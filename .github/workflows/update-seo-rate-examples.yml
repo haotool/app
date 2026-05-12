@@ -1,7 +1,7 @@
 # SEO 匯差範例數據每日更新
 #
-# 職責：每日抓取最新臺灣銀行牌告匯率，計算各幣別現金匯率與市場中間價差距，
-#        更新 apps/ratewise/src/config/generated/seo-rate-examples.ts。
+# 職責：每日抓取最新臺灣銀行牌告匯率，更新 runtime fallback snapshot，
+#        並計算各幣別現金匯率與市場中間價差距。
 #
 # 流程（業界最佳實踐 — PR-based，不直接 push main）：
 #   1. 執行腳本（雙重驗證：台銀牌告 + open.er-api.com）
@@ -51,6 +51,9 @@ jobs:
       - name: 安裝依賴
         run: pnpm install --frozen-lockfile
 
+      - name: 更新 build-time fallback 匯率 snapshot
+        run: pnpm --filter @app/ratewise refresh:fallback-rates
+
       - name: 執行匯差範例更新腳本（雙重驗證模式）
         run: node apps/ratewise/scripts/update-seo-rate-examples.mjs
 
@@ -64,6 +67,7 @@ jobs:
           commit-message: |
             chore(seo): 每日更新匯差範例數據
 
+            - 自動更新 build-time fallback 匯率 snapshot
             - 自動更新各幣別現金賣出 vs 市場中間價差距（換 3 萬台幣情境）
             - 雙重驗證：open.er-api.com 中間價 vs 台銀自身 (買入+賣出)/2 中間價
             - 差距超過 2% 幣別已警告（東南亞幣別預期偏高）
@@ -73,7 +77,7 @@ jobs:
           delete-branch: true
           title: 'chore(seo): 每日更新匯差範例數據'
           body: |
-            ## 自動更新：SEO 匯差範例數據
+            ## 自動更新：RateWise 匯率 fallback 與 SEO 匯差範例數據
 
             由 GitHub Actions 排程每日自動執行。腳本：[`update-seo-rate-examples.mjs`](apps/ratewise/scripts/update-seo-rate-examples.mjs)
 
@@ -98,6 +102,7 @@ jobs:
             automated
             seo
           add-paths: |
+            apps/ratewise/src/config/generated/build-time-rates.json
             apps/ratewise/src/config/generated/seo-rate-examples.ts
 
       - name: 合併 PR（squash）

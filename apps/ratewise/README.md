@@ -82,13 +82,16 @@ RateWise 將 build 產物分成三類，避免 live data、deterministic artifac
 
 - `pnpm --filter @app/ratewise refresh:data`：更新 live data snapshot
   （`build-time-rates.json`、`seo-rate-examples.ts`、`rating-snapshot.ts`）。
+- `pnpm --filter @app/ratewise refresh:fallback-rates`：只更新已提交的 runtime
+  fallback 匯率 snapshot，供首次離線或 LHCI fallback 使用。
 - `pnpm --filter @app/ratewise generate:deterministic`：由 repo SSOT 重建 sitemap、
   manifest、offline shell、LLMs text、Markdown mirrors、API JSON 與 OpenAPI。
 - `pnpm --filter @app/ratewise verify:artifacts`：驗證 SSOT sync 與圖片資源。
 
-`prebuild` 只負責串接上述 buckets；`lighthouse-report.json` 與 `*.tsbuildinfo` 屬本機
-工具輸出，必須保持 untracked。QA 截圖集中放 `screenshots/`，正式 SEO/manifest 圖片則保留
-在 `public/screenshots/`。
+`prebuild` 只執行 deterministic generation、artifact verification 與 rating placeholder
+refresh，不會刷新 tracked live rate data。`lighthouse-report.json` 與 `*.tsbuildinfo` 屬本機工具輸出，
+必須保持 untracked。QA 截圖集中放 `screenshots/`，正式 SEO/manifest 圖片則保留在
+`public/screenshots/`。
 
 ## 📄 授權
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +46
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +47
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-13
+- ID：reward-ratewise-fallback-rate-snapshot-ssot
+- 原因：prebuild 仍刷新 tracked live rate data，且 runtime fallback 匯率另有硬編碼副本
+- 解法：將 tracked fallback snapshot 更新改為 explicit refresh，prebuild 回到 deterministic，runtime fallback 改讀 build-time snapshot SSOT
 
 - 日期：2026-05-12
 - ID：reward-ratewise-prerender-internal-route-contract

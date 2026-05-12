@@ -302,10 +302,11 @@ finished so an older SHA cannot become active after the release SHA.
 ### Generated Artifacts
 
 RateWise generated files are bucketed by package scripts:
-`refresh:data` updates live snapshots, `generate:deterministic` rebuilds
-repo-derived public artifacts, and `verify:artifacts` checks SSOT/resource
-sync. Local tool output such as `lighthouse-report.json` and `*.tsbuildinfo`
-must remain untracked.
+`prebuild` runs deterministic generation and verification only,
+`refresh:data` explicitly updates live snapshots, and
+`refresh:fallback-rates` is the only script that writes the committed fallback
+rate snapshot. Local tool output such as `lighthouse-report.json` and
+`*.tsbuildinfo` must remain untracked.
 
 ### License
 

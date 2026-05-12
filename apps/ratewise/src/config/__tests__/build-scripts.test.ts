@@ -127,6 +127,19 @@ async function readSeoRateExamplesScript() {
   return readFile(scriptPath, 'utf-8');
 }
 
+async function readExchangeRateService() {
+  const servicePath = path.resolve(__dirname, '../../../src/services/exchangeRateService.ts');
+  return readFile(servicePath, 'utf-8');
+}
+
+async function readSeoRateExamplesWorkflow() {
+  const workflowPath = path.resolve(
+    __dirname,
+    '../../../../../.github/workflows/update-seo-rate-examples.yml',
+  );
+  return readFile(workflowPath, 'utf-8');
+}
+
 async function readApiJsonGenerator() {
   const scriptPath = path.resolve(__dirname, '../../../scripts/generate-api-json.mjs');
   return readFile(scriptPath, 'utf-8');
@@ -379,9 +392,12 @@ describe('ratewise build scripts', () => {
     const seoRateExamplesScript = await readSeoRateExamplesScript();
 
     expect(packageJson.scripts?.['prebuild']).toBe(
-      'pnpm refresh:rates && pnpm generate:deterministic && pnpm verify:artifacts && pnpm refresh:rating',
+      'pnpm generate:deterministic && pnpm verify:artifacts && pnpm refresh:rating',
     );
-    expect(packageJson.scripts?.['refresh:rates']).toContain('SEO_RATE_EXAMPLES_OPTIONAL=1');
+    expect(packageJson.scripts?.['refresh:rates']).toBe('node scripts/prebuild-fetch-rates.mjs');
+    expect(packageJson.scripts?.['update:seo-examples']).toBe(
+      'node scripts/update-seo-rate-examples.mjs',
+    );
     expect(seoRateExamplesScript).toContain(
       "const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';",
     );
@@ -392,9 +408,13 @@ describe('ratewise build scripts', () => {
   it('should expose generated artifact buckets as package script SSOT', async () => {
     const packageJson = await readPackageJson();
 
-    expect(packageJson.scripts?.['refresh:data']).toBe('pnpm refresh:rates && pnpm refresh:rating');
-    expect(packageJson.scripts?.['refresh:rates']).toContain('prebuild-fetch-rates.mjs');
-    expect(packageJson.scripts?.['refresh:rates']).toContain('update-seo-rate-examples.mjs');
+    expect(packageJson.scripts?.['refresh:data']).toBe(
+      'pnpm refresh:fallback-rates && pnpm update:seo-examples && pnpm refresh:rating',
+    );
+    expect(packageJson.scripts?.['refresh:rates']).toBe('node scripts/prebuild-fetch-rates.mjs');
+    expect(packageJson.scripts?.['refresh:fallback-rates']).toBe(
+      'RATEWISE_WRITE_FALLBACK_RATES=1 node scripts/prebuild-fetch-rates.mjs',
+    );
     expect(packageJson.scripts?.['refresh:rating']).toBe('node scripts/fetch-rating-snapshot.mjs');
     expect(packageJson.scripts?.['generate:deterministic']).toContain('generate-sitemap-2026.mjs');
     expect(packageJson.scripts?.['generate:deterministic']).toContain('generate-openapi.mjs');
@@ -402,6 +422,28 @@ describe('ratewise build scripts', () => {
       'node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs',
     );
     expect(packageJson.scripts?.['verify']).toBe('pnpm verify:artifacts');
+  });
+
+  it('should only update the committed fallback rate snapshot through the explicit refresh script', async () => {
+    const prebuildRatesScript = await readPrebuildFetchRatesScript();
+    const exchangeRateService = await readExchangeRateService();
+    const seoRateExamplesWorkflow = await readSeoRateExamplesWorkflow();
+
+    expect(prebuildRatesScript).toContain(
+      "const SHOULD_WRITE_FALLBACK_SNAPSHOT = process.env.RATEWISE_WRITE_FALLBACK_RATES === '1';",
+    );
+    expect(prebuildRatesScript).toContain(
+      "if (SHOULD_WRITE_FALLBACK_SNAPSHOT && rates.source === 'Default fallback rates')",
+    );
+    expect(prebuildRatesScript).toContain('if (SHOULD_WRITE_FALLBACK_SNAPSHOT) {');
+    expect(prebuildRatesScript).toContain(
+      "fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');",
+    );
+    expect(exchangeRateService).not.toContain('const FALLBACK_RATES');
+    expect(seoRateExamplesWorkflow).toContain('pnpm --filter @app/ratewise refresh:fallback-rates');
+    expect(seoRateExamplesWorkflow).toContain(
+      'apps/ratewise/src/config/generated/build-time-rates.json',
+    );
   });
 
   it('should generate SEO rate example dates in Asia/Taipei instead of UTC', async () => {

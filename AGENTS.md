@@ -467,9 +467,10 @@ git push origin main     # pre-push 自動驗證
 ### RateWise Generated Artifact Buckets（SSOT）
 
 - `pnpm --filter @app/ratewise refresh:data`：更新 live snapshots（build-time rates、SEO rate examples、rating snapshot）。
+- `pnpm --filter @app/ratewise refresh:fallback-rates`：只更新 committed runtime fallback rate snapshot。
 - `pnpm --filter @app/ratewise generate:deterministic`：由 repo SSOT 重建 sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON 與 OpenAPI。
 - `pnpm --filter @app/ratewise verify:artifacts`：執行 SSOT sync 與 image resource 檢查。
-- `pnpm --filter @app/ratewise prebuild`：只作為上述 buckets 的串接入口；禁止把新的 hidden side effect 直接塞回單一長命令。
+- `pnpm --filter @app/ratewise prebuild`：只執行 deterministic generation、artifact verification 與 rating placeholder refresh；禁止把 tracked live rate refresh 塞回單一長命令。
 
 ### Release PR 自動化失敗治理
 

@@ -21,6 +21,7 @@ const GENERATED_CONFIG_PATH = path.resolve(APP_ROOT, 'src/config/generated');
 const RATES_CACHE_PATH = path.resolve(PUBLIC_PATH, 'rates.json');
 const BUILD_TIME_RATES_PATH = path.resolve(GENERATED_CONFIG_PATH, 'build-time-rates.json');
 const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
+const SHOULD_WRITE_FALLBACK_SNAPSHOT = process.env.RATEWISE_WRITE_FALLBACK_RATES === '1';
 
 function parseRateTimestamp(value) {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -241,27 +242,31 @@ function getDefaultRates() {
 }
 
 /**
- * 保存匯率到 public/rates.json 與可追蹤的 src/config/generated snapshot。
- *
- * public/rates.json 是 build 暫存快取且被 .gitignore 忽略；app runtime 的首屏 fallback
- * 必須讀取已 commit 的 generated snapshot，避免 clean checkout 在 typecheck/dev 前缺檔。
+ * 保存匯率到 public/rates.json；只有明確要求時才更新可追蹤 fallback snapshot。
  */
 function saveRates(rates) {
   try {
+    if (SHOULD_WRITE_FALLBACK_SNAPSHOT && rates.source === 'Default fallback rates') {
+      console.error('❌ 拒絕使用預設匯率更新 build-time fallback snapshot');
+      return false;
+    }
+
     // 確保目錄存在
     if (!fs.existsSync(PUBLIC_PATH)) {
       fs.mkdirSync(PUBLIC_PATH, { recursive: true });
     }
-    if (!fs.existsSync(GENERATED_CONFIG_PATH)) {
-      fs.mkdirSync(GENERATED_CONFIG_PATH, { recursive: true });
-    }
 
     const payload = `${JSON.stringify(rates, null, 2)}\n`;
     fs.writeFileSync(RATES_CACHE_PATH, payload, 'utf-8');
-    fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');
 
     console.log(`✅ 匯率已保存到：${RATES_CACHE_PATH}`);
-    console.log(`✅ build-time 匯率 snapshot 已保存到：${BUILD_TIME_RATES_PATH}`);
+    if (SHOULD_WRITE_FALLBACK_SNAPSHOT) {
+      if (!fs.existsSync(GENERATED_CONFIG_PATH)) {
+        fs.mkdirSync(GENERATED_CONFIG_PATH, { recursive: true });
+      }
+      fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');
+      console.log(`✅ build-time 匯率 snapshot 已保存到：${BUILD_TIME_RATES_PATH}`);
+    }
     return true;
   } catch (error) {
     console.error(`❌ 保存匯率失敗：${error.message}`);

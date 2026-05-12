@@ -16,34 +16,6 @@ import {
 } from '../utils/offlineStorage';
 import buildTimeRates from '../config/generated/build-time-rates.json';
 
-/**
- * 離線 fallback 預設匯率
- *
- * 當用戶首次離線訪問（無 localStorage 快取）時使用。
- * 數據來源: 台灣銀行牌告匯率（近似值）
- * 這確保 PWA 在任何情況下都能顯示 UI，而非 Safari 的「無法打開網頁」錯誤
- */
-const FALLBACK_RATES: Record<string, number> = {
-  TWD: 1,
-  USD: 32.5,
-  HKD: 4.18,
-  GBP: 41.0,
-  AUD: 20.5,
-  CAD: 22.8,
-  SGD: 24.0,
-  CHF: 36.5,
-  JPY: 0.21,
-  EUR: 33.8,
-  KRW: 0.023,
-  CNY: 4.45,
-  NZD: 18.8,
-  THB: 0.95,
-  PHP: 0.56,
-  IDR: 0.002,
-  VND: 0.0013,
-  MYR: 7.3,
-};
-
 // ExchangeRateData 類型從 offlineStorage.ts 導入，確保類型一致性
 
 // CDN URLs
@@ -296,7 +268,7 @@ function getAnyCachedData(): ExchangeRateData | null {
  * 3. 網路失敗時使用任何可用快取（即使過期）
  *
  * Safari PWA 冷啟動離線優化：
- * 4. 增加 IndexedDB 作為第二層備援（localStorage → IndexedDB → FALLBACK_RATES）
+ * 4. 增加 IndexedDB 作為第二層備援（localStorage → IndexedDB → build-time snapshot）
  * 5. IndexedDB 有效期 7 天，比 localStorage (5 分鐘) 更持久
  */
 export async function getExchangeRates(): Promise<ExchangeRateData> {
@@ -331,7 +303,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
             ageDays: staleness.ageDays,
             message: staleness.message,
           });
-          // 超過 7 天，回落到 FALLBACK_RATES 避免誤導用戶
+          // 超過 7 天，回落到 build-time snapshot 避免誤導用戶
         } else {
           logger.info('Offline mode: using IndexedDB cache (Safari PWA fallback)', {
             updateTime: idbData.updateTime,
@@ -345,16 +317,17 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       logger.warn('Offline mode: IndexedDB read failed', { error: idbError });
     }
 
-    // 第三層：使用硬編碼 fallback 數據
+    // 第三層：使用 build-time fallback snapshot
     logger.warn('Offline mode: no cache available, using fallback rates');
+    const fallbackRates = getBuildTimeExchangeRates();
     return {
-      timestamp: new Date().toISOString(),
+      ...fallbackRates,
       updateTime: '離線模式 - 使用預設匯率',
       source: 'fallback',
-      sourceUrl: '',
-      base: 'TWD',
-      rates: FALLBACK_RATES,
-      details: {},
+      rates: {
+        TWD: 1,
+        ...fallbackRates.rates,
+      },
     };
   }
 

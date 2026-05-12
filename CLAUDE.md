@@ -150,10 +150,11 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 
 - `pnpm --filter @app/ratewise refresh:data`：live snapshots
   （`build-time-rates.json`、`seo-rate-examples.ts`、`rating-snapshot.ts`）。
+- `pnpm --filter @app/ratewise refresh:fallback-rates`：只更新 committed runtime fallback rate snapshot。
 - `pnpm --filter @app/ratewise generate:deterministic`：repo SSOT 可重建產物
   （sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON、OpenAPI）。
 - `pnpm --filter @app/ratewise verify:artifacts`：SSOT sync 與 image resource 檢查。
-- `prebuild` 只串接上述 buckets；`lighthouse-report.json`、`*.tsbuildinfo` 屬本機工具輸出，必須保持 untracked。
+- `prebuild` 只執行 deterministic generation、artifact verification 與 rating placeholder refresh；不得刷新 tracked live rate data。`lighthouse-report.json`、`*.tsbuildinfo` 屬本機工具輸出，必須保持 untracked。
 
 **Release PR 自動化控制**：
 
