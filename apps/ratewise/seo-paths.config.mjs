@@ -168,29 +168,21 @@ export const INDEXABLE_CANONICAL_PATHS = [
 export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 
 /**
- * 需要回傳 app shell 的互動頁面（app-only）
- *
- * 排列順序：前 3 個為使用者功能頁（noindex 處理），後 4 個為開發展示頁（Disallow 處理）
- * ─ 使用者功能頁：允許爬取，由 SEOHelmet noindex 排除索引（Google 官方建議）
- * ─ 開發展示頁：直接 Disallow，無使用者價值，無需 noindex
+ * 需要回傳 app shell 的使用者功能頁（app-only）
  *
  * 注：/seo-tech/ 已移至 CONTENT_SEO_PATHS 成為可索引頁面（2026-04-07）
  */
-export const APP_ONLY_PATHS = [
-  '/multi/',
-  '/favorites/',
-  '/settings/',
+export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/'];
+
+/** 開發 / 展示頁：正式 build 不註冊、不預渲染；robots 仍明確 Disallow。 */
+export const DEV_ONLY_PATHS = [
   '/theme-showcase/',
   '/color-scheme/',
   '/update-prompt-test/',
   '/ui-showcase/',
 ];
 
-/** 使用者功能頁子集（前 3）：允許爬取 + noindex meta */
-export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 3);
-
-/** 開發 / 展示頁子集（後 4）：Disallow 爬取 */
-export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
+export const APP_ONLY_PATHS = [...APP_ONLY_NOINDEX_PATHS];
 
 /**
  * 需要預渲染的 app-only 路由

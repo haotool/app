@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +40
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +41
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-public-surface-governance
+- 原因：內部展示與測試頁仍存在於正式路由與 prerender surface
+- 解法：將 internal-only routes 從 production route/prerender surface 移除並補測試
 
 - 日期：2026-05-12
 - ID：reward-ratewise-lint-baseline

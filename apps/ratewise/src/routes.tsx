@@ -10,7 +10,6 @@
  *   - `/multi`: 多幣別轉換器
  *   - `/favorites`: 收藏與歷史
  *   - `/settings`: 應用程式設定
- *   - `/theme-showcase`: 主題展示
  *
  * - Layout 路由（SEO 落地頁，保留原有結構）：
  *   - `/faq`: FAQ 頁面 - 預渲染靜態 HTML
@@ -22,7 +21,8 @@
  *   - `/seo-tech`: SEO 技術揭露頁面
  *   - `/xxx-twd` / `/twd-xxx`: 17+17 個幣別落地頁 - 預渲染靜態 HTML
  *
- * - 工具頁面（不預渲染）：
+ * - 內部工具頁面（僅 dev 或 VITE_ENABLE_INTERNAL_ROUTES=true 註冊）：
+ *   - `/theme-showcase`: 主題展示
  *   - `/color-scheme`: 內部工具
  *   - `/update-prompt-test`: UpdatePrompt 測試
  *   - `/ui-showcase`: UI 元件展示
@@ -52,6 +52,9 @@ import RateWise from './features/ratewise/RateWise';
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
+
+const shouldEnableInternalRoutes =
+  import.meta.env.DEV || import.meta.env['VITE_ENABLE_INTERNAL_ROUTES'] === 'true';
 
 /** 帶重試機制的動態 import */
 async function importWithRetry<T>(
@@ -181,18 +184,21 @@ export const routes: RouteRecord[] = [
         ),
         entry: 'src/pages/Settings.tsx',
       },
-      // 主題展示頁面
-      {
-        path: 'theme-showcase',
-        lazy: async () => {
-          try {
-            const module = await import('./pages/ThemeShowcase');
-            return { Component: module.default };
-          } catch (error) {
-            return { Component: () => <OfflineAwareFallback error={error} /> };
-          }
-        },
-      },
+      ...(shouldEnableInternalRoutes
+        ? [
+            {
+              path: 'theme-showcase',
+              lazy: async () => {
+                try {
+                  const module = await import('./pages/ThemeShowcase');
+                  return { Component: module.default };
+                } catch (error) {
+                  return { Component: () => <OfflineAwareFallback error={error} /> };
+                }
+              },
+            },
+          ]
+        : []),
     ],
   },
 
@@ -293,18 +299,25 @@ export const routes: RouteRecord[] = [
   // SEO 技術揭露頁面
   createLazyRoute('/seo-tech', () => import('./pages/SeoTech'), 'src/pages/SeoTech.tsx'),
 
-  // 不預渲染內部工具頁面
-  createLazyRoute(
-    '/color-scheme',
-    () => import('./pages/ColorSchemeComparison'),
-    'src/pages/ColorSchemeComparison.tsx',
-  ),
-  createLazyRoute(
-    '/update-prompt-test',
-    () => import('./pages/UpdatePromptTest'),
-    'src/pages/UpdatePromptTest.tsx',
-  ),
-  createLazyRoute('/ui-showcase', () => import('./pages/UIShowcase'), 'src/pages/UIShowcase.tsx'),
+  ...(shouldEnableInternalRoutes
+    ? [
+        createLazyRoute(
+          '/color-scheme',
+          () => import('./pages/ColorSchemeComparison'),
+          'src/pages/ColorSchemeComparison.tsx',
+        ),
+        createLazyRoute(
+          '/update-prompt-test',
+          () => import('./pages/UpdatePromptTest'),
+          'src/pages/UpdatePromptTest.tsx',
+        ),
+        createLazyRoute(
+          '/ui-showcase',
+          () => import('./pages/UIShowcase'),
+          'src/pages/UIShowcase.tsx',
+        ),
+      ]
+    : []),
 
   // 不預渲染 404 頁面（動態處理）
   createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
@@ -315,6 +328,6 @@ export const routes: RouteRecord[] = [
  *
  * 策略：
  * - 預渲染：首頁、FAQ、About、Guide + 13 個幣別落地頁
- * - 不預渲染：404、color-scheme（動態處理或內部工具）
+ * - 不預渲染：404、內部工具頁（production 不註冊）
  */
 export { getIncludedRoutes } from './config/seo-paths';
