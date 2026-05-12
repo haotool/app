@@ -460,8 +460,16 @@ git push origin main     # pre-push 自動驗證
 
 - `public/*.md`（markdown mirrors）版本號由完整 build 更新；`pnpm changeset:version` 不觸發此步驟，故 mirrors 版本會暫時落後一個版本。
 - `src/config/generated/`（build-time-rates.json、seo-rate-examples.ts）由每日 SEO 排程更新。
+- `apps/ratewise/lighthouse-report.json` 與 `apps/ratewise/*.tsbuildinfo` 屬本機工具輸出；已由 `.gitignore` 管理，必須保持 untracked。
 - **MUST NOT**：把上述兩類修改單獨建立 release 後的 follow-up commit，`verify-version-ssot` 會因為 staged set 內沒有 version bump 或 changeset 而擋下。
 - **MUST**：commit 失敗後必須重新執行 `git restore --staged --worktree <files>` 再重試；lint-staged 的 stash/restore 循環會把失敗前的 working tree 狀態還原，使已 restore 的修改重新出現。
+
+### RateWise Generated Artifact Buckets（SSOT）
+
+- `pnpm --filter @app/ratewise refresh:data`：更新 live snapshots（build-time rates、SEO rate examples、rating snapshot）。
+- `pnpm --filter @app/ratewise generate:deterministic`：由 repo SSOT 重建 sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON 與 OpenAPI。
+- `pnpm --filter @app/ratewise verify:artifacts`：執行 SSOT sync 與 image resource 檢查。
+- `pnpm --filter @app/ratewise prebuild`：只作為上述 buckets 的串接入口；禁止把新的 hidden side effect 直接塞回單一長命令。
 
 ### Release PR 自動化失敗治理
 

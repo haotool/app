@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +43
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +44
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-12
+- ID：reward-ratewise-generated-artifact-ssot
+- 原因：build/generated/local QA artifacts 責任混雜且歷史產物污染追蹤
+- 解法：建立 artifact bucket scripts、移除本機產物追蹤並同步文件 SSOT
 
 - 日期：2026-05-12
 - ID：reward-ratewise-qa-gate-governance

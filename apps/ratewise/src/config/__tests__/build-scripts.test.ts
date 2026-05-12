@@ -378,12 +378,30 @@ describe('ratewise build scripts', () => {
     const packageJson = await readPackageJson();
     const seoRateExamplesScript = await readSeoRateExamplesScript();
 
-    expect(packageJson.scripts?.['prebuild']).toContain('SEO_RATE_EXAMPLES_OPTIONAL=1');
+    expect(packageJson.scripts?.['prebuild']).toBe(
+      'pnpm refresh:rates && pnpm generate:deterministic && pnpm verify:artifacts && pnpm refresh:rating',
+    );
+    expect(packageJson.scripts?.['refresh:rates']).toContain('SEO_RATE_EXAMPLES_OPTIONAL=1');
     expect(seoRateExamplesScript).toContain(
       "const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';",
     );
     expect(seoRateExamplesScript).toContain('prebuild 優雅降級模式');
     expect(seoRateExamplesScript).toContain('process.exit(0);');
+  });
+
+  it('should expose generated artifact buckets as package script SSOT', async () => {
+    const packageJson = await readPackageJson();
+
+    expect(packageJson.scripts?.['refresh:data']).toBe('pnpm refresh:rates && pnpm refresh:rating');
+    expect(packageJson.scripts?.['refresh:rates']).toContain('prebuild-fetch-rates.mjs');
+    expect(packageJson.scripts?.['refresh:rates']).toContain('update-seo-rate-examples.mjs');
+    expect(packageJson.scripts?.['refresh:rating']).toBe('node scripts/fetch-rating-snapshot.mjs');
+    expect(packageJson.scripts?.['generate:deterministic']).toContain('generate-sitemap-2026.mjs');
+    expect(packageJson.scripts?.['generate:deterministic']).toContain('generate-openapi.mjs');
+    expect(packageJson.scripts?.['verify:artifacts']).toBe(
+      'node ../../scripts/verify-ssot-sync.mjs && node ../../scripts/verify-image-resources.mjs',
+    );
+    expect(packageJson.scripts?.['verify']).toBe('pnpm verify:artifacts');
   });
 
   it('should generate SEO rate example dates in Asia/Taipei instead of UTC', async () => {

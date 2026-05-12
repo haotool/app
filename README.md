@@ -207,6 +207,7 @@ haotool-app/
 │       ├── release.yml                 # 版本發布
 │       ├── seo-audit.yml               # SEO 審查
 │       ├── seo-production.yml          # 生產環境 SEO
+│       ├── ratewise-production-governance.yml # RateWise 生產治理檢查
 │       ├── update-committed-seo-files.yml # SEO 產出物同步
 │       ├── update-historical-rates.yml # 歷史匯率更新
 │       ├── update-latest-rates.yml     # 最新匯率更新
@@ -270,7 +271,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 - **Styling**: Tailwind CSS 3.4
 - **Testing**: Vitest 4.1 + Playwright 1.57
 - **Package Manager**: pnpm 9.10.0 (Monorepo)
-- **CI/CD**: GitHub Actions (9 workflows)
+- **CI/CD**: GitHub Actions (10 workflows)
 - **Deployment**: Docker + Zeabur / Vercel
 - **Security**: Gitleaks CLI + Trivy + SARIF
 
@@ -297,6 +298,14 @@ Every PR must include a changeset. GitHub Actions creates the release PR with
 Production is deployed by Zeabur from GitHub main. Before merging a release PR
 right after another main PR, confirm the earlier production deployment has
 finished so an older SHA cannot become active after the release SHA.
+
+### Generated Artifacts
+
+RateWise generated files are bucketed by package scripts:
+`refresh:data` updates live snapshots, `generate:deterministic` rebuilds
+repo-derived public artifacts, and `verify:artifacts` checks SSOT/resource
+sync. Local tool output such as `lighthouse-report.json` and `*.tsbuildinfo`
+must remain untracked.
 
 ### License
 
