@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * 構建時匯率數據獲取腳本
- * 在 vite build 前執行，獲取最新匯率並保存到 public/rates.json
- * 用於 SSG 預渲染時注入到靜態 HTML
+ * 匯率快照刷新腳本
+ * 顯式刷新本機 public/rates.json；設定 RATEWISE_WRITE_FALLBACK_RATES=1 時同步更新 build-time fallback snapshot
  *
- * 使用：pnpm run prebuild:fetch-rates
+ * 使用：pnpm refresh:rates
+ * 使用：pnpm refresh:fallback-rates
  */
 
 import fs from 'fs';
@@ -80,7 +80,8 @@ async function fetchLatestRates() {
       throw new Error('API 返回數據格式無效');
     }
 
-    console.log(`✅ 成功獲取 ${Object.keys(data).length} 個幣別的匯率`);
+    const currencyCount = Object.keys(data.rates ?? {}).length;
+    console.log(`✅ 成功獲取 ${currencyCount} 個幣別的匯率`);
     return data;
   } catch (error) {
     console.warn(`⚠️  API 獲取失敗（${error.message}），嘗試使用緩存...`);
@@ -278,7 +279,7 @@ function saveRates(rates) {
  * 主函數
  */
 async function main() {
-  console.log(`\n📊 ${APP_INFO.shortName} 構建時匯率數據預處理`);
+  console.log(`\n📊 ${APP_INFO.shortName} 匯率快照刷新`);
   console.log('═'.repeat(50));
 
   // 1. 獲取匯率
@@ -300,7 +301,7 @@ async function main() {
   console.log(`   canonical 金額頁：${indexableAmountPages} 個`);
   console.log(`   預渲染靜態頁：${STATS.total} 個`);
 
-  console.log('\n✅ 構建前準備完成！');
+  console.log('\n✅ 匯率快照刷新完成！');
   console.log('═'.repeat(50) + '\n');
 }
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +49
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +50
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-13
+- ID：reward-ratewise-fallback-snapshot-freshness
+- 原因：fallback snapshot 已導入每日刷新但分支仍落後最新台銀快照，刷新腳本輸出仍顯示錯誤幣別數
+- 解法：合併最新 main、更新 build-time fallback snapshot，並修正刷新腳本說明與匯率筆數輸出
 
 - 日期：2026-05-13
 - ID：reward-ratewise-multi-accessibility-contrast
