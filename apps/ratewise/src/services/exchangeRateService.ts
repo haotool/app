@@ -60,6 +60,19 @@ export function getBuildTimeExchangeRates(): ExchangeRateData {
   return buildTimeRates as ExchangeRateData;
 }
 
+function buildFallbackExchangeRates(updateTime: string): ExchangeRateData {
+  const fallbackRates = getBuildTimeExchangeRates();
+  return {
+    ...fallbackRates,
+    updateTime,
+    source: 'fallback',
+    rates: {
+      TWD: 1,
+      ...fallbackRates.rates,
+    },
+  };
+}
+
 /**
  * 讀取完整快取條目（含 ETag）；不捕獲例外，由呼叫端決定錯誤處理方式。
  */
@@ -319,16 +332,7 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
 
     // 第三層：使用 build-time fallback snapshot
     logger.warn('Offline mode: no cache available, using fallback rates');
-    const fallbackRates = getBuildTimeExchangeRates();
-    return {
-      ...fallbackRates,
-      updateTime: '離線模式 - 使用預設匯率',
-      source: 'fallback',
-      rates: {
-        TWD: 1,
-        ...fallbackRates.rates,
-      },
-    };
+    return buildFallbackExchangeRates('離線模式 - 使用預設匯率');
   }
 
   // 1. 嘗試從快取讀取（getFromCache 只返回 5 分鐘內的新鮮資料）
@@ -381,7 +385,8 @@ export async function getExchangeRates(): Promise<ExchangeRateData> {
       logger.warn('IndexedDB fallback read failed', { error: idbError });
     }
 
-    throw error;
+    logger.warn('Remote rates unavailable and no cache available, using fallback rates');
+    return buildFallbackExchangeRates('遠端匯率暫不可用 - 使用預設匯率');
   }
 }
 

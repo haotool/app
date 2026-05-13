@@ -400,11 +400,10 @@ describe('RateWise Component', () => {
       );
 
       expect(screen.queryByText('匯率載入失敗')).not.toBeInTheDocument();
-      expect(screen.getByTestId('ratewise-stale-rates-warning')).toHaveTextContent(
-        '目前使用上次可用的匯率資料',
-      );
+      expect(screen.queryByTestId('ratewise-stale-rates-warning')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /重新整理頁面/i })).not.toBeInTheDocument();
       expect(screen.getByTestId('amount-output')).toBeInTheDocument();
+      expect(screen.getByTestId('ratewise-data-source')).toBeInTheDocument();
     });
 
     it('does not expose a fatal reload CTA when build-time rates cover a fetch failure', async () => {
