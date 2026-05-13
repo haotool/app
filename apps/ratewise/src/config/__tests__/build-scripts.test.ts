@@ -428,6 +428,7 @@ describe('ratewise build scripts', () => {
     const prebuildRatesScript = await readPrebuildFetchRatesScript();
     const exchangeRateService = await readExchangeRateService();
     const seoRateExamplesWorkflow = await readSeoRateExamplesWorkflow();
+    const viteConfig = await readViteConfig();
 
     expect(prebuildRatesScript).toContain(
       "const SHOULD_WRITE_FALLBACK_SNAPSHOT = process.env.RATEWISE_WRITE_FALLBACK_RATES === '1';",
@@ -440,6 +441,8 @@ describe('ratewise build scripts', () => {
       "fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');",
     );
     expect(exchangeRateService).not.toContain('const FALLBACK_RATES');
+    expect(viteConfig).toContain('src/config/generated/build-time-rates.json');
+    expect(viteConfig).not.toContain("resolve(__dirname, 'public/rates.json')");
     expect(seoRateExamplesWorkflow).toContain('pnpm --filter @app/ratewise refresh:fallback-rates');
     expect(seoRateExamplesWorkflow).toContain(
       'apps/ratewise/src/config/generated/build-time-rates.json',

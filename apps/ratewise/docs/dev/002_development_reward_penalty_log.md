@@ -2,12 +2,13 @@
 
 **版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-05-13T09:42:00+08:00
+**更新時間**: 2026-05-13T10:18:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +139
+**當前總分**: +140
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
+| ✅ 成功 | SSG 金額頁 fallback snapshot SSOT 修正           | 1) SSG 金額頁注入改讀 build-time-rates.json 2) 移除 clean checkout 對 ignored public/rates.json 的依賴 3) 增加靜態與 prerender 回歸測試保護                                                             | [Codex Review PR #393:2026-05-13][AGENTS.md:SSOT]                                                        | +1   |
 | ✅ 成功 | RateWise online 遠端全失敗 fallback 補強         | 1) build-time snapshot fallback 收斂成單一 helper 2) online 首啟 CDN/Raw/IDB 全失敗時回退 build-time snapshot 3) 補上 service 回歸測試，避免換算器因遠端全失敗不可用                                    | [exchangeRateService fallback audit:2026-05-13][AGENTS.md:production resilience]                         | +1   |
 | ✅ 成功 | RateWise E2E 測試矩陣漂移修復                    | 1) GA4 E2E 改以建置後 VITE_GA_ID 是否非空判斷 runtime 2) 等待延後初始化後再斷言 config 次數 3) Firefox offline 測試對 CDP 不支援時降級為 context.setOffline + event                                     | [Playwright E2E:2026-05-13][AGENTS.md:QA gates]                                                          | +1   |
 | ✅ 成功 | SEO 修正：同步 sitemap 與 llms.txt 實作          | 1) 移除 sitemap.xml 生成腳本中已棄用的 image:caption 標籤 2) 移除 llms.txt 中的虛假評價數據，替換為真實用戶場景 3) 確保程式碼與開發日誌一致                                                             | [Internal Audit][Google SEO Guidelines]                                                                  | +3   |
