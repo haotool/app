@@ -151,14 +151,17 @@ class OfflinePWAPage {
     // Set network offline at browser context level first
     await this.context.setOffline(true);
 
-    // Use CDP to emulate network conditions - this makes navigator.onLine return false
-    const client = await this.context.newCDPSession(this.page);
-    await client.send('Network.emulateNetworkConditions', {
-      offline: true,
-      downloadThroughput: 0,
-      uploadThroughput: 0,
-      latency: 0,
-    });
+    try {
+      const client = await this.context.newCDPSession(this.page);
+      await client.send('Network.emulateNetworkConditions', {
+        offline: true,
+        downloadThroughput: 0,
+        uploadThroughput: 0,
+        latency: 0,
+      });
+    } catch {
+      // Firefox 不支援 CDP；保留 context.setOffline 與 offline event 作為跨瀏覽器路徑。
+    }
 
     // Dispatch offline event to trigger component's event listener
     await this.page.evaluate(() => {
@@ -174,14 +177,17 @@ class OfflinePWAPage {
    * Restore network connectivity
    */
   async goOnline(): Promise<void> {
-    // Use CDP to restore network conditions
-    const client = await this.context.newCDPSession(this.page);
-    await client.send('Network.emulateNetworkConditions', {
-      offline: false,
-      downloadThroughput: -1, // unlimited
-      uploadThroughput: -1, // unlimited
-      latency: 0,
-    });
+    try {
+      const client = await this.context.newCDPSession(this.page);
+      await client.send('Network.emulateNetworkConditions', {
+        offline: false,
+        downloadThroughput: -1,
+        uploadThroughput: -1,
+        latency: 0,
+      });
+    } catch {
+      // Firefox 不支援 CDP；保留 context.setOffline 與 online event 作為跨瀏覽器路徑。
+    }
 
     // Restore network at browser context level
     await this.context.setOffline(false);

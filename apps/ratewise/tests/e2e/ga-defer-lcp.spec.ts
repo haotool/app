@@ -39,11 +39,8 @@ function detectBuiltGaRuntime(): boolean {
       .filter((file) => file.endsWith('.js'))
       .some((file) => {
         const content = readFileSync(join(assetDir, file), 'utf-8');
-        return (
-          content.includes('googletagmanager.com/gtag/js?id=') ||
-          content.includes('send_page_view') ||
-          content.includes('transport_type')
-        );
+        const match = /VITE_GA_ID:\s*(["'`])([^"'`]*)\1/.exec(content);
+        return Boolean(match?.[2]);
       });
   } catch {
     return false;
@@ -171,7 +168,20 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
   test('實際應用頁面載入完成後 GA config 不應重複初始化', async ({ page }) => {
     await mockRatesApi(page);
     await page.goto(BASE, { waitUntil: 'load' });
-    await page.waitForTimeout(300);
+
+    if (HAS_BUILT_GA_RUNTIME) {
+      await page.waitForFunction(
+        () =>
+          window.dataLayer?.some((item) => {
+            if (!item || typeof item !== 'object') return false;
+            return (item as Record<number, unknown>)[0] === 'config';
+          }),
+        null,
+        { timeout: 10_000 },
+      );
+    } else {
+      await page.waitForTimeout(300);
+    }
 
     const analyticsState = await page.evaluate(() => {
       const configCalls = !window.dataLayer
