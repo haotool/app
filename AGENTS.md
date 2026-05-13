@@ -471,6 +471,7 @@ git push origin main     # pre-push 自動驗證
 - `pnpm --filter @app/ratewise generate:deterministic`：由 repo SSOT 重建 sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON 與 OpenAPI。
 - `pnpm --filter @app/ratewise verify:artifacts`：執行 SSOT sync 與 image resource 檢查。
 - `pnpm --filter @app/ratewise prebuild`：只執行 deterministic generation、artifact verification 與 rating placeholder refresh；禁止把 tracked live rate refresh 塞回單一長命令。
+- `update-seo-rate-examples.yml`：只建立資料更新 PR；合併必須交由 branch protection、required checks、review 或 GitHub auto-merge / merge queue 控制，workflow 不得直接執行 `gh pr merge`。
 
 ### Release PR 自動化失敗治理
 

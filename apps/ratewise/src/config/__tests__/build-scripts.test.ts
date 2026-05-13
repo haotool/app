@@ -447,6 +447,10 @@ describe('ratewise build scripts', () => {
     expect(seoRateExamplesWorkflow).toContain(
       'apps/ratewise/src/config/generated/build-time-rates.json',
     );
+    expect(seoRateExamplesWorkflow).toContain(
+      '交由 branch protection / required checks / maintainer review 或 GitHub auto-merge 合併',
+    );
+    expect(seoRateExamplesWorkflow).not.toContain('gh pr merge --squash');
   });
 
   it('should generate SEO rate example dates in Asia/Taipei instead of UTC', async () => {

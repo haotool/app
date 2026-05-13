@@ -6,7 +6,7 @@
 # 流程（業界最佳實踐 — PR-based，不直接 push main）：
 #   1. 執行腳本（雙重驗證：台銀牌告 + open.er-api.com）
 #   2. 若有變更，peter-evans/create-pull-request@v8 建立 PR 分支
-#   3. PR 建立後直接 squash merge 至 main
+#   3. 交由 branch protection / required checks / maintainer review 或 GitHub auto-merge 合併
 #   4. 無變更時不建立 PR，靜默略過
 #
 # 為何不直接 push main：
@@ -95,7 +95,8 @@ jobs:
 
             ### 自動化
 
-            - PR 建立後 **直接 squash merge** 至 `main`
+            - PR 建立後交由 branch protection、required checks 與 maintainer review 控制合併
+            - 若 repo 啟用 GitHub auto-merge / merge queue，應由 GitHub 在條件滿足後合併
             - 無變更時不建立 PR，靜默略過
             - 幣別資料缺漏時腳本 `exit(1)`，工作流程明確失敗
           labels: |
@@ -104,12 +105,6 @@ jobs:
           add-paths: |
             apps/ratewise/src/config/generated/build-time-rates.json
             apps/ratewise/src/config/generated/seo-rate-examples.ts
-
-      - name: 合併 PR（squash）
-        if: steps.create-pr.outputs.pull-request-number != ''
-        run: gh pr merge --squash "${{ steps.create-pr.outputs.pull-request-number }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 無變更
         if: steps.create-pr.outputs.pull-request-number == ''

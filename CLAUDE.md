@@ -155,6 +155,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
   （sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON、OpenAPI）。
 - `pnpm --filter @app/ratewise verify:artifacts`：SSOT sync 與 image resource 檢查。
 - `prebuild` 只執行 deterministic generation、artifact verification 與 rating placeholder refresh；不得刷新 tracked live rate data。`lighthouse-report.json`、`*.tsbuildinfo` 屬本機工具輸出，必須保持 untracked。
+- `update-seo-rate-examples.yml` 只建立資料更新 PR；合併交由 branch protection、required checks、review 或 GitHub auto-merge / merge queue 控制，workflow 不得直接執行 `gh pr merge`。
 
 **Release PR 自動化控制**：
 

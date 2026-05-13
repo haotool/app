@@ -2,12 +2,13 @@
 
 **版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-05-13T14:20:00+08:00
+**更新時間**: 2026-05-13T14:45:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +141
+**當前總分**: +142
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
+| ✅ 成功 | 每日資料 PR 合併治理收斂                         | 1) 移除 update-seo-rate-examples workflow 直接 gh pr merge 2) 改由 branch protection、required checks、review 或 GitHub auto-merge / merge queue 控制合併 3) 補測試避免回退                             | [GitHub branch protection docs:2026-05-13][AGENTS.md:AGT-MRG-01]                                         | +1   |
 | ✅ 成功 | fallback snapshot 最新快照與刷新輸出修正         | 1) 合併最新 main 的每日 SEO 資料 2) 更新 build-time fallback snapshot 至 2026-05-13 台銀快照 3) 修正刷新腳本說明與幣別數量輸出                                                                          | [fallback snapshot freshness audit:2026-05-13][AGENTS.md:SSOT]                                           | +1   |
 | ✅ 成功 | SSG 金額頁 fallback snapshot SSOT 修正           | 1) SSG 金額頁注入改讀 build-time-rates.json 2) 移除 clean checkout 對 ignored public/rates.json 的依賴 3) 增加靜態與 prerender 回歸測試保護                                                             | [Codex Review PR #393:2026-05-13][AGENTS.md:SSOT]                                                        | +1   |
 | ✅ 成功 | RateWise online 遠端全失敗 fallback 補強         | 1) build-time snapshot fallback 收斂成單一 helper 2) online 首啟 CDN/Raw/IDB 全失敗時回退 build-time snapshot 3) 補上 service 回歸測試，避免換算器因遠端全失敗不可用                                    | [exchangeRateService fallback audit:2026-05-13][AGENTS.md:production resilience]                         | +1   |
