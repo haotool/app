@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +52
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +53
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-14
+- ID：reward-ratewise-sentry-fetch-filter-ssot
+- 原因：Sentry `beforeSend` 仍用 `'Failed to fetch'` 字面比對，與 errorClassification 跨瀏覽器 SSOT 飄移，Firefox / Safari 的 fetch 失敗會繞過過濾而重複送到 Sentry
+- 解法：改用 `classifyUnhandledRejection` 判斷 `generic-fetch-failure` 後 return null；以 Playwright AB test 在 dev runtime 確認 6 變體 + 1 control 路由正確
 
 - 日期：2026-05-14
 - ID：reward-ratewise-error-classification-cross-browser
