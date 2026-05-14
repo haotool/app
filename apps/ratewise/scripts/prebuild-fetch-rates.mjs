@@ -103,8 +103,9 @@ function loadCachedRates() {
       } else {
         const ageMs = Date.now() - cacheTimestamp;
         if (ageMs <= MAX_CACHE_AGE_MS) {
+          const cachedCurrencyCount = Object.keys(cached.rates ?? {}).length;
           console.log(
-            `✅ 使用緩存匯率（年齡 ${formatAgeHours(ageMs)}，${Object.keys(cached).length} 個頂層欄位）`,
+            `✅ 使用緩存匯率（年齡 ${formatAgeHours(ageMs)}，${cachedCurrencyCount} 個幣別）`,
           );
           return cached;
         }

@@ -33,6 +33,21 @@ function isVerifiedHistoryMiss(message: string): boolean {
   return /\/rates\/history\/[^/\s]+\.json/i.test(message) && /\b404\b/.test(message);
 }
 
+// Safari 的 TypeError("Load failed") 由 isChunkLoadError 接手，這裡不再匹配，
+// 以免奪走 chunk recovery 路由。Safari 字面訊息為 WebKit 將 NSURLError 轉譯後暴露給 JS，須精確比對。
+const GENERIC_FETCH_FAILURE_PATTERNS: readonly RegExp[] = [
+  /Failed to fetch/i, // Chromium / Edge
+  /NetworkError when attempting to fetch resource/i, // Firefox
+  /The Internet connection appears to be offline/i, // Safari：離線
+  /The network connection was lost/i, // Safari：連線中斷
+  /A server with the specified hostname could not be found/i, // Safari：DNS 失敗
+  /Could not connect to the server/i, // Safari：無法連線
+];
+
+function isGenericFetchFailure(message: string): boolean {
+  return GENERIC_FETCH_FAILURE_PATTERNS.some((pattern) => pattern.test(message));
+}
+
 export function classifyUnhandledRejection(reason: unknown): UnhandledRejectionKind {
   const error = toError(reason);
   const message = getUnhandledRejectionMessage(reason);
@@ -45,7 +60,7 @@ export function classifyUnhandledRejection(reason: unknown): UnhandledRejectionK
     return 'expected-history-miss';
   }
 
-  if (message.includes('Failed to fetch')) {
+  if (isGenericFetchFailure(message)) {
     return 'generic-fetch-failure';
   }
 

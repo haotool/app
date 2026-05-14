@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +51
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +52
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-14
+- ID：reward-ratewise-error-classification-cross-browser
+- 原因：errorClassification 僅匹配 Chromium 的 "Failed to fetch"，Firefox 與 iOS / macOS Safari 在離線、連線中斷、DNS 失敗、無法連線時的訊息會落入 unknown 觀測桶，干擾告警基線
+- 解法：補上 Firefox NetworkError 與 Safari 系列 NSURLError 訊息（offline / network lost / hostname not found / cannot connect）匹配，並補單元測試保護；順手統一 prebuild 刷新腳本 cache 分支幣別數量輸出單位
 
 - 日期：2026-05-13
 - ID：reward-ratewise-data-pr-governance

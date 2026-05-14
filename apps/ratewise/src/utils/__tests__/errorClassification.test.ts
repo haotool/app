@@ -24,6 +24,30 @@ describe('classifyUnhandledRejection', () => {
     );
   });
 
+  it('classifies Firefox NetworkError as generic fetch failure', () => {
+    expect(
+      classifyUnhandledRejection(new TypeError('NetworkError when attempting to fetch resource.')),
+    ).toBe('generic-fetch-failure');
+  });
+
+  it('classifies iOS Safari offline message as generic fetch failure', () => {
+    expect(
+      classifyUnhandledRejection(new Error('The Internet connection appears to be offline.')),
+    ).toBe('generic-fetch-failure');
+  });
+
+  it.each([
+    'The network connection was lost.',
+    'A server with the specified hostname could not be found.',
+    'Could not connect to the server.',
+  ])('classifies Safari network failure "%s" as generic fetch failure', (message) => {
+    expect(classifyUnhandledRejection(new TypeError(message))).toBe('generic-fetch-failure');
+  });
+
+  it('keeps Safari TypeError("Load failed") on chunk-load so chunk recovery still fires', () => {
+    expect(classifyUnhandledRejection(new TypeError('Load failed'))).toBe('chunk-load');
+  });
+
   it('classifies unrelated errors as unknown', () => {
     expect(classifyUnhandledRejection(new Error('Unexpected application state'))).toBe('unknown');
   });
