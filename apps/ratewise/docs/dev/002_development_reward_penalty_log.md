@@ -2,12 +2,13 @@
 
 **版本**: 2.1.0
 **建立時間**: 2025-12-02T03:29:33+08:00
-**更新時間**: 2026-05-14T01:30:00+08:00
+**更新時間**: 2026-05-15T09:40:00+08:00
 **狀態**: ✅ 完成
-**當前總分**: +144
+**當前總分**: +145
 
 | 類型    | 摘要                                             | 採取行動                                                                                                                                                                                                                                    | 依據                                                                                                     | 分數 |
 | ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- |
+| ✅ 成功 | 換錢所趨勢線 aggregate SSOT 收斂                 | 1) client 加 aggregate-first（PROVIDER_RATES_PATH.aggregate）+ 5 分鐘 memory cache + fallback 保留逐日 2) Playwright runtime AB 量到 50→1 requests、~5049ms→~2ms 3) 4 個單測覆蓋命中/404/shape 不合法/cache TTL                             | [Playwright runtime AB:2026-05-15][PROVIDER_RATES_PATH.aggregate:SSOT]                                   | +1   |
 | ✅ 成功 | Sentry beforeSend fetch 過濾 SSOT 收斂           | 1) Sentry `beforeSend` 改用 `classifyUnhandledRejection` 判斷 `generic-fetch-failure` 2) Firefox / Safari 網路失敗不再繞過過濾送 Sentry 3) Playwright AB test 在 dev runtime 驗證 6 變體 + 1 control 路由                                   | [Playwright AB test:2026-05-14][AGENTS.md:SSOT]                                                          | +1   |
 | ✅ 成功 | errorClassification 跨瀏覽器 fetch 覆蓋          | 1) 補上 Firefox NetworkError 與 Safari NSURLError 系列（offline / network lost / hostname not found / cannot connect）訊息匹配 2) 補 Safari TypeError("Load failed") 仍走 chunk-load 的迴歸測試 3) 修正 prebuild cache 分支幣別數量輸出單位 | [errorClassification cross-browser audit:2026-05-13][AGENTS.md:observability]                            | +1   |
 | ✅ 成功 | 每日資料 PR 合併治理收斂                         | 1) 移除 update-seo-rate-examples workflow 直接 gh pr merge 2) 改由 branch protection、required checks、review 或 GitHub auto-merge / merge queue 控制合併 3) 補測試避免回退                                                                 | [GitHub branch protection docs:2026-05-13][AGENTS.md:AGT-MRG-01]                                         | +1   |

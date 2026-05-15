@@ -4,7 +4,7 @@ import {
   hasExchangeShopProvider,
   type ExchangeShopConfig,
 } from '../config/exchangeShopProviders';
-import { CDN_DATA_BASE, RAW_DATA_BASE } from '../config/api-endpoints';
+import { CDN_DATA_BASE, PROVIDER_RATES_PATH, RAW_DATA_BASE } from '../config/api-endpoints';
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { CurrencyCode } from '../features/ratewise/types';
@@ -12,6 +12,10 @@ import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 8_000;
+const HISTORY_AGGREGATE_TTL_MS = 5 * 60 * 1000;
+// 換錢所目前僅 moneybox 一家；多供應商時改由 metadata 動態解析 providerId。
+const EXCHANGE_SHOP_PROVIDER_ID = 'moneybox';
+
 export interface ExchangeShopRate {
   currency: CurrencyCode;
   sell: number;
@@ -28,6 +32,22 @@ export interface ExchangeShopHistoricalRate {
   date: string;
   rate: ExchangeShopRate;
 }
+
+interface ExchangeShopAggregateSnapshot {
+  date: string;
+  raw: unknown;
+}
+
+interface ExchangeShopAggregateData {
+  providerId?: string;
+  generatedAt?: string;
+  snapshots: ExchangeShopAggregateSnapshot[];
+}
+
+const historyAggregateCache = new Map<
+  string,
+  { data: ExchangeShopHistoricalRate[]; timestamp: number }
+>();
 
 interface CacheEntry {
   rate: ExchangeShopRate;
@@ -219,6 +239,48 @@ export async function fetchExchangeShopRate(
   }
 }
 
+function getExchangeShopAggregateUrls(): string[] {
+  const path = PROVIDER_RATES_PATH.aggregate(EXCHANGE_SHOP_PROVIDER_ID);
+  return [`${CDN_DATA_BASE}${path}`, `${RAW_DATA_BASE}${path}`];
+}
+
+function getAggregateCacheKey(currency: CurrencyCode, totalDays: number): string {
+  return `${EXCHANGE_SHOP_PROVIDER_ID}:${currency}:${totalDays}`;
+}
+
+async function tryFetchExchangeShopAggregate(
+  currency: CurrencyCode,
+  config: ExchangeShopConfig,
+  totalDays: number,
+): Promise<ExchangeShopHistoricalRate[] | null> {
+  for (const url of getExchangeShopAggregateUrls()) {
+    try {
+      const res = await fetchWithTimeout(url);
+      if (!res.ok) continue;
+
+      const data = (await res.json()) as ExchangeShopAggregateData;
+      if (!data || !Array.isArray(data.snapshots)) {
+        logger.warn('Invalid exchange shop aggregate shape', { url });
+        continue;
+      }
+
+      const points: ExchangeShopHistoricalRate[] = [];
+      for (const snapshot of data.snapshots) {
+        if (!snapshot?.date) continue;
+        const rate = parseExchangeShopRate(currency, config, snapshot.raw);
+        if (rate) points.push({ date: snapshot.date, rate });
+      }
+
+      // 由新到舊排序，保持與 fallback 路徑一致。
+      const sorted = points.sort((a, b) => b.date.localeCompare(a.date));
+      return sorted.slice(0, totalDays);
+    } catch (e) {
+      logger.debug(`Exchange shop aggregate fetch failed for ${url}`, { error: e });
+    }
+  }
+  return null;
+}
+
 export async function fetchExchangeShopHistoricalRatesRange(
   currency: CurrencyCode,
   maxDays = 30,
@@ -229,6 +291,20 @@ export async function fetchExchangeShopHistoricalRatesRange(
   if (!config) return [];
 
   const totalDays = Math.max(1, Math.floor(maxDays));
+
+  const cacheKey = getAggregateCacheKey(currency, totalDays);
+  const cached = historyAggregateCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < HISTORY_AGGREGATE_TTL_MS) {
+    return cached.data;
+  }
+
+  // 與台銀 history-30d 對齊：優先單一 aggregate endpoint，失敗才退回逐日 fetch。
+  const aggregate = await tryFetchExchangeShopAggregate(currency, config, totalDays);
+  if (aggregate && aggregate.length > 0) {
+    historyAggregateCache.set(cacheKey, { data: aggregate, timestamp: Date.now() });
+    return aggregate;
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -258,9 +334,15 @@ export async function fetchExchangeShopHistoricalRatesRange(
     }),
   );
 
-  return settled
+  const fallback = settled
     .flatMap((item) => (item.status === 'fulfilled' && item.value ? [item.value] : []))
     .sort((a, b) => b.date.localeCompare(a.date));
+
+  if (fallback.length > 0) {
+    historyAggregateCache.set(cacheKey, { data: fallback, timestamp: Date.now() });
+  }
+
+  return fallback;
 }
 
 export function computeConverterRate(

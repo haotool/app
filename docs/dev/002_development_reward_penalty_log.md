@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +53
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +54
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-15
+- ID：reward-ratewise-moneybox-aggregate-trend
+- 原因：換錢所（KRW/MoneyBox）趨勢線在生產環境每次載入觸發 30 個 daily fetch，且大多數 ~30 天前的日檔 404，與台銀 history-30d.json aggregate SSOT 飄移
+- 解法：client 加 aggregate-first（與 PROVIDER_RATES_PATH.aggregate 對齊）+ 5 分鐘 memory cache + fallback 保留逐日；Playwright AB 量到 50→1 requests、~5049ms→~2ms（~2500x），單測覆蓋四種情境
 
 - 日期：2026-05-14
 - ID：reward-ratewise-sentry-fetch-filter-ssot

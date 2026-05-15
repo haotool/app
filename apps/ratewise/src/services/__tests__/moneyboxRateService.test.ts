@@ -183,12 +183,23 @@ describe('fetchExchangeShopRate', () => {
   it('fetches MoneyBox history through provider metadata endpoints', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-05-10T12:00:00+08:00'));
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
-      headers: { get: () => null },
-    } as unknown as Response);
+    // 模擬 aggregate endpoint 尚未發布（CDN + Raw 皆 404），確保 fallback 走逐日 fetch。
+    vi.mocked(fetch).mockImplementation((input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : '';
+      if (url.includes('history-30d.json')) {
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({}),
+        } as unknown as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
+        headers: { get: () => null },
+      } as unknown as Response);
+    });
 
     const result = await fetchExchangeShopHistoricalRatesRange('KRW', 1);
 
