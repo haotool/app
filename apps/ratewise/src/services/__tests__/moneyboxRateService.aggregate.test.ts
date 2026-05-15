@@ -1,12 +1,5 @@
 // @vitest-environment jsdom
 
-/**
- * 換錢所 aggregate endpoint 測試
- *
- * 對齊台銀 history-30d.json SSOT：fetchExchangeShopHistoricalRatesRange 應優先
- * 嘗試單一 aggregate URL（30→1 fetch），失敗才退回逐日 fetch。
- */
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchExchangeShopHistoricalRatesRange } from '../moneyboxRateService';
 
@@ -112,7 +105,7 @@ describe('fetchExchangeShopHistoricalRatesRange - aggregate endpoint', () => {
   });
 
   it('5 分鐘 TTL 內重複呼叫應走 memory cache，不再 fetch', async () => {
-    // 使用獨立 maxDays 避免與其他 test 的 cache key 碰撞。
+    // maxDays 28 隔開其他 test 共享的 cache key
     vi.mocked(fetch).mockResolvedValueOnce(mockJsonResponse(MOCK_AGGREGATE));
 
     await fetchExchangeShopHistoricalRatesRange('KRW', 28);

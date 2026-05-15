@@ -183,7 +183,7 @@ describe('fetchExchangeShopRate', () => {
   it('fetches MoneyBox history through provider metadata endpoints', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-05-10T12:00:00+08:00'));
-    // 模擬 aggregate endpoint 尚未發布（CDN + Raw 皆 404），確保 fallback 走逐日 fetch。
+    // aggregate endpoint 尚未發布時的 fallback 路徑
     vi.mocked(fetch).mockImplementation((input) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : '';
       if (url.includes('history-30d.json')) {

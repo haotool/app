@@ -24,7 +24,6 @@ export const PROVIDER_RATES_PATH = {
   latest: (providerId: string) => `/public/rates/providers/${providerId}/latest.json`,
   history: (providerId: string, date: string) =>
     `/public/rates/providers/${providerId}/history/${date}.json`,
-  // 與台銀 history-30d 一致的 aggregate SSOT，避免趨勢圖逐日 fetch（30 → 1）。
   aggregate: (providerId: string) => `/public/rates/providers/${providerId}/history-30d.json`,
 } as const;
 
