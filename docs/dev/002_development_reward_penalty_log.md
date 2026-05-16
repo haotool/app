@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+57
+> 本次分數變化：+1（reward 1）｜累計總分：+58
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-ratewise-support-copy-i18n-shell
+- 原因：支援與資訊頁首屏文案仍分散在 JSX，SSG 又會在 Node navigator 下輸出英文 i18n，設定入口描述也保留偏工程與 AI 治理口吻
+- 解法：新增 supportPages 四語系文案命名空間，將 FAQ、Guide、About、Privacy、OpenData、SeoTech 首屏與更新標籤改由 i18n 取得，並讓無 DOM 的 SSG 鎖定 zh-TW 初始語系
 
 - 日期：2026-05-17
 - ID：reward-pr404-support-nav-path-normalization

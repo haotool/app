@@ -7,6 +7,7 @@ import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { formatLocalizedDate } from '../utils/timeFormatter';
 
 // 將 FAQ 答案中的 email 位址替換為 MailtoLink，防止 CF Email Obfuscation 將其改寫為爬蟲不可讀的 /cdn-cgi/... 連結。
 const EMAIL_RE = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
@@ -21,15 +22,14 @@ function renderFaqAnswer(answer: string): React.ReactNode {
 }
 
 const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
-const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Taipei',
-});
 
 export default function FAQ() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lastUpdated = formatLocalizedDate(
+    SITE_SEO.updatedTime,
+    i18n.resolvedLanguage ?? i18n.language,
+  );
+
   return (
     <>
       <SEOHelmet
@@ -51,14 +51,13 @@ export default function FAQ() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-4xl font-bold text-text">常見問題</h1>
-            <p className="text-text-muted">
-              集中整理台銀牌告匯率、買入賣出、現金與即期、刷卡匯率與 DCC 等核心問題。
-            </p>
+            <h1 className="mb-2 text-4xl font-bold text-text">{t('supportPages.faq.title')}</h1>
+            <p className="text-text-muted">{t('supportPages.faq.subtitle')}</p>
             <p className="mt-2 text-sm text-text-muted">
-              作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
+              {t('supportPages.common.author')}：<span itemProp="author">{APP_INFO.author}</span> ・{' '}
+              {t('supportPages.common.lastUpdated')}：
               <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
-                {LAST_UPDATED}
+                {lastUpdated}
               </time>
             </p>
           </div>

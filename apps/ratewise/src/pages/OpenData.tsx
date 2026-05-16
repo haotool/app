@@ -496,17 +496,21 @@ const OpenData = () => {
 
           {/* ── Hero ── */}
           <div className="mb-10">
-            <h1 className="mb-3 text-4xl font-bold text-text">開放資料 API</h1>
+            <h1 className="mb-3 text-4xl font-bold text-text">
+              {t('supportPages.openData.title')}
+            </h1>
             <p className="mb-4 max-w-2xl text-lg text-text-muted">
-              台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。
+              {t('supportPages.openData.subtitle')}
             </p>
             <div className="flex flex-wrap gap-2">
               {[
-                `${SUPPORTED_CURRENCIES.length} 種幣別`,
-                '每 5 分鐘更新',
-                '無需 API Key',
-                'ETag 支援',
-                'CDN 全球加速',
+                t('supportPages.openData.badges.currencyCount', {
+                  count: SUPPORTED_CURRENCIES.length,
+                }),
+                t('supportPages.openData.badges.refresh'),
+                t('supportPages.openData.badges.noApiKey'),
+                t('supportPages.openData.badges.etag'),
+                t('supportPages.openData.badges.cdn'),
               ].map((badge) => (
                 <span
                   key={badge}

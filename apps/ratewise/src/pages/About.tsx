@@ -8,16 +8,15 @@ import { APP_INFO, AUTHOR_PERSON, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { ABOUT_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
-
-const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Taipei',
-});
+import { formatLocalizedDate } from '../utils/timeFormatter';
 
 export default function About() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lastUpdated = formatLocalizedDate(
+    SITE_SEO.updatedTime,
+    i18n.resolvedLanguage ?? i18n.language,
+  );
+
   return (
     <>
       <SEOHelmet
@@ -39,12 +38,14 @@ export default function About() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-text">關於 {APP_INFO.name}</h1>
+            <h1 className="mb-2 text-3xl font-bold text-text">
+              {t('supportPages.about.title', { appName: APP_INFO.name })}
+            </h1>
             <p className="text-text-muted">
-              專注提供台灣用戶更接近實際換匯情境的匯率資訊，而不是只顯示中間價。
+              {t('supportPages.about.subtitle', { appName: APP_INFO.shortName })}
             </p>
             <p className="mt-2 text-sm text-text-muted">
-              作者：
+              {t('supportPages.common.author')}：
               <a
                 href={APP_INFO.threadsUrl}
                 target="_blank"
@@ -54,8 +55,9 @@ export default function About() {
               >
                 {AUTHOR_PERSON.name}
               </a>
-              （{APP_INFO.author}）・ 版本：{getDisplayVersion()} ・ 最後更新：
-              <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()}>{LAST_UPDATED}</time>
+              （{APP_INFO.author}）・ {t('supportPages.common.version')}：{getDisplayVersion()} ・{' '}
+              {t('supportPages.common.lastUpdated')}：
+              <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()}>{lastUpdated}</time>
             </p>
           </div>
 

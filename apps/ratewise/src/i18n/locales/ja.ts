@@ -159,7 +159,7 @@ const ja = {
     rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
-    supportInfoDesc: '使い方、データソース、プライバシー、技術的な透明性をここにまとめています。',
+    supportInfoDesc: '使い方、データソース、API、プライバシー、サービス情報を確認できます。',
     faq: 'よくある質問',
     faqDesc: '買値・売値、現金・即時、カードレート、データ更新をすばやく確認できます。',
     usageGuide: 'ご利用ガイド',
@@ -171,9 +171,57 @@ const ja = {
     privacyPolicy: 'プライバシーポリシー',
     privacyPolicyDesc: 'データ処理、分析ツール、プライバシーの境界を確認できます。',
     openDataApi: 'オープンデータ API',
-    openDataApiDesc: 'latest.json、OpenAPI、AI 向けデータ入口を確認できます。',
+    openDataApiDesc: 'latest.json、OpenAPI、データ項目を確認し、連携や監査に使えます。',
     seoTech: 'SEO 技術開示',
-    seoTechDesc: 'インデックス対象ページ、構造化データ、AI 引用ガバナンスを確認できます。',
+    seoTechDesc: 'インデックス対象ページ、sitemap、構造化データ、公開ファイルを確認できます。',
+  },
+
+  // サポートページ
+  supportPages: {
+    common: {
+      author: '作者',
+      version: 'バージョン',
+      lastUpdated: '最終更新',
+      estimatedTime: '所要時間',
+      twoMinutes: '約2分',
+    },
+    faq: {
+      title: 'よくある質問',
+      subtitle: '買値・売値、現金・即時、カードレート、DCC、データ更新をまとめて確認できます。',
+    },
+    guide: {
+      title: '{{appName}} で為替レートを調べる方法',
+      subtitle:
+        '単一換算、多通貨比較、お気に入り設定まで、旅行前によく使う確認手順を8ステップで案内します。',
+    },
+    about: {
+      title: '{{appName}} について',
+      subtitle:
+        '{{appName}} は台湾の両替シーンに合わせ、買値・売値、現金・即時、公開データソースを重視します。',
+    },
+    privacy: {
+      title: 'プライバシーポリシー',
+      subtitle:
+        'お気に入り、設定、換算履歴は端末内に保存されます。このページでは分析、安全サービス、データ処理の範囲を説明します。',
+    },
+    openData: {
+      title: 'オープンデータ API',
+      subtitle:
+        '台湾銀行の為替レート JSON エンドポイントとして、latest.json、履歴データ、OpenAPI、データ項目を提供します。',
+      badges: {
+        currencyCount: '{{count}} 通貨',
+        refresh: '5分ごとに更新',
+        noApiKey: 'API Key 不要',
+        etag: 'ETag 対応',
+        cdn: 'グローバル CDN',
+      },
+    },
+    seoTech: {
+      eyebrow: 'SEO 技術開示',
+      title: '{{appName}} SEO アーキテクチャ',
+      subtitle:
+        'このページでは、検索エンジンや AI が {{appName}} から読めるファイル、ページ、構造化データ、更新フローを確認できます。数値は設定ファイルから取得し、本番状態と照合しやすくしています。',
+    },
   },
 
   // Styles

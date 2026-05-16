@@ -48,6 +48,34 @@ export function formatIsoTimestamp(iso: string): string {
 }
 
 /**
+ * 依使用者語系格式化公開支援頁的更新日期。
+ *
+ * @param dateInput - 可被 Date 解析的日期輸入
+ * @param locale - i18next resolvedLanguage / language
+ * @returns 語系化日期；無效日期回傳空字串
+ */
+export function formatLocalizedDate(dateInput: string | number | Date, locale = 'zh-TW'): string {
+  const date = new Date(dateInput);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
+
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(date);
+  } catch {
+    return new Intl.DateTimeFormat('zh-TW', options).format(date);
+  }
+}
+
+/**
  * 格式化通用時間字串（支援多種格式）
  *
  * @param timeString - 可能的格式：
