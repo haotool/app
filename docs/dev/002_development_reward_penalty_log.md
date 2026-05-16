@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+58
+> 本次分數變化：+1（reward 1）｜累計總分：+59
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-ratewise-popular-currency-link-ssot
+- 原因：首頁熱門幣別、footer 熱門匯率與攻略頁相關幣別各自維護清單，首頁熱門區 aria-labelledby 也指向 app shell heading
+- 解法：新增 popular-currency-links SSOT 並由首頁、footer、攻略頁與 ItemList JSON-LD 共用，同步修正 aria-labelledby、SeoTech schema registry 與 footer 去重測試
 
 - 日期：2026-05-17
 - ID：reward-ratewise-support-copy-i18n-shell

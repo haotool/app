@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Footer } from '../Footer';
@@ -58,5 +58,16 @@ describe('Footer', () => {
       expect(timeSlot).toHaveClass('font-mono');
       expect(timeSlot).toHaveClass('tabular-nums');
     }
+  });
+
+  it('keeps desktop footer rendered hrefs unique', () => {
+    renderFooter();
+    const desktopFooter = screen.getByTestId('footer-desktop');
+    const hrefs = within(desktopFooter)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'))
+      .filter((href): href is string => Boolean(href));
+
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 });

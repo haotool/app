@@ -1,6 +1,7 @@
 import { CURRENCY_DEFINITIONS, SUPPORTED_CURRENCY_COUNT } from '../features/ratewise/constants';
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from './app-info';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from './seo-static';
+import { POPULAR_ITEM_LIST_LINKS, POPULAR_RELATED_CURRENCY_LINKS } from './popular-currency-links';
 import {
   SEO_RATE_EXAMPLES,
   SEO_RATE_EXAMPLES_DATE,
@@ -510,6 +511,23 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
   };
 }
 
+export function buildPopularCurrencyItemListJsonLd(): JsonLdBlock {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${buildCanonicalUrl('/')}#popular-currency-links`,
+    name: `${APP_INFO.name} 熱門幣別換算`,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    numberOfItems: POPULAR_ITEM_LIST_LINKS.length,
+    itemListElement: POPULAR_ITEM_LIST_LINKS.map((link, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: link.label,
+      url: buildCanonicalUrl(link.href),
+    })),
+  };
+}
+
 /**
  * 生成 WebPage JSON-LD。
  * 用於首頁等非 Article 類型頁面，支援 speakable 屬性標記語音搜尋可朗讀區塊。
@@ -922,6 +940,8 @@ export const HOMEPAGE_SEO = {
     }),
     // CurrencyConversionService：精確定義此工具的核心功能，AI 引擎優先引用。
     buildCurrencyConversionServiceJsonLd(),
+    // ItemList：對應首頁可見熱門幣別導覽，讓搜尋與 AI 系統理解內部連結優先序。
+    buildPopularCurrencyItemListJsonLd(),
   ],
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
@@ -1334,7 +1354,7 @@ export const ABOUT_PAGE_FAQ = [
   },
   {
     question: '這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？',
-    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）、Dataset（開放資料）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
+    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ItemList（首頁熱門幣別導覽）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）、Dataset（開放資料）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
   },
   {
     question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
@@ -1416,14 +1436,7 @@ export const ABOUT_PAGE_SEO = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 熱門幣別連結：攻略頁連結至最常用的幣別頁。 */
-const RELATED_CURRENCIES: RelatedCurrencyLink[] = [
-  { href: '/jpy-twd/', label: '日圓匯率', code: 'JPY' },
-  { href: '/usd-twd/', label: '美金匯率', code: 'USD' },
-  { href: '/krw-twd/', label: '韓元匯率', code: 'KRW' },
-  { href: '/eur-twd/', label: '歐元匯率', code: 'EUR' },
-  { href: '/cny-twd/', label: '人民幣匯率', code: 'CNY' },
-  { href: '/thb-twd/', label: '泰銖匯率', code: 'THB' },
-];
+const RELATED_CURRENCIES: RelatedCurrencyLink[] = POPULAR_RELATED_CURRENCY_LINKS;
 
 const GUIDE_LINK_SELL_RATE_VS_MID_RATE: RelatedGuideLink = {
   href: '/sell-rate-vs-mid-rate/',

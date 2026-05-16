@@ -11,12 +11,12 @@ describe('footer links config', () => {
   it('keeps popular rate links ordered by priority', () => {
     const labels = POPULAR_RATE_LINKS.map((link) => link.label);
     expect(labels).toEqual([
-      'USD 美元',
       'JPY 日圓',
+      'KRW 韓元',
+      'USD 美元',
       'EUR 歐元',
       'HKD 港幣',
-      'CNY 人民幣',
-      'KRW 韓元',
+      'SGD 新加坡幣',
     ]);
   });
 });
