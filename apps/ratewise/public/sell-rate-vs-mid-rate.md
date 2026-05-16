@@ -3,7 +3,7 @@
 > 解析賣出價、中間價與實際換匯成本差異，說清楚為什麼 Google 或 XE 顯示的中間價不能直接拿來估算換匯預算。HaoRate 聚焦臺灣銀行牌告賣出價，協助台灣用戶在買外幣前更接近真實支付金額與旅費規劃。
 
 - Canonical: https://app.haotool.org/ratewise/sell-rate-vs-mid-rate/
-- Version: v2.23.0
+- Version: v2.24.0
 
 ## 重點整理
 
@@ -52,5 +52,5 @@ HaoRate 採用臺灣銀行牌告匯率作為資料來源，讓使用者在同一
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.23.0），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.24.0），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
