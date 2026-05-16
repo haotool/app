@@ -1,5 +1,22 @@
 # @app/ratewise
 
+## 2.24.1
+
+### Patch Changes
+
+- b433865: Clarify generated artifact buckets and remove local build report files from tracked source.
+- b433865: Consolidate currency landing route registration behind a registry with parity checks.
+- b433865: Strengthen scheduled rate data update governance by requiring generated data PRs to pass branch protection before merge.
+- b433865: errorClassification 補上 Firefox 與 iOS / macOS Safari 多種 fetch 失敗訊息覆蓋（離線、連線中斷、DNS 失敗、無法連線），避免一般網路失敗在跨瀏覽器下被誤分類為 unknown；同步修正刷新腳本 cache 分支幣別數量輸出。
+- b433865: 改善正式版全域錯誤分類，避免一般網路錯誤被誤判為預期歷史匯率缺檔
+- b433865: 讓 build-time fallback 匯率快照由每日資料更新流程維護，避免一般 build 產生匯率資料漂移；同時在線上遠端匯率來源全失敗且本機無快取時，改用 build-time snapshot 維持換算器可用。
+- b433865: 換錢所 aggregate 趨勢線：移除說明性註解、抽出 daily fallback helper、收斂兩處 cache 寫入為單一寫入點，行為不變。
+- b433865: 換錢所（MoneyBox）趨勢線改用 aggregate endpoint：與台銀 history-30d.json SSOT 一致，命中時 30 個 daily fetch 收斂為 1 個（runtime AB 量到 50→1 requests、~5,049ms→~2ms）。aggregate 不存在時自動退回原本逐日 fetch 路徑，行為無回歸。
+- b433865: 修正多幣別頁面在換錢所反向匯率、現金不可用與小字低對比情境下的匯率來源標籤。
+- b433865: 正式版不再輸出內部展示與測試頁面的預渲染路由
+- b433865: Sentry `beforeSend` 改用 `classifyUnhandledRejection` 判斷 fetch 失敗，與 errorClassification SSOT 收斂；Firefox / Safari 的網路失敗訊息不再重複送到 Sentry。
+- b433865: 修正金額頁 SSG 預渲染匯率來源，clean checkout 不再依賴 ignored 的 public/rates.json。
+
 ## 2.24.0
 
 ### Minor Changes
