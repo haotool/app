@@ -52,6 +52,15 @@ describe('PageNavHeader', () => {
     expect(screen.queryByRole('navigation', { name: '支援與資訊' })).not.toBeInTheDocument();
   });
 
+  it('支援資訊頁無 trailing slash 時仍顯示導覽與目前頁標示', () => {
+    renderHeader('/faq');
+
+    expect(screen.getByRole('navigation', { name: '支援與資訊' })).toBeInTheDocument();
+    const activeLink = screen.getByRole('link', { name: /常見問題/ });
+    expect(activeLink).toHaveAttribute('aria-current', 'page');
+    expect(activeLink).toHaveClass('text-active-pill-foreground');
+  });
+
   it('在 basename 部署下產生正確連結', () => {
     renderHeader('/ratewise/faq/', '/ratewise');
 
@@ -63,5 +72,14 @@ describe('PageNavHeader', () => {
       'href',
       expect.stringMatching(/^\/ratewise\/?$/),
     );
+  });
+
+  it('basename 部署下無 trailing slash 時仍顯示導覽與目前頁標示', () => {
+    renderHeader('/ratewise/faq', '/ratewise');
+
+    expect(screen.getByRole('navigation', { name: '支援與資訊' })).toBeInTheDocument();
+    const activeLink = screen.getByRole('link', { name: /常見問題/ });
+    expect(activeLink).toHaveAttribute('aria-current', 'page');
+    expect(activeLink).toHaveAttribute('href', '/ratewise/faq/');
   });
 });

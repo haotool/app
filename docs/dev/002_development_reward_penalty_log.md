@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+56
+> 本次分數變化：+1（reward 1）｜累計總分：+57
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-pr404-support-nav-path-normalization
+- 原因：PR404 review 指出支援資訊頁若以 `/faq`、`/seo-tech` 等無 trailing slash route 進入，PageNavHeader 會因 exact match 找不到支援導覽與 active pill
+- 解法：在 PageNavHeader 正規化當前 pathname 後再比對 SUPPORT_INFO_LINKS，並補無 trailing slash 回歸測試鎖定導覽顯示與目前頁標示
 
 - 日期：2026-05-17
 - ID：reward-ratewise-support-info-ia-header

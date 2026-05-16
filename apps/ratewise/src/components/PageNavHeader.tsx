@@ -27,6 +27,11 @@ const SUPPORT_INFO_ICON_BY_HREF = {
   '/privacy/': ShieldCheck,
 } satisfies Record<SupportInfoHref, LucideIcon>;
 
+function normalizeSupportPath(pathname: string): string {
+  if (pathname === '/') return '/';
+  return `${pathname.replace(/\/+$/, '')}/`;
+}
+
 export interface PageNavHeaderProps {
   breadcrumbItems: BreadcrumbItem[];
   fallbackHref?: string;
@@ -43,8 +48,9 @@ export function PageNavHeader({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const normalizedPathname = normalizeSupportPath(location.pathname);
   const shouldShowSupportNav =
-    showSupportNav ?? SUPPORT_INFO_LINKS.some((item) => item.href === location.pathname);
+    showSupportNav ?? SUPPORT_INFO_LINKS.some((item) => item.href === normalizedPathname);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -90,7 +96,7 @@ export function PageNavHeader({
             <div className="flex min-w-max gap-2 px-1 pb-1">
               {SUPPORT_INFO_LINKS.map((item) => {
                 const Icon = SUPPORT_INFO_ICON_BY_HREF[item.href];
-                const isActive = location.pathname === item.href;
+                const isActive = normalizedPathname === item.href;
 
                 return (
                   <Link
