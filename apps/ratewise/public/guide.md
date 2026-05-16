@@ -3,7 +3,7 @@
 > HaoRate 使用指南用 8 步驟帶你完成單幣別與多幣別匯率換算，並掌握現金與即期切換、快速金額按鈕、歷史趨勢、收藏管理、下拉更新與 PWA 安裝，快速建立正確換匯操作流程與判讀順序。
 
 - Canonical: https://app.haotool.org/ratewise/guide/
-- Version: v2.24.0
+- Version: v2.24.1
 
 ## 快速上手（8 步驟）
 
@@ -36,5 +36,5 @@
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.24.0），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.24.1），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_
