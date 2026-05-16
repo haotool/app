@@ -151,23 +151,20 @@ export const INDEXABLE_CANONICAL_PATHS = [
 /** 相容別名：公開可索引 SEO 路徑。 */
 export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 
-export const APP_ONLY_PATHS = [
-  '/multi/',
-  '/favorites/',
-  '/settings/',
+/** 使用者功能頁：允許爬取 + SEOHelmet noindex，但不納入 sitemap。 */
+export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/'] as const;
+
+/** 開發 / 展示頁：正式 build 不註冊、不預渲染；robots 仍明確 Disallow。 */
+export const DEV_ONLY_PATHS = [
   '/theme-showcase/',
   '/color-scheme/',
   '/update-prompt-test/',
   '/ui-showcase/',
 ] as const;
 
-/** 使用者功能頁子集（前 3）：允許爬取 + SEOHelmet noindex */
-export const APP_ONLY_NOINDEX_PATHS = APP_ONLY_PATHS.slice(0, 3);
+export const APP_ONLY_PATHS = [...APP_ONLY_NOINDEX_PATHS] as const;
 
-/** 開發 / 展示頁子集（後 4）：直接 Disallow 爬取 */
-export const DEV_ONLY_PATHS = APP_ONLY_PATHS.slice(3);
-
-export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_PATHS] as const;
+export const APP_ONLY_PRERENDER_PATHS = [...APP_ONLY_NOINDEX_PATHS] as const;
 
 export const PRERENDER_PATHS = [
   ...SEO_PATHS,

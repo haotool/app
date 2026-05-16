@@ -8,7 +8,7 @@
  *   2. updateSitemap          — 更新 sitemap.xml lastmod
  *   3. runVersionEmbedScripts — 重新生成所有版本嵌入產出物（含 markdown mirrors）
  *   4. restoreGeneratedData   — restore live 市場資料（build-time-rates.json、seo-rate-examples.ts），
- *                               避免帶入 release commit；這些檔案由 prebuild / 每日 SEO 排程更新。
+ *                               避免帶入 release commit；這些檔案由明確 refresh 指令 / 每日 SEO 排程更新。
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -79,7 +79,7 @@ function runVersionEmbedScripts() {
 }
 
 /**
- * live 市場資料（build-time-rates.json、seo-rate-examples.ts）由 prebuild / 每日 SEO 排程更新，
+ * live 市場資料（build-time-rates.json、seo-rate-examples.ts）由明確 refresh 指令 / 每日 SEO 排程更新，
  * 不應進入 release commit（版本守門會擋：staged set 無 version bump 時不允許 src/ 變更）。
  * 在此自動 restore，避免手動操作遺漏。
  */

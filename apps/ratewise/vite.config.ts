@@ -508,14 +508,14 @@ export default defineConfig(({ mode }) => {
         const [, fromCode, toCode, amountStr] = amountRouteMatch;
         const amount = parseFloat(amountStr);
 
-        // 讀取預生成的匯率數據
+        // 讀取每日流程更新的 build-time fallback snapshot，避免 clean checkout 依賴 ignored cache。
         let rates: Record<string, any> = {};
         try {
-          const ratesPath = resolve(__dirname, 'public/rates.json');
+          const ratesPath = resolve(__dirname, 'src/config/generated/build-time-rates.json');
           const ratesJson = readFileSync(ratesPath, 'utf-8');
           rates = JSON.parse(ratesJson);
         } catch (error) {
-          console.warn(`⚠️ 無法讀取 rates.json：${error}`);
+          console.warn(`⚠️ 無法讀取 build-time-rates.json：${error}`);
           return indexHTML;
         }
 

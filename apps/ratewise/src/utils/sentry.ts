@@ -6,6 +6,7 @@
  *
  * @see https://web.dev/articles/optimize-lcp
  */
+import { classifyUnhandledRejection } from './errorClassification';
 import { logger } from './logger';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
@@ -36,8 +37,8 @@ async function initializeSentryOnce(): Promise<void> {
         // Filter out expected/handled errors
         const error = hint.originalException;
         if (error instanceof Error) {
-          // Skip network errors that are already logged
-          if (error.message.includes('Failed to fetch')) {
+          // 已由 PwaDiagnostic 收錄的跨瀏覽器 fetch 失敗，不重複送 Sentry
+          if (classifyUnhandledRejection(error) === 'generic-fetch-failure') {
             return null;
           }
         }

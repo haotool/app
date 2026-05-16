@@ -249,31 +249,41 @@ describe('exchangeRateService', () => {
       );
     });
 
-    it('CDN 失敗且完全無快取時拋出錯誤', async () => {
+    it('CDN 失敗且完全無快取時使用 build-time fallback', async () => {
       // ✅ 完全無快取
       (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(getExchangeRates()).rejects.toThrow('Network error');
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('遠端匯率暫不可用 - 使用預設匯率');
+      expect(logger.logger.error).toHaveBeenCalled();
     });
 
-    it('CDN 返回 HTTP 錯誤時拋出異常', async () => {
+    it('CDN 返回 HTTP 錯誤時使用 build-time fallback', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
       });
 
-      await expect(getExchangeRates()).rejects.toThrow('Failed to fetch from all');
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('遠端匯率暫不可用 - 使用預設匯率');
       expect(logger.logger.error).toHaveBeenCalled();
     });
 
-    it('CDN 返回無效資料格式時拋出異常', async () => {
+    it('CDN 返回無效資料格式時使用 build-time fallback', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ invalid: 'data' }), // ✅ Missing 'rates'
       });
 
-      await expect(getExchangeRates()).rejects.toThrow();
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('遠端匯率暫不可用 - 使用預設匯率');
       expect(logger.logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('CDN #1 failed'),
         expect.any(Object),
@@ -299,10 +309,16 @@ describe('exchangeRateService', () => {
       );
     });
 
-    it('所有 CDN 失敗時拋出錯誤訊息', async () => {
+    it('所有 CDN 失敗時使用 build-time fallback', async () => {
       (global.fetch as any).mockRejectedValue(new Error('Network timeout'));
 
-      await expect(getExchangeRates()).rejects.toThrow(/Failed to fetch from all.*sources/);
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      expect(result.updateTime).toBe('遠端匯率暫不可用 - 使用預設匯率');
+      expect(logger.logger.warn).toHaveBeenCalledWith(
+        'Remote rates unavailable and no cache available, using fallback rates',
+      );
     });
 
     it('快取損壞時從 CDN 獲取新資料', async () => {

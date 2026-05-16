@@ -24,6 +24,7 @@ export const PROVIDER_RATES_PATH = {
   latest: (providerId: string) => `/public/rates/providers/${providerId}/latest.json`,
   history: (providerId: string, date: string) =>
     `/public/rates/providers/${providerId}/history/${date}.json`,
+  aggregate: (providerId: string) => `/public/rates/providers/${providerId}/history-30d.json`,
 } as const;
 
 const MONEYBOX_LATEST_PATH = PROVIDER_RATES_PATH.latest('moneybox');

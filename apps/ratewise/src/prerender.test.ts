@@ -39,9 +39,9 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(existsSync(notFoundHtml)).toBe(false);
     });
 
-    it('should generate color-scheme page as static HTML (app-only prerender)', () => {
+    it('should not generate color-scheme page as static HTML (internal-only route)', () => {
       const colorSchemeHtml = resolve(distPath, 'color-scheme/index.html');
-      expect(existsSync(colorSchemeHtml)).toBe(true);
+      expect(existsSync(colorSchemeHtml)).toBe(false);
     });
   });
 
@@ -366,6 +366,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       if (!existsSync(usdAmountHtml)) return;
 
       const content = readFileSync(usdAmountHtml, 'utf-8');
+      expect(content).toContain('id="ssg-amount-result"');
       expect(content).toContain('換算結果（台銀現金賣出參考）');
       expect(content).toContain('500 USD');
       expect(content).toContain('在換算器查看最新匯率');

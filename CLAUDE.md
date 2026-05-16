@@ -146,6 +146,17 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 
 禁止：手動改版號、單獨跑 prebuild scripts、直接改 CHANGELOG 跳過 changeset。
 
+**RateWise generated artifact buckets**：
+
+- `pnpm --filter @app/ratewise refresh:data`：live snapshots
+  （`build-time-rates.json`、`seo-rate-examples.ts`、`rating-snapshot.ts`）。
+- `pnpm --filter @app/ratewise refresh:fallback-rates`：只更新 committed runtime fallback rate snapshot。
+- `pnpm --filter @app/ratewise generate:deterministic`：repo SSOT 可重建產物
+  （sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON、OpenAPI）。
+- `pnpm --filter @app/ratewise verify:artifacts`：SSOT sync 與 image resource 檢查。
+- `prebuild` 只執行 deterministic generation、artifact verification 與 rating placeholder refresh；不得刷新 tracked live rate data。`lighthouse-report.json`、`*.tsbuildinfo` 屬本機工具輸出，必須保持 untracked。
+- `update-seo-rate-examples.yml` 只建立資料更新 PR；合併交由 branch protection、required checks、review 或 GitHub auto-merge / merge queue 控制，workflow 不得直接執行 `gh pr merge`。
+
 **Release PR 自動化控制**：
 
 - `changesets/action` 的 release commit 必須使用 commitlint 豁免格式：`chore(release): 更新版本套件`
@@ -276,6 +287,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 **commitlint body-bullets 失敗**：主體**第一個非空行**必須以 `- ` 開頭；全形條列無效；`#N` issue reference 會使 parser 把 body 置空（改用 `N.` 或 `N,`）；每行 ≤100 字元。
 
 **發版後 `public/*.md` 或 generated 檔案觸發 SSOT 守門失敗**：`pnpm changeset:version` 只更新 api/latest.json 等 SSOT 產出物，不重新生成 markdown mirrors（`public/*.md`）；若這些修改殘留並另行 commit，`verify-version-ssot` 會因新 staged set 缺少 version bump 或 changeset 而擋下。修法：`git restore --staged --worktree apps/ratewise/public/*.md apps/ratewise/src/config/generated/`，讓 CI build 與每日 SEO 排程重新生成。
+
+**本機 build / QA 產物出現在 git status**：`apps/ratewise/lighthouse-report.json` 與 `apps/ratewise/*.tsbuildinfo` 是工具輸出，不是 source。若它們被重新建立，保持 untracked；若意外 staged，執行 `git restore --staged <file>`。
 
 **lint-staged stash/restore 循環復活已 restore 的檔案**：commit 失敗時 lint-staged 會還原其 stash，可能把已 `git restore` 的 working tree 修改重新帶回。修法：每次 commit 失敗後必須重新執行 `git restore --staged --worktree <files>` 再重試，不可假設檔案狀態與 restore 後相同。
 

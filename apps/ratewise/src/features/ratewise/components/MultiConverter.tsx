@@ -10,7 +10,8 @@ import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currency
 import { RateTypeTooltip } from '../../../components/RateTypeTooltip';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import {
-  getCurrencyRateTypeAvailability,
+  getPairRateTypeAvailability,
+  resolveRateTypeByAvailability,
   getUnitExchangeRate,
 } from '../../../utils/exchangeRateCalculation';
 import {
@@ -31,7 +32,6 @@ interface MultiConverterProps {
   details?: Record<string, RateDetails>;
   exchangeShopRatesByCurrency?: ExchangeShopRatesByCurrency;
   favorites: CurrencyCode[];
-  exchangeShopCurrencies?: CurrencyCode[];
   onAmountChange: (code: CurrencyCode, value: string) => void;
   onQuickAmount: (amount: number) => void;
   onRateTypeChange: (type: RateType) => void;
@@ -50,7 +50,6 @@ export const MultiConverter = ({
   details,
   exchangeShopRatesByCurrency = {},
   favorites,
-  exchangeShopCurrencies = [],
   onAmountChange,
   onQuickAmount,
   onRateTypeChange,
@@ -81,13 +80,15 @@ export const MultiConverter = ({
     current: UnifiedRateOption;
     availableCount: number;
   } => {
-    const bankAvailability = getCurrencyRateTypeAvailability(currency, details);
-    const hasExchangeShop = exchangeShopCurrencies.includes(currency);
+    const bankAvailability = getPairRateTypeAvailability(baseCurrency, currency, details);
+    const hasExchangeShop =
+      getExchangeShopRateForPair(baseCurrency, currency, exchangeShopRatesByCurrency) !== null;
+    const resolvedRateType = resolveRateTypeByAvailability(rateType, bankAvailability);
 
     const current: UnifiedRateOption =
       rateSource === 'exchange-shop' && hasExchangeShop
         ? 'exchange-shop'
-        : rateType === 'spot' && bankAvailability.spot
+        : resolvedRateType === 'spot'
           ? 'spot'
           : 'cash';
 
@@ -273,7 +274,7 @@ export const MultiConverter = ({
                   </span>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm leading-tight">{code}</div>
-                    <div className="text-[11px] opacity-60 leading-tight truncate">
+                    <div className="text-[11px] font-medium text-text leading-tight truncate">
                       {t(`currencies.${code}`)}
                     </div>
                   </div>
@@ -304,7 +305,7 @@ export const MultiConverter = ({
                   >
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </div>
-                  <div className="text-[11px] text-right leading-tight opacity-70 mt-0.5">
+                  <div className="text-[11px] text-right leading-tight text-text mt-0.5">
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
                       const nextOption = getNextAvailableOption(availability);
@@ -316,7 +317,7 @@ export const MultiConverter = ({
                             e.stopPropagation();
                             handleUnifiedToggle(code);
                           }}
-                          className="font-semibold text-primary hover:text-primary-hover transition-colors"
+                          className="font-semibold text-primary-dark hover:text-primary-darker transition-colors"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
@@ -329,7 +330,7 @@ export const MultiConverter = ({
                           isDisabled={true}
                         >
                           <button
-                            className="font-medium opacity-60 cursor-help hover:opacity-80 transition-opacity"
+                            className="font-medium text-text cursor-help"
                             aria-label={t('multiConverter.onlyOneRateAvailable')}
                           >
                             {getOptionLabel(availability.current)}
@@ -337,7 +338,7 @@ export const MultiConverter = ({
                         </RateTypeTooltip>
                       );
                     })()}
-                    <span className="opacity-80"> · {getRateDisplay(code)}</span>
+                    <span> · {getRateDisplay(code)}</span>
                   </div>
                 </div>
               </div>

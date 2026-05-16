@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +39
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +54
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,81 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-15
+- ID：reward-ratewise-moneybox-aggregate-trend
+- 原因：換錢所（KRW/MoneyBox）趨勢線在生產環境每次載入觸發 30 個 daily fetch，且大多數 ~30 天前的日檔 404，與台銀 history-30d.json aggregate SSOT 飄移
+- 解法：client 加 aggregate-first（與 PROVIDER_RATES_PATH.aggregate 對齊）+ 5 分鐘 memory cache + fallback 保留逐日；Playwright AB 量到 50→1 requests、~5049ms→~2ms（~2500x），單測覆蓋四種情境
+
+- 日期：2026-05-14
+- ID：reward-ratewise-sentry-fetch-filter-ssot
+- 原因：Sentry `beforeSend` 仍用 `'Failed to fetch'` 字面比對，與 errorClassification 跨瀏覽器 SSOT 飄移，Firefox / Safari 的 fetch 失敗會繞過過濾而重複送到 Sentry
+- 解法：改用 `classifyUnhandledRejection` 判斷 `generic-fetch-failure` 後 return null；以 Playwright AB test 在 dev runtime 確認 6 變體 + 1 control 路由正確
+
+- 日期：2026-05-14
+- ID：reward-ratewise-error-classification-cross-browser
+- 原因：errorClassification 僅匹配 Chromium 的 "Failed to fetch"，Firefox 與 iOS / macOS Safari 在離線、連線中斷、DNS 失敗、無法連線時的訊息會落入 unknown 觀測桶，干擾告警基線
+- 解法：補上 Firefox NetworkError 與 Safari 系列 NSURLError 訊息（offline / network lost / hostname not found / cannot connect）匹配，並補單元測試保護；順手統一 prebuild 刷新腳本 cache 分支幣別數量輸出單位
+
+- 日期：2026-05-13
+- ID：reward-ratewise-data-pr-governance
+- 原因：每日 SEO/fallback 資料 workflow 仍在建立 PR 後直接 merge，繞過最佳實踐中的 branch protection 決策邊界
+- 解法：移除 workflow 內直接 merge step，改由 required checks、review 或 GitHub auto-merge / merge queue 控制合併
+
+- 日期：2026-05-13
+- ID：reward-ratewise-fallback-snapshot-freshness
+- 原因：fallback snapshot 已導入每日刷新但分支仍落後最新台銀快照，刷新腳本輸出仍顯示錯誤幣別數
+- 解法：合併最新 main、更新 build-time fallback snapshot，並修正刷新腳本說明與匯率筆數輸出
+
+- 日期：2026-05-13
+- ID：reward-ratewise-multi-accessibility-contrast
+- 原因：多幣別 accessibility gate 啟用後揭露 11px 匯率資訊文字在淡底上對比不足
+- 解法：移除低對比 opacity 疊色，改用明確 text / primary-dark tokens 滿足 WCAG AA 對比
+
+- 日期：2026-05-13
+- ID：reward-ratewise-multi-rate-toggle-pair-availability
+- 原因：多幣別三態切換以列幣別而非實際 pair 判斷可用性，現金不可用時也可能顯示錯誤標籤
+- 解法：改用 pair-level availability 與 resolved rate type，並補 exchange-shop 反向 TWD 與 spot-only label 回歸測試
+
+- 日期：2026-05-13
+- ID：reward-ratewise-fallback-rate-snapshot-ssot
+- 原因：prebuild 仍刷新 tracked live rate data，且 runtime fallback 匯率另有硬編碼副本
+- 解法：將 tracked fallback snapshot 更新改為 explicit refresh，prebuild 回到 deterministic，runtime fallback 改讀 build-time snapshot SSOT
+
+- 日期：2026-05-12
+- ID：reward-ratewise-prerender-internal-route-contract
+- 原因：prerender 測試仍要求 internal-only color-scheme 頁進入 production 靜態輸出
+- 解法：將測試契約改為確認 internal-only route 不產生 static HTML
+
+- 日期：2026-05-12
+- ID：reward-ratewise-currency-route-registry
+- 原因：34 個幣別落地頁 route registration 與 SEO path/page entry 存在人工複製面
+- 解法：建立 currency route registry、由 routes 消費並補 parity guardrail tests
+
+- 日期：2026-05-12
+- ID：reward-ratewise-generated-artifact-ssot
+- 原因：build/generated/local QA artifacts 責任混雜且歷史產物污染追蹤
+- 解法：建立 artifact bucket scripts、移除本機產物追蹤並同步文件 SSOT
+
+- 日期：2026-05-12
+- ID：reward-ratewise-qa-gate-governance
+- 原因：核心 accessibility/offline/performance checks 仍含未收斂 skip 或手動流程
+- 解法：恢復可執行 accessibility/offline gate 並加入 scheduled production governance
+
+- 日期：2026-05-12
+- ID：reward-ratewise-error-observability
+- 原因：hydration 與 fetch 類錯誤被全域 suppression 遮蔽
+- 解法：集中錯誤分類並限制 production hydration suppression
+
+- 日期：2026-05-12
+- ID：reward-ratewise-public-surface-governance
+- 原因：內部展示與測試頁仍存在於正式路由與 prerender surface
+- 解法：將 internal-only routes 從 production route/prerender surface 移除並補測試
+
+- 日期：2026-05-12
+- ID：reward-ratewise-lint-baseline
+- 原因：RateWise lint gate 因 test type import warning 無法通過
+- 解法：修正測試檔 type-only import 寫法並恢復 0 warning baseline
 
 - 日期：2026-05-11
 - ID：multi-converter-exchange-shop-text-switch

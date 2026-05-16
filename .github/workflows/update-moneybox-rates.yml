@@ -36,6 +36,7 @@ jobs:
       MONEYBOX_FETCH_OUTPUT_FILE: .moneybox-current-fetch.json
       MONEYBOX_LATEST_FILE: public/rates/providers/moneybox/latest.json
       MONEYBOX_HISTORY_DIR: public/rates/providers/moneybox/history
+      MONEYBOX_AGGREGATE_FILE: public/rates/providers/moneybox/history-30d.json
       MONEYBOX_RETIRED_LATEST_FILE: public/rates/moneybox.json
       MONEYBOX_RETIRED_HISTORY_DIR: public/rates/moneybox-history
       MONEYBOX_CDN_DATA_BASE: https://cdn.jsdelivr.net/gh/haotool/app@data
@@ -138,6 +139,52 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Generate moneybox aggregate 30-day history
+        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        run: |
+          node --input-type=module << 'SCRIPT'
+          import { readdirSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+          import { dirname, join } from 'node:path';
+
+          const HISTORY_DIR = process.env.MONEYBOX_HISTORY_DIR;
+          const OUTPUT_PATH = process.env.MONEYBOX_AGGREGATE_FILE;
+          const MAX_DAYS = 30;
+
+          if (!existsSync(HISTORY_DIR)) {
+            console.error(`❌ History dir not found: ${HISTORY_DIR}`);
+            process.exit(1);
+          }
+
+          const files = readdirSync(HISTORY_DIR)
+            .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
+            .sort()
+            .reverse()
+            .slice(0, MAX_DAYS);
+
+          const snapshots = [];
+          for (const file of files) {
+            const date = file.replace(/\.json$/, '');
+            try {
+              const raw = JSON.parse(readFileSync(join(HISTORY_DIR, file), 'utf-8'));
+              snapshots.push({ date, raw });
+            } catch (e) {
+              console.warn(`⚠️ Skip ${file}: ${e.message}`);
+            }
+          }
+
+          const aggregate = {
+            providerId: 'moneybox',
+            generatedAt: new Date().toISOString(),
+            snapshots,
+          };
+
+          const outDir = dirname(OUTPUT_PATH);
+          if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+          writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2) + '\n');
+
+          console.log(`✅ moneybox aggregate: ${snapshots.length} days → ${OUTPUT_PATH}`);
+          SCRIPT
+
       - name: Commit and push changes
         if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
         env:
@@ -145,10 +192,10 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          # 只 add 當日 history 檔，避免 git checkout origin/main -- public/rates/ 後
-          # 把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
-          # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot。
-          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE"
+          # 只 add 當日 history 檔與 aggregate，避免 git checkout origin/main -- public/rates/
+          # 後把 data branch 既有的前幾日 history snapshot 一併 stage 成刪除（會清掉公開
+          # MoneyBox history API 與趨勢圖前日資料）。SSOT：每次只動當日 snapshot + aggregate。
+          git add "$MONEYBOX_LATEST_FILE" "$TODAY_HISTORY_FILE" "$MONEYBOX_AGGREGATE_FILE"
 
           # 取得更新資訊
           UPDATE_TIME=$(node -p "JSON.parse(require('fs').readFileSync(process.env.MONEYBOX_LATEST_FILE)).updateTime")
@@ -205,8 +252,9 @@ jobs:
         run: |
           PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_LATEST_FILE}"
           HISTORY_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
+          AGGREGATE_PURGE_URL="${MONEYBOX_PURGE_DATA_BASE}/${MONEYBOX_AGGREGATE_FILE}"
           echo "🧹 Purging jsDelivr CDN cache..."
-          for URL in "$PURGE_URL" "$HISTORY_PURGE_URL"; do
+          for URL in "$PURGE_URL" "$HISTORY_PURGE_URL" "$AGGREGATE_PURGE_URL"; do
             for i in 1 2 3; do
               HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
               if [ "$HTTP_STATUS" = "200" ]; then
@@ -228,7 +276,7 @@ jobs:
           git rebase --abort 2>/dev/null || true
           for i in 1 2 3; do
             echo "🔄 Refreshing MoneyBox provider files from remote data branch (try $i/3)..."
-            if git fetch origin data && git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR"; then
+            if git fetch origin data && git checkout origin/data -- "$MONEYBOX_LATEST_FILE" "$MONEYBOX_HISTORY_DIR" "$MONEYBOX_AGGREGATE_FILE"; then
               echo "✅ Remote refresh successful"
               exit 0
             fi

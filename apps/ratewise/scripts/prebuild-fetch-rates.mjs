@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * 構建時匯率數據獲取腳本
- * 在 vite build 前執行，獲取最新匯率並保存到 public/rates.json
- * 用於 SSG 預渲染時注入到靜態 HTML
+ * 匯率快照刷新腳本
+ * 顯式刷新本機 public/rates.json；設定 RATEWISE_WRITE_FALLBACK_RATES=1 時同步更新 build-time fallback snapshot
  *
- * 使用：pnpm run prebuild:fetch-rates
+ * 使用：pnpm refresh:rates
+ * 使用：pnpm refresh:fallback-rates
  */
 
 import fs from 'fs';
@@ -21,6 +21,7 @@ const GENERATED_CONFIG_PATH = path.resolve(APP_ROOT, 'src/config/generated');
 const RATES_CACHE_PATH = path.resolve(PUBLIC_PATH, 'rates.json');
 const BUILD_TIME_RATES_PATH = path.resolve(GENERATED_CONFIG_PATH, 'build-time-rates.json');
 const MAX_CACHE_AGE_MS = 24 * 60 * 60 * 1000;
+const SHOULD_WRITE_FALLBACK_SNAPSHOT = process.env.RATEWISE_WRITE_FALLBACK_RATES === '1';
 
 function parseRateTimestamp(value) {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -79,7 +80,8 @@ async function fetchLatestRates() {
       throw new Error('API 返回數據格式無效');
     }
 
-    console.log(`✅ 成功獲取 ${Object.keys(data).length} 個幣別的匯率`);
+    const currencyCount = Object.keys(data.rates ?? {}).length;
+    console.log(`✅ 成功獲取 ${currencyCount} 個幣別的匯率`);
     return data;
   } catch (error) {
     console.warn(`⚠️  API 獲取失敗（${error.message}），嘗試使用緩存...`);
@@ -101,8 +103,9 @@ function loadCachedRates() {
       } else {
         const ageMs = Date.now() - cacheTimestamp;
         if (ageMs <= MAX_CACHE_AGE_MS) {
+          const cachedCurrencyCount = Object.keys(cached.rates ?? {}).length;
           console.log(
-            `✅ 使用緩存匯率（年齡 ${formatAgeHours(ageMs)}，${Object.keys(cached).length} 個頂層欄位）`,
+            `✅ 使用緩存匯率（年齡 ${formatAgeHours(ageMs)}，${cachedCurrencyCount} 個幣別）`,
           );
           return cached;
         }
@@ -241,27 +244,31 @@ function getDefaultRates() {
 }
 
 /**
- * 保存匯率到 public/rates.json 與可追蹤的 src/config/generated snapshot。
- *
- * public/rates.json 是 build 暫存快取且被 .gitignore 忽略；app runtime 的首屏 fallback
- * 必須讀取已 commit 的 generated snapshot，避免 clean checkout 在 typecheck/dev 前缺檔。
+ * 保存匯率到 public/rates.json；只有明確要求時才更新可追蹤 fallback snapshot。
  */
 function saveRates(rates) {
   try {
+    if (SHOULD_WRITE_FALLBACK_SNAPSHOT && rates.source === 'Default fallback rates') {
+      console.error('❌ 拒絕使用預設匯率更新 build-time fallback snapshot');
+      return false;
+    }
+
     // 確保目錄存在
     if (!fs.existsSync(PUBLIC_PATH)) {
       fs.mkdirSync(PUBLIC_PATH, { recursive: true });
     }
-    if (!fs.existsSync(GENERATED_CONFIG_PATH)) {
-      fs.mkdirSync(GENERATED_CONFIG_PATH, { recursive: true });
-    }
 
     const payload = `${JSON.stringify(rates, null, 2)}\n`;
     fs.writeFileSync(RATES_CACHE_PATH, payload, 'utf-8');
-    fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');
 
     console.log(`✅ 匯率已保存到：${RATES_CACHE_PATH}`);
-    console.log(`✅ build-time 匯率 snapshot 已保存到：${BUILD_TIME_RATES_PATH}`);
+    if (SHOULD_WRITE_FALLBACK_SNAPSHOT) {
+      if (!fs.existsSync(GENERATED_CONFIG_PATH)) {
+        fs.mkdirSync(GENERATED_CONFIG_PATH, { recursive: true });
+      }
+      fs.writeFileSync(BUILD_TIME_RATES_PATH, payload, 'utf-8');
+      console.log(`✅ build-time 匯率 snapshot 已保存到：${BUILD_TIME_RATES_PATH}`);
+    }
     return true;
   } catch (error) {
     console.error(`❌ 保存匯率失敗：${error.message}`);
@@ -273,7 +280,7 @@ function saveRates(rates) {
  * 主函數
  */
 async function main() {
-  console.log(`\n📊 ${APP_INFO.shortName} 構建時匯率數據預處理`);
+  console.log(`\n📊 ${APP_INFO.shortName} 匯率快照刷新`);
   console.log('═'.repeat(50));
 
   // 1. 獲取匯率
@@ -295,7 +302,7 @@ async function main() {
   console.log(`   canonical 金額頁：${indexableAmountPages} 個`);
   console.log(`   預渲染靜態頁：${STATS.total} 個`);
 
-  console.log('\n✅ 構建前準備完成！');
+  console.log('\n✅ 匯率快照刷新完成！');
   console.log('═'.repeat(50) + '\n');
 }
 

@@ -52,7 +52,6 @@ export default function MultiConverter() {
     sortedCurrencies,
     rateMode,
     exchangeShopRatesByCurrency,
-    multiExchangeShopCurrencies,
     handleMultiAmountChange,
     quickAmount,
     setBaseCurrency,
@@ -156,7 +155,6 @@ export default function MultiConverter() {
               details={details}
               exchangeShopRatesByCurrency={exchangeShopRatesByCurrency}
               favorites={favorites}
-              exchangeShopCurrencies={multiExchangeShopCurrencies}
               onAmountChange={handleMultiAmountChange}
               onQuickAmount={handleQuickAmount}
               onRateTypeChange={setRateType}

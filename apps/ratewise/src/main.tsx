@@ -22,7 +22,12 @@ import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
-import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
+import { recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
+import {
+  classifyUnhandledRejection,
+  getUnhandledRejectionMessage,
+  toError,
+} from './utils/errorClassification';
 import { initPWAStorageManager, primePwaColdStartRecovery } from './utils/pwaStorageManager';
 import {
   clearPwaAppReadyMarker,
@@ -222,24 +227,13 @@ export const createRoot = ViteReactSSG(
       // [context7:googlechrome/lighthouse-ci:2025-10-20T04:10:04+08:00]
       // 主要用於處理歷史匯率 404 錯誤（正常現象，資料可能尚未生成）
       window.addEventListener('unhandledrejection', (event) => {
-        // 安全地提取錯誤訊息
         const reason: unknown = event.reason;
-        let errorMessage = '';
-
-        if (reason instanceof Error) {
-          errorMessage = reason.message;
-        } else if (typeof reason === 'string') {
-          errorMessage = reason;
-        } else if (reason && typeof reason === 'object' && 'message' in reason) {
-          const msg = (reason as { message: unknown }).message;
-          errorMessage = typeof msg === 'string' ? msg : JSON.stringify(reason);
-        }
-
-        const errorObject =
-          reason instanceof Error ? reason : new Error(errorMessage || 'Unhandled rejection');
+        const errorMessage = getUnhandledRejectionMessage(reason);
+        const errorObject = toError(reason);
+        const rejectionKind = classifyUnhandledRejection(reason);
 
         // 先處理 chunk 載入錯誤（避免被歷史匯率錯誤規則吞掉）
-        if (isChunkLoadError(errorObject)) {
+        if (rejectionKind === 'chunk-load') {
           logger.warn('Chunk load error captured by global handler', {
             reason: errorMessage,
           });
@@ -249,18 +243,20 @@ export const createRoot = ViteReactSSG(
           return;
         }
 
-        // 檢查是否為歷史匯率相關的網路錯誤
-        const isHistoricalRates404 =
-          errorMessage.includes('history') ||
-          errorMessage.includes('404') ||
-          errorMessage.includes('Failed to fetch');
-
-        if (isHistoricalRates404) {
+        if (rejectionKind === 'expected-history-miss') {
           // 這是預期的錯誤（歷史資料可能尚未生成），阻止顯示在 console
           logger.debug('Historical data fetch failed (expected)', {
             reason: errorMessage,
           });
           event.preventDefault(); // 防止錯誤顯示在瀏覽器 console
+          return;
+        }
+
+        if (rejectionKind === 'generic-fetch-failure') {
+          logger.warn('Generic fetch failure captured by global handler', {
+            reason: errorMessage,
+          });
+          recordPwaDiagnostic('generic-fetch-failure', errorMessage, 'warn');
           return;
         }
 

@@ -1,21 +1,31 @@
 /**
- * Suppress React Hydration Warning (#418)
+ * Optional React Hydration Warning (#418) suppression
  *
  * This module MUST be imported FIRST in main.tsx (before any other imports)
- * to ensure the console.error override is set up before React loads.
+ * so the explicit non-production diagnostic suppression can run before React loads.
  *
- * React #418 (Hydration mismatch) is an expected error in SSG environments
- * with dynamic content like i18n language detection, timestamps, etc.
- *
- * The error is suppressed in console but React still recovers and re-renders
- * the correct content on the client.
+ * Production must not globally hide hydration errors. Known harmless mismatches
+ * should be handled at component level with local suppressHydrationWarning.
  *
  * @see https://react.dev/errors/418
  * @see docs/dev/002_development_reward_penalty_log.md
  * @created 2026-01-27
  */
 
-if (typeof window !== 'undefined') {
+import { isHydrationSuppressionEnabled } from './utils/errorClassification';
+
+const hydrationSuppressionFlag =
+  typeof import.meta.env['VITE_SUPPRESS_HYDRATION_WARNINGS'] === 'string'
+    ? import.meta.env['VITE_SUPPRESS_HYDRATION_WARNINGS']
+    : undefined;
+
+if (
+  typeof window !== 'undefined' &&
+  isHydrationSuppressionEnabled({
+    prod: import.meta.env.PROD,
+    flag: hydrationSuppressionFlag,
+  })
+) {
   const originalConsoleError = console.error;
 
   console.error = (...args: unknown[]) => {
