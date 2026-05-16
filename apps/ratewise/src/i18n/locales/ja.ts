@@ -25,6 +25,7 @@ const ja = {
     copy: 'コピー',
     copied: 'コピーしました',
     clickToCopy: 'クリックでコピー',
+    opensInNewWindow: '（新しいウィンドウで開きます）',
   },
 
   // Navigation
@@ -158,13 +159,21 @@ const ja = {
     rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
+    supportInfoDesc: '使い方、データソース、プライバシー、技術的な透明性をここにまとめています。',
     faq: 'よくある質問',
+    faqDesc: '買値・売値、現金・即時、カードレート、データ更新をすばやく確認できます。',
     usageGuide: 'ご利用ガイド',
+    usageGuideDesc: '換算、モード切替、お気に入り、多通貨比較の最短手順を確認できます。',
     aboutUs: '私たちについて',
+    aboutUsDesc: 'データ方法、利用シーン、作者、メンテナンス方針を確認できます。',
     openSource: 'オープンソース',
+    openSourceDesc: 'ソースコード、変更履歴、公開コラボレーション状況を確認できます。',
     privacyPolicy: 'プライバシーポリシー',
+    privacyPolicyDesc: 'データ処理、分析ツール、プライバシーの境界を確認できます。',
     openDataApi: 'オープンデータ API',
+    openDataApiDesc: 'latest.json、OpenAPI、AI 向けデータ入口を確認できます。',
     seoTech: 'SEO 技術開示',
+    seoTechDesc: 'インデックス対象ページ、構造化データ、AI 引用ガバナンスを確認できます。',
   },
 
   // Styles

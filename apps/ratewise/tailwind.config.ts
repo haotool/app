@@ -66,6 +66,7 @@ export default {
         accent: 'rgb(var(--color-accent) / <alpha-value>)',
         info: 'rgb(var(--color-info) / <alpha-value>)',
         error: 'rgb(var(--color-error) / <alpha-value>)',
+        'active-pill-foreground': 'rgb(var(--color-active-pill-foreground) / <alpha-value>)',
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',

@@ -9,9 +9,9 @@
  */
 
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft,
   Globe,
   FileJson,
   Search,
@@ -28,6 +28,7 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { SEO_SCHEMA_REGISTRY } from '../config/seo-schema-registry';
@@ -295,6 +296,7 @@ const sectionTransition = { ...transitions.smooth, delay: 0.05 };
 // ─── 元件 ──────────────────────────────────────────────────────────────────────
 
 export default function SeoTech() {
+  const { t } = useTranslation();
   const pageSeo = APP_ONLY_PAGE_SEO.seoTech;
 
   return (
@@ -315,22 +317,14 @@ export default function SeoTech() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
-        <div className="relative px-4 pt-6 pb-10">
-          {/* 返回按鈕 */}
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={transitions.default}
-          >
-            <Link
-              to="/settings/"
-              className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] transition-colors mb-6"
-              aria-label="回到設定"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>設定</span>
-            </Link>
-          </motion.div>
+        <div className="relative mx-auto max-w-5xl px-4 pt-6 pb-10">
+          <PageNavHeader
+            fallbackHref="/settings/"
+            breadcrumbItems={[
+              { label: t('nav.home'), href: '/' },
+              { label: t('settings.seoTech'), href: '/seo-tech/' },
+            ]}
+          />
 
           {/* 標題區 */}
           <motion.div

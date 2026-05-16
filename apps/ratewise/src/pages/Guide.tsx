@@ -121,7 +121,8 @@ const Guide = () => {
                 <div
                   key={step.position}
                   id={`step-${step.position}`}
-                  className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
+                  className="card p-6 transition-shadow hover:shadow-md"
+                  style={{ scrollMarginTop: 'calc(env(safe-area-inset-top, 0px) + 14rem)' }}
                 >
                   <div className="flex items-start">
                     <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">

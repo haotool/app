@@ -20,10 +20,13 @@
  */
 
 import {
+  BookOpen,
   Palette,
   Globe,
   Database,
+  Github,
   ShieldAlert,
+  ShieldCheck,
   Check,
   HelpCircle,
   ChevronRight,
@@ -32,6 +35,8 @@ import {
   Shuffle,
   Landmark,
   Scale,
+  Info,
+  SearchCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -45,8 +50,33 @@ import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import { SUPPORT_INFO_LINKS, type SupportInfoHref } from '../config/support-info';
 import type { RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
+
+const SUPPORT_INFO_ICON_BY_HREF = {
+  '/faq/': HelpCircle,
+  '/guide/': BookOpen,
+  '/about/': Info,
+  '/open-data/': Database,
+  '/seo-tech/': SearchCheck,
+  '/privacy/': ShieldCheck,
+} satisfies Record<SupportInfoHref, LucideIcon>;
+
+const SUPPORT_LINKS = [
+  ...SUPPORT_INFO_LINKS.map((item) => ({
+    ...item,
+    icon: SUPPORT_INFO_ICON_BY_HREF[item.href],
+    external: false,
+  })),
+  {
+    href: APP_INFO.github,
+    labelKey: 'settings.openSource',
+    descKey: 'settings.openSourceDesc',
+    icon: Github,
+    external: true,
+  },
+];
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -328,65 +358,60 @@ export default function Settings() {
 
         {/* 支援與資訊區塊 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <HelpCircle className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.supportInfo')}
-            </h2>
+          <div className="px-2 mb-3">
+            <div className="flex items-center gap-2 opacity-50">
+              <HelpCircle className="w-3.5 h-3.5" />
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+                {t('settings.supportInfo')}
+              </h2>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-text-muted">
+              {t('settings.supportInfoDesc')}
+            </p>
           </div>
 
-          <div className="card overflow-hidden divide-y divide-border">
-            <Link
-              to="/faq/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.faq')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/guide/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/about/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.aboutUs')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/privacy/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.privacyPolicy')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/open-data/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.openDataApi')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/seo-tech/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.seoTech')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <a
-              href={APP_INFO.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.openSource')}</span>
-              <ExternalLink className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </a>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {SUPPORT_LINKS.map((item) => {
+              const Icon = item.icon;
+              const content = (
+                <>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-text">{t(item.labelKey)}</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-text-muted">
+                      {t(item.descKey)}
+                    </span>
+                  </span>
+                  {item.external ? (
+                    <ExternalLink className="h-4 w-4 shrink-0 text-text-muted opacity-50 transition-opacity group-hover:opacity-100" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0 text-text-muted opacity-50 transition-opacity group-hover:opacity-100" />
+                  )}
+                </>
+              );
+
+              const className =
+                'group flex min-h-[92px] items-center gap-3 rounded-2xl border border-border/70 bg-surface p-4 text-left shadow-sm transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+              return item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${t(item.labelKey)}${t('common.opensInNewWindow')}`}
+                  className={className}
+                >
+                  {content}
+                </a>
+              ) : (
+                <Link key={item.href} to={item.href} className={className}>
+                  {content}
+                </Link>
+              );
+            })}
           </div>
         </section>
 

@@ -88,6 +88,7 @@
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 139 92 246; /* violet-500 */
     --color-border: 226 232 240;
+    --color-active-pill-foreground: 91 33 182; /* violet-800 - 小字 active pill AA */
     --color-info: 14 165 233;
     --color-error: 239 68 68;
 
@@ -288,6 +289,7 @@
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 30 41 59; /* slate-800 */
+    --color-active-pill-foreground: 255 255 255; /* white - 小字 active pill AA */
 
     /* 狀態語義色彩 - 霓虹風格 */
     --color-info: 56 189 248; /* sky-400 */
@@ -433,6 +435,7 @@
     --color-secondary: 236 72 153; /* pink-500 */
     --color-accent: 255 182 193; /* light pink */
     --color-border: 255 228 225; /* misty rose */
+    --color-active-pill-foreground: 157 23 77; /* pink-800 - 小字 active pill AA */
 
     /* 狀態語義色彩 - 柔和可愛風 */
     --color-info: 147 197 253; /* blue-300 - 天空藍 */
@@ -567,6 +570,7 @@
     --color-secondary: 161 98 7; /* amber-700 - 琥珀 */
     --color-accent: 180 120 80; /* tan - 棕褐 */
     --color-border: 245 230 220; /* linen - 亞麻 */
+    --color-active-pill-foreground: 67 20 7; /* dark brown - 小字 active pill AA */
 
     /* 狀態語義色彩 - 復古調性 */
     --color-info: 59 130 246; /* blue-500 - 墨水藍 */
@@ -701,6 +705,7 @@
     --color-secondary: 14 165 233; /* sky-500 */
     --color-accent: 20 184 166; /* teal-500 */
     --color-border: 186 230 253; /* sky-200 */
+    --color-active-pill-foreground: 22 78 99; /* cyan-900 - 小字 active pill AA */
 
     /* 狀態語義色彩 - 海洋調性 */
     --color-info: 56 189 248; /* sky-400 */
@@ -835,6 +840,7 @@
     --color-secondary: 22 163 74; /* green-600 */
     --color-accent: 101 163 13; /* lime-600 */
     --color-border: 187 247 208; /* green-200 */
+    --color-active-pill-foreground: 20 83 45; /* green-800 - 小字 active pill AA */
 
     /* 狀態語義色彩 - 自然調性 */
     --color-info: 59 130 246; /* blue-500 */

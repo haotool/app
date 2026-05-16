@@ -254,5 +254,14 @@ describe('Guide Page - HowTo Schema', () => {
         expect(stepElement).toBeTruthy();
       }
     });
+
+    it('keeps hash anchor targets below the sticky safe-area header', () => {
+      renderGuide();
+      const stepElement = document.getElementById('step-1');
+
+      expect(stepElement).toHaveStyle({
+        scrollMarginTop: 'calc(env(safe-area-inset-top, 0px) + 14rem)',
+      });
+    });
   });
 });
