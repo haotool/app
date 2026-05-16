@@ -25,6 +25,7 @@ const ko = {
     copy: '복사',
     copied: '복사됨',
     clickToCopy: '클릭하여 복사',
+    opensInNewWindow: '(새 창에서 열림)',
   },
 
   // Navigation
@@ -158,13 +159,21 @@ const ko = {
     rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
+    supportInfoDesc: '사용 방법, 데이터 출처, 개인정보, 기술 투명성 정보를 한곳에 모았습니다.',
     faq: '자주 묻는 질문',
+    faqDesc: '매입/매도율, 현금/전신환, 카드 환율, 데이터 갱신 기준을 빠르게 확인합니다.',
     usageGuide: '사용 가이드',
+    usageGuideDesc: '환산, 모드 전환, 즐겨찾기, 다중 통화 비교의 빠른 사용 흐름을 확인합니다.',
     aboutUs: '소개',
+    aboutUsDesc: '데이터 방식, 사용 상황, 작성자, 유지보수 기준을 확인합니다.',
     openSource: '오픈 소스',
+    openSourceDesc: '소스 코드, 변경 이력, 공개 협업 상태를 확인합니다.',
     privacyPolicy: '개인정보 처리방침',
+    privacyPolicyDesc: '데이터 처리, 분석 도구, 개인정보 보호 범위를 확인합니다.',
     openDataApi: '공개 데이터 API',
+    openDataApiDesc: 'latest.json, OpenAPI, AI 친화 데이터 진입점을 확인합니다.',
     seoTech: 'SEO 기술 공개',
+    seoTechDesc: '색인 대상 페이지, 구조화 데이터, AI 인용 거버넌스를 확인합니다.',
   },
 
   // Styles

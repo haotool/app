@@ -71,10 +71,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* 主要內容 */}
             <main className="min-h-full [overscroll-behavior-y:contain]">{children}</main>
 
-            {/* 頁尾 - Stage 6：內部連結結構（僅桌面版顯示） */}
-            <div className="hidden md:block">
-              <Footer />
-            </div>
+            {/* 頁尾 - Stage 6：內部連結結構（Footer 內含行動版與桌面版佈局） */}
+            <Footer />
           </div>
         </ErrorBoundary>
 

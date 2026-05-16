@@ -36,6 +36,65 @@ function rgbTripletToHex(triplet: string): string {
     .join('')}`;
 }
 
+function getThemeCssBlock(style: ThemeStyle): string {
+  const pattern =
+    style === 'zen'
+      ? /:root,\s*\n\s*\[data-style='zen'\]\s*\{[\s\S]*?\n\s*\}/
+      : new RegExp(`\\[data-style='${style}'\\]\\s*\\{[\\s\\S]*?\\n\\s*\\}`);
+
+  const block = indexCss.match(pattern)?.[0];
+  expect(block).toBeDefined();
+
+  return block ?? '';
+}
+
+function getThemeCssVar(style: ThemeStyle, name: string): string | undefined {
+  const block = getThemeCssBlock(style);
+  const match = new RegExp(`${name}: ([^;]+);`).exec(block);
+
+  return match?.[1]?.trim();
+}
+
+function relativeLuminance(triplet: string): number {
+  const [red, green, blue] = parseRgbTriplet(triplet);
+  const [redLinear = 0, greenLinear = 0, blueLinear = 0] = [red, green, blue].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * redLinear + 0.7152 * greenLinear + 0.0722 * blueLinear;
+}
+
+function parseRgbTriplet(triplet: string): [number, number, number] {
+  const [red = 0, green = 0, blue = 0] = triplet.split(/\s+/).map(Number);
+  return [red, green, blue];
+}
+
+function compositeRgbTriplet(
+  foreground: string,
+  background: string,
+  foregroundAlpha: number,
+): string {
+  const foregroundChannels = parseRgbTriplet(foreground);
+  const backgroundChannels = parseRgbTriplet(background);
+
+  return foregroundChannels
+    .map((channel, index) => {
+      const backgroundChannel = backgroundChannels[index] ?? 0;
+      return channel * foregroundAlpha + backgroundChannel * (1 - foregroundAlpha);
+    })
+    .join(' ');
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 function getCriticalBootstrapEntry(style: ThemeStyle) {
   const match = new RegExp(`${style}: \\['([^']+)', '([^']+)', '(light|dark)'\\]`).exec(indexHtml);
   expect(match).not.toBeNull();
@@ -409,6 +468,9 @@ describe('Design Token System - BDD', () => {
       expect(extendColors['accent']).toBe('rgb(var(--color-accent) / <alpha-value>)');
       expect(extendColors['info']).toBe('rgb(var(--color-info) / <alpha-value>)');
       expect(extendColors['error']).toBe('rgb(var(--color-error) / <alpha-value>)');
+      expect(extendColors['active-pill-foreground']).toBe(
+        'rgb(var(--color-active-pill-foreground) / <alpha-value>)',
+      );
       expect(surface['secondary']).toBe('rgb(var(--color-surface-secondary) / <alpha-value>)');
       expect(surface['card']).toBe('rgb(var(--color-surface-card) / <alpha-value>)');
       expect(surface['border']).toBe('rgb(var(--color-surface-border) / <alpha-value>)');
@@ -500,6 +562,21 @@ describe('Design Token System - BDD', () => {
         expect(getSkeletonVar(style, '--sk-border')).toBe(expected.border);
         expect(getSkeletonVar(style, '--sk-text')).toBe(expected.text);
         expect(getSkeletonVar(style, '--sk-text-muted')).toBe(expected.textMuted);
+      }
+    });
+
+    it('active pill 前景 token 應該對齊 theme SSOT 並符合 WCAG AA', () => {
+      for (const style of themeStyles) {
+        const definition = STYLE_DEFINITIONS[style];
+        const foreground = definition.colors.activePillForeground;
+        const activePillBackground = compositeRgbTriplet(
+          definition.colors.primary,
+          definition.colors.surface,
+          0.1,
+        );
+
+        expect(getThemeCssVar(style, '--color-active-pill-foreground')).toBe(foreground);
+        expect(contrastRatio(foreground, activePillBackground)).toBeGreaterThanOrEqual(4.5);
       }
     });
   });

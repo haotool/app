@@ -25,6 +25,7 @@ const en = {
     copy: 'Copy',
     copied: 'Copied',
     clickToCopy: 'Click to copy',
+    opensInNewWindow: ' (opens in a new window)',
   },
 
   // Navigation
@@ -161,13 +162,22 @@ const en = {
       'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
     // Support & Info section
     supportInfo: 'Support & Info',
+    supportInfoDesc: 'Usage, data sources, privacy, and technical transparency are grouped here.',
     faq: 'FAQ',
+    faqDesc: 'Clarify buy/sell rates, cash vs spot, card rates, and data freshness.',
     usageGuide: 'Usage Guide',
+    usageGuideDesc:
+      'Learn the fastest path for conversion, modes, favorites, and multi-currency checks.',
     aboutUs: 'About Us',
+    aboutUsDesc: 'Understand the data method, use cases, author, and maintenance model.',
     openSource: 'Open Source',
+    openSourceDesc: 'Review the source code, changelog, and public collaboration status.',
     privacyPolicy: 'Privacy Policy',
+    privacyPolicyDesc: 'Understand data handling, analytics tools, and privacy boundaries.',
     openDataApi: 'Open Data API',
+    openDataApiDesc: 'Access latest.json, OpenAPI, and AI-friendly data entry points.',
     seoTech: 'SEO Technology',
+    seoTechDesc: 'Review indexable pages, structured data, and AI citation governance.',
   },
 
   // Styles

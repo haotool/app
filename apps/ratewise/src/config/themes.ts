@@ -51,6 +51,7 @@ export interface ThemeConfig {
  * - secondary: 輔色（次要互動、支援元素）
  * - accent: 強調色（高亮、焦點）
  * - border: 邊框/分隔線
+ * - activePillForeground: 小尺寸 active pill 文字（需符合 WCAG AA）
  *
  * ## 狀態語義色彩（4 個）
  * - info: 資訊提示（藍色系）
@@ -73,6 +74,7 @@ interface SemanticColors {
   secondary: string;
   accent: string;
   border: string;
+  activePillForeground: string;
   // 狀態語義色彩
   info: string;
   success: string;
@@ -123,6 +125,7 @@ const zenStyle: StyleDefinition = {
     secondary: '71 85 105', // slate-600
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
+    activePillForeground: '91 33 182', // violet-800
     // 狀態色彩
     info: '14 165 233', // sky-500
     success: '34 197 94', // green-500
@@ -157,6 +160,7 @@ const nitroStyle: StyleDefinition = {
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
     border: '30 41 59', // slate-800
+    activePillForeground: '255 255 255',
     // 狀態色彩
     info: '56 189 248',
     success: '52 211 153',
@@ -191,6 +195,7 @@ const kawaiiStyle: StyleDefinition = {
     secondary: '236 72 153', // pink-500
     accent: '255 182 193', // light pink
     border: '255 228 225', // misty rose
+    activePillForeground: '157 23 77', // pink-800
     // 狀態色彩 - 柔和可愛風
     info: '147 197 253', // blue-300 - 天空藍
     success: '134 239 172', // green-300 - 薄荷綠
@@ -225,6 +230,7 @@ const classicStyle: StyleDefinition = {
     secondary: '161 98 7', // amber-700 - 琥珀
     accent: '180 120 80', // tan - 棕褐
     border: '245 230 220', // linen - 亞麻
+    activePillForeground: '67 20 7', // dark brown
     // 狀態色彩 - 復古調性
     info: '59 130 246', // blue-500 - 墨水藍
     success: '22 163 74', // green-600 - 橄欖綠
@@ -259,6 +265,7 @@ const oceanStyle: StyleDefinition = {
     secondary: '20 184 166', // teal-500 - 青綠
     accent: '2 132 199', // sky-600 - 天空藍
     border: '186 230 253', // sky-200
+    activePillForeground: '22 78 99', // cyan-900
     // 狀態色彩 - 海洋風格
     info: '14 165 233', // sky-500
     success: '20 184 166', // teal-500
@@ -293,6 +300,7 @@ const forestStyle: StyleDefinition = {
     secondary: '132 204 22', // lime-500 - 青檸
     accent: '22 163 74', // green-600 - 森林綠
     border: '187 247 208', // green-200
+    activePillForeground: '20 83 45', // green-800
     // 狀態色彩 - 自然風格
     info: '59 130 246', // blue-500
     success: '34 197 94', // green-500

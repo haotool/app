@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+55
+> 本次分數變化：+1（reward 1）｜累計總分：+57
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-pr404-support-nav-path-normalization
+- 原因：PR404 review 指出支援資訊頁若以 `/faq`、`/seo-tech` 等無 trailing slash route 進入，PageNavHeader 會因 exact match 找不到支援導覽與 active pill
+- 解法：在 PageNavHeader 正規化當前 pathname 後再比對 SUPPORT_INFO_LINKS，並補無 trailing slash 回歸測試鎖定導覽顯示與目前頁標示
+
+- 日期：2026-05-17
+- ID：reward-ratewise-support-info-ia-header
+- 原因：支援與資訊入口分散在設定列表，公開內容頁手機版缺少可見 footer，頁首只有返回與麵包屑，搜尋落地或 PWA 直開時導覽脈絡不足
+- 解法：公開頁 PageNavHeader 加入品牌、支援分群導覽、safe-area sticky header 與 AA active pill token，Layout 恢復行動版 Footer，設定頁支援區改為四語系描述卡片，SEO 技術頁與 skeleton 同步收斂並補測試
 
 - 日期：2026-05-17
 - ID：reward-ratewise-nitro-design-token-ssot

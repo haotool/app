@@ -173,6 +173,12 @@ export const semanticColors = {
     via: 'rgb(var(--color-footer-via) / <alpha-value>)',
     to: 'rgb(var(--color-footer-to) / <alpha-value>)',
   },
+
+  /**
+   * Active pill 前景色
+   * 用途：小尺寸導覽 active 狀態，需跨所有主題符合 WCAG AA 4.5:1。
+   */
+  'active-pill-foreground': 'rgb(var(--color-active-pill-foreground) / <alpha-value>)',
 } as const;
 
 /**

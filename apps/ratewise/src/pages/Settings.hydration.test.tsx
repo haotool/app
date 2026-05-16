@@ -3,7 +3,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { renderToString } from 'react-dom/server';
 import { hydrateRoot } from 'react-dom/client';
 import { act, createElement, type ReactNode } from 'react';
+import { render } from '@testing-library/react';
 import Settings from './Settings';
+import { SUPPORT_INFO_LINKS } from '../config/support-info';
 
 vi.mock('../components/SEOHelmet', () => ({
   SEOHelmet: () => null,
@@ -135,5 +137,19 @@ describe('Settings hydration', () => {
 
     expect(themeButtons).toHaveLength(1);
     expect(themeButtons[0]).not.toBeDisabled();
+  });
+
+  it('uses the support info SSOT order for internal settings links', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/settings']}>
+        <Settings />
+      </MemoryRouter>,
+    );
+
+    const renderedSupportHrefs = SUPPORT_INFO_LINKS.map((item) =>
+      container.querySelector(`a[href="${item.href}"]`)?.getAttribute('href'),
+    );
+
+    expect(renderedSupportHrefs).toEqual(SUPPORT_INFO_LINKS.map((item) => item.href));
   });
 });

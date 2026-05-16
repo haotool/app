@@ -175,11 +175,12 @@ describe('SettingsSkeleton', () => {
     expect(dangerBtn).toBeInTheDocument();
   });
 
-  it('包含支援資訊連結列（4 個 skeleton-settings-link）', () => {
-    // Settings.tsx 第 5 個 section：FAQ / 使用說明 / 關於我們 / 開源 (4 links px-5 py-4)
+  it('包含支援資訊卡片骨架（7 個 skeleton-settings-link）', () => {
+    // Settings.tsx 第 5 個 section：FAQ / Guide / About / Privacy / API / SEO / GitHub
     const { container } = render(<SettingsSkeleton />);
     const links = container.querySelectorAll('[data-testid="skeleton-settings-link"]');
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(7);
+    expect(screen.getByTestId('skeleton-settings-support-desc')).toBeInTheDocument();
   });
 });
 

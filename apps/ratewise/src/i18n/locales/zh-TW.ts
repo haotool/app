@@ -25,6 +25,7 @@ const zhTW = {
     copy: '複製',
     copied: '已複製',
     clickToCopy: '點擊複製',
+    opensInNewWindow: '（開新視窗）',
   },
 
   // Navigation
@@ -158,13 +159,21 @@ const zhTW = {
     rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
+    supportInfoDesc: '使用方法、資料來源、隱私與技術透明資訊，都集中在這裡。',
     faq: '常見問題',
+    faqDesc: '快速釐清買入賣出、現金即期、刷卡匯率與資料更新。',
     usageGuide: '使用指南',
+    usageGuideDesc: '用最短路徑完成換算、切換模式、收藏與多幣別比較。',
     aboutUs: '關於我們',
+    aboutUsDesc: '了解資料方法、適用情境、作者與維護方式。',
     openSource: '開放原始碼',
+    openSourceDesc: '查看程式碼、變更紀錄與公開協作狀態。',
     privacyPolicy: '隱私權政策',
+    privacyPolicyDesc: '了解資料處理、分析工具與使用者隱私邊界。',
     openDataApi: '開放資料 API',
+    openDataApiDesc: '取得 latest.json、OpenAPI 與 AI-friendly 資料入口。',
     seoTech: 'SEO 技術揭露',
+    seoTechDesc: '查看可索引頁面、結構化資料與 AI 引用治理。',
   },
 
   // Styles
