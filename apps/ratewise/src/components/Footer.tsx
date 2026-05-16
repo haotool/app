@@ -100,7 +100,7 @@ export function Footer() {
   return (
     <footer className="bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-surface mt-16">
       {/* 行動版簡潔 Footer */}
-      <div className="md:hidden max-w-6xl mx-auto px-4 py-8">
+      <div data-testid="footer-mobile" className="md:hidden max-w-6xl mx-auto px-4 py-8">
         {/* 匯率來源與更新時間 */}
         <div className="flex flex-col items-center justify-center gap-4 mb-6">
           <a
@@ -254,7 +254,10 @@ export function Footer() {
       </div>
 
       {/* 電腦版完整 Footer - 整合簡潔風格 + SEO 連結 */}
-      <div className="hidden md:block container mx-auto px-4 md:px-6 py-12 max-w-6xl">
+      <div
+        data-testid="footer-desktop"
+        className="hidden md:block container mx-auto px-4 md:px-6 py-12 max-w-6xl"
+      >
         {/* 匯率來源與更新時間 */}
         <div className="flex flex-row items-center justify-center gap-4 mb-6">
           <a
@@ -308,37 +311,6 @@ export function Footer() {
         {/* 免責聲明 */}
         <div className="text-center mb-6">
           <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
-        </div>
-
-        {/* 快速連結 */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
-          <Link
-            to="/faq/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
-              ?
-            </span>
-            {t('footer.faq')}
-          </Link>
-          <Link
-            to="/about/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
-              i
-            </span>
-            {t('footer.about')}
-          </Link>
-          <Link
-            to="/privacy/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
-              🔒
-            </span>
-            {t('footer.privacyPolicy')}
-          </Link>
         </div>
 
         {/* 分隔線 */}
