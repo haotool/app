@@ -321,6 +321,13 @@ export const STYLE_DEFINITIONS: Record<ThemeStyle, StyleDefinition> = {
   forest: forestStyle,
 };
 
+function rgbTripletToHex(triplet: string): string {
+  return `#${triplet
+    .split(/\s+/)
+    .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 /**
  * 風格選項（供 UI 選擇器使用）
  */
@@ -389,6 +396,20 @@ export const STYLE_OPTIONS: {
   },
 ];
 
+export const CRITICAL_STYLE_BY_THEME: Record<
+  ThemeStyle,
+  { background: string; text: string; colorScheme: 'light' | 'dark' }
+> = Object.fromEntries(
+  Object.entries(STYLE_DEFINITIONS).map(([style, definition]) => [
+    style,
+    {
+      background: rgbTripletToHex(definition.colors.background),
+      text: rgbTripletToHex(definition.colors.text),
+      colorScheme: style === 'nitro' ? 'dark' : 'light',
+    },
+  ]),
+) as Record<ThemeStyle, { background: string; text: string; colorScheme: 'light' | 'dark' }>;
+
 // ============================================================================
 // Theme Application
 // ============================================================================
@@ -406,6 +427,15 @@ export function applyTheme(config: ThemeConfig): void {
 
   // 設定 data attribute（CSS 選擇器會根據這些值切換變數）
   root.dataset['style'] = config.style;
+
+  const criticalStyle = CRITICAL_STYLE_BY_THEME[config.style];
+  root.style.setProperty('--sk-bg', criticalStyle.background);
+  root.style.setProperty('--sk-text', criticalStyle.text);
+  if (criticalStyle.colorScheme === 'dark') {
+    root.style.colorScheme = criticalStyle.colorScheme;
+  } else {
+    root.style.removeProperty('color-scheme');
+  }
 
   // 移除深色模式相關屬性
   delete root.dataset['mode'];

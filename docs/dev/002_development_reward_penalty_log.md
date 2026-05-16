@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +54
+> 本次分數變化：+1（reward 1）｜累計總分：+55
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-ratewise-nitro-design-token-ssot
+- 原因：Nitro 深色主題缺少 legacy primary token、body 仍固定 `bg-slate-50`、Tailwind 語義 alias 漏定義，設定頁與 PWA overscroll 可能露出淺底或白色 focus ring
+- 解法：補齊 Nitro token、語義 alias、ring offset background 與 html/body 語義背景，並以 Vitest、typecheck、build、Chromium 桌機 / WebKit iPhone 15 Playwright smoke 驗證
 
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend

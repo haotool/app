@@ -78,6 +78,8 @@
   /* 極簡風格：紫色為主色 */
   :root,
   [data-style='zen'] {
+    color-scheme: light;
+
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
@@ -87,6 +89,7 @@
     --color-accent: 139 92 246; /* violet-500 */
     --color-border: 226 232 240;
     --color-info: 14 165 233;
+    --color-error: 239 68 68;
 
     /* 圖表專用 Token (SSOT) */
     --color-chart-line: 139 92 246; /* violet-500 */
@@ -96,6 +99,17 @@
     /* 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
     --color-surface-elevated: 248 250 252; /* slate-50 - 微灰底色 */
     --color-surface-sunken: 241 245 249; /* slate-100 - 下沉區域 */
+    --color-surface-secondary: var(--color-surface-elevated);
+    --color-surface-card: var(--color-surface);
+    --color-surface-border: var(--color-border);
+    --color-background-secondary: var(--color-surface);
+    --color-background-tertiary: var(--color-surface-elevated);
+    --color-border-secondary: var(--color-border);
+    --color-input: var(--color-surface);
+    --color-input-border: var(--color-border);
+    --color-sidebar: var(--color-surface);
+    --color-sidebar-foreground: var(--color-text);
+    --color-sidebar-active: var(--color-primary);
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -263,6 +277,8 @@
      圖表使用霓虹藍/綠漸變
      ======================================== */
   [data-style='nitro'] {
+    color-scheme: dark;
+
     /* 核心語義色彩 - 固定深色調 */
     --color-background: 2 6 23; /* slate-950 */
     --color-surface: 15 23 42; /* slate-900 */
@@ -292,6 +308,9 @@
     --color-primary-bg: 30 41 59; /* slate-800 */
     --color-primary-light: 30 41 59; /* slate-800 - 深色背景用 */
     --color-primary-hover: 34 211 238; /* cyan-400 - 霓虹藍亮色 */
+    --color-primary-active: 14 116 144; /* cyan-700 - 深色主題 active */
+    --color-primary-text-light: 103 232 249; /* cyan-300 - 深色主題可讀文字 */
+    --color-primary-ring: 103 232 249; /* cyan-300 - focus ring */
     --color-primary-dark: 103 232 249; /* cyan-300 - 深色主題高對比結果文字 */
     --color-primary-darker: 34 211 238; /* cyan-400 */
     --color-primary-text: 0 212 255; /* 霓虹藍 - 與 primary 一致 */
@@ -391,6 +410,12 @@
     --color-brand-text: 103 232 249; /* cyan-300 */
     --color-brand-text-dark: 255 255 255; /* white */
     --color-brand-shadow: 30 41 59; /* slate-800 */
+  }
+
+  *,
+  ::before,
+  ::after {
+    --tw-ring-offset-color: rgb(var(--color-background));
   }
 
   /* ========================================
@@ -1211,9 +1236,14 @@ body {
 
   /* 選中狀態的 ring */
   .ring-selected {
-    ring-width: 2px;
-    ring-offset-width: 2px;
-    ring-color: rgb(var(--color-primary));
+    --tw-ring-offset-width: 2px;
+    --tw-ring-offset-color: rgb(var(--color-background));
+    --tw-ring-color: rgb(var(--color-primary));
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+      var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+      var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
   }
 
   /* ========================================
