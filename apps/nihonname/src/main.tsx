@@ -49,7 +49,7 @@ export const createRoot = ViteReactSSG(
         } else if (typeof reason === 'string') {
           errorMessage = reason;
         } else if (reason && typeof reason === 'object' && 'message' in reason) {
-          const msg = (reason as { message: unknown }).message;
+          const msg = reason.message;
           errorMessage = typeof msg === 'string' ? msg : JSON.stringify(reason);
         }
 

@@ -175,15 +175,15 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   const patch: Partial<PersistentFields> = {};
   let dirty = false;
 
-  if (!isCurrencyCode(state.fromCurrency as string)) {
+  if (!isCurrencyCode(state.fromCurrency)) {
     patch.fromCurrency = DEFAULT_FROM_CURRENCY;
     dirty = true;
   }
-  if (!isCurrencyCode(state.toCurrency as string)) {
+  if (!isCurrencyCode(state.toCurrency)) {
     patch.toCurrency = DEFAULT_TO_CURRENCY;
     dirty = true;
   }
-  if (!isCurrencyCode(state.baseCurrency as string)) {
+  if (!isCurrencyCode(state.baseCurrency)) {
     patch.baseCurrency = DEFAULT_BASE_CURRENCY;
     dirty = true;
   }
@@ -368,7 +368,7 @@ export const useConverterStore = create<ConverterState>()(
       // ── 初始狀態 ────────────────────────────────────────────────────────
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
-      rateMode: DEFAULT_RATE_MODE as RateMode,
+      rateMode: DEFAULT_RATE_MODE,
       rateType: DEFAULT_RATE_TYPE,
       rateSource: DEFAULT_RATE_SOURCE,
       providerPreference: DEFAULT_PROVIDER_PREFERENCE,

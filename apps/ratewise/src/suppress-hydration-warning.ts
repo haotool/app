@@ -91,7 +91,7 @@ if (
     } else if (reason instanceof Error) {
       errorMessage = reason.message;
     } else if (reason !== null && typeof reason === 'object' && 'message' in reason) {
-      const msg = (reason as { message: unknown }).message;
+      const msg = reason.message;
       errorMessage = typeof msg === 'string' ? msg : '';
     }
 

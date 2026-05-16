@@ -48,7 +48,7 @@ function filterMotionProps(props: Record<string, unknown>): Record<string, unkno
     style,
     ...rest
   } = props;
-  return { ...rest, style: style as React.CSSProperties | undefined };
+  return { ...rest, style: style };
 }
 
 // Create motion component factory
@@ -182,7 +182,7 @@ class MockResizeObserver {
   }
 }
 
-global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+global.ResizeObserver = MockResizeObserver;
 
 // Mock IntersectionObserver
 class MockIntersectionObserver {
@@ -211,7 +211,7 @@ class MockIntersectionObserver {
   }
 }
 
-global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+global.IntersectionObserver = MockIntersectionObserver;
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
