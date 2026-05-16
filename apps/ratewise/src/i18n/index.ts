@@ -27,6 +27,8 @@ import ko from './locales/ko';
 
 export const SUPPORTED_LANGUAGES = ['zh-TW', 'en', 'ja', 'ko'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+export const DEFAULT_LANGUAGE: SupportedLanguage = 'zh-TW';
+export const LANGUAGE_STORAGE_KEY = 'ratewise-language';
 
 export const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
   { value: 'en', label: 'English', flag: '🇺🇸' },
@@ -52,8 +54,84 @@ const resources = {
   ko: { translation: ko },
 };
 
-const canUseBrowserLanguageStorage =
-  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+const canUseDOMLanguageDetection = typeof window !== 'undefined';
+const canUseBrowserLanguageStorage = canUseDOMLanguageDetection && import.meta.env.MODE !== 'test';
+
+export function getLanguageDetectionOrder(
+  hasDOM = canUseDOMLanguageDetection,
+  canUseStorage = canUseBrowserLanguageStorage,
+): string[] {
+  if (!hasDOM) {
+    return [];
+  }
+
+  return canUseStorage ? ['localStorage', 'htmlTag', 'navigator'] : ['htmlTag', 'navigator'];
+}
+
+export function getInitialLanguage(): SupportedLanguage {
+  return DEFAULT_LANGUAGE;
+}
+
+const initialLanguage = getInitialLanguage();
+
+export function getPreferredClientLanguage({
+  storageLanguage,
+  htmlLanguage,
+  navigatorLanguage,
+}: {
+  storageLanguage?: string | null;
+  htmlLanguage?: string | null;
+  navigatorLanguage?: string | null;
+}): SupportedLanguage {
+  const candidate =
+    storageLanguage?.trim() ||
+    htmlLanguage?.trim() ||
+    navigatorLanguage?.trim() ||
+    DEFAULT_LANGUAGE;
+
+  return normalizeLanguage(candidate);
+}
+
+export function resolveClientPreferredLanguage(): SupportedLanguage {
+  if (!canUseDOMLanguageDetection) {
+    return DEFAULT_LANGUAGE;
+  }
+
+  let storageLanguage: string | null = null;
+  try {
+    storageLanguage = window.localStorage?.getItem(LANGUAGE_STORAGE_KEY) ?? null;
+  } catch {
+    storageLanguage = null;
+  }
+
+  const htmlLanguage = document.documentElement.lang;
+  const navigatorLanguage = navigator.languages?.[0] ?? navigator.language;
+
+  return getPreferredClientLanguage({ storageLanguage, htmlLanguage, navigatorLanguage });
+}
+
+export function persistLanguagePreference(language: SupportedLanguage): void {
+  if (!canUseDOMLanguageDetection || import.meta.env.MODE === 'test') {
+    return;
+  }
+
+  try {
+    window.localStorage?.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch {
+    // Storage may be blocked in private or embedded contexts; language still changes in memory.
+  }
+}
+
+export function syncClientLanguagePreference(): void {
+  if (!canUseDOMLanguageDetection || import.meta.env.MODE === 'test') {
+    return;
+  }
+
+  const preferredLanguage = resolveClientPreferredLanguage();
+  if (preferredLanguage !== getResolvedLanguage()) {
+    void i18n.changeLanguage(preferredLanguage);
+  }
+}
 
 /**
  * 正規化語系代碼
@@ -119,6 +197,7 @@ void i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: initialLanguage,
     // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
     supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
     // 語系 fallback 配置：zh-Hant → zh-TW
@@ -132,10 +211,10 @@ void i18n
       escapeValue: false,
     },
     detection: {
-      order: canUseBrowserLanguageStorage
-        ? ['localStorage', 'htmlTag', 'navigator']
-        : ['htmlTag', 'navigator'],
-      caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
+      order: getLanguageDetectionOrder(),
+      // Avoid overwriting a stored user preference during the zh-TW hydration pass.
+      // Settings persists explicit language changes via persistLanguagePreference().
+      caches: [],
       lookupLocalStorage: 'ratewise-language',
     },
     react: {

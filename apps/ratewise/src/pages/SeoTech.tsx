@@ -336,15 +336,14 @@ export default function SeoTech() {
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 <Search className="w-3 h-3" />
-                SEO 技術揭露
+                {t('supportPages.seoTech.eyebrow')}
               </span>
             </div>
             <h1 className="text-2xl font-bold mb-2 tracking-tight">
-              {APP_INFO.shortName} SEO 架構
+              {t('supportPages.seoTech.title', { appName: APP_INFO.shortName })}
             </h1>
             <p className="text-sm text-[rgb(var(--color-text-muted))] leading-relaxed max-w-prose">
-              完整揭露 {APP_INFO.shortName} 所採用的所有搜尋引擎最佳化技術、資料架構與自動化流程。
-              所有數字均從設定檔即時計算，永遠與實際部署狀態同步。
+              {t('supportPages.seoTech.subtitle', { appName: APP_INFO.shortName })}
             </p>
           </motion.div>
 

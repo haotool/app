@@ -5,16 +5,15 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { PRIVACY_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
-
-const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Taipei',
-});
+import { formatLocalizedDate } from '../utils/timeFormatter';
 
 export default function Privacy() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lastUpdated = formatLocalizedDate(
+    SITE_SEO.updatedTime,
+    i18n.resolvedLanguage ?? i18n.language,
+  );
+
   return (
     <>
       <SEOHelmet
@@ -35,8 +34,11 @@ export default function Privacy() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-text">隱私政策</h1>
-            <p className="text-text-muted">最後更新：{LAST_UPDATED}</p>
+            <h1 className="mb-2 text-3xl font-bold text-text">{t('supportPages.privacy.title')}</h1>
+            <p className="max-w-2xl text-text-muted">{t('supportPages.privacy.subtitle')}</p>
+            <p className="mt-2 text-sm text-text-muted">
+              {t('supportPages.common.lastUpdated')}：{lastUpdated}
+            </p>
           </div>
 
           <section className="card mb-6 p-6">
