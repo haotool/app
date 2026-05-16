@@ -52,7 +52,15 @@
       (function () {
         var K = 'ratewise-theme',
           D = 'zen',
-          A = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
+          A = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'],
+          C = {
+            zen: ['#f8fafc', '#0f172a', 'light'],
+            nitro: ['#020617', '#ffffff', 'dark'],
+            kawaii: ['#fffaf4', '#8e7c80', 'light'],
+            classic: ['#fffafb', '#431407', 'light'],
+            ocean: ['#f0f9ff', '#075985', 'light'],
+            forest: ['#f0fdf4', '#14532d', 'light'],
+          };
         function v(c) {
           if (c === null || typeof c !== 'object' || Array.isArray(c) || c.constructor !== Object)
             return D;
@@ -61,8 +69,14 @@
           return typeof s === 'string' && A.indexOf(s) !== -1 ? s : D;
         }
         function a(s) {
-          document.documentElement.dataset.style = s;
-          document.documentElement.classList.add(s === 'classic' ? 'font-serif' : 'font-sans');
+          var r = document.documentElement,
+            c = C[s] || C[D];
+          r.dataset.style = s;
+          r.style.setProperty('--sk-bg', c[0]);
+          r.style.setProperty('--sk-text', c[1]);
+          if (c[2] === 'dark') r.style.colorScheme = c[2];
+          else r.style.removeProperty('color-scheme');
+          r.classList.add(s === 'classic' ? 'font-serif' : 'font-sans');
         }
         try {
           var t = localStorage.getItem(K);
@@ -92,13 +106,16 @@
       html {
         height: 100%;
         min-height: calc(100% + env(safe-area-inset-top, 0px));
+        background: var(--sk-bg, #f8fafc);
+        color: var(--sk-text, #1e293b);
       }
       body {
         margin: 0;
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
-        background: #f8fafc;
+        background: var(--sk-bg, #f8fafc);
+        color: var(--sk-text, #1e293b);
         font-family:
           'Inter',
           'Noto Sans TC',
@@ -120,7 +137,7 @@
         --sk-shimmer: #cbd5e1;
         --sk-accent: rgba(139, 92, 246, 0.15);
         --sk-accent-shimmer: rgba(139, 92, 246, 0.25);
-        --sk-text: #1e293b;
+        --sk-text: #0f172a;
         --sk-text-muted: #64748b;
       }
       [data-style='nitro'] {
@@ -130,28 +147,28 @@
         --sk-shimmer: #334155;
         --sk-accent: rgba(14, 165, 233, 0.2);
         --sk-accent-shimmer: rgba(14, 165, 233, 0.35);
-        --sk-text: #f1f5f9;
-        --sk-text-muted: #94a3b8;
+        --sk-text: #ffffff;
+        --sk-text-muted: #64748b;
       }
       [data-style='kawaii'] {
         --sk-bg: #fffaf4;
         --sk-surface: #ffffff;
-        --sk-border: #fce7f3;
+        --sk-border: #ffe4e1;
         --sk-shimmer: #fbcfe8;
         --sk-accent: rgba(244, 114, 182, 0.15);
         --sk-accent-shimmer: rgba(244, 114, 182, 0.25);
-        --sk-text: #1e293b;
-        --sk-text-muted: #64748b;
+        --sk-text: #8e7c80;
+        --sk-text-muted: #b4a0a5;
       }
       [data-style='classic'] {
         --sk-bg: #fffafb;
         --sk-surface: #ffffff;
-        --sk-border: #e7e5e4;
+        --sk-border: #f5e6dc;
         --sk-shimmer: #d6d3d1;
         --sk-accent: rgba(180, 83, 9, 0.12);
         --sk-accent-shimmer: rgba(180, 83, 9, 0.2);
-        --sk-text: #1c1917;
-        --sk-text-muted: #78716c;
+        --sk-text: #431407;
+        --sk-text-muted: #78503c;
       }
       [data-style='ocean'] {
         --sk-bg: #f0f9ff;
@@ -160,8 +177,8 @@
         --sk-shimmer: #7dd3fc;
         --sk-accent: rgba(6, 182, 212, 0.15);
         --sk-accent-shimmer: rgba(6, 182, 212, 0.25);
-        --sk-text: #0c4a6e;
-        --sk-text-muted: #0369a1;
+        --sk-text: #075985;
+        --sk-text-muted: #164e63;
       }
       [data-style='forest'] {
         --sk-bg: #f0fdf4;
@@ -377,7 +394,7 @@
     <!-- Structured Data managed by SEOHelmet component (prevents duplicate schemas) -->
     <!-- Title managed by SEOHelmet component (prevents duplicate titles) -->
   </head>
-  <body class="bg-slate-50">
+  <body class="bg-background text-text">
     <noscript>
       <p>
         __BRAND_FULL__ 需要 JavaScript

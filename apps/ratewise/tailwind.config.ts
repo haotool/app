@@ -1,10 +1,12 @@
 import type { Config } from 'tailwindcss';
 import {
   generateTailwindThemeExtension,
-  spacingTokens,
   typographyTokens,
   breakpointTokens,
 } from './src/config/design-tokens';
+
+const designTokenTheme = generateTailwindThemeExtension();
+const designTokenColors = designTokenTheme?.extend?.colors ?? {};
 
 /**
  * Tailwind CSS Configuration
@@ -25,13 +27,13 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   darkMode: ['class', '[data-mode="dark"]'],
   theme: {
-    ...generateTailwindThemeExtension(),
+    ...designTokenTheme,
     extend: {
-      ...generateTailwindThemeExtension().extend,
+      ...(designTokenTheme?.extend ?? {}),
       // 字型家族 - 使用 typographyTokens SSOT
       fontFamily: {
-        sans: typographyTokens.fontFamily.sans,
-        mono: typographyTokens.fontFamily.mono,
+        sans: [...typographyTokens.fontFamily.sans],
+        mono: [...typographyTokens.fontFamily.mono],
       },
       // 自定義間距 - 使用 spacingTokens SSOT 擴展
       spacing: {
@@ -47,6 +49,9 @@ export default {
           DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
           elevated: 'rgb(var(--color-surface-elevated) / <alpha-value>)',
           sunken: 'rgb(var(--color-surface-sunken) / <alpha-value>)',
+          secondary: 'rgb(var(--color-surface-secondary) / <alpha-value>)',
+          card: 'rgb(var(--color-surface-card) / <alpha-value>)',
+          border: 'rgb(var(--color-surface-border) / <alpha-value>)',
         },
         text: 'rgb(var(--color-text) / <alpha-value>)',
         background: 'rgb(var(--color-background) / <alpha-value>)',
@@ -57,6 +62,10 @@ export default {
         'foreground-muted': 'rgb(var(--color-foreground-muted) / <alpha-value>)',
         border: 'rgb(var(--color-border) / <alpha-value>)',
         'border-secondary': 'rgb(var(--color-border-secondary) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
+        error: 'rgb(var(--color-error) / <alpha-value>)',
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',
@@ -109,7 +118,7 @@ export default {
         'calc-equals-hover': 'rgb(var(--color-calc-equals-hover) / <alpha-value>)',
         'calc-equals-active': 'rgb(var(--color-calc-equals-active) / <alpha-value>)',
         // 保留舊版 token 向後相容
-        ...generateTailwindThemeExtension().extend?.colors,
+        ...designTokenColors,
       },
       // 現代化圓角 - ParkKeeper 風格
       borderRadius: {

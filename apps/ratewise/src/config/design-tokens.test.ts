@@ -6,7 +6,76 @@
  * @see /Users/azlife.eth/.claude/plans/federated-foraging-summit.md - 重構計劃
  */
 
-import { describe, it, expect } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, describe, it, expect } from 'vitest';
+import tailwindConfig from '../../tailwind.config';
+import { CRITICAL_STYLE_BY_THEME, STYLE_DEFINITIONS, type ThemeStyle } from './themes';
+
+function findRatewiseRoot(): string {
+  const candidates = [process.cwd(), join(process.cwd(), 'apps/ratewise')];
+  const root = candidates.find(
+    (candidate) =>
+      existsSync(join(candidate, 'index.html')) && existsSync(join(candidate, 'src/index.css')),
+  );
+
+  if (!root) throw new Error('Unable to locate apps/ratewise root for design token drift tests');
+
+  return root;
+}
+
+const ratewiseRoot = findRatewiseRoot();
+const indexCss = readFileSync(join(ratewiseRoot, 'src/index.css'), 'utf8');
+const indexHtml = readFileSync(join(ratewiseRoot, 'index.html'), 'utf8');
+const themeStyles = Object.keys(STYLE_DEFINITIONS) as ThemeStyle[];
+
+function rgbTripletToHex(triplet: string): string {
+  return `#${triplet
+    .split(/\s+/)
+    .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
+function getCriticalBootstrapEntry(style: ThemeStyle) {
+  const match = new RegExp(`${style}: \\['([^']+)', '([^']+)', '(light|dark)'\\]`).exec(indexHtml);
+  expect(match).not.toBeNull();
+
+  return {
+    background: match?.[1],
+    text: match?.[2],
+    colorScheme: match?.[3],
+  };
+}
+
+function getCriticalBootstrapStyles(): ThemeStyle[] {
+  return [...indexHtml.matchAll(/^\s+(\w+): \['#[^']+', '#[^']+', '(?:light|dark)'\],$/gm)].map(
+    ([, style]) => style as ThemeStyle,
+  );
+}
+
+function getSkeletonBlock(style: ThemeStyle): string {
+  const pattern =
+    style === 'zen'
+      ? /:root,\s*\n\s*\[data-style='zen'\]\s*\{[\s\S]*?\n\s*\}/
+      : new RegExp(`\\[data-style='${style}'\\]\\s*\\{[\\s\\S]*?\\n\\s*\\}`);
+
+  const block = indexHtml.match(pattern)?.[0];
+  expect(block).toBeDefined();
+
+  return block ?? '';
+}
+
+function getSkeletonVar(style: ThemeStyle, name: string): string | undefined {
+  const block = getSkeletonBlock(style);
+  const match = new RegExp(`${name}: ([^;]+);`).exec(block);
+
+  return match?.[1];
+}
+
+afterEach(() => {
+  document.documentElement.removeAttribute('data-style');
+  document.documentElement.removeAttribute('style');
+});
 
 /**
  * 🔴 RED Phase: 這些測試預期會失敗
@@ -293,6 +362,7 @@ describe('Design Token System - BDD', () => {
       expect(base.display).toContain('inline-flex');
       expect(base.transition).toContain('transition');
       expect(base.disabled).toContain('disabled:opacity-50');
+      expect(base.focus).toContain('focus-visible:ring-offset-background');
     });
 
     it('應該有三種尺寸 (sm, md, lg)', async () => {
@@ -323,6 +393,114 @@ describe('Design Token System - BDD', () => {
       expect(patterns.secondaryMd).toContain('bg-surface-elevated');
       expect(patterns.ghostMd).toContain('bg-transparent');
       expect(patterns.dangerMd).toContain('bg-destructive');
+
+      for (const pattern of Object.values(patterns)) {
+        expect(pattern).toContain('focus-visible:ring-offset-background');
+      }
+    });
+  });
+
+  describe('🟢 GREEN: Tailwind 語義色彩 Alias 覆蓋', () => {
+    it('應該把元件已使用的語義色彩 class 映射回 CSS variables', () => {
+      const extendColors = (tailwindConfig.theme?.extend?.colors ?? {}) as Record<string, unknown>;
+      const surface = extendColors['surface'] as Record<string, unknown>;
+
+      expect(extendColors['secondary']).toBe('rgb(var(--color-secondary) / <alpha-value>)');
+      expect(extendColors['accent']).toBe('rgb(var(--color-accent) / <alpha-value>)');
+      expect(extendColors['info']).toBe('rgb(var(--color-info) / <alpha-value>)');
+      expect(extendColors['error']).toBe('rgb(var(--color-error) / <alpha-value>)');
+      expect(surface['secondary']).toBe('rgb(var(--color-surface-secondary) / <alpha-value>)');
+      expect(surface['card']).toBe('rgb(var(--color-surface-card) / <alpha-value>)');
+      expect(surface['border']).toBe('rgb(var(--color-surface-border) / <alpha-value>)');
+    });
+  });
+
+  describe('🟢 GREEN: Nitro 主題 CSS Variable 覆蓋', () => {
+    it('應該覆蓋 legacy primary tokens，避免深色主題回落到 Zen 淺色值', () => {
+      const nitroBlock = /\[data-style='nitro'\]\s*\{[\s\S]*?\n {2}\}/.exec(indexCss)?.[0] ?? '';
+
+      expect(nitroBlock).toContain('color-scheme: dark');
+      expect(nitroBlock).toContain('--color-primary-active:');
+      expect(nitroBlock).toContain('--color-primary-text-light:');
+      expect(nitroBlock).toContain('--color-primary-ring:');
+      expect(nitroBlock).not.toContain('--color-primary-active: 196 181 253');
+      expect(nitroBlock).not.toContain('--color-primary-text-light: 167 139 250');
+      expect(nitroBlock).not.toContain('--color-primary-ring: 139 92 246');
+    });
+
+    it('應該以語義 alias 收斂 surface 與 ring offset token', () => {
+      const zenBlock =
+        /:root,\s*\n\s*\[data-style='zen'\]\s*\{[\s\S]*?\n {2}\}/.exec(indexCss)?.[0] ?? '';
+
+      expect(zenBlock).toContain('color-scheme: light');
+      expect(zenBlock).toContain('--color-surface-secondary: var(--color-surface-elevated);');
+      expect(zenBlock).toContain('--color-surface-card: var(--color-surface);');
+      expect(zenBlock).toContain('--color-surface-border: var(--color-border);');
+      expect(indexCss).toContain('--tw-ring-offset-color: rgb(var(--color-background));');
+    });
+
+    it('應該讓 HTML body 使用語義背景，避免 Nitro 與 PWA overscroll 露出淺色底', () => {
+      expect(indexHtml).toContain('background: var(--sk-bg, #f8fafc);');
+      expect(indexHtml).toContain('color: var(--sk-text, #1e293b);');
+      expect(indexHtml).toContain('html {');
+      expect(indexHtml).toContain("nitro: ['#020617', '#ffffff', 'dark']");
+      expect(indexHtml).toContain("r.style.setProperty('--sk-bg', c[0]);");
+      expect(indexHtml).toContain("r.style.setProperty('--sk-text', c[1]);");
+      expect(indexHtml).toContain("if (c[2] === 'dark') r.style.colorScheme = c[2];");
+      expect(indexHtml).toContain("else r.style.removeProperty('color-scheme');");
+      expect(indexHtml).toContain('<body class="bg-background text-text">');
+      expect(indexHtml).not.toContain('class="bg-slate-50"');
+    });
+
+    it('applyTheme 應該同步 critical 變數，避免互動切換後 color-scheme 被 inline style 卡住', async () => {
+      const { applyTheme } = await import('./themes');
+      const root = document.documentElement;
+
+      applyTheme({ style: 'nitro' });
+
+      expect(root.dataset['style']).toBe('nitro');
+      expect(root.style.getPropertyValue('--sk-bg')).toBe('#020617');
+      expect(root.style.getPropertyValue('--sk-text')).toBe('#ffffff');
+      expect(root.style.colorScheme).toBe('dark');
+
+      applyTheme({ style: 'zen' });
+
+      expect(root.dataset['style']).toBe('zen');
+      expect(root.style.getPropertyValue('--sk-bg')).toBe('#f8fafc');
+      expect(root.style.getPropertyValue('--sk-text')).toBe('#0f172a');
+      expect(root.style.colorScheme).toBe('');
+    });
+
+    it('critical bootstrap 與 skeleton 變數應該對齊 theme SSOT，避免跨檔漂移', () => {
+      expect(getCriticalBootstrapStyles().sort()).toEqual([...themeStyles].sort());
+
+      for (const style of themeStyles) {
+        const definition = STYLE_DEFINITIONS[style];
+        const colorScheme = style === 'nitro' ? 'dark' : 'light';
+        const expected = {
+          background: rgbTripletToHex(definition.colors.background),
+          surface: rgbTripletToHex(definition.colors.surface),
+          border: rgbTripletToHex(definition.colors.border),
+          text: rgbTripletToHex(definition.colors.text),
+          textMuted: rgbTripletToHex(definition.colors.textMuted),
+        };
+
+        expect(CRITICAL_STYLE_BY_THEME[style]).toEqual({
+          background: expected.background,
+          text: expected.text,
+          colorScheme,
+        });
+        expect(getCriticalBootstrapEntry(style)).toEqual({
+          background: expected.background,
+          text: expected.text,
+          colorScheme,
+        });
+        expect(getSkeletonVar(style, '--sk-bg')).toBe(expected.background);
+        expect(getSkeletonVar(style, '--sk-surface')).toBe(expected.surface);
+        expect(getSkeletonVar(style, '--sk-border')).toBe(expected.border);
+        expect(getSkeletonVar(style, '--sk-text')).toBe(expected.text);
+        expect(getSkeletonVar(style, '--sk-text-muted')).toBe(expected.textMuted);
+      }
     });
   });
 });
