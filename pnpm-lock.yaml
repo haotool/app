@@ -157,8 +157,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       three:
         specifier: ^0.182.0
         version: 0.182.0
@@ -219,7 +219,7 @@ importers:
         version: 1.2.0(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3))
+        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3))
@@ -248,8 +248,8 @@ importers:
         specifier: 1.3.0
         version: 1.3.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@playwright/test':
         specifier: ^1.57.0
@@ -304,7 +304,7 @@ importers:
         version: 1.2.0(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
+        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
@@ -342,8 +342,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.2.1
@@ -404,7 +404,7 @@ importers:
         version: 1.2.0(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
+        version: 0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
@@ -439,8 +439,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@lhci/cli':
         specifier: ^0.15.1
@@ -501,7 +501,7 @@ importers:
         version: 1.2.0(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
+        version: 0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
@@ -548,8 +548,8 @@ importers:
         specifier: ^16.5.3
         version: 16.5.3(i18next@26.0.10(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -634,7 +634,7 @@ importers:
         version: 1.2.0(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))(workbox-build@7.4.0)(workbox-window@7.4.0)
       vite-react-ssg:
         specifier: ^0.8.9
-        version: 0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
+        version: 0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@4.1.5)(jsdom@27.4.0)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3))
@@ -678,8 +678,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4
       react-router-dom:
-        specifier: ^6.30.3
-        version: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
   apps/split-meow:
     dependencies:
@@ -2753,10 +2753,6 @@ packages:
       react: ^19.0
       three: '>= 0.156.0'
 
-  '@remix-run/router@1.23.2':
-    resolution: {integrity: sha512-Ic6m2U/rMjTkhERIa/0ZtXJP17QUi2CbWE7cqx4J58M8aA3QTfW+2UlQ4psvTX9IO1RfNVhK3pcpdjej7L+t2w==}
-    engines: {node: '>=14.0.0'}
-
   '@rolldown/binding-android-arm64@1.0.0-rc.17':
     resolution: {integrity: sha512-s70pVGhw4zqGeFnXWvAzJDlvxhlRollagdCCKRgOsgUOH3N1l0LIxf83AtGzmb5SiVM4Hjl5HyarMRfdfj3DaQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -4666,6 +4662,10 @@ packages:
   cookie@0.7.2:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
+
+  cookie@1.1.1:
+    resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
+    engines: {node: '>=18'}
 
   core-js-compat@3.47.0:
     resolution: {integrity: sha512-IGfuznZ/n7Kp9+nypamBhvwdwLsW6KC8IOaURw2doAK5e98AG3acVLdh0woOnEqCfUtS+Vu882JE4k/DAm3ItQ==}
@@ -7680,18 +7680,22 @@ packages:
       redux:
         optional: true
 
-  react-router-dom@6.30.3:
-    resolution: {integrity: sha512-pxPcv1AczD4vso7G4Z3TKcvlxK7g7TNt3/FNGMhfqyntocvYKj+GCatfigGDjbLozC4baguJ0ReCigoDJXb0ag==}
-    engines: {node: '>=14.0.0'}
+  react-router-dom@7.15.1:
+    resolution: {integrity: sha512-AzF62gjY6U9rkMq4RfP/r2EVtQ7DMfNMjyOp/flLTCrtRylLiK4wT4pSq6O8rOXZ2eXdZYJPEYe+ifomiv+Igg==}
+    engines: {node: '>=20.0.0'}
     peerDependencies:
-      react: '>=16.8'
-      react-dom: '>=16.8'
+      react: '>=18'
+      react-dom: '>=18'
 
-  react-router@6.30.3:
-    resolution: {integrity: sha512-XRnlbKMTmktBkjCLE8/XcZFlnHvr2Ltdr1eJX4idL55/9BbORzyZEaIkBFDhFGCEWBBItsVrDxwx3gnisMitdw==}
-    engines: {node: '>=14.0.0'}
+  react-router@7.15.1:
+    resolution: {integrity: sha512-R8rl9HhgikFYoPJymnUtPXWbnDb3oget6lQnfIoupbt61aT9aOhRkDsY2XRhZRyX1Z/8a5sL74fXmFNm3NRK5A==}
+    engines: {node: '>=20.0.0'}
     peerDependencies:
-      react: '>=16.8'
+      react: '>=18'
+      react-dom: '>=18'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
 
   react-use-measure@2.1.7:
     resolution: {integrity: sha512-KrvcAo13I/60HpwGO5jpW7E9DfusKyLPLvuHlUyP5zqnmAPhNc6qTRjUQrdTADl0lpPpDVU2/Gg51UlOGHXbdg==}
@@ -7999,6 +8003,9 @@ packages:
 
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
+
+  set-cookie-parser@2.7.2:
+    resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
 
   set-function-length@1.2.2:
     resolution: {integrity: sha512-pgRc4hJ4/sNjWCSS9AmnS40x3bNMDTknHgL5UaMBTMyJnU90EgWh1Rz+MC9eFu4BuN/UwZjKQuY/1v3rM7HMfg==}
@@ -8405,8 +8412,8 @@ packages:
   third-party-web@0.27.0:
     resolution: {integrity: sha512-h0JYX+dO2Zr3abCQpS6/uFjujaOjA1DyDzGQ41+oFn9VW/ARiq9g5ln7qEP9+BTzDpOMyIfsfj4OvfgXAsMUSA==}
 
-  third-party-web@0.29.0:
-    resolution: {integrity: sha512-nBDSJw5B7Sl1YfsATG2XkW5qgUPODbJhXw++BKygi9w6O/NKS98/uY/nR/DxDq2axEjL6halHW1v+jhm/j1DBQ==}
+  third-party-web@0.29.2:
+    resolution: {integrity: sha512-fegtha91tq2DHphyoiBXVHjVi2YG9zFaRnboT9C28tO1en9Y3wJsfspuy40F+u5wl3hHVbw7cnd1b67kEGHb8g==}
 
   three-mesh-bvh@0.8.3:
     resolution: {integrity: sha512-4G5lBaF+g2auKX3P0yqx+MJC6oVt6sB5k+CchS6Ob0qvH0YIhuUk1eYr7ktsIpY+albCqE80/FVQGV190PmiAg==}
@@ -11685,17 +11692,17 @@ snapshots:
   '@paulirish/trace_engine@0.0.53':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.0
+      third-party-web: 0.29.2
 
   '@paulirish/trace_engine@0.0.59':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.0
+      third-party-web: 0.29.2
 
   '@paulirish/trace_engine@0.0.61':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.0
+      third-party-web: 0.29.2
 
   '@playwright/test@1.57.0':
     dependencies:
@@ -11810,8 +11817,6 @@ snapshots:
       three: 0.182.0
     transitivePeerDependencies:
       - '@types/three'
-
-  '@remix-run/router@1.23.2': {}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.17':
     optional: true
@@ -14050,6 +14055,8 @@ snapshots:
   cookie-signature@1.0.7: {}
 
   cookie@0.7.2: {}
+
+  cookie@1.1.1: {}
 
   core-js-compat@3.47.0:
     dependencies:
@@ -17333,17 +17340,19 @@ snapshots:
       '@types/react': 19.2.9
       redux: 5.0.1
 
-  react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      '@remix-run/router': 1.23.2
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-router: 6.30.3(react@19.2.4)
+      react-router: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
-  react-router@6.30.3(react@19.2.4):
+  react-router@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      '@remix-run/router': 1.23.2
+      cookie: 1.1.1
       react: 19.2.4
+      set-cookie-parser: 2.7.2
+    optionalDependencies:
+      react-dom: 19.2.4(react@19.2.4)
 
   react-use-measure@2.1.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
@@ -17749,6 +17758,8 @@ snapshots:
       - supports-color
 
   set-blocking@2.0.0: {}
+
+  set-cookie-parser@2.7.2: {}
 
   set-function-length@1.2.2:
     dependencies:
@@ -18240,7 +18251,7 @@ snapshots:
 
   third-party-web@0.27.0: {}
 
-  third-party-web@0.29.0: {}
+  third-party-web@0.29.2: {}
 
   three-mesh-bvh@0.8.3(three@0.182.0):
     dependencies:
@@ -18845,7 +18856,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-react-ssg@0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3)):
+  vite-react-ssg@0.8.9(beasties@0.1.0)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3)):
     dependencies:
       fs-extra: 11.3.2
       html5parser: 2.0.2
@@ -18860,14 +18871,14 @@ snapshots:
     optionalDependencies:
       beasties: 0.1.0
       prettier: 3.8.1
-      react-router-dom: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-router-dom: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
       - bufferutil
       - canvas
       - supports-color
       - utf-8-validate
 
-  vite-react-ssg@0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3)):
+  vite-react-ssg@0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@1.21.7)(terser@5.44.1)(yaml@2.8.3)):
     dependencies:
       fs-extra: 11.3.2
       html5parser: 2.0.2
@@ -18882,14 +18893,14 @@ snapshots:
     optionalDependencies:
       beasties: 0.4.2
       prettier: 3.8.1
-      react-router-dom: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-router-dom: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
       - bufferutil
       - canvas
       - supports-color
       - utf-8-validate
 
-  vite-react-ssg@0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3)):
+  vite-react-ssg@0.8.9(beasties@0.4.2)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react-router-dom@7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(vite@8.0.10(@types/node@24.10.1)(esbuild@0.27.2)(jiti@2.7.0)(terser@5.44.1)(yaml@2.8.3)):
     dependencies:
       fs-extra: 11.3.2
       html5parser: 2.0.2
@@ -18904,7 +18915,7 @@ snapshots:
     optionalDependencies:
       beasties: 0.4.2
       prettier: 3.8.1
-      react-router-dom: 6.30.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-router-dom: 7.15.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
       - bufferutil
       - canvas
