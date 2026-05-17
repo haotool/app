@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-05-16T12:00:24.188Z",
-  "updateTime": "2026/05/16 21:00:24",
+  "timestamp": "2026-05-17T01:23:59.597Z",
+  "updateTime": "2026/05/17 10:23:59",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -10,7 +10,7 @@
       "currency": "USD",
       "base": 1500,
       "buy": 1500,
-      "sell": 1489,
+      "sell": 1486,
       "spbuy": 1526.25,
       "spsell": 1473.75
     },
@@ -18,7 +18,7 @@
       "currency": "JPY",
       "base": 944.73,
       "buy": 945,
-      "sell": 938,
+      "sell": 937,
       "spbuy": 961.26,
       "spsell": 928.2
     },
@@ -26,14 +26,14 @@
       "currency": "CNY",
       "base": 220.16,
       "buy": 217.5,
-      "sell": 216.7,
+      "sell": 216,
       "spbuy": 231.16,
       "spsell": 209.16
     },
     "EUR": {
       "currency": "EUR",
       "base": 1743.9,
-      "buy": 1738,
+      "buy": 1735,
       "sell": 1720,
       "spbuy": 1778.6,
       "spsell": 1709.2
@@ -41,16 +41,16 @@
     "HKD": {
       "currency": "HKD",
       "base": 191.56,
-      "buy": 189.7,
-      "sell": 188.5,
+      "buy": 189.4,
+      "sell": 188.6,
       "spbuy": 195.33,
       "spsell": 187.79
     },
     "TWD": {
       "currency": "TWD",
       "base": 47.5,
-      "buy": 45.5,
-      "sell": 45.35,
+      "buy": 45.8,
+      "sell": 45.3,
       "spbuy": 53.72,
       "spsell": 42.75
     },
@@ -74,7 +74,7 @@
       "currency": "PHP",
       "base": 24.38,
       "buy": 24.5,
-      "sell": 24.15,
+      "sell": 24.1,
       "spbuy": 26.81,
       "spsell": 22.39
     },
@@ -97,7 +97,7 @@
     "VND": {
       "currency": "VND",
       "base": 5.7,
-      "buy": 5.72,
+      "buy": 5.75,
       "sell": 5.5,
       "spbuy": 6.37,
       "spsell": 5.03
@@ -137,7 +137,7 @@
     "CAD": {
       "currency": "CAD",
       "base": 1090.95,
-      "buy": 1087,
+      "buy": 1084,
       "sell": 1075,
       "spbuy": 1112.44,
       "spsell": 1069.46
