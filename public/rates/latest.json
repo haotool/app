@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-05-18T22:41:00.378Z",
-  "updateTime": "2026/05/19 06:41:00",
+  "timestamp": "2026-05-18T23:47:52.978Z",
+  "updateTime": "2026/05/19 07:47:52",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
   "sourceUrl": "https://rate.bot.com.tw/xrt",
   "base": "TWD",
@@ -8,7 +8,7 @@
     "USD": 31.815,
     "HKD": 4.077,
     "GBP": 43.3,
-    "AUD": 23.01,
+    "AUD": 23.02,
     "CAD": 23.38,
     "SGD": 25.01,
     "CHF": 40.61,
@@ -60,12 +60,12 @@
     "AUD": {
       "name": "澳幣",
       "spot": {
-        "buy": 22.445,
-        "sell": 22.79
+        "buy": 22.455,
+        "sell": 22.8
       },
       "cash": {
-        "buy": 22.23,
-        "sell": 23.01
+        "buy": 22.24,
+        "sell": 23.02
       }
     },
     "CAD": {
