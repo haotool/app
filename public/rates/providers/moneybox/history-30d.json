@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-05-18T22:35:02.946Z",
+  "generatedAt": "2026-05-18T23:41:20.883Z",
   "snapshots": [
     {
       "date": "2026-05-19",
       "raw": {
-        "timestamp": "2026-05-18T22:35:02.805Z",
-        "updateTime": "2026/05/19 07:35:02",
+        "timestamp": "2026-05-18T23:41:20.516Z",
+        "updateTime": "2026/05/19 08:41:20",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -14,155 +14,155 @@
         "rates": {
           "USD": {
             "currency": "USD",
-            "base": 1492,
+            "base": 1491,
             "buy": 1500,
             "sell": 1488,
-            "spbuy": 1518.11,
-            "spsell": 1465.89
+            "spbuy": 1517.09,
+            "spsell": 1464.91
           },
           "JPY": {
             "currency": "JPY",
-            "base": 939.52,
+            "base": 938.71,
             "buy": 942,
             "sell": 936,
-            "spbuy": 955.96,
-            "spsell": 923.08
+            "spbuy": 955.13,
+            "spsell": 922.29
           },
           "CNY": {
             "currency": "CNY",
-            "base": 219.46,
+            "base": 218.94,
             "buy": 217,
             "sell": 216,
-            "spbuy": 230.43,
-            "spsell": 208.49
+            "spbuy": 229.88,
+            "spsell": 208
           },
           "EUR": {
             "currency": "EUR",
-            "base": 1739.6,
+            "base": 1738.13,
             "buy": 1734,
             "sell": 1720,
-            "spbuy": 1774.21,
-            "spsell": 1704.99
+            "spbuy": 1772.71,
+            "spsell": 1703.55
           },
           "HKD": {
             "currency": "HKD",
-            "base": 190.53,
+            "base": 190.41,
             "buy": 190,
             "sell": 189,
-            "spbuy": 194.28,
-            "spsell": 186.78
+            "spbuy": 194.16,
+            "spsell": 186.66
           },
           "TWD": {
             "currency": "TWD",
-            "base": 47.23,
+            "base": 47.2,
             "buy": 45.5,
             "sell": 45.4,
-            "spbuy": 53.41,
-            "spsell": 42.51
+            "spbuy": 53.38,
+            "spsell": 42.48
           },
           "SGD": {
             "currency": "SGD",
-            "base": 1167.4,
+            "base": 1166.53,
             "buy": 1170,
             "sell": 1155,
-            "spbuy": 1190.63,
-            "spsell": 1144.17
+            "spbuy": 1189.74,
+            "spsell": 1143.32
           },
           "THB": {
             "currency": "THB",
-            "base": 45.89,
+            "base": 45.86,
             "buy": 47,
             "sell": 45.2,
-            "spbuy": 48.18,
-            "spsell": 43.14
+            "spbuy": 48.15,
+            "spsell": 43.11
           },
           "PHP": {
             "currency": "PHP",
-            "base": 24.22,
+            "base": 24.17,
             "buy": 24.7,
             "sell": 24.2,
-            "spbuy": 26.64,
-            "spsell": 22.24
+            "spbuy": 26.58,
+            "spsell": 22.19
           },
           "MYR": {
             "currency": "MYR",
-            "base": 375.16,
+            "base": 374.91,
             "buy": 370,
             "sell": 362,
-            "spbuy": 402.92,
-            "spsell": 347.4
+            "spbuy": 402.65,
+            "spsell": 347.17
           },
           "IDR": {
             "currency": "IDR",
-            "base": 8.47,
+            "base": 8.46,
             "buy": 9.5,
             "sell": 8.45,
-            "spbuy": 9.31,
-            "spsell": 7.63
+            "spbuy": 9.3,
+            "spsell": 7.62
           },
           "VND": {
             "currency": "VND",
-            "base": 5.68,
+            "base": 5.66,
             "buy": 5.8,
             "sell": 5.55,
-            "spbuy": 6.35,
-            "spsell": 5.01
+            "spbuy": 6.32,
+            "spsell": 5
           },
           "AUD": {
             "currency": "AUD",
-            "base": 1069.91,
+            "base": 1069.49,
             "buy": 1065,
             "sell": 1058,
-            "spbuy": 1090.98,
-            "spsell": 1048.84
+            "spbuy": 1090.55,
+            "spsell": 1048.43
           },
           "GBP": {
             "currency": "GBP",
-            "base": 2004.5,
+            "base": 2003.01,
             "buy": 1995,
             "sell": 1977,
-            "spbuy": 2043.98,
-            "spsell": 1965.02
+            "spbuy": 2042.46,
+            "spsell": 1963.56
           },
           "RUB": {
             "currency": "RUB",
-            "base": 20.59,
+            "base": 20.58,
             "buy": 18.5,
             "sell": 16,
-            "spbuy": 22.54,
-            "spsell": 16.99
+            "spbuy": 22.53,
+            "spsell": 16.98
           },
           "CHF": {
             "currency": "CHF",
-            "base": 1902.82,
+            "base": 1901.18,
             "buy": 1910,
             "sell": 1875,
-            "spbuy": 1940.3,
-            "spsell": 1865.34
+            "spbuy": 1938.63,
+            "spsell": 1863.73
           },
           "CAD": {
             "currency": "CAD",
-            "base": 1086.08,
+            "base": 1085.31,
             "buy": 1085,
             "sell": 1077,
-            "spbuy": 1107.47,
-            "spsell": 1064.69
+            "spbuy": 1106.69,
+            "spsell": 1063.93
           },
           "NZD": {
             "currency": "NZD",
-            "base": 876.92,
+            "base": 876.26,
             "buy": 895,
             "sell": 855,
-            "spbuy": 894.19,
-            "spsell": 859.65
+            "spbuy": 893.52,
+            "spsell": 859
           },
           "AED": {
             "currency": "AED",
-            "base": 406.25,
-            "buy": 428.59,
+            "base": 405.97,
+            "buy": 428.29,
             "sell": 377,
-            "spbuy": 428.59,
-            "spsell": 378.22
+            "spbuy": 428.29,
+            "spsell": 377.96
           },
           "GFT": {
             "currency": "GFT",
