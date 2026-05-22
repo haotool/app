@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-05-19T06:56:46.889Z",
+  "updatedAt": "2026-05-22T06:57:30.674Z",
   "generatedBy": "scripts/lighthouse-production.mjs",
   "status": "active",
   "runs": 3,
@@ -11,19 +11,19 @@
       "path": "/",
       "median": {
         "performanceScore": 97,
-        "lcpMs": 781.25,
-        "inpMs": 55,
+        "lcpMs": 794.02,
+        "inpMs": 47,
         "cls": 0.06
       },
       "runs": [
         {
           "run": 1,
-          "performanceScore": 95,
-          "lcpMs": 831.31,
-          "inpMs": 121,
-          "cls": 0.069,
+          "performanceScore": 96,
+          "lcpMs": 891.64,
+          "inpMs": 55,
+          "cls": 0.061,
           "lighthouseScore": {
-            "performance": 0.95,
+            "performance": 0.96,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -32,8 +32,8 @@
         {
           "run": 2,
           "performanceScore": 97,
-          "lcpMs": 737.2,
-          "inpMs": 55,
+          "lcpMs": 794.02,
+          "inpMs": 47,
           "cls": 0.06,
           "lighthouseScore": {
             "performance": 0.97,
@@ -44,12 +44,12 @@
         },
         {
           "run": 3,
-          "performanceScore": 99,
-          "lcpMs": 781.25,
-          "inpMs": 46,
-          "cls": 0.06,
+          "performanceScore": 98,
+          "lcpMs": 738.33,
+          "inpMs": 43,
+          "cls": 0,
           "lighthouseScore": {
-            "performance": 0.99,
+            "performance": 0.98,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -60,17 +60,17 @@
     "faq-": {
       "path": "/faq/",
       "median": {
-        "performanceScore": 98,
-        "lcpMs": 755.09,
-        "inpMs": 22,
+        "performanceScore": 99,
+        "lcpMs": 783.7,
+        "inpMs": 21,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
           "performanceScore": 98,
-          "lcpMs": 762.42,
-          "inpMs": 25,
+          "lcpMs": 747.81,
+          "inpMs": 21,
           "cls": 0,
           "lighthouseScore": {
             "performance": 0.98,
@@ -81,12 +81,12 @@
         },
         {
           "run": 2,
-          "performanceScore": 98,
-          "lcpMs": 745.08,
-          "inpMs": 20,
+          "performanceScore": 99,
+          "lcpMs": 783.7,
+          "inpMs": 30,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.98,
+            "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -94,12 +94,12 @@
         },
         {
           "run": 3,
-          "performanceScore": 98,
-          "lcpMs": 755.09,
-          "inpMs": 22,
+          "performanceScore": 99,
+          "lcpMs": 789.11,
+          "inpMs": 21,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.98,
+            "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -110,20 +110,20 @@
     "about-": {
       "path": "/about/",
       "median": {
-        "performanceScore": 98,
-        "lcpMs": 773.49,
-        "inpMs": 24,
+        "performanceScore": 99,
+        "lcpMs": 758.43,
+        "inpMs": 20,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
-          "performanceScore": 98,
-          "lcpMs": 773.49,
-          "inpMs": 25,
+          "performanceScore": 99,
+          "lcpMs": 758.43,
+          "inpMs": 22,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.98,
+            "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -131,12 +131,12 @@
         },
         {
           "run": 2,
-          "performanceScore": 98,
-          "lcpMs": 713.1,
-          "inpMs": 20,
+          "performanceScore": 99,
+          "lcpMs": 712.86,
+          "inpMs": 19,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.98,
+            "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
@@ -144,12 +144,12 @@
         },
         {
           "run": 3,
-          "performanceScore": 98,
-          "lcpMs": 797.1,
-          "inpMs": 24,
+          "performanceScore": 99,
+          "lcpMs": 773.62,
+          "inpMs": 20,
           "cls": 0,
           "lighthouseScore": {
-            "performance": 0.98,
+            "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
             "seo": 0.92
