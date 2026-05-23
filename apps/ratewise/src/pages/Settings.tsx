@@ -1,24 +1,3 @@
-/**
- * Settings Page - ParkKeeper 風格設定頁面
- *
- * @description 應用程式設定頁面，支援 6 種風格切換
- *              採用 ParkKeeper 設計風格（圓潤卡片、風格預覽）
- *              SSOT: 風格定義來自 themes.ts
- *
- * 風格選項：
- * - Zen - 極簡專業（預設）
- * - Nitro - 深色科技感
- * - Kawaii - 可愛粉嫩
- * - Classic - 復古書卷
- * - Ocean - 海洋深邃
- * - Forest - 自然森林
- *
- * @reference ParkKeeper UI Design, themes.ts SSOT
- * @created 2026-01-15
- * @updated 2026-01-17 - 移除深色模式功能，簡化為僅風格切換
- * @version 4.0.0
- */
-
 import {
   Palette,
   Globe,
@@ -45,6 +24,7 @@ import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
+import { appPageTokens } from '../config/design-tokens';
 import type { RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
 
@@ -80,8 +60,6 @@ export default function Settings() {
     },
   ];
 
-  // 使用正規化後的語系（zh-Hant → zh-TW）
-  // @see i18n/index.ts - getResolvedLanguage()
   const currentLanguage = getResolvedLanguage();
 
   const handleLanguageChange = (lang: SupportedLanguage) => {
@@ -97,27 +75,26 @@ export default function Settings() {
         robots={pageSeo.robots}
       />
       <h1 className="sr-only">{pageSeo.title}</h1>
-      <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
+      <div className={appPageTokens.narrowShell}>
         {/* 介面風格區塊 */}
         <section className="mb-8">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <Palette className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.interfaceStyle')}
-            </h2>
+          <div className={appPageTokens.section.headerRow}>
+            <Palette className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.interfaceStyle')}</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {STYLE_OPTIONS.map((option) => (
               <motion.button
                 key={option.value}
+                type="button"
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
                 whileHover={segmentedSwitch.item.whileHover}
                 whileTap={segmentedSwitch.item.whileTap}
                 transition={transitions.instant}
                 className={`
-                  relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
+                  relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-lg
                   shadow-sm disabled:opacity-50
                   ${style === option.value ? 'ring-2 ring-offset-2 shadow-md' : ''}
                 `}
@@ -132,15 +109,15 @@ export default function Settings() {
                 aria-pressed={style === option.value}
                 aria-label={`${t(`styles.${option.value}` as Parameters<typeof t>[0])} ${t(`styles.${option.value}Desc` as Parameters<typeof t>[0])}`}
               >
-                {/* 裝飾圓形 */}
                 <motion.div
                   className="absolute top-0 right-0 w-16 h-16 opacity-15 -mr-4 -mt-4 rounded-full"
                   style={{ backgroundColor: option.previewAccent }}
-                  animate={{ scale: style === option.value ? segmentedSwitch.activeIconScale : 1 }}
+                  animate={{
+                    scale: style === option.value ? segmentedSwitch.activeIconScale : 1,
+                  }}
                   transition={transitions.spring}
                 />
 
-                {/* 選中指示器 */}
                 {style === option.value && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -149,16 +126,15 @@ export default function Settings() {
                     className="absolute top-2 right-2 rounded-full p-0.5"
                     style={{ backgroundColor: option.previewAccent }}
                   >
-                    <Check className="w-3 h-3 text-white" />
+                    <Check className="w-3 h-3 text-primary-foreground" />
                   </motion.div>
                 )}
 
-                {/* 內容 */}
                 <div className="flex flex-col items-start w-full relative z-10">
                   <span className="font-bold text-sm leading-tight">
                     {t(`styles.${option.value}` as Parameters<typeof t>[0])}
                   </span>
-                  <span className="text-[10px] opacity-60 leading-tight">
+                  <span className="text-xs font-medium leading-tight">
                     {t(`styles.${option.value}Desc` as Parameters<typeof t>[0])}
                   </span>
                 </div>
@@ -167,13 +143,11 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* 語言區塊 - SSOT 風格 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <Globe className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.language')}
-            </h2>
+        {/* 語言區塊 */}
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.section.headerRow}>
+            <Globe className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.language')}</h2>
           </div>
 
           <div className={segmentedSwitch.containerClass}>
@@ -182,6 +156,7 @@ export default function Settings() {
               return (
                 <motion.button
                   key={option.value}
+                  type="button"
                   onClick={() => handleLanguageChange(option.value)}
                   whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
                   whileTap={segmentedSwitch.item.whileTap}
@@ -191,7 +166,6 @@ export default function Settings() {
                   aria-pressed={isActive}
                   aria-label={option.label}
                 >
-                  {/* 滑動背景指示器 - SSOT layoutId 動畫 */}
                   {isActive && (
                     <motion.div
                       layoutId="language-indicator"
@@ -207,7 +181,7 @@ export default function Settings() {
                   >
                     {option.flag}
                   </motion.span>
-                  <span className="text-[10px] font-bold">{option.label}</span>
+                  <span className="text-xs font-bold">{option.label}</span>
                 </motion.button>
               );
             })}
@@ -215,12 +189,10 @@ export default function Settings() {
         </section>
 
         {/* 匯率模式區塊 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.rateMode')}
-            </h2>
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.section.headerRow}>
+            <TrendingUp className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.rateMode')}</h2>
           </div>
 
           <div className={segmentedSwitch.containerClass}>
@@ -229,6 +201,7 @@ export default function Settings() {
               return (
                 <motion.button
                   key={option.value}
+                  type="button"
                   onClick={() => setRateMode(option.value)}
                   whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
                   whileTap={segmentedSwitch.item.whileTap}
@@ -254,7 +227,7 @@ export default function Settings() {
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
                   </motion.span>
-                  <span className="text-[10px] font-bold relative z-10">
+                  <span className="relative z-10 text-xs font-bold">
                     {t(option.labelKey as Parameters<typeof t>[0])}
                   </span>
                 </motion.button>
@@ -262,10 +235,9 @@ export default function Settings() {
             })}
           </div>
 
-          {/* 說明文字 */}
-          <p className="text-[10px] opacity-50 mt-2 px-1 leading-relaxed">
+          <p className="mt-3 px-1 text-xs leading-relaxed font-medium text-center text-text-muted">
             {t(
-              RATE_MODE_OPTIONS.find((o) => o.value === rateMode)?.descKey as Parameters<
+              RATE_MODE_OPTIONS.find((option) => option.value === rateMode)?.descKey as Parameters<
                 typeof t
               >[0],
             )}
@@ -273,15 +245,13 @@ export default function Settings() {
         </section>
 
         {/* 儲存與快取區塊 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <Database className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.storageCache')}
-            </h2>
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.section.headerRow}>
+            <Database className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.storageCache')}</h2>
           </div>
 
-          <div className="card p-5">
+          <div className={appPageTokens.infoCard}>
             <div className="flex justify-between items-center mb-4">
               <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
                 {t('settings.dataSource')}
@@ -294,23 +264,22 @@ export default function Settings() {
               </span>
               <span className="text-lg font-black">{t('settings.fiveMinutes')}</span>
             </div>
-            <p className="text-[10px] mt-2 opacity-40 font-medium text-center">
+            <p className="text-xs mt-2 font-medium text-center text-text-muted">
               {t('settings.updateNote')}
             </p>
           </div>
         </section>
 
         {/* 資料管理區塊 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.dataManagement')}
-            </h2>
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.section.headerRow}>
+            <ShieldAlert className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.dataManagement')}</h2>
           </div>
 
-          <div className="card overflow-hidden">
+          <div className={appPageTokens.listCard}>
             <motion.button
+              type="button"
               onClick={resetTheme}
               disabled={!isLoaded}
               whileHover={segmentedSwitch.item.whileHover}
@@ -327,54 +296,34 @@ export default function Settings() {
         </section>
 
         {/* 支援與資訊區塊 */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-            <HelpCircle className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {t('settings.supportInfo')}
-            </h2>
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.section.headerRow}>
+            <HelpCircle className="h-3.5 w-3.5" />
+            <h2 className={appPageTokens.section.headerText}>{t('settings.supportInfo')}</h2>
           </div>
 
-          <div className="card overflow-hidden divide-y divide-border">
-            <Link
-              to="/faq/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+          <div className={`${appPageTokens.listCard} divide-y divide-border/50`}>
+            <Link to="/faq/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.faq')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              to="/guide/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+            <Link to="/guide/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              to="/about/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+            <Link to="/about/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.aboutUs')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              to="/privacy/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+            <Link to="/privacy/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.privacyPolicy')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              to="/open-data/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+            <Link to="/open-data/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.openDataApi')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <Link
-              to="/seo-tech/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
+            <Link to="/seo-tech/" className={appPageTokens.linkRow}>
               <span className="text-sm font-medium">{t('settings.seoTech')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
@@ -382,7 +331,7 @@ export default function Settings() {
               href={APP_INFO.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className={appPageTokens.linkRow}
             >
               <span className="text-sm font-medium">{t('settings.openSource')}</span>
               <ExternalLink className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
@@ -390,11 +339,31 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* 版本資訊 */}
-        <footer className="text-center mt-8 pb-4">
-          <p className="text-[10px] opacity-40">{t('settings.copyright')}</p>
-          <p className="text-xs font-mono opacity-60 mt-1">{getDisplayVersion()}</p>
-        </footer>
+        {/* 關於區塊 */}
+        <section className={appPageTokens.section.wrapper}>
+          <div className={appPageTokens.infoCard}>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">{t('settings.appVersion')}</span>
+                <span className="font-bold font-mono">{getDisplayVersion()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">{t('settings.designSystem')}</span>
+                <span className="font-bold">{t('settings.sixStylesSST')}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="opacity-60">{t('settings.techStack')}</span>
+                <span className="font-bold">{t('settings.reactTailwind')}</span>
+              </div>
+            </div>
+
+            <div className="mt-4 border-t border-border/50 pt-4">
+              <p className="text-xs text-center font-medium text-text-muted">
+                {t('settings.copyright')}
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

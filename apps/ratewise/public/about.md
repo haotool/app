@@ -12,7 +12,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 ## 資料方法與範圍
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 18 種貨幣。
-- 每 5 分鐘自動同步最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
+- 約每 5 分鐘檢查最新報價並同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種；實際時間依臺灣銀行資料、GitHub Actions 佇列與 CDN 快取而定。
 - 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
@@ -21,7 +21,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 - **PWA 離線使用**：Service Worker 預快取，無網路仍可換算。
 - **SSG 預渲染**：所有 SEO 頁面於 build 期產生靜態 HTML。
 - **結構化資料**：JSON-LD 包含 WebSite、Organization、SoftwareApplication、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣別頁）、HowTo、BreadcrumbList、Article、FAQPage（限 /faq/）、Dataset（開放資料）與 ImageObject。
-- **AI 友善**：robots.txt 允許 OpenAI / Anthropic / Perplexity / Google / Apple / DeepSeek / Mistral 等 39+ 主流 AI 爬蟲（四層治理）；提供 llms.txt、llms-full.txt、openapi.json 供 LLM 引用。
+- **機器可讀**：robots.txt 允許 OpenAI / Anthropic / Perplexity / Google / Apple / DeepSeek / Mistral 等 39+ 主流 AI 爬蟲（四層治理）；提供 llms.txt、llms-full.txt、openapi.json 供 LLM 工具引用。
 - **開放原始碼**：所有程式碼公開於 GitHub（https://github.com/haotool/app）。
 
 ## 作者
@@ -34,7 +34,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 1. 匯率數據來源是什麼？
 
-資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。
+資料來源為臺灣銀行官方牌告匯率，系統排程檢查並同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。
 
 ### 2. 免費使用嗎？需要帳號或有廣告嗎？
 
@@ -42,7 +42,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 3. 和一般匯率 App 有什麼不同？
 
-一般工具顯示中間價（買賣均值），本工具顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前就知道真正要付多少台幣。
+一般工具顯示中間價（買賣均值），本工具顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前先估算接近臨櫃牌告的台幣成本。
 
 ### 4. 如何聯絡開發者？
 
@@ -58,7 +58,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 7. HaoRate 是否支援 AI 搜尋引擎與 LLM 引用？
 
-robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、DeepSeekBot、MistralBot 等共 39+ 個）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
+robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、DeepSeekBot、MistralBot 等共 39+ 個）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），降低回答時混用中間價與牌告價的風險。
 
 ---
 

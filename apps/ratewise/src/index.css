@@ -19,16 +19,10 @@
 }
 
 /**
- * Modern Design System - ParkKeeper Style (SSOT)
+ * RateWise Design System (SSOT)
  *
- * @description 現代化設計系統，參考 ParkKeeper 設計風格
- *              6 種風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
- *              包含圖表專用 Design Token (SSOT for MiniTrendChart)
- *
- * @reference ParkKeeper UI Design, themes.ts SSOT
- * @created 2026-01-16
- * @updated 2026-01-17 - 移除深色模式，簡化為僅風格切換
- * @version 5.0.0
+ * @description 管理 6 種介面風格的 CSS Variables 與共用元件語法
+ * @reference DESIGN.md, themes.ts, design-tokens.ts
  */
 
 @layer base {
@@ -59,7 +53,7 @@
     /* Bottom Navigation Configuration */
     --nav-bottom-height: 56px;
     --nav-bottom-icon-size: 20px;
-    --nav-bottom-label-size: 8px;
+    --nav-bottom-label-size: 11px;
     --nav-bottom-indicator-width: 24px;
     --nav-bottom-indicator-height: 3px;
 
@@ -75,27 +69,39 @@
      Zen 風格 - 極簡專業（預設）
      禪意極簡，以 violet/blue 為圖表色調
      ======================================== */
-  /* 極簡風格：紫色為主色 */
+  /* 極簡風格：安靜的金融藍色系 */
   :root,
   [data-style='zen'] {
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
     --color-text-muted: 100 116 139;
-    --color-primary: 124 58 237; /* violet-600 - 紫色主色 */
-    --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
-    --color-accent: 139 92 246; /* violet-500 */
+    --color-primary: 37 99 235; /* blue-600 */
+    --color-primary-foreground: 255 255 255;
+    --color-secondary: 14 165 233; /* sky-500 */
+    --color-accent: 59 130 246; /* blue-500 */
     --color-border: 226 232 240;
-    --color-info: 14 165 233;
+    --color-overlay: 2 6 23;
+    --color-info: 8 145 178;
 
     /* 圖表專用 Token (SSOT) */
-    --color-chart-line: 139 92 246; /* violet-500 */
-    --color-chart-area-top: 139 92 246; /* violet-500 */
-    --color-chart-area-bottom: 59 130 246; /* blue-500 */
+    --color-chart-line: 37 99 235; /* blue-600 */
+    --color-chart-area-top: 59 130 246; /* blue-500 */
+    --color-chart-area-bottom: 14 165 233; /* sky-500 */
 
     /* 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
-    --color-surface-elevated: 248 250 252; /* slate-50 - 微灰底色 */
-    --color-surface-sunken: 241 245 249; /* slate-100 - 下沉區域 */
+    --color-surface-elevated: 246 249 252;
+    --color-surface-sunken: 239 244 248;
+    --color-surface-soft: var(--color-surface-elevated);
+    --color-surface-border: var(--color-border);
+    --color-background-secondary: var(--color-surface);
+    --color-background-tertiary: var(--color-surface-elevated);
+    --color-border-secondary: var(--color-border);
+    --color-input: var(--color-surface);
+    --color-input-border: var(--color-border);
+    --color-sidebar: var(--color-surface);
+    --color-sidebar-foreground: var(--color-text);
+    --color-sidebar-active: var(--color-surface-elevated);
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -116,25 +122,25 @@
     --color-neutral-text-muted: var(--color-text-muted);
     --color-neutral-border: var(--color-border);
 
-    /* 舊版 primary 系列 - 紫色調 */
-    --color-primary-bg: 245 243 255; /* violet-50 */
-    --color-primary-light: 237 233 254; /* violet-100 */
-    --color-primary-hover: 109 40 217; /* violet-700 */
-    --color-primary-active: 196 181 253; /* violet-300 */
-    --color-primary-text-light: 167 139 250; /* violet-400 */
-    --color-primary-ring: 139 92 246; /* violet-500 */
-    --color-primary-dark: 91 33 182; /* violet-800 */
-    --color-primary-darker: 76 29 149; /* violet-900 */
-    --color-primary-text: 124 58 237; /* violet-600 */
+    /* 舊版 primary 系列 - 藍色調 */
+    --color-primary-bg: 239 246 255; /* blue-50 */
+    --color-primary-light: 219 234 254; /* blue-100 */
+    --color-primary-hover: 29 78 216; /* blue-700 */
+    --color-primary-active: 147 197 253; /* blue-300 */
+    --color-primary-text-light: 96 165 250; /* blue-400 */
+    --color-primary-ring: 59 130 246; /* blue-500 */
+    --color-primary-dark: 30 64 175; /* blue-800 */
+    --color-primary-darker: 30 58 138; /* blue-900 */
+    --color-primary-text: 37 99 235; /* blue-600 */
 
     /* 狀態色 */
-    --color-destructive: 239 68 68;
-    --color-destructive-hover: 220 38 38;
+    --color-destructive: 220 38 38;
+    --color-destructive-hover: 185 28 28;
     --color-destructive-foreground: 255 255 255;
     --color-success: 34 197 94;
-    --color-success-foreground: 255 255 255;
+    --color-success-foreground: 2 6 23;
     --color-warning: 245 158 11;
-    --color-warning-foreground: 255 255 255;
+    --color-warning-foreground: 2 6 23;
 
     /* 舊版 danger/success/warning 系列 */
     --color-danger-bg: 254 242 242;
@@ -267,11 +273,13 @@
     --color-background: 2 6 23; /* slate-950 */
     --color-surface: 15 23 42; /* slate-900 */
     --color-text: 255 255 255;
-    --color-text-muted: 100 116 139; /* slate-500 */
+    --color-text-muted: 203 213 225; /* slate-300 */
     --color-primary: 0 212 255; /* 霓虹藍 */
+    --color-primary-foreground: 2 6 23; /* slate-950 */
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 30 41 59; /* slate-800 */
+    --color-overlay: 0 0 0;
 
     /* 狀態語義色彩 - 霓虹風格 */
     --color-info: 56 189 248; /* sky-400 */
@@ -298,14 +306,47 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-primary);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 30 41 59;
+    --color-neutral-dark: 51 65 85;
+    --color-neutral-darker: 71 85 105;
     --color-neutral-text: var(--color-text);
     --color-neutral-text-secondary: 203 213 225; /* slate-300 - 算式文字高對比 */
-    --color-neutral-text-muted: 148 163 184; /* slate-400 - 預覽文字可讀 */
+    --color-neutral-text-muted: var(--color-text-muted);
+    --color-neutral-border: var(--color-border);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 239 68 68;
+    --color-destructive-foreground: 2 6 23;
+    --color-success-foreground: 2 44 34;
+    --color-warning-foreground: 2 6 23;
+    --color-danger-bg: 69 10 10;
+    --color-danger-light: 127 29 29;
+    --color-danger-hover: 239 68 68;
+    --color-danger-active: 248 113 113;
+    --color-danger-text: 252 165 165;
+    --color-danger: 248 113 113;
+    --color-success-bg: 6 78 59;
+    --color-success-light: 6 95 70;
+    --color-success-hover: 5 150 105;
+    --color-success-active: 16 185 129;
     --color-success-text: var(--color-success);
+    --color-warning-light: 120 53 15;
+    --color-warning-hover: 146 64 14;
+    --color-warning-active: 180 83 9;
     --color-warning-text: var(--color-warning);
+    --color-favorite-light: 120 53 15;
+    --color-favorite: 251 191 36;
+    --color-highlight-from: 15 23 42;
+    --color-highlight-to: 30 41 59;
+    --color-footer-from: var(--color-surface);
+    --color-footer-via: 30 41 59;
+    --color-footer-to: var(--color-background);
 
     /* Page Gradient Tokens - Nitro 深色科技漸層 */
     --color-page-gradient-from: 2 6 23; /* slate-950 */
@@ -402,12 +443,14 @@
     /* 核心語義色彩 */
     --color-background: 255 250 244; /* warm cream */
     --color-surface: 255 255 255;
-    --color-text: 142 124 128; /* muted pink-brown */
-    --color-text-muted: 180 160 165;
-    --color-primary: 255 105 180; /* hot pink */
-    --color-secondary: 236 72 153; /* pink-500 */
+    --color-text: 92 45 60; /* accessible deep rose */
+    --color-text-muted: 102 65 76;
+    --color-primary: 190 24 93; /* pink-700 */
+    --color-primary-foreground: 15 23 42;
+    --color-secondary: 190 24 93; /* pink-700 */
     --color-accent: 255 182 193; /* light pink */
     --color-border: 255 228 225; /* misty rose */
+    --color-overlay: 2 6 23;
 
     /* 狀態語義色彩 - 柔和可愛風 */
     --color-info: 147 197 253; /* blue-300 - 天空藍 */
@@ -428,14 +471,25 @@
     --color-primary-bg: 253 242 248; /* pink-50 */
     --color-primary-light: 252 231 243; /* pink-100 */
     --color-primary-hover: 219 39 119; /* pink-600 */
+    --color-primary-dark: 190 24 93; /* pink-700 */
+    --color-primary-darker: 157 23 77; /* pink-800 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-primary);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 248 113 113;
+    --color-destructive-foreground: 2 6 23;
+    --color-success-foreground: 2 6 23;
+    --color-warning-foreground: 2 6 23;
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
@@ -539,9 +593,11 @@
     --color-text: 67 20 7; /* dark brown - 深棕 */
     --color-text-muted: 120 80 60; /* 中棕 */
     --color-primary: 139 69 19; /* saddle brown - 馬鞍棕 */
+    --color-primary-foreground: 255 255 255;
     --color-secondary: 161 98 7; /* amber-700 - 琥珀 */
     --color-accent: 180 120 80; /* tan - 棕褐 */
     --color-border: 245 230 220; /* linen - 亞麻 */
+    --color-overlay: 67 20 7;
 
     /* 狀態語義色彩 - 復古調性 */
     --color-info: 59 130 246; /* blue-500 - 墨水藍 */
@@ -562,14 +618,25 @@
     --color-primary-bg: 254 243 199; /* amber-100 */
     --color-primary-light: 254 243 199; /* amber-100 */
     --color-primary-hover: 146 64 14; /* amber-800 */
+    --color-primary-dark: 120 53 15; /* amber-900 */
+    --color-primary-darker: 69 26 3; /* amber-950 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-primary);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 153 27 27;
+    --color-destructive-foreground: 255 255 255;
+    --color-success-foreground: 2 6 23;
+    --color-warning-foreground: 255 255 255;
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
@@ -673,9 +740,11 @@
     --color-text: 7 89 133; /* cyan-800 */
     --color-text-muted: 22 78 99; /* cyan-900 lighter */
     --color-primary: 6 182 212; /* cyan-500 */
+    --color-primary-foreground: 15 23 42;
     --color-secondary: 14 165 233; /* sky-500 */
     --color-accent: 20 184 166; /* teal-500 */
     --color-border: 186 230 253; /* sky-200 */
+    --color-overlay: 7 89 133;
 
     /* 狀態語義色彩 - 海洋調性 */
     --color-info: 56 189 248; /* sky-400 */
@@ -696,14 +765,25 @@
     --color-primary-bg: 207 250 254; /* cyan-100 */
     --color-primary-light: 207 250 254; /* cyan-100 */
     --color-primary-hover: 8 145 178; /* cyan-600 */
+    --color-primary-dark: 14 116 144; /* cyan-700 */
+    --color-primary-darker: 21 94 117; /* cyan-800 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-primary);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
-    --color-destructive: var(--color-error);
+    --color-destructive: 220 38 38;
+    --color-destructive-hover: 185 28 28;
+    --color-destructive-foreground: 255 255 255;
+    --color-success-foreground: 2 6 23;
+    --color-warning-foreground: 2 6 23;
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
@@ -807,9 +887,11 @@
     --color-text: 20 83 45; /* green-800 */
     --color-text-muted: 22 101 52; /* green-700 */
     --color-primary: 5 150 105; /* emerald-600 */
+    --color-primary-foreground: 15 23 42;
     --color-secondary: 22 163 74; /* green-600 */
     --color-accent: 101 163 13; /* lime-600 */
     --color-border: 187 247 208; /* green-200 */
+    --color-overlay: 20 83 45;
 
     /* 狀態語義色彩 - 自然調性 */
     --color-info: 59 130 246; /* blue-500 */
@@ -830,14 +912,25 @@
     --color-primary-bg: 209 250 229; /* emerald-100 */
     --color-primary-light: 209 250 229; /* emerald-100 */
     --color-primary-hover: 4 120 87; /* emerald-700 */
+    --color-primary-dark: 6 95 70; /* emerald-800 */
+    --color-primary-darker: 6 78 59; /* emerald-900 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-primary);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 185 28 28;
+    --color-destructive-foreground: 255 255 255;
+    --color-success-foreground: 2 6 23;
+    --color-warning-foreground: 2 6 23;
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
@@ -1025,7 +1118,7 @@ body {
     min-height: 100dvh;
   }
 
-  /* 隱藏滾動條但保留滾動功能（ParkKeeper 風格） */
+  /* 隱藏滾動條但保留滾動功能 */
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -1132,7 +1225,7 @@ body {
 }
 
 /**
- * 現代化元件樣式（ParkKeeper 風格）
+ * 共用元件樣式（RateWise SSOT）
  */
 @layer components {
   /* ========================================
@@ -1159,12 +1252,15 @@ body {
   /* 現代化卡片 */
   .card {
     background-color: rgb(var(--color-surface));
-    border-radius: 1.5rem;
+    border-radius: 0.5rem;
     border: 1px solid rgb(var(--color-border) / 0.5);
     box-shadow:
       0 1px 2px 0 rgb(0 0 0 / 0.03),
       0 1px 3px 0 rgb(0 0 0 / 0.05);
-    transition: all 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
   }
 
   .card:hover {
@@ -1177,10 +1273,13 @@ body {
   .btn-primary {
     background-color: rgb(var(--color-primary));
     color: rgb(var(--color-background));
-    border-radius: 1rem;
+    border-radius: 0.5rem;
     padding: 0.75rem 1.5rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
   }
 
   .btn-primary:hover {
@@ -1192,7 +1291,7 @@ body {
     transform: translateY(0);
   }
 
-  /* 陰影層級（ParkKeeper 風格） */
+  /* 陰影層級（產品殼層） */
   .shadow-elevation-1 {
     box-shadow:
       0 1px 2px 0 rgb(0 0 0 / 0.03),
@@ -1288,6 +1387,15 @@ body {
   .skeleton-page {
     background-color: rgb(var(--color-background));
     min-height: 100vh;
+  }
+
+  /* Lightweight Charts 會注入 TradingView attribution link；放大互動面但保留原圖示比例。 */
+  #tv-attr-logo {
+    align-items: center !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
   }
 
   /* 骨架屏卡片容器 */

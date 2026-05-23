@@ -2,24 +2,9 @@ import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * PullToRefreshIndicator - Visual feedback component for pull-to-refresh
+ * PullToRefreshIndicator
  *
- * 品牌對齊風格 (Brand Aligned - Cotton Candy inspired):
- * - 柔和藍紫漸變 (soft blue-indigo-purple gradient)
- * - 參考 UpdatePrompt 的棉花糖風格但無 emoji
- * - 超大圓角 (32px) 打造柔和感
- * - 精緻玻璃擬態效果
- * - 品牌藍紫基調 (與主應用一致)
- * - Smooth rotation animation based on pull distance
- * - Progressive text states (clean, professional)
- *
- * States:
- * - Pulling: "下拉重新整理" (indigo-400)
- * - Ready: "放開以重新整理" (indigo-600)
- * - Refreshing: "重新整理中..." (indigo-500)
- *
- * Design: UpdatePrompt 棉花糖風格 + 品牌藍紫配色
- * Updated: 2025-10-22 - 棉花糖風格統一，無 emoji
+ * 提供下拉重新整理的狀態回饋，視覺語法與目前通知浮層一致。
  */
 
 interface PullToRefreshIndicatorProps {
@@ -60,28 +45,15 @@ export function PullToRefreshIndicator({
         transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out, transform 0.2s ease-out',
       }}
     >
-      {/* Glassmorphism Container - 使用 SSOT token */}
       <div
         className="
-          mt-4 px-6 py-3 rounded-[32px]
-          backdrop-blur-xl backdrop-saturate-150
-          bg-surface/90
-          border-2 border-primary/20
-          shadow-xl
+          mt-4 rounded-lg border border-border/70
+          bg-surface/95 px-6 py-3
+          shadow-lg
         "
-        style={{
-          boxShadow: `
-            0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 8px 10px -6px rgba(0, 0, 0, 0.1)
-          `,
-        }}
       >
         <div className="flex items-center gap-3">
-          {/* Animated Icon with subtle glow */}
           <div className="relative">
-            {/* Icon glow effect - 使用 SSOT token */}
-            <div className="absolute inset-0 rounded-full bg-primary/30 blur-md opacity-50" />
-            {/* Main icon */}
             <RefreshCw
               className={`
                 relative
@@ -109,16 +81,6 @@ export function PullToRefreshIndicator({
           </span>
         </div>
       </div>
-
-      {/* 裝飾性泡泡 (棉花糖風格) - 使用 SSOT Design Token */}
-      <div
-        className="absolute top-0 right-0 w-24 h-24 rounded-full bg-[rgb(var(--color-accent))]/10 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-[rgb(var(--color-primary))]/10 blur-3xl"
-        aria-hidden="true"
-      />
     </div>
   );
 }

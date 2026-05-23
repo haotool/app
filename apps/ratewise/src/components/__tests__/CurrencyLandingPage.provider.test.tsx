@@ -120,7 +120,7 @@ describe('ProviderComparisonCard 雙向匯率顯示', () => {
     });
     const card = screen.getByTestId('provider-comparison-card');
     // sell 率 46.00 不應出現在明洞換匯所欄（台銀欄的 1/cashSell 可能碰巧是 46.xx，但 46.00 精確值不會出現）
-    const providerCell = card.querySelector('.bg-green-50, .bg-green-950\\/20');
+    const providerCell = card.querySelector('.bg-success\\/10');
     expect(providerCell?.textContent).not.toContain('46.00');
   });
 

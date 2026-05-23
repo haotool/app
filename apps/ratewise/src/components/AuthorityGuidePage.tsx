@@ -4,6 +4,7 @@ import { PageNavHeader } from './PageNavHeader';
 import { SEOHelmet } from './SEOHelmet';
 import { AnswerCapsule } from './AnswerCapsule';
 import type { AuthorityGuideContent } from '../config/seo-metadata';
+import { contentPageTokens } from '../config/design-tokens';
 
 interface AuthorityGuidePageProps {
   page: AuthorityGuideContent;
@@ -22,9 +23,8 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
         ogType="article"
       />
 
-      <div className="min-h-screen">
-        <div className="container mx-auto max-w-5xl px-4 py-8">
-          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
@@ -32,32 +32,33 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             ]}
           />
 
-          <header className="mb-8">
-            <h1 className="mb-3 text-4xl font-bold text-text">{page.heading}</h1>
-            <p className="max-w-3xl text-base leading-7 text-text-muted">{page.intro}</p>
+          <header className={contentPageTokens.hero.wrapper}>
+            <p className={contentPageTokens.sectionHeader.eyebrow}>專題指南</p>
+            <h1 className={contentPageTokens.hero.title}>{page.heading}</h1>
+            <p className={contentPageTokens.intro}>{page.intro}</p>
           </header>
 
           <AnswerCapsule items={page.answerCapsule ?? []} />
 
-          <section className="card mb-6 p-6">
-            <h2 className="mb-4 text-2xl font-bold text-text">重點整理</h2>
-            <ul className="space-y-3 text-text-muted">
+          <section className={`${contentPageTokens.article.cardLoose} mb-6`}>
+            <h2 className={contentPageTokens.article.title}>重點整理</h2>
+            <ul className={contentPageTokens.article.list}>
               {page.highlights.map((highlight) => (
-                <li key={highlight} className="flex items-start gap-3">
-                  <span className="mt-2 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary" />
-                  <span className="leading-7">{highlight}</span>
+                <li key={highlight} className={contentPageTokens.article.listItem}>
+                  <span className={contentPageTokens.article.bullet} />
+                  <span className={contentPageTokens.article.paragraph}>{highlight}</span>
                 </li>
               ))}
             </ul>
           </section>
 
-          <div className="space-y-6">
+          <div className={contentPageTokens.section.stack}>
             {page.sections.map((section) => (
-              <section key={section.title} className="card p-6">
-                <h2 className="mb-3 text-2xl font-bold text-text">{section.title}</h2>
-                <div className="space-y-3 text-text-muted">
+              <section key={section.title} className={contentPageTokens.article.cardLoose}>
+                <h2 className={contentPageTokens.article.title}>{section.title}</h2>
+                <div className={contentPageTokens.article.body}>
                   {section.paragraphs.map((paragraph) => (
-                    <p key={paragraph} className="leading-7">
+                    <p key={paragraph} className={contentPageTokens.article.paragraph}>
                       {paragraph}
                     </p>
                   ))}
@@ -67,13 +68,13 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
           </div>
 
           {page.faqContent && page.faqContent.length > 0 && (
-            <section className="card mt-8 p-6">
-              <h2 className="mb-6 text-2xl font-bold text-text">常見問題</h2>
+            <section className={`${contentPageTokens.article.cardLoose} mt-8`}>
+              <h2 className={contentPageTokens.article.title}>常見問題</h2>
               <div className="space-y-4">
                 {page.faqContent.map((item) => (
                   <div key={item.question}>
                     <h3 className="mb-1 font-semibold text-text">{item.question}</h3>
-                    <p className="leading-7 text-text-muted">{item.answer}</p>
+                    <p className={contentPageTokens.article.paragraph}>{item.answer}</p>
                   </div>
                 ))}
               </div>
@@ -81,14 +82,14 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
           )}
 
           {page.relatedGuides && page.relatedGuides.length > 0 && (
-            <section className="card mt-8 p-6">
-              <h2 className="mb-4 text-xl font-semibold text-text">相關攻略</h2>
+            <section className={`${contentPageTokens.article.cardLoose} mt-8`}>
+              <h2 className={contentPageTokens.article.title}>相關攻略</h2>
               <div className="space-y-3">
                 {page.relatedGuides.map((guide) => (
                   <Link
                     key={guide.href}
                     to={guide.href}
-                    className="flex items-start gap-3 rounded-lg border border-border p-4 transition-colors hover:border-primary/30 hover:bg-primary/5"
+                    className={`flex items-start gap-3 ${contentPageTokens.surfaces.quietInteractive}`}
                   >
                     <div>
                       <p className="font-medium text-text">{guide.label}</p>
@@ -101,14 +102,14 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
           )}
 
           {page.relatedCurrencies && page.relatedCurrencies.length > 0 && (
-            <section className="card mt-8 p-6">
-              <h2 className="mb-4 text-xl font-semibold text-text">相關幣別</h2>
+            <section className={`${contentPageTokens.article.cardLoose} mt-8`}>
+              <h2 className={contentPageTokens.article.title}>相關幣別</h2>
               <div className="flex flex-wrap gap-2">
                 {page.relatedCurrencies.map((currency) => (
                   <Link
                     key={currency.code}
                     to={currency.href}
-                    className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                    className={contentPageTokens.links.pill}
                   >
                     {currency.label}
                   </Link>
@@ -117,20 +118,14 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             </section>
           )}
 
-          <section className="card mt-8 border-primary/20 bg-primary/5 p-6">
-            <h2 className="mb-2 text-xl font-semibold text-text">{page.ctaTitle}</h2>
+          <section className={`${contentPageTokens.article.cardLoose} mt-8`}>
+            <h2 className={contentPageTokens.article.title}>{page.ctaTitle}</h2>
             <p className="text-text-muted">{page.ctaDescription}</p>
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                to="/"
-                className="inline-flex items-center rounded-lg bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
-              >
+              <Link to="/" className={contentPageTokens.buttons.primary}>
                 開始換算
               </Link>
-              <Link
-                to="/faq/"
-                className="inline-flex items-center rounded-lg border border-primary/20 px-5 py-3 font-semibold text-primary transition-colors hover:bg-primary/5"
-              >
+              <Link to="/faq/" className={contentPageTokens.links.ctaSecondary}>
                 查看 FAQ
               </Link>
             </div>

@@ -194,6 +194,18 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('new NetworkOnly(');
   });
 
+  it('should cache both legacy and provider-scoped aggregate history routes', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain('/public/rates/history-30d.json');
+    expect(sourceCode).toContain('/public/rates/providers/moneybox/history-30d.json');
+    expect(sourceCode).toContain("cacheName: 'history-aggregate-cache'");
+  });
+
   // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）
   it('should use CacheFirst for JS/CSS static resources (hash-based filenames are immutable)', async () => {
     const fs = await import('node:fs/promises');

@@ -22,24 +22,29 @@ const navItems: NavItem[] = [
     icon: CreditCard,
   },
   {
-    path: '/multi',
+    path: '/multi/',
     labelKey: 'nav.multiCurrency',
     ariaLabelKey: 'nav.multiCurrencyFull',
     icon: Globe,
   },
   {
-    path: '/favorites',
+    path: '/favorites/',
     labelKey: 'nav.favorites',
     ariaLabelKey: 'nav.favoritesFull',
     icon: Star,
   },
   {
-    path: '/settings',
+    path: '/settings/',
     labelKey: 'nav.settings',
     ariaLabelKey: 'nav.settingsFull',
     icon: Settings,
   },
 ];
+
+function normalizeNavPath(path: string): string {
+  if (!path || path === '/') return '/';
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
 
 interface BottomNavigationItemProps {
   item: NavItem;
@@ -71,7 +76,7 @@ function BottomNavigationItem({
       {/* 觸控回饋背景（避免在 <a> 內使用 whileTap 產生 tabindex）。 */}
       <div
         className="
-          absolute inset-1 rounded-xl bg-primary/0
+          absolute inset-1 rounded-lg bg-primary/0
           transition-colors duration-75
           group-active:bg-primary/10
         "
@@ -80,8 +85,8 @@ function BottomNavigationItem({
       {/* 圖標（CSS transition 替代 motion，去除 vendor-motion 依賴） */}
       <div
         className={`
-          relative transition-all duration-200
-          ${isActive ? 'scale-110 opacity-100 text-primary' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
+          relative transition-[opacity,transform,color] duration-200
+          ${isActive ? 'scale-105 opacity-100 text-primary' : isPending ? 'opacity-80 scale-100' : 'opacity-[0.55] scale-100'}
           group-active:scale-90
         `}
       >
@@ -99,20 +104,18 @@ function BottomNavigationItem({
         )}
       </div>
 
-      {/* 標籤 - 8px */}
+      {/* 標籤 */}
       <span
         className={`
-          text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-200
-          ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
+          text-xs font-semibold uppercase tracking-[0.08em] transition-[opacity,transform,color] duration-200
+          ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-80 translate-y-px' : 'opacity-[0.55] translate-y-px'}
         `}
       >
         {t(item.labelKey)}
       </span>
 
       {/* 選中指示條（靜態，無滑動動畫） */}
-      {isActive && (
-        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]" />
-      )}
+      {isActive && <div className="absolute bottom-0 h-[3px] w-6 rounded-t-full bg-primary" />}
     </a>
   );
 }
@@ -142,16 +145,16 @@ export function BottomNavigation() {
     <nav
       className="
         fixed bottom-0 inset-x-0 z-30
-        bg-background/80 backdrop-blur-xl
-        border-t border-black/[0.02]
+        bg-background/92 backdrop-blur-md
+        border-t border-border/70
         md:hidden
         pb-[env(safe-area-inset-bottom,0px)]
       "
       aria-label={t('nav.mainNavigation')}
     >
-      <div className="flex h-14 max-w-md mx-auto relative px-4">
+      <div className="flex h-14 max-w-lg mx-auto relative px-4">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = normalizeNavPath(location.pathname) === normalizeNavPath(item.path);
           const isThisPending = isPending && pendingPath === item.path;
 
           return (

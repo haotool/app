@@ -10,7 +10,8 @@
  * - motion/react 入場／退場動畫與按鈕微互動
  * - i18n 國際化
  * - prefers-reduced-motion 無障礙支援
- * - 五狀態追蹤：offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed
+ * - 更新狀態追蹤：offlineReady / needRefresh / isUpdating / updateFailed
+ * - SW 註冊失敗只記錄診斷，不阻塞可用的網頁體驗
  * - offlineReady 僅自動消失，不顯示成功提示以避免首屏 CLS
  * - ARIA role 依緊急程度切換（status / alert）
  * - 定時器清理，防止記憶體洩漏
@@ -43,7 +44,6 @@ function UpdatePromptClient() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateFailed, setUpdateFailed] = useState(false);
-  const [registrationFailed, setRegistrationFailed] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoUpdateTriggeredRef = useRef(false);
@@ -57,7 +57,6 @@ function UpdatePromptClient() {
     onRegistered(r) {
       if (r) {
         registrationRef.current = r;
-        setRegistrationFailed(false);
         void r.update();
         intervalRef.current = setInterval(() => {
           void r.update();
@@ -66,7 +65,6 @@ function UpdatePromptClient() {
     },
     onRegisterError(error) {
       const errorObject = error instanceof Error ? error : new Error(String(error));
-      setRegistrationFailed(true);
       setOfflineReady(false);
       setNeedRefresh(false);
       setUpdateFailed(false);
@@ -132,7 +130,6 @@ function UpdatePromptClient() {
 
     autoUpdateTriggeredRef.current = true;
     setIsUpdating(true);
-    setRegistrationFailed(false);
     setUpdateFailed(false);
 
     void updateServiceWorker(true)
@@ -147,7 +144,6 @@ function UpdatePromptClient() {
 
   const handleUpdate = async () => {
     setIsUpdating(true);
-    setRegistrationFailed(false);
     setUpdateFailed(false);
     try {
       await updateServiceWorker(true);
@@ -158,21 +154,16 @@ function UpdatePromptClient() {
     }
   };
 
-  const handleReload = () => {
-    window.location.reload();
-  };
-
   const close = () => {
     setOfflineReady(false);
     setNeedRefresh(false);
     setUpdateFailed(false);
-    setRegistrationFailed(false);
   };
 
   // `offlineReady` 是首次安裝 SW 的低優先級成功狀態；若以 toast 顯示，Lighthouse
   // 會把通知入場視為 CLS。需要使用者注意的更新/失敗狀態仍保留提示。
-  const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;
-  const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
+  const shouldRender = needRefresh || isUpdating || updateFailed;
+  const isUrgent = needRefresh || updateFailed || isUpdating;
   const mobilePositionStyle = {
     '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
   } as CSSProperties;
@@ -203,8 +194,8 @@ function UpdatePromptClient() {
           <div
             className={`
               relative overflow-hidden pointer-events-none ${notificationTokens.borderRadius}
-              bg-gradient-to-r from-brand-from via-brand-via to-brand-to
-              border border-brand-border/60
+              ${notificationTokens.background.brand}
+              ${notificationTokens.background.brandBorder}
               ${notificationTokens.shadow}
             `}
           >
@@ -222,12 +213,11 @@ function UpdatePromptClient() {
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
                     <div
-                      className={`relative ${notificationTokens.icon.container} bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow`}
+                      className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-sm`}
                     >
                       <StatusIcon
                         offlineReady={offlineReady}
                         isUpdating={isUpdating}
-                        registrationFailed={registrationFailed}
                         updateFailed={updateFailed}
                         strokeWidth={notificationTokens.icon.strokeWidth}
                         className={notificationTokens.icon.svg}
@@ -238,23 +228,24 @@ function UpdatePromptClient() {
                   <div className="flex-1 min-w-0">
                     <h2
                       id="update-prompt-title"
-                      className="text-sm font-semibold text-brand-text-dark truncate"
+                      className={`text-sm font-semibold ${notificationTokens.text.brandTitle} truncate`}
                     >
                       <StatusTitle
                         offlineReady={offlineReady}
                         needRefresh={needRefresh}
                         isUpdating={isUpdating}
-                        registrationFailed={registrationFailed}
                         updateFailed={updateFailed}
                         t={t}
                       />
                     </h2>
-                    <p id="update-prompt-description" className="text-xs text-brand-text">
+                    <p
+                      id="update-prompt-description"
+                      className={`text-xs ${notificationTokens.text.brandDescription}`}
+                    >
                       <StatusDescription
                         offlineReady={offlineReady}
                         needRefresh={needRefresh}
                         isUpdating={isUpdating}
-                        registrationFailed={registrationFailed}
                         updateFailed={updateFailed}
                         t={t}
                       />
@@ -266,9 +257,7 @@ function UpdatePromptClient() {
                       offlineReady={offlineReady}
                       needRefresh={needRefresh}
                       isUpdating={isUpdating}
-                      registrationFailed={registrationFailed}
                       updateFailed={updateFailed}
-                      onReload={handleReload}
                       onUpdate={handleUpdate}
                       onClose={close}
                       t={t}
@@ -276,7 +265,7 @@ function UpdatePromptClient() {
                   </div>
                 </div>
 
-                {registrationFailed || updateFailed ? (
+                {updateFailed ? (
                   <SupportContactLinks
                     title={t('support.reportIssueLead')}
                     description={t('support.reportIssueHint')}
@@ -295,7 +284,6 @@ function UpdatePromptClient() {
 interface StatusIconProps {
   offlineReady: boolean;
   isUpdating: boolean;
-  registrationFailed: boolean;
   updateFailed: boolean;
   strokeWidth: number;
   className: string;
@@ -304,7 +292,6 @@ interface StatusIconProps {
 function StatusIcon({
   offlineReady,
   isUpdating,
-  registrationFailed,
   updateFailed,
   strokeWidth,
   className,
@@ -312,7 +299,7 @@ function StatusIcon({
   if (isUpdating) {
     return (
       <svg
-        className={`${className} text-brand-text animate-spin`}
+        className={`${className} text-primary animate-spin`}
         fill="none"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -336,13 +323,13 @@ function StatusIcon({
 
   return (
     <svg
-      className={`${className} text-brand-text`}
+      className={`${className} text-primary`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      {updateFailed || registrationFailed ? (
+      {updateFailed ? (
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -372,33 +359,18 @@ interface StatusTextProps {
   offlineReady: boolean;
   needRefresh: boolean;
   isUpdating: boolean;
-  registrationFailed: boolean;
   updateFailed: boolean;
   t: (key: string) => string;
 }
 
-function StatusTitle({
-  offlineReady,
-  isUpdating,
-  registrationFailed,
-  updateFailed,
-  t,
-}: StatusTextProps) {
-  if (registrationFailed) return <>{t('pwa.registrationFailedTitle')}</>;
+function StatusTitle({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
   if (isUpdating) return <>{t('pwa.updatingTitle')}</>;
   if (updateFailed) return <>{t('pwa.updateFailedTitle')}</>;
   if (offlineReady) return <>{t('pwa.offlineReadyTitle')}</>;
   return <>{t('pwa.needRefreshTitle')}</>;
 }
 
-function StatusDescription({
-  offlineReady,
-  isUpdating,
-  registrationFailed,
-  updateFailed,
-  t,
-}: StatusTextProps) {
-  if (registrationFailed) return <>{t('pwa.registrationFailedDescription')}</>;
+function StatusDescription({ offlineReady, isUpdating, updateFailed, t }: StatusTextProps) {
   if (isUpdating) return <>{t('pwa.updatingDescription')}</>;
   if (updateFailed) return <>{t('pwa.updateFailedDescription')}</>;
   if (offlineReady) return <>{t('pwa.offlineReadyDescription')}</>;
@@ -409,31 +381,18 @@ interface ActionButtonsProps {
   offlineReady: boolean;
   needRefresh: boolean;
   isUpdating: boolean;
-  registrationFailed: boolean;
   updateFailed: boolean;
-  onReload: () => void;
   onUpdate: () => Promise<void>;
   onClose: () => void;
   t: (key: string) => string;
 }
 
-const CTA_CLASS = `
-  pointer-events-auto
-  px-3 py-1.5 rounded-full text-xs font-medium
-  bg-gradient-to-r from-brand-button-from to-brand-button-to
-  text-white shadow-sm
-  hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-  hover:scale-[1.02] active:scale-[0.98]
-  transition-[color,background-color,border-color,transform] duration-200 ease-out
-  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-`;
+const CTA_CLASS = notificationTokens.actions.primary;
 
 function ActionButtons({
   needRefresh,
   isUpdating,
-  registrationFailed,
   updateFailed,
-  onReload,
   onUpdate,
   onClose,
   t,
@@ -442,17 +401,10 @@ function ActionButtons({
     return null;
   }
 
-  if (registrationFailed) {
-    return (
-      <button onClick={onReload} className={CTA_CLASS} aria-label={t('pwa.actionReload')}>
-        {t('pwa.actionReload')}
-      </button>
-    );
-  }
-
   if (updateFailed) {
     return (
       <button
+        type="button"
         onClick={() => void onUpdate()}
         className={CTA_CLASS}
         aria-label={t('pwa.actionRetry')}
@@ -465,6 +417,7 @@ function ActionButtons({
   if (needRefresh) {
     return (
       <button
+        type="button"
         onClick={() => void onUpdate()}
         className={CTA_CLASS}
         aria-label={t('pwa.actionUpdate')}
@@ -476,16 +429,9 @@ function ActionButtons({
 
   return (
     <button
+      type="button"
       onClick={onClose}
-      className="
-        pointer-events-auto
-        p-1.5 rounded-full
-        bg-brand-icon-from/80 text-brand-text
-        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
-        active:scale-[0.95]
-        transition-[color,background-color,transform] duration-200 ease-out
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-      "
+      className={notificationTokens.actions.icon}
       aria-label={t('pwa.actionClose')}
     >
       <svg

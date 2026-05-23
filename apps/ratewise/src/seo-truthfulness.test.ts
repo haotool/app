@@ -69,6 +69,47 @@ describe('SEO 內容真實性與 SSOT', () => {
     expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
   });
 
+  it('SEO 與機器可讀文案不得保留過度承諾或 AI-first 標語', () => {
+    const files = [
+      'src/config/seo-static.ts',
+      'src/config/seo-paths.ts',
+      'src/config/seo-metadata.ts',
+      'src/pages/OpenData.tsx',
+      'src/pages/SeoTech.tsx',
+      'src/pages/Guide.tsx',
+      'scripts/generate-llms-txt.mjs',
+      'scripts/generate-markdown-mirrors.mjs',
+      'scripts/generate-api-json.mjs',
+      'public/index.md',
+      'public/about.md',
+      'public/open-data.md',
+      'public/faq.md',
+      'public/llms.txt',
+      'public/llms-full.txt',
+      'public/api/latest.json',
+    ];
+
+    const riskyPatterns = [
+      /台灣最精準/,
+      /最精準/,
+      /精確估算/,
+      /無請求上限/,
+      /AI-Ready/,
+      /AI 友善/,
+      /每 5 分鐘自動同步/,
+      /每 5 分鐘自動更新/,
+      /每 5 分鐘自動抓取/,
+      /無速率限制/,
+    ];
+
+    for (const file of files) {
+      const content = read(file);
+      for (const pattern of riskyPatterns) {
+        expect(content, `${file} still contains ${pattern}`).not.toMatch(pattern);
+      }
+    }
+  });
+
   it('Google-Extended 說明應與 Google 官方 crawler 角色一致', () => {
     const seoMetadata = read('src/config/seo-metadata.ts');
     const aboutMarkdown = read('public/about.md');

@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Breadcrumb, type BreadcrumbItem } from './Breadcrumb';
+import { pageNavHeaderTokens } from '../config/design-tokens';
+import { cn } from '../utils/classnames';
 
 export interface PageNavHeaderProps {
   breadcrumbItems: BreadcrumbItem[];
@@ -30,27 +32,21 @@ export function PageNavHeader({
   };
 
   return (
-    <div
-      className={`sticky top-0 z-20 -mx-4 px-4 py-2.5 mb-6
-        bg-background/90 backdrop-blur-md
-        border-b border-border/50 ${className}`}
-    >
-      <div className="flex min-h-[44px] items-center gap-3">
+    <div data-testid="page-nav-header" className={cn(pageNavHeaderTokens.root, className)}>
+      <div className={pageNavHeaderTokens.row}>
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex shrink-0 items-center gap-1 cursor-pointer
-            text-sm font-medium text-primary
-            transition-colors hover:text-primary-hover"
+          className={pageNavHeaderTokens.backButton}
           aria-label={t('common.back')}
         >
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          <ChevronLeft className={pageNavHeaderTokens.backIcon} aria-hidden="true" />
           <span>{t('common.back')}</span>
         </button>
 
-        <span className="h-4 w-px bg-border/60 shrink-0" aria-hidden="true" />
+        <span className={pageNavHeaderTokens.separator} aria-hidden="true" />
 
-        <Breadcrumb items={breadcrumbItems} />
+        <Breadcrumb items={breadcrumbItems} className={pageNavHeaderTokens.breadcrumbSlot} />
       </div>
     </div>
   );

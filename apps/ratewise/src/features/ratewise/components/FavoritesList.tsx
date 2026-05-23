@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { contentPageTokens } from '../../../config/design-tokens';
 
 interface FavoritesListProps {
   favorites: CurrencyCode[];
@@ -18,7 +19,7 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
   const { t } = useTranslation();
 
   return (
-    <div className="bg-surface rounded-3xl shadow-xl p-6 border border-border/30">
+    <div className={contentPageTokens.surfaces.panel}>
       <div className="flex items-center gap-2 mb-4">
         <Star className="text-favorite" size={20} fill="currentColor" />
         <h2 className="text-xl font-bold text-text">{t('currencyList.favoriteCurrencies')}</h2>
@@ -27,7 +28,7 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
         {favorites.map((code) => (
           <div
             key={`fav-${code}`}
-            className="flex items-center justify-between p-3 bg-gradient-to-r from-primary-bg/50 to-primary-light/30 rounded-xl border border-primary/10"
+            className="flex items-center justify-between rounded-lg border border-border/70 bg-surface-elevated p-3"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{CURRENCY_DEFINITIONS[code].flag}</span>

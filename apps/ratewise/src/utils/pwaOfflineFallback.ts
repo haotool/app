@@ -11,8 +11,59 @@ export const EMERGENCY_OFFLINE_HTML = `<!doctype html>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>離線模式 - ${APP_INFO.name}</title>
     <meta name="robots" content="noindex,nofollow">
+    <script>
+      (function () {
+        var K = 'ratewise-theme';
+        var D = 'zen';
+        var A = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
+        function v(c) {
+          if (c === null || typeof c !== 'object' || Array.isArray(c) || c.constructor !== Object) return D;
+          if (!Object.prototype.hasOwnProperty.call(c, 'style')) return D;
+          var s = c.style;
+          return typeof s === 'string' && A.indexOf(s) !== -1 ? s : D;
+        }
+        try {
+          var t = localStorage.getItem(K);
+          document.documentElement.dataset.style = t ? v(JSON.parse(t)) : D;
+        } catch (e) {
+          document.documentElement.dataset.style = D;
+        }
+      })();
+    </script>
     <style>
-      :root { color-scheme: light; }
+      :root,
+      [data-style='zen'] {
+        color-scheme: light;
+        --rw-bg: 248 250 252;
+        --rw-surface: 255 255 255;
+        --rw-text: 15 23 42;
+        --rw-muted: 71 85 105;
+        --rw-border: 226 232 240;
+        --rw-primary: 37 99 235;
+        --rw-shadow: 15 23 42;
+      }
+      [data-style='nitro'] {
+        color-scheme: dark;
+        --rw-bg: 2 6 23;
+        --rw-surface: 15 23 42;
+        --rw-text: 255 255 255;
+        --rw-muted: 203 213 225;
+        --rw-border: 30 41 59;
+        --rw-primary: 103 232 249;
+        --rw-shadow: 0 0 0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-style]) {
+          color-scheme: dark;
+          --rw-bg: 2 6 23;
+          --rw-surface: 15 23 42;
+          --rw-text: 255 255 255;
+          --rw-muted: 203 213 225;
+          --rw-border: 30 41 59;
+          --rw-primary: 103 232 249;
+          --rw-shadow: 0 0 0;
+        }
+      }
       body {
         margin: 0;
         min-height: 100vh;
@@ -20,28 +71,28 @@ export const EMERGENCY_OFFLINE_HTML = `<!doctype html>
         align-items: center;
         justify-content: center;
         padding: 24px;
-        background: #f8fafc;
-        color: #0f172a;
+        background: rgb(var(--rw-bg));
+        color: rgb(var(--rw-text));
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
       .card {
         width: min(100%, 360px);
-        border: 1px solid #e2e8f0;
+        border: 1px solid rgb(var(--rw-border));
         border-radius: 16px;
-        background: #fff;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        background: rgb(var(--rw-surface));
+        box-shadow: 0 10px 30px rgb(var(--rw-shadow) / 0.08);
         padding: 24px 20px;
         text-align: center;
       }
       .icon { font-size: 40px; line-height: 1; margin-bottom: 12px; }
       h1 { margin: 0 0 12px; font-size: 20px; }
-      p { margin: 0; line-height: 1.65; color: #475569; }
+      p { margin: 0; line-height: 1.65; color: rgb(var(--rw-muted)); }
       button {
         margin-top: 16px;
         border: 0;
         border-radius: 999px;
-        background: #0f172a;
-        color: #fff;
+        background: rgb(var(--rw-primary));
+        color: rgb(var(--rw-bg));
         font: inherit;
         padding: 10px 16px;
       }

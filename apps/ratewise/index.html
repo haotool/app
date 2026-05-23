@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" content="#2563EB" />
 
     <!-- Cloudflare Rocket Loader 停用（與 CSP/Trusted Types 衝突） -->
     <meta name="cloudflare-rocket-loader" content="off" />
@@ -36,9 +36,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="__BRAND_SHORT__" />
 
-    <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
-    <link rel="preload" href="__BASE_PATH__logo.png" as="image" fetchpriority="high" />
-
     <!-- Resource Hints（僅保留實際使用的來源） -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
@@ -46,6 +43,24 @@
     <link rel="preconnect" href="https://static.cloudflareinsights.com" />
 
     <!-- PWA Recovery Bootstrap -->
+
+    <!-- App-only routes: 缺少尾斜線時會被靜態伺服器回退到首頁 HTML，先在 React 啟動前正規化。 -->
+    <script>
+      (function () {
+        var basePath = '__BASE_PATH__';
+        var normalizedBase = basePath === '/' ? '/' : basePath.replace(/\/?$/, '/');
+        var pathname = window.location.pathname;
+        if (pathname.indexOf(normalizedBase) !== 0) return;
+
+        var relativePath = pathname.slice(normalizedBase === '/' ? 1 : normalizedBase.length);
+        if (!relativePath || relativePath.endsWith('/')) return;
+
+        var appOnlyRoutes = ['multi', 'favorites', 'settings'];
+        if (appOnlyRoutes.indexOf(relativePath) === -1) return;
+
+        window.location.replace(pathname + '/' + window.location.search + window.location.hash);
+      })();
+    </script>
 
     <!-- Theme Initialization (防止 FOUC) -->
     <script>
@@ -98,7 +113,8 @@
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
-        background: #f8fafc;
+        background: var(--sk-bg, #f8fafc);
+        color: var(--sk-text, #0f172a);
         font-family:
           'Inter',
           'Noto Sans TC',
@@ -118,9 +134,9 @@
         --sk-surface: #ffffff;
         --sk-border: #e2e8f0;
         --sk-shimmer: #cbd5e1;
-        --sk-accent: rgba(139, 92, 246, 0.15);
-        --sk-accent-shimmer: rgba(139, 92, 246, 0.25);
-        --sk-text: #1e293b;
+        --sk-accent: rgba(37, 99, 235, 0.12);
+        --sk-accent-shimmer: rgba(59, 130, 246, 0.22);
+        --sk-text: #0f172a;
         --sk-text-muted: #64748b;
       }
       [data-style='nitro'] {
@@ -130,28 +146,28 @@
         --sk-shimmer: #334155;
         --sk-accent: rgba(14, 165, 233, 0.2);
         --sk-accent-shimmer: rgba(14, 165, 233, 0.35);
-        --sk-text: #f1f5f9;
-        --sk-text-muted: #94a3b8;
+        --sk-text: #ffffff;
+        --sk-text-muted: #cbd5e1;
       }
       [data-style='kawaii'] {
         --sk-bg: #fffaf4;
         --sk-surface: #ffffff;
-        --sk-border: #fce7f3;
+        --sk-border: #ffe4e1;
         --sk-shimmer: #fbcfe8;
         --sk-accent: rgba(244, 114, 182, 0.15);
         --sk-accent-shimmer: rgba(244, 114, 182, 0.25);
-        --sk-text: #1e293b;
-        --sk-text-muted: #64748b;
+        --sk-text: #5c2d3c;
+        --sk-text-muted: #66414c;
       }
       [data-style='classic'] {
         --sk-bg: #fffafb;
         --sk-surface: #ffffff;
-        --sk-border: #e7e5e4;
+        --sk-border: #f5e6dc;
         --sk-shimmer: #d6d3d1;
         --sk-accent: rgba(180, 83, 9, 0.12);
         --sk-accent-shimmer: rgba(180, 83, 9, 0.2);
-        --sk-text: #1c1917;
-        --sk-text-muted: #78716c;
+        --sk-text: #431407;
+        --sk-text-muted: #78503c;
       }
       [data-style='ocean'] {
         --sk-bg: #f0f9ff;
@@ -160,8 +176,8 @@
         --sk-shimmer: #7dd3fc;
         --sk-accent: rgba(6, 182, 212, 0.15);
         --sk-accent-shimmer: rgba(6, 182, 212, 0.25);
-        --sk-text: #0c4a6e;
-        --sk-text-muted: #0369a1;
+        --sk-text: #075985;
+        --sk-text-muted: #164e63;
       }
       [data-style='forest'] {
         --sk-bg: #f0fdf4;
@@ -377,7 +393,7 @@
     <!-- Structured Data managed by SEOHelmet component (prevents duplicate schemas) -->
     <!-- Title managed by SEOHelmet component (prevents duplicate titles) -->
   </head>
-  <body class="bg-slate-50">
+  <body>
     <noscript>
       <p>
         __BRAND_FULL__ 需要 JavaScript

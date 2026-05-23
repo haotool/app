@@ -1,7 +1,16 @@
 /** 幣別 SEO 頁面共用元件：17 組幣對頁 SSOT 渲染，含 JSON-LD、常見金額操作與旅遊提示 */
 
 import { Link } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
+import {
+  ArrowLeft,
+  HelpCircle,
+  BookOpen,
+  Sparkles,
+  Calculator,
+  Lightbulb,
+  Repeat2,
+  Scale,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
 import { PageNavHeader } from './PageNavHeader';
@@ -10,6 +19,7 @@ import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
+import { contentPageTokens } from '../config/design-tokens';
 import {
   buildAmountExchangeRateSpecificationJsonLd,
   buildRateDifferenceSentence,
@@ -112,7 +122,6 @@ export function CurrencyLandingPage({
   });
 
   const formatNum = (n: number) => n.toLocaleString('zh-TW');
-
   // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
   const converterHref =
     amount !== null
@@ -198,10 +207,8 @@ export function CurrencyLandingPage({
     <>
       <SEOHelmet {...seoProps} />
 
-      {/* Main container - PWA optimized with safe area handling */}
       <div className="min-h-full">
-        <div className="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
-          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
@@ -212,22 +219,18 @@ export function CurrencyLandingPage({
             ]}
           />
 
-          {/* Header Section */}
-          <header className="mb-6 sm:mb-8">
+          <header className={contentPageTokens.hero.wrapper}>
             <div className="flex items-start gap-3 sm:gap-4">
               <span className="text-4xl sm:text-5xl">{currencyFlag}</span>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text leading-tight">
+              <div className="min-w-0 flex-1">
+                <h1 className={contentPageTokens.hero.compactTitle}>
                   {isTwdToForeign
                     ? `台幣換${currencyName}匯率換算器`
                     : `${currencyName}對台幣匯率換算器`}
                 </h1>
-                <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
-                  {description}
-                </p>
-                {/* 更新時間戳：Perplexity 新鮮度信號，AI 引擎優先引用有明確更新時間的頁面。 */}
-                <p className="text-text-muted text-xs mt-2 flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                <p className={contentPageTokens.hero.description}>{description}</p>
+                <p className={contentPageTokens.hero.metaRow}>
+                  <span className={contentPageTokens.hero.statusDot} />
                   最後更新：
                   <time dateTime={SEO_RATE_EXAMPLES_DATE}>{SEO_RATE_EXAMPLES_DATE}</time>
                 </p>
@@ -235,126 +238,107 @@ export function CurrencyLandingPage({
             </div>
           </header>
 
-          {/* AEO/GEO 快速答案：AI 引擎直接引用的問答對，顯示在頁面頂部提升引用率。 */}
           <AnswerCapsule items={answerCapsule} />
 
-          {/* 金額換算結果卡（Wise-pattern）：?amount=X 存在時顯示靜態換算結果，爬蟲可索引。 */}
           {amount !== null && amountResult !== null && cashSell !== null && (
-            <section className="mb-6 sm:mb-8">
-              <div className="card p-4 sm:p-5 bg-primary/5 border border-primary/30">
-                <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-primary/60">
-                  <Calculator className="w-3.5 h-3.5" />
+            <section className={contentPageTokens.result.section}>
+              <div className={contentPageTokens.result.card}>
+                <div className={contentPageTokens.result.eyebrowRow}>
+                  <Calculator className="h-3.5 w-3.5" />
                   <span>換算結果（台銀現金賣出參考）</span>
                 </div>
-                <div className="flex items-baseline gap-2 flex-wrap mb-1">
-                  <span className="text-[10px] text-text-muted">
+                <div className={contentPageTokens.result.amountRow}>
+                  <span className={contentPageTokens.result.sourceAmount}>
                     {isTwdToForeign
                       ? `${formatNum(amount)} TWD`
                       : `${formatNum(amount)} ${currencyCode}`}
                   </span>
-                  <span className="text-text-muted text-sm">≈</span>
-                  <span className="text-2xl sm:text-3xl font-black text-primary">
+                  <span className={contentPageTokens.result.operator}>≈</span>
+                  <span className={contentPageTokens.result.value}>
                     {isTwdToForeign
                       ? `${formatNum(amountResult)} ${currencyCode}`
                       : `${formatNum(amountResult)} TWD`}
                   </span>
                 </div>
-                <p className="text-[10px] text-text-muted mb-4">
+                <p className={contentPageTokens.result.note}>
                   {isTwdToForeign
                     ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`
                     : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`}
                 </p>
-                <Link
-                  to={converterHref}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
-                >
+                <Link to={converterHref} className={contentPageTokens.buttons.primary}>
                   在換算器查看最新匯率
-                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
                 </Link>
               </div>
             </section>
           )}
 
-          {/* 精準換匯：為什麼看賣出價 */}
-          <section className="mb-6 sm:mb-8">
-            <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
+          <section className={contentPageTokens.section.block}>
+            <div className={contentPageTokens.callouts.warning}>
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">⚖️</span>
+                <div className={`${contentPageTokens.callouts.icon} bg-warning/15 text-warning`}>
+                  <Scale className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-bold text-text text-sm sm:text-base mb-2">
-                    為什麼 {APP_INFO.shortName} 比其他工具更精準？
+                <div className="min-w-0 flex-1">
+                  <h2 className={contentPageTokens.article.titleCompact}>
+                    為什麼牌告賣出價更接近臨櫃換匯成本？
                   </h2>
-                  <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
+                  <p className="mb-3 text-xs leading-relaxed text-text-muted sm:text-sm">
                     多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
                     {APP_INFO.shortName} 直接顯示臺灣銀行牌告的「
-                    <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
-                    {currencyName} 現鈔時實際要付的台幣金額。
+                    <strong className="text-text font-semibold">現金賣出</strong>
+                    」價格，代表你去銀行換 {currencyName} 現鈔時實際要付的台幣金額。
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/30 p-2 text-center">
-                      <div className="font-bold text-red-600 dark:text-red-400 mb-0.5">
-                        中間價（Google／XE）
-                      </div>
+                  <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className={`${contentPageTokens.callouts.danger} text-center`}>
+                      <div className="font-bold text-text mb-0.5">中間價（Google／XE）</div>
                       <div className="text-text-muted">買入與賣出的平均值</div>
                       <div className="text-text-muted mt-0.5">≠ 實際換匯金額</div>
                     </div>
-                    <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
-                      <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
+                    <div className={`${contentPageTokens.callouts.success} text-center`}>
+                      <div className="font-bold text-text mb-0.5">
                         賣出價（{APP_INFO.shortName}）
                       </div>
                       <div className="text-text-muted">臺灣銀行牌告實際報價</div>
                       <div className="text-text-muted mt-0.5">= 銀行實際收你的台幣</div>
                     </div>
                   </div>
-                  <p className="text-text-muted text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200/30">
-                    {rateDifferenceSentence}
-                  </p>
+                  <p className={contentPageTokens.callouts.note}>{rateDifferenceSentence}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Quick Action Card */}
-          <div className="card p-4 sm:p-5 mb-6 bg-primary text-white">
-            <div className="flex items-center gap-2 mb-3 opacity-80">
-              <Sparkles className="w-4 h-4" />
-              <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
+          <div className={`${contentPageTokens.article.card} mb-6`}>
+            <div className="mb-3 flex items-center gap-2 text-text-muted/70">
+              <Sparkles className="h-3.5 w-3.5 text-primary/70" />
+              <h2 className={contentPageTokens.sectionHeader.eyebrow}>立即換算</h2>
             </div>
-            <p className="text-sm sm:text-base mb-4 opacity-90">
+            <p className="mb-4 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
               立即查看{currencyName}
-              賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。
+              賣出價，以台銀實際牌告為準，非中間價，換匯前先估算接近臨櫃牌告的台幣成本。
             </p>
-            <Link
-              to={converterHref}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold text-sm transition-colors"
-            >
+            <Link to={converterHref} className={contentPageTokens.buttons.primary}>
               {isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`}
-              <ArrowLeft className="w-4 h-4 rotate-180" />
+              <ArrowLeft className="h-4 w-4 rotate-180" />
             </Link>
           </div>
 
-          {/* Highlights Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <BookOpen className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-                {currencyName}匯率重點
-              </h2>
+          <section className={contentPageTokens.section.block}>
+            <div className={contentPageTokens.sectionHeader.row}>
+              <BookOpen className="h-3.5 w-3.5" />
+              <h2 className={contentPageTokens.sectionHeader.eyebrow}>{currencyName}匯率重點</h2>
             </div>
 
-            <div className="card p-4 sm:p-5">
+            <div className={contentPageTokens.article.card}>
               <ul className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
                 {highlights.map((highlight, index) => (
                   <li
                     key={index}
-                    className="flex items-start gap-3 md:rounded-xl md:bg-surface md:p-3"
+                    className="flex items-start gap-3 md:rounded-lg md:bg-surface md:p-3"
                   >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                      {index + 1}
-                    </span>
-                    <span className="text-text text-sm sm:text-base leading-relaxed">
+                    <span className={contentPageTokens.article.numberBadge}>{index + 1}</span>
+                    <span className="text-sm leading-relaxed text-text sm:text-base">
                       {highlight}
                     </span>
                   </li>
@@ -363,25 +347,24 @@ export function CurrencyLandingPage({
             </div>
           </section>
 
-          {/* How To Steps Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">使用步驟</h2>
+          <section className={contentPageTokens.section.block}>
+            <div className={contentPageTokens.sectionHeader.row}>
+              <Sparkles className="h-3.5 w-3.5" />
+              <h2 className={contentPageTokens.sectionHeader.eyebrow}>使用步驟</h2>
             </div>
 
             <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
               {howToSteps.map((step) => (
                 <div
                   key={step.position}
-                  className="card p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
+                  className={`${contentPageTokens.article.card} flex items-start gap-3 sm:gap-4`}
                 >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground sm:h-12 sm:w-12 sm:text-xl">
                     {step.position}
                   </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">{step.name}</h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
+                  <div className="min-w-0 flex-1 pt-1">
+                    <h3 className="mb-1 text-sm font-bold text-text sm:text-base">{step.name}</h3>
+                    <p className="text-xs leading-relaxed text-text-muted sm:text-sm">
                       {step.text}
                     </p>
                   </div>
@@ -390,30 +373,29 @@ export function CurrencyLandingPage({
             </div>
           </section>
 
-          {/* Common Amounts Section */}
           {commonAmounts.length > 0 && (
-            <section className="mb-6 sm:mb-8">
-              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-                <Calculator className="w-3.5 h-3.5" />
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">常見金額換算</h2>
+            <section className={contentPageTokens.section.block}>
+              <div className={contentPageTokens.sectionHeader.row}>
+                <Calculator className="h-3.5 w-3.5" />
+                <h2 className={contentPageTokens.sectionHeader.eyebrow}>常見金額換算</h2>
               </div>
 
-              <div className="card p-4 sm:p-5">
-                <p className="text-text-muted text-xs sm:text-sm mb-4">
+              <div className={contentPageTokens.article.card}>
+                <p className="mb-4 text-xs text-text-muted sm:text-sm">
                   點擊常見金額，即可在本頁查看台銀現金賣出參考換算結果，或前往換算器取得最新即時匯率：
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {commonAmounts.map((entry) => (
                     // Wise-pattern：路徑型 URL（/usd-twd/500/），可被 SSG 預渲染，Googlebot 直接索引靜態 HTML。
                     <Link
                       key={entry.amount}
                       to={`${pathname.replace(/\/$/, '')}/${entry.amount}/`}
-                      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
+                      className={`${contentPageTokens.links.row} text-left`}
                     >
                       <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
                         {entry.question}
                       </h3>
-                      <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
+                      <ArrowLeft className="h-3.5 w-3.5 flex-shrink-0 rotate-180 text-text-muted transition-colors group-hover:text-primary" />
                     </Link>
                   ))}
                 </div>
@@ -421,17 +403,20 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* Travel Tip Section */}
           {travelTip && (
-            <section className="mb-6 sm:mb-8">
-              <div className="card p-4 sm:p-5 bg-amber-50 dark:bg-amber-950/20 border-amber-200/30">
+            <section className={contentPageTokens.section.block}>
+              <div className={contentPageTokens.callouts.warning}>
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl flex-shrink-0">💡</span>
+                  <div
+                    className={`${contentPageTokens.callouts.icon} h-9 w-9 bg-warning/15 text-warning`}
+                  >
+                    <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                  </div>
                   <div>
-                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">
+                    <h3 className="mb-1 text-sm font-bold text-text sm:text-base">
                       旅遊換匯小提示
                     </h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
+                    <p className="text-xs leading-relaxed text-text-muted sm:text-sm">
                       {travelTip}
                     </p>
                   </div>
@@ -440,28 +425,30 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* 替代換匯管道比較卡（明洞換匯所等） */}
           {alternativeProviders && alternativeProviders.length > 0 && (
-            <section className="mb-6 sm:mb-8" data-testid="provider-comparison-card">
-              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-                <span className="text-xs">💱</span>
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">換匯管道比較</h2>
+            <section
+              className={contentPageTokens.section.block}
+              data-testid="provider-comparison-card"
+            >
+              <div className={contentPageTokens.sectionHeader.row}>
+                <Repeat2 className="h-3.5 w-3.5" aria-hidden="true" />
+                <h2 className={contentPageTokens.sectionHeader.eyebrow}>換匯管道比較</h2>
               </div>
-              <div className="card p-4 sm:p-5">
-                <h3 className="font-bold text-text text-sm sm:text-base mb-3">
+              <div className={contentPageTokens.article.card}>
+                <h3 className="mb-3 text-sm font-bold text-text sm:text-base">
                   台銀 vs 現場換匯所比較
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {/* 臺灣銀行欄：TWD→KRW 顯示現金賣出；KRW→TWD 顯示估算買入率 */}
-                  <div className="rounded-xl bg-surface border border-border p-3">
-                    <div className="text-xs font-bold text-text-muted mb-1">
+                  <div className={contentPageTokens.callouts.neutral}>
+                    <div className="mb-1 text-xs font-bold text-text-muted">
                       {isTwdToForeign ? '臺灣銀行（現金賣出）' : '臺灣銀行（現金買入估算）'}
                     </div>
                     <div className="text-lg font-black text-text">
-                      {taiwanBankKrwPerTwd !== null ? taiwanBankKrwPerTwd.toFixed(2) : '—'}{' '}
+                      {taiwanBankKrwPerTwd !== null ? taiwanBankKrwPerTwd.toFixed(2) : '未提供'}{' '}
                       <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
                     </div>
-                    <div className="text-xs text-text-muted mt-1">
+                    <div className="mt-1 text-xs text-text-muted">
                       {isTwdToForeign
                         ? `${rateExample?.exampleTWD.toLocaleString()} TWD ≈ ${rateExample?.foreignAtCash.toLocaleString()} KRW`
                         : '估算值；以台銀牌告現金買入率為準'}
@@ -481,31 +468,26 @@ export function CurrencyLandingPage({
                         : null // KRW→TWD 方向不顯示台幣換算範例
                       : null;
                     return (
-                      <div
-                        key={provider.source}
-                        className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-3"
-                      >
-                        <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-1">
-                          {provider.name}
-                        </div>
-                        <div className="text-lg font-black text-green-700 dark:text-green-400">
+                      <div key={provider.source} className={contentPageTokens.callouts.success}>
+                        <div className="mb-1 text-xs font-bold text-text">{provider.name}</div>
+                        <div className="text-lg font-black text-text">
                           {displayRate.toFixed(2)}{' '}
                           <span className="text-xs font-normal text-text-muted">{rateLabel}</span>
                         </div>
                         {exampleAmount !== null && rateExample && (
-                          <div className="text-xs text-text-muted mt-1">
+                          <div className="mt-1 text-xs text-text-muted">
                             {rateExample.exampleTWD.toLocaleString()} TWD ≈{' '}
                             {exampleAmount.toLocaleString()} KRW
                           </div>
                         )}
-                        <div className="text-[10px] text-text-muted mt-2">
+                        <div className={`${contentPageTokens.article.finePrint} mt-2`}>
                           {provider.source} · {provider.rateDate}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-text-muted leading-relaxed">
+                <p className={contentPageTokens.article.finePrint}>
                   {isTwdToForeign
                     ? alternativeProviders[0]?.note
                     : `${alternativeProviders[0]?.name ?? '明洞換匯所'}亦提供韓元換台幣服務，現場持韓元現鈔可直接兌換。買入估算匯率，實際以換匯所現場報價為準。`}
@@ -514,22 +496,25 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* FAQ Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <HelpCircle className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">{faqTitle}</h2>
+          <section className={contentPageTokens.section.block}>
+            <div className={contentPageTokens.sectionHeader.row}>
+              <HelpCircle className="h-3.5 w-3.5" />
+              <h2 className={contentPageTokens.sectionHeader.eyebrow}>{faqTitle}</h2>
             </div>
 
-            <div className="space-y-3 md:max-w-3xl md:mx-auto">
+            <div className={contentPageTokens.article.faqStack}>
               {faqEntries.map((faq, index) => (
-                <details key={index} className="card group" open={index === 0}>
-                  <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface/50 transition-colors rounded-2xl">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <HelpCircle className="w-4 h-4" />
+                <details
+                  key={index}
+                  className={contentPageTokens.article.faqItem}
+                  open={index === 0}
+                >
+                  <summary className={contentPageTokens.article.faqSummary}>
+                    <div className={`${contentPageTokens.article.iconBadge} h-8 w-8`}>
+                      <HelpCircle className="h-4 w-4" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-text text-sm sm:text-base leading-snug pr-4">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="pr-4 text-sm font-bold leading-snug text-text sm:text-base">
                         {faq.question}
                       </h3>
                     </div>
@@ -537,20 +522,19 @@ export function CurrencyLandingPage({
                       ▼
                     </span>
                   </summary>
-                  <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 ml-11">
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                      {faq.answer}
-                    </p>
+                  <div className="ml-11">
+                    <p className={contentPageTokens.article.faqAnswer}>{faq.answer}</p>
                   </div>
                 </details>
               ))}
             </div>
           </section>
 
-          {/* 相關攻略（hub-and-spoke 內部鏈接）：依幣別方向提供匯率知識攻略連結 */}
           {relatedGuides.length > 0 && (
             <section className="mb-6">
-              <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider px-2 mb-3 flex items-center gap-2">
+              <h2
+                className={`${contentPageTokens.sectionHeader.row} ${contentPageTokens.sectionHeader.eyebrow}`}
+              >
                 <BookOpen className="w-4 h-4" />
                 相關攻略
               </h2>
@@ -559,7 +543,7 @@ export function CurrencyLandingPage({
                   <Link
                     key={guide.href}
                     to={guide.href}
-                    className="card p-4 sm:p-5 bg-surface border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+                    className={`group ${contentPageTokens.surfaces.quietInteractive} sm:p-5`}
                   >
                     <div className="flex items-center gap-3">
                       <BookOpen className="w-5 h-5 text-primary/60 flex-shrink-0 group-hover:text-primary transition-colors" />
@@ -579,9 +563,8 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* Data Source Notice */}
-          <footer className="text-center text-text-muted text-xs opacity-60">
-            <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
+          <footer className="text-center text-xs text-text-muted/70">
+            <p>資料來源：臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>

@@ -1,13 +1,3 @@
-/**
- * UI Showcase Page - Complete Component Gallery
- * UI 展示頁面 - 完整的組件庫
- *
- * @description Comprehensive showcase of all UI components,
- *              design tokens, and theme variations with live theme switching.
- *              完整展示所有 UI 組件、設計 Token 和主題變化，支援即時主題切換。
- * @version 3.0.0
- */
-
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Head } from 'vite-react-ssg';
@@ -52,10 +42,6 @@ import { getDisplayVersion } from '../config/version';
 import { APP_INFO } from '../config/app-info';
 import type { ConversionHistoryEntry } from '../features/ratewise/types';
 
-/**
- * Theme color swatch component
- * 主題色彩樣本組件
- */
 function ColorSwatch({
   name,
   cssVar,
@@ -66,7 +52,7 @@ function ColorSwatch({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border">
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
       <div
         className="w-12 h-12 rounded-lg shadow-sm border border-border"
         style={{ backgroundColor: `rgb(var(${cssVar}))` }}
@@ -74,16 +60,12 @@ function ColorSwatch({
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-text text-sm truncate">{name}</div>
         <div className="text-xs text-text-muted font-mono truncate">{cssVar}</div>
-        <div className="text-[10px] text-text-muted opacity-60 truncate">{description}</div>
+        <div className="truncate text-[11px] text-text-muted opacity-70">{description}</div>
       </div>
     </div>
   );
 }
 
-/**
- * Section wrapper component
- * 區塊包裝組件
- */
 function Section({
   title,
   icon: Icon,
@@ -104,10 +86,6 @@ function Section({
   );
 }
 
-/**
- * Theme style icons mapping
- * 主題風格圖示對應
- */
 const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
   nitro: Zap,
   kawaii: Sparkles,
@@ -118,7 +96,7 @@ const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
 };
 
 export default function UIShowcase() {
-  useTranslation(); // Initialize i18n context
+  useTranslation();
   const { showToast } = useToast();
   const { config, setStyle, isLoaded } = useAppTheme();
   const [activeTab, setActiveTab] = useState<'themes' | 'colors' | 'components' | 'skeletons'>(
@@ -129,7 +107,6 @@ export default function UIShowcase() {
     'offlineReady' | 'needRefresh' | 'isUpdating' | 'updateFailed' | null
   >(null);
 
-  // Sample history data for demo - using useMemo to avoid impure function calls during render
   const sampleHistory: ConversionHistoryEntry[] = useMemo(
     () => [
       {
@@ -138,7 +115,7 @@ export default function UIShowcase() {
         amount: '1000',
         result: '31.62',
         time: '今天 上午10:30',
-        timestamp: 1706140200000, // Fixed timestamp for demo
+        timestamp: 1706140200000,
       },
       {
         from: 'USD',
@@ -175,27 +152,24 @@ export default function UIShowcase() {
         }}
       />
 
-      {/* Offline Indicator - 真實固定定位（頂部） */}
       <OfflineIndicator forceOffline={forceOfflinePreview ? true : undefined} />
 
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="p-2 rounded-xl bg-surface border border-border hover:bg-primary/10 transition-colors"
+              className="rounded-lg border border-border bg-surface p-2 transition-colors hover:bg-surface-elevated"
             >
               <ArrowLeft size={20} className="text-text" />
             </Link>
             <div>
-              <h1 className="text-2xl font-black text-text">UI Showcase</h1>
+              <h1 className="text-2xl font-black text-text">介面展示</h1>
               <p className="text-sm text-text-muted">{APP_INFO.shortName} 組件庫展示</p>
             </div>
           </div>
         </header>
 
-        {/* Tab Navigation */}
         <nav className="card p-1.5">
           <div className="flex gap-1 overflow-x-auto">
             {[
@@ -205,11 +179,12 @@ export default function UIShowcase() {
               { id: 'skeletons' as const, label: '骨架屏', icon: Smartphone },
             ].map(({ id, label, icon: TabIcon }) => (
               <button
+                type="button"
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] whitespace-nowrap ${
                   activeTab === id
-                    ? 'bg-primary text-white shadow-md'
+                    ? 'border border-border/70 bg-surface-elevated text-text shadow-sm'
                     : 'text-text-muted hover:bg-surface'
                 }`}
               >
@@ -220,7 +195,6 @@ export default function UIShowcase() {
           </div>
         </nav>
 
-        {/* Themes Tab - Live Theme Switching */}
         {activeTab === 'themes' && (
           <div className="space-y-6">
             <Section title="主題風格切換" icon={Palette}>
@@ -235,28 +209,31 @@ export default function UIShowcase() {
 
                   return (
                     <button
+                      type="button"
                       key={styleKey}
                       onClick={() => setStyle(styleKey)}
                       disabled={!isLoaded}
                       className={`
-                        relative p-4 rounded-2xl border-2 transition-all duration-200
+                        relative rounded-lg border-2 p-4 transition-[background-color,border-color,box-shadow,transform] duration-200
                         ${
                           isActive
-                            ? 'border-primary bg-primary/10 shadow-lg scale-[1.02]'
-                            : 'border-border bg-surface hover:border-primary/50 hover:shadow-md'
+                            ? 'border-primary/30 bg-surface-elevated shadow-sm'
+                            : 'border-border bg-surface hover:border-primary/20 hover:bg-surface-elevated'
                         }
                         ${!isLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                       `}
                     >
                       {isActive && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                          <Check size={14} className="text-white" />
+                        <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-primary/20 bg-surface text-primary">
+                          <Check size={14} />
                         </div>
                       )}
                       <div className="flex flex-col items-center gap-2">
                         <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            isActive ? 'bg-primary text-white' : 'bg-surface-elevated text-primary'
+                          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-surface-elevated text-primary'
                           }`}
                         >
                           <StyleIcon size={24} />
@@ -272,19 +249,18 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Current Theme Preview */}
             <Section title="當前主題預覽" icon={Star}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-4 rounded-xl bg-primary text-white text-center">
+                <div className="rounded-lg bg-primary p-4 text-center text-primary-foreground">
                   <span className="text-sm font-bold">Primary</span>
                 </div>
-                <div className="p-4 rounded-xl bg-accent text-white text-center">
+                <div className="rounded-lg bg-accent p-4 text-center text-primary-foreground">
                   <span className="text-sm font-bold">Accent</span>
                 </div>
-                <div className="p-4 rounded-xl bg-success text-white text-center">
+                <div className="rounded-lg bg-success p-4 text-center text-success-foreground">
                   <span className="text-sm font-bold">Success</span>
                 </div>
-                <div className="p-4 rounded-xl bg-destructive text-white text-center">
+                <div className="rounded-lg bg-destructive p-4 text-center text-destructive-foreground">
                   <span className="text-sm font-bold">Destructive</span>
                 </div>
               </div>
@@ -297,7 +273,6 @@ export default function UIShowcase() {
           </div>
         )}
 
-        {/* Colors Tab */}
         {activeTab === 'colors' && (
           <div className="space-y-6">
             <Section title="主要色彩" icon={Palette}>
@@ -338,13 +313,11 @@ export default function UIShowcase() {
           </div>
         )}
 
-        {/* Components Tab */}
         {activeTab === 'components' && (
           <div className="space-y-6">
-            {/* Update Prompt Preview */}
             <Section title="PWA 更新通知" icon={RefreshCw}>
               <p className="text-sm text-text-muted mb-3">
-                PWA 更新通知的四種狀態展示，統一品牌漸變設計。
+                PWA 更新通知的四種狀態展示，統一使用通知 shared token。
                 <br />
                 <strong className="text-warning">通知會顯示在頁面底部中央的真實位置</strong>
               </p>
@@ -392,7 +365,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Offline Indicator Preview */}
             <Section title="離線指示器" icon={Bell}>
               <p className="text-sm text-text-muted mb-3">
                 強制顯示離線指示器，方便設計檢視。未強制時會使用真實網路狀態。
@@ -409,7 +381,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Buttons */}
             <Section title="按鈕組件" icon={Layout}>
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-3">
@@ -431,7 +402,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Toast Notifications */}
             <Section title="Toast 通知" icon={Bell}>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -465,7 +435,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Conversion History */}
             <Section title="轉換歷史" icon={Clock}>
               <p className="text-sm text-text-muted mb-3">
                 點擊卡片複製轉換結果，雙擊或長按重新轉換
@@ -478,7 +447,6 @@ export default function UIShowcase() {
               />
             </Section>
 
-            {/* Typography */}
             <Section title="文字排版" icon={Type}>
               <div className="space-y-3">
                 <h1 className="text-3xl font-black text-text">Heading 1 - 標題一</h1>
@@ -490,7 +458,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Cards */}
             <Section title="卡片樣式" icon={Layout}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="card p-4">
@@ -504,7 +471,6 @@ export default function UIShowcase() {
               </div>
             </Section>
 
-            {/* Icons */}
             <Section title="圖示展示" icon={Star}>
               <div className="flex flex-wrap gap-4">
                 {[
@@ -519,7 +485,7 @@ export default function UIShowcase() {
                 ].map(({ icon: IconComponent, name, color }) => (
                   <div
                     key={name}
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl bg-surface"
+                    className="flex flex-col items-center gap-1 rounded-lg bg-surface p-3"
                   >
                     <IconComponent size={24} className={color} />
                     <span className="text-xs text-text-muted">{name}</span>
@@ -530,39 +496,37 @@ export default function UIShowcase() {
           </div>
         )}
 
-        {/* Skeletons Tab */}
         {activeTab === 'skeletons' && (
           <div className="space-y-6">
             <Section title="主頁面骨架屏" icon={Smartphone}>
-              <div className="border border-border rounded-xl overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border">
                 <SkeletonLoader />
               </div>
             </Section>
 
             <Section title="設定頁面骨架屏" icon={Settings}>
-              <div className="border border-border rounded-xl overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border">
                 <SettingsSkeleton />
               </div>
             </Section>
 
             <Section title="收藏頁面骨架屏" icon={Star}>
-              <div className="border border-border rounded-xl overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border">
                 <FavoritesSkeleton />
               </div>
             </Section>
 
             <Section title="多幣別頁面骨架屏" icon={RefreshCw}>
-              <div className="border border-border rounded-xl overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border">
                 <MultiConverterSkeleton />
               </div>
             </Section>
           </div>
         )}
 
-        {/* Footer */}
         <footer className="text-center py-6 text-sm text-text-muted">
           <p>
-            {APP_INFO.shortName} UI Showcase {getDisplayVersion()}
+            {APP_INFO.shortName} 介面展示 {getDisplayVersion()}
           </p>
           <p className="text-xs opacity-60 mt-1">使用 SSOT Design Token 系統 | 支援 6 種主題風格</p>
         </footer>

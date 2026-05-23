@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
+import { contentPageTokens } from '../config/design-tokens';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, AUTHOR_PERSON, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
@@ -29,9 +30,10 @@ export default function About() {
         ogType="article"
       />
 
-      <div className="min-h-screen">
-        <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
+            fallbackHref="/settings/"
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               { label: t('settings.aboutUs'), href: '/about/' },
@@ -39,11 +41,12 @@ export default function About() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-text">關於 {APP_INFO.name}</h1>
-            <p className="text-text-muted">
+            <p className={contentPageTokens.sectionHeader.eyebrow}>產品資訊</p>
+            <h1 className="mb-2 mt-2 text-3xl font-bold text-text">關於 {APP_INFO.name}</h1>
+            <p className={contentPageTokens.intro}>
               專注提供台灣用戶更接近實際換匯情境的匯率資訊，而不是只顯示中間價。
             </p>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className={contentPageTokens.meta}>
               作者：
               <a
                 href={APP_INFO.threadsUrl}
@@ -99,26 +102,26 @@ export default function About() {
           <section className="card mb-6 p-6">
             <h2 className="mb-4 text-2xl font-bold text-text">技術與資料面能力</h2>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                <h3 className="mb-2 text-lg font-semibold text-primary">精準換算</h3>
+              <div className={contentPageTokens.surfaces.quiet}>
+                <h3 className="mb-2 text-lg font-semibold text-primary">情境換算</h3>
                 <p className="text-sm leading-relaxed text-text-muted">
                   單幣別換算、快速金額按鈕、計算機鍵盤、現金與即期切換、7~30 天趨勢圖。
                 </p>
               </div>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className={contentPageTokens.surfaces.quiet}>
                 <h3 className="mb-2 text-lg font-semibold text-primary">日常管理</h3>
                 <p className="text-sm leading-relaxed text-text-muted">
                   多幣別比較、收藏管理、拖曳排序、換算歷史、主題風格與三語介面設定。
                 </p>
               </div>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className={contentPageTokens.surfaces.quiet}>
                 <h3 className="mb-2 text-lg font-semibold text-primary">可驗證資料面</h3>
                 <p className="text-sm leading-relaxed text-text-muted">
                   提供 `latest.json`、`openapi.json`、`llms.txt` 與 `llms-full.txt`，方便開發者與 AI
                   agent 使用。
                 </p>
               </div>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className={contentPageTokens.surfaces.quiet}>
                 <h3 className="mb-2 text-lg font-semibold text-primary">PWA 能力</h3>
                 <p className="text-sm leading-relaxed text-text-muted">
                   可加入主畫面、支援離線讀取最近快取資料，重新連線後再同步最新匯率。
@@ -169,22 +172,22 @@ export default function About() {
                   href={APP_INFO.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-1 text-primary underline"
+                  className={`ml-1 ${contentPageTokens.links.inline}`}
                 >
                   {APP_INFO.github}
                 </a>
               </p>
               <p>
                 <strong className="text-text">延伸閱讀：</strong>
-                <Link to="/faq/" className="ml-1 text-primary underline">
+                <Link to="/faq/" className={`ml-1 ${contentPageTokens.links.inline}`}>
                   常見問題
                 </Link>
                 <span className="mx-1">·</span>
-                <Link to="/guide/" className="text-primary underline">
+                <Link to="/guide/" className={contentPageTokens.links.inline}>
                   使用指南
                 </Link>
                 <span className="mx-1">·</span>
-                <Link to="/seo-tech/" className="text-primary underline">
+                <Link to="/seo-tech/" className={contentPageTokens.links.inline}>
                   SEO 技術揭露
                 </Link>
               </p>

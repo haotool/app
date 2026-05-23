@@ -51,7 +51,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
    * @see src/index.css - 6 種風格的 CSS Variables 定義
    * @see Apple Calculator、UX Collective 最佳實踐
    *
-   * 🐛 修復：移除 transition-all，避免與 Motion 動畫衝突
+   * 🐛 修復：移除通用 transition，避免與 Motion 動畫衝突
    * @see Bug Report 2025-11-19 - 按鈕放大動畫未顯現
    *
    * 🔄 重構 2026-01-23: 分離運算符與等號樣式
@@ -96,7 +96,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
     }
 
     // 基礎樣式（應該不會到達這裡）
-    return 'calculator-key relative h-16 rounded-xl font-semibold select-none overflow-hidden';
+    return 'calculator-key relative h-16 rounded-lg font-semibold select-none overflow-hidden';
   };
 
   /**

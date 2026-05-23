@@ -27,6 +27,12 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { performFullRefresh } from '../utils/swUtils';
 import { APP_INFO } from '../config/app-info';
+import {
+  feedbackSurfaceTokens,
+  multiConverterLayoutTokens,
+  pageLayoutTokens,
+  rateWiseLayoutTokens,
+} from '../config/design-tokens';
 import { MailtoLink } from './MailtoLink';
 import { SupportContactLinks } from './SupportContactLinks';
 
@@ -47,22 +53,23 @@ function SkeletonTimeoutFallback() {
   };
 
   return (
-    <div className="p-6 flex items-center justify-center min-h-[60vh]">
-      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-sm w-full space-y-5 text-center">
+    <div className="flex min-h-[60vh] items-center justify-center p-6">
+      <div className="w-full max-w-sm space-y-5 rounded-lg border border-border/70 bg-surface p-8 text-center shadow-lg">
         <AlertCircle className="mx-auto text-warning" size={40} />
         <div>
           <h2 className="text-lg font-bold text-text mb-2">{t('errors.appLoadTimeout')}</h2>
           <p className="text-sm text-text-muted">{t('errors.appLoadTimeoutDesc')}</p>
         </div>
         <button
+          type="button"
           onClick={handleReload}
           disabled={isReloading}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-xl shadow-lg transition"
+          className={`${feedbackSurfaceTokens.actionButton} disabled:opacity-60`}
         >
           <RefreshCw size={18} className={isReloading ? 'animate-spin' : ''} />
           {isReloading ? t('errors.reloading') : t('errors.forceReload')}
         </button>
-        <SupportContactLinks title="若問題持續發生，請聯絡作者：" description="" />
+        <SupportContactLinks title={t('support.contactTitle')} description="" />
         <p className="text-xs text-text-muted">
           {t('errors.cacheHint')} <MailtoLink email={APP_INFO.email} className="underline" />
         </p>
@@ -80,6 +87,7 @@ function SkeletonTimeoutFallback() {
  *              內建 watchdog：客戶端顯示超過 10 秒自動轉為錯誤復原 UI
  */
 export const SkeletonLoader = () => {
+  const { t } = useTranslation();
   const [isTimedOut, setIsTimedOut] = useState(false);
   const isBrowser = typeof window !== 'undefined';
 
@@ -96,7 +104,7 @@ export const SkeletonLoader = () => {
   }
 
   return (
-    <div className="p-4 md:p-6" role="status" aria-live="polite">
+    <div className={rateWiseLayoutTokens.content.className} role="status" aria-live="polite">
       {/* 僅在 client 顯示輔助文案；SSG HTML 不注入通用 SEO 文字，避免壓過 route 主內容。 */}
       {isBrowser && (
         <div
@@ -109,28 +117,28 @@ export const SkeletonLoader = () => {
             clip: 'rect(0,0,0,0)',
           }}
         >
-          <p>{APP_INFO.name} 載入中。</p>
+          <p>{t('skeleton.appLoading')}</p>
         </div>
       )}
 
-      <div className="mx-auto max-w-md space-y-4">
+      <div className="mx-auto max-w-2xl space-y-4">
         {/* 來源貨幣輸入骨架 - 對應 SingleConverter 上半部 */}
         <div className="space-y-3">
           <div className="skeleton-shimmer h-4 w-20 rounded" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸入 */}
-            <div className="skeleton-shimmer h-14 w-full rounded-2xl" />
+            <div className="skeleton-shimmer h-14 w-full rounded-lg" />
           </div>
           {/* 快速金額按鈕 - 水平排列 */}
           <div className="flex gap-2 overflow-hidden">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl" />
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg" />
             ))}
           </div>
         </div>
 
         {/* 匯率卡片骨架 - 對應匯率顯示區塊 */}
-        <div className="skeleton-card rounded-xl p-4 space-y-3">
+        <div className="skeleton-card space-y-3 rounded-lg p-4">
           {/* 匯率類型切換器 */}
           <div className="flex justify-center">
             <div className="skeleton-shimmer h-7 w-28 rounded-full" />
@@ -141,7 +149,7 @@ export const SkeletonLoader = () => {
             <div className="skeleton-shimmer h-4 w-40 mx-auto rounded" />
           </div>
           {/* 迷你趨勢圖區域 */}
-          <div className="skeleton-bg h-20 rounded-xl" />
+          <div className="skeleton-bg h-20 rounded-lg" />
         </div>
 
         {/* 交換按鈕骨架 */}
@@ -154,18 +162,18 @@ export const SkeletonLoader = () => {
           <div className="skeleton-shimmer h-4 w-20 rounded" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸出 */}
-            <div className="skeleton-shimmer-accent h-14 w-full rounded-2xl" />
+            <div className="skeleton-shimmer-accent h-14 w-full rounded-lg" />
           </div>
           {/* 快速金額按鈕 - 水平排列 */}
           <div className="flex gap-2 overflow-hidden">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl" />
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg" />
             ))}
           </div>
         </div>
 
         {/* 加入歷史記錄按鈕骨架 */}
-        <div className="skeleton-shimmer-accent h-12 w-full rounded-xl" />
+        <div className="skeleton-shimmer-accent h-12 w-full rounded-lg" />
 
         {/* 資料來源骨架 - 對應底部小字 */}
         <div className="flex justify-center">
@@ -173,7 +181,7 @@ export const SkeletonLoader = () => {
         </div>
       </div>
 
-      {isBrowser ? <span className="sr-only">載入匯率資料中...</span> : null}
+      {isBrowser ? <span className="sr-only">{t('skeleton.ratesLoading')}</span> : null}
     </div>
   );
 };
@@ -229,7 +237,7 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
       </div>
 
       {/* 結果顯示 */}
-      <div className="skeleton-shimmer-accent h-16 rounded-xl" />
+      <div className="skeleton-shimmer-accent h-16 rounded-lg" />
     </div>
   );
 };
@@ -239,74 +247,95 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
  * 對應 Settings 頁面布局
  */
 export const SettingsSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div className="skeleton-page p-5 max-w-md mx-auto space-y-6" role="status" aria-live="polite">
-      {/* 介面風格區塊 */}
-      <section className="space-y-3">
-        <div className="skeleton-shimmer h-4 w-20 rounded" />
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="skeleton-shimmer h-20 rounded-xl" />
-          ))}
-        </div>
-      </section>
-
-      {/* 語言區塊 */}
-      <section className="space-y-3">
-        <div className="skeleton-shimmer h-4 w-12 rounded" />
-        <div className="skeleton-card p-1.5">
-          <div className="flex gap-1">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton-shimmer flex-1 h-16 rounded-2xl" />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 儲存與快取區塊 */}
-      <section className="space-y-3">
-        <div className="skeleton-shimmer h-4 w-24 rounded" />
-        <div className="skeleton-card p-5 space-y-4">
-          <div className="flex justify-between">
-            <div className="skeleton-shimmer h-4 w-24 rounded" />
-            <div className="skeleton-shimmer h-5 w-16 rounded" />
-          </div>
-          <div className="flex justify-between">
+    <div className={pageLayoutTokens.content.className} role="status" aria-live="polite">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] xl:items-start">
+        <div className="space-y-6">
+          {/* 介面風格區塊 */}
+          <section className="space-y-3">
             <div className="skeleton-shimmer h-4 w-20 rounded" />
-            <div className="skeleton-shimmer h-5 w-12 rounded" />
-          </div>
-        </div>
-      </section>
-
-      {/* 資料管理區塊（危險操作）— 對應 Settings.tsx ShieldAlert section */}
-      <section className="space-y-3">
-        <div className="skeleton-shimmer h-4 w-20 rounded" />
-        <div className="skeleton-card overflow-hidden">
-          <div
-            data-testid="skeleton-settings-danger-btn"
-            className="skeleton-shimmer h-12 w-full rounded-none"
-          />
-        </div>
-      </section>
-
-      {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（4 個連結列）*/}
-      <section className="space-y-3">
-        <div className="skeleton-shimmer h-4 w-28 rounded" />
-        <div className="skeleton-card overflow-hidden divide-y divide-border">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              data-testid="skeleton-settings-link"
-              className="px-5 py-4 flex items-center justify-between"
-            >
-              <div className="skeleton-shimmer h-4 w-24 rounded" />
-              <div className="skeleton-shimmer h-4 w-4 rounded" />
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="skeleton-shimmer h-20 rounded-lg" />
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <span className="sr-only">載入設定中...</span>
+          {/* 語言區塊 */}
+          <section className="space-y-3">
+            <div className="skeleton-shimmer h-4 w-12 rounded" />
+            <div className="skeleton-card p-1.5">
+              <div className="flex gap-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="skeleton-shimmer h-4 w-16 rounded" />
+            <div className="skeleton-card p-1.5">
+              <div className="flex gap-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-lg" />
+                ))}
+              </div>
+            </div>
+            <div className="skeleton-shimmer h-3 w-56 rounded" />
+          </section>
+        </div>
+
+        <div className="space-y-6">
+          {/* 儲存與快取區塊 */}
+          <section className="space-y-3">
+            <div className="skeleton-shimmer h-4 w-24 rounded" />
+            <div className="skeleton-card p-5 space-y-4">
+              <div className="flex justify-between">
+                <div className="skeleton-shimmer h-4 w-24 rounded" />
+                <div className="skeleton-shimmer h-5 w-16 rounded" />
+              </div>
+              <div className="flex justify-between">
+                <div className="skeleton-shimmer h-4 w-20 rounded" />
+                <div className="skeleton-shimmer h-5 w-12 rounded" />
+              </div>
+              <div className="mx-auto h-3 w-40 rounded skeleton-shimmer" />
+            </div>
+          </section>
+
+          {/* 資料管理區塊（危險操作）— 對應 Settings.tsx ShieldAlert section */}
+          <section className="space-y-3">
+            <div className="skeleton-shimmer h-4 w-20 rounded" />
+            <div className="skeleton-card overflow-hidden">
+              <div
+                data-testid="skeleton-settings-danger-btn"
+                className="skeleton-shimmer h-12 w-full rounded-none"
+              />
+            </div>
+          </section>
+
+          {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（7 個連結列）*/}
+          <section className="space-y-3">
+            <div className="skeleton-shimmer h-4 w-28 rounded" />
+            <div className="skeleton-card overflow-hidden divide-y divide-border">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div
+                  key={i}
+                  data-testid="skeleton-settings-link"
+                  className="flex items-center justify-between px-5 py-4"
+                >
+                  <div className="skeleton-shimmer h-4 w-24 rounded" />
+                  <div className="skeleton-shimmer h-4 w-4 rounded" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <span className="sr-only">{t('skeleton.settingsLoading')}</span>
     </div>
   );
 };
@@ -324,54 +353,82 @@ export const SettingsSkeleton = () => {
  *   - 幣別名稱（flex-1）→ 對應 code + name
  *   - 換算按鈕（flex-shrink-0）→ 對應「換算 →」按鈕區
  *
- * 舊版錯誤：左側為「拖曳手柄 w-4 h-8」→ 實際 UI 左側是 star(w-7)
+ * 先前骨架曾誤設為獨立拖曳手柄；實際 UI 左側為 star(w-7) 欄位。
  *
  * @see Favorites.tsx — 實際 UI 結構（star → flag+name → convert btn）
  * @see segmentedSwitch tokens — Tab 高度 py-3.5 + icon(18) + label(10) ≈ h-14
  */
 export const FavoritesSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
     <div
-      className="flex-1 px-3 sm:px-5 py-6 max-w-md mx-auto w-full"
+      className={`${pageLayoutTokens.content.className} flex-1`}
       role="status"
       aria-live="polite"
     >
-      {/* 頁籤切換器 — 對應 'card p-1.5' segmented switch，2 個 flex-1 tab */}
-      <div className="skeleton-card p-1.5 mb-6">
-        <div className="flex gap-1">
-          {[1, 2].map((i) => (
-            <div key={i} className="skeleton-shimmer flex-1 h-14 rounded-2xl" />
-          ))}
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20rem)] lg:items-start">
+        <div className="min-w-0">
+          {/* 頁籤切換器 — 對應 'card p-1.5' segmented switch，2 個 flex-1 tab */}
+          <div className="mb-6 skeleton-card p-1.5">
+            <div className="flex gap-1">
+              {[1, 2].map((i) => (
+                <div key={i} className="skeleton-shimmer h-14 flex-1 rounded-lg" />
+              ))}
+            </div>
+          </div>
+
+          {/* 貨幣清單 — 對應 'space-y-2'，每行 'card p-4 flex items-center gap-3' */}
+          <section className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="skeleton-card flex items-center gap-3 p-4">
+                <div
+                  data-testid="skeleton-star"
+                  className="flex w-7 flex-shrink-0 items-center justify-center"
+                >
+                  <div className="skeleton-shimmer h-5 w-5 rounded" />
+                </div>
+                <div className="skeleton-shimmer h-8 w-8 rounded-full flex-shrink-0" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="skeleton-shimmer h-4 w-16 rounded" />
+                  <div className="skeleton-shimmer h-3 w-24 rounded" />
+                </div>
+                <div className="skeleton-shimmer h-4 w-14 rounded flex-shrink-0" />
+              </div>
+            ))}
+          </section>
         </div>
+
+        <aside className="hidden lg:flex lg:flex-col lg:gap-4">
+          <section className="skeleton-card p-5">
+            <div className="skeleton-shimmer h-4 w-24 rounded" />
+            <div className="mt-4 space-y-3">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-lg border border-border/70 bg-surface px-4 py-3"
+                >
+                  <div className="skeleton-shimmer h-3 w-20 rounded" />
+                  <div className="skeleton-shimmer h-5 w-10 rounded" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="skeleton-card p-5">
+            <div className="space-y-2">
+              <div className="skeleton-shimmer h-3 w-full rounded" />
+              <div className="skeleton-shimmer h-3 w-4/5 rounded" />
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="skeleton-shimmer h-11 w-full rounded-lg" />
+              <div className="skeleton-shimmer h-11 w-full rounded-lg" />
+            </div>
+          </section>
+        </aside>
       </div>
 
-      {/* 貨幣清單 — 對應 'space-y-2'，每行 'card p-4 flex items-center gap-3' */}
-      <section className="space-y-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="skeleton-card p-4 flex items-center gap-3">
-            {/* 星號欄 — 對應 'w-7 flex-shrink-0 flex items-center justify-center'
-             *  Favorites.tsx 左側永遠是 star（固定裝飾或互動按鈕），非拖曳手柄
-             */}
-            <div
-              data-testid="skeleton-star"
-              className="w-7 flex-shrink-0 flex items-center justify-center"
-            >
-              <div className="skeleton-shimmer w-5 h-5 rounded" />
-            </div>
-            {/* 國旗 — 對應 'text-2xl w-8 text-center' emoji flag */}
-            <div className="skeleton-shimmer w-8 h-8 rounded-full flex-shrink-0" />
-            {/* 幣別代碼 + 名稱 — 對應 'flex-1 min-w-0' */}
-            <div className="flex-1 space-y-1.5 min-w-0">
-              <div className="skeleton-shimmer h-4 w-16 rounded" />
-              <div className="skeleton-shimmer h-3 w-24 rounded" />
-            </div>
-            {/* 換算按鈕區 — 對應 'px-2 py-1 flex-shrink-0' 的「換算 →」 */}
-            <div className="skeleton-shimmer h-4 w-14 rounded flex-shrink-0" />
-          </div>
-        ))}
-      </section>
-
-      <span className="sr-only">載入收藏中...</span>
+      <span className="sr-only">{t('skeleton.favoritesLoading')}</span>
     </div>
   );
 };
@@ -382,7 +439,7 @@ export const FavoritesSkeleton = () => {
  *
  * 結構設計原則（CLS 防止）：
  * - 完全鏡像實際 MultiConverter UI 的佈局層級
- * - 外層：flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full
+ * - 外層：使用 multiConverterLayoutTokens.content.className
  * - 卡片：skeleton-card p-4 flex-1 flex flex-col（對應 'card p-4 flex-1 flex flex-col'）
  * - 快速金額列：5 個 pill，對應 flex gap-2 mb-4 overflow-x-auto
  * - 貨幣清單：8 行，每行結構 star(w-6) | flag(w-7) | code+name | [right] amount+rate
@@ -391,12 +448,10 @@ export const FavoritesSkeleton = () => {
  * @see multiConverterLayoutTokens — SSOT 頁面佈局 token
  */
 export const MultiConverterSkeleton = () => {
+  const { t } = useTranslation();
+
   return (
-    <div
-      className="flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full"
-      role="status"
-      aria-live="polite"
-    >
+    <div className={multiConverterLayoutTokens.content.className} role="status" aria-live="polite">
       {/* 主卡片 — 對應 'card p-4 flex-1 flex flex-col' */}
       <div className="skeleton-card p-4 flex-1 flex flex-col">
         {/* 快速金額 pill 列 — 對應 'flex gap-2 mb-4 overflow-x-auto scrollbar-hide' */}
@@ -405,7 +460,7 @@ export const MultiConverterSkeleton = () => {
             <div
               key={i}
               data-testid="skeleton-quick-pill"
-              className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-xl"
+              className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg"
             />
           ))}
         </div>
@@ -416,7 +471,7 @@ export const MultiConverterSkeleton = () => {
             <div
               key={i}
               data-testid="skeleton-currency-row"
-              className="flex items-center px-3 py-2.5 rounded-xl"
+              className="flex items-center rounded-lg px-3 py-2.5"
             >
               {/* 星號欄 — 對應 'w-6 flex-shrink-0 flex items-center justify-center' */}
               <div className="w-6 flex-shrink-0 flex items-center justify-center">
@@ -439,7 +494,7 @@ export const MultiConverterSkeleton = () => {
         </div>
       </div>
 
-      <span className="sr-only">載入多幣別換算中...</span>
+      <span className="sr-only">{t('skeleton.multiConverterLoading')}</span>
     </div>
   );
 };

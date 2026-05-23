@@ -329,10 +329,13 @@ registerRoute(new NavigationRoute(handleNavigationRequest));
 registerRoute(
   ({ url }: { url: URL }) =>
     url.pathname.includes('/public/rates/history-30d.json') ||
+    url.pathname.includes('/public/rates/providers/moneybox/history-30d.json') ||
     (url.origin === 'https://cdn.jsdelivr.net' &&
-      url.pathname.includes('/public/rates/history-30d.json')) ||
+      (url.pathname.includes('/public/rates/history-30d.json') ||
+        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))) ||
     (url.origin === 'https://raw.githubusercontent.com' &&
-      url.pathname.includes('/public/rates/history-30d.json')),
+      (url.pathname.includes('/public/rates/history-30d.json') ||
+        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))),
   new StaleWhileRevalidate({
     cacheName: 'history-aggregate-cache',
     plugins: [

@@ -6,8 +6,14 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { APP_INFO } from './config/app-info';
+import { STYLE_DEFINITIONS } from './config/themes';
 
 const ROOT_PATH = resolve(__dirname, '..');
+const defaultThemeColor = `#${STYLE_DEFINITIONS.zen.colors.primary
+  .split(' ')
+  .map((value) => Number.parseInt(value, 10).toString(16).padStart(2, '0'))
+  .join('')
+  .toUpperCase()}`;
 
 describe('PWA 離線功能測試', () => {
   describe('offline.html 配置', () => {
@@ -35,6 +41,33 @@ describe('PWA 離線功能測試', () => {
       expect(content).toContain("window.addEventListener('online'");
     });
 
+    it('should align offline theme-color with zen theme SSOT', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const content = readFileSync(offlinePath, 'utf-8');
+
+      expect(content).toContain(`<meta name="theme-color" content="${defaultThemeColor}"`);
+    });
+
+    it('should preserve selected theme before offline shell paint', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const content = readFileSync(offlinePath, 'utf-8');
+
+      expect(content).toContain('ratewise-theme');
+      expect(content).toContain('document.documentElement.dataset.style');
+      expect(content).toContain("html[data-style='nitro']");
+      expect(content).toContain('--offline-background');
+    });
+
+    it('should support iOS standalone safe-area and dynamic viewport units', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const content = readFileSync(offlinePath, 'utf-8');
+
+      expect(content).toContain('viewport-fit=cover');
+      expect(content).toContain('apple-mobile-web-app-capable');
+      expect(content).toContain('env(safe-area-inset-top, 0px)');
+      expect(content).toContain('100dvh');
+    });
+
     it('should show cached data indicator', () => {
       const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
       const content = readFileSync(offlinePath, 'utf-8');
@@ -42,6 +75,13 @@ describe('PWA 離線功能測試', () => {
       // 應該顯示快取資料指示器
       expect(content).toContain('cached-info');
       expect(content).toContain("localStorage.getItem('exchangeRates')");
+    });
+
+    it('should align manifest theme-color with zen theme SSOT', () => {
+      const manifestPath = resolve(ROOT_PATH, 'public/manifest.webmanifest');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as { theme_color: string };
+
+      expect(manifest.theme_color).toBe(defaultThemeColor);
     });
   });
 
@@ -158,6 +198,11 @@ describe('PWA 離線功能測試', () => {
       expect(fallbackContent).toContain('EMERGENCY_OFFLINE_HTML');
       expect(fallbackContent).toContain('createEmergencyOfflineResponse');
       expect(fallbackContent).toContain('data-ratewise-emergency-fallback="true"');
+      expect(fallbackContent).toContain("var K = 'ratewise-theme'");
+      expect(fallbackContent).toContain("[data-style='nitro']");
+      expect(fallbackContent).toContain(':root:not([data-style])');
+      expect(fallbackContent).not.toContain(':root { color-scheme: light; }');
+      expect(fallbackContent).not.toContain('background: #f8fafc');
       expect(fallbackContent).toContain("'X-RateWise-Offline-Fallback'");
       expect(swContent).toContain('emergency-document-fallback');
       expect(swContent).toContain('emergency-navigation-fallback');

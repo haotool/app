@@ -16,68 +16,61 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { contentPageTokens } from '../config/design-tokens';
 
 export default function NotFound() {
   const { t } = useTranslation();
   return (
-    <main className="min-h-screen flex items-center justify-center bg-page-gradient px-4">
-      {/* SEO Configuration: noindex to prevent 404 pages from being indexed */}
+    <main className="flex min-h-full items-center justify-center px-4 py-8 sm:px-6">
       <SEOHelmet
-        title="404 - 找不到頁面"
-        description="很抱歉，您訪問的頁面不存在。請返回首頁或瀏覽其他頁面。"
+        title={t('notFound.metaTitle')}
+        description={t('notFound.metaDescription')}
         pathname="/404"
         robots="noindex, follow"
       />
 
-      <div className="max-w-md w-full text-center">
-        {/* 404 Error Display */}
-        <div className="mb-8">
-          <h1 className="text-9xl font-bold text-primary mb-4" aria-label="404 錯誤">
+      <div className="card w-full max-w-xl p-6 text-center sm:p-8">
+        <p className={contentPageTokens.sectionHeader.eyebrow}>{t('notFound.eyebrow')}</p>
+        <div className="mt-3 mb-8">
+          <h1
+            className="text-6xl font-bold tracking-tight text-primary sm:text-7xl"
+            aria-label={t('notFound.errorAria')}
+          >
             404
           </h1>
-          <h2 className="text-2xl font-semibold text-text mb-2">{t('notFound.title')}</h2>
-          <p className="text-text-muted mb-6">{t('notFound.message')}</p>
+          <h2 className="mt-3 text-2xl font-semibold text-text">{t('notFound.title')}</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-muted sm:text-base">
+            {t('notFound.message')}
+          </p>
         </div>
 
-        {/* Primary Action: Return to Home */}
         <div className="mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
-          >
+          <Link to="/" className={contentPageTokens.buttons.primary}>
             {t('notFound.goHome')}
           </Link>
         </div>
 
-        {/* Suggested Pages */}
         <div className="space-y-3">
-          <p className="text-sm text-text-muted mb-3">或許您想前往：</p>
+          <p className="mb-3 text-sm text-text-muted">{t('notFound.suggestedPages')}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/faq/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
-            >
+            <Link to="/faq/" className={contentPageTokens.links.ctaSecondary}>
               {t('settings.faq')}
             </Link>
-            <Link
-              to="/about/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
-            >
+            <Link to="/about/" className={contentPageTokens.links.ctaSecondary}>
               {t('settings.aboutUs')}
             </Link>
           </div>
         </div>
 
-        {/* Additional Help Text */}
         <p className="mt-8 text-xs text-text-muted">
-          如果您認為這是一個錯誤，請
+          {t('notFound.reportIssuePrefix')}
           <a
             href="https://github.com/haotool/app/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:text-primary/80 underline ml-1"
           >
-            回報問題
+            {t('notFound.reportIssueLink')}
           </a>
         </p>
       </div>

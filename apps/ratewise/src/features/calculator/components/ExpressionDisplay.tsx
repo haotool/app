@@ -38,7 +38,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
   return (
     <div className="mb-6 space-y-2">
       {/* 表達式顯示區（套用千位分隔符，提升 UX 可讀性） */}
-      <div className="min-h-[3rem] rounded-xl bg-neutral-bg px-4 py-3 relative">
+      <div className="relative min-h-[3rem] rounded-lg bg-neutral-bg px-4 py-3">
         <div
           className="text-right text-2xl text-neutral-text-secondary font-mono tabular-nums overflow-x-auto scrollbar-hide"
           role="status"
@@ -75,7 +75,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
       {/* 結果顯示區（含千位分隔符格式化） */}
       {result !== null && !error && (
         <motion.div
-          className="rounded-xl bg-primary-bg px-4 py-3"
+          className="rounded-lg bg-primary-bg px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
@@ -97,7 +97,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
       {/* 錯誤訊息顯示區 */}
       {error && (
         <motion.div
-          className="rounded-xl bg-danger-bg px-4 py-3"
+          className="rounded-lg bg-danger-bg px-4 py-3"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms

@@ -13,7 +13,14 @@ import * as networkStatus from '../../utils/networkStatus';
 // Mock dependencies
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
+    t: (key: string) =>
+      (
+        ({
+          'offline.title': '離線模式',
+          'offline.description': '部分功能可能無法使用',
+          'offline.close': '關閉離線提示',
+        }) as Record<string, string>
+      )[key] ?? key,
   }),
 }));
 
@@ -339,12 +346,11 @@ describe('OfflineIndicator', () => {
 
       await waitFor(() => {
         const status = screen.getByRole('status');
-        const styledDiv = status.querySelector('div[class*="bg-gradient-to-r"]');
+        const styledDiv = status.querySelector('div[class*="bg-surface"]');
         expect(styledDiv).toBeTruthy();
-        expect(styledDiv?.className).toContain('from-brand-from');
-        expect(styledDiv?.className).toContain('via-brand-via');
-        expect(styledDiv?.className).toContain('to-brand-to');
-        expect(styledDiv?.className).toContain('border-brand-border');
+        expect(styledDiv?.className).toContain('bg-surface');
+        expect(styledDiv?.className).toContain('border-border/70');
+        expect(styledDiv?.className).toContain('shadow-lg');
       });
     });
   });

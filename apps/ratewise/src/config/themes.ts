@@ -5,7 +5,7 @@
  *              6 種風格（僅淺色模式）
  *
  * @styles
- * - Zen: 極簡專業 - Apple/Material Design 風格（預設）
+ * - Zen: 極簡專業 - 冷靜藍系產品基準（預設）
  * - Nitro: 深色科技感 - 賽車儀表板、霓虹燈
  * - Kawaii: 可愛粉嫩 - 日系少女風、馬卡龍色系
  * - Classic: 復古書卷 - 古典圖書館、皮革裝幀
@@ -97,14 +97,24 @@ interface StyleDefinition {
   colors: SemanticColors;
 }
 
+export interface StyleOption {
+  value: ThemeStyle;
+  label: string;
+  labelEn: string;
+  description: string;
+  previewBg: string;
+  previewText: string;
+  previewAccent: string;
+}
+
 // ============================================================================
 // Style Definitions - 6 種風格
 // ============================================================================
 
 /**
  * Zen 風格 - 極簡專業（預設）
- * 特點：純淨白底、藍灰色調、科技感
- * 靈感：Apple Design、Material Design 3、專業金融 App
+ * 特點：純淨白底、冷靜藍系、資訊優先
+ * 靈感：成熟金融工具、安靜的產品介面
  */
 const zenStyle: StyleDefinition = {
   name: 'zen',
@@ -119,19 +129,19 @@ const zenStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
-    primary: '99 102 241', // indigo-500 - 專業紫藍
-    secondary: '71 85 105', // slate-600
+    primary: '37 99 235', // blue-600
+    secondary: '14 165 233', // sky-500
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
     // 狀態色彩
-    info: '14 165 233', // sky-500
+    info: '8 145 178', // cyan-600
     success: '34 197 94', // green-500
     warning: '245 158 11', // amber-500
     error: '239 68 68', // red-500
-    // 圖表色彩 - 專業藍紫
-    chartLine: '99 102 241', // indigo-500
-    chartAreaTop: '99 102 241', // indigo-500 (40% opacity in CSS)
-    chartAreaBottom: '59 130 246', // blue-500 (10% opacity in CSS)
+    // 圖表色彩 - 冷靜藍系
+    chartLine: '37 99 235', // blue-600
+    chartAreaTop: '59 130 246', // blue-500
+    chartAreaBottom: '14 165 233', // sky-500
   },
 };
 
@@ -152,7 +162,7 @@ const nitroStyle: StyleDefinition = {
     background: '2 6 23', // slate-950
     surface: '15 23 42', // slate-900
     text: '255 255 255',
-    textMuted: '100 116 139', // slate-500
+    textMuted: '203 213 225', // slate-300
     primary: '0 212 255', // cyan
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
@@ -163,8 +173,8 @@ const nitroStyle: StyleDefinition = {
     warning: '251 191 36',
     error: '248 113 113',
     // 圖表色彩 - 霓虹藍綠
-    chartLine: '0 212 255',
-    chartAreaTop: '0 212 255',
+    chartLine: '103 232 249', // cyan-300
+    chartAreaTop: '103 232 249', // cyan-300
     chartAreaBottom: '0 255 136',
   },
 };
@@ -185,10 +195,10 @@ const kawaiiStyle: StyleDefinition = {
     // 溫暖粉嫩
     background: '255 250 244', // warm cream
     surface: '255 255 255',
-    text: '142 124 128', // muted pink-brown
-    textMuted: '180 160 165',
-    primary: '255 105 180', // hot pink
-    secondary: '236 72 153', // pink-500
+    text: '92 45 60', // accessible deep rose
+    textMuted: '102 65 76',
+    primary: '190 24 93', // pink-700
+    secondary: '190 24 93', // pink-700
     accent: '255 182 193', // light pink
     border: '255 228 225', // misty rose
     // 狀態色彩 - 柔和可愛風
@@ -197,9 +207,9 @@ const kawaiiStyle: StyleDefinition = {
     warning: '253 224 71', // yellow-300 - 檸檬黃
     error: '252 165 165', // red-300 - 珊瑚紅
     // 圖表色彩 - 粉紅漸變
-    chartLine: '255 105 180', // hot pink
-    chartAreaTop: '255 105 180',
-    chartAreaBottom: '255 182 193', // light pink
+    chartLine: '236 72 153', // pink-500
+    chartAreaTop: '236 72 153', // pink-500
+    chartAreaBottom: '244 114 182', // pink-400
   },
 };
 
@@ -231,9 +241,9 @@ const classicStyle: StyleDefinition = {
     warning: '180 83 9', // amber-700 - 琥珀警告
     error: '185 28 28', // red-700 - 磚紅
     // 圖表色彩 - 復古棕
-    chartLine: '139 69 19', // saddle brown
-    chartAreaTop: '180 120 80', // tan
-    chartAreaBottom: '245 230 220', // linen
+    chartLine: '180 83 9', // amber-700
+    chartAreaTop: '180 83 9', // amber-700
+    chartAreaBottom: '217 119 6', // amber-600
   },
 };
 
@@ -256,11 +266,11 @@ const oceanStyle: StyleDefinition = {
     text: '7 89 133', // cyan-800 - 深海藍
     textMuted: '22 78 99', // cyan-900 lightened
     primary: '6 182 212', // cyan-500 - 海水藍
-    secondary: '20 184 166', // teal-500 - 青綠
-    accent: '2 132 199', // sky-600 - 天空藍
+    secondary: '14 165 233', // sky-500 - 青藍
+    accent: '20 184 166', // teal-500 - 海水綠
     border: '186 230 253', // sky-200
     // 狀態色彩 - 海洋風格
-    info: '14 165 233', // sky-500
+    info: '56 189 248', // sky-400
     success: '20 184 166', // teal-500
     warning: '245 158 11', // amber-500
     error: '239 68 68', // red-500
@@ -289,9 +299,9 @@ const forestStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '20 83 45', // green-800 - 深綠
     textMuted: '22 101 52', // green-700
-    primary: '34 197 94', // green-500 - 翠綠
-    secondary: '132 204 22', // lime-500 - 青檸
-    accent: '22 163 74', // green-600 - 森林綠
+    primary: '5 150 105', // emerald-600 - 森林主色
+    secondary: '22 163 74', // green-600 - 次要綠
+    accent: '101 163 13', // lime-600 - 青檸點綴
     border: '187 247 208', // green-200
     // 狀態色彩 - 自然風格
     info: '59 130 246', // blue-500
@@ -299,9 +309,9 @@ const forestStyle: StyleDefinition = {
     warning: '234 179 8', // yellow-500
     error: '239 68 68', // red-500
     // 圖表色彩 - 森林綠
-    chartLine: '34 197 94', // green-500
-    chartAreaTop: '34 197 94',
-    chartAreaBottom: '132 204 22', // lime-500
+    chartLine: '5 150 105', // emerald-600
+    chartAreaTop: '5 150 105', // emerald-600
+    chartAreaBottom: '34 197 94', // green-500
   },
 };
 
@@ -324,70 +334,29 @@ export const STYLE_DEFINITIONS: Record<ThemeStyle, StyleDefinition> = {
 /**
  * 風格選項（供 UI 選擇器使用）
  */
-export const STYLE_OPTIONS: {
-  value: ThemeStyle;
-  label: string;
-  labelEn: string;
-  description: string;
-  previewBg: string;
-  previewText: string;
-  previewAccent: string;
-}[] = [
-  {
-    value: 'zen',
-    label: 'Zen',
-    labelEn: 'Zen',
-    description: '極簡專業',
-    previewBg: 'rgb(248, 250, 252)',
-    previewText: 'rgb(15, 23, 42)',
-    previewAccent: 'rgb(99, 102, 241)',
-  },
-  {
-    value: 'nitro',
-    label: 'Nitro',
-    labelEn: 'Nitro',
-    description: '深色科技感',
-    previewBg: 'rgb(2, 6, 23)',
-    previewText: 'rgb(255, 255, 255)',
-    previewAccent: 'rgb(0, 212, 255)',
-  },
-  {
-    value: 'kawaii',
-    label: 'Kawaii',
-    labelEn: 'Kawaii',
-    description: '可愛粉嫩',
-    previewBg: 'rgb(255, 250, 244)',
-    previewText: 'rgb(142, 124, 128)',
-    previewAccent: 'rgb(255, 105, 180)',
-  },
-  {
-    value: 'classic',
-    label: 'Classic',
-    labelEn: 'Classic',
-    description: '復古書卷',
-    previewBg: 'rgb(255, 250, 251)',
-    previewText: 'rgb(67, 20, 7)',
-    previewAccent: 'rgb(139, 69, 19)',
-  },
-  {
-    value: 'ocean',
-    label: 'Ocean',
-    labelEn: 'Ocean',
-    description: '海洋深邃',
-    previewBg: 'rgb(240, 249, 255)',
-    previewText: 'rgb(7, 89, 133)',
-    previewAccent: 'rgb(6, 182, 212)',
-  },
-  {
-    value: 'forest',
-    label: 'Forest',
-    labelEn: 'Forest',
-    description: '自然森林',
-    previewBg: 'rgb(240, 253, 244)',
-    previewText: 'rgb(20, 83, 45)',
-    previewAccent: 'rgb(34, 197, 94)',
-  },
-];
+function toCommaSeparatedRgb(spaceDelimited: string): string {
+  return spaceDelimited.split(' ').join(', ');
+}
+
+function toRgbColor(spaceDelimited: string): string {
+  return `rgb(${toCommaSeparatedRgb(spaceDelimited)})`;
+}
+
+function buildStyleOption(value: ThemeStyle, definition: StyleDefinition): StyleOption {
+  return {
+    value,
+    label: definition.label,
+    labelEn: definition.labelEn,
+    description: definition.description,
+    previewBg: toRgbColor(definition.colors.background),
+    previewText: toRgbColor(definition.colors.text),
+    previewAccent: toRgbColor(definition.colors.primary),
+  };
+}
+
+export const STYLE_OPTIONS: StyleOption[] = (
+  Object.entries(STYLE_DEFINITIONS) as [ThemeStyle, StyleDefinition][]
+).map(([value, definition]) => buildStyleOption(value, definition));
 
 // ============================================================================
 // Theme Application
@@ -437,19 +406,6 @@ export function getStyleColors(style: ThemeStyle): SemanticColors {
 }
 
 /**
- * 將空格分隔的 RGB 值轉換為逗號分隔格式
- * CSS Variables 使用空格分隔（如 "99 102 241"）以支援 Tailwind 的 rgb(var(--color) / <alpha>) 語法
- * 但 Canvas API (lightweight-charts) 需要標準 rgba(r, g, b, a) 格式（逗號分隔）
- *
- * @param spaceDelimited - 空格分隔的 RGB 值，如 "99 102 241"
- * @returns 逗號分隔的 RGB 值，如 "99, 102, 241"
- *
- */
-function toCommaSeparatedRgb(spaceDelimited: string): string {
-  return spaceDelimited.split(' ').join(', ');
-}
-
-/**
  * 獲取當前主題的圖表顏色（供 MiniTrendChart 使用）
  *
  * SSOT - 從 CSS Variables 獲取圖表配色。
@@ -462,12 +418,14 @@ export function getChartColors(): {
   topColor: string;
   bottomColor: string;
 } {
+  const fallbackColors = getStyleColors(DEFAULT_THEME_CONFIG.style);
+
   if (typeof window === 'undefined') {
-    // SSR fallback - 使用 Zen 預設值（高級金融風格）
+    // SSR fallback - 使用預設風格的圖表色彩
     return {
-      lineColor: 'rgb(99, 102, 241)',
-      topColor: 'rgba(99, 102, 241, 0.25)',
-      bottomColor: 'rgba(59, 130, 246, 0)',
+      lineColor: toRgbColor(fallbackColors.chartLine),
+      topColor: `rgba(${toCommaSeparatedRgb(fallbackColors.chartAreaTop)}, 0.25)`,
+      bottomColor: `rgba(${toCommaSeparatedRgb(fallbackColors.chartAreaBottom)}, 0)`,
     };
   }
 
@@ -475,13 +433,15 @@ export function getChartColors(): {
   const style = getComputedStyle(root);
 
   // CSS Variables 儲存空格分隔格式（Tailwind 相容）
-  const line = style.getPropertyValue('--color-chart-line').trim() || '99 102 241';
-  const top = style.getPropertyValue('--color-chart-area-top').trim() || '99 102 241';
-  const bottom = style.getPropertyValue('--color-chart-area-bottom').trim() || '59 130 246';
+  const line = style.getPropertyValue('--color-chart-line').trim() || fallbackColors.chartLine;
+  const top =
+    style.getPropertyValue('--color-chart-area-top').trim() || fallbackColors.chartAreaTop;
+  const bottom =
+    style.getPropertyValue('--color-chart-area-bottom').trim() || fallbackColors.chartAreaBottom;
 
   // Convert to comma-separated format for Canvas/lightweight-charts
   return {
-    lineColor: `rgb(${toCommaSeparatedRgb(line)})`,
+    lineColor: toRgbColor(line),
     topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.25)`,
     bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0)`,
   };
@@ -531,7 +491,7 @@ export interface SeasonalColors {
  * 獲取當前主題的季節性顏色（供 Easter Egg 組件使用）
  *
  * SSOT - 從 CSS Variables 獲取季節性配色
- * 用於 ChristmasTree、MiniChristmasTree、SnowAccumulation 等組件
+ * 用於 ChristmasTree、MiniChristmasTree 等組件
  *
  * @returns 季節性顏色配置，格式為標準 rgb(r, g, b)
  */

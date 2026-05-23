@@ -2,13 +2,184 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>離線模式 - HaoRate</title>
     <!-- [fix:2026-01-08] 使用相對路徑，確保在任何 base path 下都能正確載入 -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      (function () {
+        var themeColors = {
+          zen: '#2563EB',
+          nitro: '#00D4FF',
+          kawaii: '#BE185D',
+          classic: '#8B4513',
+          ocean: '#06B6D4',
+          forest: '#059669',
+        };
+        var supportedStyles = Object.keys(themeColors);
+        var selectedStyle = 'zen';
+
+        try {
+          var storedTheme = localStorage.getItem('ratewise-theme');
+          if (storedTheme) {
+            var parsedTheme = JSON.parse(storedTheme);
+            if (supportedStyles.indexOf(parsedTheme.style) >= 0) {
+              selectedStyle = parsedTheme.style;
+            }
+          }
+        } catch (e) {
+          selectedStyle = 'zen';
+        }
+
+        document.documentElement.dataset.style = selectedStyle;
+
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) {
+          themeColor.setAttribute('content', themeColors[selectedStyle] || themeColors.zen);
+        }
+      })();
+    </script>
     <style>
+      html[data-style='zen'] {
+        --offline-theme-color: #2563eb;
+        --offline-background: #f8fafc;
+        --offline-surface: #ffffff;
+        --offline-border: #e2e8f0;
+        --offline-text: #0f172a;
+        --offline-text-muted: #64748b;
+        --offline-primary: #2563eb;
+        --offline-primary-foreground: #ffffff;
+        --offline-secondary: #0ea5e9;
+        --offline-accent: #3b82f6;
+        --offline-primary-tint: rgba(37, 99, 235, 0.08);
+        --offline-primary-border-tint: rgba(37, 99, 235, 0.18);
+        --offline-primary-shadow-soft: rgba(37, 99, 235, 0.18);
+        --offline-primary-shadow-strong: rgba(37, 99, 235, 0.26);
+        --offline-primary-shadow-hover: rgba(37, 99, 235, 0.34);
+        --offline-warning-tint: rgba(245, 158, 11, 0.16);
+        --offline-warning: #f59e0b;
+        --offline-success-tint: rgba(34, 197, 94, 0.12);
+        --offline-success: #22c55e;
+      }
+
+      html[data-style='nitro'] {
+        --offline-theme-color: #00d4ff;
+        --offline-background: #020617;
+        --offline-surface: #0f172a;
+        --offline-border: #1e293b;
+        --offline-text: #ffffff;
+        --offline-text-muted: #cbd5e1;
+        --offline-primary: #00d4ff;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #818cf8;
+        --offline-accent: #00ff88;
+        --offline-primary-tint: rgba(0, 212, 255, 0.08);
+        --offline-primary-border-tint: rgba(0, 212, 255, 0.18);
+        --offline-primary-shadow-soft: rgba(0, 212, 255, 0.18);
+        --offline-primary-shadow-strong: rgba(0, 212, 255, 0.26);
+        --offline-primary-shadow-hover: rgba(0, 212, 255, 0.34);
+        --offline-warning-tint: rgba(251, 191, 36, 0.16);
+        --offline-warning: #fbbf24;
+        --offline-success-tint: rgba(52, 211, 153, 0.12);
+        --offline-success: #34d399;
+      }
+
+      html[data-style='kawaii'] {
+        --offline-theme-color: #be185d;
+        --offline-background: #fffaf4;
+        --offline-surface: #ffffff;
+        --offline-border: #ffe4e1;
+        --offline-text: #5c2d3c;
+        --offline-text-muted: #66414c;
+        --offline-primary: #be185d;
+        --offline-primary-foreground: #ffffff;
+        --offline-secondary: #be185d;
+        --offline-accent: #ffb6c1;
+        --offline-primary-tint: rgba(190, 24, 93, 0.08);
+        --offline-primary-border-tint: rgba(190, 24, 93, 0.18);
+        --offline-primary-shadow-soft: rgba(190, 24, 93, 0.18);
+        --offline-primary-shadow-strong: rgba(190, 24, 93, 0.26);
+        --offline-primary-shadow-hover: rgba(190, 24, 93, 0.34);
+        --offline-warning-tint: rgba(253, 224, 71, 0.16);
+        --offline-warning: #fde047;
+        --offline-success-tint: rgba(134, 239, 172, 0.12);
+        --offline-success: #86efac;
+      }
+
+      html[data-style='classic'] {
+        --offline-theme-color: #8b4513;
+        --offline-background: #fffafb;
+        --offline-surface: #ffffff;
+        --offline-border: #f5e6dc;
+        --offline-text: #431407;
+        --offline-text-muted: #78503c;
+        --offline-primary: #8b4513;
+        --offline-primary-foreground: #ffffff;
+        --offline-secondary: #a16207;
+        --offline-accent: #b47850;
+        --offline-primary-tint: rgba(139, 69, 19, 0.08);
+        --offline-primary-border-tint: rgba(139, 69, 19, 0.18);
+        --offline-primary-shadow-soft: rgba(139, 69, 19, 0.18);
+        --offline-primary-shadow-strong: rgba(139, 69, 19, 0.26);
+        --offline-primary-shadow-hover: rgba(139, 69, 19, 0.34);
+        --offline-warning-tint: rgba(180, 83, 9, 0.16);
+        --offline-warning: #b45309;
+        --offline-success-tint: rgba(22, 163, 74, 0.12);
+        --offline-success: #16a34a;
+      }
+
+      html[data-style='ocean'] {
+        --offline-theme-color: #06b6d4;
+        --offline-background: #f0f9ff;
+        --offline-surface: #ffffff;
+        --offline-border: #bae6fd;
+        --offline-text: #075985;
+        --offline-text-muted: #164e63;
+        --offline-primary: #06b6d4;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #0ea5e9;
+        --offline-accent: #14b8a6;
+        --offline-primary-tint: rgba(6, 182, 212, 0.08);
+        --offline-primary-border-tint: rgba(6, 182, 212, 0.18);
+        --offline-primary-shadow-soft: rgba(6, 182, 212, 0.18);
+        --offline-primary-shadow-strong: rgba(6, 182, 212, 0.26);
+        --offline-primary-shadow-hover: rgba(6, 182, 212, 0.34);
+        --offline-warning-tint: rgba(245, 158, 11, 0.16);
+        --offline-warning: #f59e0b;
+        --offline-success-tint: rgba(20, 184, 166, 0.12);
+        --offline-success: #14b8a6;
+      }
+
+      html[data-style='forest'] {
+        --offline-theme-color: #059669;
+        --offline-background: #f0fdf4;
+        --offline-surface: #ffffff;
+        --offline-border: #bbf7d0;
+        --offline-text: #14532d;
+        --offline-text-muted: #166534;
+        --offline-primary: #059669;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #16a34a;
+        --offline-accent: #65a30d;
+        --offline-primary-tint: rgba(5, 150, 105, 0.08);
+        --offline-primary-border-tint: rgba(5, 150, 105, 0.18);
+        --offline-primary-shadow-soft: rgba(5, 150, 105, 0.18);
+        --offline-primary-shadow-strong: rgba(5, 150, 105, 0.26);
+        --offline-primary-shadow-hover: rgba(5, 150, 105, 0.34);
+        --offline-warning-tint: rgba(234, 179, 8, 0.16);
+        --offline-warning: #eab308;
+        --offline-success-tint: rgba(34, 197, 94, 0.12);
+        --offline-success: #22c55e;
+      }
+      html[data-style='nitro'] {
+        color-scheme: dark;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -19,51 +190,58 @@
         font-family:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #e8ecf4 0%, #f3e8ff 50%, #ede9fe 100%);
-        padding: 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--offline-background) 0%,
+          var(--offline-primary-tint) 50%,
+          var(--offline-surface) 100%
+        );
+        padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
+          calc(1rem + env(safe-area-inset-bottom, 0px));
         text-align: center;
       }
 
       .container {
         max-width: 400px;
         padding: 2rem;
-        background: rgba(255, 255, 255, 0.9);
+        background: var(--offline-surface);
         border-radius: 24px;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
-        border: 1px solid rgba(139, 92, 246, 0.1);
+        box-shadow: 0 8px 32px var(--offline-primary-shadow-soft);
+        border: 1px solid var(--offline-primary-border-tint);
       }
 
       .icon {
         width: 80px;
         height: 80px;
         margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, var(--offline-primary) 0%, var(--offline-accent) 100%);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 16px var(--offline-primary-shadow-strong);
       }
 
       .icon svg {
         width: 48px;
         height: 48px;
-        color: white;
+        color: var(--offline-primary-foreground);
       }
 
       h1 {
         font-size: 1.5rem;
-        color: #4c1d95;
+        color: var(--offline-text);
         margin-bottom: 0.75rem;
         font-weight: 600;
       }
 
       p {
-        color: #6b7280;
+        color: var(--offline-text-muted);
         line-height: 1.6;
         margin-bottom: 1.5rem;
       }
@@ -73,8 +251,8 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background: #fef3c7;
-        color: #92400e;
+        background: var(--offline-warning-tint);
+        color: var(--offline-warning);
         border-radius: 9999px;
         font-size: 0.875rem;
         font-weight: 500;
@@ -85,7 +263,7 @@
         content: '';
         width: 8px;
         height: 8px;
-        background: #f59e0b;
+        background: var(--offline-warning);
         border-radius: 50%;
         animation: pulse 2s infinite;
       }
@@ -105,8 +283,12 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
+        background: linear-gradient(
+          135deg,
+          var(--offline-primary) 0%,
+          var(--offline-secondary) 100%
+        );
+        color: var(--offline-primary-foreground);
         border: none;
         border-radius: 12px;
         font-size: 1rem;
@@ -115,12 +297,12 @@
         transition:
           transform 0.2s,
           box-shadow 0.2s;
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 12px var(--offline-primary-shadow-strong);
       }
 
       .retry-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+        box-shadow: 0 6px 16px var(--offline-primary-shadow-hover);
       }
 
       .retry-btn:active {
@@ -130,12 +312,12 @@
       .tips {
         margin-top: 2rem;
         padding-top: 1.5rem;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--offline-border);
       }
 
       .tips h2 {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--offline-text-muted);
         font-weight: 500;
         margin-bottom: 0.75rem;
       }
@@ -150,23 +332,23 @@
         align-items: flex-start;
         gap: 0.5rem;
         font-size: 0.875rem;
-        color: #4b5563;
+        color: var(--offline-text);
         margin-bottom: 0.5rem;
       }
 
       .tips li::before {
         content: '•';
-        color: #8b5cf6;
+        color: var(--offline-primary);
         font-weight: bold;
       }
 
       .cached-data {
         margin-top: 1rem;
         padding: 0.75rem;
-        background: #f0fdf4;
+        background: var(--offline-success-tint);
         border-radius: 8px;
         font-size: 0.875rem;
-        color: #166534;
+        color: var(--offline-success);
       }
     </style>
   </head>

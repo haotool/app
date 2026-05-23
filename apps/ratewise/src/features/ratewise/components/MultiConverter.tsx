@@ -19,6 +19,7 @@ import {
   type ExchangeShopRatesByCurrency,
 } from '../../../services/moneyboxRateService';
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
+import { quickAmountButtonTokens } from '../../../config/design-tokens';
 
 type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
 
@@ -58,7 +59,7 @@ export const MultiConverter = ({
   onToggleFavorite,
 }: MultiConverterProps) => {
   const { t } = useTranslation();
-  const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const inputRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const calculator = useCalculatorModal<CurrencyCode>({
     onConfirm: (currency, result) => {
@@ -187,6 +188,7 @@ export const MultiConverter = ({
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button
+              type="button"
               key={amount}
               onClick={() => {
                 onQuickAmount(amount);
@@ -194,15 +196,7 @@ export const MultiConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
-              "
+              className={quickAmountButtonTokens.className}
             >
               {amount.toLocaleString()}
             </button>
@@ -223,11 +217,7 @@ export const MultiConverter = ({
             return (
               <div
                 key={code}
-                onClick={() => {
-                  if (!isBase) {
-                    onBaseCurrencyChange(code);
-                  }
-                }}
+                data-testid="multi-currency-row"
                 className={`${activeHighlight.itemBaseClass} transition-colors duration-200 ${
                   isBase ? activeHighlight.itemActiveClass : activeHighlight.itemInactiveClass
                 }`}
@@ -240,53 +230,70 @@ export const MultiConverter = ({
                   />
                 )}
                 <div className="relative z-10 flex items-center gap-2 flex-shrink-0 min-w-0">
-                  <div className="w-6 flex-shrink-0 flex items-center justify-center">
+                  <div className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center">
                     {code === 'TWD' ? (
                       <div aria-hidden="true" data-testid="twd-star-fixed">
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
                       </div>
                     ) : favorites.includes(code) ? (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 transition-transform hover:scale-110"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 transition-transform hover:scale-110 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
                       </button>
                     ) : (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 opacity-30 transition-opacity hover:bg-surface-elevated hover:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted" />
                       </button>
                     )}
                   </div>
-                  <span className="text-xl flex-shrink-0 w-7 text-center leading-none">
-                    {CURRENCY_DEFINITIONS[code].flag}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-sm leading-tight">{code}</div>
-                    <div className="text-[11px] font-medium text-text leading-tight truncate">
-                      {t(`currencies.${code}`)}
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isBase) {
+                        onBaseCurrencyChange(code);
+                      }
+                    }}
+                    className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    aria-pressed={isBase}
+                    aria-label={t('multiConverter.setBaseCurrency', {
+                      name: t(`currencies.${code}`),
+                      code,
+                    })}
+                  >
+                    <span className="w-7 flex-shrink-0 text-center text-xl leading-none">
+                      {CURRENCY_DEFINITIONS[code].flag}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold leading-tight">{code}</span>
+                      <span className="block truncate text-xs font-medium leading-tight text-text">
+                        {t(`currencies.${code}`)}
+                      </span>
+                    </span>
+                  </button>
                 </div>
 
                 <div className="relative z-10 flex-1 min-w-0 ml-2">
-                  <div
+                  <button
+                    type="button"
                     ref={(el) => {
                       inputRefs.current[code] = el;
                     }}
-                    role="button"
-                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       calculator.openCalculator(code);
@@ -297,15 +304,15 @@ export const MultiConverter = ({
                         calculator.openCalculator(code);
                       }
                     }}
-                    className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
+                    className="block min-h-11 w-full cursor-pointer rounded-lg text-right text-base font-bold leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={t('multiConverter.amountClickCalculator', {
                       name: t(`currencies.${code}`),
                       code,
                     })}
                   >
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
-                  </div>
-                  <div className="text-[11px] text-right leading-tight text-text mt-0.5">
+                  </button>
+                  <div className="mt-1 text-right text-xs leading-tight text-text">
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
                       const nextOption = getNextAvailableOption(availability);
@@ -313,11 +320,12 @@ export const MultiConverter = ({
 
                       return canToggle ? (
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleUnifiedToggle(code);
                           }}
-                          className="font-semibold text-primary-dark hover:text-primary-darker transition-colors"
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 font-semibold text-primary-dark transition-colors hover:bg-surface-elevated hover:text-primary-darker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
@@ -330,7 +338,8 @@ export const MultiConverter = ({
                           isDisabled={true}
                         >
                           <button
-                            className="font-medium text-text cursor-help"
+                            type="button"
+                            className="inline-flex min-h-11 min-w-11 cursor-help items-center justify-center rounded-lg px-2 font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             aria-label={t('multiConverter.onlyOneRateAvailable')}
                           >
                             {getOptionLabel(availability.current)}

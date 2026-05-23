@@ -52,8 +52,8 @@ const resources = {
   ko: { translation: ko },
 };
 
-const canUseBrowserLanguageStorage =
-  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+const hasBrowserDocument = typeof window !== 'undefined' && typeof document !== 'undefined';
+const canUseBrowserLanguageStorage = hasBrowserDocument && import.meta.env.MODE !== 'test';
 
 /**
  * 正規化語系代碼
@@ -114,33 +114,37 @@ export function getResolvedLanguage(): SupportedLanguage {
   return normalizeLanguage(i18n.language);
 }
 
-void i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
-    supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
-    // 語系 fallback 配置：zh-Hant → zh-TW
-    fallbackLng: {
-      'zh-Hant': ['zh-TW'],
-      zh: ['zh-TW'],
-      default: ['zh-TW'],
-    },
-    defaultNS: 'translation',
-    interpolation: {
-      escapeValue: false,
-    },
-    detection: {
-      order: canUseBrowserLanguageStorage
-        ? ['localStorage', 'htmlTag', 'navigator']
-        : ['htmlTag', 'navigator'],
-      caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
-      lookupLocalStorage: 'ratewise-language',
-    },
-    react: {
-      useSuspense: false,
-    },
-  });
+if (hasBrowserDocument) {
+  i18n.use(LanguageDetector);
+}
+
+void i18n.use(initReactI18next).init({
+  resources,
+  // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
+  supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
+  // 語系 fallback 配置：zh-Hant → zh-TW
+  fallbackLng: {
+    'zh-Hant': ['zh-TW'],
+    zh: ['zh-TW'],
+    default: ['zh-TW'],
+  },
+  defaultNS: 'translation',
+  interpolation: {
+    escapeValue: false,
+  },
+  detection: {
+    order: canUseBrowserLanguageStorage
+      ? ['localStorage', 'htmlTag', 'navigator']
+      : hasBrowserDocument
+        ? ['htmlTag', 'navigator']
+        : [],
+    caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
+    lookupLocalStorage: 'ratewise-language',
+  },
+  ...(hasBrowserDocument ? {} : { lng: 'zh-TW' }),
+  react: {
+    useSuspense: false,
+  },
+});
 
 export default i18n;

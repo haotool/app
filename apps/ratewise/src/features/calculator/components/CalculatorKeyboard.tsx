@@ -209,7 +209,7 @@ export function CalculatorKeyboard({
           <>
             {/* 背景遮罩 */}
             <motion.div
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-overlay/40 z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -219,7 +219,7 @@ export function CalculatorKeyboard({
 
             {/* Bottom Sheet 容器 */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-3xl bg-surface shadow-xl"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -245,6 +245,7 @@ export function CalculatorKeyboard({
                     {t('calculator.title')}
                   </h2>
                   <button
+                    type="button"
                     onClick={onClose}
                     className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
                     aria-label={t('calculator.close')}

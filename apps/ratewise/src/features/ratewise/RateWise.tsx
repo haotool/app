@@ -25,7 +25,7 @@ import { formatDisplayTime } from '../../utils/timeFormatter';
 import { performFullRefresh } from '../../utils/swUtils';
 import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
-import { rateWiseLayoutTokens } from '../../config/design-tokens';
+import { feedbackSurfaceTokens, rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { CurrencyCode, RateSource, RateType } from './types';
 import { CURRENCY_DEFINITIONS } from './constants';
 import { useConverterStore } from '../../stores/converterStore';
@@ -154,16 +154,15 @@ const RateWise = () => {
   // Error state UI
   if (ratesError) {
     return (
-      <div className="min-h-dvh bg-danger-bg flex items-center justify-center p-4">
-        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <AlertCircle className="text-danger" size={48} />
-          <h1 className="text-2xl font-bold text-neutral-text mt-4">
-            {t('errors.rateLoadFailed')}
-          </h1>
-          <p className="text-neutral-text-secondary mt-2 mb-6">{t('errors.rateLoadDescription')}</p>
+      <div className={feedbackSurfaceTokens.pageCenter}>
+        <div className={feedbackSurfaceTokens.card}>
+          <AlertCircle className={feedbackSurfaceTokens.icon} size={48} />
+          <h1 className={feedbackSurfaceTokens.title}>{t('errors.rateLoadFailed')}</h1>
+          <p className={feedbackSurfaceTokens.description}>{t('errors.rateLoadDescription')}</p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition"
+            className={feedbackSurfaceTokens.dangerActionButton}
           >
             <RefreshCw size={18} />
             {t('errors.reloadPage')}
@@ -184,109 +183,99 @@ const RateWise = () => {
         />
       )}
 
-      {/* 頁面主容器
-       *
-       * SSOT 頁面佈局規範（2026 最佳實踐）：
-       * - 外層容器：flex flex-col min-h-full（填滿可用空間）
-       * - 內容區域：flex-1 flex flex-col px-5 py-4 max-w-md mx-auto w-full
-       * - 滾動由 AppLayout 統一處理，避免嵌套滾動
-       *
-       * @see AppLayout.tsx - 外層滾動容器
-       * @see https://web.dev/viewport-units/ - 動態視口高度
-       */}
       <div ref={mainRef} className={rateWiseLayoutTokens.container}>
         <div className={rateWiseLayoutTokens.content.className}>
-          {/* H1 由 routes.tsx SEO wrapper 提供，此處不重複 */}
-          {/* 載入狀態提示 */}
-          {ratesLoading && (
-            <div className="text-center text-sm text-neutral-text-secondary py-2">
-              載入即時匯率中...
-            </div>
-          )}
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,22rem)] lg:items-start xl:grid-cols-[minmax(0,1.4fr)_minmax(20rem,24rem)]">
+            <div className="min-w-0">
+              {/* H1 由 routes.tsx SEO wrapper 提供，此處不重複 */}
+              {/* 載入狀態提示 */}
+              {ratesLoading && (
+                <div className="py-2 text-center text-sm text-neutral-text-secondary">
+                  {t('app.loadingLiveRates')}
+                </div>
+              )}
 
-          {ratesWarning && (
-            <div
-              role="status"
-              data-testid="ratewise-stale-rates-warning"
-              className="mb-3 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
-            >
-              <AlertCircle size={14} aria-hidden="true" />
-              <span>{t('errors.rateStaleWarning')}</span>
-            </div>
-          )}
+              {ratesWarning && (
+                <div
+                  role="status"
+                  data-testid="ratewise-stale-rates-warning"
+                  className="mb-3 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
+                >
+                  <AlertCircle size={14} aria-hidden="true" />
+                  <span>{t('errors.rateStaleWarning')}</span>
+                </div>
+              )}
 
-          {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
-          <section className={rateWiseLayoutTokens.section.className}>
-            <div className={rateWiseLayoutTokens.card.className}>
-              <SingleConverter
-                fromCurrency={fromCurrency}
-                toCurrency={toCurrency}
-                fromAmount={fromAmount}
-                toAmount={toAmount}
-                exchangeRates={exchangeRates}
-                details={details}
-                rateType={rateType}
-                rateSource={effectiveRateSource}
-                moneyBoxRate={moneyBoxRate}
-                exchangeShopCurrency={exchangeShopCurrency}
-                rateMode={rateMode}
-                rateTypeAvailability={rateTypeAvailability}
-                onFromCurrencyChange={setFromCurrency}
-                onToCurrencyChange={setToCurrency}
-                onFromAmountChange={handleFromAmountChange}
-                onToAmountChange={handleToAmountChange}
-                onQuickAmount={quickAmount}
-                onSwapCurrencies={swapCurrencies}
-                onAddToHistory={addToHistory}
-                onRateTypeChange={handleRateTypeChange}
-                onRateSourceChange={handleRateSourceChange}
-              />
-            </div>
-          </section>
+              {/* 單幣別轉換區塊 - RWD 全頁面佈局 */}
+              <section className={rateWiseLayoutTokens.section.className}>
+                <div className={rateWiseLayoutTokens.card.className}>
+                  <SingleConverter
+                    fromCurrency={fromCurrency}
+                    toCurrency={toCurrency}
+                    fromAmount={fromAmount}
+                    toAmount={toAmount}
+                    exchangeRates={exchangeRates}
+                    details={details}
+                    rateType={rateType}
+                    rateSource={effectiveRateSource}
+                    moneyBoxRate={moneyBoxRate}
+                    exchangeShopCurrency={exchangeShopCurrency}
+                    rateMode={rateMode}
+                    rateTypeAvailability={rateTypeAvailability}
+                    onFromCurrencyChange={setFromCurrency}
+                    onToCurrencyChange={setToCurrency}
+                    onFromAmountChange={handleFromAmountChange}
+                    onToAmountChange={handleToAmountChange}
+                    onQuickAmount={quickAmount}
+                    onSwapCurrencies={swapCurrencies}
+                    onAddToHistory={addToHistory}
+                    onRateTypeChange={handleRateTypeChange}
+                    onRateSourceChange={handleRateSourceChange}
+                  />
+                </div>
+              </section>
 
-          {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
-          <section className="mb-4 hidden md:block flex-shrink-0">
-            <div className="space-y-4">
+              {!ratesLoading && lastUpdate && (
+                <section
+                  data-testid="ratewise-data-source"
+                  className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
+                >
+                  <AnimatePresence mode="wait">
+                    {effectiveRateSource === 'exchange-shop' &&
+                    moneyBoxRate?.currency === exchangeShopCurrency ? (
+                      <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
+                    ) : (
+                      <div
+                        key="bank-badge"
+                        className="inline-flex flex-wrap items-center gap-2 text-xs text-text-muted"
+                      >
+                        <a
+                          href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-lg px-1 font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                          <Landmark className="h-3.5 w-3.5 text-primary/70" aria-hidden="true" />
+                          {t('rateInfo.bankOfficialRates')}
+                        </a>
+                        <span>·</span>
+                        <span>{formattedLastUpdate}</span>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </section>
+              )}
+            </div>
+
+            <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-6">
               <FavoritesList favorites={favorites} exchangeRates={exchangeRates} />
               <CurrencyList
                 favorites={favorites}
                 exchangeRates={exchangeRates}
                 onToggleFavorite={toggleFavorite}
               />
-            </div>
-          </section>
-
-          {/* 資料來源與更新時間區塊 - 現代化精簡設計，固定在底部 */}
-          {!ratesLoading && lastUpdate && (
-            <section
-              data-testid="ratewise-data-source"
-              className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
-            >
-              <AnimatePresence mode="wait">
-                {effectiveRateSource === 'exchange-shop' &&
-                moneyBoxRate?.currency === exchangeShopCurrency ? (
-                  <ExchangeShopBadge key="exchange-shop-badge" rate={moneyBoxRate} />
-                ) : (
-                  <div
-                    key="bank-badge"
-                    className="inline-flex items-center gap-2 text-[10px] text-text-muted/60"
-                  >
-                    <a
-                      href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 hover:text-primary transition-colors"
-                    >
-                      <Landmark className="h-3 w-3 text-primary/70" aria-hidden="true" />
-                      臺灣銀行牌告
-                    </a>
-                    <span>·</span>
-                    <span>{formattedLastUpdate}</span>
-                  </div>
-                )}
-              </AnimatePresence>
-            </section>
-          )}
+            </aside>
+          </div>
         </div>
       </div>
     </>

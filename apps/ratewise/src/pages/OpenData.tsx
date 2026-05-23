@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
+import { contentPageTokens } from '../config/design-tokens';
 import {
   CDN_DATA_BASE,
   PROVIDER_RATES_PATH,
@@ -37,13 +39,13 @@ const DATA_SOURCES = [
     label: '同步機制',
     name: 'GitHub Actions',
     url: RATES_API.actionsUrl,
-    note: '每 5 分鐘自動抓取台銀最新牌告，寫入 data 分支 JSON',
+    note: '約每 5 分鐘檢查台銀牌告更新，寫入 data 分支 JSON',
   },
   {
     label: '建議端點',
     name: 'jsDelivr CDN',
     url: 'https://cdn.jsdelivr.net',
-    note: '全球 PoP 加速，無請求上限，支援 ETag 條件式請求。data 分支推送後自動 Purge，新鮮度約 5 分鐘',
+    note: '全球 PoP 加速，無固定公開額度，請遵守 CDN fair use；支援 ETag 條件式請求。data 分支推送後自動 Purge，實際新鮮度依 CDN 而定',
   },
   {
     label: '備援端點',
@@ -62,7 +64,7 @@ const API_ENDPOINTS = [
     cdnUrl: RATES_API.latestCdn,
     rawUrl: RATES_API.latestRaw,
     description: '最新匯率',
-    badge: '每 5 分鐘更新',
+    badge: '約每 5 分鐘檢查',
     note: '包含 17 種外幣的現金與即期四種報價，TWD 為基準幣；App 匯率模式請依 rateModeStrategies 選取 buy / sell / mid 欄位。',
   },
   {
@@ -287,6 +289,7 @@ const PROVIDER_CONTRACT_ROWS = PUBLIC_PROVIDER_METADATA.providers.map((provider)
 // ─── 子元件 ────────────────────────────────────────────────────────────────────
 
 function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -296,13 +299,16 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
     });
   };
 
+  const label = copied ? t('common.copied') : t('common.copy');
+
   return (
     <button
+      type="button"
       onClick={handleCopy}
-      aria-label={copied ? '已複製' : '複製'}
+      aria-label={label}
       className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
         copied
-          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+          ? 'border border-success/20 bg-success/10 text-text'
           : 'bg-surface-elevated text-text-muted hover:text-text'
       } ${className}`}
     >
@@ -322,7 +328,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
               d="M5 13l4 4L19 7"
             />
           </svg>
-          已複製
+          {t('common.copied')}
         </>
       ) : (
         <>
@@ -340,7 +346,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
               d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
           </svg>
-          複製
+          {t('common.copy')}
         </>
       )}
     </button>
@@ -349,15 +355,45 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 function TabbedCodeExamples() {
   const [activeId, setActiveId] = useState<string>(CODE_EXAMPLES[0].id);
+  const focusTab = (id: string) => {
+    window.requestAnimationFrame(() => document.getElementById(`code-tab-${id}`)?.focus());
+  };
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const activeIndex = CODE_EXAMPLES.findIndex((example) => example.id === activeId);
+    const lastIndex = CODE_EXAMPLES.length - 1;
+    let nextIndex = activeIndex;
+
+    if (event.key === 'ArrowRight') nextIndex = activeIndex === lastIndex ? 0 : activeIndex + 1;
+    if (event.key === 'ArrowLeft') nextIndex = activeIndex === 0 ? lastIndex : activeIndex - 1;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = lastIndex;
+    if (nextIndex === activeIndex) return;
+
+    event.preventDefault();
+    const nextId = (CODE_EXAMPLES[nextIndex] ?? CODE_EXAMPLES[0]).id;
+    setActiveId(nextId);
+    focusTab(nextId);
+  };
 
   return (
-    <div className="max-w-full overflow-hidden rounded-xl border border-surface-border">
+    <div className={`${contentPageTokens.table.wrapper} overflow-hidden`}>
       {/* Tab bar */}
-      <div className="flex min-w-0 items-center gap-0 overflow-x-auto border-b border-surface-border bg-surface-elevated">
+      <div
+        role="tablist"
+        aria-label="程式碼範例"
+        className="flex min-w-0 items-center gap-0 overflow-x-auto border-b border-border/70 bg-surface-elevated"
+      >
         {CODE_EXAMPLES.map((ex) => (
           <button
             key={ex.id}
+            id={`code-tab-${ex.id}`}
+            type="button"
+            role="tab"
+            aria-selected={activeId === ex.id}
+            aria-controls={`code-panel-${ex.id}`}
+            tabIndex={activeId === ex.id ? 0 : -1}
             onClick={() => setActiveId(ex.id)}
+            onKeyDown={handleTabKeyDown}
             className={`shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               activeId === ex.id
                 ? 'border-primary text-primary'
@@ -381,8 +417,10 @@ function TabbedCodeExamples() {
         return (
           <pre
             key={example.id}
-            role="region"
-            aria-label={`程式碼範例：${example.label}`}
+            id={`code-panel-${example.id}`}
+            role="tabpanel"
+            aria-labelledby={`code-tab-${example.id}`}
+            tabIndex={isActive ? 0 : -1}
             hidden={!isActive}
             className="max-w-full overflow-x-auto bg-surface p-5 text-sm leading-relaxed text-text"
           >
@@ -440,7 +478,7 @@ interface ResourceCardItem {
 
 function ResourceCard({ item }: { item: ResourceCardItem }) {
   const className =
-    'group rounded-xl border border-surface-border bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated';
+    'group rounded-lg border border-border/70 bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background';
   const content = (
     <>
       <div className="mb-1 min-w-0 break-words font-semibold text-text group-hover:text-primary">
@@ -484,10 +522,11 @@ const OpenData = () => {
         ogType="article"
       />
 
-      <div className="min-h-screen bg-page-gradient">
-        <div className="container mx-auto max-w-5xl px-4 py-8">
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
           <PageNavHeader
+            fallbackHref="/settings/"
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               { label: t('settings.openDataApi'), href: '/open-data/' },
@@ -495,23 +534,21 @@ const OpenData = () => {
           />
 
           {/* ── Hero ── */}
-          <div className="mb-10">
-            <h1 className="mb-3 text-4xl font-bold text-text">開放資料 API</h1>
-            <p className="mb-4 max-w-2xl text-lg text-text-muted">
+          <div className={contentPageTokens.hero.wrapper}>
+            <p className={contentPageTokens.sectionHeader.eyebrow}>開發者資源</p>
+            <h1 className={contentPageTokens.hero.title}>開放資料 API</h1>
+            <p className={contentPageTokens.intro}>
               台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {[
                 `${SUPPORTED_CURRENCIES.length} 種幣別`,
-                '每 5 分鐘更新',
+                '約每 5 分鐘檢查',
                 '無需 API Key',
                 'ETag 支援',
                 'CDN 全球加速',
               ].map((badge) => (
-                <span
-                  key={badge}
-                  className="rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-xs font-medium text-text-muted"
-                >
+                <span key={badge} className={contentPageTokens.badges.neutral}>
                   {badge}
                 </span>
               ))}
@@ -525,38 +562,37 @@ const OpenData = () => {
             <h2 className="mb-5 text-2xl font-semibold text-text">資料管線</h2>
 
             {/* 流程圖 */}
-            <div className="mb-5 max-w-full overflow-hidden rounded-xl border border-surface-border bg-surface p-5">
+            <div className={`${contentPageTokens.article.card} mb-5 max-w-full overflow-hidden`}>
               <div className="flex min-w-0 flex-col items-center gap-2 font-mono text-sm sm:flex-row sm:flex-wrap sm:justify-center sm:gap-0">
                 {[
                   {
                     label: '臺灣銀行',
                     sub: 'rate.bot.com.tw',
-                    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                    color: 'border border-primary/20 bg-primary/10 text-text',
                   },
                   null,
                   {
                     label: 'GitHub Actions',
                     sub: '每 5 分鐘',
-                    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                    color: 'border border-warning/25 bg-warning/10 text-text',
                   },
                   null,
                   {
                     label: 'data 分支',
                     sub: 'latest.json / history/',
-                    color:
-                      'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+                    color: 'border border-border/70 bg-surface-elevated text-text',
                   },
                   null,
                   {
                     label: 'jsDelivr CDN',
                     sub: '全球加速',
-                    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+                    color: 'border border-success/25 bg-success/10 text-text',
                   },
                   null,
                   {
                     label: '你的應用',
                     sub: 'fetch / curl',
-                    color: 'bg-surface-elevated border border-surface-border text-text',
+                    color: 'border border-border/70 bg-surface-elevated text-text',
                   },
                 ].map((item, i) =>
                   item === null ? (
@@ -578,10 +614,7 @@ const OpenData = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {DATA_SOURCES.map((src) => (
-                <div
-                  key={src.label}
-                  className="rounded-lg border border-surface-border bg-surface p-4"
-                >
+                <div key={src.label} className={contentPageTokens.article.card}>
                   <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
                     {src.label}
                   </div>
@@ -598,7 +631,9 @@ const OpenData = () => {
               ))}
             </div>
 
-            <div className="mt-4 min-w-0 break-words rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm text-text-muted">
+            <div
+              className={`${contentPageTokens.callouts.elevated} mt-4 min-w-0 break-words text-sm text-text-muted`}
+            >
               <span className="font-semibold text-text">快取建議</span>
               ：CDN 端點支援{' '}
               <code className="rounded bg-surface px-1 font-mono text-xs">If-None-Match</code> ETag
@@ -611,30 +646,30 @@ const OpenData = () => {
               <h3 className="mb-3 text-base font-semibold text-text">資料新鮮度與時間戳記說明</h3>
 
               {/* 兩個時間欄位對照 */}
-              <div className="mb-4 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-                <table className="min-w-[42rem] text-sm" aria-label="時間戳記欄位說明">
+              <div className={`${contentPageTokens.table.wrapperBlock} mb-4`}>
+                <table className={contentPageTokens.table.table} aria-label="時間戳記欄位說明">
                   <thead>
-                    <tr className="border-b border-surface-border bg-surface-elevated">
-                      <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
-                      <th className="px-4 py-3 text-left font-semibold text-text">意義</th>
-                      <th className="px-4 py-3 text-left font-semibold text-text">更新時機</th>
+                    <tr className={contentPageTokens.table.headRow}>
+                      <th className={contentPageTokens.table.headCell}>欄位</th>
+                      <th className={contentPageTokens.table.headCell}>意義</th>
+                      <th className={contentPageTokens.table.headCell}>更新時機</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-surface-border bg-surface">
+                  <tbody className={contentPageTokens.table.body}>
                     <tr>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">updateTime</td>
-                      <td className="px-4 py-3 break-words text-text">
+                      <td className={contentPageTokens.table.monoCell}>updateTime</td>
+                      <td className={`${contentPageTokens.table.cell} break-words`}>
                         台銀匯率於本系統最後一次<strong>實際變動</strong>的時間（台灣時區）
                       </td>
-                      <td className="px-4 py-3 break-words text-text-muted">
+                      <td className={`${contentPageTokens.table.mutedCell} break-words`}>
                         僅在 GitHub Actions 偵測到匯率數值與前次不同時才更新；台銀未發布新牌告時即使
                         Actions 持續執行，此欄位也不會前進
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">timestamp</td>
-                      <td className="px-4 py-3 text-text">同上，UTC ISO 8601 格式</td>
-                      <td className="px-4 py-3 text-text-muted">與 updateTime 同步更新</td>
+                      <td className={contentPageTokens.table.monoCell}>timestamp</td>
+                      <td className={contentPageTokens.table.cell}>同上，UTC ISO 8601 格式</td>
+                      <td className={contentPageTokens.table.mutedCell}>與 updateTime 同步更新</td>
                     </tr>
                   </tbody>
                 </table>
@@ -642,9 +677,11 @@ const OpenData = () => {
 
               {/* 核心說明 */}
               <div className="space-y-3">
-                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div
+                  className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
+                >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                    <span className="rounded border border-warning/25 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-text">
                       變動偵測機制
                     </span>
                   </div>
@@ -666,9 +703,11 @@ const OpenData = () => {
                   </p>
                 </div>
 
-                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div
+                  className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
+                >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    <span className="rounded border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-text">
                       為何來源時間與刷新時間差距較大？
                     </span>
                   </div>
@@ -686,9 +725,11 @@ const OpenData = () => {
                   </p>
                 </div>
 
-                <div className="min-w-0 rounded-lg border border-surface-border bg-surface p-4 text-sm leading-relaxed">
+                <div
+                  className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
+                >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    <span className="rounded border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-semibold text-text">
                       Actions 排程說明
                     </span>
                   </div>
@@ -713,10 +754,7 @@ const OpenData = () => {
 
             <div className="space-y-5">
               {OPEN_DATA_API_ENDPOINTS.map((ep) => (
-                <div
-                  key={ep.path}
-                  className="rounded-xl border border-surface-border bg-surface p-5"
-                >
+                <div key={ep.path} className={contentPageTokens.article.card}>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                       {ep.method}
@@ -725,7 +763,7 @@ const OpenData = () => {
                       {ep.path}
                     </code>
                     <span className="font-medium text-text">{ep.description}</span>
-                    <span className="rounded-full border border-surface-border px-2 py-0.5 text-xs text-text-muted">
+                    <span className="rounded-full border border-border/70 px-2 py-0.5 text-xs text-text-muted">
                       {ep.badge}
                     </span>
                   </div>
@@ -738,7 +776,9 @@ const OpenData = () => {
               ))}
             </div>
 
-            <div className="mt-4 min-w-0 break-words rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+            <div
+              className={`${contentPageTokens.callouts.elevated} mt-4 min-w-0 break-words text-sm`}
+            >
               完整 OpenAPI 3.1 規格：
               <a
                 href="/ratewise/openapi.json"
@@ -771,42 +811,45 @@ const OpenData = () => {
               。
             </p>
 
-            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-              <table className="min-w-[44rem] text-sm" aria-label="資料格式欄位說明">
+            <div className={contentPageTokens.table.wrapperBlock}>
+              <table className={contentPageTokens.table.table} aria-label="資料格式欄位說明">
                 <thead>
-                  <tr className="border-b border-surface-border bg-surface-elevated">
-                    <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">型別</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">說明</th>
+                  <tr className={contentPageTokens.table.headRow}>
+                    <th className={contentPageTokens.table.headCell}>欄位</th>
+                    <th className={contentPageTokens.table.headCell}>型別</th>
+                    <th className={contentPageTokens.table.headCell}>說明</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border bg-surface">
+                <tbody className={contentPageTokens.table.body}>
                   {SCHEMA_FIELDS.map((f) => (
                     <tr key={f.field}>
-                      <td className="px-4 py-3 break-all font-mono text-xs text-primary">
-                        {f.field}
-                      </td>
+                      <td className={`${contentPageTokens.table.monoCell} break-all`}>{f.field}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
                         {f.type}
                       </td>
-                      <td className="px-4 py-3 break-words text-text">{f.description}</td>
+                      <td className={`${contentPageTokens.table.cell} break-words`}>
+                        {f.description}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-              <table className="min-w-[52rem] text-sm" aria-label="App 匯率模式欄位對照">
+            <div className={contentPageTokens.table.wrapperBlock}>
+              <table
+                className={contentPageTokens.table.wideTable}
+                aria-label="App 匯率模式欄位對照"
+              >
                 <thead>
-                  <tr className="border-b border-surface-border bg-surface-elevated">
-                    <th className="px-4 py-3 text-left font-semibold text-text">App 模式</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">來源幣別欄位</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">目標幣別欄位</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">說明</th>
+                  <tr className={contentPageTokens.table.headRow}>
+                    <th className={contentPageTokens.table.headCell}>App 模式</th>
+                    <th className={contentPageTokens.table.headCell}>來源幣別欄位</th>
+                    <th className={contentPageTokens.table.headCell}>目標幣別欄位</th>
+                    <th className={contentPageTokens.table.headCell}>說明</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border bg-surface">
+                <tbody className={contentPageTokens.table.body}>
                   {RATE_MODE_STRATEGY_ROWS.map((strategy) => (
                     <tr key={strategy.mode}>
                       <td className="px-4 py-3">
@@ -821,35 +864,42 @@ const OpenData = () => {
                       <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
                         {strategy.to}
                       </td>
-                      <td className="px-4 py-3 break-words text-text">{strategy.description}</td>
+                      <td className={`${contentPageTokens.table.cell} break-words`}>
+                        {strategy.description}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-              <table className="min-w-[54rem] text-sm" aria-label="匯率來源 provider 合約">
+            <div className={contentPageTokens.table.wrapperBlock}>
+              <table
+                className={contentPageTokens.table.wideTable}
+                aria-label="匯率來源 provider 合約"
+              >
                 <thead>
-                  <tr className="border-b border-surface-border bg-surface-elevated">
-                    <th className="px-4 py-3 text-left font-semibold text-text">providerId</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">sourceKind</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">來源</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">狀態</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">端點</th>
+                  <tr className={contentPageTokens.table.headRow}>
+                    <th className={contentPageTokens.table.headCell}>providerId</th>
+                    <th className={contentPageTokens.table.headCell}>sourceKind</th>
+                    <th className={contentPageTokens.table.headCell}>來源</th>
+                    <th className={contentPageTokens.table.headCell}>狀態</th>
+                    <th className={contentPageTokens.table.headCell}>端點</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border bg-surface">
+                <tbody className={contentPageTokens.table.body}>
                   {PROVIDER_CONTRACT_ROWS.map((provider) => (
                     <tr key={provider.providerId}>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">
-                        {provider.providerId}
-                      </td>
+                      <td className={contentPageTokens.table.monoCell}>{provider.providerId}</td>
                       <td className="px-4 py-3 font-mono text-xs text-text-muted">
                         {provider.sourceKind}
                       </td>
-                      <td className="px-4 py-3 break-words text-text">{provider.name}</td>
-                      <td className="px-4 py-3 break-words text-text-muted">{provider.status}</td>
+                      <td className={`${contentPageTokens.table.cell} break-words`}>
+                        {provider.name}
+                      </td>
+                      <td className={`${contentPageTokens.table.mutedCell} break-words`}>
+                        {provider.status}
+                      </td>
                       <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
                         {provider.endpoints}
                       </td>
@@ -859,7 +909,9 @@ const OpenData = () => {
               </table>
             </div>
 
-            <div className="mb-6 rounded-lg border border-surface-border bg-surface-elevated p-4 text-sm leading-relaxed text-text-muted">
+            <div
+              className={`${contentPageTokens.callouts.elevated} mb-6 text-sm leading-relaxed text-text-muted`}
+            >
               <span className="font-semibold text-text">Provider selection contract：</span>
               歷史與未來篩選以 sourceKind + providerId 作為穩定資料鍵。現在只有台灣銀行一個 bank
               provider，因此銀行選單與最佳匯率推薦保持關閉；未來 {
@@ -879,7 +931,7 @@ const OpenData = () => {
                 {SUPPORTED_CURRENCIES.map((c) => (
                   <span
                     key={c.code}
-                    className="min-w-0 rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-sm"
+                    className="min-w-0 rounded-full border border-border/70 bg-surface-elevated px-3 py-1 text-sm"
                   >
                     <span className="font-mono font-semibold text-primary">{c.code}</span>
                     <span className="ml-1 break-words text-text-muted">{c.name}</span>
@@ -893,23 +945,25 @@ const OpenData = () => {
           <section className="mb-12">
             <h2 className="mb-5 text-2xl font-semibold text-text">速率限制</h2>
 
-            <div className="mb-5 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-              <table className="min-w-[42rem] text-sm" aria-label="速率限制規則">
+            <div className={`${contentPageTokens.table.wrapperBlock} mb-5`}>
+              <table className={contentPageTokens.table.table} aria-label="速率限制規則">
                 <thead>
-                  <tr className="border-b border-surface-border bg-surface-elevated">
-                    <th className="px-4 py-3 text-left font-semibold text-text">來源</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">限制</th>
-                    <th className="px-4 py-3 text-left font-semibold text-text">備註</th>
+                  <tr className={contentPageTokens.table.headRow}>
+                    <th className={contentPageTokens.table.headCell}>來源</th>
+                    <th className={contentPageTokens.table.headCell}>限制</th>
+                    <th className={contentPageTokens.table.headCell}>備註</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-border bg-surface">
+                <tbody className={contentPageTokens.table.body}>
                   {RATE_LIMIT_ITEMS.map((r) => (
                     <tr key={r.source}>
-                      <td className="px-4 py-3 font-medium text-text">{r.source}</td>
+                      <td className={`${contentPageTokens.table.cell} font-medium`}>{r.source}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-primary">
                         {r.limit}
                       </td>
-                      <td className="px-4 py-3 break-words text-text-muted">{r.note}</td>
+                      <td className={`${contentPageTokens.table.mutedCell} break-words`}>
+                        {r.note}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -918,10 +972,19 @@ const OpenData = () => {
 
             <div className="space-y-2">
               {[
-                { icon: '✅', content: '允許：個人專案、學術研究、非商業 App、教學、媒體引用' },
-                { icon: '✅', content: '允許：標示「資料來源：臺灣銀行牌告匯率」' },
                 {
-                  icon: '⚠️',
+                  icon: CheckCircle2,
+                  iconClass: 'text-success',
+                  content: '允許：個人專案、學術研究、非商業 App、教學、媒體引用',
+                },
+                {
+                  icon: CheckCircle2,
+                  iconClass: 'text-success',
+                  content: '允許：標示「資料來源：臺灣銀行牌告匯率」',
+                },
+                {
+                  icon: AlertTriangle,
+                  iconClass: 'text-warning',
                   content: (
                     <>
                       商業用途建議聯繫{' '}
@@ -930,14 +993,22 @@ const OpenData = () => {
                     </>
                   ),
                 },
-                { icon: '❌', content: '禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）' },
-                { icon: '❌', content: '禁止：宣稱為官方臺灣銀行 API' },
-              ].map(({ icon, content }, i) => (
+                {
+                  icon: XCircle,
+                  iconClass: 'text-destructive',
+                  content: '禁止：大量爬取歷史資料（對 CDN 或 GitHub 造成異常流量）',
+                },
+                {
+                  icon: XCircle,
+                  iconClass: 'text-destructive',
+                  content: '禁止：宣稱為官方臺灣銀行 API',
+                },
+              ].map(({ icon: Icon, iconClass, content }, i) => (
                 <div
                   key={i}
                   className="flex min-w-0 items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
                 >
-                  <span className="mt-0.5 shrink-0">{icon}</span>
+                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconClass}`} aria-hidden="true" />
                   <span className="min-w-0 break-words">{content}</span>
                 </div>
               ))}
@@ -947,7 +1018,9 @@ const OpenData = () => {
           {/* ── 授權聲明 ── */}
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">授權聲明</h2>
-            <div className="min-w-0 space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+            <div
+              className={`${contentPageTokens.article.card} min-w-0 space-y-3 text-sm leading-relaxed text-text-muted`}
+            >
               <p>
                 <span className="font-semibold text-text">程式碼</span>
                 ：以{' '}
@@ -1039,11 +1112,8 @@ const OpenData = () => {
             <h2 className="mb-5 text-2xl font-semibold text-text">常見問題</h2>
             <div className="space-y-3">
               {OPEN_DATA_PAGE_SEO.faqContent?.map((item) => (
-                <details
-                  key={item.question}
-                  className="group rounded-xl border border-surface-border bg-surface"
-                >
-                  <summary className="flex min-w-0 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-medium text-text">
+                <details key={item.question} className={contentPageTokens.article.faqItem}>
+                  <summary className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-4 font-medium text-text transition-colors hover:bg-surface-elevated">
                     <span className="min-w-0 break-words">{item.question}</span>
                     <svg
                       aria-hidden="true"
@@ -1060,7 +1130,7 @@ const OpenData = () => {
                       />
                     </svg>
                   </summary>
-                  <div className="break-words border-t border-surface-border px-5 py-4 text-sm leading-relaxed text-text-muted">
+                  <div className="break-words border-t border-border/70 px-5 py-4 text-sm leading-relaxed text-text-muted">
                     {item.answer}
                   </div>
                 </details>
@@ -1069,27 +1139,11 @@ const OpenData = () => {
           </section>
 
           {/* ── CTA ── */}
-          <div className="min-w-0 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
+          <div className="min-w-0 rounded-lg border border-border/70 bg-surface-elevated p-6 text-center">
             <p className="mb-3 text-text-muted">不想呼叫 API？直接使用換算介面，免安裝、免帳號。</p>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
+            <Link to="/" className={contentPageTokens.buttons.primary}>
               開啟換算工具
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>

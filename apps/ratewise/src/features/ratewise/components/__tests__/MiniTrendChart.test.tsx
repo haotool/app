@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MiniTrendChart, type MiniTrendDataPoint } from '../MiniTrendChart';
+import { createChart } from 'lightweight-charts';
 
 // Store crosshair callback for testing
 let crosshairCallback: ((param: unknown) => void) | null = null;
@@ -321,6 +322,27 @@ describe('MiniTrendChart', () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 
       removeEventListenerSpy.mockRestore();
+    });
+
+    it('應該在 data-style 變更時重建圖表', async () => {
+      const testData: MiniTrendDataPoint[] = [
+        { date: '2025-10-14', rate: 31.0 },
+        { date: '2025-10-15', rate: 31.5 },
+      ];
+
+      render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(createChart).toHaveBeenCalledTimes(1);
+      });
+
+      act(() => {
+        document.documentElement.setAttribute('data-style', 'ocean');
+      });
+
+      await waitFor(() => {
+        expect(createChart).toHaveBeenCalledTimes(2);
+      });
     });
   });
 });

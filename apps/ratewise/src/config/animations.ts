@@ -162,9 +162,9 @@ export const segmentedSwitch = {
   },
 
   /** 容器樣式 token（保持視覺一致） */
-  containerClass: 'bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner',
-  indicatorClass: 'absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]',
-  itemBaseClass: 'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
+  containerClass: 'bg-surface-soft rounded-lg p-1.5 flex gap-1 relative shadow-inner',
+  indicatorClass: 'absolute inset-0 rounded-lg shadow-sm z-[-1] bg-surface',
+  itemBaseClass: 'flex-1 py-3 rounded-lg flex items-center justify-center gap-1 relative z-10',
 } as const;
 
 /**
@@ -182,14 +182,14 @@ export const activeHighlight = {
   transition: transitions.gentle,
 
   /** 高亮層樣式（絕對定位，作為選中背景） */
-  highlightClass: 'absolute inset-0 rounded-xl bg-primary/10 ring-2 ring-primary/30',
+  highlightClass: 'absolute inset-0 rounded-lg bg-primary/10 ring-2 ring-primary/30',
 
   /** 列表項目基礎樣式（需 relative 定位以容納高亮層） */
-  itemBaseClass: 'relative flex items-center justify-between px-3 py-2.5 rounded-xl',
+  itemBaseClass: 'relative flex items-center justify-between px-3 py-2.5 rounded-lg',
 
-  /** 未選中項目互動樣式 */
+  /** 未選中項目互動樣式 - 極簡背景，僅 hover 時顯示淡色 */
   itemInactiveClass:
-    'bg-surface-soft cursor-pointer hover:bg-primary/5 hover:shadow-sm active:scale-[0.99]',
+    'hover:bg-surface-soft/50 hover:shadow-sm active:scale-[0.99] transition-colors duration-150',
 
   /** 選中項目樣式（不可點擊） */
   itemActiveClass: 'cursor-default',
@@ -266,14 +266,14 @@ export const notificationAnimations = {
  */
 export const microInteractionClasses = {
   /** 按鈕基礎互動 */
-  button: 'transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]',
+  button: 'transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]',
 
   /** 按鈕帶陰影 */
   buttonWithShadow:
-    'transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]',
+    'transition-[box-shadow,transform] duration-200 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]',
 
   /** 卡片懸停效果 */
-  card: 'transition-all duration-200 ease-out hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-lg',
+  card: 'transition-[box-shadow,transform] duration-200 ease-out hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-lg',
 
   /** 連結懸停效果 */
   link: 'transition-colors duration-200 ease-out hover:text-primary',
@@ -288,7 +288,7 @@ export const microInteractionClasses = {
   opacity: 'transition-opacity duration-200 ease-out',
 
   /** 導覽項目效果 */
-  navItem: 'transition-all duration-200 ease-out active:scale-95',
+  navItem: 'transition-transform duration-200 ease-out active:scale-95',
 } as const;
 
 /**

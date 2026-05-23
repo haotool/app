@@ -181,7 +181,7 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
                     className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.warningGradient} flex items-center justify-center shadow-sm`}
                   >
                     <WifiOff
-                      className={`${notificationTokens.icon.svg} text-white`}
+                      className={`${notificationTokens.icon.svg} text-warning`}
                       strokeWidth={notificationTokens.icon.strokeWidth}
                       aria-hidden="true"
                     />
@@ -192,24 +192,18 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
                   <h2
                     className={`text-sm font-semibold ${notificationTokens.text.warningTitle} truncate`}
                   >
-                    {t('offline.title', '離線模式')}
+                    {t('offline.title')}
                   </h2>
                   <p className={`text-xs ${notificationTokens.text.warningDescription} truncate`}>
-                    {t('offline.description', '部分功能可能無法使用')}
+                    {t('offline.description')}
                   </p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleDismiss}
-                  className="
-                    p-1.5 rounded-full
-                    bg-brand-icon-from/80 text-brand-text
-                    hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
-                    active:scale-[0.95]
-                    transition-[color,background-color,transform] duration-200 ease-out
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning focus-visible:ring-offset-1
-                  "
-                  aria-label={t('offline.close', '關閉離線提示')}
+                  className={notificationTokens.actions.icon}
+                  aria-label={t('offline.close')}
                 >
                   <svg
                     className="w-4 h-4"

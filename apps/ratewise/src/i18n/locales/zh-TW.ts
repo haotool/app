@@ -47,6 +47,7 @@ const zhTW = {
     title: APP_INFO.shortName,
     subtitle: '匯率換算工具',
     version: '版本',
+    loadingLiveRates: '載入即時匯率中...',
   },
 
   // Single Currency Converter
@@ -75,6 +76,7 @@ const zhTW = {
     rateTypeUnavailableForCurrencies:
       '{{currencies}} 不提供 {{rateType}} 匯率，已改用 {{fallbackType}}',
     viewTrendChart: '查看趨勢圖',
+    trendChartLoadFailed: '趨勢圖載入失敗',
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',
     backToConverter: '返回主換算器',
@@ -92,6 +94,7 @@ const zhTW = {
     calculating: '計算中...',
     noData: '無資料',
     amountClickCalculator: '{{name}} ({{code}}) 金額，點擊開啟計算機',
+    setBaseCurrency: '將 {{name}} ({{code}}) 設為基準貨幣',
     currencyListLabel: '貨幣列表',
     addFavorite: '加入常用貨幣 {{code}}',
     removeFavorite: '移除常用貨幣 {{code}}',
@@ -130,6 +133,7 @@ const zhTW = {
   // Settings
   settings: {
     title: '設定',
+    description: '調整介面風格、語言、匯率模式與支援資訊入口。',
     interfaceStyle: '介面風格',
     language: '語言',
     storageCache: '儲存與快取',
@@ -139,7 +143,7 @@ const zhTW = {
     taiwanBank: '台灣銀行',
     updateFrequency: '更新頻率',
     fiveMinutes: '5 分鐘',
-    updateNote: '匯率資料每 5 分鐘自動更新。',
+    updateNote: '匯率資料約每 5 分鐘檢查更新，實際時間依來源與 CDN 而定。',
     resetTheme: '重置主題設定',
     appVersion: '應用程式版本',
     designSystem: '設計系統',
@@ -231,6 +235,7 @@ const zhTW = {
   // Rate Info
   rateInfo: {
     source: '臺灣銀行牌告',
+    bankOfficialRates: '臺灣銀行牌告',
     sourceTime: '來源',
     refreshTime: '刷新',
     lastUpdate: '最後更新',
@@ -305,24 +310,49 @@ const zhTW = {
     updatingDescription: '請稍候...',
     updateFailedTitle: '更新失敗',
     updateFailedDescription: '請重試或檢查網路',
-    registrationFailedTitle: '背景更新初始化失敗',
-    registrationFailedDescription: '更新模組載入失敗，請重新載入；若仍持續發生，請直接聯繫作者。',
     actionRetry: '重試',
-    actionReload: '重新載入',
     releaseToRefresh: '放開以重新整理',
     refreshing: '重新整理中...',
   },
 
   support: {
+    contactLinksAriaLabel: '支援聯絡方式',
+    contactTitle: '若問題持續發生，請聯絡作者：',
     reportIssueLead: '若問題持續發生，請直接聯繫作者回報。',
     reportIssueHint: '建議附上錯誤畫面、操作步驟與裝置資訊，方便快速排查。',
   },
 
+  offline: {
+    title: '離線模式',
+    description: '部分功能可能無法使用',
+    close: '關閉離線提示',
+  },
+
+  skeleton: {
+    appLoading: `${APP_INFO.name} 載入中。`,
+    ratesLoading: '載入匯率資料中...',
+    settingsLoading: '載入設定中...',
+    favoritesLoading: '載入收藏中...',
+    multiConverterLoading: '載入多幣別換算中...',
+  },
+
+  rateProvider: {
+    bestRecommendation: '推薦最佳',
+    menuAriaLabel: '匯率來源 provider 選單',
+  },
+
   // 404
   notFound: {
+    metaTitle: '404 - 找不到頁面',
+    metaDescription: '很抱歉，您訪問的頁面不存在。請返回首頁或瀏覽其他頁面。',
+    eyebrow: '頁面錯誤',
+    errorAria: '404 錯誤',
     title: '頁面不存在',
     message: '您要找的頁面不存在或已被移除。',
     goHome: '返回首頁',
+    suggestedPages: '或許您想前往：',
+    reportIssuePrefix: '如果您認為這是一個錯誤，請',
+    reportIssueLink: '回報問題',
   },
 
   // Footer
@@ -336,7 +366,7 @@ const zhTW = {
     disclaimer:
       '本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準',
     disclaimerDesktop:
-      '匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。',
+      '匯率數據參考臺灣銀行牌告匯率，排程檢查更新。僅供參考，實際交易請以銀行公告為準。',
     faq: '常見問題',
     about: '關於我們',
     appName: APP_INFO.subtitle,

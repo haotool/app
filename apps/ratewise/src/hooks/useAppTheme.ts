@@ -4,7 +4,7 @@
  * @description 管理風格（Nitro/Kawaii/Zen/Classic/Ocean/Forest）的切換與持久化
  *              支援 SSR 安全的初始化，防止 FOUC（Flash of Unstyled Content）
  *
- * @reference ParkKeeper Design System
+ * @reference DESIGN.md, themes.ts
  *
  * @architecture
  * 1. index.html 中的同步腳本負責**首次繪製前**設置 data-style

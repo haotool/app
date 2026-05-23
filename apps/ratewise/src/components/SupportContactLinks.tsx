@@ -1,5 +1,7 @@
 import { Mail, MessageCircleMore } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { AUTHOR_CONTACT_LINKS } from '../config/app-info';
+import { contentPageTokens } from '../config/design-tokens';
 
 interface SupportContactLinksProps {
   title?: string;
@@ -15,22 +17,22 @@ const ICONS = {
 
 const TONE_STYLES = {
   surface: {
-    container: 'border-border/60 bg-surface/80',
+    container: 'border-border/70 bg-surface-elevated/90',
     title: 'text-text',
     description: 'text-text-muted',
-    item: 'border-border/60 bg-surface-secondary/80 hover:border-primary/30 hover:bg-surface-secondary',
+    item: contentPageTokens.links.row,
     icon: 'text-primary',
     label: 'text-text-muted',
     value: 'text-text',
   },
   brand: {
-    container: 'border-white/15 bg-white/10',
-    title: 'text-white/95',
-    description: 'text-white/75',
-    item: 'border-white/15 bg-black/15 hover:border-white/30 hover:bg-black/25',
-    icon: 'text-white/80',
-    label: 'text-white/60',
-    value: 'text-white/95 group-hover:text-white',
+    container: 'border-border/70 bg-surface/95',
+    title: 'text-text',
+    description: 'text-text-muted',
+    item: contentPageTokens.links.row,
+    icon: 'text-primary',
+    label: 'text-text-muted',
+    value: 'text-text group-hover:text-primary',
   },
 } as const;
 
@@ -40,12 +42,13 @@ export function SupportContactLinks({
   className = '',
   tone = 'surface',
 }: SupportContactLinksProps) {
+  const { t } = useTranslation();
   const styles = TONE_STYLES[tone];
 
   return (
     <section
-      className={`pointer-events-none rounded-2xl border p-4 text-left backdrop-blur-sm ${styles.container} ${className}`.trim()}
-      aria-label="Support contact links"
+      className={`pointer-events-none rounded-lg border p-4 text-left ${styles.container} ${className}`.trim()}
+      aria-label={t('support.contactLinksAriaLabel')}
     >
       {title ? <p className={`text-sm font-semibold ${styles.title}`}>{title}</p> : null}
       {description ? (
@@ -61,7 +64,7 @@ export function SupportContactLinks({
               key={link.id}
               href={link.href}
               {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className={`pointer-events-auto group flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition-colors duration-200 ${styles.item}`}
+              className={`pointer-events-auto ${styles.item}`}
               aria-label={link.label}
             >
               <span className="flex min-w-0 items-center gap-2">

@@ -95,7 +95,7 @@ const FEATURES = [
   '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）',
 ];
 
-const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
+const content = `# ${BRAND_FULL} — 台銀牌告買賣價匯率換算器
 
 > 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 
@@ -106,7 +106,7 @@ Version: v${VERSION}
 - Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 - Q: 為什麼 ${BRAND_SHORT} 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 ${BRAND_SHORT} 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
-- Q: 更新頻率？ A: 每 5 分鐘自動同步。
+- Q: 更新頻率？ A: 約每 5 分鐘檢查並同步；實際新鮮度依臺灣銀行資料、GitHub Actions 佇列與 CDN 快取而定。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
@@ -116,14 +116,14 @@ Version: v${VERSION}
 ## E-E-A-T Signals
 
 - 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋。
-- 權威性：資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步。
+- 權威性：資料來源為臺灣銀行官方牌告匯率，排程檢查並同步。
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
 - 經驗：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕。
 
 ## Key Metrics
 
 - 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
-- 更新頻率：每 5 分鐘自動同步
+- 更新頻率：約每 5 分鐘檢查更新
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
 - i18n ${SUPPORTED_LANGUAGE_COUNT} 語言支援（${SUPPORTED_LANGUAGE_LABEL_TEXT}）
@@ -190,7 +190,7 @@ ${buildReverseRates()}
 
 - Source: 臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
-- Update: 每 5 分鐘自動同步（GitHub Actions）
+- Update: 約每 5 分鐘檢查更新（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
 - Currencies: ${SUPPORTED_CURRENCY_COUNT} 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
@@ -518,7 +518,7 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘自動同步。
+- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是以臺灣銀行牌告買賣價為核心的匯率換算工具，顯示實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新。
 - Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，每 5 分鐘更新。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔（到銀行換現鈔），即期匯率適用銀行電匯（匯款）。現鈔通常比即期差 1~3%，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。

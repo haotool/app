@@ -92,8 +92,8 @@ function Header() {
     <header
       className="
         px-4 z-30 shrink-0
-        bg-background/80 backdrop-blur-xl
-        border-b border-black/[0.03]
+        bg-background/92 backdrop-blur-md
+        border-b border-border/70
         flex items-center
       "
       style={{
@@ -101,20 +101,12 @@ function Header() {
         paddingTop: navigationTokens.safeArea.top,
       }}
     >
-      <div className="flex justify-between items-center max-w-md mx-auto w-full">
+      <div className="flex justify-between items-center w-full">
         {/* 品牌 Logo + 標題（使用 span 而非 h1，避免每頁重複 h1）*/}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <Logo />
-          <span
-            data-testid="app-title"
-            className="
-              text-lg font-black tracking-tight
-              bg-clip-text text-transparent
-              bg-gradient-to-r from-[rgb(var(--color-title-gradient-from))] to-[rgb(var(--color-title-gradient-to))]
-              [-webkit-background-clip:text]
-            "
-          >
-            {isZhTW ? APP_INFO.name : t('app.title')}
+          <span data-testid="app-title" className="text-base font-semibold tracking-[0.01em]">
+            {isZhTW ? APP_INFO.shortName : t('app.title')}
           </span>
         </div>
       </div>
@@ -201,15 +193,9 @@ export function AppLayout() {
        * 使用 --app-height（由 JS 設定）而非 100dvh，確保 WebView 環境高度正確。
        * Fallback：100dvh（JS 尚未執行時，或 SSG 初始渲染）。 */}
       <div
-        className="w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden"
+        className="flex w-full flex-col overflow-hidden bg-background font-sans text-text"
         style={{ height: 'var(--app-height, 100dvh)' }}
       >
-        {location.pathname === '/' ? (
-          <div className="sr-only">
-            <h1 id="homepage-seo-heading">{HOMEPAGE_SEO.content.heading}</h1>
-          </div>
-        ) : null}
-
         {/* Desktop sidebar (≥768px) */}
         <div className="flex flex-1 min-h-0 min-w-0">
           <SideNavigation className="hidden md:block" />
@@ -232,6 +218,11 @@ export function AppLayout() {
                 isRefreshing={isRefreshing}
                 canTrigger={canTrigger}
               />
+              {location.pathname === '/' ? (
+                <div className="sr-only">
+                  <h1 id="homepage-seo-heading">{HOMEPAGE_SEO.content.heading}</h1>
+                </div>
+              ) : null}
               <RouteErrorBoundary>
                 {/* enter-only：key 變化觸發 remount，新頁面從方向滑入淡入（CSS @keyframes） */}
                 <div

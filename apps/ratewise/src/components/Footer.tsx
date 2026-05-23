@@ -46,6 +46,14 @@ const formatTime = (dateString: string | null) => {
   }
 };
 
+const FOOTER_SOURCE_LINK_CLASS =
+  'group inline-flex min-h-11 items-center gap-2 rounded-lg border border-border/70 bg-surface-elevated px-4 py-2.5 text-text transition-colors duration-200 hover:border-primary/20 hover:bg-surface';
+const FOOTER_DIVIDER_CLASS = 'w-full border-t border-border/70';
+const FOOTER_TEXT_LINK_CLASS =
+  'inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+const FOOTER_RATE_LINK_CLASS =
+  'inline-flex min-h-11 items-center rounded-lg px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+
 function TimeSlot({ value }: { value: string }) {
   return (
     <span
@@ -98,7 +106,7 @@ export function Footer() {
   const buildTime = getFormattedBuildTime();
 
   return (
-    <footer className="bg-gradient-to-br from-footer-from via-footer-via to-footer-to text-surface mt-16">
+    <footer className="mt-16 border-t border-border/70 bg-surface text-text">
       {/* 行動版簡潔 Footer */}
       <div className="md:hidden max-w-6xl mx-auto px-4 py-8">
         {/* 匯率來源與更新時間 */}
@@ -107,10 +115,10 @@ export function Footer() {
             href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+            className={FOOTER_SOURCE_LINK_CLASS}
           >
             <svg
-              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              className="h-4 w-4 text-primary transition-transform group-hover:scale-110"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -122,9 +130,9 @@ export function Footer() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span className="text-sm font-medium text-white">{t('footer.taiwanBankFull')}</span>
+            <span className="text-sm font-medium">{t('footer.taiwanBankFull')}</span>
             <svg
-              className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+              className="h-3.5 w-3.5 text-text-muted transition-transform group-hover:translate-x-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -138,7 +146,7 @@ export function Footer() {
             </svg>
           </a>
           {/* ClientOnly 避免 hydration mismatch */}
-          <div className="flex items-center gap-2 text-sm text-white/80">
+          <div className="flex items-center gap-2 text-sm text-text-muted">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -153,34 +161,25 @@ export function Footer() {
 
         {/* 免責聲明 */}
         <div className="text-center mb-6">
-          <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
+          <p className="text-xs leading-relaxed text-text-muted">{t('footer.disclaimer')}</p>
         </div>
 
         {/* 快速連結 */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
-          <Link
-            to="/faq/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <Link to="/faq/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               ?
             </span>
             {t('footer.faq')}
           </Link>
-          <Link
-            to="/about/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+          <Link to="/about/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               i
             </span>
             {t('footer.about')}
           </Link>
-          <Link
-            to="/privacy/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+          <Link to="/privacy/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               🔒
             </span>
             {t('footer.privacyPolicy')}
@@ -188,27 +187,23 @@ export function Footer() {
         </div>
 
         {/* 熱門匯率快速導航 */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-white/80 mb-6">
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-xs">
           {POPULAR_RATE_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
-              className="hover:text-white transition-colors duration-200"
-            >
+            <Link key={link.href} to={link.href} className={FOOTER_RATE_LINK_CLASS}>
               {link.label}
             </Link>
           ))}
         </div>
 
         {/* 分隔線 */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
+        <div className={`mb-6 ${FOOTER_DIVIDER_CLASS}`} />
 
         {/* 版權與版本資訊 */}
         <div className="flex flex-col items-center justify-center gap-3 text-sm">
-          <div className="flex items-center gap-2 text-white/90">
-            <div className="w-5 h-5 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+          <div className="flex items-center gap-2 text-text">
+            <div className="flex h-5 w-5 items-center justify-center rounded-lg border border-border/70 bg-surface-elevated">
               <svg
-                className="w-3 h-3 text-white"
+                className="h-3 w-3 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -223,29 +218,29 @@ export function Footer() {
               </svg>
             </div>
             <span className="font-semibold">{t('footer.appName')}</span>
-            <span className="text-white/50">•</span>
+            <span className="text-text-muted/60">•</span>
             <span
-              className="relative inline-block cursor-help text-xs text-white/60 font-mono group"
+              className="group relative inline-block cursor-help font-mono text-xs text-text-muted"
               title={`Built on ${buildTime}`}
             >
               {appVersion}
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-text rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-text px-2 py-1 text-xs text-surface opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 Built on {buildTime}
                 <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
               </span>
             </span>
-            <span className="text-white/50">•</span>
-            <span className="text-white/70" suppressHydrationWarning>
+            <span className="text-text-muted/60">•</span>
+            <span className="text-text-muted" suppressHydrationWarning>
               © {CURRENT_YEAR}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-white/80">
+          <div className="flex items-center gap-1.5 text-text-muted">
             <span>{t('footer.by')}</span>
             <a
               href={AUTHOR_CONTACT_LINK_MAP.threads.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
+              className="font-medium text-text transition-colors duration-200 hover:text-primary"
             >
               {AUTHOR_CONTACT_LINK_MAP.threads.value}
             </a>
@@ -261,10 +256,10 @@ export function Footer() {
             href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
+            className={FOOTER_SOURCE_LINK_CLASS}
           >
             <svg
-              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              className="h-4 w-4 text-primary transition-transform group-hover:scale-110"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -276,9 +271,9 @@ export function Footer() {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span className="text-sm font-medium text-white">{t('footer.taiwanBankFull')}</span>
+            <span className="text-sm font-medium">{t('footer.taiwanBankFull')}</span>
             <svg
-              className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform"
+              className="h-3.5 w-3.5 text-text-muted transition-transform group-hover:translate-x-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -292,7 +287,7 @@ export function Footer() {
             </svg>
           </a>
           {/* ClientOnly 避免 hydration mismatch */}
-          <div className="flex items-center gap-2 text-sm text-white/80">
+          <div className="flex items-center gap-2 text-sm text-text-muted">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -307,34 +302,25 @@ export function Footer() {
 
         {/* 免責聲明 */}
         <div className="text-center mb-6">
-          <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
+          <p className="text-xs leading-relaxed text-text-muted">{t('footer.disclaimer')}</p>
         </div>
 
         {/* 快速連結 */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
-          <Link
-            to="/faq/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <Link to="/faq/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               ?
             </span>
             {t('footer.faq')}
           </Link>
-          <Link
-            to="/about/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+          <Link to="/about/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               i
             </span>
             {t('footer.about')}
           </Link>
-          <Link
-            to="/privacy/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
-          >
-            <span aria-hidden="true" className="text-white/50">
+          <Link to="/privacy/" className={FOOTER_TEXT_LINK_CLASS}>
+            <span aria-hidden="true" className="text-text-muted/60">
               🔒
             </span>
             {t('footer.privacyPolicy')}
@@ -342,20 +328,20 @@ export function Footer() {
         </div>
 
         {/* 分隔線 */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-8" />
+        <div className={`mb-8 ${FOOTER_DIVIDER_CLASS}`} />
 
         {/* Links Grid - SEO 內部連結 */}
         <nav aria-label={t('footer.footerNav')}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title}>
-                <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
+                <h3 className="mb-4 text-lg font-semibold text-text">{section.title}</h3>
                 <ul className="space-y-2">
                   {section.links.map((link) => (
                     <li key={link.href}>
                       <Link
                         to={link.href}
-                        className="text-white/80 hover:text-white transition-colors duration-200 text-sm"
+                        className="inline-flex min-h-11 min-w-[44px] items-center justify-center rounded-lg px-1 text-sm text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
                         {link.label}
                       </Link>
@@ -368,25 +354,25 @@ export function Footer() {
         </nav>
 
         {/* Divider */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-8" />
+        <div className={`my-8 ${FOOTER_DIVIDER_CLASS}`} />
 
         {/* Bottom Section - 整合版權與社群 */}
         <div className="flex flex-row justify-between items-center gap-4">
           {/* Copyright */}
-          <div className="text-sm text-white/80">
+          <div className="text-sm text-text-muted">
             <p suppressHydrationWarning>
               © {CURRENT_YEAR}{' '}
               <a
                 href="https://app.haotool.org/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/90 underline underline-offset-4 decoration-white/40 hover:text-white transition-colors"
+                className="inline-flex min-h-11 items-center rounded-lg px-1 text-text underline decoration-border underline-offset-4 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 haotool
               </a>
               . All rights reserved.
             </p>
-            <p className="mt-1 text-xs text-white/70">{t('footer.disclaimerDesktop')}</p>
+            <p className="mt-1 text-xs text-text-muted">{t('footer.disclaimerDesktop')}</p>
           </div>
 
           {/* Threads Link */}
@@ -394,28 +380,28 @@ export function Footer() {
             href={AUTHOR_CONTACT_LINK_MAP.threads.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300"
+            className="group flex min-h-11 items-center gap-2 rounded-lg border border-transparent px-4 py-2 transition-colors duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <span className="text-sm text-white/70 group-hover:text-white/90 transition-colors">
+            <span className="text-sm text-text-muted transition-colors group-hover:text-text">
               {t('footer.createdBy')}
             </span>
             <svg
               viewBox="0 0 192 192"
               xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4 text-white/70 group-hover:text-white transition-colors duration-300"
+              className="h-4 w-4 text-text-muted transition-colors duration-200 group-hover:text-primary"
               fill="currentColor"
               aria-label="Threads"
             >
               <path d="M141.537 88.9883C140.71 88.5919 139.87 88.2104 139.019 87.8451C137.537 60.5382 122.616 44.905 97.5619 44.745C97.4484 44.7443 97.3355 44.7443 97.222 44.7443C82.2364 44.7443 69.7731 51.1409 62.102 62.7807L75.881 72.2328C81.6116 63.5383 90.6052 61.6848 97.2286 61.6848C97.3051 61.6848 97.3819 61.6848 97.4576 61.6855C105.707 61.7381 111.932 64.1366 115.961 68.814C118.893 72.2193 120.854 76.925 121.825 82.8638C114.511 81.6207 106.601 81.2385 98.145 81.7233C74.3247 83.0954 59.0111 96.9879 60.0396 116.292C60.5615 126.084 65.4397 134.508 73.775 140.011C80.8224 144.663 89.899 146.938 99.3323 146.423C111.79 145.74 121.563 140.987 128.381 132.296C133.559 125.696 136.834 117.143 138.28 106.366C144.217 109.949 148.617 114.664 151.047 120.332C155.179 129.967 155.42 145.8 142.501 158.708C131.182 170.016 117.576 174.908 97.0135 175.059C74.2042 174.89 56.9538 167.575 45.7381 153.317C35.2355 139.966 29.8077 120.682 29.6052 96C29.8077 71.3178 35.2355 52.0336 45.7381 38.6827C56.9538 24.4249 74.2039 17.11 97.0132 16.9405C119.988 17.1113 137.539 24.4614 149.184 38.788C154.894 45.8136 159.199 54.6488 162.037 64.9503L178.184 60.6422C174.744 47.9622 169.331 37.0357 161.965 27.974C147.036 9.60668 125.202 0.195148 97.0695 0H96.9569C68.8816 0.19447 47.2921 9.6418 32.7883 28.0793C19.8819 44.4864 13.2244 67.3157 13.0007 95.9325L13 96L13.0007 96.0675C13.2244 124.684 19.8819 147.514 32.7883 163.921C47.2921 182.358 68.8816 191.806 96.9569 192H97.0695C122.03 191.827 139.624 185.292 154.118 170.811C173.081 151.866 172.51 128.119 166.26 113.541C161.776 103.087 153.227 94.5962 141.537 88.9883ZM98.4405 129.507C88.0005 130.095 77.1544 125.409 76.6196 115.372C76.2232 107.93 81.9158 99.626 99.0812 98.6368C101.047 98.5234 102.976 98.468 104.871 98.468C111.106 98.468 116.939 99.0737 122.242 100.233C120.264 124.935 108.662 128.946 98.4405 129.507Z" />
             </svg>
-            <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
+            <span className="text-sm font-medium text-text transition-colors group-hover:text-primary">
               {AUTHOR_CONTACT_LINK_MAP.threads.value}
             </span>
           </a>
         </div>
 
         {/* Additional Info */}
-        <div className="mt-6 text-xs text-white/70 text-center md:text-left">
+        <div className="mt-6 text-center text-xs text-text-muted md:text-left">
           <p>{t('footer.builtWith')}</p>
           <p className="mt-1">
             {t('footer.openSourceOn')}{' '}
@@ -423,7 +409,7 @@ export function Footer() {
               href={APP_INFO.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/90 underline underline-offset-4 decoration-white/40 hover:text-white"
+              className="inline-flex min-h-11 items-center rounded-lg px-1 text-text underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               GitHub
             </a>

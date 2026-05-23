@@ -1,15 +1,17 @@
-# 通知視窗設計系統 - 品牌對齊風格 (Brand Aligned)
+# 通知視窗設計系統 - 品牌對齊風格（歷史版本）
+
+> 狀態：歷史設計參考。當前正式視覺 SSOT 以 root `DESIGN.md`、`apps/ratewise/src/config/design-tokens.ts` 與 `apps/ratewise/src/index.css` 為準。
 
 ## 1. 風格總覽 (Style Overview)
 
 **核心理念**: 品牌統一、專業可靠、現代簡約。旨在與主應用完美融合，營造一致的品牌體驗。
 
-**靈感來源**: 主應用的藍紫雙色漸變、現代 UI 設計趨勢、專業財金應用的可靠感。
+**靈感來源**: 2025-10 當時的主應用藍紫漸變方向與品牌一致性探索。
 
 **適用場景**: 適合財金、工具、專業服務等需要品牌統一性的應用程式。
 
 **更新時間**: 2025-10-22T19:00:00+08:00  
-**版本**: v2.0 (品牌對齊)
+**版本**: v2.0（歷史歸檔）
 
 ---
 
@@ -291,10 +293,10 @@ export function UpdatePrompt() {
 - **粉彩雲朵**: `docs/archive/designs/pastel-cloud-variant.md`
 - **霓虹賽博**: `docs/archive/designs/neon-cyber-variant.md`
 
-### 當前版本
+### 歸檔版本
 
-- **v2.0 - 品牌對齊** (2025-10-22) ⭐ 當前使用
-- 完整代碼: `apps/ratewise/src/components/UpdatePrompt.tsx`
+- **v2.0 - 品牌對齊** (2025-10-22) 已歸檔
+- 當時參考代碼: `apps/ratewise/src/components/UpdatePrompt.tsx`
 
 ---
 
@@ -324,7 +326,7 @@ export function UpdatePrompt() {
 ---
 
 **最後更新**: 2025-10-22  
-**當前風格**: Brand Aligned (品牌對齊) v2.0  
+**歸檔風格**: Brand Aligned (品牌對齊) v2.0
 **負責人**: RateWise Design Team  
 **審核**: Linus's Good Taste Review ✅
 

@@ -10,6 +10,7 @@ import { useRouteError } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { isChunkLoadError } from '../utils/chunkLoadRecovery';
+import { notificationTokens } from '../config/design-tokens';
 
 // ── 共用 fallback UI ─────────────────────────────────────────────────────────
 
@@ -28,14 +29,14 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
         data-ratewise-watchdog-ready="true"
         className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4"
       >
-        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30">
-          <WifiOff className="w-8 h-8 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-warning/10">
+          <WifiOff className="w-8 h-8 text-warning" aria-hidden="true" />
         </div>
         <div className="space-y-1">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-base font-semibold text-text">
             {t('errors.offlineModeTitle', '離線模式')}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+          <p className="text-sm text-text-muted max-w-xs">
             {t(
               'errors.offlineModeDescription',
               '此頁面需要網路連線才能載入。恢復連線後將自動重試，或點擊下方按鈕手動重試。',
@@ -43,8 +44,9 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-icon-from text-brand-text hover:bg-brand-icon-from/90 active:scale-95 transition-all duration-150"
+          className={`${notificationTokens.actions.primary} gap-2 rounded-lg px-4 py-2 text-sm`}
         >
           <RefreshCw className="w-4 h-4" aria-hidden="true" />
           {t('errors.reload', '重新載入')}
@@ -58,14 +60,14 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
       data-ratewise-watchdog-ready="true"
       className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4"
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30">
-        <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" aria-hidden="true" />
+      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10">
+        <AlertTriangle className="w-8 h-8 text-destructive" aria-hidden="true" />
       </div>
       <div className="space-y-1">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+        <h2 className="text-base font-semibold text-text">
           {t('errors.routeLoadFailedTitle', '頁面載入失敗')}
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+        <p className="text-sm text-text-muted max-w-xs">
           {t(
             'errors.routeLoadFailedDescription',
             '可能是最近版本更新造成資源不一致，請重新載入試試。',
@@ -73,8 +75,9 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
         </p>
       </div>
       <button
+        type="button"
         onClick={() => window.location.reload()}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-icon-from text-brand-text hover:bg-brand-icon-from/90 active:scale-95 transition-all duration-150"
+        className={`${notificationTokens.actions.primary} gap-2 rounded-lg px-4 py-2 text-sm`}
       >
         <RefreshCw className="w-4 h-4" aria-hidden="true" />
         {t('errors.reload', '重新載入')}

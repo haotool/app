@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ArrowRight, Clock, HelpCircle, Lightbulb } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
+import { contentPageTokens } from '../config/design-tokens';
 import { GUIDE_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 
@@ -35,7 +37,7 @@ const RATE_READING_TIPS = [
 const FAQ_ITEMS = [
   {
     question: '匯率多久更新一次？',
-    answer: '匯率資料每 5 分鐘自動同步臺灣銀行牌告匯率，也可在首頁下拉手動更新。',
+    answer: '匯率資料會排程檢查並同步臺灣銀行牌告匯率，也可在首頁下拉手動更新。',
   },
   {
     question: '現金匯率和即期匯率有什麼差別？',
@@ -61,9 +63,10 @@ const Guide = () => {
         ogType="article"
       />
 
-      <div className="min-h-screen bg-page-gradient">
-        <div className="container mx-auto max-w-5xl px-4 py-8">
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
+            fallbackHref="/settings/"
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               { label: t('settings.usageGuide'), href: '/guide/' },
@@ -71,24 +74,18 @@ const Guide = () => {
           />
 
           <div className="mb-8">
+            <p className={contentPageTokens.sectionHeader.eyebrow}>使用指南</p>
             <h1 className="mb-2 text-4xl font-bold text-text">
               如何使用 {APP_INFO.shortName} 進行匯率換算
             </h1>
-            <p className="text-text-muted">
-              完整 8 步驟教學，快速學會使用 {APP_INFO.shortName} 進行單幣別和多幣別匯率換算。
+            <p className={contentPageTokens.intro}>
+              以常見換匯情境整理操作流程，從幣別選擇、金額輸入到現金與即期匯率判讀都可快速完成。
             </p>
             <div className="mt-2 flex items-center text-sm text-text-muted">
-              <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Clock className="mr-1 h-4 w-4" aria-hidden="true" />
               預估完成時間：約 2 分鐘
             </div>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className={contentPageTokens.meta}>
               作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
               <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
                 {LAST_UPDATED}
@@ -124,7 +121,7 @@ const Guide = () => {
                   className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
                 >
                   <div className="flex items-start">
-                    <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">
+                    <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
                       {step.position}
                     </div>
                     <div className="flex-1">
@@ -183,8 +180,11 @@ const Guide = () => {
                 </div>
               </div>
 
-              <div className="card border-primary/20 bg-primary/5 p-6">
-                <h2 className="mb-2 text-xl font-semibold text-text">💡 提示與技巧</h2>
+              <div className="card border border-border/70 bg-surface-elevated p-6">
+                <h2 className="mb-2 flex items-center gap-2 text-xl font-semibold text-text">
+                  <Lightbulb className="h-5 w-5 text-warning" aria-hidden="true" />
+                  提示與技巧
+                </h2>
                 <ul className="space-y-2 text-text-muted">
                   <li className="flex items-start">
                     <span className="mr-2 text-primary">•</span>
@@ -192,7 +192,7 @@ const Guide = () => {
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 text-primary">•</span>
-                    <span>快速金額按鈕適合旅遊與常見消費場景，可大幅減少重複輸入。</span>
+                    <span>快速金額按鈕適合旅遊與常見消費場景，可減少反覆輸入。</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 text-primary">•</span>
@@ -202,7 +202,10 @@ const Guide = () => {
               </div>
 
               <div className="card p-6">
-                <h2 className="mb-4 text-xl font-semibold text-text">❓ 常見問題</h2>
+                <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-text">
+                  <HelpCircle className="h-5 w-5 text-primary" aria-hidden="true" />
+                  常見問題
+                </h2>
                 <div className="space-y-4">
                   {FAQ_ITEMS.map((item) => (
                     <div key={item.question}>
@@ -214,7 +217,7 @@ const Guide = () => {
                 <div className="mt-4">
                   <Link
                     to="/faq/"
-                    className="text-sm font-medium text-primary hover:text-primary/80"
+                    className={`text-sm font-medium ${contentPageTokens.links.inline}`}
                   >
                     查看更多常見問題 →
                   </Link>
@@ -224,22 +227,10 @@ const Guide = () => {
               <div className="text-center">
                 <Link
                   to="/"
-                  className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
+                  className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
                 >
                   開始使用 {APP_INFO.shortName}
-                  <svg
-                    className="ml-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Link>
               </div>
             </div>

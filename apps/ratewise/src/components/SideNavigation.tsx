@@ -40,24 +40,29 @@ const navItems: NavItem[] = [
     icon: CreditCard,
   },
   {
-    path: '/multi',
+    path: '/multi/',
     labelKey: 'nav.multiCurrency',
     ariaLabelKey: 'nav.multiCurrencyFull',
     icon: Globe,
   },
   {
-    path: '/favorites',
+    path: '/favorites/',
     labelKey: 'nav.favorites',
     ariaLabelKey: 'nav.favoritesFull',
     icon: Star,
   },
   {
-    path: '/settings',
+    path: '/settings/',
     labelKey: 'nav.settings',
     ariaLabelKey: 'nav.settingsFull',
     icon: Settings,
   },
 ];
+
+function normalizeNavPath(path: string): string {
+  if (!path || path === '/') return '/';
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
 
 /**
  * SideNavigation Props
@@ -80,26 +85,31 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
     <aside
       className={`
         ${className}
-        w-64
-        bg-[rgb(var(--color-surface))]
-        border-r border-[rgb(var(--color-border))]
+        w-72 xl:w-80
+        bg-background
+        border-r border-border
         flex flex-col
       `}
       aria-label={t('nav.mainNavigation')}
     >
       {/* Logo / Brand */}
-      <div className="px-6 py-4 border-b border-[rgb(var(--color-border))]">
+      <div className="border-b border-border px-7 py-6">
         {/* 品牌標題（使用 span 而非 h1，與 mobile Header 一致，避免每頁重複 h1） */}
-        <span data-testid="app-title" className="text-xl font-bold text-[rgb(var(--color-text))]">
+        <span
+          data-testid="app-title"
+          className="text-[1.125rem] font-semibold tracking-[0.01em] text-text"
+        >
           {t('app.title')}
         </span>
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('app.subtitle')}</p>
+        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-text-muted">
+          {t('app.subtitle')}
+        </p>
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-5 space-y-1.5">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = normalizeNavPath(location.pathname) === normalizeNavPath(item.path);
           const Icon = item.icon;
 
           return (
@@ -108,22 +118,19 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
               to={item.path}
               className={`
                 flex items-center gap-3
-                px-3 py-2
-                rounded-lg
+                min-h-11 px-3.5 py-2.5
+                rounded-lg border border-transparent
                 transition-colors duration-200
                 ${
                   isActive
-                    ? 'bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-primary))] font-medium'
-                    : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
+                    ? 'border-primary/20 bg-primary/10 font-medium text-text'
+                    : 'text-text-muted hover:bg-border/30 hover:text-text'
                 }
               `}
               aria-label={t(item.ariaLabelKey)}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon
-                className={`w-5 h-5 ${isActive ? 'text-[rgb(var(--color-primary))]' : ''}`}
-                aria-hidden={true}
-              />
+              <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} aria-hidden={true} />
               <span className="text-sm">{t(item.labelKey)}</span>
             </Link>
           );
@@ -131,8 +138,8 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
+      <div className="border-t border-border px-7 py-5">
+        <p className="text-xs uppercase tracking-[0.12em] text-text-muted">
           {t('app.version')} {getDisplayVersion()}
         </p>
       </div>

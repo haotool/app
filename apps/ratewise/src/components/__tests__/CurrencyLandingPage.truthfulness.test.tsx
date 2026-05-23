@@ -9,7 +9,6 @@ import { beforeAll, describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
-import { APP_INFO } from '../../config/app-info';
 import {
   buildRateDifferenceSentence,
   getCurrencyLandingPageContent,
@@ -78,7 +77,7 @@ describe('CurrencyLandingPage template truthfulness', () => {
       '%s 禁止保留通用硬編污染文案',
       (path) => {
         const text = extractVisibleText(readDistHtml(path));
-        expect(text).toContain(`為什麼 ${APP_INFO.shortName} 比其他工具更精準？`);
+        expect(text).toContain('為什麼牌告賣出價更接近臨櫃換匯成本？');
         expect(text).not.toContain('10 萬日圓');
 
         if (!path.includes('jpy') && !path.includes('krw')) {

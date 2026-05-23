@@ -38,7 +38,7 @@ describe('Guide Page - HowTo Schema', () => {
     it('renders introduction section', () => {
       renderGuide();
       // 檢查頁面包含介紹文字
-      const introText = screen.queryAllByText(/完整 8 步驟教學/i);
+      const introText = screen.queryAllByText(/常見換匯情境/i);
       expect(introText.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -220,8 +220,7 @@ describe('Guide Page - HowTo Schema', () => {
   describe('FAQ Section', () => {
     it('renders FAQ section', () => {
       renderGuide();
-      // 使用 ❓ 常見問題 作為精確匹配
-      const faqHeading = screen.getByRole('heading', { name: /❓ 常見問題/i });
+      const faqHeading = screen.getByRole('heading', { name: /^常見問題$/i });
       expect(faqHeading).toBeInTheDocument();
     });
 

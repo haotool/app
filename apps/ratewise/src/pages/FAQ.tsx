@@ -6,6 +6,7 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { AnswerCapsule } from '../components/AnswerCapsule';
+import { contentPageTokens } from '../config/design-tokens';
 import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
 // 將 FAQ 答案中的 email 位址替換為 MailtoLink，防止 CF Email Obfuscation 將其改寫為爬蟲不可讀的 /cdn-cgi/... 連結。
@@ -41,9 +42,10 @@ export default function FAQ() {
         ogType="article"
       />
 
-      <div className="min-h-screen">
-        <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
+            fallbackHref="/settings/"
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               { label: t('settings.faq'), href: '/faq/' },
@@ -51,11 +53,12 @@ export default function FAQ() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-4xl font-bold text-text">常見問題</h1>
-            <p className="text-text-muted">
+            <p className={contentPageTokens.sectionHeader.eyebrow}>支援文件</p>
+            <h1 className="mb-2 mt-2 text-4xl font-bold text-text">常見問題</h1>
+            <p className={contentPageTokens.intro}>
               集中整理台銀牌告匯率、買入賣出、現金與即期、刷卡匯率與 DCC 等核心問題。
             </p>
-            <p className="mt-2 text-sm text-text-muted">
+            <p className={contentPageTokens.meta}>
               作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
               <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
                 {LAST_UPDATED}
@@ -115,15 +118,15 @@ export default function FAQ() {
             ))}
           </div>
 
-          <section className="card mt-10 bg-primary/5 p-6 border-primary/20">
+          <section className="card mt-10 border border-border/70 bg-surface-elevated p-6">
             <h2 className="mb-2 text-xl font-semibold text-text">還需要更多幫助？</h2>
             <p className="text-text-muted">
               可先查看
-              <Link to="/guide/" className="mx-1 text-primary underline">
+              <Link to="/guide/" className={`mx-1 ${contentPageTokens.links.inline}`}>
                 使用指南
               </Link>
               與
-              <Link to="/about/" className="mx-1 text-primary underline">
+              <Link to="/about/" className={`mx-1 ${contentPageTokens.links.inline}`}>
                 關於頁面
               </Link>
               ，若仍有問題可直接寄信至

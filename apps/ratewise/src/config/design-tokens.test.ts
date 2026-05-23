@@ -1,19 +1,16 @@
 /**
- * Design Token System - BDD Test Suite
+ * Design Token System Test Suite
  * 測試色彩定義的完整性與一致性
  *
  * @see docs/prompt/BDD.md - BDD 開發流程
- * @see /Users/azlife.eth/.claude/plans/federated-foraging-summit.md - 重構計劃
  */
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
-/**
- * 🔴 RED Phase: 這些測試預期會失敗
- * 因為 getDesignTokens() 函數尚未實作
- */
-describe('Design Token System - BDD', () => {
-  describe('🔴 RED: 色彩 Token 定義', () => {
+describe('Design Token System', () => {
+  describe('色彩 Token 定義', () => {
     describe('Given: 應用需要統一的色彩系統', () => {
       describe('When: 讀取 Design Token 配置', () => {
         it('Then: 應該定義 neutral 色系（數字鍵用）', async () => {
@@ -145,7 +142,7 @@ describe('Design Token System - BDD', () => {
       const { typographyTokens } = await import('./design-tokens');
       const fontSize = typographyTokens.fontSize;
 
-      expect(fontSize['2xs']).toHaveProperty('size', '0.625rem');
+      expect(fontSize['2xs']).toHaveProperty('size', '0.75rem');
       expect(fontSize.xs).toHaveProperty('size', '0.75rem');
       expect(fontSize.sm).toHaveProperty('size', '0.875rem');
       expect(fontSize.base).toHaveProperty('size', '1rem');
@@ -247,7 +244,7 @@ describe('Design Token System - BDD', () => {
       const { rateWiseLayoutTokens } = await import('./design-tokens');
 
       expect(rateWiseLayoutTokens).toBeDefined();
-      expect(rateWiseLayoutTokens.content.className).toContain('py-4');
+      expect(rateWiseLayoutTokens.content.className).toContain('py-6');
       // 資料來源最後隱藏 (nano 斷點)
       expect(rateWiseLayoutTokens.info.visibility).toBe('nano:hidden');
     });
@@ -274,9 +271,154 @@ describe('Design Token System - BDD', () => {
       const { multiConverterLayoutTokens } = await import('./design-tokens');
 
       expect(multiConverterLayoutTokens).toBeDefined();
-      expect(multiConverterLayoutTokens.content.className).toContain('py-4');
+      expect(multiConverterLayoutTokens.content.className).toContain('py-6');
       expect(multiConverterLayoutTokens.card.className).toContain('card');
-      expect(multiConverterLayoutTokens.info.text).toContain('text-[10px]');
+      expect(multiConverterLayoutTokens.info.text).toContain('text-xs');
+    });
+  });
+
+  describe('🟢 GREEN: 內容頁導覽與頁面 shell SSOT', () => {
+    it('contentPageTokens.shell 應直接沿用 pageLayoutTokens.content.className', async () => {
+      const { contentPageTokens, pageLayoutTokens } = await import('./design-tokens');
+
+      expect(contentPageTokens.shell).toBe(pageLayoutTokens.content.className);
+      expect(pageLayoutTokens.content.maxWidth).toBe(1024);
+    });
+
+    it('PageNavHeader 與 Breadcrumb 應集中定義 PWA safe-area 與截斷規則', async () => {
+      const { breadcrumbTokens, pageNavHeaderTokens } = await import('./design-tokens');
+
+      expect(pageNavHeaderTokens.root).toContain(
+        'pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]',
+      );
+      expect(pageNavHeaderTokens.backButton).toContain('min-h-11');
+      expect(pageNavHeaderTokens.backButton).toContain('rounded-lg');
+      expect(pageNavHeaderTokens.breadcrumbSlot).toContain('min-w-0');
+      expect(breadcrumbTokens.list).toContain('touch-pan-x');
+      expect(breadcrumbTokens.list).toContain('overflow-x-auto');
+      expect(breadcrumbTokens.list).toContain('whitespace-nowrap');
+      expect(breadcrumbTokens.current).toContain('truncate');
+    });
+
+    it('內容頁與 app 頁面 family token 應覆蓋 article、callout、result、table 與 row pattern', async () => {
+      const { appPageTokens, contentPageTokens } = await import('./design-tokens');
+
+      expect(contentPageTokens.article.card).toContain('rounded-lg');
+      expect(contentPageTokens.article.card).toContain('border-border');
+      expect(contentPageTokens.result.card).toContain('bg-surface-elevated');
+      expect(contentPageTokens.callouts.warning).toContain('border-warning');
+      expect(contentPageTokens.table.wrapperBlock).toContain('overflow-x-auto');
+      expect(contentPageTokens.buttons.primary).toContain('min-h-11');
+      expect(contentPageTokens.buttons.primary).toContain('focus-visible:ring-2');
+      expect(appPageTokens.linkRow).toContain('min-h-11');
+      expect(appPageTokens.statRow).toContain('rounded-lg');
+    });
+
+    it('互動與回饋 family token 應收斂快速金額與錯誤復原 UI', async () => {
+      const { feedbackSurfaceTokens, quickAmountButtonTokens } = await import('./design-tokens');
+
+      expect(quickAmountButtonTokens.className).toContain('rounded-lg');
+      expect(quickAmountButtonTokens.className).toContain('transition-[background-color');
+      expect(feedbackSurfaceTokens.card).toContain('rounded-lg');
+      expect(feedbackSurfaceTokens.actionButton).toContain('min-h-11');
+      expect(feedbackSurfaceTokens.actionButton).toContain('focus-visible:ring-2');
+    });
+
+    it('正式頁核心 shell 不應再使用 Tailwind 任意 rgb(var()) 色彩 class', () => {
+      const coreFiles = [
+        'src/components/AppLayout.tsx',
+        'src/components/AnswerCapsule.tsx',
+        'src/components/AuthorityGuidePage.tsx',
+        'src/components/BottomNavigation.tsx',
+        'src/components/Breadcrumb.tsx',
+        'src/components/CurrencyLandingPage.tsx',
+        'src/components/ErrorBoundary.tsx',
+        'src/components/Footer.tsx',
+        'src/components/HomepageSEOSection.tsx',
+        'src/components/PageNavHeader.tsx',
+        'src/components/PullToRefreshIndicator.tsx',
+        'src/components/RouteErrorBoundary.tsx',
+        'src/components/SideNavigation.tsx',
+        'src/components/SkeletonLoader.tsx',
+        'src/components/SupportContactLinks.tsx',
+        'src/components/Toast/ToastProvider.tsx',
+        'src/components/UpdatePrompt.tsx',
+        'src/components/UpdatePromptPreview.tsx',
+        'src/features/calculator/components/CalculatorKey.tsx',
+        'src/features/calculator/components/ExpressionDisplay.tsx',
+        'src/features/ratewise/RateWise.tsx',
+        'src/features/ratewise/components/ConversionHistory.tsx',
+        'src/features/ratewise/components/CurrencyList.tsx',
+        'src/features/ratewise/components/FavoritesList.tsx',
+        'src/features/ratewise/components/MultiConverter.tsx',
+        'src/features/ratewise/components/SingleConverter.tsx',
+        'src/pages/ColorSchemeComparison.tsx',
+        'src/pages/Favorites.tsx',
+        'src/pages/MultiConverter.tsx',
+        'src/pages/NotFound.tsx',
+        'src/pages/OpenData.tsx',
+        'src/pages/SeoTech.tsx',
+        'src/pages/Settings.tsx',
+        'src/pages/ThemeShowcase.tsx',
+        'src/pages/UIShowcase.tsx',
+        'src/config/animations.ts',
+      ];
+      const forbiddenArbitraryColorClass = /\b(?:text|bg|border)-\[rgb\(var\(--color-/;
+
+      for (const filePath of coreFiles) {
+        const source = readFileSync(resolve(process.cwd(), filePath), 'utf8');
+        const match = forbiddenArbitraryColorClass.exec(source);
+
+        expect(match?.[0], `${filePath} still uses arbitrary color class`).toBeUndefined();
+      }
+    });
+
+    it('核心 UI family 不應保留 transition-all、24px panel radius 或 div role button 回歸', () => {
+      const coreFiles = [
+        'src/components/AuthorityGuidePage.tsx',
+        'src/components/BottomNavigation.tsx',
+        'src/components/CurrencyLandingPage.tsx',
+        'src/components/ErrorBoundary.tsx',
+        'src/components/Footer.tsx',
+        'src/components/HomepageSEOSection.tsx',
+        'src/components/OfflineAwareError.tsx',
+        'src/components/OfflineIndicator.tsx',
+        'src/components/RouteErrorBoundary.tsx',
+        'src/components/SkeletonLoader.tsx',
+        'src/components/SupportContactLinks.tsx',
+        'src/components/Toast/ToastProvider.tsx',
+        'src/components/UpdatePrompt.tsx',
+        'src/components/UpdatePromptPreview.tsx',
+        'src/features/calculator/components/CalculatorKey.tsx',
+        'src/features/calculator/components/ExpressionDisplay.tsx',
+        'src/features/ratewise/RateWise.tsx',
+        'src/features/ratewise/components/ConversionHistory.tsx',
+        'src/features/ratewise/components/CurrencyList.tsx',
+        'src/features/ratewise/components/FavoritesList.tsx',
+        'src/features/ratewise/components/MultiConverter.tsx',
+        'src/features/ratewise/components/SingleConverter.tsx',
+        'src/pages/ColorSchemeComparison.tsx',
+        'src/pages/Favorites.tsx',
+        'src/pages/MultiConverter.tsx',
+        'src/pages/NotFound.tsx',
+        'src/pages/OpenData.tsx',
+        'src/pages/SeoTech.tsx',
+        'src/pages/Settings.tsx',
+        'src/pages/ThemeShowcase.tsx',
+        'src/pages/UIShowcase.tsx',
+        'src/config/animations.ts',
+        'src/config/design-tokens.ts',
+        'src/index.css',
+      ];
+      const forbidden =
+        /transition-all|transition:\s*all|rounded-(?:2xl|xl|\[[0-9][^\]]*\])|role="button"|border-black\/5|border-surface-border|divide-surface-border/;
+
+      for (const filePath of coreFiles) {
+        const source = readFileSync(resolve(process.cwd(), filePath), 'utf8');
+        const match = forbidden.exec(source);
+
+        expect(match?.[0], `${filePath} still has UI drift`).toBeUndefined();
+      }
     });
   });
 

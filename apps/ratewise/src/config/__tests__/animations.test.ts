@@ -100,8 +100,8 @@ describe('animations', () => {
     });
 
     it('should define consistent container and indicator classes', () => {
-      expect(segmentedSwitch.containerClass).toContain('rounded-[20px]');
-      expect(segmentedSwitch.indicatorClass).toContain('rounded-2xl');
+      expect(segmentedSwitch.containerClass).toContain('rounded-lg');
+      expect(segmentedSwitch.indicatorClass).toContain('rounded-lg');
       expect(segmentedSwitch.itemBaseClass).toContain('flex-1');
     });
   });
@@ -114,17 +114,17 @@ describe('animations', () => {
     it('should define highlight class with ring and background', () => {
       expect(activeHighlight.highlightClass).toContain('ring-2');
       expect(activeHighlight.highlightClass).toContain('bg-primary/10');
-      expect(activeHighlight.highlightClass).toContain('rounded-xl');
+      expect(activeHighlight.highlightClass).toContain('rounded-lg');
     });
 
     it('should define item base class with relative positioning', () => {
       expect(activeHighlight.itemBaseClass).toContain('relative');
-      expect(activeHighlight.itemBaseClass).toContain('rounded-xl');
+      expect(activeHighlight.itemBaseClass).toContain('rounded-lg');
     });
 
     it('should define active and inactive item classes', () => {
       expect(activeHighlight.itemActiveClass).toContain('cursor-default');
-      expect(activeHighlight.itemInactiveClass).toContain('cursor-pointer');
+      expect(activeHighlight.itemInactiveClass).toContain('transition-colors');
     });
   });
 

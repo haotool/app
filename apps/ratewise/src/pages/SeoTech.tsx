@@ -11,7 +11,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft,
   Globe,
   FileJson,
   Search,
@@ -29,6 +28,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { SEO_SCHEMA_REGISTRY } from '../config/seo-schema-registry';
 import { SEO_BUILD_PIPELINE } from '../config/seo-build-pipeline';
@@ -43,6 +43,7 @@ import {
 import { RATES_API } from '../config/api-endpoints';
 import { APP_INFO } from '../config/app-info';
 import { staggerContainerVariants, staggerItemVariants, transitions } from '../config/animations';
+import { contentPageTokens } from '../config/design-tokens';
 
 // ─── SSOT 計算數據 ──────────────────────────────────────────────────────────────
 
@@ -53,9 +54,9 @@ const STATS = [
     label: '可索引 SEO 路徑',
     sub: 'Google 可爬取頁面',
     icon: Globe,
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-    border: 'border-violet-200',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
   },
   {
     value: PRERENDER_PATHS.length,
@@ -63,9 +64,9 @@ const STATS = [
     label: '靜態預渲染（SSG）',
     sub: '建置期 HTML 快照',
     icon: Layers,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
   },
   {
     value: CURRENCY_SEO_PATHS.length + REVERSE_CURRENCY_SEO_PATHS.length,
@@ -73,9 +74,9 @@ const STATS = [
     label: '幣別落地頁',
     sub: '正向 + 反向匯率頁',
     icon: Link2,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
+    color: 'text-success',
+    bg: 'bg-success/10',
+    border: 'border-success/20',
   },
   {
     value: SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).length,
@@ -83,9 +84,9 @@ const STATS = [
     label: 'JSON-LD Schema',
     sub: '結構化資料類型',
     icon: FileJson,
-    color: 'text-orange-600',
-    bg: 'bg-orange-50',
-    border: 'border-orange-200',
+    color: 'text-warning',
+    bg: 'bg-warning/10',
+    border: 'border-warning/20',
   },
 ] as const;
 
@@ -97,32 +98,32 @@ const PIPELINE_STEPS = [
     label: '臺灣銀行',
     sub: '官方牌告匯率來源',
     note: '現金 / 即期 四種報價',
-    color: 'text-red-600',
-    bg: 'bg-red-50',
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
   },
   {
     icon: RefreshCw,
     label: 'GitHub Actions',
     sub: '自動化抓取排程',
     note: '每 5 分鐘同步一次',
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
   },
   {
     icon: Zap,
     label: 'jsDelivr CDN',
     sub: '全球 PoP 加速分發',
     note: '無請求限制 · ETag 支援',
-    color: 'text-yellow-600',
-    bg: 'bg-yellow-50',
+    color: 'text-warning',
+    bg: 'bg-warning/10',
   },
   {
     icon: Globe,
     label: `${APP_INFO.shortName} App`,
     sub: 'SSG 預渲染 + PWA',
     note: '可離線使用 · 即時更新',
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
+    color: 'text-success',
+    bg: 'bg-success/10',
   },
 ] as const;
 
@@ -145,10 +146,10 @@ const MACHINE_READABLE_FILES = [
   },
   {
     name: 'llms.txt',
-    desc: 'AI 友善的純文字索引，供 LLM 爬蟲快速理解站點結構',
+    desc: '機器可讀的純文字索引，供爬蟲與 LLM 工具理解站點結構',
     url: `${SITE_CONFIG.url}llms.txt`,
     icon: Bot,
-    badge: 'AI-Ready',
+    badge: 'Readable',
   },
   {
     name: 'llms-full.txt',
@@ -226,22 +227,22 @@ const PATH_CATEGORIES = [
     label: '核心內容頁',
     count: CONTENT_SEO_PATHS.length,
     examples: ['/', '/faq/', '/about/', '/guide/', '/open-data/'],
-    color: 'bg-violet-100 text-violet-800',
-    bar: 'bg-violet-500',
+    color: 'border border-primary/20 bg-primary/10 text-text',
+    bar: 'bg-primary',
   },
   {
     label: '正向幣別頁（XXX→TWD）',
     count: CURRENCY_SEO_PATHS.length,
     examples: ['/usd-twd/', '/jpy-twd/', '/eur-twd/', '/hkd-twd/', '…'],
-    color: 'bg-blue-100 text-blue-800',
-    bar: 'bg-blue-500',
+    color: 'border border-warning/20 bg-warning/10 text-text',
+    bar: 'bg-warning',
   },
   {
     label: '反向幣別頁（TWD→XXX）',
     count: REVERSE_CURRENCY_SEO_PATHS.length,
     examples: ['/twd-usd/', '/twd-jpy/', '/twd-eur/', '/twd-hkd/', '…'],
-    color: 'bg-emerald-100 text-emerald-800',
-    bar: 'bg-emerald-500',
+    color: 'border border-success/20 bg-success/10 text-text',
+    bar: 'bg-success',
   },
 ] as const;
 
@@ -256,8 +257,8 @@ const EEAT_SIGNALS = [
       '技術透明：完整 SEO 技術揭露（本頁）',
     ],
     icon: Search,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
   },
   {
     title: '權威性 (Authoritativeness)',
@@ -267,8 +268,8 @@ const EEAT_SIGNALS = [
       '機器可讀：sitemap.xml、robots.txt、llms.txt',
     ],
     icon: Shield,
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
   },
   {
     title: '可信度 (Trustworthiness)',
@@ -278,8 +279,8 @@ const EEAT_SIGNALS = [
       '透明營運：公開隱私政策、費用結構',
     ],
     icon: CheckCircle2,
-    color: 'text-green-600',
-    bg: 'bg-green-50',
+    color: 'text-success',
+    bg: 'bg-success/10',
   },
 ] as const;
 
@@ -298,7 +299,7 @@ export default function SeoTech() {
   const pageSeo = APP_ONLY_PAGE_SEO.seoTech;
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))]">
+    <div className="min-h-full bg-background text-text">
       <SEOHelmet
         title={pageSeo.title}
         description={pageSeo.description}
@@ -308,30 +309,22 @@ export default function SeoTech() {
         jsonLd={pageSeo.jsonLd}
       />
 
+      <div className={contentPageTokens.shell}>
+        <PageNavHeader
+          fallbackHref="/settings/"
+          breadcrumbItems={[
+            { label: '首頁', href: '/' },
+            { label: '設定', href: '/settings/' },
+            { label: 'SEO 技術揭露', href: '/seo-tech/' },
+          ]}
+        />
+      </div>
+
       {/* ─── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
-        {/* 背景裝飾 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/8 via-transparent to-blue-600/8 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-surface-elevated/60" />
 
-        <div className="relative px-4 pt-6 pb-10">
-          {/* 返回按鈕 */}
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={transitions.default}
-          >
-            <Link
-              to="/settings/"
-              className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] transition-colors mb-6"
-              aria-label="回到設定"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>設定</span>
-            </Link>
-          </motion.div>
-
+        <div className="relative mx-auto w-full max-w-5xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
           {/* 標題區 */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -340,7 +333,7 @@ export default function SeoTech() {
             className="mb-8"
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+              <span className={contentPageTokens.badges.subtle}>
                 <Search className="w-3 h-3" />
                 SEO 技術揭露
               </span>
@@ -348,7 +341,7 @@ export default function SeoTech() {
             <h1 className="text-2xl font-bold mb-2 tracking-tight">
               {APP_INFO.shortName} SEO 架構
             </h1>
-            <p className="text-sm text-[rgb(var(--color-text-muted))] leading-relaxed max-w-prose">
+            <p className="text-sm text-text-muted leading-relaxed max-w-prose">
               完整揭露 {APP_INFO.shortName} 所採用的所有搜尋引擎最佳化技術、資料架構與自動化流程。
               所有數字均從設定檔即時計算，永遠與實際部署狀態同步。
             </p>
@@ -368,23 +361,19 @@ export default function SeoTech() {
                   key={stat.label}
                   variants={staggerItemVariants}
                   transition={transitions.smooth}
-                  className={`rounded-2xl border p-4 ${stat.bg} ${stat.border}`}
+                  className={`rounded-lg border p-4 ${stat.bg} ${stat.border}`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2 bg-white/70 ${stat.color}`}
+                    className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated ${stat.color}`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex items-baseline gap-0.5 mb-0.5">
-                    <span className={`text-2xl font-bold tabular-nums ${stat.color}`}>
-                      {stat.value}
-                    </span>
-                    <span className={`text-sm font-medium ${stat.color}`}>{stat.unit}</span>
+                    <span className="text-2xl font-bold tabular-nums text-text">{stat.value}</span>
+                    <span className="text-sm font-medium text-text">{stat.unit}</span>
                   </div>
-                  <p className="text-xs font-semibold text-[rgb(var(--color-text))]">
-                    {stat.label}
-                  </p>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{stat.sub}</p>
+                  <p className="text-xs font-semibold text-text">{stat.label}</p>
+                  <p className="text-xs text-text mt-0.5">{stat.sub}</p>
                 </motion.div>
               );
             })}
@@ -392,7 +381,7 @@ export default function SeoTech() {
         </div>
       </div>
 
-      <div className="px-4 pb-16 space-y-8">
+      <div className="mx-auto w-full max-w-5xl space-y-8 px-4 pb-16 sm:px-6 lg:px-8">
         {/* ─── 資料管線 ─────────────────────────────────────────────────── */}
         <motion.section
           variants={fadeUp}
@@ -415,36 +404,32 @@ export default function SeoTech() {
                   className="flex items-center gap-3"
                 >
                   <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${step.bg}`}
+                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${step.bg}`}
                   >
                     <Icon className={`w-5 h-5 ${step.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">{step.label}</span>
-                      <span className="text-xs text-[rgb(var(--color-text-muted))] truncate">
-                        {step.sub}
-                      </span>
+                      <span className="text-xs text-text truncate">{step.sub}</span>
                     </div>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">{step.note}</p>
+                    <p className="text-xs text-text">{step.note}</p>
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
-                    <div className="flex-shrink-0 w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40">
-                      →
-                    </div>
+                    <div className="flex-shrink-0 w-4 h-4 text-text-muted opacity-40">→</div>
                   )}
                 </motion.div>
               );
             })}
           </div>
-          <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-            <p className="text-xs text-[rgb(var(--color-text-muted))] leading-relaxed">
+          <div className={`mt-3 ${contentPageTokens.surfaces.quiet}`}>
+            <p className="text-xs text-text-muted leading-relaxed">
               <span className="font-medium text-primary">CDN 端點：</span>{' '}
               <a
                 href={RATES_API.latestCdn}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-xs break-all hover:text-primary transition-colors"
+                className="inline-flex min-h-11 items-center rounded-lg font-mono text-xs break-all transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {RATES_API.latestCdn}
               </a>
@@ -471,7 +456,7 @@ export default function SeoTech() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ ...transitions.smooth, delay: idx * 0.08 }}
-                  className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4"
+                  className="rounded-lg border border-border bg-surface p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold">{cat.label}</span>
@@ -479,7 +464,7 @@ export default function SeoTech() {
                       {cat.count} 頁
                     </span>
                   </div>
-                  <div className="h-1.5 bg-[rgb(var(--color-border))] rounded-full mb-2 overflow-hidden">
+                  <div className="h-1.5 bg-border rounded-full mb-2 overflow-hidden">
                     <motion.div
                       className={`h-full rounded-full ${cat.bar}`}
                       initial={{ width: 0 }}
@@ -492,7 +477,7 @@ export default function SeoTech() {
                     {cat.examples.map((path) => (
                       <span
                         key={path}
-                        className="font-mono text-xs bg-[rgb(var(--color-background))] px-1.5 py-0.5 rounded-lg text-[rgb(var(--color-text-muted))]"
+                        className="font-mono text-xs bg-surface-elevated px-1.5 py-0.5 rounded-lg text-text-muted"
                       >
                         {path}
                       </span>
@@ -502,7 +487,7 @@ export default function SeoTech() {
               );
             })}
           </div>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2 pl-1">
+          <p className="text-xs text-text-muted mt-2 pl-1">
             合計 {SEO_PATHS.length} 個可索引路徑，全部收錄於 sitemap.xml
           </p>
         </motion.section>
@@ -530,23 +515,19 @@ export default function SeoTech() {
                   key={schema.type}
                   variants={staggerItemVariants}
                   transition={transitions.smooth}
-                  className="flex items-start gap-3 p-3 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+                  className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Icon className="w-4 h-4 text-orange-600" />
+                  <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-warning/10">
+                    <Icon className="w-4 h-4 text-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <code className="text-xs font-mono font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded-lg">
+                      <code className="text-xs font-mono font-bold text-text bg-warning/10 border border-warning/20 px-1.5 py-0.5 rounded-lg">
                         {schema.type}
                       </code>
-                      <span className="text-xs text-[rgb(var(--color-text-muted))]">
-                        {schema.pages}
-                      </span>
+                      <span className="text-xs text-text-muted">{schema.pages}</span>
                     </div>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 leading-relaxed">
-                      {schema.desc}
-                    </p>
+                    <p className="text-xs text-text-muted mt-1 leading-relaxed">{schema.desc}</p>
                   </div>
                 </motion.div>
               );
@@ -578,23 +559,23 @@ export default function SeoTech() {
                   transition={{ ...transitions.smooth, delay: idx * 0.06 }}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="flex items-center gap-3 p-3.5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] group cursor-pointer"
+                  className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface p-3.5"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4.5 h-4.5 text-blue-600 w-[18px] h-[18px]" />
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Icon className="w-[18px] h-[18px] text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <code className="text-xs font-mono font-bold">{file.name}</code>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                      <span className="text-xs border border-primary/20 bg-primary/10 text-text px-1.5 py-0.5 rounded-full font-medium">
                         {file.badge}
                       </span>
                     </div>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-text mt-0.5 leading-relaxed line-clamp-2">
                       {file.desc}
                     </p>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-[rgb(var(--color-text-muted))] opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
                 </motion.a>
               );
             })}
@@ -624,22 +605,20 @@ export default function SeoTech() {
                   key={feat.title}
                   variants={staggerItemVariants}
                   transition={transitions.smooth}
-                  className="p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+                  className="rounded-lg border border-border bg-surface p-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <Icon className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="text-sm font-semibold">{feat.title}</h3>
-                        <span className="text-xs bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] px-1.5 py-0.5 rounded-lg text-[rgb(var(--color-text-muted))] font-mono">
+                        <span className="text-xs bg-surface-elevated border border-border px-1.5 py-0.5 rounded-lg text-text font-mono">
                           {feat.tech}
                         </span>
                       </div>
-                      <p className="text-xs text-[rgb(var(--color-text-muted))] leading-relaxed">
-                        {feat.desc}
-                      </p>
+                      <p className="text-xs text-text leading-relaxed">{feat.desc}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -671,7 +650,7 @@ export default function SeoTech() {
                   key={signal.title}
                   variants={staggerItemVariants}
                   transition={transitions.smooth}
-                  className={`p-4 rounded-2xl border border-[rgb(var(--color-border))] ${signal.bg}`}
+                  className={`rounded-lg border border-border p-4 ${signal.bg}`}
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Icon className={`w-5 h-5 ${signal.color}`} />
@@ -679,10 +658,7 @@ export default function SeoTech() {
                   </div>
                   <ul className="space-y-2">
                     {signal.items.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="text-xs text-[rgb(var(--color-text-muted))] flex gap-2"
-                      >
+                      <li key={idx} className="text-xs text-text flex gap-2">
                         <span className="flex-shrink-0">•</span>
                         <span>{item}</span>
                       </li>
@@ -692,7 +668,7 @@ export default function SeoTech() {
               );
             })}
           </motion.div>
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mt-3 pl-1">
+          <p className="text-xs text-text-muted mt-3 pl-1">
             Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
             YMYL（您的錢或生活）內容評分的關鍵。{APP_INFO.shortName}{' '}
             透過透明化揭露、官方資料來源與隱私優先設計強化信號。
@@ -708,29 +684,25 @@ export default function SeoTech() {
           transition={sectionTransition}
         >
           <SectionHeader icon={Code2} title="Prebuild 自動化腳本" />
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3 leading-relaxed">
+          <p className="text-xs text-text-muted mb-3 leading-relaxed">
             每次建置前依序執行 SEO / machine-readable 產線，產生所有必要靜態檔案並串上驗證 gate。
           </p>
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-border">
             {SEO_BUILD_PIPELINE.map((script, idx) => (
               <div
                 key={script.name}
                 className={`flex items-center gap-3 px-4 py-3 ${
-                  idx < SEO_BUILD_PIPELINE.length - 1
-                    ? 'border-b border-[rgb(var(--color-border))]'
-                    : ''
+                  idx < SEO_BUILD_PIPELINE.length - 1 ? 'border-b border-border' : ''
                 }`}
               >
                 <span className="text-xs font-mono text-primary/60 w-4 text-right flex-shrink-0">
                   {idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <code className="text-xs font-mono text-[rgb(var(--color-text))] block truncate">
-                    {script.name}
-                  </code>
-                  <p className="text-xs text-[rgb(var(--color-text-muted))]">{script.desc}</p>
+                  <code className="text-xs font-mono text-text block truncate">{script.name}</code>
+                  <p className="text-xs text-text-muted">{script.desc}</p>
                 </div>
-                <code className="text-xs font-mono text-emerald-600 flex-shrink-0 hidden sm:block">
+                <code className="text-xs font-mono text-success flex-shrink-0 hidden sm:block">
                   {script.output}
                 </code>
               </div>
@@ -747,36 +719,36 @@ export default function SeoTech() {
           transition={sectionTransition}
         >
           <SectionHeader icon={Layers} title="SEO 狀態機架構" />
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-4">
+          <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
             {/* SSOT 層 */}
             <ArchLayer
               label="SSOT 層"
-              color="bg-violet-500"
+              color="bg-primary"
               items={['seo-paths.ts', 'seo-metadata.ts', 'api-endpoints.ts', 'app-info.ts']}
               desc="所有 SEO 資料的單一真相來源"
             />
             {/* Arrow */}
             <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">生成</span>
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-text-muted">生成</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
             {/* 建置層 */}
             <ArchLayer
               label="Prebuild 層"
-              color="bg-blue-500"
+              color="bg-warning"
               items={['sitemap.xml', 'robots.txt', 'llms.txt', 'openapi.json']}
               desc="建置期自動生成靜態 SEO 檔案"
             />
             <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">渲染</span>
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-text-muted">渲染</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
             {/* SSG 層 */}
             <ArchLayer
               label="SSG 層"
-              color="bg-emerald-500"
+              color="bg-success"
               items={[
                 `${SEO_PATHS.length} SEO 頁面`,
                 `${PRERENDER_PATHS.length} 預渲染`,
@@ -786,14 +758,14 @@ export default function SeoTech() {
               desc="靜態 HTML + 結構化資料注入"
             />
             <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">部署</span>
-              <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-text-muted">部署</span>
+              <div className="flex-1 h-px bg-border" />
             </div>
             {/* 邊緣層 */}
             <ArchLayer
               label="邊緣層"
-              color="bg-orange-500"
+              color="bg-destructive"
               items={['Cloudflare CDN', 'Security Headers', 'Cache-Control', 'CSP']}
               desc="Cloudflare Workers 注入安全標頭"
             />
@@ -865,14 +837,14 @@ function ArchLayer({
     <div>
       <div className="flex items-center gap-2 mb-2">
         <div className={`w-2 h-2 rounded-full ${color}`} />
-        <span className="text-xs font-semibold text-[rgb(var(--color-text-muted))]">{label}</span>
-        <span className="text-xs text-[rgb(var(--color-text-muted))] opacity-60">— {desc}</span>
+        <span className="text-xs font-semibold text-text-muted">{label}</span>
+        <span className="text-xs text-text-muted opacity-60">— {desc}</span>
       </div>
       <div className="flex flex-wrap gap-1.5 pl-4">
         {items.map((item) => (
           <span
             key={item}
-            className="font-mono text-xs bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] px-2 py-0.5 rounded-lg"
+            className="font-mono text-xs bg-surface-elevated border border-border px-2 py-0.5 rounded-lg"
           >
             {item}
           </span>
@@ -895,20 +867,19 @@ function ResourceLink({
   sub: string;
   external?: boolean;
 }) {
-  const cls =
-    'flex items-center justify-between px-4 py-3 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] group hover:bg-primary/5 transition-colors';
+  const cls = contentPageTokens.links.row;
 
   const content = (
     <>
       <div>
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{sub}</p>
+        <p className="text-xs text-text-muted">{sub}</p>
       </div>
       {external ? (
-        <ExternalLink className="w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40 group-hover:opacity-100 transition-opacity" />
+        <ExternalLink className="w-4 h-4 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity" />
       ) : (
         <svg
-          className="w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40 group-hover:opacity-100 transition-opacity"
+          className="w-4 h-4 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

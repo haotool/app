@@ -41,13 +41,13 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
 
           {/* Tooltip 內容（相對定位在觸發元素上方） */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200">
-            <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 backdrop-blur-sm whitespace-nowrap">
+            <div className="relative whitespace-nowrap rounded-lg border border-border/70 bg-surface px-4 py-2 text-text shadow-lg">
               {/* 訊息內容 */}
               <p className="text-sm font-medium">{message}</p>
 
               {/* 小箭頭（指向下方）- 使用 SSOT Design Token */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                <div className="w-3 h-3 bg-[rgb(var(--color-primary))] rotate-45 border-r border-b border-white/20" />
+                <div className="h-3 w-3 rotate-45 border-r border-b border-border/70 bg-surface" />
               </div>
             </div>
           </div>

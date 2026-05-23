@@ -11,6 +11,7 @@
 
 import { Link } from 'react-router-dom';
 import { Head } from 'vite-react-ssg';
+import { notificationTokens } from '../config/design-tokens';
 
 const STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
 
@@ -48,42 +49,46 @@ const STYLE_LABELS: Record<string, string> = {
 };
 
 /** CTA 按鈕共用樣式（與 UpdatePrompt 一致） */
-const CTA_CLASS =
-  'px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-sm hover:from-brand-button-hover-from hover:to-brand-button-hover-to hover:scale-[1.02] active:scale-[0.98] transition-[color,background-color,border-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+const CTA_CLASS = notificationTokens.actions.primary;
 
 /** 關閉按鈕樣式（與 UpdatePrompt 一致） */
-const CLOSE_CLASS =
-  'p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05] active:scale-[0.95] transition-[color,background-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+const CLOSE_CLASS = notificationTokens.actions.icon;
 
 function NotificationCard({ state }: { state: State }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-card shadow-brand-shadow/20">
+    <div
+      className={`relative w-full max-w-[344px] overflow-hidden ${notificationTokens.borderRadius} ${notificationTokens.background.brand} ${notificationTokens.background.brandBorder} ${notificationTokens.shadow}`}
+    >
       {/* 裝飾光暈 */}
       <div
-        className="absolute top-0 right-0 w-16 h-16 rounded-full bg-brand-icon-from/40 blur-2xl"
+        className={`absolute top-0 right-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.topRight} ${notificationTokens.decoration.blur}`}
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-brand-decoration/40 blur-2xl"
+        className={`absolute bottom-0 left-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.bottomLeft} ${notificationTokens.decoration.blur}`}
         aria-hidden="true"
       />
 
       {/* 內容 */}
-      <div className="relative px-6 py-3.5">
+      <div className={`relative ${notificationTokens.padding}`}>
         <div className="flex items-center gap-3">
           {/* 狀態圖標 */}
           <div className="flex-shrink-0">
-            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-brand-icon-from to-brand-icon-to flex items-center justify-center shadow">
+            <div
+              className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-sm`}
+            >
               <StateIcon state={state} />
             </div>
           </div>
 
           {/* 標題與描述 */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-brand-text-dark truncate">
+            <h3 className={`truncate text-sm font-semibold ${notificationTokens.text.brandTitle}`}>
               {STATE_TITLE[state]}
             </h3>
-            <p className="text-xs text-brand-text truncate">{STATE_DESC[state]}</p>
+            <p className={`truncate text-xs ${notificationTokens.text.brandDescription}`}>
+              {STATE_DESC[state]}
+            </p>
           </div>
 
           {/* 操作按鈕 */}
@@ -100,7 +105,7 @@ function StateIcon({ state }: { state: State }) {
   if (state === 'isUpdating') {
     return (
       <svg
-        className="w-5 h-5 text-brand-text animate-spin"
+        className="h-5 w-5 animate-spin text-primary"
         fill="none"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -132,7 +137,7 @@ function StateIcon({ state }: { state: State }) {
 
   return (
     <svg
-      className="w-5 h-5 text-brand-text"
+      className="h-5 w-5 text-primary"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -180,7 +185,7 @@ function StateAction({ state }: { state: State }) {
 
 export default function UpdatePromptTest() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-light via-blue-50 to-purple-50 p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <Head>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
@@ -188,7 +193,7 @@ export default function UpdatePromptTest() {
         <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-white/80 px-4 py-2.5 rounded-full shadow border border-blue-100 hover:text-blue-900 hover:bg-white transition-colors mb-4"
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface-elevated px-4 py-2.5 text-sm font-semibold text-text transition-colors hover:border-primary/20 hover:bg-surface"
           >
             <svg
               className="w-4 h-4"
@@ -206,8 +211,8 @@ export default function UpdatePromptTest() {
             </svg>
             返回主頁
           </Link>
-          <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt Brand 配色總覽</h1>
-          <p className="text-neutral-text-secondary mt-2">6 種風格 × 4 種狀態 = 24 種組合</p>
+          <h1 className="mt-4 text-3xl font-bold text-text">UpdatePrompt Token 總覽</h1>
+          <p className="mt-2 text-text-muted">6 種風格 × 4 種狀態 = 24 種組合</p>
         </div>
 
         {/* 欄標題（狀態） */}
@@ -216,7 +221,7 @@ export default function UpdatePromptTest() {
           {STATES.map((s) => (
             <div
               key={s}
-              className="text-center text-xs font-semibold text-neutral-text-secondary uppercase tracking-wide"
+              className="text-center text-xs font-semibold uppercase tracking-wide text-text-muted"
             >
               {STATE_LABELS[s]}
             </div>
@@ -233,7 +238,7 @@ export default function UpdatePromptTest() {
             >
               {/* 列標籤 */}
               <div className="mb-2 md:mb-0">
-                <span className="text-sm font-bold text-neutral-text">{STYLE_LABELS[style]}</span>
+                <span className="text-sm font-bold text-text">{STYLE_LABELS[style]}</span>
               </div>
 
               {/* 四種狀態 */}

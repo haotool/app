@@ -69,19 +69,19 @@ describe('OpenData Page', () => {
   });
 
   describe('Accessibility (WCAG 2.1 AA)', () => {
-    it('renders tabbed code examples with 4 tab buttons and all code regions in DOM', () => {
+    it('renders tabbed code examples with 4 tabs and all tab panels in DOM', () => {
       const { container } = renderOpenData();
-      // 4 語言 tab 按鈕：cURL / JavaScript / Python / Deep Link
-      const tabButtons = screen.getAllByRole('button', {
+      // 4 語言 tabs：cURL / JavaScript / Python / Deep Link
+      const tabs = screen.getAllByRole('tab', {
         name: /cURL|JavaScript|Python|Deep Link/i,
       });
-      expect(tabButtons).toHaveLength(4);
+      expect(tabs).toHaveLength(4);
 
-      // 所有 tab panel 應存在於 DOM，確保 prerender HTML 保留完整語意內容。
-      const codeRegions = container.querySelectorAll('pre[role="region"]');
-      expect(codeRegions).toHaveLength(4);
-      expect(codeRegions[0]).toBeVisible();
-      expect(codeRegions[3]).not.toBeVisible();
+      // 所有 tabpanel 應存在於 DOM，確保 prerender HTML 保留完整語意內容。
+      const codePanels = container.querySelectorAll('pre[role="tabpanel"]');
+      expect(codePanels).toHaveLength(4);
+      expect(codePanels[0]).toBeVisible();
+      expect(codePanels[3]).not.toBeVisible();
     });
 
     it('all external links have rel=noopener noreferrer', () => {
@@ -126,15 +126,15 @@ describe('OpenData Page', () => {
     it('deep link example contains SITE_CONFIG.url after clicking Deep Link tab', () => {
       renderOpenData();
       // 點擊 Deep Link tab
-      fireEvent.click(screen.getByRole('button', { name: 'Deep Link' }));
-      const region = screen.getByRole('region', { name: /程式碼範例：Deep Link/i });
-      expect(region.querySelector('code')?.textContent).toContain(SITE_CONFIG.url);
+      fireEvent.click(screen.getByRole('tab', { name: 'Deep Link' }));
+      const panel = screen.getByRole('tabpanel', { name: /Deep Link/i });
+      expect(panel.querySelector('code')?.textContent).toContain(SITE_CONFIG.url);
     });
 
     it('應明確區分可索引金額頁與首頁 query deep link', () => {
       renderOpenData();
-      fireEvent.click(screen.getByRole('button', { name: 'Deep Link' }));
-      const content = screen.getByRole('region', { name: /程式碼範例：Deep Link/i }).textContent;
+      fireEvent.click(screen.getByRole('tab', { name: 'Deep Link' }));
+      const content = screen.getByRole('tabpanel', { name: /Deep Link/i }).textContent;
 
       expect(content).toContain(`${SITE_CONFIG.url}usd-twd/1000/`);
       expect(content).toContain('主要可索引 URL');

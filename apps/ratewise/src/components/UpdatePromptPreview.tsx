@@ -1,7 +1,7 @@
 /**
  * PWA 更新通知預覽元件
  *
- * 用於 UI Showcase 展示，支援手動控制不同狀態。
+ * 用於展示頁預覽，支援手動控制不同狀態。
  * 與 UpdatePrompt 共用相同的視覺設計和動畫。
  *
  * 功能：
@@ -36,7 +36,7 @@ interface UpdatePromptPreviewProps {
    */
   onUpdate?: () => void;
   /**
-   * 覆蓋定位類別（用於 UI Showcase 預覽）
+   * 覆蓋定位類別（用於展示頁預覽）
    */
   positionClassName?: string;
 }
@@ -108,7 +108,6 @@ function UpdatePromptPreviewClient({
               ${notificationTokens.shadow}
             `}
           >
-            {/* 裝飾光暈 - 品牌色 */}
             <div
               className={`absolute top-0 right-0 ${notificationTokens.decoration.size} rounded-full ${notificationTokens.decoration.topRight} ${notificationTokens.decoration.blur} ${prefersReducedMotion ? 'hidden' : ''}`}
               aria-hidden="true"
@@ -118,10 +117,8 @@ function UpdatePromptPreviewClient({
               aria-hidden="true"
             />
 
-            {/* 內容 */}
             <div className={`relative ${notificationTokens.padding}`}>
               <div className="flex items-center gap-3">
-                {/* 狀態圖標 - 品牌色漸變 */}
                 <div className="flex-shrink-0">
                   <div
                     className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow`}
@@ -136,7 +133,6 @@ function UpdatePromptPreviewClient({
                   </div>
                 </div>
 
-                {/* 標題與描述 */}
                 <div className="flex-1 min-w-0">
                   <h2
                     id="update-prompt-title"
@@ -164,7 +160,6 @@ function UpdatePromptPreviewClient({
                   </p>
                 </div>
 
-                {/* 操作按鈕 */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <ActionButtons
                     offlineReady={offlineReady}
@@ -205,7 +200,7 @@ function StatusIcon({
   if (isUpdating) {
     return (
       <svg
-        className={`${className} text-brand-text animate-spin`}
+        className={`${className} text-primary animate-spin`}
         fill="none"
         viewBox="0 0 24 24"
         aria-hidden="true"
@@ -229,7 +224,7 @@ function StatusIcon({
 
   return (
     <svg
-      className={`${className} text-brand-text`}
+      className={`${className} text-primary`}
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -295,13 +290,7 @@ interface ActionButtonsProps {
 
 /** CTA 按鈕共用樣式（更新／重試） */
 const CTA_CLASS = `
-  px-3 py-1.5 rounded-full text-xs font-medium
-  bg-gradient-to-r from-brand-button-from to-brand-button-to
-  text-white shadow-sm
-  hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-  hover:scale-[1.02] active:scale-[0.98]
-  transition-[color,background-color,border-color,transform] duration-200 ease-out
-  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
+  ${notificationTokens.actions.primary}
 `;
 
 function ActionButtons({
@@ -318,7 +307,12 @@ function ActionButtons({
 
   if (updateFailed) {
     return (
-      <button onClick={onUpdate} className={CTA_CLASS} aria-label={t('pwa.actionRetry')}>
+      <button
+        type="button"
+        onClick={onUpdate}
+        className={CTA_CLASS}
+        aria-label={t('pwa.actionRetry')}
+      >
         {t('pwa.actionRetry')}
       </button>
     );
@@ -326,7 +320,12 @@ function ActionButtons({
 
   if (needRefresh) {
     return (
-      <button onClick={onUpdate} className={CTA_CLASS} aria-label={t('pwa.actionUpdate')}>
+      <button
+        type="button"
+        onClick={onUpdate}
+        className={CTA_CLASS}
+        aria-label={t('pwa.actionUpdate')}
+      >
         {t('pwa.actionUpdate')}
       </button>
     );
@@ -335,15 +334,9 @@ function ActionButtons({
   // offlineReady: 關閉按鈕
   return (
     <button
+      type="button"
       onClick={onClose}
-      className="
-        p-1.5 rounded-full
-        bg-brand-icon-from/80 text-brand-text
-        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
-        active:scale-[0.95]
-        transition-[color,background-color,transform] duration-200 ease-out
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-      "
+      className={notificationTokens.actions.icon}
       aria-label={t('pwa.actionClose')}
     >
       <svg

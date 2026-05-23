@@ -63,6 +63,11 @@ async function readManifestGenerator() {
   return readFile(manifestGeneratorPath, 'utf-8');
 }
 
+async function readPlaywrightConfig() {
+  const playwrightConfigPath = path.resolve(__dirname, '../../../playwright.config.ts');
+  return readFile(playwrightConfigPath, 'utf-8');
+}
+
 async function readPairAmountSeoHook() {
   const pairAmountSeoHookPath = path.resolve(__dirname, '../../../src/hooks/usePairAmountSEO.ts');
   return readFile(pairAmountSeoHookPath, 'utf-8');
@@ -258,6 +263,14 @@ describe('ratewise build scripts', () => {
     expect(manifestGenerator).not.toContain("short_name: 'HaoRate'");
     expect(manifestGenerator).not.toContain("'HaoRate 首頁 - 即時匯率換算與趨勢圖'");
     expect(manifestGenerator).not.toContain("name: 'HaoRate 匯率好工具'");
+  });
+
+  it('should rebuild before local Playwright preview to avoid stale dist artifacts', async () => {
+    const playwrightConfig = await readPlaywrightConfig();
+
+    expect(playwrightConfig).toContain('const LOCAL_PLAYWRIGHT_PREVIEW_COMMAND =');
+    expect(playwrightConfig).toContain('pnpm build && vite preview');
+    expect(playwrightConfig).toContain('command: LOCAL_PLAYWRIGHT_PREVIEW_COMMAND');
   });
 
   it('should not force React ecosystem packages into manual chunks', async () => {
@@ -534,9 +547,7 @@ describe('ratewise build scripts', () => {
     expect(healthCheckScript).toContain('GUIDE_PAGE_TITLE');
     expect(seoMetadataSource).toContain("from './seo-static'");
     expect(seoMetadataSource).toContain('title: GUIDE_PAGE_TITLE');
-    expect(healthCheckScript).not.toContain(
-      "validators.hasTitle('HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
-    );
+    expect(healthCheckScript).not.toContain("validators.hasTitle('HaoRate 匯率好工具 —");
     expect(healthCheckScript).not.toContain(
       "validators.hasTitle('使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具')",
     );

@@ -1,226 +1,138 @@
-/**
- * 配色方案比較頁面
- * 用於展示和比較不同的通知視窗配色方案
- */
-
 import { Head } from 'vite-react-ssg';
+import { ArrowLeft, RefreshCw, X } from 'lucide-react';
+import { notificationTokens } from '../config/design-tokens';
 
 export default function ColorSchemeComparison() {
   const notificationVariants = [
     {
-      id: 'current',
-      name: '當前 - 棉花糖甜心',
-      description: '粉紅粉紫粉藍三色漸變',
-      containerBg: 'bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50',
-      containerBorder: 'border-purple-100',
-      iconBg: 'bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200',
-      iconColor: 'text-purple-600',
-      titleColor: 'text-purple-700',
-      descColor: 'text-purple-500',
-      primaryBtn: 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300',
-      primaryBtnHover: 'hover:from-pink-400 hover:via-purple-400 hover:to-blue-400',
-      secondaryBtn: 'bg-white/90 text-purple-600 border-purple-200',
-      bubbleTop: 'bg-purple-100/50',
-      bubbleBottom: 'bg-pink-100/50',
+      id: 'primary',
+      name: '方案 A · 品牌主色',
+      description: '以目前風格的主色建立更新提示層級',
+      containerBg: 'bg-primary/10',
+      iconBg: 'bg-primary/15',
+      iconColor: 'text-primary',
+      primaryBtn: 'bg-primary',
     },
     {
-      id: 'brand-aligned',
-      name: '方案 A - 品牌對齊',
-      description: '藍紫雙色漸變 (與主應用一致)',
-      containerBg: 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50',
-      containerBorder: 'border-indigo-100',
-      iconBg: 'bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-200',
-      iconColor: 'text-indigo-600',
-      titleColor: 'text-indigo-700',
-      descColor: 'text-indigo-500',
-      primaryBtn: 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500',
-      primaryBtnHover: 'hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600',
-      secondaryBtn: 'bg-white/90 text-indigo-600 border-indigo-200',
-      bubbleTop: 'bg-indigo-100/50',
-      bubbleBottom: 'bg-blue-100/50',
+      id: 'success',
+      name: '方案 B · 可用狀態',
+      description: '用於離線內容已準備完成的正向回饋',
+      containerBg: 'bg-success/10',
+      iconBg: 'bg-success/15',
+      iconColor: 'text-success',
+      primaryBtn: 'bg-success',
     },
     {
-      id: 'cool-tone',
-      name: '方案 B - 冷色調',
-      description: '藍紫色調 (專業穩重)',
-      containerBg: 'bg-gradient-to-br from-blue-50 via-violet-50 to-slate-50',
-      containerBorder: 'border-violet-100',
-      iconBg: 'bg-gradient-to-br from-blue-200 via-violet-200 to-slate-200',
-      iconColor: 'text-blue-600',
-      titleColor: 'text-blue-700',
-      descColor: 'text-blue-500',
-      primaryBtn: 'bg-gradient-to-r from-blue-500 via-violet-500 to-purple-500',
-      primaryBtnHover: 'hover:from-blue-600 hover:via-violet-600 hover:to-purple-600',
-      secondaryBtn: 'bg-white/90 text-blue-600 border-blue-200',
-      bubbleTop: 'bg-violet-100/50',
-      bubbleBottom: 'bg-blue-100/50',
+      id: 'warning',
+      name: '方案 C · 更新提醒',
+      description: '用於需要使用者注意但不阻斷操作的提示',
+      containerBg: 'bg-warning/10',
+      iconBg: 'bg-warning/15',
+      iconColor: 'text-warning',
+      primaryBtn: 'bg-warning',
     },
     {
-      id: 'vibrant',
-      name: '方案 C - 活力漸變',
-      description: '藍紫漸變 (年輕活潑)',
-      containerBg: 'bg-gradient-to-br from-cyan-50 via-blue-50 to-purple-50',
-      containerBorder: 'border-blue-100',
-      iconBg: 'bg-gradient-to-br from-cyan-200 via-blue-200 to-purple-200',
-      iconColor: 'text-blue-600',
-      titleColor: 'text-blue-700',
-      descColor: 'text-blue-500',
-      primaryBtn: 'bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400',
-      primaryBtnHover: 'hover:from-cyan-500 hover:via-blue-500 hover:to-purple-500',
-      secondaryBtn: 'bg-white/90 text-blue-600 border-blue-200',
-      bubbleTop: 'bg-blue-100/50',
-      bubbleBottom: 'bg-cyan-100/50',
+      id: 'destructive',
+      name: '方案 D · 更新失敗',
+      description: '用於重試與錯誤狀態，保留明確警示感',
+      containerBg: 'bg-destructive/10',
+      iconBg: 'bg-destructive/15',
+      iconColor: 'text-destructive',
+      primaryBtn: 'bg-destructive',
     },
   ];
 
   const NotificationCard = ({ variant }: { variant: (typeof notificationVariants)[0] }) => {
     return (
       <div className="flex flex-col items-center">
-        {/* 方案名稱 */}
         <div className="mb-4 text-center">
-          <h3 className="text-lg font-bold text-slate-800 mb-1">{variant.name}</h3>
-          <p className="text-sm text-slate-500">{variant.description}</p>
+          <h3 className="mb-1 text-lg font-bold text-text">{variant.name}</h3>
+          <p className="text-sm text-text-muted">{variant.description}</p>
         </div>
 
-        {/* 通知視窗模擬 */}
         <div className="relative">
           <div
             className={`
-              relative overflow-hidden rounded-[32px]
+              relative overflow-hidden rounded-lg
               w-80 max-w-[calc(100vw-2rem)]
-              ${variant.containerBg}
-              border-2 ${variant.containerBorder}
-              shadow-xl
-              transition-transform duration-300 hover:scale-105
+              border border-border/70 bg-surface
+              shadow-sm
             `}
           >
-            {/* 棉花糖泡泡裝飾 */}
-            <div
-              className={`absolute top-0 right-0 w-24 h-24 rounded-full ${variant.bubbleTop} blur-3xl`}
-              aria-hidden="true"
-            />
-            <div
-              className={`absolute bottom-0 left-0 w-24 h-24 rounded-full ${variant.bubbleBottom} blur-3xl`}
-              aria-hidden="true"
-            />
-
-            {/* 內容區域 */}
             <div className="relative p-6">
-              {/* 圖標區 */}
               <div className="flex justify-center mb-4">
-                <div className="relative">
-                  <div
-                    className={`absolute inset-0 rounded-full ${variant.iconBg.replace('bg-gradient-to-br', 'bg-purple-200')} blur-md opacity-50`}
-                  />
-                  <div
-                    className={`relative w-16 h-16 rounded-full ${variant.iconBg} flex items-center justify-center`}
-                  >
-                    <svg
-                      className={`w-8 h-8 ${variant.iconColor}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                  </div>
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-full ${variant.iconBg}`}
+                >
+                  <RefreshCw className={`h-8 w-8 ${variant.iconColor}`} strokeWidth={2.5} />
                 </div>
               </div>
 
-              {/* 標題 */}
-              <h2 className={`text-xl font-bold ${variant.titleColor} mb-2 text-center`}>
-                🎉 發現新版本
-              </h2>
+              <h2 className="mb-2 text-center text-xl font-bold text-text">發現新版本</h2>
 
-              {/* 描述 */}
-              <p className={`text-sm ${variant.descColor} mb-5 leading-relaxed text-center px-2`}>
+              <p className="mb-5 px-2 text-center text-sm leading-relaxed text-text-muted">
                 新版本帶來更棒的體驗哦！
               </p>
 
-              {/* 按鈕 */}
               <div className="flex flex-col space-y-2">
                 <button
                   className={`
-                    w-full px-5 py-3 rounded-[20px]
-                    ${variant.primaryBtn}
-                    text-white text-sm font-bold
-                    shadow-lg
-                    ${variant.primaryBtnHover}
-                    active:scale-[0.98]
-                    transition-all duration-200
+                    inline-flex w-full items-center justify-center gap-2 rounded-lg
+                    border border-border/70 bg-surface-elevated px-5 py-3
+                    text-sm font-bold text-text shadow-sm
+                    transition-colors duration-200 hover:border-primary/20 hover:bg-surface
                   `}
                   type="button"
                 >
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${variant.primaryBtn}`}
+                    aria-hidden="true"
+                  />
                   馬上更新
                 </button>
 
                 <button
                   className={`
-                    w-full px-5 py-3 rounded-[20px]
-                    ${variant.secondaryBtn}
-                    backdrop-blur-sm
-                    text-sm font-semibold
-                    border-2
-                    hover:bg-white hover:border-opacity-100
-                    active:scale-[0.98]
-                    transition-all duration-200
+                    inline-flex w-full items-center justify-center gap-2 rounded-lg
+                    border border-border/70 bg-surface px-5 py-3
+                    text-sm font-semibold text-text-muted
+                    transition-colors duration-200 hover:bg-surface-elevated hover:text-text
                   `}
                   type="button"
                 >
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${variant.containerBg}`}
+                    aria-hidden="true"
+                  />
                   等等再說
                 </button>
               </div>
             </div>
 
-            {/* 關閉按鈕 */}
             <button
-              className={`
-                absolute top-4 right-4 p-2 rounded-full
-                bg-white/80 ${variant.titleColor.replace('text-', '').split('-')[0]}-400
-                hover:bg-white
-                transition-colors
-              `}
+              className={`absolute right-4 top-4 ${notificationTokens.actions.icon}`}
               type="button"
               aria-label="關閉通知"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        {/* 配色說明 */}
-        <div className="mt-4 p-4 bg-white rounded-lg shadow-md w-80 max-w-[calc(100vw-2rem)]">
-          <h4 className="text-sm font-bold text-slate-700 mb-2">配色詳情</h4>
-          <div className="space-y-1 text-xs text-slate-600">
+        <div className="mt-4 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border/70 bg-surface-elevated p-4">
+          <h4 className="mb-2 text-sm font-bold text-text">配色詳情</h4>
+          <div className="space-y-1 text-xs text-text-muted">
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded ${variant.containerBg} border border-slate-200`} />
-              <span>背景漸變</span>
+              <div className={`h-4 w-4 rounded border border-border/70 ${variant.containerBg}`} />
+              <span>提示背景</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded ${variant.primaryBtn}`} />
-              <span>主要按鈕</span>
+              <div className={`h-4 w-4 rounded ${variant.primaryBtn}`} />
+              <span>狀態重點</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded ${variant.iconBg} border border-slate-200`} />
-              <span>圖標背景</span>
+              <div className={`h-4 w-4 rounded border border-border/70 ${variant.iconBg}`} />
+              <span>圖示背景</span>
             </div>
           </div>
         </div>
@@ -229,42 +141,43 @@ export default function ColorSchemeComparison() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-8">
+    <div className="min-h-screen bg-background p-8">
       <Head>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3">
-            通知視窗配色方案比較
-          </h1>
-          <p className="text-slate-600 max-w-2xl mx-auto">
-            根據主應用的 <strong>藍紫色調</strong> 設計，以下是四種配色方案。
+          <h1 className="mb-3 text-4xl font-bold text-text">通知配色歷史比較</h1>
+          <p className="mx-auto max-w-2xl text-text-muted">
+            以下把通知狀態收斂成四種語義 tone，並以現行產品殼層比較其色彩傾向。
             <br />
-            請選擇最符合品牌風格且視覺舒適的方案。
+            比較重點是 token 層級與可讀性，而不是額外特效。
           </p>
         </div>
 
-        {/* 主應用配色參考 */}
-        <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-xl font-bold text-slate-800 mb-4">📐 主應用配色參考</h2>
+        <div className="mb-12 rounded-lg border border-border/70 bg-surface p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-text">現行產品語法參考</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm font-semibold text-slate-600 mb-2">主背景漸變</p>
-              <div className="h-16 rounded-lg bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-slate-200" />
-              <code className="text-xs text-slate-500 mt-1 block">
-                from-blue-50 via-indigo-50 to-purple-50
+              <p className="mb-2 text-sm font-semibold text-text-muted">基礎表面</p>
+              <div className="h-16 rounded-lg border border-border/70 bg-surface" />
+              <code className="mt-1 block text-xs text-text-muted">
+                bg-surface + border-border/70
               </code>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-600 mb-2">標題漸變</p>
-              <div className="h-16 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600" />
-              <code className="text-xs text-slate-500 mt-1 block">from-blue-600 to-purple-600</code>
+              <p className="mb-2 text-sm font-semibold text-text-muted">品牌重點</p>
+              <div className="h-16 rounded-lg border border-primary/15 bg-primary/10" />
+              <code className="mt-1 block text-xs text-text-muted">
+                bg-primary/10 + border-primary/15
+              </code>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-600 mb-2">按鈕漸變</p>
-              <div className="h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500" />
-              <code className="text-xs text-slate-500 mt-1 block">from-blue-500 to-purple-500</code>
+              <p className="mb-2 text-sm font-semibold text-text-muted">互動層次</p>
+              <div className="h-16 rounded-lg border border-border/70 bg-surface-elevated" />
+              <code className="mt-1 block text-xs text-text-muted">
+                bg-surface-elevated + shadow-sm
+              </code>
             </div>
           </div>
         </div>
@@ -280,16 +193,9 @@ export default function ColorSchemeComparison() {
         <div className="mt-12 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-surface-elevated px-6 py-3 font-semibold text-text transition-colors hover:border-primary/20 hover:bg-surface"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             返回主頁
           </a>
         </div>

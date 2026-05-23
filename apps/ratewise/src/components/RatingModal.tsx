@@ -105,8 +105,8 @@ function RatingModalClient({
           <div
             className={`
               relative overflow-hidden pointer-events-auto ${notificationTokens.borderRadius}
-              bg-gradient-to-r from-brand-from via-brand-via to-brand-to
-              border border-brand-border/60
+              ${notificationTokens.background.brand}
+              ${notificationTokens.background.brandBorder}
               ${notificationTokens.shadow}
             `}
           >
@@ -131,7 +131,10 @@ function RatingModalClient({
                   <span className="text-2xl" aria-hidden="true">
                     🎉
                   </span>
-                  <p id="rating-modal-title" className="text-sm font-semibold text-brand-text-dark">
+                  <p
+                    id="rating-modal-title"
+                    className={`text-sm font-semibold ${notificationTokens.text.brandTitle}`}
+                  >
                     {t('rating.thankYou')}
                   </p>
                 </div>
@@ -143,25 +146,21 @@ function RatingModalClient({
                     <div>
                       <h2
                         id="rating-modal-title"
-                        className="text-sm font-semibold text-brand-text-dark"
+                        className={`text-sm font-semibold ${notificationTokens.text.brandTitle}`}
                       >
                         {t('rating.title')}
                       </h2>
-                      <p className="text-xs text-brand-text mt-0.5">{t('rating.subtitle')}</p>
+                      <p className={`mt-0.5 text-xs ${notificationTokens.text.brandDescription}`}>
+                        {t('rating.subtitle')}
+                      </p>
                     </div>
 
                     {/* 關閉按鈕 */}
                     <button
+                      type="button"
                       ref={firstButtonRef}
                       onClick={isFinalChance ? dismiss : snooze}
-                      className="
-                        p-1.5 rounded-full flex-shrink-0
-                        bg-brand-icon-from/80 text-brand-text
-                        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
-                        active:scale-[0.95]
-                        transition-[color,background-color,transform] duration-200 ease-out
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-                      "
+                      className={`${notificationTokens.actions.icon} flex-shrink-0`}
                       aria-label={t('rating.dismiss')}
                     >
                       <svg
@@ -204,30 +203,18 @@ function RatingModalClient({
                   {/* 操作按鈕 */}
                   <div className="flex items-center justify-between gap-2">
                     <button
+                      type="button"
                       onClick={isFinalChance ? dismiss : snooze}
-                      className="
-                        text-xs text-brand-text/70 hover:text-brand-text
-                        transition-colors duration-150
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-                        rounded
-                      "
+                      className={notificationTokens.actions.text}
                     >
                       {isFinalChance ? t('rating.dismiss') : t('rating.later')}
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => void handleSubmit()}
                       disabled={selectedStar === 0 || isSubmitting}
-                      className="
-                        px-3 py-1.5 rounded-full text-xs font-medium
-                        bg-gradient-to-r from-brand-button-from to-brand-button-to
-                        text-white shadow-sm
-                        hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-                        hover:scale-[1.02] active:scale-[0.98]
-                        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
-                        transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
-                      "
+                      className={`${notificationTokens.actions.primary} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border/70 disabled:hover:bg-surface-elevated disabled:hover:text-text disabled:hover:scale-100`}
                     >
                       {isSubmitting ? t('rating.submitting') : t('rating.submit')}
                     </button>
@@ -263,6 +250,7 @@ function StarButton({
 }: StarButtonProps) {
   return (
     <button
+      type="button"
       role="radio"
       aria-checked={selected}
       aria-label={`${star} 星`}
@@ -274,13 +262,13 @@ function StarButton({
       className={`
         w-8 h-8 flex items-center justify-center rounded
         ${prefersReducedMotion ? '' : 'transition-transform duration-100 hover:scale-110 active:scale-95'}
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1
       `}
     >
       <svg
         viewBox="0 0 24 24"
         className={`w-6 h-6 transition-colors duration-100 ${
-          filled ? 'fill-yellow-400 stroke-yellow-500' : 'fill-transparent stroke-brand-text/40'
+          filled ? 'fill-favorite stroke-favorite' : 'fill-transparent stroke-text-muted'
         }`}
         strokeWidth={1.5}
         aria-hidden="true"

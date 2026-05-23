@@ -15,7 +15,7 @@
 | OpenAPI 規格 | https://app.haotool.org/ratewise/openapi.json |
 
 - **免 API Key**、**免費使用**、**CORS 已啟用**。
-- 更新頻率：每 5 分鐘自動同步臺灣銀行牌告。
+- 更新頻率：約每 5 分鐘檢查臺灣銀行牌告並同步；實際新鮮度依來源、GitHub Actions 佇列與 CDN 快取而定。
 - 涵蓋 18 種貨幣的現金買/賣、即期買/賣四種報價。
 
 ## 呼叫範例

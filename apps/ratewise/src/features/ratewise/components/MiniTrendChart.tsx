@@ -57,11 +57,11 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   // 追蹤主題變化 - 用於觸發圖表重建
   const [themeVersion, setThemeVersion] = useState(0);
 
-  // MutationObserver 監聽 <html> class 變化（主題切換）
+  // MutationObserver 監聽 <html> 的 style/class 變化（主題或字體切換）
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.attributeName === 'class') {
+        if (mutation.attributeName === 'class' || mutation.attributeName === 'data-style') {
           setThemeVersion((v) => v + 1);
         }
       }
@@ -69,7 +69,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['class', 'data-style'],
     });
 
     return () => observer.disconnect();
@@ -414,25 +414,17 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
           >
             {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
             <div className="relative">
-              <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-border">
-                <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
+              <div className="rounded-lg border border-border/70 bg-surface/95 px-3 py-1.5 shadow-lg">
+                <div className="flex items-center gap-2.5 text-xs leading-tight whitespace-nowrap">
                   <span className="text-primary font-semibold">{tooltipData.date}</span>
                   <span className="text-foreground font-bold">
                     {formatExchangeRate(tooltipData.rate)}
                   </span>
                 </div>
               </div>
-              {/* 小三角形指示器 - 使用 card 色 */}
               <div
-                className="absolute left-1/2 -bottom-[5px] transform -translate-x-1/2"
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '5px solid transparent',
-                  borderRight: '5px solid transparent',
-                  borderTop: '5px solid rgb(var(--color-card) / 0.98)',
-                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
-                }}
+                className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-border/70 bg-surface/95 shadow-sm"
+                aria-hidden="true"
               />
             </div>
           </motion.div>

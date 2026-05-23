@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +54
+> 本次分數變化：+1（reward 1）｜累計總分：+55
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-23
+- ID：reward-ratewise-uiux-token-ssot-convergence
+- 原因：RateWise UI shell、內容頁麵包屑與多處元件樣式存在 design token 漂移、死碼 UI 與 PWA/Chrome polish warning
+- 解法：以 Impeccable / SSOT audit 收斂 token、刪除未引用 UI shim、補 SPEC 與守門測試，並通過 full Vitest、typecheck、SSOT、Chrome console 與 build 驗證
 
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend

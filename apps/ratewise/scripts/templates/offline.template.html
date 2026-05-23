@@ -2,13 +2,46 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="__THEME_COLOR__" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>離線模式 - __BRAND_SHORT__</title>
     <!-- [fix:2026-01-08] 使用相對路徑，確保在任何 base path 下都能正確載入 -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      (function () {
+        var themeColors = __OFFLINE_THEME_COLOR_MAP__;
+        var supportedStyles = Object.keys(themeColors);
+        var selectedStyle = 'zen';
+
+        try {
+          var storedTheme = localStorage.getItem('ratewise-theme');
+          if (storedTheme) {
+            var parsedTheme = JSON.parse(storedTheme);
+            if (supportedStyles.indexOf(parsedTheme.style) >= 0) {
+              selectedStyle = parsedTheme.style;
+            }
+          }
+        } catch (e) {
+          selectedStyle = 'zen';
+        }
+
+        document.documentElement.dataset.style = selectedStyle;
+
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) {
+          themeColor.setAttribute('content', themeColors[selectedStyle] || themeColors.zen);
+        }
+      })();
+    </script>
     <style>
+      __OFFLINE_STYLE_BLOCKS__ html[data-style='nitro'] {
+        color-scheme: dark;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -19,51 +52,58 @@
         font-family:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #e8ecf4 0%, #f3e8ff 50%, #ede9fe 100%);
-        padding: 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--offline-background) 0%,
+          var(--offline-primary-tint) 50%,
+          var(--offline-surface) 100%
+        );
+        padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
+          calc(1rem + env(safe-area-inset-bottom, 0px));
         text-align: center;
       }
 
       .container {
         max-width: 400px;
         padding: 2rem;
-        background: rgba(255, 255, 255, 0.9);
+        background: var(--offline-surface);
         border-radius: 24px;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
-        border: 1px solid rgba(139, 92, 246, 0.1);
+        box-shadow: 0 8px 32px var(--offline-primary-shadow-soft);
+        border: 1px solid var(--offline-primary-border-tint);
       }
 
       .icon {
         width: 80px;
         height: 80px;
         margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, var(--offline-primary) 0%, var(--offline-accent) 100%);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 16px var(--offline-primary-shadow-strong);
       }
 
       .icon svg {
         width: 48px;
         height: 48px;
-        color: white;
+        color: var(--offline-primary-foreground);
       }
 
       h1 {
         font-size: 1.5rem;
-        color: #4c1d95;
+        color: var(--offline-text);
         margin-bottom: 0.75rem;
         font-weight: 600;
       }
 
       p {
-        color: #6b7280;
+        color: var(--offline-text-muted);
         line-height: 1.6;
         margin-bottom: 1.5rem;
       }
@@ -73,8 +113,8 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background: #fef3c7;
-        color: #92400e;
+        background: var(--offline-warning-tint);
+        color: var(--offline-warning);
         border-radius: 9999px;
         font-size: 0.875rem;
         font-weight: 500;
@@ -85,7 +125,7 @@
         content: '';
         width: 8px;
         height: 8px;
-        background: #f59e0b;
+        background: var(--offline-warning);
         border-radius: 50%;
         animation: pulse 2s infinite;
       }
@@ -105,8 +145,12 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
+        background: linear-gradient(
+          135deg,
+          var(--offline-primary) 0%,
+          var(--offline-secondary) 100%
+        );
+        color: var(--offline-primary-foreground);
         border: none;
         border-radius: 12px;
         font-size: 1rem;
@@ -115,12 +159,12 @@
         transition:
           transform 0.2s,
           box-shadow 0.2s;
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 12px var(--offline-primary-shadow-strong);
       }
 
       .retry-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+        box-shadow: 0 6px 16px var(--offline-primary-shadow-hover);
       }
 
       .retry-btn:active {
@@ -130,12 +174,12 @@
       .tips {
         margin-top: 2rem;
         padding-top: 1.5rem;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--offline-border);
       }
 
       .tips h2 {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--offline-text-muted);
         font-weight: 500;
         margin-bottom: 0.75rem;
       }
@@ -150,23 +194,23 @@
         align-items: flex-start;
         gap: 0.5rem;
         font-size: 0.875rem;
-        color: #4b5563;
+        color: var(--offline-text);
         margin-bottom: 0.5rem;
       }
 
       .tips li::before {
         content: '•';
-        color: #8b5cf6;
+        color: var(--offline-primary);
         font-weight: bold;
       }
 
       .cached-data {
         margin-top: 1rem;
         padding: 0.75rem;
-        background: #f0fdf4;
+        background: var(--offline-success-tint);
         border-radius: 8px;
         font-size: 0.875rem;
-        color: #166534;
+        color: var(--offline-success);
       }
     </style>
   </head>

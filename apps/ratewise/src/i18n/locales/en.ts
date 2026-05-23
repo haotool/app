@@ -47,6 +47,7 @@ const en = {
     title: APP_INFO.shortName,
     subtitle: 'Exchange Rate Tool',
     version: 'Version',
+    loadingLiveRates: 'Loading live exchange rates...',
   },
 
   // Single Currency Converter
@@ -75,6 +76,7 @@ const en = {
     rateTypeUnavailableForCurrencies:
       '{{currencies}} does not provide {{rateType}} rate, switched to {{fallbackType}}',
     viewTrendChart: 'View trend chart',
+    trendChartLoadFailed: 'Trend chart failed to load',
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',
     backToConverter: 'Back to Converter',
@@ -93,6 +95,7 @@ const en = {
     calculating: 'Calculating...',
     noData: 'No data',
     amountClickCalculator: '{{name}} ({{code}}) amount, click to open calculator',
+    setBaseCurrency: 'Set {{name}} ({{code}}) as base currency',
     currencyListLabel: 'Currency list',
     addFavorite: 'Add {{code}} to favorites',
     removeFavorite: 'Remove {{code}} from favorites',
@@ -131,6 +134,7 @@ const en = {
   // Settings
   settings: {
     title: 'Settings',
+    description: 'Adjust interface style, language, rate mode, and support links.',
     interfaceStyle: 'Interface Style',
     language: 'Language',
     storageCache: 'Storage & Cache',
@@ -140,7 +144,8 @@ const en = {
     taiwanBank: 'Taiwan Bank',
     updateFrequency: 'Update Frequency',
     fiveMinutes: '5 minutes',
-    updateNote: 'Exchange rates are updated every 5 minutes.',
+    updateNote:
+      'Exchange rates are checked about every 5 minutes; actual freshness depends on the source and CDN.',
     resetTheme: 'Reset Theme Settings',
     appVersion: 'App Version',
     designSystem: 'Design System',
@@ -234,6 +239,7 @@ const en = {
   // Rate Info
   rateInfo: {
     source: 'Taiwan Bank Rates',
+    bankOfficialRates: 'Taiwan Bank Rates',
     sourceTime: 'Source',
     refreshTime: 'Refresh',
     lastUpdate: 'Last updated',
@@ -312,26 +318,51 @@ const en = {
     updatingDescription: 'Please wait...',
     updateFailedTitle: 'Update Failed',
     updateFailedDescription: 'Please retry or check network',
-    registrationFailedTitle: 'Background updater failed to start',
-    registrationFailedDescription:
-      'The update worker could not start. Reload the page, and contact the author if it keeps happening.',
     actionRetry: 'Retry',
-    actionReload: 'Reload',
     releaseToRefresh: 'Release to refresh',
     refreshing: 'Refreshing...',
   },
 
   support: {
+    contactLinksAriaLabel: 'Support contact links',
+    contactTitle: 'If the problem persists, contact the author:',
     reportIssueLead: 'If this problem keeps happening, contact the author directly.',
     reportIssueHint:
       'Include the error screen, reproduction steps, and device details so the issue can be diagnosed quickly.',
   },
 
+  offline: {
+    title: 'Offline Mode',
+    description: 'Some features may be unavailable',
+    close: 'Close offline notice',
+  },
+
+  skeleton: {
+    appLoading: `${APP_INFO.name} is loading.`,
+    ratesLoading: 'Loading exchange rate data...',
+    settingsLoading: 'Loading settings...',
+    favoritesLoading: 'Loading favorites...',
+    multiConverterLoading: 'Loading multi-currency converter...',
+  },
+
+  rateProvider: {
+    bestRecommendation: 'Best recommendation',
+    menuAriaLabel: 'Rate provider menu',
+  },
+
   // 404
   notFound: {
+    metaTitle: '404 - Page Not Found',
+    metaDescription:
+      'Sorry, the page you are looking for does not exist. Return home or browse another page.',
+    eyebrow: 'Page error',
+    errorAria: '404 error',
     title: 'Page Not Found',
     message: 'The page you are looking for does not exist or has been removed.',
     goHome: 'Go Home',
+    suggestedPages: 'You may want to visit:',
+    reportIssuePrefix: 'If you think this is a mistake, please',
+    reportIssueLink: 'report the issue',
   },
 
   // Footer
@@ -345,7 +376,7 @@ const en = {
     disclaimer:
       'Exchange rates are based on Taiwan Bank official rates (cash and spot selling rates). Actual transaction rates may vary.',
     disclaimerDesktop:
-      'Exchange rates from Taiwan Bank, updated every 5 minutes. For reference only.',
+      'Exchange rates from Taiwan Bank are checked on a schedule. For reference only.',
     faq: 'FAQ',
     about: 'About Us',
     appName: APP_INFO.shortName,
