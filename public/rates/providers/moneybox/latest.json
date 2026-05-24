@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-05-24T22:38:47.614Z",
-  "updateTime": "2026/05/25 07:38:47",
+  "timestamp": "2026-05-24T23:42:41.662Z",
+  "updateTime": "2026/05/25 08:42:41",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -33,7 +33,7 @@
     "EUR": {
       "currency": "EUR",
       "base": 1762.63,
-      "buy": 1744,
+      "buy": 1750,
       "sell": 1727,
       "spbuy": 1797.7,
       "spsell": 1727.56
