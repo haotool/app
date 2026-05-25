@@ -1,0 +1,215 @@
+{
+  "timestamp": "2026-05-25T00:12:03.346Z",
+  "updateTime": "2026/05/25 08:12:03",
+  "source": "Taiwan Bank (臺灣銀行牌告匯率)",
+  "sourceUrl": "https://rate.bot.com.tw/xrt",
+  "base": "TWD",
+  "rates": {
+    "USD": 31.815,
+    "HKD": 4.075,
+    "GBP": 43.48,
+    "AUD": 22.98,
+    "CAD": 23.28,
+    "SGD": 25.03,
+    "CHF": 40.73,
+    "JPY": 0.2021,
+    "NZD": 18.9,
+    "THB": 1.032,
+    "PHP": 0.5777,
+    "IDR": 0.00208,
+    "EUR": 37.27,
+    "KRW": 0.02291,
+    "VND": 0.00136,
+    "MYR": 8.449,
+    "CNY": 4.712
+  },
+  "details": {
+    "USD": {
+      "name": "美金",
+      "spot": {
+        "buy": 31.47,
+        "sell": 31.62
+      },
+      "cash": {
+        "buy": 31.145,
+        "sell": 31.815
+      }
+    },
+    "HKD": {
+      "name": "港幣",
+      "spot": {
+        "buy": 3.992,
+        "sell": 4.062
+      },
+      "cash": {
+        "buy": 3.871,
+        "sell": 4.075
+      }
+    },
+    "GBP": {
+      "name": "英鎊",
+      "spot": {
+        "buy": 42.255,
+        "sell": 42.885
+      },
+      "cash": {
+        "buy": 41.36,
+        "sell": 43.48
+      }
+    },
+    "AUD": {
+      "name": "澳幣",
+      "spot": {
+        "buy": 22.415,
+        "sell": 22.76
+      },
+      "cash": {
+        "buy": 22.2,
+        "sell": 22.98
+      }
+    },
+    "CAD": {
+      "name": "加拿大幣",
+      "spot": {
+        "buy": 22.7,
+        "sell": 23.03
+      },
+      "cash": {
+        "buy": 22.37,
+        "sell": 23.28
+      }
+    },
+    "SGD": {
+      "name": "新加坡幣",
+      "spot": {
+        "buy": 24.59,
+        "sell": 24.81
+      },
+      "cash": {
+        "buy": 24.12,
+        "sell": 25.03
+      }
+    },
+    "CHF": {
+      "name": "瑞士法郎",
+      "spot": {
+        "buy": 40.14,
+        "sell": 40.53
+      },
+      "cash": {
+        "buy": 39.53,
+        "sell": 40.73
+      }
+    },
+    "JPY": {
+      "name": "日圓",
+      "spot": {
+        "buy": 0.1961,
+        "sell": 0.2011
+      },
+      "cash": {
+        "buy": 0.1893,
+        "sell": 0.2021
+      }
+    },
+    "NZD": {
+      "name": "紐元",
+      "spot": {
+        "buy": 18.38,
+        "sell": 18.68
+      },
+      "cash": {
+        "buy": 18.05,
+        "sell": 18.9
+      }
+    },
+    "THB": {
+      "name": "泰銖",
+      "spot": {
+        "buy": 0.9524,
+        "sell": 0.9984
+      },
+      "cash": {
+        "buy": 0.842,
+        "sell": 1.032
+      }
+    },
+    "PHP": {
+      "name": "菲律賓披索",
+      "spot": {
+        "buy": null,
+        "sell": null
+      },
+      "cash": {
+        "buy": 0.4457,
+        "sell": 0.5777
+      }
+    },
+    "IDR": {
+      "name": "印尼幣",
+      "spot": {
+        "buy": null,
+        "sell": null
+      },
+      "cash": {
+        "buy": 0.00138,
+        "sell": 0.00208
+      }
+    },
+    "EUR": {
+      "name": "歐元",
+      "spot": {
+        "buy": 36.445,
+        "sell": 37.045
+      },
+      "cash": {
+        "buy": 35.93,
+        "sell": 37.27
+      }
+    },
+    "KRW": {
+      "name": "韓元",
+      "spot": {
+        "buy": null,
+        "sell": null
+      },
+      "cash": {
+        "buy": 0.01901,
+        "sell": 0.02291
+      }
+    },
+    "VND": {
+      "name": "越南盾",
+      "spot": {
+        "buy": null,
+        "sell": null
+      },
+      "cash": {
+        "buy": 0.00095,
+        "sell": 0.00136
+      }
+    },
+    "MYR": {
+      "name": "馬來幣",
+      "spot": {
+        "buy": null,
+        "sell": null
+      },
+      "cash": {
+        "buy": 6.924,
+        "sell": 8.449
+      }
+    },
+    "CNY": {
+      "name": "人民幣",
+      "spot": {
+        "buy": 4.617,
+        "sell": 4.677
+      },
+      "cash": {
+        "buy": 4.55,
+        "sell": 4.712
+      }
+    }
+  }
+}
