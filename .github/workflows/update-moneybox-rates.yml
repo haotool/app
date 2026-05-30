@@ -135,6 +135,9 @@ jobs:
           if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/")" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+          if [[ ! -f "$MONEYBOX_AGGREGATE_FILE" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
           if [[ "$RETIRED_ALIASES_CHANGED" == "true" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi

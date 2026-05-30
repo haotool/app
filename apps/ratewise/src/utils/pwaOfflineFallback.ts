@@ -37,9 +37,9 @@ export const EMERGENCY_OFFLINE_HTML = `<!doctype html>
         --rw-bg: 248 250 252;
         --rw-surface: 255 255 255;
         --rw-text: 15 23 42;
-        --rw-muted: 71 85 105;
+        --rw-muted: 100 116 139;
         --rw-border: 226 232 240;
-        --rw-primary: 37 99 235;
+        --rw-primary: 124 58 237;
         --rw-shadow: 15 23 42;
       }
       [data-style='nitro'] {
@@ -78,9 +78,9 @@ export const EMERGENCY_OFFLINE_HTML = `<!doctype html>
       .card {
         width: min(100%, 360px);
         border: 1px solid rgb(var(--rw-border));
-        border-radius: 16px;
+        border-radius: 24px;
         background: rgb(var(--rw-surface));
-        box-shadow: 0 10px 30px rgb(var(--rw-shadow) / 0.08);
+        box-shadow: 0 1px 2px 0 rgb(var(--rw-shadow) / 0.04), 0 12px 32px -24px rgb(var(--rw-shadow) / 0.28);
         padding: 24px 20px;
         text-align: center;
       }

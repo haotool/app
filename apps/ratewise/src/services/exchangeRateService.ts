@@ -22,7 +22,7 @@ import buildTimeRates from '../config/generated/build-time-rates.json';
 // 策略：jsDelivr CDN 為主要端點，GitHub Raw 為備援。
 // jsDelivr CDN edge 快取 12 小時（s-maxage=43200），但 update-latest-rates.yml 在每次
 // 推送 data 分支後自動呼叫 jsDelivr Purge API，使快取立即失效 → 實際新鮮度約 5 分鐘。
-// 優勢：全球 PoP 加速、無速率限制、支援 ETag 條件式請求（省頻寬）。
+// 優勢：全球 PoP 加速、CDN 快取、支援 ETag 條件式請求（省頻寬）。
 // GitHub Raw 作為備援：無快取但每 IP 每小時限 60 次請求，無 CORS ETag 暴露。
 const CDN_URLS = [
   // jsDelivr CDN（主要）- Purge 後立即最新，支援 ETag，全球加速
@@ -215,7 +215,11 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
     } catch (error) {
       const elapsed = Date.now() - startTime;
       errors.push(error instanceof Error ? error : new Error(String(error)));
-      logger.warn(`CDN #${i + 1} failed`, { elapsedMs: elapsed, error });
+      const message =
+        i < CDN_URLS.length - 1
+          ? `CDN #${i + 1} failed, trying fallback source`
+          : `CDN #${i + 1} failed`;
+      logger.debug(message, { elapsedMs: elapsed, error });
       continue;
     }
   }

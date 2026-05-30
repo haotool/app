@@ -284,7 +284,7 @@ describe('exchangeRateService', () => {
 
       expect(result.source).toBe('fallback');
       expect(result.updateTime).toBe('遠端匯率暫不可用 - 使用預設匯率');
-      expect(logger.logger.warn).toHaveBeenCalledWith(
+      expect(logger.logger.debug).toHaveBeenCalledWith(
         expect.stringContaining('CDN #1 failed'),
         expect.any(Object),
       );
@@ -303,7 +303,7 @@ describe('exchangeRateService', () => {
       const result = await getExchangeRates();
 
       expect(result).toEqual(mockRateData);
-      expect(logger.logger.warn).toHaveBeenCalledWith(
+      expect(logger.logger.debug).toHaveBeenCalledWith(
         expect.stringContaining('CDN #1 failed'),
         expect.any(Object),
       );
