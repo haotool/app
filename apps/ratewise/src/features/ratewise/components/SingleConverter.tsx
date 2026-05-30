@@ -408,7 +408,7 @@ export const SingleConverter = ({
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-lg border border-border/80 bg-surface-elevated px-2 py-2 text-base font-semibold text-text shadow-sm transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/25"
+            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-control border border-border/80 bg-surface-elevated px-2 py-2 text-base font-semibold text-text shadow-soft transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/25"
             aria-label={t('singleConverter.selectFromCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
@@ -429,7 +429,7 @@ export const SingleConverter = ({
                 calculator.openCalculator('from');
               }
             }}
-            className={`block w-full appearance-none rounded-lg border-2 border-border/60 bg-surface pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20`}
+            className={`block w-full appearance-none rounded-control border-2 border-border/60 bg-surface pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20`}
             aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
@@ -481,11 +481,11 @@ export const SingleConverter = ({
       <div className={singleConverterLayoutTokens.rateCard.section}>
         {/* 匯率卡片 - 一體化設計，無切分感 */}
         <div
-          className={`group relative w-full rounded-lg border border-border/80 bg-surface shadow-sm transition-[border-color,box-shadow] duration-300 hover:border-primary/20 hover:shadow-lg ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+          className={`group relative w-full rounded-card border border-border/80 bg-surface shadow-soft transition-[border-color,box-shadow] duration-300 hover:border-primary/20 hover:shadow-floating ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
         >
           {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
           <div
-            className={`relative flex flex-col items-center justify-center overflow-hidden rounded-t-lg px-4 text-center ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative flex flex-col items-center justify-center overflow-hidden rounded-t-control px-4 text-center ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
             <RateSelector
               rateType={rateType}
@@ -568,9 +568,9 @@ export const SingleConverter = ({
             ref={swapButtonRef}
             onClick={handleSwap}
             className={`
-              relative rounded-full border border-border bg-surface p-3.5 text-text shadow-sm
+              relative rounded-full border border-border bg-surface p-3.5 text-text shadow-soft
               transition-[border-color,color,box-shadow,transform] duration-300 ease-out
-              hover:border-primary/25 hover:text-primary hover:shadow-md
+              hover:border-primary/25 hover:text-primary hover:shadow-card
               hover:scale-105 active:scale-95
               ${isSwapping ? 'scale-90' : ''}
             `}
@@ -600,7 +600,7 @@ export const SingleConverter = ({
 
           {/* 懸停提示標籤 */}
           <div className="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 transition-[opacity,transform] duration-300 group-hover/swap:opacity-100">
-            <span className="whitespace-nowrap rounded-full border border-border/70 bg-surface px-2.5 py-1 text-xs font-medium text-text-muted shadow-sm">
+            <span className="whitespace-nowrap rounded-full border border-border/70 bg-surface px-2.5 py-1 text-xs font-medium text-text-muted shadow-soft">
               {t('singleConverter.clickToSwap')}
             </span>
           </div>
@@ -617,7 +617,7 @@ export const SingleConverter = ({
           <select
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-lg border border-primary/20 bg-primary/10 px-2 py-2 text-base font-semibold text-text transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-control border border-primary/20 bg-primary/10 px-2 py-2 text-base font-semibold text-text transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
             aria-label={t('singleConverter.selectToCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
@@ -638,7 +638,7 @@ export const SingleConverter = ({
                 calculator.openCalculator('to');
               }
             }}
-            className={`block w-full appearance-none rounded-lg border-2 border-border/70 bg-surface-elevated pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/35 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15`}
+            className={`block w-full appearance-none rounded-control border-2 border-border/70 bg-surface-elevated pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/35 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15`}
             aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
@@ -684,8 +684,8 @@ export const SingleConverter = ({
       {/* 加入歷史記錄按鈕 - 現代化微互動設計
        *
        * 設計規範：
-       * - 主色調漸層背景 (primary → primary-hover)
-       * - 玻璃擬態陰影效果 (shadow-xl shadow-primary/25)
+       * - 主色調實底背景 (primary → primary-hover)
+       * - hover 品牌陰影 (shadow-brand)
        * - 微互動：hover scale + 漣漪光暈
        * - 點擊縮放回饋 (active:scale-[0.98])
        */}
@@ -694,10 +694,10 @@ export const SingleConverter = ({
         onClick={onAddToHistory}
         className={`
           relative w-full ${singleConverterLayoutTokens.addToHistory.className}
-          rounded-lg bg-primary text-primary-foreground font-semibold
-          shadow-sm
+          rounded-control bg-primary text-primary-foreground font-semibold
+          shadow-soft
           transition-[background-color,box-shadow,transform] duration-300 ease-out
-          hover:bg-primary-hover hover:shadow-md
+          hover:bg-primary-hover hover:shadow-brand
           hover:scale-[1.01] active:scale-[0.98]
           group
         `}

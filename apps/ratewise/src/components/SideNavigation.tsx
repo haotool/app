@@ -119,7 +119,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
               className={`
                 flex items-center gap-3
                 min-h-11 px-3.5 py-2.5
-                rounded-lg border border-transparent
+                rounded-control border border-transparent
                 transition-colors duration-200
                 ${
                   isActive

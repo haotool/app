@@ -94,9 +94,9 @@ export default function Settings() {
                 whileTap={segmentedSwitch.item.whileTap}
                 transition={transitions.instant}
                 className={`
-                  relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-lg
-                  shadow-sm disabled:opacity-50
-                  ${style === option.value ? 'ring-2 ring-offset-2 shadow-md' : ''}
+                  relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-control
+                  shadow-soft disabled:opacity-50
+                  ${style === option.value ? 'ring-2 ring-offset-2 shadow-soft' : ''}
                 `}
                 style={
                   {
@@ -176,7 +176,7 @@ export default function Settings() {
                   <motion.span
                     animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
                     transition={transitions.default}
-                    className="text-xl mb-1 filter drop-shadow-sm"
+                    className="text-xl mb-1 filter drop-shadow-soft"
                     aria-hidden="true"
                   >
                     {option.flag}

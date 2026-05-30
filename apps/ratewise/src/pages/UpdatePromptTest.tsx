@@ -75,7 +75,7 @@ function NotificationCard({ state }: { state: State }) {
           {/* 狀態圖標 */}
           <div className="flex-shrink-0">
             <div
-              className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-sm`}
+              className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-soft`}
             >
               <StateIcon state={state} />
             </div>

@@ -63,35 +63,51 @@
     /* Title Gradient Tokens (SSOT) */
     --color-title-gradient-from: var(--color-text);
     --color-title-gradient-to: var(--color-primary);
+
+    /* Radius Tokens (SSOT) - mirrored from design-tokens.ts */
+    --radius-card: 1.5rem;
+    --radius-panel: 1rem;
+    --radius-control: 1rem;
+    --radius-icon: 0.75rem;
+    --radius-compact: 0.5rem;
+
+    /* Shadow Tokens (SSOT) - mirrored from design-tokens.ts */
+    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -24px rgb(15 23 42 / 0.28);
+    --shadow-card-hover:
+      0 2px 6px -2px rgb(15 23 42 / 0.1), 0 22px 48px -28px rgb(var(--color-primary) / 0.3);
+    --shadow-soft: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -22px rgb(15 23 42 / 0.22);
+    --shadow-floating:
+      0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.24);
+    --shadow-brand: 0 8px 25px rgb(var(--color-primary) / 0.28);
   }
 
   /* ========================================
      Zen 風格 - 極簡專業（預設）
      禪意極簡，以 violet/blue 為圖表色調
      ======================================== */
-  /* 極簡風格：安靜的金融藍色系 */
+  /* 極簡風格：主支現代 violet/indigo 品牌語言 */
   :root,
   [data-style='zen'] {
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
     --color-text-muted: 100 116 139;
-    --color-primary: 37 99 235; /* blue-600 */
+    --color-primary: 124 58 237; /* violet-600 */
     --color-primary-foreground: 255 255 255;
-    --color-secondary: 14 165 233; /* sky-500 */
-    --color-accent: 59 130 246; /* blue-500 */
+    --color-secondary: 99 102 241; /* indigo-500 */
+    --color-accent: 139 92 246; /* violet-500 */
     --color-border: 226 232 240;
     --color-overlay: 2 6 23;
-    --color-info: 8 145 178;
+    --color-info: 14 165 233;
 
     /* 圖表專用 Token (SSOT) */
-    --color-chart-line: 37 99 235; /* blue-600 */
-    --color-chart-area-top: 59 130 246; /* blue-500 */
-    --color-chart-area-bottom: 14 165 233; /* sky-500 */
+    --color-chart-line: 139 92 246; /* violet-500 */
+    --color-chart-area-top: 139 92 246; /* violet-500 */
+    --color-chart-area-bottom: 59 130 246; /* blue-500 */
 
     /* 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
-    --color-surface-elevated: 246 249 252;
-    --color-surface-sunken: 239 244 248;
+    --color-surface-elevated: 248 250 252; /* slate-50 */
+    --color-surface-sunken: 241 245 249; /* slate-100 */
     --color-surface-soft: var(--color-surface-elevated);
     --color-surface-border: var(--color-border);
     --color-background-secondary: var(--color-surface);
@@ -122,16 +138,16 @@
     --color-neutral-text-muted: var(--color-text-muted);
     --color-neutral-border: var(--color-border);
 
-    /* 舊版 primary 系列 - 藍色調 */
-    --color-primary-bg: 239 246 255; /* blue-50 */
-    --color-primary-light: 219 234 254; /* blue-100 */
-    --color-primary-hover: 29 78 216; /* blue-700 */
-    --color-primary-active: 147 197 253; /* blue-300 */
-    --color-primary-text-light: 96 165 250; /* blue-400 */
-    --color-primary-ring: 59 130 246; /* blue-500 */
-    --color-primary-dark: 30 64 175; /* blue-800 */
-    --color-primary-darker: 30 58 138; /* blue-900 */
-    --color-primary-text: 37 99 235; /* blue-600 */
+    /* 舊版 primary 系列 - 紫色調 */
+    --color-primary-bg: 245 243 255; /* violet-50 */
+    --color-primary-light: 237 233 254; /* violet-100 */
+    --color-primary-hover: 109 40 217; /* violet-700 */
+    --color-primary-active: 196 181 253; /* violet-300 */
+    --color-primary-text-light: 167 139 250; /* violet-400 */
+    --color-primary-ring: 139 92 246; /* violet-500 */
+    --color-primary-dark: 91 33 182; /* violet-800 */
+    --color-primary-darker: 76 29 149; /* violet-900 */
+    --color-primary-text: 124 58 237; /* violet-600 */
 
     /* 狀態色 */
     --color-destructive: 220 38 38;
@@ -1252,11 +1268,9 @@ body {
   /* 現代化卡片 */
   .card {
     background-color: rgb(var(--color-surface));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-card);
     border: 1px solid rgb(var(--color-border) / 0.5);
-    box-shadow:
-      0 1px 2px 0 rgb(0 0 0 / 0.03),
-      0 1px 3px 0 rgb(0 0 0 / 0.05);
+    box-shadow: var(--shadow-card);
     transition:
       border-color 0.2s ease,
       box-shadow 0.2s ease,
@@ -1264,16 +1278,14 @@ body {
   }
 
   .card:hover {
-    box-shadow:
-      0 4px 6px -1px rgb(0 0 0 / 0.05),
-      0 2px 4px -2px rgb(0 0 0 / 0.05);
+    box-shadow: var(--shadow-card-hover);
   }
 
   /* 現代化按鈕 */
   .btn-primary {
     background-color: rgb(var(--color-primary));
     color: rgb(var(--color-background));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-control);
     padding: 0.75rem 1.5rem;
     font-weight: 600;
     transition:
@@ -1284,7 +1296,7 @@ body {
 
   .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.3);
+    box-shadow: var(--shadow-brand);
   }
 
   .btn-primary:active {
@@ -1293,19 +1305,15 @@ body {
 
   /* 陰影層級（產品殼層） */
   .shadow-elevation-1 {
-    box-shadow:
-      0 1px 2px 0 rgb(0 0 0 / 0.03),
-      0 1px 3px 0 rgb(0 0 0 / 0.05);
+    box-shadow: var(--shadow-soft);
   }
 
   .shadow-elevation-2 {
-    box-shadow:
-      0 4px 6px -1px rgb(0 0 0 / 0.05),
-      0 2px 4px -2px rgb(0 0 0 / 0.05);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .shadow-elevation-3 {
-    box-shadow: 0 8px 25px rgb(var(--color-primary) / 0.4);
+    box-shadow: var(--shadow-floating);
   }
 
   /* 選中狀態的 ring */
@@ -1401,10 +1409,8 @@ body {
   /* 骨架屏卡片容器 */
   .skeleton-card {
     background-color: rgb(var(--color-surface));
-    border-radius: 1.5rem;
+    border-radius: var(--radius-card);
     border: 1px solid rgb(var(--color-border) / 0.5);
-    box-shadow:
-      0 1px 2px 0 rgb(0 0 0 / 0.03),
-      0 1px 3px 0 rgb(0 0 0 / 0.05);
+    box-shadow: var(--shadow-card);
   }
 }

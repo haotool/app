@@ -414,7 +414,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
           >
             {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
             <div className="relative">
-              <div className="rounded-lg border border-border/70 bg-surface/95 px-3 py-1.5 shadow-lg">
+              <div className="rounded-control border border-border/70 bg-surface/95 px-3 py-1.5 shadow-floating">
                 <div className="flex items-center gap-2.5 text-xs leading-tight whitespace-nowrap">
                   <span className="text-primary font-semibold">{tooltipData.date}</span>
                   <span className="text-foreground font-bold">
@@ -423,7 +423,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
                 </div>
               </div>
               <div
-                className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-border/70 bg-surface/95 shadow-sm"
+                className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-border/70 bg-surface/95 shadow-soft"
                 aria-hidden="true"
               />
             </div>

@@ -37,7 +37,7 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
           <button
             type="button"
             key={`list-${code}`}
-            className="group flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-colors duration-200 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="group flex w-full cursor-pointer items-center justify-between rounded-control p-3 text-left transition-colors duration-200 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             onClick={() => onToggleFavorite(code)}
           >
             <div className="flex items-center gap-2">

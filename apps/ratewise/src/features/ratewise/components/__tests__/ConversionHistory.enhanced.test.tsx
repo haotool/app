@@ -217,9 +217,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI v4.0：卡片具有 hover:shadow-md 效果
+      // 新 UI v4.0：卡片具有 hover:shadow-soft 效果
       const firstCard = screen.getByText('1000').closest('div[role="group"]');
-      expect(firstCard).toHaveClass('hover:shadow-md');
+      expect(firstCard).toHaveClass('hover:shadow-soft');
     });
   });
 

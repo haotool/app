@@ -350,7 +350,7 @@ describe('OfflineIndicator', () => {
         expect(styledDiv).toBeTruthy();
         expect(styledDiv?.className).toContain('bg-surface');
         expect(styledDiv?.className).toContain('border-border/70');
-        expect(styledDiv?.className).toContain('shadow-lg');
+        expect(styledDiv?.className).toContain('shadow-floating');
       });
     });
   });

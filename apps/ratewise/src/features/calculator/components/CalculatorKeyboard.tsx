@@ -219,7 +219,7 @@ export function CalculatorKeyboard({
 
             {/* Bottom Sheet 容器 */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-3xl bg-surface shadow-xl"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-card bg-surface shadow-floating"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}

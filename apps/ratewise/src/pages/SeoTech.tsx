@@ -318,13 +318,11 @@ export default function SeoTech() {
             { label: 'SEO 技術揭露', href: '/seo-tech/' },
           ]}
         />
-      </div>
 
-      {/* ─── Hero ─────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-surface-elevated/60" />
+        {/* ─── Hero ─────────────────────────────────────────────────────────── */}
+        <div className="relative -mx-4 overflow-hidden rounded-card border border-border/70 bg-surface-elevated/60 px-4 pb-10 pt-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+          <div className="pointer-events-none absolute inset-0 bg-surface-elevated/60" />
 
-        <div className="relative mx-auto w-full max-w-5xl px-4 pb-10 pt-2 sm:px-6 lg:px-8">
           {/* 標題區 */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -361,10 +359,10 @@ export default function SeoTech() {
                   key={stat.label}
                   variants={staggerItemVariants}
                   transition={transitions.smooth}
-                  className={`rounded-lg border p-4 ${stat.bg} ${stat.border}`}
+                  className={`rounded-card border p-4 ${stat.bg} ${stat.border}`}
                 >
                   <div
-                    className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated ${stat.color}`}
+                    className={`mb-2 flex h-8 w-8 items-center justify-center rounded-icon bg-surface-elevated ${stat.color}`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
@@ -379,425 +377,427 @@ export default function SeoTech() {
             })}
           </motion.div>
         </div>
-      </div>
 
-      <div className="mx-auto w-full max-w-5xl space-y-8 px-4 pb-16 sm:px-6 lg:px-8">
-        {/* ─── 資料管線 ─────────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={RefreshCw} title="資料管線" />
-          <div className="space-y-2">
-            {PIPELINE_STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <motion.div
-                  key={step.label}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ ...transitions.smooth, delay: idx * 0.07 }}
-                  className="flex items-center gap-3"
-                >
-                  <div
-                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${step.bg}`}
-                  >
-                    <Icon className={`w-5 h-5 ${step.color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{step.label}</span>
-                      <span className="text-xs text-text truncate">{step.sub}</span>
-                    </div>
-                    <p className="text-xs text-text">{step.note}</p>
-                  </div>
-                  {idx < PIPELINE_STEPS.length - 1 && (
-                    <div className="flex-shrink-0 w-4 h-4 text-text-muted opacity-40">→</div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-          <div className={`mt-3 ${contentPageTokens.surfaces.quiet}`}>
-            <p className="text-xs text-text-muted leading-relaxed">
-              <span className="font-medium text-primary">CDN 端點：</span>{' '}
-              <a
-                href={RATES_API.latestCdn}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center rounded-lg font-mono text-xs break-all transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                {RATES_API.latestCdn}
-              </a>
-            </p>
-          </div>
-        </motion.section>
-
-        {/* ─── SEO 路徑覆蓋 ─────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Globe} title="SEO 路徑覆蓋" />
-          <div className="space-y-3">
-            {PATH_CATEGORIES.map((cat, idx) => {
-              const pct = Math.round((cat.count / SEO_PATHS.length) * 100);
-              return (
-                <motion.div
-                  key={cat.label}
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ ...transitions.smooth, delay: idx * 0.08 }}
-                  className="rounded-lg border border-border bg-surface p-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold">{cat.label}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cat.color}`}>
-                      {cat.count} 頁
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-border rounded-full mb-2 overflow-hidden">
-                    <motion.div
-                      className={`h-full rounded-full ${cat.bar}`}
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${pct}%` }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, ease: 'easeOut', delay: idx * 0.1 + 0.2 }}
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {cat.examples.map((path) => (
-                      <span
-                        key={path}
-                        className="font-mono text-xs bg-surface-elevated px-1.5 py-0.5 rounded-lg text-text-muted"
-                      >
-                        {path}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-text-muted mt-2 pl-1">
-            合計 {SEO_PATHS.length} 個可索引路徑，全部收錄於 sitemap.xml
-          </p>
-        </motion.section>
-
-        {/* ─── JSON-LD Schema ─────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={FileJson} title="JSON-LD 結構化資料" />
-          <motion.div
-            variants={staggerContainerVariants}
+        <div className="space-y-8 pb-16 pt-8">
+          {/* ─── 資料管線 ─────────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 gap-2"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
           >
-            {SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).map((schema) => {
-              const Icon = schema.icon;
-              return (
-                <motion.div
-                  key={schema.type}
-                  variants={staggerItemVariants}
-                  transition={transitions.smooth}
-                  className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3"
-                >
-                  <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-warning/10">
-                    <Icon className="w-4 h-4 text-warning" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <code className="text-xs font-mono font-bold text-text bg-warning/10 border border-warning/20 px-1.5 py-0.5 rounded-lg">
-                        {schema.type}
-                      </code>
-                      <span className="text-xs text-text-muted">{schema.pages}</span>
+            <SectionHeader icon={RefreshCw} title="資料管線" />
+            <div className="space-y-2">
+              {PIPELINE_STEPS.map((step, idx) => {
+                const Icon = step.icon;
+                return (
+                  <motion.div
+                    key={step.label}
+                    initial={{ opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ ...transitions.smooth, delay: idx * 0.07 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div
+                      className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-icon ${step.bg}`}
+                    >
+                      <Icon className={`w-5 h-5 ${step.color}`} />
                     </div>
-                    <p className="text-xs text-text-muted mt-1 leading-relaxed">{schema.desc}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </motion.section>
-
-        {/* ─── 機器可讀檔案 ───────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={FileText} title="機器可讀檔案" />
-          <div className="space-y-2">
-            {MACHINE_READABLE_FILES.map((file, idx) => {
-              const Icon = file.icon;
-              return (
-                <motion.a
-                  key={file.name}
-                  href={file.url}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">{step.label}</span>
+                        <span className="text-xs text-text truncate">{step.sub}</span>
+                      </div>
+                      <p className="text-xs text-text">{step.note}</p>
+                    </div>
+                    {idx < PIPELINE_STEPS.length - 1 && (
+                      <div className="flex-shrink-0 w-4 h-4 text-text-muted opacity-40">→</div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+            <div className={`mt-3 ${contentPageTokens.surfaces.quiet}`}>
+              <p className="text-xs text-text-muted leading-relaxed">
+                <span className="font-medium text-primary">CDN 端點：</span>{' '}
+                <a
+                  href={RATES_API.latestCdn}
                   target="_blank"
                   rel="noopener noreferrer"
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ ...transitions.smooth, delay: idx * 0.06 }}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface p-3.5"
+                  className="inline-flex min-h-11 items-center rounded-panel font-mono text-xs break-all transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Icon className="w-[18px] h-[18px] text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs font-mono font-bold">{file.name}</code>
-                      <span className="text-xs border border-primary/20 bg-primary/10 text-text px-1.5 py-0.5 rounded-full font-medium">
-                        {file.badge}
+                  {RATES_API.latestCdn}
+                </a>
+              </p>
+            </div>
+          </motion.section>
+
+          {/* ─── SEO 路徑覆蓋 ─────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={Globe} title="SEO 路徑覆蓋" />
+            <div className="space-y-3">
+              {PATH_CATEGORIES.map((cat, idx) => {
+                const pct = Math.round((cat.count / SEO_PATHS.length) * 100);
+                return (
+                  <motion.div
+                    key={cat.label}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ ...transitions.smooth, delay: idx * 0.08 }}
+                    className="rounded-card border border-border bg-surface p-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{cat.label}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cat.color}`}>
+                        {cat.count} 頁
                       </span>
                     </div>
-                    <p className="text-xs text-text mt-0.5 leading-relaxed line-clamp-2">
-                      {file.desc}
-                    </p>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
-                </motion.a>
-              );
-            })}
-          </div>
-        </motion.section>
+                    <div className="h-1.5 bg-border rounded-full mb-2 overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${cat.bar}`}
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${pct}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, ease: 'easeOut', delay: idx * 0.1 + 0.2 }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {cat.examples.map((path) => (
+                        <span
+                          key={path}
+                          className="font-mono text-xs bg-surface-elevated px-1.5 py-0.5 rounded-panel text-text-muted"
+                        >
+                          {path}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-text-muted mt-2 pl-1">
+              合計 {SEO_PATHS.length} 個可索引路徑，全部收錄於 sitemap.xml
+            </p>
+          </motion.section>
 
-        {/* ─── 技術特性 ───────────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Zap} title="核心技術特性" />
-          <motion.div
-            variants={staggerContainerVariants}
+          {/* ─── JSON-LD Schema ─────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 gap-3"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
           >
-            {TECH_FEATURES.map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <motion.div
-                  key={feat.title}
-                  variants={staggerItemVariants}
-                  transition={transitions.smooth}
-                  className="rounded-lg border border-border bg-surface p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="w-4 h-4 text-primary" />
+            <SectionHeader icon={FileJson} title="JSON-LD 結構化資料" />
+            <motion.div
+              variants={staggerContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 gap-2"
+            >
+              {SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).map((schema) => {
+                const Icon = schema.icon;
+                return (
+                  <motion.div
+                    key={schema.type}
+                    variants={staggerItemVariants}
+                    transition={transitions.smooth}
+                    className="flex items-start gap-3 rounded-card border border-border bg-surface p-3"
+                  >
+                    <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-icon bg-warning/10">
+                      <Icon className="w-4 h-4 text-warning" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="text-sm font-semibold">{feat.title}</h3>
-                        <span className="text-xs bg-surface-elevated border border-border px-1.5 py-0.5 rounded-lg text-text font-mono">
-                          {feat.tech}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <code className="text-xs font-mono font-bold text-text bg-warning/10 border border-warning/20 px-1.5 py-0.5 rounded-panel">
+                          {schema.type}
+                        </code>
+                        <span className="text-xs text-text-muted">{schema.pages}</span>
+                      </div>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">{schema.desc}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </motion.section>
+
+          {/* ─── 機器可讀檔案 ───────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={FileText} title="機器可讀檔案" />
+            <div className="space-y-2">
+              {MACHINE_READABLE_FILES.map((file, idx) => {
+                const Icon = file.icon;
+                return (
+                  <motion.a
+                    key={file.name}
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ ...transitions.smooth, delay: idx * 0.06 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="group flex cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3.5"
+                  >
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10">
+                      <Icon className="w-[18px] h-[18px] text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs font-mono font-bold">{file.name}</code>
+                        <span className="text-xs border border-primary/20 bg-primary/10 text-text px-1.5 py-0.5 rounded-full font-medium">
+                          {file.badge}
                         </span>
                       </div>
-                      <p className="text-xs text-text leading-relaxed">{feat.desc}</p>
+                      <p className="text-xs text-text mt-0.5 leading-relaxed line-clamp-2">
+                        {file.desc}
+                      </p>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </motion.section>
+                    <ExternalLink className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
+                  </motion.a>
+                );
+              })}
+            </div>
+          </motion.section>
 
-        {/* ─── E-E-A-T 信號（2026）─────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Shield} title="E-E-A-T 信號強化（2026）" />
-          <motion.div
-            variants={staggerContainerVariants}
+          {/* ─── 技術特性 ───────────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-3"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
           >
-            {EEAT_SIGNALS.map((signal) => {
-              const Icon = signal.icon;
-              return (
-                <motion.div
-                  key={signal.title}
-                  variants={staggerItemVariants}
-                  transition={transitions.smooth}
-                  className={`rounded-lg border border-border p-4 ${signal.bg}`}
+            <SectionHeader icon={Zap} title="核心技術特性" />
+            <motion.div
+              variants={staggerContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 gap-3"
+            >
+              {TECH_FEATURES.map((feat) => {
+                const Icon = feat.icon;
+                return (
+                  <motion.div
+                    key={feat.title}
+                    variants={staggerItemVariants}
+                    transition={transitions.smooth}
+                    className="rounded-card border border-border bg-surface p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="text-sm font-semibold">{feat.title}</h3>
+                          <span className="text-xs bg-surface-elevated border border-border px-1.5 py-0.5 rounded-panel text-text font-mono">
+                            {feat.tech}
+                          </span>
+                        </div>
+                        <p className="text-xs text-text leading-relaxed">{feat.desc}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </motion.section>
+
+          {/* ─── E-E-A-T 信號（2026）─────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={Shield} title="E-E-A-T 信號強化（2026）" />
+            <motion.div
+              variants={staggerContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-3"
+            >
+              {EEAT_SIGNALS.map((signal) => {
+                const Icon = signal.icon;
+                return (
+                  <motion.div
+                    key={signal.title}
+                    variants={staggerItemVariants}
+                    transition={transitions.smooth}
+                    className={`rounded-card border border-border p-4 ${signal.bg}`}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon className={`w-5 h-5 ${signal.color}`} />
+                      <h3 className="text-sm font-semibold">{signal.title}</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {signal.items.map((item, idx) => (
+                        <li key={idx} className="text-xs text-text flex gap-2">
+                          <span className="flex-shrink-0">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+            <p className="text-xs text-text-muted mt-3 pl-1">
+              Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
+              YMYL（您的錢或生活）內容評分的關鍵。{APP_INFO.shortName}{' '}
+              透過透明化揭露、官方資料來源與隱私優先設計強化信號。
+            </p>
+          </motion.section>
+
+          {/* ─── 建置腳本 ───────────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={Code2} title="Prebuild 自動化腳本" />
+            <p className="text-xs text-text-muted mb-3 leading-relaxed">
+              每次建置前依序執行 SEO / machine-readable 產線，產生所有必要靜態檔案並串上驗證 gate。
+            </p>
+            <div className="overflow-hidden rounded-panel border border-border">
+              {SEO_BUILD_PIPELINE.map((script, idx) => (
+                <div
+                  key={script.name}
+                  className={`flex items-center gap-3 px-4 py-3 ${
+                    idx < SEO_BUILD_PIPELINE.length - 1 ? 'border-b border-border' : ''
+                  }`}
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon className={`w-5 h-5 ${signal.color}`} />
-                    <h3 className="text-sm font-semibold">{signal.title}</h3>
+                  <span className="text-xs font-mono text-primary/60 w-4 text-right flex-shrink-0">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <code className="text-xs font-mono text-text block truncate">
+                      {script.name}
+                    </code>
+                    <p className="text-xs text-text-muted">{script.desc}</p>
                   </div>
-                  <ul className="space-y-2">
-                    {signal.items.map((item, idx) => (
-                      <li key={idx} className="text-xs text-text flex gap-2">
-                        <span className="flex-shrink-0">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-          <p className="text-xs text-text-muted mt-3 pl-1">
-            Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
-            YMYL（您的錢或生活）內容評分的關鍵。{APP_INFO.shortName}{' '}
-            透過透明化揭露、官方資料來源與隱私優先設計強化信號。
-          </p>
-        </motion.section>
-
-        {/* ─── 建置腳本 ───────────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Code2} title="Prebuild 自動化腳本" />
-          <p className="text-xs text-text-muted mb-3 leading-relaxed">
-            每次建置前依序執行 SEO / machine-readable 產線，產生所有必要靜態檔案並串上驗證 gate。
-          </p>
-          <div className="overflow-hidden rounded-lg border border-border">
-            {SEO_BUILD_PIPELINE.map((script, idx) => (
-              <div
-                key={script.name}
-                className={`flex items-center gap-3 px-4 py-3 ${
-                  idx < SEO_BUILD_PIPELINE.length - 1 ? 'border-b border-border' : ''
-                }`}
-              >
-                <span className="text-xs font-mono text-primary/60 w-4 text-right flex-shrink-0">
-                  {idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <code className="text-xs font-mono text-text block truncate">{script.name}</code>
-                  <p className="text-xs text-text-muted">{script.desc}</p>
+                  <code className="text-xs font-mono text-success flex-shrink-0 hidden sm:block">
+                    {script.output}
+                  </code>
                 </div>
-                <code className="text-xs font-mono text-success flex-shrink-0 hidden sm:block">
-                  {script.output}
-                </code>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* ─── 狀態機架構 ─────────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={Layers} title="SEO 狀態機架構" />
+            <div className="space-y-4 rounded-card border border-border bg-surface p-4">
+              {/* SSOT 層 */}
+              <ArchLayer
+                label="SSOT 層"
+                color="bg-primary"
+                items={['seo-paths.ts', 'seo-metadata.ts', 'api-endpoints.ts', 'app-info.ts']}
+                desc="所有 SEO 資料的單一真相來源"
+              />
+              {/* Arrow */}
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-text-muted">生成</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
-            ))}
-          </div>
-        </motion.section>
+              {/* 建置層 */}
+              <ArchLayer
+                label="Prebuild 層"
+                color="bg-warning"
+                items={['sitemap.xml', 'robots.txt', 'llms.txt', 'openapi.json']}
+                desc="建置期自動生成靜態 SEO 檔案"
+              />
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-text-muted">渲染</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              {/* SSG 層 */}
+              <ArchLayer
+                label="SSG 層"
+                color="bg-success"
+                items={[
+                  `${SEO_PATHS.length} SEO 頁面`,
+                  `${PRERENDER_PATHS.length} 預渲染`,
+                  'JSON-LD',
+                  'meta tags',
+                ]}
+                desc="靜態 HTML + 結構化資料注入"
+              />
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-text-muted">部署</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              {/* 邊緣層 */}
+              <ArchLayer
+                label="邊緣層"
+                color="bg-destructive"
+                items={['Cloudflare CDN', 'Security Headers', 'Cache-Control', 'CSP']}
+                desc="Cloudflare Workers 注入安全標頭"
+              />
+            </div>
+          </motion.section>
 
-        {/* ─── 狀態機架構 ─────────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Layers} title="SEO 狀態機架構" />
-          <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
-            {/* SSOT 層 */}
-            <ArchLayer
-              label="SSOT 層"
-              color="bg-primary"
-              items={['seo-paths.ts', 'seo-metadata.ts', 'api-endpoints.ts', 'app-info.ts']}
-              desc="所有 SEO 資料的單一真相來源"
-            />
-            {/* Arrow */}
-            <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-text-muted">生成</span>
-              <div className="flex-1 h-px bg-border" />
+          {/* ─── 相關資源 ───────────────────────────────────────────────────── */}
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            transition={sectionTransition}
+          >
+            <SectionHeader icon={Link2} title="相關資源" />
+            <div className="space-y-2">
+              <ResourceLink href={APP_INFO.github} label="原始碼" sub="haotool/app" external />
+              <ResourceLink
+                href={`${SITE_CONFIG.url}openapi.json`}
+                label="OpenAPI 規格"
+                sub="openapi.json"
+                external
+              />
+              <ResourceLink
+                href={`${SITE_CONFIG.url}sitemap.xml`}
+                label="Sitemap"
+                sub="sitemap.xml"
+                external
+              />
+              <ResourceLink to="/open-data/" label="開放資料 API" sub="匯率資料開放 API 文件" />
             </div>
-            {/* 建置層 */}
-            <ArchLayer
-              label="Prebuild 層"
-              color="bg-warning"
-              items={['sitemap.xml', 'robots.txt', 'llms.txt', 'openapi.json']}
-              desc="建置期自動生成靜態 SEO 檔案"
-            />
-            <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-text-muted">渲染</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            {/* SSG 層 */}
-            <ArchLayer
-              label="SSG 層"
-              color="bg-success"
-              items={[
-                `${SEO_PATHS.length} SEO 頁面`,
-                `${PRERENDER_PATHS.length} 預渲染`,
-                'JSON-LD',
-                'meta tags',
-              ]}
-              desc="靜態 HTML + 結構化資料注入"
-            />
-            <div className="flex items-center gap-2 px-2">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-text-muted">部署</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            {/* 邊緣層 */}
-            <ArchLayer
-              label="邊緣層"
-              color="bg-destructive"
-              items={['Cloudflare CDN', 'Security Headers', 'Cache-Control', 'CSP']}
-              desc="Cloudflare Workers 注入安全標頭"
-            />
-          </div>
-        </motion.section>
-
-        {/* ─── 相關資源 ───────────────────────────────────────────────────── */}
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
-          transition={sectionTransition}
-        >
-          <SectionHeader icon={Link2} title="相關資源" />
-          <div className="space-y-2">
-            <ResourceLink href={APP_INFO.github} label="原始碼" sub="haotool/app" external />
-            <ResourceLink
-              href={`${SITE_CONFIG.url}openapi.json`}
-              label="OpenAPI 規格"
-              sub="openapi.json"
-              external
-            />
-            <ResourceLink
-              href={`${SITE_CONFIG.url}sitemap.xml`}
-              label="Sitemap"
-              sub="sitemap.xml"
-              external
-            />
-            <ResourceLink to="/open-data/" label="開放資料 API" sub="匯率資料開放 API 文件" />
-          </div>
-        </motion.section>
+          </motion.section>
+        </div>
       </div>
     </div>
   );
@@ -814,7 +814,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-icon bg-primary/10 flex items-center justify-center">
         <Icon className="w-3.5 h-3.5 text-primary" />
       </div>
       <h2 className="text-base font-bold">{title}</h2>
@@ -844,7 +844,7 @@ function ArchLayer({
         {items.map((item) => (
           <span
             key={item}
-            className="font-mono text-xs bg-surface-elevated border border-border px-2 py-0.5 rounded-lg"
+            className="font-mono text-xs bg-surface-elevated border border-border px-2 py-0.5 rounded-panel"
           >
             {item}
           </span>

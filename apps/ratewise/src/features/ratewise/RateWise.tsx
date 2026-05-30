@@ -199,7 +199,7 @@ const RateWise = () => {
                 <div
                   role="status"
                   data-testid="ratewise-stale-rates-warning"
-                  className="mb-3 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
+                  className="mb-3 flex items-center gap-2 rounded-control border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
                 >
                   <AlertCircle size={14} aria-hidden="true" />
                   <span>{t('errors.rateStaleWarning')}</span>
@@ -253,7 +253,7 @@ const RateWise = () => {
                           href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex min-h-11 items-center gap-1 rounded-lg px-1 font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-control px-1 font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                           <Landmark className="h-3.5 w-3.5 text-primary/70" aria-hidden="true" />
                           {t('rateInfo.bankOfficialRates')}

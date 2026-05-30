@@ -213,7 +213,7 @@ function UpdatePromptClient() {
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
                     <div
-                      className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-sm`}
+                      className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.brandGradient} flex items-center justify-center shadow-soft`}
                     >
                       <StatusIcon
                         offlineReady={offlineReady}

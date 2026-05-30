@@ -96,7 +96,7 @@ export function CalculatorKey({ keyDef, onClick, disabled = false }: CalculatorK
     }
 
     // 基礎樣式（應該不會到達這裡）
-    return 'calculator-key relative h-16 rounded-lg font-semibold select-none overflow-hidden';
+    return 'calculator-key relative h-16 rounded-control font-semibold select-none overflow-hidden';
   };
 
   /**

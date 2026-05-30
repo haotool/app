@@ -91,7 +91,7 @@ export default function FAQ() {
             {FAQ_ENTRIES.map((entry) => (
               <details
                 key={entry.question}
-                className="group card p-0 hover:shadow-md transition-shadow"
+                className="group card p-0 hover:shadow-soft transition-shadow"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between p-6 transition-colors hover:text-primary">
                   <h2 className="text-lg font-semibold text-text group-hover:text-primary">

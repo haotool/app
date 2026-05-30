@@ -54,7 +54,7 @@ function SkeletonTimeoutFallback() {
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-5 rounded-lg border border-border/70 bg-surface p-8 text-center shadow-lg">
+      <div className="w-full max-w-sm space-y-5 rounded-card border border-border/70 bg-surface p-8 text-center shadow-floating">
         <AlertCircle className="mx-auto text-warning" size={40} />
         <div>
           <h2 className="text-lg font-bold text-text mb-2">{t('errors.appLoadTimeout')}</h2>
@@ -127,29 +127,29 @@ export const SkeletonLoader = () => {
           <div className="skeleton-shimmer h-4 w-20 rounded" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸入 */}
-            <div className="skeleton-shimmer h-14 w-full rounded-lg" />
+            <div className="skeleton-shimmer h-14 w-full rounded-control" />
           </div>
           {/* 快速金額按鈕 - 水平排列 */}
           <div className="flex gap-2 overflow-hidden">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg" />
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-control" />
             ))}
           </div>
         </div>
 
         {/* 匯率卡片骨架 - 對應匯率顯示區塊 */}
-        <div className="skeleton-card space-y-3 rounded-lg p-4">
+        <div className="skeleton-card space-y-3 rounded-control p-4">
           {/* 匯率類型切換器 */}
           <div className="flex justify-center">
             <div className="skeleton-shimmer h-7 w-28 rounded-full" />
           </div>
           {/* 主匯率顯示 */}
           <div className="text-center space-y-2 py-3">
-            <div className="skeleton-shimmer h-7 w-52 mx-auto rounded-lg" />
+            <div className="skeleton-shimmer h-7 w-52 mx-auto rounded-control" />
             <div className="skeleton-shimmer h-4 w-40 mx-auto rounded" />
           </div>
           {/* 迷你趨勢圖區域 */}
-          <div className="skeleton-bg h-20 rounded-lg" />
+          <div className="skeleton-bg h-20 rounded-control" />
         </div>
 
         {/* 交換按鈕骨架 */}
@@ -162,18 +162,18 @@ export const SkeletonLoader = () => {
           <div className="skeleton-shimmer h-4 w-20 rounded" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸出 */}
-            <div className="skeleton-shimmer-accent h-14 w-full rounded-lg" />
+            <div className="skeleton-shimmer-accent h-14 w-full rounded-control" />
           </div>
           {/* 快速金額按鈕 - 水平排列 */}
           <div className="flex gap-2 overflow-hidden">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg" />
+              <div key={i} className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-control" />
             ))}
           </div>
         </div>
 
         {/* 加入歷史記錄按鈕骨架 */}
-        <div className="skeleton-shimmer-accent h-12 w-full rounded-lg" />
+        <div className="skeleton-shimmer-accent h-12 w-full rounded-control" />
 
         {/* 資料來源骨架 - 對應底部小字 */}
         <div className="flex justify-center">
@@ -216,7 +216,7 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
     return (
       <div className="space-y-4" role="status">
         {/* 基準貨幣輸入 */}
-        <div className="skeleton-shimmer h-12 rounded-lg" />
+        <div className="skeleton-shimmer h-12 rounded-control" />
 
         {/* 貨幣卡片列表 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -232,12 +232,12 @@ export const ConverterSkeleton = ({ mode }: { mode: 'single' | 'multi' }) => {
     <div className="space-y-4" role="status">
       {/* 貨幣選擇器 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="skeleton-shimmer h-14 rounded-lg" />
-        <div className="skeleton-shimmer h-14 rounded-lg" />
+        <div className="skeleton-shimmer h-14 rounded-control" />
+        <div className="skeleton-shimmer h-14 rounded-control" />
       </div>
 
       {/* 結果顯示 */}
-      <div className="skeleton-shimmer-accent h-16 rounded-lg" />
+      <div className="skeleton-shimmer-accent h-16 rounded-control" />
     </div>
   );
 };
@@ -258,7 +258,7 @@ export const SettingsSkeleton = () => {
             <div className="skeleton-shimmer h-4 w-20 rounded" />
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="skeleton-shimmer h-20 rounded-lg" />
+                <div key={i} className="skeleton-shimmer h-20 rounded-control" />
               ))}
             </div>
           </section>
@@ -269,7 +269,7 @@ export const SettingsSkeleton = () => {
             <div className="skeleton-card p-1.5">
               <div className="flex gap-1">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-lg" />
+                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-control" />
                 ))}
               </div>
             </div>
@@ -280,7 +280,7 @@ export const SettingsSkeleton = () => {
             <div className="skeleton-card p-1.5">
               <div className="flex gap-1">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-lg" />
+                  <div key={i} className="skeleton-shimmer h-16 flex-1 rounded-control" />
                 ))}
               </div>
             </div>
@@ -373,7 +373,7 @@ export const FavoritesSkeleton = () => {
           <div className="mb-6 skeleton-card p-1.5">
             <div className="flex gap-1">
               {[1, 2].map((i) => (
-                <div key={i} className="skeleton-shimmer h-14 flex-1 rounded-lg" />
+                <div key={i} className="skeleton-shimmer h-14 flex-1 rounded-control" />
               ))}
             </div>
           </div>
@@ -406,7 +406,7 @@ export const FavoritesSkeleton = () => {
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-lg border border-border/70 bg-surface px-4 py-3"
+                  className="flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3"
                 >
                   <div className="skeleton-shimmer h-3 w-20 rounded" />
                   <div className="skeleton-shimmer h-5 w-10 rounded" />
@@ -421,8 +421,8 @@ export const FavoritesSkeleton = () => {
               <div className="skeleton-shimmer h-3 w-4/5 rounded" />
             </div>
             <div className="mt-4 space-y-2">
-              <div className="skeleton-shimmer h-11 w-full rounded-lg" />
-              <div className="skeleton-shimmer h-11 w-full rounded-lg" />
+              <div className="skeleton-shimmer h-11 w-full rounded-control" />
+              <div className="skeleton-shimmer h-11 w-full rounded-control" />
             </div>
           </section>
         </aside>
@@ -460,7 +460,7 @@ export const MultiConverterSkeleton = () => {
             <div
               key={i}
               data-testid="skeleton-quick-pill"
-              className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-lg"
+              className="skeleton-shimmer h-8 w-14 flex-shrink-0 rounded-control"
             />
           ))}
         </div>
@@ -471,7 +471,7 @@ export const MultiConverterSkeleton = () => {
             <div
               key={i}
               data-testid="skeleton-currency-row"
-              className="flex items-center rounded-lg px-3 py-2.5"
+              className="flex items-center rounded-control px-3 py-2.5"
             >
               {/* 星號欄 — 對應 'w-6 flex-shrink-0 flex items-center justify-center' */}
               <div className="w-6 flex-shrink-0 flex items-center justify-center">

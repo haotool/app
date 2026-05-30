@@ -5,7 +5,7 @@
  *              6 種風格（僅淺色模式）
  *
  * @styles
- * - Zen: 極簡專業 - 冷靜藍系產品基準（預設）
+ * - Zen: 極簡專業 - violet/indigo 產品基準（預設）
  * - Nitro: 深色科技感 - 賽車儀表板、霓虹燈
  * - Kawaii: 可愛粉嫩 - 日系少女風、馬卡龍色系
  * - Classic: 復古書卷 - 古典圖書館、皮革裝幀
@@ -113,7 +113,7 @@ export interface StyleOption {
 
 /**
  * Zen 風格 - 極簡專業（預設）
- * 特點：純淨白底、冷靜藍系、資訊優先
+ * 特點：純淨白底、violet/indigo 品牌層次、資訊優先
  * 靈感：成熟金融工具、安靜的產品介面
  */
 const zenStyle: StyleDefinition = {
@@ -129,19 +129,19 @@ const zenStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
-    primary: '37 99 235', // blue-600
-    secondary: '14 165 233', // sky-500
-    accent: '59 130 246', // blue-500
+    primary: '124 58 237', // violet-600
+    secondary: '99 102 241', // indigo-500
+    accent: '139 92 246', // violet-500
     border: '226 232 240', // slate-200
     // 狀態色彩
-    info: '8 145 178', // cyan-600
+    info: '14 165 233', // sky-500
     success: '34 197 94', // green-500
     warning: '245 158 11', // amber-500
     error: '239 68 68', // red-500
-    // 圖表色彩 - 冷靜藍系
-    chartLine: '37 99 235', // blue-600
-    chartAreaTop: '59 130 246', // blue-500
-    chartAreaBottom: '14 165 233', // sky-500
+    // 圖表色彩 - violet/blue 主支現代語言
+    chartLine: '139 92 246', // violet-500
+    chartAreaTop: '139 92 246', // violet-500
+    chartAreaBottom: '59 130 246', // blue-500
   },
 };
 

@@ -47,12 +47,12 @@ const formatTime = (dateString: string | null) => {
 };
 
 const FOOTER_SOURCE_LINK_CLASS =
-  'group inline-flex min-h-11 items-center gap-2 rounded-lg border border-border/70 bg-surface-elevated px-4 py-2.5 text-text transition-colors duration-200 hover:border-primary/20 hover:bg-surface';
+  'group inline-flex min-h-11 items-center gap-2 rounded-control border border-border/70 bg-surface-elevated px-4 py-2.5 text-text transition-colors duration-200 hover:border-primary/20 hover:bg-surface';
 const FOOTER_DIVIDER_CLASS = 'w-full border-t border-border/70';
 const FOOTER_TEXT_LINK_CLASS =
-  'inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+  'inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 const FOOTER_RATE_LINK_CLASS =
-  'inline-flex min-h-11 items-center rounded-lg px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+  'inline-flex min-h-11 items-center rounded-control px-2 text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 function TimeSlot({ value }: { value: string }) {
   return (
@@ -201,7 +201,7 @@ export function Footer() {
         {/* 版權與版本資訊 */}
         <div className="flex flex-col items-center justify-center gap-3 text-sm">
           <div className="flex items-center gap-2 text-text">
-            <div className="flex h-5 w-5 items-center justify-center rounded-lg border border-border/70 bg-surface-elevated">
+            <div className="flex h-5 w-5 items-center justify-center rounded-control border border-border/70 bg-surface-elevated">
               <svg
                 className="h-3 w-3 text-primary"
                 fill="none"
@@ -341,7 +341,7 @@ export function Footer() {
                     <li key={link.href}>
                       <Link
                         to={link.href}
-                        className="inline-flex min-h-11 min-w-[44px] items-center justify-center rounded-lg px-1 text-sm text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="inline-flex min-h-11 min-w-[44px] items-center justify-center rounded-control px-1 text-sm text-text-muted transition-colors duration-200 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
                         {link.label}
                       </Link>
@@ -366,7 +366,7 @@ export function Footer() {
                 href="https://app.haotool.org/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center rounded-lg px-1 text-text underline decoration-border underline-offset-4 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="inline-flex min-h-11 items-center rounded-control px-1 text-text underline decoration-border underline-offset-4 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 haotool
               </a>
@@ -380,7 +380,7 @@ export function Footer() {
             href={AUTHOR_CONTACT_LINK_MAP.threads.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex min-h-11 items-center gap-2 rounded-lg border border-transparent px-4 py-2 transition-colors duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="group flex min-h-11 items-center gap-2 rounded-control border border-transparent px-4 py-2 transition-colors duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="text-sm text-text-muted transition-colors group-hover:text-text">
               {t('footer.createdBy')}
@@ -409,7 +409,7 @@ export function Footer() {
               href={APP_INFO.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center rounded-lg px-1 text-text underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex min-h-11 items-center rounded-control px-1 text-text underline decoration-border underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               GitHub
             </a>

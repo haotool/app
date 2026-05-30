@@ -118,7 +118,7 @@ const Guide = () => {
                 <div
                   key={step.position}
                   id={`step-${step.position}`}
-                  className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
+                  className="card scroll-mt-4 p-6 transition-shadow hover:shadow-soft"
                 >
                   <div className="flex items-start">
                     <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
@@ -227,7 +227,7 @@ const Guide = () => {
               <div className="text-center">
                 <Link
                   to="/"
-                  className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
+                  className="inline-flex items-center rounded-control bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 hover:shadow-floating"
                 >
                   開始使用 {APP_INFO.shortName}
                   <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />

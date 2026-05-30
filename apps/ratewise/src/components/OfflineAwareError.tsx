@@ -46,7 +46,7 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className={`${notificationTokens.actions.primary} gap-2 rounded-lg px-4 py-2 text-sm`}
+          className={`${notificationTokens.actions.primary} gap-2 rounded-control px-4 py-2 text-sm`}
         >
           <RefreshCw className="w-4 h-4" aria-hidden="true" />
           {t('errors.reload', '重新載入')}
@@ -77,7 +77,7 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className={`${notificationTokens.actions.primary} gap-2 rounded-lg px-4 py-2 text-sm`}
+        className={`${notificationTokens.actions.primary} gap-2 rounded-control px-4 py-2 text-sm`}
       >
         <RefreshCw className="w-4 h-4" aria-hidden="true" />
         {t('errors.reload', '重新載入')}

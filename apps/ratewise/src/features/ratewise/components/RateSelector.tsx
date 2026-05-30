@@ -62,7 +62,7 @@ export const RateSelector = ({
       {isActive && (
         <motion.div
           layoutId="rate-selector-indicator"
-          className="absolute inset-0 rounded-full bg-primary shadow-md"
+          className="absolute inset-0 rounded-full bg-primary shadow-soft"
           transition={segmentedSwitch.indicator}
         />
       )}
@@ -71,7 +71,7 @@ export const RateSelector = ({
 
   return (
     <div
-      className={`grid h-12 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] rounded-lg border border-border/60 bg-background/80 p-0.5 shadow-sm backdrop-blur-md ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+      className={`grid h-12 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] rounded-control border border-border/60 bg-background/80 p-0.5 shadow-soft backdrop-blur-md ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
       role="group"
       aria-label={t('singleConverter.rateTypeGroup')}
     >
@@ -91,7 +91,7 @@ export const RateSelector = ({
             whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
-            className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-md font-semibold ${
+            className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-compact font-semibold ${
               isActive ? 'text-primary-foreground' : 'text-text/70 hover:text-text'
             } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
@@ -132,7 +132,7 @@ export const RateSelector = ({
           animate={{
             opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
           }}
-          className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-md font-semibold ${
+          className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-compact font-semibold ${
             rateSource === 'exchange-shop'
               ? 'text-primary-foreground'
               : 'text-text/70 hover:text-text'

@@ -374,8 +374,75 @@ export const darkTheme = {
  * // => 'rgb(var(--color-primary) / <alpha-value>)'
  * ```
  */
+/**
+ * Radius Design Tokens (SSOT)
+ *
+ * 恢復主支既有的柔和大圓角語言，並以語義 token 取代散落的硬編碼 radius class。
+ * - card: 24px，延續舊版 `.card` / ParkKeeper 風格，讓內容頁更現代
+ * - panel/control: 16px，供按鈕、表單、互動列與資訊面板使用
+ * - icon: 12px，供小型 icon badge 使用
+ * - compact: 8px，僅保留給密集資料表或真正小型元素
+ */
+export const radiusTokens = {
+  values: {
+    card: '1.5rem',
+    panel: '1rem',
+    control: '1rem',
+    icon: '0.75rem',
+    compact: '0.5rem',
+    full: '9999px',
+    '4xl': '2rem',
+    '3xl': '1.5rem',
+    '2xl': '1rem',
+    xl: '0.75rem',
+    lg: '0.5rem',
+    md: '0.375rem',
+    sm: '0.25rem',
+  },
+  className: {
+    card: 'rounded-card',
+    panel: 'rounded-panel',
+    control: 'rounded-control',
+    icon: 'rounded-icon',
+    compact: 'rounded-compact',
+    full: 'rounded-full',
+  },
+} as const;
+
+/**
+ * Shadow Design Tokens (SSOT)
+ *
+ * 用一組安靜、帶空氣感的陰影取代散落的 Tailwind 預設 shadow。
+ * Tailwind 的 sm/md/lg/xl 仍保留相容別名，但實際值由這裡集中控制。
+ *
+ * 注意：陰影基底色使用硬編碼 `rgb(15 23 42 / ...)` (slate-900)，
+ * 僅適用淺色模式。若未來支援深色模式，需改為 CSS variable 或條件值。
+ */
+export const shadowTokens = {
+  values: {
+    card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -24px rgb(15 23 42 / 0.28)',
+    cardHover:
+      '0 2px 6px -2px rgb(15 23 42 / 0.10), 0 22px 48px -28px rgb(var(--color-primary) / 0.30)',
+    soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    floating:
+      '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.24)',
+    brand: '0 8px 25px rgb(var(--color-primary) / 0.28)',
+    sm: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
+    md: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    lg: '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.20)',
+    xl: '0 14px 44px -24px rgb(15 23 42 / 0.32), 0 24px 64px -36px rgb(var(--color-primary) / 0.28)',
+  },
+  className: {
+    card: 'shadow-card',
+    cardHover: 'hover:shadow-card-hover',
+    soft: 'shadow-soft',
+    floating: 'shadow-floating',
+    brand: 'shadow-brand',
+  },
+} as const;
+
 export function getDesignTokens() {
-  return { colors: semanticColors };
+  return { colors: semanticColors, radius: radiusTokens, shadow: shadowTokens };
 }
 
 /**
@@ -559,7 +626,7 @@ export const pageNavHeaderTokens = {
   root: 'sticky top-0 z-20 -mx-4 mb-6 border-b border-border/50 bg-background/92 px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
   row: 'flex min-h-[44px] min-w-0 items-center gap-3',
   backButton:
-    'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-lg px-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-control px-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   backIcon: 'h-4 w-4',
   separator: 'h-4 w-px shrink-0 bg-border/60',
   breadcrumbSlot: 'min-w-0 flex-1',
@@ -571,7 +638,7 @@ export const breadcrumbTokens = {
   item: 'flex min-h-11 min-w-0 shrink-0 items-center gap-2 last:shrink',
   separatorIcon: 'h-4 w-4 flex-shrink-0 text-text-muted',
   current: 'block max-w-[min(52vw,28rem)] truncate font-medium text-text',
-  link: 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-1 transition-colors duration-200 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  link: 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-control px-1 transition-colors duration-200 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 } as const;
 
 /**
@@ -611,15 +678,15 @@ export const contentPageTokens = {
     grid3: 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3',
   },
   surfaces: {
-    quiet: 'rounded-lg border border-border/70 bg-surface-elevated p-4',
+    quiet: 'rounded-panel border border-border/70 bg-surface-elevated p-4',
     quietInteractive:
-      'rounded-lg border border-border/70 bg-surface p-4 transition-[background-color,border-color,color] duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-    emphasized: 'rounded-lg border border-border/70 bg-surface p-6 shadow-sm',
-    panel: 'rounded-lg border border-border/70 bg-surface p-5 shadow-card lg:p-6',
+      'rounded-panel border border-border/70 bg-surface p-4 transition-[background-color,border-color,color] duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    emphasized: 'rounded-card border border-border/70 bg-surface p-6 shadow-soft',
+    panel: 'rounded-card border border-border/70 bg-surface p-5 shadow-card lg:p-6',
   },
   article: {
-    card: 'rounded-lg border border-border/70 bg-surface p-4 shadow-sm sm:p-5',
-    cardLoose: 'rounded-lg border border-border/70 bg-surface p-6 shadow-sm',
+    card: 'rounded-card border border-border/70 bg-surface p-4 shadow-soft sm:p-5',
+    cardLoose: 'rounded-card border border-border/70 bg-surface p-6 shadow-soft',
     title: 'mb-3 text-xl font-bold text-text sm:text-2xl',
     titleCompact: 'mb-2 text-base font-bold text-text sm:text-lg',
     body: 'space-y-3 text-text-muted',
@@ -629,27 +696,27 @@ export const contentPageTokens = {
     listItem: 'flex items-start gap-3',
     bullet: 'mt-2 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary',
     numberBadge:
-      'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary',
+      'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10 text-xs font-bold text-primary',
     iconBadge:
-      'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary',
+      'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10 text-primary',
     faqStack: 'space-y-3 md:mx-auto md:max-w-3xl',
-    faqItem: 'group rounded-lg border border-border/70 bg-surface shadow-sm',
+    faqItem: 'group rounded-card border border-border/70 bg-surface shadow-soft',
     faqSummary:
-      'flex cursor-pointer list-none items-start gap-3 rounded-lg p-4 transition-colors hover:bg-surface-elevated sm:p-5',
+      'flex cursor-pointer list-none items-start gap-3 rounded-card p-4 transition-colors hover:bg-surface-elevated sm:p-5',
     faqAnswer: 'px-4 pb-4 pt-0 text-sm leading-7 text-text-muted sm:px-5 sm:pb-5',
   },
   callouts: {
-    warning: 'rounded-lg border border-warning/30 bg-warning/10 p-4 sm:p-5',
-    success: 'rounded-lg border border-success/20 bg-success/10 p-3',
-    danger: 'rounded-lg border border-destructive/20 bg-destructive/10 p-3',
-    neutral: 'rounded-lg border border-border/70 bg-surface p-3',
-    elevated: 'rounded-lg border border-border/70 bg-surface-elevated p-4',
-    icon: 'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg',
-    note: 'rounded-lg border border-warning/20 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-text-muted',
+    warning: 'rounded-panel border border-warning/30 bg-warning/10 p-4 sm:p-5',
+    success: 'rounded-panel border border-success/20 bg-success/10 p-3',
+    danger: 'rounded-panel border border-destructive/20 bg-destructive/10 p-3',
+    neutral: 'rounded-panel border border-border/70 bg-surface p-3',
+    elevated: 'rounded-panel border border-border/70 bg-surface-elevated p-4',
+    icon: 'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-icon',
+    note: 'rounded-panel border border-warning/20 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-text-muted',
   },
   result: {
     section: 'mb-6 sm:mb-8',
-    card: 'rounded-lg border border-border/70 bg-surface-elevated p-4 shadow-sm sm:p-5',
+    card: 'rounded-card border border-border/70 bg-surface-elevated p-4 shadow-soft sm:p-5',
     eyebrowRow:
       'mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary/80',
     amountRow: 'mb-1 flex flex-wrap items-baseline gap-2',
@@ -659,8 +726,8 @@ export const contentPageTokens = {
     note: 'mb-4 text-xs leading-relaxed text-text-muted',
   },
   table: {
-    wrapper: 'max-w-full overflow-x-auto rounded-lg border border-border/70',
-    wrapperBlock: 'mb-6 max-w-full overflow-x-auto rounded-lg border border-border/70',
+    wrapper: 'max-w-full overflow-x-auto rounded-panel border border-border/70',
+    wrapperBlock: 'mb-6 max-w-full overflow-x-auto rounded-panel border border-border/70',
     table: 'min-w-[42rem] text-sm',
     wideTable: 'min-w-[56rem] text-sm',
     headRow: 'border-b border-border/70 bg-surface-elevated',
@@ -674,18 +741,18 @@ export const contentPageTokens = {
     inline:
       'text-primary underline underline-offset-4 decoration-primary/30 transition-colors hover:text-primary-hover',
     pill: 'inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-2.5 text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-    tile: 'flex min-h-11 items-center gap-2 rounded-lg border border-border/70 bg-surface-elevated px-3 py-2.5 text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-    row: 'group flex items-center justify-between rounded-lg border border-border/70 bg-surface px-4 py-3 transition-colors hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    tile: 'flex min-h-11 items-center gap-2 rounded-control border border-border/70 bg-surface-elevated px-3 py-2.5 text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    row: 'group flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3 transition-colors hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     ctaSecondary:
-      'inline-flex items-center rounded-lg border border-border/70 bg-surface px-5 py-3 font-semibold text-primary transition-colors hover:border-primary/30 hover:bg-surface-elevated hover:text-primary-hover',
+      'inline-flex items-center rounded-control border border-border/70 bg-surface px-5 py-3 font-semibold text-primary transition-colors hover:border-primary/30 hover:bg-surface-elevated hover:text-primary-hover',
   },
   buttons: {
     primary:
-      'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     primaryWide:
-      'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     dangerQuiet:
-      'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-destructive/20 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-destructive/20 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   },
 } as const;
 
@@ -696,12 +763,12 @@ export const appPageTokens = {
     headerRow: 'mb-3 flex items-center gap-2 px-2 text-text-muted',
     headerText: 'text-xs font-black uppercase tracking-[0.16em]',
   },
-  infoCard: 'rounded-lg border border-border/70 bg-surface p-5 shadow-sm',
-  listCard: 'overflow-hidden rounded-lg border border-border/70 bg-surface shadow-sm',
+  infoCard: 'rounded-card border border-border/70 bg-surface p-5 shadow-card',
+  listCard: 'overflow-hidden rounded-card border border-border/70 bg-surface shadow-card',
   linkRow:
     'group flex min-h-11 w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset',
   statRow:
-    'flex items-center justify-between rounded-lg border border-border/70 bg-surface px-4 py-3',
+    'flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3',
   tinyMeta: 'text-xs font-semibold uppercase tracking-[0.12em] text-text-muted',
 } as const;
 
@@ -971,11 +1038,11 @@ export const singleConverterLayoutTokens = {
  */
 export const quickAmountButtonTokens = {
   className:
-    'inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-lg bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text/70 transition-[background-color,color,box-shadow,transform] duration-200 ease-out hover:scale-[1.03] hover:bg-primary/10 hover:text-primary hover:shadow-md active:scale-[0.97] active:bg-primary/20 active:text-primary active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-control bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text/70 transition-[background-color,color,box-shadow,transform] duration-200 ease-out hover:scale-[1.03] hover:bg-primary/10 hover:text-primary hover:shadow-soft active:scale-[0.97] active:bg-primary/20 active:text-primary active:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   /** 基礎樣式 */
   base: {
     padding: 'px-3 py-2.5',
-    borderRadius: 'rounded-lg',
+    borderRadius: 'rounded-control',
     typography: 'text-sm font-semibold',
   },
   /** 色彩狀態 */
@@ -998,8 +1065,8 @@ export const quickAmountButtonTokens = {
     transition: 'transition-[background-color,color,box-shadow,transform] duration-200 ease-out',
     hoverScale: 'hover:scale-[1.03]',
     activeScale: 'active:scale-[0.97]',
-    hoverShadow: 'hover:shadow-md',
-    activeShadow: 'active:shadow-sm',
+    hoverShadow: 'hover:shadow-soft',
+    activeShadow: 'active:shadow-soft',
   },
   /** 觸覺回饋時長 (毫秒) */
   hapticDuration: 30,
@@ -1305,7 +1372,7 @@ export const buttonTokens = {
   base: {
     display: 'inline-flex items-center justify-center',
     typography: 'font-semibold',
-    border: 'rounded-lg',
+    border: 'rounded-control',
     cursor: 'cursor-pointer',
     transition:
       'transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out',
@@ -1344,8 +1411,8 @@ export const buttonTokens = {
     /** 主要按鈕 - 高視覺權重 */
     primary: {
       default: 'bg-primary text-primary-foreground',
-      hover: 'hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      hover: 'hover:bg-primary-hover hover:shadow-floating hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-soft',
     },
     /** 次要按鈕 - 中視覺權重 */
     secondary: {
@@ -1362,35 +1429,35 @@ export const buttonTokens = {
     /** 危險按鈕 - 警示操作 */
     danger: {
       default: 'bg-destructive text-destructive-foreground',
-      hover: 'hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      hover: 'hover:bg-destructive-hover hover:shadow-floating hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-soft',
     },
   },
 
   /** 完整類別組合 - 直接複製使用 */
   patterns: {
     primaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-floating hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft',
     secondaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
     ghostMd:
-      'inline-flex items-center justify-center font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
     dangerMd:
-      'inline-flex items-center justify-center font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-destructive-foreground hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-destructive-foreground hover:bg-destructive-hover hover:shadow-floating hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft',
   },
 } as const;
 
 export const feedbackSurfaceTokens = {
   pageCenter: 'flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6',
-  card: 'w-full max-w-lg rounded-lg border border-border/70 bg-surface p-6 text-center shadow-lg sm:p-8',
+  card: 'w-full max-w-lg rounded-card border border-border/70 bg-surface p-6 text-center shadow-floating sm:p-8',
   icon: 'mx-auto text-destructive',
   title: 'mt-4 text-2xl font-bold text-text',
   description: 'mb-6 mt-2 text-text-muted',
   actionButton:
-    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   dangerActionButton:
-    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-  detailsPanel: 'rounded-lg border border-danger-light bg-danger-bg p-3',
+    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  detailsPanel: 'rounded-panel border border-danger-light bg-danger-bg p-3',
 } as const;
 
 /**
@@ -1426,9 +1493,9 @@ export const notificationTokens = {
   /** 內距 */
   padding: 'px-6 py-3.5',
   /** 圓角（與 card / button 統一） */
-  borderRadius: 'rounded-lg',
+  borderRadius: 'rounded-panel',
   /** 陰影（統一較安靜的浮層語法） */
-  shadow: 'shadow-lg',
+  shadow: 'shadow-floating',
 
   /** 背景與邊框 */
   background: {
@@ -1450,7 +1517,7 @@ export const notificationTokens = {
 
   /** 狀態圖標 */
   icon: {
-    container: 'w-8 h-8 rounded-lg border border-border/60 bg-surface-elevated',
+    container: 'w-8 h-8 rounded-icon border border-border/60 bg-surface-elevated',
     svg: 'w-5 h-5',
     strokeWidth: 2.5,
     /** 品牌圖標底色（UpdatePrompt） */
@@ -1472,7 +1539,7 @@ export const notificationTokens = {
   /** 通知類操作按鈕 */
   actions: {
     primary:
-      'pointer-events-auto inline-flex items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text shadow-sm transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out hover:border-primary/30 hover:bg-surface hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+      'pointer-events-auto inline-flex items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text shadow-soft transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out hover:border-primary/30 hover:bg-surface hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
     text: 'inline-flex items-center rounded px-1 text-xs text-text-muted transition-colors duration-150 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
     icon: 'pointer-events-auto rounded-full border border-border/70 bg-surface-elevated p-1.5 text-text-muted transition-[color,background-color,border-color,transform] duration-200 ease-out hover:border-primary/20 hover:bg-surface hover:text-text active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
   },

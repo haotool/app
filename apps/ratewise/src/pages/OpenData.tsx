@@ -478,7 +478,7 @@ interface ResourceCardItem {
 
 function ResourceCard({ item }: { item: ResourceCardItem }) {
   const className =
-    'group rounded-lg border border-border/70 bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+    'group rounded-control border border-border/70 bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background';
   const content = (
     <>
       <div className="mb-1 min-w-0 break-words font-semibold text-text group-hover:text-primary">
@@ -602,7 +602,7 @@ const OpenData = () => {
                   ) : (
                     <div
                       key={i}
-                      className={`max-w-full rounded-lg px-3 py-2 text-center ${item.color}`}
+                      className={`max-w-full rounded-control px-3 py-2 text-center ${item.color}`}
                     >
                       <div className="font-semibold">{item.label}</div>
                       <div className="break-all text-xs opacity-75">{item.sub}</div>
@@ -1006,7 +1006,7 @@ const OpenData = () => {
               ].map(({ icon: Icon, iconClass, content }, i) => (
                 <div
                   key={i}
-                  className="flex min-w-0 items-start gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm text-text"
+                  className="flex min-w-0 items-start gap-3 rounded-control bg-surface px-4 py-2.5 text-sm text-text"
                 >
                   <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconClass}`} aria-hidden="true" />
                   <span className="min-w-0 break-words">{content}</span>
@@ -1113,7 +1113,7 @@ const OpenData = () => {
             <div className="space-y-3">
               {OPEN_DATA_PAGE_SEO.faqContent?.map((item) => (
                 <details key={item.question} className={contentPageTokens.article.faqItem}>
-                  <summary className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-4 font-medium text-text transition-colors hover:bg-surface-elevated">
+                  <summary className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-control px-5 py-4 font-medium text-text transition-colors hover:bg-surface-elevated">
                     <span className="min-w-0 break-words">{item.question}</span>
                     <svg
                       aria-hidden="true"
@@ -1139,7 +1139,7 @@ const OpenData = () => {
           </section>
 
           {/* ── CTA ── */}
-          <div className="min-w-0 rounded-lg border border-border/70 bg-surface-elevated p-6 text-center">
+          <div className="min-w-0 rounded-control border border-border/70 bg-surface-elevated p-6 text-center">
             <p className="mb-3 text-text-muted">不想呼叫 API？直接使用換算介面，免安裝、免帳號。</p>
             <Link to="/" className={contentPageTokens.buttons.primary}>
               開啟換算工具

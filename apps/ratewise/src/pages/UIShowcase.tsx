@@ -52,9 +52,9 @@ function ColorSwatch({
   description: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
+    <div className="flex items-center gap-3 rounded-control border border-border bg-surface p-3">
       <div
-        className="w-12 h-12 rounded-lg shadow-sm border border-border"
+        className="w-12 h-12 rounded-control shadow-soft border border-border"
         style={{ backgroundColor: `rgb(var(${cssVar}))` }}
       />
       <div className="flex-1 min-w-0">
@@ -159,7 +159,7 @@ export default function UIShowcase() {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="rounded-lg border border-border bg-surface p-2 transition-colors hover:bg-surface-elevated"
+              className="rounded-control border border-border bg-surface p-2 transition-colors hover:bg-surface-elevated"
             >
               <ArrowLeft size={20} className="text-text" />
             </Link>
@@ -182,9 +182,9 @@ export default function UIShowcase() {
                 type="button"
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] whitespace-nowrap ${
+                className={`flex-1 flex items-center justify-center gap-2 rounded-control px-3 py-3 text-sm font-semibold transition-[background-color,border-color,color,box-shadow] whitespace-nowrap ${
                   activeTab === id
-                    ? 'border border-border/70 bg-surface-elevated text-text shadow-sm'
+                    ? 'border border-border/70 bg-surface-elevated text-text shadow-soft'
                     : 'text-text-muted hover:bg-surface'
                 }`}
               >
@@ -214,10 +214,10 @@ export default function UIShowcase() {
                       onClick={() => setStyle(styleKey)}
                       disabled={!isLoaded}
                       className={`
-                        relative rounded-lg border-2 p-4 transition-[background-color,border-color,box-shadow,transform] duration-200
+                        relative rounded-control border-2 p-4 transition-[background-color,border-color,box-shadow,transform] duration-200
                         ${
                           isActive
-                            ? 'border-primary/30 bg-surface-elevated shadow-sm'
+                            ? 'border-primary/30 bg-surface-elevated shadow-soft'
                             : 'border-border bg-surface hover:border-primary/20 hover:bg-surface-elevated'
                         }
                         ${!isLoaded ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -230,7 +230,7 @@ export default function UIShowcase() {
                       )}
                       <div className="flex flex-col items-center gap-2">
                         <div
-                          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                          className={`flex h-12 w-12 items-center justify-center rounded-control ${
                             isActive
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-surface-elevated text-primary'
@@ -251,16 +251,16 @@ export default function UIShowcase() {
 
             <Section title="當前主題預覽" icon={Star}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="rounded-lg bg-primary p-4 text-center text-primary-foreground">
+                <div className="rounded-control bg-primary p-4 text-center text-primary-foreground">
                   <span className="text-sm font-bold">Primary</span>
                 </div>
-                <div className="rounded-lg bg-accent p-4 text-center text-primary-foreground">
+                <div className="rounded-control bg-accent p-4 text-center text-primary-foreground">
                   <span className="text-sm font-bold">Accent</span>
                 </div>
-                <div className="rounded-lg bg-success p-4 text-center text-success-foreground">
+                <div className="rounded-control bg-success p-4 text-center text-success-foreground">
                   <span className="text-sm font-bold">Success</span>
                 </div>
-                <div className="rounded-lg bg-destructive p-4 text-center text-destructive-foreground">
+                <div className="rounded-control bg-destructive p-4 text-center text-destructive-foreground">
                   <span className="text-sm font-bold">Destructive</span>
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function UIShowcase() {
                 ].map(({ icon: IconComponent, name, color }) => (
                   <div
                     key={name}
-                    className="flex flex-col items-center gap-1 rounded-lg bg-surface p-3"
+                    className="flex flex-col items-center gap-1 rounded-control bg-surface p-3"
                   >
                     <IconComponent size={24} className={color} />
                     <span className="text-xs text-text-muted">{name}</span>
@@ -499,25 +499,25 @@ export default function UIShowcase() {
         {activeTab === 'skeletons' && (
           <div className="space-y-6">
             <Section title="主頁面骨架屏" icon={Smartphone}>
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-hidden rounded-control border border-border">
                 <SkeletonLoader />
               </div>
             </Section>
 
             <Section title="設定頁面骨架屏" icon={Settings}>
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-hidden rounded-control border border-border">
                 <SettingsSkeleton />
               </div>
             </Section>
 
             <Section title="收藏頁面骨架屏" icon={Star}>
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-hidden rounded-control border border-border">
                 <FavoritesSkeleton />
               </div>
             </Section>
 
             <Section title="多幣別頁面骨架屏" icon={RefreshCw}>
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-hidden rounded-control border border-border">
                 <MultiConverterSkeleton />
               </div>
             </Section>

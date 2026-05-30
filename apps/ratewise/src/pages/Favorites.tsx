@@ -234,7 +234,7 @@ export default function Favorites() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`-m-1 space-y-2 rounded-lg p-1 transition-colors duration-200 ${
+                        className={`-m-1 space-y-2 rounded-control p-1 transition-colors duration-200 ${
                           snapshot.isDraggingOver ? 'bg-surface-elevated' : ''
                         }`}
                       >
@@ -256,8 +256,8 @@ export default function Favorites() {
                                   data-testid={`currency-row-${code}`}
                                   className={`${contentPageTokens.article.card} flex items-center gap-3 group ${
                                     snapshot.isDragging
-                                      ? 'z-50 scale-[1.01] bg-surface shadow-lg ring-1 ring-primary/20'
-                                      : 'hover:shadow-md'
+                                      ? 'z-50 scale-[1.01] bg-surface shadow-floating ring-1 ring-primary/20'
+                                      : 'hover:shadow-soft'
                                   }`}
                                 >
                                   {isTWD ? (
@@ -275,7 +275,7 @@ export default function Favorites() {
                                   ) : (
                                     <button
                                       type="button"
-                                      className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg p-2 transition hover:scale-110 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                      className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-control p-2 transition hover:scale-110 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                       onClick={() => toggleFavorite(code)}
                                       aria-label={
                                         isFavorite
@@ -319,7 +319,7 @@ export default function Favorites() {
                                     <button
                                       {...(provided.dragHandleProps ?? {})}
                                       type="button"
-                                      className="flex min-h-11 min-w-0 flex-1 cursor-grab touch-manipulation items-center gap-3 rounded-lg text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                      className="flex min-h-11 min-w-0 flex-1 cursor-grab touch-manipulation items-center gap-3 rounded-control text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                       aria-label={t('favorites.dragHandle')}
                                       data-testid={`drag-zone-${code}`}
                                     >
@@ -338,7 +338,7 @@ export default function Favorites() {
 
                                   <button
                                     type="button"
-                                    className="mr-[-0.5rem] flex min-h-11 flex-shrink-0 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-primary/10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="mr-[-0.5rem] flex min-h-11 flex-shrink-0 cursor-pointer items-center gap-2 rounded-control px-3 py-2 transition-colors hover:bg-primary/10 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     onClick={() =>
                                       !snapshot.isDragging && handleFavoriteClick(code)
                                     }
@@ -374,7 +374,7 @@ export default function Favorites() {
                     <button
                       type="button"
                       onClick={clearAllHistory}
-                      className="flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-destructive transition hover:bg-destructive/10"
+                      className="flex min-h-11 items-center gap-1 rounded-control px-3 py-2 text-xs font-semibold text-destructive transition hover:bg-destructive/10"
                     >
                       <Trash2 size={12} />
                       {t('common.clearAll')}

@@ -335,7 +335,7 @@ export function CurrencyLandingPage({
                 {highlights.map((highlight, index) => (
                   <li
                     key={index}
-                    className="flex items-start gap-3 md:rounded-lg md:bg-surface md:p-3"
+                    className="flex items-start gap-3 md:rounded-control md:bg-surface md:p-3"
                   >
                     <span className={contentPageTokens.article.numberBadge}>{index + 1}</span>
                     <span className="text-sm leading-relaxed text-text sm:text-base">
@@ -359,7 +359,7 @@ export function CurrencyLandingPage({
                   key={step.position}
                   className={`${contentPageTokens.article.card} flex items-start gap-3 sm:gap-4`}
                 >
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground sm:h-12 sm:w-12 sm:text-xl">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-control bg-primary text-lg font-bold text-primary-foreground sm:h-12 sm:w-12 sm:text-xl">
                     {step.position}
                   </div>
                   <div className="min-w-0 flex-1 pt-1">

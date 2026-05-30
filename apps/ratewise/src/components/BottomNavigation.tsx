@@ -76,7 +76,7 @@ function BottomNavigationItem({
       {/* 觸控回饋背景（避免在 <a> 內使用 whileTap 產生 tabindex）。 */}
       <div
         className="
-          absolute inset-1 rounded-lg bg-primary/0
+          absolute inset-1 rounded-control bg-primary/0
           transition-colors duration-75
           group-active:bg-primary/10
         "

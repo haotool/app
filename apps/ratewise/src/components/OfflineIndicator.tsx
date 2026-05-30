@@ -178,7 +178,7 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
                   <div
-                    className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.warningGradient} flex items-center justify-center shadow-sm`}
+                    className={`relative ${notificationTokens.icon.container} ${notificationTokens.icon.warningGradient} flex items-center justify-center shadow-soft`}
                   >
                     <WifiOff
                       className={`${notificationTokens.icon.svg} text-warning`}

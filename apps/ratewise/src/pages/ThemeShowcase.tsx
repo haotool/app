@@ -53,8 +53,8 @@ export default function ThemeShowcase() {
                 onClick={() => setStyle(option.value)}
                 disabled={!isLoaded}
                 className={`
-                  relative flex h-28 flex-col justify-end overflow-hidden rounded-lg p-4
-                  shadow-sm transition-[box-shadow,opacity,transform] disabled:opacity-50
+                  relative flex h-28 flex-col justify-end overflow-hidden rounded-control p-4
+                  shadow-soft transition-[box-shadow,opacity,transform] disabled:opacity-50
                   ${style === option.value ? 'ring-2 ring-offset-2' : ''}
                 `}
                 style={
@@ -99,7 +99,7 @@ export default function ThemeShowcase() {
               </button>
               <button
                 type="button"
-                className="rounded-lg border px-4 py-2 transition-colors"
+                className="rounded-control border px-4 py-2 transition-colors"
                 style={{
                   borderColor: 'rgb(var(--color-border))',
                   color: 'rgb(var(--color-text))',
@@ -109,7 +109,7 @@ export default function ThemeShowcase() {
               </button>
               <button
                 type="button"
-                className="rounded-lg px-4 py-2 text-destructive transition-colors hover:bg-destructive/10"
+                className="rounded-control px-4 py-2 text-destructive transition-colors hover:bg-destructive/10"
               >
                 危險按鈕
               </button>
@@ -121,7 +121,7 @@ export default function ThemeShowcase() {
             <div className="grid grid-cols-2 gap-3">
               <div className="card p-4">
                 <p className="font-bold">預設卡片</p>
-                <p className="text-xs opacity-60 mt-1">rounded-3xl</p>
+                <p className="text-xs opacity-60 mt-1">rounded-card</p>
               </div>
               <div className="card p-4 shadow-elevation-2">
                 <p className="font-bold">懸浮卡片</p>
@@ -136,30 +136,33 @@ export default function ThemeShowcase() {
               <input
                 type="text"
                 placeholder="預設輸入框"
-                className="w-full rounded-lg border px-4 py-3 transition-colors"
+                className="w-full rounded-control border px-4 py-3 transition-colors"
                 style={{
                   backgroundColor: 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
                   color: 'rgb(var(--color-text))',
                 }}
               />
-              <div className="flex gap-1 rounded-lg bg-surface-sunken/60 p-1.5 shadow-inner">
-                <button type="button" className="relative flex-1 rounded-lg py-2 text-xs font-bold">
+              <div className="flex gap-1 rounded-control bg-surface-sunken/60 p-1.5 shadow-inner">
+                <button
+                  type="button"
+                  className="relative flex-1 rounded-control py-2 text-xs font-bold"
+                >
                   <div
-                    className="absolute inset-0 z-[-1] rounded-lg shadow-sm"
+                    className="absolute inset-0 z-[-1] rounded-control shadow-soft"
                     style={{ backgroundColor: 'rgb(var(--color-surface))' }}
                   />
                   <span className="relative z-10">選項 1</span>
                 </button>
                 <button
                   type="button"
-                  className="flex-1 rounded-lg py-2 text-xs font-bold opacity-60"
+                  className="flex-1 rounded-control py-2 text-xs font-bold opacity-60"
                 >
                   選項 2
                 </button>
                 <button
                   type="button"
-                  className="flex-1 rounded-lg py-2 text-xs font-bold opacity-60"
+                  className="flex-1 rounded-control py-2 text-xs font-bold opacity-60"
                 >
                   選項 3
                 </button>
@@ -191,15 +194,15 @@ export default function ThemeShowcase() {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center py-2 border-b border-border/60">
                 <span className="opacity-60">卡片圓角</span>
-                <code className="font-mono">rounded-lg (0.5rem)</code>
+                <code className="font-mono">rounded-control (1rem token alias)</code>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border/60">
                 <span className="opacity-60">按鈕圓角</span>
-                <code className="font-mono">rounded-lg (0.5rem)</code>
+                <code className="font-mono">rounded-control (1rem token alias)</code>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border/60">
                 <span className="opacity-60">表面層次</span>
-                <code className="font-mono">bg-surface-elevated + shadow-sm</code>
+                <code className="font-mono">bg-surface-elevated + shadow-soft</code>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border/60">
                 <span className="opacity-60">邊框透明度</span>

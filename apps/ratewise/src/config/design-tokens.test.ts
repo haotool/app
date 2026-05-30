@@ -292,7 +292,7 @@ describe('Design Token System', () => {
         'pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]',
       );
       expect(pageNavHeaderTokens.backButton).toContain('min-h-11');
-      expect(pageNavHeaderTokens.backButton).toContain('rounded-lg');
+      expect(pageNavHeaderTokens.backButton).toContain('rounded-control');
       expect(pageNavHeaderTokens.breadcrumbSlot).toContain('min-w-0');
       expect(breadcrumbTokens.list).toContain('touch-pan-x');
       expect(breadcrumbTokens.list).toContain('overflow-x-auto');
@@ -303,7 +303,7 @@ describe('Design Token System', () => {
     it('內容頁與 app 頁面 family token 應覆蓋 article、callout、result、table 與 row pattern', async () => {
       const { appPageTokens, contentPageTokens } = await import('./design-tokens');
 
-      expect(contentPageTokens.article.card).toContain('rounded-lg');
+      expect(contentPageTokens.article.card).toContain('rounded-card');
       expect(contentPageTokens.article.card).toContain('border-border');
       expect(contentPageTokens.result.card).toContain('bg-surface-elevated');
       expect(contentPageTokens.callouts.warning).toContain('border-warning');
@@ -311,17 +311,34 @@ describe('Design Token System', () => {
       expect(contentPageTokens.buttons.primary).toContain('min-h-11');
       expect(contentPageTokens.buttons.primary).toContain('focus-visible:ring-2');
       expect(appPageTokens.linkRow).toContain('min-h-11');
-      expect(appPageTokens.statRow).toContain('rounded-lg');
+      expect(appPageTokens.statRow).toContain('rounded-control');
     });
 
     it('互動與回饋 family token 應收斂快速金額與錯誤復原 UI', async () => {
       const { feedbackSurfaceTokens, quickAmountButtonTokens } = await import('./design-tokens');
 
-      expect(quickAmountButtonTokens.className).toContain('rounded-lg');
+      expect(quickAmountButtonTokens.className).toContain('rounded-control');
       expect(quickAmountButtonTokens.className).toContain('transition-[background-color');
-      expect(feedbackSurfaceTokens.card).toContain('rounded-lg');
+      expect(feedbackSurfaceTokens.card).toContain('rounded-card');
       expect(feedbackSurfaceTokens.actionButton).toContain('min-h-11');
       expect(feedbackSurfaceTokens.actionButton).toContain('focus-visible:ring-2');
+    });
+
+    it('radiusTokens 與 shadowTokens 應作為 Tailwind 與 CSS component 的單一真相', async () => {
+      const { getDesignTokens, radiusTokens, shadowTokens } = await import('./design-tokens');
+      const tokens = getDesignTokens();
+
+      expect(tokens.radius).toBe(radiusTokens);
+      expect(tokens.shadow).toBe(shadowTokens);
+      expect(radiusTokens.values.card).toBe('1.5rem');
+      expect(radiusTokens.values.control).toBe('1rem');
+      expect(radiusTokens.values.compact).toBe('0.5rem');
+      expect(radiusTokens.values.lg).toBe('0.5rem');
+      expect(radiusTokens.className.card).toBe('rounded-card');
+      expect(radiusTokens.className.control).toBe('rounded-control');
+      expect(shadowTokens.values.card).toContain('rgb(15 23 42');
+      expect(shadowTokens.values.lg).toBeDefined();
+      expect(shadowTokens.className.floating).toBe('shadow-floating');
     });
 
     it('正式頁核心 shell 不應再使用 Tailwind 任意 rgb(var()) 色彩 class', () => {
@@ -373,7 +390,7 @@ describe('Design Token System', () => {
       }
     });
 
-    it('核心 UI family 不應保留 transition-all、24px panel radius 或 div role button 回歸', () => {
+    it('核心 UI family 不應保留 transition-all、legacy radius/shadow utility 或 div role button 回歸', () => {
       const coreFiles = [
         'src/components/AuthorityGuidePage.tsx',
         'src/components/BottomNavigation.tsx',
@@ -411,7 +428,7 @@ describe('Design Token System', () => {
         'src/index.css',
       ];
       const forbidden =
-        /transition-all|transition:\s*all|rounded-(?:2xl|xl|\[[0-9][^\]]*\])|role="button"|border-black\/5|border-surface-border|divide-surface-border/;
+        /transition-all|transition:\s*all|rounded-(?:sm|md|lg|xl|2xl|3xl|4xl|\[[0-9][^\]]*\])|shadow-(?:sm|md|lg|xl|2xl)|role="button"|border-black\/5|border-surface-border|divide-surface-border/;
 
       for (const filePath of coreFiles) {
         const source = readFileSync(resolve(process.cwd(), filePath), 'utf8');

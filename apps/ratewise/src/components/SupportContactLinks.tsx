@@ -47,7 +47,7 @@ export function SupportContactLinks({
 
   return (
     <section
-      className={`pointer-events-none rounded-lg border p-4 text-left ${styles.container} ${className}`.trim()}
+      className={`pointer-events-none rounded-control border p-4 text-left ${styles.container} ${className}`.trim()}
       aria-label={t('support.contactLinksAriaLabel')}
     >
       {title ? <p className={`text-sm font-semibold ${styles.title}`}>{title}</p> : null}

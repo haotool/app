@@ -3,6 +3,8 @@ import {
   generateTailwindThemeExtension,
   typographyTokens,
   breakpointTokens,
+  radiusTokens,
+  shadowTokens,
 } from './src/config/design-tokens';
 
 type TailwindColorRecord = Record<string, string | Record<string, string>>;
@@ -129,9 +131,14 @@ export default {
       },
       // 現代化圓角 - ParkKeeper 風格
       borderRadius: {
-        '4xl': '2rem', // 超大圓角
-        '3xl': '1.5rem', // 卡片預設
-        '2xl': '1rem', // 按鈕、輸入框
+        card: radiusTokens.values.card,
+        panel: radiusTokens.values.panel,
+        control: radiusTokens.values.control,
+        icon: radiusTokens.values.icon,
+        compact: radiusTokens.values.compact,
+        '4xl': '2rem',
+        '3xl': '1.5rem',
+        '2xl': '1rem',
         xl: '0.75rem',
         lg: '0.5rem',
         md: '0.375rem',
@@ -139,9 +146,15 @@ export default {
       },
       // 現代化陰影（微妙、扁平）
       boxShadow: {
-        card: '0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05)',
-        'card-hover': '0 2px 4px 0 rgb(0 0 0 / 0.04), 0 4px 8px 0 rgb(0 0 0 / 0.06)',
-        soft: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
+        card: shadowTokens.values.card,
+        'card-hover': shadowTokens.values.cardHover,
+        soft: shadowTokens.values.soft,
+        floating: shadowTokens.values.floating,
+        brand: shadowTokens.values.brand,
+        sm: shadowTokens.values.sm,
+        md: shadowTokens.values.md,
+        lg: shadowTokens.values.lg,
+        xl: shadowTokens.values.xl,
       },
       // 現代化動畫
       animation: {

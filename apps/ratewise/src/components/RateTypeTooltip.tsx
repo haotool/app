@@ -41,7 +41,7 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
 
           {/* Tooltip 內容（相對定位在觸發元素上方） */}
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200">
-            <div className="relative whitespace-nowrap rounded-lg border border-border/70 bg-surface px-4 py-2 text-text shadow-lg">
+            <div className="relative whitespace-nowrap rounded-control border border-border/70 bg-surface px-4 py-2 text-text shadow-floating">
               {/* 訊息內容 */}
               <p className="text-sm font-medium">{message}</p>
 

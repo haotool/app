@@ -53,10 +53,10 @@ export default function ColorSchemeComparison() {
         <div className="relative">
           <div
             className={`
-              relative overflow-hidden rounded-lg
+              relative overflow-hidden rounded-control
               w-80 max-w-[calc(100vw-2rem)]
               border border-border/70 bg-surface
-              shadow-sm
+              shadow-soft
             `}
           >
             <div className="relative p-6">
@@ -77,9 +77,9 @@ export default function ColorSchemeComparison() {
               <div className="flex flex-col space-y-2">
                 <button
                   className={`
-                    inline-flex w-full items-center justify-center gap-2 rounded-lg
+                    inline-flex w-full items-center justify-center gap-2 rounded-control
                     border border-border/70 bg-surface-elevated px-5 py-3
-                    text-sm font-bold text-text shadow-sm
+                    text-sm font-bold text-text shadow-soft
                     transition-colors duration-200 hover:border-primary/20 hover:bg-surface
                   `}
                   type="button"
@@ -93,7 +93,7 @@ export default function ColorSchemeComparison() {
 
                 <button
                   className={`
-                    inline-flex w-full items-center justify-center gap-2 rounded-lg
+                    inline-flex w-full items-center justify-center gap-2 rounded-control
                     border border-border/70 bg-surface px-5 py-3
                     text-sm font-semibold text-text-muted
                     transition-colors duration-200 hover:bg-surface-elevated hover:text-text
@@ -119,7 +119,7 @@ export default function ColorSchemeComparison() {
           </div>
         </div>
 
-        <div className="mt-4 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-border/70 bg-surface-elevated p-4">
+        <div className="mt-4 w-80 max-w-[calc(100vw-2rem)] rounded-control border border-border/70 bg-surface-elevated p-4">
           <h4 className="mb-2 text-sm font-bold text-text">配色詳情</h4>
           <div className="space-y-1 text-xs text-text-muted">
             <div className="flex items-center gap-2">
@@ -155,28 +155,28 @@ export default function ColorSchemeComparison() {
           </p>
         </div>
 
-        <div className="mb-12 rounded-lg border border-border/70 bg-surface p-6 shadow-sm">
+        <div className="mb-12 rounded-control border border-border/70 bg-surface p-6 shadow-soft">
           <h2 className="mb-4 text-xl font-bold text-text">現行產品語法參考</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p className="mb-2 text-sm font-semibold text-text-muted">基礎表面</p>
-              <div className="h-16 rounded-lg border border-border/70 bg-surface" />
+              <div className="h-16 rounded-control border border-border/70 bg-surface" />
               <code className="mt-1 block text-xs text-text-muted">
                 bg-surface + border-border/70
               </code>
             </div>
             <div>
               <p className="mb-2 text-sm font-semibold text-text-muted">品牌重點</p>
-              <div className="h-16 rounded-lg border border-primary/15 bg-primary/10" />
+              <div className="h-16 rounded-control border border-primary/15 bg-primary/10" />
               <code className="mt-1 block text-xs text-text-muted">
                 bg-primary/10 + border-primary/15
               </code>
             </div>
             <div>
               <p className="mb-2 text-sm font-semibold text-text-muted">互動層次</p>
-              <div className="h-16 rounded-lg border border-border/70 bg-surface-elevated" />
+              <div className="h-16 rounded-control border border-border/70 bg-surface-elevated" />
               <code className="mt-1 block text-xs text-text-muted">
-                bg-surface-elevated + shadow-sm
+                bg-surface-elevated + shadow-soft
               </code>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function ColorSchemeComparison() {
         <div className="mt-12 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-surface-elevated px-6 py-3 font-semibold text-text transition-colors hover:border-primary/20 hover:bg-surface"
+            className="inline-flex items-center gap-2 rounded-control border border-border/70 bg-surface-elevated px-6 py-3 font-semibold text-text transition-colors hover:border-primary/20 hover:bg-surface"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             返回主頁

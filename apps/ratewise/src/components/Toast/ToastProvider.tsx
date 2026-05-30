@@ -143,9 +143,9 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       className={`
         pointer-events-auto
         w-fit max-w-[min(30ch,90vw)]
-        overflow-hidden rounded-lg
+        overflow-hidden rounded-control
         ${styles.bg}
-        shadow-md
+        shadow-soft
         transform transition-[opacity,transform] duration-300 ease-out
         ${
           isVisible && !isExiting

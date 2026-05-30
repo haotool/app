@@ -242,7 +242,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 transition-transform hover:scale-110 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control p-2 transition-transform hover:scale-110 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -254,7 +254,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 opacity-30 transition-opacity hover:bg-surface-elevated hover:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control p-2 opacity-30 transition-opacity hover:bg-surface-elevated hover:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted" />
@@ -269,7 +269,7 @@ export const MultiConverter = ({
                         onBaseCurrencyChange(code);
                       }
                     }}
-                    className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="flex min-h-11 min-w-0 items-center gap-2 rounded-control text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-pressed={isBase}
                     aria-label={t('multiConverter.setBaseCurrency', {
                       name: t(`currencies.${code}`),
@@ -304,7 +304,7 @@ export const MultiConverter = ({
                         calculator.openCalculator(code);
                       }
                     }}
-                    className="block min-h-11 w-full cursor-pointer rounded-lg text-right text-base font-bold leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="block min-h-11 w-full cursor-pointer rounded-control text-right text-base font-bold leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={t('multiConverter.amountClickCalculator', {
                       name: t(`currencies.${code}`),
                       code,
@@ -325,7 +325,7 @@ export const MultiConverter = ({
                             e.stopPropagation();
                             handleUnifiedToggle(code);
                           }}
-                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 font-semibold text-primary-dark transition-colors hover:bg-surface-elevated hover:text-primary-darker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control px-2 font-semibold text-primary-dark transition-colors hover:bg-surface-elevated hover:text-primary-darker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
@@ -339,7 +339,7 @@ export const MultiConverter = ({
                         >
                           <button
                             type="button"
-                            className="inline-flex min-h-11 min-w-11 cursor-help items-center justify-center rounded-lg px-2 font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="inline-flex min-h-11 min-w-11 cursor-help items-center justify-center rounded-control px-2 font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             aria-label={t('multiConverter.onlyOneRateAvailable')}
                           >
                             {getOptionLabel(availability.current)}

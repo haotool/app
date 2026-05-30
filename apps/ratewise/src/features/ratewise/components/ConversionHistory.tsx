@@ -107,7 +107,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
             role="group"
             tabIndex={0}
             className="card group flex items-center gap-3 p-4 transition-[box-shadow,transform] duration-200
-                     hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
+                     hover:shadow-soft focus:outline-none focus:ring-2 focus:ring-primary/30"
             aria-label={t('conversionHistory.entryAriaLabel', {
               from: item.from,
               to: item.to,
@@ -124,7 +124,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
               onTouchStart={() => handleTouchStart(item)}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchEnd}
-              className="-m-1 flex min-h-11 min-w-11 flex-shrink-0 cursor-pointer items-center justify-center -space-x-2 rounded-lg p-2
+              className="-m-1 flex min-h-11 min-w-11 flex-shrink-0 cursor-pointer items-center justify-center -space-x-2 rounded-control p-2
                        transition-[background-color,transform] hover:bg-primary/10 active:scale-95"
               aria-label={t('conversionHistory.reconvertAriaLabel', {
                 from: item.from,
@@ -139,7 +139,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
               type="button"
               onClick={() => handleClick(item)}
               onDoubleClick={() => handleDoubleClick(item)}
-              className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between rounded-lg hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between rounded-control hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label={t('conversionHistory.copyAriaLabel')}
             >
               <div className="text-left">

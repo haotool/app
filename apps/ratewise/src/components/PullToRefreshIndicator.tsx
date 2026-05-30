@@ -47,9 +47,9 @@ export function PullToRefreshIndicator({
     >
       <div
         className="
-          mt-4 rounded-lg border border-border/70
+          mt-4 rounded-control border border-border/70
           bg-surface/95 px-6 py-3
-          shadow-lg
+          shadow-floating
         "
       >
         <div className="flex items-center gap-3">

@@ -28,7 +28,7 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
         {favorites.map((code) => (
           <div
             key={`fav-${code}`}
-            className="flex items-center justify-between rounded-lg border border-border/70 bg-surface-elevated p-3"
+            className="flex items-center justify-between rounded-control border border-border/70 bg-surface-elevated p-3"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{CURRENCY_DEFINITIONS[code].flag}</span>

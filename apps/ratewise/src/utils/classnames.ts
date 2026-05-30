@@ -186,7 +186,7 @@ export function getButtonClasses(
  * @example
  * ```typescript
  * getCalculatorKeyClasses('neutral', { size: 'text-2xl' })
- * // => 'calculator-key relative h-16 rounded-lg font-semibold select-none overflow-hidden bg-neutral-light text-neutral-text hover:bg-neutral active:bg-neutral-dark text-2xl'
+ * // => 'calculator-key relative h-16 rounded-compact font-semibold select-none overflow-hidden bg-neutral-light text-neutral-text hover:bg-neutral active:bg-neutral-dark text-2xl'
  * ```
  */
 export function getCalculatorKeyClasses(
@@ -200,7 +200,7 @@ export function getCalculatorKeyClasses(
   const { size = 'text-2xl', customClass = '', includeBase = true } = options;
 
   const baseStyles = includeBase
-    ? 'calculator-key relative h-16 rounded-lg font-semibold select-none overflow-hidden'
+    ? 'calculator-key relative h-16 rounded-compact font-semibold select-none overflow-hidden'
     : '';
 
   return cn(baseStyles, tokenClasses[variant].all, size, customClass);
