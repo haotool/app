@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-06-04T18:02:03.514Z",
+  "generatedAt": "2026-06-04T20:18:29.609Z",
   "snapshots": [
     {
       "date": "2026-06-05",
       "raw": {
-        "timestamp": "2026-06-04T18:02:03.086Z",
-        "updateTime": "2026/06/05 03:02:03",
+        "timestamp": "2026-06-04T20:18:29.446Z",
+        "updateTime": "2026/06/05 05:18:29",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -62,27 +62,27 @@
           },
           "SGD": {
             "currency": "SGD",
-            "base": 1193.58,
+            "base": 1193.49,
             "buy": 1185,
             "sell": 1170,
-            "spbuy": 1217.33,
-            "spsell": 1169.83
+            "spbuy": 1217.24,
+            "spsell": 1169.74
           },
           "THB": {
             "currency": "THB",
-            "base": 46.93,
+            "base": 46.92,
             "buy": 47.5,
             "sell": 46.3,
-            "spbuy": 49.27,
-            "spsell": 44.12
+            "spbuy": 49.26,
+            "spsell": 44.11
           },
           "PHP": {
             "currency": "PHP",
-            "base": 24.93,
+            "base": 24.96,
             "buy": 24.6,
             "sell": 24.4,
-            "spbuy": 27.42,
-            "spsell": 22.89
+            "spbuy": 27.45,
+            "spsell": 22.92
           },
           "MYR": {
             "currency": "MYR",
@@ -134,11 +134,11 @@
           },
           "CHF": {
             "currency": "CHF",
-            "base": 1942.96,
+            "base": 1942.84,
             "buy": 1920,
             "sell": 1900,
-            "spbuy": 1981.23,
-            "spsell": 1904.69
+            "spbuy": 1981.11,
+            "spsell": 1904.57
           },
           "CAD": {
             "currency": "CAD",
