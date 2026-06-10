@@ -761,7 +761,7 @@ const OpenData = () => {
                     <span className="rounded-compact bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                       {ep.method}
                     </span>
-                    <code className="rounded-compact bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
+                    <code className="min-w-0 break-all rounded-compact bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
                       {ep.path}
                     </code>
                     <span className="font-medium text-text">{ep.description}</span>

@@ -106,6 +106,16 @@ describe('OpenData Page', () => {
       expect(html).not.toContain(APP_INFO.email);
       expect(html).not.toContain('/cdn-cgi/l/email-protection');
     });
+
+    it('端點路徑 code 標籤應可斷行，避免 320px 視口水平溢出', () => {
+      renderOpenData();
+
+      // 無空白的長路徑（如 /public/rates/history/{YYYY-MM-DD}.json）必須 break-all
+      const endpointPath = screen.getByText('/public/rates/history/{YYYY-MM-DD}.json');
+      expect(endpointPath.tagName).toBe('CODE');
+      expect(endpointPath.className).toContain('break-all');
+      expect(endpointPath.className).toContain('min-w-0');
+    });
   });
 
   describe('SSOT — URLs from api-endpoints.ts', () => {

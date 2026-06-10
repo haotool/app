@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+59
+> 本次分數變化：+1（reward 1）｜累計總分：+60
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-11
+- ID：reward-ratewise-responsive-320px-overflow-audit
+- 原因：以 Puppeteer 對正式站 320/768/1280 視口程式化掃描（getBoundingClientRect vs clientWidth），發現 open-data 頁端點路徑 `<code>` 無空白長字串（history/{YYYY-MM-DD}.json）未斷行，320px 下溢出至 right=449；其餘首頁/KRW 換錢所/multi/faq/guide/幣別金額頁皆零溢出
+- 解法：端點 code 標籤補 `min-w-0 break-all`，OpenData.test.tsx 新增 320px 防溢出守門測試；固定寬度掃描確認全站無 >320px 無上限寬度，5 個表格皆有 overflow-x-auto SSOT 包裹
 
 - 日期：2026-06-11
 - ID：reward-ratewise-radius-ssot-regression-guard
