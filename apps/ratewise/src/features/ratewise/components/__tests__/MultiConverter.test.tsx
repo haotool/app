@@ -158,20 +158,20 @@ describe('MultiConverter', () => {
     it('點擊非基準貨幣應該呼叫 onBaseCurrencyChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const usdRow = screen.getByRole('button', { name: /將 美元 \(USD\) 設為基準貨幣/ });
-      fireEvent.click(usdRow);
+      const usdRow = screen.getByText('USD').closest('[data-testid="multi-currency-row"]');
+      expect(usdRow).toBeDefined();
+      const currencyInfo = usdRow!.querySelector('.cursor-pointer');
+      expect(currencyInfo).toBeDefined();
+      fireEvent.click(currencyInfo!);
       expect(defaultProps.onBaseCurrencyChange).toHaveBeenCalledWith('USD');
     });
 
-    it('基準貨幣應該有特殊的樣式', () => {
+    it('基準貨幣列應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const twdRow = screen.getByText('TWD').closest('[data-testid="multi-currency-row"]');
+      expect(twdRow).toBeDefined();
       expect(twdRow).toHaveClass('cursor-default');
-      const usdBaseButton = screen.getByRole('button', {
-        name: /將 美元 \(USD\) 設為基準貨幣/,
-      });
-      expect(usdBaseButton).toHaveAttribute('aria-pressed', 'false');
     });
   });
 
@@ -373,7 +373,8 @@ describe('MultiConverter', () => {
 
       render(<MultiConverter {...propsWithKrwBase} />);
 
-      const twdRate = screen.getByText(/1 KRW = 0\.0222 TWD/);
+      // sell 模式：1 KRW = 1/sell = 1/44.9 ≈ 0.0223 TWD（rateMode SSOT，非硬編碼 1/buy）
+      const twdRate = screen.getByText(/1 KRW = 0\.0223 TWD/);
       const twdRow = twdRate.closest('[data-testid="multi-currency-row"]');
       expect(twdRow).toBeTruthy();
       expect(

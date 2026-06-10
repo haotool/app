@@ -44,8 +44,6 @@ export function PageNavHeader({
           <span>{t('common.back')}</span>
         </button>
 
-        <span className={pageNavHeaderTokens.separator} aria-hidden="true" />
-
         <Breadcrumb items={breadcrumbItems} className={pageNavHeaderTokens.breadcrumbSlot} />
       </div>
     </div>

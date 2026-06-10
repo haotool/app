@@ -617,18 +617,20 @@ export const pageLayoutTokens = {
  * 內容頁頂部返回 + 麵包屑導覽 SSOT
  *
  * 用於 SEO 內容頁、設定子頁與所有需要返回路徑的資訊頁。
+ * 設計決策：採 in-flow 區塊，禁止 sticky / backdrop-blur / 負 margin bleed。
+ * sticky + safe-area hack 在 iOS PWA standalone（black-translucent）下
+ * 會與滾動容器疊層互動導致頂部內容被遮擋。
  * 設計重點：
- * - sticky header 與 iOS PWA safe-area 合併處理
+ * - 返回鈕採韓系 pill 造型（rounded-full + 中性底色），與 RateSelector 語彙一致
  * - 單行麵包屑可水平捲動，最後一項截斷，避免小螢幕撐高 header
  * - 返回按鈕保持 44px 觸控高度與清楚 focus ring
  */
 export const pageNavHeaderTokens = {
-  root: 'sticky top-0 z-20 -mx-4 mb-6 border-b border-border/50 bg-background/92 px-4 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
-  row: 'flex min-h-[44px] min-w-0 items-center gap-3',
+  root: 'mb-6',
+  row: 'flex min-h-11 min-w-0 items-center gap-2.5',
   backButton:
-    'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-control px-1.5 text-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full bg-surface-elevated py-1.5 pl-2.5 pr-3.5 text-sm font-semibold text-text/80 transition-colors duration-200 hover:bg-primary/10 hover:text-primary active:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   backIcon: 'h-4 w-4',
-  separator: 'h-4 w-px shrink-0 bg-border/60',
   breadcrumbSlot: 'min-w-0 flex-1',
 } as const;
 
@@ -1038,11 +1040,11 @@ export const singleConverterLayoutTokens = {
  */
 export const quickAmountButtonTokens = {
   className:
-    'inline-flex min-h-11 flex-shrink-0 items-center justify-center rounded-control bg-surface-elevated px-3 py-2.5 text-sm font-semibold text-text/70 transition-[background-color,color,box-shadow,transform] duration-200 ease-out hover:scale-[1.03] hover:bg-primary/10 hover:text-primary hover:shadow-soft active:scale-[0.97] active:bg-primary/20 active:text-primary active:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'flex-shrink-0 px-3 py-1.5 rounded-compact text-sm font-semibold bg-surface-elevated text-text/70 hover:bg-primary/10 hover:text-primary active:bg-primary/20 active:text-primary transition-[background-color,color,transform] duration-200 ease-out hover:scale-[1.03] active:scale-[0.97] hover:shadow-soft active:shadow-soft micro:px-2 micro:text-xs nano:px-1.5 nano:text-xs',
   /** 基礎樣式 */
   base: {
-    padding: 'px-3 py-2.5',
-    borderRadius: 'rounded-control',
+    padding: 'px-3 py-1.5',
+    borderRadius: 'rounded-compact',
     typography: 'text-sm font-semibold',
   },
   /** 色彩狀態 */

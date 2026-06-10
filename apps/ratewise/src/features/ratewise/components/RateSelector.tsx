@@ -34,8 +34,8 @@ export const RateSelector = ({
 }: RateSelectorProps) => {
   const { t } = useTranslation();
   const optionCountClass = hasExchangeShop
-    ? 'grid-cols-3 w-[15rem] compact:w-[14.5rem] tiny:w-[13.75rem] micro:w-[13rem]'
-    : 'grid-cols-2 w-[11rem] compact:w-[10.5rem] tiny:w-[10rem] micro:w-[9.5rem]';
+    ? 'grid-cols-3 w-[12.5rem] compact:w-[12rem] tiny:w-[11.25rem] micro:w-[10.75rem]'
+    : 'grid-cols-2 w-[8.75rem] compact:w-[8.5rem] tiny:w-[8rem] micro:w-[7.5rem]';
   const bankRateOptions: BankRateOption[] = [
     {
       value: 'spot',
@@ -71,7 +71,7 @@ export const RateSelector = ({
 
   return (
     <div
-      className={`grid h-12 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] rounded-control border border-border/60 bg-background/80 p-0.5 shadow-soft backdrop-blur-md ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+      className={`grid h-7 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] rounded-full border border-border/60 bg-background/80 p-0.5 shadow-soft backdrop-blur-md ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
       role="group"
       aria-label={t('singleConverter.rateTypeGroup')}
     >
@@ -91,7 +91,7 @@ export const RateSelector = ({
             whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
-            className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-compact font-semibold ${
+            className={`relative flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none after:absolute after:-inset-y-2.5 after:inset-x-0 after:content-[''] ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold ${
               isActive ? 'text-primary-foreground' : 'text-text/70 hover:text-text'
             } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
@@ -132,7 +132,7 @@ export const RateSelector = ({
           animate={{
             opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
           }}
-          className={`relative flex min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-compact font-semibold ${
+          className={`relative flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none after:absolute after:-inset-y-2.5 after:inset-x-0 after:content-[''] ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold ${
             rateSource === 'exchange-shop'
               ? 'text-primary-foreground'
               : 'text-text/70 hover:text-text'

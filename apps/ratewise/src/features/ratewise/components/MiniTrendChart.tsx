@@ -1,8 +1,10 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   createChart,
   ColorType,
   LineStyle,
+  CrosshairMode,
   AreaSeries,
   type IChartApi,
   type ISeriesApi,
@@ -32,32 +34,24 @@ interface TooltipData {
 }
 
 /**
- * 迷你趨勢圖組件 - 現代化高級 APP 風格
- * 使用 lightweight-charts 專業金融圖表庫
- * 特色：
- * - 左到右酷炫動畫
- * - Hover/Touch 互動顯示日期和價格
- * - 觸控長按滑動支援（行動裝置）
- * - 數據 ≥ 2 天時統一延伸到最寬
- * - 現代化配色與微互動
- * - **SSOT Design Token** - 圖表顏色從 CSS Variables 獲取
+ * 迷你趨勢圖 — lightweight-charts AreaSeries。
  *
- * @version 2.0.0 - 新增觸控長按滑動 Tooltip 支援
+ * 觸控追蹤採官方 tracking-without-long-press 做法：
+ * handleScroll/handleScale 已禁用，touchstart 直接啟動 crosshair，
+ * touchmove 以 setCrosshairPosition 程式化移動。
+ *
+ * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
  */
 export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
-  // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
   const displayData = data;
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [isTouching, setIsTouching] = useState(false);
-  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 追蹤主題變化 - 用於觸發圖表重建
   const [themeVersion, setThemeVersion] = useState(0);
 
-  // MutationObserver 監聽 <html> 的 style/class 變化（主題或字體切換）
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -75,7 +69,6 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     return () => observer.disconnect();
   }, []);
 
-  // 獲取主題色彩（SSOT from CSS Variables）- themeVersion 變化時重新獲取
   // eslint-disable-next-line react-hooks/exhaustive-deps -- themeVersion 是故意的依賴，用於觸發主題切換時重建圖表
   const getThemeColors = useCallback(() => getChartColors(), [themeVersion]);
 
@@ -90,7 +83,6 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     const minIndex = rates.indexOf(min);
     const maxIndex = rates.indexOf(max);
 
-    // 計算24小時變化
     const currentRate = rates[rates.length - 1] ?? 0;
     const rate24hAgo = rates[0] ?? 0;
     const change24h = currentRate - rate24hAgo;
@@ -102,7 +94,6 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   useEffect(() => {
     if (!chartContainerRef.current || displayData.length < 2) return;
 
-    // 從 SSOT 獲取圖表顏色
     const chartColors = getThemeColors();
 
     const chart = createChart(chartContainerRef.current, {
@@ -114,23 +105,17 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         vertLines: { visible: false },
         horzLines: { visible: false },
       },
-      rightPriceScale: {
-        visible: false,
-      },
-      timeScale: {
-        visible: false,
-      },
+      rightPriceScale: { visible: false },
+      timeScale: { visible: false },
       crosshair: {
-        mode: 0, // CrosshairMode.Normal - 自由移動不吸附
+        mode: CrosshairMode.Magnet,
         vertLine: {
           width: 1,
-          color: chartColors.topColor, // SSOT: 使用主題色 (40% opacity)
+          color: chartColors.topColor,
           style: LineStyle.Solid,
           labelVisible: false,
         },
-        horzLine: {
-          visible: false,
-        },
+        horzLine: { visible: false },
       },
       handleScroll: false,
       handleScale: false,
@@ -140,20 +125,23 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
 
     chartRef.current = chart;
 
-    // SSOT: 從 CSS Variables 獲取圖表配色
     const series = chart.addSeries(AreaSeries, {
-      lineColor: chartColors.lineColor, // SSOT: --color-chart-line
+      lineColor: chartColors.lineColor,
       lineWidth: 2,
-      topColor: chartColors.topColor, // SSOT: --color-chart-area-top (40% opacity)
-      bottomColor: chartColors.bottomColor, // SSOT: --color-chart-area-bottom (10% opacity)
+      topColor: chartColors.topColor,
+      bottomColor: chartColors.bottomColor,
       lineStyle: LineStyle.Solid,
+      crosshairMarkerVisible: true,
+      crosshairMarkerRadius: 4,
+      crosshairMarkerBorderWidth: 2,
+      crosshairMarkerBorderColor: chartColors.lineColor,
+      crosshairMarkerBackgroundColor: chartColors.markerBackground,
       priceLineVisible: false,
       lastValueVisible: false,
     });
 
     seriesRef.current = series;
 
-    // 轉換數據格式為 lightweight-charts 格式
     const chartData = displayData.map((point) => ({
       time: point.date,
       value: point.rate,
@@ -162,20 +150,17 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     series.setData(chartData);
     chart.timeScale().fitContent();
 
-    // Performance mark: 趨勢圖渲染完成
     if (typeof performance !== 'undefined' && performance.mark) {
       try {
         performance.mark('rw:chart-rendered');
-        // 嘗試量測從 fetch 到渲染的總時間
         if (performance.getEntriesByName('rw:chart-fetch-start').length > 0) {
           performance.measure('rw:chart-total-time', 'rw:chart-fetch-start', 'rw:chart-rendered');
         }
       } catch {
-        // Safari 可能拒絕某些 mark/measure
+        // Safari 可能拒絕某些 mark/measure。
       }
     }
 
-    // Crosshair 移動事件 - 顯示 tooltip
     chart.subscribeCrosshairMove((param) => {
       if (param.point === undefined || !param.time || param.point.x < 0 || param.point.y < 0) {
         setTooltipData(null);
@@ -189,14 +174,13 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
               date: param.time as string,
               rate: dataPoint.value,
               x: rect.left + param.point.x,
-              y: rect.top + param.point.y,
+              y: rect.top,
             });
           }
         }
       }
     });
 
-    // 處理視窗大小變化
     const handleResize = () => {
       if (chartContainerRef.current) {
         chart.applyOptions({
@@ -218,129 +202,57 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
   /**
-   * Touch event handler - Enables tooltip after 150ms long press
-   * 觸控事件處理 - 長按 150ms 後啟動 Tooltip 滑動模式
-   *
-   * Implementation based on lightweight-charts best practices:
-   * - Long press (150ms) activates tracking mode
-   * - Touch coordinates are converted to data points
-   * - Tooltip displays date and exchange rate
-   *
+   * 觸控追蹤（官方 tracking-without-long-press 做法）。
+   * handleScroll/handleScale 已禁用，touchstart 即刻啟動 crosshair 追蹤。
    * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
    */
+  const updateCrosshairFromTouch = useCallback((clientX: number, clientY: number) => {
+    const container = chartContainerRef.current;
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!container || !chart || !series) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const price = series.coordinateToPrice(y);
+    const time = chart.timeScale().coordinateToTime(x);
+
+    if (price === null || time === null) return;
+    if (!Number.isFinite(price as number)) return;
+
+    chart.setCrosshairPosition(price as number, time, series);
+  }, []);
+
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       const touch = e.touches[0];
-      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
+      if (!touch) return;
 
-      // Store initial touch position for use in timer callback
-      const initialClientX = touch.clientX;
-      const initialClientY = touch.clientY;
-
-      touchTimerRef.current = setTimeout(() => {
-        setIsTouching(true);
-
-        // Calculate tooltip data immediately when long press is detected
-        const container = chartContainerRef.current;
-        const chart = chartRef.current;
-        if (container && chart) {
-          const rect = container.getBoundingClientRect();
-          const x = initialClientX - rect.left;
-
-          // Convert screen coordinate to logical index
-          const timeScale = chart.timeScale();
-          const logical = timeScale.coordinateToLogical(x);
-
-          if (logical !== null && logical >= 0 && logical < displayData.length) {
-            const dataPoint = displayData[Math.round(logical)];
-            if (dataPoint) {
-              setTooltipData({
-                date: dataPoint.date,
-                rate: dataPoint.rate,
-                x: initialClientX,
-                y: initialClientY - 20,
-              });
-            }
-          }
-        }
-      }, 150); // 150ms long press threshold
+      setIsTouching(true);
+      updateCrosshairFromTouch(touch.clientX, touch.clientY);
     },
-    [displayData],
+    [updateCrosshairFromTouch],
   );
 
-  /**
-   * Handle touch move event for tooltip tracking (native event handler)
-   * 處理觸控滑動事件以追蹤 Tooltip 位置（原生事件處理器）
-   *
-   * IMPORTANT: This is a native TouchEvent handler, NOT a React.TouchEvent handler.
-   * React's synthetic event handlers are passive by default, preventing preventDefault().
-   * We use useEffect to attach this handler with { passive: false } to enable preventDefault().
-   *
-   * Uses lightweight-charts API:
-   * - coordinateToLogical() converts x coordinate to data index
-   * - setCrosshairPosition() programmatically moves the crosshair
-   *
-   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
-   * @see https://stackoverflow.com/questions/63663025/react-onwheel-handler-cant-preventdefault-because-its-a-passive-event-listener
-   */
   const handleTouchMoveNative = useCallback(
     (e: TouchEvent) => {
       if (!isTouching) return;
-      e.preventDefault(); // Prevent page scrolling while tracking (works with passive: false)
+      e.preventDefault();
 
       const touch = e.touches[0];
-      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
+      if (!touch) return;
 
-      const container = chartContainerRef.current;
-      const rect = container.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-
-      // Convert screen coordinate to logical data index
-      const timeScale = chartRef.current.timeScale();
-      const logical = timeScale.coordinateToLogical(x);
-
-      if (logical !== null && logical >= 0 && logical < displayData.length) {
-        const index = Math.round(logical);
-        const dataPoint = displayData[index];
-        if (dataPoint) {
-          // Update tooltip data with touch position
-          setTooltipData({
-            date: dataPoint.date,
-            rate: dataPoint.rate,
-            x: touch.clientX,
-            y: touch.clientY - 20, // Position tooltip above finger
-          });
-
-          // Programmatically set crosshair position for visual feedback
-          try {
-            chartRef.current.setCrosshairPosition(
-              dataPoint.rate,
-              dataPoint.date,
-              seriesRef.current,
-            );
-          } catch {
-            // Silently fail if setCrosshairPosition is not supported
-          }
-        }
-      }
+      updateCrosshairFromTouch(touch.clientX, touch.clientY);
     },
-    [isTouching, displayData],
+    [isTouching, updateCrosshairFromTouch],
   );
 
-  /**
-   * Attach touchmove event listener with passive: false
-   * 附加 touchmove 事件監聽器，設定 passive: false 以支援 preventDefault()
-   *
-   * React's synthetic events are passive by default for touch/wheel events.
-   * To call preventDefault(), we must use native addEventListener with { passive: false }.
-   *
-   * @see https://stackoverflow.com/questions/76406592/how-to-do-passivefalse-event-listeners-in-react
-   */
   useEffect(() => {
     const container = chartContainerRef.current;
     if (!container) return;
 
-    // Add non-passive touchmove listener to enable preventDefault()
     container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
 
     return () => {
@@ -348,29 +260,17 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     };
   }, [handleTouchMoveNative]);
 
-  /**
-   * Handle touch end event to clean up tracking state
-   * 處理觸控結束事件以清理追蹤狀態
-   *
-   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
-   */
   const handleTouchEnd = useCallback(() => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
     setIsTouching(false);
     setTooltipData(null);
 
-    // Clear crosshair position when touch ends
     try {
       chartRef.current?.clearCrosshairPosition();
     } catch {
-      // Silently fail if clearCrosshairPosition is not supported
+      // Silently fail。
     }
   }, []);
 
-  // 數據不足時不顯示圖表
   if (displayData.length < 2) {
     return null;
   }
@@ -384,8 +284,6 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       transition={chartTransitions.fadeIn}
       whileHover={{ scale: 1.01, y: -2 }}
     >
-      {/* Lightweight Charts 趨勢圖 - 支援觸控 */}
-      {/* Note: touchmove handler attached via useEffect with { passive: false } */}
       <div
         ref={chartContainerRef}
         data-testid="mini-trend-chart-surface"
@@ -395,41 +293,42 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         onTouchCancel={handleTouchEnd}
       />
 
-      {/* Hover Tooltip - SSOT 主題色設計 */}
-      <AnimatePresence>
-        {tooltipData && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 8 }}
-            transition={chartTransitions.tooltipBounce}
-            className="pointer-events-none"
-            style={{
-              position: 'fixed',
-              left: `${tooltipData.x}px`,
-              top: `${tooltipData.y - 55}px`,
-              zIndex: 99999,
-              transform: 'translateX(-50%)',
-            }}
-          >
-            {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
-            <div className="relative">
-              <div className="rounded-control border border-border/70 bg-surface/95 px-3 py-1.5 shadow-floating">
-                <div className="flex items-center gap-2.5 text-xs leading-tight whitespace-nowrap">
-                  <span className="text-primary font-semibold">{tooltipData.date}</span>
-                  <span className="text-foreground font-bold">
-                    {formatExchangeRate(tooltipData.rate)}
-                  </span>
+      {createPortal(
+        <AnimatePresence>
+          {tooltipData && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 8 }}
+              transition={chartTransitions.tooltipBounce}
+              className="pointer-events-none"
+              style={{
+                position: 'fixed',
+                left: `${tooltipData.x}px`,
+                top: `${tooltipData.y - 55}px`,
+                zIndex: 99999,
+                x: '-50%',
+              }}
+            >
+              <div className="relative">
+                <div className="rounded-control border border-border/70 bg-surface/95 px-3 py-1.5 shadow-floating backdrop-blur-sm">
+                  <div className="flex items-center gap-2.5 text-xs leading-tight whitespace-nowrap">
+                    <span className="text-primary font-semibold">{tooltipData.date}</span>
+                    <span className="text-text font-bold">
+                      {formatExchangeRate(tooltipData.rate)}
+                    </span>
+                  </div>
                 </div>
+                <div
+                  className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-border/70 bg-surface/95"
+                  aria-hidden="true"
+                />
               </div>
-              <div
-                className="absolute -bottom-[5px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-border/70 bg-surface/95 shadow-soft"
-                aria-hidden="true"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </motion.div>
   );
 }

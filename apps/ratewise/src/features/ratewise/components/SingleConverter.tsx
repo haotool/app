@@ -224,7 +224,7 @@ export const SingleConverter = ({
         if (!isMounted) return;
         setLoadingTrend(true);
         const exchangeShopLatestRate = moneyBoxRate
-          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
+          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency, rateMode)
           : null;
         const shouldUseExchangeShopTrend =
           rateSource === 'exchange-shop' &&
@@ -242,7 +242,7 @@ export const SingleConverter = ({
 
           const historyPoints = historicalRates
             .map(({ date, rate }) => {
-              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency);
+              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency, rateMode);
               return converterRate && Number.isFinite(converterRate) && converterRate > 0
                 ? { date, rate: converterRate }
                 : null;
@@ -367,7 +367,15 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    trendDateKey,
+    rateSource,
+    rateMode,
+    moneyBoxRate,
+    exchangeShopCurrency,
+  ]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */

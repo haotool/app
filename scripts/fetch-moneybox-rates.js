@@ -35,6 +35,31 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const MONEYBOX_API_URL =
   'https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4';
 
+function extractSeoulSnapshotDate(snapshot) {
+  const updateTime = snapshot?.updateTime;
+  if (typeof updateTime === 'string') {
+    const match = updateTime.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+  }
+
+  const timestamp = snapshot?.timestamp;
+  if (typeof timestamp === 'string') {
+    const parsed = new Date(timestamp);
+    if (!Number.isNaN(parsed.getTime())) {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(parsed);
+    }
+  }
+
+  return null;
+}
+
 function writeCurrentFetchSnapshot(ratesData) {
   const output = process.env.MONEYBOX_FETCH_OUTPUT_FILE;
   if (!output) return;
@@ -204,20 +229,55 @@ function listRateChanges(oldRates = {}, newRates = {}) {
   );
 }
 
+function shouldRefreshLatestSnapshot(oldData = {}, newData = {}) {
+  const rateChanges = listRateChanges(oldData.rates, newData.rates);
+  if (rateChanges.length > 0) {
+    return {
+      shouldUpdate: true,
+      reason: 'rate-changed',
+      rateChanges,
+    };
+  }
+
+  const oldSnapshotDate = extractSeoulSnapshotDate(oldData);
+  const newSnapshotDate = extractSeoulSnapshotDate(newData);
+  if (oldSnapshotDate && newSnapshotDate && oldSnapshotDate !== newSnapshotDate) {
+    return {
+      shouldUpdate: true,
+      reason: 'date-rollover',
+      oldSnapshotDate,
+      newSnapshotDate,
+      rateChanges,
+    };
+  }
+
+  return {
+    shouldUpdate: false,
+    reason: 'unchanged',
+    rateChanges,
+    oldSnapshotDate,
+    newSnapshotDate,
+  };
+}
+
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    const decision = shouldRefreshLatestSnapshot(oldData, newData);
 
-    const rateChanges = listRateChanges(oldData.rates, newData.rates);
-    const hasChanges = rateChanges.length > 0;
-
-    if (hasChanges) {
+    if (decision.shouldUpdate && decision.reason === 'rate-changed') {
+      const { rateChanges } = decision;
       console.log(
         `🔄 Rate change detected: ${rateChanges.map(({ currency, field }) => `${currency}.${field}`).join(', ')}`,
       );
       for (const { currency, field, oldValue, newValue } of rateChanges) {
         console.log(`   ${currency}.${field}: ${oldValue} → ${newValue}`);
       }
+    } else if (decision.shouldUpdate && decision.reason === 'date-rollover') {
+      console.log(
+        `📅 Snapshot date rolled over: ${decision.oldSnapshotDate} → ${decision.newSnapshotDate}`,
+      );
+      console.log('   Refreshing latest.json to keep current snapshot aligned with daily history');
     } else {
       const currentCurrencies = Object.keys(newData.rates ?? {}).length;
       console.log('📊 Rates unchanged since last update');
@@ -225,7 +285,7 @@ function hasRateChanges(newData) {
       console.log(`   Currencies checked: ${currentCurrencies}`);
     }
 
-    return hasChanges;
+    return decision.shouldUpdate;
   } catch {
     console.log('📝 No previous data found, will create new file');
     return true;
@@ -308,3 +368,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export { fetchMoneyBoxRates };
 export { listRateChanges };
+export { extractSeoulSnapshotDate, shouldRefreshLatestSnapshot };

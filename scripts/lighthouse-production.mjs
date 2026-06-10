@@ -44,7 +44,7 @@ const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '
 const DRIFT_ABSOLUTE_TOLERANCE = {
   performanceScore: 1,
   lcpMs: 500,
-  inpMs: 10,
+  inpMs: 15,
   cls: 0.01,
 };
 

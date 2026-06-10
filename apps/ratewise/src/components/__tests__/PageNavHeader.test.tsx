@@ -31,21 +31,22 @@ function renderHeader() {
 }
 
 describe('PageNavHeader', () => {
-  it('應由 SSOT class 為 iOS PWA sticky header 預留 safe-area top', () => {
+  it('不得使用 sticky 定位與 safe-area hack，避免 PWA 用戶內容被遮擋', () => {
     renderHeader();
 
     const header = screen.getByTestId('page-nav-header');
-    expect(header).toHaveClass('pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]');
+    expect(header.className).not.toContain('sticky');
+    expect(header.className).not.toContain('safe-area-inset-top');
+    expect(header.className).not.toContain('backdrop-blur');
+    expect(header.className).not.toContain('-mx-4');
     expect(header).not.toHaveAttribute('style');
   });
 
-  it('應使用 responsive bleed 並保持 breadcrumb 單行可截斷', () => {
+  it('應為 in-flow 區塊並保持 breadcrumb 單行可截斷', () => {
     renderHeader();
 
     const header = screen.getByTestId('page-nav-header');
-    expect(header.className).toContain('-mx-4');
-    expect(header.className).toContain('sm:-mx-6');
-    expect(header.className).toContain('lg:-mx-8');
+    expect(header.className).toContain('mb-');
 
     const breadcrumb = screen.getByRole('navigation', { name: '麵包屑' });
     const breadcrumbList = breadcrumb.querySelector('ol');
@@ -54,9 +55,12 @@ describe('PageNavHeader', () => {
     expect(breadcrumbList).toHaveClass('whitespace-nowrap');
   });
 
-  it('返回按鈕應有鍵盤 focus 樣式', () => {
+  it('返回按鈕應為 pill 造型且維持 44px 觸控目標與鍵盤 focus 樣式', () => {
     renderHeader();
 
-    expect(screen.getByRole('button', { name: '返回' })).toHaveClass('focus-visible:ring-2');
+    const backButton = screen.getByRole('button', { name: '返回' });
+    expect(backButton).toHaveClass('focus-visible:ring-2');
+    expect(backButton.className).toContain('min-h-11');
+    expect(backButton.className).toContain('rounded-full');
   });
 });

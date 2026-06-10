@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+56
+> 本次分數變化：+1（reward 1）｜累計總分：+57
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-11
+- ID：reward-ratewise-exchange-shop-ratemode-ssot-nav-header-deflake
+- 原因：換錢所 `computeConverterRate` 硬編碼買賣方向並忽略 rateMode（選中間價無效），內容頁 sticky header 的 safe-area hack 在 iOS PWA standalone 會遮擋頂部內容，且在途 UIUX 變更留有未同步測試（themes SSR fallback、換錢所匯率期望值鎖死舊 bug）
+- 解法：TDD 將換錢所選價收斂至 `computeConverterRate(rateMode)` 單一 SSOT（mid=(買+賣)/2、sell 雙向賣出、auto 維持客戶視角）並貫穿 getUnitExchangeRate/報價 adapter/趨勢圖；PageNavHeader 砍掉 sticky 改 in-flow pill 返回鈕並以測試禁止 sticky 回歸；RateSelector 以透明命中區補回 44px 觸控目標；同步修正在途測試與 gitignore，typecheck/lint/prettier/1800+ Vitest 全綠
 
 - 日期：2026-05-23
 - ID：reward-ratewise-uiux-token-ssot-convergence

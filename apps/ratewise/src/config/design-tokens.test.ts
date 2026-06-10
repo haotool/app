@@ -285,14 +285,14 @@ describe('Design Token System', () => {
       expect(pageLayoutTokens.content.maxWidth).toBe(1024);
     });
 
-    it('PageNavHeader 與 Breadcrumb 應集中定義 PWA safe-area 與截斷規則', async () => {
+    it('PageNavHeader 應為 in-flow 區塊（禁止 sticky），Breadcrumb 集中定義截斷規則', async () => {
       const { breadcrumbTokens, pageNavHeaderTokens } = await import('./design-tokens');
 
-      expect(pageNavHeaderTokens.root).toContain(
-        'pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]',
-      );
+      expect(pageNavHeaderTokens.root).not.toContain('sticky');
+      expect(pageNavHeaderTokens.root).not.toContain('safe-area-inset-top');
+      expect(pageNavHeaderTokens.root).not.toContain('backdrop-blur');
       expect(pageNavHeaderTokens.backButton).toContain('min-h-11');
-      expect(pageNavHeaderTokens.backButton).toContain('rounded-control');
+      expect(pageNavHeaderTokens.backButton).toContain('rounded-full');
       expect(pageNavHeaderTokens.breadcrumbSlot).toContain('min-w-0');
       expect(breadcrumbTokens.list).toContain('touch-pan-x');
       expect(breadcrumbTokens.list).toContain('overflow-x-auto');
@@ -317,7 +317,7 @@ describe('Design Token System', () => {
     it('互動與回饋 family token 應收斂快速金額與錯誤復原 UI', async () => {
       const { feedbackSurfaceTokens, quickAmountButtonTokens } = await import('./design-tokens');
 
-      expect(quickAmountButtonTokens.className).toContain('rounded-control');
+      expect(quickAmountButtonTokens.className).toContain('rounded-compact');
       expect(quickAmountButtonTokens.className).toContain('transition-[background-color');
       expect(feedbackSurfaceTokens.card).toContain('rounded-card');
       expect(feedbackSurfaceTokens.actionButton).toContain('min-h-11');

@@ -417,6 +417,7 @@ export function getChartColors(): {
   lineColor: string;
   topColor: string;
   bottomColor: string;
+  markerBackground: string;
 } {
   const fallbackColors = getStyleColors(DEFAULT_THEME_CONFIG.style);
 
@@ -426,6 +427,7 @@ export function getChartColors(): {
       lineColor: toRgbColor(fallbackColors.chartLine),
       topColor: `rgba(${toCommaSeparatedRgb(fallbackColors.chartAreaTop)}, 0.25)`,
       bottomColor: `rgba(${toCommaSeparatedRgb(fallbackColors.chartAreaBottom)}, 0)`,
+      markerBackground: 'rgb(255, 255, 255)',
     };
   }
 
@@ -438,12 +440,15 @@ export function getChartColors(): {
     style.getPropertyValue('--color-chart-area-top').trim() || fallbackColors.chartAreaTop;
   const bottom =
     style.getPropertyValue('--color-chart-area-bottom').trim() || fallbackColors.chartAreaBottom;
+  // crosshair marker 背景跟隨 surface token（深色主題自動適配）
+  const surface = style.getPropertyValue('--color-surface').trim() || '255 255 255';
 
   // Convert to comma-separated format for Canvas/lightweight-charts
   return {
     lineColor: toRgbColor(line),
     topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.25)`,
     bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0)`,
+    markerBackground: toRgbColor(surface),
   };
 }
 

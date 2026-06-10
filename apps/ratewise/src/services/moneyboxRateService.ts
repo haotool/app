@@ -7,7 +7,7 @@ import {
 import { CDN_DATA_BASE, PROVIDER_RATES_PATH, RAW_DATA_BASE } from '../config/api-endpoints';
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
-import type { CurrencyCode } from '../features/ratewise/types';
+import type { CurrencyCode, RateMode } from '../features/ratewise/types';
 import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
@@ -346,15 +346,30 @@ export async function fetchExchangeShopHistoricalRatesRange(
   return result;
 }
 
+/**
+ * 換錢所單位匯率 SSOT：依 rateMode 選價，禁止在呼叫端硬編碼買賣價方向。
+ *
+ * | mode | TWD→外幣 | 外幣→TWD | 說明 |
+ * |------|---------|---------|------|
+ * | auto | sell    | 1/buy   | 客戶視角（預設，維持既有行為）|
+ * | sell | sell    | 1/sell  | 換錢所賣出牌價 |
+ * | mid  | (buy+sell)/2 | 1/mid | 市場參考中間價 |
+ */
 export function computeConverterRate(
   rate: ExchangeShopRate,
   from: CurrencyCode,
   to: CurrencyCode,
+  rateMode: RateMode = 'auto',
 ): number | null {
+  const midRate = (rate.buy + rate.sell) / 2;
+
   if (from === 'TWD' && to === rate.currency && hasExchangeShopProvider(to)) {
+    if (rateMode === 'mid') return midRate;
     return rate.sell;
   }
   if (to === 'TWD' && from === rate.currency && hasExchangeShopProvider(from)) {
+    if (rateMode === 'mid') return 1 / midRate;
+    if (rateMode === 'sell') return 1 / rate.sell;
     return 1 / rate.buy;
   }
   return null;

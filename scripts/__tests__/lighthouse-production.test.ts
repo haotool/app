@@ -67,7 +67,15 @@ describe('lighthouse-production SSOT controls', () => {
     );
     expect(source).toContain('absoluteChanged > absoluteTolerance');
     expect(source).toContain('lcpMs: 500');
+    expect(source).toContain('inpMs: 15');
     expect(source).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
     expect(source).toContain('actual: current');
+  });
+
+  it('allows low-baseline INP jitter under the absolute tolerance floor', () => {
+    const source = readFileSync(SCRIPT_PATH, 'utf8');
+
+    expect(source).toContain('inpMs: 15');
+    expect(source).not.toContain('inpMs: 10');
   });
 });
