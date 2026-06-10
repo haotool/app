@@ -260,7 +260,7 @@ function StarButton({
       onFocus={() => onHover(star)}
       onBlur={onLeave}
       className={`
-        w-8 h-8 flex items-center justify-center rounded
+        flex h-11 w-11 items-center justify-center rounded-full
         ${prefersReducedMotion ? '' : 'transition-transform duration-100 hover:scale-110 active:scale-95'}
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1
       `}

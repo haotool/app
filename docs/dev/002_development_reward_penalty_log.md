@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+57
+> 本次分數變化：+1（reward 1）｜累計總分：+58
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-11
+- ID：reward-ratewise-a11y-touch-target-focus-radius-convergence
+- 原因：UIUX 稽核發現 RatingModal 星星按鈕僅 32px 觸控目標、OpenData 複製鈕與 MailtoLink、計算機關閉鈕缺 focus-visible 指示，且 OpenData/Footer 多處 bare `rounded`（4px）偏離語義 radius token（小型元素應用 rounded-compact 8px）
+- 解法：TDD 新增 RatingModal 觸控目標守門測試後將星星升至 44px 圓形命中區；複製鈕以透明 after 命中區補 44px 並補 focus ring；MailtoLink 與計算機關閉鈕補 focus-visible 與 44px；OpenData/Footer bare rounded 全數收斂為 rounded-compact，typecheck/eslint/prettier/相關 Vitest 全綠
 
 - 日期：2026-06-11
 - ID：reward-ratewise-exchange-shop-ratemode-ssot-nav-header-deflake

@@ -306,7 +306,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
       type="button"
       onClick={handleCopy}
       aria-label={label}
-      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+      className={`relative inline-flex items-center gap-1 rounded-compact px-2 py-0.5 text-xs font-medium transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
         copied
           ? 'border border-success/20 bg-success/10 text-text'
           : 'bg-surface-elevated text-text-muted hover:text-text'
@@ -448,12 +448,12 @@ function UrlCopyRow({
           {label}
         </span>
         {recommended && (
-          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+          <span className="rounded-compact bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
             建議
           </span>
         )}
       </div>
-      <div className="flex min-w-0 items-center gap-2 rounded bg-surface-elevated px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2 rounded-compact bg-surface-elevated px-3 py-2">
         <a
           href={url}
           target="_blank"
@@ -636,9 +636,11 @@ const OpenData = () => {
             >
               <span className="font-semibold text-text">快取建議</span>
               ：CDN 端點支援{' '}
-              <code className="rounded bg-surface px-1 font-mono text-xs">If-None-Match</code> ETag
-              條件式請求， 資料未變時回傳 304（零 body），可節省約 5 KB／次。建議 client 端快取 5
-              分鐘，避免無意義重複請求。
+              <code className="rounded-compact bg-surface px-1 font-mono text-xs">
+                If-None-Match
+              </code>{' '}
+              ETag 條件式請求， 資料未變時回傳 304（零 body），可節省約 5 KB／次。建議 client 端快取
+              5 分鐘，避免無意義重複請求。
             </div>
 
             {/* ── 資料新鮮度與時間戳記說明 ── */}
@@ -681,22 +683,22 @@ const OpenData = () => {
                   className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
                 >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded border border-warning/25 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-text">
+                    <span className="rounded-compact border border-warning/25 bg-warning/10 px-2 py-0.5 text-xs font-semibold text-text">
                       變動偵測機制
                     </span>
                   </div>
                   <p className="break-words text-text">
                     GitHub Actions 每 5 分鐘抓取台銀 CSV 後，會將本次各幣別匯率與前次儲存的
-                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="mx-1 rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       rates
                     </code>
                     物件進行 JSON 字串比對。若完全相同，腳本立即結束、不寫檔、不
                     commit；只有在至少一個幣別數值發生變化時，才會寫入新的
-                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="mx-1 rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       latest.json
                     </code>
                     並更新
-                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="mx-1 rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       updateTime
                     </code>
                     。
@@ -707,18 +709,18 @@ const OpenData = () => {
                   className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
                 >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-text">
+                    <span className="rounded-compact border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-text">
                       為何來源時間與刷新時間差距較大？
                     </span>
                   </div>
                   <p className="break-words text-text">
                     應用介面顯示的「<strong>來源</strong>」時間對應
-                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="mx-1 rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       updateTime
                     </code>
                     ，代表台銀牌告上次實際更新的時刻；「<strong>刷新</strong>
                     」時間則是用戶端瀏覽器本次成功取得資料的時刻。臺灣銀行通常每個交易日更新牌告數次（多集中於開盤後），非交易時段、例假日或銀行內部尚未發布新牌告時，
-                    <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="mx-1 rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       updateTime
                     </code>
                     不會變動，因此兩者之間出現數小時乃至跨日的落差屬預期行為，並非資料延遲或系統異常。
@@ -729,13 +731,13 @@ const OpenData = () => {
                   className={`${contentPageTokens.article.card} min-w-0 text-sm leading-relaxed`}
                 >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="rounded border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-semibold text-text">
+                    <span className="rounded-compact border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-semibold text-text">
                       Actions 排程說明
                     </span>
                   </div>
                   <p className="break-words text-text">
                     排程使用標準 cron 語法{' '}
-                    <code className="rounded bg-surface-elevated px-1 font-mono text-xs">
+                    <code className="rounded-compact bg-surface-elevated px-1 font-mono text-xs">
                       */5 * * * *
                     </code>
                     ，理論間隔 5 分鐘。受 GitHub Actions 公共執行器佇列影響，實際觸發可能有 1–10
@@ -756,10 +758,10 @@ const OpenData = () => {
               {OPEN_DATA_API_ENDPOINTS.map((ep) => (
                 <div key={ep.path} className={contentPageTokens.article.card}>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                    <span className="rounded-compact bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                       {ep.method}
                     </span>
-                    <code className="rounded bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
+                    <code className="rounded-compact bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
                       {ep.path}
                     </code>
                     <span className="font-medium text-text">{ep.description}</span>
@@ -805,7 +807,7 @@ const OpenData = () => {
             <h2 className="mb-2 text-2xl font-semibold text-text">資料格式</h2>
             <p className="mb-5 text-sm text-text-muted">
               回應為 JSON，
-              <code className="rounded bg-surface-elevated px-1 font-mono">
+              <code className="rounded-compact bg-surface-elevated px-1 font-mono">
                 Content-Type: application/json
               </code>
               。
@@ -853,7 +855,7 @@ const OpenData = () => {
                   {RATE_MODE_STRATEGY_ROWS.map((strategy) => (
                     <tr key={strategy.mode}>
                       <td className="px-4 py-3">
-                        <code className="rounded bg-surface-elevated px-1 font-mono text-xs text-primary">
+                        <code className="rounded-compact bg-surface-elevated px-1 font-mono text-xs text-primary">
                           {strategy.mode}
                         </code>
                         <span className="ml-2 text-text">{strategy.name}</span>

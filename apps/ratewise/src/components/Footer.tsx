@@ -224,7 +224,7 @@ export function Footer() {
               title={`Built on ${buildTime}`}
             >
               {appVersion}
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-text px-2 py-1 text-xs text-surface opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-compact bg-text px-2 py-1 text-xs text-surface opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 Built on {buildTime}
                 <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
               </span>

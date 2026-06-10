@@ -247,7 +247,7 @@ export function CalculatorKeyboard({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-text-muted transition-colors hover:text-neutral-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     aria-label={t('calculator.close')}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
