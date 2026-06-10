@@ -1542,7 +1542,7 @@ export const notificationTokens = {
   actions: {
     primary:
       'pointer-events-auto inline-flex items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text shadow-soft transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out hover:border-primary/30 hover:bg-surface hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
-    text: 'inline-flex items-center rounded px-1 text-xs text-text-muted transition-colors duration-150 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+    text: 'inline-flex items-center rounded-compact px-1 text-xs text-text-muted transition-colors duration-150 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
     icon: 'pointer-events-auto rounded-full border border-border/70 bg-surface-elevated p-1.5 text-text-muted transition-[color,background-color,border-color,transform] duration-200 ease-out hover:border-primary/20 hover:bg-surface hover:text-text active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
   },
 

@@ -522,7 +522,7 @@ export const SingleConverter = ({
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[opacity,transform] duration-500 will-change-[opacity,transform] overflow-hidden rounded-b-xl ${
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[opacity,transform] duration-500 will-change-[opacity,transform] overflow-hidden rounded-b-card ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >

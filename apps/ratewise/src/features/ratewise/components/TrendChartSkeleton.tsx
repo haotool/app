@@ -17,7 +17,7 @@ export const TrendChartSkeleton: FC = () => {
     <div
       role="status"
       aria-live="polite"
-      className="w-full h-full flex items-center justify-center rounded-b-xl overflow-hidden relative skeleton-bg"
+      className="w-full h-full flex items-center justify-center rounded-b-card overflow-hidden relative skeleton-bg"
       data-testid="trend-chart-skeleton"
     >
       <svg className="w-full h-full px-4 py-3" viewBox="0 0 400 100" preserveAspectRatio="none">

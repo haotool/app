@@ -123,15 +123,19 @@ export default function ColorSchemeComparison() {
           <h4 className="mb-2 text-sm font-bold text-text">配色詳情</h4>
           <div className="space-y-1 text-xs text-text-muted">
             <div className="flex items-center gap-2">
-              <div className={`h-4 w-4 rounded border border-border/70 ${variant.containerBg}`} />
+              <div
+                className={`h-4 w-4 rounded-compact border border-border/70 ${variant.containerBg}`}
+              />
               <span>提示背景</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`h-4 w-4 rounded ${variant.primaryBtn}`} />
+              <div className={`h-4 w-4 rounded-compact ${variant.primaryBtn}`} />
               <span>狀態重點</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`h-4 w-4 rounded border border-border/70 ${variant.iconBg}`} />
+              <div
+                className={`h-4 w-4 rounded-compact border border-border/70 ${variant.iconBg}`}
+              />
               <span>圖示背景</span>
             </div>
           </div>

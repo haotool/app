@@ -124,7 +124,7 @@ export const SkeletonLoader = () => {
       <div className="mx-auto max-w-2xl space-y-4">
         {/* 來源貨幣輸入骨架 - 對應 SingleConverter 上半部 */}
         <div className="space-y-3">
-          <div className="skeleton-shimmer h-4 w-20 rounded" />
+          <div className="skeleton-shimmer h-4 w-20 rounded-compact" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸入 */}
             <div className="skeleton-shimmer h-14 w-full rounded-control" />
@@ -146,7 +146,7 @@ export const SkeletonLoader = () => {
           {/* 主匯率顯示 */}
           <div className="text-center space-y-2 py-3">
             <div className="skeleton-shimmer h-7 w-52 mx-auto rounded-control" />
-            <div className="skeleton-shimmer h-4 w-40 mx-auto rounded" />
+            <div className="skeleton-shimmer h-4 w-40 mx-auto rounded-compact" />
           </div>
           {/* 迷你趨勢圖區域 */}
           <div className="skeleton-bg h-20 rounded-control" />
@@ -159,7 +159,7 @@ export const SkeletonLoader = () => {
 
         {/* 目標貨幣輸入骨架 - 對應 SingleConverter 下半部 */}
         <div className="space-y-3">
-          <div className="skeleton-shimmer h-4 w-20 rounded" />
+          <div className="skeleton-shimmer h-4 w-20 rounded-compact" />
           <div className="relative">
             {/* 貨幣選擇器 + 金額輸出 */}
             <div className="skeleton-shimmer-accent h-14 w-full rounded-control" />
@@ -177,7 +177,7 @@ export const SkeletonLoader = () => {
 
         {/* 資料來源骨架 - 對應底部小字 */}
         <div className="flex justify-center">
-          <div className="skeleton-shimmer h-3 w-40 rounded" />
+          <div className="skeleton-shimmer h-3 w-40 rounded-compact" />
         </div>
       </div>
 
@@ -197,11 +197,11 @@ export const CurrencyCardSkeleton = () => {
         <div className="flex items-center gap-2">
           <div className="skeleton-shimmer w-8 h-8 rounded-full" />
           <div className="space-y-1">
-            <div className="skeleton-shimmer h-4 w-12 rounded" />
-            <div className="skeleton-shimmer h-3 w-20 rounded" />
+            <div className="skeleton-shimmer h-4 w-12 rounded-compact" />
+            <div className="skeleton-shimmer h-3 w-20 rounded-compact" />
           </div>
         </div>
-        <div className="skeleton-shimmer h-4 w-16 rounded" />
+        <div className="skeleton-shimmer h-4 w-16 rounded-compact" />
       </div>
     </div>
   );
@@ -255,7 +255,7 @@ export const SettingsSkeleton = () => {
         <div className="space-y-6">
           {/* 介面風格區塊 */}
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-20 rounded" />
+            <div className="skeleton-shimmer h-4 w-20 rounded-compact" />
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="skeleton-shimmer h-20 rounded-control" />
@@ -265,7 +265,7 @@ export const SettingsSkeleton = () => {
 
           {/* 語言區塊 */}
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-12 rounded" />
+            <div className="skeleton-shimmer h-4 w-12 rounded-compact" />
             <div className="skeleton-card p-1.5">
               <div className="flex gap-1">
                 {[1, 2, 3].map((i) => (
@@ -276,7 +276,7 @@ export const SettingsSkeleton = () => {
           </section>
 
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-16 rounded" />
+            <div className="skeleton-shimmer h-4 w-16 rounded-compact" />
             <div className="skeleton-card p-1.5">
               <div className="flex gap-1">
                 {[1, 2, 3].map((i) => (
@@ -284,30 +284,30 @@ export const SettingsSkeleton = () => {
                 ))}
               </div>
             </div>
-            <div className="skeleton-shimmer h-3 w-56 rounded" />
+            <div className="skeleton-shimmer h-3 w-56 rounded-compact" />
           </section>
         </div>
 
         <div className="space-y-6">
           {/* 儲存與快取區塊 */}
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-24 rounded" />
+            <div className="skeleton-shimmer h-4 w-24 rounded-compact" />
             <div className="skeleton-card p-5 space-y-4">
               <div className="flex justify-between">
-                <div className="skeleton-shimmer h-4 w-24 rounded" />
-                <div className="skeleton-shimmer h-5 w-16 rounded" />
+                <div className="skeleton-shimmer h-4 w-24 rounded-compact" />
+                <div className="skeleton-shimmer h-5 w-16 rounded-compact" />
               </div>
               <div className="flex justify-between">
-                <div className="skeleton-shimmer h-4 w-20 rounded" />
-                <div className="skeleton-shimmer h-5 w-12 rounded" />
+                <div className="skeleton-shimmer h-4 w-20 rounded-compact" />
+                <div className="skeleton-shimmer h-5 w-12 rounded-compact" />
               </div>
-              <div className="mx-auto h-3 w-40 rounded skeleton-shimmer" />
+              <div className="mx-auto h-3 w-40 rounded-compact skeleton-shimmer" />
             </div>
           </section>
 
           {/* 資料管理區塊（危險操作）— 對應 Settings.tsx ShieldAlert section */}
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-20 rounded" />
+            <div className="skeleton-shimmer h-4 w-20 rounded-compact" />
             <div className="skeleton-card overflow-hidden">
               <div
                 data-testid="skeleton-settings-danger-btn"
@@ -318,7 +318,7 @@ export const SettingsSkeleton = () => {
 
           {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（7 個連結列）*/}
           <section className="space-y-3">
-            <div className="skeleton-shimmer h-4 w-28 rounded" />
+            <div className="skeleton-shimmer h-4 w-28 rounded-compact" />
             <div className="skeleton-card overflow-hidden divide-y divide-border">
               {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                 <div
@@ -326,8 +326,8 @@ export const SettingsSkeleton = () => {
                   data-testid="skeleton-settings-link"
                   className="flex items-center justify-between px-5 py-4"
                 >
-                  <div className="skeleton-shimmer h-4 w-24 rounded" />
-                  <div className="skeleton-shimmer h-4 w-4 rounded" />
+                  <div className="skeleton-shimmer h-4 w-24 rounded-compact" />
+                  <div className="skeleton-shimmer h-4 w-4 rounded-compact" />
                 </div>
               ))}
             </div>
@@ -386,14 +386,14 @@ export const FavoritesSkeleton = () => {
                   data-testid="skeleton-star"
                   className="flex w-7 flex-shrink-0 items-center justify-center"
                 >
-                  <div className="skeleton-shimmer h-5 w-5 rounded" />
+                  <div className="skeleton-shimmer h-5 w-5 rounded-compact" />
                 </div>
                 <div className="skeleton-shimmer h-8 w-8 rounded-full flex-shrink-0" />
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="skeleton-shimmer h-4 w-16 rounded" />
-                  <div className="skeleton-shimmer h-3 w-24 rounded" />
+                  <div className="skeleton-shimmer h-4 w-16 rounded-compact" />
+                  <div className="skeleton-shimmer h-3 w-24 rounded-compact" />
                 </div>
-                <div className="skeleton-shimmer h-4 w-14 rounded flex-shrink-0" />
+                <div className="skeleton-shimmer h-4 w-14 rounded-compact flex-shrink-0" />
               </div>
             ))}
           </section>
@@ -401,15 +401,15 @@ export const FavoritesSkeleton = () => {
 
         <aside className="hidden lg:flex lg:flex-col lg:gap-4">
           <section className="skeleton-card p-5">
-            <div className="skeleton-shimmer h-4 w-24 rounded" />
+            <div className="skeleton-shimmer h-4 w-24 rounded-compact" />
             <div className="mt-4 space-y-3">
               {[1, 2].map((i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3"
                 >
-                  <div className="skeleton-shimmer h-3 w-20 rounded" />
-                  <div className="skeleton-shimmer h-5 w-10 rounded" />
+                  <div className="skeleton-shimmer h-3 w-20 rounded-compact" />
+                  <div className="skeleton-shimmer h-5 w-10 rounded-compact" />
                 </div>
               ))}
             </div>
@@ -417,8 +417,8 @@ export const FavoritesSkeleton = () => {
 
           <section className="skeleton-card p-5">
             <div className="space-y-2">
-              <div className="skeleton-shimmer h-3 w-full rounded" />
-              <div className="skeleton-shimmer h-3 w-4/5 rounded" />
+              <div className="skeleton-shimmer h-3 w-full rounded-compact" />
+              <div className="skeleton-shimmer h-3 w-4/5 rounded-compact" />
             </div>
             <div className="mt-4 space-y-2">
               <div className="skeleton-shimmer h-11 w-full rounded-control" />
@@ -475,19 +475,19 @@ export const MultiConverterSkeleton = () => {
             >
               {/* 星號欄 — 對應 'w-6 flex-shrink-0 flex items-center justify-center' */}
               <div className="w-6 flex-shrink-0 flex items-center justify-center">
-                <div className="skeleton-shimmer w-4 h-4 rounded" />
+                <div className="skeleton-shimmer w-4 h-4 rounded-compact" />
               </div>
               {/* 國旗欄 — 對應 'text-xl flex-shrink-0 w-7 text-center' */}
-              <div className="skeleton-shimmer w-6 h-5 rounded flex-shrink-0 mx-1" />
+              <div className="skeleton-shimmer w-6 h-5 rounded-compact flex-shrink-0 mx-1" />
               {/* 幣別代碼 + 名稱 — 對應 code text-sm + name text-[11px] */}
               <div className="space-y-1 ml-1 flex-shrink-0">
-                <div className="skeleton-shimmer h-3.5 w-10 rounded" />
-                <div className="skeleton-shimmer h-2.5 w-16 rounded" />
+                <div className="skeleton-shimmer h-3.5 w-10 rounded-compact" />
+                <div className="skeleton-shimmer h-2.5 w-16 rounded-compact" />
               </div>
               {/* 金額 + 匯率資訊（右側）— 對應 'flex-1 ml-2' text-right */}
               <div className="flex-1 ml-2 space-y-1">
-                <div className="skeleton-shimmer h-4 w-20 ml-auto rounded" />
-                <div className="skeleton-shimmer h-2.5 w-28 ml-auto rounded" />
+                <div className="skeleton-shimmer h-4 w-20 ml-auto rounded-compact" />
+                <div className="skeleton-shimmer h-2.5 w-28 ml-auto rounded-compact" />
               </div>
             </div>
           ))}

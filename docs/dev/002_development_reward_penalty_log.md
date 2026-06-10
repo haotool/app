@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+58
+> 本次分數變化：+1（reward 1）｜累計總分：+59
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-11
+- ID：reward-ratewise-radius-ssot-regression-guard
+- 原因：圓角僅有一次性清理而無防回歸守門（顏色有 regex 守門、圓角沒有），SkeletonLoader/ColorSchemeComparison/notificationTokens.actions.text 殘留 bare `rounded`，趨勢圖 `rounded-b-xl`（12px）與 `rounded-card`（24px）卡片底角不貼合
+- 解法：TDD 先建 `radius-ssot.test.ts` regex 守門（白名單語義 token + full/none 與方向變體，紅燈列出全部殘留）再全數收斂：skeleton/swatch/token 改 `rounded-compact`、趨勢圖改 `rounded-b-card` 對齊卡片外框，config 489 tests + typecheck + prettier 全綠
 
 - 日期：2026-06-11
 - ID：reward-ratewise-a11y-touch-target-focus-radius-convergence
