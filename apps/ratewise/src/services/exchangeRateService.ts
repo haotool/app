@@ -22,10 +22,13 @@ import buildTimeRates from '../config/generated/build-time-rates.json';
 // 策略：jsDelivr CDN 為主要端點，GitHub Raw 為備援。
 // jsDelivr CDN edge 快取 12 小時（s-maxage=43200），但 update-latest-rates.yml 在每次
 // 推送 data 分支後自動呼叫 jsDelivr Purge API，使快取立即失效 → 實際新鮮度約 5 分鐘。
-// 優勢：全球 PoP 加速、CDN 快取、支援 ETag 條件式請求（省頻寬）。
-// GitHub Raw 作為備援：無快取但每 IP 每小時限 60 次請求，無 CORS ETag 暴露。
+// 優勢：全球 PoP 加速、CDN 快取。
+// [2026-06-12] 不使用 ETag 條件式請求（If-None-Match 非 CORS safelisted，
+// jsDelivr preflight 會拒絕，導致主 CDN 永遠失敗並降級）；頻寬由瀏覽器 HTTP cache
+// 與 5 分鐘 localStorage TTL 控制。
+// GitHub Raw 作為備援：無快取但每 IP 每小時限 60 次請求。
 const CDN_URLS = [
-  // jsDelivr CDN（主要）- Purge 後立即最新，支援 ETag，全球加速
+  // jsDelivr CDN（主要）- Purge 後立即最新，全球加速
   'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json',
   // GitHub Raw（備援）- 無快取，速率限制 60 req/hr/IP
   'https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json',
@@ -48,7 +51,7 @@ const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
 interface CachedData {
   data: ExchangeRateData;
   timestamp: number;
-  etag?: string; // ETag 條件式請求（jsDelivr 支援 Access-Control-Expose-Headers: *）
+  etag?: string; // 保留回應 ETag 供未來 proxy/worker 路徑重新啟用條件式請求
 }
 
 interface FetchResult {
@@ -146,10 +149,11 @@ function saveToCache(data: ExchangeRateData, etag?: string): void {
 /**
  * 從 CDN 獲取匯率資料（帶 fallback）
  *
- * ETag 條件式請求策略（僅適用 CDN_URLS[0] jsDelivr）：
- * - jsDelivr 回應包含 Access-Control-Expose-Headers: *，瀏覽器可讀取 ETag。
- * - 若快取中有 ETag，發送 If-None-Match header；304 時重置快取時間戳，省去 ~5 KB 下載。
- * - GitHub Raw（index > 0）不暴露 ETag，條件式請求不適用。
+ * [2026-06-12] 不發送 If-None-Match：該 header 非 CORS safelisted，jsDelivr 的
+ * Access-Control-Allow-Headers 不允許它，導致 preflight 被拒、主 CDN 永遠失敗並
+ * 降級到 GitHub Raw（每 IP 每小時 60 次限制）。回應 ETag 仍會讀取並存入快取
+ * （供未來改走自家 Worker proxy 時重新啟用條件請求），但不再用於後續請求。
+ * 頻寬由瀏覽器 HTTP cache 與 5 分鐘 localStorage TTL 控制。
  */
 async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
   const errors: Error[] = [];
@@ -162,32 +166,15 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
     try {
       logger.debug(`Trying CDN #${i + 1}/${CDN_URLS.length}`, { url: url.substring(0, 80) });
 
-      // ETag 條件式請求（僅 CDN_URLS[0] jsDelivr 支援 CORS 暴露 ETag）。
-      const cachedEntry = i === 0 ? getCachedEntry() : null;
-      const storedETag = cachedEntry?.etag;
-      const headers: Record<string, string> = {};
-      if (storedETag) {
-        headers['If-None-Match'] = storedETag;
-      }
-
-      // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
+      // [2026-06-12] 不發送 If-None-Match：該 header 非 CORS safelisted，
+      // jsDelivr preflight 不允許，會使主 CDN 永遠失敗並降級到 GitHub Raw(60 req/hr)。
+      // 頻寬由瀏覽器 HTTP cache 與 5 分鐘 localStorage TTL 控制。
       const fetchInit: RequestInit = {
         ...(signal ? { signal } : {}),
-        ...(Object.keys(headers).length > 0 ? { headers } : {}),
       };
-      const response = await fetchWithRequestId(url, fetchInit);
 
-      // 304 Not Modified：資料未變更，重置快取時間戳以延長 5 分鐘有效期。
-      if (response.status === 304) {
-        if (cachedEntry) {
-          logger.info('ETag hit: 304 Not Modified, refreshing cache timestamp', {
-            etag: storedETag,
-          });
-          return { data: cachedEntry.data, etag: cachedEntry.etag };
-        }
-        // 304 但無快取（不應發生，安全起見繼續嘗試下一個來源）
-        throw new Error('304 Not Modified but no cached data available');
-      }
+      // [2025-12-10] 使用 fetchWithRequestId 自動注入 X-Correlation-ID header
+      const response = await fetchWithRequestId(url, fetchInit);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

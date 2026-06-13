@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+60
+> 本次分數變化：+1（reward 1）｜累計總分：+61
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-12
+- ID：reward-ratewise-cdn-if-none-match-preflight
+- 原因：If-None-Match 非 CORS safelisted，jsDelivr preflight 拒絕導致主 CDN 永遠失敗並降級 GitHub Raw（60 req/hr/IP）
+- 解法：移除 CDN 條件式請求與 304 分支，保留 ETag 存入快取供未來 Worker proxy；同步更新 exchangeRateService 單測
 
 - 日期：2026-06-11
 - ID：reward-ratewise-responsive-320px-overflow-audit

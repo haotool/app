@@ -612,8 +612,8 @@ describe('exchangeRateService', () => {
       expect(saved.etag).toBe('"v1-abc"');
     });
 
-    it('快取含 ETag 時，對 CDN_URLS[0]（jsDelivr）發送 If-None-Match 標頭', async () => {
-      // 過期快取含 ETag（SWR 路徑：立即返回 stale，背景 fetch 帶 If-None-Match）
+    it('即使快取存有 ETag，也不對 CDN 發送 If-None-Match（jsDelivr preflight 不允許）', async () => {
+      // 過期快取含 ETag（SWR 路徑：立即返回 stale，背景 fetch 觸發 CDN 請求）
       const cachedData = {
         data: mockRateData,
         timestamp: Date.now() - 10 * 60 * 1000,
@@ -636,37 +636,13 @@ describe('exchangeRateService', () => {
 
       // fetch 在 SWR 背景立即被呼叫（synchronous before return）
       expect(global.fetch).toHaveBeenCalled();
-      const sentHeaders = capturedInit?.headers as Record<string, string> | undefined;
-      expect(sentHeaders?.['If-None-Match']).toBe('"stored-etag-v1"');
+      const headerKeys = Object.keys((capturedInit?.headers ?? {}) as Record<string, string>).map(
+        (k) => k.toLowerCase(),
+      );
+      expect(headerKeys).not.toContain('if-none-match');
     });
 
-    it('快取無 ETag 時，不發送 If-None-Match 標頭', async () => {
-      // 過期快取，但沒有 ETag 欄位
-      const cachedData = {
-        data: mockRateData,
-        timestamp: Date.now() - 10 * 60 * 1000,
-        // 刻意省略 etag
-      };
-      mockLocalStorage.setItem('exchangeRates', JSON.stringify(cachedData));
-
-      let capturedInit: RequestInit | undefined;
-      (global.fetch as any).mockImplementation((_: unknown, init?: RequestInit) => {
-        capturedInit = init;
-        return Promise.resolve({
-          status: 200,
-          ok: true,
-          json: async () => mockRateData,
-          headers: { get: () => null },
-        });
-      });
-
-      await getExchangeRates();
-
-      const sentHeaders = capturedInit?.headers as Record<string, string> | undefined;
-      expect(sentHeaders?.['If-None-Match']).toBeUndefined();
-    });
-
-    it('CDN_URLS[1]（GitHub Raw 備援）不發送 If-None-Match 標頭', async () => {
+    it('CDN_URLS[1]（GitHub Raw 備援）即使快取有 ETag 也不發送 If-None-Match', async () => {
       // 過期快取含 ETag，CDN_URLS[0] 失敗 → 落到 CDN_URLS[1]
       const cachedData = {
         data: mockRateData,
@@ -693,41 +669,13 @@ describe('exchangeRateService', () => {
 
       await getExchangeRates();
 
-      // CDN_URLS[0]（jsDelivr）：應帶 If-None-Match
-      const firstHeaders = capturedInits[0]?.headers as Record<string, string> | undefined;
-      expect(firstHeaders?.['If-None-Match']).toBe('"v1"');
-
-      // CDN_URLS[1]（GitHub Raw）：不帶 If-None-Match
-      const secondHeaders = capturedInits[1]?.headers as Record<string, string> | undefined;
-      expect(secondHeaders?.['If-None-Match']).toBeUndefined();
-    });
-
-    it('CDN 返回 304 Not Modified 時，背景更新記錄 ETag 命中日誌', async () => {
-      // 過期快取含 ETag
-      const cachedData = {
-        data: { ...mockRateData, updateTime: '304-test-timestamp' },
-        timestamp: Date.now() - 10 * 60 * 1000,
-        etag: '"v1"',
-      };
-      mockLocalStorage.setItem('exchangeRates', JSON.stringify(cachedData));
-
-      (global.fetch as any).mockResolvedValueOnce({
-        status: 304,
-        ok: false, // 304 在 response.ok 為 false，但先被 status === 304 分支攔截
-        headers: { get: () => null },
-      });
-
-      // SWR：立即返回 stale 資料
-      const result = await getExchangeRates();
-      expect(result.updateTime).toBe('304-test-timestamp');
-
-      // 排空 microtask queue，讓背景 fetch 鏈完成（fetchWithTimeout → fetchFromCDN → .then）
-      for (let i = 0; i < 10; i++) await Promise.resolve();
-
-      expect(logger.logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('ETag hit'),
-        expect.any(Object),
-      );
+      // CDN_URLS[0]（jsDelivr）與 CDN_URLS[1]（GitHub Raw）皆不帶 If-None-Match
+      for (const init of capturedInits) {
+        const headerKeys = Object.keys((init.headers ?? {}) as Record<string, string>).map((k) =>
+          k.toLowerCase(),
+        );
+        expect(headerKeys).not.toContain('if-none-match');
+      }
     });
   });
 
