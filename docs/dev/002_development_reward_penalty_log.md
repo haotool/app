@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+61
+> 本次分數變化：0（neutral 0）｜累計總分：+61
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-12
+- ID：neutral-ratewise-2026-ux-product-spec
+- 原因：二十線 UX 審查（韓式 fintech 對標、單幣 Modal 摩擦、資訊重複）需可追溯設計 SSOT
+- 解法：新增 docs/superpowers/specs/2026-06-12-ratewise-2026-product-ux-spec.md 與 Phase 1 實作計畫
 
 - 日期：2026-06-12
 - ID：reward-ratewise-cdn-if-none-match-preflight
