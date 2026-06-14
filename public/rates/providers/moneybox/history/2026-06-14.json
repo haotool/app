@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-14T01:39:22.059Z",
-  "updateTime": "2026/06/14 10:39:22",
+  "timestamp": "2026-06-14T10:00:02.558Z",
+  "updateTime": "2026/06/14 19:00:02",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -10,7 +10,7 @@
       "currency": "USD",
       "base": 1519.5,
       "buy": 1517,
-      "sell": 1510,
+      "sell": 1508,
       "spbuy": 1546.09,
       "spsell": 1492.91
     },
@@ -18,22 +18,22 @@
       "currency": "JPY",
       "base": 948.35,
       "buy": 948,
-      "sell": 940,
+      "sell": 941,
       "spbuy": 964.94,
       "spsell": 931.76
     },
     "CNY": {
       "currency": "CNY",
       "base": 224.67,
-      "buy": 222.3,
-      "sell": 221,
+      "buy": 222,
+      "sell": 220.5,
       "spbuy": 235.9,
       "spsell": 213.44
     },
     "EUR": {
       "currency": "EUR",
       "base": 1757.83,
-      "buy": 1755,
+      "buy": 1752,
       "sell": 1735,
       "spbuy": 1792.81,
       "spsell": 1722.85
@@ -50,7 +50,7 @@
       "currency": "TWD",
       "base": 48.05,
       "buy": 47,
-      "sell": 46.5,
+      "sell": 46.75,
       "spbuy": 54.34,
       "spsell": 43.25
     },
@@ -58,7 +58,7 @@
       "currency": "SGD",
       "base": 1183.04,
       "buy": 1185,
-      "sell": 1165,
+      "sell": 1160,
       "spbuy": 1206.58,
       "spsell": 1159.5
     },
@@ -106,7 +106,7 @@
       "currency": "AUD",
       "base": 1070.64,
       "buy": 1068,
-      "sell": 1055,
+      "sell": 1050,
       "spbuy": 1091.73,
       "spsell": 1049.55
     },
@@ -114,7 +114,7 @@
       "currency": "GBP",
       "base": 2037.27,
       "buy": 2050,
-      "sell": 2010,
+      "sell": 2005,
       "spbuy": 2077.4,
       "spsell": 1997.14
     },
@@ -130,7 +130,7 @@
       "currency": "CHF",
       "base": 1906.17,
       "buy": 1930,
-      "sell": 1880,
+      "sell": 1875,
       "spbuy": 1943.72,
       "spsell": 1868.62
     },
