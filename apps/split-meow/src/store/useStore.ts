@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { randomAvatarSeed } from '../lib/avatar';
 import i18n from '../i18n';
+import type { CurrencyCode } from '../config/currencies';
 
 export type SplitMode = 'split_evenly' | 'itemized';
 export type ExpenseCategory =
@@ -83,6 +84,14 @@ interface AppState {
   toggleSettlement: (key: string) => void;
   catPlayMode: boolean;
   toggleCatPlayMode: () => void;
+
+  // 幣別
+  currency: CurrencyCode;
+  currencyManuallySet: boolean;
+  krwPerTwd: number | null;
+  rateUpdatedAt: string | null;
+  setCurrency: (code: CurrencyCode, manual?: boolean) => void;
+  setExchangeRate: (krwPerTwd: number, updatedAt: string) => void;
 }
 
 // 初始成員使用固定 seed，確保每次新安裝頭像一致（boring-avatars deterministic）
@@ -141,6 +150,10 @@ export const useStore = create<AppState>()(
       expenseCategory: null,
       settledPayments: [],
       catPlayMode: false,
+      currency: 'TWD',
+      currencyManuallySet: false,
+      krwPerTwd: null,
+      rateUpdatedAt: null,
 
       addTrip: (name) =>
         set((state) => {
@@ -290,6 +303,10 @@ export const useStore = create<AppState>()(
         })),
 
       toggleCatPlayMode: () => set((state) => ({ catPlayMode: !state.catPlayMode })),
+
+      setCurrency: (code, manual = true) => set({ currency: code, currencyManuallySet: manual }),
+
+      setExchangeRate: (krwPerTwd, updatedAt) => set({ krwPerTwd, rateUpdatedAt: updatedAt }),
     }),
     {
       name: 'split-meow-storage',

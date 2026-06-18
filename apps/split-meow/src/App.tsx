@@ -11,6 +11,7 @@ import { PayerSelector } from './components/PayerSelector';
 import { CatCompanion } from './components/CatCompanion';
 import { CatPlayLayer, type Particle } from './components/CatPlayLayer';
 import { makePawParticle, makeCelebrateParticles } from './lib/catPlay';
+import { useCurrencyAutoDetect } from './hooks/useCurrencyAutoDetect';
 
 function ShareButton() {
   const { t } = useTranslation();
@@ -61,6 +62,7 @@ export default function App() {
   const { activeTab, catPlayMode } = useStore();
   const { t } = useTranslation();
   const [particles, setParticles] = useState<Particle[]>([]);
+  useCurrencyAutoDetect();
   const prevTabRef = useRef(activeTab);
 
   // 儲存費用後 activeTab 切換到 history → 觸發慶祝動畫
