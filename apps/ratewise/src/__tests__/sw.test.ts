@@ -151,24 +151,25 @@ describe('Service Worker Cache Strategies', () => {
     'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
-  it('should use NavigationRoute + bounded SWR-style handler for zero-white-screen navigation', async () => {
+  it('should use NavigationRoute + hybrid SWR + precache-first handler for zero-white-screen navigation', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // 已 install 過的 PWA 與已 visited 的瀏覽器：cache hit 立即返回，背景 revalidate。
-    // cache miss 則保留 3 秒 bounded fallback，避免慢網路下白屏。
+    // 暖快取：cache hit 立即返回，背景 revalidate（SWR）。
+    // 冷快取：precache index.html 立即回傳，背景抓最新版本寫入 html-cache。
+    // 避免 3s timeout 在 iOS precache 被驅逐時錯誤回傳 offline.html 給在線用戶。
     expect(sourceCode).toContain('handleNavigationRequest');
     expect(sourceCode).toContain('new NavigationRoute(handleNavigationRequest)');
-    expect(sourceCode).toContain('event.waitUntil(');
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
-    expect(sourceCode).toContain(
-      'event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined))',
-    );
+    expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：禁止重新引入 NetworkFirst navigation（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
+    // 防回歸：禁止重新引入 3s timeout Promise.race（iOS eviction 假離線根因）。
+    expect(sourceCode).not.toContain('const NAVIGATION_NETWORK_TIMEOUT_MS');
+    expect(sourceCode).not.toContain('Promise.race([networkResponse, timeoutFallback])');
   });
 
   it('should have correct historical rates cache configuration', () => {
@@ -249,12 +250,13 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // bounded SWR-style navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
+    // precache-first SWR navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
+    // 注意：已從 Promise.race timeout 改為 precache-first 方案（避免 iOS precache 被驅逐時誤回 offline.html）。
     expect(sourceCode).toContain('new NavigationRoute(');
     expect(sourceCode).toContain('resolveOfflineDocumentFallback');
     expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
-    expect(sourceCode).toContain('const NAVIGATION_NETWORK_TIMEOUT_MS = 3000');
-    expect(sourceCode).toContain('Promise.race([networkResponse, timeoutFallback])');
+    expect(sourceCode).toContain("matchPrecache('index.html')");
+    expect(sourceCode).toContain('fetchAndCacheNavigation');
     // 防回歸：navigation 不可重新引入 NetworkFirst（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
   });
