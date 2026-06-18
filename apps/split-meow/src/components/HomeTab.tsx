@@ -7,6 +7,7 @@ import { BottomSheet } from './BottomSheet';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useEffect, useRef, useState } from 'react';
+import { formatAmount } from '../config/currencies';
 
 /**
  * BottomSheet の peek/expanded 高さを動的計算する。
@@ -91,6 +92,8 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     setExpenseNote,
     expenseCategory,
     setExpenseCategory,
+    currency,
+    krwPerTwd,
   } = useStore();
 
   const CATEGORIES = [
@@ -164,13 +167,21 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               {splitMode === 'split_evenly' ? t('home.totalAmount') : t('home.totalItemized')}
             </span>
             <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
-              NT$ {Math.round(totalAmount).toLocaleString()}
+              {formatAmount(totalAmount, currency)}
             </h1>
+            {/* 換算提示：另一幣別的近似金額 */}
+            {krwPerTwd && totalAmount > 0 && (
+              <p className="text-xs text-on-surface-variant/50 mt-1">
+                {currency === 'KRW'
+                  ? `≈ NT$ ${Math.round(totalAmount / krwPerTwd).toLocaleString('zh-TW')}`
+                  : `≈ ₩${Math.round(totalAmount * krwPerTwd).toLocaleString('ko-KR')}`}
+              </p>
+            )}
             {splitMode === 'split_evenly' && activeMembers.length > 0 && (
               <p className="text-sm text-on-surface-variant mt-2">
                 {t('home.perPerson')}{' '}
                 <span className="font-semibold text-secondary">
-                  NT$ {Math.round(splitAmount).toLocaleString()}
+                  {formatAmount(splitAmount, currency)}
                 </span>{' '}
                 × {activeMembers.length} {t('home.people')}
               </p>
@@ -206,7 +217,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               </div>
               <div className="text-right">
                 <span className="text-xl font-medium">
-                  NT$ {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString()}
+                  {formatAmount(evaluateExpression(itemizedValues[m.id] ?? '0'), currency)}
                 </span>
                 {itemizedValues[m.id] && focusedMemberId === m.id && (
                   <p className="text-xs opacity-70 font-mono mt-1">{itemizedValues[m.id]}</p>

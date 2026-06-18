@@ -5,6 +5,7 @@ import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
+import { CURRENCIES, type CurrencyCode } from '../config/currencies';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -23,6 +24,10 @@ export function SettingsTab() {
     addMember,
     catPlayMode,
     toggleCatPlayMode,
+    currency,
+    currencyManuallySet,
+    setCurrency,
+    rateUpdatedAt,
   } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
@@ -188,15 +193,48 @@ export function SettingsTab() {
               <div className="w-4 h-4 bg-on-primary rounded-full absolute right-1"></div>
             </div>
           </div>
-          <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-[2rem] hover:bg-surface-container transition-colors">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary">payments</span>
-              <span className="font-medium">{t('settings.default_currency')}</span>
+          {/* Currency Selector */}
+          <div className="p-5 bg-surface-container-low rounded-[2rem] space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-primary">payments</span>
+                <div>
+                  <span className="font-medium">{t('settings.default_currency')}</span>
+                  {!currencyManuallySet && (
+                    <p className="text-xs text-tertiary mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">my_location</span>
+                      {t('settings.auto_detected')}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-1 bg-surface-container rounded-full p-1">
+                {(['TWD', 'KRW'] as CurrencyCode[]).map((code) => {
+                  const info = CURRENCIES[code];
+                  const isActive = currency === code;
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => setCurrency(code, true)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
+                        isActive
+                          ? 'bg-primary-container text-on-primary-container shadow-ambient'
+                          : 'text-on-surface-variant hover:bg-surface-container-high',
+                      )}
+                    >
+                      <span>{info.flag}</span>
+                      <span>{info.symbol}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-on-surface-variant text-sm">
-              <span>TWD (NT$)</span>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
-            </div>
+            {rateUpdatedAt && (
+              <p className="text-[11px] text-on-surface-variant/50 pl-10">
+                {t('settings.rate_updated', { time: rateUpdatedAt })}
+              </p>
+            )}
           </div>
           <button
             onClick={toggleCatPlayMode}
