@@ -157,9 +157,10 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("const HTML_CACHE_NAME = 'html-cache'");
       expect(swContent).toContain('event.waitUntil(');
       expect(swContent).toContain('fetchAndCacheNavigation(request, cache)');
-      expect(swContent).toContain(
-        'event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined))',
-      );
+      // SWR 背景 revalidate 模式：fetchAndCacheNavigation 直接傳入 event.waitUntil。
+      expect(swContent).toContain('fetchAndCacheNavigation(request, cache)');
+      expect(swContent).toContain('.then(() => undefined)');
+      expect(swContent).toContain('.catch(() => undefined)');
       // 防回歸：禁止把 NetworkFirst 重新引入 navigation 路徑（cold-start 白屏根因之一）。
       expect(swContent).not.toContain('new NetworkFirst(');
     });
@@ -168,8 +169,9 @@ describe('PWA 離線功能測試', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
       expect(swContent).toContain('clearNavigationHtmlCacheOnActivate');
       expect(swContent).toContain('caches.delete(HTML_CACHE_NAME)');
-      expect(swContent).toContain('const NAVIGATION_NETWORK_TIMEOUT_MS = 3000');
-      expect(swContent).toContain('Promise.race([networkResponse, timeoutFallback])');
+      // precache-first 方案：冷快取先嘗試 precache index.html，避免 timeout 在 iOS eviction 時誤回 offline.html。
+      expect(swContent).toContain("matchPrecache('index.html')");
+      expect(swContent).toContain('fetchAndCacheNavigation');
       expect(swContent).toContain('resolveNavigationFallback');
     });
 
