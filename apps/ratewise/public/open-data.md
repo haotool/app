@@ -87,7 +87,7 @@ print(data['details']['JPY']['cash']['buy'])
 
 ### 2. jsDelivr CDN 和 GitHub Raw 端點有何差異？
 
-jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限，支援 ETag 條件式請求（瀏覽器可讀取 ETag，實作 If-None-Match 省流量）。GitHub Actions 每次推送 data 分支後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘。GitHub Raw（備援）：無快取，每次請求直接取得最新版本，但每小時限 60 次請求，CORS 不暴露 ETag，瀏覽器端無法使用條件式請求。
+jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限；GitHub Actions 每次推送 data 分支後自動呼叫 jsDelivr Purge API，CDN 快取立即失效，實際新鮮度約 5 分鐘。GitHub Raw（備援）：無快取，每次請求直接取得最新版本，但每小時限 60 次請求。瀏覽器端建議以 HTTP cache 搭配 client 端 5 分鐘快取控制重複請求。
 
 ### 3. 有備援端點嗎？
 
