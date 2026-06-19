@@ -13,6 +13,7 @@ describe('pwaOfflineFallback', () => {
     const response = await resolveOfflineDocumentFallback({
       emergencyReason: 'emergency-navigation-fallback',
       matchPrecache,
+      matchIndexHtmlInAnyCache: () => null,
       matchOfflineHtmlInAnyCache,
     });
 
@@ -22,12 +23,26 @@ describe('pwaOfflineFallback', () => {
     expect(matchOfflineHtmlInAnyCache).not.toHaveBeenCalled();
   });
 
+  it('should fall back to index.html from any cache when precache is evicted', async () => {
+    const anyCacheIndexResponse = new Response('<html>index from html-cache</html>');
+
+    const response = await resolveOfflineDocumentFallback({
+      emergencyReason: 'emergency-navigation-fallback',
+      matchPrecache: () => null,
+      matchIndexHtmlInAnyCache: () => anyCacheIndexResponse,
+      matchOfflineHtmlInAnyCache: () => null,
+    });
+
+    expect(response).toBe(anyCacheIndexResponse);
+  });
+
   it('should use precached offline.html when index.html is unavailable', async () => {
     const offlineResponse = new Response('<html>offline</html>');
 
     const response = await resolveOfflineDocumentFallback({
       emergencyReason: 'emergency-navigation-fallback',
       matchPrecache: (url) => (url === 'offline.html' ? offlineResponse : null),
+      matchIndexHtmlInAnyCache: () => null,
       matchOfflineHtmlInAnyCache: () => null,
     });
 
@@ -40,6 +55,7 @@ describe('pwaOfflineFallback', () => {
     const response = await resolveOfflineDocumentFallback({
       emergencyReason: 'emergency-navigation-fallback',
       matchPrecache: () => null,
+      matchIndexHtmlInAnyCache: () => null,
       matchOfflineHtmlInAnyCache: () => anyCacheOfflineResponse,
     });
 
@@ -50,6 +66,7 @@ describe('pwaOfflineFallback', () => {
     const response = await resolveOfflineDocumentFallback({
       emergencyReason: 'emergency-navigation-fallback',
       matchPrecache: () => null,
+      matchIndexHtmlInAnyCache: () => null,
       matchOfflineHtmlInAnyCache: () => null,
     });
 
