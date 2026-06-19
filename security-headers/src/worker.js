@@ -28,7 +28,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.2';
+const SECURITY_POLICY_VERSION = '5.3';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -496,6 +496,14 @@ const QUAKE_SCHOOL_HTML_PROFILE = createHtmlProfile({
 	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
+const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
+	scriptMode: 'unsafe-inline',
+	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
+	styleSources: ['https://fonts.googleapis.com'],
+	fontSources: ['https://fonts.gstatic.com'],
+	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://cdn.jsdelivr.net'],
+});
+
 const RATEWISE_HTML_PROFILE = createHtmlProfile({
 	scriptMode: 'nonce',
 	scriptSources: ['https://static.cloudflareinsights.com', 'https://www.googletagmanager.com'],
@@ -527,6 +535,9 @@ function normalizeHtmlPath(pathname) {
 function resolveHtmlProfile(url) {
 	if (url.pathname.startsWith('/ratewise/')) {
 		return RATEWISE_HTML_PROFILE;
+	}
+	if (url.pathname.startsWith('/split-meow/')) {
+		return SPLIT_MEOW_HTML_PROFILE;
 	}
 	if (url.pathname.startsWith('/nihonname/')) {
 		return NIHONNAME_HTML_PROFILE;
