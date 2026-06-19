@@ -163,7 +163,7 @@ const nitroStyle: StyleDefinition = {
     surface: '15 23 42', // slate-900
     text: '255 255 255',
     textMuted: '203 213 225', // slate-300
-    primary: '0 212 255', // cyan
+    primary: '0 150 230', // 霓虹藍（深電光，白字 3:1 AA）
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
     border: '30 41 59', // slate-800
