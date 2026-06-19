@@ -132,7 +132,7 @@ describe('fetchExchangeShopRate', () => {
     expect(result).toBeNull();
   });
 
-  it('returns cached rate when server responds with 304 Not Modified', async () => {
+  it('即使快取存有 ETag，也不對 CDN 發送 If-None-Match', async () => {
     // First call: warm the cache
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
@@ -147,18 +147,25 @@ describe('fetchExchangeShopRate', () => {
     const cached = JSON.parse(localStorage.getItem(key)!);
     localStorage.setItem(key, JSON.stringify({ ...cached, timestamp: 0 }));
 
-    // Second call: CDN returns 304
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 304,
-      json: () => Promise.resolve(null),
-      headers: { get: () => null },
-    } as unknown as Response);
+    let capturedInit: RequestInit | undefined;
+    vi.mocked(fetch).mockImplementationOnce((_, init?: RequestInit) => {
+      capturedInit = init;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MOCK_MONEYBOX_JSON),
+        headers: { get: () => null },
+      } as unknown as Response);
+    });
 
     const result = await fetchExchangeShopRate('KRW');
     expect(result).not.toBeNull();
     expect(result!.sell).toBe(44.85);
     expect(result!.isFallback).toBe(false);
+    const headerKeys = Object.keys((capturedInit?.headers ?? {}) as Record<string, string>).map(
+      (key) => key.toLowerCase(),
+    );
+    expect(headerKeys).not.toContain('if-none-match');
   });
 
   it('falls back to secondary CDN URL when primary fails', async () => {

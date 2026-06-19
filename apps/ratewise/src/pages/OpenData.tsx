@@ -635,12 +635,12 @@ const OpenData = () => {
               className={`${contentPageTokens.callouts.elevated} mt-4 min-w-0 break-words text-sm text-text-muted`}
             >
               <span className="font-semibold text-text">快取建議</span>
-              ：CDN 端點支援{' '}
-              <code className="rounded-compact bg-surface px-1 font-mono text-xs">
+              ：瀏覽器端建議直接依賴 HTTP cache 與 client 端 5 分鐘快取，避免無意義重複請求；跨域
+              CDN 請求不應主動附加
+              <code className="mx-1 rounded-compact bg-surface px-1 font-mono text-xs">
                 If-None-Match
-              </code>{' '}
-              ETag 條件式請求， 資料未變時回傳 304（零 body），可節省約 5 KB／次。建議 client 端快取
-              5 分鐘，避免無意義重複請求。
+              </code>
+              之類非 safelisted 標頭，以免觸發預檢失敗。
             </div>
 
             {/* ── 資料新鮮度與時間戳記說明 ── */}

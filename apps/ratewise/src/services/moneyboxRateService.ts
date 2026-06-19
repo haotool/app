@@ -166,24 +166,12 @@ async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Respon
   }
 }
 
-async function fetchFromCDN(
-  config: ExchangeShopConfig,
-  cachedEtag?: string,
-): Promise<{ raw: unknown; etag?: string; notModified: boolean }> {
+async function fetchFromCDN(config: ExchangeShopConfig): Promise<{ raw: unknown; etag?: string }> {
   const urls = [config.cdnUrl, config.cdnUrlFallback];
 
   for (const url of urls) {
     try {
-      const headers: Record<string, string> = {};
-      if (url === config.cdnUrl && cachedEtag) {
-        headers['If-None-Match'] = cachedEtag;
-      }
-
-      const res = await fetchWithTimeout(url, { headers });
-
-      if (res.status === 304) {
-        return { raw: null, notModified: true };
-      }
+      const res = await fetchWithTimeout(url);
 
       if (!res.ok) {
         logger.warn(`Exchange shop CDN returned ${res.status}`, { url });
@@ -192,7 +180,7 @@ async function fetchFromCDN(
 
       const raw: unknown = await res.json();
       const etag = res.headers.get('etag') ?? undefined;
-      return { raw, etag, notModified: false };
+      return { raw, etag };
     } catch (e) {
       logger.warn(`Exchange shop CDN fetch failed`, { url, error: e });
     }
@@ -216,12 +204,7 @@ export async function fetchExchangeShopRate(
   }
 
   try {
-    const { raw, etag, notModified } = await fetchFromCDN(config, cached?.etag);
-
-    if (notModified && cached) {
-      writeCache(currency, { ...cached, timestamp: Date.now() });
-      return cached.rate;
-    }
+    const { raw, etag } = await fetchFromCDN(config);
 
     const rate = parseExchangeShopRate(currency, config, raw);
 

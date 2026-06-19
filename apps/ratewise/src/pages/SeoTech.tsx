@@ -184,9 +184,9 @@ const TECH_FEATURES = [
   },
   {
     icon: Search,
-    title: 'ETag 條件式請求',
-    desc: '匯率 API 支援 If-None-Match 標頭，相同資料回傳 304 Not Modified，省流量。',
-    tech: 'jsDelivr CDN',
+    title: '瀏覽器快取策略',
+    desc: '匯率資料以 HTTP cache 搭配 5 分鐘 client 快取控制重複請求，避免跨域預檢失敗。',
+    tech: 'jsDelivr CDN + localStorage TTL',
   },
   {
     icon: Globe,
