@@ -3,75 +3,10 @@ import { useStore } from '../store/useStore';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
-import { BottomSheet } from './BottomSheet';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useEffect, useRef, useState } from 'react';
-
-/**
- * BottomSheet の peek/expanded 高さを動的計算する。
- *
- * 考慮事項：
- * - iOS PWA では safe-area-inset-bottom（ホームバー）が追加される
- * - BottomNav の実際の高さは CSS 変数 --nav-h で動的に取得
- * - BottomNav ラッパーの bottom は 0.5rem(8px)
- * - navZone = 16 + navH + safeArea → BottomSheet の bottom と一致させる
- * - visualViewport.height を使うと iOS でキーボード表示時の高さも正確
- */
-function useResponsiveSheetHeight() {
-  const [vh, setVh] = useState(() => window.visualViewport?.height ?? window.innerHeight);
-  const [navH, setNavH] = useState(62);
-  const [sab, setSab] = useState(0);
-
-  useEffect(() => {
-    // safe-area-inset-bottom を CSS 変数経由で JS から読む
-    // :root { --sab: env(safe-area-inset-bottom, 0px); } が必要
-    const readSab = () => {
-      const val = getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();
-      setSab(parseInt(val) || 0);
-    };
-
-    // --nav-h は BottomNav の ResizeObserver が inline style で設定する
-    const readNavH = () => {
-      const val = document.documentElement.style.getPropertyValue('--nav-h').trim();
-      const h = parseInt(val);
-      if (h > 0) setNavH(h);
-    };
-
-    const update = () => {
-      setVh(window.visualViewport?.height ?? window.innerHeight);
-      readNavH();
-    };
-
-    readSab();
-    readNavH();
-    update();
-
-    window.addEventListener('resize', update);
-    window.visualViewport?.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.visualViewport?.removeEventListener('resize', update);
-    };
-  }, []);
-
-  // BottomNav が占める底からの高さ = navWrapper.bottom(0.5rem=8px) + navHeight + safeArea
-  const navZone = 8 + navH + sab;
-
-  /**
-   * CALC_FULL_H: 計算機全行表示に必要な最低高さ
-   * 内訳: ドラッグハンドル(20) + メモ欄(48) + モード切替(44) + ヒント(28)
-   *      + 計算機5行 × (h-12=48px + gap-1.5=6px) - 最後のgap(6) + pb-2(8) = 416
-   */
-  const CALC_FULL_H = 416;
-
-  // peekHeight: 計算機コンテンツと完全一致させ余白ゼロにする
-  // 小画面では viewport に合わせてクリップ、通常は CALC_FULL_H ぴったり
-  const peekHeight = Math.min(CALC_FULL_H, vh - navZone - 80);
-  // expandedHeight: ヘッダー下 80px のバッファを確保して最大限展開
-  const expandedHeight = Math.min(560, vh - navZone - 80);
-  return { peekHeight, expandedHeight };
-}
+import { formatAmount } from '../config/currencies';
 
 interface HomeTabProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -91,6 +26,8 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     setExpenseNote,
     expenseCategory,
     setExpenseCategory,
+    currency,
+    krwPerTwd,
   } = useStore();
 
   const CATEGORIES = [
@@ -104,9 +41,33 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const noteInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelH, setPanelH] = useState(400);
+  const [keyboardH, setKeyboardH] = useState(0);
+
+  // Track panel height → drives content paddingBottom
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) setPanelH(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Detect system keyboard via visualViewport (iOS PWA / Android Chrome)
+  useEffect(() => {
+    const update = () => {
+      const vvh = window.visualViewport?.height ?? window.innerHeight;
+      setKeyboardH(Math.max(0, window.innerHeight - vvh));
+    };
+    update();
+    window.visualViewport?.addEventListener('resize', update);
+    return () => window.visualViewport?.removeEventListener('resize', update);
+  }, []);
 
   const activeMembers = members.filter((m) => m.isActive);
-  const { peekHeight, expandedHeight } = useResponsiveSheetHeight();
 
   // 個別輸入模式必須始終把焦點維持在有效成員上，避免鍵盤輸入寫入已停用對象。
   useEffect(() => {
@@ -131,10 +92,16 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
   const splitAmount = activeMembers.length > 0 ? totalAmount / activeMembers.length : 0;
 
+  // 系統鍵盤開啟時：面板移至鍵盤上方；否則：固定在 BottomNav 上方
+  const isKeyboardOpen = keyboardH > 0;
+  const panelBottom = isKeyboardOpen
+    ? `${keyboardH}px`
+    : 'calc(0.5rem + var(--nav-h, 62px) + env(safe-area-inset-bottom, 0px))';
+
   return (
     <div
       className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-      style={{ paddingBottom: expandedHeight + 24 }}
+      style={{ paddingBottom: panelH + 80 }}
     >
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
@@ -164,13 +131,21 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               {splitMode === 'split_evenly' ? t('home.totalAmount') : t('home.totalItemized')}
             </span>
             <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
-              NT$ {Math.round(totalAmount).toLocaleString()}
+              {formatAmount(totalAmount, currency)}
             </h1>
+            {/* 換算提示：另一幣別的近似金額 */}
+            {krwPerTwd && totalAmount > 0 && (
+              <p className="text-xs text-on-surface-variant/50 mt-1">
+                {currency === 'KRW'
+                  ? `≈ NT$ ${Math.round(totalAmount / krwPerTwd).toLocaleString('zh-TW')}`
+                  : `≈ ₩${Math.round(totalAmount * krwPerTwd).toLocaleString('ko-KR')}`}
+              </p>
+            )}
             {splitMode === 'split_evenly' && activeMembers.length > 0 && (
               <p className="text-sm text-on-surface-variant mt-2">
                 {t('home.perPerson')}{' '}
                 <span className="font-semibold text-secondary">
-                  NT$ {Math.round(splitAmount).toLocaleString()}
+                  {formatAmount(splitAmount, currency)}
                 </span>{' '}
                 × {activeMembers.length} {t('home.people')}
               </p>
@@ -206,7 +181,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               </div>
               <div className="text-right">
                 <span className="text-xl font-medium">
-                  NT$ {Math.round(evaluateExpression(itemizedValues[m.id] ?? '0')).toLocaleString()}
+                  {formatAmount(evaluateExpression(itemizedValues[m.id] ?? '0'), currency)}
                 </span>
                 {itemizedValues[m.id] && focusedMemberId === m.id && (
                   <p className="text-xs opacity-70 font-mono mt-1">{itemizedValues[m.id]}</p>
@@ -217,13 +192,15 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         </div>
       )}
 
-      {/* Bottom Sheet: 計算機 + 模式切換；bottom-[72px] 確保浮動 BottomNav（~68px）不遮蓋 */}
-      <BottomSheet
-        isOpen={true}
-        onClose={() => undefined}
-        peekHeight={peekHeight}
-        expandedHeight={expandedHeight}
+      {/* Fixed Bottom Panel：取代 BottomSheet，避免系統鍵盤遮蓋計算機 */}
+      <div
+        ref={panelRef}
+        className="fixed inset-x-0 z-40 max-w-lg mx-auto rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2"
+        style={{ bottom: panelBottom, transition: 'bottom 0.15s ease-out' }}
       >
+        {/* 裝飾性把手（不可拖動） */}
+        <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2" />
+
         {/* Note Input */}
         <div className="mx-4 mt-1 mb-2">
           <div className="flex items-center gap-2 bg-surface-container rounded-full px-4 py-2">
@@ -330,19 +307,24 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
           </button>
         </div>
 
-        <DockInfo
-          splitMode={splitMode}
-          activeMembersCount={activeMembers.length}
-          totalAmount={totalAmount}
-          focusedMemberId={focusedMemberId}
-          focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
-          focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
-        />
+        {/* 系統鍵盤開啟時只顯示備註列，隱藏計算機避免面板超出可視區域 */}
+        {!isKeyboardOpen && (
+          <>
+            <DockInfo
+              splitMode={splitMode}
+              activeMembersCount={activeMembers.length}
+              totalAmount={totalAmount}
+              focusedMemberId={focusedMemberId}
+              focusedMemberAvatarUrl={members.find((m) => m.id === focusedMemberId)?.avatarUrl}
+              focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
+            />
 
-        <div className="px-1 pb-2 touch-manipulation">
-          <Calculator onPawParticle={onPawParticle} />
-        </div>
-      </BottomSheet>
+            <div className="px-1 pb-2 touch-manipulation">
+              <Calculator onPawParticle={onPawParticle} />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
