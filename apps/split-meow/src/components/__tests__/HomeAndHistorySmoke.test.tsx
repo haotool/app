@@ -76,6 +76,34 @@ describe('HomeTab', () => {
     expect(container).toBeTruthy();
   });
 
+  it('幣別為 KRW 時顯示 ₩ 金額', () => {
+    useStore.setState({ calculatorValue: '10000', currency: 'KRW' });
+    renderWith(<HomeTab />);
+    const el = document.querySelector('h1');
+    expect(el?.textContent).toContain('₩');
+    expect(el?.textContent).toContain('10,000');
+  });
+
+  it('KRW 模式有匯率時顯示 ≈ NT$ 換算提示', () => {
+    // 1 TWD = 40 KRW → 10000 KRW ≈ NT$ 250
+    useStore.setState({ calculatorValue: '10000', currency: 'KRW', krwPerTwd: 40 });
+    renderWith(<HomeTab />);
+    expect(screen.getByText(/≈ NT\$ 250/)).toBeInTheDocument();
+  });
+
+  it('TWD 模式有匯率時顯示 ≈ ₩ 換算提示', () => {
+    // 1 TWD = 40 KRW → 100 TWD ≈ ₩4,000
+    useStore.setState({ calculatorValue: '100', currency: 'TWD', krwPerTwd: 40 });
+    renderWith(<HomeTab />);
+    expect(screen.getByText(/≈ ₩4,000/)).toBeInTheDocument();
+  });
+
+  it('無匯率時不顯示換算提示', () => {
+    useStore.setState({ calculatorValue: '10000', currency: 'KRW', krwPerTwd: null });
+    renderWith(<HomeTab />);
+    expect(screen.queryByText(/≈ NT\$/)).not.toBeInTheDocument();
+  });
+
   it('itemized 模式停用目前焦點成員後會自動切換到仍有效的成員', () => {
     useStore.setState({
       splitMode: 'itemized',
@@ -156,6 +184,13 @@ describe('HistoryTab', () => {
       expect(useStore.getState().expenses).toHaveLength(1);
       expect(document.body).toBeTruthy();
     }
+  });
+
+  it('幣別為 KRW 時以 ₩ 顯示金額', () => {
+    useStore.setState({ expenses: [EXPENSE_1], currency: 'KRW' });
+    renderWith(<HistoryTab />);
+    // 總金額與費用列表均應顯示 ₩
+    expect(document.body.textContent).toContain('₩');
   });
 
   it('多筆消費顯示 settlement 區塊', () => {

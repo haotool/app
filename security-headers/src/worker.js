@@ -1,13 +1,15 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.2
+ * 安全標頭 Worker v5.4
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.4: Service Worker 檔案（sw.js、registerSW.js）強制 no-store，確保瀏覽器每次都取得最新版本
+ * - v5.3: 新增 split-meow CSP profile，允許 jsDelivr CDN 連線取得匯率
  * - v5.2: 收斂 ratewise robots.txt / llms.txt 重複 Content-Type，統一為單一 text/plain; charset=utf-8
  * - v5.1: 清洗 root robots.txt 上游殘留 Content-Signal，避免 Lighthouse SEO 92 回歸
  * - v5.1: Markdown mirror 補 X-Robots-Tag noindex，避免 .md 與 canonical HTML 重複索引
@@ -28,7 +30,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.3';
+const SECURITY_POLICY_VERSION = '5.4';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -624,6 +626,11 @@ function isStaticAssetPath(pathname) {
 	return pathname.includes('/assets/') || isImmutableHashedAsset(pathname);
 }
 
+// Service Worker 相關檔案不可快取：瀏覽器需每次取得最新版本才能觸發 PWA 更新。
+function isServiceWorkerFile(pathname) {
+	return /(?:^|\/)(?:sw|registerSW)\.js$/.test(pathname);
+}
+
 function applyHtmlSecurityHeaders(response, url, profile, nonce) {
 	response.headers.delete('Expires');
 	response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(profile, nonce));
@@ -866,6 +873,10 @@ export default {
 
 			if (isImmutableHashedAsset(url.pathname)) {
 				response.headers.set('Cache-Control', 'max-age=31536000, public, immutable');
+			} else if (isServiceWorkerFile(url.pathname)) {
+				// SW 檔案必須 no-store：確保 navigator.serviceWorker.register() 每次都取得最新 SW，
+				// 讓瀏覽器能正確偵測版本變更並觸發更新流程。
+				response.headers.set('Cache-Control', 'no-store');
 			} else if (url.pathname.endsWith('.webmanifest')) {
 				response.headers.set('Content-Type', 'application/manifest+json');
 			}
