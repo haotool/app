@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # 需要完整歷史記錄來生成完整的 changelog
           fetch-depth: 0
