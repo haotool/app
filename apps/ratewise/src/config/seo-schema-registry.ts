@@ -39,6 +39,13 @@ export const SEO_SCHEMA_REGISTRY = [
     enabled: true,
   },
   {
+    type: 'ItemList',
+    desc: '首頁可見熱門幣別導覽清單',
+    pages: '首頁',
+    icon: Link2,
+    enabled: true,
+  },
+  {
     type: 'ExchangeRateSpecification',
     desc: '幣對頁 / 金額頁的匯率數值、來源與換算金額',
     pages: '幣別落地頁 / 金額頁',
