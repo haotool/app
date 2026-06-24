@@ -12,6 +12,7 @@ import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
+import { LanguagePreferenceSync } from './LanguagePreferenceSync';
 
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
 
@@ -63,6 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <React.StrictMode>
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
+          <LanguagePreferenceSync />
           <PwaAppReadyBeacon />
           <div
             data-scroll-container="layout"
@@ -71,10 +73,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* 主要內容 */}
             <main className="min-h-full [overscroll-behavior-y:contain]">{children}</main>
 
-            {/* 頁尾 - Stage 6：內部連結結構（僅桌面版顯示） */}
-            <div className="hidden md:block">
-              <Footer />
-            </div>
+            {/* 頁尾 - Stage 6：內部連結結構（Footer 內含行動版與桌面版佈局） */}
+            <Footer />
           </div>
         </ErrorBoundary>
 

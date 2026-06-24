@@ -289,18 +289,26 @@ export const SettingsSkeleton = () => {
         </div>
       </section>
 
-      {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（4 個連結列）*/}
+      {/* 支援與資訊區塊 — 對應 Settings.tsx HelpCircle section（7 張資訊卡） */}
       <section className="space-y-3">
         <div className="skeleton-shimmer h-4 w-28 rounded" />
-        <div className="skeleton-card overflow-hidden divide-y divide-border">
-          {[1, 2, 3, 4].map((i) => (
+        <div
+          data-testid="skeleton-settings-support-desc"
+          className="skeleton-shimmer h-8 w-full rounded-xl"
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div
               key={i}
               data-testid="skeleton-settings-link"
-              className="px-5 py-4 flex items-center justify-between"
+              className="skeleton-card flex min-h-[92px] items-center gap-3 p-4"
             >
-              <div className="skeleton-shimmer h-4 w-24 rounded" />
-              <div className="skeleton-shimmer h-4 w-4 rounded" />
+              <div className="skeleton-shimmer h-10 w-10 flex-shrink-0 rounded-2xl" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="skeleton-shimmer h-4 w-28 rounded" />
+                <div className="skeleton-shimmer h-3 w-full rounded" />
+                <div className="skeleton-shimmer h-3 w-3/4 rounded" />
+              </div>
             </div>
           ))}
         </div>

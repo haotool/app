@@ -207,7 +207,7 @@ describe('OpenData Page', () => {
 
     it('renders internal guide card with basename-aware href', () => {
       renderOpenDataWithBasename();
-      expect(screen.getByRole('link', { name: /使用指南/i })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: /網頁介面使用教學/i })).toHaveAttribute(
         'href',
         '/ratewise/guide/',
       );

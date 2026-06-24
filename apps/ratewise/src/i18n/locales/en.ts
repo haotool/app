@@ -25,6 +25,7 @@ const en = {
     copy: 'Copy',
     copied: 'Copied',
     clickToCopy: 'Click to copy',
+    opensInNewWindow: ' (opens in a new window)',
   },
 
   // Navigation
@@ -161,13 +162,71 @@ const en = {
       'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
     // Support & Info section
     supportInfo: 'Support & Info',
+    supportInfoDesc: 'Find usage help, data sources, API docs, privacy, and service details.',
     faq: 'FAQ',
+    faqDesc: 'Clarify buy/sell rates, cash vs spot, card rates, and data freshness.',
     usageGuide: 'Usage Guide',
+    usageGuideDesc:
+      'Learn the fastest path for conversion, modes, favorites, and multi-currency checks.',
     aboutUs: 'About Us',
+    aboutUsDesc: 'Understand the data method, use cases, author, and maintenance model.',
     openSource: 'Open Source',
+    openSourceDesc: 'Review the source code, changelog, and public collaboration status.',
     privacyPolicy: 'Privacy Policy',
+    privacyPolicyDesc: 'Understand data handling, analytics tools, and privacy boundaries.',
     openDataApi: 'Open Data API',
+    openDataApiDesc: 'View latest.json, OpenAPI, and data fields for integrations or audits.',
     seoTech: 'SEO Technology',
+    seoTechDesc: 'Review indexable pages, sitemap, structured data, and public files.',
+  },
+
+  // Support pages
+  supportPages: {
+    common: {
+      author: 'Author',
+      version: 'Version',
+      lastUpdated: 'Last updated',
+      estimatedTime: 'Estimated time',
+      twoMinutes: 'About 2 minutes',
+    },
+    faq: {
+      title: 'FAQ',
+      subtitle:
+        'Clear answers on buy/sell rates, cash vs spot rates, card exchange rates, DCC, and data refreshes.',
+    },
+    guide: {
+      title: 'How to use {{appName}} for exchange rates',
+      subtitle:
+        'A complete 8-step guide for one-off conversions, multi-currency checks, favorites, and trip planning.',
+    },
+    about: {
+      title: 'About {{appName}}',
+      subtitle:
+        '{{appName}} focuses on Taiwan exchange decisions: buy/sell quotes, cash/spot rates, and public data sources.',
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      subtitle:
+        'Favorites, settings, and conversion history stay on your device; this page explains analytics, security services, and data boundaries.',
+    },
+    openData: {
+      title: 'Open Data API',
+      subtitle:
+        'Taiwan Bank exchange-rate JSON endpoints with latest.json, history files, OpenAPI, and field definitions.',
+      badges: {
+        currencyCount: '{{count}} currencies',
+        refresh: 'Updates every 5 minutes',
+        noApiKey: 'No API key',
+        etag: 'ETag support',
+        cdn: 'Global CDN',
+      },
+    },
+    seoTech: {
+      eyebrow: 'SEO Technology',
+      title: '{{appName}} SEO Architecture',
+      subtitle:
+        'This page lists the files, pages, structured data, and update flow that search engines and AI systems can read from {{appName}}. The numbers come directly from config so they can be checked against production.',
+    },
   },
 
   // Styles

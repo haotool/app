@@ -5,16 +5,10 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { GUIDE_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
+import { formatLocalizedDate } from '../utils/timeFormatter';
 
 const HOW_TO = GUIDE_PAGE_SEO.howTo;
 const HOW_TO_STEPS = HOW_TO?.steps ?? [];
-
-const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'Asia/Taipei',
-});
 
 const RATE_READING_TIPS = [
   {
@@ -48,7 +42,12 @@ const FAQ_ITEMS = [
 ];
 
 const Guide = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lastUpdated = formatLocalizedDate(
+    SITE_SEO.updatedTime,
+    i18n.resolvedLanguage ?? i18n.language,
+  );
+
   return (
     <>
       <SEOHelmet
@@ -72,10 +71,10 @@ const Guide = () => {
 
           <div className="mb-8">
             <h1 className="mb-2 text-4xl font-bold text-text">
-              如何使用 {APP_INFO.shortName} 進行匯率換算
+              {t('supportPages.guide.title', { appName: APP_INFO.shortName })}
             </h1>
             <p className="text-text-muted">
-              完整 8 步驟教學，快速學會使用 {APP_INFO.shortName} 進行單幣別和多幣別匯率換算。
+              {t('supportPages.guide.subtitle', { appName: APP_INFO.shortName })}
             </p>
             <div className="mt-2 flex items-center text-sm text-text-muted">
               <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,12 +85,13 @@ const Guide = () => {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              預估完成時間：約 2 分鐘
+              {t('supportPages.common.estimatedTime')}：{t('supportPages.common.twoMinutes')}
             </div>
             <p className="mt-2 text-sm text-text-muted">
-              作者：<span itemProp="author">{APP_INFO.author}</span> ・ 最後更新：
+              {t('supportPages.common.author')}：<span itemProp="author">{APP_INFO.author}</span> ・{' '}
+              {t('supportPages.common.lastUpdated')}：
               <time dateTime={new Date(SITE_SEO.updatedTime).toISOString()} itemProp="dateModified">
-                {LAST_UPDATED}
+                {lastUpdated}
               </time>
             </p>
           </div>
@@ -121,7 +121,8 @@ const Guide = () => {
                 <div
                   key={step.position}
                   id={`step-${step.position}`}
-                  className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
+                  className="card p-6 transition-shadow hover:shadow-md"
+                  style={{ scrollMarginTop: 'calc(env(safe-area-inset-top, 0px) + 14rem)' }}
                 >
                   <div className="flex items-start">
                     <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">

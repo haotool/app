@@ -25,6 +25,7 @@ const zhTW = {
     copy: '複製',
     copied: '已複製',
     clickToCopy: '點擊複製',
+    opensInNewWindow: '（開新視窗）',
   },
 
   // Navigation
@@ -158,13 +159,65 @@ const zhTW = {
     rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
+    supportInfoDesc: '查使用教學、資料來源、API、隱私與服務說明。',
     faq: '常見問題',
+    faqDesc: '快速釐清買入賣出、現金即期、刷卡匯率與資料更新。',
     usageGuide: '使用指南',
+    usageGuideDesc: '用最短路徑完成換算、切換模式、收藏與多幣別比較。',
     aboutUs: '關於我們',
+    aboutUsDesc: '了解資料方法、適用情境、作者與維護方式。',
     openSource: '開放原始碼',
+    openSourceDesc: '查看程式碼、變更紀錄與公開協作狀態。',
     privacyPolicy: '隱私權政策',
+    privacyPolicyDesc: '了解資料處理、分析工具與使用者隱私邊界。',
     openDataApi: '開放資料 API',
+    openDataApiDesc: '查看 latest.json、OpenAPI 與資料欄位，方便接入或稽核。',
     seoTech: 'SEO 技術揭露',
+    seoTechDesc: '查看可索引頁面、sitemap、結構化資料與公開檔案。',
+  },
+
+  // Support pages
+  supportPages: {
+    common: {
+      author: '作者',
+      version: '版本',
+      lastUpdated: '最後更新',
+      estimatedTime: '預估完成時間',
+      twoMinutes: '約 2 分鐘',
+    },
+    faq: {
+      title: '常見問題',
+      subtitle: '把買入賣出、現金即期、刷卡匯率、DCC 與資料更新一次說清楚。',
+    },
+    guide: {
+      title: '如何使用 {{appName}} 進行匯率換算',
+      subtitle: '完整 8 步驟教學，從單筆換算、多幣別比較到收藏設定，完成出國前常見查價。',
+    },
+    about: {
+      title: '關於 {{appName}}',
+      subtitle: '{{appName}} 專注台灣換匯情境：看買入賣出、現金即期與公開資料來源。',
+    },
+    privacy: {
+      title: '隱私政策',
+      subtitle: '收藏、設定與換算歷史留在你的裝置；這頁列出分析、安全服務與資料處理邊界。',
+    },
+    openData: {
+      title: '開放資料 API',
+      subtitle: '台灣銀行牌告匯率 JSON 端點，提供 latest.json、歷史資料、OpenAPI 與資料欄位。',
+      badges: {
+        currencyCount: '{{count}} 種幣別',
+        refresh: '每 5 分鐘更新',
+        noApiKey: '無需 API Key',
+        etag: 'ETag 支援',
+        cdn: 'CDN 全球加速',
+      },
+    },
+    seoTech: {
+      eyebrow: 'SEO 技術揭露',
+      title: '{{appName}} SEO 架構',
+      subtitle:
+        '這頁列出 {{appName}} 目前公開給搜尋引擎和 AI 讀取的檔案、頁面與資料更新流程。數字直接來自設定檔，方便核對實際部署狀態。',
+    },
   },
 
   // Styles

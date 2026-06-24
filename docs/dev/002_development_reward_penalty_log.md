@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：+55
+> 本次分數變化：+1（reward 1）｜累計總分：+59
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-05-17
+- ID：reward-ratewise-popular-currency-link-ssot
+- 原因：首頁熱門幣別、footer 熱門匯率與攻略頁相關幣別各自維護清單，首頁熱門區 aria-labelledby 也指向 app shell heading
+- 解法：新增 popular-currency-links SSOT 並由首頁、footer、攻略頁與 ItemList JSON-LD 共用，同步修正 aria-labelledby、SeoTech schema registry 與 footer 去重測試
+
+- 日期：2026-05-17
+- ID：reward-ratewise-support-copy-i18n-shell
+- 原因：支援與資訊頁首屏文案仍分散在 JSX，SSG 又會在 Node navigator 下輸出英文 i18n，設定入口描述也保留偏工程與 AI 治理口吻
+- 解法：新增 supportPages 四語系文案命名空間，將 FAQ、Guide、About、Privacy、OpenData、SeoTech 首屏與更新標籤改由 i18n 取得，並讓無 DOM 的 SSG 鎖定 zh-TW 初始語系
+
+- 日期：2026-05-17
+- ID：reward-pr404-support-nav-path-normalization
+- 原因：PR404 review 指出支援資訊頁若以 `/faq`、`/seo-tech` 等無 trailing slash route 進入，PageNavHeader 會因 exact match 找不到支援導覽與 active pill
+- 解法：在 PageNavHeader 正規化當前 pathname 後再比對 SUPPORT_INFO_LINKS，並補無 trailing slash 回歸測試鎖定導覽顯示與目前頁標示
+
+- 日期：2026-05-17
+- ID：reward-ratewise-support-info-ia-header
+- 原因：支援與資訊入口分散在設定列表，公開內容頁手機版缺少可見 footer，頁首只有返回與麵包屑，搜尋落地或 PWA 直開時導覽脈絡不足
+- 解法：公開頁 PageNavHeader 加入品牌、支援分群導覽、safe-area sticky header 與 AA active pill token，Layout 恢復行動版 Footer，設定頁支援區改為四語系描述卡片，SEO 技術頁與 skeleton 同步收斂並補測試
 
 - 日期：2026-05-17
 - ID：reward-ratewise-nitro-design-token-ssot

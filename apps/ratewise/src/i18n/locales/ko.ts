@@ -25,6 +25,7 @@ const ko = {
     copy: '복사',
     copied: '복사됨',
     clickToCopy: '클릭하여 복사',
+    opensInNewWindow: '(새 창에서 열림)',
   },
 
   // Navigation
@@ -158,13 +159,69 @@ const ko = {
     rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
+    supportInfoDesc: '사용 방법, 데이터 출처, API, 개인정보, 서비스 정보를 확인합니다.',
     faq: '자주 묻는 질문',
+    faqDesc: '매입/매도율, 현금/전신환, 카드 환율, 데이터 갱신 기준을 빠르게 확인합니다.',
     usageGuide: '사용 가이드',
+    usageGuideDesc: '환산, 모드 전환, 즐겨찾기, 다중 통화 비교의 빠른 사용 흐름을 확인합니다.',
     aboutUs: '소개',
+    aboutUsDesc: '데이터 방식, 사용 상황, 작성자, 유지보수 기준을 확인합니다.',
     openSource: '오픈 소스',
+    openSourceDesc: '소스 코드, 변경 이력, 공개 협업 상태를 확인합니다.',
     privacyPolicy: '개인정보 처리방침',
+    privacyPolicyDesc: '데이터 처리, 분석 도구, 개인정보 보호 범위를 확인합니다.',
     openDataApi: '공개 데이터 API',
+    openDataApiDesc: 'latest.json, OpenAPI, 데이터 필드를 확인해 연동이나 감사에 활용합니다.',
     seoTech: 'SEO 기술 공개',
+    seoTechDesc: '색인 대상 페이지, sitemap, 구조화 데이터, 공개 파일을 확인합니다.',
+  },
+
+  // 지원 페이지
+  supportPages: {
+    common: {
+      author: '작성자',
+      version: '버전',
+      lastUpdated: '마지막 업데이트',
+      estimatedTime: '예상 시간',
+      twoMinutes: '약 2분',
+    },
+    faq: {
+      title: '자주 묻는 질문',
+      subtitle: '매입/매도율, 현금/전신환, 카드 환율, DCC, 데이터 갱신을 한곳에서 확인합니다.',
+    },
+    guide: {
+      title: '{{appName}} 환율 조회 사용법',
+      subtitle:
+        '단일 환산, 다중 통화 비교, 즐겨찾기 설정까지 여행 전 자주 쓰는 확인 흐름을 8단계로 안내합니다.',
+    },
+    about: {
+      title: '{{appName}} 소개',
+      subtitle:
+        '{{appName}}는 대만 환전 상황에 맞춰 매입/매도, 현금/전신환, 공개 데이터 출처를 중심으로 보여줍니다.',
+    },
+    privacy: {
+      title: '개인정보 처리방침',
+      subtitle:
+        '즐겨찾기, 설정, 환산 기록은 기기에 보관됩니다. 이 페이지는 분석, 보안 서비스, 데이터 처리 범위를 설명합니다.',
+    },
+    openData: {
+      title: '공개 데이터 API',
+      subtitle:
+        '대만 은행 고시 환율 JSON 엔드포인트로 latest.json, 기록 데이터, OpenAPI, 데이터 필드를 제공합니다.',
+      badges: {
+        currencyCount: '{{count}}개 통화',
+        refresh: '5분마다 업데이트',
+        noApiKey: 'API Key 불필요',
+        etag: 'ETag 지원',
+        cdn: '글로벌 CDN',
+      },
+    },
+    seoTech: {
+      eyebrow: 'SEO 기술 공개',
+      title: '{{appName}} SEO 아키텍처',
+      subtitle:
+        '이 페이지는 검색 엔진과 AI가 {{appName}}에서 읽을 수 있는 파일, 페이지, 구조화 데이터, 업데이트 흐름을 정리합니다. 숫자는 설정 파일에서 가져와 운영 상태와 대조하기 쉽습니다.',
+    },
   },
 
   // Styles

@@ -20,6 +20,7 @@ import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
+import { LanguagePreferenceSync } from './LanguagePreferenceSync';
 
 function AppLazyGlobalPrompts({
   attempt,
@@ -194,6 +195,7 @@ export function AppLayout() {
 
   return (
     <ToastProvider>
+      <LanguagePreferenceSync />
       <PwaAppReadyBeacon />
       {/* SPA 路由變更時送出 GA4 page_view */}
       <RouteAnalytics />
