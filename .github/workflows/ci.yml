@@ -147,6 +147,7 @@ jobs:
     name: E2E Tests
     needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
 
@@ -168,6 +169,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm --filter @app/ratewise exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
       - name: Build
         env:
           VITE_RATEWISE_BASE_PATH: '/'
@@ -175,7 +187,14 @@ jobs:
         run: pnpm build:ratewise
 
       - name: Install Playwright browsers
-        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
+        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @app/ratewise exec playwright install-deps chromium
 
       - name: Start preview server
         env:
