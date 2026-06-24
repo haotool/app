@@ -1,3 +1,5 @@
+import { POPULAR_RATE_LINKS } from './popular-currency-links';
+
 export interface FooterLink {
   label: string;
   href: string;
@@ -8,14 +10,7 @@ export interface FooterSection {
   links: FooterLink[];
 }
 
-export const POPULAR_RATE_LINKS: FooterLink[] = [
-  { label: 'USD 美元', href: '/usd-twd/' },
-  { label: 'JPY 日圓', href: '/jpy-twd/' },
-  { label: 'EUR 歐元', href: '/eur-twd/' },
-  { label: 'HKD 港幣', href: '/hkd-twd/' },
-  { label: 'CNY 人民幣', href: '/cny-twd/' },
-  { label: 'KRW 韓元', href: '/krw-twd/' },
-];
+export { POPULAR_RATE_LINKS };
 
 export const FOOTER_SECTIONS: FooterSection[] = [
   {
@@ -34,10 +29,10 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     links: POPULAR_RATE_LINKS,
   },
   {
-    // 移除與熱門匯率重複的 USD/JPY/HKD/CNY/KRW，改為非重複的亞洲幣別。
+    // 移除與熱門匯率重複的 JPY/KRW/HKD/SGD，改為非重複的亞洲幣別。
     title: '亞洲貨幣',
     links: [
-      { label: 'SGD 新加坡幣', href: '/sgd-twd/' },
+      { label: 'CNY 人民幣', href: '/cny-twd/' },
       { label: 'THB 泰銖', href: '/thb-twd/' },
       { label: 'PHP 菲律賓披索', href: '/php-twd/' },
       { label: 'MYR 馬來幣', href: '/myr-twd/' },

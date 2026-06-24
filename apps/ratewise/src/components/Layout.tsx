@@ -12,6 +12,7 @@ import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
+import { LanguagePreferenceSync } from './LanguagePreferenceSync';
 
 const DecemberTheme = React.lazy(() => import('../features/calculator/easter-eggs/DecemberTheme'));
 
@@ -63,6 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <React.StrictMode>
       <HelmetProvider context={helmetContext}>
         <ErrorBoundary>
+          <LanguagePreferenceSync />
           <PwaAppReadyBeacon />
           <div
             data-scroll-container="layout"

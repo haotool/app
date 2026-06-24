@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { formatIsoTimestamp, formatGenericTimeString, formatDisplayTime } from '../timeFormatter';
+import {
+  formatIsoTimestamp,
+  formatGenericTimeString,
+  formatDisplayTime,
+  formatLocalizedDate,
+} from '../timeFormatter';
 
 describe('formatIsoTimestamp', () => {
   it('should format valid ISO timestamp correctly', () => {
@@ -62,6 +67,26 @@ describe('formatGenericTimeString', () => {
   it('should return empty string for empty input', () => {
     expect(formatGenericTimeString('')).toBe('');
     expect(formatGenericTimeString('   ')).toBe('');
+  });
+});
+
+describe('formatLocalizedDate', () => {
+  it('formats public support dates with the requested locale', () => {
+    const result = formatLocalizedDate('2026-05-17T00:00:00+08:00', 'en');
+    expect(result).toContain('2026');
+    expect(result).toMatch(/May|5/);
+    expect(result).toContain('17');
+  });
+
+  it('falls back safely when locale is invalid', () => {
+    const result = formatLocalizedDate('2026-05-17T00:00:00+08:00', 'not-a-locale');
+    expect(result).toContain('2026');
+    expect(result).toMatch(/May|5/);
+    expect(result).toContain('17');
+  });
+
+  it('returns empty string for invalid dates', () => {
+    expect(formatLocalizedDate('not-a-date', 'zh-TW')).toBe('');
   });
 });
 

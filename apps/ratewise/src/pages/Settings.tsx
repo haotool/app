@@ -45,7 +45,12 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
-import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
+import {
+  LANGUAGE_OPTIONS,
+  getResolvedLanguage,
+  persistLanguagePreference,
+  type SupportedLanguage,
+} from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_INFO } from '../config/app-info';
@@ -115,6 +120,7 @@ export default function Settings() {
   const currentLanguage = getResolvedLanguage();
 
   const handleLanguageChange = (lang: SupportedLanguage) => {
+    persistLanguagePreference(lang);
     void i18n.changeLanguage(lang);
   };
 
