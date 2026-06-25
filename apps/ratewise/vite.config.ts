@@ -316,6 +316,7 @@ export default defineConfig(({ mode }) => {
             '**/node_modules/**',
             '**/lighthouse-reports/**',
             '**/rates/**/*.json',
+            '**/pwa-install/**',
             '**/offline.html',
             '**/sitemap.xml',
             '**/robots.txt',

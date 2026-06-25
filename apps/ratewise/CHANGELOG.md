@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.25.0
+
+### Minor Changes
+
+- 新增 RateWise PWA 安裝指引：依 iOS Safari、Android Chrome 與 Threads/Instagram 等內建瀏覽器情境自動切換文案與步驟，並提供品牌化安裝海報。
+
 ## 2.24.1
 
 ### Patch Changes

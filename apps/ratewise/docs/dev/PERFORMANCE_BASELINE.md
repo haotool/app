@@ -56,6 +56,21 @@
 
 ## 退化偵測 SOP
 
+### 漂移門檻（Production Baseline SSOT）
+
+Production baseline 比較採**相對 + 絕對雙門檻**：兩者同時超過才判定退化（`scripts/lighthouse-drift.mjs`）。
+
+| 指標        | 相對退化門檻 | 絕對漂移容忍（DRIFT_ABSOLUTE_TOLERANCE） | 硬性門檻   |
+| ----------- | ------------ | ---------------------------------------- | ---------- |
+| Performance | 5%           | 1 分                                     | ≥ 90       |
+| LCP         | 5%           | 500 ms                                   | ≤ 2,500 ms |
+| INP         | 5%           | 30 ms                                    | ≤ 200 ms   |
+| CLS         | 5%           | 0.01                                     | ≤ 0.1      |
+
+範例：INP baseline 34 ms → 實測 60 ms（+26 ms）在 30 ms 絕對容忍內，即使相對漂移 >5% 也不 fail；34 → 66 ms（+32 ms）才 fail。
+
+> **CI 觸發範圍**：Production Lighthouse workflow 掃描**正式站 live URL**，結果受 CDN/排程/第三方腳本影響，與 PR 程式碼無直接因果。一般 `apps/ratewise/**` PR **不觸發**此 workflow；僅在每日 cron 或 `workflow_dispatch` 時執行。**PR 合併 gate 使用 ci.yml 的 Lighthouse CI（本地 build + LHCI）**，非 production 掃描。
+
 ### 自動偵測
 
 1. **趨勢圖 E2E 測試**：`tests/e2e/trend-chart-latency.spec.ts`
@@ -64,11 +79,11 @@
    - 失敗自動阻擋合併
 
 2. **Lighthouse Production Baseline**
-   - 每日 cron 執行 production URL
-   - 腳本：`scripts/lighthouse-production.mjs`
+   - 每日 cron 執行 production URL（一般 ratewise PR 不觸發，見上方 CI 觸發範圍）
+   - 腳本：`scripts/lighthouse-production.mjs`（漂移邏輯：`scripts/lighthouse-drift.mjs`）
    - 每頁 3 次取中位數，持續更新 `scripts/lighthouse-baseline.production.json`
    - 硬性門檻：LCP ≤ 2,500ms、INP ≤ 200ms、CLS ≤ 0.1、Performance ≥ 90
-   - 退化 > 5%（較上次 baseline）自動 fail 並在 PR 留言
+   - 退化：相對 >5% **且** 絕對漂移超過 DRIFT_ABSOLUTE_TOLERANCE 才 fail
 
 3. **RUM（Real User Monitoring）**（待啟用）
    - `web-vitals` → `VITE_VITALS_ENDPOINT`

@@ -1,5 +1,9 @@
 name: Lighthouse Production Baseline
 
+# Production baseline 掃描正式站 live URL，結果受 CDN/邊緣/排程影響，與 PR 程式碼無直接因果。
+# PR 合併 gate 使用 ci.yml 的 Lighthouse CI（本地 build + LHCI）；此 workflow 僅 schedule / workflow_dispatch。
+# 若 branch protection 仍要求「Production Lighthouse Baseline Check」，需 repo admin 改為 ci.yml「Lighthouse CI」。
+
 on:
   schedule:
     - cron: '15 3 * * *'
@@ -10,14 +14,6 @@ on:
         required: false
         default: 'https://app.haotool.org/ratewise/'
         type: string
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'apps/ratewise/**'
-      - 'scripts/lighthouse-production.mjs'
-      - 'scripts/lighthouse-baseline.production.json'
-      - '.github/workflows/lighthouse-production.yml'
 
 jobs:
   lighthouse-production:
@@ -25,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -106,7 +101,12 @@ jobs:
               } else if (check?.type === 'regression') {
                 const baselineValue = check.baseline ?? 'N/A';
                 const actualValue = check.actual ?? 'N/A';
-                lines.push(`- ⚠️ ${name}: baseline ${baselineValue} -> ${actualValue}，drift +${check.drift}%`);
+                const unit = check.unit ?? '';
+                const absDrift = check.absoluteDrift ?? 'N/A';
+                const absTol = check.absoluteTolerance ?? 'N/A';
+                lines.push(
+                  `- ⚠️ ${name}: baseline ${baselineValue} -> ${actualValue}，drift +${check.drift}% (absolute +${absDrift}${unit} / tol ${absTol}${unit})`,
+                );
               }
             }
             const content = `${body}${lines.length ? lines.join('\\n') : '- 無異常，指標符合要求'}\n`;
@@ -198,7 +198,12 @@ jobs:
                   if (check?.type === "regression") {
                     const driftValue = check.drift ?? drift[name];
                     const baselineValue = check.baseline ?? "N/A";
-                    lines.push(`- ⚠️ ${name}: baseline ${baselineValue} -> ${check.actual} (${driftValue}%)`);
+                    const unit = check.unit ?? "";
+                    const absDrift = check.absoluteDrift ?? "N/A";
+                    const absTol = check.absoluteTolerance ?? "N/A";
+                    lines.push(
+                      `- ⚠️ ${name}: baseline ${baselineValue} -> ${check.actual} (${driftValue}%, absolute +${absDrift}${unit} / tol ${absTol}${unit})`,
+                    );
                   }
                 }
                 if (lines.length === details.length + 2) {

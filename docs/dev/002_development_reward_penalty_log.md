@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +55
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +58
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,41 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-26
+- ID：reward-lighthouse-ci-production-grade-converge
+- 原因：Production Lighthouse 在 ratewise PR 掃 live URL 造成誤判，compareDirection 缺行為測試且 PERFORMANCE_BASELINE 未同步絕對容忍
+- 解法：抽出 lighthouse-drift.mjs 補 INP 漂移行為測試、移除 production workflow PR 觸發、ci.yml LHCI 加 paths/timeout、E2E timeout 30 分
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide-p1-merge-fix
+- 原因：beforeinstallprompt 在 desktop 無條件 preventDefault 阻擋原生安裝 UI，且 ~693KB 安裝海報被 SW precache
+- 解法：僅 Android 且 shouldShowGuide 時攔截事件，pwa-install 海報加入 globIgnores 改 runtime fetch，補 desktop Vitest
+
+- 日期：2026-06-25
+- ID：neutral-continual-learning-agents-md
+- 原因：continual-learning 從近期 transcript 萃取高訊號 UI/UX 偏好與 Cloudflare Workers 治理事實
+- 解法：在 AGENTS.md 新增 Learned User Preferences 與 Learned Workspace Facts 章節
+
+- 日期：2026-06-25
+- ID：reward-lighthouse-inp-drift-tolerance
+- 原因：Production Lighthouse baseline 以 10ms INP 絕對門檻誤判 lab 34→60ms 噪音為阻擋性回歸
+- 解法：將 inpMs 絕對漂移容忍值調整為 30ms，保留 5% 相對與 200ms 硬性門檻，vitest 驗證通過
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-poster-ssot
+- 原因：安裝海報未走專案 optimize-images.js SSOT，PNG fallback 達 ~500KB 未做效能優化
+- 解法：將海報納入 optimize-images.js（sharp avif q80/webp q85），PNG fallback 下採樣量化至 ~240KB（−53%），master 比照既有圖片不入庫
+
+- 日期：2026-06-25
+- ID：penalty-ratewise-pwa-install-guide-semver-converge
+- 原因：初版誤用 patch 升版（新互動元件應為 minor）、002 本次分數變化算術誤標，且 messenger UA 偵測排在 facebook 之後永遠不可達
+- 解法：改以 minor 經 changeset 重生至 2.25.0，修正 002 算術、調整 messenger 偵測順序、補 Escape 關閉與對應 Vitest
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide
+- 原因：RateWise PWA 缺少依 iOS、Android 與 Threads 等內建瀏覽器情境自動分流的安裝指引，使用者無法清楚完成加入主畫面流程
+- 解法：新增 SSR-safe PWA 安裝環境偵測、品牌化 iOS/Android 安裝海報與 lazy 全域提示，並補 focused Vitest 與 changeset
 
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend
