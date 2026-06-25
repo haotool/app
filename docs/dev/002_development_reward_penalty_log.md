@@ -13,6 +13,11 @@
 
 ## 條目（新→舊）
 
+- 日期：2026-06-26
+- ID：reward-ci-e2e-timeout-30
+- 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
+- 解法：ci.yml E2E job timeout 調整為 30 分鐘
+
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend
 - 原因：換錢所（KRW/MoneyBox）趨勢線在生產環境每次載入觸發 30 個 daily fetch，且大多數 ~30 天前的日檔 404，與台銀 history-30d.json aggregate SSOT 飄移
