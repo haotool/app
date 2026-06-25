@@ -94,7 +94,7 @@ const buildBreadcrumbSchema = (items: BreadcrumbItem[]): JsonLdBlock | null => {
 
 function upsertTitle(title: string) {
   const existing = Array.from(document.head.querySelectorAll('title'));
-  const element = (existing[0] as HTMLTitleElement | undefined) ?? document.createElement('title');
+  const element = existing[0] ?? document.createElement('title');
 
   if (!element.isConnected) {
     document.head.appendChild(element);

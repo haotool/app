@@ -11,7 +11,6 @@ import {
   getCompassHeading,
   getDeviceTilt,
   isPhoneFlatFromTilt,
-  type CompassOrientationEvent,
 } from '@app/park-keeper/services/deviceOrientation';
 
 export interface DeviceOrientationState {
@@ -79,8 +78,8 @@ export function useDeviceOrientation(
     if (!enabled || !isSupported) return;
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      const compassHeading = getCompassHeading(event as CompassOrientationEvent);
-      const deviceTilt = getDeviceTilt(event as CompassOrientationEvent);
+      const compassHeading = getCompassHeading(event);
+      const deviceTilt = getDeviceTilt(event);
 
       if (compassHeading !== null && compassHeading !== undefined) {
         setHeading(compassHeading);

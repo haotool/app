@@ -836,7 +836,7 @@ function CarPositionReader({
 
   useEffect(() => {
     const update = () => {
-      const pt = map.latLngToContainerPoint(position as L.LatLngExpression);
+      const pt = map.latLngToContainerPoint(position);
       onPositionUpdate({ x: pt.x, y: pt.y });
     };
     update();

@@ -4,7 +4,6 @@ import {
   getCompassHeading,
   getDeviceTilt,
   isPhoneFlatFromTilt,
-  type CompassOrientationEvent,
 } from '@app/park-keeper/services/deviceOrientation';
 
 // ---------------------------------------------------------------------------
@@ -184,8 +183,8 @@ export function useNavigation(record: ParkingRecord) {
     }
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      const h = getCompassHeading(e as CompassOrientationEvent);
-      const tilt = getDeviceTilt(e as CompassOrientationEvent);
+      const h = getCompassHeading(e);
+      const tilt = getDeviceTilt(e);
 
       if (h !== null) {
         const smoothed = smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);

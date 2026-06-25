@@ -67,9 +67,7 @@ export function getAllRateProviders(): RateProviderConfig[] {
 }
 
 export function getRateProvider(providerId: RateProviderId): RateProviderConfig | null {
-  const provider = (RATE_PROVIDERS as Record<string, RateProviderConfig | undefined>)[
-    providerId as string
-  ];
+  const provider = (RATE_PROVIDERS as Record<string, RateProviderConfig | undefined>)[providerId];
   return provider ?? null;
 }
 

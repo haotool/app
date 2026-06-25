@@ -57,7 +57,7 @@ interface FetchResult {
 }
 
 export function getBuildTimeExchangeRates(): ExchangeRateData {
-  return buildTimeRates as ExchangeRateData;
+  return buildTimeRates;
 }
 
 function buildFallbackExchangeRates(updateTime: string): ExchangeRateData {

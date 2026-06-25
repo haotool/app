@@ -597,7 +597,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     const remaining = CURRENCY_CODES.filter(
       (code) => code !== DEFAULT_BASE_CURRENCY && !favSet.has(code),
     ).sort();
-    return [DEFAULT_BASE_CURRENCY as CurrencyCode, ...favWithoutBase, ...remaining];
+    return [DEFAULT_BASE_CURRENCY, ...favWithoutBase, ...remaining];
   }, [favorites]);
 
   return {
