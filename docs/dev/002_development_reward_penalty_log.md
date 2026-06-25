@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +58
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +59
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-full-shard-timeout-45
+- 原因：main push E2E Full 2-way shard 仍設 20 分鐘逾時，完整 desktop+mobile 套件在冷快取下被取消，merge-reports 連帶失敗
+- 解法：ci.yml 將 e2e-full shard 與 e2e-merge-reports timeout-minutes 調整為 45（高於 PR smoke 30 分鐘）
 
 - 日期：2026-06-26
 - ID：reward-ci-e2e-speed-optimization

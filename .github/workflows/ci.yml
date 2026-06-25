@@ -262,7 +262,7 @@ jobs:
       needs.quality.result == 'success' &&
       github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
       contents: read
     strategy:
@@ -349,6 +349,7 @@ jobs:
     needs: e2e-full
     if: ${{ always() && !cancelled() && needs.e2e-full.result != 'skipped' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
 
