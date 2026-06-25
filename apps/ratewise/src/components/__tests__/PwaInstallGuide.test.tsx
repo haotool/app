@@ -128,6 +128,26 @@ describe('PwaInstallGuide', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('does not intercept beforeinstallprompt on desktop Chrome', () => {
+    const preventDefault = vi.fn();
+    mockNavigator(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+      'MacIntel',
+      0,
+    );
+
+    render(<PwaInstallGuide />);
+
+    const event = new Event('beforeinstallprompt') as Event & { preventDefault: () => void };
+    event.preventDefault = preventDefault;
+    window.dispatchEvent(event);
+
+    showGuide();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
   it('stays hidden when the PWA is already standalone', () => {
     mockNavigator(
       'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36',

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0）｜累計總分：前次總分 +56
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +57
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide-p1-merge-fix
+- 原因：beforeinstallprompt 在 desktop 無條件 preventDefault 阻擋原生安裝 UI，且 ~693KB 安裝海報被 SW precache
+- 解法：僅 Android 且 shouldShowGuide 時攔截事件，pwa-install 海報加入 globIgnores 改 runtime fetch，補 desktop Vitest
 
 - 日期：2026-06-25
 - ID：neutral-continual-learning-agents-md

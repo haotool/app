@@ -89,6 +89,11 @@ function PwaInstallGuideClient() {
   }, []);
 
   React.useEffect(() => {
+    const currentEnvironment = readPwaInstallEnvironmentFromBrowser();
+    if (!currentEnvironment.shouldShowGuide || currentEnvironment.platform !== 'android') {
+      return;
+    }
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
