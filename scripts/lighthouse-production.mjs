@@ -22,6 +22,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import { APP_CONFIG } from '../apps/ratewise/app.config.mjs';
+import {
+  compareDirection,
+  DRIFT_ABSOLUTE_TOLERANCE,
+} from './lighthouse-drift.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(SCRIPT_DIR, '..');
@@ -41,14 +45,6 @@ const LIGHTHOUSE_BIN = resolve(ROOT_DIR, 'node_modules', '.bin', 'lighthouse');
 const OUTPUT_ONLY = process.env.LH_OUTPUT_ONLY === '1';
 const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
 const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '2', 10);
-const DRIFT_ABSOLUTE_TOLERANCE = {
-  performanceScore: 1,
-  lcpMs: 500,
-  // Lighthouse lab INP 在 good 區間（<200ms）內常見 20–30ms 波動，需高於 PR378 的 10ms 門檻。
-  inpMs: 30,
-  cls: 0.01,
-};
-
 const PATHS = Array.isArray(APP_CONFIG.lighthouseSmokePaths)
   ? APP_CONFIG.lighthouseSmokePaths
   : ['/'];
@@ -250,35 +246,6 @@ function runLighthouse(url, outputPath) {
   }
 }
 
-function compareDirection(current, baseline, compareDirection, absoluteTolerance = 0) {
-  if (
-    baseline === null ||
-    baseline === 0 ||
-    !Number.isFinite(current) ||
-    !Number.isFinite(baseline)
-  ) {
-    return { changed: 0, absoluteChanged: 0, exceed: false };
-  }
-
-  if (compareDirection === 'higherBetter') {
-    const degradePercent = ((baseline - current) / baseline) * 100;
-    const absoluteChanged = baseline - current;
-    return {
-      changed: safeRound(degradePercent, 2),
-      absoluteChanged: safeRound(absoluteChanged, 2),
-      exceed: degradePercent > DRIFT_PERCENT && absoluteChanged > absoluteTolerance,
-    };
-  }
-
-  const worsenPercent = ((current - baseline) / baseline) * 100;
-  const absoluteChanged = current - baseline;
-  return {
-    changed: safeRound(worsenPercent, 2),
-    absoluteChanged: safeRound(absoluteChanged, 2),
-    exceed: worsenPercent > DRIFT_PERCENT && absoluteChanged > absoluteTolerance,
-  };
-}
-
 function main() {
   validatePositiveIntegerEnv('LH_RUNS', process.env.LH_RUNS, RUNS);
   validatePositiveIntegerEnv(
@@ -447,6 +414,7 @@ function main() {
           previous,
           check.compareDirection,
           check.driftAbsoluteTolerance,
+          DRIFT_PERCENT,
         );
         summary.overall.drift[`${pathKey}:${check.path}`] = drift;
         if (drift.exceed) {
@@ -462,6 +430,7 @@ function main() {
             drift: drift.changed,
             absoluteDrift: drift.absoluteChanged,
             absoluteTolerance: check.driftAbsoluteTolerance,
+            unit: check.unit,
           };
         }
       }

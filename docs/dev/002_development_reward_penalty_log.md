@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +57
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +58
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-26
+- ID：reward-lighthouse-ci-production-grade-converge
+- 原因：Production Lighthouse 在 ratewise PR 掃 live URL 造成誤判，compareDirection 缺行為測試且 PERFORMANCE_BASELINE 未同步絕對容忍
+- 解法：抽出 lighthouse-drift.mjs 補 INP 漂移行為測試、移除 production workflow PR 觸發、ci.yml LHCI 加 paths/timeout、E2E timeout 30 分
 
 - 日期：2026-06-25
 - ID：reward-ratewise-pwa-install-guide-p1-merge-fix
