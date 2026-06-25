@@ -22,10 +22,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 import { APP_CONFIG } from '../apps/ratewise/app.config.mjs';
-import {
-  compareDirection,
-  DRIFT_ABSOLUTE_TOLERANCE,
-} from './lighthouse-drift.mjs';
+import { compareDirection, DRIFT_ABSOLUTE_TOLERANCE } from './lighthouse-drift.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(SCRIPT_DIR, '..');
