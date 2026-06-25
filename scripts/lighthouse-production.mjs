@@ -44,7 +44,8 @@ const LIGHTHOUSE_MAX_ATTEMPTS = Number.parseInt(process.env.LH_MAX_ATTEMPTS || '
 const DRIFT_ABSOLUTE_TOLERANCE = {
   performanceScore: 1,
   lcpMs: 500,
-  inpMs: 10,
+  // Lighthouse lab INP 在 good 區間（<200ms）內常見 20–30ms 波動，需高於 PR378 的 10ms 門檻。
+  inpMs: 30,
   cls: 0.01,
 };
 

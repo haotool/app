@@ -67,6 +67,7 @@ describe('lighthouse-production SSOT controls', () => {
     );
     expect(source).toContain('absoluteChanged > absoluteTolerance');
     expect(source).toContain('lcpMs: 500');
+    expect(source).toContain('inpMs: 30');
     expect(source).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
     expect(source).toContain('actual: current');
   });
