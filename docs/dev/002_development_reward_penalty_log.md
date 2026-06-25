@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1）｜累計總分：前次總分 +54
+> 本次分數變化：+1（reward 2、penalty 1）｜累計總分：前次總分 +55
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-poster-ssot
+- 原因：安裝海報未走專案 optimize-images.js SSOT，PNG fallback 達 ~500KB 未做效能優化
+- 解法：將海報納入 optimize-images.js（sharp avif q80/webp q85），PNG fallback 下採樣量化至 ~240KB（−53%），master 比照既有圖片不入庫
 
 - 日期：2026-06-25
 - ID：penalty-ratewise-pwa-install-guide-semver-converge

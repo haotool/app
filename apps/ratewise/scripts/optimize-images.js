@@ -14,6 +14,7 @@
  */
 
 import sharp from 'sharp';
+import { statSync } from 'node:fs';
 import { readdir, mkdir } from 'node:fs/promises';
 import { join, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +49,59 @@ const CONFIG = {
   // 需要優化的圖片
   targets: ['logo.png', 'apple-touch-icon.png', 'og-image.png', 'twitter-image.png'],
 };
+
+/**
+ * PWA 安裝指引海報配置（直式長圖，顯示於最大寬度約 344px 的提示卡）
+ *
+ * 與主 CONFIG 共用 sharp 與品質基準（avif q80 / webp q85 / png q90），
+ * 但海報為固定尺寸顯示，毋須完整響應式階梯：avif/webp 維持 640w 覆蓋 ~2x retina，
+ * PNG 僅作為極舊瀏覽器深度 fallback，下採樣並量化壓縮以避免 ~500KB 體積。
+ *
+ * 來源 master 置於 scripts/source-images（不部署），輸出至 public/pwa-install。
+ */
+const POSTER_CONFIG = {
+  sourceDir: join(__dirname, 'source-images/pwa-install'),
+  outputDir: join(__dirname, '../public/pwa-install'),
+  displayWidth: 640,
+  fallbackWidth: 512,
+  modernFormats: [
+    { ext: 'avif', quality: 80 },
+    { ext: 'webp', quality: 85 },
+  ],
+  targets: ['ios-install-guide.png', 'android-install-guide.png'],
+};
+
+/**
+ * 優化單張 PWA 安裝海報
+ */
+async function optimizePoster(inputPath, filename) {
+  console.log(`\n🖼️  海報: ${filename}`);
+
+  const baseName = basename(filename, extname(filename));
+  const results = [];
+
+  for (const format of POSTER_CONFIG.modernFormats) {
+    const outputPath = join(POSTER_CONFIG.outputDir, `${baseName}.${format.ext}`);
+    await sharp(inputPath)
+      .resize(POSTER_CONFIG.displayWidth, null, { fit: 'inside', withoutEnlargement: true })
+      .toFormat(format.ext, { quality: format.quality })
+      .toFile(outputPath);
+    const kb = (statSync(outputPath).size / 1024).toFixed(0);
+    results.push({ file: `${baseName}.${format.ext}`, kb });
+    console.log(`  ✅ ${baseName}.${format.ext} (${POSTER_CONFIG.displayWidth}w, ${kb}KB)`);
+  }
+
+  const pngPath = join(POSTER_CONFIG.outputDir, `${baseName}.png`);
+  await sharp(inputPath)
+    .resize(POSTER_CONFIG.fallbackWidth, null, { fit: 'inside', withoutEnlargement: true })
+    .png({ palette: true, quality: 90, effort: 10, compressionLevel: 9 })
+    .toFile(pngPath);
+  const pngKb = (statSync(pngPath).size / 1024).toFixed(0);
+  results.push({ file: `${baseName}.png`, kb: pngKb });
+  console.log(`  ✅ ${baseName}.png (${POSTER_CONFIG.fallbackWidth}w fallback, ${pngKb}KB)`);
+
+  return results;
+}
 
 /**
  * 優化單張圖片
@@ -119,6 +173,18 @@ async function main() {
       allResults.push(...results);
     } catch (error) {
       console.error(`❌ 無法處理 ${target}:`, error.message);
+    }
+  }
+
+  // 處理 PWA 安裝指引海報
+  await mkdir(POSTER_CONFIG.outputDir, { recursive: true });
+  for (const target of POSTER_CONFIG.targets) {
+    const inputPath = join(POSTER_CONFIG.sourceDir, target);
+    try {
+      const results = await optimizePoster(inputPath, target);
+      allResults.push(...results);
+    } catch (error) {
+      console.error(`❌ 無法處理海報 ${target}:`, error.message);
     }
   }
 
