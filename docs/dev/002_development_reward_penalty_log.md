@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +54
+> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +55
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-speed-optimization
+- 原因：PR E2E 每次跑完整 96 測試 + 冷 Playwright 安裝，常超過 15 分鐘且 docs-only PR 也觸發
+- 解法：path filter + Playwright 分層快取 composite action + PR smoke（38 desktop tests）+ main 2-way sharding 與 merge-reports
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-timeout-30
+- 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
+- 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
 
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend

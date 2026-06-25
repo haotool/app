@@ -220,6 +220,7 @@ Agent **必須**先完成：
 3. `pnpm build:ratewise`
 
 - E2E / coverage / Lighthouse 由 CI 執行（本地 pre-push 不做完整長時間檢查）
+- PR CI E2E 為 smoke 子集（3 核心 spec × desktop）；main push 為 sharded 完整套件（見 `docs/dev/039_ci_e2e_speed_optimization.md`）
 
 ## Commit Format（commitlint SSOT）
 
