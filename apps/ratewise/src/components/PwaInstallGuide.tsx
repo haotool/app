@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, Download, ExternalLink, MoreHorizontal, X } from 'lucide-react';
+import { APP_INFO } from '../config/app-info';
 import { notificationTokens } from '../config/design-tokens';
 import {
   type PwaInstallEnvironment,
@@ -36,19 +37,20 @@ function rememberDismissedGuide() {
 }
 
 function getGuideCopy(environment: PwaInstallEnvironment) {
+  const appName = APP_INFO.shortName;
+
   if (environment.inAppBrowser) {
     return {
       title: '請先用外部瀏覽器開啟',
-      description:
-        'Threads、Instagram 等內建瀏覽器無法穩定安裝 PWA。請點右上方 ...，選擇在瀏覽器開啟後再安裝 HaoRate。',
-      steps: ['右上方 ...', '在瀏覽器開啟', '回到 HaoRate 安裝'],
+      description: `Threads、Instagram 等內建瀏覽器無法穩定安裝 PWA。請點右上方 ...，選擇在瀏覽器開啟後再安裝 ${appName}。`,
+      steps: ['右上方 ...', '在瀏覽器開啟', `回到 ${appName} 安裝`],
       posterPlatform: environment.platform === 'android' ? 'android' : 'ios',
     } as const;
   }
 
   if (environment.platform === 'android') {
     return {
-      title: '把 HaoRate 安裝到 Android',
+      title: `把 ${appName} 安裝到 Android`,
       description: '使用瀏覽器選單安裝後，就能像一般 App 一樣從主畫面快速開啟。',
       steps: ['點選右上方 ⋮', '選擇安裝應用程式', '完成後從主畫面開啟'],
       posterPlatform: 'android',
@@ -56,7 +58,7 @@ function getGuideCopy(environment: PwaInstallEnvironment) {
   }
 
   return {
-    title: '把 HaoRate 加到 iPhone 主畫面',
+    title: `把 ${appName} 加到 iPhone 主畫面`,
     description: '在 Safari 點右下方 ...，再點分享、檢視較多，選擇加入主畫面。',
     steps: ['右下方 ...', '分享', '檢視較多', '加入主畫面'],
     posterPlatform: 'ios',
@@ -134,7 +136,7 @@ function PwaInstallGuideClient() {
 
   return (
     <aside
-      className={`${notificationTokens.position} pointer-events-none`}
+      className={`${notificationTokens.position} pointer-events-none -translate-x-1/2`}
       style={
         {
           '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
@@ -229,7 +231,7 @@ function PwaInstallGuideClient() {
               onClick={() => void install()}
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              立即安裝 HaoRate
+              立即安裝 {APP_INFO.shortName}
             </button>
           ) : null}
         </div>

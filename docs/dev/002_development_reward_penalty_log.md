@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1）｜累計總分：前次總分 +55
+> 本次分數變化：0（neutral 1）｜累計總分：前次總分 +55
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-25
+- ID：neutral-ratewise-pwa-install-guide-version
+- 原因：PWA 安裝指引 PR 需要依 changeset SSOT 完成版本號、CHANGELOG 與公開 metadata 同步
+- 解法：執行 `pnpm changeset:version` 將 RateWise/root 版本更新至 2.24.2，並重建 manifest、API、LLMs 與 markdown mirrors
 
 - 日期：2026-06-25
 - ID：reward-ratewise-pwa-install-guide

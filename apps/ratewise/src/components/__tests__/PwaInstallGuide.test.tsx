@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_INFO } from '../../config/app-info';
 import { PwaInstallGuide } from '../PwaInstallGuide';
 
 function mockNavigator(userAgent: string, platform: string, maxTouchPoints = 5) {
@@ -49,14 +50,15 @@ describe('PwaInstallGuide', () => {
     render(<PwaInstallGuide />);
     showGuide();
 
-    expect(
-      screen.getByRole('dialog', { name: '把 HaoRate 加到 iPhone 主畫面' }),
-    ).toBeInTheDocument();
+    const title = `把 ${APP_INFO.shortName} 加到 iPhone 主畫面`;
+
+    expect(screen.getByRole('dialog', { name: title })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: title })).toHaveClass('-translate-x-1/2');
     expect(screen.getByText('右下方 ...')).toBeInTheDocument();
     expect(screen.getByText('分享')).toBeInTheDocument();
     expect(screen.getByText('檢視較多')).toBeInTheDocument();
     expect(screen.getByText('加入主畫面')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '把 HaoRate 加到 iPhone 主畫面' })).toHaveAttribute(
+    expect(screen.getByRole('img', { name: title })).toHaveAttribute(
       'src',
       '/pwa-install/ios-install-guide.png',
     );
@@ -74,7 +76,7 @@ describe('PwaInstallGuide', () => {
     expect(screen.getByRole('dialog', { name: '請先用外部瀏覽器開啟' })).toBeInTheDocument();
     expect(screen.getByText('右上方 ...')).toBeInTheDocument();
     expect(screen.getByText('在瀏覽器開啟')).toBeInTheDocument();
-    expect(screen.getByText('回到 HaoRate 安裝')).toBeInTheDocument();
+    expect(screen.getByText(`回到 ${APP_INFO.shortName} 安裝`)).toBeInTheDocument();
   });
 
   it('uses Android poster and native beforeinstallprompt when available', async () => {
@@ -96,13 +98,12 @@ describe('PwaInstallGuide', () => {
 
     showGuide();
 
-    expect(screen.getByRole('img', { name: '把 HaoRate 安裝到 Android' })).toHaveAttribute(
-      'src',
-      '/pwa-install/android-install-guide.png',
-    );
+    expect(
+      screen.getByRole('img', { name: `把 ${APP_INFO.shortName} 安裝到 Android` }),
+    ).toHaveAttribute('src', '/pwa-install/android-install-guide.png');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: '立即安裝 HaoRate' }));
+      fireEvent.click(screen.getByRole('button', { name: `立即安裝 ${APP_INFO.shortName}` }));
       await event.userChoice;
     });
 
