@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +56
+> 本次分數變化：0（reward 0、penalty 0）｜累計總分：前次總分 +56
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：reward-ci-e2e-timeout-30
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-25
+- ID：neutral-continual-learning-agents-md
+- 原因：continual-learning 從近期 transcript 萃取高訊號 UI/UX 偏好與 Cloudflare Workers 治理事實
+- 解法：在 AGENTS.md 新增 Learned User Preferences 與 Learned Workspace Facts 章節
 
 - 日期：2026-06-25
 - ID：reward-lighthouse-inp-drift-tolerance
