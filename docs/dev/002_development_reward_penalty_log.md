@@ -23,6 +23,11 @@
 - 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
 
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide
+- 原因：RateWise PWA 缺少依 iOS、Android 與 Threads 等內建瀏覽器情境自動分流的安裝指引，使用者無法清楚完成加入主畫面流程
+- 解法：新增 SSR-safe PWA 安裝環境偵測、品牌化 iOS/Android 安裝海報與 lazy 全域提示，並補 focused Vitest 與 changeset
+
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend
 - 原因：換錢所（KRW/MoneyBox）趨勢線在生產環境每次載入觸發 30 個 daily fetch，且大多數 ~30 天前的日檔 404，與台銀 history-30d.json aggregate SSOT 飄移

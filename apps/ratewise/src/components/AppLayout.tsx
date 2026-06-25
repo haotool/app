@@ -43,12 +43,19 @@ function AppLazyGlobalPrompts({
     void attempt;
     return React.lazy(() => import('./RatingModal').then((m) => ({ default: m.RatingModal })));
   }, [attempt]);
+  const LazyPwaInstallGuide = React.useMemo(() => {
+    void attempt;
+    return React.lazy(() =>
+      import('./PwaInstallGuide').then((m) => ({ default: m.PwaInstallGuide })),
+    );
+  }, [attempt]);
 
   return (
     <React.Suspense fallback={null}>
       <LazyOfflineIndicator />
       <LazyUpdatePrompt />
       <LazyRatingModal {...ratingPrompt} />
+      <LazyPwaInstallGuide />
     </React.Suspense>
   );
 }
