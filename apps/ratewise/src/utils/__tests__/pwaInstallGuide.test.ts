@@ -54,6 +54,24 @@ describe('pwaInstallGuide environment detection', () => {
     expect(environment.shouldShowGuide).toBe(true);
   });
 
+  it('classifies Messenger in-app browser as messenger, not facebook', () => {
+    const iosMessenger = getPwaInstallEnvironment({
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 [FBAN/MessengerForiOS;FBAV/451.0.0;FBBV/1]',
+      platform: 'iPhone',
+      maxTouchPoints: 5,
+    });
+    const androidMessenger = getPwaInstallEnvironment({
+      userAgent:
+        'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/142.0.0.0 Mobile Safari/537.36 [FB_IAB/MESSENGER;FBAV/451.0.0;]',
+      platform: 'Linux armv8l',
+      maxTouchPoints: 5,
+    });
+
+    expect(iosMessenger.inAppBrowser).toBe('messenger');
+    expect(androidMessenger.inAppBrowser).toBe('messenger');
+  });
+
   it('does not show guide when already launched standalone', () => {
     const environment = getPwaInstallEnvironment({
       userAgent:

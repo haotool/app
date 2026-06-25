@@ -108,6 +108,20 @@ function PwaInstallGuideClient() {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!isVisible) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        rememberDismissedGuide();
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isVisible]);
+
   if (!environment?.shouldShowGuide || !isVisible) {
     return null;
   }

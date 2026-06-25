@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（neutral 1）｜累計總分：前次總分 +55
+> 本次分數變化：0（reward 1、penalty 1）｜累計總分：前次總分 +54
 
 ## 新增模板（4 行）
 
@@ -24,9 +24,9 @@
 - 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
 
 - 日期：2026-06-25
-- ID：neutral-ratewise-pwa-install-guide-version
-- 原因：PWA 安裝指引 PR 需要依 changeset SSOT 完成版本號、CHANGELOG 與公開 metadata 同步
-- 解法：執行 `pnpm changeset:version` 將 RateWise/root 版本更新至 2.24.2，並重建 manifest、API、LLMs 與 markdown mirrors
+- ID：penalty-ratewise-pwa-install-guide-semver-converge
+- 原因：初版誤用 patch 升版（新互動元件應為 minor）、002 本次分數變化算術誤標，且 messenger UA 偵測排在 facebook 之後永遠不可達
+- 解法：改以 minor 經 changeset 重生至 2.25.0，修正 002 算術、調整 messenger 偵測順序、補 Escape 關閉與對應 Vitest
 
 - 日期：2026-06-25
 - ID：reward-ratewise-pwa-install-guide

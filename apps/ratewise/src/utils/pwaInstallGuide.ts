@@ -26,11 +26,12 @@ export interface PwaInstallEnvironment {
   shouldShowGuide: boolean;
 }
 
+// Messenger 須先於 facebook：其 UA 含 FBAN/FB_IAB，否則會被 facebook 規則搶先命中。
 const IN_APP_BROWSER_PATTERNS: [InAppBrowserKind, RegExp][] = [
   ['threads', /\bThreads\b/i],
+  ['messenger', /MessengerForiOS|FB_IAB\/MESSENGER|FB_IAB\/Orca|Orca-Android/i],
   ['instagram', /\bInstagram\b/i],
   ['facebook', /\b(FBAN|FBAV|FBIOS|FB_IAB|FB4A)\b/i],
-  ['messenger', /\bMessenger\b|\bFB_IAB\/Messenger\b/i],
   ['line', /\bLine\//i],
   ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly)\b/i],
   ['x', /\b(Twitter|X-WebView)\b/i],

@@ -110,6 +110,24 @@ describe('PwaInstallGuide', () => {
     expect(prompt).toHaveBeenCalledTimes(1);
   });
 
+  it('closes when the Escape key is pressed', () => {
+    mockNavigator(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+      'iPhone',
+    );
+
+    render(<PwaInstallGuide />);
+    showGuide();
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.keyDown(window, { key: 'Escape' });
+    });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('stays hidden when the PWA is already standalone', () => {
     mockNavigator(
       'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36',
