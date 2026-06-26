@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +59
+> 本次分數變化：+3（reward 3、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,31 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：neutral-002-score-header-correction-pr425
+- 原因：Codex P2 指出本批 3 reward + 1 neutral 的 header 誤寫 +1
+- 解法：header 更正為 +3（reward 3、penalty 0），累計 +62 維持不變
+
+- 日期：2026-06-26
+- ID：reward-ratewise-moneybox-no-cache-revalidation
+- 原因：Codex P2 指出 MoneyBox fetchFromCDN 移除 If-None-Match 後仍用預設 cache mode，TTL 到期可能被 HTTP cache 餵舊換錢所報價
+- 解法：fetchWithTimeout 加 cache: 'no-cache' 並補 moneyboxRateService 測試斷言
+
+- 日期：2026-06-26
+- ID：reward-ratewise-cdn-no-cache-revalidation
+- 原因：Codex P1 指出移除 If-None-Match 後 localStorage TTL 到期仍可能被瀏覽器 HTTP cache 餵舊匯率 body
+- 解法：fetchFromCDN 加 cache: 'no-cache' 強制 CDN 重新驗證，並補 exchangeRateService 測試斷言
+
+- 日期：2026-06-26
+- ID：neutral-agents-continual-learning-sync
+- 原因：continual-learning 4c1b7c25 更新 AGENTS.md Learned Preferences/Facts 未入版控
+- 解法：新增 neutral 002 條目並以 docs(agents) commit 推送 fix/ratewise-pwa-etag
+
+- 日期：2026-06-26
+- ID：reward-ratewise-pwa-etag-p0-convergence
+- 原因：PR411 混雜 split-meow 與 AppLayout 變更，P0 修復（precache-first、If-None-Match preflight、moneybox ETag）無法安全合併
+- 解法：自 origin/main 開 fix/ratewise-pwa-etag 分支 cherry-pick 三 commit，整合 patch changeset 與 focused 測試後獨立 PR
 
 - 日期：2026-06-26
 - ID：reward-ci-e2e-full-shard-timeout-45

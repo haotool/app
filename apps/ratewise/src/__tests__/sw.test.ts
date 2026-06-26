@@ -158,17 +158,15 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // 已 install 過的 PWA 與已 visited 的瀏覽器：cache hit 立即返回，背景 revalidate。
-    // cache miss 則保留 3 秒 bounded fallback，避免慢網路下白屏。
+    // 已 install 過的 PWA：暖快取 SWR；冷快取 precache-first，避免 3s timeout 假離線。
     expect(sourceCode).toContain('handleNavigationRequest');
     expect(sourceCode).toContain('new NavigationRoute(handleNavigationRequest)');
     expect(sourceCode).toContain('event.waitUntil(');
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
-    expect(sourceCode).toContain(
-      'event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined))',
-    );
+    expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：禁止重新引入 NetworkFirst navigation（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
+    expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
   });
 
   it('should have correct historical rates cache configuration', () => {
@@ -237,14 +235,14 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // bounded SWR-style navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
+    // precache-first navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
     expect(sourceCode).toContain('new NavigationRoute(');
     expect(sourceCode).toContain('resolveOfflineDocumentFallback');
     expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
-    expect(sourceCode).toContain('const NAVIGATION_NETWORK_TIMEOUT_MS = 3000');
-    expect(sourceCode).toContain('Promise.race([networkResponse, timeoutFallback])');
+    expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：navigation 不可重新引入 NetworkFirst（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
+    expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
   });
 
   it('should clear stale navigation HTML runtime cache when a new worker activates', async () => {

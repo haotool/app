@@ -73,6 +73,11 @@ interface ResolveOfflineDocumentFallbackOptions {
   matchPrecache: (
     url: 'index.html' | 'offline.html',
   ) => Response | undefined | null | Promise<Response | undefined | null>;
+  matchIndexHtmlInAnyCache: () =>
+    | Response
+    | undefined
+    | null
+    | Promise<Response | undefined | null>;
   matchOfflineHtmlInAnyCache: () =>
     | Response
     | undefined
@@ -83,11 +88,18 @@ interface ResolveOfflineDocumentFallbackOptions {
 export async function resolveOfflineDocumentFallback({
   emergencyReason,
   matchPrecache,
+  matchIndexHtmlInAnyCache,
   matchOfflineHtmlInAnyCache,
 }: ResolveOfflineDocumentFallbackOptions): Promise<Response> {
+  // 1. Workbox precache（正常情況）
   const precachedIndex = await matchPrecache('index.html');
   if (precachedIndex) return precachedIndex;
 
+  // 2. 任何快取中的 index.html（iOS eviction 後 html-cache 仍可能有備份）
+  const anyIndex = await matchIndexHtmlInAnyCache();
+  if (anyIndex) return anyIndex;
+
+  // 3. offline.html（precache 或 html-cache）
   const precachedOffline = await matchPrecache('offline.html');
   if (precachedOffline) return precachedOffline;
 

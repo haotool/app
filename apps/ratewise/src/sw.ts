@@ -28,7 +28,6 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
-const NAVIGATION_NETWORK_TIMEOUT_MS = 3000;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -44,24 +43,42 @@ precacheAndRoute(WB_MANIFEST);
  * 此機制在 SW activate 時直接用 bare URL（無 revision）快取 offline.html，
  * 確保 setCatchHandler 的 matchPrecache('offline.html') 或 caches.match() 一定能命中。
  */
+/**
+ * 確保關鍵文件存入 html-cache，對抗 iOS Safari precache 驅逐。
+ *
+ * 問題：iOS 在記憶體壓力下驅逐 Workbox precache（整個 cache 被砍），
+ * 造成 matchPrecache('index.html') 失敗，而 offline.html 若只在 html-cache
+ * 中備份則反而成為唯一可用文件，導致在線用戶看到離線頁面。
+ *
+ * 修法：offline.html 與 index.html 都備份到 html-cache，確保兩者具有
+ * 同等存活率。index.html 從 precache 複製（避免額外網路請求）。
+ */
 async function ensureOfflineHtmlCached(): Promise<void> {
   try {
-    // 先檢查是否已在任何快取中（precache 或 critical-launch-cache）
-    const existingResponse = await caches.match('offline.html');
-    if (existingResponse) {
-      return;
+    const scope = self.registration.scope;
+    const cache = await caches.open(HTML_CACHE_NAME);
+
+    // 備份 offline.html（從網路取得，確保最新版）
+    const existingOffline = await caches.match('offline.html');
+    if (!existingOffline) {
+      const offlineUrl = new URL('offline.html', scope).href;
+      const response = await fetch(offlineUrl, { cache: 'no-cache' });
+      if (response.ok) {
+        await cache.put(offlineUrl, response.clone());
+        await cache.put('offline.html', response);
+      }
     }
 
-    // 嘗試從網路取得並快取到 html-cache（setCatchHandler 可 match）
-    const scope = self.registration.scope;
-    const offlineUrl = new URL('offline.html', scope).href;
-
-    const response = await fetch(offlineUrl, { cache: 'no-cache' });
-    if (response.ok) {
-      const cache = await caches.open(HTML_CACHE_NAME);
-      await cache.put(offlineUrl, response.clone());
-      // 同時用相對路徑快取，讓 matchPrecache('offline.html') 也能命中
-      await cache.put('offline.html', response);
+    // 備份 index.html（從 precache 複製，避免額外網路請求）
+    // 使 index.html 與 offline.html 具有同等 iOS eviction 存活率。
+    const indexUrl = new URL('index.html', scope).href;
+    const existingIndex = await cache.match(indexUrl);
+    if (!existingIndex) {
+      const precachedIndex = await matchPrecache('index.html');
+      if (precachedIndex) {
+        await cache.put(indexUrl, precachedIndex.clone());
+        await cache.put('index.html', precachedIndex);
+      }
     }
   } catch {
     // 離線時無法 fetch 為正常現象，忽略錯誤。
@@ -252,23 +269,22 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
   return resolveOfflineDocumentFallback({
     emergencyReason: 'emergency-document-fallback',
     matchPrecache,
+    matchIndexHtmlInAnyCache: () => caches.match('index.html'),
     matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
   });
 });
 
 /**
- * SPA 導覽策略：bounded SWR-style navigation（installed PWA 與瀏覽器共用）
+ * SPA 導覽策略：hybrid SWR + precache-first navigation
  *
- * 業界最佳實踐（web.dev / Workbox docs）：
- * - 已 install 過的 PWA / 已 visited 的瀏覽器：cache hit 立即返回（零白屏冷啟動）
- * - 背景 revalidate 抓取最新 HTML 寫回 cache，下一次 navigation 自動拿到新版
- * - 新版本切換由既有 SW controllerchange + reload 機制處理（main.tsx）
- * - cache miss 導覽：網路最多等待 3s，再回 precache 三層 fallback
+ * - 暖快取（html-cache hit）：立即回傳已快取 HTML + 背景 revalidate（零白屏）
+ * - 冷快取（html-cache miss）：直接從 Workbox precache 取 index.html 回傳，
+ *   同時背景發網路請求更新 html-cache，下次導覽自動用最新版本
+ * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 offline.html
  *
- * 取代 NetworkFirst + 3s timeout 的理由：
- * - NetworkFirst 在慢網路下要等到 3s timeout 才 fallback → 感知白屏
- * - SWR-style cache hit 立即回應，把已暖機場景的感知白屏降為 0
- * - 對版本撕裂的防護：activate 時清掉舊 HTML runtime cache，避免新 SW 先回舊 HTML
+ * 為什麼不用 3s timeout：
+ * - timeout 命中時 precache 可能已被 iOS 驅逐，導致 offline.html 被服務給在線用戶
+ * - cold cache 用 precache 直接回傳，等同舊的 createHandlerBoundToURL 行為，無需等待
  *
  * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
@@ -276,6 +292,7 @@ function resolveNavigationFallback(): Promise<Response> {
   return resolveOfflineDocumentFallback({
     emergencyReason: 'emergency-navigation-fallback',
     matchPrecache,
+    matchIndexHtmlInAnyCache: () => caches.match('index.html'),
     matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
   });
 }
@@ -302,6 +319,7 @@ async function handleNavigationRequest({
   const cache = await caches.open(HTML_CACHE_NAME);
   const cached = await cache.match(request);
   if (cached) {
+    // 暖快取：SWR — 立即回傳 + 背景 revalidate
     event.waitUntil(
       fetchAndCacheNavigation(request, cache)
         .then(() => undefined)
@@ -310,17 +328,24 @@ async function handleNavigationRequest({
     return cached;
   }
 
-  const networkResponse = fetchAndCacheNavigation(request, cache).catch(() =>
-    resolveNavigationFallback(),
-  );
-  event.waitUntil(networkResponse.then(() => undefined).catch(() => undefined));
-  const timeoutFallback = new Promise<Response>((resolve) => {
-    setTimeout(() => {
-      resolve(resolveNavigationFallback());
-    }, NAVIGATION_NETWORK_TIMEOUT_MS);
-  });
+  // 冷快取：先嘗試 precache index.html（零延遲），再背景抓最新版本寫入 html-cache。
+  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳 offline.html 給在線用戶。
+  const precachedShell = await matchPrecache('index.html');
+  if (precachedShell) {
+    event.waitUntil(
+      fetchAndCacheNavigation(request, cache)
+        .then(() => undefined)
+        .catch(() => undefined),
+    );
+    return precachedShell;
+  }
 
-  return Promise.race([networkResponse, timeoutFallback]);
+  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 offline fallback
+  try {
+    return await fetchAndCacheNavigation(request, cache);
+  } catch {
+    return resolveNavigationFallback();
+  }
 }
 
 registerRoute(new NavigationRoute(handleNavigationRequest));
