@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+63
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-split-meow-expense-currency-rate-snapshot
+- 原因：split-meow 的 ExpenseRecord 只存裸數字、未保存記帳當下幣別；使用者先以 TWD 記帳後切換 KRW（或韓國時區自動偵測）時，歷史金額會被當前全域幣別重新格式化，NT$1,000 被誤顯示為 ₩1,000。
+- 解法：ExpenseRecord 增加 currency 與 exchangeRateKrwPerTwd 快照欄位，記帳時保存；HistoryTab 個別金額改用各筆快照幣別、KRW 副標即時換算 TWD、彙總/結算採 trip 主導幣別 fallback；補 store/currencies 單元測試與 Playwright 瀏覽器驗收（切回 TWD 後 KRW 記錄仍正確）。
 
 - 日期：2026-06-26
 - ID：reward-moneybox-history-snapshot-date-ssot
