@@ -58,6 +58,8 @@ describe('PwaInstallGuide', () => {
     expect(screen.getByText('分享')).toBeInTheDocument();
     expect(screen.getByText('檢視較多')).toBeInTheDocument();
     expect(screen.getByText('加入主畫面')).toBeInTheDocument();
+    // 一般瀏覽器不應顯示內建瀏覽器專屬的右上角動態指引。
+    expect(screen.queryByTestId('inapp-corner-pointer')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: title })).toHaveAttribute(
       'src',
       '/pwa-install/ios-install-guide.png',
@@ -77,6 +79,10 @@ describe('PwaInstallGuide', () => {
     expect(screen.getByText('右上方 ...')).toBeInTheDocument();
     expect(screen.getByText('在瀏覽器開啟')).toBeInTheDocument();
     expect(screen.getByText(`回到 ${APP_INFO.shortName} 安裝`)).toBeInTheDocument();
+    // 內建瀏覽器需顯示指向右上角 ... 的動態指引。
+    const cornerPointer = screen.getByTestId('inapp-corner-pointer');
+    expect(cornerPointer).toBeInTheDocument();
+    expect(cornerPointer).toHaveClass('animate-point-up-right');
   });
 
   it('uses Android poster and native beforeinstallprompt when available', async () => {
