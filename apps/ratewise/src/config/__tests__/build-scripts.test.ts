@@ -658,6 +658,9 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain(
       'MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"',
     );
+    // SSOT：MoneyBox 為首爾換匯所，history 檔名須對齊 Asia/Seoul 日曆日（非 Asia/Taipei）
+    expect(workflowSource).toContain('CURRENT_DATE=$(TZ=Asia/Seoul date +%Y-%m-%d)');
+    expect(workflowSource).not.toContain('CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)');
     expect(workflowSource).toContain('cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_HISTORY_FILE"');
     expect(workflowSource).not.toContain(
       'cp "$MONEYBOX_FETCH_OUTPUT_FILE" "$MONEYBOX_LATEST_FILE"',

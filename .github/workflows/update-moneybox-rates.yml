@@ -94,7 +94,7 @@ jobs:
         id: save-history
         if: steps.fetch-rates.outcome == 'success'
         run: |
-          CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
+          CURRENT_DATE=$(TZ=Asia/Seoul date +%Y-%m-%d)
           MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
           mkdir -p "$MONEYBOX_HISTORY_DIR"
           if [[ ! -f "$MONEYBOX_FETCH_OUTPUT_FILE" ]]; then

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +59
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +60
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：fix-moneybox-history-seoul-date-ssot
+- 原因：MoneyBox workflow 以 Asia/Taipei 產生 history 檔名，首爾午夜換日但台北仍前一日時會錯標 30 日 aggregate 日期
+- 解法：update-moneybox-rates.yml 改以 Asia/Seoul 對齊 fetch-moneybox-rates.js SSOT，並補 build-scripts 守門測試
 
 - 日期：2026-06-26
 - ID：reward-ci-e2e-full-shard-timeout-45
