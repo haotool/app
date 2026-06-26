@@ -18,18 +18,10 @@ import { ExpressionDisplay } from './ExpressionDisplay';
 import { ChristmasEasterEgg } from '../easter-eggs/ChristmasEasterEgg';
 
 /**
- * 鍵盤佈局定義（iOS 標準 4×5 網格，20 按鈕）
- * @description 符合 iOS 計算機標準佈局
- * @updated 2025-11-18 - 修正為 iOS 標準佈局（消除跨欄特殊情況）
- * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 4
- *
- * Linus 哲學：
- * - ✅ 消除特殊情況：所有按鈕等寬等高，無跨欄
- * - ✅ 簡潔執念：5 行 × 4 列，均勻分佈
- * - ✅ 實用主義：符合真實 iOS 佈局
+ * 鍵盤佈局（iOS 標準 4×5 網格）
  */
 const KEYBOARD_LAYOUT: KeyDefinition[][] = [
-  // 第 1 行：⌫, AC, %, ÷（功能鍵 + 除法）
+  // 第 1 行：⌫, AC, %, ÷
   [
     { label: '⌫', value: 'backspace', type: 'action', ariaLabel: '刪除' },
     { label: 'AC', value: 'clear', type: 'action', ariaLabel: '清除全部' },
@@ -100,8 +92,7 @@ export function CalculatorKeyboard({
 }: CalculatorKeyboardProps) {
   const { t } = useTranslation();
 
-  // 🔧 Phase 2: 背景滾動鎖定（iOS/Android 兼容）
-  // @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 2
+  // 🔧 Phase 2: 背景滾動鎖定
   useBodyScrollLock(isOpen);
 
   const {
@@ -124,11 +115,6 @@ export function CalculatorKeyboard({
       ? formatConversionPreview(preview)
       : null;
 
-  /**
-   * 處理按鍵點擊（iOS 標準功能）
-   * @description 處理所有按鍵類型：數字、運算符、操作鍵
-   * @updated 2025-11-18 - Added negate and percent handlers
-   */
   const handleKeyClick = (value: string) => {
     switch (value) {
       case 'clear':
@@ -146,11 +132,9 @@ export function CalculatorKeyboard({
         break;
       }
       case 'negate':
-        // iOS 標準：正負號切換
         negate();
         break;
       case 'percent':
-        // iOS 標準：百分比轉換
         percent();
         break;
       default:
@@ -186,9 +170,7 @@ export function CalculatorKeyboard({
   };
 
   /**
-   * 處理向下滑動關閉
-   * 🔧 Phase 3: 向下滑動關閉動畫 (>100px threshold)
-   * @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 3
+   * 向下滑動關閉（>100px threshold）
    */
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,

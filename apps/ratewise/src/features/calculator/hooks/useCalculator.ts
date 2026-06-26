@@ -6,7 +6,7 @@
  * @see docs/dev/011_calculator_apple_ux_enhancements.md - 即時預覽功能
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { CalculatorState, UseCalculatorReturn, EasterEggType } from '../types';
 import { calculateExpression } from '../utils/evaluator';
 import { validateExpression, canAddOperator, canAddDecimal, canAddDigit } from '../utils/validator';
@@ -49,31 +49,20 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     pristine: true,
   });
 
-  // 即時預覽狀態（獨立於主要結果）
-  const [preview, setPreview] = useState<number | null>(null);
-
   // 彩蛋狀態
   const [easterEgg, setEasterEgg] = useState<EasterEggType>(null);
 
-  /**
-   * 同步 initialValue 變更
-   * @description 修復計算機與輸入框數值不同步問題
-   * @see BDD Test: 應在 initialValue 變更時重置表達式
-   *
-   * Linus 哲學：
-   * - ✅ 解決實際問題：輸入框與計算機數值不同步
-   * - ✅ 簡潔執念：只有 initialValue 變更時才重置
-   * - ✅ 實用主義：不影響使用者正在輸入的運算式
-   */
-  useEffect(() => {
+  // initialValue 變更時重置運算式（編輯模式切換）；以渲染期調整取代 effect，避免 set-state-in-effect。
+  const [prevInitialValue, setPrevInitialValue] = useState(initialValue);
+  if (initialValue !== prevInitialValue) {
+    setPrevInitialValue(initialValue);
     setState({
       expression: initialValue?.toString() ?? '',
       result: null,
       error: null,
       pristine: true,
     });
-    setPreview(null);
-  }, [initialValue]);
+  }
 
   // 防抖表達式（50ms 延遲，極速響應 - iOS 標準！）
   // @updated 2025-11-19 - 極速優化（100ms → 50ms，< 60fps 一幀時間）
@@ -291,9 +280,6 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         error: null,
       }));
 
-      // 清除預覽（已顯示最終結果）
-      setPreview(null);
-
       return result;
     } catch (error) {
       // 錯誤處理
@@ -316,11 +302,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     setEasterEgg(null);
   }, []);
 
-  /**
-   * 即時預覽計算（防抖後自動觸發）
-   * 使用 useMemo 快取計算結果，避免不必要的重新計算
-   */
-  const calculatedPreview = useMemo(() => {
+  const preview = useMemo(() => {
     // 不預覽空表達式
     if (!debouncedExpression || debouncedExpression.trim() === '') {
       return null;
@@ -346,25 +328,18 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
     }
   }, [debouncedExpression, state.result]);
 
-  /**
-   * 更新預覽狀態（當計算結果變化時）
-   */
-  useEffect(() => {
-    setPreview(calculatedPreview);
-  }, [calculatedPreview]);
-
   return {
     expression: state.expression,
     result: state.result,
     error: state.error,
-    preview, // 新增：即時預覽結果
-    easterEgg, // 新增：彩蛋狀態
+    preview,
+    easterEgg,
     input,
     backspace,
     clear,
     calculate,
-    negate, // 新增：正負號切換（+/-）
-    percent, // 新增：百分比轉換（%）
-    closeEasterEgg, // 新增：關閉彩蛋
+    negate,
+    percent,
+    closeEasterEgg,
   };
 }

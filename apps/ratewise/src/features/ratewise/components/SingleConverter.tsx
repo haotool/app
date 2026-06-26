@@ -53,7 +53,7 @@ import {
   fetchExchangeShopHistoricalRatesRange,
   type ExchangeShopRate,
 } from '../../../services/moneyboxRateService';
-import { getRateBasisKind } from '../../../utils/rateBasisLabel';
+import { getRateBasisKind, getRateBasisLabelKey } from '../../../utils/rateBasisLabel';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -538,7 +538,7 @@ export const SingleConverter = ({
                     data-testid="rate-basis-label"
                     className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
                   >
-                    {t(`rateBasis.${rateBasisKind}`)}
+                    {t(getRateBasisLabelKey(rateBasisKind))}
                   </span>
                 </div>
               )}
