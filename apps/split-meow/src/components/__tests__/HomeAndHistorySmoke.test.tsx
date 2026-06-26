@@ -223,4 +223,46 @@ describe('HistoryTab', () => {
     // Should render settlement amounts somewhere
     expect(document.body).toBeTruthy();
   });
+
+  it('混幣行程顯示警告並隱藏總額與結算（避免跨幣別錯誤加總）', () => {
+    useStore.setState({
+      expenses: [
+        { ...EXPENSE_1, id: 'mix-twd', currency: 'TWD', totalAmount: 300 },
+        {
+          id: 'mix-krw',
+          tripId: 'trip-1',
+          type: 'split_evenly' as const,
+          participantIds: ['me', 'm1'],
+          paidBy: 'm1',
+          totalAmount: 9000,
+          perPersonAmounts: { me: 4500, m1: 4500 },
+          note: '',
+          createdAt: Date.now() + 1,
+          currency: 'KRW',
+        },
+      ],
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.getByText(i18n.t('history.mixed_currency_warning'))).toBeInTheDocument();
+    // 結算區塊標題不應出現：跨幣別結算為無效運算，不得顯示誤導金額。
+    expect(screen.queryByText(i18n.t('history.settlements'))).not.toBeInTheDocument();
+  });
+
+  it('單一幣別行程不顯示混幣警告', () => {
+    useStore.setState({
+      expenses: [
+        { ...EXPENSE_1, id: 'same-1', currency: 'TWD' },
+        {
+          ...EXPENSE_1,
+          id: 'same-2',
+          currency: 'TWD',
+          paidBy: 'm1',
+          totalAmount: 60,
+          perPersonAmounts: { me: 30, m1: 30 },
+        },
+      ],
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.queryByText(i18n.t('history.mixed_currency_warning'))).not.toBeInTheDocument();
+  });
 });
