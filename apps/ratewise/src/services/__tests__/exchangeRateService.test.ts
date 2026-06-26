@@ -636,6 +636,7 @@ describe('exchangeRateService', () => {
 
       // fetch 在 SWR 背景立即被呼叫（synchronous before return）
       expect(global.fetch).toHaveBeenCalled();
+      expect(capturedInit?.cache).toBe('no-cache');
       const headerKeys = Object.keys((capturedInit?.headers ?? {}) as Record<string, string>).map(
         (k) => k.toLowerCase(),
       );
@@ -669,8 +670,9 @@ describe('exchangeRateService', () => {
 
       await getExchangeRates();
 
-      // CDN_URLS[0]（jsDelivr）與 CDN_URLS[1]（GitHub Raw）皆不帶 If-None-Match
+      // CDN_URLS[0]（jsDelivr）與 CDN_URLS[1]（GitHub Raw）皆不帶 If-None-Match，且強制重新驗證
       for (const init of capturedInits) {
+        expect(init.cache).toBe('no-cache');
         const headerKeys = Object.keys((init.headers ?? {}) as Record<string, string>).map((k) =>
           k.toLowerCase(),
         );

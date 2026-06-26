@@ -24,8 +24,8 @@ import buildTimeRates from '../config/generated/build-time-rates.json';
 // 推送 data 分支後自動呼叫 jsDelivr Purge API，使快取立即失效 → 實際新鮮度約 5 分鐘。
 // 優勢：全球 PoP 加速、CDN 快取。
 // [2026-06-12] 不使用 ETag 條件式請求（If-None-Match 非 CORS safelisted，
-// jsDelivr preflight 會拒絕，導致主 CDN 永遠失敗並降級）；頻寬由瀏覽器 HTTP cache
-// 與 5 分鐘 localStorage TTL 控制。
+// jsDelivr preflight 會拒絕，導致主 CDN 永遠失敗並降級）；fetch 使用 cache: 'no-cache'
+// 強制 CDN 重新驗證，並以 5 分鐘 localStorage TTL 控制應用層新鮮度。
 // GitHub Raw 作為備援：無快取但每 IP 每小時限 60 次請求。
 const CDN_URLS = [
   // jsDelivr CDN（主要）- Purge 後立即最新，全球加速
@@ -153,7 +153,7 @@ function saveToCache(data: ExchangeRateData, etag?: string): void {
  * Access-Control-Allow-Headers 不允許它，導致 preflight 被拒、主 CDN 永遠失敗並
  * 降級到 GitHub Raw（每 IP 每小時 60 次限制）。回應 ETag 仍會讀取並存入快取
  * （供未來改走自家 Worker proxy 時重新啟用條件請求），但不再用於後續請求。
- * 頻寬由瀏覽器 HTTP cache 與 5 分鐘 localStorage TTL 控制。
+ * TTL 到期後以 cache: 'no-cache' 強制 CDN 重新驗證，避免 HTTP cache 回傳過期 body。
  */
 async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
   const errors: Error[] = [];
@@ -168,8 +168,9 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
 
       // [2026-06-12] 不發送 If-None-Match：該 header 非 CORS safelisted，
       // jsDelivr preflight 不允許，會使主 CDN 永遠失敗並降級到 GitHub Raw(60 req/hr)。
-      // 頻寬由瀏覽器 HTTP cache 與 5 分鐘 localStorage TTL 控制。
+      // TTL 到期後以 cache: 'no-cache' 強制 CDN 重新驗證。
       const fetchInit: RequestInit = {
+        cache: 'no-cache',
         ...(signal ? { signal } : {}),
       };
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（neutral）｜累計總分：+60
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+61
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-ratewise-cdn-no-cache-revalidation
+- 原因：Codex P1 指出移除 If-None-Match 後 localStorage TTL 到期仍可能被瀏覽器 HTTP cache 餵舊匯率 body
+- 解法：fetchFromCDN 加 cache: 'no-cache' 強制 CDN 重新驗證，並補 exchangeRateService 測試斷言
 
 - 日期：2026-06-26
 - ID：neutral-agents-continual-learning-sync
