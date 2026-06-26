@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-25T06:56:31.416Z",
+  "updatedAt": "2026-06-26T07:03:26.264Z",
   "generatedBy": "scripts/lighthouse-production.mjs",
   "status": "active",
   "runs": 3,
@@ -11,48 +11,48 @@
       "path": "/",
       "median": {
         "performanceScore": 98,
-        "lcpMs": 946.2,
-        "inpMs": 34,
+        "lcpMs": 824.18,
+        "inpMs": 49,
         "cls": 0.06
       },
       "runs": [
         {
           "run": 1,
+          "performanceScore": 83,
+          "lcpMs": 934.55,
+          "inpMs": 218,
+          "cls": 0.069,
+          "lighthouseScore": {
+            "performance": 0.83,
+            "accessibility": 1,
+            "bestPractices": 0.96,
+            "seo": 1
+          }
+        },
+        {
+          "run": 2,
           "performanceScore": 98,
-          "lcpMs": 676.7,
-          "inpMs": 34,
+          "lcpMs": 769.3,
+          "inpMs": 49,
           "cls": 0.06,
           "lighthouseScore": {
             "performance": 0.98,
             "accessibility": 1,
             "bestPractices": 0.96,
-            "seo": 0.92
-          }
-        },
-        {
-          "run": 2,
-          "performanceScore": 96,
-          "lcpMs": 1214.91,
-          "inpMs": 32,
-          "cls": 0.06,
-          "lighthouseScore": {
-            "performance": 0.96,
-            "accessibility": 1,
-            "bestPractices": 0.96,
-            "seo": 0.92
+            "seo": 1
           }
         },
         {
           "run": 3,
           "performanceScore": 98,
-          "lcpMs": 946.2,
-          "inpMs": 35,
+          "lcpMs": 824.18,
+          "inpMs": 48,
           "cls": 0.059,
           "lighthouseScore": {
             "performance": 0.98,
             "accessibility": 1,
             "bestPractices": 0.96,
-            "seo": 0.92
+            "seo": 1
           }
         }
       ]
@@ -61,48 +61,48 @@
       "path": "/faq/",
       "median": {
         "performanceScore": 99,
-        "lcpMs": 661.22,
-        "inpMs": 16,
+        "lcpMs": 824.5,
+        "inpMs": 24,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
+          "performanceScore": 99,
+          "lcpMs": 788.88,
+          "inpMs": 24,
+          "cls": 0,
+          "lighthouseScore": {
+            "performance": 0.99,
+            "accessibility": 1,
+            "bestPractices": 0.96,
+            "seo": 1
+          }
+        },
+        {
+          "run": 2,
           "performanceScore": 98,
-          "lcpMs": 789.05,
-          "inpMs": 16,
+          "lcpMs": 831.11,
+          "inpMs": 23,
           "cls": 0,
           "lighthouseScore": {
             "performance": 0.98,
             "accessibility": 1,
             "bestPractices": 0.96,
-            "seo": 0.92
-          }
-        },
-        {
-          "run": 2,
-          "performanceScore": 99,
-          "lcpMs": 564.94,
-          "inpMs": 16,
-          "cls": 0,
-          "lighthouseScore": {
-            "performance": 0.99,
-            "accessibility": 1,
-            "bestPractices": 0.96,
-            "seo": 0.92
+            "seo": 1
           }
         },
         {
           "run": 3,
           "performanceScore": 99,
-          "lcpMs": 661.22,
-          "inpMs": 17,
+          "lcpMs": 824.5,
+          "inpMs": 31,
           "cls": 0,
           "lighthouseScore": {
             "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
-            "seo": 0.92
+            "seo": 1
           }
         }
       ]
@@ -111,48 +111,48 @@
       "path": "/about/",
       "median": {
         "performanceScore": 99,
-        "lcpMs": 575.91,
-        "inpMs": 16,
+        "lcpMs": 799.68,
+        "inpMs": 21,
         "cls": 0
       },
       "runs": [
         {
           "run": 1,
-          "performanceScore": 97,
-          "lcpMs": 993.74,
-          "inpMs": 16,
-          "cls": 0,
-          "lighthouseScore": {
-            "performance": 0.97,
-            "accessibility": 1,
-            "bestPractices": 0.96,
-            "seo": 0.92
-          }
-        },
-        {
-          "run": 2,
-          "performanceScore": 100,
-          "lcpMs": 575.91,
-          "inpMs": 16,
-          "cls": 0,
-          "lighthouseScore": {
-            "performance": 1,
-            "accessibility": 1,
-            "bestPractices": 0.96,
-            "seo": 0.92
-          }
-        },
-        {
-          "run": 3,
           "performanceScore": 99,
-          "lcpMs": 561.7,
-          "inpMs": 16,
+          "lcpMs": 794.3,
+          "inpMs": 21,
           "cls": 0,
           "lighthouseScore": {
             "performance": 0.99,
             "accessibility": 1,
             "bestPractices": 0.96,
-            "seo": 0.92
+            "seo": 1
+          }
+        },
+        {
+          "run": 2,
+          "performanceScore": 99,
+          "lcpMs": 799.68,
+          "inpMs": 21,
+          "cls": 0,
+          "lighthouseScore": {
+            "performance": 0.99,
+            "accessibility": 1,
+            "bestPractices": 0.96,
+            "seo": 1
+          }
+        },
+        {
+          "run": 3,
+          "performanceScore": 98,
+          "lcpMs": 839.96,
+          "inpMs": 21,
+          "cls": 0,
+          "lighthouseScore": {
+            "performance": 0.98,
+            "accessibility": 1,
+            "bestPractices": 0.96,
+            "seo": 1
           }
         }
       ]

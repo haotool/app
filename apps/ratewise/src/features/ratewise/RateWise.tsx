@@ -36,7 +36,11 @@ import {
 } from '../../utils/exchangeRateCalculation';
 
 const RateWise = () => {
-  useRememberConverterView(DEFAULT_CONVERTER_MODE);
+  const [searchParams] = useSearchParams();
+  // deep-link（分享連結帶 from/to/amount）只是臨時進入，不應覆寫上次停留模式偏好。
+  const isDeepLink =
+    searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
+  useRememberConverterView(DEFAULT_CONVERTER_MODE, { enabled: !isDeepLink });
   const { t } = useTranslation();
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
@@ -98,8 +102,6 @@ const RateWise = () => {
     exchangeShopCurrency,
     effectiveRateSource,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
-
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const from = searchParams.get('from')?.toUpperCase();

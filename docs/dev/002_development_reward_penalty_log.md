@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0）｜累計總分：+62
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+66
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-pr435-code-reviewer-hardening
+- 原因：Codex 配額用盡無法 review PR 435，改派 code-reviewer 代理把關，發現 i18n 探測在 removeItem 丟錯時會誤判 localStorage 不可寫（可寫性結論不應依賴清除步驟），且 smoke 測試 BASE_STATE 仍缺部分 test-mutable 欄位。
+- 解法：i18n 探測改用 finally 清除 probe key、可寫性僅依 setItem 結果；BASE_STATE 補 expenseCategory/settledPayments/catPlayMode；img-src 收窄列為 follow-up issue #437。
+
+- 日期：2026-06-26
+- ID：reward-ratewise-i18n-localstorage-writable-probe
+- 原因：PR 404 review 指出 canUseBrowserLanguageStorage 只檢查 window 與非 test 模式，未實際偵測 localStorage 可寫；私密模式 / 嵌入式瀏覽器中 window 存在但 setItem 丟錯，i18next caches:['localStorage'] 寫入失敗導致語系切換不持久。
+- 解法：改用 try setItem/removeItem 實際探測可寫性，不可寫時 detection 回退 ['htmlTag','navigator'] 且 caches:[]，避免寫入失敗中斷語系切換。
+
+- 日期：2026-06-26
+- ID：reward-worker-split-meow-img-src-https-restore
+- 原因：PR 414 review 指出 split-meow 專屬 CSP profile 未帶 fallback 的 img-src https:，Split Meow 成員 legacy 遠端頭像會在正式站被 CSP 擋下。
+- 解法：SPLIT_MEOW_HTML_PROFILE 補回 imgSources:['https:']，並 bump SECURITY_POLICY_VERSION 5.4→5.5 與變更記錄。
+
+- 日期：2026-06-26
+- ID：reward-split-meow-smoke-test-currency-reset
+- 原因：PR 415 review 指出 HomeAndHistorySmoke 的 BASE_STATE 未重置 currency / krwPerTwd，設定 KRW 的測試會洩漏污染後續測試。
+- 解法：BASE_STATE 補上 currency:'TWD'、currencyManuallySet:false、krwPerTwd:null、rateUpdatedAt:null，確保測試隔離。
 
 - 日期：2026-06-26
 - ID：neutral-retrigger-prod-deploy-2252
