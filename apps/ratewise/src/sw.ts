@@ -28,6 +28,7 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
+const NAVIGATION_FETCH_TIMEOUT_MS = 8000;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -340,10 +341,22 @@ async function handleNavigationRequest({
     return precachedShell;
   }
 
-  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 offline fallback
+  // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
+  // 此分支 precache 已確認不存在，timeout fallback 不會把 offline.html 誤送給 precache 仍在的在線用戶。
+  const networkFetch = fetchAndCacheNavigation(request, cache);
   try {
-    return await fetchAndCacheNavigation(request, cache);
+    return await Promise.race([
+      networkFetch,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('navigation-fetch-timeout')),
+          NAVIGATION_FETCH_TIMEOUT_MS,
+        ),
+      ),
+    ]);
   } catch {
+    // 讓 in-flight fetch 繼續，成功則寫入 html-cache 供下次導覽。
+    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
   }
 }
