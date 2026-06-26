@@ -19,6 +19,8 @@ import {
   buildSpeakableJsonLd,
   getCurrencyLandingPageContent,
   getReverseCurrencyLandingPageContent,
+  CURRENCY_LANDING_THESIS_KEYWORD,
+  CANONICAL_BANK_SELL_THESIS,
 } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
 import { SEO_SCHEMA_REGISTRY } from '../seo-schema-registry';
@@ -188,7 +190,7 @@ describe('SEO SSOT', () => {
       const commonAmountQuestions = content.commonAmounts.map((entry) => entry.question).join('\n');
       const schema = JSON.stringify(content.jsonLd);
 
-      expect(questions).toContain('買美金今日台銀賣出價是多少？');
+      expect(questions).toContain('今日台銀美金牌告匯率是多少？');
       expect(commonAmountQuestions).toContain('買 1 美金要多少台幣？');
       expect(questions).not.toContain('美金換台幣今日匯率是多少？');
       expect(schema).toContain('買美金所需台幣匯率');
@@ -420,6 +422,68 @@ describe('SEO SSOT', () => {
       for (const item of capsule) {
         expect(item.question.length).toBeGreaterThan(0);
         expect(item.answer.length).toBeGreaterThanOrEqual(20);
+      }
+    });
+  });
+
+  // ─── L09 內容去重（capsule / FAQ / thesis keyword）────────────────────────
+  describe('currency page content dedupe (L09)', () => {
+    const CURRENCY_CODES = [
+      'USD',
+      'JPY',
+      'EUR',
+      'GBP',
+      'CNY',
+      'KRW',
+      'HKD',
+      'AUD',
+      'CAD',
+      'SGD',
+      'THB',
+      'NZD',
+      'CHF',
+      'VND',
+      'PHP',
+      'IDR',
+      'MYR',
+    ] as const;
+
+    const REVERSE_CODES = CURRENCY_CODES;
+
+    function collectBodyText(content: ReturnType<typeof getCurrencyLandingPageContent>): string {
+      return [
+        content.heroIntro,
+        content.precisionThesis.heading,
+        content.precisionThesis.body,
+        ...content.highlights,
+        ...(content.answerCapsule?.flatMap((item) => [item.question, item.answer]) ?? []),
+        ...content.faqEntries.flatMap((item) => [item.question, item.answer]),
+        ...content.relatedGuides.flatMap((guide) => [guide.label, guide.description]),
+      ].join('\n');
+    }
+
+    it('meta description 應含唯一 canonical thesis SSOT', () => {
+      const content = getCurrencyLandingPageContent('USD');
+      expect(content.description).toContain(CANONICAL_BANK_SELL_THESIS);
+      expect(content.heroIntro).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+    });
+
+    it.each(CURRENCY_CODES)('%s 正文 SSOT 不得含 thesis keyword（賣出價|中間價）', (code) => {
+      const content = getCurrencyLandingPageContent(code);
+      expect(collectBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+    });
+
+    it.each(REVERSE_CODES)('反向 %s 正文 SSOT 不得含 thesis keyword', (code) => {
+      const content = getReverseCurrencyLandingPageContent(code);
+      expect(collectBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+    });
+
+    it.each(CURRENCY_CODES)('%s capsule 問題不得與 FAQ 逐字重複', (code) => {
+      const content = getCurrencyLandingPageContent(code);
+      const capsuleQuestions = content.answerCapsule?.map((item) => item.question) ?? [];
+      const faqQuestions = content.faqEntries.map((item) => item.question);
+      for (const question of capsuleQuestions) {
+        expect(faqQuestions).not.toContain(question);
       }
     });
   });

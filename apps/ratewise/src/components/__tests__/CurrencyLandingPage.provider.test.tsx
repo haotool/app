@@ -46,6 +46,11 @@ const baseProps = {
   pathname: '/krw-twd',
   canonical: 'https://app.haotool.org/ratewise/krw-twd/',
   keywords: ['韓元'],
+  heroIntro: '測試用首屏 intro',
+  precisionThesis: {
+    heading: '測試精準論述標題',
+    body: '測試精準論述正文',
+  },
   faqEntries: [],
   howToSteps: [],
   highlights: [],

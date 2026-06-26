@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+63
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+64
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-epic3-canonical-sell-thesis
+- 原因：幣別頁 curl 賣出價/中間價 keyword 重複（L09 thesis >1）
+- 解法：seo-metadata 新增 CANONICAL_BANK_SELL_THESIS SSOT 並收斂 AnswerCapsule/FAQ 交叉引用
 
 - 日期：2026-06-27
 - ID：reward-ratewise-api-semantics-v2-m1-m3
