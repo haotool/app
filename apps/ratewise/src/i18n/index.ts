@@ -53,7 +53,19 @@ const resources = {
 };
 
 const hasBrowserDocument = typeof window !== 'undefined' && typeof document !== 'undefined';
-const canUseBrowserLanguageStorage = hasBrowserDocument && import.meta.env.MODE !== 'test';
+const canUseBrowserLanguageStorage = (() => {
+  if (!hasBrowserDocument || import.meta.env.MODE === 'test') {
+    return false;
+  }
+  try {
+    const probeKey = '__ratewise_ls_probe__';
+    window.localStorage.setItem(probeKey, '1');
+    window.localStorage.removeItem(probeKey);
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 /**
  * 正規化語系代碼

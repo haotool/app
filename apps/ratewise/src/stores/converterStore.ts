@@ -293,10 +293,13 @@ function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> |
     const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
     const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
     const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
+    const oldMode = window.localStorage.getItem(LEGACY_KEYS.MODE);
 
     if (oldFrom && isCurrencyCode(oldFrom)) patch.fromCurrency = oldFrom;
     if (oldTo && isCurrencyCode(oldTo)) patch.toCurrency = oldTo;
-    // 註：legacy `mode` 不再遷移；頁面 `mode` 由 route 決定（route 即 SSOT）。
+    if ((CONVERTER_MODES as readonly string[]).includes(oldMode ?? '')) {
+      patch.lastConverterView = oldMode as ConverterMode;
+    }
 
     if (oldFavoritesRaw) {
       const oldFavorites = parseLegacyFavorites(oldFavoritesRaw);

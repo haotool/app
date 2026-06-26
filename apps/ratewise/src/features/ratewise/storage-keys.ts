@@ -43,7 +43,7 @@ export const STORAGE_KEYS = {
 
   // === 用戶數據 (不可清除) ===
 
-  /** 貨幣轉換器模式 (single/multi) - 用戶界面偏好 */
+  /** legacy key：僅供 converterStore 一次性遷移至 lastConverterView，執行期勿直接讀寫 */
   CURRENCY_CONVERTER_MODE: 'currencyConverterMode',
 
   /** 收藏的貨幣列表 - 用戶自定義收藏 */

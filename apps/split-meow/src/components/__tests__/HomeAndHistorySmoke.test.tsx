@@ -37,6 +37,10 @@ const BASE_STATE = {
   payerId: 'me',
   expenseNote: '',
   activeTab: 'home' as const,
+  currency: 'TWD' as const,
+  currencyManuallySet: false,
+  krwPerTwd: null,
+  rateUpdatedAt: null,
 };
 
 beforeEach(() => {
