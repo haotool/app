@@ -89,7 +89,7 @@ if (typeof window !== 'undefined') {
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   });
-  window.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
+  window.IntersectionObserver = mockIntersectionObserver;
 
   // Mock ResizeObserver
   const mockResizeObserver = vi.fn();
@@ -98,5 +98,5 @@ if (typeof window !== 'undefined') {
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   });
-  window.ResizeObserver = mockResizeObserver as unknown as typeof ResizeObserver;
+  window.ResizeObserver = mockResizeObserver;
 }

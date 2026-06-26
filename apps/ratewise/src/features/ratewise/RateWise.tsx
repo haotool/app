@@ -27,7 +27,8 @@ import { logger } from '../../utils/logger';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { feedbackSurfaceTokens, rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { CurrencyCode, RateSource, RateType } from './types';
-import { CURRENCY_DEFINITIONS } from './constants';
+import { CURRENCY_DEFINITIONS, DEFAULT_CONVERTER_MODE } from './constants';
+import { useRememberConverterView } from './hooks/useRememberConverterView';
 import { useConverterStore } from '../../stores/converterStore';
 import {
   getPairRateTypeAvailability,
@@ -35,6 +36,7 @@ import {
 } from '../../utils/exchangeRateCalculation';
 
 const RateWise = () => {
+  useRememberConverterView(DEFAULT_CONVERTER_MODE);
   const { t } = useTranslation();
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);

@@ -19,6 +19,7 @@ import { persist } from 'zustand/middleware';
 import type {
   ConversionHistoryCategory,
   ConversionHistoryEntry,
+  ConverterMode,
   CurrencyCode,
   RateMode,
   RateSource,
@@ -32,8 +33,10 @@ import type {
 } from '../features/ratewise/rateProviderTypes';
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
 import {
+  CONVERTER_MODES,
   CURRENCY_DEFINITIONS,
   DEFAULT_BASE_CURRENCY,
+  DEFAULT_CONVERTER_MODE,
   DEFAULT_FAVORITES,
   DEFAULT_FROM_CURRENCY,
   DEFAULT_RATE_MODE,
@@ -75,7 +78,9 @@ const LEGACY_HISTORY_STORAGE_KEY = STORAGE_KEYS.CONVERSION_HISTORY;
 // ── Store 狀態介面 ───────────────────────────────────────────────────────────
 interface ConverterState {
   // ── 持久化狀態 ──────────────────────────────────────────────────────────
-  // 註：頁面 `mode`（single/multi）由 route 決定，不持久化於 store。
+  // 註：當前頁面 mode（single/multi）仍由 route 決定；lastConverterView 僅供冷啟動還原。
+  /** 上次停留的換算模式（single / multi），供根路徑冷啟動還原。 */
+  lastConverterView: ConverterMode;
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   rateMode: RateMode;
@@ -107,6 +112,9 @@ interface ConverterState {
   addToHistory: (entry: ConversionHistoryEntry) => void;
   clearHistory: () => void;
 
+  /** 記錄使用者最後停留的換算模式（single / multi）。 */
+  setLastConverterView: (view: ConverterMode) => void;
+
   /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
   __migrateFromLegacy: () => void;
   /** hydrate 後驗證並修復不合法的欄位；由 onRehydrateStorage 自動觸發，亦可由單元測試直接呼叫 */
@@ -117,6 +125,7 @@ interface ConverterState {
 
 type PersistentFields = Pick<
   ConverterState,
+  | 'lastConverterView'
   | 'fromCurrency'
   | 'toCurrency'
   | 'rateMode'
@@ -175,15 +184,19 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   const patch: Partial<PersistentFields> = {};
   let dirty = false;
 
-  if (!isCurrencyCode(state.fromCurrency as string)) {
+  if (!(CONVERTER_MODES as readonly string[]).includes(state.lastConverterView)) {
+    patch.lastConverterView = DEFAULT_CONVERTER_MODE;
+    dirty = true;
+  }
+  if (!isCurrencyCode(state.fromCurrency)) {
     patch.fromCurrency = DEFAULT_FROM_CURRENCY;
     dirty = true;
   }
-  if (!isCurrencyCode(state.toCurrency as string)) {
+  if (!isCurrencyCode(state.toCurrency)) {
     patch.toCurrency = DEFAULT_TO_CURRENCY;
     dirty = true;
   }
-  if (!isCurrencyCode(state.baseCurrency as string)) {
+  if (!isCurrencyCode(state.baseCurrency)) {
     patch.baseCurrency = DEFAULT_BASE_CURRENCY;
     dirty = true;
   }
@@ -366,9 +379,10 @@ export const useConverterStore = create<ConverterState>()(
   persist(
     (set, get) => ({
       // ── 初始狀態 ────────────────────────────────────────────────────────
+      lastConverterView: DEFAULT_CONVERTER_MODE,
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
-      rateMode: DEFAULT_RATE_MODE as RateMode,
+      rateMode: DEFAULT_RATE_MODE,
       rateType: DEFAULT_RATE_TYPE,
       rateSource: DEFAULT_RATE_SOURCE,
       providerPreference: DEFAULT_PROVIDER_PREFERENCE,
@@ -438,6 +452,8 @@ export const useConverterStore = create<ConverterState>()(
 
       clearHistory: () => set({ history: [] }),
 
+      setLastConverterView: (view) => set({ lastConverterView: view }),
+
       __migrateFromLegacy: () => {
         const patch = buildMigrationPatch(get());
         if (patch) {
@@ -461,6 +477,7 @@ export const useConverterStore = create<ConverterState>()(
     {
       name: 'ratewise-converter',
       partialize: (state) => ({
+        lastConverterView: state.lastConverterView,
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,
         rateMode: state.rateMode,

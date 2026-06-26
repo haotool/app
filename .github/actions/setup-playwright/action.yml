@@ -1,0 +1,39 @@
+name: Setup Playwright Chromium
+description: 快取並安裝 Playwright Chromium（分層 cache-hit 僅裝 OS deps）
+
+inputs:
+  app-filter:
+    description: pnpm filter（例如 @app/ratewise）
+    required: true
+    default: '@app/ratewise'
+
+runs:
+  using: composite
+  steps:
+    - name: Get Playwright version
+      id: pw-version
+      shell: bash
+      run: |
+        version=$(pnpm --filter "${{ inputs.app-filter }}" exec playwright --version | awk '{print $2}')
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Playwright browsers
+      id: pw-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-chromium-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+        restore-keys: |
+          playwright-chromium-${{ runner.os }}-
+
+    - name: Install Playwright browsers
+      if: steps.pw-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
+      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install --with-deps chromium
+
+    - name: Install Playwright system deps
+      if: steps.pw-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium

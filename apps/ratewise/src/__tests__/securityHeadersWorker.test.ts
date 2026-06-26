@@ -197,7 +197,7 @@ describe('security-headers worker', () => {
     expect(csp).toContain('https://fonts.googleapis.com');
   });
 
-  it('未定義專屬 profile 的 app 路徑應保留 fallback CSP，避免 legacy 遠端頭像被誤擋', async () => {
+  it('split-meow 應使用專屬 profile，connect-src 含 jsdelivr 以允許匯率 API 請求', async () => {
     globalThis.fetch = vi
       .fn()
       .mockResolvedValue(
@@ -205,6 +205,21 @@ describe('security-headers worker', () => {
       );
 
     const response = await worker.fetch(new Request('https://app.haotool.org/split-meow/'));
+    const csp = response.headers.get('content-security-policy') ?? '';
+
+    expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).toContain('https://fonts.googleapis.com');
+    expect(csp).toContain('https://cdn.jsdelivr.net');
+  });
+
+  it('未定義專屬 profile 的 app 路徑應保留 fallback CSP，避免 legacy 遠端頭像被誤擋', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        createHtmlResponse('<!doctype html><html><head></head><body></body></html>'),
+      );
+
+    const response = await worker.fetch(new Request('https://app.haotool.org/unknown-app/'));
     const csp = response.headers.get('content-security-policy') ?? '';
 
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");

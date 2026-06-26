@@ -4,6 +4,11 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
+import {
+  compareDirection,
+  DRIFT_ABSOLUTE_TOLERANCE,
+  isHardThresholdBreached,
+} from '../lighthouse-drift.mjs';
 
 const ROOT_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..');
 const SCRIPT_PATH = join(ROOT_DIR, 'scripts/lighthouse-production.mjs');
@@ -60,22 +65,35 @@ describe('lighthouse-production SSOT controls', () => {
   });
 
   it('guards production baseline drift with relative and absolute tolerance', () => {
-    const source = readFileSync(SCRIPT_PATH, 'utf8');
+    const productionSource = readFileSync(SCRIPT_PATH, 'utf8');
+    const driftSource = readFileSync(join(ROOT_DIR, 'scripts/lighthouse-drift.mjs'), 'utf8');
 
-    expect(source).toContain(
-      'function compareDirection(current, baseline, compareDirection, absoluteTolerance = 0)',
-    );
-    expect(source).toContain('absoluteChanged > absoluteTolerance');
-    expect(source).toContain('lcpMs: 500');
-    expect(source).toContain('inpMs: 15');
-    expect(source).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
-    expect(source).toContain('actual: current');
+    expect(productionSource).toContain("from './lighthouse-drift.mjs'");
+    expect(productionSource).toContain('driftAbsoluteTolerance: DRIFT_ABSOLUTE_TOLERANCE.inpMs');
+    expect(productionSource).toContain('actual: current');
+    expect(driftSource).toContain('absoluteChanged > absoluteTolerance');
+    expect(driftSource).toContain('inpMs: 30');
+  });
+});
+
+describe('compareDirection behavioral drift checks', () => {
+  const inpTolerance = DRIFT_ABSOLUTE_TOLERANCE.inpMs;
+
+  it('passes INP lab noise within 30ms absolute tolerance (34→60)', () => {
+    const result = compareDirection(60, 34, 'lowerBetter', inpTolerance);
+    expect(result.absoluteChanged).toBe(26);
+    expect(result.exceed).toBe(false);
   });
 
-  it('allows low-baseline INP jitter under the absolute tolerance floor', () => {
-    const source = readFileSync(SCRIPT_PATH, 'utf8');
+  it('fails INP drift when absolute change exceeds 30ms (34→66)', () => {
+    const result = compareDirection(66, 34, 'lowerBetter', inpTolerance);
+    expect(result.absoluteChanged).toBe(32);
+    expect(result.exceed).toBe(true);
+  });
 
-    expect(source).toContain('inpMs: 15');
-    expect(source).not.toContain('inpMs: 10');
+  it('flags large INP drift and hard threshold breach (34→250)', () => {
+    const drift = compareDirection(250, 34, 'lowerBetter', inpTolerance);
+    expect(drift.exceed).toBe(true);
+    expect(isHardThresholdBreached(250, { direction: 'lowerBetter', threshold: 200 })).toBe(true);
   });
 });

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
+> 本次分數變化：0（reward 0、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,56 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：neutral-ratewise-production-governance-v2-merge
+- 原因：PR411 與 main 分叉過久，已發版 changeset 與 split-meow 版本會造成 double-bump 與衝突
+- 解法：3-way merge 至 chore/ratewise-production-governance-v2，刪除 9 個已發版 changeset 並保留 genuinely-new 治理項
+
+- 日期：2026-06-26
+- ID：neutral-002-score-header-correction-pr425
+- 原因：Codex P2 指出本批 3 reward + 1 neutral 的 header 誤寫 +1
+- 解法：header 更正為 +3（reward 3、penalty 0），累計 +62 維持不變
+
+- 日期：2026-06-26
+- ID：reward-ratewise-moneybox-no-cache-revalidation
+- 原因：Codex P2 指出 MoneyBox fetchFromCDN 移除 If-None-Match 後仍用預設 cache mode，TTL 到期可能被 HTTP cache 餵舊換錢所報價
+- 解法：fetchWithTimeout 加 cache: 'no-cache' 並補 moneyboxRateService 測試斷言
+
+- 日期：2026-06-26
+- ID：reward-ratewise-cdn-no-cache-revalidation
+- 原因：Codex P1 指出移除 If-None-Match 後 localStorage TTL 到期仍可能被瀏覽器 HTTP cache 餵舊匯率 body
+- 解法：fetchFromCDN 加 cache: 'no-cache' 強制 CDN 重新驗證，並補 exchangeRateService 測試斷言
+
+- 日期：2026-06-26
+- ID：neutral-agents-continual-learning-sync
+- 原因：continual-learning 4c1b7c25 更新 AGENTS.md Learned Preferences/Facts 未入版控
+- 解法：新增 neutral 002 條目並以 docs(agents) commit 推送 fix/ratewise-pwa-etag
+
+- 日期：2026-06-26
+- ID：reward-ratewise-pwa-etag-p0-convergence
+- 原因：PR411 混雜 split-meow 與 AppLayout 變更，P0 修復（precache-first、If-None-Match preflight、moneybox ETag）無法安全合併
+- 解法：自 origin/main 開 fix/ratewise-pwa-etag 分支 cherry-pick 三 commit，整合 patch changeset 與 focused 測試後獨立 PR
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-full-shard-timeout-45
+- 原因：main push E2E Full 2-way shard 仍設 20 分鐘逾時，完整 desktop+mobile 套件在冷快取下被取消，merge-reports 連帶失敗
+- 解法：ci.yml 將 e2e-full shard 與 e2e-merge-reports timeout-minutes 調整為 45（高於 PR smoke 30 分鐘）
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-speed-optimization
+- 原因：PR E2E 每次跑完整 96 測試 + 冷 Playwright 安裝，常超過 15 分鐘且 docs-only PR 也觸發
+- 解法：path filter + Playwright 分層快取 composite action + PR smoke（38 desktop tests）+ main 2-way sharding 與 merge-reports
+
+- 日期：2026-06-26
+- ID：reward-ci-e2e-timeout-30
+- 原因：E2E job timeout-minutes 15 不足，Playwright 冷快取安裝階段遭 GitHub Actions 取消
+- 解法：ci.yml E2E job timeout 調整為 30 分鐘（已由 e2e-speed-optimization 取代為 smoke 15 / full 20 min）
+
+- 日期：2026-06-26
+- ID：reward-lighthouse-ci-production-grade-converge
+- 原因：Production Lighthouse 在 ratewise PR 掃 live URL 造成誤判，compareDirection 缺行為測試且 PERFORMANCE_BASELINE 未同步絕對容忍
+- 解法：抽出 lighthouse-drift.mjs 補 INP 漂移行為測試、移除 production workflow PR 觸發、ci.yml LHCI 加 paths/timeout、E2E timeout 30 分
 
 - 日期：2026-06-26
 - ID：reward-moneybox-history-snapshot-date-ssot
@@ -52,6 +102,40 @@
 - ID：reward-ratewise-uiux-token-ssot-convergence
 - 原因：RateWise UI shell、內容頁麵包屑與多處元件樣式存在 design token 漂移、死碼 UI 與 PWA/Chrome polish warning
 - 解法：以 Impeccable / SSOT audit 收斂 token、刪除未引用 UI shim、補 SPEC 與守門測試，並通過 full Vitest、typecheck、SSOT、Chrome console 與 build 驗證
+
+- 日期：2026-05-30
+- ID：ratewise-tw-radius-defaults-restore
+- 原因：`tailwind.config.ts` 覆蓋標準 `lg`/`md`/`sm`/`xl` radius alias 為語義 token 值，第三方元件與未遷移路徑會隱性受影響，為生產級風險。
+- 解法：恢復 Tailwind 標準 radius 預設值，僅保留語義 token（`card`/`panel`/`control`/`icon`/`compact`）作為新增擴充；修正最後一個 `rounded-t-lg` → `rounded-t-control`；同步 `DESIGN.md` 與測試。
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide-p1-merge-fix
+- 原因：beforeinstallprompt 在 desktop 無條件 preventDefault 阻擋原生安裝 UI，且 ~693KB 安裝海報被 SW precache
+- 解法：僅 Android 且 shouldShowGuide 時攔截事件，pwa-install 海報加入 globIgnores 改 runtime fetch，補 desktop Vitest
+
+- 日期：2026-06-25
+- ID：neutral-continual-learning-agents-md
+- 原因：continual-learning 從近期 transcript 萃取高訊號 UI/UX 偏好與 Cloudflare Workers 治理事實
+- 解法：在 AGENTS.md 新增 Learned User Preferences 與 Learned Workspace Facts 章節
+
+- 日期：2026-06-25
+- ID：reward-lighthouse-inp-drift-tolerance
+- 原因：Production Lighthouse baseline 以 10ms INP 絕對門檻誤判 lab 34→60ms 噪音為阻擋性回歸
+- 解法：將 inpMs 絕對漂移容忍值調整為 30ms，保留 5% 相對與 200ms 硬性門檻，vitest 驗證通過
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-poster-ssot
+- 原因：安裝海報未走專案 optimize-images.js SSOT，PNG fallback 達 ~500KB 未做效能優化
+- 解法：將海報納入 optimize-images.js（sharp avif q80/webp q85），PNG fallback 下採樣量化至 ~240KB（−53%），master 比照既有圖片不入庫
+
+- 日期：2026-06-25
+- ID：penalty-ratewise-pwa-install-guide-semver-converge
+- 原因：初版誤用 patch 升版（新互動元件應為 minor）、002 本次分數變化算術誤標，且 messenger UA 偵測排在 facebook 之後永遠不可達
+- 解法：改以 minor 經 changeset 重生至 2.25.0，修正 002 算術、調整 messenger 偵測順序、補 Escape 關閉與對應 Vitest
+
+- 日期：2026-06-25
+- ID：reward-ratewise-pwa-install-guide
+- 原因：RateWise PWA 缺少依 iOS、Android 與 Threads 等內建瀏覽器情境自動分流的安裝指引，使用者無法清楚完成加入主畫面流程
+- 解法：新增 SSR-safe PWA 安裝環境偵測、品牌化 iOS/Android 安裝海報與 lazy 全域提示，並補 focused Vitest 與 changeset
 
 - 日期：2026-05-15
 - ID：reward-ratewise-moneybox-aggregate-trend
@@ -1229,8 +1313,3 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
-
-- 日期：2026-05-30
-- ID：ratewise-tw-radius-defaults-restore
-- 原因：`tailwind.config.ts` 覆蓋標準 `lg`/`md`/`sm`/`xl` radius alias 為語義 token 值，第三方元件與未遷移路徑會隱性受影響，為生產級風險。
-- 解法：恢復 Tailwind 標準 radius 預設值，僅保留語義 token（`card`/`panel`/`control`/`icon`/`compact`）作為新增擴充；修正最後一個 `rounded-t-lg` → `rounded-t-control`；同步 `DESIGN.md` 與測試。

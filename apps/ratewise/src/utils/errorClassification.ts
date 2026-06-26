@@ -16,7 +16,7 @@ export function getUnhandledRejectionMessage(reason: unknown): string {
   }
 
   if (reason && typeof reason === 'object' && 'message' in reason) {
-    const message = (reason as { message: unknown }).message;
+    const message = reason.message;
     return typeof message === 'string' ? message : JSON.stringify(reason);
   }
 

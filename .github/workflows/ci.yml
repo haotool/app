@@ -3,14 +3,18 @@ name: CI
 # 完整核心 CI Pipeline
 # 功能: lint / format / typecheck / test / build / security / e2e
 #
-# 更新時間: 2026-01-29
-# 依據: [CLAUDE.md:CI/CD 品質門檻][GitHub Actions Best Practices 2025]
+# 更新時間: 2026-06-26
+# 依據: [CLAUDE.md:CI/CD 品質門檻][Playwright CI docs][GitHub Actions Best Practices 2025]
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -27,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -133,7 +137,7 @@ jobs:
 
       - name: Upload coverage
         if: success() && steps.coverage.outputs.paths != ''
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ${{ steps.coverage.outputs.paths }}
           flags: unittests
@@ -141,18 +145,46 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  # NOTE: E2E tests currently target ratewise only.
-  # To add other apps, convert to a matrix strategy with app-specific config.
-  e2e:
-    name: E2E Tests
-    needs: quality
+  # E2E path filter：PR 僅在 ratewise/nihonname/shared 或 lockfile 變更時執行。
+  e2e-filter:
+    name: E2E Path Filter
     runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Detect E2E-relevant changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            e2e:
+              - 'apps/ratewise/**'
+              - 'apps/nihonname/**'
+              - 'apps/shared/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/setup-playwright/**'
+
+  # PR：核心 smoke（desktop 單專案 + 3 個核心 spec），預估 5–8 分鐘。
+  e2e-smoke:
+    name: E2E Smoke (PR)
+    needs: [quality, e2e-filter]
+    if: |
+      needs.quality.result == 'success' &&
+      github.event_name == 'pull_request' &&
+      needs.e2e-filter.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -168,14 +200,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/ratewise'
+
       - name: Build
         env:
           VITE_RATEWISE_BASE_PATH: '/'
           RATING_API_URL: ${{ secrets.RATING_API_URL }}
         run: pnpm build:ratewise
-
-      - name: Install Playwright browsers
-        run: pnpm --filter @app/ratewise exec playwright install --with-deps chromium firefox
 
       - name: Start preview server
         env:
@@ -183,7 +217,7 @@ jobs:
         run: |
           pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
           echo $! > .preview-server.pid
-          for i in {1..10}; do
+          for i in {1..15}; do
             if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
               exit 0
             fi
@@ -192,12 +226,17 @@ jobs:
           echo "Preview server failed to start"
           exit 1
 
-      - name: Run E2E tests
+      - name: Run E2E smoke tests
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
           E2E_BASE_PATH: '/'
-        run: pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop --project=chromium-mobile
+        run: |
+          pnpm --filter @app/ratewise exec playwright test \
+            tests/e2e/ratewise.spec.ts \
+            tests/e2e/calculator-fix-verification.spec.ts \
+            tests/e2e/mobile-parity.spec.ts \
+            --project=chromium-desktop
 
       - name: Stop preview server
         if: always()
@@ -211,20 +250,187 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-smoke
           path: apps/ratewise/playwright-report
           retention-days: 7
 
-  lighthouse:
-    name: Lighthouse CI
-    needs: quality
+  # main / workflow_dispatch：完整 E2E，2-way sharding + blob merge。
+  e2e-full:
+    name: E2E Full (${{ matrix.shard }}/2)
+    needs: [quality, e2e-filter]
+    if: |
+      needs.quality.result == 'success' &&
+      github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1, 2]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/ratewise'
+
+      - name: Build
+        env:
+          VITE_RATEWISE_BASE_PATH: '/'
+          RATING_API_URL: ${{ secrets.RATING_API_URL }}
+        run: pnpm build:ratewise
+
+      - name: Start preview server
+        env:
+          VITE_RATEWISE_BASE_PATH: '/'
+        run: |
+          pnpm --filter @app/ratewise preview --host 0.0.0.0 --port 4173 --strictPort &
+          echo $! > .preview-server.pid
+          for i in {1..15}; do
+            if curl --silent --fail http://127.0.0.1:4173 > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Preview server failed to start"
+          exit 1
+
+      - name: Run E2E tests (shard ${{ matrix.shard }}/2)
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+          E2E_BASE_PATH: '/'
+        run: |
+          pnpm --filter @app/ratewise exec playwright test \
+            --project=chromium-desktop \
+            --project=chromium-mobile \
+            --shard=${{ matrix.shard }}/2 \
+            --reporter=blob \
+            --reporter=github \
+            --reporter=list
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f .preview-server.pid ]; then
+            kill "$(cat .preview-server.pid)" || true
+            rm .preview-server.pid
+          fi
+
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: apps/ratewise/blob-report
+          retention-days: 1
+
+  e2e-merge-reports:
+    name: E2E Merge Reports
+    needs: e2e-full
+    if: ${{ always() && !cancelled() && needs.e2e-full.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
 
     steps:
       - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        run: pnpm --filter @app/ratewise exec playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged HTML report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-merged
+          path: apps/ratewise/playwright-report
+          retention-days: 7
+
+      - name: Propagate shard failures
+        if: needs.e2e-full.result != 'success'
+        run: exit 1
+
+  lighthouse-changes:
+    name: Detect Lighthouse scope
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.filter.outputs.lighthouse }}
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "lighthouse=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          if git diff --name-only "$BASE" "$HEAD" | grep -Eq '^(apps/ratewise/|scripts/lighthouse-|\.github/workflows/(ci|lighthouse-production)\.yml|\.lighthouserc\.cjs)'; then
+            echo "lighthouse=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lighthouse=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  lighthouse:
+    name: Lighthouse CI
+    needs: [quality, lighthouse-changes]
+    if: needs.lighthouse-changes.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -281,7 +487,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -364,7 +570,7 @@ jobs:
 
     steps:
       - name: Checkpoint code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Dependency review
         uses: actions/dependency-review-action@v5
