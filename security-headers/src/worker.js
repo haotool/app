@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.4
+ * 安全標頭 Worker v5.5
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.5: split-meow profile 補回 fallback 的 img-src https:，修復 legacy 遠端頭像被 CSP 擋下
  * - v5.4: Service Worker 檔案（sw.js、registerSW.js）強制 no-store，確保瀏覽器每次都取得最新版本
  * - v5.3: 新增 split-meow CSP profile，允許 jsDelivr CDN 連線取得匯率
  * - v5.2: 收斂 ratewise robots.txt / llms.txt 重複 Content-Type，統一為單一 text/plain; charset=utf-8
@@ -30,7 +31,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.4';
+const SECURITY_POLICY_VERSION = '5.5';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -503,6 +504,9 @@ const SPLIT_MEOW_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
+	// 保留 fallback 的遠端頭像白名單：Split Meow 成員頭像可能來自 legacy https 來源，
+	// 未帶 img-src https: 會在專屬 profile 下被 CSP 擋下。
+	imgSources: ['https:'],
 	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT, 'https://cdn.jsdelivr.net'],
 });
 

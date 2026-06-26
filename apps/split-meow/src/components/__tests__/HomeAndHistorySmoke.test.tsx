@@ -37,6 +37,15 @@ const BASE_STATE = {
   payerId: 'me',
   expenseNote: '',
   activeTab: 'home' as const,
+  // 重置幣別相關狀態，避免設定 currency/krwPerTwd 的測試洩漏污染後續測試
+  currency: 'TWD' as const,
+  currencyManuallySet: false,
+  krwPerTwd: null,
+  rateUpdatedAt: null,
+  // 補齊其餘 test-mutable 欄位，避免未來測試設值後跨測試洩漏（與 store 初始值對齊）
+  expenseCategory: null,
+  settledPayments: [],
+  catPlayMode: false,
 };
 
 beforeEach(() => {
