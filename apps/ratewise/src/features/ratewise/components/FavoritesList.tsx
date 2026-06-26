@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { RATE_BASIS_LIST_NOTE_KEY } from '../../../utils/rateBasisLabel';
 import { contentPageTokens } from '../../../config/design-tokens';
 
 interface FavoritesListProps {
@@ -25,7 +26,7 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
         <h2 className="text-xl font-bold text-text">{t('currencyList.favoriteCurrencies')}</h2>
       </div>
       <p className="mb-4 text-xs text-text-muted" data-testid="favorites-basis-note">
-        {t('rateBasis.listBasisNote')}
+        {t(RATE_BASIS_LIST_NOTE_KEY)}
       </p>
       <div className="space-y-2">
         {favorites.map((code) => (

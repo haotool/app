@@ -10,6 +10,12 @@ export type RateBasisKind =
   | 'shop-buy'
   | 'shop-mid';
 
+export const RATE_BASIS_LIST_NOTE_KEY = 'rateBasis.listBasisNote' as const;
+
+export function getRateBasisLabelKey(kind: RateBasisKind): `rateBasis.${RateBasisKind}` {
+  return `rateBasis.${kind}`;
+}
+
 export function getRateBasisKind(
   fromCurrency: CurrencyCode,
   toCurrency: CurrencyCode,

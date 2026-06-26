@@ -32,8 +32,6 @@ export type OperatorType = '+' | '-' | '×' | '÷';
 
 /**
  * 操作類型
- * @description 特殊功能按鍵（清除、刪除、計算、正負號、百分比）
- * @updated 2025-11-18 - Added 'negate' and 'percent' for iOS standard layout
  */
 export type ActionType = 'clear' | 'backspace' | 'calculate' | 'negate' | 'percent';
 
@@ -68,9 +66,6 @@ export type EasterEggType = 'christmas' | null;
 
 /**
  * 計算機 Hook 返回值
- * @description useCalculator hook 的返回介面
- * @updated 2025-11-18 - Added negate() and percent() for iOS standard features
- * @updated 2025-12-25 - Added Easter egg support
  */
 export interface UseCalculatorReturn {
   /** 當前表達式 */

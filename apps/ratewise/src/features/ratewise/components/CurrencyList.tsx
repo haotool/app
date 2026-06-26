@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { RATE_BASIS_LIST_NOTE_KEY } from '../../../utils/rateBasisLabel';
 import { contentPageTokens } from '../../../config/design-tokens';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
@@ -26,7 +27,7 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
       <div className="mb-4">
         <h2 className="text-xl font-bold text-text">{t('currencyList.allCurrencies')}</h2>
         <p className="mt-0.5 text-xs text-text-muted" data-testid="currency-list-basis-note">
-          {t('rateBasis.listBasisNote')}
+          {t(RATE_BASIS_LIST_NOTE_KEY)}
         </p>
       </div>
       <div
