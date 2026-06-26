@@ -514,4 +514,37 @@ describe('useCalculator', () => {
       expect(result.current.result).toBe(300);
     });
   });
+
+  describe('useCalculator - 初始值 pristine 語意（iOS 慣例）', () => {
+    it('帶初始值開啟後輸入數字應重新開始，而非附加', () => {
+      const { result } = renderHook(() => useCalculator(1000));
+      act(() => result.current.input('5'));
+      expect(result.current.expression).toBe('5');
+    });
+
+    it('帶初始值開啟後輸入小數點應從 0. 開始', () => {
+      const { result } = renderHook(() => useCalculator(1000));
+      act(() => result.current.input('.'));
+      expect(result.current.expression).toBe('0.');
+    });
+
+    it('帶初始值開啟後輸入運算符應延續初始值', () => {
+      const { result } = renderHook(() => useCalculator(1000));
+      act(() => result.current.input('+'));
+      expect(result.current.expression).toBe('1000 + ');
+    });
+
+    it('輸入過一次後恢復一般附加行為', () => {
+      const { result } = renderHook(() => useCalculator(1000));
+      act(() => result.current.input('5'));
+      act(() => result.current.input('6'));
+      expect(result.current.expression).toBe('56');
+    });
+
+    it('無初始值時行為不變', () => {
+      const { result } = renderHook(() => useCalculator());
+      act(() => result.current.input('5'));
+      expect(result.current.expression).toBe('5');
+    });
+  });
 });

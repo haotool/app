@@ -13,6 +13,10 @@ import { validateExpression, canAddOperator, canAddDecimal, canAddDigit } from '
 import { useDebounce } from './useDebounce';
 import { isChristmasEasterEgg } from '../easter-eggs/utils';
 
+interface InternalCalculatorState extends CalculatorState {
+  pristine: boolean;
+}
+
 /**
  * 計算機 Hook
  * @description 管理計算機的狀態和操作邏輯
@@ -38,10 +42,11 @@ import { isChristmasEasterEgg } from '../easter-eggs/utils';
  */
 export function useCalculator(initialValue?: number): UseCalculatorReturn {
   // 初始化狀態
-  const [state, setState] = useState<CalculatorState>({
+  const [state, setState] = useState<InternalCalculatorState>({
     expression: initialValue?.toString() ?? '',
     result: null,
     error: null,
+    pristine: true,
   });
 
   // 即時預覽狀態（獨立於主要結果）
@@ -65,6 +70,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
       expression: initialValue?.toString() ?? '',
       result: null,
       error: null,
+      pristine: true,
     });
     setPreview(null);
   }, [initialValue]);
@@ -79,6 +85,13 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
    */
   const input = useCallback((value: string) => {
     setState((prev) => {
+      if (prev.pristine && /^\d$/.test(value)) {
+        return { expression: value, result: null, error: null, pristine: false };
+      }
+      if (prev.pristine && value === '.') {
+        return { expression: '0.', result: null, error: null, pristine: false };
+      }
+
       let newExpression = prev.expression;
 
       // 如果上次計算有結果，且輸入的是數字，清空表達式重新開始
@@ -121,6 +134,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         expression: newExpression,
         result: null, // 新輸入時清除結果
         error: null,
+        pristine: false,
       };
     });
   }, []);
@@ -146,6 +160,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         expression: newExpression,
         result: null,
         error: null,
+        pristine: false,
       };
     });
   }, []);
@@ -158,6 +173,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
       expression: '',
       result: null,
       error: null,
+      pristine: false,
     });
   }, []);
 
@@ -198,6 +214,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         expression: newExpression,
         result: null,
         error: null,
+        pristine: false,
       };
     });
   }, []);
@@ -237,6 +254,7 @@ export function useCalculator(initialValue?: number): UseCalculatorReturn {
         expression: newExpression,
         result: null,
         error: null,
+        pristine: false,
       };
     });
   }, []);

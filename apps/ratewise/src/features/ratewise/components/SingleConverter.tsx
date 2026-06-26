@@ -10,7 +10,7 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
@@ -53,6 +53,7 @@ import {
   fetchExchangeShopHistoricalRatesRange,
   type ExchangeShopRate,
 } from '../../../services/moneyboxRateService';
+import { getRateBasisKind } from '../../../utils/rateBasisLabel';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -159,6 +160,21 @@ export const SingleConverter = ({
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
+
+  const rateBasisKind = getRateBasisKind(fromCurrency, toCurrency, rateMode, rateSource);
+
+  const formatCalculatorPreview = useCallback(
+    (value: number): string | null => {
+      if (!Number.isFinite(value) || value < 0) return null;
+      if (calculator.activeField === 'to') {
+        if (!reverseRate || reverseRate <= 0) return null;
+        return `≈ ${formatAmountDisplay(value * reverseRate, fromCurrency)} ${fromCurrency}`;
+      }
+      if (!exchangeRate || exchangeRate <= 0) return null;
+      return `≈ ${formatAmountDisplay(value * exchangeRate, toCurrency)} ${toCurrency}`;
+    },
+    [calculator.activeField, exchangeRate, reverseRate, fromCurrency, toCurrency],
+  );
 
   // 趨勢圖進場動畫
   useEffect(() => {
@@ -516,6 +532,16 @@ export const SingleConverter = ({
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
+              {fromCurrency !== toCurrency && (
+                <div className="mt-1.5 flex items-center justify-center">
+                  <span
+                    data-testid="rate-basis-label"
+                    className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+                  >
+                    {t(`rateBasis.${rateBasisKind}`)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -724,6 +750,20 @@ export const SingleConverter = ({
         </span>
       </button>
 
+      <output
+        className="sr-only"
+        data-testid="conversion-live-region"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {t('singleConverter.conversionAnnouncement', {
+          fromAmount: formatAmountDisplay(fromAmount, fromCurrency) || '0',
+          fromCurrency,
+          toAmount: formatAmountDisplay(toAmount, toCurrency) || '0',
+          toCurrency,
+        })}
+      </output>
+
       {/* 計算機鍵盤 Bottom Sheet */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
@@ -731,6 +771,7 @@ export const SingleConverter = ({
           onClose={calculator.closeCalculator}
           onConfirm={calculator.handleConfirm}
           initialValue={calculator.initialValue}
+          formatConversionPreview={formatCalculatorPreview}
         />
       </Suspense>
     </>

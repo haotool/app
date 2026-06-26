@@ -27,6 +27,18 @@ const zhTW = {
     clickToCopy: '點擊複製',
   },
 
+  rateBasis: {
+    'bank-sell': '適用銀行賣出價',
+    'bank-buy': '適用銀行買入價',
+    'bank-cross': '買入／賣出交叉換算',
+    'bank-sell-only': '適用臺銀賣出牌告',
+    mid: '參考中間價（非交易報價）',
+    'shop-sell': '適用換錢所賣出價',
+    'shop-buy': '適用換錢所買入價',
+    'shop-mid': '換錢所中間價（參考）',
+    listBasisNote: '臺銀賣出價・1 外幣 = N 台幣',
+  },
+
   // Navigation
   nav: {
     mainNavigation: '主導覽列',
@@ -64,6 +76,7 @@ const zhTW = {
     clickToSwap: '點擊交換',
     addToHistory: '加入歷史記錄',
     addedToHistory: '已加入歷史記錄',
+    conversionAnnouncement: '{{fromAmount}} {{fromCurrency}} 約等於 {{toAmount}} {{toCurrency}}',
     spotRate: '即期',
     cashRate: '現金',
     exchangeShopRate: '換錢所',

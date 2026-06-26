@@ -254,7 +254,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                        className="relative p-0.5 opacity-60 hover:opacity-100 transition-opacity after:absolute after:-inset-3 after:content-['']"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted" />
@@ -273,7 +273,7 @@ export const MultiConverter = ({
                     }}
                   >
                     <div className="font-semibold text-sm leading-tight">{code}</div>
-                    <div className="text-[11px] font-medium text-text leading-tight truncate">
+                    <div className="text-xs font-medium text-text leading-tight truncate">
                       {t(`currencies.${code}`)}
                     </div>
                   </div>
@@ -303,7 +303,7 @@ export const MultiConverter = ({
                   >
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </button>
-                  <div className="text-[11px] text-right leading-tight text-text mt-0.5">
+                  <div className="text-xs text-right leading-tight text-text mt-0.5">
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
                       const nextOption = getNextAvailableOption(availability);
@@ -316,7 +316,7 @@ export const MultiConverter = ({
                             e.stopPropagation();
                             handleUnifiedToggle(code);
                           }}
-                          className="font-semibold text-primary-dark hover:text-primary-darker transition-colors"
+                          className="relative font-semibold text-primary-dark hover:text-primary-darker transition-colors after:absolute after:-inset-2.5 after:content-['']"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
