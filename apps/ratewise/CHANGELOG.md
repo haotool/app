@@ -1,5 +1,15 @@
 # @app/ratewise
 
+## 2.25.2
+
+### Patch Changes
+
+- 978aa12: 修正從多幣別頁（/multi）直接啟動後切換至首頁會被誤 redirect 回 /multi 的問題。
+- c4ee4a3: 離線導覽更快、匯率不再因 ETag 304 卡住：iOS PWA 改用 precache-first 冷啟動，移除 jsDelivr 跨域 If-None-Match 條件式請求，匯率與換錢所 CDN 皆以 cache no-cache 強制重新驗證
+- e2431e3: patch typescript-eslint 至 8.59.3 並修正新規則標記的多餘型別斷言；此為內部 lint 清理與 devDependency 升級，使用者無可見影響。
+- e5a014a: 在內建瀏覽器（Threads、Instagram 等）安裝提示加入動態指引：右上角彈跳箭頭與擴散光環引導使用者開啟 ... 選單，並強調卡片內第一步操作。
+- 978aa12: 重新開啟 App 時自動回到上次使用的單幣別或多幣別換算模式。
+
 ## 2.25.1
 
 ### Patch Changes
