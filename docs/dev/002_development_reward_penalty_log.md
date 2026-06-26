@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（neutral 0）｜累計總分：+61
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-pr426-sw-bounded-nav-case3-002-audit
+- 原因：PR 426 review P1 指出 fix/sw-bounded-nav-fallback 修改 SW case-3 有界網路 fallback 與測試 lint，但 commit 未包含 002 稽核軌跡。
+- 解法：補本條目（reward +1）；SW case-3 setCatchHandler 有界 fallback 已於 508db987 完成，lint 於 fbc1d48 修正。
 
 - 日期：2026-06-12
 - ID：neutral-ratewise-2026-ux-product-spec
