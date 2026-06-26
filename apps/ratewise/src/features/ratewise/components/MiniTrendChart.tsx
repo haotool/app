@@ -220,9 +220,9 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     const time = chart.timeScale().coordinateToTime(x);
 
     if (price === null || time === null) return;
-    if (!Number.isFinite(price as number)) return;
+    if (!Number.isFinite(price)) return;
 
-    chart.setCrosshairPosition(price as number, time, series);
+    chart.setCrosshairPosition(price, time, series);
   }, []);
 
   const handleTouchStart = useCallback(
