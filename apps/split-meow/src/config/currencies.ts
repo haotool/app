@@ -36,3 +36,8 @@ export function formatAmount(amount: number, currency: CurrencyCode): string {
 export function getCurrencySymbol(currency: CurrencyCode): string {
   return CURRENCIES[currency].symbol;
 }
+
+export function formatKrwAsTwd(krwAmount: number, rate: number | null | undefined): string | null {
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) return null;
+  return formatAmount(krwAmount / rate, 'TWD');
+}

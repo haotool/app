@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { formatAmount, detectCurrencyFromTimezone, getCurrencySymbol } from '../currencies';
+import {
+  formatAmount,
+  formatKrwAsTwd,
+  detectCurrencyFromTimezone,
+  getCurrencySymbol,
+} from '../currencies';
 
 describe('formatAmount', () => {
   it('TWD：以 NT$ 前綴格式化', () => {
@@ -20,6 +25,25 @@ describe('formatAmount', () => {
 
   it('KRW：零元', () => {
     expect(formatAmount(0, 'KRW')).toBe('₩0');
+  });
+});
+
+describe('formatKrwAsTwd', () => {
+  it('依匯率將 KRW 換算為 TWD 顯示字串', () => {
+    expect(formatKrwAsTwd(30000, 43.5)).toBe('NT$ 690');
+  });
+
+  it('匯率為 null 時回傳 null', () => {
+    expect(formatKrwAsTwd(30000, null)).toBeNull();
+  });
+
+  it('匯率為 0 或負值時回傳 null', () => {
+    expect(formatKrwAsTwd(30000, 0)).toBeNull();
+    expect(formatKrwAsTwd(30000, -1)).toBeNull();
+  });
+
+  it('匯率為 undefined（舊資料）時回傳 null', () => {
+    expect(formatKrwAsTwd(30000, undefined)).toBeNull();
   });
 });
 

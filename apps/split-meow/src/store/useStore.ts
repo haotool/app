@@ -32,6 +32,8 @@ export interface ExpenseRecord {
   note: string;
   category?: ExpenseCategory;
   createdAt: number;
+  currency?: CurrencyCode;
+  exchangeRateKrwPerTwd?: number | null;
 }
 
 export interface Trip {
@@ -266,6 +268,8 @@ export const useStore = create<AppState>()(
             note: state.expenseNote.trim(),
             ...(state.expenseCategory ? { category: state.expenseCategory } : {}),
             createdAt: Date.now(),
+            currency: state.currency,
+            exchangeRateKrwPerTwd: state.krwPerTwd,
           };
 
           return {

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useStore, type Member, type ExpenseRecord } from '../store/useStore';
-import { formatAmount, getCurrencySymbol } from '../config/currencies';
+import { formatAmount, getCurrencySymbol, formatKrwAsTwd } from '../config/currencies';
+import type { CurrencyCode } from '../config/currencies';
 import { format } from 'date-fns';
 import { useRef, useState } from 'react';
 import { cn } from '../lib/utils';
@@ -177,6 +178,9 @@ export function HistoryTab() {
     });
   const totalSpent = tripExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
 
+  const tripCurrency: CurrencyCode = tripExpenses[tripExpenses.length - 1]?.currency ?? currency;
+  const expenseCurrency = (exp: ExpenseRecord): CurrencyCode => exp.currency ?? tripCurrency;
+
   // 計算各人餘額
   const balances: Record<string, number> = {};
   tripExpenses.forEach((exp) => {
@@ -215,7 +219,7 @@ export function HistoryTab() {
     const lines: string[] = [
       `🐾 喵喵分帳 — ${tripName}`,
       `${'─'.repeat(24)}`,
-      `💰 總花費：${formatAmount(totalSpent, currency)}`,
+      `💰 總花費：${formatAmount(totalSpent, tripCurrency)}`,
       '',
     ];
     if (tripExpenses.length > 0) {
@@ -226,7 +230,9 @@ export function HistoryTab() {
         const label =
           exp.note ||
           (exp.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
-        lines.push(`${emoji} ${label}  ${formatAmount(exp.totalAmount, currency)}（${payer} 付）`);
+        lines.push(
+          `${emoji} ${label}  ${formatAmount(exp.totalAmount, expenseCurrency(exp))}（${payer} 付）`,
+        );
       });
       lines.push('');
     }
@@ -235,7 +241,7 @@ export function HistoryTab() {
       settlements.forEach((s) => {
         const from = members.find((m) => m.id === s.from)?.name ?? s.from;
         const to = members.find((m) => m.id === s.to)?.name ?? s.to;
-        lines.push(`${from} → ${to}  ${formatAmount(s.amount, currency)}`);
+        lines.push(`${from} → ${to}  ${formatAmount(s.amount, tripCurrency)}`);
       });
       lines.push('');
     }
@@ -273,7 +279,7 @@ export function HistoryTab() {
               {t('history.total_spent')}
             </span>
             <h2 className="text-4xl font-medium text-on-surface tracking-tight">
-              {formatAmount(totalSpent, currency)}
+              {formatAmount(totalSpent, tripCurrency)}
             </h2>
           </div>
           <div className="mt-6 flex items-center justify-between gap-2">
@@ -376,7 +382,7 @@ export function HistoryTab() {
                           check_circle
                         </span>
                       ) : (
-                        formatAmount(s.amount, currency)
+                        formatAmount(s.amount, tripCurrency)
                       )}
                     </span>
                   </div>
@@ -451,7 +457,7 @@ export function HistoryTab() {
                           )}
                         >
                           {isOwed ? '+' : '-'}
-                          {formatAmount(Math.abs(amount), currency)}
+                          {formatAmount(Math.abs(amount), tripCurrency)}
                         </span>
                         <span
                           className="material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300"
@@ -513,7 +519,7 @@ export function HistoryTab() {
                                     {t('history.balance_paid')}
                                   </span>
                                   <span className="font-semibold text-secondary">
-                                    +{formatAmount(exp.totalAmount, currency)}
+                                    +{formatAmount(exp.totalAmount, expenseCurrency(exp))}
                                   </span>
                                 </div>
                               )}
@@ -528,7 +534,7 @@ export function HistoryTab() {
                                     {t('history.balance_share')}
                                   </span>
                                   <span className="font-semibold text-error">
-                                    -{formatAmount(share, currency)}
+                                    -{formatAmount(share, expenseCurrency(exp))}
                                   </span>
                                 </div>
                               )}
@@ -549,7 +555,7 @@ export function HistoryTab() {
                                   )}
                                 >
                                   {net > 0.01 ? '+' : net < -0.01 ? '-' : ''}
-                                  {formatAmount(Math.abs(net), currency)}
+                                  {formatAmount(Math.abs(net), expenseCurrency(exp))}
                                 </span>
                               </div>
                             </div>
@@ -568,7 +574,7 @@ export function HistoryTab() {
                             )}
                           >
                             {isOwed ? '+' : '-'}
-                            {formatAmount(Math.abs(amount), currency)}
+                            {formatAmount(Math.abs(amount), tripCurrency)}
                           </span>
                         </div>
                       </div>
@@ -708,8 +714,14 @@ export function HistoryTab() {
                       <div className="text-right flex items-center gap-2 sm:gap-3 shrink-0">
                         <div className="shrink-0">
                           <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
-                            {formatAmount(exp.totalAmount, currency)}
+                            {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
+                          {expenseCurrency(exp) === 'KRW' &&
+                            formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd) && (
+                              <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
+                                ≈ {formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd)}
+                              </p>
+                            )}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>
@@ -830,7 +842,7 @@ export function HistoryTab() {
                                   <span className="font-medium text-on-surface">{m.name}</span>
                                 </div>
                                 <span className="font-semibold text-on-surface">
-                                  {formatAmount(amt, currency)}
+                                  {formatAmount(amt, expenseCurrency(exp))}
                                 </span>
                               </div>
                             );
