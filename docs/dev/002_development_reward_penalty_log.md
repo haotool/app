@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0）｜累計總分：+65
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+66
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-pr435-code-reviewer-hardening
+- 原因：Codex 配額用盡無法 review PR 435，改派 code-reviewer 代理把關，發現 i18n 探測在 removeItem 丟錯時會誤判 localStorage 不可寫（可寫性結論不應依賴清除步驟），且 smoke 測試 BASE_STATE 仍缺部分 test-mutable 欄位。
+- 解法：i18n 探測改用 finally 清除 probe key、可寫性僅依 setItem 結果；BASE_STATE 補 expenseCategory/settledPayments/catPlayMode；img-src 收窄列為 follow-up issue #437。
 
 - 日期：2026-06-26
 - ID：reward-ratewise-i18n-localstorage-writable-probe

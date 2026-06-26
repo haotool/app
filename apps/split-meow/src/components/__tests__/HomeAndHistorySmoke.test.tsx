@@ -42,6 +42,10 @@ const BASE_STATE = {
   currencyManuallySet: false,
   krwPerTwd: null,
   rateUpdatedAt: null,
+  // 補齊其餘 test-mutable 欄位，避免未來測試設值後跨測試洩漏（與 store 初始值對齊）
+  expenseCategory: null,
+  settledPayments: [],
+  catPlayMode: false,
 };
 
 beforeEach(() => {

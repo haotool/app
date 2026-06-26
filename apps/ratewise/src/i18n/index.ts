@@ -56,13 +56,19 @@ const resources = {
 // setItem 會丟錯，僅檢查 window 會讓 i18next caches:['localStorage'] 寫入失敗。
 const canUseBrowserLanguageStorage = (() => {
   if (typeof window === 'undefined' || import.meta.env.MODE === 'test') return false;
+  const probeKey = '__ratewise_ls_probe__';
   try {
-    const probeKey = '__ratewise_ls_probe__';
     window.localStorage.setItem(probeKey, '1');
-    window.localStorage.removeItem(probeKey);
     return true;
   } catch {
     return false;
+  } finally {
+    // 清除探測 key 與可寫性判定解耦：即使 removeItem 丟錯也不影響 setItem 成功的結論
+    try {
+      window.localStorage.removeItem(probeKey);
+    } catch {
+      /* noop */
+    }
   }
 })();
 
