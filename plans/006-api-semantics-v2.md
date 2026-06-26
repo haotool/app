@@ -7,6 +7,10 @@
 - **Priority**: P2 | **Effort**: M | **Risk**: LOW
 - **Depends on**: plans/001-experiment-branch-bootstrap.md
 - **Category**: migration | **Planned at**: `e7b7f1ec`, 2026-06-27
+  <<<<<<< HEAD
+  =======
+- **Execution**: DONE @ 2026-06-27（feat/ratewise-api-semantics-v2 → experiment/ratewise-ux-2026）
+  > > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
 
 ## Why this matters
 
@@ -92,11 +96,19 @@ changeset patch；002 002 log
 
 ## Done criteria
 
+<<<<<<< HEAD
+
 - [ ] legacy + v2 並存
 - [ ] `schemaVersion: "2.0"` 存在
 - [ ] OpenAPI 含 V2 schema
 - [ ] verify:artifacts pass
-- [ ] 無 consumer breaking change
+- [ ] # 無 consumer breaking change
+- [x] legacy + v2 並存
+- [x] `schemaVersion: "2.0"` 存在
+- [x] OpenAPI 含 V2 schema
+- [x] verify:artifacts pass
+- [x] 無 consumer breaking change
+  > > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
 
 ## STOP conditions
 

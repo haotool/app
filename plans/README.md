@@ -6,18 +6,32 @@
 
 ## 建議執行順序與狀態
 
-| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status      |
-| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------- |
-| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE        |
-| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | TODO        |
-| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | IN PROGRESS |
-| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001               | E2 / L12,L15          | TODO        |
-| [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS |
-| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO        |
-| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | IN PROGRESS |
-| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | IN PROGRESS |
-| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | TODO        |
-| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO        |
+| Plan                                        | 標題               | Priority | Effort | Depends on | Spec Epic | Status |
+| ------------------------------------------- | ------------------ | -------- | ------ | ---------- | --------- | ------ |
+| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap | P1       | S      | —          | §十四.12  | DONE   |
+
+<<<<<<< HEAD
+| [009](./009-agent-orchestration.md) | Agent 編排與 gh playbook | P1 | M | 001 | §三 | TODO |
+=======
+| [009](./009-agent-orchestration.md) | Agent 編排與 gh playbook | P1 | M | 001 | §三 | IN PROGRESS |
+
+> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
+> > > > > > > | [002](./002-epic1-hero-trust.md) | Epic 1 Hero + Trust | P1 | L | 001, 009 | E1 / L01,L06,L14 | IN PROGRESS |
+> > > > > > > | [003](./003-epic2-settings-ssot.md) | Epic 2 Settings SSOT | P1 | M | 001 | E2 / L12,L15 | TODO |
+> > > > > > > | [004](./004-epic3-content-distill.md) | Epic 3 Content Distill | P1 | M | 001 | E3 / L09,L13 | IN PROGRESS |
+> > > > > > > | [005](./005-epic4-multi-ia.md) | Epic 4 Multi + IA | P2 | M | 001, 002 | E4 / L03,L05 | TODO |
+> > > > > > > <<<<<<< HEAD
+> > > > > > > | [006](./006-api-semantics-v2.md) | API 語意 v2 加法遷移 | P2 | M | 001 | §二十一 | IN PROGRESS |
+> > > > > > > | [007](./007-cf-security-headers.md) | CF Worker 可維護性 | P2 | M | — | Release gate | IN PROGRESS |
+
+# | [008](./008-zeabur-deployment.md) | Zeabur 部署與 race 防護 | P2 | M | — | §3.5 / Release | TODO |
+
+| [006](./006-api-semantics-v2.md) | API 語意 v2 加法遷移 | P2 | M | 001 | §二十一 | DONE |
+| [007](./007-cf-security-headers.md) | CF Worker 可維護性 | P2 | M | — | Release gate | AUDIT DONE |
+| [008](./008-zeabur-deployment.md) | Zeabur 部署與 race 防護 | P2 | M | — | §3.5 / Release | AUDIT DONE |
+
+> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
+> > > > > > > | [010](./010-qa-gate.md) | QA 閘門（390×844 + live） | P1 | M | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO |
 
 Status 值：`TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` | `REJECTED`
 
@@ -102,6 +116,38 @@ flowchart TB
 | F6  | 觸控 / nav 未達 44px                  | direction      | WCAG 2.5.8、韓系對標 gap                              | M      | LOW  | `BottomNavigation.tsx:105` `text-[8px]`；`PwaInstallGuide.tsx:16` `1800ms`                             |
 | F7  | 內容 thesis 重複                      | docs/direction | curl 賣出價/中間價 keyword=2（目標 ≤1）               | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                                       |
 | F8  | CF observability 已取樣 10%           | dx             | 符合 044 治理；deploy SOP 需與 UX gate 綁定           | S      | LOW  | `wrangler.jsonc:23-36` `head_sampling_rate: 0.1`                                                       |
+
+# <<<<<<< HEAD
+
+## Infra 稽核摘要（Plan 007 + 008 — read-only，2026-06-27）
+
+**Verdict**：可維護性 **conditional pass**（Worker/Zeabur 基線健全；release 順序與文件 SSOT 有 gap）
+
+| 項目                                   | 狀態        | 證據 / gap                                                                                                                                                                             |
+| -------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Worker v5.4 四處版本同步               | **PASS**    | `worker.js` JSDoc、`SECURITY_POLICY_VERSION`、`X-Security-Policy-Version` 一致                                                                                                         |
+| wrangler observability 10%             | **PASS**    | `wrangler.jsonc` `head_sampling_rate: 0.1` 對齊 044                                                                                                                                    |
+| COEP HTML-only 邊界                    | **PASS**    | `DEPLOY.md` §已知例外；v3.9 PWA precache 修法已文件化                                                                                                                                  |
+| release.yml 邊緣順序                   | **GAP**     | 現序：Worker deploy（L209）→ Zeabur wait（L213）→ purge；AGENTS.md SOP 建議 app-version probe **後**再 purge（purge 步驟正確），Worker 與 Zeabur 先後需 Tech Lead 確認是否 intentional |
+| CF UX release checklist 文件           | **GAP**     | plan 007 Step 2 尚未落地（無 `045_cf_worker_ux_release_checklist.md`）                                                                                                                 |
+| `ratewise-production-release.mjs` wait | **PASS**    | cache-busting probe + `RATEWISE_EXPECTED_VERSION`；exit 1 on timeout                                                                                                                   |
+| Dockerfile ↔ Zeabur 文件               | **GAP**     | `docs/ZEABUR_DEPLOYMENT.md` 仍偏模板；`Dockerfile:121-125` symlink 機制未完整鏡像                                                                                                      |
+| HEALTHCHECK 測 `/` 非 `/ratewise/`     | **LOW GAP** | `Dockerfile:139-140` wget `:8080/`；ratewise 子路徑回歸風險低但 plan 008 Step 4 可改                                                                                                   |
+| Context7 wrangler                      | **NOTE**    | 官方 wrangler-action / observability 文件存在；維持 ≤10% 取樣符合 CF Workers 配額最佳實踐                                                                                              |
+
+**007/008 下一步 owner**：Release/DevOps lens → 補 checklist 文件 + 對齊 release.yml 註解；**不阻塞** Epic 1 UX worktree。
+
+## Plan 001 / 009 執行證據（2026-06-27）
+
+| 項目                                 | 結果                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `origin/experiment/ratewise-ux-2026` | `567ebd4d`（= origin/main @ push 時）                                                                         |
+| Worktrees                            | `../ratewise-ux-worktrees/epic1-hero-trust`（002）、`epic3-content-distill`（004）、`api-semantics-v2`（006） |
+| gh labels                            | `experiment:ux-2026`、`epic:*`、`ux-lens:L01–L20` 已存在                                                      |
+| gh issues                            | #458 HERO-P0-001、#459 QA-P0-001、#460 Epic 3；**缺** Epic 2/4 umbrella、TYP-P2-001                           |
+| Agent 4ef4e173                       | 已完成 001 push + labels/issues + worktrees；002 SingleConverter 中途變更未保留，需 master executor 續作      |
+
+> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
 
 ## 已考慮並拒絕
 

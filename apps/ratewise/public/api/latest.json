@@ -1,6 +1,39 @@
 {
   "name": "HaoRate Exchange Rate API",
   "version": "2.25.3",
+  "schemaVersion": "2.0",
+  "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+  "semanticFieldMapping": {
+    "schemaVersion": "2.0",
+    "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+    "asOfSourceField": "timestamp | updateTime",
+    "fields": {
+      "customerBuyForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.sell",
+        "description": "客戶用 TWD 買外幣（銀行賣出）"
+      },
+      "customerSellForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.buy",
+        "description": "客戶用外幣賣回 TWD（銀行買入）"
+      },
+      "midMarketRate": {
+        "legacyPath": "(buy + sell) / 2",
+        "description": "參考中間價"
+      },
+      "bankSellTwdPerUnit": {
+        "legacyPath": "1 / sell",
+        "description": "每 1 單位外幣的 TWD 賣價（外幣計價時）"
+      }
+    },
+    "examples": {
+      "USD": {
+        "cash": {
+          "customerBuyForeignRate": "details.USD.cash.sell",
+          "customerSellForeignRate": "details.USD.cash.buy"
+        }
+      }
+    }
+  },
   "description": "臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照",
   "source": "臺灣銀行牌告匯率",
   "sourceUrl": "https://rate.bot.com.tw/xrt",

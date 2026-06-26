@@ -11,6 +11,11 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import {
+  API_SEMANTICS_DOC,
+  API_SEMANTICS_SCHEMA_VERSION,
+  buildSemanticFieldMapping,
+} from '../src/config/api-semantics-v2.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -42,6 +47,9 @@ const exchangeShopProvider = providerMetadata.providers.find(
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
+  schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+  semanticsDoc: API_SEMANTICS_DOC.publicUrl,
+  semanticFieldMapping: buildSemanticFieldMapping(),
   description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',

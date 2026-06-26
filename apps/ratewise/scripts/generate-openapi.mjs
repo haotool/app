@@ -3,6 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { API_SEMANTICS_DOC, API_SEMANTICS_SCHEMA_VERSION } from '../src/config/api-semantics-v2.ts';
 import { PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
 
@@ -112,6 +113,64 @@ const response429 = {
   },
 };
 
+const semanticRateTypeBlockSchema = {
+  type: 'object',
+  description: 'v2 語意化匯率區塊（additive；legacy buy/sell 仍保留）',
+  properties: {
+    buy: {
+      type: ['number', 'null'],
+      description:
+        '@deprecated 2026-12-31 — 銀行視角買入價；請改用 customerSellForeignRate（客戶賣外幣回 TWD）',
+      example: 32.015,
+    },
+    sell: {
+      type: ['number', 'null'],
+      description:
+        '@deprecated 2026-12-31 — 銀行視角賣出價；請改用 customerBuyForeignRate（客戶用 TWD 買外幣）',
+      example: 32.085,
+    },
+    customerBuyForeignRate: {
+      type: ['number', 'null'],
+      description: '客戶用 TWD 買外幣（銀行賣出）；對應 legacy sell',
+      example: 32.085,
+    },
+    customerSellForeignRate: {
+      type: ['number', 'null'],
+      description: '客戶用外幣賣回 TWD（銀行買入）；對應 legacy buy',
+      example: 32.015,
+    },
+    midMarketRate: {
+      type: ['number', 'null'],
+      description: '參考中間價：(buy + sell) / 2',
+      example: 32.05,
+    },
+    bankSellTwdPerUnit: {
+      type: ['number', 'null'],
+      description: '每 1 單位外幣的 TWD 賣價（1 / sell）',
+      example: 0.03117,
+    },
+    rateType: {
+      type: 'string',
+      enum: ['cash', 'spot'],
+      example: 'cash',
+    },
+    currency: {
+      type: 'string',
+      description: 'ISO 4217 幣別代碼',
+      example: 'USD',
+    },
+  },
+  required: [
+    'buy',
+    'sell',
+    'customerBuyForeignRate',
+    'customerSellForeignRate',
+    'midMarketRate',
+    'rateType',
+    'currency',
+  ],
+};
+
 const currencyRateDetailSchema = {
   type: 'object',
   description: '單一幣別的完整四種報價（即期與現金的買入/賣出）',
@@ -122,14 +181,30 @@ const currencyRateDetailSchema = {
       properties: {
         buy: {
           type: 'number',
-          description: '即期買入匯率：銀行以此價收購外幣（你匯款回台灣時適用）',
+          description:
+            '@deprecated 2026-12-31 — 即期買入匯率（銀行視角）；請改用 customerSellForeignRate',
           example: 32.015,
         },
         sell: {
           type: 'number',
-          description: '即期賣出匯率：銀行以此價賣出外幣（你從台灣匯款出去時適用）',
+          description:
+            '@deprecated 2026-12-31 — 即期賣出匯率（銀行視角）；請改用 customerBuyForeignRate',
           example: 32.085,
         },
+        customerBuyForeignRate: {
+          type: 'number',
+          description: '客戶用 TWD 買外幣（即期）；對應 legacy sell',
+          example: 32.085,
+        },
+        customerSellForeignRate: {
+          type: 'number',
+          description: '客戶用外幣賣回 TWD（即期）；對應 legacy buy',
+          example: 32.015,
+        },
+        midMarketRate: { type: 'number', example: 32.05 },
+        bankSellTwdPerUnit: { type: 'number', example: 0.03117 },
+        rateType: { type: 'string', enum: ['spot'], example: 'spot' },
+        currency: { type: 'string', example: 'USD' },
       },
       required: ['buy', 'sell'],
     },
@@ -139,17 +214,45 @@ const currencyRateDetailSchema = {
       properties: {
         buy: {
           type: 'number',
-          description: '現金買入匯率：銀行以此價收購外幣現鈔（你拿外幣現鈔換台幣時適用）',
+          description:
+            '@deprecated 2026-12-31 — 現金買入匯率（銀行視角）；請改用 customerSellForeignRate',
           example: 31.73,
         },
         sell: {
           type: 'number',
-          description: '現金賣出匯率：銀行以此價賣出外幣現鈔（你拿台幣換外幣現鈔時適用）',
+          description:
+            '@deprecated 2026-12-31 — 現金賣出匯率（銀行視角）；請改用 customerBuyForeignRate',
           example: 32.385,
         },
+        customerBuyForeignRate: {
+          type: 'number',
+          description: '客戶用 TWD 買外幣（現金）；對應 legacy sell',
+          example: 32.385,
+        },
+        customerSellForeignRate: {
+          type: 'number',
+          description: '客戶用外幣賣回 TWD（現金）；對應 legacy buy',
+          example: 31.73,
+        },
+        midMarketRate: { type: 'number', example: 32.0575 },
+        bankSellTwdPerUnit: { type: 'number', example: 0.03087 },
+        rateType: { type: 'string', enum: ['cash'], example: 'cash' },
+        currency: { type: 'string', example: 'USD' },
       },
       required: ['buy', 'sell'],
     },
+  },
+  required: ['spot', 'cash'],
+};
+
+const currencyRateV2Schema = {
+  type: 'object',
+  description:
+    'v2 語意化匯率物件（customer-centric additive 欄位；spec §二十一）。legacy buy/sell 仍保留至 2026-12-31 文件 sunset。',
+  properties: {
+    name: { type: 'string', example: '美金' },
+    spot: semanticRateTypeBlockSchema,
+    cash: semanticRateTypeBlockSchema,
   },
   required: ['spot', 'cash'],
 };
@@ -158,6 +261,17 @@ const ratesResponseSchema = {
   type: 'object',
   description: '匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）',
   properties: {
+    schemaVersion: {
+      type: 'string',
+      description: 'API 語意版本（有別於 App semver）',
+      example: API_SEMANTICS_SCHEMA_VERSION,
+    },
+    asOf: {
+      type: 'string',
+      format: 'date-time',
+      description: '牌告生效時間（通常對應 timestamp 或 updateTime）',
+      example: '2026-06-27T04:00:00.000Z',
+    },
     timestamp: {
       type: 'string',
       format: 'date-time',
@@ -186,8 +300,9 @@ const ratesResponseSchema = {
     },
     details: {
       type: 'object',
-      description: '各幣別完整四種報價資料（以幣別代碼為 key）',
-      additionalProperties: { $ref: '#/components/schemas/CurrencyRateDetail' },
+      description:
+        '各幣別完整四種報價資料（以幣別代碼為 key）；v2 欄位見 CurrencyRateV2 / CurrencyRateDetail',
+      additionalProperties: { $ref: '#/components/schemas/CurrencyRateV2' },
       example: {
         USD: { spot: { buy: 32.015, sell: 32.085 }, cash: { buy: 31.73, sell: 32.385 } },
         JPY: { spot: { buy: 0.2078, sell: 0.2088 }, cash: { buy: 0.2041, sell: 0.2119 } },
@@ -363,8 +478,16 @@ const openApiSpec = {
     'x-webapp': SITE_CONFIG.url,
     'x-documentation': `${SITE_CONFIG.url}open-data/`,
     'x-app-version': APP_VERSION,
+    'x-schema-version': API_SEMANTICS_SCHEMA_VERSION,
+    'x-semantics-doc': API_SEMANTICS_DOC.publicUrl,
   },
   'x-changelog': {
+    '2.0.0': {
+      date: '2026-06-27',
+      summary:
+        '新增 customer-centric v2 語意欄位（customerBuyForeignRate 等）與 schemaVersion；legacy buy/sell 保留。',
+      'app-version': APP_VERSION,
+    },
     '1.2.0': {
       date: '2026-05-09',
       summary: '新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。',
@@ -619,6 +742,8 @@ const openApiSpec = {
   components: {
     schemas: {
       CurrencyRateDetail: currencyRateDetailSchema,
+      CurrencyRateV2: currencyRateV2Schema,
+      SemanticRateTypeBlock: semanticRateTypeBlockSchema,
       ExchangeShopRatesResponse: exchangeShopRatesResponseSchema,
       RatesResponse: ratesResponseSchema,
       PairInfo: pairInfoSchema,

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0）｜累計總分：+62
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+63
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-ratewise-api-semantics-v2-m1-m3
+- 原因：public API 仍用銀行視角 buy/sell，整合方易反解 customer action；spec §二十一 要求 additive v2 語意層。
+- 解法：新增 api-semantics-v2 SSOT、schemaVersion 2.0 metadata、OpenAPI CurrencyRateV2 與 vitest 映射測試；legacy 欄位保留。
 
 - 日期：2026-06-27
 - ID：neutral-ux2026-stream0-bootstrap

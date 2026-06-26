@@ -766,6 +766,13 @@ describeIfApiGenerated('📡 Static API Endpoint (api/latest.json) (requires pre
     expect(content).not.toContain('?amount=100&from=USD&to=TWD');
   });
 
+  it('should declare schemaVersion 2.0 and semantic field mapping', () => {
+    const content = JSON.parse(readFile(apiPath));
+    expect(content.schemaVersion).toBe('2.0');
+    expect(content.semanticsDoc).toContain('open-data');
+    expect(content.semanticFieldMapping?.fields?.customerBuyForeignRate).toBeDefined();
+  });
+
   it('should reference pair API base path in api/latest.json', () => {
     const content = JSON.parse(readFile(apiPath));
     // pairs 端點提供穩定幣對 JSON，供搜尋系統與 AI agent 讀取特定幣對最新匯率

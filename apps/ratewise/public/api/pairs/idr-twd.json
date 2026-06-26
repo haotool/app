@@ -2,6 +2,39 @@
   "pair": "IDR/TWD",
   "from": "IDR",
   "to": "TWD",
+  "schemaVersion": "2.0",
+  "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+  "semanticFieldMapping": {
+    "schemaVersion": "2.0",
+    "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+    "asOfSourceField": "timestamp | updateTime",
+    "fields": {
+      "customerBuyForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.sell",
+        "description": "客戶用 TWD 買外幣（銀行賣出）"
+      },
+      "customerSellForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.buy",
+        "description": "客戶用外幣賣回 TWD（銀行買入）"
+      },
+      "midMarketRate": {
+        "legacyPath": "(buy + sell) / 2",
+        "description": "參考中間價"
+      },
+      "bankSellTwdPerUnit": {
+        "legacyPath": "1 / sell",
+        "description": "每 1 單位外幣的 TWD 賣價（外幣計價時）"
+      }
+    },
+    "examples": {
+      "USD": {
+        "cash": {
+          "customerBuyForeignRate": "details.USD.cash.sell",
+          "customerSellForeignRate": "details.USD.cash.buy"
+        }
+      }
+    }
+  },
   "slug": "idr-twd",
   "pageUrl": "https://app.haotool.org/ratewise/idr-twd/",
   "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
