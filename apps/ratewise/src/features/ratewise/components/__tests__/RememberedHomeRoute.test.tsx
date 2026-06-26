@@ -5,7 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { RememberedHomeRoute } from '../RememberedHomeRoute';
-import { __resetColdStartRestoreForTests } from '../coldStartRestore';
+import { __resetColdStartRestoreForTests, markRestoreAttempted } from '../coldStartRestore';
 import { useConverterStore } from '../../../../stores/converterStore';
 
 vi.mock('../../RateWise', () => ({
@@ -74,6 +74,18 @@ describe('RememberedHomeRoute', () => {
       expect(screen.getByTestId('multi-page')).toBeInTheDocument();
     });
     unmount();
+
+    renderHome('/');
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('從 /multi 冷啟動後 in-app 導向 / 不應 redirect 回 /multi', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    // 模擬非首頁冷啟動：模組初始化時已預先標記還原嘗試
+    markRestoreAttempted();
 
     renderHome('/');
     expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
