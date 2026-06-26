@@ -4,6 +4,10 @@ import {
   detectCurrencyFromTimezone,
   getCurrencySymbol,
   formatKrwAsTwd,
+  resolveExpenseCurrency,
+  resolveTripCurrency,
+  isMixedCurrencyTrip,
+  computeMemberBalances,
 } from '../currencies';
 
 describe('formatAmount', () => {
@@ -82,5 +86,33 @@ describe('formatKrwAsTwd', () => {
 
   it('匯率為 undefined（舊資料）時回傳 null', () => {
     expect(formatKrwAsTwd(30000, undefined)).toBeNull();
+  });
+});
+
+describe('trip currency helpers', () => {
+  it('resolveTripCurrency 取最舊一筆的幣別', () => {
+    expect(resolveTripCurrency([{ currency: 'KRW' }, { currency: 'TWD' }], 'TWD')).toBe('TWD');
+  });
+
+  it('isMixedCurrencyTrip 偵測混幣行程', () => {
+    expect(isMixedCurrencyTrip([{ currency: 'TWD' }, { currency: 'KRW' }], 'TWD')).toBe(true);
+    expect(isMixedCurrencyTrip([{ currency: 'TWD' }, { currency: 'TWD' }], 'TWD')).toBe(false);
+  });
+
+  it('computeMemberBalances 僅加總同幣別 raw 金額', () => {
+    expect(
+      computeMemberBalances([
+        {
+          paidBy: 'a',
+          totalAmount: 100,
+          perPersonAmounts: { a: 50, b: 50 },
+        },
+      ]),
+    ).toEqual({ a: 50, b: -50 });
+  });
+
+  it('resolveExpenseCurrency 舊資料 fallback 行程幣別', () => {
+    expect(resolveExpenseCurrency({}, 'KRW')).toBe('KRW');
+    expect(resolveExpenseCurrency({ currency: 'TWD' }, 'KRW')).toBe('TWD');
   });
 });

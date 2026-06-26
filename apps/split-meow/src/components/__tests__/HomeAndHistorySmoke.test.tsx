@@ -244,8 +244,8 @@ describe('HistoryTab', () => {
     });
     renderWith(<HistoryTab />);
     expect(screen.getByText(i18n.t('history.mixed_currency_warning'))).toBeInTheDocument();
-    // 結算區塊標題不應出現：跨幣別結算為無效運算，不得顯示誤導金額。
     expect(screen.queryByText(i18n.t('history.settlements'))).not.toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('history.balances'))).not.toBeInTheDocument();
   });
 
   it('單一幣別行程不顯示混幣警告', () => {

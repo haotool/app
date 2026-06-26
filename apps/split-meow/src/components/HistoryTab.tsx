@@ -1,7 +1,15 @@
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { useStore, type Member, type ExpenseRecord } from '../store/useStore';
-import { formatAmount, getCurrencySymbol, formatKrwAsTwd } from '../config/currencies';
-import type { CurrencyCode } from '../config/currencies';
+import {
+  formatAmount,
+  getCurrencySymbol,
+  formatKrwAsTwd,
+  resolveExpenseCurrency,
+  resolveTripCurrency,
+  isMixedCurrencyTrip,
+  computeMemberBalances,
+} from '../config/currencies';
 import { format } from 'date-fns';
 import { useRef, useState } from 'react';
 import { cn } from '../lib/utils';
@@ -113,18 +121,20 @@ function ParticipantAvatars({
 
 export function HistoryTab() {
   const { t } = useTranslation();
-  const {
-    expenses,
-    members,
-    trips,
-    currentTripId,
-    deleteExpense,
-    updateExpenseNote,
-    updateExpense,
-    settledPayments,
-    toggleSettlement,
-    currency,
-  } = useStore();
+  const { expenses, members, trips, currentTripId, currency, settledPayments } = useStore(
+    useShallow((s) => ({
+      expenses: s.expenses,
+      members: s.members,
+      trips: s.trips,
+      currentTripId: s.currentTripId,
+      currency: s.currency,
+      settledPayments: s.settledPayments,
+    })),
+  );
+  const deleteExpense = useStore((s) => s.deleteExpense);
+  const updateExpenseNote = useStore((s) => s.updateExpenseNote);
+  const updateExpense = useStore((s) => s.updateExpense);
+  const toggleSettlement = useStore((s) => s.toggleSettlement);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -176,26 +186,13 @@ export function HistoryTab() {
         participantIds: e.participantIds.filter((id) => id in perPersonAmounts),
       };
     });
-  const totalSpent = tripExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
 
-  // trip 主導幣別：採用該行程最舊一筆記錄的幣別（trip 建立時的幣別），
-  // 舊資料無幣別時 fallback 至當前全域幣別。彙總與結算統一以此幣別顯示。
-  const tripCurrency: CurrencyCode = tripExpenses[tripExpenses.length - 1]?.currency ?? currency;
-  // 取得單筆記錄的顯示幣別（優先使用記帳當下快照，舊資料 fallback 主導幣別）。
-  const expenseCurrency = (exp: ExpenseRecord): CurrencyCode => exp.currency ?? tripCurrency;
-  // 混幣行程：跨幣別直接相加的總額與結算為無效運算，改顯示警告而非誤導數字。
-  const isMixedCurrency = new Set(tripExpenses.map((exp) => expenseCurrency(exp))).size > 1;
-
-  // 計算各人餘額
-  const balances: Record<string, number> = {};
-  tripExpenses.forEach((exp) => {
-    balances[exp.paidBy] = (balances[exp.paidBy] ?? 0) + exp.totalAmount;
-    Object.entries(exp.perPersonAmounts).forEach(([memberId, amount]) => {
-      balances[memberId] = (balances[memberId] ?? 0) - amount;
-    });
-  });
-
-  const settlements = calculateSettlements({ ...balances });
+  const tripCurrency = resolveTripCurrency(tripExpenses, currency);
+  const expenseCurrency = (exp: ExpenseRecord) => resolveExpenseCurrency(exp, tripCurrency);
+  const isMixedCurrency = isMixedCurrencyTrip(tripExpenses, tripCurrency);
+  const totalSpent = isMixedCurrency ? 0 : tripExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
+  const balances = isMixedCurrency ? {} : computeMemberBalances(tripExpenses);
+  const settlements = isMixedCurrency ? [] : calculateSettlements(balances);
 
   const startEditNote = (expId: string, currentNote: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -407,7 +404,7 @@ export function HistoryTab() {
       )}
 
       {/* 各人結算 */}
-      {Object.keys(balances).length > 0 && (
+      {!isMixedCurrency && Object.keys(balances).length > 0 && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
             {t('history.balances')}
@@ -926,7 +923,8 @@ interface EditExpenseSheetProps {
 
 function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseSheetProps) {
   const { t } = useTranslation();
-  const { currency } = useStore();
+  const globalCurrency = useStore((s) => s.currency);
+  const expenseCurrency = expense.currency ?? globalCurrency;
   const isEvenly = expense.type === 'split_evenly';
 
   const [totalInput, setTotalInput] = useState(
@@ -992,7 +990,7 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
         {isEvenly ? (
           <div className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3">
             <span className="text-on-surface-variant text-sm font-medium shrink-0">
-              {getCurrencySymbol(currency)}
+              {getCurrencySymbol(expenseCurrency)}
             </span>
             <input
               type="number"
@@ -1018,7 +1016,7 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
                     {m.name}
                   </span>
                   <span className="text-on-surface-variant text-sm shrink-0">
-                    {getCurrencySymbol(currency)}
+                    {getCurrencySymbol(expenseCurrency)}
                   </span>
                   <input
                     type="number"

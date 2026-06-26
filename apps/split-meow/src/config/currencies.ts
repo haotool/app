@@ -37,6 +37,50 @@ export function getCurrencySymbol(currency: CurrencyCode): string {
   return CURRENCIES[currency].symbol;
 }
 
+/** 單筆費用的顯示幣別；舊資料缺欄位時 fallback 至行程主導幣別。 */
+export function resolveExpenseCurrency(
+  expense: { currency?: CurrencyCode },
+  tripCurrency: CurrencyCode,
+): CurrencyCode {
+  return expense.currency ?? tripCurrency;
+}
+
+/** 行程主導幣別：最舊一筆記帳的幣別快照，舊資料 fallback 全域幣別。 */
+export function resolveTripCurrency(
+  expenses: { currency?: CurrencyCode }[],
+  globalCurrency: CurrencyCode,
+): CurrencyCode {
+  return expenses[expenses.length - 1]?.currency ?? globalCurrency;
+}
+
+/** 行程是否混用多種幣別；混幣時不可加總或結算。 */
+export function isMixedCurrencyTrip(
+  expenses: { currency?: CurrencyCode }[],
+  tripCurrency: CurrencyCode,
+): boolean {
+  if (expenses.length === 0) return false;
+  const codes = new Set(expenses.map((exp) => resolveExpenseCurrency(exp, tripCurrency)));
+  return codes.size > 1;
+}
+
+/** 同幣別行程的成員餘額；僅在 `isMixedCurrencyTrip` 為 false 時有意義。 */
+export function computeMemberBalances(
+  expenses: {
+    paidBy: string;
+    totalAmount: number;
+    perPersonAmounts: Record<string, number>;
+  }[],
+): Record<string, number> {
+  const balances: Record<string, number> = {};
+  for (const exp of expenses) {
+    balances[exp.paidBy] = (balances[exp.paidBy] ?? 0) + exp.totalAmount;
+    for (const [memberId, amount] of Object.entries(exp.perPersonAmounts)) {
+      balances[memberId] = (balances[memberId] ?? 0) - amount;
+    }
+  }
+  return balances;
+}
+
 /**
  * 將 KRW 金額依匯率快照換算為 TWD 顯示字串（用於 KRW 記帳時的副標）。
  * rate 為 1 TWD = rate KRW（賣出價）；rate 無效時回傳 null 表示無法換算。

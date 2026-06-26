@@ -105,7 +105,6 @@ const INITIAL_SEEDS = {
   m2: 'split-meow-luna',
 };
 
-/** ロケール別のランダム名生成素材 */
 const NAME_PARTS: Record<string, { prefixes: string[]; suffixes: string[] }> = {
   'zh-TW': {
     prefixes: ['奶油', '布丁', '麻糬', '棉花', '糰子', '可可', '芝麻', '蜜桃', '焦糖', '雲朵'],
@@ -270,7 +269,6 @@ export const useStore = create<AppState>()(
             note: state.expenseNote.trim(),
             ...(state.expenseCategory ? { category: state.expenseCategory } : {}),
             createdAt: Date.now(),
-            // 記帳當下的幣別與匯率快照，確保歷史金額不受日後切換幣別影響並可回溯換算
             currency: state.currency,
             exchangeRateKrwPerTwd: state.krwPerTwd,
           };
