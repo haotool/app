@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+69
+> 本次分數變化：0（reward 0、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -13,40 +13,10 @@
 
 ## 條目（新→舊）
 
-- 日期：2026-06-26
-- ID：reward-split-meow-expense-currency-rate-snapshot
-- 原因：split-meow 的 ExpenseRecord 只存裸數字、未保存記帳當下幣別；使用者先以 TWD 記帳後切換 KRW（或韓國時區自動偵測）時，歷史金額會被當前全域幣別重新格式化，NT$1,000 被誤顯示為 ₩1,000。
-- 解法：ExpenseRecord 增加 currency 與 exchangeRateKrwPerTwd 快照欄位，記帳時保存；HistoryTab 個別金額改用各筆快照幣別、KRW 副標即時換算 TWD、彙總/結算採 trip 主導幣別 fallback；補 store/currencies 單元測試與 Playwright 瀏覽器驗收（切回 TWD 後 KRW 記錄仍正確）。
-
-- 日期：2026-06-26
-- ID：reward-pr426-sw-bounded-nav-case3-002-audit
-- 原因：PR 426 review P1 指出 SW case-3 有界網路 fallback 與測試 lint 修改的 commit 未含 002 稽核軌跡；該功能已隨 #433 生產治理進 main，但稽核條目隨被取代的 #411 分支遺失。
-- 解法：補本條目搶救稽核軌跡；SW case-3 setCatchHandler 有界 fallback 本體已於 #433 收斂進 main。
-
-- 日期：2026-06-26
-- ID：reward-ci-playwright-cache-v6
-- 原因：setup-playwright composite action 仍用 actions/cache@v4，在 Node 24 CI 觸發 Node 20 deprecation warning
-- 解法：升級 actions/cache@v6 並補 patch changeset
-
-- 日期：2026-06-26
-- ID：reward-pr435-code-reviewer-hardening
-- 原因：Codex 配額用盡無法 review PR 435，改派 code-reviewer 代理把關，發現 i18n 探測在 removeItem 丟錯時會誤判 localStorage 不可寫（可寫性結論不應依賴清除步驟），且 smoke 測試 BASE_STATE 仍缺部分 test-mutable 欄位。
-- 解法：i18n 探測改用 finally 清除 probe key、可寫性僅依 setItem 結果；BASE_STATE 補 expenseCategory/settledPayments/catPlayMode；img-src 收窄列為 follow-up issue #437。
-
-- 日期：2026-06-26
-- ID：reward-ratewise-i18n-localstorage-writable-probe
-- 原因：PR 404 review 指出 canUseBrowserLanguageStorage 只檢查 window 與非 test 模式，未實際偵測 localStorage 可寫；私密模式 / 嵌入式瀏覽器中 window 存在但 setItem 丟錯，i18next caches:['localStorage'] 寫入失敗導致語系切換不持久。
-- 解法：改用 try setItem/removeItem 實際探測可寫性，不可寫時 detection 回退 ['htmlTag','navigator'] 且 caches:[]，避免寫入失敗中斷語系切換。
-
-- 日期：2026-06-26
-- ID：reward-worker-split-meow-img-src-https-restore
-- 原因：PR 414 review 指出 split-meow 專屬 CSP profile 未帶 fallback 的 img-src https:，Split Meow 成員 legacy 遠端頭像會在正式站被 CSP 擋下。
-- 解法：SPLIT_MEOW_HTML_PROFILE 補回 imgSources:['https:']，並 bump SECURITY_POLICY_VERSION 5.4→5.5 與變更記錄。
-
-- 日期：2026-06-26
-- ID：reward-split-meow-smoke-test-currency-reset
-- 原因：PR 415 review 指出 HomeAndHistorySmoke 的 BASE_STATE 未重置 currency / krwPerTwd，設定 KRW 的測試會洩漏污染後續測試。
-- 解法：BASE_STATE 補上 currency:'TWD'、currencyManuallySet:false、krwPerTwd:null、rateUpdatedAt:null，確保測試隔離。
+- 日期：2026-06-27
+- ID：neutral-ux2026-stream0-bootstrap
+- 原因：UX 2026 平行 stream 0 需確認 experiment 分支與 worktree SSOT 並同步 plans/spec 追蹤
+- 解法：驗證 origin/experiment/ratewise-ux-2026、補 cf worktree、更新 plans/README 001 DONE 與 002/004/006/007 IN PROGRESS
 
 - 日期：2026-06-26
 - ID：neutral-retrigger-prod-deploy-2252
