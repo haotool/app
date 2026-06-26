@@ -1,10 +1,19 @@
 import type { Config } from 'tailwindcss';
 import {
   generateTailwindThemeExtension,
-  spacingTokens,
   typographyTokens,
   breakpointTokens,
+  radiusTokens,
+  shadowTokens,
 } from './src/config/design-tokens';
+
+type TailwindColorRecord = Record<string, string | Record<string, string>>;
+
+const tailwindThemeExtension = generateTailwindThemeExtension() ?? {};
+const generatedColors = (tailwindThemeExtension.extend?.colors ?? {}) as TailwindColorRecord;
+const generatedPrimaryColors = (generatedColors['primary'] ?? {}) as Record<string, string>;
+const generatedSuccessColors = (generatedColors['success'] ?? {}) as Record<string, string>;
+const generatedWarningColors = (generatedColors['warning'] ?? {}) as Record<string, string>;
 
 /**
  * Tailwind CSS Configuration
@@ -25,13 +34,13 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   darkMode: ['class', '[data-mode="dark"]'],
   theme: {
-    ...generateTailwindThemeExtension(),
+    ...tailwindThemeExtension,
     extend: {
-      ...generateTailwindThemeExtension().extend,
+      ...tailwindThemeExtension.extend,
       // 字型家族 - 使用 typographyTokens SSOT
       fontFamily: {
-        sans: typographyTokens.fontFamily.sans,
-        mono: typographyTokens.fontFamily.mono,
+        sans: [...typographyTokens.fontFamily.sans],
+        mono: [...typographyTokens.fontFamily.mono],
       },
       // 自定義間距 - 使用 spacingTokens SSOT 擴展
       spacing: {
@@ -41,14 +50,21 @@ export default {
       },
       // 現代化語義色彩（使用 CSS Variables）
       colors: {
+        // 保留舊版 token 向後相容
+        ...generatedColors,
         // 新版語義化 token（主要使用）
         // SSOT: 基礎語義色彩
         surface: {
           DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
           elevated: 'rgb(var(--color-surface-elevated) / <alpha-value>)',
           sunken: 'rgb(var(--color-surface-sunken) / <alpha-value>)',
+          soft: 'rgb(var(--color-surface-soft) / <alpha-value>)',
+          border: 'rgb(var(--color-surface-border) / <alpha-value>)',
         },
-        text: 'rgb(var(--color-text) / <alpha-value>)',
+        text: {
+          DEFAULT: 'rgb(var(--color-text) / <alpha-value>)',
+          muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
+        },
         background: 'rgb(var(--color-background) / <alpha-value>)',
         'background-secondary': 'rgb(var(--color-background-secondary) / <alpha-value>)',
         'background-tertiary': 'rgb(var(--color-background-tertiary) / <alpha-value>)',
@@ -57,7 +73,9 @@ export default {
         'foreground-muted': 'rgb(var(--color-foreground-muted) / <alpha-value>)',
         border: 'rgb(var(--color-border) / <alpha-value>)',
         'border-secondary': 'rgb(var(--color-border-secondary) / <alpha-value>)',
+        overlay: 'rgb(var(--color-overlay) / <alpha-value>)',
         primary: {
+          ...generatedPrimaryColors,
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',
           foreground: 'rgb(var(--color-primary-foreground) / <alpha-value>)',
@@ -68,10 +86,12 @@ export default {
           foreground: 'rgb(var(--color-destructive-foreground) / <alpha-value>)',
         },
         success: {
+          ...generatedSuccessColors,
           DEFAULT: 'rgb(var(--color-success) / <alpha-value>)',
           foreground: 'rgb(var(--color-success-foreground) / <alpha-value>)',
         },
         warning: {
+          ...generatedWarningColors,
           DEFAULT: 'rgb(var(--color-warning) / <alpha-value>)',
           foreground: 'rgb(var(--color-warning-foreground) / <alpha-value>)',
         },
@@ -108,14 +128,17 @@ export default {
         'calc-equals-text': 'rgb(var(--color-calc-equals-text) / <alpha-value>)',
         'calc-equals-hover': 'rgb(var(--color-calc-equals-hover) / <alpha-value>)',
         'calc-equals-active': 'rgb(var(--color-calc-equals-active) / <alpha-value>)',
-        // 保留舊版 token 向後相容
-        ...generateTailwindThemeExtension().extend?.colors,
       },
       // 現代化圓角 - ParkKeeper 風格
       borderRadius: {
-        '4xl': '2rem', // 超大圓角
-        '3xl': '1.5rem', // 卡片預設
-        '2xl': '1rem', // 按鈕、輸入框
+        card: radiusTokens.values.card,
+        panel: radiusTokens.values.panel,
+        control: radiusTokens.values.control,
+        icon: radiusTokens.values.icon,
+        compact: radiusTokens.values.compact,
+        '4xl': '2rem',
+        '3xl': '1.5rem',
+        '2xl': '1rem',
         xl: '0.75rem',
         lg: '0.5rem',
         md: '0.375rem',
@@ -123,9 +146,15 @@ export default {
       },
       // 現代化陰影（微妙、扁平）
       boxShadow: {
-        card: '0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05)',
-        'card-hover': '0 2px 4px 0 rgb(0 0 0 / 0.04), 0 4px 8px 0 rgb(0 0 0 / 0.06)',
-        soft: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
+        card: shadowTokens.values.card,
+        'card-hover': shadowTokens.values.cardHover,
+        soft: shadowTokens.values.soft,
+        floating: shadowTokens.values.floating,
+        brand: shadowTokens.values.brand,
+        sm: shadowTokens.values.sm,
+        md: shadowTokens.values.md,
+        lg: shadowTokens.values.lg,
+        xl: shadowTokens.values.xl,
       },
       // 現代化動畫
       animation: {

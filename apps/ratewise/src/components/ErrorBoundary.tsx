@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { APP_INFO } from '../config/app-info';
+import { feedbackSurfaceTokens } from '../config/design-tokens';
 import { MailtoLink } from './MailtoLink';
 import i18n from '../i18n';
 
@@ -88,22 +89,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI
       return (
-        <div className="min-h-screen bg-gradient-to-br from-danger-bg to-warning-light flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl shadow-2xl p-8 max-w-md w-full">
-            <div className="flex items-center gap-3 mb-4">
+        <div className={feedbackSurfaceTokens.pageCenter}>
+          <div className={feedbackSurfaceTokens.card}>
+            <div className="mb-4 flex items-center gap-3">
               <AlertCircle className="text-destructive" size={32} />
               <h1 className="text-2xl font-bold text-text">{i18n.t('errors.crashTitle')}</h1>
             </div>
 
-            <p className="text-text-muted mb-4">{i18n.t('errors.crashDescription')}</p>
+            <p className="mb-4 text-text-muted">{i18n.t('errors.crashDescription')}</p>
 
             {import.meta.env.DEV && this.state.error && (
               <details className="mb-4">
-                <summary className="cursor-pointer text-sm font-semibold text-text mb-2">
+                <summary className="mb-2 cursor-pointer text-sm font-semibold text-text">
                   {i18n.t('errors.errorDetails')}
                 </summary>
-                <div className="bg-danger-bg border border-danger-light rounded-lg p-3">
-                  <p className="text-xs font-mono text-danger mb-2">
+                <div className={feedbackSurfaceTokens.detailsPanel}>
+                  <p className="mb-2 font-mono text-xs text-danger">
                     {this.state.error.toString()}
                   </p>
                   {this.state.errorInfo && (
@@ -116,17 +117,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
 
             <button
+              type="button"
               onClick={this.handleReset}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+              className={feedbackSurfaceTokens.actionButton}
             >
               <RefreshCw size={18} />
               {i18n.t('errors.reload')}
             </button>
 
-            <p className="text-xs text-text-muted text-center mt-4">
+            <p className="mt-4 text-center text-xs text-text-muted">
               {i18n.t('errors.clearCacheHint')}
             </p>
-            <div className="flex justify-center gap-4 mt-2 flex-wrap">
+            <div className="mt-2 flex flex-wrap justify-center gap-4">
               <a
                 href={APP_INFO.threadsUrl}
                 target="_blank"

@@ -67,6 +67,51 @@ test.describe('無障礙性掃描', () => {
     expect(criticalViolations).toHaveLength(0);
   });
 
+  test('收藏與設定頁應該通過無障礙性掃描', async ({ rateWisePage: page }) => {
+    const pages = [
+      {
+        name: '收藏頁',
+        open: async () =>
+          page
+            .getByRole('link', { name: /收藏|Favorites/i })
+            .first()
+            .click(),
+        ready: page.getByRole('heading', { name: '所有貨幣', exact: true }),
+      },
+      {
+        name: '設定頁',
+        open: async () =>
+          page
+            .getByRole('link', { name: /設定|Settings/i })
+            .first()
+            .click(),
+        ready: page.getByRole('heading', { name: '介面風格', exact: true }),
+      },
+    ] as const;
+
+    for (const target of pages) {
+      await target.open();
+      await expect(target.ready).toBeVisible({ timeout: 10_000 });
+
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
+
+      const criticalViolations = accessibilityScanResults.violations.filter(
+        (violation) => violation.impact === 'critical' || violation.impact === 'serious',
+      );
+
+      if (criticalViolations.length > 0) {
+        console.log(`${target.name} 無障礙性違規項目：`);
+        criticalViolations.forEach((violation) => {
+          console.log(`- ${violation.id}: ${violation.description}`);
+        });
+      }
+
+      expect(criticalViolations, `${target.name} 不應有 critical 或 serious 違規`).toHaveLength(0);
+    }
+  });
+
   test('表單元素應該有適當的標籤', async ({ rateWisePage: page }) => {
     // 檢查所有輸入框是否有關聯的標籤或 aria-label
     const inputs = page.locator('input[type="text"]');

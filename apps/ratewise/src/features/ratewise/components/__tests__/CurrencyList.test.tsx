@@ -96,10 +96,8 @@ describe('CurrencyList Component', () => {
     render(<CurrencyList {...defaultProps} />);
 
     // 點擊 EUR 行
-    const eurRow = screen.getByText('EUR').closest('div[class*="group"]');
-    if (eurRow) {
-      fireEvent.click(eurRow);
-    }
+    const eurRow = screen.getByRole('button', { name: /EUR/ });
+    fireEvent.click(eurRow);
 
     expect(defaultProps.onToggleFavorite).toHaveBeenCalledWith('EUR');
   });
@@ -156,9 +154,9 @@ describe('CurrencyList Component', () => {
   it('applies hover styles on currency row', () => {
     render(<CurrencyList {...defaultProps} />);
 
-    const currencyRow = screen.getByText('USD').closest('div[class*="group"]');
-    // 使用 SSOT design token: hover:bg-primary/5
-    expect(currencyRow).toHaveClass('hover:bg-primary/5');
+    const currencyRow = screen.getByRole('button', { name: /USD/ });
+    // 使用目前主題的語義 surface token，避免 Nitro 繼承固定淺色 hover。
+    expect(currencyRow).toHaveClass('hover:bg-surface-elevated');
   });
 });
 

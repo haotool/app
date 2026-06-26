@@ -27,6 +27,18 @@ const ko = {
     clickToCopy: '클릭하여 복사',
   },
 
+  rateBasis: {
+    'bank-sell': '은행 매도 환율 적용',
+    'bank-buy': '은행 매입 환율 적용',
+    'bank-cross': '매입/매도 교차 환율',
+    'bank-sell-only': '대만은행 고시 매도 환율',
+    mid: '참고 중간 환율(거래 불가)',
+    'shop-sell': '환전소 매도 환율 적용',
+    'shop-buy': '환전소 매입 환율 적용',
+    'shop-mid': '환전소 중간 환율(참고)',
+    listBasisNote: '대만은행 매도율 · 1단위 = N TWD',
+  },
+
   // Navigation
   nav: {
     mainNavigation: '주요 내비게이션',
@@ -47,6 +59,7 @@ const ko = {
     title: APP_INFO.shortName,
     subtitle: '환율 계산 도구',
     version: '버전',
+    loadingLiveRates: '실시간 환율을 불러오는 중...',
   },
 
   // Single Currency Converter
@@ -63,6 +76,8 @@ const ko = {
     clickToSwap: '클릭하여 교체',
     addToHistory: '기록에 추가',
     addedToHistory: '기록에 추가됨',
+    conversionAnnouncement:
+      '{{fromAmount}} {{fromCurrency}} 은(는) 약 {{toAmount}} {{toCurrency}} 입니다',
     spotRate: '전신환',
     cashRate: '현금',
     exchangeShopRate: '환전소',
@@ -75,6 +90,7 @@ const ko = {
     rateTypeUnavailableForCurrencies:
       '{{currencies}}는 {{rateType}} 환율을 지원하지 않아 {{fallbackType}}으로 전환되었습니다',
     viewTrendChart: '추세 차트 보기',
+    trendChartLoadFailed: '추세 차트를 불러오지 못했습니다',
     fromAmountLabel: '금액 ({{code}})',
     toAmountLabel: '결과 ({{code}})',
     backToConverter: '환산기로 돌아가기',
@@ -92,6 +108,7 @@ const ko = {
     calculating: '계산 중...',
     noData: '데이터 없음',
     amountClickCalculator: '{{name}} ({{code}}) 금액, 클릭하여 계산기 열기',
+    setBaseCurrency: '{{name}} ({{code}}) 기준 통화로 설정',
     currencyListLabel: '통화 목록',
     addFavorite: '{{code}} 즐겨찾기에 추가',
     removeFavorite: '{{code}} 즐겨찾기에서 제거',
@@ -130,6 +147,7 @@ const ko = {
   // Settings
   settings: {
     title: '설정',
+    description: '인터페이스 스타일, 언어, 환율 모드와 지원 정보를 조정합니다.',
     interfaceStyle: '인터페이스 스타일',
     language: '언어',
     storageCache: '저장소 및 캐시',
@@ -139,7 +157,8 @@ const ko = {
     taiwanBank: '대만 은행',
     updateFrequency: '업데이트 빈도',
     fiveMinutes: '5분',
-    updateNote: '환율 데이터는 5분마다 자동으로 업데이트됩니다.',
+    updateNote:
+      '환율 데이터는 약 5분마다 확인되며 실제 반영 시점은 원본과 CDN 상태에 따라 달라집니다.',
     resetTheme: '테마 설정 초기화',
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',
@@ -231,6 +250,7 @@ const ko = {
   // Rate Info
   rateInfo: {
     source: '대만 은행 환율',
+    bankOfficialRates: '대만 은행 환율',
     sourceTime: '출처',
     refreshTime: '새로고침',
     lastUpdate: '마지막 업데이트',
@@ -307,25 +327,50 @@ const ko = {
     updatingDescription: '잠시 기다려 주세요...',
     updateFailedTitle: '업데이트 실패',
     updateFailedDescription: '다시 시도하거나 네트워크를 확인해 주세요',
-    registrationFailedTitle: '백그라운드 업데이트 초기화 실패',
-    registrationFailedDescription:
-      '업데이트 워커를 시작할 수 없습니다. 페이지를 새로고침하고 계속되면 작성자에게 문의해 주세요.',
     actionRetry: '재시도',
-    actionReload: '새로고침',
     releaseToRefresh: '놓아서 새로고침',
     refreshing: '새로고침 중...',
   },
 
   support: {
+    contactLinksAriaLabel: '지원 연락처',
+    contactTitle: '문제가 계속되면 작성자에게 문의해 주세요:',
     reportIssueLead: '문제가 계속되면 작성자에게 직접 연락해 주세요.',
     reportIssueHint: '오류 화면, 재현 단계, 기기 정보를 함께 보내주시면 빠른 해결에 도움이 됩니다.',
   },
 
+  offline: {
+    title: '오프라인 모드',
+    description: '일부 기능을 사용할 수 없을 수 있습니다',
+    close: '오프라인 알림 닫기',
+  },
+
+  skeleton: {
+    appLoading: `${APP_INFO.name} 로딩 중입니다.`,
+    ratesLoading: '환율 데이터를 불러오는 중...',
+    settingsLoading: '설정을 불러오는 중...',
+    favoritesLoading: '즐겨찾기를 불러오는 중...',
+    multiConverterLoading: '복수 통화 환산을 불러오는 중...',
+  },
+
+  rateProvider: {
+    bestRecommendation: '추천',
+    menuAriaLabel: '환율 제공자 메뉴',
+  },
+
   // 404
   notFound: {
+    metaTitle: '404 - 페이지를 찾을 수 없습니다',
+    metaDescription:
+      '죄송합니다. 방문하신 페이지가 존재하지 않습니다. 홈으로 돌아가거나 다른 페이지를 둘러보세요.',
+    eyebrow: '페이지 오류',
+    errorAria: '404 오류',
     title: '페이지를 찾을 수 없습니다',
     message: '찾으시는 페이지가 존재하지 않거나 삭제되었습니다.',
     goHome: '홈으로 이동',
+    suggestedPages: '다음 페이지를 확인해 보세요:',
+    reportIssuePrefix: '오류라고 생각되면',
+    reportIssueLink: '문제를 신고해 주세요',
   },
 
   // Footer
@@ -338,7 +383,7 @@ const ko = {
     refresh: '새로고침',
     disclaimer:
       '환율은 대만 은행 공식 환율(현금·전신환 매도 가격)을 참고합니다. 실제 거래 환율은 각 은행 공지를 확인하세요.',
-    disclaimerDesktop: '대만 은행 기준 환율, 5분마다 업데이트. 참고용으로만 사용하세요.',
+    disclaimerDesktop: '대만 은행 기준 환율을 정기적으로 확인합니다. 참고용으로만 사용하세요.',
     faq: '자주 묻는 질문',
     about: '소개',
     appName: APP_INFO.shortName,

@@ -97,10 +97,10 @@ export function ChristmasEasterEgg({ isVisible, onClose }: ChristmasEasterEggPro
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            <h1 className="christmas-greeting-title text-4xl md:text-5xl font-bold mb-4">
               Merry Christmas!
             </h1>
-            <p className="text-2xl md:text-3xl text-yellow-300 font-semibold drop-shadow-md">
+            <p className="christmas-greeting-year text-2xl md:text-3xl font-semibold">
               {BUILD_YEAR} 聖誕快樂
             </p>
             <p className="text-sm text-neutral-text-muted mt-6 opacity-70">點擊任意處關閉</p>
@@ -108,7 +108,7 @@ export function ChristmasEasterEgg({ isVisible, onClose }: ChristmasEasterEggPro
 
           {/* 底部裝飾 */}
           <motion.div
-            className="absolute bottom-8 text-white/50 text-sm"
+            className="christmas-equation absolute bottom-8 text-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}

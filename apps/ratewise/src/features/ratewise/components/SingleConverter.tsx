@@ -10,7 +10,7 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
@@ -33,7 +33,10 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import {
+  quickAmountButtonTokens,
+  singleConverterLayoutTokens,
+} from '../../../config/design-tokens';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -50,6 +53,7 @@ import {
   fetchExchangeShopHistoricalRatesRange,
   type ExchangeShopRate,
 } from '../../../services/moneyboxRateService';
+import { getRateBasisKind, getRateBasisLabelKey } from '../../../utils/rateBasisLabel';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -122,8 +126,8 @@ export const SingleConverter = ({
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
   // 輸入框 refs（用於焦點管理）
-  const fromInputRef = useRef<HTMLDivElement>(null);
-  const toInputRef = useRef<HTMLDivElement>(null);
+  const fromInputRef = useRef<HTMLButtonElement>(null);
+  const toInputRef = useRef<HTMLButtonElement>(null);
 
   // 計算機鍵盤狀態（使用統一的 Hook）
   const calculator = useCalculatorModal<'from' | 'to'>({
@@ -156,6 +160,21 @@ export const SingleConverter = ({
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
+
+  const rateBasisKind = getRateBasisKind(fromCurrency, toCurrency, rateMode, rateSource);
+
+  const formatCalculatorPreview = useCallback(
+    (value: number): string | null => {
+      if (!Number.isFinite(value) || value < 0) return null;
+      if (calculator.activeField === 'to') {
+        if (!reverseRate || reverseRate <= 0) return null;
+        return `≈ ${formatAmountDisplay(value * reverseRate, fromCurrency)} ${fromCurrency}`;
+      }
+      if (!exchangeRate || exchangeRate <= 0) return null;
+      return `≈ ${formatAmountDisplay(value * exchangeRate, toCurrency)} ${toCurrency}`;
+    },
+    [calculator.activeField, exchangeRate, reverseRate, fromCurrency, toCurrency],
+  );
 
   // 趨勢圖進場動畫
   useEffect(() => {
@@ -221,7 +240,7 @@ export const SingleConverter = ({
         if (!isMounted) return;
         setLoadingTrend(true);
         const exchangeShopLatestRate = moneyBoxRate
-          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
+          ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency, rateMode)
           : null;
         const shouldUseExchangeShopTrend =
           rateSource === 'exchange-shop' &&
@@ -239,7 +258,7 @@ export const SingleConverter = ({
 
           const historyPoints = historicalRates
             .map(({ date, rate }) => {
-              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency);
+              const converterRate = computeConverterRate(rate, fromCurrency, toCurrency, rateMode);
               return converterRate && Number.isFinite(converterRate) && converterRate > 0
                 ? { date, rate: converterRate }
                 : null;
@@ -364,7 +383,15 @@ export const SingleConverter = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    trendDateKey,
+    rateSource,
+    rateMode,
+    moneyBoxRate,
+    exchangeShopCurrency,
+  ]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -405,7 +432,7 @@ export const SingleConverter = ({
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
+            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-control border border-border/80 bg-surface-elevated px-2 py-2 text-base font-semibold text-text shadow-soft transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/25"
             aria-label={t('singleConverter.selectFromCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
@@ -415,10 +442,9 @@ export const SingleConverter = ({
             ))}
           </select>
           {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
-          <div
+          <button
+            type="button"
             ref={fromInputRef}
-            role="button"
-            tabIndex={0}
             data-testid="amount-input"
             onClick={() => calculator.openCalculator('from')}
             onKeyDown={(e) => {
@@ -427,11 +453,11 @@ export const SingleConverter = ({
                 calculator.openCalculator('from');
               }
             }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+            className={`block w-full appearance-none rounded-control border-2 border-border/60 bg-surface pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20`}
             aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
-          </div>
+          </button>
         </div>
         {/* 快速金額按鈕 - 來源貨幣
          *
@@ -458,6 +484,7 @@ export const SingleConverter = ({
         >
           {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
             <button
+              type="button"
               key={amount}
               onClick={() => {
                 // 直接更新來源金額，繞過 mode 狀態依賴
@@ -467,15 +494,7 @@ export const SingleConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
-              "
+              className={quickAmountButtonTokens.className}
             >
               {amount.toLocaleString()}
             </button>
@@ -486,19 +505,11 @@ export const SingleConverter = ({
       <div className={singleConverterLayoutTokens.rateCard.section}>
         {/* 匯率卡片 - 一體化設計，無切分感 */}
         <div
-          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+          className={`group relative w-full rounded-card border border-border/80 bg-surface shadow-soft transition-[border-color,box-shadow] duration-300 hover:border-primary/20 hover:shadow-floating ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
         >
-          {/*
-           * 微光效果 - 極淺的漸層覆蓋
-           * 使用 aspect-square + object-cover 確保等比例不變形
-           */}
-          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </div>
-
           {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative flex flex-col items-center justify-center overflow-hidden rounded-t-control px-4 text-center ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
             <RateSelector
               rateType={rateType}
@@ -512,30 +523,40 @@ export const SingleConverter = ({
             {/* 匯率顯示 - 使用 SSOT text 色 */}
             <div className="w-full">
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
+                className={`${singleConverterLayoutTokens.rateCard.rateText} mb-1 font-semibold tabular-nums text-text`}
               >
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 group-hover:opacity-95 transition-opacity`}
+                className={`${singleConverterLayoutTokens.rateCard.rateSubText} font-medium tabular-nums text-text-muted`}
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
+              {fromCurrency !== toCurrency && (
+                <div className="mt-1.5 flex items-center justify-center">
+                  <span
+                    data-testid="rate-basis-label"
+                    className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-xs font-medium text-text-muted"
+                  >
+                    {t(getRateBasisLabelKey(rateBasisKind))}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[opacity,transform] duration-500 will-change-[opacity,transform] overflow-hidden rounded-b-card ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
-            <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+            <div className="absolute inset-0">
               <ErrorBoundary
                 fallback={
                   <div className="flex items-center justify-center h-full text-xs text-danger">
-                    趨勢圖載入失敗
+                    {t('singleConverter.trendChartLoadFailed')}
                   </div>
                 }
                 onError={(error: unknown) => {
@@ -555,8 +576,10 @@ export const SingleConverter = ({
               </ErrorBoundary>
             </div>
             {/* 互動提示 - 與整體漸層融合 */}
-            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface-elevated/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
-              <span className="text-[10px] font-semibold text-text-muted">查看趨勢圖</span>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-8 items-end justify-center bg-gradient-to-t from-surface/80 to-transparent pb-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <span className="text-xs font-medium text-text-muted">
+                {t('singleConverter.viewTrendChart')}
+              </span>
             </div>
           </div>
         </div>
@@ -573,40 +596,22 @@ export const SingleConverter = ({
           data-testid="swap-button"
           className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
         >
-          {/* 外圍漸層光環 */}
-          <div
-            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${singleConverterLayoutTokens.swap.glowHidden} ${
-              isSwapping
-                ? 'opacity-80 scale-110'
-                : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
-            }`}
-          />
-
-          {/* 交換按鈕 - 玻璃擬態設計 */}
+          {/* 交換按鈕 - 收斂為清楚但安靜的工具按鈕 */}
           <button
+            type="button"
             ref={swapButtonRef}
             onClick={handleSwap}
             className={`
-              relative p-3.5
-              bg-gradient-to-br from-primary to-primary-hover
-              text-white rounded-full
-              shadow-lg shadow-primary/30
-              transition-all duration-300 ease-out
-              hover:shadow-xl hover:shadow-primary/40
-              hover:scale-110 active:scale-95
+              relative rounded-full border border-border bg-surface p-3.5 text-text shadow-soft
+              transition-[border-color,color,box-shadow,transform] duration-300 ease-out
+              hover:border-primary/25 hover:text-primary hover:shadow-card
+              hover:scale-105 active:scale-95
               ${isSwapping ? 'scale-90' : ''}
             `}
             aria-label={t('singleConverter.swapCurrencies')}
             title={t('singleConverter.swapCurrencies')}
             disabled={isSwapping}
           >
-            {/* 內部光暈效果 */}
-            <span
-              className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
-                isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
-              }`}
-            />
-
             {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
             <svg
               className={`relative z-10 w-5 h-5 transition-transform duration-500 ${
@@ -628,8 +633,8 @@ export const SingleConverter = ({
           </button>
 
           {/* 懸停提示標籤 */}
-          <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-[10px] font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
+          <div className="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 transition-[opacity,transform] duration-300 group-hover/swap:opacity-100">
+            <span className="whitespace-nowrap rounded-full border border-border/70 bg-surface px-2.5 py-1 text-xs font-medium text-text-muted shadow-soft">
               {t('singleConverter.clickToSwap')}
             </span>
           </div>
@@ -646,7 +651,7 @@ export const SingleConverter = ({
           <select
             value={toCurrency}
             onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
+            className="absolute left-3 top-1/2 min-h-11 -translate-y-1/2 rounded-control border border-primary/20 bg-primary/10 px-2 py-2 text-base font-semibold text-text transition-[border-color,box-shadow,color,background-color] duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
             aria-label={t('singleConverter.selectToCurrency')}
           >
             {CURRENCY_CODES.map((code) => (
@@ -656,10 +661,9 @@ export const SingleConverter = ({
             ))}
           </select>
           {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
-          <div
+          <button
+            type="button"
             ref={toInputRef}
-            role="button"
-            tabIndex={0}
             data-testid="amount-output"
             onClick={() => calculator.openCalculator('to')}
             onKeyDown={(e) => {
@@ -668,11 +672,11 @@ export const SingleConverter = ({
                 calculator.openCalculator('to');
               }
             }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+            className={`block w-full appearance-none rounded-control border-2 border-border/70 bg-surface-elevated pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} cursor-pointer font-bold text-right text-text transition-[border-color,box-shadow,background-color] duration-300 hover:border-primary/35 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15`}
             aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
-          </div>
+          </button>
         </div>
         {/* 快速金額按鈕 - 目標貨幣
          *
@@ -694,6 +698,7 @@ export const SingleConverter = ({
         >
           {quickAmounts.map((amount) => (
             <button
+              type="button"
               key={amount}
               onClick={() => {
                 const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
@@ -702,15 +707,7 @@ export const SingleConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
-              "
+              className={quickAmountButtonTokens.className}
             >
               {amount.toLocaleString()}
             </button>
@@ -721,26 +718,24 @@ export const SingleConverter = ({
       {/* 加入歷史記錄按鈕 - 現代化微互動設計
        *
        * 設計規範：
-       * - 主色調漸層背景 (primary → primary-hover)
-       * - 玻璃擬態陰影效果 (shadow-xl shadow-primary/25)
+       * - 主色調實底背景 (primary → primary-hover)
+       * - hover 品牌陰影 (shadow-brand)
        * - 微互動：hover scale + 漣漪光暈
        * - 點擊縮放回饋 (active:scale-[0.98])
        */}
       <button
+        type="button"
         onClick={onAddToHistory}
         className={`
-          relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
-          bg-gradient-to-r from-primary to-primary-hover
-          text-white font-bold rounded-2xl
-          shadow-xl shadow-primary/25
-          transition-all duration-300 ease-out
-          hover:shadow-2xl hover:shadow-primary/30
-          hover:scale-[1.02] active:scale-[0.98]
+          relative w-full ${singleConverterLayoutTokens.addToHistory.className}
+          rounded-control bg-primary text-primary-foreground font-semibold
+          shadow-soft
+          transition-[background-color,box-shadow,transform] duration-300 ease-out
+          hover:bg-primary-hover hover:shadow-brand
+          hover:scale-[1.01] active:scale-[0.98]
           group
         `}
       >
-        {/* 光暈效果 */}
-        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
         <span className="relative z-10 flex items-center justify-center gap-2">
           <svg
             className="w-4 h-4"
@@ -755,6 +750,20 @@ export const SingleConverter = ({
         </span>
       </button>
 
+      <output
+        className="sr-only"
+        data-testid="conversion-live-region"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {t('singleConverter.conversionAnnouncement', {
+          fromAmount: formatAmountDisplay(fromAmount, fromCurrency) || '0',
+          fromCurrency,
+          toAmount: formatAmountDisplay(toAmount, toCurrency) || '0',
+          toCurrency,
+        })}
+      </output>
+
       {/* 計算機鍵盤 Bottom Sheet */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
@@ -762,6 +771,7 @@ export const SingleConverter = ({
           onClose={calculator.closeCalculator}
           onConfirm={calculator.handleConfirm}
           initialValue={calculator.initialValue}
+          formatConversionPreview={formatCalculatorPreview}
         />
       </Suspense>
     </>

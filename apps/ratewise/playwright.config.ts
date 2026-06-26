@@ -4,6 +4,8 @@ const DESKTOP_AND_MOBILE_TEST_IGNORE =
   /pwa\.spec\.ts|offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/;
 const OFFLINE_PWA_TEST_MATCH =
   /offline-pwa\.spec\.ts|offline-cold-start\.spec\.ts|ga-defer-lcp\.spec\.ts/;
+const LOCAL_PLAYWRIGHT_PREVIEW_COMMAND =
+  'pnpm build && vite preview --host 127.0.0.1 --port 4173 --strictPort';
 
 /**
  * Playwright 配置 - E2E 測試
@@ -129,7 +131,7 @@ export default defineConfig({
   webServer: process.env['CI']
     ? undefined
     : {
-        command: 'pnpm preview',
+        command: LOCAL_PLAYWRIGHT_PREVIEW_COMMAND,
         url: 'http://localhost:4173',
         reuseExistingServer: !process.env['CI'],
         timeout: 120000,

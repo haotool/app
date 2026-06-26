@@ -9,7 +9,52 @@
  * [test:2026-01-10] PWA 離線功能測試
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
+
+const { matchPrecacheMock, navigationHandlerRef } = vi.hoisted(() => ({
+  matchPrecacheMock: vi.fn(),
+  navigationHandlerRef: {
+    current: null as
+      | ((params: { event: ExtendableEvent; request: Request }) => Promise<Response>)
+      | null,
+  },
+}));
+
+vi.mock('workbox-core', () => ({
+  clientsClaim: vi.fn(),
+}));
+
+vi.mock('workbox-precaching', () => ({
+  cleanupOutdatedCaches: vi.fn(),
+  matchPrecache: (...args: unknown[]) => matchPrecacheMock(...args),
+  precacheAndRoute: vi.fn(),
+}));
+
+vi.mock('workbox-routing', () => ({
+  NavigationRoute: class NavigationRoute {
+    constructor(
+      handler: (params: { event: ExtendableEvent; request: Request }) => Promise<Response>,
+    ) {
+      navigationHandlerRef.current = handler;
+    }
+  },
+  registerRoute: vi.fn(),
+  setCatchHandler: vi.fn(),
+}));
+
+vi.mock('workbox-strategies', () => ({
+  CacheFirst: class CacheFirst {},
+  NetworkOnly: class NetworkOnly {},
+  StaleWhileRevalidate: class StaleWhileRevalidate {},
+}));
+
+vi.mock('workbox-cacheable-response', () => ({
+  CacheableResponsePlugin: class CacheableResponsePlugin {},
+}));
+
+vi.mock('workbox-expiration', () => ({
+  ExpirationPlugin: class ExpirationPlugin {},
+}));
 
 // Mock ServiceWorkerGlobalScope
 const mockScope = 'https://example.com/ratewise/';
@@ -151,22 +196,28 @@ describe('Service Worker Cache Strategies', () => {
     'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
 
-  it('should use NavigationRoute + bounded SWR-style handler for zero-white-screen navigation', async () => {
+  it('should use NavigationRoute + hybrid SWR + precache-first handler for zero-white-screen navigation', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // 已 install 過的 PWA：暖快取 SWR；冷快取 precache-first，避免 3s timeout 假離線。
+    // 暖快取：cache hit 立即返回，背景 revalidate（SWR）。
+    // 冷快取：precache index.html 立即回傳，背景抓最新版本寫入 html-cache。
+    // 避免 3s timeout 在 iOS precache 被驅逐時錯誤回傳 offline.html 給在線用戶。
     expect(sourceCode).toContain('handleNavigationRequest');
     expect(sourceCode).toContain('new NavigationRoute(handleNavigationRequest)');
-    expect(sourceCode).toContain('event.waitUntil(');
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
     expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：禁止重新引入 NetworkFirst navigation（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
-    expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
+    // 防回歸：禁止重新引入 3s 全域 navigation timeout（iOS eviction 假離線根因）。
+    expect(sourceCode).not.toContain('const NAVIGATION_NETWORK_TIMEOUT_MS');
+    expect(sourceCode).not.toContain('Promise.race([networkResponse, timeoutFallback])');
+    // case 3（precache 已 miss）允許 8s bounded race，避免 hung network 無限白屏。
+    expect(sourceCode).toContain('const NAVIGATION_FETCH_TIMEOUT_MS = 8000');
+    expect(sourceCode).toContain('navigation-fetch-timeout');
   });
 
   it('should have correct historical rates cache configuration', () => {
@@ -190,6 +241,18 @@ describe('Service Worker Cache Strategies', () => {
 
     expect(sourceCode).toContain('__network_probe__');
     expect(sourceCode).toContain('new NetworkOnly(');
+  });
+
+  it('should cache both legacy and provider-scoped aggregate history routes', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain('/public/rates/history-30d.json');
+    expect(sourceCode).toContain('/public/rates/providers/moneybox/history-30d.json');
+    expect(sourceCode).toContain("cacheName: 'history-aggregate-cache'");
   });
 
   // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）
@@ -235,14 +298,15 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // precache-first navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
+    // precache-first SWR navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
+    // 注意：已從 Promise.race timeout 改為 precache-first 方案（避免 iOS precache 被驅逐時誤回 offline.html）。
     expect(sourceCode).toContain('new NavigationRoute(');
     expect(sourceCode).toContain('resolveOfflineDocumentFallback');
     expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
     expect(sourceCode).toContain("matchPrecache('index.html')");
+    expect(sourceCode).toContain('fetchAndCacheNavigation');
     // 防回歸：navigation 不可重新引入 NetworkFirst（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
-    expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
   });
 
   it('should clear stale navigation HTML runtime cache when a new worker activates', async () => {
@@ -379,5 +443,120 @@ describe('Service Worker Denylist', () => {
     expect(isDenied('/')).toBe(false);
     expect(isDenied('/about')).toBe(false);
     expect(isDenied('/faq')).toBe(false);
+  });
+});
+
+describe('handleNavigationRequest', () => {
+  const htmlCacheName = 'html-cache';
+  const navigationUrl = 'https://example.com/ratewise/about';
+  const offlineHtml = '<html>offline fallback</html>';
+
+  let htmlCache: {
+    match: ReturnType<typeof vi.fn>;
+    put: ReturnType<typeof vi.fn>;
+  };
+  let cachesOpen: ReturnType<typeof vi.fn>;
+  let cachesMatch: ReturnType<typeof vi.fn>;
+
+  beforeAll(async () => {
+    htmlCache = {
+      match: vi.fn(),
+      put: vi.fn(),
+    };
+    cachesOpen = vi.fn().mockResolvedValue(htmlCache);
+    cachesMatch = vi.fn().mockResolvedValue(undefined);
+
+    vi.stubGlobal('caches', {
+      open: cachesOpen,
+      match: cachesMatch,
+      keys: vi.fn().mockResolvedValue([]),
+      delete: vi.fn(),
+    });
+
+    await import('../sw.ts');
+    expect(navigationHandlerRef.current).not.toBeNull();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    cachesOpen.mockResolvedValue(htmlCache);
+    cachesMatch.mockResolvedValue(undefined);
+    htmlCache.match.mockReset();
+    htmlCache.put.mockReset();
+    matchPrecacheMock.mockReset();
+  });
+
+  function createNavigationEvent(): ExtendableEvent {
+    return { waitUntil: vi.fn() } as unknown as ExtendableEvent;
+  }
+
+  function createOfflineFallbackResponse(): Response {
+    return new Response(offlineHtml, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  }
+
+  it('case 2: precache hit resolves instantly without timer dependency', async () => {
+    vi.useFakeTimers();
+
+    const precachedShell = new Response('<html>precached index</html>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockImplementation((url: string) =>
+      Promise.resolve(url === 'index.html' ? precachedShell : null),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => undefined)),
+    );
+
+    const handler = navigationHandlerRef.current!;
+    const response = await handler({
+      event: createNavigationEvent(),
+      request: new Request(navigationUrl),
+    });
+
+    expect(response).toBe(precachedShell);
+    expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
+    await vi.runAllTimersAsync();
+  });
+
+  it('case 3: hung network falls back to offline.html after bounded timeout', async () => {
+    vi.useFakeTimers();
+
+    const offlineFallback = createOfflineFallbackResponse();
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockImplementation((url: string) => {
+      if (url === 'index.html') return Promise.resolve(null);
+      if (url === 'offline.html') return Promise.resolve(offlineFallback);
+      return Promise.resolve(null);
+    });
+    cachesMatch.mockResolvedValue(undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>(() => undefined)),
+    );
+
+    const handler = navigationHandlerRef.current!;
+    const responsePromise = handler({
+      event: createNavigationEvent(),
+      request: new Request(navigationUrl),
+    });
+
+    await vi.advanceTimersByTimeAsync(8000);
+
+    const response = await responsePromise;
+    const body = await response.text();
+
+    expect(body).toBe(offlineHtml);
+    expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
+    expect(matchPrecacheMock).toHaveBeenCalledWith('offline.html');
+    expect(cachesOpen).toHaveBeenCalledWith(htmlCacheName);
   });
 });

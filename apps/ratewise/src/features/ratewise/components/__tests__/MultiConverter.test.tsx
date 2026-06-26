@@ -18,6 +18,7 @@ const translations: Record<string, string> = {
   'favorites.removeFavorite': '移除常用貨幣',
   'multiConverter.amountClickCalculator': '{{name}} ({{code}}) 金額，點擊開啟計算機',
   'multiConverter.baseCurrency': '基準貨幣',
+  'multiConverter.setBaseCurrency': '將 {{name}} ({{code}}) 設為基準貨幣',
   'multiConverter.calculating': '計算中',
   'multiConverter.cashOnlyNote': '{{code}} 僅提供現金匯率',
   'multiConverter.cashRate': '現金',
@@ -157,19 +158,20 @@ describe('MultiConverter', () => {
     it('點擊非基準貨幣應該呼叫 onBaseCurrencyChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const usdRow = screen.getByText('美元').closest('div[class*="rounded-xl"]');
-      expect(usdRow).toBeTruthy();
-      fireEvent.click(usdRow!);
+      const usdRow = screen.getByText('USD').closest('[data-testid="multi-currency-row"]');
+      expect(usdRow).toBeDefined();
+      const currencyInfo = usdRow!.querySelector('.cursor-pointer');
+      expect(currencyInfo).toBeDefined();
+      fireEvent.click(currencyInfo!);
       expect(defaultProps.onBaseCurrencyChange).toHaveBeenCalledWith('USD');
     });
 
-    it('基準貨幣應該有特殊的樣式', () => {
+    it('基準貨幣列應該有特殊的樣式', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const twdRow = screen.getByText('TWD').closest('div[class*="rounded-xl"]');
+      const twdRow = screen.getByText('TWD').closest('[data-testid="multi-currency-row"]');
+      expect(twdRow).toBeDefined();
       expect(twdRow).toHaveClass('cursor-default');
-      const usdRow = screen.getByText('USD').closest('div[class*="rounded-xl"]');
-      expect(usdRow).toHaveClass('cursor-pointer');
     });
   });
 
@@ -371,8 +373,9 @@ describe('MultiConverter', () => {
 
       render(<MultiConverter {...propsWithKrwBase} />);
 
-      const twdRate = screen.getByText(/1 KRW = 0\.0222 TWD/);
-      const twdRow = twdRate.closest('div[class*="rounded-xl"]');
+      // sell 模式：1 KRW = 1/sell = 1/44.9 ≈ 0.0223 TWD（rateMode SSOT，非硬編碼 1/buy）
+      const twdRate = screen.getByText(/1 KRW = 0\.0223 TWD/);
+      const twdRow = twdRate.closest('[data-testid="multi-currency-row"]');
       expect(twdRow).toBeTruthy();
       expect(
         within(twdRow as HTMLElement).getByRole('button', { name: /切換到/ }),
@@ -401,7 +404,7 @@ describe('MultiConverter', () => {
       render(<MultiConverter {...propsWithSpotOnlyJpy} />);
 
       const jpyRate = screen.getByText(/1 TWD = 4\.9020 JPY/);
-      const jpyRow = jpyRate.closest('div[class*="rounded-xl"]');
+      const jpyRow = jpyRate.closest('[data-testid="multi-currency-row"]');
       expect(jpyRow).toBeTruthy();
       expect(
         within(jpyRow as HTMLElement).getByRole('button', {

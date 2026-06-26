@@ -3,8 +3,6 @@
 /**
  * ConversionHistory Enhanced Features Test Suite
  *
- * 🔴 RED Phase: 定義新功能的測試案例
- *
  * 測試範圍：
  * - 持久化存儲 (localStorage)
  * - 點擊重新轉換
@@ -14,7 +12,6 @@
  * - 7 天過期自動清理
  *
  * 建立時間: 2025-12-26
- * BDD 階段: 🔴 RED (預期所有測試失敗)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -220,9 +217,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
 
       render(<ConversionHistory history={mockHistory} onReconvert={onReconvert} />);
 
-      // 新 UI v4.0：卡片具有 hover:shadow-md 效果
+      // 新 UI v4.0：卡片具有 hover:shadow-soft 效果
       const firstCard = screen.getByText('1000').closest('div[role="group"]');
-      expect(firstCard).toHaveClass('hover:shadow-md');
+      expect(firstCard).toHaveClass('hover:shadow-soft');
     });
   });
 
@@ -381,7 +378,7 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
   });
 
   describe('UI/UX 設計一致性', () => {
-    it('應該使用 ParkKeeper 風格的卡片樣式', () => {
+    it('應該使用專案標準的卡片樣式', () => {
       const mockHistory = createMockHistory();
       const { container } = render(<ConversionHistory history={mockHistory} />);
 
@@ -412,7 +409,7 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       const { container } = render(<ConversionHistory history={mockHistory} />);
 
-      const historyItem = container.querySelector('.transition-all');
+      const historyItem = container.querySelector('[class*="transition-[box-shadow,transform]"]');
       expect(historyItem).toBeInTheDocument();
     });
   });

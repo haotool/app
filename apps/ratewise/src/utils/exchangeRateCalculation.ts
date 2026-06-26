@@ -404,7 +404,7 @@ export function getUnitExchangeRate(
   const { rateSource = DEFAULT_RATE_SOURCE, exchangeShopRate = null } = options;
 
   if (rateSource === 'exchange-shop' && exchangeShopRate) {
-    const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);
+    const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency, rateMode);
     if (shopRate !== null) {
       return shopRate;
     }

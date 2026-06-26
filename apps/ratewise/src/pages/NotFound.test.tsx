@@ -19,6 +19,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import zhTW from '../i18n/locales/zh-TW';
 
 // 🔴 RED: 這個 import 會失敗，因為 NotFound 元件尚未建立
 import NotFound from './NotFound';
@@ -111,8 +112,9 @@ describe('NotFound Component - 404 Page (BDD)', () => {
       const notFoundPath = path.resolve(__dirname, 'NotFound.tsx');
       const notFoundContent = await fs.readFile(notFoundPath, 'utf-8');
 
-      // 🔴 紅燈：確認 SEOHelmet 包含 404 相關標題
-      expect(notFoundContent).toMatch(/title.*404|找不到頁面/i);
+      // SEO title 由 i18n SSOT 提供，避免 noindex runtime 頁面殘留硬編中文。
+      expect(notFoundContent).toContain("title={t('notFound.metaTitle')}");
+      expect(zhTW.notFound.metaTitle).toMatch(/404|找不到頁面/i);
     });
   });
 

@@ -5,7 +5,7 @@
  * @description 統一管理應用色彩、間距、字體等設計 token
  *              使用 CSS Variables 實現動態主題切換
  *
- * @see docs/design/COLOR_SCHEME_OPTIONS.md - 方案 A: 品牌對齊
+ * @see ../../../DESIGN.md
  * @see docs/dev/005_design_token_refactoring.md - 技術決策記錄
  *
  * @reference Context7 - Tailwind CSS Official Docs:
@@ -66,6 +66,7 @@ export const semanticColors = {
     'text-light': 'rgb(var(--color-primary-text-light) / <alpha-value>)',
     ring: 'rgb(var(--color-primary-ring) / <alpha-value>)',
     DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+    foreground: 'rgb(var(--color-primary-foreground) / <alpha-value>)',
     dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
     darker: 'rgb(var(--color-primary-darker) / <alpha-value>)',
     text: 'rgb(var(--color-primary-text) / <alpha-value>)',
@@ -110,6 +111,12 @@ export const semanticColors = {
   },
 
   /**
+   * 遮罩層（Overlay）
+   * 用途：modal / bottom sheet 背景遮罩
+   */
+  overlay: 'rgb(var(--color-overlay) / <alpha-value>)',
+
+  /**
    * 收藏色系（Favorite）
    * 用途：星號圖標顏色
    * 映射：yellow 色系
@@ -132,10 +139,10 @@ export const semanticColors = {
   },
 
   /**
-   * 品牌漸變（Brand Gradient）
-   * 用途：品牌色彩漸變、通知視窗背景
+   * 歷史品牌漸變（Legacy Brand Gradient）
+   * 用途：保留歷史通知／展示頁相容層，不作為目前正式產品語法
    * 映射：blue-indigo-purple 色系
-   * @see docs/design/COLOR_SCHEME_OPTIONS.md - 方案 A
+   * @see ../../../DESIGN.md
    */
   brand: {
     // 背景漸變（淺色）
@@ -179,9 +186,12 @@ export const semanticColors = {
  * 預設主題值（Fallback & 參考）
  *
  * 用途：
- * 1. 作為 CSS Variables 的預設值（在 global.css 中定義）
- * 2. 作為主題設計的參考文檔
- * 3. 用於 SSR 環境的 fallback
+ * 1. 作為歷史相容色票與測試參考
+ * 2. 供展示頁與相容層比對使用
+ *
+ * 注意：
+ * - 正式產品視覺基準以 `DESIGN.md`、`index.css` 的 `zen` CSS variables 為準
+ * - 本物件不是目前 runtime theme 的唯一真實來源
  *
  * @example
  * ```css
@@ -267,9 +277,9 @@ export const defaultTheme = {
 } as const;
 
 /**
- * 深色主題值
+ * 深色相容色票
  *
- * 用途：為深色模式提供預設配置
+ * 用途：保留舊主題測試與相容層參考
  *
  * 設計原則：
  * - 中性色反轉（淺色 ↔ 深色）
@@ -364,8 +374,75 @@ export const darkTheme = {
  * // => 'rgb(var(--color-primary) / <alpha-value>)'
  * ```
  */
+/**
+ * Radius Design Tokens (SSOT)
+ *
+ * 恢復主支既有的柔和大圓角語言，並以語義 token 取代散落的硬編碼 radius class。
+ * - card: 24px，延續舊版 `.card` / ParkKeeper 風格，讓內容頁更現代
+ * - panel/control: 16px，供按鈕、表單、互動列與資訊面板使用
+ * - icon: 12px，供小型 icon badge 使用
+ * - compact: 8px，僅保留給密集資料表或真正小型元素
+ */
+export const radiusTokens = {
+  values: {
+    card: '1.5rem',
+    panel: '1rem',
+    control: '1rem',
+    icon: '0.75rem',
+    compact: '0.5rem',
+    full: '9999px',
+    '4xl': '2rem',
+    '3xl': '1.5rem',
+    '2xl': '1rem',
+    xl: '0.75rem',
+    lg: '0.5rem',
+    md: '0.375rem',
+    sm: '0.25rem',
+  },
+  className: {
+    card: 'rounded-card',
+    panel: 'rounded-panel',
+    control: 'rounded-control',
+    icon: 'rounded-icon',
+    compact: 'rounded-compact',
+    full: 'rounded-full',
+  },
+} as const;
+
+/**
+ * Shadow Design Tokens (SSOT)
+ *
+ * 用一組安靜、帶空氣感的陰影取代散落的 Tailwind 預設 shadow。
+ * Tailwind 的 sm/md/lg/xl 仍保留相容別名，但實際值由這裡集中控制。
+ *
+ * 注意：陰影基底色使用硬編碼 `rgb(15 23 42 / ...)` (slate-900)，
+ * 僅適用淺色模式。若未來支援深色模式，需改為 CSS variable 或條件值。
+ */
+export const shadowTokens = {
+  values: {
+    card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -24px rgb(15 23 42 / 0.28)',
+    cardHover:
+      '0 2px 6px -2px rgb(15 23 42 / 0.10), 0 22px 48px -28px rgb(var(--color-primary) / 0.30)',
+    soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    floating:
+      '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.24)',
+    brand: '0 8px 25px rgb(var(--color-primary) / 0.28)',
+    sm: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
+    md: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    lg: '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.20)',
+    xl: '0 14px 44px -24px rgb(15 23 42 / 0.32), 0 24px 64px -36px rgb(var(--color-primary) / 0.28)',
+  },
+  className: {
+    card: 'shadow-card',
+    cardHover: 'hover:shadow-card-hover',
+    soft: 'shadow-soft',
+    floating: 'shadow-floating',
+    brand: 'shadow-brand',
+  },
+} as const;
+
 export function getDesignTokens() {
-  return { colors: semanticColors };
+  return { colors: semanticColors, radius: radiusTokens, shadow: shadowTokens };
 }
 
 /**
@@ -442,11 +519,11 @@ export const navigationTokens = {
     },
     /** Label typography */
     label: {
-      fontSize: 8,
-      fontSizeClass: 'text-[8px]',
-      fontWeight: 'font-black',
-      letterSpacing: '0.15em',
-      letterSpacingClass: 'tracking-[0.15em]',
+      fontSize: 12,
+      fontSizeClass: 'text-xs',
+      fontWeight: 'font-semibold',
+      letterSpacing: '0.08em',
+      letterSpacingClass: 'tracking-[0.08em]',
     },
     /** Active indicator bar */
     indicator: {
@@ -485,8 +562,8 @@ export const navigationTokens = {
  *
  * 設計原理（2025 最佳實踐）：
  * - 外層容器：min-h-full（不重複 overflow，由 AppLayout 統一處理滾動）
- * - 內容區域：水平內距 20px (px-5)，垂直內距 24px (py-6)，最大寬度 448px (max-w-md)
- * - 區塊間距：各區塊使用 mb-6 分隔，卡片內距 p-4
+ * - 內容區域：響應式內距 + 1120px 內容寬度上限，桌面不再鎖成窄欄
+ * - 區塊間距：各區塊使用 mb-6 分隔，卡片內距 p-5 / lg:p-6
  * - 底部留白：由 AppLayout pb-[calc(56px+safe-area)] 統一處理
  *
  * 避免問題：
@@ -510,9 +587,19 @@ export const pageLayoutTokens = {
   content: {
     horizontalPadding: 20,
     verticalPadding: 24,
-    maxWidth: 448,
+    maxWidth: 1024,
     /** 完整類別組合 */
-    className: 'px-5 py-6 max-w-md mx-auto',
+    className: 'w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8',
+    padding: {
+      default: 'px-4 sm:px-6 lg:px-8 py-6 lg:py-8',
+      compact: 'px-4 sm:px-6 py-4 lg:py-5',
+      none: '',
+    },
+    variant: {
+      default: 'w-full max-w-5xl mx-auto',
+      full: 'w-full',
+      centered: 'w-full max-w-2xl mx-auto flex min-h-full flex-col items-center justify-center',
+    },
   },
   /** 區塊配置 */
   section: {
@@ -521,9 +608,170 @@ export const pageLayoutTokens = {
   },
   /** 卡片配置 */
   card: {
-    padding: 16,
-    className: 'card p-4',
+    padding: 20,
+    className: 'card p-5 lg:p-6',
   },
+} as const;
+
+/**
+ * 內容頁頂部返回 + 麵包屑導覽 SSOT
+ *
+ * 用於 SEO 內容頁、設定子頁與所有需要返回路徑的資訊頁。
+ * 設計決策：採 in-flow 區塊，禁止 sticky / backdrop-blur / 負 margin bleed。
+ * sticky + safe-area hack 在 iOS PWA standalone（black-translucent）下
+ * 會與滾動容器疊層互動導致頂部內容被遮擋。
+ * 設計重點：
+ * - 返回鈕採韓系 pill 造型（rounded-full + 中性底色），與 RateSelector 語彙一致
+ * - 單行麵包屑可水平捲動，最後一項截斷，避免小螢幕撐高 header
+ * - 返回按鈕保持 44px 觸控高度與清楚 focus ring
+ */
+export const pageNavHeaderTokens = {
+  root: 'mb-6',
+  row: 'flex min-h-11 min-w-0 items-center gap-2.5',
+  backButton:
+    'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full bg-surface-elevated py-1.5 pl-2.5 pr-3.5 text-sm font-semibold text-text/80 transition-colors duration-200 hover:bg-primary/10 hover:text-primary active:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  backIcon: 'h-4 w-4',
+  breadcrumbSlot: 'min-w-0 flex-1',
+} as const;
+
+export const breadcrumbTokens = {
+  nav: 'min-w-0',
+  list: 'no-scrollbar flex min-w-0 touch-pan-x items-center gap-2 overflow-x-auto whitespace-nowrap text-sm text-text-muted [-webkit-overflow-scrolling:touch]',
+  item: 'flex min-h-11 min-w-0 shrink-0 items-center gap-2 last:shrink',
+  separatorIcon: 'h-4 w-4 flex-shrink-0 text-text-muted',
+  current: 'block max-w-[min(52vw,28rem)] truncate font-medium text-text',
+  link: 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-control px-1 transition-colors duration-200 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+} as const;
+
+/**
+ * 內容頁視覺語法 SSOT
+ *
+ * 統一 About、FAQ、Guide、首頁 SEO 區塊與幣別內容頁的頁面骨架、
+ * section eyebrow、靜態資訊卡與內容型連結語法，避免各頁各自硬編碼。
+ */
+export const contentPageTokens = {
+  shell: pageLayoutTokens.content.className,
+  intro: 'mt-3 max-w-3xl text-sm leading-7 text-text-muted sm:text-base',
+  meta: 'mt-2 text-sm text-text-muted',
+  hero: {
+    wrapper: 'mb-6 sm:mb-8',
+    title: 'mt-2 text-3xl font-bold tracking-tight text-text text-balance sm:text-4xl',
+    compactTitle: 'text-2xl font-bold leading-tight text-text text-balance sm:text-3xl md:text-4xl',
+    description: 'mt-2 text-sm leading-7 text-text-muted sm:text-base',
+    metaRow: 'mt-2 flex items-center gap-1.5 text-xs text-text-muted',
+    statusDot: 'inline-block h-1.5 w-1.5 rounded-full bg-success',
+  },
+  badges: {
+    subtle:
+      'inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-surface-elevated px-2.5 py-1 text-xs font-semibold text-primary',
+    neutral:
+      'rounded-full border border-border/70 bg-surface-elevated px-3 py-1 text-xs font-medium text-text-muted',
+  },
+  sectionHeader: {
+    row: 'mb-3 flex items-center gap-2 px-2 text-text-muted',
+    eyebrow: 'text-xs font-semibold uppercase tracking-[0.16em] text-text-muted',
+    title: 'text-xl font-bold text-text sm:text-2xl',
+  },
+  section: {
+    block: 'mb-6 sm:mb-8',
+    loose: 'mb-8 sm:mb-10',
+    stack: 'space-y-6',
+    grid2: 'grid gap-3 sm:grid-cols-2',
+    grid3: 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3',
+  },
+  surfaces: {
+    quiet: 'rounded-panel border border-border/70 bg-surface-elevated p-4',
+    quietInteractive:
+      'rounded-panel border border-border/70 bg-surface p-4 transition-[background-color,border-color,color] duration-200 hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    emphasized: 'rounded-card border border-border/70 bg-surface p-6 shadow-soft',
+    panel: 'rounded-card border border-border/70 bg-surface p-5 shadow-card lg:p-6',
+  },
+  article: {
+    card: 'rounded-card border border-border/70 bg-surface p-4 shadow-soft sm:p-5',
+    cardLoose: 'rounded-card border border-border/70 bg-surface p-6 shadow-soft',
+    title: 'mb-3 text-xl font-bold text-text sm:text-2xl',
+    titleCompact: 'mb-2 text-base font-bold text-text sm:text-lg',
+    body: 'space-y-3 text-text-muted',
+    paragraph: 'text-sm leading-7 text-text-muted sm:text-base',
+    finePrint: 'text-xs leading-relaxed text-text-muted',
+    list: 'space-y-3 text-text-muted',
+    listItem: 'flex items-start gap-3',
+    bullet: 'mt-2 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary',
+    numberBadge:
+      'mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10 text-xs font-bold text-primary',
+    iconBadge:
+      'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-icon bg-primary/10 text-primary',
+    faqStack: 'space-y-3 md:mx-auto md:max-w-3xl',
+    faqItem: 'group rounded-card border border-border/70 bg-surface shadow-soft',
+    faqSummary:
+      'flex cursor-pointer list-none items-start gap-3 rounded-card p-4 transition-colors hover:bg-surface-elevated sm:p-5',
+    faqAnswer: 'px-4 pb-4 pt-0 text-sm leading-7 text-text-muted sm:px-5 sm:pb-5',
+  },
+  callouts: {
+    warning: 'rounded-panel border border-warning/30 bg-warning/10 p-4 sm:p-5',
+    success: 'rounded-panel border border-success/20 bg-success/10 p-3',
+    danger: 'rounded-panel border border-destructive/20 bg-destructive/10 p-3',
+    neutral: 'rounded-panel border border-border/70 bg-surface p-3',
+    elevated: 'rounded-panel border border-border/70 bg-surface-elevated p-4',
+    icon: 'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-icon',
+    note: 'rounded-panel border border-warning/20 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-text-muted',
+  },
+  result: {
+    section: 'mb-6 sm:mb-8',
+    card: 'rounded-card border border-border/70 bg-surface-elevated p-4 shadow-soft sm:p-5',
+    eyebrowRow:
+      'mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary/80',
+    amountRow: 'mb-1 flex flex-wrap items-baseline gap-2',
+    sourceAmount: 'text-xs text-text-muted',
+    operator: 'text-sm text-text-muted',
+    value: 'text-2xl font-black text-primary sm:text-3xl',
+    note: 'mb-4 text-xs leading-relaxed text-text-muted',
+  },
+  table: {
+    wrapper: 'max-w-full overflow-x-auto rounded-panel border border-border/70',
+    wrapperBlock: 'mb-6 max-w-full overflow-x-auto rounded-panel border border-border/70',
+    table: 'min-w-[42rem] text-sm',
+    wideTable: 'min-w-[56rem] text-sm',
+    headRow: 'border-b border-border/70 bg-surface-elevated',
+    headCell: 'px-4 py-3 text-left font-semibold text-text',
+    body: 'divide-y divide-border/70 bg-surface',
+    cell: 'px-4 py-3 text-text',
+    mutedCell: 'px-4 py-3 text-text-muted',
+    monoCell: 'px-4 py-3 font-mono text-xs text-primary',
+  },
+  links: {
+    inline:
+      'text-primary underline underline-offset-4 decoration-primary/30 transition-colors hover:text-primary-hover',
+    pill: 'inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-2.5 text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+    tile: 'flex min-h-11 items-center gap-2 rounded-control border border-border/70 bg-surface-elevated px-3 py-2.5 text-xs font-semibold text-text transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    row: 'group flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3 transition-colors hover:border-primary/20 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    ctaSecondary:
+      'inline-flex items-center rounded-control border border-border/70 bg-surface px-5 py-3 font-semibold text-primary transition-colors hover:border-primary/30 hover:bg-surface-elevated hover:text-primary-hover',
+  },
+  buttons: {
+    primary:
+      'inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    primaryWide:
+      'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    dangerQuiet:
+      'inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-destructive/20 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  },
+} as const;
+
+export const appPageTokens = {
+  narrowShell: 'mx-auto w-full max-w-md px-3 py-6 sm:px-5',
+  section: {
+    wrapper: 'mb-6',
+    headerRow: 'mb-3 flex items-center gap-2 px-2 text-text-muted',
+    headerText: 'text-xs font-black uppercase tracking-[0.16em]',
+  },
+  infoCard: 'rounded-card border border-border/70 bg-surface p-5 shadow-card',
+  listCard: 'overflow-hidden rounded-card border border-border/70 bg-surface shadow-card',
+  linkRow:
+    'group flex min-h-11 w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset',
+  statRow:
+    'flex items-center justify-between rounded-control border border-border/70 bg-surface px-4 py-3',
+  tinyMeta: 'text-xs font-semibold uppercase tracking-[0.12em] text-text-muted',
 } as const;
 
 /**
@@ -576,7 +824,7 @@ export const rateWiseLayoutTokens = {
    * [align:2026-01-29] 與 3ea33 版一致的 px/py 與 max-w
    */
   content: {
-    className: 'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full',
+    className: 'flex-1 flex flex-col w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8',
   },
 
   section: {
@@ -585,7 +833,7 @@ export const rateWiseLayoutTokens = {
 
   /** 單幣別卡片 - 移除 flex-1 避免過度拉伸 */
   card: {
-    className: 'card p-4 flex-1',
+    className: 'card p-5 lg:p-6',
   },
 
   /**
@@ -613,7 +861,7 @@ export const multiConverterLayoutTokens = {
 
   /** 內容容器 */
   content: {
-    className: 'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full',
+    className: 'flex-1 flex flex-col w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8',
   },
 
   /** 主區塊 */
@@ -629,10 +877,10 @@ export const multiConverterLayoutTokens = {
   /** 更新時間區塊 */
   info: {
     wrapper: 'mt-4 flex-shrink-0',
-    titleRow: 'flex items-center gap-2 px-2 opacity-40 mb-3',
-    titleText: 'text-[10px] font-black uppercase tracking-[0.2em]',
-    card: 'card p-4',
-    text: 'text-[10px] text-center opacity-60 font-medium',
+    titleRow: contentPageTokens.sectionHeader.row,
+    titleText: contentPageTokens.sectionHeader.eyebrow,
+    card: 'card px-4 py-3',
+    text: 'text-xs text-center lg:text-left opacity-70 font-medium',
   },
 } as const;
 
@@ -691,7 +939,7 @@ export const singleConverterLayoutTokens = {
 
     /** 匯率資訊區內距 - 保持充足空間感 */
     infoPadding:
-      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-5 micro:pb-2.5 nano:pt-4 nano:pb-2',
+      'pt-16 pb-6 compact:pt-16 compact:pb-5 short:pt-16 short:pb-4 tiny:pt-16 tiny:pb-3 micro:pt-16 micro:pb-2.5 nano:pt-16 nano:pb-2',
 
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
@@ -699,7 +947,7 @@ export const singleConverterLayoutTokens = {
 
     /** 匯率類型按鈕尺寸 */
     rateTypeButton:
-      'px-2 py-0.5 text-[11px] compact:px-1.5 compact:py-0.5 compact:text-[10px] short:px-1.5 short:py-0.5 short:text-[10px] tiny:px-1 tiny:py-0.5 tiny:text-[9px] micro:px-1 micro:py-0.5 micro:text-[9px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+      'px-2.5 py-1 text-xs compact:px-2 short:px-2 tiny:px-1.5 micro:px-1.5 nano:px-1.5',
 
     /** 匯率類型圖示 - nano 隱藏 */
     rateTypeIcon:
@@ -709,18 +957,17 @@ export const singleConverterLayoutTokens = {
     rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-sm nano:text-sm',
 
     /** 次要匯率文字 */
-    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',
+    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-xs nano:text-xs',
 
     /** 趨勢圖高度 - 線性遞減 */
     chartHeight: 'h-20 compact:h-16 short:h-14 tiny:h-12 micro:h-10 nano:h-8',
 
     /** 趨勢圖懸停高度 */
-    chartHoverHeight:
-      'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-16 tiny:group-hover:h-14 micro:group-hover:h-12 nano:group-hover:h-10',
+    chartHoverHeight: '',
 
     /** 換錢所來源 badge 容器（換錢所選中時顯示） */
     exchangeShopBadge:
-      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] font-medium leading-tight text-text-muted/60',
+      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs font-medium leading-tight text-text-muted/60',
 
     /** 換錢所 badge 圖示 */
     exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary/70',
@@ -792,10 +1039,12 @@ export const singleConverterLayoutTokens = {
  * @version 1.0.0
  */
 export const quickAmountButtonTokens = {
+  className:
+    'flex-shrink-0 px-3 py-1.5 rounded-compact text-sm font-semibold bg-surface-elevated text-text/70 hover:bg-primary/10 hover:text-primary active:bg-primary/20 active:text-primary transition-[background-color,color,transform] duration-200 ease-out hover:scale-[1.03] active:scale-[0.97] hover:shadow-soft active:shadow-soft micro:px-2 micro:text-xs nano:px-1.5 nano:text-xs',
   /** 基礎樣式 */
   base: {
     padding: 'px-3 py-1.5',
-    borderRadius: 'rounded-xl',
+    borderRadius: 'rounded-compact',
     typography: 'text-sm font-semibold',
   },
   /** 色彩狀態 */
@@ -815,11 +1064,11 @@ export const quickAmountButtonTokens = {
   },
   /** 微互動效果 */
   interactions: {
-    transition: 'transition-all duration-200 ease-out',
+    transition: 'transition-[background-color,color,box-shadow,transform] duration-200 ease-out',
     hoverScale: 'hover:scale-[1.03]',
     activeScale: 'active:scale-[0.97]',
-    hoverShadow: 'hover:shadow-md',
-    activeShadow: 'active:shadow-sm',
+    hoverShadow: 'hover:shadow-soft',
+    activeShadow: 'active:shadow-soft',
   },
   /** 觸覺回饋時長 (毫秒) */
   hapticDuration: 30,
@@ -911,8 +1160,8 @@ export const typographyTokens = {
 
   /** 字型大小比例表 */
   fontSize: {
-    /** 10px - 極小標籤 */
-    '2xs': { size: '0.625rem', lineHeight: '0.875rem', class: 'text-[10px]' },
+    /** 12px - 最小可讀標籤；保留 2xs key 作為舊呼叫相容別名 */
+    '2xs': { size: '0.75rem', lineHeight: '1rem', class: 'text-xs' },
     /** 12px - 小標籤、說明文字 */
     xs: { size: '0.75rem', lineHeight: '1rem', class: 'text-xs' },
     /** 14px - 次要內容 */
@@ -1125,9 +1374,10 @@ export const buttonTokens = {
   base: {
     display: 'inline-flex items-center justify-center',
     typography: 'font-semibold',
-    border: 'rounded-2xl',
+    border: 'rounded-control',
     cursor: 'cursor-pointer',
-    transition: 'transition-all duration-200 ease-out',
+    transition:
+      'transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out',
     focus:
       'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
     disabled: 'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
@@ -1162,9 +1412,9 @@ export const buttonTokens = {
   variants: {
     /** 主要按鈕 - 高視覺權重 */
     primary: {
-      default: 'bg-primary text-white',
-      hover: 'hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      default: 'bg-primary text-primary-foreground',
+      hover: 'hover:bg-primary-hover hover:shadow-floating hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-soft',
     },
     /** 次要按鈕 - 中視覺權重 */
     secondary: {
@@ -1180,23 +1430,36 @@ export const buttonTokens = {
     },
     /** 危險按鈕 - 警示操作 */
     danger: {
-      default: 'bg-destructive text-white',
-      hover: 'hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      default: 'bg-destructive text-destructive-foreground',
+      hover: 'hover:bg-destructive-hover hover:shadow-floating hover:-translate-y-0.5',
+      active: 'active:translate-y-0 active:shadow-soft',
     },
   },
 
   /** 完整類別組合 - 直接複製使用 */
   patterns: {
     primaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-white hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-floating hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft',
     secondaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
     ghostMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
     dangerMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-white hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-control cursor-pointer transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-destructive-foreground hover:bg-destructive-hover hover:shadow-floating hover:-translate-y-0.5 active:translate-y-0 active:shadow-soft',
   },
+} as const;
+
+export const feedbackSurfaceTokens = {
+  pageCenter: 'flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6',
+  card: 'w-full max-w-lg rounded-card border border-border/70 bg-surface p-6 text-center shadow-floating sm:p-8',
+  icon: 'mx-auto text-destructive',
+  title: 'mt-4 text-2xl font-bold text-text',
+  description: 'mb-6 mt-2 text-text-muted',
+  actionButton:
+    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  dangerActionButton:
+    'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  detailsPanel: 'rounded-panel border border-danger-light bg-danger-bg p-3',
 } as const;
 
 /**
@@ -1206,9 +1469,9 @@ export const buttonTokens = {
  * Material Design snackbar 風格，支援頂部與底部定位。
  *
  * 設計原則：
- * - 統一品牌漸變背景（藍-靛-紫）
- * - 透過圖標顏色區分狀態（更新=品牌色、離線=警告色）
- * - 一致的裝飾光暈、按鈕樣式、動畫效果
+ * - 使用安靜的 surface 浮層，避免品牌漸層背景
+ * - 透過圖標顏色區分狀態（更新=主色、離線=警告色）
+ * - 共享一致的動作、邊框與微弱裝飾語法
  *
  * @see src/components/UpdatePrompt.tsx
  * @see src/components/OfflineIndicator.tsx
@@ -1232,49 +1495,55 @@ export const notificationTokens = {
   /** 內距 */
   padding: 'px-6 py-3.5',
   /** 圓角（與 card / button 統一） */
-  borderRadius: 'rounded-2xl',
-  /** 陰影（統一 shadow-card token） */
-  shadow: 'shadow-card shadow-brand-shadow/20',
+  borderRadius: 'rounded-panel',
+  /** 陰影（統一較安靜的浮層語法） */
+  shadow: 'shadow-floating',
 
-  /** 背景漸變（統一品牌風格） */
+  /** 背景與邊框 */
   background: {
-    /** 品牌漸變 - 淡藍-淡靛-淡紫 */
-    brand: 'bg-gradient-to-r from-brand-from via-brand-via to-brand-to',
-    /** 邊框 - 品牌色 */
-    brandBorder: 'border border-brand-border/60',
+    brand: 'bg-surface',
+    brandBorder: 'border border-border/70',
   },
 
   /** 裝飾光暈 */
   decoration: {
-    size: 'w-16 h-16',
-    blur: 'blur-2xl',
+    size: 'w-14 h-14',
+    blur: 'blur-xl',
     /** 品牌色光暈（UpdatePrompt） */
-    topRight: 'bg-brand-icon-from/40',
-    bottomLeft: 'bg-brand-decoration/40',
+    topRight: 'bg-primary/10',
+    bottomLeft: 'bg-accent/10',
     /** 警告色光暈（OfflineIndicator） */
-    offlineTopRight: 'bg-warning/20',
-    offlineBottomLeft: 'bg-warning/10',
+    offlineTopRight: 'bg-warning/12',
+    offlineBottomLeft: 'bg-warning/8',
   },
 
   /** 狀態圖標 */
   icon: {
-    container: 'w-8 h-8 rounded-xl',
+    container: 'w-8 h-8 rounded-icon border border-border/60 bg-surface-elevated',
     svg: 'w-5 h-5',
     strokeWidth: 2.5,
-    /** 品牌漸變 - UpdatePrompt 圖標背景 */
-    brandGradient: 'bg-gradient-to-br from-brand-icon-from to-brand-icon-to',
-    /** 警告漸變 - OfflineIndicator 圖標背景 */
-    warningGradient: 'bg-gradient-to-br from-warning-light to-warning',
+    /** 品牌圖標底色（UpdatePrompt） */
+    brandGradient: 'bg-surface-elevated text-primary',
+    /** 警告圖標底色（OfflineIndicator） */
+    warningGradient: 'bg-warning/15 text-warning',
   },
 
   /** 文字顏色 */
   text: {
     /** 品牌色標題（UpdatePrompt） */
-    brandTitle: 'text-brand-text-dark',
-    brandDescription: 'text-brand-text',
+    brandTitle: 'text-text',
+    brandDescription: 'text-text-muted',
     /** 警告色標題（OfflineIndicator） */
     warningTitle: 'text-warning',
-    warningDescription: 'text-neutral-text-secondary',
+    warningDescription: 'text-text-muted',
+  },
+
+  /** 通知類操作按鈕 */
+  actions: {
+    primary:
+      'pointer-events-auto inline-flex items-center justify-center rounded-full border border-border/70 bg-surface-elevated px-3 py-1.5 text-xs font-medium text-text shadow-soft transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out hover:border-primary/30 hover:bg-surface hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+    text: 'inline-flex items-center rounded-compact px-1 text-xs text-text-muted transition-colors duration-150 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+    icon: 'pointer-events-auto rounded-full border border-border/70 bg-surface-elevated p-1.5 text-text-muted transition-[color,background-color,border-color,transform] duration-200 ease-out hover:border-primary/20 hover:bg-surface hover:text-text active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
   },
 
   /** 時序 */

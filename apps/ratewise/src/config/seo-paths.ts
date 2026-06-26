@@ -213,8 +213,8 @@ export const IMAGE_RESOURCES = [
 export const SITE_CONFIG = {
   url: normalizeSiteUrl('https://app.haotool.org/ratewise/'),
   name: APP_INFO.name,
-  title: `${APP_INFO.shortName} — 台灣最精準匯率換算器`,
-  description: `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 18 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，每 5 分鐘自動同步，免費無廣告無註冊。`,
+  title: `${APP_INFO.shortName} — 台銀牌告買賣價匯率換算器`,
+  description: `${APP_INFO.shortName} 以臺灣銀行牌告買賣價為核心，顯示實際買入賣出價（非中間價），協助換匯前參考估算台幣成本。支援 18 種貨幣換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，約每 5 分鐘檢查更新，免費無廣告無註冊。`,
 } as const satisfies Readonly<{
   url: string;
   name: string;

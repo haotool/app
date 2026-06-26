@@ -18,18 +18,10 @@ import { ExpressionDisplay } from './ExpressionDisplay';
 import { ChristmasEasterEgg } from '../easter-eggs/ChristmasEasterEgg';
 
 /**
- * 鍵盤佈局定義（iOS 標準 4×5 網格，20 按鈕）
- * @description 符合 iOS 計算機標準佈局
- * @updated 2025-11-18 - 修正為 iOS 標準佈局（消除跨欄特殊情況）
- * @see docs/dev/011_calculator_apple_ux_enhancements.md - Feature 4
- *
- * Linus 哲學：
- * - ✅ 消除特殊情況：所有按鈕等寬等高，無跨欄
- * - ✅ 簡潔執念：5 行 × 4 列，均勻分佈
- * - ✅ 實用主義：符合真實 iOS 佈局
+ * 鍵盤佈局（iOS 標準 4×5 網格）
  */
 const KEYBOARD_LAYOUT: KeyDefinition[][] = [
-  // 第 1 行：⌫, AC, %, ÷（功能鍵 + 除法）
+  // 第 1 行：⌫, AC, %, ÷
   [
     { label: '⌫', value: 'backspace', type: 'action', ariaLabel: '刪除' },
     { label: 'AC', value: 'clear', type: 'action', ariaLabel: '清除全部' },
@@ -96,11 +88,11 @@ export function CalculatorKeyboard({
   onClose,
   onConfirm,
   initialValue,
+  formatConversionPreview,
 }: CalculatorKeyboardProps) {
   const { t } = useTranslation();
 
-  // 🔧 Phase 2: 背景滾動鎖定（iOS/Android 兼容）
-  // @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 2
+  // 🔧 Phase 2: 背景滾動鎖定
   useBodyScrollLock(isOpen);
 
   const {
@@ -118,11 +110,11 @@ export function CalculatorKeyboard({
     closeEasterEgg,
   } = useCalculator(initialValue);
 
-  /**
-   * 處理按鍵點擊（iOS 標準功能）
-   * @description 處理所有按鍵類型：數字、運算符、操作鍵
-   * @updated 2025-11-18 - Added negate and percent handlers
-   */
+  const conversionLabel =
+    formatConversionPreview && preview !== null && Number.isFinite(preview)
+      ? formatConversionPreview(preview)
+      : null;
+
   const handleKeyClick = (value: string) => {
     switch (value) {
       case 'clear':
@@ -140,11 +132,9 @@ export function CalculatorKeyboard({
         break;
       }
       case 'negate':
-        // iOS 標準：正負號切換
         negate();
         break;
       case 'percent':
-        // iOS 標準：百分比轉換
         percent();
         break;
       default:
@@ -180,9 +170,7 @@ export function CalculatorKeyboard({
   };
 
   /**
-   * 處理向下滑動關閉
-   * 🔧 Phase 3: 向下滑動關閉動畫 (>100px threshold)
-   * @see docs/dev/012_calculator_modal_sync_enhancement.md Feature 3
+   * 向下滑動關閉（>100px threshold）
    */
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
@@ -209,7 +197,7 @@ export function CalculatorKeyboard({
           <>
             {/* 背景遮罩 */}
             <motion.div
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-overlay/40 z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -219,7 +207,7 @@ export function CalculatorKeyboard({
 
             {/* Bottom Sheet 容器 */}
             <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-hidden rounded-t-card bg-surface shadow-floating"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -245,8 +233,9 @@ export function CalculatorKeyboard({
                     {t('calculator.title')}
                   </h2>
                   <button
+                    type="button"
                     onClick={onClose}
-                    className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-text-muted transition-colors hover:text-neutral-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     aria-label={t('calculator.close')}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,6 +256,15 @@ export function CalculatorKeyboard({
                   error={error}
                   preview={preview}
                 />
+
+                {conversionLabel && (
+                  <div
+                    data-testid="calculator-conversion-preview"
+                    className="mb-3 px-1 text-right text-sm font-semibold text-primary tabular-nums"
+                  >
+                    {conversionLabel}
+                  </div>
+                )}
 
                 {/* 鍵盤佈局（iOS 標準 5×4 網格，20 按鈕均勻分佈） */}
                 <div className="space-y-3">

@@ -5,6 +5,7 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO, getCopyrightYears } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { PRIVACY_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { contentPageTokens } from '../config/design-tokens';
 
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
   year: 'numeric',
@@ -25,9 +26,10 @@ export default function Privacy() {
         robots={PRIVACY_PAGE_SEO.robots}
       />
 
-      <div className="min-h-screen">
-        <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="min-h-full">
+        <div className={contentPageTokens.shell}>
           <PageNavHeader
+            fallbackHref="/settings/"
             breadcrumbItems={[
               { label: t('nav.home'), href: '/' },
               { label: t('footer.privacyPolicy'), href: '/privacy/' },
@@ -35,11 +37,12 @@ export default function Privacy() {
           />
 
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-text">隱私政策</h1>
-            <p className="text-text-muted">最後更新：{LAST_UPDATED}</p>
+            <p className={contentPageTokens.sectionHeader.eyebrow}>資料與隱私</p>
+            <h1 className="mb-2 mt-2 text-3xl font-bold text-text">隱私政策</h1>
+            <p className={contentPageTokens.meta}>最後更新：{LAST_UPDATED}</p>
           </div>
 
-          <section className="card mb-6 p-6">
+          <section className={`mb-6 ${contentPageTokens.surfaces.panel}`}>
             <h2 className="mb-4 text-2xl font-bold text-text">概述</h2>
             <p className="mb-4 leading-relaxed text-text-muted">
               {APP_INFO.shortName}{' '}
@@ -50,7 +53,7 @@ export default function Privacy() {
             </p>
           </section>
 
-          <section className="card mb-6 p-6">
+          <section className={`mb-6 ${contentPageTokens.surfaces.panel}`}>
             <h2 className="mb-4 text-2xl font-bold text-text">本地儲存資料</h2>
             <ul className="list-inside list-disc space-y-2 text-text-muted">
               <li>收藏貨幣清單</li>
@@ -64,7 +67,7 @@ export default function Privacy() {
             </p>
           </section>
 
-          <section className="card mb-6 p-6">
+          <section className={`mb-6 ${contentPageTokens.surfaces.panel}`}>
             <h2 className="mb-4 text-2xl font-bold text-text">第三方服務</h2>
             <div className="space-y-4 text-text-muted">
               <p>
@@ -84,12 +87,12 @@ export default function Privacy() {
             </div>
           </section>
 
-          <section className="card mb-6 p-6">
+          <section className={`mb-6 ${contentPageTokens.surfaces.panel}`}>
             <h2 className="mb-4 text-2xl font-bold text-text">你可以怎麼管理資料</h2>
             <ul className="space-y-3 text-text-muted">
               <li>
                 你可以在
-                <Link to="/settings/" className="mx-1 text-primary underline">
+                <Link to="/settings/" className={`mx-1 ${contentPageTokens.links.inline}`}>
                   設定頁
                 </Link>
                 重設部分本地偏好與快取資料。
@@ -97,7 +100,10 @@ export default function Privacy() {
               <li>你也可以透過瀏覽器設定清除站點資料、Cookie 與本地儲存內容。</li>
               <li>
                 若對隱私有疑問，可來信
-                <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
+                <MailtoLink
+                  email={APP_INFO.email}
+                  className={`ml-1 ${contentPageTokens.links.inline}`}
+                />
               </li>
             </ul>
           </section>

@@ -193,7 +193,11 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
     } catch (error) {
       const elapsed = Date.now() - startTime;
       errors.push(error instanceof Error ? error : new Error(String(error)));
-      logger.warn(`CDN #${i + 1} failed`, { elapsedMs: elapsed, error });
+      const message =
+        i < CDN_URLS.length - 1
+          ? `CDN #${i + 1} failed, trying fallback source`
+          : `CDN #${i + 1} failed`;
+      logger.debug(message, { elapsedMs: elapsed, error });
       continue;
     }
   }

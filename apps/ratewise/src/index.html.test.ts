@@ -3,10 +3,40 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { STYLE_DEFINITIONS, type ThemeStyle } from './config/themes';
 
 describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   const indexHtmlPath = resolve(__dirname, '..', 'index.html');
   const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
+  const defaultThemeColor = toHexColor(STYLE_DEFINITIONS.zen.colors.primary).toUpperCase();
+  const skeletonTokenMap = {
+    background: '--sk-bg',
+    surface: '--sk-surface',
+    border: '--sk-border',
+    text: '--sk-text',
+    textMuted: '--sk-text-muted',
+  } as const;
+
+  function toHexColor(spaceDelimitedRgb: string): string {
+    return `#${spaceDelimitedRgb
+      .split(' ')
+      .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+      .join('')}`;
+  }
+
+  function getStyleBlock(style: ThemeStyle): string {
+    const pattern =
+      style === 'zen'
+        ? /:root,\s*\[data-style='zen'\]\s*\{([\s\S]*?)\n\s*\}/
+        : new RegExp(`\\[data-style='${style}'\\]\\s*\\{([\\s\\S]*?)\\n\\s*\\}`);
+    const match = indexHtmlContent.match(pattern);
+
+    if (!match?.[1]) {
+      throw new Error(`找不到 ${style} 的 skeleton 樣式區塊`);
+    }
+
+    return match[1];
+  }
 
   describe('🟢 基礎設施 Meta Tags（保留）', () => {
     it('should have <html lang="zh-TW"> attribute', () => {
@@ -19,7 +49,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
 
     it('should have theme-color meta tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
+      expect(indexHtmlContent).toContain(`<meta name="theme-color" content="${defaultThemeColor}"`);
     });
 
     it('should have Cloudflare Rocket Loader disabled', () => {
@@ -114,7 +144,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
 
   describe('🟢 PWA Meta Tags（保留）', () => {
     it('should retain PWA essential tags', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
+      expect(indexHtmlContent).toContain(`<meta name="theme-color" content="${defaultThemeColor}"`);
       expect(indexHtmlContent).toContain('<meta name="viewport"');
       expect(indexHtmlContent).toContain('<link rel="apple-touch-icon"');
       expect(indexHtmlContent).toContain('<link rel="icon"');
@@ -142,6 +172,27 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       // Vite transformIndexHtml 會把 __BRAND_FULL__ 替換為 APP_INFO.name；
       // 測試以靜態模板為對象，斷言 placeholder 而非最終品牌字串。
       expect(indexHtmlContent).toContain('__BRAND_FULL__');
+    });
+  });
+
+  describe('🟢 Skeleton Theme Tokens（保留）', () => {
+    it('should not pin body background to Zen before theme CSS loads', () => {
+      expect(indexHtmlContent).toContain('background: var(--sk-bg, #f8fafc);');
+      expect(indexHtmlContent).toContain('color: var(--sk-text, #0f172a);');
+      expect(indexHtmlContent).toContain('<body>');
+      expect(indexHtmlContent).not.toContain('<body class="bg-slate-50">');
+    });
+
+    it('should align skeleton semantic colors with style definitions', () => {
+      for (const style of Object.keys(STYLE_DEFINITIONS) as ThemeStyle[]) {
+        const block = getStyleBlock(style);
+
+        for (const token of Object.keys(skeletonTokenMap) as (keyof typeof skeletonTokenMap)[]) {
+          const cssVariable = skeletonTokenMap[token];
+          const expected = toHexColor(STYLE_DEFINITIONS[style].colors[token]);
+          expect(block).toContain(`${cssVariable}: ${expected};`);
+        }
+      }
     });
   });
 

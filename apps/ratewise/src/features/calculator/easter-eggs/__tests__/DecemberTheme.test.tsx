@@ -8,7 +8,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { DecemberTheme } from '../DecemberTheme';
 import { DecemberSnowScene } from '../DecemberSnowScene';
-import { SnowAccumulation } from '../SnowAccumulation';
 import { MiniChristmasTree } from '../MiniChristmasTree';
 
 // Mock useDecemberTheme hook
@@ -137,37 +136,6 @@ describe('DecemberTheme Components', () => {
 
       const snowflakes = document.querySelectorAll('.december-snowflake');
       expect(snowflakes.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('SnowAccumulation', () => {
-    it('should render with default props', () => {
-      render(<SnowAccumulation />);
-
-      const accumulation = document.querySelector('.snow-accumulation');
-      expect(accumulation).toBeInTheDocument();
-      expect(accumulation).toHaveAttribute('aria-hidden', 'true');
-    });
-
-    it('should apply variant class', () => {
-      render(<SnowAccumulation variant="thick" />);
-
-      const accumulation = document.querySelector('.snow-accumulation--thick');
-      expect(accumulation).toBeInTheDocument();
-    });
-
-    it('should apply custom className', () => {
-      render(<SnowAccumulation className="custom-class" />);
-
-      const accumulation = document.querySelector('.custom-class');
-      expect(accumulation).toBeInTheDocument();
-    });
-
-    it('should render sparkles', () => {
-      render(<SnowAccumulation />);
-
-      const sparkles = document.querySelectorAll('.snow-sparkle');
-      expect(sparkles.length).toBe(6);
     });
   });
 

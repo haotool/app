@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { CURRENCY_DEFINITIONS } from '../constants';
 import type { CurrencyCode } from '../types';
 import { formatExchangeRate } from '../../../utils/currencyFormatter';
+import { RATE_BASIS_LIST_NOTE_KEY } from '../../../utils/rateBasisLabel';
+import { contentPageTokens } from '../../../config/design-tokens';
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 
@@ -21,9 +23,12 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
   const { t } = useTranslation();
 
   return (
-    <div className="bg-surface rounded-3xl shadow-xl p-6 border border-border/30">
+    <div className={contentPageTokens.surfaces.panel}>
       <div className="mb-4">
         <h2 className="text-xl font-bold text-text">{t('currencyList.allCurrencies')}</h2>
+        <p className="mt-0.5 text-xs text-text-muted" data-testid="currency-list-basis-note">
+          {t(RATE_BASIS_LIST_NOTE_KEY)}
+        </p>
       </div>
       <div
         className="space-y-2 max-h-96 overflow-y-auto"
@@ -33,9 +38,10 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
         data-testid="currency-list"
       >
         {CURRENCY_CODES.map((code) => (
-          <div
+          <button
+            type="button"
             key={`list-${code}`}
-            className="group flex items-center justify-between p-2 hover:bg-primary/5 rounded-lg transition-colors duration-200 cursor-pointer"
+            className="group flex w-full cursor-pointer items-center justify-between rounded-control p-3 text-left transition-colors duration-200 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             onClick={() => onToggleFavorite(code)}
           >
             <div className="flex items-center gap-2">
@@ -46,16 +52,17 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-text">
+              <span className="text-sm text-text tabular-nums">
                 {formatExchangeRate(exchangeRates[code] ?? 0)}
+                <span className="ml-1 text-xs text-text-muted">TWD</span>
               </span>
               <Star
-                className={`${favorites.includes(code) ? 'text-favorite' : 'text-text-muted/30 opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}
+                className={`${favorites.includes(code) ? 'text-favorite' : 'text-text-muted/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100'}`}
                 size={14}
                 fill={favorites.includes(code) ? 'currentColor' : 'none'}
               />
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

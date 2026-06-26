@@ -217,8 +217,7 @@ describe('CalculatorKey Component - BDD Tests', () => {
    * When: 長按刪除鍵（≥500ms）
    * Then: 應該連續觸發 onClick 回調（間隔 150ms）
    *
-   * 注意：長按行為的完整測試已在 useLongPress.test.ts 覆蓋（10 個測試）
-   *       這裡只測試刪除鍵的基本渲染和點擊行為
+   * 注意：目前刪除鍵只保留基本渲染與短按行為，未啟用長按連續刪除。
    */
   describe('場景 4: 刪除鍵基本功能', () => {
     it('應該正確渲染刪除鍵', () => {

@@ -159,8 +159,8 @@ describe('SingleConverter - 輸入框進階測試', () => {
 
       const toAmount = screen.getByTestId('amount-output');
 
-      expect(toAmount).toHaveAttribute('role', 'button');
-      expect(toAmount).toHaveAttribute('tabIndex', '0');
+      expect(toAmount.tagName).toBe('BUTTON');
+      expect(toAmount).toHaveAttribute('type', 'button');
     });
   });
 

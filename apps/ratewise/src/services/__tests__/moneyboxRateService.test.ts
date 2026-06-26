@@ -162,7 +162,6 @@ describe('fetchExchangeShopRate', () => {
     expect(result).not.toBeNull();
     expect(result!.sell).toBe(44.85);
     expect(result!.isFallback).toBe(false);
-    expect(capturedInit?.cache).toBe('no-cache');
     const headerKeys = Object.keys((capturedInit?.headers ?? {}) as Record<string, string>).map(
       (key) => key.toLowerCase(),
     );
@@ -249,6 +248,26 @@ describe('computeConverterRate', () => {
   it('KRW→TWD returns 1/buy rate (1 KRW = 1/buy TWD)', () => {
     const r = computeConverterRate(rate, 'KRW', 'TWD');
     expect(r).toBeCloseTo(1 / 45.1, 5);
+  });
+
+  it('mid 模式：TWD→KRW 回傳 (buy+sell)/2 中間價', () => {
+    const mid = (45.1 + 44.85) / 2;
+    expect(computeConverterRate(rate, 'TWD', 'KRW', 'mid')).toBeCloseTo(mid, 5);
+  });
+
+  it('mid 模式：KRW→TWD 回傳 1/中間價', () => {
+    const mid = (45.1 + 44.85) / 2;
+    expect(computeConverterRate(rate, 'KRW', 'TWD', 'mid')).toBeCloseTo(1 / mid, 5);
+  });
+
+  it('sell 模式：雙向皆以 sell 價計算', () => {
+    expect(computeConverterRate(rate, 'TWD', 'KRW', 'sell')).toBeCloseTo(44.85, 5);
+    expect(computeConverterRate(rate, 'KRW', 'TWD', 'sell')).toBeCloseTo(1 / 44.85, 5);
+  });
+
+  it('未傳 rateMode 時維持 auto 客戶視角（向後相容）', () => {
+    expect(computeConverterRate(rate, 'TWD', 'KRW')).toBeCloseTo(44.85, 5);
+    expect(computeConverterRate(rate, 'KRW', 'TWD')).toBeCloseTo(1 / 45.1, 5);
   });
 
   it('returns null for non-KRW pairs', () => {

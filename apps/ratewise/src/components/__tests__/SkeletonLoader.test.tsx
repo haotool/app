@@ -175,11 +175,11 @@ describe('SettingsSkeleton', () => {
     expect(dangerBtn).toBeInTheDocument();
   });
 
-  it('包含支援資訊連結列（4 個 skeleton-settings-link）', () => {
-    // Settings.tsx 第 5 個 section：FAQ / 使用說明 / 關於我們 / 開源 (4 links px-5 py-4)
+  it('包含支援資訊連結列（7 個 skeleton-settings-link）', () => {
+    // Settings.tsx 第 5 個 section：FAQ / 使用說明 / 關於我們 / 隱私 / 開放資料 / SEO 技術 / 開源
     const { container } = render(<SettingsSkeleton />);
     const links = container.querySelectorAll('[data-testid="skeleton-settings-link"]');
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(7);
   });
 });
 
@@ -196,16 +196,15 @@ describe('FavoritesSkeleton', () => {
     expect(tabs.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('貨幣列每行：星星在左（data-testid=skeleton-star），不是拖曳手柄', () => {
-    // 實際 Favorites UI 結構：star(w-7) | flag | code+name | convert-btn
-    // 舊版錯誤骨架：drag-handle(w-4 h-8) | circle(w-10) | code+name | star(h-6 w-6)
+  it('貨幣列左側應為星號欄，不應替換為獨立拖曳手柄', () => {
+    // 實際 Favorites UI 結構：star(w-7) | flag | code+name | convert button
     const { container } = render(<FavoritesSkeleton />);
     const starPlaceholders = container.querySelectorAll('[data-testid="skeleton-star"]');
     expect(starPlaceholders.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('不應包含 drag-handle skeleton（w-4 h-8）—— 對應實際 UI 無獨立拖曳圖示欄', () => {
-    // 實際 Favorites 拖曳手柄是整個中間區域，不是獨立的細長 bar
+  it('不應包含獨立拖曳手柄骨架（w-4 h-8）', () => {
+    // 實際 Favorites 拖曳區域位於中段內容，不是獨立細長欄位。
     const { container } = render(<FavoritesSkeleton />);
     const dragHandle = container.querySelector('.skeleton-shimmer.w-4.h-8');
     expect(dragHandle).not.toBeInTheDocument();
@@ -234,9 +233,8 @@ describe('MultiConverterSkeleton', () => {
     expect(currencyRows.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('不應包含「基準幣大輸入卡片」結構（h-12 全寬 shimmer）—— 實際 UI 無此元素', () => {
-    // 舊版錯誤骨架有一個 skeleton-shimmer h-12 w-full 的「基準幣輸入框」
-    // 實際 MultiConverter 只有 quick amounts pill 列，不存在此卡片
+  it('不應包含基準幣大輸入卡片骨架（h-12 全寬 shimmer）', () => {
+    // 實際 MultiConverter 只有 quick amounts pill 列，不存在此卡片。
     const { container } = render(<MultiConverterSkeleton />);
     const largeInput = container.querySelector('.skeleton-shimmer.h-12.w-full');
     expect(largeInput).not.toBeInTheDocument();
@@ -282,8 +280,9 @@ describe('SSOT Design Tokens', () => {
     // v2.1.0: SkeletonLoader 移除 AppLayout 結構，避免 Hydration mismatch
     // 作為 ClientOnly fallback，僅渲染內容區域骨架
     const rootDiv = container.firstChild as HTMLElement;
-    // 根元素應為簡單的 div，使用 p-4 padding
-    expect(rootDiv).toHaveClass('p-4');
+    // 根元素應與正式頁面共用內容殼層 token
+    expect(rootDiv).toHaveClass('max-w-6xl');
+    expect(rootDiv).toHaveClass('px-4');
     expect(rootDiv.getAttribute('role')).toBe('status');
     // 不應包含 h-dvh、flex 等 AppLayout 專屬類
     expect(rootDiv).not.toHaveClass('h-dvh');

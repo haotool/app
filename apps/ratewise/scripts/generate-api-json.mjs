@@ -42,7 +42,7 @@ const exchangeShopProvider = providerMetadata.providers.find(
 const latestJson = {
   name: `${APP_INFO.shortName} Exchange Rate API`,
   version: pkg.version,
-  description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照',
+  description: '臺灣銀行牌告匯率靜態 API — 資料排程檢查並同步，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',

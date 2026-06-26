@@ -113,6 +113,20 @@
   animation: fadeInUp 1s ease-out forwards;
 }
 
+.christmas-greeting-title {
+  color: rgb(var(--color-seasonal-snow));
+  text-shadow: 0 8px 24px rgb(var(--color-background) / 0.45);
+}
+
+.christmas-greeting-year {
+  color: rgb(var(--color-seasonal-star));
+  text-shadow: 0 4px 18px rgb(var(--color-background) / 0.4);
+}
+
+.christmas-equation {
+  color: rgb(var(--color-seasonal-snow) / 0.5);
+}
+
 /* ============================================
    彩蛋背景漸層 - 使用主題感知顏色
    深色主題（Nitro）時自動適配

@@ -135,7 +135,7 @@ describe('Authority guide Markdown mirrors', () => {
   const authorityGuides = [
     {
       slug: 'sell-rate-vs-mid-rate',
-      heading: '賣出價比中間價更接近你真正要付的台幣',
+      heading: '賣出價比中間價更接近臨櫃換匯成本',
       keyContent: '中間價',
       faqKeyword: '換匯',
     },

@@ -516,7 +516,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(screen.getByText('1 TWD = 44.8500 KRW')).toBeInTheDocument();
     });
 
-    it('KRW→TWD 選擇換錢所時應顯示換錢所買入反向匯率', () => {
+    it('KRW→TWD 換錢所 sell 模式應顯示賣出反向匯率（rateMode SSOT）', () => {
       render(
         <SingleConverter
           {...mockProps}
@@ -528,7 +528,26 @@ describe('SingleConverter - 核心功能測試', () => {
         />,
       );
 
+      // sell 模式：1 KRW = 1/sell = 1/44.85 ≈ 0.0223 TWD
+      expect(screen.getByText('1 KRW = 0.0223 TWD')).toBeInTheDocument();
+    });
+
+    it('KRW→TWD 換錢所 mid 模式應以 (buy+sell)/2 中間價計算', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          rateMode="mid"
+          fromCurrency="KRW"
+          toCurrency="TWD"
+          rateSource="exchange-shop"
+          moneyBoxRate={mockMoneyBoxRate}
+          exchangeShopCurrency="KRW"
+        />,
+      );
+
+      // mid = (45.1 + 44.85) / 2 = 44.975 → 1 KRW = 1/44.975 ≈ 0.0222 TWD
       expect(screen.getByText('1 KRW = 0.0222 TWD')).toBeInTheDocument();
+      expect(screen.getByText('1 TWD = 44.9750 KRW')).toBeInTheDocument();
     });
 
     it('auto 模式 KRW→TWD 時，副標應顯示主方向匯率的倒數', () => {

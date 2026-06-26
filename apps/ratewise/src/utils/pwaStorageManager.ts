@@ -97,7 +97,7 @@ export async function requestPersistentStorage(): Promise<boolean> {
       logger.info('Persistent storage granted');
       recordPwaDiagnostic('storage-persist-granted');
     } else {
-      logger.warn('Persistent storage denied - cache may be cleared by browser');
+      logger.info('Persistent storage not granted - cache may be cleared by browser');
       recordPwaDiagnostic('storage-persist-denied', undefined, 'warn');
     }
 

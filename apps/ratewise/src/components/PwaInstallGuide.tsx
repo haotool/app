@@ -235,7 +235,7 @@ function PwaInstallGuideClient() {
 
           <div className="relative space-y-3 px-4 pb-4 pt-3">
             <div className="flex items-start gap-3 pr-8">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-icon-from to-brand-icon-to text-white shadow-card">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-icon bg-gradient-to-br from-brand-icon-from to-brand-icon-to text-white shadow-card">
                 {environment.inAppBrowser ? (
                   <ExternalLink className="h-5 w-5" aria-hidden="true" />
                 ) : (
@@ -270,7 +270,7 @@ function PwaInstallGuideClient() {
                 return (
                   <li
                     key={step}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-colors ${
+                    className={`flex items-center gap-2 rounded-compact border px-3 py-2 transition-colors ${
                       isPrimaryStep
                         ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                         : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-elevated))]'
@@ -310,7 +310,7 @@ function PwaInstallGuideClient() {
             {canUseNativeInstall ? (
               <button
                 type="button"
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-control bg-primary px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 onClick={() => void install()}
               >
                 <Download className="h-4 w-4" aria-hidden="true" />

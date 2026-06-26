@@ -50,8 +50,10 @@ const DEFAULT_ADAPTERS: RateProviderQuoteAdapters = {
       isAvailable: unitRate > 0,
     };
   },
-  moneybox: ({ provider, amount, from, to, exchangeShopRate }) => {
-    const unitRate = exchangeShopRate ? computeConverterRate(exchangeShopRate, from, to) : null;
+  moneybox: ({ provider, amount, from, to, rateMode, exchangeShopRate }) => {
+    const unitRate = exchangeShopRate
+      ? computeConverterRate(exchangeShopRate, from, to, rateMode)
+      : null;
 
     return {
       provider: { sourceKind: provider.sourceKind, providerId: provider.id },

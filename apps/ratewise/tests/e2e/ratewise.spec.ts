@@ -152,6 +152,44 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(getVisibleAppTitle(page)).toBeVisible();
   });
 
+  test('收藏頁：應該顯示摘要側欄並支援切換歷史分頁', async ({ rateWisePage: page }) => {
+    await page
+      .getByRole('link', { name: /收藏|Favorites/i })
+      .first()
+      .click();
+
+    await expect(page).toHaveURL(/\/favorites\/$/);
+    await expect(page.getByRole('heading', { name: '所有貨幣', exact: true })).toBeVisible();
+    await expect(page.locator('aside').getByRole('button', { name: '前往換算' })).toBeVisible();
+
+    await page.getByRole('button', { name: '轉換歷史', exact: true }).click();
+    await expect(page.getByRole('heading', { name: '尚無轉換記錄', exact: true })).toBeVisible();
+
+    await page.locator('aside').getByRole('button', { name: '前往換算' }).click();
+    await expect(page.getByTestId('amount-input')).toBeVisible();
+  });
+
+  test('設定頁：應該顯示分組設定並可切換匯率模式', async ({ rateWisePage: page }) => {
+    await page
+      .getByRole('link', { name: /設定|Settings/i })
+      .first()
+      .click();
+
+    await expect(page).toHaveURL(/\/settings\/$/);
+    await expect(page.getByRole('heading', { name: '介面風格', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '語言', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '匯率模式', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '儲存與快取', exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: '賣出價', exact: true }).click();
+    await expect(
+      page.getByText('全程以銀行賣出牌告計算；即期適用網銀換匯，現金適用臨櫃買外幣現鈔'),
+    ).toBeVisible();
+
+    await expect(page.getByRole('link', { name: '常見問題', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: '開放原始碼', exact: true })).toBeVisible();
+  });
+
   test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {

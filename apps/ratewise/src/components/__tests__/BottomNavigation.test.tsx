@@ -61,6 +61,6 @@ describe('BottomNavigation', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Multi Currency' }));
 
     expect(navigateMock).toHaveBeenCalledTimes(1);
-    expect(navigateMock).toHaveBeenCalledWith('/multi');
+    expect(navigateMock).toHaveBeenCalledWith('/multi/');
   });
 });

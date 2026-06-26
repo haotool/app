@@ -1,7 +1,7 @@
 /**
- * BottomNavigation A11y Test - TDD RED Phase
+ * BottomNavigation A11y Test
  *
- * 測試目標：驗證 W3C 規範 - `<a>` 元素內部不應有 tabindex 屬性的子元素
+ * 測試目標：驗證 W3C 規範，`<a>` 元素內部不應有 tabindex 屬性的子元素
  *
  * @reference https://rocketvalidator.com/html-validation/an-element-with-the-attribute-tabindex-must-not-appear-as-a-descendant-of-the-a-element
  * @reference W3C HTML Validator Error: "An element with the attribute tabindex must not appear as a descendant of the a element"
@@ -146,9 +146,9 @@ describe('BottomNavigation A11y Compliance', () => {
 
     expect(hrefs).toEqual([
       '/ratewise/',
-      '/ratewise/multi',
-      '/ratewise/favorites',
-      '/ratewise/settings',
+      '/ratewise/multi/',
+      '/ratewise/favorites/',
+      '/ratewise/settings/',
     ]);
   });
 });

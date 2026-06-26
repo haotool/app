@@ -128,6 +128,9 @@ squirrel.toml
 .agents/skills/*/references/
 .agents/skills/*/AGENTS.md
 
+# Third-party local skill bundles (tool-synced, not project source)
+.agents/skills/impeccable/
+
 # AI tool local skill copies (synced from .agents/skills/)
 .claude/
 .codex/

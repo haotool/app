@@ -160,9 +160,11 @@ describe('ToastProvider', () => {
     // Trigger success toast
     fireEvent.click(screen.getByTestId('success-btn'));
 
-    // Should have backdrop-blur for modern design
-    const toast = container.querySelector('[class*="backdrop-blur"]');
+    // Toast 使用語義色票，不依賴 backdrop blur 才能在各主題維持一致對比。
+    const toast = container.querySelector('[data-testid="toast"]');
     expect(toast).toBeInTheDocument();
+    expect(toast).toHaveClass('bg-primary/15');
+    expect(toast).toHaveClass('border-primary/20');
   });
 
   it('applies primary background for success type', () => {

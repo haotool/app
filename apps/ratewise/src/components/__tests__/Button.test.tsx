@@ -30,7 +30,7 @@ describe('Button Component', () => {
       const button = screen.getByRole('button');
       // 驗證包含 primary 變體的類別
       expect(button.className).toContain('bg-primary');
-      expect(button.className).toContain('text-white');
+      expect(button.className).toContain('text-primary-foreground');
     });
   });
 
@@ -39,7 +39,7 @@ describe('Button Component', () => {
       render(<Button variant="primary">Primary</Button>);
       const button = screen.getByRole('button');
       expect(button.className).toContain('bg-primary');
-      expect(button.className).toContain('text-white');
+      expect(button.className).toContain('text-primary-foreground');
     });
 
     it('secondary 變體應該有正確的樣式', () => {
@@ -59,7 +59,7 @@ describe('Button Component', () => {
       render(<Button variant="danger">Danger</Button>);
       const button = screen.getByRole('button');
       expect(button.className).toContain('bg-destructive');
-      expect(button.className).toContain('text-white');
+      expect(button.className).toContain('text-destructive-foreground');
     });
   });
 

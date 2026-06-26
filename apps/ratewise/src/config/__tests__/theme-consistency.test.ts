@@ -1,26 +1,17 @@
 /**
- * Theme Consistency Test
- * 測試設計文檔與 Design Token 實作的一致性
+ * 歷史 token 相容性測試
  *
- * @see docs/design/COLOR_SCHEME_OPTIONS.md - 方案 A: 品牌對齊
- * @see /Users/azlife.eth/.claude/plans/federated-foraging-summit.md - 重構計劃
+ * @see ../../../DESIGN.md
  */
 
 import { describe, it, expect } from 'vitest';
 import colors from 'tailwindcss/colors';
 
-/**
- * 🔴 RED Phase: 這些測試預期會失敗
- * 因為 design-tokens.ts 尚未實作
- */
-describe('Theme Consistency - BDD', () => {
-  describe('🔴 RED: Design Token 與設計文檔一致性', () => {
-    describe('Given: 設計文檔定義了品牌色彩', () => {
+describe('Legacy Brand Token Consistency', () => {
+  describe('歷史品牌 token 與相容層一致性', () => {
+    describe('Given: 相容層保留歷史品牌漸變色彩', () => {
       describe('When: 檢查 Design Token 定義', () => {
-        it('Then: brand 色系應該符合 COLOR_SCHEME_OPTIONS.md 方案 A', async () => {
-          // Given: 設計文檔定義品牌漸變色
-          // 方案 A: from-blue-50 via-indigo-50 to-purple-50
-
+        it('Then: brand 色系應該維持既有 blue-indigo-purple 相容映射', async () => {
           const { semanticColors, defaultTheme } = await import('../design-tokens');
 
           // Then: 驗證 CSS Variables 格式
@@ -28,14 +19,13 @@ describe('Theme Consistency - BDD', () => {
           expect(semanticColors.brand.via).toBe('rgb(var(--color-brand-via) / <alpha-value>)');
           expect(semanticColors.brand.to).toBe('rgb(var(--color-brand-to) / <alpha-value>)');
 
-          // Then: 驗證 defaultTheme 符合設計文檔
+          // Then: 驗證 defaultTheme 維持既有相容映射
           expect(defaultTheme.brand.from).toBe(colors.blue[50]);
           expect(defaultTheme.brand.via).toBe(colors.indigo[50]);
           expect(defaultTheme.brand.to).toBe(colors.purple[50]);
         });
 
-        it('Then: primary 色系應該使用 violet 作為品牌主色', async () => {
-          // Given: 設計文檔定義品牌主色為紫色系
+        it('Then: primary 色系應該維持 violet 相容層', async () => {
           const { semanticColors, defaultTheme } = await import('../design-tokens');
 
           // Then: 驗證 CSS Variables 格式
@@ -50,7 +40,7 @@ describe('Theme Consistency - BDD', () => {
             'rgb(var(--color-primary-darker) / <alpha-value>)',
           );
 
-          // Then: 驗證 defaultTheme 使用 violet
+          // Then: 驗證 defaultTheme 維持 violet 相容層
           expect(defaultTheme.primary.light).toBe(colors.violet[100]);
           expect(defaultTheme.primary.DEFAULT).toBe(colors.violet[600]);
           expect(defaultTheme.primary.dark).toBe(colors.violet[700]);

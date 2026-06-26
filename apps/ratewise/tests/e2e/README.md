@@ -50,20 +50,24 @@ pnpm --filter @app/ratewise exec playwright test --project=chromium-desktop
 ```
 tests/e2e/
 ├── README.md                  # 本文件
-├── ratewise.spec.ts          # 核心功能測試
-└── accessibility.spec.ts     # 無障礙性測試
+├── accessibility.spec.ts      # 無障礙性測試
+├── mobile-parity.spec.ts      # 桌面與行動版核心內容一致性
+├── pwa.spec.ts                # PWA 安裝與快取測試
+├── support-info.spec.ts       # 支援與資訊頁 desktop/mobile guardrail
+└── ratewise.spec.ts           # 核心功能測試
 ```
 
 ---
 
 ## 測試矩陣
 
-| 瀏覽器   | 裝置    | 視窗尺寸 | Project 名稱       |
-| -------- | ------- | -------- | ------------------ |
-| Chromium | Desktop | 1440×900 | `chromium-desktop` |
-| Chromium | Mobile  | 375×667  | `chromium-mobile`  |
-| Firefox  | Desktop | 1440×900 | `firefox-desktop`  |
-| Firefox  | Mobile  | 375×667  | `firefox-mobile`   |
+| 瀏覽器   | 裝置    | 視窗尺寸 | Project 名稱           |
+| -------- | ------- | -------- | ---------------------- |
+| Chromium | Desktop | 1440×900 | `chromium-desktop`     |
+| Chromium | Mobile  | 375×667  | `chromium-mobile`      |
+| Chromium | Desktop | 1440×900 | `pwa-chromium`         |
+| Chromium | Desktop | 1440×900 | `offline-pwa-chromium` |
+| Firefox  | Desktop | 1440×900 | `offline-pwa-firefox`  |
 
 ---
 
@@ -91,6 +95,13 @@ tests/e2e/
 - ✅ 語義化 HTML 結構檢查
 - ✅ 鍵盤導航檢查
 - ✅ ARIA 屬性檢查
+
+### support-info.spec.ts（支援與資訊頁）
+
+- ✅ Settings / FAQ / Guide / About / Privacy / OpenData / SeoTech 路由載入
+- ✅ Desktop 與 Mobile 皆檢查 H1、main landmark、console error、pageerror
+- ✅ Body 級水平溢位檢查
+- ✅ OpenData 程式碼範例 tabs 語意檢查
 
 ---
 

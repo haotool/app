@@ -17,6 +17,18 @@
 import type { Page, BrowserContext } from '@playwright/test';
 import { test, expect } from './fixtures/test';
 import { APP_INFO } from '../../src/config/app-info';
+import { STYLE_DEFINITIONS } from '../../src/config/themes';
+
+function toHexColor(rgbTriplet: string): string {
+  return `#${rgbTriplet
+    .trim()
+    .split(/\s+/)
+    .map((value) => Number.parseInt(value, 10).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()}`;
+}
+
+const defaultThemeColor = toHexColor(STYLE_DEFINITIONS.zen.colors.primary);
 
 const getManifestBasePath = async (page: Page) => {
   const manifestLink = await page.locator('link[rel="manifest"]').getAttribute('href');
@@ -40,11 +52,13 @@ test.describe('PWA Features', () => {
     const manifest = (await manifestResponse.json()) as {
       name: string;
       short_name: string;
+      theme_color: string;
       display: string;
       icons: { sizes: string; purpose?: string }[];
     };
     expect(manifest.name).toBe(APP_INFO.name);
     expect(manifest.short_name).toBe(APP_INFO.shortName);
+    expect(manifest.theme_color).toBe(defaultThemeColor);
     expect(manifest.display).toBe('standalone');
     expect(manifest.icons.length).toBeGreaterThan(0);
 
@@ -123,7 +137,7 @@ test.describe('PWA Features', () => {
 
   test('should have theme color meta tag', async ({ rateWisePage: page }) => {
     const themeColor = await page.locator('meta[name="theme-color"]').getAttribute('content');
-    expect(themeColor).toBe('#8B5CF6');
+    expect(themeColor).toBe(defaultThemeColor);
   });
 
   test('should have viewport meta tag', async ({ rateWisePage: page }) => {

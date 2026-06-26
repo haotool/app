@@ -42,7 +42,7 @@ describe('AppLayout Safe Area', () => {
     expect(header).toHaveStyle(`padding-top: ${navigationTokens.safeArea.top}`);
   });
 
-  it('主要滾動區域應可鍵盤聚焦', () => {
+  it('主要滾動區域可程式化聚焦但不在 Tab 順序中', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -53,6 +53,6 @@ describe('AppLayout Safe Area', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('main')).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('main')).toHaveAttribute('tabindex', '-1');
   });
 });

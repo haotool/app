@@ -36,7 +36,7 @@ export function MailtoLink({ email, className }: MailtoLinkProps) {
       ref={ref}
       type="button"
       onClick={handleClick}
-      className={`bg-transparent border-0 p-0 cursor-pointer ${className ?? ''}`.trim()}
+      className={`cursor-pointer rounded-compact border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className ?? ''}`.trim()}
     >
       {safeLabel}
     </button>

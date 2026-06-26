@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-06-26
+- ID：reward-moneybox-seoul-date-workflow-guard
+- 原因：關閉 PR 428（wall-clock Asia/Seoul 方案）改採本分支 snapshot date 方案後，PR 428 的 workflow 時區守門測試會隨之遺失，缺少防止 update-moneybox-rates.yml 退回 Asia/Taipei 的回歸守門。
+- 解法：搶救守門測試至 build-scripts.test，斷言 workflow 含 extractSeoulSnapshotDate 提取與 Asia/Seoul fallback、且不含 Asia/Taipei；47 tests 通過。
+
+- 日期：2026-06-26
 - ID：reward-split-meow-expense-currency-rate-snapshot
 - 原因：split-meow 的 ExpenseRecord 只存裸數字、未保存記帳當下幣別；使用者先以 TWD 記帳後切換 KRW（或韓國時區自動偵測）時，歷史金額會被當前全域幣別重新格式化，NT$1,000 被誤顯示為 ₩1,000。
 - 解法：ExpenseRecord 增加 currency 與 exchangeRateKrwPerTwd 快照欄位，記帳時保存；HistoryTab 個別金額改用各筆快照幣別、KRW 副標即時換算 TWD、彙總/結算採 trip 主導幣別 fallback；補 store/currencies 單元測試與 Playwright 瀏覽器驗收（切回 TWD 後 KRW 記錄仍正確）。
@@ -52,6 +57,11 @@
 - ID：neutral-retrigger-prod-deploy-2252
 - 原因：Release run 28213399513 Zeabur GitHub deployment 回報 success（2306994）但 Zeabur RUNNING pod 仍為 6/25 舊版，正式站 app-version 卡 2.25.1
 - 解法：最小 PR 重觸 main push 促使 Zeabur 重新部署 2.25.2，版本切換後手動 CF purge 與 live precache 驗證
+
+- 日期：2026-06-26
+- ID：neutral-ratewise-production-governance-v2-merge
+- 原因：PR411 與 main 分叉過久，已發版 changeset 與 split-meow 版本會造成 double-bump 與衝突
+- 解法：3-way merge 至 chore/ratewise-production-governance-v2，刪除 9 個已發版 changeset 並保留 genuinely-new 治理項
 
 - 日期：2026-06-26
 - ID：neutral-002-score-header-correction-pr425
@@ -98,6 +108,50 @@
 - 原因：Production Lighthouse 在 ratewise PR 掃 live URL 造成誤判，compareDirection 缺行為測試且 PERFORMANCE_BASELINE 未同步絕對容忍
 - 解法：抽出 lighthouse-drift.mjs 補 INP 漂移行為測試、移除 production workflow PR 觸發、ci.yml LHCI 加 paths/timeout、E2E timeout 30 分
 
+- 日期：2026-06-26
+- ID：reward-moneybox-history-snapshot-date-ssot
+- 原因：MoneyBox history 檔名用 runner 的 Asia/Taipei wall-clock，但 date-rollover 判斷 (extractSeoulSnapshotDate) 用首爾 snapshot date；cron 每 5 分鐘全天執行，UTC 15:00-15:59 視窗每日必觸發，首爾新一日資料會被寫進台北前一日檔名，趨勢日期錯標。
+- 解法：history 檔名改用資料本身宣告的首爾掛牌日（updateTime，與 rollover 判斷同源 SSOT），提取失敗時 fallback 至 Asia/Seoul wall-clock；以三組情境驗證（updateTime、UTC 跨日 timestamp、空資料 fallback）。
+
+- 日期：2026-06-12
+- ID：neutral-ratewise-2026-ux-product-spec
+- 原因：二十線 UX 審查（韓式 fintech 對標、單幣 Modal 摩擦、資訊重複）需可追溯設計 SSOT
+- 解法：新增 docs/superpowers/specs/2026-06-12-ratewise-2026-product-ux-spec.md 與 Phase 1 實作計畫
+
+- 日期：2026-06-12
+- ID：reward-ratewise-cdn-if-none-match-preflight
+- 原因：If-None-Match 非 CORS safelisted，jsDelivr preflight 拒絕導致主 CDN 永遠失敗並降級 GitHub Raw（60 req/hr/IP）
+- 解法：移除 CDN 條件式請求與 304 分支，保留 ETag 存入快取供未來 Worker proxy；同步更新 exchangeRateService 單測
+
+- 日期：2026-06-11
+- ID：reward-ratewise-responsive-320px-overflow-audit
+- 原因：以 Puppeteer 對正式站 320/768/1280 視口程式化掃描（getBoundingClientRect vs clientWidth），發現 open-data 頁端點路徑 `<code>` 無空白長字串（history/{YYYY-MM-DD}.json）未斷行，320px 下溢出至 right=449；其餘首頁/KRW 換錢所/multi/faq/guide/幣別金額頁皆零溢出
+- 解法：端點 code 標籤補 `min-w-0 break-all`，OpenData.test.tsx 新增 320px 防溢出守門測試；固定寬度掃描確認全站無 >320px 無上限寬度，5 個表格皆有 overflow-x-auto SSOT 包裹
+
+- 日期：2026-06-11
+- ID：reward-ratewise-radius-ssot-regression-guard
+- 原因：圓角僅有一次性清理而無防回歸守門（顏色有 regex 守門、圓角沒有），SkeletonLoader/ColorSchemeComparison/notificationTokens.actions.text 殘留 bare `rounded`，趨勢圖 `rounded-b-xl`（12px）與 `rounded-card`（24px）卡片底角不貼合
+- 解法：TDD 先建 `radius-ssot.test.ts` regex 守門（白名單語義 token + full/none 與方向變體，紅燈列出全部殘留）再全數收斂：skeleton/swatch/token 改 `rounded-compact`、趨勢圖改 `rounded-b-card` 對齊卡片外框，config 489 tests + typecheck + prettier 全綠
+
+- 日期：2026-06-11
+- ID：reward-ratewise-a11y-touch-target-focus-radius-convergence
+- 原因：UIUX 稽核發現 RatingModal 星星按鈕僅 32px 觸控目標、OpenData 複製鈕與 MailtoLink、計算機關閉鈕缺 focus-visible 指示，且 OpenData/Footer 多處 bare `rounded`（4px）偏離語義 radius token（小型元素應用 rounded-compact 8px）
+- 解法：TDD 新增 RatingModal 觸控目標守門測試後將星星升至 44px 圓形命中區；複製鈕以透明 after 命中區補 44px 並補 focus ring；MailtoLink 與計算機關閉鈕補 focus-visible 與 44px；OpenData/Footer bare rounded 全數收斂為 rounded-compact，typecheck/eslint/prettier/相關 Vitest 全綠
+
+- 日期：2026-06-11
+- ID：reward-ratewise-exchange-shop-ratemode-ssot-nav-header-deflake
+- 原因：換錢所 `computeConverterRate` 硬編碼買賣方向並忽略 rateMode（選中間價無效），內容頁 sticky header 的 safe-area hack 在 iOS PWA standalone 會遮擋頂部內容，且在途 UIUX 變更留有未同步測試（themes SSR fallback、換錢所匯率期望值鎖死舊 bug）
+- 解法：TDD 將換錢所選價收斂至 `computeConverterRate(rateMode)` 單一 SSOT（mid=(買+賣)/2、sell 雙向賣出、auto 維持客戶視角）並貫穿 getUnitExchangeRate/報價 adapter/趨勢圖；PageNavHeader 砍掉 sticky 改 in-flow pill 返回鈕並以測試禁止 sticky 回歸；RateSelector 以透明命中區補回 44px 觸控目標；同步修正在途測試與 gitignore，typecheck/lint/prettier/1800+ Vitest 全綠
+
+- 日期：2026-05-23
+- ID：reward-ratewise-uiux-token-ssot-convergence
+- 原因：RateWise UI shell、內容頁麵包屑與多處元件樣式存在 design token 漂移、死碼 UI 與 PWA/Chrome polish warning
+- 解法：以 Impeccable / SSOT audit 收斂 token、刪除未引用 UI shim、補 SPEC 與守門測試，並通過 full Vitest、typecheck、SSOT、Chrome console 與 build 驗證
+
+- 日期：2026-05-30
+- ID：ratewise-tw-radius-defaults-restore
+- 原因：`tailwind.config.ts` 覆蓋標準 `lg`/`md`/`sm`/`xl` radius alias 為語義 token 值，第三方元件與未遷移路徑會隱性受影響，為生產級風險。
+- 解法：恢復 Tailwind 標準 radius 預設值，僅保留語義 token（`card`/`panel`/`control`/`icon`/`compact`）作為新增擴充；修正最後一個 `rounded-t-lg` → `rounded-t-control`；同步 `DESIGN.md` 與測試。
 - 日期：2026-06-25
 - ID：reward-ratewise-pwa-install-guide-p1-merge-fix
 - 原因：beforeinstallprompt 在 desktop 無條件 preventDefault 阻擋原生安裝 UI，且 ~693KB 安裝海報被 SW precache

@@ -6,6 +6,8 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { breadcrumbTokens } from '../config/design-tokens';
+import { cn } from '../utils/classnames';
 
 export interface BreadcrumbItem {
   label: string;
@@ -23,35 +25,28 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label={t('nav.breadcrumb')} className={className}>
-      <ol className="flex items-center gap-2 text-sm text-text-muted flex-wrap">
+    <nav aria-label={t('nav.breadcrumb')} className={cn(breadcrumbTokens.nav, className)}>
+      <ol className={breadcrumbTokens.list}>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           const itemKey = `${item.href}::${item.label}`;
 
           return (
-            <li key={itemKey} className="flex items-center gap-2">
+            <li key={itemKey} className={breadcrumbTokens.item}>
               {/* Separator */}
               {index > 0 && (
-                <ChevronRight
-                  className="w-4 h-4 text-text-muted flex-shrink-0"
-                  aria-hidden="true"
-                />
+                <ChevronRight className={breadcrumbTokens.separatorIcon} aria-hidden="true" />
               )}
 
               {/* Breadcrumb Item */}
               {isLast ? (
                 // Current Page - Not a link
-                <span className="font-medium text-text" aria-current="page" title={item.label}>
+                <span className={breadcrumbTokens.current} aria-current="page" title={item.label}>
                   {item.label}
                 </span>
               ) : (
                 // Parent Pages - Links
-                <Link
-                  to={item.href}
-                  title={item.label}
-                  className="hover:text-primary transition-colors duration-200 hover:underline"
-                >
+                <Link to={item.href} title={item.label} className={breadcrumbTokens.link}>
                   {item.label}
                 </Link>
               )}

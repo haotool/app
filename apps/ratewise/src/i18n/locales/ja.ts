@@ -27,6 +27,18 @@ const ja = {
     clickToCopy: 'クリックでコピー',
   },
 
+  rateBasis: {
+    'bank-sell': '銀行売りレート適用',
+    'bank-buy': '銀行買いレート適用',
+    'bank-cross': '買い／売りクロスレート',
+    'bank-sell-only': '台湾銀行の掲示売りレート',
+    mid: '参考仲値（取引不可）',
+    'shop-sell': '両替所の売りレート適用',
+    'shop-buy': '両替所の買いレート適用',
+    'shop-mid': '両替所の仲値（参考）',
+    listBasisNote: '台湾銀行売りレート・1 通貨 = N 台湾ドル',
+  },
+
   // Navigation
   nav: {
     mainNavigation: 'メインナビゲーション',
@@ -47,6 +59,7 @@ const ja = {
     title: APP_INFO.shortName,
     subtitle: '為替レートツール',
     version: 'バージョン',
+    loadingLiveRates: '最新の為替レートを読み込み中...',
   },
 
   // Single Currency Converter
@@ -63,6 +76,7 @@ const ja = {
     clickToSwap: 'クリックで入れ替え',
     addToHistory: '履歴に追加',
     addedToHistory: '履歴に追加しました',
+    conversionAnnouncement: '{{fromAmount}} {{fromCurrency}} は約 {{toAmount}} {{toCurrency}} です',
     spotRate: '直物',
     cashRate: '現金',
     exchangeShopRate: '両替所',
@@ -75,6 +89,7 @@ const ja = {
     rateTypeUnavailableForCurrencies:
       '{{currencies}} は {{rateType}} レート非対応のため、{{fallbackType}} を使用します',
     viewTrendChart: 'トレンドチャートを見る',
+    trendChartLoadFailed: 'トレンドチャートの読み込みに失敗しました',
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',
     backToConverter: 'コンバーターに戻る',
@@ -92,6 +107,7 @@ const ja = {
     calculating: '計算中...',
     noData: 'データなし',
     amountClickCalculator: '{{name}} ({{code}}) 金額、クリックして電卓を開く',
+    setBaseCurrency: '{{name}} ({{code}}) を基準通貨に設定',
     currencyListLabel: '通貨リスト',
     addFavorite: '{{code}} をお気に入りに追加',
     removeFavorite: '{{code}} をお気に入りから削除',
@@ -130,6 +146,7 @@ const ja = {
   // Settings
   settings: {
     title: '設定',
+    description: '表示スタイル、言語、レートモード、サポート情報を調整します。',
     interfaceStyle: 'インターフェーススタイル',
     language: '言語',
     storageCache: 'ストレージとキャッシュ',
@@ -139,7 +156,8 @@ const ja = {
     taiwanBank: '台湾銀行',
     updateFrequency: '更新頻度',
     fiveMinutes: '5分',
-    updateNote: '為替レートは5分ごとに更新されます。',
+    updateNote:
+      '為替レートは約5分ごとに確認されます。実際の反映時間はソースとCDNにより異なります。',
     resetTheme: 'テーマ設定をリセット',
     appVersion: 'アプリバージョン',
     designSystem: 'デザインシステム',
@@ -231,6 +249,7 @@ const ja = {
   // Rate Info
   rateInfo: {
     source: '台湾銀行レート',
+    bankOfficialRates: '台湾銀行レート',
     sourceTime: 'ソース',
     refreshTime: '更新',
     lastUpdate: '最終更新',
@@ -309,25 +328,50 @@ const ja = {
     updatingDescription: 'しばらくお待ちください...',
     updateFailedTitle: '更新に失敗しました',
     updateFailedDescription: '再試行するかネットワークを確認してください',
-    registrationFailedTitle: 'バックグラウンド更新の初期化に失敗しました',
-    registrationFailedDescription:
-      '更新ワーカーを起動できませんでした。ページを再読み込みし、続く場合は作者へ連絡してください。',
     actionRetry: '再試行',
-    actionReload: '再読み込み',
     releaseToRefresh: '離して更新',
     refreshing: '更新中...',
   },
 
   support: {
+    contactLinksAriaLabel: 'サポート連絡先',
+    contactTitle: '問題が続く場合は、作者へご連絡ください：',
     reportIssueLead: '問題が続く場合は、作者へ直接ご連絡ください。',
     reportIssueHint: 'エラー画面、再現手順、端末情報を添えると、原因の特定が早くなります。',
   },
 
+  offline: {
+    title: 'オフラインモード',
+    description: '一部の機能を利用できない場合があります',
+    close: 'オフライン通知を閉じる',
+  },
+
+  skeleton: {
+    appLoading: `${APP_INFO.name}を読み込み中です。`,
+    ratesLoading: '為替レートデータを読み込み中...',
+    settingsLoading: '設定を読み込み中...',
+    favoritesLoading: 'お気に入りを読み込み中...',
+    multiConverterLoading: '複数通貨換算を読み込み中...',
+  },
+
+  rateProvider: {
+    bestRecommendation: 'おすすめ',
+    menuAriaLabel: '為替レート提供元メニュー',
+  },
+
   // 404
   notFound: {
+    metaTitle: '404 - ページが見つかりません',
+    metaDescription:
+      '申し訳ありません。アクセスしたページは存在しません。ホームへ戻るか、別のページをご覧ください。',
+    eyebrow: 'ページエラー',
+    errorAria: '404 エラー',
     title: 'ページが見つかりません',
     message: 'お探しのページは存在しないか、削除されました。',
     goHome: 'ホームに戻る',
+    suggestedPages: 'こちらのページもご覧ください：',
+    reportIssuePrefix: '誤りと思われる場合は',
+    reportIssueLink: '問題を報告',
   },
 
   // Footer
@@ -340,7 +384,7 @@ const ja = {
     refresh: '更新',
     disclaimer:
       '為替レートは台湾銀行の公式レート（現金・直物売りレート）を参照しています。実際の取引レートは銀行の発表をご確認ください。',
-    disclaimerDesktop: '台湾銀行のレートを5分ごとに更新。参考用のみ。',
+    disclaimerDesktop: '台湾銀行のレートを定期的に確認。参考用のみ。',
     faq: 'よくある質問',
     about: '私たちについて',
     appName: APP_INFO.shortName,

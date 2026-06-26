@@ -6,7 +6,8 @@
  * - SSOT tokens 引用
  * - i18n 多語系支援
  * - useReducedMotion 支援
- * - 5 個狀態追蹤（offlineReady / needRefresh / isUpdating / updateFailed / registrationFailed）
+ * - 更新狀態追蹤（offlineReady / needRefresh / isUpdating / updateFailed）
+ * - SW 註冊失敗靜默降級，避免背景更新錯誤阻塞可用頁面
  * - offlineReady 首次安裝成功狀態保持靜默，避免 Lighthouse CLS
  * - ARIA 語義化
  * - SSR 安全
@@ -93,12 +94,9 @@ describe('UpdatePrompt - i18n 多語系', () => {
     expect(sourceCode).toContain("t('pwa.updatingDescription')");
     expect(sourceCode).toContain("t('pwa.updateFailedTitle')");
     expect(sourceCode).toContain("t('pwa.updateFailedDescription')");
-    expect(sourceCode).toContain("t('pwa.registrationFailedTitle')");
-    expect(sourceCode).toContain("t('pwa.registrationFailedDescription')");
     expect(sourceCode).toContain("t('pwa.actionUpdate')");
     expect(sourceCode).toContain("t('pwa.actionClose')");
     expect(sourceCode).toContain("t('pwa.actionRetry')");
-    expect(sourceCode).toContain("t('pwa.actionReload')");
   });
 
   it('should use support.* i18n keys for issue reporting', async () => {
@@ -131,7 +129,7 @@ describe('UpdatePrompt - useReducedMotion 支援', () => {
   });
 });
 
-describe('UpdatePrompt - 5 個狀態', () => {
+describe('UpdatePrompt - 更新狀態與 SW 降級', () => {
   it('should have isUpdating state', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('isUpdating');
@@ -144,18 +142,20 @@ describe('UpdatePrompt - 5 個狀態', () => {
     expect(sourceCode).toContain('setUpdateFailed');
   });
 
-  it('should have registrationFailed state for service worker registration errors', async () => {
+  it('should log service worker registration errors without rendering a blocking prompt', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('registrationFailed');
-    expect(sourceCode).toContain('setRegistrationFailed');
     expect(sourceCode).toContain('onRegisterError');
-    expect(sourceCode).toContain('setRegistrationFailed(true)');
+    expect(sourceCode).toContain("logger.error('Service Worker registration error'");
+    expect(sourceCode).not.toContain('setRegistrationFailed(true)');
+    expect(sourceCode).not.toContain('const [registrationFailed');
+    expect(sourceCode).not.toContain("t('pwa.registrationFailedTitle')");
   });
 
-  it('should render support links when registration or update fails', async () => {
+  it('should render support links only when an actual update action fails', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('SupportContactLinks');
-    expect(sourceCode).toContain('registrationFailed || updateFailed');
+    expect(sourceCode).toContain('{updateFailed ? (');
+    expect(sourceCode).not.toContain('registrationFailed || updateFailed');
   });
 
   it('should handle update with try/catch for error recovery', async () => {
@@ -176,11 +176,12 @@ describe('UpdatePrompt - 5 個狀態', () => {
 describe('UpdatePrompt - ARIA 語義', () => {
   it('should keep offlineReady silent to avoid first-load CLS', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain(
-      'const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;',
-    );
+    expect(sourceCode).toContain('const shouldRender = needRefresh || isUpdating || updateFailed;');
     expect(sourceCode).not.toContain(
       'const shouldRender = offlineReady || needRefresh || isUpdating || updateFailed || registrationFailed;',
+    );
+    expect(sourceCode).not.toContain(
+      'const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;',
     );
   });
 
@@ -207,38 +208,35 @@ describe('UpdatePrompt - SSR 安全', () => {
   });
 });
 
-describe('UpdatePrompt - Design token 品牌配色', () => {
-  it('should use brand gradient', async () => {
+describe('UpdatePrompt - Design token 通知語法', () => {
+  it('should use notification background tokens', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('from-brand-from via-brand-via to-brand-to');
+    expect(sourceCode).toContain('notificationTokens.background.brand');
+    expect(sourceCode).toContain('notificationTokens.background.brandBorder');
   });
 
-  it('should use brand border', async () => {
+  it('should use notification icon tokens', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('border-brand-border');
+    expect(sourceCode).toContain('notificationTokens.icon.brandGradient');
   });
 
-  it('should use brand icon gradient', async () => {
+  it('should use notification text tokens', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('from-brand-icon-from to-brand-icon-to');
+    expect(sourceCode).toContain('notificationTokens.text.brandTitle');
+    expect(sourceCode).toContain('notificationTokens.text.brandDescription');
   });
 
-  it('should use brand text colors', async () => {
+  it('should use shared notification action tokens', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('text-brand-text-dark');
-    expect(sourceCode).toContain('text-brand-text');
+    expect(sourceCode).toContain('notificationTokens.actions.primary');
+    expect(sourceCode).toContain('notificationTokens.actions.icon');
   });
 
-  it('should use brand button gradient', async () => {
+  it('should NOT contain old hardcoded brand gradient classes', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('from-brand-button-from to-brand-button-to');
-  });
-
-  it('should NOT use hardcoded blue/indigo/purple colors', async () => {
-    const sourceCode = await readSource();
-    expect(sourceCode).not.toContain('from-blue-500 to-indigo-600');
-    expect(sourceCode).not.toContain('text-blue-900');
-    expect(sourceCode).not.toContain('text-indigo-700');
+    expect(sourceCode).not.toContain('from-brand-from via-brand-via to-brand-to');
+    expect(sourceCode).not.toContain('from-brand-icon-from to-brand-icon-to');
+    expect(sourceCode).not.toContain('from-brand-button-from to-brand-button-to');
   });
 });
 
@@ -258,6 +256,7 @@ describe('UpdatePrompt - mobile interaction safety', () => {
 
   it('should keep the card itself interactive for buttons and links', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('pointer-events-auto');
+    expect(sourceCode).toContain('notificationTokens.actions.primary');
+    expect(sourceCode).toContain('notificationTokens.actions.icon');
   });
 });

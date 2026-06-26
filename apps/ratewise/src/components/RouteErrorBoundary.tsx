@@ -21,6 +21,7 @@ import i18n from '../i18n';
 import { logger } from '../utils/logger';
 import { isChunkLoadError } from '../utils/chunkLoadRecovery';
 import { SupportContactLinks } from './SupportContactLinks';
+import { feedbackSurfaceTokens } from '../config/design-tokens';
 
 interface Props {
   children: ReactNode;
@@ -57,10 +58,7 @@ function ErrorCard({
           <h2 className="text-lg font-bold text-text mb-2">{title}</h2>
           <p className="text-sm text-text-muted">{description}</p>
         </div>
-        <button
-          onClick={onAction}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
-        >
+        <button type="button" onClick={onAction} className={feedbackSurfaceTokens.actionButton}>
           <RefreshCw size={18} />
           {actionLabel}
         </button>
