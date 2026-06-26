@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+61
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-ratewise-moneybox-no-cache-revalidation
+- 原因：Codex P2 指出 MoneyBox fetchFromCDN 移除 If-None-Match 後仍用預設 cache mode，TTL 到期可能被 HTTP cache 餵舊換錢所報價
+- 解法：fetchWithTimeout 加 cache: 'no-cache' 並補 moneyboxRateService 測試斷言
 
 - 日期：2026-06-26
 - ID：reward-ratewise-cdn-no-cache-revalidation

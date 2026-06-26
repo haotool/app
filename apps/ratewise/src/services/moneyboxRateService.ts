@@ -171,7 +171,7 @@ async function fetchFromCDN(config: ExchangeShopConfig): Promise<{ raw: unknown;
 
   for (const url of urls) {
     try {
-      const res = await fetchWithTimeout(url);
+      const res = await fetchWithTimeout(url, { cache: 'no-cache' });
 
       if (!res.ok) {
         logger.warn(`Exchange shop CDN returned ${res.status}`, { url });

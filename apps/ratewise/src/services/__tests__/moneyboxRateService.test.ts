@@ -162,6 +162,7 @@ describe('fetchExchangeShopRate', () => {
     expect(result).not.toBeNull();
     expect(result!.sell).toBe(44.85);
     expect(result!.isFallback).toBe(false);
+    expect(capturedInit?.cache).toBe('no-cache');
     const headerKeys = Object.keys((capturedInit?.headers ?? {}) as Record<string, string>).map(
       (key) => key.toLowerCase(),
     );
