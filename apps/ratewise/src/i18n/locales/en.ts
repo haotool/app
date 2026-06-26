@@ -159,6 +159,11 @@ const en = {
     rateModeMid: 'Ref Rate',
     rateModeMidDesc:
       'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
+    heroLayout: 'Home Layout',
+    heroLayoutLegacy: 'Classic',
+    heroLayoutLegacyDesc: 'Amount row above the rate card (default)',
+    heroLayoutV2: 'Hero v2',
+    heroLayoutV2Desc: 'Rate hero on top, 32px type, freshness chip (experimental)',
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',

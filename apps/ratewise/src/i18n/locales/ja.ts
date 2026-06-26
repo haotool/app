@@ -156,6 +156,11 @@ const ja = {
     rateModeSellDesc: '全換算に銀行売値を適用。電信送金（即時）・窓口現金どちらも対応',
     rateModeMid: '参考値',
     rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
+    heroLayout: 'ホームレイアウト',
+    heroLayoutLegacy: 'クラシック',
+    heroLayoutLegacyDesc: '金額行をレートカードの上に表示（既定）',
+    heroLayoutV2: 'Hero v2',
+    heroLayoutV2Desc: 'レート hero を最上部、32px 字級と freshness chip（実験）',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',

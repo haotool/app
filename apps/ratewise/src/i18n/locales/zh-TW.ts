@@ -156,6 +156,11 @@ const zhTW = {
     rateModeSellDesc: '全程以銀行賣出牌告計算；即期適用網銀換匯，現金適用臨櫃買外幣現鈔',
     rateModeMid: '參考價',
     rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
+    heroLayout: '首屏布局',
+    heroLayoutLegacy: '經典',
+    heroLayoutLegacyDesc: '金額列在匯率卡片上方（預設）',
+    heroLayoutV2: 'Hero v2',
+    heroLayoutV2Desc: '匯率 hero 置頂、32px 字級與 freshness chip（實驗）',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',

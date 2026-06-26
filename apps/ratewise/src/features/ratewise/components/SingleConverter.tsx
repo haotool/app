@@ -36,7 +36,10 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
-import { getHeroLayoutVariant } from '../../../config/hero-layout-variant';
+import {
+  getHeroLayoutVariant,
+  HERO_LAYOUT_VARIANT_CHANGE_EVENT,
+} from '../../../config/hero-layout-variant';
 import { formatDisplayTime } from '../../../utils/timeFormatter';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
@@ -131,7 +134,10 @@ export const SingleConverter = ({
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setIsHeroV2(getHeroLayoutVariant() === 'hero-v2');
+    const syncHeroLayout = () => setIsHeroV2(getHeroLayoutVariant() === 'hero-v2');
+    syncHeroLayout();
+    window.addEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
+    return () => window.removeEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
   }, []);
 
   const rateTextClassName = isHeroV2
@@ -522,7 +528,11 @@ export const SingleConverter = ({
           ) : null}
 
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl overflow-hidden ${rateInfoMotionClassName} ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl overflow-hidden ${rateInfoMotionClassName} ${
+              isHeroV2
+                ? singleConverterLayoutTokens.rateCard.heroInfoPadding
+                : singleConverterLayoutTokens.rateCard.infoPadding
+            }`}
           >
             <RateSelector
               rateType={rateType}

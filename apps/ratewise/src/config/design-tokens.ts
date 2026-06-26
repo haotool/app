@@ -696,6 +696,10 @@ export const singleConverterLayoutTokens = {
     infoPadding:
       'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-5 micro:pb-2.5 nano:pt-4 nano:pb-2',
 
+    /** Hero v2 匯率資訊區內距（answer-first：頂部留白較小，y≤120） */
+    heroInfoPadding:
+      'pt-6 pb-4 compact:pt-5 compact:pb-3.5 short:pt-4 short:pb-3 tiny:pt-3 tiny:pb-2.5 micro:pt-2.5 micro:pb-2 nano:pt-2 nano:pb-2',
+
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
       'absolute top-3 left-1/2 -translate-x-1/2 compact:top-2.5 short:top-2 tiny:top-2 micro:top-1.5 nano:top-1.5',

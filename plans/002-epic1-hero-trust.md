@@ -12,6 +12,7 @@
 - **Depends on**: plans/001-experiment-branch-bootstrap.md, plans/009-agent-orchestration.md
 - **Category**: direction
 - **Planned at**: commit `e7b7f1ec`, 2026-06-27
+- **Completed**: 2026-06-27 — PR pending merge to `experiment/ratewise-ux-2026`
 
 ## Why this matters
 
@@ -151,13 +152,13 @@
 
 ## Done criteria
 
-- [ ] `legacy` 與 `hero-v2` 皆可 render；預設 `legacy`
-- [ ] `hero-v2` 通過 L01 AC1–AC5（有 Playwright 證據）
-- [ ] console error=0 三路由（L06）
-- [ ] `display-md` token 存在（L14）
-- [ ] `.changeset` 已建立
+- [x] `legacy` 與 `hero-v2` 皆可 render；預設 `legacy`
+- [x] `hero-v2` 通過 L01 AC1–AC5（有 Playwright 證據）
+- [x] console error=0 三路由（L06）
+- [x] `display-md` token 存在（L14）
+- [x] `.changeset` 已建立
 - [ ] PR merged to **experiment**（非 main）
-- [ ] spec §六 三列 P0 透鏡 updated
+- [x] spec §六 三列 P0 透鏡 updated
 
 ## STOP conditions
 

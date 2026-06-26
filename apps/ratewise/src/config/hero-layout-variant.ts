@@ -1,6 +1,7 @@
 export type HeroLayoutVariant = 'legacy' | 'hero-v2';
 
 const STORAGE_KEY = 'ratewise:heroLayoutVariant';
+export const HERO_LAYOUT_VARIANT_CHANGE_EVENT = 'ratewise:hero-layout-variant-change';
 
 export function getHeroLayoutVariant(): HeroLayoutVariant {
   if (typeof window === 'undefined') {
@@ -32,6 +33,7 @@ export function setHeroLayoutVariant(variant: HeroLayoutVariant): void {
 
   try {
     window.localStorage.setItem(STORAGE_KEY, variant);
+    window.dispatchEvent(new CustomEvent(HERO_LAYOUT_VARIANT_CHANGE_EVENT, { detail: variant }));
   } catch {
     // 忽略 private mode 寫入失敗。
   }

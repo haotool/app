@@ -7,6 +7,7 @@
 - **Priority**: P1 | **Effort**: M | **Risk**: MED
 - **Depends on**: plans/002, 003, 004, 005, 007, 008
 - **Category**: tests | **Planned at**: `e7b7f1ec`, 2026-06-27
+- **L20 local phase**: 2026-06-27 @ `origin/experiment/ratewise-ux-2026` (`5e5e543e`) — **Gate ~35%**（見下方驗收表）
 
 ## Why this matters
 
@@ -119,13 +120,34 @@ VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ no
 - 本 plan 即測試交付物；新增 spec 檔案 ≥3
 - 回歸：`pnpm --filter @app/ratewise test -- seo-ssot animations`
 
+## L20 local phase 驗收（2026-06-27）
+
+**環境**：worktree `../ratewise-ux-worktrees/epic3-content-distill` @ `5e5e543e`；`pnpm build:ratewise` + preview `:4173`
+
+| Matrix 列（§十六） | 結果 | 備註 |
+| ------------------ | ---- | ---- |
+| 16.2 curl 8 routes | **PASS** | prod 全 200 |
+| 16.2 security headers | **PASS** | `x-security-policy-version: 5.4` |
+| 16.2 live precache | **PASS** | ≥50 assets 200 |
+| 16.3 mobile-pwa-smoke | **FAIL** | spec 待建；手動四 tab 無白屏 |
+| 16.3 hero y ≤120 | **FAIL** | rateText y≈274；24px |
+| 16.3 console=0 | **FAIL** | `/` `/settings/` `/faq/` 各 React #418 |
+| 16.3 touch-44 | **SKIP** | spec 待建 |
+| 16.4 build | **PASS** | build:ratewise exit 0 |
+| G2 Lighthouse | **BLOCKED** | #433；本地 lhci port 衝突 |
+| G5 Maintainer | **PENDING** | 禁止 merge experiment→main |
+
+**截圖**：`screenshots/l20-hero-v2-390x844.png`
+
+**CI path（本機無瀏覽器時）**：`pnpm --filter @app/ratewise test:e2e --grep 'mobile-pwa|hero-y|touch-44'`（spec 合併後）；PR CI `chromium-mobile` project。
+
 ## Done criteria
 
-- [ ] §十六 matrix 對應自動化 ≥80%
-- [ ] G1–G4 證據路徑記錄於 spec §六
+- [ ] §十六 matrix 對應自動化 ≥80%（現況 ~25%：curl + precache + build）
+- [x] G1–G4 證據路徑記錄於 spec §六 L20（local phase 部分）
 - [ ] experiment branch CI green（含 lighthouse 若 path hit）
-- [ ] experiment→main PR 已開或 BLOCKED 原因明確
-- [ ] `registerSW.js` 404 **不**視為 fail（spec L20）
+- [x] experiment→main PR 已開或 BLOCKED 原因明確 → **BLOCKED**（G1 P0、G2、G4）
+- [x] `registerSW.js` 404 **不**視為 fail（spec L20）
 
 ## STOP conditions
 

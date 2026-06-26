@@ -253,7 +253,7 @@ describe('Design Token System - BDD', () => {
     });
 
     it('應該導出 singleConverterLayoutTokens', async () => {
-      const { singleConverterLayoutTokens } = await import('./design-tokens');
+      const { singleConverterLayoutTokens, navigationTokens } = await import('./design-tokens');
 
       expect(singleConverterLayoutTokens).toBeDefined();
 
@@ -266,6 +266,9 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
       expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('absolute');
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
+      expect(singleConverterLayoutTokens.rateCard.heroRateDisplay).toContain('text-[32px]');
+      expect(singleConverterLayoutTokens.rateCard.trustChipGap).toBe('mt-2');
+      expect(navigationTokens.bottomNav.scrollPaddingBottom).toBe(57);
     });
   });
 

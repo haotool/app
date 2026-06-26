@@ -156,6 +156,11 @@ const ko = {
     rateModeSellDesc: '전 구간 은행 매도율 적용. 전신환(인터넷뱅킹)·창구 현금 매수 모두 동일 기준',
     rateModeMid: '참고율',
     rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
+    heroLayout: '홈 레이아웃',
+    heroLayoutLegacy: '클래식',
+    heroLayoutLegacyDesc: '금액 행이 환율 카드 위에 표시 (기본)',
+    heroLayoutV2: 'Hero v2',
+    heroLayoutV2Desc: '환율 hero 상단, 32px 글자, freshness chip (실험)',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
     faq: '자주 묻는 질문',
