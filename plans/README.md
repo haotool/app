@@ -6,32 +6,18 @@
 
 ## 建議執行順序與狀態
 
-| Plan                                        | 標題               | Priority | Effort | Depends on | Spec Epic | Status |
-| ------------------------------------------- | ------------------ | -------- | ------ | ---------- | --------- | ------ |
-| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap | P1       | S      | —          | §十四.12  | DONE   |
-
-<<<<<<< HEAD
-| [009](./009-agent-orchestration.md) | Agent 編排與 gh playbook | P1 | M | 001 | §三 | TODO |
-=======
-| [009](./009-agent-orchestration.md) | Agent 編排與 gh playbook | P1 | M | 001 | §三 | IN PROGRESS |
-
-> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
-> > > > > > > | [002](./002-epic1-hero-trust.md) | Epic 1 Hero + Trust | P1 | L | 001, 009 | E1 / L01,L06,L14 | IN PROGRESS |
-> > > > > > > | [003](./003-epic2-settings-ssot.md) | Epic 2 Settings SSOT | P1 | M | 001 | E2 / L12,L15 | TODO |
-> > > > > > > | [004](./004-epic3-content-distill.md) | Epic 3 Content Distill | P1 | M | 001 | E3 / L09,L13 | IN PROGRESS |
-> > > > > > > | [005](./005-epic4-multi-ia.md) | Epic 4 Multi + IA | P2 | M | 001, 002 | E4 / L03,L05 | TODO |
-> > > > > > > <<<<<<< HEAD
-> > > > > > > | [006](./006-api-semantics-v2.md) | API 語意 v2 加法遷移 | P2 | M | 001 | §二十一 | IN PROGRESS |
-> > > > > > > | [007](./007-cf-security-headers.md) | CF Worker 可維護性 | P2 | M | — | Release gate | IN PROGRESS |
-
-# | [008](./008-zeabur-deployment.md) | Zeabur 部署與 race 防護 | P2 | M | — | §3.5 / Release | TODO |
-
-| [006](./006-api-semantics-v2.md) | API 語意 v2 加法遷移 | P2 | M | 001 | §二十一 | DONE |
-| [007](./007-cf-security-headers.md) | CF Worker 可維護性 | P2 | M | — | Release gate | AUDIT DONE |
-| [008](./008-zeabur-deployment.md) | Zeabur 部署與 race 防護 | P2 | M | — | §3.5 / Release | AUDIT DONE |
-
-> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
-> > > > > > > | [010](./010-qa-gate.md) | QA 閘門（390×844 + live） | P1 | M | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO |
+| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status      |
+| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------- |
+| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE        |
+| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS |
+| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | IN PROGRESS |
+| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001               | E2 / L12,L15          | TODO        |
+| [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS |
+| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO        |
+| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE        |
+| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | AUDIT DONE  |
+| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE  |
+| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO        |
 
 Status 值：`TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` | `REJECTED`
 
@@ -106,18 +92,16 @@ flowchart TB
 
 ## 稽核摘要（vetted findings — commit e7b7f1ec）
 
-| #   | Finding                               | Category       | Impact                                                | Effort | Risk | Evidence                                                                                               |
-| --- | ------------------------------------- | -------------- | ----------------------------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------------------------ |
-| F1  | ~~實驗分支尚未建立~~ **已 bootstrap** | direction      | experiment @ `567ebd4d`；worktrees epic1/epic3/api/cf | S      | LOW  | `git ls-remote origin experiment/ratewise-ux-2026` 有 ref                                              |
-| F2  | 首屏 answer-first 倒置                | direction      | 0 tap 可讀匯率但視線先落金額列                        | L      | MED  | `SingleConverter.tsx:398-422` 早於 `:486+`；`design-tokens.ts:678-709` 同 `text-2xl`                   |
-| F3  | Hydration P0 未解                     | correctness    | React #418 阻斷 trust / release gate                  | M      | MED  | `main.tsx:9-10` import `suppress-hydration-warning`                                                    |
-| F4  | API buy/sell 銀行視角                 | correctness    | 整合方易反解 customer action                          | M      | LOW  | `latest.json:14-22` `fromCurrencyField: "{rateType}.buy"`；無 `schemaVersion`/`customerBuyForeignRate` |
-| F5  | Release 邊界分散                      | architecture   | Zeabur→CF→precache 順序錯易 stale 404                 | M      | MED  | `release.yml:213-241`；`Dockerfile:73-78` 多 app 單映像                                                |
-| F6  | 觸控 / nav 未達 44px                  | direction      | WCAG 2.5.8、韓系對標 gap                              | M      | LOW  | `BottomNavigation.tsx:105` `text-[8px]`；`PwaInstallGuide.tsx:16` `1800ms`                             |
-| F7  | 內容 thesis 重複                      | docs/direction | curl 賣出價/中間價 keyword=2（目標 ≤1）               | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                                       |
-| F8  | CF observability 已取樣 10%           | dx             | 符合 044 治理；deploy SOP 需與 UX gate 綁定           | S      | LOW  | `wrangler.jsonc:23-36` `head_sampling_rate: 0.1`                                                       |
-
-# <<<<<<< HEAD
+| #   | Finding                                | Category       | Impact                                                | Effort | Risk | Evidence                                                                             |
+| --- | -------------------------------------- | -------------- | ----------------------------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------ |
+| F1  | ~~實驗分支尚未建立~~ **已 bootstrap**  | direction      | experiment @ `567ebd4d`；worktrees epic1/epic3/api/cf | S      | LOW  | `git ls-remote origin experiment/ratewise-ux-2026` 有 ref                            |
+| F2  | 首屏 answer-first 倒置                 | direction      | 0 tap 可讀匯率但視線先落金額列                        | L      | MED  | `SingleConverter.tsx:398-422` 早於 `:486+`；`design-tokens.ts:678-709` 同 `text-2xl` |
+| F3  | Hydration P0 未解                      | correctness    | React #418 阻斷 trust / release gate                  | M      | MED  | `main.tsx:9-10` import `suppress-hydration-warning`                                  |
+| F4  | ~~API buy/sell 銀行視角~~ **006 DONE** | correctness    | v2 additive 欄位 + OpenAPI CurrencyRateV2             | M      | LOW  | `api-semantics-v2.ts`；`latest.json` `schemaVersion: "2.0"`                          |
+| F5  | Release 邊界分散                       | architecture   | Zeabur→CF→precache 順序錯易 stale 404                 | M      | MED  | `release.yml:213-241`；`Dockerfile:73-78` 多 app 單映像                              |
+| F6  | 觸控 / nav 未達 44px                   | direction      | WCAG 2.5.8、韓系對標 gap                              | M      | LOW  | `BottomNavigation.tsx:105` `text-[8px]`；`PwaInstallGuide.tsx:16` `1800ms`           |
+| F7  | 內容 thesis 重複                       | docs/direction | curl 賣出價/中間價 keyword=2（目標 ≤1）               | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                     |
+| F8  | CF observability 已取樣 10%            | dx             | 符合 044 治理；deploy SOP 需與 UX gate 綁定           | S      | LOW  | `wrangler.jsonc:23-36` `head_sampling_rate: 0.1`                                     |
 
 ## Infra 稽核摘要（Plan 007 + 008 — read-only，2026-06-27）
 
@@ -147,7 +131,14 @@ flowchart TB
 | gh issues                            | #458 HERO-P0-001、#459 QA-P0-001、#460 Epic 3；**缺** Epic 2/4 umbrella、TYP-P2-001                           |
 | Agent 4ef4e173                       | 已完成 001 push + labels/issues + worktrees；002 SingleConverter 中途變更未保留，需 master executor 續作      |
 
-> > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
+## Plan 006 執行證據（2026-06-27）
+
+| 項目      | 結果                                                                       |
+| --------- | -------------------------------------------------------------------------- |
+| 分支      | `feat/ratewise-api-semantics-v2`                                           |
+| SSOT      | `apps/ratewise/src/config/api-semantics-v2.ts`                             |
+| 測試      | `api-semantics-v2.test.ts` 5 passed；typecheck pass；verify:artifacts pass |
+| changeset | `.changeset/ratewise-api-semantics-v2.md`（patch）                         |
 
 ## 已考慮並拒絕
 

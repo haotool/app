@@ -7,40 +7,30 @@
 - **Priority**: P2 | **Effort**: M | **Risk**: LOW
 - **Depends on**: plans/001-experiment-branch-bootstrap.md
 - **Category**: migration | **Planned at**: `e7b7f1ec`, 2026-06-27
-  <<<<<<< HEAD
-  =======
-- **Execution**: DONE @ 2026-06-27（feat/ratewise-api-semantics-v2 → experiment/ratewise-ux-2026）
-  > > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
+- **Execution**: DONE @ 2026-06-27（`feat/ratewise-api-semantics-v2` → `experiment/ratewise-ux-2026`）
 
 ## Why this matters
 
 現況 API 使用銀行視角 `buy`/`sell` 與 `{rateType}.buy` 公式字串（`latest.json:14-22`），整合方易反解 customer action。Spec §二十一 提案 v2 **additive** 欄位（`customerBuyForeignRate` 等），對齊 RateWise「台銀賣出價」產品定位。
 
-## Current state
+## Current state（完成後）
 
-```json
-// apps/ratewise/public/api/latest.json (excerpt)
-"rateModeStrategies": {
-  "auto": {
-    "fromCurrencyField": "{rateType}.buy",
-    "toCurrencyField": "{rateType}.sell"
-  }
-}
-```
-
-- `apps/ratewise/public/openapi.json` — 說明 buy/sell 但未 export `schemaVersion: "2.0"`
-- 生成腳本：搜尋 `apps/ratewise/scripts/` 內 `latest.json` / OpenAPI generator
-- **無** `customerBuyForeignRate` 欄位（grep 無匹配）
+- `apps/ratewise/src/config/api-semantics-v2.ts` — SSOT：`enrichRatesPayload` / `buildSemanticFieldMapping`
+- `apps/ratewise/public/api/latest.json` — 頂層 `schemaVersion: "2.0"`、`semanticsDoc`、`semanticFieldMapping`；legacy `rateModeStrategies` 不變
+- `apps/ratewise/public/openapi.json` — `CurrencyRateV2` schema、`asOf`、legacy `@deprecated` description
+- 生成腳本：`generate-api-json.mjs`、`generate-pair-json.mjs`、`generate-openapi.mjs` 匯入 SSOT
+- vitest：`api-semantics-v2.test.ts`（5 tests）+ `seo-best-practices` schemaVersion 斷言
 
 Migration 階段 M1–M4（spec §21.4）；**禁止 M5 remove** 除非 Maintainer 批准。
 
 ## Commands
 
-| Purpose   | Command                                              | Expected       |
-| --------- | ---------------------------------------------------- | -------------- |
-| Artifacts | `pnpm --filter @app/ratewise verify:artifacts`       | pass           |
-| Test      | `pnpm --filter @app/ratewise test -- api`            | pass（若存在） |
-| Prebuild  | `pnpm --filter @app/ratewise generate:deterministic` | updates JSON   |
+| Purpose   | Command                                              | Expected     |
+| --------- | ---------------------------------------------------- | ------------ |
+| Artifacts | `pnpm --filter @app/ratewise verify:artifacts`       | pass         |
+| Test      | `pnpm --filter @app/ratewise test -- api-semantics`  | 5 passed     |
+| Typecheck | `pnpm --filter @app/ratewise typecheck`              | pass         |
+| Prebuild  | `pnpm --filter @app/ratewise generate:deterministic` | updates JSON |
 
 ## Scope
 
@@ -50,65 +40,49 @@ Migration 階段 M1–M4（spec §21.4）；**禁止 M5 remove** 除非 Maintain
 
 ## Steps
 
-### Step 1: 定位生成 SSOT
+### Step 1: 定位生成 SSOT ✅
 
-```bash
-rg -l 'latest\.json|openapi' apps/ratewise/scripts --type js
-```
+- `generate-api-json.mjs` → `public/api/latest.json`
+- `generate-pair-json.mjs` → `public/api/pairs/*.json`
+- `generate-openapi.mjs` → `public/openapi.json`
+- 映射邏輯 SSOT：`src/config/api-semantics-v2.ts`
 
-記錄單一寫入路徑；禁止第二份 hardcode 名單。
-
-### Step 2: M1 Additive 欄位
-
-對每幣別 rate object 新增（spec §21.2）:
+### Step 2: M1 Additive 欄位 ✅
 
 - `customerBuyForeignRate` ← legacy `{type}.sell`
 - `customerSellForeignRate` ← legacy `{type}.buy`
-- `midMarketRate`
-- 頂層 `schemaVersion: "2.0"`, `asOf`
+- `midMarketRate`、`asOf`（payload enrich）
+- 頂層 `schemaVersion: "2.0"`
+- legacy `buy`/`sell` 保留
 
-**保留** legacy `buy`/`sell` 不變。
+### Step 3: M2 OpenAPI ✅
 
-**Verify**: JSON parse；spot check USD cash 對照表 §21.3
+`CurrencyRateV2` + legacy `@deprecated` in description
 
-### Step 3: M2 OpenAPI
+### Step 4: M3 Docs metadata ✅
 
-`openapi.json` 新增 `CurrencyRateV2` schema；legacy 標 `@deprecated` in description only
+`semanticsDoc: https://app.haotool.org/ratewise/open-data/`
 
-**Verify**: `pnpm --filter @app/ratewise verify:artifacts`
+### Step 5: Tests ✅
 
-### Step 4: M3 Docs metadata
+`api-semantics-v2.test.ts` — USD cash 映射 §21.3
 
-`latest.json` metadata 加 `semanticsDoc: "docs/superpowers/specs/...§二十一"` 或 public URL
+### Step 6: PR to experiment ✅
 
-### Step 5: Tests
-
-新增 vitest：映射 `customerBuyForeignRate === details.USD.cash.sell`（範例）
-
-### Step 6: PR to experiment
-
-changeset patch；002 002 log
+changeset patch；002 log
 
 ## Test plan
 
-- Unit: field mapping table §21.3
-- `verify:artifacts` SSOT sync
+- Unit: field mapping table §21.3 — **pass**
+- `verify:artifacts` SSOT sync — **pass**
 
 ## Done criteria
 
-<<<<<<< HEAD
-
-- [ ] legacy + v2 並存
-- [ ] `schemaVersion: "2.0"` 存在
-- [ ] OpenAPI 含 V2 schema
-- [ ] verify:artifacts pass
-- [ ] # 無 consumer breaking change
 - [x] legacy + v2 並存
 - [x] `schemaVersion: "2.0"` 存在
 - [x] OpenAPI 含 V2 schema
 - [x] verify:artifacts pass
 - [x] 無 consumer breaking change
-  > > > > > > > 0d3ad675 (feat(ratewise): API 語意 v2 加法遷移)
 
 ## STOP conditions
 
