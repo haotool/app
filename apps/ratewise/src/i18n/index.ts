@@ -52,8 +52,19 @@ const resources = {
   ko: { translation: ko },
 };
 
-const canUseBrowserLanguageStorage =
-  typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
+// 實際偵測 localStorage 是否可寫：私密模式或嵌入式瀏覽器中 window 存在但
+// setItem 會丟錯，僅檢查 window 會讓 i18next caches:['localStorage'] 寫入失敗。
+const canUseBrowserLanguageStorage = (() => {
+  if (typeof window === 'undefined' || import.meta.env.MODE === 'test') return false;
+  try {
+    const probeKey = '__ratewise_ls_probe__';
+    window.localStorage.setItem(probeKey, '1');
+    window.localStorage.removeItem(probeKey);
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 /**
  * 正規化語系代碼
