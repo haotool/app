@@ -507,8 +507,8 @@ describe('handleNavigationRequest', () => {
     });
 
     htmlCache.match.mockResolvedValue(undefined);
-    matchPrecacheMock.mockImplementation(async (url: string) =>
-      url === 'index.html' ? precachedShell : null,
+    matchPrecacheMock.mockImplementation((url: string) =>
+      Promise.resolve(url === 'index.html' ? precachedShell : null),
     );
     vi.stubGlobal(
       'fetch',
@@ -532,10 +532,10 @@ describe('handleNavigationRequest', () => {
     const offlineFallback = createOfflineFallbackResponse();
 
     htmlCache.match.mockResolvedValue(undefined);
-    matchPrecacheMock.mockImplementation(async (url: string) => {
-      if (url === 'index.html') return null;
-      if (url === 'offline.html') return offlineFallback;
-      return null;
+    matchPrecacheMock.mockImplementation((url: string) => {
+      if (url === 'index.html') return Promise.resolve(null);
+      if (url === 'offline.html') return Promise.resolve(offlineFallback);
+      return Promise.resolve(null);
     });
     cachesMatch.mockResolvedValue(undefined);
     vi.stubGlobal(
