@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：前次總分 +60
+> 本次分數變化：0（neutral）｜累計總分：+60
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：neutral-agents-continual-learning-sync
+- 原因：continual-learning 4c1b7c25 更新 AGENTS.md Learned Preferences/Facts 未入版控
+- 解法：新增 neutral 002 條目並以 docs(agents) commit 推送 fix/ratewise-pwa-etag
 
 - 日期：2026-06-26
 - ID：reward-ratewise-pwa-etag-p0-convergence
