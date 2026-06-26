@@ -266,7 +266,8 @@ jobs:
     permissions:
       contents: read
     strategy:
-      fail-fast: true
+      # 各 shard 獨立：單一 shard 暫時性失敗不應取消其他 shard，便於拿到完整結果與精準重跑。
+      fail-fast: false
       matrix:
         shard: [1, 2]
 
