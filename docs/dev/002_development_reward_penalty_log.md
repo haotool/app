@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（neutral 0）｜累計總分：+61
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-moneybox-history-snapshot-date-ssot
+- 原因：MoneyBox history 檔名用 runner 的 Asia/Taipei wall-clock，但 date-rollover 判斷 (extractSeoulSnapshotDate) 用首爾 snapshot date；cron 每 5 分鐘全天執行，UTC 15:00-15:59 視窗每日必觸發，首爾新一日資料會被寫進台北前一日檔名，趨勢日期錯標。
+- 解法：history 檔名改用資料本身宣告的首爾掛牌日（updateTime，與 rollover 判斷同源 SSOT），提取失敗時 fallback 至 Asia/Seoul wall-clock；以三組情境驗證（updateTime、UTC 跨日 timestamp、空資料 fallback）。
 
 - 日期：2026-06-12
 - ID：neutral-ratewise-2026-ux-product-spec
