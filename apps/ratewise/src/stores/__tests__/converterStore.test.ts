@@ -94,6 +94,35 @@ describe('converterStore', () => {
     });
   });
 
+  // ── lastConverterView（冷啟動還原偏好）──────────────────────────────────
+  describe('lastConverterView', () => {
+    it('預設值為 single', () => {
+      expect(useConverterStore.getState().lastConverterView).toBe('single');
+    });
+
+    it('setLastConverterView 更新上次停留模式', () => {
+      useConverterStore.getState().setLastConverterView('multi');
+      expect(useConverterStore.getState().lastConverterView).toBe('multi');
+    });
+
+    it('partialize 將 lastConverterView 納入持久化', () => {
+      useConverterStore.getState().setLastConverterView('multi');
+      const { partialize } = useConverterStore.persist.getOptions();
+      const persisted = partialize?.(useConverterStore.getState()) as {
+        lastConverterView?: string;
+      };
+      expect(persisted?.lastConverterView).toBe('multi');
+    });
+
+    it('sanitize: 非法 lastConverterView 修正為 single', () => {
+      useConverterStore.setState({
+        lastConverterView: 'invalid' as unknown as 'single' | 'multi',
+      });
+      useConverterStore.getState().__validateAndSanitize?.();
+      expect(useConverterStore.getState().lastConverterView).toBe('single');
+    });
+  });
+
   // ── setRateType / setRateSource ──────────────────────────────────────────
   describe('setRateType / setRateSource', () => {
     it('setRateType 直接更新 rateType', () => {

@@ -1,0 +1,94 @@
+// @vitest-environment jsdom
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { RememberedHomeRoute } from '../RememberedHomeRoute';
+import { __resetColdStartRestoreForTests, markRestoreAttempted } from '../coldStartRestore';
+import { useConverterStore } from '../../../../stores/converterStore';
+
+vi.mock('../../RateWise', () => ({
+  default: () => <div data-testid="ratewise-single">Single</div>,
+}));
+
+const MultiMarker = () => <div data-testid="multi-page">Multi</div>;
+
+function renderHome(initialEntry = '/') {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route path="/" element={<RememberedHomeRoute />} />
+        <Route path="/multi" element={<MultiMarker />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('RememberedHomeRoute', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    __resetColdStartRestoreForTests();
+    useConverterStore.setState({ lastConverterView: 'single' });
+  });
+
+  it('lastConverterView=multi 且已 hydrate 時導向 /multi', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    renderHome('/');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('multi-page')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('ratewise-single')).not.toBeInTheDocument();
+  });
+
+  it('lastConverterView=single 時渲染單幣別且不導向', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'single' });
+
+    renderHome('/');
+
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('deep-link query 存在時不導向，即使 lastConverterView=multi', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    renderHome('/?from=USD');
+
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('冷啟動還原後第二次造訪 / 不再導向', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    const { unmount } = renderHome('/');
+    await waitFor(() => {
+      expect(screen.getByTestId('multi-page')).toBeInTheDocument();
+    });
+    unmount();
+
+    renderHome('/');
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('從 /multi 冷啟動後 in-app 導向 / 不應 redirect 回 /multi', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    // 模擬非首頁冷啟動：模組初始化時已預先標記還原嘗試
+    markRestoreAttempted();
+
+    renderHome('/');
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+});
