@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 import { SettingsTab } from '../SettingsTab';
@@ -84,5 +84,32 @@ describe('SettingsTab', () => {
       fireEvent.click(addPersonBtn);
       expect(useStore.getState().members).toHaveLength(3);
     }
+  });
+
+  it('切換幣別若會混幣需確認，取消則不變更', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    useStore.setState({
+      currency: 'TWD',
+      currentTripId: 'default-trip',
+      expenses: [
+        {
+          id: 'exp-1',
+          tripId: 'default-trip',
+          type: 'split_evenly',
+          participantIds: ['me'],
+          paidBy: 'me',
+          totalAmount: 100,
+          perPersonAmounts: { me: 100 },
+          note: '',
+          createdAt: 1,
+          currency: 'TWD',
+        },
+      ],
+    });
+    renderSettings();
+    fireEvent.click(screen.getByText('₩'));
+    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_warning'));
+    expect(useStore.getState().currency).toBe('TWD');
+    confirmSpy.mockRestore();
   });
 });

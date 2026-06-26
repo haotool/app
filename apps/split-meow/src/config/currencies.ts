@@ -63,6 +63,22 @@ export function isMixedCurrencyTrip(
   return codes.size > 1;
 }
 
+/** 新增一筆 `incomingCurrency` 是否會使原本單幣行程變成混幣。 */
+export function wouldCreateMixedCurrencyTrip(
+  tripExpenses: { currency?: CurrencyCode }[],
+  globalCurrency: CurrencyCode,
+  incomingCurrency: CurrencyCode,
+): boolean {
+  if (tripExpenses.length === 0) return false;
+  const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
+  if (isMixedCurrencyTrip(tripExpenses, tripCurrency)) return false;
+  const establishedCurrency = resolveExpenseCurrency(
+    tripExpenses[tripExpenses.length - 1]!,
+    tripCurrency,
+  );
+  return incomingCurrency !== establishedCurrency;
+}
+
 /** 同幣別行程的成員餘額；僅在 `isMixedCurrencyTrip` 為 false 時有意義。 */
 export function computeMemberBalances(
   expenses: {

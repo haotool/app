@@ -5,7 +5,7 @@ import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
-import { CURRENCIES, type CurrencyCode } from '../config/currencies';
+import { CURRENCIES, type CurrencyCode, wouldCreateMixedCurrencyTrip } from '../config/currencies';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -28,6 +28,8 @@ export function SettingsTab() {
     currencyManuallySet,
     setCurrency,
     rateUpdatedAt,
+    expenses,
+    currentTripId,
   } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
@@ -47,6 +49,18 @@ export function SettingsTab() {
   const handleLanguageChange = (lang: SupportedLanguage) => {
     // i18next-browser-languagedetector が localStorage('split-meow-language') に自動保存するため手動不要
     void i18n.changeLanguage(lang);
+  };
+
+  const handleCurrencyChange = (code: CurrencyCode) => {
+    if (code === currency) return;
+    const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
+    if (
+      wouldCreateMixedCurrencyTrip(tripExpenses, currency, code) &&
+      !window.confirm(t('history.mixed_currency_warning'))
+    ) {
+      return;
+    }
+    setCurrency(code, true);
   };
 
   return (
@@ -215,7 +229,7 @@ export function SettingsTab() {
                   return (
                     <button
                       key={code}
-                      onClick={() => setCurrency(code, true)}
+                      onClick={() => handleCurrencyChange(code)}
                       className={cn(
                         'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
                         isActive
