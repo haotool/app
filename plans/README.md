@@ -6,18 +6,18 @@
 
 ## 建議執行順序與狀態
 
-| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status      |
-| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------- |
-| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE        |
-| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS |
-| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | IN PROGRESS |
-| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001               | E2 / L12,L15          | TODO        |
-| [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS |
-| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO        |
-| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE        |
-| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | AUDIT DONE  |
-| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE  |
-| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO        |
+| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status                        |
+| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------------------------- |
+| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE                          |
+| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS                   |
+| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | IN PROGRESS                   |
+| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001               | E2 / L12,L15          | TODO                          |
+| [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS（L09 Step1 DONE） |
+| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO                          |
+| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE                          |
+| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | AUDIT DONE                    |
+| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE                    |
+| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | TODO                          |
 
 Status 值：`TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` | `REJECTED`
 
@@ -100,7 +100,7 @@ flowchart TB
 | F4  | ~~API buy/sell 銀行視角~~ **006 DONE** | correctness    | v2 additive 欄位 + OpenAPI CurrencyRateV2             | M      | LOW  | `api-semantics-v2.ts`；`latest.json` `schemaVersion: "2.0"`                          |
 | F5  | Release 邊界分散                       | architecture   | Zeabur→CF→precache 順序錯易 stale 404                 | M      | MED  | `release.yml:213-241`；`Dockerfile:73-78` 多 app 單映像                              |
 | F6  | 觸控 / nav 未達 44px                   | direction      | WCAG 2.5.8、韓系對標 gap                              | M      | LOW  | `BottomNavigation.tsx:105` `text-[8px]`；`PwaInstallGuide.tsx:16` `1800ms`           |
-| F7  | 內容 thesis 重複                       | docs/direction | curl 賣出價/中間價 keyword=2（目標 ≤1）               | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                     |
+| F7  | ~~內容 thesis 重複~~ **L09 Step1**     | docs/direction | build dist thesis curl **1**（原 2）；L09 Step1 完成  | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                       |
 | F8  | CF observability 已取樣 10%            | dx             | 符合 044 治理；deploy SOP 需與 UX gate 綁定           | S      | LOW  | `wrangler.jsonc:23-36` `head_sampling_rate: 0.1`                                     |
 
 ## Infra 稽核摘要（Plan 007 + 008 — read-only，2026-06-27）

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+64
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+64
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：neutral-epic3-l09-plan-spec-sync
+- 原因：L09 Step1 完成需同步 plan 004 與 UX spec 狀態證據
+- 解法：更新 plans/README、004 done criteria 與 spec L09 status（build dist thesis curl 1）
 
 - 日期：2026-06-27
 - ID：reward-epic3-canonical-sell-thesis
