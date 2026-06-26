@@ -26,4 +26,15 @@ describe('useRememberConverterView', () => {
       expect(useConverterStore.getState().lastConverterView).toBe('multi');
     });
   });
+
+  it('microtask 執行前卸載時取消寫入（避免冷啟動還原被覆寫）', async () => {
+    useConverterStore.setState({ lastConverterView: CONVERTER_MODES[1] });
+    const { unmount } = renderHook(() => useRememberConverterView(CONVERTER_MODES[0]));
+
+    // 在排程的 microtask 執行前同步卸載，cleanup 應將寫入取消。
+    unmount();
+    await Promise.resolve();
+
+    expect(useConverterStore.getState().lastConverterView).toBe('multi');
+  });
 });
