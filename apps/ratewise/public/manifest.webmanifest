@@ -6,7 +6,7 @@
   "background_color": "#E8ECF4",
   "display": "standalone",
   "scope": "/ratewise/",
-  "start_url": "/ratewise/",
+  "start_url": "https://app.haotool.org/ratewise/",
   "id": "/ratewise/",
   "orientation": "portrait-primary",
   "categories": [

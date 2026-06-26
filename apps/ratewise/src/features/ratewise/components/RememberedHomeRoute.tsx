@@ -29,6 +29,8 @@ export function RememberedHomeRoute() {
   const hasDeepLink =
     searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
   const restoreToMulti = shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView });
+  // hydrate 未完成或即將導向 multi 時，禁止 RateWise 寫入偏好，避免覆寫 persist 的 lastConverterView。
+  const allowRememberView = hydrated && !restoreToMulti;
 
   // hydrate 完成後標記已嘗試還原，確保冷啟動只導向一次。
   useEffect(() => {
@@ -41,5 +43,5 @@ export function RememberedHomeRoute() {
     return <Navigate to="/multi" replace />;
   }
 
-  return <RateWise />;
+  return <RateWise rememberConverterView={allowRememberView} />;
 }
