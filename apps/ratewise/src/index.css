@@ -1117,6 +1117,64 @@ body {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  /* 指向右上角的彈跳指引（內建瀏覽器外開提示） */
+  @keyframes point-up-right {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(4px, -4px);
+    }
+  }
+
+  .animate-point-up-right {
+    animation: point-up-right 1.2s ease-in-out infinite;
+  }
+
+  /* 擴散注意力光環 */
+  @keyframes attention-ring {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.65;
+    }
+    100% {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+
+  .animate-attention-ring {
+    animation: attention-ring 1.6s ease-out infinite;
+  }
+
+  /* 圖示左右擺動，強調可點擊 */
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-9deg);
+    }
+    75% {
+      transform: rotate(9deg);
+    }
+  }
+
+  .animate-wiggle {
+    animation: wiggle 1.4s ease-in-out infinite;
+  }
+
+  /* 尊重使用者的減少動態偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-point-up-right,
+    .animate-attention-ring,
+    .animate-wiggle {
+      animation: none;
+    }
+  }
+
   /* iOS Safe Area */
   @supports (padding: max(0px)) {
     .safe-area-inset-bottom {
