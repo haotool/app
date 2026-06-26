@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0）｜累計總分：+62
+> 本次分數變化：0（reward 0、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：neutral-retrigger-prod-deploy-2252
+- 原因：Release run 28213399513 Zeabur GitHub deployment 回報 success（2306994）但 Zeabur RUNNING pod 仍為 6/25 舊版，正式站 app-version 卡 2.25.1
+- 解法：最小 PR 重觸 main push 促使 Zeabur 重新部署 2.25.2，版本切換後手動 CF purge 與 live precache 驗證
 
 - 日期：2026-06-26
 - ID：neutral-002-score-header-correction-pr425
