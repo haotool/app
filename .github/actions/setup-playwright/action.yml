@@ -1,5 +1,5 @@
 name: Setup Playwright Chromium
-description: 快取並安裝 Playwright Chromium（分層 cache-hit 僅裝 OS deps）
+description: 快取並安裝 Playwright Chromium（瀏覽器下載與 OS deps 拆分並加 timeout，避免掛起燒滿 job 逾時）
 
 inputs:
   app-filter:
@@ -19,21 +19,36 @@ runs:
 
     - name: Cache Playwright browsers
       id: pw-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
         key: playwright-chromium-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
         restore-keys: |
           playwright-chromium-${{ runner.os }}-
 
-    - name: Install Playwright browsers
+    # 僅在 cache miss 時下載瀏覽器。瀏覽器下載偶發卡死是 E2E job 失敗主因；
+    # 過往僅調高單次 timeout 無法解決 CDN 暫時性卡死，改為每次嘗試加 timeout + 最多 3 次退避重試。
+    - name: Install Playwright browser (Chromium)
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
         PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
-      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install --with-deps chromium
+      run: |
+        for attempt in 1 2 3; do
+          if timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install chromium; then
+            echo "✅ Chromium 安裝成功（第 ${attempt} 次嘗試）"
+            exit 0
+          fi
+          echo "⚠️ 第 ${attempt} 次安裝逾時/失敗，退避 $((attempt * 10))s 後重試"
+          sleep "$((attempt * 10))"
+        done
+        echo "❌ Chromium 重試 3 次仍失敗"
+        exit 1
 
-    - name: Install Playwright system deps
-      if: steps.pw-cache.outputs.cache-hit == 'true'
+    # OS 相依套件不在 cache 內，cache hit/miss 皆需安裝。
+    # 與瀏覽器下載拆開並加 timeout，避免 apt lock/網路問題無限掛起。
+    - name: Install Playwright system deps (Chromium)
       shell: bash
-      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium

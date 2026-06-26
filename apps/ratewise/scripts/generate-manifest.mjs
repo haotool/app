@@ -36,7 +36,9 @@ const manifest = {
   background_color: rgbTripletToHex(zenColors.background),
   display: 'standalone',
   scope: '/ratewise/',
-  start_url: '/ratewise/',
+  // 絕對 HTTPS start_url：避免獨立 PWA partition + Chrome HTTPS-First 在啟動時以 http 語意解析。
+  // id/scope 維持相對（id 變更會被視為新 PWA 身分，破壞既有安裝更新連續性）。
+  start_url: APP_INFO.siteUrl,
   id: '/ratewise/',
   orientation: 'portrait-primary',
   categories: ['finance', 'utilities', 'productivity'],

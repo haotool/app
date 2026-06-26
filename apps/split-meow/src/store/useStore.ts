@@ -32,6 +32,10 @@ export interface ExpenseRecord {
   note: string;
   category?: ExpenseCategory;
   createdAt: number;
+  /** 記帳當下的幣別快照；舊資料缺此欄位時視為 TWD（記帳幣別於 KRW 上線前僅有 TWD）。 */
+  currency?: CurrencyCode;
+  /** 記帳當下的匯率快照（1 TWD = X KRW 賣出價）；供 KRW 金額回溯換算 TWD，舊資料為 null。 */
+  exchangeRateKrwPerTwd?: number | null;
 }
 
 export interface Trip {
@@ -266,6 +270,9 @@ export const useStore = create<AppState>()(
             note: state.expenseNote.trim(),
             ...(state.expenseCategory ? { category: state.expenseCategory } : {}),
             createdAt: Date.now(),
+            // 記帳當下的幣別與匯率快照，確保歷史金額不受日後切換幣別影響並可回溯換算
+            currency: state.currency,
+            exchangeRateKrwPerTwd: state.krwPerTwd,
           };
 
           return {

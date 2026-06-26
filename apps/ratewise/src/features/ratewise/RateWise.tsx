@@ -35,12 +35,15 @@ import {
   resolveRateTypeByAvailability,
 } from '../../utils/exchangeRateCalculation';
 
-const RateWise = () => {
+const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
   // deep-link（分享連結帶 from/to/amount）只是臨時進入，不應覆寫上次停留模式偏好。
   const isDeepLink =
     searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
-  useRememberConverterView(DEFAULT_CONVERTER_MODE, { enabled: !isDeepLink });
+  // 還原決策完成前（hydrate 中或將導向 multi）不得寫入，否則會把 persist 的 multi 覆寫成 single。
+  useRememberConverterView(DEFAULT_CONVERTER_MODE, {
+    enabled: !isDeepLink && rememberConverterView,
+  });
   const { t } = useTranslation();
   // Main container ref for pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);

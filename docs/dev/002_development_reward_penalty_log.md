@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+67
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+69
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,21 @@
 - ID：reward-moneybox-seoul-date-workflow-guard
 - 原因：關閉 PR 428（wall-clock Asia/Seoul 方案）改採本分支 snapshot date 方案後，PR 428 的 workflow 時區守門測試會隨之遺失，缺少防止 update-moneybox-rates.yml 退回 Asia/Taipei 的回歸守門。
 - 解法：搶救守門測試至 build-scripts.test，斷言 workflow 含 extractSeoulSnapshotDate 提取與 Asia/Seoul fallback、且不含 Asia/Taipei；47 tests 通過。
+
+- 日期：2026-06-26
+- ID：reward-split-meow-expense-currency-rate-snapshot
+- 原因：split-meow 的 ExpenseRecord 只存裸數字、未保存記帳當下幣別；使用者先以 TWD 記帳後切換 KRW（或韓國時區自動偵測）時，歷史金額會被當前全域幣別重新格式化，NT$1,000 被誤顯示為 ₩1,000。
+- 解法：ExpenseRecord 增加 currency 與 exchangeRateKrwPerTwd 快照欄位，記帳時保存；HistoryTab 個別金額改用各筆快照幣別、KRW 副標即時換算 TWD、彙總/結算採 trip 主導幣別 fallback；補 store/currencies 單元測試與 Playwright 瀏覽器驗收（切回 TWD 後 KRW 記錄仍正確）。
+
+- 日期：2026-06-26
+- ID：reward-pr426-sw-bounded-nav-case3-002-audit
+- 原因：PR 426 review P1 指出 SW case-3 有界網路 fallback 與測試 lint 修改的 commit 未含 002 稽核軌跡；該功能已隨 #433 生產治理進 main，但稽核條目隨被取代的 #411 分支遺失。
+- 解法：補本條目搶救稽核軌跡；SW case-3 setCatchHandler 有界 fallback 本體已於 #433 收斂進 main。
+
+- 日期：2026-06-26
+- ID：reward-ci-playwright-cache-v6
+- 原因：setup-playwright composite action 仍用 actions/cache@v4，在 Node 24 CI 觸發 Node 20 deprecation warning
+- 解法：升級 actions/cache@v6 並補 patch changeset
 
 - 日期：2026-06-26
 - ID：reward-pr435-code-reviewer-hardening

@@ -207,6 +207,23 @@ describe('useStore', () => {
       expect(useStore.getState().activeTab).toBe('history');
     });
 
+    it('保存記帳當下的幣別與匯率快照（KRW）', () => {
+      useStore.setState({ calculatorValue: '30000', currency: 'KRW', krwPerTwd: 43.5 });
+      act(() => useStore.getState().saveExpense());
+      const exp = useStore.getState().expenses[0]!;
+      expect(exp.currency).toBe('KRW');
+      expect(exp.exchangeRateKrwPerTwd).toBe(43.5);
+    });
+
+    it('幣別快照不受日後切換幣別影響', () => {
+      useStore.setState({ calculatorValue: '1000', currency: 'TWD', krwPerTwd: null });
+      act(() => useStore.getState().saveExpense());
+      // 記帳後切換全域幣別到 KRW
+      act(() => useStore.getState().setCurrency('KRW'));
+      const exp = useStore.getState().expenses[0]!;
+      expect(exp.currency).toBe('TWD');
+    });
+
     it('儲存後清空計算機', () => {
       useStore.setState({ calculatorValue: '100', expenseNote: '午餐' });
       act(() => useStore.getState().saveExpense());
