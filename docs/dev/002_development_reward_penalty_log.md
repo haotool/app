@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+66
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+67
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：reward-moneybox-seoul-date-workflow-guard
+- 原因：關閉 PR 428（wall-clock Asia/Seoul 方案）改採本分支 snapshot date 方案後，PR 428 的 workflow 時區守門測試會隨之遺失，缺少防止 update-moneybox-rates.yml 退回 Asia/Taipei 的回歸守門。
+- 解法：搶救守門測試至 build-scripts.test，斷言 workflow 含 extractSeoulSnapshotDate 提取與 Asia/Seoul fallback、且不含 Asia/Taipei；47 tests 通過。
 
 - 日期：2026-06-26
 - ID：reward-pr435-code-reviewer-hardening
