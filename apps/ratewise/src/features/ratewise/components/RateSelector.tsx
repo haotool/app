@@ -71,7 +71,7 @@ export const RateSelector = ({
 
   return (
     <div
-      className={`grid h-7 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+      className={`grid min-h-11 h-11 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-1 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
       role="group"
       aria-label={t('singleConverter.rateTypeGroup')}
     >
@@ -88,10 +88,9 @@ export const RateSelector = ({
               onRateSourceChange('bank');
               onRateTypeChange(option.value);
             }}
-            whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
-            className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
+            className={`flex min-h-11 min-w-11 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
               isActive ? 'text-white' : 'text-text/70 hover:text-text'
             } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
@@ -127,12 +126,11 @@ export const RateSelector = ({
         <motion.button
           type="button"
           onClick={() => onRateSourceChange('exchange-shop')}
-          whileHover={segmentedSwitch.item.whileHover}
           whileTap={segmentedSwitch.item.whileTap}
           animate={{
             opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
           }}
-          className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
+          className={`flex min-h-11 min-w-11 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
             rateSource === 'exchange-shop' ? 'text-white' : 'text-text/70 hover:text-text'
           }`}
           aria-pressed={rateSource === 'exchange-shop'}

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+65
+> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+66
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-epic1-hero-v2-layout
+- 原因：首屏 answer-first 倒置（金額列優先於 hero 匯率）違反 spec §十一 E1
+- 解法：新增 hero-v2 feature flag、display-md token、DOM 重排與 freshness chip；預設 legacy
 
 - 日期：2026-06-27
 - ID：reward-release-yml-worker-order-minify

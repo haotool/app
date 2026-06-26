@@ -247,6 +247,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 onAddToHistory={addToHistory}
                 onRateTypeChange={handleRateTypeChange}
                 onRateSourceChange={handleRateSourceChange}
+                lastUpdate={lastUpdate}
+                lastFetchedAt={lastFetchedAt}
               />
             </div>
           </section>

@@ -2,12 +2,8 @@
  * Vite React SSG Entry Point
  *
  * 使用 ViteReactSSG() 進行 SSG 預渲染，保留所有初始化邏輯。
- * 抑制 React Hydration #418 預期錯誤（SSG + 動態內容固有差異）。
+ * Hydration 差異改由 ClientOnly / 元件級 suppressHydrationWarning 處理（E1-T5）。
  */
-
-// IMPORTANT: This MUST be the first import to suppress hydration warnings
-// before React loads. See suppress-hydration-warning.ts for details.
-import './suppress-hydration-warning';
 
 // Initialize Trusted Types (must run before any DOM manipulation)
 import './trusted-types-bootstrap';
