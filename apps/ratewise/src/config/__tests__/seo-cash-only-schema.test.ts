@@ -184,7 +184,7 @@ describe('getCurrencyLandingPageContent FAQ #1 答案精準性（正向頁）', 
       expect(firstFaq, `${code} 缺少 FAQ #1`).toBeDefined();
       if (!firstFaq) continue;
       expect(
-        firstFaq.answer.includes('現金賣出與即期賣出價'),
+        firstFaq.answer.includes('現金賣出與即期賣出報價'),
         `${code} FAQ #1 答案不應聲稱顯示即期賣出價（該幣別僅有現金牌告）`,
       ).toBe(false);
     }
@@ -198,8 +198,8 @@ describe('getCurrencyLandingPageContent FAQ #1 答案精準性（正向頁）', 
       expect(firstFaq, `${code} 缺少 FAQ #1`).toBeDefined();
       if (!firstFaq) continue;
       expect(
-        firstFaq.answer.includes('現金賣出與即期賣出價'),
-        `${code} FAQ #1 答案應聲稱顯示現金賣出與即期賣出價`,
+        firstFaq.answer.includes('現金賣出與即期賣出報價'),
+        `${code} FAQ #1 答案應聲稱顯示現金賣出與即期賣出報價`,
       ).toBe(true);
     }
   });

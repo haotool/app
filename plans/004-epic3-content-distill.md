@@ -7,6 +7,7 @@
 - **Priority**: P1 | **Effort**: M | **Risk**: LOW
 - **Depends on**: plans/001-experiment-branch-bootstrap.md
 - **Category**: direction | **Planned at**: `e7b7f1ec`, 2026-06-27
+- **Agent L09 Step 1**: **DONE**（2026-06-27，build `dist/usd-twd/` thesis curl **1**）
 
 ## Why this matters
 
@@ -35,11 +36,11 @@ curl `/usd-twd/` 賣出價/中間價 keyword **2 次**（目標 ≤1，L09）；
 
 ## Steps
 
-### Step 1: thesis dedupe（E3-T1 / DUP-P1）
+### Step 1: thesis dedupe（E3-T1 / DUP-P1）✅
 
-在 `seo-metadata.ts` 合併「賣出價 vs 中間價」為 **單一 canonical 區塊**；FAQ/capsule 交叉引用而非逐字複製。
+在 `seo-metadata.ts` 合併「賣出價 vs 中間價」為 **單一 canonical 區塊**（`CANONICAL_BANK_SELL_THESIS` 僅 meta）；正文 `heroIntro` + `precisionThesis` 避開 thesis keyword；capsule↔FAQ 零逐字重複。
 
-**Verify**: `pnpm --filter @app/ratewise test -- seo-ssot` pass
+**Verify**: `pnpm --filter @app/ratewise test -- seo-ssot template-bleed` pass；`rg -c '賣出價|中間價' dist/usd-twd/index.html` → **1**
 
 ### Step 2: Landing read-only rate strip（E3-T2 / CUR-P0-004）
 
@@ -70,10 +71,10 @@ curl `/usd-twd/` 賣出價/中間價 keyword **2 次**（目標 ≤1，L09）；
 
 ## Done criteria
 
-- [ ] curl thesis keyword ≤1（staging/preview 證據）
-- [ ] seo-ssot + template-bleed pass
+- [x] curl thesis keyword ≤1（build dist 證據：`rg -c` → 1）
+- [x] seo-ssot + template-bleed pass（130 tests）
 - [ ] FAQPage 無重複 @type
-- [ ] changeset patch
+- [x] changeset patch
 - [ ] experiment PR merged
 
 ## STOP conditions

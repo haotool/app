@@ -9,7 +9,8 @@ const BASE_PROPS = {
   currencyFlag: '🇰🇷',
   currencyName: '韓元',
   title: 'KRW 對 TWD 匯率換算器',
-  description: '測試用描述',
+  description: '測試用 SEO 描述',
+  heroIntro: '測試用首屏 intro',
   pathname: '/krw-twd',
   canonical: 'https://app.haotool.org/ratewise/krw-twd/',
   keywords: ['韓元換台幣'],
@@ -17,6 +18,10 @@ const BASE_PROPS = {
   howToSteps: [{ position: 1, name: '選擇幣別', text: '測試步驟' }],
   highlights: ['測試重點'],
   commonAmounts: [{ amount: 50000, label: '五萬韓元', question: '50000 韓元多少台幣？' }],
+  precisionThesis: {
+    heading: '為什麼更精準？',
+    body: '測試用精準度論述。',
+  },
 };
 
 describe('CurrencyLandingPage', () => {

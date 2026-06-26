@@ -722,28 +722,28 @@ sequenceDiagram
 > SSOT 透鏡 ID 對齊 §二 Scorecard。Severity：`P0`=release blocking、`P1`=Sprint 必達、`P2`=選配。  
 > **命名格式**：`姓名 / Agent L0N · Codename`
 
-| ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers |
-| --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | -------- |
-| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | in_progress | Frontend      | 2026-06-27    | —        |
-| L02 | **沈零閱** / Agent L02 · Zero-Click Reader           | E1    | P1  |     65 |   90 | pending     | Frontend      | 2026-06-27    | L01      |
-| L03 | **韓多理** / Agent L03 · Multi-Flow Analyst          | E4    | P1  |     55 |   80 | pending     | Frontend      | 2026-06-27    | —        |
-| L04 | **鄭落地** / Agent L04 · Landing Curator             | E3    | P1  |     62 |   85 | pending     | SEO / Content | 2026-06-27    | —        |
-| L05 | **羅導航** / Agent L05 · Nav-IA Architect            | E4    | P1  |     62 |   85 | pending     | Frontend      | 2026-06-27    | —        |
-| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | in_progress | QA            | 2026-06-27    | —        |
-| L07 | **周寬屏** / Agent L07 · Desktop Layout Auditor      | E4    | P2  |     45 |   70 | pending     | Frontend      | 2026-06-27    | L01      |
-| L08 | **金墨字** / Agent L08 · Typography Specialist       | E1    | P1  |     52 |   80 | pending     | Design Tokens | 2026-06-27    | L01, L14 |
-| L09 | **白精煉** / Agent L09 · Content Distiller           | E3    | P1  |     50 |   85 | in_progress | SEO / Content | 2026-06-27    | —        |
-| L10 | **許無障** / Agent L10 · Contrast Guardian           | E1    | P1  |     58 |   80 | pending     | Design Tokens | 2026-06-27    | L08      |
-| L11 | **方觸達** / Agent L11 · Touch Target Auditor        | E1    | P1  |     58 |   85 | pending     | QA            | 2026-06-27    | L04(TOU) |
-| L12 | **吳收藏** / Agent L12 · Settings Favorites Curator  | E2    | P1  |     65 |   82 | pending     | Frontend      | 2026-06-27    | —        |
-| L13 | **孫問答** / Agent L13 · Help Content Architect      | E3    | P1  |     50 |   78 | in_progress | SEO / Content | 2026-06-27    | L09      |
-| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | in_progress | Design Tokens | 2026-06-27    | —        |
-| L15 | **車安裝** / Agent L15 · PWA Install Advocate        | E2    | P1  |     72 |   88 | pending     | PWA / SW      | 2026-06-27    | —        |
-| L16 | **何降級** / Agent L16 · Loading Degradation Auditor | E1    | P2  |     70 |   85 | pending     | Frontend      | 2026-06-27    | L06      |
-| L17 | **高信任** / Agent L17 · Trust E-E-A-T Lead          | E1/E3 | P1  |     72 |   90 | pending     | SEO / Content | 2026-06-27    | L06      |
-| L18 | **裴對標** / Agent L18 · K-Fintech Benchmark Analyst | E1    | P1  |     58 |   80 | pending     | PM / Design   | 2026-06-27    | —        |
-| L19 | **梁趨勢** / Agent L19 · UX Trends Futurist          | E1/E3 | P1  |     62 |   85 | pending     | PM            | 2026-06-27    | L09      |
-| L20 | **馮驗收** / Agent L20 · Motion QA Lead              | E1    | P2  |     68 |   85 | in_progress | QA            | 2026-06-27    | L06, L11 |
+| ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers                 |
+| --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | ------------------------ |
+| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | in_progress | Frontend      | 2026-06-27    | —                        |
+| L02 | **沈零閱** / Agent L02 · Zero-Click Reader           | E1    | P1  |     65 |   90 | pending     | Frontend      | 2026-06-27    | L01                      |
+| L03 | **韓多理** / Agent L03 · Multi-Flow Analyst          | E4    | P1  |     55 |   80 | pending     | Frontend      | 2026-06-27    | —                        |
+| L04 | **鄭落地** / Agent L04 · Landing Curator             | E3    | P1  |     62 |   85 | pending     | SEO / Content | 2026-06-27    | —                        |
+| L05 | **羅導航** / Agent L05 · Nav-IA Architect            | E4    | P1  |     62 |   85 | pending     | Frontend      | 2026-06-27    | —                        |
+| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | in_progress | QA            | 2026-06-27    | —                        |
+| L07 | **周寬屏** / Agent L07 · Desktop Layout Auditor      | E4    | P2  |     45 |   70 | pending     | Frontend      | 2026-06-27    | L01                      |
+| L08 | **金墨字** / Agent L08 · Typography Specialist       | E1    | P1  |     52 |   80 | pending     | Design Tokens | 2026-06-27    | L01, L14                 |
+| L09 | **白精煉** / Agent L09 · Content Distiller           | E3    | P1  |     50 |   85 | done        | SEO / Content | 2026-06-27    | build dist thesis curl 1 |
+| L10 | **許無障** / Agent L10 · Contrast Guardian           | E1    | P1  |     58 |   80 | pending     | Design Tokens | 2026-06-27    | L08                      |
+| L11 | **方觸達** / Agent L11 · Touch Target Auditor        | E1    | P1  |     58 |   85 | pending     | QA            | 2026-06-27    | L04(TOU)                 |
+| L12 | **吳收藏** / Agent L12 · Settings Favorites Curator  | E2    | P1  |     65 |   82 | pending     | Frontend      | 2026-06-27    | —                        |
+| L13 | **孫問答** / Agent L13 · Help Content Architect      | E3    | P1  |     50 |   78 | in_progress | SEO / Content | 2026-06-27    | L09                      |
+| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | in_progress | Design Tokens | 2026-06-27    | —                        |
+| L15 | **車安裝** / Agent L15 · PWA Install Advocate        | E2    | P1  |     72 |   88 | pending     | PWA / SW      | 2026-06-27    | —                        |
+| L16 | **何降級** / Agent L16 · Loading Degradation Auditor | E1    | P2  |     70 |   85 | pending     | Frontend      | 2026-06-27    | L06                      |
+| L17 | **高信任** / Agent L17 · Trust E-E-A-T Lead          | E1/E3 | P1  |     72 |   90 | pending     | SEO / Content | 2026-06-27    | L06                      |
+| L18 | **裴對標** / Agent L18 · K-Fintech Benchmark Analyst | E1    | P1  |     58 |   80 | pending     | PM / Design   | 2026-06-27    | —                        |
+| L19 | **梁趨勢** / Agent L19 · UX Trends Futurist          | E1/E3 | P1  |     62 |   85 | pending     | PM            | 2026-06-27    | L09                      |
+| L20 | **馮驗收** / Agent L20 · Motion QA Lead              | E1    | P2  |     68 |   85 | in_progress | QA            | 2026-06-27    | L06, L11                 |
 
 **詳細 Agent prompt、Acceptance、Evidence → §七 Appendix（L01–L20）**
 
@@ -966,7 +966,7 @@ Backlog: QA-P0-001.
 
 ### L09 — 白精煉 / Agent L09 · Content Distiller
 
-**Agent**：**白精煉** / Agent L09 · Content Distiller | **Role**：Content Distillation Auditor | **Owner**：SEO / Content | **Status**：pending
+**Agent**：**白精煉** / Agent L09 · Content Distiller | **Role**：Content Distillation Auditor | **Owner**：SEO / Content | **Status**：done（2026-06-27 build dist `/usd-twd/` thesis curl **1**；seo-ssot dedupe 130 pass）
 
 **Agent Prompt Template**
 
@@ -1750,15 +1750,15 @@ git worktree list
 
 ### 14.8 Department RACI + Engineer Assignment
 
-| 角色                        | A/R/C/I                                      | 負責 Spec 章節                    | 範例 Branch                                     | Handoff Checklist                                                       |
-| --------------------------- | -------------------------------------------- | --------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
-| **PM / Product Owner**      | **A** Epic 優先序、SemVer、§3.5 release gate | §一、§十二、§十八                 | —                                               | [ ] Sprint goal [ ] Open Q 決策 [ ] changeset bump 確認                 |
-| **Frontend (Converter UI)** | **R** Single/Multi、Bottom nav、Settings UI  | §七 L01–L03/L05/L12；§十一 E1/E4  | `feat/ratewise-epic1-hero-trust`                | [ ] 390×844 截圖 [ ] typecheck [ ] 無 console error [ ] 更新 §六 Status |
-| **Design Tokens / CSS**     | **R** typography、contrast、radius           | §七 L08/L10/L14；§十一 E1-T2      | `feat/ratewise-epic1-hero-trust`（token 子 PR） | [ ] display-md merged [ ] nav label ≥10px [ ] 對比 ratio 證據           |
-| **SEO / Content**           | **R** seo-metadata、landing、FAQ dedupe      | §七 L04/L09/L13/L17/L19；§十一 E3 | `feat/ratewise-epic3-content`                   | [ ] curl thesis ≤1 [ ] seo-ssot.test Pass [ ] FAQPage 僅 /faq/          |
-| **PWA / SW**                | **R** install guide、UpdatePrompt、sw.ts     | §七 L15/L16；§十一 E2             | `feat/ratewise-epic2-settings`                  | [ ] precache ≥50 [ ] prompt SW mode [ ] install 觸發時機                |
-| **QA (390×844 + curl)**     | **R** Playwright、console、touch audit       | §七 L06/L11/L20；§十六            | `test/ratewise-mobile-pwa-smoke`                | [ ] hero y 量測 [ ] 44px audit [ ] curl 6 routes 200                    |
-| **Release / DevOps**        | **R** #446、Zeabur、CF Worker、precache live | §十三；§3.5                       | `changeset-release/main`                        | [ ] app-version probe [ ] CF purge [ ] live precache script             |
+| 角色                        | A/R/C/I                                      | 負責 Spec 章節                    | 範例 Branch                                     | Handoff Checklist                                                            |
+| --------------------------- | -------------------------------------------- | --------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| **PM / Product Owner**      | **A** Epic 優先序、SemVer、§3.5 release gate | §一、§十二、§十八                 | —                                               | [ ] Sprint goal [ ] Open Q 決策 [ ] changeset bump 確認                      |
+| **Frontend (Converter UI)** | **R** Single/Multi、Bottom nav、Settings UI  | §七 L01–L03/L05/L12；§十一 E1/E4  | `feat/ratewise-epic1-hero-trust`                | [ ] 390×844 截圖 [ ] typecheck [ ] 無 console error [ ] 更新 §六 Status      |
+| **Design Tokens / CSS**     | **R** typography、contrast、radius           | §七 L08/L10/L14；§十一 E1-T2      | `feat/ratewise-epic1-hero-trust`（token 子 PR） | [ ] display-md merged [ ] nav label ≥10px [ ] 對比 ratio 證據                |
+| **SEO / Content**           | **R** seo-metadata、landing、FAQ dedupe      | §七 L04/L09/L13/L17/L19；§十一 E3 | `feat/ratewise-epic3-content`                   | [x] curl thesis ≤1（build dist） [x] seo-ssot.test Pass [ ] FAQPage 僅 /faq/ |
+| **PWA / SW**                | **R** install guide、UpdatePrompt、sw.ts     | §七 L15/L16；§十一 E2             | `feat/ratewise-epic2-settings`                  | [ ] precache ≥50 [ ] prompt SW mode [ ] install 觸發時機                     |
+| **QA (390×844 + curl)**     | **R** Playwright、console、touch audit       | §七 L06/L11/L20；§十六            | `test/ratewise-mobile-pwa-smoke`                | [ ] hero y 量測 [ ] 44px audit [ ] curl 6 routes 200                         |
+| **Release / DevOps**        | **R** #446、Zeabur、CF Worker、precache live | §十三；§3.5                       | `changeset-release/main`                        | [ ] app-version probe [ ] CF purge [ ] live precache script                  |
 
 **Accountable（A）**：Repo Maintainer — PR squash、release 批准、§3.5 P0 waiver。
 

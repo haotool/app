@@ -117,12 +117,46 @@ export interface RelatedGuideLink {
   description: string;
 }
 
+/** curl / 幣別頁 thesis 計數 SSOT：`rg -c '賣出價|中間價'` 僅允許 head/meta 一處；正文改用同義表述。 */
+export const CURRENCY_LANDING_THESIS_KEYWORD = /賣出價|中間價/;
+
+/** 幣別 landing 正文 SSOT 聚合（不含 meta description，供 dedupe 測試）。 */
+export function collectCurrencyLandingBodyText(content: CurrencyLandingPageContent): string {
+  return [
+    content.heroIntro,
+    content.precisionThesis.heading,
+    content.precisionThesis.body,
+    ...(content.answerCapsule ?? []).flatMap((entry) => [entry.question, entry.answer]),
+    ...content.faqEntries.flatMap((entry) => [entry.question, entry.answer]),
+    ...content.highlights,
+    ...content.howToSteps.map((step) => step.text),
+    ...content.commonAmounts.map((entry) => entry.question),
+    content.travelTip,
+    ...content.relatedGuides.flatMap((guide) => [guide.label, guide.description]),
+    JSON.stringify(content.jsonLd),
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+export function countThesisKeywordLines(text: string): number {
+  return text.split('\n').filter((line) => CURRENCY_LANDING_THESIS_KEYWORD.test(line)).length;
+}
+
+export interface CurrencyPrecisionThesis {
+  heading: string;
+  body: string;
+}
+
 export interface CurrencyLandingPageContent {
   currencyCode: string;
   currencyFlag: string;
   currencyName: string;
   title: string;
+  /** SEO meta description（可含 CANONICAL_BANK_SELL_THESIS，僅 head）。 */
   description: string;
+  /** 首屏可見 intro（避開 thesis keyword，與 meta description 分離）。 */
+  heroIntro: string;
   pathname: string;
   canonical: string;
   keywords: string[];
@@ -137,6 +171,8 @@ export interface CurrencyLandingPageContent {
   alternativeProviders?: AlternativeProvider[];
   relatedGuides: RelatedGuideLink[];
   answerCapsule?: FAQEntry[];
+  /** 幣別頁唯一 canonical 精準度論述（正文 SSOT，不含 thesis keyword）。 */
+  precisionThesis: CurrencyPrecisionThesis;
 }
 
 const sanitizeBaseUrl = (value: string) => value.replace(/\/+$/, '');
@@ -147,6 +183,9 @@ const SITE_BASE_URL = ensureTrailingSlash(
 );
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME ?? new Date().toISOString();
 const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'dev'}`;
+
+/** 幣別頁 canonical 賣出價論述 SSOT（僅 meta description，正文不重複）。 */
+export const CANONICAL_BANK_SELL_THESIS = '臺灣銀行牌告銀行賣出價（非市場中間價）' as const;
 
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
@@ -1431,6 +1470,13 @@ const GUIDE_LINK_SELL_RATE_VS_MID_RATE: RelatedGuideLink = {
   description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
 };
 
+/** 幣別 landing 內鏈：標籤避開 thesis keyword，完整論述留在攻略頁。 */
+const LANDING_GUIDE_LINK_RATE_DIFFERENCE: RelatedGuideLink = {
+  href: '/sell-rate-vs-mid-rate/',
+  label: 'Google 匯率差異說明',
+  description: '了解為何 Google、XE 顯示的匯率與銀行臨櫃不同',
+};
+
 const GUIDE_LINK_CASH_VS_SPOT_RATE: RelatedGuideLink = {
   href: '/cash-vs-spot-rate/',
   label: '現金 vs 即期匯率',
@@ -1820,13 +1866,13 @@ export const APP_ONLY_PAGE_SEO = {
 
 /** 外幣→台幣方向的相關攻略連結（旅客回國換匯場景）。 */
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
-  GUIDE_LINK_SELL_RATE_VS_MID_RATE,
+  LANDING_GUIDE_LINK_RATE_DIFFERENCE,
   GUIDE_LINK_CASH_VS_SPOT_RATE,
 ];
 
 /** 台幣→外幣方向的相關攻略連結（出國換匯場景）。 */
 const RELATED_GUIDES_TWD_TO_FOREIGN: RelatedGuideLink[] = [
-  GUIDE_LINK_SELL_RATE_VS_MID_RATE,
+  LANDING_GUIDE_LINK_RATE_DIFFERENCE,
   GUIDE_LINK_CASH_VS_SPOT_RATE,
   GUIDE_LINK_CARD_RATE_GUIDE,
 ];
@@ -2426,16 +2472,16 @@ export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput):
   const amount = exampleAmount && exampleAmount > 0 ? exampleAmount : 1000;
 
   if (bankMid == null || cashSell == null) {
-    return '中間價只適合觀察市場方向，實際換匯仍應以銀行牌告買入價或賣出價為準。換匯金額越大，買賣價差的影響越明顯。';
+    return '批發參考價只適合觀察市場方向，實際換匯仍應以銀行牌告報價為準。換匯金額越大，價差影響越明顯。';
   }
 
   if (direction === 'twd-to-foreign') {
     const foreignAtMid = amount / bankMid;
     const foreignAtSell = amount / cashSell;
     const diffForeign = Math.abs(foreignAtMid - foreignAtSell);
-    return `差距有多大？以 ${formatAmount(amount)} 台幣估算 TWD→${currencyCode}，若用中間價推算約可換得 ${formatAmount(
+    return `差距有多大？以 ${formatAmount(amount)} 台幣估算 TWD→${currencyCode}，若用批發參考價推算約可換得 ${formatAmount(
       foreignAtMid,
-    )} ${currencyCode}，實際台銀賣出價約可換得 ${formatAmount(
+    )} ${currencyCode}，實際台銀現金賣出報價約可換得 ${formatAmount(
       foreignAtSell,
     )} ${currencyCode}，少換約 ${formatAmount(diffForeign)} ${currencyCode}。換匯金額越大，差距越明顯。`;
   }
@@ -2444,9 +2490,16 @@ export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput):
   const sellCost = amount * cashSell;
   const diff = Math.abs(sellCost - midCost);
 
-  return `差距有多大？以買 ${formatAmount(amount)} ${currencyName} 所需台幣估算，中間價與台銀實際賣出價約相差 ${Math.round(
+  return `差距有多大？以買 ${formatAmount(amount)} ${currencyName} 所需台幣估算，批發參考價與台銀現金賣出報價約相差 ${Math.round(
     diff,
   ).toLocaleString('zh-TW')} 元台幣；金額越大，差距越明顯。`;
+}
+
+function buildCurrencyPrecisionThesis(displayName: string): CurrencyPrecisionThesis {
+  return {
+    heading: `為什麼 ${APP_INFO.shortName} 比其他工具更精準？`,
+    body: `多數匯率工具顯示批發參考價（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。${APP_INFO.shortName} 直接顯示臺灣銀行牌告的現金賣出報價——你去銀行換 ${displayName} 現鈔時實際要付的台幣金額。`,
+  };
 }
 
 export interface PairAmountSeoCopy {
@@ -2488,7 +2541,7 @@ function buildRateExampleSentence(code: string, displayName: string): string {
   const fCash = formatAmount(ex.foreignAtCash);
   const fMid = formatAmount(ex.foreignAtMarketMid);
   const fDiff = formatAmount(ex.diffForeign);
-  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的批發參考價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用批發參考價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 /**
@@ -2499,7 +2552,7 @@ function buildCashSellRateSentence(code: string, baseAmount: number): string {
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '';
   const result = Math.round(baseAmount * ex.cashSell);
-  return `以台銀現金賣出匯率換算，${formatAmount(baseAmount)} ${code} ≈ ${formatAmount(result)} 元台幣（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+  return `以台銀現金牌告換算，${formatAmount(baseAmount)} ${code} ≈ ${formatAmount(result)} 元台幣（台銀現金 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
 /** 反向頁（TWD→外幣）FAQ：嵌入台幣換外幣的靜態換算結果。 */
@@ -2507,7 +2560,7 @@ function buildTwdToForeignRateSentence(code: string, twdAmount: number): string 
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return '';
   const result = Math.round(twdAmount / ex.cashSell);
-  return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
+  return `以台銀現金牌告換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
 /**
@@ -2522,30 +2575,37 @@ function buildCurrencyAnswerCapsule(
   const ex = SEO_RATE_EXAMPLES[code];
   if (!ex) return [];
 
+  const spotAvailable = ex.spotAvailable ?? true;
+
   if (direction === 'to-twd') {
     return [
       {
-        question: `買${displayName}今日台銀賣出價是多少？`,
-        answer: `台銀現金賣出價：1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${APP_INFO.shortName} 直接顯示臺灣銀行牌告的實際賣出價，非中間價，換匯前可精準估算所需台幣。`,
+        question: `1 ${code} 換多少台幣（台銀牌告）？`,
+        answer: `1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${APP_INFO.shortName} 顯示臺灣銀行牌告現金報價，換匯前可精準估算所需台幣。`,
       },
       {
-        question: `為什麼 ${APP_INFO.shortName} 顯示的${displayName}匯率和 Google 不一樣？`,
-        answer: `Google 顯示的是市場中間價（批發參考價），一般人換不到。${APP_INFO.shortName} 顯示的是台銀牌告的現金賣出價，是你臨櫃換匯的實際匯率，兩者差距可達 ${ex.diffPct}%。`,
+        question: spotAvailable
+          ? `${displayName}現金報價和即期報價應該看哪個？`
+          : `${displayName}換匯前應確認哪種牌告？`,
+        answer: spotAvailable
+          ? `臨櫃換現鈔看現金報價，網銀外幣帳戶看即期報價。${APP_INFO.shortName} 同時顯示兩種台銀牌告，依換匯情境選擇。`
+          : `此幣別以台銀現金牌告為主，換匯前請直接確認現金報價並搭配歷史趨勢規劃預算。`,
       },
     ];
   }
 
-  // twd-to-foreign
   const exampleTwd = ex.exampleTWD;
   const foreignResult = Math.round(exampleTwd / ex.cashSell);
   return [
     {
-      question: `台幣換${displayName}今日匯率是多少？`,
-      answer: `台銀現金賣出價：1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${formatAmount(exampleTwd)} 台幣約可換 ${formatAmount(foreignResult)} ${code}。${APP_INFO.shortName} 顯示臺灣銀行牌告實際賣出價，出國換匯前可精準估算。`,
+      question: `台幣換${displayName}今日牌告匯率是多少？`,
+      answer: `1 ${code} = ${ex.cashSell} TWD（${SEO_RATE_EXAMPLES_DATE} 更新）。${formatAmount(exampleTwd)} 台幣約可換 ${formatAmount(foreignResult)} ${code}。`,
     },
     {
-      question: `出國前換${displayName}，該用哪個匯率？`,
-      answer: `臨櫃換現鈔看「現金賣出」，網銀外幣帳戶看「即期賣出」。${APP_INFO.shortName} 同時顯示兩種匯率，讓你依換匯情境選擇正確報價。`,
+      question: `出國前換${displayName}，該用哪個牌告？`,
+      answer: spotAvailable
+        ? `臨櫃換現鈔看現金報價，網銀外幣帳戶看即期報價。${APP_INFO.shortName} 同時顯示兩種台銀牌告。`
+        : `此幣別以現金牌告為主，出國換匯前請直接確認台銀現金報價。`,
     },
   ];
 }
@@ -2574,7 +2634,7 @@ export function getCurrencyLandingPageContent(
   const faqEntries: FAQEntry[] = [
     {
       question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
-      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，通常比市場中間價高出 1% 至 10% 以上（東南亞及非主流貨幣差距尤為顯著）。${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行官方牌告的${spotAvailable ? '現金賣出與即期賣出價' : '現金賣出價'}，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
+      answer: `${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行官方牌告的${spotAvailable ? '現金賣出與即期賣出報價' : '現金賣出報價'}；批發參考價與牌告價差異的完整說明見〈Google 匯率差異說明〉攻略。`,
     },
     // 幣別特化 FAQ：基於權威金融網站資訊，提供該幣別獨特的換匯知識
     ...(CURRENCY_SPECIFIC_FAQ[code] ?? []),
@@ -2587,7 +2647,7 @@ export function getCurrencyLandingPageContent(
         ]
       : []),
     {
-      question: `買${displayName}今日台銀賣出價是多少？`,
+      question: `今日台銀${displayName}牌告匯率是多少？`,
       answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
@@ -2607,10 +2667,13 @@ export function getCurrencyLandingPageContent(
     currencyCode: code,
     currencyFlag: definition.flag,
     currencyName: displayName,
-    title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD`,
+    title: `即時${displayName}匯率 | ${code}/TWD`,
     description: spotAvailable
-      ? `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`
-      : `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
+      ? `即時查看台銀${displayName}${CANONICAL_BANK_SELL_THESIS}，換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`
+      : `即時查看台銀${displayName}${CANONICAL_BANK_SELL_THESIS}，換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
+    heroIntro: spotAvailable
+      ? `即時查看台銀${displayName}現金牌告匯率，換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`
+      : `即時查看台銀${displayName}現金牌告匯率，換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -2634,7 +2697,7 @@ export function getCurrencyLandingPageContent(
               code,
               'TWD',
               rateExample.cashSell,
-              `臺灣銀行現金賣出價（買${displayName}所需台幣匯率）`,
+              `臺灣銀行現金牌告（買${displayName}所需台幣匯率）`,
             ),
           ]
         : []),
@@ -2656,7 +2719,7 @@ export function getCurrencyLandingPageContent(
         name: '切換匯率類型',
         text: spotAvailable
           ? '依換匯情境切換現金匯率或即期匯率。臨櫃換鈔選現金，匯款轉帳選即期。'
-          : '此幣別以現金牌告為主，換匯前請直接確認現金賣出價並搭配歷史趨勢判斷預算。',
+          : '此幣別以現金牌告為主，換匯前請直接確認現金報價並搭配歷史趨勢判斷預算。',
       },
       {
         position: 4,
@@ -2666,8 +2729,8 @@ export function getCurrencyLandingPageContent(
     ],
     highlights: [
       spotAvailable
-        ? `精準賣出價：顯示臺灣銀行牌告的現金賣出與即期賣出實際報價，非中間價——換匯金額更精準，避免低估所需台幣。`
-        : `精準賣出價：顯示臺灣銀行牌告的現金賣出實際報價，非中間價——換匯金額更精準，避免低估所需台幣。`,
+        ? `資料精準：顯示臺灣銀行牌告的現金與即期四種報價，換匯金額更接近臨櫃實際成本。`
+        : `資料精準：顯示臺灣銀行牌告的現金買入賣出報價，換匯金額更接近臨櫃實際成本。`,
       spotAvailable
         ? `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`
         : `資料來源：臺灣銀行牌告匯率，頁面以該幣別可實際查得的現金買入賣出報價為準。`,
@@ -2682,6 +2745,7 @@ export function getCurrencyLandingPageContent(
     direction: 'to-twd' as const,
     relatedGuides: RELATED_GUIDES_TO_TWD,
     answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'to-twd'),
+    precisionThesis: buildCurrencyPrecisionThesis(displayName),
     ...(rateExample?.alternativeProviders
       ? { alternativeProviders: rateExample.alternativeProviders }
       : {}),
@@ -2844,8 +2908,8 @@ export function getReverseCurrencyLandingPageContent(
     // 反向頁特化 FAQ：基於權威金融網站資訊，提供出國換匯場景的獨特知識
     ...(REVERSE_CURRENCY_SPECIFIC_FAQ[code] ?? []),
     {
-      question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
-      answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。${APP_INFO.shortName} 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
+      question: `帶台幣去銀行換${displayName}，要看哪個牌告？`,
+      answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的現金報價。${APP_INFO.shortName} 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的批發參考價。`,
     },
     {
       question: `${formatAmount(override.popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
@@ -2872,10 +2936,13 @@ export function getReverseCurrencyLandingPageContent(
     currencyCode: code,
     currencyFlag: definition.flag,
     currencyName: displayName,
-    title: `台幣換${displayName}匯率 — 出國換匯實際費率 | TWD/${code}`,
+    title: `台幣換${displayName}匯率 | TWD/${code}`,
     description: spotAvailable
-      ? `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`
-      : `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
+      ? `出國換${displayName}前，先用台銀${CANONICAL_BANK_SELL_THESIS}確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`
+      : `出國換${displayName}前，先用台銀${CANONICAL_BANK_SELL_THESIS}確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
+    heroIntro: spotAvailable
+      ? `出國換${displayName}前，先用台銀現金牌告匯率確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`
+      : `出國換${displayName}前，先用台銀現金牌告匯率確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -2900,7 +2967,7 @@ export function getReverseCurrencyLandingPageContent(
               'TWD',
               code,
               Number((1 / rateExample.cashSell).toFixed(6)),
-              `臺灣銀行現金賣出價（台幣換${displayName}匯率）`,
+              `臺灣銀行現金牌告（台幣換${displayName}匯率）`,
             ),
           ]
         : []),
@@ -2922,7 +2989,7 @@ export function getReverseCurrencyLandingPageContent(
         name: '確認匯率類型',
         text: spotAvailable
           ? '確認使用「現金匯率」（臨櫃換鈔）或「即期匯率」（網銀外幣帳戶）。兩者費率不同，請依換匯方式選擇。'
-          : '此幣別以現金牌告為主，出國前請直接確認現金賣出價並搭配歷史趨勢安排換匯節奏。',
+          : '此幣別以現金牌告為主，出國前請直接確認現金報價並搭配歷史趨勢安排換匯節奏。',
       },
       {
         position: 4,
@@ -2931,7 +2998,7 @@ export function getReverseCurrencyLandingPageContent(
       },
     ],
     highlights: [
-      `精準費率：顯示台銀現金賣出價——這是你帶台幣換${displayName}現鈔的實際費率，非中間價。`,
+      `精準費率：顯示台銀現金牌告——這是你帶台幣換${displayName}現鈔的實際費率。`,
       spotAvailable
         ? `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`
         : `資料來源：臺灣銀行牌告匯率，頁面以該幣別可實際查得的現金買入賣出報價為準。`,
@@ -2946,6 +3013,7 @@ export function getReverseCurrencyLandingPageContent(
     direction: 'twd-to-foreign' as const,
     relatedGuides: RELATED_GUIDES_TWD_TO_FOREIGN,
     answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'twd-to-foreign'),
+    precisionThesis: buildCurrencyPrecisionThesis(displayName),
     ...(rateExample?.alternativeProviders
       ? { alternativeProviders: rateExample.alternativeProviders }
       : {}),

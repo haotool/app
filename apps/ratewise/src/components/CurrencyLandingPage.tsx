@@ -14,6 +14,7 @@ import {
   buildAmountExchangeRateSpecificationJsonLd,
   buildRateDifferenceSentence,
   getDefaultExampleAmount,
+  type CurrencyPrecisionThesis,
   type FAQEntry,
   type HowToStep,
   type CommonAmountEntry,
@@ -27,6 +28,7 @@ export interface CurrencyLandingPageProps {
   currencyName: string;
   title: string;
   description: string;
+  heroIntro: string;
   pathname: string;
   canonical: string;
   keywords: string[];
@@ -43,6 +45,8 @@ export interface CurrencyLandingPageProps {
   relatedGuides?: RelatedGuideLink[];
   /** AEO/GEO 快速答案區塊：AI 引擎直接引用的問答對。 */
   answerCapsule?: FAQEntry[];
+  /** 幣別頁唯一精準度論述（正文 SSOT，不含 thesis keyword）。 */
+  precisionThesis: CurrencyPrecisionThesis;
 }
 
 export function CurrencyLandingPage({
@@ -51,6 +55,7 @@ export function CurrencyLandingPage({
   currencyName,
   title,
   description,
+  heroIntro,
   pathname,
   canonical,
   keywords,
@@ -65,6 +70,7 @@ export function CurrencyLandingPage({
   alternativeProviders,
   relatedGuides = [],
   answerCapsule = [],
+  precisionThesis,
 }: CurrencyLandingPageProps) {
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
@@ -223,7 +229,7 @@ export function CurrencyLandingPage({
                     : `${currencyName}對台幣匯率換算器`}
                 </h1>
                 <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
-                  {description}
+                  {heroIntro}
                 </p>
                 {/* 更新時間戳：Perplexity 新鮮度信號，AI 引擎優先引用有明確更新時間的頁面。 */}
                 <p className="text-text-muted text-xs mt-2 flex items-center gap-1.5">
@@ -275,7 +281,7 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* 精準換匯：為什麼看賣出價 */}
+          {/* 精準換匯：唯一正文論述區塊（SSOT 來自 seo-metadata.precisionThesis） */}
           <section className="mb-6 sm:mb-8">
             <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
               <div className="flex items-start gap-3">
@@ -284,30 +290,11 @@ export function CurrencyLandingPage({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-bold text-text text-sm sm:text-base mb-2">
-                    為什麼 {APP_INFO.shortName} 比其他工具更精準？
+                    {precisionThesis.heading}
                   </h2>
                   <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
-                    多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
-                    {APP_INFO.shortName} 直接顯示臺灣銀行牌告的「
-                    <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
-                    {currencyName} 現鈔時實際要付的台幣金額。
+                    {precisionThesis.body}
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/30 p-2 text-center">
-                      <div className="font-bold text-red-600 dark:text-red-400 mb-0.5">
-                        中間價（Google／XE）
-                      </div>
-                      <div className="text-text-muted">買入與賣出的平均值</div>
-                      <div className="text-text-muted mt-0.5">≠ 實際換匯金額</div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
-                      <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
-                        賣出價（{APP_INFO.shortName}）
-                      </div>
-                      <div className="text-text-muted">臺灣銀行牌告實際報價</div>
-                      <div className="text-text-muted mt-0.5">= 銀行實際收你的台幣</div>
-                    </div>
-                  </div>
                   <p className="text-text-muted text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200/30">
                     {rateDifferenceSentence}
                   </p>
@@ -323,8 +310,7 @@ export function CurrencyLandingPage({
               <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
             </div>
             <p className="text-sm sm:text-base mb-4 opacity-90">
-              立即查看{currencyName}
-              賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。
+              立即查看{currencyName}台銀牌告匯率，在換算器輸入金額取得最新結果。
             </p>
             <Link
               to={converterHref}
