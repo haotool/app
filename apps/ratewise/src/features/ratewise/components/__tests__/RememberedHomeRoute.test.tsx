@@ -9,7 +9,11 @@ import { __resetColdStartRestoreForTests, markRestoreAttempted } from '../coldSt
 import { useConverterStore } from '../../../../stores/converterStore';
 
 vi.mock('../../RateWise', () => ({
-  default: () => <div data-testid="ratewise-single">Single</div>,
+  default: ({ rememberConverterView = true }: { rememberConverterView?: boolean }) => (
+    <div data-testid="ratewise-single" data-remember={String(rememberConverterView)}>
+      Single
+    </div>
+  ),
 }));
 
 const MultiMarker = () => <div data-testid="multi-page">Multi</div>;
@@ -53,6 +57,16 @@ describe('RememberedHomeRoute', () => {
 
     expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
     expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('停留 single 還原決策完成後才允許 RateWise 寫入偏好（rememberConverterView=true）', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'single' });
+
+    renderHome('/');
+
+    // 還原決策完成（hydrated 且不導向 multi）後才開放寫入，避免覆寫 persist 的 lastConverterView。
+    expect(await screen.findByTestId('ratewise-single')).toHaveAttribute('data-remember', 'true');
   });
 
   it('deep-link query 存在時不導向，即使 lastConverterView=multi', async () => {
