@@ -37,13 +37,6 @@ const CDN_URLS = [
 // 單次 CDN fetch 逾時上限。行動網路平均 RTT 約 200-500ms，8 秒足以涵蓋 3G 網路，同時防止無限等待。
 export const FETCH_TIMEOUT_MS = 8_000;
 
-// localStorage key 分離策略：
-// 使用 storage-keys.ts 集中管理所有 localStorage keys
-// - STORAGE_KEYS.EXCHANGE_RATES: 匯率數據快取（本檔案管理，5分鐘過期）
-// - STORAGE_KEYS.CURRENCY_CONVERTER_MODE: 用戶界面模式（RateWise.tsx）
-// - STORAGE_KEYS.FAVORITES: 用戶收藏的貨幣（RateWise.tsx）
-// - STORAGE_KEYS.FROM_CURRENCY, TO_CURRENCY: 用戶選擇的貨幣（RateWise.tsx）
-// clearExchangeRateCache() 只清除快取，不影響用戶數據
 const CACHE_KEY = STORAGE_KEYS.EXCHANGE_RATES;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 分鐘
 const IS_LHCI_OFFLINE = import.meta.env['VITE_LHCI_OFFLINE'] === 'true';
@@ -166,9 +159,6 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
     try {
       logger.debug(`Trying CDN #${i + 1}/${CDN_URLS.length}`, { url: url.substring(0, 80) });
 
-      // [2026-06-12] 不發送 If-None-Match：該 header 非 CORS safelisted，
-      // jsDelivr preflight 不允許，會使主 CDN 永遠失敗並降級到 GitHub Raw(60 req/hr)。
-      // TTL 到期後以 cache: 'no-cache' 強制 CDN 重新驗證。
       const fetchInit: RequestInit = {
         cache: 'no-cache',
         ...(signal ? { signal } : {}),

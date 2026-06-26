@@ -85,6 +85,59 @@ interface ResolveOfflineDocumentFallbackOptions {
     | Promise<Response | undefined | null>;
 }
 
+function getPrecacheLookupKeys(request: Request): string[] {
+  const pathname = new URL(request.url).pathname;
+  const keys = new Set<string>();
+  const withoutLeadingSlash = pathname.replace(/^\//, '');
+  if (withoutLeadingSlash) keys.add(withoutLeadingSlash);
+
+  const assetsIndex = pathname.indexOf('/assets/');
+  if (assetsIndex >= 0) {
+    keys.add(pathname.slice(assetsIndex + 1));
+  }
+
+  const filename = pathname.split('/').pop();
+  if (filename) keys.add(filename);
+
+  return [...keys];
+}
+
+type MatchPrecacheFn = (
+  url: string,
+) => Response | undefined | null | Promise<Response | undefined | null>;
+
+/** JS/CSS 離線回退：exact URL → ignoreSearch → matchPrecache。 */
+export async function resolveOfflineStaticResourceFallback(
+  request: Request,
+  matchPrecacheFn: MatchPrecacheFn,
+): Promise<Response> {
+  try {
+    const exact = await caches.match(request);
+    if (exact) return exact;
+  } catch {
+    // 忽略快取存取錯誤。
+  }
+
+  const bareUrl = request.url.split('?')[0] ?? request.url;
+  try {
+    const ignoreSearchMatch = await caches.match(bareUrl, { ignoreSearch: true });
+    if (ignoreSearchMatch) return ignoreSearchMatch;
+  } catch {
+    // 忽略快取存取錯誤。
+  }
+
+  for (const key of getPrecacheLookupKeys(request)) {
+    try {
+      const precached = await matchPrecacheFn(key);
+      if (precached) return precached;
+    } catch {
+      // 忽略 matchPrecache 錯誤。
+    }
+  }
+
+  return Response.error();
+}
+
 export async function resolveOfflineDocumentFallback({
   emergencyReason,
   matchPrecache,

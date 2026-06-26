@@ -8,7 +8,10 @@ import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing
 import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
-import { resolveOfflineDocumentFallback } from './utils/pwaOfflineFallback';
+import {
+  resolveOfflineDocumentFallback,
+  resolveOfflineStaticResourceFallback,
+} from './utils/pwaOfflineFallback';
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
@@ -33,25 +36,8 @@ const HTML_CACHE_NAME = 'html-cache';
 precacheAndRoute(WB_MANIFEST);
 
 /**
- * 確保 offline.html 一定被快取（install 失敗時的補救機制）。
- *
- * iOS Safari 在 PWA 冷啟動時可能遇到以下問題：
- * 1. SW install 過程中 offline.html 的 precache 因網路問題失敗
- * 2. additionalManifestEntries 的 revision 導致 cache key mismatch
- * 3. iOS cache eviction 清除了 offline.html
- *
- * 此機制在 SW activate 時直接用 bare URL（無 revision）快取 offline.html，
- * 確保 setCatchHandler 的 matchPrecache('offline.html') 或 caches.match() 一定能命中。
- */
-/**
- * 確保關鍵文件存入 html-cache，對抗 iOS Safari precache 驅逐。
- *
- * 問題：iOS 在記憶體壓力下驅逐 Workbox precache（整個 cache 被砍），
- * 造成 matchPrecache('index.html') 失敗，而 offline.html 若只在 html-cache
- * 中備份則反而成為唯一可用文件，導致在線用戶看到離線頁面。
- *
- * 修法：offline.html 與 index.html 都備份到 html-cache，確保兩者具有
- * 同等存活率。index.html 從 precache 複製（避免額外網路請求）。
+ * 確保 index.html / offline.html 存入 html-cache，對抗 iOS precache 驅逐。
+ * offline.html 從網路備份；index.html 從 precache 複製，避免在線用戶只剩離線頁。
  */
 async function ensureOfflineHtmlCached(): Promise<void> {
   try {
@@ -144,12 +130,7 @@ async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
   }
 }
 
-/**
- * Cache Budget Guard（PR3: iOS 50MB cache 限制保護）
- *
- * iOS Safari 對 SW cache 有 50MB 上限，超過會觸發 eviction。
- * 此函式在 install 時檢查使用量，超過 40MB 時清理非關鍵快取。
- */
+/** iOS Safari SW cache 約 50MB 上限；超過 40MB 時清理非關鍵快取。 */
 async function checkAndCleanupCacheBudget(): Promise<void> {
   try {
     if (!navigator.storage?.estimate) return;
@@ -161,7 +142,6 @@ async function checkAndCleanupCacheBudget(): Promise<void> {
     const budgetMB = 40; // iOS 安全邊界（50MB 上限前預留緩衝）
 
     if (usageMB <= budgetMB) {
-      // Cache 使用量在預算內，無需清理
       return;
     }
 
@@ -177,10 +157,8 @@ async function checkAndCleanupCacheBudget(): Promise<void> {
         await caches.delete(cacheName);
         console.warn(`[SW] Deleted cache: ${cacheName}`);
 
-        // 重新檢查使用量
         const { usage: newUsage } = await navigator.storage.estimate();
         if (newUsage && newUsage / 1024 / 1024 <= budgetMB) {
-          // 清理完成，使用量已在預算內
           return;
         }
       }
@@ -245,32 +223,28 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// 網路失敗離線回退：JS/CSS 嘗試快取；導覽請求回退至 precache index.html / offline.html。
+const OFFLINE_DOCUMENT_FALLBACK_MATCHERS = {
+  matchPrecache,
+  matchIndexHtmlInAnyCache: () => caches.match('index.html'),
+  matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+} as const;
+
+// 網路失敗離線回退：JS/CSS 三層快取；導覽請求回退至 precache index.html / offline.html。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
 
-  // JS/CSS 離線回退：iOS cache eviction 後先嘗試全快取比對，避免 "Load failed" 崩潰。
   if (req.destination === 'script' || req.destination === 'style') {
-    try {
-      const cached = await caches.match(req);
-      if (cached) return cached;
-    } catch {
-      // 忽略快取存取錯誤。
-    }
-    return Response.error();
+    return resolveOfflineStaticResourceFallback(req, matchPrecache);
   }
 
   if (req.destination !== 'document') {
     return Response.error();
   }
 
-  // NavigationRoute 已攔截正常導覽；setCatchHandler 僅在網路失敗時作保險層。
   return resolveOfflineDocumentFallback({
     emergencyReason: 'emergency-document-fallback',
-    matchPrecache,
-    matchIndexHtmlInAnyCache: () => caches.match('index.html'),
-    matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
   });
 });
 
@@ -291,9 +265,7 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 function resolveNavigationFallback(): Promise<Response> {
   return resolveOfflineDocumentFallback({
     emergencyReason: 'emergency-navigation-fallback',
-    matchPrecache,
-    matchIndexHtmlInAnyCache: () => caches.match('index.html'),
-    matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
+    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
   });
 }
 

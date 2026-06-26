@@ -18,8 +18,11 @@
  * 2. major version bump
  * 3. release notes 明確告知使用者
  *
- * 參考：/home/user/app/CLAUDE.md
+ * 參考：`CLAUDE.md`、`AGENTS.md`
  */
+
+/** Zustand converterStore persist key（與 USER_DATA_KEYS 同步，不可改名）。 */
+export const CONVERTER_STORE_KEY = 'ratewise-converter' as const;
 
 /**
  * localStorage Keys 常數
@@ -101,7 +104,7 @@ export const CACHE_KEY_PREFIXES = [STORAGE_KEYS.EXCHANGE_SHOP_RATE_PREFIX] as co
  *   仍保留在本清單中以保護過渡期使用者資料不被快取清除流程誤刪。
  */
 export const USER_DATA_KEYS = [
-  'ratewise-converter', // Zustand store（含 fromCurrency/toCurrency/mode/rateMode/rateType/rateSource/favorites/history）
+  CONVERTER_STORE_KEY,
   STORAGE_KEYS.RATE_TYPE,
   STORAGE_KEYS.RATE_SOURCE,
   STORAGE_KEYS.CONVERSION_HISTORY,
