@@ -33,6 +33,7 @@ const resources = {
         total_spent: '總花費',
         members_count: '由 {{count}} 位探險家分攤',
         settlements: '結清方式',
+        mixed_currency_warning: '此行程含多種幣別，無法合併總額與結算，請改用單一幣別記帳',
         pay_to: '{{from}} 付給 {{to}}',
         balances: '各人結算',
         owed: '應收',
@@ -123,6 +124,8 @@ const resources = {
         total_spent: 'Total Spent',
         members_count: '{{count}} adventurers splitting',
         settlements: 'How to Settle',
+        mixed_currency_warning:
+          'This trip mixes currencies; totals and settlement cannot be combined. Use a single currency.',
         pay_to: '{{from}} pays {{to}}',
         balances: 'Balances',
         owed: 'Receives',
@@ -213,6 +216,8 @@ const resources = {
         total_spent: '총 지출',
         members_count: '{{count}}명이 분담',
         settlements: '정산 방법',
+        mixed_currency_warning:
+          '이 여행에는 여러 통화가 섞여 있어 합계와 정산을 합칠 수 없습니다. 단일 통화를 사용하세요.',
         pay_to: '{{from}} → {{to}}',
         balances: '개인 정산',
         owed: '받을 돈',
@@ -303,6 +308,8 @@ const resources = {
         total_spent: '総支出',
         members_count: '{{count}}人で割り勘',
         settlements: '精算方法',
+        mixed_currency_warning:
+          'この旅行は複数の通貨が混在しており、合計と精算を統合できません。単一通貨を使用してください。',
         pay_to: '{{from}} → {{to}}',
         balances: '各自の精算',
         owed: '受け取り',

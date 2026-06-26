@@ -183,6 +183,8 @@ export function HistoryTab() {
   const tripCurrency: CurrencyCode = tripExpenses[tripExpenses.length - 1]?.currency ?? currency;
   // 取得單筆記錄的顯示幣別（優先使用記帳當下快照，舊資料 fallback 主導幣別）。
   const expenseCurrency = (exp: ExpenseRecord): CurrencyCode => exp.currency ?? tripCurrency;
+  // 混幣行程：跨幣別直接相加的總額與結算為無效運算，改顯示警告而非誤導數字。
+  const isMixedCurrency = new Set(tripExpenses.map((exp) => expenseCurrency(exp))).size > 1;
 
   // 計算各人餘額
   const balances: Record<string, number> = {};
@@ -222,7 +224,9 @@ export function HistoryTab() {
     const lines: string[] = [
       `🐾 喵喵分帳 — ${tripName}`,
       `${'─'.repeat(24)}`,
-      `💰 總花費：${formatAmount(totalSpent, tripCurrency)}`,
+      isMixedCurrency
+        ? `⚠️ ${t('history.mixed_currency_warning')}`
+        : `💰 總花費：${formatAmount(totalSpent, tripCurrency)}`,
       '',
     ];
     if (tripExpenses.length > 0) {
@@ -239,7 +243,7 @@ export function HistoryTab() {
       });
       lines.push('');
     }
-    if (settlements.length > 0) {
+    if (settlements.length > 0 && !isMixedCurrency) {
       lines.push(`💸 結清方式`);
       settlements.forEach((s) => {
         const from = members.find((m) => m.id === s.from)?.name ?? s.from;
@@ -281,9 +285,15 @@ export function HistoryTab() {
             <span className="text-xs font-medium uppercase tracking-widest text-primary mb-1 block">
               {t('history.total_spent')}
             </span>
-            <h2 className="text-4xl font-medium text-on-surface tracking-tight">
-              {formatAmount(totalSpent, tripCurrency)}
-            </h2>
+            {isMixedCurrency ? (
+              <p className="text-sm font-medium text-error leading-snug">
+                {t('history.mixed_currency_warning')}
+              </p>
+            ) : (
+              <h2 className="text-4xl font-medium text-on-surface tracking-tight">
+                {formatAmount(totalSpent, tripCurrency)}
+              </h2>
+            )}
           </div>
           <div className="mt-6 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -327,7 +337,7 @@ export function HistoryTab() {
       </section>
 
       {/* 結清方式 */}
-      {settlements.length > 0 && (
+      {settlements.length > 0 && !isMixedCurrency && (
         <section className="mb-10">
           <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
             {t('history.settlements')}
