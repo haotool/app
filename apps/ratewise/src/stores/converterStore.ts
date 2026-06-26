@@ -47,7 +47,7 @@ import {
   RATE_SOURCES,
   RATE_TYPES,
 } from '../features/ratewise/constants';
-import { STORAGE_KEYS } from '../features/ratewise/storage-keys';
+import { CONVERTER_STORE_KEY, STORAGE_KEYS } from '../features/ratewise/storage-keys';
 
 const DEFAULT_PROVIDER_PREFERENCE: RateProviderPreference = {
   mode: 'manual',
@@ -289,7 +289,7 @@ function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> |
     };
   }
 
-  if (window.localStorage.getItem('ratewise-converter') === null) {
+  if (window.localStorage.getItem(CONVERTER_STORE_KEY) === null) {
     const oldFrom = window.localStorage.getItem(LEGACY_KEYS.FROM_CURRENCY);
     const oldTo = window.localStorage.getItem(LEGACY_KEYS.TO_CURRENCY);
     const oldFavoritesRaw = window.localStorage.getItem(LEGACY_KEYS.FAVORITES);
@@ -479,7 +479,7 @@ export const useConverterStore = create<ConverterState>()(
       },
     }),
     {
-      name: 'ratewise-converter',
+      name: CONVERTER_STORE_KEY,
       partialize: (state) => ({
         lastConverterView: state.lastConverterView,
         fromCurrency: state.fromCurrency,
