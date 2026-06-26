@@ -19,12 +19,22 @@ pnpm exec wrangler whoami
 
 ```bash
 cd security-headers
+pnpm deploy   # wrangler deploy --minify（package.json script）
+```
+
+手動部署（不加 minify）：
+
+```bash
 pnpm exec wrangler deploy
 ```
 
+> **CI**：`.github/workflows/release.yml` 於 Wait for RateWise 之後使用 `wrangler deploy --minify`；本地 Maintainer 部署建議同用 `pnpm deploy`。
+
 ## 本版重點
 
-- Worker 版本：`4.1`
+- Worker 版本：`5.4`（以 `X-Security-Policy-Version` 與 `worker.js` JSDoc 四處同步為準）
+- `wrangler.jsonc` observability 取樣率：`0.1`（10%，對齊 Workers 配額治理）
+- `compatibility_date`：`2026-06-01`（季度更新 runtime 基準）
 - HSTS 改由 Cloudflare Edge 管理，Worker 不再寫入
 - `app.haotool.org/*` 全域納入 Worker
 - `www.haotool.org/*` 由 Worker 永久轉址到 apex
@@ -58,7 +68,26 @@ curl -sSI https://app.haotool.org/ratewise/og-image.jpg | grep -i 'access-contro
 
 # 6. Edge HSTS（確認仍存在，來源應為 Edge 而非 Worker）
 curl -sSI https://app.haotool.org/ratewise/ | grep -i 'strict-transport-security'
+
+# 7. COEP 邊界（PWA precache）：HTML 有 COEP，hashed JS 僅 CORP、無 COEP
+curl -sSI https://app.haotool.org/ratewise/ | grep -i 'cross-origin-embedder'
+JS=$(curl -s --compressed https://app.haotool.org/ratewise/ | grep -Eo 'assets/[^"]+\.js' | head -1)
+curl -sSI "https://app.haotool.org/ratewise/${JS}" | grep -i 'cross-origin'
 ```
+
+## RateWise UX Release 順序（SSOT）
+
+對齊 UX spec §5.4 與 `AGENTS.md` Release SOP；**不可**在 Zeabur 正式站版本就緒前 purge。
+
+1. **Zeabur app deploy**（`main` push 觸發 Dockerfile 建置）
+2. **app-version probe**：`RATEWISE_RELEASE_ACTION=wait RATEWISE_EXPECTED_VERSION=x.y.z node scripts/ratewise-production-release.mjs`
+3. **Worker deploy**：`cd security-headers && pnpm deploy`（或 release workflow）
+4. **CF purge**（prefix 清單見 `scripts/ratewise-production-release.mjs` `buildRatewisePurgePayload`）
+5. **live precache**：`VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ node scripts/verify-precache-assets.mjs`
+
+**stale edge 404**：若原 URL 404、加 querystring 可 200 → 先 purge 再視為完成。
+
+詳細稽核步驟見 [038_ratewise_cloudflare_audit_workflow.md](../docs/dev/038_ratewise_cloudflare_audit_workflow.md)。
 
 ## 已知例外
 
@@ -74,6 +103,7 @@ curl -sSI https://app.haotool.org/ratewise/ | grep -i 'strict-transport-security
 
 ## 相關文件
 
-- `/Users/azlife.eth/Tools/app/docs/SECURITY_CSP_STRATEGY.md`
-- `/Users/azlife.eth/Tools/app/docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md`
-- `/Users/azlife.eth/Tools/app/docs/dev/040_cloudflare_security_headers_refactor_spec.md`
+- [docs/SECURITY_CSP_STRATEGY.md](../docs/SECURITY_CSP_STRATEGY.md)
+- [docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md](../docs/CLOUDFLARE_SECURITY_HEADERS_GUIDE.md)
+- [docs/dev/038_ratewise_cloudflare_audit_workflow.md](../docs/dev/038_ratewise_cloudflare_audit_workflow.md)
+- [docs/dev/040_cloudflare_security_headers_refactor_spec.md](../docs/dev/040_cloudflare_security_headers_refactor_spec.md)
