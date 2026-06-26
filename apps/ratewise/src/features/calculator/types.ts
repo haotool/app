@@ -112,6 +112,8 @@ export interface CalculatorKeyboardProps {
   onConfirm: (result: number) => void;
   /** 初始值（optional，用於編輯現有數值） */
   initialValue?: number;
+  /** 即時換算預覽：由轉換器注入匯率邏輯 */
+  formatConversionPreview?: (value: number) => string | null;
 }
 
 /**

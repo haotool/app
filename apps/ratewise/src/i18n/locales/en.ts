@@ -27,6 +27,18 @@ const en = {
     clickToCopy: 'Click to copy',
   },
 
+  rateBasis: {
+    'bank-sell': 'Bank selling rate applied',
+    'bank-buy': 'Bank buying rate applied',
+    'bank-cross': 'Buy/sell cross rate',
+    'bank-sell-only': 'Bank of Taiwan posted selling rate',
+    mid: 'Mid-market reference (not tradable)',
+    'shop-sell': 'Exchange shop selling rate',
+    'shop-buy': 'Exchange shop buying rate',
+    'shop-mid': 'Exchange shop mid-rate (reference)',
+    listBasisNote: 'Bank of Taiwan selling rate · 1 unit = N TWD',
+  },
+
   // Navigation
   nav: {
     mainNavigation: 'Main Navigation',
@@ -64,6 +76,8 @@ const en = {
     clickToSwap: 'Click to swap',
     addToHistory: 'Add to history',
     addedToHistory: 'Added to history',
+    conversionAnnouncement:
+      '{{fromAmount}} {{fromCurrency}} is approximately {{toAmount}} {{toCurrency}}',
     spotRate: 'Spot',
     cashRate: 'Cash',
     exchangeShopRate: 'Exchange shop',

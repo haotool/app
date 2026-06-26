@@ -20,10 +20,13 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
 
   return (
     <div className={contentPageTokens.surfaces.panel}>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-1">
         <Star className="text-favorite" size={20} fill="currentColor" />
         <h2 className="text-xl font-bold text-text">{t('currencyList.favoriteCurrencies')}</h2>
       </div>
+      <p className="mb-4 text-xs text-text-muted" data-testid="favorites-basis-note">
+        {t('rateBasis.listBasisNote')}
+      </p>
       <div className="space-y-2">
         {favorites.map((code) => (
           <div
@@ -38,8 +41,9 @@ export const FavoritesList = ({ favorites, exchangeRates }: FavoritesListProps) 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-text">
+              <span className="text-sm font-medium text-text tabular-nums">
                 {formatExchangeRate(exchangeRates[code] ?? 0)}
+                <span className="ml-1 text-xs text-text-muted">TWD</span>
               </span>
             </div>
           </div>

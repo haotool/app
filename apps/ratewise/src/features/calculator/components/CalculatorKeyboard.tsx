@@ -96,6 +96,7 @@ export function CalculatorKeyboard({
   onClose,
   onConfirm,
   initialValue,
+  formatConversionPreview,
 }: CalculatorKeyboardProps) {
   const { t } = useTranslation();
 
@@ -117,6 +118,11 @@ export function CalculatorKeyboard({
     percent,
     closeEasterEgg,
   } = useCalculator(initialValue);
+
+  const conversionLabel =
+    formatConversionPreview && preview !== null && Number.isFinite(preview)
+      ? formatConversionPreview(preview)
+      : null;
 
   /**
    * 處理按鍵點擊（iOS 標準功能）
@@ -268,6 +274,15 @@ export function CalculatorKeyboard({
                   error={error}
                   preview={preview}
                 />
+
+                {conversionLabel && (
+                  <div
+                    data-testid="calculator-conversion-preview"
+                    className="mb-3 px-1 text-right text-sm font-semibold text-primary tabular-nums"
+                  >
+                    {conversionLabel}
+                  </div>
+                )}
 
                 {/* 鍵盤佈局（iOS 標準 5×4 網格，20 按鈕均勻分佈） */}
                 <div className="space-y-3">

@@ -27,6 +27,18 @@ const ja = {
     clickToCopy: 'クリックでコピー',
   },
 
+  rateBasis: {
+    'bank-sell': '銀行売りレート適用',
+    'bank-buy': '銀行買いレート適用',
+    'bank-cross': '買い／売りクロスレート',
+    'bank-sell-only': '台湾銀行の掲示売りレート',
+    mid: '参考仲値（取引不可）',
+    'shop-sell': '両替所の売りレート適用',
+    'shop-buy': '両替所の買いレート適用',
+    'shop-mid': '両替所の仲値（参考）',
+    listBasisNote: '台湾銀行売りレート・1 通貨 = N 台湾ドル',
+  },
+
   // Navigation
   nav: {
     mainNavigation: 'メインナビゲーション',
@@ -64,6 +76,7 @@ const ja = {
     clickToSwap: 'クリックで入れ替え',
     addToHistory: '履歴に追加',
     addedToHistory: '履歴に追加しました',
+    conversionAnnouncement: '{{fromAmount}} {{fromCurrency}} は約 {{toAmount}} {{toCurrency}} です',
     spotRate: '直物',
     cashRate: '現金',
     exchangeShopRate: '両替所',

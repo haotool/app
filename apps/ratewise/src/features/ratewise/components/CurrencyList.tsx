@@ -25,6 +25,9 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
     <div className={contentPageTokens.surfaces.panel}>
       <div className="mb-4">
         <h2 className="text-xl font-bold text-text">{t('currencyList.allCurrencies')}</h2>
+        <p className="mt-0.5 text-xs text-text-muted" data-testid="currency-list-basis-note">
+          {t('rateBasis.listBasisNote')}
+        </p>
       </div>
       <div
         className="space-y-2 max-h-96 overflow-y-auto"
@@ -48,8 +51,9 @@ export const CurrencyList = ({ favorites, exchangeRates, onToggleFavorite }: Cur
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-text">
+              <span className="text-sm text-text tabular-nums">
                 {formatExchangeRate(exchangeRates[code] ?? 0)}
+                <span className="ml-1 text-xs text-text-muted">TWD</span>
               </span>
               <Star
                 className={`${favorites.includes(code) ? 'text-favorite' : 'text-text-muted/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100'}`}

@@ -27,6 +27,18 @@ const ko = {
     clickToCopy: '클릭하여 복사',
   },
 
+  rateBasis: {
+    'bank-sell': '은행 매도 환율 적용',
+    'bank-buy': '은행 매입 환율 적용',
+    'bank-cross': '매입/매도 교차 환율',
+    'bank-sell-only': '대만은행 고시 매도 환율',
+    mid: '참고 중간 환율(거래 불가)',
+    'shop-sell': '환전소 매도 환율 적용',
+    'shop-buy': '환전소 매입 환율 적용',
+    'shop-mid': '환전소 중간 환율(참고)',
+    listBasisNote: '대만은행 매도율 · 1단위 = N TWD',
+  },
+
   // Navigation
   nav: {
     mainNavigation: '주요 내비게이션',
@@ -64,6 +76,8 @@ const ko = {
     clickToSwap: '클릭하여 교체',
     addToHistory: '기록에 추가',
     addedToHistory: '기록에 추가됨',
+    conversionAnnouncement:
+      '{{fromAmount}} {{fromCurrency}} 은(는) 약 {{toAmount}} {{toCurrency}} 입니다',
     spotRate: '전신환',
     cashRate: '현금',
     exchangeShopRate: '환전소',
