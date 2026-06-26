@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+62
+> 本次分數變化：+3（reward 3、penalty 0）｜累計總分：+62
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-26
+- ID：neutral-002-score-header-correction-pr425
+- 原因：Codex P2 指出本批 3 reward + 1 neutral 的 header 誤寫 +1
+- 解法：header 更正為 +3（reward 3、penalty 0），累計 +62 維持不變
 
 - 日期：2026-06-26
 - ID：reward-ratewise-moneybox-no-cache-revalidation
