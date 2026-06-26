@@ -21,6 +21,7 @@ import {
   getReverseCurrencyLandingPageContent,
   CURRENCY_LANDING_THESIS_KEYWORD,
   CANONICAL_BANK_SELL_THESIS,
+  collectCurrencyLandingBodyText,
 } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
 import { SEO_SCHEMA_REGISTRY } from '../seo-schema-registry';
@@ -450,18 +451,6 @@ describe('SEO SSOT', () => {
 
     const REVERSE_CODES = CURRENCY_CODES;
 
-    function collectBodyText(content: ReturnType<typeof getCurrencyLandingPageContent>): string {
-      return [
-        content.heroIntro,
-        content.precisionThesis.heading,
-        content.precisionThesis.body,
-        ...content.highlights,
-        ...(content.answerCapsule?.flatMap((item) => [item.question, item.answer]) ?? []),
-        ...content.faqEntries.flatMap((item) => [item.question, item.answer]),
-        ...content.relatedGuides.flatMap((guide) => [guide.label, guide.description]),
-      ].join('\n');
-    }
-
     it('meta description 應含唯一 canonical thesis SSOT', () => {
       const content = getCurrencyLandingPageContent('USD');
       expect(content.description).toContain(CANONICAL_BANK_SELL_THESIS);
@@ -470,12 +459,12 @@ describe('SEO SSOT', () => {
 
     it.each(CURRENCY_CODES)('%s 正文 SSOT 不得含 thesis keyword（賣出價|中間價）', (code) => {
       const content = getCurrencyLandingPageContent(code);
-      expect(collectBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+      expect(collectCurrencyLandingBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
     });
 
     it.each(REVERSE_CODES)('反向 %s 正文 SSOT 不得含 thesis keyword', (code) => {
       const content = getReverseCurrencyLandingPageContent(code);
-      expect(collectBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+      expect(collectCurrencyLandingBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
     });
 
     it.each(CURRENCY_CODES)('%s capsule 問題不得與 FAQ 逐字重複', (code) => {

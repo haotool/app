@@ -100,7 +100,7 @@ flowchart TB
 | F4  | ~~API buy/sell 銀行視角~~ **006 DONE** | correctness    | v2 additive 欄位 + OpenAPI CurrencyRateV2             | M      | LOW  | `api-semantics-v2.ts`；`latest.json` `schemaVersion: "2.0"`                          |
 | F5  | Release 邊界分散                       | architecture   | Zeabur→CF→precache 順序錯易 stale 404                 | M      | MED  | `release.yml:213-241`；`Dockerfile:73-78` 多 app 單映像                              |
 | F6  | 觸控 / nav 未達 44px                   | direction      | WCAG 2.5.8、韓系對標 gap                              | M      | LOW  | `BottomNavigation.tsx:105` `text-[8px]`；`PwaInstallGuide.tsx:16` `1800ms`           |
-| F7  | ~~內容 thesis 重複~~ **L09 Step1**     | docs/direction | build dist thesis curl **1**（原 2）；L09 Step1 完成  | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                       |
+| F7  | ~~內容 thesis 重複~~ **L09 Step1**     | docs/direction | build dist thesis curl **1**（原 2）；L09 Step1 完成  | M      | LOW  | spec §十；`seo-metadata.ts` SSOT                                                     |
 | F8  | CF observability 已取樣 10%            | dx             | 符合 044 治理；deploy SOP 需與 UX gate 綁定           | S      | LOW  | `wrangler.jsonc:23-36` `head_sampling_rate: 0.1`                                     |
 
 ## Infra 稽核摘要（Plan 007 + 008 — read-only，2026-06-27）

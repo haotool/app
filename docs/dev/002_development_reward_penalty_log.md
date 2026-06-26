@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-06-27
+- ID：neutral-epic3-collect-body-text-ssot
+- 原因：L09 dedupe 測試內嵌 collectBodyText 與 seo-metadata SSOT 重複
+- 解法：seo-ssot.test 改 import collectCurrencyLandingBodyText 共用 SSOT
+
+- 日期：2026-06-27
 - ID：neutral-epic3-l09-plan-spec-sync
 - 原因：L09 Step1 完成需同步 plan 004 與 UX spec 狀態證據
 - 解法：更新 plans/README、004 done criteria 與 spec L09 status（build dist thesis curl 1）
