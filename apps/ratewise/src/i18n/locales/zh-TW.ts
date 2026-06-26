@@ -125,6 +125,7 @@ const zhTW = {
     dragToReorder: '拖曳排序',
     dragToFavorite: '拖曳加收藏',
     dragHandle: '拖曳手柄',
+    baseCurrency: '基準幣',
   },
 
   // Settings
@@ -170,6 +171,9 @@ const zhTW = {
     privacyPolicy: '隱私權政策',
     openDataApi: '開放資料 API',
     seoTech: 'SEO 技術揭露',
+    installApp: '安裝 App',
+    installAppDesc: '將 RateWise 加到主畫面，離線也能快速查匯率。',
+    showInstallGuide: '查看安裝指引',
   },
 
   // Styles

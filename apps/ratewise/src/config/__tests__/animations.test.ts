@@ -102,7 +102,7 @@ describe('animations', () => {
     it('should define consistent container and indicator classes', () => {
       expect(segmentedSwitch.containerClass).toContain('rounded-[20px]');
       expect(segmentedSwitch.indicatorClass).toContain('rounded-2xl');
-      expect(segmentedSwitch.itemBaseClass).toContain('flex-1');
+      expect(segmentedSwitch.itemBaseClass).toContain('min-h-11');
     });
   });
 

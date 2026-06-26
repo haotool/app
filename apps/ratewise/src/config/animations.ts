@@ -164,7 +164,8 @@ export const segmentedSwitch = {
   /** 容器樣式 token（保持視覺一致） */
   containerClass: 'bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner',
   indicatorClass: 'absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]',
-  itemBaseClass: 'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
+  itemBaseClass:
+    'flex-1 min-h-11 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
 } as const;
 
 /**

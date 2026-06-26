@@ -2,6 +2,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_INFO } from '../../config/app-info';
+import {
+  notifyConversionSuccess,
+  resetConversionSuccessSignalForTests,
+} from '../../utils/conversionSuccessSignal';
 import { PwaInstallGuide } from '../PwaInstallGuide';
 
 function mockNavigator(userAgent: string, platform: string, maxTouchPoints = 5) {
@@ -19,9 +23,9 @@ function mockNavigator(userAgent: string, platform: string, maxTouchPoints = 5) 
   });
 }
 
-function showGuide() {
+function showGuideAfterConversion() {
   act(() => {
-    vi.advanceTimersByTime(1800);
+    notifyConversionSuccess();
   });
 }
 
@@ -29,6 +33,8 @@ describe('PwaInstallGuide', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     sessionStorage.clear();
+    localStorage.clear();
+    resetConversionSuccessSignalForTests();
     Object.defineProperty(window, 'matchMedia', {
       value: vi.fn().mockReturnValue({ matches: false }),
       configurable: true,
@@ -39,16 +45,33 @@ describe('PwaInstallGuide', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
+    resetConversionSuccessSignalForTests();
   });
 
-  it('renders the clearer iPhone Safari install flow', () => {
+  it('does not auto-show within 3 seconds on cold load', () => {
     mockNavigator(
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
       'iPhone',
     );
 
     render(<PwaInstallGuide />);
-    showGuide();
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('renders the clearer iPhone Safari install flow after conversion success', () => {
+    mockNavigator(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+      'iPhone',
+    );
+
+    render(<PwaInstallGuide />);
+    showGuideAfterConversion();
 
     const title = `把 ${APP_INFO.shortName} 加到 iPhone 主畫面`;
 
@@ -58,7 +81,6 @@ describe('PwaInstallGuide', () => {
     expect(screen.getByText('分享')).toBeInTheDocument();
     expect(screen.getByText('檢視較多')).toBeInTheDocument();
     expect(screen.getByText('加入主畫面')).toBeInTheDocument();
-    // 一般瀏覽器不應顯示內建瀏覽器專屬的右上角動態指引。
     expect(screen.queryByTestId('inapp-corner-pointer')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: title })).toHaveAttribute(
       'src',
@@ -73,13 +95,12 @@ describe('PwaInstallGuide', () => {
     );
 
     render(<PwaInstallGuide />);
-    showGuide();
+    showGuideAfterConversion();
 
     expect(screen.getByRole('dialog', { name: '請先用外部瀏覽器開啟' })).toBeInTheDocument();
     expect(screen.getByText('右上方 ...')).toBeInTheDocument();
     expect(screen.getByText('在瀏覽器開啟')).toBeInTheDocument();
     expect(screen.getByText(`回到 ${APP_INFO.shortName} 安裝`)).toBeInTheDocument();
-    // 內建瀏覽器需顯示指向右上角 ... 的動態指引。
     const cornerPointer = screen.getByTestId('inapp-corner-pointer');
     expect(cornerPointer).toBeInTheDocument();
     expect(cornerPointer).toHaveClass('animate-point-up-right');
@@ -102,7 +123,7 @@ describe('PwaInstallGuide', () => {
     event.userChoice = Promise.resolve({ outcome: 'accepted', platform: 'web' });
     window.dispatchEvent(event);
 
-    showGuide();
+    showGuideAfterConversion();
 
     expect(
       screen.getByRole('img', { name: `把 ${APP_INFO.shortName} 安裝到 Android` }),
@@ -123,7 +144,7 @@ describe('PwaInstallGuide', () => {
     );
 
     render(<PwaInstallGuide />);
-    showGuide();
+    showGuideAfterConversion();
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
@@ -148,7 +169,7 @@ describe('PwaInstallGuide', () => {
     event.preventDefault = preventDefault;
     window.dispatchEvent(event);
 
-    showGuide();
+    showGuideAfterConversion();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(preventDefault).not.toHaveBeenCalled();
@@ -162,7 +183,7 @@ describe('PwaInstallGuide', () => {
     vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList);
 
     render(<PwaInstallGuide />);
-    showGuide();
+    showGuideAfterConversion();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

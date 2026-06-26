@@ -125,6 +125,7 @@ const ja = {
     dragToReorder: 'ドラッグで並べ替え',
     dragToFavorite: 'お気に入りに追加',
     dragHandle: 'ドラッグハンドル',
+    baseCurrency: '基準通貨',
   },
 
   // Settings
@@ -170,6 +171,9 @@ const ja = {
     privacyPolicy: 'プライバシーポリシー',
     openDataApi: 'オープンデータ API',
     seoTech: 'SEO 技術開示',
+    installApp: 'アプリをインストール',
+    installAppDesc: 'RateWise をホーム画面に追加して、オフラインでも素早く為替を確認。',
+    showInstallGuide: 'インストール手順を見る',
   },
 
   // Styles

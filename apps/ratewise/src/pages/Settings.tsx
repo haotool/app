@@ -27,6 +27,7 @@ import {
   Check,
   HelpCircle,
   ChevronRight,
+  Download,
   ExternalLink,
   TrendingUp,
   Shuffle,
@@ -54,6 +55,7 @@ import {
   type HeroLayoutVariant,
 } from '../config/hero-layout-variant';
 import { useState } from 'react';
+import { requestPwaInstallGuide } from '../components/PwaInstallGuide';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -127,7 +129,7 @@ export default function Settings() {
       <div className="px-3 sm:px-5 py-6 max-w-md mx-auto">
         {/* 介面風格區塊 */}
         <section className="mb-8">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <Palette className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.interfaceStyle')}
@@ -196,7 +198,7 @@ export default function Settings() {
 
         {/* 語言區塊 - SSOT 風格 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <Globe className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.language')}
@@ -243,7 +245,7 @@ export default function Settings() {
 
         {/* 匯率模式區塊 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <TrendingUp className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.rateMode')}
@@ -300,6 +302,7 @@ export default function Settings() {
         </section>
 
         {/* 首屏布局（hero-v2 feature flag） */}
+
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <LayoutTemplate className="w-3.5 h-3.5" />
@@ -349,9 +352,36 @@ export default function Settings() {
           </p>
         </section>
 
+{/* PWA 安裝區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
+            <Download className="w-3.5 h-3.5" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.installApp')}
+            </h2>
+          </div>
+
+          <div className="card p-5 space-y-3">
+            <p className="text-xs leading-relaxed text-[rgb(var(--color-text-secondary))]">
+              {t('settings.installAppDesc')}
+            </p>
+            <motion.button
+              type="button"
+              onClick={() => requestPwaInstallGuide()}
+              whileHover={segmentedSwitch.item.whileHover}
+              whileTap={segmentedSwitch.item.whileTap}
+              transition={transitions.instant}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              {t('settings.showInstallGuide')}
+            </motion.button>
+          </div>
+        </section>
+
         {/* 儲存與快取區塊 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <Database className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.storageCache')}
@@ -379,7 +409,7 @@ export default function Settings() {
 
         {/* 資料管理區塊 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <ShieldAlert className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.dataManagement')}
@@ -393,7 +423,7 @@ export default function Settings() {
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
-              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
                 {t('settings.resetTheme')}
@@ -405,7 +435,7 @@ export default function Settings() {
 
         {/* 支援與資訊區塊 */}
         <section className="mb-6">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <HelpCircle className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
               {t('settings.supportInfo')}
@@ -415,51 +445,44 @@ export default function Settings() {
           <div className="card overflow-hidden divide-y divide-border">
             <Link
               to="/faq/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.faq')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/guide/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/about/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.aboutUs')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/privacy/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.privacyPolicy')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/open-data/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.openDataApi')}</span>
-              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </Link>
-            <Link
-              to="/seo-tech/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
-            >
-              <span className="text-sm font-medium">{t('settings.seoTech')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <a
               href={APP_INFO.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full min-h-11 px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.openSource')}</span>
               <ExternalLink className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
