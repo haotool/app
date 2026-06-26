@@ -1170,7 +1170,8 @@ body {
   @media (prefers-reduced-motion: reduce) {
     .animate-point-up-right,
     .animate-attention-ring,
-    .animate-wiggle {
+    .animate-wiggle,
+    .animate-pulse-soft {
       animation: none;
     }
   }

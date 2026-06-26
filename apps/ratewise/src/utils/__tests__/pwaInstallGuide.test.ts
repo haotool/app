@@ -54,6 +54,18 @@ describe('pwaInstallGuide environment detection', () => {
     expect(environment.shouldShowGuide).toBe(true);
   });
 
+  it('detects TikTok in-app browser with musical_ly version suffix', () => {
+    const environment = getPwaInstallEnvironment({
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 musical_ly_37.0.0 JsSdk/2.0 NetType/WIFI',
+      platform: 'iPhone',
+      maxTouchPoints: 5,
+    });
+
+    expect(environment.inAppBrowser).toBe('tiktok');
+    expect(environment.shouldShowGuide).toBe(true);
+  });
+
   it('classifies Messenger in-app browser as messenger, not facebook', () => {
     const iosMessenger = getPwaInstallEnvironment({
       userAgent:
