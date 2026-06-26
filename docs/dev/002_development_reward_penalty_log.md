@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-06-26
+- ID：neutral-retrigger-prod-deploy-2252
+- 原因：Release run 28213399513 Zeabur GitHub deployment 回報 success（2306994）但 Zeabur RUNNING pod 仍為 6/25 舊版，正式站 app-version 卡 2.25.1
+- 解法：最小 PR 重觸 main push 促使 Zeabur 重新部署 2.25.2，版本切換後手動 CF purge 與 live precache 驗證
+
+- 日期：2026-06-26
 - ID：neutral-ratewise-production-governance-v2-merge
 - 原因：PR411 與 main 分叉過久，已發版 changeset 與 split-meow 版本會造成 double-bump 與衝突
 - 解法：3-way merge 至 chore/ratewise-production-governance-v2，刪除 9 個已發版 changeset 並保留 genuinely-new 治理項
