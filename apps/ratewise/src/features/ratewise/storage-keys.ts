@@ -43,7 +43,11 @@ export const STORAGE_KEYS = {
 
   // === 用戶數據 (不可清除) ===
 
-  /** 貨幣轉換器模式 (single/multi) - 用戶界面偏好 */
+  /**
+   * 貨幣轉換器模式 (single/multi) - legacy key，僅供一次性遷移使用。
+   * SSOT 已改為 'ratewise-converter' 內的 lastConverterView；converterStore 遷移時
+   * 會讀取本 key 映射至 lastConverterView 後刪除，請勿在執行期直接讀寫本 key。
+   */
   CURRENCY_CONVERTER_MODE: 'currencyConverterMode',
 
   /** 收藏的貨幣列表 - 用戶自定義收藏 */

@@ -39,6 +39,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 // ── Store reset helper ────────────────────────────────────────────────────────
 const resetStore = () => {
   useConverterStore.setState({
+    lastConverterView: 'single',
     fromCurrency: 'TWD',
     toCurrency: 'JPY',
     rateType: 'spot',
@@ -277,11 +278,12 @@ describe('converterStore', () => {
       useConverterStore.getState().__migrateFromLegacy?.();
 
       // After migration, store should reflect legacy values
-      // 註：legacy `mode` 不再遷移；頁面 mode 由 route 決定（SSOT）。
+      // legacy `currencyConverterMode` 對應「上次停留模式」，遷移至 lastConverterView 保留冷啟動還原偏好。
       const state = useConverterStore.getState();
       expect(state.fromCurrency).toBe('USD');
       expect(state.toCurrency).toBe('KRW');
       expect(state.favorites).toEqual(['USD', 'EUR']);
+      expect(state.lastConverterView).toBe('multi');
     });
 
     it('does not overwrite existing ratewise-converter data', () => {

@@ -37,4 +37,13 @@ describe('useRememberConverterView', () => {
 
     expect(useConverterStore.getState().lastConverterView).toBe('multi');
   });
+
+  it('enabled=false 時不寫入（deep-link 進入不覆寫偏好）', async () => {
+    useConverterStore.setState({ lastConverterView: CONVERTER_MODES[1] });
+    renderHook(() => useRememberConverterView(CONVERTER_MODES[0], { enabled: false }));
+
+    await Promise.resolve();
+
+    expect(useConverterStore.getState().lastConverterView).toBe('multi');
+  });
 });

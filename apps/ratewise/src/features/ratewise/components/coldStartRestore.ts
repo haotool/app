@@ -1,4 +1,5 @@
 import type { ConverterMode } from '../types';
+import { MULTI_CONVERTER_MODE } from '../constants';
 
 /**
  * 冷啟動單次還原旗標。
@@ -35,7 +36,7 @@ export function shouldRestoreToMulti(params: {
     params.hydrated &&
     !hasAttemptedRestore &&
     !params.hasDeepLink &&
-    params.lastConverterView === 'multi'
+    params.lastConverterView === MULTI_CONVERTER_MODE
   );
 }
 

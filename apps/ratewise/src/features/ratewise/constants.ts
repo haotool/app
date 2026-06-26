@@ -51,6 +51,8 @@ export const RATE_TYPES = ['spot', 'cash'] as const;
 export const RATE_SOURCES = ['bank', 'exchange-shop'] as const;
 
 export const DEFAULT_CONVERTER_MODE = 'single';
+/** 多幣別模式字串 SSOT；避免在元件散落 'multi' 字面量。 */
+export const MULTI_CONVERTER_MODE = 'multi';
 export const DEFAULT_RATE_MODE = 'auto';
 export const DEFAULT_RATE_TYPE = 'spot';
 export const DEFAULT_RATE_SOURCE = 'bank';
