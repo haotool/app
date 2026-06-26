@@ -1,6 +1,5 @@
 /**
- * i18n 初始化設定
- * 支援語言：繁體中文（預設）、英文、韓文、日文
+ * i18n 初始化：繁中（預設）、英文、韓文、日文。
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
