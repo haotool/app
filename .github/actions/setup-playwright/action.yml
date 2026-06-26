@@ -1,5 +1,5 @@
 name: Setup Playwright Chromium
-description: 快取並安裝 Playwright Chromium（分層 cache-hit 僅裝 OS deps）
+description: 快取並安裝 Playwright Chromium（瀏覽器下載與 OS deps 拆分並加 timeout，避免掛起燒滿 job 逾時）
 
 inputs:
   app-filter:
@@ -26,14 +26,18 @@ runs:
         restore-keys: |
           playwright-chromium-${{ runner.os }}-
 
-    - name: Install Playwright browsers
+    # 僅在 cache miss 時下載瀏覽器；以 timeout 防止下載卡死燒滿 job 逾時。
+    - name: Install Playwright browser (Chromium)
       if: steps.pw-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
         PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '120000'
-      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install --with-deps chromium
+      run: timeout 600 pnpm --filter "${{ inputs.app-filter }}" exec playwright install chromium
 
-    - name: Install Playwright system deps
-      if: steps.pw-cache.outputs.cache-hit == 'true'
+    # OS 相依套件不在 cache 內，cache hit/miss 皆需安裝。
+    # 與瀏覽器下載拆開並加 timeout，避免 apt lock/網路問題無限掛起。
+    - name: Install Playwright system deps (Chromium)
       shell: bash
-      run: pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: timeout 300 pnpm --filter "${{ inputs.app-filter }}" exec playwright install-deps chromium
