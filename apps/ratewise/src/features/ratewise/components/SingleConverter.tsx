@@ -750,7 +750,12 @@ export const SingleConverter = ({
         </span>
       </button>
 
-      <output className="sr-only" data-testid="conversion-live-region">
+      <output
+        className="sr-only"
+        data-testid="conversion-live-region"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {t('singleConverter.conversionAnnouncement', {
           fromAmount: formatAmountDisplay(fromAmount, fromCurrency) || '0',
           fromCurrency,

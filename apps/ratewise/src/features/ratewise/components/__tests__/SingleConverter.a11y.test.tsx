@@ -71,6 +71,9 @@ describe('SingleConverter - 換算結果無障礙宣告', () => {
   it('渲染 polite live region 並包含目前換算結果', () => {
     render(<SingleConverter {...baseProps} fromCurrency="TWD" toCurrency="JPY" />);
     const region = screen.getByTestId('conversion-live-region');
+    // 顯式宣告 live region 語意，確保螢幕閱讀器確實朗讀換算結果（不僅依賴 <output> 的隱式 role）。
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('aria-atomic', 'true');
     expect(region).toHaveTextContent('TWD');
     expect(region).toHaveTextContent('JPY');
     expect(region).toHaveTextContent('5,008');
