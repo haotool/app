@@ -21,8 +21,11 @@ import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { CurrencyCode } from '../features/ratewise/types';
 import { multiConverterLayoutTokens } from '../config/design-tokens';
 import { useConverterStore } from '../stores/converterStore';
+import { CONVERTER_MODES } from '../features/ratewise/constants';
+import { useRememberConverterView } from '../features/ratewise/hooks/useRememberConverterView';
 
 export default function MultiConverter() {
+  useRememberConverterView(CONVERTER_MODES[1]);
   const { t } = useTranslation();
   const isTestEnv = import.meta.env.MODE === 'test';
   const [isHydrated, setIsHydrated] = useState(isTestEnv);

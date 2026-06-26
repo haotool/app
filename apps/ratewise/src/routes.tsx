@@ -49,7 +49,7 @@ import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRe
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
 
-import RateWise from './features/ratewise/RateWise';
+import { RememberedHomeRoute } from './features/ratewise/components/RememberedHomeRoute';
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
 const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
 const Settings = lazyWithRetry(() => import('./pages/Settings'));
@@ -180,7 +180,7 @@ export const routes: RouteRecord[] = [
               description={HOMEPAGE_SEO.description}
               jsonLd={HOMEPAGE_SEO.jsonLd}
             />
-            <RateWise />
+            <RememberedHomeRoute />
             <HomepageSEOSection />
           </>
         ),
