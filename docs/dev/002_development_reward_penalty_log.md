@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+74
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+75
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-ratewise-homepage-cls-454-hotfix
+- 原因：#441 計價基準 pill 與趨勢圖進場動畫使首頁 CLS 達 0.237，超過 LHCI 門檻 0.1
+- 解法：SingleConverter 匯率卡片固定 min-height、預留 pill 槽位、移除趨勢圖 translate 動畫；RateWise footer 保留 min-h-6
 
 - 日期：2026-06-27
 - ID：reward-moneybox-schema-migration-cdn-fallback

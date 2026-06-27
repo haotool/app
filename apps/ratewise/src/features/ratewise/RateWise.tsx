@@ -263,12 +263,12 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </div>
           </section>
 
-          {/* 資料來源與更新時間區塊 - 現代化精簡設計，固定在底部 */}
-          {!ratesLoading && lastUpdate && (
-            <section
-              data-testid="ratewise-data-source"
-              className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility}`}
-            >
+          {/* 資料來源與更新時間區塊 - 固定最小高度避免載入完成後 footer 位移 */}
+          <section
+            data-testid="ratewise-data-source"
+            className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility} min-h-6`}
+          >
+            {!ratesLoading && lastUpdate ? (
               <AnimatePresence mode="wait">
                 {effectiveRateSource === 'exchange-shop' &&
                 moneyBoxRate?.currency === exchangeShopCurrency ? (
@@ -292,8 +292,12 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                   </div>
                 )}
               </AnimatePresence>
-            </section>
-          )}
+            ) : (
+              <span className="invisible block text-[10px]" aria-hidden="true">
+                &#8203;
+              </span>
+            )}
+          </section>
         </div>
       </div>
     </>

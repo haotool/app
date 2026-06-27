@@ -711,6 +711,17 @@ export const singleConverterLayoutTokens = {
     /** 次要匯率文字 */
     rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',
 
+    /** 匯率文字區塊最小高度（含計價基準 pill 槽位，避免 async 載入位移） */
+    rateTextBlock:
+      'min-h-[5rem] compact:min-h-[4.5rem] short:min-h-[4rem] tiny:min-h-[3.75rem] micro:min-h-[3.5rem] nano:min-h-[3.25rem]',
+
+    /** 計價基準 pill 槽位（無 pill 時仍保留高度） */
+    rateBasisSlot: 'mt-1.5 flex min-h-6 items-center justify-center',
+
+    /** 匯率卡片本體最小高度（資訊區 + 圖表） */
+    cardMinHeight:
+      'min-h-[10.5rem] compact:min-h-[9.5rem] short:min-h-[8.75rem] tiny:min-h-[8rem] micro:min-h-[7.25rem] nano:min-h-[6.75rem]',
+
     /** 趨勢圖高度 - 線性遞減 */
     chartHeight: 'h-20 compact:h-16 short:h-14 tiny:h-12 micro:h-10 nano:h-8',
 
