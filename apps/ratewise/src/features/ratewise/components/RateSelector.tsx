@@ -14,6 +14,12 @@ interface RateSelectorProps {
   hasExchangeShop: boolean;
   onRateTypeChange: (type: RateType) => void;
   onRateSourceChange: (source: RateSource) => void;
+  variant?: 'legacy' | 'hero-v2';
+  rateValues?: {
+    spot?: number | null;
+    cash?: number | null;
+    exchangeShop?: number | null;
+  };
 }
 
 interface BankRateOption {
@@ -22,6 +28,7 @@ interface BankRateOption {
   ariaLabel: string;
   unavailableMessage: string;
   icon: typeof TrendingUp;
+  rateValue?: number | null;
 }
 
 export const RateSelector = ({
@@ -31,11 +38,17 @@ export const RateSelector = ({
   hasExchangeShop,
   onRateTypeChange,
   onRateSourceChange,
+  variant = 'legacy',
+  rateValues,
 }: RateSelectorProps) => {
   const { t } = useTranslation();
+  const isHeroV2 = variant === 'hero-v2';
+  const tokens = singleConverterLayoutTokens.rateCard;
+
   const optionCountClass = hasExchangeShop
     ? 'grid-cols-3 w-[12.5rem] compact:w-[12rem] tiny:w-[11.25rem] micro:w-[10.75rem]'
     : 'grid-cols-2 w-[8.75rem] compact:w-[8.5rem] tiny:w-[8rem] micro:w-[7.5rem]';
+
   const bankRateOptions: BankRateOption[] = [
     {
       value: 'spot',
@@ -45,6 +58,7 @@ export const RateSelector = ({
         rateType: t('singleConverter.spotRate'),
       }),
       icon: TrendingUp,
+      rateValue: rateValues?.spot,
     },
     {
       value: 'cash',
@@ -54,8 +68,14 @@ export const RateSelector = ({
         rateType: t('singleConverter.cashRate'),
       }),
       icon: Banknote,
+      rateValue: rateValues?.cash,
     },
   ];
+
+  const formatInlineRate = (value: number | null | undefined): string | null => {
+    if (value === null || value === undefined || !Number.isFinite(value)) return null;
+    return value.toFixed(2);
+  };
 
   const renderIndicator = (isActive: boolean) => (
     <AnimatePresence>
@@ -69,9 +89,81 @@ export const RateSelector = ({
     </AnimatePresence>
   );
 
+  const renderHeroTabLabel = (label: string, rateValue: number | null | undefined) => {
+    const inlineRate = formatInlineRate(rateValue);
+    if (!inlineRate) return label;
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span>{label}</span>
+        <span className="tabular-nums opacity-80">{inlineRate}</span>
+      </span>
+    );
+  };
+
+  if (isHeroV2) {
+    return (
+      <div
+        data-testid="hero-rate-tabs"
+        className="flex flex-wrap items-center justify-center gap-2"
+        role="tablist"
+        aria-label={t('singleConverter.rateTypeGroup')}
+      >
+        {bankRateOptions.map((option) => {
+          const isActive = rateSource === 'bank' && rateType === option.value;
+          const isUnavailable = !rateTypeAvailability[option.value];
+          const tabButton = (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              disabled={isUnavailable}
+              onClick={() => {
+                if (isUnavailable) return;
+                onRateSourceChange('bank');
+                onRateTypeChange(option.value);
+              }}
+              className={`${tokens.heroRateTabPill} ${
+                isActive ? tokens.heroRateTabActive : tokens.heroRateTabInactive
+              } ${isUnavailable ? 'cursor-not-allowed opacity-50' : ''}`}
+            >
+              {renderHeroTabLabel(option.label, option.rateValue)}
+            </button>
+          );
+
+          if (!isUnavailable) return tabButton;
+
+          return (
+            <RateTypeTooltip
+              key={option.value}
+              message={option.unavailableMessage}
+              isDisabled={true}
+            >
+              {tabButton}
+            </RateTypeTooltip>
+          );
+        })}
+
+        {hasExchangeShop ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={rateSource === 'exchange-shop'}
+            onClick={() => onRateSourceChange('exchange-shop')}
+            className={`${tokens.heroRateTabPill} ${
+              rateSource === 'exchange-shop' ? tokens.heroRateTabActive : tokens.heroRateTabInactive
+            }`}
+          >
+            {renderHeroTabLabel(t('singleConverter.exchangeShopRate'), rateValues?.exchangeShop)}
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`grid min-h-11 h-11 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-1 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+      className={`grid h-7 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${tokens.rateTypeContainer}`}
       role="group"
       aria-label={t('singleConverter.rateTypeGroup')}
     >
@@ -90,7 +182,7 @@ export const RateSelector = ({
             }}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
-            className={`flex min-h-11 min-w-11 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+            className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${tokens.rateTypeButton} ${tokens.rateTypeButtonHit} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
               isActive ? 'text-white' : 'text-text/70 hover:text-text'
             } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
@@ -102,10 +194,7 @@ export const RateSelector = ({
               className="relative z-10 inline-flex"
               animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
             >
-              <Icon
-                className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-                aria-hidden="true"
-              />
+              <Icon className={tokens.rateTypeIcon} aria-hidden="true" />
             </motion.span>
             <span className="relative z-10 leading-none">{option.label}</span>
           </motion.button>
@@ -130,7 +219,7 @@ export const RateSelector = ({
           animate={{
             opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
           }}
-          className={`flex min-h-11 min-w-11 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+          className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${tokens.rateTypeButton} ${tokens.rateTypeButtonHit} rounded-full font-semibold relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
             rateSource === 'exchange-shop' ? 'text-white' : 'text-text/70 hover:text-text'
           }`}
           aria-pressed={rateSource === 'exchange-shop'}
@@ -143,10 +232,7 @@ export const RateSelector = ({
               scale: rateSource === 'exchange-shop' ? segmentedSwitch.activeIconScale : 1,
             }}
           >
-            <Store
-              className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-              aria-hidden="true"
-            />
+            <Store className={tokens.rateTypeIcon} aria-hidden="true" />
           </motion.span>
           <span className="relative z-10 leading-none">
             {t('singleConverter.exchangeShopRate')}

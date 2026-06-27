@@ -77,6 +77,8 @@ const en = {
     viewTrendChart: 'View trend chart',
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',
+    numpadBackspace: 'Backspace',
+    numpadKey: 'Digit {{key}}',
     backToConverter: 'Back to Converter',
   },
 

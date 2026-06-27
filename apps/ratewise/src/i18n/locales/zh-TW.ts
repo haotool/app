@@ -77,6 +77,8 @@ const zhTW = {
     viewTrendChart: '查看趨勢圖',
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',
+    numpadBackspace: '退格',
+    numpadKey: '數字 {{key}}',
     backToConverter: '返回主換算器',
   },
 

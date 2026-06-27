@@ -10,9 +10,8 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Calculator } from 'lucide-react';
 import { ClientOnly } from 'vite-react-ssg';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
@@ -52,6 +51,7 @@ import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculatio
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 import { RateSelector } from './RateSelector';
+import { HeroAmountNumpad, applyHeroAmountKey } from './HeroAmountNumpad';
 import {
   computeConverterRate,
   fetchExchangeShopHistoricalRatesRange,
@@ -125,7 +125,9 @@ export const SingleConverter = ({
   lastFetchedAt = null,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
+  const rateCardTokens = singleConverterLayoutTokens.rateCard;
   const [isHeroV2, setIsHeroV2] = useState(false);
+  const [heroActiveInput, setHeroActiveInput] = useState<'from' | 'to'>('from');
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
@@ -139,25 +141,6 @@ export const SingleConverter = ({
     window.addEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
     return () => window.removeEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
   }, []);
-
-  const rateTextClassName = isHeroV2
-    ? singleConverterLayoutTokens.rateCard.heroRateDisplay
-    : singleConverterLayoutTokens.rateCard.rateText;
-  const amountInputClassName = isHeroV2
-    ? singleConverterLayoutTokens.rateCard.amountSecondaryDisplay
-    : singleConverterLayoutTokens.amountInput.className;
-  const rateCardSurfaceClassName = isHeroV2
-    ? singleConverterLayoutTokens.rateCard.heroCardSurface
-    : 'bg-gradient-to-b from-surface-card to-surface-elevated border border-border/50 hover:border-primary/30';
-  const rateInfoMotionClassName = isHeroV2
-    ? ''
-    : 'transition-transform duration-300 group-hover:scale-[1.02]';
-  const rateDisplayHoverClassName = isHeroV2
-    ? ''
-    : 'transition-transform duration-300 group-hover:scale-105';
-  const rateCardHoverClassName = isHeroV2
-    ? 'hover:shadow-md'
-    : 'group cursor-pointer hover:shadow-xl transition-all duration-500';
 
   // 輸入框 refs（用於焦點管理）
   const fromInputRef = useRef<HTMLDivElement>(null);
@@ -194,6 +177,55 @@ export const SingleConverter = ({
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
+
+  const heroRateValues = useMemo(
+    () => ({
+      spot: getUnitExchangeRate(
+        fromCurrency,
+        toCurrency,
+        details,
+        'spot',
+        rateMode,
+        exchangeRates,
+        { rateSource, exchangeShopRate: moneyBoxRate },
+      ),
+      cash: getUnitExchangeRate(
+        fromCurrency,
+        toCurrency,
+        details,
+        'cash',
+        rateMode,
+        exchangeRates,
+        { rateSource, exchangeShopRate: moneyBoxRate },
+      ),
+      exchangeShop: moneyBoxRate
+        ? computeConverterRate(moneyBoxRate, fromCurrency, toCurrency)
+        : null,
+    }),
+    [fromCurrency, toCurrency, details, rateMode, exchangeRates, rateSource, moneyBoxRate],
+  );
+
+  const heroQuickAmounts = useMemo(() => {
+    const currency = heroActiveInput === 'from' ? fromCurrency : toCurrency;
+    return CURRENCY_QUICK_AMOUNTS[currency] || CURRENCY_QUICK_AMOUNTS.TWD;
+  }, [heroActiveInput, fromCurrency, toCurrency]);
+
+  const handleHeroNumpadKey = useCallback(
+    (key: string) => {
+      if (heroActiveInput === 'from') {
+        const next = applyHeroAmountKey(fromAmount, key);
+        onFromAmountChange(next);
+        const parsed = parseFloat(next);
+        if (!Number.isNaN(parsed)) {
+          onQuickAmount(parsed);
+        }
+      } else {
+        const next = applyHeroAmountKey(toAmount, key);
+        onToAmountChange(next);
+      }
+    },
+    [heroActiveInput, fromAmount, toAmount, onFromAmountChange, onToAmountChange, onQuickAmount],
+  );
 
   // 趨勢圖進場動畫
   useEffect(() => {
@@ -438,8 +470,8 @@ export const SingleConverter = ({
       >
         {t('singleConverter.fromAmount')}
       </label>
-      <div className={isHeroV2 ? 'flex items-stretch gap-2' : 'relative'}>
-        <div className={isHeroV2 ? 'relative min-w-0 flex-1' : 'relative'}>
+      <div className="relative">
+        <div className="relative">
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
@@ -464,23 +496,12 @@ export const SingleConverter = ({
                 calculator.openCalculator('from');
               }
             }}
-            className={`w-full pl-32 pr-4 ${amountInputClassName} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
             aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
           </div>
         </div>
-        {isHeroV2 ? (
-          <button
-            type="button"
-            data-testid="calculator-from-button"
-            className={singleConverterLayoutTokens.rateCard.calculatorAffordanceHit}
-            aria-label={t('singleConverter.openCalculatorFrom')}
-            onClick={() => calculator.openCalculator('from')}
-          >
-            <Calculator className="h-5 w-5" aria-hidden="true" />
-          </button>
-        ) : null}
       </div>
       <div
         data-testid="quick-amounts-from"
@@ -513,26 +534,272 @@ export const SingleConverter = ({
     </div>
   );
 
-  return (
-    <>
-      {!isHeroV2 ? renderFromAmountSection() : null}
+  const renderSwapButton = () => (
+    <div
+      data-testid="swap-button"
+      className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
+    >
+      {/* 外圍漸層光環 */}
+      <div
+        className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${singleConverterLayoutTokens.swap.glowHidden} ${
+          isSwapping
+            ? 'opacity-80 scale-110'
+            : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
+        }`}
+      />
 
-      <div className={singleConverterLayoutTokens.rateCard.section} data-testid="rate-hero-section">
-        <div
-          className={`relative rounded-xl w-full ${rateCardSurfaceClassName} ${rateCardHoverClassName} ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+      {/* 交換按鈕 - 玻璃擬態設計 */}
+      <button
+        ref={swapButtonRef}
+        onClick={handleSwap}
+        className={`
+              relative p-3.5
+              bg-gradient-to-br from-primary to-primary-hover
+              text-white rounded-full
+              shadow-lg shadow-primary/30
+              transition-all duration-300 ease-out
+              hover:shadow-xl hover:shadow-primary/40
+              hover:scale-110 active:scale-95
+              ${isSwapping ? 'scale-90' : ''}
+            `}
+        aria-label={t('singleConverter.swapCurrencies')}
+        title={t('singleConverter.swapCurrencies')}
+        disabled={isSwapping}
+      >
+        {/* 內部光暈效果 */}
+        <span
+          className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
+            isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
+          }`}
+        />
+
+        {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
+        <svg
+          className={`relative z-10 w-5 h-5 transition-transform duration-500 ${
+            isSwapping
+              ? '[transform:rotateY(180deg)]'
+              : 'group-hover/swap:[transform:rotateY(180deg)]'
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
         >
-          {!isHeroV2 ? (
-            <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+          <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      </button>
+
+      {/* 懸停提示標籤 */}
+      <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
+        <span className="text-[10px] font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
+          {t('singleConverter.clickToSwap')}
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderAddToHistoryButton = () => (
+    <button
+      onClick={onAddToHistory}
+      className={`
+          relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
+          bg-gradient-to-r from-primary to-primary-hover
+          text-white font-bold rounded-2xl
+          shadow-xl shadow-primary/25
+          transition-all duration-300 ease-out
+          hover:shadow-2xl hover:shadow-primary/30
+          hover:scale-[1.02] active:scale-[0.98]
+          group
+        `}
+    >
+      {/* 光暈效果 */}
+      <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
+      <span className="relative z-10 flex items-center justify-center gap-2">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        {t('singleConverter.addToHistory')}
+      </span>
+    </button>
+  );
+
+  const renderHeroV2Layout = () => (
+    <>
+      <div className={rateCardTokens.section} data-testid="rate-hero-section">
+        <div
+          className={`relative rounded-xl w-full ${rateCardTokens.heroCardGradient} ${rateCardTokens.cardSpacing}`}
+        >
+          <div
+            className={`relative px-4 flex flex-col items-center justify-center rounded-xl overflow-hidden ${rateCardTokens.heroInfoPadding}`}
+          >
+            <RateSelector
+              variant="hero-v2"
+              rateValues={heroRateValues}
+              rateType={rateType}
+              rateSource={rateSource}
+              rateTypeAvailability={rateTypeAvailability}
+              hasExchangeShop={!!exchangeShopCurrency}
+              onRateTypeChange={onRateTypeChange}
+              onRateSourceChange={onRateSourceChange ?? (() => undefined)}
+            />
+
+            <div className="sr-only" data-testid="hero-rate-display">
+              1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
             </div>
-          ) : null}
+
+            <div className={rateCardTokens.heroDualCurrencyRow}>
+              <div className={rateCardTokens.heroDualCurrencyField}>
+                <span className={rateCardTokens.heroDualCurrencyLabel}>
+                  {t('singleConverter.fromAmount')}
+                </span>
+                <div className="relative">
+                  <select
+                    value={fromCurrency}
+                    onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-1.5 py-1 text-sm font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200 z-10"
+                    aria-label={t('singleConverter.selectFromCurrency')}
+                  >
+                    {CURRENCY_CODES.map((code) => (
+                      <option key={code} value={code}>
+                        {CURRENCY_DEFINITIONS[code].flag} {code}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    data-testid="hero-currency-input-from"
+                    onClick={() => setHeroActiveInput('from')}
+                    className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
+                      heroActiveInput === 'from'
+                        ? rateCardTokens.heroDualCurrencyInputActive
+                        : rateCardTokens.heroDualCurrencyInputInactive
+                    }`}
+                    aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
+                  >
+                    {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
+                  </button>
+                </div>
+              </div>
+
+              <div className={rateCardTokens.heroDualCurrencyField}>
+                <span className={rateCardTokens.heroDualCurrencyLabel}>
+                  {t('singleConverter.toAmount')}
+                </span>
+                <div className="relative">
+                  <select
+                    value={toCurrency}
+                    onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-1.5 py-1 text-sm font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200 z-10"
+                    aria-label={t('singleConverter.selectToCurrency')}
+                  >
+                    {CURRENCY_CODES.map((code) => (
+                      <option key={code} value={code}>
+                        {CURRENCY_DEFINITIONS[code].flag} {code}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    data-testid="hero-currency-input-to"
+                    onClick={() => setHeroActiveInput('to')}
+                    className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
+                      heroActiveInput === 'to'
+                        ? rateCardTokens.heroDualCurrencyInputActive
+                        : rateCardTokens.heroDualCurrencyInputInactive
+                    }`}
+                    aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
+                  >
+                    {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {lastUpdate ? (
+              <div
+                data-testid="hero-freshness-chip"
+                className={`${rateCardTokens.trustChipGap} text-[10px] tabular-nums text-text-muted/70`}
+              >
+                <ClientOnly fallback={<span aria-hidden="true">&nbsp;</span>}>
+                  {() => (
+                    <span suppressHydrationWarning>
+                      {formatDisplayTime(lastUpdate, lastFetchedAt)}
+                    </span>
+                  )}
+                </ClientOnly>
+              </div>
+            ) : null}
+
+            <div
+              data-testid="quick-amounts-hero"
+              className={`w-full ${singleConverterLayoutTokens.quickAmounts.container}`}
+            >
+              {heroQuickAmounts.map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => {
+                    if (heroActiveInput === 'from') {
+                      onFromAmountChange(amount.toString());
+                      onQuickAmount(amount);
+                    } else {
+                      const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
+                      onToAmountChange(amount.toFixed(decimals));
+                    }
+                    if ('vibrate' in navigator) {
+                      navigator.vibrate(30);
+                    }
+                  }}
+                  className="
+                    flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
+                    bg-surface-elevated text-text/70
+                    hover:bg-primary/10 hover:text-primary
+                    active:bg-primary/20 active:text-primary
+                    transition-all duration-200 ease-out
+                    hover:scale-[1.03] active:scale-[0.97]
+                    hover:shadow-md active:shadow-sm
+                  "
+                >
+                  {amount.toLocaleString()}
+                </button>
+              ))}
+            </div>
+
+            <HeroAmountNumpad onKeyPress={handleHeroNumpadKey} className="w-full" />
+          </div>
+        </div>
+
+        {renderSwapButton()}
+      </div>
+
+      {renderAddToHistoryButton()}
+    </>
+  );
+
+  const renderLegacyLayout = () => (
+    <>
+      {renderFromAmountSection()}
+
+      <div className={rateCardTokens.section} data-testid="rate-hero-section">
+        <div
+          className={`relative rounded-xl w-full bg-gradient-to-b from-surface-card to-surface-elevated border border-border/50 hover:border-primary/30 group cursor-pointer hover:shadow-xl transition-all duration-500 ${rateCardTokens.cardSpacing}`}
+        >
+          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </div>
 
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl overflow-hidden ${rateInfoMotionClassName} ${
-              isHeroV2
-                ? singleConverterLayoutTokens.rateCard.heroInfoPadding
-                : singleConverterLayoutTokens.rateCard.infoPadding
-            }`}
+            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] ${rateCardTokens.infoPadding}`}
           >
             <RateSelector
               rateType={rateType}
@@ -546,36 +813,22 @@ export const SingleConverter = ({
             <div className="w-full">
               <div
                 data-testid="hero-rate-display"
-                className={`${rateTextClassName} font-bold tabular-nums text-text mb-1 ${rateDisplayHoverClassName}`}
+                className={`${rateCardTokens.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
               >
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 ${isHeroV2 ? '' : 'group-hover:opacity-95 transition-opacity'}`}
+                className={`${rateCardTokens.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 group-hover:opacity-95 transition-opacity`}
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
-              {isHeroV2 && lastUpdate ? (
-                <div
-                  data-testid="hero-freshness-chip"
-                  className={`${singleConverterLayoutTokens.rateCard.trustChipGap} text-[10px] tabular-nums text-text-muted/70`}
-                >
-                  <ClientOnly fallback={<span aria-hidden="true">&nbsp;</span>}>
-                    {() => (
-                      <span suppressHydrationWarning>
-                        {formatDisplayTime(lastUpdate, lastFetchedAt)}
-                      </span>
-                    )}
-                  </ClientOnly>
-                </div>
-              ) : null}
             </div>
           </div>
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
+            className={`relative w-full ${rateCardTokens.chartHeight} ${rateCardTokens.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
               showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -609,82 +862,8 @@ export const SingleConverter = ({
           </div>
         </div>
 
-        {/* 轉換按鈕 - 現代化微互動設計
-         *
-         * 設計規範：
-         * - 雙箭頭圖示 (ArrowUpDown) 取代旋轉圖示
-         * - 漸層光環效果 (gradient glow)
-         * - 懸停放大 + 陰影加深
-         * - 點擊縮放 + Y軸旋轉動畫
-         */}
-        <div
-          data-testid="swap-button"
-          className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
-        >
-          {/* 外圍漸層光環 */}
-          <div
-            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${singleConverterLayoutTokens.swap.glowHidden} ${
-              isSwapping
-                ? 'opacity-80 scale-110'
-                : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
-            }`}
-          />
-
-          {/* 交換按鈕 - 玻璃擬態設計 */}
-          <button
-            ref={swapButtonRef}
-            onClick={handleSwap}
-            className={`
-              relative p-3.5
-              bg-gradient-to-br from-primary to-primary-hover
-              text-white rounded-full
-              shadow-lg shadow-primary/30
-              transition-all duration-300 ease-out
-              hover:shadow-xl hover:shadow-primary/40
-              hover:scale-110 active:scale-95
-              ${isSwapping ? 'scale-90' : ''}
-            `}
-            aria-label={t('singleConverter.swapCurrencies')}
-            title={t('singleConverter.swapCurrencies')}
-            disabled={isSwapping}
-          >
-            {/* 內部光暈效果 */}
-            <span
-              className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
-                isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
-              }`}
-            />
-
-            {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
-            <svg
-              className={`relative z-10 w-5 h-5 transition-transform duration-500 ${
-                isSwapping
-                  ? '[transform:rotateY(180deg)]'
-                  : 'group-hover/swap:[transform:rotateY(180deg)]'
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M7 16V4m0 0L3 8m4-4l4 4" />
-              <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-          </button>
-
-          {/* 懸停提示標籤 */}
-          <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-[10px] font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
-              {t('singleConverter.clickToSwap')}
-            </span>
-          </div>
-        </div>
+        {renderSwapButton()}
       </div>
-
-      {isHeroV2 ? renderFromAmountSection() : null}
 
       <div className={singleConverterLayoutTokens.section.className}>
         <label
@@ -692,8 +871,8 @@ export const SingleConverter = ({
         >
           {t('singleConverter.toAmount')}
         </label>
-        <div className={isHeroV2 ? 'flex items-stretch gap-2' : 'relative'}>
-          <div className={isHeroV2 ? 'relative min-w-0 flex-1' : 'relative'}>
+        <div className="relative">
+          <div className="relative">
             <select
               value={toCurrency}
               onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
@@ -718,38 +897,13 @@ export const SingleConverter = ({
                   calculator.openCalculator('to');
                 }
               }}
-              className={`w-full pl-32 pr-4 ${amountInputClassName} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+              className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
               aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
             >
               {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
             </div>
           </div>
-          {isHeroV2 ? (
-            <button
-              type="button"
-              data-testid="calculator-to-button"
-              className={singleConverterLayoutTokens.rateCard.calculatorAffordanceHit}
-              aria-label={t('singleConverter.openCalculatorTo')}
-              onClick={() => calculator.openCalculator('to')}
-            >
-              <Calculator className="h-5 w-5" aria-hidden="true" />
-            </button>
-          ) : null}
         </div>
-        {/* 快速金額按鈕 - 目標貨幣
-         *
-         * SSOT 設計規範：中性變體（所有轉換器一致）
-         * @see design-tokens.ts - quickAmountButtonTokens
-         *
-         * 響應式設計（行動端單行水平滾動）：
-         * - overflow-x-auto：內容溢出時啟用水平滾動
-         * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-         * - flex-nowrap：防止按鈕換行
-         * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-         *
-         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
-         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-         */}
         <div
           data-testid="quick-amounts-to"
           className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.toVisibility}`}
@@ -780,44 +934,8 @@ export const SingleConverter = ({
         </div>
       </div>
 
-      {/* 加入歷史記錄按鈕 - 現代化微互動設計
-       *
-       * 設計規範：
-       * - 主色調漸層背景 (primary → primary-hover)
-       * - 玻璃擬態陰影效果 (shadow-xl shadow-primary/25)
-       * - 微互動：hover scale + 漣漪光暈
-       * - 點擊縮放回饋 (active:scale-[0.98])
-       */}
-      <button
-        onClick={onAddToHistory}
-        className={`
-          relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
-          bg-gradient-to-r from-primary to-primary-hover
-          text-white font-bold rounded-2xl
-          shadow-xl shadow-primary/25
-          transition-all duration-300 ease-out
-          hover:shadow-2xl hover:shadow-primary/30
-          hover:scale-[1.02] active:scale-[0.98]
-          group
-        `}
-      >
-        {/* 光暈效果 */}
-        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
-        <span className="relative z-10 flex items-center justify-center gap-2">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2.5}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          {t('singleConverter.addToHistory')}
-        </span>
-      </button>
+      {renderAddToHistoryButton()}
 
-      {/* 計算機鍵盤 Bottom Sheet */}
       <Suspense fallback={null}>
         <CalculatorKeyboard
           isOpen={calculator.isOpen}
@@ -828,4 +946,6 @@ export const SingleConverter = ({
       </Suspense>
     </>
   );
+
+  return isHeroV2 ? renderHeroV2Layout() : renderLegacyLayout();
 };

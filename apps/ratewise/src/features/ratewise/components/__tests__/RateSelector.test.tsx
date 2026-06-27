@@ -33,6 +33,8 @@ describe('RateSelector', () => {
     rateSource: RateSource;
     rateTypeAvailability: RateTypeAvailability;
     hasExchangeShop: boolean;
+    variant?: 'legacy' | 'hero-v2';
+    rateValues?: { spot?: number | null; cash?: number | null; exchangeShop?: number | null };
     onRateTypeChange: Mock<(type: RateType) => void>;
     onRateSourceChange: Mock<(source: RateSource) => void>;
   }
@@ -45,6 +47,7 @@ describe('RateSelector', () => {
       rateSource: 'bank' as RateSource,
       rateTypeAvailability: { spot: true, cash: true },
       hasExchangeShop: false,
+      variant: 'legacy',
       onRateTypeChange: vi.fn<(type: RateType) => void>(),
       onRateSourceChange: vi.fn<(source: RateSource) => void>(),
       ...overrides,
@@ -120,5 +123,16 @@ describe('RateSelector', () => {
       'Exchange shop',
     );
     expect(screen.queryByRole('button', { name: /換錢所/ })).not.toBeInTheDocument();
+  });
+  it('hero-v2 variant renders tablist with inline rates', () => {
+    setup({
+      variant: 'hero-v2',
+      hasExchangeShop: true,
+      rateValues: { spot: 32.15, cash: 31.98, exchangeShop: 32.05 },
+    });
+    expect(screen.getByTestId('hero-rate-tabs')).toHaveAttribute('role', 'tablist');
+    expect(screen.getByRole('tab', { name: /即期/ })).toHaveTextContent('32.15');
+    expect(screen.getByRole('tab', { name: /現金/ })).toHaveTextContent('31.98');
+    expect(screen.getByRole('tab', { name: /換錢所/ })).toHaveTextContent('32.05');
   });
 });

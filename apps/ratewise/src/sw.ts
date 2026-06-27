@@ -122,11 +122,20 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
+async function refreshNavigationHtmlCacheOnActivate(): Promise<void> {
   try {
-    await caches.delete(HTML_CACHE_NAME);
+    const scope = self.registration.scope;
+    const precachedIndex = await matchPrecache('index.html');
+    if (!precachedIndex) {
+      return;
+    }
+
+    const cache = await caches.open(HTML_CACHE_NAME);
+    const indexUrl = new URL('index.html', scope).href;
+    await cache.put(indexUrl, precachedIndex.clone());
+    await cache.put('index.html', precachedIndex);
   } catch {
-    // 快取清理失敗不可阻斷新版 SW 啟用。
+    // 保留既有 html-cache，避免 SW 更新時清掉 iOS 備份的 index.html。
   }
 }
 
@@ -173,9 +182,9 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(checkAndCleanupCacheBudget());
 });
 
-// activate 時清掉舊 navigation HTML，再確保 offline.html 已快取（install 失敗時的補救）。
+// activate 時刷新 navigation HTML 備份，再確保 offline.html 已快取（install 失敗時的補救）。
 self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
+  event.waitUntil(refreshNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
 });
 
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
@@ -223,13 +232,17 @@ registerRoute(
   new NetworkOnly(),
 );
 
-const OFFLINE_DOCUMENT_FALLBACK_MATCHERS = {
-  matchPrecache,
-  matchIndexHtmlInAnyCache: () => caches.match('index.html'),
-  matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
-} as const;
+function createOfflineDocumentFallbackOptions(
+  emergencyReason: 'emergency-document-fallback' | 'emergency-navigation-fallback',
+) {
+  return {
+    emergencyReason,
+    scope: self.registration.scope,
+    matchPrecache,
+  } as const;
+}
 
-// 網路失敗離線回退：JS/CSS 三層快取；導覽請求回退至 precache index.html / offline.html。
+// 網路失敗離線回退：JS/CSS 三層快取；導覽請求回退至 precache index.html（app shell）。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
@@ -242,10 +255,9 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     return Response.error();
   }
 
-  return resolveOfflineDocumentFallback({
-    emergencyReason: 'emergency-document-fallback',
-    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
-  });
+  return resolveOfflineDocumentFallback(
+    createOfflineDocumentFallbackOptions('emergency-document-fallback'),
+  );
 });
 
 /**
@@ -254,19 +266,18 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
  * - 暖快取（html-cache hit）：立即回傳已快取 HTML + 背景 revalidate（零白屏）
  * - 冷快取（html-cache miss）：直接從 Workbox precache 取 index.html 回傳，
  *   同時背景發網路請求更新 html-cache，下次導覽自動用最新版本
- * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 offline.html
+ * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 app shell / emergency HTML
  *
  * 為什麼不用 3s timeout：
- * - timeout 命中時 precache 可能已被 iOS 驅逐，導致 offline.html 被服務給在線用戶
+ * - timeout 命中時 precache 可能已被 iOS 驅逐，導致靜態離線頁被服務給在線用戶
  * - cold cache 用 precache 直接回傳，等同舊的 createHandlerBoundToURL 行為，無需等待
  *
  * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
 function resolveNavigationFallback(): Promise<Response> {
-  return resolveOfflineDocumentFallback({
-    emergencyReason: 'emergency-navigation-fallback',
-    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
-  });
+  return resolveOfflineDocumentFallback(
+    createOfflineDocumentFallbackOptions('emergency-navigation-fallback'),
+  );
 }
 
 async function fetchAndCacheNavigation(request: Request, cache: Cache): Promise<Response> {
@@ -301,7 +312,7 @@ async function handleNavigationRequest({
   }
 
   // 冷快取：先嘗試 precache index.html（零延遲），再背景抓最新版本寫入 html-cache。
-  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳 offline.html 給在線用戶。
+  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳靜態離線頁給在線用戶。
   const precachedShell = await matchPrecache('index.html');
   if (precachedShell) {
     event.waitUntil(
@@ -312,7 +323,7 @@ async function handleNavigationRequest({
     return precachedShell;
   }
 
-  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 offline fallback
+  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 app shell fallback
   try {
     return await fetchAndCacheNavigation(request, cache);
   } catch {

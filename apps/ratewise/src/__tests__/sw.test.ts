@@ -238,14 +238,16 @@ describe('Service Worker Cache Strategies', () => {
     // precache-first navigation → resolveOfflineDocumentFallback helper（含三層 fallback + emergency HTML）。
     expect(sourceCode).toContain('new NavigationRoute(');
     expect(sourceCode).toContain('resolveOfflineDocumentFallback');
-    expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
+    expect(sourceCode).toContain(
+      "createOfflineDocumentFallbackOptions('emergency-navigation-fallback')",
+    );
     expect(sourceCode).toContain("matchPrecache('index.html')");
     // 防回歸：navigation 不可重新引入 NetworkFirst（cold-start 白屏根因之一）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
     expect(sourceCode).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
   });
 
-  it('should clear stale navigation HTML runtime cache when a new worker activates', async () => {
+  it('should refresh navigation HTML runtime cache when a new worker activates', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
@@ -253,10 +255,11 @@ describe('Service Worker Cache Strategies', () => {
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
     expect(sourceCode).toContain("const HTML_CACHE_NAME = 'html-cache'");
-    expect(sourceCode).toContain('clearNavigationHtmlCacheOnActivate');
-    expect(sourceCode).toContain('caches.delete(HTML_CACHE_NAME)');
+    expect(sourceCode).toContain('refreshNavigationHtmlCacheOnActivate');
+    expect(sourceCode).not.toContain('clearNavigationHtmlCacheOnActivate');
+    expect(sourceCode).not.toContain('caches.delete(HTML_CACHE_NAME)');
     expect(sourceCode).toContain(
-      'clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached())',
+      'refreshNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached())',
     );
   });
 
@@ -268,8 +271,13 @@ describe('Service Worker Cache Strategies', () => {
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
     expect(sourceCode).toContain('resolveOfflineDocumentFallback');
-    expect(sourceCode).toContain("emergencyReason: 'emergency-navigation-fallback'");
-    expect(sourceCode).toContain("matchOfflineHtmlInAnyCache: () => caches.match('offline.html')");
+    expect(sourceCode).toContain(
+      "createOfflineDocumentFallbackOptions('emergency-navigation-fallback')",
+    );
+    expect(sourceCode).toContain('createOfflineDocumentFallbackOptions');
+    expect(sourceCode).not.toContain(
+      "matchOfflineHtmlInAnyCache: () => caches.match('offline.html')",
+    );
   });
 });
 

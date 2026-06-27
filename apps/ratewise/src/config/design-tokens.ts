@@ -700,7 +700,7 @@ export const singleConverterLayoutTokens = {
 
     /** Hero v2 匯率資訊區內距（answer-first：頂部留白較小，y≤120） */
     heroInfoPadding:
-      'pt-6 pb-4 compact:pt-5 compact:pb-3.5 short:pt-4 short:pb-3 tiny:pt-3 tiny:pb-2.5 micro:pt-2.5 micro:pb-2 nano:pt-2 nano:pb-2',
+      'pt-10 pb-4 compact:pt-8 compact:pb-3.5 short:pt-6 short:pb-3 tiny:pt-5 tiny:pb-2.5 micro:pt-4 micro:pb-2 nano:pt-3 nano:pb-2',
 
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
@@ -709,6 +709,10 @@ export const singleConverterLayoutTokens = {
     /** 匯率類型按鈕尺寸 */
     rateTypeButton:
       'px-2 py-0.5 text-[11px] compact:px-1.5 compact:py-0.5 compact:text-[10px] short:px-1.5 short:py-0.5 short:text-[10px] tiny:px-1 tiny:py-0.5 tiny:text-[9px] micro:px-1 micro:py-0.5 micro:text-[9px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+
+    /** 緊湊 pill 視覺 + 偽元素擴大觸控區（WCAG 2.5.8） */
+    rateTypeButtonHit:
+      'relative before:absolute before:-inset-x-2.5 before:-inset-y-2.5 before:content-[""]',
 
     /** 匯率類型圖示 - nano 隱藏 */
     rateTypeIcon:
@@ -737,6 +741,26 @@ export const singleConverterLayoutTokens = {
 
     /** Hero v2 Zen 白底卡片（取代 heavy gradient） */
     heroCardSurface: 'bg-surface-card border border-border/60 shadow-sm',
+    heroCardGradient:
+      'bg-gradient-to-br from-primary/8 via-surface-card to-brand-via/40 border border-primary/15 shadow-lg rounded-2xl',
+    heroRateTabPill:
+      'px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors duration-200',
+    heroRateTabActive: 'bg-primary text-white shadow-sm',
+    heroRateTabInactive:
+      'bg-surface-elevated/80 text-text/70 hover:text-text hover:bg-surface-elevated',
+    heroDualCurrencyRow: 'flex items-stretch gap-2 w-full mt-4',
+    heroDualCurrencyField: 'flex-1 min-w-0 flex flex-col',
+    heroDualCurrencyLabel:
+      'text-[10px] font-bold uppercase tracking-wider text-text-muted/70 mb-1 px-1',
+    heroDualCurrencyInput:
+      'w-full text-xl font-black tabular-nums text-right px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-[border-color,background-color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+    heroDualCurrencyInputActive: 'border-primary bg-primary/5 text-text',
+    heroDualCurrencyInputInactive:
+      'border-border/60 bg-surface-elevated/50 text-text/80 hover:border-primary/30',
+    heroNumpadGrid: 'grid grid-cols-3 gap-2 mt-4',
+    heroNumpadKey:
+      'flex items-center justify-center min-h-11 rounded-xl bg-surface-elevated text-text font-bold text-lg active:scale-95 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+    heroNumpadKeyDanger: 'bg-danger/10 text-danger hover:bg-danger/15 active:bg-danger/20',
 
     /** 次要匯率文字 */
     rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',

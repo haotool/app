@@ -70,19 +70,58 @@ export function createEmergencyOfflineResponse(reason: EmergencyOfflineFallbackR
 
 interface ResolveOfflineDocumentFallbackOptions {
   emergencyReason: EmergencyOfflineFallbackReason;
+  scope: string;
   matchPrecache: (
-    url: 'index.html' | 'offline.html',
+    url: 'index.html',
   ) => Response | undefined | null | Promise<Response | undefined | null>;
-  matchIndexHtmlInAnyCache: () =>
+  matchIndexHtmlInAnyCache?: () =>
     | Response
     | undefined
     | null
     | Promise<Response | undefined | null>;
-  matchOfflineHtmlInAnyCache: () =>
-    | Response
-    | undefined
-    | null
-    | Promise<Response | undefined | null>;
+}
+
+/** 跨 precache / html-cache / critical-launch-cache 搜尋 app shell。 */
+export async function findIndexHtmlInAnyCache(scope: string): Promise<Response | null> {
+  const candidateUrls = new Set<string>(['index.html', new URL('index.html', scope).href]);
+  const scopePath = new URL(scope).pathname.replace(/\/$/, '');
+
+  for (const url of candidateUrls) {
+    try {
+      const match = await caches.match(url);
+      if (match) return match;
+    } catch {
+      // 忽略快取存取錯誤。
+    }
+  }
+
+  try {
+    const cacheNames = await caches.keys();
+    for (const cacheName of cacheNames) {
+      const cache = await caches.open(cacheName);
+      for (const url of candidateUrls) {
+        const match = await cache.match(url);
+        if (match) return match;
+      }
+
+      const requests = await cache.keys();
+      for (const request of requests) {
+        const pathname = new URL(request.url).pathname.replace(/\/$/, '');
+        if (
+          pathname.endsWith('/index.html') ||
+          pathname.endsWith('index.html') ||
+          (scopePath && pathname === scopePath)
+        ) {
+          const match = await cache.match(request);
+          if (match) return match;
+        }
+      }
+    }
+  } catch {
+    // 忽略快取存取錯誤。
+  }
+
+  return null;
 }
 
 function getPrecacheLookupKeys(request: Request): string[] {
@@ -140,21 +179,20 @@ export async function resolveOfflineStaticResourceFallback(
 
 export async function resolveOfflineDocumentFallback({
   emergencyReason,
+  scope,
   matchPrecache,
   matchIndexHtmlInAnyCache,
-  matchOfflineHtmlInAnyCache,
 }: ResolveOfflineDocumentFallbackOptions): Promise<Response> {
   // 1. Workbox precache（正常情況）
   const precachedIndex = await matchPrecache('index.html');
   if (precachedIndex) return precachedIndex;
 
   // 2. 任何快取中的 index.html（iOS eviction 後 html-cache 仍可能有備份）
-  const anyIndex = await matchIndexHtmlInAnyCache();
+  const anyIndex =
+    (matchIndexHtmlInAnyCache ? await matchIndexHtmlInAnyCache() : null) ??
+    (await findIndexHtmlInAnyCache(scope));
   if (anyIndex) return anyIndex;
 
-  // 3. offline.html（precache 或 html-cache）
-  const precachedOffline = await matchPrecache('offline.html');
-  if (precachedOffline) return precachedOffline;
-
-  return (await matchOfflineHtmlInAnyCache()) ?? createEmergencyOfflineResponse(emergencyReason);
+  // 導覽只回 app shell；offline.html 僅供直接 URL 存取，避免阻斷已快取匯率的離線換算。
+  return createEmergencyOfflineResponse(emergencyReason);
 }
