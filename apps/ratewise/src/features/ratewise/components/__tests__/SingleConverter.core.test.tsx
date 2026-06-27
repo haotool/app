@@ -254,6 +254,13 @@ describe('SingleConverter - 核心功能測試', () => {
         expect(trendChart).toHaveClass(className);
       });
     });
+
+    it('匯率文字區塊應預留計價基準 pill 槽位高度', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const rateTextBlock = screen.getByText(/1 TWD =/).parentElement;
+      expect(rateTextBlock).toHaveClass(singleConverterLayoutTokens.rateCard.rateTextBlock);
+    });
   });
 
   describe('匯率類型切換', () => {
@@ -433,21 +440,15 @@ describe('SingleConverter - 核心功能測試', () => {
     });
   });
 
-  describe('趨勢圖進場動畫', () => {
-    it('should show trend chart after 300ms delay', () => {
+  describe('趨勢圖 CLS 穩定', () => {
+    it('趨勢圖容器應自初始渲染起保持可見且固定高度', () => {
       render(<SingleConverter {...mockProps} />);
 
-      // 初始狀態不應該顯示趨勢圖（opacity-0）
-      const trendContainer = document.querySelector('.opacity-0.translate-y-4');
-      expect(trendContainer).toBeInTheDocument();
-
-      // 300ms 後應該顯示（opacity-100）
-      act(() => {
-        vi.advanceTimersByTime(400);
+      const trendChart = screen.getByTestId('trend-chart');
+      expect(trendChart).not.toHaveClass('opacity-0');
+      singleConverterLayoutTokens.rateCard.chartHeight.split(' ').forEach((className) => {
+        expect(trendChart).toHaveClass(className);
       });
-
-      const visibleTrend = document.querySelector('.opacity-100.translate-y-0');
-      expect(visibleTrend).toBeInTheDocument();
     });
   });
 

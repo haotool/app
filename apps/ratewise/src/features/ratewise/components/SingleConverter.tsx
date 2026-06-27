@@ -117,7 +117,6 @@ export const SingleConverter = ({
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [showTrend, setShowTrend] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -156,12 +155,6 @@ export const SingleConverter = ({
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
-
-  // 趨勢圖進場動畫
-  useEffect(() => {
-    const timer = setTimeout(() => setShowTrend(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   // 處理交換按鈕點擊
   const handleSwap = () => {
@@ -486,7 +479,7 @@ export const SingleConverter = ({
       <div className={singleConverterLayoutTokens.rateCard.section}>
         {/* 匯率卡片 - 一體化設計，無切分感 */}
         <div
-          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing} ${singleConverterLayoutTokens.rateCard.cardMinHeight}`}
         >
           {/*
            * 微光效果 - 極淺的漸層覆蓋
@@ -509,8 +502,8 @@ export const SingleConverter = ({
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
             />
 
-            {/* 匯率顯示 - 使用 SSOT text 色 */}
-            <div className="w-full">
+            {/* 匯率顯示 - 使用 SSOT text 色；固定高度避免計價基準 pill / live 匯率載入 CLS */}
+            <div className={`w-full ${singleConverterLayoutTokens.rateCard.rateTextBlock}`}>
               <div
                 className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
               >
@@ -521,15 +514,21 @@ export const SingleConverter = ({
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
+              <div
+                className={singleConverterLayoutTokens.rateCard.rateBasisSlot}
+                aria-hidden="true"
+              >
+                <span className="invisible rounded-full border border-transparent px-2 py-0.5 text-xs">
+                  &#8203;
+                </span>
+              </div>
             </div>
           </div>
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
-              showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} overflow-hidden rounded-b-xl`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
               <ErrorBoundary
