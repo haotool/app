@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+76
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+77
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-applayout-logo-vitest-teardown-flake
+- 原因：AppLayout.logo.test 渲染後 lazy prompt 非同步觸發 console，vitest onConsoleLog RPC 在 worker 關閉時仍 pending 導致 EnvironmentTeardownError
+- 解法：mock NonCriticalLazyBoundary 與 lazy 子元件、beforeEach/afterEach 抑制 console 並 cleanup
 
 - 日期：2026-06-27
 - ID：reward-cold-start-multi-restore-race
