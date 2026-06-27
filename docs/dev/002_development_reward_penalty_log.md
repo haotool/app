@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+69
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-moneybox-workflow-api-semantics-checkout
+- 原因：data branch workflow 只 checkout fetch 腳本，缺 api-semantics-v2.ts 導致 enrich 失敗且 CDN 無 v2
+- 解法：update-moneybox-rates.yml sync 步驟補 checkout SSOT 並加 build-scripts 守門
 
 - 日期：2026-06-27
 - ID：reward-api-semantics-v2-moneybox-provider

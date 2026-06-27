@@ -61,6 +61,7 @@ jobs:
         run: |
           git fetch origin main
           git checkout origin/main -- scripts/fetch-moneybox-rates.js
+          git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts
           git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
