@@ -375,7 +375,8 @@ jobs:
       - name: Download blob reports
         uses: actions/download-artifact@v4
         with:
-          path: all-blob-reports
+          # 下載至 apps/ratewise 內，對齊 merge 指令的 cwd（pnpm --filter exec 以套件目錄為工作目錄）。
+          path: apps/ratewise/all-blob-reports
           pattern: blob-report-*
           merge-multiple: true
 
