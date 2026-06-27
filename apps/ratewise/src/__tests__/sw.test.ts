@@ -573,7 +573,8 @@ describe('handleNavigationRequest', () => {
       vi.fn(() => fetchPromise),
     );
 
-    const event = createNavigationEvent();
+    const waitUntilMock = vi.fn();
+    const event = { waitUntil: waitUntilMock } as unknown as ExtendableEvent;
     const handler = navigationHandlerRef.current!;
     const responsePromise = handler({
       event,
@@ -586,7 +587,7 @@ describe('handleNavigationRequest', () => {
     const body = await response.text();
 
     expect(body).toBe(offlineHtml);
-    expect(event.waitUntil).toHaveBeenCalledTimes(1);
+    expect(waitUntilMock).toHaveBeenCalledTimes(1);
 
     resolveFetch(
       new Response(networkHtml, {
@@ -594,9 +595,7 @@ describe('handleNavigationRequest', () => {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       }),
     );
-    const waitUntilPromise = (event.waitUntil as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as
-      | Promise<unknown>
-      | undefined;
+    const waitUntilPromise = waitUntilMock.mock.calls[0]?.[0] as Promise<unknown> | undefined;
     await waitUntilPromise;
 
     expect(htmlCache.put).toHaveBeenCalled();
