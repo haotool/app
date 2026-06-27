@@ -722,27 +722,27 @@ sequenceDiagram
 > SSOT 透鏡 ID 對齊 §二 Scorecard。Severity：`P0`=release blocking、`P1`=Sprint 必達、`P2`=選配。  
 > **命名格式**：`姓名 / Agent L0N · Codename`
 
-| ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers                 |
-| --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | ------------------------ |
-| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | done        | Frontend      | 2026-06-27    | —                        |
-| L02 | **沈零閱** / Agent L02 · Zero-Click Reader           | E1    | P1  |     65 |   90 | pending     | Frontend      | 2026-06-27    | L01                      |
-| L03 | **韓多理** / Agent L03 · Multi-Flow Analyst          | E4    | P1  |     55 |   80 | pending     | Frontend      | 2026-06-27    | —                        |
-| L04 | **鄭落地** / Agent L04 · Landing Curator             | E3    | P1  |     62 |   85 | pending     | SEO / Content | 2026-06-27    | —                        |
-| L05 | **羅導航** / Agent L05 · Nav-IA Architect            | E4    | P1  |     62 |   85 | pending     | Frontend      | 2026-06-27    | —                        |
-| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | done        | QA            | 2026-06-27    | —                        |
-| L07 | **周寬屏** / Agent L07 · Desktop Layout Auditor      | E4    | P2  |     45 |   70 | pending     | Frontend      | 2026-06-27    | L01                      |
-| L08 | **金墨字** / Agent L08 · Typography Specialist       | E1    | P1  |     52 |   80 | pending     | Design Tokens | 2026-06-27    | L01, L14                 |
-| L09 | **白精煉** / Agent L09 · Content Distiller           | E3    | P1  |     50 |   85 | done        | SEO / Content | 2026-06-27    | build dist thesis curl 1 |
-| L10 | **許無障** / Agent L10 · Contrast Guardian           | E1    | P1  |     58 |   80 | pending     | Design Tokens | 2026-06-27    | L08                      |
-| L11 | **方觸達** / Agent L11 · Touch Target Auditor        | E1    | P1  |     58 |   85 | pending     | QA            | 2026-06-27    | L04(TOU)                 |
-| L12 | **吳收藏** / Agent L12 · Settings Favorites Curator  | E2    | P1  |     65 |   82 | pending     | Frontend      | 2026-06-27    | —                        |
-| L13 | **孫問答** / Agent L13 · Help Content Architect      | E3    | P1  |     50 |   78 | in_progress | SEO / Content | 2026-06-27    | L09                      |
-| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | done        | Design Tokens | 2026-06-27    | —                        |
-| L15 | **車安裝** / Agent L15 · PWA Install Advocate        | E2    | P1  |     72 |   88 | pending     | PWA / SW      | 2026-06-27    | —                        |
-| L16 | **何降級** / Agent L16 · Loading Degradation Auditor | E1    | P2  |     70 |   85 | pending     | Frontend      | 2026-06-27    | L06                      |
-| L17 | **高信任** / Agent L17 · Trust E-E-A-T Lead          | E1/E3 | P1  |     72 |   90 | pending     | SEO / Content | 2026-06-27    | L06                      |
-| L18 | **裴對標** / Agent L18 · K-Fintech Benchmark Analyst | E1    | P1  |     58 |   80 | pending     | PM / Design   | 2026-06-27    | —                        |
-| L19 | **梁趨勢** / Agent L19 · UX Trends Futurist          | E1/E3 | P1  |     62 |   85 | pending     | PM            | 2026-06-27    | L09                      |
+| ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers                                    |
+| --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | ------------------------------------------- |
+| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | done        | Frontend      | 2026-06-27    | —                                           |
+| L02 | **沈零閱** / Agent L02 · Zero-Click Reader           | E1    | P1  |     65 |   90 | pending     | Frontend      | 2026-06-27    | L01                                         |
+| L03 | **韓多理** / Agent L03 · Multi-Flow Analyst          | E4    | P1  |     55 |   80 | pending     | Frontend      | 2026-06-27    | —                                           |
+| L04 | **鄭落地** / Agent L04 · Landing Curator             | E3    | P1  |     62 |   85 | pending     | SEO / Content | 2026-06-27    | —                                           |
+| L05 | **羅導航** / Agent L05 · Nav-IA Architect            | E4    | P1  |     62 |   85 | pending     | Frontend      | 2026-06-27    | —                                           |
+| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | done        | QA            | 2026-06-27    | —                                           |
+| L07 | **周寬屏** / Agent L07 · Desktop Layout Auditor      | E4    | P2  |     45 |   70 | pending     | Frontend      | 2026-06-27    | L01                                         |
+| L08 | **金墨字** / Agent L08 · Typography Specialist       | E1    | P1  |     52 |   80 | pending     | Design Tokens | 2026-06-27    | L01, L14                                    |
+| L09 | **白精煉** / Agent L09 · Content Distiller           | E3    | P1  |     50 |   85 | done        | SEO / Content | 2026-06-27    | build dist thesis curl 1                    |
+| L10 | **許無障** / Agent L10 · Contrast Guardian           | E1    | P1  |     58 |   80 | pending     | Design Tokens | 2026-06-27    | L08                                         |
+| L11 | **方觸達** / Agent L11 · Touch Target Auditor        | E1    | P1  |     58 |   85 | pending     | QA            | 2026-06-27    | L04(TOU)                                    |
+| L12 | **吳收藏** / Agent L12 · Settings Favorites Curator  | E2    | P1  |     65 |   82 | pending     | Frontend      | 2026-06-27    | —                                           |
+| L13 | **孫問答** / Agent L13 · Help Content Architect      | E3    | P1  |     50 |   78 | in_progress | SEO / Content | 2026-06-27    | L09                                         |
+| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | done        | Design Tokens | 2026-06-27    | —                                           |
+| L15 | **車安裝** / Agent L15 · PWA Install Advocate        | E2    | P1  |     72 |   88 | pending     | PWA / SW      | 2026-06-27    | —                                           |
+| L16 | **何降級** / Agent L16 · Loading Degradation Auditor | E1    | P2  |     70 |   85 | pending     | Frontend      | 2026-06-27    | L06                                         |
+| L17 | **高信任** / Agent L17 · Trust E-E-A-T Lead          | E1/E3 | P1  |     72 |   90 | pending     | SEO / Content | 2026-06-27    | L06                                         |
+| L18 | **裴對標** / Agent L18 · K-Fintech Benchmark Analyst | E1    | P1  |     58 |   80 | pending     | PM / Design   | 2026-06-27    | —                                           |
+| L19 | **梁趨勢** / Agent L19 · UX Trends Futurist          | E1/E3 | P1  |     62 |   85 | pending     | PM            | 2026-06-27    | L09                                         |
 | L20 | **馮驗收** / Agent L20 · Motion QA Lead              | E1    | P2  |     68 |   85 | in_progress | QA            | 2026-06-27    | G2 Lighthouse; G4 #418; Plan 010 specs 待建 |
 
 **詳細 Agent prompt、Acceptance、Evidence → §七 Appendix（L01–L20）**
@@ -1119,17 +1119,17 @@ Acceptance: thesis ≤1; capsule↔FAQ 0 verbatim dup; tests Pass.
 
 **L20 local phase（2026-06-27，experiment @ `5e5e543e`）**：
 
-| 項目 | 結果 | 證據 |
-| ---- | ---- | ---- |
-| build:ratewise + preview | PASS | worktree `epic3-content-distill` @ origin/experiment/ratewise-ux-2026 |
-| curl 8 routes（prod） | PASS 200 | `/` `/multi/` `/favorites/` `/settings/` `/faq/` `/about/` `/usd-twd/` `/usd-twd/500/` |
-| Security headers（prod） | PASS | `x-security-policy-version: 5.4`；CSP nonce；HTML COEP require-corp |
-| live precache | PASS | `verify-precache-assets.mjs` ≥50 資產 200 |
-| hero y @390×844 | **FAIL** | rateText y≈274（門檻 ≤120）；font-size 24px（門檻 ≥32） |
-| console @390×844 | **FAIL** | `/` `/settings/` `/faq/` 各 1× React #418（hydration） |
-| Plan 010 E2E specs | **SKIP** | `mobile-pwa\|hero-y\|touch-44` grep 0 tests；CI path 待 plan 010 Step 1–4 |
-| Lighthouse CI（G2） | **BLOCKED** | 本地 port 衝突；#433 mega-PR 現況 fail |
-| 截圖 | PASS | `screenshots/l20-hero-v2-390x844.png` |
+| 項目                     | 結果        | 證據                                                                                   |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------- |
+| build:ratewise + preview | PASS        | worktree `epic3-content-distill` @ origin/experiment/ratewise-ux-2026                  |
+| curl 8 routes（prod）    | PASS 200    | `/` `/multi/` `/favorites/` `/settings/` `/faq/` `/about/` `/usd-twd/` `/usd-twd/500/` |
+| Security headers（prod） | PASS        | `x-security-policy-version: 5.4`；CSP nonce；HTML COEP require-corp                    |
+| live precache            | PASS        | `verify-precache-assets.mjs` ≥50 資產 200                                              |
+| hero y @390×844          | **FAIL**    | rateText y≈274（門檻 ≤120）；font-size 24px（門檻 ≥32）                                |
+| console @390×844         | **FAIL**    | `/` `/settings/` `/faq/` 各 1× React #418（hydration）                                 |
+| Plan 010 E2E specs       | **SKIP**    | `mobile-pwa\|hero-y\|touch-44` grep 0 tests；CI path 待 plan 010 Step 1–4              |
+| Lighthouse CI（G2）      | **BLOCKED** | 本地 port 衝突；#433 mega-PR 現況 fail                                                 |
+| 截圖                     | PASS        | `screenshots/l20-hero-v2-390x844.png`                                                  |
 
 **Gate 完成度（local phase）**：~35%（G3 pass；G1/G2/G4/G5 未過）
 
@@ -1341,12 +1341,12 @@ Acceptance: thesis ≤1; capsule↔FAQ 0 verbatim dup; tests Pass.
 
 #### L20 — QA verification matrix
 
-| 欄位           | 內容                                                                                                                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 欄位           | 內容                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Findings**   | Plan 010 E2E 待建；experiment HEAD 無 hero-v2 layout（`?ux=hero-v2` 與 legacy 同 DOM）；rate y≈274 / 24px 未達 AC；三路由 React #418。 |
-| **Severity**   | **P2**（G4 console 升級 P0 阻斷 gate）                                                                                               |
-| **Evidence**   | Plan 010 local phase 2026-06-27；`screenshots/l20-hero-v2-390x844.png`；live precache PASS                                         |
-| **Acceptance** | §十六 matrix 全綠；28-step nav journey Pass                                                                                          |
+| **Severity**   | **P2**（G4 console 升級 P0 阻斷 gate）                                                                                                 |
+| **Evidence**   | Plan 010 local phase 2026-06-27；`screenshots/l20-hero-v2-390x844.png`；live precache PASS                                             |
+| **Acceptance** | §十六 matrix 全綠；28-step nav journey Pass                                                                                            |
 
 ---
 

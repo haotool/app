@@ -124,18 +124,18 @@ VERIFY_PRECACHE_SOURCE=live VERIFY_BASE_URL=https://app.haotool.org/ratewise/ no
 
 **環境**：worktree `../ratewise-ux-worktrees/epic3-content-distill` @ `5e5e543e`；`pnpm build:ratewise` + preview `:4173`
 
-| Matrix 列（§十六） | 結果 | 備註 |
-| ------------------ | ---- | ---- |
-| 16.2 curl 8 routes | **PASS** | prod 全 200 |
-| 16.2 security headers | **PASS** | `x-security-policy-version: 5.4` |
-| 16.2 live precache | **PASS** | ≥50 assets 200 |
-| 16.3 mobile-pwa-smoke | **FAIL** | spec 待建；手動四 tab 無白屏 |
-| 16.3 hero y ≤120 | **FAIL** | rateText y≈274；24px |
-| 16.3 console=0 | **FAIL** | `/` `/settings/` `/faq/` 各 React #418 |
-| 16.3 touch-44 | **SKIP** | spec 待建 |
-| 16.4 build | **PASS** | build:ratewise exit 0 |
-| G2 Lighthouse | **BLOCKED** | #433；本地 lhci port 衝突 |
-| G5 Maintainer | **PENDING** | 禁止 merge experiment→main |
+| Matrix 列（§十六）    | 結果        | 備註                                   |
+| --------------------- | ----------- | -------------------------------------- |
+| 16.2 curl 8 routes    | **PASS**    | prod 全 200                            |
+| 16.2 security headers | **PASS**    | `x-security-policy-version: 5.4`       |
+| 16.2 live precache    | **PASS**    | ≥50 assets 200                         |
+| 16.3 mobile-pwa-smoke | **FAIL**    | spec 待建；手動四 tab 無白屏           |
+| 16.3 hero y ≤120      | **FAIL**    | rateText y≈274；24px                   |
+| 16.3 console=0        | **FAIL**    | `/` `/settings/` `/faq/` 各 React #418 |
+| 16.3 touch-44         | **SKIP**    | spec 待建                              |
+| 16.4 build            | **PASS**    | build:ratewise exit 0                  |
+| G2 Lighthouse         | **BLOCKED** | #433；本地 lhci port 衝突              |
+| G5 Maintainer         | **PENDING** | 禁止 merge experiment→main             |
 
 **截圖**：`screenshots/l20-hero-v2-390x844.png`
 
