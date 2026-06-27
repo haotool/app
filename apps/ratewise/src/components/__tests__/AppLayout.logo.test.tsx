@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../AppLayout';
@@ -21,11 +21,33 @@ vi.mock('../UpdatePrompt', () => ({
   UpdatePrompt: () => null,
 }));
 
+vi.mock('../RatingModal', () => ({
+  RatingModal: () => null,
+}));
+
+vi.mock('../PwaInstallGuide', () => ({
+  PwaInstallGuide: () => null,
+}));
+
+vi.mock('../NonCriticalLazyBoundary', () => ({
+  NonCriticalLazyBoundary: () => null,
+}));
+
 vi.mock('../RouteErrorBoundary', () => ({
   RouteErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 describe('AppLayout Logo', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
   it('應只使用透明 logo.png，避免 retina 螢幕誤載入有底色的 PWA icon', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
