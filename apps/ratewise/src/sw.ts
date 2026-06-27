@@ -315,19 +315,24 @@ async function handleNavigationRequest({
 
   // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
   const networkFetch = fetchAndCacheNavigation(request, cache);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
       networkFetch,
-      new Promise<never>((_, reject) =>
-        setTimeout(
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
           () => reject(new Error('navigation-fetch-timeout')),
           NAVIGATION_FETCH_TIMEOUT_MS,
-        ),
-      ),
+        );
+      }),
     ]);
   } catch {
     event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 

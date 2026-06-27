@@ -512,6 +512,96 @@ describe('handleNavigationRequest', () => {
     await vi.runAllTimersAsync();
   });
 
+  it('case 3: network resolves within 8s returns network response without orphan timer', async () => {
+    vi.useFakeTimers();
+
+    const networkHtml = '<html>network fresh</html>';
+    const networkResponse = new Response(networkHtml, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockImplementation((url: string) =>
+      Promise.resolve(url === 'index.html' ? null : null),
+    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(networkResponse.clone()));
+
+    const orphanRejections: unknown[] = [];
+    const onRejection = (reason: unknown) => {
+      orphanRejections.push(reason);
+    };
+    process.on('unhandledRejection', onRejection);
+
+    try {
+      const handler = navigationHandlerRef.current!;
+      const response = await handler({
+        event: createNavigationEvent(),
+        request: new Request(navigationUrl),
+      });
+      const body = await response.text();
+
+      expect(body).toBe(networkHtml);
+      expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
+      expect(matchPrecacheMock).not.toHaveBeenCalledWith('offline.html');
+
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(orphanRejections).toHaveLength(0);
+    } finally {
+      process.off('unhandledRejection', onRejection);
+    }
+  });
+
+  it('case 3: timeout fallback still waitUntils late network fetch to html-cache', async () => {
+    vi.useFakeTimers();
+
+    const offlineFallback = createOfflineFallbackResponse();
+    const networkHtml = '<html>late network</html>';
+    let resolveFetch!: (value: Response) => void;
+    const fetchPromise = new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    });
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockImplementation((url: string) => {
+      if (url === 'index.html') return Promise.resolve(null);
+      if (url === 'offline.html') return Promise.resolve(offlineFallback);
+      return Promise.resolve(null);
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => fetchPromise),
+    );
+
+    const event = createNavigationEvent();
+    const handler = navigationHandlerRef.current!;
+    const responsePromise = handler({
+      event,
+      request: new Request(navigationUrl),
+    });
+
+    await vi.advanceTimersByTimeAsync(8000);
+
+    const response = await responsePromise;
+    const body = await response.text();
+
+    expect(body).toBe(offlineHtml);
+    expect(event.waitUntil).toHaveBeenCalledTimes(1);
+
+    resolveFetch(
+      new Response(networkHtml, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      }),
+    );
+    const waitUntilPromise = (event.waitUntil as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as
+      | Promise<unknown>
+      | undefined;
+    await waitUntilPromise;
+
+    expect(htmlCache.put).toHaveBeenCalled();
+  });
+
   it('case 3: hung network falls back to offline.html after bounded timeout', async () => {
     vi.useFakeTimers();
 
