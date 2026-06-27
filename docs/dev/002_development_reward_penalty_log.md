@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+79
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+80
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-pwa-https-cold-start-manifest-regression
+- 原因：#447 已改絕對 HTTPS start_url，但 SW seo-files-cache 以 SWR 快取舊 manifest（相對 start_url），冷啟動仍觸發 HTTPS-First 警告
+- 解法：manifest.webmanifest 改 NetworkOnly、scope 同步絕對 HTTPS SSOT，並補防回歸測試
 
 - 日期：2026-06-28
 - ID：reward-threads-barcelona-inapp-ua

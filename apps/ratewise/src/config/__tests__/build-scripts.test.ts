@@ -260,6 +260,21 @@ describe('ratewise build scripts', () => {
     expect(manifestGenerator).not.toContain("name: 'HaoRate 匯率好工具'");
   });
 
+  it('should keep PWA manifest scope and start_url on absolute HTTPS SSOT', async () => {
+    const manifestGenerator = await readManifestGenerator();
+    const manifestPath = path.resolve(__dirname, '../../../public/manifest.webmanifest');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf-8')) as {
+      scope: string;
+      start_url: string;
+    };
+
+    expect(manifestGenerator).toContain('scope: APP_INFO.siteUrl');
+    expect(manifestGenerator).toContain('start_url: APP_INFO.siteUrl');
+    expect(manifest.scope).toMatch(/^https:\/\//);
+    expect(manifest.start_url).toMatch(/^https:\/\//);
+    expect(manifest.scope).toBe(manifest.start_url);
+  });
+
   it('should not force React ecosystem packages into manual chunks', async () => {
     const viteConfig = await readViteConfig();
     expect(viteConfig).not.toContain(
