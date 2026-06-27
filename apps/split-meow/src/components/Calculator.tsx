@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
-import { wouldCreateMixedCurrencyTrip } from '../config/currencies';
+import { confirmMixedCurrencyIfNeeded } from '../config/currencies';
 
 interface CalculatorProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -38,8 +38,12 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
   const handleSave = () => {
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
     if (
-      wouldCreateMixedCurrencyTrip(tripExpenses, currency, currency) &&
-      !window.confirm(t('history.mixed_currency_warning'))
+      !confirmMixedCurrencyIfNeeded(
+        tripExpenses,
+        currency,
+        currency,
+        t('history.mixed_currency_confirm'),
+      )
     ) {
       return;
     }

@@ -127,7 +127,7 @@ describe('Calculator', () => {
     const allBtns = document.querySelectorAll('button');
     const saveBtn = allBtns[allBtns.length - 1] as HTMLButtonElement;
     fireEvent.click(saveBtn);
-    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_warning'));
+    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
     expect(useStore.getState().expenses).toHaveLength(1);
     expect(useStore.getState().calculatorValue).toBe('100');
     confirmSpy.mockRestore();

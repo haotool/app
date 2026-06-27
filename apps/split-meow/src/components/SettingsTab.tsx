@@ -5,7 +5,7 @@ import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
-import { CURRENCIES, type CurrencyCode, wouldCreateMixedCurrencyTrip } from '../config/currencies';
+import { CURRENCIES, type CurrencyCode, confirmMixedCurrencyIfNeeded } from '../config/currencies';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -55,8 +55,12 @@ export function SettingsTab() {
     if (code === currency) return;
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
     if (
-      wouldCreateMixedCurrencyTrip(tripExpenses, currency, code) &&
-      !window.confirm(t('history.mixed_currency_warning'))
+      !confirmMixedCurrencyIfNeeded(
+        tripExpenses,
+        currency,
+        code,
+        t('history.mixed_currency_confirm'),
+      )
     ) {
       return;
     }

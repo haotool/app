@@ -125,4 +125,9 @@ describe('trip currency helpers', () => {
       wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }, { currency: 'KRW' }], 'TWD', 'TWD'),
     ).toBe(false);
   });
+
+  it('wouldCreateMixedCurrencyTrip 舊資料缺 currency 欄位時仍偵測混幣風險', () => {
+    expect(wouldCreateMixedCurrencyTrip([{}], 'TWD', 'KRW')).toBe(true);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: undefined }], 'TWD', 'KRW')).toBe(true);
+  });
 });

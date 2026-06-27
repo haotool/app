@@ -108,8 +108,35 @@ describe('SettingsTab', () => {
     });
     renderSettings();
     fireEvent.click(screen.getByText('₩'));
-    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_warning'));
+    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
     expect(useStore.getState().currency).toBe('TWD');
+    confirmSpy.mockRestore();
+  });
+
+  it('切換幣別若會混幣且確認則變更', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    useStore.setState({
+      currency: 'TWD',
+      currentTripId: 'default-trip',
+      expenses: [
+        {
+          id: 'exp-1',
+          tripId: 'default-trip',
+          type: 'split_evenly',
+          participantIds: ['me'],
+          paidBy: 'me',
+          totalAmount: 100,
+          perPersonAmounts: { me: 100 },
+          note: '',
+          createdAt: 1,
+          currency: 'TWD',
+        },
+      ],
+    });
+    renderSettings();
+    fireEvent.click(screen.getByText('₩'));
+    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
+    expect(useStore.getState().currency).toBe('KRW');
     confirmSpy.mockRestore();
   });
 });
