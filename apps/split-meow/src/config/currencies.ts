@@ -72,10 +72,9 @@ export function wouldCreateMixedCurrencyTrip(
   if (tripExpenses.length === 0) return false;
   const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
   if (isMixedCurrencyTrip(tripExpenses, tripCurrency)) return false;
-  const establishedCurrency = resolveExpenseCurrency(
-    tripExpenses[tripExpenses.length - 1]!,
-    tripCurrency,
-  );
+  const lastExpense = tripExpenses[tripExpenses.length - 1];
+  if (lastExpense === undefined) return false;
+  const establishedCurrency = resolveExpenseCurrency(lastExpense, tripCurrency);
   return incomingCurrency !== establishedCurrency;
 }
 

@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type * as CurrenciesModule from '../../config/currencies';
 import { useStore } from '../../store/useStore';
 
 vi.mock('../../lib/exchangeRate', () => ({
@@ -7,7 +8,7 @@ vi.mock('../../lib/exchangeRate', () => ({
 }));
 
 vi.mock('../../config/currencies', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../config/currencies')>();
+  const actual = await importOriginal<typeof CurrenciesModule>();
   return {
     ...actual,
     detectCurrencyFromTimezone: vi.fn(() => 'KRW' as const),

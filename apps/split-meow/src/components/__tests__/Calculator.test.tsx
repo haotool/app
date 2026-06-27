@@ -125,7 +125,7 @@ describe('Calculator', () => {
     });
     renderCalc();
     const allBtns = document.querySelectorAll('button');
-    const saveBtn = allBtns[allBtns.length - 1] as HTMLButtonElement;
+    const saveBtn = allBtns[allBtns.length - 1]!;
     fireEvent.click(saveBtn);
     expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
     expect(useStore.getState().expenses).toHaveLength(1);
