@@ -8,19 +8,18 @@
 
 **追蹤**：Epic 1 已於 2026-06-27 以 PR [#464](https://github.com/haotool/app/pull/464) squash 併入 `experiment/ratewise-ux-2026`（`dbcadb05`）。
 
-| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status                                              |
-| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | --------------------------------------------------- |
-| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE                                                |
-| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS                                         |
-| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | DONE（PR #464 merged）                              |
-| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001, 002          | E2 / L12,L15          | IN PROGRESS（[#466](https://github.com/haotool/app/pull/466)） |
+| Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status                                                                         |
+| ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ------------------------------------------------------------------------------ |
+| [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE                                                                           |
+| [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS                                                                    |
+| [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | DONE（PR #464 merged）                                                         |
+| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001, 002          | E2 / L12,L15          | IN PROGRESS（[#466](https://github.com/haotool/app/pull/466)）                 |
 | [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS（Steps 2–5 DONE，[#469](https://github.com/haotool/app/pull/469)） |
-| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO                                                |
-| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE                                                |
-| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | DONE                                                |
-| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE                                          |
-| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | IN PROGRESS                                         |
-
+| [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO                                                                           |
+| [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE                                                                           |
+| [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | DONE                                                                           |
+| [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE                                                                     |
+| [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | IN PROGRESS                                                                    |
 
 Status 值：`TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` | `REJECTED`
 

@@ -722,7 +722,6 @@ sequenceDiagram
 > SSOT 透鏡 ID 對齊 §二 Scorecard。Severity：`P0`=release blocking、`P1`=Sprint 必達、`P2`=選配。  
 > **命名格式**：`姓名 / Agent L0N · Codename`
 
-
 | ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers                                                  |
 | --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | --------------------------------------------------------- |
 | L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | done        | Frontend      | 2026-06-27    | —                                                         |
@@ -1024,9 +1023,7 @@ Acceptance: thesis ≤1; capsule↔FAQ 0 verbatim dup; tests Pass.
 
 ### L13 — 孫問答 / Agent L13 · Help Content Architect
 
-
 **Agent**：**孫問答** / Agent L13 · Help Content Architect | **Role**：Help Content Architecture Auditor | **Owner**：SEO / Content | **Status**：done | **Last verified**：2026-06-27 | **Evidence**：`FAQ_PAGE_CATEGORIES` 四類、21 題全覆蓋
-
 
 **Acceptance**：FAQ 四類 accordion; flat 21 題改分組; `/faq/` curl 200; FAQPage schema **僅** `/faq/`.
 
