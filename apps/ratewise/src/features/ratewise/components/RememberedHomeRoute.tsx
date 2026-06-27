@@ -6,6 +6,7 @@ import {
   markRestoreAttempted,
   shouldRestoreToMulti,
   isPersistedMultiPendingStoreSync,
+  readPersistedLastConverterView,
 } from './coldStartRestore';
 
 /**
@@ -20,14 +21,46 @@ export function RememberedHomeRoute() {
   const [hydrated, setHydrated] = useState(isTestEnv);
 
   useEffect(() => {
+    let active = true;
+    const markHydrated = () => {
+      if (active) {
+        setHydrated(true);
+      }
+    };
+
+    const isStoreSyncedWithPersist = (): boolean => {
+      const persisted = readPersistedLastConverterView();
+      if (persisted === null) return true;
+      return useConverterStore.getState().lastConverterView === persisted;
+    };
+
     if (useConverterStore.persist.hasHydrated()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- persist hydration marker
-      setHydrated(true);
-      return undefined;
+      markHydrated();
+      return () => {
+        active = false;
+      };
     }
-    return useConverterStore.persist.onFinishHydration(() => {
-      setHydrated(true);
+
+    const unsubFinish = useConverterStore.persist.onFinishHydration(markHydrated);
+
+    // SSG/CSR：store 可能已 merge persist，但 onFinishHydration 未觸發。
+    queueMicrotask(() => {
+      if (isStoreSyncedWithPersist()) {
+        markHydrated();
+      }
     });
+
+    const unsubStore = useConverterStore.subscribe((state, prevState) => {
+      if (state.lastConverterView !== prevState.lastConverterView && isStoreSyncedWithPersist()) {
+        markHydrated();
+      }
+    });
+
+    return () => {
+      active = false;
+      unsubFinish();
+      unsubStore();
+    };
   }, []);
 
   const hasDeepLink =

@@ -131,4 +131,18 @@ describe('RememberedHomeRoute', () => {
     expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
     expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
   });
+
+  it('production MODE：store 已同步 multi 但 hasHydrated=false 時仍導向 /multi', async () => {
+    vi.stubEnv('MODE', 'production');
+    localStorage.setItem(CONVERTER_STORE_KEY, multiPersistPayload);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(false);
+
+    renderHome('/');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('multi-page')).toBeInTheDocument();
+    });
+    vi.unstubAllEnvs();
+  });
 });
