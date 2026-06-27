@@ -325,9 +325,7 @@ jobs:
             --project=chromium-desktop \
             --project=chromium-mobile \
             --shard=${{ matrix.shard }}/2 \
-            --reporter=blob \
-            --reporter=github \
-            --reporter=list
+            --reporter=blob,github,list
 
       - name: Stop preview server
         if: always()
