@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+71
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+72
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-split-meow-legacy-expense-currency-twd
+- 原因：PR 445 審查發現缺 currency 的舊支出 fallback 至全域幣別，KRW 上線前 TWD 帳目切換幣別後仍誤顯示 ₩
+- 解法：resolveExpenseCurrency 與 resolveTripCurrency 舊資料固定 fallback TWD，補 currencies 單元測試
 
 - 日期：2026-06-27
 - ID：reward-pw-version-unify-1611
