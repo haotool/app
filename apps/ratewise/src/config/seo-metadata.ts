@@ -557,8 +557,8 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
   return {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: `${APP_INFO.shortName} 台灣銀行牌告匯率開放資料`,
-    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期買入賣出四種報價，並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
+    name: `${APP_INFO.shortName} 匯率開放資料`,
+    description: `${APP_INFO.shortName} 提供臺灣銀行牌告匯率與 MoneyBox 換錢所（KRW/TWD）的開放 JSON 資料集，包含 ${SUPPORTED_CURRENCY_COUNT} 種台銀外幣的現金與即期四種報價，以及 v2 語意欄位（customerBuyForeignRate、quoteUnit）對照；並提供最新匯率、歷史匯率與 OpenAPI 規格。`,
     url: buildCanonicalUrl('/open-data/'),
     sameAs: 'https://rate.bot.com.tw/xrt',
     isBasedOn: {
@@ -609,6 +609,12 @@ export function buildOpenDataDatasetJsonLd(): JsonLdBlock {
         '@type': 'DataDownload',
         name: 'OpenAPI 3.1 規格',
         contentUrl: `${SITE_BASE_URL}openapi.json`,
+        encodingFormat: 'application/json',
+      },
+      {
+        '@type': 'DataDownload',
+        name: 'MoneyBox 換錢所最新匯率 JSON',
+        contentUrl: RATES_API.moneyboxCdn,
         encodingFormat: 'application/json',
       },
     ],
