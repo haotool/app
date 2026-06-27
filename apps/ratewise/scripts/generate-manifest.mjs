@@ -24,9 +24,9 @@ const manifest = {
   theme_color: '#8B5CF6',
   background_color: '#E8ECF4',
   display: 'standalone',
-  scope: '/ratewise/',
-  // 絕對 HTTPS start_url：避免獨立 PWA partition + Chrome HTTPS-First 在啟動時以 http 語意解析。
-  // id/scope 維持相對（id 變更會被視為新 PWA 身分，破壞既有安裝更新連續性）。
+  // 絕對 HTTPS scope/start_url：避免獨立 PWA partition + Chrome HTTPS-First 在啟動時以 http 語意解析。
+  // id 維持相對（id 變更會被視為新 PWA 身分，破壞既有安裝更新連續性）。
+  scope: APP_INFO.siteUrl,
   start_url: APP_INFO.siteUrl,
   id: '/ratewise/',
   orientation: 'portrait-primary',

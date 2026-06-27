@@ -242,6 +242,17 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('new NetworkOnly(');
   });
 
+  it('should fetch manifest.webmanifest with NetworkOnly to avoid stale relative start_url', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain("url.pathname.endsWith('.webmanifest')");
+    expect(sourceCode).not.toContain('.(webmanifest|txt|xml)$');
+  });
+
   // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）
   it('should use CacheFirst for JS/CSS static resources (hash-based filenames are immutable)', async () => {
     const fs = await import('node:fs/promises');

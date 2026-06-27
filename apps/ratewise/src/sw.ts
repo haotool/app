@@ -457,9 +457,12 @@ registerRoute(
   }),
 );
 
-// manifest / SEO 文字檔案：StaleWhileRevalidate，7 天。
+// manifest 必須 NetworkOnly：SWR 快取會回傳舊版相對 start_url，觸發冷啟動 HTTPS-First 警告。
+registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), new NetworkOnly());
+
+// SEO 文字/XML：StaleWhileRevalidate，7 天。
 registerRoute(
-  ({ url }: { url: URL }) => /\.(webmanifest|txt|xml)$/.test(url.pathname),
+  ({ url }: { url: URL }) => /\.(txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
     cacheName: 'seo-files-cache',
     plugins: [
