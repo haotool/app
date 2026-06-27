@@ -352,7 +352,7 @@ export default function Settings() {
           </p>
         </section>
 
-{/* PWA 安裝區塊 */}
+        {/* PWA 安裝區塊 */}
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <Download className="w-3.5 h-3.5" />

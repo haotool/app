@@ -8,7 +8,6 @@
 
 **追蹤**：Epic 1 已於 2026-06-27 以 PR [#464](https://github.com/haotool/app/pull/464) squash 併入 `experiment/ratewise-ux-2026`（`dbcadb05`）。
 
-
 | Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status                        |
 | ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------------------------- |
 | [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE（PR #464 merged）        |
@@ -21,7 +20,6 @@
 | [007](./007-cf-security-headers.md)         | CF Worker 可維護性        | P2       | M      | —                 | Release gate          | DONE                          |
 | [008](./008-zeabur-deployment.md)           | Zeabur 部署與 race 防護   | P2       | M      | —                 | §3.5 / Release        | AUDIT DONE                    |
 | [010](./010-qa-gate.md)                     | QA 閘門（390×844 + live） | P1       | M      | 002–005, 007, 008 | §十六 / §十四.12 Gate | IN PROGRESS                   |
-
 
 Status 值：`TODO` | `IN PROGRESS` | `DONE` | `BLOCKED` | `REJECTED`
 
