@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+67
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-pr468-multi-base-visible
+- 原因：PR 468 progressive disclosure 只 slice 前 8 列，基準幣在 9 列後時摺疊態不可見
+- 解法：摺疊列表以基準幣置換最後一列，維持 ≤8 列且基準列永遠可見
 
 - 日期：2026-06-27
 - ID：reward-ux2026-epic2-settings-ssot

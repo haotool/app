@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from 'react';
+import { Suspense, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
@@ -26,6 +26,22 @@ import {
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 
 type UnifiedRateOption = 'spot' | 'cash' | 'exchange-shop';
+
+function getCollapsedVisibleCurrencies(
+  sortedCurrencies: CurrencyCode[],
+  baseCurrency: CurrencyCode,
+): CurrencyCode[] {
+  if (sortedCurrencies.length <= MULTI_DEFAULT_VISIBLE_ROWS) {
+    return sortedCurrencies;
+  }
+
+  const head = sortedCurrencies.slice(0, MULTI_DEFAULT_VISIBLE_ROWS);
+  if (head.includes(baseCurrency)) {
+    return head;
+  }
+
+  return [...head.slice(0, MULTI_DEFAULT_VISIBLE_ROWS - 1), baseCurrency];
+}
 
 interface MultiConverterProps {
   sortedCurrencies: CurrencyCode[];
@@ -67,9 +83,11 @@ export const MultiConverter = ({
   const [expanded, setExpanded] = useState(false);
 
   const hiddenCurrencyCount = Math.max(0, sortedCurrencies.length - MULTI_DEFAULT_VISIBLE_ROWS);
-  const visibleCurrencies = expanded
-    ? sortedCurrencies
-    : sortedCurrencies.slice(0, MULTI_DEFAULT_VISIBLE_ROWS);
+  const visibleCurrencies = useMemo(
+    () =>
+      expanded ? sortedCurrencies : getCollapsedVisibleCurrencies(sortedCurrencies, baseCurrency),
+    [expanded, sortedCurrencies, baseCurrency],
+  );
 
   const calculator = useCalculatorModal<CurrencyCode>({
     onConfirm: (currency, result) => {

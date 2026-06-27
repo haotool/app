@@ -158,6 +158,36 @@ describe('MultiConverter', () => {
       expect(rows.length).toBe(allCodes.length);
       expect(screen.getByTestId('multi-show-less')).toBeInTheDocument();
     });
+
+    it('基準幣不在前 8 列時摺疊列表仍應顯示基準列', () => {
+      const sortedWithGbpLate = [
+        'TWD',
+        'USD',
+        'JPY',
+        'EUR',
+        'AUD',
+        'CAD',
+        'CHF',
+        'CNY',
+        'GBP',
+        'HKD',
+      ] as CurrencyCode[];
+
+      render(
+        <MultiConverter
+          {...defaultProps}
+          sortedCurrencies={sortedWithGbpLate}
+          multiAmounts={fullAmounts}
+          baseCurrency="GBP"
+        />,
+      );
+
+      const list = screen.getByTestId('multi-currency-list');
+      const rows = within(list).getAllByTestId('multi-currency-row');
+      expect(rows.length).toBe(MULTI_DEFAULT_VISIBLE_ROWS);
+      expect(within(list).getByText('GBP')).toBeInTheDocument();
+      expect(within(list).queryByText('HKD')).not.toBeInTheDocument();
+    });
   });
 
   describe('Epic 4 global rate semantics', () => {
