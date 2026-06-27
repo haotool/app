@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+66
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+67
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-epic3-steps2-5-content-distill
+- 原因：Plan 004 E3-T2–T5 缺 landing rate strip、首頁 SEO 瘦身、FAQ 分類與金額 capsule
+- 解法：CurrencyLandingPage rate strip + accordion、HomepageSEOSection 精簡、FAQ_PAGE_CATEGORIES、buildAmountAnswerCapsule
 
 - 日期：2026-06-27
 - ID：neutral-epic1-settings-hero-toggle
@@ -27,7 +32,6 @@
 - ID：reward-release-yml-worker-order-minify
 - 原因：release.yml Worker deploy 在 Zeabur wait 之前且 CI 未用 --minify，違反 AGENTS.md 邊緣順序 SOP
 - 解法：調整為 Wait → Worker deploy --minify → purge，並同步 DEPLOY.md 與 security-headers package.json
-
 - 日期：2026-06-27
 - ID：neutral-epic3-collect-body-text-ssot
 - 原因：L09 dedupe 測試內嵌 collectBodyText 與 seo-metadata SSOT 重複

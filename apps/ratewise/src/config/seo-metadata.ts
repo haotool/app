@@ -1096,6 +1096,43 @@ export const FAQ_PAGE_ENTRIES = [
   },
 ] as const satisfies readonly FAQEntry[];
 
+export interface FAQPageCategory {
+  id: string;
+  title: string;
+  entries: readonly FAQEntry[];
+}
+
+function faqEntriesAt(...indices: number[]): FAQEntry[] {
+  return indices.flatMap((index) => {
+    const entry = FAQ_PAGE_ENTRIES[index];
+    return entry ? [entry] : [];
+  });
+}
+
+/** FAQ 頁四類分組 SSOT（flat 21 題 → 四類 accordion，JSON-LD 仍用 FAQ_PAGE_ENTRIES）。 */
+export const FAQ_PAGE_CATEGORIES: readonly FAQPageCategory[] = [
+  {
+    id: 'rates',
+    title: '台銀匯率怎麼看',
+    entries: faqEntriesAt(0, 1, 2, 3, 9, 12, 18, 20),
+  },
+  {
+    id: 'app',
+    title: 'App 功能與操作',
+    entries: faqEntriesAt(4, 5, 6, 7, 8, 10, 11, 13, 16),
+  },
+  {
+    id: 'travel',
+    title: '出國換匯實用',
+    entries: faqEntriesAt(15),
+  },
+  {
+    id: 'card',
+    title: '刷卡與 DCC',
+    entries: faqEntriesAt(14, 17, 19),
+  },
+];
+
 export const FAQ_PAGE_SEO = {
   title: `${APP_INFO.shortName} 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂`,
   description: `整理 ${APP_INFO.shortName} 最常被問的換匯問題，涵蓋台銀匯率來源、現金與即期差異、買入賣出判讀、DCC 刷卡匯率、收藏排序、歷史記錄、離線使用與 PWA 安裝重點，讓第一次換匯也能快速判斷並少踩錯價。`,
@@ -2606,6 +2643,37 @@ function buildCurrencyAnswerCapsule(
       answer: spotAvailable
         ? `臨櫃換現鈔看現金報價，網銀外幣帳戶看即期報價。${APP_INFO.shortName} 同時顯示兩種台銀牌告。`
         : `此幣別以現金牌告為主，出國換匯前請直接確認台銀現金報價。`,
+    },
+  ];
+}
+
+/** 金額 landing 頁 Answer Capsule：首句含金額化換算（UX26-P0-001）。 */
+export function buildAmountAnswerCapsule(
+  amount: number,
+  currencyCode: string,
+  currencyName: string,
+  direction: 'to-twd' | 'twd-to-foreign',
+): FAQEntry[] {
+  const ex = SEO_RATE_EXAMPLES[currencyCode];
+  if (!ex) return [];
+
+  const formatted = formatAmount(amount);
+
+  if (direction === 'twd-to-foreign') {
+    const result = Math.round(amount / ex.cashSell);
+    return [
+      {
+        question: `${formatted} 台幣可換多少${currencyName}？`,
+        answer: `${formatted} 台幣 ≈ ${formatAmount(result)} ${currencyCode}（台銀現金 1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 更新）。`,
+      },
+    ];
+  }
+
+  const result = Math.round(amount * ex.cashSell);
+  return [
+    {
+      question: `${formatted} ${currencyName}換多少台幣？`,
+      answer: `${formatted} ${currencyCode} ≈ ${formatAmount(result)} TWD（台銀現金 1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 更新）。`,
     },
   ];
 }

@@ -11,6 +11,7 @@ import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/s
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
 import {
+  buildAmountAnswerCapsule,
   buildAmountExchangeRateSpecificationJsonLd,
   buildRateDifferenceSentence,
   getDefaultExampleAmount,
@@ -118,6 +119,14 @@ export function CurrencyLandingPage({
   });
 
   const formatNum = (n: number) => n.toLocaleString('zh-TW');
+
+  const landingDirection = isTwdToForeign ? 'twd-to-foreign' : 'to-twd';
+  const resolvedAnswerCapsule =
+    amount !== null && cashSell !== null
+      ? buildAmountAnswerCapsule(amount, currencyCode, currencyName, landingDirection)
+      : answerCapsule;
+  const exampleForeignAmount = getDefaultExampleAmount(currencyCode);
+  const exampleTwdResult = cashSell !== null ? Math.round(exampleForeignAmount * cashSell) : null;
 
   // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
   const converterHref =
@@ -241,8 +250,39 @@ export function CurrencyLandingPage({
             </div>
           </header>
 
+          {cashSell !== null && (
+            <section
+              aria-label="即時匯率"
+              className="mb-6 sm:mb-8"
+              data-testid="landing-rate-strip"
+            >
+              <div className="card p-4 sm:p-5 border border-primary/20 bg-surface">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary/70 mb-2">
+                  台銀現金賣出 · {SEO_RATE_EXAMPLES_DATE}
+                </p>
+                <p className="text-3xl sm:text-4xl font-black tabular-nums text-text leading-none">
+                  1 {currencyCode} = {cashSell} TWD
+                </p>
+                {exampleTwdResult !== null && amount === null && (
+                  <p className="mt-2 text-sm text-text-muted tabular-nums">
+                    {isTwdToForeign
+                      ? `例：${formatNum(exampleForeignAmount)} TWD ≈ ${formatNum(Math.round(exampleForeignAmount / cashSell))} ${currencyCode}`
+                      : `例：${formatNum(exampleForeignAmount)} ${currencyCode} ≈ ${formatNum(exampleTwdResult)} TWD`}
+                  </p>
+                )}
+                <Link
+                  to={converterHref}
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+                >
+                  在換算器輸入金額
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </Link>
+              </div>
+            </section>
+          )}
+
           {/* AEO/GEO 快速答案：AI 引擎直接引用的問答對，顯示在頁面頂部提升引用率。 */}
-          <AnswerCapsule items={answerCapsule} />
+          <AnswerCapsule items={resolvedAnswerCapsule} />
 
           {/* 金額換算結果卡（Wise-pattern）：?amount=X 存在時顯示靜態換算結果，爬蟲可索引。 */}
           {amount !== null && amountResult !== null && cashSell !== null && (
@@ -281,17 +321,22 @@ export function CurrencyLandingPage({
             </section>
           )}
 
-          {/* 精準換匯：唯一正文論述區塊（SSOT 來自 seo-metadata.precisionThesis） */}
-          <section className="mb-6 sm:mb-8">
-            <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
-              <div className="flex items-start gap-3">
+          {/* 精準換匯：唯一正文論述區塊（預設折疊，ATF 留給 rate strip）。 */}
+          <details className="card group mb-6 sm:mb-8">
+            <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
+              <h2 className="font-bold text-text text-sm sm:text-base">
+                {precisionThesis.heading}
+              </h2>
+              <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
+                ▼
+              </span>
+            </summary>
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-border/50">
+              <div className="flex items-start gap-3 pt-4">
                 <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-lg">⚖️</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="font-bold text-text text-sm sm:text-base mb-2">
-                    {precisionThesis.heading}
-                  </h2>
                   <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
                     {precisionThesis.body}
                   </p>
@@ -301,7 +346,7 @@ export function CurrencyLandingPage({
                 </div>
               </div>
             </div>
-          </section>
+          </details>
 
           {/* Quick Action Card */}
           <div className="card p-4 sm:p-5 mb-6 bg-primary text-white">
@@ -321,17 +366,18 @@ export function CurrencyLandingPage({
             </Link>
           </div>
 
-          {/* Highlights Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <BookOpen className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-                {currencyName}匯率重點
-              </h2>
-            </div>
-
-            <div className="card p-4 sm:p-5">
-              <ul className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
+          <details className="card group mb-6 sm:mb-8">
+            <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-3.5 h-3.5 text-primary/70" />
+                <h2 className="text-sm font-black text-text">{currencyName}匯率重點</h2>
+              </div>
+              <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
+                ▼
+              </span>
+            </summary>
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-border/50">
+              <ul className="space-y-3 pt-4 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
                 {highlights.map((highlight, index) => (
                   <li
                     key={index}
@@ -347,34 +393,39 @@ export function CurrencyLandingPage({
                 ))}
               </ul>
             </div>
-          </section>
+          </details>
 
-          {/* How To Steps Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">使用步驟</h2>
-            </div>
-
-            <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-              {howToSteps.map((step) => (
-                <div
-                  key={step.position}
-                  className="card p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
-                    {step.position}
+          <details className="card group mb-6 sm:mb-8">
+            <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-primary/70" />
+                <h2 className="text-sm font-black text-text">使用步驟</h2>
+              </div>
+              <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
+                ▼
+              </span>
+            </summary>
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-border/50">
+              <div className="space-y-3 pt-4 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                {howToSteps.map((step) => (
+                  <div
+                    key={step.position}
+                    className="rounded-xl bg-surface p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
+                  >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
+                      {step.position}
+                    </div>
+                    <div className="flex-1 min-w-0 pt-1">
+                      <h3 className="font-bold text-text text-sm sm:text-base mb-1">{step.name}</h3>
+                      <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
+                        {step.text}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">{step.name}</h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                      {step.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </section>
+          </details>
 
           {/* Common Amounts Section */}
           {commonAmounts.length > 0 && (
@@ -509,7 +560,7 @@ export function CurrencyLandingPage({
 
             <div className="space-y-3 md:max-w-3xl md:mx-auto">
               {faqEntries.map((faq, index) => (
-                <details key={index} className="card group" open={index === 0}>
+                <details key={index} className="card group">
                   <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface/50 transition-colors rounded-2xl">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
                       <HelpCircle className="w-4 h-4" />

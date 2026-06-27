@@ -6,7 +6,7 @@ import { PageNavHeader } from '../components/PageNavHeader';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
 import { AnswerCapsule } from '../components/AnswerCapsule';
-import { FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { FAQ_PAGE_CATEGORIES, FAQ_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 
 // 將 FAQ 答案中的 email 位址替換為 MailtoLink，防止 CF Email Obfuscation 將其改寫為爬蟲不可讀的 /cdn-cgi/... 連結。
 const EMAIL_RE = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
@@ -20,7 +20,6 @@ function renderFaqAnswer(answer: string): React.ReactNode {
   );
 }
 
-const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
   year: 'numeric',
   month: 'long',
@@ -63,7 +62,6 @@ export default function FAQ() {
             </p>
           </div>
 
-          {/* AEO/GEO 快速答案：AI 引擎直接引用的核心問答，放在 FAQ 頂部提升引用率。 */}
           <AnswerCapsule items={FAQ_PAGE_SEO.answerCapsule ?? []} />
 
           <section className="card mb-6 p-6">
@@ -84,34 +82,43 @@ export default function FAQ() {
             </ul>
           </section>
 
-          <div className="space-y-4">
-            {FAQ_ENTRIES.map((entry) => (
-              <details
-                key={entry.question}
-                className="group card p-0 hover:shadow-md transition-shadow"
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between p-6 transition-colors hover:text-primary">
-                  <h2 className="text-lg font-semibold text-text group-hover:text-primary">
-                    {entry.question}
-                  </h2>
-                  <svg
-                    className="ml-4 h-5 w-5 flex-shrink-0 text-text-muted transition-transform group-open:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </summary>
-                <div className="border-t border-border px-6 pb-6 pt-4 leading-relaxed text-text-muted">
-                  {renderFaqAnswer(entry.answer)}
+          <div className="space-y-6">
+            {FAQ_PAGE_CATEGORIES.map((category) => (
+              <section key={category.id} aria-labelledby={`faq-category-${category.id}`}>
+                <h2 id={`faq-category-${category.id}`} className="mb-3 text-xl font-bold text-text">
+                  {category.title}
+                </h2>
+                <div className="space-y-4">
+                  {category.entries.map((entry) => (
+                    <details
+                      key={entry.question}
+                      className="group card p-0 hover:shadow-md transition-shadow"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center justify-between p-6 transition-colors hover:text-primary">
+                        <h3 className="text-lg font-semibold text-text group-hover:text-primary">
+                          {entry.question}
+                        </h3>
+                        <svg
+                          className="ml-4 h-5 w-5 flex-shrink-0 text-text-muted transition-transform group-open:rotate-180"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </summary>
+                      <div className="border-t border-border px-6 pb-6 pt-4 leading-relaxed text-text-muted">
+                        {renderFaqAnswer(entry.answer)}
+                      </div>
+                    </details>
+                  ))}
                 </div>
-              </details>
+              </section>
             ))}
           </div>
 

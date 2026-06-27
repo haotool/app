@@ -8,6 +8,7 @@
 - **Depends on**: plans/001-experiment-branch-bootstrap.md
 - **Category**: direction | **Planned at**: `e7b7f1ec`, 2026-06-27
 - **Agent L09 Step 1**: **DONE**（2026-06-27，build `dist/usd-twd/` thesis curl **1**）
+- **Steps 2–5**: **DONE**（2026-06-27，E3-T2–T5 + dist 驗證）
 
 ## Why this matters
 
@@ -42,27 +43,27 @@ curl `/usd-twd/` 賣出價/中間價 keyword **2 次**（目標 ≤1，L09）；
 
 **Verify**: `pnpm --filter @app/ratewise test -- seo-ssot template-bleed` pass；`rg -c '賣出價|中間價' dist/usd-twd/index.html` → **1**
 
-### Step 2: Landing read-only rate strip（E3-T2 / CUR-P0-004）
+### Step 2: Landing read-only rate strip（E3-T2 / CUR-P0-004）✅
 
-`CurrencyLandingPage.tsx`: ATF 0 scroll 可見 live rate strip（read-only）；長文 accordion
+`CurrencyLandingPage.tsx`: ATF `data-testid="landing-rate-strip"` read-only 台銀現金賣出；highlights/howTo/precision/FAQ 預設 accordion 折疊。
 
-**Verify**: preview `/usd-twd/` ATF 可見匯率
+**Verify**: `CurrencyLandingPage.test.tsx` rate strip pass
 
-### Step 3: Homepage SEO 瘦身（E3-T3）
+### Step 3: Homepage SEO 瘦身（E3-T3）✅
 
-`HomepageSEOSection.tsx` → 1 段 + 幣對連結（spec §15.1）
+`HomepageSEOSection.tsx` → 1 段 intro + 熱門幣對連結（移除 howTo/FAQ/capsule/highlights）
 
-### Step 4: FAQ 四類 accordion（E3-T4 / FAQ-P1）
+### Step 4: FAQ 四類 accordion（E3-T4 / FAQ-P1）✅
 
-`FAQ.tsx`: flat 21 題 → 四類分組；**FAQPage schema 僅 `/faq/`**
+`FAQ_PAGE_CATEGORIES` SSOT + `FAQ.tsx` 四類分組；**FAQPage schema 僅 `/faq/`**（既有測試 Pass）
 
-**Verify**: `grep -r FAQPage apps/ratewise/src` — 僅 FAQ 頁輸出
+**Verify**: `seo-ssot` FAQ 分組 21 題；`schema-truthfulness` FAQPage 僅 /faq/
 
-### Step 5: Amount capsule（UX26-P0-001）
+### Step 5: Amount capsule（UX26-P0-001）✅
 
-`/usd-twd/500/` capsule 含金額化首句（spec L19）
+`buildAmountAnswerCapsule()` + landing `resolvedAnswerCapsule`；`/usd-twd/500/` dist thesis curl **1**
 
-### Step 6: PR + spec L09/L13 → done
+### Step 6: PR + spec L04/L09/L13 → done
 
 ## Test plan
 
@@ -72,8 +73,8 @@ curl `/usd-twd/` 賣出價/中間價 keyword **2 次**（目標 ≤1，L09）；
 ## Done criteria
 
 - [x] curl thesis keyword ≤1（build dist 證據：`rg -c` → 1）
-- [x] seo-ssot + template-bleed pass（130 tests）
-- [ ] FAQPage 無重複 @type
+- [x] seo-ssot + template-bleed pass（132 tests）
+- [x] FAQPage 無重複 @type（schema-truthfulness Pass）
 - [x] changeset patch
 - [ ] experiment PR merged
 

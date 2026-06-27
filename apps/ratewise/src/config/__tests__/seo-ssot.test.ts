@@ -12,6 +12,8 @@ import {
   OPEN_DATA_PAGE_SEO,
   SEO_INDEXABLE_LOCALES,
   buildPairAmountSeo,
+  buildAmountAnswerCapsule,
+  FAQ_PAGE_CATEGORIES,
   SELL_RATE_VS_MID_RATE_PAGE,
   buildDefaultAlternates,
   buildPersonJsonLd,
@@ -474,6 +476,28 @@ describe('SEO SSOT', () => {
       for (const question of capsuleQuestions) {
         expect(faqQuestions).not.toContain(question);
       }
+    });
+  });
+
+  describe('FAQ page category grouping (L13)', () => {
+    it('FAQ_PAGE_CATEGORIES 應為四類且涵蓋全部 21 題', () => {
+      expect(FAQ_PAGE_CATEGORIES).toHaveLength(4);
+      const grouped = FAQ_PAGE_CATEGORIES.flatMap((category) => category.entries);
+      expect(grouped).toHaveLength(FAQ_PAGE_SEO.faqContent.length);
+      const questions = grouped.map((entry) => entry.question);
+      expect(new Set(questions).size).toBe(questions.length);
+      for (const entry of FAQ_PAGE_SEO.faqContent) {
+        expect(questions).toContain(entry.question);
+      }
+    });
+  });
+
+  describe('amount landing answer capsule (UX26-P0-001)', () => {
+    it('USD 500 金額頁 capsule 首句含金額化換算', () => {
+      const capsule = buildAmountAnswerCapsule(500, 'USD', '美金', 'to-twd');
+      expect(capsule).toHaveLength(1);
+      expect(capsule[0]?.answer).toMatch(/500.*USD.*≈.*TWD/);
+      expect(capsule[0]?.answer).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
     });
   });
 

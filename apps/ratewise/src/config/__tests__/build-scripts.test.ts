@@ -732,28 +732,26 @@ describe('ratewise build scripts', () => {
     // 驗證 answerCapsule prop 定義存在。
     expect(source).toContain('answerCapsule?: FAQEntry[]');
     // 驗證 AnswerCapsule 元件有被實際渲染。
-    expect(source).toContain('<AnswerCapsule items={answerCapsule}');
+    expect(source).toContain('<AnswerCapsule items={resolvedAnswerCapsule}');
   });
 
-  it('HomepageSEOSection should import and render AnswerCapsule (AEO/GEO readiness)', async () => {
+  it('HomepageSEOSection should stay slim (intro + currency links only)', async () => {
     const source = await readHomepageSEOSectionSource();
 
-    // 驗證匯入 AnswerCapsule，確保首頁有 AEO/GEO 快速答案覆蓋。
-    expect(source).toContain("import { AnswerCapsule } from './AnswerCapsule'");
-    // 驗證有讀取 answerCapsule 資料來源。
-    expect(source).toContain('answerCapsule');
-    // 驗證 AnswerCapsule 元件有被實際渲染。
-    expect(source).toContain('<AnswerCapsule items=');
+    expect(source).toContain('HOMEPAGE_SEO');
+    expect(source).toContain('content.intro');
+    expect(source).toContain('熱門幣別換算');
+    expect(source).not.toContain('AnswerCapsule');
+    expect(source).not.toContain('howTo');
+    expect(source).not.toContain('faqContent');
   });
 
-  it('FAQ page should import and render AnswerCapsule (AEO/GEO readiness)', async () => {
+  it('FAQ page should import FAQ categories and render AnswerCapsule', async () => {
     const source = await readFaqPageSource();
 
-    // 驗證匯入 AnswerCapsule，確保 FAQ 頁有 AEO/GEO 快速答案覆蓋。
     expect(source).toContain("import { AnswerCapsule } from '../components/AnswerCapsule'");
-    // 驗證引用 FAQ_PAGE_SEO.answerCapsule。
+    expect(source).toContain('FAQ_PAGE_CATEGORIES');
     expect(source).toContain('FAQ_PAGE_SEO.answerCapsule');
-    // 驗證 AnswerCapsule 元件有被實際渲染。
     expect(source).toContain('<AnswerCapsule items=');
   });
 
