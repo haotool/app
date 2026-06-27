@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+70
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+71
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-pw-version-unify-1611
+- 原因：monorepo 混用 PW 1.57/1.61，Node24.16+ 搭配 PW<1.60 導致 nihonname E2E 安裝卡死
+- 解法：root 與 quake-school/haotool/nihonname/split-meow 升至 ^1.61.1 對齊 ratewise 並更新 lockfile
 
 - 日期：2026-06-27
 - ID：reward-pwa-static-fallback-unit-tests
