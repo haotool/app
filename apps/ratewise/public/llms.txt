@@ -156,9 +156,11 @@ Contact: haotool.org@gmail.com
 
 ### 即時匯率資料（真實數據，每 5 分鐘更新）
 - 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
-  - 欄位：timestamp, updateTime, source, rates{USD/JPY/EUR/...}, details{貨幣:{spot:{buy,sell}, cash:{buy,sell}}}
-  - 匯率類型：cash_buy=現金買入, cash_sell=現金賣出, spot_buy=即期買入, spot_sell=即期賣出
-  - 說明：賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價
+  - 欄位：schemaVersion (2.0), semanticFieldMapping, timestamp, updateTime, source, details{貨幣:{spot/cash + v2 customerBuyForeignRate 等}}
+  - v2 語意：customerBuyForeignRate = 客戶用 TWD 買外幣（台銀對應 sell）；詳見 https://app.haotool.org/ratewise/open-data/
+- MoneyBox 換錢所 JSON（KRW 現金）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json
+  - quoteUnit: KRW_PER_TWD；TWD→KRW 用 amount * rates.TWD.sell（與台銀除法語意相反）
+  - 欄位：schemaVersion, semanticFieldMapping, rates.TWD.{buy,sell,customerBuyForeignRate,quotePerBaseUnit}
 
 ### 幣對靜態 JSON 端點（Per-Pair API，供 AI agent / 搜尋系統）
 - 格式：https://app.haotool.org/ratewise/api/pairs/{pair}.json (例如: https://app.haotool.org/ratewise/api/pairs/usd-twd.json)

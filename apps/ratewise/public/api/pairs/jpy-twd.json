@@ -2,6 +2,49 @@
   "pair": "JPY/TWD",
   "from": "JPY",
   "to": "TWD",
+  "schemaVersion": "2.0",
+  "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+  "semanticFieldMapping": {
+    "schemaVersion": "2.0",
+    "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+    "providerKind": "bank",
+    "quoteUnit": "TWD_PER_FOREIGN",
+    "asOfSourceField": "timestamp | updateTime",
+    "fields": {
+      "customerBuyForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.sell",
+        "description": "客戶用 TWD 買外幣（銀行賣出）",
+        "twdToForeignFormula": "amount / details.{TO}.{rateType}.sell"
+      },
+      "customerSellForeignRate": {
+        "legacyPath": "details.{CURRENCY}.{rateType}.buy",
+        "description": "客戶用外幣賣回 TWD（銀行買入）",
+        "foreignToTwdFormula": "amount * details.{FROM}.{rateType}.buy"
+      },
+      "midMarketRate": {
+        "legacyPath": "(buy + sell) / 2",
+        "description": "參考中間價"
+      },
+      "bankSellTwdPerUnit": {
+        "legacyPath": "1 / sell",
+        "description": "每 1 單位外幣的 TWD 賣價（外幣計價時）"
+      }
+    },
+    "examples": {
+      "USD": {
+        "cash": {
+          "customerBuyForeignRate": "details.USD.cash.sell",
+          "customerSellForeignRate": "details.USD.cash.buy"
+        }
+      }
+    },
+    "bankComparison": {
+      "botQuoteUnit": "TWD_PER_FOREIGN",
+      "botTwdToForeign": "amount / details.{CCY}.cash.sell",
+      "moneyboxQuoteUnit": "KRW_PER_TWD",
+      "moneyboxTwdToKrw": "amount * rates.TWD.sell"
+    }
+  },
   "slug": "jpy-twd",
   "pageUrl": "https://app.haotool.org/ratewise/jpy-twd/",
   "liveRateUrl": "https://raw.githubusercontent.com/haotool/app/data/public/rates/latest.json",
