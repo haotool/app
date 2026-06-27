@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+69
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+70
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-pwa-static-fallback-unit-tests
+- 原因：PR 452 未覆蓋 resolveOfflineStaticResourceFallback 三層離線回退路徑
+- 解法：補 exact、ignoreSearch、matchPrecache 與全 miss 四項單元測試
 
 - 日期：2026-06-27
 - ID：reward-moneybox-workflow-api-semantics-checkout
