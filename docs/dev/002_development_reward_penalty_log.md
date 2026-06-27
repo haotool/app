@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+77
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+78
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-cold-start-multi-hydration-fallback
+- 原因：RememberedHomeRoute 僅依 hasHydrated/onFinishHydration 設 hydrated，SSG/CSR 生產環境 store 已 merge persist 但回呼未觸發，multi 冷啟動無法還原
+- 解法：hydration effect 補 queueMicrotask 與 store subscribe fallback，store 與 localStorage 同步即標記 hydrated
 
 - 日期：2026-06-27
 - ID：reward-applayout-logo-vitest-teardown-flake
