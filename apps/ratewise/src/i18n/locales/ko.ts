@@ -125,6 +125,7 @@ const ko = {
     dragToReorder: '드래그하여 순서 변경',
     dragToFavorite: '드래그하여 즐겨찾기 추가',
     dragHandle: '드래그 핸들',
+    baseCurrency: '기준 통화',
   },
 
   // Settings
@@ -170,6 +171,10 @@ const ko = {
     privacyPolicy: '개인정보 처리방침',
     openDataApi: '공개 데이터 API',
     seoTech: 'SEO 기술 공개',
+    installApp: '앱 설치',
+    installAppDesc:
+      'RateWise를 홈 화면에 추가하면 오프라인에서도 빠르게 환율을 확인할 수 있습니다.',
+    showInstallGuide: '설치 안내 보기',
   },
 
   // Styles

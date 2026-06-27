@@ -30,6 +30,27 @@ import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
 import { SupportContactLinks } from './SupportContactLinks';
 
+const NEED_REFRESH_DEFER_KEY = 'ratewise:pwa-update-defer-until:v1';
+const NEED_REFRESH_DEFER_MS = 24 * 60 * 60 * 1000;
+
+function isNeedRefreshDeferred() {
+  try {
+    const until = localStorage.getItem(NEED_REFRESH_DEFER_KEY);
+    if (!until) return false;
+    return Date.now() < Number(until);
+  } catch {
+    return false;
+  }
+}
+
+function deferNeedRefreshPrompt() {
+  try {
+    localStorage.setItem(NEED_REFRESH_DEFER_KEY, String(Date.now() + NEED_REFRESH_DEFER_MS));
+  } catch {
+    // ignore
+  }
+}
+
 /** SSR 安全入口：伺服器端回傳 null */
 export function UpdatePrompt() {
   if (typeof window === 'undefined') return null;
@@ -121,6 +142,12 @@ function UpdatePromptClient() {
       return;
     }
 
+    if (isNeedRefreshDeferred()) {
+      setNeedRefresh(false);
+      autoUpdateTriggeredRef.current = false;
+      return;
+    }
+
     if (
       autoUpdateTriggeredRef.current ||
       isUpdating ||
@@ -160,6 +187,14 @@ function UpdatePromptClient() {
 
   const handleReload = () => {
     window.location.reload();
+  };
+
+  const handleDeferUpdate = () => {
+    deferNeedRefreshPrompt();
+    setNeedRefresh(false);
+    setUpdateFailed(false);
+    setRegistrationFailed(false);
+    autoUpdateTriggeredRef.current = false;
   };
 
   const close = () => {
@@ -270,6 +305,7 @@ function UpdatePromptClient() {
                       updateFailed={updateFailed}
                       onReload={handleReload}
                       onUpdate={handleUpdate}
+                      onDefer={handleDeferUpdate}
                       onClose={close}
                       t={t}
                     />
@@ -413,6 +449,7 @@ interface ActionButtonsProps {
   updateFailed: boolean;
   onReload: () => void;
   onUpdate: () => Promise<void>;
+  onDefer: () => void;
   onClose: () => void;
   t: (key: string) => string;
 }
@@ -435,6 +472,7 @@ function ActionButtons({
   updateFailed,
   onReload,
   onUpdate,
+  onDefer,
   onClose,
   t,
 }: ActionButtonsProps) {
@@ -464,13 +502,29 @@ function ActionButtons({
 
   if (needRefresh) {
     return (
-      <button
-        onClick={() => void onUpdate()}
-        className={CTA_CLASS}
-        aria-label={t('pwa.actionUpdate')}
-      >
-        {t('pwa.actionUpdate')}
-      </button>
+      <>
+        <button
+          onClick={() => void onUpdate()}
+          className={CTA_CLASS}
+          aria-label={t('pwa.actionUpdate')}
+        >
+          {t('pwa.actionUpdate')}
+        </button>
+        <button
+          onClick={onDefer}
+          className="
+            pointer-events-auto
+            px-3 py-1.5 rounded-full text-xs font-medium
+            bg-white/80 text-brand-text-dark shadow-sm
+            hover:bg-white hover:scale-[1.02] active:scale-[0.98]
+            transition-[color,background-color,transform] duration-200 ease-out
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
+          "
+          aria-label={t('pwa.dismiss')}
+        >
+          {t('pwa.dismiss')}
+        </button>
+      </>
     );
   }
 

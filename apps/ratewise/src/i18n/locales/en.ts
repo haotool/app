@@ -126,6 +126,7 @@ const en = {
     dragToReorder: 'Drag to reorder',
     dragToFavorite: 'Drag to favorite',
     dragHandle: 'Drag handle',
+    baseCurrency: 'Base currency',
   },
 
   // Settings
@@ -173,6 +174,9 @@ const en = {
     privacyPolicy: 'Privacy Policy',
     openDataApi: 'Open Data API',
     seoTech: 'SEO Technology',
+    installApp: 'Install App',
+    installAppDesc: 'Add RateWise to your home screen for quick offline access.',
+    showInstallGuide: 'View install guide',
   },
 
   // Styles

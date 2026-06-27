@@ -36,7 +36,11 @@ import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
+import { formatExchangeRate } from '../utils/currencyFormatter';
+import { getUnitExchangeRate } from '../utils/exchangeRateCalculation';
 import { getAllCurrenciesSorted } from './favorites-utils';
+
+const BASE_CURRENCY: CurrencyCode = 'TWD';
 
 export default function Favorites() {
   const { t } = useTranslation();
@@ -45,8 +49,9 @@ export default function Favorites() {
   const [isHydrated, setIsHydrated] = useState(isTestEnv);
   const [activeTab, setActiveTab] = useState<'favorites' | 'history'>('favorites');
 
-  // rateType 共用 converterStore，避免本頁與 RateWise/MultiConverter 之間漂移。
+  // rateType / rateMode 共用 converterStore，避免本頁與 RateWise/MultiConverter 之間漂移。
   const rateType = useConverterStore((state) => state.rateType);
+  const rateMode = useConverterStore((state) => state.rateMode);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration marker
@@ -73,6 +78,35 @@ export default function Favorites() {
 
   /** 取得所有貨幣列表（已收藏 + 未收藏） */
   const allCurrencies = getAllCurrenciesSorted(favorites);
+
+  const getRateDisplay = useCallback(
+    (currency: CurrencyCode): string | null => {
+      if (currency === BASE_CURRENCY) {
+        return null;
+      }
+
+      const hasCurrencyDetails = (code: CurrencyCode) =>
+        code === BASE_CURRENCY || Boolean(details?.[code]);
+      if (!hasCurrencyDetails(BASE_CURRENCY) || !hasCurrencyDetails(currency)) {
+        return t('multiConverter.calculating');
+      }
+
+      const unitRate = getUnitExchangeRate(
+        BASE_CURRENCY,
+        currency,
+        details,
+        rateType,
+        rateMode,
+        exchangeRates,
+      );
+      if (!unitRate) {
+        return t('multiConverter.noData');
+      }
+
+      return `1 ${BASE_CURRENCY} = ${formatExchangeRate(unitRate)} ${currency}`;
+    },
+    [details, exchangeRates, rateMode, rateType, t],
+  );
 
   /**
    * 處理拖曳結束事件
@@ -249,6 +283,16 @@ export default function Favorites() {
               )}
             </div>
 
+            {favorites.length === 0 && (
+              <div className="card p-6 mb-3 text-center">
+                <Star className="w-10 h-10 text-favorite mx-auto mb-3 opacity-40" />
+                <h2 className="text-sm font-bold text-text mb-1">{t('favorites.noFavorites')}</h2>
+                <p className="text-[10px] text-text-muted opacity-70">
+                  {t('favorites.noFavoritesHint')}
+                </p>
+              </div>
+            )}
+
             {/* 所有貨幣統一拖曳區域 */}
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="all-currencies-list">
@@ -351,16 +395,24 @@ export default function Favorites() {
                                     {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
                                     {isTWD && (
                                       <span className="ml-1 opacity-50">
-                                        · {t('favorites.baseCurrency') || '基準幣'}
+                                        · {t('favorites.baseCurrency')}
                                       </span>
                                     )}
                                   </div>
+                                  {!isTWD && (
+                                    <div
+                                      className="text-[10px] font-semibold text-primary/80 mt-0.5 tabular-nums"
+                                      data-testid={`currency-rate-${code}`}
+                                    >
+                                      {getRateDisplay(code)}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
                               {/* 右側：換算按鈕 → 進入單幣別換算頁 */}
                               <div
-                                className="flex items-center gap-2 cursor-pointer px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition flex-shrink-0"
+                                className="flex items-center gap-2 cursor-pointer min-h-11 px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition flex-shrink-0"
                                 onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
                                 role="button"
                                 tabIndex={0}

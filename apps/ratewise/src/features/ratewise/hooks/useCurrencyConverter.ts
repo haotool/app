@@ -22,6 +22,7 @@ import { getUnitExchangeRate } from '../../../utils/exchangeRateCalculation';
 import { getRelativeTimeString } from '../../../utils/timeFormatter';
 import { INP_LONG_TASK_THRESHOLD_MS } from '../../../utils/interactionBudget';
 import { useToast } from '../../../components/Toast';
+import { notifyConversionSuccess } from '../../../utils/conversionSuccessSignal';
 import { useConverterStore } from '../../../stores/converterStore';
 import {
   getExchangeShopProvider,
@@ -405,6 +406,20 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     calculateFromAmount,
     calculateToAmount,
   ]);
+
+  useEffect(() => {
+    if (mode !== 'single') return;
+
+    const amount = parseFloat(fromAmount);
+    const result = parseFloat(toAmount);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (!Number.isFinite(result) || result <= 0) return;
+
+    const unitRate = getResolvedUnitRate(fromCurrency, toCurrency);
+    if (!unitRate || unitRate <= 0) return;
+
+    notifyConversionSuccess();
+  }, [mode, fromAmount, toAmount, fromCurrency, toCurrency, getResolvedUnitRate]);
 
   useEffect(() => {
     if (mode !== 'multi') return;

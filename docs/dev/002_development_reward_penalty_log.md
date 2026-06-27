@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+66
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+67
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-ux2026-epic2-settings-ssot
+- 原因：Settings 缺 PWA 安裝入口、PWA 1.8s 自動弹出、Favorites 無匯率列且觸控未達 44px
+- 解法：Epic 2 實作 conversion-success nudge、Settings install 區塊、Favorites 匯率列與 segmentedSwitch min-h-11
 
 - 日期：2026-06-27
 - ID：neutral-epic1-settings-hero-toggle

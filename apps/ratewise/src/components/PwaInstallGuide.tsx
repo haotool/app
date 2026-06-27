@@ -2,6 +2,11 @@ import React from 'react';
 import { ArrowUpRight, Compass, Download, ExternalLink, MoreHorizontal, X } from 'lucide-react';
 import { APP_INFO } from '../config/app-info';
 import { notificationTokens } from '../config/design-tokens';
+import { subscribeConversionSuccess } from '../utils/conversionSuccessSignal';
+import {
+  registerPwaInstallGuideShow,
+  requestPwaInstallGuide,
+} from '../utils/pwaInstallGuideController';
 import {
   type PwaInstallEnvironment,
   readPwaInstallEnvironmentFromBrowser,
@@ -12,25 +17,41 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
-const DISMISSED_KEY = 'ratewise:pwa-install-guide-dismissed:v1';
-const SHOW_DELAY_MS = 1800;
+const DISMISSED_SESSION_KEY = 'ratewise:pwa-install-guide-dismissed:v1';
+const DISMISSED_UNTIL_KEY = 'ratewise:pwa-install-guide-dismissed-until:v1';
+const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getAssetPath(fileName: string) {
   const basePath = import.meta.env.BASE_URL || '/';
   return `${basePath}pwa-install/${fileName}`;
 }
 
-function hasDismissedGuide() {
+function hasDismissedGuideInSession() {
   try {
-    return sessionStorage.getItem(DISMISSED_KEY) === 'true';
+    return sessionStorage.getItem(DISMISSED_SESSION_KEY) === 'true';
   } catch {
     return false;
   }
 }
 
+function isInDismissCooldown() {
+  try {
+    const until = localStorage.getItem(DISMISSED_UNTIL_KEY);
+    if (!until) return false;
+    return Date.now() < Number(until);
+  } catch {
+    return false;
+  }
+}
+
+function shouldSuppressGuide() {
+  return hasDismissedGuideInSession() || isInDismissCooldown();
+}
+
 function rememberDismissedGuide() {
   try {
-    sessionStorage.setItem(DISMISSED_KEY, 'true');
+    sessionStorage.setItem(DISMISSED_SESSION_KEY, 'true');
+    localStorage.setItem(DISMISSED_UNTIL_KEY, String(Date.now() + COOLDOWN_MS));
   } catch {
     // Storage may be blocked in some in-app browsers; closing still works for the current render.
   }
@@ -105,16 +126,29 @@ function PwaInstallGuideClient() {
   const [isVisible, setIsVisible] = React.useState(false);
 
   React.useEffect(() => {
-    const currentEnvironment = readPwaInstallEnvironmentFromBrowser();
-    setEnvironment(currentEnvironment);
+    setEnvironment(readPwaInstallEnvironmentFromBrowser());
+  }, []);
 
-    if (!currentEnvironment.shouldShowGuide || hasDismissedGuide()) {
+  React.useEffect(() => {
+    if (!environment?.shouldShowGuide || shouldSuppressGuide()) {
       return;
     }
 
-    const timer = window.setTimeout(() => setIsVisible(true), SHOW_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, []);
+    return subscribeConversionSuccess(() => {
+      setIsVisible(true);
+    });
+  }, [environment]);
+
+  React.useEffect(() => {
+    if (!environment?.shouldShowGuide) {
+      return;
+    }
+
+    return registerPwaInstallGuideShow(() => {
+      if (shouldSuppressGuide()) return;
+      setIsVisible(true);
+    });
+  }, [environment]);
 
   React.useEffect(() => {
     const currentEnvironment = readPwaInstallEnvironmentFromBrowser();
@@ -323,5 +357,7 @@ function PwaInstallGuideClient() {
     </>
   );
 }
+
+export { requestPwaInstallGuide };
 
 export default PwaInstallGuide;
