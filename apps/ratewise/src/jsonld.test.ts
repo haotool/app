@@ -101,7 +101,7 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
     });
 
     it('FAQ page should render visible FAQ HTML and keep FAQPage JSON-LD in SEO layer', () => {
-      expect(faqContent).toContain('FAQ_ENTRIES.map');
+      expect(faqContent).toContain('FAQ_PAGE_CATEGORIES.map');
       expect(faqContent).not.toContain('faqContent={');
     });
 
