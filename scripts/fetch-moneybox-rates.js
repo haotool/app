@@ -7,6 +7,7 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
+import { enrichExchangeShopRatesPayload } from '../apps/ratewise/src/config/api-semantics-v2.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -263,10 +264,11 @@ async function main() {
     // 確保目錄存在
     mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 
-    // 寫入檔案
-    writeFileSync(OUTPUT_FILE, JSON.stringify(ratesData, null, 2), 'utf8');
+    const enrichedRatesData = enrichExchangeShopRatesPayload(ratesData);
 
-    const twdRate = ratesData.rates.TWD;
+    writeFileSync(OUTPUT_FILE, JSON.stringify(enrichedRatesData, null, 2), 'utf8');
+
+    const twdRate = enrichedRatesData.rates.TWD;
     console.log('✅ Successfully saved new rates');
     console.log('===============================================');
     console.log(`📁 Output: ${OUTPUT_FILE}`);

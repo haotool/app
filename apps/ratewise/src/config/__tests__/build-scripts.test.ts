@@ -949,7 +949,8 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '1.3.0'");
+    expect(openApiGenerator).toContain("const API_VERSION = '2.1.0'");
+    expect(openApiGenerator).toContain('ExchangeShopRateV2');
     expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
     expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
     expect(openApiGenerator).not.toContain(

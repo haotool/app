@@ -14,6 +14,11 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURRENCY_SEO_PATHS, SITE_CONFIG, RAW_DATA_BASE } from '../seo-paths.config.mjs';
+import {
+  API_SEMANTICS_DOC,
+  API_SEMANTICS_SCHEMA_VERSION,
+  buildSemanticFieldMapping,
+} from '../src/config/api-semantics-v2.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -47,6 +52,9 @@ for (const path of CURRENCY_SEO_PATHS) {
     pair: `${fromCode}/${toCode}`,
     from: fromCode,
     to: toCode,
+    schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
+    semanticsDoc: API_SEMANTICS_DOC.publicUrl,
+    semanticFieldMapping: buildSemanticFieldMapping(),
     slug,
     pageUrl: `${SITE_CONFIG.url}${slug}/`,
     liveRateUrl: `${CDN_BASE_URL}/latest.json`,

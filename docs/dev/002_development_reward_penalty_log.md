@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0）｜累計總分：+69
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
 
 ## 新增模板（4 行）
 
@@ -13,40 +13,65 @@
 
 ## 條目（新→舊）
 
-- 日期：2026-06-26
-- ID：reward-split-meow-expense-currency-rate-snapshot
-- 原因：split-meow 的 ExpenseRecord 只存裸數字、未保存記帳當下幣別；使用者先以 TWD 記帳後切換 KRW（或韓國時區自動偵測）時，歷史金額會被當前全域幣別重新格式化，NT$1,000 被誤顯示為 ₩1,000。
-- 解法：ExpenseRecord 增加 currency 與 exchangeRateKrwPerTwd 快照欄位，記帳時保存；HistoryTab 個別金額改用各筆快照幣別、KRW 副標即時換算 TWD、彙總/結算採 trip 主導幣別 fallback；補 store/currencies 單元測試與 Playwright 瀏覽器驗收（切回 TWD 後 KRW 記錄仍正確）。
+- 日期：2026-06-27
+- ID：reward-api-semantics-v2-moneybox-provider
+- 原因：MoneyBox provider JSON 缺 v2 語意層，sell 與台銀 quote 方向相反易誤用
+- 解法：enrichExchangeShopRatesPayload、provider semanticFieldMapping、OpenData 對照表與 OpenAPI ExchangeShopRateV2
 
-- 日期：2026-06-26
-- ID：reward-pr426-sw-bounded-nav-case3-002-audit
-- 原因：PR 426 review P1 指出 SW case-3 有界網路 fallback 與測試 lint 修改的 commit 未含 002 稽核軌跡；該功能已隨 #433 生產治理進 main，但稽核條目隨被取代的 #411 分支遺失。
-- 解法：補本條目搶救稽核軌跡；SW case-3 setCatchHandler 有界 fallback 本體已於 #433 收斂進 main。
+- 日期：2026-06-27
+- ID：neutral-plan010-e2e-mobile-smoke
+- 原因：Plan 010 Gate G4 缺 mobile-pwa/hero-y/touch-44/console Playwright 390x844 自動化
+- 解法：新增 mobile-pwa-smoke、touch-targets-44、console-hydration spec 與 chromium-mobile-390 project
 
-- 日期：2026-06-26
-- ID：reward-ci-playwright-cache-v6
-- 原因：setup-playwright composite action 仍用 actions/cache@v4，在 Node 24 CI 觸發 Node 20 deprecation warning
-- 解法：升級 actions/cache@v6 並補 patch changeset
+- 日期：2026-06-27
+- ID：reward-ux2026-epic2-settings-ssot
+- 原因：Settings 缺 PWA 安裝入口、PWA 1.8s 自動弹出、Favorites 無匯率列且觸控未達 44px
+- 解法：Epic 2 實作 conversion-success nudge、Settings install 區塊、Favorites 匯率列與 segmentedSwitch min-h-11
 
-- 日期：2026-06-26
-- ID：reward-pr435-code-reviewer-hardening
-- 原因：Codex 配額用盡無法 review PR 435，改派 code-reviewer 代理把關，發現 i18n 探測在 removeItem 丟錯時會誤判 localStorage 不可寫（可寫性結論不應依賴清除步驟），且 smoke 測試 BASE_STATE 仍缺部分 test-mutable 欄位。
-- 解法：i18n 探測改用 finally 清除 probe key、可寫性僅依 setItem 結果；BASE_STATE 補 expenseCategory/settledPayments/catPlayMode；img-src 收窄列為 follow-up issue #437。
+- 日期：2026-06-27
+- ID：neutral-epic4-multi-ia-plan005
+- 原因：Multi 18 列全展開與 nav 8px/scroll-padding 不足（L03/L05 UX-INC-004/007）
+- 解法：≤8 progressive disclosure、全列表套用文案、nav 10px+scroll-padding 57px、冷啟動禁 redirect /multi
 
-- 日期：2026-06-26
-- ID：reward-ratewise-i18n-localstorage-writable-probe
-- 原因：PR 404 review 指出 canUseBrowserLanguageStorage 只檢查 window 與非 test 模式，未實際偵測 localStorage 可寫；私密模式 / 嵌入式瀏覽器中 window 存在但 setItem 丟錯，i18next caches:['localStorage'] 寫入失敗導致語系切換不持久。
-- 解法：改用 try setItem/removeItem 實際探測可寫性，不可寫時 detection 回退 ['htmlTag','navigator'] 且 caches:[]，避免寫入失敗中斷語系切換。
+- 日期：2026-06-27
+- ID：neutral-epic1-settings-hero-toggle
+- 原因：plan 002 §二十 要求 Settings heroLayoutVariant toggle 與 spec L01/L06/L14 done 證據同步
+- 解法：Settings 新增 legacy/hero-v2 切換、i18n 四語系、SingleConverter DOM helper 重排、spec §六 Status=done
 
-- 日期：2026-06-26
-- ID：reward-worker-split-meow-img-src-https-restore
-- 原因：PR 414 review 指出 split-meow 專屬 CSP profile 未帶 fallback 的 img-src https:，Split Meow 成員 legacy 遠端頭像會在正式站被 CSP 擋下。
-- 解法：SPLIT_MEOW_HTML_PROFILE 補回 imgSources:['https:']，並 bump SECURITY_POLICY_VERSION 5.4→5.5 與變更記錄。
+- 日期：2026-06-27
+- ID：reward-epic1-hero-v2-layout
+- 原因：首屏 answer-first 倒置（金額列優先於 hero 匯率）違反 spec §十一 E1
+- 解法：新增 hero-v2 feature flag、display-md token、DOM 重排與 freshness chip；預設 legacy
 
-- 日期：2026-06-26
-- ID：reward-split-meow-smoke-test-currency-reset
-- 原因：PR 415 review 指出 HomeAndHistorySmoke 的 BASE_STATE 未重置 currency / krwPerTwd，設定 KRW 的測試會洩漏污染後續測試。
-- 解法：BASE_STATE 補上 currency:'TWD'、currencyManuallySet:false、krwPerTwd:null、rateUpdatedAt:null，確保測試隔離。
+- 日期：2026-06-27
+- ID：reward-release-yml-worker-order-minify
+- 原因：release.yml Worker deploy 在 Zeabur wait 之前且 CI 未用 --minify，違反 AGENTS.md 邊緣順序 SOP
+- 解法：調整為 Wait → Worker deploy --minify → purge，並同步 DEPLOY.md 與 security-headers package.json
+
+- 日期：2026-06-27
+- ID：neutral-epic3-collect-body-text-ssot
+- 原因：L09 dedupe 測試內嵌 collectBodyText 與 seo-metadata SSOT 重複
+- 解法：seo-ssot.test 改 import collectCurrencyLandingBodyText 共用 SSOT
+
+- 日期：2026-06-27
+- ID：neutral-epic3-l09-plan-spec-sync
+- 原因：L09 Step1 完成需同步 plan 004 與 UX spec 狀態證據
+- 解法：更新 plans/README、004 done criteria 與 spec L09 status（build dist thesis curl 1）
+
+- 日期：2026-06-27
+- ID：reward-epic3-canonical-sell-thesis
+- 原因：幣別頁 curl 賣出價/中間價 keyword 重複（L09 thesis >1）
+- 解法：seo-metadata 新增 CANONICAL_BANK_SELL_THESIS SSOT 並收斂 AnswerCapsule/FAQ 交叉引用
+
+- 日期：2026-06-27
+- ID：reward-ratewise-api-semantics-v2-m1-m3
+- 原因：public API 仍用銀行視角 buy/sell，整合方易反解 customer action；spec §二十一 要求 additive v2 語意層。
+- 解法：新增 api-semantics-v2 SSOT、schemaVersion 2.0 metadata、OpenAPI CurrencyRateV2 與 vitest 映射測試；legacy 欄位保留。
+
+- 日期：2026-06-27
+- ID：neutral-ux2026-stream0-bootstrap
+- 原因：UX 2026 平行 stream 0 需確認 experiment 分支與 worktree SSOT 並同步 plans/spec 追蹤
+- 解法：驗證 origin/experiment/ratewise-ux-2026、補 cf worktree、更新 plans/README 001 DONE 與 002/004/006/007 IN PROGRESS
 
 - 日期：2026-06-26
 - ID：neutral-retrigger-prod-deploy-2252
