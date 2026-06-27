@@ -722,15 +722,14 @@ sequenceDiagram
 > SSOT 透鏡 ID 對齊 §二 Scorecard。Severity：`P0`=release blocking、`P1`=Sprint 必達、`P2`=選配。  
 > **命名格式**：`姓名 / Agent L0N · Codename`
 
-
 | ID  | Agent（姓名 / Codename）                             | Epic  | Sev | 現況分 | 目標 | Status      | Owner Role    | Last Verified | Blockers                        |
 | --- | ---------------------------------------------------- | ----- | --- | -----: | ---: | ----------- | ------------- | ------------- | ------------------------------- |
-| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | done        | Frontend      | 2026-06-27    | —                                           |
+| L01 | **林安答** / Agent L01 · Answer-First Auditor        | E1    | P0  |     52 |   85 | done        | Frontend      | 2026-06-27    | —                               |
 | L02 | **沈零閱** / Agent L02 · Zero-Click Reader           | E1    | P1  |     65 |   90 | pending     | Frontend      | 2026-06-27    | L01                             |
 | L03 | **韓多理** / Agent L03 · Multi-Flow Analyst          | E4    | P1  |     55 |   80 | done        | Frontend      | 2026-06-27    | PR feat/ratewise-epic4-multi-ia |
 | L04 | **鄭落地** / Agent L04 · Landing Curator             | E3    | P1  |     62 |   85 | pending     | SEO / Content | 2026-06-27    | —                               |
 | L05 | **羅導航** / Agent L05 · Nav-IA Architect            | E4    | P1  |     62 |   85 | done        | Frontend      | 2026-06-27    | PR feat/ratewise-epic4-multi-ia |
-| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | done        | QA            | 2026-06-27    | —                                           |
+| L06 | **蔡穩屏** / Agent L06 · Viewport Trust Auditor      | E1    | P0  |     58 |   82 | done        | QA            | 2026-06-27    | —                               |
 | L07 | **周寬屏** / Agent L07 · Desktop Layout Auditor      | E4    | P2  |     45 |   70 | pending     | Frontend      | 2026-06-27    | L01                             |
 | L08 | **金墨字** / Agent L08 · Typography Specialist       | E1    | P1  |     52 |   80 | pending     | Design Tokens | 2026-06-27    | L01, L14                        |
 | L09 | **白精煉** / Agent L09 · Content Distiller           | E3    | P1  |     50 |   85 | done        | SEO / Content | 2026-06-27    | build dist thesis curl 1        |
@@ -738,7 +737,7 @@ sequenceDiagram
 | L11 | **方觸達** / Agent L11 · Touch Target Auditor        | E1    | P1  |     58 |   85 | pending     | QA            | 2026-06-27    | L04(TOU)                        |
 | L12 | **吳收藏** / Agent L12 · Settings Favorites Curator  | E2    | P1  |     65 |   82 | pending     | Frontend      | 2026-06-27    | —                               |
 | L13 | **孫問答** / Agent L13 · Help Content Architect      | E3    | P1  |     50 |   78 | in_progress | SEO / Content | 2026-06-27    | L09                             |
-| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | done        | Design Tokens | 2026-06-27    | —                                           |
+| L14 | **朴顯赫** / Agent L14 · Hero Token Lead             | E1    | P0  |     52 |   80 | done        | Design Tokens | 2026-06-27    | —                               |
 | L15 | **車安裝** / Agent L15 · PWA Install Advocate        | E2    | P1  |     72 |   88 | pending     | PWA / SW      | 2026-06-27    | —                               |
 | L16 | **何降級** / Agent L16 · Loading Degradation Auditor | E1    | P2  |     70 |   85 | pending     | Frontend      | 2026-06-27    | L06                             |
 | L17 | **高信任** / Agent L17 · Trust E-E-A-T Lead          | E1/E3 | P1  |     72 |   90 | pending     | SEO / Content | 2026-06-27    | L06                             |

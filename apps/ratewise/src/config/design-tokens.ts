@@ -427,12 +427,9 @@ export const navigationTokens = {
    * Balanced design between iOS Tab Bar (49pt) and Material Navigation Bar (56dp)
    */
   bottomNav: {
-    /** 主滾動區 scroll-padding-bottom（nav 56px + 1px 緩衝，L05/L06） */
-    scrollPaddingBottom: 57,
-
     /** Total bottom nav height in pixels (excluding safe area) */
     height: 56,
-    /** scroll-padding-bottom 下限（≥ tab bar + 1px，Epic 4 L05） */
+    /** scroll-padding-bottom 下限（nav 56px + 1px，Epic 4 L05 / L06） */
     scrollPaddingBottom: 57,
     /** CSS value including safe area for notched devices */
     heightWithSafeArea: 'calc(56px + env(safe-area-inset-bottom, 0px))',
