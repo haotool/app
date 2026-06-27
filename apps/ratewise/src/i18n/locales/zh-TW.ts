@@ -103,6 +103,9 @@ const zhTW = {
     spotRate: '即期',
     cashRate: '現金',
     bankRate: '銀行',
+    showMoreCurrencies: '顯示更多（{{count}}）',
+    showLessCurrencies: '收合列表',
+    globalRateApplyNotice: '列內匯率切換會套用至全部幣別',
   },
 
   // Favorites

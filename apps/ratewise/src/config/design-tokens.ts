@@ -432,6 +432,8 @@ export const navigationTokens = {
 
     /** Total bottom nav height in pixels (excluding safe area) */
     height: 56,
+    /** scroll-padding-bottom 下限（≥ tab bar + 1px，Epic 4 L05） */
+    scrollPaddingBottom: 57,
     /** CSS value including safe area for notched devices */
     heightWithSafeArea: 'calc(56px + env(safe-area-inset-bottom, 0px))',
     /** Tailwind class for bottom nav height */
@@ -443,13 +445,16 @@ export const navigationTokens = {
       activeStrokeWidth: 2.5,
       inactiveStrokeWidth: 2,
     },
-    /** Label typography */
+    /** Label typography（Epic 4 L05：≥10px、繁中 normal-case、inactive 用 muted 達 4.5:1） */
     label: {
-      fontSize: 8,
-      fontSizeClass: 'text-[8px]',
-      fontWeight: 'font-black',
-      letterSpacing: '0.15em',
-      letterSpacingClass: 'tracking-[0.15em]',
+      fontSize: 10,
+      fontSizeClass: 'text-[10px]',
+      fontWeight: 'font-semibold',
+      letterSpacing: '0.02em',
+      letterSpacingClass: 'tracking-wide',
+      inactiveClass: 'text-text-muted',
+      activeClass: 'text-primary',
+      pendingClass: 'text-text-muted',
     },
     /** Active indicator bar */
     indicator: {

@@ -4,6 +4,7 @@ import React, { useTransition } from 'react';
 import { useNavigate, useLocation, useHref } from 'react-router-dom';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { navigationTokens } from '../config/design-tokens';
 
 /** 導覽項目型別。 */
 interface NavItem {
@@ -40,6 +41,8 @@ const navItems: NavItem[] = [
     icon: Settings,
   },
 ];
+
+const navLabelTokens = navigationTokens.bottomNav.label;
 
 interface BottomNavigationItemProps {
   item: NavItem;
@@ -81,7 +84,13 @@ function BottomNavigationItem({
       <div
         className={`
           relative transition-all duration-200
-          ${isActive ? 'scale-110 opacity-100 text-primary' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
+          ${
+            isActive
+              ? `scale-110 opacity-100 ${navLabelTokens.activeClass}`
+              : isPending
+                ? `opacity-80 scale-100 ${navLabelTokens.pendingClass}`
+                : `scale-100 ${navLabelTokens.inactiveClass}`
+          }
           group-active:scale-90
         `}
       >
@@ -99,11 +108,17 @@ function BottomNavigationItem({
         )}
       </div>
 
-      {/* 標籤 - 8px */}
       <span
         className={`
-          text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-200
-          ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
+          ${navLabelTokens.fontSizeClass} ${navLabelTokens.fontWeight} ${navLabelTokens.letterSpacingClass}
+          normal-case transition-all duration-200
+          ${
+            isActive
+              ? `${navLabelTokens.activeClass} opacity-100 translate-y-0`
+              : isPending
+                ? `${navLabelTokens.pendingClass} opacity-80 translate-y-px`
+                : `${navLabelTokens.inactiveClass} translate-y-px`
+          }
         `}
       >
         {t(item.labelKey)}
@@ -149,7 +164,9 @@ export function BottomNavigation() {
       "
       aria-label={t('nav.mainNavigation')}
     >
-      <div className="flex h-14 max-w-md mx-auto relative px-4">
+      <div
+        className={`flex ${navigationTokens.bottomNav.heightClass} max-w-md mx-auto relative px-4`}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isThisPending = isPending && pendingPath === item.path;
