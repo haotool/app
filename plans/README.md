@@ -6,14 +6,14 @@
 
 ## 建議執行順序與狀態
 
-**追蹤**：Epic 1 已於 2026-06-27 以 PR [#464](https://github.com/haotool/app/pull/464) squash 併入 `experiment/ratewise-ux-2026`（`dbcadb05`）。
+**追蹤**：Epic 1 已於 2026-06-27 以 PR [#464](https://github.com/haotool/app/pull/464) squash 併入 `experiment/ratewise-ux-2026`（`dbcadb05`）。Epic 2 已以 PR [#466](https://github.com/haotool/app/pull/466) squash 併入（`b399dd9a`）。
 
 | Plan                                        | 標題                      | Priority | Effort | Depends on        | Spec Epic             | Status                        |
 | ------------------------------------------- | ------------------------- | -------- | ------ | ----------------- | --------------------- | ----------------------------- |
 | [001](./001-experiment-branch-bootstrap.md) | 實驗分支 bootstrap        | P1       | S      | —                 | §十四.12              | DONE（PR #464 merged）        |
 | [009](./009-agent-orchestration.md)         | Agent 編排與 gh playbook  | P1       | M      | 001               | §三                   | IN PROGRESS                   |
 | [002](./002-epic1-hero-trust.md)            | Epic 1 Hero + Trust       | P1       | L      | 001, 009          | E1 / L01,L06,L14      | DONE                          |
-| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001, 002          | E2 / L12,L15          | IN PROGRESS（PR #466）        |
+| [003](./003-epic2-settings-ssot.md)         | Epic 2 Settings SSOT      | P1       | M      | 001, 002          | E2 / L12,L15          | DONE（PR #466 merged）        |
 | [004](./004-epic3-content-distill.md)       | Epic 3 Content Distill    | P1       | M      | 001               | E3 / L09,L13          | IN PROGRESS（L09 Step1 DONE） |
 | [005](./005-epic4-multi-ia.md)              | Epic 4 Multi + IA         | P2       | M      | 001, 002          | E4 / L03,L05          | TODO                          |
 | [006](./006-api-semantics-v2.md)            | API 語意 v2 加法遷移      | P2       | M      | 001               | §二十一               | DONE                          |
