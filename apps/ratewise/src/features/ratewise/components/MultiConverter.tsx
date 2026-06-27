@@ -1,9 +1,14 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
-import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS, DEFAULT_RATE_SOURCE } from '../constants';
+import {
+  CURRENCY_DEFINITIONS,
+  CURRENCY_QUICK_AMOUNTS,
+  DEFAULT_RATE_SOURCE,
+  MULTI_DEFAULT_VISIBLE_ROWS,
+} from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
@@ -59,6 +64,12 @@ export const MultiConverter = ({
 }: MultiConverterProps) => {
   const { t } = useTranslation();
   const inputRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [expanded, setExpanded] = useState(false);
+
+  const hiddenCurrencyCount = Math.max(0, sortedCurrencies.length - MULTI_DEFAULT_VISIBLE_ROWS);
+  const visibleCurrencies = expanded
+    ? sortedCurrencies
+    : sortedCurrencies.slice(0, MULTI_DEFAULT_VISIBLE_ROWS);
 
   const calculator = useCalculatorModal<CurrencyCode>({
     onConfirm: (currency, result) => {
@@ -181,6 +192,10 @@ export const MultiConverter = ({
     return `1 ${baseCurrency} = ${formatExchangeRate(unitRate)} ${currency}`;
   };
 
+  const hasGlobalRateToggle = sortedCurrencies.some(
+    (code) => getUnifiedRateAvailability(code).availableCount > 1,
+  );
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
@@ -210,6 +225,15 @@ export const MultiConverter = ({
         )}
       </div>
 
+      {hasGlobalRateToggle ? (
+        <p
+          className="mb-2 px-1 text-[11px] font-medium leading-snug text-text-muted"
+          data-testid="multi-global-rate-notice"
+        >
+          {t('multiConverter.globalRateApplyNotice')}
+        </p>
+      ) : null}
+
       <div
         className="flex-1 space-y-2 -m-0.5 p-0.5"
         tabIndex={0}
@@ -218,11 +242,12 @@ export const MultiConverter = ({
         data-testid="multi-currency-list"
       >
         <AnimatePresence>
-          {sortedCurrencies.map((code) => {
+          {visibleCurrencies.map((code) => {
             const isBase = code === baseCurrency;
             return (
               <div
                 key={code}
+                data-testid="multi-currency-row"
                 onClick={() => {
                   if (!isBase) {
                     onBaseCurrencyChange(code);
@@ -346,6 +371,20 @@ export const MultiConverter = ({
           })}
         </AnimatePresence>
       </div>
+
+      {hiddenCurrencyCount > 0 ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-3 w-full rounded-xl border border-border/60 bg-surface-elevated py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5 active:bg-primary/10"
+          aria-expanded={expanded}
+          data-testid={expanded ? 'multi-show-less' : 'multi-show-more'}
+        >
+          {expanded
+            ? t('multiConverter.showLessCurrencies')
+            : t('multiConverter.showMoreCurrencies', { count: hiddenCurrencyCount })}
+        </button>
+      ) : null}
 
       <Suspense fallback={null}>
         <CalculatorKeyboard

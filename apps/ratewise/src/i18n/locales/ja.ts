@@ -103,6 +103,9 @@ const ja = {
     spotRate: '直物',
     cashRate: '現金',
     bankRate: '銀行',
+    showMoreCurrencies: 'さらに {{count}} 件を表示',
+    showLessCurrencies: 'リストを折りたたむ',
+    globalRateApplyNotice: '行内のレート切替はリスト全体に適用されます',
   },
 
   // Favorites

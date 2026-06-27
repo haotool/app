@@ -19,6 +19,11 @@
 - 解法：Epic 2 實作 conversion-success nudge、Settings install 區塊、Favorites 匯率列與 segmentedSwitch min-h-11
 
 - 日期：2026-06-27
+- ID：neutral-epic4-multi-ia-plan005
+- 原因：Multi 18 列全展開與 nav 8px/scroll-padding 不足（L03/L05 UX-INC-004/007）
+- 解法：≤8 progressive disclosure、全列表套用文案、nav 10px+scroll-padding 57px、冷啟動禁 redirect /multi
+
+- 日期：2026-06-27
 - ID：neutral-epic1-settings-hero-toggle
 - 原因：plan 002 §二十 要求 Settings heroLayoutVariant toggle 與 spec L01/L06/L14 done 證據同步
 - 解法：Settings 新增 legacy/hero-v2 切換、i18n 四語系、SingleConverter DOM helper 重排、spec §六 Status=done

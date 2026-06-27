@@ -88,17 +88,20 @@ test.describe('RateWise 核心功能測試', () => {
     // 等待 UI 更新
     await page.waitForTimeout(1000);
 
-    // [fix:2026-01-31] 使用多重選擇器適配不同環境
     const currencyList = page.getByTestId('multi-currency-list');
     await expect(currencyList).toBeVisible({ timeout: 10000 });
 
-    // [fix:2026-01-31] 驗證頁面有多個貨幣相關按鈕
     await expect(
       page
         .getByTestId('multi-currency-list')
         .getByText(/TWD|USD|JPY|EUR/i)
         .first(),
     ).toBeVisible();
+
+    const rowCount = await currencyList.getByTestId('multi-currency-row').count();
+    expect(rowCount).toBeLessThanOrEqual(8);
+
+    await expect(page.getByTestId('multi-global-rate-notice')).toBeVisible();
   });
 
   // [fix:2026-01-31] 測試在 CI 環境不穩定，因 aria-label 在 SSG 預渲染版本可能不同
