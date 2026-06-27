@@ -475,6 +475,15 @@ export const navigationTokens = {
       bottom: 'pb-safe-bottom',
     },
   },
+
+  /**
+   * 行動版 main 滾動區底部留白（fixed bottom nav 上方可捲動空間）
+   * narrow 額外 +28px：Galaxy S21 360×800 QA 曾見 CTA 與 bottom nav 重疊
+   */
+  mainScroll: {
+    paddingBottomClass:
+      'pb-[calc(56px+env(safe-area-inset-bottom,0px))] max-[360px]:pb-[calc(84px+env(safe-area-inset-bottom,0px))] md:pb-0',
+  },
 } as const;
 
 /**
@@ -689,9 +698,9 @@ export const singleConverterLayoutTokens = {
     /** 卡片底部間距 */
     cardSpacing: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1.5 nano:mb-1',
 
-    /** 匯率資訊區內距 - 保持充足空間感 */
+    /** 匯率資訊區內距 - micro/nano 頂部 ≥40px，避免 RateSelector 與匯率文字重疊 */
     infoPadding:
-      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-5 micro:pb-2.5 nano:pt-4 nano:pb-2',
+      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-10 micro:pb-2.5 nano:pt-10 nano:pb-2',
 
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
@@ -778,9 +787,10 @@ export const singleConverterLayoutTokens = {
     glowHidden: 'short:hidden',
   },
 
-  /** 加入歷史按鈕 - 線性縮減 */
+  /** 加入歷史按鈕 - micro/nano 維持 WCAG 44px 最小觸控高度 */
   addToHistory: {
-    className: 'py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:py-1.5 nano:py-1.5',
+    className:
+      'py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:min-h-11 micro:py-2 nano:min-h-11 nano:py-2',
   },
 } as const;
 
