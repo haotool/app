@@ -1,5 +1,18 @@
 # @app/ratewise
 
+## 2.25.4
+
+### Patch Changes
+
+- d30b799: CI Playwright 快取 action 升級至 actions/cache@v6，消除 Node 20 deprecation warning；僅 CI 基礎設施變更，使用者無可見影響。
+- 935e52f: 修正 TikTok iOS 內建瀏覽器（musical*ly*<版本>、trill\_<版本> UA）未被辨識，導致不顯示「改用外部瀏覽器開啟」指引；並修正 musical_lyric 等字串被誤判為 TikTok 的 false positive；prefers-reduced-motion 一併停用安裝步驟的脈動動畫。
+- dfb9712: 修復冷啟動時未還原上次停留的單/多幣別換算模式（hydrate 前偏好被預設值覆寫的競態）；PWA manifest 改用絕對 HTTPS start_url，降低獨立啟動情境下的安全連線警告。
+- 3fd6a4a: 開放資料 API：MoneyBox 換錢所 JSON 與 Open Data 頁面新增 v2 語意欄位（quoteUnit、semanticFieldMapping），澄清與台銀 sell 報價方向差異。
+- b615b4a: 離線/弱網下導覽不再被卡住的網路請求拖住，避免長時間白屏。
+  - 網路成功時清除 8 秒 race timer，避免 orphan rejection 與 timer 洩漏。
+
+- 567ebd4: 強化離線可靠度：Service Worker 在網路失敗時，對 JS/CSS 資源改用三層快取回退（精確網址 → 忽略查詢字串 → precache 比對），降低 iOS 在 cache 驅逐後出現「Load failed」白屏的機率。離線文件回退與靜態資源回退邏輯收斂為單一來源。
+
 ## 2.25.3
 
 ### Patch Changes
