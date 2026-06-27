@@ -12,6 +12,8 @@
 
 import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { Calculator } from 'lucide-react';
+import { ClientOnly } from 'vite-react-ssg';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,6 +36,11 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import {
+  getHeroLayoutVariant,
+  HERO_LAYOUT_VARIANT_CHANGE_EVENT,
+} from '../../../config/hero-layout-variant';
+import { formatDisplayTime } from '../../../utils/timeFormatter';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -88,6 +95,8 @@ interface SingleConverterProps {
   moneyBoxRate?: ExchangeShopRate | null;
   exchangeShopCurrency?: CurrencyCode | null;
   onRateSourceChange?: (source: RateSource) => void;
+  lastUpdate?: string | null;
+  lastFetchedAt?: string | null;
 }
 
 export const SingleConverter = ({
@@ -112,14 +121,43 @@ export const SingleConverter = ({
   moneyBoxRate = null,
   exchangeShopCurrency = null,
   onRateSourceChange,
+  lastUpdate = null,
+  lastFetchedAt = null,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
+  const [isHeroV2, setIsHeroV2] = useState(false);
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const syncHeroLayout = () => setIsHeroV2(getHeroLayoutVariant() === 'hero-v2');
+    syncHeroLayout();
+    window.addEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
+    return () => window.removeEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
+  }, []);
+
+  const rateTextClassName = isHeroV2
+    ? singleConverterLayoutTokens.rateCard.heroRateDisplay
+    : singleConverterLayoutTokens.rateCard.rateText;
+  const amountInputClassName = isHeroV2
+    ? singleConverterLayoutTokens.rateCard.amountSecondaryDisplay
+    : singleConverterLayoutTokens.amountInput.className;
+  const rateCardSurfaceClassName = isHeroV2
+    ? singleConverterLayoutTokens.rateCard.heroCardSurface
+    : 'bg-gradient-to-b from-surface-card to-surface-elevated border border-border/50 hover:border-primary/30';
+  const rateInfoMotionClassName = isHeroV2
+    ? ''
+    : 'transition-transform duration-300 group-hover:scale-[1.02]';
+  const rateDisplayHoverClassName = isHeroV2
+    ? ''
+    : 'transition-transform duration-300 group-hover:scale-105';
+  const rateCardHoverClassName = isHeroV2
+    ? 'hover:shadow-md'
+    : 'group cursor-pointer hover:shadow-xl transition-all duration-500';
 
   // 輸入框 refs（用於焦點管理）
   const fromInputRef = useRef<HTMLDivElement>(null);
@@ -393,15 +431,15 @@ export const SingleConverter = ({
     };
   }, [trendData]);
 
-  return (
-    <>
-      <div className={singleConverterLayoutTokens.section.className}>
-        <label
-          className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
-        >
-          {t('singleConverter.fromAmount')}
-        </label>
-        <div className="relative">
+  const renderFromAmountSection = () => (
+    <div className={singleConverterLayoutTokens.section.className}>
+      <label
+        className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
+      >
+        {t('singleConverter.fromAmount')}
+      </label>
+      <div className={isHeroV2 ? 'flex items-stretch gap-2' : 'relative'}>
+        <div className={isHeroV2 ? 'relative min-w-0 flex-1' : 'relative'}>
           <select
             value={fromCurrency}
             onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
@@ -414,7 +452,6 @@ export const SingleConverter = ({
               </option>
             ))}
           </select>
-          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
           <div
             ref={fromInputRef}
             role="button"
@@ -427,47 +464,39 @@ export const SingleConverter = ({
                 calculator.openCalculator('from');
               }
             }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+            className={`w-full pl-32 pr-4 ${amountInputClassName} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
             aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
           >
             {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
           </div>
         </div>
-        {/* 快速金額按鈕 - 來源貨幣
-         *
-         * SSOT 設計規範：中性變體（所有轉換器一致）
-         * @see design-tokens.ts - quickAmountButtonTokens
-         *
-         * 響應式設計（行動端單行水平滾動）：
-         * - overflow-x-auto：內容溢出時啟用水平滾動
-         * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-         * - flex-nowrap：防止按鈕換行
-         * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-         *
-         * 互動狀態：
-         * - 預設：抬升表面背景 + 柔和文字
-         * - 懸停：主色調淡化 + 主色文字 + 微幅放大
-         * - 按壓：主色調加深 + 縮放回饋
-         *
-         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
-         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-         */}
-        <div
-          data-testid="quick-amounts-from"
-          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.fromVisibility}`}
-        >
-          {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
-            <button
-              key={amount}
-              onClick={() => {
-                // 直接更新來源金額，繞過 mode 狀態依賴
-                onFromAmountChange(amount.toString());
-                onQuickAmount(amount);
-                if ('vibrate' in navigator) {
-                  navigator.vibrate(30);
-                }
-              }}
-              className="
+        {isHeroV2 ? (
+          <button
+            type="button"
+            data-testid="calculator-from-button"
+            className={singleConverterLayoutTokens.rateCard.calculatorAffordanceHit}
+            aria-label={t('singleConverter.openCalculatorFrom')}
+            onClick={() => calculator.openCalculator('from')}
+          >
+            <Calculator className="h-5 w-5" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+      <div
+        data-testid="quick-amounts-from"
+        className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.fromVisibility}`}
+      >
+        {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
+          <button
+            key={amount}
+            onClick={() => {
+              onFromAmountChange(amount.toString());
+              onQuickAmount(amount);
+              if ('vibrate' in navigator) {
+                navigator.vibrate(30);
+              }
+            }}
+            className="
                 flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
                 bg-surface-elevated text-text/70
                 hover:bg-primary/10 hover:text-primary
@@ -476,29 +505,34 @@ export const SingleConverter = ({
                 hover:scale-[1.03] active:scale-[0.97]
                 hover:shadow-md active:shadow-sm
               "
-            >
-              {amount.toLocaleString()}
-            </button>
-          ))}
-        </div>
+          >
+            {amount.toLocaleString()}
+          </button>
+        ))}
       </div>
+    </div>
+  );
 
-      <div className={singleConverterLayoutTokens.rateCard.section}>
-        {/* 匯率卡片 - 一體化設計，無切分感 */}
+  return (
+    <>
+      {!isHeroV2 ? renderFromAmountSection() : null}
+
+      <div className={singleConverterLayoutTokens.rateCard.section} data-testid="rate-hero-section">
         <div
-          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+          className={`relative rounded-xl w-full ${rateCardSurfaceClassName} ${rateCardHoverClassName} ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
         >
-          {/*
-           * 微光效果 - 極淺的漸層覆蓋
-           * 使用 aspect-square + object-cover 確保等比例不變形
-           */}
-          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </div>
+          {!isHeroV2 ? (
+            <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </div>
+          ) : null}
 
-          {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl overflow-hidden ${rateInfoMotionClassName} ${
+              isHeroV2
+                ? singleConverterLayoutTokens.rateCard.heroInfoPadding
+                : singleConverterLayoutTokens.rateCard.infoPadding
+            }`}
           >
             <RateSelector
               rateType={rateType}
@@ -509,18 +543,32 @@ export const SingleConverter = ({
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
             />
 
-            {/* 匯率顯示 - 使用 SSOT text 色 */}
             <div className="w-full">
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
+                data-testid="hero-rate-display"
+                className={`${rateTextClassName} font-bold tabular-nums text-text mb-1 ${rateDisplayHoverClassName}`}
               >
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 group-hover:opacity-95 transition-opacity`}
+                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 ${isHeroV2 ? '' : 'group-hover:opacity-95 transition-opacity'}`}
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
+              {isHeroV2 && lastUpdate ? (
+                <div
+                  data-testid="hero-freshness-chip"
+                  className={`${singleConverterLayoutTokens.rateCard.trustChipGap} text-[10px] tabular-nums text-text-muted/70`}
+                >
+                  <ClientOnly fallback={<span aria-hidden="true">&nbsp;</span>}>
+                    {() => (
+                      <span suppressHydrationWarning>
+                        {formatDisplayTime(lastUpdate, lastFetchedAt)}
+                      </span>
+                    )}
+                  </ClientOnly>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -636,43 +684,57 @@ export const SingleConverter = ({
         </div>
       </div>
 
+      {isHeroV2 ? renderFromAmountSection() : null}
+
       <div className={singleConverterLayoutTokens.section.className}>
         <label
           className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
         >
           {t('singleConverter.toAmount')}
         </label>
-        <div className="relative">
-          <select
-            value={toCurrency}
-            onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
-            aria-label={t('singleConverter.selectToCurrency')}
-          >
-            {CURRENCY_CODES.map((code) => (
-              <option key={code} value={code}>
-                {CURRENCY_DEFINITIONS[code].flag} {code}
-              </option>
-            ))}
-          </select>
-          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
-          <div
-            ref={toInputRef}
-            role="button"
-            tabIndex={0}
-            data-testid="amount-output"
-            onClick={() => calculator.openCalculator('to')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                calculator.openCalculator('to');
-              }
-            }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
-            aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
-          >
-            {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+        <div className={isHeroV2 ? 'flex items-stretch gap-2' : 'relative'}>
+          <div className={isHeroV2 ? 'relative min-w-0 flex-1' : 'relative'}>
+            <select
+              value={toCurrency}
+              onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
+              aria-label={t('singleConverter.selectToCurrency')}
+            >
+              {CURRENCY_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {CURRENCY_DEFINITIONS[code].flag} {code}
+                </option>
+              ))}
+            </select>
+            <div
+              ref={toInputRef}
+              role="button"
+              tabIndex={0}
+              data-testid="amount-output"
+              onClick={() => calculator.openCalculator('to')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  calculator.openCalculator('to');
+                }
+              }}
+              className={`w-full pl-32 pr-4 ${amountInputClassName} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+              aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
+            >
+              {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+            </div>
           </div>
+          {isHeroV2 ? (
+            <button
+              type="button"
+              data-testid="calculator-to-button"
+              className={singleConverterLayoutTokens.rateCard.calculatorAffordanceHit}
+              aria-label={t('singleConverter.openCalculatorTo')}
+              onClick={() => calculator.openCalculator('to')}
+            >
+              <Calculator className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
         {/* 快速金額按鈕 - 目標貨幣
          *

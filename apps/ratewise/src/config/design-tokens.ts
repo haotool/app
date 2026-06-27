@@ -427,6 +427,9 @@ export const navigationTokens = {
    * Balanced design between iOS Tab Bar (49pt) and Material Navigation Bar (56dp)
    */
   bottomNav: {
+    /** 主滾動區 scroll-padding-bottom（nav 56px + 1px 緩衝，L05/L06） */
+    scrollPaddingBottom: 57,
+
     /** Total bottom nav height in pixels (excluding safe area) */
     height: 56,
     /** CSS value including safe area for notched devices */
@@ -693,6 +696,10 @@ export const singleConverterLayoutTokens = {
     infoPadding:
       'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-5 micro:pb-2.5 nano:pt-4 nano:pb-2',
 
+    /** Hero v2 匯率資訊區內距（answer-first：頂部留白較小，y≤120） */
+    heroInfoPadding:
+      'pt-6 pb-4 compact:pt-5 compact:pb-3.5 short:pt-4 short:pb-3 tiny:pt-3 tiny:pb-2.5 micro:pt-2.5 micro:pb-2 nano:pt-2 nano:pb-2',
+
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
       'absolute top-3 left-1/2 -translate-x-1/2 compact:top-2.5 short:top-2 tiny:top-2 micro:top-1.5 nano:top-1.5',
@@ -705,8 +712,29 @@ export const singleConverterLayoutTokens = {
     rateTypeIcon:
       'w-3 h-3 compact:w-2.5 compact:h-2.5 short:w-2.5 short:h-2.5 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden',
 
-    /** 主要匯率文字 */
+    /** 主要匯率文字（legacy 路徑） */
     rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-sm nano:text-sm',
+
+    /** Hero v2 主匯率 display-md（32px，answer-first） */
+    heroRateDisplay:
+      'text-[32px] compact:text-[28px] short:text-2xl tiny:text-xl font-bold tabular-nums leading-tight',
+
+    /** Hero v2 次級 display-sm（28px） */
+    displaySm: 'text-[28px] font-bold tabular-nums leading-tight',
+
+    /** Hero v2 金額列（≤ hero×0.75） */
+    amountSecondaryDisplay:
+      'py-3 text-xl compact:py-2.5 compact:text-lg short:py-2 short:text-base tiny:py-1.5 tiny:text-sm micro:py-1.5 micro:text-sm nano:py-1 nano:text-sm',
+
+    /** Freshness trust chip 與 hero 間距（≤8px） */
+    trustChipGap: 'mt-2',
+
+    /** 44×44 計算機 affordance（WCAG 2.5.8） */
+    calculatorAffordanceHit:
+      'inline-flex shrink-0 items-center justify-center min-h-11 min-w-11 rounded-xl border border-border/60 bg-surface-elevated text-text/70 hover:text-primary hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+
+    /** Hero v2 Zen 白底卡片（取代 heavy gradient） */
+    heroCardSurface: 'bg-surface-card border border-border/60 shadow-sm',
 
     /** 次要匯率文字 */
     rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',

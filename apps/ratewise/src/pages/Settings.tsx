@@ -32,6 +32,7 @@ import {
   Shuffle,
   Landmark,
   Scale,
+  LayoutTemplate,
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -47,12 +48,38 @@ import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
+import {
+  getHeroLayoutVariant,
+  setHeroLayoutVariant,
+  type HeroLayoutVariant,
+} from '../config/hero-layout-variant';
+import { useState } from 'react';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode } = useConverterStore();
+  const [heroLayoutVariant, setHeroLayoutVariantState] = useState<HeroLayoutVariant>(() =>
+    typeof window === 'undefined' ? 'legacy' : getHeroLayoutVariant(),
+  );
+
+  const HERO_LAYOUT_OPTIONS: {
+    value: HeroLayoutVariant;
+    labelKey: string;
+    descKey: string;
+  }[] = [
+    {
+      value: 'legacy',
+      labelKey: 'settings.heroLayoutLegacy',
+      descKey: 'settings.heroLayoutLegacyDesc',
+    },
+    {
+      value: 'hero-v2',
+      labelKey: 'settings.heroLayoutV2',
+      descKey: 'settings.heroLayoutV2Desc',
+    },
+  ];
 
   const RATE_MODE_OPTIONS: {
     value: RateMode;
@@ -266,6 +293,56 @@ export default function Settings() {
           <p className="text-[10px] opacity-50 mt-2 px-1 leading-relaxed">
             {t(
               RATE_MODE_OPTIONS.find((o) => o.value === rateMode)?.descKey as Parameters<
+                typeof t
+              >[0],
+            )}
+          </p>
+        </section>
+
+        {/* 首屏布局（hero-v2 feature flag） */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <LayoutTemplate className="w-3.5 h-3.5" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.heroLayout')}
+            </h2>
+          </div>
+
+          <div className={segmentedSwitch.containerClass}>
+            {HERO_LAYOUT_OPTIONS.map((option) => {
+              const isActive = heroLayoutVariant === option.value;
+              return (
+                <motion.button
+                  key={option.value}
+                  onClick={() => {
+                    setHeroLayoutVariant(option.value);
+                    setHeroLayoutVariantState(option.value);
+                  }}
+                  whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
+                  whileTap={segmentedSwitch.item.whileTap}
+                  animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
+                  transition={transitions.default}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col`}
+                  aria-pressed={isActive}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="hero-layout-indicator"
+                      className={segmentedSwitch.indicatorClass}
+                      transition={segmentedSwitch.indicator}
+                    />
+                  )}
+                  <span className="text-[10px] font-bold relative z-10">
+                    {t(option.labelKey as Parameters<typeof t>[0])}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <p className="text-[10px] opacity-50 mt-2 px-1 leading-relaxed">
+            {t(
+              HERO_LAYOUT_OPTIONS.find((o) => o.value === heroLayoutVariant)?.descKey as Parameters<
                 typeof t
               >[0],
             )}
