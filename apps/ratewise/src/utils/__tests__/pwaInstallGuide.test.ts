@@ -42,11 +42,26 @@ describe('pwaInstallGuide environment detection', () => {
     expect(environment.shouldShowGuide).toBe(true);
   });
 
-  it('detects Threads in-app browser and still shows external-browser guide', () => {
-    const environment = getPwaInstallEnvironment({
+  it.each([
+    {
+      label: 'legacy Threads token',
       userAgent:
         'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Threads 337.0 Instagram 337.0',
-      platform: 'iPhone',
+    },
+    {
+      label: 'Barcelona iOS token (2025+ production)',
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/22H352 Barcelona 431.0.0.25.69 (iPhone13,3; iOS 18_7_8; en_US; en; scale=3.00; 1170x2532; IABMV/1; 979167741)',
+    },
+    {
+      label: 'Barcelona Android token',
+      userAgent:
+        'Mozilla/5.0 (Linux; Android 14; SM-S921B Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/136.0.7103.125 Mobile Safari/537.36 Barcelona 382.0.0.51.85 Android (34/14; 480dpi; 1080x2109; samsung)',
+    },
+  ])('detects Threads in-app browser: $label', ({ userAgent }) => {
+    const environment = getPwaInstallEnvironment({
+      userAgent,
+      platform: userAgent.includes('Android') ? 'Linux armv8l' : 'iPhone',
       maxTouchPoints: 5,
     });
 
