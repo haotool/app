@@ -33,7 +33,7 @@ const IN_APP_BROWSER_PATTERNS: [InAppBrowserKind, RegExp][] = [
   ['instagram', /\bInstagram\b/i],
   ['facebook', /\b(FBAN|FBAV|FBIOS|FB_IAB|FB4A)\b/i],
   ['line', /\bLine\//i],
-  ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly)\b/i],
+  ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly_[\d.]+|trill_[\d.]+)/i],
   ['x', /\b(Twitter|X-WebView)\b/i],
 ];
 
