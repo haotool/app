@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.25.5
+
+### Patch Changes
+
+- 55ad0f3: MoneyBox 換匯所在 jsDelivr CDN 落後 v2 schema 時，自動改從 GitHub Raw 取得最新資料，避免 Open Data 整合方讀到過期語意欄位。
+- 74e13c1: 開放資料 API 說明與結構化資料對齊 v2 語意：OpenAPI 台銀 details 契約改回與現行 JSON 一致，Dataset 納入 MoneyBox 換錢所端點。
+
 ## 2.25.4
 
 ### Patch Changes
