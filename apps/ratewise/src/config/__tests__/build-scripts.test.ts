@@ -727,6 +727,15 @@ describe('ratewise build scripts', () => {
     ]);
   });
 
+  it('should trigger MoneyBox update when schemaVersion migration is needed even if rates unchanged', async () => {
+    const scriptSource = await readMoneyBoxFetchScript();
+
+    expect(scriptSource).toContain('function needsSchemaMigration()');
+    expect(scriptSource).toContain('API_SEMANTICS_SCHEMA_VERSION');
+    expect(scriptSource).toContain('schemaMigrationNeeded');
+    expect(scriptSource).toContain('!hasChanges && !schemaMigrationNeeded');
+  });
+
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
     const source = await readCurrencyLandingPageSource();
 

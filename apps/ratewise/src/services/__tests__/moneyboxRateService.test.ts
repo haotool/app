@@ -12,6 +12,7 @@ import { EXCHANGE_SHOP_PROVIDERS } from '../../config/exchangeShopProviders';
 import type { CurrencyCode } from '../../features/ratewise/types';
 
 const MOCK_MONEYBOX_JSON = {
+  schemaVersion: '2.0',
   timestamp: '2026-05-07T07:33:55.932Z',
   updateTime: '2026/05/07 16:33:55',
   source: 'MoneyBox (明洞換匯所聯盟)',
@@ -48,6 +49,35 @@ describe('fetchExchangeShopRate', () => {
     expect((result as ExchangeShopRate & { currency?: CurrencyCode })!.currency).toBe('KRW');
     expect(result!.providerName).toBe('明洞換匯所');
     expect(result!.source).toBe('MoneyBox');
+  });
+
+  it('falls back to raw GitHub URL when jsDelivr CDN returns stale schemaVersion', async () => {
+    const config = EXCHANGE_SHOP_PROVIDERS.KRW!;
+    const { schemaVersion: _ignored, ...legacyPayload } = MOCK_MONEYBOX_JSON;
+    const v2Payload = MOCK_MONEYBOX_JSON;
+
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(legacyPayload),
+        headers: { get: () => '"etag-legacy"' },
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(v2Payload),
+        headers: { get: () => '"etag-v2"' },
+      } as unknown as Response);
+
+    const result = await fetchExchangeShopRate('KRW');
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe(config.cdnUrl);
+    expect(vi.mocked(fetch).mock.calls[1]?.[0]).toBe(config.cdnUrlFallback);
+    expect(result).not.toBeNull();
+    expect(result!.sell).toBe(44.85);
+    expect(result!.isFallback).toBe(false);
   });
 
   it('returns cached data within 5 minutes without re-fetching', async () => {
