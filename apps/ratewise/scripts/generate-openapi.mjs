@@ -302,7 +302,7 @@ const ratesResponseSchema = {
       type: 'object',
       description:
         '各幣別完整四種報價資料（以幣別代碼為 key）；v2 欄位見 CurrencyRateV2 / CurrencyRateDetail',
-      additionalProperties: { $ref: '#/components/schemas/CurrencyRateV2' },
+      additionalProperties: { $ref: '#/components/schemas/CurrencyRateDetail' },
       example: {
         USD: { spot: { buy: 32.015, sell: 32.085 }, cash: { buy: 31.73, sell: 32.385 } },
         JPY: { spot: { buy: 0.2078, sell: 0.2088 }, cash: { buy: 0.2041, sell: 0.2119 } },

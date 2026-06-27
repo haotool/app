@@ -1148,7 +1148,7 @@
             "type": "object",
             "description": "各幣別完整四種報價資料（以幣別代碼為 key）；v2 欄位見 CurrencyRateV2 / CurrencyRateDetail",
             "additionalProperties": {
-              "$ref": "#/components/schemas/CurrencyRateV2"
+              "$ref": "#/components/schemas/CurrencyRateDetail"
             },
             "example": {
               "USD": {

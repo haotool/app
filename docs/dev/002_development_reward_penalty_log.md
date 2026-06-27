@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+72
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+73
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-pr472-openapi-dataset-hotfix
+- 原因：PR472 後 OpenAPI details 誤用 CurrencyRateV2 必填 v2 欄位，與台銀 live JSON 不符；Dataset JSON-LD 未納入 MoneyBox
+- 解法：RatesResponse details 改 ref CurrencyRateDetail；buildOpenDataDatasetJsonLd 補 MoneyBox distribution 與描述
 
 - 日期：2026-06-27
 - ID：reward-split-meow-legacy-expense-currency-twd
