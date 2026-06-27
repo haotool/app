@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+73
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+74
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-moneybox-schema-migration-cdn-fallback
+- 原因：MoneyBox fetch 僅比對匯率數字，schema v2 遷移未觸發 data commit/purge；jsDelivr @data 分支快取最長 12h
+- 解法：needsSchemaMigration 補觸發寫入與 purge；runtime CDN stale schemaVersion 時 fallback Raw
 
 - 日期：2026-06-27
 - ID：reward-pr472-openapi-dataset-hotfix

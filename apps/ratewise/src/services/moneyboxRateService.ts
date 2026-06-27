@@ -4,6 +4,7 @@ import {
   hasExchangeShopProvider,
   type ExchangeShopConfig,
 } from '../config/exchangeShopProviders';
+import { API_SEMANTICS_SCHEMA_VERSION } from '../config/api-semantics-v2';
 import { CDN_DATA_BASE, PROVIDER_RATES_PATH, RAW_DATA_BASE } from '../config/api-endpoints';
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
@@ -166,10 +167,16 @@ async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Respon
   }
 }
 
+function isStaleMoneyboxPayload(raw: unknown): boolean {
+  const schemaVersion = (raw as { schemaVersion?: string } | null)?.schemaVersion;
+  return schemaVersion !== API_SEMANTICS_SCHEMA_VERSION;
+}
+
 async function fetchFromCDN(config: ExchangeShopConfig): Promise<{ raw: unknown; etag?: string }> {
   const urls = [config.cdnUrl, config.cdnUrlFallback];
 
-  for (const url of urls) {
+  for (const [index, url] of urls.entries()) {
+    const isLastUrl = index === urls.length - 1;
     try {
       const res = await fetchWithTimeout(url, { cache: 'no-cache' });
 
@@ -179,6 +186,14 @@ async function fetchFromCDN(config: ExchangeShopConfig): Promise<{ raw: unknown;
       }
 
       const raw: unknown = await res.json();
+      if (!isLastUrl && isStaleMoneyboxPayload(raw)) {
+        logger.warn('Exchange shop CDN payload schemaVersion stale, trying fallback URL', {
+          url,
+          schemaVersion: (raw as { schemaVersion?: string }).schemaVersion,
+        });
+        continue;
+      }
+
       const etag = res.headers.get('etag') ?? undefined;
       return { raw, etag };
     } catch (e) {
