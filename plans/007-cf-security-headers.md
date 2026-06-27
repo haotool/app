@@ -7,7 +7,7 @@
 - **Priority**: P2 | **Effort**: M | **Risk**: MED
 - **Depends on**: none（可與 UX Epic 並行）
 - **Category**: dx | **Planned at**: `e7b7f1ec`, 2026-06-27
-- **Audit**（2026-06-27, stream 4）：**PARTIAL PASS** — worker v5.4 四處同步、COEP 邊界 live 驗證 OK、observability 0.1；gap：`release.yml` Worker 步驟在 Wait 之前（L197 vs L213）、`045` checklist 未建、`release.yml` 未用 `--minify`。DEPLOY.md 已補 release 順序與 COEP curl。
+- **Audit**（2026-06-27, stream 4）：**PARTIAL PASS** — worker v5.4 四處同步、COEP 邊界 live 驗證 OK、observability 0.1；**G7-1/G7-2 已修**（release.yml Wait→Worker→purge + `--minify`）；gap：`045` checklist 未建。DEPLOY.md 已補 release 順序與 COEP curl。
 
 ## Why this matters
 

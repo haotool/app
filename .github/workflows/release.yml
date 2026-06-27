@@ -192,7 +192,15 @@ jobs:
             gh release create "$TAG" --title "$TITLE" --notes "Automated release via Changesets workflow." --verify-tag
           done
 
-      # Cloudflare Security Headers Worker 同步部署
+      # 正式站 app 版本就緒後再部署 Worker，避免 edge CSP/COEP 與新 app 資產不同步。
+      - name: Wait for RateWise production deployment
+        if: success() && steps.ratewise_release.outputs.changed == 'true'
+        env:
+          RATEWISE_RELEASE_ACTION: wait
+          RATEWISE_EXPECTED_VERSION: ${{ steps.ratewise_release.outputs.version }}
+        run: node scripts/ratewise-production-release.mjs
+
+      # Cloudflare Security Headers Worker 同步部署（Zeabur wait 之後、purge 之前）
       # 依 Cloudflare Workers CI/CD 文檔，非互動環境需使用 API Token 與 Account ID。
       - name: Deploy Cloudflare security-headers worker
         if: success()
@@ -208,14 +216,7 @@ jobs:
 
           echo "🔐 Deploying security-headers worker for app.haotool.org/ratewise/* ..."
           npm ci --prefix security-headers
-          npx --prefix security-headers wrangler deploy --config security-headers/wrangler.jsonc
-
-      - name: Wait for RateWise production deployment
-        if: success() && steps.ratewise_release.outputs.changed == 'true'
-        env:
-          RATEWISE_RELEASE_ACTION: wait
-          RATEWISE_EXPECTED_VERSION: ${{ steps.ratewise_release.outputs.version }}
-        run: node scripts/ratewise-production-release.mjs
+          npx --prefix security-headers wrangler deploy --minify --config security-headers/wrangler.jsonc
 
       # RateWise 的 hashed assets 若在正式站尚未就緒前被 purge，Cloudflare 會先回填 404 並保留 stale edge。
       # 因此必須等到正式站版本已更新，再做定點 purge 與 live precache 驗證。
