@@ -15,8 +15,8 @@
 
 - 日期：2026-06-28
 - ID：reward-dependabot-npm-overrides-2026-06
-- 原因：15 個 open Dependabot npm alerts（undici、axios、shell-quote、form-data、js-yaml、launch-editor、@babel/core）transitive 版本低於修補門檻
-- 解法：root pnpm.overrides 收斂至修補版本（undici≥7.28、axios≥1.16 等）並 refresh lockfile
+- 原因：32 個 open Dependabot npm alerts（axios、undici、shell-quote、form-data、js-yaml、launch-editor、@babel/core、@babel/plugin-transform-modules-systemjs、qs、tmp、uuid、react-router）transitive 版本低於修補門檻
+- 解法：root pnpm.overrides 收斂 12 套件至修補版本（含 react-router ^6.30.4 限 v6 patch，不觸 #423 v7 遷移）並 refresh lockfile
 
 - 日期：2026-06-28
 - ID：reward-docker-libssh2-dsa-6365
