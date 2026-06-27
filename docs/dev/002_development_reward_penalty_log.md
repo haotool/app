@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+82
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+83
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-dependabot-npm-overrides-2026-06
+- 原因：32 個 open Dependabot npm alerts（axios、undici、shell-quote、form-data、js-yaml、launch-editor、@babel/core、@babel/plugin-transform-modules-systemjs、qs、tmp、uuid、react-router）transitive 版本低於修補門檻
+- 解法：root pnpm.overrides 收斂 12 套件至修補版本（含 react-router ^6.30.4 限 v6 patch，不觸 #423 v7 遷移）並 refresh lockfile
 
 - 日期：2026-06-28
 - ID：reward-docker-libssh2-dsa-6365
