@@ -195,11 +195,17 @@ describe('HistoryTab', () => {
     }
   });
 
-  it('幣別為 KRW 時以 ₩ 顯示金額', () => {
+  it('有 currency 快照的 KRW 支出以 ₩ 顯示金額', () => {
+    useStore.setState({ expenses: [{ ...EXPENSE_1, currency: 'KRW' }], currency: 'KRW' });
+    renderWith(<HistoryTab />);
+    expect(document.body.textContent).toContain('₩');
+  });
+
+  it('缺 currency 的舊支出在全域 KRW 時仍顯示 NT$', () => {
     useStore.setState({ expenses: [EXPENSE_1], currency: 'KRW' });
     renderWith(<HistoryTab />);
-    // 總金額與費用列表均應顯示 ₩
-    expect(document.body.textContent).toContain('₩');
+    expect(document.body.textContent).toContain('NT$');
+    expect(document.body.textContent).not.toContain('₩');
   });
 
   it('多筆消費顯示 settlement 區塊', () => {

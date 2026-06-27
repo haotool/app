@@ -112,9 +112,15 @@ describe('trip currency helpers', () => {
     ).toEqual({ a: 50, b: -50 });
   });
 
-  it('resolveExpenseCurrency 舊資料 fallback 行程幣別', () => {
-    expect(resolveExpenseCurrency({}, 'KRW')).toBe('KRW');
+  it('resolveExpenseCurrency 舊資料 fallback TWD', () => {
+    expect(resolveExpenseCurrency({}, 'KRW')).toBe('TWD');
     expect(resolveExpenseCurrency({ currency: 'TWD' }, 'KRW')).toBe('TWD');
+    expect(resolveExpenseCurrency({ currency: 'KRW' }, 'TWD')).toBe('KRW');
+  });
+
+  it('resolveTripCurrency 舊資料 fallback TWD，空行程 fallback 全域幣別', () => {
+    expect(resolveTripCurrency([{}], 'KRW')).toBe('TWD');
+    expect(resolveTripCurrency([], 'KRW')).toBe('KRW');
   });
 
   it('wouldCreateMixedCurrencyTrip 僅在單幣行程將混幣時為 true', () => {
