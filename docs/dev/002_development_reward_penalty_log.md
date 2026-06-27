@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+67
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+67
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：neutral-plan010-e2e-mobile-smoke
+- 原因：Plan 010 Gate G4 缺 mobile-pwa/hero-y/touch-44/console Playwright 390x844 自動化
+- 解法：新增 mobile-pwa-smoke、touch-targets-44、console-hydration spec 與 chromium-mobile-390 project
 
 - 日期：2026-06-27
 - ID：reward-ux2026-epic2-settings-ssot

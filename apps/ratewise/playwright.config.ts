@@ -83,6 +83,14 @@ export default defineConfig({
       },
       testIgnore: DESKTOP_AND_MOBILE_TEST_IGNORE, // PWA/GA 測試由專用 project 處理
     },
+    {
+      name: 'chromium-mobile-390',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 390, height: 844 },
+      },
+      testMatch: /mobile-pwa-smoke|hero-layout|touch-targets|console-hydration/,
+    },
     // PWA 專用 project - 允許 Service Worker
     // 注意：使用正向前瞻確保不匹配 offline-pwa.spec.ts
     {
