@@ -644,6 +644,9 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain('branches:\n      - main');
     expect(workflowSource).toContain('git fetch origin main');
     expect(workflowSource).toContain('git checkout origin/main -- scripts/fetch-moneybox-rates.js');
+    expect(workflowSource).toContain(
+      'git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts',
+    );
     expect(workflowSource).not.toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
     expect(workflowSource).not.toContain(
       'git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js',
