@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+81
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+82
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-docker-libssh2-dsa-6365
+- 原因：Trivy 掃描 ratewise Docker 映像（nginx:stable / Debian trixie）偵測 libssh2-1t64@1.11.1-1 含 DSA-6365-1 未修補 CVE
+- 解法：production stage 於 apt upgrade 後明確 `--only-upgrade libssh2-1t64` 拉取 1.11.1-1+deb13u1
 
 - 日期：2026-06-28
 - ID：reward-viewport-qa-layout-hotfix
