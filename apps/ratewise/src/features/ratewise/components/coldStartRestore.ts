@@ -1,5 +1,6 @@
 import type { ConverterMode } from '../types';
 import { MULTI_CONVERTER_MODE } from '../constants';
+import { CONVERTER_STORE_KEY } from '../storage-keys';
 
 /**
  * 冷啟動單次還原旗標。
@@ -24,6 +25,32 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * 讀取 persist 中 lastConverterView；store 尚未同步時供還原決策使用。
+ */
+export function readPersistedLastConverterView(): ConverterMode | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(CONVERTER_STORE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { state?: { lastConverterView?: string } };
+    const view = parsed.state?.lastConverterView;
+    return view === MULTI_CONVERTER_MODE || view === 'single' ? view : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * persist 已寫入 multi，但 zustand store 尚未合併完成。
+ */
+export function isPersistedMultiPendingStoreSync(currentView: ConverterMode): boolean {
+  return (
+    currentView !== MULTI_CONVERTER_MODE &&
+    readPersistedLastConverterView() === MULTI_CONVERTER_MODE
+  );
+}
+
+/**
  * 判斷冷啟動是否應還原至多幣別頁（純讀取，不改旗標）。
  * 須等 persist hydrate 完成、無 deep-link 參數，且上次停留為 multi 才還原。
  */
@@ -32,12 +59,13 @@ export function shouldRestoreToMulti(params: {
   hasDeepLink: boolean;
   lastConverterView: ConverterMode;
 }): boolean {
-  return (
-    params.hydrated &&
-    !hasAttemptedRestore &&
-    !params.hasDeepLink &&
-    params.lastConverterView === MULTI_CONVERTER_MODE
-  );
+  if (!params.hydrated || hasAttemptedRestore || params.hasDeepLink) {
+    return false;
+  }
+  if (params.lastConverterView === MULTI_CONVERTER_MODE) {
+    return true;
+  }
+  return isPersistedMultiPendingStoreSync(params.lastConverterView);
 }
 
 /** 標記冷啟動還原已嘗試；須於 effect 中呼叫，避免 render 期間產生副作用。 */
