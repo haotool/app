@@ -7,6 +7,7 @@ import {
   resolveExpenseCurrency,
   resolveTripCurrency,
   isMixedCurrencyTrip,
+  wouldCreateMixedCurrencyTrip,
   computeMemberBalances,
 } from '../currencies';
 
@@ -114,5 +115,19 @@ describe('trip currency helpers', () => {
   it('resolveExpenseCurrency 舊資料 fallback 行程幣別', () => {
     expect(resolveExpenseCurrency({}, 'KRW')).toBe('KRW');
     expect(resolveExpenseCurrency({ currency: 'TWD' }, 'KRW')).toBe('TWD');
+  });
+
+  it('wouldCreateMixedCurrencyTrip 僅在單幣行程將混幣時為 true', () => {
+    expect(wouldCreateMixedCurrencyTrip([], 'TWD', 'KRW')).toBe(false);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }], 'TWD', 'TWD')).toBe(false);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }], 'TWD', 'KRW')).toBe(true);
+    expect(
+      wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }, { currency: 'KRW' }], 'TWD', 'TWD'),
+    ).toBe(false);
+  });
+
+  it('wouldCreateMixedCurrencyTrip 舊資料缺 currency 欄位時仍偵測混幣風險', () => {
+    expect(wouldCreateMixedCurrencyTrip([{}], 'TWD', 'KRW')).toBe(true);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: undefined }], 'TWD', 'KRW')).toBe(true);
   });
 });

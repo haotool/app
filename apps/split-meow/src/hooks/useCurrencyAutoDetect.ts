@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { detectCurrencyFromTimezone } from '../config/currencies';
+import { detectCurrencyFromTimezone, wouldCreateMixedCurrencyTrip } from '../config/currencies';
 import { fetchMoneyboxRate } from '../lib/exchangeRate';
 
 /**
@@ -13,7 +13,8 @@ import { fetchMoneyboxRate } from '../lib/exchangeRate';
  */
 export function useCurrencyAutoDetect() {
   useEffect(() => {
-    const { currencyManuallySet, setCurrency, setExchangeRate } = useStore.getState();
+    const { currencyManuallySet, setCurrency, setExchangeRate, currency, expenses, currentTripId } =
+      useStore.getState();
 
     // 無論如何都更新匯率（供換算提示使用）
     fetchMoneyboxRate()
@@ -28,6 +29,11 @@ export function useCurrencyAutoDetect() {
     if (currencyManuallySet) return;
 
     const detected = detectCurrencyFromTimezone();
-    if (detected) setCurrency(detected, false);
+    if (!detected) return;
+
+    const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
+    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, detected)) return;
+
+    setCurrency(detected, false);
   }, []); // 僅 mount 時執行一次
 }

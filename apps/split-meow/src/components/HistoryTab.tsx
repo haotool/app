@@ -924,7 +924,9 @@ interface EditExpenseSheetProps {
 function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseSheetProps) {
   const { t } = useTranslation();
   const globalCurrency = useStore((s) => s.currency);
-  const expenseCurrency = expense.currency ?? globalCurrency;
+  const tripExpenses = useStore((s) => s.expenses.filter((e) => e.tripId === s.currentTripId));
+  const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
+  const expenseCurrency = resolveExpenseCurrency(expense, tripCurrency);
   const isEvenly = expense.type === 'split_evenly';
 
   const [totalInput, setTotalInput] = useState(
