@@ -1,5 +1,11 @@
 # @app/ratewise
 
+## 2.25.7
+
+### Patch Changes
+
+- 463c39d: 修復冷啟動時多幣別換算模式無法還原的問題（生產環境 persist 已同步但 hydration 回呼未觸發）。
+
 ## 2.25.6
 
 ### Patch Changes
