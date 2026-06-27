@@ -457,6 +457,15 @@ describe('SEO SSOT', () => {
       expect(content.heroIntro).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
     });
 
+    it('金額頁 SEO 僅 description 含 canonical thesis，title 避開 thesis keyword', () => {
+      const forward = buildPairAmountSeo(100, 'USD', '美金', 'to-twd');
+      const reverse = buildPairAmountSeo(30000, 'USD', '美金', 'twd-to-foreign');
+      expect(forward.description).toContain(CANONICAL_BANK_SELL_THESIS);
+      expect(reverse.description).toContain(CANONICAL_BANK_SELL_THESIS);
+      expect(forward.title).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+      expect(reverse.title).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);
+    });
+
     it.each(CURRENCY_CODES)('%s 正文 SSOT 不得含 thesis keyword（賣出價|中間價）', (code) => {
       const content = getCurrencyLandingPageContent(code);
       expect(collectCurrencyLandingBodyText(content)).not.toMatch(CURRENCY_LANDING_THESIS_KEYWORD);

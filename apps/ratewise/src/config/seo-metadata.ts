@@ -2517,14 +2517,14 @@ export function buildPairAmountSeo(
 
   if (direction === 'twd-to-foreign') {
     return {
-      title: `${formatted} 台幣換${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
-      description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`,
+      title: `${formatted} 台幣換${currencyName}（TWD/${currencyCode}）| ${APP_INFO.shortName}`,
+      description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 出國換匯前可查看台銀${currencyName}${CANONICAL_BANK_SELL_THESIS}，資料每 5 分鐘自動更新，幫你精確估算可兌換的外幣金額。`,
     };
   }
 
   return {
-    title: `買 ${formatted} ${currencyName}要多少新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
-    description: `買 ${formatted} ${currencyName}今日要多少新台幣？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
+    title: `買 ${formatted} ${currencyName}要多少新台幣（${currencyCode}/TWD）| ${APP_INFO.shortName}`,
+    description: `買 ${formatted} ${currencyName}今日要多少新台幣？${APP_INFO.shortName} 即時顯示台銀${currencyName}${CANONICAL_BANK_SELL_THESIS}，資料每 5 分鐘自動更新，幫你換匯前精確估算所需台幣金額。`,
   };
 }
 

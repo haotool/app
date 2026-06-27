@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+67
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-27
+- ID：reward-pr467-pair-amount-seo-thesis
+- 原因：PR 467 收斂 landing thesis 但未同步 buildPairAmountSeo，金額頁 title/description 仍含賣出價/中間價
+- 解法：金額頁 SEO 對齊 CANONICAL_BANK_SELL_THESIS SSOT 並補 L09 測試
 
 - 日期：2026-06-27
 - ID：reward-ux2026-epic2-settings-ssot
