@@ -1,5 +1,12 @@
 # @app/ratewise
 
+## 2.25.9
+
+### Patch Changes
+
+- 2eb0f1f: 修復 PWA 冷啟動時 Chrome 顯示「此連結並不安全」警告：manifest 改為絕對 HTTPS scope，且 Service Worker 不再快取舊版 manifest。
+- cb748c3: 修復 360×800 與 320×568 裝置上 CTA 與 bottom nav 重疊、匯率文字與 RateSelector 重疊，以及加入歷史按鈕觸控目標不足 44px 的問題
+
 ## 2.25.8
 
 ### Patch Changes
