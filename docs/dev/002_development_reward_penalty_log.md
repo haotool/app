@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+80
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+81
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-viewport-qa-layout-hotfix
+- 原因：10 裝置 QA 矩陣在 Galaxy S21 360×800 與 iPhone SE 320×568 出現 CTA 與 bottom nav 重疊、匯率文字蓋住 RateSelector、CTA 觸控高度僅 38px
+- 解法：design-tokens SSOT 調整 infoPadding/addToHistory min-h-11，AppLayout narrow 360px 額外 bottom padding +28px
 
 - 日期：2026-06-28
 - ID：reward-pwa-https-cold-start-manifest-regression
