@@ -1,6 +1,6 @@
 {
   "name": "HaoRate Exchange Rate API",
-  "version": "2.25.10",
+  "version": "2.25.11",
   "schemaVersion": "2.0",
   "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
   "semanticFieldMapping": {
