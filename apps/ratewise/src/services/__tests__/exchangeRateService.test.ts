@@ -290,6 +290,29 @@ describe('exchangeRateService', () => {
       );
     });
 
+    // TASK-001 / P1：rate 數值無效時不得穿透，須落入 build-time fallback（避免 transformRates 產生 Infinity/NaN）
+    it.each([
+      ['rate 為 0', { USD: 30.5, JPY: 0 }],
+      ['rate 為負數', { USD: -30.5 }],
+      ['rate 為 NaN', { USD: NaN }],
+      ['rate 為字串', { USD: '30.5' }],
+      ['rates 為空物件', {}],
+    ])('CDN 返回 %s 時使用 build-time fallback', async (_label, badRates) => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({ ...mockRateData, rates: badRates }),
+      });
+
+      const result = await getExchangeRates();
+
+      expect(result.source).toBe('fallback');
+      // 回傳的 fallback 匯率每筆皆為有限正數
+      Object.values(result.rates).forEach((rate) => {
+        expect(Number.isFinite(rate)).toBe(true);
+        expect(rate).toBeGreaterThan(0);
+      });
+    });
+
     it('CDN_URLS[0]（jsDelivr）失敗時自動落到 CDN_URLS[1]（GitHub Raw 備援）', async () => {
       // CDN_URLS[0]（jsDelivr，主要端點）失敗
       (global.fetch as any)

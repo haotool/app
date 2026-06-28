@@ -56,6 +56,22 @@ export function getBuildTimeExchangeRates(): ExchangeRateData {
   return buildTimeRates;
 }
 
+/**
+ * 驗證 CDN 匯率 payload 的結構與數值有效性。
+ *
+ * 守住 transformRates(1/rate) 邊界：rate 為 0/NaN/Infinity/負/非數值時會產生
+ * 靜默 Infinity/NaN 並穿透 fallback 鏈。此 guard 要求 rates 為非空物件，
+ * 且每筆值皆為有限正數；失敗時由呼叫端落入既有 fallback。
+ */
+export function isValidRatePayload(data: unknown): data is ExchangeRateData {
+  if (typeof data !== 'object' || data === null) return false;
+  const rates = (data as { rates?: unknown }).rates;
+  if (typeof rates !== 'object' || rates === null) return false;
+  const values = Object.values(rates as Record<string, unknown>);
+  if (values.length === 0) return false;
+  return values.every((value) => typeof value === 'number' && Number.isFinite(value) && value > 0);
+}
+
 function buildFallbackExchangeRates(updateTime: string): ExchangeRateData {
   const fallbackRates = getBuildTimeExchangeRates();
   return {
@@ -173,9 +189,10 @@ async function fetchFromCDN(signal?: AbortSignal): Promise<FetchResult> {
 
       const data = (await response.json()) as ExchangeRateData;
 
-      // 驗證資料格式
-      if (!data.rates || typeof data.rates !== 'object') {
-        throw new Error('Invalid data format');
+      // 驗證資料格式與數值有效性（rate 須為有限正數，避免 transformRates 產生 Infinity/NaN）。
+      // 失敗即 throw → 換下一個 CDN，全部失敗則由呼叫端落入 build-time fallback。
+      if (!isValidRatePayload(data)) {
+        throw new Error('Invalid rate payload');
       }
 
       // 讀取 ETag（jsDelivr 透過 Access-Control-Expose-Headers: * 暴露；GitHub Raw 回傳 null）。
