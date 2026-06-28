@@ -25,14 +25,21 @@ const REQUIRED_PRECACHE_URLS = [
   'icons/ratewise-icon-192x192.png',
 ];
 
+// Tier 1 必含但檔名帶 hash 的資產，以子字串比對。
+const REQUIRED_PRECACHE_SUBSTRINGS = ['static-loader-data-manifest'];
+
 const FORBIDDEN_PRECACHE_PATTERNS = [
   /screenshots\//,
   /pwa-install\//,
   /-1024x1024\.png/,
   /pwa-512x512\.png/,
   /openapi\.json$/,
-  /[a-z]{3}-[a-z]{3}\/index\.html$/,
-  /\/[a-z]{3}-[a-z]{3}\/\d+/,
+  // 匯率 JSON 屬 Tier 2 runtime SWR，不得進 precache（loader manifest 例外，於 REQUIRED 檢查）。
+  /(?:^|\/)api\/(?:latest\.json|pairs\/)/,
+  // 任何非根目錄 index.html（幣別 landing、about、faq 等 SSG 頁）由 NavigationRoute 回退 shell。
+  /.+\/index\.html$/,
+  // 點陣圖一律 runtime CacheFirst（REQUIRED 的 shell 圖示於下方掃描時排除）。
+  /\.(?:png|jpe?g|webp|avif)$/,
 ];
 
 function normalizeBase(url) {
@@ -245,9 +252,24 @@ async function main() {
     throw new Error(`precache 缺少 Tier 1 shell 資產：${missingRequired.join(', ')}。`);
   }
 
+  const missingRequiredSubstrings = REQUIRED_PRECACHE_SUBSTRINGS.filter(
+    (needle) => ![...entryUrls].some((url) => url.includes(needle)),
+  );
+  if (missingRequiredSubstrings.length > 0) {
+    throw new Error(
+      `precache 缺少 Tier 1 雜湊命名資產：${missingRequiredSubstrings.join(', ')}（離線 SPA 導覽必要）。`,
+    );
+  }
+
+  const requiredUrlSet = new Set(REQUIRED_PRECACHE_URLS);
   const forbiddenMatches = entries
     .map((entry) => entry.url)
-    .filter((url) => url && FORBIDDEN_PRECACHE_PATTERNS.some((pattern) => pattern.test(url)));
+    .filter(
+      (url) =>
+        url &&
+        !requiredUrlSet.has(url) &&
+        FORBIDDEN_PRECACHE_PATTERNS.some((pattern) => pattern.test(url)),
+    );
   if (forbiddenMatches.length > 0) {
     throw new Error(
       `precache 洩漏非 Tier 1 資源：${forbiddenMatches.slice(0, 5).join(', ')}${
@@ -349,6 +371,7 @@ export {
   shouldProbePrecacheAssetsOverHttp,
   resolveLocalPrecacheAssetPath,
   REQUIRED_PRECACHE_URLS,
+  REQUIRED_PRECACHE_SUBSTRINGS,
   FORBIDDEN_PRECACHE_PATTERNS,
   MAX_PRECACHE_ENTRY_COUNT,
   MAX_PRECACHE_BYTES,

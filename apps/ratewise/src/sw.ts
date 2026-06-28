@@ -88,9 +88,15 @@ async function verifyAndRepairPrecache(): Promise<void> {
     const scope = self.registration.scope;
 
     type ManifestEntry = string | { url: string; revision?: string | null };
+    // 補回 iOS eviction 清除的 Tier 1 shell 資產：JS/CSS 與路由 loader 清單。
+    // loader 清單為離線 SPA 子路由導覽必要，且無 runtime route 後備，故一併修復。
     const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
-      if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
+      const isRepairable =
+        relUrl.endsWith('.js') ||
+        relUrl.endsWith('.css') ||
+        relUrl.includes('static-loader-data-manifest');
+      if (!isRepairable) return false;
       const fullUrl = new URL(relUrl, scope).href;
       return !cachedUrls.has(fullUrl);
     });
@@ -397,7 +403,9 @@ registerRoute(
 const LATEST_RATE_SWR_PLUGINS = [
   new CacheableResponsePlugin({ statuses: [0, 200] }),
   new ExpirationPlugin({
-    maxEntries: 20,
+    // GitHub raw + 同域 api/latest + 17 個 api/pairs 共用此快取（約 19 筆），
+    // 預留擴充幣對的餘裕，避免 LRU 驅逐離線匯率備援。
+    maxEntries: 32,
     maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
   }),
 ];
@@ -416,8 +424,9 @@ registerRoute(
 // 同域匯率 API（latest / pairs）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
-    url.pathname.endsWith('/api/latest.json') ||
-    (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json')),
+    url.origin === self.location.origin &&
+    (url.pathname.endsWith('/api/latest.json') ||
+      (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json'))),
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
     plugins: LATEST_RATE_SWR_PLUGINS,

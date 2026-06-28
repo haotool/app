@@ -86,4 +86,22 @@ describe('verify-precache-assets script', () => {
       ),
     ).toBe(true);
   });
+
+  it('requires the hash-named loader-data manifest in precache (offline SPA nav)', async () => {
+    const script = await loadVerifyPrecacheModule();
+    expect(script.REQUIRED_PRECACHE_SUBSTRINGS).toContain('static-loader-data-manifest');
+  });
+
+  it('forbids Tier 2 runtime assets (api JSON, nested index.html, raster images) in precache', async () => {
+    const script = await loadVerifyPrecacheModule();
+    const isForbidden = (url: string): boolean =>
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) => pattern.test(url));
+    expect(isForbidden('api/latest.json')).toBe(true);
+    expect(isForbidden('api/pairs/usd-twd.json')).toBe(true);
+    expect(isForbidden('about/index.html')).toBe(true);
+    expect(isForbidden('faq/index.html')).toBe(true);
+    expect(isForbidden('og-image.jpg')).toBe(true);
+    // 根 index.html 與 shell 圖示不得被視為禁止項。
+    expect(isForbidden('index.html')).toBe(false);
+  });
 });

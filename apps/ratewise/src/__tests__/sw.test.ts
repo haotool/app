@@ -240,6 +240,21 @@ describe('Service Worker Cache Strategies', () => {
 
     expect(sourceCode).toContain("url.pathname.endsWith('/api/latest.json')");
     expect(sourceCode).toContain("url.pathname.includes('/api/pairs/')");
+    // 防回歸：同域 API SWR 必須限制同源，避免 cross-origin pathname 碰撞污染 latest-rate-cache。
+    expect(sourceCode).toContain('url.origin === self.location.origin');
+    // 防回歸：共用 latest-rate-cache 需保留擴充幣對餘裕（GitHub raw + latest + 17 pairs）。
+    expect(sourceCode).toContain('maxEntries: 32');
+  });
+
+  it('should repair the loader-data manifest alongside JS/CSS after iOS eviction', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    // 防回歸：verifyAndRepairPrecache 必須涵蓋 static-loader-data-manifest（無 runtime route 後備）。
+    expect(sourceCode).toContain("relUrl.includes('static-loader-data-manifest')");
   });
 
   it('should use CacheFirst with 30-day expiration for runtime images', async () => {
