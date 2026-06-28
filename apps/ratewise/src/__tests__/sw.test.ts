@@ -257,6 +257,20 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain("relUrl.includes('static-loader-data-manifest')");
   });
 
+  it('should expose CHECK_SHELL_PRECACHE health probe for self-heal', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    // 自我修復探針：回報 app shell 是否仍在 precache，供 client 端判斷壞 SW。
+    expect(sourceCode).toContain("data?.type === 'CHECK_SHELL_PRECACHE'");
+    expect(sourceCode).toContain("type: 'SHELL_PRECACHE_STATUS'");
+    expect(sourceCode).toContain('precacheEntryCount');
+    expect(sourceCode).toContain('hasIndexShell');
+  });
+
   it('should use CacheFirst with 30-day expiration for runtime images', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');

@@ -28,6 +28,7 @@ import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
+import { isActiveServiceWorkerBroken, propagateCriticalSwFixIfBroken } from '../utils/swHealth';
 import { SupportContactLinks } from './SupportContactLinks';
 
 /** SSR 安全入口：伺服器端回傳 null */
@@ -47,7 +48,20 @@ function UpdatePromptClient() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoUpdateTriggeredRef = useRef(false);
+  const brokenSwRef = useRef(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+
+  const runCriticalSwPropagation = async () => {
+    const result = await propagateCriticalSwFixIfBroken();
+    if (result === 'healthy') {
+      brokenSwRef.current = false;
+      return;
+    }
+    if (result === 'applied') {
+      return;
+    }
+    brokenSwRef.current = await isActiveServiceWorkerBroken();
+  };
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -59,6 +73,8 @@ function UpdatePromptClient() {
         registrationRef.current = r;
         setRegistrationFailed(false);
         void r.update();
+        // 自我修復：壞 SW 連網時自動 SKIP_WAITING + 重載；健康 SW 維持 prompt。
+        void runCriticalSwPropagation();
         intervalRef.current = setInterval(() => {
           void r.update();
         }, notificationTokens.timing.updateInterval);
@@ -89,6 +105,21 @@ function UpdatePromptClient() {
     document.addEventListener('visibilitychange', checkUpdate);
     return () => {
       document.removeEventListener('visibilitychange', checkUpdate);
+    };
+  }, []);
+
+  // 連線恢復時立即檢查：壞 SW 走關鍵修復傳播；健康 SW 僅 background update()。
+  useEffect(() => {
+    const onOnline = () => {
+      if (registrationRef.current) {
+        void registrationRef.current.update();
+      }
+      void runCriticalSwPropagation();
+    };
+
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('online', onOnline);
     };
   }, []);
 
@@ -124,6 +155,7 @@ function UpdatePromptClient() {
     if (
       autoUpdateTriggeredRef.current ||
       isUpdating ||
+      !brokenSwRef.current ||
       typeof navigator === 'undefined' ||
       !navigator.onLine
     ) {

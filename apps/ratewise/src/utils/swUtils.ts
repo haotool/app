@@ -211,6 +211,17 @@ export async function performFullRefresh(): Promise<void> {
 }
 
 /**
+ * @deprecated 請改用 propagateCriticalSwFixIfBroken（swHealth.ts）。
+ */
+export async function selfHealStaleShellPrecache(): Promise<'healthy' | 'healing' | 'skipped'> {
+  const { propagateCriticalSwFixIfBroken } = await import('./swHealth');
+  const result = await propagateCriticalSwFixIfBroken();
+  if (result === 'healthy') return 'healthy';
+  if (result === 'applied' || result === 'pending') return 'healing';
+  return 'skipped';
+}
+
+/**
  * 獲取 Service Worker 狀態資訊
  *
  * @returns Promise<ServiceWorkerStatus> Service Worker 狀態

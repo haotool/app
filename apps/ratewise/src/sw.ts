@@ -204,6 +204,36 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     return;
   }
 
+  // 自我修復探針：回報 app shell 與 precache 規模，供 client 判斷壞 SW。
+  if (data?.type === 'CHECK_SHELL_PRECACHE') {
+    event.waitUntil(
+      (async () => {
+        let hasIndexShell = false;
+        let precacheEntryCount = 0;
+        try {
+          hasIndexShell = Boolean(await matchPrecache('index.html'));
+          const cacheNames = await caches.keys();
+          const precacheName = cacheNames.find((name) => name.startsWith('workbox-precache-v2'));
+          if (precacheName) {
+            const precache = await caches.open(precacheName);
+            precacheEntryCount = (await precache.keys()).length;
+          }
+        } catch {
+          hasIndexShell = false;
+        }
+        // 舊版膨脹 precache（400+ 項）視為不健康，即使 index.html 仍在。
+        const healthy = hasIndexShell && precacheEntryCount <= 150;
+        event.source?.postMessage({
+          type: 'SHELL_PRECACHE_STATUS',
+          healthy,
+          hasIndexShell,
+          precacheEntryCount,
+        });
+      })(),
+    );
+    return;
+  }
+
   if (data?.type !== 'FORCE_HARD_RESET') return;
 
   event.waitUntil(

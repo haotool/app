@@ -13,6 +13,7 @@ import {
   forceHardReset,
   forceServiceWorkerUpdate,
   performFullRefresh,
+  selfHealStaleShellPrecache,
 } from '../swUtils';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -294,6 +295,89 @@ describe('swUtils', () => {
 
       expect(deleteStub).toHaveBeenCalledOnce();
       expect(reloadMock).toHaveBeenCalledOnce();
+    });
+  });
+
+  // ── selfHealStaleShellPrecache ───────────────────────────────────────────
+  describe('selfHealStaleShellPrecache', () => {
+    function setController(controller: unknown) {
+      Object.defineProperty(window.navigator.serviceWorker, 'controller', {
+        writable: true,
+        configurable: true,
+        value: controller,
+      });
+    }
+
+    it('離線時略過，不觸發 update（保留離線快取）', async () => {
+      setOnline(false);
+      const updateStub = vi.fn().mockResolvedValue(undefined);
+      window.navigator.serviceWorker.getRegistration = vi
+        .fn()
+        .mockResolvedValue({ update: updateStub });
+      setController({ postMessage: vi.fn() });
+
+      const result = await selfHealStaleShellPrecache();
+
+      expect(result).toBe('skipped');
+      expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('無 active controller 時略過', async () => {
+      setOnline(true);
+      const updateStub = vi.fn().mockResolvedValue(undefined);
+      window.navigator.serviceWorker.getRegistration = vi
+        .fn()
+        .mockResolvedValue({ update: updateStub });
+      setController(null);
+
+      const result = await selfHealStaleShellPrecache();
+
+      expect(result).toBe('skipped');
+      expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('shell precache 健康時回報 healthy，不觸發 update', async () => {
+      setOnline(true);
+      const updateStub = vi.fn().mockResolvedValue(undefined);
+      window.navigator.serviceWorker.getRegistration = vi
+        .fn()
+        .mockResolvedValue({ update: updateStub });
+      // controller 立即在 transferred port 回覆 healthy:true
+      setController({
+        postMessage: (_msg: unknown, transfer: MessagePort[]) => {
+          const replyPort = transfer[0];
+          if (replyPort) {
+            replyPort.postMessage({ type: 'SHELL_PRECACHE_STATUS', healthy: true });
+          }
+        },
+      });
+
+      const result = await selfHealStaleShellPrecache();
+
+      expect(result).toBe('healthy');
+      expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('shell precache 不健康（壞 SW 無回覆）→ 委派 swHealth 傳播關鍵修復', async () => {
+      vi.useFakeTimers();
+      try {
+        setOnline(true);
+        const updateStub = vi.fn().mockResolvedValue(undefined);
+        const waiting = { postMessage: vi.fn() };
+        window.navigator.serviceWorker.getRegistration = vi
+          .fn()
+          .mockResolvedValue({ waiting, update: updateStub });
+        setController({ postMessage: vi.fn() });
+
+        const promise = selfHealStaleShellPrecache();
+        await vi.advanceTimersByTimeAsync(2100);
+        const result = await promise;
+
+        expect(result).toBe('healing');
+        expect(updateStub).toHaveBeenCalledOnce();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });
