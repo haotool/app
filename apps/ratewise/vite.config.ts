@@ -298,37 +298,43 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'inline',
 
         injectManifest: {
-          // 避免 brace expansion 相依異常導致 glob 全數失效，明確列出副檔名。
-          // 含 json 以預快取 React Router data manifest（離線 SPA 導覽必要）。
+          // Tier 1 precache：app shell（index.html）+ JS/CSS。
+          // 圖片改 runtime CacheFirst、匯率 JSON 改 runtime SWR（見 sw.ts）。
+          // static-loader-data-manifest 為 vite-react-ssg 路由 loader 資料清單，
+          // 屬 app shell 一環、離線 SPA 導覽必要，必須保留 precache（內容雜湊命名）。
           globPatterns: [
             '**/*.js',
             '**/*.css',
             '**/*.html',
-            '**/*.ico',
-            '**/*.png',
-            '**/*.svg',
-            '**/*.avif',
-            '**/*.webp',
-            '**/*.json',
+            '**/static-loader-data-manifest-*.json',
           ],
           globIgnores: [
             '**/og-image-old.png',
             '**/node_modules/**',
             '**/lighthouse-reports/**',
-            '**/rates/**/*.json',
             '**/pwa-install/**',
+            '**/screenshots/**',
             '**/offline.html',
             '**/sitemap.xml',
             '**/robots.txt',
             '**/llms.txt',
             '**/manifest.webmanifest',
-            // SSG 金額排列子頁（例 usd-twd/500/index.html）由 runtime html-cache 處理；
-            // precache 僅保留 app shell 與各幣別頂層 landing index.html。
-            '**/[a-z][a-z][a-z]-twd/*/index.html',
-            '**/twd-[a-z][a-z][a-z]/*/index.html',
+            '**/openapi.json',
+            // 非 shell HTML（幣別 landing、金額子頁、about/faq 等）由 NavigationRoute → index.html 處理。
+            '**/*/index.html',
           ],
           additionalManifestEntries: [
             { url: 'offline.html', revision: getFileRevision('public/offline.html') },
+            { url: 'favicon.svg', revision: getFileRevision('public/favicon.svg') },
+            { url: 'favicon.ico', revision: getFileRevision('public/favicon.ico') },
+            {
+              url: 'apple-touch-icon.png',
+              revision: getFileRevision('public/apple-touch-icon.png'),
+            },
+            {
+              url: 'icons/ratewise-icon-192x192.png',
+              revision: getFileRevision('public/icons/ratewise-icon-192x192.png'),
+            },
           ],
           rollupFormat: 'iife',
           // SW 中 location 全域變數 polyfill（Workbox 相容性）

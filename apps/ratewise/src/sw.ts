@@ -394,33 +394,49 @@ registerRoute(
   }),
 );
 
-// 最新匯率：StaleWhileRevalidate，離線備援 7 天。
+const LATEST_RATE_SWR_PLUGINS = [
+  new CacheableResponsePlugin({ statuses: [0, 200] }),
+  new ExpirationPlugin({
+    maxEntries: 20,
+    maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+  }),
+];
+
+// 最新匯率（GitHub raw）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
     url.pathname.includes('/public/rates/latest.json'),
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-      }),
-    ],
+    plugins: LATEST_RATE_SWR_PLUGINS,
   }),
 );
 
-// 圖片：CacheFirst，90 天。
+// 同域匯率 API（latest / pairs）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
-  ({ request }: { request: Request }) => request.destination === 'image',
+  ({ url }: { url: URL }) =>
+    url.pathname.endsWith('/api/latest.json') ||
+    (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json')),
+  new StaleWhileRevalidate({
+    cacheName: 'latest-rate-cache',
+    plugins: LATEST_RATE_SWR_PLUGINS,
+  }),
+);
+
+const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|webp|avif)$/i;
+
+// 圖片（Tier 2）：CacheFirst，按需快取大圖示 / OG / screenshots 等。
+registerRoute(
+  ({ request, url }: { request: Request; url: URL }) =>
+    request.destination === 'image' || IMAGE_EXTENSION_PATTERN.test(url.pathname),
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
-        maxEntries: 150,
-        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天
+        maxEntries: 60,
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
       }),
     ],
   }),

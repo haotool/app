@@ -59,4 +59,31 @@ describe('verify-precache-assets script', () => {
       path.resolve('/repo/apps/ratewise/dist', 'assets/app.css'),
     );
   });
+
+  it('should define tier-1 precache guardrails for shell assets and forbidden runtime-only resources', async () => {
+    const script = await loadVerifyPrecacheModule();
+
+    expect(script.MAX_PRECACHE_ENTRY_COUNT).toBe(100);
+    expect(script.MAX_PRECACHE_BYTES).toBe(3 * 1024 * 1024);
+    expect(script.REQUIRED_PRECACHE_URLS).toEqual(
+      expect.arrayContaining([
+        'index.html',
+        'offline.html',
+        'favicon.svg',
+        'favicon.ico',
+        'apple-touch-icon.png',
+        'icons/ratewise-icon-192x192.png',
+      ]),
+    );
+    expect(
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) =>
+        pattern.test('screenshots/a.png'),
+      ),
+    ).toBe(true);
+    expect(
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) =>
+        pattern.test('usd-twd/index.html'),
+      ),
+    ).toBe(true);
+  });
 });

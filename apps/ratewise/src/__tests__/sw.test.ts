@@ -191,7 +191,7 @@ describe('Service Worker Cache Strategies', () => {
   const expectedStrategies = {
     'history-rates-cdn': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
     'latest-rate-cache': { strategy: 'StaleWhileRevalidate', maxAge: 7 * 24 * 60 * 60 },
-    'image-cache': { strategy: 'CacheFirst', maxAge: 90 * 24 * 60 * 60 },
+    'image-cache': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60, maxEntries: 60 },
     'font-cache': { strategy: 'CacheFirst', maxAge: 365 * 24 * 60 * 60 },
     'static-resources': { strategy: 'CacheFirst', maxAge: 30 * 24 * 60 * 60 },
   };
@@ -229,6 +229,33 @@ describe('Service Worker Cache Strategies', () => {
     const config = expectedStrategies['latest-rate-cache'];
     expect(config.strategy).toBe('StaleWhileRevalidate');
     expect(config.maxAge).toBe(7 * 24 * 60 * 60); // 7 days
+  });
+
+  it('should cache same-origin api latest and pairs JSON with StaleWhileRevalidate', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+
+    expect(sourceCode).toContain("url.pathname.endsWith('/api/latest.json')");
+    expect(sourceCode).toContain("url.pathname.includes('/api/pairs/')");
+  });
+
+  it('should use CacheFirst with 30-day expiration for runtime images', async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+
+    const swPath = path.resolve(__dirname, '../sw.ts');
+    const sourceCode = await fs.readFile(swPath, 'utf-8');
+    const config = expectedStrategies['image-cache'];
+
+    expect(sourceCode).toContain('IMAGE_EXTENSION_PATTERN');
+    expect(sourceCode).toContain("cacheName: 'image-cache'");
+    expect(sourceCode).toContain('maxEntries: 60');
+    expect(config.strategy).toBe('CacheFirst');
+    expect(config.maxAge).toBe(30 * 24 * 60 * 60);
+    expect(config.maxEntries).toBe(60);
   });
 
   it('should register a network-only route for connectivity probe', async () => {
