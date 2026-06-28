@@ -28,6 +28,7 @@ import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
+import { selfHealStaleShellPrecache } from '../utils/swUtils';
 import { SupportContactLinks } from './SupportContactLinks';
 
 /** SSR 安全入口：伺服器端回傳 null */
@@ -59,6 +60,8 @@ function UpdatePromptClient() {
         registrationRef.current = r;
         setRegistrationFailed(false);
         void r.update();
+        // 自我修復：偵測壞掉的舊 SW（precache 缺 index.html）並主動拉取新版。
+        void selfHealStaleShellPrecache();
         intervalRef.current = setInterval(() => {
           void r.update();
         }, notificationTokens.timing.updateInterval);
@@ -89,6 +92,22 @@ function UpdatePromptClient() {
     document.addEventListener('visibilitychange', checkUpdate);
     return () => {
       document.removeEventListener('visibilitychange', checkUpdate);
+    };
+  }, []);
+
+  // 連線恢復時立即檢查更新：讓「離線時看到 offline.html」的使用者一連網就拉取已修復的新 SW。
+  // 僅觸發 update()/自我修復探針；實際接管仍走自動更新流程（SKIP_WAITING + 重載），無版本撕裂。
+  useEffect(() => {
+    const onOnline = () => {
+      if (registrationRef.current) {
+        void registrationRef.current.update();
+      }
+      void selfHealStaleShellPrecache();
+    };
+
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('online', onOnline);
     };
   }, []);
 

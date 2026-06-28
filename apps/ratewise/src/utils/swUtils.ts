@@ -211,6 +211,63 @@ export async function performFullRefresh(): Promise<void> {
 }
 
 /**
+ * 自我修復：偵測「壞掉的 active SW」並在連網時主動拉取新版。
+ *
+ * 背景：舊版 precache 過大（曾 34.5MB）在弱網安裝失敗 → active SW 的 precache
+ * 缺少 index.html → 離線導覽 fallback 到 offline.html。此函式向 active SW 探詢
+ * shell precache 是否健康，不健康則觸發 registration.update() 拉取已修復的新 SW。
+ *
+ * 版本撕裂防護：本函式「絕不」送 SKIP_WAITING 或 unregister，只呼叫 update()。
+ * 新 SW 的實際接管仍走既有 UpdatePrompt 自動更新流程（SKIP_WAITING + controllerchange 重載），
+ * 因此不會在未重載的舊頁面上切換 SW，無版本撕裂風險。離線時直接略過。
+ *
+ * @returns Promise<'healthy' | 'healing' | 'skipped'>
+ */
+export async function selfHealStaleShellPrecache(): Promise<'healthy' | 'healing' | 'skipped'> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return 'skipped';
+  }
+  // 離線時略過：無法拉取新 SW，且須保留現有快取維持離線能力。
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return 'skipped';
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const controller = navigator.serviceWorker.controller;
+    // 無 active controller（首次安裝中）時不需修復；交由正常安裝流程。
+    if (!registration || !controller) {
+      return 'skipped';
+    }
+
+    const healthy = await new Promise<boolean>((resolve) => {
+      const channel = new MessageChannel();
+      const timeoutId = setTimeout(() => {
+        // 舊 SW 無此 handler → 視為不健康，觸發更新。
+        resolve(false);
+      }, 2000);
+      channel.port1.onmessage = (event: MessageEvent) => {
+        clearTimeout(timeoutId);
+        resolve(Boolean((event.data as { healthy?: boolean })?.healthy));
+      };
+      controller.postMessage({ type: 'CHECK_SHELL_PRECACHE' }, [channel.port2]);
+    });
+
+    if (healthy) {
+      return 'healthy';
+    }
+
+    // 不健康：主動檢查新版本。實際接管由 UpdatePrompt 自動更新流程安全處理。
+    logger.warn('[swUtils] Active SW shell precache unhealthy — triggering update()');
+    await registration.update();
+    return 'healing';
+  } catch (error) {
+    logger.error('Failed self-heal shell precache check', error as Error);
+    return 'skipped';
+  }
+}
+
+/**
  * 獲取 Service Worker 狀態資訊
  *
  * @returns Promise<ServiceWorkerStatus> Service Worker 狀態

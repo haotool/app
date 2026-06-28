@@ -204,6 +204,23 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     return;
   }
 
+  // 自我修復探針：回報 app shell（index.html）是否仍在 precache。
+  // client 端據此判斷是否為「壞掉的舊 SW」並主動觸發 registration.update()。
+  if (data?.type === 'CHECK_SHELL_PRECACHE') {
+    event.waitUntil(
+      (async () => {
+        let healthy = false;
+        try {
+          healthy = Boolean(await matchPrecache('index.html'));
+        } catch {
+          healthy = false;
+        }
+        event.source?.postMessage({ type: 'SHELL_PRECACHE_STATUS', healthy });
+      })(),
+    );
+    return;
+  }
+
   if (data?.type !== 'FORCE_HARD_RESET') return;
 
   event.waitUntil(
