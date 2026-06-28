@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-27T10:24:30.578Z",
-  "updateTime": "2026/06/27 19:24:30",
+  "timestamp": "2026-06-28T01:35:27.369Z",
+  "updateTime": "2026/06/28 10:35:27",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -9,8 +9,8 @@
     "USD": {
       "currency": "USD",
       "base": 1535.8,
-      "buy": 1534,
-      "sell": 1528,
+      "buy": 1535,
+      "sell": 1525,
       "spbuy": 1562.67,
       "spsell": 1508.93
     },
@@ -26,7 +26,7 @@
       "currency": "CNY",
       "base": 225.74,
       "buy": 225,
-      "sell": 223,
+      "sell": 222.5,
       "spbuy": 237.02,
       "spsell": 214.46
     },
@@ -34,7 +34,7 @@
       "currency": "EUR",
       "base": 1748.74,
       "buy": 1745,
-      "sell": 1735,
+      "sell": 1730,
       "spbuy": 1783.53,
       "spsell": 1713.95
     },
@@ -42,7 +42,7 @@
       "currency": "HKD",
       "base": 195.85,
       "buy": 196,
-      "sell": 193.8,
+      "sell": 193.5,
       "spbuy": 199.7,
       "spsell": 192
     },
@@ -50,14 +50,14 @@
       "currency": "TWD",
       "base": 48.2,
       "buy": 46.9,
-      "sell": 46.8,
+      "sell": 46.6,
       "spbuy": 54.51,
       "spsell": 43.38
     },
     "SGD": {
       "currency": "SGD",
       "base": 1186.5,
-      "buy": 1180,
+      "buy": 1185,
       "sell": 1165,
       "spbuy": 1210.11,
       "spsell": 1162.89
@@ -105,7 +105,7 @@
     "AUD": {
       "currency": "AUD",
       "base": 1058.86,
-      "buy": 1060,
+      "buy": 1058,
       "sell": 1045,
       "spbuy": 1079.71,
       "spsell": 1038.01

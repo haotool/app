@@ -7,6 +7,10 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  API_SEMANTICS_SCHEMA_VERSION,
+  enrichExchangeShopRatesPayload,
+} from '../apps/ratewise/src/config/api-semantics-v2.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -204,6 +208,15 @@ function listRateChanges(oldRates = {}, newRates = {}) {
   );
 }
 
+function needsSchemaMigration() {
+  try {
+    const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    return oldData.schemaVersion !== API_SEMANTICS_SCHEMA_VERSION;
+  } catch {
+    return false;
+  }
+}
+
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
@@ -251,22 +264,30 @@ async function main() {
     // 檢查是否有變化
     console.log('🔍 Checking for rate changes...');
     const hasChanges = hasRateChanges(ratesData);
+    const schemaMigrationNeeded = needsSchemaMigration();
 
-    if (!hasChanges) {
+    if (!hasChanges && !schemaMigrationNeeded) {
       console.log('ℹ️  No rate changes detected, skipping update');
       return;
     }
 
-    console.log('✨ Rate changes detected!');
+    if (schemaMigrationNeeded && !hasChanges) {
+      console.log(
+        `🔄 Schema migration needed: latest.json lacks schemaVersion ${API_SEMANTICS_SCHEMA_VERSION}`,
+      );
+    }
+
+    console.log('✨ Rate or schema changes detected!');
     console.log('');
 
     // 確保目錄存在
     mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 
-    // 寫入檔案
-    writeFileSync(OUTPUT_FILE, JSON.stringify(ratesData, null, 2), 'utf8');
+    const enrichedRatesData = enrichExchangeShopRatesPayload(ratesData);
 
-    const twdRate = ratesData.rates.TWD;
+    writeFileSync(OUTPUT_FILE, JSON.stringify(enrichedRatesData, null, 2), 'utf8');
+
+    const twdRate = enrichedRatesData.rates.TWD;
     console.log('✅ Successfully saved new rates');
     console.log('===============================================');
     console.log(`📁 Output: ${OUTPUT_FILE}`);
@@ -308,3 +329,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export { fetchMoneyBoxRates };
 export { listRateChanges };
+export { needsSchemaMigration };
