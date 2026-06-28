@@ -292,6 +292,27 @@ describe('PWA 離線功能測試', () => {
       expect(viteConfig).not.toContain('**/*.{js,css,html');
     });
 
+    it('should keep images out of precache globPatterns and add shell icons via additionalManifestEntries', () => {
+      const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
+      expect(viteConfig).not.toContain("'**/*.png'");
+      expect(viteConfig).not.toContain("'**/*.ico'");
+      expect(viteConfig).not.toContain("'**/*.svg'");
+      expect(viteConfig).not.toContain("'**/*.webp'");
+      expect(viteConfig).not.toContain("'**/*.avif'");
+      expect(viteConfig).not.toContain("'**/*.json'");
+      expect(viteConfig).toContain("'favicon.svg'");
+      expect(viteConfig).toContain("'favicon.ico'");
+      expect(viteConfig).toContain("'apple-touch-icon.png'");
+      expect(viteConfig).toContain("'icons/ratewise-icon-192x192.png'");
+    });
+
+    it('should exclude nested HTML and openapi from precache via globIgnores', () => {
+      const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
+      expect(viteConfig).toContain("'**/*/index.html'");
+      expect(viteConfig).toContain("'**/openapi.json'");
+      expect(viteConfig).toContain("'**/screenshots/**'");
+    });
+
     it('should verify index.html and shell assets exist in the generated precache manifest', () => {
       const verifyScript = readFileSync(
         resolve(ROOT_PATH, '../../scripts/verify-precache-assets.mjs'),

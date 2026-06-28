@@ -2,7 +2,7 @@
 /* eslint-env node */
 /* eslint-disable no-undef */
 
-import { readFile, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile as readFileAsync } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -13,6 +13,34 @@ const DIST_DIR = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist');
 const SW_PATH = path.resolve(PROJECT_ROOT, 'apps/ratewise/dist/sw.js');
 const INDEX_HTML_PATH = path.resolve(DIST_DIR, 'index.html');
 const MIN_PRECACHE_ENTRY_COUNT = 20;
+const MAX_PRECACHE_ENTRY_COUNT = 100;
+const MAX_PRECACHE_BYTES = 3 * 1024 * 1024;
+
+const REQUIRED_PRECACHE_URLS = [
+  'index.html',
+  'offline.html',
+  'favicon.svg',
+  'favicon.ico',
+  'apple-touch-icon.png',
+  'icons/ratewise-icon-192x192.png',
+];
+
+// Tier 1 必含但檔名帶 hash 的資產，以子字串比對。
+const REQUIRED_PRECACHE_SUBSTRINGS = ['static-loader-data-manifest'];
+
+const FORBIDDEN_PRECACHE_PATTERNS = [
+  /screenshots\//,
+  /pwa-install\//,
+  /-1024x1024\.png/,
+  /pwa-512x512\.png/,
+  /openapi\.json$/,
+  // 匯率 JSON 屬 Tier 2 runtime SWR，不得進 precache（loader manifest 例外，於 REQUIRED 檢查）。
+  /(?:^|\/)api\/(?:latest\.json|pairs\/)/,
+  // 任何非根目錄 index.html（幣別 landing、about、faq 等 SSG 頁）由 NavigationRoute 回退 shell。
+  /.+\/index\.html$/,
+  // 點陣圖一律 runtime CacheFirst（REQUIRED 的 shell 圖示於下方掃描時排除）。
+  /\.(?:png|jpe?g|webp|avif)$/,
+];
 
 function normalizeBase(url) {
   // Remove trailing slashes first, then add a single slash
@@ -213,6 +241,61 @@ async function main() {
     );
   }
 
+  if (entries.length > MAX_PRECACHE_ENTRY_COUNT) {
+    throw new Error(
+      `precache 條目過多：目前 ${entries.length} 筆，上限 ${MAX_PRECACHE_ENTRY_COUNT} 筆。請確認 globIgnores 已排除非 Tier 1 資源。`,
+    );
+  }
+
+  const missingRequired = REQUIRED_PRECACHE_URLS.filter((url) => !entryUrls.has(url));
+  if (missingRequired.length > 0) {
+    throw new Error(`precache 缺少 Tier 1 shell 資產：${missingRequired.join(', ')}。`);
+  }
+
+  const missingRequiredSubstrings = REQUIRED_PRECACHE_SUBSTRINGS.filter(
+    (needle) => ![...entryUrls].some((url) => url.includes(needle)),
+  );
+  if (missingRequiredSubstrings.length > 0) {
+    throw new Error(
+      `precache 缺少 Tier 1 雜湊命名資產：${missingRequiredSubstrings.join(', ')}（離線 SPA 導覽必要）。`,
+    );
+  }
+
+  const requiredUrlSet = new Set(REQUIRED_PRECACHE_URLS);
+  const forbiddenMatches = entries
+    .map((entry) => entry.url)
+    .filter(
+      (url) =>
+        url &&
+        !requiredUrlSet.has(url) &&
+        FORBIDDEN_PRECACHE_PATTERNS.some((pattern) => pattern.test(url)),
+    );
+  if (forbiddenMatches.length > 0) {
+    throw new Error(
+      `precache 洩漏非 Tier 1 資源：${forbiddenMatches.slice(0, 5).join(', ')}${
+        forbiddenMatches.length > 5 ? '…' : ''
+      }`,
+    );
+  }
+
+  if (VERIFY_SOURCE === 'local') {
+    let totalBytes = 0;
+    for (const entry of entries) {
+      const localPath = resolveLocalPrecacheAssetPath(entry.url, DIST_DIR);
+      if (existsSync(localPath)) {
+        totalBytes += readFileSync(localPath).byteLength;
+      }
+    }
+    if (totalBytes > MAX_PRECACHE_BYTES) {
+      throw new Error(
+        `precache 總體積過大：${(totalBytes / 1024 / 1024).toFixed(2)}MB，上限 ${MAX_PRECACHE_BYTES / 1024 / 1024}MB。`,
+      );
+    }
+    console.log(
+      `📦 precache 體積：${entries.length} 筆 / ${(totalBytes / 1024 / 1024).toFixed(2)}MB`,
+    );
+  }
+
   if (!entryUrls.has('index.html')) {
     throw new Error('precache 缺少 index.html，冷啟動離線導覽將直接失敗。');
   }
@@ -287,4 +370,9 @@ export {
   parseShellAssetUrls,
   shouldProbePrecacheAssetsOverHttp,
   resolveLocalPrecacheAssetPath,
+  REQUIRED_PRECACHE_URLS,
+  REQUIRED_PRECACHE_SUBSTRINGS,
+  FORBIDDEN_PRECACHE_PATTERNS,
+  MAX_PRECACHE_ENTRY_COUNT,
+  MAX_PRECACHE_BYTES,
 };
