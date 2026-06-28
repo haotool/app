@@ -30,9 +30,21 @@ describe('PWA 離線功能測試', () => {
       const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
       const content = readFileSync(offlinePath, 'utf-8');
 
-      // 應該有重試功能
-      expect(content).toContain('window.location.reload()');
+      // 重試按鈕應觸發 shell 自我修復，而非單純 reload（避免在線死亡迴圈）
+      expect(content).toContain('retry-btn');
+      expect(content).toContain('attemptOfflineShellSelfHeal');
       expect(content).toContain("window.addEventListener('online'");
+    });
+
+    it('should self-heal when online user lands on offline shell', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const content = readFileSync(offlinePath, 'utf-8');
+
+      expect(content).toContain('rw-offline-shell-heal');
+      expect(content).toContain('CHECK_SHELL_PRECACHE');
+      expect(content).toContain("type: 'SKIP_WAITING'");
+      expect(content).toContain('navigateToAppShell');
+      expect(content).not.toContain('window.location.reload()');
     });
 
     it('should show cached data indicator', () => {
