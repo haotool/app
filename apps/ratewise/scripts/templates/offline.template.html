@@ -193,7 +193,7 @@
       <h1>您目前處於離線狀態</h1>
       <p>請檢查您的網路連線，或稍後再試。__BRAND_SHORT__ 會在連線恢復時自動更新。</p>
 
-      <button class="retry-btn" onclick="window.location.reload()">
+      <button class="retry-btn" id="retry-btn" type="button">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
@@ -227,20 +227,157 @@
     </div>
 
     <script>
-      // 檢查是否有快取的匯率數據
-      try {
-        const cached = localStorage.getItem('exchangeRates');
-        if (cached) {
-          document.getElementById('cached-info').style.display = 'block';
-        }
-      } catch (e) {
-        // Ignore localStorage errors
-      }
+      (function () {
+        var HEAL_SESSION_KEY = 'rw-offline-shell-heal';
+        var LEGACY_PRECACHE_THRESHOLD = 150;
+        var SHELL_PROBE_TIMEOUT_MS = 2000;
+        var WAITING_SW_TIMEOUT_MS = 8000;
 
-      // 監聽網路狀態變化，自動重載
-      window.addEventListener('online', () => {
-        window.location.reload();
-      });
+        // 檢查是否有快取的匯率數據
+        try {
+          var cached = localStorage.getItem('exchangeRates');
+          if (cached) {
+            document.getElementById('cached-info').style.display = 'block';
+          }
+        } catch (e) {
+          // localStorage 不可用時略過
+        }
+
+        function hasHealBeenAttemptedThisSession() {
+          try {
+            return sessionStorage.getItem(HEAL_SESSION_KEY) === '1';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function markHealAttemptedThisSession() {
+          try {
+            sessionStorage.setItem(HEAL_SESSION_KEY, '1');
+          } catch (e) {
+            // sessionStorage 不可用時仍允許單次修復
+          }
+        }
+
+        function navigateToAppShell() {
+          var healQuery = 'shell-heal=' + Date.now();
+          window.location.replace('./?' + healQuery);
+        }
+
+        function probeActiveSwShellBroken() {
+          if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+            return Promise.resolve(true);
+          }
+
+          return new Promise(function (resolve) {
+            var channel = new MessageChannel();
+            var timeoutId = setTimeout(function () {
+              resolve(true);
+            }, SHELL_PROBE_TIMEOUT_MS);
+
+            channel.port1.onmessage = function (event) {
+              clearTimeout(timeoutId);
+              var data = event.data || {};
+              var precacheEntryCount = Number(data.precacheEntryCount || 0);
+              var hasIndexShell = Boolean(data.hasIndexShell || data.healthy);
+              resolve(!hasIndexShell || precacheEntryCount > LEGACY_PRECACHE_THRESHOLD);
+            };
+
+            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_SHELL_PRECACHE' }, [
+              channel.port2,
+            ]);
+          });
+        }
+
+        function waitForWaitingServiceWorker(registration) {
+          if (registration.waiting) {
+            return Promise.resolve(registration.waiting);
+          }
+
+          return new Promise(function (resolve) {
+            var timeoutId = setTimeout(function () {
+              registration.removeEventListener('updatefound', onUpdateFound);
+              resolve(registration.waiting);
+            }, WAITING_SW_TIMEOUT_MS);
+
+            function onUpdateFound() {
+              var installing = registration.installing;
+              if (!installing) {
+                return;
+              }
+
+              installing.addEventListener('statechange', function () {
+                if (installing.state === 'installed' && registration.waiting) {
+                  clearTimeout(timeoutId);
+                  registration.removeEventListener('updatefound', onUpdateFound);
+                  resolve(registration.waiting);
+                }
+              });
+            }
+
+            registration.addEventListener('updatefound', onUpdateFound);
+          });
+        }
+
+        function skipWaitingAndNavigateToShell(waitingWorker) {
+          return new Promise(function () {
+            navigator.serviceWorker.addEventListener(
+              'controllerchange',
+              function () {
+                navigateToAppShell();
+              },
+              { once: true },
+            );
+            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            setTimeout(navigateToAppShell, 1500);
+          });
+        }
+
+        // 在線卻載入 offline.html 時自我修復；swHealth 僅在 React 掛載後執行，無法打破死亡迴圈。
+        async function attemptOfflineShellSelfHeal(forceRetry) {
+          if (!navigator.onLine) {
+            return;
+          }
+          if (!forceRetry && hasHealBeenAttemptedThisSession()) {
+            return;
+          }
+          markHealAttemptedThisSession();
+
+          try {
+            if ('serviceWorker' in navigator) {
+              var registration = await navigator.serviceWorker.getRegistration();
+              if (registration) {
+                await registration.update();
+                var broken = await probeActiveSwShellBroken();
+                if (broken) {
+                  var waiting = await waitForWaitingServiceWorker(registration);
+                  if (waiting) {
+                    await skipWaitingAndNavigateToShell(waiting);
+                    return;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // 修復失敗時仍嘗試導向 app shell
+          }
+
+          navigateToAppShell();
+        }
+
+        var retryBtn = document.getElementById('retry-btn');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', function () {
+            void attemptOfflineShellSelfHeal(true);
+          });
+        }
+
+        window.addEventListener('online', function () {
+          void attemptOfflineShellSelfHeal(true);
+        });
+
+        void attemptOfflineShellSelfHeal(false);
+      })();
     </script>
   </body>
 </html>

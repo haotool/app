@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+84
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+85
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-offline-shell-self-heal-death-loop
+- 原因：在線用戶被壞 SW 誤服 offline.html 時 React/swHealth 未掛載，reload 仍回 offline.html 形成死亡迴圈
+- 解法：offline.html 內嵌 CHECK_SHELL_PRECACHE 探針 + SKIP_WAITING + 導向 app shell，打破無 React 的修復盲區
 
 - 日期：2026-06-28
 - ID：reward-sw-aggressive-propagation-broken-shell
