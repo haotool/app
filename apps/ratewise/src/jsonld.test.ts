@@ -35,9 +35,10 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
 
   describe('🟢 SEO 層負責所有 JSON-LD 生成（SEOHelmet + seo-metadata）', () => {
     const seoHelmetPath = resolve(__dirname, 'components/SEOHelmet.tsx');
-    const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
     const seoHelmetContent = readFileSync(seoHelmetPath, 'utf-8');
-    const seoMetadataContent = readFileSync(seoMetadataPath, 'utf-8');
+    const seoMetadataContent =
+      readFileSync(resolve(__dirname, 'config/seo-metadata/core.ts'), 'utf-8') +
+      readFileSync(resolve(__dirname, 'config/seo-metadata/currency-landing.ts'), 'utf-8');
     const combinedContent = seoHelmetContent + seoMetadataContent;
 
     it('should have SoftwareApplication schema in SEO layer', () => {
@@ -59,8 +60,9 @@ describe('JSON-LD Structured Data (SEOHelmet Architecture)', () => {
   });
 
   describe('🟢 Homepage JSON-LD 與內容 SSOT', () => {
-    const seoMetadataPath = resolve(__dirname, 'config/seo-metadata.ts');
-    const seoMetadata = readFileSync(seoMetadataPath, 'utf-8');
+    const seoMetadata =
+      readFileSync(resolve(__dirname, 'config/seo-metadata/core.ts'), 'utf-8') +
+      readFileSync(resolve(__dirname, 'config/seo-metadata/currency-landing.ts'), 'utf-8');
 
     it('should define HowTo and FAQ content in seo-metadata.ts', () => {
       expect(seoMetadata).toContain('HOMEPAGE_HOW_TO');

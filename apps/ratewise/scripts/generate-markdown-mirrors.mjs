@@ -47,7 +47,9 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const VERSION = pkg.version;
 const BASE_URL = SITE_CONFIG.url;
 
-const seoMetadataSrc = readFileSync(resolve(ROOT, 'src/config/seo-metadata.ts'), 'utf-8');
+const seoMetadataSrc =
+  readFileSync(resolve(ROOT, 'src/config/seo-metadata/core.ts'), 'utf-8') +
+  readFileSync(resolve(ROOT, 'src/config/seo-metadata/currency-landing.ts'), 'utf-8');
 const constantsSrc = readFileSync(resolve(ROOT, 'src/features/ratewise/constants.ts'), 'utf-8');
 const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].length;
 
