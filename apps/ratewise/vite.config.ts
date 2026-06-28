@@ -322,6 +322,10 @@ export default defineConfig(({ mode }) => {
             '**/robots.txt',
             '**/llms.txt',
             '**/manifest.webmanifest',
+            // SSG 金額排列子頁（例 usd-twd/500/index.html）由 runtime html-cache 處理；
+            // precache 僅保留 app shell 與各幣別頂層 landing index.html。
+            '**/[a-z][a-z][a-z]-twd/*/index.html',
+            '**/twd-[a-z][a-z][a-z]/*/index.html',
           ],
           additionalManifestEntries: [
             { url: 'offline.html', revision: getFileRevision('public/offline.html') },
