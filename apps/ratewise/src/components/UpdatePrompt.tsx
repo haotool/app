@@ -28,7 +28,7 @@ import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
-import { selfHealStaleShellPrecache } from '../utils/swUtils';
+import { isActiveServiceWorkerBroken, propagateCriticalSwFixIfBroken } from '../utils/swHealth';
 import { SupportContactLinks } from './SupportContactLinks';
 
 /** SSR 安全入口：伺服器端回傳 null */
@@ -48,7 +48,20 @@ function UpdatePromptClient() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoUpdateTriggeredRef = useRef(false);
+  const brokenSwRef = useRef(false);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+
+  const runCriticalSwPropagation = async () => {
+    const result = await propagateCriticalSwFixIfBroken();
+    if (result === 'healthy') {
+      brokenSwRef.current = false;
+      return;
+    }
+    if (result === 'applied') {
+      return;
+    }
+    brokenSwRef.current = await isActiveServiceWorkerBroken();
+  };
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -60,8 +73,8 @@ function UpdatePromptClient() {
         registrationRef.current = r;
         setRegistrationFailed(false);
         void r.update();
-        // 自我修復：偵測壞掉的舊 SW（precache 缺 index.html）並主動拉取新版。
-        void selfHealStaleShellPrecache();
+        // 自我修復：壞 SW 連網時自動 SKIP_WAITING + 重載；健康 SW 維持 prompt。
+        void runCriticalSwPropagation();
         intervalRef.current = setInterval(() => {
           void r.update();
         }, notificationTokens.timing.updateInterval);
@@ -95,14 +108,13 @@ function UpdatePromptClient() {
     };
   }, []);
 
-  // 連線恢復時立即檢查更新：讓「離線時看到 offline.html」的使用者一連網就拉取已修復的新 SW。
-  // 僅觸發 update()/自我修復探針；實際接管仍走自動更新流程（SKIP_WAITING + 重載），無版本撕裂。
+  // 連線恢復時立即檢查：壞 SW 走關鍵修復傳播；健康 SW 僅 background update()。
   useEffect(() => {
     const onOnline = () => {
       if (registrationRef.current) {
         void registrationRef.current.update();
       }
-      void selfHealStaleShellPrecache();
+      void runCriticalSwPropagation();
     };
 
     window.addEventListener('online', onOnline);
@@ -143,6 +155,7 @@ function UpdatePromptClient() {
     if (
       autoUpdateTriggeredRef.current ||
       isUpdating ||
+      !brokenSwRef.current ||
       typeof navigator === 'undefined' ||
       !navigator.onLine
     ) {

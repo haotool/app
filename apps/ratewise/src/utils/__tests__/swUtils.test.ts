@@ -358,15 +358,15 @@ describe('swUtils', () => {
       expect(updateStub).not.toHaveBeenCalled();
     });
 
-    it('shell precache 不健康（壞 SW 無回覆）→ 觸發 registration.update()', async () => {
+    it('shell precache 不健康（壞 SW 無回覆）→ 委派 swHealth 傳播關鍵修復', async () => {
       vi.useFakeTimers();
       try {
         setOnline(true);
         const updateStub = vi.fn().mockResolvedValue(undefined);
+        const waiting = { postMessage: vi.fn() };
         window.navigator.serviceWorker.getRegistration = vi
           .fn()
-          .mockResolvedValue({ update: updateStub });
-        // 舊 SW 無 CHECK_SHELL_PRECACHE handler → 永不回覆 → 2s timeout → 視為不健康
+          .mockResolvedValue({ waiting, update: updateStub });
         setController({ postMessage: vi.fn() });
 
         const promise = selfHealStaleShellPrecache();

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+83
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+84
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-28
+- ID：reward-sw-aggressive-propagation-broken-shell
+- 原因：舊版 SW precache 不完整（缺 index.html 或 400+ legacy 項）仍控制 client，離線冷啟動誤觸 offline.html，且 prompt 模式離線無法拉取修復版
+- 解法：swHealth 探針判斷壞 SW，連網時自動 update + SKIP_WAITING + 整頁重載一次；健康 SW 維持 prompt UX
 
 - 日期：2026-06-28
 - ID：reward-dependabot-npm-overrides-2026-06

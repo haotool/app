@@ -267,6 +267,8 @@ describe('Service Worker Cache Strategies', () => {
     // 自我修復探針：回報 app shell 是否仍在 precache，供 client 端判斷壞 SW。
     expect(sourceCode).toContain("data?.type === 'CHECK_SHELL_PRECACHE'");
     expect(sourceCode).toContain("type: 'SHELL_PRECACHE_STATUS'");
+    expect(sourceCode).toContain('precacheEntryCount');
+    expect(sourceCode).toContain('hasIndexShell');
   });
 
   it('should use CacheFirst with 30-day expiration for runtime images', async () => {
