@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+90
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+91
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw6b-moneybox-workflow-sw-history
+- 原因：MoneyBox history 檔名用台北 wall-clock（跨日與首爾掛牌日不一致）、aggregate 首次缺失不觸發 commit、SW 未快取換錢所 history-30d（離線趨勢圖無資料）
+- 解法：workflow 改用 extractSeoulSnapshotDate 命名 history（fallback 首爾 wall-clock）+ aggregate 缺失補 changed=true；sw.ts history-30d 路由加 providers/moneybox 路徑
 
 - 日期：2026-06-30
 - ID：reward-rw6-moneybox-seoul-date-rollover
