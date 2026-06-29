@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+89
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+90
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw3-manifest-theme-color-ssot
+- 原因：PWA manifest theme_color/background 硬編 #8B5CF6/#E8ECF4，與實際 zen 主題色不符；themes.ts zen primary(99 102 241) 與 index.css(124 58 237) 漂移
+- 解法：manifest 改讀 STYLE_DEFINITIONS.zen 經 rgbTripletToHex 轉換；同步 themes.ts zen primary 至 124 58 237 修漂移（離線模板主題化屬高風險 #508 合併，列 RW-3b）
 
 - 日期：2026-06-30
 - ID：reward-rw2-nitro-theme-contrast-fix

@@ -119,7 +119,7 @@ const zenStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
-    primary: '99 102 241', // indigo-500 - 專業紫藍
+    primary: '124 58 237', // violet-600（與 index.css 渲染值同步，修 TS↔CSS 漂移）
     secondary: '71 85 105', // slate-600
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
