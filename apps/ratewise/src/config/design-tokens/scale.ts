@@ -264,16 +264,66 @@ export const breakpointTokens = {
 } as const;
 
 /**
- * 按鈕設計規範 (SSOT)
+ * Radius Design Tokens (SSOT)
  *
- * 統一應用程式按鈕系統，支援多種變體與尺寸。
- * 結合語義色彩與微互動效果。
- *
- * 設計原理：
- * - 變體分類：primary (主要)、secondary (次要)、ghost (幽靈)、danger (危險)
- * - 尺寸分類：sm (小)、md (中)、lg (大)
- * - 狀態完整：default、hover、active、disabled、loading
- *
- * @created 2026-01-25
- * @version 1.0.0
+ * 以語義 token 取代散落的硬編碼 radius class，並保留 Tailwind scale 別名相容。
+ * - card: 24px，柔和大圓角內容卡片
+ * - panel/control: 16px，按鈕、表單、互動列與資訊面板
+ * - icon: 12px，小型 icon badge
+ * - compact: 8px，密集資料表或真正小型元素
  */
+export const radiusTokens = {
+  values: {
+    card: '1.5rem',
+    panel: '1rem',
+    control: '1rem',
+    icon: '0.75rem',
+    compact: '0.5rem',
+    full: '9999px',
+    '4xl': '2rem',
+    '3xl': '1.5rem',
+    '2xl': '1rem',
+    xl: '0.75rem',
+    lg: '0.5rem',
+    md: '0.375rem',
+    sm: '0.25rem',
+  },
+  className: {
+    card: 'rounded-card',
+    panel: 'rounded-panel',
+    control: 'rounded-control',
+    icon: 'rounded-icon',
+    compact: 'rounded-compact',
+    full: 'rounded-full',
+  },
+} as const;
+
+/**
+ * Shadow Design Tokens (SSOT)
+ *
+ * 一組安靜、帶空氣感的陰影，集中控制散落的 Tailwind shadow。
+ * Tailwind 的 sm/md/lg/xl 保留相容別名，實際值由此集中定義。
+ * 注意：陰影基底色 `rgb(15 23 42 / ...)` (slate-900) 僅適用淺色模式。
+ */
+export const shadowTokens = {
+  values: {
+    card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -24px rgb(15 23 42 / 0.28)',
+    cardHover:
+      '0 2px 6px -2px rgb(15 23 42 / 0.10), 0 22px 48px -28px rgb(var(--color-primary) / 0.30)',
+    soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    floating:
+      '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.24)',
+    brand: '0 8px 25px rgb(var(--color-primary) / 0.28)',
+    sm: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
+    md: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
+    lg: '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.20)',
+    xl: '0 14px 44px -24px rgb(15 23 42 / 0.32), 0 24px 64px -36px rgb(var(--color-primary) / 0.28)',
+  },
+  className: {
+    card: 'shadow-card',
+    cardHover: 'hover:shadow-card-hover',
+    soft: 'shadow-soft',
+    floating: 'shadow-floating',
+    brand: 'shadow-brand',
+  },
+} as const;

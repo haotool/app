@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 3、penalty 1、neutral 0）｜累計總分：+87
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+88
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-29
+- ID：reward-rw1-design-token-radius-shadow-ssot
+- 原因：#433 的 radius/shadow 語義 token 改在扁平 design-tokens.ts，與 main #512 目錄化衝突；散落 rounded-2xl/shadow-card 硬編碼無 SSOT
+- 解法：RW-1 將 radiusTokens/shadowTokens REMAP 至 design-tokens/scale.ts + tailwind.config 接線 + DESIGN.md；radius-ssot 守門延至元件遷移 PR（避免未遷移即大規模失敗）
 
 - 日期：2026-06-29
 - ID：penalty-pr512-missing-002-audit-log
