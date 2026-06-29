@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+89
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+90
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw5-seo-truthfulness-update-frequency
+- 原因：SEO 文案過度承諾「每 5 分鐘自動同步/更新」（實際依資料來源與 CDN 快取而定），有 E-E-A-T 不實風險
+- 解法：seo-metadata core/currency-landing 與內容 generator 一致軟化為「約每 5 分鐘檢查更新」+ OpenData FAQ 加新鮮度免責；regenerate mirrors/llms/api 同步；「最精準」品牌定位詞屬產品決策，本支不擅改
 
 - 日期：2026-06-30
 - ID：reward-rw2-nitro-theme-contrast-fix
