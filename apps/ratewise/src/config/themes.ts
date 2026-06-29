@@ -152,8 +152,8 @@ const nitroStyle: StyleDefinition = {
     background: '2 6 23', // slate-950
     surface: '15 23 42', // slate-900
     text: '255 255 255',
-    textMuted: '100 116 139', // slate-500
-    primary: '0 212 255', // cyan
+    textMuted: '203 213 225', // slate-300（修正 slate-500 在深底對比過低、次要文字看不清）
+    primary: '0 150 230', // 霓虹藍（深電光，白字達 3:1 AA，取代過亮 cyan）
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
     border: '30 41 59', // slate-800
@@ -162,9 +162,9 @@ const nitroStyle: StyleDefinition = {
     success: '52 211 153',
     warning: '251 191 36',
     error: '248 113 113',
-    // 圖表色彩 - 霓虹藍綠
-    chartLine: '0 212 255',
-    chartAreaTop: '0 212 255',
+    // 圖表色彩 - 霓虹藍綠（與 index.css 同步，修 TS↔CSS drift）
+    chartLine: '103 232 249', // cyan-300
+    chartAreaTop: '103 232 249', // cyan-300
     chartAreaBottom: '0 255 136',
   },
 };

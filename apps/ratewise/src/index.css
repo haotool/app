@@ -267,8 +267,8 @@
     --color-background: 2 6 23; /* slate-950 */
     --color-surface: 15 23 42; /* slate-900 */
     --color-text: 255 255 255;
-    --color-text-muted: 100 116 139; /* slate-500 */
-    --color-primary: 0 212 255; /* 霓虹藍 */
+    --color-text-muted: 203 213 225; /* slate-300（修正 slate-500 在深底對比過低） */
+    --color-primary: 0 150 230; /* 霓虹藍（深電光，按鈕白字達 3:1 AA） */
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 30 41 59; /* slate-800 */

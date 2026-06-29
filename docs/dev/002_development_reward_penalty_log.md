@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+88
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+89
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw2-nitro-theme-contrast-fix
+- 原因：Nitro 深色主題 textMuted 為 slate-500（深底對比過低，次要文字看不清）、primary 為過亮 cyan（按鈕白字對比不足）；themes.ts chartLine 與 index.css 漂移
+- 解法：textMuted→slate-300、primary→0 150 230（白字 3:1 AA）、chartLine 同步 cyan-300；新增 themes.test 守門 nitro 對比與 TS↔CSS 同步
 
 - 日期：2026-06-29
 - ID：reward-rw1-design-token-radius-shadow-ssot
