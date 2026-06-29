@@ -1,5 +1,14 @@
 # @app/ratewise
 
+## 2.25.12
+
+### Patch Changes
+
+- 0f48058: 內部重構：將 design tokens 設定模組化為多檔（colors/layout/scale/components/tailwind），提升可維護性，無使用者可見行為變更。
+- 0f48058: 匯率資料來源回傳異常數值（如 0、NaN、負數）時，自動改用預設匯率，避免顯示錯誤的換算結果。
+- 0f48058: 內部監控調整：Sentry 停用連續 session replay（僅保留錯誤現場擷取）以節省配額，並修正 @sentry/react 依賴分類；無使用者可見行為變更。
+- 0f48058: 內部重構：將 SEO metadata 設定模組化為多檔，提升可維護性，無使用者可見行為變更。
+
 ## 2.25.11
 
 ### Patch Changes
