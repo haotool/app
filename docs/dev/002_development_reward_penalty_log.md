@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+89
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+90
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw6-moneybox-seoul-date-rollover
+- 原因：MoneyBox 換錢所牌價不變但首爾掛牌日跨日時，latest.json 未刷新→與每日 history 日期不對齊
+- 解法：加 extractSeoulSnapshotDate/shouldRefreshLatestSnapshot（rate-changed 或 date-rollover 才刷新），整合進 hasRateChanges；保留 main 的 needsSchemaMigration/enrich（紅線）；補 3 測試並納入 test:root
 
 - 日期：2026-06-30
 - ID：reward-rw2-nitro-theme-contrast-fix
