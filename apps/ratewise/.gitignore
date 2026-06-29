@@ -10,3 +10,6 @@ public/sitemap.xml
 
 # 注意：robots.txt 由 seo-best-practices.test.ts 直接讀取（無 existsSync 保護），
 # 必須 commit 至 repo 讓 CI 測試可通過。移除日期後內容穩定，不會造成 git 污染。
+
+# 多 Agent 審查委員會工作產物（baseline / 報告 / 批評 / 辯論 / SPEC），本機分析用，不入庫
+.audit/

@@ -210,8 +210,10 @@ async function readPostbuildMirrorScript() {
 }
 
 async function readSeoMetadataSource() {
-  const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
-  return readFile(seoMetadataPath, 'utf-8');
+  return (
+    (await readFile(path.resolve(__dirname, '../seo-metadata/core.ts'), 'utf-8')) +
+    (await readFile(path.resolve(__dirname, '../seo-metadata/currency-landing.ts'), 'utf-8'))
+  );
 }
 
 async function readCurrencyLandingPageSource() {
@@ -350,8 +352,9 @@ describe('ratewise build scripts', () => {
   });
 
   it('should not reference a removed optimized PNG logo in structured data', async () => {
-    const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
-    const seoMetadata = await readFile(seoMetadataPath, 'utf-8');
+    const seoMetadata =
+      (await readFile(path.resolve(__dirname, '../seo-metadata/core.ts'), 'utf-8')) +
+      (await readFile(path.resolve(__dirname, '../seo-metadata/currency-landing.ts'), 'utf-8'));
 
     expect(seoMetadata).not.toContain('optimized/logo-512w.png');
     expect(seoMetadata).toContain('icons/ratewise-icon-512x512.png');
@@ -547,7 +550,7 @@ describe('ratewise build scripts', () => {
     expect(healthCheckScript).not.toContain("from '../src/config/seo-metadata.ts'");
     expect(healthCheckScript).toContain('DEFAULT_TITLE');
     expect(healthCheckScript).toContain('GUIDE_PAGE_TITLE');
-    expect(seoMetadataSource).toContain("from './seo-static'");
+    expect(seoMetadataSource).toContain("from '../seo-static'");
     expect(seoMetadataSource).toContain('title: GUIDE_PAGE_TITLE');
     expect(healthCheckScript).not.toContain(
       "validators.hasTitle('HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",

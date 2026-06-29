@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+85
+> 本次分數變化：+2（reward 3、penalty 1、neutral 0）｜累計總分：+87
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-29
+- ID：penalty-pr512-missing-002-audit-log
+- 原因：PR #512 的 6 個 commit 全程未更新 002 稽核紀錄，違反 AGENTS.md Phase 4 / AGT-LOG-01「每次 commit 前更新 002 並同步分數」的硬規則（由 Codex review P1 抓出）
+- 解法：補登本批次 002 條目與分數，回覆並收斂 Codex thread；後續多 commit 任務每次 commit 前先寫 002
+
+- 日期：2026-06-29
+- ID：reward-ratewise-rate-payload-validation
+- 原因：CDN 匯率 payload 的 rate 為 0/NaN/負/非數值時會穿透 transformRates(1/rate) 產生靜默 Infinity/NaN，回傳錯誤匯率且不觸發既有 fallback
+- 解法：新增純函式 isValidRatePayload（rates 非空且每筆為有限正數）守住 fetch 邊界，失敗即落入既有 build-time fallback；補 14 測試，不引入 zod（KISS/YAGNI）
+
+- 日期：2026-06-29
+- ID：reward-ratewise-config-modularization-ssot-coupling
+- 原因：seo-metadata.ts(2959) 與 design-tokens.ts(1340) 巨型單檔可讀性差；拆分隱藏三類 source-text 耦合（守門測試 fs.readFile、lastmod SSOT、markdown-mirrors prebuild script，最後一類僅 build 抓得到）
+- 解法：各拆為目錄 + barrel（import 路徑不變、單檔 <600），同步守門測試/lastmod SSOT/prebuild script；以 typecheck+lint+2513 測試+build 零漂移驗證
+
+- 日期：2026-06-29
+- ID：reward-ratewise-sentry-sampling-coverage-ratchet
+- 原因：Sentry 連續 session replay 取樣耗配額、@sentry/react 誤置 devDependencies；覆蓋率門檻(79/63/79/81)遠低於現況留太大退步空間
+- 解法：replaysSessionSampleRate 設 0 僅保留 onError replay、@sentry/react 移至 dependencies（bundle chunk hash 不變）；覆蓋率門檻棘輪上調至現況−2%(83/72/84/84)防退步
 
 - 日期：2026-06-28
 - ID：reward-offline-shell-self-heal-death-loop

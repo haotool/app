@@ -331,9 +331,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
   describe('🏷️ JSON-LD Structured Data - Schema.org', () => {
     const seoHelmetPath = resolve(SRC_PATH, 'components/SEOHelmet.tsx');
-    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
     const seoHelmetContent = readFile(seoHelmetPath);
-    const seoMetadataContent = readFile(seoMetadataPath);
+    const seoMetadataContent =
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/core.ts')) +
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/currency-landing.ts'));
     const combinedContent = seoHelmetContent + seoMetadataContent;
 
     it('should have SoftwareApplication schema', () => {
@@ -525,8 +526,9 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
   });
 
   describe('🏠 Homepage Rich Results (seo-metadata.ts SSOT)', () => {
-    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
-    const seoMetadataContent = readFile(seoMetadataPath);
+    const seoMetadataContent =
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/core.ts')) +
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/currency-landing.ts'));
 
     it('should have HowTo schema via HOMEPAGE_HOW_TO', () => {
       expect(seoMetadataContent).toContain('HOMEPAGE_HOW_TO');
@@ -575,9 +577,10 @@ describe('🔍 AI SEO Best Practices 2026 (GEO/LLMO/AEO)', () => {
 
   describe('🌐 Internationalization - Language SEO', () => {
     const seoHelmetPath = resolve(SRC_PATH, 'components/SEOHelmet.tsx');
-    const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
     const seoHelmetContent = readFile(seoHelmetPath);
-    const seoMetadataContent = readFile(seoMetadataPath);
+    const seoMetadataContent =
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/core.ts')) +
+      readFile(resolve(SRC_PATH, 'config/seo-metadata/currency-landing.ts'));
     const combinedContent = seoHelmetContent + seoMetadataContent;
     const indexHtmlPath = resolve(ROOT_PATH, 'index.html');
     const indexHtmlContent = readFile(indexHtmlPath);
@@ -686,8 +689,9 @@ describe('📊 E-E-A-T Compliance', () => {
 });
 
 describe('💰 Exchange Rate Knowledge Coverage', () => {
-  const seoMetadataPath = resolve(SRC_PATH, 'config/seo-metadata.ts');
-  const faqContent = readFile(seoMetadataPath);
+  const faqContent =
+    readFile(resolve(SRC_PATH, 'config/seo-metadata/core.ts')) +
+    readFile(resolve(SRC_PATH, 'config/seo-metadata/currency-landing.ts'));
 
   it('should cover cash vs spot rate difference', () => {
     expect(faqContent).toContain('現金匯率為什麼比即期匯率差');

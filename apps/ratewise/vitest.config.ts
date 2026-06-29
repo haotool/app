@@ -110,12 +110,12 @@ export default defineConfig(() => {
           'src/suppress-hydration-warning.ts', // console.error override，SSR 專用
         ],
         thresholds: {
-          // 2026-02-10: 覆蓋率校準
-          // MiniTrendChart + CalculatorKeyboard 移除 lazy 後稍微影響全局覆蓋率
-          statements: 79,
-          branches: 63,
-          functions: 79,
-          lines: 81,
+          // 2026-06-29: 防退步棘輪校準（量測基線 stmts 85.13 / branch 74.81 / funcs 86.18 / lines 86.91）
+          // 門檻設為「現況 −2%」緩衝，避免正常波動誤擋，同時鎖住覆蓋率不得明顯倒退。
+          statements: 83,
+          branches: 72,
+          functions: 84,
+          lines: 84,
         },
       },
     },
