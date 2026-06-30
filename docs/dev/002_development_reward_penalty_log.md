@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+72
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+72
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-01
+- ID：neutral-notfound-main-role-push-gate
+- 原因：NotFound 缺 role=main 導致 pre-push NotFound.test 失敗阻擋 experiment push
+- 解法：404 外層容器補 role=main 對齊語意化 HTML 與既有測試
 
 - 日期：2026-07-01
 - ID：reward-hero-v2-answer-first-redesign

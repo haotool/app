@@ -20,7 +20,10 @@ import { SEOHelmet } from '../components/SEOHelmet';
 export default function NotFound() {
   const { t } = useTranslation();
   return (
-    <main className="min-h-screen flex items-center justify-center bg-page-gradient px-4">
+    <div
+      role="main"
+      className="min-h-screen flex items-center justify-center bg-page-gradient px-4"
+    >
       {/* SEO Configuration: noindex to prevent 404 pages from being indexed */}
       <SEOHelmet
         title="404 - 找不到頁面"
@@ -81,6 +84,6 @@ export default function NotFound() {
           </a>
         </p>
       </div>
-    </main>
+    </div>
   );
 }
