@@ -103,6 +103,9 @@ const ko = {
     spotRate: '전신환',
     cashRate: '현금',
     bankRate: '은행',
+    showMoreCurrencies: '{{count}}개 더 보기',
+    showLessCurrencies: '목록 접기',
+    globalRateApplyNotice: '행별 환율 전환은 전체 목록에 적용됩니다',
   },
 
   // Favorites

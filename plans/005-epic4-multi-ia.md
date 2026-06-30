@@ -7,6 +7,7 @@
 - **Priority**: P2 | **Effort**: M | **Risk**: MED
 - **Depends on**: plans/001-experiment-branch-bootstrap.md, plans/002-epic1-hero-trust.md
 - **Category**: direction | **Planned at**: `e7b7f1ec`, 2026-06-27
+- **Execution**: `feat/ratewise-epic4-multi-ia` @ worktree `../ratewise-ux-worktrees/epic4-multi-ia`（2026-06-27）
 
 ## Why this matters
 
@@ -77,11 +78,11 @@ Rebase `origin/experiment/ratewise-ux-2026` 含 Epic 1 後開 PR
 
 ## Done criteria
 
-- [ ] ≤8 default rows（L03）
-- [ ] 全列表套用文案或 per-row preview
-- [ ] nav label ≥10px；scroll-padding ≥57px
-- [ ] `/multi/` 200
-- [ ] experiment merged
+- [x] ≤8 default rows（L03）
+- [x] 全列表套用文案或 per-row preview
+- [x] nav label ≥10px；scroll-padding ≥57px
+- [x] `/multi/` 200
+- [ ] experiment merged（待 PR merge）
 
 ## STOP conditions
 

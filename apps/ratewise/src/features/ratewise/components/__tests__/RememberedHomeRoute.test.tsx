@@ -43,16 +43,14 @@ describe('RememberedHomeRoute', () => {
     useConverterStore.setState({ lastConverterView: 'single' });
   });
 
-  it('lastConverterView=multi 且已 hydrate 時導向 /multi', async () => {
+  it('lastConverterView=multi 且已 hydrate 時仍停留 single（E4-T4）', async () => {
     vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
     useConverterStore.setState({ lastConverterView: 'multi' });
 
     renderHome('/');
 
-    await waitFor(() => {
-      expect(screen.getByTestId('multi-page')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('ratewise-single')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
   });
 
   it('lastConverterView=single 時渲染單幣別且不導向', async () => {
@@ -85,14 +83,12 @@ describe('RememberedHomeRoute', () => {
     expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
   });
 
-  it('冷啟動還原後第二次造訪 / 不再導向', async () => {
+  it('冷啟動還原旗標設定後第二次造訪 / 仍停留 single', async () => {
     vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
     useConverterStore.setState({ lastConverterView: 'multi' });
 
     const { unmount } = renderHome('/');
-    await waitFor(() => {
-      expect(screen.getByTestId('multi-page')).toBeInTheDocument();
-    });
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
     unmount();
 
     renderHome('/');

@@ -42,6 +42,22 @@ describe('AppLayout Safe Area', () => {
     expect(header).toHaveStyle(`padding-top: ${navigationTokens.safeArea.top}`);
   });
 
+  it('主要滾動區域應設定 scroll-padding-bottom ≥57px（Epic 4 L05）', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<div>內容</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('main')).toHaveStyle({
+      scrollPaddingBottom: `${navigationTokens.bottomNav.scrollPaddingBottom}px`,
+    });
+  });
+
   it('主要滾動區域應可鍵盤聚焦', () => {
     render(
       <MemoryRouter initialEntries={['/']}>

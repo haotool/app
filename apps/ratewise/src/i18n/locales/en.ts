@@ -104,6 +104,9 @@ const en = {
     spotRate: 'Spot',
     cashRate: 'Cash',
     bankRate: 'Bank',
+    showMoreCurrencies: 'Show {{count}} more',
+    showLessCurrencies: 'Show less',
+    globalRateApplyNotice: 'Rate changes in any row apply to the entire list',
   },
 
   // Favorites

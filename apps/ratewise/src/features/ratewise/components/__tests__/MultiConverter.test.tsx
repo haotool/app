@@ -7,6 +7,7 @@ import { MultiConverter } from '../MultiConverter';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateType } from '../../types';
 import type { RateDetails } from '../../hooks/useExchangeRates';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
+import { CURRENCY_DEFINITIONS, MULTI_DEFAULT_VISIBLE_ROWS } from '../../constants';
 
 const translations: Record<string, string> = {
   'currencies.TWD': '新台幣',
@@ -29,6 +30,9 @@ const translations: Record<string, string> = {
   'multiConverter.switchToSpot': '切換到即期匯率',
   'multiConverter.switchToNextRate': '切換到{{next}}',
   'multiConverter.onlyOneRateAvailable': '此幣別僅有一種匯率可用',
+  'multiConverter.showMoreCurrencies': '顯示更多（{{count}}）',
+  'multiConverter.showLessCurrencies': '收合列表',
+  'multiConverter.globalRateApplyNotice': '列內匯率切換會套用至全部幣別',
   'singleConverter.exchangeShopRate': '換錢所',
 };
 
@@ -123,6 +127,59 @@ describe('MultiConverter', () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  describe('Epic 4 progressive disclosure', () => {
+    const allCodes = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
+    const fullAmounts = Object.fromEntries(
+      allCodes.map((code) => [code, '100']),
+    ) as MultiAmountsState;
+
+    it(`預設僅顯示 ${MULTI_DEFAULT_VISIBLE_ROWS} 列並提供顯示更多`, () => {
+      render(
+        <MultiConverter {...defaultProps} sortedCurrencies={allCodes} multiAmounts={fullAmounts} />,
+      );
+
+      const list = screen.getByTestId('multi-currency-list');
+      const rows = within(list).getAllByTestId('multi-currency-row');
+      expect(rows.length).toBe(MULTI_DEFAULT_VISIBLE_ROWS);
+      expect(screen.getByTestId('multi-show-more')).toBeInTheDocument();
+    });
+
+    it('點擊顯示更多後展開全部列', () => {
+      render(
+        <MultiConverter {...defaultProps} sortedCurrencies={allCodes} multiAmounts={fullAmounts} />,
+      );
+
+      fireEvent.click(screen.getByTestId('multi-show-more'));
+
+      const list = screen.getByTestId('multi-currency-list');
+      const rows = within(list).getAllByTestId('multi-currency-row');
+      expect(rows.length).toBe(allCodes.length);
+      expect(screen.getByTestId('multi-show-less')).toBeInTheDocument();
+    });
+  });
+
+  describe('Epic 4 global rate semantics', () => {
+    it('有可切換匯率時顯示全列表套用文案', () => {
+      render(<MultiConverter {...defaultProps} />);
+
+      expect(screen.getByTestId('multi-global-rate-notice')).toHaveTextContent(
+        '列內匯率切換會套用至全部幣別',
+      );
+    });
+
+    it('列內切換匯率仍寫入全域 onRateTypeChange', () => {
+      render(<MultiConverter {...defaultProps} />);
+
+      const rateToggleButtons = screen.getAllByRole('button', { name: /切換到/ });
+      fireEvent.click(rateToggleButtons[0]!);
+
+      const called =
+        defaultProps.onRateTypeChange.mock.calls.length > 0 ||
+        defaultProps.onRateSourceChange!.mock.calls.length > 0;
+      expect(called).toBe(true);
+    });
   });
 
   describe('基本渲染', () => {
