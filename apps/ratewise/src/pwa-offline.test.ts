@@ -149,10 +149,11 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
     });
 
-    it('should clear old navigation HTML cache on activate and keep a bounded cache-miss fallback', () => {
+    it('should refresh navigation HTML cache on activate and keep a bounded cache-miss fallback', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      expect(swContent).toContain('clearNavigationHtmlCacheOnActivate');
-      expect(swContent).toContain('caches.delete(HTML_CACHE_NAME)');
+      expect(swContent).toContain('refreshNavigationHtmlCacheOnActivate');
+      expect(swContent).not.toContain('clearNavigationHtmlCacheOnActivate');
+      expect(swContent).not.toContain('caches.delete(HTML_CACHE_NAME)');
       expect(swContent).toContain('resolveNavigationFallback');
       expect(swContent).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');
     });
@@ -168,9 +169,8 @@ describe('PWA 離線功能測試', () => {
       // document 請求回退到 precache index.html，確保冷啟動離線可用。
       expect(swContent).toContain('resolveOfflineDocumentFallback');
       expect(fallbackContent).toContain("matchPrecache('index.html')");
-      // NavigationRoute 的 handlerDidError 也必須能直接命中任意快取中的 offline.html，
-      // 避免 Workbox 視為已處理後不再進入全域 setCatchHandler。
-      expect(swContent).toContain("caches.match('offline.html')");
+      expect(fallbackContent).not.toContain("matchPrecache('offline.html')");
+      expect(fallbackContent).toContain('findIndexHtmlInAnyCache');
     });
 
     it('should provide an emergency inline HTML fallback when both index and offline caches are unavailable', () => {

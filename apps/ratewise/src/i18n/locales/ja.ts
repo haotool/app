@@ -77,6 +77,8 @@ const ja = {
     viewTrendChart: 'トレンドチャートを見る',
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',
+    numpadBackspace: 'バックスペース',
+    numpadKey: '数字 {{key}}',
     backToConverter: 'コンバーターに戻る',
   },
 

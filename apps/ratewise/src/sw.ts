@@ -31,7 +31,6 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
-const NAVIGATION_FETCH_TIMEOUT_MS = 8000;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -88,15 +87,9 @@ async function verifyAndRepairPrecache(): Promise<void> {
     const scope = self.registration.scope;
 
     type ManifestEntry = string | { url: string; revision?: string | null };
-    // 補回 iOS eviction 清除的 Tier 1 shell 資產：JS/CSS 與路由 loader 清單。
-    // loader 清單為離線 SPA 子路由導覽必要，且無 runtime route 後備，故一併修復。
     const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
-      const isRepairable =
-        relUrl.endsWith('.js') ||
-        relUrl.endsWith('.css') ||
-        relUrl.includes('static-loader-data-manifest');
-      if (!isRepairable) return false;
+      if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
       const fullUrl = new URL(relUrl, scope).href;
       return !cachedUrls.has(fullUrl);
     });
@@ -129,11 +122,20 @@ async function verifyAndRepairPrecache(): Promise<void> {
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
-async function clearNavigationHtmlCacheOnActivate(): Promise<void> {
+async function refreshNavigationHtmlCacheOnActivate(): Promise<void> {
   try {
-    await caches.delete(HTML_CACHE_NAME);
+    const scope = self.registration.scope;
+    const precachedIndex = await matchPrecache('index.html');
+    if (!precachedIndex) {
+      return;
+    }
+
+    const cache = await caches.open(HTML_CACHE_NAME);
+    const indexUrl = new URL('index.html', scope).href;
+    await cache.put(indexUrl, precachedIndex.clone());
+    await cache.put('index.html', precachedIndex);
   } catch {
-    // 快取清理失敗不可阻斷新版 SW 啟用。
+    // 保留既有 html-cache，避免 SW 更新時清掉 iOS 備份的 index.html。
   }
 }
 
@@ -180,9 +182,9 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(checkAndCleanupCacheBudget());
 });
 
-// activate 時清掉舊 navigation HTML，再確保 offline.html 已快取（install 失敗時的補救）。
+// activate 時刷新 navigation HTML 備份，再確保 offline.html 已快取（install 失敗時的補救）。
 self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(clearNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
+  event.waitUntil(refreshNavigationHtmlCacheOnActivate().then(() => ensureOfflineHtmlCached()));
 });
 
 // prompt 模式：僅在 waiting SW 收到 SKIP_WAITING 訊息後才接管。
@@ -201,36 +203,6 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   // 啟動時驗證 precache 完整性，補回 iOS cache eviction 清除的 chunk。
   if (data?.type === 'VERIFY_AND_REPAIR_PRECACHE') {
     event.waitUntil(verifyAndRepairPrecache());
-    return;
-  }
-
-  // 自我修復探針：回報 app shell 與 precache 規模，供 client 判斷壞 SW。
-  if (data?.type === 'CHECK_SHELL_PRECACHE') {
-    event.waitUntil(
-      (async () => {
-        let hasIndexShell = false;
-        let precacheEntryCount = 0;
-        try {
-          hasIndexShell = Boolean(await matchPrecache('index.html'));
-          const cacheNames = await caches.keys();
-          const precacheName = cacheNames.find((name) => name.startsWith('workbox-precache-v2'));
-          if (precacheName) {
-            const precache = await caches.open(precacheName);
-            precacheEntryCount = (await precache.keys()).length;
-          }
-        } catch {
-          hasIndexShell = false;
-        }
-        // 舊版膨脹 precache（400+ 項）視為不健康，即使 index.html 仍在。
-        const healthy = hasIndexShell && precacheEntryCount <= 150;
-        event.source?.postMessage({
-          type: 'SHELL_PRECACHE_STATUS',
-          healthy,
-          hasIndexShell,
-          precacheEntryCount,
-        });
-      })(),
-    );
     return;
   }
 
@@ -260,13 +232,17 @@ registerRoute(
   new NetworkOnly(),
 );
 
-const OFFLINE_DOCUMENT_FALLBACK_MATCHERS = {
-  matchPrecache,
-  matchIndexHtmlInAnyCache: () => caches.match('index.html'),
-  matchOfflineHtmlInAnyCache: () => caches.match('offline.html'),
-} as const;
+function createOfflineDocumentFallbackOptions(
+  emergencyReason: 'emergency-document-fallback' | 'emergency-navigation-fallback',
+) {
+  return {
+    emergencyReason,
+    scope: self.registration.scope,
+    matchPrecache,
+  } as const;
+}
 
-// 網路失敗離線回退：JS/CSS 三層快取；導覽請求回退至 precache index.html / offline.html。
+// 網路失敗離線回退：JS/CSS 三層快取；導覽請求回退至 precache index.html（app shell）。
 setCatchHandler(async ({ event, request }): Promise<Response> => {
   const fetchEvent = event as FetchEvent;
   const req = request ?? fetchEvent.request;
@@ -279,10 +255,9 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
     return Response.error();
   }
 
-  return resolveOfflineDocumentFallback({
-    emergencyReason: 'emergency-document-fallback',
-    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
-  });
+  return resolveOfflineDocumentFallback(
+    createOfflineDocumentFallbackOptions('emergency-document-fallback'),
+  );
 });
 
 /**
@@ -291,19 +266,18 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
  * - 暖快取（html-cache hit）：立即回傳已快取 HTML + 背景 revalidate（零白屏）
  * - 冷快取（html-cache miss）：直接從 Workbox precache 取 index.html 回傳，
  *   同時背景發網路請求更新 html-cache，下次導覽自動用最新版本
- * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 offline.html
+ * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 app shell / emergency HTML
  *
  * 為什麼不用 3s timeout：
- * - timeout 命中時 precache 可能已被 iOS 驅逐，導致 offline.html 被服務給在線用戶
+ * - timeout 命中時 precache 可能已被 iOS 驅逐，導致靜態離線頁被服務給在線用戶
  * - cold cache 用 precache 直接回傳，等同舊的 createHandlerBoundToURL 行為，無需等待
  *
  * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
 function resolveNavigationFallback(): Promise<Response> {
-  return resolveOfflineDocumentFallback({
-    emergencyReason: 'emergency-navigation-fallback',
-    ...OFFLINE_DOCUMENT_FALLBACK_MATCHERS,
-  });
+  return resolveOfflineDocumentFallback(
+    createOfflineDocumentFallbackOptions('emergency-navigation-fallback'),
+  );
 }
 
 async function fetchAndCacheNavigation(request: Request, cache: Cache): Promise<Response> {
@@ -338,7 +312,7 @@ async function handleNavigationRequest({
   }
 
   // 冷快取：先嘗試 precache index.html（零延遲），再背景抓最新版本寫入 html-cache。
-  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳 offline.html 給在線用戶。
+  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳靜態離線頁給在線用戶。
   const precachedShell = await matchPrecache('index.html');
   if (precachedShell) {
     event.waitUntil(
@@ -349,26 +323,11 @@ async function handleNavigationRequest({
     return precachedShell;
   }
 
-  // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
-  const networkFetch = fetchAndCacheNavigation(request, cache);
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 app shell fallback
   try {
-    return await Promise.race([
-      networkFetch,
-      new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(
-          () => reject(new Error('navigation-fetch-timeout')),
-          NAVIGATION_FETCH_TIMEOUT_MS,
-        );
-      }),
-    ]);
+    return await fetchAndCacheNavigation(request, cache);
   } catch {
-    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
-  } finally {
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
   }
 }
 
@@ -378,13 +337,10 @@ registerRoute(new NavigationRoute(handleNavigationRequest));
 registerRoute(
   ({ url }: { url: URL }) =>
     url.pathname.includes('/public/rates/history-30d.json') ||
-    url.pathname.includes('/public/rates/providers/moneybox/history-30d.json') ||
     (url.origin === 'https://cdn.jsdelivr.net' &&
-      (url.pathname.includes('/public/rates/history-30d.json') ||
-        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))) ||
+      url.pathname.includes('/public/rates/history-30d.json')) ||
     (url.origin === 'https://raw.githubusercontent.com' &&
-      (url.pathname.includes('/public/rates/history-30d.json') ||
-        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))),
+      url.pathname.includes('/public/rates/history-30d.json')),
   new StaleWhileRevalidate({
     cacheName: 'history-aggregate-cache',
     plugins: [
@@ -433,52 +389,33 @@ registerRoute(
   }),
 );
 
-const LATEST_RATE_SWR_PLUGINS = [
-  new CacheableResponsePlugin({ statuses: [0, 200] }),
-  new ExpirationPlugin({
-    // GitHub raw + 同域 api/latest + 17 個 api/pairs 共用此快取（約 19 筆），
-    // 預留擴充幣對的餘裕，避免 LRU 驅逐離線匯率備援。
-    maxEntries: 32,
-    maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-  }),
-];
-
-// 最新匯率（GitHub raw）：StaleWhileRevalidate，離線備援 7 天。
+// 最新匯率：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
     url.pathname.includes('/public/rates/latest.json'),
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
-    plugins: LATEST_RATE_SWR_PLUGINS,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({
+        maxEntries: 1,
+        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+      }),
+    ],
   }),
 );
 
-// 同域匯率 API（latest / pairs）：StaleWhileRevalidate，離線備援 7 天。
+// 圖片：CacheFirst，90 天。
 registerRoute(
-  ({ url }: { url: URL }) =>
-    url.origin === self.location.origin &&
-    (url.pathname.endsWith('/api/latest.json') ||
-      (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json'))),
-  new StaleWhileRevalidate({
-    cacheName: 'latest-rate-cache',
-    plugins: LATEST_RATE_SWR_PLUGINS,
-  }),
-);
-
-const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|webp|avif)$/i;
-
-// 圖片（Tier 2）：CacheFirst，按需快取大圖示 / OG / screenshots 等。
-registerRoute(
-  ({ request, url }: { request: Request; url: URL }) =>
-    request.destination === 'image' || IMAGE_EXTENSION_PATTERN.test(url.pathname),
+  ({ request }: { request: Request }) => request.destination === 'image',
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
+        maxEntries: 150,
+        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天
       }),
     ],
   }),
@@ -515,12 +452,9 @@ registerRoute(
   }),
 );
 
-// manifest 必須 NetworkOnly：SWR 快取會回傳舊版相對 start_url，觸發冷啟動 HTTPS-First 警告。
-registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), new NetworkOnly());
-
-// SEO 文字/XML：StaleWhileRevalidate，7 天。
+// manifest / SEO 文字檔案：StaleWhileRevalidate，7 天。
 registerRoute(
-  ({ url }: { url: URL }) => /\.(txt|xml)$/.test(url.pathname),
+  ({ url }: { url: URL }) => /\.(webmanifest|txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
     cacheName: 'seo-files-cache',
     plugins: [

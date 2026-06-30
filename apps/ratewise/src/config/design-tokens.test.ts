@@ -253,7 +253,7 @@ describe('Design Token System - BDD', () => {
     });
 
     it('應該導出 singleConverterLayoutTokens', async () => {
-      const { singleConverterLayoutTokens } = await import('./design-tokens');
+      const { singleConverterLayoutTokens, navigationTokens } = await import('./design-tokens');
 
       expect(singleConverterLayoutTokens).toBeDefined();
 
@@ -270,6 +270,23 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('nano:pt-10');
       expect(singleConverterLayoutTokens.addToHistory.className).toContain('micro:min-h-11');
       expect(singleConverterLayoutTokens.addToHistory.className).toContain('nano:min-h-11');
+      expect(singleConverterLayoutTokens.rateCard.rateTypeButtonHit).toContain('before:absolute');
+      expect(singleConverterLayoutTokens.rateCard.heroRateDisplay).toContain('text-[32px]');
+      expect(singleConverterLayoutTokens.rateCard.trustChipGap).toBe('mt-2');
+      expect(singleConverterLayoutTokens.rateCard.heroCardGradient).toContain('gradient');
+      expect(singleConverterLayoutTokens.rateCard.heroRateTabPill).toContain('rounded-full');
+      expect(singleConverterLayoutTokens.rateCard.heroRateTabActive).toContain('bg-primary');
+      expect(singleConverterLayoutTokens.rateCard.heroRateTabInactive).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyRow).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyField).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyLabel).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyInput).toContain('text-xl');
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyInputActive).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyInputInactive).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroNumpadGrid).toContain('grid-cols-3');
+      expect(singleConverterLayoutTokens.rateCard.heroNumpadKey).toBeTruthy();
+      expect(singleConverterLayoutTokens.rateCard.heroNumpadKeyDanger).toContain('danger');
+      expect(navigationTokens.bottomNav.scrollPaddingBottom).toBe(57);
     });
   });
 

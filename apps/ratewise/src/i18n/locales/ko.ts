@@ -77,6 +77,8 @@ const ko = {
     viewTrendChart: '추세 차트 보기',
     fromAmountLabel: '금액 ({{code}})',
     toAmountLabel: '결과 ({{code}})',
+    numpadBackspace: '백스페이스',
+    numpadKey: '숫자 {{key}}',
     backToConverter: '환산기로 돌아가기',
   },
 
