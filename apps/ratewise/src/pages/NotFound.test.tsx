@@ -122,8 +122,8 @@ describe('NotFound Component - 404 Page (BDD)', () => {
 
       // 🔴 紅燈：應該有友善的錯誤說明文字
       // 範例：「您訪問的頁面不存在」、「請檢查網址是否正確」等
-      const container = screen.getByRole('main');
-      const text = container.textContent;
+      const container = screen.getByText(/404/i).closest('div');
+      const text = container?.textContent ?? '';
 
       expect(text).toMatch(/您.*頁面|這個頁面|網址|連結|已被移除/i);
     });
@@ -131,10 +131,8 @@ describe('NotFound Component - 404 Page (BDD)', () => {
     it('should be visually styled consistently with the app', () => {
       renderNotFound();
 
-      // 🔴 紅燈：確認有適當的容器結構
-      // 至少應該有 main role 和適當的 className
-      const main = screen.getByRole('main');
-      expect(main).toHaveClass(/container|min-h-screen|flex|items-center/);
+      const container = document.querySelector('.bg-page-gradient');
+      expect(container?.className).toMatch(/flex|items-center/);
     });
   });
 });

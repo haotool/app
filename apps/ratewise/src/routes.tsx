@@ -32,27 +32,21 @@
 
 import type { RouteRecord } from 'vite-react-ssg';
 import type { ComponentType } from 'react';
-import { Suspense } from 'react';
 import { SEOHelmet } from './components/SEOHelmet';
 import { HomepageSEOSection } from './components/HomepageSEOSection';
 import { Layout } from './components/Layout';
 import { AppLayout } from './components/AppLayout';
-import {
-  MultiConverterSkeleton,
-  FavoritesSkeleton,
-  SettingsSkeleton,
-} from './components/SkeletonLoader';
 import { HOMEPAGE_SEO } from './config/seo-metadata';
 import { CURRENCY_LANDING_ROUTE_REGISTRY } from './config/currencyLandingRouteRegistry';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
-import { lazyWithRetry } from './utils/lazyWithRetry';
 import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
 
 import { RememberedHomeRoute } from './features/ratewise/components/RememberedHomeRoute';
-const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
-const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
-const Settings = lazyWithRetry(() => import('./pages/Settings'));
+import MultiConverter from './pages/MultiConverter';
+import Favorites from './pages/Favorites';
+import Settings from './pages/Settings';
+import NotFound from './pages/NotFound';
 
 const shouldEnableInternalRoutes =
   import.meta.env.DEV || import.meta.env['VITE_ENABLE_INTERNAL_ROUTES'] === 'true';
@@ -191,9 +185,7 @@ export const routes: RouteRecord[] = [
         path: 'multi',
         element: (
           <ChunkErrorBoundary>
-            <Suspense fallback={<MultiConverterSkeleton />}>
-              <MultiConverter />
-            </Suspense>
+            <MultiConverter />
           </ChunkErrorBoundary>
         ),
         entry: 'src/pages/MultiConverter.tsx',
@@ -203,9 +195,7 @@ export const routes: RouteRecord[] = [
         path: 'favorites',
         element: (
           <ChunkErrorBoundary>
-            <Suspense fallback={<FavoritesSkeleton />}>
-              <Favorites />
-            </Suspense>
+            <Favorites />
           </ChunkErrorBoundary>
         ),
         entry: 'src/pages/Favorites.tsx',
@@ -215,9 +205,7 @@ export const routes: RouteRecord[] = [
         path: 'settings',
         element: (
           <ChunkErrorBoundary>
-            <Suspense fallback={<SettingsSkeleton />}>
-              <Settings />
-            </Suspense>
+            <Settings />
           </ChunkErrorBoundary>
         ),
         entry: 'src/pages/Settings.tsx',
@@ -237,6 +225,25 @@ export const routes: RouteRecord[] = [
             },
           ]
         : []),
+      // 404：掛在 AppLayout 下，首屏對齊 index.html SSG fallback（首頁 shell）。
+      {
+        path: 'nonexistent-route-qa',
+        element: (
+          <ChunkErrorBoundary>
+            <NotFound />
+          </ChunkErrorBoundary>
+        ),
+        entry: 'src/pages/NotFound.tsx',
+      },
+      {
+        path: '*',
+        element: (
+          <ChunkErrorBoundary>
+            <NotFound />
+          </ChunkErrorBoundary>
+        ),
+        entry: 'src/pages/NotFound.tsx',
+      },
     ],
   },
 
@@ -294,9 +301,6 @@ export const routes: RouteRecord[] = [
         ),
       ]
     : []),
-
-  // 不預渲染 404 頁面（動態處理）
-  createLazyRoute('*', () => import('./pages/NotFound'), 'src/pages/NotFound.tsx'),
 ];
 
 /**

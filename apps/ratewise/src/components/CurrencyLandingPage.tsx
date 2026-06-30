@@ -329,9 +329,9 @@ export function CurrencyLandingPage({
           {/* 精準換匯：唯一正文論述區塊（預設折疊，ATF 留給 rate strip）。 */}
           <details className="card group mb-6 sm:mb-8">
             <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
-              <h2 className="font-bold text-text text-sm sm:text-base">
+              <span className="font-bold text-text text-sm sm:text-base">
                 {precisionThesis.heading}
-              </h2>
+              </span>
               <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
                 ▼
               </span>
@@ -375,7 +375,7 @@ export function CurrencyLandingPage({
             <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-3.5 h-3.5 text-primary/70" />
-                <h2 className="text-sm font-black text-text">{currencyName}匯率重點</h2>
+                <span className="text-sm font-black text-text">{currencyName}匯率重點</span>
               </div>
               <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
                 ▼
@@ -404,7 +404,7 @@ export function CurrencyLandingPage({
             <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-center justify-between gap-3 hover:bg-surface/50 rounded-2xl">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-primary/70" />
-                <h2 className="text-sm font-black text-text">使用步驟</h2>
+                <span className="text-sm font-black text-text">使用步驟</span>
               </div>
               <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
                 ▼
@@ -452,9 +452,9 @@ export function CurrencyLandingPage({
                       to={`${pathname.replace(/\/$/, '')}/${entry.amount}/`}
                       className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
                     >
-                      <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
+                      <span className="text-sm font-medium text-text group-hover:text-primary transition-colors block">
                         {entry.question}
-                      </h3>
+                      </span>
                       <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
                     </Link>
                   ))}
@@ -571,9 +571,9 @@ export function CurrencyLandingPage({
                       <HelpCircle className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-text text-sm sm:text-base leading-snug pr-4">
+                      <span className="font-bold text-text text-sm sm:text-base leading-snug pr-4 block">
                         {faq.question}
-                      </h3>
+                      </span>
                     </div>
                     <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
                       ▼

@@ -3,7 +3,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { APP_ONLY_NOINDEX_PATHS } from './config/seo-paths';
+import { APP_ONLY_NOINDEX_PATHS, QA_PRERENDER_PATHS } from './config/seo-paths';
 import { APP_INFO } from './config/app-info';
 import { ensurePrerenderDist } from './__tests__/helpers/ensurePrerenderDist';
 
@@ -422,6 +422,26 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
       const sitemap = readFileSync(sitemapPath, 'utf-8');
       expect(sitemap).not.toContain(`/ratewise${path}</loc>`);
+    });
+
+    it.each(QA_PRERENDER_PATHS)('%s should include robots noindex in prerendered HTML', (path) => {
+      const htmlPath = resolve(distPath, path.slice(1), 'index.html');
+      if (!existsSync(htmlPath)) return;
+
+      const content = readFileSync(htmlPath, 'utf-8');
+      expect(content).toMatch(/name="robots"[^>]*content="noindex/);
+    });
+
+    it.each(QA_PRERENDER_PATHS)('%s should use self canonical URL', (path) => {
+      const htmlPath = resolve(distPath, path.slice(1), 'index.html');
+      if (!existsSync(htmlPath)) return;
+
+      const content = readFileSync(htmlPath, 'utf-8');
+      expect(content).toMatch(
+        new RegExp(
+          `<link[^>]*rel="canonical"[^>]*href="https://app\\.haotool\\.org/ratewise${path}"`,
+        ),
+      );
     });
   });
 

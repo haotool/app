@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+72
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+73
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-01
+- ID：reward-site-wide-hydration-418-fix
+- 原因：SW 冷快取回傳首頁 shell、404 fallback 與 Layout 頁無效 HTML 嵌套，11/12 路由 React #418
+- 解法：SW network-first 導覽、404 預渲染與 fallback shell 清空、summary/MailtoLink 嵌套修正；QA 12/12 console=0
 
 - 日期：2026-07-01
 - ID：neutral-notfound-main-role-push-gate

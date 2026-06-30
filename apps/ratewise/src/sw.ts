@@ -317,16 +317,12 @@ setCatchHandler(async ({ event, request }): Promise<Response> => {
 });
 
 /**
- * SPA 導覽策略：hybrid SWR + precache-first navigation
+ * SSG + SPA 導覽策略：hybrid SWR + network-first cold navigation
  *
  * - 暖快取（html-cache hit）：立即回傳已快取 HTML + 背景 revalidate（零白屏）
- * - 冷快取（html-cache miss）：直接從 Workbox precache 取 index.html 回傳，
- *   同時背景發網路請求更新 html-cache，下次導覽自動用最新版本
- * - precache 也 miss（iOS eviction）：等網路回應，失敗才 fallback 到 app shell / emergency HTML
- *
- * 為什麼不用 3s timeout：
- * - timeout 命中時 precache 可能已被 iOS 驅逐，導致靜態離線頁被服務給在線用戶
- * - cold cache 用 precache 直接回傳，等同舊的 createHandlerBoundToURL 行為，無需等待
+ * - 冷快取（html-cache miss）：先向 origin 取該 URL 的 SSG HTML，避免誤回傳 index.html
+ *   造成 React #418 hydration mismatch（landing / Layout 路由各有獨立預渲染 HTML）
+ * - 網路失敗或 timeout：才 fallback 到 precache index.html（SPA shell）/ emergency HTML
  *
  * @see https://developer.chrome.com/docs/workbox/modules/workbox-strategies#stale-while-revalidate
  */
@@ -367,19 +363,7 @@ async function handleNavigationRequest({
     return cached;
   }
 
-  // 冷快取：先嘗試 precache index.html（零延遲），再背景抓最新版本寫入 html-cache。
-  // 這避免了 3s timeout 在 iOS precache 被驅逐時錯誤回傳靜態離線頁給在線用戶。
-  const precachedShell = await matchPrecache('index.html');
-  if (precachedShell) {
-    event.waitUntil(
-      fetchAndCacheNavigation(request, cache)
-        .then(() => undefined)
-        .catch(() => undefined),
-    );
-    return precachedShell;
-  }
-
-  // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
+  // 冷快取：先取正確的 per-route SSG HTML；僅在離線/timeout 時才回退 app shell。
   const networkFetch = fetchAndCacheNavigation(request, cache);
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -394,6 +378,10 @@ async function handleNavigationRequest({
     ]);
   } catch {
     event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
+    const precachedShell = await matchPrecache('index.html');
+    if (precachedShell) {
+      return precachedShell;
+    }
     return resolveNavigationFallback();
   } finally {
     if (timeoutId !== undefined) {

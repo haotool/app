@@ -95,9 +95,9 @@ export default function FAQ() {
                       className="group card p-0 hover:shadow-md transition-shadow"
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between p-6 transition-colors hover:text-primary">
-                        <h3 className="text-lg font-semibold text-text group-hover:text-primary">
+                        <span className="text-lg font-semibold text-text group-hover:text-primary">
                           {entry.question}
-                        </h3>
+                        </span>
                         <svg
                           className="ml-4 h-5 w-5 flex-shrink-0 text-text-muted transition-transform group-open:rotate-180"
                           fill="none"
@@ -124,7 +124,7 @@ export default function FAQ() {
 
           <section className="card mt-10 bg-primary/5 p-6 border-primary/20">
             <h2 className="mb-2 text-xl font-semibold text-text">還需要更多幫助？</h2>
-            <p className="text-text-muted">
+            <div className="text-text-muted">
               可先查看
               <Link to="/guide/" className="mx-1 text-primary underline">
                 使用指南
@@ -135,7 +135,7 @@ export default function FAQ() {
               </Link>
               ，若仍有問題可直接寄信至
               <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
-            </p>
+            </div>
           </section>
         </div>
       </div>

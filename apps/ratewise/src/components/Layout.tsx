@@ -43,8 +43,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isBrowser = typeof window !== 'undefined';
   const [showDecemberTheme, setShowDecemberTheme] = React.useState(false);
 
-  // SSR 端需提供空 context 避免狀態洩漏；客戶端使用預設值
-  const helmetContext = isBrowser ? undefined : {};
+  // SSR 與 hydration 首屏必須共用同一 Helmet context，避免 #418。
+  const helmetContext = {};
 
   React.useEffect(() => {
     syncI18nAfterHydration();

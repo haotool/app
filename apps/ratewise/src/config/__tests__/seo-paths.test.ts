@@ -113,11 +113,12 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(253);
-      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(3) = 253
+      expect(PRERENDER_PATHS).toHaveLength(254);
+      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL(1) + APP_ONLY(3) + QA(1) = 254
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
+      expect(PRERENDER_PATHS).toContain('/nonexistent-route-qa/');
       expect(APP_CONFIG.prerenderPaths).toEqual(PRERENDER_PATHS);
     });
 

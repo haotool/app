@@ -19,6 +19,7 @@ import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
 import { recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
+import { normalizePath, parseDynamicAmountRoute, shouldPrerender } from './config/seo-paths';
 import {
   classifyUnhandledRejection,
   getUnhandledRejectionMessage,
@@ -111,6 +112,56 @@ const resolveColdStartPrimeResult = async (
     };
   }
 };
+
+function resolveClientRoutePathname(): string {
+  const base = import.meta.env.BASE_URL || '/';
+  let path = window.location.pathname;
+  const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
+  if (baseNoTrailing && path.startsWith(baseNoTrailing)) {
+    path = path.slice(baseNoTrailing.length) || '/';
+  }
+  return normalizePath(path);
+}
+
+function isHydratableKnownRoute(path: string): boolean {
+  return shouldPrerender(path) || parseDynamicAmountRoute(path) !== null;
+}
+
+/** 未知 URL 的 index.html fallback 帶首頁 SSG，須清空後再 client render 404，避免 React #418。 */
+function clearIndexHtmlFallbackShellIfNeeded(): void {
+  const path = resolveClientRoutePathname();
+  if (isHydratableKnownRoute(path)) {
+    return;
+  }
+
+  const root = document.getElementById('root');
+  if (!root) {
+    return;
+  }
+
+  root.innerHTML = '';
+  // 保留 marker，避免 index.html cold-start watchdog 在 hydration 期間誤清 #root。
+  root.setAttribute('data-server-rendered', 'true');
+
+  for (const node of Array.from(document.head.querySelectorAll('[data-rh="true"]'))) {
+    node.remove();
+  }
+  for (const node of Array.from(
+    document.head.querySelectorAll(
+      'script[type="application/ld+json"][data-rh="true"], script[type="application/ld+json"][data-seo-helmet="structured-data"]',
+    ),
+  )) {
+    node.remove();
+  }
+  const title = document.head.querySelector('title');
+  if (title) {
+    title.textContent = '';
+  }
+}
+
+if (typeof window !== 'undefined') {
+  clearIndexHtmlFallbackShellIfNeeded();
+}
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(

@@ -153,10 +153,10 @@ export default function About() {
                   {APP_INFO.socialHandle}
                 </a>
               </p>
-              <p>
+              <div>
                 <strong className="text-text">聯絡信箱：</strong>
                 <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />
-              </p>
+              </div>
             </div>
           </section>
 

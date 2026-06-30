@@ -13,27 +13,26 @@
  * 依據：[SEO 審查報告 2025-11-25] 404 頁面最佳實踐
  */
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { normalizePath } from '../config/seo-paths';
 
 export default function NotFound() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const seoPathname = pathname === '/' ? '/404' : normalizePath(pathname);
+
   return (
-    <div
-      role="main"
-      className="min-h-screen flex items-center justify-center bg-page-gradient px-4"
-    >
-      {/* SEO Configuration: noindex to prevent 404 pages from being indexed */}
+    <div className="min-h-full flex items-center justify-center bg-page-gradient px-4 py-8">
       <SEOHelmet
         title="404 - 找不到頁面"
         description="很抱歉，您訪問的頁面不存在。請返回首頁或瀏覽其他頁面。"
-        pathname="/404"
+        pathname={seoPathname}
         robots="noindex, follow"
       />
 
       <div className="max-w-md w-full text-center">
-        {/* 404 Error Display */}
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-primary mb-4" aria-label="404 錯誤">
             404
@@ -42,7 +41,6 @@ export default function NotFound() {
           <p className="text-text-muted mb-6">{t('notFound.message')}</p>
         </div>
 
-        {/* Primary Action: Return to Home */}
         <div className="mb-8">
           <Link
             to="/"
@@ -52,7 +50,6 @@ export default function NotFound() {
           </Link>
         </div>
 
-        {/* Suggested Pages */}
         <div className="space-y-3">
           <p className="text-sm text-text-muted mb-3">或許您想前往：</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -71,7 +68,6 @@ export default function NotFound() {
           </div>
         </div>
 
-        {/* Additional Help Text */}
         <p className="mt-8 text-xs text-text-muted">
           如果您認為這是一個錯誤，請
           <a

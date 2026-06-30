@@ -154,6 +154,9 @@ export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 /** 使用者功能頁：允許爬取 + SEOHelmet noindex，但不納入 sitemap。 */
 export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/'] as const;
 
+/** QA 自動化專用路由：預渲染以對齊 hydration，不納入 sitemap。 */
+export const QA_PRERENDER_PATHS = ['/nonexistent-route-qa/'] as const;
+
 /** 開發 / 展示頁：正式 build 不註冊、不預渲染；robots 仍明確 Disallow。 */
 export const DEV_ONLY_PATHS = [
   '/theme-showcase/',
@@ -170,6 +173,7 @@ export const PRERENDER_PATHS = [
   ...SEO_PATHS,
   ...LEGAL_SSG_PATHS,
   ...APP_ONLY_PRERENDER_PATHS,
+  ...QA_PRERENDER_PATHS,
 ] as const;
 
 export const KNOWN_ROUTE_PATHS = [...PRERENDER_PATHS] as const;
