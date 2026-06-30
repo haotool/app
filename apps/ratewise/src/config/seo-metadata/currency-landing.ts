@@ -666,13 +666,13 @@ export function buildPairAmountSeo(
   if (direction === 'twd-to-foreign') {
     return {
       title: `${formatted} 台幣換${currencyName}（TWD/${currencyCode}）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
-      description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`,
+      description: `${formatted} 台幣今日可換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料約每 5 分鐘檢查更新，幫你出國換匯前精確估算可兌換的外幣金額，避免被中間價誤導。`,
     };
   }
 
   return {
     title: `買 ${formatted} ${currencyName}要多少新台幣（${currencyCode}/TWD）— 台銀實際賣出價 | ${APP_INFO.shortName}`,
-    description: `買 ${formatted} ${currencyName}今日要多少新台幣？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料每 5 分鐘自動更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
+    description: `買 ${formatted} ${currencyName}今日要多少新台幣？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），資料約每 5 分鐘檢查更新，幫你出國換匯前精確估算所需台幣金額，避免被中間價誤導。`,
   };
 }
 
@@ -810,8 +810,8 @@ export function getCurrencyLandingPageContent(
     currencyName: displayName,
     title: `即時${displayName}匯率 — 台銀實際賣出價 | ${code}/TWD`,
     description: spotAvailable
-      ? `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`
-      : `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
+      ? `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，約每 5 分鐘檢查更新，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`
+      : `即時查看台銀${displayName}現金賣出價（非中間價），換匯前確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，約每 5 分鐘檢查更新，附快速金額按鈕與 7～30 天歷史趨勢圖。適合${override.region}費用估算使用。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -872,7 +872,7 @@ export function getCurrencyLandingPageContent(
       spotAvailable
         ? `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`
         : `資料來源：臺灣銀行牌告匯率，頁面以該幣別可實際查得的現金買入賣出報價為準。`,
-      `更新頻率：每 5 分鐘自動同步，首頁顯示最近更新時間，亦可下拉手動重新整理。`,
+      `更新頻率：約每 5 分鐘檢查更新，首頁顯示最近更新時間，亦可下拉手動重新整理。`,
       `適用情境：${override.region}前快速查看 ${code}/TWD 即時換算與歷史趨勢。`,
       `${override.travelTip}`,
       `工具功能：計算機鍵盤快速輸入、快速金額按鈕、收藏管理與拖曳排序、換算歷史紀錄。`,
@@ -1075,8 +1075,8 @@ export function getReverseCurrencyLandingPageContent(
     currencyName: displayName,
     title: `台幣換${displayName}匯率 — 出國換匯實際費率 | TWD/${code}`,
     description: spotAvailable
-      ? `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`
-      : `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，每 5 分鐘自動同步，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
+      ? `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，約每 5 分鐘檢查更新，支援現金與即期匯率切換，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`
+      : `出國換${displayName}前，先用台銀實際現金賣出價（非中間價）確認你真正要付多少台幣。資料來源臺灣銀行官方牌告，約每 5 分鐘檢查更新，附快速金額按鈕與 7～30 天歷史趨勢圖，幫助你合理規劃換匯預算。`,
     pathname,
     canonical: canonicalUrl,
     keywords: [
@@ -1136,7 +1136,7 @@ export function getReverseCurrencyLandingPageContent(
       spotAvailable
         ? `資料來源：臺灣銀行牌告匯率，現金與即期買入賣出四種報價完整呈現。`
         : `資料來源：臺灣銀行牌告匯率，頁面以該幣別可實際查得的現金買入賣出報價為準。`,
-      `更新頻率：每 5 分鐘自動同步，顯示最近更新時間，可手動重新整理。`,
+      `更新頻率：約每 5 分鐘檢查更新，顯示最近更新時間，可手動重新整理。`,
       `換匯估算：輸入台幣金額即時計算可換到的${displayName}，並附 7～30 天趨勢。`,
       `${override.travelTip}`,
       `工具功能：計算機鍵盤快速輸入、快速金額按鈕、收藏管理、換算歷史紀錄。`,
