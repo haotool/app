@@ -55,6 +55,7 @@ import {
   type HeroLayoutVariant,
 } from '../config/hero-layout-variant';
 import { useState } from 'react';
+import { navigationTokens } from '../config/design-tokens';
 import { requestPwaInstallGuide } from '../components/PwaInstallGuide';
 
 export default function Settings() {
@@ -408,7 +409,7 @@ export default function Settings() {
         </section>
 
         {/* 資料管理區塊 */}
-        <section className="mb-6">
+        <section className="mb-6 scroll-mb-[calc(56px+env(safe-area-inset-bottom,0px))] max-[360px]:scroll-mb-[calc(84px+env(safe-area-inset-bottom,0px))]">
           <div className="flex items-center gap-2 px-2 opacity-55 mb-3">
             <ShieldAlert className="w-3.5 h-3.5" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
@@ -491,7 +492,9 @@ export default function Settings() {
         </section>
 
         {/* 版本資訊 */}
-        <footer className="text-center mt-8 pb-4">
+        <footer
+          className={`text-center mt-8 pb-4 ${navigationTokens.mainScroll.paddingBottomClass} md:pb-4`}
+        >
           <p className="text-[10px] opacity-40">{t('settings.copyright')}</p>
           <p className="text-xs font-mono opacity-60 mt-1">{getDisplayVersion()}</p>
         </footer>

@@ -31,6 +31,8 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
+/** 與 swHealth.ts LEGACY_PRECACHE_BLOAT_THRESHOLD 同步。 */
+const LEGACY_PRECACHE_BLOAT_THRESHOLD = 150;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -119,6 +121,27 @@ async function verifyAndRepairPrecache(): Promise<void> {
   }
 }
 
+async function probeShellPrecacheHealth(): Promise<{
+  hasIndexShell: boolean;
+  precacheEntryCount: number;
+}> {
+  const cacheNames = await caches.keys();
+  const precacheName = cacheNames.find((n) => n.startsWith('workbox-precache-v2'));
+  if (!precacheName) {
+    return { hasIndexShell: false, precacheEntryCount: 0 };
+  }
+
+  const cache = await caches.open(precacheName);
+  const keys = await cache.keys();
+  const scope = self.registration.scope;
+  const indexUrl = new URL('index.html', scope).href;
+  const hasIndexShell = keys.some(
+    (request) => request.url === indexUrl || request.url.endsWith('/index.html'),
+  );
+
+  return { hasIndexShell, precacheEntryCount: keys.length };
+}
+
 // 清除舊版快取。
 cleanupOutdatedCaches();
 
@@ -203,6 +226,34 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   // 啟動時驗證 precache 完整性，補回 iOS cache eviction 清除的 chunk。
   if (data?.type === 'VERIFY_AND_REPAIR_PRECACHE') {
     event.waitUntil(verifyAndRepairPrecache());
+    return;
+  }
+
+  // 自我修復探針：回報 app shell 是否在 precache，供 client 判斷壞 SW。
+  if (data?.type === 'CHECK_SHELL_PRECACHE') {
+    const port = event.ports?.[0];
+    if (!port) return;
+
+    event.waitUntil(
+      (async () => {
+        try {
+          const { hasIndexShell, precacheEntryCount } = await probeShellPrecacheHealth();
+          port.postMessage({
+            type: 'SHELL_PRECACHE_STATUS',
+            healthy: hasIndexShell && precacheEntryCount <= LEGACY_PRECACHE_BLOAT_THRESHOLD,
+            hasIndexShell,
+            precacheEntryCount,
+          });
+        } catch {
+          port.postMessage({
+            type: 'SHELL_PRECACHE_STATUS',
+            healthy: false,
+            hasIndexShell: false,
+            precacheEntryCount: 0,
+          });
+        }
+      })(),
+    );
     return;
   }
 

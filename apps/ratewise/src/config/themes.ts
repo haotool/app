@@ -289,7 +289,7 @@ const forestStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '20 83 45', // green-800 - 深綠
     textMuted: '22 101 52', // green-700
-    primary: '34 197 94', // green-500 - 翠綠
+    primary: '5 150 105', // emerald-600（與 index.css 渲染值同步）
     secondary: '132 204 22', // lime-500 - 青檸
     accent: '22 163 74', // green-600 - 森林綠
     border: '187 247 208', // green-200

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+69
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-01
+- ID：reward-ux2026-p1-round2-convergence
+- 原因：P1 第二輪 34 項 seo-ssot thesis body dedupe 失敗；sw.ts 缺 CHECK_SHELL_PRECACHE；Forest primary themes↔CSS 漂移；Settings 重置鈕 safe-area clip
+- 解法：currency-landing 正文改批發參考價/賣出報價同義表述；sw 探針回報 SHELL_PRECACHE_STATUS；themes.test 六風格 primary 守門；Settings scroll-mb + footer pb
 
 - 日期：2026-07-01
 - ID：reward-ux2026-l09-sticky-cta-p0

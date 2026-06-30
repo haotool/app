@@ -28,6 +28,22 @@ function contrastRatio(a: string, b: string): number {
 
 const WHITE = '255 255 255';
 
+describe('主題色彩 SSOT 守門', () => {
+  const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf-8');
+
+  const cssPrimaryForStyle = (style: string) => {
+    const block = css.slice(css.indexOf(`[data-style='${style}']`));
+    return new RegExp(`--color-primary:\\s*([0-9]+\\s+[0-9]+\\s+[0-9]+)`).exec(block)?.[1]?.trim();
+  };
+
+  it.each(['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const)(
+    'themes.ts 與 index.css 的 %s primary 不得漂移',
+    (style) => {
+      expect(cssPrimaryForStyle(style)).toBe(STYLE_DEFINITIONS[style].colors.primary);
+    },
+  );
+});
+
 describe('Nitro 主題可讀性守門', () => {
   const nitro = STYLE_DEFINITIONS.nitro.colors;
 
