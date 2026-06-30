@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+70
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+71
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-01
+- ID：reward-ux-hero-v2-default-hydration-418
+- 原因：i18n LanguageDetector 於 client init 讀 localStorage 與 SSG zh-TW 不一致，全站 React #418；hero-v2 需 query 才啟用
+- 解法：lng 固定 zh-TW + hydration 後 syncI18nAfterHydration；hero-v2 預設 on（?ux=legacy opt-out）+ useSyncExternalStore 對齊 SSG
 
 - 日期：2026-07-01
 - ID：reward-ux2026-test-fix-push

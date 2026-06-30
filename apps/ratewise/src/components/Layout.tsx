@@ -10,6 +10,7 @@ import { HelmetProvider } from '../utils/react-helmet-async';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Footer } from './Footer';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
+import { syncI18nAfterHydration } from '../i18n';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
 
@@ -44,6 +45,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   // SSR 端需提供空 context 避免狀態洩漏；客戶端使用預設值
   const helmetContext = isBrowser ? undefined : {};
+
+  React.useEffect(() => {
+    syncI18nAfterHydration();
+  }, []);
 
   React.useEffect(() => {
     if (isBrowser) {

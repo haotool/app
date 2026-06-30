@@ -64,7 +64,7 @@ export default function Settings() {
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode } = useConverterStore();
   const [heroLayoutVariant, setHeroLayoutVariantState] = useState<HeroLayoutVariant>(() =>
-    typeof window === 'undefined' ? 'legacy' : getHeroLayoutVariant(),
+    typeof window === 'undefined' ? 'hero-v2' : getHeroLayoutVariant(),
   );
 
   const HERO_LAYOUT_OPTIONS: {

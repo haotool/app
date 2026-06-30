@@ -3,13 +3,19 @@ export type HeroLayoutVariant = 'legacy' | 'hero-v2';
 const STORAGE_KEY = 'ratewise:heroLayoutVariant';
 export const HERO_LAYOUT_VARIANT_CHANGE_EVENT = 'ratewise:hero-layout-variant-change';
 
+/** SSG 與 hydration 首屏預設；須與 SingleConverter server snapshot 一致。 */
+export const DEFAULT_HERO_LAYOUT_VARIANT: HeroLayoutVariant = 'hero-v2';
+
 export function getHeroLayoutVariant(): HeroLayoutVariant {
   if (typeof window === 'undefined') {
-    return 'legacy';
+    return DEFAULT_HERO_LAYOUT_VARIANT;
   }
 
   const params = new URLSearchParams(window.location.search);
   const uxParam = params.get('ux');
+  if (uxParam === 'legacy') {
+    return 'legacy';
+  }
   if (uxParam === 'hero-v2') {
     return 'hero-v2';
   }
@@ -20,10 +26,10 @@ export function getHeroLayoutVariant(): HeroLayoutVariant {
       return stored;
     }
   } catch {
-    // localStorage 不可用時維持 legacy。
+    // localStorage 不可用時維持 hero-v2 預設。
   }
 
-  return 'legacy';
+  return DEFAULT_HERO_LAYOUT_VARIANT;
 }
 
 export function setHeroLayoutVariant(variant: HeroLayoutVariant): void {

@@ -85,7 +85,7 @@ const canUseBrowserLanguageStorage = (() => {
  * @returns 正規化後的語系代碼（zh-TW | en | ja | ko）
  */
 export function normalizeLanguage(lng: string | undefined): SupportedLanguage {
-  if (!lng) return 'zh-TW';
+  if (!lng || typeof lng !== 'string') return 'zh-TW';
 
   // 中文變體正規化（zh-Hant, zh-Hant-TW, zh-TW, zh → zh-TW）
   if (lng.startsWith('zh')) {
@@ -131,11 +131,45 @@ export function getResolvedLanguage(): SupportedLanguage {
   return normalizeLanguage(i18n.language);
 }
 
+/**
+ * hydration 後套用使用者語系偏好，避免 SSG（zh-TW）與 localStorage 偵測結果不一致觸發 React #418。
+ */
+export function syncI18nAfterHydration(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const stored = window.localStorage.getItem('ratewise-language');
+    if (stored) {
+      const normalized = normalizeLanguage(stored);
+      if (normalized !== getResolvedLanguage()) {
+        void i18n.changeLanguage(normalized);
+      }
+      return;
+    }
+  } catch {
+    // 私密模式等無法讀取 localStorage 時改走 htmlTag / navigator 偵測。
+  }
+
+  const detector = i18n.services.languageDetector as
+    | { detect: () => string | readonly string[] | undefined }
+    | undefined;
+  if (!detector) return;
+
+  const rawDetected = detector.detect();
+  const detectedLng: unknown = Array.isArray(rawDetected) ? rawDetected[0] : rawDetected;
+  const detected = normalizeLanguage(typeof detectedLng === 'string' ? detectedLng : undefined);
+  if (detected !== getResolvedLanguage()) {
+    void i18n.changeLanguage(detected);
+  }
+}
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    // 與 SSG 預渲染語系一致；使用者偏好於 hydration 後由 syncI18nAfterHydration 套用。
+    lng: 'zh-TW',
     // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
     supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
     // 語系 fallback 配置：zh-Hant → zh-TW
@@ -149,9 +183,8 @@ void i18n
       escapeValue: false,
     },
     detection: {
-      order: canUseBrowserLanguageStorage
-        ? ['localStorage', 'htmlTag', 'navigator']
-        : ['htmlTag', 'navigator'],
+      // init 階段不做自動偵測，避免 hydration 前改寫語系造成 text mismatch。
+      order: [],
       caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
       lookupLocalStorage: 'ratewise-language',
     },

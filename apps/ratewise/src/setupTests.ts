@@ -182,4 +182,6 @@ ensureStorage('sessionStorage');
 beforeEach(() => {
   ensureStorage('localStorage').clear();
   ensureStorage('sessionStorage').clear();
+  // legacy 佈局測試仍為多數 SingleConverter / RateWise 單元測試預設。
+  window.localStorage.setItem('ratewise:heroLayoutVariant', 'legacy');
 });

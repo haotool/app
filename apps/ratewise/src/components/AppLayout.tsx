@@ -9,7 +9,7 @@ import { ToastProvider } from './Toast';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { PullToRefreshIndicator } from './PullToRefreshIndicator';
 import { useRatingPrompt } from '../hooks/useRatingPrompt';
-import { getResolvedLanguage } from '../i18n';
+import { getResolvedLanguage, syncI18nAfterHydration } from '../i18n';
 import { APP_INFO } from '../config/app-info';
 import { HOMEPAGE_SEO } from '../config/seo-metadata';
 import { navigationTokens } from '../config/design-tokens';
@@ -157,6 +157,7 @@ export function AppLayout() {
 
   React.useEffect(() => {
     setHasMounted(true);
+    syncI18nAfterHydration();
   }, []);
 
   // 修正 WebView（Threads、Instagram 等）與一般瀏覽器的視口高度擠壓問題。

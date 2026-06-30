@@ -77,6 +77,7 @@ describe('RateWise Component', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('ratewise:heroLayoutVariant', 'legacy');
     // 重置 Zustand store，防止測試間狀態洩漏
     useConverterStore.setState({
       fromCurrency: 'TWD',

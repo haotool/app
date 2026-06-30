@@ -10,7 +10,16 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+  Suspense,
+  lazy,
+} from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ClientOnly } from 'vite-react-ssg';
 // RefreshCw 已替換為自定義雙箭頭 SVG
@@ -36,9 +45,23 @@ import {
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
 import {
+  DEFAULT_HERO_LAYOUT_VARIANT,
   getHeroLayoutVariant,
   HERO_LAYOUT_VARIANT_CHANGE_EVENT,
 } from '../../../config/hero-layout-variant';
+
+const subscribeHeroLayoutVariant = (onStoreChange: () => void) => {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handler = () => onStoreChange();
+  window.addEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, handler);
+  return () => window.removeEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, handler);
+};
+
+const getHeroLayoutIsV2Snapshot = () => getHeroLayoutVariant() === 'hero-v2';
+const getHeroLayoutIsV2ServerSnapshot = () => DEFAULT_HERO_LAYOUT_VARIANT === 'hero-v2';
 import { formatDisplayTime } from '../../../utils/timeFormatter';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
@@ -126,7 +149,11 @@ export const SingleConverter = ({
 }: SingleConverterProps) => {
   const { t } = useTranslation();
   const rateCardTokens = singleConverterLayoutTokens.rateCard;
-  const [isHeroV2, setIsHeroV2] = useState(false);
+  const isHeroV2 = useSyncExternalStore(
+    subscribeHeroLayoutVariant,
+    getHeroLayoutIsV2Snapshot,
+    getHeroLayoutIsV2ServerSnapshot,
+  );
   const [heroActiveInput, setHeroActiveInput] = useState<'from' | 'to'>('from');
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
@@ -134,13 +161,6 @@ export const SingleConverter = ({
   const [showTrend, setShowTrend] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const syncHeroLayout = () => setIsHeroV2(getHeroLayoutVariant() === 'hero-v2');
-    syncHeroLayout();
-    window.addEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
-    return () => window.removeEventListener(HERO_LAYOUT_VARIANT_CHANGE_EVENT, syncHeroLayout);
-  }, []);
 
   // 輸入框 refs（用於焦點管理）
   const fromInputRef = useRef<HTMLDivElement>(null);
