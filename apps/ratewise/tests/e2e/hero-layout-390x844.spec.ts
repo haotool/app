@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Hero layout @390×844 (hero-v2 flag)', () => {
+test.describe('hero-y @390×844 (hero-v2 flag)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test('AC1: hero rate y≤120px @ ?ux=hero-v2', async ({ page }) => {
