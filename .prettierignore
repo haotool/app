@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# 由 generate-offline-html.mjs 從模板生成（prebuild 禁 prettier，避免格式漂移）
+apps/ratewise/public/offline.html
+
 # Build output
 dist/
 build/
