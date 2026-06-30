@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+71
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+72
 
 ## 新增模板（4 行）
 
@@ -14,7 +14,9 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-01
-- ID：reward-ux-hero-v2-default-hydration-418
+- ID：reward-hero-v2-answer-first-redesign
+- 原因：hero-v2 匯率 sr-only、tabs 11px、amount 優先於 rate，AC-HERO-01/02 未達
+- 解法：HeroRatePanel answer-first（32px 可見 rate + trust badge + 44px tabs）；converter 分區 + inline swap；2 輪截圖 QA 全 viewport pass
 - 原因：i18n LanguageDetector 於 client init 讀 localStorage 與 SSG zh-TW 不一致，全站 React #418；hero-v2 需 query 才啟用
 - 解法：lng 固定 zh-TW + hydration 後 syncI18nAfterHydration；hero-v2 預設 on（?ux=legacy opt-out）+ useSyncExternalStore 對齊 SSG
 

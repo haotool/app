@@ -316,7 +316,7 @@ export const singleConverterLayoutTokens = {
 
     /** Hero v2 匯率資訊區內距（answer-first：頂部留白較小，y≤120） */
     heroInfoPadding:
-      'pt-10 pb-4 compact:pt-8 compact:pb-3.5 short:pt-6 short:pb-3 tiny:pt-5 tiny:pb-2.5 micro:pt-4 micro:pb-2 nano:pt-3 nano:pb-2',
+      'pt-4 pb-3 compact:pt-3.5 compact:pb-3 short:pt-3 short:pb-2.5 tiny:pt-2.5 tiny:pb-2 micro:pt-2 micro:pb-2 nano:pt-2 nano:pb-1.5',
 
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
@@ -337,9 +337,8 @@ export const singleConverterLayoutTokens = {
     /** 主要匯率文字（legacy 路徑） */
     rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-sm nano:text-sm',
 
-    /** Hero v2 主匯率 display-md（32px，answer-first） */
-    heroRateDisplay:
-      'text-[32px] compact:text-[28px] short:text-2xl tiny:text-xl font-bold tabular-nums leading-tight',
+    /** Hero v2 主匯率 display-md（32px 固定，answer-first AC-HERO-02） */
+    heroRateDisplay: 'text-[32px] font-bold tabular-nums leading-tight tracking-tight',
 
     /** Hero v2 金額列（≤ hero×0.75） */
     amountSecondaryDisplay:
@@ -356,21 +355,28 @@ export const singleConverterLayoutTokens = {
     heroCardSurface: 'bg-surface-card border border-border/60 shadow-sm',
     heroCardGradient:
       'bg-gradient-to-br from-primary/8 via-surface-card to-brand-via/40 border border-primary/15 shadow-lg rounded-2xl',
+    heroRateBlock: 'flex flex-col items-center',
+    heroRateTabsWrap: 'mt-3 w-full flex justify-center',
+    heroTrustBadge:
+      'inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary',
     heroRateTabPill:
-      'px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors duration-200',
+      'inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
     heroRateTabActive: 'bg-primary text-white shadow-sm',
     heroRateTabInactive:
       'bg-surface-elevated/80 text-text/70 hover:text-text hover:bg-surface-elevated',
-    heroDualCurrencyRow: 'flex items-stretch gap-2 w-full mt-4',
+    heroDualCurrencyRow: 'mt-3 flex w-full items-end gap-1.5',
+    heroSwapInline:
+      'relative z-10 flex shrink-0 items-center justify-center min-h-11 min-w-11 rounded-full bg-gradient-to-br from-primary to-primary-hover text-white shadow-md shadow-primary/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60',
     heroDualCurrencyField: 'flex-1 min-w-0 flex flex-col',
     heroDualCurrencyLabel:
       'text-[10px] font-bold uppercase tracking-wider text-text-muted/70 mb-1 px-1',
     heroDualCurrencyInput:
-      'w-full text-xl font-black tabular-nums text-right px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-[border-color,background-color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+      'w-full text-xl font-black tabular-nums text-right px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-[border-color,background-color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 min-h-11',
     heroDualCurrencyInputActive: 'border-primary bg-primary/5 text-text',
     heroDualCurrencyInputInactive:
       'border-border/60 bg-surface-elevated/50 text-text/80 hover:border-primary/30',
-    heroNumpadGrid: 'grid grid-cols-3 gap-2 mt-4',
+    heroNumpadGrid: 'mt-3 grid grid-cols-3 gap-2',
+    heroConverterSection: 'mt-3 w-full border-t border-border/40 pt-3',
     heroNumpadKey:
       'flex items-center justify-center min-h-11 rounded-xl bg-surface-elevated text-text font-bold text-lg active:scale-95 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
     heroNumpadKeyDanger: 'bg-danger/10 text-danger hover:bg-danger/15 active:bg-danger/20',

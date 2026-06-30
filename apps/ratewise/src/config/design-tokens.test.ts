@@ -275,6 +275,8 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.trustChipGap).toBe('mt-2');
       expect(singleConverterLayoutTokens.rateCard.heroCardGradient).toContain('gradient');
       expect(singleConverterLayoutTokens.rateCard.heroRateTabPill).toContain('rounded-full');
+      expect(singleConverterLayoutTokens.rateCard.heroRateTabPill).toContain('min-h-11');
+      expect(singleConverterLayoutTokens.rateCard.heroRateTabPill).toContain('text-sm');
       expect(singleConverterLayoutTokens.rateCard.heroRateTabActive).toContain('bg-primary');
       expect(singleConverterLayoutTokens.rateCard.heroRateTabInactive).toBeTruthy();
       expect(singleConverterLayoutTokens.rateCard.heroDualCurrencyRow).toBeTruthy();

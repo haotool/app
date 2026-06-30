@@ -95,8 +95,23 @@ describe('SingleConverter - 核心功能測試', () => {
     onRateTypeChange: vi.fn(),
   };
 
-  const getSpotRateButton = () => screen.getByRole('button', { name: /即期/ });
-  const getCashRateButton = () => screen.getByRole('button', { name: /現金/ });
+  const getSpotRateButton = () =>
+    screen.queryByRole('tab', { name: /即期/ }) ?? screen.getByRole('button', { name: /即期/ });
+  const getCashRateButton = () =>
+    screen.queryByRole('tab', { name: /現金/ }) ?? screen.getByRole('button', { name: /現金/ });
+
+  const assertRateTypeSelected = (control: HTMLElement, selected: boolean) => {
+    if (control.getAttribute('role') === 'tab') {
+      expect(control).toHaveAttribute('aria-selected', selected ? 'true' : 'false');
+      return;
+    }
+    expect(control).toHaveAttribute('aria-pressed', selected ? 'true' : 'false');
+  };
+
+  const renderLegacy = (props = mockProps) => {
+    window.history.replaceState({}, '', '/?ux=legacy');
+    return render(<SingleConverter {...props} />);
+  };
 
   const mockMoneyBoxRate: ExchangeShopRate = {
     currency: 'KRW',
@@ -112,6 +127,8 @@ describe('SingleConverter - 核心功能測試', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/');
 
     // Mock navigator.vibrate
     Object.defineProperty(navigator, 'vibrate', {
@@ -137,6 +154,8 @@ describe('SingleConverter - 核心功能測試', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/');
 
     // Restore navigator.vibrate for next test
     Object.defineProperty(navigator, 'vibrate', {
@@ -218,13 +237,9 @@ describe('SingleConverter - 核心功能測試', () => {
     it('should set to amount directly when to currency quick amount clicked', () => {
       render(<SingleConverter {...mockProps} />);
 
-      // USD decimals = 2, 所以快速金額應該格式化為 2 位小數
-      const toQuickButtons = screen.getAllByText('100'); // 可能有多個，取最後一個（to currency）
-      const toQuickButton = toQuickButtons[toQuickButtons.length - 1];
-
-      if (toQuickButton) {
-        fireEvent.click(toQuickButton);
-      }
+      fireEvent.click(screen.getByTestId('hero-currency-input-to'));
+      const toQuickButton = within(screen.getByTestId('quick-amounts-hero')).getByText('100');
+      fireEvent.click(toQuickButton);
 
       expect(mockProps.onToAmountChange).toHaveBeenCalledWith('100.00');
       // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -233,33 +248,55 @@ describe('SingleConverter - 核心功能測試', () => {
   });
 
   describe('高度斷點佈局', () => {
-    it('快速金額與交換按鈕應套用高度斷點顯示規則', () => {
+    it('hero-v2 快速金額應使用 quick-amounts-hero', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      expect(screen.getByTestId('quick-amounts-hero')).toBeInTheDocument();
+      expect(screen.queryByTestId('quick-amounts-from')).not.toBeInTheDocument();
+    });
+
+    it('legacy 快速金額與交換按鈕應套用高度斷點顯示規則', () => {
+      window.history.replaceState({}, '', '/?ux=legacy');
       render(<SingleConverter {...mockProps} />);
 
       const quickFrom = screen.getByTestId('quick-amounts-from');
       const quickTo = screen.getByTestId('quick-amounts-to');
       const swapButton = screen.getByTestId('swap-button');
 
-      // 隱藏優先順序：快速金額(來源) short → 快速金額(結果) tiny → 交換按鈕 micro
       expect(quickFrom).toHaveClass(singleConverterLayoutTokens.quickAmounts.fromVisibility);
       expect(quickTo).toHaveClass(singleConverterLayoutTokens.quickAmounts.toVisibility);
       expect(swapButton).toHaveClass(singleConverterLayoutTokens.swap.visibility);
+      window.history.replaceState({}, '', '/');
     });
 
-    it('趨勢圖容器應套用高度斷點高度設定', () => {
+    it('legacy 趨勢圖容器應套用高度斷點高度設定', () => {
+      window.history.replaceState({}, '', '/?ux=legacy');
       render(<SingleConverter {...mockProps} />);
 
       const trendChart = screen.getByTestId('trend-chart');
       singleConverterLayoutTokens.rateCard.chartHeight.split(' ').forEach((className) => {
         expect(trendChart).toHaveClass(className);
       });
+      window.history.replaceState({}, '', '/');
     });
 
-    it('匯率文字區塊應預留計價基準 pill 槽位高度', () => {
+    it('hero-v2 匯率顯示應套用 answer-first 字級 token', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const heroRateDisplay = screen.getByTestId('hero-rate-display');
+      singleConverterLayoutTokens.rateCard.heroRateDisplay.split(' ').forEach((className) => {
+        expect(heroRateDisplay).toHaveClass(className);
+      });
+      expect(screen.getByTestId('hero-rate-trust-badge')).toBeInTheDocument();
+    });
+
+    it('legacy 匯率文字區塊應預留計價基準 pill 槽位高度', () => {
+      window.history.replaceState({}, '', '/?ux=legacy');
       render(<SingleConverter {...mockProps} />);
 
       const rateTextBlock = screen.getByTestId('hero-rate-display').parentElement;
       expect(rateTextBlock).toHaveClass(singleConverterLayoutTokens.rateCard.rateTextBlock);
+      window.history.replaceState({}, '', '/');
     });
   });
 
@@ -286,15 +323,13 @@ describe('SingleConverter - 核心功能測試', () => {
       const { rerender } = render(<SingleConverter {...mockProps} rateType="spot" />);
 
       const spotButton = getSpotRateButton();
-      expect(spotButton).toHaveAttribute('aria-pressed', 'true');
+      assertRateTypeSelected(spotButton, true);
 
       rerender(<SingleConverter {...mockProps} rateType="cash" />);
 
       const cashButton = getCashRateButton();
-      expect(cashButton).toHaveAttribute('aria-pressed', 'true');
-      // 即期按鈕切換為未選中
-      const spotButtonAfter = getSpotRateButton();
-      expect(spotButtonAfter).toHaveAttribute('aria-pressed', 'false');
+      assertRateTypeSelected(cashButton, true);
+      assertRateTypeSelected(getSpotRateButton(), false);
     });
 
     it('should disable unavailable rate type button for current currency pair', () => {
@@ -346,48 +381,50 @@ describe('SingleConverter - 核心功能測試', () => {
 
   describe('金額顯示區域', () => {
     it('should display formatted from amount', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
-      // v2.0: 金額顯示為 div，點擊開啟計算機
       const fromAmount = screen.getByTestId('amount-input');
       expect(fromAmount).toHaveTextContent('1,000.00');
     });
 
     it('should open calculator when from amount area clicked', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
       const fromAmount = screen.getByTestId('amount-input');
       fireEvent.click(fromAmount);
 
-      // 計算機應該打開（通過其他測試驗證）
       expect(fromAmount).toBeInTheDocument();
     });
 
     it('should display formatted to amount', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
-      // v2.0: 金額顯示區域（div）應該顯示 mockProps.toAmount 的值
       const toAmount = screen.getByTestId('amount-output');
       expect(toAmount).toHaveTextContent('31.58');
     });
 
     it('should open calculator when to amount area clicked', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
-      // v2.0: 計算機鍵盤應該打開
       const toAmount = screen.getByTestId('amount-output');
       fireEvent.click(toAmount);
       expect(toAmount).toBeInTheDocument();
     });
 
     it('should support keyboard activation (Enter/Space)', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
       const fromAmount = screen.getByTestId('amount-input');
       fireEvent.keyDown(fromAmount, { key: 'Enter' });
 
-      // Enter 鍵應該開啟計算機
       expect(fromAmount).toBeInTheDocument();
+    });
+
+    it('hero-v2 應顯示雙欄金額輸入', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      expect(screen.getByTestId('hero-currency-input-from')).toHaveTextContent('1,000.00');
+      expect(screen.getByTestId('hero-currency-input-to')).toHaveTextContent('31.58');
     });
   });
 
@@ -442,7 +479,7 @@ describe('SingleConverter - 核心功能測試', () => {
 
   describe('趨勢圖 CLS 穩定', () => {
     it('趨勢圖容器應自初始渲染起保持可見且固定高度', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
       act(() => {
         vi.advanceTimersByTime(300);
@@ -587,21 +624,24 @@ describe('SingleConverter - 核心功能測試', () => {
 
   describe('金額格式化顯示', () => {
     it('should show formatted from amount', () => {
-      render(<SingleConverter {...mockProps} fromAmount="1000" />);
+      renderLegacy({ ...mockProps, fromAmount: '1000' });
 
       const fromAmount = screen.getByTestId('amount-input');
-
-      // v2.0: 金額顯示區域（div）應該顯示格式化的值
       expect(fromAmount).toHaveTextContent('1,000.00');
     });
 
     it('should show formatted to amount', () => {
-      render(<SingleConverter {...mockProps} />);
+      renderLegacy();
 
       const toAmount = screen.getByTestId('amount-output');
-
-      // v2.0: 金額顯示區域（div）應該顯示格式化的值（使用 mockProps.toAmount = '31.58'）
       expect(toAmount).toHaveTextContent('31.58');
+    });
+
+    it('hero-v2 should show formatted hero currency inputs', () => {
+      render(<SingleConverter {...mockProps} fromAmount="1000" />);
+
+      expect(screen.getByTestId('hero-currency-input-from')).toHaveTextContent('1,000.00');
+      expect(screen.getByTestId('hero-currency-input-to')).toHaveTextContent('31.58');
     });
   });
 });

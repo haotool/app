@@ -21,7 +21,6 @@ import {
   lazy,
 } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { ClientOnly } from 'vite-react-ssg';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,8 +61,6 @@ const subscribeHeroLayoutVariant = (onStoreChange: () => void) => {
 
 const getHeroLayoutIsV2Snapshot = () => getHeroLayoutVariant() === 'hero-v2';
 const getHeroLayoutIsV2ServerSnapshot = () => DEFAULT_HERO_LAYOUT_VARIANT === 'hero-v2';
-import { formatDisplayTime } from '../../../utils/timeFormatter';
-// 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
 import {
@@ -75,6 +72,7 @@ import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 import { RateSelector } from './RateSelector';
 import { HeroAmountNumpad, applyHeroAmountKey } from './HeroAmountNumpad';
+import { HeroRatePanel } from './HeroRatePanel';
 import {
   computeConverterRate,
   fetchExchangeShopHistoricalRatesRange,
@@ -653,6 +651,33 @@ export const SingleConverter = ({
     </button>
   );
 
+  const renderHeroInlineSwapButton = () => (
+    <button
+      ref={swapButtonRef}
+      type="button"
+      data-testid="hero-swap-button"
+      onClick={handleSwap}
+      disabled={isSwapping}
+      className={`${rateCardTokens.heroSwapInline} ${isSwapping ? 'scale-90' : ''}`}
+      aria-label={t('singleConverter.swapCurrencies')}
+      title={t('singleConverter.swapCurrencies')}
+    >
+      <svg
+        className={`h-5 w-5 transition-transform duration-500 ${isSwapping ? '[transform:rotateY(180deg)]' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+        <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+      </svg>
+    </button>
+  );
+
   const renderHeroV2Layout = () => (
     <>
       <div className={rateCardTokens.section} data-testid="rate-hero-section">
@@ -662,126 +687,116 @@ export const SingleConverter = ({
           <div
             className={`relative px-4 flex flex-col items-center justify-center rounded-xl overflow-hidden ${rateCardTokens.heroInfoPadding}`}
           >
-            <RateSelector
-              variant="hero-v2"
-              rateValues={heroRateValues}
+            <HeroRatePanel
+              fromCurrency={fromCurrency}
+              toCurrency={toCurrency}
+              exchangeRate={exchangeRate}
+              reverseRate={reverseRate}
               rateType={rateType}
               rateSource={rateSource}
+              rateMode={rateMode}
               rateTypeAvailability={rateTypeAvailability}
               hasExchangeShop={!!exchangeShopCurrency}
+              heroRateValues={heroRateValues}
               onRateTypeChange={onRateTypeChange}
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
+              lastUpdate={lastUpdate}
+              lastFetchedAt={lastFetchedAt}
             />
 
-            <div className="sr-only" data-testid="hero-rate-display">
-              1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
-            </div>
+            <div className={rateCardTokens.heroConverterSection}>
+              <div className={rateCardTokens.heroDualCurrencyRow}>
+                <div className={rateCardTokens.heroDualCurrencyField}>
+                  <span className={rateCardTokens.heroDualCurrencyLabel}>
+                    {t('singleConverter.fromAmount')}
+                  </span>
+                  <div className="relative">
+                    <select
+                      value={fromCurrency}
+                      onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
+                      className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-sm font-semibold text-text transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      aria-label={t('singleConverter.selectFromCurrency')}
+                    >
+                      {CURRENCY_CODES.map((code) => (
+                        <option key={code} value={code}>
+                          {CURRENCY_DEFINITIONS[code].flag} {code}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      data-testid="hero-currency-input-from"
+                      onClick={() => setHeroActiveInput('from')}
+                      className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
+                        heroActiveInput === 'from'
+                          ? rateCardTokens.heroDualCurrencyInputActive
+                          : rateCardTokens.heroDualCurrencyInputInactive
+                      }`}
+                      aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
+                    >
+                      {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
+                    </button>
+                  </div>
+                </div>
 
-            <div className={rateCardTokens.heroDualCurrencyRow}>
-              <div className={rateCardTokens.heroDualCurrencyField}>
-                <span className={rateCardTokens.heroDualCurrencyLabel}>
-                  {t('singleConverter.fromAmount')}
-                </span>
-                <div className="relative">
-                  <select
-                    value={fromCurrency}
-                    onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-1.5 py-1 text-sm font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200 z-10"
-                    aria-label={t('singleConverter.selectFromCurrency')}
-                  >
-                    {CURRENCY_CODES.map((code) => (
-                      <option key={code} value={code}>
-                        {CURRENCY_DEFINITIONS[code].flag} {code}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    data-testid="hero-currency-input-from"
-                    onClick={() => setHeroActiveInput('from')}
-                    className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
-                      heroActiveInput === 'from'
-                        ? rateCardTokens.heroDualCurrencyInputActive
-                        : rateCardTokens.heroDualCurrencyInputInactive
-                    }`}
-                    aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
-                  >
-                    {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
-                  </button>
+                {renderHeroInlineSwapButton()}
+
+                <div className={rateCardTokens.heroDualCurrencyField}>
+                  <span className={rateCardTokens.heroDualCurrencyLabel}>
+                    {t('singleConverter.toAmount')}
+                  </span>
+                  <div className="relative">
+                    <select
+                      value={toCurrency}
+                      onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
+                      className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-lg border border-primary/20 bg-primary/10 px-1.5 py-1 text-sm font-semibold text-text transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      aria-label={t('singleConverter.selectToCurrency')}
+                    >
+                      {CURRENCY_CODES.map((code) => (
+                        <option key={code} value={code}>
+                          {CURRENCY_DEFINITIONS[code].flag} {code}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      data-testid="hero-currency-input-to"
+                      onClick={() => setHeroActiveInput('to')}
+                      className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
+                        heroActiveInput === 'to'
+                          ? rateCardTokens.heroDualCurrencyInputActive
+                          : rateCardTokens.heroDualCurrencyInputInactive
+                      }`}
+                      aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
+                    >
+                      {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className={rateCardTokens.heroDualCurrencyField}>
-                <span className={rateCardTokens.heroDualCurrencyLabel}>
-                  {t('singleConverter.toAmount')}
-                </span>
-                <div className="relative">
-                  <select
-                    value={toCurrency}
-                    onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-1.5 py-1 text-sm font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200 z-10"
-                    aria-label={t('singleConverter.selectToCurrency')}
-                  >
-                    {CURRENCY_CODES.map((code) => (
-                      <option key={code} value={code}>
-                        {CURRENCY_DEFINITIONS[code].flag} {code}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    data-testid="hero-currency-input-to"
-                    onClick={() => setHeroActiveInput('to')}
-                    className={`pl-24 ${rateCardTokens.heroDualCurrencyInput} ${
-                      heroActiveInput === 'to'
-                        ? rateCardTokens.heroDualCurrencyInputActive
-                        : rateCardTokens.heroDualCurrencyInputInactive
-                    }`}
-                    aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
-                  >
-                    {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {lastUpdate ? (
               <div
-                data-testid="hero-freshness-chip"
-                className={`${rateCardTokens.trustChipGap} text-[10px] tabular-nums text-text-muted/70`}
+                data-testid="quick-amounts-hero"
+                className={`w-full ${singleConverterLayoutTokens.quickAmounts.container}`}
               >
-                <ClientOnly fallback={<span aria-hidden="true">&nbsp;</span>}>
-                  {() => (
-                    <span suppressHydrationWarning>
-                      {formatDisplayTime(lastUpdate, lastFetchedAt)}
-                    </span>
-                  )}
-                </ClientOnly>
-              </div>
-            ) : null}
-
-            <div
-              data-testid="quick-amounts-hero"
-              className={`w-full ${singleConverterLayoutTokens.quickAmounts.container}`}
-            >
-              {heroQuickAmounts.map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => {
-                    if (heroActiveInput === 'from') {
-                      onFromAmountChange(amount.toString());
-                      onQuickAmount(amount);
-                    } else {
-                      const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
-                      onToAmountChange(amount.toFixed(decimals));
-                    }
-                    if ('vibrate' in navigator) {
-                      navigator.vibrate(30);
-                    }
-                  }}
-                  className="
-                    flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
+                {heroQuickAmounts.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => {
+                      if (heroActiveInput === 'from') {
+                        onFromAmountChange(amount.toString());
+                        onQuickAmount(amount);
+                      } else {
+                        const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
+                        onToAmountChange(amount.toFixed(decimals));
+                      }
+                      if ('vibrate' in navigator) {
+                        navigator.vibrate(30);
+                      }
+                    }}
+                    className="
+                    flex-shrink-0 min-h-11 px-3 py-1.5 rounded-xl text-sm font-semibold
                     bg-surface-elevated text-text/70
                     hover:bg-primary/10 hover:text-primary
                     active:bg-primary/20 active:text-primary
@@ -789,17 +804,16 @@ export const SingleConverter = ({
                     hover:scale-[1.03] active:scale-[0.97]
                     hover:shadow-md active:shadow-sm
                   "
-                >
-                  {amount.toLocaleString()}
-                </button>
-              ))}
-            </div>
+                  >
+                    {amount.toLocaleString()}
+                  </button>
+                ))}
+              </div>
 
-            <HeroAmountNumpad onKeyPress={handleHeroNumpadKey} className="w-full" />
+              <HeroAmountNumpad onKeyPress={handleHeroNumpadKey} className="w-full" />
+            </div>
           </div>
         </div>
-
-        {renderSwapButton()}
       </div>
 
       {renderAddToHistoryButton()}
