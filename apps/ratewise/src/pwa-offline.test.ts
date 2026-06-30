@@ -55,6 +55,19 @@ describe('PWA 離線功能測試', () => {
       expect(content).toContain('cached-info');
       expect(content).toContain("localStorage.getItem('exchangeRates')");
     });
+
+    it('should keep offline.html zen theme-color aligned with manifest theme_color SSOT', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const manifestPath = resolve(ROOT_PATH, 'public/manifest.webmanifest');
+      const offlineContent = readFileSync(offlinePath, 'utf-8');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as { theme_color: string };
+
+      const themeColorMatch = /<meta name="theme-color" content="([^"]+)"/.exec(offlineContent);
+      expect(themeColorMatch?.[1]).toBe(manifest.theme_color);
+
+      const themeColorsMatch = /var themeColors = (\{[^}]+\})/.exec(offlineContent);
+      expect(themeColorsMatch?.[1]).toContain(`"zen":"${manifest.theme_color}"`);
+    });
   });
 
   describe('vite.config.ts PWA 配置', () => {

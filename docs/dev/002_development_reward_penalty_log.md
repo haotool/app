@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+94
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+95
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw-offline-manifest-theme-ssot
+- 原因：RW-3b 離線頁 committed zen 仍為 #6366F1（未 regenerate），與 manifest/index SSOT #7C3AED 不一致，deploy gate 失敗
+- 解法：generate:deterministic 重生成 offline.html、index.html theme-color 對齊 violet-600、更新 E2E/unit 期望與 artifact smoke test
 
 - 日期：2026-06-30
 - ID：reward-rw6b-moneybox-workflow-sw-history
