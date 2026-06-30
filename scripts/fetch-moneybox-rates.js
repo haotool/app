@@ -217,20 +217,83 @@ function needsSchemaMigration() {
   }
 }
 
+/**
+ * 從 snapshot 取得首爾掛牌日（YYYY-MM-DD）。
+ * 優先用 updateTime（首爾日曆字串），否則由 UTC timestamp 換算 Asia/Seoul 日期。
+ */
+function extractSeoulSnapshotDate(snapshot) {
+  const updateTime = snapshot?.updateTime;
+  if (typeof updateTime === 'string') {
+    const match = updateTime.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+  }
+
+  const timestamp = snapshot?.timestamp;
+  if (typeof timestamp === 'string') {
+    const parsed = new Date(timestamp);
+    if (!Number.isNaN(parsed.getTime())) {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(parsed);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * 判斷是否刷新 latest.json：匯率有變化，或首爾掛牌日跨日（牌價不變但日期前進仍需刷新，
+ * 讓 latest 與每日 history 對齊）。
+ */
+function shouldRefreshLatestSnapshot(oldData = {}, newData = {}) {
+  const rateChanges = listRateChanges(oldData.rates, newData.rates);
+  if (rateChanges.length > 0) {
+    return { shouldUpdate: true, reason: 'rate-changed', rateChanges };
+  }
+
+  const oldSnapshotDate = extractSeoulSnapshotDate(oldData);
+  const newSnapshotDate = extractSeoulSnapshotDate(newData);
+  if (oldSnapshotDate && newSnapshotDate && oldSnapshotDate !== newSnapshotDate) {
+    return {
+      shouldUpdate: true,
+      reason: 'date-rollover',
+      oldSnapshotDate,
+      newSnapshotDate,
+      rateChanges,
+    };
+  }
+
+  return {
+    shouldUpdate: false,
+    reason: 'unchanged',
+    rateChanges,
+    oldSnapshotDate,
+    newSnapshotDate,
+  };
+}
+
 function hasRateChanges(newData) {
   try {
     const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    const decision = shouldRefreshLatestSnapshot(oldData, newData);
 
-    const rateChanges = listRateChanges(oldData.rates, newData.rates);
-    const hasChanges = rateChanges.length > 0;
-
-    if (hasChanges) {
+    if (decision.shouldUpdate && decision.reason === 'rate-changed') {
       console.log(
-        `🔄 Rate change detected: ${rateChanges.map(({ currency, field }) => `${currency}.${field}`).join(', ')}`,
+        `🔄 Rate change detected: ${decision.rateChanges.map(({ currency, field }) => `${currency}.${field}`).join(', ')}`,
       );
-      for (const { currency, field, oldValue, newValue } of rateChanges) {
+      for (const { currency, field, oldValue, newValue } of decision.rateChanges) {
         console.log(`   ${currency}.${field}: ${oldValue} → ${newValue}`);
       }
+    } else if (decision.shouldUpdate && decision.reason === 'date-rollover') {
+      console.log(
+        `📅 Snapshot date rolled over: ${decision.oldSnapshotDate} → ${decision.newSnapshotDate}`,
+      );
+      console.log('   Refreshing latest.json to keep current snapshot aligned with daily history');
     } else {
       const currentCurrencies = Object.keys(newData.rates ?? {}).length;
       console.log('📊 Rates unchanged since last update');
@@ -238,7 +301,7 @@ function hasRateChanges(newData) {
       console.log(`   Currencies checked: ${currentCurrencies}`);
     }
 
-    return hasChanges;
+    return decision.shouldUpdate;
   } catch {
     console.log('📝 No previous data found, will create new file');
     return true;
@@ -330,3 +393,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 export { fetchMoneyBoxRates };
 export { listRateChanges };
 export { needsSchemaMigration };
+export { extractSeoulSnapshotDate, shouldRefreshLatestSnapshot };

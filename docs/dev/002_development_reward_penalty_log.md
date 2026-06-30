@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+92
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+94
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw6b-moneybox-workflow-sw-history
+- 原因：MoneyBox history 檔名用台北 wall-clock（跨日與首爾掛牌日不一致）、aggregate 首次缺失不觸發 commit、SW 未快取換錢所 history-30d（離線趨勢圖無資料）
+- 解法：workflow 改用 extractSeoulSnapshotDate 命名 history（fallback 首爾 wall-clock）+ aggregate 缺失補 changed=true；sw.ts history-30d 路由加 providers/moneybox 路徑
+
+- 日期：2026-06-30
+- ID：reward-rw6-moneybox-seoul-date-rollover
+- 原因：MoneyBox 換錢所牌價不變但首爾掛牌日跨日時，latest.json 未刷新→與每日 history 日期不對齊
+- 解法：加 extractSeoulSnapshotDate/shouldRefreshLatestSnapshot（rate-changed 或 date-rollover 才刷新），整合進 hasRateChanges；保留 main 的 needsSchemaMigration/enrich（紅線）；補 3 測試並納入 test:root
 
 - 日期：2026-06-30
 - ID：reward-rw5-seo-truthfulness-update-frequency

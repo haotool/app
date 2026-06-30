@@ -95,7 +95,20 @@ jobs:
         id: save-history
         if: steps.fetch-rates.outcome == 'success'
         run: |
-          CURRENT_DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)
+          # history 檔名 SSOT：採資料本身宣告的首爾掛牌日（updateTime），與 fetch script 的
+          # date-rollover 判斷 (extractSeoulSnapshotDate) 同源，避免 runner wall-clock 與資料日期
+          # 在跨日視窗不一致。提取失敗時 fallback 首爾 wall-clock。
+          CURRENT_DATE=$(node --input-type=module -e "
+            import { readFileSync } from 'node:fs';
+            const { extractSeoulSnapshotDate } = await import('./scripts/fetch-moneybox-rates.js');
+            const data = JSON.parse(readFileSync(process.env.MONEYBOX_FETCH_OUTPUT_FILE, 'utf8'));
+            const d = extractSeoulSnapshotDate(data);
+            if (d) process.stdout.write(d);
+          " 2>/dev/null)
+          if [[ ! "$CURRENT_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            CURRENT_DATE=$(TZ=Asia/Seoul date +%Y-%m-%d)
+            echo "⚠️ 無法從資料提取首爾 snapshot date，fallback 至首爾 wall-clock: ${CURRENT_DATE}"
+          fi
           MONEYBOX_HISTORY_FILE="${MONEYBOX_HISTORY_DIR}/${CURRENT_DATE}.json"
           mkdir -p "$MONEYBOX_HISTORY_DIR"
           if [[ ! -f "$MONEYBOX_FETCH_OUTPUT_FILE" ]]; then
@@ -131,6 +144,10 @@ jobs:
           RETIRED_ALIASES_CHANGED: ${{ steps.remove-retired-aliases.outputs.changed }}
         run: |
           if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_LATEST_FILE")" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+          # aggregate 首次生成（檔案不存在）也應觸發 commit，避免 history-30d.json 遺失卻不開 PR
+          if [[ ! -f "$MONEYBOX_AGGREGATE_FILE" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
           if [[ -n "$(git status --short --untracked-files=all -- "$MONEYBOX_HISTORY_DIR/")" ]]; then
