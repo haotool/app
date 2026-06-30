@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+69
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+70
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-01
+- ID：reward-ux2026-test-fix-push
+- 原因：experiment 分支 12 項 ratewise 測試失敗（SW case-3 timeout 遺失、E4-T4 還原邏輯、AppLayout scroll-padding、SingleConverter token/趨勢動畫）
+- 解法：還原 sw.ts 8s 有界 fallback 與 precache 修復；coldStartRestore 僅 persist 不同步或 production 冷啟動才導向 multi；補 main scrollPaddingBottom 與 legacy rateTextBlock；對齊 sw/case-3 與 CLS 測試
 
 - 日期：2026-07-01
 - ID：reward-ux2026-p1-round2-convergence

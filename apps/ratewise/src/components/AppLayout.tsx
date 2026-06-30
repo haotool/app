@@ -232,6 +232,9 @@ export function AppLayout() {
               ref={mainRef}
               data-scroll-container="main"
               tabIndex={0}
+              style={{
+                scrollPaddingBottom: `${navigationTokens.bottomNav.scrollPaddingBottom}px`,
+              }}
               className={`flex-1 min-h-0 min-w-0 w-full relative overflow-y-auto overflow-x-hidden ${navigationTokens.mainScroll.paddingBottomClass} [-webkit-overflow-scrolling:touch] overscroll-y-contain`}
             >
               <PullToRefreshIndicator

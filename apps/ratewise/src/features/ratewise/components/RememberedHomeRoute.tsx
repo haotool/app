@@ -65,7 +65,13 @@ export function RememberedHomeRoute() {
 
   const hasDeepLink =
     searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
-  const restoreToMulti = shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView });
+  const persistHasHydrated = useConverterStore.persist?.hasHydrated?.() ?? true;
+  const restoreToMulti = shouldRestoreToMulti({
+    hydrated,
+    hasDeepLink,
+    lastConverterView,
+    persistHasHydrated,
+  });
   // hydrate 未完成或即將導向 multi 時，禁止 RateWise 寫入偏好，避免覆寫 persist 的 lastConverterView。
   const allowRememberView = hydrated && !restoreToMulti;
 
@@ -73,7 +79,7 @@ export function RememberedHomeRoute() {
   useEffect(() => {
     if (!hydrated) return undefined;
 
-    if (shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView })) {
+    if (shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView, persistHasHydrated })) {
       markRestoreAttempted();
       return undefined;
     }

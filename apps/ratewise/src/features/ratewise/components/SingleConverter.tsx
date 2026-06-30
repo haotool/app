@@ -810,7 +810,7 @@ export const SingleConverter = ({
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
             />
 
-            <div className="w-full">
+            <div className={`w-full ${rateCardTokens.rateTextBlock}`}>
               <div
                 data-testid="hero-rate-display"
                 className={`${rateCardTokens.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}

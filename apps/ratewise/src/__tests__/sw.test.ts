@@ -510,7 +510,6 @@ describe('Service Worker Denylist', () => {
 describe('handleNavigationRequest', () => {
   const htmlCacheName = 'html-cache';
   const navigationUrl = 'https://example.com/ratewise/about';
-  const offlineHtml = '<html>offline fallback</html>';
 
   let htmlCache: {
     match: ReturnType<typeof vi.fn>;
@@ -550,13 +549,6 @@ describe('handleNavigationRequest', () => {
 
   function createNavigationEvent(): ExtendableEvent {
     return { waitUntil: vi.fn() } as unknown as ExtendableEvent;
-  }
-
-  function createOfflineFallbackResponse(): Response {
-    return new Response(offlineHtml, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
   }
 
   it('case 2: precache hit resolves instantly without timer dependency', async () => {
@@ -630,7 +622,6 @@ describe('handleNavigationRequest', () => {
   it('case 3: timeout fallback still waitUntils late network fetch to html-cache', async () => {
     vi.useFakeTimers();
 
-    const offlineFallback = createOfflineFallbackResponse();
     const networkHtml = '<html>late network</html>';
     let resolveFetch!: (value: Response) => void;
     const fetchPromise = new Promise<Response>((resolve) => {
@@ -638,11 +629,9 @@ describe('handleNavigationRequest', () => {
     });
 
     htmlCache.match.mockResolvedValue(undefined);
-    matchPrecacheMock.mockImplementation((url: string) => {
-      if (url === 'index.html') return Promise.resolve(null);
-      if (url === 'offline.html') return Promise.resolve(offlineFallback);
-      return Promise.resolve(null);
-    });
+    matchPrecacheMock.mockImplementation((url: string) =>
+      Promise.resolve(url === 'index.html' ? null : null),
+    );
     vi.stubGlobal(
       'fetch',
       vi.fn(() => fetchPromise),
@@ -661,7 +650,7 @@ describe('handleNavigationRequest', () => {
     const response = await responsePromise;
     const body = await response.text();
 
-    expect(body).toBe(offlineHtml);
+    expect(body).toContain('離線啟動保護模式');
     expect(waitUntilMock).toHaveBeenCalledTimes(1);
 
     resolveFetch(
@@ -676,17 +665,13 @@ describe('handleNavigationRequest', () => {
     expect(htmlCache.put).toHaveBeenCalled();
   });
 
-  it('case 3: hung network falls back to offline.html after bounded timeout', async () => {
+  it('case 3: hung network falls back to emergency shell after bounded timeout', async () => {
     vi.useFakeTimers();
 
-    const offlineFallback = createOfflineFallbackResponse();
-
     htmlCache.match.mockResolvedValue(undefined);
-    matchPrecacheMock.mockImplementation((url: string) => {
-      if (url === 'index.html') return Promise.resolve(null);
-      if (url === 'offline.html') return Promise.resolve(offlineFallback);
-      return Promise.resolve(null);
-    });
+    matchPrecacheMock.mockImplementation((url: string) =>
+      Promise.resolve(url === 'index.html' ? null : null),
+    );
     cachesMatch.mockResolvedValue(undefined);
     vi.stubGlobal(
       'fetch',
@@ -704,9 +689,9 @@ describe('handleNavigationRequest', () => {
     const response = await responsePromise;
     const body = await response.text();
 
-    expect(body).toBe(offlineHtml);
+    expect(body).toContain('離線啟動保護模式');
     expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
-    expect(matchPrecacheMock).toHaveBeenCalledWith('offline.html');
+    expect(matchPrecacheMock).not.toHaveBeenCalledWith('offline.html');
     expect(cachesOpen).toHaveBeenCalledWith(htmlCacheName);
   });
 });

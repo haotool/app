@@ -31,6 +31,7 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
+const NAVIGATION_FETCH_TIMEOUT_MS = 8000;
 /** 與 swHealth.ts LEGACY_PRECACHE_BLOAT_THRESHOLD 同步。 */
 const LEGACY_PRECACHE_BLOAT_THRESHOLD = 150;
 
@@ -91,7 +92,11 @@ async function verifyAndRepairPrecache(): Promise<void> {
     type ManifestEntry = string | { url: string; revision?: string | null };
     const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
-      if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
+      const isRepairable =
+        relUrl.endsWith('.js') ||
+        relUrl.endsWith('.css') ||
+        relUrl.includes('static-loader-data-manifest');
+      if (!isRepairable) return false;
       const fullUrl = new URL(relUrl, scope).href;
       return !cachedUrls.has(fullUrl);
     });
@@ -374,11 +379,26 @@ async function handleNavigationRequest({
     return precachedShell;
   }
 
-  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 app shell fallback
+  // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
+  const networkFetch = fetchAndCacheNavigation(request, cache);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await fetchAndCacheNavigation(request, cache);
+    return await Promise.race([
+      networkFetch,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('navigation-fetch-timeout')),
+          NAVIGATION_FETCH_TIMEOUT_MS,
+        );
+      }),
+    ]);
   } catch {
+    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
@@ -440,33 +460,50 @@ registerRoute(
   }),
 );
 
-// 最新匯率：StaleWhileRevalidate，離線備援 7 天。
+const LATEST_RATE_SWR_PLUGINS = [
+  new CacheableResponsePlugin({ statuses: [0, 200] }),
+  new ExpirationPlugin({
+    maxEntries: 32,
+    maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+  }),
+];
+
+// 最新匯率（GitHub raw）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
     url.pathname.includes('/public/rates/latest.json'),
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-      }),
-    ],
+    plugins: LATEST_RATE_SWR_PLUGINS,
   }),
 );
 
-// 圖片：CacheFirst，90 天。
+// 同域匯率 API（latest / pairs）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
-  ({ request }: { request: Request }) => request.destination === 'image',
+  ({ url }: { url: URL }) =>
+    url.origin === self.location.origin &&
+    (url.pathname.endsWith('/api/latest.json') ||
+      (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json'))),
+  new StaleWhileRevalidate({
+    cacheName: 'latest-rate-cache',
+    plugins: LATEST_RATE_SWR_PLUGINS,
+  }),
+);
+
+const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|webp|avif)$/i;
+
+// 圖片（Tier 2）：CacheFirst，按需快取大圖示 / OG / screenshots 等。
+registerRoute(
+  ({ request, url }: { request: Request; url: URL }) =>
+    request.destination === 'image' || IMAGE_EXTENSION_PATTERN.test(url.pathname),
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
-        maxEntries: 150,
-        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天
+        maxEntries: 60,
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
       }),
     ],
   }),
@@ -503,9 +540,12 @@ registerRoute(
   }),
 );
 
-// manifest / SEO 文字檔案：StaleWhileRevalidate，7 天。
+// manifest 必須 NetworkOnly：SWR 快取會回傳舊版相對 start_url，觸發冷啟動 HTTPS-First 警告。
+registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), new NetworkOnly());
+
+// SEO 文字/XML：StaleWhileRevalidate，7 天。
 registerRoute(
-  ({ url }: { url: URL }) => /\.(webmanifest|txt|xml)$/.test(url.pathname),
+  ({ url }: { url: URL }) => /\.(txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
     cacheName: 'seo-files-cache',
     plugins: [

@@ -258,7 +258,7 @@ describe('SingleConverter - 核心功能測試', () => {
     it('匯率文字區塊應預留計價基準 pill 槽位高度', () => {
       render(<SingleConverter {...mockProps} />);
 
-      const rateTextBlock = screen.getByText(/1 TWD =/).parentElement;
+      const rateTextBlock = screen.getByTestId('hero-rate-display').parentElement;
       expect(rateTextBlock).toHaveClass(singleConverterLayoutTokens.rateCard.rateTextBlock);
     });
   });
@@ -443,6 +443,10 @@ describe('SingleConverter - 核心功能測試', () => {
   describe('趨勢圖 CLS 穩定', () => {
     it('趨勢圖容器應自初始渲染起保持可見且固定高度', () => {
       render(<SingleConverter {...mockProps} />);
+
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
 
       const trendChart = screen.getByTestId('trend-chart');
       expect(trendChart).not.toHaveClass('opacity-0');

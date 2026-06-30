@@ -58,14 +58,22 @@ export function shouldRestoreToMulti(params: {
   hydrated: boolean;
   hasDeepLink: boolean;
   lastConverterView: ConverterMode;
+  persistHasHydrated?: boolean;
 }): boolean {
   if (!params.hydrated || hasAttemptedRestore || params.hasDeepLink) {
     return false;
   }
-  if (params.lastConverterView === MULTI_CONVERTER_MODE) {
+  if (isPersistedMultiPendingStoreSync(params.lastConverterView)) {
     return true;
   }
-  return isPersistedMultiPendingStoreSync(params.lastConverterView);
+  if (
+    import.meta.env.MODE === 'production' &&
+    params.persistHasHydrated === false &&
+    readPersistedLastConverterView() === MULTI_CONVERTER_MODE
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /** 標記冷啟動還原已嘗試；須於 effect 中呼叫，避免 render 期間產生副作用。 */
