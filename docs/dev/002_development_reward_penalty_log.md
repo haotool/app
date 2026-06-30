@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+67
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+68
 
 ## 新增模板（4 行）
 
@@ -13,8 +13,10 @@
 
 ## 條目（新→舊）
 
-- 日期：2026-06-27
-- ID：neutral-ux2026-plans-readme-merge-sync
+- 日期：2026-07-01
+- ID：reward-ux2026-l09-sticky-cta-p0
+- 原因：L09 capsule 與 FAQ 逐字重複 52 項 seo-ssot 失敗；landing 主 CTA 在 390×844 被 viewport 截斷（UX-PR-011）
+- 解法：excludeCapsuleDuplicateFaqs + FAQ 改寫牌告匯率問句；CurrencyLandingPage 行動版 sticky thumb CTA 與 desktop-only inline card
 - 原因：#465/#464/#466 合併後 plans/README 003 仍標 IN PROGRESS 與 experiment 事實漂移
 - 解法：experiment 分支更新 003 DONE 證據行與 Epic 2 追蹤 SHA
 

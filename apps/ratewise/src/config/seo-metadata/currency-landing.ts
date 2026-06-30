@@ -713,6 +713,16 @@ function buildTwdToForeignRateSentence(code: string, twdAmount: number): string 
   return `以台銀現金賣出匯率換算，${formatAmount(twdAmount)} 台幣 ≈ ${formatAmount(result)} ${code}（台銀現金賣出 1 ${code} = ${ex.cashSell} TWD，匯率每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）。`;
 }
 
+/** L09：FAQ 不得與 Answer Capsule 逐字重複問題（capsule 為 AEO SSOT）。 */
+function excludeCapsuleDuplicateFaqs(
+  faqEntries: FAQEntry[],
+  answerCapsule: FAQEntry[],
+): FAQEntry[] {
+  if (answerCapsule.length === 0) return faqEntries;
+  const capsuleQuestions = new Set(answerCapsule.map((item) => item.question));
+  return faqEntries.filter((item) => !capsuleQuestions.has(item.question));
+}
+
 /**
  * 幣對頁 Answer Capsule：40-60 字直接答案段落，供 AI 引擎直接引用。
  * P1-1 任務：在所有 34 幣對頁頂部加入 Answer Capsule，提升 AI 引用率 +40%。
@@ -828,7 +838,7 @@ export function getCurrencyLandingPageContent(
         ]
       : []),
     {
-      question: `買${displayName}今日台銀賣出價是多少？`,
+      question: `今日台銀${displayName}牌告匯率是多少？`,
       answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0])}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
@@ -843,6 +853,8 @@ export function getCurrencyLandingPageContent(
     // /krw-twd/ 頁方向為 to-twd（旅客持 KRW 換 TWD），使用 rateBuy 版本 FAQ
     ...buildAlternativeProviderFaq(code, rateExample ?? ({} as RateExample), 'to-twd'),
   ];
+
+  const answerCapsule = buildCurrencyAnswerCapsule(code, displayName, 'to-twd');
 
   return {
     currencyCode: code,
@@ -883,7 +895,7 @@ export function getCurrencyLandingPageContent(
           ]
         : []),
     ],
-    faqEntries,
+    faqEntries: excludeCapsuleDuplicateFaqs(faqEntries, answerCapsule),
     howToSteps: [
       {
         position: 1,
@@ -925,7 +937,7 @@ export function getCurrencyLandingPageContent(
     faqTitle: `${displayName}換匯常見問題`,
     direction: 'to-twd' as const,
     relatedGuides: RELATED_GUIDES_TO_TWD,
-    answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'to-twd'),
+    answerCapsule,
     precisionThesis: buildCurrencyPrecisionThesis(displayName),
     ...(rateExample?.alternativeProviders
       ? { alternativeProviders: rateExample.alternativeProviders }
@@ -1113,6 +1125,8 @@ export function getReverseCurrencyLandingPageContent(
     ...buildAlternativeProviderFaq(code, rateExample ?? ({} as RateExample), 'twd-to-foreign'),
   ];
 
+  const answerCapsule = buildCurrencyAnswerCapsule(code, displayName, 'twd-to-foreign');
+
   return {
     currencyCode: code,
     currencyFlag: definition.flag,
@@ -1153,7 +1167,7 @@ export function getReverseCurrencyLandingPageContent(
           ]
         : []),
     ],
-    faqEntries,
+    faqEntries: excludeCapsuleDuplicateFaqs(faqEntries, answerCapsule),
     howToSteps: [
       {
         position: 1,
@@ -1193,7 +1207,7 @@ export function getReverseCurrencyLandingPageContent(
     faqTitle: `台幣換${displayName}常見問題`,
     direction: 'twd-to-foreign' as const,
     relatedGuides: RELATED_GUIDES_TWD_TO_FOREIGN,
-    answerCapsule: buildCurrencyAnswerCapsule(code, displayName, 'twd-to-foreign'),
+    answerCapsule,
     precisionThesis: buildCurrencyPrecisionThesis(displayName),
     ...(rateExample?.alternativeProviders
       ? { alternativeProviders: rateExample.alternativeProviders }

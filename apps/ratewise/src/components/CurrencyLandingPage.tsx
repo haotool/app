@@ -10,6 +10,7 @@ import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
+import { navigationTokens } from '../config/design-tokens/layout';
 import {
   buildAmountAnswerCapsule,
   buildAmountExchangeRateSpecificationJsonLd,
@@ -136,6 +137,10 @@ export function CurrencyLandingPage({
         : `/?amount=${amount}&from=${currencyCode}&to=TWD`
       : '/';
 
+  const stickyCtaLabel = isTwdToForeign
+    ? `開始換算 TWD → ${currencyCode}`
+    : `開始換算 ${currencyCode} → TWD`;
+
   // 金額頁以金額專用 ExchangeRateSpecification 取代幣對頁基礎匯率 schema，避免同頁重複同型節點。
   const resolvedJsonLd = (() => {
     if (amount === null || !jsonLd) return jsonLd;
@@ -214,7 +219,7 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       {/* Main container - PWA optimized with safe area handling */}
-      <div className="min-h-full">
+      <div className="min-h-full pb-16 md:pb-0">
         <div className="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
           {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
           <PageNavHeader
@@ -348,8 +353,8 @@ export function CurrencyLandingPage({
             </div>
           </details>
 
-          {/* Quick Action Card */}
-          <div className="card p-4 sm:p-5 mb-6 bg-primary text-white">
+          {/* Quick Action Card — 桌面版；行動版改由 sticky CTA（UX-PR-011） */}
+          <div className="hidden md:block card p-4 sm:p-5 mb-6 bg-primary text-white">
             <div className="flex items-center gap-2 mb-3 opacity-80">
               <Sparkles className="w-4 h-4" />
               <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
@@ -622,6 +627,21 @@ export function CurrencyLandingPage({
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>
+      </div>
+
+      {/* UX-PR-011：行動版 sticky thumb CTA，固定於 bottom nav 上方避免 viewport 截斷。 */}
+      <div
+        className="md:hidden fixed inset-x-0 z-20 px-4 pointer-events-none"
+        style={{ bottom: navigationTokens.bottomNav.heightWithSafeArea }}
+        data-testid="landing-sticky-cta"
+      >
+        <Link
+          to={converterHref}
+          className="pointer-events-auto flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-3 bg-primary text-white rounded-xl font-semibold text-sm shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          {stickyCtaLabel}
+          <ArrowLeft className="w-4 h-4 rotate-180" />
+        </Link>
       </div>
     </>
   );
