@@ -100,6 +100,16 @@ describe('CurrencyLandingPage', () => {
     ).not.toThrow();
   });
 
+  it('ATF 應渲染 read-only live rate strip', () => {
+    render(
+      <MemoryRouter>
+        <CurrencyLandingPage {...BASE_PROPS} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId('landing-rate-strip')).toBeInTheDocument();
+    expect(screen.getByText(/1 KRW =/)).toBeInTheDocument();
+  });
+
   // ─── AnswerCapsule：AEO/GEO 快速答案區塊 ───
   it('answerCapsule 有資料時應渲染快速答案區塊（AnswerCapsule，供 AI 引擎直接引用）', () => {
     const answerCapsule = [

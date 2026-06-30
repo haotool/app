@@ -760,6 +760,37 @@ function buildCurrencyPrecisionThesis(displayName: string): CurrencyPrecisionThe
   };
 }
 
+/** 金額 landing 頁 Answer Capsule：首句含金額化換算（UX26-P0-001）。 */
+export function buildAmountAnswerCapsule(
+  amount: number,
+  currencyCode: string,
+  currencyName: string,
+  direction: 'to-twd' | 'twd-to-foreign',
+): FAQEntry[] {
+  const ex = SEO_RATE_EXAMPLES[currencyCode];
+  if (!ex) return [];
+
+  const formatted = formatAmount(amount);
+
+  if (direction === 'twd-to-foreign') {
+    const result = Math.round(amount / ex.cashSell);
+    return [
+      {
+        question: `${formatted} 台幣可換多少${currencyName}？`,
+        answer: `${formatted} 台幣 ≈ ${formatAmount(result)} ${currencyCode}（台銀現金 1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 更新）。`,
+      },
+    ];
+  }
+
+  const result = Math.round(amount * ex.cashSell);
+  return [
+    {
+      question: `${formatted} ${currencyName}換多少台幣？`,
+      answer: `${formatted} ${currencyCode} ≈ ${formatAmount(result)} TWD（台銀現金 1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 更新）。`,
+    },
+  ];
+}
+
 export function getCurrencyLandingPageContent(
   code: CurrencyLandingCode,
 ): CurrencyLandingPageContent {
