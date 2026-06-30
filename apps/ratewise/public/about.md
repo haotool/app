@@ -3,7 +3,7 @@
 > 了解 HaoRate 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 18 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。
 
 - Canonical: https://app.haotool.org/ratewise/about/
-- Version: v2.25.3
+- Version: v2.25.13
 
 ## 定位
 
@@ -12,7 +12,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 ## 資料方法與範圍
 
 - 資料來源為臺灣銀行官方牌告匯率，涵蓋 18 種貨幣。
-- 每 5 分鐘自動同步最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
+- 約每 5 分鐘檢查更新最新報價，涵蓋現金買入、現金賣出、即期買入、即期賣出四種。
 - 資料管線：GitHub Actions 每日抓取 + 雙重驗證（台銀牌告 vs open.er-api.com 中間價，誤差 ≤ 2%）+ Pull Request 自動審核後合併至 data branch。
 - 匯差範例數字透過 SSG（vite-react-ssg）於 build 期嵌入靜態 HTML，搜尋引擎無需執行 JavaScript 即可讀取。
 
@@ -34,7 +34,7 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 ### 1. 匯率數據來源是什麼？
 
-資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。
+資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。
 
 ### 2. 免費使用嗎？需要帳號或有廣告嗎？
 
@@ -62,5 +62,5 @@ robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Ov
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.25.3），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.25.13），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

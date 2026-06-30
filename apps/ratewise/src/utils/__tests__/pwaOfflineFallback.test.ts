@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { APP_INFO } from '../../config/app-info';
-import { resolveOfflineDocumentFallback } from '../pwaOfflineFallback';
+import {
+  resolveOfflineDocumentFallback,
+  resolveOfflineStaticResourceFallback,
+} from '../pwaOfflineFallback';
 
 describe('pwaOfflineFallback', () => {
   it('should prefer cached index.html before offline fallbacks', async () => {
@@ -80,5 +83,75 @@ describe('pwaOfflineFallback', () => {
       'emergency-navigation-fallback',
     );
     expect(response.headers.get('X-RateWise-Offline-Fallback')).not.toBeNull();
+  });
+});
+
+describe('resolveOfflineStaticResourceFallback', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('should return exact caches.match(request) hit without calling matchPrecacheFn', async () => {
+    const request = new Request('https://app.haotool.org/ratewise/assets/x.js');
+    const exactResponse = new Response('exact');
+    const cachesMatch = vi.fn().mockResolvedValue(exactResponse);
+    vi.stubGlobal('caches', { match: cachesMatch });
+    const matchPrecacheFn = vi.fn();
+
+    const response = await resolveOfflineStaticResourceFallback(request, matchPrecacheFn);
+
+    expect(response).toBe(exactResponse);
+    expect(cachesMatch).toHaveBeenCalledTimes(1);
+    expect(cachesMatch).toHaveBeenCalledWith(request);
+    expect(matchPrecacheFn).not.toHaveBeenCalled();
+  });
+
+  it('should fall back to ignoreSearch match when exact match misses', async () => {
+    const request = new Request('https://app.haotool.org/ratewise/assets/x.js?__WB_REVISION__=abc');
+    const ignoreSearchResponse = new Response('ignore-search');
+    const cachesMatch = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(ignoreSearchResponse);
+    vi.stubGlobal('caches', { match: cachesMatch });
+    const matchPrecacheFn = vi.fn();
+
+    const response = await resolveOfflineStaticResourceFallback(request, matchPrecacheFn);
+
+    expect(response).toBe(ignoreSearchResponse);
+    expect(cachesMatch).toHaveBeenCalledTimes(2);
+    expect(cachesMatch).toHaveBeenNthCalledWith(1, request);
+    expect(cachesMatch).toHaveBeenNthCalledWith(2, 'https://app.haotool.org/ratewise/assets/x.js', {
+      ignoreSearch: true,
+    });
+    expect(matchPrecacheFn).not.toHaveBeenCalled();
+  });
+
+  it('should fall back to matchPrecacheFn when caches layers miss', async () => {
+    const request = new Request('https://app.haotool.org/ratewise/assets/x.js');
+    const precacheResponse = new Response('precached');
+    const cachesMatch = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('caches', { match: cachesMatch });
+    const matchPrecacheFn = vi.fn((key: string) => (key === 'x.js' ? precacheResponse : null));
+
+    const response = await resolveOfflineStaticResourceFallback(request, matchPrecacheFn);
+
+    expect(response).toBe(precacheResponse);
+    expect(matchPrecacheFn.mock.calls.map(([key]) => key)).toEqual([
+      'ratewise/assets/x.js',
+      'assets/x.js',
+      'x.js',
+    ]);
+  });
+
+  it('should return Response.error() when all fallback layers miss', async () => {
+    const request = new Request('https://app.haotool.org/ratewise/assets/x.js');
+    const cachesMatch = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('caches', { match: cachesMatch });
+    const matchPrecacheFn = vi.fn().mockResolvedValue(null);
+
+    const response = await resolveOfflineStaticResourceFallback(request, matchPrecacheFn);
+
+    expect(response.type).toBe('error');
   });
 });

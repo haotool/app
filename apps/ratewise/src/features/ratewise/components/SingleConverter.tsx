@@ -129,7 +129,6 @@ export const SingleConverter = ({
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [showTrend, setShowTrend] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -194,12 +193,6 @@ export const SingleConverter = ({
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
-
-  // 趨勢圖進場動畫
-  useEffect(() => {
-    const timer = setTimeout(() => setShowTrend(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   // 處理交換按鈕點擊
   const handleSwap = () => {
@@ -519,7 +512,7 @@ export const SingleConverter = ({
 
       <div className={singleConverterLayoutTokens.rateCard.section} data-testid="rate-hero-section">
         <div
-          className={`relative rounded-xl w-full ${rateCardSurfaceClassName} ${rateCardHoverClassName} ${singleConverterLayoutTokens.rateCard.cardSpacing}`}
+          className={`relative rounded-xl w-full ${rateCardSurfaceClassName} ${rateCardHoverClassName} ${singleConverterLayoutTokens.rateCard.cardSpacing} ${singleConverterLayoutTokens.rateCard.cardMinHeight}`}
         >
           {!isHeroV2 ? (
             <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
@@ -543,7 +536,7 @@ export const SingleConverter = ({
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
             />
 
-            <div className="w-full">
+            <div className={`w-full ${singleConverterLayoutTokens.rateCard.rateTextBlock}`}>
               <div
                 data-testid="hero-rate-display"
                 className={`${rateTextClassName} font-bold tabular-nums text-text mb-1 ${rateDisplayHoverClassName}`}
@@ -568,16 +561,23 @@ export const SingleConverter = ({
                     )}
                   </ClientOnly>
                 </div>
-              ) : null}
+              ) : (
+                <div
+                  className={singleConverterLayoutTokens.rateCard.rateBasisSlot}
+                  aria-hidden="true"
+                >
+                  <span className="invisible rounded-full border border-transparent px-2 py-0.5 text-xs">
+                    &#8203;
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} transition-[height,opacity,transform] duration-500 will-change-[height,opacity,transform] overflow-hidden rounded-b-xl ${
-              showTrend ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} overflow-hidden rounded-b-xl`}
           >
             <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
               <ErrorBoundary

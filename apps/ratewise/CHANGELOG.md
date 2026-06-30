@@ -1,5 +1,90 @@
 # @app/ratewise
 
+## 2.25.13
+
+### Patch Changes
+
+- 08e27f4: 對齊離線頁、manifest 與 index.html 的 zen 主題色（violet-600），避免 PWA 安裝列與離線殼色不一致。
+- 43f6a7d: 統一圓角與陰影設計語言：新增 radius/shadow 語義 token SSOT（rounded-card/panel/control 等），卡片陰影更柔和一致。無功能變更。
+- 1e7fd4e: 修正 Nitro 深色主題可讀性：次要文字加亮（解決部分文字在深底看不清）、主色加深讓按鈕白字對比達 AA。
+- 08e27f4: PWA 安裝/狀態列顏色改用實際主題色（移除硬編 hex），並修正 zen 主色 themes.ts 與 CSS 漂移。
+- 08e27f4: 離線頁改為主題感知：依使用者主題顯示對應底色（深色主題不再閃淺紫），並保留斷網自我修復；同步狀態列顏色與 iOS 安全區。
+- 08e27f4: SEO 文案真實性：將「每 5 分鐘自動同步」軟化為「約每 5 分鐘檢查更新」並加新鮮度免責，與實際資料管線一致。
+- 08e27f4: 修正換錢所匯率資料：首爾掛牌日跨日時即使牌價未變也刷新快照，讓趨勢與歷史日期正確對齊，並讓離線時也能服務換錢所趨勢圖。
+
+## 2.25.12
+
+### Patch Changes
+
+- 0f48058: 內部重構：將 design tokens 設定模組化為多檔（colors/layout/scale/components/tailwind），提升可維護性，無使用者可見行為變更。
+- 0f48058: 匯率資料來源回傳異常數值（如 0、NaN、負數）時，自動改用預設匯率，避免顯示錯誤的換算結果。
+- 0f48058: 內部監控調整：Sentry 停用連續 session replay（僅保留錯誤現場擷取）以節省配額，並修正 @sentry/react 依賴分類；無使用者可見行為變更。
+- 0f48058: 內部重構：將 SEO metadata 設定模組化為多檔，提升可維護性，無使用者可見行為變更。
+
+## 2.25.11
+
+### Patch Changes
+
+- 13ebfa5: 在線卻卡在離線頁時，offline.html 會自動嘗試修復 Service Worker 並導回主應用，避免無法進入主功能的死亡迴圈。
+- c5f08b8: 讓 PWA 修復更快傳播到既有使用者：連線恢復時偵測「舊版 SW 預快取缺少 app shell 或 legacy 膨脹 precache」等壞 SW 狀態，並在線上自動安全接管新版（SKIP_WAITING + 整頁重載一次）。健康 SW 仍維持 prompt 更新 UX，避免版本切換時的載入失敗。
+
+## 2.25.10
+
+### Patch Changes
+
+- 31fea7c: 重整 PWA 快取為優先級分層，確保主功能（幣別換算）離線必可載入，並讓離線錯誤頁不再無謂出現：
+  - Tier 1 預快取只保留 app shell（index.html）、JS/CSS、路由 loader 清單與少量 shell 圖示與離線頁，precache 由 428 筆（約 34.5MB）降至 92 筆（約 2.2MB），弱網下 Service Worker 能可靠安裝完成。
+  - Tier 2 改為 runtime 快取：大型圖片（CacheFirst）、SEO 頁（導覽回退至 app shell）、匯率資料（StaleWhileRevalidate 7 天離線備援）。
+  - 離線時一律以 app shell 還原主功能，offline.html 僅作最後手段，不再因預快取過大而誤觸。
+
+- 31fea7c: 強化 PWA 快取分層的離線韌性與防回歸護欄：iOS 快取被驅逐後一併修復離線導覽所需的路由 loader 清單、擴充匯率離線備援的快取容量，並收緊預快取守門避免非必要資源回流，確保主功能離線載入更穩定。
+
+## 2.25.9
+
+### Patch Changes
+
+- 2eb0f1f: 修復 PWA 冷啟動時 Chrome 顯示「此連結並不安全」警告：manifest 改為絕對 HTTPS scope，且 Service Worker 不再快取舊版 manifest。
+- cb748c3: 修復 360×800 與 320×568 裝置上 CTA 與 bottom nav 重疊、匯率文字與 RateSelector 重疊，以及加入歷史按鈕觸控目標不足 44px 的問題
+
+## 2.25.8
+
+### Patch Changes
+
+- c24f666: 修復 Threads 內建瀏覽器無法顯示「在瀏覽器開啟」PWA 安裝指引與右上角動態提示
+
+## 2.25.7
+
+### Patch Changes
+
+- 463c39d: 修復冷啟動時多幣別換算模式無法還原的問題（生產環境 persist 已同步但 hydration 回呼未觸發）。
+
+## 2.25.6
+
+### Patch Changes
+
+- 1cdd24c: 冷啟動首頁時，若上次停留於多幣別模式，將正確還原導向多幣別換算頁
+- 1b19eb1: 首頁換算器預留固定高度，減少匯率卡片與計價基準 pill 載入時的版面跳動（CLS）
+
+## 2.25.5
+
+### Patch Changes
+
+- 55ad0f3: MoneyBox 換匯所在 jsDelivr CDN 落後 v2 schema 時，自動改從 GitHub Raw 取得最新資料，避免 Open Data 整合方讀到過期語意欄位。
+- 74e13c1: 開放資料 API 說明與結構化資料對齊 v2 語意：OpenAPI 台銀 details 契約改回與現行 JSON 一致，Dataset 納入 MoneyBox 換錢所端點。
+
+## 2.25.4
+
+### Patch Changes
+
+- d30b799: CI Playwright 快取 action 升級至 actions/cache@v6，消除 Node 20 deprecation warning；僅 CI 基礎設施變更，使用者無可見影響。
+- 935e52f: 修正 TikTok iOS 內建瀏覽器（musical*ly*<版本>、trill\_<版本> UA）未被辨識，導致不顯示「改用外部瀏覽器開啟」指引；並修正 musical_lyric 等字串被誤判為 TikTok 的 false positive；prefers-reduced-motion 一併停用安裝步驟的脈動動畫。
+- dfb9712: 修復冷啟動時未還原上次停留的單/多幣別換算模式（hydrate 前偏好被預設值覆寫的競態）；PWA manifest 改用絕對 HTTPS start_url，降低獨立啟動情境下的安全連線警告。
+- 3fd6a4a: 開放資料 API：MoneyBox 換錢所 JSON 與 Open Data 頁面新增 v2 語意欄位（quoteUnit、semanticFieldMapping），澄清與台銀 sell 報價方向差異。
+- b615b4a: 離線/弱網下導覽不再被卡住的網路請求拖住，避免長時間白屏。
+  - 網路成功時清除 8 秒 race timer，避免 orphan rejection 與 timer 洩漏。
+
+- 567ebd4: 強化離線可靠度：Service Worker 在網路失敗時，對 JS/CSS 資源改用三層快取回退（精確網址 → 忽略查詢字串 → precache 比對），降低 iOS 在 cache 驅逐後出現「Load failed」白屏的機率。離線文件回退與靜態資源回退邏輯收斂為單一來源。
+
 ## 2.25.3
 
 ### Patch Changes

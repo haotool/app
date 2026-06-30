@@ -31,6 +31,7 @@ self.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
 // 保存 manifest 供 VERIFY_AND_REPAIR_PRECACHE 使用。
 const WB_MANIFEST = self.__WB_MANIFEST;
 const HTML_CACHE_NAME = 'html-cache';
+const NAVIGATION_FETCH_TIMEOUT_MS = 8000;
 
 // 預快取 Vite 產出的靜態資源。
 precacheAndRoute(WB_MANIFEST);
@@ -87,9 +88,15 @@ async function verifyAndRepairPrecache(): Promise<void> {
     const scope = self.registration.scope;
 
     type ManifestEntry = string | { url: string; revision?: string | null };
+    // 補回 iOS eviction 清除的 Tier 1 shell 資產：JS/CSS 與路由 loader 清單。
+    // loader 清單為離線 SPA 子路由導覽必要，且無 runtime route 後備，故一併修復。
     const missing = (WB_MANIFEST as ManifestEntry[]).filter((entry) => {
       const relUrl = typeof entry === 'string' ? entry : entry.url;
-      if (!relUrl.endsWith('.js') && !relUrl.endsWith('.css')) return false;
+      const isRepairable =
+        relUrl.endsWith('.js') ||
+        relUrl.endsWith('.css') ||
+        relUrl.includes('static-loader-data-manifest');
+      if (!isRepairable) return false;
       const fullUrl = new URL(relUrl, scope).href;
       return !cachedUrls.has(fullUrl);
     });
@@ -194,6 +201,36 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   // 啟動時驗證 precache 完整性，補回 iOS cache eviction 清除的 chunk。
   if (data?.type === 'VERIFY_AND_REPAIR_PRECACHE') {
     event.waitUntil(verifyAndRepairPrecache());
+    return;
+  }
+
+  // 自我修復探針：回報 app shell 與 precache 規模，供 client 判斷壞 SW。
+  if (data?.type === 'CHECK_SHELL_PRECACHE') {
+    event.waitUntil(
+      (async () => {
+        let hasIndexShell = false;
+        let precacheEntryCount = 0;
+        try {
+          hasIndexShell = Boolean(await matchPrecache('index.html'));
+          const cacheNames = await caches.keys();
+          const precacheName = cacheNames.find((name) => name.startsWith('workbox-precache-v2'));
+          if (precacheName) {
+            const precache = await caches.open(precacheName);
+            precacheEntryCount = (await precache.keys()).length;
+          }
+        } catch {
+          hasIndexShell = false;
+        }
+        // 舊版膨脹 precache（400+ 項）視為不健康，即使 index.html 仍在。
+        const healthy = hasIndexShell && precacheEntryCount <= 150;
+        event.source?.postMessage({
+          type: 'SHELL_PRECACHE_STATUS',
+          healthy,
+          hasIndexShell,
+          precacheEntryCount,
+        });
+      })(),
+    );
     return;
   }
 
@@ -312,11 +349,26 @@ async function handleNavigationRequest({
     return precachedShell;
   }
 
-  // precache 也 miss（例如 iOS eviction）：等網路，真正失敗才用 offline fallback
+  // precache 也 miss（iOS eviction）：等網路但設上限，避免連線掛住造成無限白屏。
+  const networkFetch = fetchAndCacheNavigation(request, cache);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await fetchAndCacheNavigation(request, cache);
+    return await Promise.race([
+      networkFetch,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('navigation-fetch-timeout')),
+          NAVIGATION_FETCH_TIMEOUT_MS,
+        );
+      }),
+    ]);
   } catch {
+    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
@@ -326,10 +378,13 @@ registerRoute(new NavigationRoute(handleNavigationRequest));
 registerRoute(
   ({ url }: { url: URL }) =>
     url.pathname.includes('/public/rates/history-30d.json') ||
+    url.pathname.includes('/public/rates/providers/moneybox/history-30d.json') ||
     (url.origin === 'https://cdn.jsdelivr.net' &&
-      url.pathname.includes('/public/rates/history-30d.json')) ||
+      (url.pathname.includes('/public/rates/history-30d.json') ||
+        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))) ||
     (url.origin === 'https://raw.githubusercontent.com' &&
-      url.pathname.includes('/public/rates/history-30d.json')),
+      (url.pathname.includes('/public/rates/history-30d.json') ||
+        url.pathname.includes('/public/rates/providers/moneybox/history-30d.json'))),
   new StaleWhileRevalidate({
     cacheName: 'history-aggregate-cache',
     plugins: [
@@ -378,33 +433,52 @@ registerRoute(
   }),
 );
 
-// 最新匯率：StaleWhileRevalidate，離線備援 7 天。
+const LATEST_RATE_SWR_PLUGINS = [
+  new CacheableResponsePlugin({ statuses: [0, 200] }),
+  new ExpirationPlugin({
+    // GitHub raw + 同域 api/latest + 17 個 api/pairs 共用此快取（約 19 筆），
+    // 預留擴充幣對的餘裕，避免 LRU 驅逐離線匯率備援。
+    maxEntries: 32,
+    maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
+  }),
+];
+
+// 最新匯率（GitHub raw）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
   ({ url }: { url: URL }) =>
     url.origin === 'https://raw.githubusercontent.com' &&
     url.pathname.includes('/public/rates/latest.json'),
   new StaleWhileRevalidate({
     cacheName: 'latest-rate-cache',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24 * 7, // 7 天
-      }),
-    ],
+    plugins: LATEST_RATE_SWR_PLUGINS,
   }),
 );
 
-// 圖片：CacheFirst，90 天。
+// 同域匯率 API（latest / pairs）：StaleWhileRevalidate，離線備援 7 天。
 registerRoute(
-  ({ request }: { request: Request }) => request.destination === 'image',
+  ({ url }: { url: URL }) =>
+    url.origin === self.location.origin &&
+    (url.pathname.endsWith('/api/latest.json') ||
+      (url.pathname.includes('/api/pairs/') && url.pathname.endsWith('.json'))),
+  new StaleWhileRevalidate({
+    cacheName: 'latest-rate-cache',
+    plugins: LATEST_RATE_SWR_PLUGINS,
+  }),
+);
+
+const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|webp|avif)$/i;
+
+// 圖片（Tier 2）：CacheFirst，按需快取大圖示 / OG / screenshots 等。
+registerRoute(
+  ({ request, url }: { request: Request; url: URL }) =>
+    request.destination === 'image' || IMAGE_EXTENSION_PATTERN.test(url.pathname),
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
-        maxEntries: 150,
-        maxAgeSeconds: 60 * 60 * 24 * 90, // 90 天
+        maxEntries: 60,
+        maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
       }),
     ],
   }),
@@ -441,9 +515,12 @@ registerRoute(
   }),
 );
 
-// manifest / SEO 文字檔案：StaleWhileRevalidate，7 天。
+// manifest 必須 NetworkOnly：SWR 快取會回傳舊版相對 start_url，觸發冷啟動 HTTPS-First 警告。
+registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), new NetworkOnly());
+
+// SEO 文字/XML：StaleWhileRevalidate，7 天。
 registerRoute(
-  ({ url }: { url: URL }) => /\.(webmanifest|txt|xml)$/.test(url.pathname),
+  ({ url }: { url: URL }) => /\.(txt|xml)$/.test(url.pathname),
   new StaleWhileRevalidate({
     cacheName: 'seo-files-cache',
     plugins: [

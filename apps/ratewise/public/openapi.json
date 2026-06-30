@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "HaoRate 匯率 API",
-    "version": "1.3.0",
+    "version": "2.1.0",
     "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
@@ -135,30 +135,35 @@
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
-    "x-app-version": "2.25.3",
+    "x-app-version": "2.25.13",
     "x-schema-version": "2.0",
     "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/"
   },
   "x-changelog": {
+    "2.1.0": {
+      "date": "2026-06-27",
+      "summary": "換錢所 provider JSON 新增 schemaVersion、quoteUnit、semanticFieldMapping 與 ExchangeShopRateV2 語意欄位。",
+      "app-version": "2.25.13"
+    },
     "2.0.0": {
       "date": "2026-06-27",
       "summary": "新增 customer-centric v2 語意欄位（customerBuyForeignRate 等）與 schemaVersion；legacy buy/sell 保留。",
-      "app-version": "2.25.3"
+      "app-version": "2.25.13"
     },
     "1.2.0": {
       "date": "2026-05-09",
       "summary": "新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。",
-      "app-version": "2.25.3"
+      "app-version": "2.25.13"
     },
     "1.1.0": {
       "date": "2026-05-08",
       "summary": "新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。",
-      "app-version": "2.25.3"
+      "app-version": "2.25.13"
     },
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
-      "app-version": "2.25.3"
+      "app-version": "2.25.13"
     }
   },
   "servers": [
@@ -932,10 +937,129 @@
           "currency"
         ]
       },
+      "ExchangeShopRateV2": {
+        "type": "object",
+        "description": "換錢所單一幣別報價（legacy + v2 additive）",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "TWD"
+          },
+          "base": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 44.9
+          },
+          "buy": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "@deprecated 2026-12-31 — 換錢所買入價；請改用 customerSellForeignRate",
+            "example": 45.1
+          },
+          "sell": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "@deprecated 2026-12-31 — 換錢所賣出價；請改用 customerBuyForeignRate",
+            "example": 44.9
+          },
+          "spbuy": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 45.2
+          },
+          "spsell": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 44.8
+          },
+          "customerBuyForeignRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "客戶用 TWD 買外幣（換錢所賣出）；MoneyBox TWD 對應 rates.TWD.sell（KRW/TWD）",
+            "example": 46.5
+          },
+          "customerSellForeignRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "客戶用外幣賣回 TWD（換錢所買入）；對應 legacy buy",
+            "example": 46
+          },
+          "midMarketRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "參考中間價：(buy + sell) / 2",
+            "example": 46.25
+          },
+          "quoteUnit": {
+            "type": "string",
+            "enum": [
+              "TWD_PER_FOREIGN",
+              "KRW_PER_TWD"
+            ],
+            "description": "報價單位；MoneyBox TWD 為 KRW_PER_TWD（與台銀 TWD_PER_FOREIGN 相反）",
+            "example": "KRW_PER_TWD"
+          },
+          "quotePerBaseUnit": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "每 1 TWD 可換 KRW（KRW_PER_TWD 時等同 sell；台銀語意為 1/sell）",
+            "example": 46.5
+          }
+        },
+        "required": [
+          "currency",
+          "base",
+          "buy",
+          "sell",
+          "spbuy",
+          "spsell"
+        ]
+      },
       "ExchangeShopRatesResponse": {
         "type": "object",
-        "description": "換錢所匯率資料回應。目前 MoneyBox 以 KRW 為基準，TWD rate 表示 1 TWD 可換多少 KRW。",
+        "description": "換錢所匯率資料回應。MoneyBox 以 KRW 為基準；TWD rate 表示 1 TWD 可換多少 KRW（sell 直接乘算）。",
         "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "description": "API 語意版本（有別於 App semver）",
+            "example": "2.0"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "資料生效時間（通常對應 timestamp）",
+            "example": "2026-06-27T04:00:00.000Z"
+          },
+          "semanticFieldMapping": {
+            "type": "object",
+            "description": "v2 語意欄位對照（見 open-data / latest.json metadata）"
+          },
+          "quoteUnit": {
+            "type": "string",
+            "enum": [
+              "KRW_PER_TWD"
+            ],
+            "description": "MoneyBox TWD 報價單位（與台銀 details 語意不同）",
+            "example": "KRW_PER_TWD"
+          },
           "timestamp": {
             "type": "string",
             "format": "date-time",
@@ -963,56 +1087,7 @@
           "rates": {
             "type": "object",
             "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "currency": {
-                  "type": "string",
-                  "example": "TWD"
-                },
-                "base": {
-                  "type": [
-                    "number",
-                    "null"
-                  ],
-                  "example": 44.9
-                },
-                "buy": {
-                  "type": [
-                    "number",
-                    "null"
-                  ],
-                  "example": 45.1
-                },
-                "sell": {
-                  "type": [
-                    "number",
-                    "null"
-                  ],
-                  "example": 44.9
-                },
-                "spbuy": {
-                  "type": [
-                    "number",
-                    "null"
-                  ],
-                  "example": 45.2
-                },
-                "spsell": {
-                  "type": [
-                    "number",
-                    "null"
-                  ],
-                  "example": 44.8
-                }
-              },
-              "required": [
-                "currency",
-                "base",
-                "buy",
-                "sell",
-                "spbuy",
-                "spsell"
-              ]
+              "$ref": "#/components/schemas/ExchangeShopRateV2"
             }
           }
         },
@@ -1073,7 +1148,7 @@
             "type": "object",
             "description": "各幣別完整四種報價資料（以幣別代碼為 key）；v2 欄位見 CurrencyRateV2 / CurrencyRateDetail",
             "additionalProperties": {
-              "$ref": "#/components/schemas/CurrencyRateV2"
+              "$ref": "#/components/schemas/CurrencyRateDetail"
             },
             "example": {
               "USD": {

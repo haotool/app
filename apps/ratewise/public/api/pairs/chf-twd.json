@@ -7,15 +7,19 @@
   "semanticFieldMapping": {
     "schemaVersion": "2.0",
     "semanticsDoc": "https://app.haotool.org/ratewise/open-data/",
+    "providerKind": "bank",
+    "quoteUnit": "TWD_PER_FOREIGN",
     "asOfSourceField": "timestamp | updateTime",
     "fields": {
       "customerBuyForeignRate": {
         "legacyPath": "details.{CURRENCY}.{rateType}.sell",
-        "description": "客戶用 TWD 買外幣（銀行賣出）"
+        "description": "客戶用 TWD 買外幣（銀行賣出）",
+        "twdToForeignFormula": "amount / details.{TO}.{rateType}.sell"
       },
       "customerSellForeignRate": {
         "legacyPath": "details.{CURRENCY}.{rateType}.buy",
-        "description": "客戶用外幣賣回 TWD（銀行買入）"
+        "description": "客戶用外幣賣回 TWD（銀行買入）",
+        "foreignToTwdFormula": "amount * details.{FROM}.{rateType}.buy"
       },
       "midMarketRate": {
         "legacyPath": "(buy + sell) / 2",
@@ -33,6 +37,12 @@
           "customerSellForeignRate": "details.USD.cash.buy"
         }
       }
+    },
+    "bankComparison": {
+      "botQuoteUnit": "TWD_PER_FOREIGN",
+      "botTwdToForeign": "amount / details.{CCY}.cash.sell",
+      "moneyboxQuoteUnit": "KRW_PER_TWD",
+      "moneyboxTwdToKrw": "amount * rates.TWD.sell"
     }
   },
   "slug": "chf-twd",

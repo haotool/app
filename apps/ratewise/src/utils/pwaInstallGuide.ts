@@ -27,13 +27,14 @@ export interface PwaInstallEnvironment {
 }
 
 // Messenger 須先於 facebook：其 UA 含 FBAN/FB_IAB，否則會被 facebook 規則搶先命中。
+// Threads 2024+ 內建瀏覽器 UA 使用內部代號 Barcelona（非 Threads 字串）；來源：whatmyuseragent.com / udger UA list。
 const IN_APP_BROWSER_PATTERNS: [InAppBrowserKind, RegExp][] = [
-  ['threads', /\bThreads\b/i],
+  ['threads', /\b(Threads|Barcelona)\b/i],
   ['messenger', /MessengerForiOS|FB_IAB\/MESSENGER|FB_IAB\/Orca|Orca-Android/i],
   ['instagram', /\bInstagram\b/i],
   ['facebook', /\b(FBAN|FBAV|FBIOS|FB_IAB|FB4A)\b/i],
   ['line', /\bLine\//i],
-  ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly)\b/i],
+  ['tiktok', /\b(TikTok|BytedanceWebview|musical_ly_[\d.]+|trill_[\d.]+)/i],
   ['x', /\b(Twitter|X-WebView)\b/i],
 ];
 

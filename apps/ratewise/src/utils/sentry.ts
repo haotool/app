@@ -55,8 +55,8 @@ async function initializeSentryOnce(): Promise<void> {
         }),
       ],
 
-      // Session Replay (only small % in prod to save quota)
-      replaysSessionSampleRate: IS_PROD ? 0.01 : 0.1,
+      // Session Replay：停用連續錄影（session=0），僅在錯誤發生時擷取現場，最省配額且保留除錯價值
+      replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: IS_PROD ? 0.5 : 1.0,
     });
 

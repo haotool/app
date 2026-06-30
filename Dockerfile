@@ -92,10 +92,12 @@ RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
 FROM nginx:stable
 
 # [fix:2026-04-10] 安裝安全更新以修復 CVE-2026-4775 (libtiff) 等漏洞
-# 參考: https://security-tracker.debian.org/tracker/CVE-2026-4775
+# [fix:2026-06-28] 明確升級 libssh2-1t64 以修復 DSA-6365-1（CVE-2026-55200 等）
+# 參考: https://security-tracker.debian.org/tracker/DSA-6365-1
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends wget && \
+    apt-get install -y --only-upgrade libssh2-1t64 && \
     rm -rf /var/lib/apt/lists/*
 
 # [fix:2025-12-13] 新架構：haotool 作為根路徑首頁

@@ -13,14 +13,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <script>
       (function () {
-        var themeColors = {
-          zen: '#7C3AED',
-          nitro: '#0096E6',
-          kawaii: '#BE185D',
-          classic: '#8B4513',
-          ocean: '#06B6D4',
-          forest: '#059669',
-        };
+        var themeColors = {"zen":"#7C3AED","nitro":"#0096E6","kawaii":"#FF69B4","classic":"#8B4513","ocean":"#06B6D4","forest":"#22C55E"};
         var supportedStyles = Object.keys(themeColors);
         var selectedStyle = 'zen';
 
@@ -46,137 +39,136 @@
     </script>
     <style>
       html[data-style='zen'] {
-        --offline-theme-color: #7c3aed;
-        --offline-background: #f8fafc;
-        --offline-surface: #ffffff;
-        --offline-border: #e2e8f0;
-        --offline-text: #0f172a;
-        --offline-text-muted: #64748b;
-        --offline-primary: #7c3aed;
-        --offline-primary-foreground: #ffffff;
-        --offline-secondary: #6366f1;
-        --offline-accent: #8b5cf6;
+        --offline-theme-color: #7C3AED;
+        --offline-background: #F8FAFC;
+        --offline-surface: #FFFFFF;
+        --offline-border: #E2E8F0;
+        --offline-text: #0F172A;
+        --offline-text-muted: #64748B;
+        --offline-primary: #7C3AED;
+        --offline-primary-foreground: #FFFFFF;
+        --offline-secondary: #475569;
+        --offline-accent: #3B82F6;
         --offline-primary-tint: rgba(124, 58, 237, 0.08);
         --offline-primary-border-tint: rgba(124, 58, 237, 0.18);
         --offline-primary-shadow-soft: rgba(124, 58, 237, 0.18);
         --offline-primary-shadow-strong: rgba(124, 58, 237, 0.26);
         --offline-primary-shadow-hover: rgba(124, 58, 237, 0.34);
         --offline-warning-tint: rgba(245, 158, 11, 0.16);
-        --offline-warning: #f59e0b;
+        --offline-warning: #F59E0B;
         --offline-success-tint: rgba(34, 197, 94, 0.12);
-        --offline-success: #22c55e;
+        --offline-success: #22C55E;
       }
 
       html[data-style='nitro'] {
-        --offline-theme-color: #0096e6;
+        --offline-theme-color: #0096E6;
         --offline-background: #020617;
-        --offline-surface: #0f172a;
-        --offline-border: #1e293b;
-        --offline-text: #ffffff;
-        --offline-text-muted: #cbd5e1;
-        --offline-primary: #0096e6;
+        --offline-surface: #0F172A;
+        --offline-border: #1E293B;
+        --offline-text: #FFFFFF;
+        --offline-text-muted: #CBD5E1;
+        --offline-primary: #0096E6;
         --offline-primary-foreground: #020617;
-        --offline-secondary: #818cf8;
-        --offline-accent: #00ff88;
+        --offline-secondary: #818CF8;
+        --offline-accent: #00FF88;
         --offline-primary-tint: rgba(0, 150, 230, 0.08);
         --offline-primary-border-tint: rgba(0, 150, 230, 0.18);
         --offline-primary-shadow-soft: rgba(0, 150, 230, 0.18);
         --offline-primary-shadow-strong: rgba(0, 150, 230, 0.26);
         --offline-primary-shadow-hover: rgba(0, 150, 230, 0.34);
         --offline-warning-tint: rgba(251, 191, 36, 0.16);
-        --offline-warning: #fbbf24;
+        --offline-warning: #FBBF24;
         --offline-success-tint: rgba(52, 211, 153, 0.12);
-        --offline-success: #34d399;
+        --offline-success: #34D399;
       }
 
       html[data-style='kawaii'] {
-        --offline-theme-color: #be185d;
-        --offline-background: #fffaf4;
-        --offline-surface: #ffffff;
-        --offline-border: #ffe4e1;
-        --offline-text: #5c2d3c;
-        --offline-text-muted: #66414c;
-        --offline-primary: #be185d;
-        --offline-primary-foreground: #ffffff;
-        --offline-secondary: #be185d;
-        --offline-accent: #ffb6c1;
-        --offline-primary-tint: rgba(190, 24, 93, 0.08);
-        --offline-primary-border-tint: rgba(190, 24, 93, 0.18);
-        --offline-primary-shadow-soft: rgba(190, 24, 93, 0.18);
-        --offline-primary-shadow-strong: rgba(190, 24, 93, 0.26);
-        --offline-primary-shadow-hover: rgba(190, 24, 93, 0.34);
+        --offline-theme-color: #FF69B4;
+        --offline-background: #FFFAF4;
+        --offline-surface: #FFFFFF;
+        --offline-border: #FFE4E1;
+        --offline-text: #8E7C80;
+        --offline-text-muted: #B4A0A5;
+        --offline-primary: #FF69B4;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #EC4899;
+        --offline-accent: #FFB6C1;
+        --offline-primary-tint: rgba(255, 105, 180, 0.08);
+        --offline-primary-border-tint: rgba(255, 105, 180, 0.18);
+        --offline-primary-shadow-soft: rgba(255, 105, 180, 0.18);
+        --offline-primary-shadow-strong: rgba(255, 105, 180, 0.26);
+        --offline-primary-shadow-hover: rgba(255, 105, 180, 0.34);
         --offline-warning-tint: rgba(253, 224, 71, 0.16);
-        --offline-warning: #fde047;
+        --offline-warning: #FDE047;
         --offline-success-tint: rgba(134, 239, 172, 0.12);
-        --offline-success: #86efac;
+        --offline-success: #86EFAC;
       }
 
       html[data-style='classic'] {
-        --offline-theme-color: #8b4513;
-        --offline-background: #fffafb;
-        --offline-surface: #ffffff;
-        --offline-border: #f5e6dc;
+        --offline-theme-color: #8B4513;
+        --offline-background: #FFFAFB;
+        --offline-surface: #FFFFFF;
+        --offline-border: #F5E6DC;
         --offline-text: #431407;
-        --offline-text-muted: #78503c;
-        --offline-primary: #8b4513;
-        --offline-primary-foreground: #ffffff;
-        --offline-secondary: #a16207;
-        --offline-accent: #b47850;
+        --offline-text-muted: #78503C;
+        --offline-primary: #8B4513;
+        --offline-primary-foreground: #FFFFFF;
+        --offline-secondary: #A16207;
+        --offline-accent: #B47850;
         --offline-primary-tint: rgba(139, 69, 19, 0.08);
         --offline-primary-border-tint: rgba(139, 69, 19, 0.18);
         --offline-primary-shadow-soft: rgba(139, 69, 19, 0.18);
         --offline-primary-shadow-strong: rgba(139, 69, 19, 0.26);
         --offline-primary-shadow-hover: rgba(139, 69, 19, 0.34);
         --offline-warning-tint: rgba(180, 83, 9, 0.16);
-        --offline-warning: #b45309;
+        --offline-warning: #B45309;
         --offline-success-tint: rgba(22, 163, 74, 0.12);
-        --offline-success: #16a34a;
+        --offline-success: #16A34A;
       }
 
       html[data-style='ocean'] {
-        --offline-theme-color: #06b6d4;
-        --offline-background: #f0f9ff;
-        --offline-surface: #ffffff;
-        --offline-border: #bae6fd;
+        --offline-theme-color: #06B6D4;
+        --offline-background: #F0F9FF;
+        --offline-surface: #FFFFFF;
+        --offline-border: #BAE6FD;
         --offline-text: #075985;
-        --offline-text-muted: #164e63;
-        --offline-primary: #06b6d4;
+        --offline-text-muted: #164E63;
+        --offline-primary: #06B6D4;
         --offline-primary-foreground: #020617;
-        --offline-secondary: #0ea5e9;
-        --offline-accent: #14b8a6;
+        --offline-secondary: #14B8A6;
+        --offline-accent: #0284C7;
         --offline-primary-tint: rgba(6, 182, 212, 0.08);
         --offline-primary-border-tint: rgba(6, 182, 212, 0.18);
         --offline-primary-shadow-soft: rgba(6, 182, 212, 0.18);
         --offline-primary-shadow-strong: rgba(6, 182, 212, 0.26);
         --offline-primary-shadow-hover: rgba(6, 182, 212, 0.34);
         --offline-warning-tint: rgba(245, 158, 11, 0.16);
-        --offline-warning: #f59e0b;
+        --offline-warning: #F59E0B;
         --offline-success-tint: rgba(20, 184, 166, 0.12);
-        --offline-success: #14b8a6;
+        --offline-success: #14B8A6;
       }
 
       html[data-style='forest'] {
-        --offline-theme-color: #059669;
-        --offline-background: #f0fdf4;
-        --offline-surface: #ffffff;
-        --offline-border: #bbf7d0;
-        --offline-text: #14532d;
+        --offline-theme-color: #22C55E;
+        --offline-background: #F0FDF4;
+        --offline-surface: #FFFFFF;
+        --offline-border: #BBF7D0;
+        --offline-text: #14532D;
         --offline-text-muted: #166534;
-        --offline-primary: #059669;
+        --offline-primary: #22C55E;
         --offline-primary-foreground: #020617;
-        --offline-secondary: #16a34a;
-        --offline-accent: #65a30d;
-        --offline-primary-tint: rgba(5, 150, 105, 0.08);
-        --offline-primary-border-tint: rgba(5, 150, 105, 0.18);
-        --offline-primary-shadow-soft: rgba(5, 150, 105, 0.18);
-        --offline-primary-shadow-strong: rgba(5, 150, 105, 0.26);
-        --offline-primary-shadow-hover: rgba(5, 150, 105, 0.34);
+        --offline-secondary: #84CC16;
+        --offline-accent: #16A34A;
+        --offline-primary-tint: rgba(34, 197, 94, 0.08);
+        --offline-primary-border-tint: rgba(34, 197, 94, 0.18);
+        --offline-primary-shadow-soft: rgba(34, 197, 94, 0.18);
+        --offline-primary-shadow-strong: rgba(34, 197, 94, 0.26);
+        --offline-primary-shadow-hover: rgba(34, 197, 94, 0.34);
         --offline-warning-tint: rgba(234, 179, 8, 0.16);
-        --offline-warning: #eab308;
+        --offline-warning: #EAB308;
         --offline-success-tint: rgba(34, 197, 94, 0.12);
-        --offline-success: #22c55e;
-      }
-      html[data-style='nitro'] {
+        --offline-success: #22C55E;
+      } html[data-style='nitro'] {
         color-scheme: dark;
       }
 
@@ -375,7 +367,7 @@
       <h1>您目前處於離線狀態</h1>
       <p>請檢查您的網路連線，或稍後再試。HaoRate 會在連線恢復時自動更新。</p>
 
-      <button class="retry-btn" onclick="window.location.reload()">
+      <button class="retry-btn" id="retry-btn" type="button">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
@@ -409,20 +401,157 @@
     </div>
 
     <script>
-      // 檢查是否有快取的匯率數據
-      try {
-        const cached = localStorage.getItem('exchangeRates');
-        if (cached) {
-          document.getElementById('cached-info').style.display = 'block';
-        }
-      } catch (e) {
-        // Ignore localStorage errors
-      }
+      (function () {
+        var HEAL_SESSION_KEY = 'rw-offline-shell-heal';
+        var LEGACY_PRECACHE_THRESHOLD = 150;
+        var SHELL_PROBE_TIMEOUT_MS = 2000;
+        var WAITING_SW_TIMEOUT_MS = 8000;
 
-      // 監聽網路狀態變化，自動重載
-      window.addEventListener('online', () => {
-        window.location.reload();
-      });
+        // 檢查是否有快取的匯率數據
+        try {
+          var cached = localStorage.getItem('exchangeRates');
+          if (cached) {
+            document.getElementById('cached-info').style.display = 'block';
+          }
+        } catch (e) {
+          // localStorage 不可用時略過
+        }
+
+        function hasHealBeenAttemptedThisSession() {
+          try {
+            return sessionStorage.getItem(HEAL_SESSION_KEY) === '1';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function markHealAttemptedThisSession() {
+          try {
+            sessionStorage.setItem(HEAL_SESSION_KEY, '1');
+          } catch (e) {
+            // sessionStorage 不可用時仍允許單次修復
+          }
+        }
+
+        function navigateToAppShell() {
+          var healQuery = 'shell-heal=' + Date.now();
+          window.location.replace('./?' + healQuery);
+        }
+
+        function probeActiveSwShellBroken() {
+          if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+            return Promise.resolve(true);
+          }
+
+          return new Promise(function (resolve) {
+            var channel = new MessageChannel();
+            var timeoutId = setTimeout(function () {
+              resolve(true);
+            }, SHELL_PROBE_TIMEOUT_MS);
+
+            channel.port1.onmessage = function (event) {
+              clearTimeout(timeoutId);
+              var data = event.data || {};
+              var precacheEntryCount = Number(data.precacheEntryCount || 0);
+              var hasIndexShell = Boolean(data.hasIndexShell || data.healthy);
+              resolve(!hasIndexShell || precacheEntryCount > LEGACY_PRECACHE_THRESHOLD);
+            };
+
+            navigator.serviceWorker.controller.postMessage({ type: 'CHECK_SHELL_PRECACHE' }, [
+              channel.port2,
+            ]);
+          });
+        }
+
+        function waitForWaitingServiceWorker(registration) {
+          if (registration.waiting) {
+            return Promise.resolve(registration.waiting);
+          }
+
+          return new Promise(function (resolve) {
+            var timeoutId = setTimeout(function () {
+              registration.removeEventListener('updatefound', onUpdateFound);
+              resolve(registration.waiting);
+            }, WAITING_SW_TIMEOUT_MS);
+
+            function onUpdateFound() {
+              var installing = registration.installing;
+              if (!installing) {
+                return;
+              }
+
+              installing.addEventListener('statechange', function () {
+                if (installing.state === 'installed' && registration.waiting) {
+                  clearTimeout(timeoutId);
+                  registration.removeEventListener('updatefound', onUpdateFound);
+                  resolve(registration.waiting);
+                }
+              });
+            }
+
+            registration.addEventListener('updatefound', onUpdateFound);
+          });
+        }
+
+        function skipWaitingAndNavigateToShell(waitingWorker) {
+          return new Promise(function () {
+            navigator.serviceWorker.addEventListener(
+              'controllerchange',
+              function () {
+                navigateToAppShell();
+              },
+              { once: true },
+            );
+            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+            setTimeout(navigateToAppShell, 1500);
+          });
+        }
+
+        // 在線卻載入 offline.html 時自我修復；swHealth 僅在 React 掛載後執行，無法打破死亡迴圈。
+        async function attemptOfflineShellSelfHeal(forceRetry) {
+          if (!navigator.onLine) {
+            return;
+          }
+          if (!forceRetry && hasHealBeenAttemptedThisSession()) {
+            return;
+          }
+          markHealAttemptedThisSession();
+
+          try {
+            if ('serviceWorker' in navigator) {
+              var registration = await navigator.serviceWorker.getRegistration();
+              if (registration) {
+                await registration.update();
+                var broken = await probeActiveSwShellBroken();
+                if (broken) {
+                  var waiting = await waitForWaitingServiceWorker(registration);
+                  if (waiting) {
+                    await skipWaitingAndNavigateToShell(waiting);
+                    return;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // 修復失敗時仍嘗試導向 app shell
+          }
+
+          navigateToAppShell();
+        }
+
+        var retryBtn = document.getElementById('retry-btn');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', function () {
+            void attemptOfflineShellSelfHeal(true);
+          });
+        }
+
+        window.addEventListener('online', function () {
+          void attemptOfflineShellSelfHeal(true);
+        });
+
+        void attemptOfflineShellSelfHeal(false);
+      })();
     </script>
   </body>
 </html>

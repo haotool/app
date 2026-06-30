@@ -3,7 +3,7 @@
 > HaoRate 開放台灣銀行牌告匯率 JSON 資料：jsDelivr CDN 與 GitHub Raw 雙端點，支援 curl / JS / Python 查詢。免費、免 API Key。
 
 - Canonical: https://app.haotool.org/ratewise/open-data/
-- Version: v2.25.3
+- Version: v2.25.13
 
 ## 端點
 
@@ -15,7 +15,7 @@
 | OpenAPI 規格 | https://app.haotool.org/ratewise/openapi.json |
 
 - **免 API Key**、**免費使用**、**CORS 已啟用**。
-- 更新頻率：每 5 分鐘自動同步臺灣銀行牌告。
+- 更新頻率：約每 5 分鐘檢查更新臺灣銀行牌告。
 - 涵蓋 18 種貨幣的現金買/賣、即期買/賣四種報價。
 
 ## 呼叫範例
@@ -99,5 +99,5 @@ jsDelivr CDN（建議）：全球 PoP 節點加速，無明確請求上限；Git
 
 ---
 
-_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.25.3），與 HTML 頁面語義一致。_
+_本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.25.13），與 HTML 頁面語義一致。_
 _正式人眼版本請見對應 HTML URL。_

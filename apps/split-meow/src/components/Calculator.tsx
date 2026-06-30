@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
+import { confirmMixedCurrencyIfNeeded } from '../config/currencies';
 
 interface CalculatorProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -17,6 +18,9 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
     setCalculatorValue,
     setItemizedValue,
     saveExpense,
+    expenses,
+    currentTripId,
+    currency,
   } = useStore();
 
   const currentValue =
@@ -30,6 +34,21 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
     splitMode === 'split_evenly'
       ? evaluateExpression(currentValue) > 0
       : Object.values(itemizedValues).some((v) => evaluateExpression(v) > 0);
+
+  const handleSave = () => {
+    const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
+    if (
+      !confirmMixedCurrencyIfNeeded(
+        tripExpenses,
+        currency,
+        currency,
+        t('history.mixed_currency_confirm'),
+      )
+    ) {
+      return;
+    }
+    saveExpense();
+  };
 
   const handlePress = (key: string) => {
     if (splitMode === 'itemized' && !focusedMemberId) return;
@@ -191,7 +210,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
         </button>
       ))}
       <button
-        onClick={canSave ? saveExpense : undefined}
+        onClick={canSave ? handleSave : undefined}
         disabled={!canSave}
         className={cn(
           'relative overflow-hidden rounded-full transition-all flex items-center justify-center gap-2 shadow-ambient text-lg sm:text-xl font-medium',

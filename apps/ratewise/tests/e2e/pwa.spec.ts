@@ -123,7 +123,7 @@ test.describe('PWA Features', () => {
 
   test('should have theme color meta tag', async ({ rateWisePage: page }) => {
     const themeColor = await page.locator('meta[name="theme-color"]').getAttribute('content');
-    expect(themeColor).toBe('#8B5CF6');
+    expect(themeColor).toBe('#7C3AED');
   });
 
   test('should have viewport meta tag', async ({ rateWisePage: page }) => {

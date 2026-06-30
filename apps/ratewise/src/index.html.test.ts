@@ -19,7 +19,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
 
     it('should have theme-color meta tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
+      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#7C3AED"');
     });
 
     it('should have Cloudflare Rocket Loader disabled', () => {
@@ -114,7 +114,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
 
   describe('🟢 PWA Meta Tags（保留）', () => {
     it('should retain PWA essential tags', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#8B5CF6"');
+      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#7C3AED"');
       expect(indexHtmlContent).toContain('<meta name="viewport"');
       expect(indexHtmlContent).toContain('<link rel="apple-touch-icon"');
       expect(indexHtmlContent).toContain('<link rel="icon"');

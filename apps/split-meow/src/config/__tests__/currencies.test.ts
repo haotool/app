@@ -7,6 +7,7 @@ import {
   resolveExpenseCurrency,
   resolveTripCurrency,
   isMixedCurrencyTrip,
+  wouldCreateMixedCurrencyTrip,
   computeMemberBalances,
 } from '../currencies';
 
@@ -111,8 +112,28 @@ describe('trip currency helpers', () => {
     ).toEqual({ a: 50, b: -50 });
   });
 
-  it('resolveExpenseCurrency 舊資料 fallback 行程幣別', () => {
-    expect(resolveExpenseCurrency({}, 'KRW')).toBe('KRW');
+  it('resolveExpenseCurrency 舊資料 fallback TWD', () => {
+    expect(resolveExpenseCurrency({}, 'KRW')).toBe('TWD');
     expect(resolveExpenseCurrency({ currency: 'TWD' }, 'KRW')).toBe('TWD');
+    expect(resolveExpenseCurrency({ currency: 'KRW' }, 'TWD')).toBe('KRW');
+  });
+
+  it('resolveTripCurrency 舊資料 fallback TWD，空行程 fallback 全域幣別', () => {
+    expect(resolveTripCurrency([{}], 'KRW')).toBe('TWD');
+    expect(resolveTripCurrency([], 'KRW')).toBe('KRW');
+  });
+
+  it('wouldCreateMixedCurrencyTrip 僅在單幣行程將混幣時為 true', () => {
+    expect(wouldCreateMixedCurrencyTrip([], 'TWD', 'KRW')).toBe(false);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }], 'TWD', 'TWD')).toBe(false);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }], 'TWD', 'KRW')).toBe(true);
+    expect(
+      wouldCreateMixedCurrencyTrip([{ currency: 'TWD' }, { currency: 'KRW' }], 'TWD', 'TWD'),
+    ).toBe(false);
+  });
+
+  it('wouldCreateMixedCurrencyTrip 舊資料缺 currency 欄位時仍偵測混幣風險', () => {
+    expect(wouldCreateMixedCurrencyTrip([{}], 'TWD', 'KRW')).toBe(true);
+    expect(wouldCreateMixedCurrencyTrip([{ currency: undefined }], 'TWD', 'KRW')).toBe(true);
   });
 });

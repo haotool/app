@@ -1,0 +1,4516 @@
+{
+  "date": "2026-06-30",
+  "base": "https://app.haotool.org/ratewise",
+  "results": [
+    {
+      "page": "home",
+      "path": "/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/",
+      "httpStatus": 200,
+      "error": "page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://app.haotool.org/ratewise/\", waiting until \"networkidle\"\n",
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "page": "usd-twd",
+      "path": "/usd-twd/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/usd-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時美金匯率 — 台銀實際賣出價 | USD/TWD | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "jpy-twd",
+      "path": "/jpy-twd/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/jpy-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-jpy-twd-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時日圓匯率 — 台銀實際賣出價 | JPY/TWD | HaoRate 匯率好工具",
+        "h1": "日圓對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "twd-usd",
+      "path": "/twd-usd/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/twd-usd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-twd-usd-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "台幣換美金匯率 — 出國換匯實際費率 | TWD/USD | HaoRate 匯率好工具",
+        "h1": "台幣換美金匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "usd-twd-500",
+      "path": "/usd-twd/500/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/usd-twd/500/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-500-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "買 500 美金要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "multi",
+      "path": "/multi/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/multi/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-multi-375x667.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "多幣別同時換算 - 一次比較 18 種即時匯率1005001,0003,0005",
+          "rect": {
+            "top": 48,
+            "bottom": 1396,
+            "h": 1348,
+            "w": 375
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣1,000.00即期 · 基準貨幣🇯🇵JPY日圓5,02",
+          "rect": {
+            "top": 127,
+            "bottom": 1271,
+            "h": 1144,
+            "w": 321
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 149,
+            "bottom": 165,
+            "h": 16,
+            "w": 16
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 161,
+            "bottom": 175,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 211,
+            "bottom": 231,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 225,
+            "bottom": 239,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 274,
+            "bottom": 294,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 289,
+            "bottom": 302,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 338,
+            "bottom": 358,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 667
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 662
+        }
+      ],
+      "heroInfo": {
+        "title": "多幣別同時換算 - 一次比較 18 種即時匯率 | HaoRate 匯率好工具",
+        "h1": "多幣別同時換算 - 一次比較 18 種即時匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 45
+    },
+    {
+      "page": "favorites",
+      "path": "/favorites/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/favorites/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-favorites-375x667.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率常用貨幣轉換歷史所有貨幣拖曳排序🇹",
+          "rect": {
+            "top": 48,
+            "bottom": 1618,
+            "h": 1570,
+            "w": 375
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 224,
+            "bottom": 242,
+            "h": 18,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣· favorites.baseCurrency",
+          "rect": {
+            "top": 215,
+            "bottom": 251,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 300,
+            "bottom": 322,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇯🇵JPY日圓",
+          "rect": {
+            "top": 293,
+            "bottom": 329,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 378,
+            "bottom": 400,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇰🇷KRW韓元",
+          "rect": {
+            "top": 371,
+            "bottom": 407,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 456,
+            "bottom": 478,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇻🇳VND越南盾",
+          "rect": {
+            "top": 449,
+            "bottom": 485,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 534,
+            "bottom": 556,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇭THB泰銖",
+          "rect": {
+            "top": 527,
+            "bottom": 563,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 612,
+            "bottom": 634,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇭🇰HKD港幣",
+          "rect": {
+            "top": 605,
+            "bottom": 641,
+            "h": 36,
+            "w": 225
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇺🇸USD美元換算 →",
+          "rect": {
+            "top": 666,
+            "bottom": 736,
+            "h": 70,
+            "w": 351
+          },
+          "issues": ["bottom-clipped"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 667
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 662
+        }
+      ],
+      "heroInfo": {
+        "title": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率 | HaoRate 匯率好工具",
+        "h1": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 51
+    },
+    {
+      "page": "settings",
+      "path": "/settings/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/settings/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-settings-375x667.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "應用程式設定 - 介面風格切換與語言偏好管理介面風格Zen極簡專業Nitro深色",
+          "rect": {
+            "top": 48,
+            "bottom": 1517,
+            "h": 1469,
+            "w": 375
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Zen極簡專業",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Nitro深色科技感",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Kawaii可愛粉嫩",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Classic復古書卷",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Ocean海洋深邃",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Forest自然森林",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 170
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "重置主題設定",
+          "rect": {
+            "top": 936,
+            "bottom": 984,
+            "h": 48,
+            "w": 349
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 77,
+            "bottom": 109,
+            "h": 32,
+            "w": 32
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 667
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 662
+        }
+      ],
+      "heroInfo": {
+        "title": "應用程式設定 - 介面風格切換與語言偏好管理 | HaoRate 匯率好工具",
+        "h1": "應用程式設定 - 介面風格切換與語言偏好管理",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 10
+    },
+    {
+      "page": "faq",
+      "path": "/faq/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/faq/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-faq-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 3589,
+            "bottom": 3615,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "HaoRate 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂 | HaoRate 匯率好工具",
+        "h1": "常見問題",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "about",
+      "path": "/about/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/about/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-about-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 2450,
+            "bottom": 2476,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "關於 HaoRate 匯率好工具 - 資料來源、技術架構與 SEO 透明度 | HaoRate 匯率好工具",
+        "h1": "關於 HaoRate 匯率好工具",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "guide",
+      "path": "/guide/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/guide/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-guide-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具",
+        "h1": "如何使用 HaoRate 進行匯率換算",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "privacy",
+      "path": "/privacy/",
+      "viewport": "375x667",
+      "url": "https://app.haotool.org/ratewise/privacy/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-privacy-375x667.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 1467,
+            "bottom": 1493,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "隱私政策 - HaoRate 個人資料保護說明 | HaoRate 匯率好工具",
+        "h1": "隱私政策",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "home",
+      "path": "/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/",
+      "httpStatus": 200,
+      "error": "page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://app.haotool.org/ratewise/\", waiting until \"networkidle\"\n",
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "page": "usd-twd",
+      "path": "/usd-twd/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/usd-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時美金匯率 — 台銀實際賣出價 | USD/TWD | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "jpy-twd",
+      "path": "/jpy-twd/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/jpy-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-jpy-twd-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時日圓匯率 — 台銀實際賣出價 | JPY/TWD | HaoRate 匯率好工具",
+        "h1": "日圓對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "twd-usd",
+      "path": "/twd-usd/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/twd-usd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-twd-usd-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "台幣換美金匯率 — 出國換匯實際費率 | TWD/USD | HaoRate 匯率好工具",
+        "h1": "台幣換美金匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "usd-twd-500",
+      "path": "/usd-twd/500/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/usd-twd/500/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-500-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "買 500 美金要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "multi",
+      "path": "/multi/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/multi/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-multi-390x844.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "多幣別同時換算 - 一次比較 18 種即時匯率1005001,0003,0005",
+          "rect": {
+            "top": 48,
+            "bottom": 1396,
+            "h": 1348,
+            "w": 390
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣1,000.00即期 · 基準貨幣🇯🇵JPY日圓5,02",
+          "rect": {
+            "top": 127,
+            "bottom": 1271,
+            "h": 1144,
+            "w": 336
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 149,
+            "bottom": 165,
+            "h": 16,
+            "w": 16
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 161,
+            "bottom": 175,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 211,
+            "bottom": 231,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 225,
+            "bottom": 239,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 274,
+            "bottom": 294,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 289,
+            "bottom": 302,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 338,
+            "bottom": 358,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 844
+        }
+      ],
+      "heroInfo": {
+        "title": "多幣別同時換算 - 一次比較 18 種即時匯率 | HaoRate 匯率好工具",
+        "h1": "多幣別同時換算 - 一次比較 18 種即時匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 45
+    },
+    {
+      "page": "favorites",
+      "path": "/favorites/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/favorites/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-favorites-390x844.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率常用貨幣轉換歷史所有貨幣拖曳排序🇹",
+          "rect": {
+            "top": 48,
+            "bottom": 1618,
+            "h": 1570,
+            "w": 390
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 224,
+            "bottom": 242,
+            "h": 18,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣· favorites.baseCurrency",
+          "rect": {
+            "top": 215,
+            "bottom": 251,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 300,
+            "bottom": 322,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇯🇵JPY日圓",
+          "rect": {
+            "top": 293,
+            "bottom": 329,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 378,
+            "bottom": 400,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇰🇷KRW韓元",
+          "rect": {
+            "top": 371,
+            "bottom": 407,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 456,
+            "bottom": 478,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇻🇳VND越南盾",
+          "rect": {
+            "top": 449,
+            "bottom": 485,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 534,
+            "bottom": 556,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇭THB泰銖",
+          "rect": {
+            "top": 527,
+            "bottom": 563,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 612,
+            "bottom": 634,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇭🇰HKD港幣",
+          "rect": {
+            "top": 605,
+            "bottom": 641,
+            "h": 36,
+            "w": 240
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 690,
+            "bottom": 712,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 844
+        }
+      ],
+      "heroInfo": {
+        "title": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率 | HaoRate 匯率好工具",
+        "h1": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 49
+    },
+    {
+      "page": "settings",
+      "path": "/settings/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/settings/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-settings-390x844.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "應用程式設定 - 介面風格切換與語言偏好管理介面風格Zen極簡專業Nitro深色",
+          "rect": {
+            "top": 48,
+            "bottom": 1517,
+            "h": 1469,
+            "w": 390
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Zen極簡專業",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Nitro深色科技感",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Kawaii可愛粉嫩",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Classic復古書卷",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Ocean海洋深邃",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Forest自然森林",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 177
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "重置主題設定",
+          "rect": {
+            "top": 936,
+            "bottom": 984,
+            "h": 48,
+            "w": 364
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 77,
+            "bottom": 109,
+            "h": 32,
+            "w": 32
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 844
+        }
+      ],
+      "heroInfo": {
+        "title": "應用程式設定 - 介面風格切換與語言偏好管理 | HaoRate 匯率好工具",
+        "h1": "應用程式設定 - 介面風格切換與語言偏好管理",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 10
+    },
+    {
+      "page": "faq",
+      "path": "/faq/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/faq/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-faq-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 3408,
+            "bottom": 3434,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "HaoRate 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂 | HaoRate 匯率好工具",
+        "h1": "常見問題",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "about",
+      "path": "/about/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/about/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-about-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 2399,
+            "bottom": 2424,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "關於 HaoRate 匯率好工具 - 資料來源、技術架構與 SEO 透明度 | HaoRate 匯率好工具",
+        "h1": "關於 HaoRate 匯率好工具",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "guide",
+      "path": "/guide/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/guide/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-guide-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具",
+        "h1": "如何使用 HaoRate 進行匯率換算",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "privacy",
+      "path": "/privacy/",
+      "viewport": "390x844",
+      "url": "https://app.haotool.org/ratewise/privacy/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-privacy-390x844.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 1467,
+            "bottom": 1493,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "隱私政策 - HaoRate 個人資料保護說明 | HaoRate 匯率好工具",
+        "h1": "隱私政策",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "home",
+      "path": "/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/",
+      "httpStatus": 200,
+      "error": "page.goto: Timeout 45000ms exceeded.\nCall log:\n  - navigating to \"https://app.haotool.org/ratewise/\", waiting until \"networkidle\"\n",
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "page": "usd-twd",
+      "path": "/usd-twd/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/usd-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時美金匯率 — 台銀實際賣出價 | USD/TWD | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "jpy-twd",
+      "path": "/jpy-twd/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/jpy-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-jpy-twd-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時日圓匯率 — 台銀實際賣出價 | JPY/TWD | HaoRate 匯率好工具",
+        "h1": "日圓對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "twd-usd",
+      "path": "/twd-usd/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/twd-usd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-twd-usd-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "台幣換美金匯率 — 出國換匯實際費率 | TWD/USD | HaoRate 匯率好工具",
+        "h1": "台幣換美金匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "usd-twd-500",
+      "path": "/usd-twd/500/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/usd-twd/500/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-500-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "買 500 美金要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "multi",
+      "path": "/multi/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/multi/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+        "Access to fetch at 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json' from origin 'https://app.haotool.org' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-multi-414x896.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "多幣別同時換算 - 一次比較 18 種即時匯率1005001,0003,0005",
+          "rect": {
+            "top": 48,
+            "bottom": 1396,
+            "h": 1348,
+            "w": 414
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣1,000.00即期 · 基準貨幣🇯🇵JPY日圓5,02",
+          "rect": {
+            "top": 127,
+            "bottom": 1271,
+            "h": 1144,
+            "w": 360
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 149,
+            "bottom": 165,
+            "h": 16,
+            "w": 16
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 161,
+            "bottom": 175,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 211,
+            "bottom": 231,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 225,
+            "bottom": 239,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 274,
+            "bottom": 294,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 289,
+            "bottom": 302,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 338,
+            "bottom": 358,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 896
+        }
+      ],
+      "heroInfo": {
+        "title": "多幣別同時換算 - 一次比較 18 種即時匯率 | HaoRate 匯率好工具",
+        "h1": "多幣別同時換算 - 一次比較 18 種即時匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 45
+    },
+    {
+      "page": "favorites",
+      "path": "/favorites/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/favorites/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-favorites-414x896.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率常用貨幣轉換歷史所有貨幣拖曳排序🇹",
+          "rect": {
+            "top": 48,
+            "bottom": 1618,
+            "h": 1570,
+            "w": 414
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 224,
+            "bottom": 242,
+            "h": 18,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣· favorites.baseCurrency",
+          "rect": {
+            "top": 215,
+            "bottom": 251,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 300,
+            "bottom": 322,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇯🇵JPY日圓",
+          "rect": {
+            "top": 293,
+            "bottom": 329,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 378,
+            "bottom": 400,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇰🇷KRW韓元",
+          "rect": {
+            "top": 371,
+            "bottom": 407,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 456,
+            "bottom": 478,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇻🇳VND越南盾",
+          "rect": {
+            "top": 449,
+            "bottom": 485,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 534,
+            "bottom": 556,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇭THB泰銖",
+          "rect": {
+            "top": 527,
+            "bottom": 563,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 612,
+            "bottom": 634,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇭🇰HKD港幣",
+          "rect": {
+            "top": 605,
+            "bottom": 641,
+            "h": 36,
+            "w": 264
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 690,
+            "bottom": 712,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 896
+        }
+      ],
+      "heroInfo": {
+        "title": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率 | HaoRate 匯率好工具",
+        "h1": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 48
+    },
+    {
+      "page": "settings",
+      "path": "/settings/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/settings/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-settings-414x896.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "應用程式設定 - 介面風格切換與語言偏好管理介面風格Zen極簡專業Nitro深色",
+          "rect": {
+            "top": 48,
+            "bottom": 1517,
+            "h": 1469,
+            "w": 414
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Zen極簡專業",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Nitro深色科技感",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Kawaii可愛粉嫩",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Classic復古書卷",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Ocean海洋深邃",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Forest自然森林",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 189
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "重置主題設定",
+          "rect": {
+            "top": 936,
+            "bottom": 984,
+            "h": 48,
+            "w": 388
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 77,
+            "bottom": 109,
+            "h": 32,
+            "w": 32
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 896
+        }
+      ],
+      "heroInfo": {
+        "title": "應用程式設定 - 介面風格切換與語言偏好管理 | HaoRate 匯率好工具",
+        "h1": "應用程式設定 - 介面風格切換與語言偏好管理",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 10
+    },
+    {
+      "page": "faq",
+      "path": "/faq/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/faq/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-faq-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 3383,
+            "bottom": 3408,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "HaoRate 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂 | HaoRate 匯率好工具",
+        "h1": "常見問題",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "about",
+      "path": "/about/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/about/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-about-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 2373,
+            "bottom": 2399,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "關於 HaoRate 匯率好工具 - 資料來源、技術架構與 SEO 透明度 | HaoRate 匯率好工具",
+        "h1": "關於 HaoRate 匯率好工具",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "guide",
+      "path": "/guide/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/guide/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-guide-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具",
+        "h1": "如何使用 HaoRate 進行匯率換算",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "privacy",
+      "path": "/privacy/",
+      "viewport": "414x896",
+      "url": "https://app.haotool.org/ratewise/privacy/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-privacy-414x896.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 1441,
+            "bottom": 1467,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "隱私政策 - HaoRate 個人資料保護說明 | HaoRate 匯率好工具",
+        "h1": "隱私政策",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "home",
+      "path": "/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+        "Access to fetch at 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/history-30d.json' from origin 'https://app.haotool.org' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-home-360x800.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "下拉重新整理轉換金額🇹🇼 TWD🇯🇵 JPY🇰🇷 KRW🇨🇳 C",
+          "rect": {
+            "top": 48,
+            "bottom": 4266,
+            "h": 4218,
+            "w": 360
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "1005001,0003,0005,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 302
+          },
+          "issues": ["touch-target<44px", "text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 241,
+            "bottom": 265,
+            "h": 24,
+            "w": 67
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 241,
+            "bottom": 265,
+            "h": 24,
+            "w": 67
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "點擊交換",
+          "rect": {
+            "top": 477,
+            "bottom": 525,
+            "h": 48,
+            "w": 48
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "DIV",
+          "text": "1,0003,0005,00010,00030,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 302
+          },
+          "issues": ["touch-target<44px", "text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 800
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 722
+        }
+      ],
+      "heroInfo": {
+        "title": "HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價",
+        "h1": "HaoRate 匯率好工具 即時匯率換算",
+        "firstLargeNumber": "1,000.00",
+        "rateY": 109,
+        "rateFontSize": 24
+      },
+      "truncationCount": 19
+    },
+    {
+      "page": "usd-twd",
+      "path": "/usd-twd/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/usd-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時美金匯率 — 台銀實際賣出價 | USD/TWD | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "jpy-twd",
+      "path": "/jpy-twd/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/jpy-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-jpy-twd-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時日圓匯率 — 台銀實際賣出價 | JPY/TWD | HaoRate 匯率好工具",
+        "h1": "日圓對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "twd-usd",
+      "path": "/twd-usd/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/twd-usd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-twd-usd-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "台幣換美金匯率 — 出國換匯實際費率 | TWD/USD | HaoRate 匯率好工具",
+        "h1": "台幣換美金匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "usd-twd-500",
+      "path": "/usd-twd/500/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/usd-twd/500/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-500-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "買 500 美金要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "multi",
+      "path": "/multi/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/multi/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+        "Access to fetch at 'https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/providers/moneybox/latest.json' from origin 'https://app.haotool.org' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-multi-360x800.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "多幣別同時換算 - 一次比較 18 種即時匯率1005001,0003,0005",
+          "rect": {
+            "top": 48,
+            "bottom": 1396,
+            "h": 1348,
+            "w": 360
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣1,000.00即期 · 基準貨幣🇯🇵JPY日圓5,02",
+          "rect": {
+            "top": 127,
+            "bottom": 1271,
+            "h": 1144,
+            "w": 306
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 149,
+            "bottom": 165,
+            "h": 16,
+            "w": 16
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 161,
+            "bottom": 175,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 211,
+            "bottom": 231,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 225,
+            "bottom": 239,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 274,
+            "bottom": 294,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 289,
+            "bottom": 302,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 338,
+            "bottom": 358,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 800
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 722
+        }
+      ],
+      "heroInfo": {
+        "title": "多幣別同時換算 - 一次比較 18 種即時匯率 | HaoRate 匯率好工具",
+        "h1": "多幣別同時換算 - 一次比較 18 種即時匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 45
+    },
+    {
+      "page": "favorites",
+      "path": "/favorites/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/favorites/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-favorites-360x800.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率常用貨幣轉換歷史所有貨幣拖曳排序🇹",
+          "rect": {
+            "top": 48,
+            "bottom": 1618,
+            "h": 1570,
+            "w": 360
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 224,
+            "bottom": 242,
+            "h": 18,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣· favorites.baseCurrency",
+          "rect": {
+            "top": 215,
+            "bottom": 251,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 300,
+            "bottom": 322,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇯🇵JPY日圓",
+          "rect": {
+            "top": 293,
+            "bottom": 329,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 378,
+            "bottom": 400,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇰🇷KRW韓元",
+          "rect": {
+            "top": 371,
+            "bottom": 407,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 456,
+            "bottom": 478,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇻🇳VND越南盾",
+          "rect": {
+            "top": 449,
+            "bottom": 485,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 534,
+            "bottom": 556,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇭THB泰銖",
+          "rect": {
+            "top": 527,
+            "bottom": 563,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 612,
+            "bottom": 634,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇭🇰HKD港幣",
+          "rect": {
+            "top": 605,
+            "bottom": 641,
+            "h": 36,
+            "w": 210
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 690,
+            "bottom": 712,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 800
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 722
+        }
+      ],
+      "heroInfo": {
+        "title": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率 | HaoRate 匯率好工具",
+        "h1": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 50
+    },
+    {
+      "page": "settings",
+      "path": "/settings/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/settings/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-settings-360x800.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "應用程式設定 - 介面風格切換與語言偏好管理介面風格Zen極簡專業Nitro深色",
+          "rect": {
+            "top": 48,
+            "bottom": 1517,
+            "h": 1469,
+            "w": 360
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Zen極簡專業",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Nitro深色科技感",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Kawaii可愛粉嫩",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Classic復古書卷",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Ocean海洋深邃",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Forest自然森林",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 162
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "重置主題設定",
+          "rect": {
+            "top": 936,
+            "bottom": 984,
+            "h": 48,
+            "w": 334
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 77,
+            "bottom": 109,
+            "h": 32,
+            "w": 32
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 800
+        },
+        {
+          "tag": "ASIDE",
+          "class": "fixed top-[var(--notification-mobile-top-offset)] md:top-aut",
+          "bottom": 722
+        }
+      ],
+      "heroInfo": {
+        "title": "應用程式設定 - 介面風格切換與語言偏好管理 | HaoRate 匯率好工具",
+        "h1": "應用程式設定 - 介面風格切換與語言偏好管理",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 10
+    },
+    {
+      "page": "faq",
+      "path": "/faq/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/faq/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-faq-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 3693,
+            "bottom": 3719,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "HaoRate 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂 | HaoRate 匯率好工具",
+        "h1": "常見問題",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "about",
+      "path": "/about/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/about/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-about-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 2532,
+            "bottom": 2557,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "關於 HaoRate 匯率好工具 - 資料來源、技術架構與 SEO 透明度 | HaoRate 匯率好工具",
+        "h1": "關於 HaoRate 匯率好工具",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "guide",
+      "path": "/guide/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/guide/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-guide-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具",
+        "h1": "如何使用 HaoRate 進行匯率換算",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "privacy",
+      "path": "/privacy/",
+      "viewport": "360x800",
+      "url": "https://app.haotool.org/ratewise/privacy/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-privacy-360x800.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 1544,
+            "bottom": 1570,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "隱私政策 - HaoRate 個人資料保護說明 | HaoRate 匯率好工具",
+        "h1": "隱私政策",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "home",
+      "path": "/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-home-430x932.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "下拉重新整理轉換金額🇹🇼 TWD🇯🇵 JPY🇰🇷 KRW🇨🇳 C",
+          "rect": {
+            "top": 48,
+            "bottom": 3923,
+            "h": 3875,
+            "w": 430
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "1005001,0003,0005,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 372
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 177,
+            "bottom": 209,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 241,
+            "bottom": 265,
+            "h": 24,
+            "w": 67
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 241,
+            "bottom": 265,
+            "h": 24,
+            "w": 67
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "點擊交換",
+          "rect": {
+            "top": 477,
+            "bottom": 525,
+            "h": 48,
+            "w": 48
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "DIV",
+          "text": "1,0003,0005,00010,00030,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 372
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 637,
+            "bottom": 669,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 932
+        }
+      ],
+      "heroInfo": {
+        "title": "HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價",
+        "h1": "HaoRate 匯率好工具 即時匯率換算",
+        "firstLargeNumber": "1,000.00",
+        "rateY": 109,
+        "rateFontSize": 24
+      },
+      "truncationCount": 19
+    },
+    {
+      "page": "usd-twd",
+      "path": "/usd-twd/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/usd-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時美金匯率 — 台銀實際賣出價 | USD/TWD | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "jpy-twd",
+      "path": "/jpy-twd/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/jpy-twd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-jpy-twd-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "即時日圓匯率 — 台銀實際賣出價 | JPY/TWD | HaoRate 匯率好工具",
+        "h1": "日圓對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "twd-usd",
+      "path": "/twd-usd/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/twd-usd/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-twd-usd-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "台幣換美金匯率 — 出國換匯實際費率 | TWD/USD | HaoRate 匯率好工具",
+        "h1": "台幣換美金匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "usd-twd-500",
+      "path": "/usd-twd/500/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/usd-twd/500/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-usd-twd-500-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 46,
+            "bottom": 66,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "買 500 美金要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具",
+        "h1": "美金對台幣匯率換算器",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "multi",
+      "path": "/multi/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/multi/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-multi-430x932.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "多幣別同時換算 - 一次比較 18 種即時匯率1005001,0003,0005",
+          "rect": {
+            "top": 48,
+            "bottom": 1396,
+            "h": 1348,
+            "w": 430
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "100",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 49
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "500",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 51
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "1,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 62
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "3,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "5,000",
+          "rect": {
+            "top": 81,
+            "bottom": 113,
+            "h": 32,
+            "w": 64
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣1,000.00即期 · 基準貨幣🇯🇵JPY日圓5,02",
+          "rect": {
+            "top": 127,
+            "bottom": 1271,
+            "h": 1144,
+            "w": 376
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 149,
+            "bottom": 165,
+            "h": 16,
+            "w": 16
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 161,
+            "bottom": 175,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 211,
+            "bottom": 231,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "即期",
+          "rect": {
+            "top": 225,
+            "bottom": 239,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 274,
+            "bottom": 294,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "現金",
+          "rect": {
+            "top": 289,
+            "bottom": 302,
+            "h": 14,
+            "w": 22
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 338,
+            "bottom": 358,
+            "h": 20,
+            "w": 20
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 932
+        }
+      ],
+      "heroInfo": {
+        "title": "多幣別同時換算 - 一次比較 18 種即時匯率 | HaoRate 匯率好工具",
+        "h1": "多幣別同時換算 - 一次比較 18 種即時匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 45
+    },
+    {
+      "page": "favorites",
+      "path": "/favorites/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/favorites/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-favorites-430x932.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率常用貨幣轉換歷史所有貨幣拖曳排序🇹",
+          "rect": {
+            "top": 48,
+            "bottom": 1618,
+            "h": 1570,
+            "w": 430
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "DIV",
+          "text": "",
+          "rect": {
+            "top": 224,
+            "bottom": 242,
+            "h": 18,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇼TWD新台幣· favorites.baseCurrency",
+          "rect": {
+            "top": 215,
+            "bottom": 251,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 300,
+            "bottom": 322,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇯🇵JPY日圓",
+          "rect": {
+            "top": 293,
+            "bottom": 329,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 378,
+            "bottom": 400,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇰🇷KRW韓元",
+          "rect": {
+            "top": 371,
+            "bottom": 407,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 456,
+            "bottom": 478,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇻🇳VND越南盾",
+          "rect": {
+            "top": 449,
+            "bottom": 485,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 534,
+            "bottom": 556,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇹🇭THB泰銖",
+          "rect": {
+            "top": 527,
+            "bottom": 563,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 612,
+            "bottom": 634,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "🇭🇰HKD港幣",
+          "rect": {
+            "top": 605,
+            "bottom": 641,
+            "h": 36,
+            "w": 280
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 690,
+            "bottom": 712,
+            "h": 22,
+            "w": 28
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 932
+        }
+      ],
+      "heroInfo": {
+        "title": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率 | HaoRate 匯率好工具",
+        "h1": "收藏貨幣與換算歷史記錄 - 快速存取常用匯率",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 48
+    },
+    {
+      "page": "settings",
+      "path": "/settings/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/settings/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-settings-430x932.png",
+      "truncation": [
+        {
+          "tag": "SPAN",
+          "text": "HaoRate 匯率好工具",
+          "rect": {
+            "top": 10,
+            "bottom": 38,
+            "h": 28,
+            "w": 165
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "DIV",
+          "text": "應用程式設定 - 介面風格切換與語言偏好管理介面風格Zen極簡專業Nitro深色",
+          "rect": {
+            "top": 48,
+            "bottom": 1517,
+            "h": 1469,
+            "w": 430
+          },
+          "issues": ["bottom-clipped", "right-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Zen極簡專業",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Nitro深色科技感",
+          "rect": {
+            "top": 100,
+            "bottom": 180,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Kawaii可愛粉嫩",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Classic復古書卷",
+          "rect": {
+            "top": 192,
+            "bottom": 272,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Ocean海洋深邃",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Forest自然森林",
+          "rect": {
+            "top": 284,
+            "bottom": 364,
+            "h": 80,
+            "w": 197
+          },
+          "issues": ["text-overflow"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "重置主題設定",
+          "rect": {
+            "top": 936,
+            "bottom": 984,
+            "h": 48,
+            "w": 404
+          },
+          "issues": ["bottom-clipped"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "rect": {
+            "top": 77,
+            "bottom": 109,
+            "h": 32,
+            "w": 32
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [
+        {
+          "tag": "NAV",
+          "class": "\n        fixed bottom-0 inset-x-0 z-30\n        bg-background",
+          "bottom": 932
+        }
+      ],
+      "heroInfo": {
+        "title": "應用程式設定 - 介面風格切換與語言偏好管理 | HaoRate 匯率好工具",
+        "h1": "應用程式設定 - 介面風格切換與語言偏好管理",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 10
+    },
+    {
+      "page": "faq",
+      "path": "/faq/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/faq/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-faq-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 3336,
+            "bottom": 3362,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "HaoRate 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂 | HaoRate 匯率好工具",
+        "h1": "常見問題",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "about",
+      "path": "/about/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/about/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-about-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 2273,
+            "bottom": 2299,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "關於 HaoRate 匯率好工具 - 資料來源、技術架構與 SEO 透明度 | HaoRate 匯率好工具",
+        "h1": "關於 HaoRate 匯率好工具",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    },
+    {
+      "page": "guide",
+      "path": "/guide/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/guide/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-guide-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "使用指南 — 如何使用 HaoRate 匯率好工具換算匯率 | HaoRate 匯率好工具",
+        "h1": "如何使用 HaoRate 進行匯率換算",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 1
+    },
+    {
+      "page": "privacy",
+      "path": "/privacy/",
+      "viewport": "430x932",
+      "url": "https://app.haotool.org/ratewise/privacy/",
+      "httpStatus": 200,
+      "consoleErrors": [
+        "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ],
+      "screenshot": "screenshots/ux-audit-2026-06-30-privacy-430x932.png",
+      "truncation": [
+        {
+          "tag": "BUTTON",
+          "text": "返回",
+          "rect": {
+            "top": 54,
+            "bottom": 74,
+            "h": 20,
+            "w": 48
+          },
+          "issues": ["touch-target<44px"]
+        },
+        {
+          "tag": "BUTTON",
+          "text": "haotool.org@gmail.com",
+          "rect": {
+            "top": 1415,
+            "bottom": 1441,
+            "h": 26,
+            "w": 171
+          },
+          "issues": ["bottom-clipped", "touch-target<44px"]
+        }
+      ],
+      "fixedBottom": [],
+      "heroInfo": {
+        "title": "隱私政策 - HaoRate 個人資料保護說明 | HaoRate 匯率好工具",
+        "h1": "隱私政策",
+        "firstLargeNumber": null,
+        "rateY": null
+      },
+      "truncationCount": 2
+    }
+  ]
+}

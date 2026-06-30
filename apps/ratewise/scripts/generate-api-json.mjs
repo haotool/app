@@ -14,6 +14,7 @@ import { APP_INFO } from '../src/config/app-info.ts';
 import {
   API_SEMANTICS_DOC,
   API_SEMANTICS_SCHEMA_VERSION,
+  buildProviderSemanticFieldMapping,
   buildSemanticFieldMapping,
 } from '../src/config/api-semantics-v2.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
@@ -50,7 +51,7 @@ const latestJson = {
   schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
   semanticFieldMapping: buildSemanticFieldMapping(),
-  description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照',
+  description: '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',
@@ -72,7 +73,13 @@ const latestJson = {
     moneyboxHistory: exchangeShopProvider?.cdnHistoryEndpoint,
   },
   providerSelection,
-  providers,
+  providers: providers.map((provider) => ({
+    ...provider,
+    semanticFieldMapping: buildProviderSemanticFieldMapping(provider.sourceKind, {
+      providerId: provider.providerId,
+      ...(provider.sourceKind === 'exchange-shop' ? { quoteUnit: 'KRW_PER_TWD' } : {}),
+    }),
+  })),
   rateTypeDescriptions: {
     cash_buy: '現金買入：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
     cash_sell: '現金賣出：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）',

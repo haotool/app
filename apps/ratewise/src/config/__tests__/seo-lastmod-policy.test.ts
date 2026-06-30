@@ -37,15 +37,15 @@ describe('seo lastmod policy', () => {
 
   it('內容頁 lastmod 應追蹤 seo-metadata 的頁面段落而非整個大型 SSOT 檔', () => {
     expect(CONTENT_LASTMOD_POLICY['/about/'].lastmodFiles).not.toContain(
-      'apps/ratewise/src/config/seo-metadata.ts',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
     );
     expect(CONTENT_LASTMOD_POLICY['/about/'].metadataSections).toContainEqual({
-      file: 'apps/ratewise/src/config/seo-metadata.ts',
+      file: 'apps/ratewise/src/config/seo-metadata/core.ts',
       start: '/export const ABOUT_PAGE_FAQ/',
       end: '/export const PRIVACY_PAGE_SEO/',
     });
     expect(CONTENT_LASTMOD_POLICY['/open-data/'].metadataSections).toContainEqual({
-      file: 'apps/ratewise/src/config/seo-metadata.ts',
+      file: 'apps/ratewise/src/config/seo-metadata/core.ts',
       start: '/export const OPEN_DATA_PAGE_FAQ/',
       end: '/export const ABOUT_PAGE_FAQ/',
     });

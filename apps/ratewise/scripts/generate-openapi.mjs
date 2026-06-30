@@ -13,7 +13,7 @@ const ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
 const APP_VERSION = pkg.version;
 
-const API_VERSION = '1.3.0';
+const API_VERSION = '2.1.0';
 
 const constantsPath = resolve(ROOT, 'src/features/ratewise/constants.ts');
 const constantsContent = readFileSync(constantsPath, 'utf-8');
@@ -302,7 +302,7 @@ const ratesResponseSchema = {
       type: 'object',
       description:
         '各幣別完整四種報價資料（以幣別代碼為 key）；v2 欄位見 CurrencyRateV2 / CurrencyRateDetail',
-      additionalProperties: { $ref: '#/components/schemas/CurrencyRateV2' },
+      additionalProperties: { $ref: '#/components/schemas/CurrencyRateDetail' },
       example: {
         USD: { spot: { buy: 32.015, sell: 32.085 }, cash: { buy: 31.73, sell: 32.385 } },
         JPY: { spot: { buy: 0.2078, sell: 0.2088 }, cash: { buy: 0.2041, sell: 0.2119 } },
@@ -312,11 +312,80 @@ const ratesResponseSchema = {
   required: ['timestamp', 'updateTime', 'source', 'rates', 'details'],
 };
 
+const exchangeShopRateBlockSchema = {
+  type: 'object',
+  description: '換錢所單一幣別報價（legacy + v2 additive）',
+  properties: {
+    currency: { type: 'string', example: 'TWD' },
+    base: { type: ['number', 'null'], example: 44.9 },
+    buy: {
+      type: ['number', 'null'],
+      description: '@deprecated 2026-12-31 — 換錢所買入價；請改用 customerSellForeignRate',
+      example: 45.1,
+    },
+    sell: {
+      type: ['number', 'null'],
+      description: '@deprecated 2026-12-31 — 換錢所賣出價；請改用 customerBuyForeignRate',
+      example: 44.9,
+    },
+    spbuy: { type: ['number', 'null'], example: 45.2 },
+    spsell: { type: ['number', 'null'], example: 44.8 },
+    customerBuyForeignRate: {
+      type: ['number', 'null'],
+      description: '客戶用 TWD 買外幣（換錢所賣出）；MoneyBox TWD 對應 rates.TWD.sell（KRW/TWD）',
+      example: 46.5,
+    },
+    customerSellForeignRate: {
+      type: ['number', 'null'],
+      description: '客戶用外幣賣回 TWD（換錢所買入）；對應 legacy buy',
+      example: 46.0,
+    },
+    midMarketRate: {
+      type: ['number', 'null'],
+      description: '參考中間價：(buy + sell) / 2',
+      example: 46.25,
+    },
+    quoteUnit: {
+      type: 'string',
+      enum: ['TWD_PER_FOREIGN', 'KRW_PER_TWD'],
+      description: '報價單位；MoneyBox TWD 為 KRW_PER_TWD（與台銀 TWD_PER_FOREIGN 相反）',
+      example: 'KRW_PER_TWD',
+    },
+    quotePerBaseUnit: {
+      type: ['number', 'null'],
+      description: '每 1 TWD 可換 KRW（KRW_PER_TWD 時等同 sell；台銀語意為 1/sell）',
+      example: 46.5,
+    },
+  },
+  required: ['currency', 'base', 'buy', 'sell', 'spbuy', 'spsell'],
+};
+
 const exchangeShopRatesResponseSchema = {
   type: 'object',
   description:
-    '換錢所匯率資料回應。目前 MoneyBox 以 KRW 為基準，TWD rate 表示 1 TWD 可換多少 KRW。',
+    '換錢所匯率資料回應。MoneyBox 以 KRW 為基準；TWD rate 表示 1 TWD 可換多少 KRW（sell 直接乘算）。',
   properties: {
+    schemaVersion: {
+      type: 'string',
+      description: 'API 語意版本（有別於 App semver）',
+      example: API_SEMANTICS_SCHEMA_VERSION,
+    },
+    asOf: {
+      type: 'string',
+      format: 'date-time',
+      description: '資料生效時間（通常對應 timestamp）',
+      example: '2026-06-27T04:00:00.000Z',
+    },
+    semanticFieldMapping: {
+      type: 'object',
+      description: 'v2 語意欄位對照（見 open-data / latest.json metadata）',
+    },
+    quoteUnit: {
+      type: 'string',
+      enum: ['KRW_PER_TWD'],
+      description: 'MoneyBox TWD 報價單位（與台銀 details 語意不同）',
+      example: 'KRW_PER_TWD',
+    },
     timestamp: {
       type: 'string',
       format: 'date-time',
@@ -344,16 +413,7 @@ const exchangeShopRatesResponseSchema = {
     rates: {
       type: 'object',
       additionalProperties: {
-        type: 'object',
-        properties: {
-          currency: { type: 'string', example: 'TWD' },
-          base: { type: ['number', 'null'], example: 44.9 },
-          buy: { type: ['number', 'null'], example: 45.1 },
-          sell: { type: ['number', 'null'], example: 44.9 },
-          spbuy: { type: ['number', 'null'], example: 45.2 },
-          spsell: { type: ['number', 'null'], example: 44.8 },
-        },
-        required: ['currency', 'base', 'buy', 'sell', 'spbuy', 'spsell'],
+        $ref: '#/components/schemas/ExchangeShopRateV2',
       },
     },
   },
@@ -482,6 +542,12 @@ const openApiSpec = {
     'x-semantics-doc': API_SEMANTICS_DOC.publicUrl,
   },
   'x-changelog': {
+    '2.1.0': {
+      date: '2026-06-27',
+      summary:
+        '換錢所 provider JSON 新增 schemaVersion、quoteUnit、semanticFieldMapping 與 ExchangeShopRateV2 語意欄位。',
+      'app-version': APP_VERSION,
+    },
     '2.0.0': {
       date: '2026-06-27',
       summary:
@@ -744,6 +810,7 @@ const openApiSpec = {
       CurrencyRateDetail: currencyRateDetailSchema,
       CurrencyRateV2: currencyRateV2Schema,
       SemanticRateTypeBlock: semanticRateTypeBlockSchema,
+      ExchangeShopRateV2: exchangeShopRateBlockSchema,
       ExchangeShopRatesResponse: exchangeShopRatesResponseSchema,
       RatesResponse: ratesResponseSchema,
       PairInfo: pairInfoSchema,

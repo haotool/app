@@ -59,4 +59,49 @@ describe('verify-precache-assets script', () => {
       path.resolve('/repo/apps/ratewise/dist', 'assets/app.css'),
     );
   });
+
+  it('should define tier-1 precache guardrails for shell assets and forbidden runtime-only resources', async () => {
+    const script = await loadVerifyPrecacheModule();
+
+    expect(script.MAX_PRECACHE_ENTRY_COUNT).toBe(100);
+    expect(script.MAX_PRECACHE_BYTES).toBe(3 * 1024 * 1024);
+    expect(script.REQUIRED_PRECACHE_URLS).toEqual(
+      expect.arrayContaining([
+        'index.html',
+        'offline.html',
+        'favicon.svg',
+        'favicon.ico',
+        'apple-touch-icon.png',
+        'icons/ratewise-icon-192x192.png',
+      ]),
+    );
+    expect(
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) =>
+        pattern.test('screenshots/a.png'),
+      ),
+    ).toBe(true);
+    expect(
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) =>
+        pattern.test('usd-twd/index.html'),
+      ),
+    ).toBe(true);
+  });
+
+  it('requires the hash-named loader-data manifest in precache (offline SPA nav)', async () => {
+    const script = await loadVerifyPrecacheModule();
+    expect(script.REQUIRED_PRECACHE_SUBSTRINGS).toContain('static-loader-data-manifest');
+  });
+
+  it('forbids Tier 2 runtime assets (api JSON, nested index.html, raster images) in precache', async () => {
+    const script = await loadVerifyPrecacheModule();
+    const isForbidden = (url: string): boolean =>
+      script.FORBIDDEN_PRECACHE_PATTERNS.some((pattern: RegExp) => pattern.test(url));
+    expect(isForbidden('api/latest.json')).toBe(true);
+    expect(isForbidden('api/pairs/usd-twd.json')).toBe(true);
+    expect(isForbidden('about/index.html')).toBe(true);
+    expect(isForbidden('faq/index.html')).toBe(true);
+    expect(isForbidden('og-image.jpg')).toBe(true);
+    // 根 index.html 與 shell 圖示不得被視為禁止項。
+    expect(isForbidden('index.html')).toBe(false);
+  });
 });

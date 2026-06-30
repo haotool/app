@@ -55,4 +55,19 @@ describe('AppLayout Safe Area', () => {
 
     expect(screen.getByRole('main')).toHaveAttribute('tabindex', '0');
   });
+
+  it('主要滾動區域應保留 bottom nav 留白並含 narrow 360px 加值', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<div>內容</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const main = screen.getByRole('main');
+    expect(main.className).toContain(navigationTokens.mainScroll.paddingBottomClass);
+  });
 });

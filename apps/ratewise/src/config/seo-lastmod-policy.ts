@@ -4,7 +4,7 @@ export const CONTENT_LASTMOD_POLICY = {
     contentFiles: [
       'apps/ratewise/src/features/ratewise/RateWise.tsx',
       'apps/ratewise/src/components/HomepageSEOSection.tsx',
-      'apps/ratewise/src/config/seo-metadata.ts',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
     ],
     lastmodFiles: [
       'apps/ratewise/src/features/ratewise/RateWise.tsx',
@@ -12,12 +12,12 @@ export const CONTENT_LASTMOD_POLICY = {
     ],
     metadataSections: [
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export function buildCurrencyConversionServiceJsonLd/',
         end: '/export function buildWebPageJsonLd/',
       },
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export const HOMEPAGE_FAQ_CONTENT/',
         end: '/export const FAQ_PAGE_ENTRIES/',
       },
@@ -26,11 +26,14 @@ export const CONTENT_LASTMOD_POLICY = {
   },
   '/faq/': {
     type: 'editorial',
-    contentFiles: ['apps/ratewise/src/pages/FAQ.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    contentFiles: [
+      'apps/ratewise/src/pages/FAQ.tsx',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
+    ],
     lastmodFiles: ['apps/ratewise/src/pages/FAQ.tsx'],
     metadataSections: [
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export const FAQ_PAGE_ENTRIES/',
         end: '/export const GUIDE_HOW_TO_STEPS/',
       },
@@ -39,11 +42,14 @@ export const CONTENT_LASTMOD_POLICY = {
   },
   '/about/': {
     type: 'trust',
-    contentFiles: ['apps/ratewise/src/pages/About.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    contentFiles: [
+      'apps/ratewise/src/pages/About.tsx',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
+    ],
     lastmodFiles: ['apps/ratewise/src/pages/About.tsx'],
     metadataSections: [
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export const ABOUT_PAGE_FAQ/',
         end: '/export const PRIVACY_PAGE_SEO/',
       },
@@ -52,11 +58,14 @@ export const CONTENT_LASTMOD_POLICY = {
   },
   '/guide/': {
     type: 'editorial',
-    contentFiles: ['apps/ratewise/src/pages/Guide.tsx', 'apps/ratewise/src/config/seo-metadata.ts'],
+    contentFiles: [
+      'apps/ratewise/src/pages/Guide.tsx',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
+    ],
     lastmodFiles: ['apps/ratewise/src/pages/Guide.tsx'],
     metadataSections: [
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export const GUIDE_HOW_TO_STEPS/',
         end: '/export const OPEN_DATA_PAGE_FAQ/',
       },
@@ -86,7 +95,7 @@ export const CONTENT_LASTMOD_POLICY = {
     contentFiles: [
       'apps/ratewise/src/pages/OpenData.tsx',
       'apps/ratewise/src/config/api-endpoints.ts',
-      'apps/ratewise/src/config/seo-metadata.ts',
+      'apps/ratewise/src/config/seo-metadata/core.ts',
     ],
     lastmodFiles: [
       'apps/ratewise/src/pages/OpenData.tsx',
@@ -94,12 +103,12 @@ export const CONTENT_LASTMOD_POLICY = {
     ],
     metadataSections: [
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export function buildOpenDataDatasetJsonLd/',
         end: '/export function buildPersonJsonLd/',
       },
       {
-        file: 'apps/ratewise/src/config/seo-metadata.ts',
+        file: 'apps/ratewise/src/config/seo-metadata/core.ts',
         start: '/export const OPEN_DATA_PAGE_FAQ/',
         end: '/export const ABOUT_PAGE_FAQ/',
       },

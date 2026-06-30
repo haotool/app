@@ -26,8 +26,13 @@ async function readSource() {
 async function readDesignTokensSource() {
   const fs = await import('node:fs/promises');
   const path = await import('node:path');
-  const tokensPath = path.resolve(__dirname, '../../config/design-tokens.ts');
-  return fs.readFile(tokensPath, 'utf-8');
+  // design-tokens 已模組化為目錄；讀全部子檔合併以涵蓋拆分後的 token 定義
+  const dir = path.resolve(__dirname, '../../config/design-tokens');
+  const files = await fs.readdir(dir);
+  const contents = await Promise.all(
+    files.filter((f) => f.endsWith('.ts')).map((f) => fs.readFile(path.join(dir, f), 'utf-8')),
+  );
+  return contents.join('\n');
 }
 
 describe('UpdatePrompt - setInterval 洩漏防護', () => {

@@ -253,7 +253,7 @@ describe('Design Token System - BDD', () => {
     });
 
     it('應該導出 singleConverterLayoutTokens', async () => {
-      const { singleConverterLayoutTokens, navigationTokens } = await import('./design-tokens');
+      const { singleConverterLayoutTokens } = await import('./design-tokens');
 
       expect(singleConverterLayoutTokens).toBeDefined();
 
@@ -266,9 +266,22 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
       expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('absolute');
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
-      expect(singleConverterLayoutTokens.rateCard.heroRateDisplay).toContain('text-[32px]');
-      expect(singleConverterLayoutTokens.rateCard.trustChipGap).toBe('mt-2');
-      expect(navigationTokens.bottomNav.scrollPaddingBottom).toBe(57);
+      expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('micro:pt-10');
+      expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('nano:pt-10');
+      expect(singleConverterLayoutTokens.addToHistory.className).toContain('micro:min-h-11');
+      expect(singleConverterLayoutTokens.addToHistory.className).toContain('nano:min-h-11');
+    });
+  });
+
+  describe('🟢 GREEN: 導覽 main 滾動留白 Token', () => {
+    it('應該導出 narrow 360px 額外 bottom padding', async () => {
+      const { navigationTokens } = await import('./design-tokens');
+
+      expect(navigationTokens.mainScroll.paddingBottomClass).toContain(
+        'pb-[calc(56px+env(safe-area-inset-bottom,0px))]',
+      );
+      expect(navigationTokens.mainScroll.paddingBottomClass).toContain('max-[360px]:pb-[calc(84px');
+      expect(navigationTokens.mainScroll.paddingBottomClass).toContain('md:pb-0');
     });
   });
 

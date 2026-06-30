@@ -1,5 +1,8 @@
 export type CurrencyCode = 'TWD' | 'KRW';
 
+/** KRW 上線前 localStorage 舊帳目皆為 TWD；缺 currency 欄位時不可跟著全域幣別漂移。 */
+const LEGACY_DEFAULT_CURRENCY: CurrencyCode = 'TWD';
+
 export interface CurrencyInfo {
   code: CurrencyCode;
   symbol: string;
@@ -37,20 +40,22 @@ export function getCurrencySymbol(currency: CurrencyCode): string {
   return CURRENCIES[currency].symbol;
 }
 
-/** 單筆費用的顯示幣別；舊資料缺欄位時 fallback 至行程主導幣別。 */
+/** 單筆費用的顯示幣別；舊資料缺欄位時視為 TWD。 */
 export function resolveExpenseCurrency(
   expense: { currency?: CurrencyCode },
-  tripCurrency: CurrencyCode,
+  _tripCurrency: CurrencyCode,
 ): CurrencyCode {
-  return expense.currency ?? tripCurrency;
+  return expense.currency ?? LEGACY_DEFAULT_CURRENCY;
 }
 
-/** 行程主導幣別：最舊一筆記帳的幣別快照，舊資料 fallback 全域幣別。 */
+/** 行程主導幣別：最舊一筆記帳的幣別快照；舊資料 fallback TWD，空行程 fallback 全域幣別。 */
 export function resolveTripCurrency(
   expenses: { currency?: CurrencyCode }[],
   globalCurrency: CurrencyCode,
 ): CurrencyCode {
-  return expenses[expenses.length - 1]?.currency ?? globalCurrency;
+  const oldest = expenses[expenses.length - 1];
+  if (!oldest) return globalCurrency;
+  return oldest.currency ?? LEGACY_DEFAULT_CURRENCY;
 }
 
 /** 行程是否混用多種幣別；混幣時不可加總或結算。 */
@@ -61,6 +66,34 @@ export function isMixedCurrencyTrip(
   if (expenses.length === 0) return false;
   const codes = new Set(expenses.map((exp) => resolveExpenseCurrency(exp, tripCurrency)));
   return codes.size > 1;
+}
+
+/** 新增一筆 `incomingCurrency` 是否會使原本單幣行程變成混幣。 */
+export function wouldCreateMixedCurrencyTrip(
+  tripExpenses: { currency?: CurrencyCode }[],
+  globalCurrency: CurrencyCode,
+  incomingCurrency: CurrencyCode,
+): boolean {
+  if (tripExpenses.length === 0) return false;
+  const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
+  if (isMixedCurrencyTrip(tripExpenses, tripCurrency)) return false;
+  const lastExpense = tripExpenses[tripExpenses.length - 1];
+  if (lastExpense === undefined) return false;
+  const establishedCurrency = resolveExpenseCurrency(lastExpense, tripCurrency);
+  return incomingCurrency !== establishedCurrency;
+}
+
+/** 混幣風險時以 confirm 詢問；無風險或使用者確認則回傳 true。 */
+export function confirmMixedCurrencyIfNeeded(
+  tripExpenses: { currency?: CurrencyCode }[],
+  globalCurrency: CurrencyCode,
+  incomingCurrency: CurrencyCode,
+  confirmMessage: string,
+): boolean {
+  if (!wouldCreateMixedCurrencyTrip(tripExpenses, globalCurrency, incomingCurrency)) {
+    return true;
+  }
+  return window.confirm(confirmMessage);
 }
 
 /** 同幣別行程的成員餘額；僅在 `isMixedCurrencyTrip` 為 false 時有意義。 */

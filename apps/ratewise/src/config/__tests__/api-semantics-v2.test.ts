@@ -3,8 +3,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   API_SEMANTICS_SCHEMA_VERSION,
+  buildProviderSemanticFieldMapping,
   buildSemanticFieldMapping,
   enrichCurrencyDetail,
+  enrichExchangeShopRatesPayload,
   enrichRatesPayload,
 } from '../api-semantics-v2';
 
@@ -62,5 +64,52 @@ describe('api-semantics-v2', () => {
     expect(mapping.schemaVersion).toBe('2.0');
     expect(mapping.fields.customerBuyForeignRate.legacyPath).toContain('.sell');
     expect(mapping.fields.customerSellForeignRate.legacyPath).toContain('.buy');
+  });
+
+  it('maps MoneyBox TWD sell to customerBuyForeignRate with KRW_PER_TWD (spec §21.2)', () => {
+    const payload = enrichExchangeShopRatesPayload({
+      timestamp: '2026-06-27T04:00:00.000Z',
+      updateTime: '2026/06/27 13:00:00',
+      base: 'KRW',
+      rates: {
+        TWD: {
+          currency: 'TWD',
+          base: 46.2,
+          buy: 46.0,
+          sell: 46.5,
+          spbuy: 46.1,
+          spsell: 46.4,
+        },
+      },
+    });
+
+    const twd = payload.rates['TWD'];
+    expect(twd).toBeDefined();
+    if (!twd) return;
+
+    expect(payload.schemaVersion).toBe(API_SEMANTICS_SCHEMA_VERSION);
+    expect(payload.quoteUnit).toBe('KRW_PER_TWD');
+    expect(twd.customerBuyForeignRate).toBe(46.5);
+    expect(twd.customerSellForeignRate).toBe(46.0);
+    expect(twd.quoteUnit).toBe('KRW_PER_TWD');
+    expect(twd.quotePerBaseUnit).toBe(46.5);
+    expect(twd.sell).toBe(46.5);
+    expect(payload.semanticFieldMapping.providerKind).toBe('exchange-shop');
+    expect(payload.semanticFieldMapping.fields.customerBuyForeignRate.twdToForeignFormula).toBe(
+      'amount * rates.TWD.sell',
+    );
+  });
+
+  it('buildProviderSemanticFieldMapping distinguishes bank vs exchange-shop quote units', () => {
+    const bank = buildProviderSemanticFieldMapping('bank');
+    const shop = buildProviderSemanticFieldMapping('exchange-shop', {
+      providerId: 'moneybox',
+      quoteUnit: 'KRW_PER_TWD',
+    });
+
+    expect(bank.quoteUnit).toBe('TWD_PER_FOREIGN');
+    expect(shop.quoteUnit).toBe('KRW_PER_TWD');
+    expect(shop.bankComparison.moneyboxTwdToKrw).toBe('amount * rates.TWD.sell');
+    expect(bank.bankComparison.botTwdToForeign).toContain('details');
   });
 });

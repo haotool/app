@@ -1,6 +1,7 @@
 import type { CurrencyCode } from '../features/ratewise/types';
 import { CDN_DATA_BASE, PROVIDER_RATES_PATH, RAW_DATA_BASE } from './api-endpoints.ts';
 
+/** 換錢所 provider 匯率；v2 語意見 api-semantics-v2（quoteUnit KRW_PER_TWD）。 */
 export interface ExchangeShopConfig {
   providerName: string;
   providerNameEn: string;

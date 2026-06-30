@@ -13,6 +13,10 @@ import {
   RATES_API,
   RAW_DATA_BASE,
 } from '../config/api-endpoints';
+import {
+  buildProviderSemanticFieldMapping,
+  buildSemanticFieldMapping,
+} from '../config/api-semantics-v2';
 import { buildPublicRateProviderMetadata } from '../config/rateProviderPublicMetadata';
 import { SITE_CONFIG } from '../config/seo-paths';
 import rateModeStrategies from '../config/rate-mode-strategies.json';
@@ -180,6 +184,67 @@ print(history["details"]["USD"]["spot"]["sell"])`,
 ] as const;
 
 // ─── 資料欄位說明 ──────────────────────────────────────────────────────────────
+
+const BANK_SEMANTIC_MAPPING = buildSemanticFieldMapping();
+const MONEYBOX_SEMANTIC_MAPPING = buildProviderSemanticFieldMapping('exchange-shop', {
+  providerId: 'moneybox',
+  quoteUnit: 'KRW_PER_TWD',
+});
+
+const QUOTE_UNIT_COMPARISON_ROWS = [
+  {
+    source: '臺灣銀行（details）',
+    quoteUnit: BANK_SEMANTIC_MAPPING.quoteUnit,
+    sellMeaning: '每 1 單位外幣的 TWD 賣價（例 USD cash.sell ≈ 32）',
+    twdToForeign: BANK_SEMANTIC_MAPPING.bankComparison.botTwdToForeign,
+    v2Field: 'customerBuyForeignRate ← sell',
+  },
+  {
+    source: 'MoneyBox（rates.TWD）',
+    quoteUnit: MONEYBOX_SEMANTIC_MAPPING.quoteUnit,
+    sellMeaning: '每 1 TWD 可換的 KRW（例 sell ≈ 46.5 KRW/TWD）',
+    twdToForeign: MONEYBOX_SEMANTIC_MAPPING.bankComparison.moneyboxTwdToKrw,
+    v2Field: 'customerBuyForeignRate ← sell（直接乘算）',
+  },
+] as const;
+
+const V2_SCHEMA_FIELDS = [
+  {
+    field: 'schemaVersion',
+    type: 'string',
+    description: 'API 語意版本（2.0）；有別於頂層 version（App semver）',
+  },
+  {
+    field: 'semanticFieldMapping',
+    type: 'object',
+    description: 'v2 欄位對照與換算公式；latest.json metadata 與換錢所 provider JSON 皆可引用',
+  },
+  {
+    field: 'customerBuyForeignRate',
+    type: 'number | null',
+    description: '客戶用 TWD 買外幣；台銀對應 details.{CCY}.{rateType}.sell',
+  },
+  {
+    field: 'customerSellForeignRate',
+    type: 'number | null',
+    description: '客戶用外幣賣回 TWD；台銀對應 details.{CCY}.{rateType}.buy',
+  },
+  {
+    field: 'midMarketRate',
+    type: 'number | null',
+    description: '參考中間價：(buy + sell) / 2',
+  },
+  {
+    field: 'quoteUnit',
+    type: 'TWD_PER_FOREIGN | KRW_PER_TWD',
+    description: '報價方向；台銀與 MoneyBox 皆叫 sell 但 quote 方向相反，換算前必須確認',
+  },
+  {
+    field: 'quotePerBaseUnit',
+    type: 'number | null',
+    description: '換錢所：KRW_PER_TWD 時等同 sell；台銀外幣計價時為 1/sell',
+  },
+] as const;
 
 const SCHEMA_FIELDS = [
   { field: 'timestamp', type: 'string (ISO 8601)', description: '資料抓取時間（UTC）' },
@@ -774,7 +839,61 @@ const OpenData = () => {
             </p>
 
             <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
-              <table className="min-w-[44rem] text-sm" aria-label="資料格式欄位說明">
+              <table className="min-w-[52rem] text-sm" aria-label="台銀與 MoneyBox quote 語意對照">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-elevated">
+                    <th className="px-4 py-3 text-left font-semibold text-text">來源</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">quoteUnit</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">
+                      legacy sell 意義
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">TWD→外幣/KRW</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">v2 對照</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border bg-surface">
+                  {QUOTE_UNIT_COMPARISON_ROWS.map((row) => (
+                    <tr key={row.source}>
+                      <td className="px-4 py-3 break-words text-text">{row.source}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-primary">{row.quoteUnit}</td>
+                      <td className="px-4 py-3 break-words text-text-muted">{row.sellMeaning}</td>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
+                        {row.twdToForeign}
+                      </td>
+                      <td className="px-4 py-3 break-words text-text">{row.v2Field}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[44rem] text-sm" aria-label="API Semantics v2 欄位說明">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-elevated">
+                    <th className="px-4 py-3 text-left font-semibold text-text">v2 欄位</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">型別</th>
+                    <th className="px-4 py-3 text-left font-semibold text-text">說明</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border bg-surface">
+                  {V2_SCHEMA_FIELDS.map((f) => (
+                    <tr key={f.field}>
+                      <td className="px-4 py-3 break-all font-mono text-xs text-primary">
+                        {f.field}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
+                        {f.type}
+                      </td>
+                      <td className="px-4 py-3 break-words text-text">{f.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mb-6 max-w-full overflow-x-auto rounded-xl border border-surface-border">
+              <table className="min-w-[44rem] text-sm" aria-label="台銀 latest.json 欄位說明">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-elevated">
                     <th className="px-4 py-3 text-left font-semibold text-text">欄位</th>

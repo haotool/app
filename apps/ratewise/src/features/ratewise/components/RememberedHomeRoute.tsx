@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import RateWise from '../RateWise';
 import { useConverterStore } from '../../../stores/converterStore';
-import { markRestoreAttempted, shouldRestoreToMulti } from './coldStartRestore';
+import {
+  markRestoreAttempted,
+  shouldRestoreToMulti,
+  isPersistedMultiPendingStoreSync,
+  readPersistedLastConverterView,
+} from './coldStartRestore';
 
 /**
  * 首頁路由包裝：冷啟動時依 persist 中的 lastConverterView 還原到上次停留的換算模式。
@@ -16,14 +21,46 @@ export function RememberedHomeRoute() {
   const [hydrated, setHydrated] = useState(isTestEnv);
 
   useEffect(() => {
+    let active = true;
+    const markHydrated = () => {
+      if (active) {
+        setHydrated(true);
+      }
+    };
+
+    const isStoreSyncedWithPersist = (): boolean => {
+      const persisted = readPersistedLastConverterView();
+      if (persisted === null) return true;
+      return useConverterStore.getState().lastConverterView === persisted;
+    };
+
     if (useConverterStore.persist.hasHydrated()) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- persist hydration marker
-      setHydrated(true);
-      return undefined;
+      markHydrated();
+      return () => {
+        active = false;
+      };
     }
-    return useConverterStore.persist.onFinishHydration(() => {
-      setHydrated(true);
+
+    const unsubFinish = useConverterStore.persist.onFinishHydration(markHydrated);
+
+    // SSG/CSR：store 可能已 merge persist，但 onFinishHydration 未觸發。
+    queueMicrotask(() => {
+      if (isStoreSyncedWithPersist()) {
+        markHydrated();
+      }
     });
+
+    const unsubStore = useConverterStore.subscribe((state, prevState) => {
+      if (state.lastConverterView !== prevState.lastConverterView && isStoreSyncedWithPersist()) {
+        markHydrated();
+      }
+    });
+
+    return () => {
+      active = false;
+      unsubFinish();
+      unsubStore();
+    };
   }, []);
 
   const hasDeepLink =
@@ -32,12 +69,22 @@ export function RememberedHomeRoute() {
   // hydrate 未完成或即將導向 multi 時，禁止 RateWise 寫入偏好，避免覆寫 persist 的 lastConverterView。
   const allowRememberView = hydrated && !restoreToMulti;
 
-  // hydrate 完成後標記已嘗試還原，確保冷啟動只導向一次。
+  // hydrate 完成後標記已嘗試還原；須等 store 與 persist 同步後再標記，避免錯失 multi 還原。
   useEffect(() => {
-    if (hydrated) {
+    if (!hydrated) return undefined;
+
+    if (shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView })) {
       markRestoreAttempted();
+      return undefined;
     }
-  }, [hydrated]);
+
+    if (isPersistedMultiPendingStoreSync(lastConverterView)) {
+      return undefined;
+    }
+
+    markRestoreAttempted();
+    return undefined;
+  }, [hydrated, hasDeepLink, lastConverterView]);
 
   if (restoreToMulti) {
     return <Navigate to="/multi" replace />;

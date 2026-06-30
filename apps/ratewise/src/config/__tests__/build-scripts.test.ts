@@ -210,8 +210,10 @@ async function readPostbuildMirrorScript() {
 }
 
 async function readSeoMetadataSource() {
-  const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
-  return readFile(seoMetadataPath, 'utf-8');
+  return (
+    (await readFile(path.resolve(__dirname, '../seo-metadata/core.ts'), 'utf-8')) +
+    (await readFile(path.resolve(__dirname, '../seo-metadata/currency-landing.ts'), 'utf-8'))
+  );
 }
 
 async function readCurrencyLandingPageSource() {
@@ -258,6 +260,21 @@ describe('ratewise build scripts', () => {
     expect(manifestGenerator).not.toContain("short_name: 'HaoRate'");
     expect(manifestGenerator).not.toContain("'HaoRate 首頁 - 即時匯率換算與趨勢圖'");
     expect(manifestGenerator).not.toContain("name: 'HaoRate 匯率好工具'");
+  });
+
+  it('should keep PWA manifest scope and start_url on absolute HTTPS SSOT', async () => {
+    const manifestGenerator = await readManifestGenerator();
+    const manifestPath = path.resolve(__dirname, '../../../public/manifest.webmanifest');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf-8')) as {
+      scope: string;
+      start_url: string;
+    };
+
+    expect(manifestGenerator).toContain('scope: APP_INFO.siteUrl');
+    expect(manifestGenerator).toContain('start_url: APP_INFO.siteUrl');
+    expect(manifest.scope).toMatch(/^https:\/\//);
+    expect(manifest.start_url).toMatch(/^https:\/\//);
+    expect(manifest.scope).toBe(manifest.start_url);
   });
 
   it('should not force React ecosystem packages into manual chunks', async () => {
@@ -335,8 +352,9 @@ describe('ratewise build scripts', () => {
   });
 
   it('should not reference a removed optimized PNG logo in structured data', async () => {
-    const seoMetadataPath = path.resolve(__dirname, '../seo-metadata.ts');
-    const seoMetadata = await readFile(seoMetadataPath, 'utf-8');
+    const seoMetadata =
+      (await readFile(path.resolve(__dirname, '../seo-metadata/core.ts'), 'utf-8')) +
+      (await readFile(path.resolve(__dirname, '../seo-metadata/currency-landing.ts'), 'utf-8'));
 
     expect(seoMetadata).not.toContain('optimized/logo-512w.png');
     expect(seoMetadata).toContain('icons/ratewise-icon-512x512.png');
@@ -532,7 +550,7 @@ describe('ratewise build scripts', () => {
     expect(healthCheckScript).not.toContain("from '../src/config/seo-metadata.ts'");
     expect(healthCheckScript).toContain('DEFAULT_TITLE');
     expect(healthCheckScript).toContain('GUIDE_PAGE_TITLE');
-    expect(seoMetadataSource).toContain("from './seo-static'");
+    expect(seoMetadataSource).toContain("from '../seo-static'");
     expect(seoMetadataSource).toContain('title: GUIDE_PAGE_TITLE');
     expect(healthCheckScript).not.toContain(
       "validators.hasTitle('HaoRate 匯率好工具 — 台灣最精準匯率換算器 | 顯示實際買賣價，不用中間價')",
@@ -644,6 +662,9 @@ describe('ratewise build scripts', () => {
     expect(workflowSource).toContain('branches:\n      - main');
     expect(workflowSource).toContain('git fetch origin main');
     expect(workflowSource).toContain('git checkout origin/main -- scripts/fetch-moneybox-rates.js');
+    expect(workflowSource).toContain(
+      'git checkout origin/main -- apps/ratewise/src/config/api-semantics-v2.ts',
+    );
     expect(workflowSource).not.toContain('SOURCE_REF="${GITHUB_REF_NAME:-main}"');
     expect(workflowSource).not.toContain(
       'git checkout FETCH_HEAD -- scripts/fetch-moneybox-rates.js',
@@ -722,6 +743,15 @@ describe('ratewise build scripts', () => {
         newValue: 1381,
       },
     ]);
+  });
+
+  it('should trigger MoneyBox update when schemaVersion migration is needed even if rates unchanged', async () => {
+    const scriptSource = await readMoneyBoxFetchScript();
+
+    expect(scriptSource).toContain('function needsSchemaMigration()');
+    expect(scriptSource).toContain('API_SEMANTICS_SCHEMA_VERSION');
+    expect(scriptSource).toContain('schemaMigrationNeeded');
+    expect(scriptSource).toContain('!hasChanges && !schemaMigrationNeeded');
   });
 
   it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
@@ -949,7 +979,8 @@ describe('ratewise build scripts', () => {
     expect(typeof fixture.updateTime).toBe('string');
     expect(fixture.details).not.toHaveProperty('TWD');
 
-    expect(openApiGenerator).toContain("const API_VERSION = '1.3.0'");
+    expect(openApiGenerator).toContain("const API_VERSION = '2.1.0'");
+    expect(openApiGenerator).toContain('ExchangeShopRateV2');
     expect(openApiGenerator).toContain("timestamp: {\n      type: 'string'");
     expect(openApiGenerator).not.toContain("description: 'Unix 時間戳（毫秒）'");
     expect(openApiGenerator).not.toContain(

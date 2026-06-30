@@ -30,9 +30,21 @@ describe('PWA 離線功能測試', () => {
       const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
       const content = readFileSync(offlinePath, 'utf-8');
 
-      // 應該有重試功能
-      expect(content).toContain('window.location.reload()');
+      // 重試按鈕應觸發 shell 自我修復，而非單純 reload（避免在線死亡迴圈）
+      expect(content).toContain('retry-btn');
+      expect(content).toContain('attemptOfflineShellSelfHeal');
       expect(content).toContain("window.addEventListener('online'");
+    });
+
+    it('should self-heal when online user lands on offline shell', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const content = readFileSync(offlinePath, 'utf-8');
+
+      expect(content).toContain('rw-offline-shell-heal');
+      expect(content).toContain('CHECK_SHELL_PRECACHE');
+      expect(content).toContain("type: 'SKIP_WAITING'");
+      expect(content).toContain('navigateToAppShell');
+      expect(content).not.toContain('window.location.reload()');
     });
 
     it('should show cached data indicator', () => {
@@ -42,6 +54,19 @@ describe('PWA 離線功能測試', () => {
       // 應該顯示快取資料指示器
       expect(content).toContain('cached-info');
       expect(content).toContain("localStorage.getItem('exchangeRates')");
+    });
+
+    it('should keep offline.html zen theme-color aligned with manifest theme_color SSOT', () => {
+      const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
+      const manifestPath = resolve(ROOT_PATH, 'public/manifest.webmanifest');
+      const offlineContent = readFileSync(offlinePath, 'utf-8');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as { theme_color: string };
+
+      const themeColorMatch = /<meta name="theme-color" content="([^"]+)"/.exec(offlineContent);
+      expect(themeColorMatch?.[1]).toBe(manifest.theme_color);
+
+      const themeColorsMatch = /var themeColors = (\{[^}]+\})/.exec(offlineContent);
+      expect(themeColorsMatch?.[1]).toContain(`"zen":"${manifest.theme_color}"`);
     });
   });
 
@@ -290,6 +315,27 @@ describe('PWA 離線功能測試', () => {
       expect(viteConfig).toContain("'**/*.css'");
       expect(viteConfig).toContain("'**/*.html'");
       expect(viteConfig).not.toContain('**/*.{js,css,html');
+    });
+
+    it('should keep images out of precache globPatterns and add shell icons via additionalManifestEntries', () => {
+      const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
+      expect(viteConfig).not.toContain("'**/*.png'");
+      expect(viteConfig).not.toContain("'**/*.ico'");
+      expect(viteConfig).not.toContain("'**/*.svg'");
+      expect(viteConfig).not.toContain("'**/*.webp'");
+      expect(viteConfig).not.toContain("'**/*.avif'");
+      expect(viteConfig).not.toContain("'**/*.json'");
+      expect(viteConfig).toContain("'favicon.svg'");
+      expect(viteConfig).toContain("'favicon.ico'");
+      expect(viteConfig).toContain("'apple-touch-icon.png'");
+      expect(viteConfig).toContain("'icons/ratewise-icon-192x192.png'");
+    });
+
+    it('should exclude nested HTML and openapi from precache via globIgnores', () => {
+      const viteConfig = readFileSync(resolve(ROOT_PATH, 'vite.config.ts'), 'utf-8');
+      expect(viteConfig).toContain("'**/*/index.html'");
+      expect(viteConfig).toContain("'**/openapi.json'");
+      expect(viteConfig).toContain("'**/screenshots/**'");
     });
 
     it('should verify index.html and shell assets exist in the generated precache manifest', () => {

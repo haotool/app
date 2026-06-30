@@ -88,11 +88,19 @@ describe('PwaInstallGuide', () => {
     );
   });
 
-  it('renders external-browser guidance inside Threads in-app browser', () => {
-    mockNavigator(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Threads 337.0 Instagram 337.0',
-      'iPhone',
-    );
+  it.each([
+    {
+      label: 'legacy Threads token',
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Threads 337.0 Instagram 337.0',
+    },
+    {
+      label: 'Barcelona iOS token (2025+ production)',
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/22H352 Barcelona 431.0.0.25.69 (iPhone13,3; iOS 18_7_8; en_US; en; scale=3.00; 1170x2532; IABMV/1; 979167741)',
+    },
+  ])('renders external-browser guidance inside Threads in-app browser: $label', ({ userAgent }) => {
+    mockNavigator(userAgent, 'iPhone');
 
     render(<PwaInstallGuide />);
     showGuideAfterConversion();

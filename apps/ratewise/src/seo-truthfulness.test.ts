@@ -12,7 +12,8 @@ function read(relativePath: string): string {
 describe('SEO 內容真實性與 SSOT', () => {
   it('不應再宣稱不存在的 30+ 種貨幣支援', () => {
     const files = [
-      'src/config/seo-metadata.ts',
+      'src/config/seo-metadata/core.ts',
+      'src/config/seo-metadata/currency-landing.ts',
       'src/pages/About.tsx',
       'src/pages/FAQ.tsx',
       'src/pages/Guide.tsx',
@@ -63,14 +64,16 @@ describe('SEO 內容真實性與 SSOT', () => {
   });
 
   it('seo-metadata 不應包含誤導性總覽宣稱', () => {
-    const seoMetadata = read('src/config/seo-metadata.ts');
+    const seoMetadata =
+      read('src/config/seo-metadata/core.ts') + read('src/config/seo-metadata/currency-landing.ts');
 
     // 「均符合」等概括性宣稱不應出現於程式碼，易導致未來維護者誤解
     expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
   });
 
   it('Google-Extended 說明應與 Google 官方 crawler 角色一致', () => {
-    const seoMetadata = read('src/config/seo-metadata.ts');
+    const seoMetadata =
+      read('src/config/seo-metadata/core.ts') + read('src/config/seo-metadata/currency-landing.ts');
     const aboutMarkdown = read('public/about.md');
 
     for (const content of [seoMetadata, aboutMarkdown]) {

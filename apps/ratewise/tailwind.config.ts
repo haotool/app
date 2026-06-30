@@ -4,6 +4,8 @@ import {
   spacingTokens,
   typographyTokens,
   breakpointTokens,
+  radiusTokens,
+  shadowTokens,
 } from './src/config/design-tokens';
 
 /**
@@ -111,21 +113,32 @@ export default {
         // 保留舊版 token 向後相容
         ...generateTailwindThemeExtension().extend?.colors,
       },
-      // 現代化圓角 - ParkKeeper 風格
+      // 圓角語義 SSOT（design-tokens/scale.ts radiusTokens）+ Tailwind scale 別名相容
       borderRadius: {
-        '4xl': '2rem', // 超大圓角
-        '3xl': '1.5rem', // 卡片預設
-        '2xl': '1rem', // 按鈕、輸入框
-        xl: '0.75rem',
-        lg: '0.5rem',
-        md: '0.375rem',
-        sm: '0.25rem',
+        card: radiusTokens.values.card,
+        panel: radiusTokens.values.panel,
+        control: radiusTokens.values.control,
+        icon: radiusTokens.values.icon,
+        compact: radiusTokens.values.compact,
+        '4xl': radiusTokens.values['4xl'],
+        '3xl': radiusTokens.values['3xl'],
+        '2xl': radiusTokens.values['2xl'],
+        xl: radiusTokens.values.xl,
+        lg: radiusTokens.values.lg,
+        md: radiusTokens.values.md,
+        sm: radiusTokens.values.sm,
       },
-      // 現代化陰影（微妙、扁平）
+      // 陰影語義 SSOT（design-tokens/scale.ts shadowTokens）
       boxShadow: {
-        card: '0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05)',
-        'card-hover': '0 2px 4px 0 rgb(0 0 0 / 0.04), 0 4px 8px 0 rgb(0 0 0 / 0.06)',
-        soft: '0 1px 3px 0 rgb(0 0 0 / 0.05)',
+        card: shadowTokens.values.card,
+        'card-hover': shadowTokens.values.cardHover,
+        soft: shadowTokens.values.soft,
+        floating: shadowTokens.values.floating,
+        brand: shadowTokens.values.brand,
+        sm: shadowTokens.values.sm,
+        md: shadowTokens.values.md,
+        lg: shadowTokens.values.lg,
+        xl: shadowTokens.values.xl,
       },
       // 現代化動畫
       animation: {
