@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+89
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+95
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw-offline-manifest-theme-ssot
+- 原因：RW-3b 離線頁 committed zen 仍為 #6366F1（未 regenerate），與 manifest/index SSOT #7C3AED 不一致，deploy gate 失敗
+- 解法：generate:deterministic 重生成 offline.html、index.html theme-color 對齊 violet-600、更新 E2E/unit 期望與 artifact smoke test
+
+- 日期：2026-06-30
+- ID：reward-rw6b-moneybox-workflow-sw-history
+- 原因：MoneyBox history 檔名用台北 wall-clock（跨日與首爾掛牌日不一致）、aggregate 首次缺失不觸發 commit、SW 未快取換錢所 history-30d（離線趨勢圖無資料）
+- 解法：workflow 改用 extractSeoulSnapshotDate 命名 history（fallback 首爾 wall-clock）+ aggregate 缺失補 changed=true；sw.ts history-30d 路由加 providers/moneybox 路徑
+
+- 日期：2026-06-30
+- ID：reward-rw6-moneybox-seoul-date-rollover
+- 原因：MoneyBox 換錢所牌價不變但首爾掛牌日跨日時，latest.json 未刷新→與每日 history 日期不對齊
+- 解法：加 extractSeoulSnapshotDate/shouldRefreshLatestSnapshot（rate-changed 或 date-rollover 才刷新），整合進 hasRateChanges；保留 main 的 needsSchemaMigration/enrich（紅線）；補 3 測試並納入 test:root
+
+- 日期：2026-06-30
+- ID：reward-rw5-seo-truthfulness-update-frequency
+- 原因：SEO 文案過度承諾「每 5 分鐘自動同步/更新」（實際依資料來源與 CDN 快取而定），有 E-E-A-T 不實風險
+- 解法：seo-metadata core/currency-landing 與內容 generator 一致軟化為「約每 5 分鐘檢查更新」+ OpenData FAQ 加新鮮度免責；regenerate mirrors/llms/api 同步；「最精準」品牌定位詞屬產品決策，本支不擅改
+
+- 日期：2026-06-30
+- ID：reward-rw3b-offline-template-theme-aware
+- 原因：離線頁背景/容器/圖示硬編紫色，nitro/深色主題使用者斷網時閃錯誤的淺紫，與主題不一致
+- 解法：合併 #433 主題感知模板（per-theme CSS + theme-color + safe-area）但植回 main 的 #508 自我修復腳本與 retry-btn（非整檔取避免回退死亡迴圈）；generator 移除 prettier（紅線）；驗證 nitro 離線頁深色 #020617 且 #508 導回 app 正常
+
+- 日期：2026-06-30
+- ID：reward-rw3-manifest-theme-color-ssot
+- 原因：PWA manifest theme_color/background 硬編 #8B5CF6/#E8ECF4，與實際 zen 主題色不符；themes.ts zen primary(99 102 241) 與 index.css(124 58 237) 漂移
+- 解法：manifest 改讀 STYLE_DEFINITIONS.zen 經 rgbTripletToHex 轉換；同步 themes.ts zen primary 至 124 58 237 修漂移（離線模板主題化屬高風險 #508 合併，列 RW-3b）
 
 - 日期：2026-06-30
 - ID：reward-rw2-nitro-theme-contrast-fix

@@ -149,7 +149,7 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，每 5 分鐘自動同步，免費無廣告無註冊。`;
+export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，約每 5 分鐘檢查更新，免費無廣告無註冊。`;
 export const DEFAULT_KEYWORDS = [
   APP_INFO.subtitle,
   APP_INFO.shortName,
@@ -496,7 +496,7 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
     featureList: [
       '台灣銀行牌告匯率（現金/即期四種報價）',
       `${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算`,
-      '每 5 分鐘自動同步',
+      '約每 5 分鐘檢查更新',
       'PWA 離線使用',
       '匯率歷史趨勢圖（7-30 天）',
     ],
@@ -845,7 +845,7 @@ export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: '匯率多久更新一次？',
     answer:
-      '匯率數據每 5 分鐘自動同步臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
+      '匯率數據約每 5 分鐘檢查更新臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
   },
   {
     question: '單幣別和多幣別模式有什麼差別？',
@@ -905,7 +905,7 @@ export const HOMEPAGE_SEO = {
   answerCapsule: [
     {
       question: `${APP_INFO.shortName} 顯示的是台銀哪種匯率？`,
-      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」，每 5 分鐘自動同步。`,
+      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」，約每 5 分鐘檢查更新。`,
     },
     {
       question: '換匯前為什麼要看賣出價，不看中間價？',
@@ -928,9 +928,9 @@ export const HOMEPAGE_SEO = {
     buildCurrencyConversionServiceJsonLd(),
   ],
   content: {
-    eyebrow: '臺灣銀行牌告匯率 · 每 5 分鐘同步 · 顯示實際買賣價',
+    eyebrow: '臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新 · 顯示實際買賣價',
     heading: `${APP_INFO.name} 即時匯率換算`,
-    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，每 5 分鐘自動同步，適合出國旅遊、海外付款與跨境報價前快速比價。`,
+    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新，適合出國旅遊、海外付款與跨境報價前快速比價。`,
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
       `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
@@ -971,7 +971,7 @@ export const FAQ_PAGE_ENTRIES = [
   },
   {
     question: '匯率數據來源是什麼？',
-    answer: `${APP_INFO.shortName} 的匯率資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步一次，涵蓋現金與即期買入賣出價四種報價。`,
+    answer: `${APP_INFO.shortName} 的匯率資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新一次，涵蓋現金與即期買入賣出價四種報價。`,
   },
   {
     question: '現金匯率和即期匯率有什麼差別？',
@@ -1008,7 +1008,7 @@ export const FAQ_PAGE_ENTRIES = [
   {
     question: '匯率更新頻率如何？',
     answer:
-      '匯率數據每 5 分鐘自動更新一次，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理（Pull to Refresh）以手動同步最新牌告資料。',
+      '匯率數據約每 5 分鐘檢查更新一次，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理（Pull to Refresh）以手動同步最新牌告資料；實際新鮮度依資料來源與 CDN 快取而定。',
   },
   {
     question: `如何安裝 ${APP_INFO.shortName} 到手機桌面？`,
@@ -1302,7 +1302,7 @@ export const OPEN_DATA_PAGE_SEO = {
           'curl',
           'fetch',
         ],
-        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（每 5 分鐘更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1', 'h3'],
         proficiencyLevel: 'Beginner',
         dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
@@ -1315,7 +1315,7 @@ export const ABOUT_PAGE_FAQ = [
   {
     question: '匯率數據來源是什麼？',
     answer:
-      '資料來源為臺灣銀行官方牌告匯率，每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
+      '資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
   },
   {
     question: '免費使用嗎？需要帳號或有廣告嗎？',
@@ -1389,7 +1389,7 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料每 5 分鐘自動同步，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),

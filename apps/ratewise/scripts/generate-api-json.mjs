@@ -51,7 +51,7 @@ const latestJson = {
   schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
   semanticFieldMapping: buildSemanticFieldMapping(),
-  description: '臺灣銀行牌告匯率靜態 API — 資料每 5 分鐘自動同步，並提供 App 匯率模式欄位對照',
+  description: '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',

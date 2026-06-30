@@ -2,6 +2,19 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_INFO, APP_MANIFEST } from '../src/config/app-info.ts';
+import { STYLE_DEFINITIONS } from '../src/config/themes.ts';
+
+// manifest 為靜態單一色，取預設 zen 主題的主色/背景作 SSOT，避免硬編 hex 漂移
+const zenColors = STYLE_DEFINITIONS.zen.colors;
+
+function rgbTripletToHex(rgbTriplet) {
+  return `#${rgbTriplet
+    .trim()
+    .split(/\s+/)
+    .map((value) => Number.parseInt(value, 10).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()}`;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -21,8 +34,8 @@ const manifest = {
   name: APP_INFO.name,
   short_name: APP_MANIFEST.shortName,
   description: `${APP_INFO.name}顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${currencyCount} 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。`,
-  theme_color: '#8B5CF6',
-  background_color: '#E8ECF4',
+  theme_color: rgbTripletToHex(zenColors.primary),
+  background_color: rgbTripletToHex(zenColors.background),
   display: 'standalone',
   // 絕對 HTTPS scope/start_url：避免獨立 PWA partition + Chrome HTTPS-First 在啟動時以 http 語意解析。
   // id 維持相對（id 變更會被視為新 PWA 身分，破壞既有安裝更新連續性）。
