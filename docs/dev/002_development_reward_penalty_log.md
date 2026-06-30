@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+90
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+91
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-06-30
+- ID：reward-rw3b-offline-template-theme-aware
+- 原因：離線頁背景/容器/圖示硬編紫色，nitro/深色主題使用者斷網時閃錯誤的淺紫，與主題不一致
+- 解法：合併 #433 主題感知模板（per-theme CSS + theme-color + safe-area）但植回 main 的 #508 自我修復腳本與 retry-btn（非整檔取避免回退死亡迴圈）；generator 移除 prettier（紅線）；驗證 nitro 離線頁深色 #020617 且 #508 導回 app 正常
 
 - 日期：2026-06-30
 - ID：reward-rw3-manifest-theme-color-ssot
