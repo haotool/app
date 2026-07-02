@@ -1,7 +1,7 @@
 /**
  * useAppTheme - 應用程式主題管理 Hook
  *
- * @description 管理風格（Nitro/Kawaii/Zen/Classic/Ocean/Forest）的切換與持久化
+ * @description 管理風格（Zen/Violet/Nitro/Kawaii/Classic/Ocean/Forest）的切換與持久化
  *              支援 SSR 安全的初始化，防止 FOUC（Flash of Unstyled Content）
  *
  * @reference ParkKeeper Design System

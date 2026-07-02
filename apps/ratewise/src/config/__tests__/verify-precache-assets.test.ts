@@ -73,6 +73,7 @@ describe('verify-precache-assets script', () => {
         'favicon.ico',
         'apple-touch-icon.png',
         'icons/haorate-icon-192x192.png',
+        'fonts/nunito-wordmark-900.woff2',
       ]),
     );
     expect(

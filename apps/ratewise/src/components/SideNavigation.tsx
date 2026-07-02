@@ -18,6 +18,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { getDisplayVersion } from '../config/version';
 import { useTranslation } from 'react-i18next';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
+import { BrandWordmark } from './BrandWordmark';
 
 /**
  * 導覽項目類型 - 使用 i18n keys（與 BottomNavigation 一致）
@@ -89,9 +90,9 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
     >
       {/* Logo / Brand */}
       <div className="px-6 py-4 border-b border-[rgb(var(--color-border))]">
-        {/* 品牌標題（使用 span 而非 h1，與 mobile Header 一致，避免每頁重複 h1） */}
-        <span data-testid="app-title" className="text-xl font-bold text-[rgb(var(--color-text))]">
-          {t('app.title')}
+        {/* 品牌標準字（使用 span 而非 h1，與 mobile Header 一致，避免每頁重複 h1） */}
+        <span data-testid="app-title" className="block">
+          <BrandWordmark className="text-xl text-[rgb(var(--color-text))]" />
         </span>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('app.subtitle')}</p>
       </div>
@@ -113,7 +114,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
                 transition-colors duration-200
                 ${
                   isActive
-                    ? 'bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-primary))] font-medium'
+                    ? 'bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-primary-strong,var(--color-primary)))] font-medium'
                     : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
                 }
               `}
@@ -121,7 +122,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon
-                className={`w-5 h-5 ${isActive ? 'text-[rgb(var(--color-primary))]' : ''}`}
+                className={`w-5 h-5 ${isActive ? 'text-[rgb(var(--color-primary-strong,var(--color-primary)))]' : ''}`}
                 aria-hidden={true}
               />
               <span className="text-sm">{t(item.labelKey)}</span>

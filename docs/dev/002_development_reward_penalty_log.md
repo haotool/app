@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+95
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+96
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-03
+- ID：reward-rw-haorate-wordmark-splash
+- 原因：品牌 wordmark 未按 showcase SSOT（Nunito 900、Rate 主色）落地，缺啟動頁與關閉設定；SEO 文案仍寫 6 種主題、品牌藍白字對比未達 WCAG AA
+- 解法：自架 1.2KB Nunito 子集＋BrandWordmark/SplashScreen（standalone 限定＋設定開關＋預覽＋i18n×4、字體入 precache 守門）；文案修 7 種主題；新增 zen primary-strong token 修對比，Lighthouse 99/100/96/100
 
 - 日期：2026-06-30
 - ID：reward-rw-offline-manifest-theme-ssot

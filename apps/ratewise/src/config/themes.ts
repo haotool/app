@@ -2,7 +2,7 @@
  * Modern Theme System - 7 Styles SSOT Architecture
  *
  * @description 現代化主題系統 - 單一真實來源（SSOT）
- *              6 種風格（僅淺色模式）
+ *              7 種風格（Nitro 為深色，其餘淺色）
  *
  * @styles
  * - Zen: 極簡專業 - 品牌藍 #3182F6（預設）
@@ -99,7 +99,7 @@ interface StyleDefinition {
 }
 
 // ============================================================================
-// Style Definitions - 6 種風格
+// Style Definitions - 7 種風格
 // ============================================================================
 
 /**
@@ -539,7 +539,7 @@ export function getChartColors(): {
  * 季節性顏色配置介面
  *
  * @description 用於聖誕節、冬季等季節性裝飾組件
- *              支援 6 種風格的主題感知顏色
+ *              支援 7 種風格的主題感知顏色
  *
  * @created 2026-01-24
  */

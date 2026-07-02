@@ -1,7 +1,7 @@
 /**
  * UpdatePrompt 測試頁面
  *
- * 展示 6 種風格（Zen / Nitro / Kawaii / Classic / Ocean / Forest）
+ * 展示 7 種風格（Zen / Violet / Nitro / Kawaii / Classic / Ocean / Forest）
  * 與 4 種狀態（offlineReady / needRefresh / isUpdating / updateFailed）
  * 共 24 種通知卡片組合。
  *
@@ -207,7 +207,7 @@ export default function UpdatePromptTest() {
             返回主頁
           </Link>
           <h1 className="text-3xl font-bold text-neutral-text mt-4">UpdatePrompt Brand 配色總覽</h1>
-          <p className="text-neutral-text-secondary mt-2">6 種風格 × 4 種狀態 = 24 種組合</p>
+          <p className="text-neutral-text-secondary mt-2">7 種風格 × 4 種狀態 = 28 種組合</p>
         </div>
 
         {/* 欄標題（狀態） */}

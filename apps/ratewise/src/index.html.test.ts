@@ -120,6 +120,13 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).toContain('<link rel="icon"');
     });
 
+    it('should preload and define the brand wordmark font subset with base path SSOT', () => {
+      // 品牌標準字（Nunito 900 子集）：preload + @font-face 均須走 __BASE_PATH__ 佔位符。
+      expect(indexHtmlContent).toContain('__BASE_PATH__fonts/nunito-wordmark-900.woff2');
+      expect(indexHtmlContent).toContain("font-family: 'Nunito Wordmark'");
+      expect(indexHtmlContent).toContain('font-display: swap');
+    });
+
     it('should retain PWA manifest hints', () => {
       expect(indexHtmlContent).toContain('mobile-web-app-capable');
       expect(indexHtmlContent).toContain('apple-mobile-web-app-capable');

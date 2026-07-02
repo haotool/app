@@ -20,6 +20,8 @@ import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
+import { BrandWordmark } from './BrandWordmark';
+import { SplashScreen } from './SplashScreen';
 
 function AppLazyGlobalPrompts({
   attempt,
@@ -109,19 +111,19 @@ function Header() {
       }}
     >
       <div className="flex justify-between items-center max-w-md mx-auto w-full">
-        {/* 品牌 Logo + 標題（使用 span 而非 h1，避免每頁重複 h1）*/}
-        <div className="flex items-center gap-1.5">
+        {/* 品牌 Logo + 標準字 lockup（使用 span 而非 h1，避免每頁重複 h1）
+         * SSOT：showcase-twincoins.html 水平 lockup（wordmark + 小字副標）。 */}
+        <div className="flex items-center gap-2">
           <Logo />
-          <span
-            data-testid="app-title"
-            className="
-              text-lg font-black tracking-tight
-              bg-clip-text text-transparent
-              bg-gradient-to-r from-[rgb(var(--color-title-gradient-from))] to-[rgb(var(--color-title-gradient-to))]
-              [-webkit-background-clip:text]
-            "
-          >
-            {isZhTW ? APP_INFO.name : t('app.title')}
+          <span data-testid="app-title" className="flex flex-col justify-center">
+            <BrandWordmark className="text-lg leading-none text-[rgb(var(--color-text))]" />
+            <span
+              className={`text-[9px] leading-none font-bold mt-1 text-[rgb(var(--color-text-muted))] ${
+                isZhTW ? 'brand-subtitle' : 'tracking-[0.12em]'
+              }`}
+            >
+              {isZhTW ? APP_INFO.subtitle : t('app.subtitle')}
+            </span>
           </span>
         </div>
       </div>
@@ -202,6 +204,8 @@ export function AppLayout() {
   return (
     <ToastProvider>
       <PwaAppReadyBeacon />
+      {/* 品牌啟動頁：僅 PWA standalone 冷啟動顯示（瀏覽器/爬蟲不受影響） */}
+      <SplashScreen />
       {/* SPA 路由變更時送出 GA4 page_view */}
       <RouteAnalytics />
       {/* 根容器：固定視口高度，啟用 flex 滾動

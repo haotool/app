@@ -38,6 +38,14 @@
 
     <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
     <link rel="preload" href="__BASE_PATH__logo.png" as="image" fetchpriority="high" />
+    <!-- 品牌標準字子集字體（Nunito 900，僅 HaoRate 字符，1.2KB）：同源自架，避免外部字體阻塞與 CSP 擴權 -->
+    <link
+      rel="preload"
+      href="__BASE_PATH__fonts/nunito-wordmark-900.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <!-- Resource Hints（僅保留實際使用的來源） -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -107,6 +115,15 @@
           sans-serif;
         line-height: 1.6;
         -webkit-text-size-adjust: 100%;
+      }
+      /* 品牌標準字（showcase-twincoins SSOT）：Nunito 900 子集，僅含 HaoRate 六個字符。 */
+      @font-face {
+        font-family: 'Nunito Wordmark';
+        font-style: normal;
+        font-weight: 900;
+        font-display: swap;
+        src: url('__BASE_PATH__fonts/nunito-wordmark-900.woff2') format('woff2');
+        unicode-range: U+0048, U+0052, U+0061, U+0065, U+006F, U+0074;
       }
       /* Theme-aware skeleton variables
        * Maps to user's selected theme for seamless loading experience

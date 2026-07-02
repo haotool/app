@@ -27,7 +27,7 @@
 - **多幣別同時比較**：一個基準貨幣同時查看 18 種貨幣換算。
 - **歷史趨勢圖**：7 到 30 天匯率波動視覺化，判斷換匯時機。
 - **換算歷史紀錄**：自動記錄每次換算，可單擊複製或雙擊重新載入。
-- **6 種主題風格**：Zen、Nitro、Kawaii、Classic、Ocean、Forest。
+- **7 種主題風格**：Zen、Violet、Nitro、Kawaii、Classic、Ocean、Forest。
 - **PWA 安裝**：iPhone Safari → 分享 → 加入主畫面；Android Chrome → 選單 → 安裝應用程式。
 
 ## 常見 FAQ 導引

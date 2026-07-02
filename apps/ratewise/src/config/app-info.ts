@@ -12,12 +12,21 @@
 const BRAND_SHORT_NAME = 'HaoRate';
 const BRAND_SUBTITLE = '匯率好工具';
 
+// 品牌標準字拆分（showcase-twincoins SSOT）：前段墨色、後段主色強調。
+// 兩段串接必須等於 BRAND_SHORT_NAME。
+const BRAND_WORDMARK_PREFIX = 'Hao';
+const BRAND_WORDMARK_ACCENT = 'Rate';
+
 export const APP_INFO = {
   /** 應用程式完整名稱（shortName + subtitle 組合） */
   name: `${BRAND_SHORT_NAME} ${BRAND_SUBTITLE}`,
 
   /** 安裝後顯示的簡短名稱（純品牌） */
   shortName: BRAND_SHORT_NAME,
+
+  /** 品牌標準字拆分（wordmark 視覺）：prefix 墨色 + accent 主色。 */
+  wordmarkPrefix: BRAND_WORDMARK_PREFIX,
+  wordmarkAccent: BRAND_WORDMARK_ACCENT,
 
   /** 應用程式副標題 */
   subtitle: BRAND_SUBTITLE,

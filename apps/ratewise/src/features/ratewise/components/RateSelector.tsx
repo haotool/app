@@ -57,12 +57,13 @@ export const RateSelector = ({
     },
   ];
 
+  // 實底 pill 使用主色深階（zen 定義 --color-primary-strong），確保白字 WCAG AA 對比。
   const renderIndicator = (isActive: boolean) => (
     <AnimatePresence>
       {isActive && (
         <motion.div
           layoutId="rate-selector-indicator"
-          className="absolute inset-0 rounded-full bg-primary shadow-md"
+          className="absolute inset-0 rounded-full bg-[rgb(var(--color-primary-strong,var(--color-primary)))] shadow-md"
           transition={segmentedSwitch.indicator}
         />
       )}

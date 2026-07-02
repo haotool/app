@@ -1,12 +1,13 @@
 /**
  * Settings Page - ParkKeeper 風格設定頁面
  *
- * @description 應用程式設定頁面，支援 6 種風格切換
+ * @description 應用程式設定頁面，支援 7 種風格切換與啟動畫面偏好
  *              採用 ParkKeeper 設計風格（圓潤卡片、風格預覽）
  *              SSOT: 風格定義來自 themes.ts
  *
  * 風格選項：
- * - Zen - 極簡專業（預設）
+ * - Zen - 極簡專業（預設，品牌藍）
+ * - Violet - 經典紫
  * - Nitro - 深色科技感
  * - Kawaii - 可愛粉嫩
  * - Classic - 復古書卷
@@ -32,8 +33,11 @@ import {
   Shuffle,
   Landmark,
   Scale,
+  Sparkles,
+  Play,
   type LucideIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -47,12 +51,28 @@ import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
+import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../utils/splashPreference';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode } = useConverterStore();
+
+  // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
+  const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
+
+  const handleSplashToggle = () => {
+    setSplashEnabledState((prev) => {
+      const next = !prev;
+      setSplashEnabled(next);
+      return next;
+    });
+  };
+
+  const handleSplashPreview = () => {
+    window.dispatchEvent(new CustomEvent(SPLASH_PREVIEW_EVENT));
+  };
 
   const RATE_MODE_OPTIONS: {
     value: RateMode;
@@ -298,6 +318,56 @@ export default function Settings() {
               >[0],
             )}
           </p>
+        </section>
+
+        {/* 啟動畫面區塊 */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {t('settings.splashScreen')}
+            </h2>
+          </div>
+
+          <div className="card overflow-hidden divide-y divide-border">
+            <div className="px-5 py-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{t('settings.splashScreen')}</p>
+                <p className="text-[10px] opacity-50 mt-0.5 leading-relaxed">
+                  {t('settings.splashScreenDesc')}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={splashEnabled}
+                aria-label={t('settings.splashScreen')}
+                onClick={handleSplashToggle}
+                className="relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
+                style={{
+                  backgroundColor: splashEnabled
+                    ? 'rgb(var(--color-primary))'
+                    : 'rgb(var(--color-border))',
+                }}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                    splashEnabled ? 'translate-x-5' : ''
+                  }`}
+                />
+              </button>
+            </div>
+            <motion.button
+              onClick={handleSplashPreview}
+              whileHover={segmentedSwitch.item.whileHover}
+              whileTap={segmentedSwitch.item.whileTap}
+              transition={transitions.instant}
+              className="w-full px-5 py-3.5 flex items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">{t('settings.splashPreview')}</span>
+            </motion.button>
+          </div>
         </section>
 
         {/* 儲存與快取區塊 */}

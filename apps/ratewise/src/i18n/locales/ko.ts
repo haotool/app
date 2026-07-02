@@ -156,6 +156,10 @@ const ko = {
     rateModeSellDesc: '전 구간 은행 매도율 적용. 전신환(인터넷뱅킹)·창구 현금 매수 모두 동일 기준',
     rateModeMid: '참고율',
     rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
+    // 시작 화면 섹션
+    splashScreen: '시작 화면',
+    splashScreenDesc: '설치된 앱 실행 시 브랜드 애니메이션 재생',
+    splashPreview: '시작 화면 미리보기',
     // 지원 및 정보 섹션
     supportInfo: '지원 및 정보',
     faq: '자주 묻는 질문',

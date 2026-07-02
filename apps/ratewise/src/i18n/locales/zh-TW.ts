@@ -156,6 +156,10 @@ const zhTW = {
     rateModeSellDesc: '全程以銀行賣出牌告計算；即期適用網銀換匯，現金適用臨櫃買外幣現鈔',
     rateModeMid: '參考價',
     rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
+    // 啟動畫面區塊
+    splashScreen: '啟動畫面',
+    splashScreenDesc: '開啟已安裝的 App 時播放品牌動畫',
+    splashPreview: '預覽啟動畫面',
     // 支援與資訊區塊
     supportInfo: '支援與資訊',
     faq: '常見問題',
