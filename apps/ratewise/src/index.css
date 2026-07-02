@@ -82,6 +82,190 @@
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
     --color-text-muted: 100 116 139;
+    --color-primary: 49 130 246; /* #3182F6 - 品牌藍 */
+    --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
+    --color-accent: 59 130 246; /* blue-500 */
+    --color-border: 226 232 240;
+    --color-info: 14 165 233;
+
+    /* 圖表專用 Token (SSOT) */
+    --color-chart-line: 59 130 246; /* blue-500 */
+    --color-chart-area-top: 59 130 246; /* blue-500 */
+    --color-chart-area-bottom: 59 130 246; /* blue-500 */
+
+    /* 卡片層級區分 Token - 用於嵌套卡片視覺區分 */
+    --color-surface-elevated: 248 250 252; /* slate-50 - 微灰底色 */
+    --color-surface-sunken: 241 245 249; /* slate-100 - 下沉區域 */
+
+    /* 向後相容映射 */
+    --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
+
+    /* 舊版 neutral 系列 */
+    --color-neutral-bg: var(--color-background);
+    --color-neutral-light: 241 245 249;
+    --color-neutral: 226 232 240;
+    --color-neutral-dark: 203 213 225;
+    --color-neutral-darker: 148 163 184;
+    --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
+    --color-neutral-text-muted: var(--color-text-muted);
+    --color-neutral-border: var(--color-border);
+
+    /* 舊版 primary 系列 - 紫色調 */
+    --color-primary-bg: 239 246 255; /* blue-50 */
+    --color-primary-light: 219 234 254; /* blue-100 */
+    --color-primary-hover: 37 99 235; /* blue-600 */
+    --color-primary-active: 147 197 253; /* blue-300 */
+    --color-primary-text-light: 96 165 250; /* blue-400 */
+    --color-primary-ring: 59 130 246; /* blue-500 */
+    --color-primary-dark: 30 64 175; /* blue-800 */
+    --color-primary-darker: 30 58 138; /* blue-900 */
+    --color-primary-text: 49 130 246; /* blue #3182F6 */
+
+    /* 狀態色 */
+    --color-destructive: 239 68 68;
+    --color-destructive-hover: 220 38 38;
+    --color-destructive-foreground: 255 255 255;
+    --color-success: 34 197 94;
+    --color-success-foreground: 255 255 255;
+    --color-warning: 245 158 11;
+    --color-warning-foreground: 255 255 255;
+
+    /* 舊版 danger/success/warning 系列 */
+    --color-danger-bg: 254 242 242;
+    --color-danger-light: 254 226 226;
+    --color-danger-hover: 220 38 38;
+    --color-danger-active: 252 165 165;
+    --color-danger-text: 239 68 68;
+    --color-danger: 239 68 68;
+    --color-success-bg: 240 253 244;
+    --color-success-light: 220 252 231;
+    --color-success-hover: 187 247 208;
+    --color-success-active: 134 239 172;
+    --color-success-text: 34 197 94;
+    --color-warning-light: 254 243 199;
+    --color-warning-hover: 253 230 138;
+    --color-warning-active: 252 211 77;
+
+    /* Favorite 系列 */
+    --color-favorite-light: 254 243 199;
+    --color-favorite: 234 179 8;
+
+    /* Highlight 系列 */
+    --color-highlight-from: 254 252 232;
+    --color-highlight-to: 255 251 235;
+
+    /* Brand 系列（藍色漸變風格） */
+    --color-brand-from: var(--color-background);
+    --color-brand-via: var(--color-background);
+    --color-brand-to: var(--color-background);
+    --color-brand-border: var(--color-border);
+    --color-brand-decoration: var(--color-primary-light);
+    --color-brand-button-from: 59 130 246; /* blue-500 */
+    --color-brand-button-to: 49 130 246; /* blue #3182F6 */
+    --color-brand-button-hover-from: 49 130 246; /* blue #3182F6 */
+    --color-brand-button-hover-to: 37 99 235; /* blue-600 */
+    --color-brand-icon-from: var(--color-primary-light);
+    --color-brand-icon-to: var(--color-primary-light);
+    --color-brand-text: 59 130 246; /* blue-500 */
+    --color-brand-text-dark: 30 64 175; /* blue-800 */
+    --color-brand-shadow: var(--color-primary-light);
+
+    /* Footer 系列 */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
+
+    /* ========================================
+       Page Gradient Tokens (頁面漸層)
+       用於頁面背景漸層，支援 6 種風格主題切換
+       @created 2026-01-24
+       ======================================== */
+    --color-page-gradient-from: 241 245 249; /* slate-100 / neutral-light */
+    --color-page-gradient-via: 219 234 254; /* blue-100 */
+    --color-page-gradient-to: 255 255 255; /* white */
+
+    /* ========================================
+       Seasonal Design Tokens (季節性主題)
+       用於聖誕節、冬季等季節性裝飾組件
+       支援 6 種風格的主題感知顏色
+       @created 2026-01-24
+       ======================================== */
+
+    /* 星星顏色 - 金色調 */
+    --color-seasonal-star: 251 191 36; /* amber-400 */
+    --color-seasonal-star-stroke: 245 158 11; /* amber-500 */
+    --color-seasonal-star-glow: 254 240 138; /* yellow-200 */
+
+    /* 樹冠顏色 - 綠色調 */
+    --color-seasonal-tree: 34 197 94; /* green-500 */
+    --color-seasonal-tree-dark: 22 101 52; /* green-800 */
+    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
+
+    /* 樹幹顏色 - 棕色調 */
+    --color-seasonal-trunk: 146 64 14; /* amber-800 */
+    --color-seasonal-trunk-dark: 120 53 15; /* amber-900 */
+    --color-seasonal-trunk-stroke: 69 26 3; /* amber-950 */
+
+    /* 裝飾球顏色 */
+    --color-seasonal-ornament-red: 239 68 68; /* red-500 */
+    --color-seasonal-ornament-red-stroke: 220 38 38; /* red-600 */
+    --color-seasonal-ornament-gold: 251 191 36; /* amber-400 */
+    --color-seasonal-ornament-gold-stroke: 245 158 11; /* amber-500 */
+    --color-seasonal-ornament-blue: 59 130 246; /* blue-500 */
+    --color-seasonal-ornament-blue-stroke: 37 99 235; /* blue-600 */
+
+    /* 積雪顏色 - 主題感知白色 */
+    --color-seasonal-snow: 255 255 255; /* white */
+    --color-seasonal-snow-shadow: 248 250 252; /* slate-50 */
+
+    /* 底座顏色 */
+    --color-seasonal-base: 220 38 38; /* red-600 */
+    --color-seasonal-base-stroke: 185 28 28; /* red-700 */
+
+    /* ========================================
+       計算機按鍵色彩系統 (Zen 預設風格)
+       三種按鍵：數字鍵（淺灰）、運算符（淺藍）、等號（深藍）
+       ======================================== */
+    /* 數字鍵 (0-9, .) - 淺灰背景、深色字 */
+    --color-calc-number: 241 245 249; /* slate-100 */
+    --color-calc-number-text: 51 65 85; /* slate-700 */
+    --color-calc-number-hover: 226 232 240; /* slate-200 */
+    --color-calc-number-active: 203 213 225; /* slate-300 */
+
+    /* 運算符 (+, -, ×, ÷) - 淺藍背景、深藍字 */
+    --color-calc-operator: 219 234 254; /* blue-100 */
+    --color-calc-operator-text: 37 99 235; /* blue-600 */
+    --color-calc-operator-hover: 191 219 254; /* blue-200 */
+    --color-calc-operator-active: 147 197 253; /* blue-300 */
+
+    /* 等號 (=) - 深藍背景、白字 - 最高視覺優先 */
+    --color-calc-equals: 59 130 246; /* blue-500 */
+    --color-calc-equals-text: 255 255 255; /* white */
+    --color-calc-equals-hover: 49 130 246; /* blue #3182F6 */
+    --color-calc-equals-active: 96 165 250; /* blue-400 */
+
+    /* 功能鍵 (AC, ⌫, %, +/-) - 中灰背景、深色字 */
+    --color-calc-function: 226 232 240; /* slate-200 */
+    --color-calc-function-text: 51 65 85; /* slate-700 */
+    --color-calc-function-hover: 241 245 249; /* slate-100 */
+    --color-calc-function-active: 203 213 225; /* slate-300 */
+  }
+
+  /* ========================================
+     Violet 風格 - 經典紫
+     原 Zen 預設紫色配色完整保留（2026-07 品牌藍改版前）
+     ======================================== */
+  [data-style='violet'] {
+    --color-background: 248 250 252;
+    --color-surface: 255 255 255;
+    --color-text: 15 23 42;
+    --color-text-muted: 100 116 139;
     --color-primary: 124 58 237; /* violet-600 - 紫色主色 */
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 139 92 246; /* violet-500 */

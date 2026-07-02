@@ -181,6 +181,10 @@ const ko = {
     oceanDesc: '심해',
     forest: 'Forest',
     forestDesc: '자연의 숲',
+    violet: 'Violet',
+    violetDesc: '클래식 퍼플',
+    custom: '커스텀 테마',
+    customDesc: '곧 출시',
   },
 
   // Currency List

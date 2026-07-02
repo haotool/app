@@ -332,8 +332,8 @@ export default defineConfig(({ mode }) => {
               revision: getFileRevision('public/apple-touch-icon.png'),
             },
             {
-              url: 'icons/ratewise-icon-192x192.png',
-              revision: getFileRevision('public/icons/ratewise-icon-192x192.png'),
+              url: 'icons/haorate-icon-192x192.png',
+              revision: getFileRevision('public/icons/haorate-icon-192x192.png'),
             },
           ],
           rollupFormat: 'iife',

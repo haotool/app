@@ -72,7 +72,7 @@ describe('verify-precache-assets script', () => {
         'favicon.svg',
         'favicon.ico',
         'apple-touch-icon.png',
-        'icons/ratewise-icon-192x192.png',
+        'icons/haorate-icon-192x192.png',
       ]),
     );
     expect(

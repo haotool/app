@@ -22,7 +22,7 @@ const REQUIRED_PRECACHE_URLS = [
   'favicon.svg',
   'favicon.ico',
   'apple-touch-icon.png',
-  'icons/ratewise-icon-192x192.png',
+  'icons/haorate-icon-192x192.png',
 ];
 
 // Tier 1 必含但檔名帶 hash 的資產，以子字串比對。

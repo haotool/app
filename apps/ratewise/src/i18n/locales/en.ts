@@ -184,6 +184,10 @@ const en = {
     oceanDesc: 'Deep Sea',
     forest: 'Forest',
     forestDesc: 'Natural Woods',
+    violet: 'Violet',
+    violetDesc: 'Classic Violet',
+    custom: 'Custom Theme',
+    customDesc: 'Coming Soon',
   },
 
   // Currency List

@@ -164,6 +164,34 @@ export default function Settings() {
                 </div>
               </motion.button>
             ))}
+
+            {/* 自訂主題色 — 功能預告（尚未開放，僅呈現讓使用者預期） */}
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl shadow-sm border border-dashed opacity-50 cursor-not-allowed"
+              style={{
+                backgroundColor: 'rgb(var(--color-surface))',
+                color: 'rgb(var(--color-text))',
+                borderColor: 'rgb(var(--color-primary) / 0.35)',
+              }}
+              aria-label={`${t('styles.custom')} ${t('styles.customDesc')}`}
+            >
+              <div
+                className="absolute top-0 right-0 w-16 h-16 opacity-20 -mr-4 -mt-4 rounded-full"
+                style={{
+                  background:
+                    'conic-gradient(from 0deg, #F87171, #FBBF24, #34D399, #3182F6, #A78BFA, #F87171)',
+                }}
+              />
+              <div className="flex flex-col items-start w-full relative z-10">
+                <span className="font-bold text-sm leading-tight">{t('styles.custom')}</span>
+                <span className="text-[10px] opacity-60 leading-tight">
+                  {t('styles.customDesc')}
+                </span>
+              </div>
+            </button>
           </div>
         </section>
 

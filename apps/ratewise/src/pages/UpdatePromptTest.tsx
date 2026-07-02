@@ -12,7 +12,7 @@
 import { Link } from 'react-router-dom';
 import { Head } from 'vite-react-ssg';
 
-const STYLES = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
+const STYLES = ['zen', 'violet', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
 
 const STATES = ['offlineReady', 'needRefresh', 'isUpdating', 'updateFailed'] as const;
 type State = (typeof STATES)[number];

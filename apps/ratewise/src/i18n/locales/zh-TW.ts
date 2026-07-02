@@ -181,6 +181,10 @@ const zhTW = {
     oceanDesc: '海洋深邃',
     forest: 'Forest',
     forestDesc: '自然森林',
+    violet: 'Violet',
+    violetDesc: '經典紫',
+    custom: '自訂主題色',
+    customDesc: '即將推出',
   },
 
   // Currency List

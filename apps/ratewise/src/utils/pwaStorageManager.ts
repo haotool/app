@@ -65,8 +65,8 @@ const CRITICAL_RESOURCES = [
   './', // 首頁（解析為 basePath 本身）
   'offline.html', // 離線頁面
   'manifest.webmanifest', // PWA manifest
-  'icons/ratewise-icon-192x192.png', // 應用圖標
-  'icons/ratewise-icon-512x512.png',
+  'icons/haorate-icon-192x192.png', // 應用圖標
+  'icons/haorate-icon-512x512.png',
 ];
 
 /**

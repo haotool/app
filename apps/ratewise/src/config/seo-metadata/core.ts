@@ -312,7 +312,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       name: APP_INFO.author,
       url: SITE_BASE_URL,
       foundingDate: String(APP_INFO.copyrightStartYear),
-      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      logo: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'Customer Support',
@@ -692,7 +692,7 @@ export function buildArticleJsonLd(
       name: APP_INFO.author,
       logo: {
         '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        url: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       },
     },
     inLanguage: DEFAULT_LOCALE,
@@ -756,7 +756,7 @@ export function buildTechArticleJsonLd(
       name: APP_INFO.author,
       logo: {
         '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        url: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       },
     },
     inLanguage: DEFAULT_LOCALE,

@@ -1,11 +1,12 @@
 /**
- * Modern Theme System - 6 Styles SSOT Architecture
+ * Modern Theme System - 7 Styles SSOT Architecture
  *
  * @description 現代化主題系統 - 單一真實來源（SSOT）
  *              6 種風格（僅淺色模式）
  *
  * @styles
- * - Zen: 極簡專業 - Apple/Material Design 風格（預設）
+ * - Zen: 極簡專業 - 品牌藍 #3182F6（預設）
+ * - Violet: 經典紫 - 原 Zen 預設紫色保留
  * - Nitro: 深色科技感 - 賽車儀表板、霓虹燈
  * - Kawaii: 可愛粉嫩 - 日系少女風、馬卡龍色系
  * - Classic: 復古書卷 - 古典圖書館、皮革裝幀
@@ -26,9 +27,9 @@
 // ============================================================================
 
 /**
- * 風格類型 - 6 種可選風格
+ * 風格類型 - 7 種可選風格
  */
-export type ThemeStyle = 'zen' | 'nitro' | 'kawaii' | 'classic' | 'ocean' | 'forest';
+export type ThemeStyle = 'zen' | 'violet' | 'nitro' | 'kawaii' | 'classic' | 'ocean' | 'forest';
 
 /**
  * 完整主題配置
@@ -119,7 +120,7 @@ const zenStyle: StyleDefinition = {
     surface: '255 255 255',
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
-    primary: '124 58 237', // violet-600（與 index.css 渲染值同步，修 TS↔CSS 漂移）
+    primary: '49 130 246', // #3182F6 - 品牌藍（與 index.css 渲染值同步）
     secondary: '71 85 105', // slate-600
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
@@ -128,10 +129,43 @@ const zenStyle: StyleDefinition = {
     success: '34 197 94', // green-500
     warning: '245 158 11', // amber-500
     error: '239 68 68', // red-500
-    // 圖表色彩 - 專業藍紫
-    chartLine: '99 102 241', // indigo-500
-    chartAreaTop: '99 102 241', // indigo-500 (40% opacity in CSS)
+    // 圖表色彩 - 品牌藍
+    chartLine: '59 130 246', // blue-500（與 index.css 同步）
+    chartAreaTop: '59 130 246', // blue-500 (40% opacity in CSS)
     chartAreaBottom: '59 130 246', // blue-500 (10% opacity in CSS)
+  },
+};
+
+/**
+ * Violet 風格 - 經典紫
+ * 特點：純淨白底、紫羅蘭主色；2026-07 品牌藍改版前的原始預設配色保留
+ */
+const violetStyle: StyleDefinition = {
+  name: 'violet',
+  label: 'Violet',
+  labelEn: 'Violet',
+  description: '經典紫',
+  descriptionEn: 'Classic Violet',
+  font: 'font-sans',
+  colors: {
+    // 核心色彩（原 Zen 預設）
+    background: '248 250 252', // slate-50
+    surface: '255 255 255',
+    text: '15 23 42', // slate-900
+    textMuted: '100 116 139', // slate-500
+    primary: '124 58 237', // violet-600 - 經典紫主色
+    secondary: '71 85 105', // slate-600
+    accent: '139 92 246', // violet-500（與 index.css 渲染值同步）
+    border: '226 232 240', // slate-200
+    // 狀態色彩
+    info: '14 165 233', // sky-500
+    success: '34 197 94', // green-500
+    warning: '245 158 11', // amber-500
+    error: '239 68 68', // red-500
+    // 圖表色彩 - 經典紫
+    chartLine: '139 92 246', // violet-500
+    chartAreaTop: '139 92 246', // violet-500
+    chartAreaBottom: '59 130 246', // blue-500
   },
 };
 
@@ -314,6 +348,7 @@ const forestStyle: StyleDefinition = {
  */
 export const STYLE_DEFINITIONS: Record<ThemeStyle, StyleDefinition> = {
   zen: zenStyle,
+  violet: violetStyle,
   nitro: nitroStyle,
   kawaii: kawaiiStyle,
   classic: classicStyle,
@@ -340,7 +375,16 @@ export const STYLE_OPTIONS: {
     description: '極簡專業',
     previewBg: 'rgb(248, 250, 252)',
     previewText: 'rgb(15, 23, 42)',
-    previewAccent: 'rgb(99, 102, 241)',
+    previewAccent: 'rgb(49, 130, 246)',
+  },
+  {
+    value: 'violet',
+    label: 'Violet',
+    labelEn: 'Violet',
+    description: '經典紫',
+    previewBg: 'rgb(248, 250, 252)',
+    previewText: 'rgb(15, 23, 42)',
+    previewAccent: 'rgb(124, 58, 237)',
   },
   {
     value: 'nitro',

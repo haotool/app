@@ -181,6 +181,10 @@ const ja = {
     oceanDesc: '深海',
     forest: 'Forest',
     forestDesc: '自然の森',
+    violet: 'Violet',
+    violetDesc: 'クラシックパープル',
+    custom: 'カスタムテーマ',
+    customDesc: '近日公開',
   },
 
   // Currency List
