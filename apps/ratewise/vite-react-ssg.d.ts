@@ -6,6 +6,7 @@ declare module 'vite-react-ssg' {
   export interface RouteRecord {
     path?: string;
     element?: ReactNode;
+    errorElement?: ReactNode;
     children?: RouteRecord[];
     lazy?: () => Promise<{ Component: () => ReactNode }>;
     entry?: string;

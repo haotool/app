@@ -9,7 +9,8 @@ import * as React from 'react';
 import { useRouteError } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
-import { isChunkLoadError } from '../utils/chunkLoadRecovery';
+import { isChunkLoadError, recoverFromChunkLoadError } from '../utils/chunkLoadRecovery';
+import { recordPwaDiagnostic } from '../utils/pwaDiagnostics';
 
 // ── 共用 fallback UI ─────────────────────────────────────────────────────────
 
@@ -21,6 +22,65 @@ export function OfflineAwareFallback({ error }: FallbackProps) {
   const { t } = useTranslation();
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
   const showOfflineUI = offline || isChunkLoadError(error);
+  // chunk 錯誤且在線時先進入自動恢復狀態；cooldown 擋下才退回手動 UI。
+  const [recovering, setRecovering] = React.useState(() => isChunkLoadError(error) && !offline);
+
+  // 掛載時記錄路由層錯誤診斷，供觀察性追蹤。
+  React.useEffect(() => {
+    recordPwaDiagnostic(
+      'route-error-boundary',
+      { message: String((error as Error)?.message ?? error) },
+      'warn',
+    );
+  }, [error]);
+
+  // chunk 錯誤且在線時自動觸發一次溫和恢復；被 cooldown 擋下則退回手動重試 UI。
+  // ref 守門防止 StrictMode 雙執行：第二次呼叫會被 cooldown 擋下而誤退手動 UI。
+  const recoveryAttemptedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isChunkLoadError(error)) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    if (recoveryAttemptedRef.current) return;
+    recoveryAttemptedRef.current = true;
+    void recoverFromChunkLoadError().then((triggered) => {
+      if (!triggered) setRecovering(false);
+    });
+  }, [error]);
+
+  // 恢復連線後自動重試，兌現離線文案的自動重試承諾。
+  React.useEffect(() => {
+    const handleOnline = () => {
+      window.location.reload();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
+  if (recovering) {
+    return (
+      <div
+        data-ratewise-watchdog-ready="true"
+        className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center gap-4"
+      >
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30">
+          <RefreshCw
+            className="w-8 h-8 text-amber-600 dark:text-amber-400 animate-spin"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {t('errors.recoveringTitle', '正在更新至最新版本…')}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+            {t('errors.recoveringDescription', '偵測到新版本資源，正在自動重新載入。')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (showOfflineUI) {
     return (

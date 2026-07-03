@@ -22,8 +22,12 @@ vi.mock('../logger', () => ({
   },
 }));
 
-const performFullRefresh = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+const { forceServiceWorkerUpdate, performFullRefresh } = vi.hoisted(() => ({
+  forceServiceWorkerUpdate: vi.fn(() => Promise.resolve(true)),
+  performFullRefresh: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('../swUtils', () => ({
+  forceServiceWorkerUpdate,
   performFullRefresh,
 }));
 
@@ -96,24 +100,61 @@ describe('chunkLoadRecovery', () => {
   });
 
   describe('recoverFromChunkLoadError', () => {
+    let reloadMock: ReturnType<typeof vi.fn>;
+
     beforeEach(() => {
+      sessionStorage.clear();
+      forceServiceWorkerUpdate.mockClear();
       performFullRefresh.mockClear();
+      reloadMock = vi.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...window.location, reload: reloadMock },
+      });
     });
 
-    it('should trigger full refresh when safe', async () => {
-      const result = await recoverFromChunkLoadError();
+    it('should apply SW update and reload when safe, never clearing caches', async () => {
+      vi.useFakeTimers();
+      try {
+        const result = await recoverFromChunkLoadError();
 
-      expect(result).toBe(true);
-      expect(performFullRefresh).toHaveBeenCalledTimes(1);
+        expect(result).toBe(true);
+        expect(forceServiceWorkerUpdate).toHaveBeenCalledTimes(1);
+        // 兜底重載延遲 600ms：讓 waiting SW 的 controllerchange 重載先行，避免載到舊 shell。
+        expect(reloadMock).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(600);
+        expect(reloadMock).toHaveBeenCalledTimes(1);
+        expect(performFullRefresh).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
-    it('should block refresh when cooldown active', async () => {
+    it('should block recovery when cooldown active', async () => {
       markChunkRefreshed();
 
       const result = await recoverFromChunkLoadError();
 
       expect(result).toBe(false);
+      expect(forceServiceWorkerUpdate).not.toHaveBeenCalled();
+      expect(reloadMock).not.toHaveBeenCalled();
       expect(performFullRefresh).not.toHaveBeenCalled();
+    });
+
+    it('should skip recovery while offline and preserve cooldown budget', async () => {
+      const onLineSpy = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+      try {
+        const result = await recoverFromChunkLoadError();
+
+        // 離線時不重載（重載只會回 shell），交由 online 事件自動重試。
+        expect(result).toBe(false);
+        expect(forceServiceWorkerUpdate).not.toHaveBeenCalled();
+        expect(reloadMock).not.toHaveBeenCalled();
+        // 不消耗 cooldown：恢復連線後的自動恢復不會被誤擋。
+        expect(sessionStorage.getItem('chunk_load_refresh_timestamp')).toBeNull();
+      } finally {
+        onLineSpy.mockRestore();
+      }
     });
   });
 });

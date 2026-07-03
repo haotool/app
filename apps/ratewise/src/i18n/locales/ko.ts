@@ -282,6 +282,8 @@ const ko = {
     routeLoadFailedTitle: '페이지 로드 실패',
     routeLoadFailedDescription:
       '최근 업데이트로 인해 캐시된 리소스가 불일치할 수 있습니다. 페이지를 새로고침해 주세요.',
+    recoveringTitle: '최신 버전으로 업데이트 중…',
+    recoveringDescription: '새 버전을 감지하여 자동으로 다시 불러오는 중입니다.',
     crashTitle: '이런! 오류가 발생했습니다',
     crashDescription: '앱에 문제가 발생했습니다. 페이지를 새로고침해 주세요.',
     errorDetails: '오류 세부사항 (개발 모드)',

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+99
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+100
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-04
+- ID：reward-rw-offline-loadfailed-resilience
+- 原因：chunk 失敗恢復流程呼叫 FORCE_HARD_RESET 清光所有快取，弱網瞬斷即自毀離線防護導致 offline.html 頻現；root route 無 errorElement 使 react-router 預設「Unexpected Application Error/Load failed」洩漏
+- 解法：恢復流程去核彈化（SW update+延遲重載、離線不重載不耗 cooldown）、全路由掛 OfflineAwareError（chunk 錯誤自動恢復、online 自動重試）、hard reset 後回填 shell；Playwright 離線/驅逐/恢復四場景實測
 
 - 日期：2026-07-03
 - ID：reward-rw-twbank-challenge-stale-rates

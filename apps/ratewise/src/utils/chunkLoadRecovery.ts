@@ -4,12 +4,15 @@
  * 用途:
  * - 統一判斷 chunk 載入錯誤訊息
  * - 避免無限刷新循環
- * - 觸發完整快取清理與更新流程
+ * - 溫和恢復：套用新版 SW 後整頁重載，絕不清除任何快取
+ *
+ * chunk 失敗最常見原因是部署後版本更替，正確解法是套用新版 SW 後整頁重載；
+ * 清除全部快取會摧毀離線防護、把弱網用戶推向 offline.html。
  */
 
 import { logger } from './logger';
 import { recordPwaDiagnostic } from './pwaDiagnostics';
-import { performFullRefresh } from './swUtils';
+import { forceServiceWorkerUpdate } from './swUtils';
 
 export const CHUNK_REFRESH_KEY = 'chunk_load_refresh_timestamp';
 export const CHUNK_REFRESH_COOLDOWN_MS = 30000;
@@ -86,18 +89,31 @@ export function markChunkRefreshed(): void {
 }
 
 /**
- * 觸發完整刷新流程
+ * 觸發溫和恢復流程：套用新版 SW（若有）後整頁重載，不清除任何快取。
  */
 export async function recoverFromChunkLoadError(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
+
+  // 離線時重載只會回到 shell 首頁、無法取得 chunk：交由呼叫端顯示離線 UI，
+  // 待 online 事件自動重試（不消耗 cooldown）。
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    recordPwaDiagnostic('chunk-load-refresh-skipped-offline', undefined, 'warn');
+    return false;
+  }
+
   if (!canSafelyRefresh()) {
     recordPwaDiagnostic('chunk-load-refresh-blocked', undefined, 'warn');
     return false;
   }
 
-  logger.warn('Chunk load retries exhausted, performing full refresh');
+  logger.warn('Chunk load retries exhausted, applying SW update and reloading');
   recordPwaDiagnostic('chunk-load-refresh-triggered');
   markChunkRefreshed();
-  await performFullRefresh();
+  await forceServiceWorkerUpdate();
+  // 有 waiting SW 時由 controllerchange 觸發重載（新 SW 接管後才載頁，避免再拿到舊 shell）；
+  // 延遲兜底重載涵蓋無 waiting SW 的情境，若 controllerchange 先重載則此計時器隨頁面卸載消失。
+  setTimeout(() => {
+    window.location.reload();
+  }, 600);
   return true;
 }

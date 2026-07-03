@@ -47,7 +47,11 @@ import { CURRENCY_LANDING_ROUTE_REGISTRY } from './config/currencyLandingRouteRe
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { ChunkErrorBoundary, OfflineAwareFallback } from './components/OfflineAwareError';
+import {
+  ChunkErrorBoundary,
+  OfflineAwareError,
+  OfflineAwareFallback,
+} from './components/OfflineAwareError';
 
 import { RememberedHomeRoute } from './features/ratewise/components/RememberedHomeRoute';
 const MultiConverter = lazyWithRetry(() => import('./pages/MultiConverter'));
@@ -137,6 +141,8 @@ function createLazyRoute(
 ): RouteRecord {
   return {
     path,
+    // 路由層最後防線：任何冒到路由層的錯誤都以離線友善 UI 呈現。
+    errorElement: <OfflineAwareError />,
     lazy: async () => {
       try {
         const module = await importWithRetry(importFn);
@@ -168,6 +174,8 @@ export const routes: RouteRecord[] = [
   {
     path: '/',
     element: <AppLayout />,
+    // 路由層最後防線：防止 react-router 預設錯誤頁洩漏給使用者。
+    errorElement: <OfflineAwareError />,
     children: [
       // 單幣別轉換器（首頁）
       // 首頁可索引內容與 head metadata 都在 ClientOnly 外層，避免爬蟲只拿到互動骨架。
