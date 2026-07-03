@@ -165,5 +165,7 @@ export const notificationTokens = {
     updateInterval: 3_600_000,
     /** offlineReady 自動消失 (ms) */
     autoDismiss: 5_000,
+    /** 啟動窗口 (ms)：窗口內偵測到新版視為冷啟動，自動套用更新不打斷使用者 */
+    autoUpdateLaunchWindow: 30_000,
   },
 } as const;
