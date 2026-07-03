@@ -145,4 +145,50 @@ describe('RememberedHomeRoute', () => {
     });
     vi.unstubAllEnvs();
   });
+
+  it('冷啟動同步還原：persisted multi 於 hydration 完成同一 commit 內即導向 /multi（不需 waitFor）', () => {
+    // 非 test MODE 才會走 hydrated=false 起始 + layout effect 同步翻轉的真實時序。
+    vi.stubEnv('MODE', 'development');
+    localStorage.setItem(CONVERTER_STORE_KEY, multiPersistPayload);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+    // 還原 setState 觸發的 persist 寫回，維持 localStorage 與 store 一致的 multi。
+    localStorage.setItem(CONVERTER_STORE_KEY, multiPersistPayload);
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(false);
+
+    renderHome('/');
+
+    // render 返回時 layout effect 已同步執行（paint 前），Navigate 應已生效——
+    // 同步斷言（無 waitFor / 無 microtask 推進）即可觀察到路由變更。
+    expect(screen.getByTestId('multi-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('ratewise-single')).not.toBeInTheDocument();
+    vi.unstubAllEnvs();
+  });
+
+  it('冷啟動同步還原：有 deep-link（?from=USD）時不還原，維持單幣', () => {
+    vi.stubEnv('MODE', 'development');
+    localStorage.setItem(CONVERTER_STORE_KEY, multiPersistPayload);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+    localStorage.setItem(CONVERTER_STORE_KEY, multiPersistPayload);
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(false);
+
+    renderHome('/?from=USD');
+
+    expect(screen.getByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+    vi.unstubAllEnvs();
+  });
+
+  it('冷啟動同步還原：persisted 為 null 時不還原，維持單幣', () => {
+    vi.stubEnv('MODE', 'development');
+    localStorage.removeItem(CONVERTER_STORE_KEY);
+    useConverterStore.setState({ lastConverterView: 'single' });
+    localStorage.removeItem(CONVERTER_STORE_KEY);
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(false);
+
+    renderHome('/');
+
+    expect(screen.getByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+    vi.unstubAllEnvs();
+  });
 });
