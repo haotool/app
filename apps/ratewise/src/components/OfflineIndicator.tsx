@@ -62,6 +62,8 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
   const [isOffline, setIsOffline] = useState(false);
   const [isDismissed, setIsDismissed] = useState(() => readSessionDismissed());
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 連續探測失敗次數，達 2 次才視為確認離線，避免瞬時抖動誤報 */
+  const failureCountRef = useRef(0);
 
   // 10 秒自動關閉，關閉後同次 session 不再顯示
   useEffect(() => {
@@ -93,34 +95,55 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
     }
 
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const checkNetworkStatus = async () => {
       const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
       if (!browserOnline) {
+        // 瀏覽器明確回報離線，不需防抖，立即顯示
+        failureCountRef.current = 0;
         setIsOffline(true);
         logger.warn('Offline mode detected (navigator.onLine)');
         return;
       }
 
       const online = await isOnline();
-      setIsOffline(!online);
 
-      if (!online) {
-        logger.warn('Offline mode detected (hybrid verification)');
+      if (online) {
+        failureCountRef.current = 0;
+        setIsOffline(false);
+        return;
       }
+
+      failureCountRef.current += 1;
+
+      if (failureCountRef.current >= 2) {
+        setIsOffline(true);
+        logger.warn('Offline mode detected (hybrid verification)');
+        return;
+      }
+
+      // 單次探測失敗：5 秒後複測，避免瞬時抖動誤報
+      retryTimeoutId = setTimeout(() => void checkNetworkStatus(), 5_000);
     };
 
     void checkNetworkStatus();
 
     intervalId = setInterval(() => void checkNetworkStatus(), 30_000);
 
-    const handleEvent = () => void checkNetworkStatus();
+    const handleEvent = () => {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        failureCountRef.current = 0;
+      }
+      void checkNetworkStatus();
+    };
     window.addEventListener('online', handleEvent);
     window.addEventListener('offline', handleEvent);
 
     return () => {
       if (intervalId) clearInterval(intervalId);
+      if (retryTimeoutId) clearTimeout(retryTimeoutId);
       window.removeEventListener('online', handleEvent);
       window.removeEventListener('offline', handleEvent);
     };
