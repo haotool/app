@@ -176,6 +176,22 @@ describe('UpdatePrompt - 5 個狀態', () => {
     expect(sourceCode).toContain('navigator.onLine');
     expect(sourceCode).toContain('autoUpdateTriggeredRef');
   });
+
+  it('should auto-apply updates during the cold-launch window so stale PWA users load latest', async () => {
+    const sourceCode = await readSource();
+    // 冷啟動窗口：頁面剛載入偵測到新版時自動整頁更新（無版本撕裂）。
+    expect(sourceCode).toContain('notificationTokens.timing.autoUpdateLaunchWindow');
+    expect(sourceCode).toContain('withinLaunchWindow');
+    // 打字中不自動重載，避免打斷輸入。
+    expect(sourceCode).toContain('isTypingInField');
+  });
+
+  it('should guard cold-launch auto-update against reload loops (once per 5 min per session)', async () => {
+    const sourceCode = await readSource();
+    expect(sourceCode).toContain('wasAutoUpdateRecentlyAttempted');
+    expect(sourceCode).toContain('markAutoUpdateAttempted');
+    expect(sourceCode).toContain('sessionStorage.setItem(AUTO_UPDATE_GUARD_KEY');
+  });
 });
 
 describe('UpdatePrompt - ARIA 語義', () => {

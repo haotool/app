@@ -38,6 +38,28 @@ export function UpdatePrompt() {
   return <UpdatePromptClient />;
 }
 
+// 冷啟動自動更新的循環防護：同分頁 5 分鐘內只自動重載一次，
+// 異常情境（sw.js 持續變動）退回 prompt 流程而非無限 reload。
+const AUTO_UPDATE_GUARD_KEY = 'rw-sw-auto-update-at';
+const AUTO_UPDATE_GUARD_MS = 5 * 60_000;
+
+function wasAutoUpdateRecentlyAttempted(): boolean {
+  try {
+    const at = Number(sessionStorage.getItem(AUTO_UPDATE_GUARD_KEY));
+    return Number.isFinite(at) && at > 0 && Date.now() - at < AUTO_UPDATE_GUARD_MS;
+  } catch {
+    return false;
+  }
+}
+
+function markAutoUpdateAttempted(): void {
+  try {
+    sessionStorage.setItem(AUTO_UPDATE_GUARD_KEY, String(Date.now()));
+  } catch {
+    // sessionStorage 不可用時略過，仍允許單次自動更新。
+  }
+}
+
 function UpdatePromptClient() {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
@@ -152,10 +174,23 @@ function UpdatePromptClient() {
       return;
     }
 
+    // 自動套用更新的兩條路徑：
+    // 1. 壞 SW（任何時機）：自我修復，避免用戶卡在故障版本。
+    // 2. 冷啟動窗口內偵測到新版：頁面剛載入、重載無感且無版本撕裂風險，
+    //    舊 PWA 用戶免手動點擊即自動載入最新版本。
+    //    正在輸入時不自動重載（避免打斷）；5 分鐘內已自動重載過則退回 prompt。
+    const withinLaunchWindow = performance.now() < notificationTokens.timing.autoUpdateLaunchWindow;
+    const isTypingInField =
+      document.activeElement instanceof HTMLInputElement ||
+      document.activeElement instanceof HTMLTextAreaElement;
+    const shouldAutoApply =
+      brokenSwRef.current ||
+      (withinLaunchWindow && !isTypingInField && !wasAutoUpdateRecentlyAttempted());
+
     if (
       autoUpdateTriggeredRef.current ||
       isUpdating ||
-      !brokenSwRef.current ||
+      !shouldAutoApply ||
       typeof navigator === 'undefined' ||
       !navigator.onLine
     ) {
@@ -163,6 +198,7 @@ function UpdatePromptClient() {
     }
 
     autoUpdateTriggeredRef.current = true;
+    markAutoUpdateAttempted();
     setIsUpdating(true);
     setRegistrationFailed(false);
     setUpdateFailed(false);

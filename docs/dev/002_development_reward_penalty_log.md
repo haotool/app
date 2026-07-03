@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+97
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+98
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-03
+- ID：reward-rw-pwa-cold-launch-auto-update
+- 原因：prompt 模式下舊 PWA 用戶熱啟動偵測到新版仍需手動點「更新」，長期未點者停留舊版
+- 解法：needRefresh 於冷啟動 30 秒窗口內自動 SKIP_WAITING+整頁重載（輸入中不打斷、session 5 分鐘防迴圈），preview 雙版本實測 loads=2 自動切換
 
 - 日期：2026-07-03
 - ID：reward-rw-theme-token-longpress-tooltip
