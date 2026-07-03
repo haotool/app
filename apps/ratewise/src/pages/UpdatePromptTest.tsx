@@ -1,7 +1,7 @@
 /**
  * UpdatePrompt 測試頁面
  *
- * 展示 7 種風格（Zen / Violet / Nitro / Kawaii / Classic / Ocean / Forest）
+ * 展示 7 種風格（Zen / Violet / Nitro / Racing / Kawaii / Classic / Forest）
  * 與 4 種狀態（offlineReady / needRefresh / isUpdating / updateFailed）
  * 共 24 種通知卡片組合。
  *
@@ -12,7 +12,7 @@
 import { Link } from 'react-router-dom';
 import { Head } from 'vite-react-ssg';
 
-const STYLES = ['zen', 'violet', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'] as const;
+const STYLES = ['zen', 'violet', 'nitro', 'racing', 'kawaii', 'classic', 'forest'] as const;
 
 const STATES = ['offlineReady', 'needRefresh', 'isUpdating', 'updateFailed'] as const;
 type State = (typeof STATES)[number];
@@ -41,10 +41,10 @@ const STATE_DESC: Record<State, string> = {
 const STYLE_LABELS: Record<string, string> = {
   zen: 'Zen 極簡專業',
   nitro: 'Nitro 深色科技',
+  racing: 'Racing 黑紅賽車',
   kawaii: 'Kawaii 可愛粉嫩',
   classic: 'Classic 復古書卷',
-  ocean: 'Ocean 海洋深邃',
-  forest: 'Forest 森林自然',
+  forest: 'Forest 韓系簡約',
 };
 
 /** CTA 按鈕共用樣式（與 UpdatePrompt 一致） */

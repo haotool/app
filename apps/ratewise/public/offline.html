@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <script>
       (function () {
-        var themeColors = {"zen":"#3182F6","violet":"#7C3AED","nitro":"#0096E6","kawaii":"#FF69B4","classic":"#8B4513","ocean":"#06B6D4","forest":"#22C55E"};
+        var themeColors = {"zen":"#3182F6","violet":"#7C3AED","nitro":"#0096E6","racing":"#EF4444","kawaii":"#FF69B4","classic":"#8B4513","forest":"#059669"};
         var supportedStyles = Object.keys(themeColors);
         var selectedStyle = 'zen';
 
@@ -104,6 +104,28 @@
         --offline-success: #34D399;
       }
 
+      html[data-style='racing'] {
+        --offline-theme-color: #EF4444;
+        --offline-background: #0A0A0A;
+        --offline-surface: #171717;
+        --offline-border: #262626;
+        --offline-text: #FAFAFA;
+        --offline-text-muted: #A3A3A3;
+        --offline-primary: #EF4444;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #818CF8;
+        --offline-accent: #F87171;
+        --offline-primary-tint: rgba(239, 68, 68, 0.08);
+        --offline-primary-border-tint: rgba(239, 68, 68, 0.18);
+        --offline-primary-shadow-soft: rgba(239, 68, 68, 0.18);
+        --offline-primary-shadow-strong: rgba(239, 68, 68, 0.26);
+        --offline-primary-shadow-hover: rgba(239, 68, 68, 0.34);
+        --offline-warning-tint: rgba(251, 191, 36, 0.16);
+        --offline-warning: #FBBF24;
+        --offline-success-tint: rgba(52, 211, 153, 0.12);
+        --offline-success: #34D399;
+      }
+
       html[data-style='kawaii'] {
         --offline-theme-color: #FF69B4;
         --offline-background: #FFFAF4;
@@ -148,44 +170,22 @@
         --offline-success: #16A34A;
       }
 
-      html[data-style='ocean'] {
-        --offline-theme-color: #06B6D4;
-        --offline-background: #F0F9FF;
-        --offline-surface: #FFFFFF;
-        --offline-border: #BAE6FD;
-        --offline-text: #075985;
-        --offline-text-muted: #164E63;
-        --offline-primary: #06B6D4;
-        --offline-primary-foreground: #020617;
-        --offline-secondary: #14B8A6;
-        --offline-accent: #0284C7;
-        --offline-primary-tint: rgba(6, 182, 212, 0.08);
-        --offline-primary-border-tint: rgba(6, 182, 212, 0.18);
-        --offline-primary-shadow-soft: rgba(6, 182, 212, 0.18);
-        --offline-primary-shadow-strong: rgba(6, 182, 212, 0.26);
-        --offline-primary-shadow-hover: rgba(6, 182, 212, 0.34);
-        --offline-warning-tint: rgba(245, 158, 11, 0.16);
-        --offline-warning: #F59E0B;
-        --offline-success-tint: rgba(20, 184, 166, 0.12);
-        --offline-success: #14B8A6;
-      }
-
       html[data-style='forest'] {
-        --offline-theme-color: #22C55E;
-        --offline-background: #F0FDF4;
+        --offline-theme-color: #059669;
+        --offline-background: #FAFAF9;
         --offline-surface: #FFFFFF;
-        --offline-border: #BBF7D0;
-        --offline-text: #14532D;
-        --offline-text-muted: #166534;
-        --offline-primary: #22C55E;
+        --offline-border: #E7E5E4;
+        --offline-text: #1C1917;
+        --offline-text-muted: #78716C;
+        --offline-primary: #059669;
         --offline-primary-foreground: #020617;
         --offline-secondary: #84CC16;
         --offline-accent: #16A34A;
-        --offline-primary-tint: rgba(34, 197, 94, 0.08);
-        --offline-primary-border-tint: rgba(34, 197, 94, 0.18);
-        --offline-primary-shadow-soft: rgba(34, 197, 94, 0.18);
-        --offline-primary-shadow-strong: rgba(34, 197, 94, 0.26);
-        --offline-primary-shadow-hover: rgba(34, 197, 94, 0.34);
+        --offline-primary-tint: rgba(5, 150, 105, 0.08);
+        --offline-primary-border-tint: rgba(5, 150, 105, 0.18);
+        --offline-primary-shadow-soft: rgba(5, 150, 105, 0.18);
+        --offline-primary-shadow-strong: rgba(5, 150, 105, 0.26);
+        --offline-primary-shadow-hover: rgba(5, 150, 105, 0.34);
         --offline-warning-tint: rgba(234, 179, 8, 0.16);
         --offline-warning: #EAB308;
         --offline-success-tint: rgba(34, 197, 94, 0.12);

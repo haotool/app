@@ -33,7 +33,7 @@ import {
   Sparkles,
   Zap,
   Leaf,
-  Waves,
+  Flag,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/Button';
@@ -114,7 +114,7 @@ const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
   zen: Sun,
   violet: Palette,
   classic: Moon,
-  ocean: Waves,
+  racing: Flag,
   forest: Leaf,
 };
 

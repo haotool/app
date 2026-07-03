@@ -859,7 +859,7 @@ export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: '有哪些主題風格可選？',
     answer:
-      '提供 7 種主題風格：Zen（極簡專業）、Violet（經典紫）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林），可在設定頁面中切換。',
+      '提供 7 種主題風格：Zen（極簡專業）、Violet（經典紫）、Nitro（深色科技）、Racing（黑紅賽車）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Forest（韓系簡約），可在設定頁面中切換。',
   },
   {
     question: '什麼是現金匯率和即期匯率？',
