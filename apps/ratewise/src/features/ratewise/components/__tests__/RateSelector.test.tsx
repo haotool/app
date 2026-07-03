@@ -81,14 +81,16 @@ describe('RateSelector', () => {
     expect(screen.getByRole('button', { name: /換錢所/ })).toBeInTheDocument();
   });
 
-  it('cash-only availability 下即期 button disabled 且不能觸發切換', () => {
+  it('cash-only availability 下即期 button aria-disabled 且不能觸發切換', () => {
     const props = setup({
       rateType: 'cash',
       rateTypeAvailability: { spot: false, cash: true },
     });
     const spotButton = screen.getByRole('button', { name: /即期/ });
 
-    expect(spotButton).toBeDisabled();
+    // 用 aria-disabled 而非原生 disabled：保留點擊事件讓禁用原因 tooltip 可觸發。
+    expect(spotButton).not.toBeDisabled();
+    expect(spotButton).toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(spotButton);
 
     expect(props.onRateSourceChange).not.toHaveBeenCalled();

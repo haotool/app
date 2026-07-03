@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { BrandWordmark } from './BrandWordmark';
+import { BrandMark } from './BrandMark';
 import { APP_INFO } from '../config/app-info';
 import {
   consumeSplashAutoShow,
@@ -74,41 +75,7 @@ export function SplashScreen() {
       aria-hidden="true"
       onClick={handleSkip}
     >
-      <svg
-        className="splash-mark"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 100 100"
-        width="96"
-        height="96"
-      >
-        <defs>
-          <linearGradient id="splash-mk" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#55A3FF" />
-            <stop offset="0.5" stopColor="#3182F6" />
-            <stop offset="1" stopColor="#1B64DA" />
-          </linearGradient>
-          <filter id="splash-halo-blur" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="3" />
-          </filter>
-        </defs>
-        <g className="splash-halo" filter="url(#splash-halo-blur)" opacity="0.18">
-          <circle cx="38" cy="50" r="18" fill="#3182F6" />
-          <circle cx="62" cy="50" r="18" fill="none" stroke="#3182F6" strokeWidth="7.5" />
-        </g>
-        <g className="splash-coin-solid">
-          <circle cx="38" cy="50" r="18" fill="url(#splash-mk)" />
-        </g>
-        <g className="splash-coin-ring">
-          <circle
-            cx="62"
-            cy="50"
-            r="18"
-            fill="#F7FAFF"
-            stroke="url(#splash-mk)"
-            strokeWidth="7.5"
-          />
-        </g>
-      </svg>
+      <BrandMark variant="splash" className="splash-mark w-24 h-24" />
       <BrandWordmark className="splash-wordmark" />
       <span className="splash-tagline brand-subtitle">{APP_INFO.subtitle}</span>
     </div>

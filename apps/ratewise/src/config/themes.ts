@@ -71,6 +71,8 @@ interface SemanticColors {
   text: string;
   textMuted: string;
   primary: string;
+  /** 主色深階：白字實底與淺底強調文字的 AA 對比用（多數主題與 primary 同值）。 */
+  primaryStrong: string;
   secondary: string;
   accent: string;
   border: string;
@@ -121,6 +123,7 @@ const zenStyle: StyleDefinition = {
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
     primary: '49 130 246', // #3182F6 - 品牌藍（與 index.css 渲染值同步）
+    primaryStrong: '27 100 218', // #1B64DA - Deep 600（白字 AA 對比）
     secondary: '71 85 105', // slate-600
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
@@ -154,6 +157,7 @@ const violetStyle: StyleDefinition = {
     text: '15 23 42', // slate-900
     textMuted: '100 116 139', // slate-500
     primary: '124 58 237', // violet-600 - 經典紫主色
+    primaryStrong: '124 58 237', // 同 primary（白字對比已達 AA）
     secondary: '71 85 105', // slate-600
     accent: '139 92 246', // violet-500（與 index.css 渲染值同步）
     border: '226 232 240', // slate-200
@@ -188,6 +192,7 @@ const nitroStyle: StyleDefinition = {
     text: '255 255 255',
     textMuted: '203 213 225', // slate-300（修正 slate-500 在深底對比過低、次要文字看不清）
     primary: '0 150 230', // 霓虹藍（深電光，白字達 3:1 AA，取代過亮 cyan）
+    primaryStrong: '0 150 230', // 同 primary（深色主題維持霓虹視覺）
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
     border: '30 41 59', // slate-800
@@ -222,6 +227,7 @@ const kawaiiStyle: StyleDefinition = {
     text: '142 124 128', // muted pink-brown
     textMuted: '180 160 165',
     primary: '255 105 180', // hot pink
+    primaryStrong: '219 39 119', // pink-600（白字 AA 對比）
     secondary: '236 72 153', // pink-500
     accent: '255 182 193', // light pink
     border: '255 228 225', // misty rose
@@ -256,6 +262,7 @@ const classicStyle: StyleDefinition = {
     text: '67 20 7', // dark brown
     textMuted: '120 80 60', // 中棕
     primary: '139 69 19', // saddle brown - 馬鞍棕
+    primaryStrong: '139 69 19', // 同 primary（白字對比已達 AA）
     secondary: '161 98 7', // amber-700 - 琥珀
     accent: '180 120 80', // tan - 棕褐
     border: '245 230 220', // linen - 亞麻
@@ -290,6 +297,7 @@ const oceanStyle: StyleDefinition = {
     text: '7 89 133', // cyan-800 - 深海藍
     textMuted: '22 78 99', // cyan-900 lightened
     primary: '6 182 212', // cyan-500 - 海水藍
+    primaryStrong: '14 116 144', // cyan-700（白字 AA 對比）
     secondary: '20 184 166', // teal-500 - 青綠
     accent: '2 132 199', // sky-600 - 天空藍
     border: '186 230 253', // sky-200
@@ -324,6 +332,7 @@ const forestStyle: StyleDefinition = {
     text: '20 83 45', // green-800 - 深綠
     textMuted: '22 101 52', // green-700
     primary: '34 197 94', // green-500 - 翠綠
+    primaryStrong: '21 128 61', // green-700（白字 AA 對比）
     secondary: '132 204 22', // lime-500 - 青檸
     accent: '22 163 74', // green-600 - 森林綠
     border: '187 247 208', // green-200
@@ -507,10 +516,10 @@ export function getChartColors(): {
   bottomColor: string;
 } {
   if (typeof window === 'undefined') {
-    // SSR fallback - 使用 Zen 預設值（高級金融風格）
+    // SSR fallback - 使用 Zen 預設值（品牌藍圖表色）
     return {
-      lineColor: 'rgb(99, 102, 241)',
-      topColor: 'rgba(99, 102, 241, 0.25)',
+      lineColor: 'rgb(59, 130, 246)',
+      topColor: 'rgba(59, 130, 246, 0.25)',
       bottomColor: 'rgba(59, 130, 246, 0)',
     };
   }

@@ -103,7 +103,13 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  background: linear-gradient(160deg, #ffffff 0%, #f4f9ff 55%, #e5effc 100%);
+  /* 主題感知底色：surface → background 微漸層，LOGO 主色隨主題切換。 */
+  background: linear-gradient(
+    160deg,
+    rgb(var(--color-surface)) 0%,
+    rgb(var(--color-surface)) 45%,
+    rgb(var(--color-background)) 100%
+  );
   transition: opacity 0.35s ease-out;
 }
 
@@ -128,19 +134,14 @@
   animation: splash-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
   font-size: 1.75rem;
   line-height: 1;
-  color: #191f28;
+  color: rgb(var(--color-text));
 }
 
 .ratewise-splash .splash-tagline {
   animation: splash-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.52s both;
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #8b95a1;
-}
-
-/* 啟動頁為品牌固定色，accent 不隨主題變動。 */
-.ratewise-splash .splash-wordmark .brand-wordmark-accent {
-  color: #3182f6;
+  color: rgb(var(--color-text-muted));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -403,6 +404,7 @@
     --color-text: 15 23 42;
     --color-text-muted: 100 116 139;
     --color-primary: 124 58 237; /* violet-600 - 紫色主色 */
+    --color-primary-strong: 124 58 237; /* 同 primary（白字對比已達 AA） */
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 139 92 246; /* violet-500 */
     --color-border: 226 232 240;
@@ -589,6 +591,7 @@
     --color-text: 255 255 255;
     --color-text-muted: 203 213 225; /* slate-300（修正 slate-500 在深底對比過低） */
     --color-primary: 0 150 230; /* 霓虹藍（深電光，按鈕白字達 3:1 AA） */
+    --color-primary-strong: 0 150 230; /* 同 primary（深色主題維持霓虹視覺） */
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 30 41 59; /* slate-800 */
@@ -725,6 +728,7 @@
     --color-text: 142 124 128; /* muted pink-brown */
     --color-text-muted: 180 160 165;
     --color-primary: 255 105 180; /* hot pink */
+    --color-primary-strong: 219 39 119; /* pink-600（白字 AA 對比） */
     --color-secondary: 236 72 153; /* pink-500 */
     --color-accent: 255 182 193; /* light pink */
     --color-border: 255 228 225; /* misty rose */
@@ -859,6 +863,7 @@
     --color-text: 67 20 7; /* dark brown - 深棕 */
     --color-text-muted: 120 80 60; /* 中棕 */
     --color-primary: 139 69 19; /* saddle brown - 馬鞍棕 */
+    --color-primary-strong: 139 69 19; /* 同 primary（白字對比已達 AA） */
     --color-secondary: 161 98 7; /* amber-700 - 琥珀 */
     --color-accent: 180 120 80; /* tan - 棕褐 */
     --color-border: 245 230 220; /* linen - 亞麻 */
@@ -993,6 +998,7 @@
     --color-text: 7 89 133; /* cyan-800 */
     --color-text-muted: 22 78 99; /* cyan-900 lighter */
     --color-primary: 6 182 212; /* cyan-500 */
+    --color-primary-strong: 14 116 144; /* cyan-700（白字 AA 對比） */
     --color-secondary: 14 165 233; /* sky-500 */
     --color-accent: 20 184 166; /* teal-500 */
     --color-border: 186 230 253; /* sky-200 */
@@ -1127,6 +1133,7 @@
     --color-text: 20 83 45; /* green-800 */
     --color-text-muted: 22 101 52; /* green-700 */
     --color-primary: 5 150 105; /* emerald-600 */
+    --color-primary-strong: 21 128 61; /* green-700（白字 AA 對比） */
     --color-secondary: 22 163 74; /* green-600 */
     --color-accent: 101 163 13; /* lime-600 */
     --color-border: 187 247 208; /* green-200 */

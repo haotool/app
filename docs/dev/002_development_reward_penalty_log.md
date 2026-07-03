@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+96
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+97
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-03
+- ID：reward-rw-theme-token-longpress-tooltip
+- 原因：primary-strong 定義在 :root 洩漏至全主題使 pill 恆為 zen 深藍；趨勢圖自製長按與內建 tracking 互搶致 tooltip 跳動；原生 disabled 吞點擊使禁用原因提示永不顯示；主題監聽只看 class 漏 data-style
+- 解法：primary-strong 收斂 7 主題雙 SSOT、LOGO 改 BrandMark inline SVG 隨主題、長按交還內建 trackingMode（OnTouchEnd）、匯率類型改 aria-disabled、observer 加 data-style；瀏覽器長按/禁用/7 主題輪巡實測
 
 - 日期：2026-07-03
 - ID：reward-rw-haorate-wordmark-splash

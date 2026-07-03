@@ -37,7 +37,7 @@
     <meta name="apple-mobile-web-app-title" content="__BRAND_SHORT__" />
 
     <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
-    <link rel="preload" href="__BASE_PATH__logo.png" as="image" fetchpriority="high" />
+    <!-- 品牌 LOGO 已改為 inline SVG（主題感知），不再 preload 點陣 logo -->
     <!-- 品牌標準字子集字體（Nunito 900，僅 HaoRate 字符，1.2KB）：同源自架，避免外部字體阻塞與 CSP 擴權 -->
     <link
       rel="preload"

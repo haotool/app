@@ -21,6 +21,7 @@ import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
 import { BrandWordmark } from './BrandWordmark';
+import { BrandMark } from './BrandMark';
 import { SplashScreen } from './SplashScreen';
 
 function AppLazyGlobalPrompts({
@@ -62,24 +63,12 @@ function AppLazyGlobalPrompts({
   );
 }
 
-/** Logo 組件 */
+/** Logo 組件：inline SVG 主題感知品牌符號（無網路請求、主色隨主題切換）。 */
 function Logo() {
-  const basePath = import.meta.env.BASE_URL || '/';
-
   return (
-    <picture>
-      <source srcSet={`${basePath}logo.webp`} type="image/webp" />
-      <img
-        src={`${basePath}logo.png`}
-        alt={APP_INFO.name}
-        width={28}
-        height={28}
-        className="w-7 h-7 shrink-0"
-        loading="eager"
-        decoding="async"
-        fetchPriority="high"
-      />
-    </picture>
+    <span role="img" aria-label={APP_INFO.name} className="shrink-0">
+      <BrandMark className="w-7 h-7" />
+    </span>
   );
 }
 
