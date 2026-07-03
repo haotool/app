@@ -9,15 +9,15 @@
  * - Zen - 極簡專業（預設，品牌藍）
  * - Violet - 經典紫
  * - Nitro - 深色科技感
+ * - Racing - 黑紅賽車
  * - Kawaii - 可愛粉嫩
  * - Classic - 復古書卷
- * - Ocean - 海洋深邃
- * - Forest - 自然森林
+ * - Forest - 韓系簡約
  *
  * @reference ParkKeeper UI Design, themes.ts SSOT
  * @created 2026-01-15
- * @updated 2026-01-17 - 移除深色模式功能，簡化為僅風格切換
- * @version 4.0.0
+ * @updated 2026-07-04 - Plan 014：移除 Ocean，新增 Racing，Forest 改韓系簡約
+ * @version 5.0.0
  */
 
 import {

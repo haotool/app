@@ -92,7 +92,7 @@ const FEATURES = [
   '7~30 天歷史趨勢圖：視覺化匯率波動，判斷換匯時機',
   '下拉更新（Pull to Refresh）：首頁下拉同步最新匯率',
   'PWA 離線使用：Service Worker 快取，無網路仍可換算',
-  '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林）',
+  '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Racing（黑紅賽車）、Forest（韓系簡約）',
 ];
 
 const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
@@ -125,7 +125,7 @@ Version: v${VERSION}
 - 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
 - 更新頻率：約每 5 分鐘檢查更新
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
-- 6 種主題風格（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
+- 6 種主題風格（Zen/Nitro/Kawaii/Classic/Racing/Forest）
 - i18n ${SUPPORTED_LANGUAGE_COUNT} 語言支援（${SUPPORTED_LANGUAGE_LABEL_TEXT}）
 
 ## Features

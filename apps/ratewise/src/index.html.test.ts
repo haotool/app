@@ -158,7 +158,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     it('should have theme whitelist for security', () => {
       // [2026-01-29] 白名單防注入，壓縮後仍含完整主題名稱陣列。
       expect(indexHtmlContent).toContain(
-        "'zen', 'violet', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'",
+        "'zen', 'violet', 'nitro', 'racing', 'kawaii', 'classic', 'forest'",
       );
     });
 

@@ -2,24 +2,24 @@
  * Modern Theme System - 7 Styles SSOT Architecture
  *
  * @description 現代化主題系統 - 單一真實來源（SSOT）
- *              7 種風格（Nitro 為深色，其餘淺色）
+ *              7 種風格（Nitro、Racing 為深色，其餘淺色）
  *
  * @styles
  * - Zen: 極簡專業 - 品牌藍 #3182F6（預設）
  * - Violet: 經典紫 - 原 Zen 預設紫色保留
  * - Nitro: 深色科技感 - 賽車儀表板、霓虹燈
+ * - Racing: 黑紅賽車 - F1 賽道紅、純黑底、機能科技感
  * - Kawaii: 可愛粉嫩 - 日系少女風、馬卡龍色系
  * - Classic: 復古書卷 - 古典圖書館、皮革裝幀
- * - Ocean: 海洋深邃 - 深海藍綠、專業金融
- * - Forest: 自然森林 - 環保綠意、有機質感
+ * - Forest: 韓系簡約 - 白底柔和翠綠、有機質感
  *
  * @reference
  * - Context7: Tailwind CSS Theme Configuration [/tailwindlabs/tailwindcss.com]
  * - Design Token Best Practices 2026 - Semantic Color System
  *
  * @created 2026-01-16
- * @updated 2026-01-17 - 移除深色模式，簡化為單一色彩配置
- * @version 4.0.0
+ * @updated 2026-07-04 - Plan 014：Forest 改白底韓系簡約，Ocean 移除並以 Racing 黑紅賽車取代
+ * @version 5.0.0
  */
 
 // ============================================================================
@@ -29,7 +29,7 @@
 /**
  * 風格類型 - 7 種可選風格
  */
-export type ThemeStyle = 'zen' | 'violet' | 'nitro' | 'kawaii' | 'classic' | 'ocean' | 'forest';
+export type ThemeStyle = 'zen' | 'violet' | 'nitro' | 'racing' | 'kawaii' | 'classic' | 'forest';
 
 /**
  * 完整主題配置
@@ -279,71 +279,71 @@ const classicStyle: StyleDefinition = {
 };
 
 /**
- * Ocean 風格 - 海洋深邃
- * 特點：深海藍綠、專業金融感、沉穩大氣
- * 靈感：深海、專業投資平台、Bloomberg Terminal
+ * Racing 風格 - 黑紅賽車
+ * 特點：純黑底、賽道紅、機能科技感
+ * 靈感：F1 賽車儀表板、Pit Wall HUD、賽道旗幟
  */
-const oceanStyle: StyleDefinition = {
-  name: 'ocean',
-  label: 'Ocean',
-  labelEn: 'Ocean',
-  description: '海洋深邃',
-  descriptionEn: 'Deep Ocean',
+const racingStyle: StyleDefinition = {
+  name: 'racing',
+  label: 'Racing',
+  labelEn: 'Racing',
+  description: '黑紅賽車',
+  descriptionEn: 'Racing',
   font: 'font-sans',
   colors: {
-    // 淺海藍
-    background: '240 249 255', // sky-50 - 淺藍
-    surface: '255 255 255',
-    text: '7 89 133', // cyan-800 - 深海藍
-    textMuted: '22 78 99', // cyan-900 lightened
-    primary: '6 182 212', // cyan-500 - 海水藍
-    primaryStrong: '14 116 144', // cyan-700（白字 AA 對比）
-    secondary: '20 184 166', // teal-500 - 青綠
-    accent: '2 132 199', // sky-600 - 天空藍
-    border: '186 230 253', // sky-200
-    // 狀態色彩 - 海洋風格
-    info: '14 165 233', // sky-500
-    success: '20 184 166', // teal-500
-    warning: '245 158 11', // amber-500
-    error: '239 68 68', // red-500
-    // 圖表色彩 - 海洋藍綠
-    chartLine: '6 182 212', // cyan-500
-    chartAreaTop: '6 182 212',
-    chartAreaBottom: '20 184 166', // teal-500
+    // 純黑賽道感（固定為深色調，結構比照 Nitro）
+    background: '10 10 10', // near-black
+    surface: '23 23 23', // neutral-900
+    text: '250 250 250',
+    textMuted: '163 163 163', // neutral-400
+    primary: '239 68 68', // red-500 - 賽道紅
+    primaryStrong: '220 38 38', // red-600（白字 AA 對比 4.83:1）
+    secondary: '129 140 248', // indigo-400
+    accent: '248 113 113', // red-400
+    border: '38 38 38', // neutral-800
+    // 狀態色彩（error 與 primary 紅色系區隔，改用 orange）
+    info: '56 189 248',
+    success: '52 211 153',
+    warning: '251 191 36',
+    error: '251 146 60', // orange-400（與 surface 對比 7.92:1，避免與 primary 紅混淆）
+    // 圖表色彩 - 賽道紅
+    chartLine: '239 68 68', // red-500
+    chartAreaTop: '239 68 68',
+    chartAreaBottom: '248 113 113', // red-400
   },
 };
 
 /**
- * Forest 風格 - 自然森林
- * 特點：環保綠意、有機質感、自然療癒
- * 靈感：森林、有機產品、永續設計
+ * Forest 風格 - 韓系簡約
+ * 特點：白底韓系簡約、柔和翠綠、有機質感
+ * 靈感：韓系極簡設計、Zen 白底範式、自然療癒綠意
  */
 const forestStyle: StyleDefinition = {
   name: 'forest',
   label: 'Forest',
   labelEn: 'Forest',
-  description: '自然森林',
-  descriptionEn: 'Natural Green',
+  description: '韓系簡約',
+  descriptionEn: 'Korean Minimal',
   font: 'font-sans',
   colors: {
-    // 清新綠意
-    background: '240 253 244', // green-50 - 薄荷綠
+    // 白底韓系簡約（範式對齊 Zen，底色全面改白/近白）
+    background: '250 250 249', // stone-50 - 微暖白
     surface: '255 255 255',
-    text: '20 83 45', // green-800 - 深綠
-    textMuted: '22 101 52', // green-700
-    primary: '34 197 94', // green-500 - 翠綠
-    primaryStrong: '21 128 61', // green-700（白字 AA 對比）
+    text: '28 25 23', // stone-900
+    textMuted: '120 113 108', // stone-500
+    primary: '5 150 105', // emerald-600 - 柔和翠綠（韓系簡約降飽和）
+    primaryStrong: '4 120 87', // emerald-700（白字 AA 對比 5.49:1）
     secondary: '132 204 22', // lime-500 - 青檸
     accent: '22 163 74', // green-600 - 森林綠
-    border: '187 247 208', // green-200
+    border: '231 229 228', // stone-200
     // 狀態色彩 - 自然風格
     info: '59 130 246', // blue-500
     success: '34 197 94', // green-500
     warning: '234 179 8', // yellow-500
     error: '239 68 68', // red-500
     // 圖表色彩 - 森林綠
-    chartLine: '34 197 94', // green-500
-    chartAreaTop: '34 197 94',
+    chartLine: '5 150 105', // emerald-600
+    chartAreaTop: '5 150 105',
     chartAreaBottom: '132 204 22', // lime-500
   },
 };
@@ -359,9 +359,9 @@ export const STYLE_DEFINITIONS: Record<ThemeStyle, StyleDefinition> = {
   zen: zenStyle,
   violet: violetStyle,
   nitro: nitroStyle,
+  racing: racingStyle,
   kawaii: kawaiiStyle,
   classic: classicStyle,
-  ocean: oceanStyle,
   forest: forestStyle,
 };
 
@@ -405,6 +405,15 @@ export const STYLE_OPTIONS: {
     previewAccent: 'rgb(0, 212, 255)',
   },
   {
+    value: 'racing',
+    label: 'Racing',
+    labelEn: 'Racing',
+    description: '黑紅賽車',
+    previewBg: 'rgb(10, 10, 10)',
+    previewText: 'rgb(250, 250, 250)',
+    previewAccent: 'rgb(239, 68, 68)',
+  },
+  {
     value: 'kawaii',
     label: 'Kawaii',
     labelEn: 'Kawaii',
@@ -423,22 +432,13 @@ export const STYLE_OPTIONS: {
     previewAccent: 'rgb(139, 69, 19)',
   },
   {
-    value: 'ocean',
-    label: 'Ocean',
-    labelEn: 'Ocean',
-    description: '海洋深邃',
-    previewBg: 'rgb(240, 249, 255)',
-    previewText: 'rgb(7, 89, 133)',
-    previewAccent: 'rgb(6, 182, 212)',
-  },
-  {
     value: 'forest',
     label: 'Forest',
     labelEn: 'Forest',
-    description: '自然森林',
-    previewBg: 'rgb(240, 253, 244)',
-    previewText: 'rgb(20, 83, 45)',
-    previewAccent: 'rgb(34, 197, 94)',
+    description: '韓系簡約',
+    previewBg: 'rgb(250, 250, 249)',
+    previewText: 'rgb(28, 25, 23)',
+    previewAccent: 'rgb(5, 150, 105)',
   },
 ];
 

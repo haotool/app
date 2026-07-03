@@ -1003,187 +1003,186 @@
   }
 
   /* ========================================
-     Ocean 風格 - 海洋深邃
-     靈感：深海、海浪、海洋生態
-     圖表使用青藍漸變
+     Racing 風格 - 黑紅賽車
+     靈感：F1 賽車儀表板、Pit Wall HUD、賽道旗幟
+     結構完全比照 Nitro（深色主題鍵集合一致）；圖表使用賽道紅漸變
      ======================================== */
-  [data-style='ocean'] {
-    /* 核心語義色彩 */
-    --color-background: 240 249 255; /* sky-50 */
-    --color-surface: 255 255 255;
-    --color-text: 7 89 133; /* cyan-800 */
-    --color-text-muted: 22 78 99; /* cyan-900 lighter */
-    --color-primary: 6 182 212; /* cyan-500 */
-    --color-primary-strong: 14 116 144; /* cyan-700（白字 AA 對比） */
-    --color-secondary: 14 165 233; /* sky-500 */
-    --color-accent: 20 184 166; /* teal-500 */
-    --color-border: 186 230 253; /* sky-200 */
+  [data-style='racing'] {
+    /* 核心語義色彩 - 固定深色調 */
+    --color-background: 10 10 10; /* near-black */
+    --color-surface: 23 23 23; /* neutral-900 */
+    --color-text: 250 250 250;
+    --color-text-muted: 163 163 163; /* neutral-400 */
+    --color-primary: 239 68 68; /* red-500 - 賽道紅 */
+    --color-primary-strong: 220 38 38; /* red-600（白字 AA 對比 4.83:1） */
+    --color-secondary: 129 140 248; /* indigo-400 */
+    --color-accent: 248 113 113; /* red-400 */
+    --color-border: 38 38 38; /* neutral-800 */
 
-    /* 狀態語義色彩 - 海洋調性 */
+    /* 狀態語義色彩 - error 與 primary 紅色系區隔，改用 orange */
     --color-info: 56 189 248; /* sky-400 */
-    --color-success: 20 184 166; /* teal-500 */
-    --color-warning: 245 158 11; /* amber-500 */
-    --color-error: 239 68 68; /* red-500 */
+    --color-success: 52 211 153; /* emerald-400 */
+    --color-warning: 251 191 36; /* amber-400 */
+    --color-error: 251 146 60; /* orange-400（與 surface 對比 7.92:1） */
 
-    /* 圖表專用 Token (SSOT) - 青藍漸變 */
-    --color-chart-line: 6 182 212; /* cyan-500 */
-    --color-chart-area-top: 6 182 212; /* cyan-500 */
-    --color-chart-area-bottom: 20 184 166; /* teal-500 */
+    /* 圖表專用 Token (SSOT) - 賽道紅 */
+    --color-chart-line: 239 68 68; /* red-500 */
+    --color-chart-area-top: 239 68 68; /* red-500 */
+    --color-chart-area-bottom: 248 113 113; /* red-400 */
 
-    /* 卡片層級區分 Token - 海洋風格 */
-    --color-surface-elevated: 224 242 254; /* sky-100 - 淺海 */
-    --color-surface-sunken: 186 230 253; /* sky-200 */
+    /* 卡片層級區分 Token - 深色主題 */
+    --color-surface-elevated: 38 38 38; /* neutral-800 - 略亮於 surface */
+    --color-surface-sunken: 10 10 10; /* near-black - 下沉區域 */
 
-    /* 舊版 primary 系列 - 海洋風格 */
-    --color-primary-bg: 207 250 254; /* cyan-100 */
-    --color-primary-light: 207 250 254; /* cyan-100 */
-    --color-primary-hover: 8 145 178; /* cyan-600 */
-    --color-primary-active: 103 232 249; /* cyan-300 */
-    --color-primary-text-light: 34 211 238; /* cyan-400 */
-    --color-primary-ring: 6 182 212; /* cyan-500 */
-    --color-primary-dark: 21 94 117; /* cyan-800 */
-    --color-primary-darker: 22 78 99; /* cyan-900 */
-    --color-primary-text: 8 145 178; /* cyan-600 */
+    /* 舊版 primary 系列 - 賽道紅風格 */
+    --color-primary-bg: 38 38 38; /* neutral-800 */
+    --color-primary-light: 38 38 38; /* neutral-800 - 深色背景用 */
+    --color-primary-hover: 248 113 113; /* red-400 - 亮紅 hover */
+    --color-primary-active: 252 165 165; /* red-300 - 深色主題按壓強調（亮向） */
+    --color-primary-text-light: 248 113 113; /* red-400 */
+    --color-primary-ring: 239 68 68; /* red-500 */
+    --color-primary-dark: 252 165 165; /* red-300 - 深色主題高對比結果文字 */
+    --color-primary-darker: 248 113 113; /* red-400 */
+    --color-primary-text: 239 68 68; /* red-500 - 與 primary 一致 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
     --color-neutral-text: var(--color-text);
-    --color-neutral-text-muted: var(--color-text-muted);
+    --color-neutral-text-secondary: 212 212 212; /* neutral-300 - 算式文字高對比 */
+    --color-neutral-text-muted: 163 163 163; /* neutral-400 - 預覽文字可讀 */
     --color-destructive: var(--color-error);
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* Page Gradient Tokens - Ocean 海洋深邃漸層 */
-    --color-page-gradient-from: 240 249 255; /* sky-50 */
-    --color-page-gradient-via: 224 242 254; /* sky-100 */
-    --color-page-gradient-to: 255 255 255; /* white */
+    /* Page Gradient Tokens - Racing 黑紅賽車漸層 */
+    --color-page-gradient-from: 10 10 10; /* near-black */
+    --color-page-gradient-via: 38 38 38; /* neutral-800 */
+    --color-page-gradient-to: 23 23 23; /* neutral-900 */
 
     /* ========================================
-       Seasonal Design Tokens - Ocean 海洋深邃
-       青藍/珊瑚為主調，營造海底聖誕氛圍
+       Seasonal Design Tokens - Racing 黑紅賽車
+       賽道紅/沉穩金為主調，營造夜間賽道聖誕氛圍
        ======================================== */
 
-    /* 星星顏色 - 海星金 */
-    --color-seasonal-star: 250 204 21; /* yellow-400 */
-    --color-seasonal-star-stroke: 234 179 8; /* yellow-500 */
+    /* 星星顏色 - 領獎台金 */
+    --color-seasonal-star: 251 191 36; /* amber-400 */
+    --color-seasonal-star-stroke: 245 158 11; /* amber-500 */
     --color-seasonal-star-glow: 254 240 138; /* yellow-200 */
 
-    /* 樹冠顏色 - 海草綠 */
-    --color-seasonal-tree: 20 184 166; /* teal-500 */
-    --color-seasonal-tree-dark: 13 148 136; /* teal-600 */
-    --color-seasonal-tree-stroke: 17 94 89; /* teal-800 */
+    /* 樹冠顏色 - 賽道旗幟綠 */
+    --color-seasonal-tree: 34 197 94; /* green-500 */
+    --color-seasonal-tree-dark: 22 163 74; /* green-600 */
+    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
 
-    /* 樹幹顏色 - 珊瑚棕 */
-    --color-seasonal-trunk: 180 83 9; /* amber-700 */
-    --color-seasonal-trunk-dark: 146 64 14; /* amber-800 */
-    --color-seasonal-trunk-stroke: 120 53 15; /* amber-900 */
+    /* 樹幹顏色 - 碳纖維黑棕 */
+    --color-seasonal-trunk: 87 55 33; /* dark brown */
+    --color-seasonal-trunk-dark: 62 39 23; /* darker brown */
+    --color-seasonal-trunk-stroke: 30 19 11; /* near-black brown */
 
-    /* 裝飾球顏色 - 海洋調性 */
-    --color-seasonal-ornament-red: 248 113 113; /* red-400 - 珊瑚紅 */
+    /* 裝飾球顏色 - 賽道旗幟色調 */
+    --color-seasonal-ornament-red: 248 113 113; /* red-400 */
     --color-seasonal-ornament-red-stroke: 239 68 68; /* red-500 */
-    --color-seasonal-ornament-gold: 250 204 21; /* yellow-400 */
-    --color-seasonal-ornament-gold-stroke: 234 179 8; /* yellow-500 */
-    --color-seasonal-ornament-blue: 56 189 248; /* sky-400 */
-    --color-seasonal-ornament-blue-stroke: 14 165 233; /* sky-500 */
+    --color-seasonal-ornament-gold: 251 191 36; /* amber-400 */
+    --color-seasonal-ornament-gold-stroke: 245 158 11; /* amber-500 */
+    --color-seasonal-ornament-blue: 129 140 248; /* indigo-400 */
+    --color-seasonal-ornament-blue-stroke: 99 102 241; /* indigo-500 */
 
-    /* 積雪顏色 - 海沫白 */
-    --color-seasonal-snow: 255 255 255; /* white */
-    --color-seasonal-snow-shadow: 224 242 254; /* sky-100 */
+    /* 積雪顏色 - 深色主題用淺灰 */
+    --color-seasonal-snow: 212 212 212; /* neutral-300 */
+    --color-seasonal-snow-shadow: 115 115 115; /* neutral-500 */
 
-    /* 底座顏色 - 珊瑚紅 */
+    /* 底座顏色 - 賽道紅 */
     --color-seasonal-base: 248 113 113; /* red-400 */
     --color-seasonal-base-stroke: 239 68 68; /* red-500 */
 
-    /* 計算機按鍵色彩 - Ocean 風格
-       背景：sky-50 (240 249 255)
-       數字鍵：淺天藍色（接近白色但非純白，配合海洋風格）
-       功能鍵：淺天藍色（配合海洋風格）
-       運算符/等號：青藍主色調 */
+    /* 計算機按鍵色彩 - Racing 黑紅賽車
+       數字鍵/功能鍵：深灰階一致風格
+       運算符/等號：賽道紅主色調 */
 
-    /* 數字鍵 - 淺天藍色背景（接近白色但帶藍調） */
-    --color-calc-number: 252 254 255; /* sky-50 lighter - 比純白清涼 */
-    --color-calc-number-text: 7 89 133; /* cyan-800 */
-    --color-calc-number-hover: 240 249 255; /* sky-50 */
-    --color-calc-number-active: 224 242 254; /* sky-100 */
+    /* 數字鍵 - 深灰背景、白字 */
+    --color-calc-number: 38 38 38; /* neutral-800 */
+    --color-calc-number-text: 229 229 229; /* neutral-200 */
+    --color-calc-number-hover: 64 64 64; /* neutral-700 */
+    --color-calc-number-active: 23 23 23; /* neutral-900 */
 
-    /* 功能鍵 - 淺天藍色（配合海洋風格） */
-    --color-calc-function: 224 242 254; /* sky-100 */
-    --color-calc-function-text: 3 105 161; /* sky-700 */
-    --color-calc-function-hover: 240 249 255; /* sky-50 */
-    --color-calc-function-active: 186 230 253; /* sky-200 */
+    /* 功能鍵 - 略亮深灰背景、白字 */
+    --color-calc-function: 64 64 64; /* neutral-700 */
+    --color-calc-function-text: 212 212 212; /* neutral-300 */
+    --color-calc-function-hover: 82 82 82; /* neutral-600 */
+    --color-calc-function-active: 38 38 38; /* neutral-800 */
 
-    /* 運算符 - 淺青背景、深青字 */
-    --color-calc-operator: 207 250 254; /* cyan-100 */
-    --color-calc-operator-text: 14 116 144; /* cyan-700 */
-    --color-calc-operator-hover: 165 243 252; /* cyan-200 */
-    --color-calc-operator-active: 103 232 249; /* cyan-300 */
+    /* 運算符 - 深紅背景、亮紅字（賽道風格） */
+    --color-calc-operator: 69 10 10; /* red-950 */
+    --color-calc-operator-text: 252 165 165; /* red-300 */
+    --color-calc-operator-hover: 127 29 29; /* red-900 */
+    --color-calc-operator-active: 153 27 27; /* red-800 */
 
-    /* 等號 - 深青背景、白字（最高視覺優先） */
-    --color-calc-equals: 6 182 212; /* cyan-500 */
+    /* 等號 - 賽道紅背景、白字（最高視覺優先） */
+    --color-calc-equals: 220 38 38; /* red-600 */
     --color-calc-equals-text: 255 255 255; /* white */
-    --color-calc-equals-hover: 8 145 178; /* cyan-600 */
-    --color-calc-equals-active: 34 211 238; /* cyan-400 */
+    --color-calc-equals-hover: 185 28 28; /* red-700 */
+    --color-calc-equals-active: 248 113 113; /* red-400 */
 
-    /* Brand 系列（海洋深邃風格） */
-    --color-brand-from: 240 249 255; /* sky-50 */
-    --color-brand-via: 224 242 254; /* cyan-50 */
-    --color-brand-to: 240 249 255; /* sky-50 */
-    --color-brand-border: 186 230 253; /* sky-200 */
-    --color-brand-decoration: 207 250 254; /* cyan-100 */
-    --color-brand-button-from: 6 182 212; /* cyan-500 */
-    --color-brand-button-to: 8 145 178; /* cyan-600 */
-    --color-brand-button-hover-from: 8 145 178; /* cyan-600 */
-    --color-brand-button-hover-to: 14 116 144; /* cyan-700 */
-    --color-brand-icon-from: 207 250 254; /* cyan-100 */
-    --color-brand-icon-to: 207 250 254; /* cyan-100 */
-    --color-brand-text: 6 182 212; /* cyan-500 */
-    --color-brand-text-dark: 21 94 117; /* cyan-800 */
-    --color-brand-shadow: 207 250 254; /* cyan-100 */
+    /* Brand 系列（黑紅賽車風格） */
+    --color-brand-from: 23 23 23; /* neutral-900 */
+    --color-brand-via: 38 38 38; /* neutral-800 */
+    --color-brand-to: 23 23 23; /* neutral-900 */
+    --color-brand-border: 64 64 64; /* neutral-700 */
+    --color-brand-decoration: 38 38 38; /* neutral-800 */
+    --color-brand-button-from: 239 68 68; /* red-500 */
+    --color-brand-button-to: 220 38 38; /* red-600 */
+    --color-brand-button-hover-from: 220 38 38; /* red-600 */
+    --color-brand-button-hover-to: 185 28 28; /* red-700 */
+    --color-brand-icon-from: 38 38 38; /* neutral-800 */
+    --color-brand-icon-to: 38 38 38; /* neutral-800 */
+    --color-brand-text: 248 113 113; /* red-400 */
+    --color-brand-text-dark: 255 255 255; /* white */
+    --color-brand-shadow: 38 38 38; /* neutral-800 */
   }
 
   /* ========================================
-     Forest 風格 - 森林自然
-     靈感：原始森林、大自然、綠意盎然
-     圖表使用翠綠漸變
+     Forest 風格 - 韓系簡約
+     靈感：韓系極簡設計、白底柔和翠綠、自然療癒
+     圖表使用翠綠漸變；範式對齊 Zen 白底架構
      ======================================== */
   [data-style='forest'] {
     /* 核心語義色彩 */
-    --color-background: 240 253 244; /* green-50 */
+    --color-background: 250 250 249; /* stone-50 - 微暖白 */
     --color-surface: 255 255 255;
-    --color-text: 20 83 45; /* green-800 */
-    --color-text-muted: 22 101 52; /* green-700 */
-    --color-primary: 5 150 105; /* emerald-600 */
-    --color-primary-strong: 21 128 61; /* green-700（白字 AA 對比） */
-    --color-secondary: 22 163 74; /* green-600 */
-    --color-accent: 101 163 13; /* lime-600 */
-    --color-border: 187 247 208; /* green-200 */
+    --color-text: 28 25 23; /* stone-900 */
+    --color-text-muted: 120 113 108; /* stone-500 */
+    --color-primary: 5 150 105; /* emerald-600 - 柔和翠綠 */
+    --color-primary-strong: 4 120 87; /* emerald-700（白字 AA 對比 5.49:1） */
+    --color-secondary: 132 204 22; /* lime-500 - 青檸 */
+    --color-accent: 22 163 74; /* green-600 - 森林綠 */
+    --color-border: 231 229 228; /* stone-200 */
 
     /* 狀態語義色彩 - 自然調性 */
     --color-info: 59 130 246; /* blue-500 */
     --color-success: 34 197 94; /* green-500 */
     --color-warning: 234 179 8; /* yellow-500 */
-    --color-error: 220 38 38; /* red-600 */
+    --color-error: 239 68 68; /* red-500 */
 
     /* 圖表專用 Token (SSOT) - 翠綠漸變 */
     --color-chart-line: 5 150 105; /* emerald-600 */
     --color-chart-area-top: 5 150 105; /* emerald-600 */
-    --color-chart-area-bottom: 34 197 94; /* green-500 */
+    --color-chart-area-bottom: 132 204 22; /* lime-500 */
 
-    /* 卡片層級區分 Token - 森林風格 */
-    --color-surface-elevated: 220 252 231; /* green-100 - 嫩葉 */
-    --color-surface-sunken: 187 247 208; /* green-200 */
+    /* 卡片層級區分 Token - 韓系簡約風格 */
+    --color-surface-elevated: 245 245 244; /* stone-100 - 微灰底色 */
+    --color-surface-sunken: 231 229 228; /* stone-200 - 下沉區域 */
 
-    /* 舊版 primary 系列 - 森林風格 */
+    /* 舊版 primary 系列 - 翠綠風格 */
     --color-primary-bg: 209 250 229; /* emerald-100 */
     --color-primary-light: 209 250 229; /* emerald-100 */
     --color-primary-hover: 4 120 87; /* emerald-700 */
     --color-primary-active: 110 231 183; /* emerald-300 */
     --color-primary-text-light: 52 211 153; /* emerald-400 */
     --color-primary-ring: 16 185 129; /* emerald-500 */
-    --color-primary-dark: 22 101 52; /* green-800 */
-    --color-primary-darker: 20 83 45; /* green-900 */
+    --color-primary-dark: 6 95 70; /* emerald-800 */
+    --color-primary-darker: 6 78 59; /* emerald-900 */
     --color-primary-text: 5 150 105; /* emerald-600 */
 
     /* 向後相容映射 */
@@ -1196,13 +1195,13 @@
     --color-success-text: var(--color-success);
     --color-warning-text: var(--color-warning);
 
-    /* Page Gradient Tokens - Forest 森林自然漸層 */
-    --color-page-gradient-from: 240 253 244; /* green-50 */
-    --color-page-gradient-via: 220 252 231; /* green-100 */
+    /* Page Gradient Tokens - Forest 韓系簡約漸層 */
+    --color-page-gradient-from: 250 250 249; /* stone-50 */
+    --color-page-gradient-via: 245 245 244; /* stone-100 */
     --color-page-gradient-to: 255 255 255; /* white */
 
     /* ========================================
-       Seasonal Design Tokens - Forest 森林自然
+       Seasonal Design Tokens - Forest 韓系簡約
        翠綠/漿果為主調，營造自然聖誕氛圍
        ======================================== */
 
@@ -1214,7 +1213,7 @@
     /* 樹冠顏色 - 森林翠綠 */
     --color-seasonal-tree: 34 197 94; /* green-500 */
     --color-seasonal-tree-dark: 22 163 74; /* green-600 */
-    --color-seasonal-tree-stroke: 20 83 45; /* green-900 */
+    --color-seasonal-tree-stroke: 6 78 59; /* emerald-900 */
 
     /* 樹幹顏色 - 橡木棕 */
     --color-seasonal-trunk: 146 64 14; /* amber-800 */
@@ -1231,29 +1230,29 @@
 
     /* 積雪顏色 - 霜白 */
     --color-seasonal-snow: 255 255 255; /* white */
-    --color-seasonal-snow-shadow: 220 252 231; /* green-100 */
+    --color-seasonal-snow-shadow: 245 245 244; /* stone-100 */
 
     /* 底座顏色 - 漿果紅 */
     --color-seasonal-base: 220 38 38; /* red-600 */
     --color-seasonal-base-stroke: 185 28 28; /* red-700 */
 
-    /* 計算機按鍵色彩 - Forest 風格
-       背景：green-50 (240 253 244)
-       數字鍵：淺薄荷色（接近白色但非純白，配合森林風格）
-       功能鍵：淺綠色（配合森林風格）
+    /* 計算機按鍵色彩 - Forest 韓系簡約風格
+       背景：stone-50 (250 250 249)
+       數字鍵：淺灰白色（接近白色但非純白，配合簡約風格）
+       功能鍵：淺灰色（配合簡約風格）
        運算符/等號：翠綠主色調 */
 
-    /* 數字鍵 - 淺薄荷色背景（接近白色但帶綠調） */
-    --color-calc-number: 252 255 253; /* green-50 lighter - 比純白清新 */
-    --color-calc-number-text: 20 83 45; /* green-800 */
-    --color-calc-number-hover: 240 253 244; /* green-50 */
-    --color-calc-number-active: 220 252 231; /* green-100 */
+    /* 數字鍵 - 淺灰白色背景（接近白色但帶暖調） */
+    --color-calc-number: 250 250 249; /* stone-50 - 比純白溫潤 */
+    --color-calc-number-text: 28 25 23; /* stone-900 */
+    --color-calc-number-hover: 245 245 244; /* stone-100 */
+    --color-calc-number-active: 231 229 228; /* stone-200 */
 
-    /* 功能鍵 - 淺綠色（配合森林風格） */
-    --color-calc-function: 220 252 231; /* green-100 */
-    --color-calc-function-text: 21 128 61; /* green-700 */
-    --color-calc-function-hover: 240 253 244; /* green-50 */
-    --color-calc-function-active: 187 247 208; /* green-200 */
+    /* 功能鍵 - 淺灰色（配合簡約風格） */
+    --color-calc-function: 245 245 244; /* stone-100 */
+    --color-calc-function-text: 68 64 60; /* stone-700 */
+    --color-calc-function-hover: 250 250 249; /* stone-50 */
+    --color-calc-function-active: 231 229 228; /* stone-200 */
 
     /* 運算符 - 淺翠綠背景、深綠字 */
     --color-calc-operator: 209 250 229; /* emerald-100 */
@@ -1262,16 +1261,16 @@
     --color-calc-operator-active: 110 231 183; /* emerald-300 */
 
     /* 等號 - 深綠背景、白字（最高視覺優先） */
-    --color-calc-equals: 16 185 129; /* emerald-500 */
+    --color-calc-equals: 5 150 105; /* emerald-600 */
     --color-calc-equals-text: 255 255 255; /* white */
-    --color-calc-equals-hover: 5 150 105; /* emerald-600 */
+    --color-calc-equals-hover: 4 120 87; /* emerald-700 */
     --color-calc-equals-active: 52 211 153; /* emerald-400 */
 
-    /* Brand 系列（森林自然風格） */
-    --color-brand-from: 240 253 244; /* green-50 */
+    /* Brand 系列（韓系簡約翠綠風格） */
+    --color-brand-from: 250 250 249; /* stone-50 */
     --color-brand-via: 209 250 229; /* emerald-50 */
-    --color-brand-to: 240 253 244; /* green-50 */
-    --color-brand-border: 187 247 208; /* green-200 */
+    --color-brand-to: 250 250 249; /* stone-50 */
+    --color-brand-border: 231 229 228; /* stone-200 */
     --color-brand-decoration: 209 250 229; /* emerald-100 */
     --color-brand-button-from: 16 185 129; /* emerald-500 */
     --color-brand-button-to: 5 150 105; /* emerald-600 */
@@ -1280,7 +1279,7 @@
     --color-brand-icon-from: 209 250 229; /* emerald-100 */
     --color-brand-icon-to: 209 250 229; /* emerald-100 */
     --color-brand-text: 5 150 105; /* emerald-600 */
-    --color-brand-text-dark: 20 83 45; /* green-800 */
+    --color-brand-text-dark: 28 25 23; /* stone-900 */
     --color-brand-shadow: 209 250 229; /* emerald-100 */
   }
 }
