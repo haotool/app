@@ -49,9 +49,12 @@ jobs:
 
       - name: Ensure data branch is up to date with scripts
         run: |
-          git fetch origin main
-          git checkout origin/main -- scripts/fetch-taiwan-bank-rates.js
-          git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
+          # 使用觸發 ref 的腳本版本：schedule 為 main HEAD；push/dispatch 為對應分支，
+          # 讓腳本修正能在分支上先驗證，不必等合併 main。
+          git fetch origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates.js
+          git checkout ${{ github.sha }} -- scripts/fetch-taiwan-bank-rates-browser.mjs
+          git checkout ${{ github.sha }} -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -80,14 +83,44 @@ jobs:
           echo "🔄 Fetching latest exchange rates from Taiwan Bank..."
           node scripts/fetch-taiwan-bank-rates.js
 
+      # 台銀 bot challenge fallback：純 fetch 被擋時改用真瀏覽器（xvfb headed Chrome）
+      # 於頁面內完成 JS 驗證後下載 CSV，再以 CSV_INPUT_FILE 模式解析寫檔。
+      - name: Fetch via browser fallback (bot challenge)
+        id: fetch-browser
+        if: steps.fetch-rates.outcome == 'failure'
+        continue-on-error: true
+        run: |
+          echo "🤖 Direct fetch blocked — falling back to real browser..."
+          FALLBACK_DIR="$RUNNER_TEMP/twbank-browser"
+          mkdir -p "$FALLBACK_DIR"
+          cp scripts/fetch-taiwan-bank-rates-browser.mjs "$FALLBACK_DIR/"
+          pushd "$FALLBACK_DIR" > /dev/null
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund --silent @playwright/test@1.61.1
+          CSV_FILE="$FALLBACK_DIR/taiwan-bank.csv"
+          xvfb-run -a node fetch-taiwan-bank-rates-browser.mjs "$CSV_FILE"
+          popd > /dev/null
+          CSV_INPUT_FILE="$CSV_FILE" node scripts/fetch-taiwan-bank-rates.js
+
+      - name: Resolve fetch status
+        id: fetch-status
+        run: |
+          if [ "${{ steps.fetch-rates.outcome }}" = "success" ] || [ "${{ steps.fetch-browser.outcome }}" = "success" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Rates fetched (direct: ${{ steps.fetch-rates.outcome }}, browser: ${{ steps.fetch-browser.outcome }})"
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "❌ Both direct and browser fetch failed"
+          fi
+
       - name: Check for changes in latest.json
         id: git-check
-        if: steps.fetch-rates.outcome == 'success'
+        if: steps.fetch-status.outputs.ok == 'true'
         run: |
           git diff --quiet public/rates/latest.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -141,7 +174,7 @@ jobs:
           fi
 
       - name: Purge jsDelivr CDN cache
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         run: |
           PURGE_URL="https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json"
           echo "🧹 Purging jsDelivr CDN cache..."
@@ -158,7 +191,7 @@ jobs:
 
       - name: Refresh latest.json from remote data branch
         id: refresh-remote
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         continue-on-error: true
         run: |
           # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
@@ -180,7 +213,7 @@ jobs:
           exit 1
 
       - name: Update workflow summary (success)
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true'
         run: |
           echo "# ✅ Latest exchange rates updated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -207,7 +240,7 @@ jobs:
           echo "- **CNY:** $(node -p "JSON.parse(require('fs').readFileSync('public/rates/latest.json')).rates.CNY")" >> $GITHUB_STEP_SUMMARY
 
       - name: Update workflow summary (remote refresh warning)
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.outcome == 'failure'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed == 'true' && steps.refresh-remote.outcome == 'failure'
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ⚠️ Post-push verification warning" >> $GITHUB_STEP_SUMMARY
@@ -215,32 +248,45 @@ jobs:
           echo "- The workflow kept the successful update and will verify again on the next scheduled run or manual rerun." >> $GITHUB_STEP_SUMMARY
 
       - name: No changes detected
-        if: steps.fetch-rates.outcome == 'success' && steps.git-check.outputs.changed != 'true'
+        if: steps.fetch-status.outputs.ok == 'true' && steps.git-check.outputs.changed != 'true'
         run: |
           echo "# ℹ️ No rate changes detected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The exchange rates have not changed since the last update." >> $GITHUB_STEP_SUMMARY
           echo "Next check: 5 minutes from now" >> $GITHUB_STEP_SUMMARY
 
-      - name: Update workflow summary (API failure)
-        if: steps.fetch-rates.outcome == 'failure'
+      # 資料新鮮度守門：抓取全數失敗時，若 committed latest.json 已超過門檻
+      # 未更新，必須讓 workflow 失敗曝光事故——禁止用綠燈掩蓋持續性故障
+      #（2026-06/29~07/03 台銀 bot challenge 造成 4 天停更即因舊版無此守門而未被發現）。
+      - name: Data staleness gate (fail on persistent outage)
+        if: steps.fetch-status.outputs.ok != 'true'
+        env:
+          STALENESS_THRESHOLD_HOURS: '6'
         run: |
-          echo "# ⚠️ Taiwan Bank API temporarily unavailable" >> $GITHUB_STEP_SUMMARY
+          AGE_HOURS=$(node -e "
+            const { readFileSync } = require('fs');
+            try {
+              const data = JSON.parse(readFileSync('public/rates/latest.json', 'utf8'));
+              const ageMs = Date.now() - new Date(data.timestamp).getTime();
+              console.log(Math.floor(ageMs / 3600000));
+            } catch { console.log(999); }
+          ")
+          echo "📅 latest.json age: ${AGE_HOURS}h (threshold: ${STALENESS_THRESHOLD_HOURS}h)"
+
+          echo "# ⚠️ Taiwan Bank rate fetch failed (direct + browser fallback)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Taiwan Bank API is experiencing issues" >> $GITHUB_STEP_SUMMARY
-          echo "- Retry mechanism attempted with exponential backoff (3 retries)" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow continues successfully (graceful degradation)" >> $GITHUB_STEP_SUMMARY
+          echo "- Direct fetch outcome: ${{ steps.fetch-rates.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Browser fallback outcome: ${{ steps.fetch-browser.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Committed latest.json age: ${AGE_HOURS}h" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Impact" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **No user impact**: App continues using cached exchange rates" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Automatic recovery**: Next scheduled run in 5 minutes" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **No manual intervention required**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Technical Details" >> $GITHUB_STEP_SUMMARY
-          echo "- API URL: https://rate.bot.com.tw/xrt/flcsv/0/day" >> $GITHUB_STEP_SUMMARY
-          echo "- Retry strategy: Exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
-          echo "- Error handling: Graceful degradation enabled" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "_This is a transient API failure and does not indicate a problem with our system._" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$AGE_HOURS" -ge "$STALENESS_THRESHOLD_HOURS" ]; then
+            echo "## ❌ Persistent outage detected" >> $GITHUB_STEP_SUMMARY
+            echo "Rates have been stale for over ${STALENESS_THRESHOLD_HOURS}h — manual investigation required." >> $GITHUB_STEP_SUMMARY
+            echo "Check whether Taiwan Bank changed its bot challenge or CSV endpoint." >> $GITHUB_STEP_SUMMARY
+            echo "::error::Exchange rates stale for ${AGE_HOURS}h and all fetch paths failed"
+            exit 1
+          fi
+
+          echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
+          echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY

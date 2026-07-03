@@ -36,7 +36,8 @@
 }
 
 .brand-wordmark-accent {
-  color: rgb(var(--color-primary));
+  /* 主色深階：18px bold 屬 WCAG 一般文字，需 4.5:1（primary #3182F6 於淺底僅 3.54）。 */
+  color: rgb(var(--color-primary-strong, var(--color-primary)));
 }
 
 /* 中文副標：對齊 showcase wordmark-zh 的寬字距處理。 */
