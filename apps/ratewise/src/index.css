@@ -616,6 +616,9 @@
     --color-primary-bg: 30 41 59; /* slate-800 */
     --color-primary-light: 30 41 59; /* slate-800 - 深色背景用 */
     --color-primary-hover: 34 211 238; /* cyan-400 - 霓虹藍亮色 */
+    --color-primary-active: 103 232 249; /* cyan-300 - 深色主題按壓強調（亮向） */
+    --color-primary-text-light: 34 211 238; /* cyan-400 */
+    --color-primary-ring: 6 182 212; /* cyan-500 */
     --color-primary-dark: 103 232 249; /* cyan-300 - 深色主題高對比結果文字 */
     --color-primary-darker: 34 211 238; /* cyan-400 */
     --color-primary-text: 0 212 255; /* 霓虹藍 - 與 primary 一致 */
@@ -753,6 +756,12 @@
     --color-primary-bg: 253 242 248; /* pink-50 */
     --color-primary-light: 252 231 243; /* pink-100 */
     --color-primary-hover: 219 39 119; /* pink-600 */
+    --color-primary-active: 249 168 212; /* pink-300 */
+    --color-primary-text-light: 244 114 182; /* pink-400 */
+    --color-primary-ring: 236 72 153; /* pink-500 */
+    --color-primary-dark: 157 23 77; /* pink-800 */
+    --color-primary-darker: 131 24 67; /* pink-900 */
+    --color-primary-text: 219 39 119; /* pink-600 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -888,6 +897,12 @@
     --color-primary-bg: 254 243 199; /* amber-100 */
     --color-primary-light: 254 243 199; /* amber-100 */
     --color-primary-hover: 146 64 14; /* amber-800 */
+    --color-primary-active: 252 211 77; /* amber-300 */
+    --color-primary-text-light: 251 191 36; /* amber-400 */
+    --color-primary-ring: 245 158 11; /* amber-500 */
+    --color-primary-dark: 146 64 14; /* amber-800 */
+    --color-primary-darker: 120 53 15; /* amber-900 */
+    --color-primary-text: 180 83 9; /* amber-700 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -1023,6 +1038,12 @@
     --color-primary-bg: 207 250 254; /* cyan-100 */
     --color-primary-light: 207 250 254; /* cyan-100 */
     --color-primary-hover: 8 145 178; /* cyan-600 */
+    --color-primary-active: 103 232 249; /* cyan-300 */
+    --color-primary-text-light: 34 211 238; /* cyan-400 */
+    --color-primary-ring: 6 182 212; /* cyan-500 */
+    --color-primary-dark: 21 94 117; /* cyan-800 */
+    --color-primary-darker: 22 78 99; /* cyan-900 */
+    --color-primary-text: 8 145 178; /* cyan-600 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
@@ -1158,6 +1179,12 @@
     --color-primary-bg: 209 250 229; /* emerald-100 */
     --color-primary-light: 209 250 229; /* emerald-100 */
     --color-primary-hover: 4 120 87; /* emerald-700 */
+    --color-primary-active: 110 231 183; /* emerald-300 */
+    --color-primary-text-light: 52 211 153; /* emerald-400 */
+    --color-primary-ring: 16 185 129; /* emerald-500 */
+    --color-primary-dark: 22 101 52; /* green-800 */
+    --color-primary-darker: 20 83 45; /* green-900 */
+    --color-primary-text: 5 150 105; /* emerald-600 */
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
