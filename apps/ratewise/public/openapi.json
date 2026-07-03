@@ -135,7 +135,7 @@
     ],
     "x-webapp": "https://app.haotool.org/ratewise/",
     "x-documentation": "https://app.haotool.org/ratewise/open-data/",
-    "x-app-version": "2.26.0",
+    "x-app-version": "2.26.1",
     "x-schema-version": "2.0",
     "x-semantics-doc": "https://app.haotool.org/ratewise/open-data/"
   },
@@ -143,27 +143,27 @@
     "2.1.0": {
       "date": "2026-06-27",
       "summary": "換錢所 provider JSON 新增 schemaVersion、quoteUnit、semanticFieldMapping 與 ExchangeShopRateV2 語意欄位。",
-      "app-version": "2.26.0"
+      "app-version": "2.26.1"
     },
     "2.0.0": {
       "date": "2026-06-27",
       "summary": "新增 customer-centric v2 語意欄位（customerBuyForeignRate 等）與 schemaVersion；legacy buy/sell 保留。",
-      "app-version": "2.26.0"
+      "app-version": "2.26.1"
     },
     "1.2.0": {
       "date": "2026-05-09",
       "summary": "新增 MoneyBox 換錢所 current/history 端點與 provider metadata 合約。",
-      "app-version": "2.26.0"
+      "app-version": "2.26.1"
     },
     "1.1.0": {
       "date": "2026-05-08",
       "summary": "新增 App 匯率模式欄位對照與幣對 rateModes 規格，並對齊資料端時間欄位格式。",
-      "app-version": "2.26.0"
+      "app-version": "2.26.1"
     },
     "1.0.0": {
       "date": "2026-03-21",
       "summary": "初始 API 版本。包含最新匯率、歷史匯率、幣對資訊三個端點。",
-      "app-version": "2.26.0"
+      "app-version": "2.26.1"
     }
   },
   "servers": [
