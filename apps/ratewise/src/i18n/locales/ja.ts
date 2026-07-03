@@ -282,6 +282,8 @@ const ja = {
     routeLoadFailedTitle: 'ページの読み込みに失敗しました',
     routeLoadFailedDescription:
       '最近の更新でキャッシュ済みリソースが不整合になっている可能性があります。ページを再読み込みしてください。',
+    recoveringTitle: '最新バージョンに更新中…',
+    recoveringDescription: '新しいバージョンを検出し、自動的に再読み込みしています。',
     crashTitle: 'エラーが発生しました',
     crashDescription:
       '申し訳ありませんが、アプリにエラーが発生しました。ページを再読み込みしてください。',

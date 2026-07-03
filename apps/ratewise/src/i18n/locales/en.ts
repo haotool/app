@@ -286,6 +286,8 @@ const en = {
     routeLoadFailedTitle: 'Page Load Failed',
     routeLoadFailedDescription:
       'A recent update may have left cached assets out of sync. Please reload the page.',
+    recoveringTitle: 'Updating to the latest version…',
+    recoveringDescription: 'New version detected — reloading automatically.',
     crashTitle: 'Oops! An error occurred',
     crashDescription: 'Sorry, the app has encountered an issue. Please try refreshing the page.',
     errorDetails: 'Error Details (Dev Mode)',

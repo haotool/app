@@ -246,6 +246,23 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
       } catch (err) {
         console.error('[SW] 清除快取失敗:', err);
       }
+      // 硬重置僅在有網路時觸發（client 端已守門），立即回填 shell 避免清除後裸奔。
+      try {
+        const scope = self.registration.scope;
+        const cache = await caches.open(HTML_CACHE_NAME);
+        await Promise.allSettled(
+          ['index.html', 'offline.html'].map(async (page) => {
+            const fullUrl = new URL(page, scope).href;
+            const response = await fetch(fullUrl, { cache: 'no-cache' });
+            if (response.ok) {
+              await cache.put(fullUrl, response.clone());
+              await cache.put(page, response);
+            }
+          }),
+        );
+      } catch {
+        // shell 回填失敗不阻斷 client 通知流程。
+      }
       const clients = await self.clients.matchAll({ type: 'window' });
       for (const client of clients) {
         client.postMessage({ type: 'SW_HARD_RESET_DONE' });

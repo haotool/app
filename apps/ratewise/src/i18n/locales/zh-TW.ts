@@ -281,6 +281,8 @@ const zhTW = {
       '此頁面需要網路連線才能載入。恢復連線後將自動重試，或點擊下方按鈕手動重試。',
     routeLoadFailedTitle: '頁面載入失敗',
     routeLoadFailedDescription: '可能是最近版本更新造成資源不一致，請重新載入試試。',
+    recoveringTitle: '正在更新至最新版本…',
+    recoveringDescription: '偵測到新版本資源，正在自動重新載入。',
     crashTitle: '哎呀！發生錯誤',
     crashDescription: '抱歉，應用程式遇到了一些問題。請重新整理頁面試試。',
     errorDetails: '錯誤詳情（開發模式）',

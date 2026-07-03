@@ -37,7 +37,7 @@ function parseThemeBlocks(source: string): Map<string, Set<string>> {
     if (!name || match.index === undefined) return;
     const start = match.index;
     const next = blockStarts[index + 1];
-    const end = next?.index !== undefined ? next.index : source.length;
+    const end = next?.index ?? source.length;
     const body = source.slice(start, end);
     const keys = new Set(
       [...body.matchAll(/(--color-[\w-]+)\s*:/g)].map((m) => m[1]).filter((k): k is string => !!k),
