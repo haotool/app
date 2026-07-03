@@ -314,6 +314,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **排程資料 workflow 在 post-push refresh 報 GitHub 500**：若 `Commit and push changes` 已成功、失敗發生在 `Refresh ... from remote data branch`，視為 GitHub 瞬時錯誤。修法：post-push refresh 使用 3 次重試並設為 `continue-on-error: true`；summary warning 必須看 `steps.<id>.outcome == 'failure'`，不得用 `conclusion`，否則會把失敗誤判成 success。
 
+**台銀牌告匯率停更（bot challenge）**：`rate.bot.com.tw` 對非瀏覽器請求回傳 Challenge Validation HTML（2026-06-29 起），純 fetch 與 headless/Playwright request context 均被擋。修法：direct fetch 偵測 challenge 後改走 `scripts/fetch-taiwan-bank-rates-browser.mjs`（xvfb headed Chrome，於頁面內 fetch CSV 沿用瀏覽器指紋），再以 `CSV_INPUT_FILE` 模式解析寫檔；抓取全數失敗且 latest.json 超過 6 小時未更新時 workflow 必須 fail 曝光事故，禁止綠燈掩蓋持續停更。
+
 **Release workflow 顯示 success 但沒有語意升版**：先查 `.changeset/*.md` 是否仍存在，再查 release run log。若 `Create Release Pull Request` 在 `git commit` 階段被 commitlint 擋下，將 `changesets/action` 的 `commit` / `title` 改為 `chore(release): 更新版本套件`，且失敗回報步驟必須 `exit 1`，避免 release PR 未建立卻顯示綠燈。
 
 **Release workflow 卡在 Create release tags**：取消卡住 run 後檢查是否在 CI 內呼叫 `pnpm changeset tag`，或 tag push 是否觸發 `.husky/pre-push`。修法是移除互動式 changeset tag 呼叫，改由 `scripts/get-release-metadata.mjs --changed` 顯式輸出 package tag 與 app tag，先驗證 `git check-ref-format`，再用完整 refspec 一次推送全部 tag；CI tag push 必須設定 `HUSKY=0` 並為步驟設定 timeout。

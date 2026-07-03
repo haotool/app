@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+98
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+99
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-03
+- ID：reward-rw-twbank-challenge-stale-rates
+- 原因：台銀 06/29 啟用 bot challenge 使純 fetch 拿到 HTML，匯率停更 4 天；workflow continue-on-error 綠燈掩蓋事故；另 wordmark accent #3182F6 淺底 3.54 未達 AA 使 main E2E 紅
+- 解法：新增真瀏覽器 fallback（xvfb headed Chrome 頁內 fetch CSV）+ CSV_INPUT_FILE 解析模式 + 6 小時 staleness gate 讓持續故障紅燈曝光；wordmark accent 改 primary-strong
 
 - 日期：2026-07-03
 - ID：reward-rw-pwa-cold-launch-auto-update

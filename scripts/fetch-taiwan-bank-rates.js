@@ -2,6 +2,11 @@
  * 台灣銀行牌告匯率抓取腳本
  * 資料來源: https://rate.bot.com.tw/xrt/flcsv/0/day
  * 更新頻率: 每5分鐘（由 GitHub Actions cron 觸發，見 .github/workflows/update-latest-rates.yml）
+ *
+ * 台銀自 2026-06-29 起在邊緣加上 bot challenge（JS 驗證頁），純 fetch 會拿到
+ * challenge HTML 而非 CSV。偵測到 challenge 時以明確錯誤失敗，workflow 會改走
+ * fetch-taiwan-bank-rates-browser.mjs（真瀏覽器）取得 CSV，再以 CSV_INPUT_FILE
+ * 模式重跑本腳本完成解析與寫檔。
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
@@ -32,6 +37,14 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 台灣銀行 CSV API
 const TAIWAN_BANK_CSV_URL = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
+
+// 瀏覽器 fallback 產出的 CSV 檔（設定時跳過網路，直接解析檔案內容）。
+const CSV_INPUT_FILE = process.env.CSV_INPUT_FILE || '';
+
+/** 台銀 bot challenge 頁特徵：HTML 文件 + Challenge Validation 標題。 */
+function looksLikeBotChallenge(text) {
+  return text.trimStart().startsWith('<!DOCTYPE html') || text.includes('Challenge Validation');
+}
 
 // 貨幣代碼對應表（台銀使用的代碼）
 const CURRENCY_MAP = {
@@ -149,10 +162,50 @@ function isRetryableError(error) {
   return false;
 }
 
+/** 由解析結果組出 latest.json payload（網路與檔案模式共用）。 */
+function buildRatesPayload(rates, details) {
+  return {
+    timestamp: new Date().toISOString(),
+    updateTime: new Date().toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }),
+    source: 'Taiwan Bank (臺灣銀行牌告匯率)',
+    sourceUrl: 'https://rate.bot.com.tw/xrt',
+    base: 'TWD',
+    rates,
+    details,
+  };
+}
+
 /**
  * 從台灣銀行抓取匯率 (帶重試機制)
  */
 async function fetchTaiwanBankRates() {
+  // 檔案模式：CSV 已由瀏覽器 fallback 取得，直接解析。
+  if (CSV_INPUT_FILE) {
+    console.log(`📄 Parsing CSV from file: ${CSV_INPUT_FILE}`);
+    const csvText = readFileSync(CSV_INPUT_FILE, 'utf8');
+
+    if (looksLikeBotChallenge(csvText)) {
+      throw new AbortError('CSV input file contains bot challenge HTML, not rate data');
+    }
+
+    const { rates, details } = parseTaiwanBankCSV(csvText);
+    if (Object.keys(rates).length === 0) {
+      throw new AbortError('No valid rates found in CSV input file');
+    }
+
+    console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies (file mode)`);
+    return buildRatesPayload(rates, details);
+  }
+
   console.log('🔄 Fetching exchange rates from Taiwan Bank...');
 
   const attempts = MAX_RETRIES + 1;
@@ -185,6 +238,12 @@ async function fetchTaiwanBankRates() {
       }
 
       const csvText = await response.text();
+
+      // bot challenge 偵測：明確報錯讓 workflow 切換瀏覽器 fallback，而非誤判為資料格式問題。
+      if (looksLikeBotChallenge(csvText)) {
+        throw new AbortError('Blocked by Taiwan Bank bot challenge (HTML challenge page returned)');
+      }
+
       const { rates, details } = parseTaiwanBankCSV(csvText);
 
       if (Object.keys(rates).length === 0) {
@@ -193,24 +252,7 @@ async function fetchTaiwanBankRates() {
 
       console.log(`✅ Successfully parsed ${Object.keys(rates).length} currencies`);
 
-      return {
-        timestamp: new Date().toISOString(),
-        updateTime: new Date().toLocaleString('zh-TW', {
-          timeZone: 'Asia/Taipei',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false,
-        }),
-        source: 'Taiwan Bank (臺灣銀行牌告匯率)',
-        sourceUrl: 'https://rate.bot.com.tw/xrt',
-        base: 'TWD',
-        rates,
-        details,
-      };
+      return buildRatesPayload(rates, details);
     } catch (error) {
       if (error instanceof AbortError) {
         throw error;
