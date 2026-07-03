@@ -349,6 +349,86 @@ describe('OfflineIndicator', () => {
     });
   });
 
+  describe('🟡 DEBOUNCE: 連續失敗防抖避免誤報', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should NOT render indicator after a single probe failure (navigator.onLine=true)', async () => {
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
+      render(<OfflineIndicator />);
+
+      // 初次探測（componentDidMount 觸發）
+      await vi.waitFor(() => {
+        expect(networkStatus.isOnline).toHaveBeenCalledTimes(1);
+      });
+
+      // 單次失敗不應顯示橫幅
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('should render indicator after two consecutive probe failures', async () => {
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
+      render(<OfflineIndicator />);
+
+      await vi.waitFor(() => {
+        expect(networkStatus.isOnline).toHaveBeenCalledTimes(1);
+      });
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+      // 推進 5 秒觸發複測（第二次探測失敗）
+      await vi.advanceTimersByTimeAsync(5_000);
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+      });
+    });
+
+    it('should render indicator immediately when navigator.onLine=false (no debounce needed)', async () => {
+      Object.defineProperty(window.navigator, 'onLine', {
+        writable: true,
+        configurable: true,
+        value: false,
+      });
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(false);
+
+      render(<OfflineIndicator />);
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('status')).toBeInTheDocument();
+      });
+
+      // navigator.onLine=false 分支不需呼叫 isOnline probe
+      expect(networkStatus.isOnline).not.toHaveBeenCalled();
+    });
+
+    it('should reset failure count after a success following one failure', async () => {
+      vi.mocked(networkStatus.isOnline).mockResolvedValueOnce(false);
+
+      render(<OfflineIndicator />);
+
+      await vi.waitFor(() => {
+        expect(networkStatus.isOnline).toHaveBeenCalledTimes(1);
+      });
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+      // 第二次探測（5 秒後複測）成功，計數應重置，不顯示橫幅
+      vi.mocked(networkStatus.isOnline).mockResolvedValue(true);
+      await vi.advanceTimersByTimeAsync(5_000);
+
+      await vi.waitFor(() => {
+        expect(networkStatus.isOnline).toHaveBeenCalledTimes(2);
+      });
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+  });
+
   describe('SSR Safety', () => {
     it('should handle SSR environment gracefully', () => {
       // The component has built-in SSR safety check:
