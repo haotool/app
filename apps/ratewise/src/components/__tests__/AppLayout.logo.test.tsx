@@ -48,7 +48,7 @@ describe('AppLayout Logo', () => {
     vi.restoreAllMocks();
   });
 
-  it('應只使用透明 logo.png，避免 retina 螢幕誤載入有底色的 PWA icon', () => {
+  it('品牌 LOGO 應為主題感知 inline SVG（無點陣圖請求、主色隨主題切換）', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
@@ -60,7 +60,11 @@ describe('AppLayout Logo', () => {
     );
 
     const logo = screen.getByRole('img', { name: APP_INFO.name });
-    expect(logo).toHaveAttribute('src', '/logo.png');
-    expect(logo).not.toHaveAttribute('srcset');
+    // inline SVG：不應有任何外部圖片請求。
+    expect(logo.querySelector('img')).toBeNull();
+    const svg = logo.querySelector('svg');
+    expect(svg).not.toBeNull();
+    // 主色由主題 token 驅動（--color-primary），切換主題即時跟隨。
+    expect(svg?.innerHTML).toContain('var(--color-primary)');
   });
 });

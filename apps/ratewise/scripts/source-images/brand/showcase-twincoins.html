@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HaoRate 品牌形象 — Twin Coins 微材質系列 Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&family=Manrope:wght@800&family=Poppins:wght@700;800&family=Montserrat:wght@800&family=Nunito:wght@900&family=Space+Grotesk:wght@700&family=Outfit:wght@800&family=Plus+Jakarta+Sans:wght@800&family=Sora:wght@800&family=Urbanist:wght@900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --wmfont: -apple-system, 'PingFang TC', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          'PingFang TC',
+          'Noto Sans TC',
+          -apple-system,
+          sans-serif;
+        background: #f0f3f8;
+        color: #191f28;
+      }
+      section {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 44px 24px;
+      }
+      .kicker {
+        font-size: 11.5px;
+        letter-spacing: 0.22em;
+        color: #3182f6;
+        font-weight: 800;
+      }
+      h1 {
+        font-size: 34px;
+        font-weight: 900;
+        margin-top: 10px;
+        letter-spacing: -0.01em;
+      }
+      h2 {
+        font-size: 21px;
+        font-weight: 800;
+      }
+      .sub {
+        color: #6b7684;
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.8;
+      }
+      .note {
+        color: #8b95a1;
+        font-size: 12.5px;
+        margin-top: 4px;
+        margin-bottom: 22px;
+      }
+
+      /* HERO */
+      .hero {
+        text-align: center;
+        padding-top: 64px;
+        background: radial-gradient(
+          640px 380px at 50% -8%,
+          rgba(49, 130, 246, 0.14),
+          transparent 70%
+        );
+      }
+      .hero .appicon {
+        width: 200px;
+        height: 200px;
+        margin: 30px auto 26px;
+        filter: drop-shadow(0 22px 44px rgba(27, 80, 180, 0.3));
+      }
+      .hero .appicon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .wordmark {
+        font-size: 40px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        font-family: var(--wmfont);
+      }
+      .lock .wm,
+      .splash .swm {
+        font-family: var(--wmfont);
+      }
+
+      /* FONT PICKER */
+      .fonts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .fonts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fcard {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px 22px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 6px rgba(25, 31, 40, 0.05);
+      }
+      .fcard:hover {
+        transform: translateY(-2px);
+      }
+      .fcard.active {
+        border-color: #3182f6;
+        box-shadow: 0 8px 20px rgba(49, 130, 246, 0.2);
+      }
+      .fcard .sample {
+        font-size: 27px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .fcard .sample i {
+        font-style: normal;
+        color: #3182f6;
+      }
+      .fcard b {
+        display: block;
+        font-size: 12px;
+        color: #191f28;
+        margin-top: 10px;
+      }
+      .fcard.active b {
+        color: #3182f6;
+      }
+      .fcard span {
+        font-size: 11px;
+        color: #8b95a1;
+        line-height: 1.6;
+        display: block;
+        margin-top: 3px;
+      }
+      .wordmark .rate {
+        color: #3182f6;
+      }
+      .wordmark-zh {
+        font-size: 15px;
+        color: #4e5968;
+        font-weight: 700;
+        margin-top: 6px;
+        letter-spacing: 0.35em;
+      }
+
+      /* ANATOMY */
+      .anatomy {
+        background: #fff;
+        border-radius: 26px;
+        padding: 38px;
+        display: flex;
+        align-items: center;
+        gap: 44px;
+        flex-wrap: wrap;
+        box-shadow: 0 2px 14px rgba(25, 31, 40, 0.05);
+      }
+      .anatomy .mark {
+        width: 190px;
+        height: 190px;
+        flex-shrink: 0;
+      }
+      .anatomy .mark svg {
+        width: 100%;
+        height: 100%;
+      }
+      .legend {
+        flex: 1;
+        min-width: 260px;
+      }
+      .legend li {
+        list-style: none;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 13px 0;
+        border-bottom: 1px solid #f0f2f5;
+        font-size: 14px;
+        color: #4e5968;
+      }
+      .legend li:last-child {
+        border-bottom: 0;
+      }
+      .legend b {
+        color: #191f28;
+        display: block;
+        margin-bottom: 3px;
+        font-size: 14.5px;
+      }
+      .dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .dot.solid {
+        background: linear-gradient(180deg, #55a3ff, #1b64da);
+      }
+      .dot.ring {
+        border: 5px solid #3182f6;
+        background: #fff;
+      }
+      .dot.cross {
+        background: linear-gradient(135deg, #55a3ff 50%, #fff 50%);
+        border: 1px solid #d7e2f2;
+      }
+
+      /* GALLERY */
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 820px) {
+        .gallery {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .gcard {
+        background: #fff;
+        border-radius: 22px;
+        padding: 22px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.16s ease;
+        box-shadow: 0 1px 6px rgba(25, 31, 40, 0.05);
+      }
+      .gcard:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(25, 31, 40, 0.1);
+      }
+      .gcard.active {
+        border-color: #3182f6;
+        box-shadow: 0 10px 26px rgba(49, 130, 246, 0.22);
+      }
+      .gcard .tile {
+        border-radius: 18px;
+        padding: 18px;
+        background: linear-gradient(165deg, #f7faff, #e9f1fc);
+        margin-bottom: 14px;
+      }
+      .gcard.darktile .tile {
+        background: linear-gradient(165deg, #16244c, #0a1330);
+      }
+      .gcard .tile svg {
+        width: 108px;
+        height: 108px;
+      }
+      .gcard b {
+        font-size: 14.5px;
+        display: block;
+      }
+      .gcard.active b {
+        color: #3182f6;
+      }
+      .gcard p {
+        font-size: 12px;
+        color: #7c8ca5;
+        margin-top: 6px;
+        line-height: 1.65;
+        text-align: left;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        background: #eaf3ff;
+        color: #1b64da;
+        border-radius: 999px;
+        padding: 3px 9px;
+        margin-bottom: 8px;
+      }
+      .badge.keep {
+        background: #fff3e0;
+        color: #b26a00;
+      }
+
+      /* TRANSPARENT */
+      .surfaces {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .surfaces {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .surf {
+        border-radius: 18px;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e3e8f0;
+        overflow: hidden;
+      }
+      .surf svg {
+        width: 72%;
+        height: 72%;
+      }
+      .surf.checker {
+        background: repeating-conic-gradient(#e3e7ee 0% 25%, #ffffff 0% 50%);
+        background-size: 18px 18px;
+      }
+      .surf.white {
+        background: #ffffff;
+      }
+      .surf.ink {
+        background: #14181f;
+      }
+      .surf.blue {
+        background: #3182f6;
+      }
+      .surf.mesh {
+        background:
+          radial-gradient(120px 120px at 30% 25%, #4e9eff55, transparent),
+          linear-gradient(150deg, #0e1b3c, #274fdb);
+      }
+      .surf figcaption {
+        display: none;
+      }
+      .surflabels {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+        margin-top: 8px;
+      }
+      @media (max-width: 820px) {
+        .surflabels {
+          display: none;
+        }
+      }
+      .surflabels span {
+        font-size: 11px;
+        color: #8b95a1;
+        text-align: center;
+      }
+
+      /* LOCKUP */
+      .lockups {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 820px) {
+        .lockups {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lock {
+        background: #fff;
+        border-radius: 22px;
+        padding: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        box-shadow: 0 1px 6px rgba(25, 31, 40, 0.05);
+        min-height: 170px;
+      }
+      .lock.v {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .lock svg {
+        width: 64px;
+        height: 64px;
+      }
+      .lock .wm {
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+      .lock .wm small {
+        display: block;
+        font-size: 12px;
+        color: #6b7684;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        margin-top: 2px;
+      }
+      .lock.v .wm {
+        font-size: 26px;
+        text-align: center;
+      }
+
+      /* PALETTE */
+      .pal {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 820px) {
+        .pal {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .chipc {
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 1px 6px rgba(25, 31, 40, 0.05);
+      }
+      .chipc .c {
+        height: 72px;
+      }
+      .chipc figcaption {
+        padding: 10px 12px;
+        font-size: 11px;
+        color: #4e5968;
+      }
+      .chipc figcaption b {
+        display: block;
+        font-size: 12px;
+        color: #191f28;
+      }
+
+      /* APPLICATIONS */
+      .apps-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 820px) {
+        .apps-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .appcard {
+        background: #fff;
+        border-radius: 22px;
+        padding: 26px;
+        box-shadow: 0 1px 6px rgba(25, 31, 40, 0.05);
+      }
+      .appcard h3 {
+        font-size: 13px;
+        font-weight: 700;
+        color: #4e5968;
+        margin-bottom: 18px;
+      }
+      .sizes {
+        display: flex;
+        align-items: flex-end;
+        gap: 22px;
+        flex-wrap: wrap;
+      }
+      .cell {
+        text-align: center;
+      }
+      .cell span {
+        display: block;
+        font-size: 10.5px;
+        margin-top: 7px;
+        color: #8b95a1;
+      }
+      .cell svg {
+        display: block;
+      }
+      .tabmock {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 18px;
+        background: #e9edf2;
+        border-radius: 9px;
+        padding: 8px 13px;
+        font-size: 12px;
+        color: #334155;
+      }
+      .tabmock svg {
+        width: 16px;
+        height: 16px;
+      }
+      .ioshome {
+        border-radius: 18px;
+        padding: 26px 18px;
+        background:
+          radial-gradient(300px 200px at 20% 0%, #17346e, transparent 70%),
+          linear-gradient(160deg, #0f1b38, #0a1226);
+        display: flex;
+        gap: 22px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .iapp {
+        text-align: center;
+        width: 64px;
+      }
+      .iapp .ic {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 7px;
+        filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.35));
+      }
+      .iapp .ic svg {
+        width: 100%;
+        height: 100%;
+      }
+      .iapp .ph {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        margin: 0 auto 7px;
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .iapp small {
+        font-size: 10px;
+        color: #c7d2e4;
+      }
+      .splashwrap {
+        display: flex;
+        justify-content: center;
+      }
+      .splash {
+        width: 190px;
+        height: 330px;
+        border-radius: 28px;
+        background: #ffffff;
+        border: 1px solid #e3e8f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        box-shadow: 0 14px 30px rgba(25, 31, 40, 0.12);
+      }
+      .splash svg {
+        width: 84px;
+        height: 84px;
+      }
+      .splash .swm {
+        font-size: 19px;
+        font-weight: 900;
+      }
+      .splash .swm i {
+        font-style: normal;
+        color: #3182f6;
+      }
+      .splash small {
+        font-size: 10px;
+        color: #8b95a1;
+        letter-spacing: 0.25em;
+      }
+      .avatars {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .ava {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .ava svg {
+        width: 74%;
+        height: 74%;
+      }
+      .ava.blue {
+        background: linear-gradient(160deg, #4e9eff, #1b64da);
+      }
+      .ava.ink {
+        background: #191f28;
+      }
+      .ava.lite {
+        background: #eef4fc;
+        border: 1px solid #e3e8f0;
+      }
+
+      footer {
+        text-align: center;
+        padding: 30px 0 60px;
+        color: #a6b0be;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="kicker">HAORATE BRAND IDENTITY · TWIN COINS SYSTEM</div>
+      <h1>雙幣交會 Twin Coins — 材質系列</h1>
+      <p class="sub">
+        實心＝本幣 · 鏤空＝外幣 · 交會＝匯率。同一個符號，九種材質詮釋。<br />點選下方任一變體，整頁應用場景即時切換。
+      </p>
+      <div class="appicon" id="heroIcon"></div>
+      <div class="wordmark">Hao<span class="rate">Rate</span></div>
+      <div class="wordmark-zh">好 匯 率</div>
+    </section>
+
+    <section>
+      <h2>符號解構</h2>
+      <p class="note">原版 #4 的三個語意層，所有材質變體共享同一套幾何。</p>
+      <div class="anatomy">
+        <div class="mark" id="anatomyMark"></div>
+        <ul class="legend">
+          <li>
+            <i class="dot solid"></i>
+            <div><b>實心硬幣＝本幣（TWD）</b>握在手上的錢，穩定、確定，永遠在前景的左位。</div>
+          </li>
+          <li>
+            <i class="dot ring"></i>
+            <div><b>鏤空硬幣＝外幣</b>即將兌換的目標，輪廓存在但尚未擁有——鏤空即「期待」。</div>
+          </li>
+          <li>
+            <i class="dot cross"></i>
+            <div>
+              <b>前後交疊＝匯率</b
+              >兩枚硬幣交會的瞬間就是兌換；一前一後的景深讓「兩種貨幣、一次看清」。
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>微材質變體 Gallery</h2>
+      <p class="note">
+        原版保留為 01；02–09
+        只做「微」等級的玻璃光暈調整——大圖才看得出差異，縮小後與原版幾乎一致。點卡片切換全頁預覽。
+      </p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section>
+      <h2>去背版本 Transparent</h2>
+      <p class="note">
+        無底座純符號，五種表面驗證：透明格 / 白 / 墨黑 / 品牌藍 /
+        深藍漸層。深色表面自動改用白色單色版以保對比。
+      </p>
+      <div class="surfaces" id="surfaces"></div>
+      <div class="surflabels">
+        <span>Transparent</span><span>White</span><span>Ink</span><span>Brand Blue</span
+        ><span>Gradient</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>標準字組合 Lockup</h2>
+      <p class="note">水平版用於網站頁首與行銷物；直式用於 splash 與社群頭像旁。</p>
+      <div class="lockups">
+        <div class="lock">
+          <span id="lockH"></span>
+          <div class="wm">
+            Hao<span style="color: #3182f6">Rate</span><small>好匯率 · 台銀即時匯率</small>
+          </div>
+        </div>
+        <div class="lock v">
+          <span id="lockV"></span>
+          <div class="wm">Hao<span style="color: #3182f6">Rate</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>英文標準字字體 Typography</h2>
+      <p class="note">
+        點任一字體，Hero 標準字、Lockup 與啟動頁即時套用。全部為免費可商用（Google Fonts /
+        系統字）。
+      </p>
+      <div class="fonts" id="fonts"></div>
+    </section>
+
+    <section>
+      <h2>色彩系統 Color</h2>
+      <p class="note">以 Toss UI Blue 為軸的韓系金融藍階，輔以墨色與雲白。</p>
+      <div class="pal">
+        <figure class="chipc">
+          <div class="c" style="background: #55a3ff"></div>
+          <figcaption><b>Sky 400</b>#55A3FF</figcaption>
+        </figure>
+        <figure class="chipc">
+          <div class="c" style="background: #3182f6"></div>
+          <figcaption><b>Primary 500</b>#3182F6</figcaption>
+        </figure>
+        <figure class="chipc">
+          <div class="c" style="background: #1b64da"></div>
+          <figcaption><b>Deep 600</b>#1B64DA</figcaption>
+        </figure>
+        <figure class="chipc">
+          <div class="c" style="background: #0e1b3c"></div>
+          <figcaption><b>Navy Ink</b>#0E1B3C</figcaption>
+        </figure>
+        <figure class="chipc">
+          <div class="c" style="background: #191f28"></div>
+          <figcaption><b>Ink</b>#191F28</figcaption>
+        </figure>
+        <figure class="chipc">
+          <div class="c" style="background: #f4f9ff; border-bottom: 1px solid #eef1f5"></div>
+          <figcaption><b>Cloud</b>#F4F9FF</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>應用場景 Applications</h2>
+      <p class="note">App icon（白玻璃底座）、favicon 縮放、iOS 主畫面、啟動頁、社群頭像。</p>
+      <div class="apps-grid">
+        <div class="appcard">
+          <h3>APP ICON · FAVICON 縮放（96 → 16px）</h3>
+          <div class="sizes" id="sizeStrip"></div>
+          <div class="tabmock" id="tabMock"></div>
+        </div>
+        <div class="appcard">
+          <h3>iOS 主畫面（深色桌布）</h3>
+          <div class="ioshome">
+            <div class="iapp">
+              <div class="ph"></div>
+              <small>Bank</small>
+            </div>
+            <div class="iapp">
+              <div class="ic" id="homeIcon"></div>
+              <small>HaoRate</small>
+            </div>
+            <div class="iapp">
+              <div class="ph"></div>
+              <small>Pay</small>
+            </div>
+            <div class="iapp">
+              <div class="ph"></div>
+              <small>Stocks</small>
+            </div>
+          </div>
+        </div>
+        <div class="appcard">
+          <h3>啟動頁 Splash</h3>
+          <div class="splashwrap">
+            <div class="splash">
+              <span id="splashMark"></span>
+              <div class="swm">Hao<i>Rate</i></div>
+              <small>好匯率</small>
+            </div>
+          </div>
+        </div>
+        <div class="appcard">
+          <h3>社群頭像 Avatar（白色單色版 / 彩色版）</h3>
+          <div class="avatars">
+            <div class="ava blue" id="avaBlue"></div>
+            <div class="ava ink" id="avaInk"></div>
+            <div class="ava lite" id="avaLite"></div>
+          </div>
+          <p style="font-size: 11.5px; color: #8b95a1; margin-top: 16px; line-height: 1.7">
+            深色 / 品牌色表面一律使用白色單色鏤空版（knockout），淺色表面使用彩色版本。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>HaoRate Brand Showcase · Twin Coins Material Series · #3182F6</footer>
+
+    <script>
+      /* ---------- 共用漸層 ---------- */
+      const MKG = (id) =>
+        `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#55A3FF"/><stop offset="0.5" stop-color="#3182F6"/>
+    <stop offset="1" stop-color="#1B64DA"/></linearGradient>`;
+
+      /* ---------- 9 個材質變體（原版為 01，保留不動） ---------- */
+      const VARIANTS = [
+        {
+          key: 'original',
+          keep: true,
+          name: '01 原版 Twin Coins',
+          desc: '扁平雙幣：實心漸層 + 白底鏤空環。乾淨、直接，是整個系統的原點（保留版本）。',
+          defs: MKG('o1'),
+          body: `<circle cx="38" cy="50" r="18" fill="url(#o1)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#o1)" stroke-width="7.5"/>`,
+        },
+        {
+          key: 'softglow',
+          name: '02 微光暈 Soft Glow',
+          desc: '原版加一層極淡的藍色外暈（16% 透明度、3px 模糊）——像螢幕上微微發亮，縮小後與原版無異。',
+          defs:
+            MKG('p2') +
+            `<filter id="p2g" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3"/></filter>`,
+          body: `<g filter="url(#p2g)" opacity="0.18">
+        <circle cx="38" cy="50" r="18" fill="#3182F6"/>
+        <circle cx="62" cy="50" r="18" fill="none" stroke="#3182F6" stroke-width="7.5"/>
+      </g>
+      <circle cx="38" cy="50" r="18" fill="url(#p2)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p2)" stroke-width="7.5"/>`,
+        },
+        {
+          key: 'microhl',
+          name: '03 微高光 Micro Highlight',
+          desc: '兩枚硬幣的左上各補一道 2px 白色弧光——玻璃感只出現在光線掠過的那一小段。',
+          defs: MKG('p3'),
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p3)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p3)" stroke-width="7.5"/>
+      <path d="M28.8 40.8 A13 13 0 0 1 35.7 37.2" fill="none" stroke="#FFFFFF"
+        stroke-width="2.2" stroke-linecap="round" opacity="0.75"/>
+      <path d="M55.8 33.1 A18 18 0 0 1 62 32" fill="none" stroke="#FFFFFF"
+        stroke-width="2" stroke-linecap="round" opacity="0.8"/>`,
+        },
+        {
+          key: 'depth',
+          name: '04 微景深 Subtle Depth',
+          desc: '漸層拉深一階＋1px 髮絲投影（22% 透明度）——多了一點「浮起來」的厚度，其餘不動。',
+          defs: `<linearGradient id="p4" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#66ACFF"/><stop offset="0.5" stop-color="#3182F6"/>
+        <stop offset="1" stop-color="#175BCB"/></linearGradient>
+      <filter id="p4s" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="1.3" stdDeviation="1.3" flood-color="#1E4FA8" flood-opacity="0.22"/></filter>`,
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p4)" filter="url(#p4s)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p4)" stroke-width="7.5" filter="url(#p4s)"/>`,
+        },
+        {
+          key: 'film',
+          name: '05 玻璃薄膜 Glass Film',
+          desc: '前幣白底改為 78% 半透明——交疊處能隱約「透」見本幣的邊緣，一片薄玻璃的存在感。',
+          defs: MKG('p5'),
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p5)"/>
+      <circle cx="62" cy="50" r="18" fill="#FFFFFF" fill-opacity="0.78"
+        stroke="url(#p5)" stroke-width="7.5"/>
+      <path d="M55.8 33.1 A18 18 0 0 1 62 32" fill="none" stroke="#FFFFFF"
+        stroke-width="2" stroke-linecap="round" opacity="0.9"/>`,
+        },
+        {
+          key: 'sheen',
+          name: '06 晨光斜照 Morning Sheen',
+          desc: '一道斜向光帶掃過雙幣（遮罩內 28% 白）——光只落在硬幣上，背景完全不受影響。',
+          defs:
+            MKG('p6') +
+            `<mask id="p6m">
+      <circle cx="38" cy="50" r="18" fill="#fff"/>
+      <circle cx="62" cy="50" r="18" fill="none" stroke="#fff" stroke-width="7.5"/></mask>`,
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p6)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p6)" stroke-width="7.5"/>
+      <g mask="url(#p6m)"><path d="M18 46 L84 26 L84 34 L18 56 Z" fill="#FFFFFF" opacity="0.28"/></g>`,
+        },
+        {
+          key: 'hairline',
+          name: '07 髮絲內圈 Hairline Ring',
+          desc: '只在實心幣加一圈 1.4px 白色內緣刻線——像真硬幣的內圈，精緻感 +1、複雜度 +0。',
+          defs: MKG('p7'),
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p7)"/>
+      <circle cx="38" cy="50" r="13.2" fill="none" stroke="#FFFFFF"
+        stroke-width="1.4" stroke-opacity="0.55"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p7)" stroke-width="7.5"/>`,
+        },
+        {
+          key: 'dew',
+          name: '08 露珠光點 Dew Dot',
+          desc: '實心幣左上一顆橢圓光斑、外幣環上一粒 1.7px 光點——最小劑量的玻璃反光。',
+          defs: MKG('p8'),
+          body: `<circle cx="38" cy="50" r="18" fill="url(#p8)"/>
+      <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#p8)" stroke-width="7.5"/>
+      <ellipse cx="31.5" cy="42.5" rx="4.2" ry="2.8" fill="#FFFFFF" opacity="0.7"
+        transform="rotate(-24 31.5 42.5)"/>
+      <circle cx="56.2" cy="33.8" r="1.7" fill="#FFFFFF" opacity="0.85"/>`,
+        },
+        {
+          key: 'polished',
+          name: '09 精修合成 Polished',
+          desc: '02+03+04 的總和：微光暈、微高光、微景深一次到位——仍然一眼是原版，只是被打磨過。',
+          defs: `<linearGradient id="p9" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#66ACFF"/><stop offset="0.5" stop-color="#3182F6"/>
+        <stop offset="1" stop-color="#175BCB"/></linearGradient>
+      <filter id="p9g" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="3"/></filter>
+      <filter id="p9s" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="1.3" stdDeviation="1.3" flood-color="#1E4FA8" flood-opacity="0.22"/></filter>`,
+          body: `<g filter="url(#p9g)" opacity="0.15">
+        <circle cx="38" cy="50" r="18" fill="#3182F6"/>
+        <circle cx="62" cy="50" r="18" fill="none" stroke="#3182F6" stroke-width="7.5"/>
+      </g>
+      <circle cx="38" cy="50" r="18" fill="url(#p9)" filter="url(#p9s)"/>
+      <circle cx="62" cy="50" r="18" fill="#FDFEFF" stroke="url(#p9)" stroke-width="7.5" filter="url(#p9s)"/>
+      <path d="M28.8 40.8 A13 13 0 0 1 35.7 37.2" fill="none" stroke="#FFFFFF"
+        stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+      <path d="M55.8 33.1 A18 18 0 0 1 62 32" fill="none" stroke="#FFFFFF"
+        stroke-width="2" stroke-linecap="round" opacity="0.8"/>`,
+        },
+      ];
+
+      /* 白色單色鏤空版（深色 / 品牌色表面用） */
+      const WHITE_MONO = {
+        defs: `<mask id="mwm"><rect width="100" height="100" fill="#fff"/>
+    <circle cx="62" cy="50" r="14.25" fill="#000"/></mask>`,
+        body: `<circle cx="38" cy="50" r="18" fill="#FFFFFF" mask="url(#mwm)"/>
+    <circle cx="62" cy="50" r="18" fill="none" stroke="#FFFFFF" stroke-width="7.5"/>`,
+      };
+
+      /* ---------- SVG 組裝 ---------- */
+      const tsvg = (v, px) =>
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"${px ? ` width="${px}" height="${px}"` : ''}>
+    <defs>${v.defs}</defs>${v.body}</svg>`;
+
+      /* 白玻璃 squircle 底座（app icon 形態） */
+      function appIcon(v, px) {
+        const dark = v.darkTile;
+        const bgDefs = dark
+          ? `<linearGradient id="ai-bg" x1="0" y1="0" x2="0.9" y2="1">
+        <stop offset="0" stop-color="#16307A"/><stop offset="0.55" stop-color="#0C1D52"/>
+        <stop offset="1" stop-color="#070F2E"/></linearGradient>`
+          : `<linearGradient id="ai-bg" x1="0" y1="0" x2="0.9" y2="1">
+        <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.55" stop-color="#F4F9FF"/>
+        <stop offset="1" stop-color="#E5EFFC"/></linearGradient>`;
+        const glow = dark
+          ? `<radialGradient id="ai-glow" cx="0.3" cy="0.05" r="0.9">
+        <stop offset="0" stop-color="#6FA5FF" stop-opacity="0.3"/>
+        <stop offset="0.55" stop-color="#6FA5FF" stop-opacity="0"/></radialGradient>`
+          : `<radialGradient id="ai-glow" cx="0.3" cy="0.05" r="0.9">
+        <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>`;
+        const rim = dark ? 0.16 : 0.95;
+        const sheen = dark ? 0.06 : 0.5;
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"${px ? ` width="${px}" height="${px}"` : ''}>
+  <defs>${bgDefs}${glow}
+    <clipPath id="ai-clip"><rect width="100" height="100" rx="23"/></clipPath>
+    ${v.defs}</defs>
+  <rect width="100" height="100" rx="23" fill="url(#ai-bg)"/>
+  <g clip-path="url(#ai-clip)">
+    <rect width="100" height="100" fill="url(#ai-glow)"/>
+    <path d="M-12 40 L112 8 L112 30 L-12 66 Z" fill="#FFFFFF" opacity="${sheen}"/>
+  </g>
+  <g>${v.body}</g>
+  <rect x="1.4" y="1.4" width="97.2" height="97.2" rx="21.8" fill="none"
+    stroke="#FFFFFF" stroke-opacity="${rim}" stroke-width="1.6"/>
+  ${
+    v.darkTile
+      ? ''
+      : `<rect x="0.5" y="0.5" width="99" height="99" rx="22.6" fill="none"
+    stroke="#CBD9EC" stroke-opacity="0.8" stroke-width="1"/>`
+  }
+</svg>`;
+      }
+
+      /* ---------- Gallery ---------- */
+      let cur = 0;
+      const gallery = document.getElementById('gallery');
+      VARIANTS.forEach((v, i) => {
+        const card = document.createElement('div');
+        card.className = 'gcard' + (v.darkTile ? ' darktile' : '');
+        card.innerHTML = `
+    <div class="tile">${tsvg(v)}</div>
+    <span class="badge${v.keep ? ' keep' : ''}">${v.keep ? '原版保留' : '材質延伸'}</span>
+    <b>${v.name}</b><p>${v.desc}</p>`;
+        card.onclick = () => select(i);
+        gallery.appendChild(card);
+      });
+
+      /* ---------- 全頁切換 ---------- */
+      function select(i) {
+        cur = i;
+        const v = VARIANTS[i];
+        document
+          .querySelectorAll('.gcard')
+          .forEach((c, j) => c.classList.toggle('active', j === i));
+
+        document.getElementById('heroIcon').innerHTML = appIcon(v);
+        document.getElementById('anatomyMark').innerHTML = tsvg(VARIANTS[0]);
+        document.getElementById('lockH').innerHTML = tsvg(v, 64);
+        document.getElementById('lockV').innerHTML = tsvg(v, 64);
+        document.getElementById('splashMark').innerHTML = tsvg(v, 84);
+        document.getElementById('homeIcon').innerHTML = appIcon(v);
+
+        document.getElementById('surfaces').innerHTML = `
+    <figure class="surf checker">${tsvg(v)}</figure>
+    <figure class="surf white">${tsvg(v)}</figure>
+    <figure class="surf ink">${tsvg(WHITE_MONO)}</figure>
+    <figure class="surf blue">${tsvg(WHITE_MONO)}</figure>
+    <figure class="surf mesh">${tsvg(WHITE_MONO)}</figure>`;
+
+        document.getElementById('sizeStrip').innerHTML = [96, 64, 48, 32, 16]
+          .map((px) => `<div class="cell">${appIcon(v, px)}<span>${px}px</span></div>`)
+          .join('');
+        document.getElementById('tabMock').innerHTML =
+          `${appIcon(v, 16)} HaoRate 好匯率｜台銀即時匯率換算`;
+
+        document.getElementById('avaBlue').innerHTML = tsvg(WHITE_MONO);
+        document.getElementById('avaInk').innerHTML = tsvg(WHITE_MONO);
+        document.getElementById('avaLite').innerHTML = tsvg(v);
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') select((cur + 1) % VARIANTS.length);
+        if (e.key === 'ArrowLeft') select((cur + VARIANTS.length - 1) % VARIANTS.length);
+      });
+
+      /* ---------- 字體切換 ---------- */
+      const FONTS = [
+        {
+          name: '系統圓黑（預設）',
+          css: "-apple-system, 'PingFang TC', sans-serif",
+          note: 'Apple 系統字，Toss 實際用的 Pretendard 同路線——中性、韓感基準',
+        },
+        {
+          name: 'Inter',
+          css: "'Inter', sans-serif",
+          note: '全球 fintech 標配（Stripe、Figma 同款氣質），理性可信',
+        },
+        {
+          name: 'Manrope',
+          css: "'Manrope', sans-serif",
+          note: '幾何圓潤、字腔開放，最接近韓系 app 的親切現代感',
+        },
+        {
+          name: 'Outfit',
+          css: "'Outfit', sans-serif",
+          note: '極簡幾何，正圓 O / a 與雙幣圓形符號互相呼應',
+        },
+        {
+          name: 'Plus Jakarta Sans',
+          css: "'Plus Jakarta Sans', sans-serif",
+          note: '人文幾何混血，專業中帶溫度',
+        },
+        {
+          name: 'Poppins',
+          css: "'Poppins', sans-serif",
+          note: '純幾何圓形骨架，可愛度最高、年輕化路線',
+        },
+        {
+          name: 'Montserrat',
+          css: "'Montserrat', sans-serif",
+          note: '寬字幅、存在感強，適合大標語場景',
+        },
+        {
+          name: 'Space Grotesk',
+          css: "'Space Grotesk', sans-serif",
+          note: '科技感 grotesque，帶稜角個性，差異化最大',
+        },
+        {
+          name: 'Nunito',
+          css: "'Nunito', sans-serif",
+          note: '圓端點筆畫，全場最柔軟——偏可愛工具風',
+        },
+        {
+          name: 'Sora',
+          css: "'Sora', sans-serif",
+          note: '為 fintech 而生的字體，冷靜俐落、數字表現佳',
+        },
+        { name: 'Urbanist', css: "'Urbanist', sans-serif", note: '低對比幾何，時髦輕盈的都會感' },
+      ];
+
+      let curFont = 0;
+      const fontsEl = document.getElementById('fonts');
+      FONTS.forEach((f, i) => {
+        const card = document.createElement('div');
+        card.className = 'fcard';
+        card.innerHTML = `<div class="sample" style="font-family:${f.css}">Hao<i>Rate</i></div>
+    <b>${f.name}</b><span>${f.note}</span>`;
+        card.onclick = () => selectFont(i);
+        fontsEl.appendChild(card);
+      });
+
+      function selectFont(i) {
+        curFont = i;
+        document.documentElement.style.setProperty('--wmfont', FONTS[i].css);
+        document
+          .querySelectorAll('.fcard')
+          .forEach((c, j) => c.classList.toggle('active', j === i));
+      }
+
+      /* 已定案狀態：字體 Nunito（index 8）＋ 材質 02 微光暈 Soft Glow（index 1）。 */
+      selectFont(8);
+      select(1);
+    </script>
+  </body>
+</html>

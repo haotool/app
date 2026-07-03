@@ -4,6 +4,7 @@ import {
   ColorType,
   LineStyle,
   AreaSeries,
+  TrackingModeExitMode,
   type IChartApi,
   type ISeriesApi,
 } from 'lightweight-charts';
@@ -35,14 +36,13 @@ interface TooltipData {
  * 迷你趨勢圖組件 - 現代化高級 APP 風格
  * 使用 lightweight-charts 專業金融圖表庫
  * 特色：
- * - 左到右酷炫動畫
- * - Hover/Touch 互動顯示日期和價格
- * - 觸控長按滑動支援（行動裝置）
- * - 數據 ≥ 2 天時統一延伸到最寬
- * - 現代化配色與微互動
- * - **SSOT Design Token** - 圖表顏色從 CSS Variables 獲取
+ * - Hover/長按互動顯示日期和價格（單一事件來源：subscribeCrosshairMove）
+ * - 觸控長按追蹤採用 library 內建 trackingMode（240ms long-tap，退出於放開手指），
+ *   不再自製手勢計時器，避免與內建觸控處理互相干擾造成 tooltip 跳動
+ * - Tooltip 錨定於 crosshair 資料點 x、固定顯示於圖表上緣，不被手指遮擋
+ * - **SSOT Design Token** - 圖表顏色從 CSS Variables 獲取，data-style 切換即時重建
  *
- * @version 2.0.0 - 新增觸控長按滑動 Tooltip 支援
+ * @version 3.0.0 - 收斂觸控處理至 lightweight-charts 內建 tracking mode
  */
 export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
@@ -51,17 +51,16 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
-  const [isTouching, setIsTouching] = useState(false);
-  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 追蹤主題變化 - 用於觸發圖表重建
   const [themeVersion, setThemeVersion] = useState(0);
 
-  // MutationObserver 監聽 <html> class 變化（主題切換）
+  // MutationObserver 監聽 <html> 的 data-style / class 變化（主題切換）。
+  // applyTheme 以 data-style 切換主題，僅監聽 class 會漏掉同字體主題間的切換。
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.attributeName === 'class') {
+        if (mutation.attributeName === 'data-style' || mutation.attributeName === 'class') {
           setThemeVersion((v) => v + 1);
         }
       }
@@ -69,7 +68,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['data-style', 'class'],
     });
 
     return () => observer.disconnect();
@@ -132,6 +131,11 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
           visible: false,
         },
       },
+      // 行動裝置長按追蹤：交由內建 tracking mode 處理（240ms long-tap 啟動），
+      // 放開手指即退出，crosshairMove 為唯一 tooltip 事件來源。
+      trackingMode: {
+        exitMode: TrackingModeExitMode.OnTouchEnd,
+      },
       handleScroll: false,
       handleScale: false,
       width: chartContainerRef.current.clientWidth,
@@ -175,7 +179,8 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       }
     }
 
-    // Crosshair 移動事件 - 顯示 tooltip
+    // Crosshair 移動事件 - tooltip 唯一來源（滑鼠 hover 與觸控 tracking mode 共用）。
+    // x 錨定 crosshair 座標、y 固定於圖表上緣：位置穩定且不被手指遮擋。
     chart.subscribeCrosshairMove((param) => {
       if (param.point === undefined || !param.time || param.point.x < 0 || param.point.y < 0) {
         setTooltipData(null);
@@ -189,7 +194,7 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
               date: param.time as string,
               rate: dataPoint.value,
               x: rect.left + param.point.x,
-              y: rect.top + param.point.y,
+              y: rect.top,
             });
           }
         }
@@ -217,159 +222,6 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     };
   }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
-  /**
-   * Touch event handler - Enables tooltip after 150ms long press
-   * 觸控事件處理 - 長按 150ms 後啟動 Tooltip 滑動模式
-   *
-   * Implementation based on lightweight-charts best practices:
-   * - Long press (150ms) activates tracking mode
-   * - Touch coordinates are converted to data points
-   * - Tooltip displays date and exchange rate
-   *
-   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
-   */
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      const touch = e.touches[0];
-      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
-
-      // Store initial touch position for use in timer callback
-      const initialClientX = touch.clientX;
-      const initialClientY = touch.clientY;
-
-      touchTimerRef.current = setTimeout(() => {
-        setIsTouching(true);
-
-        // Calculate tooltip data immediately when long press is detected
-        const container = chartContainerRef.current;
-        const chart = chartRef.current;
-        if (container && chart) {
-          const rect = container.getBoundingClientRect();
-          const x = initialClientX - rect.left;
-
-          // Convert screen coordinate to logical index
-          const timeScale = chart.timeScale();
-          const logical = timeScale.coordinateToLogical(x);
-
-          if (logical !== null && logical >= 0 && logical < displayData.length) {
-            const dataPoint = displayData[Math.round(logical)];
-            if (dataPoint) {
-              setTooltipData({
-                date: dataPoint.date,
-                rate: dataPoint.rate,
-                x: initialClientX,
-                y: initialClientY - 20,
-              });
-            }
-          }
-        }
-      }, 150); // 150ms long press threshold
-    },
-    [displayData],
-  );
-
-  /**
-   * Handle touch move event for tooltip tracking (native event handler)
-   * 處理觸控滑動事件以追蹤 Tooltip 位置（原生事件處理器）
-   *
-   * IMPORTANT: This is a native TouchEvent handler, NOT a React.TouchEvent handler.
-   * React's synthetic event handlers are passive by default, preventing preventDefault().
-   * We use useEffect to attach this handler with { passive: false } to enable preventDefault().
-   *
-   * Uses lightweight-charts API:
-   * - coordinateToLogical() converts x coordinate to data index
-   * - setCrosshairPosition() programmatically moves the crosshair
-   *
-   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
-   * @see https://stackoverflow.com/questions/63663025/react-onwheel-handler-cant-preventdefault-because-its-a-passive-event-listener
-   */
-  const handleTouchMoveNative = useCallback(
-    (e: TouchEvent) => {
-      if (!isTouching) return;
-      e.preventDefault(); // Prevent page scrolling while tracking (works with passive: false)
-
-      const touch = e.touches[0];
-      if (!touch || !chartContainerRef.current || !chartRef.current || !seriesRef.current) return;
-
-      const container = chartContainerRef.current;
-      const rect = container.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-
-      // Convert screen coordinate to logical data index
-      const timeScale = chartRef.current.timeScale();
-      const logical = timeScale.coordinateToLogical(x);
-
-      if (logical !== null && logical >= 0 && logical < displayData.length) {
-        const index = Math.round(logical);
-        const dataPoint = displayData[index];
-        if (dataPoint) {
-          // Update tooltip data with touch position
-          setTooltipData({
-            date: dataPoint.date,
-            rate: dataPoint.rate,
-            x: touch.clientX,
-            y: touch.clientY - 20, // Position tooltip above finger
-          });
-
-          // Programmatically set crosshair position for visual feedback
-          try {
-            chartRef.current.setCrosshairPosition(
-              dataPoint.rate,
-              dataPoint.date,
-              seriesRef.current,
-            );
-          } catch {
-            // Silently fail if setCrosshairPosition is not supported
-          }
-        }
-      }
-    },
-    [isTouching, displayData],
-  );
-
-  /**
-   * Attach touchmove event listener with passive: false
-   * 附加 touchmove 事件監聽器，設定 passive: false 以支援 preventDefault()
-   *
-   * React's synthetic events are passive by default for touch/wheel events.
-   * To call preventDefault(), we must use native addEventListener with { passive: false }.
-   *
-   * @see https://stackoverflow.com/questions/76406592/how-to-do-passivefalse-event-listeners-in-react
-   */
-  useEffect(() => {
-    const container = chartContainerRef.current;
-    if (!container) return;
-
-    // Add non-passive touchmove listener to enable preventDefault()
-    container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
-
-    return () => {
-      container.removeEventListener('touchmove', handleTouchMoveNative);
-    };
-  }, [handleTouchMoveNative]);
-
-  /**
-   * Handle touch end event to clean up tracking state
-   * 處理觸控結束事件以清理追蹤狀態
-   *
-   * @see https://tradingview.github.io/lightweight-charts/tutorials/how_to/set-crosshair-position
-   */
-  const handleTouchEnd = useCallback(() => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
-    setIsTouching(false);
-    setTooltipData(null);
-
-    // Clear crosshair position when touch ends
-    try {
-      chartRef.current?.clearCrosshairPosition();
-    } catch {
-      // Silently fail if clearCrosshairPosition is not supported
-    }
-  }, []);
-
   // 數據不足時不顯示圖表
   if (displayData.length < 2) {
     return null;
@@ -384,15 +236,12 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
       transition={chartTransitions.fadeIn}
       whileHover={{ scale: 1.01, y: -2 }}
     >
-      {/* Lightweight Charts 趨勢圖 - 支援觸控 */}
-      {/* Note: touchmove handler attached via useEffect with { passive: false } */}
+      {/* Lightweight Charts 趨勢圖：觸控長按由 library trackingMode 內建處理。
+       * touch-none 阻止瀏覽器手勢、select-none 防止長按選字/iOS 放大鏡。 */}
       <div
         ref={chartContainerRef}
         data-testid="mini-trend-chart-surface"
-        className={`w-full h-full touch-none ${isTouching ? 'select-none' : ''}`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
+        className="w-full h-full touch-none select-none"
       />
 
       {/* Hover Tooltip - SSOT 主題色設計 */}

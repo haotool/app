@@ -112,6 +112,7 @@ const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
   nitro: Zap,
   kawaii: Sparkles,
   zen: Sun,
+  violet: Palette,
   classic: Moon,
   ocean: Waves,
   forest: Leaf,

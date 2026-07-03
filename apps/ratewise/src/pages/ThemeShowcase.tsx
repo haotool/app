@@ -4,7 +4,7 @@
  * @description 展示新主題系統的所有風格和元件
  *
  * 展示內容：
- * - 6 種風格預覽（Zen/Nitro/Kawaii/Classic/Ocean/Forest）
+ * - 7 種風格預覽（Zen/Violet/Nitro/Kawaii/Classic/Ocean/Forest）
  * - 設計語彙（圓角、陰影、間距）
  * - 元件庫預覽（按鈕、卡片、輸入框）
  *

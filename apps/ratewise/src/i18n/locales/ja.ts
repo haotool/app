@@ -156,6 +156,10 @@ const ja = {
     rateModeSellDesc: '全換算に銀行売値を適用。電信送金（即時）・窓口現金どちらも対応',
     rateModeMid: '参考値',
     rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
+    // 起動画面セクション
+    splashScreen: '起動画面',
+    splashScreenDesc: 'インストール版アプリの起動時にブランドアニメーションを再生',
+    splashPreview: '起動画面をプレビュー',
     // サポートと情報セクション
     supportInfo: 'サポートと情報',
     faq: 'よくある質問',
@@ -181,6 +185,10 @@ const ja = {
     oceanDesc: '深海',
     forest: 'Forest',
     forestDesc: '自然の森',
+    violet: 'Violet',
+    violetDesc: 'クラシックパープル',
+    custom: 'カスタムテーマ',
+    customDesc: '近日公開',
   },
 
   // Currency List

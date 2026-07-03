@@ -332,8 +332,13 @@ export default defineConfig(({ mode }) => {
               revision: getFileRevision('public/apple-touch-icon.png'),
             },
             {
-              url: 'icons/ratewise-icon-192x192.png',
-              revision: getFileRevision('public/icons/ratewise-icon-192x192.png'),
+              url: 'icons/haorate-icon-192x192.png',
+              revision: getFileRevision('public/icons/haorate-icon-192x192.png'),
+            },
+            {
+              // 品牌標準字子集字體（1.2KB）：離線啟動頁與頁首 wordmark 需要。
+              url: 'fonts/nunito-wordmark-900.woff2',
+              revision: getFileRevision('public/fonts/nunito-wordmark-900.woff2'),
             },
           ],
           rollupFormat: 'iife',

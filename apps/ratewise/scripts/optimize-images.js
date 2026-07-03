@@ -203,8 +203,7 @@ async function main() {
     type="image/avif"
     srcset="
       /optimized/logo-112w.avif 112w,
-      /optimized/logo-192w.avif 192w,
-      /optimized/logo-384w.avif 384w
+      /optimized/logo-192w.avif 192w
     "
     sizes="(max-width: 768px) 112px, 192px"
   />
@@ -212,8 +211,7 @@ async function main() {
     type="image/webp"
     srcset="
       /optimized/logo-112w.webp 112w,
-      /optimized/logo-192w.webp 192w,
-      /optimized/logo-384w.webp 384w
+      /optimized/logo-192w.webp 192w
     "
     sizes="(max-width: 768px) 112px, 192px"
   />

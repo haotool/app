@@ -205,9 +205,9 @@ export const IMAGE_RESOURCES = [
   TWITTER_IMAGE,
   '/favicon.ico',
   '/apple-touch-icon.png',
-  '/icons/ratewise-icon-192x192.png',
-  '/icons/ratewise-icon-512x512.png',
-  '/icons/ratewise-icon-maskable-512x512.png',
+  '/icons/haorate-icon-192x192.png',
+  '/icons/haorate-icon-512x512.png',
+  '/icons/haorate-icon-maskable-512x512.png',
 ] as const;
 
 export const SITE_CONFIG = {

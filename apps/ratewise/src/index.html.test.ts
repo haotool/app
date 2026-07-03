@@ -19,7 +19,7 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
 
     it('should have theme-color meta tag', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#7C3AED"');
+      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#3182F6"');
     });
 
     it('should have Cloudflare Rocket Loader disabled', () => {
@@ -114,10 +114,17 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
 
   describe('🟢 PWA Meta Tags（保留）', () => {
     it('should retain PWA essential tags', () => {
-      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#7C3AED"');
+      expect(indexHtmlContent).toContain('<meta name="theme-color" content="#3182F6"');
       expect(indexHtmlContent).toContain('<meta name="viewport"');
       expect(indexHtmlContent).toContain('<link rel="apple-touch-icon"');
       expect(indexHtmlContent).toContain('<link rel="icon"');
+    });
+
+    it('should preload and define the brand wordmark font subset with base path SSOT', () => {
+      // 品牌標準字（Nunito 900 子集）：preload + @font-face 均須走 __BASE_PATH__ 佔位符。
+      expect(indexHtmlContent).toContain('__BASE_PATH__fonts/nunito-wordmark-900.woff2');
+      expect(indexHtmlContent).toContain("font-family: 'Nunito Wordmark'");
+      expect(indexHtmlContent).toContain('font-display: swap');
     });
 
     it('should retain PWA manifest hints', () => {
@@ -150,7 +157,9 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
 
     it('should have theme whitelist for security', () => {
       // [2026-01-29] 白名單防注入，壓縮後仍含完整主題名稱陣列。
-      expect(indexHtmlContent).toContain("'zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'");
+      expect(indexHtmlContent).toContain(
+        "'zen', 'violet', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'",
+      );
     });
 
     it('should check for prototype pollution prevention', () => {

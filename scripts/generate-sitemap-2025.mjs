@@ -180,7 +180,7 @@ const PAGE_IMAGES = {
       caption: `${BRAND_SHORT} - 即時匯率轉換器 Open Graph 圖片`,
     },
     {
-      loc: `${SITE_URL}icons/ratewise-icon-512x512.png`,
+      loc: `${SITE_URL}icons/haorate-icon-512x512.png`,
       caption: `${BRAND_SHORT} Logo`,
     },
   ],

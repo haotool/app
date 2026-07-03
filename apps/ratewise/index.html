@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <meta name="theme-color" content="#7C3AED" />
+    <meta name="theme-color" content="#3182F6" />
 
     <!-- Cloudflare Rocket Loader 停用（與 CSP/Trusted Types 衝突） -->
     <meta name="cloudflare-rocket-loader" content="off" />
@@ -24,9 +24,9 @@
          路徑使用 __BASE_PATH__ 佔位符由 vite.config.ts 在 build 時注入（SSOT: VITE_RATEWISE_BASE_PATH），
          避免 base=/ 時硬編 /ratewise/ 造成 404 與 PWA 安裝能力失效。 -->
     <link rel="manifest" href="__BASE_PATH__manifest.webmanifest" />
-    <link rel="icon" href="__BASE_PATH__favicon.ico?v=20251208" sizes="48x48" />
-    <link rel="icon" href="__BASE_PATH__favicon.svg?v=20251208" sizes="any" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="__BASE_PATH__apple-touch-icon.png?v=20251208" />
+    <link rel="icon" href="__BASE_PATH__favicon.ico?v=20260703" sizes="48x48" />
+    <link rel="icon" href="__BASE_PATH__favicon.svg?v=20260703" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="__BASE_PATH__apple-touch-icon.png?v=20260703" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!-- iOS PWA Status Bar Configuration
@@ -37,7 +37,15 @@
     <meta name="apple-mobile-web-app-title" content="__BRAND_SHORT__" />
 
     <!-- LCP 關鍵資源預載入：logo 是首頁 LCP 元素，preload 可提前請求避免 render-blocking 延遲。 -->
-    <link rel="preload" href="__BASE_PATH__logo.png" as="image" fetchpriority="high" />
+    <!-- 品牌 LOGO 已改為 inline SVG（主題感知），不再 preload 點陣 logo -->
+    <!-- 品牌標準字子集字體（Nunito 900，僅 HaoRate 字符，1.2KB）：同源自架，避免外部字體阻塞與 CSP 擴權 -->
+    <link
+      rel="preload"
+      href="__BASE_PATH__fonts/nunito-wordmark-900.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <!-- Resource Hints（僅保留實際使用的來源） -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -52,7 +60,7 @@
       (function () {
         var K = 'ratewise-theme',
           D = 'zen',
-          A = ['zen', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
+          A = ['zen', 'violet', 'nitro', 'kawaii', 'classic', 'ocean', 'forest'];
         function v(c) {
           if (c === null || typeof c !== 'object' || Array.isArray(c) || c.constructor !== Object)
             return D;
@@ -108,12 +116,31 @@
         line-height: 1.6;
         -webkit-text-size-adjust: 100%;
       }
+      /* 品牌標準字（showcase-twincoins SSOT）：Nunito 900 子集，僅含 HaoRate 六個字符。 */
+      @font-face {
+        font-family: 'Nunito Wordmark';
+        font-style: normal;
+        font-weight: 900;
+        font-display: swap;
+        src: url('__BASE_PATH__fonts/nunito-wordmark-900.woff2') format('woff2');
+        unicode-range: U+0048, U+0052, U+0061, U+0065, U+006F, U+0074;
+      }
       /* Theme-aware skeleton variables
        * Maps to user's selected theme for seamless loading experience
        * @see index.css - theme color definitions
        */
       :root,
       [data-style='zen'] {
+        --sk-bg: #f8fafc;
+        --sk-surface: #ffffff;
+        --sk-border: #e2e8f0;
+        --sk-shimmer: #cbd5e1;
+        --sk-accent: rgba(49, 130, 246, 0.15);
+        --sk-accent-shimmer: rgba(49, 130, 246, 0.25);
+        --sk-text: #1e293b;
+        --sk-text-muted: #64748b;
+      }
+      [data-style='violet'] {
         --sk-bg: #f8fafc;
         --sk-surface: #ffffff;
         --sk-border: #e2e8f0;
@@ -677,9 +704,9 @@
           wrap.appendChild(title);
           wrap.appendChild(desc);
           var CTA =
-            'padding:.625rem 1.75rem;background:rgb(var(--color-primary,124 58 237));' +
+            'padding:.625rem 1.75rem;background:rgb(var(--color-primary,49 130 246));' +
             'color:#fff;border:none;border-radius:.75rem;font-size:.875rem;font-weight:600;' +
-            'cursor:pointer;box-shadow:0 8px 20px rgb(var(--color-primary,124 58 237) / 0.22);';
+            'cursor:pointer;box-shadow:0 8px 20px rgb(var(--color-primary,49 130 246) / 0.22);';
           var SEC =
             'padding:.5rem 1.25rem;background:rgb(var(--color-surface-elevated,248 250 252));' +
             'color:rgb(var(--color-text-muted,100 116 139));' +

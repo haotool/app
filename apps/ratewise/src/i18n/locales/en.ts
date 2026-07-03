@@ -159,6 +159,10 @@ const en = {
     rateModeMid: 'Ref Rate',
     rateModeMidDesc:
       'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
+    // Splash screen section
+    splashScreen: 'Splash Screen',
+    splashScreenDesc: 'Play the brand animation when launching the installed app',
+    splashPreview: 'Preview Splash Screen',
     // Support & Info section
     supportInfo: 'Support & Info',
     faq: 'FAQ',
@@ -184,6 +188,10 @@ const en = {
     oceanDesc: 'Deep Sea',
     forest: 'Forest',
     forestDesc: 'Natural Woods',
+    violet: 'Violet',
+    violetDesc: 'Classic Violet',
+    custom: 'Custom Theme',
+    customDesc: 'Coming Soon',
   },
 
   // Currency List

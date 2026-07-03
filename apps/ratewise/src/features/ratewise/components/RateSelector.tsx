@@ -57,12 +57,13 @@ export const RateSelector = ({
     },
   ];
 
+  // 實底 pill 使用主色深階（zen 定義 --color-primary-strong），確保白字 WCAG AA 對比。
   const renderIndicator = (isActive: boolean) => (
     <AnimatePresence>
       {isActive && (
         <motion.div
           layoutId="rate-selector-indicator"
-          className="absolute inset-0 rounded-full bg-primary shadow-md"
+          className="absolute inset-0 rounded-full bg-[rgb(var(--color-primary-strong,var(--color-primary)))] shadow-md"
           transition={segmentedSwitch.indicator}
         />
       )}
@@ -93,10 +94,12 @@ export const RateSelector = ({
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
             className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
               isActive ? 'text-white' : 'text-text/70 hover:text-text'
-            } ${isUnavailable ? 'cursor-not-allowed' : ''}`}
+            } ${isUnavailable ? 'cursor-not-allowed opacity-60' : ''}`}
             aria-label={option.ariaLabel}
             aria-pressed={isActive}
-            disabled={isUnavailable}
+            // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
+            // RateTypeTooltip 的禁用原因提示將永遠無法觸發（onClick guard 已阻擋切換）。
+            aria-disabled={isUnavailable || undefined}
           >
             {renderIndicator(isActive)}
             <motion.span

@@ -357,7 +357,7 @@ describe('ratewise build scripts', () => {
       (await readFile(path.resolve(__dirname, '../seo-metadata/currency-landing.ts'), 'utf-8'));
 
     expect(seoMetadata).not.toContain('optimized/logo-512w.png');
-    expect(seoMetadata).toContain('icons/ratewise-icon-512x512.png');
+    expect(seoMetadata).toContain('icons/haorate-icon-512x512.png');
   });
 
   it('should not manage CSP inside the app build pipeline when Cloudflare is the SSOT', async () => {

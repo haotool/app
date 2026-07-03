@@ -52,6 +52,10 @@ vi.mock('lightweight-charts', () => ({
     Normal: 0,
     Magnet: 1,
   },
+  TrackingModeExitMode: {
+    OnTouchEnd: 0,
+    OnNextTap: 1,
+  },
   LineStyle: {
     Solid: 0,
     Dotted: 1,

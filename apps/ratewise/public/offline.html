@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#7C3AED" />
+    <meta name="theme-color" content="#3182F6" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <script>
       (function () {
-        var themeColors = {"zen":"#7C3AED","nitro":"#0096E6","kawaii":"#FF69B4","classic":"#8B4513","ocean":"#06B6D4","forest":"#22C55E"};
+        var themeColors = {"zen":"#3182F6","violet":"#7C3AED","nitro":"#0096E6","kawaii":"#FF69B4","classic":"#8B4513","ocean":"#06B6D4","forest":"#22C55E"};
         var supportedStyles = Object.keys(themeColors);
         var selectedStyle = 'zen';
 
@@ -39,6 +39,28 @@
     </script>
     <style>
       html[data-style='zen'] {
+        --offline-theme-color: #3182F6;
+        --offline-background: #F8FAFC;
+        --offline-surface: #FFFFFF;
+        --offline-border: #E2E8F0;
+        --offline-text: #0F172A;
+        --offline-text-muted: #64748B;
+        --offline-primary: #3182F6;
+        --offline-primary-foreground: #020617;
+        --offline-secondary: #475569;
+        --offline-accent: #3B82F6;
+        --offline-primary-tint: rgba(49, 130, 246, 0.08);
+        --offline-primary-border-tint: rgba(49, 130, 246, 0.18);
+        --offline-primary-shadow-soft: rgba(49, 130, 246, 0.18);
+        --offline-primary-shadow-strong: rgba(49, 130, 246, 0.26);
+        --offline-primary-shadow-hover: rgba(49, 130, 246, 0.34);
+        --offline-warning-tint: rgba(245, 158, 11, 0.16);
+        --offline-warning: #F59E0B;
+        --offline-success-tint: rgba(34, 197, 94, 0.12);
+        --offline-success: #22C55E;
+      }
+
+      html[data-style='violet'] {
         --offline-theme-color: #7C3AED;
         --offline-background: #F8FAFC;
         --offline-surface: #FFFFFF;
@@ -48,7 +70,7 @@
         --offline-primary: #7C3AED;
         --offline-primary-foreground: #FFFFFF;
         --offline-secondary: #475569;
-        --offline-accent: #3B82F6;
+        --offline-accent: #8B5CF6;
         --offline-primary-tint: rgba(124, 58, 237, 0.08);
         --offline-primary-border-tint: rgba(124, 58, 237, 0.18);
         --offline-primary-shadow-soft: rgba(124, 58, 237, 0.18);

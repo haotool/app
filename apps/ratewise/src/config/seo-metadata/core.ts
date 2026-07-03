@@ -208,7 +208,7 @@ export const SITE_SEO = {
       '拖曳排序自訂幣別順序',
       '換算歷史記錄',
       '7~30 天歷史匯率趨勢圖',
-      '6 種主題風格',
+      '7 種主題風格',
       '4 語言支援（繁中／英／日／韓）',
       '下拉更新即時同步',
       '離線使用（PWA）',
@@ -312,7 +312,7 @@ export function buildSiteJsonLd(): JsonLdBlock[] {
       name: APP_INFO.author,
       url: SITE_BASE_URL,
       foundingDate: String(APP_INFO.copyrightStartYear),
-      logo: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+      logo: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'Customer Support',
@@ -692,7 +692,7 @@ export function buildArticleJsonLd(
       name: APP_INFO.author,
       logo: {
         '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        url: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       },
     },
     inLanguage: DEFAULT_LOCALE,
@@ -756,7 +756,7 @@ export function buildTechArticleJsonLd(
       name: APP_INFO.author,
       logo: {
         '@type': 'ImageObject',
-        url: buildAbsoluteAssetUrl('/icons/ratewise-icon-512x512.png'),
+        url: buildAbsoluteAssetUrl('/icons/haorate-icon-512x512.png'),
       },
     },
     inLanguage: DEFAULT_LOCALE,
@@ -859,7 +859,7 @@ export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: '有哪些主題風格可選？',
     answer:
-      '提供 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林），可在設定頁面中切換。',
+      '提供 7 種主題風格：Zen（極簡專業）、Violet（經典紫）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Ocean（海洋深邃）、Forest（自然森林），可在設定頁面中切換。',
   },
   {
     question: '什麼是現金匯率和即期匯率？',
@@ -890,7 +890,7 @@ export const HOMEPAGE_HOW_TO: HowToData = {
     {
       position: 4,
       name: '管理與個人化',
-      text: '在收藏頁面透過拖曳手柄調整貨幣順序、管理收藏清單與查看換算歷史記錄，並在設定頁面切換 6 種主題風格與 4 種介面語言。',
+      text: '在收藏頁面透過拖曳手柄調整貨幣順序、管理收藏清單與查看換算歷史記錄，並在設定頁面切換 7 種主題風格與 4 種介面語言。',
     },
   ],
 };
@@ -934,7 +934,7 @@ export const HOMEPAGE_SEO = {
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
       `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
-      '6 種主題風格、4 語言介面（繁中／英／日／韓），PWA 可離線使用，重新連線自動同步。',
+      '7 種主題風格、4 語言介面（繁中／英／日／韓），PWA 可離線使用，重新連線自動同步。',
     ],
     quickLinks: [
       { href: '/usd-twd/', label: 'USD/TWD 匯率' },

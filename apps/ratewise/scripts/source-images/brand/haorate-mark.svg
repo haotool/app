@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- HaoRate 純符號（去背）：Twin Coins 微光暈；深色底請改用白色單色 knockout 版 -->
+  <defs>
+    <linearGradient id="mk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#55A3FF"/>
+      <stop offset="0.5" stop-color="#3182F6"/>
+      <stop offset="1" stop-color="#1B64DA"/>
+    </linearGradient>
+    <filter id="halo" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <g filter="url(#halo)" opacity="0.18">
+    <circle cx="38" cy="50" r="18" fill="#3182F6"/>
+    <circle cx="62" cy="50" r="18" fill="none" stroke="#3182F6" stroke-width="7.5"/>
+  </g>
+  <circle cx="38" cy="50" r="18" fill="url(#mk)"/>
+  <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#mk)" stroke-width="7.5"/>
+</svg>

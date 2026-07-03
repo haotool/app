@@ -45,6 +45,10 @@ vi.mock('lightweight-charts', () => ({
     Normal: 0,
     Magnet: 1,
   },
+  TrackingModeExitMode: {
+    OnTouchEnd: 0,
+    OnNextTap: 1,
+  },
   LineStyle: {
     Solid: 0,
     Dotted: 1,
@@ -297,7 +301,7 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(spotButtonAfter).toHaveAttribute('aria-pressed', 'false');
     });
 
-    it('should disable unavailable rate type button for current currency pair', () => {
+    it('should mark unavailable rate type button aria-disabled (keeps tooltip clickable)', () => {
       render(
         <SingleConverter
           {...mockProps}
@@ -315,8 +319,36 @@ describe('SingleConverter - 核心功能測試', () => {
         />,
       );
 
+      // 原生 disabled 會吞掉點擊事件，導致禁用原因 tooltip 永遠無法顯示；
+      // 改用 aria-disabled 保留可點擊性（切換行為由 onClick guard 阻擋）。
       const spotButton = getSpotRateButton();
-      expect(spotButton).toBeDisabled();
+      expect(spotButton).not.toBeDisabled();
+      expect(spotButton).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should show unavailable reason tooltip when tapping the aria-disabled button', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateType="cash"
+          details={{
+            KRW: {
+              name: '韓元',
+              spot: { buy: 0, sell: null },
+              cash: { buy: 0.0226, sell: 0.024 },
+            },
+          }}
+          rateTypeAvailability={{ spot: false, cash: true }}
+        />,
+      );
+
+      fireEvent.click(getSpotRateButton());
+
+      // RateTypeTooltip 應顯示禁用原因（目前不提供即期匯率）。
+      expect(screen.getByText(/目前不提供/)).toBeInTheDocument();
+      expect(document.querySelector('.fixed.inset-0.z-40')).toBeInTheDocument();
     });
 
     it('should not call onRateTypeChange when target rate type is unavailable', () => {

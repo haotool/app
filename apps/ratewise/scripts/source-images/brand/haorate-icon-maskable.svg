@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- HaoRate 品牌圖示 master（maskable）：符號縮至 82% 置於安全區（中央 80% 圓形） -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#F4F9FF"/>
+      <stop offset="1" stop-color="#E5EFFC"/>
+    </linearGradient>
+    <linearGradient id="mk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#55A3FF"/>
+      <stop offset="0.5" stop-color="#3182F6"/>
+      <stop offset="1" stop-color="#1B64DA"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.05" r="0.9">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="halo" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <rect width="100" height="100" fill="url(#bg)"/>
+  <rect width="100" height="100" fill="url(#glow)"/>
+  <path d="M-12 40 L112 8 L112 30 L-12 66 Z" fill="#FFFFFF" opacity="0.5"/>
+  <g transform="translate(9.34 9) scale(0.82)">
+    <g filter="url(#halo)" opacity="0.18">
+      <circle cx="38" cy="50" r="18" fill="#3182F6"/>
+      <circle cx="62" cy="50" r="18" fill="none" stroke="#3182F6" stroke-width="7.5"/>
+    </g>
+    <circle cx="38" cy="50" r="18" fill="url(#mk)"/>
+    <circle cx="62" cy="50" r="18" fill="#F7FAFF" stroke="url(#mk)" stroke-width="7.5"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@
   "name": "HaoRate 匯率好工具",
   "short_name": "HaoRate",
   "description": "HaoRate 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 18 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。",
-  "theme_color": "#7C3AED",
+  "theme_color": "#3182F6",
   "background_color": "#F8FAFC",
   "display": "standalone",
   "scope": "https://app.haotool.org/ratewise/",
@@ -16,43 +16,43 @@
   ],
   "icons": [
     {
-      "src": "icons/ratewise-icon-192x192.png?v=2.25.13",
+      "src": "icons/haorate-icon-192x192.png?v=2.25.13",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/ratewise-icon-256x256.png?v=2.25.13",
+      "src": "icons/haorate-icon-256x256.png?v=2.25.13",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/ratewise-icon-384x384.png?v=2.25.13",
+      "src": "icons/haorate-icon-384x384.png?v=2.25.13",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/ratewise-icon-512x512.png?v=2.25.13",
+      "src": "icons/haorate-icon-512x512.png?v=2.25.13",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/ratewise-icon-1024x1024.png?v=2.25.13",
+      "src": "icons/haorate-icon-1024x1024.png?v=2.25.13",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/ratewise-icon-maskable-512x512.png?v=2.25.13",
+      "src": "icons/haorate-icon-maskable-512x512.png?v=2.25.13",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/ratewise-icon-maskable-1024x1024.png?v=2.25.13",
+      "src": "icons/haorate-icon-maskable-1024x1024.png?v=2.25.13",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"

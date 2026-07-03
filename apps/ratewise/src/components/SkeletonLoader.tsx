@@ -8,7 +8,7 @@
  * - 布局與最終 UI 結構高度一致，減少 CLS
  * - 使用 shimmer 動畫提升感知速度
  * - CSS-only 動畫，避免 JavaScript 阻塞
- * - 主題感知顏色，適應所有 6 種風格
+ * - 主題感知顏色，適應所有 7 種風格
  *
  * 重要：SkeletonLoader 僅渲染內容骨架，不包含 AppLayout 結構
  *       因為它作為 ClientOnly fallback 已在 AppLayout 內部渲染
