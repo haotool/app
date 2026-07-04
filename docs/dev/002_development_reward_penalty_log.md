@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-05
+- ID：neutral-rw-e3-converter-v2-design-brief
+- 原因：E3「等值雙列」wave-A 實作需要設計簡報 SSOT 入 repo，避免實作與 PM 裁決脫鉤
+- 解法：將 ratewise-e3-converter-v2-design.md 複製至 .claude/prds/ 並強制納入版控作為勾稽基準
+
+- 日期：2026-07-05
 - ID：neutral-rw-e2-002-score-conservation-fix
 - 原因：前一 fix commit 新增 1 筆 penalty 時，檔頭把前一 commit 已消化的 reward 重複計入，誤植「本次 0（reward 1、penalty 1）｜累計 +108」，正確應為「本次 -1（reward 0、penalty 1、neutral 0）｜累計 +107」，違反記分守恆
 - 解法：檔頭累計總分回正 +107 並以本筆 neutral（0 分）留痕；同步更正 AA property 條目輸入數 312→322（12 邊界＋300 隨機＋10 色票）
