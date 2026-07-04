@@ -252,7 +252,6 @@
     --color-neutral-text: var(--color-text);
     --color-neutral-text-secondary: var(--color-text-muted);
     --color-neutral-text-muted: var(--color-text-muted);
-    --color-neutral-border: var(--color-border);
 
     /* 舊版 primary 系列 - 紫色調 */
     --color-primary-bg: 239 246 255; /* blue-50 */
@@ -273,6 +272,7 @@
     --color-success-foreground: 255 255 255;
     --color-warning: 245 158 11;
     --color-warning-foreground: 255 255 255;
+    --color-error: 239 68 68; /* red-500 - 與 destructive 同色相值 */
 
     /* 舊版 danger/success/warning 系列 */
     --color-danger-bg: 254 242 242;
@@ -289,6 +289,7 @@
     --color-warning-light: 254 243 199;
     --color-warning-hover: 253 230 138;
     --color-warning-active: 252 211 77;
+    --color-warning-text: var(--color-warning);
 
     /* Favorite 系列 */
     --color-favorite-light: 254 243 199;
@@ -437,7 +438,6 @@
     --color-neutral-text: var(--color-text);
     --color-neutral-text-secondary: var(--color-text-muted);
     --color-neutral-text-muted: var(--color-text-muted);
-    --color-neutral-border: var(--color-border);
 
     /* 舊版 primary 系列 - 紫色調 */
     --color-primary-bg: 245 243 255; /* violet-50 */
@@ -458,6 +458,7 @@
     --color-success-foreground: 255 255 255;
     --color-warning: 245 158 11;
     --color-warning-foreground: 255 255 255;
+    --color-error: 239 68 68; /* red-500 - 與 destructive 同色相值 */
 
     /* 舊版 danger/success/warning 系列 */
     --color-danger-bg: 254 242 242;
@@ -474,6 +475,7 @@
     --color-warning-light: 254 243 199;
     --color-warning-hover: 253 230 138;
     --color-warning-active: 252 211 77;
+    --color-warning-text: var(--color-warning);
 
     /* Favorite 系列 */
     --color-favorite-light: 254 243 199;
@@ -625,14 +627,54 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 30 41 59; /* slate-800 */
+    --color-neutral-dark: 51 65 85; /* slate-700 - 深色主題互動回饋（亮向） */
+    --color-neutral-darker: 71 85 105; /* slate-600 */
     --color-neutral-text: var(--color-text);
     --color-neutral-text-secondary: 203 213 225; /* slate-300 - 算式文字高對比 */
     --color-neutral-text-muted: 148 163 184; /* slate-400 - 預覽文字可讀 */
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 239 68 68; /* red-500 */
+    --color-destructive-foreground: 15 23 42; /* slate-900 - 亮色警示底需深色字（AA） */
     --color-success-text: var(--color-success);
+    --color-success-bg: 2 44 34; /* emerald-950 */
+    --color-success-light: 6 78 59; /* emerald-900 */
+    --color-success-hover: 6 95 70; /* emerald-800 */
+    --color-success-active: 4 120 87; /* emerald-700 */
+    --color-success-foreground: 15 23 42; /* slate-900 - 亮色底深色字（AA） */
     --color-warning-text: var(--color-warning);
+    --color-warning-light: 69 26 3; /* amber-950 */
+    --color-warning-hover: 120 53 15; /* amber-900 */
+    --color-warning-active: 146 64 14; /* amber-800 */
+    --color-warning-foreground: 15 23 42; /* slate-900 - 亮色底深色字（AA） */
+
+    /* 舊版 danger 系列 - 由 error（red-400）色階推導 */
+    --color-danger: 248 113 113; /* red-400 - 同 error */
+    --color-danger-text: 248 113 113; /* red-400 */
+    --color-danger-bg: 69 10 10; /* red-950 */
+    --color-danger-light: 127 29 29; /* red-900 */
+    --color-danger-hover: 239 68 68; /* red-500 */
+    --color-danger-active: 252 165 165; /* red-300 - 深色主題按壓強調（亮向） */
+
+    /* Favorite 系列 - 深色主題金色 */
+    --color-favorite: 250 204 21; /* yellow-400 */
+    --color-favorite-light: 66 32 6; /* yellow-950 */
+
+    /* Highlight 系列 - 深色主題暗金底 */
+    --color-highlight-from: 66 32 6; /* yellow-950 */
+    --color-highlight-to: 69 26 3; /* amber-950 */
+
+    /* Footer 系列 - 與 zen 相同的反轉映射（text 底 + surface 字） */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
 
     /* Page Gradient Tokens - Nitro 深色科技漸層 */
     --color-page-gradient-from: 2 6 23; /* slate-950 */
@@ -765,13 +807,54 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 255 228 230; /* rose-100 - 粉嫩中性階 */
+    --color-neutral-dark: 254 205 211; /* rose-200 */
+    --color-neutral-darker: 253 164 175; /* rose-300 */
     --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 220 38 38; /* red-600 */
+    --color-destructive-foreground: 255 255 255; /* white */
     --color-success-text: var(--color-success);
+    --color-success-bg: 240 253 244; /* green-50 */
+    --color-success-light: 220 252 231; /* green-100 */
+    --color-success-hover: 187 247 208; /* green-200 */
+    --color-success-active: 134 239 172; /* green-300 */
+    --color-success-foreground: 255 255 255; /* white */
     --color-warning-text: var(--color-warning);
+    --color-warning-light: 254 249 195; /* yellow-100 - 檸檬黃色階 */
+    --color-warning-hover: 254 240 138; /* yellow-200 */
+    --color-warning-active: 253 224 71; /* yellow-300 */
+    --color-warning-foreground: 255 255 255; /* white */
+
+    /* 舊版 danger 系列 - 同 error 紅色相 Tailwind 色階 */
+    --color-danger: 239 68 68; /* red-500 */
+    --color-danger-text: 239 68 68; /* red-500 */
+    --color-danger-bg: 254 242 242; /* red-50 */
+    --color-danger-light: 254 226 226; /* red-100 */
+    --color-danger-hover: 220 38 38; /* red-600 */
+    --color-danger-active: 252 165 165; /* red-300 */
+
+    /* Favorite 系列 - 柔和檸檬金 */
+    --color-favorite: 250 204 21; /* yellow-400 */
+    --color-favorite-light: 254 249 195; /* yellow-100 */
+
+    /* Highlight 系列 - 暖金高亮 */
+    --color-highlight-from: 254 252 232; /* yellow-50 */
+    --color-highlight-to: 255 251 235; /* amber-50 */
+
+    /* Footer 系列 - 與 zen 相同的反轉映射（text 底 + surface 字） */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
 
     /* Page Gradient Tokens - Kawaii 夢幻粉嫩漸層 */
     --color-page-gradient-from: 255 250 244; /* warm cream */
@@ -906,13 +989,54 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 231 229 228; /* stone-200 - 暖灰中性階 */
+    --color-neutral-dark: 214 211 209; /* stone-300 */
+    --color-neutral-darker: 168 162 158; /* stone-400 */
     --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 153 27 27; /* red-800 */
+    --color-destructive-foreground: 255 255 255; /* white */
     --color-success-text: var(--color-success);
+    --color-success-bg: 240 253 244; /* green-50 */
+    --color-success-light: 220 252 231; /* green-100 */
+    --color-success-hover: 187 247 208; /* green-200 */
+    --color-success-active: 134 239 172; /* green-300 */
+    --color-success-foreground: 255 255 255; /* white */
     --color-warning-text: var(--color-warning);
+    --color-warning-light: 254 243 199; /* amber-100 - 琥珀色階 */
+    --color-warning-hover: 253 230 138; /* amber-200 */
+    --color-warning-active: 252 211 77; /* amber-300 */
+    --color-warning-foreground: 255 255 255; /* white */
+
+    /* 舊版 danger 系列 - 同 error 磚紅色相 Tailwind 色階 */
+    --color-danger: 185 28 28; /* red-700 - 同 error */
+    --color-danger-text: 185 28 28; /* red-700 */
+    --color-danger-bg: 254 242 242; /* red-50 */
+    --color-danger-light: 254 226 226; /* red-100 */
+    --color-danger-hover: 153 27 27; /* red-800 */
+    --color-danger-active: 252 165 165; /* red-300 */
+
+    /* Favorite 系列 - 古銅金 */
+    --color-favorite: 217 119 6; /* amber-600 */
+    --color-favorite-light: 254 243 199; /* amber-100 */
+
+    /* Highlight 系列 - 羊皮紙金 */
+    --color-highlight-from: 254 252 232; /* yellow-50 */
+    --color-highlight-to: 255 251 235; /* amber-50 */
+
+    /* Footer 系列 - 與 zen 相同的反轉映射（text 底 + surface 字） */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
 
     /* Page Gradient Tokens - Classic 復古典雅漸層 */
     --color-page-gradient-from: 255 250 251; /* warm white */
@@ -1047,14 +1171,54 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 38 38 38; /* neutral-800 */
+    --color-neutral-dark: 64 64 64; /* neutral-700 - 深色主題互動回饋（亮向） */
+    --color-neutral-darker: 82 82 82; /* neutral-600 */
     --color-neutral-text: var(--color-text);
     --color-neutral-text-secondary: 212 212 212; /* neutral-300 - 算式文字高對比 */
     --color-neutral-text-muted: 163 163 163; /* neutral-400 - 預覽文字可讀 */
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 249 115 22; /* orange-500 */
+    --color-destructive-foreground: 23 23 23; /* neutral-900 - 亮色警示底需深色字（AA） */
     --color-success-text: var(--color-success);
+    --color-success-bg: 2 44 34; /* emerald-950 */
+    --color-success-light: 6 78 59; /* emerald-900 */
+    --color-success-hover: 6 95 70; /* emerald-800 */
+    --color-success-active: 4 120 87; /* emerald-700 */
+    --color-success-foreground: 23 23 23; /* neutral-900 - 亮色底深色字（AA） */
     --color-warning-text: var(--color-warning);
+    --color-warning-light: 69 26 3; /* amber-950 */
+    --color-warning-hover: 120 53 15; /* amber-900 */
+    --color-warning-active: 146 64 14; /* amber-800 */
+    --color-warning-foreground: 23 23 23; /* neutral-900 - 亮色底深色字（AA） */
+
+    /* 舊版 danger 系列 - 由 error（orange-400）色階推導，與賽道紅 primary 區隔 */
+    --color-danger: 251 146 60; /* orange-400 - 同 error */
+    --color-danger-text: 251 146 60; /* orange-400 */
+    --color-danger-bg: 67 20 7; /* orange-950 */
+    --color-danger-light: 124 45 18; /* orange-900 */
+    --color-danger-hover: 249 115 22; /* orange-500 */
+    --color-danger-active: 253 186 116; /* orange-300 - 深色主題按壓強調（亮向） */
+
+    /* Favorite 系列 - 深色主題領獎台金 */
+    --color-favorite: 251 191 36; /* amber-400 */
+    --color-favorite-light: 69 26 3; /* amber-950 */
+
+    /* Highlight 系列 - 深色主題暗金底 */
+    --color-highlight-from: 66 32 6; /* yellow-950 */
+    --color-highlight-to: 69 26 3; /* amber-950 */
+
+    /* Footer 系列 - 與 zen 相同的反轉映射（text 底 + surface 字） */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
 
     /* Page Gradient Tokens - Racing 黑紅賽車漸層 */
     --color-page-gradient-from: 10 10 10; /* near-black */
@@ -1187,13 +1351,54 @@
 
     /* 向後相容映射 */
     --color-foreground: var(--color-text);
+    --color-foreground-secondary: var(--color-text-muted);
+    --color-foreground-muted: var(--color-text-muted);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text);
+    --color-ring: var(--color-accent);
     --color-neutral-bg: var(--color-background);
     --color-neutral-light: var(--color-surface);
+    --color-neutral: 231 229 228; /* stone-200 - 暖灰中性階 */
+    --color-neutral-dark: 214 211 209; /* stone-300 */
+    --color-neutral-darker: 168 162 158; /* stone-400 */
     --color-neutral-text: var(--color-text);
+    --color-neutral-text-secondary: var(--color-text-muted);
     --color-neutral-text-muted: var(--color-text-muted);
     --color-destructive: var(--color-error);
+    --color-destructive-hover: 220 38 38; /* red-600 */
+    --color-destructive-foreground: 255 255 255; /* white */
     --color-success-text: var(--color-success);
+    --color-success-bg: 240 253 244; /* green-50 */
+    --color-success-light: 220 252 231; /* green-100 */
+    --color-success-hover: 187 247 208; /* green-200 */
+    --color-success-active: 134 239 172; /* green-300 */
+    --color-success-foreground: 255 255 255; /* white */
     --color-warning-text: var(--color-warning);
+    --color-warning-light: 254 249 195; /* yellow-100 - 黃色階 */
+    --color-warning-hover: 254 240 138; /* yellow-200 */
+    --color-warning-active: 253 224 71; /* yellow-300 */
+    --color-warning-foreground: 255 255 255; /* white */
+
+    /* 舊版 danger 系列 - 同 error 紅色相 Tailwind 色階 */
+    --color-danger: 239 68 68; /* red-500 - 同 error */
+    --color-danger-text: 239 68 68; /* red-500 */
+    --color-danger-bg: 254 242 242; /* red-50 */
+    --color-danger-light: 254 226 226; /* red-100 */
+    --color-danger-hover: 220 38 38; /* red-600 */
+    --color-danger-active: 252 165 165; /* red-300 */
+
+    /* Favorite 系列 - 螢火蟲金 */
+    --color-favorite: 234 179 8; /* yellow-500 */
+    --color-favorite-light: 254 249 195; /* yellow-100 */
+
+    /* Highlight 系列 - 暖金高亮 */
+    --color-highlight-from: 254 252 232; /* yellow-50 */
+    --color-highlight-to: 255 251 235; /* amber-50 */
+
+    /* Footer 系列 - 與 zen 相同的反轉映射（text 底 + surface 字） */
+    --color-footer-from: var(--color-text);
+    --color-footer-via: var(--color-text);
+    --color-footer-to: var(--color-text);
 
     /* Page Gradient Tokens - Forest 韓系簡約漸層 */
     --color-page-gradient-from: 250 250 249; /* stone-50 */

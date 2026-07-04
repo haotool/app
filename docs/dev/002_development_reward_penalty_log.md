@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+101
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+102
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-04
+- ID：reward-rw-theme-token-contract-parity
+- 原因：主題變數合約破碎（zen 聯集 121 鍵、深色主題僅 88 鍵），缺鍵靜默 fallback 到 zen 淺色值，深色主題出現淺色卡片／警示／收藏色；defaultTheme/darkTheme violet 遺物僅被過時測試消費形同無守門
+- 解法：7 主題全鍵補齊（深色補值同色相且文字對比 ≥4.5:1、淺色跟隨各自 Tailwind 色階）、刪除死鍵 neutral-border、parity 測試擴為全鍵集合相等＋聯集下限＋zen 組合選擇器守門、移除 defaultTheme/darkTheme 並重寫 consistency 測試為格式合約
 
 - 日期：2026-07-04
 - ID：reward-rw-rates-history-integrity

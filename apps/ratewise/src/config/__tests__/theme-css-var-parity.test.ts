@@ -1,19 +1,25 @@
 /**
- * 主題 CSS 變數 parity 守門（舊版 primary 系列）
+ * 主題 CSS 變數全鍵 parity 守門
  *
- * 背景：`text-primary-dark` / `hover:text-primary-darker` 等 Tailwind class
- * 對應的 legacy primary 變數過去只在部分 `[data-style]` 區塊定義，
- * 缺失主題（kawaii / classic / ocean / forest）會 fallback 到 `:root`
- * 的品牌藍，導致多幣別頁費率切換鈕顏色不符主題。
+ * 背景：`index.css` 的 `:root, [data-style='zen']` 是全站預設，
+ * 任何主題缺鍵都會靜默 fallback 到 zen 淺色值，
+ * 深色主題（nitro/racing）下形成「深底淺卡」級視覺 bug（Plan 018）。
  *
- * 守門規則：每個 `[data-style]` 區塊必須定義完整 9 鍵 primary 系列；
- * 未來新增主題若漏定義，本測試會列出主題名與缺失鍵。
+ * 守門規則：
+ * 1. 全部 `[data-style]` 區塊的 `--color-*` 鍵集合必須完全相等（缺失/多餘皆列出）。
+ * 2. 聯集鍵數不得低於下限，且 legacy primary 9 鍵必須存在（防止刪光變數讓 parity 通過）。
+ * 3. `:root, [data-style='zen']` 組合選擇器不可被拆掉（zen = 預設的合約）。
+ *
+ * 分工：本測試守 CSS 區塊鍵集合；`theme-consistency.test.ts` 守 JS→CSS 變數格式。
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-/** legacy primary 系列 SSOT 鍵集合（9 鍵） */
+/** 全鍵聯集下限（Step 2 落地後實際鍵數；刪鍵需同步下修並附計畫依據） */
+const MIN_UNION_KEY_COUNT = 120;
+
+/** legacy primary 系列 SSOT 鍵集合（9 鍵，Plan 013 守門對象） */
 const REQUIRED_PRIMARY_KEYS = [
   '--color-primary-bg',
   '--color-primary-light',
@@ -48,27 +54,39 @@ function parseThemeBlocks(source: string): Map<string, Set<string>> {
 }
 
 const themeBlocks = parseThemeBlocks(css);
+const unionKeys = new Set([...themeBlocks.values()].flatMap((keys) => [...keys]));
 
-describe('主題 CSS 變數 parity（legacy primary 系列）', () => {
+describe('主題 CSS 變數 parity（全鍵合約）', () => {
   it('index.css 至少包含 6 個 [data-style] 主題區塊', () => {
     expect(themeBlocks.size).toBeGreaterThanOrEqual(6);
   });
 
-  it('守門鍵清單必須涵蓋 primary-dark / primary-darker（防止清單被掏空）', () => {
-    expect(REQUIRED_PRIMARY_KEYS).toContain('--color-primary-dark');
-    expect(REQUIRED_PRIMARY_KEYS).toContain('--color-primary-darker');
+  it(':root 與 [data-style=zen] 必須維持組合選擇器（zen = 全站預設合約）', () => {
+    expect(css).toMatch(/:root,\n\s*\[data-style='zen'\]\s*\{/);
   });
+
+  it(`聯集鍵數不得低於 ${MIN_UNION_KEY_COUNT}（防止刪光變數讓 parity 通過）`, () => {
+    expect(unionKeys.size).toBeGreaterThanOrEqual(MIN_UNION_KEY_COUNT);
+  });
+
+  it.each(REQUIRED_PRIMARY_KEYS.map((key) => ({ key })))(
+    '聯集必須包含 legacy primary 鍵 $key',
+    ({ key }) => {
+      expect(unionKeys.has(key), `聯集缺少 ${key}（legacy primary 系列 9 鍵必須齊備）`).toBe(true);
+    },
+  );
 
   describe.each([...themeBlocks.keys()].map((theme) => ({ theme })))(
     '[data-style=$theme]',
     ({ theme }) => {
-      it.each(REQUIRED_PRIMARY_KEYS.map((key) => ({ key })))('定義 $key', ({ key }) => {
+      it('鍵集合必須與全主題聯集完全相等', () => {
         const keys = themeBlocks.get(theme);
         expect(keys, `主題 ${theme} 區塊解析失敗`).toBeDefined();
+        const missing = [...unionKeys].filter((key) => !keys?.has(key)).sort();
         expect(
-          keys?.has(key),
-          `主題 ${theme} 缺少 ${key}（legacy primary 系列 9 鍵必須齊備）`,
-        ).toBe(true);
+          missing,
+          `主題 ${theme} 缺少 ${missing.length} 鍵（缺鍵會 fallback 到 zen 淺色值）：${missing.join(', ')}`,
+        ).toEqual([]);
       });
     },
   );
