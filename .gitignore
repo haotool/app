@@ -133,6 +133,10 @@ squirrel.toml
 .codex/
 .gemini/
 
+# Agent runtime state and product intelligence (local only)
+.claude/state/
+.claude/product-intel/
+
 # AI tool auto-generated directories
 .codebuddy/
 .commandcode/

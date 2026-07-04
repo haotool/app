@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+105
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+105
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-product-2026h2-experiment-baseline
+- 原因：建立產品級迭代實驗分支基線（experiment/ratewise-product-2026h2），作為後續大規模重構 epic PR 的共同 base
+- 解法：新增 ROADMAP.md 路線圖並於 .gitignore 補 .claude/state/ 與 .claude/product-intel/ 忽略規則
 
 - 日期：2026-07-05
 - ID：reward-rw-theme-ssot-drift-convergence
