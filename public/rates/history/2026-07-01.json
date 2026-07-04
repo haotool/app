@@ -1,27 +1,28 @@
 {
-  "timestamp": "2026-06-29T06:56:34.378Z",
-  "updateTime": "2026/06/29 14:56:34",
+  "timestamp": "2026-07-01T08:01:00.000Z",
+  "updateTime": "2026/07/01 16:01:00",
   "source": "Taiwan Bank (臺灣銀行牌告匯率)",
-  "sourceUrl": "https://rate.bot.com.tw/xrt",
+  "sourceUrl": "https://rate.bot.com.tw/xrt/flcsv/0/2026-07-01",
   "base": "TWD",
+  "note": "backfilled from Taiwan Bank historical CSV (2026-07-04) — original snapshot was stale due to bot-challenge outage",
   "rates": {
     "USD": 32.16,
     "HKD": 4.113,
-    "GBP": 43.09,
-    "AUD": 22.4,
-    "CAD": 22.91,
-    "SGD": 24.99,
-    "CHF": 39.82,
-    "JPY": 0.2007,
-    "NZD": 18.41,
-    "THB": 1.0191,
-    "PHP": 0.5871,
+    "GBP": 43.16,
+    "AUD": 22.36,
+    "CAD": 22.84,
+    "SGD": 24.94,
+    "CHF": 39.77,
+    "JPY": 0.1996,
+    "NZD": 18.48,
+    "THB": 1.0168,
+    "PHP": 0.5836,
     "IDR": 0.00213,
-    "EUR": 36.91,
-    "KRW": 0.02284,
+    "EUR": 36.89,
+    "KRW": 0.02267,
     "VND": 0.0014,
-    "MYR": 8.355,
-    "CNY": 4.757
+    "MYR": 8.288,
+    "CNY": 4.754
   },
   "details": {
     "USD": {
@@ -49,89 +50,89 @@
     "GBP": {
       "name": "英鎊",
       "spot": {
-        "buy": 41.98,
-        "sell": 42.38
+        "buy": 42.05,
+        "sell": 42.45
       },
       "cash": {
-        "buy": 40.97,
-        "sell": 43.09
+        "buy": 41.04,
+        "sell": 43.16
       }
     },
     "AUD": {
       "name": "澳幣",
       "spot": {
-        "buy": 21.91,
-        "sell": 22.11
+        "buy": 21.87,
+        "sell": 22.07
       },
       "cash": {
-        "buy": 21.62,
-        "sell": 22.4
+        "buy": 21.58,
+        "sell": 22.36
       }
     },
     "CAD": {
       "name": "加拿大幣",
       "spot": {
-        "buy": 22.4,
-        "sell": 22.6
+        "buy": 22.33,
+        "sell": 22.53
       },
       "cash": {
-        "buy": 22,
-        "sell": 22.91
+        "buy": 21.93,
+        "sell": 22.84
       }
     },
     "SGD": {
       "name": "新加坡幣",
       "spot": {
-        "buy": 24.57,
-        "sell": 24.75
+        "buy": 24.52,
+        "sell": 24.7
       },
       "cash": {
-        "buy": 24.08,
-        "sell": 24.99
+        "buy": 24.03,
+        "sell": 24.94
       }
     },
     "CHF": {
       "name": "瑞士法郎",
       "spot": {
-        "buy": 39.3,
-        "sell": 39.55
+        "buy": 39.25,
+        "sell": 39.5
       },
       "cash": {
-        "buy": 38.62,
-        "sell": 39.82
+        "buy": 38.57,
+        "sell": 39.77
       }
     },
     "JPY": {
       "name": "日圓",
       "spot": {
-        "buy": 0.1952,
-        "sell": 0.1992
+        "buy": 0.1941,
+        "sell": 0.1981
       },
       "cash": {
-        "buy": 0.1879,
-        "sell": 0.2007
+        "buy": 0.1868,
+        "sell": 0.1996
       }
     },
     "NZD": {
       "name": "紐元",
       "spot": {
-        "buy": 17.94,
-        "sell": 18.14
+        "buy": 18.01,
+        "sell": 18.21
       },
       "cash": {
-        "buy": 17.56,
-        "sell": 18.41
+        "buy": 17.63,
+        "sell": 18.48
       }
     },
     "THB": {
       "name": "泰銖",
       "spot": {
-        "buy": 0.9425,
-        "sell": 0.9825
+        "buy": 0.9402,
+        "sell": 0.9802
       },
       "cash": {
-        "buy": 0.8291,
-        "sell": 1.0191
+        "buy": 0.8268,
+        "sell": 1.0168
       }
     },
     "PHP": {
@@ -141,8 +142,8 @@
         "sell": null
       },
       "cash": {
-        "buy": 0.4551,
-        "sell": 0.5871
+        "buy": 0.4516,
+        "sell": 0.5836
       }
     },
     "IDR": {
@@ -159,12 +160,12 @@
     "EUR": {
       "name": "歐元",
       "spot": {
-        "buy": 36.19,
-        "sell": 36.59
+        "buy": 36.17,
+        "sell": 36.57
       },
       "cash": {
-        "buy": 35.57,
-        "sell": 36.91
+        "buy": 35.55,
+        "sell": 36.89
       }
     },
     "KRW": {
@@ -174,8 +175,8 @@
         "sell": null
       },
       "cash": {
-        "buy": 0.01894,
-        "sell": 0.02284
+        "buy": 0.01877,
+        "sell": 0.02267
       }
     },
     "VND": {
@@ -196,19 +197,19 @@
         "sell": null
       },
       "cash": {
-        "buy": 6.83,
-        "sell": 8.355
+        "buy": 6.763,
+        "sell": 8.288
       }
     },
     "CNY": {
       "name": "人民幣",
       "spot": {
-        "buy": 4.667,
-        "sell": 4.717
+        "buy": 4.664,
+        "sell": 4.714
       },
       "cash": {
-        "buy": 4.595,
-        "sell": 4.757
+        "buy": 4.592,
+        "sell": 4.754
       }
     }
   }
