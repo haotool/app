@@ -22,6 +22,8 @@ on:
   schedule:
     # 每日 0:00 UTC (台北時間 8:00)
     - cron: '0 0 * * *'
+    # 備援：GitHub scheduled run 偶發掉單（2026-07-04 實例）；冪等設計下重跑無副作用
+    - cron: '30 1 * * *'
 
   # 允許手動觸發
   workflow_dispatch:
@@ -66,6 +68,20 @@ jobs:
           # 檢查 latest.json 是否存在
           if [ ! -f "public/rates/latest.json" ]; then
             echo "❌ Error: latest.json not found"
+            exit 1
+          fi
+
+          # 資料新鮮度守門：latest.json 過期時寧缺勿錯，拒絕寫入壞快照。
+          # 閾值 72h 容忍週末休市（週一快照資料齡約 65h）；持續 outage（如 2026-06-29 bot challenge
+          # 事故導致 4 天 stale 複本寫入 history）會在此明確失敗曝光，而非靜默保存錯誤匯率。
+          DATA_AGE_HOURS=$(node -p "
+            const ts = JSON.parse(require('fs').readFileSync('public/rates/latest.json')).timestamp;
+            Math.round((Date.now() - new Date(ts).getTime()) / 3600000);
+          ")
+          echo "📅 latest.json data age: ${DATA_AGE_HOURS}h"
+          if [ "$DATA_AGE_HOURS" -gt 72 ]; then
+            echo "❌ Error: latest.json is stale (${DATA_AGE_HOURS}h > 72h). Refusing to snapshot stale data."
+            echo "::error::Historical snapshot aborted: latest.json is ${DATA_AGE_HOURS}h old. Fix the rates pipeline, then backfill from https://rate.bot.com.tw/xrt/flcsv/0/<date>."
             exit 1
           fi
 

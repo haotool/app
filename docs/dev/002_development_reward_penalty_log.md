@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+100
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+101
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-04
+- ID：reward-rw-rates-history-integrity
+- 原因：台銀 outage 期間每日快照 workflow 無新鮮度檢查，把 stale latest.json 連續 4 天複製成 history 壞資料（趨勢圖假平線）且當日 cron 掉單無備援；另 Worker v5.4 將 sw.js 改為純 no-store 使 governance E2E 斷言 no-cache 過時紅燈
+- 解法：data 分支以台銀歷史 CSV（真瀏覽器過 challenge）回補 4 天真實匯率+重生 aggregate+purge CDN；workflow 加 72h 資料齡守門（寧缺勿錯、休市不誤報）與 01:30 備援 cron；sw.js 斷言改為 no-store 且禁 max-age/immutable
 
 - 日期：2026-07-04
 - ID：reward-rw-offline-loadfailed-resilience
