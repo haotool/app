@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+108
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+109
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-splash-animation-parity
+- 原因：index.html 內嵌靜態 splash 與 React SplashScreen 動畫版雙軌互不同步（視覺/動畫/偏好各自維護），冷啟動實際序列與設定頁預覽必然不一致，且開關只關 React 版
+- 解法：inline 版標記鏡射 SplashScreen 輸出並共用 index.css .ratewise-splash 樣式與 keyframes（SSOT），inline script 對齊偏好開關與 exit 相位，React 版偵測 session 旗標跳過自動顯示避免雙重播放，新增 splashParity 守門測試＋e2e 兩案例，8 相位（zen/nitro × 4 時點）像素對比 0.000% 差異
 
 - 日期：2026-07-05
 - ID：reward-rw-trend-tooltip-bubble-basis

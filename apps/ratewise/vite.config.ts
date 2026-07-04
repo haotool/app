@@ -260,6 +260,9 @@ export default defineConfig(({ mode }) => {
             .replace(/__BUILD_TIME__/g, buildTime)
             .replace(/__BRAND_FULL__/g, APP_INFO.name)
             .replace(/__BRAND_SHORT__/g, APP_INFO.shortName)
+            .replace(/__BRAND_WORDMARK_PREFIX__/g, APP_INFO.wordmarkPrefix)
+            .replace(/__BRAND_WORDMARK_ACCENT__/g, APP_INFO.wordmarkAccent)
+            .replace(/__BRAND_SUBTITLE__/g, APP_INFO.subtitle)
             .replace(/\/__BASE_PATH__/g, htmlBasePath)
             .replace(/__BASE_PATH__/g, htmlBasePath);
         },

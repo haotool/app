@@ -71,6 +71,61 @@ test.describe('品牌啟動頁 rw-splash', () => {
     expect(state.sessionFlag).toBe('1');
   });
 
+  test('偏好關閉（ratewise-splash-enabled=0）時 splash 維持 hidden 不顯示', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('ratewise-splash-enabled', '0');
+      document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('rw-splash');
+        window.__splashAtDCL = el
+          ? {
+              exists: true,
+              hidden: el.hasAttribute('hidden'),
+              display: getComputedStyle(el).display,
+            }
+          : { exists: false, hidden: false, display: '' };
+      });
+    });
+    await page.goto(HOME_PATH);
+
+    // 設定頁開關關閉 → inline splash 不得顯示（偏好 SSOT 對齊 React 版）。
+    const atDCL = await page.evaluate(() => window.__splashAtDCL);
+    expect(atDCL?.exists).toBe(true);
+    expect(atDCL?.hidden).toBe(true);
+    expect(atDCL?.display).toBe('none');
+  });
+
+  test('首次載入視覺 parity：inline splash 使用共用 .ratewise-splash 樣式與動畫 class', async ({
+    page,
+  }) => {
+    await page.goto(HOME_PATH, { waitUntil: 'commit' });
+    // 於 splash 尚未被 app-ready 移除前取樣（2500ms 硬上限內）。
+    const parity = await page.evaluate(() => {
+      const el = document.getElementById('rw-splash');
+      if (!el) return null;
+      return {
+        classes: el.className,
+        phase: el.getAttribute('data-phase'),
+        hasCoinSolid: Boolean(el.querySelector('.splash-coin-solid')),
+        hasCoinRing: Boolean(el.querySelector('.splash-coin-ring')),
+        hasWordmark: Boolean(el.querySelector('.brand-wordmark.splash-wordmark')),
+        hasTagline: Boolean(el.querySelector('.splash-tagline.brand-subtitle')),
+      };
+    });
+    // splash 可能已被 app-ready 移除（載入極快時）；存在時必須符合 parity 結構。
+    if (parity) {
+      expect(parity.classes).toContain('ratewise-splash');
+      expect(parity.phase === 'enter' || parity.phase === 'exit').toBe(true);
+      expect(parity.hasCoinSolid).toBe(true);
+      expect(parity.hasCoinRing).toBe(true);
+      expect(parity.hasWordmark).toBe(true);
+      expect(parity.hasTagline).toBe(true);
+    } else {
+      // 已移除代表 inline script 有執行；session 旗標必須已寫入。
+      const flag = await page.evaluate(() => sessionStorage.getItem('rw-splash-shown'));
+      expect(flag).toBe('1');
+    }
+  });
+
   test('同 session 二次載入：splash 維持 hidden 不再顯示', async ({ page }) => {
     await page.goto(HOME_PATH);
     await page.waitForFunction(() => !document.getElementById('rw-splash'), undefined, {
