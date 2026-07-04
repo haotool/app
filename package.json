@@ -31,7 +31,7 @@
     "format:fix": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test && pnpm test:root",
-    "test:root": "vitest run scripts/__tests__/lighthouse-production.test.ts scripts/__tests__/fetch-moneybox-rates.test.ts",
+    "test:root": "vitest run scripts/__tests__/lighthouse-production.test.ts scripts/__tests__/fetch-moneybox-rates.test.ts scripts/__tests__/fetch-taiwan-bank-rates.test.ts",
     "test:unit": "pnpm -r test && pnpm test:root",
     "test:integration": "pnpm --filter @app/ratewise exec vitest run integration",
     "test:e2e": "pnpm --filter @app/ratewise exec playwright test && pnpm --filter @app/nihonname exec playwright test",

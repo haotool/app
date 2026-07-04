@@ -75,8 +75,10 @@ test.describe('Cloudflare Production Headers', () => {
       const response = await request.get(`${RATEWISE_URL}/sw.js`);
       const cacheControl = response.headers()['cache-control'] ?? '';
 
-      expect(cacheControl).toContain('no-cache');
+      // Worker v5.4 起 SW 檔案固定 no-store（最強不可快取語義），不再附帶 no-cache。
       expect(cacheControl).toContain('no-store');
+      expect(cacheControl).not.toContain('max-age');
+      expect(cacheControl).not.toContain('immutable');
     });
   });
 
