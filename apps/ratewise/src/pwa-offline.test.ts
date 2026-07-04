@@ -47,13 +47,15 @@ describe('PWA 離線功能測試', () => {
       expect(content).not.toContain('window.location.reload()');
     });
 
-    it('should show cached data indicator', () => {
+    it('should show last known rates snapshot', () => {
       const offlinePath = resolve(ROOT_PATH, 'public/offline.html');
       const content = readFileSync(offlinePath, 'utf-8');
 
-      // 應該顯示快取資料指示器
-      expect(content).toContain('cached-info');
+      // 應該渲染最後已知匯率唯讀快照（textContent 紀律，禁 innerHTML 拼接資料）
+      expect(content).toContain('last-known-rates');
       expect(content).toContain("localStorage.getItem('exchangeRates')");
+      expect(content).toContain('renderLastKnownRates');
+      expect(content).not.toContain('innerHTML +=');
     });
 
     it('should keep offline.html zen theme-color aligned with manifest theme_color SSOT', () => {
