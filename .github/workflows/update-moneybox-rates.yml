@@ -373,3 +373,39 @@ jobs:
           echo "- Retry strategy: Exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "_This is a transient API failure and does not indicate a problem with our system._" >> $GITHUB_STEP_SUMMARY
+
+      # 資料新鮮度守門：抓取失敗時，若 committed latest.json 已超過門檻未更新，
+      # 必須讓 workflow 失敗曝光事故——禁止用綠燈掩蓋持續性故障（比照台銀 staleness gate）。
+      # 閾值 30h（不能照抄台銀 6h）：MoneyBox latest.json 只在牌價變化或首爾日期跨日時重寫，
+      # 健康狀態下每日 rollover 至少寫一次、timestamp 最舊約 24h，30h 額外容忍時差與排程延遲。
+      - name: Data staleness gate (fail on persistent outage)
+        if: steps.fetch-rates.outcome != 'success'
+        env:
+          STALENESS_THRESHOLD_HOURS: '30'
+        run: |
+          AGE_HOURS=$(node -e "
+            const { readFileSync } = require('fs');
+            try {
+              const data = JSON.parse(readFileSync(process.env.MONEYBOX_LATEST_FILE, 'utf8'));
+              const ageMs = Date.now() - new Date(data.timestamp).getTime();
+              console.log(Math.floor(ageMs / 3600000));
+            } catch { console.log(999); }
+          ")
+          echo "📅 moneybox latest.json age: ${AGE_HOURS}h (threshold: ${STALENESS_THRESHOLD_HOURS}h)"
+
+          echo "# ⚠️ MoneyBox rate fetch failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Fetch outcome: ${{ steps.fetch-rates.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Committed latest.json age: ${AGE_HOURS}h" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$AGE_HOURS" -ge "$STALENESS_THRESHOLD_HOURS" ]; then
+            echo "## ❌ Persistent outage detected" >> $GITHUB_STEP_SUMMARY
+            echo "MoneyBox rates have been stale for over ${STALENESS_THRESHOLD_HOURS}h — manual investigation required." >> $GITHUB_STEP_SUMMARY
+            echo "Check whether the MoneyBox API endpoint or response format changed." >> $GITHUB_STEP_SUMMARY
+            echo "::error::MoneyBox exchange rates stale for ${AGE_HOURS}h and fetch failed"
+            exit 1
+          fi
+
+          echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
+          echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY

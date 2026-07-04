@@ -6,6 +6,7 @@
 # ✅ 低頻更新（每日一次）
 # ✅ 單一職責（只保存歷史快照）
 # ✅ 永久保存（不清理舊數據）
+# ✅ 上游管線存活守門（持續 outage 時拒寫壞快照）
 # ✅ 開源專案 GitHub Actions 完全免費
 
 name: Update Historical Exchange Rates
@@ -29,7 +30,10 @@ on:
   workflow_dispatch:
 
   # 測試用：當工作流被修改時執行
+  # 資料更新 workflow 具有 data branch 寫入權限，push 事件只允許已審查的 main。
   push:
+    branches:
+      - main
     paths:
       - '.github/workflows/update-historical-rates.yml'
 
@@ -39,6 +43,8 @@ jobs:
 
     permissions:
       contents: write
+      # 讀取 update-latest-rates.yml 的 run 結果作為上游管線存活訊號。
+      actions: read
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -55,6 +61,49 @@ jobs:
         with:
           node-version: '24'
 
+      # 上游管線存活守門：取代舊的 72h 資料齡檢查。
+      # 資料齡不可靠——fetch 腳本只在 rates 變化時重寫 latest.json，週末/春節休市時
+      # timestamp 會凍結多天（春節 6-9 天連假會讓資料齡守門誤報並拒寫正確快照）。
+      # 改判斷「update-latest-rates.yml 最近 12 小時是否至少一次 success」：
+      # - 有 success → 管線活著（正常更新或休市無變化）→ 照常寫快照
+      # - 全部失敗/取消 → 持續 outage（如 2026-06-29 bot challenge 事故連寫 4 天壞資料）→ 拒寫
+      # - 查詢失敗/窗口無 run → 告警但照常寫（告警責任在 update-latest 的 6h staleness gate；
+      #   快照寧可保存最後已知良好資料，也不因 API 抖動中斷）
+      - name: Upstream pipeline liveness gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LIVENESS_WINDOW_HOURS: '12'
+        run: |
+          WINDOW_START=$(date -u -d "${LIVENESS_WINDOW_HOURS} hours ago" +%Y-%m-%dT%H:%M:%SZ)
+          echo "🔎 Checking update-latest-rates.yml runs since ${WINDOW_START}..."
+
+          if ! RUNS_JSON=$(gh run list \
+            --workflow update-latest-rates.yml \
+            --created ">=${WINDOW_START}" \
+            --limit 200 \
+            --json conclusion 2>/dev/null); then
+            echo "::warning::Liveness query failed; proceeding with snapshot (alerting is owned by update-latest staleness gate)."
+            exit 0
+          fi
+
+          TOTAL_RUNS=$(echo "$RUNS_JSON" | jq 'length')
+          SUCCESS_RUNS=$(echo "$RUNS_JSON" | jq '[.[] | select(.conclusion == "success")] | length')
+          echo "📊 Upstream runs in window: ${TOTAL_RUNS} total, ${SUCCESS_RUNS} success"
+
+          if [ "$TOTAL_RUNS" -eq 0 ]; then
+            echo "::warning::No update-latest-rates.yml runs found in the last ${LIVENESS_WINDOW_HOURS}h; proceeding with snapshot (alerting is owned by update-latest staleness gate)."
+            exit 0
+          fi
+
+          if [ "$SUCCESS_RUNS" -eq 0 ]; then
+            echo "❌ Persistent upstream outage: 0/${TOTAL_RUNS} successful runs in the last ${LIVENESS_WINDOW_HOURS}h."
+            echo "::error::Historical snapshot aborted: rates pipeline has zero successful runs in ${LIVENESS_WINDOW_HOURS}h. Fix the pipeline, then backfill from https://rate.bot.com.tw/xrt/flcsv/0/<date>."
+            exit 1
+          fi
+
+          echo "✅ Upstream pipeline alive (${SUCCESS_RUNS} successful runs) — safe to snapshot."
+
       - name: Save historical snapshot
         id: save-snapshot
         run: |
@@ -68,20 +117,6 @@ jobs:
           # 檢查 latest.json 是否存在
           if [ ! -f "public/rates/latest.json" ]; then
             echo "❌ Error: latest.json not found"
-            exit 1
-          fi
-
-          # 資料新鮮度守門：latest.json 過期時寧缺勿錯，拒絕寫入壞快照。
-          # 閾值 72h 容忍週末休市（週一快照資料齡約 65h）；持續 outage（如 2026-06-29 bot challenge
-          # 事故導致 4 天 stale 複本寫入 history）會在此明確失敗曝光，而非靜默保存錯誤匯率。
-          DATA_AGE_HOURS=$(node -p "
-            const ts = JSON.parse(require('fs').readFileSync('public/rates/latest.json')).timestamp;
-            Math.round((Date.now() - new Date(ts).getTime()) / 3600000);
-          ")
-          echo "📅 latest.json data age: ${DATA_AGE_HOURS}h"
-          if [ "$DATA_AGE_HOURS" -gt 72 ]; then
-            echo "❌ Error: latest.json is stale (${DATA_AGE_HOURS}h > 72h). Refusing to snapshot stale data."
-            echo "::error::Historical snapshot aborted: latest.json is ${DATA_AGE_HOURS}h old. Fix the rates pipeline, then backfill from https://rate.bot.com.tw/xrt/flcsv/0/<date>."
             exit 1
           fi
 

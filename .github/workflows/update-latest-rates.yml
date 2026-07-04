@@ -17,7 +17,10 @@ on:
     - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
   # 腳本變更時觸發測試
+  # 資料更新 workflow 具有 data branch 寫入權限，push 事件只允許已審查的 main。
   push:
+    branches:
+      - main
     paths:
       - 'scripts/fetch-taiwan-bank-rates.js'
       - '.github/workflows/update-latest-rates.yml'

@@ -15,8 +15,8 @@
 
 - 日期：2026-07-04
 - ID：reward-rw-rates-history-integrity
-- 原因：台銀 outage 期間每日快照 workflow 無新鮮度檢查，把 stale latest.json 連續 4 天複製成 history 壞資料（趨勢圖假平線）且當日 cron 掉單無備援；另 Worker v5.4 將 sw.js 改為純 no-store 使 governance E2E 斷言 no-cache 過時紅燈
-- 解法：data 分支以台銀歷史 CSV（真瀏覽器過 challenge）回補 4 天真實匯率+重生 aggregate+purge CDN；workflow 加 72h 資料齡守門（寧缺勿錯、休市不誤報）與 01:30 備援 cron；sw.js 斷言改為 no-store 且禁 max-age/immutable
+- 原因：台銀 outage 期間每日快照 workflow 無新鮮度檢查，把 stale latest.json 連續 4 天複製成 history 壞資料（趨勢圖假平線）且當日 cron 掉單無備援；資料齡守門在春節連假會因休市 timestamp 凍結誤報；MoneyBox 鏈無 staleness gate、兩條抓取腳本無數值熔斷；另 Worker v5.4 將 sw.js 改為純 no-store 使 governance E2E 斷言 no-cache 過時紅燈
+- 解法：data 分支以台銀歷史 CSV（真瀏覽器過 challenge）回補 4 天真實匯率+重生 aggregate+purge CDN；歷史快照守門改用上游管線存活訊號（12h 內 update-latest 零 success 才拒寫，休市不誤報）+保留 01:30 備援 cron；MoneyBox 加 30h staleness gate（每日 rollover 最舊 ~24h）；兩腳本寫檔前加幣別數/合理區間/突變 >15% 熔斷（env 可覆寫）並補單元測試；update-seo-rate-examples 改掛 gh pr merge --auto（checks 仍把關）；data 寫入 workflow push trigger 限 main；sw.js 斷言改為 no-store 且禁 max-age/immutable
 
 - 日期：2026-07-04
 - ID：reward-rw-offline-loadfailed-resilience
