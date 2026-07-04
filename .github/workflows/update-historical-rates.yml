@@ -69,6 +69,10 @@ jobs:
       # - 全部失敗/取消 → 持續 outage（如 2026-06-29 bot challenge 事故連寫 4 天壞資料）→ 拒寫
       # - 查詢失敗/窗口無 run → 告警但照常寫（告警責任在 update-latest 的 6h staleness gate；
       #   快照寧可保存最後已知良好資料，也不因 API 抖動中斷）
+      # 耦合防護：本訊號依賴 update-latest-rates.yml 的 Data staleness gate——fetch step 雖
+      # continue-on-error，持續 outage 超過 6h 後該 gate 會讓 run 轉紅，12h 窗口內才會出現
+      # 零 success；最壞情況只會抄到 ~13h 舊資料（前一營業日收盤，語意可接受）。
+      # 若移除或修改該 gate，必須同步重新設計本守門。
       - name: Upstream pipeline liveness gate
         env:
           GH_TOKEN: ${{ github.token }}

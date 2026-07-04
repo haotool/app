@@ -110,13 +110,39 @@ jobs:
 
       # 啟用 GitHub auto-merge（squash）：合併仍由 branch protection + required checks 把關，
       # checks 未通過不會合併；此步驟只是免除人工點擊，非繞過審查控制。
+      # 掛載失敗不得讓整個排程紅燈：資料 PR 已建立即主要交付物完成，人工仍可合併；
+      # 失敗由後續 step 以 outcome 判定並發 warning（repo 規則：continue-on-error 不得用 conclusion）。
       - name: 啟用 auto-merge（待 required checks 通過後自動合併）
+        id: enable-automerge
         if: steps.create-pr.outputs.pull-request-number != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
         run: |
-          gh pr merge --auto --squash "${{ steps.create-pr.outputs.pull-request-number }}"
-          echo "✅ Auto-merge enabled for PR #${{ steps.create-pr.outputs.pull-request-number }}"
+          for i in 1 2 3; do
+            if gh pr merge --auto --squash "$PR_NUMBER"; then
+              echo "✅ Auto-merge enabled for PR #${PR_NUMBER} (attempt $i)"
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "⚠️ Enabling auto-merge failed (attempt $i/3), retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+          echo "❌ Failed to enable auto-merge after 3 attempts"
+          exit 1
+
+      - name: Auto-merge 掛載失敗告警
+        if: steps.create-pr.outputs.pull-request-number != '' && steps.enable-automerge.outcome == 'failure'
+        env:
+          PR_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+        run: |
+          echo "::warning::PR 已建立但 auto-merge 掛載失敗（重試 3 次），需人工合併：${PR_URL}"
+          echo "## ⚠️ Auto-merge 掛載失敗" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 資料 PR 已成功建立：${PR_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- auto-merge 掛載重試 3 次均失敗（政策拒絕或暫時性錯誤），請人工檢查後合併" >> $GITHUB_STEP_SUMMARY
 
       - name: 無變更
         if: steps.create-pr.outputs.pull-request-number == ''

@@ -261,6 +261,8 @@ jobs:
       # 資料新鮮度守門：抓取全數失敗時，若 committed latest.json 已超過門檻
       # 未更新，必須讓 workflow 失敗曝光事故——禁止用綠燈掩蓋持續性故障
       #（2026-06/29~07/03 台銀 bot challenge 造成 4 天停更即因舊版無此守門而未被發現）。
+      # 耦合防護：本 gate 的紅燈同時是 update-historical-rates.yml liveness 守門的訊號來源
+      #（該守門以「12h 內零 success」判定持續 outage 並拒寫快照），不可改為 continue-on-error。
       - name: Data staleness gate (fail on persistent outage)
         if: steps.fetch-status.outputs.ok != 'true'
         env:

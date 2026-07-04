@@ -353,31 +353,12 @@ jobs:
           echo "The MoneyBox exchange rates have not changed since the last update." >> $GITHUB_STEP_SUMMARY
           echo "Next check: 5 minutes from now" >> $GITHUB_STEP_SUMMARY
 
-      - name: Update workflow summary (API failure)
-        if: steps.fetch-rates.outcome == 'failure'
-        run: |
-          echo "# ⚠️ MoneyBox API temporarily unavailable" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Status" >> $GITHUB_STEP_SUMMARY
-          echo "- MoneyBox API is experiencing issues" >> $GITHUB_STEP_SUMMARY
-          echo "- Retry mechanism attempted with exponential backoff (3 retries)" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow continues successfully (graceful degradation)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Impact" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **No user impact**: SEO examples continue using cached MoneyBox rates" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Automatic recovery**: Next scheduled run in 5 minutes" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **No manual intervention required**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Technical Details" >> $GITHUB_STEP_SUMMARY
-          echo "- API URL: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011" >> $GITHUB_STEP_SUMMARY
-          echo "- Retry strategy: Exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "_This is a transient API failure and does not indicate a problem with our system._" >> $GITHUB_STEP_SUMMARY
-
       # 資料新鮮度守門：抓取失敗時，若 committed latest.json 已超過門檻未更新，
       # 必須讓 workflow 失敗曝光事故——禁止用綠燈掩蓋持續性故障（比照台銀 staleness gate）。
       # 閾值 30h（不能照抄台銀 6h）：MoneyBox latest.json 只在牌價變化或首爾日期跨日時重寫，
       # 健康狀態下每日 rollover 至少寫一次、timestamp 最舊約 24h，30h 額外容忍時差與排程延遲。
+      # fetch 失敗的 summary 統一由本 step 輸出（transient / persistent 兩種），
+      # 不得另設宣稱「一切正常」的 API-failure summary step 掩蓋紅燈語意。
       - name: Data staleness gate (fail on persistent outage)
         if: steps.fetch-rates.outcome != 'success'
         env:
@@ -397,6 +378,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Fetch outcome: ${{ steps.fetch-rates.outcome }}" >> $GITHUB_STEP_SUMMARY
           echo "- Committed latest.json age: ${AGE_HOURS}h" >> $GITHUB_STEP_SUMMARY
+          echo "- API URL: https://cems.moneybox.or.kr/api/cmd.php?cmd=C011" >> $GITHUB_STEP_SUMMARY
+          echo "- Retry strategy already attempted: exponential backoff (1s, 2s, 4s)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$AGE_HOURS" -ge "$STALENESS_THRESHOLD_HOURS" ]; then
@@ -408,4 +391,5 @@ jobs:
           fi
 
           echo "## Transient failure tolerated" >> $GITHUB_STEP_SUMMARY
-          echo "Data is still fresh (<${STALENESS_THRESHOLD_HOURS}h); next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
+          echo "This run's fetch failed; committed data is still fresh (<${STALENESS_THRESHOLD_HOURS}h)." >> $GITHUB_STEP_SUMMARY
+          echo "Next scheduled run retries in 5 minutes." >> $GITHUB_STEP_SUMMARY
