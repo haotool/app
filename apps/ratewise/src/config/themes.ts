@@ -124,7 +124,7 @@ const zenStyle: StyleDefinition = {
     textMuted: '100 116 139', // slate-500
     primary: '49 130 246', // #3182F6 - 品牌藍（與 index.css 渲染值同步）
     primaryStrong: '27 100 218', // #1B64DA - Deep 600（白字 AA 對比）
-    secondary: '71 85 105', // slate-600
+    secondary: '99 102 241', // indigo-500 - 靛藍輔色（與 index.css 渲染值同步）
     accent: '59 130 246', // blue-500
     border: '226 232 240', // slate-200
     // 狀態色彩
@@ -158,7 +158,7 @@ const violetStyle: StyleDefinition = {
     textMuted: '100 116 139', // slate-500
     primary: '124 58 237', // violet-600 - 經典紫主色
     primaryStrong: '124 58 237', // 同 primary（白字對比已達 AA）
-    secondary: '71 85 105', // slate-600
+    secondary: '99 102 241', // indigo-500 - 靛藍輔色（與 index.css 渲染值同步）
     accent: '139 92 246', // violet-500（與 index.css 渲染值同步）
     border: '226 232 240', // slate-200
     // 狀態色彩
@@ -236,10 +236,10 @@ const kawaiiStyle: StyleDefinition = {
     success: '134 239 172', // green-300 - 薄荷綠
     warning: '253 224 71', // yellow-300 - 檸檬黃
     error: '252 165 165', // red-300 - 珊瑚紅
-    // 圖表色彩 - 粉紅漸變
-    chartLine: '255 105 180', // hot pink
-    chartAreaTop: '255 105 180',
-    chartAreaBottom: '255 182 193', // light pink
+    // 圖表色彩 - 粉紅漸變（與 index.css 渲染值同步）
+    chartLine: '236 72 153', // pink-500
+    chartAreaTop: '236 72 153', // pink-500
+    chartAreaBottom: '244 114 182', // pink-400
   },
 };
 
@@ -271,10 +271,10 @@ const classicStyle: StyleDefinition = {
     success: '22 163 74', // green-600 - 橄欖綠
     warning: '180 83 9', // amber-700 - 琥珀警告
     error: '185 28 28', // red-700 - 磚紅
-    // 圖表色彩 - 復古棕
-    chartLine: '139 69 19', // saddle brown
-    chartAreaTop: '180 120 80', // tan
-    chartAreaBottom: '245 230 220', // linen
+    // 圖表色彩 - 琥珀漸變（與 index.css 渲染值同步）
+    chartLine: '180 83 9', // amber-700
+    chartAreaTop: '180 83 9', // amber-700
+    chartAreaBottom: '217 119 6', // amber-600
   },
 };
 
