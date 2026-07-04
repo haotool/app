@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+136
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+146
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-haotool-e2-final-review-fixes
+- 原因：epic-final 對抗審查抓到 S1 session 閘無移除點致 SPA 返回重播（Blocking）、odometer aria prohibited naming、兩處偏離未回寫文件
+- 解法：intro 完成後移除 data-intro＋防回歸測試；odometer 改 aria-hidden reels＋sr-only 終值；brief §8.4 與 motion-deep-dive §3 回寫
+
+- 日期：2026-07-06
+- ID：reward-haotool-e2-wave-b
+- 原因：wave-A 後桌面體驗仍缺「展示前端能力」的深度互動；wave-B 六項（舞台視差聚焦/magnetic/tilt/draw-in/progress/F2 出貨列）補齊高級質感
+- 解法：依 motion-deep-dive 實作（pointer fine 限定、reduced-motion 降級、bundle ≤2KB）；F2 以 build-time define 注入零 runtime 成本
 
 - 日期：2026-07-06
 - ID：reward-rw-601-content-nav-safe-area
@@ -62,6 +72,71 @@
 - ID：reward-rw-kawaii-text-contrast-aa-572
 - 原因：Kawaii 主題 `--color-text` #8E7C80 對背景僅 3.79:1、textMuted 僅 2.38:1，未達 WCAG AA，內容頁正文可讀性不足（#572）
 - 解法：text/textMuted 調深為同粉棕色相深階（7.42:1／5.62:1），雙源（index.css＋themes.ts）與 calc-number-text、STYLE_OPTIONS preview、offline.html 同步，新增 kawaii AA 與色相守門測試
+
+- 日期：2026-07-05
+- ID：reward-haotool-e2-wave-a
+- 原因：使用者回饋官網動效不足、行動優先需高級動畫；wave-A 六項核心（spring/開場/odometer/轉場/chips/指示器）為體感升級最高 ROI 組合
+- 解法：依 motion-deep-dive 實作六項（初始 JS 增量 ≤2KB、LCP 仍 H1、reduced-motion 全降級）；002 檔頭同步修正先前漏計的 reward-haotool-root-site-removal +1（累計 +118→+119，加計本筆 +1 為 +120）
+
+- 日期：2026-07-05
+- ID：penalty-haotool-qa-mjs-lint-coverage
+- 原因：qa-deep-audit.mjs 為 Playwright standalone 腳本卻未列 eslint flat config 忽略清單，`eslint .` 以瀏覽器/Node 混合 context 掃出 45 個 no-undef，PR #552 Quality Checks 紅燈
+- 解法：eslint.config.js 忽略清單補 `**/tests/**/*.mjs`（比照既有 scripts/\*.mjs 與 e2e 排除），root `pnpm lint` 回歸 0 errors
+
+- 日期：2026-07-05
+- ID：penalty-haotool-qa-url-substring-check
+- 原因：QA 腳本以 `req.url().includes('app.haotool.org')` 子字串判斷 host，任意網域可繞過（CodeQL js/incomplete-url-substring-sanitization high，PR #552 check 紅燈）
+- 解法：改 `new URL(req.url()).hostname === 'app.haotool.org'` 嚴格比對 hostname 並附註解防回流
+
+- 日期：2026-07-05
+- ID：neutral-haotool-e2-motion-brief
+- 原因：使用者回饋現版動效與吸引力不足、行動優先需高級動畫展現前端能力，E2 需 PM 級動效設計指令作為 SSOT
+- 解法：design brief 追加 §8 動效升級指令（S1-S7 簽名時刻＋F 軌構想＋不可動搖約束），Fable designer 據此深化
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-deploy-integration
+- 原因：046 §9 部署整合點在移除時清空，merge 後正式站根路徑會停留 404；Worker 邊緣仍硬編碼 4 工具作品集敘事與 /projects/ 路徑（critic B3）
+- 解法：恢復 root build:haotool/build:all、Dockerfile 根站建置鏈與 HEALTHCHECK GET /、nginx /tools 路由＋/projects 301＋error_page 404（容器煙霧測試全過）；Worker v5.6 原始碼同步 5 工具工具站敘事與 /tools/（不部署，deploy 屬使用者批准步驟）
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-verify-round-fixes
+- 原因：八鏡頭 review 與六尺寸 QA 抓出：站內 hash 不捲動、SW 清單僅字串守門、Reveal SSG opacity:0 no-JS 隱形、mobile LCP 被舞台圖搶走、primary 實底對比 3.71 未達 AA、測試冷啟 flake
+- 解法：ScrollRestoration 官方模式、sw-routes.ts 抽 SSOT＋行為測試、Reveal initial=false＋hydration 偵測、hero 文字區 100svh 撐滿使舞台出首屏（LCP=H1、Perf 0.98）、CTA 實底改 #1B64DA/hover #1E40AF（A11y 1.0）、asyncUtilTimeout 5s；109 tests 冷跑兩輪全綠；Content-Signal 假陽性保留並入文件
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-hire-info-section
+- 原因：deep-dive 版面稿早於 PRD v2 未含委託資訊區，D-A2 偏離經 PM 駁回後需補齊 hire-me 轉換 MUST 需求；apple-touch-icon 仍指舊佔位
+- 解法：Contact 補「委託與合作」區（範圍 chips/三步流程/SLA，扁平語彙）＋3 條渲染測試（97 全過）；icon 引用鏈對齊 2C 產物
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-korean-flat-ui
+- 原因：腳手架佔位頁無設計系統；需依 design-deep-dive 落地韓系扁平完整視覺且守住 LCP=H1、150KB JS、扁平鐵律與四態規範
+- 解法：tokens 全表＋15 元件＋五頁終稿＋hero 舞台（桌面 5 卡浮動/行動 3 卡 84KB）；motion LazyMotion 按需 4.4KB；94 tests＋tokens drift 守門；瀏覽器 QA console=0、375/390 零橫捲
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-brand-asset-pipeline
+- 原因：品牌素材缺 SSOT 管線（舊佔位 icons/OG），且需可重現快照制避免 build 依賴外網與人工 PS 流程
+- 解法：手寫 wordmark/monogram SVG SSOT，三個冪等腳本（icons/OG/五工具截圖）零新依賴產出 19 檔（AVIF 單張 ≤60KB、OG 56.6KB），視覺 review 通過並記載再生成指令
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-seo-aeo-final
+- 原因：腳手架 SEO 為佔位骨架；官方現況（FAQ rich results 終止、hreflang 單語無用、SearchAction 退役、2026 AI crawler 更新）需落地為終稿並收斂生成鏈防清單漂移
+- 解法：meta/JSON-LD @graph 終稿（title 15-25/description 60-78 全形字）、FAQ 五題 SSOT、llms.txt 含接案情境、index.md mirror、robots 39-bot、工具清單全由 tools.ts 生成；seo tests 擴至 55 項
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-scaffold
+- 原因：官網 v2 重建需要可驗證的骨架基線（SSOT 配置/SSG/PWA 防護/測試）支撐 wave-2 併行實作；版號策略需對齊 changesets 流程
+- 解法：39 檔腳手架（4 路由 SSG nested、PWA prompt＋denylist 含 split-meow、@graph 單 script、42 測試綠、build 通過、零漸層零第三方字體）；版號回 1.0.6＋major changeset（release 時升 2.0.0）對齊 AGT-VER-01
+
+- 日期：2026-07-05
+- ID：reward-haotool-v2-prd-critic-convergence
+- 原因：Fable critic 八鏡頭審查揪出 PRD/brief 16+ 處規格衝突、hero 截圖舞台與 LCP 預算矛盾、Worker 邊緣硬編碼 4 工具作品集敘事未列更新範圍（AEO 自我矛盾）
+- 解法：PRD v2 逐條回寫（設計值 SSOT 歸 brief、FAQ/FAQPage 移 About、禁毛玻璃、StatusDot 取代徽章）；新增 hero 資產預算硬規則與 LCP=H1 驗收；Worker 三項同步入 PRD/資安；截圖快照制、motion 統一命名、404 error_page、無遙測決策、委託資訊與證據錨點；併入研究/設計收斂：hreflang 移除（單語站官方無用）、SearchAction 移除、系統字型優先＋wordmark subset、beastiesOptions:false、crawler token 補齊、D1-D8 設計裁決、canonical 308 目標架構列 ADR-001（Phase 2 待批）
+
+- 日期：2026-07-05
+- ID：neutral-haotool-v2-pm-kickoff
+- 原因：haotool 官網 v2 以多代理全自主開發啟動，缺路線圖、設計與資安 SSOT 底稿；PRD v1 部分語彙（漸層/陰影）與使用者已表態的韓系扁平偏好衝突
+- 解法：建立 ROADMAP 與設計 brief（扁平鐵律修正 PRD §4.2）＋資安設計基準；feat/haotool-site-v2 rebase 最新 main 後提交底稿
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-waveb-settings-toggle-e2e-guards
@@ -322,6 +397,11 @@
 - ID：reward-rw-theme-token-contract-parity
 - 原因：主題變數合約破碎（zen 聯集 121 鍵、深色主題僅 88 鍵），缺鍵靜默 fallback 到 zen 淺色值，深色主題出現淺色卡片／警示／收藏色；defaultTheme/darkTheme violet 遺物僅被過時測試消費形同無守門
 - 解法：7 主題全鍵補齊（深色補值同色相且文字對比 ≥4.5:1、淺色跟隨各自 Tailwind 色階）、刪除死鍵 neutral-border、parity 測試擴為全鍵集合相等＋聯集下限＋zen 組合選擇器守門、移除 defaultTheme/darkTheme 並重寫 consistency 測試為格式合約
+
+- 日期：2026-07-04
+- ID：reward-haotool-root-site-removal
+- 原因：haotool 根站規劃完整重建，需先移除 apps/haotool 並保存內容/功能事實避免重建時遺失整合細節
+- 解法：以 safe-worktree 建分支刪除 apps/haotool；盤點文件落地 docs/dev/046（排除 UI/UX）；同步清理 root scripts/Dockerfile/nginx/CI/env/GSC 腳本整合點並重算 lockfile；HEALTHCHECK 改 /health
 
 - 日期：2026-07-04
 - ID：reward-rw-rates-history-integrity

@@ -42,7 +42,7 @@ RateWise Monorepo -- Agent 標準作業程序（SOP）與稽核控制規範。
 
 - `apps/ratewise`：匯率換算主站（PWA/SEO/測試密度最高）
 - `apps/nihonname`：日文命名工具（SSG/SEO）
-- `apps/haotool`：作品入口與視覺展示
+- `apps/haotool`：已於 2026-07-04 移除待重建（盤點見 `docs/dev/046_haotool_site_content_inventory.md`）
 - `apps/quake-school`：地震學習工具（SSG）
 - `apps/park-keeper`：停車紀錄工具（Leaflet / i18n / Tailwind v4）
 - `apps/poplog`：子應用（依任務確認）

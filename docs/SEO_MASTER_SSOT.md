@@ -1350,7 +1350,7 @@ node scripts/fetch-rating-snapshot.mjs
   - `/.well-known/api-catalog`：回 RFC 9727 / RFC 9264 `application/linkset+json`
   - `/.well-known/agent-skills/index.json`：回 Agent Skills Discovery v0.2.0 index
   - `/.well-known/agent-skills/{name}/SKILL.md`：回可驗證 digest 對應的 Markdown skill artifact
-- Static fallback：`apps/haotool/public/index.md`、`apps/haotool/public/robots.txt`
+- Static fallback：原 `apps/haotool/public/index.md`、`apps/haotool/public/robots.txt`（haotool 根站 2026-07-04 移除待重建，見 `docs/dev/046`；重建後需恢復 upstream 資產）
 - Truthfulness gate：OAuth / MCP / WebMCP 只在產品實際提供能力時發布 metadata；禁止為了分數建立無法使用的發現文件。
 
 #### 12.6.6.2 生產驗證命令（發佈 Worker 後必跑）

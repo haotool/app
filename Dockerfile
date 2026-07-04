@@ -1,5 +1,6 @@
-# Multi-stage Dockerfile for haotool.org Portfolio
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/)
+# Multi-stage Dockerfile for haotool.org Apps
+# Includes: ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/)
+# [2026-07-04] haotool 根站已移除待重建，根路徑暫無內容（見 docs/dev/046）
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -10,7 +11,6 @@ FROM node:24-alpine AS builder
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
-ARG VITE_HAOTOOL_BASE_PATH=/
 ARG VITE_RATEWISE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
@@ -39,7 +39,6 @@ ENV CI=true
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ratewise/package.json ./apps/ratewise/
 COPY apps/nihonname/package.json ./apps/nihonname/
-COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
 COPY apps/split-meow/package.json ./apps/split-meow/
@@ -59,7 +58,6 @@ COPY . .
 # Build applications（若外部未提供 build args，於此自動回退計算）
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
 # [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
-# 新增 haotool 作為根路徑首頁
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
     export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
@@ -70,7 +68,6 @@ RUN set -eux; \
   if [ -z "${BUILD_TIME:-}" ]; then \
     export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
   fi; \
-  VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
@@ -81,7 +78,6 @@ RUN set -eux; \
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
 RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
     test -f /app/apps/nihonname/dist/sitemap.xml && \
-    test -f /app/apps/haotool/dist/sitemap.xml && \
     test -f /app/apps/quake-school/dist/sitemap.xml && \
     test -f /app/apps/park-keeper/dist/sitemap.xml || \
     { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
@@ -100,10 +96,7 @@ RUN apt-get update && \
     apt-get install -y --only-upgrade libssh2-1t64 && \
     rm -rf /var/lib/apt/lists/*
 
-# [fix:2025-12-13] 新架構：haotool 作為根路徑首頁
-# 複製 haotool 作為根目錄（首頁）
-COPY --from=builder /app/apps/haotool/dist /usr/share/nginx/html
-
+# [2026-07-04] haotool 根站已移除待重建；根目錄僅保留子 app 目錄與 symlink
 # Copy built assets for ratewise 到子目錄
 COPY --from=builder /app/apps/ratewise/dist /usr/share/nginx/html/ratewise-app
 
@@ -138,8 +131,9 @@ EXPOSE 8080
 
 # Health check - 測試 nginx 是否正常回應 HTTP 請求
 # 檔案存在不代表 nginx 運作正常,必須測試實際 HTTP 回應
+# [2026-07-04] 根站移除後 / 暫回 404，改以 /health 端點探測
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Use non-root user
 USER nodejs

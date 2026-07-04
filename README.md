@@ -34,7 +34,8 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 | **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**   | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
-| **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
+
+> haotool 根站（app.haotool.org 首頁）已於 2026-07-04 移除並規劃重建；原內容與功能盤點見 `docs/dev/046_haotool_site_content_inventory.md`。
 
 ### 應用特色
 
@@ -86,14 +87,6 @@ GPS 輔助的停車場路徑指引工具
 - 行程摘要分享：Web Share API + 剪貼簿備援
 - 貓咪互動夥伴：爪印粒子效果 + 慶祝動畫
 - 結清標記：追蹤已結算費用
-
-#### haotool - 專案平台
-
-3D 互動展示平台，介紹所有專案
-
-- Three.js 3D 效果：沉浸式視覺體驗
-- 響應式設計：完美適配各種裝置
-- 極致效能：Lighthouse 95+ 全類別
 
 ---
 
@@ -147,7 +140,6 @@ pnpm --filter @app/nihonname dev     # NihonName (http://localhost:3002)
 pnpm --filter @app/quake-school dev  # Quake-School (http://localhost:3003)
 pnpm --filter @app/park-keeper dev   # Park Keeper (http://localhost:3004)
 pnpm --filter @app/split-meow dev    # Split Meow (http://localhost:3005)
-pnpm --filter @app/haotool dev       # haotool (http://localhost:3000)
 ```
 
 #### 建置與測試
@@ -197,7 +189,6 @@ haotool-app/
 │   ├── quake-school/     # 地震知識小學堂
 │   ├── park-keeper/      # 停車場導航工具
 │   ├── split-meow/       # 貓咪分帳計算機
-│   ├── haotool/          # 專案展示平台
 │   └── shared/           # 共用模組
 ├── docs/                 # 文檔
 ├── scripts/              # 自動化腳本
@@ -262,7 +253,8 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 | **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education            | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**   | Parking lot navigator with GPS compass + i18n       | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | Cat-themed trip expense splitter with share + emoji | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
-| **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage       | Live   | [app.haotool.org](https://app.haotool.org/)                           |
+
+> The haotool root site (app.haotool.org homepage) was removed on 2026-07-04 pending a full rebuild; see `docs/dev/046_haotool_site_content_inventory.md` for the content/feature inventory.
 
 ### Tech Stack
 

@@ -61,7 +61,7 @@ RateWise Monorepo -- Claude / Codex / AI 助手執行手冊（Enterprise SOP / A
 
 - `apps/ratewise`：主站；PWA/SEO/版本 SSOT 影響最大
 - `apps/nihonname`：SSG + SEO 導向
-- `apps/haotool`：視覺展示與動畫較多
+- `apps/haotool`：已於 2026-07-04 移除待重建（盤點見 `docs/dev/046_haotool_site_content_inventory.md`）
 - `apps/quake-school`：教育內容 + SSG
 - `apps/park-keeper`：地圖功能（Leaflet）、i18n、Tailwind v4
 - `apps/shared`：共用邏輯 / 元件

@@ -450,7 +450,6 @@ jobs:
         run: pnpm build
         env:
           VITE_RATEWISE_BASE_PATH: '/'
-          VITE_HAOTOOL_BASE_PATH: '/'
           VITE_NIHONNAME_BASE_PATH: '/'
           VITE_LHCI_OFFLINE: 'true'
 
