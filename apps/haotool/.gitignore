@@ -1,0 +1,17 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+node_modules
+dist
+dist-ssr
+dev-dist
+coverage
+*.local
+*.tsbuildinfo
+
+# Editor directories and files
+.idea
+.DS_Store

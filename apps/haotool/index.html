@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- SEO Meta Tags（SSG onPageRendered 會移除並注入 per-route 版本） -->
+    <title>HaoTool 好工具 — 免費開源的台灣網頁工具集 | 匯率、分帳、停車、防災</title>
+    <meta
+      name="description"
+      content="HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。HaoRate 匯率換算、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂。"
+    />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#3182F6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="HaoTool" />
+
+    <!-- Version Info (replaced at build time) -->
+    <meta name="version" content="__APP_VERSION__" />
+    <meta name="build-time" content="__BUILD_TIME__" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div
+        style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif"
+      >
+        <h1>HaoTool 好工具</h1>
+        <p>免費、開源、不收集個資的台灣網頁工具集——每一個都以產品級標準交付。</p>
+        <h2>五個上線工具</h2>
+        <ul>
+          <li>
+            <a href="https://app.haotool.org/ratewise/">HaoRate 匯率好工具</a> —
+            台銀銀行賣出價即時換算，30 天趨勢圖，離線可用
+          </li>
+          <li>
+            <a href="https://app.haotool.org/split-meow/">喵喵分帳 Split Meow</a> —
+            貓咪主題旅遊分帳，費用分類、一鍵分享結算結果
+          </li>
+          <li>
+            <a href="https://app.haotool.org/park-keeper/">停車好工具 ParkKeeper</a> — GPS
+            記錄車位、羅盤導航回車，多語系、離線優先
+          </li>
+          <li>
+            <a href="https://app.haotool.org/nihonname/">日本名字產生器 NihonName</a> —
+            中文姓氏產生道地日文名，100+ 漢姓對照
+          </li>
+          <li>
+            <a href="https://app.haotool.org/quake-school/">地震知識小學堂</a> — 18
+            道互動測驗＋動畫，離線防災學習
+          </li>
+        </ul>
+        <nav>
+          <a href="https://haotool.org/">首頁</a> · <a href="https://haotool.org/tools/">工具</a> ·
+          <a href="https://haotool.org/about/">關於</a> ·
+          <a href="https://haotool.org/contact/">聯繫</a>
+        </nav>
+        <footer style="margin-top: 2rem; font-size: 0.875rem">
+          <p>© 2025 HaoTool · GPL-3.0</p>
+        </footer>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

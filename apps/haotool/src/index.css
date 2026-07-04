@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/**
+ * HaoTool 設計 Tokens SSOT
+ * 色彩來源：apps/ratewise/src/index.css Zen 主題（PRD §4.2 + 設計 brief §1.2）
+ * 動效來源：設計 brief §2 Motion Tokens
+ * 扁平鐵律：全站禁止 linear-gradient / radial-gradient 與裝飾性陰影。
+ */
+@theme {
+  /* 色彩 Tokens（禁止新增色相；drift 視為缺陷） */
+  --color-primary: #3182f6;
+  --color-primary-strong: #1b64da;
+  --color-primary-bg: #eff6ff;
+  --color-secondary: #6366f1;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* 字族（wave-2 決定自託管 subset 策略前，先以系統字體回退） */
+  --font-sans:
+    'Inter', 'Noto Sans TC', system-ui, -apple-system, 'Segoe UI', 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
+
+  /* 全站標準 easing */
+  --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 動效時長 Tokens（brief §2；transform/opacity 專用） */
+:root {
+  --dur-tap: 120ms;
+  --dur-hover: 200ms;
+  --dur-reveal: 480ms;
+  --stagger: 70ms;
+  --dur-count: 1200ms;
+}
+
+/* 基礎排版 reset */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* 固定 header 下錨點不被遮擋（PRD §7 硬性規則） */
+:target {
+  scroll-margin-top: 5rem;
+}

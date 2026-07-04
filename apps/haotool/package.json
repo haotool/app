@@ -1,0 +1,48 @@
+{
+  "name": "@app/haotool",
+  "version": "1.0.6",
+  "private": true,
+  "license": "GPL-3.0",
+  "author": {
+    "name": "haotool",
+    "email": "haotool.org@gmail.com",
+    "url": "https://haotool.org"
+  },
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/generate-sitemap.js",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite-react-ssg build --config vite.config.ts",
+    "postbuild": "node scripts/postbuild.js",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "generate:sitemap": "node scripts/generate-sitemap.js",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^6.30.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "4.1.5",
+    "jsdom": "^27.4.0",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.10",
+    "vite-plugin-pwa": "^1.2.0",
+    "vite-react-ssg": "^0.8.9",
+    "vitest": "^4.1.5"
+  }
+}

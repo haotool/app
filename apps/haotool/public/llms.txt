@@ -1,0 +1,30 @@
+# HaoTool 好工具
+
+> HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。HaoRate 匯率換算、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂，每一個都以產品級標準交付。
+
+最後更新：2026-07-04
+
+## 工具（Featured Tools）
+
+- [HaoRate 匯率好工具](https://app.haotool.org/ratewise/): 台銀銀行賣出價即時換算，30 天趨勢圖，離線可用
+- [喵喵分帳 Split Meow](https://app.haotool.org/split-meow/): 貓咪主題旅遊分帳，費用分類、一鍵分享結算結果
+- [停車好工具 ParkKeeper](https://app.haotool.org/park-keeper/): GPS 記錄車位、羅盤導航回車，多語系、離線優先
+- [日本名字產生器 NihonName](https://app.haotool.org/nihonname/): 中文姓氏產生道地日文名，100+ 漢姓對照
+- [地震知識小學堂](https://app.haotool.org/quake-school/): 18 道互動測驗＋動畫，離線防災學習
+
+## 核心頁面（Core Pages）
+
+- https://haotool.org/
+- https://haotool.org/tools/
+- https://haotool.org/about/
+- https://haotool.org/contact/
+
+## 聯繫（Contact）
+
+- Email: haotool.org@gmail.com
+- GitHub: https://github.com/haotool/app
+- Threads: https://www.threads.net/@azlife_1224
+
+## 授權（License）
+
+GPL-3.0 — 全部工具免費、開源、不收集個資。
