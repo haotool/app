@@ -1,5 +1,6 @@
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { navigationTokens } from '../config/design-tokens';
 
 /**
  * PullToRefreshIndicator - Visual feedback component for pull-to-refresh
@@ -55,6 +56,8 @@ export function PullToRefreshIndicator({
     <div
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none"
       style={{
+        // iOS standalone：補償狀態列／瀏海高度，避免指示器被遮擋。
+        paddingTop: navigationTokens.safeArea.top,
         opacity,
         transform: `translateY(${Math.min(pullDistance / 2, 64)}px)`,
         transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out, transform 0.2s ease-out',

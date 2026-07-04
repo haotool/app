@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+105
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+106
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-favorites-sort-ptr-hotfix
+- 原因：全域 pull-to-refresh 掛在 main 無拖曳排除，與 dnd 拖曳同時作動造成收藏頁排序錯位與誤觸整頁重載風險，且非收藏幣拖曳被隱式加收藏、favorites.baseCurrency 四語系缺 key 直接顯示 raw key、刷新指示器無 safe-area 補償
+- 解法：PTR touchstart 以 data-rfd-drag-handle 祖先 gate 完全抑制拖曳中 PTR，排序合約收斂為 reorderFavoritesOnDragEnd 純函式（僅收藏幣可拖、非收藏幣停用拖曳），四語系補 baseCurrency key，指示器加 safe-area-inset-top；unit＋390×844 觸控模擬修前修後對照驗證
 
 - 日期：2026-07-05
 - ID：reward-rw-theme-ssot-drift-convergence

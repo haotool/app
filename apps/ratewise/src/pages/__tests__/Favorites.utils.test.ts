@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getAllCurrenciesSorted } from '../favorites-utils';
+import { getAllCurrenciesSorted, reorderFavoritesOnDragEnd } from '../favorites-utils';
 import type { CurrencyCode } from '../../features/ratewise/types';
 
 describe('getAllCurrenciesSorted', () => {
@@ -68,5 +68,43 @@ describe('getAllCurrenciesSorted', () => {
     const nonFavorites = result.slice(nonFavoritesStart);
     const sorted = [...nonFavorites].sort();
     expect(nonFavorites).toEqual(sorted);
+  });
+});
+
+describe('reorderFavoritesOnDragEnd（排序合約）', () => {
+  const favorites: CurrencyCode[] = ['JPY', 'KRW', 'USD'];
+
+  it('收藏幣在收藏段內拖曳：依落點重新排序', () => {
+    // allCurrencies: [TWD, JPY, KRW, USD, ...]；把 JPY（index 1）拖到 index 3（USD 之後）
+    const result = reorderFavoritesOnDragEnd(favorites, 'JPY', 3);
+    expect(result).toEqual(['KRW', 'USD', 'JPY']);
+  });
+
+  it('收藏幣拖到收藏段開頭：落點緊跟 TWD 之後', () => {
+    const result = reorderFavoritesOnDragEnd(favorites, 'USD', 1);
+    expect(result).toEqual(['USD', 'JPY', 'KRW']);
+  });
+
+  it('非收藏幣拖曳：回傳 null，不得被隱式加入收藏', () => {
+    const result = reorderFavoritesOnDragEnd(favorites, 'EUR', 2);
+    expect(result).toBeNull();
+  });
+
+  it('TWD 拖曳：回傳 null（固定置頂不可移動）', () => {
+    const result = reorderFavoritesOnDragEnd(favorites, 'TWD', 2);
+    expect(result).toBeNull();
+  });
+
+  it('收藏幣拖出收藏段：夾回收藏段尾端，且不引入非收藏幣', () => {
+    // destinationIndex = 10 遠超收藏段（favorites.length = 3）
+    const result = reorderFavoritesOnDragEnd(favorites, 'JPY', 10);
+    expect(result).toEqual(['KRW', 'USD', 'JPY']);
+    expect(result).toHaveLength(favorites.length);
+  });
+
+  it('不變更輸入陣列（immutable）', () => {
+    const input: CurrencyCode[] = ['JPY', 'KRW', 'USD'];
+    reorderFavoritesOnDragEnd(input, 'JPY', 3);
+    expect(input).toEqual(['JPY', 'KRW', 'USD']);
   });
 });
