@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+109
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+110
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-sw-cold-nav-hydration-fix
+- 原因：SW 導覽 handler 在 html-cache 冷快取時直接回 precache index.html（首頁 SSG 快照）給任意深層路由，造成全站 React #418 hydration mismatch 與首頁畫面閃現（issue #545；以舊分支 6621b34a 為 spec 對 main 現行 SW 架構重做）
+- 解法：冷導覽改為先以 8s bounded fetch 取該 URL 的 per-route SSG HTML，離線或 timeout 才回退 precache index.html → offline.html 兜底鏈；QA 驗證冷導覽服出正確路由 shell（wrongShell 3→0）且離線回退不退步
 
 - 日期：2026-07-05
 - ID：reward-rw-splash-animation-parity
