@@ -69,7 +69,7 @@
 編排（choreography）：
 
 1. **首屏不等動畫**：hero 文案為 SSG 靜態內容立即可見；進場動畫只作用於首屏以下（`whileInView once`）。
-2. **hero 舞台**：右側工具卡疊層以 CSS `transform: translateY` 慢速浮動（8s 循環、位移 ≤8px）；desktop 加指標視差 ±6px（`pointermove`，rAF 節流）；mobile 靜態。
+2. **hero 舞台**：右側工具卡疊層以 CSS `transform: translateY` 慢速浮動（8s 循環、位移 ≤8px）；desktop 加指標視差 ±6px（`pointermove`，rAF 節流）；**行動版首屏預設純文字 hero**（舞台不進首屏或僅 1 張延遲載入靜態卡）。舞台圖受 PRD §10.2 資產預算硬約束：全部 lazy + `fetchpriority="low"`、AVIF 單張 ≤60KB、總重 ≤200KB、LCP 必須是 H1 文字。
 3. **滾動進場**：每區標題先進、內容 stagger 跟進；同視口只允許一組動畫進行。
 4. **微互動**：ToolCard hover＝border 轉品牌藍 + 箭頭右移 4px（無位移縮放）；按鈕 active scale 0.97；FAQ 展開 240ms grid-rows。
 5. **技術選型**：CSS transition/animation 優先；`motion/react`（framer-motion 12 後繼）僅用於 inView stagger 與 count-up。禁止滾動劫持、禁止 parallax 背景圖。
@@ -86,7 +86,7 @@
 | 4   | 工具展示（白底）                  | 標題＋5 張 ToolCard（1/2/3 欄）；每卡：app icon、名稱、一句定位、真實截圖（device frame）、Live 圓點＋「開啟 →」                                                          | 標題:「五個正在服務真實使用者的工具」                                                                                                    |
 | 5   | 工藝證明（淺灰底）                | 3 欄卡：效能（LCP <2s、Lighthouse 90+）、可靠（PWA 離線、資料守門）、誠實（開源 GPL-3.0、零追蹤）；每卡 icon＋數據＋一句                                                  | 標題:「產品級，是可以被驗證的」                                                                                                          |
 | 6   | 作者（白底）                      | 左：頭像/mascot 圖＋姓名職稱；右：三句自介＋「更多關於我 →」                                                                                                              | 「寫程式碼之前，我先想像使用的人。」                                                                                                     |
-| 7   | 聯繫 Banner（`#1B64DA` 實色全幅） | 白字標題＋一句＋白底藍字實色按鈕「聊聊你的專案」＋次要文字連結「先看 FAQ」                                                                                                | 標題:「有想做的產品？我們聊聊。」副文:「合作委託、技術顧問或只是打個招呼——24 小時內回覆。」                                              |
+| 7   | 聯繫 Banner（`#1B64DA` 實色全幅） | 白字標題＋一句＋白底藍字實色按鈕「聊聊你的專案」（→ `/contact/`）＋次要文字連結「先看 FAQ」（→ `/about/#faq`）                                                            | 標題:「有想做的產品？我們聊聊。」副文:「合作委託、技術顧問或只是打個招呼——24 小時內回覆。」                                              |
 | 8   | Footer（白底）                    | wordmark＋一句、工具×5、頁面、社群（GitHub/Threads/Email）、版權＋GPL-3.0＋隱私連結                                                                                       | —                                                                                                                                        |
 
 FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，FAQ 集中 About（`FAQPage` schema 輸出頁改為 About，全站唯一——SEO 規格同步修訂）。
@@ -101,7 +101,7 @@ FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，F
 
 ### 3.4 Contact `/contact/`
 
-三張聯絡卡（Email 複製、GitHub、Threads）＋回覆承諾；卡片同 ToolCard 語彙；Email 走 MailtoLink 模式（SSG 無 href）。
+三張聯絡卡（Email 複製、GitHub、Threads）＋回覆承諾；卡片同 ToolCard 語彙；Email 走 MailtoLink 模式（SSG 無 href，hydration 後帶預填主旨）。下方「委託資訊」區：承接範圍、三步合作流程、24h SLA（降低 hire-me 摩擦，PRD §5.4）。noscript fallback 的聯絡導引一律用 GitHub/Threads 連結（email 純文字也會被 CF Obfuscation 改寫）。
 
 ### 3.5 404
 
@@ -111,15 +111,15 @@ FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，F
 
 **原則：素材優先用「程式碼與真實截圖」產生（可維護、SSOT）；點陣生成（Codex imagegen）僅限插畫/吉祥物。**
 
-| #   | 素材                | 用途/位置               | 規格                                                                            | 產生方式                                          |
-| --- | ------------------- | ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------- |
-| A1  | `wordmark.svg`      | Header/Footer/OG        | 高 24–28px 自適應；「Hao」`#0F172A`＋「Tool」`#3182F6`；Inter 800 手工向量化    | 手寫 SVG（實作者）                                |
-| A2  | monogram icon       | favicon/PWA icons       | 圓角方（20% 半徑）`#3182F6` 實底＋白色「H」幾何字；輸出 32/180/192/512/maskable | SVG SSOT → `sharp` 腳本輸出 PNG                   |
-| A3  | `og-image.png`      | 全站分享 1200×630       | 白底、左上 wordmark、中央大字標語、右下 5 個工具 icon 排列；零漸層              | HTML 模板 → Playwright 截圖（build script）       |
-| A4  | 工具截圖 ×5         | Home hero 舞台/ToolCard | 各 app 首頁 390×844 @2x；CSS device frame（圓角 40px、墨色邊）                  | Playwright 對 live 站截圖 pipeline（腳本入 repo） |
-| A5  | 能力/工藝 icon ×6–8 | 工藝證明、能力卡        | Lucide 24px stroke-2，統一 `#1B64DA`                                            | Lucide（現有依賴）                                |
-| A6  | 作者頭像/吉祥物     | Home 作者區、About、404 | 1024×1024 透明背景；扁平幾何風、品牌藍+墨雙色、無漸層無外框陰影                 | Codex imagegen（E2 階段；PM 出 prompt）           |
-| A7  | 幾何裝飾形          | 區塊點綴（極少量）      | 實色 `#EFF6FF` 圓/圓角矩形，CSS 繪製                                            | 程式碼                                            |
+| #   | 素材                | 用途/位置               | 規格                                                                                                | 產生方式                                                                           |
+| --- | ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A1  | `wordmark.svg`      | Header/Footer/OG        | 高 24–28px 自適應；「Hao」`#0F172A`＋「Tool」`#3182F6`；Inter 800 手工向量化                        | 手寫 SVG（實作者）                                                                 |
+| A2  | monogram icon       | favicon/PWA icons       | 圓角方（20% 半徑）`#3182F6` 實底＋白色「H」幾何字；輸出 32/180/192/512/maskable                     | SVG SSOT → `sharp` 腳本輸出 PNG                                                    |
+| A3  | `og-image.png`      | 全站分享 1200×630       | 白底、左上 wordmark、中央大字標語、右下 5 個工具 icon 排列；零漸層                                  | HTML 模板 → Playwright 截圖腳本手動產生，產物 commit（快照制）                     |
+| A4  | 工具截圖 ×5         | Home hero 舞台/ToolCard | 各 app 首頁 390×844 @2x 快照；CSS device frame（圓角 40px、墨色邊）；輸出 AVIF＋WebP、寬 ≤2× 渲染寬 | Playwright 腳本手動 refresh，**產物 commit 入 repo（快照制）**，build 不抓 live 站 |
+| A5  | 能力/工藝 icon ×6–8 | 工藝證明、能力卡        | Lucide 24px stroke-2，統一 `#1B64DA`                                                                | Lucide（現有依賴）                                                                 |
+| A6  | 作者頭像/吉祥物     | Home 作者區、About、404 | 1024×1024 透明背景；扁平幾何風、品牌藍+墨雙色、無漸層無外框陰影                                     | Codex imagegen（E2 階段；PM 出 prompt）                                            |
+| A7  | 幾何裝飾形          | 區塊點綴（極少量）      | 實色 `#EFF6FF` 圓/圓角矩形，CSS 繪製                                                                | 程式碼                                                                             |
 
 ## 5. 互動品質門檻（驗收用）
 
@@ -130,7 +130,21 @@ FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，F
 - 零 console error；零水平捲動（375–1440）；CLS <0.1；首屏無動畫阻塞。
 - 對比：正文 ≥4.5:1；藍底白字區塊底色一律 `#1B64DA`。
 
-## 6. 給子代理的邊界
+## 6. PM 裁決紀錄（2026-07-05，對 design-deep-dive D1–D8）
+
+| #     | 裁決     | 內容                                                                                                  |
+| ----- | -------- | ----------------------------------------------------------------------------------------------------- |
+| D1    | 核准     | `#1B64DA` banner 上 focus ring 改白色（焦點可視性優先）                                               |
+| D2    | 核准     | 全幅 `#1B64DA` 聯繫 Banner 為「藍實底 ≤15%」規則的**唯一授權例外**，高度上限 400px；其餘視口維持 ≤15% |
+| D3/D4 | 核准     | 文案長度收斂（hero 副文 ≤36 字、作者標題 ≤13 字）                                                     |
+| D5    | 核准     | 平板（768–1023）Display 52px 中繼值與 hero 平板版式（補規格空白）                                     |
+| D6    | 核准     | pill tab 選中態墨實底 `#0F172A` 白字（品牌藍保留給 CTA）                                              |
+| D7    | 核准     | Header 白實底＋捲動後安靜陰影（PRD FR-010 已同步，無毛玻璃）                                          |
+| D8    | 修訂核准 | 行動 hero 舞台 ≤3 張小尺寸靜態卡、置於 hero 文字之後、全部 lazy、總重 ≤90KB（PRD §10.2 同步）         |
+
+字體 v2.1 裁決（依技術研究）：全站改**系統字型堆疊**＋wordmark/數字小 subset（≤10KB）；§1.3「Inter + Noto Sans TC 自託管 subset」條目依此修正——排印個性由字重/字級/字距承擔，不依賴 webfont。
+
+## 7. 給子代理的邊界
 
 - designer：可深化版式、間距、文案潤飾與動效編排細節；**不得**引入新色相、漸層、陰影體系、新字族；產出寫入 `.claude/product-intel/design-deep-dive.md`。
 - executor：實作以本 brief + PRD 為準，衝突時本 brief 優先（§1.1 扁平鐵律 > PRD §4.2 規則 4）。

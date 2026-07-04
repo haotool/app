@@ -34,7 +34,8 @@
 - 本站義務：
   1. 路由變更（`/projects/`→`/tools/`）時同步 worker `HAOTOOL_ROOT_HTML_PATHS`。
   2. 新增外部資源網域（如字體改自託管後應為零）需同步 CSP `connect-src`/`font-src` 白名單——目標：**零第三方網域**。
-  3. 上線驗證：`curl -s --compressed https://app.haotool.org/ -D - -o /dev/null | grep -i 'content-security-policy\|x-frame-options\|x-security-policy-version'`。
+  3. Worker 邊緣硬編碼內容同步（防 AEO 漂移）：`AGENT_SKILL_ARTIFACTS`（haotool-discovery 更新為 5 工具＋工具站敘事）、`LLM_DOC_PATHS`（補根站 `/llms.txt`）；上線逐項 curl 驗證。
+  4. 上線驗證：`curl -s --compressed https://app.haotool.org/ -D - -o /dev/null | grep -i 'content-security-policy\|x-frame-options\|x-security-policy-version'`。
 
 ## 4. 隱私承諾（產品層 SSOT）
 
@@ -44,8 +45,9 @@
 ## 5. 驗收清單（Security gate）
 
 - [ ] `git grep dangerouslySetInnerHTML apps/haotool` 為空（或逐一 review 豁免）
-- [ ] SSG dist 無 `mailto:` href（`rg "mailto:" apps/haotool/.vite-ssg-dist` 類驗證）
+- [ ] SSG 產物無 `mailto:` href（`rg "mailto:" apps/haotool/dist` 驗證）
 - [ ] 外連全帶 `noopener noreferrer`（單元測試守門）
 - [ ] SW allow/denylist 單元測試 + E2E 子 app 導覽不經根 SW
-- [ ] 新依賴數 = PRD §11 清單內（diff 審查）
+- [ ] 新依賴數 = PRD §11 清單內（diff 審查；動效依賴名一律為 `motion`，防 `framer-motion` 混入）
+- [ ] Worker 邊緣內容三項同步驗證（§3.3）
 - [ ] 部署後 curl 驗證三標頭 + `x-security-policy-version`
