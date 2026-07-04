@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+104
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+105
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-theme-ssot-drift-convergence
+- 原因：主題雙源（themes.ts STYLE_DEFINITIONS 與 index.css [data-style] 變數）累積 8 筆值漂移（zen/violet secondary、kawaii/classic 圖表 3 色），既有測試只守鍵集合與格式、不守值同步
+- 解法：以實際渲染消費端定真相（secondary 由 CSS 變數渲染、圖表色 getChartColors 讀 CSS 變數），themes.ts 8 筆全數收斂至 index.css 值，新增 theme-style-definitions-css-sync 表驅動守門（7 主題 × 16 鍵值同步，突變驗證可抓漏）
 
 - 日期：2026-07-05
 - ID：reward-rw-offline-shell-korean-flat-ui
