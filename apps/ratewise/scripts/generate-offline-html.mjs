@@ -60,12 +60,12 @@ function choosePrimaryForeground(primary) {
     : DARK_TEXT_COLOR;
 }
 
+// 韓系扁平視覺只保留實際使用的 token（無漸層、無裝飾陰影）。
 function buildOfflineStyleBlock([styleName, definition]) {
   const { colors } = definition;
   const primaryForeground = choosePrimaryForeground(colors.primary);
 
   return `html[data-style='${styleName}'] {
-        --offline-theme-color: ${rgbTripletToHex(colors.primary)};
         --offline-background: ${rgbTripletToHex(colors.background)};
         --offline-surface: ${rgbTripletToHex(colors.surface)};
         --offline-border: ${rgbTripletToHex(colors.border)};
@@ -73,17 +73,8 @@ function buildOfflineStyleBlock([styleName, definition]) {
         --offline-text-muted: ${rgbTripletToHex(colors.textMuted)};
         --offline-primary: ${rgbTripletToHex(colors.primary)};
         --offline-primary-foreground: ${rgbTripletToHex(primaryForeground)};
-        --offline-secondary: ${rgbTripletToHex(colors.secondary)};
-        --offline-accent: ${rgbTripletToHex(colors.accent)};
         --offline-primary-tint: ${rgbTripletToRgba(colors.primary, 0.08)};
-        --offline-primary-border-tint: ${rgbTripletToRgba(colors.primary, 0.18)};
-        --offline-primary-shadow-soft: ${rgbTripletToRgba(colors.primary, 0.18)};
-        --offline-primary-shadow-strong: ${rgbTripletToRgba(colors.primary, 0.26)};
-        --offline-primary-shadow-hover: ${rgbTripletToRgba(colors.primary, 0.34)};
-        --offline-warning-tint: ${rgbTripletToRgba(colors.warning, 0.16)};
         --offline-warning: ${rgbTripletToHex(colors.warning)};
-        --offline-success-tint: ${rgbTripletToRgba(colors.success, 0.12)};
-        --offline-success: ${rgbTripletToHex(colors.success)};
       }`;
 }
 

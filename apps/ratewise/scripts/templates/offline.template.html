@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-offline-state="offline">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -31,6 +31,9 @@
 
         document.documentElement.dataset.style = selectedStyle;
 
+        // 雙狀態分流：在線代表自我修復進行中，離線顯示誠實說明。
+        document.documentElement.dataset.offlineState = navigator.onLine ? 'recovering' : 'offline';
+
         var themeColor = document.querySelector('meta[name="theme-color"]');
         if (themeColor) {
           themeColor.setAttribute('content', themeColors[selectedStyle] || themeColors.zen);
@@ -38,7 +41,8 @@
       })();
     </script>
     <style>
-      __OFFLINE_STYLE_BLOCKS__ html[data-style='nitro'] {
+      __OFFLINE_STYLE_BLOCKS__ html[data-style='nitro'],
+      html[data-style='racing'] {
         color-scheme: dark;
       }
 
@@ -48,6 +52,7 @@
         box-sizing: border-box;
       }
 
+      /* 韓系 fintech 扁平風：純色背景、無漸層、無裝飾陰影、留白排版。 */
       body {
         font-family:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -57,74 +62,66 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(
-          135deg,
-          var(--offline-background) 0%,
-          var(--offline-primary-tint) 50%,
-          var(--offline-surface) 100%
-        );
-        padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
-          calc(1rem + env(safe-area-inset-bottom, 0px));
+        background: var(--offline-background);
+        color: var(--offline-text);
+        padding: calc(1.5rem + env(safe-area-inset-top, 0px)) 1.5rem
+          calc(1.5rem + env(safe-area-inset-bottom, 0px));
         text-align: center;
+        -webkit-font-smoothing: antialiased;
       }
 
       .container {
+        width: 100%;
         max-width: 400px;
-        padding: 2rem;
-        background: var(--offline-surface);
-        border-radius: 24px;
-        box-shadow: 0 8px 32px var(--offline-primary-shadow-soft);
-        border: 1px solid var(--offline-primary-border-tint);
       }
 
       .icon {
-        width: 80px;
-        height: 80px;
+        width: 64px;
+        height: 64px;
         margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, var(--offline-primary) 0%, var(--offline-accent) 100%);
+        background: var(--offline-primary-tint);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 16px var(--offline-primary-shadow-strong);
       }
 
       .icon svg {
-        width: 48px;
-        height: 48px;
-        color: var(--offline-primary-foreground);
+        width: 32px;
+        height: 32px;
+        color: var(--offline-primary);
       }
 
       h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         color: var(--offline-text);
         margin-bottom: 0.75rem;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.35;
       }
 
       p {
         color: var(--offline-text-muted);
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        margin-bottom: 2rem;
       }
 
       .status {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: var(--offline-warning-tint);
-        color: var(--offline-warning);
-        border-radius: 9999px;
-        font-size: 0.875rem;
+        gap: 0.375rem;
+        color: var(--offline-text-muted);
+        font-size: 0.8125rem;
         font-weight: 500;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
       }
 
       .status::before {
         content: '';
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
         background: var(--offline-warning);
         border-radius: 50%;
         animation: pulse 2s infinite;
@@ -136,39 +133,35 @@
           opacity: 1;
         }
         50% {
-          opacity: 0.5;
+          opacity: 0.4;
         }
       }
 
       .retry-btn {
-        display: inline-flex;
+        display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        background: linear-gradient(
-          135deg,
-          var(--offline-primary) 0%,
-          var(--offline-secondary) 100%
-        );
+        width: 100%;
+        min-height: 52px;
+        padding: 0.875rem 1.5rem;
+        background: var(--offline-primary);
         color: var(--offline-primary-foreground);
         border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 500;
+        border-radius: 14px;
+        font-size: 1.0625rem;
+        font-weight: 600;
+        font-family: inherit;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
         transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-        box-shadow: 0 4px 12px var(--offline-primary-shadow-strong);
-      }
-
-      .retry-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px var(--offline-primary-shadow-hover);
+          opacity 0.15s ease,
+          transform 0.15s ease;
       }
 
       .retry-btn:active {
-        transform: translateY(0);
+        opacity: 0.8;
+        transform: scale(0.98);
       }
 
       .tips {
@@ -178,10 +171,11 @@
       }
 
       .tips h2 {
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         color: var(--offline-text-muted);
-        font-weight: 500;
+        font-weight: 600;
         margin-bottom: 0.75rem;
+        text-align: left;
       }
 
       .tips ul {
@@ -195,78 +189,174 @@
         gap: 0.5rem;
         font-size: 0.875rem;
         color: var(--offline-text);
+        line-height: 1.6;
         margin-bottom: 0.5rem;
       }
 
       .tips li::before {
-        content: '•';
-        color: var(--offline-primary);
-        font-weight: bold;
+        content: '·';
+        color: var(--offline-text-muted);
+        font-weight: 700;
       }
 
-      .cached-data {
-        margin-top: 1rem;
-        padding: 0.75rem;
-        background: var(--offline-success-tint);
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: var(--offline-success);
+      /* 雙狀態分流：data-offline-state 控制顯示。 */
+      html[data-offline-state='offline'] .state-recovering {
+        display: none;
+      }
+
+      html[data-offline-state='recovering'] .state-offline {
+        display: none;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 1.5rem;
+        border: 3px solid var(--offline-border);
+        border-top-color: var(--offline-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Toss 交易列表式匯率快照：扁平 surface + hairline 分隔。 */
+      .last-known-rates {
+        margin-top: 1.5rem;
+        padding: 1.25rem 1.25rem 0.5rem;
+        background: var(--offline-surface);
+        border: 1px solid var(--offline-border);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        text-align: left;
+      }
+
+      .last-known-rates h2 {
+        font-size: 0.9375rem;
+        color: var(--offline-text);
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+
+      .last-known-rates .snapshot-time {
+        font-size: 0.75rem;
+        color: var(--offline-text-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      .last-known-rates table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9375rem;
+      }
+
+      .last-known-rates td {
+        padding: 0.75rem 0;
+        color: var(--offline-text);
+        border-top: 1px solid var(--offline-border);
+      }
+
+      .last-known-rates tr:first-child td {
+        border-top: none;
+      }
+
+      .last-known-rates td.rate-code {
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      .last-known-rates td.rate-value {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .last-known-rates td.rate-label {
+        text-align: right;
+        color: var(--offline-text-muted);
+        font-size: 0.75rem;
+        white-space: nowrap;
+        padding-left: 0.625rem;
+        width: 1%;
+      }
+
+      .diag-code {
+        margin-top: 2rem;
+        font-size: 0.6875rem;
+        color: var(--offline-text-muted);
+        opacity: 0.7;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="icon">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
-          />
-        </svg>
+      <div class="state-recovering">
+        <div class="spinner" role="status" aria-label="載入中"></div>
+
+        <h1>正在恢復應用程式…</h1>
+        <p>偵測到連線，正在重新載入最新版本。</p>
       </div>
 
-      <div class="status">網路連線中斷</div>
+      <div class="state-offline">
+        <div class="icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
+            />
+          </svg>
+        </div>
 
-      <h1>您目前處於離線狀態</h1>
-      <p>請檢查您的網路連線，或稍後再試。__BRAND_SHORT__ 會在連線恢復時自動更新。</p>
+        <div class="status">離線</div>
 
-      <button class="retry-btn" id="retry-btn" type="button">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        重新載入
-      </button>
+        <h1>需要連線一次以恢復離線功能</h1>
+        <p>
+          __BRAND_SHORT__ 支援離線使用，但此裝置上的離線資料已被系統清除（常見於 iOS
+          儲存空間不足時自動回收）。連上網路後將自動恢復，之後即可離線查看匯率。
+        </p>
 
-      <div class="tips">
-        <h2>小提示</h2>
-        <ul>
-          <li>已快取的匯率數據仍可離線使用</li>
-          <li>檢查 Wi-Fi 或行動數據是否開啟</li>
-          <li>嘗試開關飛航模式</li>
-        </ul>
-      </div>
+        <button class="retry-btn" id="retry-btn" type="button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          重新載入
+        </button>
 
-      <div class="cached-data" id="cached-info" style="display: none">
-        <strong>✓</strong> 已快取匯率數據可用
+        <div class="last-known-rates" id="last-known-rates" style="display: none"></div>
+
+        <div class="tips">
+          <h2>小提示</h2>
+          <ul>
+            <li>檢查 Wi-Fi 或行動數據是否開啟</li>
+            <li>嘗試開關飛航模式</li>
+            <li>連線後 App 會自動重新下載離線資料</li>
+          </ul>
+        </div>
+
+        <div class="diag-code">診斷代碼：SHELL-EVICTED</div>
       </div>
     </div>
 
@@ -277,15 +367,106 @@
         var SHELL_PROBE_TIMEOUT_MS = 2000;
         var WAITING_SW_TIMEOUT_MS = 8000;
 
-        // 檢查是否有快取的匯率數據
-        try {
-          var cached = localStorage.getItem('exchangeRates');
-          if (cached) {
-            document.getElementById('cached-info').style.display = 'block';
-          }
-        } catch (e) {
-          // localStorage 不可用時略過
+        function setOfflineState(state) {
+          document.documentElement.dataset.offlineState = state;
         }
+
+        // 挑選匯率：銀行賣出（cash.sell）優先，退回 spot.sell 再退回 rates。
+        function pickSellRate(detail, fallbackRate) {
+          var candidates = [];
+          if (detail && detail.cash) {
+            candidates.push(detail.cash.sell);
+          }
+          if (detail && detail.spot) {
+            candidates.push(detail.spot.sell);
+          }
+          candidates.push(fallbackRate);
+
+          for (var i = 0; i < candidates.length; i++) {
+            var candidate = candidates[i];
+            if (candidate === null || candidate === undefined || candidate === '') {
+              continue;
+            }
+            var numeric = Number(candidate);
+            if (isFinite(numeric) && numeric > 0) {
+              return numeric;
+            }
+          }
+          return null;
+        }
+
+        function formatRate(value) {
+          return String(Number(value.toFixed(3)));
+        }
+
+        // 渲染最後已知匯率唯讀快照；資料缺損時整區維持隱藏。
+        function renderLastKnownRates() {
+          var container = document.getElementById('last-known-rates');
+          if (!container) {
+            return;
+          }
+
+          try {
+            var raw = localStorage.getItem('exchangeRates');
+            if (!raw) {
+              return;
+            }
+            var parsed = JSON.parse(raw);
+            var data = parsed && parsed.data;
+            if (!data || !data.rates) {
+              return;
+            }
+
+            var priorityCurrencies = ['USD', 'JPY', 'KRW', 'EUR', 'CNY', 'GBP'];
+            var details = data.details || {};
+            var rows = [];
+            for (var i = 0; i < priorityCurrencies.length && rows.length < 5; i++) {
+              var code = priorityCurrencies[i];
+              var rate = pickSellRate(details[code], data.rates[code]);
+              if (rate !== null) {
+                rows.push({ code: code, rate: rate });
+              }
+            }
+            if (rows.length === 0) {
+              return;
+            }
+
+            var title = document.createElement('h2');
+            title.textContent = '最後已知匯率（僅供參考）';
+            container.appendChild(title);
+
+            if (data.updateTime) {
+              var snapshotTime = document.createElement('div');
+              snapshotTime.className = 'snapshot-time';
+              snapshotTime.textContent = '快照時間：' + String(data.updateTime);
+              container.appendChild(snapshotTime);
+            }
+
+            var table = document.createElement('table');
+            for (var j = 0; j < rows.length; j++) {
+              var tr = document.createElement('tr');
+              var tdCode = document.createElement('td');
+              tdCode.className = 'rate-code';
+              tdCode.textContent = rows[j].code;
+              var tdRate = document.createElement('td');
+              tdRate.className = 'rate-value';
+              tdRate.textContent = formatRate(rows[j].rate);
+              var tdLabel = document.createElement('td');
+              tdLabel.className = 'rate-label';
+              tdLabel.textContent = '銀行賣出';
+              tr.appendChild(tdCode);
+              tr.appendChild(tdRate);
+              tr.appendChild(tdLabel);
+              table.appendChild(tr);
+            }
+            container.appendChild(table);
+            container.style.display = 'block';
+          } catch (e) {
+            // 快取資料損毀或 localStorage 不可用時整區隱藏。
+          }
+        }
+
+        renderLastKnownRates();
 
         function hasHealBeenAttemptedThisSession() {
           try {
@@ -417,7 +598,12 @@
         }
 
         window.addEventListener('online', function () {
+          setOfflineState('recovering');
           void attemptOfflineShellSelfHeal(true);
+        });
+
+        window.addEventListener('offline', function () {
+          setOfflineState('offline');
         });
 
         void attemptOfflineShellSelfHeal(false);
