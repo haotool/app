@@ -80,6 +80,11 @@ const zhTW = {
     backToConverter: '返回主換算器',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: '現金賣出走勢',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '多幣別換算',

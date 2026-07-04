@@ -80,6 +80,11 @@ const ja = {
     backToConverter: 'コンバーターに戻る',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: '現金売レートの推移',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '複数通貨換算',

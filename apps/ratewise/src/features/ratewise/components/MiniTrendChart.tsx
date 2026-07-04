@@ -1,4 +1,5 @@
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   createChart,
   ColorType,
@@ -23,6 +24,8 @@ export interface MiniTrendChartProps {
   data: MiniTrendDataPoint[];
   currencyCode: CurrencyCode;
   className?: string;
+  /** 走勢價格基準標註（例如「現金賣出走勢」）；提供時顯示於圖角與 tooltip。 */
+  basisLabel?: string;
 }
 
 interface TooltipData {
@@ -30,6 +33,22 @@ interface TooltipData {
   rate: number;
   x: number;
   y: number;
+}
+
+/**
+ * 將 tooltip 中心 x 夾在 viewport 內，確保首尾資料點的 tooltip 完整可見。
+ */
+export function clampTooltipCenterX(
+  x: number,
+  tooltipWidth: number,
+  viewportWidth: number,
+  margin = 8,
+): number {
+  const halfWidth = tooltipWidth / 2;
+  const min = halfWidth + margin;
+  const max = viewportWidth - halfWidth - margin;
+  if (max < min) return viewportWidth / 2;
+  return Math.min(Math.max(x, min), max);
 }
 
 /**
@@ -44,12 +63,13 @@ interface TooltipData {
  *
  * @version 3.0.0 - 收斂觸控處理至 lightweight-charts 內建 tracking mode
  */
-export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
+export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendChartProps) {
   // 使用真實數據（Safari 404 問題已透過 logger.debug 降級處理修復）
   const displayData = data;
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
   // 追蹤主題變化 - 用於觸發圖表重建
@@ -222,6 +242,14 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
     };
   }, [displayData, stats.maxIndex, stats.minIndex, getThemeColors]);
 
+  // Tooltip portal 至 body 後量測實際寬度，將中心 x 夾在 viewport 內（首尾資料點防溢出）。
+  useLayoutEffect(() => {
+    const el = tooltipRef.current;
+    if (!el || !tooltipData) return;
+    const clampedX = clampTooltipCenterX(tooltipData.x, el.offsetWidth, window.innerWidth);
+    el.style.left = `${clampedX}px`;
+  }, [tooltipData]);
+
   // 數據不足時不顯示圖表
   if (displayData.length < 2) {
     return null;
@@ -244,49 +272,76 @@ export function MiniTrendChart({ data, className = '' }: MiniTrendChartProps) {
         className="w-full h-full touch-none select-none"
       />
 
-      {/* Hover Tooltip - SSOT 主題色設計 */}
-      <AnimatePresence>
-        {tooltipData && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 8 }}
-            transition={chartTransitions.tooltipBounce}
-            className="pointer-events-none"
-            style={{
-              position: 'fixed',
-              left: `${tooltipData.x}px`,
-              top: `${tooltipData.y - 55}px`,
-              zIndex: 99999,
-              transform: 'translateX(-50%)',
-            }}
-          >
-            {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
-            <div className="relative">
-              <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-border">
-                <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
-                  <span className="text-primary font-semibold">{tooltipData.date}</span>
-                  <span className="text-foreground font-bold">
-                    {formatExchangeRate(tooltipData.rate)}
-                  </span>
-                </div>
-              </div>
-              {/* 小三角形指示器 - 使用 card 色 */}
+      {/* 走勢基準標註（例如「現金賣出走勢」）- 展開視圖下常駐可見 */}
+      {basisLabel && (
+        <span
+          data-testid="trend-basis-label"
+          className="absolute top-1 left-2 z-10 pointer-events-none text-[10px] font-medium text-text-muted/80 whitespace-nowrap"
+        >
+          {basisLabel}
+        </span>
+      )}
+
+      {/* Hover Tooltip - SSOT 主題色設計。
+       * Portal 至 body：position:fixed 不再受帶 transform 的祖先（motion whileHover）
+       * 影響而以錯誤的 containing block 定位；translateX(-50%) 置中放在外層純 div，
+       * 避免被 Framer Motion 的 animate transform 覆寫；useLayoutEffect 夾 viewport 邊界。 */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {tooltipData && (
               <div
-                className="absolute left-1/2 -bottom-[5px] transform -translate-x-1/2"
+                ref={tooltipRef}
+                data-testid="mini-trend-chart-tooltip"
+                className="pointer-events-none"
                 style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '5px solid transparent',
-                  borderRight: '5px solid transparent',
-                  borderTop: '5px solid rgb(var(--color-card) / 0.98)',
-                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                  position: 'fixed',
+                  left: `${tooltipData.x}px`,
+                  top: `${tooltipData.y - 55}px`,
+                  zIndex: 99999,
+                  transform: 'translateX(-50%)',
                 }}
-              />
-            </div>
-          </motion.div>
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                  transition={chartTransitions.tooltipBounce}
+                >
+                  {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
+                  <div className="relative">
+                    <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-border">
+                      {basisLabel && (
+                        <div className="text-[10px] leading-tight text-text-muted whitespace-nowrap">
+                          {basisLabel}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
+                        <span className="text-primary font-semibold">{tooltipData.date}</span>
+                        <span className="text-foreground font-bold">
+                          {formatExchangeRate(tooltipData.rate)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* 小三角形指示器 - 使用 card 色 */}
+                    <div
+                      className="absolute left-1/2 -bottom-[5px] transform -translate-x-1/2"
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '5px solid transparent',
+                        borderRight: '5px solid transparent',
+                        borderTop: '5px solid rgb(var(--color-card) / 0.98)',
+                        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </motion.div>
   );
 }

@@ -80,6 +80,11 @@ const en = {
     backToConverter: 'Back to Converter',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: 'Cash sell rate trend',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: 'Multi-Currency',

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import { MiniTrendChart, type MiniTrendDataPoint } from '../MiniTrendChart';
+import { MiniTrendChart, clampTooltipCenterX, type MiniTrendDataPoint } from '../MiniTrendChart';
 
 // Store crosshair callback for testing
 let crosshairCallback: ((param: unknown) => void) | null = null;
@@ -325,6 +325,140 @@ describe('MiniTrendChart', () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 
       removeEventListenerSpy.mockRestore();
+    });
+  });
+
+  describe('clampTooltipCenterX（viewport 邊界夾定）', () => {
+    it('中間點不夾定，維持原 x', () => {
+      expect(clampTooltipCenterX(195, 146, 390)).toBe(195);
+    });
+
+    it('最右資料點夾回 viewport 內（取證案例：x=388, 寬 146, viewport 390）', () => {
+      // 未夾定時 tooltip 右緣 = 388 + 73 = 461 > 390；夾定後中心 = 390 - 73 - 8 = 309
+      expect(clampTooltipCenterX(388, 146, 390)).toBe(309);
+    });
+
+    it('最左資料點夾回 viewport 內', () => {
+      expect(clampTooltipCenterX(2, 146, 390)).toBe(81);
+    });
+
+    it('tooltip 寬於 viewport 時退回置中', () => {
+      expect(clampTooltipCenterX(10, 500, 390)).toBe(195);
+    });
+  });
+
+  describe('Tooltip portal 與邊界夾定', () => {
+    const testData: MiniTrendDataPoint[] = [
+      { date: '2025-10-14', rate: 31.0 },
+      { date: '2025-10-15', rate: 31.5 },
+      { date: '2025-10-16', rate: 32.0 },
+    ];
+
+    // component 以 seriesData.get(series) 取值，直接以 stub get 回傳資料點
+    const showTooltipAt = (x: number) => {
+      act(() => {
+        crosshairCallback?.({
+          point: { x, y: 40 },
+          time: '2025-10-15',
+          seriesData: {
+            get: () => ({ value: 31.5 }),
+          },
+        });
+      });
+    };
+
+    it('tooltip 應 portal 至 document.body（不受帶 transform 的祖先影響 fixed 定位）', async () => {
+      const { container } = render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      showTooltipAt(100);
+
+      const tooltip = document.querySelector('[data-testid="mini-trend-chart-tooltip"]');
+      expect(tooltip).toBeInTheDocument();
+      // portal 後 tooltip 不在圖表容器 DOM 樹內
+      expect(container.contains(tooltip)).toBe(false);
+      expect(document.body.contains(tooltip)).toBe(true);
+    });
+
+    it('最右資料點 tooltip 的 left 應被夾在 viewport 內', async () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 模擬 crosshair x 遠超 viewport 寬度（jsdom innerWidth 預設 1024）
+      showTooltipAt(window.innerWidth + 500);
+
+      const tooltip = document.querySelector<HTMLElement>(
+        '[data-testid="mini-trend-chart-tooltip"]',
+      );
+      expect(tooltip).toBeInTheDocument();
+      const left = parseFloat(tooltip!.style.left);
+      // 中心 x 夾定上限 = innerWidth - 寬/2 - 8（jsdom offsetWidth=0 → 上限 innerWidth-8）
+      expect(left).toBeLessThanOrEqual(window.innerWidth - 8);
+    });
+
+    it('最左資料點 tooltip 的 left 應被夾在 viewport 內', async () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      // 圖表最左緣（x=0 為合法座標；負值會被 crosshair handler 視為離開圖表）
+      showTooltipAt(0);
+
+      const tooltip = document.querySelector<HTMLElement>(
+        '[data-testid="mini-trend-chart-tooltip"]',
+      );
+      expect(tooltip).toBeInTheDocument();
+      expect(parseFloat(tooltip!.style.left)).toBeGreaterThanOrEqual(8);
+    });
+  });
+
+  describe('走勢基準標註（basisLabel）', () => {
+    const testData: MiniTrendDataPoint[] = [
+      { date: '2025-10-14', rate: 31.0 },
+      { date: '2025-10-15', rate: 31.5 },
+    ];
+
+    it('提供 basisLabel 時圖角顯示基準標註', () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" basisLabel="現金賣出走勢" />);
+
+      const badge = screen.getByTestId('trend-basis-label');
+      expect(badge).toHaveTextContent('現金賣出走勢');
+    });
+
+    it('未提供 basisLabel 時不顯示基準標註', () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" />);
+
+      expect(screen.queryByTestId('trend-basis-label')).not.toBeInTheDocument();
+    });
+
+    it('tooltip 內也顯示基準標註', async () => {
+      render(<MiniTrendChart data={testData} currencyCode="USD" basisLabel="現金賣出走勢" />);
+
+      await waitFor(() => {
+        expect(crosshairCallback).not.toBeNull();
+      });
+
+      act(() => {
+        crosshairCallback?.({
+          point: { x: 100, y: 40 },
+          time: '2025-10-15',
+          seriesData: {
+            get: () => ({ value: 31.5 }),
+          },
+        });
+      });
+
+      const tooltip = document.querySelector('[data-testid="mini-trend-chart-tooltip"]');
+      expect(tooltip).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('現金賣出走勢');
     });
   });
 });
