@@ -468,6 +468,8 @@ describe('ratewise build scripts', () => {
     expect(seoRateExamplesWorkflow).toContain(
       '交由 branch protection / required checks / maintainer review 或 GitHub auto-merge 合併',
     );
+    // auto-merge 僅為排隊機制：required checks 未過不會合併；禁止的是繞過 checks 的直接合併
+    expect(seoRateExamplesWorkflow).toContain('gh pr merge --auto --squash');
     expect(seoRateExamplesWorkflow).not.toContain('gh pr merge --squash');
   });
 

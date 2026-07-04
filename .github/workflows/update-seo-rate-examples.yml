@@ -6,13 +6,15 @@
 # 流程（業界最佳實踐 — PR-based，不直接 push main）：
 #   1. 執行腳本（雙重驗證：台銀牌告 + open.er-api.com）
 #   2. 若有變更，peter-evans/create-pull-request@v8 建立 PR 分支
-#   3. 交由 branch protection / required checks / maintainer review 或 GitHub auto-merge 合併
+#   3. 以 gh pr merge --auto 掛上 GitHub auto-merge，
+#      交由 branch protection / required checks / maintainer review 或 GitHub auto-merge 合併
 #   4. 無變更時不建立 PR，靜默略過
 #
 # 為何不直接 push main：
 #   - 避免繞過 branch protection 與必要的 CI 檢查（typecheck/test/build）
 #   - PR 流程確保每次入 main 的資料均通過完整驗證
 #   - 可追溯：每次更新均有獨立 PR 紀錄與 CI 狀態
+#   - auto-merge 僅為排隊機制：required checks 未過不會合併，禁止的是繞過 checks 的直接合併
 #
 # 觸發：每日 02:00 UTC（台灣時間 10:00）+ 手動觸發
 
@@ -95,8 +97,8 @@ jobs:
 
             ### 自動化
 
-            - PR 建立後交由 branch protection、required checks 與 maintainer review 控制合併
-            - 若 repo 啟用 GitHub auto-merge / merge queue，應由 GitHub 在條件滿足後合併
+            - PR 建立後由 workflow 掛上 GitHub auto-merge（squash），required checks 通過後自動合併
+            - 合併仍由 branch protection 與 required checks 把關，checks 未過不會合併
             - 無變更時不建立 PR，靜默略過
             - 幣別資料缺漏時腳本 `exit(1)`，工作流程明確失敗
           labels: |
@@ -105,6 +107,16 @@ jobs:
           add-paths: |
             apps/ratewise/src/config/generated/build-time-rates.json
             apps/ratewise/src/config/generated/seo-rate-examples.ts
+
+      # 啟用 GitHub auto-merge（squash）：合併仍由 branch protection + required checks 把關，
+      # checks 未通過不會合併；此步驟只是免除人工點擊，非繞過審查控制。
+      - name: 啟用 auto-merge（待 required checks 通過後自動合併）
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge --auto --squash "${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "✅ Auto-merge enabled for PR #${{ steps.create-pr.outputs.pull-request-number }}"
 
       - name: 無變更
         if: steps.create-pr.outputs.pull-request-number == ''
