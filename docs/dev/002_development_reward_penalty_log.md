@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+103
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+104
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-offline-shell-korean-flat-ui
+- 原因：離線兜底頁 v1 沿用漸層背景／漸層按鈕／裝飾陰影，與韓系 fintech（Toss）產品級扁平語彙不符，使用者回饋顏色風格醜且不喜歡漸層
+- 解法：視覺層全面扁平化（移除全部 linear-gradient 與 shadow token、主按鈕全寬實色 ≥52px、匯率快照改 Toss 交易列表式、status 改安靜小圓點），generate-offline-html.mjs 同步精簡未用 token，7 主題兩尺寸截圖驗證 console 零錯誤
 
 - 日期：2026-07-04
 - ID：reward-rw-offline-shell-honest-redesign
