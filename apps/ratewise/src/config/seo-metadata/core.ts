@@ -829,10 +829,15 @@ export function buildFaqPageJsonLd(faqEntries: readonly FAQEntry[], maxItems = 5
   };
 }
 
+// 中間價與台銀實際賣出價差距的全站描述 SSOT，統一多處曾互相矛盾的數字。
+// 依據：SEO_RATE_EXAMPLES 每日實測 diffPct（主要貨幣約 1～2%，東南亞與非主流貨幣可達 6% 以上）。
+export const MID_RATE_SPREAD_NOTE =
+  '中間價與台銀實際賣出價的差距依幣別而異：主要貨幣通常約 1～2%，東南亞與非主流貨幣可能超過 6%（依台銀牌告與市場中間價每日實測）。';
+
 export const HOMEPAGE_FAQ_CONTENT = [
   {
     question: `${APP_INFO.shortName} 和其他匯率工具有什麼不同？`,
-    answer: `多數匯率工具顯示「中間價」（買賣均值），並非銀行實際換匯報價。${APP_INFO.shortName} 直接顯示臺灣銀行牌告的現金與即期買賣四種報價，讓您換匯前就知道真正要付多少台幣。以日圓為例，中間價與賣出價差約 1～3%，換 10 萬日圓大約差 1,500～3,000 元台幣。`,
+    answer: `多數匯率工具顯示「中間價」（買賣均值），並非銀行實際換匯報價。${APP_INFO.shortName} 直接顯示臺灣銀行牌告的現金與即期買賣四種報價，讓您換匯前就知道真正要付多少台幣。${MID_RATE_SPREAD_NOTE}`,
   },
   {
     question: '支援哪些貨幣？',
@@ -909,8 +914,7 @@ export const HOMEPAGE_SEO = {
     },
     {
       question: '換匯前為什麼要看賣出價，不看中間價？',
-      answer:
-        '中間價是銀行間批發報價，一般民眾換匯必須用「銀行賣出價」——即銀行賣外幣給你的價格。中間價與賣出價的差距通常 0.5～2%，換 1,000 美元可差 150～600 元新台幣，金額越大差距越明顯。',
+      answer: `中間價是銀行間批發報價，一般民眾換匯必須用「銀行賣出價」——即銀行賣外幣給你的價格。${MID_RATE_SPREAD_NOTE}金額越大差距越明顯。`,
     },
     {
       question: '現金匯率和即期匯率怎麼選？',
@@ -1335,15 +1339,6 @@ export const ABOUT_PAGE_FAQ = [
     question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
     answer:
       '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
-  },
-  {
-    question: '這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？',
-    answer: `目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）、Dataset（開放資料）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。`,
-  },
-  {
-    question: `${APP_INFO.shortName} 是否支援 AI 搜尋引擎與 LLM 引用？`,
-    answer:
-      'robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、DeepSeekBot、MistralBot 等共 39+ 個）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。',
   },
 ] as const satisfies readonly FAQEntry[];
 

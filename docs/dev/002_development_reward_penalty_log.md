@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+106
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+107
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-seo-content-truthfulness-p0
+- 原因：SEO 文案 SSOT 含手寫匯率快照＋寫死年份（SGD/AUD/GBP/CAD/NZD/MYR/IDR/THB/VND/KRW 共 13 處）、精確假數字（419,639 韓元）、無來源最高級銀行宣稱（高雄銀行最便宜等 7 處）、About 自我指涉 SEO FAQ（schema 清單＋AI 爬蟲名單），且中間價差距數字三處互相矛盾（0.5-2%／1-3%／1-10%），YMYL 頁必然過期失真
+- 解法：匯率數字一律改由 SEO_RATE_EXAMPLES（每日更新）注入（新增 buildUnitRateSentence）、銀行宣稱改中性比價建議、About 自指涉 FAQ 移除並以守門測試防回流、差距描述收斂為 MID_RATE_SPREAD_NOTE 單一常數三處引用（鏡像腳本同步擷取），vitest 2730 綠＋generate:deterministic＋build:ratewise 通過
 
 - 日期：2026-07-05
 - ID：reward-rw-favorites-sort-ptr-hotfix

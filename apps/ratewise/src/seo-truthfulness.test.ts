@@ -71,15 +71,15 @@ describe('SEO 內容真實性與 SSOT', () => {
     expect(seoMetadata).not.toContain('均符合 Google Rich Results 規範');
   });
 
-  it('Google-Extended 說明應與 Google 官方 crawler 角色一致', () => {
+  it('About FAQ 不得殘留自我指涉的 AI 爬蟲與 schema 部署敘述', () => {
+    // 自我指涉 SEO FAQ（schema 清單、AI 爬蟲名單）已自 About 頁移除，
+    // 技術揭露統一由 /seo-tech/ 頁承擔；此測試防止敘述回流。
     const seoMetadata =
       read('src/config/seo-metadata/core.ts') + read('src/config/seo-metadata/currency-landing.ts');
     const aboutMarkdown = read('public/about.md');
 
     for (const content of [seoMetadata, aboutMarkdown]) {
-      expect(content).toContain('Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制');
-      expect(content).toContain('Google-Extended');
-      expect(content).toContain('Gemini / Vertex');
+      expect(content).not.toContain('Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制');
       expect(content).not.toContain('Google-Extended、GrokBot、Applebot-Extended 等）全站讀取');
     }
   });
