@@ -188,4 +188,15 @@ void i18n
     },
   });
 
+// 語言變更時同步 <html lang>：SSG 模板固定 zh-TW，client 切換語言後
+// documentElement.lang 必須跟上（無障礙與 SEO 一致性；涵蓋 #594 第 3 項的 lang 面）。
+// SSG（Node）無 document，僅 client 註冊。
+if (typeof document !== 'undefined') {
+  i18n.on('languageChanged', () => {
+    document.documentElement.lang = getResolvedLanguage();
+  });
+  // init 已於 listener 註冊前完成語言設定，需補一次初始同步。
+  document.documentElement.lang = getResolvedLanguage();
+}
+
 export default i18n;

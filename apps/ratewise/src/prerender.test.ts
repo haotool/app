@@ -548,7 +548,8 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
     it('SSG 導覽列必須以 zh-TW 預渲染（issue #560：Node navigator 為 en-US 不得洩入 SSG）', () => {
       const settingsHtml = resolve(distPath, 'settings/index.html');
-      if (!existsSync(settingsHtml)) return;
+      // 守門測試不允許 silent-pass：settings 靜態頁必須存在
+      expect(existsSync(settingsHtml)).toBe(true);
 
       const content = readFileSync(settingsHtml, 'utf-8');
       expect(content).toContain('aria-label="主導覽列"');
