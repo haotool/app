@@ -28,6 +28,8 @@ export interface BottomSheetProps {
   children: ReactNode;
   /** fixed：65vh 固定高；adaptive：內容自適應（max-h 70vh）。 */
   size?: 'fixed' | 'adaptive';
+  /** 內容含指標拖曳互動（如選色面板）時關閉整片下拉關閉，避免手勢衝突。 */
+  enableDrag?: boolean;
   testId?: string;
 }
 
@@ -44,6 +46,7 @@ export function BottomSheet({
   closeLabel,
   children,
   size = 'adaptive',
+  enableDrag = true,
   testId,
 }: BottomSheetProps) {
   useBodyScrollLock(isOpen);
@@ -135,7 +138,7 @@ export function BottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '120%' }}
             transition={transitions.keyboardSheet}
-            drag="y"
+            drag={enableDrag ? 'y' : false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}

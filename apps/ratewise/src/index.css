@@ -1911,6 +1911,30 @@ body {
     );
   }
 
+  /* ========================================
+     react-colorful 選色器覆寫（E2 wave-C，ADR-001）
+     全寬、高 200px、圓角對齊 radiusTokens.control = 0.75rem；
+     pointer 放大至 28px 提升手機拖曳可視性。
+     ======================================== */
+  .custom-theme-picker .react-colorful {
+    width: 100%;
+    height: 200px;
+  }
+
+  .custom-theme-picker .react-colorful__saturation {
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .custom-theme-picker .react-colorful__hue {
+    height: 28px;
+    border-radius: 0 0 0.75rem 0.75rem;
+  }
+
+  .custom-theme-picker .react-colorful__pointer {
+    width: 28px;
+    height: 28px;
+  }
+
   /* 毛玻璃效果 */
   .glass {
     background-color: rgb(var(--color-background) / 0.8);

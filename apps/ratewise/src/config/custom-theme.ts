@@ -18,6 +18,34 @@
 /** 預設自訂主色（品牌藍，與 zen primary 同值）。 */
 export const DEFAULT_CUSTOM_PRIMARY = '#3182F6';
 
+/** 背景色調三選一（wave-C）：只切換 background / surface-sunken 淡色對。 */
+export type CustomBackgroundTone = 'pure' | 'warm' | 'cool';
+
+/** 預設背景色調（zen 現值；舊持久化資料缺省時向後相容）。 */
+export const DEFAULT_CUSTOM_BACKGROUND_TONE: CustomBackgroundTone = 'pure';
+
+/**
+ * 背景色調 SSOT（wave-C AA 守門選值）：
+ * - background：--color-text（slate-900）與 --color-text-muted（slate-500）對其 ≥ 4.5:1
+ * - surfaceSunken：--color-text 對其 ≥ 4.5:1（比照 zen 現值 slate-100 的既有合約）
+ */
+export const CUSTOM_BACKGROUND_TONES: Record<
+  CustomBackgroundTone,
+  { background: string; surfaceSunken: string }
+> = {
+  // 純淨白＝zen 現值（slate-50 / slate-100）。
+  pure: { background: '#F8FAFC', surfaceSunken: '#F1F5F9' },
+  // 暖白（stone 系暖調，muted 對比 4.54:1）。
+  warm: { background: '#FDF9F3', surfaceSunken: '#F6F0E4' },
+  // 冷白（slate/blue 系冷調，muted 對比 4.53:1）。
+  cool: { background: '#F5FAFF', surfaceSunken: '#EAF1F8' },
+};
+
+/** 僅接受三種背景色調值（持久化 allowlist 驗證）。 */
+export function isValidBackgroundTone(value: unknown): value is CustomBackgroundTone {
+  return value === 'pure' || value === 'warm' || value === 'cool';
+}
+
 /**
  * 精選色票（韓系 fintech 調性：Toss 藍系/薄荷/珊瑚/紫羅蘭…）。
  * 色票彼此可區辨；文字對比由 deriveCustomThemeCssVars 的 AA clamp 保證（測試守門）。
@@ -37,6 +65,9 @@ export const CUSTOM_PRIMARY_PRESETS = [
 
 /** applyTheme 於 custom 模式寫入 / 切回內建主題時清除的 inline CSS 變數全集。 */
 export const CUSTOM_THEME_CSS_VARS = [
+  // wave-C：背景色調對（純淨白/暖白/冷白），寫入與清除共用本常數集合。
+  '--color-background',
+  '--color-surface-sunken',
   '--color-primary',
   '--color-primary-strong',
   '--color-primary-bg',
@@ -210,7 +241,7 @@ function darkenToContrast(hsl: Hsl, startLightness: number, against: Rgb, target
 }
 
 /**
- * 由使用者主色導出整組 custom 主題 CSS 變數。
+ * 由使用者主色（＋背景色調）導出整組 custom 主題 CSS 變數。
  *
  * 導出規則（zen 階差對應 + AA clamp）：
  * - primary：使用者原色（選色即所得；bootstrap pre-paint 同值）
@@ -218,32 +249,48 @@ function darkenToContrast(hsl: Hsl, startLightness: number, against: Rgb, target
  * - ring/chart 三色：非文字圖形色，clamp 至對白底對比 ≥ 3:1（WCAG 1.4.11）
  * - hover：zen 階差（primary 與 strong 明度中點），clamp 至白字對比 ≥ 4.5:1
  * - strong：主色加深至白字對比 ≥ 4.5:1（AA 硬規格）
- * - text/dark/darker：有色文字，clamp 至對 bg tint（含白底）對比 ≥ 4.5:1，並維持遞深階序
+ * - text/dark/darker：有色文字，clamp 至對最深底色（含背景調對）對比 ≥ 4.5:1，並維持遞深階序
+ * - background/surface-sunken：由背景色調三選一（CUSTOM_BACKGROUND_TONES SSOT）直出
  */
-export function deriveCustomThemeCssVars(primaryHex: string): CustomThemeCssVarMap {
+export function deriveCustomThemeCssVars(
+  primaryHex: string,
+  backgroundTone: CustomBackgroundTone = DEFAULT_CUSTOM_BACKGROUND_TONE,
+): CustomThemeCssVarMap {
   const hex = isValidHexColor(primaryHex) ? primaryHex : DEFAULT_CUSTOM_PRIMARY;
   const base = hexToRgb(hex);
   const hsl = rgbToHsl(base);
+  const tone = CUSTOM_BACKGROUND_TONES[backgroundTone];
 
   const bg = shadeAt(hsl, 0.97);
   const light = shadeAt(hsl, 0.93);
   const active = shadeAt(hsl, 0.78);
   const textLight = shadeAt(hsl, 0.68);
 
-  // 非文字圖形色（focus ring / 圖表線）：對白底至少 3:1。
-  const vivid = darkenToContrast(hsl, hsl.l, WHITE, 3);
+  // wave-C：有色文字/圖形錨點取「primary bg tint 與背景調對」中最深者，
+  // 保證任一背景調下文字（4.5:1）與圖形（3:1）皆守門。
+  const toneBackground = hexToRgb(tone.background);
+  const toneSunken = hexToRgb(tone.surfaceSunken);
+  const textAnchor = [bg, toneBackground, toneSunken].reduce((darkest, candidate) =>
+    relativeLuminance(candidate) < relativeLuminance(darkest) ? candidate : darkest,
+  );
+
+  // 非文字圖形色（focus ring / 圖表線）：對最深底色至少 3:1。
+  const vivid = darkenToContrast(hsl, hsl.l, textAnchor, 3);
 
   // 白字實底：strong 為 AA 錨點；hover 取 primary 與 strong 明度中點後再 clamp。
   const strong = darkenToContrast(hsl, Math.min(hsl.l, 0.482), WHITE, 4.5);
   const strongL = rgbToHsl(strong).l;
   const hover = darkenToContrast(hsl, Math.min(hsl.l, (hsl.l + strongL) / 2), WHITE, 4.5);
 
-  // 有色文字：對 bg tint 達 AA（bg 較白底更嚴格，同時涵蓋白底/light 底）。
-  const text = darkenToContrast(hsl, hsl.l, bg, 4.5);
-  const dark = darkenToContrast(hsl, Math.min(hsl.l, 0.404), bg, 4.5);
-  const darker = darkenToContrast(hsl, Math.min(hsl.l, 0.33), bg, 5.5);
+  // 有色文字：對最深底色（bg tint / 背景調 background / surface-sunken）達 AA，
+  // 同時涵蓋白底與 light 底（皆較 textAnchor 淺）。
+  const text = darkenToContrast(hsl, hsl.l, textAnchor, 4.5);
+  const dark = darkenToContrast(hsl, Math.min(hsl.l, 0.404), textAnchor, 4.5);
+  const darker = darkenToContrast(hsl, Math.min(hsl.l, 0.33), textAnchor, 5.5);
 
   return {
+    '--color-background': hexToRgbTriple(tone.background),
+    '--color-surface-sunken': hexToRgbTriple(tone.surfaceSunken),
     '--color-primary': rgbToTriple(base),
     '--color-primary-strong': rgbToTriple(strong),
     '--color-primary-bg': rgbToTriple(bg),

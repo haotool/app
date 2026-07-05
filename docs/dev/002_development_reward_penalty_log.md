@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+150
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+151
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-e2c-color-picker-modernization
+- 原因：自訂色 UX 僅原生色相/明度滑桿＋hex 輸入，體驗陽春且無背景色調選項（E2 wave-C）
+- 解法：context7 查證後引入 react-colorful@5.7.0（ADR-001，bundle +3.59KB gzip ≤5KB）改 BottomSheet 選色（色票＋二維拖曳＋HEX＋預覽 chip），新增背景色調三選一進演算集合（寫入=清除同一常數），AA property 守門擴充三背景調 × 977 case 全綠，customBackgroundTone 持久化向後相容，e2e 全旅程（chromium 雙專案）通過
 
 - 日期：2026-07-06
 - ID：reward-rw-602-manifest-site-url-env

@@ -10,13 +10,17 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  CUSTOM_BACKGROUND_TONES,
   CUSTOM_PRIMARY_PRESETS,
   CUSTOM_THEME_CSS_VARS,
+  DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
   choosePrimaryForeground,
   deriveCustomThemeCssVars,
   hexToRgbTriple,
+  isValidBackgroundTone,
   isValidHexColor,
+  type CustomBackgroundTone,
 } from '../custom-theme';
 
 /** 'R G B' → 相對亮度（WCAG 2.x，獨立實作） */
@@ -80,59 +84,104 @@ const boundaryHexColors = [
 
 const allInputs = [...boundaryHexColors, ...randomHexColors, ...CUSTOM_PRIMARY_PRESETS];
 
-describe('custom 主題演算 AA property 守門（任意輸入色 → 全部文字配對 ≥ 4.5:1）', () => {
-  it.each(allInputs.map((hex) => ({ hex })))('$hex 導出全組變數皆守 AA', ({ hex }) => {
-    const vars = deriveCustomThemeCssVars(hex);
-    const strong = vars['--color-primary-strong'];
-    const hover = vars['--color-primary-hover'];
-    const bg = vars['--color-primary-bg'];
-    const text = vars['--color-primary-text'];
-    const dark = vars['--color-primary-dark'];
-    const darker = vars['--color-primary-darker'];
+/** 全部背景色調（wave-C：三選一 property 守門全覆蓋）。 */
+const ALL_TONES = Object.keys(CUSTOM_BACKGROUND_TONES) as CustomBackgroundTone[];
 
-    // 白字實底（按鈕 / 等號鍵語境）
-    expect(contrast(WHITE, strong), `${hex} strong 白字`).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(WHITE, hover), `${hex} hover 白字`).toBeGreaterThanOrEqual(4.5);
+// zen 底座固定文字色（[data-style='custom'] 靜態區塊值：slate-900 / slate-500）。
+const BASE_TEXT = '15 23 42';
+const BASE_TEXT_MUTED = '100 116 139';
 
-    // 有色文字對白底與 bg tint（primary-text / dark / darker 均為文字角色）
-    for (const [name, value] of [
-      ['text', text],
-      ['dark', dark],
-      ['darker', darker],
-    ] as const) {
-      expect(contrast(value, WHITE), `${hex} ${name} on white`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(value, bg), `${hex} ${name} on bg tint`).toBeGreaterThanOrEqual(4.5);
-    }
+describe.each(ALL_TONES.map((tone) => ({ tone })))(
+  'custom 主題演算 AA property 守門（背景調 $tone × 任意輸入色 → 全部文字配對 ≥ 4.5:1）',
+  ({ tone }) => {
+    const toneBackground = hexToTriple(CUSTOM_BACKGROUND_TONES[tone].background);
+    const toneSunken = hexToTriple(CUSTOM_BACKGROUND_TONES[tone].surfaceSunken);
 
-    // 亮度擇色法（白/深二選一）在 strong 底上必達 AA
-    const strongHex = `#${strong
-      .split(' ')
-      .map((n) => Number(n).toString(16).padStart(2, '0'))
-      .join('')}`;
-    const foreground = hexToTriple(choosePrimaryForeground(strongHex));
-    expect(contrast(foreground, strong), `${hex} 擇色文字 on strong`).toBeGreaterThanOrEqual(4.5);
+    it('背景調對本身守 AA：text/muted 對 background ≥ 4.5、text 對 surface-sunken ≥ 4.5', () => {
+      expect(
+        contrast(BASE_TEXT, toneBackground),
+        `${tone} text on background`,
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(
+        contrast(BASE_TEXT_MUTED, toneBackground),
+        `${tone} muted on background`,
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(BASE_TEXT, toneSunken), `${tone} text on sunken`).toBeGreaterThanOrEqual(4.5);
+    });
 
-    // 非文字圖形色（focus ring / 圖表線 / accent）對白底 ≥ 3:1
-    expect(contrast(vars['--color-primary-ring'], WHITE)).toBeGreaterThanOrEqual(3);
-    expect(contrast(vars['--color-chart-line'], WHITE)).toBeGreaterThanOrEqual(3);
-    expect(contrast(vars['--color-accent'], WHITE)).toBeGreaterThanOrEqual(3);
+    it.each(allInputs.map((hex) => ({ hex })))('$hex 導出全組變數皆守 AA', ({ hex }) => {
+      const vars = deriveCustomThemeCssVars(hex, tone);
+      const strong = vars['--color-primary-strong'];
+      const hover = vars['--color-primary-hover'];
+      const bg = vars['--color-primary-bg'];
+      const text = vars['--color-primary-text'];
+      const dark = vars['--color-primary-dark'];
+      const darker = vars['--color-primary-darker'];
 
-    // S2 跟色鍵：白字表面（等號鍵 / 品牌按鈕）全部 ≥ 4.5:1
-    for (const key of [
-      '--color-calc-equals',
-      '--color-calc-equals-hover',
-      '--color-calc-equals-active',
-      '--color-brand-button-from',
-      '--color-brand-button-to',
-      '--color-brand-button-hover-from',
-      '--color-brand-button-hover-to',
-    ] as const) {
-      expect(contrast(WHITE, vars[key]), `${hex} ${key} 白字`).toBeGreaterThanOrEqual(4.5);
-    }
-    // brand-text 為有色文字：對白底 ≥ 4.5:1
-    expect(contrast(vars['--color-brand-text'], WHITE)).toBeGreaterThanOrEqual(4.5);
-  });
-});
+      // 背景調對經演算直出（寫入=清除同一常數集合）
+      expect(vars['--color-background']).toBe(toneBackground);
+      expect(vars['--color-surface-sunken']).toBe(toneSunken);
+
+      // 白字實底（按鈕 / 等號鍵語境）
+      expect(contrast(WHITE, strong), `${hex} strong 白字`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(WHITE, hover), `${hex} hover 白字`).toBeGreaterThanOrEqual(4.5);
+
+      // 有色文字對白底、bg tint 與背景調對（primary-text / dark / darker 均為文字角色）
+      for (const [name, value] of [
+        ['text', text],
+        ['dark', dark],
+        ['darker', darker],
+      ] as const) {
+        expect(contrast(value, WHITE), `${hex} ${name} on white`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(value, bg), `${hex} ${name} on bg tint`).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrast(value, toneBackground),
+          `${hex} ${name} on ${tone} bg`,
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrast(value, toneSunken),
+          `${hex} ${name} on ${tone} sunken`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+
+      // 亮度擇色法（白/深二選一）在 strong 底上必達 AA
+      const strongHex = `#${strong
+        .split(' ')
+        .map((n) => Number(n).toString(16).padStart(2, '0'))
+        .join('')}`;
+      const foreground = hexToTriple(choosePrimaryForeground(strongHex));
+      expect(contrast(foreground, strong), `${hex} 擇色文字 on strong`).toBeGreaterThanOrEqual(4.5);
+
+      // 非文字圖形色（focus ring / 圖表線 / accent）對白底與背景調對 ≥ 3:1
+      for (const key of ['--color-primary-ring', '--color-chart-line', '--color-accent'] as const) {
+        expect(contrast(vars[key], WHITE), `${hex} ${key} on white`).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(vars[key], toneBackground),
+          `${hex} ${key} on ${tone} bg`,
+        ).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(vars[key], toneSunken),
+          `${hex} ${key} on ${tone} sunken`,
+        ).toBeGreaterThanOrEqual(3);
+      }
+
+      // S2 跟色鍵：白字表面（等號鍵 / 品牌按鈕）全部 ≥ 4.5:1
+      for (const key of [
+        '--color-calc-equals',
+        '--color-calc-equals-hover',
+        '--color-calc-equals-active',
+        '--color-brand-button-from',
+        '--color-brand-button-to',
+        '--color-brand-button-hover-from',
+        '--color-brand-button-hover-to',
+      ] as const) {
+        expect(contrast(WHITE, vars[key]), `${hex} ${key} 白字`).toBeGreaterThanOrEqual(4.5);
+      }
+      // brand-text 為有色文字：對白底 ≥ 4.5:1
+      expect(contrast(vars['--color-brand-text'], WHITE)).toBeGreaterThanOrEqual(4.5);
+    });
+  },
+);
 
 describe('custom 主題演算行為合約', () => {
   it('--color-primary 為 identity 映射（與 bootstrap pre-paint 同構）', () => {
@@ -170,5 +219,33 @@ describe('custom 主題演算行為合約', () => {
     expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(12);
     CUSTOM_PRIMARY_PRESETS.forEach((preset) => expect(isValidHexColor(preset)).toBe(true));
     expect(new Set(CUSTOM_PRIMARY_PRESETS).size).toBe(CUSTOM_PRIMARY_PRESETS.length);
+  });
+
+  it('背景色調缺省＝純淨白（zen 現值，向後相容合約）', () => {
+    expect(DEFAULT_CUSTOM_BACKGROUND_TONE).toBe('pure');
+    expect(CUSTOM_BACKGROUND_TONES.pure.background).toBe('#F8FAFC');
+    expect(CUSTOM_BACKGROUND_TONES.pure.surfaceSunken).toBe('#F1F5F9');
+    const withDefault = deriveCustomThemeCssVars('#FF6B6B');
+    const explicit = deriveCustomThemeCssVars('#FF6B6B', 'pure');
+    expect(withDefault).toEqual(explicit);
+  });
+
+  it('isValidBackgroundTone 僅接受三種 allowlist 值', () => {
+    expect(isValidBackgroundTone('pure')).toBe(true);
+    expect(isValidBackgroundTone('warm')).toBe(true);
+    expect(isValidBackgroundTone('cool')).toBe(true);
+    expect(isValidBackgroundTone('dark')).toBe(false);
+    expect(isValidBackgroundTone('')).toBe(false);
+    expect(isValidBackgroundTone(null)).toBe(false);
+    expect(isValidBackgroundTone(1)).toBe(false);
+  });
+
+  it('三背景調彼此可區辨且格式合法', () => {
+    const values = ALL_TONES.flatMap((tone) => [
+      CUSTOM_BACKGROUND_TONES[tone].background,
+      CUSTOM_BACKGROUND_TONES[tone].surfaceSunken,
+    ]);
+    values.forEach((hex) => expect(isValidHexColor(hex)).toBe(true));
+    expect(new Set(values).size).toBe(values.length);
   });
 });
