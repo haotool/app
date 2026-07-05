@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-settings-converter-mode-ssot
+- 原因：converter-v2 只能靠 URL override 或手動 localStorage 開啟，使用者無設定入口，且 wave-A 獨立 flag key 與 converterStore 形成雙持久化來源
+- 解法：設定頁新增「單幣別模式」區段（i18n ×4），偏好併入 converterStore（舊 key 一次性遷移刪除），flag 讀取端收斂為 URL override > 使用者設定 > 預設 off 單一優先序並記入 README
 
 - 日期：2026-07-05
 - ID：penalty-rw-e3-keypad-stale-seed-rejected-key-gate

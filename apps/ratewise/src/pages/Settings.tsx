@@ -34,6 +34,8 @@ import {
   Scale,
   Sparkles,
   Play,
+  LayoutList,
+  Rows3,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -56,7 +58,7 @@ import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '.
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
-import type { RateMode } from '../features/ratewise/types';
+import type { ConverterV2Variant, RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
 import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../utils/splashPreference';
 
@@ -64,7 +66,8 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { style, setStyle, setCustomPrimary, customPrimary, resetTheme, isLoaded } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
-  const { rateMode, setRateMode } = useConverterStore();
+  const { rateMode, setRateMode, singleConverterVariant, setSingleConverterVariant } =
+    useConverterStore();
 
   // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
   const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
@@ -130,6 +133,27 @@ export default function Settings() {
       labelKey: 'settings.rateModeMid',
       descKey: 'settings.rateModeMidDesc',
       icon: Scale,
+    },
+  ];
+
+  // 單幣別模式：持久化於 converterStore；URL override 優先序見 config/converter-v2-flag.ts。
+  const CONVERTER_VARIANT_OPTIONS: {
+    value: ConverterV2Variant;
+    labelKey: string;
+    descKey: string;
+    icon: LucideIcon;
+  }[] = [
+    {
+      value: 'legacy',
+      labelKey: 'settings.converterVariantLegacy',
+      descKey: 'settings.converterVariantLegacyDesc',
+      icon: LayoutList,
+    },
+    {
+      value: 'v2',
+      labelKey: 'settings.converterVariantV2',
+      descKey: 'settings.converterVariantV2Desc',
+      icon: Rows3,
     },
   ];
 
@@ -510,6 +534,64 @@ export default function Settings() {
               RATE_MODE_OPTIONS.find((o) => o.value === rateMode)?.descKey as Parameters<
                 typeof t
               >[0],
+            )}
+          </p>
+        </section>
+
+        {/* 單幣別模式區塊：經典 legacy／等值雙列 v2（converterStore 持久化） */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+            <Rows3 className="w-3.5 h-3.5" />
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
+              {t('settings.singleConverterMode')}
+            </h2>
+          </div>
+
+          <div className={segmentedSwitch.containerClass}>
+            {CONVERTER_VARIANT_OPTIONS.map((option) => {
+              const isActive = singleConverterVariant === option.value;
+              return (
+                <motion.button
+                  key={option.value}
+                  onClick={() => setSingleConverterVariant(option.value)}
+                  whileHover={{ ...segmentedSwitch.item.whileHover, opacity: 1 }}
+                  whileTap={segmentedSwitch.item.whileTap}
+                  animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
+                  transition={transitions.default}
+                  className={`${segmentedSwitch.itemBaseClass} flex-col`}
+                  aria-pressed={isActive}
+                  data-testid={`converter-variant-${option.value}`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="converter-variant-indicator"
+                      className={segmentedSwitch.indicatorClass}
+                      transition={segmentedSwitch.indicator}
+                    />
+                  )}
+                  <motion.span
+                    animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
+                    transition={transitions.default}
+                    className="mb-1 relative z-10"
+                  >
+                    <option.icon
+                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary' : ''}`}
+                      strokeWidth={isActive ? 2.5 : 1.8}
+                    />
+                  </motion.span>
+                  <span className="text-2xs font-bold relative z-10">
+                    {t(option.labelKey as Parameters<typeof t>[0])}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* 說明文字 */}
+          <p className="text-2xs opacity-50 mt-2 px-1 leading-relaxed">
+            {t(
+              CONVERTER_VARIANT_OPTIONS.find((o) => o.value === singleConverterVariant)
+                ?.descKey as Parameters<typeof t>[0],
             )}
           </p>
         </section>

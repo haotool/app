@@ -68,6 +68,17 @@ src/
 | ESLint     | 0 警告      |
 | Lighthouse | 95+ 全類別  |
 
+## 🧪 Feature Flag：converter-v2（單幣別等值雙列）
+
+單幣別換算 v2 的啟用判定為單一 SSOT（`src/config/converter-v2-flag.ts`），優先序固定：
+
+1. **URL override**：`?converter=v2|legacy`——QA／支援直達用，僅影響本次瀏覽，不持久化。
+2. **使用者設定**：設定頁「單幣別模式」二選一，持久化於 `converterStore`
+   （`ratewise-converter` 的 `singleConverterVariant`，與 `lastConverterView` 同域；
+   wave-A 舊獨立 key `ratewise:converterV2` 由 store 遷移一次性併入後刪除）。
+3. **預設 off（legacy）**：未設定時維持經典版面；SSG／server snapshot 恆為 legacy，
+   保證 flag off 時預渲染輸出不變（可用 `scripts/qa/verify-ssg-invariance.mjs` 驗證）。
+
 ## 🚢 發版驗證
 
 RateWise 正式站由 Zeabur production deployment 發布，Release 完成後需確認

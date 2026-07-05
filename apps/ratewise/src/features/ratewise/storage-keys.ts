@@ -70,6 +70,13 @@ export const STORAGE_KEYS = {
 
   /** 轉換歷史記錄 - 用戶的轉換記錄，7 天後自動過期 */
   CONVERSION_HISTORY: 'conversionHistory',
+
+  /**
+   * converter-v2 flag（wave-A 獨立 key）- legacy key，僅供一次性遷移使用。
+   * SSOT 已改為 'ratewise-converter' 內的 singleConverterVariant；converterStore
+   * 遷移時會讀取本 key 映射後刪除，請勿在執行期直接讀寫本 key。
+   */
+  CONVERTER_V2_FLAG: 'ratewise:converterV2',
 } as const;
 
 /**
