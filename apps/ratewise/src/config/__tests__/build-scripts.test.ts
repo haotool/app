@@ -756,15 +756,16 @@ describe('ratewise build scripts', () => {
     expect(scriptSource).toContain('!hasChanges && !schemaMigrationNeeded');
   });
 
-  it('CurrencyLandingPage should import AnswerCapsule and accept answerCapsule prop (AEO/GEO readiness)', async () => {
+  it('CurrencyLandingPage should render answerCapsule quick answers (AEO/GEO readiness)', async () => {
     const source = await readCurrencyLandingPageSource();
 
-    // 驗證匯入 AnswerCapsule，確保 34 個幣對頁都有 AEO/GEO 快速答案覆蓋。
-    expect(source).toContain("import { AnswerCapsule } from './AnswerCapsule'");
+    // 驗證匯入 CurrencyAnswerHero（E5 wave-B 起快速答案由 Answer Hero 渲染），
+    // 確保 34 個幣對頁都有 AEO/GEO 快速答案覆蓋。
+    expect(source).toContain("import { CurrencyAnswerHero } from './currency/CurrencyAnswerHero'");
     // 驗證 answerCapsule prop 定義存在。
     expect(source).toContain('answerCapsule?: FAQEntry[]');
-    // 驗證 AnswerCapsule 元件有被實際渲染。
-    expect(source).toContain('<AnswerCapsule items={answerCapsule}');
+    // 驗證快速答案資料有被實際傳入渲染。
+    expect(source).toContain('quickAnswers={answerCapsule}');
   });
 
   it('HomepageSEOSection should import and render AnswerCapsule (AEO/GEO readiness)', async () => {
