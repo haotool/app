@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+130
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-563-favorites-star-to-reorder-hint
+- 原因：PR #557 後非收藏幣停用拖曳但無顯性訊號，且 dragToFavorite 四語系死鍵與 baseCurrency 死 fallback 殘留造成維護噪音
+- 解法：非收藏段前加一行 muted 提示（i18n ×4＋key 存在性測試）、清除死鍵與死 fallback、補 destinationIndex=0 邊界測試
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-waveb-settings-toggle-e2e-guards

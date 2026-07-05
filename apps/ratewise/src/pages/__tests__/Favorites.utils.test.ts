@@ -85,6 +85,11 @@ describe('reorderFavoritesOnDragEnd（排序合約）', () => {
     expect(result).toEqual(['USD', 'JPY', 'KRW']);
   });
 
+  it('destinationIndex=0（TWD 位置）：夾回收藏段開頭，TWD 仍固定置頂', () => {
+    const result = reorderFavoritesOnDragEnd(favorites, 'USD', 0);
+    expect(result).toEqual(['USD', 'JPY', 'KRW']);
+  });
+
   it('非收藏幣拖曳：回傳 null，不得被隱式加入收藏', () => {
     const result = reorderFavoritesOnDragEnd(favorites, 'EUR', 2);
     expect(result).toBeNull();

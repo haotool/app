@@ -157,7 +157,7 @@ const en = {
     reconvert: 'Reconvert',
     clearAllHistory: 'Clear all history',
     dragToReorder: 'Drag to reorder',
-    dragToFavorite: 'Drag to favorite',
+    starToReorderHint: 'Tap ⭐ to add a favorite, then drag to reorder',
     dragHandle: 'Drag handle',
     baseCurrency: 'Base currency',
   },
