@@ -17,8 +17,8 @@ export default function ColorSchemeComparison() {
       iconColor: 'text-purple-600',
       titleColor: 'text-purple-700',
       descColor: 'text-purple-500',
-      primaryBtn: 'bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300',
-      primaryBtnHover: 'hover:from-pink-400 hover:via-purple-400 hover:to-blue-400',
+      primaryBtn: 'bg-purple-300',
+      primaryBtnHover: 'hover:bg-purple-400',
       secondaryBtn: 'bg-white/90 text-purple-600 border-purple-200',
       bubbleTop: 'bg-purple-100/50',
       bubbleBottom: 'bg-pink-100/50',
@@ -33,8 +33,8 @@ export default function ColorSchemeComparison() {
       iconColor: 'text-indigo-600',
       titleColor: 'text-indigo-700',
       descColor: 'text-indigo-500',
-      primaryBtn: 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500',
-      primaryBtnHover: 'hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600',
+      primaryBtn: 'bg-indigo-500',
+      primaryBtnHover: 'hover:bg-indigo-600',
       secondaryBtn: 'bg-white/90 text-indigo-600 border-indigo-200',
       bubbleTop: 'bg-indigo-100/50',
       bubbleBottom: 'bg-blue-100/50',
@@ -49,8 +49,8 @@ export default function ColorSchemeComparison() {
       iconColor: 'text-blue-600',
       titleColor: 'text-blue-700',
       descColor: 'text-blue-500',
-      primaryBtn: 'bg-gradient-to-r from-blue-500 via-violet-500 to-purple-500',
-      primaryBtnHover: 'hover:from-blue-600 hover:via-violet-600 hover:to-purple-600',
+      primaryBtn: 'bg-violet-500',
+      primaryBtnHover: 'hover:bg-violet-600',
       secondaryBtn: 'bg-white/90 text-blue-600 border-blue-200',
       bubbleTop: 'bg-violet-100/50',
       bubbleBottom: 'bg-blue-100/50',
@@ -65,8 +65,8 @@ export default function ColorSchemeComparison() {
       iconColor: 'text-blue-600',
       titleColor: 'text-blue-700',
       descColor: 'text-blue-500',
-      primaryBtn: 'bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400',
-      primaryBtnHover: 'hover:from-cyan-500 hover:via-blue-500 hover:to-purple-500',
+      primaryBtn: 'bg-blue-400',
+      primaryBtnHover: 'hover:bg-blue-500',
       secondaryBtn: 'bg-white/90 text-blue-600 border-blue-200',
       bubbleTop: 'bg-blue-100/50',
       bubbleBottom: 'bg-cyan-100/50',
@@ -86,7 +86,7 @@ export default function ColorSchemeComparison() {
         <div className="relative">
           <div
             className={`
-              relative overflow-hidden rounded-[32px]
+              relative overflow-hidden rounded-card
               w-80 max-w-[calc(100vw-2rem)]
               ${variant.containerBg}
               border-2 ${variant.containerBorder}
@@ -146,7 +146,7 @@ export default function ColorSchemeComparison() {
               <div className="flex flex-col space-y-2">
                 <button
                   className={`
-                    w-full px-5 py-3 rounded-[20px]
+                    w-full px-5 py-3 rounded-card
                     ${variant.primaryBtn}
                     text-white text-sm font-bold
                     shadow-lg
@@ -161,7 +161,7 @@ export default function ColorSchemeComparison() {
 
                 <button
                   className={`
-                    w-full px-5 py-3 rounded-[20px]
+                    w-full px-5 py-3 rounded-card
                     ${variant.secondaryBtn}
                     backdrop-blur-sm
                     text-sm font-semibold

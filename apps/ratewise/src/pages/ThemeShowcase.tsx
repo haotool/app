@@ -160,7 +160,7 @@ export default function ThemeShowcase() {
                   color: 'rgb(var(--color-text))',
                 }}
               />
-              <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 shadow-inner">
+              <div className="bg-black/5 rounded-card p-1.5 flex gap-1 shadow-inner">
                 <button className="flex-1 py-2 rounded-2xl text-xs font-bold relative">
                   <div
                     className="absolute inset-0 rounded-2xl shadow-sm z-[-1]"

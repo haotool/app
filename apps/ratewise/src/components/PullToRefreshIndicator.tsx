@@ -66,7 +66,7 @@ export function PullToRefreshIndicator({
       {/* Glassmorphism Container - 使用 SSOT token */}
       <div
         className="
-          mt-4 px-6 py-3 rounded-[32px]
+          mt-4 px-6 py-3 rounded-full
           backdrop-blur-xl backdrop-saturate-150
           bg-surface/90
           border-2 border-primary/20

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+120
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-static-lint-guards
+- 原因：token 收斂後缺乏防回退機制，後續 PR 可能重新引入小字、按鈕漸層、任意圓角、彩色陰影與 hover-scale 造成漂移
+- 解法：新增 design-system-guards 靜態掃描測試（禁 <12px、button 禁 bg-gradient、圓角/陰影白名單、hover-scale 與 infinite 動畫清零、token 實值收斂斷言），並以注入違規探針的突變驗證證明 7 條規則翻紅（移除後全綠）
 
 - 日期：2026-07-05
 - ID：reward-rw-e1-consumer-migration
