@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-05
+- ID：neutral-rw-e1-design-brief-roadmap-sync
+- 原因：E1 設計簡報（韓系設計系統收斂 SSOT）尚未入庫，ROADMAP 亦未反映 H1-H6/E2/E3 已完成狀態，epic 勾稽缺乏可追溯依據
+- 解法：將 PM 簡報 add -f 進 .claude/prds/ 作為 E1 SSOT，ROADMAP 補狀態欄（H1-H6/E2/E3 → DONE、E1 → IN PROGRESS）
+
+- 日期：2026-07-05
 - ID：neutral-rw-main-hotfix-sync-into-experiment
 - 原因：main 七個 hotfix（#557/#558/#559/#561/#565/#569/#571）落後於實驗分支基底，後續 epic 需建立在最新基底上
 - 解法：以 3-way merge 將 origin/main 合入 experiment/ratewise-product-2026h2，保雙方語意解衝突（002 檔頭依公式重算累計 +117、i18n 四語系雙鍵組並存），全套守門測試驗證
