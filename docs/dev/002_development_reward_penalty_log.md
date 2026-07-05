@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+151
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+152
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-587-v2-physical-keyboard
+- 原因：v2 等值雙列無 keydown 監聽，桌面與外接鍵盤用戶只能滑鼠點虛擬鍵（issue 587，v2 轉正硬前置）
+- 解法：泛化 useCalculatorKeyboard（respectInteractiveTarget 讓 Enter/Esc 交還互動元素原生語意）並掛入 ConverterKeypad 直通同一計算引擎，鍵盤輸入視同按鍵意圖與虛擬鍵共用回寫閘門，sheet 開啟時停用避免語意衝突
 
 - 日期：2026-07-06
 - ID：neutral-rw-617-review-convergence-chunk-lockfile

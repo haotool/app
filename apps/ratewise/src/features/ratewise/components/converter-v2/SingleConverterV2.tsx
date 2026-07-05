@@ -316,11 +316,13 @@ export const SingleConverterV2 = ({
         </div>
       </div>
 
-      {/* 常駐計算機：輸入目標＝活躍列；key remount 重置種子，掛載為唯讀、僅實際按鍵才回寫 */}
+      {/* 常駐計算機：輸入目標＝活躍列；key remount 重置種子，掛載為唯讀、僅實際按鍵才回寫。
+          實體鍵盤（#587）於任一 sheet 開啟時停用，避免與 sheet 內搜尋、Esc 語意衝突。 */}
       <ConverterKeypad
         key={`${activeRow}-${keypadSession}`}
         initialValue={keypadSeed}
         onValueChange={handleKeypadValue}
+        keyboardEnabled={pickerFor === null && !isTrendOpen}
       />
 
       <CurrencyPickerSheet

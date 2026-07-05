@@ -7,6 +7,9 @@
 
 import { useEffect } from 'react';
 
+// 常駐鍵盤情境下 Enter/Escape 應讓路的互動元素（交還原生語意）。
+const INTERACTIVE_TARGET_SELECTOR = 'button, a[href], select, summary, [role="button"]';
+
 interface UseCalculatorKeyboardProps {
   /** 計算機是否開啟 */
   isOpen: boolean;
@@ -20,6 +23,11 @@ interface UseCalculatorKeyboardProps {
   onCalculate: () => void;
   /** 關閉計算機 */
   onClose: () => void;
+  /**
+   * 常駐鍵盤情境（如 v2 keypad）：Enter/Escape 落在互動元素上時不攔截，
+   * 保留按鈕、連結的原生鍵盤語意。預設 false 維持 v1 modal 行為。
+   */
+  respectInteractiveTarget?: boolean;
 }
 
 /**
@@ -53,6 +61,7 @@ export function useCalculatorKeyboard({
   onClear,
   onCalculate,
   onClose,
+  respectInteractiveTarget = false,
 }: UseCalculatorKeyboardProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -60,6 +69,16 @@ export function useCalculatorKeyboard({
     const handleKeyDown = (e: KeyboardEvent) => {
       // 防止影響其他輸入框
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // 常駐鍵盤情境：Enter/Escape 落在互動元素上時交還原生語意（如按鈕觸發、row 切換）。
+      if (
+        respectInteractiveTarget &&
+        (e.key === 'Enter' || e.key === 'Escape') &&
+        e.target instanceof HTMLElement &&
+        e.target.closest(INTERACTIVE_TARGET_SELECTOR) !== null
+      ) {
         return;
       }
 
@@ -112,5 +131,5 @@ export function useCalculatorKeyboard({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onInput, onBackspace, onClear, onCalculate, onClose]);
+  }, [isOpen, onInput, onBackspace, onClear, onCalculate, onClose, respectInteractiveTarget]);
 }
