@@ -16,6 +16,9 @@
  *    對齊 verify-ssg-invariance.mjs 的 build 時戳正規化慣例。
  * 6. 以 multiset（節點字串×出現次數）比對；區塊順序重排不影響等價。
  *
+ * 守門範圍限定：僅比對 body 可見文字節點；HTML attributes（alt/aria-label/title）、
+ * JSON-LD 與 nav 文字不在本守門範圍，由 seo-ssot 與 truthfulness 測試補位。
+ *
  * 用法：node scripts/qa/verify-visible-text-parity.mjs <baselineDist> <currentDist> [path ...]
  * 預設抽樣頁：/krw-twd/ /usd-twd/ /jpy-twd/ /twd-krw/ /krw-twd/50000/
  */
