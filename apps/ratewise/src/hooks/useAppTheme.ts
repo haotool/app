@@ -57,8 +57,9 @@ function subscribeHydrationReady(onStoreChange: () => void): () => void {
  * @description 讀到 legacy 風格值（如舊版 'ocean'）時，透過
  *              {@link LEGACY_STYLE_MIGRATION} 無感遷移為現行風格並回寫 localStorage，
  *              確保後續讀取與 setStyle 儲存的值一致。
+ *              export 供 main.tsx client 初始化補齊 custom 完整演算（bootstrap 僅做最小覆寫）。
  */
-function loadThemeConfig(): ThemeConfig {
+export function loadThemeConfig(): ThemeConfig {
   if (typeof window === 'undefined') {
     return DEFAULT_THEME_CONFIG;
   }
@@ -133,7 +134,8 @@ export function useAppTheme() {
   // 追蹤是否是首次掛載（避免重複應用主題）
   const isFirstMount = useRef(true);
 
-  // 客戶端主題更新 - 只在配置變更時應用主題（首次掛載由 index.html 處理）
+  // 客戶端主題更新 - 只在配置變更時應用主題
+  // （首次掛載由 index.html bootstrap 與 main.tsx client 初始化處理，含 custom 完整演算補齊）
   useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;

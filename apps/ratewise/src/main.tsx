@@ -22,6 +22,8 @@ import { logger } from './utils/logger';
 import { initWebVitals } from './utils/webVitals';
 import { handleVersionUpdate } from './utils/versionManager';
 import { APP_VERSION, BUILD_TIME } from './config/version';
+import { applyTheme } from './config/themes';
+import { loadThemeConfig } from './hooks/useAppTheme';
 import { recoverFromChunkLoadError } from './utils/chunkLoadRecovery';
 import {
   classifyUnhandledRejection,
@@ -130,6 +132,13 @@ export const createRoot = ViteReactSSG(
     // Client-side initialization
     if (isClient) {
       clearPwaAppReadyMarker();
+
+      // custom 主題完整演算補齊：bootstrap pre-paint 僅覆寫 --color-primary，
+      // 其餘 13 鍵（strong/hover/圖表等）需在任何路由的 client 啟動時由 applyTheme 導出。
+      const themeConfig = loadThemeConfig();
+      if (themeConfig.style === 'custom') {
+        applyTheme(themeConfig);
+      }
 
       // GA4 延後初始化：load 後再注入腳本，避免 152KB GA 腳本與 LCP 關鍵資源競爭頻寬。
       // 防快取競態：若頁面已在 load 前完成（BFCache、快速快取頁），直接呼叫。

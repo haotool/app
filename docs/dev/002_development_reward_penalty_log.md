@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+108
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+108
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e2-custom-theme-hydration-derivation-gap
+- 原因：custom 完整演算補齊只掛在 useAppTheme（僅設定頁掛載），首頁/多幣別冷啟動只有 bootstrap 的 --color-primary 最小覆寫，strong/hover/圖表 13 鍵停留在 zen fallback，三代表色截圖 QA 抓到全 app 未變色
+- 解法：export loadThemeConfig，於 main.tsx client 初始化（isClient）對 custom 主題呼叫 applyTheme 補齊完整演算，任何路由冷啟動皆全量套用；e2e 與截圖 QA 重新驗證通過
 
 - 日期：2026-07-05
 - ID：reward-rw-e2-custom-theme-aa-property-gate
