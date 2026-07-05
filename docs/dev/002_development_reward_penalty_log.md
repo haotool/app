@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+121
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-l2-pure-assembler
+- 原因：幣別頁生成器仍自帶敘述文案（六條規格式 highlights、同構 travelTip 與 description 公式），與 L1 persona SSOT 職責重疊造成 template bleed
+- 解法：改寫 currency-landing.ts 為純組裝生成器——敘述欄位全數改讀 persona，highlights 收斂為 3 條（≥2 條 persona 特化），description 尾句注入幣別 hook
 
 - 日期：2026-07-05
 - ID：reward-rw-e5-l1-persona-schema-content
