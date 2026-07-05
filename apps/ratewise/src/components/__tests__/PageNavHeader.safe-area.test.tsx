@@ -20,6 +20,7 @@ import About from '../../pages/About';
 import Privacy from '../../pages/Privacy';
 import OpenData from '../../pages/OpenData';
 import SeoTech from '../../pages/SeoTech';
+import OpenSource from '../../pages/OpenSource';
 
 // 非 standalone 時 env() fallback 為 0px，padding-top 回到基準 0.625rem（10px）。
 const SAFE_AREA_CLASS = 'pt-[calc(0.625rem+env(safe-area-inset-top,0px))]';
@@ -63,6 +64,7 @@ describe('內容頁 smoke：返回列均含 safe-area 適配', () => {
     ['Privacy', Privacy],
     ['OpenData', OpenData],
     ['SeoTech', SeoTech],
+    ['OpenSource', OpenSource],
   ];
 
   it.each(PAGES)('%s 頁返回列含 safe-area 類別', (_name, Page) => {
