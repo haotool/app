@@ -4,7 +4,9 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
+import routes from '../routes';
 import HeroChips from '../components/HeroChips';
 import StatItem from '../components/StatItem';
 import Wordmark from '../components/Wordmark';
@@ -74,6 +76,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   reducedMotionState.value = false;
+  document.documentElement.removeAttribute('data-intro');
   Object.defineProperty(window, 'IntersectionObserver', {
     writable: true,
     value: OriginalIntersectionObserver,
@@ -134,6 +137,36 @@ describe('S1 Hero H1（LCP 鐵律：僅位移、透明度恆 1、不拆詞段）
   });
 });
 
+describe('S1 開場單次性（B1：intro 播畢移除觸發、SPA 返回不重播）', () => {
+  it('intro 時間軸結束後移除 data-intro；SPA 導航離開返回首頁不重播', async () => {
+    // 模擬 index.html 內聯腳本的首次 session 判定。
+    document.documentElement.dataset['intro'] = '1';
+    const router = createMemoryRouter(routes as RouteObject[], { initialEntries: ['/'] });
+    render(<RouterProvider router={router} />);
+    await screen.findByRole('heading', { level: 1, name: /把好想法/ });
+
+    // Layout 於時間軸（815ms）結束後移除觸發條件（900ms 上限含緩衝）。
+    await waitFor(
+      () => {
+        expect(document.documentElement.dataset['intro']).toBeUndefined();
+      },
+      { timeout: 3000 },
+    );
+
+    // SPA 導航離開再返回：觸發條件不得復活（html[data-intro] 選擇器不再匹配 → 不重播）。
+    await act(async () => {
+      await router.navigate('/about/');
+    });
+    await screen.findByRole('heading', { level: 1, name: /關於/ });
+    await act(async () => {
+      await router.navigate('/');
+    });
+    const homeHeading = await screen.findByRole('heading', { level: 1, name: /把好想法/ });
+    expect(homeHeading).toHaveClass('intro-h1');
+    expect(document.documentElement.dataset['intro']).toBeUndefined();
+  });
+});
+
 describe('S2 HeroChips', () => {
   it('三枚 chips 純裝飾（aria-hidden）且父 scroll 層/子 drift 層分離', () => {
     render(<HeroChips />);
@@ -160,10 +193,11 @@ describe('S2 HeroChips', () => {
 });
 
 describe('S3 StatItem odometer（M8 取代 count-up）', () => {
-  it('未觸發前輸出純文字終值（SSG/AEO 路徑），無滾輪結構', () => {
+  it('未觸發前輸出純文字終值（SSG/AEO 路徑），無滾輪結構、無 prohibited aria-label', () => {
     const { container } = render(<StatItem value={100} suffix="%" label="開源免費" />);
     expect(container.querySelector('.odo-reel')).toBeNull();
-    expect(screen.getByLabelText('100%')).toHaveTextContent('100%');
+    expect(container.querySelector('[aria-label]')).toBeNull();
+    expect(screen.getByText('100%')).toBeInTheDocument();
   });
 
   it('inView 後換入滾輪：--i 低位優先、非首位 0 補尾滾整圈（--d:10）', async () => {
@@ -187,10 +221,12 @@ describe('S3 StatItem odometer（M8 取代 count-up）', () => {
     expect(reels[1]!.style.getPropertyValue('--i')).toBe('1');
     expect(reels[2]!.style.getPropertyValue('--i')).toBe('0');
 
-    // a11y：外層終值 aria-label、滾輪整體 aria-hidden、後綴為靜態字元。
-    const stat = screen.getByLabelText('100%');
-    expect(stat.querySelector('[aria-hidden="true"]')).not.toBeNull();
-    expect(stat).toHaveTextContent('%');
+    // a11y（prohibited naming 修法）：sr-only 終值供 AT 朗讀、滾輪視覺整體 aria-hidden。
+    const srOnly = container.querySelector('.sr-only');
+    expect(srOnly).toHaveTextContent('100%');
+    expect(srOnly!.parentElement).not.toHaveAttribute('aria-label');
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(container.querySelector('p')).toHaveTextContent('%');
   });
 
   it('統計 0 不滾動（靜止本身是訊息）', async () => {
@@ -198,7 +234,7 @@ describe('S3 StatItem odometer（M8 取代 count-up）', () => {
     const { container } = render(<StatItem value={0} label="廣告與追蹤" />);
     await flushReelFrames();
     expect(container.querySelector('.odo-reel')).toBeNull();
-    expect(screen.getByLabelText('0')).toHaveTextContent('0');
+    expect(screen.getByText('0')).toBeInTheDocument();
   });
 
   it('reduced-motion 維持純文字路徑（不換入滾輪）', async () => {
@@ -207,7 +243,7 @@ describe('S3 StatItem odometer（M8 取代 count-up）', () => {
     const { container } = render(<StatItem value={90} suffix="+" label="Lighthouse 分數" />);
     await flushReelFrames();
     expect(container.querySelector('.odo-reel')).toBeNull();
-    expect(screen.getByLabelText('90+')).toHaveTextContent('90+');
+    expect(screen.getByText('90+')).toBeInTheDocument();
   });
 });
 

@@ -66,33 +66,38 @@ export default function StatItem({ value, suffix, label }: StatItemProps) {
 
   return (
     <div ref={ref} className="flex flex-col items-center text-center">
-      <p className="text-stat tabular-nums text-text" aria-label={finalText}>
+      {/* p 為 generic role 不可 aria-label（prohibited naming）：
+          滾輪模式改以 sr-only 終值文字供 AT 朗讀、滾輪視覺整體 aria-hidden。 */}
+      <p className="text-stat tabular-nums text-text">
         {showReel ? (
-          <span aria-hidden="true">
-            {buildDigits(value).map((spec, index) => (
-              <span key={index} className="odo-cell">
-                <span className="odo-ghost">{spec.digit}</span>
-                <span className="odo-window">
-                  <span
-                    className="odo-reel"
-                    style={
-                      {
-                        '--d': rolled ? spec.target : 0,
-                        '--i': spec.delayIndex,
-                      } as CSSProperties
-                    }
-                  >
-                    {spec.glyphs.map((glyph, glyphIndex) => (
-                      <span key={glyphIndex} className="odo-glyph">
-                        {glyph}
-                      </span>
-                    ))}
+          <>
+            <span className="sr-only">{finalText}</span>
+            <span aria-hidden="true">
+              {buildDigits(value).map((spec, index) => (
+                <span key={index} className="odo-cell">
+                  <span className="odo-ghost">{spec.digit}</span>
+                  <span className="odo-window">
+                    <span
+                      className="odo-reel"
+                      style={
+                        {
+                          '--d': rolled ? spec.target : 0,
+                          '--i': spec.delayIndex,
+                        } as CSSProperties
+                      }
+                    >
+                      {spec.glyphs.map((glyph, glyphIndex) => (
+                        <span key={glyphIndex} className="odo-glyph">
+                          {glyph}
+                        </span>
+                      ))}
+                    </span>
                   </span>
                 </span>
-              </span>
-            ))}
-            {suffix}
-          </span>
+              ))}
+              {suffix}
+            </span>
+          </>
         ) : (
           finalText
         )}
