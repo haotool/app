@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 4、penalty 1、neutral 2）｜累計總分：+110
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+117
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-main-hotfix-sync-into-experiment
+- 原因：main 七個 hotfix（#557/#558/#559/#561/#565/#569/#571）落後於實驗分支基底，後續 epic 需建立在最新基底上
+- 解法：以 3-way merge 將 origin/main 合入 experiment/ratewise-product-2026h2，保雙方語意解衝突（002 檔頭依公式重算累計 +117、i18n 四語系雙鍵組並存），全套守門測試驗證
 
 - 日期：2026-07-05
 - ID：penalty-rw-e3-converter-v2-keypad-remount-writeback
@@ -82,6 +87,51 @@
 - ID：neutral-rw-product-2026h2-experiment-baseline
 - 原因：建立產品級迭代實驗分支基線（experiment/ratewise-product-2026h2），作為後續大規模重構 epic PR 的共同 base
 - 解法：新增 ROADMAP.md 路線圖並於 .gitignore 補 .claude/state/ 與 .claude/product-intel/ 忽略規則
+
+- 日期：2026-07-05
+- ID：reward-rw-dark-theme-content-pages-unreadable
+- 原因：index.html 硬編碼 `<body class="bg-slate-50">` 以 class specificity 蓋掉 index.css 的主題底色變數，且 Layout 內容頁容器無主題 token，Nitro/Racing 深色主題下 FAQ/About 等內容頁白字壓白底（實測對比 1.0:1）
+- 解法：body 移除硬編碼 class 改吃 `--color-background`（critical CSS 同步走 `--sk-bg` 防深色閃白）、Layout 滾動容器補 `bg-background text-text`，新增 index.html 靜態守門與 Layout 容器 token 斷言，7 主題 × FAQ/About 實測對比全數 ≥3.79:1（深色 20.17/18.97）
+
+- 日期：2026-07-05
+- ID：penalty-rw-multi-ratetype-aria-pressed-misuse
+- 原因：觸控目標 hotfix 給「循環切換到下一選項」的 cycle button 加上恆為 true 的 aria-pressed，screen reader 永遠唸「已按下」，把非 toggle 鈕誤標為 on/off toggle（review Should-fix 抓出）
+- 解法：移除 aria-pressed（動作語意由 aria-label「切換到現金」等完整表達），測試改斷言不得帶 aria-pressed 並附註解，另補 -my-[15px] 數值推導註解防後人改壞
+
+- 日期：2026-07-05
+- ID：reward-rw-multi-ratetype-touch-target
+- 原因：/multi 匯率類型切換為 text-[11px] 純文字按鈕，實測觸控目標 22×13.8px（WCAG 2.5.8 最低 24px、repo 標準 44px），且與旁邊靜態匯率文字無區隔，可切換性不可發現
+- 解法：切換鈕改 min-h-11/min-w-11 觸控目標（負 margin 保持列高）＋ bg-primary/10 chip 選中態（zen 7.79:1、nitro 10.82:1 對比）＋ aria-pressed 與 focus ring，390×844 preview 實測 44×44px，新增觸控目標與 aria 測試斷言
+
+- 日期：2026-07-05
+- ID：reward-rw-sw-cold-nav-4xx-shell-fallback
+- 原因：冷導覽 network-first 首版只處理網路失敗/timeout，fetch resolve 但 4xx/5xx（如文件化的 Cloudflare stale edge 404）會把錯誤頁直接服給用戶（adversarial review blocking）
+- 解法：非 2xx/opaque 一律回退既有 resolveNavigationFallback 兜底鏈且不寫 html-cache；補 404/503/200 單元測試與「冷快取在線導覽深層路由服出 per-route HTML」e2e；catch 兜底收斂為既有 fallback helper 消除重複 lookup
+
+- 日期：2026-07-05
+- ID：reward-rw-sw-cold-nav-hydration-fix
+- 原因：SW 導覽 handler 在 html-cache 冷快取時直接回 precache index.html（首頁 SSG 快照）給任意深層路由，造成全站 React #418 hydration mismatch 與首頁畫面閃現（issue #545；以舊分支 6621b34a 為 spec 對 main 現行 SW 架構重做）
+- 解法：冷導覽改為先以 8s bounded fetch 取該 URL 的 per-route SSG HTML，離線或 timeout 才回退 precache index.html → offline.html 兜底鏈；QA 驗證冷導覽服出正確路由 shell（wrongShell 3→0）且離線回退不退步
+
+- 日期：2026-07-05
+- ID：reward-rw-splash-animation-parity
+- 原因：index.html 內嵌靜態 splash 與 React SplashScreen 動畫版雙軌互不同步（視覺/動畫/偏好各自維護），冷啟動實際序列與設定頁預覽必然不一致，且開關只關 React 版
+- 解法：inline 版標記鏡射 SplashScreen 輸出並共用 index.css .ratewise-splash 樣式與 keyframes（SSOT），inline script 對齊偏好開關與 exit 相位，React 版偵測 session 旗標跳過自動顯示避免雙重播放，新增 splashParity 守門測試＋e2e 兩案例，8 相位（zen/nitro × 4 時點）像素對比 0.000% 差異
+
+- 日期：2026-07-05
+- ID：reward-rw-trend-tooltip-bubble-basis
+- 原因：趨勢圖 tooltip 的 translateX(-50%) 被 Framer Motion animate transform 覆寫且 position:fixed 落在帶 transform 的祖先內（最新點 tooltip 溢出畫面 left=388/viewport=390）；「即期不可用」氣泡被匯率資訊區 overflow-hidden 剪到剩 7px；趨勢資料固定現金賣出基準但卡片可顯示即期價，圖表無標註致使用者誤判圖錯
+- 解法：tooltip createPortal 至 body＋置中放外層純 div＋useLayoutEffect 以 clampTooltipCenterX 夾 viewport 邊界；移除資訊區 overflow-hidden（微光疊層自有剪裁不受影響）；新增 trend.cashSellBasis i18n ×4 於圖角與 tooltip 誠實標註基準（換錢所趨勢同基準不標），資料基準對齊 rateType 留 backlog
+
+- 日期：2026-07-05
+- ID：reward-rw-seo-content-truthfulness-p0
+- 原因：SEO 文案 SSOT 含手寫匯率快照＋寫死年份（SGD/AUD/GBP/CAD/NZD/MYR/IDR/THB/VND/KRW 共 13 處）、精確假數字（419,639 韓元）、無來源最高級銀行宣稱（高雄銀行最便宜等 7 處）、About 自我指涉 SEO FAQ（schema 清單＋AI 爬蟲名單），且中間價差距數字三處互相矛盾（0.5-2%／1-3%／1-10%），YMYL 頁必然過期失真
+- 解法：匯率數字一律改由 SEO_RATE_EXAMPLES（每日更新）注入（新增 buildUnitRateSentence）、銀行宣稱改中性比價建議、About 自指涉 FAQ 移除並以守門測試防回流、差距描述收斂為 MID_RATE_SPREAD_NOTE 單一常數三處引用（鏡像腳本同步擷取），vitest 2730 綠＋generate:deterministic＋build:ratewise 通過
+
+- 日期：2026-07-05
+- ID：reward-rw-favorites-sort-ptr-hotfix
+- 原因：全域 pull-to-refresh 掛在 main 無拖曳排除，與 dnd 拖曳同時作動造成收藏頁排序錯位與誤觸整頁重載風險，且非收藏幣拖曳被隱式加收藏、favorites.baseCurrency 四語系缺 key 直接顯示 raw key、刷新指示器無 safe-area 補償
+- 解法：PTR touchstart 以 data-rfd-drag-handle 祖先 gate 完全抑制拖曳中 PTR，排序合約收斂為 reorderFavoritesOnDragEnd 純函式（僅收藏幣可拖、非收藏幣停用拖曳），四語系補 baseCurrency key，指示器加 safe-area-inset-top；unit＋390×844 觸控模擬修前修後對照驗證
 
 - 日期：2026-07-05
 - ID：reward-rw-theme-ssot-drift-convergence

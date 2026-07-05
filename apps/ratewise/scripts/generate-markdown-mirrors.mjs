@@ -58,7 +58,16 @@ const SUPPORTED_CURRENCY_COUNT = [...constantsSrc.matchAll(/^\s+([A-Z]{3}):\s*\{
  * 支援單引號、雙引號與 backtick；template literal 內 ${...} 以 KNOWN_SUBSTITUTIONS 表展開。
  * 未知 token 直接 throw，避免未解析變數（例如 ${RATES_API.latestCdn}）靜默發佈到鏡像內容。
  */
+// MID_RATE_SPREAD_NOTE 為 core.ts 內的中間價差距描述 SSOT，直接由原始碼擷取避免 drift。
+const midRateSpreadNoteMatch = /export const MID_RATE_SPREAD_NOTE =\s*'([^']+)'/.exec(
+  seoMetadataSrc,
+);
+if (!midRateSpreadNoteMatch) {
+  throw new Error('generate-markdown-mirrors: 找不到 MID_RATE_SPREAD_NOTE 常數，請確認 core.ts。');
+}
+
 const KNOWN_SUBSTITUTIONS = {
+  MID_RATE_SPREAD_NOTE: midRateSpreadNoteMatch[1],
   'APP_INFO.email': APP_INFO.email,
   'APP_INFO.github': APP_INFO.github,
   'APP_INFO.shortName': APP_INFO.shortName,

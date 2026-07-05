@@ -106,6 +106,11 @@ const ko = {
     close: '닫기',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: '현금 매도율 추이',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '복수 통화 환산',
@@ -151,6 +156,7 @@ const ko = {
     dragToReorder: '드래그하여 순서 변경',
     dragToFavorite: '드래그하여 즐겨찾기 추가',
     dragHandle: '드래그 핸들',
+    baseCurrency: '기준 통화',
   },
 
   // Settings

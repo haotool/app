@@ -3,11 +3,9 @@
  * 收藏與歷史記錄頁面 - ParkKeeper 設計風格
  *
  * @description Favorites and conversion history page with ParkKeeper design style.
- *              All currencies support drag-and-drop with smooth spring animations.
- *              Dragging a non-favorite currency automatically adds it to favorites.
+ *              Only favorite currencies support drag-and-drop reordering.
  *              收藏與歷史記錄頁面，採用 ParkKeeper 設計風格。
- *              所有貨幣支援拖曳，具有流暢的彈簧動畫。
- *              拖曳非收藏貨幣時自動加入收藏。
+ *              只有收藏貨幣支援拖曳排序；非收藏貨幣不可拖曳，也不會被隱式加入收藏。
  * @version 3.0.0
  */
 
@@ -36,7 +34,7 @@ import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
 import type { CurrencyCode, ConversionHistoryEntry } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
-import { getAllCurrenciesSorted } from './favorites-utils';
+import { getAllCurrenciesSorted, reorderFavoritesOnDragEnd } from './favorites-utils';
 
 export default function Favorites() {
   const { t } = useTranslation();
@@ -77,11 +75,8 @@ export default function Favorites() {
   /**
    * 處理拖曳結束事件
    *
-   * allCurrencies[0] 永遠是 TWD（isDragDisabled），
-   * 故 source/destination.index >= 1，需 -1 轉換成 favorites 陣列的索引。
-   *
-   * - 拖曳已收藏貨幣：重新排序
-   * - 拖曳未收藏貨幣：自動加入收藏並置於目標位置
+   * 排序合約由 reorderFavoritesOnDragEnd 實作：
+   * 只有收藏幣可排序；TWD 與非收藏幣拖曳一律忽略（防禦性，isDragDisabled 已擋）。
    */
   const handleDragEnd = useCallback(
     (result: DropResult) => {
@@ -89,26 +84,14 @@ export default function Favorites() {
       if (result.source.index === result.destination.index) return;
 
       const draggedCode = allCurrencies[result.source.index];
-      // TWD 不可拖曳（isDragDisabled），此處為防禦性檢查
-      if (!draggedCode || draggedCode === 'TWD') return;
+      if (!draggedCode) return;
 
-      // allCurrencies 中 index 0 = TWD，favorites 索引 = allCurrencies 索引 - 1
-      const destFavIndex = Math.max(0, result.destination.index - 1);
-
-      const isFav = favorites.includes(draggedCode);
-      let newFavorites: CurrencyCode[];
-
-      if (isFav) {
-        // 已收藏：重新排序
-        const favIndex = favorites.indexOf(draggedCode);
-        newFavorites = [...favorites];
-        newFavorites.splice(favIndex, 1);
-        newFavorites.splice(Math.min(destFavIndex, newFavorites.length), 0, draggedCode);
-      } else {
-        // 未收藏：拖曳即加入收藏
-        newFavorites = [...favorites];
-        newFavorites.splice(Math.min(destFavIndex, newFavorites.length), 0, draggedCode);
-      }
+      const newFavorites = reorderFavoritesOnDragEnd(
+        favorites,
+        draggedCode,
+        result.destination.index,
+      );
+      if (!newFavorites) return;
 
       reorderFavorites(newFavorites);
     },
@@ -263,12 +246,14 @@ export default function Favorites() {
                     {allCurrencies.map((code, index) => {
                       const isTWD = code === 'TWD';
                       const isFavorite = favorites.includes(code);
+                      // 排序合約：只有收藏幣可拖曳；TWD 與非收藏幣一律停用拖曳。
+                      const canDrag = !isTWD && isFavorite;
                       return (
                         <Draggable
                           key={code}
                           draggableId={code}
                           index={index}
-                          isDragDisabled={isTWD}
+                          isDragDisabled={!canDrag}
                         >
                           {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                             <div
@@ -320,8 +305,8 @@ export default function Favorites() {
 
                               {/* 中間：貨幣資訊 + 拖曳區域
                                *
-                               * TWD  → cursor-default（不可拖）
-                               * 其他 → dragHandleProps 套用於此區塊
+                               * TWD / 非收藏幣 → cursor-default（不可拖）
+                               * 收藏幣 → dragHandleProps 套用於此區塊
                                *        使用者在 [幣別名稱] 與 [換算] 之間的任意空白處拖曳
                                *
                                * IMPORTANT: 移除 touch-none 以允許頁面滾動
@@ -331,13 +316,13 @@ export default function Favorites() {
                                * @see https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md
                                */}
                               <div
-                                {...(isTWD ? {} : provided.dragHandleProps)}
+                                {...(canDrag ? provided.dragHandleProps : {})}
                                 className={`flex items-center gap-3 flex-1 min-w-0 ${
-                                  isTWD
-                                    ? 'cursor-default'
-                                    : 'cursor-grab active:cursor-grabbing touch-manipulation'
+                                  canDrag
+                                    ? 'cursor-grab active:cursor-grabbing touch-manipulation'
+                                    : 'cursor-default'
                                 }`}
-                                aria-label={isTWD ? undefined : t('favorites.dragHandle')}
+                                aria-label={canDrag ? t('favorites.dragHandle') : undefined}
                                 data-testid={isTWD ? 'twd-info' : `drag-zone-${code}`}
                               >
                                 {/* 國旗 */}

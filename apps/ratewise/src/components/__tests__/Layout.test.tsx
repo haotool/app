@@ -112,6 +112,20 @@ describe('Layout Component', () => {
       expect(scrollContainer).toHaveClass('h-dvh');
       expect(scrollContainer).toHaveClass('overflow-y-auto');
     });
+
+    it('滾動容器應套用主題背景與文字 token（深色主題內容頁可讀性）', () => {
+      // [2026-07-05] P0 守門：內容頁容器必須吃 --color-background / --color-text，
+      // 不得依賴 body 底色（曾被 index.html 硬編碼 class 蓋掉）。
+      const { container } = render(
+        <Layout>
+          <div>Content</div>
+        </Layout>,
+      );
+
+      const scrollContainer = container.querySelector('[data-scroll-container="layout"]');
+      expect(scrollContainer).toHaveClass('bg-background');
+      expect(scrollContainer).toHaveClass('text-text');
+    });
   });
 
   describe('Layout 不包含 UpdatePrompt', () => {

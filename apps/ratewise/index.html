@@ -129,7 +129,8 @@
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
-        background: #f8fafc;
+        /* 首次 paint 前跟隨主題底色（--sk-bg 由同段 critical CSS 依 data-style 提供），深色主題不閃白。 */
+        background: var(--sk-bg, #f8fafc);
         font-family:
           'Inter',
           'Noto Sans TC',
@@ -425,59 +426,40 @@
       /* rw-splash：品牌啟動頁（Plan 015）
        * 預設 hidden；同步 inline script 於首次 paint 前移除 hidden 屬性顯示。
        * 無 JS 環境（爬蟲、noscript）hidden 恆存在 → 元素不可見，SSG 內容原樣曝光，無 SEO cloaking 疑慮。
-       * 顏色吃 critical 主題變數（--color-primary 等），fallback 值對齊品牌預設藍 #3182F6。
+       * 視覺 SSOT：src/index.css 的 .ratewise-splash（production CSS 為 render-blocking，
+       * 首次 paint 前必已可用）；此處僅保留 :where() 零特異性降級佈局，禁止定義字級 / 動畫 / keyframes。
        */
       #rw-splash[hidden] {
         display: none;
       }
-      #rw-splash {
+      :where(#rw-splash) {
         position: fixed;
         inset: 0;
-        z-index: 9999;
+        z-index: 999;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.75rem;
-        background: rgb(var(--color-background, 248 250 252));
-        opacity: 1;
-        transition: opacity 0.2s ease-out;
+        gap: 1rem;
+        background: rgb(var(--color-surface, 255 255 255));
       }
-      #rw-splash.rw-splash-out {
-        opacity: 0;
-      }
-      .rw-splash-logo {
-        width: 96px;
-        max-width: 96px;
-        height: 96px;
-      }
-      .rw-splash-title {
-        font-family:
-          'Nunito Wordmark',
-          system-ui,
-          -apple-system,
-          sans-serif;
-        font-weight: 900;
-        font-size: 1.25rem;
-        letter-spacing: 0.01em;
-        color: rgb(var(--color-primary, 49 130 246));
-      }
-      @media (prefers-reduced-motion: reduce) {
-        #rw-splash {
-          transition: none;
-        }
+      :where(#rw-splash) svg {
+        width: 6rem;
+        height: 6rem;
       }
     </style>
 
     <!-- Structured Data managed by SEOHelmet component (prevents duplicate schemas) -->
     <!-- Title managed by SEOHelmet component (prevents duplicate titles) -->
   </head>
-  <body class="bg-slate-50">
+  <body>
     <!-- rw-splash（Plan 015）：品牌啟動頁，預設 hidden，緊接的同步 script 於首次 paint 前顯示。
-         無 JS 環境永遠停在 hidden，爬蟲與 <noscript> 完全看不到（非 cloaking：同一份 SSG 內容）。 -->
-    <div id="rw-splash" aria-hidden="true" hidden>
+         無 JS 環境永遠停在 hidden，爬蟲與 <noscript> 完全看不到（非 cloaking：同一份 SSG 內容）。
+         標記與 class 必須鏡射 SplashScreen.tsx 輸出（parity 守門：splashParity.test.ts），
+         樣式與動畫由 src/index.css 的 .ratewise-splash 區塊單一來源驅動。 -->
+    <div id="rw-splash" class="ratewise-splash" data-phase="enter" aria-hidden="true" hidden>
       <svg
-        class="rw-splash-logo"
+        class="splash-mark w-24 h-24"
         viewBox="0 0 100 100"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -494,7 +476,7 @@
             <stop offset="1" stop-color="rgb(var(--color-primary-strong, 27 100 218))" />
           </linearGradient>
         </defs>
-        <g opacity="0.18" style="filter: blur(2.5px)">
+        <g class="splash-halo" opacity="0.18" style="filter: blur(2.5px)">
           <circle cx="38" cy="50" r="18" fill="rgb(var(--color-primary, 49 130 246))" />
           <circle
             cx="62"
@@ -505,26 +487,40 @@
             stroke-width="7.5"
           />
         </g>
-        <circle cx="38" cy="50" r="18" fill="url(#rw-splash-grad)" />
-        <circle
-          cx="62"
-          cy="50"
-          r="18"
-          fill="rgb(var(--color-surface, 255 255 255))"
-          stroke="url(#rw-splash-grad)"
-          stroke-width="7.5"
-        />
+        <g class="splash-coin-solid">
+          <circle cx="38" cy="50" r="18" fill="url(#rw-splash-grad)" />
+        </g>
+        <g class="splash-coin-ring">
+          <circle
+            cx="62"
+            cy="50"
+            r="18"
+            fill="rgb(var(--color-surface, 255 255 255))"
+            stroke="url(#rw-splash-grad)"
+            stroke-width="7.5"
+          />
+        </g>
       </svg>
-      <span class="rw-splash-title">__BRAND_SHORT__</span>
+      <span class="brand-wordmark splash-wordmark"
+        >__BRAND_WORDMARK_PREFIX__<span class="brand-wordmark-accent"
+          >__BRAND_WORDMARK_ACCENT__</span
+        ></span
+      >
+      <span class="splash-tagline brand-subtitle">__BRAND_SUBTITLE__</span>
     </div>
     <script>
       (function () {
         'use strict';
         var SPLASH_SESSION_KEY = 'rw-splash-shown';
+        var SPLASH_PREF_KEY = 'ratewise-splash-enabled';
         var SPLASH_READY_EVENT = 'ratewise:pwa-app-ready';
         var SPLASH_FALLBACK_MS = 2500;
         var splash = document.getElementById('rw-splash');
         if (!splash) return;
+        // 偏好對齊設定頁開關（utils/splashPreference.ts SSOT：'0' = 關閉）。
+        try {
+          if (localStorage.getItem(SPLASH_PREF_KEY) === '0') return;
+        } catch (e) {}
         var alreadyShown = false;
         try {
           alreadyShown = sessionStorage.getItem(SPLASH_SESSION_KEY) === '1';
@@ -548,7 +544,8 @@
             removeSplash();
             return;
           }
-          splash.classList.add('rw-splash-out');
+          // 淡出走 .ratewise-splash[data-phase='exit'] 共用 transition（與 React 版一致）。
+          splash.setAttribute('data-phase', 'exit');
           var onEnd = function () {
             splash.removeEventListener('transitionend', onEnd);
             removeSplash();

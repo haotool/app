@@ -106,6 +106,11 @@ const en = {
     close: 'Close',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: 'Cash sell rate trend',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: 'Multi-Currency',
@@ -152,6 +157,7 @@ const en = {
     dragToReorder: 'Drag to reorder',
     dragToFavorite: 'Drag to favorite',
     dragHandle: 'Drag handle',
+    baseCurrency: 'Base currency',
   },
 
   // Settings
