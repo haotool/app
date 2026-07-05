@@ -187,3 +187,4 @@ M1–M8 全數核准（差異點定義見 `motion-deep-dive.md` §7）：
 - M6 核准：easing 措辭放寬為「唯一 bezier ＋ 三檔 spring token」（§2 已同步）。
 - M7 裁決：F1 **reject**（陳舊匯率與品牌敘事矛盾＋跨 app build 耦合）；F2 納入 **wave-B**（靜態版）。
 - M8 核准：`--dur-count`/count-up 廢止，S3 odometer 取代（§2 token 表與 deep-dive §1.4/§4.4 已同步）。
+- S1 H1 不拆詞段（保 LCP=H1 最高約束）——PM 核准（wave-A 偏離）。
