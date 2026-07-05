@@ -84,6 +84,7 @@ export function SegmentedControl<T extends string>({
     >
       {options.map((option) => {
         const isChecked = option.value === value;
+        // sm 模式：44px 熱區（min-h-11）比 24px 視覺 pill 高 20px，上下各以 -10px 負邊距抵銷，避免撐高列高。
         const buttonClass = isCompact
           ? '-my-[10px] inline-flex min-h-11 min-w-11 items-center justify-center align-middle focus-visible:outline-none group/segment'
           : 'min-h-11 rounded-control text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ' +

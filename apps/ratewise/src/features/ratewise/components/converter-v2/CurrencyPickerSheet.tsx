@@ -8,6 +8,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CurrencyPicker } from '../../../../components/CurrencyPicker';
+import { useConverterStore } from '../../../../stores/converterStore';
 import { CURRENCY_DEFINITIONS } from '../../constants';
 import type { CurrencyCode } from '../../types';
 
@@ -27,6 +28,8 @@ export function CurrencyPickerSheet({
   onClose,
 }: CurrencyPickerSheetProps) {
   const { t } = useTranslation();
+  // 常用置頂：直接吃使用者收藏（converterStore SSOT），依收藏順序置頂。
+  const favorites = useConverterStore((state) => state.favorites);
 
   const items = useMemo(
     () =>
@@ -45,6 +48,7 @@ export function CurrencyPickerSheet({
       onSelect={(code) => onSelect(code as CurrencyCode)}
       onClose={onClose}
       items={items}
+      pinned={favorites}
       title={t('converterV2.pickerTitle')}
       closeLabel={t('converterV2.close')}
       searchLabel={t('converterV2.pickerSearch')}

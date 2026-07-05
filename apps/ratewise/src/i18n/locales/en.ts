@@ -99,6 +99,7 @@ const en = {
     range7d: '7D',
     range30d: '30D',
     range90d: '90D',
+    trendRangeLabel: 'Trend range',
     trendMin: 'Low',
     trendMax: 'High',
     trendBasisNote: 'Basis: {{basis}} · Bank of Taiwan board rate',

@@ -99,6 +99,7 @@ const ko = {
     range7d: '7일',
     range30d: '30일',
     range90d: '90일',
+    trendRangeLabel: '추이 기간',
     trendMin: '최저',
     trendMax: '최고',
     trendBasisNote: '기준: {{basis}}・대만은행 고시 환율',

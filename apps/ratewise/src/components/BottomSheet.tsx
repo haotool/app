@@ -6,11 +6,15 @@
  * 文案（標題、關閉鈕 aria-label）由消費端傳入，primitive 不綁 i18n。
  */
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { transitions } from '../config/animations';
 import { useBodyScrollLock } from '../features/calculator/hooks/useBodyScrollLock';
+
+// modal 焦點循環涵蓋的可聚焦元素（WCAG 2.4.3）。
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export interface BottomSheetProps {
   isOpen: boolean;
@@ -43,6 +47,59 @@ export function BottomSheet({
 }: BottomSheetProps) {
   useBodyScrollLock(isOpen);
 
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  // 開啟時初始焦點移入 sheet；關閉時還原到開啟前的觸發元素（WCAG modal 鍵盤要求）。
+  useEffect(() => {
+    if (!isOpen) return;
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const sheet = sheetRef.current;
+    if (sheet && !sheet.contains(document.activeElement)) {
+      sheet.focus();
+    }
+    return () => {
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
+    };
+  }, [isOpen]);
+
+  // Esc 關閉＋Tab 焦點困於 sheet 內循環。
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const focusables = Array.from(sheet.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+      const first = focusables[0];
+      const last = focusables.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+        return;
+      }
+      const active = document.activeElement;
+      const isInside = active instanceof HTMLElement && sheet.contains(active);
+      if (event.shiftKey) {
+        if (!isInside || active === first || active === sheet) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (!isInside || active === last || active === sheet) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (typeof document === 'undefined') {
     return null;
   }
@@ -69,7 +126,9 @@ export function BottomSheet({
             aria-hidden="true"
           />
           <motion.div
-            className={`fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-card shadow-floating flex flex-col pb-[env(safe-area-inset-bottom,0px)] ${SIZE_CLASS[size]}`}
+            ref={sheetRef}
+            tabIndex={-1}
+            className={`fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-card shadow-floating flex flex-col pb-[env(safe-area-inset-bottom,0px)] outline-none ${SIZE_CLASS[size]}`}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+122
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+123
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-task0-bottomsheet-a11y
+- 原因：BottomSheet primitive 具 dialog 語意但缺 Esc 關閉、focus trap 與初始/還原焦點，E4 內部頁將大量使用 sheet，可及性債會放大
+- 解法：補 Esc／Tab 循環／初始焦點／焦點還原並附四項單元測試，守門 regex 註解已知限制，收斂三 nits（picker 收藏置頂、trend radiogroup 獨立 aria 名稱、sm 魔法數註解）
 
 - 日期：2026-07-05
 - ID：neutral-rw-e5-review-should-fix-batch
