@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import { SingleConverter } from '../SingleConverter';
+import { SingleConverter, preheatConverterV2Chunk } from '../SingleConverter';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type { CurrencyCode } from '../../types';
 
@@ -81,12 +81,27 @@ describe('SingleConverter - converter-v2 flag gate', () => {
     expect(screen.queryByTestId('converter-v2')).not.toBeInTheDocument();
   });
 
-  it('flag on（使用者設定 v2）：分流至等值雙列 v2', async () => {
+  it('flag on（使用者設定 v2）：chunk 就緒前以 v2 骨架佔位，就緒後分流至等值雙列 v2', async () => {
     useConverterStore.setState({ singleConverterVariant: 'v2' });
     render(<SingleConverter {...mockProps} />);
 
+    // lazy 尚未 resolve：Suspense fallback 為 v2 佈局輪廓骨架，而非空白（issue #583）。
+    if (!screen.queryByTestId('converter-v2')) {
+      expect(screen.getByTestId('converter-v2-skeleton')).toBeInTheDocument();
+    }
+
     expect(await screen.findByTestId('converter-v2')).toBeInTheDocument();
+    expect(screen.queryByTestId('converter-v2-skeleton')).not.toBeInTheDocument();
     expect(screen.queryByTestId('amount-input')).not.toBeInTheDocument();
+  });
+
+  it('冷啟動預熱：persisted 偏好為 v2 時觸發 v2 chunk 預取，legacy 時不觸發', async () => {
+    expect(preheatConverterV2Chunk()).toBeNull();
+
+    useConverterStore.setState({ singleConverterVariant: 'v2' });
+    const preheat = preheatConverterV2Chunk();
+    expect(preheat).not.toBeNull();
+    await expect(preheat).resolves.toMatchObject({ default: expect.any(Function) });
   });
 
   it('flag on（URL override）：?converter=v2 直接啟用', async () => {
