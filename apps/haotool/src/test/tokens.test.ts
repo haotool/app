@@ -101,6 +101,19 @@ describe('design tokens 對照（NFR-006）', () => {
     expect(tokenValue('--drift-b')).toBe('11.5s');
     expect(tokenValue('--drift-c')).toBe('14s');
   });
+
+  it('wave-B 動效 tokens（S4/S5-b/S5-c/S7）', () => {
+    expect(tokenValue('--dur-draw')).toBe('600ms');
+    expect(tokenValue('--dur-focus')).toBe('200ms');
+    expect(tokenValue('--magnet-max')).toBe('4px');
+    expect(tokenValue('--tilt-max')).toBe('4deg');
+  });
+
+  it('S7-a 舞台深度係數升級（前 ±8 / 中 ±5 / 後 ±3，T6）', () => {
+    // 依卡片宣告順序抽出全部 --depth 值：card1..3（行動含桌面覆寫前值）→ card4/5。
+    const depths = Array.from(css.matchAll(/--depth:\s*([^;]+);/g), (match) => match[1]);
+    expect(depths).toEqual(['8px', '5px', '5px', '3px', '3px']);
+  });
 });
 
 describe('扁平鐵律（brief §1.1）', () => {

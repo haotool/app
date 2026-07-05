@@ -3,13 +3,16 @@
  * Hero 為 SSG 靜態內容（LCP = H1 文字；S1 開場僅位移不動透明度）；首屏以下 whileInView once。
  */
 import { Link } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import { Gauge, Scale, ShieldCheck } from 'lucide-react';
 import { APP_INFO } from '../config/app-info';
 import { TOOLS } from '../config/tools';
 import { buttonClass, GhostLink } from '../components/Button';
 import HeroChips from '../components/HeroChips';
 import HeroStage from '../components/HeroStage';
+import { useMagnetic } from '../components/interactions';
 import Reveal from '../components/Reveal';
+import ScrollProgress from '../components/ScrollProgress';
 import SectionHeading from '../components/SectionHeading';
 import StatItem from '../components/StatItem';
 import ToolCard from '../components/ToolCard';
@@ -51,8 +54,14 @@ const CRAFT_PROOFS = [
 ] as const;
 
 export default function Home() {
+  // S5-b magnetic hover（範圍收斂：hero 主/次 CTA；Header GitHub 鈕於 Header 內）。
+  const primaryCtaRef = useMagnetic<HTMLAnchorElement>();
+  const secondaryCtaRef = useMagnetic<HTMLAnchorElement>();
+
   return (
     <>
+      {/* S4-c：僅 Home（敘事長頁）掛載 1px scroll progress。 */}
+      <ScrollProgress />
       {/* 區 2 — Hero（白底；文字在上、舞台在後 — D8） */}
       <section aria-labelledby="hero-heading" className="bg-surface">
         <div className="shell flex flex-col gap-10 pb-[72px] pt-12 lg:grid lg:grid-cols-[minmax(0,560px)_minmax(0,512px)] lg:items-center lg:gap-12 lg:pb-28 lg:pt-24">
@@ -79,15 +88,21 @@ export default function Home() {
                 。從匯率、分帳到防災教育，每一個工具都以產品級標準交付，免費且開源。
               </p>
               <div className="intro-follow mt-8 flex flex-col gap-3 md:flex-row">
-                <a href="#tools" className={buttonClass('primary', 'w-full md:w-auto')}>
-                  看看我做的工具
+                {/* S5-b：內層 magnet-item 承載 ±4px 位移，避免與外層 :active scale 衝突。 */}
+                <a
+                  ref={primaryCtaRef}
+                  href="#tools"
+                  className={buttonClass('primary', 'w-full md:w-auto')}
+                >
+                  <span className="magnet-item">看看我做的工具</span>
                 </a>
                 <Link
+                  ref={secondaryCtaRef}
                   to="/contact/"
                   viewTransition
                   className={buttonClass('secondary', 'w-full md:w-auto')}
                 >
-                  和我聊專案
+                  <span className="magnet-item">和我聊專案</span>
                 </Link>
               </div>
             </div>
@@ -164,9 +179,13 @@ export default function Home() {
               <li key={proof.title}>
                 <Reveal className="h-full" delay={index * 0.07}>
                   <div className="flex h-full flex-col items-start gap-4 rounded-card border border-border bg-surface px-6 py-7">
-                    <span className="inline-flex size-10 items-center justify-center rounded-icon bg-primary-bg">
+                    {/* S4-b：淡藍底格恆顯示，icon clip-path draw-in（delay = 卡片 stagger + 120ms）。 */}
+                    <span
+                      className="inline-flex size-10 items-center justify-center rounded-icon bg-primary-bg"
+                      style={{ '--draw-delay': `${index * 70}ms` } as CSSProperties}
+                    >
                       <proof.icon
-                        className="size-6 text-primary-strong"
+                        className="draw-in size-6 text-primary-strong"
                         strokeWidth={2}
                         aria-hidden="true"
                       />

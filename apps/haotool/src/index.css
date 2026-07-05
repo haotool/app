@@ -113,8 +113,10 @@
   --dur-intro-word: 560ms;
   --dur-intro-char: 480ms;
   --dur-odometer: 900ms;
+  --dur-draw: 600ms;
   --dur-vt: 240ms;
   --dur-vt-out: 200ms;
+  --dur-focus: 200ms;
   --dur-pill-slide: 250ms;
   --stagger: 70ms;
   --stagger-word: 45ms;
@@ -124,6 +126,8 @@
   --drift-a: 9s;
   --drift-b: 11.5s;
   --drift-c: 14s;
+  --magnet-max: 4px;
+  --tilt-max: 4deg;
 
   /* 三檔 spring 基線：不支援 linear() 的環境回落唯一 bezier（體感等價無回彈）。 */
   --ease-spring-tap: var(--ease-out-quart);
@@ -369,7 +373,7 @@ h3 {
   --z: 30;
   --amp: 8px;
   --float-delay: 0s;
-  --depth: 6px;
+  --depth: 8px;
 }
 .stage-card-2 {
   --x: -88px;
@@ -379,7 +383,7 @@ h3 {
   --z: 20;
   --amp: 6px;
   --float-delay: -1.6s;
-  --depth: 4px;
+  --depth: 5px;
 }
 .stage-card-3 {
   --x: 88px;
@@ -389,7 +393,7 @@ h3 {
   --z: 10;
   --amp: 6px;
   --float-delay: -3.2s;
-  --depth: 4px;
+  --depth: 5px;
 }
 /* 卡 4/5 行動與平板不渲染資源（D8：display:none + lazy 圖不觸發載入） */
 .stage-card-4,
@@ -435,7 +439,7 @@ h3 {
     --z: 20;
     --amp: 4px;
     --float-delay: -4.8s;
-    --depth: 2px;
+    --depth: 3px;
   }
   .stage-card-5 {
     display: block;
@@ -446,7 +450,7 @@ h3 {
     --z: 10;
     --amp: 4px;
     --float-delay: -6.4s;
-    --depth: 2px;
+    --depth: 3px;
   }
 }
 
@@ -505,6 +509,25 @@ h3 {
       0
     );
     transition: transform 300ms var(--ease-out-quart);
+  }
+}
+
+/* S7-b 舞台 hover 聚焦（motion-deep-dive §2 S7-b）：懸停卡 scale 1.03、其餘卡退至 0.85。
+ * scale 掛第四層 stage-frame，不與定位/浮動/視差三層 transform 打架；
+ * pointer-events: auto 僅為 :hover 命中（舞台維持 aria-hidden、無 click 行為）。 */
+@media (min-width: 1024px) and (pointer: fine) {
+  .stage-card {
+    pointer-events: auto;
+  }
+  .stage-frame {
+    transition: transform var(--dur-focus) var(--ease-out-quart);
+  }
+  .stage-card:hover .stage-frame {
+    transform: scale(1.03);
+  }
+  .hero-stage:has(.stage-card:hover) .stage-card:not(:hover) {
+    opacity: 0.85;
+    transition: opacity var(--dur-focus) var(--ease-out-quart);
   }
 }
 
@@ -751,6 +774,84 @@ html[data-intro='1'] .intro-follow {
 }
 
 /* ============================================================
+ * S5-b desktop magnetic hover — motion-deep-dive §2 S5-b
+ * 內層 span 承載位移（避免與外層 :active scale 衝突）；
+ * JS 寫 --mx/--my（-1..1）× --magnet-max 4px；三重媒體閘由 useMagnetic 把關。
+ * ============================================================ */
+@media (min-width: 1024px) and (pointer: fine) {
+  .magnet-item {
+    display: inline-flex;
+    align-items: center;
+    transform: translate(
+      calc(var(--mx, 0) * var(--magnet-max)),
+      calc(var(--my, 0) * var(--magnet-max))
+    );
+    transition: transform var(--dur-press-release) var(--ease-spring-tap);
+  }
+}
+
+/* ============================================================
+ * S5-c ToolCard pointer tilt — motion-deep-dive §2 S5-c（M3 核准，行動禁用）
+ * 場景層 perspective 800px；卡片本體 rotateX/rotateY ≤4deg（transform 無版面位移）。
+ * 歸位/跟隨過渡由 .press 既有 transform 時序承載（320ms spring-tap）；
+ * :active 時 press-scale 較高特異性覆蓋 → 按壓瞬間回平屬預期行為。
+ * ============================================================ */
+@media (min-width: 1024px) and (pointer: fine) {
+  .tilt-scene {
+    perspective: 800px;
+  }
+  .tilt-inner {
+    transform: rotateX(calc(var(--rx, 0) * var(--tilt-max)))
+      rotateY(calc(var(--ry, 0) * var(--tilt-max)));
+  }
+}
+
+/* ============================================================
+ * S4-b 工藝證明 icon clip-path draw-in — motion-deep-dive §2 S4-b
+ * 40px 淡藍底格恆顯示、僅 24px icon 橫向揭示；不用 stroke-dashoffset（paint 屬性違鐵律）。
+ * SSG 韌性：SSR 輸出 data-inview="true"（no-JS 首繪即完整可見）；
+ * hydration 後未進視口才回到 clip 起手態，Reveal inView 觸發揭示。
+ * ============================================================ */
+.draw-in {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--dur-draw) var(--ease-out-quart);
+  transition-delay: calc(var(--draw-delay, 0ms) + 120ms);
+}
+[data-inview='true'] .draw-in {
+  clip-path: inset(0 0 0 0);
+}
+
+/* ============================================================
+ * S4-c 頂部 1px scroll progress — motion-deep-dive §2 S4-c
+ * @supports 純 CSS scroll-timeline；不支援即無（scaleX(0) 不可見），零 JS fallback。
+ * ============================================================ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  background: var(--color-primary);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: calc(var(--z-header) + 1);
+}
+@keyframes progress-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+/* ============================================================
  * S6 View Transitions 頁面轉場 — motion-deep-dive §2 S6
  * 全部包在 no-preference：reduced-motion 走 UA 預設 cross-fade（僅淡切）。
  * vt-in 的 opacity:0 起手不違反 LCP 鐵律（SPA 導航非首載）。
@@ -791,6 +892,26 @@ html[data-intro='1'] .intro-follow {
   .stage-para {
     transition: none;
     transform: none;
+  }
+  /* S7-b 聚焦狀態瞬切（保留聚焦資訊、去除過渡）；S5-b/c 桌面增強完全停用。 */
+  .stage-frame,
+  .hero-stage:has(.stage-card:hover) .stage-card:not(:hover) {
+    transition: none;
+  }
+  .magnet-item,
+  .tilt-inner {
+    transform: none;
+    transition: none;
+  }
+  /* S4-b 無 clip 動畫直接顯示（含 data-inview 態，特異性需覆蓋觸發規則）；
+   * S4-c 進度指示本身是動效，隱藏。 */
+  .draw-in,
+  [data-inview='true'] .draw-in {
+    clip-path: none;
+    transition: none;
+  }
+  .scroll-progress {
+    display: none;
   }
   .fade-in,
   .icon-pop {

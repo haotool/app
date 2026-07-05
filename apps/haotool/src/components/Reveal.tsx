@@ -42,6 +42,9 @@ export default function Reveal({ children, className, delay = 0 }: RevealProps) 
     <m.div
       ref={ref}
       className={className}
+      // data-inview：S4-b draw-in 的 CSS 觸發訊號（SSR 輸出 true 保 no-JS 可見；
+      // hydration 後未進視口移除，inView once 時重新標記）。
+      data-inview={hidden ? undefined : 'true'}
       initial={false}
       animate={hidden ? { opacity: 0, y: 16 } : { opacity: 1, y: 0 }}
       transition={hidden ? { duration: 0 } : { duration: 0.48, ease: EASE_OUT_QUART, delay }}

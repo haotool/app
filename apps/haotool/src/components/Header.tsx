@@ -5,6 +5,7 @@ import { APP_INFO } from '../config/app-info';
 import Wordmark from './Wordmark';
 import MobileMenu from './MobileMenu';
 import { NAV_ITEMS } from './nav-items';
+import { useMagnetic } from './interactions';
 
 /**
  * 全站 Header（deep-dive §4.7）：h 64px、白實底、底部 1px border、sticky。
@@ -13,6 +14,8 @@ import { NAV_ITEMS } from './nav-items';
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // S5-b magnetic hover（GitHub icon 鈕；hero 主/次 CTA 於 Home 內）。
+  const githubRef = useMagnetic<HTMLAnchorElement>();
 
   useEffect(() => {
     let frame = 0;
@@ -71,16 +74,19 @@ export default function Header() {
               ))}
               <li>
                 <a
+                  ref={githubRef}
                   href={APP_INFO.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"
                   className="press focus-ring group inline-flex size-11 items-center justify-center rounded-icon hover:bg-background"
                 >
-                  <Github
-                    className="size-[22px] text-text-muted group-hover:text-text"
-                    aria-hidden="true"
-                  />
+                  <span className="magnet-item">
+                    <Github
+                      className="size-[22px] text-text-muted group-hover:text-text"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </a>
               </li>
             </ul>

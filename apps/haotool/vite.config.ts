@@ -20,6 +20,14 @@ function readPackageVersion(): string {
   return packageJson.version;
 }
 
+// F2「正在打造」列（motion-deep-dive §3 F2）：build-time 讀 ratewise 版本，零 runtime fetch。
+function readRatewiseVersion(): string {
+  const packageJson = JSON.parse(
+    readFileSync(resolve(__dirname, '../ratewise/package.json'), 'utf-8'),
+  );
+  return packageJson.version;
+}
+
 function generateVersion(): string {
   const baseVersion = readPackageVersion();
 
@@ -60,6 +68,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
+      __LATEST_SHIP__: JSON.stringify(readRatewiseVersion()),
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
