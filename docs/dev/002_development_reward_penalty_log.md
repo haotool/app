@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-05
+- ID：neutral-rw-e2-custom-theme-design-brief
+- 原因：E2「自訂主題色」epic 缺少 repo 內可追溯的設計 SSOT，PM 簡報僅存於本機 .claude 目錄（被 gitignore）
+- 解法：以 git add -f 將 `.claude/prds/ratewise-e2-custom-theme-design.md` 納入版控，作為 E2 實作與 PR 勾稽的唯一依據
+
+- 日期：2026-07-05
 - ID：neutral-rw-product-2026h2-experiment-baseline
 - 原因：建立產品級迭代實驗分支基線（experiment/ratewise-product-2026h2），作為後續大規模重構 epic PR 的共同 base
 - 解法：新增 ROADMAP.md 路線圖並於 .gitignore 補 .claude/state/ 與 .claude/product-intel/ 忽略規則
