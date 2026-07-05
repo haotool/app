@@ -31,7 +31,9 @@ export function PageNavHeader({
 
   return (
     <div
-      className={`sticky top-0 z-20 -mx-4 px-4 py-2.5 mb-6
+      data-testid="page-nav-header"
+      className={`sticky top-0 z-20 -mx-4 px-4 pb-2.5 mb-6
+        pt-[calc(0.625rem+env(safe-area-inset-top,0px))]
         bg-background/90 backdrop-blur-md
         border-b border-border/50 ${className}`}
     >
