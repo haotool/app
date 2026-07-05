@@ -17,6 +17,23 @@ pnpm --filter @app/haotool test:coverage    # 覆蓋率報告
 pnpm --filter @app/haotool generate:sitemap # 重新生成 sitemap/robots/llms
 ```
 
+## 品牌素材再生成（快照制）
+
+素材腳本手動執行、產物 commit 入 repo；build 不抓 live 站。皆為冪等，可重複執行。
+瀏覽器自動化使用 monorepo root 既有 `@playwright/test`，零新增依賴（AVIF 轉檔用 macOS 內建 `sips`）。
+
+```bash
+node apps/haotool/scripts/generate-icons.mjs       # icons/icon.svg SSOT → PWA icons + favicon.ico
+node apps/haotool/scripts/generate-og.mjs          # HTML 模板 → og-image.png（1200×630，≤200KB）
+node apps/haotool/scripts/capture-screenshots.mjs  # live 站 5 工具行動截圖 → AVIF+WebP（520px 寬，單張 ≤60KB）
+```
+
+素材 SSOT 對照：
+
+- `public/brand/wordmark.svg`（+ `wordmark-white.svg`）：手寫幾何向量字形，Header/Footer/OG 共用。
+- `public/icons/icon.svg`：monogram 單一來源，icons 腳本由此輸出全部 PNG 尺寸與 favicon.ico。
+- `public/screenshots/<toolId>-mobile.{avif,webp}`：工具清單以 `src/config/tools.ts` 為準。
+
 ## 結構
 
 ```text
