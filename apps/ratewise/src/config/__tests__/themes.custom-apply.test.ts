@@ -63,6 +63,31 @@ describe('applyTheme - custom 覆寫層', () => {
     });
   });
 
+  it('customBackgroundTone 寫入背景調對；缺省視為 pure（向後相容）', () => {
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'warm' });
+    const warm = deriveCustomThemeCssVars('#FF6B6B', 'warm');
+    const root = document.documentElement;
+    expect(root.style.getPropertyValue('--color-background')).toBe(warm['--color-background']);
+    expect(root.style.getPropertyValue('--color-surface-sunken')).toBe(
+      warm['--color-surface-sunken'],
+    );
+
+    // 舊持久化資料無 customBackgroundTone → 與 pure 完全一致
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B' });
+    const pure = deriveCustomThemeCssVars('#FF6B6B', 'pure');
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => {
+      expect(root.style.getPropertyValue(cssVar), cssVar).toBe(pure[cssVar]);
+    });
+  });
+
+  it('切換背景調後切回內建主題：背景調 inline 覆寫零殘留', () => {
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'cool' });
+    applyTheme({ style: 'zen' });
+    const root = document.documentElement;
+    expect(root.style.getPropertyValue('--color-background')).toBe('');
+    expect(root.style.getPropertyValue('--color-surface-sunken')).toBe('');
+  });
+
   it('customPrimary 缺失或無效時回退預設自訂主色', () => {
     applyTheme({ style: 'custom' });
     const expected = deriveCustomThemeCssVars(DEFAULT_CUSTOM_PRIMARY);

@@ -25,10 +25,13 @@
 // 附 .ts 副檔名：themes.ts 亦被 prebuild node 腳本（type stripping）直接載入，需明確副檔名。
 import {
   CUSTOM_THEME_CSS_VARS,
+  DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
   deriveCustomThemeCssVars,
   hexToRgbTriple,
+  isValidBackgroundTone,
   isValidHexColor,
+  type CustomBackgroundTone,
 } from './custom-theme.ts';
 
 // ============================================================================
@@ -59,6 +62,8 @@ export interface ThemeConfig {
   style: ThemeStyle;
   /** style === 'custom' 時的使用者主色（#RRGGBB）；切回內建主題時保留以便再次啟用。 */
   customPrimary?: string;
+  /** style === 'custom' 時的背景色調；舊持久化資料缺省時視為 'pure'（向後相容）。 */
+  customBackgroundTone?: CustomBackgroundTone;
 }
 
 /**
@@ -495,7 +500,10 @@ function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void
   const primaryHex = isValidHexColor(config.customPrimary)
     ? config.customPrimary
     : DEFAULT_CUSTOM_PRIMARY;
-  const derived = deriveCustomThemeCssVars(primaryHex);
+  const backgroundTone = isValidBackgroundTone(config.customBackgroundTone)
+    ? config.customBackgroundTone
+    : DEFAULT_CUSTOM_BACKGROUND_TONE;
+  const derived = deriveCustomThemeCssVars(primaryHex, backgroundTone);
   CUSTOM_THEME_CSS_VARS.forEach((cssVar) => root.style.setProperty(cssVar, derived[cssVar]));
   // 與 bootstrap pre-paint 同為 identity 映射（hex → 'R G B'），保證雙端一致。
   root.style.setProperty('--color-primary', hexToRgbTriple(primaryHex));

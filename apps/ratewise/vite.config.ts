@@ -388,6 +388,13 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
 
+            // react-colorful 僅 Settings 選色 sheet 使用（E2 wave-C）：
+            // 回傳 undefined 讓 rolldown 依 import graph 併入 Settings lazy chunk，
+            // 避免 fallback 進 vendor-commons 使全部用戶首屏多付 ~3KB gzip。
+            if (id.includes('react-colorful')) {
+              return undefined;
+            }
+
             // jsx-runtime CJS factory 必須在 vendor-commons（初始 bundle），
             // 避免 rolldown 將 factory 置入 vendor-motion（首個使用者），
             // 導致 app chunk 靜態依賴 vendor-motion 拖慢首次 LCP。

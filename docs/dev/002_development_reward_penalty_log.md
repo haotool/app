@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+150
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+151
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-617-review-convergence-chunk-lockfile
+- 原因：PR #617 審查 APPROVE 附收斂——react-colorful 落 manualChunks fallback 進 vendor-commons（全部用戶首屏多付 3.43KB gzip）、lockfile 夾帶 jiti 等無關 churn
+- 解法：manualChunks 對 react-colorful 回傳 undefined 依 import graph 併入 Settings lazy chunk（vendor-commons 回落基準 23.64KB、hash 同基準，Settings 3.77→7.55KB 僅設定頁用戶付費），lockfile 以 base 版重生成收斂至 +14 行純 react-colorful；背景調 pre-paint FOUC 已由 PM 立案 #619
+
+- 日期：2026-07-06
+- ID：reward-rw-e2c-color-picker-modernization
+- 原因：自訂色 UX 僅原生色相/明度滑桿＋hex 輸入，體驗陽春且無背景色調選項（E2 wave-C）
+- 解法：context7 查證後引入 react-colorful@5.7.0（ADR-001，bundle +3.59KB gzip ≤5KB）改 BottomSheet 選色（色票＋二維拖曳＋HEX＋預覽 chip），新增背景色調三選一進演算集合（寫入=清除同一常數），AA property 守門擴充三背景調 × 977 case 全綠，customBackgroundTone 持久化向後相容，e2e 全旅程（chromium 雙專案）通過
 
 - 日期：2026-07-06
 - ID：reward-rw-602-manifest-site-url-env

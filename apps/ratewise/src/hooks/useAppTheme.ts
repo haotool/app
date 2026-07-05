@@ -24,7 +24,13 @@ import {
   DEFAULT_THEME_CONFIG,
   applyTheme,
 } from '../config/themes';
-import { DEFAULT_CUSTOM_PRIMARY, isValidHexColor } from '../config/custom-theme';
+import {
+  DEFAULT_CUSTOM_BACKGROUND_TONE,
+  DEFAULT_CUSTOM_PRIMARY,
+  isValidBackgroundTone,
+  isValidHexColor,
+  type CustomBackgroundTone,
+} from '../config/custom-theme';
 
 // Storage key（必須與 index.html 中的腳本一致）
 const STORAGE_KEY = 'ratewise-theme';
@@ -67,11 +73,19 @@ export function loadThemeConfig(): ThemeConfig {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const parsed = JSON.parse(stored) as { style?: unknown; customPrimary?: unknown };
+      const parsed = JSON.parse(stored) as {
+        style?: unknown;
+        customPrimary?: unknown;
+        customBackgroundTone?: unknown;
+      };
       const rawStyle = parsed.style;
       // customPrimary 僅在通過 hex 驗證時保留（防注入與壞資料）。
       const customPrimary = isValidHexColor(parsed.customPrimary)
         ? parsed.customPrimary
+        : undefined;
+      // customBackgroundTone 走 allowlist 驗證；舊資料缺省不寫入（讀取端視為 pure）。
+      const customBackgroundTone = isValidBackgroundTone(parsed.customBackgroundTone)
+        ? parsed.customBackgroundTone
         : undefined;
       if (typeof rawStyle === 'string') {
         const migrated = LEGACY_STYLE_MIGRATION[rawStyle];
@@ -79,15 +93,24 @@ export function loadThemeConfig(): ThemeConfig {
           const migratedConfig: ThemeConfig = {
             style: migrated,
             ...(customPrimary && { customPrimary }),
+            ...(customBackgroundTone && { customBackgroundTone }),
           };
           saveThemeConfig(migratedConfig);
           return migratedConfig;
         }
         // style 為 custom 但主色缺失/無效時，回退預設自訂主色（與 bootstrap 行為一致）。
         if (rawStyle === 'custom') {
-          return { style: 'custom', customPrimary: customPrimary ?? DEFAULT_CUSTOM_PRIMARY };
+          return {
+            style: 'custom',
+            customPrimary: customPrimary ?? DEFAULT_CUSTOM_PRIMARY,
+            ...(customBackgroundTone && { customBackgroundTone }),
+          };
         }
-        return { style: rawStyle as ThemeStyle, ...(customPrimary && { customPrimary }) };
+        return {
+          style: rawStyle as ThemeStyle,
+          ...(customPrimary && { customPrimary }),
+          ...(customBackgroundTone && { customBackgroundTone }),
+        };
       }
       return DEFAULT_THEME_CONFIG;
     }
@@ -161,8 +184,27 @@ export function useAppTheme() {
   // 設定自訂主色（即選即用：同時切換至 custom 風格並持久化）
   const setCustomPrimary = useCallback((customPrimary: string) => {
     if (!isValidHexColor(customPrimary)) return;
-    setConfig(() => {
-      const newConfig: ThemeConfig = { style: 'custom', customPrimary };
+    setConfig((prev) => {
+      const newConfig: ThemeConfig = {
+        style: 'custom',
+        customPrimary,
+        ...(prev.customBackgroundTone && { customBackgroundTone: prev.customBackgroundTone }),
+      };
+      saveThemeConfig(newConfig);
+      applyTheme(newConfig);
+      return newConfig;
+    });
+  }, []);
+
+  // 設定背景色調（即選即用：同時切換至 custom 風格並持久化）
+  const setCustomBackgroundTone = useCallback((customBackgroundTone: CustomBackgroundTone) => {
+    if (!isValidBackgroundTone(customBackgroundTone)) return;
+    setConfig((prev) => {
+      const newConfig: ThemeConfig = {
+        style: 'custom',
+        customPrimary: prev.customPrimary ?? DEFAULT_CUSTOM_PRIMARY,
+        customBackgroundTone,
+      };
       saveThemeConfig(newConfig);
       applyTheme(newConfig);
       return newConfig;
@@ -181,6 +223,7 @@ export function useAppTheme() {
     config,
     style: config.style,
     customPrimary: config.customPrimary ?? DEFAULT_CUSTOM_PRIMARY,
+    customBackgroundTone: config.customBackgroundTone ?? DEFAULT_CUSTOM_BACKGROUND_TONE,
 
     // 狀態
     isLoaded,
@@ -188,6 +231,7 @@ export function useAppTheme() {
     // 操作
     setStyle,
     setCustomPrimary,
+    setCustomBackgroundTone,
     resetTheme,
   };
 }
