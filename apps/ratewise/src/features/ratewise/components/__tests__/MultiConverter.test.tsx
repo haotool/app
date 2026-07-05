@@ -469,14 +469,15 @@ describe('MultiConverter', () => {
       ).toBeInTheDocument();
     });
 
-    it('匯率類型切換按鈕應有 ≥44px 觸控目標、chip 選中態與 aria-pressed 語意', () => {
+    it('匯率類型切換按鈕應有 ≥44px 觸控目標、chip 選中態且不帶 aria-pressed', () => {
       render(<MultiConverter {...defaultProps} />);
 
       const toggles = screen.getAllByRole('button', { name: /切換到/ });
       expect(toggles.length).toBeGreaterThan(0);
       for (const toggle of toggles) {
         expect(toggle).toHaveClass('min-h-11', 'min-w-11');
-        expect(toggle).toHaveAttribute('aria-pressed', 'true');
+        // cycle button（循環切換到下一選項）非 on/off toggle，不得帶 aria-pressed；動作語意由 aria-label 表達。
+        expect(toggle).not.toHaveAttribute('aria-pressed');
         expect(toggle).toHaveAttribute('type', 'button');
         expect(toggle.querySelector('span')).toHaveClass('bg-primary/10', 'rounded-full');
       }

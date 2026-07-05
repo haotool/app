@@ -313,6 +313,8 @@ export const MultiConverter = ({
 
                       return canToggle ? (
                         // 負 margin 讓 44px 觸控目標不撐高列高（WCAG 2.5.8）。
+                        // -my-[15px] = (min-h-11 44px − 行高 14px) / 2；行高 = text-[11px] × leading-tight 1.25。
+                        // 改 min-h、字級或 leading 時需同步重算，否則列高會被撐開。
                         <button
                           type="button"
                           onClick={(e) => {
@@ -320,7 +322,6 @@ export const MultiConverter = ({
                             handleUnifiedToggle(code);
                           }}
                           className="group/ratetype relative -my-[15px] inline-flex min-h-11 min-w-11 items-center justify-center align-middle focus-visible:outline-none"
-                          aria-pressed="true"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
