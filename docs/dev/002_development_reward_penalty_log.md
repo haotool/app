@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-content-pages-e2e-smoke
+- 原因：內容頁統一骨架缺 e2e 守門，底部導覽修復與七頁可達性可能被後續變更靜默破壞
+- 解法：新增 content-pages.spec（七頁 h1／返回導覽／行動版底部導覽＋設定頁開源入口導向），base path 解析對齊 fixtures；本機以單 worker 驗證 a11y 與 smoke 全綠
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-pages-wave2-guide-opendata-seotech
