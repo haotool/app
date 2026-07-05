@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+130
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-waveb-settings-toggle-e2e-guards
+- 原因：設定頁切換→首頁生效→重載持久的完整旅程無 e2e 鎖定，store 舊 flag key 遷移與非法值修復亦缺守門測試
+- 解法：新增 e2e case（切 v2→首頁生效→重載持久→切回經典）與 store 遷移／sanitize 單元測試，SSG 不變性 254 頁 diff=0
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-settings-converter-mode-ssot

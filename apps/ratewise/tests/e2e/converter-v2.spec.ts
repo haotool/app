@@ -43,8 +43,8 @@ function buildMockAggregateHistory(days = 30) {
   return { updateTime: `${dates[0]}T08:00:00+08:00`, dates, rates };
 }
 
-// 導向 v2：關閉 PWA 安裝導引避免遮擋、mock aggregate 端點避免觸外網、避開 networkidle 等待。
-async function gotoConverterV2(page: Page) {
+// 前置：關閉 PWA 安裝導引避免遮擋、mock aggregate 端點避免觸外網。
+async function prepareConverterV2(page: Page) {
   await page.addInitScript(() => {
     sessionStorage.setItem('ratewise:pwa-install-guide-dismissed:v1', 'true');
   });
@@ -58,6 +58,11 @@ async function gotoConverterV2(page: Page) {
       });
     },
   );
+}
+
+// 導向 v2：URL override 直達，避開 networkidle 等待。
+async function gotoConverterV2(page: Page) {
+  await prepareConverterV2(page);
 
   const url = new URL(page.url());
   url.searchParams.set('converter', 'v2');
@@ -131,6 +136,49 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
   test('flag off：首頁維持 legacy 版面', async ({ rateWisePage: page }) => {
     await expect(page.getByTestId('amount-input')).toBeVisible();
     await expect(page.getByTestId('converter-v2')).toHaveCount(0);
+  });
+
+  test('設定頁切換：等值雙列 → 首頁生效 → 重載持久 → 切回經典', async ({ rateWisePage: page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    await prepareConverterV2(page);
+
+    // 1. 設定頁「單幣別模式」切到等值雙列
+    await page.getByRole('link', { name: /設定/i }).first().click();
+    await expect(page.getByTestId('converter-variant-v2')).toBeVisible();
+    await page.getByTestId('converter-variant-v2').click();
+    await expect(page.getByTestId('converter-variant-v2')).toHaveAttribute('aria-pressed', 'true');
+
+    // 持久化與 lastConverterView 同域（converterStore SSOT，無獨立 flag key）
+    const stored = await page.evaluate(() => localStorage.getItem('ratewise-converter'));
+    expect(JSON.parse(stored ?? '{}')).toMatchObject({
+      state: { singleConverterVariant: 'v2' },
+    });
+
+    // 2. 回單幣別首頁：v2 版面即時生效（無 URL override）
+    await page
+      .getByRole('link', { name: /單幣別/i })
+      .first()
+      .click();
+    await expect(page.getByTestId('converter-v2')).toBeVisible({ timeout: 30_000 });
+
+    // 3. 重載後仍持久（converterStore hydrate）
+    await page.reload();
+    await expect(page.getByTestId('converter-v2')).toBeVisible({ timeout: 30_000 });
+
+    // 4. 設定頁切回經典 → 首頁恢復 legacy
+    await page.getByRole('link', { name: /設定/i }).first().click();
+    await page.getByTestId('converter-variant-legacy').click();
+    await page
+      .getByRole('link', { name: /單幣別/i })
+      .first()
+      .click();
+    await expect(page.getByTestId('amount-input')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('converter-v2')).toHaveCount(0);
+
+    expect(consoleErrors).toEqual([]);
   });
 
   test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
