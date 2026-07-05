@@ -5,7 +5,7 @@ name: SEO Production Validation
 # 1. 健康檢查: 必要 SEO/圖片資源 200、sitemap.xml、robots.txt、llms.txt
 # 2. JSON-LD 驗證: Schema.org 結構化數據完整性與正確性
 # 3. E2E 測試: Meta Tags、Open Graph、圖片資源
-# 4. 支援所有 apps: ratewise + nihonname + haotool
+# 4. 支援所有 apps（由 app.config.mjs 自動發現）
 #
 # 觸發條件:
 # - Release 成功後自動執行

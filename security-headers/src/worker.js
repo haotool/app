@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.5
+ * 安全標頭 Worker v5.6
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.6: haotool 根站 v2 同步：HTML 路徑改 /tools/、discovery skill 更新為 5 工具工具站敘事、LLM 文件清單補根站 llms.txt
  * - v5.5: split-meow profile 補回 fallback 的 img-src https:，修復 legacy 遠端頭像被 CSP 擋下
  * - v5.4: Service Worker 檔案（sw.js、registerSW.js）強制 no-store，確保瀏覽器每次都取得最新版本
  * - v5.3: 新增 split-meow CSP profile，允許 jsDelivr CDN 連線取得匯率
@@ -31,7 +32,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.5';
+const SECURITY_POLICY_VERSION = '5.6';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -57,7 +58,7 @@ const CLOUDFLARE_INSIGHTS_SCRIPT = 'https://static.cloudflareinsights.com';
 const APP_HOST = 'app.haotool.org';
 const ROOT_SITE_HOSTS = new Set(['haotool.org', 'www.haotool.org', APP_HOST]);
 const ROOT_SITE_HTML_HOSTS = new Set(['haotool.org', 'www.haotool.org']);
-const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/projects/', '/about/', '/contact/']);
+const HAOTOOL_ROOT_HTML_PATHS = new Set(['/', '/tools/', '/about/', '/contact/']);
 const HAOTOOL_ROOT_MARKDOWN_MIRROR = '/index.md';
 const RATEWISE_MARKDOWN_MIRROR = '/ratewise/index.md';
 const RATEWISE_PAGE_MARKDOWN_MIRRORS = new Map([
@@ -99,21 +100,22 @@ description: Discover haotool.org public tools, Markdown mirrors, and agent-read
 
 # haotool Discovery
 
-Use this skill when an agent needs to understand the public haotool.org tool portfolio.
+Use this skill when an agent needs to understand the haotool.org tool hub: a free, open-source, privacy-first collection of Taiwanese web tools（免費、開源、不收集個資的台灣網頁工具集）.
 
 ## Canonical Entry Points
 
-- Portfolio home: https://app.haotool.org/
+- Tool hub home: https://app.haotool.org/
 - Markdown mirror: https://app.haotool.org/index.md
 - API catalog: https://app.haotool.org/.well-known/api-catalog
 - Agent skills index: https://app.haotool.org/.well-known/agent-skills/index.json
 
 ## Available Tools
 
-- HaoRate: https://app.haotool.org/ratewise/
-- NihonName: https://app.haotool.org/nihonname/
-- ParkKeeper: https://app.haotool.org/park-keeper/
-- Quake School: https://app.haotool.org/quake-school/
+- HaoRate 匯率好工具: https://app.haotool.org/ratewise/ — 台銀銀行賣出價即時換算，30 天趨勢圖，離線可用——台灣最精準的匯率工具
+- 喵喵分帳 Split Meow: https://app.haotool.org/split-meow/ — 貓咪主題旅遊分帳，費用分類、一鍵分享結算結果，完全離線
+- 停車好工具 ParkKeeper: https://app.haotool.org/park-keeper/ — GPS 記錄車位、羅盤導航回車，多語系、離線優先
+- 日本名字產生器 NihonName: https://app.haotool.org/nihonname/ — 中文姓氏產生道地日文名，100+ 漢姓對照與歷史脈絡
+- 地震知識小學堂: https://app.haotool.org/quake-school/ — 18 道互動測驗＋動畫，搞懂規模與震度，離線防災學習
 `,
 	},
 	{
@@ -182,6 +184,7 @@ const AI_CRAWLER_PATTERNS = [
 
 /** LLM 可讀文件路徑。 */
 const LLM_DOC_PATHS = new Set([
+	'/llms.txt',
 	'/ratewise/llms.txt',
 	'/ratewise/llms-full.txt',
 	'/nihonname/llms.txt',
@@ -352,7 +355,7 @@ function createApiCatalogResponse(url, workerStart) {
 				],
 				'service-doc': [
 					{
-						href: `${rootOrigin}/projects/`,
+						href: `${rootOrigin}/tools/`,
 						type: 'text/html',
 					},
 				],

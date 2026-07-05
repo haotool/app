@@ -1,95 +1,75 @@
 /**
- * Routes Configuration Tests
- * Testing route configuration and lazy loading
- * [update:2025-12-16] - Updated to match new route structure (Home is standalone)
+ * Routes Tests — 4 條路由實際 render + 404 catch-all
  */
-import { describe, it, expect } from 'vitest';
-import routes, { getIncludedRoutes } from './routes';
+import { describe, it, expect, afterEach } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router-dom';
+import routes from './routes';
 
-describe('routes', () => {
-  it('should export routes as default', () => {
-    expect(routes).toBeDefined();
-    expect(Array.isArray(routes)).toBe(true);
+afterEach(() => {
+  cleanup();
+});
+
+function renderRoute(path: string) {
+  const router = createMemoryRouter(routes as RouteObject[], { initialEntries: [path] });
+  return render(<RouterProvider router={router} />);
+}
+
+describe('routes render', () => {
+  it('/ 渲染首頁 h1', async () => {
+    renderRoute('/');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('把好想法，做成好工具。');
   });
 
-  it('should have at least two route groups', () => {
-    // One for Home (standalone), one for Layout-wrapped pages
-    expect(routes.length).toBeGreaterThanOrEqual(2);
+  it('/tools/ 渲染工具總覽 h1 與 5 張工具卡', async () => {
+    renderRoute('/tools/');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('所有工具');
+    expect(await screen.findByRole('heading', { name: /HaoRate 匯率好工具/ })).toBeInTheDocument();
   });
 
-  it('should have home route as standalone', () => {
-    const homeRoute = routes[0];
-    expect(homeRoute).toBeDefined();
-    expect(homeRoute?.path).toBe('/');
-    // Home is standalone, no Component wrapper (uses lazy)
-    expect(homeRoute?.lazy).toBeDefined();
+  it('/about/ 渲染關於頁 h1 與隱私錨點', async () => {
+    const { container } = renderRoute('/about/');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('關於 HaoTool');
+    expect(container.querySelector('#privacy')).not.toBeNull();
   });
 
-  it('should have Layout-wrapped routes', () => {
-    const layoutRoute = routes[1];
-    expect(layoutRoute).toBeDefined();
-    expect(layoutRoute?.path).toBe('/');
-    expect(layoutRoute?.Component).toBeDefined();
-    expect(layoutRoute?.children).toBeDefined();
+  it('/contact/ 渲染聯繫頁 h1', async () => {
+    renderRoute('/contact/');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('與我聯繫');
   });
 
-  it('should have projects path in Layout children', () => {
-    const layoutRoute = routes[1];
-    const projectsRoute = layoutRoute?.children?.find((r) => r.path === 'projects');
-    expect(projectsRoute).toBeDefined();
+  it('未知路徑渲染 404 頁', async () => {
+    renderRoute('/does-not-exist/');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('這頁不存在，但工具都在。');
   });
 
-  it('should have about path in Layout children', () => {
-    const layoutRoute = routes[1];
-    const aboutRoute = layoutRoute?.children?.find((r) => r.path === 'about');
-    expect(aboutRoute).toBeDefined();
+  it('/404 渲染 404 頁（供 SSG 預渲染）', async () => {
+    renderRoute('/404');
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('這頁不存在，但工具都在。');
   });
 
-  it('should have contact path in Layout children', () => {
-    const layoutRoute = routes[1];
-    const contactRoute = layoutRoute?.children?.find((r) => r.path === 'contact');
-    expect(contactRoute).toBeDefined();
+  it('每頁皆含 main landmark 與 SkipLink', async () => {
+    renderRoute('/');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+    expect(screen.getByText('跳至主內容')).toBeInTheDocument();
   });
 });
 
-describe('getIncludedRoutes', () => {
-  it('should return array of routes for SSG', () => {
-    const includedRoutes = getIncludedRoutes();
-    expect(Array.isArray(includedRoutes)).toBe(true);
-  });
-
-  it('should include home route', () => {
-    const includedRoutes = getIncludedRoutes();
-    expect(includedRoutes).toContain('/');
-  });
-
-  it('should include projects route', () => {
-    const includedRoutes = getIncludedRoutes();
-    expect(includedRoutes.some((r) => r.includes('projects'))).toBe(true);
-  });
-
-  it('should include about route', () => {
-    const includedRoutes = getIncludedRoutes();
-    expect(includedRoutes.some((r) => r.includes('about'))).toBe(true);
-  });
-
-  it('should include contact route', () => {
-    const includedRoutes = getIncludedRoutes();
-    expect(includedRoutes.some((r) => r.includes('contact'))).toBe(true);
-  });
-
-  it('should all start with slash', () => {
-    const includedRoutes = getIncludedRoutes();
-    includedRoutes.forEach((route) => {
-      expect(route.startsWith('/')).toBe(true);
-    });
-  });
-
-  it('should have trailing slashes for non-root routes', () => {
-    const includedRoutes = getIncludedRoutes();
-    const nonRootRoutes = includedRoutes.filter((r) => r !== '/');
-    nonRootRoutes.forEach((route) => {
-      expect(route.endsWith('/')).toBe(true);
-    });
+describe('routes 結構', () => {
+  it('共用 Layout 包含 4 條子路由 + 404 + catch-all', () => {
+    const layoutRoute = routes[0];
+    expect(layoutRoute?.path).toBe('/');
+    expect(layoutRoute?.Component).toBeDefined();
+    const childPaths = (layoutRoute?.children ?? []).map((child) =>
+      'index' in child && child.index ? '(index)' : child.path,
+    );
+    expect(childPaths).toEqual(['(index)', 'tools', 'about', 'contact', '404', '*']);
   });
 });

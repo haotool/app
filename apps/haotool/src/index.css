@@ -1,127 +1,949 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Lenis Smooth Scroll Styles */
-/* [context7:/darkroomengineering/lenis:2025-12-14] */
-html.lenis,
-html.lenis body {
-  height: auto;
+/* Reveal.tsx 的 motion transition prop 會被掃描器誤判為 transition class 候選；
+ * 排除之，避免生成含毛玻璃濾鏡屬性清單的未使用內建 utility（扁平鐵律掃描歸零）。 */
+@source not inline('transition');
+
+/**
+ * HaoTool 設計 Tokens SSOT
+ * 色彩來源：apps/ratewise/src/index.css Zen 主題（PRD §4.2 13 色 + design-deep-dive §1.1 互動衍生值）
+ * 字級/間距/圓角/動效：design-deep-dive §1.2–§1.4（brief §1–§2 深化版）
+ * 扁平鐵律：全站零漸層、零毛玻璃濾鏡、零裝飾性陰影（brief §1.1）。
+ * 深度表達全站唯二：1px 邊框與 --shadow-quiet（僅 header 捲動後 / toast / sticky CTA）。
+ */
+@theme {
+  /* 色彩 Tokens — PRD §4.2 全表（NFR-006 token 對照測試守門；drift 視為缺陷） */
+  --color-primary: #3182f6;
+  --color-primary-strong: #1b64da;
+  --color-primary-bg: #eff6ff;
+  --color-secondary: #6366f1;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* 互動態衍生值 — deep-dive §1.1（既有 Zen 藍階與 slate 階，非新色相） */
+  --color-primary-bg-hover: #dbeafe;
+  /* 白字實底互動面 hover（R2-1 AA 裁決；值取自 RateWise Zen --color-primary-dark 30 64 175） */
+  --color-primary-dark: #1e40af;
+  --color-border-strong: #cbd5e1;
+  --color-disabled-bg: #e2e8f0;
+  --color-disabled-text: #94a3b8;
+
+  /* 深藍 Banner 專用（Contact banner；D2 唯一授權例外） */
+  --color-banner-bg: #1b64da;
+  --color-banner-text: #ffffff;
+  --color-banner-sub: #eff6ff;
+
+  /* Focus（深藍底上 ring 用白色 — PM 裁決 D1） */
+  --color-focus: #3182f6;
+  --color-focus-inverse: #ffffff;
+
+  /* 字族：系統字型堆疊（brief §6 字體 v2.1 裁決 — 不載任何 webfont） */
+  --font-sans:
+    'Inter', 'Noto Sans TC', system-ui, -apple-system, 'Segoe UI', 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
+
+  /* 字級階 — deep-dive §1.2（clamp 基準 390→1120，斜率 = Δpx / 730） */
+  --text-display: clamp(36px, 10vw, 44px);
+  --text-display--line-height: 1.12;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 800;
+  --text-h1: clamp(30px, 22.5px + 1.92vw, 44px);
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h1--font-weight: 800;
+  --text-h2: clamp(26px, 18.5px + 1.92vw, 40px);
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h2--font-weight: 800;
+  --text-h3: clamp(17px, 15.9px + 0.27vw, 19px);
+  --text-h3--line-height: 1.4;
+  --text-h3--font-weight: 700;
+  --text-body: 16px;
+  --text-body--line-height: 1.7;
+  --text-body-sm: 15px;
+  --text-body-sm--line-height: 1.6;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+  --text-caption--font-weight: 500;
+  --text-overline: 13px;
+  --text-overline--line-height: 1.4;
+  --text-overline--letter-spacing: 0.08em;
+  --text-overline--font-weight: 700;
+  --text-stat: clamp(32px, 26.7px + 1.37vw, 42px);
+  --text-stat--line-height: 1.1;
+  --text-stat--letter-spacing: -0.01em;
+  --text-stat--font-weight: 800;
+  --text-404: clamp(88px, 61px + 6.85vw, 138px);
+  --text-404--line-height: 1;
+  --text-404--letter-spacing: -0.03em;
+  --text-404--font-weight: 800;
+
+  /* 圓角體系 — deep-dive §1.3 */
+  --radius-card: 20px;
+  --radius-btn: 16px;
+  --radius-input: 12px;
+  --radius-chip: 999px;
+  --radius-deco: 24px;
+  --radius-frame: 32px;
+  --radius-icon: 12px;
+
+  /* 全站唯一安靜陰影（僅 header 捲動後 / toast / sticky CTA） */
+  --shadow-quiet: 0 1px 2px rgb(15 23 42 / 0.04);
+
+  /* 全站唯一 bezier（非 spring 過渡；spring 回饋由三檔 spring token 承載，M6） */
+  --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+/* 動效時長與版式節奏 Tokens — deep-dive §1.3/§1.4 + motion-deep-dive §1（transform/opacity 專用） */
+:root {
+  --dur-tap: 120ms;
+  --dur-hover: 200ms;
+  --dur-reveal: 480ms;
+  --dur-accordion: 240ms;
+  --dur-menu: 240ms;
+  --dur-toast: 200ms;
+  --dur-press-release: 320ms;
+  --dur-intro-word: 560ms;
+  --dur-intro-char: 480ms;
+  --dur-odometer: 900ms;
+  --dur-draw: 600ms;
+  --dur-vt: 240ms;
+  --dur-vt-out: 200ms;
+  --dur-focus: 200ms;
+  --dur-pill-slide: 250ms;
+  --stagger: 70ms;
+  --stagger-word: 45ms;
+  --stagger-char: 30ms;
+  --stagger-digit: 60ms;
+  --float-cycle: 8s;
+  --drift-a: 9s;
+  --drift-b: 11.5s;
+  --drift-c: 14s;
+  --magnet-max: 4px;
+  --tilt-max: 4deg;
+
+  /* 三檔 spring 基線：不支援 linear() 的環境回落唯一 bezier（體感等價無回彈）。 */
+  --ease-spring-tap: var(--ease-out-quart);
+  --ease-spring-reveal: var(--ease-out-quart);
+  --ease-spring-hero: var(--ease-out-quart);
+
+  --space-section: clamp(72px, 42px + 7.7vw, 128px);
+  --container-max: 1120px;
+
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-overlay: 30;
+  --z-toast: 50;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
+/* 純 CSS spring（linear() Baseline Widely Available；motion-deep-dive §1.1 定稿控制點） */
+@supports (animation-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring-tap: linear(0, 0.55 25%, 0.92 45%, 1.03 62%, 0.99 80%, 1);
+    --ease-spring-reveal: linear(0, 0.4 18%, 0.78 38%, 0.94 60%, 0.99 80%, 1);
+    --ease-spring-hero: linear(0, 0.29 12%, 0.71 24%, 0.94 36%, 1.06 52%, 1.01 70%, 0.99 84%, 1);
+  }
 }
 
-.lenis.lenis-stopped {
+/* Display 平板 52px 中繼值與桌面 64px — deep-dive §1.2 + PM 裁決 D5 */
+@media (min-width: 768px) {
+  :root {
+    --text-display: 52px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --text-display: 64px;
+  }
+}
+
+/* 基礎排版 */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* 固定 header 下錨點不被遮擋（deep-dive §1.3：全站 80px） */
+:target {
+  scroll-margin-top: 80px;
+}
+
+/* 全站容器：max 1120、側距 mobile 20 / ≥768 24 */
+.shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-max);
+  padding-inline: 20px;
+}
+@media (min-width: 768px) {
+  .shell {
+    padding-inline: 24px;
+  }
+}
+
+/* 區塊垂直節奏：mobile 72 → desktop 128 */
+.section-pad {
+  padding-block: var(--space-section);
+}
+
+/* Focus ring：淺底品牌藍 / 深藍底白色（D1） */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.focus-ring-inverse:focus-visible {
+  outline: 2px solid var(--color-focus-inverse);
+  outline-offset: 2px;
+}
+.focus-ring-inset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* MobileMenu 開合：240ms opacity + translateY(8px)；關閉時 visibility 延遲切換 */
+.mobile-menu {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur-menu) var(--ease-out-quart),
+    transform var(--dur-menu) var(--ease-out-quart),
+    visibility 0s var(--dur-menu);
+}
+.mobile-menu[data-open='true'] {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--dur-menu) var(--ease-out-quart),
+    transform var(--dur-menu) var(--ease-out-quart),
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu,
+  .mobile-menu[data-open='true'] {
+    transform: none;
+    transition:
+      opacity var(--dur-menu) var(--ease-out-quart),
+      visibility 0s var(--dur-menu);
+  }
+  .mobile-menu[data-open='true'] {
+    transition:
+      opacity var(--dur-menu) var(--ease-out-quart),
+      visibility 0s;
+  }
+}
+
+/* Pill tabs 水平捲動列：隱藏 scrollbar（§4.9） */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pill 觸控 hit area 外擴至 44px（本體 40px）；z-index 高於滑動指示器（S5-d） */
+.pill-hit {
+  position: relative;
+  z-index: 1;
+}
+.pill-hit::after {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+
+/* 互動過渡 SSOT：hover 色彩 200ms；transform 時序由 --press-dur/--press-ease 承載 */
+.press {
+  transition:
+    color var(--dur-hover) var(--ease-out-quart),
+    background-color var(--dur-hover) var(--ease-out-quart),
+    border-color var(--dur-hover) var(--ease-out-quart),
+    opacity var(--dur-hover) var(--ease-out-quart),
+    box-shadow var(--dur-hover) var(--ease-out-quart),
+    transform var(--press-dur, var(--dur-tap)) var(--press-ease, var(--ease-out-quart));
+}
+/* S5-a 快按慢彈：按下 120ms quart、釋放 320ms spring-tap（~3% 過衝）。 */
+.press-scale {
+  --press-dur: var(--dur-press-release);
+  --press-ease: var(--ease-spring-tap);
+}
+.press-scale:active {
+  --press-dur: var(--dur-tap);
+  --press-ease: var(--ease-out-quart);
+  transform: scale(var(--press-scale, 0.97));
+}
+.press-scale:disabled:active {
+  transform: none;
+}
+
+/* Accordion：grid-rows 0fr→1fr 展開 + chevron 旋轉（§4.3） */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-accordion) var(--ease-out-quart);
+}
+.accordion-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+.accordion-chevron {
+  transition: transform var(--dur-accordion) var(--ease-out-quart);
+}
+.accordion-chevron[data-open='true'] {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press {
+    transition:
+      color var(--dur-hover) var(--ease-out-quart),
+      background-color var(--dur-hover) var(--ease-out-quart),
+      border-color var(--dur-hover) var(--ease-out-quart),
+      opacity var(--dur-hover) var(--ease-out-quart);
+  }
+  .press-scale:active {
+    transform: none;
+  }
+  .accordion-panel,
+  .accordion-chevron {
+    transition: none;
+  }
+}
+
+/* ============================================================
+ * Hero 工具卡疊層舞台 — design-deep-dive §3
+ * 三層 transform：定位層（stage-card）→ 浮動層（stage-float）→ 視差層（stage-para）
+ * 行動/平板：3 卡完全靜態；桌面（≥1024）：5 卡 + 浮動 + 指標視差。
+ * ============================================================ */
+.hero-stage {
+  position: relative;
+  /* 卡片 z-index 僅在舞台內比層，不與 header/overlay 全域 z 競爭。 */
+  isolation: isolate;
+  width: 100%;
+  max-width: 350px;
+  height: 380px;
+  margin-inline: auto;
+  overflow: visible;
+}
+@media (min-width: 768px) {
+  .hero-stage {
+    max-width: 420px;
+    height: 440px;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-stage {
+    max-width: none;
+    width: 512px;
+    height: 500px;
+  }
+}
+
+.stage-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, 0) translate(var(--x, 0px), var(--y, 0px)) rotate(var(--r, 0deg))
+    scale(var(--s, 1));
+  z-index: var(--z, 1);
+}
+
+/* 行動（<768）3 卡版式 §3.2 */
+.stage-card-1 {
+  --x: 0px;
+  --y: 0px;
+  --r: 0deg;
+  --s: 1;
+  --z: 30;
+  --amp: 8px;
+  --float-delay: 0s;
+  --depth: 8px;
+}
+.stage-card-2 {
+  --x: -88px;
+  --y: 26px;
+  --r: -6deg;
+  --s: 0.88;
+  --z: 20;
+  --amp: 6px;
+  --float-delay: -1.6s;
+  --depth: 5px;
+}
+.stage-card-3 {
+  --x: 88px;
+  --y: 26px;
+  --r: 6deg;
+  --s: 0.88;
+  --z: 10;
+  --amp: 6px;
+  --float-delay: -3.2s;
+  --depth: 5px;
+}
+/* 卡 4/5 行動與平板不渲染資源（D8：display:none + lazy 圖不觸發載入） */
+.stage-card-4,
+.stage-card-5 {
+  display: none;
+}
+
+/* 平板（768–1023）：沿用 3 卡版式，舞台 420×440 等比放大偏移 */
+@media (min-width: 768px) {
+  .stage-card-2 {
+    --x: -106px;
+    --y: 31px;
+  }
+  .stage-card-3 {
+    --x: 106px;
+    --y: 31px;
+  }
+}
+
+/* 桌面（≥1024）5 卡疊層 §3.1 精確數值 */
+@media (min-width: 1024px) {
+  .stage-card-1 {
+    --z: 50;
+  }
+  .stage-card-2 {
+    --x: -104px;
+    --y: 36px;
+    --s: 0.92;
+    --z: 40;
+  }
+  .stage-card-3 {
+    --x: 104px;
+    --y: 36px;
+    --s: 0.92;
+    --z: 30;
+  }
+  .stage-card-4 {
+    display: block;
+    --x: -172px;
+    --y: 80px;
+    --r: -11deg;
+    --s: 0.84;
+    --z: 20;
+    --amp: 4px;
+    --float-delay: -4.8s;
+    --depth: 3px;
+  }
+  .stage-card-5 {
+    display: block;
+    --x: 172px;
+    --y: 80px;
+    --r: 11deg;
+    --s: 0.84;
+    --z: 10;
+    --amp: 4px;
+    --float-delay: -6.4s;
+    --depth: 3px;
+  }
+}
+
+/* CSS device frame：行動 156×338 / 平板 180×390 / 桌面 200×434（無陰影，深度靠 scale/rotate/z） */
+.stage-frame {
+  width: 156px;
+  height: 338px;
+  border: 4px solid var(--color-text);
+  border-radius: 28px;
+  background: var(--color-surface);
   overflow: hidden;
 }
-
-.lenis.lenis-scrolling iframe {
-  pointer-events: none;
+.stage-frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
-
-/* Custom Animations */
-@layer utilities {
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-
-  .animation-delay-4000 {
-    animation-delay: 4s;
-  }
+.stage-frame img,
+.stage-frame .stage-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  object-fit: cover;
+  object-position: top;
 }
-
-/* Base Styles */
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    @apply bg-[#050505] text-white antialiased;
-    font-feature-settings: 'cv11', 'ss01';
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  ::selection {
-    @apply bg-brand-500/30 text-white;
+@media (min-width: 768px) {
+  .stage-frame {
+    width: 180px;
+    height: 390px;
   }
 }
-
-/* Scrollbar Styles */
-@layer components {
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+@media (min-width: 1024px) {
+  .stage-frame {
+    width: 200px;
+    height: 434px;
+    border-width: 5px;
+    border-radius: 32px;
   }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-[#050505];
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/20;
+  .stage-frame img,
+  .stage-frame .stage-placeholder {
+    border-radius: 27px;
   }
 }
 
-/* Focus Styles */
-@layer base {
-  *:focus-visible {
-    @apply outline-none ring-2 ring-brand-500/50 ring-offset-2 ring-offset-[#050505];
+/* 浮動與視差僅桌面啟用；行動/平板完全靜態 */
+@media (min-width: 1024px) {
+  .stage-float {
+    animation: hero-float var(--float-cycle) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+  .stage-para {
+    transform: translate3d(
+      calc(var(--px, 0) * var(--depth, 0px)),
+      calc(var(--py, 0) * var(--depth, 0px)),
+      0
+    );
+    transition: transform 300ms var(--ease-out-quart);
   }
 }
 
-/* Gradient Animation */
-@keyframes gradient-x {
+/* S7-b 舞台 hover 聚焦（motion-deep-dive §2 S7-b）：懸停卡 scale 1.03、其餘卡退至 0.85。
+ * scale 掛第四層 stage-frame，不與定位/浮動/視差三層 transform 打架；
+ * pointer-events: auto 僅為 :hover 命中（舞台維持 aria-hidden、無 click 行為）。 */
+@media (min-width: 1024px) and (pointer: fine) {
+  .stage-card {
+    pointer-events: auto;
+  }
+  .stage-frame {
+    transition: transform var(--dur-focus) var(--ease-out-quart);
+  }
+  .stage-card:hover .stage-frame {
+    transform: scale(1.03);
+  }
+  .hero-stage:has(.stage-card:hover) .stage-card:not(:hover) {
+    opacity: 0.85;
+    transition: opacity var(--dur-focus) var(--ease-out-quart);
+  }
+}
+
+@keyframes hero-float {
   0%,
   100% {
-    background-size: 200% 200%;
-    background-position: left center;
+    transform: translateY(0);
   }
   50% {
-    background-size: 200% 200%;
-    background-position: right center;
+    transform: translateY(calc(var(--amp, 0px) * -1));
   }
 }
 
-.animate-gradient-x {
-  animation: gradient-x 15s ease infinite;
+/* Tools 頁分類切換：卡格 150ms opacity 淡入（無位移） */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 150ms var(--ease-out-quart);
 }
 
-/* Blob Animation */
-@keyframes blob {
+/* CopyField 成功 icon 切換：150ms scale 0.8→1 + opacity */
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.icon-pop {
+  animation: icon-pop 150ms var(--ease-out-quart);
+}
+
+/* Toast 生命週期：進場 200ms → 停留 2s → 離場 200ms（合計 2400ms，由 JS 移除） */
+@keyframes toast-life {
   0% {
-    transform: translate(0px, 0px) scale(1);
+    opacity: 0;
+    transform: translate(-50%, 8px);
   }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  8%,
+  84% {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
   100% {
-    transform: translate(0px, 0px) scale(1);
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+}
+.toast-bubble {
+  animation: toast-life 2400ms var(--ease-out-quart) both;
+}
+
+/* ============================================================
+ * S1 開場序列 — motion-deep-dive §2 S1
+ * 僅首次 session（html[data-intro='1']，index.html 內聯腳本設定）。
+ * LCP 鐵律：透明度恆 1、無 clip，僅 translateY 位移歸位（H1 第一幀即繪製）。
+ * ============================================================ */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+.wm-char {
+  display: inline-block;
+}
+.wm-char-accent {
+  color: var(--color-primary);
+}
+
+@keyframes intro-rise {
+  from {
+    transform: translateY(var(--intro-y, 10px));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+html[data-intro='1'] .wm-char {
+  --intro-y: 10px;
+  animation: intro-rise var(--dur-intro-char) var(--ease-spring-hero) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger-char));
+}
+/* H1 整體單一 spring（不拆詞段：inline-block 詞段會分裂 LCP 候選，LCP=H1 為最高約束）。 */
+html[data-intro='1'] .intro-h1 {
+  --intro-y: 14px;
+  animation: intro-rise var(--dur-intro-word) var(--ease-spring-hero) both;
+  animation-delay: 120ms;
+}
+/* 副文＋CTA 列整組（不拆）：335ms 後跟進，總長 815ms < 900ms。 */
+html[data-intro='1'] .intro-follow {
+  --intro-y: 10px;
+  animation: intro-rise var(--dur-intro-char) var(--ease-spring-hero) both;
+  animation-delay: 335ms;
+}
+
+/* ============================================================
+ * S2 行動 hero 漂浮 chips — motion-deep-dive §2 S2
+ * 僅 <1024px；純 CSS 色塊＋Lucide icon；兩層動畫分掛父（scroll 視差）子（drift）。
+ * ============================================================ */
+.hero-chips {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+@media (min-width: 1024px) {
+  .hero-chips {
+    display: none;
+  }
+}
+.chip-scroll {
+  position: absolute;
+}
+.chip-scroll-a {
+  top: 16px;
+  right: 12px;
+  --scroll-shift: -28px;
+}
+.chip-scroll-b {
+  top: 128px;
+  right: 64px;
+  --scroll-shift: -20px;
+}
+.chip-scroll-c {
+  top: 236px;
+  right: 24px;
+  --scroll-shift: -24px;
+}
+/* 漂浮與 hero-float 同構；三週期互質＋負 delay 錯相，永不同步。 */
+.hero-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hero-float var(--chip-cycle, var(--drift-a)) ease-in-out infinite;
+  animation-delay: var(--chip-delay, 0s);
+}
+.hero-chip-a {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--color-primary-bg);
+  --amp: 6px;
+  --chip-cycle: var(--drift-a);
+  --chip-delay: 0s;
+}
+.hero-chip-b {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--color-surface-sunken);
+  --amp: 5px;
+  --chip-cycle: var(--drift-b);
+  --chip-delay: -4s;
+}
+.hero-chip-c {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--color-primary-bg);
+  --amp: 6px;
+  --chip-cycle: var(--drift-c);
+  --chip-delay: -8s;
+}
+/* 滾動視差增強層：iOS <26 僅少一層視差，漂浮仍在；不寫 JS scroll fallback。 */
+@keyframes chip-parallax {
+  to {
+    transform: translateY(var(--scroll-shift, -24px));
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .chip-scroll {
+    animation: chip-parallax linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100svh;
   }
 }
 
-.animate-blob {
-  animation: blob 10s infinite;
+/* ============================================================
+ * S3 信任列 odometer — motion-deep-dive §2 S3
+ * ghost 佔位字（visibility:hidden）承載 baseline 與 tabular 寬度，
+ * 絕對定位 window 裁切滾輪柱——換入瞬間零抖動、與靜態後綴基線對齊。
+ * ============================================================ */
+.odo-cell {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  vertical-align: baseline;
+}
+.odo-ghost {
+  visibility: hidden;
+}
+.odo-window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.odo-reel {
+  display: block;
+  transform: translateY(calc(var(--d, 0) * -1em));
+  transition: transform var(--dur-odometer) var(--ease-spring-reveal);
+  transition-delay: calc(var(--i, 0) * var(--stagger-digit));
+}
+.odo-glyph {
+  display: block;
+  height: 1em;
+  line-height: 1;
 }
 
-/* Line Clamp */
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* ============================================================
+ * S5-d pill tabs 滑動指示器 — motion-deep-dive §2 S5-d（M4：CSS 變數方案）
+ * ============================================================ */
+.pill-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 40px;
+  width: var(--pill-w, 0px);
+  transform: translateX(var(--pill-x, 0px));
+  border-radius: 999px;
+  background: var(--color-text);
+  z-index: 0;
+  pointer-events: none;
+}
+/* mount 首次定位無過渡；data-ready 後才啟用滑動。 */
+.pill-indicator[data-ready='true'] {
+  transition:
+    transform var(--dur-pill-slide) var(--ease-spring-reveal),
+    width var(--dur-pill-slide) var(--ease-spring-reveal);
+}
+
+/* ============================================================
+ * S5-b desktop magnetic hover — motion-deep-dive §2 S5-b
+ * 內層 span 承載位移（避免與外層 :active scale 衝突）；
+ * JS 寫 --mx/--my（-1..1）× --magnet-max 4px；三重媒體閘由 useMagnetic 把關。
+ * ============================================================ */
+@media (min-width: 1024px) and (pointer: fine) {
+  .magnet-item {
+    display: inline-flex;
+    align-items: center;
+    transform: translate(
+      calc(var(--mx, 0) * var(--magnet-max)),
+      calc(var(--my, 0) * var(--magnet-max))
+    );
+    transition: transform var(--dur-press-release) var(--ease-spring-tap);
+  }
+}
+
+/* ============================================================
+ * S5-c ToolCard pointer tilt — motion-deep-dive §2 S5-c（M3 核准，行動禁用）
+ * 場景層 perspective 800px；卡片本體 rotateX/rotateY ≤4deg（transform 無版面位移）。
+ * 歸位/跟隨過渡由 .press 既有 transform 時序承載（320ms spring-tap）；
+ * :active 時 press-scale 較高特異性覆蓋 → 按壓瞬間回平屬預期行為。
+ * ============================================================ */
+@media (min-width: 1024px) and (pointer: fine) {
+  .tilt-scene {
+    perspective: 800px;
+  }
+  .tilt-inner {
+    transform: rotateX(calc(var(--rx, 0) * var(--tilt-max)))
+      rotateY(calc(var(--ry, 0) * var(--tilt-max)));
+  }
+}
+
+/* ============================================================
+ * S4-b 工藝證明 icon clip-path draw-in — motion-deep-dive §2 S4-b
+ * 40px 淡藍底格恆顯示、僅 24px icon 橫向揭示；不用 stroke-dashoffset（paint 屬性違鐵律）。
+ * SSG 韌性：SSR 輸出 data-inview="true"（no-JS 首繪即完整可見）；
+ * hydration 後未進視口才回到 clip 起手態，Reveal inView 觸發揭示。
+ * ============================================================ */
+.draw-in {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--dur-draw) var(--ease-out-quart);
+  transition-delay: calc(var(--draw-delay, 0ms) + 120ms);
+}
+[data-inview='true'] .draw-in {
+  clip-path: inset(0 0 0 0);
+}
+
+/* ============================================================
+ * S4-c 頂部 1px scroll progress — motion-deep-dive §2 S4-c
+ * @supports 純 CSS scroll-timeline；不支援即無（scaleX(0) 不可見），零 JS fallback。
+ * ============================================================ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  background: var(--color-primary);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: calc(var(--z-header) + 1);
+}
+@keyframes progress-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+/* ============================================================
+ * S6 View Transitions 頁面轉場 — motion-deep-dive §2 S6
+ * 全部包在 no-preference：reduced-motion 走 UA 預設 cross-fade（僅淡切）。
+ * vt-in 的 opacity:0 起手不違反 LCP 鐵律（SPA 導航非首載）。
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-out var(--dur-vt-out) var(--ease-out-quart) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-in var(--dur-vt) var(--ease-out-quart) both;
+  }
+  /* Header 獨立快照：轉場中恆常穩定不閃動（Toss 式頁面連續感）。 */
+  .site-header {
+    view-transition-name: site-header;
+  }
+  @keyframes vt-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes vt-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* reduced-motion：移除 translate/scale/float/parallax，僅保留 opacity 過渡 */
+@media (prefers-reduced-motion: reduce) {
+  .stage-float {
+    animation: none;
+  }
+  .stage-para {
+    transition: none;
+    transform: none;
+  }
+  /* S7-b 聚焦狀態瞬切（保留聚焦資訊、去除過渡）；S5-b/c 桌面增強完全停用。 */
+  .stage-frame,
+  .hero-stage:has(.stage-card:hover) .stage-card:not(:hover) {
+    transition: none;
+  }
+  .magnet-item,
+  .tilt-inner {
+    transform: none;
+    transition: none;
+  }
+  /* S4-b 無 clip 動畫直接顯示（含 data-inview 態，特異性需覆蓋觸發規則）；
+   * S4-c 進度指示本身是動效，隱藏。 */
+  .draw-in,
+  [data-inview='true'] .draw-in {
+    clip-path: none;
+    transition: none;
+  }
+  .scroll-progress {
+    display: none;
+  }
+  .fade-in,
+  .icon-pop {
+    animation: none;
+  }
+  /* S1 直接呈現最終版面（本序列無 opacity 變化）；chips 靜態顯示保留構圖。 */
+  html[data-intro='1'] .wm-char,
+  html[data-intro='1'] .intro-h1,
+  html[data-intro='1'] .intro-follow,
+  .hero-chip,
+  .chip-scroll {
+    animation: none;
+  }
+  .odo-reel {
+    transition: none;
+  }
+  .pill-indicator[data-ready='true'] {
+    transition: none;
+  }
+  @keyframes toast-life {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+    8%,
+    84% {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+  }
 }

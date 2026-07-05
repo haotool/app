@@ -1,39 +1,40 @@
-/**
- * Toast Component - Notification toast with automatic dismissal
- * [update:2025-12-16] - Added from .example/haotool.org-v1.0.6
- * [context7:/websites/motion-dev-docs:2025-12-16]
- */
-import React, { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 import { Check } from 'lucide-react';
 
-const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-interface ToastProps {
+export interface ToastMessage {
+  /** 每次觸發遞增，重啟 CSS 生命週期動畫（後到覆蓋，同時最多一則）。 */
+  id: number;
   message: string;
-  onClose: () => void;
+  success?: boolean;
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
+interface ToastProps {
+  toast: ToastMessage | null;
+  onDismiss: () => void;
+}
+
+/**
+ * Toast（deep-dive §4.6）：底部置中（safe-area 之上）、墨底白字、進場 200ms → 停留 2s → 離場 200ms。
+ * 生命週期由 CSS animation（toast-life 2400ms）呈現，JS 定時移除節點；不可點。
+ */
+export default function Toast({ toast, onDismiss }: ToastProps) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
+    if (!toast) return undefined;
+    const timer = setTimeout(onDismiss, 2400);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [toast, onDismiss]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      transition={{ ease: EASING_NEBULA, duration: 0.4 }}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] whitespace-nowrap"
-    >
-      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-500/20 text-green-400">
-        <Check className="w-3 h-3" />
-      </div>
-      <span className="text-sm font-medium text-white">{message}</span>
-    </motion.div>
+    <div role="status" aria-live="polite">
+      {toast ? (
+        <div
+          key={toast.id}
+          className="toast-bubble shadow-quiet pointer-events-none fixed bottom-[calc(16px+env(safe-area-inset-bottom))] left-1/2 z-(--z-toast) flex items-center gap-2 rounded-input bg-text px-5 py-3 text-sm font-medium text-white"
+        >
+          {toast.success ? <Check className="size-4 text-success" aria-hidden="true" /> : null}
+          {toast.message}
+        </div>
+      ) : null}
+    </div>
   );
-};
-
-export default Toast;
+}

@@ -1,5 +1,6 @@
-# Multi-stage Dockerfile for haotool.org Portfolio
+# Multi-stage Dockerfile for haotool.org Apps
 # Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/)
+# [2026-07-05] haotool 根站 v2 回歸根路徑（重建依據 docs/dev/046 §9）
 # syntax=docker/dockerfile:1
 
 # Build stage
@@ -59,7 +60,7 @@ COPY . .
 # Build applications（若外部未提供 build args，於此自動回退計算）
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
 # [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
-# 新增 haotool 作為根路徑首頁
+# [2026-07-05] haotool 根站先建（根站優先，見 docs/dev/046 §9）
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
     export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
@@ -79,9 +80,9 @@ RUN set -eux; \
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
-RUN test -f /app/apps/ratewise/dist/sitemap.xml && \
+RUN test -f /app/apps/haotool/dist/sitemap.xml && \
+    test -f /app/apps/ratewise/dist/sitemap.xml && \
     test -f /app/apps/nihonname/dist/sitemap.xml && \
-    test -f /app/apps/haotool/dist/sitemap.xml && \
     test -f /app/apps/quake-school/dist/sitemap.xml && \
     test -f /app/apps/park-keeper/dist/sitemap.xml || \
     { echo "ERROR: Sitemaps not generated in Docker build"; exit 1; }
@@ -100,7 +101,7 @@ RUN apt-get update && \
     apt-get install -y --only-upgrade libssh2-1t64 && \
     rm -rf /var/lib/apt/lists/*
 
-# [fix:2025-12-13] 新架構：haotool 作為根路徑首頁
+# [2026-07-05] 恢復 haotool 作為根路徑站點（docs/dev/046 §9）
 # 複製 haotool 作為根目錄（首頁）
 COPY --from=builder /app/apps/haotool/dist /usr/share/nginx/html
 
@@ -138,6 +139,7 @@ EXPOSE 8080
 
 # Health check - 測試 nginx 是否正常回應 HTTP 請求
 # 檔案存在不代表 nginx 運作正常,必須測試實際 HTTP 回應
+# [2026-07-05] 根站回歸後改回 GET /（docs/dev/046 §9）
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 

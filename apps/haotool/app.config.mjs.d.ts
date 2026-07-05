@@ -12,6 +12,7 @@ export interface AppConfig {
   };
   seoPaths: string[];
   siteUrl: string;
+  lighthouseSmokePaths: string[];
   build: {
     ssg: boolean;
     pwa: boolean;
@@ -25,6 +26,7 @@ export interface AppConfig {
 export const SEO_PATHS: string[];
 export const SEO_FILES: string[];
 export const IMAGE_RESOURCES: string[];
+export const LIGHTHOUSE_CI_SMOKE_PATHS: string[];
 export const SITE_CONFIG: {
   url: string;
   appsHostUrl: string;
