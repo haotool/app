@@ -468,6 +468,19 @@ describe('MultiConverter', () => {
         screen.getByRole('button', { name: '新台幣 (TWD) 金額，點擊開啟計算機' }),
       ).toBeInTheDocument();
     });
+
+    it('匯率類型切換按鈕應有 ≥44px 觸控目標、chip 選中態與 aria-pressed 語意', () => {
+      render(<MultiConverter {...defaultProps} />);
+
+      const toggles = screen.getAllByRole('button', { name: /切換到/ });
+      expect(toggles.length).toBeGreaterThan(0);
+      for (const toggle of toggles) {
+        expect(toggle).toHaveClass('min-h-11', 'min-w-11');
+        expect(toggle).toHaveAttribute('aria-pressed', 'true');
+        expect(toggle).toHaveAttribute('type', 'button');
+        expect(toggle.querySelector('span')).toHaveClass('bg-primary/10', 'rounded-full');
+      }
+    });
   });
 
   describe('TWD 收藏星號行為', () => {
