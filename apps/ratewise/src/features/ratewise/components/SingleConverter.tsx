@@ -10,7 +10,7 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore, Suspense, lazy } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
@@ -50,6 +50,16 @@ import {
   fetchExchangeShopHistoricalRatesRange,
   type ExchangeShopRate,
 } from '../../../services/moneyboxRateService';
+import {
+  subscribeConverterV2Variant,
+  getConverterV2Snapshot,
+  getConverterV2ServerSnapshot,
+} from '../../../config/converter-v2-flag';
+
+// v2 走 lazy chunk：flag off 使用者不載入 v2 程式碼。
+const SingleConverterV2 = lazy(() =>
+  import('./converter-v2/SingleConverterV2').then((m) => ({ default: m.SingleConverterV2 })),
+);
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -66,7 +76,7 @@ function getDateKeyFromUpdateTime(updateTime: string | undefined, fallback: stri
   return datePart ? datePart.replace(/\//g, '-') : fallback;
 }
 
-interface SingleConverterProps {
+export interface SingleConverterProps {
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   fromAmount: string;
@@ -90,7 +100,7 @@ interface SingleConverterProps {
   onRateSourceChange?: (source: RateSource) => void;
 }
 
-export const SingleConverter = ({
+const SingleConverterLegacy = ({
   fromCurrency,
   toCurrency,
   fromAmount,
@@ -765,4 +775,26 @@ export const SingleConverter = ({
       </Suspense>
     </>
   );
+};
+
+/**
+ * 模式分流：converter-v2 flag on 時渲染等值雙列 v2，off 時維持 legacy。
+ * server snapshot 固定 legacy，flag off 時 SSG 首頁輸出與現行一致（hydration 紅線）。
+ */
+export const SingleConverter = (props: SingleConverterProps) => {
+  const isV2 = useSyncExternalStore(
+    subscribeConverterV2Variant,
+    getConverterV2Snapshot,
+    getConverterV2ServerSnapshot,
+  );
+
+  if (isV2) {
+    return (
+      <Suspense fallback={null}>
+        <SingleConverterV2 {...props} />
+      </Suspense>
+    );
+  }
+
+  return <SingleConverterLegacy {...props} />;
 };

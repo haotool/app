@@ -80,6 +80,32 @@ const ko = {
     backToConverter: '환산기로 돌아가기',
   },
 
+  // E3 等值雙列換算 v2（flag: converter-v2）
+  converterV2: {
+    rowLabel: '{{code}} 금액',
+    selectCurrency: '통화 선택',
+    pickerTitle: '통화 선택',
+    swapCurrencies: '두 통화 맞바꾸기',
+    rateBasisCash: '현찰 매도',
+    rateBasisSpot: '전신환 매도',
+    rateBasisExchangeShop: '환전소',
+    toggleRateBasis: '현찰／전신환 기준 전환',
+    keypadLabel: '환산 키패드',
+    keyBackspace: '삭제',
+    keyBackspaceHint: '길게 눌러 전체 지우기',
+    trendTitle: '{{from}}/{{to}} 환율 추이',
+    trendOpen: '환율 추이 차트 열기',
+    range7d: '7일',
+    range30d: '30일',
+    range90d: '90일',
+    trendMin: '최저',
+    trendMax: '최고',
+    trendBasisNote: '기준: {{basis}}・대만은행 고시 환율',
+    trendHonestRange: '현재 {{days}}일치 데이터만 제공되며 부족 구간은 추정하지 않습니다',
+    trendEmpty: '과거 데이터가 없습니다',
+    close: '닫기',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '복수 통화 환산',

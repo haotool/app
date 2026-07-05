@@ -1,0 +1,149 @@
+/**
+ * Converter v2（等值雙列）E2E：flag-on 核心旅程
+ * 選幣 → 輸入 → swap → 展開趨勢 → 計算機輸入；console error 必須為 0。
+ * @see .claude/prds/ratewise-e3-converter-v2-design.md
+ */
+
+import type { Page } from '@playwright/test';
+import { test, expect } from './fixtures/test';
+
+// 合成 aggregate 歷史資料（column-major），避免趨勢請求觸外網或 404 汙染 console。
+function buildMockAggregateHistory(days = 30) {
+  const baseRates: Record<string, number> = {
+    TWD: 1,
+    USD: 31.5,
+    EUR: 34.2,
+    JPY: 0.21,
+    GBP: 39.9,
+    AUD: 20.5,
+    CAD: 23.0,
+    SGD: 23.5,
+    CHF: 35.5,
+    KRW: 0.023,
+    CNY: 4.3,
+    HKD: 4.0,
+    NZD: 19.0,
+    THB: 0.87,
+    PHP: 0.55,
+    IDR: 0.002,
+    VND: 0.0013,
+    MYR: 6.7,
+  };
+  const dates: string[] = [];
+  const today = new Date();
+  for (let i = 1; i <= days; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  const rates: Record<string, number[]> = {};
+  for (const [code, base] of Object.entries(baseRates)) {
+    rates[code] = dates.map((_, i) => base * (1 + Math.sin(i / 5) * 0.01));
+  }
+  return { updateTime: `${dates[0]}T08:00:00+08:00`, dates, rates };
+}
+
+// 導向 v2：關閉 PWA 安裝導引避免遮擋、mock aggregate 端點避免觸外網、避開 networkidle 等待。
+async function gotoConverterV2(page: Page) {
+  await page.addInitScript(() => {
+    sessionStorage.setItem('ratewise:pwa-install-guide-dismissed:v1', 'true');
+  });
+  await page.route(
+    (url) => url.toString().includes('history-30d.json'),
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(buildMockAggregateHistory()),
+      });
+    },
+  );
+
+  const url = new URL(page.url());
+  url.searchParams.set('converter', 'v2');
+  await page.goto(url.toString());
+  await expect(page.getByTestId('converter-v2')).toBeVisible({ timeout: 30_000 });
+}
+
+test.describe('Converter v2 等值雙列（flag on）', () => {
+  // fixture 首次導覽（networkidle + hydration 等待）在本機 15s 預設下偏緊，統一放寬。
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
+
+  test('核心旅程：選幣→輸入→swap→展開趨勢→計算機輸入', async ({ rateWisePage: page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push(message.text());
+      }
+    });
+
+    await gotoConverterV2(page);
+
+    // 1. 選幣：bottom sheet picker 換第二列為 JPY
+    await page.getByTestId('converter-v2-currency-to').click();
+    await expect(page.getByTestId('currency-picker-sheet')).toBeVisible();
+    await page.getByTestId('currency-option-JPY').click();
+    await expect(page.getByTestId('currency-picker-sheet')).not.toBeVisible();
+    await expect(page.getByTestId('converter-v2-currency-to')).toContainText('JPY');
+
+    // 2. 計算機輸入：長按退格清空後鍵入 100，活躍列（第一列）即時更新
+    await page.getByTestId('converter-v2-key-backspace').click({ delay: 700 });
+    await page.getByTestId('converter-v2-key-1').click();
+    await page.getByTestId('converter-v2-key-0').click();
+    await page.getByTestId('converter-v2-key-0').click();
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('100');
+
+    // 3. 對等性：切換活躍列後編輯第二列，第一列即時重算
+    await page.getByTestId('converter-v2-amount-to').click();
+    await page.getByTestId('converter-v2-key-backspace').click({ delay: 700 });
+    await page.getByTestId('converter-v2-key-5').click();
+    await expect(page.getByTestId('converter-v2-amount-to')).toContainText('5');
+
+    // 4. swap：交換兩列幣別
+    const fromCodeBefore = await page.getByTestId('converter-v2-currency-from').innerText();
+    await page.getByTestId('converter-v2-swap').click();
+    await expect(page.getByTestId('converter-v2-currency-to')).toContainText(
+      fromCodeBefore.replace(/[^A-Z]/g, ''),
+    );
+
+    // 5. 展開趨勢 sheet：65vh、範圍切換
+    await page.getByTestId('converter-v2-sparkline').click();
+    await expect(page.getByTestId('converter-v2-trend-sheet')).toBeVisible();
+    await page.getByTestId('converter-v2-trend-range-7d').click();
+    await expect(page.getByTestId('converter-v2-trend-range-7d')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    // 背景 tap 關閉
+    await page.mouse.click(200, 60);
+    await expect(page.getByTestId('converter-v2-trend-sheet')).not.toBeVisible();
+
+    // 6. 計算機仍可輸入（sheet 關閉後）
+    await page.getByTestId('converter-v2-key-9').click();
+    await expect(page.getByTestId('converter-v2-keypad')).toBeVisible();
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('flag off：首頁維持 legacy 版面', async ({ rateWisePage: page }) => {
+    await expect(page.getByTestId('amount-input')).toBeVisible();
+    await expect(page.getByTestId('converter-v2')).toHaveCount(0);
+  });
+
+  test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
+    await gotoConverterV2(page);
+
+    for (const testId of [
+      'converter-v2-swap',
+      'converter-v2-rate-chip',
+      'converter-v2-key-7',
+      'converter-v2-amount-from',
+    ]) {
+      const box = await page.getByTestId(testId).boundingBox();
+      expect(box, `${testId} 應可見`).not.toBeNull();
+      expect(box!.height, `${testId} 高度 ≥44px`).toBeGreaterThanOrEqual(44);
+    }
+  });
+});

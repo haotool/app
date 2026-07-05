@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+107
+> 本次分數變化：+3（reward 4、penalty 1、neutral 2）｜累計總分：+110
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,41 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e3-converter-v2-keypad-remount-writeback
+- 原因：ConverterKeypad remount 初始同步在使用者僅切換活躍列（零按鍵）時即回寫，以捨入反推值改寫原輸入列（1000→999.98）並靜默翻轉最後編輯方向，違反等值雙列對等語意（epic 審查抓出）
+- 解法：掛載種子改唯讀（useState 鎖定＋hasUserInput 回寫閘門，僅實際按鍵才進入回寫流程），補「切列 N 次零按鍵→兩列數值與方向不變」回歸測試（紅→綠），並將 SSG 不變性 diff 收斂為 scripts/qa/verify-ssg-invariance.mjs 可重現腳本
+
+- 日期：2026-07-05
+- ID：neutral-rw-e3-converter-v2-short-screen-budget
+- 原因：375×667 短螢幕下 v2 常駐計算機底緣超出可視區，違反「先砍留白再砍裝飾」佈局預算原則
+- 解法：以既有 short: 高度斷點壓縮列間距、字級、sparkline 與鍵高（維持 ≥44px 觸控），三尺寸截圖驗證無捲動
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-test-gate
+- 原因：v2 分流與雙列互動需守門，且 flag off 的 SSG 不變性紅線需可重複驗證
+- 解法：新增 flag 單元測試、SingleConverterV2 對等性／swap／基準切換測試、flag gate 測試與 flag-on e2e 核心旅程；以 254 頁 SSG #root DOM diff=0 證明 flag off 輸出不變
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-trend-sheet
+- 原因：v2 需常態小、展開大的趨勢呈現；歷史資料源僅 30 天，90D 需求若硬造會違反誠實標註原則
+- 解法：72px sparkline＋漲跌 chip 常態嵌入，65vh bottom sheet（7D/30D/90D、min/max、內建長按 crosshair），資料不足以「僅 N 天、不足不推估」誠實標註
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-dual-rows
+- 原因：現行單幣別以上下位置編碼 from/to 方向、匯率卡切斷因果鏈、結果欄偽可編輯，造成三個認知斷點
+- 解法：v2 等值雙列（兩列對等可編輯、divider 內嵌 swap、rate chip）＋常駐 4×4 計算機（沿用引擎重排呈現層）＋bottom sheet 幣別 picker，經 converter-v2 flag 分流且 legacy 零改動
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-flag-infra
+- 原因：E3 v2 需要可安全灰度的開關，且 flag off 時 SSG 首頁輸出必須與現行一致（hydration 紅線）
+- 解法：新增 converter-v2-flag.ts（URL override＋localStorage＋CustomEvent，server snapshot 固定 legacy），範式對齊舊分支 hero-layout-variant
+
+- 日期：2026-07-05
+- ID：neutral-rw-e3-converter-v2-design-brief
+- 原因：E3「等值雙列」wave-A 實作需要設計簡報 SSOT 入 repo，避免實作與 PM 裁決脫鉤
+- 解法：將 ratewise-e3-converter-v2-design.md 複製至 .claude/prds/ 並強制納入版控作為勾稽基準
 
 - 日期：2026-07-05
 - ID：neutral-rw-e2-002-score-conservation-fix

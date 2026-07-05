@@ -80,6 +80,32 @@ const en = {
     backToConverter: 'Back to Converter',
   },
 
+  // E3 等值雙列換算 v2（flag: converter-v2）
+  converterV2: {
+    rowLabel: '{{code}} amount',
+    selectCurrency: 'Select currency',
+    pickerTitle: 'Select currency',
+    swapCurrencies: 'Swap row currencies',
+    rateBasisCash: 'Cash sell',
+    rateBasisSpot: 'Spot sell',
+    rateBasisExchangeShop: 'Exchange shop',
+    toggleRateBasis: 'Toggle cash/spot rate basis',
+    keypadLabel: 'Conversion keypad',
+    keyBackspace: 'Delete',
+    keyBackspaceHint: 'Long press to clear',
+    trendTitle: '{{from}}/{{to}} rate trend',
+    trendOpen: 'Expand rate trend chart',
+    range7d: '7D',
+    range30d: '30D',
+    range90d: '90D',
+    trendMin: 'Low',
+    trendMax: 'High',
+    trendBasisNote: 'Basis: {{basis}} · Bank of Taiwan board rate',
+    trendHonestRange: 'Only {{days}} days of history available; missing range is not estimated',
+    trendEmpty: 'No historical data yet',
+    close: 'Close',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: 'Multi-Currency',
