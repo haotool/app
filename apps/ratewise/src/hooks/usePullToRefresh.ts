@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { DND_DRAG_HANDLE_SELECTOR } from '../config/dnd';
 import { logger } from '../utils/logger';
 
 /**
@@ -95,10 +96,7 @@ export function usePullToRefresh(
     const handleTouchStart = (e: TouchEvent) => {
       // 觸控起點位於 dnd 拖曳把手內：完全抑制 PTR，避免與拖曳排序互相干擾。
       const touchTarget = e.target;
-      if (
-        touchTarget instanceof Element &&
-        touchTarget.closest('[data-rfd-drag-handle-draggable-id]')
-      ) {
+      if (touchTarget instanceof Element && touchTarget.closest(DND_DRAG_HANDLE_SELECTOR)) {
         logger.debug('Pull-to-refresh: touch started on drag handle, ignoring');
         return;
       }

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-562-dnd-handle-selector-contract
+- 原因：PTR gate 硬編 dnd 把手屬性字串散落 4 處，測試以手動 setAttribute 自我實現，套件升級改屬性名（rbd→rfd 曾發生）時 gate 靜默失效而測試照綠
+- 解法：抽 DND_DRAG_HANDLE_ATTRIBUTE/SELECTOR 常數收斂 4 處，新增真實 DragDropContext/Droppable/Draggable 契約測試（突變常數值時紅燈已驗證）
 
 - 日期：2026-07-06
 - ID：reward-rw-563-favorites-star-to-reorder-hint
