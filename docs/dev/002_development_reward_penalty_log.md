@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+133
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+133
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-560-langsync-remount-rollback
+- 原因：LanguagePreferenceSync 掛雙佈局且每次 remount 重放 init 前捕捉的 stale 偏好，session 內切語言後跨佈局 SPA 導覽把語言與 localStorage 回滾 zh-TW（#595 審查 PoC 抓出）
+- 解法：改模組級 hasSynced 單次同步（每次 page load 只執行一次）＋新增 remount 不回滾迴歸測試（先紅後綠）；順帶收斂 languageChanged 同步 html lang 與 prerender 守門移除 silent-pass
+
+- 日期：2026-07-06
+- ID：reward-rw-560-i18n-ssg-hydration-418
+- 原因：SSG 於 Node 內以全域 navigator.language（en-US）偵測語言預渲染英文、client 首屏 zh-TW，加上 client/SSR bundle 各自取樣 buildTime，全站每頁殘留 1~2 筆 React #418
+- 解法：i18n init 固定 lng zh-TW（SSG＝client 首屏），hydration 後由 LanguagePreferenceSync 套用 init 前捕捉的使用者偏好，vite buildTime 以 env 快取跨 client/SSR build 一致；停 SW 抽測 7 路由 #418 由 8 → 0、四語系與 hreflang 不退步
 
 - 日期：2026-07-06
 - ID：neutral-rw-583-review-convergence-preheat-catch-i18n

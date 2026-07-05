@@ -131,11 +131,39 @@ export function getResolvedLanguage(): SupportedLanguage {
   return normalizeLanguage(i18n.language);
 }
 
+// 在 init 之前捕捉已儲存的語言偏好：init 以固定 lng 啟動時，
+// LanguageDetector caches 會立即把 zh-TW 寫回 localStorage，覆寫使用者原偏好。
+const storedLanguagePreference = (() => {
+  if (!canUseBrowserLanguageStorage) return null;
+  try {
+    return window.localStorage.getItem('ratewise-language');
+  } catch {
+    return null;
+  }
+})();
+
+/**
+ * 取得 hydration 後應套用的語言偏好
+ *
+ * 對齊原 LanguageDetector 順序（localStorage → htmlTag）：
+ * 有儲存偏好用偏好，否則以 index.html 的 lang（zh-TW）為準。
+ */
+export function getPreferredLanguage(): SupportedLanguage {
+  if (storedLanguagePreference) return normalizeLanguage(storedLanguagePreference);
+  if (typeof document !== 'undefined') return normalizeLanguage(document.documentElement.lang);
+  return 'zh-TW';
+}
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    // 固定初始語言為 zh-TW：SSG（Node 全域 navigator.language 為 en-US）與 client
+    // 首屏必須渲染同一語言，否則頁面層文字 mismatch 觸發 React #418。
+    // hydration 完成後由 LanguagePreferenceSync 呼叫 changeLanguage() 重新偵測偏好。
+    // @reference [context7:/websites/i18next:lng-overrides-detection:2026-07-05]
+    lng: 'zh-TW',
     // 明確列出所有支援的語系代碼（包含 zh-Hant 因為 index.html lang="zh-Hant"）
     supportedLngs: ['zh-TW', 'zh-Hant', 'en', 'ja', 'ko'],
     // 語系 fallback 配置：zh-Hant → zh-TW
@@ -159,5 +187,16 @@ void i18n
       useSuspense: false,
     },
   });
+
+// 語言變更時同步 <html lang>：SSG 模板固定 zh-TW，client 切換語言後
+// documentElement.lang 必須跟上（無障礙與 SEO 一致性；涵蓋 #594 第 3 項的 lang 面）。
+// SSG（Node）無 document，僅 client 註冊。
+if (typeof document !== 'undefined') {
+  i18n.on('languageChanged', () => {
+    document.documentElement.lang = getResolvedLanguage();
+  });
+  // init 已於 listener 註冊前完成語言設定，需補一次初始同步。
+  document.documentElement.lang = getResolvedLanguage();
+}
 
 export default i18n;
