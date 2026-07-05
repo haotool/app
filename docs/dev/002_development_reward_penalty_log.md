@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+151
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+151
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-617-review-convergence-chunk-lockfile
+- 原因：PR #617 審查 APPROVE 附收斂——react-colorful 落 manualChunks fallback 進 vendor-commons（全部用戶首屏多付 3.43KB gzip）、lockfile 夾帶 jiti 等無關 churn
+- 解法：manualChunks 對 react-colorful 回傳 undefined 依 import graph 併入 Settings lazy chunk（vendor-commons 回落基準 23.64KB、hash 同基準，Settings 3.77→7.55KB 僅設定頁用戶付費），lockfile 以 base 版重生成收斂至 +14 行純 react-colorful；背景調 pre-paint FOUC 已由 PM 立案 #619
 
 - 日期：2026-07-06
 - ID：reward-rw-e2c-color-picker-modernization
