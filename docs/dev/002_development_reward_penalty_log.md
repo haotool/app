@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+152
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-590-v2-amount-left-clip
+- 原因：v2 非活躍列大金額繪製寬超出容器（QA 實測 188px vs 179px）且 overflow hidden 右對齊，最高位被左緣裁掉致 163 萬誤讀為 63 萬（issue 590）
+- 解法：CurrencyRow 金額以 offsetWidth/容器內寬單次量測 transform 縮放（right origin、下限 0.5、ResizeObserver 追蹤 resize 與字級 transition），必保最高位可見且 aria-label 保留完整金額
 
 - 日期：2026-07-06
 - ID：reward-rw-587-v2-physical-keyboard

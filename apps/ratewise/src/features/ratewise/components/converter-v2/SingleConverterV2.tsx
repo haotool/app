@@ -4,7 +4,7 @@
  * @see .claude/prds/ratewise-e3-converter-v2-design.md
  */
 
-import { useMemo, useState, Suspense, lazy } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SingleConverterProps } from '../SingleConverter';
 import type { CurrencyCode, RateType } from '../../types';
@@ -31,6 +31,11 @@ const SPARKLINE_DAYS = 30;
 
 type RowField = 'from' | 'to';
 
+// #590：金額自適應縮放下限；低於此值代表版面異常，寧可截尾也不再縮小到不可讀。
+const MIN_AMOUNT_FIT_SCALE = 0.5;
+// 縮放抖動容差：避免量測捨入造成 setState 往返。
+const FIT_SCALE_EPSILON = 0.005;
+
 interface CurrencyRowProps {
   field: RowField;
   currency: CurrencyCode;
@@ -50,6 +55,36 @@ function CurrencyRow({
 }: CurrencyRowProps) {
   const { t } = useTranslation();
   const display = formatAmountDisplay(amount, currency) || '0';
+  const amountBoxRef = useRef<HTMLDivElement>(null);
+  const amountTextRef = useRef<HTMLSpanElement>(null);
+  const [fitScale, setFitScale] = useState(1);
+
+  // #590：大金額 fit-to-container——以 transform 縮放（offsetWidth 不受 transform 影響，
+  // 單次量測即收斂），right origin 保持右對齊且必保最高位可見。
+  useLayoutEffect(() => {
+    const box = amountBoxRef.current;
+    const text = amountTextRef.current;
+    if (!box || !text) return;
+
+    const measure = () => {
+      const styles = window.getComputedStyle(box);
+      const available =
+        box.clientWidth -
+        (parseFloat(styles.paddingLeft) || 0) -
+        (parseFloat(styles.paddingRight) || 0);
+      const needed = text.offsetWidth;
+      if (available <= 0 || needed <= 0) return;
+      const next = Math.max(MIN_AMOUNT_FIT_SCALE, Math.min(1, available / needed));
+      setFitScale((prev) => (Math.abs(prev - next) > FIT_SCALE_EPSILON ? next : prev));
+    };
+
+    measure();
+    // 容器 resize（旋轉、視口變化）與文字尺寸變化（active 字級 transition）都需重量。
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    observer.observe(text);
+    return () => observer.disconnect();
+  }, [display, isActive]);
 
   return (
     <div
@@ -79,6 +114,7 @@ function CurrencyRow({
         </svg>
       </button>
       <div
+        ref={amountBoxRef}
         role="button"
         tabIndex={0}
         onClick={() => onActivate(field)}
@@ -97,7 +133,18 @@ function CurrencyRow({
             : 'text-[28px] short:text-[22px] text-neutral-text-secondary'
         }`}
       >
-        {display}
+        <span
+          ref={amountTextRef}
+          data-testid={`converter-v2-amount-text-${field}`}
+          className="inline-block"
+          style={
+            fitScale < 1
+              ? { transform: `scale(${fitScale})`, transformOrigin: 'right center' }
+              : undefined
+          }
+        >
+          {display}
+        </span>
       </div>
     </div>
   );
