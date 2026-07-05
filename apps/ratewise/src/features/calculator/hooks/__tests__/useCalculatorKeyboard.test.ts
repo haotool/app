@@ -260,6 +260,70 @@ describe('useCalculatorKeyboard', () => {
     });
   });
 
+  describe('respectInteractiveTarget（#587 常駐鍵盤情境）', () => {
+    it('啟用時 Enter 落在按鈕上交還原生語意（不觸發 onCalculate）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          respectInteractiveTarget: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onCalculate).not.toHaveBeenCalled();
+
+      document.body.removeChild(button);
+    });
+
+    it('啟用時數字鍵不受互動元素 focus 影響（仍輸入）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          respectInteractiveTarget: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: '5', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onInput).toHaveBeenCalledWith('5');
+
+      document.body.removeChild(button);
+    });
+
+    it('預設（v1 modal）Enter 於按鈕上仍觸發 onCalculate（行為不變）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onCalculate).toHaveBeenCalled();
+
+      document.body.removeChild(button);
+    });
+  });
+
   describe('清理', () => {
     it('應在卸載時移除事件監聽器', () => {
       const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');

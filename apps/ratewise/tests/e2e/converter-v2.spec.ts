@@ -217,6 +217,110 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test('實體鍵盤完整旅程：清空→數字→運算子→退格→Esc 關 sheet→續輸入（#587）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+
+    // Delete 清空活躍列（第一列），等同長按退格（TWD 依幣別小數位顯示 0.00）
+    await page.keyboard.press('Delete');
+    await expect(page.getByTestId('converter-v2-amount-from')).toHaveText(/^0(\.0+)?$/);
+
+    // 數字輸入直通計算引擎，即時回寫活躍列
+    await page.keyboard.type('123');
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('123');
+
+    // 運算子＋數字：引擎 preview 即時回寫（123 + 7 = 130）
+    await page.keyboard.type('+7');
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('130');
+
+    // 退格刪 7 後鍵入 9（123 + 9 = 132）
+    await page.keyboard.press('Backspace');
+    await page.keyboard.type('9');
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('132');
+
+    // Esc 關趨勢 sheet：BottomSheet 既有行為不受鍵盤掛接影響
+    await page.getByTestId('converter-v2-sparkline').click();
+    await expect(page.getByTestId('converter-v2-trend-sheet')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('converter-v2-trend-sheet')).not.toBeVisible();
+
+    // sheet 關閉後鍵盤恢復輸入（123 + 90 = 213）
+    await page.keyboard.type('0');
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('213');
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，證據截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+    await page.screenshot({
+      path: `test-results/v2-physical-keyboard-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('極端金額（9 位整數＋小數）三視口不截斷、最高位可見（#590）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+
+    // 鍵入 iOS 上限內極端值：9 位整數＋2 位小數
+    await page.keyboard.press('Delete');
+    await page.keyboard.type('123456789.12');
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText('123,456,789.12');
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，證據截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+
+    // QA 回歸（qa-mobile-pwa-report P1-1）：繪製寬曾超出容器（188px vs 179px）致最高位被裁。
+    // 量測斷言：兩列金額繪製矩形必須完整落在容器矩形內（左緣＝最高位可見）。
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      for (const field of ['from', 'to'] as const) {
+        await expect
+          .poll(
+            () =>
+              page.evaluate((f) => {
+                const box = document.querySelector(`[data-testid="converter-v2-amount-${f}"]`);
+                const text = document.querySelector(
+                  `[data-testid="converter-v2-amount-text-${f}"]`,
+                );
+                if (!box || !text) return false;
+                const b = box.getBoundingClientRect();
+                const t = text.getBoundingClientRect();
+                return t.left >= b.left - 0.5 && t.right <= b.right + 0.5;
+              }, field),
+            { message: `${field} 列金額於 ${viewport.width}px 視口不得截斷` },
+          )
+          .toBe(true);
+      }
+      await page.screenshot({
+        path: `test-results/v2-extreme-amount-${viewport.width}-${testInfo.project.name}.png`,
+        fullPage: false,
+      });
+    }
+
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
     await gotoConverterV2(page);
 
