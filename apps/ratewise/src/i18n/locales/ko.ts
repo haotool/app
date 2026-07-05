@@ -156,8 +156,8 @@ const ko = {
     reconvert: '재환산',
     clearAllHistory: '모든 기록 삭제',
     dragToReorder: '드래그하여 순서 변경',
-    dragToFavorite: '드래그하여 즐겨찾기 추가',
     dragHandle: '드래그 핸들',
+    starToReorderHint: '즐겨찾기에 추가하면 순서를 바꿀 수 있어요',
     baseCurrency: '기준 통화',
   },
 

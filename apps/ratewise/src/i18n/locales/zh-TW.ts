@@ -156,8 +156,8 @@ const zhTW = {
     reconvert: '重新轉換',
     clearAllHistory: '清除全部歷史記錄',
     dragToReorder: '拖曳排序',
-    dragToFavorite: '拖曳加收藏',
     dragHandle: '拖曳手柄',
+    starToReorderHint: '加入收藏後即可拖曳排序',
     baseCurrency: '基準幣',
   },
 

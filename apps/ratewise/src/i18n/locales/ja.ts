@@ -156,8 +156,8 @@ const ja = {
     reconvert: '再換算',
     clearAllHistory: 'すべての履歴を削除',
     dragToReorder: 'ドラッグで並べ替え',
-    dragToFavorite: 'お気に入りに追加',
     dragHandle: 'ドラッグハンドル',
+    starToReorderHint: 'お気に入りに追加すると並べ替えできます',
     baseCurrency: '基準通貨',
   },
 

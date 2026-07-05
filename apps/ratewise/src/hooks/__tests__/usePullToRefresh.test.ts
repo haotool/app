@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { usePullToRefresh, SHOW_INDICATOR_THRESHOLD, TRIGGER_THRESHOLD } from '../usePullToRefresh';
+import {
+  usePullToRefresh,
+  SHOW_INDICATOR_THRESHOLD,
+  TRIGGER_THRESHOLD,
+  DND_DRAG_HANDLE_ATTRIBUTE,
+} from '../usePullToRefresh';
 
 /**
  * usePullToRefresh 完整測試套件
@@ -547,7 +552,7 @@ describe('usePullToRefresh', () => {
       window.scrollY = 0;
 
       const dragHandle = document.createElement('div');
-      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      dragHandle.setAttribute(DND_DRAG_HANDLE_ATTRIBUTE, 'USD');
       container.appendChild(dragHandle);
 
       const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
@@ -581,7 +586,7 @@ describe('usePullToRefresh', () => {
       window.scrollY = 0;
 
       const dragHandle = document.createElement('div');
-      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      dragHandle.setAttribute(DND_DRAG_HANDLE_ATTRIBUTE, 'USD');
       const child = document.createElement('span');
       dragHandle.appendChild(child);
       container.appendChild(dragHandle);
@@ -612,7 +617,7 @@ describe('usePullToRefresh', () => {
       window.scrollY = 0;
 
       const dragHandle = document.createElement('div');
-      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      dragHandle.setAttribute(DND_DRAG_HANDLE_ATTRIBUTE, 'USD');
       container.appendChild(dragHandle);
 
       const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
