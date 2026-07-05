@@ -725,7 +725,8 @@ async function runKeyboardAudit(browser) {
     await page.route('https://app.haotool.org/**', (route) => route.abort());
     const requestedUrls = [];
     page.on('request', (req) => {
-      if (req.url().includes('app.haotool.org')) requestedUrls.push(req.url());
+      // hostname 嚴格比對，避免子字串比對被任意 host 繞過（CodeQL js/incomplete-url-substring-sanitization）。
+      if (new URL(req.url()).hostname === 'app.haotool.org') requestedUrls.push(req.url());
     });
     const ratewiseCard = page.locator('a[href="https://app.haotool.org/ratewise/"]').first();
     await ratewiseCard.focus();
