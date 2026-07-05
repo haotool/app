@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+146
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-c
+- 原因：使用者要求行動首頁更好看；研究驅動選型後 wave-C 五項（bento/貼紙/pattern/kinetic/pretty）為基線瀏覽器全可見的美感升級核心
+- 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
 
 - 日期：2026-07-06
 - ID：neutral-haotool-e3-branch-governance
