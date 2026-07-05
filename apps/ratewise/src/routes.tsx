@@ -269,6 +269,8 @@ export const routes: RouteRecord[] = [
     'src/pages/CardRateGuide.tsx',
   ),
   createLazyRoute('/open-data', () => import('./pages/OpenData'), 'src/pages/OpenData.tsx'),
+  // 開放原始碼頁（noindex 功能頁，E4 新增）
+  createLazyRoute('/open-source', () => import('./pages/OpenSource'), 'src/pages/OpenSource.tsx'),
 
   ...CURRENCY_LANDING_ROUTE_REGISTRY.flatMap((route) => {
     const importPage =

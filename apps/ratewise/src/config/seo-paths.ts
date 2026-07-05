@@ -152,7 +152,12 @@ export const INDEXABLE_CANONICAL_PATHS = [
 export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
 
 /** 使用者功能頁：允許爬取 + SEOHelmet noindex，但不納入 sitemap。 */
-export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/'] as const;
+export const APP_ONLY_NOINDEX_PATHS = [
+  '/multi/',
+  '/favorites/',
+  '/settings/',
+  '/open-source/',
+] as const;
 
 /** 開發 / 展示頁：正式 build 不註冊、不預渲染；robots 仍明確 Disallow。 */
 export const DEV_ONLY_PATHS = [

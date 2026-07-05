@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+124
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+125
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-open-source-page
+- 原因：使用者需求七頁含開放原始碼頁，但現況僅設定頁外部 GitHub 連結，開源／授權資訊散落 About 與 OpenData 缺乏收斂入口
+- 解法：新增 /open-source/ noindex 功能頁（SEO 設定就地定義不動 seo-metadata），文案沿用 About 透明區塊＋OpenData 授權聲明，APP_ONLY_NOINDEX_PATHS 雙 SSOT 同步＋路徑守門測試更新
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-content-page-skeleton
