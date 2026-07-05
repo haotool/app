@@ -30,6 +30,16 @@ const currencyCount = [...constantsContent.matchAll(/^\s+([A-Z]{3}):\s*\{/gm)].l
 
 const versioned = (path) => `${path}?v=${VERSION_TOKEN}`;
 
+// scope/start_url 以 VITE_SITE_URL 環境變數驅動（與 seo-metadata canonical 同一 SSOT），
+// 未設定時回退正式站 APP_INFO.siteUrl；staging 等替代網域部署設定該變數即可，禁止硬編網域。
+// 正規化行為對齊 seo-paths.ts 的 normalizeSiteUrl（trim＋補尾斜線）；無法直接 import 複用：
+// seo-paths.ts 內部以無副檔名路徑 import './app-info'，Node Type Stripping 不解析副檔名。
+function normalizeSiteUrl(value) {
+  const trimmed = value.trim();
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+}
+const siteUrl = normalizeSiteUrl(process.env.VITE_SITE_URL || APP_INFO.siteUrl);
+
 const manifest = {
   name: APP_INFO.name,
   short_name: APP_MANIFEST.shortName,
@@ -39,8 +49,8 @@ const manifest = {
   display: 'standalone',
   // 絕對 HTTPS scope/start_url：避免獨立 PWA partition + Chrome HTTPS-First 在啟動時以 http 語意解析。
   // id 維持相對（id 變更會被視為新 PWA 身分，破壞既有安裝更新連續性）。
-  scope: APP_INFO.siteUrl,
-  start_url: APP_INFO.siteUrl,
+  scope: siteUrl,
+  start_url: siteUrl,
   id: '/ratewise/',
   orientation: 'portrait-primary',
   categories: ['finance', 'utilities', 'productivity'],
