@@ -21,7 +21,6 @@ import {
   getReverseCurrencyLandingPageContent,
 } from '../seo-metadata';
 import { SEO_RATE_EXAMPLES } from '../generated/seo-rate-examples';
-import { SEO_SCHEMA_REGISTRY } from '../seo-schema-registry';
 
 describe('SEO SSOT', () => {
   it('should keep indexable locales limited to the default locale', () => {
@@ -450,67 +449,18 @@ describe('SEO SSOT', () => {
     });
   });
 
-  // ─── ABOUT_PAGE_FAQ AI 爬蟲說明準確性 ────────────────────────────────────────
-  // AI crawler 清單持續擴充，FAQ 不應硬編碼數量。
-  describe('ABOUT_PAGE_FAQ AI 爬蟲支援說明準確性', () => {
-    const aiAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('AI 搜尋引擎'));
-
-    it('應存在「AI 搜尋引擎」相關問答', () => {
-      expect(aiAnswer).toBeDefined();
+  // ─── ABOUT_PAGE_FAQ 使用者導向守門 ──────────────────────────────────────────
+  // About FAQ 只保留真實使用者視角問題；自我指涉 SEO 內容（schema 部署清單、
+  // AI 爬蟲名單）已移除，技術揭露統一由 /seo-tech/ 頁承擔。
+  describe('ABOUT_PAGE_FAQ 不得含自我指涉 SEO 內容', () => {
+    it('不應存在 schema 部署清單類問答', () => {
+      const schemaAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('結構化資料'));
+      expect(schemaAnswer).toBeUndefined();
     });
 
-    it('答案不應硬編碼 AI 爬蟲數量', () => {
-      // 具體數字容易隨 robots.txt SSOT 漂移。
-      expect(aiAnswer!.answer).not.toMatch(/\d+\s*種(?:以上)?主流?\s*AI\s*爬蟲/);
-    });
-
-    it('答案應明確表達支援多種主流 AI 爬蟲', () => {
-      expect(aiAnswer!.answer).toContain('多種主流 AI 爬蟲');
-    });
-
-    it('答案應涵蓋 GPTBot、ClaudeBot、PerplexityBot 等主要 AI 爬蟲名稱', () => {
-      expect(aiAnswer!.answer).toContain('GPTBot');
-      expect(aiAnswer!.answer).toContain('ClaudeBot');
-      expect(aiAnswer!.answer).toContain('PerplexityBot');
-    });
-  });
-
-  // ─── ABOUT_PAGE_FAQ 結構化資料說明準確性 ──────────────────────────────────────
-  // FAQPage 僅允許 /faq/ 頁輸出；幣別頁以 ExchangeRateSpecification 為主。
-  // ABOUT_PAGE_FAQ 必須反映現況，避免 AI 引擎引用到過時資訊。
-  describe('ABOUT_PAGE_FAQ 結構化資料說明準確性', () => {
-    const schemaAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('結構化資料'));
-
-    it('應存在「結構化資料」相關問答', () => {
-      expect(schemaAnswer).toBeDefined();
-    });
-
-    it('答案應明確提及 FAQPage 僅限 /faq/ 主頁輸出', () => {
-      expect(schemaAnswer!.answer).toContain('FAQPage');
-      expect(schemaAnswer!.answer).toContain('/faq/');
-    });
-
-    it('答案不應再提及 FinancialService 舊 schema', () => {
-      expect(schemaAnswer!.answer).not.toContain('FinancialService');
-    });
-
-    it('答案應明確提及 ExchangeRateSpecification（幣別頁核心 YMYL schema）', () => {
-      expect(schemaAnswer!.answer).toContain('ExchangeRateSpecification');
-    });
-
-    it('答案宣稱的 schema 類型應覆蓋 SEO schema registry 啟用清單', () => {
-      const enabledSchemaTypes = SEO_SCHEMA_REGISTRY.filter((schema) => schema.enabled).map(
-        (schema) => schema.type,
-      );
-
-      for (const schemaType of enabledSchemaTypes) {
-        expect(schemaAnswer!.answer).toContain(schemaType);
-      }
-    });
-
-    it('答案應表達幣別頁以可稽核匯率數值 schema 為主', () => {
-      expect(schemaAnswer!.answer).toContain('可稽核');
-      expect(schemaAnswer!.answer).toContain('匯率數值');
+    it('不應存在 AI 爬蟲名單類問答', () => {
+      const aiAnswer = ABOUT_PAGE_FAQ.find((q) => q.question.includes('AI 搜尋引擎'));
+      expect(aiAnswer).toBeUndefined();
     });
   });
 

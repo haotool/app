@@ -15,10 +15,22 @@ import {
   buildAlternativeProviderFaq,
   buildExchangeRateSpecificationJsonLd,
   buildShareImageJsonLd,
+  MID_RATE_SPREAD_NOTE,
   GUIDE_LINK_SELL_RATE_VS_MID_RATE,
   GUIDE_LINK_CASH_VS_SPOT_RATE,
   GUIDE_LINK_CARD_RATE_GUIDE,
 } from './core';
+
+// 以台銀現金賣出價生成單位匯率動態句，避免特化 FAQ 手寫匯率數字過期。
+// 數據來自 SEO_RATE_EXAMPLES（每日 GitHub Actions 自動更新）。
+function buildUnitRateSentence(code: string): string {
+  const ex = SEO_RATE_EXAMPLES[code];
+  if (!ex) return '實際匯率請以本頁即時換算為準。';
+  if (ex.cashSell < 1) {
+    return `以台銀現金賣出價換算，1 台幣約可換 ${Math.round(1 / ex.cashSell).toLocaleString('zh-TW')} ${code}（${SEO_RATE_EXAMPLES_DATE} 更新，數字每日自動更新）。`;
+  }
+  return `以台銀現金賣出價換算，1 ${code} 約等於 ${ex.cashSell} 台幣（${SEO_RATE_EXAMPLES_DATE} 更新，數字每日自動更新）。`;
+}
 
 const RELATED_GUIDES_TO_TWD: RelatedGuideLink[] = [
   GUIDE_LINK_SELL_RATE_VS_MID_RATE,
@@ -233,7 +245,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '去韓國換韓元，在台灣換還是到當地換？',
       answer:
-        '強烈建議到韓國當地換。以 10,000 台幣為例，台灣銀行約換 419,639 韓元，明洞換錢所約換 452,000 韓元，相差約 32,361 韓元（約台幣 770 元）。帶台幣千元鈔到明洞 Money Plant、大使館、一品香等換錢所換最划算。',
+        '多數旅客會到韓國當地換：帶台幣千元鈔到明洞 Money Plant、大使館、一品香等換錢所兌換，匯率通常優於在台灣的銀行先換。實際價差每日變動，可參考本頁的明洞換匯所比較數字（每日更新）再決定換匯地點。',
     },
     {
       question: '首爾明洞哪家換錢所匯率最好？',
@@ -296,7 +308,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '去泰國換泰銖，在台灣換還是到當地換？',
       answer:
-        '強烈建議到泰國當地換。台灣銀行匯率約 1 TWD = 0.89-1.07 THB，曼谷 Super Rich 約 1 TWD = 1.115-1.135 THB，價差超過 10%。帶台幣到曼谷 Super Rich（綠標或橘標）換最划算。',
+        '多數旅客會帶台幣到曼谷 Super Rich（綠標或橘標）等換匯所兌換，匯率通常明顯優於在台灣的銀行先換。實際價差每日變動，建議出發前先用本工具確認台銀牌告，再與 Super Rich 官網公告匯率比較。',
     },
     {
       question: '曼谷機場可以換泰銖嗎？',
@@ -313,12 +325,12 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '去越南換越南盾，在台灣換還是到當地換？',
       answer:
-        '建議到越南當地換。台灣銀行匯率約 1:752 越南盾，越南當地銀樓約 1:854，每 1 萬台幣相差超過 100 萬越盾。在台灣先換 1,000-2,000 台幣的越南盾作為應急金，大筆金額到當地再換。',
+        '建議到越南當地換。越南當地銀樓與換匯點的匯率通常優於在台灣的銀行先換，實際價差每日變動。可在台灣先換 1,000-2,000 台幣的越南盾作為應急金，大筆金額到當地再換。',
     },
     {
       question: '在越南可以用台幣直接換越南盾嗎？',
       answer:
-        '可以。越南當地銀樓可直接用台幣換越南盾，不需先換美金。匯率參考：10,000 台幣 ≈ 750-830 萬越南盾。可查詢 CHỢ GIÁ（chogia.vn）網站了解當日匯率。',
+        '可以。越南當地銀樓可直接用台幣換越南盾，不需先換美金。當日行情可查詢 CHỢ GIÁ（chogia.vn）等當地匯率網站，並與本工具顯示的台銀牌告比較。',
     },
     {
       question: '越南換匯有什麼注意事項？',
@@ -329,8 +341,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   SGD: [
     {
       question: '新加坡幣匯率大約多少？',
-      answer:
-        '1 新加坡幣約等於 24-25 台幣（2026 年）。新加坡幣相對穩定，與美元連動性高。各銀行匯率略有差異，星展銀行通常提供較優惠的新幣匯率。',
+      answer: `${buildUnitRateSentence('SGD')}新加坡幣相對穩定，與美元連動性高。各銀行牌價每日不同，換匯前建議比較 2-3 家。`,
     },
     {
       question: '去新加坡需要換多少新幣現金？',
@@ -341,8 +352,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   AUD: [
     {
       question: '澳幣匯率大約多少？',
-      answer:
-        '1 澳幣約等於 22-23 台幣（2026 年）。澳幣屬於商品貨幣，匯率受原物料價格影響較大。換澳幣最便宜的銀行為高雄銀行，換回台幣最划算的是台新銀行。',
+      answer: `${buildUnitRateSentence('AUD')}澳幣屬於商品貨幣，匯率受原物料價格影響較大。各銀行牌價每日變動，建議換匯前比較 2-3 家銀行的牌告。`,
     },
     {
       question: '去澳洲需要換多少澳幣現金？',
@@ -353,8 +363,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   GBP: [
     {
       question: '英鎊匯率大約多少？',
-      answer:
-        '1 英鎊約等於 41-43 台幣（2026 年）。英鎊是主要貨幣中單位價值較高的，換匯時注意金額。玉山銀行通常提供較優惠的英鎊匯率。',
+      answer: `${buildUnitRateSentence('GBP')}英鎊是主要貨幣中單位價值較高的，換匯時注意金額。各銀行牌價每日不同，建議換匯前多方比較。`,
     },
     {
       question: '去英國需要換多少英鎊現金？',
@@ -365,8 +374,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   CAD: [
     {
       question: '加幣匯率大約多少？',
-      answer:
-        '1 加幣約等於 23 台幣（2026 年）。加幣屬於商品貨幣，與油價有一定連動性。現金匯率通常比即期匯率差 0.2-0.5 元。',
+      answer: `${buildUnitRateSentence('CAD')}加幣屬於商品貨幣，與油價有一定連動性。臨櫃換現鈔請看現金賣出價，條件通常比即期匯率差。`,
     },
     {
       question: '去加拿大需要換多少加幣現金？',
@@ -389,8 +397,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   NZD: [
     {
       question: '紐元匯率大約多少？',
-      answer:
-        '1 紐元約等於 18-19 台幣（2026 年）。紐元與澳幣走勢相近，同屬商品貨幣。新光銀行通常提供較優惠的紐元即期匯率。',
+      answer: `${buildUnitRateSentence('NZD')}紐元與澳幣走勢相近，同屬商品貨幣。各銀行牌價每日不同，建議換匯前多方比較。`,
     },
     {
       question: '去紐西蘭需要換多少紐元現金？',
@@ -413,8 +420,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   IDR: [
     {
       question: '印尼盾面額很大，怎麼換算？',
-      answer:
-        '印尼盾面額大，1 台幣約等於 500-540 印尼盾。簡易換算：印尼盾去掉 3 個零再除以 2，約等於台幣金額。例如 100,000 印尼盾 ≈ 100 ÷ 2 = 50 台幣。',
+      answer: `印尼盾面額大、位數多，心算容易看錯位數。${buildUnitRateSentence('IDR')}建議直接用本工具輸入金額換算，即時取得台銀牌告結果。`,
     },
     {
       question: '去峇里島刷信用卡還是換現金？QRIS 可以用嗎？',
@@ -425,8 +431,7 @@ const CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
   MYR: [
     {
       question: '馬來幣匯率大約多少？',
-      answer:
-        '1 馬來幣約等於 7-8.5 台幣（2026 年），各銀行匯率差異較大。台灣銀行現金賣出約 8.52，兆豐銀行約 8.60，建議多方比較。',
+      answer: `${buildUnitRateSentence('MYR')}馬來幣屬於次要貨幣，各銀行牌告差異較大，建議換匯前比較 2-3 家。`,
     },
     {
       question: "去馬來西亞刷信用卡方便嗎？需要辦 Touch 'n Go 嗎？",
@@ -468,7 +473,7 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '台幣換韓元，在台灣換還是到首爾換？',
       answer:
-        '到首爾明洞換匯所換最划算，匯率比台灣銀行好 7-10%。但若不想帶大量台幣現鈔出國，可在台灣先換少量韓元（約 5 萬韓元）用於機場交通，抵達後再到明洞換足額。',
+        '多數旅客會到首爾明洞換匯所換，匯率通常優於在台灣的銀行（實際價差每日變動，可參考本頁的明洞換匯所比較數字）。若不想帶大量台幣現鈔出國，可在台灣先換少量韓元（約 5 萬韓元）用於機場交通，抵達後再到明洞換足額。',
     },
     {
       question: '去韓國要帶台幣還是美金去換？',
@@ -511,7 +516,7 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '去泰國要在台灣先換泰銖嗎？',
       answer:
-        '不建議在台灣換大量泰銖，台灣銀行匯率比曼谷 Super Rich 差 10% 以上。建議只在台灣換少量（約 1,000-2,000 泰銖）用於機場交通，抵達曼谷後再到 Super Rich 換足額。',
+        '不建議在台灣換大量泰銖，曼谷 Super Rich 等換匯所的匯率通常明顯優於台灣的銀行（實際價差每日變動）。建議只在台灣換少量（約 1,000-2,000 泰銖）用於機場交通，抵達曼谷後再到 Super Rich 換足額。',
     },
     {
       question: '帶台幣去泰國換泰銖要注意什麼？',
@@ -523,14 +528,14 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '台幣換越南盾，在台灣換還是到當地換？',
       answer:
-        '強烈建議到越南當地換。台灣銀行匯率約 1:752，越南銀樓約 1:854，每 1 萬台幣相差超過 100 萬越盾。在台灣只需換少量（約 50-100 萬越盾）應急金即可。',
+        '建議到越南當地換。越南當地銀樓與換匯點的匯率通常優於台灣的銀行，實際價差每日變動。在台灣只需換少量（約 50-100 萬越盾）應急金即可。',
     },
   ],
   SGD: [
     {
       question: '新加坡幣在台灣好換嗎？',
       answer:
-        '新加坡幣是主要貨幣，台灣大型銀行皆有提供。星展銀行（新加坡銀行）通常提供較優惠的新幣匯率，可優先比較。',
+        '新加坡幣是主要貨幣，台灣大型銀行皆有提供。各銀行牌價每日不同，換匯前建議比較 2-3 家。',
     },
   ],
   AUD: [
@@ -544,7 +549,7 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '英鎊在台灣好換嗎？',
       answer:
-        '英鎊是主要貨幣，台灣大型銀行皆可換。玉山銀行通常提供較優惠的英鎊匯率。建議提前 1-2 天預約，確保有足夠庫存。',
+        '英鎊是主要貨幣，台灣大型銀行皆可換。各銀行牌價每日不同，換匯前建議多方比較，並提前 1-2 天預約，確保有足夠庫存。',
     },
   ],
   CAD: [
@@ -565,7 +570,7 @@ const REVERSE_CURRENCY_SPECIFIC_FAQ: Record<string, FAQEntry[]> = {
     {
       question: '紐元在台灣好換嗎？',
       answer:
-        '紐元是次要貨幣，部分銀行可能庫存有限。新光銀行通常提供較優惠的紐元匯率。建議提前預約，或選擇大型銀行換匯。',
+        '紐元是次要貨幣，部分銀行可能庫存有限。各銀行牌價每日不同，建議換匯前多方比較，並提前預約或選擇大型銀行換匯。',
     },
   ],
   PHP: [
@@ -775,7 +780,7 @@ export function getCurrencyLandingPageContent(
   const faqEntries: FAQEntry[] = [
     {
       question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
-      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，通常比市場中間價高出 1% 至 10% 以上（東南亞及非主流貨幣差距尤為顯著）。${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行官方牌告的${spotAvailable ? '現金賣出與即期賣出價' : '現金賣出價'}，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
+      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）所顯示的匯率均為「市場中間價」（mid-market rate）——即全球銀行同業間批發交易的參考基準價，一般消費者無法直接以此價格換匯。這些工具本質上是匯率參考儀表板，並非反映實際臨櫃換匯成本。台灣銀行臨櫃現金換匯使用的是「現金賣出」牌告價，因需涵蓋現鈔保管、運送與保險成本，價格高於市場中間價。${MID_RATE_SPREAD_NOTE}${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行官方牌告的${spotAvailable ? '現金賣出與即期賣出價' : '現金賣出價'}，是專為台灣人設計的精準換匯工具，讓使用者出門換匯前即可掌握真實兌換金額，不被市場中間價誤導。`,
     },
     // 幣別特化 FAQ：基於權威金融網站資訊，提供該幣別獨特的換匯知識
     ...(CURRENCY_SPECIFIC_FAQ[code] ?? []),

@@ -52,14 +52,6 @@ HaoRate 是以臺灣銀行牌告匯率為基礎的換匯工具，重點是幫台
 
 匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。
 
-### 6. 這個網站使用哪些結構化資料幫助搜尋引擎與 AI 系統理解內容？
-
-目前站內實際部署的 schema.org JSON-LD 包含 WebSite（全站識別）、SoftwareApplication（產品資訊）、Organization（聯絡資訊）、CurrencyConversionService（首頁）、ExchangeRateSpecification（幣對頁與金額頁的匯率數值）、BreadcrumbList（麵包屑導覽）、Article（內容頁）、HowTo（Guide 教學頁）、FAQPage（僅 /faq/ 主 FAQ 頁）、Dataset（開放資料）與 ImageObject（分享圖片授權）。首頁與內容頁仍保留可讀 FAQ HTML，但不會在所有頁面重複輸出 FAQPage JSON-LD；幣別換算頁則以可稽核的匯率數值 schema 為主，避免把 FAQ rich result 訊號擴散到金融頁。sitemap.xml 只收錄公開可索引 URL，並同步 hreflang 資訊。
-
-### 7. HaoRate 是否支援 AI 搜尋引擎與 LLM 引用？
-
-robots.txt 明確允許 Googlebot 讀取；Googlebot 是 Google Search 與 AI Overviews 的主要爬取控制。AI crawler 分層另允許多種主流 AI 爬蟲（GPTBot、ClaudeBot、PerplexityBot、GrokBot、DeepSeekBot、MistralBot 等共 39+ 個）；Google-Extended 則作為 Gemini / Vertex 訓練與 grounding 的控制 token。站點另提供 llms.txt、llms-full.txt 與 openapi.json，讓 AI Agent 可理解頁面架構並呼叫即時匯率 API。FAQ 文案中的匯差數字採雙幣標示（外幣 + 台幣），針對 LLM 引用語意設計，確保 AI 回答換匯問題時能引用精確數字而非中間價。
-
 ---
 
 _本 Markdown 鏡像由 `scripts/generate-markdown-mirrors.mjs` 於 build 時自動產生（v2.27.1），與 HTML 頁面語義一致。_
