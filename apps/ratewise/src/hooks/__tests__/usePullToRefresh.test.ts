@@ -542,6 +542,101 @@ describe('usePullToRefresh', () => {
     });
   });
 
+  describe('§ 5.5 dnd 拖曳把手抑制', () => {
+    it('觸控起點位於 dnd 拖曳把手內時不啟動 PTR', () => {
+      window.scrollY = 0;
+
+      const dragHandle = document.createElement('div');
+      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      container.appendChild(dragHandle);
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        // bubbles: true 讓事件冒泡到 container 的 listener，target 保持為拖曳把手。
+        dragHandle.dispatchEvent(
+          new TouchEvent('touchstart', {
+            touches: [{ clientY: 100 } as Touch],
+            bubbles: true,
+          }),
+        );
+
+        container.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [{ clientY: 600 } as Touch],
+            cancelable: true,
+          }),
+        );
+
+        container.dispatchEvent(new TouchEvent('touchend'));
+      });
+
+      expect(result.current.pullDistance).toBe(0);
+      expect(result.current.canTrigger).toBe(false);
+      expect(container.style.transform).toBe('');
+      expect(onRefresh).not.toHaveBeenCalled();
+    });
+
+    it('觸控起點位於拖曳把手的子元素內時同樣不啟動 PTR', () => {
+      window.scrollY = 0;
+
+      const dragHandle = document.createElement('div');
+      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      const child = document.createElement('span');
+      dragHandle.appendChild(child);
+      container.appendChild(dragHandle);
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        child.dispatchEvent(
+          new TouchEvent('touchstart', {
+            touches: [{ clientY: 100 } as Touch],
+            bubbles: true,
+          }),
+        );
+
+        container.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [{ clientY: 600 } as Touch],
+            cancelable: true,
+          }),
+        );
+      });
+
+      expect(result.current.pullDistance).toBe(0);
+      expect(container.style.transform).toBe('');
+    });
+
+    it('觸控起點不在拖曳把手內時 PTR 正常啟動', () => {
+      window.scrollY = 0;
+
+      const dragHandle = document.createElement('div');
+      dragHandle.setAttribute('data-rfd-drag-handle-draggable-id', 'USD');
+      container.appendChild(dragHandle);
+
+      const { result } = renderHook(() => usePullToRefresh(containerRef, onRefresh));
+
+      act(() => {
+        container.dispatchEvent(
+          new TouchEvent('touchstart', {
+            touches: [{ clientY: 100 } as Touch],
+            bubbles: true,
+          }),
+        );
+
+        container.dispatchEvent(
+          new TouchEvent('touchmove', {
+            touches: [{ clientY: 200 } as Touch],
+            cancelable: true,
+          }),
+        );
+      });
+
+      expect(result.current.pullDistance).toBeGreaterThan(0);
+    });
+  });
+
   describe('§ 6 Cleanup 邏輯', () => {
     it('應該在 unmount 時移除事件監聽器', () => {
       const removeEventListenerSpy = vi.spyOn(container, 'removeEventListener');

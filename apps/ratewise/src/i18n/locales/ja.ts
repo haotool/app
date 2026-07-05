@@ -125,6 +125,7 @@ const ja = {
     dragToReorder: 'ドラッグで並べ替え',
     dragToFavorite: 'お気に入りに追加',
     dragHandle: 'ドラッグハンドル',
+    baseCurrency: '基準通貨',
   },
 
   // Settings

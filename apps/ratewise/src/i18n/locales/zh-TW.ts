@@ -125,6 +125,7 @@ const zhTW = {
     dragToReorder: '拖曳排序',
     dragToFavorite: '拖曳加收藏',
     dragHandle: '拖曳手柄',
+    baseCurrency: '基準幣',
   },
 
   // Settings

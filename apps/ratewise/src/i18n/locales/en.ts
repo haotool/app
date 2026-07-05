@@ -126,6 +126,7 @@ const en = {
     dragToReorder: 'Drag to reorder',
     dragToFavorite: 'Drag to favorite',
     dragHandle: 'Drag handle',
+    baseCurrency: 'Base currency',
   },
 
   // Settings
