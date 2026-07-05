@@ -66,7 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <PwaAppReadyBeacon />
           <div
             data-scroll-container="layout"
-            className="h-dvh min-h-0 overflow-y-auto overflow-x-hidden"
+            className="h-dvh min-h-0 overflow-y-auto overflow-x-hidden bg-background text-text"
           >
             {/* 主要內容 */}
             <main className="min-h-full [overscroll-behavior-y:contain]">{children}</main>

@@ -152,6 +152,20 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
   });
 
+  describe('🟢 主題底色 SSOT（深色主題內容頁可讀性守門）', () => {
+    it('body 標籤不得硬編碼 Tailwind 色板 class（會蓋掉主題變數）', () => {
+      // [2026-07-05] P0：bg-slate-50 utility class specificity 高於 index.css 的
+      // body { background-color: rgb(var(--color-background)) }，導致深色主題底色被鎖淺色。
+      expect(indexHtmlContent).toMatch(/<body>/);
+      expect(indexHtmlContent).not.toMatch(/<body[^>]*class=/);
+    });
+
+    it('critical CSS 的 body 底色必須走 --sk-bg 主題變數', () => {
+      // 首次 paint 前依 data-style 取主題底色，深色主題不閃白。
+      expect(indexHtmlContent).toContain('background: var(--sk-bg, #f8fafc);');
+    });
+  });
+
   describe('🟢 Security: Theme Initialization Script', () => {
     // 壓縮後以行為驗證，不依賴變數名稱（ALLOWED_STYLES→A、getValidatedStyle→v 等）。
 

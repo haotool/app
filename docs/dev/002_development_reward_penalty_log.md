@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+111
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+112
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-dark-theme-content-pages-unreadable
+- 原因：index.html 硬編碼 `<body class="bg-slate-50">` 以 class specificity 蓋掉 index.css 的主題底色變數，且 Layout 內容頁容器無主題 token，Nitro/Racing 深色主題下 FAQ/About 等內容頁白字壓白底（實測對比 1.0:1）
+- 解法：body 移除硬編碼 class 改吃 `--color-background`（critical CSS 同步走 `--sk-bg` 防深色閃白）、Layout 滾動容器補 `bg-background text-text`，新增 index.html 靜態守門與 Layout 容器 token 斷言，7 主題 × FAQ/About 實測對比全數 ≥3.79:1（深色 20.17/18.97）
 
 - 日期：2026-07-05
 - ID：penalty-rw-multi-ratetype-aria-pressed-misuse
@@ -52,7 +57,6 @@
 - ID：reward-rw-favorites-sort-ptr-hotfix
 - 原因：全域 pull-to-refresh 掛在 main 無拖曳排除，與 dnd 拖曳同時作動造成收藏頁排序錯位與誤觸整頁重載風險，且非收藏幣拖曳被隱式加收藏、favorites.baseCurrency 四語系缺 key 直接顯示 raw key、刷新指示器無 safe-area 補償
 - 解法：PTR touchstart 以 data-rfd-drag-handle 祖先 gate 完全抑制拖曳中 PTR，排序合約收斂為 reorderFavoritesOnDragEnd 純函式（僅收藏幣可拖、非收藏幣停用拖曳），四語系補 baseCurrency key，指示器加 safe-area-inset-top；unit＋390×844 觸控模擬修前修後對照驗證
-
 - 日期：2026-07-05
 - ID：reward-rw-theme-ssot-drift-convergence
 - 原因：主題雙源（themes.ts STYLE_DEFINITIONS 與 index.css [data-style] 變數）累積 8 筆值漂移（zen/violet secondary、kawaii/classic 圖表 3 色），既有測試只守鍵集合與格式、不守值同步
