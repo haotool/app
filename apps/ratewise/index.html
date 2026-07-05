@@ -140,15 +140,8 @@
         line-height: 1.6;
         -webkit-text-size-adjust: 100%;
       }
-      /* 品牌標準字（showcase-twincoins SSOT）：Nunito 900 子集，僅含 HaoRate 六個字符。 */
-      @font-face {
-        font-family: 'Nunito Wordmark';
-        font-style: normal;
-        font-weight: 900;
-        font-display: swap;
-        src: url('__BASE_PATH__fonts/nunito-wordmark-900.woff2') format('woff2');
-        unicode-range: U+0048, U+0052, U+0061, U+0065, U+006F, U+0074;
-      }
+      /* 品牌標準字 @font-face 移至 src/index.css（與 .brand-wordmark 同 sheet）：
+         Beasties 逐 sheet 判定 critical fonts，內嵌 sheet 無使用者會整條剝除 @font-face。 */
       /* Theme-aware skeleton variables
        * Maps to user's selected theme for seamless loading experience
        * @see index.css - theme color definitions

@@ -21,8 +21,19 @@
 /* ========================================
    品牌標準字 Wordmark（SSOT: scripts/source-images/brand/showcase-twincoins.html）
    Nunito 900、字距 -0.02em；「Rate」使用主題主色。
-   @font-face 定義於 index.html critical CSS（__BASE_PATH__ SSOT 替換）。
    ======================================== */
+/* 品牌標準字子集（Nunito 900，僅 wordmark 六字符，1.2KB）。
+   必須與 .brand-wordmark 同 sheet：Beasties 逐 sheet 判定 critical fonts，
+   放在 index.html 內嵌樣式會於 SSG 階段被整條剝除（unused preload 根因）。 */
+@font-face {
+  font-family: 'Nunito Wordmark';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/fonts/nunito-wordmark-900.woff2') format('woff2');
+  unicode-range: U+0048, U+0052, U+0061, U+0065, U+006F, U+0074;
+}
+
 .brand-wordmark {
   font-family:
     'Nunito Wordmark',
@@ -1898,6 +1909,30 @@ body {
       rgb(var(--color-page-gradient-via)),
       rgb(var(--color-page-gradient-to))
     );
+  }
+
+  /* ========================================
+     react-colorful 選色器覆寫（E2 wave-C，ADR-001）
+     全寬、高 200px、圓角對齊 radiusTokens.control = 0.75rem；
+     pointer 放大至 28px 提升手機拖曳可視性。
+     ======================================== */
+  .custom-theme-picker .react-colorful {
+    width: 100%;
+    height: 200px;
+  }
+
+  .custom-theme-picker .react-colorful__saturation {
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .custom-theme-picker .react-colorful__hue {
+    height: 28px;
+    border-radius: 0 0 0.75rem 0.75rem;
+  }
+
+  .custom-theme-picker .react-colorful__pointer {
+    width: 28px;
+    height: 28px;
   }
 
   /* 毛玻璃效果 */

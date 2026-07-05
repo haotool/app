@@ -21,6 +21,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('motion/react', () => ({
+  AnimatePresence: ({ children }: { children?: ReactNode }) => children ?? null,
   motion: new Proxy(
     {},
     {

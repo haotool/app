@@ -1,11 +1,25 @@
-/** 幣別 SEO 頁面共用元件：17 組幣對頁 SSOT 渲染，含 JSON-LD、常見金額操作與旅遊提示 */
+/**
+ * 幣別 SEO 頁面共用元件：34 幣對頁＋金額頁 SSOT 渲染。
+ * E5 wave-B 六段 IA：Answer Hero → 報價對比卡 → 階梯表/金額互鏈 → 在地情境卡片組 → FAQ 手風琴 → 相關連結。
+ * 純呈現層：SEO head／JSON-LD／內容文字零變動，佈局與樣式全走 E1 token。
+ * @see .claude/prds/ratewise-e5b-currency-page-uiux-design.md
+ */
 
-import { Link } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, BookOpen, Sparkles, Calculator } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from './SEOHelmet';
-import { PageNavHeader } from './PageNavHeader';
-import { AnswerCapsule } from './AnswerCapsule';
+import { ContentPageLayout } from './content/ContentPageLayout';
+import { ContentFaqAccordion } from './content/ContentSections';
+import { CurrencyAnswerHero } from './currency/CurrencyAnswerHero';
+import { CurrencySectionHeading } from './currency/CurrencySectionHeading';
+import { AmountAnswerCard } from './currency/AmountAnswerCard';
+import { AmountLadderSection } from './currency/AmountLadderSection';
+import { RateInsightSection } from './currency/RateInsightSection';
+import { CommonAmountsSection } from './currency/CommonAmountsSection';
+import { LocalInsightsSection } from './currency/LocalInsightsSection';
+import { HowToStepsSection } from './currency/HowToStepsSection';
+import { ProviderComparisonSection } from './currency/ProviderComparisonSection';
+import { RelatedGuidesSection } from './currency/RelatedGuidesSection';
 import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
@@ -114,8 +128,6 @@ export function CurrencyLandingPage({
     cashSell,
   });
 
-  const formatNum = (n: number) => n.toLocaleString('zh-TW');
-
   // 金額頁 v2 資料（雙向答案與階梯表）：全部由 config 純計算生成，元件不含文案邏輯。
   const answerData = getAmountAnswerData(currencyCode);
   const forwardLadder =
@@ -209,493 +221,103 @@ export function CurrencyLandingPage({
     <>
       <SEOHelmet {...seoProps} />
 
-      {/* Main container - PWA optimized with safe area handling */}
-      <div className="min-h-full">
-        <div className="px-4 sm:px-6 py-6 max-w-4xl mx-auto">
-          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
-          <PageNavHeader
-            breadcrumbItems={[
-              { label: t('nav.home'), href: '/' },
-              {
-                label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
-                href: `${pathname}/`,
-              },
-            ]}
+      <ContentPageLayout
+        breadcrumbItems={[
+          { label: t('nav.home'), href: '/' },
+          {
+            label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
+            href: `${pathname}/`,
+          },
+        ]}
+        testId="currency-landing-page"
+      >
+        <div className="space-y-6">
+          {/* 1. Answer Hero：頁面身分＋（金額頁換算結果）＋快速答案＋CTA。 */}
+          <CurrencyAnswerHero
+            flag={currencyFlag}
+            heading={
+              isTwdToForeign ? `台幣換${currencyName}匯率換算器` : `${currencyName}對台幣匯率換算器`
+            }
+            description={description}
+            updatedDate={SEO_RATE_EXAMPLES_DATE}
+            quickAnswers={answerCapsule}
+            ctaTitle="立即換算"
+            ctaLead={`立即查看${currencyName}賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。`}
+            ctaLabel={
+              isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
+            }
+            ctaTo={converterHref}
+          >
+            {amount !== null && amountResult !== null && cashSell !== null && (
+              <AmountAnswerCard
+                amount={amount}
+                amountResult={amountResult}
+                cashSell={cashSell}
+                currencyCode={currencyCode}
+                isTwdToForeign={isTwdToForeign}
+                answerData={answerData}
+                converterHref={converterHref}
+              />
+            )}
+          </CurrencyAnswerHero>
+
+          {/* 2. 報價對比卡：中間價 vs 賣出價。 */}
+          <RateInsightSection
+            currencyName={currencyName}
+            rateDifferenceSentence={rateDifferenceSentence}
           />
 
-          {/* Header Section */}
-          <header className="mb-6 sm:mb-8">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <span className="text-4xl sm:text-5xl">{currencyFlag}</span>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text leading-tight">
-                  {isTwdToForeign
-                    ? `台幣換${currencyName}匯率換算器`
-                    : `${currencyName}對台幣匯率換算器`}
-                </h1>
-                <p className="text-text-muted text-sm sm:text-base mt-2 leading-relaxed">
-                  {description}
-                </p>
-                {/* 更新時間戳：Perplexity 新鮮度信號，AI 引擎優先引用有明確更新時間的頁面。 */}
-                <p className="text-text-muted text-xs mt-2 flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
-                  最後更新：
-                  <time dateTime={SEO_RATE_EXAMPLES_DATE}>{SEO_RATE_EXAMPLES_DATE}</time>
-                </p>
-              </div>
-            </div>
-          </header>
-
-          {/* AEO/GEO 快速答案：AI 引擎直接引用的問答對，顯示在頁面頂部提升引用率。 */}
-          <AnswerCapsule items={answerCapsule} />
-
-          {/* 金額頁 v2 Answer Block（answer-first，雙向答案）：?amount=X 存在時顯示，數字全部由每日資料純計算。 */}
-          {amount !== null && amountResult !== null && cashSell !== null && (
-            <section className="mb-6 sm:mb-8" data-testid="amount-answer-block">
-              <div className="card p-4 sm:p-5 bg-primary/5 border border-primary/30">
-                <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-primary/60">
-                  <Calculator className="w-3.5 h-3.5" />
-                  <span>換算結果（台銀實際牌告）</span>
-                </div>
-                <div className="flex items-baseline gap-2 flex-wrap mb-1">
-                  <span className="text-2xs text-text-muted">
-                    {isTwdToForeign
-                      ? `${formatNum(amount)} TWD`
-                      : `${formatNum(amount)} ${currencyCode}`}
-                  </span>
-                  <span className="text-text-muted text-sm">≈</span>
-                  <span className="text-2xl sm:text-3xl font-black text-primary">
-                    {isTwdToForeign
-                      ? `${formatNum(amountResult)} ${currencyCode}`
-                      : `${formatNum(amountResult)} TWD`}
-                  </span>
-                  <span className="text-2xs text-text-muted">（台銀現金賣出）</span>
-                </div>
-                {/* 雙向答案：to-twd 頁補「換回台幣（現金買入）」與中間價對比；數字純計算。 */}
-                {answerData && (
-                  <ul className="text-xs text-text-muted space-y-1 mb-2">
-                    {!isTwdToForeign && answerData.cashBuyEstimate !== null && (
-                      <li>
-                        把 {formatNum(amount)} {currencyCode} 換回台幣 ≈{' '}
-                        <strong className="text-text font-semibold">
-                          {formatNum(Math.round(amount * answerData.cashBuyEstimate))} TWD
-                        </strong>
-                        （台銀現金買入估算）
-                      </li>
-                    )}
-                    <li>
-                      Google／XE 中間價換算 ≈{' '}
-                      {isTwdToForeign
-                        ? `${formatNum(Math.round((amount / answerData.marketMid) * 100) / 100)} ${currencyCode}`
-                        : `${formatNum(Math.round(amount * answerData.marketMid))} TWD`}
-                      ——中間價是批發參考價，一般人換不到
-                    </li>
-                  </ul>
-                )}
-                <p className="text-2xs text-text-muted mb-4">
-                  資料來源：臺灣銀行牌告（現金賣出 1 {currencyCode} = {cashSell}{' '}
-                  TWD），頁面嵌入價每日更新；即時價請用換算器查看。
-                </p>
-                <Link
-                  to={converterHref}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-strong text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors"
-                >
-                  在換算器查看最新匯率
-                  <ArrowLeft className="w-4 h-4 rotate-180" />
-                </Link>
-              </div>
-
-              {/* 金額階梯對照表：由 INDEXABLE amounts 純計算生成（featured snippet 可提取結構）。 */}
-              {ladderRows.length > 0 && (
-                <div className="card p-4 sm:p-5 mt-3 overflow-x-auto" data-testid="amount-ladder">
-                  <table className="w-full text-xs sm:text-sm text-left">
-                    <caption className="text-left text-2xs font-black uppercase tracking-wider text-text-muted mb-2">
-                      {isTwdToForeign
-                        ? `常用台幣金額換${currencyName}對照（台銀現金賣出）`
-                        : `常用${currencyName}金額換台幣對照（台銀牌告）`}
-                    </caption>
-                    <thead>
-                      <tr className="text-text-muted border-b border-border">
-                        {isTwdToForeign ? (
-                          <>
-                            <th scope="col" className="py-2 pr-3 font-semibold">
-                              台幣（TWD）
-                            </th>
-                            <th scope="col" className="py-2 font-semibold">
-                              可換{currencyName}（現金賣出）
-                            </th>
-                          </>
-                        ) : (
-                          <>
-                            <th scope="col" className="py-2 pr-3 font-semibold">
-                              {currencyName}（{currencyCode}）
-                            </th>
-                            <th scope="col" className="py-2 pr-3 font-semibold">
-                              換回台幣（現金買入）
-                            </th>
-                            <th scope="col" className="py-2 font-semibold">
-                              買入成本（現金賣出）
-                            </th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {isTwdToForeign
-                        ? reverseLadder.map((row) => (
-                            <tr key={row.twdAmount} className="border-b border-border/50">
-                              <td className="py-2 pr-3">
-                                <Link
-                                  to={`${pathname.replace(/\/$/, '')}/${row.twdAmount}/`}
-                                  className="text-primary hover:underline"
-                                >
-                                  {formatNum(row.twdAmount)}
-                                </Link>
-                              </td>
-                              <td className="py-2">
-                                {formatNum(row.foreignAtCashSell)} {currencyCode}
-                              </td>
-                            </tr>
-                          ))
-                        : forwardLadder.map((row) => (
-                            <tr key={row.amount} className="border-b border-border/50">
-                              <td className="py-2 pr-3">
-                                <Link
-                                  to={`${pathname.replace(/\/$/, '')}/${row.amount}/`}
-                                  className="text-primary hover:underline"
-                                >
-                                  {formatNum(row.amount)}
-                                </Link>
-                              </td>
-                              <td className="py-2 pr-3">
-                                {row.twdAtCashBuy !== null
-                                  ? `${formatNum(row.twdAtCashBuy)} TWD`
-                                  : '—'}
-                              </td>
-                              <td className="py-2">{formatNum(row.twdAtCashSell)} TWD</td>
-                            </tr>
-                          ))}
-                    </tbody>
-                  </table>
-                  <p className="text-2xs text-text-muted mt-2">
-                    表格由台銀牌告每日更新資料計算；「換回台幣」為現金買入估算值，實際以臨櫃牌告為準。
-                  </p>
-                </div>
-              )}
-            </section>
+          {/* 3. 金額階梯表（金額頁）＋常見金額互鏈（Toss 列表式）。 */}
+          {ladderRows.length > 0 && (
+            <AmountLadderSection
+              isTwdToForeign={isTwdToForeign}
+              currencyCode={currencyCode}
+              currencyName={currencyName}
+              pathname={pathname}
+              forwardLadder={forwardLadder}
+              reverseLadder={reverseLadder}
+            />
           )}
-
-          {/* 精準換匯：為什麼看賣出價 */}
-          <section className="mb-6 sm:mb-8">
-            <div className="card p-4 sm:p-5 bg-surface border border-amber-500/30">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">⚖️</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-bold text-text text-sm sm:text-base mb-2">
-                    為什麼 {APP_INFO.shortName} 比其他工具更精準？
-                  </h2>
-                  <p className="text-text-muted text-xs sm:text-sm leading-relaxed mb-3">
-                    多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
-                    {APP_INFO.shortName} 直接顯示臺灣銀行牌告的「
-                    <strong className="text-text font-semibold">現金賣出</strong>」價格—— 你去銀行換{' '}
-                    {currencyName} 現鈔時實際要付的台幣金額。
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/30 p-2 text-center">
-                      <div className="font-bold text-red-600 dark:text-red-400 mb-0.5">
-                        中間價（Google／XE）
-                      </div>
-                      <div className="text-text-muted">買入與賣出的平均值</div>
-                      <div className="text-text-muted mt-0.5">≠ 實際換匯金額</div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-2 text-center">
-                      <div className="font-bold text-green-600 dark:text-green-400 mb-0.5">
-                        賣出價（{APP_INFO.shortName}）
-                      </div>
-                      <div className="text-text-muted">臺灣銀行牌告實際報價</div>
-                      <div className="text-text-muted mt-0.5">= 銀行實際收你的台幣</div>
-                    </div>
-                  </div>
-                  <p className="text-text-muted text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/20 rounded-lg px-3 py-2 border border-amber-200/30">
-                    {rateDifferenceSentence}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Quick Action Card */}
-          <div className="card p-4 sm:p-5 mb-6 bg-primary-strong text-white">
-            <div className="flex items-center gap-2 mb-3 opacity-80">
-              <Sparkles className="w-4 h-4" />
-              <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
-            </div>
-            <p className="text-sm sm:text-base mb-4 opacity-90">
-              立即查看{currencyName}
-              賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。
-            </p>
-            <Link
-              to={converterHref}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold text-sm transition-colors"
-            >
-              {isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`}
-              <ArrowLeft className="w-4 h-4 rotate-180" />
-            </Link>
-          </div>
-
-          {/* Highlights Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <BookOpen className="w-3.5 h-3.5" />
-              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
-                {currencyName}匯率重點
-              </h2>
-            </div>
-
-            <div className="card p-4 sm:p-5">
-              <ul className="space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
-                {highlights.map((highlight, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3 md:rounded-xl md:bg-surface md:p-3"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                      {index + 1}
-                    </span>
-                    <span className="text-text text-sm sm:text-base leading-relaxed">
-                      {highlight}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          {/* How To Steps Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">使用步驟</h2>
-            </div>
-
-            <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-              {howToSteps.map((step) => (
-                <div
-                  key={step.position}
-                  className="card p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-strong text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
-                    {step.position}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">{step.name}</h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                      {step.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Common Amounts Section */}
           {commonAmounts.length > 0 && (
-            <section className="mb-6 sm:mb-8">
-              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-                <Calculator className="w-3.5 h-3.5" />
-                <h2 className="text-2xs font-black uppercase tracking-[0.2em]">常見金額換算</h2>
-              </div>
-
-              <div className="card p-4 sm:p-5">
-                <p className="text-text-muted text-xs sm:text-sm mb-4">
-                  點擊常見金額，即可在本頁查看台銀現金賣出參考換算結果，或前往換算器取得最新即時匯率：
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {commonAmounts.map((entry) => (
-                    // Wise-pattern：路徑型 URL（/usd-twd/500/），可被 SSG 預渲染，Googlebot 直接索引靜態 HTML。
-                    <Link
-                      key={entry.amount}
-                      to={`${pathname.replace(/\/$/, '')}/${entry.amount}/`}
-                      className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface hover:bg-primary/10 transition-colors group text-left"
-                    >
-                      <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">
-                        {entry.question}
-                      </h3>
-                      <ArrowLeft className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-primary transition-colors flex-shrink-0" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
+            <CommonAmountsSection commonAmounts={commonAmounts} pathname={pathname} />
           )}
 
-          {/* Travel Tip Section */}
-          {travelTip && (
-            <section className="mb-6 sm:mb-8">
-              <div className="card p-4 sm:p-5 bg-amber-50 dark:bg-amber-950/20 border-amber-200/30">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl flex-shrink-0">💡</span>
-                  <div>
-                    <h3 className="font-bold text-text text-sm sm:text-base mb-1">
-                      旅遊換匯小提示
-                    </h3>
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                      {travelTip}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
+          {/* 4. 在地情境卡片組：匯率重點＋旅遊提示＋換匯管道比較。 */}
+          {(highlights.length > 0 || travelTip) && (
+            <LocalInsightsSection
+              currencyName={currencyName}
+              highlights={highlights}
+              travelTip={travelTip}
+            />
           )}
-
-          {/* 替代換匯管道比較卡（明洞換匯所等） */}
           {alternativeProviders && alternativeProviders.length > 0 && (
-            <section className="mb-6 sm:mb-8" data-testid="provider-comparison-card">
-              <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-                <span className="text-xs">💱</span>
-                <h2 className="text-2xs font-black uppercase tracking-[0.2em]">換匯管道比較</h2>
-              </div>
-              <div className="card p-4 sm:p-5">
-                <h3 className="font-bold text-text text-sm sm:text-base mb-3">
-                  台銀 vs 現場換匯所比較
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                  {/* 臺灣銀行欄：TWD→KRW 顯示現金賣出；KRW→TWD 顯示估算買入率 */}
-                  <div className="rounded-xl bg-surface border border-border p-3">
-                    <div className="text-xs font-bold text-text-muted mb-1">
-                      {isTwdToForeign ? '臺灣銀行（現金賣出）' : '臺灣銀行（現金買入估算）'}
-                    </div>
-                    <div className="text-lg font-black text-text">
-                      {taiwanBankKrwPerTwd !== null ? taiwanBankKrwPerTwd.toFixed(2) : '—'}{' '}
-                      <span className="text-xs font-normal text-text-muted">KRW / TWD</span>
-                    </div>
-                    <div className="text-xs text-text-muted mt-1">
-                      {isTwdToForeign
-                        ? `${rateExample?.exampleTWD.toLocaleString()} TWD ≈ ${rateExample?.foreignAtCash.toLocaleString()} KRW`
-                        : '估算值；以台銀牌告現金買入率為準'}
-                    </div>
-                  </div>
-                  {/* 替代換匯管道欄 */}
-                  {alternativeProviders.map((provider) => {
-                    // TWD→KRW: 使用 sell 率（provider.rate），KRW→TWD: 使用 buy 率（provider.rateBuy）
-                    // 兩者單位均為 KRW/TWD（46.0 = 1 TWD 換 46 KRW；46.7 = 需 46.7 KRW 換 1 TWD）
-                    const displayRate = isTwdToForeign
-                      ? provider.rate
-                      : (provider.rateBuy ?? provider.rate);
-                    const rateLabel = 'KRW / TWD';
-                    const exampleAmount = rateExample
-                      ? isTwdToForeign
-                        ? Math.floor(rateExample.exampleTWD * displayRate)
-                        : null // KRW→TWD 方向不顯示台幣換算範例
-                      : null;
-                    return (
-                      <div
-                        key={provider.source}
-                        className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200/30 p-3"
-                      >
-                        <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-1">
-                          {provider.name}
-                        </div>
-                        <div className="text-lg font-black text-green-700 dark:text-green-400">
-                          {displayRate.toFixed(2)}{' '}
-                          <span className="text-xs font-normal text-text-muted">{rateLabel}</span>
-                        </div>
-                        {exampleAmount !== null && rateExample && (
-                          <div className="text-xs text-text-muted mt-1">
-                            {rateExample.exampleTWD.toLocaleString()} TWD ≈{' '}
-                            {exampleAmount.toLocaleString()} KRW
-                          </div>
-                        )}
-                        <div className="text-2xs text-text-muted mt-2">
-                          {provider.source} · {provider.rateDate}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-2xs text-text-muted leading-relaxed">
-                  {isTwdToForeign
-                    ? alternativeProviders[0]?.note
-                    : `${alternativeProviders[0]?.name ?? '明洞換匯所'}亦提供韓元換台幣服務，現場持韓元現鈔可直接兌換。買入估算匯率，實際以換匯所現場報價為準。`}
-                </p>
-              </div>
+            <ProviderComparisonSection
+              isTwdToForeign={isTwdToForeign}
+              taiwanBankKrwPerTwd={taiwanBankKrwPerTwd}
+              rateExample={rateExample}
+              alternativeProviders={alternativeProviders}
+            />
+          )}
+          {howToSteps.length > 0 && <HowToStepsSection howToSteps={howToSteps} />}
+
+          {/* 5. FAQ 手風琴（E4 ContentFaqAccordion 範式）。 */}
+          {faqEntries.length > 0 && (
+            <section>
+              <CurrencySectionHeading icon={HelpCircle}>{faqTitle}</CurrencySectionHeading>
+              <ContentFaqAccordion items={faqEntries} />
             </section>
           )}
 
-          {/* FAQ Section */}
-          <section className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
-              <HelpCircle className="w-3.5 h-3.5" />
-              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">{faqTitle}</h2>
-            </div>
-
-            <div className="space-y-3 md:max-w-3xl md:mx-auto">
-              {faqEntries.map((faq, index) => (
-                <details key={index} className="card group" open={index === 0}>
-                  <summary className="p-4 sm:p-5 cursor-pointer list-none flex items-start gap-3 hover:bg-surface/50 transition-colors rounded-2xl">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <HelpCircle className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-text text-sm sm:text-base leading-snug pr-4">
-                        {faq.question}
-                      </h3>
-                    </div>
-                    <span className="text-text-muted group-open:rotate-180 transition-transform duration-200 flex-shrink-0">
-                      ▼
-                    </span>
-                  </summary>
-                  <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 ml-11">
-                    <p className="text-text-muted text-xs sm:text-sm leading-relaxed">
-                      {faq.answer}
-                    </p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
-
-          {/* 相關攻略（hub-and-spoke 內部鏈接）：依幣別方向提供匯率知識攻略連結 */}
-          {relatedGuides.length > 0 && (
-            <section className="mb-6">
-              <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider px-2 mb-3 flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                相關攻略
-              </h2>
-              <div className="flex flex-col gap-2">
-                {relatedGuides.map((guide) => (
-                  <Link
-                    key={guide.href}
-                    to={guide.href}
-                    className="card p-4 sm:p-5 bg-surface border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="w-5 h-5 text-primary/60 flex-shrink-0 group-hover:text-primary transition-colors" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-text text-sm sm:text-base group-hover:text-primary transition-colors">
-                          {guide.label}
-                        </p>
-                        <p className="text-text-muted text-xs sm:text-sm mt-0.5 leading-relaxed">
-                          {guide.description}
-                        </p>
-                      </div>
-                      <ArrowLeft className="w-4 h-4 text-text-muted rotate-180 flex-shrink-0 group-hover:text-primary transition-colors" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* 6. 相關連結（hub-and-spoke 內部鏈接）。 */}
+          {relatedGuides.length > 0 && <RelatedGuidesSection relatedGuides={relatedGuides} />}
 
           {/* Data Source Notice */}
-          <footer className="text-center text-text-muted text-xs opacity-60">
+          <footer className="text-center text-xs text-text-muted opacity-60">
             <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>
-      </div>
+      </ContentPageLayout>
     </>
   );
 }

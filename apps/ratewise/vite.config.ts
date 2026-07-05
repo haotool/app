@@ -388,6 +388,13 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
 
+            // react-colorful 僅 Settings 選色 sheet 使用（E2 wave-C）：
+            // 回傳 undefined 讓 rolldown 依 import graph 併入 Settings lazy chunk，
+            // 避免 fallback 進 vendor-commons 使全部用戶首屏多付 ~3KB gzip。
+            if (id.includes('react-colorful')) {
+              return undefined;
+            }
+
             // jsx-runtime CJS factory 必須在 vendor-commons（初始 bundle），
             // 避免 rolldown 將 factory 置入 vendor-motion（首個使用者），
             // 導致 app chunk 靜態依賴 vendor-motion 拖慢首次 LCP。
@@ -503,6 +510,13 @@ export default defineConfig(({ mode }) => {
       script: 'async',
       formatting: 'beautify',
       dirStyle: 'nested',
+      // Beasties 預設 inlineFonts:false 會剝除 index.html inline @font-face 並注入重複
+      // font preload，導致品牌字體永遠未被使用（unused preload console warning）。
+      // inlineFonts:true 保留 @font-face；preloadFonts:false 交由 index.html 靜態 preload SSOT。
+      beastiesOptions: {
+        inlineFonts: true,
+        preloadFonts: false,
+      },
       // vite-react-ssg + Beasties may read freshly rendered nested amount pages during
       // writeout. Serial rendering avoids intermittent ENOENT on CI/pre-push.
       concurrency: 1,

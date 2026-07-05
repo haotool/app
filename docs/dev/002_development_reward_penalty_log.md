@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,66 @@
 - ID：reward-haotool-e3-wave-c
 - 原因：使用者要求行動首頁更好看；研究驅動選型後 wave-C 五項（bento/貼紙/pattern/kinetic/pretty）為基線瀏覽器全可見的美感升級核心
 - 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
+
+- 日期：2026-07-06
+- ID：penalty-rw-587-keyboard-modifier-passthrough
+- 原因：PR #614 掛接的 useCalculatorKeyboard 未檢查 modifier keys，v2 常駐監聽下 Cmd/Ctrl+'-'（瀏覽器縮放）被 preventDefault 吞掉且減號寫進表達式開閘改值（WCAG 1.4.4 回歸，審查 B-1 抓出）
+- 解法：handler 開頭 metaKey/ctrlKey/altKey 直接 return 讓路（Shift 保留供 '+' 等符號輸入），補 hook 四個 modifier 案例與 v2 整合「Cmd/Ctrl+- 不開閘不改值」回歸測試
+
+- 日期：2026-07-06
+- ID：neutral-rw-587-590-viewport-log-correction
+- 原因：002 條目與 PR #614 body 將極端金額 e2e 視口誤記為 375/390/430，實際 spec 斷言與截圖為 375/390/1440（含桌面 1440×900）
+- 解法：更正 002 條目與 PR body 為 375/390/1440；程式碼與測試不變
+
+- 日期：2026-07-06
+- ID：neutral-rw-587-590-regression-guards
+- 原因：issue 587/590 修復需鎖定回寫閘門語意（切列零按鍵不變值）、QA 量測案例（179px vs 188px）與桌面鍵盤旅程，避免後續回歸
+- 解法：新增單元測試（鍵盤旅程、sheet 停用、閘門不誤開、fit 縮放與 aria 完整值）與 e2e（實體鍵盤完整旅程、極端金額 375/390/1440 三視口繪製矩形量測斷言）
+
+- 日期：2026-07-06
+- ID：reward-rw-590-v2-amount-left-clip
+- 原因：v2 非活躍列大金額繪製寬超出容器（QA 實測 188px vs 179px）且 overflow hidden 右對齊，最高位被左緣裁掉致 163 萬誤讀為 63 萬（issue 590）
+- 解法：CurrencyRow 金額以 offsetWidth/容器內寬單次量測 transform 縮放（right origin、下限 0.5、ResizeObserver 追蹤 resize 與字級 transition），必保最高位可見且 aria-label 保留完整金額
+
+- 日期：2026-07-06
+- ID：reward-rw-587-v2-physical-keyboard
+- 原因：v2 等值雙列無 keydown 監聽，桌面與外接鍵盤用戶只能滑鼠點虛擬鍵（issue 587，v2 轉正硬前置）
+- 解法：泛化 useCalculatorKeyboard（respectInteractiveTarget 讓 Enter/Esc 交還互動元素原生語意）並掛入 ConverterKeypad 直通同一計算引擎，鍵盤輸入視同按鍵意圖與虛擬鍵共用回寫閘門，sheet 開啟時停用避免語意衝突
+
+- 日期：2026-07-06
+- ID：neutral-rw-617-review-convergence-chunk-lockfile
+- 原因：PR #617 審查 APPROVE 附收斂——react-colorful 落 manualChunks fallback 進 vendor-commons（全部用戶首屏多付 3.43KB gzip）、lockfile 夾帶 jiti 等無關 churn
+- 解法：manualChunks 對 react-colorful 回傳 undefined 依 import graph 併入 Settings lazy chunk（vendor-commons 回落基準 23.64KB、hash 同基準，Settings 3.77→7.55KB 僅設定頁用戶付費），lockfile 以 base 版重生成收斂至 +14 行純 react-colorful；背景調 pre-paint FOUC 已由 PM 立案 #619
+
+- 日期：2026-07-06
+- ID：reward-rw-e2c-color-picker-modernization
+- 原因：自訂色 UX 僅原生色相/明度滑桿＋hex 輸入，體驗陽春且無背景色調選項（E2 wave-C）
+- 解法：context7 查證後引入 react-colorful@5.7.0（ADR-001，bundle +3.59KB gzip ≤5KB）改 BottomSheet 選色（色票＋二維拖曳＋HEX＋預覽 chip），新增背景色調三選一進演算集合（寫入=清除同一常數），AA property 守門擴充三背景調 × 977 case 全綠，customBackgroundTone 持久化向後相容，e2e 全旅程（chromium 雙專案）通過
+
+- 日期：2026-07-06
+- ID：reward-rw-602-manifest-site-url-env
+- 原因：generate-manifest 的 scope/start_url 硬編 APP_INFO.siteUrl（app.haotool.org），staging 等替代網域部署時 manifest scope 跨網域、PWA 安裝行為異常（#602；字體 @font-face 被 Beasties 修剪部分經 PM 裁決移交 #616 處理）
+- 解法：scope/start_url 改由 VITE_SITE_URL 環境變數驅動＋normalizeSiteUrl 正規化（行為對齊 seo-paths；直接 import 因該檔無副檔名 import 在 Node Type Stripping 下 ERR_MODULE_NOT_FOUND，以註解標明），未設定時回退正式站；committed manifest 補「必為正式站」JSON 斷言堵 env 污染誤 commit，generate:deterministic 冪等零 diff 實證
+
+- 日期：2026-07-06
+- ID：reward-rw-600-anchor-scroll-mt-safe-area
+- 原因：#605 修了 sticky 返回列 safe-area 但錨點目標 `scroll-mt-20` 固定 80px 未連動，standalone 下 sticky 列變高（+59px）後隱私目錄與 Guide 步驟跳轉被遮蔽（#600 連動項）
+- 解法：三處錨點（Privacy 目錄、Guide 步驟、ContentSections）改 `scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]`，CDP inset 59px 實測 targetTop 139 > headerBottom 124，補 ContentPageLayout 錨點斷言
+
+- 日期：2026-07-06
+- ID：reward-rw-font-preload-beasties-fontface-strip
+- 原因：品牌字體 @font-face 放 index.html 內嵌樣式，Beasties 逐 sheet 判定 critical fonts 時因該 sheet 無使用者而整條剝除，全站 unused preload 警告且 wordmark 永遠回落系統字體（正式站取證：HTML 無任何 @font-face）
+- 解法：@font-face 移至 src/index.css（與 .brand-wordmark 同 sheet）＋ ssgOptions.beastiesOptions 設 inlineFonts:true／preloadFonts:false，preview 驗證警告歸零、document.fonts.check 為 true、preload 單一化
+
+- 日期：2026-07-06
+- ID：neutral-rw-612-staging-manifest-cross-origin
+- 原因：staging manifest `scope`/`start_url` 由 generate-manifest.mjs 以 APP_INFO.siteUrl 硬編正式站絕對 URL，對 staging origin 跨網域；屬刻意設計（PWA partition／HTTPS-First）連動 SSOT 生成鏈
+- 解法：取證後立案 #612（附 curl 證據與範圍）不硬修；React #418 staging 複驗無殘留（#595 已修）
+
+- 日期：2026-07-06
+- ID：reward-rw-e5b-currency-page-uiux-six-section-ia
+- 原因：34 幣別頁＋金額頁為牆文式段落佈局、視覺語言與 app 端割裂且行動版缺底部導覽，未達韓系 app 水準（E5 wave-B）
+- 解法：重排六段 IA（Answer Hero→報價對比→階梯列表→在地情境卡→FAQ 手風琴→相關連結）共用 presentational 元件組並換 ContentPageLayout 骨架，新增 verify-visible-text-parity 腳本證明 34 頁 dist 可見文字集合等價（純呈現層零文案變動）
 
 - 日期：2026-07-06
 - ID：neutral-haotool-e3-branch-governance

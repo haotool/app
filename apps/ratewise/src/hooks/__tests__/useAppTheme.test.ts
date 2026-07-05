@@ -110,6 +110,70 @@ describe('useAppTheme - custom 主題持久化（E2）', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
+  it('customBackgroundTone 持久化：舊資料缺省回傳 pure（向後相容）', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ style: 'custom', customPrimary: '#FF6B6B' }),
+    );
+
+    const { result } = renderHook(() => useAppTheme());
+
+    expect(result.current.customBackgroundTone).toBe('pure');
+  });
+
+  it('persisted customBackgroundTone 應原樣載入；無效值回退 pure', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'warm' }),
+    );
+    const { result } = renderHook(() => useAppTheme());
+    expect(result.current.customBackgroundTone).toBe('warm');
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'dark' }),
+    );
+    const { result: invalid } = renderHook(() => useAppTheme());
+    expect(invalid.current.customBackgroundTone).toBe('pure');
+  });
+
+  it('setCustomBackgroundTone 即選即用：切至 custom、持久化並寫入背景調對', () => {
+    const { result } = renderHook(() => useAppTheme());
+
+    act(() => {
+      result.current.setCustomBackgroundTone('cool');
+    });
+
+    expect(result.current.style).toBe('custom');
+    expect(result.current.customBackgroundTone).toBe('cool');
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
+      style?: string;
+      customBackgroundTone?: string;
+    };
+    expect(stored.style).toBe('custom');
+    expect(stored.customBackgroundTone).toBe('cool');
+    expect(document.documentElement.style.getPropertyValue('--color-background')).not.toBe('');
+  });
+
+  it('setCustomPrimary 保留既有背景調（不互相覆蓋）', () => {
+    const { result } = renderHook(() => useAppTheme());
+
+    act(() => {
+      result.current.setCustomBackgroundTone('warm');
+    });
+    act(() => {
+      result.current.setCustomPrimary('#14B8A6');
+    });
+
+    expect(result.current.customBackgroundTone).toBe('warm');
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
+      customPrimary?: string;
+      customBackgroundTone?: string;
+    };
+    expect(stored.customPrimary).toBe('#14B8A6');
+    expect(stored.customBackgroundTone).toBe('warm');
+  });
+
   it('自 custom 切回內建主題：customPrimary 保留供再次啟用，inline 覆寫清除', () => {
     const { result } = renderHook(() => useAppTheme());
 

@@ -120,11 +120,17 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).toContain('<link rel="icon"');
     });
 
-    it('should preload and define the brand wordmark font subset with base path SSOT', () => {
-      // 品牌標準字（Nunito 900 子集）：preload + @font-face 均須走 __BASE_PATH__ 佔位符。
+    it('should preload the brand wordmark font subset with base path SSOT', () => {
+      // 品牌標準字（Nunito 900 子集）：preload 走 __BASE_PATH__ 佔位符。
+      // @font-face 必須在 src/index.css（與 .brand-wordmark 同 sheet），
+      // 否則 Beasties 逐 sheet 判定 critical fonts 時會整條剝除（unused preload 根因）。
       expect(indexHtmlContent).toContain('__BASE_PATH__fonts/nunito-wordmark-900.woff2');
-      expect(indexHtmlContent).toContain("font-family: 'Nunito Wordmark'");
-      expect(indexHtmlContent).toContain('font-display: swap');
+      expect(indexHtmlContent).not.toMatch(/@font-face\s*\{/);
+
+      const indexCssContent = readFileSync(resolve(__dirname, 'index.css'), 'utf-8');
+      expect(indexCssContent).toContain("font-family: 'Nunito Wordmark'");
+      expect(indexCssContent).toContain('font-display: swap');
+      expect(indexCssContent).toContain("url('/fonts/nunito-wordmark-900.woff2')");
     });
 
     it('should retain PWA manifest hints', () => {

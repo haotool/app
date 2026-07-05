@@ -46,6 +46,20 @@ describe('ContentPageLayout', () => {
     const container = screen.getByTestId('content-page').firstElementChild;
     expect(container?.className).toContain('pb-24');
   });
+
+  // sticky 返回列 safe-area 適配由 PageNavHeader.safe-area.test.tsx（#605）守門；
+  // 此處守門錨點連動：sticky 列在 standalone 下變高，錨點目標 scroll-margin 必須同步吃 safe-area（#600）。
+  it('錨點 section 的 scroll-margin-top 疊加 safe-area-inset-top', () => {
+    render(
+      <BrowserRouter>
+        <ContentSections
+          sections={[{ kind: 'text', id: 'anchor-a', title: '錨點區', paragraphs: ['內容'] }]}
+        />
+      </BrowserRouter>,
+    );
+    const section = document.getElementById('anchor-a');
+    expect(section?.className).toContain('scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]');
+  });
 });
 
 describe('ContentSections', () => {

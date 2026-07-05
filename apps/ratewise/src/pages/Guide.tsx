@@ -160,7 +160,7 @@ const Guide = () => {
               <section
                 key={step.position}
                 id={`step-${step.position}`}
-                className="scroll-mt-20 rounded-card border border-border/60 bg-surface p-5 shadow-card"
+                className="scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))] rounded-card border border-border/60 bg-surface p-5 shadow-card"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-strong text-lg font-bold text-white">
