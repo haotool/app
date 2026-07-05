@@ -4,10 +4,11 @@
  * @see .claude/prds/ratewise-e3-converter-v2-design.md
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCalculator } from '../../../calculator/hooks/useCalculator';
+import { useCalculatorKeyboard } from '../../../calculator/hooks/useCalculatorKeyboard';
 import { lightHaptic, mediumHaptic } from '../../../calculator/utils/haptics';
 
 export interface ConverterKeypadProps {
@@ -18,6 +19,8 @@ export interface ConverterKeypadProps {
   initialValue: number;
   /** 鍵入後的即時等值（純數字直出、含運算子時取引擎 preview）。 */
   onValueChange: (value: number) => void;
+  /** 實體鍵盤是否啟用；sheet 開啟時由父層關閉，避免與 sheet 鍵盤語意衝突。預設啟用。 */
+  keyboardEnabled?: boolean;
 }
 
 interface KeypadKey {
@@ -68,11 +71,15 @@ function getKeyClassName(kind: KeypadKey['kind']): string {
   return `${base} bg-surface-elevated text-text`;
 }
 
-export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypadProps) {
+export function ConverterKeypad({
+  initialValue,
+  onValueChange,
+  keyboardEnabled = true,
+}: ConverterKeypadProps) {
   const { t } = useTranslation();
   // 掛載時鎖定種子：初始同步為唯讀，回寫後的 prop 變更不得重置進行中的表達式。
   const [seedValue, setSeedValue] = useState(initialValue);
-  const { expression, preview, input, backspace, clear } = useCalculator(seedValue);
+  const { expression, preview, input, backspace, clear, calculate } = useCalculator(seedValue);
   const lastSentRef = useRef<number | null>(null);
   // 回寫閘門：僅「引擎實際接受」的按鍵後開啟；remount 或種子同步不得以捨入反推值改寫另一列。
   const hasUserInputRef = useRef(false);
@@ -159,6 +166,35 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
     lightHaptic();
     input(key.value);
   };
+
+  // #587：實體鍵盤直通同一計算引擎；鍵盤輸入視同按鍵意圖（與虛擬鍵共用回寫閘門）。
+  const handlePhysicalInput = useCallback(
+    (value: string) => {
+      keyPressedRef.current = true;
+      input(value);
+    },
+    [input],
+  );
+  const handlePhysicalBackspace = useCallback(() => {
+    keyPressedRef.current = true;
+    backspace();
+  }, [backspace]);
+  const handlePhysicalClear = useCallback(() => {
+    keyPressedRef.current = true;
+    clear();
+  }, [clear]);
+  // 常駐鍵盤無「關閉」語意；Esc 關 sheet 由 BottomSheet 自行處理（stopPropagation）。
+  const handlePhysicalClose = useCallback(() => undefined, []);
+
+  useCalculatorKeyboard({
+    isOpen: keyboardEnabled,
+    onInput: handlePhysicalInput,
+    onBackspace: handlePhysicalBackspace,
+    onClear: handlePhysicalClear,
+    onCalculate: calculate,
+    onClose: handlePhysicalClose,
+    respectInteractiveTarget: true,
+  });
 
   return (
     <div

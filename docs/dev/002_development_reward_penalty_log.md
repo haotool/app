@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+151
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+152
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,31 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-587-keyboard-modifier-passthrough
+- 原因：PR #614 掛接的 useCalculatorKeyboard 未檢查 modifier keys，v2 常駐監聽下 Cmd/Ctrl+'-'（瀏覽器縮放）被 preventDefault 吞掉且減號寫進表達式開閘改值（WCAG 1.4.4 回歸，審查 B-1 抓出）
+- 解法：handler 開頭 metaKey/ctrlKey/altKey 直接 return 讓路（Shift 保留供 '+' 等符號輸入），補 hook 四個 modifier 案例與 v2 整合「Cmd/Ctrl+- 不開閘不改值」回歸測試
+
+- 日期：2026-07-06
+- ID：neutral-rw-587-590-viewport-log-correction
+- 原因：002 條目與 PR #614 body 將極端金額 e2e 視口誤記為 375/390/430，實際 spec 斷言與截圖為 375/390/1440（含桌面 1440×900）
+- 解法：更正 002 條目與 PR body 為 375/390/1440；程式碼與測試不變
+
+- 日期：2026-07-06
+- ID：neutral-rw-587-590-regression-guards
+- 原因：issue 587/590 修復需鎖定回寫閘門語意（切列零按鍵不變值）、QA 量測案例（179px vs 188px）與桌面鍵盤旅程，避免後續回歸
+- 解法：新增單元測試（鍵盤旅程、sheet 停用、閘門不誤開、fit 縮放與 aria 完整值）與 e2e（實體鍵盤完整旅程、極端金額 375/390/1440 三視口繪製矩形量測斷言）
+
+- 日期：2026-07-06
+- ID：reward-rw-590-v2-amount-left-clip
+- 原因：v2 非活躍列大金額繪製寬超出容器（QA 實測 188px vs 179px）且 overflow hidden 右對齊，最高位被左緣裁掉致 163 萬誤讀為 63 萬（issue 590）
+- 解法：CurrencyRow 金額以 offsetWidth/容器內寬單次量測 transform 縮放（right origin、下限 0.5、ResizeObserver 追蹤 resize 與字級 transition），必保最高位可見且 aria-label 保留完整金額
+
+- 日期：2026-07-06
+- ID：reward-rw-587-v2-physical-keyboard
+- 原因：v2 等值雙列無 keydown 監聽，桌面與外接鍵盤用戶只能滑鼠點虛擬鍵（issue 587，v2 轉正硬前置）
+- 解法：泛化 useCalculatorKeyboard（respectInteractiveTarget 讓 Enter/Esc 交還互動元素原生語意）並掛入 ConverterKeypad 直通同一計算引擎，鍵盤輸入視同按鍵意圖與虛擬鍵共用回寫閘門，sheet 開啟時停用避免語意衝突
 
 - 日期：2026-07-06
 - ID：neutral-rw-617-review-convergence-chunk-lockfile

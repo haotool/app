@@ -292,3 +292,172 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(screen.getByTestId('converter-v2-key-7').className).toContain('h-[54px]');
   });
 });
+
+describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('鍵盤數字輸入視同按鍵開閘，回寫活躍列（預設第一列）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.keyDown(window, { key: '5' });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('10005');
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+
+  it('鍵盤運算子表達式以引擎 preview 回寫', () => {
+    const props = buildProps({ fromAmount: '100' });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.keyDown(window, { key: '+' });
+    fireEvent.keyDown(window, { key: '5' });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('105');
+  });
+
+  it('鍵盤退格刪除最後一位並回寫', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.keyDown(window, { key: 'Backspace' });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('100');
+  });
+
+  it('切換活躍列後，鍵盤輸入回寫另一列', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+    fireEvent.keyDown(window, { key: '1' });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(props.onToAmountChange).toHaveBeenLastCalledWith('31.581');
+  });
+
+  it('幣別 picker 開啟時實體鍵盤停用，避免與 sheet 搜尋衝突', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-currency-from'));
+    expect(screen.getByTestId('currency-picker-sheet')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: '5' });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+
+  it('回歸：Cmd/Ctrl 組合鍵（如瀏覽器縮放 Cmd+-）不入表達式、不開閘改值（B-1）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.keyDown(window, { key: '-', metaKey: true });
+    fireEvent.keyDown(window, { key: '-', ctrlKey: true });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('converter-v2-amount-from')).toHaveTextContent('1,000');
+  });
+
+  it('回歸：無任何鍵盤輸入時閘門維持關閉（切列零按鍵不變值）', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 外部重算路徑（父層 re-render）不得因掛上鍵盤監聽而誤開閘門。
+    rerender(<SingleConverterV2 {...props} toAmount="99" />);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('SingleConverterV2 - 大金額自適應縮放（#590）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('QA 回歸：容器 179px、繪製 188px 時縮放至可完整顯示（保最高位）', () => {
+    // QA 實測（qa-mobile-pwa-report P1-1）：51,346 USD → 1,636,397.02 TWD 左截斷。
+    const props = buildProps({ fromAmount: '51346', toAmount: '1000' });
+    const { rerender } = render(
+      <SingleConverterV2 {...props} fromCurrency="USD" toCurrency="TWD" />,
+    );
+
+    const box = screen.getByTestId('converter-v2-amount-to');
+    const text = screen.getByTestId('converter-v2-amount-text-to');
+    Object.defineProperty(box, 'clientWidth', { value: 179, configurable: true });
+    Object.defineProperty(text, 'offsetWidth', { value: 188, configurable: true });
+
+    // 外部值變動觸發重量測（layout effect 依 display 重跑）。
+    rerender(
+      <SingleConverterV2 {...props} fromCurrency="USD" toCurrency="TWD" toAmount="1636397.02" />,
+    );
+
+    expect(text).toHaveTextContent('1,636,397');
+    // 179 / 188 ≈ 0.9521：縮放後繪製寬 ≤ 容器寬，最高位「1」不再被左緣裁掉。
+    expect(text.style.transform).toMatch(/^scale\(0\.95/);
+    expect(text.style.transformOrigin).toBe('right center');
+  });
+
+  it('金額可容納時不縮放（transform 不出現）', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    const box = screen.getByTestId('converter-v2-amount-to');
+    const text = screen.getByTestId('converter-v2-amount-text-to');
+    Object.defineProperty(box, 'clientWidth', { value: 200, configurable: true });
+    Object.defineProperty(text, 'offsetWidth', { value: 80, configurable: true });
+
+    rerender(<SingleConverterV2 {...props} toAmount="42" />);
+
+    expect(text.style.transform).toBe('');
+  });
+
+  it('縮放不影響 aria-label 完整金額（可及性語意保留）', () => {
+    const props = buildProps({ toAmount: '1636397.02' });
+    render(<SingleConverterV2 {...props} />);
+
+    expect(screen.getByTestId('converter-v2-amount-to')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('1,636,397.02'),
+    );
+  });
+});

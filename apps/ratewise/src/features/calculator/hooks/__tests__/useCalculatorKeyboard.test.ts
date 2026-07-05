@@ -260,6 +260,132 @@ describe('useCalculatorKeyboard', () => {
     });
   });
 
+  describe('modifier 組合鍵讓路（B-1：系統快捷鍵不得攔截）', () => {
+    it('Cmd+- （瀏覽器縮小）不寫入表達式且不 preventDefault', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const event = new KeyboardEvent('keydown', { key: '-', metaKey: true, cancelable: true });
+      window.dispatchEvent(event);
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      // 未被 preventDefault ＝ 瀏覽器縮放快捷鍵不受阻（WCAG 1.4.4）。
+      expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('Ctrl+- 與 Ctrl+數字 均不觸發任何 callback', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '-', ctrlKey: true }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '5', ctrlKey: true }));
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      expect(mockCallbacks.onBackspace).not.toHaveBeenCalled();
+      expect(mockCallbacks.onCalculate).not.toHaveBeenCalled();
+    });
+
+    it('Alt 組合與 Cmd+Backspace 不觸發輸入或刪除', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '7', altKey: true }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true }));
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      expect(mockCallbacks.onBackspace).not.toHaveBeenCalled();
+    });
+
+    it('Shift 組合不受影響（如 Shift+= 產生 + 仍可輸入）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '+', shiftKey: true }));
+
+      expect(mockCallbacks.onInput).toHaveBeenCalledWith('+');
+    });
+  });
+
+  describe('respectInteractiveTarget（#587 常駐鍵盤情境）', () => {
+    it('啟用時 Enter 落在按鈕上交還原生語意（不觸發 onCalculate）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          respectInteractiveTarget: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onCalculate).not.toHaveBeenCalled();
+
+      document.body.removeChild(button);
+    });
+
+    it('啟用時數字鍵不受互動元素 focus 影響（仍輸入）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          respectInteractiveTarget: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: '5', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onInput).toHaveBeenCalledWith('5');
+
+      document.body.removeChild(button);
+    });
+
+    it('預設（v1 modal）Enter 於按鈕上仍觸發 onCalculate（行為不變）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const button = document.createElement('button');
+      document.body.appendChild(button);
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      Object.defineProperty(event, 'target', { value: button, enumerable: true });
+      button.dispatchEvent(event);
+
+      expect(mockCallbacks.onCalculate).toHaveBeenCalled();
+
+      document.body.removeChild(button);
+    });
+  });
+
   describe('清理', () => {
     it('應在卸載時移除事件監聽器', () => {
       const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
