@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+122
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,46 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-seotech-stats-contrast-and-capture
+- 原因：截圖矩陣抓出 SeoTech 統計卡標籤吃主題 text token 但卡底為固定淺色調色板，nitro 下白字壓淺底不可讀（審計 P0-1 同病殘留）
+- 解法：標籤改固定深色 slate 對比安全值並註解設計依據；沉澱 capture-content-pages.mjs 截圖矩陣腳本（7 頁×2 主題×2 尺寸＋console error 收集）供後續回歸
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-content-pages-e2e-smoke
+- 原因：內容頁統一骨架缺 e2e 守門，底部導覽修復與七頁可達性可能被後續變更靜默破壞
+- 解法：新增 content-pages.spec（七頁 h1／返回導覽／行動版底部導覽＋設定頁開源入口導向），base path 解析對齊 fixtures；本機以單 worker 驗證 a11y 與 smoke 全綠
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-pages-wave2-guide-opendata-seotech
+- 原因：Guide／OpenData／SeoTech 版殼各自實作（SeoTech 甚至無麵包屑與底部導覽），與統一骨架漂移
+- 解法：三頁遷移至 ContentPageLayout（保留頁內專屬元件：API 表格、複製按鈕、技術卡），Guide 步驟與功能區塊改共用 renderer，測試合約（step 錨點、快速導航、FAQ 標題）維持不變
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-pages-wave1-faq-about-privacy
+- 原因：FAQ／About／Privacy 各自手刻版面且視覺未對齊 E1 token，隱私長文缺頁內導覽
+- 解法：三頁遷移至 ContentPageLayout＋ContentSections 內容驅動渲染（文案零改動），FAQ 保留手風琴、隱私補錨點目錄側跳
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-open-source-page
+- 原因：使用者需求七頁含開放原始碼頁，但現況僅設定頁外部 GitHub 連結，開源／授權資訊散落 About 與 OpenData 缺乏收斂入口
+- 解法：新增 /open-source/ noindex 功能頁（SEO 設定就地定義不動 seo-metadata），文案沿用 About 透明區塊＋OpenData 授權聲明，APP_ONLY_NOINDEX_PATHS 雙 SSOT 同步＋路徑守門測試更新
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-content-page-skeleton
+- 原因：七個內容頁各自手刻版面且行動版遺失底部導覽（審計 P1-8），重複 JSX 造成維護債
+- 解法：新增 ContentPageLayout 共用骨架（返回導覽＋麵包屑＋底部導覽＋safe-area 內距）與 ContentSections 五型別 section renderer（text/list/faq/links/cards），附骨架與渲染測試
+
+- 日期：2026-07-05
+- ID：neutral-rw-e4-design-brief-intake
+- 原因：E4 內部頁重構設計簡報尚未入庫，epic 勾稽缺乏可追溯 SSOT
+- 解法：將 PM 簡報 add -f 進 .claude/prds/ 作為 E4 SSOT（獨立 docs commit）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-task0-bottomsheet-a11y
+- 原因：BottomSheet primitive 具 dialog 語意但缺 Esc 關閉、focus trap 與初始/還原焦點，E4 內部頁將大量使用 sheet，可及性債會放大
+- 解法：補 Esc／Tab 循環／初始焦點／焦點還原並附四項單元測試，守門 regex 註解已知限制，收斂三 nits（picker 收藏置頂、trend radiogroup 獨立 aria 名稱、sm 魔法數註解）
 
 - 日期：2026-07-05
 - ID：neutral-rw-e5-review-should-fix-batch

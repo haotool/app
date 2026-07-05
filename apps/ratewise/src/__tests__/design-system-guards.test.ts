@@ -62,7 +62,11 @@ function findSub12pxText(content: string, file: string): Violation[] {
   return violations;
 }
 
-/** 規則 2a：button／motion.button 開標籤內出現 bg-gradient。 */
+/**
+ * 規則 2a：button／motion.button 開標籤內出現 bg-gradient。
+ * 已知限制：僅掃 JSX 開標籤內的字面值，無法涵蓋 className 以變數／常數間接注入的漸層；
+ * 該缺口由規則 2b 補位——品牌漸層 token 於常數定義處（任何位置）即會被全域禁用抓到。
+ */
 const BUTTON_GRADIENT = /<(?:motion\.)?button\b[^<]*?bg-gradient/g;
 /** 規則 2b：品牌按鈕漸層 token（E1 已下線，任何位置皆禁）。 */
 const BRAND_BUTTON_GRADIENT_TOKEN = /from-brand-button-from|to-brand-button-to/g;

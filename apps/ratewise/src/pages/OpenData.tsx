@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { PageNavHeader } from '../components/PageNavHeader';
+import { ContentPageLayout } from '../components/content/ContentPageLayout';
+import { ContentPageHeader } from '../components/content/ContentSections';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
@@ -549,38 +550,34 @@ const OpenData = () => {
         ogType="article"
       />
 
-      <div className="min-h-screen bg-page-gradient">
-        <div className="container mx-auto max-w-5xl px-4 py-8">
-          {/* 頁面頂部導航：返回 + 麵包屑（PageNavHeader SSOT 模組）。 */}
-          <PageNavHeader
-            breadcrumbItems={[
-              { label: t('nav.home'), href: '/' },
-              { label: t('settings.openDataApi'), href: '/open-data/' },
-            ]}
-          />
-
+      <ContentPageLayout
+        width="wide"
+        breadcrumbItems={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('settings.openDataApi'), href: '/open-data/' },
+        ]}
+      >
+        <div>
           {/* ── Hero ── */}
-          <div className="mb-10">
-            <h1 className="mb-3 text-4xl font-bold text-text">開放資料 API</h1>
-            <p className="mb-4 max-w-2xl text-lg text-text-muted">
-              台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                `${SUPPORTED_CURRENCIES.length} 種幣別`,
-                '每 5 分鐘更新',
-                '無需 API Key',
-                'ETag 支援',
-                'CDN 全球加速',
-              ].map((badge) => (
-                <span
-                  key={badge}
-                  className="rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-xs font-medium text-text-muted"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
+          <ContentPageHeader
+            title="開放資料 API"
+            lead="台灣銀行牌告匯率 JSON 端點，免費、免 API Key、免帳號。"
+          />
+          <div className="mb-8 flex flex-wrap gap-2">
+            {[
+              `${SUPPORTED_CURRENCIES.length} 種幣別`,
+              '每 5 分鐘更新',
+              '無需 API Key',
+              'ETag 支援',
+              'CDN 全球加速',
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-xs font-medium text-text-muted"
+              >
+                {badge}
+              </span>
+            ))}
           </div>
 
           <AnswerCapsule items={OPEN_DATA_PAGE_SEO.answerCapsule ?? []} />
@@ -1214,7 +1211,7 @@ const OpenData = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </ContentPageLayout>
     </>
   );
 };

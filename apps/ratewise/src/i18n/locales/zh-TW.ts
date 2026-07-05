@@ -99,6 +99,7 @@ const zhTW = {
     range7d: '7 天',
     range30d: '30 天',
     range90d: '90 天',
+    trendRangeLabel: '走勢期間',
     trendMin: '最低',
     trendMax: '最高',
     trendBasisNote: '基準：{{basis}}・臺灣銀行牌告',

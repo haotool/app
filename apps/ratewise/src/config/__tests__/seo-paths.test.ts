@@ -113,11 +113,12 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('PRERENDER_PATHS 應包含公開 SEO 路徑、法律頁與 app-only noindex 頁面', () => {
-      expect(PRERENDER_PATHS).toHaveLength(253);
-      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(3) = 253
+      expect(PRERENDER_PATHS).toHaveLength(254);
+      // PRERENDER_PATHS = SEO_PATHS(249) + LEGAL_SSG_PATHS(1) + APP_ONLY_PRERENDER_PATHS(4) = 254
       expect(PRERENDER_PATHS).toContain('/privacy/'); // 仍需預渲染，但不在 sitemap
       expect(PRERENDER_PATHS).toContain('/favorites/');
       expect(PRERENDER_PATHS).toContain('/settings/');
+      expect(PRERENDER_PATHS).toContain('/open-source/');
       expect(APP_CONFIG.prerenderPaths).toEqual(PRERENDER_PATHS);
     });
 
@@ -140,7 +141,7 @@ describe('SEO Paths Configuration', () => {
     });
 
     it('APP_ONLY_PATHS 應與 SEO_PATHS 完全分離', () => {
-      expect(APP_ONLY_PATHS).toHaveLength(3);
+      expect(APP_ONLY_PATHS).toHaveLength(4);
       // 注：內部展示頁不再註冊於 production route surface
       APP_ONLY_PATHS.forEach((path) => {
         expect(SEO_PATHS).not.toContain(path as (typeof SEO_PATHS)[number]);

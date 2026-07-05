@@ -172,7 +172,7 @@ export const SEO_PATHS = INDEXABLE_CANONICAL_PATHS;
  *
  * 注：/seo-tech/ 已移至 CONTENT_SEO_PATHS 成為可索引頁面（2026-04-07）
  */
-export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/'];
+export const APP_ONLY_NOINDEX_PATHS = ['/multi/', '/favorites/', '/settings/', '/open-source/'];
 
 /** 開發 / 展示頁：正式 build 不註冊、不預渲染；robots 仍明確 Disallow。 */
 export const DEV_ONLY_PATHS = [

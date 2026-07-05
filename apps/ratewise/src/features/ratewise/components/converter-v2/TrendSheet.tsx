@@ -76,11 +76,11 @@ export function TrendSheet({
       size="fixed"
       testId="converter-v2-trend-sheet"
     >
-      {/* 7D/30D/90D 切換（radiogroup 語意） */}
+      {/* 7D/30D/90D 切換（radiogroup 語意）；aria 名稱與 dialog 標題區分，避免重複可及名稱 */}
       <SegmentedControl
         value={range}
         onChange={setRange}
-        ariaLabel={title}
+        ariaLabel={t('converterV2.trendRangeLabel')}
         className="mx-5"
         options={(Object.keys(RANGE_DAYS) as TrendRange[]).map((key) => ({
           value: key,

@@ -99,6 +99,7 @@ const ja = {
     range7d: '7日',
     range30d: '30日',
     range90d: '90日',
+    trendRangeLabel: '推移期間',
     trendMin: '最安',
     trendMax: '最高',
     trendBasisNote: '基準：{{basis}}・台湾銀行公示レート',

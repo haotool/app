@@ -10,7 +10,13 @@ const internalOnlyRoutes = [
 
 describe('RateWise public route surface', () => {
   it('keeps only real user app routes in public noindex app paths', () => {
-    expect(APP_ONLY_NOINDEX_PATHS).toEqual(['/multi/', '/favorites/', '/settings/']);
+    // /open-source/ 為 E4 新增的 noindex 內容頁：可爬取讀 noindex、不入 sitemap。
+    expect(APP_ONLY_NOINDEX_PATHS).toEqual([
+      '/multi/',
+      '/favorites/',
+      '/settings/',
+      '/open-source/',
+    ]);
   });
 
   it('keeps internal-only routes out of production prerender paths', () => {

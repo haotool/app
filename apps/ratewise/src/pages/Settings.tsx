@@ -28,7 +28,6 @@ import {
   Check,
   HelpCircle,
   ChevronRight,
-  ExternalLink,
   TrendingUp,
   Shuffle,
   Landmark,
@@ -56,7 +55,6 @@ import {
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
-import { APP_INFO } from '../config/app-info';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
@@ -672,15 +670,13 @@ export default function Settings() {
               <span className="text-sm font-medium">{t('settings.seoTech')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <a
-              href={APP_INFO.github}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/open-source/"
               className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
             >
               <span className="text-sm font-medium">{t('settings.openSource')}</span>
-              <ExternalLink className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-            </a>
+              <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+            </Link>
           </div>
         </section>
 
