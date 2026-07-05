@@ -106,6 +106,7 @@ const zhTW = {
     trendHonestRange: '目前歷史資料僅 {{days}} 天，不足期間不做推估',
     trendEmpty: '暫無歷史資料',
     close: '關閉',
+    skeletonLoading: '載入等值雙列換算中...',
   },
 
   // Trend Chart
@@ -201,6 +202,8 @@ const zhTW = {
     converterVariantLegacyDesc: '沿用現行版面：金額輸入框與快速金額按鈕，點金額開啟計算機',
     converterVariantV2: '等值雙列（新）',
     converterVariantV2Desc: '兩列對等即時換算，內建常駐計算機與匯率趨勢圖',
+    converterVariantOverrideBadge:
+      '網址參數暫時指定為「{{variant}}」，僅本次瀏覽有效；下方選擇為已儲存的偏好',
     // 啟動畫面區塊
     splashScreen: '啟動畫面',
     splashScreenDesc: '開啟已安裝的 App 時播放品牌動畫',

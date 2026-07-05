@@ -44,6 +44,8 @@ function buildMockAggregateHistory(days = 30) {
 }
 
 // 前置：關閉 PWA 安裝導引避免遮擋、mock aggregate 端點避免觸外網。
+// 注意：addInitScript 只在後續 document navigation 生效；fixture 已完成首次導覽，
+// 呼叫端需以 goto／reload 重新導覽後再互動，避免行動版安裝導引攔截點擊（PR #582 審查 P2）。
 async function prepareConverterV2(page: Page) {
   await page.addInitScript(() => {
     sessionStorage.setItem('ratewise:pwa-install-guide-dismissed:v1', 'true');
@@ -144,6 +146,9 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
       if (message.type() === 'error') consoleErrors.push(message.text());
     });
     await prepareConverterV2(page);
+    // 重新導覽使 init script 生效（dismiss 安裝導引），再開始互動。
+    await page.reload();
+    await expect(page.getByRole('link', { name: /多幣別/i })).toBeVisible({ timeout: 30_000 });
 
     // 1. 設定頁「單幣別模式」切到等值雙列
     await page.getByRole('link', { name: /設定/i }).first().click();
@@ -177,6 +182,37 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
       .click();
     await expect(page.getByTestId('amount-input')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('converter-v2')).toHaveCount(0);
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('設 v2 冷啟動重載：骨架或 v2 佔位、無 legacy 互動殘留、console 乾淨', async ({
+    rateWisePage: page,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    await prepareConverterV2(page);
+
+    // 模擬冷啟動：清 session、寫入 persisted v2 偏好後硬重載（無 URL override）。
+    await page.addInitScript(() => {
+      sessionStorage.clear();
+      sessionStorage.setItem('ratewise:pwa-install-guide-dismissed:v1', 'true');
+      const persisted = JSON.parse(localStorage.getItem('ratewise-converter') ?? '{}') as {
+        state?: Record<string, unknown>;
+        version?: number;
+      };
+      persisted.state = { ...persisted.state, singleConverterVariant: 'v2' };
+      persisted.version ??= 0;
+      localStorage.setItem('ratewise-converter', JSON.stringify(persisted));
+    });
+    await page.reload();
+
+    // 預熱＋骨架收斂驗收：v2 版面就緒，期間至多出現 v2 佈局輪廓骨架（不再長空白）。
+    await expect(page.getByTestId('converter-v2')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('converter-v2-skeleton')).toHaveCount(0);
+    await expect(page.getByTestId('amount-input')).toHaveCount(0);
 
     expect(consoleErrors).toEqual([]);
   });

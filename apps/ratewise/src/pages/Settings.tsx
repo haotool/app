@@ -38,7 +38,7 @@ import {
   Rows3,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -60,6 +60,11 @@ import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { ConverterV2Variant, RateMode } from '../features/ratewise/types';
 import { useConverterStore } from '../stores/converterStore';
+import {
+  subscribeConverterV2Variant,
+  getConverterV2Variant,
+  getConverterV2VariantServerSnapshot,
+} from '../config/converter-v2-flag';
 import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../utils/splashPreference';
 
 export default function Settings() {
@@ -68,6 +73,15 @@ export default function Settings() {
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode, singleConverterVariant, setSingleConverterVariant } =
     useConverterStore();
+
+  // URL override 提示：effective 值（含 ?converter= 覆寫）與儲存偏好不一致時顯示 badge。
+  // server snapshot 恆 legacy，與 SSG 輸出一致（hydration 安全）。
+  const effectiveConverterVariant = useSyncExternalStore(
+    subscribeConverterV2Variant,
+    getConverterV2Variant,
+    getConverterV2VariantServerSnapshot,
+  );
+  const isConverterVariantOverridden = effectiveConverterVariant !== singleConverterVariant;
 
   // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
   const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
@@ -546,6 +560,22 @@ export default function Settings() {
               {t('settings.singleConverterMode')}
             </h2>
           </div>
+
+          {/* URL override 生效提示：?converter= 覆寫使下方儲存偏好暫時不生效 */}
+          {isConverterVariantOverridden && (
+            <p
+              data-testid="converter-variant-override-badge"
+              className="mb-3 mx-1 px-3 py-2 rounded-xl bg-primary/10 text-primary text-2xs font-bold leading-relaxed"
+            >
+              {t('settings.converterVariantOverrideBadge', {
+                variant: t(
+                  effectiveConverterVariant === 'v2'
+                    ? 'settings.converterVariantV2'
+                    : 'settings.converterVariantLegacy',
+                ),
+              })}
+            </p>
+          )}
 
           <div className={segmentedSwitch.containerClass}>
             {CONVERTER_VARIANT_OPTIONS.map((option) => {

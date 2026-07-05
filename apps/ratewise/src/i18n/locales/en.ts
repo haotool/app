@@ -106,6 +106,7 @@ const en = {
     trendHonestRange: 'Only {{days}} days of history available; missing range is not estimated',
     trendEmpty: 'No historical data yet',
     close: 'Close',
+    skeletonLoading: 'Loading dual-row converter...',
   },
 
   // Trend Chart
@@ -206,6 +207,8 @@ const en = {
     converterVariantV2: 'Dual Rows (New)',
     converterVariantV2Desc:
       'Two equal editable rows with instant conversion, built-in keypad and rate trend chart',
+    converterVariantOverrideBadge:
+      'A URL parameter temporarily applies "{{variant}}" for this visit only; the selection below is your saved preference',
     // Splash screen section
     splashScreen: 'Splash Screen',
     splashScreenDesc: 'Play the brand animation when launching the installed app',

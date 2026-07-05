@@ -9,6 +9,7 @@ import {
   getConverterV2ServerSnapshot,
   getConverterV2Snapshot,
   getConverterV2Variant,
+  getConverterV2VariantServerSnapshot,
   setConverterV2Variant,
   subscribeConverterV2Variant,
 } from '../converter-v2-flag';
@@ -31,6 +32,11 @@ describe('converter-v2-flag', () => {
   it('server snapshot 恆為 false，保證 SSG 輸出不受使用者設定影響', () => {
     useConverterStore.setState({ singleConverterVariant: 'v2' });
     expect(getConverterV2ServerSnapshot()).toBe(false);
+  });
+
+  it('variant server snapshot 恆為預設 legacy（設定頁 override 提示 hydration 安全）', () => {
+    useConverterStore.setState({ singleConverterVariant: 'v2' });
+    expect(getConverterV2VariantServerSnapshot()).toBe(DEFAULT_CONVERTER_V2_VARIANT);
   });
 
   it('使用者設定為 v2 時啟用 v2（converterStore SSOT）', () => {

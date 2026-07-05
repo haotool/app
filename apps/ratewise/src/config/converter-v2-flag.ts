@@ -50,3 +50,8 @@ export function getConverterV2Snapshot(): boolean {
 export function getConverterV2ServerSnapshot(): boolean {
   return false;
 }
+
+/** server snapshot（variant 版）：SSG 一律預設 legacy，供設定頁 override 提示等 variant 級讀取。 */
+export function getConverterV2VariantServerSnapshot(): ConverterV2Variant {
+  return DEFAULT_CONVERTER_V2_VARIANT;
+}

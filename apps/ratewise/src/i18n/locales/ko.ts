@@ -106,6 +106,7 @@ const ko = {
     trendHonestRange: '현재 {{days}}일치 데이터만 제공되며 부족 구간은 추정하지 않습니다',
     trendEmpty: '과거 데이터가 없습니다',
     close: '닫기',
+    skeletonLoading: '등가 2행 환산 불러오는 중...',
   },
 
   // Trend Chart
@@ -202,6 +203,8 @@ const ko = {
       '기존 레이아웃: 금액 입력과 빠른 금액 버튼, 금액을 탭하면 계산기가 열립니다',
     converterVariantV2: '등가 2행 (신규)',
     converterVariantV2Desc: '동등한 두 행으로 실시간 환산, 상시 키패드와 환율 추세 차트 내장',
+    converterVariantOverrideBadge:
+      'URL 매개변수로 이번 방문에만 "{{variant}}"이(가) 적용됩니다. 아래 선택은 저장된 설정입니다',
     // 시작 화면 섹션
     splashScreen: '시작 화면',
     splashScreenDesc: '설치된 앱 실행 시 브랜드 애니메이션 재생',

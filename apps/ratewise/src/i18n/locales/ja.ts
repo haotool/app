@@ -106,6 +106,7 @@ const ja = {
     trendHonestRange: '履歴データは現在 {{days}} 日分のみで、不足期間は推定しません',
     trendEmpty: '履歴データがありません',
     close: '閉じる',
+    skeletonLoading: '等価2行換算を読み込み中...',
   },
 
   // Trend Chart
@@ -202,6 +203,8 @@ const ja = {
       '従来のレイアウト：金額入力とクイック金額ボタン。金額をタップすると電卓が開きます',
     converterVariantV2: '等価2行（新）',
     converterVariantV2Desc: '対等な2行でリアルタイム換算。常設テンキーとレート推移チャートを内蔵',
+    converterVariantOverrideBadge:
+      'URL パラメータにより今回の閲覧のみ「{{variant}}」が適用されています。下の選択は保存済みの設定です',
     // 起動画面セクション
     splashScreen: '起動画面',
     splashScreenDesc: 'インストール版アプリの起動時にブランドアニメーションを再生',

@@ -55,11 +55,25 @@ import {
   getConverterV2Snapshot,
   getConverterV2ServerSnapshot,
 } from '../../../config/converter-v2-flag';
+import { ConverterV2Skeleton } from './converter-v2/ConverterV2Skeleton';
 
 // v2 走 lazy chunk：flag off 使用者不載入 v2 程式碼。
-const SingleConverterV2 = lazy(() =>
-  import('./converter-v2/SingleConverterV2').then((m) => ({ default: m.SingleConverterV2 })),
-);
+const loadSingleConverterV2 = () =>
+  import('./converter-v2/SingleConverterV2').then((m) => ({ default: m.SingleConverterV2 }));
+const SingleConverterV2 = lazy(loadSingleConverterV2);
+
+// 冷啟動預熱：persisted 偏好（或 URL override）為 v2 時，模組評估即預取 v2 chunk，
+// 讓 hydration 後 legacy→v2 切換不再等待網路載入（issue #583 兩段跳動收斂）。
+// 回傳值供單元測試驗證觸發條件；SSG／flag off 時回傳 null 不觸發下載。
+export function preheatConverterV2Chunk(): Promise<unknown> | null {
+  if (typeof window === 'undefined' || !getConverterV2Snapshot()) {
+    return null;
+  }
+  return loadSingleConverterV2();
+}
+// 預熱失敗（弱網、換版後舊 HTML 引用失效 chunk）靜默吞掉：lazy 首次渲染會重試，
+// 交由 Suspense／ErrorBoundary 與全域 chunk-load 回復機制處理，避免 unhandled rejection。
+preheatConverterV2Chunk()?.catch(() => null);
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;
@@ -782,7 +796,8 @@ export const SingleConverter = (props: SingleConverterProps) => {
 
   if (isV2) {
     return (
-      <Suspense fallback={null}>
+      // fallback 為 v2 佈局輪廓骨架：chunk 未就緒時取代空白，冷啟動至多一次可感知佈局變化。
+      <Suspense fallback={<ConverterV2Skeleton />}>
         <SingleConverterV2 {...props} />
       </Suspense>
     );
