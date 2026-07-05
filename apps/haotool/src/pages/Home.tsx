@@ -15,6 +15,7 @@ import Reveal from '../components/Reveal';
 import ScrollProgress from '../components/ScrollProgress';
 import SectionHeading from '../components/SectionHeading';
 import StatItem from '../components/StatItem';
+import StickerBadge from '../components/StickerBadge';
 import ToolCard from '../components/ToolCard';
 
 // 信任列統計（§2 區 3）：符號為靜態字元，不參與 count-up。
@@ -24,6 +25,54 @@ const STATS = [
   { value: 0, label: '廣告與追蹤' },
   { value: 90, suffix: '+', label: 'Lighthouse 分數' },
 ] as const;
+
+// A1 bento 網格放置序（mobile-beauty §2.1）：DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序。
+const BENTO_SLOTS = [
+  'bento-feature',
+  'bento-sm-a',
+  'bento-sm-b',
+  'bento-wide-a',
+  'bento-wide-b',
+] as const;
+
+// A1 feature 數據帶（HaoRate 專屬、零時效數值）：靜態 sparkline 形狀＋幣別徽章牆。
+// 禁止清單：匯率值、更新時間、漲跌百分比——一切會過期的內容（PM 9.2 A1 硬規則）。
+const FEATURE_CURRENCIES = ['USD', 'JPY', 'KRW', 'EUR', 'GBP'] as const;
+
+const featureDataBand = (
+  <div className="mt-4 flex flex-col gap-2" data-testid="feature-data-band">
+    <div className="flex items-center gap-3">
+      <svg
+        viewBox="0 0 120 32"
+        width={120}
+        height={32}
+        aria-hidden="true"
+        className="shrink-0 text-primary"
+      >
+        <path
+          d="M2 26 L14 22 L26 24 L38 17 L50 19 L62 12 L74 14 L86 9 L98 11 L110 5 L118 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx={118} cy={6} r={3} fill="currentColor" />
+      </svg>
+      <span className="text-caption text-text-muted">30 天趨勢</span>
+    </div>
+    <ul className="flex flex-wrap gap-1.5">
+      {FEATURE_CURRENCIES.map((code) => (
+        <li
+          key={code}
+          className="rounded-chip bg-surface-sunken px-2 py-0.5 text-caption text-text-muted"
+        >
+          {code}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 // 工藝證明三卡（§2 區 5）＋ FR-012 證據錨點（每個宣稱 ≥1 個可點擊證據）。
 const CRAFT_PROOFS = [
@@ -70,11 +119,14 @@ export default function Home() {
           <div className="relative flex min-h-[calc(100svh-152px)] flex-col justify-center lg:min-h-0">
             {/* 文字容器 z-index 1、chips z-index 0（S2：chips 置於文字之下）。 */}
             <div className="relative z-[1] flex flex-col">
-              {/* self-start：flex column 下維持 chip 內容寬（不被 stretch 撐滿）。 */}
-              <p className="inline-flex items-center gap-2 self-start rounded-chip bg-primary-bg px-3.5 py-1.5 text-overline uppercase text-primary-strong">
-                <span className="size-2 rounded-full bg-success" aria-hidden="true" />
-                OPEN SOURCE · 台灣
-              </p>
+              {/* A6 貼紙徽章列（mobile-beauty §1 屏 1）：靜態旋轉、不新增動畫、首屏第一幀即繪製；
+                  padding-block 2px 吸收 ±2° 縱向溢出。 */}
+              <div className="flex items-center gap-2 self-start py-0.5">
+                <StickerBadge variant="primary" withDot>
+                  OPEN SOURCE · 台灣
+                </StickerBadge>
+                <StickerBadge variant="ink">100% FREE</StickerBadge>
+              </div>
               {/* S1：H1 整體單一 spring（僅 translateY、透明度恆 1）。
                   不拆詞段——inline-block 詞段會把 H1 文字拆成多個小 LCP 候選，
                   使 LCP 被副文段落搶走，違反 8.1 不可動搖約束「LCP=H1」（實測驗證）。 */}
@@ -112,8 +164,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 區 3 — 信任列（淺灰底；banner 型窄區節奏例外） */}
-      <section aria-labelledby="stats-heading" className="bg-background">
+      {/* 區 3 — 信任列（淺灰底；banner 型窄區節奏例外）；A7 dot-grid pattern 全站唯一授權處 */}
+      <section aria-labelledby="stats-heading" className="trust-pattern">
         <div className="shell py-12 md:py-20">
           <Reveal>
             <p
@@ -141,18 +193,25 @@ export default function Home() {
       <section id="tools" aria-labelledby="tools-heading" className="scroll-mt-20 bg-surface">
         <div className="shell section-pad">
           <Reveal>
+            {/* A5 H2 詞級 kinetic（僅區 4/6，N2）：aria-label 完整句＋aria-hidden 拆詞雙軌。 */}
             <SectionHeading
               overline="TOOLS"
               id="tools-heading"
-              title="五個正在服務真實使用者的工具"
+              kineticWords={['五個', '正在服務', '真實使用者', '的工具']}
               sub="不是 demo，每一個都上線、可安裝、離線可用。"
             />
           </Reveal>
-          <ul className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:flex lg:flex-wrap lg:justify-center">
+          {/* A1 bento：行動 2 欄（feature 跨滿＋2×2 mini）／桌面 12 欄 3 列；
+              DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序（禁止 grid 放置交叉）。 */}
+          <ul className="bento mt-12">
             {TOOLS.map((tool, index) => (
-              <li key={tool.id} className="lg:w-[calc((100%-48px)/3)]">
+              <li key={tool.id} data-tool-id={tool.id} className={BENTO_SLOTS[index]}>
                 <Reveal className="h-full" delay={index * 0.07}>
-                  <ToolCard tool={tool} />
+                  <ToolCard
+                    tool={tool}
+                    variant={index === 0 ? 'feature' : 'mini'}
+                    {...(index === 0 ? { extra: featureDataBand } : {})}
+                  />
                 </Reveal>
               </li>
             ))}
@@ -221,8 +280,23 @@ export default function Home() {
                 <span className="text-[64px] font-extrabold text-primary lg:text-[96px]">好</span>
               </div>
               <div className="flex max-w-[60ch] flex-col gap-4">
-                <h2 id="author-heading" className="text-h2 text-text">
-                  寫程式之前，先想像<span className="text-primary-strong">使用的人</span>。
+                {/* A5 kinetic（區 6，3 段、570ms）：品牌色 span 併入所屬段；AT 讀 aria-label 完整句。 */}
+                <h2
+                  id="author-heading"
+                  className="text-h2 text-text"
+                  aria-label="寫程式之前，先想像使用的人。"
+                >
+                  <span aria-hidden="true">
+                    <span className="kinetic-word" style={{ '--i': 0 } as CSSProperties}>
+                      寫程式之前，
+                    </span>
+                    <span className="kinetic-word" style={{ '--i': 1 } as CSSProperties}>
+                      先想像
+                    </span>
+                    <span className="kinetic-word" style={{ '--i': 2 } as CSSProperties}>
+                      <span className="text-primary-strong">使用的人</span>。
+                    </span>
+                  </span>
                 </h2>
                 <p className="text-caption text-text-muted">
                   {APP_INFO.author} · {APP_INFO.authorTitle} · Since {APP_INFO.copyrightStartYear}

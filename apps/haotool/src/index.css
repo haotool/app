@@ -129,6 +129,15 @@
   --magnet-max: 4px;
   --tilt-max: 4deg;
 
+  /* A6 貼紙徽章靜態旋轉（mobile-beauty §5.1；非動畫、無 hover 回正）。 */
+  --sticker-rotate-1: -2deg;
+  --sticker-rotate-2: 1.5deg;
+  --sticker-rotate-live: 2deg;
+  /* A7 dot-grid pattern（--color-border 於 --color-background 上的低對比底紋；<200B data URI）。 */
+  --pattern-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.5' fill='%23E2E8F0'/%3E%3C/svg%3E");
+  /* A5 kinetic 起手位移（時長/stagger 復用 --dur-reveal 與 --stagger-word）。 */
+  --kinetic-y: 12px;
+
   /* 三檔 spring 基線：不支援 linear() 的環境回落唯一 bezier（體感等價無回彈）。 */
   --ease-spring-tap: var(--ease-out-quart);
   --ease-spring-reveal: var(--ease-out-quart);
@@ -177,6 +186,11 @@ h1,
 h2,
 h3 {
   text-wrap: balance;
+}
+
+/* A9：全站段落 rag 整理（Safari 26 完整、Chrome 117+ 防 orphan、Firefox 靜默忽略）。 */
+p {
+  text-wrap: pretty;
 }
 
 /* 固定 header 下錨點不被遮擋（deep-dive §1.3：全站 80px） */
@@ -539,6 +553,201 @@ h3 {
   50% {
     transform: translateY(calc(var(--amp, 0px) * -1));
   }
+}
+
+/* ============================================================
+ * A6 貼紙徽章家族 — mobile-beauty §5.2
+ * 純色底＋1px 框＋靜態旋轉（非動畫、無 hover 回正）；禁撕邊/濾鏡；全站 ≤3 枚。
+ * ============================================================ */
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-chip);
+  transform: rotate(var(--sticker-rotate, 0deg));
+}
+.sticker-primary {
+  --sticker-rotate: var(--sticker-rotate-1);
+  padding: 6px 14px;
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-strong);
+}
+.sticker-ink {
+  --sticker-rotate: var(--sticker-rotate-2);
+  padding: 6px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-text);
+}
+.sticker-live {
+  --sticker-rotate: var(--sticker-rotate-live);
+  padding: 4px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* ============================================================
+ * A7 dot-grid pattern — mobile-beauty §5.3
+ * 全站唯一授權處＝區 3 信任列；其他任何區塊禁用。
+ * ============================================================ */
+.trust-pattern {
+  background-color: var(--color-background);
+  background-image: var(--pattern-dots);
+  background-size: 24px 24px;
+}
+
+/* ============================================================
+ * A1 Bento 工具展示網格 — mobile-beauty §2.1（僅 Home 區 4）
+ * 行動 2 欄（feature 跨滿＋2×2 mini）；桌面 12 欄 3 列固定 264px 軌。
+ * DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序（a11y 硬規則）。
+ * ============================================================ */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.bento-feature {
+  grid-column: 1 / -1;
+}
+@media (min-width: 768px) {
+  .bento {
+    gap: 16px;
+  }
+}
+@media (min-width: 1024px) {
+  .bento {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: repeat(3, 264px);
+    gap: 24px;
+  }
+  .bento-feature {
+    grid-column: 1 / span 7;
+    grid-row: 1 / span 2;
+  }
+  .bento-sm-a {
+    grid-column: 8 / -1;
+    grid-row: 1;
+  }
+  .bento-sm-b {
+    grid-column: 8 / -1;
+    grid-row: 2;
+  }
+  .bento-wide-a {
+    grid-column: 1 / span 6;
+    grid-row: 3;
+  }
+  .bento-wide-b {
+    grid-column: 7 / -1;
+    grid-row: 3;
+  }
+  /* 桌面橫排右欄 device frame 寬（sm 120 / wide 148，mobile-beauty §2.2）。 */
+  .bento-wide-a .bento-mini-frame,
+  .bento-wide-b .bento-mini-frame {
+    width: 148px;
+  }
+}
+
+/* feature 卡截圖窗：行動＝現行 device frame 語彙（16/10 窗、62% 置中、下緣硬裁切）；
+ * 桌面＝200×434 舞台桌面卡規格、bottom-right 錨定、下緣被卡 overflow 硬裁切。 */
+.bento-feature-shot {
+  margin-top: 20px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+.bento-feature-frame {
+  margin-inline: auto;
+  width: 62%;
+  border: 4px solid var(--color-text);
+  border-bottom: 0;
+  border-radius: 28px 28px 0 0;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.bento-feature-frame img {
+  border-radius: 24px 24px 0 0;
+}
+@media (min-width: 1024px) {
+  .bento-feature-shot {
+    flex: none;
+    align-self: flex-end;
+    margin-top: 0;
+    aspect-ratio: auto;
+    width: 200px;
+    height: 434px;
+  }
+  .bento-feature-frame {
+    width: 100%;
+    height: 100%;
+    border-width: 5px;
+    border-bottom: 0;
+    border-radius: 32px 32px 0 0;
+  }
+  .bento-feature-frame img {
+    height: 100%;
+    border-radius: 27px 27px 0 0;
+  }
+}
+
+/* mini 卡截圖窗：行動＝4/3 窗、84% frame、border 3、radius 20/17、top 裁切；
+ * 桌面（sm/wide 橫排右欄）＝固定寬 frame、border 4、radius 24/20、top 對齊、下緣硬裁切。 */
+.bento-mini-shot {
+  margin-top: 12px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.bento-mini-frame {
+  margin-inline: auto;
+  width: 84%;
+  border: 3px solid var(--color-text);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.bento-mini-frame img {
+  border-radius: 17px 17px 0 0;
+}
+@media (min-width: 1024px) {
+  .bento-mini-shot {
+    flex: none;
+    align-self: stretch;
+    margin-top: 0;
+    aspect-ratio: auto;
+  }
+  .bento-mini-frame {
+    width: 120px;
+    height: 100%;
+    border-width: 4px;
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
+  }
+  .bento-mini-frame img {
+    height: 100%;
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+/* ============================================================
+ * A5 H2 詞級 kinetic — mobile-beauty §5.4（僅區 4/6；H1 永不拆）
+ * 觸發沿用 Reveal data-inview 管線（與 S4-b draw-in 同構，零新 JS 觀察器）；
+ * SSG 韌性：SSR 輸出 data-inview="true"（no-JS 首繪即終態）。
+ * ============================================================ */
+.kinetic-word {
+  /* transform 需要 inline-block；基態即終態（no-JS／未觸發時文字恆可見）。 */
+  display: inline-block;
+}
+@keyframes kinetic-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--kinetic-y));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-inview='true'] .kinetic-word {
+  animation: kinetic-rise var(--dur-reveal) var(--ease-spring-reveal) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger-word));
 }
 
 /* Tools 頁分類切換：卡格 150ms opacity 淡入（無位移） */
@@ -915,6 +1124,10 @@ html[data-intro='1'] .intro-follow {
   }
   .fade-in,
   .icon-pop {
+    animation: none;
+  }
+  /* A5 kinetic：直接終態（基態即完整可見，僅取消進場動畫）。 */
+  [data-inview='true'] .kinetic-word {
     animation: none;
   }
   /* S1 直接呈現最終版面（本序列無 opacity 變化）；chips 靜態顯示保留構圖。 */
