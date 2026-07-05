@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+108
+> 本次分數變化：+2（reward 2、penalty 0、neutral 1）｜累計總分：+109
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-dual-rows
+- 原因：現行單幣別以上下位置編碼 from/to 方向、匯率卡切斷因果鏈、結果欄偽可編輯，造成三個認知斷點
+- 解法：v2 等值雙列（兩列對等可編輯、divider 內嵌 swap、rate chip）＋常駐 4×4 計算機（沿用引擎重排呈現層）＋bottom sheet 幣別 picker，經 converter-v2 flag 分流且 legacy 零改動
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-converter-v2-flag-infra

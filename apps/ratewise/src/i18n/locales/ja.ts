@@ -80,6 +80,32 @@ const ja = {
     backToConverter: 'コンバーターに戻る',
   },
 
+  // E3 等值雙列換算 v2（flag: converter-v2）
+  converterV2: {
+    rowLabel: '{{code}} 金額',
+    selectCurrency: '通貨を選択',
+    pickerTitle: '通貨を選択',
+    swapCurrencies: '通貨を入れ替え',
+    rateBasisCash: '現金売レート',
+    rateBasisSpot: '電信売レート',
+    rateBasisExchangeShop: '両替所',
+    toggleRateBasis: '現金／電信レート基準を切り替え',
+    keypadLabel: '換算キーパッド',
+    keyBackspace: '削除',
+    keyBackspaceHint: '長押しでクリア',
+    trendTitle: '{{from}}/{{to}} レート推移',
+    trendOpen: 'レート推移チャートを開く',
+    range7d: '7日',
+    range30d: '30日',
+    range90d: '90日',
+    trendMin: '最安',
+    trendMax: '最高',
+    trendBasisNote: '基準：{{basis}}・台湾銀行公示レート',
+    trendHonestRange: '履歴データは現在 {{days}} 日分のみで、不足期間は推定しません',
+    trendEmpty: '履歴データがありません',
+    close: '閉じる',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '複数通貨換算',

@@ -80,6 +80,32 @@ const zhTW = {
     backToConverter: '返回主換算器',
   },
 
+  // E3 等值雙列換算 v2（flag: converter-v2）
+  converterV2: {
+    rowLabel: '{{code}} 金額',
+    selectCurrency: '選擇幣別',
+    pickerTitle: '選擇幣別',
+    swapCurrencies: '交換兩列幣別',
+    rateBasisCash: '現金賣出',
+    rateBasisSpot: '即期賣出',
+    rateBasisExchangeShop: '換錢所',
+    toggleRateBasis: '切換現金／即期匯率基準',
+    keypadLabel: '換算鍵盤',
+    keyBackspace: '刪除',
+    keyBackspaceHint: '長按清空',
+    trendTitle: '{{from}}/{{to}} 匯率走勢',
+    trendOpen: '展開匯率走勢圖',
+    range7d: '7 天',
+    range30d: '30 天',
+    range90d: '90 天',
+    trendMin: '最低',
+    trendMax: '最高',
+    trendBasisNote: '基準：{{basis}}・臺灣銀行牌告',
+    trendHonestRange: '目前歷史資料僅 {{days}} 天，不足期間不做推估',
+    trendEmpty: '暫無歷史資料',
+    close: '關閉',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '多幣別換算',
