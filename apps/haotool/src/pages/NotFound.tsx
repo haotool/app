@@ -16,7 +16,7 @@ export default function NotFound() {
           <h1 className="mt-4 text-h2 text-text">這頁不存在，但工具都在。</h1>
           <p className="mt-3 text-body text-text-muted">網址可能打錯了，或這個頁面已經搬家。</p>
           <p className="mt-8">
-            <Link to="/" className={buttonClass('primary', 'w-full md:w-auto')}>
+            <Link to="/" viewTransition className={buttonClass('primary', 'w-full md:w-auto')}>
               回首頁
             </Link>
           </p>

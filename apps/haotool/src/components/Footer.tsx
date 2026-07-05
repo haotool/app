@@ -40,13 +40,13 @@ export default function Footer() {
             <h2 className={COLUMN_TITLE_CLASS}>頁面</h2>
             <ul className="mt-3">
               <li>
-                <Link to="/" className={FOOTER_LINK_CLASS}>
+                <Link to="/" viewTransition className={FOOTER_LINK_CLASS}>
                   首頁
                 </Link>
               </li>
               {NAV_ITEMS.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} className={FOOTER_LINK_CLASS}>
+                  <Link to={item.to} viewTransition className={FOOTER_LINK_CLASS}>
                     {item.label}
                   </Link>
                 </li>
@@ -83,6 +83,7 @@ export default function Footer() {
           <p className="text-caption text-text-muted">{getCopyrightNotice()}</p>
           <Link
             to="/about/#privacy"
+            viewTransition
             className="press focus-ring text-caption text-text-muted hover:text-primary-strong active:opacity-80"
           >
             隱私政策

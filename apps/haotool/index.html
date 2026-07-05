@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
+    <!-- S1 開場序列 session 閘（首繪前執行；sessionStorage 不可用時靜默略過） -->
+    <script>
+      try {
+        if (!sessionStorage.getItem('htl-intro')) {
+          sessionStorage.setItem('htl-intro', '1');
+          document.documentElement.dataset.intro = '1';
+        }
+      } catch (e) {}
+    </script>
+
     <!-- SEO Meta Tags（SSG onPageRendered 會移除並注入 per-route 版本） -->
     <title>HaoTool 好工具 — 免費開源的台灣網頁工具集 | 匯率、分帳、停車、防災</title>
     <meta

@@ -53,7 +53,7 @@ export function GhostLink({
 
   if (to) {
     return (
-      <Link to={to} className={classes}>
+      <Link to={to} viewTransition className={classes}>
         {children}
         {arrow}
       </Link>

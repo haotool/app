@@ -1,12 +1,13 @@
 /**
  * 首頁（design-deep-dive §2 八區；Header/Footer 由 Layout 提供）。
- * Hero 為 SSG 靜態內容（LCP = H1 文字，零動畫延遲）；首屏以下 whileInView once。
+ * Hero 為 SSG 靜態內容（LCP = H1 文字；S1 開場僅位移不動透明度）；首屏以下 whileInView once。
  */
 import { Link } from 'react-router-dom';
 import { Gauge, Scale, ShieldCheck } from 'lucide-react';
 import { APP_INFO } from '../config/app-info';
 import { TOOLS } from '../config/tools';
 import { buttonClass, GhostLink } from '../components/Button';
+import HeroChips from '../components/HeroChips';
 import HeroStage from '../components/HeroStage';
 import Reveal from '../components/Reveal';
 import SectionHeading from '../components/SectionHeading';
@@ -57,29 +58,40 @@ export default function Home() {
         <div className="shell flex flex-col gap-10 pb-[72px] pt-12 lg:grid lg:grid-cols-[minmax(0,560px)_minmax(0,512px)] lg:items-center lg:gap-12 lg:pb-28 lg:pt-24">
           {/* <1024：文字區撐滿首屏可視高（100svh − header 64 − pt 48 − gap 40），
               舞台整體移出首屏 → LCP 元素保證為 H1 文字（PRD §10.2 MUST）；桌面版式不變。 */}
-          <div className="flex min-h-[calc(100svh-152px)] flex-col justify-center lg:min-h-0">
-            {/* self-start：flex column 下維持 chip 內容寬（不被 stretch 撐滿）。 */}
-            <p className="inline-flex items-center gap-2 self-start rounded-chip bg-primary-bg px-3.5 py-1.5 text-overline uppercase text-primary-strong">
-              <span className="size-2 rounded-full bg-success" aria-hidden="true" />
-              OPEN SOURCE · 台灣
-            </p>
-            <h1 id="hero-heading" className="mt-4 text-display text-text">
-              把好想法，
-              <br />
-              做成<span className="text-primary-strong">好工具</span>。
-            </h1>
-            <p className="mt-5 max-w-none text-body text-text-muted lg:max-w-[30ch]">
-              我是{APP_INFO.author}
-              。從匯率、分帳到防災教育，每一個工具都以產品級標準交付，免費且開源。
-            </p>
-            <div className="mt-8 flex flex-col gap-3 md:flex-row">
-              <a href="#tools" className={buttonClass('primary', 'w-full md:w-auto')}>
-                看看我做的工具
-              </a>
-              <Link to="/contact/" className={buttonClass('secondary', 'w-full md:w-auto')}>
-                和我聊專案
-              </Link>
+          <div className="relative flex min-h-[calc(100svh-152px)] flex-col justify-center lg:min-h-0">
+            {/* 文字容器 z-index 1、chips z-index 0（S2：chips 置於文字之下）。 */}
+            <div className="relative z-[1] flex flex-col">
+              {/* self-start：flex column 下維持 chip 內容寬（不被 stretch 撐滿）。 */}
+              <p className="inline-flex items-center gap-2 self-start rounded-chip bg-primary-bg px-3.5 py-1.5 text-overline uppercase text-primary-strong">
+                <span className="size-2 rounded-full bg-success" aria-hidden="true" />
+                OPEN SOURCE · 台灣
+              </p>
+              {/* S1：H1 整體單一 spring（僅 translateY、透明度恆 1）。
+                  不拆詞段——inline-block 詞段會把 H1 文字拆成多個小 LCP 候選，
+                  使 LCP 被副文段落搶走，違反 8.1 不可動搖約束「LCP=H1」（實測驗證）。 */}
+              <h1 id="hero-heading" className="intro-h1 mt-4 text-display text-text">
+                把好想法，
+                <br />
+                做成<span className="text-primary-strong">好工具</span>。
+              </h1>
+              <p className="intro-follow mt-5 max-w-none text-body text-text-muted lg:max-w-[30ch]">
+                我是{APP_INFO.author}
+                。從匯率、分帳到防災教育，每一個工具都以產品級標準交付，免費且開源。
+              </p>
+              <div className="intro-follow mt-8 flex flex-col gap-3 md:flex-row">
+                <a href="#tools" className={buttonClass('primary', 'w-full md:w-auto')}>
+                  看看我做的工具
+                </a>
+                <Link
+                  to="/contact/"
+                  viewTransition
+                  className={buttonClass('secondary', 'w-full md:w-auto')}
+                >
+                  和我聊專案
+                </Link>
+              </div>
             </div>
+            <HeroChips />
           </div>
           <HeroStage />
         </div>
@@ -222,6 +234,7 @@ export default function Home() {
               </p>
               <Link
                 to="/contact/"
+                viewTransition
                 className={buttonClass(
                   'banner',
                   'mt-3 w-full max-w-[360px] md:w-auto md:max-w-none',

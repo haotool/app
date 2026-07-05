@@ -193,7 +193,11 @@ export default function About() {
               聯繫方式
             </h2>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-              <Link to="/contact/" className={buttonClass('primary', 'w-full md:w-auto')}>
+              <Link
+                to="/contact/"
+                viewTransition
+                className={buttonClass('primary', 'w-full md:w-auto')}
+              >
                 聯繫我
               </Link>
               <GhostLink href={APP_INFO.github} external>

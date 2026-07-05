@@ -56,17 +56,50 @@ describe('design tokens 對照（NFR-006）', () => {
     expect(tokenValue(token)).toBe(expected);
   });
 
-  it('唯一安靜陰影值與全站唯一 easing', () => {
+  it('唯一安靜陰影值與全站唯一 bezier', () => {
     expect(tokenValue('--shadow-quiet')).toBe('0 1px 2px rgb(15 23 42 / 0.04)');
     expect(tokenValue('--ease-out-quart')).toBe('cubic-bezier(0.16, 1, 0.3, 1)');
   });
 
-  it('動效時長 tokens 對齊 brief §2', () => {
+  it('動效時長 tokens 對齊 brief §2（M8：--dur-count 廢止，odometer 取代）', () => {
     expect(tokenValue('--dur-tap')).toBe('120ms');
     expect(tokenValue('--dur-hover')).toBe('200ms');
     expect(tokenValue('--dur-reveal')).toBe('480ms');
     expect(tokenValue('--stagger')).toBe('70ms');
-    expect(tokenValue('--dur-count')).toBe('1200ms');
+    expect(css).not.toContain('--dur-count:');
+    expect(tokenValue('--dur-odometer')).toBe('900ms');
+    expect(tokenValue('--stagger-digit')).toBe('60ms');
+  });
+
+  it('三檔 spring token（M6）：基線回落唯一 bezier、linear() 於 @supports 覆寫', () => {
+    // 基線宣告（不支援 linear() 的環境）指向唯一 bezier。
+    expect(tokenValue('--ease-spring-tap')).toBe('var(--ease-out-quart)');
+    expect(tokenValue('--ease-spring-reveal')).toBe('var(--ease-out-quart)');
+    expect(tokenValue('--ease-spring-hero')).toBe('var(--ease-out-quart)');
+    // @supports 覆寫存在且為 motion-deep-dive §1.1 定稿控制點。
+    expect(css).toContain(
+      '--ease-spring-tap: linear(0, 0.55 25%, 0.92 45%, 1.03 62%, 0.99 80%, 1)',
+    );
+    expect(css).toContain(
+      '--ease-spring-reveal: linear(0, 0.4 18%, 0.78 38%, 0.94 60%, 0.99 80%, 1)',
+    );
+    expect(css).toContain(
+      '--ease-spring-hero: linear(0, 0.29 12%, 0.71 24%, 0.94 36%, 1.06 52%, 1.01 70%, 0.99 84%, 1)',
+    );
+  });
+
+  it('wave-A 動效 tokens（S1/S2/S5/S6）', () => {
+    expect(tokenValue('--dur-press-release')).toBe('320ms');
+    expect(tokenValue('--dur-intro-word')).toBe('560ms');
+    expect(tokenValue('--dur-intro-char')).toBe('480ms');
+    expect(tokenValue('--dur-vt')).toBe('240ms');
+    expect(tokenValue('--dur-vt-out')).toBe('200ms');
+    expect(tokenValue('--dur-pill-slide')).toBe('250ms');
+    expect(tokenValue('--stagger-word')).toBe('45ms');
+    expect(tokenValue('--stagger-char')).toBe('30ms');
+    expect(tokenValue('--drift-a')).toBe('9s');
+    expect(tokenValue('--drift-b')).toBe('11.5s');
+    expect(tokenValue('--drift-c')).toBe('14s');
   });
 });
 

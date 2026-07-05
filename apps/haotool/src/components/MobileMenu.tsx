@@ -64,7 +64,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
       inert={!open}
     >
       <div className="flex h-16 shrink-0 items-center justify-between px-5">
-        <Link to="/" className="focus-ring press hover:opacity-80" onClick={onClose}>
+        <Link to="/" viewTransition className="focus-ring press hover:opacity-80" onClick={onClose}>
           <span className="sr-only">{APP_INFO.shortName} 首頁</span>
           <Wordmark />
         </Link>
@@ -84,6 +84,7 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
             <li key={item.to} className="border-b border-border">
               <Link
                 to={item.to}
+                viewTransition
                 onClick={onClose}
                 className="press focus-ring-inset flex h-14 items-center px-5 text-[22px] font-bold text-text hover:bg-background active:bg-background"
               >
@@ -103,7 +104,12 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
         >
           GitHub
         </a>
-        <Link to="/contact/" onClick={onClose} className={buttonClass('primary', 'w-full')}>
+        <Link
+          to="/contact/"
+          viewTransition
+          onClick={onClose}
+          className={buttonClass('primary', 'w-full')}
+        >
           聊聊你的專案
         </Link>
       </div>

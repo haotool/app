@@ -33,15 +33,21 @@ export default function Header() {
 
   return (
     <>
+      {/* site-header：S6 View Transition 獨立快照（轉場中導航列恆常穩定）。 */}
       <header
-        className={`sticky top-0 z-(--z-header) border-b border-border bg-surface transition-shadow duration-200 ${
+        className={`site-header sticky top-0 z-(--z-header) border-b border-border bg-surface transition-shadow duration-200 ${
           scrolled ? 'shadow-quiet' : ''
         }`}
       >
         <div className="shell flex h-16 items-center justify-between">
-          <Link to="/" className="press focus-ring inline-flex items-center hover:opacity-80">
+          <Link
+            to="/"
+            viewTransition
+            className="press focus-ring inline-flex items-center hover:opacity-80"
+          >
             <span className="sr-only">{APP_INFO.shortName} 首頁</span>
-            <Wordmark />
+            {/* 僅 Header 實例參與 S1 開場動畫（M1）；Footer/MobileMenu 維持 SVG。 */}
+            <Wordmark variant="animated" />
           </Link>
 
           <nav aria-label="主導覽" className="hidden md:block">
@@ -50,6 +56,7 @@ export default function Header() {
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
+                    viewTransition
                     className={({ isActive }) =>
                       `press focus-ring inline-flex h-11 items-center text-[15px] active:opacity-80 ${
                         isActive
