@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+120
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-seo-copy-design-brief-docs
+- 原因：E5 wave-A（SEO copy 四層架構與金額頁 v2）開工，設計簡報需納入版控供 PR 勾稽與後續 wave 溯源
+- 解法：將 PM 設計簡報 `git add -f` 進 `.claude/prds/`，作為本 epic 的 SSOT 依據
 
 - 日期：2026-07-05
 - ID：penalty-rw-e1-primary-strong-utility-not-generated
