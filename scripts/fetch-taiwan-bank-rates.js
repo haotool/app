@@ -25,6 +25,11 @@ const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
 
+// 數值熔斷：CURRENCY_MAP 19 幣、正常 17 幣有現金賣出；低於 15 視為來源資料異常。
+const MIN_CURRENCY_COUNT = 15;
+// 突變熔斷預設閾值：單日匯率變動超過 15% 視為垃圾資料（可由 env 覆寫）。
+const DEFAULT_MUTATION_THRESHOLD = 0.15;
+
 class AbortError extends Error {
   constructor(message, status) {
     super(message);
@@ -279,6 +284,59 @@ async function fetchTaiwanBankRates() {
   throw new Error('Failed to fetch Taiwan Bank rates after maximum retries');
 }
 
+/** 解析突變熔斷閾值：env RATE_MUTATION_THRESHOLD 優先，非法值回落預設 0.15。 */
+function resolveMutationThreshold(env = process.env) {
+  const parsed = Number.parseFloat(env.RATE_MUTATION_THRESHOLD ?? '');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MUTATION_THRESHOLD;
+}
+
+/**
+ * 寫檔前數值熔斷（純函式，網路與 CSV 檔案模式共用）：
+ * 1. 幣別數 < minCurrencyCount → 來源資料不完整，拒寫。
+ * 2. 任一共同幣別相對舊檔變動 > mutationThreshold → 疑似垃圾資料，拒寫並列出異常幣別。
+ * previousRates 為 null（首次寫入/舊檔損毀）時跳過突變檢查。
+ */
+function assertRatesIntegrity(
+  newRates,
+  previousRates,
+  { minCurrencyCount = MIN_CURRENCY_COUNT, mutationThreshold = resolveMutationThreshold() } = {},
+) {
+  const currencyCount = Object.keys(newRates ?? {}).length;
+  if (currencyCount < minCurrencyCount) {
+    throw new AbortError(
+      `Currency count circuit breaker: parsed ${currencyCount} currencies (< ${minCurrencyCount}); refusing to write suspicious data`,
+    );
+  }
+
+  if (!previousRates) return;
+
+  const mutations = [];
+  for (const [currency, oldValue] of Object.entries(previousRates)) {
+    const newValue = newRates[currency];
+    if (typeof oldValue !== 'number' || typeof newValue !== 'number' || oldValue <= 0) continue;
+    const changeRatio = Math.abs(newValue - oldValue) / oldValue;
+    if (changeRatio > mutationThreshold) {
+      mutations.push(`${currency}: ${oldValue} → ${newValue} (${(changeRatio * 100).toFixed(1)}%)`);
+    }
+  }
+
+  if (mutations.length > 0) {
+    throw new AbortError(
+      `Rate mutation circuit breaker (>${(mutationThreshold * 100).toFixed(0)}%): ${mutations.join('; ')}`,
+    );
+  }
+}
+
+/** 讀取既有 latest.json 的 rates；檔案不存在或損毀時回傳 null（跳過突變檢查）。 */
+function readPreviousRates() {
+  try {
+    const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    return oldData && typeof oldData.rates === 'object' ? oldData.rates : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * 檢查匯率是否有變化
  */
@@ -333,6 +391,9 @@ async function main() {
     // 抓取匯率
     console.log('📡 Fetching data from Taiwan Bank...');
     const ratesData = await fetchTaiwanBankRates();
+
+    // 寫檔前數值熔斷：幣別數不足或匯率突變超閾值時拒寫垃圾資料。
+    assertRatesIntegrity(ratesData.rates, readPreviousRates());
 
     // 檢查是否有變化
     console.log('🔍 Checking for rate changes...');
@@ -399,4 +460,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { fetchTaiwanBankRates, parseTaiwanBankCSV };
+export { fetchTaiwanBankRates, parseTaiwanBankCSV, assertRatesIntegrity, resolveMutationThreshold };
