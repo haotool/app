@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-07-04T10:06:26.141Z",
-  "updateTime": "2026/07/04 19:06:26",
+  "timestamp": "2026-07-05T00:12:37.564Z",
+  "updateTime": "2026/07/05 09:12:37",
   "source": "MoneyBox (明洞換匯所聯盟)",
   "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
   "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -49,8 +49,8 @@
     "TWD": {
       "currency": "TWD",
       "base": 47.9,
-      "buy": 46.6,
-      "sell": 45.5,
+      "buy": 46.3,
+      "sell": 45.9,
       "spbuy": 54.17,
       "spsell": 43.11
     },
@@ -74,7 +74,7 @@
       "currency": "PHP",
       "base": 24.93,
       "buy": 25.4,
-      "sell": 25.1,
+      "sell": 25,
       "spbuy": 27.42,
       "spsell": 22.89
     },
@@ -97,7 +97,7 @@
     "VND": {
       "currency": "VND",
       "base": 5.83,
-      "buy": 6.1,
+      "buy": 6.15,
       "sell": 5.8,
       "spbuy": 6.51,
       "spsell": 5.15
@@ -106,7 +106,7 @@
       "currency": "AUD",
       "base": 1061.67,
       "buy": 1060,
-      "sell": 1045,
+      "sell": 1048,
       "spbuy": 1082.58,
       "spsell": 1040.76
     },

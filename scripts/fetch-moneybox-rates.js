@@ -25,6 +25,15 @@ const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 5000;
 const RATE_QUOTE_FIELDS = ['base', 'buy', 'sell', 'spbuy', 'spsell'];
 
+// 數值熔斷：MoneyBox 正常回傳十餘種幣別；低於 5 視為來源資料異常。
+const MIN_CURRENCY_COUNT = 5;
+// TWD.sell 合理區間（KRW/TWD）：近年匯率約 40-50（目前 ~45.9），30-70 已含大幅波動緩衝；
+// 超出區間多半是 API 欄位錯位或單位改變，拒寫。
+const TWD_SELL_MIN = 30;
+const TWD_SELL_MAX = 70;
+// 突變熔斷預設閾值：TWD.sell 單次變動超過 15% 視為垃圾資料（可由 env 覆寫）。
+const DEFAULT_MUTATION_THRESHOLD = 0.15;
+
 class AbortError extends Error {
   constructor(message, status) {
     super(message);
@@ -191,6 +200,59 @@ async function fetchMoneyBoxRates() {
   throw new Error('Failed to fetch MoneyBox rates after maximum retries');
 }
 
+/** 解析突變熔斷閾值：env RATE_MUTATION_THRESHOLD 優先，非法值回落預設 0.15。 */
+function resolveMutationThreshold(env = process.env) {
+  const parsed = Number.parseFloat(env.RATE_MUTATION_THRESHOLD ?? '');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MUTATION_THRESHOLD;
+}
+
+/**
+ * 寫檔前數值熔斷（純函式）：
+ * 1. 幣別數 < minCurrencyCount → 來源資料不完整，拒寫。
+ * 2. TWD.sell 不在 30-70 KRW/TWD 合理區間 → 疑似欄位錯位/單位改變，拒寫。
+ * 3. TWD.sell 相對舊檔變動 > mutationThreshold → 疑似垃圾資料，拒寫。
+ * previousRates 為 null（首次寫入/舊檔損毀）時跳過突變檢查。
+ */
+function assertMoneyBoxRatesIntegrity(
+  newRates,
+  previousRates,
+  { minCurrencyCount = MIN_CURRENCY_COUNT, mutationThreshold = resolveMutationThreshold() } = {},
+) {
+  const currencyCount = Object.keys(newRates ?? {}).length;
+  if (currencyCount < minCurrencyCount) {
+    throw new AbortError(
+      `Currency count circuit breaker: parsed ${currencyCount} currencies (< ${minCurrencyCount}); refusing to write suspicious data`,
+    );
+  }
+
+  const twdSell = newRates?.TWD?.sell;
+  if (typeof twdSell !== 'number' || twdSell < TWD_SELL_MIN || twdSell > TWD_SELL_MAX) {
+    throw new AbortError(
+      `TWD.sell sanity circuit breaker: ${twdSell} is outside plausible range ${TWD_SELL_MIN}-${TWD_SELL_MAX} KRW/TWD; refusing to write suspicious data`,
+    );
+  }
+
+  const previousTwdSell = previousRates?.TWD?.sell;
+  if (typeof previousTwdSell === 'number' && previousTwdSell > 0) {
+    const changeRatio = Math.abs(twdSell - previousTwdSell) / previousTwdSell;
+    if (changeRatio > mutationThreshold) {
+      throw new AbortError(
+        `Rate mutation circuit breaker (>${(mutationThreshold * 100).toFixed(0)}%): TWD.sell ${previousTwdSell} → ${twdSell} (${(changeRatio * 100).toFixed(1)}%)`,
+      );
+    }
+  }
+}
+
+/** 讀取既有 latest.json 的 rates；檔案不存在或損毀時回傳 null（跳過突變檢查）。 */
+function readPreviousRates() {
+  try {
+    const oldData = JSON.parse(readFileSync(OUTPUT_FILE, 'utf8'));
+    return oldData && typeof oldData.rates === 'object' ? oldData.rates : null;
+  } catch {
+    return null;
+  }
+}
+
 function listRateChanges(oldRates = {}, newRates = {}) {
   const currencies = Array.from(
     new Set([...Object.keys(oldRates), ...Object.keys(newRates)]),
@@ -322,6 +384,10 @@ async function main() {
     // 抓取匯率
     console.log('📡 Fetching data from MoneyBox API...');
     const ratesData = await fetchMoneyBoxRates();
+
+    // 寫檔前數值熔斷：幣別數不足、TWD.sell 超出合理區間或突變超閾值時拒寫垃圾資料。
+    assertMoneyBoxRatesIntegrity(ratesData.rates, readPreviousRates());
+
     writeCurrentFetchSnapshot(ratesData);
 
     // 檢查是否有變化
@@ -394,3 +460,4 @@ export { fetchMoneyBoxRates };
 export { listRateChanges };
 export { needsSchemaMigration };
 export { extractSeoulSnapshotDate, shouldRefreshLatestSnapshot };
+export { assertMoneyBoxRatesIntegrity, resolveMutationThreshold };
