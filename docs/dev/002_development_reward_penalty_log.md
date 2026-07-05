@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+146
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-e5b-currency-page-uiux-six-section-ia
+- 原因：34 幣別頁＋金額頁為牆文式段落佈局、視覺語言與 app 端割裂且行動版缺底部導覽，未達韓系 app 水準（E5 wave-B）
+- 解法：重排六段 IA（Answer Hero→報價對比→階梯列表→在地情境卡→FAQ 手風琴→相關連結）共用 presentational 元件組並換 ContentPageLayout 骨架，新增 verify-visible-text-parity 腳本證明 34 頁 dist 可見文字集合等價（純呈現層零文案變動）
 
 - 日期：2026-07-06
 - ID：reward-haotool-e2-final-review-fixes
