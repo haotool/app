@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+111
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+111
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-multi-ratetype-aria-pressed-misuse
+- 原因：觸控目標 hotfix 給「循環切換到下一選項」的 cycle button 加上恆為 true 的 aria-pressed，screen reader 永遠唸「已按下」，把非 toggle 鈕誤標為 on/off toggle（review Should-fix 抓出）
+- 解法：移除 aria-pressed（動作語意由 aria-label「切換到現金」等完整表達），測試改斷言不得帶 aria-pressed 並附註解，另補 -my-[15px] 數值推導註解防後人改壞
+
+- 日期：2026-07-05
+- ID：reward-rw-multi-ratetype-touch-target
+- 原因：/multi 匯率類型切換為 text-[11px] 純文字按鈕，實測觸控目標 22×13.8px（WCAG 2.5.8 最低 24px、repo 標準 44px），且與旁邊靜態匯率文字無區隔，可切換性不可發現
+- 解法：切換鈕改 min-h-11/min-w-11 觸控目標（負 margin 保持列高）＋ bg-primary/10 chip 選中態（zen 7.79:1、nitro 10.82:1 對比）＋ aria-pressed 與 focus ring，390×844 preview 實測 44×44px，新增觸控目標與 aria 測試斷言
 
 - 日期：2026-07-05
 - ID：reward-rw-sw-cold-nav-4xx-shell-fallback

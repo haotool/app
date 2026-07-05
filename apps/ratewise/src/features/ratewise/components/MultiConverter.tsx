@@ -312,17 +312,23 @@ export const MultiConverter = ({
                       const canToggle = availability.availableCount > 1 && nextOption !== null;
 
                       return canToggle ? (
+                        // 負 margin 讓 44px 觸控目標不撐高列高（WCAG 2.5.8）。
+                        // -my-[15px] = (min-h-11 44px − 行高 14px) / 2；行高 = text-[11px] × leading-tight 1.25。
+                        // 改 min-h、字級或 leading 時需同步重算，否則列高會被撐開。
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleUnifiedToggle(code);
                           }}
-                          className="font-semibold text-primary-dark hover:text-primary-darker transition-colors"
+                          className="group/ratetype relative -my-[15px] inline-flex min-h-11 min-w-11 items-center justify-center align-middle focus-visible:outline-none"
                           aria-label={t('multiConverter.switchToNextRate', {
                             next: getOptionLabel(nextOption),
                           })}
                         >
-                          {getOptionLabel(availability.current)}
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary-dark transition-all group-hover/ratetype:bg-primary/15 group-hover/ratetype:text-primary-darker group-active/ratetype:scale-95 group-focus-visible/ratetype:ring-2 group-focus-visible/ratetype:ring-primary/50">
+                            {getOptionLabel(availability.current)}
+                          </span>
                         </button>
                       ) : (
                         <RateTypeTooltip
