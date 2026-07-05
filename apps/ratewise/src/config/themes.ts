@@ -247,8 +247,8 @@ const kawaiiStyle: StyleDefinition = {
     // 溫暖粉嫩
     background: '255 250 244', // warm cream
     surface: '255 255 255',
-    text: '142 124 128', // muted pink-brown
-    textMuted: '180 160 165',
+    text: '107 74 82', // deep pink-brown（對 background 7.42:1，AA）
+    textMuted: '126 92 100', // 對 background 5.62:1，AA
     primary: '255 105 180', // hot pink
     primaryStrong: '219 39 119', // pink-600（白字 AA 對比）
     secondary: '236 72 153', // pink-500
@@ -442,7 +442,7 @@ export const STYLE_OPTIONS: {
     labelEn: 'Kawaii',
     description: '可愛粉嫩',
     previewBg: 'rgb(255, 250, 244)',
-    previewText: 'rgb(142, 124, 128)',
+    previewText: 'rgb(107, 74, 82)',
     previewAccent: 'rgb(255, 105, 180)',
   },
   {

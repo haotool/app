@@ -970,8 +970,8 @@
     /* 核心語義色彩 */
     --color-background: 255 250 244; /* warm cream */
     --color-surface: 255 255 255;
-    --color-text: 142 124 128; /* muted pink-brown */
-    --color-text-muted: 180 160 165;
+    --color-text: 107 74 82; /* deep pink-brown（對 background 7.42:1，AA） */
+    --color-text-muted: 126 92 100; /* 對 background 5.62:1，AA */
     --color-primary: 255 105 180; /* hot pink */
     --color-primary-strong: 219 39 119; /* pink-600（白字 AA 對比） */
     --color-secondary: 236 72 153; /* pink-500 */
@@ -1104,7 +1104,7 @@
 
     /* 數字鍵 - 淺玫瑰色背景（接近白色但帶粉調） */
     --color-calc-number: 255 251 252; /* rose-50 lighter - 比純白柔和 */
-    --color-calc-number-text: 142 124 128; /* muted pink-brown */
+    --color-calc-number-text: 107 74 82; /* deep pink-brown（同 --color-text） */
     --color-calc-number-hover: 255 241 242; /* rose-50 */
     --color-calc-number-active: 255 228 230; /* rose-100 */
 
