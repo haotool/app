@@ -57,7 +57,8 @@ function AppLazyGlobalPrompts({
   return (
     <React.Suspense fallback={null}>
       <LazyOfflineIndicator />
-      <LazyUpdatePrompt />
+      {/* 側欄 w-64：md+ 傳一半寬度讓更新提示錨定主欄置中，不再壓在視窗中線偏左。 */}
+      <LazyUpdatePrompt centerOffset="8rem" />
       <LazyRatingModal {...ratingPrompt} />
       <LazyPwaInstallGuide />
     </React.Suspense>

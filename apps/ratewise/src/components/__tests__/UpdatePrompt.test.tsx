@@ -149,12 +149,13 @@ describe('UpdatePrompt - 5 個狀態', () => {
     expect(sourceCode).toContain('setUpdateFailed');
   });
 
-  it('should have registrationFailed state for service worker registration errors', async () => {
+  it('should track registration failures via the swRegistration singleton (#593 熱迴圈防護)', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('registrationFailed');
-    expect(sourceCode).toContain('setRegistrationFailed');
-    expect(sourceCode).toContain('onRegisterError');
-    expect(sourceCode).toContain('setRegistrationFailed(true)');
+    // 註冊改由模組層單例管理：render attempt 不得產生 registerSW 副作用。
+    expect(sourceCode).toContain('ensureSwRegistration');
+    expect(sourceCode).toContain('useSyncExternalStore');
+    expect(sourceCode).not.toContain('useRegisterSW');
   });
 
   it('should render support links when registration or update fails', async () => {
