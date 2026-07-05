@@ -355,7 +355,7 @@ async function handleNavigationRequest({
   const networkFetch = fetchAndCacheNavigation(request, cache);
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await Promise.race([
+    const networkResponse = await Promise.race([
       networkFetch,
       new Promise<never>((_, reject) => {
         timeoutId = setTimeout(
@@ -364,14 +364,15 @@ async function handleNavigationRequest({
         );
       }),
     ]);
-  } catch {
-    // 離線或 timeout：保留背景寫入，回退 precache index.html shell；
-    // precache 也 miss（iOS eviction）才走 offline.html 兜底鏈。
-    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
-    const precachedShell = await matchPrecache('index.html');
-    if (precachedShell) {
-      return precachedShell;
+    // 4xx/5xx（如 Cloudflare stale edge 404）不可直接服給用戶：回退 shell 由 client render。
+    // status 0（opaque）視同可用，與 fetchAndCacheNavigation 的可快取判斷一致。
+    if (networkResponse.status === 0 || networkResponse.ok) {
+      return networkResponse;
     }
+    return resolveNavigationFallback();
+  } catch {
+    // 離線或 timeout：保留背景寫入，回退 precache index.html → offline.html 兜底鏈。
+    event.waitUntil(networkFetch.then(() => undefined).catch(() => undefined));
     return resolveNavigationFallback();
   } finally {
     if (timeoutId !== undefined) {

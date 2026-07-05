@@ -621,6 +621,65 @@ describe('handleNavigationRequest', () => {
     }
   });
 
+  it('cold cache 200 response returns network HTML and writes html-cache', async () => {
+    const networkHtml = '<html>network fresh 200</html>';
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockResolvedValue(null);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(networkHtml, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        }),
+      ),
+    );
+
+    const handler = navigationHandlerRef.current!;
+    const response = await handler({
+      event: createNavigationEvent(),
+      request: new Request(navigationUrl),
+    });
+
+    expect(await response.text()).toBe(networkHtml);
+    expect(htmlCache.put).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([404, 503])(
+    'cold cache %i response falls back to precache shell without caching',
+    async (status) => {
+      const precachedShell = new Response('<html>precached index</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+
+      htmlCache.match.mockResolvedValue(undefined);
+      matchPrecacheMock.mockImplementation((url: string) =>
+        Promise.resolve(url === 'index.html' ? precachedShell : null),
+      );
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(
+          new Response(`<html>edge error ${String(status)}</html>`, {
+            status,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }),
+        ),
+      );
+
+      const handler = navigationHandlerRef.current!;
+      const response = await handler({
+        event: createNavigationEvent(),
+        request: new Request(navigationUrl),
+      });
+
+      // Cloudflare stale edge 404 等錯誤頁不得服給用戶，且不得污染 html-cache。
+      expect(response).toBe(precachedShell);
+      expect(htmlCache.put).not.toHaveBeenCalled();
+    },
+  );
+
   it('case 3: timeout fallback still waitUntils late network fetch to html-cache', async () => {
     vi.useFakeTimers();
 

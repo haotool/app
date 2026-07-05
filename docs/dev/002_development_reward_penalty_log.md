@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+110
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+111
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-sw-cold-nav-4xx-shell-fallback
+- 原因：冷導覽 network-first 首版只處理網路失敗/timeout，fetch resolve 但 4xx/5xx（如文件化的 Cloudflare stale edge 404）會把錯誤頁直接服給用戶（adversarial review blocking）
+- 解法：非 2xx/opaque 一律回退既有 resolveNavigationFallback 兜底鏈且不寫 html-cache；補 404/503/200 單元測試與「冷快取在線導覽深層路由服出 per-route HTML」e2e；catch 兜底收斂為既有 fallback helper 消除重複 lookup
 
 - 日期：2026-07-05
 - ID：reward-rw-sw-cold-nav-hydration-fix
