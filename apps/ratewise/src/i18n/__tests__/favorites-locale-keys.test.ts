@@ -22,4 +22,16 @@ describe('favorites 區段 i18n key 存在性', () => {
   it('zh-TW 的 favorites.baseCurrency 為「基準幣」', () => {
     expect(zhTW.favorites.baseCurrency).toBe('基準幣');
   });
+
+  it.each(Object.entries(locales))(
+    '%s 語系 favorites.starToReorderHint 存在且非空',
+    (_lng, locale) => {
+      expect(locale.favorites.starToReorderHint).toBeTruthy();
+      expect(typeof locale.favorites.starToReorderHint).toBe('string');
+    },
+  );
+
+  it('zh-TW 的 favorites.starToReorderHint 為「加入收藏後即可拖曳排序」', () => {
+    expect(zhTW.favorites.starToReorderHint).toBe('加入收藏後即可拖曳排序');
+  });
 });

@@ -257,7 +257,7 @@ export default function Favorites() {
                         <Fragment key={code}>
                           {index === firstNonFavoriteIndex && (
                             <p
-                              className="px-2 pt-3 pb-1 text-2xs opacity-40 font-medium"
+                              className="px-2 pt-3 pb-1 text-2xs opacity-60 font-medium"
                               data-testid="star-to-reorder-hint"
                             >
                               {t('favorites.starToReorderHint')}
