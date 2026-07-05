@@ -1,0 +1,39 @@
+diff --git a/dist/client/single-page.mjs b/dist/client/single-page.mjs
+index 8a1d522..e1712a4 100644
+--- a/dist/client/single-page.mjs
++++ b/dist/client/single-page.mjs
+@@ -60,7 +60,7 @@ function ViteReactSSG(App, fn, options = {}) {
+       window.__VITE_REACT_SSG_CONTEXT__ = context;
+       const app = /* @__PURE__ */ jsx(HelmetProvider, { children: App });
+       const isSSR = document.querySelector("[data-server-rendered=true]") !== null;
+-      if (!isSSR && process.env.NODE_ENV === "development") {
++      if (!isSSR) {
+         render(app, container, options);
+       } else {
+         hydrate(app, container, options);
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 6a969ba..bb5fb38 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -144,7 +144,7 @@ function ViteReactSSG(routerOptions, fn, options = {}) {
+       const { router } = context;
+       const app = /* @__PURE__ */ jsx(HelmetProvider, { children: /* @__PURE__ */ jsx(RouterProvider, { router, future: { v7_startTransition } }) });
+       const isSSR = document.querySelector("[data-server-rendered=true]") !== null;
+-      if (!isSSR && process.env.NODE_ENV === "development") {
++      if (!isSSR) {
+         render(app, container, options);
+       } else {
+         hydrate(app, container, options);
+diff --git a/dist/tanstack.mjs b/dist/tanstack.mjs
+index 6ec0430..2806a14 100644
+--- a/dist/tanstack.mjs
++++ b/dist/tanstack.mjs
+@@ -122,7 +122,7 @@ function Experimental_ViteReactSSG(routerOptions, fn, options = {}) {
+       window.__VITE_REACT_SSG_CONTEXT__ = context;
+       const { router } = context;
+       const isSSR = document.querySelector("[data-server-rendered=true]") !== null;
+-      if (!isSSR && process.env.NODE_ENV === "development") {
++      if (!isSSR) {
+         render(
+           /* @__PURE__ */ jsx(HelmetProvider, { children: /* @__PURE__ */ jsx(RouterProvider, { router }) }),
+           container,
