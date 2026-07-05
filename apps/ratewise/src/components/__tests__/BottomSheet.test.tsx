@@ -101,6 +101,19 @@ describe('BottomSheet primitive', () => {
     expect(className).toContain('shadow-floating');
     expect(className).not.toContain('bg-gradient');
   });
+
+  it('≥md 寬視口限寬置中＋四邊圓角，手機基底維持貼底全寬（#588）', () => {
+    renderSheet();
+    const className = screen.getByTestId('test-sheet').className;
+    // 寬視口：max-width 置中、四邊圓角、離底留距
+    expect(className).toContain('md:max-w-screen-sm');
+    expect(className).toContain('md:mx-auto');
+    expect(className).toContain('md:rounded-card');
+    expect(className).toContain('md:bottom-6');
+    // 手機基底不變：貼底全寬、雙上圓角
+    expect(className).toContain('inset-x-0');
+    expect(className).toContain('bottom-0');
+  });
 });
 
 describe('BottomSheet modal 鍵盤可及性（#577）', () => {

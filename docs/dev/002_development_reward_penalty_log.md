@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+133
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+134
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-596-review-audit-number-and-comment
+- 原因：PR #596 body 將三檔合跑的 43/43 誤標為 `vitest run BottomSheet` 結果（單檔實為 10/10），且 120% 位移缺推導註解易被誤改回 100%
+- 解法：PR body 更正為單檔 10/10 並註明 43/43 的確切指令，兩處 `y: '120%'` 補繁中推導註解（md:bottom-6 退場殘留）
+
+- 日期：2026-07-06
+- ID：reward-rw-sheet-wide-viewport-588
+- 原因：BottomSheet primitive 與 CalculatorKeyboard 沿用手機貼底全寬 pattern，桌面 1440 與 iPad 12.9" 橫向 sheet 拉滿 100vw（#588、#594 第一階段）
+- 解法：兩處殼層加 `md:max-w-screen-sm md:mx-auto md:rounded-card md:bottom-6` 寬視口限寬置中（進出場位移 100%→120% 補離底間距），消費端零改動，新增寬視口樣式斷言
 
 - 日期：2026-07-06
 - ID：penalty-rw-560-langsync-remount-rollback
