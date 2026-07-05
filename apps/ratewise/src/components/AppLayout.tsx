@@ -20,6 +20,7 @@ import { performFullRefresh } from '../utils/swUtils';
 import { useUrlNormalization } from '../hooks/useUrlNormalization';
 import { NonCriticalLazyBoundary } from './NonCriticalLazyBoundary';
 import { PwaAppReadyBeacon } from './PwaAppReadyBeacon';
+import { LanguagePreferenceSync } from './LanguagePreferenceSync';
 import { BrandWordmark } from './BrandWordmark';
 import { BrandMark } from './BrandMark';
 import { SplashScreen } from './SplashScreen';
@@ -192,6 +193,7 @@ export function AppLayout() {
 
   return (
     <ToastProvider>
+      <LanguagePreferenceSync />
       <PwaAppReadyBeacon />
       {/* 品牌啟動頁：僅 PWA standalone 冷啟動顯示（瀏覽器/爬蟲不受影響） */}
       <SplashScreen />

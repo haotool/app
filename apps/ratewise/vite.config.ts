@@ -189,7 +189,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   // 自動生成版本號（語義化版本 + git metadata）
   const appVersion = generateVersion();
-  const buildTime = new Date().toISOString();
+  // vite-react-ssg 會在同一 process 內分別載入 client 與 SSR build 的 config；
+  // buildTime 必須跨兩次載入一致，否則 Footer「Built on」文字 SSG 與 client 不同觸發 #418。
+  const buildTime = (process.env['RATEWISE_BUILD_TIME'] ??= new Date().toISOString());
   const pwaRecoveryBootstrap = readFileSync(
     resolve(__dirname, 'src/bootstrap/pwa-recovery-bootstrap.js'),
     'utf-8',

@@ -546,6 +546,15 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       });
     });
 
+    it('SSG 導覽列必須以 zh-TW 預渲染（issue #560：Node navigator 為 en-US 不得洩入 SSG）', () => {
+      const settingsHtml = resolve(distPath, 'settings/index.html');
+      if (!existsSync(settingsHtml)) return;
+
+      const content = readFileSync(settingsHtml, 'utf-8');
+      expect(content).toContain('aria-label="主導覽列"');
+      expect(content).not.toContain('aria-label="Main Navigation"');
+    });
+
     it('All pages should have lang="zh-TW" attribute', () => {
       const pages = [
         resolve(distPath, 'index.html'),
