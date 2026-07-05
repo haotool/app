@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e1-primary-strong-utility-not-generated
+- 原因：bg-primary-strong 只加在 tailwind.config 的 primary 物件，但該鍵隨後被 semanticColors SSOT 展開覆蓋，utility 未生成導致選中 pill 白字透明底（截圖矩陣抓出）
+- 解法：strong 改定義於 semanticColors SSOT（design-tokens/colors.ts），格式對齊 theme-consistency 合約（無 fallback，parity 守門保證全主題有鍵），重建驗證 dist CSS 產出 .bg-primary-strong 並重跑截圖矩陣
 
 - 日期：2026-07-05
 - ID：reward-rw-e1-static-lint-guards

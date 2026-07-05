@@ -63,6 +63,9 @@ export const semanticColors = {
     'text-light': 'rgb(var(--color-primary-text-light) / <alpha-value>)',
     ring: 'rgb(var(--color-primary-ring) / <alpha-value>)',
     DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+    // 白字表面 AA 錨點：custom 主題由演算 clamp 保證對比 ≥4.5:1。
+    // 全主題皆定義 --color-primary-strong（theme-css-var-parity 守門），無需 fallback。
+    strong: 'rgb(var(--color-primary-strong) / <alpha-value>)',
     dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
     darker: 'rgb(var(--color-primary-darker) / <alpha-value>)',
     text: 'rgb(var(--color-primary-text) / <alpha-value>)',
