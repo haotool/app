@@ -106,6 +106,7 @@ const ja = {
     trendHonestRange: '履歴データは現在 {{days}} 日分のみで、不足期間は推定しません',
     trendEmpty: '履歴データがありません',
     close: '閉じる',
+    skeletonLoading: '等価2行換算を読み込み中...',
   },
 
   // Trend Chart

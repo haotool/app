@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+133
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+133
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-583-review-convergence-preheat-catch-i18n
+- 原因：PR #592 審查 APPROVE 附兩小項——模組層預熱 promise 未接 catch（弱網／換版舊 HTML 下 import 失敗會產生 unhandled rejection）、骨架 sr-only 文案硬編碼 zh-TW
+- 解法：預熱呼叫點補 `?.catch(() => {})`（函式回傳語意不變，lazy 首次渲染自行重試）、sr-only 改走 `converterV2.skeletonLoading` i18n key（×4 語系）並補 key 存在性測試
 
 - 日期：2026-07-06
 - ID：reward-rw-e3-v2-coldstart-preheat

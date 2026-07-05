@@ -71,7 +71,9 @@ export function preheatConverterV2Chunk(): Promise<unknown> | null {
   }
   return loadSingleConverterV2();
 }
-void preheatConverterV2Chunk();
+// 預熱失敗（弱網、換版後舊 HTML 引用失效 chunk）靜默吞掉：lazy 首次渲染會重試，
+// 交由 Suspense／ErrorBoundary 與全域 chunk-load 回復機制處理，避免 unhandled rejection。
+preheatConverterV2Chunk()?.catch(() => null);
 
 const CURRENCY_CODES = Object.keys(CURRENCY_DEFINITIONS) as CurrencyCode[];
 const MAX_TREND_DAYS = 30;

@@ -106,6 +106,7 @@ const ko = {
     trendHonestRange: '현재 {{days}}일치 데이터만 제공되며 부족 구간은 추정하지 않습니다',
     trendEmpty: '과거 데이터가 없습니다',
     close: '닫기',
+    skeletonLoading: '등가 2행 환산 불러오는 중...',
   },
 
   // Trend Chart

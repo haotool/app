@@ -5,7 +5,10 @@
  * 必須維持被 SingleConverter 靜態 import（不得併入 v2 lazy chunk）。
  */
 
+import { useTranslation } from 'react-i18next';
+
 export function ConverterV2Skeleton() {
+  const { t } = useTranslation();
   return (
     <div
       data-testid="converter-v2-skeleton"
@@ -61,7 +64,7 @@ export function ConverterV2Skeleton() {
         </div>
       </div>
 
-      <span className="sr-only">載入等值雙列換算中...</span>
+      <span className="sr-only">{t('converterV2.skeletonLoading')}</span>
     </div>
   );
 }

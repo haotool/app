@@ -106,6 +106,7 @@ const zhTW = {
     trendHonestRange: '目前歷史資料僅 {{days}} 天，不足期間不做推估',
     trendEmpty: '暫無歷史資料',
     close: '關閉',
+    skeletonLoading: '載入等值雙列換算中...',
   },
 
   // Trend Chart

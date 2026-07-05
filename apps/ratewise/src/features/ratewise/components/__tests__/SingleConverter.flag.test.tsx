@@ -9,6 +9,10 @@ import '@testing-library/jest-dom/vitest';
 import { SingleConverter, preheatConverterV2Chunk } from '../SingleConverter';
 import { useConverterStore } from '../../../../stores/converterStore';
 import type { CurrencyCode } from '../../types';
+import zhTW from '../../../../i18n/locales/zh-TW';
+import en from '../../../../i18n/locales/en';
+import ja from '../../../../i18n/locales/ja';
+import ko from '../../../../i18n/locales/ko';
 
 // Mock services（避免測試觸網）
 vi.mock('../../../../services/exchangeRateHistoryService', () => ({
@@ -110,4 +114,13 @@ describe('SingleConverter - converter-v2 flag gate', () => {
 
     expect(await screen.findByTestId('converter-v2')).toBeInTheDocument();
   });
+
+  // i18next 缺 key 時回傳 key 本身（truthy），screen reader 會唸出 raw key。
+  it.each(Object.entries({ 'zh-TW': zhTW, en, ja, ko }))(
+    '%s 語系 converterV2.skeletonLoading 存在且非空（骨架 sr-only 文案）',
+    (_lng, locale) => {
+      expect(locale.converterV2.skeletonLoading).toBeTruthy();
+      expect(typeof locale.converterV2.skeletonLoading).toBe('string');
+    },
+  );
 });

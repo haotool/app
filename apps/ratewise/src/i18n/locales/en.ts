@@ -106,6 +106,7 @@ const en = {
     trendHonestRange: 'Only {{days}} days of history available; missing range is not estimated',
     trendEmpty: 'No historical data yet',
     close: 'Close',
+    skeletonLoading: 'Loading dual-row converter...',
   },
 
   // Trend Chart
