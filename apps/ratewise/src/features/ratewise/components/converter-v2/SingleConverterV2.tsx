@@ -316,7 +316,7 @@ export const SingleConverterV2 = ({
         </div>
       </div>
 
-      {/* 常駐計算機：輸入目標＝活躍列，key remount 保證切列/交換後表達式重置 */}
+      {/* 常駐計算機：輸入目標＝活躍列；key remount 重置種子，掛載為唯讀、僅實際按鍵才回寫 */}
       <ConverterKeypad
         key={`${activeRow}-${keypadSession}`}
         initialValue={keypadSeed}

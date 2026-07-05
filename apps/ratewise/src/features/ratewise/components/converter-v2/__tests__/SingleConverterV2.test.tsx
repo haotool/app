@@ -159,6 +159,27 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(props.onToAmountChange).toHaveBeenLastCalledWith('31.581');
   });
 
+  it('回歸：切換活躍列多次且零按鍵，兩列數值與方向完全不變', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    // 來回切換活躍列 N 次（含 keypad remount），全程不按任何鍵。
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+      fireEvent.click(screen.getByTestId('converter-v2-amount-from'));
+    }
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    // 不得觸發任何金額回寫（回寫會使父層以捨入反推值改寫另一列並翻轉最後編輯方向）。
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('converter-v2-amount-from')).toHaveTextContent('1,000');
+    expect(screen.getByTestId('converter-v2-amount-to')).toHaveTextContent('31.58');
+  });
+
   it('含運算子表達式以引擎 preview 回寫（沿用既有計算引擎）', () => {
     const props = buildProps({ fromAmount: '100' });
     render(<SingleConverterV2 {...props} />);

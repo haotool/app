@@ -4,14 +4,14 @@
  * @see .claude/prds/ratewise-e3-converter-v2-design.md
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useCalculator } from '../../../calculator/hooks/useCalculator';
 import { lightHaptic, mediumHaptic } from '../../../calculator/utils/haptics';
 
 export interface ConverterKeypadProps {
-  /** 活躍列的種子值；父層以 key remount 保證切列時表達式重置。 */
+  /** 活躍列的種子值；僅掛載時讀取一次（父層以 key remount 重新播種），掛載後變更無效。 */
   initialValue: number;
   /** 鍵入後的即時等值（純數字直出、含運算子時取引擎 preview）。 */
   onValueChange: (value: number) => void;
@@ -67,13 +67,18 @@ function getKeyClassName(kind: KeypadKey['kind']): string {
 
 export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypadProps) {
   const { t } = useTranslation();
-  const { expression, preview, input, backspace, clear } = useCalculator(initialValue);
+  // 掛載時鎖定種子：初始同步為唯讀，回寫後的 prop 變更不得重置進行中的表達式。
+  const [seedValue] = useState(initialValue);
+  const { expression, preview, input, backspace, clear } = useCalculator(seedValue);
   const lastSentRef = useRef<number | null>(null);
+  // 回寫閘門：僅實際按鍵後開啟；切換活躍列／swap 的 remount 不得以捨入反推值改寫另一列。
+  const hasUserInputRef = useRef(false);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
 
   // 鍵入即時回寫活躍列：純數字直接送出，含運算子時等引擎 preview（50ms 防抖）。
   useEffect(() => {
+    if (!hasUserInputRef.current) return;
     const trimmed = expression.trim();
     let live: number | null = null;
 
@@ -104,6 +109,7 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
     longPressFiredRef.current = false;
     longPressTimerRef.current = window.setTimeout(() => {
       longPressFiredRef.current = true;
+      hasUserInputRef.current = true;
       mediumHaptic();
       clear();
     }, LONG_PRESS_CLEAR_MS);
@@ -121,11 +127,13 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
       const wasLongPress = longPressFiredRef.current;
       clearLongPressTimer();
       if (wasLongPress) return;
+      hasUserInputRef.current = true;
       lightHaptic();
       backspace();
       return;
     }
 
+    hasUserInputRef.current = true;
     lightHaptic();
     input(key.value);
   };

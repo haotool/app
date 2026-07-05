@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 2）｜累計總分：+111
+> 本次分數變化：+3（reward 4、penalty 1、neutral 2）｜累計總分：+110
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e3-converter-v2-keypad-remount-writeback
+- 原因：ConverterKeypad remount 初始同步在使用者僅切換活躍列（零按鍵）時即回寫，以捨入反推值改寫原輸入列（1000→999.98）並靜默翻轉最後編輯方向，違反等值雙列對等語意（epic 審查抓出）
+- 解法：掛載種子改唯讀（useState 鎖定＋hasUserInput 回寫閘門，僅實際按鍵才進入回寫流程），補「切列 N 次零按鍵→兩列數值與方向不變」回歸測試（紅→綠），並將 SSG 不變性 diff 收斂為 scripts/qa/verify-ssg-invariance.mjs 可重現腳本
 
 - 日期：2026-07-05
 - ID：neutral-rw-e3-converter-v2-short-screen-budget
