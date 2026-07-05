@@ -3,6 +3,7 @@
  *
  * 收斂 E3 兩個 sheet 殼（TrendSheet / CurrencyPickerSheet）與未來 modal 需求：
  * 拖曳關閉、backdrop、safe-area、fixed（65vh）/ adaptive（max-h 70vh）兩模式。
+ * ≥md 寬視口：max-w-screen-sm 水平置中、四邊圓角、離底 24px（#588）；手機維持貼底全寬雙上圓角。
  * 文案（標題、關閉鈕 aria-label）由消費端傳入，primitive 不綁 i18n。
  */
 
@@ -128,10 +129,10 @@ export function BottomSheet({
           <motion.div
             ref={sheetRef}
             tabIndex={-1}
-            className={`fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-card shadow-floating flex flex-col pb-[env(safe-area-inset-bottom,0px)] outline-none ${SIZE_CLASS[size]}`}
-            initial={{ y: '100%' }}
+            className={`fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-card shadow-floating flex flex-col pb-[env(safe-area-inset-bottom,0px)] outline-none md:bottom-6 md:mx-auto md:max-w-screen-sm md:rounded-card ${SIZE_CLASS[size]}`}
+            initial={{ y: '120%' }}
             animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            exit={{ y: '120%' }}
             transition={transitions.keyboardSheet}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}

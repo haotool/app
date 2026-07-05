@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+133
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+134
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-sheet-wide-viewport-588
+- 原因：BottomSheet primitive 與 CalculatorKeyboard 沿用手機貼底全寬 pattern，桌面 1440 與 iPad 12.9" 橫向 sheet 拉滿 100vw（#588、#594 第一階段）
+- 解法：兩處殼層加 `md:max-w-screen-sm md:mx-auto md:rounded-card md:bottom-6` 寬視口限寬置中（進出場位移 100%→120% 補離底間距），消費端零改動，新增寬視口樣式斷言
 
 - 日期：2026-07-06
 - ID：penalty-rw-560-langsync-remount-rollback
