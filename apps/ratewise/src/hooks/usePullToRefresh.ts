@@ -20,6 +20,10 @@ import { logger } from '../utils/logger';
  * - https://blog.logrocket.com/implementing-pull-to-refresh-react-tailwind-css/
  */
 
+// @hello-pangea/dnd 拖曳把手的 data 屬性（單一來源；升級改名由契約測試把關）。
+export const DND_DRAG_HANDLE_ATTRIBUTE = 'data-rfd-drag-handle-draggable-id';
+export const DND_DRAG_HANDLE_SELECTOR = `[${DND_DRAG_HANDLE_ATTRIBUTE}]`;
+
 // Configuration constants
 const SHOW_INDICATOR_THRESHOLD = 50; // Show visual indicator
 const TRIGGER_THRESHOLD = 100; // Trigger refresh callback
@@ -95,10 +99,7 @@ export function usePullToRefresh(
     const handleTouchStart = (e: TouchEvent) => {
       // 觸控起點位於 dnd 拖曳把手內：完全抑制 PTR，避免與拖曳排序互相干擾。
       const touchTarget = e.target;
-      if (
-        touchTarget instanceof Element &&
-        touchTarget.closest('[data-rfd-drag-handle-draggable-id]')
-      ) {
+      if (touchTarget instanceof Element && touchTarget.closest(DND_DRAG_HANDLE_SELECTOR)) {
         logger.debug('Pull-to-refresh: touch started on drag handle, ignoring');
         return;
       }

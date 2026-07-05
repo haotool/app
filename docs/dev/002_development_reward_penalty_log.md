@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-favorites-hint-dnd-selector-contract
+- 原因：#563 收藏排序改版後缺「先加收藏才能排序」顯性訊號且殘留 dragToFavorite 死鍵與死 fallback；#562 dnd 把手選擇器字串散落四處、gate 測試以 setAttribute 自我實現無法抓套件升級改名
+- 解法：非收藏段起點加一行 i18n 提示（×4 語系）並清理死鍵死碼、補 destinationIndex=0 邊界測試；選擇器抽 DND_DRAG_HANDLE_ATTRIBUTE/SELECTOR 單一來源，新增真實 dnd 渲染契約測試（突變常數值紅燈、還原綠燈）
 
 - 日期：2026-07-06
 - ID：reward-rw-kawaii-text-contrast-aa-572
