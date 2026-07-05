@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+120
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+122
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,41 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-review-should-fix-batch
+- 原因：PR 578 epic 審查三項 Should-fix——明洞換錢所名稱誤植（Money Plant）、單值寫死匯率可穿透區間 regex、phrase budget 覆蓋範圍未註記且一句貼上限
+- 解法：更正為 Money Planet（MONEYPLANET SEOUL）、新增 persona 原始碼層單值匯率 lint（含 pattern 自我驗證與突變證明）、補覆蓋範圍註解並收斂「真正要付多少台幣」至 2 處（budget ≤2）
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-l3-copy-guards
+- 原因：issue 566 三項守門缺口（新模板句 phrase budget、About FAQ 尾句機房語言、answer 級自指涉掃描）且無 AI 贅詞黑名單、寫死匯率 lint、跨幣別相似度上限
+- 解法：新增 seo-copy-guard.test.ts 七組守門（黑名單、匯率 lint、最高級宣稱、persona bigram Jaccard <0.5、phrase budget、About SF-2/SF-3、金額頁 v2 不變式），六種故意突變全數變紅後還原
+
+- 日期：2026-07-05
+- ID：penalty-rw-e5-mutation-revert-hook-swap
+- 原因：突變還原腳本以「第一個出現」取代字串，將 USD 與 GBP 的 description hook 內容互換而未察覺
+- 解法：守門重跑後以 rg 抽查 hook 對應幣別發現互換，改以幣別上下文錨點精準還原並補跑守門確認全綠
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-amount-page-v2
+- 原因：金額頁只給單向現金賣出答案（與「50000韓元」大宗搜尋意圖錯位）、無階梯表可提取結構、title 無中文金額別名
+- 解法：Answer Block 雙向答案（現金買入估算＋現金賣出＋中間價對比）、INDEXABLE amounts 純計算階梯表、title/description 導入 formatZhAmount 中文別名公式且 description 首句給答案
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-l2-pure-assembler
+- 原因：幣別頁生成器仍自帶敘述文案（六條規格式 highlights、同構 travelTip 與 description 公式），與 L1 persona SSOT 職責重疊造成 template bleed
+- 解法：改寫 currency-landing.ts 為純組裝生成器——敘述欄位全數改讀 persona，highlights 收斂為 3 條（≥2 條 persona 特化），description 尾句注入幣別 hook
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-l1-persona-schema-content
+- 原因：34 幣別頁敘述文字散落於模板常數且含 #566 指出的新模板句複製，缺乏單一 persona SSOT 與可驗證在地事實
+- 解法：新增 currency-personas.ts L1 必填 schema（hook／cashCulture／denominationTip／exchangeChannel／faqSpecific／reverse），17 幣別各 ≥3 個 WebSearch 查證在地事實（來源列於 PR 附錄），品質對齊 PHP/IDR/MYR 基準
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-seo-copy-design-brief-docs
+- 原因：E5 wave-A（SEO copy 四層架構與金額頁 v2）開工，設計簡報需納入版控供 PR 勾稽與後續 wave 溯源
+- 解法：將 PM 設計簡報 `git add -f` 進 `.claude/prds/`，作為本 epic 的 SSOT 依據
 
 - 日期：2026-07-05
 - ID：penalty-rw-e1-primary-strong-utility-not-generated

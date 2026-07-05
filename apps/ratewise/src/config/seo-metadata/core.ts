@@ -910,7 +910,7 @@ export const HOMEPAGE_SEO = {
   answerCapsule: [
     {
       question: `${APP_INFO.shortName} 顯示的是台銀哪種匯率？`,
-      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」，約每 5 分鐘檢查更新。`,
+      answer: `${APP_INFO.shortName} 顯示臺灣銀行牌告的實際買入與賣出價（現金與即期各兩種），不是銀行間中間價。你拿台幣換外幣時看「銀行賣出價」，把外幣換回台幣時看「銀行買入價」。`,
     },
     {
       question: '換匯前為什麼要看賣出價，不看中間價？',
@@ -934,7 +934,7 @@ export const HOMEPAGE_SEO = {
   content: {
     eyebrow: '臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新 · 顯示實際買賣價',
     heading: `${APP_INFO.name} 即時匯率換算`,
-    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新，適合出國旅遊、海外付款與跨境報價前快速比價。`,
+    intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，適合出國旅遊、海外付款與跨境報價前快速比價。`,
     highlights: [
       '顯示實際買賣價：臺灣銀行牌告匯率的現金與即期買入賣出四種報價，不是中間價——換匯金額更精準。',
       `支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，提供計算機快速輸入、收藏管理、拖曳排序與換算歷史。`,
@@ -975,7 +975,7 @@ export const FAQ_PAGE_ENTRIES = [
   },
   {
     question: '匯率數據來源是什麼？',
-    answer: `${APP_INFO.shortName} 的匯率資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新一次，涵蓋現金與即期買入賣出價四種報價。`,
+    answer: `${APP_INFO.shortName} 的匯率資料來源為臺灣銀行官方牌告匯率，涵蓋現金與即期買入賣出價四種報價，更新頻率見下方「匯率更新頻率如何？」。`,
   },
   {
     question: '現金匯率和即期匯率有什麼差別？',
@@ -1066,8 +1066,8 @@ export const FAQ_PAGE_ENTRIES = [
 ] as const satisfies readonly FAQEntry[];
 
 export const FAQ_PAGE_SEO = {
-  title: `${APP_INFO.shortName} 常見問題 FAQ：台銀匯率、DCC 與現金即期一次看懂`,
-  description: `整理 ${APP_INFO.shortName} 最常被問的換匯問題，涵蓋台銀匯率來源、現金與即期差異、買入賣出判讀、DCC 刷卡匯率、收藏排序、歷史記錄、離線使用與 PWA 安裝重點，讓第一次換匯也能快速判斷並少踩錯價。`,
+  title: `${APP_INFO.shortName} 常見問題 FAQ：台銀匯率、DCC 與現金即期怎麼看`,
+  description: `現金和即期差在哪？DCC 為什麼要拒絕？買入賣出該看哪一欄？整理 ${APP_INFO.shortName} 最常被問的換匯問題與台銀牌告判讀方式，第一次換匯最容易踩的坑，這裡一次講清楚。`,
   pathname: '/faq/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1171,7 +1171,7 @@ export const GUIDE_HOW_TO_STEPS = [
 
 export const GUIDE_PAGE_SEO = {
   title: GUIDE_PAGE_TITLE,
-  description: `${APP_INFO.shortName} 使用指南用 8 步驟帶你完成單幣別與多幣別匯率換算，並掌握現金與即期切換、快速金額按鈕、歷史趨勢、收藏管理、下拉更新與 PWA 安裝，快速建立正確換匯操作流程與判讀順序。`,
+  description: `第一次用 ${APP_INFO.shortName}？8 個步驟學會查台銀賣出價、切換現金／即期報價、看 7～30 天歷史趨勢挑換匯時機，並涵蓋收藏管理、快速金額按鈕與 PWA 安裝教學。`,
   pathname: '/guide/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1329,22 +1329,22 @@ export const ABOUT_PAGE_FAQ = [
   {
     question: '和一般匯率 App 有什麼不同？',
     answer:
-      '一般工具顯示中間價（買賣均值），本工具顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前就知道真正要付多少台幣。',
+      '一般工具顯示中間價（買賣均值），本工具顯示臺灣銀行牌告的實際現金與即期四種報價，讓您換匯前先掌握實際成本。',
   },
   {
     question: '如何聯絡開發者？',
     answer: `可透過 Email（${APP_INFO.email}）聯繫，歡迎回饋意見或錯誤回報，也可在 GitHub（${APP_INFO.github}）查看原始碼或提交 Issue。`,
   },
   {
-    question: '匯差數字如何保持最新且讓搜尋引擎正確讀取？',
+    question: '匯差數字多久更新一次？',
     answer:
-      '匯差範例數據由 GitHub Actions 每日自動執行：同時抓取台灣銀行牌告匯率與 open.er-api.com 市場中間價（Google、XE、Wise、Apple 計算機的共同基準），進行雙重驗證（兩個中間價差距須在 2% 以內），生成靜態 TypeScript 常數，透過 Pull Request 自動審核後進入主分支。最終數字直接嵌入靜態 HTML（vite-react-ssg SSG 預渲染），Google 爬蟲無需執行 JavaScript 即可讀取所有匯差數字。',
+      '頁面上的匯差範例每日自動更新一次：系統同日抓取台灣銀行牌告匯率與市場中間價（Google、XE、Wise、Apple 計算機的共同基準），並做雙重驗證——兩個來源的中間價差距須在 2% 以內才會發布。換算器內的即時匯率更新頻率則見上方「匯率數據來源是什麼？」。',
   },
 ] as const satisfies readonly FAQEntry[];
 
 export const ABOUT_PAGE_SEO = {
-  title: `關於 ${APP_INFO.name} - 資料來源、技術架構與 SEO 透明度`,
-  description: `了解 ${APP_INFO.shortName} 的資料來源、更新機制、技術架構與 SEO 透明度。站點以台銀牌告實際買賣價為核心，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、PWA 離線使用、SSG 預渲染、JSON-LD 結構化資料與 AI 可讀文件輸出，所有公開資訊皆可追溯。`,
+  title: `關於 ${APP_INFO.name} - 誰做的、資料哪來、為什麼只看台銀牌告`,
+  description: `${APP_INFO.shortName} 由誰維護？匯率資料哪裡來、多久更新？為什麼堅持顯示台銀牌告實際買賣價而不是中間價？關於頁把資料來源、更新機制、匯差驗證方法與聯絡方式一次交代清楚。`,
   pathname: '/about/',
   breadcrumb: [
     { name: `${APP_INFO.shortName} 首頁`, item: '/' },
@@ -1439,7 +1439,7 @@ export const GUIDE_LINK_CASH_VS_SPOT_RATE: RelatedGuideLink = {
 export const GUIDE_LINK_CARD_RATE_GUIDE: RelatedGuideLink = {
   href: '/card-rate-guide/',
   label: '刷卡匯率指南',
-  description: '海外刷卡匯率、DCC 與手續費完整解析',
+  description: '海外刷卡匯率怎麼算？DCC 為什麼要拒絕',
 };
 
 export const SELL_RATE_VS_MID_RATE_PAGE = {
@@ -1626,7 +1626,7 @@ export const CASH_VS_SPOT_RATE_PAGE = {
 } as const satisfies AuthorityGuideContent;
 
 export const CARD_RATE_GUIDE_PAGE = {
-  title: `刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂 | ${APP_INFO.shortName}`,
+  title: `海外刷卡匯率怎麼算？DCC 為什麼要拒絕 | ${APP_INFO.shortName}`,
   description:
     '整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你分辨牌告換匯、海外刷卡與商家端台幣結帳三者的成本差別，避免把刷卡匯率和銀行牌告混為一談與誤估總成本。',
   pathname: '/card-rate-guide/',
@@ -1699,7 +1699,7 @@ export const CARD_RATE_GUIDE_PAGE = {
   relatedGuides: [GUIDE_LINK_SELL_RATE_VS_MID_RATE, GUIDE_LINK_CASH_VS_SPOT_RATE],
   jsonLd: [
     buildArticleJsonLd(
-      '刷卡匯率怎麼看？台銀牌告、卡組織匯率與 DCC 一次搞懂',
+      '海外刷卡匯率怎麼算？DCC 為什麼要拒絕',
       `整理海外刷卡匯率的組成方式，說明 Visa、Mastercard 清算匯率、銀行海外手續費與 DCC 差異，幫助你正確理解 ${APP_INFO.shortName} 與刷卡成本的關係。`,
       '/card-rate-guide/',
       GUIDE_PUBLISH_DATES.cardRateGuide,
