@@ -1,12 +1,15 @@
 /**
- * JSON-LD Structured Data for SEO（@graph 單一 script，PRD §9.3）
- * - 首頁：Organization + WebSite（SearchAction → /tools/?q=）+ Person
+ * JSON-LD Structured Data for SEO（@graph 單一 script，PRD §9.3 v2.1）
+ * - 首頁：Organization(#organization) + WebSite(#website) + Person(#person)；禁止 SearchAction
  * - 全頁：WebPage（dateModified = BUILD_TIME，禁止寫死日期）＋非首頁 BreadcrumbList
  * - /tools/：CollectionPage + ItemList（5 工具，SSOT 為 config/tools.ts）
- * - /about/：ProfilePage；FAQPage 掛點（全站唯一），內容終稿後補
+ * - /about/：ProfilePage + FAQPage（全站唯一，SSOT 為 config/faq.ts）
+ * - /contact/：ContactPage（seo-2026 決定表 #5）
  */
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../config/app-info';
+import { ABOUT_FAQS } from '../config/faq';
 import { TOOLS, getToolUrl } from '../config/tools';
+import { getRouteMetadata } from './meta-tags';
 
 const SITE_URL = APP_INFO.siteUrl.replace(/\/$/, '');
 const SITE_NAME = APP_INFO.name;
@@ -14,49 +17,19 @@ const DATE_PUBLISHED = '2025-01-01T00:00:00Z';
 
 type JsonLdNode = Record<string, unknown>;
 
-/**
- * About 頁 FAQ SSOT 掛點 — 內容定稿後填入，FAQPage 即自動輸出於 /about/（全站唯一）。
- */
-export const ABOUT_FAQ_ITEMS: readonly { question: string; answer: string }[] = [];
-
-interface RouteJsonLdMetadata {
-  title: string;
-  description: string;
-  breadcrumbs?: { name: string; url: string }[];
-}
-
-const ROUTE_METADATA: Record<string, RouteJsonLdMetadata> = {
-  '/': {
-    title: `${SITE_NAME} — 免費開源的台灣網頁工具集`,
-    description:
-      'HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。匯率換算、旅遊分帳、停車記錄、日本名字產生、地震防災教育。',
-  },
-  '/tools/': {
-    title: `所有工具 — ${SITE_NAME}`,
-    description:
-      'HaoTool 全部工具總覽：HaoRate 匯率好工具、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂。',
-    breadcrumbs: [
-      { name: '首頁', url: '/' },
-      { name: '工具', url: '/tools/' },
-    ],
-  },
-  '/about/': {
-    title: `關於 ${APP_INFO.shortName} 與${APP_INFO.author} — ${SITE_NAME}`,
-    description:
-      '「HAO」取自「好」的拼音，HaoTool 的核心理念是打造真正的好工具。認識作者阿璋的開發哲學與本站隱私承諾。',
-    breadcrumbs: [
-      { name: '首頁', url: '/' },
-      { name: '關於', url: '/about/' },
-    ],
-  },
-  '/contact/': {
-    title: `聯繫${APP_INFO.author} — ${SITE_NAME}`,
-    description: '有專案想法或合作委託？歡迎透過 Email、GitHub 或 Threads 聯繫，24 小時內回覆。',
-    breadcrumbs: [
-      { name: '首頁', url: '/' },
-      { name: '聯繫', url: '/contact/' },
-    ],
-  },
+const BREADCRUMBS: Record<string, { name: string; url: string }[]> = {
+  '/tools/': [
+    { name: '首頁', url: '/' },
+    { name: '工具', url: '/tools/' },
+  ],
+  '/about/': [
+    { name: '首頁', url: '/' },
+    { name: '關於', url: '/about/' },
+  ],
+  '/contact/': [
+    { name: '首頁', url: '/' },
+    { name: '聯繫', url: '/contact/' },
+  ],
 };
 
 function normalizeRoute(route: string): string {
@@ -73,7 +46,7 @@ function buildPersonNode(): JsonLdNode {
     sameAs: AUTHOR_PERSON.sameAs,
     jobTitle: AUTHOR_PERSON.jobTitle,
     description: '專注於 React 19、TypeScript、Vite、PWA 開發，以產品級標準打造免費開源工具。',
-    knowsAbout: ['React', 'TypeScript', 'Vite', 'PWA', 'Tailwind CSS', 'Cloudflare'],
+    knowsAbout: ['React', 'TypeScript', 'Vite', 'PWA', 'Tailwind CSS', 'Cloudflare', 'Web 效能'],
   };
 }
 
@@ -82,9 +55,9 @@ function buildPersonNode(): JsonLdNode {
  */
 export function getJsonLdForRoute(route: string, buildTime: string): JsonLdNode[] {
   const normalizedRoute = normalizeRoute(route);
-  const metadata = ROUTE_METADATA[normalizedRoute];
-  // 未知路由（含 /404/）不輸出結構化資料
-  if (!metadata) {
+  const metadata = getRouteMetadata(normalizedRoute);
+  // 未知路由與 noindex 頁（/404/）不輸出結構化資料
+  if (!metadata || metadata.noindex) {
     return [];
   }
 
@@ -97,27 +70,27 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLdNode[
       name: SITE_NAME,
       url: `${SITE_URL}/`,
       logo: `${SITE_URL}/og-image.png`,
+      email: APP_INFO.email,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: APP_INFO.email,
+        url: `${SITE_URL}/contact/`,
+      },
       founder: { '@id': `${SITE_URL}/#person` },
       sameAs: SEO_SOCIAL_LINKS,
     });
 
+    // WebSite（站名）僅首頁輸出；alternateName 含全小寫網域名備援（site names 官方建議）。
     graph.push({
       '@type': 'WebSite',
       '@id': `${SITE_URL}/#website`,
       name: SITE_NAME,
-      alternateName: [APP_INFO.shortName, APP_INFO.subtitle],
+      alternateName: [APP_INFO.shortName, APP_INFO.subtitle, 'haotool.org'],
       url: `${SITE_URL}/`,
       description: metadata.description,
       inLanguage: 'zh-TW',
       publisher: { '@id': `${SITE_URL}/#organization` },
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: {
-          '@type': 'EntryPoint',
-          urlTemplate: `${SITE_URL}/tools/?q={search_term_string}`,
-        },
-        'query-input': 'required name=search_term_string',
-      },
     });
 
     graph.push(buildPersonNode());
@@ -135,10 +108,11 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLdNode[
     isPartOf: { '@id': `${SITE_URL}/#website` },
   };
 
-  if (metadata.breadcrumbs && metadata.breadcrumbs.length > 0) {
+  const breadcrumbs = BREADCRUMBS[normalizedRoute];
+  if (breadcrumbs && breadcrumbs.length > 0) {
     webPageNode['breadcrumb'] = {
       '@type': 'BreadcrumbList',
-      itemListElement: metadata.breadcrumbs.map((item, index) => ({
+      itemListElement: breadcrumbs.map((item, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         name: item.name,
@@ -177,11 +151,11 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLdNode[
       mainEntity: buildPersonNode(),
     });
 
-    // FAQPage 全站唯一輸出處（PRD §9.3 + brief §3.1 修正）；items 為空時不輸出。
-    if (ABOUT_FAQ_ITEMS.length > 0) {
+    // FAQPage 全站唯一輸出處（PRD §9.3）；SSOT 為 config/faq.ts。
+    if (ABOUT_FAQS.length > 0) {
       graph.push({
         '@type': 'FAQPage',
-        mainEntity: ABOUT_FAQ_ITEMS.map((item) => ({
+        mainEntity: ABOUT_FAQS.map((item) => ({
           '@type': 'Question',
           name: item.question,
           acceptedAnswer: {
@@ -191,6 +165,16 @@ export function getJsonLdForRoute(route: string, buildTime: string): JsonLdNode[
         })),
       });
     }
+  }
+
+  if (normalizedRoute === '/contact/') {
+    graph.push({
+      '@type': 'ContactPage',
+      name: metadata.title,
+      description: metadata.description,
+      url: `${SITE_URL}/contact/`,
+      about: { '@id': `${SITE_URL}/#organization` },
+    });
   }
 
   return graph;

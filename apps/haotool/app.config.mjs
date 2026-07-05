@@ -20,9 +20,9 @@
 export const SEO_PATHS = ['/', '/tools/', '/about/', '/contact/'];
 
 /**
- * SEO 配置文件路徑
+ * SEO 配置文件路徑（index.md 為 Agent Discovery mirror）
  */
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
+export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/index.md'];
 
 /**
  * 圖片資源路徑（用於生產環境驗證）
@@ -47,7 +47,7 @@ export const SITE_CONFIG = {
   url: 'https://haotool.org/',
   appsHostUrl: 'https://app.haotool.org/',
   name: 'HaoTool 好工具',
-  title: 'HaoTool 好工具 — 免費開源的台灣網頁工具集 | 匯率、分帳、停車、防災',
+  title: 'HaoTool 好工具｜免費開源的台灣網頁工具集',
   description:
     'HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。HaoRate 匯率換算、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂，每一個都以產品級標準交付。',
 };

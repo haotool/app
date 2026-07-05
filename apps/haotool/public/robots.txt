@@ -1,12 +1,15 @@
 # HaoTool 好工具 — Robots Exclusion Protocol
 # https://haotool.org/
-# 最後更新：2026-07-04
+#
+# AI Bot 四層治理：TRAINING / SEARCH / USER_AGENT / PREVIEW
+# 清單 SSOT：apps/ratewise/scripts/lib/ai-crawlers.mjs（查證：.claude/product-intel/seo-2026.md）
+# 當前策略：四層皆 Allow /（最大化 AI 搜尋曝光）。
 
 User-agent: *
 Allow: /
 Disallow: /sw.js
 Disallow: /workbox-*.js
-Content-Signal: ai-train=no, search=yes, ai-input=no
+Content-Signal: search=yes, ai-train=no, ai-input=yes
 
 Sitemap: https://haotool.org/sitemap.xml
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
@@ -15,47 +18,201 @@ Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
 
+# --- Tier 1: TRAINING (基礎模型訓練語料) ---
 User-agent: GPTBot
 Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: anthropic-ai
 Allow: /
-
-User-agent: PerplexityBot
-Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
-User-agent: cohere-ai
+User-agent: Applebot-Extended
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
-User-agent: CCBot
+User-agent: Amazonbot
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: Bytespider
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: CCBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: FacebookBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: Meta-ExternalAgent
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
+User-agent: Timpibot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: ProRataInc
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Novellum AI Crawl
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: DeepSeekBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: MistralBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+# --- Tier 2: SEARCH (AI 搜尋索引與引用) ---
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Applebot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Google-CloudVertexBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+# --- Tier 3: USER_AGENT (使用者觸發即時抓取) ---
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Claude-User
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: MistralAI-User
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Manus-User
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Cloudflare-AutoRAG
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Anchor Browser
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+# --- Tier 4: PREVIEW / OTHER (社群預覽與其他) ---
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
 User-agent: LinkedInBot
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
 
-User-agent: Slackbot
+User-agent: archive.org_bot
 Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: Terracotta Bot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: PhindBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: YouBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: GrokBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js
+
+User-agent: PetalBot
+Allow: /
+Disallow: /sw.js
+Disallow: /workbox-*.js

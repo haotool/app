@@ -1,6 +1,8 @@
 /**
  * Meta Tags Generator for SEO（SSG onPageRendered 注入）
- * 文案方向依 PRD §9.2；終稿可後補，SSOT 一律集中本檔。
+ * 每頁 title/description 終稿 SSOT（meta 與 JSON-LD WebPage 共用）。
+ * 預算依 PRD §9.1 v2.1：title 15–25 全形字、description 60–78 全形字。
+ * 單語 zh-TW 站不輸出 hreflang（含 x-default）。
  */
 import { APP_INFO } from '../config/app-info';
 
@@ -10,7 +12,7 @@ const DEFAULT_IMAGE = '/og-image.png';
 const TWITTER_HANDLE = APP_INFO.socialHandle;
 const THEME_COLOR = '#3182F6';
 
-interface RouteMetadata {
+export interface RouteMetadata {
   title: string;
   description: string;
   image?: string;
@@ -24,9 +26,10 @@ interface RouteMetadata {
  */
 const ROUTE_METADATA: Record<string, RouteMetadata> = {
   '/': {
-    title: 'HaoTool 好工具 — 免費開源的台灣網頁工具集 | 匯率、分帳、停車、防災',
+    title: `${APP_INFO.name}｜免費開源的台灣網頁工具集`,
     description:
-      'HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。HaoRate 匯率換算、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂，每一個都以產品級標準交付，Lighthouse 90+ 分。',
+      `${APP_INFO.name}：免費、開源、不收集個資的台灣網頁工具集。` +
+      '匯率換算、旅遊分帳、停車記錄、日本名字、地震防災五款 PWA，全部離線可用，以產品級標準交付。',
     type: 'website',
     keywords: [
       'HaoTool',
@@ -42,25 +45,28 @@ const ROUTE_METADATA: Record<string, RouteMetadata> = {
     ],
   },
   '/tools/': {
-    title: '所有工具 — HaoRate 匯率、喵喵分帳、停車好工具、日本名字、地震小學堂',
+    title: '所有工具｜匯率、分帳、停車、日本名字、防災',
     description:
-      'HaoTool 全部工具總覽：HaoRate 匯率好工具（台銀銀行賣出價）、喵喵分帳 Split Meow、停車好工具 ParkKeeper、日本名字產生器 NihonName、地震知識小學堂。全部免費、開源、離線可用。',
+      `${APP_INFO.shortName} 全部工具總覽：HaoRate 匯率好工具、喵喵分帳、停車好工具 ParkKeeper、` +
+      '日本名字產生器、地震知識小學堂，全部免費、開源、離線可用。',
     type: 'website',
     keywords: ['工具總覽', '免費工具', '匯率', '分帳', '停車', '日本名字', '地震', 'PWA'],
   },
   '/about/': {
-    title: '關於 HaoTool 與阿璋 — 打造好工具的開發哲學',
+    title: `關於 ${APP_INFO.shortName} 與${APP_INFO.author}｜打造好工具的開發哲學`,
     description:
-      '「HAO」取自「好」的拼音，HaoTool 的核心理念是打造真正的好工具。認識作者阿璋的開發哲學：效能是功能、細節是尊重、開源是承諾；並了解本站的隱私承諾。',
+      `「HAO」取自「好」的拼音，${APP_INFO.shortName} 的核心理念是打造真正的好工具。` +
+      `認識作者${APP_INFO.author}的開發哲學：效能是功能、細節是尊重、開源是承諾；並了解本站的隱私承諾。`,
     type: 'profile',
     keywords: ['阿璋', 'HaoTool', '好工具', '全端工程師', '開發哲學', '隱私政策', '開源'],
   },
   '/contact/': {
-    title: '聯繫阿璋 — 合作委託與問題回報',
+    title: `聯繫${APP_INFO.author}｜合作委託、技術顧問與問題回報`,
     description:
-      '有專案想法或合作委託？歡迎透過 Email、GitHub 或 Threads 聯繫阿璋，通常 24 小時內回覆。',
+      '有專案想法或合作委託？形象網站、前端架構規劃、產品原型開發都歡迎聊聊。' +
+      `透過 Email、GitHub 或 Threads 聯繫${APP_INFO.author}，通常 24 小時內回覆。`,
     type: 'website',
-    keywords: ['聯繫', '合作', '委託', '前端開發', 'React'],
+    keywords: ['聯繫', '合作', '委託', '技術顧問', '前端開發', 'React'],
   },
   '/404/': {
     title: `找不到頁面 — ${SITE_NAME}`,
@@ -76,6 +82,13 @@ const ROUTE_METADATA: Record<string, RouteMetadata> = {
 function normalizeRoute(route: string): string {
   if (route === '/') return '/';
   return route.endsWith('/') ? route : `${route}/`;
+}
+
+/**
+ * 取得路由文案終稿（JSON-LD WebPage 名稱/描述共用此 SSOT）
+ */
+export function getRouteMetadata(route: string): RouteMetadata | undefined {
+  return ROUTE_METADATA[normalizeRoute(route)];
 }
 
 /**
@@ -124,10 +137,8 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
     tags.push(
       `<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />`,
     );
-    // Canonical 與 hreflang 僅輸出於可索引頁
+    // Canonical 僅輸出於可索引頁；單語站不輸出 hreflang（PRD §9.1 v2.1）。
     tags.push(`<link rel="canonical" href="${canonicalUrl}" />`);
-    tags.push(`<link rel="alternate" hreflang="zh-TW" href="${canonicalUrl}" />`);
-    tags.push(`<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`);
   }
 
   // Open Graph Tags
