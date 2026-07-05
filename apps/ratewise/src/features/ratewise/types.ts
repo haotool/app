@@ -1,5 +1,6 @@
 import {
   type CONVERTER_MODES,
+  type CONVERTER_V2_VARIANTS,
   type CURRENCY_DEFINITIONS,
   type RATE_MODES,
   type RATE_SOURCES,
@@ -10,6 +11,7 @@ export type CurrencyCode = keyof typeof CURRENCY_DEFINITIONS;
 export type CurrencyMeta = (typeof CURRENCY_DEFINITIONS)[CurrencyCode];
 
 export type ConverterMode = (typeof CONVERTER_MODES)[number];
+export type ConverterV2Variant = (typeof CONVERTER_V2_VARIANTS)[number];
 export type AmountField = 'from' | 'to';
 export type RateType = (typeof RATE_TYPES)[number];
 

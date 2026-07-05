@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+130
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-waveb-settings-toggle-e2e-guards
+- 原因：設定頁切換→首頁生效→重載持久的完整旅程無 e2e 鎖定，store 舊 flag key 遷移與非法值修復亦缺守門測試
+- 解法：新增 e2e case（切 v2→首頁生效→重載持久→切回經典）與 store 遷移／sanitize 單元測試，SSG 不變性 254 頁 diff=0
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-settings-converter-mode-ssot
+- 原因：converter-v2 只能靠 URL override 或手動 localStorage 開啟，使用者無設定入口，且 wave-A 獨立 flag key 與 converterStore 形成雙持久化來源
+- 解法：設定頁新增「單幣別模式」區段（i18n ×4），偏好併入 converterStore（舊 key 一次性遷移刪除），flag 讀取端收斂為 URL override > 使用者設定 > 預設 off 單一優先序並記入 README
+
+- 日期：2026-07-05
+- ID：penalty-rw-e3-keypad-stale-seed-rejected-key-gate
+- 原因：wave-A keypad 種子掛載即鎖定且按鍵未經引擎確認即開回寫閘門——切列零按鍵視窗內外部值變動時種子過期、被拒按鍵使後續重算把未變顯示值當成使用者編輯回寫
+- 解法：閘門關閉時外部值變動同步重播種子（render 期間調整 state），閘門改由「表達式確實變動＋曾按鍵」才開啟，三個回歸測試修正前紅、修正後綠
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-seotech-stats-contrast-and-capture

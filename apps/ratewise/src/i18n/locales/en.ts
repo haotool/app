@@ -198,6 +198,14 @@ const en = {
     rateModeMid: 'Ref Rate',
     rateModeMidDesc:
       'Buy/sell midpoint, less precise — useful as a forex market reference for traders',
+    // Single-currency layout section
+    singleConverterMode: 'Single-Currency Layout',
+    converterVariantLegacy: 'Classic',
+    converterVariantLegacyDesc:
+      'Current layout: amount inputs with quick amounts; tap an amount to open the calculator',
+    converterVariantV2: 'Dual Rows (New)',
+    converterVariantV2Desc:
+      'Two equal editable rows with instant conversion, built-in keypad and rate trend chart',
     // Splash screen section
     splashScreen: 'Splash Screen',
     splashScreenDesc: 'Play the brand animation when launching the installed app',

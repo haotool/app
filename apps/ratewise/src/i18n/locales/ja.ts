@@ -195,6 +195,13 @@ const ja = {
     rateModeSellDesc: '全換算に銀行売値を適用。電信送金（即時）・窓口現金どちらも対応',
     rateModeMid: '参考値',
     rateModeMidDesc: '売値と買値の中間レート。精度はやや低め。外為トレーダーの市場参考値として活用',
+    // 単一通貨モードセクション
+    singleConverterMode: '単一通貨モード',
+    converterVariantLegacy: 'クラシック',
+    converterVariantLegacyDesc:
+      '従来のレイアウト：金額入力とクイック金額ボタン。金額をタップすると電卓が開きます',
+    converterVariantV2: '等価2行（新）',
+    converterVariantV2Desc: '対等な2行でリアルタイム換算。常設テンキーとレート推移チャートを内蔵',
     // 起動画面セクション
     splashScreen: '起動画面',
     splashScreenDesc: 'インストール版アプリの起動時にブランドアニメーションを再生',

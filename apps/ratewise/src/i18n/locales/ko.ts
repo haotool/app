@@ -195,6 +195,13 @@ const ko = {
     rateModeSellDesc: '전 구간 은행 매도율 적용. 전신환(인터넷뱅킹)·창구 현금 매수 모두 동일 기준',
     rateModeMid: '참고율',
     rateModeMidDesc: '매도·매입 중간값. 정밀도가 낮아 외환 트레이더의 시장 참고용으로 적합',
+    // 단일 통화 모드 섹션
+    singleConverterMode: '단일 통화 모드',
+    converterVariantLegacy: '클래식',
+    converterVariantLegacyDesc:
+      '기존 레이아웃: 금액 입력과 빠른 금액 버튼, 금액을 탭하면 계산기가 열립니다',
+    converterVariantV2: '등가 2행 (신규)',
+    converterVariantV2Desc: '동등한 두 행으로 실시간 환산, 상시 키패드와 환율 추세 차트 내장',
     // 시작 화면 섹션
     splashScreen: '시작 화면',
     splashScreenDesc: '설치된 앱 실행 시 브랜드 애니메이션 재생',

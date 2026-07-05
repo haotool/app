@@ -195,6 +195,12 @@ const zhTW = {
     rateModeSellDesc: '全程以銀行賣出牌告計算；即期適用網銀換匯，現金適用臨櫃買外幣現鈔',
     rateModeMid: '參考價',
     rateModeMidDesc: '買賣中間價，精準度相對較低，適合外匯交易者做市場行情參考',
+    // 單幣別模式區塊
+    singleConverterMode: '單幣別模式',
+    converterVariantLegacy: '經典模式',
+    converterVariantLegacyDesc: '沿用現行版面：金額輸入框與快速金額按鈕，點金額開啟計算機',
+    converterVariantV2: '等值雙列（新）',
+    converterVariantV2Desc: '兩列對等即時換算，內建常駐計算機與匯率趨勢圖',
     // 啟動畫面區塊
     splashScreen: '啟動畫面',
     splashScreenDesc: '開啟已安裝的 App 時播放品牌動畫',

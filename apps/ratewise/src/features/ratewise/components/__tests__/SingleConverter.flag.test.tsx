@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { SingleConverter } from '../SingleConverter';
+import { useConverterStore } from '../../../../stores/converterStore';
 import type { CurrencyCode } from '../../types';
 
 // Mock services（避免測試觸網）
@@ -65,6 +66,7 @@ describe('SingleConverter - converter-v2 flag gate', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.history.replaceState(null, '', '/');
+    useConverterStore.setState({ singleConverterVariant: 'legacy' });
     Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
   });
 
@@ -79,8 +81,8 @@ describe('SingleConverter - converter-v2 flag gate', () => {
     expect(screen.queryByTestId('converter-v2')).not.toBeInTheDocument();
   });
 
-  it('flag on（localStorage v2）：分流至等值雙列 v2', async () => {
-    window.localStorage.setItem('ratewise:converterV2', 'v2');
+  it('flag on（使用者設定 v2）：分流至等值雙列 v2', async () => {
+    useConverterStore.setState({ singleConverterVariant: 'v2' });
     render(<SingleConverter {...mockProps} />);
 
     expect(await screen.findByTestId('converter-v2')).toBeInTheDocument();

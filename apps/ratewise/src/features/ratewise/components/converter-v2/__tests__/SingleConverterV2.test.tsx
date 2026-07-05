@@ -180,6 +180,55 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(screen.getByTestId('converter-v2-amount-to')).toHaveTextContent('31.58');
   });
 
+  it('回歸：切列零按鍵期間外部值變動，首次按鍵以最新值為種子（stale seed 視窗）', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 零按鍵期間外部值變動（如費率模式切換觸發重算）。
+    rerender(<SingleConverterV2 {...props} fromAmount="500" />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-1'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // 修正前種子仍為掛載時的 1000，會回寫 '10001'。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('5001');
+  });
+
+  it('回歸：被引擎拒絕的按鍵不得開啟回寫閘門', () => {
+    // 8 位小數已達 iOS 上限，再鍵入數字會被 canAddDigit 拒絕（表達式不變）。
+    const props = buildProps({ fromAmount: '0.12345678' });
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-9'));
+    // 之後的重算路徑（另一列更新觸發父層 re-render）不得把未變的顯示值當成使用者編輯回寫。
+    rerender(<SingleConverterV2 {...props} toAmount="99" />);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    // 修正前 hasUserInputRef 已被設為 true，重算路徑會回寫捨入反推值並翻轉最後編輯方向。
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+
+  it('回歸：被拒按鍵後外部值變動仍可正常重播種子', () => {
+    const props = buildProps({ fromAmount: '0.12345678' });
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 被拒按鍵（閘門不得開啟）之後外部值變動，種子應同步為新值。
+    fireEvent.click(screen.getByTestId('converter-v2-key-9'));
+    rerender(<SingleConverterV2 {...props} fromAmount="200" />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('2003');
+  });
+
   it('含運算子表達式以引擎 preview 回寫（沿用既有計算引擎）', () => {
     const props = buildProps({ fromAmount: '100' });
     render(<SingleConverterV2 {...props} />);

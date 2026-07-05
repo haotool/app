@@ -40,6 +40,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 const resetStore = () => {
   useConverterStore.setState({
     lastConverterView: 'single',
+    singleConverterVariant: 'legacy',
     fromCurrency: 'TWD',
     toCurrency: 'JPY',
     rateType: 'spot',
@@ -425,10 +426,54 @@ describe('converterStore', () => {
 
       expect(useConverterStore.getState().favorites).toEqual(['JPY', 'USD']);
     });
+
+    it('wave-A converter-v2 flag 舊 key 即使 ratewise-converter 已存在仍要遷移並刪除', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          'ratewise-converter': JSON.stringify({
+            state: { fromCurrency: 'USD', toCurrency: 'JPY' },
+          }),
+          'ratewise:converterV2': 'v2',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      expect(useConverterStore.getState().singleConverterVariant).toBe('v2');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('ratewise:converterV2');
+    });
+
+    it('converter-v2 flag 舊 key 為非法值時不寫入 patch（保留 store 預設）', () => {
+      localStorageMock.clear();
+      localStorageMock.getItem.mockImplementation((key: string) => {
+        const legacyStore: Record<string, string> = {
+          'ratewise:converterV2': 'bogus',
+        };
+        return legacyStore[key] ?? null;
+      });
+
+      resetStore();
+      useConverterStore.getState().__migrateFromLegacy?.();
+
+      expect(useConverterStore.getState().singleConverterVariant).toBe('legacy');
+    });
   });
 
   // ── hydrated state schema validation ─────────────────────────────────────
   describe('hydrated state schema validation (__validateAndSanitize)', () => {
+    it('singleConverterVariant 為非法值時重置為 legacy', () => {
+      useConverterStore.setState({
+        singleConverterVariant: 'bogus' as unknown as 'legacy',
+      });
+
+      useConverterStore.getState().__validateAndSanitize?.();
+
+      expect(useConverterStore.getState().singleConverterVariant).toBe('legacy');
+    });
+
     it('過濾 favorites 中不合法的貨幣代碼（舊 CurrencyPair 物件格式）', () => {
       // 模擬舊版 favorites 為 CurrencyPair[]（物件陣列）被 hydrate 進 store
       useConverterStore.setState({

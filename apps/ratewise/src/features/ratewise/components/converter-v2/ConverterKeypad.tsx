@@ -11,7 +11,10 @@ import { useCalculator } from '../../../calculator/hooks/useCalculator';
 import { lightHaptic, mediumHaptic } from '../../../calculator/utils/haptics';
 
 export interface ConverterKeypadProps {
-  /** 活躍列的種子值；僅掛載時讀取一次（父層以 key remount 重新播種），掛載後變更無效。 */
+  /**
+   * 活躍列的種子值。父層以 key remount 重新播種；掛載後僅在使用者尚未有任何
+   * 被接受按鍵（閘門關閉）時，外部變更會同步重播種子，其餘時間為唯讀。
+   */
   initialValue: number;
   /** 鍵入後的即時等值（純數字直出、含運算子時取引擎 preview）。 */
   onValueChange: (value: number) => void;
@@ -68,17 +71,26 @@ function getKeyClassName(kind: KeypadKey['kind']): string {
 export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypadProps) {
   const { t } = useTranslation();
   // 掛載時鎖定種子：初始同步為唯讀，回寫後的 prop 變更不得重置進行中的表達式。
-  const [seedValue] = useState(initialValue);
+  const [seedValue, setSeedValue] = useState(initialValue);
   const { expression, preview, input, backspace, clear } = useCalculator(seedValue);
   const lastSentRef = useRef<number | null>(null);
-  // 回寫閘門：僅實際按鍵後開啟；切換活躍列／swap 的 remount 不得以捨入反推值改寫另一列。
+  // 回寫閘門：僅「引擎實際接受」的按鍵後開啟；remount 或種子同步不得以捨入反推值改寫另一列。
   const hasUserInputRef = useRef(false);
+  // 按鍵意圖：使用者曾按鍵（可能被引擎拒絕）；閘門僅在表達式確實變動時才開啟。
+  const keyPressedRef = useRef(false);
+  const prevExpressionRef = useRef(expression);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
 
   // 鍵入即時回寫活躍列：純數字直接送出，含運算子時等引擎 preview（50ms 防抖）。
   useEffect(() => {
-    if (!hasUserInputRef.current) return;
+    const expressionChanged = expression !== prevExpressionRef.current;
+    prevExpressionRef.current = expression;
+    // 被拒按鍵不開閘門：僅在引擎確實改寫表達式的首次按鍵後，才進入回寫流程。
+    if (!hasUserInputRef.current) {
+      if (!expressionChanged || !keyPressedRef.current) return;
+      hasUserInputRef.current = true;
+    }
     const trimmed = expression.trim();
     let live: number | null = null;
 
@@ -97,6 +109,16 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
     onValueChange(live);
   }, [expression, preview, onValueChange]);
 
+  // stale seed 修復：閘門開啟前外部值變動（如費率模式切換重算）時，同步種子重播表達式。
+  // 必須排在回寫 effect 之後，確保首次有效按鍵先開啟閘門，自身回寫不會觸發重播。
+  // 同步重置按鍵意圖，避免被拒按鍵殘留誤開閘門。
+  useEffect(() => {
+    if (hasUserInputRef.current || initialValue === seedValue) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 閘門關閉時同步外部種子，需依 ref 判斷不可於 render 期間讀取
+    setSeedValue(initialValue);
+    keyPressedRef.current = false;
+  }, [initialValue, seedValue]);
+
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current !== null) {
@@ -109,7 +131,7 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
     longPressFiredRef.current = false;
     longPressTimerRef.current = window.setTimeout(() => {
       longPressFiredRef.current = true;
-      hasUserInputRef.current = true;
+      keyPressedRef.current = true;
       mediumHaptic();
       clear();
     }, LONG_PRESS_CLEAR_MS);
@@ -127,13 +149,13 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
       const wasLongPress = longPressFiredRef.current;
       clearLongPressTimer();
       if (wasLongPress) return;
-      hasUserInputRef.current = true;
+      keyPressedRef.current = true;
       lightHaptic();
       backspace();
       return;
     }
 
-    hasUserInputRef.current = true;
+    keyPressedRef.current = true;
     lightHaptic();
     input(key.value);
   };

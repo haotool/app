@@ -46,11 +46,15 @@ export const CURRENCY_DEFINITIONS = {
 export const SUPPORTED_CURRENCY_COUNT = Object.keys(CURRENCY_DEFINITIONS).length;
 
 export const CONVERTER_MODES = ['single', 'multi'] as const;
+/** 單幣別版面變體：legacy（經典）／v2（等值雙列）。 */
+export const CONVERTER_V2_VARIANTS = ['legacy', 'v2'] as const;
 export const RATE_MODES = ['auto', 'sell', 'mid'] as const;
 export const RATE_TYPES = ['spot', 'cash'] as const;
 export const RATE_SOURCES = ['bank', 'exchange-shop'] as const;
 
 export const DEFAULT_CONVERTER_MODE = 'single';
+/** 單幣別版面預設 legacy（flag off）；須與 converter-v2 flag server snapshot 一致（SSG 紅線）。 */
+export const DEFAULT_CONVERTER_V2_VARIANT = 'legacy';
 /** 多幣別模式字串 SSOT；避免在元件散落 'multi' 字面量。 */
 export const MULTI_CONVERTER_MODE = 'multi';
 export const DEFAULT_RATE_MODE = 'auto';

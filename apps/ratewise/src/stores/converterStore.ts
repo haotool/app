@@ -20,6 +20,7 @@ import type {
   ConversionHistoryCategory,
   ConversionHistoryEntry,
   ConverterMode,
+  ConverterV2Variant,
   CurrencyCode,
   RateMode,
   RateSource,
@@ -34,9 +35,11 @@ import type {
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
 import {
   CONVERTER_MODES,
+  CONVERTER_V2_VARIANTS,
   CURRENCY_DEFINITIONS,
   DEFAULT_BASE_CURRENCY,
   DEFAULT_CONVERTER_MODE,
+  DEFAULT_CONVERTER_V2_VARIANT,
   DEFAULT_FAVORITES,
   DEFAULT_FROM_CURRENCY,
   DEFAULT_RATE_MODE,
@@ -70,6 +73,7 @@ const LEGACY_KEYS = {
   FAVORITES: STORAGE_KEYS.FAVORITES,
   RATE_TYPE: STORAGE_KEYS.RATE_TYPE,
   RATE_SOURCE: STORAGE_KEYS.RATE_SOURCE,
+  CONVERTER_V2_FLAG: STORAGE_KEYS.CONVERTER_V2_FLAG,
 } as const;
 
 const HISTORY_CAPACITY = 50;
@@ -81,6 +85,11 @@ interface ConverterState {
   // 註：當前頁面 mode（single/multi）仍由 route 決定；lastConverterView 僅供冷啟動還原。
   /** 上次停留的換算模式（single / multi），供根路徑冷啟動還原。 */
   lastConverterView: ConverterMode;
+  /**
+   * 單幣別版面偏好（legacy 經典／v2 等值雙列），設定頁寫入。
+   * 讀取端 SSOT 為 config/converter-v2-flag.ts（URL override > 本欄位 > 預設 legacy）。
+   */
+  singleConverterVariant: ConverterV2Variant;
   fromCurrency: CurrencyCode;
   toCurrency: CurrencyCode;
   rateMode: RateMode;
@@ -115,6 +124,9 @@ interface ConverterState {
   /** 記錄使用者最後停留的換算模式（single / multi）。 */
   setLastConverterView: (view: ConverterMode) => void;
 
+  /** 設定單幣別版面偏好（設定頁「單幣別模式」入口）。 */
+  setSingleConverterVariant: (variant: ConverterV2Variant) => void;
+
   /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
   __migrateFromLegacy: () => void;
   /** hydrate 後驗證並修復不合法的欄位；由 onRehydrateStorage 自動觸發，亦可由單元測試直接呼叫 */
@@ -126,6 +138,7 @@ interface ConverterState {
 type PersistentFields = Pick<
   ConverterState,
   | 'lastConverterView'
+  | 'singleConverterVariant'
   | 'fromCurrency'
   | 'toCurrency'
   | 'rateMode'
@@ -186,6 +199,10 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
 
   if (!(CONVERTER_MODES as readonly string[]).includes(state.lastConverterView)) {
     patch.lastConverterView = DEFAULT_CONVERTER_MODE;
+    dirty = true;
+  }
+  if (!(CONVERTER_V2_VARIANTS as readonly string[]).includes(state.singleConverterVariant)) {
+    patch.singleConverterVariant = DEFAULT_CONVERTER_V2_VARIANT;
     dirty = true;
   }
   if (!isCurrencyCode(state.fromCurrency)) {
@@ -275,6 +292,15 @@ function buildMigrationPatch(state: ConverterState): Partial<PersistentFields> |
     patch.rateType = resolveRateTypeForSource(patch.rateSource, patch.rateType ?? state.rateType);
   }
 
+  // wave-A converter-v2 flag 獨立 key 一次性併入 store（設定頁 SSOT 遷移安全）。
+  const oldConverterV2 = window.localStorage.getItem(LEGACY_KEYS.CONVERTER_V2_FLAG);
+  if (
+    typeof oldConverterV2 === 'string' &&
+    (CONVERTER_V2_VARIANTS as readonly string[]).includes(oldConverterV2)
+  ) {
+    patch.singleConverterVariant = oldConverterV2 as ConverterV2Variant;
+  }
+
   const hasPersistedPreference =
     typeof state.providerPreference === 'object' && state.providerPreference !== null;
   if (patch.rateSource) {
@@ -329,6 +355,7 @@ function removeLegacyKeys(): void {
   window.localStorage.removeItem(LEGACY_KEYS.FAVORITES);
   window.localStorage.removeItem(LEGACY_KEYS.RATE_TYPE);
   window.localStorage.removeItem(LEGACY_KEYS.RATE_SOURCE);
+  window.localStorage.removeItem(LEGACY_KEYS.CONVERTER_V2_FLAG);
 }
 
 function migrateLegacyHistory(state: ConverterState): ConversionHistoryEntry[] | null {
@@ -384,6 +411,7 @@ export const useConverterStore = create<ConverterState>()(
     (set, get) => ({
       // ── 初始狀態 ────────────────────────────────────────────────────────
       lastConverterView: DEFAULT_CONVERTER_MODE,
+      singleConverterVariant: DEFAULT_CONVERTER_V2_VARIANT,
       fromCurrency: DEFAULT_FROM_CURRENCY,
       toCurrency: DEFAULT_TO_CURRENCY,
       rateMode: DEFAULT_RATE_MODE,
@@ -458,6 +486,8 @@ export const useConverterStore = create<ConverterState>()(
 
       setLastConverterView: (view) => set({ lastConverterView: view }),
 
+      setSingleConverterVariant: (variant) => set({ singleConverterVariant: variant }),
+
       __migrateFromLegacy: () => {
         const patch = buildMigrationPatch(get());
         if (patch) {
@@ -482,6 +512,7 @@ export const useConverterStore = create<ConverterState>()(
       name: CONVERTER_STORE_KEY,
       partialize: (state) => ({
         lastConverterView: state.lastConverterView,
+        singleConverterVariant: state.singleConverterVariant,
         fromCurrency: state.fromCurrency,
         toCurrency: state.toCurrency,
         rateMode: state.rateMode,
