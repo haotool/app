@@ -149,3 +149,27 @@ FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，F
 - designer：可深化版式、間距、文案潤飾與動效編排細節；**不得**引入新色相、漸層、陰影體系、新字族；產出寫入 `.claude/product-intel/design-deep-dive.md`。
 - executor：實作以本 brief + PRD 為準，衝突時本 brief 優先（§1.1 扁平鐵律 > PRD §4.2 規則 4）。
 - 視覺（Codex）：僅 A6 類點陣素材；prompt 由 PM 提供；輸出過視覺 review 才可引用。
+
+## 8. E2 動效升級指令（PM 親撰，2026-07-05 使用者回饋驅動）
+
+> 使用者回饋：現版不夠吸引人；行動裝置優先為主要設計；需高級動畫技巧展現前端能力、高級質感與互動效果。
+> 北極星：**「站點本身就是作品」**——每一屏一個記憶點、每次觸碰有物理回饋；390px 為第一設計對象，桌面是增強層。
+
+### 8.1 不可動搖約束
+
+扁平鐵律不變（零漸層/裝飾陰影/毛玻璃）；LCP=H1、INP<200ms、CLS<0.1、初始 JS ≤150KB；`prefers-reduced-motion` 全降級；60fps（僅 transform/opacity/clip-path）。「高級質感」來源＝動效物理、排印節奏、色塊構圖——不是表面材質。
+
+### 8.2 簽名時刻（S1–S7，designer 深化，可增刪附理由）
+
+- S1 開場序列（行動優先）：wordmark 字元 spring 進場＋hero 標題逐詞 stagger（<900ms、僅首次 session 播放、sessionStorage 記憶）；H1 是 LCP——動畫必須是「已渲染文字的 transform/clip-path reveal」，**禁止 opacity:0 起手**。
+- S2 行動 hero 記憶點：品牌色塊＋工具 icon 的 3 枚迷你浮動 chips（純 CSS、無點陣圖、不影響 LCP），慢速漂浮＋滾動視差。
+- S3 數字 odometer：信任列 count-up 升級為滾輪式逐位數字（tabular-nums）。
+- S4 滾動敘事：區塊進場升級 CSS scroll-driven animations（@supports 漸進增強、motion fallback）；工藝證明指標 draw-in；頂部 1px 品牌藍 scroll progress。
+- S5 觸覺微互動：Button spring press（scale 0.96＋回彈）、desktop magnetic hover（±4px）、ToolCard pointer tilt（desktop ≤4deg、行動禁用）、pill tabs 換 motion layoutId 滑動指示器。
+- S6 頁面轉場：View Transitions API 同文件轉場（漸進增強，fallback 即時切換）——header 常駐、內容 cross-fade＋8px 上移。
+- S7 hero 舞台升級（desktop）：疊層卡 pointer 視差深度分層（前 ±8px/後 ±3px）＋hover 聚焦（該卡上浮、其餘微退）。
+
+### 8.3 功能構想（F 軌，需過 ROI 閘）
+
+- F1 live 匯率 chip：build-time 讀 repo 內 ratewise 匯率資料，hero 顯示即時感匯率＋ticker 動畫——真產品證明、零 runtime 成本。
+- F2 「正在打造」列：footer 上方一行最新 release 資訊（build-time git 資料）。

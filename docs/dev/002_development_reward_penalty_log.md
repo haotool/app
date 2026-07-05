@@ -99,11 +99,6 @@
 - 解法：恢復 root build:haotool/build:all、Dockerfile 根站建置鏈與 HEALTHCHECK GET /、nginx /tools 路由＋/projects 301＋error_page 404（容器煙霧測試全過）；Worker v5.6 原始碼同步 5 工具工具站敘事與 /tools/（不部署，deploy 屬使用者批准步驟）
 
 - 日期：2026-07-05
-- ID：reward-haotool-v2-deploy-integration
-- 原因：046 §9 部署整合點在移除時清空，merge 後正式站根路徑會停留 404；Worker 邊緣仍硬編碼 4 工具作品集敘事與 /projects/ 路徑（critic B3）
-- 解法：恢復 root build:haotool/build:all、Dockerfile 根站建置鏈與 HEALTHCHECK GET /、nginx /tools 路由＋/projects 301＋error_page 404（容器煙霧測試全過）；Worker v5.6 原始碼同步 5 工具工具站敘事與 /tools/（不部署，deploy 屬使用者批准步驟）
-
-- 日期：2026-07-05
 - ID：reward-haotool-v2-verify-round-fixes
 - 原因：八鏡頭 review 與六尺寸 QA 抓出：站內 hash 不捲動、SW 清單僅字串守門、Reveal SSG opacity:0 no-JS 隱形、mobile LCP 被舞台圖搶走、primary 實底對比 3.71 未達 AA、測試冷啟 flake
 - 解法：ScrollRestoration 官方模式、sw-routes.ts 抽 SSOT＋行為測試、Reveal initial=false＋hydration 偵測、hero 文字區 100svh 撐滿使舞台出首屏（LCP=H1、Perf 0.98）、CTA 實底改 #1B64DA/hover #1E40AF（A11y 1.0）、asyncUtilTimeout 5s；109 tests 冷跑兩輪全綠；Content-Signal 假陽性保留並入文件
