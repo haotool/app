@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+107
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+108
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-flag-infra
+- 原因：E3 v2 需要可安全灰度的開關，且 flag off 時 SSG 首頁輸出必須與現行一致（hydration 紅線）
+- 解法：新增 converter-v2-flag.ts（URL override＋localStorage＋CustomEvent，server snapshot 固定 legacy），範式對齊舊分支 hero-layout-variant
 
 - 日期：2026-07-05
 - ID：neutral-rw-e3-converter-v2-design-brief
