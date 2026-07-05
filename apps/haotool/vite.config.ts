@@ -189,12 +189,11 @@ export default defineConfig(({ mode }) => {
             }
             if (id.includes('node_modules')) {
               // react-router-dom 與 react 合併同一 chunk，避免 createContext 載入順序問題。
-              if (
-                id.includes('react') ||
-                id.includes('scheduler') ||
-                id.includes('react-router-dom') ||
-                id.includes('@remix-run')
-              ) {
+              // 以套件路徑段精確比對：避免 motion/framer-motion（pnpm 路徑含 react peer 字串）
+              // 被吞進 vendor，破壞 LazyMotion features 的 async 按需載入。
+              const vendorPattern =
+                /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?(?:react|react-dom|scheduler|react-router-dom|react-router|@remix-run)\//;
+              if (vendorPattern.test(id)) {
                 return 'vendor';
               }
             }

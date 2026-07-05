@@ -1,13 +1,18 @@
 @import 'tailwindcss';
 
+/* Reveal.tsx 的 motion transition prop 會被掃描器誤判為 transition class 候選；
+ * 排除之，避免生成含毛玻璃濾鏡屬性清單的未使用內建 utility（扁平鐵律掃描歸零）。 */
+@source not inline('transition');
+
 /**
  * HaoTool 設計 Tokens SSOT
- * 色彩來源：apps/ratewise/src/index.css Zen 主題（PRD §4.2 + 設計 brief §1.2）
- * 動效來源：設計 brief §2 Motion Tokens
- * 扁平鐵律：全站禁止 linear-gradient / radial-gradient 與裝飾性陰影。
+ * 色彩來源：apps/ratewise/src/index.css Zen 主題（PRD §4.2 13 色 + design-deep-dive §1.1 互動衍生值）
+ * 字級/間距/圓角/動效：design-deep-dive §1.2–§1.4（brief §1–§2 深化版）
+ * 扁平鐵律：全站零漸層、零毛玻璃濾鏡、零裝飾性陰影（brief §1.1）。
+ * 深度表達全站唯二：1px 邊框與 --shadow-quiet（僅 header 捲動後 / toast / sticky CTA）。
  */
 @theme {
-  /* 色彩 Tokens（禁止新增色相；drift 視為缺陷） */
+  /* 色彩 Tokens — PRD §4.2 全表（NFR-006 token 對照測試守門；drift 視為缺陷） */
   --color-primary: #3182f6;
   --color-primary-strong: #1b64da;
   --color-primary-bg: #eff6ff;
@@ -22,25 +27,112 @@
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
 
-  /* 字族（wave-2 決定自託管 subset 策略前，先以系統字體回退） */
+  /* 互動態衍生值 — deep-dive §1.1（既有 Zen 藍階與 slate 階，非新色相） */
+  --color-primary-bg-hover: #dbeafe;
+  --color-border-strong: #cbd5e1;
+  --color-disabled-bg: #e2e8f0;
+  --color-disabled-text: #94a3b8;
+
+  /* 深藍 Banner 專用（Contact banner；D2 唯一授權例外） */
+  --color-banner-bg: #1b64da;
+  --color-banner-text: #ffffff;
+  --color-banner-sub: #eff6ff;
+
+  /* Focus（深藍底上 ring 用白色 — PM 裁決 D1） */
+  --color-focus: #3182f6;
+  --color-focus-inverse: #ffffff;
+
+  /* 字族：系統字型堆疊（brief §6 字體 v2.1 裁決 — 不載任何 webfont） */
   --font-sans:
     'Inter', 'Noto Sans TC', system-ui, -apple-system, 'Segoe UI', 'PingFang TC',
     'Microsoft JhengHei', sans-serif;
 
-  /* 全站標準 easing */
+  /* 字級階 — deep-dive §1.2（clamp 基準 390→1120，斜率 = Δpx / 730） */
+  --text-display: clamp(36px, 10vw, 44px);
+  --text-display--line-height: 1.12;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 800;
+  --text-h1: clamp(30px, 22.5px + 1.92vw, 44px);
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h1--font-weight: 800;
+  --text-h2: clamp(26px, 18.5px + 1.92vw, 40px);
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h2--font-weight: 800;
+  --text-h3: clamp(17px, 15.9px + 0.27vw, 19px);
+  --text-h3--line-height: 1.4;
+  --text-h3--font-weight: 700;
+  --text-body: 16px;
+  --text-body--line-height: 1.7;
+  --text-body-sm: 15px;
+  --text-body-sm--line-height: 1.6;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.5;
+  --text-caption--font-weight: 500;
+  --text-overline: 13px;
+  --text-overline--line-height: 1.4;
+  --text-overline--letter-spacing: 0.08em;
+  --text-overline--font-weight: 700;
+  --text-stat: clamp(32px, 26.7px + 1.37vw, 42px);
+  --text-stat--line-height: 1.1;
+  --text-stat--letter-spacing: -0.01em;
+  --text-stat--font-weight: 800;
+  --text-404: clamp(88px, 61px + 6.85vw, 138px);
+  --text-404--line-height: 1;
+  --text-404--letter-spacing: -0.03em;
+  --text-404--font-weight: 800;
+
+  /* 圓角體系 — deep-dive §1.3 */
+  --radius-card: 20px;
+  --radius-btn: 16px;
+  --radius-input: 12px;
+  --radius-chip: 999px;
+  --radius-deco: 24px;
+  --radius-frame: 32px;
+  --radius-icon: 12px;
+
+  /* 全站唯一安靜陰影（僅 header 捲動後 / toast / sticky CTA） */
+  --shadow-quiet: 0 1px 2px rgb(15 23 42 / 0.04);
+
+  /* 全站唯一 easing */
   --ease-out-quart: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 動效時長 Tokens（brief §2；transform/opacity 專用） */
+/* 動效時長與版式節奏 Tokens — deep-dive §1.3/§1.4（transform/opacity 專用） */
 :root {
   --dur-tap: 120ms;
   --dur-hover: 200ms;
   --dur-reveal: 480ms;
-  --stagger: 70ms;
+  --dur-accordion: 240ms;
+  --dur-menu: 240ms;
+  --dur-toast: 200ms;
   --dur-count: 1200ms;
+  --stagger: 70ms;
+  --float-cycle: 8s;
+
+  --space-section: clamp(72px, 42px + 7.7vw, 128px);
+  --container-max: 1120px;
+
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-overlay: 30;
+  --z-toast: 50;
 }
 
-/* 基礎排版 reset */
+/* Display 平板 52px 中繼值與桌面 64px — deep-dive §1.2 + PM 裁決 D5 */
+@media (min-width: 768px) {
+  :root {
+    --text-display: 52px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --text-display: 64px;
+  }
+}
+
+/* 基礎排版 */
 body {
   background-color: var(--color-background);
   color: var(--color-text);
@@ -55,7 +147,415 @@ h3 {
   text-wrap: balance;
 }
 
-/* 固定 header 下錨點不被遮擋（PRD §7 硬性規則） */
+/* 固定 header 下錨點不被遮擋（deep-dive §1.3：全站 80px） */
 :target {
-  scroll-margin-top: 5rem;
+  scroll-margin-top: 80px;
+}
+
+/* 全站容器：max 1120、側距 mobile 20 / ≥768 24 */
+.shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-max);
+  padding-inline: 20px;
+}
+@media (min-width: 768px) {
+  .shell {
+    padding-inline: 24px;
+  }
+}
+
+/* 區塊垂直節奏：mobile 72 → desktop 128 */
+.section-pad {
+  padding-block: var(--space-section);
+}
+
+/* Focus ring：淺底品牌藍 / 深藍底白色（D1） */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.focus-ring-inverse:focus-visible {
+  outline: 2px solid var(--color-focus-inverse);
+  outline-offset: 2px;
+}
+.focus-ring-inset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* MobileMenu 開合：240ms opacity + translateY(8px)；關閉時 visibility 延遲切換 */
+.mobile-menu {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur-menu) var(--ease-out-quart),
+    transform var(--dur-menu) var(--ease-out-quart),
+    visibility 0s var(--dur-menu);
+}
+.mobile-menu[data-open='true'] {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--dur-menu) var(--ease-out-quart),
+    transform var(--dur-menu) var(--ease-out-quart),
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu,
+  .mobile-menu[data-open='true'] {
+    transform: none;
+    transition:
+      opacity var(--dur-menu) var(--ease-out-quart),
+      visibility 0s var(--dur-menu);
+  }
+  .mobile-menu[data-open='true'] {
+    transition:
+      opacity var(--dur-menu) var(--ease-out-quart),
+      visibility 0s;
+  }
+}
+
+/* Pill tabs 水平捲動列：隱藏 scrollbar（§4.9） */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pill 觸控 hit area 外擴至 44px（本體 40px） */
+.pill-hit {
+  position: relative;
+}
+.pill-hit::after {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+
+/* 互動過渡 SSOT：hover 色彩 200ms、active transform 120ms（全站唯一 easing） */
+.press {
+  transition:
+    color var(--dur-hover) var(--ease-out-quart),
+    background-color var(--dur-hover) var(--ease-out-quart),
+    border-color var(--dur-hover) var(--ease-out-quart),
+    opacity var(--dur-hover) var(--ease-out-quart),
+    box-shadow var(--dur-hover) var(--ease-out-quart),
+    transform var(--dur-tap) var(--ease-out-quart);
+}
+.press-scale:active {
+  transform: scale(var(--press-scale, 0.97));
+}
+.press-scale:disabled:active {
+  transform: none;
+}
+
+/* Accordion：grid-rows 0fr→1fr 展開 + chevron 旋轉（§4.3） */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-accordion) var(--ease-out-quart);
+}
+.accordion-panel[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+.accordion-chevron {
+  transition: transform var(--dur-accordion) var(--ease-out-quart);
+}
+.accordion-chevron[data-open='true'] {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press {
+    transition:
+      color var(--dur-hover) var(--ease-out-quart),
+      background-color var(--dur-hover) var(--ease-out-quart),
+      border-color var(--dur-hover) var(--ease-out-quart),
+      opacity var(--dur-hover) var(--ease-out-quart);
+  }
+  .press-scale:active {
+    transform: none;
+  }
+  .accordion-panel,
+  .accordion-chevron {
+    transition: none;
+  }
+}
+
+/* ============================================================
+ * Hero 工具卡疊層舞台 — design-deep-dive §3
+ * 三層 transform：定位層（stage-card）→ 浮動層（stage-float）→ 視差層（stage-para）
+ * 行動/平板：3 卡完全靜態；桌面（≥1024）：5 卡 + 浮動 + 指標視差。
+ * ============================================================ */
+.hero-stage {
+  position: relative;
+  /* 卡片 z-index 僅在舞台內比層，不與 header/overlay 全域 z 競爭。 */
+  isolation: isolate;
+  width: 100%;
+  max-width: 350px;
+  height: 380px;
+  margin-inline: auto;
+  overflow: visible;
+}
+@media (min-width: 768px) {
+  .hero-stage {
+    max-width: 420px;
+    height: 440px;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-stage {
+    max-width: none;
+    width: 512px;
+    height: 500px;
+  }
+}
+
+.stage-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, 0) translate(var(--x, 0px), var(--y, 0px)) rotate(var(--r, 0deg))
+    scale(var(--s, 1));
+  z-index: var(--z, 1);
+}
+
+/* 行動（<768）3 卡版式 §3.2 */
+.stage-card-1 {
+  --x: 0px;
+  --y: 0px;
+  --r: 0deg;
+  --s: 1;
+  --z: 30;
+  --amp: 8px;
+  --float-delay: 0s;
+  --depth: 6px;
+}
+.stage-card-2 {
+  --x: -88px;
+  --y: 26px;
+  --r: -6deg;
+  --s: 0.88;
+  --z: 20;
+  --amp: 6px;
+  --float-delay: -1.6s;
+  --depth: 4px;
+}
+.stage-card-3 {
+  --x: 88px;
+  --y: 26px;
+  --r: 6deg;
+  --s: 0.88;
+  --z: 10;
+  --amp: 6px;
+  --float-delay: -3.2s;
+  --depth: 4px;
+}
+/* 卡 4/5 行動與平板不渲染資源（D8：display:none + lazy 圖不觸發載入） */
+.stage-card-4,
+.stage-card-5 {
+  display: none;
+}
+
+/* 平板（768–1023）：沿用 3 卡版式，舞台 420×440 等比放大偏移 */
+@media (min-width: 768px) {
+  .stage-card-2 {
+    --x: -106px;
+    --y: 31px;
+  }
+  .stage-card-3 {
+    --x: 106px;
+    --y: 31px;
+  }
+}
+
+/* 桌面（≥1024）5 卡疊層 §3.1 精確數值 */
+@media (min-width: 1024px) {
+  .stage-card-1 {
+    --z: 50;
+  }
+  .stage-card-2 {
+    --x: -104px;
+    --y: 36px;
+    --s: 0.92;
+    --z: 40;
+  }
+  .stage-card-3 {
+    --x: 104px;
+    --y: 36px;
+    --s: 0.92;
+    --z: 30;
+  }
+  .stage-card-4 {
+    display: block;
+    --x: -172px;
+    --y: 80px;
+    --r: -11deg;
+    --s: 0.84;
+    --z: 20;
+    --amp: 4px;
+    --float-delay: -4.8s;
+    --depth: 2px;
+  }
+  .stage-card-5 {
+    display: block;
+    --x: 172px;
+    --y: 80px;
+    --r: 11deg;
+    --s: 0.84;
+    --z: 10;
+    --amp: 4px;
+    --float-delay: -6.4s;
+    --depth: 2px;
+  }
+}
+
+/* CSS device frame：行動 156×338 / 平板 180×390 / 桌面 200×434（無陰影，深度靠 scale/rotate/z） */
+.stage-frame {
+  width: 156px;
+  height: 338px;
+  border: 4px solid var(--color-text);
+  border-radius: 28px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.stage-frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.stage-frame img,
+.stage-frame .stage-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  object-fit: cover;
+  object-position: top;
+}
+@media (min-width: 768px) {
+  .stage-frame {
+    width: 180px;
+    height: 390px;
+  }
+}
+@media (min-width: 1024px) {
+  .stage-frame {
+    width: 200px;
+    height: 434px;
+    border-width: 5px;
+    border-radius: 32px;
+  }
+  .stage-frame img,
+  .stage-frame .stage-placeholder {
+    border-radius: 27px;
+  }
+}
+
+/* 浮動與視差僅桌面啟用；行動/平板完全靜態 */
+@media (min-width: 1024px) {
+  .stage-float {
+    animation: hero-float var(--float-cycle) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+  .stage-para {
+    transform: translate3d(
+      calc(var(--px, 0) * var(--depth, 0px)),
+      calc(var(--py, 0) * var(--depth, 0px)),
+      0
+    );
+    transition: transform 300ms var(--ease-out-quart);
+  }
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(var(--amp, 0px) * -1));
+  }
+}
+
+/* Tools 頁分類切換：卡格 150ms opacity 淡入（無位移） */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 150ms var(--ease-out-quart);
+}
+
+/* CopyField 成功 icon 切換：150ms scale 0.8→1 + opacity */
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.icon-pop {
+  animation: icon-pop 150ms var(--ease-out-quart);
+}
+
+/* Toast 生命週期：進場 200ms → 停留 2s → 離場 200ms（合計 2400ms，由 JS 移除） */
+@keyframes toast-life {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  8%,
+  84% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+}
+.toast-bubble {
+  animation: toast-life 2400ms var(--ease-out-quart) both;
+}
+
+/* reduced-motion：移除 translate/scale/float/parallax，僅保留 opacity 過渡 */
+@media (prefers-reduced-motion: reduce) {
+  .stage-float {
+    animation: none;
+  }
+  .stage-para {
+    transition: none;
+    transform: none;
+  }
+  .fade-in,
+  .icon-pop {
+    animation: none;
+  }
+  @keyframes toast-life {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+    8%,
+    84% {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, 0);
+    }
+  }
 }

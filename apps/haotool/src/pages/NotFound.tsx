@@ -1,36 +1,41 @@
 /**
- * 404 佔位頁（brief §3.5）：大數字 + 品牌一句 + 回首頁 + 工具導流。
+ * 404（design-deep-dive §5.4）：大數字 + 品牌一句 + 回首頁 + 5 工具導流；noindex 由 SEO 模組處理。
  */
 import { Link } from 'react-router-dom';
+import { buttonClass } from '../components/Button';
 import { TOOLS, getToolUrl } from '../config/tools';
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-[1120px] px-5 py-16 text-center md:px-6">
-      <p className="text-7xl font-extrabold [font-variant-numeric:tabular-nums]" aria-hidden="true">
-        404
-      </p>
-      <h1 className="mt-4 text-3xl font-extrabold">找不到頁面</h1>
-      <p className="mt-3 text-text-muted">這頁不存在，但工具都在。</p>
-      <p className="mt-6">
-        <Link
-          to="/"
-          className="inline-flex h-[52px] items-center rounded-2xl bg-primary px-8 font-bold text-white"
-        >
-          回首頁
-        </Link>
-      </p>
-      <nav aria-label="工具導流" className="mt-10">
-        <ul className="flex flex-wrap justify-center gap-4">
-          {TOOLS.map((tool) => (
-            <li key={tool.id}>
-              <a href={getToolUrl(tool)} className="text-sm font-semibold text-primary-strong">
-                {tool.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <div className="bg-surface">
+      <div className="shell flex min-h-[calc(100svh-64px)] flex-col items-center justify-center py-16 text-center">
+        <div className="max-w-[560px]">
+          <p className="text-404 tabular-nums text-text" aria-hidden="true">
+            404
+          </p>
+          <h1 className="mt-4 text-h2 text-text">這頁不存在，但工具都在。</h1>
+          <p className="mt-3 text-body text-text-muted">網址可能打錯了，或這個頁面已經搬家。</p>
+          <p className="mt-8">
+            <Link to="/" className={buttonClass('primary', 'w-full md:w-auto')}>
+              回首頁
+            </Link>
+          </p>
+          <nav aria-label="工具導流" className="mt-12">
+            <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3">
+              {TOOLS.map((tool) => (
+                <li key={tool.id}>
+                  <a
+                    href={getToolUrl(tool)}
+                    className="press focus-ring text-[15px] font-semibold text-primary-strong active:opacity-80"
+                  >
+                    {tool.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </div>
     </div>
   );
 }

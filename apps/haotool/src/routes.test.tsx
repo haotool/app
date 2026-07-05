@@ -45,13 +45,13 @@ describe('routes render', () => {
   it('未知路徑渲染 404 頁', async () => {
     renderRoute('/does-not-exist/');
     const heading = await screen.findByRole('heading', { level: 1 });
-    expect(heading).toHaveTextContent('找不到頁面');
+    expect(heading).toHaveTextContent('這頁不存在，但工具都在。');
   });
 
   it('/404 渲染 404 頁（供 SSG 預渲染）', async () => {
     renderRoute('/404');
     const heading = await screen.findByRole('heading', { level: 1 });
-    expect(heading).toHaveTextContent('找不到頁面');
+    expect(heading).toHaveTextContent('這頁不存在，但工具都在。');
   });
 
   it('每頁皆含 main landmark 與 SkipLink', async () => {
