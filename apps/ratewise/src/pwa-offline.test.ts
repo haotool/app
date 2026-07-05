@@ -136,16 +136,16 @@ describe('PWA 離線功能測試', () => {
       expect(swContent).toContain("destination !== 'document'");
     });
 
-    it('should use NavigationRoute + bounded SWR-style handler for zero-white-screen navigation', () => {
+    it('should use NavigationRoute + bounded SWR-style handler for SSG-safe navigation', () => {
       const swContent = readFileSync(resolve(ROOT_PATH, 'src/sw.ts'), 'utf-8');
-      // 取代 NetworkFirst：installed PWA 已暖機後 cache hit 立即返回，背景 revalidate 抓最新 HTML。
+      // 暖快取 SWR；冷快取先 network fetch 正確 SSG HTML，離線才回退 index.html shell。
       expect(swContent).toContain('handleNavigationRequest');
       expect(swContent).toContain('new NavigationRoute(handleNavigationRequest)');
       expect(swContent).toContain("const HTML_CACHE_NAME = 'html-cache'");
       expect(swContent).toContain('event.waitUntil(');
       expect(swContent).toContain('fetchAndCacheNavigation(request, cache)');
       expect(swContent).toContain("matchPrecache('index.html')");
-      // 防回歸：禁止把 NetworkFirst 重新引入 navigation 路徑（cold-start 白屏根因之一）。
+      // 防回歸：禁止 Workbox NetworkFirst navigation plugin。
       expect(swContent).not.toContain('new NetworkFirst(');
       // 防回歸：禁止 3s timeout 在 iOS eviction 後誤服 offline.html 給在線用戶。
       expect(swContent).not.toContain('NAVIGATION_NETWORK_TIMEOUT_MS');

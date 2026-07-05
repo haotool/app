@@ -203,18 +203,18 @@ describe('Service Worker Cache Strategies', () => {
     const swPath = path.resolve(__dirname, '../sw.ts');
     const sourceCode = await fs.readFile(swPath, 'utf-8');
 
-    // 已 install 過的 PWA：暖快取 SWR；冷快取 precache-first，避免 3s timeout 假離線。
+    // 已 install 過的 PWA：暖快取 SWR；冷快取先 network fetch 正確 SSG HTML，避免 #418。
     expect(sourceCode).toContain('handleNavigationRequest');
     expect(sourceCode).toContain('new NavigationRoute(handleNavigationRequest)');
     expect(sourceCode).toContain('event.waitUntil(');
     expect(sourceCode).toContain('fetchAndCacheNavigation(request, cache)');
     expect(sourceCode).toContain("matchPrecache('index.html')");
-    // 防回歸：禁止重新引入 NetworkFirst navigation（cold-start 白屏根因之一）。
+    // 防回歸：禁止 Workbox NetworkFirst navigation plugin（與自訂 bounded fetch 策略不同）。
     expect(sourceCode).not.toContain('new NetworkFirst(');
     // 防回歸：禁止重新引入 3s 全域 navigation timeout（iOS eviction 假離線根因）。
     expect(sourceCode).not.toContain('const NAVIGATION_NETWORK_TIMEOUT_MS');
     expect(sourceCode).not.toContain('Promise.race([networkResponse, timeoutFallback])');
-    // case 3（precache 已 miss）允許 8s bounded race，避免 hung network 無限白屏。
+    // 冷快取與離線 fallback 允許 8s bounded race，避免 hung network 無限白屏。
     expect(sourceCode).toContain('const NAVIGATION_FETCH_TIMEOUT_MS = 8000');
     expect(sourceCode).toContain('navigation-fetch-timeout');
   });
@@ -551,7 +551,7 @@ describe('handleNavigationRequest', () => {
     });
   }
 
-  it('case 2: precache hit resolves instantly without timer dependency', async () => {
+  it('case 2: cold cache timeout falls back to precache index.html', async () => {
     vi.useFakeTimers();
 
     const precachedShell = new Response('<html>precached index</html>', {
@@ -569,14 +569,16 @@ describe('handleNavigationRequest', () => {
     );
 
     const handler = navigationHandlerRef.current!;
-    const response = await handler({
+    const responsePromise = handler({
       event: createNavigationEvent(),
       request: new Request(navigationUrl),
     });
 
+    await vi.advanceTimersByTimeAsync(8000);
+
+    const response = await responsePromise;
     expect(response).toBe(precachedShell);
     expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
-    await vi.runAllTimersAsync();
   });
 
   it('case 3: network resolves within 8s returns network response without orphan timer', async () => {
@@ -609,7 +611,7 @@ describe('handleNavigationRequest', () => {
       const body = await response.text();
 
       expect(body).toBe(networkHtml);
-      expect(matchPrecacheMock).toHaveBeenCalledWith('index.html');
+      expect(matchPrecacheMock).not.toHaveBeenCalledWith('index.html');
       expect(matchPrecacheMock).not.toHaveBeenCalledWith('offline.html');
 
       await vi.advanceTimersByTimeAsync(8000);
@@ -618,6 +620,65 @@ describe('handleNavigationRequest', () => {
       process.off('unhandledRejection', onRejection);
     }
   });
+
+  it('cold cache 200 response returns network HTML and writes html-cache', async () => {
+    const networkHtml = '<html>network fresh 200</html>';
+
+    htmlCache.match.mockResolvedValue(undefined);
+    matchPrecacheMock.mockResolvedValue(null);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(networkHtml, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        }),
+      ),
+    );
+
+    const handler = navigationHandlerRef.current!;
+    const response = await handler({
+      event: createNavigationEvent(),
+      request: new Request(navigationUrl),
+    });
+
+    expect(await response.text()).toBe(networkHtml);
+    expect(htmlCache.put).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([404, 503])(
+    'cold cache %i response falls back to precache shell without caching',
+    async (status) => {
+      const precachedShell = new Response('<html>precached index</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+
+      htmlCache.match.mockResolvedValue(undefined);
+      matchPrecacheMock.mockImplementation((url: string) =>
+        Promise.resolve(url === 'index.html' ? precachedShell : null),
+      );
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(
+          new Response(`<html>edge error ${String(status)}</html>`, {
+            status,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          }),
+        ),
+      );
+
+      const handler = navigationHandlerRef.current!;
+      const response = await handler({
+        event: createNavigationEvent(),
+        request: new Request(navigationUrl),
+      });
+
+      // Cloudflare stale edge 404 等錯誤頁不得服給用戶，且不得污染 html-cache。
+      expect(response).toBe(precachedShell);
+      expect(htmlCache.put).not.toHaveBeenCalled();
+    },
+  );
 
   it('case 3: timeout fallback still waitUntils late network fetch to html-cache', async () => {
     vi.useFakeTimers();

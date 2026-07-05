@@ -569,6 +569,46 @@ test.describe('飛航模式冷啟動診斷', () => {
     await ctx.close();
   });
 
+  test('冷快取在線導覽深層路由：SW 應服出 per-route SSG HTML 而非首頁快照', async ({ browser }) => {
+    const ctx = await browser.newContext({ serviceWorkers: 'allow' });
+    const page = await ctx.newPage();
+
+    // Phase 1：暖機讓 SW activate 並取得導覽控制權。
+    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 60_000 });
+    await page.waitForFunction(
+      async () => {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        return reg?.active?.state === 'activated';
+      },
+      undefined,
+      { timeout: 60_000 },
+    );
+    await waitForOfflineReadiness(page, BASE);
+
+    // Phase 2：清空 html-cache，模擬 SW 已安裝但深層路由 HTML 尚未暖機（冷導覽）。
+    await page.evaluate(async () => {
+      await caches.delete('html-cache');
+    });
+
+    // Phase 3：在線導覽深層路由，攔截 SW 服出的 navigation response 原文。
+    const targetUrl = `${BASE}settings/`;
+    const [navigationResponse] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.request().isNavigationRequest() && res.url() === targetUrl,
+        { timeout: 30_000 },
+      ),
+      page.goto(targetUrl, { waitUntil: 'commit', timeout: 60_000 }),
+    ]);
+
+    const servedHtml = await navigationResponse.text();
+    const canonical = /rel="canonical"\s+href="([^"]+)"/.exec(servedHtml)?.[1] ?? '(none)';
+
+    // 防回歸（#418 根因）：冷導覽不得回首頁 SSG 快照給深層路由。
+    expect(canonical, 'SW 冷導覽應服出 settings 的 per-route SSG HTML').toContain('/settings/');
+
+    await ctx.close();
+  });
+
   test('即使 root 提前出現假節點，冷啟動 watchdog 仍應顯示全屏診斷 UI', async ({ browser }) => {
     const context = await browser.newContext({
       serviceWorkers: 'allow',
