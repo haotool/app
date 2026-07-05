@@ -165,20 +165,25 @@ describe('SEO SSOT', () => {
     it('反向金額頁 title 應把金額標示為台幣，避免誤讀成外幣金額', () => {
       const copy = buildPairAmountSeo(30000, 'USD', '美金', 'twd-to-foreign');
 
-      expect(copy.title).toContain('30,000 台幣換美金');
+      // 金額頁 v2 公式：「{金額} 台幣換多少{幣名}？今日台銀實際價」。
+      expect(copy.title).toContain('30,000 台幣換多少美金');
       expect(copy.title).not.toContain('台幣換 30,000 美金');
       expect(copy.description).toContain('30,000 台幣');
+      // description 首句直接給答案（現金賣出換算結果）。
+      expect(copy.description).toContain('現金賣出');
     });
   });
 
   describe('正向幣別頁（外幣→TWD URL）台銀賣出價語意', () => {
-    it('金額頁 SEO 文案應描述買外幣所需台幣，避免誤導為持外幣換回台幣', () => {
+    it('金額頁 SEO 文案應同時交代雙向語意，且買外幣方向對齊現金賣出', () => {
       const copy = buildPairAmountSeo(100, 'USD', '美金', 'to-twd');
 
-      expect(copy.title).toContain('買 100 美金要多少新台幣');
-      expect(copy.title).not.toContain('100 美金換新台幣');
+      // 金額頁 v2：title 用中文別名雙寫法、不放匯率數字；答案數字在 description。
+      expect(copy.title).toContain('100 美金（USD）換台幣是多少');
       expect(copy.description).toContain('買 100 美金');
-      expect(copy.description).toContain('所需台幣金額');
+      expect(copy.description).toContain('現金賣出');
+      // 雙向答案：換回台幣方向必須標示現金買入，避免單向誤導。
+      expect(copy.description).toContain('現金買入');
     });
 
     it('幣別頁 FAQ 與 schema 名稱應使用買外幣語意對齊 cashSell', () => {

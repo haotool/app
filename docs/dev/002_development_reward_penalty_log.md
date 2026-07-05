@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+121
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+122
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-amount-page-v2
+- 原因：金額頁只給單向現金賣出答案（與「50000韓元」大宗搜尋意圖錯位）、無階梯表可提取結構、title 無中文金額別名
+- 解法：Answer Block 雙向答案（現金買入估算＋現金賣出＋中間價對比）、INDEXABLE amounts 純計算階梯表、title/description 導入 formatZhAmount 中文別名公式且 description 首句給答案
 
 - 日期：2026-07-05
 - ID：neutral-rw-e5-l2-pure-assembler

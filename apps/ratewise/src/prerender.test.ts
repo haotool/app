@@ -367,7 +367,7 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
 
       const content = readFileSync(usdAmountHtml, 'utf-8');
       expect(content).toContain('id="ssg-amount-result"');
-      expect(content).toContain('換算結果（台銀現金賣出參考）');
+      expect(content).toContain('換算結果（台銀實際牌告）');
       expect(content).toContain('500 USD');
       expect(content).toContain('在換算器查看最新匯率');
     });

@@ -13,6 +13,9 @@ import { APP_INFO, getCopyrightNotice } from '../config/app-info';
 import {
   buildAmountExchangeRateSpecificationJsonLd,
   buildRateDifferenceSentence,
+  buildForwardAmountLadder,
+  buildReverseAmountLadder,
+  getAmountAnswerData,
   getDefaultExampleAmount,
   type FAQEntry,
   type HowToStep,
@@ -112,6 +115,14 @@ export function CurrencyLandingPage({
   });
 
   const formatNum = (n: number) => n.toLocaleString('zh-TW');
+
+  // 金額頁 v2 資料（雙向答案與階梯表）：全部由 config 純計算生成，元件不含文案邏輯。
+  const answerData = getAmountAnswerData(currencyCode);
+  const forwardLadder =
+    !isTwdToForeign && amount !== null ? buildForwardAmountLadder(currencyCode) : [];
+  const reverseLadder =
+    isTwdToForeign && amount !== null ? buildReverseAmountLadder(currencyCode) : [];
+  const ladderRows = isTwdToForeign ? reverseLadder : forwardLadder;
 
   // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
   const converterHref =
@@ -238,13 +249,13 @@ export function CurrencyLandingPage({
           {/* AEO/GEO 快速答案：AI 引擎直接引用的問答對，顯示在頁面頂部提升引用率。 */}
           <AnswerCapsule items={answerCapsule} />
 
-          {/* 金額換算結果卡（Wise-pattern）：?amount=X 存在時顯示靜態換算結果，爬蟲可索引。 */}
+          {/* 金額頁 v2 Answer Block（answer-first，雙向答案）：?amount=X 存在時顯示，數字全部由每日資料純計算。 */}
           {amount !== null && amountResult !== null && cashSell !== null && (
-            <section className="mb-6 sm:mb-8">
+            <section className="mb-6 sm:mb-8" data-testid="amount-answer-block">
               <div className="card p-4 sm:p-5 bg-primary/5 border border-primary/30">
                 <div className="flex items-center gap-2 mb-3 text-xs font-black uppercase tracking-wider text-primary/60">
                   <Calculator className="w-3.5 h-3.5" />
-                  <span>換算結果（台銀現金賣出參考）</span>
+                  <span>換算結果（台銀實際牌告）</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-wrap mb-1">
                   <span className="text-2xs text-text-muted">
@@ -258,11 +269,32 @@ export function CurrencyLandingPage({
                       ? `${formatNum(amountResult)} ${currencyCode}`
                       : `${formatNum(amountResult)} TWD`}
                   </span>
+                  <span className="text-2xs text-text-muted">（台銀現金賣出）</span>
                 </div>
+                {/* 雙向答案：to-twd 頁補「換回台幣（現金買入）」與中間價對比；數字純計算。 */}
+                {answerData && (
+                  <ul className="text-xs text-text-muted space-y-1 mb-2">
+                    {!isTwdToForeign && answerData.cashBuyEstimate !== null && (
+                      <li>
+                        把 {formatNum(amount)} {currencyCode} 換回台幣 ≈{' '}
+                        <strong className="text-text font-semibold">
+                          {formatNum(Math.round(amount * answerData.cashBuyEstimate))} TWD
+                        </strong>
+                        （台銀現金買入估算）
+                      </li>
+                    )}
+                    <li>
+                      Google／XE 中間價換算 ≈{' '}
+                      {isTwdToForeign
+                        ? `${formatNum(Math.round((amount / answerData.marketMid) * 100) / 100)} ${currencyCode}`
+                        : `${formatNum(Math.round(amount * answerData.marketMid))} TWD`}
+                      ——中間價是批發參考價，一般人換不到
+                    </li>
+                  </ul>
+                )}
                 <p className="text-2xs text-text-muted mb-4">
-                  {isTwdToForeign
-                    ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`
-                    : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`}
+                  資料來源：臺灣銀行牌告（現金賣出 1 {currencyCode} = {cashSell}{' '}
+                  TWD），頁面嵌入價每日更新；即時價請用換算器查看。
                 </p>
                 <Link
                   to={converterHref}
@@ -272,6 +304,84 @@ export function CurrencyLandingPage({
                   <ArrowLeft className="w-4 h-4 rotate-180" />
                 </Link>
               </div>
+
+              {/* 金額階梯對照表：由 INDEXABLE amounts 純計算生成（featured snippet 可提取結構）。 */}
+              {ladderRows.length > 0 && (
+                <div className="card p-4 sm:p-5 mt-3 overflow-x-auto" data-testid="amount-ladder">
+                  <table className="w-full text-xs sm:text-sm text-left">
+                    <caption className="text-left text-2xs font-black uppercase tracking-wider text-text-muted mb-2">
+                      {isTwdToForeign
+                        ? `常用台幣金額換${currencyName}對照（台銀現金賣出）`
+                        : `常用${currencyName}金額換台幣對照（台銀牌告）`}
+                    </caption>
+                    <thead>
+                      <tr className="text-text-muted border-b border-border">
+                        {isTwdToForeign ? (
+                          <>
+                            <th scope="col" className="py-2 pr-3 font-semibold">
+                              台幣（TWD）
+                            </th>
+                            <th scope="col" className="py-2 font-semibold">
+                              可換{currencyName}（現金賣出）
+                            </th>
+                          </>
+                        ) : (
+                          <>
+                            <th scope="col" className="py-2 pr-3 font-semibold">
+                              {currencyName}（{currencyCode}）
+                            </th>
+                            <th scope="col" className="py-2 pr-3 font-semibold">
+                              換回台幣（現金買入）
+                            </th>
+                            <th scope="col" className="py-2 font-semibold">
+                              買入成本（現金賣出）
+                            </th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isTwdToForeign
+                        ? reverseLadder.map((row) => (
+                            <tr key={row.twdAmount} className="border-b border-border/50">
+                              <td className="py-2 pr-3">
+                                <Link
+                                  to={`${pathname.replace(/\/$/, '')}/${row.twdAmount}/`}
+                                  className="text-primary hover:underline"
+                                >
+                                  {formatNum(row.twdAmount)}
+                                </Link>
+                              </td>
+                              <td className="py-2">
+                                {formatNum(row.foreignAtCashSell)} {currencyCode}
+                              </td>
+                            </tr>
+                          ))
+                        : forwardLadder.map((row) => (
+                            <tr key={row.amount} className="border-b border-border/50">
+                              <td className="py-2 pr-3">
+                                <Link
+                                  to={`${pathname.replace(/\/$/, '')}/${row.amount}/`}
+                                  className="text-primary hover:underline"
+                                >
+                                  {formatNum(row.amount)}
+                                </Link>
+                              </td>
+                              <td className="py-2 pr-3">
+                                {row.twdAtCashBuy !== null
+                                  ? `${formatNum(row.twdAtCashBuy)} TWD`
+                                  : '—'}
+                              </td>
+                              <td className="py-2">{formatNum(row.twdAtCashSell)} TWD</td>
+                            </tr>
+                          ))}
+                    </tbody>
+                  </table>
+                  <p className="text-2xs text-text-muted mt-2">
+                    表格由台銀牌告每日更新資料計算；「換回台幣」為現金買入估算值，實際以臨櫃牌告為準。
+                  </p>
+                </div>
+              )}
             </section>
           )}
 
