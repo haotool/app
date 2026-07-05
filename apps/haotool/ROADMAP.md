@@ -2,9 +2,14 @@
 
 > Scope：本路線圖聚焦 `app.haotool.org` 根站（haotool 官網）重建任務；各子 app 路線圖見各自文件。
 > SSOT：PRD `docs/superpowers/specs/2026-07-04-haotool-site-rebuild-prd.md`、設計 brief `docs/superpowers/specs/2026-07-05-haotool-site-design-brief.md`、內容盤點 `docs/dev/046_haotool_site_content_inventory.md`。
-> 工作分支：`feat/haotool-site-v2`（含舊站移除 commit）。合併與正式部署需使用者明確批准。
+> 工作分支：`feat/haotool-site-e3`（基於 `experiment/ratewise-product-2026h2`）。合併與正式部署需使用者明確批准。
 
-## Now — Epic E1：haotool-site v2 MVP（韓系扁平、產品級）
+## Now — Epic E3：行動首頁美感升級（Codex LOGO/素材、美學研究驅動設計迭代）
+
+- Codex imagegen 產製 LOGO 與視覺素材 v2（吉祥物/插圖/OG 模板精修）
+- 美學研究驅動的行動首頁設計迭代（多視口截圖 QA 與體感驗收）
+
+## Done — Epic E1：haotool-site v2 MVP（韓系扁平、產品級）
 
 | 序  | 工作項                                                                  | 狀態 |
 | --- | ----------------------------------------------------------------------- | ---- |
@@ -18,15 +23,11 @@
 | 8   | 部署整合（root scripts/Dockerfile/nginx/Worker v5.6 原始碼）            | 完成 |
 | 9   | gh issues（#546-550）→ PR #552 ready（merge 待使用者批准）              | 完成 |
 
-## Next — Epic E2：品質與治理強化
+> E1+E2 已於 2026-07-06 併入 `experiment/ratewise-product-2026h2`（PR #552）。
 
-- 多視口截圖 QA（375/390/414/430/768/1440）與每顆按鈕/連結實測（Playwright 旅程 + 點擊深度 ≤2 驗證）
-- Lighthouse CI 納入 smoke（`APP_CONFIG.lighthouseSmokePaths`）與效能預算守門
-- 視覺素材 v2：吉祥物/插圖（Codex imagegen）、OG 模板精修
-- GSC 重新驗證、live 部署後 SEO/precache 驗證（`verify-production-resources` + purge SOP）
-- 完美模式迭代：情報四軌（功能缺口/UX/成本/競品）與 ROI 閘改進
+## Next — Epic E4：main 合併與正式部署（需使用者批准）
 
-## Later — Epic E3+：擴充候選（過 ROI 閘才立案）
+## Later — Epic E5+：擴充候選（過 ROI 閘才立案）
 
 - 英文版 i18n、深色模式（`prefers-color-scheme`）
 - HaoRate 即時匯率預覽 chip（build-time 資料，零 runtime 成本）

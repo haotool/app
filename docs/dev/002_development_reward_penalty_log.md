@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+146
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+146
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-haotool-e3-branch-governance
+- 原因：使用者指示 E1+E2 成果併入 experiment/ratewise-product-2026h2、E3 於其上續迭代，路線圖與分支治理需同步
+- 解法：PR #552 rebase 後 squash 併入實驗分支、開 feat/haotool-site-e3 續作、ROADMAP Now/Next 對齊
 
 - 日期：2026-07-06
 - ID：reward-haotool-e2-final-review-fixes
