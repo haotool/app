@@ -130,6 +130,7 @@ export function BottomSheet({
             ref={sheetRef}
             tabIndex={-1}
             className={`fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-card shadow-floating flex flex-col pb-[env(safe-area-inset-bottom,0px)] outline-none md:bottom-6 md:mx-auto md:max-w-screen-sm md:rounded-card ${SIZE_CLASS[size]}`}
+            // 位移 120%：md:bottom-6 使寬視口 sheet 離底 24px，100% 退場會殘留可見條；spring 收斂時間與幅度無關，勿改回 100%。
             initial={{ y: '120%' }}
             animate={{ y: 0 }}
             exit={{ y: '120%' }}

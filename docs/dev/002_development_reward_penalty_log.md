@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+134
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+134
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-596-review-audit-number-and-comment
+- 原因：PR #596 body 將三檔合跑的 43/43 誤標為 `vitest run BottomSheet` 結果（單檔實為 10/10），且 120% 位移缺推導註解易被誤改回 100%
+- 解法：PR body 更正為單檔 10/10 並註明 43/43 的確切指令，兩處 `y: '120%'` 補繁中推導註解（md:bottom-6 退場殘留）
 
 - 日期：2026-07-06
 - ID：reward-rw-sheet-wide-viewport-588

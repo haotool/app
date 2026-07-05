@@ -220,6 +220,7 @@ export function CalculatorKeyboard({
             {/* Bottom Sheet 容器 */}
             <motion.div
               className="fixed inset-x-0 bottom-0 z-50 bg-surface rounded-t-3xl shadow-floating max-h-[80vh] overflow-hidden md:bottom-6 md:mx-auto md:max-w-screen-sm md:rounded-card"
+              // 位移 120%：md:bottom-6 使寬視口 sheet 離底 24px，100% 退場會殘留可見條；spring 收斂時間與幅度無關，勿改回 100%。
               initial={{ y: '120%' }}
               animate={{ y: 0 }}
               exit={{ y: '120%' }}
