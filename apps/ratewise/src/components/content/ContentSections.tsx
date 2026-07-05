@@ -77,7 +77,7 @@ export function ContentSectionCard({
   return (
     <section
       id={id}
-      className="rounded-card border border-border/60 bg-surface shadow-card p-5 scroll-mt-20"
+      className="rounded-card border border-border/60 bg-surface shadow-card p-5 scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]"
     >
       {title && <h2 className="mb-4 text-xl font-bold leading-tight text-text">{title}</h2>}
       {children}
@@ -175,7 +175,7 @@ function renderSection(section: ContentSection) {
       );
     case 'faq':
       return (
-        <section id={section.id} className="scroll-mt-20">
+        <section id={section.id} className="scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]">
           {section.title && (
             <h2 className="mb-4 text-xl font-bold leading-tight text-text">{section.title}</h2>
           )}

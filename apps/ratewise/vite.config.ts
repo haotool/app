@@ -503,6 +503,13 @@ export default defineConfig(({ mode }) => {
       script: 'async',
       formatting: 'beautify',
       dirStyle: 'nested',
+      // Beasties 預設 inlineFonts:false 會剝除 index.html inline @font-face 並注入重複
+      // font preload，導致品牌字體永遠未被使用（unused preload console warning）。
+      // inlineFonts:true 保留 @font-face；preloadFonts:false 交由 index.html 靜態 preload SSOT。
+      beastiesOptions: {
+        inlineFonts: true,
+        preloadFonts: false,
+      },
       // vite-react-ssg + Beasties may read freshly rendered nested amount pages during
       // writeout. Serial rendering avoids intermittent ENOENT on CI/pre-push.
       concurrency: 1,

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
+> 本次分數變化：+2（reward 2、penalty 0、neutral 1）｜累計總分：+149
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-600-anchor-scroll-mt-safe-area
+- 原因：#605 修了 sticky 返回列 safe-area 但錨點目標 `scroll-mt-20` 固定 80px 未連動，standalone 下 sticky 列變高（+59px）後隱私目錄與 Guide 步驟跳轉被遮蔽（#600 連動項）
+- 解法：三處錨點（Privacy 目錄、Guide 步驟、ContentSections）改 `scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]`，CDP inset 59px 實測 targetTop 139 > headerBottom 124，補 ContentPageLayout 錨點斷言
+
+- 日期：2026-07-06
+- ID：reward-rw-font-preload-beasties-fontface-strip
+- 原因：品牌字體 @font-face 放 index.html 內嵌樣式，Beasties 逐 sheet 判定 critical fonts 時因該 sheet 無使用者而整條剝除，全站 unused preload 警告且 wordmark 永遠回落系統字體（正式站取證：HTML 無任何 @font-face）
+- 解法：@font-face 移至 src/index.css（與 .brand-wordmark 同 sheet）＋ ssgOptions.beastiesOptions 設 inlineFonts:true／preloadFonts:false，preview 驗證警告歸零、document.fonts.check 為 true、preload 單一化
+
+- 日期：2026-07-06
+- ID：neutral-rw-612-staging-manifest-cross-origin
+- 原因：staging manifest `scope`/`start_url` 由 generate-manifest.mjs 以 APP_INFO.siteUrl 硬編正式站絕對 URL，對 staging origin 跨網域；屬刻意設計（PWA partition／HTTPS-First）連動 SSOT 生成鏈
+- 解法：取證後立案 #612（附 curl 證據與範圍）不硬修；React #418 staging 複驗無殘留（#595 已修）
 
 - 日期：2026-07-06
 - ID：reward-rw-e5b-currency-page-uiux-six-section-ia
