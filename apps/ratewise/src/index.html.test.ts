@@ -183,4 +183,30 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       expect(indexHtmlContent).toContain('.indexOf(');
     });
   });
+
+  describe('🟢 Custom Theme Bootstrap（E2 pre-paint 最小覆寫）', () => {
+    it('should validate customPrimary with strict hex pattern', () => {
+      // 僅接受 #RRGGBB 六碼，與 runtime isValidHexColor 同構。
+      expect(indexHtmlContent).toContain('/^#[0-9a-fA-F]{6}$/');
+      expect(indexHtmlContent).toContain('customPrimary');
+    });
+
+    it('should pre-paint override --color-primary only (identity hex → R G B)', () => {
+      // 只檢查 Theme Initialization bootstrap script 區塊（skeleton SVG 消費變數不在此限）。
+      const bootstrapStart = indexHtmlContent.indexOf('<!-- Theme Initialization');
+      const bootstrapEnd = indexHtmlContent.indexOf('</script>', bootstrapStart);
+      const bootstrap = indexHtmlContent.slice(bootstrapStart, bootstrapEnd);
+
+      // 最小覆寫：--color-primary 一鍵 + theme-color meta；完整演算由 applyTheme 接手。
+      expect(bootstrap).toContain("'--color-primary'");
+      expect(bootstrap).toContain('meta[name="theme-color"]');
+      // 不得在 bootstrap 內嵌完整演算（strong/hover 等鍵禁止出現，防雙份漂移）。
+      expect(bootstrap).not.toContain('--color-primary-strong');
+      expect(bootstrap).not.toContain('--color-primary-hover');
+    });
+
+    it('should keep default custom primary aligned with brand blue', () => {
+      expect(indexHtmlContent).toContain("P = '#3182F6'");
+    });
+  });
 });

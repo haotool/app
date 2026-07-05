@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+107
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+108
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-aa-property-gate
+- 原因：custom 主題演算若無硬閘門，極淺/極豔輸入色可能導出低對比文字配對，且 bootstrap 內嵌覆寫與 runtime 演算存在雙份漂移風險
+- 解法：新增 AA property 測試（312 個種子化隨機+邊界+色票輸入 × 全部文字配對 ≥4.5:1、圖形色 ≥3:1）、applyTheme 覆寫/清除守門、useAppTheme custom 持久化測試、bootstrap 最小覆寫守門（禁止內嵌 strong/hover 演算鍵）、chromium e2e 選色旅程（套用→重載→切回零殘留）
 
 - 日期：2026-07-05
 - ID：reward-rw-e2-custom-theme-picker-ui
