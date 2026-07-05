@@ -34,12 +34,16 @@ export interface ContentCardItem {
   description: ReactNode;
 }
 
-export type ContentSection =
+export type ContentSection = (
   | { kind: 'text'; title: string; paragraphs: readonly ReactNode[] }
   | { kind: 'list'; title: string; items: readonly ContentListItem[] }
   | { kind: 'faq'; title?: string; items: readonly ContentFaqItem[] }
   | { kind: 'links'; title: string; links: readonly ContentLinkItem[] }
-  | { kind: 'cards'; title: string; cards: readonly ContentCardItem[] };
+  | { kind: 'cards'; title: string; cards: readonly ContentCardItem[] }
+) & {
+  /** 頁內錨點（供長文頁目錄側跳）。 */
+  id?: string;
+};
 
 /** 內容頁標準頁首：h1＋導言＋meta 列（作者／更新時間等）。 */
 export function ContentPageHeader({
@@ -146,7 +150,7 @@ function renderSection(section: ContentSection) {
   switch (section.kind) {
     case 'text':
       return (
-        <ContentSectionCard title={section.title}>
+        <ContentSectionCard title={section.title} id={section.id}>
           <div className="space-y-4">
             {section.paragraphs.map((paragraph, index) => (
               <p key={index} className="text-base leading-relaxed text-text-muted">
@@ -158,7 +162,7 @@ function renderSection(section: ContentSection) {
       );
     case 'list':
       return (
-        <ContentSectionCard title={section.title}>
+        <ContentSectionCard title={section.title} id={section.id}>
           <ul className="space-y-3">
             {section.items.map((item, index) => (
               <li key={index} className="text-base leading-relaxed text-text-muted">
@@ -171,7 +175,7 @@ function renderSection(section: ContentSection) {
       );
     case 'faq':
       return (
-        <section>
+        <section id={section.id} className="scroll-mt-20">
           {section.title && (
             <h2 className="mb-4 text-xl font-bold leading-tight text-text">{section.title}</h2>
           )}
@@ -180,7 +184,7 @@ function renderSection(section: ContentSection) {
       );
     case 'links':
       return (
-        <ContentSectionCard title={section.title}>
+        <ContentSectionCard title={section.title} id={section.id}>
           <div className="divide-y divide-border/40">
             {section.links.map((link) => (
               <ContentLinkRow key={`${link.href}::${link.label}`} link={link} />
@@ -190,7 +194,7 @@ function renderSection(section: ContentSection) {
       );
     case 'cards':
       return (
-        <ContentSectionCard title={section.title}>
+        <ContentSectionCard title={section.title} id={section.id}>
           <div className="grid gap-3 sm:grid-cols-2">
             {section.cards.map((card) => (
               <div

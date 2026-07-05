@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+125
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+126
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-pages-wave1-faq-about-privacy
+- 原因：FAQ／About／Privacy 各自手刻版面且視覺未對齊 E1 token，隱私長文缺頁內導覽
+- 解法：三頁遷移至 ContentPageLayout＋ContentSections 內容驅動渲染（文案零改動），FAQ 保留手風琴、隱私補錨點目錄側跳
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-open-source-page
