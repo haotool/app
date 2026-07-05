@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+120
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-l1-persona-schema-content
+- 原因：34 幣別頁敘述文字散落於模板常數且含 #566 指出的新模板句複製，缺乏單一 persona SSOT 與可驗證在地事實
+- 解法：新增 currency-personas.ts L1 必填 schema（hook／cashCulture／denominationTip／exchangeChannel／faqSpecific／reverse），17 幣別各 ≥3 個 WebSearch 查證在地事實（來源列於 PR 附錄），品質對齊 PHP/IDR/MYR 基準
 
 - 日期：2026-07-05
 - ID：neutral-rw-e5-seo-copy-design-brief-docs
