@@ -8,7 +8,11 @@
 /** 設定頁「預覽啟動畫面」使用的自訂事件名稱。 */
 export const SPLASH_PREVIEW_EVENT = 'ratewise:splash-preview';
 
-const SPLASH_STORAGE_KEY = 'ratewise-splash-enabled';
+/** 偏好開關 key；index.html inline splash script 同步讀取（parity 守門）。 */
+export const SPLASH_STORAGE_KEY = 'ratewise-splash-enabled';
+
+/** inline splash 已顯示旗標（index.html 寫入）；同 session 不重播，避免雙重播放。 */
+export const SPLASH_SESSION_KEY = 'rw-splash-shown';
 
 /** 每次頁面載入只自動顯示一次（standalone 冷啟動 = 新載入）。 */
 let hasAutoShownThisLoad = false;
@@ -44,10 +48,25 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** 決策並消耗自動顯示資格：standalone + 偏好開啟 + 本次載入尚未顯示。 */
+/** inline splash（index.html）本 session 是否已播放過。 */
+export function hasInlineSplashShown(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(SPLASH_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 決策並消耗自動顯示資格：standalone + 偏好開啟 + 本次載入尚未顯示。
+ * 冷啟動由 index.html inline splash 負責播放（session 旗標存在時跳過），
+ * React 版僅在 inline 缺席時兜底自動顯示，避免序列雙重播放。
+ */
 export function consumeSplashAutoShow(): boolean {
   if (hasAutoShownThisLoad) return false;
   if (!isStandaloneDisplay() || !isSplashEnabled()) return false;
+  if (hasInlineSplashShown()) return false;
   hasAutoShownThisLoad = true;
   return true;
 }

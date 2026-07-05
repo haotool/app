@@ -43,6 +43,7 @@ describe('SplashScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     localStorage.clear();
+    sessionStorage.clear();
     __resetSplashAutoShowForTests();
   });
 
@@ -87,6 +88,19 @@ describe('SplashScreen', () => {
     render(<SplashScreen />);
     flushAutoShow();
     expect(screen.queryByTestId('splash-screen')).not.toBeInTheDocument();
+  });
+
+  it('inline splash 本 session 已顯示時不自動顯示（避免雙重播放），預覽事件仍可播放', () => {
+    mockMatchMedia(['display-mode: standalone']);
+    sessionStorage.setItem('rw-splash-shown', '1');
+    render(<SplashScreen />);
+    flushAutoShow();
+    expect(screen.queryByTestId('splash-screen')).not.toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent(SPLASH_PREVIEW_EVENT));
+    });
+    expect(screen.getByTestId('splash-screen')).toBeInTheDocument();
   });
 
   it('預覽事件在瀏覽器模式也強制顯示', () => {
