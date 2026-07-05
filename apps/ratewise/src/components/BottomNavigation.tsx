@@ -102,7 +102,7 @@ function BottomNavigationItem({
       {/* 標籤 - 8px */}
       <span
         className={`
-          text-[8px] font-black uppercase tracking-[0.15em] transition-all duration-200
+          text-2xs font-black uppercase tracking-[0.1em] transition-all duration-200
           ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
         `}
       >

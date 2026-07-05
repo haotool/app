@@ -110,7 +110,7 @@ export function Footer() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
           >
             <svg
-              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              className="w-4 h-4 text-white group- transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -264,7 +264,7 @@ export function Footer() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
           >
             <svg
-              className="w-4 h-4 text-white group-hover:scale-110 transition-transform"
+              className="w-4 h-4 text-white group- transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

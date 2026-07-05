@@ -240,7 +240,6 @@ export function MiniChristmasTree({
           onPointerDown={handlePressStart}
           onPointerUp={handlePressEnd}
           onPointerLeave={handlePressEnd}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           aria-label="聖誕樹裝飾，點擊查看聖誕祝福，可拖動移動位置，長按關閉動畫"
           title="點擊查看聖誕祝福 · 可拖動移動"

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+119
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-consumer-migration
+- 原因：token 與 primitive 已就緒，但消費端仍散布 8-11px 字、hover-scale、按鈕漸層、白字 bg-primary 與各自實作的 sheet/chip，設計語言尚未落地
+- 解法：E3 兩 sheet 收斂至 BottomSheet/CurrencyPicker（testid 相容）、multi chip 改 SegmentedControl radiogroup、全站 8-11px 升 text-2xs、hover-scale 清零、CTA/chip 去漸層並錨定 primary-strong、shadow-2xl 收斂 token（僅留一則設計契約測試同步更新）
 
 - 日期：2026-07-05
 - ID：reward-rw-e1-primitives

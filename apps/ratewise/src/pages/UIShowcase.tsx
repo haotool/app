@@ -74,7 +74,7 @@ function ColorSwatch({
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-text text-sm truncate">{name}</div>
         <div className="text-xs text-text-muted font-mono truncate">{cssVar}</div>
-        <div className="text-[10px] text-text-muted opacity-60 truncate">{description}</div>
+        <div className="text-2xs text-text-muted opacity-60 truncate">{description}</div>
       </div>
     </div>
   );
@@ -210,7 +210,7 @@ export default function UIShowcase() {
                 onClick={() => setActiveTab(id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
                   activeTab === id
-                    ? 'bg-primary text-white shadow-md'
+                    ? 'bg-primary-strong text-white shadow-md'
                     : 'text-text-muted hover:bg-surface'
                 }`}
               >
@@ -257,7 +257,9 @@ export default function UIShowcase() {
                       <div className="flex flex-col items-center gap-2">
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            isActive ? 'bg-primary text-white' : 'bg-surface-elevated text-primary'
+                            isActive
+                              ? 'bg-primary-strong text-white'
+                              : 'bg-surface-elevated text-primary'
                           }`}
                         >
                           <StyleIcon size={24} />
@@ -276,7 +278,7 @@ export default function UIShowcase() {
             {/* Current Theme Preview */}
             <Section title="當前主題預覽" icon={Star}>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-4 rounded-xl bg-primary text-white text-center">
+                <div className="p-4 rounded-xl bg-primary-strong text-white text-center">
                   <span className="text-sm font-bold">Primary</span>
                 </div>
                 <div className="p-4 rounded-xl bg-accent text-white text-center">

@@ -576,7 +576,6 @@ export default function SeoTech() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ ...transitions.smooth, delay: idx * 0.06 }}
-                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   className="flex items-center gap-3 p-3.5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] group cursor-pointer"
                 >

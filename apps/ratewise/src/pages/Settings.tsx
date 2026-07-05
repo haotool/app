@@ -157,7 +157,7 @@ export default function Settings() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.interfaceStyle')}
             </h2>
           </div>
@@ -213,7 +213,7 @@ export default function Settings() {
                   <span className="font-bold text-sm leading-tight">
                     {t(`styles.${option.value}` as Parameters<typeof t>[0])}
                   </span>
-                  <span className="text-[10px] opacity-60 leading-tight">
+                  <span className="text-2xs opacity-60 leading-tight">
                     {t(`styles.${option.value}Desc` as Parameters<typeof t>[0])}
                   </span>
                 </div>
@@ -274,9 +274,7 @@ export default function Settings() {
 
               <div className="flex flex-col items-start w-full relative z-10">
                 <span className="font-bold text-sm leading-tight">{t('styles.custom')}</span>
-                <span className="text-[10px] opacity-60 leading-tight">
-                  {t('styles.customDesc')}
-                </span>
+                <span className="text-2xs opacity-60 leading-tight">{t('styles.customDesc')}</span>
               </div>
             </motion.button>
           </div>
@@ -290,7 +288,7 @@ export default function Settings() {
               className="card p-5 mt-3"
             >
               {/* 精選色票 */}
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-3">
+              <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-3">
                 {t('settings.customThemePresets')}
               </p>
               <div
@@ -305,7 +303,7 @@ export default function Settings() {
                       key={preset}
                       type="button"
                       onClick={() => setCustomPrimary(preset)}
-                      className={`relative w-9 h-9 rounded-full shadow-sm transition-transform hover:scale-110 ${
+                      className={`relative w-9 h-9 rounded-full shadow-sm transition-transform ${
                         isActive ? 'ring-2 ring-offset-2' : ''
                       }`}
                       style={
@@ -331,7 +329,7 @@ export default function Settings() {
 
               {/* HEX 輸入 */}
               <label className="block mb-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
                   {t('settings.customThemeHex')}
                 </span>
                 <div className="flex items-center gap-3 mt-2">
@@ -358,7 +356,7 @@ export default function Settings() {
 
               {/* 色相滑桿 */}
               <label className="block mb-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
                   {t('settings.customThemeHue')}
                 </span>
                 <input
@@ -380,7 +378,7 @@ export default function Settings() {
 
               {/* 明度滑桿 */}
               <label className="block mb-5">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
                   {t('settings.customThemeLightness')}
                 </span>
                 <input
@@ -417,7 +415,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Globe className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.language')}
             </h2>
           </div>
@@ -453,7 +451,7 @@ export default function Settings() {
                   >
                     {option.flag}
                   </motion.span>
-                  <span className="text-[10px] font-bold">{option.label}</span>
+                  <span className="text-2xs font-bold">{option.label}</span>
                 </motion.button>
               );
             })}
@@ -464,7 +462,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <TrendingUp className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.rateMode')}
             </h2>
           </div>
@@ -500,7 +498,7 @@ export default function Settings() {
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
                   </motion.span>
-                  <span className="text-[10px] font-bold relative z-10">
+                  <span className="text-2xs font-bold relative z-10">
                     {t(option.labelKey as Parameters<typeof t>[0])}
                   </span>
                 </motion.button>
@@ -509,7 +507,7 @@ export default function Settings() {
           </div>
 
           {/* 說明文字 */}
-          <p className="text-[10px] opacity-50 mt-2 px-1 leading-relaxed">
+          <p className="text-2xs opacity-50 mt-2 px-1 leading-relaxed">
             {t(
               RATE_MODE_OPTIONS.find((o) => o.value === rateMode)?.descKey as Parameters<
                 typeof t
@@ -522,7 +520,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.splashScreen')}
             </h2>
           </div>
@@ -531,7 +529,7 @@ export default function Settings() {
             <div className="px-5 py-4 flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-sm font-medium">{t('settings.splashScreen')}</p>
-                <p className="text-[10px] opacity-50 mt-0.5 leading-relaxed">
+                <p className="text-2xs opacity-50 mt-0.5 leading-relaxed">
                   {t('settings.splashScreenDesc')}
                 </p>
               </div>
@@ -572,7 +570,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Database className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.storageCache')}
             </h2>
           </div>
@@ -590,7 +588,7 @@ export default function Settings() {
               </span>
               <span className="text-lg font-black">{t('settings.fiveMinutes')}</span>
             </div>
-            <p className="text-[10px] mt-2 opacity-40 font-medium text-center">
+            <p className="text-2xs mt-2 opacity-40 font-medium text-center">
               {t('settings.updateNote')}
             </p>
           </div>
@@ -600,7 +598,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <ShieldAlert className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.dataManagement')}
             </h2>
           </div>
@@ -626,7 +624,7 @@ export default function Settings() {
         <section className="mb-6">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <HelpCircle className="w-3.5 h-3.5" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+            <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
               {t('settings.supportInfo')}
             </h2>
           </div>
@@ -688,7 +686,7 @@ export default function Settings() {
 
         {/* 版本資訊 */}
         <footer className="text-center mt-8 pb-4">
-          <p className="text-[10px] opacity-40">{t('settings.copyright')}</p>
+          <p className="text-2xs opacity-40">{t('settings.copyright')}</p>
           <p className="text-xs font-mono opacity-60 mt-1">{getDisplayVersion()}</p>
         </footer>
       </div>

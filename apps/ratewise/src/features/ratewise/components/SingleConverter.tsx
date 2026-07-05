@@ -476,8 +476,7 @@ const SingleConverterLegacy = ({
                 hover:bg-primary/10 hover:text-primary
                 active:bg-primary/20 active:text-primary
                 transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
+                active:scale-[0.97]
               "
             >
               {amount.toLocaleString()}
@@ -503,7 +502,7 @@ const SingleConverterLegacy = ({
            * 不設 overflow-hidden：RateTypeTooltip 以 bottom-full 向上彈出，
            * 剪裁會讓「即期不可用」說明只露出數 px；微光疊層已由上方獨立容器自行剪裁。 */}
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
             <RateSelector
               rateType={rateType}
@@ -517,7 +516,7 @@ const SingleConverterLegacy = ({
             {/* 匯率顯示 - 使用 SSOT text 色；固定高度避免計價基準 pill / live 匯率載入 CLS */}
             <div className={`w-full ${singleConverterLayoutTokens.rateCard.rateTextBlock}`}>
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1 transition-transform duration-300 group-hover:scale-105`}
+                className={`${singleConverterLayoutTokens.rateCard.rateText} font-bold tabular-nums text-text mb-1`}
               >
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
@@ -542,7 +541,7 @@ const SingleConverterLegacy = ({
             data-testid="trend-chart"
             className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} overflow-hidden rounded-b-xl`}
           >
-            <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+            <div className="absolute inset-0">
               <ErrorBoundary
                 fallback={
                   <div className="flex items-center justify-center h-full text-xs text-danger">
@@ -575,7 +574,7 @@ const SingleConverterLegacy = ({
             </div>
             {/* 互動提示 - 與整體漸層融合 */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface-elevated/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-1 pointer-events-none">
-              <span className="text-[10px] font-semibold text-text-muted">查看趨勢圖</span>
+              <span className="text-2xs font-semibold text-text-muted">查看趨勢圖</span>
             </div>
           </div>
         </div>
@@ -592,27 +591,16 @@ const SingleConverterLegacy = ({
           data-testid="swap-button"
           className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
         >
-          {/* 外圍漸層光環 */}
-          <div
-            className={`absolute -inset-2 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-full blur-xl transition-all duration-500 ${singleConverterLayoutTokens.swap.glowHidden} ${
-              isSwapping
-                ? 'opacity-80 scale-110'
-                : 'opacity-0 group-hover/swap:opacity-40 group-hover/swap:scale-100'
-            }`}
-          />
-
-          {/* 交換按鈕 - 玻璃擬態設計 */}
+          {/* 交換按鈕 - 平色主色深階（E1 去漸層、白字 AA 錨點） */}
           <button
             ref={swapButtonRef}
             onClick={handleSwap}
             className={`
               relative p-3.5
-              bg-gradient-to-br from-primary to-primary-hover
+              bg-primary-strong hover:bg-primary-hover
               text-white rounded-full
-              shadow-lg shadow-primary/30
               transition-all duration-300 ease-out
-              hover:shadow-xl hover:shadow-primary/40
-              hover:scale-110 active:scale-95
+              active:scale-95
               ${isSwapping ? 'scale-90' : ''}
             `}
             aria-label={t('singleConverter.swapCurrencies')}
@@ -648,7 +636,7 @@ const SingleConverterLegacy = ({
 
           {/* 懸停提示標籤 */}
           <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-[10px] font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
+            <span className="text-2xs font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
               {t('singleConverter.clickToSwap')}
             </span>
           </div>
@@ -727,8 +715,7 @@ const SingleConverterLegacy = ({
                 hover:bg-primary/10 hover:text-primary
                 active:bg-primary/20 active:text-primary
                 transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
+                active:scale-[0.97]
               "
             >
               {amount.toLocaleString()}
@@ -737,29 +724,24 @@ const SingleConverterLegacy = ({
         </div>
       </div>
 
-      {/* 加入歷史記錄按鈕 - 現代化微互動設計
+      {/* 加入歷史記錄按鈕 - 平色主 CTA（E1）
        *
        * 設計規範：
-       * - 主色調漸層背景 (primary → primary-hover)
-       * - 玻璃擬態陰影效果 (shadow-xl shadow-primary/25)
-       * - 微互動：hover scale + 漣漪光暈
+       * - 平色主色深階背景（白字表面錨定 primary-strong 保 AA）
+       * - 無裝飾性陰影與光澤掃過
        * - 點擊縮放回饋 (active:scale-[0.98])
        */}
       <button
         onClick={onAddToHistory}
         className={`
           relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
-          bg-gradient-to-r from-primary to-primary-hover
+          bg-primary-strong hover:bg-primary-hover
           text-white font-bold rounded-2xl
-          shadow-xl shadow-primary/25
           transition-all duration-300 ease-out
-          hover:shadow-2xl hover:shadow-primary/30
-          hover:scale-[1.02] active:scale-[0.98]
+          active:scale-[0.98]
           group
         `}
       >
-        {/* 光暈效果 */}
-        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
         <span className="relative z-10 flex items-center justify-center gap-2">
           <svg
             className="w-4 h-4"

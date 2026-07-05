@@ -85,6 +85,7 @@ const ja = {
     rowLabel: '{{code}} 金額',
     selectCurrency: '通貨を選択',
     pickerTitle: '通貨を選択',
+    pickerSearch: '通貨を検索',
     swapCurrencies: '通貨を入れ替え',
     rateBasisCash: '現金売レート',
     rateBasisSpot: '電信売レート',

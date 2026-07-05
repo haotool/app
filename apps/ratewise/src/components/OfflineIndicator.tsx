@@ -227,7 +227,7 @@ function OfflineIndicatorClient({ forceOffline, positionClassName }: OfflineIndi
                   className="
                     p-1.5 rounded-full
                     bg-brand-icon-from/80 text-brand-text
-                    hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
+                    hover:text-brand-text-dark hover:bg-brand-icon-from
                     active:scale-[0.95]
                     transition-[color,background-color,transform] duration-200 ease-out
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning focus-visible:ring-offset-1

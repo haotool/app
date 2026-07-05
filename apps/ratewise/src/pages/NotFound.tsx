@@ -43,7 +43,7 @@ export default function NotFound() {
         <div className="mb-8">
           <Link
             to="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-primary-strong text-white font-medium rounded-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
           >
             {t('notFound.goHome')}
           </Link>

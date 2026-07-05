@@ -49,15 +49,15 @@ const STYLE_LABELS: Record<string, string> = {
 
 /** CTA 按鈕共用樣式（與 UpdatePrompt 一致） */
 const CTA_CLASS =
-  'px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-brand-button-from to-brand-button-to text-white shadow-sm hover:from-brand-button-hover-from hover:to-brand-button-hover-to hover:scale-[1.02] active:scale-[0.98] transition-[color,background-color,border-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+  'px-3 py-1.5 rounded-full text-xs font-medium bg-primary-strong text-white hover:bg-primary-hover active:scale-[0.98] transition-[color,background-color,border-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
 
 /** 關閉按鈕樣式（與 UpdatePrompt 一致） */
 const CLOSE_CLASS =
-  'p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05] active:scale-[0.95] transition-[color,background-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
+  'p-1.5 rounded-full bg-brand-icon-from/80 text-brand-text hover:text-brand-text-dark hover:bg-brand-icon-from active:scale-[0.95] transition-[color,background-color,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1';
 
 function NotificationCard({ state }: { state: State }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-card shadow-brand-shadow/20">
+    <div className="relative overflow-hidden rounded-2xl w-full max-w-[344px] bg-gradient-to-r from-brand-from via-brand-via to-brand-to border border-brand-border/60 shadow-card">
       {/* 裝飾光暈 */}
       <div
         className="absolute top-0 right-0 w-16 h-16 rounded-full bg-brand-icon-from/40 blur-2xl"

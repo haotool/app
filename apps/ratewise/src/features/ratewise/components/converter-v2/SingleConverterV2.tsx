@@ -228,8 +228,8 @@ export const SingleConverterV2 = ({
             aria-label={t('converterV2.swapCurrencies')}
             className="mx-2 -my-1 flex h-11 w-11 shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
           >
-            {/* 視覺 32px 圓形，觸控熱區 44px */}
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white transition-transform active:scale-95">
+            {/* 視覺 32px 圓形，觸控熱區 44px；白字表面錨定 primary-strong 保 AA。 */}
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-strong text-white transition-transform active:scale-95">
               <svg
                 className="w-4 h-4"
                 fill="none"

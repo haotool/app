@@ -123,7 +123,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 to="/"
-                className="inline-flex items-center rounded-lg bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
+                className="inline-flex items-center rounded-lg bg-primary-strong px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover"
               >
                 開始換算
               </Link>

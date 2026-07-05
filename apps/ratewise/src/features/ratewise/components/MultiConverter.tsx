@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
+import { SegmentedControl } from '../../../components/SegmentedControl';
 import { CURRENCY_DEFINITIONS, CURRENCY_QUICK_AMOUNTS, DEFAULT_RATE_SOURCE } from '../constants';
 import type { CurrencyCode, MultiAmountsState, RateMode, RateSource, RateType } from '../types';
 import type { RateDetails } from '../hooks/useExchangeRates';
@@ -104,30 +105,7 @@ export const MultiConverter = ({
     };
   };
 
-  const getNextAvailableOption = (
-    availability: ReturnType<typeof getUnifiedRateAvailability>,
-  ): UnifiedRateOption | null => {
-    const order: UnifiedRateOption[] = ['spot', 'cash', 'exchange-shop'];
-    const currentIndex = order.indexOf(availability.current);
-    for (let i = 1; i <= order.length; i++) {
-      const nextIndex = (currentIndex + i) % order.length;
-      const next = order[nextIndex];
-      if (
-        (next === 'spot' && availability.spot) ||
-        (next === 'cash' && availability.cash) ||
-        (next === 'exchange-shop' && availability.exchangeShop)
-      ) {
-        return next;
-      }
-    }
-    return null;
-  };
-
-  const handleUnifiedToggle = (currency: CurrencyCode) => {
-    const availability = getUnifiedRateAvailability(currency);
-    const next = getNextAvailableOption(availability);
-    if (!next || next === availability.current) return;
-
+  const handleUnifiedSelect = (next: UnifiedRateOption) => {
     if (next === 'exchange-shop') {
       onRateSourceChange?.('exchange-shop');
     } else {
@@ -200,8 +178,7 @@ export const MultiConverter = ({
                 hover:bg-primary/10 hover:text-primary
                 active:bg-primary/20 active:text-primary
                 transition-all duration-200 ease-out
-                hover:scale-[1.03] active:scale-[0.97]
-                hover:shadow-md active:shadow-sm
+                active:scale-[0.97]
               "
             >
               {amount.toLocaleString()}
@@ -251,7 +228,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 transition-transform hover:scale-110"
+                        className="p-0.5 transition-transform active:scale-95"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -274,7 +251,7 @@ export const MultiConverter = ({
                   </span>
                   <div className="min-w-0">
                     <div className="font-semibold text-sm leading-tight">{code}</div>
-                    <div className="text-[11px] font-medium text-text leading-tight truncate">
+                    <div className="text-2xs font-medium text-text leading-tight truncate">
                       {t(`currencies.${code}`)}
                     </div>
                   </div>
@@ -305,31 +282,37 @@ export const MultiConverter = ({
                   >
                     {formatAmountDisplay(multiAmounts[code] ?? '', code) || '0.00'}
                   </div>
-                  <div className="text-[11px] text-right leading-tight text-text mt-0.5">
+                  <div className="flex flex-wrap items-center justify-end gap-x-1 text-2xs text-right leading-tight text-text mt-0.5">
                     {(() => {
                       const availability = getUnifiedRateAvailability(code);
-                      const nextOption = getNextAvailableOption(availability);
-                      const canToggle = availability.availableCount > 1 && nextOption !== null;
+                      const canToggle = availability.availableCount > 1;
+
+                      const availableOptions = (
+                        ['spot', 'cash', 'exchange-shop'] as UnifiedRateOption[]
+                      ).filter(
+                        (option) =>
+                          (option === 'spot' && availability.spot) ||
+                          (option === 'cash' && availability.cash) ||
+                          (option === 'exchange-shop' && availability.exchangeShop),
+                      );
 
                       return canToggle ? (
-                        // 負 margin 讓 44px 觸控目標不撐高列高（WCAG 2.5.8）。
-                        // -my-[15px] = (min-h-11 44px − 行高 14px) / 2；行高 = text-[11px] × leading-tight 1.25。
-                        // 改 min-h、字級或 leading 時需同步重算，否則列高會被撐開。
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUnifiedToggle(code);
-                          }}
-                          className="group/ratetype relative -my-[15px] inline-flex min-h-11 min-w-11 items-center justify-center align-middle focus-visible:outline-none"
-                          aria-label={t('multiConverter.switchToNextRate', {
-                            next: getOptionLabel(nextOption),
-                          })}
+                        // SegmentedControl sm：radiogroup 語意，44px 熱區由負邊距補償不撐高列高。
+                        <span
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                         >
-                          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary-dark transition-all group-hover/ratetype:bg-primary/15 group-hover/ratetype:text-primary-darker group-active/ratetype:scale-95 group-focus-visible/ratetype:ring-2 group-focus-visible/ratetype:ring-primary/50">
-                            {getOptionLabel(availability.current)}
-                          </span>
-                        </button>
+                          <SegmentedControl
+                            size="sm"
+                            value={availability.current}
+                            onChange={handleUnifiedSelect}
+                            ariaLabel={`${code} ${t('singleConverter.rateTypeGroup')}`}
+                            options={availableOptions.map((option) => ({
+                              value: option,
+                              label: getOptionLabel(option),
+                            }))}
+                          />
+                        </span>
                       ) : (
                         <RateTypeTooltip
                           message={t('multiConverter.onlyOneRateAvailable')}

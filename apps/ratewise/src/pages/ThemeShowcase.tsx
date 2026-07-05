@@ -47,7 +47,7 @@ export default function ThemeShowcase() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">當前主題</h3>
+            <h3 className="text-2xs font-black uppercase tracking-[0.2em]">當前主題</h3>
           </div>
           <div className="card p-5">
             <div className="text-sm">
@@ -61,7 +61,7 @@ export default function ThemeShowcase() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Palette className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">介面風格</h3>
+            <h3 className="text-2xs font-black uppercase tracking-[0.2em]">介面風格</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {STYLE_OPTIONS.map((option) => (
@@ -108,7 +108,7 @@ export default function ThemeShowcase() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Box className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">元件庫</h3>
+            <h3 className="text-2xs font-black uppercase tracking-[0.2em]">元件庫</h3>
           </div>
 
           {/* 按鈕 */}
@@ -183,10 +183,10 @@ export default function ThemeShowcase() {
         <section className="mb-8">
           <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
             <Type className="w-3.5 h-3.5" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">排版</h3>
+            <h3 className="text-2xs font-black uppercase tracking-[0.2em]">排版</h3>
           </div>
           <div className="card p-5">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">
+            <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2">
               標籤文字 LABEL
             </p>
             <h1 className="text-3xl font-black tracking-tight mb-1">大標題 H1</h1>
@@ -220,7 +220,7 @@ export default function ThemeShowcase() {
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="opacity-60">標籤文字</span>
-                <code className="font-mono">text-[9px] uppercase tracking-[0.2em]</code>
+                <code className="font-mono">text-2xs uppercase tracking-[0.2em]</code>
               </div>
             </div>
           </div>
@@ -228,8 +228,8 @@ export default function ThemeShowcase() {
 
         {/* 參考來源 */}
         <section className="text-center opacity-40">
-          <p className="text-[10px] font-medium">Design Reference: ParkKeeper UI Style</p>
-          <p className="text-[10px] mt-1">Built with Tailwind CSS + CSS Variables</p>
+          <p className="text-2xs font-medium">Design Reference: ParkKeeper UI Style</p>
+          <p className="text-2xs mt-1">Built with Tailwind CSS + CSS Variables</p>
         </section>
       </div>
     </div>

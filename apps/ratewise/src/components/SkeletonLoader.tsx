@@ -57,7 +57,7 @@ function SkeletonTimeoutFallback() {
         <button
           onClick={handleReload}
           disabled={isReloading}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-xl shadow-lg transition"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-xl transition active:scale-[0.97]"
         >
           <RefreshCw size={18} className={isReloading ? 'animate-spin' : ''} />
           {isReloading ? t('errors.reloading') : t('errors.forceReload')}
@@ -424,7 +424,7 @@ export const MultiConverterSkeleton = () => {
               </div>
               {/* 國旗欄 — 對應 'text-xl flex-shrink-0 w-7 text-center' */}
               <div className="skeleton-shimmer w-6 h-5 rounded flex-shrink-0 mx-1" />
-              {/* 幣別代碼 + 名稱 — 對應 code text-sm + name text-[11px] */}
+              {/* 幣別代碼 + 名稱 — 對應 code text-sm + name text-2xs */}
               <div className="space-y-1 ml-1 flex-shrink-0">
                 <div className="skeleton-shimmer h-3.5 w-10 rounded" />
                 <div className="skeleton-shimmer h-2.5 w-16 rounded" />

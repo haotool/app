@@ -29,7 +29,7 @@ export function HomepageSEOSection() {
       className="px-5 pt-5 pb-3 max-w-md mx-auto w-full"
     >
       <div className="rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-2xs font-black uppercase tracking-[0.18em] text-primary">
           {content.eyebrow}
         </p>
         <h2
@@ -115,7 +115,7 @@ export function HomepageSEOSection() {
         <ol className="mt-4 space-y-3">
           {howTo.steps.map((step, index) => (
             <li key={step.name} className="flex gap-3 rounded-2xl bg-primary/5 px-4 py-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-strong text-xs font-black text-white">
                 {step.position ?? index + 1}
               </span>
               <div>

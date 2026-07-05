@@ -262,7 +262,6 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={chartTransitions.fadeIn}
-      whileHover={{ scale: 1.01, y: -2 }}
     >
       {/* Lightweight Charts 趨勢圖：觸控長按由 library trackingMode 內建處理。
        * touch-none 阻止瀏覽器手勢、select-none 防止長按選字/iOS 放大鏡。 */}
@@ -276,7 +275,7 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
       {basisLabel && (
         <span
           data-testid="trend-basis-label"
-          className="absolute top-1 left-2 z-10 pointer-events-none text-[10px] font-medium text-text-muted/80 whitespace-nowrap"
+          className="absolute top-1 left-2 z-10 pointer-events-none text-2xs font-medium text-text-muted/80 whitespace-nowrap"
         >
           {basisLabel}
         </span>
@@ -310,13 +309,13 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
                 >
                   {/* SSOT: 使用主題色 Tooltip (card/foreground/primary) */}
                   <div className="relative">
-                    <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-2xl border-2 border-border">
+                    <div className="bg-card/98 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-floating border-2 border-border">
                       {basisLabel && (
-                        <div className="text-[10px] leading-tight text-text-muted whitespace-nowrap">
+                        <div className="text-2xs leading-tight text-text-muted whitespace-nowrap">
                           {basisLabel}
                         </div>
                       )}
-                      <div className="flex items-center gap-2.5 text-[11px] leading-tight whitespace-nowrap">
+                      <div className="flex items-center gap-2.5 text-2xs leading-tight whitespace-nowrap">
                         <span className="text-primary font-semibold">{tooltipData.date}</span>
                         <span className="text-foreground font-bold">
                           {formatExchangeRate(tooltipData.rate)}

@@ -157,7 +157,7 @@ export default function Favorites() {
             <p className="text-text-muted mt-2 mb-6">{t('errors.dataLoadFailed')}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition active:scale-[0.97]"
             >
               <RefreshCw size={18} />
               {t('errors.reload')}
@@ -208,7 +208,7 @@ export default function Favorites() {
                   >
                     <TabIcon size={18} className={isActive ? 'text-primary' : ''} />
                   </motion.div>
-                  <span className="text-[10px] font-bold">{tab.label}</span>
+                  <span className="text-2xs font-bold">{tab.label}</span>
                 </motion.button>
               );
             })}
@@ -221,12 +221,12 @@ export default function Favorites() {
             <div className="flex items-center justify-between px-2 mb-3">
               <div className="flex items-center gap-2 opacity-40">
                 <Star className="w-3.5 h-3.5" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+                <h3 className="text-2xs font-black uppercase tracking-[0.2em]">
                   {t('favorites.allCurrencies')}
                 </h3>
               </div>
               {favorites.length > 0 && (
-                <span className="text-[10px] opacity-40 font-medium">
+                <span className="text-2xs opacity-40 font-medium">
                   {t('favorites.dragToReorder')}
                 </span>
               )}
@@ -263,7 +263,7 @@ export default function Favorites() {
                               data-testid={`currency-row-${code}`}
                               className={`card p-4 flex items-center gap-3 group ${
                                 snapshot.isDragging
-                                  ? 'shadow-2xl scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
+                                  ? 'shadow-floating scale-[1.02] bg-surface ring-2 ring-primary/40 z-50'
                                   : 'hover:shadow-md'
                               }`}
                             >
@@ -282,7 +282,7 @@ export default function Favorites() {
                                 </div>
                               ) : (
                                 <button
-                                  className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 hover:scale-110 transition"
+                                  className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 transition"
                                   onClick={() => toggleFavorite(code)}
                                   aria-label={
                                     isFavorite
@@ -332,7 +332,7 @@ export default function Favorites() {
                                 {/* 幣別名稱 */}
                                 <div className="min-w-0">
                                   <div className="font-bold text-sm">{code}</div>
-                                  <div className="text-[10px] opacity-60">
+                                  <div className="text-2xs opacity-60">
                                     {t(`currencies.${code}`) || CURRENCY_DEFINITIONS[code]?.name}
                                     {isTWD && (
                                       <span className="ml-1 opacity-50">
@@ -354,7 +354,7 @@ export default function Favorites() {
                                 }}
                                 aria-label={`${t('favorites.goToConvert')} ${code}`}
                               >
-                                <span className="text-[10px] font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
+                                <span className="text-2xs font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
                                   {t('favorites.clickToConvert')}
                                 </span>
                               </div>
@@ -377,14 +377,14 @@ export default function Favorites() {
             <div className="flex items-center justify-between px-2 mb-3">
               <div className="flex items-center gap-2 opacity-40">
                 <Clock className="w-3.5 h-3.5" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">
+                <h3 className="text-2xs font-black uppercase tracking-[0.2em]">
                   {t('favorites.history')}
                 </h3>
               </div>
               {history.length > 0 && (
                 <button
                   onClick={clearAllHistory}
-                  className="flex items-center gap-1 text-[10px] text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition font-bold"
+                  className="flex items-center gap-1 text-2xs text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition font-bold"
                 >
                   <Trash2 size={12} />
                   {t('common.clearAll')}
@@ -396,12 +396,12 @@ export default function Favorites() {
               <div className="card p-8 text-center">
                 <Clock className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-30" />
                 <h2 className="text-sm font-bold text-text mb-2">{t('favorites.noHistory')}</h2>
-                <p className="text-[10px] text-text-muted mb-4 opacity-60">
+                <p className="text-2xs text-text-muted mb-4 opacity-60">
                   {t('favorites.noHistoryHint')}
                 </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
+                  className="px-6 py-2.5 bg-primary-strong text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
                 >
                   {t('favorites.goToConvert')}
                 </button>
