@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+135
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+136
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-601-content-nav-safe-area
+- 原因：內容頁共用 sticky 返回列 `top-0` 只給固定 10px padding 未吃 `env(safe-area-inset-top)`，PWA standalone（viewport-fit=cover＋black-translucent）下被狀態列遮蔽（#601，使用者實機回報）
+- 解法：padding-top 改 `calc(0.625rem + env(safe-area-inset-top, 0px))`（半透明底色同步涵蓋 inset 區；幣別 landing 與 authority guide 直掛頁同步受惠），CDP inset 59px 模擬 6 頁前後截圖驗證、非 standalone 維持 10px，新增 safe-area class 單元＋7 內容頁 smoke 防回歸
 
 - 日期：2026-07-06
 - ID：reward-rw-sw-register-storm-593
