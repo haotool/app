@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+153
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+152
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-587-keyboard-modifier-passthrough
+- 原因：PR #614 掛接的 useCalculatorKeyboard 未檢查 modifier keys，v2 常駐監聽下 Cmd/Ctrl+'-'（瀏覽器縮放）被 preventDefault 吞掉且減號寫進表達式開閘改值（WCAG 1.4.4 回歸，審查 B-1 抓出）
+- 解法：handler 開頭 metaKey/ctrlKey/altKey 直接 return 讓路（Shift 保留供 '+' 等符號輸入），補 hook 四個 modifier 案例與 v2 整合「Cmd/Ctrl+- 不開閘不改值」回歸測試
 
 - 日期：2026-07-06
 - ID：neutral-rw-587-590-viewport-log-correction

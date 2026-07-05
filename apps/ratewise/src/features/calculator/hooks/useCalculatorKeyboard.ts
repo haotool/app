@@ -67,6 +67,11 @@ export function useCalculatorKeyboard({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 系統快捷鍵讓路：Cmd/Ctrl/Alt 組合（如 Cmd+'-' 瀏覽器縮放）不得攔截或寫入表達式。
+      if (e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+
       // 防止影響其他輸入框
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;

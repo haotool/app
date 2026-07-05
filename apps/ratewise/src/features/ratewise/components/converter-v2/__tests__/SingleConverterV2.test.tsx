@@ -372,6 +372,21 @@ describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
     expect(props.onToAmountChange).not.toHaveBeenCalled();
   });
 
+  it('回歸：Cmd/Ctrl 組合鍵（如瀏覽器縮放 Cmd+-）不入表達式、不開閘改值（B-1）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.keyDown(window, { key: '-', metaKey: true });
+    fireEvent.keyDown(window, { key: '-', ctrlKey: true });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(props.onFromAmountChange).not.toHaveBeenCalled();
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('converter-v2-amount-from')).toHaveTextContent('1,000');
+  });
+
   it('回歸：無任何鍵盤輸入時閘門維持關閉（切列零按鍵不變值）', () => {
     const props = buildProps();
     const { rerender } = render(<SingleConverterV2 {...props} />);

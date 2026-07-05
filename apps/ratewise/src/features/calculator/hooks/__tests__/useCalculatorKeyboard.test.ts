@@ -260,6 +260,68 @@ describe('useCalculatorKeyboard', () => {
     });
   });
 
+  describe('modifier 組合鍵讓路（B-1：系統快捷鍵不得攔截）', () => {
+    it('Cmd+- （瀏覽器縮小）不寫入表達式且不 preventDefault', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      const event = new KeyboardEvent('keydown', { key: '-', metaKey: true, cancelable: true });
+      window.dispatchEvent(event);
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      // 未被 preventDefault ＝ 瀏覽器縮放快捷鍵不受阻（WCAG 1.4.4）。
+      expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('Ctrl+- 與 Ctrl+數字 均不觸發任何 callback', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '-', ctrlKey: true }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '5', ctrlKey: true }));
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      expect(mockCallbacks.onBackspace).not.toHaveBeenCalled();
+      expect(mockCallbacks.onCalculate).not.toHaveBeenCalled();
+    });
+
+    it('Alt 組合與 Cmd+Backspace 不觸發輸入或刪除', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '7', altKey: true }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', metaKey: true }));
+
+      expect(mockCallbacks.onInput).not.toHaveBeenCalled();
+      expect(mockCallbacks.onBackspace).not.toHaveBeenCalled();
+    });
+
+    it('Shift 組合不受影響（如 Shift+= 產生 + 仍可輸入）', () => {
+      renderHook(() =>
+        useCalculatorKeyboard({
+          isOpen: true,
+          ...mockCallbacks,
+        }),
+      );
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '+', shiftKey: true }));
+
+      expect(mockCallbacks.onInput).toHaveBeenCalledWith('+');
+    });
+  });
+
   describe('respectInteractiveTarget（#587 常駐鍵盤情境）', () => {
     it('啟用時 Enter 落在按鈕上交還原生語意（不觸發 onCalculate）', () => {
       renderHook(() =>
