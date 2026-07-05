@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+122
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+122
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e5-l3-copy-guards
+- 原因：issue 566 三項守門缺口（新模板句 phrase budget、About FAQ 尾句機房語言、answer 級自指涉掃描）且無 AI 贅詞黑名單、寫死匯率 lint、跨幣別相似度上限
+- 解法：新增 seo-copy-guard.test.ts 七組守門（黑名單、匯率 lint、最高級宣稱、persona bigram Jaccard <0.5、phrase budget、About SF-2/SF-3、金額頁 v2 不變式），六種故意突變全數變紅後還原
+
+- 日期：2026-07-05
+- ID：penalty-rw-e5-mutation-revert-hook-swap
+- 原因：突變還原腳本以「第一個出現」取代字串，將 USD 與 GBP 的 description hook 內容互換而未察覺
+- 解法：守門重跑後以 rg 抽查 hook 對應幣別發現互換，改以幣別上下文錨點精準還原並補跑守門確認全綠
 
 - 日期：2026-07-05
 - ID：reward-rw-e5-amount-page-v2
