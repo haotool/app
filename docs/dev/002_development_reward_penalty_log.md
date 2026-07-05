@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+118
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+119
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-primitives
+- 原因：E3 兩個 bottom sheet 各自實作殼層、multi 費率切換僅有過渡 chip（無 radiogroup 語意）、選幣 sheet 無法跨場景重用，元件層缺 SSOT
+- 解法：新增 BottomSheet（拖曳關閉/backdrop/safe-area/fixed+adaptive）、SegmentedControl（radiogroup＋roving tabindex＋44px 熱區）、CurrencyPicker（搜尋/常用置頂/旗幟）三個 primitive 並各附 API 測試
 
 - 日期：2026-07-05
 - ID：reward-rw-e1-token-convergence
