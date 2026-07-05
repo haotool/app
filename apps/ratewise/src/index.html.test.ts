@@ -157,8 +157,9 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
 
     it('should have theme whitelist for security', () => {
       // [2026-01-29] 白名單防注入，壓縮後仍含完整主題名稱陣列。
+      // [2026-07-05] E2：allowlist 加入 'custom'（自訂主題色）。
       expect(indexHtmlContent).toContain(
-        "'zen', 'violet', 'nitro', 'racing', 'kawaii', 'classic', 'forest'",
+        "'zen', 'violet', 'nitro', 'racing', 'kawaii', 'classic', 'forest', 'custom'",
       );
     });
 
@@ -180,6 +181,32 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     it('should use indexOf for whitelist validation (ES5 compatible)', () => {
       // [2026-01-29] indexOf 白名單查找，ES5 相容，壓縮後仍保留。
       expect(indexHtmlContent).toContain('.indexOf(');
+    });
+  });
+
+  describe('🟢 Custom Theme Bootstrap（E2 pre-paint 最小覆寫）', () => {
+    it('should validate customPrimary with strict hex pattern', () => {
+      // 僅接受 #RRGGBB 六碼，與 runtime isValidHexColor 同構。
+      expect(indexHtmlContent).toContain('/^#[0-9a-fA-F]{6}$/');
+      expect(indexHtmlContent).toContain('customPrimary');
+    });
+
+    it('should pre-paint override --color-primary only (identity hex → R G B)', () => {
+      // 只檢查 Theme Initialization bootstrap script 區塊（skeleton SVG 消費變數不在此限）。
+      const bootstrapStart = indexHtmlContent.indexOf('<!-- Theme Initialization');
+      const bootstrapEnd = indexHtmlContent.indexOf('</script>', bootstrapStart);
+      const bootstrap = indexHtmlContent.slice(bootstrapStart, bootstrapEnd);
+
+      // 最小覆寫：--color-primary 一鍵 + theme-color meta；完整演算由 applyTheme 接手。
+      expect(bootstrap).toContain("'--color-primary'");
+      expect(bootstrap).toContain('meta[name="theme-color"]');
+      // 不得在 bootstrap 內嵌完整演算（strong/hover 等鍵禁止出現，防雙份漂移）。
+      expect(bootstrap).not.toContain('--color-primary-strong');
+      expect(bootstrap).not.toContain('--color-primary-hover');
+    });
+
+    it('should keep default custom primary aligned with brand blue', () => {
+      expect(indexHtmlContent).toContain("P = '#3182F6'");
     });
   });
 });

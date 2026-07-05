@@ -141,6 +141,11 @@ const ko = {
     fiveMinutes: '5분',
     updateNote: '환율 데이터는 5분마다 자동으로 업데이트됩니다.',
     resetTheme: '테마 설정 초기화',
+    customThemePresets: '추천 색상',
+    customThemeHex: 'HEX 코드',
+    customThemeHue: '색상(Hue)',
+    customThemeLightness: '명도',
+    customThemeReset: '기본 테마로 복원',
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',
     techStack: '기술 스택',
@@ -188,7 +193,7 @@ const ko = {
     violet: 'Violet',
     violetDesc: '클래식 퍼플',
     custom: '커스텀 테마',
-    customDesc: '곧 출시',
+    customDesc: '나만의 색상',
   },
 
   // Currency List

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+105
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+107
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e2-002-score-conservation-fix
+- 原因：前一 fix commit 新增 1 筆 penalty 時，檔頭把前一 commit 已消化的 reward 重複計入，誤植「本次 0（reward 1、penalty 1）｜累計 +108」，正確應為「本次 -1（reward 0、penalty 1、neutral 0）｜累計 +107」，違反記分守恆
+- 解法：檔頭累計總分回正 +107 並以本筆 neutral（0 分）留痕；同步更正 AA property 條目輸入數 312→322（12 邊界＋300 隨機＋10 色票）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e2-custom-theme-hydration-derivation-gap
+- 原因：custom 完整演算補齊只掛在 useAppTheme（僅設定頁掛載），首頁/多幣別冷啟動只有 bootstrap 的 --color-primary 最小覆寫，strong/hover/圖表 13 鍵停留在 zen fallback，三代表色截圖 QA 抓到全 app 未變色
+- 解法：export loadThemeConfig，於 main.tsx client 初始化（isClient）對 custom 主題呼叫 applyTheme 補齊完整演算，任何路由冷啟動皆全量套用；e2e 與截圖 QA 重新驗證通過
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-aa-property-gate
+- 原因：custom 主題演算若無硬閘門，極淺/極豔輸入色可能導出低對比文字配對，且 bootstrap 內嵌覆寫與 runtime 演算存在雙份漂移風險
+- 解法：新增 AA property 測試（322 個種子化隨機+邊界+色票輸入 × 全部文字配對 ≥4.5:1、圖形色 ≥3:1）、applyTheme 覆寫/清除守門、useAppTheme custom 持久化測試、bootstrap 最小覆寫守門（禁止內嵌 strong/hover 演算鍵）、chromium e2e 選色旅程（套用→重載→切回零殘留）
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-picker-ui
+- 原因：設定頁「自訂主題色」預告卡無實際功能，且 themes.ts 新增的 custom-theme 匯入未帶 .ts 副檔名導致 prebuild node（type stripping）腳本 ERR_MODULE_NOT_FOUND
+- 解法：預告卡改功能卡＋展開式選色面板（10 精選色票、hex 輸入、色相/明度滑桿、恢復預設，全部即選即用）、i18n ×4 補 customTheme 鍵並移除「即將推出」、themes.ts 匯入補 .ts 副檔名修復 prebuild
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-engine
+- 原因：設定頁「自訂主題色」僅為預告卡，主題管線只支援 7 個靜態主題，無法由使用者主色即時導出全組變數且守住 AA 對比
+- 解法：新增 custom-theme.ts 演算 SSOT（單一主色導出 14 鍵 primary 系列＋內建 AA clamp）、applyTheme custom 覆寫層（切回內建主題清除 inline 覆寫）、index.css [data-style='custom'] 靜態區塊採 zen 完整複製滿足 parity 合約、bootstrap allowlist 加 custom 並做最小 pre-paint identity 覆寫
+
+- 日期：2026-07-05
+- ID：neutral-rw-e2-custom-theme-design-brief
+- 原因：E2「自訂主題色」epic 缺少 repo 內可追溯的設計 SSOT，PM 簡報僅存於本機 .claude 目錄（被 gitignore）
+- 解法：以 git add -f 將 `.claude/prds/ratewise-e2-custom-theme-design.md` 納入版控，作為 E2 實作與 PR 勾稽的唯一依據
 
 - 日期：2026-07-05
 - ID：neutral-rw-product-2026h2-experiment-baseline

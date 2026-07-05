@@ -142,6 +142,11 @@ const en = {
     fiveMinutes: '5 minutes',
     updateNote: 'Exchange rates are updated every 5 minutes.',
     resetTheme: 'Reset Theme Settings',
+    customThemePresets: 'Curated Colors',
+    customThemeHex: 'HEX Code',
+    customThemeHue: 'Hue',
+    customThemeLightness: 'Lightness',
+    customThemeReset: 'Restore Default Theme',
     appVersion: 'App Version',
     designSystem: 'Design System',
     techStack: 'Tech Stack',
@@ -191,7 +196,7 @@ const en = {
     violet: 'Violet',
     violetDesc: 'Classic Violet',
     custom: 'Custom Theme',
-    customDesc: 'Coming Soon',
+    customDesc: 'Your own color',
   },
 
   // Currency List

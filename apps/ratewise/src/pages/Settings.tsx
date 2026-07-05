@@ -44,6 +44,15 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { STYLE_OPTIONS } from '../config/themes';
+import {
+  CUSTOM_PRIMARY_PRESETS,
+  choosePrimaryForeground,
+  hexToRgb,
+  hslToRgb,
+  isValidHexColor,
+  rgbToHex,
+  rgbToHsl,
+} from '../config/custom-theme';
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
@@ -55,12 +64,38 @@ import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../util
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
-  const { style, setStyle, resetTheme, isLoaded } = useAppTheme();
+  const { style, setStyle, setCustomPrimary, customPrimary, resetTheme, isLoaded } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode } = useConverterStore();
 
   // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
   const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
+
+  // hex 輸入草稿：輸入合法六碼時即時套用並清空草稿（即選即用，無確認步驟）。
+  const [hexDraft, setHexDraft] = useState<string | null>(null);
+  const hexInputValue = hexDraft ?? customPrimary;
+  const customHsl = rgbToHsl(hexToRgb(customPrimary));
+
+  const handleHexInput = (raw: string) => {
+    const value = raw.startsWith('#') ? raw : `#${raw}`;
+    if (isValidHexColor(value)) {
+      setCustomPrimary(value.toUpperCase());
+      setHexDraft(null);
+      return;
+    }
+    setHexDraft(value);
+  };
+
+  const handleHueChange = (hue: number) => {
+    // 灰階（飽和度 0）時給予預設飽和度，讓色相滑桿立即可感。
+    const saturation = customHsl.s === 0 ? 0.85 : customHsl.s;
+    setCustomPrimary(rgbToHex(hslToRgb({ h: hue, s: saturation, l: customHsl.l })));
+  };
+
+  const handleLightnessChange = (percent: number) => {
+    const lightness = Math.min(0.9, Math.max(0.1, percent / 100));
+    setCustomPrimary(rgbToHex(hslToRgb({ h: customHsl.h, s: customHsl.s, l: lightness })));
+  };
 
   const handleSplashToggle = () => {
     setSplashEnabledState((prev) => {
@@ -185,34 +220,197 @@ export default function Settings() {
               </motion.button>
             ))}
 
-            {/* 自訂主題色 — 功能預告（尚未開放，僅呈現讓使用者預期） */}
-            <button
+            {/* 自訂主題色 — 選擇後於下方展開選色面板（即選即用） */}
+            <motion.button
               type="button"
-              disabled
-              aria-disabled="true"
-              className="relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl shadow-sm border border-dashed opacity-50 cursor-not-allowed"
-              style={{
-                backgroundColor: 'rgb(var(--color-surface))',
-                color: 'rgb(var(--color-text))',
-                borderColor: 'rgb(var(--color-primary) / 0.35)',
-              }}
+              onClick={() => setStyle('custom')}
+              disabled={!isLoaded}
+              whileHover={segmentedSwitch.item.whileHover}
+              whileTap={segmentedSwitch.item.whileTap}
+              transition={transitions.instant}
+              className={`
+                relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
+                shadow-sm disabled:opacity-50
+                ${style === 'custom' ? 'ring-2 ring-offset-2 shadow-md' : ''}
+              `}
+              style={
+                {
+                  backgroundColor: 'rgb(var(--color-surface))',
+                  color: 'rgb(var(--color-text))',
+                  '--tw-ring-color': customPrimary,
+                  '--tw-ring-offset-color': 'rgb(var(--color-background))',
+                } as React.CSSProperties
+              }
+              aria-pressed={style === 'custom'}
               aria-label={`${t('styles.custom')} ${t('styles.customDesc')}`}
             >
-              <div
+              {/* 裝飾圓形：未啟用時呈彩虹輪，啟用後跟隨使用者主色 */}
+              <motion.div
                 className="absolute top-0 right-0 w-16 h-16 opacity-20 -mr-4 -mt-4 rounded-full"
                 style={{
                   background:
-                    'conic-gradient(from 0deg, #F87171, #FBBF24, #34D399, #3182F6, #A78BFA, #F87171)',
+                    style === 'custom'
+                      ? customPrimary
+                      : 'conic-gradient(from 0deg, #F87171, #FBBF24, #34D399, #3182F6, #A78BFA, #F87171)',
                 }}
+                animate={{ scale: style === 'custom' ? segmentedSwitch.activeIconScale : 1 }}
+                transition={transitions.spring}
               />
+
+              {style === 'custom' && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={transitions.spring}
+                  className="absolute top-2 right-2 rounded-full p-0.5"
+                  style={{ backgroundColor: customPrimary }}
+                >
+                  <Check
+                    className="w-3 h-3"
+                    style={{ color: choosePrimaryForeground(customPrimary) }}
+                  />
+                </motion.div>
+              )}
+
               <div className="flex flex-col items-start w-full relative z-10">
                 <span className="font-bold text-sm leading-tight">{t('styles.custom')}</span>
                 <span className="text-[10px] opacity-60 leading-tight">
                   {t('styles.customDesc')}
                 </span>
               </div>
-            </button>
+            </motion.button>
           </div>
+
+          {/* 選色面板：僅在 custom 啟用時展開 */}
+          {style === 'custom' && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={transitions.default}
+              className="card p-5 mt-3"
+            >
+              {/* 精選色票 */}
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-3">
+                {t('settings.customThemePresets')}
+              </p>
+              <div
+                className="flex flex-wrap gap-3 mb-5"
+                role="group"
+                aria-label={t('settings.customThemePresets')}
+              >
+                {CUSTOM_PRIMARY_PRESETS.map((preset) => {
+                  const isActive = customPrimary.toUpperCase() === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCustomPrimary(preset)}
+                      className={`relative w-9 h-9 rounded-full shadow-sm transition-transform hover:scale-110 ${
+                        isActive ? 'ring-2 ring-offset-2' : ''
+                      }`}
+                      style={
+                        {
+                          backgroundColor: preset,
+                          '--tw-ring-color': preset,
+                          '--tw-ring-offset-color': 'rgb(var(--color-surface))',
+                        } as React.CSSProperties
+                      }
+                      aria-pressed={isActive}
+                      aria-label={`${t('styles.custom')} ${preset}`}
+                    >
+                      {isActive && (
+                        <Check
+                          className="w-4 h-4 absolute inset-0 m-auto"
+                          style={{ color: choosePrimaryForeground(preset) }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* HEX 輸入 */}
+              <label className="block mb-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                  {t('settings.customThemeHex')}
+                </span>
+                <div className="flex items-center gap-3 mt-2">
+                  <span
+                    className="w-8 h-8 rounded-lg shadow-sm shrink-0 border border-border"
+                    style={{ backgroundColor: customPrimary }}
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="text"
+                    inputMode="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={7}
+                    value={hexInputValue}
+                    onChange={(e) => handleHexInput(e.target.value)}
+                    onBlur={() => setHexDraft(null)}
+                    className="w-28 px-3 py-2 rounded-lg border border-border bg-transparent font-mono text-sm uppercase focus:outline-none focus:ring-2"
+                    style={{ '--tw-ring-color': customPrimary } as React.CSSProperties}
+                    aria-label={t('settings.customThemeHex')}
+                  />
+                </div>
+              </label>
+
+              {/* 色相滑桿 */}
+              <label className="block mb-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                  {t('settings.customThemeHue')}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={359}
+                  step={1}
+                  value={Math.round(customHsl.h)}
+                  onChange={(e) => handleHueChange(Number(e.target.value))}
+                  className="w-full mt-2 h-2 rounded-full appearance-none cursor-pointer"
+                  style={{
+                    accentColor: customPrimary,
+                    background:
+                      'linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)',
+                  }}
+                  aria-label={t('settings.customThemeHue')}
+                />
+              </label>
+
+              {/* 明度滑桿 */}
+              <label className="block mb-5">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                  {t('settings.customThemeLightness')}
+                </span>
+                <input
+                  type="range"
+                  min={10}
+                  max={90}
+                  step={1}
+                  value={Math.round(customHsl.l * 100)}
+                  onChange={(e) => handleLightnessChange(Number(e.target.value))}
+                  className="w-full mt-2 h-2 rounded-full appearance-none cursor-pointer"
+                  style={{
+                    accentColor: customPrimary,
+                    background: `linear-gradient(to right, #111, ${rgbToHex(
+                      hslToRgb({ h: customHsl.h, s: customHsl.s, l: 0.5 }),
+                    )}, #fff)`,
+                  }}
+                  aria-label={t('settings.customThemeLightness')}
+                />
+              </label>
+
+              {/* 恢復預設（回 zen） */}
+              <button
+                type="button"
+                onClick={resetTheme}
+                className="w-full py-2.5 rounded-xl text-xs font-bold border border-border hover:bg-primary/5 transition-colors"
+              >
+                {t('settings.customThemeReset')}
+              </button>
+            </motion.div>
+          )}
         </section>
 
         {/* 語言區塊 - SSOT 風格 */}
