@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+134
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+135
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-sw-register-storm-593
+- 原因：useRegisterSW 在 useState initializer 執行 registerSW()，UpdatePrompt 位於未 commit 的 Suspense 子樹時每次 render attempt 重跑，註冊被阻擋環境下 onRegisterError setState 再觸發 render 形成無上限熱迴圈（2 秒 13,379 次）
+- 解法：註冊改 swRegistration 模組單例（useSyncExternalStore 訂閱＋effect 啟動），單例重試最多 2 次（1s 退避）＋session 旗標靜默降級（含 inline 註冊總計 ≤3），並以 surface tone 修 toast 白字壓淺漸層重影、md+ 錨定主欄置中
 
 - 日期：2026-07-06
 - ID：neutral-rw-596-review-audit-number-and-comment

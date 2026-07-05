@@ -102,7 +102,7 @@ export const notificationTokens = {
    * 行動版定位在 header 下方，避免阻擋底部導覽列
    */
   position:
-    'fixed top-[var(--notification-mobile-top-offset)] md:top-auto md:bottom-4 left-1/2 w-[calc(100vw-2rem)] max-w-[344px] z-50',
+    'fixed top-[var(--notification-mobile-top-offset)] md:top-auto md:bottom-4 left-1/2 md:left-[calc(50%+var(--notification-center-offset,0px))] w-[calc(100vw-2rem)] max-w-[344px] z-50',
   /** 行動版頂部偏移量：header 高度 + safe area + 16px 間距 */
   mobileTopOffset: `calc(${navigationTokens.header.height}px + env(safe-area-inset-top, 0px) + 16px)`,
   /** 固定定位 + 容器尺寸（視窗頂部中央） - OfflineIndicator 專用

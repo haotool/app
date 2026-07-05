@@ -19,23 +19,35 @@
  * @see notificationAnimations — animations.ts
  */
 import type { CSSProperties } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'motion/react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import { notificationTokens } from '../config/design-tokens';
 import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { logger } from '../utils/logger';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
 import { isActiveServiceWorkerBroken, propagateCriticalSwFixIfBroken } from '../utils/swHealth';
+import {
+  dismissSwNeedRefresh,
+  dismissSwOfflineReady,
+  ensureSwRegistration,
+  getSwRegistrationServerSnapshot,
+  getSwRegistrationSnapshot,
+  subscribeSwRegistration,
+  updateServiceWorker,
+} from '../utils/swRegistration';
 import { SupportContactLinks } from './SupportContactLinks';
 
+interface UpdatePromptProps {
+  /** md+ 水平置中偏移（例：AppLayout 側欄佔位時傳側欄寬度的一半，讓 toast 錨定主欄置中）。 */
+  centerOffset?: string;
+}
+
 /** SSR 安全入口：伺服器端回傳 null */
-export function UpdatePrompt() {
+export function UpdatePrompt({ centerOffset }: UpdatePromptProps = {}) {
   if (typeof window === 'undefined') return null;
 
-  return <UpdatePromptClient />;
+  return <UpdatePromptClient {...(centerOffset !== undefined ? { centerOffset } : {})} />;
 }
 
 // 冷啟動自動更新的循環防護：同分頁 5 分鐘內只自動重載一次，
@@ -60,14 +72,14 @@ function markAutoUpdateAttempted(): void {
   }
 }
 
-function UpdatePromptClient() {
+function UpdatePromptClient({ centerOffset = '0px' }: UpdatePromptProps) {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateFailed, setUpdateFailed] = useState(false);
-  const [registrationFailed, setRegistrationFailed] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 註冊失敗提示的關閉旗標：失敗狀態由 swRegistration 單例提供（#593）。
+  const [registrationFailedDismissed, setRegistrationFailedDismissed] = useState(false);
   const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoUpdateTriggeredRef = useRef(false);
   const brokenSwRef = useRef(false);
@@ -85,32 +97,36 @@ function UpdatePromptClient() {
     brokenSwRef.current = await isActiveServiceWorkerBroken();
   };
 
-  const {
-    offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegistered(r) {
-      if (r) {
-        registrationRef.current = r;
-        setRegistrationFailed(false);
-        void r.update();
-        // 自我修復：壞 SW 連網時自動 SKIP_WAITING + 重載；健康 SW 維持 prompt。
-        void runCriticalSwPropagation();
-        intervalRef.current = setInterval(() => {
-          void r.update();
-        }, notificationTokens.timing.updateInterval);
-      }
-    },
-    onRegisterError(error) {
-      const errorObject = error instanceof Error ? error : new Error(String(error));
-      setRegistrationFailed(true);
-      setOfflineReady(false);
-      setNeedRefresh(false);
-      setUpdateFailed(false);
-      logger.error('Service Worker registration error', errorObject);
-    },
-  });
+  // 訂閱 SW 註冊單例：render attempt 不再產生註冊副作用（修復 #593 熱迴圈）。
+  const swState = useSyncExternalStore(
+    subscribeSwRegistration,
+    getSwRegistrationSnapshot,
+    getSwRegistrationServerSnapshot,
+  );
+  const offlineReady = swState.offlineReady;
+  const needRefresh = swState.needRefresh;
+  const registrationFailed = swState.status === 'failed' && !registrationFailedDismissed;
+
+  // 註冊改於 effect 啟動：單例最多 2 次嘗試（含 inline 註冊總計 ≤3；退避 + session 旗標）。
+  useEffect(() => {
+    ensureSwRegistration();
+  }, []);
+
+  // 註冊成功後：立即檢查更新、跑自我修復傳播、啟動定期更新檢查。
+  useEffect(() => {
+    const registration = swState.registration;
+    if (!registration) return;
+    registrationRef.current = registration;
+    void registration.update();
+    // 自我修復：壞 SW 連網時自動 SKIP_WAITING + 重載；健康 SW 維持 prompt。
+    void runCriticalSwPropagation();
+    const intervalId = setInterval(() => {
+      void registration.update();
+    }, notificationTokens.timing.updateInterval);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [swState.registration]);
 
   // PWA 從背景回前景時主動檢查更新並重新快取關鍵資源（iOS 會清除 Cache Storage）
   useEffect(() => {
@@ -146,18 +162,10 @@ function UpdatePromptClient() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     if (offlineReady) {
       autoDismissRef.current = setTimeout(() => {
-        setOfflineReady(false);
-        setNeedRefresh(false);
+        dismissSwOfflineReady();
+        dismissSwNeedRefresh();
         setUpdateFailed(false);
       }, notificationTokens.timing.autoDismiss);
     }
@@ -166,7 +174,7 @@ function UpdatePromptClient() {
         clearTimeout(autoDismissRef.current);
       }
     };
-  }, [offlineReady, setOfflineReady, setNeedRefresh]);
+  }, [offlineReady]);
 
   useEffect(() => {
     if (!needRefresh) {
@@ -200,7 +208,7 @@ function UpdatePromptClient() {
     autoUpdateTriggeredRef.current = true;
     markAutoUpdateAttempted();
     setIsUpdating(true);
-    setRegistrationFailed(false);
+    setRegistrationFailedDismissed(true);
     setUpdateFailed(false);
 
     void updateServiceWorker(true)
@@ -211,11 +219,11 @@ function UpdatePromptClient() {
       .finally(() => {
         setIsUpdating(false);
       });
-  }, [isUpdating, needRefresh, updateServiceWorker]);
+  }, [isUpdating, needRefresh]);
 
   const handleUpdate = async () => {
     setIsUpdating(true);
-    setRegistrationFailed(false);
+    setRegistrationFailedDismissed(true);
     setUpdateFailed(false);
     try {
       await updateServiceWorker(true);
@@ -231,10 +239,10 @@ function UpdatePromptClient() {
   };
 
   const close = () => {
-    setOfflineReady(false);
-    setNeedRefresh(false);
+    dismissSwOfflineReady();
+    dismissSwNeedRefresh();
     setUpdateFailed(false);
-    setRegistrationFailed(false);
+    setRegistrationFailedDismissed(true);
   };
 
   // `offlineReady` 是首次安裝 SW 的低優先級成功狀態；若以 toast 顯示，Lighthouse
@@ -243,6 +251,8 @@ function UpdatePromptClient() {
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
   const mobilePositionStyle = {
     '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
+    // md+ 錨定主欄置中：AppLayout 傳側欄寬度一半，內容頁維持視窗置中（0px）。
+    '--notification-center-offset': centerOffset,
   } as CSSProperties;
 
   return (
@@ -345,10 +355,11 @@ function UpdatePromptClient() {
                 </div>
 
                 {registrationFailed || updateFailed ? (
+                  // E1 token：surface tone（深色文字＋實色底），修 brand tone 白字壓淺色漸層的重影不可讀。
                   <SupportContactLinks
                     title={t('support.reportIssueLead')}
                     description={t('support.reportIssueHint')}
-                    tone="brand"
+                    tone="surface"
                   />
                 ) : null}
               </div>
