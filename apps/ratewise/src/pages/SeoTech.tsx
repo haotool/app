@@ -373,10 +373,9 @@ export default function SeoTech() {
                       </span>
                       <span className={`text-sm font-medium ${stat.color}`}>{stat.unit}</span>
                     </div>
-                    <p className="text-xs font-semibold text-[rgb(var(--color-text))]">
-                      {stat.label}
-                    </p>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{stat.sub}</p>
+                    {/* 卡底為固定淺色調色板，標籤用固定深色避免深色主題白字壓淺底（審計 P0-1 同病）。 */}
+                    <p className="text-xs font-semibold text-slate-900">{stat.label}</p>
+                    <p className="text-xs text-slate-600 mt-0.5">{stat.sub}</p>
                   </motion.div>
                 );
               })}

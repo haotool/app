@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-seotech-stats-contrast-and-capture
+- 原因：截圖矩陣抓出 SeoTech 統計卡標籤吃主題 text token 但卡底為固定淺色調色板，nitro 下白字壓淺底不可讀（審計 P0-1 同病殘留）
+- 解法：標籤改固定深色 slate 對比安全值並註解設計依據；沉澱 capture-content-pages.mjs 截圖矩陣腳本（7 頁×2 主題×2 尺寸＋console error 收集）供後續回歸
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-content-pages-e2e-smoke
