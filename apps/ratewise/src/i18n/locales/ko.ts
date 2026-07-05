@@ -80,6 +80,11 @@ const ko = {
     backToConverter: '환산기로 돌아가기',
   },
 
+  // Trend Chart
+  trend: {
+    cashSellBasis: '현금 매도율 추이',
+  },
+
   // Multi Currency Converter
   multiConverter: {
     title: '복수 통화 환산',

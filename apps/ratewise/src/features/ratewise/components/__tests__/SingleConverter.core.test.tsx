@@ -351,6 +351,34 @@ describe('SingleConverter - 核心功能測試', () => {
       expect(document.querySelector('.fixed.inset-0.z-40')).toBeInTheDocument();
     });
 
+    it('should keep the unavailable reason tooltip unclipped (no overflow-hidden ancestor)', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          fromCurrency="TWD"
+          toCurrency="KRW"
+          rateType="cash"
+          details={{
+            KRW: {
+              name: '韓元',
+              spot: { buy: 0, sell: null },
+              cash: { buy: 0.0226, sell: 0.024 },
+            },
+          }}
+          rateTypeAvailability={{ spot: false, cash: true }}
+        />,
+      );
+
+      fireEvent.click(getSpotRateButton());
+
+      // 氣泡以 bottom-full 向上彈出；任何 overflow-hidden 祖先都會把它剪到只剩數 px。
+      let node: HTMLElement | null = screen.getByText(/目前不提供/);
+      while (node && node !== document.body) {
+        expect(node.className).not.toMatch(/overflow-hidden/);
+        node = node.parentElement;
+      }
+    });
+
     it('should not call onRateTypeChange when target rate type is unavailable', () => {
       render(
         <SingleConverter

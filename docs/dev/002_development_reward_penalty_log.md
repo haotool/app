@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+107
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+108
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-trend-tooltip-bubble-basis
+- 原因：趨勢圖 tooltip 的 translateX(-50%) 被 Framer Motion animate transform 覆寫且 position:fixed 落在帶 transform 的祖先內（最新點 tooltip 溢出畫面 left=388/viewport=390）；「即期不可用」氣泡被匯率資訊區 overflow-hidden 剪到剩 7px；趨勢資料固定現金賣出基準但卡片可顯示即期價，圖表無標註致使用者誤判圖錯
+- 解法：tooltip createPortal 至 body＋置中放外層純 div＋useLayoutEffect 以 clampTooltipCenterX 夾 viewport 邊界；移除資訊區 overflow-hidden（微光疊層自有剪裁不受影響）；新增 trend.cashSellBasis i18n ×4 於圖角與 tooltip 誠實標註基準（換錢所趨勢同基準不標），資料基準對齊 rateType 留 backlog
 
 - 日期：2026-07-05
 - ID：reward-rw-seo-content-truthfulness-p0

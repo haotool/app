@@ -489,9 +489,11 @@ export const SingleConverter = ({
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </div>
 
-          {/* 匯率資訊區塊 - 透明背景繼承父元素漸層 */}
+          {/* 匯率資訊區塊 - 透明背景繼承父元素漸層。
+           * 不設 overflow-hidden：RateTypeTooltip 以 bottom-full 向上彈出，
+           * 剪裁會讓「即期不可用」說明只露出數 px；微光疊層已由上方獨立容器自行剪裁。 */}
           <div
-            className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl overflow-hidden ${singleConverterLayoutTokens.rateCard.infoPadding}`}
+            className={`relative text-center px-4 flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-[1.02] rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
             <RateSelector
               rateType={rateType}
@@ -548,7 +550,15 @@ export const SingleConverter = ({
                   <TrendChartSkeleton />
                 ) : (
                   <Suspense fallback={<TrendChartSkeleton />}>
-                    <MiniTrendChart data={trendData} currencyCode={toCurrency} />
+                    {/* 銀行歷史趨勢固定為現金賣出基準（與卡片即期價可能不同），須誠實標註；
+                     * 換錢所趨勢與卡片同基準，不另標。基準對齊 rateType 屬資料管線 backlog。 */}
+                    <MiniTrendChart
+                      data={trendData}
+                      currencyCode={toCurrency}
+                      basisLabel={
+                        rateSource === 'exchange-shop' ? undefined : t('trend.cashSellBasis')
+                      }
+                    />
                   </Suspense>
                 )}
               </ErrorBoundary>
