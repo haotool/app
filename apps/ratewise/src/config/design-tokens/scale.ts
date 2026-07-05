@@ -66,10 +66,10 @@ export const typographyTokens = {
     mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
   },
 
-  /** 字型大小比例表 */
+  /** 字型大小比例表（E1 字階下限 12px：全站禁止 <12px 文字） */
   fontSize: {
-    /** 10px - 極小標籤 */
-    '2xs': { size: '0.625rem', lineHeight: '0.875rem', class: 'text-[10px]' },
+    /** 12px - 極小標籤（字階下限；原 10px 已升級） */
+    '2xs': { size: '0.75rem', lineHeight: '1rem', class: 'text-2xs' },
     /** 12px - 小標籤、說明文字 */
     xs: { size: '0.75rem', lineHeight: '1rem', class: 'text-xs' },
     /** 14px - 次要內容 */
@@ -124,6 +124,35 @@ export const typographyTokens = {
     numeric: 'text-2xl font-bold tabular-nums',
     /** 小數值 */
     numericSmall: 'text-lg font-semibold tabular-nums',
+  },
+} as const;
+
+/**
+ * 8 級字階 SSOT（E1 收斂）
+ *
+ * 全站文字尺寸只允許此 8 級；micro（12px）為硬下限，禁止任意值 <12px。
+ * 數字一律搭配 tabular-nums（typographyTokens.patterns.numeric*）。
+ */
+export const typeScaleTokens = {
+  /** 字階硬下限（px） */
+  minFontSizePx: 12,
+  levels: {
+    /** 32px - 主金額 Display */
+    display: { px: 32, class: 'text-[32px]' },
+    /** 28px - 次金額 Display */
+    displaySm: { px: 28, class: 'text-[28px]' },
+    /** 24px - 頁面標題 */
+    title: { px: 24, class: 'text-2xl' },
+    /** 20px - 區塊標題 */
+    heading: { px: 20, class: 'text-xl' },
+    /** 16px - 正文 */
+    body: { px: 16, class: 'text-base' },
+    /** 14px - 次要內容 */
+    secondary: { px: 14, class: 'text-sm' },
+    /** 12px - 說明文字 */
+    caption: { px: 12, class: 'text-xs' },
+    /** 12px - 極小標籤（下限） */
+    micro: { px: 12, class: 'text-2xs' },
   },
 } as const;
 
@@ -264,29 +293,27 @@ export const breakpointTokens = {
 } as const;
 
 /**
- * Radius Design Tokens (SSOT)
+ * Radius Design Tokens (SSOT) - E1 三級制收斂
  *
- * 以語義 token 取代散落的硬編碼 radius class，並保留 Tailwind scale 別名相容。
- * - card: 24px，柔和大圓角內容卡片
- * - panel/control: 16px，按鈕、表單、互動列與資訊面板
- * - icon: 12px，小型 icon badge
- * - compact: 8px，密集資料表或真正小型元素
+ * 全站圓角收斂為三個實值（＋pill full）：容器 20px、卡片/面板 16px、控件 12px。
+ * Tailwind scale 別名（sm~4xl）一律映射到三級值，確保舊 class 不產生第四種圓角。
+ * 守門：design-tokens.test 斷言 distinct 值恰為三個。
  */
 export const radiusTokens = {
   values: {
-    card: '1.5rem',
+    card: '1.25rem',
     panel: '1rem',
-    control: '1rem',
+    control: '0.75rem',
     icon: '0.75rem',
-    compact: '0.5rem',
+    compact: '0.75rem',
     full: '9999px',
-    '4xl': '2rem',
-    '3xl': '1.5rem',
+    '4xl': '1.25rem',
+    '3xl': '1.25rem',
     '2xl': '1rem',
     xl: '0.75rem',
-    lg: '0.5rem',
-    md: '0.375rem',
-    sm: '0.25rem',
+    lg: '0.75rem',
+    md: '0.75rem',
+    sm: '0.75rem',
   },
   className: {
     card: 'rounded-card',
@@ -299,25 +326,27 @@ export const radiusTokens = {
 } as const;
 
 /**
- * Shadow Design Tokens (SSOT)
+ * Shadow Design Tokens (SSOT) - E1 二級制收斂
  *
- * 一組安靜、帶空氣感的陰影，集中控制散落的 Tailwind shadow。
- * Tailwind 的 sm/md/lg/xl 保留相容別名，實際值由此集中定義。
- * 注意：陰影基底色 `rgb(15 23 42 / ...)` (slate-900) 僅適用淺色模式。
+ * 抬升層次交給 hairline border（1px --color-border）與 surface 層差；
+ * 陰影僅保留兩級極淡單層中性值（rest/raised），裝飾性彩色陰影清零。
+ * Tailwind 的 sm/md/lg/xl 與語義別名全部映射到 rest/raised 其中之一。
+ * 守門：design-tokens.test 斷言 distinct 值恰為兩個且不含 --color-primary。
  */
+const SHADOW_REST = '0 1px 3px 0 rgb(15 23 42 / 0.06)';
+const SHADOW_RAISED = '0 8px 24px -12px rgb(15 23 42 / 0.14)';
+
 export const shadowTokens = {
   values: {
-    card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -24px rgb(15 23 42 / 0.28)',
-    cardHover:
-      '0 2px 6px -2px rgb(15 23 42 / 0.10), 0 22px 48px -28px rgb(var(--color-primary) / 0.30)',
-    soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
-    floating:
-      '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.24)',
-    brand: '0 8px 25px rgb(var(--color-primary) / 0.28)',
-    sm: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
-    md: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 8px 24px -22px rgb(15 23 42 / 0.22)',
-    lg: '0 8px 28px -18px rgb(15 23 42 / 0.28), 0 16px 44px -28px rgb(var(--color-primary) / 0.20)',
-    xl: '0 14px 44px -24px rgb(15 23 42 / 0.32), 0 24px 64px -36px rgb(var(--color-primary) / 0.28)',
+    card: SHADOW_REST,
+    cardHover: SHADOW_RAISED,
+    soft: SHADOW_REST,
+    floating: SHADOW_RAISED,
+    brand: SHADOW_RAISED,
+    sm: SHADOW_REST,
+    md: SHADOW_REST,
+    lg: SHADOW_RAISED,
+    xl: SHADOW_RAISED,
   },
   className: {
     card: 'shadow-card',

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+117
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+118
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-token-convergence
+- 原因：圓角 5 級混用、彩色重陰影、<12px 字散布、hover-scale 與 4 個 infinite 動畫造成視覺語言漂移；custom 主題非演算鍵（等號鍵/品牌按鈕）停留 zen 藍且白字表面未錨定 AA
+- 解法：radius 收斂三級（20/16/12px 別名全映射）、陰影收斂中性兩級、2xs 升 12px 為字階下限、動效收斂 press-scale/slide/count-up 並清 infinite 與 hover-scale、按鈕 SSOT 白字錨定 primary-strong、custom 演算鍵擴充跟色（S1/S2 同批）並強化 AA property 守門
 
 - 日期：2026-07-05
 - ID：neutral-rw-e1-design-brief-roadmap-sync

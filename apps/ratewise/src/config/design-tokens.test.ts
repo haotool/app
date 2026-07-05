@@ -145,7 +145,7 @@ describe('Design Token System - BDD', () => {
       const { typographyTokens } = await import('./design-tokens');
       const fontSize = typographyTokens.fontSize;
 
-      expect(fontSize['2xs']).toHaveProperty('size', '0.625rem');
+      expect(fontSize['2xs']).toHaveProperty('size', '0.75rem');
       expect(fontSize.xs).toHaveProperty('size', '0.75rem');
       expect(fontSize.sm).toHaveProperty('size', '0.875rem');
       expect(fontSize.base).toHaveProperty('size', '1rem');
@@ -292,7 +292,7 @@ describe('Design Token System - BDD', () => {
       expect(multiConverterLayoutTokens).toBeDefined();
       expect(multiConverterLayoutTokens.content.className).toContain('py-4');
       expect(multiConverterLayoutTokens.card.className).toContain('card');
-      expect(multiConverterLayoutTokens.info.text).toContain('text-[10px]');
+      expect(multiConverterLayoutTokens.info.text).toContain('text-2xs');
     });
   });
 

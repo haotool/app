@@ -61,6 +61,8 @@ export default {
         'border-secondary': 'rgb(var(--color-border-secondary) / <alpha-value>)',
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          // 白字表面 AA 錨點：自訂主色下由演算 clamp 保證對比 ≥4.5:1。
+          strong: 'rgb(var(--color-primary-strong, var(--color-primary)) / <alpha-value>)',
           hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',
           foreground: 'rgb(var(--color-primary-foreground) / <alpha-value>)',
         },

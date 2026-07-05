@@ -1,7 +1,7 @@
 /**
  * applyTheme custom 覆寫層守門（E2）
  *
- * 1. style === 'custom'：14 鍵 inline CSS 變數寫入 documentElement，theme-color meta 跟隨主色。
+ * 1. style === 'custom'：演算全鍵 inline CSS 變數寫入 documentElement，theme-color meta 跟隨主色。
  * 2. 切回內建主題：inline 覆寫全部清除、meta 還原品牌藍（靜態 [data-style] 區塊接手）。
  * 3. customPrimary 缺失/無效：回退預設自訂主色，不得產生半套覆寫。
  */
@@ -27,7 +27,7 @@ describe('applyTheme - custom 覆寫層', () => {
     document.head.appendChild(meta);
   });
 
-  it('custom 主題寫入全部 14 鍵 inline 變數且與演算 SSOT 一致', () => {
+  it('custom 主題寫入演算全鍵 inline 變數且與演算 SSOT 一致', () => {
     applyTheme({ style: 'custom', customPrimary: '#FF6B6B' });
 
     const root = document.documentElement;
