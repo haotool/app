@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { APP_INFO, getCopyrightNotice } from '../config/app-info';
+import { AUTHOR_CONTACT_LINKS, getCopyrightNotice } from '../config/app-info';
 import { TOOLS, getToolUrl } from '../config/tools';
 import Wordmark from './Wordmark';
 import MailtoLink from './MailtoLink';
@@ -57,31 +57,24 @@ export default function Footer() {
           <nav aria-label="社群連結">
             <h2 className={COLUMN_TITLE_CLASS}>社群</h2>
             <ul className="mt-3">
-              <li>
-                <a
-                  href={APP_INFO.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={FOOTER_LINK_CLASS}
-                >
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <a
-                  href={APP_INFO.threadsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={FOOTER_LINK_CLASS}
-                >
-                  Threads
-                </a>
-              </li>
-              <li>
-                <MailtoLink email={APP_INFO.email} className={`focus-ring ${FOOTER_LINK_CLASS}`}>
-                  Email
-                </MailtoLink>
-              </li>
+              {AUTHOR_CONTACT_LINKS.map((link) => (
+                <li key={link.id}>
+                  {link.href ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={FOOTER_LINK_CLASS}
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <MailtoLink email={link.value} className={`focus-ring ${FOOTER_LINK_CLASS}`}>
+                      {link.label}
+                    </MailtoLink>
+                  )}
+                </li>
+              ))}
             </ul>
           </nav>
         </div>

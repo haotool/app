@@ -45,7 +45,7 @@
 ## 5. 驗收清單（Security gate）
 
 - [ ] `git grep dangerouslySetInnerHTML apps/haotool` 為空（或逐一 review 豁免）
-- [ ] SSG 產物無 `mailto:` href（`rg "mailto:" apps/haotool/dist` 驗證）
+- [ ] SSG HTML 產物無 `mailto:` href（`rg "mailto:" apps/haotool/dist --glob '*.html'` 驗證；JS bundle 內 hydration 用字串屬設計預期）
 - [ ] 外連全帶 `noopener noreferrer`（單元測試守門）
 - [ ] SW allow/denylist 單元測試 + E2E 子 app 導覽不經根 SW
 - [ ] 新依賴數 = PRD §11 清單內（diff 審查；動效依賴名一律為 `motion`，防 `framer-motion` 混入）

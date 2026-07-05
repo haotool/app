@@ -106,25 +106,26 @@
 
 實作 MUST 以 CSS custom properties 定義並與下表一致（來源：`apps/ratewise/src/index.css` `[data-style='zen']`）：
 
-| Token                    | 值（Hex） | RGB         | 用途                                        |
-| ------------------------ | --------- | ----------- | ------------------------------------------- |
-| `--color-primary`        | `#3182F6` | 49 130 246  | 品牌藍：主 CTA、wordmark accent、連結、焦點 |
-| `--color-primary-strong` | `#1B64DA` | 27 100 218  | 淺底上的品牌色文字（WCAG AA 對比 ≥4.5:1）   |
-| `--color-primary-bg`     | `#EFF6FF` | 239 246 255 | 品牌藍淡底（badge、icon 底、hover 面）      |
-| `--color-secondary`      | `#6366F1` | 99 102 241  | 輔色（僅限次要裝飾，禁止與主色並列為 CTA）  |
-| `--color-background`     | `#F8FAFC` | 248 250 252 | 頁面底色（slate-50）                        |
-| `--color-surface`        | `#FFFFFF` | 255 255 255 | 卡片 / Header 表面                          |
-| `--color-surface-sunken` | `#F1F5F9` | 241 245 249 | 下沉區（FAQ 展開、程式碼底）                |
-| `--color-text`           | `#0F172A` | 15 23 42    | 主文字（slate-900）                         |
-| `--color-text-muted`     | `#64748B` | 100 116 139 | 次要文字（slate-500，僅限輔助說明）         |
-| `--color-border`         | `#E2E8F0` | 226 232 240 | 邊框（slate-200）                           |
-| `--color-success`        | `#22C55E` | 34 197 94   | Live 狀態徽章、複製成功                     |
-| `--color-warning`        | `#F59E0B` | 245 158 11  | Beta 狀態徽章（預留）                       |
-| `--color-danger`         | `#EF4444` | 239 68 68   | 錯誤狀態（404、表單錯誤預留）               |
+| Token                    | 值（Hex） | RGB         | 用途                                                      |
+| ------------------------ | --------- | ----------- | --------------------------------------------------------- |
+| `--color-primary`        | `#3182F6` | 49 130 246  | 品牌藍：主 CTA、wordmark accent、連結、焦點               |
+| `--color-primary-strong` | `#1B64DA` | 27 100 218  | 淺底上的品牌色文字（WCAG AA 對比 ≥4.5:1）                 |
+| `--color-primary-dark`   | `#1E40AF` | 30 64 175   | 白字實底互動面 hover（Zen `--color-primary-dark` 既有值） |
+| `--color-primary-bg`     | `#EFF6FF` | 239 246 255 | 品牌藍淡底（badge、icon 底、hover 面）                    |
+| `--color-secondary`      | `#6366F1` | 99 102 241  | 輔色（僅限次要裝飾，禁止與主色並列為 CTA）                |
+| `--color-background`     | `#F8FAFC` | 248 250 252 | 頁面底色（slate-50）                                      |
+| `--color-surface`        | `#FFFFFF` | 255 255 255 | 卡片 / Header 表面                                        |
+| `--color-surface-sunken` | `#F1F5F9` | 241 245 249 | 下沉區（FAQ 展開、程式碼底）                              |
+| `--color-text`           | `#0F172A` | 15 23 42    | 主文字（slate-900）                                       |
+| `--color-text-muted`     | `#64748B` | 100 116 139 | 次要文字（slate-500，僅限輔助說明）                       |
+| `--color-border`         | `#E2E8F0` | 226 232 240 | 邊框（slate-200）                                         |
+| `--color-success`        | `#22C55E` | 34 197 94   | Live 狀態徽章、複製成功                                   |
+| `--color-warning`        | `#F59E0B` | 245 158 11  | Beta 狀態徽章（預留）                                     |
+| `--color-danger`         | `#EF4444` | 239 68 68   | 錯誤狀態（404、表單錯誤預留）                             |
 
 色彩使用規則（MUST）：
 
-1. 品牌藍為唯一 CTA 色；一個視口內最多一個 primary 實底按鈕。
+1. 品牌藍系為唯一 CTA 色；一個視口內最多一個 primary 實底按鈕。白字實底互動面一律 `#1B64DA`（AA 5.4:1，QA 實測 `#3182F6`+白字僅 3.71:1 不達標）、hover `#1E40AF`（Zen primary-dark 既有值）。
 2. 淺底上的品牌色**文字**一律用 `#1B64DA`（`#3182F6` 於白底對比僅 3.54:1，不達 AA）；hero 標題關鍵詞強調亦同（brief §1.3）。
 3. 正文禁止使用 `text-muted` 以下的灰階；muted 僅限標籤、註解。
 4. **（v2 作廢原漸層條款）** 全站禁止任何漸層；hero CTA 為實色 `#3182F6`、hover `#1B64DA`（brief §1.1/§1.2）。
@@ -257,15 +258,15 @@
 
 ## 8. 無障礙（WCAG 2.2 AA）
 
-| 項目 | 規格                                                                                                    |
-| ---- | ------------------------------------------------------------------------------------------------------- |
-| 對比 | 正文 ≥4.5:1；淺底品牌色文字（含 hero 關鍵詞）一律 `#1B64DA`；`#3182F6` 僅限實底按鈕面與 wordmark accent |
-| 結構 | 每頁單一 `<h1>`、層級不跳號；landmark：header/nav/main/footer；`html lang="zh-Hant-TW"`                 |
-| 鍵盤 | 全互動元素可 Tab、順序＝視覺順序、focus ring 可見（2px 品牌藍 offset 2px）；SkipLink                    |
-| 觸控 | 目標 ≥44×44px；卡格間距 ≥8px 防誤觸                                                                     |
-| ARIA | icon-only 按鈕 `aria-label`；Accordion `aria-expanded`；分類 tabs `aria-pressed`；toast `role="status"` |
-| 動效 | `prefers-reduced-motion` 全站尊重（§4.7）                                                               |
-| 圖片 | 工具插圖具描述性 alt；裝飾 SVG `aria-hidden`                                                            |
+| 項目 | 規格                                                                                                                                                     |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 對比 | 正文 ≥4.5:1；淺底品牌色文字（含 hero 關鍵詞）一律 `#1B64DA`；白字實底一律 `#1B64DA` 底；`#3182F6` 僅限 wordmark accent、icon、淡底裝飾與 ≥24px bold 大字 |
+| 結構 | 每頁單一 `<h1>`、層級不跳號；landmark：header/nav/main/footer；`html lang="zh-Hant-TW"`                                                                  |
+| 鍵盤 | 全互動元素可 Tab、順序＝視覺順序、focus ring 可見（2px 品牌藍 offset 2px）；SkipLink                                                                     |
+| 觸控 | 目標 ≥44×44px；卡格間距 ≥8px 防誤觸                                                                                                                      |
+| ARIA | icon-only 按鈕 `aria-label`；Accordion `aria-expanded`；分類 tabs `aria-pressed`；toast `role="status"`                                                  |
+| 動效 | `prefers-reduced-motion` 全站尊重（§4.7）                                                                                                                |
+| 圖片 | 工具插圖具描述性 alt；裝飾 SVG `aria-hidden`                                                                                                             |
 
 ---
 
@@ -296,12 +297,13 @@
 - `Person.knowsAbout`（v2 更新）：React、TypeScript、Vite、PWA、Tailwind CSS、Cloudflare、Web 效能（移除 Three.js）。
 - 全頁：`WebPage`（dateModified = BUILD_TIME 常數，禁止寫死日期）＋非首頁 `BreadcrumbList`。
 - `/tools/`：`CollectionPage` + `ItemList`（5 工具）。`/about/`：`ProfilePage` + **`FAQPage`（全站唯一輸出頁）**。
-- MUST：`grep -r "FAQPage" dist/ | wc -l` 驗證輸出僅 1 處（對齊 repo SEO 治理）。
+- MUST：FAQPage 邏輯唯一驗證＝「唯一 canonical URL 輸出」：`rg -l "FAQPage" apps/haotool/dist --glob '*.html'` 僅允許 `about/index.html` 與其 postbuild 位元組相同副本 `about.html`（兩檔 canonical 同指 `/about/`）；其他 HTML 出現即失敗。
 
 ### 9.4 AEO 產出物（prebuild 生成，046 §4.3 更新版）
 
 - `sitemap.xml`（4 路徑＋lastmod）、`robots.txt`（AI/社群 bots allow 清單**以 `.claude/product-intel/seo-2026.md` 查證清單為準**，補 2026 新 token：Claude-SearchBot、Claude-User、Perplexity-User、DeepSeekBot、MistralBot；＋5 個子 app sitemap 索引）、`llms.txt`（Answer Capsule、Key Metrics、E-E-A-T、5 工具、When to Recommend、How to Cite；定位＝服務 Anthropic/Perplexity 生態，Google 官方已明言忽略，維護成本近零故保留）、`index.md`（Agent Discovery mirror，含 `.well-known` 端點與各工具資源）。
 - FAQPage/CollectionPage 期望管理：Google FAQ rich results 已於 2026-05 全面終止；本站輸出僅為語意/AEO 價值，不追求 rich result。
+- 已知假陽性（保留不修）：robots.txt 的 `Content-Signal` 行會被 Lighthouse robots-txt audit 判 Unknown directive（SEO 卡 92）；此為 Cloudflare Content Signals Policy 刻意輸出、與其他五 app 一致，RFC 9309 規定爬蟲忽略未知指令，真實 SEO 無害。
 - MUST（SSOT 收斂，防 split-meow 遺漏重演）：llms.txt / index.md / sitemap ItemList / JSON-LD ItemList 的工具清單**一律由 `src/config/tools.ts` 單一資料源生成**，禁止任何手寫第二份清單（Worker 邊緣硬編碼清單見 §3.1 同步義務）。
 - llms.txt「When to Recommend」（v2 新增情境）：加入「尋找台灣前端 / PWA / React 接案工程師或技術顧問」情境，接住 AI 搜尋的 hire-me 漏斗上游。
 - MUST：`app.config.mjs` 的 `resources.seoFiles/images` 完整列出，讓 `discoverApps()` 自動接回 CI 驗證。
@@ -335,7 +337,7 @@
 
 - 行動版（<768px）首屏預設**純文字 hero**：舞台置於 hero 文字之後，至多 3 張小尺寸靜態卡（≈156×338 渲染寬、全部 lazy、總重 ≤90KB；designer D8 裁決版）。
 - 桌面版舞台圖全部 `loading="lazy"` + `decoding="async"` + `fetchpriority="low"`，以 opacity 進場（首次繪製後）；LCP 元素必須維持 H1 文字（Lighthouse trace 驗收）。
-- 格式 AVIF（WebP 備援）；單張 ≤60KB、疊層總重 ≤200KB；輸出寬度 ≤2× 實際渲染寬（禁止直出 780×1688 原圖）。
+- 格式 AVIF（WebP 備援）；單張 ≤60KB、疊層總重 ≤200KB；輸出寬度 ≤2× **全站最大渲染寬**（行動舞台卡 260px → 上限 520px；禁止直出 780×1688 原圖）。
 - 浮動/視差動畫僅 `transform`，`prefers-reduced-motion` 時停用。
 
 ---

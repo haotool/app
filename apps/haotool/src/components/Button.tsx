@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 // Button 四態 SSOT（design-deep-dive §4.2）：radius 16、字 17px、h 52px、focus ring 2px offset 2px。
+// primary 底色用 primary-strong（R2-1 AA 裁決：白字實底 #1B64DA 5.4:1；#3182F6 僅 3.71:1 不達標）。
 const BUTTON_BASE =
   'press press-scale inline-flex h-[52px] items-center justify-center gap-2 rounded-btn px-8 text-[17px]';
 
 export const BUTTON_VARIANT = {
-  primary: `${BUTTON_BASE} focus-ring bg-primary font-bold text-white hover:bg-primary-strong disabled:pointer-events-none disabled:bg-disabled-bg disabled:text-disabled-text`,
+  primary: `${BUTTON_BASE} focus-ring bg-primary-strong font-bold text-white hover:bg-primary-dark disabled:pointer-events-none disabled:bg-disabled-bg disabled:text-disabled-text`,
   secondary: `${BUTTON_BASE} focus-ring border border-border bg-surface font-semibold text-text hover:border-primary hover:text-primary-strong disabled:pointer-events-none disabled:border-surface-sunken disabled:text-disabled-text`,
   banner: `${BUTTON_BASE} focus-ring-inverse bg-white font-bold text-primary-strong hover:bg-primary-bg disabled:pointer-events-none disabled:bg-white/60 disabled:text-disabled-text`,
 } as const;

@@ -29,6 +29,8 @@
 
   /* 互動態衍生值 — deep-dive §1.1（既有 Zen 藍階與 slate 階，非新色相） */
   --color-primary-bg-hover: #dbeafe;
+  /* 白字實底互動面 hover（R2-1 AA 裁決；值取自 RateWise Zen --color-primary-dark 30 64 175） */
+  --color-primary-dark: #1e40af;
   --color-border-strong: #cbd5e1;
   --color-disabled-bg: #e2e8f0;
   --color-disabled-text: #94a3b8;

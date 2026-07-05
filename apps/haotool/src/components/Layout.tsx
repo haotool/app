@@ -3,7 +3,7 @@
  * LazyMotion（async features）+ m 元件按需載入；MotionConfig reducedMotion="user"
  * 統一將 transform 動畫降級為僅 opacity（deep-dive §1.4 編排硬規則）。
  */
-import { Outlet } from 'react-router-dom';
+import { Outlet, ScrollRestoration } from 'react-router-dom';
 import { LazyMotion, MotionConfig } from 'motion/react';
 import Header from './Header';
 import Footer from './Footer';
@@ -27,6 +27,11 @@ export default function Layout() {
           </main>
           <Footer />
         </div>
+        {/* React Router v6 官方捲動治理：SPA 導航含 hash 時捲至錨點（lazy route 於導航
+            完成前已 resolve），其餘新頁面捲回頂部、back/forward 還原位置。
+            scrollIntoView 尊重錨點的 scroll-margin-top（80px），instant 捲動天然符合
+            prefers-reduced-motion。 */}
+        <ScrollRestoration />
       </MotionConfig>
     </LazyMotion>
   );

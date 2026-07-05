@@ -28,9 +28,9 @@ describe('APP_INFO 品牌原子', () => {
     expect(APP_INFO.appsHostUrl).toBe('https://app.haotool.org/');
   });
 
-  it('聯絡連結含 Email/GitHub/Threads；Email 不輸出 mailto href（CF 治理）', () => {
+  it('聯絡連結含 GitHub/Threads/Email（Footer 渲染順序）；Email 不輸出 mailto href（CF 治理）', () => {
     const ids = AUTHOR_CONTACT_LINKS.map((link) => link.id);
-    expect(ids).toEqual(['email', 'github', 'threads']);
+    expect(ids).toEqual(['github', 'threads', 'email']);
     const email = AUTHOR_CONTACT_LINKS.find((link) => link.id === 'email');
     expect(email?.href).toBeNull();
   });

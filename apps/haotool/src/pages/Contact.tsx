@@ -6,12 +6,17 @@
  */
 import { useCallback, useRef, useState } from 'react';
 import { ArrowUpRight, AtSign, Github, Mail } from 'lucide-react';
-import { APP_INFO } from '../config/app-info';
+import { AUTHOR_CONTACT_LINK_MAP } from '../config/app-info';
 import CopyField from '../components/CopyField';
 import MailtoLink from '../components/MailtoLink';
 import Reveal from '../components/Reveal';
 import SectionHeading from '../components/SectionHeading';
 import Toast, { type ToastMessage } from '../components/Toast';
+
+// 三張聯絡卡資料 SSOT：config/app-info 的作者聯絡連結。
+const EMAIL_CONTACT = AUTHOR_CONTACT_LINK_MAP.email;
+const GITHUB_CONTACT = AUTHOR_CONTACT_LINK_MAP.github;
+const THREADS_CONTACT = AUTHOR_CONTACT_LINK_MAP.threads;
 
 const CARD_CLASS = 'flex items-center gap-4 rounded-card border border-border bg-surface p-6';
 const ICON_WRAP_CLASS =
@@ -56,12 +61,12 @@ export default function Contact() {
                 <Mail className="size-6 text-primary-strong" strokeWidth={2} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-[17px] font-bold text-text">Email</h2>
+                <h2 className="text-[17px] font-bold text-text">{EMAIL_CONTACT.label}</h2>
                 <div className="mt-2">
-                  <CopyField value={APP_INFO.email} onToast={showToast} />
+                  <CopyField value={EMAIL_CONTACT.value} onToast={showToast} />
                 </div>
                 <MailtoLink
-                  email={APP_INFO.email}
+                  email={EMAIL_CONTACT.value}
                   subject="專案合作洽詢"
                   className="press focus-ring mt-2 inline-flex text-caption text-text-muted hover:text-primary-strong"
                 >
@@ -72,7 +77,7 @@ export default function Contact() {
 
             <li>
               <a
-                href={APP_INFO.github}
+                href={GITHUB_CONTACT.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`press press-scale focus-ring group cursor-pointer [--press-scale:0.99] hover:border-primary ${CARD_CLASS}`}
@@ -85,7 +90,7 @@ export default function Contact() {
                   />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[17px] font-bold text-text">GitHub</h2>
+                  <h2 className="text-[17px] font-bold text-text">{GITHUB_CONTACT.label}</h2>
                   <p className="mt-0.5 text-sm text-text-muted">看程式碼、開 issue 或參與討論。</p>
                 </div>
                 <ArrowUpRight
@@ -97,7 +102,7 @@ export default function Contact() {
 
             <li>
               <a
-                href={APP_INFO.threadsUrl}
+                href={THREADS_CONTACT.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`press press-scale focus-ring group cursor-pointer [--press-scale:0.99] hover:border-primary ${CARD_CLASS}`}
@@ -110,9 +115,9 @@ export default function Contact() {
                   />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[17px] font-bold text-text">Threads</h2>
+                  <h2 className="text-[17px] font-bold text-text">{THREADS_CONTACT.label}</h2>
                   <p className="mt-0.5 text-sm text-text-muted">
-                    {APP_INFO.socialHandle} — 日常分享與快速提問。
+                    {THREADS_CONTACT.value} — 日常分享與快速提問。
                   </p>
                 </div>
                 <ArrowUpRight

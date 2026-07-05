@@ -7,26 +7,13 @@ import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dns from 'node:dns';
+// root-scope SW allow/denylist SSOT：與行為測試共用（046 §5 防護）。
+import { HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST, SIBLING_APP_DENYLIST } from './src/config/sw-routes';
 
 // 確保 localhost 解析一致性（Node.js v17+ DNS 變更）。
 dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// root-scope SW 只能處理 haotool 自身路由，避免吞掉同網域子 app（046 §5 防護）。
-const HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST = [
-  /^\/$/,
-  /^\/tools(?:\/.*)?$/,
-  /^\/about(?:\/.*)?$/,
-  /^\/contact(?:\/.*)?$/,
-];
-const SIBLING_APP_DENYLIST = [
-  /^\/ratewise(?:\/.*)?$/,
-  /^\/nihonname(?:\/.*)?$/,
-  /^\/park-keeper(?:\/.*)?$/,
-  /^\/quake-school(?:\/.*)?$/,
-  /^\/split-meow(?:\/.*)?$/,
-];
 
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));

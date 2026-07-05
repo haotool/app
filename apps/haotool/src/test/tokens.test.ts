@@ -28,8 +28,10 @@ const PRD_COLOR_TOKENS = {
 } as const;
 
 // design-deep-dive §1.1 互動態衍生值（既有 Zen 藍階 / slate 階，禁止另創色值）。
+// primary-dark：R2-1 AA 裁決新增（白字實底 hover；RateWise Zen 既有 30 64 175）。
 const DERIVED_COLOR_TOKENS = {
   '--color-primary-bg-hover': '#dbeafe',
+  '--color-primary-dark': '#1e40af',
   '--color-border-strong': '#cbd5e1',
   '--color-disabled-bg': '#e2e8f0',
   '--color-disabled-text': '#94a3b8',

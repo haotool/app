@@ -145,6 +145,7 @@ describe('HeroStage', () => {
     // 全部截圖 lazy + 低優先權（PRD §10.2 hero 資產預算）。
     for (const img of Array.from(stage.querySelectorAll('img'))) {
       expect(img).toHaveAttribute('loading', 'lazy');
+      expect(img).toHaveAttribute('fetchpriority', 'low');
     }
   });
 });

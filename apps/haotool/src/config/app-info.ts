@@ -94,10 +94,11 @@ export const AUTHOR_CONTACT_LINK_MAP = {
   },
 } as const;
 
+/** 社群連結渲染順序（Footer 社群欄 SSOT）：外連在前、Email 殿後。 */
 export const AUTHOR_CONTACT_LINKS = [
-  AUTHOR_CONTACT_LINK_MAP.email,
   AUTHOR_CONTACT_LINK_MAP.github,
   AUTHOR_CONTACT_LINK_MAP.threads,
+  AUTHOR_CONTACT_LINK_MAP.email,
 ] as const;
 
 export const SEO_SOCIAL_LINKS = [APP_INFO.threadsUrl, APP_INFO.github] as const;

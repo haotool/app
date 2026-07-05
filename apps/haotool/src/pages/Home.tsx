@@ -55,8 +55,11 @@ export default function Home() {
       {/* 區 2 — Hero（白底；文字在上、舞台在後 — D8） */}
       <section aria-labelledby="hero-heading" className="bg-surface">
         <div className="shell flex flex-col gap-10 pb-[72px] pt-12 lg:grid lg:grid-cols-[minmax(0,560px)_minmax(0,512px)] lg:items-center lg:gap-12 lg:pb-28 lg:pt-24">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-chip bg-primary-bg px-3.5 py-1.5 text-overline uppercase text-primary-strong">
+          {/* <1024：文字區撐滿首屏可視高（100svh − header 64 − pt 48 − gap 40），
+              舞台整體移出首屏 → LCP 元素保證為 H1 文字（PRD §10.2 MUST）；桌面版式不變。 */}
+          <div className="flex min-h-[calc(100svh-152px)] flex-col justify-center lg:min-h-0">
+            {/* self-start：flex column 下維持 chip 內容寬（不被 stretch 撐滿）。 */}
+            <p className="inline-flex items-center gap-2 self-start rounded-chip bg-primary-bg px-3.5 py-1.5 text-overline uppercase text-primary-strong">
               <span className="size-2 rounded-full bg-success" aria-hidden="true" />
               OPEN SOURCE · 台灣
             </p>
