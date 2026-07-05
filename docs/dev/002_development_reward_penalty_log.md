@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 1）｜累計總分：+111
+> 本次分數變化：+4（reward 4、penalty 0、neutral 2）｜累計總分：+111
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e3-converter-v2-short-screen-budget
+- 原因：375×667 短螢幕下 v2 常駐計算機底緣超出可視區，違反「先砍留白再砍裝飾」佈局預算原則
+- 解法：以既有 short: 高度斷點壓縮列間距、字級、sparkline 與鍵高（維持 ≥44px 觸控），三尺寸截圖驗證無捲動
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-converter-v2-test-gate

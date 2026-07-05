@@ -55,7 +55,7 @@ const LONG_PRESS_CLEAR_MS = 500;
 
 function getKeyClassName(kind: KeypadKey['kind']): string {
   const base =
-    'flex h-[54px] items-center justify-center rounded-2xl text-2xl font-semibold select-none min-w-[44px]';
+    'flex h-[54px] short:h-[44px] items-center justify-center rounded-2xl text-2xl short:text-xl font-semibold select-none min-w-[44px]';
   if (kind === 'operator') {
     return `${base} bg-primary/10 text-primary`;
   }
@@ -135,9 +135,9 @@ export function ConverterKeypad({ initialValue, onValueChange }: ConverterKeypad
       data-testid="converter-v2-keypad"
       role="group"
       aria-label={t('converterV2.keypadLabel')}
-      className="rounded-2xl bg-surface px-1 pt-3 pb-2"
+      className="rounded-2xl bg-surface px-1 pt-3 pb-2 short:pt-1.5 short:pb-1"
     >
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 short:gap-1.5">
         {KEYPAD_LAYOUT.flat().map((key) => (
           <motion.button
             key={key.value}

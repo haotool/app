@@ -54,7 +54,7 @@ function CurrencyRow({
   return (
     <div
       data-testid={`converter-v2-row-${field}`}
-      className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+      className={`flex items-center gap-3 px-4 py-3 short:py-1.5 transition-colors ${
         isActive ? 'bg-primary/5' : ''
       }`}
     >
@@ -93,8 +93,8 @@ function CurrencyRow({
         aria-pressed={isActive}
         className={`flex-1 min-w-0 min-h-[44px] flex items-center justify-end rounded-xl px-2 text-right font-bold tabular-nums leading-tight cursor-pointer whitespace-nowrap overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[font-size,color,box-shadow] duration-200 ${
           isActive
-            ? 'text-[32px] text-text ring-2 ring-primary/40'
-            : 'text-[28px] text-neutral-text-secondary'
+            ? 'text-[32px] short:text-[26px] text-text ring-2 ring-primary/40'
+            : 'text-[28px] short:text-[22px] text-neutral-text-secondary'
         }`}
       >
         {display}
@@ -208,7 +208,7 @@ export const SingleConverterV2 = ({
   };
 
   return (
-    <div className="flex flex-col gap-3" data-testid="converter-v2">
+    <div className="flex flex-col gap-3 short:gap-2" data-testid="converter-v2">
       {/* 等值雙列：上下緊貼、完全對等，divider 內嵌 32px swap 鈕 */}
       <div className="rounded-2xl border border-border/60 bg-surface overflow-hidden">
         <CurrencyRow
@@ -305,7 +305,7 @@ export const SingleConverterV2 = ({
             </span>
           )}
         </div>
-        <div className="h-[72px] pointer-events-none">
+        <div className="h-[72px] short:h-[48px] pointer-events-none">
           {sparklineData.length >= 2 ? (
             <Suspense fallback={<TrendChartSkeleton />}>
               <MiniTrendChart data={sparklineData} currencyCode={toCurrency} />
