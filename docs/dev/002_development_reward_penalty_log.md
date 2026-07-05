@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+123
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+124
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-content-page-skeleton
+- 原因：七個內容頁各自手刻版面且行動版遺失底部導覽（審計 P1-8），重複 JSX 造成維護債
+- 解法：新增 ContentPageLayout 共用骨架（返回導覽＋麵包屑＋底部導覽＋safe-area 內距）與 ContentSections 五型別 section renderer（text/list/faq/links/cards），附骨架與渲染測試
+
+- 日期：2026-07-05
+- ID：neutral-rw-e4-design-brief-intake
+- 原因：E4 內部頁重構設計簡報尚未入庫，epic 勾稽缺乏可追溯 SSOT
+- 解法：將 PM 簡報 add -f 進 .claude/prds/ 作為 E4 SSOT（獨立 docs commit）
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-task0-bottomsheet-a11y
