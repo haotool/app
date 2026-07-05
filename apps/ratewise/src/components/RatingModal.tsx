@@ -157,7 +157,7 @@ function RatingModalClient({
                       className="
                         p-1.5 rounded-full flex-shrink-0
                         bg-brand-icon-from/80 text-brand-text
-                        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
+                        hover:text-brand-text-dark hover:bg-brand-icon-from
                         active:scale-[0.95]
                         transition-[color,background-color,transform] duration-200 ease-out
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
@@ -220,11 +220,11 @@ function RatingModalClient({
                       disabled={selectedStar === 0 || isSubmitting}
                       className="
                         px-3 py-1.5 rounded-full text-xs font-medium
-                        bg-gradient-to-r from-brand-button-from to-brand-button-to
-                        text-white shadow-sm
-                        hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-                        hover:scale-[1.02] active:scale-[0.98]
-                        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
+                        bg-primary-strong
+                        text-white
+                        hover:bg-primary-hover
+                        active:scale-[0.98]
+                        disabled:opacity-40 disabled:cursor-not-allowed
                         transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
                       "
@@ -273,7 +273,7 @@ function StarButton({
       onBlur={onLeave}
       className={`
         w-8 h-8 flex items-center justify-center rounded
-        ${prefersReducedMotion ? '' : 'transition-transform duration-100 hover:scale-110 active:scale-95'}
+        ${prefersReducedMotion ? '' : 'transition-transform duration-100 active:scale-95'}
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
       `}
     >

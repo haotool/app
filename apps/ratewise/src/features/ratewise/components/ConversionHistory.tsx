@@ -198,7 +198,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
                   <span className="text-primary">{item.result}</span>
                   <span className="text-primary">{item.to}</span>
                 </div>
-                <span className="text-[10px] text-text-muted opacity-60 block mt-0.5">
+                <span className="text-2xs text-text-muted opacity-60 block mt-0.5">
                   {item.time}
                   {categoryLabel ? ` · ${categoryLabel}` : ''}
                 </span>
@@ -206,7 +206,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
 
               <div className="flex items-center gap-1 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
                 <Copy size={14} />
-                <span className="hidden sm:inline text-[10px]">{t('common.copy')}</span>
+                <span className="hidden sm:inline text-2xs">{t('common.copy')}</span>
               </div>
             </button>
           </div>

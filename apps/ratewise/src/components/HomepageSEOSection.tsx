@@ -28,8 +28,8 @@ export function HomepageSEOSection() {
       aria-labelledby="homepage-seo-heading"
       className="px-5 pt-5 pb-3 max-w-md mx-auto w-full"
     >
-      <div className="rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+      <div className="rounded-card border border-black/5 bg-surface shadow-card p-5">
+        <p className="text-2xs font-black uppercase tracking-[0.18em] text-primary">
           {content.eyebrow}
         </p>
         <h2
@@ -71,7 +71,7 @@ export function HomepageSEOSection() {
       </div>
 
       {/* 熱門幣別換算：內部連結區塊，提升幣對落地頁 PageRank 傳遞。 */}
-      <div className="mt-4 rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">熱門幣別換算</h2>
 
         <p className="mt-1 text-xs text-text-muted">外幣換台幣</p>
@@ -109,13 +109,13 @@ export function HomepageSEOSection() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">{howTo.name}</h2>
         <p className="mt-2 text-sm leading-6 text-text-muted">{howTo.description}</p>
         <ol className="mt-4 space-y-3">
           {howTo.steps.map((step, index) => (
             <li key={step.name} className="flex gap-3 rounded-2xl bg-primary/5 px-4 py-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-white">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-strong text-xs font-black text-white">
                 {step.position ?? index + 1}
               </span>
               <div>
@@ -127,7 +127,7 @@ export function HomepageSEOSection() {
         </ol>
       </div>
 
-      <div className="mt-4 rounded-[28px] border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">首頁常見問題</h2>
         <div className="mt-4 space-y-3">
           {faqContent?.map((entry, index) => (

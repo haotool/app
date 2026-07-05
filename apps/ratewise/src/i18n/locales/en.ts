@@ -85,6 +85,7 @@ const en = {
     rowLabel: '{{code}} amount',
     selectCurrency: 'Select currency',
     pickerTitle: 'Select currency',
+    pickerSearch: 'Search currencies',
     swapCurrencies: 'Swap row currencies',
     rateBasisCash: 'Cash sell',
     rateBasisSpot: 'Spot sell',

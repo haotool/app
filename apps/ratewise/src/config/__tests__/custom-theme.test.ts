@@ -112,9 +112,25 @@ describe('custom 主題演算 AA property 守門（任意輸入色 → 全部文
     const foreground = hexToTriple(choosePrimaryForeground(strongHex));
     expect(contrast(foreground, strong), `${hex} 擇色文字 on strong`).toBeGreaterThanOrEqual(4.5);
 
-    // 非文字圖形色（focus ring / 圖表線）對白底 ≥ 3:1
+    // 非文字圖形色（focus ring / 圖表線 / accent）對白底 ≥ 3:1
     expect(contrast(vars['--color-primary-ring'], WHITE)).toBeGreaterThanOrEqual(3);
     expect(contrast(vars['--color-chart-line'], WHITE)).toBeGreaterThanOrEqual(3);
+    expect(contrast(vars['--color-accent'], WHITE)).toBeGreaterThanOrEqual(3);
+
+    // S2 跟色鍵：白字表面（等號鍵 / 品牌按鈕）全部 ≥ 4.5:1
+    for (const key of [
+      '--color-calc-equals',
+      '--color-calc-equals-hover',
+      '--color-calc-equals-active',
+      '--color-brand-button-from',
+      '--color-brand-button-to',
+      '--color-brand-button-hover-from',
+      '--color-brand-button-hover-to',
+    ] as const) {
+      expect(contrast(WHITE, vars[key]), `${hex} ${key} 白字`).toBeGreaterThanOrEqual(4.5);
+    }
+    // brand-text 為有色文字：對白底 ≥ 4.5:1
+    expect(contrast(vars['--color-brand-text'], WHITE)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
@@ -126,7 +142,7 @@ describe('custom 主題演算行為合約', () => {
     }
   });
 
-  it('演算為純函式：同輸入同輸出且涵蓋全部 14 鍵', () => {
+  it('演算為純函式：同輸入同輸出且涵蓋 CUSTOM_THEME_CSS_VARS 全鍵', () => {
     const first = deriveCustomThemeCssVars('#FF6B6B');
     const second = deriveCustomThemeCssVars('#FF6B6B');
     expect(second).toEqual(first);

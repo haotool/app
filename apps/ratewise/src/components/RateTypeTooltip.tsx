@@ -65,7 +65,7 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
             role="status"
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200"
           >
-            <div className="relative bg-[rgb(var(--color-primary-strong,var(--color-primary)))] text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 backdrop-blur-sm whitespace-nowrap">
+            <div className="relative bg-[rgb(var(--color-primary-strong,var(--color-primary)))] text-white px-4 py-2 rounded-lg shadow-floating border border-white/20 backdrop-blur-sm whitespace-nowrap">
               {/* 訊息內容 */}
               <p className="text-sm font-medium">{message}</p>
 

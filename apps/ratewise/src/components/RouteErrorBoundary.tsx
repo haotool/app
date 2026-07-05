@@ -59,7 +59,7 @@ function ErrorCard({
         </div>
         <button
           onClick={onAction}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl shadow-lg transition"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition active:scale-[0.97]"
         >
           <RefreshCw size={18} />
           {actionLabel}

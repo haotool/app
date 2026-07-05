@@ -112,8 +112,9 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
     await page.getByTestId('converter-v2-sparkline').click();
     await expect(page.getByTestId('converter-v2-trend-sheet')).toBeVisible();
     await page.getByTestId('converter-v2-trend-range-7d').click();
+    // E1：範圍切換改用 SegmentedControl（radiogroup 語意，選中態為 aria-checked）。
     await expect(page.getByTestId('converter-v2-trend-range-7d')).toHaveAttribute(
-      'aria-pressed',
+      'aria-checked',
       'true',
     );
     // 背景 tap 關閉

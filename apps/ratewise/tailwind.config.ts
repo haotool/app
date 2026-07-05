@@ -59,6 +59,8 @@ export default {
         'foreground-muted': 'rgb(var(--color-foreground-muted) / <alpha-value>)',
         border: 'rgb(var(--color-border) / <alpha-value>)',
         'border-secondary': 'rgb(var(--color-border-secondary) / <alpha-value>)',
+        // primary 系列由 semanticColors SSOT（design-tokens/colors.ts）於下方展開時定義，
+        // 含 strong（白字 AA 錨點）；此處僅保留 foreground 補充鍵。
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           hover: 'rgb(var(--color-primary-hover) / <alpha-value>)',

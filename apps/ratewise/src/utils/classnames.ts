@@ -72,10 +72,11 @@ export const tokenClasses = {
    * 品牌主色組合（等號鍵）
    */
   primaryStrong: {
-    base: 'bg-primary text-white',
+    // 白字表面錨定 primary-strong：自訂主色下由 AA clamp 保證對比。
+    base: 'bg-primary-strong text-white',
     hover: 'hover:bg-primary-dark',
     active: 'active:bg-primary-darker',
-    all: 'bg-primary text-white hover:bg-primary-dark active:bg-primary-darker',
+    all: 'bg-primary-strong text-white hover:bg-primary-dark active:bg-primary-darker',
   },
 
   /**

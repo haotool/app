@@ -77,15 +77,11 @@ function InAppBrowserCornerPointer() {
       className="pointer-events-none fixed right-3 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-[60] flex animate-point-up-right items-center gap-1.5"
       aria-hidden="true"
     >
-      <span className="rounded-full bg-[rgb(var(--color-text))]/85 px-2.5 py-1 text-[11px] font-bold text-white shadow-card backdrop-blur">
+      <span className="rounded-full bg-[rgb(var(--color-text))]/85 px-2.5 py-1 text-2xs font-bold text-white shadow-card backdrop-blur">
         右上角 ⋯ 開啟選單
       </span>
       <span className="relative inline-flex h-8 w-8 items-center justify-center">
-        <span
-          className="absolute inset-0 rounded-full bg-primary/40 animate-attention-ring"
-          aria-hidden="true"
-        />
-        <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-card">
+        <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-strong text-white shadow-card">
           <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
         </span>
       </span>
@@ -279,7 +275,7 @@ function PwaInstallGuideClient() {
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                         isPrimaryStep
-                          ? 'animate-pulse-soft bg-primary text-white'
+                          ? 'bg-primary-strong text-white'
                           : 'bg-primary/10 text-primary'
                       }`}
                     >
@@ -288,18 +284,7 @@ function PwaInstallGuideClient() {
                     <span className="min-w-0 flex-1">{step}</span>
                     {StepIcon ? (
                       <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                        {isPrimaryStep ? (
-                          <span
-                            className="absolute inset-0 rounded-full bg-primary/30 animate-attention-ring"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <StepIcon
-                          className={`relative h-4 w-4 text-primary ${
-                            isPrimaryStep ? 'animate-wiggle' : 'animate-pulse-soft'
-                          }`}
-                          aria-hidden="true"
-                        />
+                        <StepIcon className="relative h-4 w-4 text-primary" aria-hidden="true" />
                       </span>
                     ) : null}
                   </li>
@@ -310,7 +295,7 @@ function PwaInstallGuideClient() {
             {canUseNativeInstall ? (
               <button
                 type="button"
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-primary-strong px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 onClick={() => void install()}
               >
                 <Download className="h-4 w-4" aria-hidden="true" />

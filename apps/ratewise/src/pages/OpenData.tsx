@@ -1194,7 +1194,7 @@ const OpenData = () => {
             <p className="mb-3 text-text-muted">不想呼叫 API？直接使用換算介面，免安裝、免帳號。</p>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-strong px-6 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover"
             >
               開啟換算工具
               <svg

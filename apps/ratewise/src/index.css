@@ -158,6 +158,16 @@
   }
 }
 
+/* ========================================
+   E1 動效 Token（SSOT：config/animations.ts motionDurations 同值）
+   全站 duration 收斂三級：fast 150 / base 200 / slow 300。
+   ======================================== */
+:root {
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+}
+
 /**
  * Modern Design System - ParkKeeper Style (SSOT)
  *
@@ -1833,37 +1843,8 @@ body {
     animation: slide-up 0.3s ease-out;
   }
 
-  /* 緩慢脈動 */
-  @keyframes ping-slow {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-  }
-
-  .animate-ping-slow {
-    animation: ping-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  /* 柔和脈動 */
-  @keyframes pulse-soft {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.95;
-    }
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
+  /* E1 動效收斂：ping-slow / pulse-soft / wiggle / attention-ring 四個常駐
+     infinite 動畫已清除（splash 與載入 spinner/骨架 shimmer 豁免）。 */
 
   /* 指向右上角的彈跳指引（內建瀏覽器外開提示） */
   @keyframes point-up-right {
@@ -1880,46 +1861,9 @@ body {
     animation: point-up-right 1.2s ease-in-out infinite;
   }
 
-  /* 擴散注意力光環 */
-  @keyframes attention-ring {
-    0% {
-      transform: scale(0.85);
-      opacity: 0.65;
-    }
-    100% {
-      transform: scale(1.9);
-      opacity: 0;
-    }
-  }
-
-  .animate-attention-ring {
-    animation: attention-ring 1.6s ease-out infinite;
-  }
-
-  /* 圖示左右擺動，強調可點擊 */
-  @keyframes wiggle {
-    0%,
-    100% {
-      transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(-9deg);
-    }
-    75% {
-      transform: rotate(9deg);
-    }
-  }
-
-  .animate-wiggle {
-    animation: wiggle 1.4s ease-in-out infinite;
-  }
-
   /* 尊重使用者的減少動態偏好 */
   @media (prefers-reduced-motion: reduce) {
-    .animate-point-up-right,
-    .animate-attention-ring,
-    .animate-wiggle,
-    .animate-pulse-soft {
+    .animate-point-up-right {
       animation: none;
     }
   }
@@ -1963,10 +1907,10 @@ body {
     -webkit-backdrop-filter: blur(20px);
   }
 
-  /* 現代化卡片 */
+  /* 現代化卡片（圓角對齊 radiusTokens.card = 1.25rem 三級制） */
   .card {
     background-color: rgb(var(--color-surface));
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     border: 1px solid rgb(var(--color-border) / 0.5);
     box-shadow:
       0 1px 2px 0 rgb(0 0 0 / 0.03),
@@ -1991,12 +1935,12 @@ body {
   }
 
   .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgb(var(--color-primary) / 0.3);
+    background-color: rgb(var(--color-primary-hover));
   }
 
+  /* press-scale 0.97：E1 全站統一按壓回饋，主按鈕不加陰影、靠色塊本身。 */
   .btn-primary:active {
-    transform: translateY(0);
+    transform: scale(0.97);
   }
 
   /* 陰影層級（ParkKeeper 風格） */
@@ -2012,8 +1956,9 @@ body {
       0 2px 4px -2px rgb(0 0 0 / 0.05);
   }
 
+  /* E1 陰影二級制：elevation-3 併入中性 raised 值，彩色陰影清零。 */
   .shadow-elevation-3 {
-    box-shadow: 0 8px 25px rgb(var(--color-primary) / 0.4);
+    box-shadow: 0 8px 24px -12px rgb(15 23 42 / 0.14);
   }
 
   /* 選中狀態的 ring */
@@ -2100,7 +2045,7 @@ body {
   /* 骨架屏卡片容器 */
   .skeleton-card {
     background-color: rgb(var(--color-surface));
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     border: 1px solid rgb(var(--color-border) / 0.5);
     box-shadow:
       0 1px 2px 0 rgb(0 0 0 / 0.03),

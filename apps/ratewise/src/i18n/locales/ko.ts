@@ -85,6 +85,7 @@ const ko = {
     rowLabel: '{{code}} 금액',
     selectCurrency: '통화 선택',
     pickerTitle: '통화 선택',
+    pickerSearch: '통화 검색',
     swapCurrencies: '두 통화 맞바꾸기',
     rateBasisCash: '현찰 매도',
     rateBasisSpot: '전신환 매도',

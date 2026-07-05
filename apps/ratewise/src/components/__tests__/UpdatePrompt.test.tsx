@@ -250,9 +250,10 @@ describe('UpdatePrompt - Design token 品牌配色', () => {
     expect(sourceCode).toContain('text-brand-text');
   });
 
-  it('should use brand button gradient', async () => {
+  it('should use flat primary-strong CTA (E1: 按鈕禁漸層、白字 AA 錨點)', async () => {
     const sourceCode = await readSource();
-    expect(sourceCode).toContain('from-brand-button-from to-brand-button-to');
+    expect(sourceCode).toContain('bg-primary-strong');
+    expect(sourceCode).not.toContain('from-brand-button-from');
   });
 
   it('should NOT use hardcoded blue/indigo/purple colors', async () => {

@@ -107,7 +107,7 @@ function Header() {
           <span data-testid="app-title" className="flex flex-col justify-center">
             <BrandWordmark className="text-lg leading-none text-[rgb(var(--color-text))]" />
             <span
-              className={`text-[9px] leading-none font-bold mt-1 text-[rgb(var(--color-text-muted))] ${
+              className={`text-2xs leading-none font-bold mt-1 text-[rgb(var(--color-text-muted))] ${
                 isZhTW ? 'brand-subtitle' : 'tracking-[0.12em]'
               }`}
             >

@@ -124,7 +124,7 @@ const Guide = () => {
                   className="card scroll-mt-4 p-6 transition-shadow hover:shadow-md"
                 >
                   <div className="flex items-start">
-                    <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">
+                    <div className="mr-4 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-strong text-lg font-bold text-white">
                       {step.position}
                     </div>
                     <div className="flex-1">
@@ -224,7 +224,7 @@ const Guide = () => {
               <div className="text-center">
                 <Link
                   to="/"
-                  className="inline-flex items-center rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition-colors hover:bg-primary/90 hover:shadow-lg"
+                  className="inline-flex items-center rounded-lg bg-primary-strong px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-hover"
                 >
                   開始使用 {APP_INFO.shortName}
                   <svg

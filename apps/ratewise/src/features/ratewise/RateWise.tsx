@@ -276,7 +276,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 ) : (
                   <div
                     key="bank-badge"
-                    className="inline-flex items-center gap-2 text-[10px] text-text-muted/60"
+                    className="inline-flex items-center gap-2 text-2xs text-text-muted/60"
                   >
                     <a
                       href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
@@ -293,7 +293,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 )}
               </AnimatePresence>
             ) : (
-              <span className="invisible block text-[10px]" aria-hidden="true">
+              <span className="invisible block text-2xs" aria-hidden="true">
                 &#8203;
               </span>
             )}

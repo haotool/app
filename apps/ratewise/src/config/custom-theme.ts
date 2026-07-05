@@ -3,7 +3,8 @@
  *
  * @description 由單一使用者主色（#RRGGBB）導出整組 primary 系列 CSS 變數。
  *              底座＝zen 白底韓系骨架（background/surface/text 不變），
- *              只演算「主色相關」14 鍵：primary、primaryStrong、legacy 9 鍵、圖表 3 色。
+ *              演算「主色相關」鍵集合：primary、primaryStrong、legacy 9 鍵、圖表 3 色，
+ *              以及 wave-B 跟色鍵（secondary/accent/等號鍵/品牌按鈕/頁面漸層 via）。
  *              演算內建 WCAG AA clamp：極淺/極豔輸入色自動加深 strong 與文字配色至對比達標。
  *
  * @architecture 依 .claude/prds/ratewise-e2-custom-theme-design.md 架構裁決：
@@ -50,6 +51,18 @@ export const CUSTOM_THEME_CSS_VARS = [
   '--color-chart-line',
   '--color-chart-area-top',
   '--color-chart-area-bottom',
+  // E2 wave-B（S2）：非演算鍵跟色——等號鍵/輔色/品牌按鈕/頁面漸層不再停留 zen 藍。
+  '--color-secondary',
+  '--color-accent',
+  '--color-calc-equals',
+  '--color-calc-equals-hover',
+  '--color-calc-equals-active',
+  '--color-brand-button-from',
+  '--color-brand-button-to',
+  '--color-brand-button-hover-from',
+  '--color-brand-button-hover-to',
+  '--color-brand-text',
+  '--color-page-gradient-via',
 ] as const;
 
 export type CustomThemeCssVar = (typeof CUSTOM_THEME_CSS_VARS)[number];
@@ -245,5 +258,17 @@ export function deriveCustomThemeCssVars(primaryHex: string): CustomThemeCssVarM
     '--color-chart-line': rgbToTriple(vivid),
     '--color-chart-area-top': rgbToTriple(vivid),
     '--color-chart-area-bottom': rgbToTriple(vivid),
+    // S2 跟色：輔色/圖形色沿用非文字 vivid（≥3:1），白字表面沿用 AA 錨點階序。
+    '--color-secondary': rgbToTriple(dark),
+    '--color-accent': rgbToTriple(vivid),
+    '--color-calc-equals': rgbToTriple(strong),
+    '--color-calc-equals-hover': rgbToTriple(dark),
+    '--color-calc-equals-active': rgbToTriple(darker),
+    '--color-brand-button-from': rgbToTriple(strong),
+    '--color-brand-button-to': rgbToTriple(strong),
+    '--color-brand-button-hover-from': rgbToTriple(dark),
+    '--color-brand-button-hover-to': rgbToTriple(dark),
+    '--color-brand-text': rgbToTriple(text),
+    '--color-page-gradient-via': rgbToTriple(light),
   };
 }

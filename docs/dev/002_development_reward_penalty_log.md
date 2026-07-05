@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+117
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e1-primary-strong-utility-not-generated
+- 原因：bg-primary-strong 只加在 tailwind.config 的 primary 物件，但該鍵隨後被 semanticColors SSOT 展開覆蓋，utility 未生成導致選中 pill 白字透明底（截圖矩陣抓出）
+- 解法：strong 改定義於 semanticColors SSOT（design-tokens/colors.ts），格式對齊 theme-consistency 合約（無 fallback，parity 守門保證全主題有鍵），重建驗證 dist CSS 產出 .bg-primary-strong 並重跑截圖矩陣
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-static-lint-guards
+- 原因：token 收斂後缺乏防回退機制，後續 PR 可能重新引入小字、按鈕漸層、任意圓角、彩色陰影與 hover-scale 造成漂移
+- 解法：新增 design-system-guards 靜態掃描測試（禁 <12px、button 禁 bg-gradient、圓角/陰影白名單、hover-scale 與 infinite 動畫清零、token 實值收斂斷言），並以注入違規探針的突變驗證證明 7 條規則翻紅（移除後全綠）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-consumer-migration
+- 原因：token 與 primitive 已就緒，但消費端仍散布 8-11px 字、hover-scale、按鈕漸層、白字 bg-primary 與各自實作的 sheet/chip，設計語言尚未落地
+- 解法：E3 兩 sheet 收斂至 BottomSheet/CurrencyPicker（testid 相容）、multi chip 改 SegmentedControl radiogroup、全站 8-11px 升 text-2xs、hover-scale 清零、CTA/chip 去漸層並錨定 primary-strong、shadow-2xl 收斂 token（僅留一則設計契約測試同步更新）
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-primitives
+- 原因：E3 兩個 bottom sheet 各自實作殼層、multi 費率切換僅有過渡 chip（無 radiogroup 語意）、選幣 sheet 無法跨場景重用，元件層缺 SSOT
+- 解法：新增 BottomSheet（拖曳關閉/backdrop/safe-area/fixed+adaptive）、SegmentedControl（radiogroup＋roving tabindex＋44px 熱區）、CurrencyPicker（搜尋/常用置頂/旗幟）三個 primitive 並各附 API 測試
+
+- 日期：2026-07-05
+- ID：reward-rw-e1-token-convergence
+- 原因：圓角 5 級混用、彩色重陰影、<12px 字散布、hover-scale 與 4 個 infinite 動畫造成視覺語言漂移；custom 主題非演算鍵（等號鍵/品牌按鈕）停留 zen 藍且白字表面未錨定 AA
+- 解法：radius 收斂三級（20/16/12px 別名全映射）、陰影收斂中性兩級、2xs 升 12px 為字階下限、動效收斂 press-scale/slide/count-up 並清 infinite 與 hover-scale、按鈕 SSOT 白字錨定 primary-strong、custom 演算鍵擴充跟色（S1/S2 同批）並強化 AA property 守門
+
+- 日期：2026-07-05
+- ID：neutral-rw-e1-design-brief-roadmap-sync
+- 原因：E1 設計簡報（韓系設計系統收斂 SSOT）尚未入庫，ROADMAP 亦未反映 H1-H6/E2/E3 已完成狀態，epic 勾稽缺乏可追溯依據
+- 解法：將 PM 簡報 add -f 進 .claude/prds/ 作為 E1 SSOT，ROADMAP 補狀態欄（H1-H6/E2/E3 → DONE、E1 → IN PROGRESS）
 
 - 日期：2026-07-05
 - ID：neutral-rw-main-hotfix-sync-into-experiment

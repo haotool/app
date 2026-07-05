@@ -40,11 +40,11 @@ export const buttonTokens = {
 
   /** 顏色變體 */
   variants: {
-    /** 主要按鈕 - 高視覺權重 */
+    /** 主要按鈕 - 高視覺權重（白字表面錨定 primary-strong 保 AA；E1 無 hover 位移/陰影） */
     primary: {
-      default: 'bg-primary text-white',
-      hover: 'hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      default: 'bg-primary-strong text-white',
+      hover: 'hover:bg-primary-hover',
+      active: 'active:scale-[0.97]',
     },
     /** 次要按鈕 - 中視覺權重 */
     secondary: {
@@ -58,24 +58,24 @@ export const buttonTokens = {
       hover: 'hover:bg-surface-elevated hover:text-primary',
       active: 'active:bg-surface-sunken',
     },
-    /** 危險按鈕 - 警示操作 */
+    /** 危險按鈕 - 警示操作（E1 無 hover 位移/陰影） */
     danger: {
       default: 'bg-destructive text-white',
-      hover: 'hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5',
-      active: 'active:translate-y-0 active:shadow-md',
+      hover: 'hover:bg-destructive-hover',
+      active: 'active:scale-[0.97]',
     },
   },
 
   /** 完整類別組合 - 直接複製使用 */
   patterns: {
     primaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary text-white hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary-strong text-white hover:bg-primary-hover active:scale-[0.97]',
     secondaryMd:
       'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
     ghostMd:
       'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
     dangerMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-white hover:bg-destructive-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md',
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-white hover:bg-destructive-hover active:scale-[0.97]',
   },
 } as const;
 
@@ -113,8 +113,8 @@ export const notificationTokens = {
   padding: 'px-6 py-3.5',
   /** 圓角（與 card / button 統一） */
   borderRadius: 'rounded-2xl',
-  /** 陰影（統一 shadow-card token） */
-  shadow: 'shadow-card shadow-brand-shadow/20',
+  /** 陰影（統一 shadow-card token；E1 彩色陰影清零） */
+  shadow: 'shadow-card',
 
   /** 背景漸變（統一品牌風格） */
   background: {

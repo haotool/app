@@ -16,6 +16,24 @@
 import type { Transition, Variants } from 'motion/react';
 
 /**
+ * E1 動效 Token（SSOT，與 index.css --duration-* 同值）
+ *
+ * 全站動效收斂三類：press-scale(0.97)、頁面 slide 轉場、數字 count-up。
+ * 常駐 infinite 動畫與 hover-scale 已清零（splash 脈動與載入 spinner 豁免）。
+ */
+export const motionDurations = {
+  /** 150ms - 按壓回饋 */
+  fast: 150,
+  /** 200ms - UI 狀態變化 */
+  base: 200,
+  /** 300ms - 頁面/面板轉場 */
+  slow: 300,
+} as const;
+
+/** 全站統一按壓縮放比例 */
+export const PRESS_SCALE = 0.97;
+
+/**
  * 基礎動畫過渡配置
  */
 export const transitions = {
@@ -42,21 +60,21 @@ export const transitions = {
 } as const;
 
 /**
- * 按鈕微互動動畫變體
+ * 按鈕微互動動畫變體（E1：hover 不縮放，僅保留 press-scale）
  */
 export const buttonVariants: Variants = {
   idle: { scale: 1 },
-  hover: { scale: 1.02 },
-  tap: { scale: 0.98 },
+  hover: { scale: 1 },
+  tap: { scale: PRESS_SCALE },
   disabled: { opacity: 0.5, scale: 1 },
 };
 
 /**
- * 卡片懸停動畫變體
+ * 卡片動畫變體（E1：hover 不縮放不位移，抬升交給 surface 層差）
  */
 export const cardVariants: Variants = {
   idle: { scale: 1, y: 0 },
-  hover: { scale: 1.01, y: -2 },
+  hover: { scale: 1, y: 0 },
   tap: { scale: 0.99, y: 0 },
 };
 
@@ -113,10 +131,10 @@ export const staggerItemVariants: Variants = {
  *
  * 與標準 buttonVariants 不同：
  * - tap 放大到 1.1（強調觸覺回饋，iOS Calculator 風格）
- * - hover 與 buttonVariants 一致（1.02）
+ * - hover 不縮放（E1 hover-scale 清零）
  */
 export const calculatorKeyVariants = {
-  hover: { scale: 1.02 },
+  hover: { scale: 1 },
   tap: { scale: 1.1 },
 } as const;
 
@@ -155,14 +173,14 @@ export const segmentedSwitch = {
   /** 未選中項目透明度 */
   inactiveOpacity: 0.6,
 
-  /** 切換按鈕的 hover/tap 微互動 */
+  /** 切換按鈕的微互動（E1：hover 不縮放，僅 press-scale） */
   item: {
-    whileHover: { scale: 1.02 },
-    whileTap: { scale: 0.98 },
+    whileHover: { scale: 1 },
+    whileTap: { scale: PRESS_SCALE },
   },
 
-  /** 容器樣式 token（保持視覺一致） */
-  containerClass: 'bg-surface-soft rounded-[20px] p-1.5 flex gap-1 relative shadow-inner',
+  /** 容器樣式 token（rounded-card = 20px 三級制容器圓角） */
+  containerClass: 'bg-surface-soft rounded-card p-1.5 flex gap-1 relative shadow-inner',
   indicatorClass: 'absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]',
   itemBaseClass: 'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
 } as const;
@@ -265,24 +283,23 @@ export const notificationAnimations = {
  * 用於不需要 Motion 的簡單效果
  */
 export const microInteractionClasses = {
-  /** 按鈕基礎互動 */
-  button: 'transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]',
+  /** 按鈕基礎互動（E1：press-scale 0.97，無 hover 縮放） */
+  button: 'transition-all duration-200 ease-out active:scale-[0.97]',
 
-  /** 按鈕帶陰影 */
-  buttonWithShadow:
-    'transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]',
+  /** 按鈕帶陰影（E1：陰影不隨 hover 變化） */
+  buttonWithShadow: 'transition-all duration-200 ease-out active:scale-[0.97]',
 
-  /** 卡片懸停效果 */
-  card: 'transition-all duration-200 ease-out hover:scale-[1.01] hover:-translate-y-0.5 hover:shadow-lg',
+  /** 卡片互動（E1：不縮放不位移，僅色彩/陰影過渡） */
+  card: 'transition-shadow duration-200 ease-out',
 
   /** 連結懸停效果 */
   link: 'transition-colors duration-200 ease-out hover:text-primary',
 
-  /** 圖標旋轉效果 */
-  iconRotate: 'transition-transform duration-200 ease-out hover:rotate-12',
+  /** 圖標過渡（E1：移除 hover 旋轉） */
+  iconRotate: 'transition-transform duration-200 ease-out',
 
-  /** 圖標縮放效果 */
-  iconScale: 'transition-transform duration-200 ease-out hover:scale-110 active:scale-95',
+  /** 圖標按壓效果（E1：移除 hover 縮放） */
+  iconScale: 'transition-transform duration-200 ease-out active:scale-95',
 
   /** 透明度過渡 */
   opacity: 'transition-opacity duration-200 ease-out',

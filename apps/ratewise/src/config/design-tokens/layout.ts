@@ -46,13 +46,13 @@ export const navigationTokens = {
       activeStrokeWidth: 2.5,
       inactiveStrokeWidth: 2,
     },
-    /** Label typography */
+    /** Label typography（E1 字階下限 12px：原 8px 升級為 text-2xs） */
     label: {
-      fontSize: 8,
-      fontSizeClass: 'text-[8px]',
+      fontSize: 12,
+      fontSizeClass: 'text-2xs',
       fontWeight: 'font-black',
-      letterSpacing: '0.15em',
-      letterSpacingClass: 'tracking-[0.15em]',
+      letterSpacing: '0.1em',
+      letterSpacingClass: 'tracking-[0.1em]',
     },
     /** Active indicator bar */
     indicator: {
@@ -245,9 +245,9 @@ export const multiConverterLayoutTokens = {
   info: {
     wrapper: 'mt-4 flex-shrink-0',
     titleRow: 'flex items-center gap-2 px-2 opacity-40 mb-3',
-    titleText: 'text-[10px] font-black uppercase tracking-[0.2em]',
+    titleText: 'text-2xs font-black uppercase tracking-[0.2em]',
     card: 'card p-4',
-    text: 'text-[10px] text-center opacity-60 font-medium',
+    text: 'text-2xs text-center opacity-60 font-medium',
   },
 } as const;
 
@@ -312,9 +312,9 @@ export const singleConverterLayoutTokens = {
     rateTypeContainer:
       'absolute top-3 left-1/2 -translate-x-1/2 compact:top-2.5 short:top-2 tiny:top-2 micro:top-1.5 nano:top-1.5',
 
-    /** 匯率類型按鈕尺寸 */
+    /** 匯率類型按鈕尺寸（E1 字階下限 12px：各斷點統一 text-2xs，僅縮內距） */
     rateTypeButton:
-      'px-2 py-0.5 text-[11px] compact:px-1.5 compact:py-0.5 compact:text-[10px] short:px-1.5 short:py-0.5 short:text-[10px] tiny:px-1 tiny:py-0.5 tiny:text-[9px] micro:px-1 micro:py-0.5 micro:text-[9px] nano:px-1 nano:py-0.5 nano:text-[9px]',
+      'px-2 py-0.5 text-2xs compact:px-1.5 compact:py-0.5 short:px-1.5 short:py-0.5 tiny:px-1 tiny:py-0.5 micro:px-1 micro:py-0.5 nano:px-1 nano:py-0.5',
 
     /** 匯率類型圖示 - nano 隱藏 */
     rateTypeIcon:
@@ -323,8 +323,8 @@ export const singleConverterLayoutTokens = {
     /** 主要匯率文字 */
     rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-sm nano:text-sm',
 
-    /** 次要匯率文字 */
-    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-[10px] nano:text-[10px]',
+    /** 次要匯率文字（E1 字階下限 12px） */
+    rateSubText: 'text-sm short:text-xs tiny:text-xs micro:text-2xs nano:text-2xs',
 
     /** 匯率文字區塊最小高度（含計價基準 pill 槽位，避免 async 載入位移） */
     rateTextBlock:
@@ -346,7 +346,7 @@ export const singleConverterLayoutTokens = {
 
     /** 換錢所來源 badge 容器（換錢所選中時顯示） */
     exchangeShopBadge:
-      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] font-medium leading-tight text-text-muted/60',
+      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted/60',
 
     /** 換錢所 badge 圖示 */
     exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary/70',
@@ -440,13 +440,10 @@ export const quickAmountButtonTokens = {
       text: 'text-primary',
     },
   },
-  /** 微互動效果 */
+  /** 微互動效果（E1：hover 縮放/陰影清零，僅保留 press-scale 0.97） */
   interactions: {
     transition: 'transition-all duration-200 ease-out',
-    hoverScale: 'hover:scale-[1.03]',
     activeScale: 'active:scale-[0.97]',
-    hoverShadow: 'hover:shadow-md',
-    activeShadow: 'active:shadow-sm',
   },
   /** 觸覺回饋時長 (毫秒) */
   hapticDuration: 30,

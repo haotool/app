@@ -296,10 +296,10 @@ interface ActionButtonsProps {
 /** CTA 按鈕共用樣式（更新／重試） */
 const CTA_CLASS = `
   px-3 py-1.5 rounded-full text-xs font-medium
-  bg-gradient-to-r from-brand-button-from to-brand-button-to
-  text-white shadow-sm
-  hover:from-brand-button-hover-from hover:to-brand-button-hover-to
-  hover:scale-[1.02] active:scale-[0.98]
+  bg-primary-strong
+  text-white
+  hover:bg-primary-hover
+  active:scale-[0.98]
   transition-[color,background-color,border-color,transform] duration-200 ease-out
   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
 `;
@@ -339,7 +339,7 @@ function ActionButtons({
       className="
         p-1.5 rounded-full
         bg-brand-icon-from/80 text-brand-text
-        hover:text-brand-text-dark hover:bg-brand-icon-from hover:scale-[1.05]
+        hover:text-brand-text-dark hover:bg-brand-icon-from
         active:scale-[0.95]
         transition-[color,background-color,transform] duration-200 ease-out
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1

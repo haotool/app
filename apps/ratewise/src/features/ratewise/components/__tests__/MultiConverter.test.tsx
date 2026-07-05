@@ -30,6 +30,7 @@ const translations: Record<string, string> = {
   'multiConverter.switchToNextRate': '切換到{{next}}',
   'multiConverter.onlyOneRateAvailable': '此幣別僅有一種匯率可用',
   'singleConverter.exchangeShopRate': '換錢所',
+  'singleConverter.rateTypeGroup': '匯率類型',
 };
 
 vi.mock('react-i18next', () => ({
@@ -174,12 +175,14 @@ describe('MultiConverter', () => {
   });
 
   describe('匯率類型切換', () => {
-    it('點擊匯率類型按鈕應該呼叫 onRateTypeChange 或 onRateSourceChange', () => {
+    it('點擊未選中的匯率類型選項應該呼叫 onRateTypeChange 或 onRateSourceChange', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const rateToggleButtons = screen.getAllByRole('button', { name: /切換到/ });
-      expect(rateToggleButtons.length).toBeGreaterThan(0);
-      fireEvent.click(rateToggleButtons[0]!);
+      const radios = screen.getAllByRole('radio');
+      expect(radios.length).toBeGreaterThan(0);
+      const unchecked = radios.find((radio) => radio.getAttribute('aria-checked') === 'false');
+      expect(unchecked).toBeTruthy();
+      fireEvent.click(unchecked!);
       const called =
         defaultProps.onRateTypeChange.mock.calls.length > 0 ||
         defaultProps.onRateSourceChange!.mock.calls.length > 0;
@@ -374,9 +377,10 @@ describe('MultiConverter', () => {
       const twdRate = screen.getByText(/1 KRW = 0\.0222 TWD/);
       const twdRow = twdRate.closest('div[class*="rounded-xl"]');
       expect(twdRow).toBeTruthy();
-      expect(
-        within(twdRow as HTMLElement).getByRole('button', { name: /切換到/ }),
-      ).toHaveTextContent('換錢所');
+      const checkedOption = within(twdRow as HTMLElement)
+        .getAllByRole('radio')
+        .find((radio) => radio.getAttribute('aria-checked') === 'true');
+      expect(checkedOption).toHaveTextContent('換錢所');
     });
 
     it('現金不可用但即期可用時，匯率標籤應顯示實際使用的即期', () => {
@@ -469,17 +473,25 @@ describe('MultiConverter', () => {
       ).toBeInTheDocument();
     });
 
-    it('匯率類型切換按鈕應有 ≥44px 觸控目標、chip 選中態且不帶 aria-pressed', () => {
+    it('匯率類型切換為 radiogroup 語意，選項有 ≥44px 觸控熱區與平色選中態', () => {
       render(<MultiConverter {...defaultProps} />);
 
-      const toggles = screen.getAllByRole('button', { name: /切換到/ });
-      expect(toggles.length).toBeGreaterThan(0);
-      for (const toggle of toggles) {
-        expect(toggle).toHaveClass('min-h-11', 'min-w-11');
-        // cycle button（循環切換到下一選項）非 on/off toggle，不得帶 aria-pressed；動作語意由 aria-label 表達。
-        expect(toggle).not.toHaveAttribute('aria-pressed');
-        expect(toggle).toHaveAttribute('type', 'button');
-        expect(toggle.querySelector('span')).toHaveClass('bg-primary/10', 'rounded-full');
+      const groups = screen.getAllByRole('radiogroup', { name: /匯率類型/ });
+      expect(groups.length).toBeGreaterThan(0);
+
+      const radios = screen.getAllByRole('radio');
+      expect(radios.length).toBeGreaterThan(0);
+      for (const radio of radios) {
+        expect(radio).toHaveClass('min-h-11', 'min-w-11');
+        expect(radio).toHaveAttribute('type', 'button');
+        expect(radio).toHaveAttribute('aria-checked');
+        // 選中面為 primary-strong 平色（AA 錨點），未選中為 primary/10 淡底；禁止漸層。
+        const pill = radio.querySelector('span');
+        expect(pill?.className).toContain('rounded-full');
+        expect(pill?.className).not.toContain('bg-gradient');
+        if (radio.getAttribute('aria-checked') === 'true') {
+          expect(pill?.className).toContain('bg-primary-strong');
+        }
       }
     });
   });

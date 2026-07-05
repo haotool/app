@@ -85,6 +85,7 @@ const zhTW = {
     rowLabel: '{{code}} 金額',
     selectCurrency: '選擇幣別',
     pickerTitle: '選擇幣別',
+    pickerSearch: '搜尋幣別',
     swapCurrencies: '交換兩列幣別',
     rateBasisCash: '現金賣出',
     rateBasisSpot: '即期賣出',

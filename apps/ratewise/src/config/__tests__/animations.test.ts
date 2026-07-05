@@ -49,15 +49,15 @@ describe('animations', () => {
   });
 
   describe('variants', () => {
-    it('should define button variants with scale effects', () => {
+    it('should define button variants with press-only scale (E1)', () => {
       expect(buttonVariants['idle']).toEqual({ scale: 1 });
-      expect(buttonVariants['hover']).toEqual({ scale: 1.02 });
-      expect(buttonVariants['tap']).toEqual({ scale: 0.98 });
+      expect(buttonVariants['hover']).toEqual({ scale: 1 });
+      expect(buttonVariants['tap']).toEqual({ scale: 0.97 });
     });
 
-    it('should define card variants with elevation effects', () => {
+    it('should define card variants without hover lift (E1)', () => {
       expect(cardVariants['idle']).toEqual({ scale: 1, y: 0 });
-      expect(cardVariants['hover']).toEqual({ scale: 1.01, y: -2 });
+      expect(cardVariants['hover']).toEqual({ scale: 1, y: 0 });
     });
 
     it('should define fade in variants', () => {
@@ -94,13 +94,13 @@ describe('animations', () => {
       expect(segmentedSwitch.inactiveOpacity).toBe(0.6);
     });
 
-    it('should define hover and tap micro-interactions', () => {
-      expect(segmentedSwitch.item.whileHover).toEqual({ scale: 1.02 });
-      expect(segmentedSwitch.item.whileTap).toEqual({ scale: 0.98 });
+    it('should define press-only micro-interactions (E1: no hover scale)', () => {
+      expect(segmentedSwitch.item.whileHover).toEqual({ scale: 1 });
+      expect(segmentedSwitch.item.whileTap).toEqual({ scale: 0.97 });
     });
 
     it('should define consistent container and indicator classes', () => {
-      expect(segmentedSwitch.containerClass).toContain('rounded-[20px]');
+      expect(segmentedSwitch.containerClass).toContain('rounded-card');
       expect(segmentedSwitch.indicatorClass).toContain('rounded-2xl');
       expect(segmentedSwitch.itemBaseClass).toContain('flex-1');
     });
@@ -147,8 +147,8 @@ describe('animations', () => {
       expect(calculatorKeyVariants.tap).toEqual({ scale: 1.1 });
     });
 
-    it('should use standard hover from buttonVariants', () => {
-      expect(calculatorKeyVariants.hover).toEqual({ scale: 1.02 });
+    it('should not scale on hover (E1)', () => {
+      expect(calculatorKeyVariants.hover).toEqual({ scale: 1 });
     });
   });
 
@@ -170,13 +170,14 @@ describe('animations', () => {
   });
 
   describe('microInteractionClasses', () => {
-    it('should have button interaction classes', () => {
-      expect(microInteractionClasses.button).toContain('hover:scale');
-      expect(microInteractionClasses.button).toContain('active:scale');
+    it('should have press-only button interaction classes (E1: no hover scale)', () => {
+      expect(microInteractionClasses.button).not.toContain('hover:scale');
+      expect(microInteractionClasses.button).toContain('active:scale-[0.97]');
     });
 
-    it('should have card interaction classes', () => {
-      expect(microInteractionClasses.card).toContain('hover:shadow');
+    it('should have card interaction classes without hover lift (E1)', () => {
+      expect(microInteractionClasses.card).not.toContain('hover:scale');
+      expect(microInteractionClasses.card).not.toContain('-translate-y');
     });
 
     it('should have link interaction classes', () => {

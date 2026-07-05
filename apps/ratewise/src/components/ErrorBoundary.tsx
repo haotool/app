@@ -89,7 +89,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Default fallback UI
       return (
         <div className="min-h-screen bg-gradient-to-br from-danger-bg to-warning-light flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl shadow-2xl p-8 max-w-md w-full">
+          <div className="bg-surface rounded-2xl shadow-floating p-8 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="text-destructive" size={32} />
               <h1 className="text-2xl font-bold text-text">{i18n.t('errors.crashTitle')}</h1>
@@ -117,7 +117,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
             <button
               onClick={this.handleReset}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition active:scale-[0.97]"
             >
               <RefreshCw size={18} />
               {i18n.t('errors.reload')}

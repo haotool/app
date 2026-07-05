@@ -247,7 +247,7 @@ export function CurrencyLandingPage({
                   <span>換算結果（台銀現金賣出參考）</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-wrap mb-1">
-                  <span className="text-[10px] text-text-muted">
+                  <span className="text-2xs text-text-muted">
                     {isTwdToForeign
                       ? `${formatNum(amount)} TWD`
                       : `${formatNum(amount)} ${currencyCode}`}
@@ -259,14 +259,14 @@ export function CurrencyLandingPage({
                       : `${formatNum(amountResult)} TWD`}
                   </span>
                 </div>
-                <p className="text-[10px] text-text-muted mb-4">
+                <p className="text-2xs text-text-muted mb-4">
                   {isTwdToForeign
                     ? `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`
                     : `參考台銀現金賣出 1 ${currencyCode} = ${cashSell} TWD（每日更新）。實際匯率以台銀牌告為準。`}
                 </p>
                 <Link
                   to={converterHref}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-strong text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors"
                 >
                   在換算器查看最新匯率
                   <ArrowLeft className="w-4 h-4 rotate-180" />
@@ -317,7 +317,7 @@ export function CurrencyLandingPage({
           </section>
 
           {/* Quick Action Card */}
-          <div className="card p-4 sm:p-5 mb-6 bg-primary text-white">
+          <div className="card p-4 sm:p-5 mb-6 bg-primary-strong text-white">
             <div className="flex items-center gap-2 mb-3 opacity-80">
               <Sparkles className="w-4 h-4" />
               <h2 className="text-xs font-black uppercase tracking-wider">立即換算</h2>
@@ -339,7 +339,7 @@ export function CurrencyLandingPage({
           <section className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
               <BookOpen className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
+              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">
                 {currencyName}匯率重點
               </h2>
             </div>
@@ -367,7 +367,7 @@ export function CurrencyLandingPage({
           <section className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">使用步驟</h2>
+              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">使用步驟</h2>
             </div>
 
             <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
@@ -376,7 +376,7 @@ export function CurrencyLandingPage({
                   key={step.position}
                   className="card p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
                 >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-strong text-white flex items-center justify-center font-bold text-lg sm:text-xl flex-shrink-0">
                     {step.position}
                   </div>
                   <div className="flex-1 min-w-0 pt-1">
@@ -395,7 +395,7 @@ export function CurrencyLandingPage({
             <section className="mb-6 sm:mb-8">
               <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
                 <Calculator className="w-3.5 h-3.5" />
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">常見金額換算</h2>
+                <h2 className="text-2xs font-black uppercase tracking-[0.2em]">常見金額換算</h2>
               </div>
 
               <div className="card p-4 sm:p-5">
@@ -445,7 +445,7 @@ export function CurrencyLandingPage({
             <section className="mb-6 sm:mb-8" data-testid="provider-comparison-card">
               <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
                 <span className="text-xs">💱</span>
-                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">換匯管道比較</h2>
+                <h2 className="text-2xs font-black uppercase tracking-[0.2em]">換匯管道比較</h2>
               </div>
               <div className="card p-4 sm:p-5">
                 <h3 className="font-bold text-text text-sm sm:text-base mb-3">
@@ -498,14 +498,14 @@ export function CurrencyLandingPage({
                             {exampleAmount.toLocaleString()} KRW
                           </div>
                         )}
-                        <div className="text-[10px] text-text-muted mt-2">
+                        <div className="text-2xs text-text-muted mt-2">
                           {provider.source} · {provider.rateDate}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-text-muted leading-relaxed">
+                <p className="text-2xs text-text-muted leading-relaxed">
                   {isTwdToForeign
                     ? alternativeProviders[0]?.note
                     : `${alternativeProviders[0]?.name ?? '明洞換匯所'}亦提供韓元換台幣服務，現場持韓元現鈔可直接兌換。買入估算匯率，實際以換匯所現場報價為準。`}
@@ -518,7 +518,7 @@ export function CurrencyLandingPage({
           <section className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
               <HelpCircle className="w-3.5 h-3.5" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">{faqTitle}</h2>
+              <h2 className="text-2xs font-black uppercase tracking-[0.2em]">{faqTitle}</h2>
             </div>
 
             <div className="space-y-3 md:max-w-3xl md:mx-auto">
