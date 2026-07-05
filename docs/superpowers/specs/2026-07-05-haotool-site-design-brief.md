@@ -57,14 +57,15 @@
 
 原則：**動效是回饋，不是表演**。全部 transform/opacity；`prefers-reduced-motion` 時僅保留 opacity。
 
-| Token            | 值                              | 用途                              |
-| ---------------- | ------------------------------- | --------------------------------- |
-| `ease-out-quart` | `cubic-bezier(0.16, 1, 0.3, 1)` | 全站標準 easing                   |
-| `dur-tap`        | 120ms                           | 按下回饋（scale 0.97）            |
-| `dur-hover`      | 200ms                           | hover 色彩/邊框                   |
-| `dur-reveal`     | 480ms                           | 進場（opacity + translateY 16px） |
-| `stagger`        | 70ms（同組最多 6 個）           | 卡片/清單序列進場                 |
-| `dur-count`      | 1200ms                          | 統計數字 count-up（單次）         |
+| Token                         | 值                              | 用途                                                                                  |
+| ----------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
+| `ease-out-quart`              | `cubic-bezier(0.16, 1, 0.3, 1)` | 全站唯一 bezier（非 spring 過渡；M6）                                                 |
+| `ease-spring-tap/reveal/hero` | 三檔 `linear()` spring          | spring 回饋唯一來源（按壓回彈／滾輪與指示器／開場；M6，參數見 motion-deep-dive §1.1） |
+| `dur-tap`                     | 120ms                           | 按下回饋（scale 0.97；釋放 320ms spring-tap 回彈，S5-a）                              |
+| `dur-hover`                   | 200ms                           | hover 色彩/邊框                                                                       |
+| `dur-reveal`                  | 480ms                           | 進場（opacity + translateY 16px）                                                     |
+| `stagger`                     | 70ms（同組最多 6 個）           | 卡片/清單序列進場                                                                     |
+| `dur-odometer`                | 900ms（＋digit stagger 60ms）   | 統計 odometer 滾輪（單次；M8 取代 count-up 與 `dur-count`）                           |
 
 編排（choreography）：
 
@@ -72,7 +73,7 @@
 2. **hero 舞台**：右側工具卡疊層以 CSS `transform: translateY` 慢速浮動（8s 循環、位移 ≤8px）；desktop 加指標視差 ±6px（`pointermove`，rAF 節流）；**行動版首屏預設純文字 hero**（舞台不進首屏或僅 1 張延遲載入靜態卡）。舞台圖受 PRD §10.2 資產預算硬約束：全部 lazy + `fetchpriority="low"`、AVIF 單張 ≤60KB、總重 ≤200KB、LCP 必須是 H1 文字。
 3. **滾動進場**：每區標題先進、內容 stagger 跟進；同視口只允許一組動畫進行。
 4. **微互動**：ToolCard hover＝border 轉品牌藍 + 箭頭右移 4px（無位移縮放）；按鈕 active scale 0.97；FAQ 展開 240ms grid-rows。
-5. **技術選型**：CSS transition/animation 優先；`motion/react`（framer-motion 12 後繼）僅用於 inView stagger 與 count-up。禁止滾動劫持、禁止 parallax 背景圖。
+5. **技術選型**：CSS transition/animation（含 `linear()` spring）優先；`motion/react`（framer-motion 12 後繼）僅用於 inView stagger 與 inView 觸發偵測。easing 收斂為「唯一 bezier ＋ 三檔 spring token」（M6），不開放隨意曲線。禁止滾動劫持、禁止 parallax 背景圖。
 
 ## 3. 頁面編排與文案（PM 定稿草案，designer 深化）
 
@@ -82,7 +83,7 @@
 | --- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Header                            | 白底、底部 1px border；wordmark（Hao 墨 + Tool 藍）＋ 工具/關於/聯繫 ＋ GitHub icon；mobile 漢堡全屏選單                                                                  | —                                                                                                                                        |
 | 2   | Hero（白底）                      | 左文右舞台（mobile 上下）；overline chip「OPEN SOURCE · 台灣」；Display 標題兩行；副文一句；雙 CTA（實色「看看我做的工具」/ 描邊「和我聊專案」）；右側 5 張工具卡疊層浮動 | H1:「把好想法，做成**好工具**。」副文:「我是阿璋。HaoTool 是我打造的免費開源工具集——從匯率、分帳到防災教育，每一個都以產品級標準交付。」 |
-| 3   | 信任列（淺灰底）                  | 4 統計橫排（mobile 2×2）：`5` 個上線產品、`100%` 開源免費、`0` 廣告與追蹤、`90+` Lighthouse 分數；tabular-nums count-up                                                   | overline:「不是作品集，是已上線的產品」                                                                                                  |
+| 3   | 信任列（淺灰底）                  | 4 統計橫排（mobile 2×2）：`5` 個上線產品、`100%` 開源免費、`0` 廣告與追蹤、`90+` Lighthouse 分數；tabular-nums odometer（M8）                                             | overline:「不是作品集，是已上線的產品」                                                                                                  |
 | 4   | 工具展示（白底）                  | 標題＋5 張 ToolCard（1/2/3 欄）；每卡：app icon、名稱、一句定位、真實截圖（device frame）、Live 圓點＋「開啟 →」                                                          | 標題:「五個正在服務真實使用者的工具」                                                                                                    |
 | 5   | 工藝證明（淺灰底）                | 3 欄卡：效能（LCP <2s、Lighthouse 90+）、可靠（PWA 離線、資料守門）、誠實（開源 GPL-3.0、零追蹤）；每卡 icon＋數據＋一句                                                  | 標題:「產品級，是可以被驗證的」                                                                                                          |
 | 6   | 作者（白底）                      | 左：頭像/mascot 圖＋姓名職稱；右：三句自介＋「更多關於我 →」                                                                                                              | 「寫程式碼之前，我先想像使用的人。」                                                                                                     |
@@ -173,3 +174,16 @@ FAQ 自 Home 移除（PRD v1 §5.1 修正）：Home 保持銷售敘事節奏，F
 
 - F1 live 匯率 chip：build-time 讀 repo 內 ratewise 匯率資料，hero 顯示即時感匯率＋ticker 動畫——真產品證明、零 runtime 成本。
 - F2 「正在打造」列：footer 上方一行最新 release 資訊（build-time git 資料）。
+
+### 8.4 PM 裁決紀錄（2026-07-05）
+
+M1–M8 全數核准（差異點定義見 `motion-deep-dive.md` §7）：
+
+- M1 核准：Header wordmark 實例改 HTML 字元 span（視覺零差；Footer/OG 維持 SVG；Wordmark 元件單一 API 加 `variant`）。
+- M2 核准：motion `Reveal` 維持唯一進場基線，不引入 scroll-driven 區塊進場。
+- M3 核准：ToolCard desktop pointer tilt ≤4deg（wave-B 生效；deep-dive §4.1 已補例外預告）。
+- M4 核准：pill 指示器採 CSS 變數方案（禁 `layoutId`/`domMax`）。
+- M5 核准：S2 行動 chips 僅 <1024px 顯示。
+- M6 核准：easing 措辭放寬為「唯一 bezier ＋ 三檔 spring token」（§2 已同步）。
+- M7 裁決：F1 **reject**（陳舊匯率與品牌敘事矛盾＋跨 app build 耦合）；F2 納入 **wave-B**（靜態版）。
+- M8 核准：`--dur-count`/count-up 廢止，S3 odometer 取代（§2 token 表與 deep-dive §1.4/§4.4 已同步）。
