@@ -47,7 +47,7 @@ import {
 } from '../components/SkeletonLoader';
 import { ConversionHistory } from '../features/ratewise/components/ConversionHistory';
 import { useAppTheme } from '../hooks/useAppTheme';
-import { STYLE_DEFINITIONS, type ThemeStyle } from '../config/themes';
+import { STYLE_DEFINITIONS, type BuiltinThemeStyle } from '../config/themes';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO } from '../config/app-info';
 import type { ConversionHistoryEntry } from '../features/ratewise/types';
@@ -108,7 +108,7 @@ function Section({
  * Theme style icons mapping
  * 主題風格圖示對應
  */
-const STYLE_ICONS: Record<ThemeStyle, React.ElementType> = {
+const STYLE_ICONS: Record<BuiltinThemeStyle, React.ElementType> = {
   nitro: Zap,
   kawaii: Sparkles,
   zen: Sun,
@@ -229,7 +229,7 @@ export default function UIShowcase() {
                 即時切換主題風格，查看所有組件在不同主題下的表現
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {(Object.keys(STYLE_DEFINITIONS) as ThemeStyle[]).map((styleKey) => {
+                {(Object.keys(STYLE_DEFINITIONS) as BuiltinThemeStyle[]).map((styleKey) => {
                   const styleDef = STYLE_DEFINITIONS[styleKey];
                   const StyleIcon = STYLE_ICONS[styleKey];
                   const isActive = config.style === styleKey;

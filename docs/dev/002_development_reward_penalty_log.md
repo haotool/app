@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+105
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+106
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-engine
+- 原因：設定頁「自訂主題色」僅為預告卡，主題管線只支援 7 個靜態主題，無法由使用者主色即時導出全組變數且守住 AA 對比
+- 解法：新增 custom-theme.ts 演算 SSOT（單一主色導出 14 鍵 primary 系列＋內建 AA clamp）、applyTheme custom 覆寫層（切回內建主題清除 inline 覆寫）、index.css [data-style='custom'] 靜態區塊採 zen 完整複製滿足 parity 合約、bootstrap allowlist 加 custom 並做最小 pre-paint identity 覆寫
 
 - 日期：2026-07-05
 - ID：neutral-rw-e2-custom-theme-design-brief

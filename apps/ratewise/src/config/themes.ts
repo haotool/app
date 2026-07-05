@@ -22,20 +22,42 @@
  * @version 5.0.0
  */
 
+import {
+  CUSTOM_THEME_CSS_VARS,
+  DEFAULT_CUSTOM_PRIMARY,
+  deriveCustomThemeCssVars,
+  hexToRgbTriple,
+  isValidHexColor,
+} from './custom-theme';
+
 // ============================================================================
 // Type Definitions
 // ============================================================================
 
 /**
- * 風格類型 - 7 種可選風格
+ * 內建風格類型 - 7 種靜態定義風格（STYLE_DEFINITIONS 的鍵集合）
  */
-export type ThemeStyle = 'zen' | 'violet' | 'nitro' | 'racing' | 'kawaii' | 'classic' | 'forest';
+export type BuiltinThemeStyle =
+  | 'zen'
+  | 'violet'
+  | 'nitro'
+  | 'racing'
+  | 'kawaii'
+  | 'classic'
+  | 'forest';
+
+/**
+ * 風格類型 - 內建 7 風格 + custom（runtime 演算，不進 STYLE_DEFINITIONS）
+ */
+export type ThemeStyle = BuiltinThemeStyle | 'custom';
 
 /**
  * 完整主題配置
  */
 export interface ThemeConfig {
   style: ThemeStyle;
+  /** style === 'custom' 時的使用者主色（#RRGGBB）；切回內建主題時保留以便再次啟用。 */
+  customPrimary?: string;
 }
 
 /**
@@ -353,9 +375,9 @@ const forestStyle: StyleDefinition = {
 // ============================================================================
 
 /**
- * 所有風格定義
+ * 所有內建風格定義（custom 為 runtime 演算，刻意不進本表以維持 7×16 靜態同步合約）
  */
-export const STYLE_DEFINITIONS: Record<ThemeStyle, StyleDefinition> = {
+export const STYLE_DEFINITIONS: Record<BuiltinThemeStyle, StyleDefinition> = {
   zen: zenStyle,
   violet: violetStyle,
   nitro: nitroStyle,
@@ -446,10 +468,43 @@ export const STYLE_OPTIONS: {
 // Theme Application
 // ============================================================================
 
+/** zen primary 的 hex 值（theme-color meta 的內建主題預設）。 */
+const ZEN_THEME_COLOR = `#${STYLE_DEFINITIONS.zen.colors.primary
+  .split(' ')
+  .map((channel) => Number.parseInt(channel, 10).toString(16).padStart(2, '0'))
+  .join('')
+  .toUpperCase()}`;
+
+/** 更新 theme-color meta（PWA 狀態列跟隨 custom 主色，切回內建主題還原品牌藍）。 */
+function updateThemeColorMeta(hex: string): void {
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hex);
+}
+
+/**
+ * custom 覆寫層：style === 'custom' 時由主色演算導出整組變數寫至 documentElement；
+ * 切回內建主題時清除全部 inline 覆寫（靜態 [data-style] 區塊接手）。
+ */
+function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void {
+  if (config.style !== 'custom') {
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => root.style.removeProperty(cssVar));
+    updateThemeColorMeta(ZEN_THEME_COLOR);
+    return;
+  }
+
+  const primaryHex = isValidHexColor(config.customPrimary)
+    ? config.customPrimary
+    : DEFAULT_CUSTOM_PRIMARY;
+  const derived = deriveCustomThemeCssVars(primaryHex);
+  CUSTOM_THEME_CSS_VARS.forEach((cssVar) => root.style.setProperty(cssVar, derived[cssVar]));
+  // 與 bootstrap pre-paint 同為 identity 映射（hex → 'R G B'），保證雙端一致。
+  root.style.setProperty('--color-primary', hexToRgbTriple(primaryHex));
+  updateThemeColorMeta(primaryHex);
+}
+
 /**
  * 將主題變數應用到 DOM
  *
- * @description 使用 data attributes 來控制主題
+ * @description 使用 data attributes 來控制主題；custom 主題另以 inline CSS 變數覆寫主色系列
  * @param config - 主題配置
  */
 export function applyTheme(config: ThemeConfig): void {
@@ -464,8 +519,9 @@ export function applyTheme(config: ThemeConfig): void {
   delete root.dataset['mode'];
   root.classList.remove('dark');
 
-  // 設定字體（Classic 使用 serif）
-  const fontFamily = STYLE_DEFINITIONS[config.style].font;
+  // 設定字體（Classic 使用 serif；custom 底座為 zen，同 font-sans）
+  const fontFamily =
+    config.style === 'custom' ? zenStyle.font : STYLE_DEFINITIONS[config.style].font;
   if (fontFamily === 'font-serif') {
     root.classList.add('font-serif');
     root.classList.remove('font-sans');
@@ -473,6 +529,8 @@ export function applyTheme(config: ThemeConfig): void {
     root.classList.add('font-sans');
     root.classList.remove('font-serif');
   }
+
+  applyCustomThemeOverrides(root, config);
 }
 
 /**
@@ -483,9 +541,9 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
 };
 
 /**
- * 獲取風格的顏色
+ * 獲取內建風格的顏色（custom 為 runtime 演算，請改用 deriveCustomThemeCssVars）
  */
-export function getStyleColors(style: ThemeStyle): SemanticColors {
+export function getStyleColors(style: BuiltinThemeStyle): SemanticColors {
   return STYLE_DEFINITIONS[style].colors;
 }
 
