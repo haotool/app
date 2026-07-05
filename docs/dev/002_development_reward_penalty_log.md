@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+126
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e4-pages-wave2-guide-opendata-seotech
+- 原因：Guide／OpenData／SeoTech 版殼各自實作（SeoTech 甚至無麵包屑與底部導覽），與統一骨架漂移
+- 解法：三頁遷移至 ContentPageLayout（保留頁內專屬元件：API 表格、複製按鈕、技術卡），Guide 步驟與功能區塊改共用 renderer，測試合約（step 錨點、快速導航、FAQ 標題）維持不變
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-pages-wave1-faq-about-privacy
