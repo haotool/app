@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+130
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-kawaii-text-contrast-aa-572
+- 原因：Kawaii 主題 `--color-text` #8E7C80 對背景僅 3.79:1、textMuted 僅 2.38:1，未達 WCAG AA，內容頁正文可讀性不足（#572）
+- 解法：text/textMuted 調深為同粉棕色相深階（7.42:1／5.62:1），雙源（index.css＋themes.ts）與 calc-number-text、STYLE_OPTIONS preview、offline.html 同步，新增 kawaii AA 與色相守門測試
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-waveb-settings-toggle-e2e-guards

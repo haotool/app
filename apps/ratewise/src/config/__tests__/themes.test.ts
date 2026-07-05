@@ -107,6 +107,35 @@ describe('Forest 主題可讀性守門（韓系簡約白底）', () => {
   });
 });
 
+describe('Kawaii 主題可讀性守門（#572 正文對比 AA）', () => {
+  const kawaii = STYLE_DEFINITIONS.kawaii.colors;
+
+  it('text 對 background / surface 對比 ≥ 4.5:1（AA 內文）', () => {
+    expect(contrastRatio(kawaii.text, kawaii.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(kawaii.text, kawaii.surface)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('textMuted 對 background / surface 對比 ≥ 4.5:1（AA 內文）', () => {
+    expect(contrastRatio(kawaii.textMuted, kawaii.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(kawaii.textMuted, kawaii.surface)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('text 色相保持粉嫩調性（R > G、R > B，非灰階）', () => {
+    const [r, g, b] = kawaii.text.split(' ').map(Number);
+    expect(r).toBeGreaterThan(g ?? 0);
+    expect(r).toBeGreaterThan(b ?? 0);
+  });
+
+  it('themes.ts 與 index.css 的 Kawaii text / textMuted 不得漂移', () => {
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf-8');
+    const block = css.slice(css.indexOf("[data-style='kawaii']"));
+    const cssVar = (name: string) =>
+      new RegExp(`--color-${name}:\\s*([0-9]+\\s+[0-9]+\\s+[0-9]+)`).exec(block)?.[1]?.trim();
+    expect(cssVar('text')).toBe(kawaii.text);
+    expect(cssVar('text-muted')).toBe(kawaii.textMuted);
+  });
+});
+
 describe('STYLE_OPTIONS 主題選單順序守門', () => {
   it('不再包含 ocean', () => {
     const values: string[] = STYLE_OPTIONS.map((option) => option.value);
