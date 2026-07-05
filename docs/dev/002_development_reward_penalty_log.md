@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 1）｜累計總分：+149
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+150
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-602-manifest-site-url-env
+- 原因：generate-manifest 的 scope/start_url 硬編 APP_INFO.siteUrl（app.haotool.org），staging 等替代網域部署時 manifest scope 跨網域、PWA 安裝行為異常（#602；字體 @font-face 被 Beasties 修剪部分經 PM 裁決移交 #616 處理）
+- 解法：scope/start_url 改由 VITE_SITE_URL 環境變數驅動＋normalizeSiteUrl 正規化（行為對齊 seo-paths；直接 import 因該檔無副檔名 import 在 Node Type Stripping 下 ERR_MODULE_NOT_FOUND，以註解標明），未設定時回退正式站；committed manifest 補「必為正式站」JSON 斷言堵 env 污染誤 commit，generate:deterministic 冪等零 diff 實證
 
 - 日期：2026-07-06
 - ID：reward-rw-600-anchor-scroll-mt-safe-area

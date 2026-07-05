@@ -3,6 +3,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { APP_INFO } from '../app-info';
 
 async function readPackageJson() {
   const packageJsonPath = path.resolve(__dirname, '../../../package.json');
@@ -270,11 +271,19 @@ describe('ratewise build scripts', () => {
       start_url: string;
     };
 
-    expect(manifestGenerator).toContain('scope: APP_INFO.siteUrl');
-    expect(manifestGenerator).toContain('start_url: APP_INFO.siteUrl');
+    // scope/start_url 由 VITE_SITE_URL 環境變數驅動（staging 等替代網域），未設定時回退正式站 SSOT，
+    // 正規化必須複用 seo-paths 的 normalizeSiteUrl 避免行為分歧。
+    expect(manifestGenerator).toContain(
+      'normalizeSiteUrl(process.env.VITE_SITE_URL || APP_INFO.siteUrl)',
+    );
+    expect(manifestGenerator).toContain('scope: siteUrl');
+    expect(manifestGenerator).toContain('start_url: siteUrl');
     expect(manifest.scope).toMatch(/^https:\/\//);
     expect(manifest.start_url).toMatch(/^https:\/\//);
     expect(manifest.scope).toBe(manifest.start_url);
+    // committed manifest 必為正式站：堵住 env 污染下（VITE_SITE_URL 指向 staging）
+    // 重新生成並誤 commit staging URL 仍全綠的缺口。
+    expect(manifest.scope).toBe(APP_INFO.siteUrl);
   });
 
   it('should not force React ecosystem packages into manual chunks', async () => {
