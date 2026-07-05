@@ -141,6 +141,11 @@ const zhTW = {
     fiveMinutes: '5 分鐘',
     updateNote: '匯率資料每 5 分鐘自動更新。',
     resetTheme: '重置主題設定',
+    customThemePresets: '精選色票',
+    customThemeHex: 'HEX 色碼',
+    customThemeHue: '色相',
+    customThemeLightness: '明度',
+    customThemeReset: '恢復預設主題',
     appVersion: '應用程式版本',
     designSystem: '設計系統',
     techStack: '技術棧',
@@ -188,7 +193,7 @@ const zhTW = {
     violet: 'Violet',
     violetDesc: '經典紫',
     custom: '自訂主題色',
-    customDesc: '即將推出',
+    customDesc: '打造專屬主色',
   },
 
   // Currency List

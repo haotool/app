@@ -22,13 +22,14 @@
  * @version 5.0.0
  */
 
+// 附 .ts 副檔名：themes.ts 亦被 prebuild node 腳本（type stripping）直接載入，需明確副檔名。
 import {
   CUSTOM_THEME_CSS_VARS,
   DEFAULT_CUSTOM_PRIMARY,
   deriveCustomThemeCssVars,
   hexToRgbTriple,
   isValidHexColor,
-} from './custom-theme';
+} from './custom-theme.ts';
 
 // ============================================================================
 // Type Definitions

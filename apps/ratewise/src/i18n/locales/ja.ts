@@ -141,6 +141,11 @@ const ja = {
     fiveMinutes: '5分',
     updateNote: '為替レートは5分ごとに更新されます。',
     resetTheme: 'テーマ設定をリセット',
+    customThemePresets: 'おすすめカラー',
+    customThemeHex: 'HEXコード',
+    customThemeHue: '色相',
+    customThemeLightness: '明度',
+    customThemeReset: 'デフォルトに戻す',
     appVersion: 'アプリバージョン',
     designSystem: 'デザインシステム',
     techStack: '技術スタック',
@@ -188,7 +193,7 @@ const ja = {
     violet: 'Violet',
     violetDesc: 'クラシックパープル',
     custom: 'カスタムテーマ',
-    customDesc: '近日公開',
+    customDesc: '自分だけの色',
   },
 
   // Currency List

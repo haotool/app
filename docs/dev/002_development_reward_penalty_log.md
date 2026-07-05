@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+106
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+107
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e2-custom-theme-picker-ui
+- 原因：設定頁「自訂主題色」預告卡無實際功能，且 themes.ts 新增的 custom-theme 匯入未帶 .ts 副檔名導致 prebuild node（type stripping）腳本 ERR_MODULE_NOT_FOUND
+- 解法：預告卡改功能卡＋展開式選色面板（10 精選色票、hex 輸入、色相/明度滑桿、恢復預設，全部即選即用）、i18n ×4 補 customTheme 鍵並移除「即將推出」、themes.ts 匯入補 .ts 副檔名修復 prebuild
 
 - 日期：2026-07-05
 - ID：reward-rw-e2-custom-theme-engine

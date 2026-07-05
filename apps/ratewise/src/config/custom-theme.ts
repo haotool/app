@@ -17,6 +17,23 @@
 /** 預設自訂主色（品牌藍，與 zen primary 同值）。 */
 export const DEFAULT_CUSTOM_PRIMARY = '#3182F6';
 
+/**
+ * 精選色票（韓系 fintech 調性：Toss 藍系/薄荷/珊瑚/紫羅蘭…）。
+ * 色票彼此可區辨；文字對比由 deriveCustomThemeCssVars 的 AA clamp 保證（測試守門）。
+ */
+export const CUSTOM_PRIMARY_PRESETS = [
+  '#3182F6', // Toss 藍
+  '#0EA5E9', // 天空藍
+  '#14B8A6', // 薄荷
+  '#22C55E', // 清新綠
+  '#F59E0B', // 琥珀
+  '#FF6B6B', // 珊瑚
+  '#EC4899', // 櫻花粉
+  '#8B5CF6', // 紫羅蘭
+  '#6366F1', // 靛藍
+  '#64748B', // 石墨
+] as const;
+
 /** applyTheme 於 custom 模式寫入 / 切回內建主題時清除的 inline CSS 變數全集。 */
 export const CUSTOM_THEME_CSS_VARS = [
   '--color-primary',
