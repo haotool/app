@@ -11,6 +11,8 @@
  * - 金額頁 v2（中文別名 title、answer-first description、階梯表純計算）
  */
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ABOUT_PAGE_FAQ,
@@ -130,6 +132,37 @@ describe('AI-trace guard：寫死匯率 lint（幣別頁）', () => {
   });
 });
 
+describe('AI-trace guard：單值寫死匯率 lint（persona 原始碼）', () => {
+  // 單值句式（如「1 美元約 31.5 台幣」）可穿透區間 regex。
+  // 掃描層級為「原始碼」而非生成 corpus：合法的動態匯率句由模板字串
+  // `${buildUnitRateSentence(code)}` 注入，原始碼中不存在字面數字；
+  // 排除 `$`（interpolation 起始字元）即可只咬字面寫死值、不誤殺動態句。
+  const HARDCODED_SINGLE_RATE =
+    /1\s+[^\s\d$`{]{1,8}\s*(?:[=≈]|約(?:等於)?)\s*\d+(?:\.\d+)?\s*(?:元)?台幣/;
+
+  const SOURCE_FILES = [
+    resolve(__dirname, '../seo-metadata/currency-personas.ts'),
+    resolve(__dirname, '../seo-metadata/currency-landing.ts'),
+  ];
+
+  it('lint pattern 自我驗證：應咬住已知穿透句、不誤殺動態模板句', () => {
+    // 已知穿透句（審查實測）：單值必須被抓到。
+    expect(HARDCODED_SINGLE_RATE.test('1 美元約 31.5 台幣')).toBe(true);
+    expect(HARDCODED_SINGLE_RATE.test('1 USD = 31.5 台幣')).toBe(true);
+    expect(HARDCODED_SINGLE_RATE.test('1 澳幣約等於 22 元台幣')).toBe(true);
+    // 合法句：動態注入模板（原始碼含 ${...}）與無數字敘述不得誤殺。
+
+    expect(HARDCODED_SINGLE_RATE.test('1 ${code} 約等於 ${ex.cashSell} 台幣')).toBe(false);
+    expect(HARDCODED_SINGLE_RATE.test('帶台幣千元鈔到明洞換錢所兌換')).toBe(false);
+  });
+
+  it.each(SOURCE_FILES)('%s 原始碼不得含單值寫死匯率', (file) => {
+    const source = readFileSync(file, 'utf-8');
+    const match = HARDCODED_SINGLE_RATE.exec(source);
+    expect(match, `發現單值寫死匯率：「${match?.[0]}」`).toBeNull();
+  });
+});
+
 // ─── 3. 無來源最高級宣稱 ─────────────────────────────────────────────────────
 
 describe('AI-trace guard：無來源最高級宣稱（幣別頁）', () => {
@@ -218,6 +251,11 @@ describe('cross-currency dedupe：persona 敘述唯一性', () => {
 
 // ─── 5. phrase budget（#566 SF-1） ───────────────────────────────────────────
 
+// 覆蓋範圍註記：phrase budget 只掃描 fullVisibleCopy() 白名單欄位
+// （title／description／intro／highlights／FAQ／answerCapsule／sections 等），
+// 未涵蓋 JSON-LD articleBody、howToSteps、eyebrow 與元件層 JSX 文案——
+// 「約每 5 分鐘檢查更新」在這些未收集欄位仍有殘留，屬已知邊界而非守門失效；
+// 擴大覆蓋需連動收斂該類欄位，留待後續 wave 處理。
 describe('phrase budget：模板句收斂', () => {
   const currencyCopy = () => ALL_CODES.map(collectCurrencyCopy).join('\n');
 
@@ -233,8 +271,8 @@ describe('phrase budget：模板句收斂', () => {
     expect(countOccurrences(fullVisibleCopy(), '約每 5 分鐘檢查更新')).toBeLessThanOrEqual(5);
   });
 
-  it('「真正要付多少台幣」config 可見文案 ≤ 3 處', () => {
-    expect(countOccurrences(fullVisibleCopy(), '真正要付多少台幣')).toBeLessThanOrEqual(3);
+  it('「真正要付多少台幣」config 可見文案 ≤ 2 處', () => {
+    expect(countOccurrences(fullVisibleCopy(), '真正要付多少台幣')).toBeLessThanOrEqual(2);
   });
 });
 

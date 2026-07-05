@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+122
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+122
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：neutral-rw-e5-review-should-fix-batch
+- 原因：PR 578 epic 審查三項 Should-fix——明洞換錢所名稱誤植（Money Plant）、單值寫死匯率可穿透區間 regex、phrase budget 覆蓋範圍未註記且一句貼上限
+- 解法：更正為 Money Planet（MONEYPLANET SEOUL）、新增 persona 原始碼層單值匯率 lint（含 pattern 自我驗證與突變證明）、補覆蓋範圍註解並收斂「真正要付多少台幣」至 2 處（budget ≤2）
 
 - 日期：2026-07-05
 - ID：reward-rw-e5-l3-copy-guards
