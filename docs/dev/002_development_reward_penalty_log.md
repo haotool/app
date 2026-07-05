@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 1）｜累計總分：+110
+> 本次分數變化：+4（reward 4、penalty 0、neutral 1）｜累計總分：+111
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-test-gate
+- 原因：v2 分流與雙列互動需守門，且 flag off 的 SSG 不變性紅線需可重複驗證
+- 解法：新增 flag 單元測試、SingleConverterV2 對等性／swap／基準切換測試、flag gate 測試與 flag-on e2e 核心旅程；以 254 頁 SSG #root DOM diff=0 證明 flag off 輸出不變
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-converter-v2-trend-sheet
