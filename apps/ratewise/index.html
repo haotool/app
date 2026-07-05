@@ -106,7 +106,8 @@
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
-        background: #f8fafc;
+        /* 首次 paint 前跟隨主題底色（--sk-bg 由同段 critical CSS 依 data-style 提供），深色主題不閃白。 */
+        background: var(--sk-bg, #f8fafc);
         font-family:
           'Inter',
           'Noto Sans TC',
@@ -428,7 +429,7 @@
     <!-- Structured Data managed by SEOHelmet component (prevents duplicate schemas) -->
     <!-- Title managed by SEOHelmet component (prevents duplicate titles) -->
   </head>
-  <body class="bg-slate-50">
+  <body>
     <!-- rw-splash（Plan 015）：品牌啟動頁，預設 hidden，緊接的同步 script 於首次 paint 前顯示。
          無 JS 環境永遠停在 hidden，爬蟲與 <noscript> 完全看不到（非 cloaking：同一份 SSG 內容）。
          標記與 class 必須鏡射 SplashScreen.tsx 輸出（parity 守門：splashParity.test.ts），
