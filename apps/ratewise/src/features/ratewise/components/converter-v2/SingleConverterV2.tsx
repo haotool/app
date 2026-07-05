@@ -4,7 +4,7 @@
  * @see .claude/prds/ratewise-e3-converter-v2-design.md
  */
 
-import { useState } from 'react';
+import { useMemo, useState, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SingleConverterProps } from '../SingleConverter';
 import type { CurrencyCode, RateType } from '../../types';
@@ -16,6 +16,18 @@ import {
 } from '../../../../utils/exchangeRateCalculation';
 import { ConverterKeypad } from './ConverterKeypad';
 import { CurrencyPickerSheet } from './CurrencyPickerSheet';
+import { TrendSheet } from './TrendSheet';
+import { useConverterTrend } from './useConverterTrend';
+import { TrendChartSkeleton } from '../TrendChartSkeleton';
+
+const MiniTrendChart = lazy(() =>
+  import('../MiniTrendChart').then((m) => ({ default: m.MiniTrendChart })),
+);
+
+// 一次抓滿 sheet 最大範圍（實際回傳受資料源可用天數限制，不足不推估）。
+const TREND_FETCH_DAYS = 90;
+// sparkline 常態顯示 30 天。
+const SPARKLINE_DAYS = 30;
 
 type RowField = 'from' | 'to';
 
@@ -114,8 +126,25 @@ export const SingleConverterV2 = ({
   const { t } = useTranslation();
   const [activeRow, setActiveRow] = useState<RowField>('from');
   const [pickerFor, setPickerFor] = useState<RowField | null>(null);
+  const [isTrendOpen, setIsTrendOpen] = useState(false);
   // swap 或切列時遞增，強制 keypad remount 重置表達式為活躍列現值。
   const [keypadSession, setKeypadSession] = useState(0);
+
+  const trend = useConverterTrend({
+    fromCurrency,
+    toCurrency,
+    rateSource,
+    moneyBoxRate,
+    exchangeShopCurrency,
+    maxDays: TREND_FETCH_DAYS,
+  });
+  const sparklineData = useMemo(() => trend.data.slice(-SPARKLINE_DAYS), [trend.data]);
+  const sparklineChange = useMemo(() => {
+    const first = sparklineData[0]?.rate;
+    const last = sparklineData.at(-1)?.rate;
+    if (first === undefined || last === undefined || first === 0) return null;
+    return ((last - first) / first) * 100;
+  }, [sparklineData]);
 
   const exchangeRate = getUnitExchangeRate(
     fromCurrency,
@@ -245,6 +274,48 @@ export const SingleConverterV2 = ({
         </button>
       </div>
 
+      {/* sparkline：72px 常態趨勢＋漲跌 chip，tap 展開 65vh 趨勢 sheet */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setIsTrendOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsTrendOpen(true);
+          }
+        }}
+        data-testid="converter-v2-sparkline"
+        aria-label={t('converterV2.trendOpen')}
+        className="w-full cursor-pointer rounded-2xl border border-border/60 bg-surface px-3 pt-2 pb-1 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      >
+        <div className="flex min-h-[24px] items-center justify-between">
+          <span className="text-xs text-neutral-text-secondary">
+            {t('converterV2.trendTitle', { from: fromCurrency, to: toCurrency })}
+          </span>
+          {sparklineChange !== null && (
+            <span
+              data-testid="converter-v2-trend-change"
+              className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                sparklineChange >= 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+              }`}
+            >
+              <span aria-hidden="true">{sparklineChange >= 0 ? '▲' : '▼'}</span>
+              {Math.abs(sparklineChange).toFixed(2)}%
+            </span>
+          )}
+        </div>
+        <div className="h-[72px] pointer-events-none">
+          {sparklineData.length >= 2 ? (
+            <Suspense fallback={<TrendChartSkeleton />}>
+              <MiniTrendChart data={sparklineData} currencyCode={toCurrency} />
+            </Suspense>
+          ) : (
+            <TrendChartSkeleton />
+          )}
+        </div>
+      </div>
+
       {/* 常駐計算機：輸入目標＝活躍列，key remount 保證切列/交換後表達式重置 */}
       <ConverterKeypad
         key={`${activeRow}-${keypadSession}`}
@@ -257,6 +328,15 @@ export const SingleConverterV2 = ({
         selected={pickerFor === 'to' ? toCurrency : fromCurrency}
         onSelect={handlePickCurrency}
         onClose={() => setPickerFor(null)}
+      />
+
+      <TrendSheet
+        isOpen={isTrendOpen}
+        onClose={() => setIsTrendOpen(false)}
+        fromCurrency={fromCurrency}
+        toCurrency={toCurrency}
+        data={trend.data}
+        basisLabel={basisLabel}
       />
     </div>
   );

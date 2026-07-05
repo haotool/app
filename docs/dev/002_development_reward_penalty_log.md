@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 1）｜累計總分：+109
+> 本次分數變化：+3（reward 3、penalty 0、neutral 1）｜累計總分：+110
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：reward-rw-e3-converter-v2-trend-sheet
+- 原因：v2 需常態小、展開大的趨勢呈現；歷史資料源僅 30 天，90D 需求若硬造會違反誠實標註原則
+- 解法：72px sparkline＋漲跌 chip 常態嵌入，65vh bottom sheet（7D/30D/90D、min/max、內建長按 crosshair），資料不足以「僅 N 天、不足不推估」誠實標註
 
 - 日期：2026-07-05
 - ID：reward-rw-e3-converter-v2-dual-rows
