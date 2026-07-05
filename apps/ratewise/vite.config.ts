@@ -532,8 +532,15 @@ export default defineConfig(({ mode }) => {
 
         return PRERENDER_PATHS;
       },
-      // 預渲染前處理 HTML：金額路由注入換算結果
+      // 預渲染前處理 HTML：注入 SSG 路由標記＋金額路由換算結果
       async onBeforePageRender(route, indexHTML) {
+        // SSG 路由標記：client 端 ssgFallbackGuard 據此判斷「快照路由 ≠ 當前 URL」
+        // 的 SPA fallback 情境（404、SW shell fallback），改走 client render 避免 React #418。
+        indexHTML = indexHTML.replace(
+          '</head>',
+          `<meta name="ssg-route" content="${route}"></head>`,
+        );
+
         // 檢查是否為金額路由（例如：/usd-twd/500/）
         const amountRouteMatch = route.match(/\/([a-z]{3})-([a-z]{3})\/(\d+(?:\.\d+)?)\/$/i);
         if (amountRouteMatch) {

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+152
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+152
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-459-595-tz-blind-spot
+- 原因：#595 驗證只在本地同時區（build 與瀏覽器皆 Asia/Taipei）抽測，未覆蓋 staging「UTC build × 台北瀏覽器」情境，漏掉 Footer 建置時間 toLocale 無 timeZone 造成內容頁全數 #418
+- 解法：本地以 TZ=UTC build＋Asia/Taipei 瀏覽器重演 staging 差異定位根因；此後 hydration 修復驗證必須含跨時區組合（build TZ ≠ browser TZ）
+
+- 日期：2026-07-06
+- ID：reward-rw-459-content-pages-418
+- 原因：內容頁 Footer `getFormattedBuildTime()` 無 timeZone 隨 build 機器時區漂移（args[]=text）；404／SPA fallback 送首頁快照帶 data-server-rendered，vite-react-ssg 0.8.9 production 一律 hydrate（args[]=HTML）
+- 解法：建置時間固定 Asia/Taipei；SSG 注入 ssg-route 標記＋client 守門偵測 stale 快照改走 render＋patch vite-react-ssg（上游已 merge 未發版的 PR #90）；11 路由雙時區停 SW 巡檢 #418 歸零＋prerender 守門測試
 
 - 日期：2026-07-06
 - ID：penalty-rw-587-keyboard-modifier-passthrough

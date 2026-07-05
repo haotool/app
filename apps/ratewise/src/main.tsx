@@ -31,6 +31,7 @@ import {
   toError,
 } from './utils/errorClassification';
 import { initPWAStorageManager, primePwaColdStartRecovery } from './utils/pwaStorageManager';
+import { applySsgFallbackGuard } from './utils/ssgFallbackGuard';
 import {
   clearPwaAppReadyMarker,
   flushPwaDiagnosticAnalyticsQueue,
@@ -117,6 +118,10 @@ const resolveColdStartPrimeResult = async (
     };
   }
 };
+
+// SPA fallback 守門：快照路由 ≠ 當前 URL（404／SW shell fallback）時，
+// 於 hydration 前清空 root 改走 client render，避免結構性 React #418。
+applySsgFallbackGuard(import.meta.env.BASE_URL || '/');
 
 // Vite React SSG Configuration
 export const createRoot = ViteReactSSG(

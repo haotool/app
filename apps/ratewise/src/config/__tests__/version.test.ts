@@ -61,6 +61,25 @@ describe('version', () => {
       // 格式: YYYY/MM/DD HH:mm
       expect(formatted).toMatch(/\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}/);
     });
+
+    it('should format BUILD_TIME in Asia/Taipei regardless of runtime timezone (issue #459 #418)', () => {
+      // SSG（CI 為 UTC）與使用者瀏覽器（Asia/Taipei）必須產出同一字串，
+      // 否則 Footer 建置時間文字節點觸發 React #418；CI（UTC）會抓到 timeZone 遺失。
+      const buildDate = new Date(BUILD_TIME);
+      const expectedDate = buildDate.toLocaleDateString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const expectedTime = buildDate.toLocaleTimeString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(getFormattedBuildTime()).toBe(`${expectedDate} ${expectedTime}`);
+    });
   });
 
   describe('getVersionInfo', () => {

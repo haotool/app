@@ -556,6 +556,48 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       expect(content).not.toContain('aria-label="Main Navigation"');
     });
 
+    it.each(['index.html', 'faq/index.html', 'guide/index.html', 'usd-twd/index.html'])(
+      '%s 必須含 ssg-route 標記供 SPA fallback 守門比對（issue #459 #418）',
+      (relPath) => {
+        const htmlPath = resolve(distPath, relPath);
+        expect(existsSync(htmlPath)).toBe(true);
+
+        const content = readFileSync(htmlPath, 'utf-8');
+        const markerMatch = /<meta[^>]*name="ssg-route"[^>]*content="([^"]*)"/.exec(content);
+        expect(markerMatch).toBeTruthy();
+
+        const expectedRoute =
+          relPath === 'index.html' ? '/' : `/${relPath.replace('index.html', '')}`;
+        expect(markerMatch?.[1]).toBe(expectedRoute);
+      },
+    );
+
+    it('內容頁 Footer 建置時間必須以 Asia/Taipei 格式化，與 build 機器時區無關（issue #459 #418）', () => {
+      // CI（UTC）build 產出的 SSG 文字若隨 build 機器時區漂移，
+      // 使用者瀏覽器（Asia/Taipei）client 首屏就會 mismatch 觸發 React #418。
+      const faqHtml = resolve(distPath, 'faq/index.html');
+      expect(existsSync(faqHtml)).toBe(true);
+
+      const content = readFileSync(faqHtml, 'utf-8');
+      const buildTimeMatch = /<meta[^>]*name="build-time"[^>]*content="([^"]*)"/.exec(content);
+      expect(buildTimeMatch?.[1]).toBeTruthy();
+
+      const buildDate = new Date(buildTimeMatch?.[1] ?? '');
+      const expectedDate = buildDate.toLocaleDateString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const expectedTime = buildDate.toLocaleTimeString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      expect(content).toContain(`Built on ${expectedDate} ${expectedTime}`);
+    });
+
     it('All pages should have lang="zh-TW" attribute', () => {
       const pages = [
         resolve(distPath, 'index.html'),
