@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-05
+- ID：penalty-rw-e3-keypad-stale-seed-rejected-key-gate
+- 原因：wave-A keypad 種子掛載即鎖定且按鍵未經引擎確認即開回寫閘門——切列零按鍵視窗內外部值變動時種子過期、被拒按鍵使後續重算把未變顯示值當成使用者編輯回寫
+- 解法：閘門關閉時外部值變動同步重播種子（render 期間調整 state），閘門改由「表達式確實變動＋曾按鍵」才開啟，三個回歸測試修正前紅、修正後綠
 
 - 日期：2026-07-05
 - ID：reward-rw-e4-seotech-stats-contrast-and-capture
