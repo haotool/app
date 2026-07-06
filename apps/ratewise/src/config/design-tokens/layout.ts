@@ -349,7 +349,7 @@ export const singleConverterLayoutTokens = {
       'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted/60',
 
     /** 換錢所 badge 圖示 */
-    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary-on-surface/70',
+    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary-on-surface',
 
     /** 換錢所 badge 分隔點 */
     exchangeShopBadgeDot: 'text-text-muted/40',

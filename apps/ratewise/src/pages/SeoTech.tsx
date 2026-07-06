@@ -711,7 +711,7 @@ export default function SeoTech() {
                       : ''
                   }`}
                 >
-                  <span className="text-xs font-mono text-primary-on-surface/60 w-4 text-right flex-shrink-0">
+                  <span className="text-xs font-mono text-primary-on-surface w-4 text-right flex-shrink-0">
                     {idx + 1}
                   </span>
                   <div className="flex-1 min-w-0">

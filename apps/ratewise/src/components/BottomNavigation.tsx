@@ -81,7 +81,7 @@ function BottomNavigationItem({
       <div
         className={`
           relative transition-all duration-200
-          ${isActive ? 'scale-110 opacity-100 text-primary-on-surface' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
+          ${isActive ? 'scale-110 text-primary-on-surface' : 'scale-100 text-[rgb(var(--color-text-muted))]'}
           group-active:scale-90
         `}
       >
@@ -103,7 +103,7 @@ function BottomNavigationItem({
       <span
         className={`
           text-2xs font-black uppercase tracking-[0.1em] transition-all duration-200
-          ${isActive ? 'text-primary-on-surface opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
+          ${isActive ? 'text-primary-on-surface translate-y-0' : 'text-[rgb(var(--color-text-muted))] translate-y-px'}
         `}
       >
         {t(item.labelKey)}

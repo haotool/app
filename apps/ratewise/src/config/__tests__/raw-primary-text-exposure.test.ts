@@ -61,7 +61,37 @@ function scanExposures(): string[] {
   });
 }
 
-describe('內建主題 on-surface 錨點合約（#632 視覺不變）', () => {
+/**
+ * on-surface 覆寫白名單（issue #609 合約修訂）：
+ * 內建主題預設維持 on-surface == primary（#632 視覺零變化）；
+ * 列於本白名單者允許有意識覆寫，但必須通過對自身 surface / background /
+ * surface-elevated / surface-sunken 全部 ≥ 4.5:1 的 AA 驗證。
+ * 新增條目需 PM/a11y 裁決並附理由。
+ */
+const ON_SURFACE_OVERRIDE_WHITELIST: Record<string, string> = {
+  // hot pink primary 對白底僅 2.65:1，文字錨點加深至 pink-700（白底 6.04:1）；品牌色本身不動。
+  kawaii: 'primary 對白底不達 AA，文字面走加深 clamp 色',
+  // 深色主題文字錨點亮向（對 surface 8.36:1），原 primary 對 surface-elevated 僅 4.53:1 貼線。
+  nitro: '深色主題文字錨點亮向增加對比餘裕',
+};
+
+/** 'R G B' → 相對亮度（WCAG 2.x，測試內獨立實作）。 */
+function relativeLuminance(triple: string): number {
+  const [r, g, b] = triple.split(/\s+/).map((n) => {
+    const c = Number(n) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+}
+
+function contrast(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  const [hi, lo] = la >= lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+describe('內建主題 on-surface 錨點合約（#632 預設零變化 + #609 白名單覆寫）', () => {
   const css = readFileSync(resolve(SRC_ROOT, 'index.css'), 'utf-8');
   const blockStarts = [...css.matchAll(/\[data-style='([\w-]+)'\]\s*\{/g)];
   const themeBlocks = blockStarts.map((match, index) => ({
@@ -73,15 +103,53 @@ describe('內建主題 on-surface 錨點合約（#632 視覺不變）', () => {
     return new RegExp(`${name}:\\s*([0-9]+ [0-9]+ [0-9]+)\\s*;`).exec(body)?.[1];
   }
 
+  it('白名單主題必須實際存在於 index.css（防止殘留條目）', () => {
+    const themes = new Set(themeBlocks.map((block) => block.theme));
+    Object.keys(ON_SURFACE_OVERRIDE_WHITELIST).forEach((theme) => {
+      expect(themes.has(theme), `白名單主題 ${theme} 不存在於 index.css`).toBe(true);
+    });
+  });
+
   it.each(themeBlocks)(
-    '[data-style=$theme] 的 --color-primary-on-surface 必須等於 --color-primary（靜態值視覺零變化）',
+    '[data-style=$theme] 的 --color-primary-on-surface 必須定義；非白名單主題必須等於 --color-primary',
     ({ theme, body }) => {
       const primary = readVar(body, '--color-primary');
       const onSurface = readVar(body, '--color-primary-on-surface');
       expect(primary, `${theme} 缺少 --color-primary`).toBeDefined();
-      expect(onSurface, `${theme} 缺少 --color-primary-on-surface（文字錨點需全主題齊備）`).toBe(
+      expect(
+        onSurface,
+        `${theme} 缺少 --color-primary-on-surface（文字錨點需全主題齊備）`,
+      ).toBeDefined();
+      if (!(theme in ON_SURFACE_OVERRIDE_WHITELIST)) {
+        expect(onSurface, `${theme} 未列於白名單，on-surface 必須等於 primary（視覺零變化）`).toBe(
+          primary,
+        );
+      }
+    },
+  );
+
+  it.each(themeBlocks.filter(({ theme }) => theme in ON_SURFACE_OVERRIDE_WHITELIST))(
+    '[data-style=$theme] 白名單覆寫必須對自身全部底色 ≥ 4.5:1（AA）',
+    ({ theme, body }) => {
+      const onSurface = readVar(body, '--color-primary-on-surface');
+      const primary = readVar(body, '--color-primary');
+      expect(onSurface).toBeDefined();
+      expect(onSurface, `${theme} 列於白名單但 on-surface 仍等於 primary（覆寫不存在）`).not.toBe(
         primary,
       );
+      for (const name of [
+        '--color-surface',
+        '--color-background',
+        '--color-surface-elevated',
+        '--color-surface-sunken',
+      ]) {
+        const surface = readVar(body, name);
+        expect(surface, `${theme} 缺少 ${name}`).toBeDefined();
+        expect(
+          contrast(onSurface ?? '', surface ?? ''),
+          `${theme} on-surface 對 ${name} 對比不達 AA`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
     },
   );
 });

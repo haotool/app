@@ -34,20 +34,38 @@ const WHITE = '255 255 255';
 describe('Nitro 主題可讀性守門', () => {
   const nitro = STYLE_DEFINITIONS.nitro.colors;
 
-  it('primary 上的白字對比 ≥ 3:1（AA-large / 按鈕）', () => {
+  it('primary 上的白字對比 ≥ 3:1（AA-large / 大字與圖形面）', () => {
     expect(contrastRatio(WHITE, nitro.primary)).toBeGreaterThanOrEqual(3);
+  });
+
+  // #609 字級分級門檻：白字小字表面（按鈕）錨定 strong，需一般文字 AA 4.5:1。
+  it('primaryStrong 上的白字對比 ≥ 4.5:1（AA 小字 / 白字表面錨點）', () => {
+    expect(contrastRatio(WHITE, nitro.primaryStrong)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('textMuted 對 background 對比 ≥ 4.5:1（AA 內文）', () => {
     expect(contrastRatio(nitro.textMuted, nitro.background)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('themes.ts 與 index.css 的 Nitro primary / textMuted 不得漂移', () => {
+  // #609：hover 是白字按鈕（bg-primary-strong hover:bg-primary-hover text-white）的表面，
+  // 同受一般文字 AA 4.5:1 約束（原 cyan-400 白字僅 ~1.8:1）。
+  it('index.css 的 Nitro primary-hover 上白字對比 ≥ 4.5:1（hover 白字表面）', () => {
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf-8');
+    const block = css.slice(css.indexOf("[data-style='nitro']"));
+    const hover = new RegExp(`--color-primary-hover:\\s*([0-9]+\\s+[0-9]+\\s+[0-9]+)`)
+      .exec(block)?.[1]
+      ?.trim();
+    expect(hover, 'nitro 缺少 --color-primary-hover').toBeDefined();
+    expect(contrastRatio(WHITE, hover ?? '')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('themes.ts 與 index.css 的 Nitro primary / primaryStrong / textMuted 不得漂移', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf-8');
     const block = css.slice(css.indexOf("[data-style='nitro']"));
     const cssVar = (name: string) =>
       new RegExp(`--color-${name}:\\s*([0-9]+\\s+[0-9]+\\s+[0-9]+)`).exec(block)?.[1]?.trim();
     expect(cssVar('primary')).toBe(nitro.primary);
+    expect(cssVar('primary-strong')).toBe(nitro.primaryStrong);
     expect(cssVar('text-muted')).toBe(nitro.textMuted);
   });
 });

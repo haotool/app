@@ -49,12 +49,8 @@ export function PullToRefreshIndicator({
       ? t('pwa.releaseToRefresh')
       : t('pwa.pullToRefresh');
 
-  // Color scheme using SSOT tokens
-  const iconColor = isRefreshing
-    ? 'text-primary-on-surface'
-    : canTrigger
-      ? 'text-primary-on-surface'
-      : 'text-primary-on-surface/70';
+  // 圖示一律實色 on-surface 錨點（#609：/70 稀釋後實效對比不達標）。
+  const iconColor = 'text-primary-on-surface';
 
   return (
     <div

@@ -284,7 +284,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 hover:text-primary-on-surface transition-colors"
                     >
-                      <Landmark className="h-3 w-3 text-primary-on-surface/70" aria-hidden="true" />
+                      <Landmark className="h-3 w-3 text-primary-on-surface" aria-hidden="true" />
                       臺灣銀行牌告
                     </a>
                     <span>·</span>

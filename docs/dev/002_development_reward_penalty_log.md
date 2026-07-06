@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+160
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+161
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-609-builtin-theme-aa-batch
+- 原因：nitro primary-hover 白字僅 ~1.8:1、小字白字按鈕 3.23:1（守門鎖 3:1 放行）；kawaii hot pink 對白底 2.65:1 經 on-surface==primary 合約傳導到全站文字；`/70`、`opacity-[0.35]` alpha 疊加把達標實色稀釋到 <4.5:1 且守門只驗實色
+- 解法：nitro strong/hover 同色相加深（白字 5.30/4.80:1）、kawaii/nitro on-surface 白名單覆寫（pink-700／亮向 61 187 255），#632 合約改為「預設==primary＋白名單覆寫須對自身底色 ≥4.5:1」；alpha 稀釋點全數收斂實色並新增 alpha-composite 掃描守門與合成計算斷言
 
 - 日期：2026-07-06
 - ID：reward-rw-633-first-input-replaces-seed
