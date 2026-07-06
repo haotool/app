@@ -109,8 +109,9 @@ export function Footer() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
           >
+            {/* 修正殘缺 class（原 `group- `）；WCAG 2.4.7 focus-visible ring。 */}
             <svg
-              className="w-4 h-4 text-white group- transition-transform"
+              className="w-4 h-4 text-white transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -156,11 +157,11 @@ export function Footer() {
           <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
         </div>
 
-        {/* 快速連結 */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
+        {/* 快速連結（min-h-11：WCAG 2.5.8 觸控目標 ≥44px） */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 text-xs text-white/80 mb-6">
           <Link
             to="/faq/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               ?
@@ -169,7 +170,7 @@ export function Footer() {
           </Link>
           <Link
             to="/about/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               i
@@ -178,7 +179,7 @@ export function Footer() {
           </Link>
           <Link
             to="/privacy/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               🔒
@@ -187,13 +188,13 @@ export function Footer() {
           </Link>
         </div>
 
-        {/* 熱門匯率快速導航 */}
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-white/80 mb-6">
+        {/* 熱門匯率快速導航（min-h-11：WCAG 2.5.8 觸控目標 ≥44px） */}
+        <div className="flex flex-wrap items-center justify-center gap-x-4 text-xs text-white/80 mb-6">
           {POPULAR_RATE_LINKS.map((link) => (
             <Link
               key={link.href}
               to={link.href}
-              className="hover:text-white transition-colors duration-200"
+              className="inline-flex min-h-11 items-center hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               {link.label}
             </Link>
@@ -224,12 +225,14 @@ export function Footer() {
             </div>
             <span className="font-semibold">{t('footer.appName')}</span>
             <span className="text-white/50">•</span>
+            {/* tabIndex＋group-focus-visible：tooltip 鍵盤可觸達（WCAG 2.1.1）。 */}
             <span
-              className="relative inline-block cursor-help text-xs text-white/60 font-mono group"
+              tabIndex={0}
+              className="relative inline-block cursor-help text-xs text-white/60 font-mono group rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               title={`Built on ${buildTime}`}
             >
               {appVersion}
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-text rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-text rounded opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
                 Built on {buildTime}
                 <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
               </span>
@@ -245,7 +248,7 @@ export function Footer() {
               href={AUTHOR_CONTACT_LINK_MAP.threads.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
+              className="inline-flex min-h-11 items-center text-white/90 hover:text-white transition-colors duration-200 font-medium rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               {AUTHOR_CONTACT_LINK_MAP.threads.value}
             </a>
@@ -263,8 +266,9 @@ export function Footer() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/30 transition-all duration-300 group"
           >
+            {/* 修正殘缺 class（原 `group- `）。 */}
             <svg
-              className="w-4 h-4 text-white group- transition-transform"
+              className="w-4 h-4 text-white transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -310,11 +314,11 @@ export function Footer() {
           <p className="text-xs text-white/70 leading-relaxed">{t('footer.disclaimer')}</p>
         </div>
 
-        {/* 快速連結 */}
-        <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-white/80 mb-6">
+        {/* 快速連結（min-h-11：WCAG 2.5.8 觸控目標 ≥44px） */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 text-xs text-white/80 mb-6">
           <Link
             to="/faq/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               ?
@@ -323,7 +327,7 @@ export function Footer() {
           </Link>
           <Link
             to="/about/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               i
@@ -332,7 +336,7 @@ export function Footer() {
           </Link>
           <Link
             to="/privacy/"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors duration-200"
+            className="inline-flex min-h-11 items-center gap-1.5 hover:text-white transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
             <span aria-hidden="true" className="text-white/50">
               🔒
@@ -350,12 +354,13 @@ export function Footer() {
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title}>
                 <h3 className="text-white font-semibold mb-4 text-lg">{section.title}</h3>
-                <ul className="space-y-2">
+                {/* py-1：桌面指標目標 ≥24px（WCAG 2.5.8 AA）。 */}
+                <ul className="space-y-1">
                   {section.links.map((link) => (
                     <li key={link.href}>
                       <Link
                         to={link.href}
-                        className="text-white/80 hover:text-white transition-colors duration-200 text-sm"
+                        className="inline-block py-1 text-white/80 hover:text-white transition-colors duration-200 text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                       >
                         {link.label}
                       </Link>

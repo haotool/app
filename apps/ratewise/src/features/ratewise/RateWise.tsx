@@ -170,7 +170,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           <p className="text-neutral-text-secondary mt-2 mb-6">{t('errors.rateLoadDescription')}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition-all duration-200 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <RefreshCw size={18} />
             {t('errors.reloadPage')}

@@ -41,9 +41,10 @@ export default function NotFound() {
 
         {/* Primary Action: Return to Home */}
         <div className="mb-8">
+          {/* focus-visible（僅鍵盤顯示 ring，WCAG 2.4.7）＋ min-h-11 觸控目標＋ active 回饋。 */}
           <Link
             to="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary-strong text-white font-medium rounded-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+            className="inline-flex min-h-11 items-center justify-center px-6 py-3 bg-primary-strong text-white font-medium rounded-lg hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-200 ease-out active:scale-[0.97]"
           >
             {t('notFound.goHome')}
           </Link>
@@ -55,13 +56,13 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/faq/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="inline-flex min-h-11 items-center justify-center px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors duration-200 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {t('settings.faq')}
             </Link>
             <Link
               to="/about/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="inline-flex min-h-11 items-center justify-center px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors duration-200 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {t('settings.aboutUs')}
             </Link>

@@ -217,12 +217,13 @@ export const MultiConverter = ({
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
                       </div>
                     ) : favorites.includes(code) ? (
+                      /* w-11 h-11 + 負 margin：44px 觸控目標（WCAG 2.5.8）不改列高。 */
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="-m-2 p-2.5 cursor-pointer transition-transform active:scale-95"
+                        className="w-11 h-11 -m-3.5 flex items-center justify-center rounded-full cursor-pointer transition-transform duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -233,7 +234,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="-m-2 p-2.5 cursor-pointer transition-colors"
+                        className="w-11 h-11 -m-3.5 flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted/50 hover:text-favorite transition-colors" />
@@ -268,7 +269,7 @@ export const MultiConverter = ({
                         calculator.openCalculator(code);
                       }
                     }}
-                    className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
+                    className="text-right text-base font-bold leading-tight cursor-pointer transition-opacity duration-200 hover:opacity-80 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     aria-label={t('multiConverter.amountClickCalculator', {
                       name: t(`currencies.${code}`),
                       code,
