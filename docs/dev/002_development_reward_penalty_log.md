@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+163
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+164
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-639-lh-mobile-perf-85
+- 原因：LH mobile perf 79（#639）——PWA 安裝指引於載入 1.8s 後彈出，其海報（126K px²）成為 LCP 元素（LCP 4.48s）；首頁 head 14 個 modulepreload 與 HTML／關鍵 CSS 競爭模擬 4G 頻寬拖慢 FCP 約 700ms；vite-react-ssg 動態 import react-dom/client 使 vendor-react 串行下載
+- 解法：指引改首次互動後起算顯示（LCP 於首次輸入後凍結，對齊 Chrome install promotion 指引）＋移除 HTML modulepreload（動態 import 依賴預載保留）＋ main 靜態載入 react-dom/client；preview 三次中位數 perf 86（FCP 2.65s、LCP 3.65s、TBT 0／CLS 0.002 不回退），SSG 255 頁零 diff、precache 98 項不變
 
 - 日期：2026-07-06
 - ID：reward-rw-638-591-star-hotzone-mobile-polish

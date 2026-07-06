@@ -367,6 +367,15 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2020',
       sourcemap: 'hidden',
+      // 首頁 head 的十餘個 modulepreload 會與 HTML 本體、關鍵 CSS 競爭 4G 頻寬，
+      // 實測拖慢 FCP 約 700ms；entry 為 async module，其靜態依賴仍會被瀏覽器
+      // 於 app chunk 抵達後平行下載，LCP 實測不受影響。
+      // 僅移除 HTML 注入的 modulepreload；動態 import 的依賴預載（js host）保留。
+      modulePreload: {
+        resolveDependencies(_url, deps, context) {
+          return context.hostType === 'html' ? [] : deps;
+        },
+      },
       rolldownOptions: {
         output: {
           minify: {
