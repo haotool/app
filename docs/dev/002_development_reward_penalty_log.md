@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 2）｜累計總分：+153
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-606-e2e-gate-regression
+- 原因：#606 hostname gate 未同步更新 ga-defer-lcp e2e——spec 以 HAS_BUILT_GA_RUNTIME（dist 內嵌 GA ID）期望 1 次 config，但 gate 在 localhost 恆回空 ID 致 config 0 次、waitForFunction 10 秒逾時，`pnpm test:e2e` 本地必紅（審查實跑抓出）
+- 解法：spec 改 gate-aware——匯出 analyticsGate 的 PRODUCTION_HOSTNAME（同一 SSOT，無第二份 hostname 字串），期望值依「HAS_BUILT_GA_RUNTIME 且 執行 host 為正式站」決定 1 或 0（0 時斷言恆 0 不逾時等待）；GA 注入驗證流程後移至正式站（本地 preview 恆零注入）；補 www 前綴與 FQDN 尾點繞過 case
+
+- 日期：2026-07-06
+- ID：reward-rw-607-offline-install-guide-img
+- 原因：pwa-install/\*\* hero 圖被 globIgnores 排除 precache（708KB 超過 200KB 門檻不宜納入），離線開啟 PWA 安裝導引時大面積破圖覆蓋內容（issue 607）
+- 解法：img onError 時隱藏整個 picture 圖區、文字步驟導引保留（離線誠實原則），補離線降級單元測試並以 Playwright 阻斷圖片請求截圖實證無破圖
+
+- 日期：2026-07-06
+- ID：reward-rw-606-ga4-staging-gate
+- 原因：GA4 僅以 VITE_GA_ID 空值判斷是否啟用，staging／preview 共用 production build 令 gtag 照常外送，QA 流量污染正式 GA4 資料（issue 606）
+- 解法：新增 resolveGaMeasurementId 以 APP_INFO.siteUrl（SSOT）導出正式站 hostname 做 runtime gate，非正式 host 回空字串使 initGA 提早返回；補 production／staging／localhost 單元測試並以本地 preview 網路面板實證零 gtag 請求
 
 - 日期：2026-07-06
 - ID：neutral-rw-e5d-qa-capture-matrix
@@ -27,7 +42,6 @@
 - ID：neutral-rw-e5d-answer-capsule-e1-token
 - 原因：AnswerCapsule 沿用 legacy `card` 類與任意邊框，與 E4/E5 內容頁 E1 token 體系（rounded-card/panel、hairline、shadow-card）漂移
 - 解法：改 E1 token 卡片＋lucide Zap 標題徽章，可見文字零變動，消費頁（首頁/FAQ/About/Guide/OpenData/攻略頁）樣式一致收斂
-
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot
 - 原因：#595 驗證只在本地同時區（build 與瀏覽器皆 Asia/Taipei）抽測，未覆蓋 staging「UTC build × 台北瀏覽器」情境，漏掉 Footer 建置時間 toLocale 無 timeZone 造成內容頁全數 #418

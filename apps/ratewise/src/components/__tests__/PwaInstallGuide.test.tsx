@@ -124,6 +124,28 @@ describe('PwaInstallGuide', () => {
     expect(prompt).toHaveBeenCalledTimes(1);
   });
 
+  it('hides the poster but keeps the guide content when the image fails to load (offline)', () => {
+    mockNavigator(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+      'iPhone',
+    );
+
+    render(<PwaInstallGuide />);
+    showGuide();
+
+    const title = `把 ${APP_INFO.shortName} 加到 iPhone 主畫面`;
+    const poster = screen.getByRole('img', { name: title });
+
+    act(() => {
+      fireEvent.error(poster);
+    });
+
+    // 圖區隱藏，文字導引保留（離線誠實原則：不呈現破圖）。
+    expect(screen.queryByRole('img', { name: title })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: title })).toBeInTheDocument();
+    expect(screen.getByText('加入主畫面')).toBeInTheDocument();
+  });
+
   it('closes when the Escape key is pressed', () => {
     mockNavigator(
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',

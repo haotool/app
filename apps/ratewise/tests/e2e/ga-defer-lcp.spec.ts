@@ -25,12 +25,17 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PRODUCTION_HOSTNAME } from '../../src/utils/analyticsGate';
 
 const BASE_URL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:4173';
 const BASE_PATH =
   process.env['E2E_BASE_PATH'] || process.env['VITE_RATEWISE_BASE_PATH'] || '/ratewise';
 const BASE = `${BASE_URL}${BASE_PATH}/`.replace(/\/+$/, '/');
 const APP_ROOT = fileURLToPath(new URL('../..', new URL('.', import.meta.url)));
+
+// hostname gate（issue 606）：GA 僅在正式站 host 初始化。
+// 期望 config 次數依「建置內嵌 GA ID 且 執行 host 為正式站」決定，hostname 來源與 runtime 同一 SSOT。
+const IS_PRODUCTION_HOST = new URL(BASE).hostname === PRODUCTION_HOSTNAME;
 
 function detectBuiltGaRuntime(): boolean {
   try {
@@ -169,7 +174,11 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     await mockRatesApi(page);
     await page.goto(BASE, { waitUntil: 'load' });
 
-    if (HAS_BUILT_GA_RUNTIME) {
+    // gate-aware：建置內嵌 GA ID 且執行 host 為正式站才會初始化；
+    // 其餘（本地 preview / staging）hostname gate 令 initGA 提早返回，config 恆 0。
+    const expectGaConfig = HAS_BUILT_GA_RUNTIME && IS_PRODUCTION_HOST;
+
+    if (expectGaConfig) {
       await page.waitForFunction(
         () =>
           window.dataLayer?.some((item) => {
@@ -198,10 +207,15 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
     });
 
     expect(analyticsState.readyState, '實頁面 load 後 readyState 應為 complete').toBe('complete');
-    if (HAS_BUILT_GA_RUNTIME) {
-      expect(analyticsState.configCalls, '內含 GA runtime 的建置應恰好送出 1 次 config').toBe(1);
+    if (expectGaConfig) {
+      expect(analyticsState.configCalls, '正式站建置應恰好送出 1 次 config（不重複初始化）').toBe(
+        1,
+      );
     } else {
-      expect(analyticsState.configCalls, '未包含 GA runtime 的建置不應送出 config').toBe(0);
+      expect(
+        analyticsState.configCalls,
+        '非正式站 host（hostname gate）或無 GA runtime 的建置不應送出 config',
+      ).toBe(0);
     }
 
     console.log(`[GA E2E] readyState after load: ${analyticsState.readyState}`);

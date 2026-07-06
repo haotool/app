@@ -99,6 +99,8 @@ function PwaInstallGuideClient() {
   const [environment, setEnvironment] = React.useState<PwaInstallEnvironment | null>(null);
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = React.useState(false);
+  // pwa-install/** 未納入 precache（708KB 超過體積門檻）；離線載圖失敗時隱藏圖區，避免大面積破圖。
+  const [posterFailed, setPosterFailed] = React.useState(false);
 
   React.useEffect(() => {
     const currentEnvironment = readPwaInstallEnvironmentFromBrowser();
@@ -215,19 +217,22 @@ function PwaInstallGuideClient() {
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
 
-          <picture>
-            <source srcSet={getAssetPath(`${posterPrefix}.avif`)} type="image/avif" />
-            <source srcSet={getAssetPath(`${posterPrefix}.webp`)} type="image/webp" />
-            <img
-              src={getAssetPath(`${posterPrefix}.png`)}
-              alt={guide.title}
-              width={640}
-              height={1349}
-              className="block max-h-[45vh] w-full object-cover object-top"
-              loading="lazy"
-              decoding="async"
-            />
-          </picture>
+          {posterFailed ? null : (
+            <picture>
+              <source srcSet={getAssetPath(`${posterPrefix}.avif`)} type="image/avif" />
+              <source srcSet={getAssetPath(`${posterPrefix}.webp`)} type="image/webp" />
+              <img
+                src={getAssetPath(`${posterPrefix}.png`)}
+                alt={guide.title}
+                width={640}
+                height={1349}
+                className="block max-h-[45vh] w-full object-cover object-top"
+                loading="lazy"
+                decoding="async"
+                onError={() => setPosterFailed(true)}
+              />
+            </picture>
+          )}
 
           <div className="relative space-y-3 px-4 pb-4 pt-3">
             <div className="flex items-start gap-3 pr-8">

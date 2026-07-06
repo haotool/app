@@ -38,6 +38,7 @@ import {
   recordPwaDiagnostic,
 } from './utils/pwaDiagnostics';
 import { initGA, scheduleAfterPageLoad, trackPageview, trackAiReferral } from '@shared/analytics';
+import { resolveGaMeasurementId } from './utils/analyticsGate';
 import {
   ANALYTICS_IDLE_TIMEOUT_MS,
   ANALYTICS_INIT_DELAY_MS,
@@ -147,7 +148,11 @@ export const createRoot = ViteReactSSG(
 
       // GA4 延後初始化：load 後再注入腳本，避免 152KB GA 腳本與 LCP 關鍵資源競爭頻寬。
       // 防快取競態：若頁面已在 load 前完成（BFCache、快速快取頁），直接呼叫。
-      const gaId = import.meta.env.VITE_GA_ID ?? '';
+      // hostname gate：staging / preview 佈署共用 production build，僅正式站 host 放行 GA4。
+      const gaId = resolveGaMeasurementId(
+        window.location.hostname,
+        import.meta.env.VITE_GA_ID ?? '',
+      );
       const initAnalytics = (): void => {
         initGA(gaId);
         flushPwaDiagnosticAnalyticsQueue();
