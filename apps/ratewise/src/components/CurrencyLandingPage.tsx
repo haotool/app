@@ -218,6 +218,7 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       <ContentPageLayout
+        width="wide"
         breadcrumbItems={[
           { label: t('nav.home'), href: '/' },
           {
@@ -227,7 +228,8 @@ export function CurrencyLandingPage({
         ]}
         testId="currency-landing-page"
       >
-        <div className="space-y-6">
+        {/* #594 二階：≥1024px 六段 IA 轉寬版兩欄 grid（全幅段落標 lg:col-span-2）；<1024px 佈局零變化。 */}
+        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
           {/* 1. Answer Hero：頁面身分＋（金額頁換算結果）＋快速答案＋CTA。 */}
           <CurrencyAnswerHero
             flag={currencyFlag}
@@ -272,8 +274,13 @@ export function CurrencyLandingPage({
               reverseLadder={reverseLadder}
             />
           )}
+          {/* 金額頁另有階梯表佔一半欄（與報價對比卡成對），互鏈改全幅避免奇數子項右側懸空。 */}
           {commonAmounts.length > 0 && (
-            <CommonAmountsSection commonAmounts={commonAmounts} pathname={pathname} />
+            <CommonAmountsSection
+              commonAmounts={commonAmounts}
+              pathname={pathname}
+              className={ladderRows.length > 0 ? 'lg:col-span-2' : undefined}
+            />
           )}
 
           {/* 4. 在地情境卡片組：匯率重點＋旅遊提示＋換匯管道比較。 */}
@@ -296,7 +303,7 @@ export function CurrencyLandingPage({
 
           {/* 5. FAQ 手風琴（E4 ContentFaqAccordion 範式）。 */}
           {faqEntries.length > 0 && (
-            <section>
+            <section className="lg:col-span-2">
               <CurrencySectionHeading icon={HelpCircle}>{faqTitle}</CurrencySectionHeading>
               <ContentFaqAccordion items={faqEntries} />
             </section>
@@ -306,7 +313,7 @@ export function CurrencyLandingPage({
           {relatedGuides.length > 0 && <RelatedGuidesSection relatedGuides={relatedGuides} />}
 
           {/* Data Source Notice */}
-          <footer className="text-center text-xs text-text-muted opacity-60">
+          <footer className="text-center text-xs text-text-muted opacity-60 lg:col-span-2">
             <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>

@@ -10,7 +10,8 @@ export interface HowToStepsSectionProps {
 
 export function HowToStepsSection({ howToSteps }: HowToStepsSectionProps) {
   return (
-    <section>
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section className="lg:col-span-2">
       <CurrencySectionHeading icon={ListOrdered}>使用步驟</CurrencySectionHeading>
       <div className="grid gap-3 md:grid-cols-2">
         {howToSteps.map((step) => (

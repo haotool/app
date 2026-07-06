@@ -11,13 +11,19 @@ import { CurrencySectionHeading } from './CurrencySectionHeading';
 export interface CommonAmountsSectionProps {
   commonAmounts: CommonAmountEntry[];
   pathname: string;
+  /** #594 二階：寬版 grid 欄位配置由頁面層決定（金額頁全幅防半欄懸空）。 */
+  className?: string;
 }
 
-export function CommonAmountsSection({ commonAmounts, pathname }: CommonAmountsSectionProps) {
+export function CommonAmountsSection({
+  commonAmounts,
+  pathname,
+  className,
+}: CommonAmountsSectionProps) {
   const basePath = pathname.replace(/\/$/, '');
 
   return (
-    <section>
+    <section className={className}>
       <CurrencySectionHeading icon={Calculator}>常見金額換算</CurrencySectionHeading>
       <div className="rounded-card border border-border/60 bg-surface p-4 shadow-card sm:p-5">
         <p className="text-xs leading-relaxed text-text-muted sm:text-sm">
