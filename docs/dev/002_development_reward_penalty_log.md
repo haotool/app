@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：penalty-rw-606-e2e-gate-regression
+- 原因：#606 hostname gate 未同步更新 ga-defer-lcp e2e——spec 以 HAS_BUILT_GA_RUNTIME（dist 內嵌 GA ID）期望 1 次 config，但 gate 在 localhost 恆回空 ID 致 config 0 次、waitForFunction 10 秒逾時，`pnpm test:e2e` 本地必紅（審查實跑抓出）
+- 解法：spec 改 gate-aware——匯出 analyticsGate 的 PRODUCTION_HOSTNAME（同一 SSOT，無第二份 hostname 字串），期望值依「HAS_BUILT_GA_RUNTIME 且 執行 host 為正式站」決定 1 或 0（0 時斷言恆 0 不逾時等待）；GA 注入驗證流程後移至正式站（本地 preview 恆零注入）；補 www 前綴與 FQDN 尾點繞過 case
 
 - 日期：2026-07-06
 - ID：reward-rw-607-offline-install-guide-img

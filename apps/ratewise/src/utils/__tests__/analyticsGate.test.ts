@@ -13,6 +13,8 @@ describe('resolveGaMeasurementId', () => {
     ['localhost preview', 'localhost'],
     ['loopback IP', '127.0.0.1'],
     ['非正式子網域', 'preview.app.haotool.org'],
+    ['www 前綴變體', 'www.app.haotool.org'],
+    ['FQDN 尾點變體', 'app.haotool.org.'],
   ])('%s 回傳空字串使 initGA 提早返回', (_label, hostname) => {
     expect(resolveGaMeasurementId(hostname, GA_ID)).toBe('');
   });
