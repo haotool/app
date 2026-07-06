@@ -154,6 +154,24 @@ describe('內建主題 on-surface 錨點合約（#632 預設零變化 + #609 白
   );
 });
 
+describe('死類 text-primary-foreground 守門', () => {
+  // --color-primary-foreground CSS 變數未定義，此類實渲染為繼承色（QA-H E6：
+  // 深藏青字壓 bg-primary-strong 僅 3.3:1）。白字實底一律用 text-white。
+  it('src 下使用數必須為 0', () => {
+    const pattern = /(?<![\w-])text-primary-foreground(?![\w-])/;
+    const hits = collectSourceFiles(SRC_ROOT).flatMap((path) => {
+      const lines = readFileSync(path, 'utf-8').split('\n');
+      return lines.flatMap((line, index) =>
+        pattern.test(line) ? [`${relative(SRC_ROOT, path)}:${index + 1}`] : [],
+      );
+    });
+    expect(
+      hits,
+      `發現死類 text-primary-foreground（請改用 text-white）：\n${hits.join('\n')}`,
+    ).toEqual([]);
+  });
+});
+
 describe('raw primary 文字曝露面守門（#632）', () => {
   it('掃描範圍非空（防止路徑失效讓守門空轉）', () => {
     expect(collectSourceFiles(SRC_ROOT).length).toBeGreaterThan(100);
