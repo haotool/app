@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（雙線合併：本線 reward 4＋上游 reward 1）｜累計總分：+170
+> 本次分數變化：+1｜累計總分：+172
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-344-lhci-smoke-authority-guides
+- 原因：Lighthouse CI smoke paths 僅覆蓋 `/`、`/faq/`、`/about/`，3 篇 Authority Guide 主戰內容頁無同層級性能守門，內容頁 CLS/LCP 回歸無法被 PR 守門攔截（issue #344）
+- 解法：`LIGHTHOUSE_CI_SMOKE_PATHS`（seo-paths.config.mjs＋seo-paths.ts 雙 SSOT 同步）擴充 sell-rate-vs-mid-rate／cash-vs-spot-rate／card-rate-guide 三頁 canonical trailing slash 路徑，消費點（.lighthouserc.cjs、lighthouse-production.mjs、lighthouse-ci.sh）均由 `APP_CONFIG.lighthouseSmokePaths` 取得無第二份清單，SEO_MASTER_SSOT B4 同步
+
+- 日期：2026-07-07
+- ID：reward-rw-ga-e2e-gate-regression-window
+- 原因：ga-defer-lcp.spec.ts 非正式 host 分支僅等 300ms 即斷言零 GA config，短於 ANALYTICS_INIT_DELAY_MS（6s）——hostname gate（#606）若回歸，GA 於 6 秒後初始化而測試已提前通過，守門形同虛設（PR #629 review thread）
+- 解法：內嵌 GA runtime 且非正式 host 情境改等待完整初始化窗口（init delay 6s＋idle timeout 2s＋1s buffer，鏡射 performance.ts 預設並尊重同名 env 覆寫）後再斷言零 config；無 GA runtime 建置維持 300ms 短取樣，斷言本身不放寬
 
 - 日期：2026-07-07
 - ID：reward-rw-currency-cta-dead-class-contrast

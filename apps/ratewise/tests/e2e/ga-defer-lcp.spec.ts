@@ -37,6 +37,25 @@ const APP_ROOT = fileURLToPath(new URL('../..', new URL('.', import.meta.url)));
 // 期望 config 次數依「建置內嵌 GA ID 且 執行 host 為正式站」決定，hostname 來源與 runtime 同一 SSOT。
 const IS_PRODUCTION_HOST = new URL(BASE).hostname === PRODUCTION_HOSTNAME;
 
+// gate 回歸監測窗（PR #629 review）：initGA 於 load 後 ANALYTICS_INIT_DELAY_MS 再經
+// requestIdleCallback（timeout ANALYTICS_IDLE_TIMEOUT_MS）才執行；取樣需晚於此窗口，
+// 否則 hostname gate 回歸時 GA 仍會在 6 秒後初始化而測試已提前通過。
+// 預設值鏡射 src/config/performance.ts（該檔依賴 import.meta.env，node 端無法直接 import）。
+const parsePositiveInteger = (value: string | undefined, fallback: number): number => {
+  if (value === undefined || value.trim() === '') return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+const ANALYTICS_INIT_DELAY_MS = parsePositiveInteger(
+  process.env['VITE_ANALYTICS_INIT_DELAY_MS'],
+  6_000,
+);
+const ANALYTICS_IDLE_TIMEOUT_MS = parsePositiveInteger(
+  process.env['VITE_ANALYTICS_IDLE_TIMEOUT_MS'],
+  2_000,
+);
+const GATE_REGRESSION_WAIT_MS = ANALYTICS_INIT_DELAY_MS + ANALYTICS_IDLE_TIMEOUT_MS + 1_000;
+
 function detectBuiltGaRuntime(): boolean {
   try {
     const assetDir = join(APP_ROOT, 'dist', 'assets');
@@ -188,7 +207,12 @@ test.describe('GA4 延後初始化 + LCP 效能', () => {
         null,
         { timeout: 10_000 },
       );
+    } else if (HAS_BUILT_GA_RUNTIME) {
+      // 建置內嵌 GA ID 但非正式站 host：等待超過完整 analytics 初始化窗口再取樣，
+      // 確保 hostname gate 回歸（#606）時能觀測到延後出現的 config 而非提前通過。
+      await page.waitForTimeout(GATE_REGRESSION_WAIT_MS);
     } else {
+      // 建置未內嵌 GA ID：initGA 無 ID 可用，任何時點都不可能送 config，短取樣即可。
       await page.waitForTimeout(300);
     }
 

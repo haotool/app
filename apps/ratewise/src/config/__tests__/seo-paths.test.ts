@@ -124,7 +124,14 @@ describe('SEO Paths Configuration', () => {
 
     it('Lighthouse CI smoke paths 應使用 canonical trailing slash 路徑', () => {
       expect(APP_CONFIG.lighthouseSmokePaths).toEqual(LIGHTHOUSE_CI_SMOKE_PATHS);
-      expect(LIGHTHOUSE_CI_SMOKE_PATHS).toEqual(['/', '/faq/', '/about/']);
+      expect(LIGHTHOUSE_CI_SMOKE_PATHS).toEqual([
+        '/',
+        '/faq/',
+        '/about/',
+        '/sell-rate-vs-mid-rate/',
+        '/cash-vs-spot-rate/',
+        '/card-rate-guide/',
+      ]);
 
       LIGHTHOUSE_CI_SMOKE_PATHS.forEach((path) => {
         expect(SEO_PATHS).toContain(path);
