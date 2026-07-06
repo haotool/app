@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { FAQEntry } from '../../config/seo-metadata';
 
 export interface CurrencyAnswerHeroProps {
@@ -14,8 +14,6 @@ export interface CurrencyAnswerHeroProps {
   description: string;
   updatedDate: string;
   quickAnswers: FAQEntry[];
-  ctaTitle: string;
-  ctaLead: string;
   ctaLabel: string;
   ctaTo: string;
   /** 金額頁換算結果卡插槽（answer-first：緊接頁面身分之後）。 */
@@ -28,8 +26,6 @@ export function CurrencyAnswerHero({
   description,
   updatedDate,
   quickAnswers,
-  ctaTitle,
-  ctaLead,
   ctaLabel,
   ctaTo,
   children,
@@ -56,34 +52,29 @@ export function CurrencyAnswerHero({
 
       {children}
 
-      {quickAnswers.length > 0 && (
-        <div className="mt-4 rounded-panel border border-primary/20 bg-primary/5 p-4">
-          <h2 className="text-sm font-semibold text-primary-on-surface">快速答案</h2>
-          <div className="mt-3 space-y-3">
-            {quickAnswers.map((item) => (
-              <div
-                key={item.question}
-                className="border-t border-border/40 pt-3 first:border-t-0 first:pt-0"
-              >
-                <h3 className="text-xs font-medium text-text-muted">{item.question}</h3>
-                <p className="mt-1 text-sm font-medium leading-relaxed text-text sm:text-base">
-                  {item.answer}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-5 border-t border-border/60 pt-4">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-text">
-          <Sparkles className="h-4 w-4 text-primary-on-surface" aria-hidden="true" />
-          {ctaTitle}
-        </h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{ctaLead}</p>
+      {/* 單一帶參數 hero 卡（#631）：快速答案＋深連結 CTA 收斂同卡，砍除與快速答案語意重複的行銷段。 */}
+      <div className="mt-4 rounded-panel border border-primary/20 bg-primary/5 p-4">
+        {quickAnswers.length > 0 && (
+          <>
+            <h2 className="text-sm font-semibold text-primary-on-surface">快速答案</h2>
+            <div className="mt-3 space-y-3">
+              {quickAnswers.map((item) => (
+                <div
+                  key={item.question}
+                  className="border-t border-border/40 pt-3 first:border-t-0 first:pt-0"
+                >
+                  <h3 className="text-xs font-medium text-text-muted">{item.question}</h3>
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-text sm:text-base">
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         <Link
           to={ctaTo}
-          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
         >
           {ctaLabel}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

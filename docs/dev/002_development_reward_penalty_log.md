@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+158
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+159
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-631-pair-cta-deeplink
+- 原因：pair 頁 AnswerHero 主 CTA 為裸 `/` 未帶深連結參數，SEO 落地點「開始換算 KRW→TWD」卻拿到預設 TWD→JPY（QA-F P1-1），且「立即換算」段與快速答案語意重複
+- 解法：converterHref 於 pair 頁帶 `?from&to`（金額頁維持 `?amount&from&to`），hero 收斂為單一帶參數卡並砍除重複行銷段（PM 授權內容策略修正，parity 差異已申報），補 CTA href 單元測試與落地 e2e
 
 - 日期：2026-07-06
 - ID：reward-haotool-e3-final-review-fixes
