@@ -112,6 +112,7 @@ const ko = {
   // Trend Chart
   trend: {
     cashSellBasis: '현금 매도율 추이',
+    spotSellBasis: '전신환 매도율 추이',
   },
 
   // Multi Currency Converter
@@ -186,6 +187,7 @@ const ko = {
     customThemeToneMint: '민트 화이트',
     customThemeToneRose: '로즈 화이트',
     customThemeReset: '기본 테마로 복원',
+    customThemeContrastNotice: '이 색상의 텍스트는 가독성을 위해 자동으로 어두워집니다',
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',
     techStack: '기술 스택',

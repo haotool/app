@@ -4,6 +4,8 @@
  *
  * 將 30 個獨立的 history/YYYY-MM-DD.json 合併成單一 history-30d.json。
  * 使用 column-major 格式減少 JSON 大小（約 8KB gzip）。
+ * rates 維持現金賣出基準（向後相容）；basisRates 由每日檔 details 展開
+ * 多基準序列（cashBuy/spotBuy/spotSell），供趨勢圖跟隨費率模式（#564/#618）。
  *
  * 輸入：public/rates/history/*.json（或 CDN data branch）
  * 輸出：public/rates/history-30d.json
@@ -40,6 +42,28 @@ function resolveTargetRoot() {
 const CDN_BASE = 'https://cdn.jsdelivr.net/gh/haotool/app@data';
 const RAW_BASE = 'https://raw.githubusercontent.com/haotool/app/data';
 const MAX_DAYS = 30;
+
+// 多基準序列鍵值：對應每日檔 details 的 cash/spot 買賣欄位（現金賣出已由 rates 承載）。
+const BASIS_KEYS = ['cashBuy', 'spotBuy', 'spotSell'];
+
+/**
+ * 從每日檔 details 取出指定基準的匯率；TWD 為基準幣固定 1，缺值回傳 null。
+ * @param {{ cash?: { buy?: number|null }, spot?: { buy?: number|null, sell?: number|null } } | undefined} detail
+ * @param {string} basis
+ * @param {string} currency
+ * @returns {number | null}
+ */
+function pickBasisRate(detail, basis, currency) {
+  if (currency === 'TWD') return 1;
+  if (!detail) return null;
+  const value =
+    basis === 'cashBuy'
+      ? detail.cash?.buy
+      : basis === 'spotBuy'
+        ? detail.spot?.buy
+        : detail.spot?.sell;
+  return typeof value === 'number' && value > 0 ? value : null;
+}
 
 /**
  * 產生過去 N 天的日期字串陣列
@@ -100,6 +124,7 @@ async function main() {
 
   const dates = generateDateRange(MAX_DAYS);
   const aggregateRates = {};
+  const aggregateBasisRates = {};
   const validDates = [];
   let updateTime = '';
 
@@ -129,6 +154,12 @@ async function main() {
   for (const currency of currencies) {
     aggregateRates[currency] = [];
   }
+  for (const basis of BASIS_KEYS) {
+    aggregateBasisRates[basis] = {};
+    for (const currency of currencies) {
+      aggregateBasisRates[basis][currency] = [];
+    }
+  }
 
   // 並行獲取所有日期的資料（5 批次）
   const BATCH_SIZE = 5;
@@ -155,6 +186,11 @@ async function main() {
         for (const currency of currencies) {
           const rate = data.rates[currency];
           aggregateRates[currency].push(rate ?? null);
+          for (const basis of BASIS_KEYS) {
+            aggregateBasisRates[basis][currency].push(
+              pickBasisRate(data.details?.[currency], basis, currency),
+            );
+          }
         }
       } else {
         consecutiveMissing++;
@@ -163,6 +199,9 @@ async function main() {
         // 填充 null 保持索引對齊
         for (const currency of currencies) {
           aggregateRates[currency].push(null);
+          for (const basis of BASIS_KEYS) {
+            aggregateBasisRates[basis][currency].push(null);
+          }
         }
       }
     }
@@ -179,12 +218,13 @@ async function main() {
     }
   }
 
-  // 建立 aggregate JSON
+  // 建立 aggregate JSON（rates 保持現金賣出；basisRates 為多基準擴充欄位）
   const aggregate = {
     updateTime: updateTime || new Date().toISOString(),
     generatedAt: new Date().toISOString(),
     dates: validDates,
     rates: aggregateRates,
+    basisRates: aggregateBasisRates,
   };
 
   // 確保輸出目錄存在

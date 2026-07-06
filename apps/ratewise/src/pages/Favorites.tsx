@@ -211,7 +211,7 @@ export default function Favorites() {
                     animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
                     transition={transitions.default}
                   >
-                    <TabIcon size={18} className={isActive ? 'text-primary' : ''} />
+                    <TabIcon size={18} className={isActive ? 'text-primary-on-surface' : ''} />
                   </motion.div>
                   <span className="text-2xs font-bold">{tab.label}</span>
                 </motion.button>
@@ -291,7 +291,8 @@ export default function Favorites() {
                                   </div>
                                 ) : (
                                   <button
-                                    className="w-11 h-11 -mx-2 -my-2 flex-shrink-0 flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                                    // 熱區 ≥44×44（#638）：負邊距補償使 margin box 維持 28×22，列高與對齊不變。
+                                    className="min-w-11 min-h-11 -mx-2 -my-[11px] flex-shrink-0 flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                                     onClick={() => toggleFavorite(code)}
                                     aria-label={
                                       isFavorite
@@ -367,7 +368,7 @@ export default function Favorites() {
                                   }}
                                   aria-label={`${t('favorites.goToConvert')} ${code}`}
                                 >
-                                  <span className="text-2xs font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
+                                  <span className="text-2xs font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary-on-surface transition">
                                     {t('favorites.clickToConvert')}
                                   </span>
                                 </div>

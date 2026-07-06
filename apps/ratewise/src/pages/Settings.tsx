@@ -401,7 +401,7 @@ export default function Settings() {
                     className="mb-1 relative z-10"
                   >
                     <option.icon
-                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary' : ''}`}
+                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary-on-surface' : ''}`}
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
                   </motion.span>
@@ -436,7 +436,7 @@ export default function Settings() {
           {isConverterVariantOverridden && (
             <p
               data-testid="converter-variant-override-badge"
-              className="mb-3 mx-1 px-3 py-2 rounded-xl bg-primary/10 text-primary text-2xs font-bold leading-relaxed"
+              className="mb-3 mx-1 px-3 py-2 rounded-xl bg-primary/10 text-primary-on-surface text-2xs font-bold leading-relaxed"
             >
               {t('settings.converterVariantOverrideBadge', {
                 variant: t(
@@ -476,7 +476,7 @@ export default function Settings() {
                     className="mb-1 relative z-10"
                   >
                     <option.icon
-                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary' : ''}`}
+                      className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-primary-on-surface' : ''}`}
                       strokeWidth={isActive ? 2.5 : 1.8}
                     />
                   </motion.span>
@@ -544,7 +544,7 @@ export default function Settings() {
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
-              className="w-full px-5 py-3.5 flex items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
+              className="w-full px-5 py-3.5 flex items-center justify-center gap-2 text-primary-on-surface hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <Play className="w-3.5 h-3.5" />
               <span className="text-xs font-bold">{t('settings.splashPreview')}</span>

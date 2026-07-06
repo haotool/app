@@ -37,7 +37,7 @@ const SECTIONS: readonly ContentSection[] = [
               href={APP_INFO.licenseUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary underline"
+              className="text-primary-on-surface underline"
             >
               {APP_INFO.license}
             </a>{' '}

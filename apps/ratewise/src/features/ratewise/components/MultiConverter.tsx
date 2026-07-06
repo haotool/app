@@ -223,7 +223,8 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="w-11 h-11 -m-3.5 flex items-center justify-center rounded-full cursor-pointer transition-transform duration-200 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        // 熱區 ≥44×44（#638）：負邊距補償使 margin box 維持 24×20，列高不變。
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center rounded-full cursor-pointer transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -234,7 +235,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="w-11 h-11 -m-3.5 flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center rounded-full cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted/50 hover:text-favorite transition-colors" />

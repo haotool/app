@@ -11,13 +11,19 @@ import { CurrencySectionHeading } from './CurrencySectionHeading';
 export interface CommonAmountsSectionProps {
   commonAmounts: CommonAmountEntry[];
   pathname: string;
+  /** #594 二階：寬版 grid 欄位配置由頁面層決定（金額頁全幅防半欄懸空）。 */
+  className?: string;
 }
 
-export function CommonAmountsSection({ commonAmounts, pathname }: CommonAmountsSectionProps) {
+export function CommonAmountsSection({
+  commonAmounts,
+  pathname,
+  className,
+}: CommonAmountsSectionProps) {
   const basePath = pathname.replace(/\/$/, '');
 
   return (
-    <section>
+    <section className={className}>
       <CurrencySectionHeading icon={Calculator}>常見金額換算</CurrencySectionHeading>
       <div className="rounded-card border border-border/60 bg-surface p-4 shadow-card sm:p-5">
         <p className="text-xs leading-relaxed text-text-muted sm:text-sm">
@@ -30,11 +36,11 @@ export function CommonAmountsSection({ commonAmounts, pathname }: CommonAmountsS
               to={`${basePath}/${entry.amount}/`}
               className="group flex min-h-11 items-center justify-between gap-3 py-3 transition-colors hover:bg-primary/5"
             >
-              <h3 className="text-sm font-medium text-text transition-colors group-hover:text-primary">
+              <h3 className="text-sm font-medium text-text transition-colors group-hover:text-primary-on-surface">
                 {entry.question}
               </h3>
               <ChevronRight
-                className="h-4 w-4 shrink-0 text-text-muted opacity-60 transition-colors group-hover:text-primary"
+                className="h-4 w-4 shrink-0 text-text-muted opacity-60 transition-colors group-hover:text-primary-on-surface"
                 aria-hidden="true"
               />
             </Link>

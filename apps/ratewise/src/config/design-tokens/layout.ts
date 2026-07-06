@@ -189,13 +189,15 @@ export const rateWiseLayoutTokens = {
   /**
    * 內容容器 - 流體內距搭配最大寬度限制
    * [align:2026-01-29] 與 3ea33 版一致的 px/py 與 max-w
+   * [#594 二階] ≥1024px 轉兩欄 grid：左欄換算核心（28rem）、右欄輔助資訊；<1024px 佈局零變化。
    */
   content: {
-    className: 'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full',
+    className:
+      'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6',
   },
 
   section: {
-    className: 'flex-1 flex flex-col mb-4',
+    className: 'flex-1 flex flex-col mb-4 lg:col-start-1',
   },
 
   /** 單幣別卡片 - 移除 flex-1 避免過度拉伸 */
@@ -349,32 +351,33 @@ export const singleConverterLayoutTokens = {
       'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted/60',
 
     /** 換錢所 badge 圖示 */
-    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary/70',
+    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary-on-surface',
 
     /** 換錢所 badge 分隔點 */
     exchangeShopBadgeDot: 'text-text-muted/40',
 
     /** 換錢所 badge 來源連結 */
     exchangeShopBadgeLink:
-      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary',
+      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-on-surface',
   },
 
   /**
    * 快速金額區塊
    *
-   * 隱藏優先順序：來源 (short) → 結果 (tiny)
+   * 隱藏優先順序：來源 (tiny) → 結果 (micro)
    * 快速金額為輔助功能，優先於資料來源隱藏
+   * #591：iPhone SE（667px 高，short 區間）需保留來源快速金額，隱藏門檻下移一級
    */
   quickAmounts: {
     /** 容器樣式（snap-x proximity：滑動後 chip 對齊起點，避免半截停留） */
     container:
       'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto snap-x snap-proximity scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
 
-    /** 來源快速金額：short (≤700px) 隱藏 */
-    fromVisibility: 'short:hidden',
+    /** 來源快速金額：tiny (≤650px) 隱藏 */
+    fromVisibility: 'tiny:hidden',
 
-    /** 結果快速金額：tiny (≤650px) 隱藏 */
-    toVisibility: 'tiny:hidden',
+    /** 結果快速金額：micro (≤600px) 隱藏 */
+    toVisibility: 'micro:hidden',
   },
 
   /**
@@ -412,7 +415,7 @@ export const singleConverterLayoutTokens = {
  *
  * 互動狀態：
  * - 預設：抬升表面背景 + 柔和文字 (bg-surface-elevated text-text/70)
- * - 懸停：主色調淡化 + 主色文字 (bg-primary/10 text-primary)
+ * - 懸停：主色調淡化 + 主色文字 (bg-primary/10 text-primary-on-surface)
  * - 按壓：主色調加深 + 縮放回饋 (bg-primary/20 scale-[0.97])
  *
  * @created 2026-01-25
@@ -433,11 +436,11 @@ export const quickAmountButtonTokens = {
     },
     hover: {
       background: 'bg-primary/10',
-      text: 'text-primary',
+      text: 'text-primary-on-surface',
     },
     active: {
       background: 'bg-primary/20',
-      text: 'text-primary',
+      text: 'text-primary-on-surface',
     },
   },
   /** 微互動效果（E1：hover 縮放/陰影清零，僅保留 press-scale 0.97） */
@@ -452,7 +455,7 @@ export const quickAmountButtonTokens = {
    * min-h-9 保觸控目標、snap-start 配合容器 scroll-snap 滑動對齊
    */
   pattern:
-    'flex-shrink-0 snap-start min-h-9 cursor-pointer px-3 py-1.5 rounded-xl text-sm font-semibold bg-surface-elevated text-text/70 hover:bg-primary/10 hover:text-primary active:bg-primary/20 active:text-primary transition-all duration-200 ease-out active:scale-[0.97]',
+    'flex-shrink-0 snap-start min-h-9 cursor-pointer px-3 py-1.5 rounded-xl text-sm font-semibold bg-surface-elevated text-text/70 hover:bg-primary/10 hover:text-primary-on-surface active:bg-primary/20 active:text-primary-on-surface transition-all duration-200 ease-out active:scale-[0.97]',
 } as const;
 
 /**

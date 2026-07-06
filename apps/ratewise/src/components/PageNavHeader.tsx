@@ -43,7 +43,7 @@ export function PageNavHeader({
           type="button"
           onClick={handleBack}
           className="inline-flex min-h-11 shrink-0 items-center gap-1 cursor-pointer
-            text-sm font-medium text-primary rounded
+            text-sm font-medium text-primary-on-surface rounded
             transition-colors duration-200 hover:text-primary-hover active:opacity-70
             focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           aria-label={t('common.back')}

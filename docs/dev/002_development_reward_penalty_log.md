@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
+> 本次分數變化：+4（雙線合併：本線 reward 4）｜累計總分：+169
 
 ## 新增模板（4 行）
 
@@ -33,6 +33,90 @@
 - 原因：RatingModal 消費 notificationTokens.position 但未設 --notification-mobile-top-offset CSS 變數（僅 UpdatePrompt/PwaInstallGuide 有 inline 設定），行動版 top 退化為 auto 使星評 Modal 整個落在視口外（top=844px），PWA 使用者永遠看不到；星星觸控目標亦僅 32px 低於 WCAG 44px
 - 解法：token 補 CSS 變數 fallback（漏設仍落 header 下方）＋新增 notificationMobilePositionStyle SSOT 供三元件共用；星星升至 44px、🎉 emoji 改品牌 SVG、新增 zIndexTokens scale 收斂 z-50/z-[60]/z-[9999] 散值、快速金額 chips 收斂至 quickAmountButtonTokens.pattern 並加 scroll-snap；補 RatingModal.position 回歸測試 6 例
 
+- 日期：2026-07-06
+- ID：reward-rw-618-564-quote-matrix-multi-basis-pipeline
+- 原因：歷史趨勢管線僅存現金賣出單一序列，卡片切即期時圖卡基準不一致（#564）；資料層缺即期買賣欄位使 A2 四報價卡構想在 wave-B 降級為對比卡（#618）；另 sitemap 匯率頁 lastmod 於完整 checkout 走 git commit 日期，任何觸及 seo-rate-examples.ts 的 commit 讓 240+ 頁同日戳、時間戳多樣性守門紅燈
+- 解法：history-30d aggregate 由每日檔 details 展開 cashBuy/spotBuy/spotSell 多基準序列（rates 向後相容、30 天自動回補）；趨勢圖基準跟隨費率模式且即期不足誠實回落並同步標註；SEO_RATE_EXAMPLES 補四基準欄位（零漂移遷移）驅動 34 幣別頁四報價卡與缺值誠實態；匯率頁 lastmod 錨定匯率快照日期（與 shallow 模式及 RATE_PAGE_LASTMOD_POLICY 語意一致）
+
+- 日期：2026-07-06
+- ID：reward-rw-639-lh-mobile-perf-85
+- 原因：LH mobile perf 79（#639）——PWA 安裝指引於載入 1.8s 後彈出，其海報（126K px²）成為 LCP 元素（LCP 4.48s）；首頁 head 14 個 modulepreload 與 HTML／關鍵 CSS 競爭模擬 4G 頻寬拖慢 FCP 約 700ms；vite-react-ssg 動態 import react-dom/client 使 vendor-react 串行下載
+- 解法：指引改首次互動後起算顯示（LCP 於首次輸入後凍結，對齊 Chrome install promotion 指引）＋移除 HTML modulepreload（動態 import 依賴預載保留）＋ main 靜態載入 react-dom/client；preview 三次中位數 perf 86（FCP 2.65s、LCP 3.65s、TBT 0／CLS 0.002 不回退），SSG 255 頁零 diff、precache 98 項不變
+
+- 日期：2026-07-06
+- ID：reward-rw-638-591-star-hotzone-mobile-polish
+- 原因：收藏／多幣別頁星號 toggle 實測熱區僅 28×22（低於 44×44 產品標準）；SE 667px 因 layout token `short:hidden` 整排隱藏來源快速金額；splash z-999 被 body::before 狀態列模糊帶 z-9999 蓋頂
+- 解法：星號以 min-w/h-11＋負邊距補償撐大熱區（margin box 不變、不與 dnd 把手重疊，補 class 合約迴歸測試）；快速金額隱藏門檻自 short/tiny 下移至 tiny/micro；splash z-index 提至 10000 蓋過模糊帶
+
+- 日期：2026-07-06
+- ID：reward-rw-594-tablet-two-column
+- 原因：≥1024px 視口主內容仍為手機版單欄置中（首頁 max-w-md、幣別頁 max-w-3xl），12.9" 橫向留白 >60%（issue #594 二階、E6 評分卡實測）
+- 解法：純 lg: class 收斂——首頁 grid 兩欄（換算核心 28rem＋右欄收藏/幣種、v1/v2 共用且 keypad 常駐不動）、隱私頁目錄轉 sticky 錨點欄、幣別頁 wide 容器＋六段 IA 寬版（快速答案＋CTA 並排、金額頁常見金額互鏈全幅防半欄懸空）；<1024px 佈局零變化（像素 diff AE=0）、SSG 非目標頁 13 頁零 diff
+
+- 日期：2026-07-06
+- ID：reward-rw-609-builtin-theme-aa-batch
+- 原因：nitro primary-hover 白字僅 ~1.8:1、小字白字按鈕 3.23:1（守門鎖 3:1 放行）；kawaii hot pink 對白底 2.65:1 經 on-surface==primary 合約傳導到全站文字；`/70`、`opacity-[0.35]` alpha 疊加把達標實色稀釋到 <4.5:1 且守門只驗實色
+- 解法：nitro strong/hover 同色相加深（白字 5.30/4.80:1）、kawaii/nitro on-surface 白名單覆寫（pink-700／亮向 61 187 255），#632 合約改為「預設==primary＋白名單覆寫須對自身底色 ≥4.5:1」；alpha 稀釋點全數收斂實色並新增 alpha-composite 掃描守門與合成計算斷言
+
+- 日期：2026-07-06
+- ID：reward-rw-633-first-input-replaces-seed
+- 原因：v2 keypad 以種子播入計算引擎，首次數字鍵串接在預設 1,000 之後（123456789 變 1,000,123,456,789），違反計算機首鍵取代慣例（QA-F P2-1）
+- 解法：回寫閘門開啟前的首顆數字鍵先 clear 再 input（運算子／小數點／退格保留種子串接），實體與虛擬鍵共用同一路徑；stale seed 與拒鍵不開閘紅線改以運算子／小數點驗證，補首鍵取代單元＋e2e 兩路徑測試
+
+- 日期：2026-07-06
+- ID：reward-rw-631-pair-cta-deeplink
+- 原因：pair 頁 AnswerHero 主 CTA 為裸 `/` 未帶深連結參數，SEO 落地點「開始換算 KRW→TWD」卻拿到預設 TWD→JPY（QA-F P1-1），且「立即換算」段與快速答案語意重複
+- 解法：converterHref 於 pair 頁帶 `?from&to`（金額頁維持 `?amount&from&to`），hero 收斂為單一帶參數卡並砍除重複行銷段（PM 授權內容策略修正，parity 差異已申報），補 CTA href 單元測試與落地 e2e
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-final-review-fixes
+- 原因：epic-final 實測抓到 sticky 隱形幕以 opacity:0 疊頂層攔截點擊且可聚焦（FR-012 於幕 1/2 失效，規格與 QA 雙盲區）；另素材格式偏離未回寫、死資產入 dist、base 前進 002 漂移
+- 解法：keyframes 端點幀 visibility:hidden＋隱形幕互動斷言入 QA；illus 降採 480w AVIF+WebP、源檔遷 brand-src；merge base 收斂 002；SR 逐幕語意裁決回寫 §3.3
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-d
+- 原因：E3 需場景級記憶點與品牌素材落地：sticky 一幕、卡片 morph 轉場、Codex 素材（logomark/吉祥物/插畫）經 PM 視覺關卡選用後待整合
+- 解法：view-timeline sticky 三幕（四重降級）、靜態 vt-name morph、L1-b/L2-a/L3-b 快照制入 public 並重生成 icons/OG；LCP 仍 H1、增量 ≤+2.5KB
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-c
+- 原因：使用者要求行動首頁更好看；研究驅動選型後 wave-C 五項（bento/貼紙/pattern/kinetic/pretty）為基線瀏覽器全可見的美感升級核心
+- 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
+
+- 日期：2026-07-06
+- ID：reward-rw-632-custom-primary-contrast-guard
+- 原因：custom 主題 `--color-primary` 為使用者原色 identity 映射且 20+ 處文字直接消費 raw token，近白主色（F5F5F0）使快速連結／幣別連結／設定按鈕／底部導覽 active 全隱形且重載持久（issue #632）
+- 解法：新增 `--color-primary-on-surface` 文字錨點（內建主題同 primary 值零視覺變化、custom 走 AA clamp），全站 `text-primary` 改錨並以靜態掃描守門曝露面清單；選色面板加即時可讀性提示與 clamp 實效色預覽（i18n ×4），AA property 測試擴充 on-surface 任意色全綠
+
+- 日期：2026-07-06
+- ID：penalty-rw-606-e2e-gate-regression
+- 原因：#606 hostname gate 未同步更新 ga-defer-lcp e2e——spec 以 HAS_BUILT_GA_RUNTIME（dist 內嵌 GA ID）期望 1 次 config，但 gate 在 localhost 恆回空 ID 致 config 0 次、waitForFunction 10 秒逾時，`pnpm test:e2e` 本地必紅（審查實跑抓出）
+- 解法：spec 改 gate-aware——匯出 analyticsGate 的 PRODUCTION_HOSTNAME（同一 SSOT，無第二份 hostname 字串），期望值依「HAS_BUILT_GA_RUNTIME 且 執行 host 為正式站」決定 1 或 0（0 時斷言恆 0 不逾時等待）；GA 注入驗證流程後移至正式站（本地 preview 恆零注入）；補 www 前綴與 FQDN 尾點繞過 case
+
+- 日期：2026-07-06
+- ID：reward-rw-607-offline-install-guide-img
+- 原因：pwa-install/\*\* hero 圖被 globIgnores 排除 precache（708KB 超過 200KB 門檻不宜納入），離線開啟 PWA 安裝導引時大面積破圖覆蓋內容（issue 607）
+- 解法：img onError 時隱藏整個 picture 圖區、文字步驟導引保留（離線誠實原則），補離線降級單元測試並以 Playwright 阻斷圖片請求截圖實證無破圖
+
+- 日期：2026-07-06
+- ID：reward-rw-606-ga4-staging-gate
+- 原因：GA4 僅以 VITE_GA_ID 空值判斷是否啟用，staging／preview 共用 production build 令 gtag 照常外送，QA 流量污染正式 GA4 資料（issue 606）
+- 解法：新增 resolveGaMeasurementId 以 APP_INFO.siteUrl（SSOT）導出正式站 hostname 做 runtime gate，非正式 host 回空字串使 initGA 提早返回；補 production／staging／localhost 單元測試並以本地 preview 網路面板實證零 gtag 請求
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-qa-capture-matrix
+- 原因：E5 wave-D 受改頁需要可重跑的截圖矩陣與 console error 檢核證據（三攻略頁＋AnswerCapsule 消費樣本 × 雙主題 × 雙尺寸，#418 為硬標準 0）
+- 解法：新增 scripts/qa/capture-authority-guides.mjs（20 張截圖＋console/pageerror 收集，非零即失敗），本輪實跑 console errors 0
+
+- 日期：2026-07-06
+- ID：reward-rw-e5d-authority-guide-uiux
+- 原因：三篇 Authority Guide（賣出價/現金即期/刷卡）仍為舊版面——legacy card、無行動版底部導覽、無目錄側跳、圓點 bullet，與 E4/E5 內容頁體系脫節（E5 wave-D）
+- 解法：AuthorityGuidePage 遷移 ContentPageLayout＋六段 IA（answer-first 頁首→目錄側跳→重點整理→分段卡片→FAQ 手風琴→相關連結與 CTA），消費 E4 section renderer 與 E1 token；SEO head/JSON-LD/可見文字與 heading 集合零變動（parity＋heading diff 驗證）
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-answer-capsule-e1-token
+- 原因：AnswerCapsule 沿用 legacy `card` 類與任意邊框，與 E4/E5 內容頁 E1 token 體系（rounded-card/panel、hairline、shadow-card）漂移
+- 解法：改 E1 token 卡片＋lucide Zap 標題徽章，可見文字零變動，消費頁（首頁/FAQ/About/Guide/OpenData/攻略頁）樣式一致收斂
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot
 - 原因：#595 驗證只在本地同時區（build 與瀏覽器皆 Asia/Taipei）抽測，未覆蓋 staging「UTC build × 台北瀏覽器」情境，漏掉 Footer 建置時間 toLocale 無 timeZone 造成內容頁全數 #418
@@ -102,6 +186,11 @@
 - ID：reward-rw-e5b-currency-page-uiux-six-section-ia
 - 原因：34 幣別頁＋金額頁為牆文式段落佈局、視覺語言與 app 端割裂且行動版缺底部導覽，未達韓系 app 水準（E5 wave-B）
 - 解法：重排六段 IA（Answer Hero→報價對比→階梯列表→在地情境卡→FAQ 手風琴→相關連結）共用 presentational 元件組並換 ContentPageLayout 骨架，新增 verify-visible-text-parity 腳本證明 34 頁 dist 可見文字集合等價（純呈現層零文案變動）
+
+- 日期：2026-07-06
+- ID：neutral-haotool-e3-branch-governance
+- 原因：使用者指示 E1+E2 成果併入 experiment/ratewise-product-2026h2、E3 於其上續迭代，路線圖與分支治理需同步
+- 解法：PR #552 rebase 後 squash 併入實驗分支、開 feat/haotool-site-e3 續作、ROADMAP Now/Next 對齊
 
 - 日期：2026-07-06
 - ID：reward-haotool-e2-final-review-fixes

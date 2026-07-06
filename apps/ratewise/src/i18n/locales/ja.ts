@@ -112,6 +112,7 @@ const ja = {
   // Trend Chart
   trend: {
     cashSellBasis: '現金売レートの推移',
+    spotSellBasis: '電信売レートの推移',
   },
 
   // Multi Currency Converter
@@ -186,6 +187,7 @@ const ja = {
     customThemeToneMint: 'ミントホワイト',
     customThemeToneRose: 'ローズホワイト',
     customThemeReset: 'デフォルトに戻す',
+    customThemeContrastNotice: 'この色の文字は読みやすさのため自動的に濃くなります',
     appVersion: 'アプリバージョン',
     designSystem: 'デザインシステム',
     techStack: '技術スタック',

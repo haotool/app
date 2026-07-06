@@ -10,7 +10,8 @@ export interface HowToStepsSectionProps {
 
 export function HowToStepsSection({ howToSteps }: HowToStepsSectionProps) {
   return (
-    <section>
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section className="lg:col-span-2">
       <CurrencySectionHeading icon={ListOrdered}>使用步驟</CurrencySectionHeading>
       <div className="grid gap-3 md:grid-cols-2">
         {howToSteps.map((step) => (
@@ -18,7 +19,7 @@ export function HowToStepsSection({ howToSteps }: HowToStepsSectionProps) {
             key={step.position}
             className="flex items-start gap-3 rounded-card border border-border/60 bg-surface p-4 shadow-card sm:p-5"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-icon bg-primary/10 text-base font-bold tabular-nums text-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-icon bg-primary/10 text-base font-bold tabular-nums text-primary-on-surface">
               {step.position}
             </span>
             <div className="min-w-0 flex-1">

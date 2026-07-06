@@ -32,6 +32,7 @@ import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
+import { mergeLatestTrendPoint, resolveTrendSeries } from './converter-v2/useConverterTrend';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
 import {
   singleConverterLayoutTokens,
@@ -143,6 +144,8 @@ const SingleConverterLegacy = ({
   const { t } = useTranslation();
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
+  // 趨勢圖實際使用的費率基準；即期序列不足時誠實回落現金賣出，標註跟隨（#564）。
+  const [trendRateType, setTrendRateType] = useState<RateType>(rateType);
   const [isSwapping, setIsSwapping] = useState(false);
   const [trendDateKey, setTrendDateKey] = useState(() => getLocalDateKey());
   const swapButtonRef = useRef<HTMLButtonElement>(null);
@@ -288,45 +291,25 @@ const SingleConverterLegacy = ({
 
         if (!isMounted) return;
 
-        const historyPoints: MiniTrendDataPoint[] = historicalData
-          .map((item) => {
-            const fromRate = item.data.rates[fromCurrency] ?? 1;
-            const toRate = item.data.rates[toCurrency] ?? 1;
-            const rate = fromRate / toRate;
-
-            return {
-              date: item.date, // Keep full YYYY-MM-DD format for lightweight-charts
-              rate,
-            };
-          })
-          .filter((item): item is MiniTrendDataPoint => item !== null)
-          .reverse();
-
-        // 整合即時匯率到歷史數據
-        let mergedPoints = historyPoints;
-
-        if (latestRates) {
-          const latestFromRate = latestRates.rates[fromCurrency] ?? 1;
-          const latestToRate = latestRates.rates[toCurrency] ?? 1;
-          const latestRate = latestFromRate / latestToRate;
-
-          if (Number.isFinite(latestRate) && latestRate > 0) {
-            // 提取日期並轉換為 YYYY-MM-DD 格式
-            const latestDate =
-              latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
-              new Date().toISOString().slice(0, 10);
-
-            // 去重：過濾掉相同日期的歷史數據，添加最新數據點
-            mergedPoints = [
-              ...historyPoints.filter((point) => point.date !== latestDate),
-              { date: latestDate, rate: latestRate },
-            ];
-          }
-        }
+        // 基準跟隨卡片費率模式（#564）；即期序列不足時誠實回落現金賣出。
+        const { points: historyPoints, trendRateType: effectiveRateType } = resolveTrendSeries(
+          historicalData,
+          fromCurrency,
+          toCurrency,
+          rateType,
+        );
+        const mergedPoints = mergeLatestTrendPoint(
+          historyPoints,
+          latestRates,
+          fromCurrency,
+          toCurrency,
+          effectiveRateType,
+        );
 
         // 按日期排序並限制最多30天
         const sortedPoints = mergedPoints.sort((a, b) => a.date.localeCompare(b.date));
         setTrendData(sortedPoints.slice(-MAX_TREND_DAYS));
+        setTrendRateType(effectiveRateType);
       } catch {
         if (!isMounted) return;
         setTrendData([]);
@@ -384,7 +367,15 @@ const SingleConverterLegacy = ({
         clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
       }
     };
-  }, [fromCurrency, toCurrency, trendDateKey, rateSource, moneyBoxRate, exchangeShopCurrency]);
+  }, [
+    fromCurrency,
+    toCurrency,
+    trendDateKey,
+    rateSource,
+    moneyBoxRate,
+    exchangeShopCurrency,
+    rateType,
+  ]);
 
   // 開發工具：強制觸發骨架屏效果（僅開發模式）
   /* v8 ignore next 22 */
@@ -569,13 +560,17 @@ const SingleConverterLegacy = ({
                   <TrendChartSkeleton />
                 ) : (
                   <Suspense fallback={<TrendChartSkeleton />}>
-                    {/* 銀行歷史趨勢固定為現金賣出基準（與卡片即期價可能不同），須誠實標註；
-                     * 換錢所趨勢與卡片同基準，不另標。基準對齊 rateType 屬資料管線 backlog。 */}
+                    {/* 銀行歷史趨勢基準跟隨卡片費率模式（#564）；即期序列不足時回落現金賣出並同步標註。
+                     * 換錢所趨勢與卡片同基準，不另標。 */}
                     <MiniTrendChart
                       data={trendData}
                       currencyCode={toCurrency}
                       basisLabel={
-                        rateSource === 'exchange-shop' ? undefined : t('trend.cashSellBasis')
+                        rateSource === 'exchange-shop'
+                          ? undefined
+                          : trendRateType === 'spot'
+                            ? t('trend.spotSellBasis')
+                            : t('trend.cashSellBasis')
                       }
                     />
                   </Suspense>

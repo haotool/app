@@ -51,9 +51,9 @@ describe('MailtoLink', () => {
   });
 
   it('applies provided className alongside reset styles', () => {
-    render(<MailtoLink email="x@y.z" className="text-primary underline" />);
+    render(<MailtoLink email="x@y.z" className="text-primary-on-surface underline" />);
     const el = screen.getByRole('button');
-    expect(el.className).toContain('text-primary');
+    expect(el.className).toContain('text-primary-on-surface');
     expect(el.className).toContain('underline');
     // baseline reset classes still applied
     expect(el.className).toContain('bg-transparent');

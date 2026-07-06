@@ -295,7 +295,7 @@ export const microInteractionClasses = {
   card: 'transition-shadow duration-200 ease-out',
 
   /** 連結懸停效果 */
-  link: 'transition-colors duration-200 ease-out hover:text-primary',
+  link: 'transition-colors duration-200 ease-out hover:text-primary-on-surface',
 
   /** 圖標過渡（E1：移除 hover 旋轉） */
   iconRotate: 'transition-transform duration-200 ease-out',

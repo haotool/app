@@ -258,8 +258,9 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens).toBeDefined();
 
       // 隱藏優先順序：快速金額(來源) → 快速金額(結果) → 交換按鈕 → 資料來源
-      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('short:hidden');
-      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('tiny:hidden');
+      // #591：SE（short 區間）保留來源快速金額，隱藏門檻自 short/tiny 下移至 tiny/micro。
+      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('tiny:hidden');
+      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('micro:hidden');
       expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
 
       // 流體縮放配置

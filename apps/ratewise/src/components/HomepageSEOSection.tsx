@@ -29,7 +29,7 @@ export function HomepageSEOSection() {
       className="px-5 pt-5 pb-3 max-w-md mx-auto w-full"
     >
       <div className="rounded-card border border-border/60 bg-surface shadow-card p-5">
-        <p className="text-2xs font-black uppercase tracking-[0.18em] text-primary">
+        <p className="text-2xs font-black uppercase tracking-[0.18em] text-primary-on-surface">
           {content.eyebrow}
         </p>
         <h2
@@ -57,7 +57,7 @@ export function HomepageSEOSection() {
             <Link
               key={link.href}
               to={link.href}
-              className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
+              className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary-on-surface transition hover:bg-primary/10"
             >
               {link.label}
             </Link>
@@ -82,7 +82,7 @@ export function HomepageSEOSection() {
               <Link
                 key={`to-twd-${code}`}
                 to={`/${code.toLowerCase()}-twd/`}
-                className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/10"
+                className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-primary-on-surface transition hover:bg-primary/10"
               >
                 <span aria-hidden="true">{def.flag}</span>
                 <span>{def.name}換台幣</span>
@@ -99,7 +99,7 @@ export function HomepageSEOSection() {
               <Link
                 key={`from-twd-${code}`}
                 to={`/twd-${code.toLowerCase()}/`}
-                className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/10"
+                className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-primary-on-surface transition hover:bg-primary/10"
               >
                 <span aria-hidden="true">{def.flag}</span>
                 <span>台幣換{def.name}</span>

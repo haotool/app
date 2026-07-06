@@ -18,7 +18,8 @@ export function LocalInsightsSection({
   travelTip,
 }: LocalInsightsSectionProps) {
   return (
-    <section>
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section className="lg:col-span-2">
       <CurrencySectionHeading icon={BookOpen}>{currencyName}匯率重點</CurrencySectionHeading>
       <div className="grid gap-3 md:grid-cols-3">
         {highlights.map((highlight, index) => (
@@ -26,7 +27,7 @@ export function LocalInsightsSection({
             key={index}
             className="flex items-start gap-3 rounded-card border border-border/60 bg-surface p-4 shadow-card"
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold tabular-nums text-primary">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold tabular-nums text-primary-on-surface">
               {index + 1}
             </span>
             <p className="min-w-0 text-sm leading-relaxed text-text">{highlight}</p>

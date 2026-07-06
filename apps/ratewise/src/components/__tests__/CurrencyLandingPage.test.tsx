@@ -36,6 +36,29 @@ describe('CurrencyLandingPage', () => {
     expect(screen.queryByRole('button', { name: '50000 韓元多少台幣？' })).not.toBeInTheDocument();
   });
 
+  // ─── #631: pair 頁主 CTA 深連結（不得斷幣別脈絡）───
+  it('#631: pair 頁主 CTA 帶 ?from&to 深連結，落地即正確幣別對', () => {
+    render(
+      <MemoryRouter>
+        <CurrencyLandingPage {...BASE_PROPS} />
+      </MemoryRouter>,
+    );
+
+    const cta = screen.getByRole('link', { name: /開始換算 KRW → TWD/ });
+    expect(cta).toHaveAttribute('href', '/?from=KRW&to=TWD');
+  });
+
+  it('#631: twd-to-foreign 方向 pair 頁 CTA 帶反向 ?from=TWD&to=KRW', () => {
+    render(
+      <MemoryRouter>
+        <CurrencyLandingPage {...BASE_PROPS} direction="twd-to-foreign" pathname="/twd-krw" />
+      </MemoryRouter>,
+    );
+
+    const cta = screen.getByRole('link', { name: /開始換算 TWD → KRW/ });
+    expect(cta).toHaveAttribute('href', '/?from=TWD&to=KRW');
+  });
+
   // ─── P8: 相關攻略連結（hub-and-spoke 內部鏈接 SEO）───
   it('P8: relatedGuides 為空陣列時不渲染相關攻略區塊', () => {
     render(

@@ -117,7 +117,7 @@ function ContentLinkRow({ link }: { link: ContentLinkItem }) {
   const body = (
     <>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold text-text group-hover:text-primary">
+        <span className="block text-sm font-semibold text-text group-hover:text-primary-on-surface">
           {link.label}
         </span>
         {link.sub && (
@@ -201,7 +201,9 @@ function renderSection(section: ContentSection) {
                 key={card.title}
                 className="rounded-panel border border-border/60 bg-surface-elevated p-4"
               >
-                <h3 className="mb-1.5 text-base font-semibold text-primary">{card.title}</h3>
+                <h3 className="mb-1.5 text-base font-semibold text-primary-on-surface">
+                  {card.title}
+                </h3>
                 <p className="text-sm leading-relaxed text-text-muted">{card.description}</p>
               </div>
             ))}

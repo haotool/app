@@ -87,6 +87,8 @@ export const CUSTOM_THEME_CSS_VARS = [
   '--color-surface-sunken',
   '--color-primary',
   '--color-primary-strong',
+  // 文字消費面唯一合法 primary 錨點（issue #632）：custom 演算給 AA clamp 值。
+  '--color-primary-on-surface',
   '--color-primary-bg',
   '--color-primary-light',
   '--color-primary-hover',
@@ -266,6 +268,7 @@ function darkenToContrast(hsl: Hsl, startLightness: number, against: Rgb, target
  * - ring/chart 三色：非文字圖形色，clamp 至對白底對比 ≥ 3:1（WCAG 1.4.11）
  * - hover：zen 階差（primary 與 strong 明度中點），clamp 至白字對比 ≥ 4.5:1
  * - strong：主色加深至白字對比 ≥ 4.5:1（AA 硬規格）
+ * - on-surface：文字消費面的 primary 錨點（#632 合約），與 text 同 clamp（對最深底色 ≥ 4.5:1）
  * - text/dark/darker：有色文字，clamp 至對最深底色（含背景調對）對比 ≥ 4.5:1，並維持遞深階序
  * - background/surface-sunken：由背景色調三選一（CUSTOM_BACKGROUND_TONES SSOT）直出
  */
@@ -310,6 +313,7 @@ export function deriveCustomThemeCssVars(
     '--color-surface-sunken': hexToRgbTriple(tone.surfaceSunken),
     '--color-primary': rgbToTriple(base),
     '--color-primary-strong': rgbToTriple(strong),
+    '--color-primary-on-surface': rgbToTriple(text),
     '--color-primary-bg': rgbToTriple(bg),
     '--color-primary-light': rgbToTriple(light),
     '--color-primary-hover': rgbToTriple(hover),

@@ -2,9 +2,11 @@
  * OG 分享圖生成腳本（快照制：手動執行、產物 commit）。
  *
  * 產物：public/og-image.png（1200×630）。
- * 版式：白底、左上 wordmark、中央標語大字、下方副標、右下 5 工具名稱列；
+ * 版式：白底、左上 logomark 72×72（64,56）右接 wordmark 高 36（mobile-beauty §6 L1 版位）、
+ * 中央標語大字、下方副標、右下 5 工具名稱列；
  * 零漸層零陰影（設計 brief §1.1 扁平鐵律）；中文用系統字型。
- * SSOT：public/brand/wordmark.svg（字形）＋ src/config/tools.ts（工具名稱）。
+ * SSOT：brand-src/logomark-192.png（L1-b 衍生，不入 dist）＋ public/brand/wordmark.svg（字形）＋
+ * src/config/tools.ts（工具名稱）。
  *
  * 執行：node apps/haotool/scripts/generate-og.mjs（依賴 monorepo root 既有 @playwright/test）
  */
@@ -36,11 +38,14 @@ const MAX_BYTES = 200 * 1024;
 
 const { TOOLS } = await import('../src/config/tools.ts');
 
-// wordmark.svg 高 28 → OG 版面放大至高 44。
+// wordmark.svg 高 28 → OG 版面放大至高 36（右接 72×72 logomark，§6 L1 版位）。
 const wordmark = readFileSync(resolve(PUBLIC_DIR, 'brand/wordmark.svg'), 'utf8').replace(
   'width="138.04" height="28"',
-  'width="216.92" height="44"',
+  'width="177.48" height="36"',
 );
+const logomark = `data:image/png;base64,${readFileSync(
+  resolve(__dirname, '../brand-src/logomark-192.png'),
+).toString('base64')}`;
 
 const toolNames = TOOLS.map((tool) => tool.name).join('<span class="dot">·</span>');
 
@@ -58,7 +63,15 @@ const html = `<!doctype html>
     position: relative;
     overflow: hidden;
   }
-  .wordmark { position: absolute; top: 64px; left: 72px; }
+  .brand {
+    position: absolute;
+    top: 56px;
+    left: 64px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .brand img { width: 72px; height: 72px; display: block; }
   .center {
     position: absolute;
     inset: 0;
@@ -105,7 +118,7 @@ const html = `<!doctype html>
 </style>
 </head>
 <body>
-  <div class="wordmark">${wordmark}</div>
+  <div class="brand"><img src="${logomark}" alt="">${wordmark}</div>
   <div class="center">
     <h1>把好想法，做成<span class="accent">好工具</span>。</h1>
     <p class="tagline">HaoTool 好工具 · 免費開源的台灣網頁工具集</p>

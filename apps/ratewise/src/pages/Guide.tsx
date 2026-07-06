@@ -143,7 +143,7 @@ const Guide = () => {
                   <a
                     key={step.position}
                     href={`#step-${step.position}`}
-                    className="inline-flex min-h-11 items-center text-sm text-primary transition-colors hover:underline"
+                    className="inline-flex min-h-11 items-center text-sm text-primary-on-surface transition-colors hover:underline"
                   >
                     {step.position}. {step.name}
                   </a>
@@ -179,7 +179,7 @@ const Guide = () => {
             <div className="text-center">
               <Link
                 to="/faq/"
-                className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+                className="inline-flex min-h-11 items-center text-sm font-medium text-primary-on-surface hover:underline"
               >
                 查看更多常見問題 →
               </Link>

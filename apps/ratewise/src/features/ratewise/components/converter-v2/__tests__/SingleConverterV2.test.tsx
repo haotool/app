@@ -133,20 +133,38 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(screen.queryByText('轉換結果')).not.toBeInTheDocument();
   });
 
-  it('鍵入數字時即時回寫活躍列（預設第一列）', () => {
+  it('首次數字鍵取代預設種子而非串接，後續鍵入正常串接（#633 虛擬鍵路徑）', () => {
     const props = buildProps();
     render(<SingleConverterV2 {...props} />);
 
-    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-1'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-2'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
     act(() => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('10005');
+    // 修正前首鍵串接在種子 1000 之後，會回寫 '1000123'。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('123');
     expect(props.onToAmountChange).not.toHaveBeenCalled();
   });
 
-  it('切換活躍列後，鍵入回寫另一列（換算對等性）', () => {
+  it('回歸：種子為單一數字且首鍵按同一數字時，首鍵不被吞掉（#633 邊界）', () => {
+    // 種子 5 按 5：clear+input 後表達式仍為 '5'（不變），閘門必須仍然開啟；再按 3 應得 53。
+    const props = buildProps({ fromAmount: '5' });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // 修正前首鍵後閘門未開，按 3 再度觸發取代種子，回寫 '3'。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('53');
+  });
+
+  it('切換活躍列後，鍵入回寫另一列（換算對等性；首鍵取代該列種子）', () => {
     const props = buildProps();
     render(<SingleConverterV2 {...props} />);
 
@@ -156,7 +174,7 @@ describe('SingleConverterV2 - 等值雙列', () => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(props.onToAmountChange).toHaveBeenLastCalledWith('31.581');
+    expect(props.onToAmountChange).toHaveBeenLastCalledWith('1');
   });
 
   it('回歸：切換活躍列多次且零按鍵，兩列數值與方向完全不變', () => {
@@ -187,21 +205,23 @@ describe('SingleConverterV2 - 等值雙列', () => {
     // 零按鍵期間外部值變動（如費率模式切換觸發重算）。
     rerender(<SingleConverterV2 {...props} fromAmount="500" />);
 
+    // #633 後數字首鍵取代種子，改以運算子首鍵驗證種子已同步（串接語意保留）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
     fireEvent.click(screen.getByTestId('converter-v2-key-1'));
     act(() => {
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(200);
     });
 
-    // 修正前種子仍為掛載時的 1000，會回寫 '10001'。
-    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('5001');
+    // 修正前種子仍為掛載時的 1000，會回寫 '1001'。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('501');
   });
 
   it('回歸：被引擎拒絕的按鍵不得開啟回寫閘門', () => {
-    // 8 位小數已達 iOS 上限，再鍵入數字會被 canAddDigit 拒絕（表達式不變）。
+    // 種子已含小數點，再鍵入 '.' 會被 canAddDecimal 拒絕（表達式不變）。
     const props = buildProps({ fromAmount: '0.12345678' });
     const { rerender } = render(<SingleConverterV2 {...props} />);
 
-    fireEvent.click(screen.getByTestId('converter-v2-key-9'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-.'));
     // 之後的重算路徑（另一列更新觸發父層 re-render）不得把未變的顯示值當成使用者編輯回寫。
     rerender(<SingleConverterV2 {...props} toAmount="99" />);
     act(() => {
@@ -218,15 +238,17 @@ describe('SingleConverterV2 - 等值雙列', () => {
     const { rerender } = render(<SingleConverterV2 {...props} />);
 
     // 被拒按鍵（閘門不得開啟）之後外部值變動，種子應同步為新值。
-    fireEvent.click(screen.getByTestId('converter-v2-key-9'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-.'));
     rerender(<SingleConverterV2 {...props} fromAmount="200" />);
 
+    // 以運算子串接驗證重播後的種子確實為 200（200 + 3 = 203）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
     fireEvent.click(screen.getByTestId('converter-v2-key-3'));
     act(() => {
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(200);
     });
 
-    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('2003');
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('203');
   });
 
   it('含運算子表達式以引擎 preview 回寫（沿用既有計算引擎）', () => {
@@ -305,16 +327,19 @@ describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
     vi.clearAllMocks();
   });
 
-  it('鍵盤數字輸入視同按鍵開閘，回寫活躍列（預設第一列）', () => {
+  it('鍵盤首次數字輸入取代預設種子而非串接，後續正常串接（#633 實體鍵路徑）', () => {
     const props = buildProps();
     render(<SingleConverterV2 {...props} />);
 
-    fireEvent.keyDown(window, { key: '5' });
+    fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(window, { key: '2' });
+    fireEvent.keyDown(window, { key: '3' });
     act(() => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('10005');
+    // 修正前首鍵串接在種子 1000 之後，會回寫 '1000123'（QA：123456789 變 1,000,123,456,789）。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('123');
     expect(props.onToAmountChange).not.toHaveBeenCalled();
   });
 
@@ -343,7 +368,7 @@ describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
     expect(props.onFromAmountChange).toHaveBeenLastCalledWith('100');
   });
 
-  it('切換活躍列後，鍵盤輸入回寫另一列', () => {
+  it('切換活躍列後，鍵盤輸入回寫另一列（首鍵取代該列種子）', () => {
     const props = buildProps();
     render(<SingleConverterV2 {...props} />);
 
@@ -353,7 +378,7 @@ describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(props.onToAmountChange).toHaveBeenLastCalledWith('31.581');
+    expect(props.onToAmountChange).toHaveBeenLastCalledWith('1');
   });
 
   it('幣別 picker 開啟時實體鍵盤停用，避免與 sheet 搜尋衝突', () => {

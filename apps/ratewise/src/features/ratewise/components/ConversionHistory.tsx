@@ -195,8 +195,8 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
                   <span className="text-text">{item.amount}</span>
                   <span className="text-text-muted">{item.from}</span>
                   <ArrowRight size={12} className="text-text-muted flex-shrink-0" />
-                  <span className="text-primary">{item.result}</span>
-                  <span className="text-primary">{item.to}</span>
+                  <span className="text-primary-on-surface">{item.result}</span>
+                  <span className="text-primary-on-surface">{item.to}</span>
                 </div>
                 <span className="text-2xs text-text-muted opacity-60 block mt-0.5">
                   {item.time}

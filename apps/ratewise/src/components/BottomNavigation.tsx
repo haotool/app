@@ -83,7 +83,7 @@ function BottomNavigationItem({
       <div
         className={`
           relative transition-all duration-200
-          ${isActive ? 'scale-110 text-primary' : isPending ? 'text-text-muted' : 'text-text-muted/80'}
+          ${isActive ? 'scale-110 text-primary-on-surface' : isPending ? 'text-text-muted' : 'text-text-muted/80'}
           group-active:scale-90
         `}
       >
@@ -105,7 +105,7 @@ function BottomNavigationItem({
       <span
         className={`
           text-2xs font-semibold transition-colors duration-200
-          ${isActive ? 'text-primary' : 'text-text-muted'}
+          ${isActive ? 'text-primary-on-surface' : 'text-text-muted'}
         `}
       >
         {t(item.labelKey)}
@@ -113,7 +113,7 @@ function BottomNavigationItem({
 
       {/* 選中指示條（靜態，無滑動動畫） */}
       {isActive && (
-        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]" />
+        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary-on-surface))]" />
       )}
     </a>
   );

@@ -17,7 +17,12 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = 'ratewise:pwa-install-guide-dismissed:v1';
+// 首次互動後再延遲顯示：對齊 Chrome install promotion 指引（互動後才推薦安裝），
+// 亦避免指引成為 LCP 元素拖垮行動端分數（LCP 於首次輸入後凍結）。
+// 不含 scroll：程式化捲動（scroll restoration／anchor）會在 LCP 未凍結時誤觸 gate；
+// 真實捲動必先觸發 touchstart／wheel／pointerdown 之一，招回損失趨近零。
 const SHOW_DELAY_MS = 1800;
+const ENGAGEMENT_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'wheel'] as const;
 
 function getAssetPath(fileName: string) {
   const basePath = import.meta.env.BASE_URL || '/';
@@ -103,6 +108,8 @@ function PwaInstallGuideClient() {
   const [environment, setEnvironment] = React.useState<PwaInstallEnvironment | null>(null);
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = React.useState(false);
+  // pwa-install/** 未納入 precache（708KB 超過體積門檻）；離線載圖失敗時隱藏圖區，避免大面積破圖。
+  const [posterFailed, setPosterFailed] = React.useState(false);
 
   React.useEffect(() => {
     const currentEnvironment = readPwaInstallEnvironmentFromBrowser();
@@ -112,8 +119,37 @@ function PwaInstallGuideClient() {
       return;
     }
 
-    const timer = window.setTimeout(() => setIsVisible(true), SHOW_DELAY_MS);
-    return () => window.clearTimeout(timer);
+    // 等待首次互動再起算顯示計時：未互動的過客不會被安裝指引打斷，
+    // 且 LCP 於首次輸入後凍結，指引海報不再成為 LCP 元素。
+    let timer: number | null = null;
+
+    const removeEngagementListeners = () => {
+      for (const eventName of ENGAGEMENT_EVENTS) {
+        window.removeEventListener(eventName, startTimer);
+      }
+    };
+
+    function startTimer() {
+      removeEngagementListeners();
+      timer = window.setTimeout(() => setIsVisible(true), SHOW_DELAY_MS);
+    }
+
+    // 內建瀏覽器豁免互動 gate：「請改用外部瀏覽器」屬功能性逃逸引導（非行銷推廣），
+    // 且 webview 不在 Lighthouse 量測面內——維持載入後直接起算顯示。
+    if (currentEnvironment.inAppBrowser) {
+      startTimer();
+    } else {
+      for (const eventName of ENGAGEMENT_EVENTS) {
+        window.addEventListener(eventName, startTimer, { once: true, passive: true });
+      }
+    }
+
+    return () => {
+      removeEngagementListeners();
+      if (timer != null) {
+        window.clearTimeout(timer);
+      }
+    };
   }, []);
 
   React.useEffect(() => {
@@ -215,19 +251,22 @@ function PwaInstallGuideClient() {
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
 
-          <picture>
-            <source srcSet={getAssetPath(`${posterPrefix}.avif`)} type="image/avif" />
-            <source srcSet={getAssetPath(`${posterPrefix}.webp`)} type="image/webp" />
-            <img
-              src={getAssetPath(`${posterPrefix}.png`)}
-              alt={guide.title}
-              width={640}
-              height={1349}
-              className="block max-h-[45vh] w-full object-cover object-top"
-              loading="lazy"
-              decoding="async"
-            />
-          </picture>
+          {posterFailed ? null : (
+            <picture>
+              <source srcSet={getAssetPath(`${posterPrefix}.avif`)} type="image/avif" />
+              <source srcSet={getAssetPath(`${posterPrefix}.webp`)} type="image/webp" />
+              <img
+                src={getAssetPath(`${posterPrefix}.png`)}
+                alt={guide.title}
+                width={640}
+                height={1349}
+                className="block max-h-[45vh] w-full object-cover object-top"
+                loading="lazy"
+                decoding="async"
+                onError={() => setPosterFailed(true)}
+              />
+            </picture>
+          )}
 
           <div className="relative space-y-3 px-4 pb-4 pt-3">
             <div className="flex items-start gap-3 pr-8">
@@ -276,7 +315,7 @@ function PwaInstallGuideClient() {
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                         isPrimaryStep
                           ? 'bg-primary-strong text-white'
-                          : 'bg-primary/10 text-primary'
+                          : 'bg-primary/10 text-primary-on-surface'
                       }`}
                     >
                       {index + 1}
@@ -284,7 +323,10 @@ function PwaInstallGuideClient() {
                     <span className="min-w-0 flex-1">{step}</span>
                     {StepIcon ? (
                       <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                        <StepIcon className="relative h-4 w-4 text-primary" aria-hidden="true" />
+                        <StepIcon
+                          className="relative h-4 w-4 text-primary-on-surface"
+                          aria-hidden="true"
+                        />
                       </span>
                     ) : null}
                   </li>

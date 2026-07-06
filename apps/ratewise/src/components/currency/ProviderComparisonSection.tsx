@@ -21,7 +21,8 @@ export function ProviderComparisonSection({
   alternativeProviders,
 }: ProviderComparisonSectionProps) {
   return (
-    <section data-testid="provider-comparison-card">
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section data-testid="provider-comparison-card" className="lg:col-span-2">
       <CurrencySectionHeading icon={Landmark}>換匯管道比較</CurrencySectionHeading>
       <div className="rounded-card border border-border/60 bg-surface p-4 shadow-card sm:p-5">
         <h3 className="text-sm font-bold text-text sm:text-base">台銀 vs 現場換匯所比較</h3>

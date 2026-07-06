@@ -152,6 +152,37 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(getVisibleAppTitle(page)).toBeVisible();
   });
 
+  test('星號收藏 toggle 觸控熱區 bounding box ≥44×44（#638）', async ({ rateWisePage: page }) => {
+    // 收藏頁：修復前實測 28×22，熱區以 min-w/h-11＋負邊距補償撐大。
+    await page
+      .getByRole('link', { name: /收藏|Favorites/i })
+      .first()
+      .click();
+
+    const favStar = page.locator('[data-testid^="star-toggle-"]').first();
+    await expect(favStar).toBeVisible();
+    const favBox = await favStar.boundingBox();
+    expect(favBox).not.toBeNull();
+    expect(favBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(favBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    // 多幣別頁：同款星號按鈕（修復前實測 20×20）。
+    await page.getByRole('link', { name: /多幣別/i }).click();
+    await expect(page.getByTestId('multi-currency-list')).toBeVisible({ timeout: 10000 });
+
+    const multiStar = page
+      .getByTestId('multi-currency-list')
+      .getByRole('button', {
+        name: /加入常用貨幣|移除常用貨幣|Add to favorites|Remove from favorites/i,
+      })
+      .first();
+    await expect(multiStar).toBeVisible();
+    const multiBox = await multiStar.boundingBox();
+    expect(multiBox).not.toBeNull();
+    expect(multiBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(multiBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
   test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {
@@ -194,6 +225,42 @@ test.describe('RateWise 核心功能測試', () => {
     const bodyText = await page.textContent('body');
     expect(bodyText).toBeTruthy();
     expect(bodyText!.length).toBeGreaterThan(0);
+  });
+});
+
+test.describe('幣別頁 CTA 深連結（#631）', () => {
+  // 與 fixtures/test.ts 相同的 base path 解析：本機 preview 服務於 /ratewise/。
+  const BASE_PATH = (
+    process.env['E2E_BASE_PATH'] ??
+    process.env['VITE_RATEWISE_BASE_PATH'] ??
+    '/ratewise/'
+  ).replace(/\/$/, '');
+
+  test('pair 頁主 CTA 帶 ?from&to，落地即正確幣別對（KRW→TWD）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    await page.goto(`${BASE_PATH}/krw-twd/`);
+
+    // CTA 必須帶深連結參數（修正前為裸 /ratewise/，落地變預設 TWD→JPY）。
+    const cta = page.getByRole('link', { name: /開始換算 KRW → TWD/ });
+    await expect(cta).toHaveAttribute('href', /\/\?from=KRW&to=TWD$/);
+
+    await cta.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: `test-results/cta-deeplink-pair-hero-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+    await cta.click();
+    await expect(page).toHaveURL(/from=KRW&to=TWD/);
+
+    // 換算器落地即 KRW→TWD，與按鈕承諾一致。
+    await expect(page.getByLabel('選擇來源貨幣')).toHaveValue('KRW', { timeout: 15_000 });
+    await expect(page.getByLabel('選擇目標貨幣')).toHaveValue('TWD');
+
+    await page.screenshot({
+      path: `test-results/cta-deeplink-landing-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
   });
 });
 

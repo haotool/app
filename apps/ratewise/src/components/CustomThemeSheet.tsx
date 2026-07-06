@@ -77,6 +77,10 @@ export function CustomThemeSheet({
   const textRgb = tripleToRgb(derived['--color-primary-text']);
   const chartRgb = tripleToRgb(derived['--color-chart-line']);
   const toneBackground = CUSTOM_BACKGROUND_TONES[customBackgroundTone].background;
+  // 可讀性回饋（#632）：on-surface 被 clamp（≠ raw primary）時提示文字將自動加深。
+  const onSurfaceTriple = derived['--color-primary-on-surface'];
+  const isTextClamped = onSurfaceTriple !== derived['--color-primary'];
+  const onSurfaceRgb = tripleToRgb(onSurfaceTriple);
 
   const handleHexInput = (raw: string) => {
     const value = raw.startsWith('#') ? raw : `#${raw}`;
@@ -247,6 +251,27 @@ export function CustomThemeSheet({
               Aa
             </span>
           </div>
+        </div>
+
+        {/* 可讀性回饋（#632）：過淺主色不硬擋，即時預覽 clamp 後的實效文字色。 */}
+        <div role="status" aria-live="polite" className="mb-5 empty:mb-0 empty:h-0">
+          {isTextClamped && (
+            <div
+              className="flex items-center gap-3 rounded-control bg-surface-sunken px-3 py-2.5"
+              data-testid="custom-theme-contrast-notice"
+            >
+              <span
+                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-compact bg-surface text-sm font-bold shadow-sm"
+                style={{ color: onSurfaceRgb }}
+                aria-hidden="true"
+              >
+                Aa
+              </span>
+              <p className="text-xs leading-relaxed opacity-70">
+                {t('settings.customThemeContrastNotice')}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* 背景色調五選一：色調圓票直接呈現底色（比文字 segmented 更所見即所得） */}

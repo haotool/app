@@ -112,6 +112,7 @@ const zhTW = {
   // Trend Chart
   trend: {
     cashSellBasis: '現金賣出走勢',
+    spotSellBasis: '即期賣出走勢',
   },
 
   // Multi Currency Converter
@@ -186,6 +187,7 @@ const zhTW = {
     customThemeToneMint: '薄荷白',
     customThemeToneRose: '玫瑰白',
     customThemeReset: '恢復預設主題',
+    customThemeContrastNotice: '此顏色文字將自動加深以確保可讀',
     appVersion: '應用程式版本',
     designSystem: '設計系統',
     techStack: '技術棧',

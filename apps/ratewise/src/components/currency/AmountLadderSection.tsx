@@ -70,7 +70,7 @@ export function AmountLadderSection({
                   <td className="py-2.5 pr-3">
                     <Link
                       to={`${basePath}/${row.twdAmount}/`}
-                      className="font-medium tabular-nums text-primary hover:underline"
+                      className="font-medium tabular-nums text-primary-on-surface hover:underline"
                     >
                       {formatNum(row.twdAmount)}
                     </Link>
@@ -85,7 +85,7 @@ export function AmountLadderSection({
                   <td className="py-2.5 pr-3">
                     <Link
                       to={`${basePath}/${row.amount}/`}
-                      className="font-medium tabular-nums text-primary hover:underline"
+                      className="font-medium tabular-nums text-primary-on-surface hover:underline"
                     >
                       {formatNum(row.amount)}
                     </Link>

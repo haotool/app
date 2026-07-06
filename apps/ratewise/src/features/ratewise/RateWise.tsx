@@ -206,7 +206,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           {/* H1 由 routes.tsx SEO wrapper 提供，此處不重複 */}
           {/* 載入狀態提示 */}
           {ratesLoading && (
-            <div className="text-center text-sm text-neutral-text-secondary py-2">
+            <div className="text-center text-sm text-neutral-text-secondary py-2 lg:col-span-2">
               載入即時匯率中...
             </div>
           )}
@@ -215,7 +215,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             <div
               role="status"
               data-testid="ratewise-stale-rates-warning"
-              className="mb-3 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text"
+              className="mb-3 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-text lg:col-span-2"
             >
               <AlertCircle size={14} aria-hidden="true" />
               <span>{t('errors.rateStaleWarning')}</span>
@@ -251,8 +251,8 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
             </div>
           </section>
 
-          {/* 收藏與貨幣列表區塊（桌面版顯示於側欄） */}
-          <section className="mb-4 hidden md:block flex-shrink-0">
+          {/* 收藏與貨幣列表區塊（md 起顯示；#594 二階：≥1024px 移入右欄輔助資訊） */}
+          <section className="mb-4 hidden md:block flex-shrink-0 lg:col-start-2 lg:row-span-2">
             <div className="space-y-4">
               <FavoritesList favorites={favorites} exchangeRates={exchangeRates} />
               <CurrencyList
@@ -266,7 +266,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           {/* 資料來源與更新時間區塊 - 固定最小高度避免載入完成後 footer 位移 */}
           <section
             data-testid="ratewise-data-source"
-            className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility} min-h-6`}
+            className={`${rateWiseLayoutTokens.info.base} ${rateWiseLayoutTokens.info.visibility} min-h-6 lg:col-start-1`}
           >
             {!ratesLoading && lastUpdate ? (
               <AnimatePresence mode="wait">
@@ -282,9 +282,9 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                       href="https://rate.bot.com.tw/xrt?Lang=zh-TW"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+                      className="inline-flex items-center gap-1 hover:text-primary-on-surface transition-colors"
                     >
-                      <Landmark className="h-3 w-3 text-primary/70" aria-hidden="true" />
+                      <Landmark className="h-3 w-3 text-primary-on-surface" aria-hidden="true" />
                       臺灣銀行牌告
                     </a>
                     <span>·</span>

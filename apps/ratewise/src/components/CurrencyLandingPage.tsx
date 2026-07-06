@@ -14,6 +14,7 @@ import { CurrencyAnswerHero } from './currency/CurrencyAnswerHero';
 import { CurrencySectionHeading } from './currency/CurrencySectionHeading';
 import { AmountAnswerCard } from './currency/AmountAnswerCard';
 import { AmountLadderSection } from './currency/AmountLadderSection';
+import { QuoteMatrixSection } from './currency/QuoteMatrixSection';
 import { RateInsightSection } from './currency/RateInsightSection';
 import { CommonAmountsSection } from './currency/CommonAmountsSection';
 import { LocalInsightsSection } from './currency/LocalInsightsSection';
@@ -136,13 +137,9 @@ export function CurrencyLandingPage({
     isTwdToForeign && amount !== null ? buildReverseAmountLadder(currencyCode) : [];
   const ladderRows = isTwdToForeign ? reverseLadder : forwardLadder;
 
-  // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
-  const converterHref =
-    amount !== null
-      ? isTwdToForeign
-        ? `/?amount=${amount}&from=TWD&to=${currencyCode}`
-        : `/?amount=${amount}&from=${currencyCode}&to=TWD`
-      : '/';
+  // 換算器 CTA 深連結（#631）：pair 頁帶 ?from&to、金額頁帶 ?amount&from&to，落地即正確幣別對。
+  const pairParams = isTwdToForeign ? `from=TWD&to=${currencyCode}` : `from=${currencyCode}&to=TWD`;
+  const converterHref = amount !== null ? `/?amount=${amount}&${pairParams}` : `/?${pairParams}`;
 
   // 金額頁以金額專用 ExchangeRateSpecification 取代幣對頁基礎匯率 schema，避免同頁重複同型節點。
   const resolvedJsonLd = (() => {
@@ -225,6 +222,7 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       <ContentPageLayout
+        width="wide"
         breadcrumbItems={[
           { label: t('nav.home'), href: '/' },
           {
@@ -234,7 +232,8 @@ export function CurrencyLandingPage({
         ]}
         testId="currency-landing-page"
       >
-        <div className="space-y-6">
+        {/* #594 二階：≥1024px 六段 IA 轉寬版兩欄 grid（全幅段落標 lg:col-span-2）；<1024px 佈局零變化。 */}
+        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
           {/* 1. Answer Hero：頁面身分＋（金額頁換算結果）＋快速答案＋CTA。 */}
           <CurrencyAnswerHero
             flag={currencyFlag}
@@ -244,8 +243,6 @@ export function CurrencyLandingPage({
             description={description}
             updatedDate={SEO_RATE_EXAMPLES_DATE}
             quickAnswers={answerCapsule}
-            ctaTitle="立即換算"
-            ctaLead={`立即查看${currencyName}賣出價：台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。`}
             ctaLabel={
               isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
             }
@@ -264,7 +261,16 @@ export function CurrencyLandingPage({
             )}
           </CurrencyAnswerHero>
 
-          {/* 2. 報價對比卡：中間價 vs 賣出價。 */}
+          {/* 2. 四報價卡（#618）：現金買/賣＋即期買/賣，缺值幣別誠實顯示不可用態。 */}
+          {rateExample && (
+            <QuoteMatrixSection
+              currencyCode={currencyCode}
+              currencyName={currencyName}
+              rateExample={rateExample}
+            />
+          )}
+
+          {/* 報價對比卡：中間價 vs 賣出價。 */}
           <RateInsightSection
             currencyName={currencyName}
             rateDifferenceSentence={rateDifferenceSentence}
@@ -281,8 +287,13 @@ export function CurrencyLandingPage({
               reverseLadder={reverseLadder}
             />
           )}
+          {/* 金額頁另有階梯表佔一半欄（與報價對比卡成對），互鏈改全幅避免奇數子項右側懸空。 */}
           {commonAmounts.length > 0 && (
-            <CommonAmountsSection commonAmounts={commonAmounts} pathname={pathname} />
+            <CommonAmountsSection
+              commonAmounts={commonAmounts}
+              pathname={pathname}
+              className={ladderRows.length > 0 ? 'lg:col-span-2' : undefined}
+            />
           )}
 
           {/* 4. 在地情境卡片組：匯率重點＋旅遊提示＋換匯管道比較。 */}
@@ -305,7 +316,7 @@ export function CurrencyLandingPage({
 
           {/* 5. FAQ 手風琴（E4 ContentFaqAccordion 範式）。 */}
           {faqEntries.length > 0 && (
-            <section>
+            <section className="lg:col-span-2">
               <CurrencySectionHeading icon={HelpCircle}>{faqTitle}</CurrencySectionHeading>
               <ContentFaqAccordion items={faqEntries} />
             </section>
@@ -315,8 +326,8 @@ export function CurrencyLandingPage({
           {relatedGuides.length > 0 && <RelatedGuidesSection relatedGuides={relatedGuides} />}
 
           {/* Data Source Notice */}
-          <footer className="text-center text-xs text-text-muted opacity-60">
-            <p>資料來源：臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新</p>
+          <footer className="text-center text-xs text-text-muted opacity-60 lg:col-span-2">
+            <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>

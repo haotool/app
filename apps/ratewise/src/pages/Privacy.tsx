@@ -73,7 +73,7 @@ const SECTIONS: readonly ContentSection[] = [
         description: (
           <>
             你可以在
-            <Link to="/settings/" className="mx-1 text-primary underline">
+            <Link to="/settings/" className="mx-1 text-primary-on-surface underline">
               設定頁
             </Link>
             重設部分本地偏好與快取資料。
@@ -85,7 +85,8 @@ const SECTIONS: readonly ContentSection[] = [
         description: (
           <>
             若對隱私有疑問，可來信
-            <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
+            <MailtoLink email={APP_INFO.email} className="ml-1 text-primary-on-surface underline" />
+            。
           </>
         ),
       },
@@ -119,19 +120,25 @@ export default function Privacy() {
       >
         <ContentPageHeader title="隱私政策" meta={<>最後更新：{LAST_UPDATED}</>} />
 
-        <nav aria-label="頁內目錄" className="mb-6 flex flex-wrap gap-2">
-          {TOC.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary"
-            >
-              {item.title}
-            </a>
-          ))}
-        </nav>
+        {/* #594 二階：≥1024px 目錄轉左側錨點欄＋正文收斂閱讀寬度；<1024px 佈局零變化。 */}
+        <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <nav
+            aria-label="頁內目錄"
+            className="mb-6 flex flex-wrap gap-2 lg:sticky lg:top-16 lg:mb-0 lg:flex-col lg:self-start"
+          >
+            {TOC.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary-on-surface"
+              >
+                {item.title}
+              </a>
+            ))}
+          </nav>
 
-        <ContentSections sections={SECTIONS} />
+          <ContentSections sections={SECTIONS} />
+        </div>
 
         <p className="mt-8 text-center text-sm text-text-muted">
           © {getCopyrightYears()} {APP_INFO.name}

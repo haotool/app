@@ -112,6 +112,7 @@ const en = {
   // Trend Chart
   trend: {
     cashSellBasis: 'Cash sell rate trend',
+    spotSellBasis: 'Spot sell rate trend',
   },
 
   // Multi Currency Converter
@@ -187,6 +188,7 @@ const en = {
     customThemeToneMint: 'Mint White',
     customThemeToneRose: 'Rose White',
     customThemeReset: 'Restore Default Theme',
+    customThemeContrastNotice: 'Text in this color will be darkened automatically for readability',
     appVersion: 'App Version',
     designSystem: 'Design System',
     techStack: 'Tech Stack',

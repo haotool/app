@@ -49,11 +49,25 @@ export default function About() {
     <>
       <div className="bg-surface">
         <div className="shell pb-12 pt-16 md:pt-20">
-          <div className="mx-auto max-w-[720px]">
-            <h1 className="text-h1 text-text">關於 {APP_INFO.shortName}</h1>
-            <p className="mt-3 text-caption text-text-muted">
-              {APP_INFO.author} · {APP_INFO.authorTitle} · Since {APP_INFO.copyrightStartYear}
-            </p>
+          <div className="mx-auto flex max-w-[720px] items-center gap-5 md:gap-6">
+            {/* A4 L2-a 吉祥物頭像（與 Home 區 6 同資產）；固定尺寸容器零 CLS。 */}
+            <div className="flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-deco bg-primary-bg md:size-[112px]">
+              <img
+                src="/brand/avatar.png"
+                alt="阿璋的吉祥物頭像——手持扳手的品牌藍小方塊"
+                width={640}
+                height={640}
+                loading="lazy"
+                decoding="async"
+                className="size-full object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-h1 text-text">關於 {APP_INFO.shortName}</h1>
+              <p className="mt-3 text-caption text-text-muted">
+                {APP_INFO.author} · {APP_INFO.authorTitle} · Since {APP_INFO.copyrightStartYear}
+              </p>
+            </div>
           </div>
         </div>
       </div>

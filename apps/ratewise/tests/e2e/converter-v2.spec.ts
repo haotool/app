@@ -321,6 +321,39 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test('首次鍵盤輸入取代預設種子而非串接（#633，實體＋虛擬兩路徑）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+
+    // 實體鍵路徑：不清空、不點輸入框，直接鍵入 123456789。
+    // 修正前串接在預設 1,000 之後變 1,000,123,456,789。
+    await page.keyboard.type('123456789');
+    await expect(page.getByTestId('converter-v2-amount-from')).toHaveText(/^123,456,789(\.\d+)?$/);
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，證據截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+    await page.screenshot({
+      path: `test-results/v2-first-input-replaces-seed-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+
+    // 虛擬鍵路徑：重載重播種子後，首顆數字鍵同樣取代種子。
+    await page.reload();
+    await expect(page.getByTestId('converter-v2')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('converter-v2-key-5').click();
+    await expect(page.getByTestId('converter-v2-amount-from')).toHaveText(/^5(\.\d+)?$/);
+
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
     await gotoConverterV2(page);
 
