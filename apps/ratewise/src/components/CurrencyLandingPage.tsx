@@ -148,6 +148,9 @@ export function CurrencyLandingPage({
   const resolvedJsonLd = (() => {
     if (amount === null || !jsonLd) return jsonLd;
 
+    // 金額頁 canonical 與幣對頁不同，移除幣對頁層級的 WebPage 節點避免 @id 錯置。
+    const baseJsonLd = jsonLd.filter((schema) => schema['@type'] !== 'WebPage');
+
     // 金額頁加入 ExchangeRateSpecification（含換算金額）。
     if (amountResult !== null && cashSell !== null) {
       const amountSchema = isTwdToForeign
@@ -167,13 +170,13 @@ export function CurrencyLandingPage({
             amountResult,
             'to-twd',
           );
-      const nonExchangeRateSchemas = jsonLd.filter(
+      const nonExchangeRateSchemas = baseJsonLd.filter(
         (schema) => schema['@type'] !== 'ExchangeRateSpecification',
       );
       return [...nonExchangeRateSchemas, amountSchema];
     }
 
-    return jsonLd;
+    return baseJsonLd;
   })();
 
   const robotsDirective =
@@ -313,7 +316,7 @@ export function CurrencyLandingPage({
 
           {/* Data Source Notice */}
           <footer className="text-center text-xs text-text-muted opacity-60">
-            <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
+            <p>資料來源：臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>

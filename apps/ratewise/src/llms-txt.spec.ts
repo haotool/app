@@ -60,10 +60,20 @@ describeIfGenerated('llms.txt structure (requires prebuild)', () => {
   it('uses prerendered path-based amount landing pages as the indexable format', () => {
     const content = readFileSync(llmsPath, 'utf-8');
     expect(content).toContain('https://app.haotool.org/ratewise/usd-twd/500/');
-    expect(content).toContain('買 500 美元要多少新台幣');
+    // title 範例必須對齊金額頁 v2 實際格式（buildPairAmountSeo SSOT），避免文件漂移。
+    expect(content).toContain('500 美金（USD）換台幣是多少');
+    expect(content).not.toContain('買 500 美元要多少新台幣');
     expect(content).not.toContain('https://app.haotool.org/ratewise/usd-twd/?amount={AMOUNT}');
     expect(content).not.toContain('canonical：自引用含 ?amount=');
     expect(content).not.toContain('500 美元換新台幣（USD/TWD）— 台銀實際賣出價');
+  });
+
+  it('embeds daily-updated cash sell snapshots with a freshness date for AI citation', () => {
+    const content = readFileSync(llmsPath, 'utf-8');
+    // Popular Rates 每行附台銀現金賣出快照與日期，AI 引用時可帶出數據新鮮度。
+    expect(content).toContain('匯率快照日期：');
+    expect(content).toMatch(/台銀現金賣出 1 USD = \d+(\.\d+)? TWD，\d{4}-\d{2}-\d{2}/);
+    expect(content).toMatch(/台銀現金賣出 1 JPY = \d+(\.\d+)? TWD，\d{4}-\d{2}-\d{2}/);
   });
 
   it('keeps card-rate guidance separate from Bank of Taiwan cash sell rates', () => {

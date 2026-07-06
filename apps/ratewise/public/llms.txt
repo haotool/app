@@ -1,12 +1,12 @@
 # HaoRate 匯率好工具 — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、4 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 18 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、7 種主題風格、4 語言介面與 PWA 離線使用。
 
 Version: v2.27.1
 
 ## Answer Capsule (Quick Q&A)
 
-- Q: HaoRate 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、4 語言介面與 PWA 離線使用。
+- Q: HaoRate 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、7 種主題風格、4 語言介面與 PWA 離線使用。
 - Q: 為什麼 HaoRate 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 HaoRate 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 約每 5 分鐘檢查更新。
@@ -27,8 +27,9 @@ Version: v2.27.1
 
 - 支援貨幣：18 種
 - 更新頻率：約每 5 分鐘檢查更新
+- 匯率快照日期：2026-07-04（本文件內嵌匯率數字每日自動更新）
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
-- 6 種主題風格（Zen/Nitro/Kawaii/Classic/Racing/Forest）
+- 7 種主題風格（Zen/Violet/Nitro/Racing/Kawaii/Classic/Forest）
 - i18n 4 語言支援（English/繁體中文/日本語/한국어）
 
 ## Features
@@ -44,7 +45,7 @@ Version: v2.27.1
 - 7~30 天歷史趨勢圖：視覺化匯率波動，判斷換匯時機
 - 下拉更新（Pull to Refresh）：首頁下拉同步最新匯率
 - PWA 離線使用：Service Worker 快取，無網路仍可換算
-- 6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Racing（黑紅賽車）、Forest（韓系簡約）
+- 7 種主題風格：Zen（極簡專業）、Violet（經典紫）、Nitro（深色科技）、Racing（黑紅賽車）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Forest（韓系簡約）
 
 ## 幣對金額頁（SSG 路徑型程序化 SEO，可被索引）
 
@@ -52,7 +53,7 @@ Version: v2.27.1
 Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 - 格式：`/{pair}/{amount}/` (例如: https://app.haotool.org/ratewise/usd-twd/500/)
-- title 範例：「買 500 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具」
+- title 範例：「500 美金（USD）換台幣是多少？今日台銀實際價 | HaoRate」（description 首句直接給台銀現金買入／賣出換算答案）
 - canonical：自引用同一路徑型 URL (例如 `/usd-twd/500/`)
 - sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
 
@@ -94,43 +95,43 @@ Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 ## Popular Rates（外幣→TWD，每頁含常見金額錨點、搜尋意圖 FAQ、旅遊換匯提示）
 
-- [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學
-- [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學
-- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 瑞士旅遊與跨境付款
-- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 人民幣付款與報價
-- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲旅遊與跨境付款
-- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國旅遊換匯
-- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 香港旅遊換匯
-- [IDR/TWD 印尼盾](https://app.haotool.org/ratewise/idr-twd/): 印尼旅遊換匯
-- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 日本旅遊換匯
-- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 韓國旅遊換匯
-- [MYR/TWD 馬來幣](https://app.haotool.org/ratewise/myr-twd/): 馬來西亞旅遊換匯
-- [NZD/TWD 紐元](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與留學
-- [PHP/TWD 菲律賓披索](https://app.haotool.org/ratewise/php-twd/): 菲律賓旅遊換匯
-- [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 新加坡旅遊與商務
-- [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯
-- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款
-- [VND/TWD 越南盾](https://app.haotool.org/ratewise/vnd-twd/): 越南旅遊換匯
+- [AUD/TWD 澳幣](https://app.haotool.org/ratewise/aud-twd/): 澳洲旅遊與留學（台銀現金賣出 1 AUD = 22.57 TWD，2026-07-04）
+- [CAD/TWD 加幣](https://app.haotool.org/ratewise/cad-twd/): 加拿大旅遊與留學（台銀現金賣出 1 CAD = 22.92 TWD，2026-07-04）
+- [CHF/TWD 瑞士法郎](https://app.haotool.org/ratewise/chf-twd/): 瑞士旅遊與跨境付款（台銀現金賣出 1 CHF = 40.16 TWD，2026-07-04）
+- [CNY/TWD 人民幣](https://app.haotool.org/ratewise/cny-twd/): 人民幣付款與報價（台銀現金賣出 1 CNY = 4.775 TWD，2026-07-04）
+- [EUR/TWD 歐元](https://app.haotool.org/ratewise/eur-twd/): 歐洲旅遊與跨境付款（台銀現金賣出 1 EUR = 37.07 TWD，2026-07-04）
+- [GBP/TWD 英鎊](https://app.haotool.org/ratewise/gbp-twd/): 英國旅遊換匯（台銀現金賣出 1 GBP = 43.59 TWD，2026-07-04）
+- [HKD/TWD 港幣](https://app.haotool.org/ratewise/hkd-twd/): 香港旅遊換匯（台銀現金賣出 1 HKD = 4.122 TWD，2026-07-04）
+- [IDR/TWD 印尼盾](https://app.haotool.org/ratewise/idr-twd/): 印尼旅遊換匯（台銀現金賣出 1 IDR = 0.00208 TWD，2026-07-04）
+- [JPY/TWD 日圓](https://app.haotool.org/ratewise/jpy-twd/): 日本旅遊換匯（台銀現金賣出 1 JPY = 0.2016 TWD，2026-07-04）
+- [KRW/TWD 韓元](https://app.haotool.org/ratewise/krw-twd/): 韓國旅遊換匯（台銀現金賣出 1 KRW = 0.02305 TWD，2026-07-04）
+- [MYR/TWD 馬來幣](https://app.haotool.org/ratewise/myr-twd/): 馬來西亞旅遊換匯（台銀現金賣出 1 MYR = 8.346 TWD，2026-07-04）
+- [NZD/TWD 紐元](https://app.haotool.org/ratewise/nzd-twd/): 紐西蘭旅遊與留學（台銀現金賣出 1 NZD = 18.62 TWD，2026-07-04）
+- [PHP/TWD 菲律賓披索](https://app.haotool.org/ratewise/php-twd/): 菲律賓旅遊換匯（台銀現金賣出 1 PHP = 0.5864 TWD，2026-07-04）
+- [SGD/TWD 新加坡幣](https://app.haotool.org/ratewise/sgd-twd/): 新加坡旅遊與商務（台銀現金賣出 1 SGD = 25.07 TWD，2026-07-04）
+- [THB/TWD 泰銖](https://app.haotool.org/ratewise/thb-twd/): 泰國旅遊換匯（台銀現金賣出 1 THB = 1.0248 TWD，2026-07-04）
+- [USD/TWD 美元](https://app.haotool.org/ratewise/usd-twd/): 美國旅遊與海外付款（台銀現金賣出 1 USD = 32.215 TWD，2026-07-04）
+- [VND/TWD 越南盾](https://app.haotool.org/ratewise/vnd-twd/): 越南旅遊換匯（台銀現金賣出 1 VND = 0.00138 TWD，2026-07-04）
 
 ## TWD→外幣落地頁（出國換匯場景，台幣換外幣方向）
 
-- [台幣換澳幣 TWD/AUD](https://app.haotool.org/ratewise/twd-aud/): 出國前台幣換澳幣，澳洲旅遊與留學
-- [台幣換加幣 TWD/CAD](https://app.haotool.org/ratewise/twd-cad/): 出國前台幣換加幣，加拿大旅遊與留學
-- [台幣換瑞士法郎 TWD/CHF](https://app.haotool.org/ratewise/twd-chf/): 出國前台幣換瑞士法郎，瑞士旅遊與跨境付款
-- [台幣換人民幣 TWD/CNY](https://app.haotool.org/ratewise/twd-cny/): 出國前台幣換人民幣，人民幣付款與報價
-- [台幣換歐元 TWD/EUR](https://app.haotool.org/ratewise/twd-eur/): 出國前台幣換歐元，歐洲旅遊與跨境付款
-- [台幣換英鎊 TWD/GBP](https://app.haotool.org/ratewise/twd-gbp/): 出國前台幣換英鎊，英國旅遊換匯
-- [台幣換港幣 TWD/HKD](https://app.haotool.org/ratewise/twd-hkd/): 出國前台幣換港幣，香港旅遊換匯
-- [台幣換印尼盾 TWD/IDR](https://app.haotool.org/ratewise/twd-idr/): 出國前台幣換印尼盾，印尼旅遊換匯
-- [台幣換日圓 TWD/JPY](https://app.haotool.org/ratewise/twd-jpy/): 出國前台幣換日圓，日本旅遊換匯
-- [台幣換韓元 TWD/KRW](https://app.haotool.org/ratewise/twd-krw/): 出國前台幣換韓元，韓國旅遊換匯
-- [台幣換馬來幣 TWD/MYR](https://app.haotool.org/ratewise/twd-myr/): 出國前台幣換馬來幣，馬來西亞旅遊換匯
-- [台幣換紐元 TWD/NZD](https://app.haotool.org/ratewise/twd-nzd/): 出國前台幣換紐元，紐西蘭旅遊與留學
-- [台幣換菲律賓披索 TWD/PHP](https://app.haotool.org/ratewise/twd-php/): 出國前台幣換菲律賓披索，菲律賓旅遊換匯
-- [台幣換新加坡幣 TWD/SGD](https://app.haotool.org/ratewise/twd-sgd/): 出國前台幣換新加坡幣，新加坡旅遊與商務
-- [台幣換泰銖 TWD/THB](https://app.haotool.org/ratewise/twd-thb/): 出國前台幣換泰銖，泰國旅遊換匯
-- [台幣換美元 TWD/USD](https://app.haotool.org/ratewise/twd-usd/): 出國前台幣換美元，美國旅遊與海外付款
-- [台幣換越南盾 TWD/VND](https://app.haotool.org/ratewise/twd-vnd/): 出國前台幣換越南盾，越南旅遊換匯
+- [台幣換澳幣 TWD/AUD](https://app.haotool.org/ratewise/twd-aud/): 出國前台幣換澳幣，澳洲旅遊與留學（台銀現金賣出 1 AUD = 22.57 TWD，2026-07-04）
+- [台幣換加幣 TWD/CAD](https://app.haotool.org/ratewise/twd-cad/): 出國前台幣換加幣，加拿大旅遊與留學（台銀現金賣出 1 CAD = 22.92 TWD，2026-07-04）
+- [台幣換瑞士法郎 TWD/CHF](https://app.haotool.org/ratewise/twd-chf/): 出國前台幣換瑞士法郎，瑞士旅遊與跨境付款（台銀現金賣出 1 CHF = 40.16 TWD，2026-07-04）
+- [台幣換人民幣 TWD/CNY](https://app.haotool.org/ratewise/twd-cny/): 出國前台幣換人民幣，人民幣付款與報價（台銀現金賣出 1 CNY = 4.775 TWD，2026-07-04）
+- [台幣換歐元 TWD/EUR](https://app.haotool.org/ratewise/twd-eur/): 出國前台幣換歐元，歐洲旅遊與跨境付款（台銀現金賣出 1 EUR = 37.07 TWD，2026-07-04）
+- [台幣換英鎊 TWD/GBP](https://app.haotool.org/ratewise/twd-gbp/): 出國前台幣換英鎊，英國旅遊換匯（台銀現金賣出 1 GBP = 43.59 TWD，2026-07-04）
+- [台幣換港幣 TWD/HKD](https://app.haotool.org/ratewise/twd-hkd/): 出國前台幣換港幣，香港旅遊換匯（台銀現金賣出 1 HKD = 4.122 TWD，2026-07-04）
+- [台幣換印尼盾 TWD/IDR](https://app.haotool.org/ratewise/twd-idr/): 出國前台幣換印尼盾，印尼旅遊換匯（台銀現金賣出 1 IDR = 0.00208 TWD，2026-07-04）
+- [台幣換日圓 TWD/JPY](https://app.haotool.org/ratewise/twd-jpy/): 出國前台幣換日圓，日本旅遊換匯（台銀現金賣出 1 JPY = 0.2016 TWD，2026-07-04）
+- [台幣換韓元 TWD/KRW](https://app.haotool.org/ratewise/twd-krw/): 出國前台幣換韓元，韓國旅遊換匯（台銀現金賣出 1 KRW = 0.02305 TWD，2026-07-04）
+- [台幣換馬來幣 TWD/MYR](https://app.haotool.org/ratewise/twd-myr/): 出國前台幣換馬來幣，馬來西亞旅遊換匯（台銀現金賣出 1 MYR = 8.346 TWD，2026-07-04）
+- [台幣換紐元 TWD/NZD](https://app.haotool.org/ratewise/twd-nzd/): 出國前台幣換紐元，紐西蘭旅遊與留學（台銀現金賣出 1 NZD = 18.62 TWD，2026-07-04）
+- [台幣換菲律賓披索 TWD/PHP](https://app.haotool.org/ratewise/twd-php/): 出國前台幣換菲律賓披索，菲律賓旅遊換匯（台銀現金賣出 1 PHP = 0.5864 TWD，2026-07-04）
+- [台幣換新加坡幣 TWD/SGD](https://app.haotool.org/ratewise/twd-sgd/): 出國前台幣換新加坡幣，新加坡旅遊與商務（台銀現金賣出 1 SGD = 25.07 TWD，2026-07-04）
+- [台幣換泰銖 TWD/THB](https://app.haotool.org/ratewise/twd-thb/): 出國前台幣換泰銖，泰國旅遊換匯（台銀現金賣出 1 THB = 1.0248 TWD，2026-07-04）
+- [台幣換美元 TWD/USD](https://app.haotool.org/ratewise/twd-usd/): 出國前台幣換美元，美國旅遊與海外付款（台銀現金賣出 1 USD = 32.215 TWD，2026-07-04）
+- [台幣換越南盾 TWD/VND](https://app.haotool.org/ratewise/twd-vnd/): 出國前台幣換越南盾，越南旅遊換匯（台銀現金賣出 1 VND = 0.00138 TWD，2026-07-04）
 
 ## Data Source
 
