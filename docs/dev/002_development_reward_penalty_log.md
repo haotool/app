@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-final-review-fixes
+- 原因：epic-final 實測抓到 sticky 隱形幕以 opacity:0 疊頂層攔截點擊且可聚焦（FR-012 於幕 1/2 失效，規格與 QA 雙盲區）；另素材格式偏離未回寫、死資產入 dist、base 前進 002 漂移
+- 解法：keyframes 端點幀 visibility:hidden＋隱形幕互動斷言入 QA；illus 降採 480w AVIF+WebP、源檔遷 brand-src；merge base 收斂 002；SR 逐幕語意裁決回寫 §3.3
 
 - 日期：2026-07-06
 - ID：reward-haotool-e3-wave-d
