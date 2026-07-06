@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
+> 本次分數變化：+1（reward 1、penalty 0、neutral 2）｜累計總分：+153
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-qa-capture-matrix
+- 原因：E5 wave-D 受改頁需要可重跑的截圖矩陣與 console error 檢核證據（三攻略頁＋AnswerCapsule 消費樣本 × 雙主題 × 雙尺寸，#418 為硬標準 0）
+- 解法：新增 scripts/qa/capture-authority-guides.mjs（20 張截圖＋console/pageerror 收集，非零即失敗），本輪實跑 console errors 0
 
 - 日期：2026-07-06
 - ID：reward-rw-e5d-authority-guide-uiux
