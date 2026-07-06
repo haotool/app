@@ -11,9 +11,11 @@ import type { CurrencyCode, RateType } from '../../types';
 import { CURRENCY_DEFINITIONS, DEFAULT_RATE_MODE, DEFAULT_RATE_SOURCE } from '../../constants';
 import { formatExchangeRate, formatAmountDisplay } from '../../../../utils/currencyFormatter';
 import {
-  getUnitExchangeRate,
+  getUnitExchangeRateWithBasis,
   type RateTypeAvailability,
+  type UnitRateBasis,
 } from '../../../../utils/exchangeRateCalculation';
+import { RateTypeTooltip } from '../../../../components/RateTypeTooltip';
 import { ConverterKeypad } from './ConverterKeypad';
 import { CurrencyPickerSheet } from './CurrencyPickerSheet';
 import { TrendSheet } from './TrendSheet';
@@ -194,7 +196,8 @@ export const SingleConverterV2 = ({
     return ((last - first) / first) * 100;
   }, [sparklineData]);
 
-  const exchangeRate = getUnitExchangeRate(
+  // 匯率與實際採用 basis 由引擎一次回傳：值與標籤共用同一選價決策（QA-I D1 review）。
+  const { rate: exchangeRate, side: rateSide } = getUnitExchangeRateWithBasis(
     fromCurrency,
     toCurrency,
     details,
@@ -241,13 +244,31 @@ export const SingleConverterV2 = ({
     setPickerFor(null);
   };
 
-  // rate chip 基準標註：換錢所來源優先，其餘依 cash/spot 誠實標示銀行賣出語意。
+  // rate chip 基準標註：換錢所來源優先，其餘直接消費引擎回傳的實際採用 basis。
+  // mid：單一「中間價」標籤（引擎依當前 rateType 計價，fallback 可跨型，故不宣稱現金/即期）。
+  // mixed（auto 交叉兩腿買/賣不一致）：只標 rate type，省略買/賣字樣，不過度宣稱（PM 裁決）。
+  const resolveBankBasisLabel = (side: UnitRateBasis): string => {
+    switch (side) {
+      case 'mid':
+        return t('converterV2.rateBasisMid');
+      case 'mixed':
+        return t(rateType === 'cash' ? 'singleConverter.cashRate' : 'singleConverter.spotRate');
+      case 'buy':
+        return t(
+          rateType === 'cash' ? 'converterV2.rateBasisCashBuy' : 'converterV2.rateBasisSpotBuy',
+        );
+      case 'sell':
+        return t(rateType === 'cash' ? 'converterV2.rateBasisCash' : 'converterV2.rateBasisSpot');
+      default: {
+        const exhaustive: never = side;
+        return exhaustive;
+      }
+    }
+  };
   const basisLabel =
     rateSource === 'exchange-shop' && exchangeShopCurrency
       ? t('converterV2.rateBasisExchangeShop')
-      : rateType === 'cash'
-        ? t('converterV2.rateBasisCash')
-        : t('converterV2.rateBasisSpot');
+      : resolveBankBasisLabel(rateSide);
 
   // 趨勢圖基準標註跟隨實際資料序列（#564）：即期序列不足回落現金賣出時標註同步。
   const trendBasisLabel =
@@ -257,11 +278,38 @@ export const SingleConverterV2 = ({
         ? t('converterV2.rateBasisCash')
         : t('converterV2.rateBasisSpot');
 
+  // 切換目標基準不可用時（如 KRW 無即期），chip 進入不可用態並以 tooltip 說明原因。
+  const nextRateType: RateType = rateType === 'cash' ? 'spot' : 'cash';
+  const isBasisToggleDisabled = !rateTypeAvailability[nextRateType];
+  const basisUnavailableMessage = t('singleConverter.rateTypeUnavailable', {
+    rateType: t(nextRateType === 'spot' ? 'singleConverter.spotRate' : 'singleConverter.cashRate'),
+  });
+
   const handleToggleBasis = () => {
-    const nextType: RateType = rateType === 'cash' ? 'spot' : 'cash';
-    if (!rateTypeAvailability[nextType]) return;
-    onRateTypeChange(nextType);
+    if (isBasisToggleDisabled) return;
+    onRateTypeChange(nextRateType);
   };
+
+  const rateChipButton = (
+    <button
+      type="button"
+      onClick={handleToggleBasis}
+      data-testid="converter-v2-rate-chip"
+      aria-label={t('converterV2.toggleRateBasis')}
+      // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
+      // RateTypeTooltip 的禁用原因提示將永遠無法觸發（onClick guard 已阻擋切換）。
+      aria-disabled={isBasisToggleDisabled || undefined}
+      className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface-elevated px-4 text-sm font-semibold tabular-nums text-neutral-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+        isBasisToggleDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-primary/10'
+      }`}
+    >
+      <span className="text-text">
+        1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
+      </span>
+      <span aria-hidden="true">・</span>
+      <span className="text-primary-on-surface">{basisLabel}</span>
+    </button>
+  );
 
   return (
     <div className="flex flex-col gap-3 short:gap-2" data-testid="converter-v2">
@@ -313,21 +361,15 @@ export const SingleConverterV2 = ({
         />
       </div>
 
-      {/* rate chip：一行匯率資訊，tap 切換現金／即期 */}
+      {/* rate chip：一行匯率資訊，tap 切換現金／即期；目標基準不可用時以 tooltip 說明（對齊 v1 RateSelector 慣例）。 */}
       <div className="flex justify-center">
-        <button
-          type="button"
-          onClick={handleToggleBasis}
-          data-testid="converter-v2-rate-chip"
-          aria-label={t('converterV2.toggleRateBasis')}
-          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface-elevated px-4 text-sm font-semibold tabular-nums text-neutral-text-secondary transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        >
-          <span className="text-text">
-            1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
-          </span>
-          <span aria-hidden="true">・</span>
-          <span className="text-primary-on-surface">{basisLabel}</span>
-        </button>
+        {isBasisToggleDisabled ? (
+          <RateTypeTooltip message={basisUnavailableMessage} isDisabled={true}>
+            {rateChipButton}
+          </RateTypeTooltip>
+        ) : (
+          rateChipButton
+        )}
       </div>
 
       {/* sparkline：72px 常態趨勢＋漲跌 chip，tap 展開 65vh 趨勢 sheet */}
