@@ -332,7 +332,7 @@ export default function SeoTech() {
               className="mb-8"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary-on-surface text-xs font-semibold">
                   <Search className="w-3 h-3" />
                   SEO 技術揭露
                 </span>
@@ -430,12 +430,12 @@ export default function SeoTech() {
             </div>
             <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
               <p className="text-xs text-[rgb(var(--color-text-muted))] leading-relaxed">
-                <span className="font-medium text-primary">CDN 端點：</span>{' '}
+                <span className="font-medium text-primary-on-surface">CDN 端點：</span>{' '}
                 <a
                   href={RATES_API.latestCdn}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs break-all hover:text-primary transition-colors"
+                  className="font-mono text-xs break-all hover:text-primary-on-surface transition-colors"
                 >
                   {RATES_API.latestCdn}
                 </a>
@@ -618,7 +618,7 @@ export default function SeoTech() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon className="w-4 h-4 text-primary" />
+                        <Icon className="w-4 h-4 text-primary-on-surface" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -711,7 +711,7 @@ export default function SeoTech() {
                       : ''
                   }`}
                 >
-                  <span className="text-xs font-mono text-primary/60 w-4 text-right flex-shrink-0">
+                  <span className="text-xs font-mono text-primary-on-surface/60 w-4 text-right flex-shrink-0">
                     {idx + 1}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -835,7 +835,7 @@ function SectionHeader({
   return (
     <div className="flex items-center gap-2 mb-3">
       <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
-        <Icon className="w-3.5 h-3.5 text-primary" />
+        <Icon className="w-3.5 h-3.5 text-primary-on-surface" />
       </div>
       <h2 className="text-base font-bold">{title}</h2>
     </div>

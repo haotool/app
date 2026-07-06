@@ -211,7 +211,7 @@ export default function Favorites() {
                     animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
                     transition={transitions.default}
                   >
-                    <TabIcon size={18} className={isActive ? 'text-primary' : ''} />
+                    <TabIcon size={18} className={isActive ? 'text-primary-on-surface' : ''} />
                   </motion.div>
                   <span className="text-2xs font-bold">{tab.label}</span>
                 </motion.button>
@@ -364,7 +364,7 @@ export default function Favorites() {
                                   }}
                                   aria-label={`${t('favorites.goToConvert')} ${code}`}
                                 >
-                                  <span className="text-2xs font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary transition">
+                                  <span className="text-2xs font-bold opacity-60 group-hover:opacity-100 group-hover:text-primary-on-surface transition">
                                     {t('favorites.clickToConvert')}
                                   </span>
                                 </div>

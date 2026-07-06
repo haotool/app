@@ -316,7 +316,9 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
                         </div>
                       )}
                       <div className="flex items-center gap-2.5 text-2xs leading-tight whitespace-nowrap">
-                        <span className="text-primary font-semibold">{tooltipData.date}</span>
+                        <span className="text-primary-on-surface font-semibold">
+                          {tooltipData.date}
+                        </span>
                         <span className="text-foreground font-bold">
                           {formatExchangeRate(tooltipData.rate)}
                         </span>

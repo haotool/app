@@ -58,7 +58,7 @@ export function CurrencyAnswerHero({
 
       {quickAnswers.length > 0 && (
         <div className="mt-4 rounded-panel border border-primary/20 bg-primary/5 p-4">
-          <h2 className="text-sm font-semibold text-primary">快速答案</h2>
+          <h2 className="text-sm font-semibold text-primary-on-surface">快速答案</h2>
           <div className="mt-3 space-y-3">
             {quickAnswers.map((item) => (
               <div
@@ -77,7 +77,7 @@ export function CurrencyAnswerHero({
 
       <div className="mt-5 border-t border-border/60 pt-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-text">
-          <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+          <Sparkles className="h-4 w-4 text-primary-on-surface" aria-hidden="true" />
           {ctaTitle}
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{ctaLead}</p>

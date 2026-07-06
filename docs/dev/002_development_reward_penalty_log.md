@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+154
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-632-custom-primary-contrast-guard
+- 原因：custom 主題 `--color-primary` 為使用者原色 identity 映射且 20+ 處文字直接消費 raw token，近白主色（F5F5F0）使快速連結／幣別連結／設定按鈕／底部導覽 active 全隱形且重載持久（issue #632）
+- 解法：新增 `--color-primary-on-surface` 文字錨點（內建主題同 primary 值零視覺變化、custom 走 AA clamp），全站 `text-primary` 改錨並以靜態掃描守門曝露面清單；選色面板加即時可讀性提示與 clamp 實效色預覽（i18n ×4），AA property 測試擴充 on-surface 任意色全綠
 
 - 日期：2026-07-06
 - ID：penalty-rw-606-e2e-gate-regression
