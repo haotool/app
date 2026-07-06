@@ -3,7 +3,7 @@
  * A2 sticky 三幕 DOM 契約與 CSS 降級閘、A3 morph 靜態 view-transition-name、
  * A4 素材整合（brand 檔案存在、Home/About 頭像、banner 插畫版位）。
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect, afterEach } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
@@ -79,21 +79,46 @@ describe('A2 sticky 敘事一幕（Home 區 5）', () => {
     expect(css).toMatch(/\.craft-scene-3 \{[^}]*animation-range: cover 55% cover 78%;/s);
   });
 
-  it('幕 keyframes 僅 opacity＋translateY（compositor-only）；N8：enhanced 幕內 draw-in 整格隱藏', () => {
+  it('幕 keyframes 僅 opacity＋visibility＋translateY；N8：enhanced 幕內 draw-in 整格隱藏', () => {
     for (const name of ['craft-hold-out', 'craft-in-out', 'craft-in-hold']) {
       const match = new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n\\}`).exec(css);
       expect(match).not.toBeNull();
       const body = match![1]!;
       const properties = Array.from(body.matchAll(/([a-z-]+):/g), (m) => m[1]);
-      expect(new Set(properties)).toEqual(new Set(['opacity', 'transform']));
+      expect(new Set(properties)).toEqual(new Set(['opacity', 'visibility', 'transform']));
       const transforms = Array.from(body.matchAll(/transform:\s*([^;]+);/g), (m) => m[1]);
       for (const value of transforms) {
         expect(value).toMatch(/^(none|translateY\(-?24px\))$/);
+      }
+      // B1：opacity 0 端點幀必須同幀宣告 visibility hidden（隱形幕不攔截點擊、不可聚焦）；
+      // opacity 1 幀必須 visible（離散插值下過渡期間保持可見）。
+      const frames = Array.from(body.matchAll(/\{([^}]*)\}/g), (m) => m[1]!.replace(/\s+/g, ' '));
+      for (const frame of frames) {
+        if (frame.includes('opacity: 0')) {
+          expect(frame).toContain('visibility: hidden');
+        }
+        if (frame.includes('opacity: 1')) {
+          expect(frame).toContain('visibility: visible');
+        }
       }
     }
     expect(css).toMatch(/\.craft-icon \{\s*display: none;\s*\}/);
     // 基線（fallback）overline 隱藏、卡版維持現行三卡網格。
     expect(css).toMatch(/\.craft-overline \{\s*display: none;\s*\}/);
+  });
+
+  it('dist CSS：animation-fill-mode 與 visibility 端點幀存活 minify（防 minifier 回歸）', () => {
+    // 本斷言依賴 build 產物；dist 缺席（如 CI 未先 build）時跳過。
+    const distAssets = resolve(process.cwd(), 'dist/assets');
+    if (!existsSync(distAssets)) return;
+    const distCss = readdirSync(distAssets)
+      .filter((file) => file.endsWith('.css'))
+      .map((file) => readFileSync(resolve(distAssets, file), 'utf-8'))
+      .join('\n');
+    expect(distCss).toContain('animation-fill-mode:both');
+    // minifier 會將 100% 改寫為 to；斷言端點幀 visibility 存活。
+    expect(distCss).toMatch(/craft-hold-out\{0%,78%\{opacity:1;visibility:visible/);
+    expect(distCss).toMatch(/to\{opacity:0;visibility:hidden/);
   });
 });
 
@@ -135,15 +160,13 @@ describe('A3 View Transition morph（靜態 view-transition-name，N4）', () =>
 });
 
 describe('A4 素材整合（快照制產物與版位）', () => {
-  it('brand 產物齊備：logomark 三尺寸＋avatar 640＋illus-desk png/webp', () => {
-    for (const file of [
-      'brand/logomark.png',
-      'brand/logomark-512.png',
-      'brand/logomark-192.png',
-      'brand/avatar.png',
-      'brand/illus-desk.png',
-      'brand/illus-desk.webp',
-    ]) {
+  it('素材檔位正確：build-time 源檔在 brand-src（不入 dist）、runtime 資產在 public/brand（S2）', () => {
+    const brandSrcDir = `${resolve(process.cwd(), 'brand-src')}/`;
+    for (const file of ['logomark.png', 'logomark-512.png', 'logomark-192.png', 'illus-desk.png']) {
+      expect(existsSync(`${brandSrcDir}${file}`), `brand-src/${file}`).toBe(true);
+      expect(existsSync(`${publicDir}brand/${file}`), `public 不得含 ${file}`).toBe(false);
+    }
+    for (const file of ['brand/avatar.png', 'brand/illus-desk.avif', 'brand/illus-desk.webp']) {
       expect(existsSync(`${publicDir}${file}`), file).toBe(true);
     }
   });
@@ -170,13 +193,20 @@ describe('A4 素材整合（快照制產物與版位）', () => {
     expect(avatar).toHaveAttribute('width', '640');
   });
 
-  it('聯繫 banner 右下角插畫：aria-hidden＋lazy＋banner-illus（CSS 基線隱藏、≥1024 顯示）', () => {
+  it('聯繫 banner 右下角插畫：picture AVIF 主軌＋WebP 備援（S1 480w）、aria-hidden＋lazy、≥1024 顯示', () => {
     const { container } = renderHome();
-    const illus = container.querySelector<HTMLImageElement>('img.banner-illus');
-    expect(illus).not.toBeNull();
-    expect(illus).toHaveAttribute('aria-hidden', 'true');
-    expect(illus).toHaveAttribute('alt', '');
-    expect(illus).toHaveAttribute('loading', 'lazy');
+    const picture = container.querySelector<HTMLPictureElement>('picture.banner-illus');
+    expect(picture).not.toBeNull();
+    expect(picture).toHaveAttribute('aria-hidden', 'true');
+    expect(picture!.querySelector('source')).toHaveAttribute('type', 'image/avif');
+    expect(picture!.querySelector('source')).toHaveAttribute('srcset', '/brand/illus-desk.avif');
+    const img = picture!.querySelector('img');
+    expect(img).toHaveAttribute('src', '/brand/illus-desk.webp');
+    expect(img).toHaveAttribute('alt', '');
+    expect(img).toHaveAttribute('loading', 'lazy');
+    // S1：480w = 渲染寬 240px 的 2× 帳；width/height 屬性防 CLS。
+    expect(img).toHaveAttribute('width', '480');
+    expect(img).toHaveAttribute('height', '320');
     expect(css).toMatch(/\.banner-illus \{\s*display: none;\s*\}/);
     expect(css).toMatch(
       /@media \(min-width: 1024px\) \{\s*\.banner-illus \{[^}]*position: absolute;[^}]*right: 48px;[^}]*bottom: 0;[^}]*width: 240px;/s,

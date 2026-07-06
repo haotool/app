@@ -844,40 +844,49 @@ p {
     }
   }
 }
+/* opacity:0 端點幀補 visibility:hidden（B1）：隱形幕不攔截點擊、錨點不可聚焦；
+ * visibility 於 keyframes 內離散插值（任一端 visible 則過渡期間 visible），compositor 友善。 */
 @keyframes craft-hold-out {
   0%,
   78% {
     opacity: 1;
+    visibility: visible;
     transform: none;
   }
   100% {
     opacity: 0;
+    visibility: hidden;
     transform: translateY(-24px);
   }
 }
 @keyframes craft-in-out {
   0% {
     opacity: 0;
+    visibility: hidden;
     transform: translateY(24px);
   }
   28%,
   78% {
     opacity: 1;
+    visibility: visible;
     transform: none;
   }
   100% {
     opacity: 0;
+    visibility: hidden;
     transform: translateY(-24px);
   }
 }
 @keyframes craft-in-hold {
   0% {
     opacity: 0;
+    visibility: hidden;
     transform: translateY(24px);
   }
   30%,
   100% {
     opacity: 1;
+    visibility: visible;
     transform: none;
   }
 }

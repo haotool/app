@@ -34,6 +34,18 @@ async function newPage(viewport, options = {}) {
   return { context, page, errors };
 }
 
+// 捲至 pin cover 進度（0..1）；cover 起點 = pin 頂進入視口底。
+async function scrollToCover(page, fraction) {
+  await page.evaluate((f) => {
+    const el = document.querySelector('.craft-pin');
+    const rect = el.getBoundingClientRect();
+    const coverStart = window.scrollY + rect.top - window.innerHeight;
+    const coverLength = rect.height + window.innerHeight;
+    window.scrollTo(0, coverStart + coverLength * f);
+  }, fraction);
+  await page.waitForTimeout(250);
+}
+
 // ---------- 1440×900：sticky enhanced 三幕 ----------
 {
   const { context, page, errors } = await newPage({ width: 1440, height: 900 });
@@ -56,27 +68,14 @@ async function newPage(viewport, options = {}) {
       const scenes = [1, 2, 3].map((n) => document.querySelector(`.craft-scene-${n}`));
       return scenes.map((scene) => Number(getComputedStyle(scene).opacity));
     });
-  await page.evaluate(() => {
-    const el = document.querySelector('.craft-pin');
-    const rect = el.getBoundingClientRect();
-    const coverStart = window.scrollY + rect.top - window.innerHeight;
-    const coverLength = rect.height + window.innerHeight;
-    window.scrollTo(0, coverStart + coverLength * 0.5);
-  });
-  await page.waitForTimeout(300);
+  await scrollToCover(page, 0.5);
   const mid = await sceneOpacity();
   check('A2 cover 50% 幕 2 opacity > 0.9', mid[1] > 0.9, String(mid[1]));
   check('A2 cover 50% 幕 1 opacity < 0.1', mid[0] < 0.1, String(mid[0]));
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'haotool-e3d-sticky-1440.png') });
 
   // 幕 1 → 幕 3 換幕全程走查。
-  await page.evaluate(() => {
-    const el = document.querySelector('.craft-pin');
-    const rect = el.getBoundingClientRect();
-    const coverStart = window.scrollY + rect.top - window.innerHeight;
-    window.scrollTo(0, coverStart + (rect.height + window.innerHeight) * 0.3);
-  });
-  await page.waitForTimeout(200);
+  await scrollToCover(page, 0.3);
   const early = await sceneOpacity();
   check('A2 cover 30% 幕 1 可見', early[0] > 0.9, String(early[0]));
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -91,6 +90,49 @@ async function newPage(viewport, options = {}) {
   }));
   check('A2 enhanced overline 顯示', enhanced.overline !== 'none', enhanced.overline);
   check('A2 enhanced draw-in 整格隱藏（N8）', enhanced.icon === 'none', enhanced.icon);
+
+  // B1 ①：幕 1 可見期點擊幕 1 證據錨點 → popup URL 正確（隱形幕不得攔截）。
+  await scrollToCover(page, 0.3);
+  const hiddenScenes = await page.evaluate(() =>
+    [2, 3].map((n) => getComputedStyle(document.querySelector(`.craft-scene-${n}`)).visibility),
+  );
+  check(
+    'B1 1440 幕 1 期非當前幕 visibility hidden',
+    hiddenScenes.every((v) => v === 'hidden'),
+    hiddenScenes.join(','),
+  );
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator('.craft-scene-1 a').click(),
+  ]);
+  await popup.waitForLoadState('domcontentloaded').catch(() => {});
+  const popupUrl = popup.url();
+  await popup.close();
+  check(
+    'B1 1440 幕 1 錨點點擊 popup URL 正確（pagespeed）',
+    popupUrl.includes('pagespeed.web.dev'),
+    popupUrl,
+  );
+
+  // B1 ②：隱形幕錨點不可聚焦（focus() 拒絕＋Tab 遍歷跳過）。
+  const focusProbe = await page.evaluate(() => {
+    const hiddenAnchor = document.querySelector('.craft-scene-2 a');
+    hiddenAnchor.focus();
+    const programmatic = document.activeElement === hiddenAnchor;
+    document.querySelector('.craft-scene-1 a').focus();
+    return { programmatic, start: document.activeElement.closest('.craft-scene-1') !== null };
+  });
+  await page.keyboard.press('Tab');
+  const tabTarget = await page.evaluate(() => ({
+    inHiddenScene: Boolean(document.activeElement.closest('.craft-scene-2, .craft-scene-3')),
+    tag: document.activeElement.tagName,
+  }));
+  check('B1 1440 隱形幕錨點 focus() 拒絕', focusProbe.programmatic === false && focusProbe.start);
+  check(
+    'B1 1440 Tab 遍歷跳過隱形幕錨點',
+    tabTarget.inHiddenScene === false,
+    JSON.stringify(tabTarget),
+  );
 
   // A4 banner 插畫 ≥1024 可見。
   const illus = await page.evaluate(() => {
@@ -162,7 +204,40 @@ async function newPage(viewport, options = {}) {
     `${pin.height}`,
   );
 
-  // A4 頭像顯示（好字佔位已移除）。
+  // B1：390 同跑點擊與聚焦兩斷言（隱形幕不攔截、不可聚焦）。
+  await scrollToCover(page, 0.3);
+  const [popup390] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator('.craft-scene-1 a').click(),
+  ]);
+  await popup390.waitForLoadState('domcontentloaded').catch(() => {});
+  const popup390Url = popup390.url();
+  await popup390.close();
+  check(
+    'B1 390 幕 1 錨點點擊 popup URL 正確（pagespeed）',
+    popup390Url.includes('pagespeed.web.dev'),
+    popup390Url,
+  );
+  const focus390 = await page.evaluate(() => {
+    const hiddenAnchor = document.querySelector('.craft-scene-3 a');
+    hiddenAnchor.focus();
+    return {
+      programmatic: document.activeElement === hiddenAnchor,
+      visibility: getComputedStyle(document.querySelector('.craft-scene-3')).visibility,
+    };
+  });
+  await page.evaluate(() => document.querySelector('.craft-scene-1 a').focus());
+  await page.keyboard.press('Tab');
+  const tab390 = await page.evaluate(() =>
+    Boolean(document.activeElement.closest('.craft-scene-2, .craft-scene-3')),
+  );
+  check(
+    'B1 390 隱形幕錨點 focus() 拒絕＋Tab 跳過',
+    focus390.programmatic === false && focus390.visibility === 'hidden' && tab390 === false,
+    JSON.stringify(focus390),
+  );
+
+  // A4 頭像顯示。
   const avatar = await page.evaluate(() => {
     const img = document.querySelector('img[src="/brand/avatar.png"]');
     if (!img) return null;
@@ -170,7 +245,6 @@ async function newPage(viewport, options = {}) {
       alt: img.getAttribute('alt'),
       complete: img.complete,
       naturalWidth: img.naturalWidth,
-      containerText: document.body.textContent.includes('好字佔位'),
     };
   });
   await page.evaluate(() =>

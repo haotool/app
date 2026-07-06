@@ -29,7 +29,12 @@ export default function SectionHeading({
         <h2 id={id} className="text-h2 text-text" aria-label={kineticWords.join('')}>
           <span aria-hidden="true">
             {kineticWords.map((word, index) => (
-              <span key={word} className="kinetic-word" style={{ '--i': index } as CSSProperties}>
+              <span
+                // 複合 key：拆詞可能出現重複詞段（nit：index 併入避免 key 衝突）。
+                key={`${index}-${word}`}
+                className="kinetic-word"
+                style={{ '--i': index } as CSSProperties}
+              >
                 {word}
               </span>
             ))}
