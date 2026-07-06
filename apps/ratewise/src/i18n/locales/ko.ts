@@ -112,6 +112,7 @@ const ko = {
   // Trend Chart
   trend: {
     cashSellBasis: '현금 매도율 추이',
+    spotSellBasis: '전신환 매도율 추이',
   },
 
   // Multi Currency Converter

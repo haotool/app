@@ -166,6 +166,20 @@ jobs:
           const RAW_BASE = 'https://raw.githubusercontent.com/haotool/app/data';
           const MAX_DAYS = 30;
           const currencies = ['TWD','USD','HKD','GBP','AUD','CAD','SGD','CHF','JPY','NZD','THB','PHP','IDR','EUR','KRW','VND','MYR','CNY'];
+          // 多基準序列（#564/#618）：現金賣出由 rates 承載，其餘由每日檔 details 展開。
+          const BASIS_KEYS = ['cashBuy', 'spotBuy', 'spotSell'];
+
+          function pickBasisRate(detail, basis, currency) {
+            if (currency === 'TWD') return 1;
+            if (!detail) return null;
+            const value =
+              basis === 'cashBuy'
+                ? detail.cash?.buy
+                : basis === 'spotBuy'
+                  ? detail.spot?.buy
+                  : detail.spot?.sell;
+            return typeof value === 'number' && value > 0 ? value : null;
+          }
 
           function generateDateRange(days) {
             const dates = [];
@@ -197,9 +211,14 @@ jobs:
             console.log('🚀 生成 30 天歷史匯率聚合 JSON...');
             const dates = generateDateRange(MAX_DAYS);
             const aggregateRates = {};
+            const aggregateBasisRates = {};
             const validDates = [];
             let updateTime = '';
             for (const c of currencies) aggregateRates[c] = [];
+            for (const basis of BASIS_KEYS) {
+              aggregateBasisRates[basis] = {};
+              for (const c of currencies) aggregateBasisRates[basis][c] = [];
+            }
 
             const BATCH_SIZE = 5;
             let consecutiveMissing = 0;
@@ -214,7 +233,12 @@ jobs:
                   validDates.push(date);
                   consecutiveMissing = 0;
                   if (!updateTime && data.updateTime) updateTime = data.updateTime;
-                  for (const c of currencies) aggregateRates[c].push(data.rates[c] ?? null);
+                  for (const c of currencies) {
+                    aggregateRates[c].push(data.rates[c] ?? null);
+                    for (const basis of BASIS_KEYS) {
+                      aggregateBasisRates[basis][c].push(pickBasisRate(data.details?.[c], basis, c));
+                    }
+                  }
                 } else {
                   consecutiveMissing++;
                   console.log('  ⚠️ 缺少 ' + date + ' 的資料');
@@ -229,6 +253,7 @@ jobs:
               generatedAt: new Date().toISOString(),
               dates: validDates,
               rates: aggregateRates,
+              basisRates: aggregateBasisRates,
             };
 
             const outputDir = dirname(OUTPUT_PATH);

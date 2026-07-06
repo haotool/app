@@ -14,6 +14,7 @@ import { CurrencyAnswerHero } from './currency/CurrencyAnswerHero';
 import { CurrencySectionHeading } from './currency/CurrencySectionHeading';
 import { AmountAnswerCard } from './currency/AmountAnswerCard';
 import { AmountLadderSection } from './currency/AmountLadderSection';
+import { QuoteMatrixSection } from './currency/QuoteMatrixSection';
 import { RateInsightSection } from './currency/RateInsightSection';
 import { CommonAmountsSection } from './currency/CommonAmountsSection';
 import { LocalInsightsSection } from './currency/LocalInsightsSection';
@@ -257,7 +258,16 @@ export function CurrencyLandingPage({
             )}
           </CurrencyAnswerHero>
 
-          {/* 2. 報價對比卡：中間價 vs 賣出價。 */}
+          {/* 2. 四報價卡（#618）：現金買/賣＋即期買/賣，缺值幣別誠實顯示不可用態。 */}
+          {rateExample && (
+            <QuoteMatrixSection
+              currencyCode={currencyCode}
+              currencyName={currencyName}
+              rateExample={rateExample}
+            />
+          )}
+
+          {/* 報價對比卡：中間價 vs 賣出價。 */}
           <RateInsightSection
             currencyName={currencyName}
             rateDifferenceSentence={rateDifferenceSentence}

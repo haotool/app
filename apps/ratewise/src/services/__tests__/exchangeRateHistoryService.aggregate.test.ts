@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchHistoricalRatesRange } from '../exchangeRateHistoryService';
+import { fetchHistoricalRatesRange, getTrendRate } from '../exchangeRateHistoryService';
 
 describe('fetchHistoricalRatesRange - aggregate endpoint', () => {
   beforeEach(() => {
@@ -122,6 +122,67 @@ describe('fetchHistoricalRatesRange - aggregate endpoint', () => {
     expect(result[1]?.date).toBe('2026-05-03');
     expect(result[1]?.data.rates.USD).toBe(31.85);
     expect(result[1]?.data.rates.EUR).toBe(37.5);
+  });
+
+  it('aggregate basisRates 應還原為每日 details（多基準序列 #564）', async () => {
+    const mockAggregateData = {
+      updateTime: '2026-07-06T08:00:00+08:00',
+      dates: ['2026-07-05', '2026-07-04'],
+      rates: {
+        TWD: [1, 1],
+        USD: [32.215, 32.2],
+        KRW: [0.02305, 0.023],
+      },
+      basisRates: {
+        cashBuy: { TWD: [1, 1], USD: [31.545, 31.5], KRW: [0.02051, 0.0205] },
+        spotBuy: { TWD: [1, 1], USD: [31.87, 31.85], KRW: [null, null] },
+        spotSell: { TWD: [1, 1], USD: [32.02, 32.0], KRW: [null, null] },
+      },
+    };
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockAggregateData),
+    } as Response);
+
+    const result = await fetchHistoricalRatesRange(2);
+
+    const first = result[0]?.data;
+    expect(first?.details?.['USD']).toEqual({
+      spot: { buy: 31.87, sell: 32.02 },
+      cash: { buy: 31.545, sell: 32.215 },
+    });
+    // 現金專屬幣別（KRW）即期序列誠實為 null
+    expect(first?.details?.['KRW']?.spot).toEqual({ buy: null, sell: null });
+
+    // getTrendRate：spot 走即期賣出、cash 走現金賣出；缺值回 null 不推估
+    expect(getTrendRate(first!, 'USD', 'spot')).toBe(32.02);
+    expect(getTrendRate(first!, 'USD', 'cash')).toBe(32.215);
+    expect(getTrendRate(first!, 'KRW', 'spot')).toBeNull();
+    expect(getTrendRate(first!, 'KRW', 'cash')).toBe(0.02305);
+    expect(getTrendRate(first!, 'TWD', 'spot')).toBe(1);
+  });
+
+  it('舊 aggregate（無 basisRates）cash 基準應回落 rates', async () => {
+    const mockAggregateData = {
+      updateTime: '2026-05-05T08:00:00+08:00',
+      dates: ['2026-05-04'],
+      rates: { TWD: [1], USD: [31.92] },
+    };
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockAggregateData),
+    } as Response);
+
+    const result = await fetchHistoricalRatesRange(1);
+    const first = result[0]?.data;
+
+    expect(first?.details).toBeUndefined();
+    expect(getTrendRate(first!, 'USD', 'cash')).toBe(31.92);
+    expect(getTrendRate(first!, 'USD', 'spot')).toBeNull();
   });
 
   it('請求天數超過 aggregate 可用天數時應 graceful 處理', async () => {

@@ -15,7 +15,8 @@ vi.mock('../../../../config/performance', () => ({
 }));
 
 // Mock exchangeRateHistoryService
-vi.mock('../../../../services/exchangeRateHistoryService', () => ({
+vi.mock('../../../../services/exchangeRateHistoryService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../services/exchangeRateHistoryService')>()),
   fetchHistoricalRatesRange: vi.fn(),
   fetchLatestRates: vi.fn(),
 }));

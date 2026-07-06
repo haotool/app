@@ -10,7 +10,8 @@ import type * as MoneyboxRateServiceModule from '../../../../services/moneyboxRa
 import { TREND_CHART_DEFER_MS } from '../../../../config/performance';
 
 // Mock services with controllable responses
-vi.mock('../../../../services/exchangeRateHistoryService', () => ({
+vi.mock('../../../../services/exchangeRateHistoryService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../services/exchangeRateHistoryService')>()),
   fetchHistoricalRatesRange: vi.fn(),
   fetchLatestRates: vi.fn(),
 }));

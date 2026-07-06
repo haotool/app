@@ -210,6 +210,8 @@ async function main() {
 
     const cashSell = d.cash?.sell;
     const cashBuy = d.cash?.buy;
+    const spotBuy = d.spot?.buy;
+    const spotSell = d.spot?.sell;
 
     if (!cashSell) {
       errors.push(`${code}: 缺少 cash.sell`);
@@ -268,6 +270,9 @@ async function main() {
       diffTWD,
       diffPct,
       cashSell,
+      cashBuy: cashBuy || null,
+      spotBuy: spotBuy || null,
+      spotSell: spotSell || null,
       marketMid: +marketMid.toFixed(6),
       bankMid: bankMid ? +bankMid.toFixed(6) : null,
       spotAvailable: !!d.spot?.sell,
@@ -346,6 +351,12 @@ async function main() {
     `  diffPct: number;`,
     `  /** 台灣銀行現金賣出匯率（每 1 單位外幣 = N 台幣） */`,
     `  cashSell: number;`,
+    `  /** 台灣銀行現金買入匯率（null 代表台銀無此報價） */`,
+    `  cashBuy: number | null;`,
+    `  /** 台灣銀行即期買入匯率（null 代表台銀無此報價） */`,
+    `  spotBuy: number | null;`,
+    `  /** 台灣銀行即期賣出匯率（null 代表台銀無此報價） */`,
+    `  spotSell: number | null;`,
     `  /** 市場中間匯率（open.er-api.com，每 1 單位外幣 = N 台幣） */`,
     `  marketMid: number;`,
     `  /** 台銀自身現金中間價（(買入+賣出)/2，雙重驗證用，null 代表無現金買入資料） */`,
@@ -370,6 +381,9 @@ async function main() {
     lines.push(`    diffTWD: ${ex.diffTWD},`);
     lines.push(`    diffPct: ${ex.diffPct},`);
     lines.push(`    cashSell: ${ex.cashSell},`);
+    lines.push(`    cashBuy: ${ex.cashBuy ?? 'null'},`);
+    lines.push(`    spotBuy: ${ex.spotBuy ?? 'null'},`);
+    lines.push(`    spotSell: ${ex.spotSell ?? 'null'},`);
     lines.push(`    marketMid: ${ex.marketMid},`);
     lines.push(`    bankMid: ${ex.bankMid ?? 'null'},`);
     lines.push(`    spotAvailable: ${ex.spotAvailable},`);

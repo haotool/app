@@ -18,7 +18,16 @@ describe('trend i18n keys', () => {
     expect(locale.trend.cashSellBasis.length).toBeGreaterThan(0);
   });
 
+  it.each(locales)('%s 應提供 trend.spotSellBasis', (_name, locale) => {
+    expect(locale.trend.spotSellBasis).toEqual(expect.any(String));
+    expect(locale.trend.spotSellBasis.length).toBeGreaterThan(0);
+  });
+
   it('zh-TW 基準標註為現金賣出走勢', () => {
     expect(zhTW.trend.cashSellBasis).toBe('現金賣出走勢');
+  });
+
+  it('zh-TW 即期基準標註為即期賣出走勢', () => {
+    expect(zhTW.trend.spotSellBasis).toBe('即期賣出走勢');
   });
 });

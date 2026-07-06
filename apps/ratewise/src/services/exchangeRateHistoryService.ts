@@ -18,17 +18,45 @@
 
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
-import type { CurrencyCode } from '../features/ratewise/types';
+import type { CurrencyCode, RateType } from '../features/ratewise/types';
 import { CDN_DATA_BASE, RAW_DATA_BASE, RATES_API } from '../config/api-endpoints';
+
+/** 單幣別多基準報價（現金/即期 × 買入/賣出）；缺值以 null 誠實表示。 */
+export interface RateBasisDetail {
+  spot?: { buy?: number | null; sell?: number | null };
+  cash?: { buy?: number | null; sell?: number | null };
+}
 
 /**
  * 歷史服務專用的精簡匯率快照型別。
- * 只包含趨勢圖需要的欄位；完整型別請見 offlineStorage.ts 的 RateSnapshot。
+ * rates 為現金賣出基準（向後相容）；details 為多基準擴充欄位（#564）。
+ * 完整型別請見 offlineStorage.ts 的 RateSnapshot。
  */
 export interface RateSnapshot {
   updateTime: string;
   source: string;
   rates: Record<CurrencyCode, number | null>;
+  details?: Record<string, RateBasisDetail>;
+}
+
+/**
+ * 依費率模式取得趨勢用賣出匯率：spot 走 details 即期賣出（缺值回 null，不推估）；
+ * cash 優先 details 現金賣出、回落 rates（舊資料相容）。TWD 為基準幣固定 1。
+ */
+export function getTrendRate(
+  snapshot: RateSnapshot,
+  code: CurrencyCode,
+  rateType: RateType,
+): number | null {
+  if (code === 'TWD') return 1;
+
+  if (rateType === 'spot') {
+    const spotSell = snapshot.details?.[code]?.spot?.sell;
+    return typeof spotSell === 'number' && spotSell > 0 ? spotSell : null;
+  }
+
+  const cashSell = snapshot.details?.[code]?.cash?.sell ?? snapshot.rates[code];
+  return typeof cashSell === 'number' && cashSell > 0 ? cashSell : null;
 }
 
 /**
@@ -132,6 +160,10 @@ interface AggregateHistoryData {
   updateTime: string;
   dates: string[];
   rates: Record<CurrencyCode, number[]>;
+  /** 多基準序列（#564）：現金賣出由 rates 承載，其餘基準 column-major 展開。 */
+  basisRates?: Partial<
+    Record<'cashBuy' | 'spotBuy' | 'spotSell', Record<CurrencyCode, (number | null)[]>>
+  >;
 }
 
 /**
@@ -145,6 +177,8 @@ function convertAggregateToHistorical(
   const currencies = Object.keys(aggregate.rates) as CurrencyCode[];
   const actualDays = Math.min(aggregate.dates.length, maxDays);
 
+  const { basisRates } = aggregate;
+
   for (let i = 0; i < actualDays; i++) {
     const date = aggregate.dates[i];
     if (!date) continue;
@@ -154,12 +188,31 @@ function convertAggregateToHistorical(
       rates[currency] = aggregate.rates[currency]?.[i] ?? null;
     }
 
+    // 由 column-major 多基準序列還原每日 details（cashSell 由 rates 承載）。
+    let details: Record<string, RateBasisDetail> | undefined;
+    if (basisRates) {
+      details = {};
+      for (const currency of currencies) {
+        details[currency] = {
+          spot: {
+            buy: basisRates.spotBuy?.[currency]?.[i] ?? null,
+            sell: basisRates.spotSell?.[currency]?.[i] ?? null,
+          },
+          cash: {
+            buy: basisRates.cashBuy?.[currency]?.[i] ?? null,
+            sell: rates[currency],
+          },
+        };
+      }
+    }
+
     results.push({
       date,
       data: {
         updateTime: `${date}T08:00:00+08:00`,
         source: 'Taiwan Bank (臺灣銀行牌告匯率)',
         rates,
+        ...(details ? { details } : {}),
       },
     });
   }

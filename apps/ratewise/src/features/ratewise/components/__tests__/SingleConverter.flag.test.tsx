@@ -15,7 +15,8 @@ import ja from '../../../../i18n/locales/ja';
 import ko from '../../../../i18n/locales/ko';
 
 // Mock services（避免測試觸網）
-vi.mock('../../../../services/exchangeRateHistoryService', () => ({
+vi.mock('../../../../services/exchangeRateHistoryService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../services/exchangeRateHistoryService')>()),
   fetchHistoricalRatesRange: vi.fn().mockResolvedValue([]),
   fetchLatestRates: vi.fn().mockResolvedValue({
     updateTime: '2026/07/05 08:00:00',
