@@ -24,6 +24,15 @@ interface BankRateOption {
   icon: typeof TrendingUp;
 }
 
+// 內容驅動佈局（#651 前置）：欄數由子元素數量隱式決定，2/3/4 pills 免改版。
+// minmax(max-content,1fr)：空間足夠時等寬，受 max-w 擠壓時退至內容寬下限，文字永不截斷換行。
+const PILL_GRID_CLASS = 'inline-grid grid-flow-col auto-cols-[minmax(max-content,1fr)]';
+
+// 熱區與視覺分離（比照 SegmentedControl sm / #644 星號）：
+// button 為 44×44 透明熱區（WCAG 2.5.8），-my-[10px] 負邊距抵銷垂直外擴，容器與卡片版面不變。
+const PILL_HIT_CLASS =
+  '-my-[10px] flex min-h-11 min-w-11 items-center justify-center focus:outline-none group/pill relative';
+
 export const RateSelector = ({
   rateType,
   rateSource,
@@ -33,9 +42,6 @@ export const RateSelector = ({
   onRateSourceChange,
 }: RateSelectorProps) => {
   const { t } = useTranslation();
-  const optionCountClass = hasExchangeShop
-    ? 'grid-cols-3 w-[12.5rem] compact:w-[12rem] tiny:w-[11.25rem] micro:w-[10.75rem]'
-    : 'grid-cols-2 w-[8.75rem] compact:w-[8.5rem] tiny:w-[8rem] micro:w-[7.5rem]';
   const bankRateOptions: BankRateOption[] = [
     {
       value: 'spot',
@@ -57,6 +63,12 @@ export const RateSelector = ({
     },
   ];
 
+  // 視覺 pill 維持 24px（h-6）：熱區外擴不改變韓系緊湊視覺。
+  const pillVisualClass = (isActive: boolean) =>
+    `relative flex h-6 w-full min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold group-focus-visible/pill:ring-2 group-focus-visible/pill:ring-primary/50 ${
+      isActive ? 'text-white' : 'text-text/70 hover:text-text'
+    }`;
+
   // 實底 pill 使用主色深階（zen 定義 --color-primary-strong），確保白字 WCAG AA 對比。
   const renderIndicator = (isActive: boolean) => (
     <AnimatePresence>
@@ -72,7 +84,8 @@ export const RateSelector = ({
 
   return (
     <div
-      className={`grid h-7 ${optionCountClass} max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
+      data-testid="rate-selector"
+      className={`${PILL_GRID_CLASS} h-7 max-w-[calc(100%_-_1.5rem)] bg-background/80 backdrop-blur-md rounded-full p-0.5 shadow-sm border border-border/60 ${singleConverterLayoutTokens.rateCard.rateTypeContainer}`}
       role="group"
       aria-label={t('singleConverter.rateTypeGroup')}
     >
@@ -84,6 +97,7 @@ export const RateSelector = ({
           <motion.button
             key={option.value}
             type="button"
+            data-testid="rate-selector-pill"
             onClick={() => {
               if (isUnavailable) return;
               onRateSourceChange('bank');
@@ -92,26 +106,26 @@ export const RateSelector = ({
             whileHover={isUnavailable ? undefined : segmentedSwitch.item.whileHover}
             whileTap={isUnavailable ? undefined : segmentedSwitch.item.whileTap}
             animate={{ opacity: isActive ? 1 : segmentedSwitch.inactiveOpacity }}
-            className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
-              isActive ? 'text-white' : 'text-text/70 hover:text-text'
-            } ${isUnavailable ? 'cursor-not-allowed opacity-60' : ''}`}
+            className={`${PILL_HIT_CLASS} ${isUnavailable ? 'cursor-not-allowed' : ''}`}
             aria-label={option.ariaLabel}
             aria-pressed={isActive}
             // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
             // RateTypeTooltip 的禁用原因提示將永遠無法觸發（onClick guard 已阻擋切換）。
             aria-disabled={isUnavailable || undefined}
           >
-            {renderIndicator(isActive)}
-            <motion.span
-              className="relative z-10 inline-flex"
-              animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
-            >
-              <Icon
-                className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-                aria-hidden="true"
-              />
-            </motion.span>
-            <span className="relative z-10 leading-none">{option.label}</span>
+            <span className={`${pillVisualClass(isActive)} ${isUnavailable ? 'opacity-60' : ''}`}>
+              {renderIndicator(isActive)}
+              <motion.span
+                className="relative z-10 inline-flex"
+                animate={{ scale: isActive ? segmentedSwitch.activeIconScale : 1 }}
+              >
+                <Icon
+                  className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
+                  aria-hidden="true"
+                />
+              </motion.span>
+              <span className="relative z-10 leading-none">{option.label}</span>
+            </span>
           </motion.button>
         );
 
@@ -120,7 +134,13 @@ export const RateSelector = ({
         }
 
         return (
-          <RateTypeTooltip key={option.value} message={option.unavailableMessage} isDisabled={true}>
+          // triggerClassName="grid"：讓 pill 在 tooltip 包裝下仍撐滿格軌並免除 inline 基線偏移。
+          <RateTypeTooltip
+            key={option.value}
+            message={option.unavailableMessage}
+            isDisabled={true}
+            triggerClassName="grid"
+          >
             {optionButton}
           </RateTypeTooltip>
         );
@@ -129,32 +149,33 @@ export const RateSelector = ({
       {hasExchangeShop && (
         <motion.button
           type="button"
+          data-testid="rate-selector-pill"
           onClick={() => onRateSourceChange('exchange-shop')}
           whileHover={segmentedSwitch.item.whileHover}
           whileTap={segmentedSwitch.item.whileTap}
           animate={{
             opacity: rateSource === 'exchange-shop' ? 1 : segmentedSwitch.inactiveOpacity,
           }}
-          className={`flex h-6 min-h-0 min-w-0 items-center justify-center gap-0.5 whitespace-nowrap leading-none ${singleConverterLayoutTokens.rateCard.rateTypeButton} rounded-full font-semibold relative ${
-            rateSource === 'exchange-shop' ? 'text-white' : 'text-text/70 hover:text-text'
-          }`}
+          className={PILL_HIT_CLASS}
           aria-pressed={rateSource === 'exchange-shop'}
           aria-label={t('singleConverter.switchToExchangeShop')}
         >
-          {renderIndicator(rateSource === 'exchange-shop')}
-          <motion.span
-            className="relative z-10 inline-flex"
-            animate={{
-              scale: rateSource === 'exchange-shop' ? segmentedSwitch.activeIconScale : 1,
-            }}
-          >
-            <Store
-              className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
-              aria-hidden="true"
-            />
-          </motion.span>
-          <span className="relative z-10 leading-none">
-            {t('singleConverter.exchangeShopRate')}
+          <span className={pillVisualClass(rateSource === 'exchange-shop')}>
+            {renderIndicator(rateSource === 'exchange-shop')}
+            <motion.span
+              className="relative z-10 inline-flex"
+              animate={{
+                scale: rateSource === 'exchange-shop' ? segmentedSwitch.activeIconScale : 1,
+              }}
+            >
+              <Store
+                className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
+                aria-hidden="true"
+              />
+            </motion.span>
+            <span className="relative z-10 leading-none">
+              {t('singleConverter.exchangeShopRate')}
+            </span>
           </span>
         </motion.button>
       )}

@@ -314,13 +314,14 @@ export const singleConverterLayoutTokens = {
     rateTypeContainer:
       'absolute top-3 left-1/2 -translate-x-1/2 compact:top-2.5 short:top-2 tiny:top-2 micro:top-1.5 nano:top-1.5',
 
-    /** 匯率類型按鈕尺寸（E1 字階下限 12px：各斷點統一 text-2xs，僅縮內距） */
+    /** 匯率類型按鈕尺寸（E1 字階下限 12px：各斷點統一 text-2xs，僅縮內距）
+     *  極窄寬度梯次第 2 級（xnarrow ≤329px）：內距收斂至最小；字級已在 12px 下限不再降級 */
     rateTypeButton:
-      'px-2 py-0.5 text-2xs compact:px-1.5 compact:py-0.5 short:px-1.5 short:py-0.5 tiny:px-1 tiny:py-0.5 micro:px-1 micro:py-0.5 nano:px-1 nano:py-0.5',
+      'px-2 py-0.5 text-2xs compact:px-1.5 compact:py-0.5 short:px-1.5 short:py-0.5 tiny:px-1 tiny:py-0.5 micro:px-1 micro:py-0.5 nano:px-1 nano:py-0.5 xnarrow:px-1',
 
-    /** 匯率類型圖示 - nano 隱藏 */
+    /** 匯率類型圖示 - nano（高度）與 narrow ≤349px（寬度梯次第 1 級）隱藏，留文字保單行 */
     rateTypeIcon:
-      'w-3 h-3 compact:w-2.5 compact:h-2.5 short:w-2.5 short:h-2.5 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden',
+      'w-3 h-3 compact:w-2.5 compact:h-2.5 short:w-2.5 short:h-2.5 tiny:w-2 tiny:h-2 micro:w-2 micro:h-2 nano:hidden narrow:hidden',
 
     /** 主要匯率文字 */
     rateText: 'text-2xl compact:text-xl short:text-lg tiny:text-base micro:text-sm nano:text-sm',

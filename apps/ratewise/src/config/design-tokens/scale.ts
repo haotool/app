@@ -237,6 +237,17 @@ export const breakpointTokens = {
 
     /** 長螢幕 - 完整顯示所有元素 */
     tall: { raw: '(min-height: 761px)', class: 'tall:' },
+
+    /* ─────────────────────────────────────────────────────────────
+     * 極窄寬度斷點（RateSelector pills 梯次；repo screens 為 object 格式，
+     * Tailwind 的 max-[...] 任意變體不會產出，必須用 raw 斷點）
+     * ───────────────────────────────────────────────────────────── */
+
+    /** 極窄寬度第 1 級 - pills icon 隱藏留文字 */
+    narrow: { raw: '(max-width: 349px)', class: 'narrow:' },
+
+    /** 極窄寬度第 2 級 - pills 內距收斂至最小 */
+    xnarrow: { raw: '(max-width: 329px)', class: 'xnarrow:' },
   },
 
   /** 容器最大寬度 */
