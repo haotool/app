@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+152
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+152
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-answer-capsule-e1-token
+- 原因：AnswerCapsule 沿用 legacy `card` 類與任意邊框，與 E4/E5 內容頁 E1 token 體系（rounded-card/panel、hairline、shadow-card）漂移
+- 解法：改 E1 token 卡片＋lucide Zap 標題徽章，可見文字零變動，消費頁（首頁/FAQ/About/Guide/OpenData/攻略頁）樣式一致收斂
 
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot
