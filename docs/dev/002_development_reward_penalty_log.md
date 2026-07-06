@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1｜累計總分：+171
+> 本次分數變化：+1｜累計總分：+172
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-344-lhci-smoke-authority-guides
+- 原因：Lighthouse CI smoke paths 僅覆蓋 `/`、`/faq/`、`/about/`，3 篇 Authority Guide 主戰內容頁無同層級性能守門，內容頁 CLS/LCP 回歸無法被 PR 守門攔截（issue #344）
+- 解法：`LIGHTHOUSE_CI_SMOKE_PATHS`（seo-paths.config.mjs＋seo-paths.ts 雙 SSOT 同步）擴充 sell-rate-vs-mid-rate／cash-vs-spot-rate／card-rate-guide 三頁 canonical trailing slash 路徑，消費點（.lighthouserc.cjs、lighthouse-production.mjs、lighthouse-ci.sh）均由 `APP_CONFIG.lighthouseSmokePaths` 取得無第二份清單，SEO_MASTER_SSOT B4 同步
 
 - 日期：2026-07-07
 - ID：reward-rw-ga-e2e-gate-regression-window
