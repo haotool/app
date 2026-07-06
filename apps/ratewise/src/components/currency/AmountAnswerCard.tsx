@@ -78,7 +78,7 @@ export function AmountAnswerCard({
 
       <Link
         to={converterHref}
-        className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-control bg-primary-strong px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+        className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-control bg-primary-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
       >
         在換算器查看最新匯率
         <ArrowRight className="h-4 w-4" aria-hidden="true" />

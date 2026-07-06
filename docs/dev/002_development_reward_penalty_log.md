@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（雙線合併：本線 reward 4）｜累計總分：+169
+> 本次分數變化：+5（雙線合併：本線 reward 4＋上游 reward 1）｜累計總分：+170
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-currency-cta-dead-class-contrast
+- 原因：幣別頁／金額頁主 CTA 使用死類 `text-primary-foreground`（dist CSS 無此類、CSS 變數未定義），實渲染為繼承深藏青字壓 `bg-primary-strong` 僅 3.3:1，34 幣別頁＋金額頁全中（QA-H E6）
+- 解法：CTA 文字改錨 repo 既有白字慣例 `text-white`（`bg-primary-strong` 7 主題白字對比 4.60–7.10:1 均達 AA），並於 raw-primary-text-exposure 守門新增死類全站使用數為 0 的斷言防回退
 
 - 日期：2026-07-06
 - ID：reward-rw-custom-theme-wave-d-fullpage-picker
