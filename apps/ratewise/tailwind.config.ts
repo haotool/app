@@ -177,6 +177,9 @@ export default {
       micro: { raw: breakpointTokens.screens.micro.raw },
       nano: { raw: breakpointTokens.screens.nano.raw },
       tall: { raw: breakpointTokens.screens.tall.raw },
+      // 極窄寬度斷點 - RateSelector pills 梯次（複雜 screens 下 max-[...] 變體不可用）
+      narrow: { raw: breakpointTokens.screens.narrow.raw },
+      xnarrow: { raw: breakpointTokens.screens.xnarrow.raw },
     },
   },
   plugins: [],

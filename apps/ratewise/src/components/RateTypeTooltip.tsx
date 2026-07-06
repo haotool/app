@@ -13,11 +13,18 @@ interface RateTypeTooltipProps {
   children: React.ReactNode;
   message: string;
   isDisabled: boolean;
+  /** 觸發層 display 覆寫：grid/flex 場景避免 inline-block 的 baseline 對齊造成子元素垂直偏移。 */
+  triggerClassName?: string;
 }
 
 const AUTO_HIDE_MS = 3000;
 
-export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeTooltipProps) => {
+export const RateTypeTooltip = ({
+  children,
+  message,
+  isDisabled,
+  triggerClassName,
+}: RateTypeTooltipProps) => {
   const [show, setShow] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,7 +57,7 @@ export const RateTypeTooltip = ({ children, message, isDisabled }: RateTypeToolt
   return (
     <div className="relative inline-block">
       {/* 觸發元素 */}
-      <div onClick={handleClick} className="inline-block">
+      <div onClick={handleClick} className={triggerClassName ?? 'inline-block'}>
         {children}
       </div>
 

@@ -204,6 +204,14 @@ describe('Design Token System - BDD', () => {
       expect(screens.tall.raw).toBe('(min-height: 761px)');
     });
 
+    it('應該有極窄寬度斷點設定（RateSelector pills 梯次）', async () => {
+      const { breakpointTokens } = await import('./design-tokens');
+      const screens = breakpointTokens.screens;
+
+      expect(screens.narrow.raw).toBe('(max-width: 349px)');
+      expect(screens.xnarrow.raw).toBe('(max-width: 329px)');
+    });
+
     it('應該有容器最大寬度定義', async () => {
       const { breakpointTokens } = await import('./design-tokens');
       const container = breakpointTokens.container;
@@ -267,6 +275,9 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
       expect(singleConverterLayoutTokens.rateCard.rateTypeContainer).toContain('absolute');
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('px-');
+      // #651 前置：極窄寬度梯次（icon 先藏 → 內距收斂；字級已在 12px 下限）
+      expect(singleConverterLayoutTokens.rateCard.rateTypeIcon).toContain('narrow:hidden');
+      expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('xnarrow:px-1');
       expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('micro:pt-10');
       expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('nano:pt-10');
       expect(singleConverterLayoutTokens.addToHistory.className).toContain('micro:min-h-11');

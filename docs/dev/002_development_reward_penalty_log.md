@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+174
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+175
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-rate-selector-pills-content-driven-layout
+- 原因：RateSelector pills 用硬編碼寬度網格（grid-cols-2/3＋w-[8.75rem]/w-[12.5rem]×4 斷點微調）脆弱不可擴充，無法容納 ADR-002 刷卡匯率第四選項，且 pill 觸控目標僅 24px 遠低於 WCAG 44px
+- 解法：改 inline-grid auto-cols-[minmax(max-content,1fr)] 內容驅動（欄數隱式、等寬有底線、永不截斷），pill 比照 #644 以 min-h-11/min-w-11＋-my-[10px] 負邊距把熱區撐到 44×44 視覺不變，新增 narrow(≤349px 藏 icon)/xnarrow(≤329px 收內距) 寬度梯次斷點，Playwright 視口矩陣（320–768×2/3/4 pills）斷言無換行無截斷熱區達標
 
 - 日期：2026-07-07
 - ID：reward-608-002-score-precommit-guard

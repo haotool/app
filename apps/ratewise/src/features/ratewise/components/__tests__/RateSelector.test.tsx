@@ -123,4 +123,31 @@ describe('RateSelector', () => {
     );
     expect(screen.queryByRole('button', { name: /換錢所/ })).not.toBeInTheDocument();
   });
+
+  // #651 前置：佈局改為內容驅動，欄數由 pills 數量隱式決定，禁止回退硬編碼寬度。
+  it('容器為內容驅動 inline-grid，無 grid-cols-N 與硬編碼寬度 class', () => {
+    setup({ hasExchangeShop: true });
+
+    const group = screen.getByRole('group', { name: /匯率類型/ });
+    expect(group.className).toContain('inline-grid');
+    expect(group.className).toContain('grid-flow-col');
+    expect(group.className).toContain('auto-cols-[minmax(max-content,1fr)]');
+    expect(group.className).not.toMatch(/grid-cols-\d/);
+    // 硬編碼固定寬度（w-[...]）禁止回歸；max-w-[...] 為安全上限、允許保留。
+    expect(group.className).not.toMatch(/(?:^|\s)w-\[/);
+  });
+
+  it('每顆 pill 具 44px 熱區（min-h-11＋負邊距抵銷），視覺 pill 維持 h-6', () => {
+    setup({ hasExchangeShop: true });
+
+    const pills = screen.getAllByRole('button');
+    expect(pills).toHaveLength(3);
+    for (const pill of pills) {
+      expect(pill.className).toContain('min-h-11');
+      expect(pill.className).toContain('-my-[10px]');
+      const visual = pill.querySelector('span');
+      expect(visual?.className).toContain('h-6');
+      expect(visual?.className).toContain('whitespace-nowrap');
+    }
+  });
 });
