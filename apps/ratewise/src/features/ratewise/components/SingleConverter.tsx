@@ -33,7 +33,10 @@ import {
   fetchLatestRates,
 } from '../../../services/exchangeRateHistoryService';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import {
+  singleConverterLayoutTokens,
+  quickAmountButtonTokens,
+} from '../../../config/design-tokens';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -484,14 +487,7 @@ const SingleConverterLegacy = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>
@@ -723,14 +719,7 @@ const SingleConverterLegacy = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>

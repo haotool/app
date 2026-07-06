@@ -58,7 +58,7 @@ export function formatIsoTimestamp(iso: string): string {
  *
  * @example
  * formatGenericTimeString('2025-10-31T03:30:00+08:00') // '10/31 03:30'
- * formatGenericTimeString('2025-10-31 03:30:00') // '10/31 03:30:00'
+ * formatGenericTimeString('2025-10-31 03:30:00') // '10/31 03:30'
  */
 export function formatGenericTimeString(timeString: string): string {
   const trimmed = timeString.trim();
@@ -85,9 +85,11 @@ export function formatGenericTimeString(timeString: string): string {
     // 修復：使用 || 而不是 ?? 來處理空字串的情況
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     const timeCandidate = timePart || /(\d{1,2}:\d{2}(?::\d{2})?)/.exec(trimmed)?.[0] || '';
+    // 顯示層只保留 HH:mm：秒數對匯率無資訊價值，且會撐爆行動版來源列寬度
+    const timeDisplay = /^(\d{1,2}:\d{2})/.exec(timeCandidate)?.[1] ?? timeCandidate;
 
-    return timeCandidate
-      ? `${formattedMonth}/${formattedDay} ${timeCandidate}`
+    return timeDisplay
+      ? `${formattedMonth}/${formattedDay} ${timeDisplay}`
       : `${formattedMonth}/${formattedDay}`;
   }
 
@@ -104,7 +106,7 @@ export function formatGenericTimeString(timeString: string): string {
  *
  * @example
  * formatDisplayTime('2025-10-31 03:30:00', '2025-10-31T03:35:00+08:00')
- * // '來源 10/31 03:30:00 · 刷新 10/31 03:35'
+ * // '來源 10/31 03:30 · 刷新 10/31 03:35'
  *
  * formatDisplayTime('2025-10-31T03:30:00+08:00', null)
  * // '刷新 10/31 03:30'

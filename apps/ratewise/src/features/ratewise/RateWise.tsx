@@ -276,7 +276,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 ) : (
                   <div
                     key="bank-badge"
-                    className="inline-flex items-center gap-2 text-2xs text-text-muted/60"
+                    className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-3 text-2xs text-text-muted/60"
                   >
                     <a
                       href="https://rate.bot.com.tw/xrt?Lang=zh-TW"

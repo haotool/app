@@ -21,6 +21,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { Check, X, Info, Copy } from 'lucide-react';
 import { ToastContext, type ToastMessage, type ToastType } from './ToastContext';
+import { zIndexTokens } from '../../config/design-tokens';
 
 /**
  * Toast Provider - Wraps application to enable Toast functionality
@@ -42,7 +43,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {/* Toast 容器 - 右上角定位，安全區域內縮 */}
-      <div className="fixed top-16 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-none">
+      <div
+        className={`fixed top-16 right-4 ${zIndexTokens.toast} flex flex-col items-end gap-2 pointer-events-none`}
+      >
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}

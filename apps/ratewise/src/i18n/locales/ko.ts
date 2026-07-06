@@ -183,6 +183,8 @@ const ko = {
     customThemeTonePure: '퓨어 화이트',
     customThemeToneWarm: '웜 화이트',
     customThemeToneCool: '쿨 화이트',
+    customThemeToneMint: '민트 화이트',
+    customThemeToneRose: '로즈 화이트',
     customThemeReset: '기본 테마로 복원',
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',

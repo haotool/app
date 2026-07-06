@@ -26,8 +26,8 @@ export interface BottomSheetProps {
   /** 關閉按鈕 aria-label。 */
   closeLabel: string;
   children: ReactNode;
-  /** fixed：65vh 固定高；adaptive：內容自適應（max-h 70vh）。 */
-  size?: 'fixed' | 'adaptive';
+  /** fixed：65vh 固定高；adaptive：內容自適應（max-h 70vh）；full：整頁沉浸（近全螢幕，保留頂部縫隙維持 sheet 語意）。 */
+  size?: 'fixed' | 'adaptive' | 'full';
   /** 內容含指標拖曳互動（如選色面板）時關閉整片下拉關閉，避免手勢衝突。 */
   enableDrag?: boolean;
   testId?: string;
@@ -36,6 +36,7 @@ export interface BottomSheetProps {
 const SIZE_CLASS: Record<NonNullable<BottomSheetProps['size']>, string> = {
   fixed: 'h-[65vh]',
   adaptive: 'max-h-[70vh]',
+  full: 'h-[calc(100dvh-1.75rem)]',
 };
 
 export function BottomSheet({

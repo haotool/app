@@ -67,7 +67,7 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
   it('should use notificationTokens for layout', async () => {
     const sourceCode = await readSource();
     expect(sourceCode).toContain('notificationTokens.position');
-    expect(sourceCode).toContain('notificationTokens.mobileTopOffset');
+    expect(sourceCode).toContain('notificationMobilePositionStyle');
     expect(sourceCode).toContain('notificationTokens.padding');
     expect(sourceCode).toContain('notificationTokens.borderRadius');
   });
@@ -77,8 +77,11 @@ describe('UpdatePrompt - SSOT tokens 引用', () => {
       readSource(),
       readDesignTokensSource(),
     ]);
-    expect(sourceCode).toContain('--notification-mobile-top-offset');
-    expect(designTokensSource).toContain('top-[var(--notification-mobile-top-offset)]');
+    expect(sourceCode).toContain('notificationMobilePositionStyle');
+    expect(designTokensSource).toContain(
+      'top-[var(--notification-mobile-top-offset,calc(64px+env(safe-area-inset-top,0px)))]',
+    );
+    expect(designTokensSource).toContain('notificationMobilePositionStyle');
   });
 });
 

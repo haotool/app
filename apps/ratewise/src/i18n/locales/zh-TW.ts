@@ -183,6 +183,8 @@ const zhTW = {
     customThemeTonePure: '純淨白',
     customThemeToneWarm: '暖白',
     customThemeToneCool: '冷白',
+    customThemeToneMint: '薄荷白',
+    customThemeToneRose: '玫瑰白',
     customThemeReset: '恢復預設主題',
     appVersion: '應用程式版本',
     designSystem: '設計系統',
