@@ -18,8 +18,8 @@
 /** 預設自訂主色（品牌藍，與 zen primary 同值）。 */
 export const DEFAULT_CUSTOM_PRIMARY = '#3182F6';
 
-/** 背景色調三選一（wave-C）：只切換 background / surface-sunken 淡色對。 */
-export type CustomBackgroundTone = 'pure' | 'warm' | 'cool';
+/** 背景色調五選一（wave-C 三調 + wave-D 薄荷/玫瑰）：只切換 background / surface-sunken 淡色對。 */
+export type CustomBackgroundTone = 'pure' | 'warm' | 'cool' | 'mint' | 'rose';
 
 /** 預設背景色調（zen 現值；舊持久化資料缺省時向後相容）。 */
 export const DEFAULT_CUSTOM_BACKGROUND_TONE: CustomBackgroundTone = 'pure';
@@ -39,27 +39,44 @@ export const CUSTOM_BACKGROUND_TONES: Record<
   warm: { background: '#FDF9F3', surfaceSunken: '#F6F0E4' },
   // 冷白（slate/blue 系冷調，muted 對比 4.53:1）。
   cool: { background: '#F5FAFF', surfaceSunken: '#EAF1F8' },
+  // 薄荷白（green 系清爽調，muted 對比 4.53:1）。
+  mint: { background: '#F4FBF7', surfaceSunken: '#E9F4EE' },
+  // 玫瑰白（rose 系柔和調，muted 對比 4.56:1）。
+  rose: { background: '#FDF9FA', surfaceSunken: '#F8EFF1' },
 };
 
-/** 僅接受三種背景色調值（持久化 allowlist 驗證）。 */
+/** 僅接受五種背景色調值（持久化 allowlist 驗證）。 */
 export function isValidBackgroundTone(value: unknown): value is CustomBackgroundTone {
-  return value === 'pure' || value === 'warm' || value === 'cool';
+  return (
+    value === 'pure' || value === 'warm' || value === 'cool' || value === 'mint' || value === 'rose'
+  );
 }
 
 /**
- * 精選色票（韓系 fintech 調性：Toss 藍系/薄荷/珊瑚/紫羅蘭…）。
+ * 精選色票（韓系 fintech 調性，wave-D 擴充至 20 色、5 欄 × 4 列）。
+ * 排列邏輯：藍靛系 → 綠青系 → 暖色系 → 粉紫與中性系。
  * 色票彼此可區辨；文字對比由 deriveCustomThemeCssVars 的 AA clamp 保證（測試守門）。
  */
 export const CUSTOM_PRIMARY_PRESETS = [
   '#3182F6', // Toss 藍
   '#0EA5E9', // 天空藍
-  '#14B8A6', // 薄荷
-  '#22C55E', // 清新綠
-  '#F59E0B', // 琥珀
-  '#FF6B6B', // 珊瑚
-  '#EC4899', // 櫻花粉
-  '#8B5CF6', // 紫羅蘭
+  '#2563EB', // 皇家藍
   '#6366F1', // 靛藍
+  '#0891B2', // 青瓷
+  '#14B8A6', // 薄荷
+  '#10B981', // 翡翠
+  '#22C55E', // 清新綠
+  '#84CC16', // 萊姆
+  '#059669', // 松綠
+  '#F59E0B', // 琥珀
+  '#F97316', // 柑橘
+  '#EF4444', // 緋紅
+  '#FF6B6B', // 珊瑚
+  '#D946EF', // 蘭紫
+  '#EC4899', // 櫻花粉
+  '#F43F5E', // 玫瑰紅
+  '#8B5CF6', // 紫羅蘭
+  '#78716C', // 暖石
   '#64748B', // 石墨
 ] as const;
 

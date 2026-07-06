@@ -214,9 +214,9 @@ describe('custom 主題演算行為合約', () => {
     expect(isValidHexColor(123)).toBe(false);
   });
 
-  it('精選色票 8–12 個、格式合法且彼此可區辨', () => {
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeGreaterThanOrEqual(8);
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(12);
+  it('精選色票 16–24 個（wave-D 擴充）、格式合法且彼此可區辨', () => {
+    expect(CUSTOM_PRIMARY_PRESETS.length).toBeGreaterThanOrEqual(16);
+    expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(24);
     CUSTOM_PRIMARY_PRESETS.forEach((preset) => expect(isValidHexColor(preset)).toBe(true));
     expect(new Set(CUSTOM_PRIMARY_PRESETS).size).toBe(CUSTOM_PRIMARY_PRESETS.length);
   });
@@ -230,17 +230,19 @@ describe('custom 主題演算行為合約', () => {
     expect(withDefault).toEqual(explicit);
   });
 
-  it('isValidBackgroundTone 僅接受三種 allowlist 值', () => {
+  it('isValidBackgroundTone 僅接受五種 allowlist 值', () => {
     expect(isValidBackgroundTone('pure')).toBe(true);
     expect(isValidBackgroundTone('warm')).toBe(true);
     expect(isValidBackgroundTone('cool')).toBe(true);
+    expect(isValidBackgroundTone('mint')).toBe(true);
+    expect(isValidBackgroundTone('rose')).toBe(true);
     expect(isValidBackgroundTone('dark')).toBe(false);
     expect(isValidBackgroundTone('')).toBe(false);
     expect(isValidBackgroundTone(null)).toBe(false);
     expect(isValidBackgroundTone(1)).toBe(false);
   });
 
-  it('三背景調彼此可區辨且格式合法', () => {
+  it('全部背景調彼此可區辨且格式合法', () => {
     const values = ALL_TONES.flatMap((tone) => [
       CUSTOM_BACKGROUND_TONES[tone].background,
       CUSTOM_BACKGROUND_TONES[tone].surfaceSunken,

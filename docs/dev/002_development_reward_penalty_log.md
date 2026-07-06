@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-custom-theme-wave-d-fullpage-picker
+- 原因：自訂主題色僅 10 色票、3 背景調、65vh sheet 無即時預覽（整片 sheet 遮住主畫面時使用者看不到跟色效果），互動回饋不足
+- 解法：wave-D 升級——色票擴至 20（測試守門界線同步 16–24）、背景調加薄荷白/玫瑰白（AA 演算選值 4.53/4.56）、BottomSheet 新增 full 尺寸整頁沉浸、頂部即時預覽卡（匯率 pill/趨勢線/CTA 跟色）、色調改圓票所見即所得、選色觸覺回饋與 press 縮放微互動（遵守 E1 hover-scale 清零）
 
 - 日期：2026-07-06
 - ID：reward-rw-star-touch-target-dark-border-sweep
