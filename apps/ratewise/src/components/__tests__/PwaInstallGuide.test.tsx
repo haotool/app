@@ -20,7 +20,9 @@ function mockNavigator(userAgent: string, platform: string, maxTouchPoints = 5) 
 }
 
 function showGuide() {
+  // 指引改為首次互動後才起算顯示計時：先模擬使用者互動再推進計時器。
   act(() => {
+    fireEvent.pointerDown(window);
     vi.advanceTimersByTime(1800);
   });
 }
@@ -39,6 +41,55 @@ describe('PwaInstallGuide', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     sessionStorage.clear();
+  });
+
+  it('stays hidden until the user interacts (LCP-safe engagement gate)', () => {
+    mockNavigator(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1',
+      'iPhone',
+    );
+
+    render(<PwaInstallGuide />);
+
+    // 未互動：即使超過顯示延遲，也不得出現指引。
+    // scroll 不在互動集合內：程式化捲動（scroll restoration／anchor）不得誤觸 gate。
+    act(() => {
+      fireEvent.scroll(window);
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 互動後起算延遲，時間到才顯示。
+    act(() => {
+      fireEvent.pointerDown(window);
+      vi.advanceTimersByTime(1799);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('shows automatically without interaction inside in-app browsers (functional escape guidance)', () => {
+    mockNavigator(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Threads 337.0 Instagram 337.0',
+      'iPhone',
+    );
+
+    render(<PwaInstallGuide />);
+
+    // 內建瀏覽器豁免互動 gate：未互動經過顯示延遲即自動顯示逃逸引導。
+    act(() => {
+      vi.advanceTimersByTime(1799);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole('dialog', { name: '請先用外部瀏覽器開啟' })).toBeInTheDocument();
   });
 
   it('renders the clearer iPhone Safari install flow', () => {

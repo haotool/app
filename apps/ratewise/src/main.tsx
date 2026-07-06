@@ -15,6 +15,11 @@ import './trusted-types-bootstrap';
 // Initialize i18n (must be before any React rendering)
 import './i18n';
 
+// 提前靜態載入 react-dom/client：vite-react-ssg 於 hydrate 時才動態 import，
+// 若無此靜態依賴，vendor-react chunk 需等 app chunk 下載並執行後才開始下載，
+// 串行化的 60KB 下載會直接拖慢 hydration 與 LCP。
+import 'react-dom/client';
+
 import { ViteReactSSG } from 'vite-react-ssg';
 import { routes } from './routes';
 import './index.css';
