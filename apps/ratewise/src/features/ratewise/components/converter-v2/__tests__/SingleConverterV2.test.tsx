@@ -9,6 +9,11 @@ import '@testing-library/jest-dom/vitest';
 import { SingleConverterV2 } from '../SingleConverterV2';
 import type { SingleConverterProps } from '../../SingleConverter';
 import type { CurrencyCode } from '../../../types';
+import type { RateDetails } from '../../../../../utils/offlineStorage';
+import zhTW from '../../../../../i18n/locales/zh-TW';
+import en from '../../../../../i18n/locales/en';
+import ja from '../../../../../i18n/locales/ja';
+import ko from '../../../../../i18n/locales/ko';
 
 // motion mock：onTap 映射為 onClick，去除動畫 props（對齊 CalculatorKey.test 慣例）。
 vi.mock('motion/react', () => ({
@@ -273,6 +278,170 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(props.onSwapCurrencies).toHaveBeenCalledTimes(1);
   });
 
+  it('QA-I D1：auto 模式 KRW→TWD chip 顯示現金買入且數值為買入價', () => {
+    // KRW 僅現金：buy 0.0185 / sell 0.0195。auto 模式外幣→TWD 以銀行買入計算，標籤必須同源。
+    const krwDetails: Record<string, RateDetails> = {
+      KRW: {
+        name: '韓元',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.0185, sell: 0.0195 },
+      },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'KRW',
+          toCurrency: 'TWD',
+          details: krwDetails,
+          rateType: 'cash',
+          rateMode: 'auto',
+          rateTypeAvailability: { spot: false, cash: true },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    // 修正前：數值用買入 0.0185 計算，標籤卻顯示「現金賣出」。
+    expect(chip).toHaveTextContent('1 KRW = 0.0185 TWD');
+    expect(chip).toHaveTextContent('現金買入');
+    expect(chip).not.toHaveTextContent('現金賣出');
+  });
+
+  it('QA-I D1：auto 模式 TWD→KRW chip 顯示現金賣出且數值為賣出價倒數', () => {
+    const krwDetails: Record<string, RateDetails> = {
+      KRW: {
+        name: '韓元',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.0185, sell: 0.0195 },
+      },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'TWD',
+          toCurrency: 'KRW',
+          details: krwDetails,
+          rateType: 'cash',
+          rateMode: 'auto',
+          rateTypeAvailability: { spot: false, cash: true },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    // TWD→外幣（客戶買外幣）：1 / KRW.cash.sell = 1 / 0.0195 ≈ 51.2821。
+    expect(chip).toHaveTextContent('1 TWD = 51.2821 KRW');
+    expect(chip).toHaveTextContent('現金賣出');
+    expect(chip).not.toHaveTextContent('現金買入');
+  });
+
+  it('QA-I D1 review Blocking 2：買入全缺 fallback 到賣出時，標籤跟著實際採用側', () => {
+    // cash.buy 缺失 → 引擎實際用 cash.sell 0.0195 計算，chip 不得再標「現金買入」。
+    const buyMissingDetails: Record<string, RateDetails> = {
+      KRW: {
+        name: '韓元',
+        spot: { buy: null, sell: null },
+        cash: { buy: null, sell: 0.0195 },
+      },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'KRW',
+          toCurrency: 'TWD',
+          details: buyMissingDetails,
+          rateType: 'cash',
+          rateMode: 'auto',
+          rateTypeAvailability: { spot: false, cash: true },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    expect(chip).toHaveTextContent('1 KRW = 0.0195 TWD');
+    expect(chip).toHaveTextContent('現金賣出');
+    expect(chip).not.toHaveTextContent('現金買入');
+  });
+
+  it('QA-I D1 review：mid 模式值為中間價且標籤為「中間價」', () => {
+    const krwDetails: Record<string, RateDetails> = {
+      KRW: {
+        name: '韓元',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0.0185, sell: 0.0195 },
+      },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'KRW',
+          toCurrency: 'TWD',
+          details: krwDetails,
+          rateType: 'cash',
+          rateMode: 'mid',
+          rateTypeAvailability: { spot: false, cash: true },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    // (0.0185 + 0.0195) / 2 = 0.0190。
+    expect(chip).toHaveTextContent('1 KRW = 0.0190 TWD');
+    expect(chip).toHaveTextContent('中間價');
+    expect(chip).not.toHaveTextContent('賣出');
+    expect(chip).not.toHaveTextContent('買入');
+  });
+
+  it('QA-I D1 review：auto 交叉（外幣→外幣）混合價只標 rate type，省略買/賣', () => {
+    const crossDetails: Record<string, RateDetails> = {
+      USD: { name: '美元', spot: { buy: 30.87, sell: 30.97 }, cash: { buy: 30.4, sell: 31.4 } },
+      JPY: { name: '日圓', spot: { buy: 0.2, sell: 0.204 }, cash: { buy: null, sell: null } },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'USD',
+          toCurrency: 'JPY',
+          details: crossDetails,
+          rateType: 'spot',
+          rateMode: 'auto',
+          rateTypeAvailability: { spot: true, cash: false },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    // 值為 USD.spot.buy / JPY.spot.sell = 30.87 / 0.204 ≈ 151.3235（買/賣混合價）。
+    expect(chip).toHaveTextContent('1 USD = 151.3235 JPY');
+    expect(chip).toHaveTextContent('即期');
+    expect(chip).not.toHaveTextContent('即期賣出');
+    expect(chip).not.toHaveTextContent('即期買入');
+  });
+
+  it('QA-I D1 review：sell 模式交叉兩腿一致，維持「即期賣出」完整標籤', () => {
+    const crossDetails: Record<string, RateDetails> = {
+      USD: { name: '美元', spot: { buy: 30.87, sell: 30.97 }, cash: { buy: 30.4, sell: 31.4 } },
+      JPY: { name: '日圓', spot: { buy: 0.2, sell: 0.204 }, cash: { buy: null, sell: null } },
+    };
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'USD',
+          toCurrency: 'JPY',
+          details: crossDetails,
+          rateType: 'spot',
+          rateMode: 'sell',
+          rateTypeAvailability: { spot: true, cash: false },
+        })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    // 值為 USD.spot.sell / JPY.spot.sell = 30.97 / 0.204 ≈ 151.8137。
+    expect(chip).toHaveTextContent('1 USD = 151.8137 JPY');
+    expect(chip).toHaveTextContent('即期賣出');
+  });
+
   it('rate chip 顯示基準並可切換現金／即期', () => {
     const props = buildProps({ rateType: 'spot' });
     render(<SingleConverterV2 {...props} />);
@@ -295,6 +464,45 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(props.onRateTypeChange).not.toHaveBeenCalled();
   });
 
+  it('QA-I D3：目標基準不可用時 chip 呈現不可用態（aria-disabled + 樣式）', () => {
+    // KRW 無即期：切換目標 spot 不可用。
+    const props = buildProps({
+      rateType: 'cash',
+      rateTypeAvailability: { spot: false, cash: true },
+    });
+    render(<SingleConverterV2 {...props} />);
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    expect(chip).toHaveAttribute('aria-disabled', 'true');
+    expect(chip.className).toContain('cursor-not-allowed');
+    expect(chip.className).toContain('opacity-60');
+  });
+
+  it('QA-I D3：不可用態點擊顯示原因 tooltip 而非無聲無反應', () => {
+    const props = buildProps({
+      rateType: 'cash',
+      rateTypeAvailability: { spot: false, cash: true },
+    });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+
+    expect(props.onRateTypeChange).not.toHaveBeenCalled();
+    expect(screen.getByText('目前不提供 即期 匯率')).toBeInTheDocument();
+  });
+
+  it('QA-I D3：目標基準可用時 chip 不帶不可用態', () => {
+    render(
+      <SingleConverterV2
+        {...buildProps({ rateType: 'spot', rateTypeAvailability: { spot: true, cash: true } })}
+      />,
+    );
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    expect(chip).not.toHaveAttribute('aria-disabled');
+    expect(chip.className).not.toContain('cursor-not-allowed');
+  });
+
   it('幣別 picker：開啟 bottom sheet 並選擇幣別', () => {
     const props = buildProps();
     render(<SingleConverterV2 {...props} />);
@@ -312,6 +520,44 @@ describe('SingleConverterV2 - 等值雙列', () => {
 
     expect(screen.getByTestId('converter-v2-swap').className).toContain('h-11 w-11');
     expect(screen.getByTestId('converter-v2-key-7').className).toContain('h-[54px]');
+  });
+});
+
+describe('SingleConverterV2 - 基準標籤 i18n keys（QA-I D1，四語系）', () => {
+  const locales = [
+    ['zh-TW', zhTW],
+    ['en', en],
+    ['ja', ja],
+    ['ko', ko],
+  ] as const;
+
+  it.each(locales)('%s 應提供 converterV2.rateBasisCashBuy', (_name, locale) => {
+    expect(locale.converterV2.rateBasisCashBuy).toEqual(expect.any(String));
+    expect(locale.converterV2.rateBasisCashBuy.length).toBeGreaterThan(0);
+  });
+
+  it.each(locales)('%s 應提供 converterV2.rateBasisSpotBuy', (_name, locale) => {
+    expect(locale.converterV2.rateBasisSpotBuy).toEqual(expect.any(String));
+    expect(locale.converterV2.rateBasisSpotBuy.length).toBeGreaterThan(0);
+  });
+
+  it.each(locales)('%s 應提供 converterV2.rateBasisMid', (_name, locale) => {
+    expect(locale.converterV2.rateBasisMid).toEqual(expect.any(String));
+    expect(locale.converterV2.rateBasisMid.length).toBeGreaterThan(0);
+  });
+
+  it.each(locales)(
+    '%s 應提供 mixed 標籤用的 singleConverter.cashRate/spotRate',
+    (_name, locale) => {
+      expect(locale.singleConverter.cashRate).toEqual(expect.any(String));
+      expect(locale.singleConverter.spotRate).toEqual(expect.any(String));
+    },
+  );
+
+  it('zh-TW 買入標籤為現金買入／即期買入、mid 標籤為中間價', () => {
+    expect(zhTW.converterV2.rateBasisCashBuy).toBe('現金買入');
+    expect(zhTW.converterV2.rateBasisSpotBuy).toBe('即期買入');
+    expect(zhTW.converterV2.rateBasisMid).toBe('中間價');
   });
 });
 

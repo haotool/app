@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+175
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+176
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-v2-chip-basis-honesty-qa-i-d1-d3
+- 原因：v2 rate chip 的 basisLabel 只看 rateType 平行推導，忽略 auto 模式實際選價方向與 fallback（外幣→TWD 用買入卻標賣出、買入缺失回落賣出仍標買入，QA-I D1）；且現金／即期切換在目標基準不可用時（KRW 無即期）無 disabled 樣式與提示（QA-I D3）
+- 解法：引擎 per-leg 選價改回傳 { rate, side }（side 感知 fallback），getUnitExchangeRateWithBasis 回傳實際採用 basis 供 chip 直接消費（mid 標「中間價」、auto 交叉兩腿不一致只標 rate type 不過度宣稱），chip 不可用態比照 v1 RateSelector 慣例加 aria-disabled＋RateTypeTooltip，補值與標籤耦合測試（fallback／mid／cross）
 
 - 日期：2026-07-07
 - ID：reward-rw-rate-selector-pills-content-driven-layout

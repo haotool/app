@@ -260,6 +260,97 @@ export function convertCurrencyAmount(
 
 const hasValidBuyRate = (value: number | null | undefined): value is number => isUsableRate(value);
 
+// 單腿實際採用的牌價方向；fallback 後以實際取用側回報（QA-I D1 review）。
+export type RateSide = 'buy' | 'sell' | 'mid';
+
+// 單位匯率整體 basis：跨幣別兩腿方向不一致時為 'mixed'（UI 不得過度宣稱買/賣）。
+export type UnitRateBasis = RateSide | 'mixed';
+
+interface ResolvedLegRate {
+  rate: number | null;
+  side: RateSide;
+}
+
+function resolveSellLeg(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): ResolvedLegRate {
+  return { rate: getExchangeRate(code, details, rateType, exchangeRates), side: 'sell' };
+}
+
+// 買入腿：買入價全缺時回落賣出，side 誠實回報 fallback 結果（QA-I D1 review Blocking 2）。
+function resolveBuyLeg(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): ResolvedLegRate {
+  if (code === 'TWD') return { rate: 1, side: 'buy' };
+
+  if (details?.[code]) {
+    const detail = details[code];
+    let rate = detail[rateType]?.buy;
+
+    if (!hasValidBuyRate(rate)) {
+      const fallbackType: RateType = rateType === 'spot' ? 'cash' : 'spot';
+      rate = detail[fallbackType]?.buy;
+    }
+
+    if (hasValidBuyRate(rate)) return { rate, side: 'buy' };
+  }
+
+  return resolveSellLeg(code, details, rateType, exchangeRates);
+}
+
+// 中間價腿：任一側缺失時退化為可用側，side 同步回報實際採用側。
+function resolveMidLeg(
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): ResolvedLegRate {
+  if (code === 'TWD') return { rate: 1, side: 'mid' };
+
+  const sellRate = getExchangeRate(code, details, rateType, exchangeRates);
+  const buyLeg = resolveBuyLeg(code, details, rateType, exchangeRates);
+
+  if (sellRate == null && buyLeg.rate == null) return { rate: null, side: 'mid' };
+  if (sellRate == null) return buyLeg;
+  if (buyLeg.rate == null) return { rate: sellRate, side: 'sell' };
+  // 買入腿已回落賣出：(sell+sell)/2 即賣出價，side 誠實回報 sell。
+  if (buyLeg.side === 'sell') return { rate: sellRate, side: 'sell' };
+
+  return { rate: (buyLeg.rate + sellRate) / 2, side: 'mid' };
+}
+
+// 依 rateMode 與腿別解析選價：引擎換算與 UI basis 標籤共用此唯一決策點，禁止平行推導。
+function resolveConversionLeg(
+  rateMode: RateMode,
+  role: 'from' | 'to',
+  code: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): ResolvedLegRate {
+  switch (rateMode) {
+    case 'sell':
+      return resolveSellLeg(code, details, rateType, exchangeRates);
+    case 'mid':
+      return resolveMidLeg(code, details, rateType, exchangeRates);
+    case 'auto':
+      // 客戶視角：FROM 外幣（客戶賣外幣給銀行）用買入，TO 外幣（客戶向銀行買）用賣出。
+      return role === 'from'
+        ? resolveBuyLeg(code, details, rateType, exchangeRates)
+        : resolveSellLeg(code, details, rateType, exchangeRates);
+    default: {
+      const exhaustive: never = rateMode;
+      return exhaustive;
+    }
+  }
+}
+
 /**
  * 取得指定貨幣的「買入價」（帶 fallback 機制）
  *
@@ -275,22 +366,7 @@ export function getBuyRate(
   rateType: RateType,
   exchangeRates?: Record<CurrencyCode, number | null> | null,
 ): number | null {
-  if (code === 'TWD') return 1;
-
-  if (details?.[code]) {
-    const detail = details[code];
-    let rate = detail[rateType]?.buy;
-
-    if (!hasValidBuyRate(rate)) {
-      const fallbackType: RateType = rateType === 'spot' ? 'cash' : 'spot';
-      rate = detail[fallbackType]?.buy;
-    }
-
-    if (hasValidBuyRate(rate)) return rate;
-  }
-
-  // 最終 fallback：用 sell rate 或簡化匯率
-  return getExchangeRate(code, details, rateType, exchangeRates);
+  return resolveBuyLeg(code, details, rateType, exchangeRates).rate;
 }
 
 /**
@@ -304,16 +380,7 @@ export function getMidRate(
   rateType: RateType,
   exchangeRates?: Record<CurrencyCode, number | null> | null,
 ): number | null {
-  if (code === 'TWD') return 1;
-
-  const sellRate = getExchangeRate(code, details, rateType, exchangeRates);
-  const buyRate = getBuyRate(code, details, rateType, exchangeRates);
-
-  if (sellRate == null && buyRate == null) return null;
-  if (sellRate == null) return buyRate;
-  if (buyRate == null) return sellRate;
-
-  return (buyRate + sellRate) / 2;
+  return resolveMidLeg(code, details, rateType, exchangeRates).rate;
 }
 
 /**
@@ -346,52 +413,100 @@ export function convertCurrencyAmountWithMode(
 ): number {
   if (fromCurrency === toCurrency) return amount;
 
-  // sell 模式：維持現有行為，直接委派
-  if (rateMode === 'sell') {
-    return convertCurrencyAmount(
-      amount,
-      fromCurrency,
-      toCurrency,
-      details,
-      rateType,
-      exchangeRates,
-    );
-  }
-
-  // 取得各幣別的匯率（依模式選擇函數）
-  const getRateFrom = (code: CurrencyCode): number | null => {
-    if (code === 'TWD') return 1;
-    return rateMode === 'mid'
-      ? getMidRate(code, details, rateType, exchangeRates)
-      : getBuyRate(code, details, rateType, exchangeRates); // auto: FROM 外幣用買入（客戶賣外幣給銀行）
-  };
-
-  const getRateTo = (code: CurrencyCode): number | null => {
-    if (code === 'TWD') return 1;
-    return rateMode === 'mid'
-      ? getMidRate(code, details, rateType, exchangeRates)
-      : getExchangeRate(code, details, rateType, exchangeRates); // auto: TO 外幣用賣出（客戶向銀行買外幣）
-  };
+  const fromLeg = resolveConversionLeg(
+    rateMode,
+    'from',
+    fromCurrency,
+    details,
+    rateType,
+    exchangeRates,
+  );
+  const toLeg = resolveConversionLeg(rateMode, 'to', toCurrency, details, rateType, exchangeRates);
 
   // TWD → 外幣：amount / toRate
   if (fromCurrency === 'TWD') {
-    const toRate = getRateTo(toCurrency);
-    if (!toRate) return 0;
-    return amount / toRate;
+    if (!toLeg.rate) return 0;
+    return amount / toLeg.rate;
   }
 
   // 外幣 → TWD：amount * fromRate
   if (toCurrency === 'TWD') {
-    const fromRate = getRateFrom(fromCurrency);
-    if (!fromRate) return 0;
-    return amount * fromRate;
+    if (!fromLeg.rate) return 0;
+    return amount * fromLeg.rate;
   }
 
   // 外幣 → 外幣：交叉匯率（via TWD）
-  const fromRate = getRateFrom(fromCurrency);
-  const toRate = getRateTo(toCurrency);
-  if (!fromRate || !toRate) return 0;
-  return amount * (fromRate / toRate);
+  if (!fromLeg.rate || !toLeg.rate) return 0;
+  return amount * (fromLeg.rate / toLeg.rate);
+}
+
+export interface UnitExchangeRateWithBasis {
+  rate: number;
+  side: UnitRateBasis;
+}
+
+// 銀行路徑單位匯率＋實際採用 basis：與 convertCurrencyAmountWithMode 共用 resolveConversionLeg
+// 的同一次選價決策；amount=1 時兩者數值完全一致。
+function resolveUnitBankRate(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  rateMode: RateMode,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+): UnitExchangeRateWithBasis {
+  if (fromCurrency === toCurrency) {
+    return { rate: 1, side: rateMode === 'mid' ? 'mid' : 'sell' };
+  }
+
+  const fromLeg = resolveConversionLeg(
+    rateMode,
+    'from',
+    fromCurrency,
+    details,
+    rateType,
+    exchangeRates,
+  );
+  const toLeg = resolveConversionLeg(rateMode, 'to', toCurrency, details, rateType, exchangeRates);
+
+  if (fromCurrency === 'TWD') {
+    return { rate: toLeg.rate ? 1 / toLeg.rate : 0, side: toLeg.side };
+  }
+
+  if (toCurrency === 'TWD') {
+    return { rate: fromLeg.rate ?? 0, side: fromLeg.side };
+  }
+
+  // 交叉匯率為兩腿混合價：兩腿方向一致回該方向；不一致回 'mixed'，
+  // UI 僅標 rate type（現金／即期）不宣稱買/賣（QA-I D1 review PM 裁決）。
+  const rate = fromLeg.rate && toLeg.rate ? fromLeg.rate / toLeg.rate : 0;
+  return { rate, side: fromLeg.side === toLeg.side ? fromLeg.side : 'mixed' };
+}
+
+/**
+ * 取得單位匯率與實際採用的 basis（UI 基準標籤唯一來源）。
+ * side 由引擎選價結果回傳（含 fallback 後實際取用側），禁止在 UI 層平行推導。
+ * 換錢所報價：TWD→外幣用店家賣出、外幣→TWD 用店家買入（computeConverterRate 語意）。
+ */
+export function getUnitExchangeRateWithBasis(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  rateMode: RateMode,
+  exchangeRates?: Record<CurrencyCode, number | null> | null,
+  options: UnitExchangeRateOptions = {},
+): UnitExchangeRateWithBasis {
+  const { rateSource = DEFAULT_RATE_SOURCE, exchangeShopRate = null } = options;
+
+  if (rateSource === 'exchange-shop' && exchangeShopRate) {
+    const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);
+    if (shopRate !== null) {
+      return { rate: shopRate, side: toCurrency === 'TWD' ? 'buy' : 'sell' };
+    }
+  }
+
+  return resolveUnitBankRate(fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates);
 }
 
 export function getUnitExchangeRate(
@@ -403,24 +518,15 @@ export function getUnitExchangeRate(
   exchangeRates?: Record<CurrencyCode, number | null> | null,
   options: UnitExchangeRateOptions = {},
 ): number {
-  const { rateSource = DEFAULT_RATE_SOURCE, exchangeShopRate = null } = options;
-
-  if (rateSource === 'exchange-shop' && exchangeShopRate) {
-    const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);
-    if (shopRate !== null) {
-      return shopRate;
-    }
-  }
-
-  return convertCurrencyAmountWithMode(
-    1,
+  return getUnitExchangeRateWithBasis(
     fromCurrency,
     toCurrency,
     details,
     rateType,
     rateMode,
     exchangeRates,
-  );
+    options,
+  ).rate;
 }
 
 /**

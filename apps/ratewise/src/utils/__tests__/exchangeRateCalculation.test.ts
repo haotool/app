@@ -23,6 +23,8 @@ import {
   getBuyRate,
   getMidRate,
   convertCurrencyAmountWithMode,
+  getUnitExchangeRate,
+  getUnitExchangeRateWithBasis,
 } from '../exchangeRateCalculation';
 import type { RateDetails } from '../../features/ratewise/hooks/useExchangeRates';
 import type { CurrencyCode, RateType } from '../../features/ratewise/types';
@@ -635,5 +637,107 @@ describe('convertCurrencyAmountWithMode — mid 模式（中間價）', () => {
     );
     expect(autoResult).toBeLessThan(sellResult);
     expect(sellResult).toBeLessThan(midResult);
+  });
+});
+
+describe('getUnitExchangeRateWithBasis — 引擎回傳實際採用 basis（QA-I D1 review）', () => {
+  it('auto 外幣→TWD：用買入價且 side=buy（USD.cash.buy=30.4）', () => {
+    const result = getUnitExchangeRateWithBasis('USD', 'TWD', mockRateDetails, 'cash', 'auto');
+    expect(result.rate).toBeCloseTo(30.4, 4);
+    expect(result.side).toBe('buy');
+  });
+
+  it('auto TWD→外幣：用賣出價且 side=sell（1/USD.cash.sell=1/31.4）', () => {
+    const result = getUnitExchangeRateWithBasis('TWD', 'USD', mockRateDetails, 'cash', 'auto');
+    expect(result.rate).toBeCloseTo(1 / 31.4, 6);
+    expect(result.side).toBe('sell');
+  });
+
+  it('Blocking 2 回歸：auto 外幣→TWD 買入全缺回落賣出時 side 同步為 sell', () => {
+    // 買入雙型別皆缺（null/0），引擎實際用 cash.sell —— side 必須跟著 fallback 結果。
+    const buyMissing: Record<string, RateDetails> = {
+      KRW: {
+        name: '韓元',
+        spot: { buy: null, sell: null },
+        cash: { buy: 0, sell: 0.0195 },
+      },
+    };
+    const result = getUnitExchangeRateWithBasis('KRW', 'TWD', buyMissing, 'cash', 'auto');
+    expect(result.rate).toBeCloseTo(0.0195, 6);
+    expect(result.side).toBe('sell');
+  });
+
+  it('auto 交叉（外幣→外幣）：買/賣兩腿混合 → side=mixed，值與引擎換算一致', () => {
+    const result = getUnitExchangeRateWithBasis('USD', 'EUR', mockRateDetails, 'spot', 'auto');
+    expect(result.rate).toBeCloseTo(30.87 / 34.0, 6);
+    expect(result.rate).toBeCloseTo(
+      convertCurrencyAmountWithMode(1, 'USD', 'EUR', mockRateDetails, 'spot', 'auto'),
+      10,
+    );
+    expect(result.side).toBe('mixed');
+  });
+
+  it('auto 交叉但 from 腿買入缺失回落賣出：兩腿同為 sell → side=sell（不誤標 mixed）', () => {
+    const fromBuyMissing: Record<string, RateDetails> = {
+      KRW: { name: '韓元', spot: { buy: null, sell: null }, cash: { buy: null, sell: 0.0195 } },
+      USD: { name: '美元', spot: { buy: 30.87, sell: 30.97 }, cash: { buy: 30.4, sell: 31.4 } },
+    };
+    const result = getUnitExchangeRateWithBasis('KRW', 'USD', fromBuyMissing, 'cash', 'auto');
+    expect(result.rate).toBeCloseTo(0.0195 / 31.4, 8);
+    expect(result.side).toBe('sell');
+  });
+
+  it('sell 模式三方向全為 sell', () => {
+    expect(getUnitExchangeRateWithBasis('USD', 'TWD', mockRateDetails, 'spot', 'sell').side).toBe(
+      'sell',
+    );
+    expect(getUnitExchangeRateWithBasis('TWD', 'USD', mockRateDetails, 'spot', 'sell').side).toBe(
+      'sell',
+    );
+    expect(getUnitExchangeRateWithBasis('USD', 'EUR', mockRateDetails, 'spot', 'sell').side).toBe(
+      'sell',
+    );
+  });
+
+  it('mid 模式：值為中間價且 side=mid（USD.spot mid=(30.87+30.97)/2）', () => {
+    const result = getUnitExchangeRateWithBasis('USD', 'TWD', mockRateDetails, 'spot', 'mid');
+    expect(result.rate).toBeCloseTo(30.92, 4);
+    expect(result.side).toBe('mid');
+  });
+
+  it('mid 交叉：兩腿皆中間價 → side=mid', () => {
+    const result = getUnitExchangeRateWithBasis('USD', 'EUR', mockRateDetails, 'spot', 'mid');
+    expect(result.rate).toBeCloseTo(30.92 / 33.75, 6);
+    expect(result.side).toBe('mid');
+  });
+
+  it('mid 退化：買入全缺時值退為賣出價且 side=sell（不誤標中間價）', () => {
+    const buyMissing: Record<string, RateDetails> = {
+      KRW: { name: '韓元', spot: { buy: null, sell: null }, cash: { buy: null, sell: 0.0195 } },
+    };
+    const result = getUnitExchangeRateWithBasis('KRW', 'TWD', buyMissing, 'cash', 'mid');
+    expect(result.rate).toBeCloseTo(0.0195, 6);
+    expect(result.side).toBe('sell');
+  });
+
+  it('rate 同源斷言：三模式三方向 rate 與 convertCurrencyAmountWithMode(1,...) 完全一致', () => {
+    const modes = ['auto', 'sell', 'mid'] as const;
+    const pairs: [CurrencyCode, CurrencyCode][] = [
+      ['USD', 'TWD'],
+      ['TWD', 'USD'],
+      ['USD', 'EUR'],
+    ];
+    for (const mode of modes) {
+      for (const [from, to] of pairs) {
+        const { rate } = getUnitExchangeRateWithBasis(from, to, mockRateDetails, 'spot', mode);
+        expect(rate).toBe(
+          convertCurrencyAmountWithMode(1, from, to, mockRateDetails, 'spot', mode),
+        );
+      }
+    }
+  });
+
+  it('getUnitExchangeRate 維持回傳純數值（既有呼叫端相容）', () => {
+    expect(getUnitExchangeRate('USD', 'TWD', mockRateDetails, 'cash', 'auto')).toBeCloseTo(30.4, 4);
   });
 });
