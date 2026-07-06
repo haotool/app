@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 2）｜累計總分：+153
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-606-ga4-staging-gate
+- 原因：GA4 僅以 VITE_GA_ID 空值判斷是否啟用，staging／preview 共用 production build 令 gtag 照常外送，QA 流量污染正式 GA4 資料（issue 606）
+- 解法：新增 resolveGaMeasurementId 以 APP_INFO.siteUrl（SSOT）導出正式站 hostname 做 runtime gate，非正式 host 回空字串使 initGA 提早返回；補 production／staging／localhost 單元測試並以本地 preview 網路面板實證零 gtag 請求
 
 - 日期：2026-07-06
 - ID：neutral-rw-e5d-qa-capture-matrix
@@ -27,7 +32,6 @@
 - ID：neutral-rw-e5d-answer-capsule-e1-token
 - 原因：AnswerCapsule 沿用 legacy `card` 類與任意邊框，與 E4/E5 內容頁 E1 token 體系（rounded-card/panel、hairline、shadow-card）漂移
 - 解法：改 E1 token 卡片＋lucide Zap 標題徽章，可見文字零變動，消費頁（首頁/FAQ/About/Guide/OpenData/攻略頁）樣式一致收斂
-
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot
 - 原因：#595 驗證只在本地同時區（build 與瀏覽器皆 Asia/Taipei）抽測，未覆蓋 staging「UTC build × 台北瀏覽器」情境，漏掉 Footer 建置時間 toLocale 無 timeZone 造成內容頁全數 #418
