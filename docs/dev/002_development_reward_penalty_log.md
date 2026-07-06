@@ -19,6 +19,16 @@
 - 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
 
 - 日期：2026-07-06
+- ID：penalty-rw-459-595-tz-blind-spot
+- 原因：#595 驗證只在本地同時區（build 與瀏覽器皆 Asia/Taipei）抽測，未覆蓋 staging「UTC build × 台北瀏覽器」情境，漏掉 Footer 建置時間 toLocale 無 timeZone 造成內容頁全數 #418
+- 解法：本地以 TZ=UTC build＋Asia/Taipei 瀏覽器重演 staging 差異定位根因；此後 hydration 修復驗證必須含跨時區組合（build TZ ≠ browser TZ）
+
+- 日期：2026-07-06
+- ID：reward-rw-459-content-pages-418
+- 原因：內容頁 Footer `getFormattedBuildTime()` 無 timeZone 隨 build 機器時區漂移（args[]=text）；404／SPA fallback 送首頁快照帶 data-server-rendered，vite-react-ssg 0.8.9 production 一律 hydrate（args[]=HTML）
+- 解法：建置時間固定 Asia/Taipei；SSG 注入 ssg-route 標記＋client 守門偵測 stale 快照改走 render＋patch vite-react-ssg（上游已 merge 未發版的 PR #90）；11 路由雙時區停 SW 巡檢 #418 歸零＋prerender 守門測試
+
+- 日期：2026-07-06
 - ID：penalty-rw-587-keyboard-modifier-passthrough
 - 原因：PR #614 掛接的 useCalculatorKeyboard 未檢查 modifier keys，v2 常駐監聽下 Cmd/Ctrl+'-'（瀏覽器縮放）被 preventDefault 吞掉且減號寫進表達式開閘改值（WCAG 1.4.4 回歸，審查 B-1 抓出）
 - 解法：handler 開頭 metaKey/ctrlKey/altKey 直接 return 讓路（Shift 保留供 '+' 等符號輸入），補 hook 四個 modifier 案例與 v2 整合「Cmd/Ctrl+- 不開閘不改值」回歸測試

@@ -59,16 +59,20 @@ export function getFullVersion(): string {
 
 /**
  * 格式化建置時間
+ * timeZone 固定 Asia/Taipei：SSG（CI 為 UTC）與使用者瀏覽器必須產出同一字串，
+ * 否則 Footer 建置時間文字節點會觸發 React #418 hydration mismatch。
  * @returns 格式化的日期時間字串
  */
 export function getFormattedBuildTime(): string {
   const buildDate = new Date(BUILD_TIME);
   const date = buildDate.toLocaleDateString('zh-TW', {
+    timeZone: 'Asia/Taipei',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
   const time = buildDate.toLocaleTimeString('zh-TW', {
+    timeZone: 'Asia/Taipei',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
