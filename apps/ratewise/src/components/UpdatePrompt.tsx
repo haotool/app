@@ -22,7 +22,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'motion/react';
-import { notificationTokens } from '../config/design-tokens';
+import { notificationTokens, notificationMobilePositionStyle } from '../config/design-tokens';
 import { notificationAnimations, safeTransition } from '../config/animations';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { recacheCriticalResourcesOnLaunch } from '../utils/pwaStorageManager';
@@ -250,7 +250,7 @@ function UpdatePromptClient({ centerOffset = '0px' }: UpdatePromptProps) {
   const shouldRender = needRefresh || isUpdating || updateFailed || registrationFailed;
   const isUrgent = needRefresh || updateFailed || isUpdating || registrationFailed;
   const mobilePositionStyle = {
-    '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
+    ...notificationMobilePositionStyle,
     // md+ 錨定主欄置中：AppLayout 傳側欄寬度一半，內容頁維持視窗置中（0px）。
     '--notification-center-offset': centerOffset,
   } as CSSProperties;

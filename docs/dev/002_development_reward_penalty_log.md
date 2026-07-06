@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+152
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-rating-modal-offscreen-token-fallback
+- 原因：RatingModal 消費 notificationTokens.position 但未設 --notification-mobile-top-offset CSS 變數（僅 UpdatePrompt/PwaInstallGuide 有 inline 設定），行動版 top 退化為 auto 使星評 Modal 整個落在視口外（top=844px），PWA 使用者永遠看不到；星星觸控目標亦僅 32px 低於 WCAG 44px
+- 解法：token 補 CSS 變數 fallback（漏設仍落 header 下方）＋新增 notificationMobilePositionStyle SSOT 供三元件共用；星星升至 44px、🎉 emoji 改品牌 SVG、新增 zIndexTokens scale 收斂 z-50/z-[60]/z-[9999] 散值、快速金額 chips 收斂至 quickAmountButtonTokens.pattern 並加 scroll-snap；補 RatingModal.position 回歸測試 6 例
 
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot

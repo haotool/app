@@ -13,9 +13,9 @@
  */
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, type MotionStyle } from 'motion/react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { notificationTokens } from '../config/design-tokens';
+import { notificationTokens, notificationMobilePositionStyle } from '../config/design-tokens';
 import { notificationAnimations, safeTransition } from '../config/animations';
 import type { UseRatingPromptReturn } from '../hooks/useRatingPrompt';
 
@@ -84,6 +84,7 @@ function RatingModalClient({
         <motion.div
           key="rating-modal"
           className={`${notificationTokens.position} pointer-events-none`}
+          style={notificationMobilePositionStyle as MotionStyle}
           role="dialog"
           aria-modal="true"
           aria-labelledby="rating-modal-title"
@@ -128,8 +129,23 @@ function RatingModalClient({
               {submitted ? (
                 /* 感謝畫面 */
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl" aria-hidden="true">
-                    🎉
+                  <span
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-icon-from to-brand-icon-to"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      className="h-5 w-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
+                    </svg>
                   </span>
                   <p id="rating-modal-title" className="text-sm font-semibold text-brand-text-dark">
                     {t('rating.thankYou')}
@@ -155,9 +171,9 @@ function RatingModalClient({
                       ref={firstButtonRef}
                       onClick={isFinalChance ? dismiss : snooze}
                       className="
-                        p-1.5 rounded-full flex-shrink-0
-                        bg-brand-icon-from/80 text-brand-text
-                        hover:text-brand-text-dark hover:bg-brand-icon-from
+                        -m-2.5 p-2.5 rounded-full flex-shrink-0 cursor-pointer
+                        text-brand-text
+                        hover:text-brand-text-dark hover:bg-brand-icon-from/60
                         active:scale-[0.95]
                         transition-[color,background-color,transform] duration-200 ease-out
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
@@ -165,7 +181,7 @@ function RatingModalClient({
                       aria-label={t('rating.dismiss')}
                     >
                       <svg
-                        className="w-3.5 h-3.5"
+                        className="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -183,7 +199,7 @@ function RatingModalClient({
 
                   {/* 星評列 */}
                   <div
-                    className="flex items-center gap-1.5 justify-center"
+                    className="flex items-center gap-1 justify-center"
                     role="radiogroup"
                     aria-label={t('rating.starsLabel')}
                   >
@@ -206,8 +222,8 @@ function RatingModalClient({
                     <button
                       onClick={isFinalChance ? dismiss : snooze}
                       className="
-                        text-xs text-brand-text/70 hover:text-brand-text
-                        transition-colors duration-150
+                        min-h-9 px-2 -mx-2 text-xs text-brand-text/70 hover:text-brand-text
+                        cursor-pointer transition-colors duration-150
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
                         rounded
                       "
@@ -219,11 +235,12 @@ function RatingModalClient({
                       onClick={() => void handleSubmit()}
                       disabled={selectedStar === 0 || isSubmitting}
                       className="
-                        px-3 py-1.5 rounded-full text-xs font-medium
+                        min-h-9 px-4 py-1.5 rounded-full text-xs font-semibold
                         bg-primary-strong
                         text-white
+                        cursor-pointer
                         hover:bg-primary-hover
-                        active:scale-[0.98]
+                        active:scale-[0.97]
                         disabled:opacity-40 disabled:cursor-not-allowed
                         transition-[color,background-color,border-color,transform,opacity] duration-200 ease-out
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
@@ -272,16 +289,16 @@ function StarButton({
       onFocus={() => onHover(star)}
       onBlur={onLeave}
       className={`
-        w-8 h-8 flex items-center justify-center rounded
-        ${prefersReducedMotion ? '' : 'transition-transform duration-100 active:scale-95'}
+        w-11 h-11 flex items-center justify-center rounded-full cursor-pointer
+        ${prefersReducedMotion ? '' : 'transition-transform duration-150 ease-out active:scale-90'}
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-text focus-visible:ring-offset-1
       `}
     >
       <svg
         viewBox="0 0 24 24"
-        className={`w-6 h-6 transition-colors duration-100 ${
+        className={`w-7 h-7 transition-[fill,stroke,transform] duration-150 ease-out ${
           filled ? 'fill-yellow-400 stroke-yellow-500' : 'fill-transparent stroke-brand-text/40'
-        }`}
+        } ${selected && !prefersReducedMotion ? 'scale-110' : ''}`}
         strokeWidth={1.5}
         aria-hidden="true"
       >

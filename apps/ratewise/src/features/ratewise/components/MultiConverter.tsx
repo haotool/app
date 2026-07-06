@@ -1,5 +1,6 @@
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { quickAmountButtonTokens } from '../../../config/design-tokens';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
@@ -161,7 +162,7 @@ export const MultiConverter = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+      <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto snap-x snap-proximity scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button
@@ -172,14 +173,7 @@ export const MultiConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>
