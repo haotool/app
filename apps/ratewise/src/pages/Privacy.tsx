@@ -113,6 +113,7 @@ export default function Privacy() {
       />
 
       <ContentPageLayout
+        width="wide-lg"
         breadcrumbItems={[
           { label: t('nav.home'), href: '/' },
           { label: t('footer.privacyPolicy'), href: '/privacy/' },

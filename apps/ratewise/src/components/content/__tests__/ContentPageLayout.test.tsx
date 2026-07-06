@@ -47,6 +47,20 @@ describe('ContentPageLayout', () => {
     expect(container?.className).toContain('pb-24');
   });
 
+  // #594 三階 A11/A12：lg: grid 頁面 md–lg 帶維持閱讀寬度，僅 ≥lg 放寬。
+  it('width="wide-lg" 僅於 lg 以上放寬容器', () => {
+    render(
+      <BrowserRouter>
+        <ContentPageLayout breadcrumbItems={BREADCRUMB} width="wide-lg">
+          <p>內容</p>
+        </ContentPageLayout>
+      </BrowserRouter>,
+    );
+    const container = screen.getByTestId('content-page').firstElementChild;
+    expect(container?.className).toContain('max-w-3xl');
+    expect(container?.className).toContain('lg:max-w-5xl');
+  });
+
   it('頁面容器承擔 safe-area 適配（頂列改靜態後 pt-safe-top 移至容器）', () => {
     renderLayout();
     expect(screen.getByTestId('content-page').className).toContain('pt-safe-top');

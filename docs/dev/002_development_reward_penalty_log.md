@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+176
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+177
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-594-stage3-tablet-reading-width-a11-a12
+- 原因：#643 幣別頁 width="wide" 在 md–lg 帶（如 820px iPad 直向）無 lg: grid 卻先吃 max-w-5xl 致行長過長（A11）；Privacy 加 220px 側欄卻未放寬容器，lg 正文僅約 492px 被壓窄（A12）
+- 解法：ContentPageLayout 新增 width="wide-lg"（max-w-3xl lg:max-w-5xl，僅 ≥lg 放寬），幣別頁與 Privacy 均改用——md–lg 帶維持閱讀寬度、≥lg 兩欄 grid 吃滿寬版；手機視口 AE=0、四視口前後截圖佐證
 
 - 日期：2026-07-07
 - ID：reward-rw-v2-chip-basis-honesty-qa-i-d1-d3
