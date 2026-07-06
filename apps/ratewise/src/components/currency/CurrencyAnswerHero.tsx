@@ -31,14 +31,17 @@ export function CurrencyAnswerHero({
   children,
 }: CurrencyAnswerHeroProps) {
   return (
-    <section className="rounded-card border border-border/60 bg-surface p-5 shadow-card sm:p-6">
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section className="rounded-card border border-border/60 bg-surface p-5 shadow-card sm:p-6 lg:col-span-2">
       <header className="flex items-start gap-3 sm:gap-4">
         <span className="text-4xl leading-none sm:text-5xl">{flag}</span>
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold leading-tight tracking-tight text-text sm:text-[28px]">
             {heading}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-text-muted sm:text-base">{description}</p>
+          <p className="mt-2 text-sm leading-relaxed text-text-muted sm:text-base lg:max-w-[65ch]">
+            {description}
+          </p>
         </div>
       </header>
 
@@ -52,12 +55,13 @@ export function CurrencyAnswerHero({
 
       {children}
 
-      {/* 單一帶參數 hero 卡（#631）：快速答案＋深連結 CTA 收斂同卡，砍除與快速答案語意重複的行銷段。 */}
-      <div className="mt-4 rounded-panel border border-primary/20 bg-primary/5 p-4">
+      {/* 單一帶參數 hero 卡（#631）：快速答案＋深連結 CTA 收斂同卡，砍除與快速答案語意重複的行銷段。
+          #594 二階：≥1024px 快速答案與 CTA 並排（答案左、CTA 右置中）；<1024px 佈局零變化。 */}
+      <div className="mt-4 rounded-panel border border-primary/20 bg-primary/5 p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-6">
         {quickAnswers.length > 0 && (
           <>
             <h2 className="text-sm font-semibold text-primary-on-surface">快速答案</h2>
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-3 lg:col-start-1 lg:max-w-[65ch]">
               {quickAnswers.map((item) => (
                 <div
                   key={item.question}
@@ -74,7 +78,7 @@ export function CurrencyAnswerHero({
         )}
         <Link
           to={ctaTo}
-          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:self-center"
         >
           {ctaLabel}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

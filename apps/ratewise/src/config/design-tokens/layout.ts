@@ -189,13 +189,15 @@ export const rateWiseLayoutTokens = {
   /**
    * 內容容器 - 流體內距搭配最大寬度限制
    * [align:2026-01-29] 與 3ea33 版一致的 px/py 與 max-w
+   * [#594 二階] ≥1024px 轉兩欄 grid：左欄換算核心（28rem）、右欄輔助資訊；<1024px 佈局零變化。
    */
   content: {
-    className: 'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full',
+    className:
+      'flex-1 flex flex-col px-3 sm:px-5 py-4 max-w-md mx-auto w-full lg:max-w-5xl lg:grid lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start lg:gap-x-6',
   },
 
   section: {
-    className: 'flex-1 flex flex-col mb-4',
+    className: 'flex-1 flex flex-col mb-4 lg:col-start-1',
   },
 
   /** 單幣別卡片 - 移除 flex-1 避免過度拉伸 */

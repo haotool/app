@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+161
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+162
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-594-tablet-two-column
+- 原因：≥1024px 視口主內容仍為手機版單欄置中（首頁 max-w-md、幣別頁 max-w-3xl），12.9" 橫向留白 >60%（issue #594 二階、E6 評分卡實測）
+- 解法：純 lg: class 收斂——首頁 grid 兩欄（換算核心 28rem＋右欄收藏/幣種、v1/v2 共用且 keypad 常駐不動）、隱私頁目錄轉 sticky 錨點欄、幣別頁 wide 容器＋六段 IA 寬版（快速答案＋CTA 並排、金額頁常見金額互鏈全幅防半欄懸空）；<1024px 佈局零變化（像素 diff AE=0）、SSG 非目標頁 13 頁零 diff
 
 - 日期：2026-07-06
 - ID：reward-rw-609-builtin-theme-aa-batch

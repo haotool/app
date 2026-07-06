@@ -13,7 +13,8 @@ export interface RelatedGuidesSectionProps {
 
 export function RelatedGuidesSection({ relatedGuides }: RelatedGuidesSectionProps) {
   return (
-    <section>
+    // #594 二階：≥1024px 佔滿兩欄寬版；<1024px 佈局零變化。
+    <section className="lg:col-span-2">
       <CurrencySectionHeading icon={BookOpen}>相關攻略</CurrencySectionHeading>
       <div className="rounded-card border border-border/60 bg-surface shadow-card">
         <div className="divide-y divide-border/40">
