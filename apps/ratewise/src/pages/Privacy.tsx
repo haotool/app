@@ -124,7 +124,7 @@ export default function Privacy() {
         <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6">
           <nav
             aria-label="頁內目錄"
-            className="mb-6 flex flex-wrap gap-2 lg:sticky lg:top-16 lg:mb-0 lg:flex-col lg:self-start"
+            className="mb-6 flex flex-wrap gap-2 lg:sticky lg:top-6 lg:mb-0 lg:flex-col lg:self-start"
           >
             {TOC.map((item) => (
               <a

@@ -217,7 +217,7 @@ describe('Guide Page - HowTo Schema', () => {
     });
   });
 
-  describe('FAQ Section', () => {
+  describe('FAQ Section（導流摘要，不逐字複製 Q&A）', () => {
     it('renders FAQ section', () => {
       renderGuide();
       // 使用 ❓ 常見問題 作為精確匹配
@@ -227,8 +227,15 @@ describe('Guide Page - HowTo Schema', () => {
 
     it('renders link to full FAQ page', () => {
       renderGuide();
-      const faqLink = screen.getByRole('link', { name: /查看更多常見問題/i });
+      const faqLink = screen.getByRole('link', { name: /查看完整答案/i });
       expect(faqLink).toHaveAttribute('href', '/faq/');
+    });
+
+    it('不得逐字複製 FAQ 頁 Q&A（重複內容收斂守門）', () => {
+      renderGuide();
+      expect(screen.queryByText('現金匯率和即期匯率有什麼差別？')).not.toBeInTheDocument();
+      expect(screen.queryByText('匯率多久更新一次？')).not.toBeInTheDocument();
+      expect(screen.queryByText('離線時可以使用嗎？')).not.toBeInTheDocument();
     });
   });
 

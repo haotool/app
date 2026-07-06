@@ -9,7 +9,7 @@ import {
   ContentSections,
   type ContentSection,
 } from '../components/content/ContentSections';
-import { GUIDE_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
+import { GUIDE_FAQ_BRIDGE, GUIDE_PAGE_SEO, SITE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 
 const HOW_TO = GUIDE_PAGE_SEO.howTo;
@@ -27,8 +27,9 @@ const RATE_READING_TIPS = [
     title: '先判斷你是買外幣還是賣外幣',
     description: '拿台幣買外幣時，通常要看銀行賣出價；把外幣換回台幣時，則看銀行買入價。',
   },
+  // 標題不與 /cash-vs-spot-rate/ 主標逐字重複（跨頁重複內容收斂）。
   {
-    title: '現金與即期不是同一種匯率',
+    title: '分清楚現金與即期兩種報價',
     description: '臨櫃換現鈔看現金匯率，外幣帳戶、網銀或匯款看即期匯率。現金匯率通常會比即期差。',
   },
   {
@@ -80,22 +81,19 @@ const FEATURE_SECTIONS: readonly ContentSection[] = [
       { description: '若主要情境是海外刷卡，請額外留意發卡銀行手續費與 DCC。' },
     ],
   },
+  // 問答全文唯一歸屬 /faq/（SSOT）：此處僅保留情境化摘要＋導流連結，不逐字複製 Q&A。
   {
-    kind: 'faq',
-    title: '❓ 常見問題',
-    items: [
-      {
-        question: '匯率多久更新一次？',
-        answer: '匯率資料每 5 分鐘自動同步臺灣銀行牌告匯率，也可在首頁下拉手動更新。',
-      },
-      {
-        question: '現金匯率和即期匯率有什麼差別？',
-        answer: '現金匯率適用於臨櫃換鈔，即期匯率適用於帳戶轉換與匯款。一般來說，即期匯率較佳。',
-      },
-      {
-        question: '離線時可以使用嗎？',
-        answer: `可以。${APP_INFO.shortName} 會快取最近一次更新的資料，離線時仍可進行換算。`,
-      },
+    kind: 'text',
+    title: GUIDE_FAQ_BRIDGE.title,
+    paragraphs: [
+      GUIDE_FAQ_BRIDGE.summary,
+      <Link
+        key="faq-link"
+        to={GUIDE_FAQ_BRIDGE.linkHref}
+        className="inline-flex min-h-11 items-center text-sm font-medium text-primary-on-surface hover:underline"
+      >
+        {GUIDE_FAQ_BRIDGE.linkLabel}
+      </Link>,
     ],
   },
 ];
@@ -136,7 +134,8 @@ const Guide = () => {
         />
 
         <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <aside className="lg:sticky lg:top-16 lg:self-start">
+          {/* 側欄 sticky 為桌面欄位行為（保留）；頂列已改靜態，offset 只留小間距。 */}
+          <aside className="lg:sticky lg:top-6 lg:self-start">
             <ContentSectionCard title="快速導航">
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
                 {HOW_TO_STEPS.map((step) => (
@@ -160,7 +159,7 @@ const Guide = () => {
               <section
                 key={step.position}
                 id={`step-${step.position}`}
-                className="scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))] rounded-card border border-border/60 bg-surface p-5 shadow-card"
+                className="scroll-mt-[calc(1rem+env(safe-area-inset-top,0px))] rounded-card border border-border/60 bg-surface p-5 shadow-card"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-strong text-lg font-bold text-white">
@@ -175,15 +174,6 @@ const Guide = () => {
             ))}
 
             <ContentSections sections={FEATURE_SECTIONS} />
-
-            <div className="text-center">
-              <Link
-                to="/faq/"
-                className="inline-flex min-h-11 items-center text-sm font-medium text-primary-on-surface hover:underline"
-              >
-                查看更多常見問題 →
-              </Link>
-            </div>
 
             <div className="text-center">
               <Link

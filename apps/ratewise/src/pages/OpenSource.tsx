@@ -2,8 +2,8 @@
  * 開放原始碼頁（E4 新增，noindex 功能頁）
  *
  * 將散落於設定頁外部連結、關於頁與開放資料頁的開源／授權資訊卡片化收斂。
- * 頁面 SEO 設定就地定義（noindex、不入 sitemap），不動 seo-metadata/**（E5 白名單互斥）。
- * 文案沿用現況來源（About 透明區塊＋OpenData 授權聲明），只重排呈現。
+ * 頁面 SEO 設定就地定義（noindex、不入 sitemap）。
+ * 授權聲明全文唯一歸屬本頁，文案取自 LICENSING_NOTICE SSOT（跨頁重複內容收斂）。
  */
 
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import {
   ContentSections,
   type ContentSection,
 } from '../components/content/ContentSections';
+import { LICENSING_NOTICE } from '../config/seo-metadata';
 
 const OPEN_SOURCE_PAGE_SEO = {
   title: `開放原始碼 - ${APP_INFO.shortName} 程式碼與授權資訊`,
@@ -41,19 +42,17 @@ const SECTIONS: readonly ContentSection[] = [
             >
               {APP_INFO.license}
             </a>{' '}
-            授權釋出，可自由使用、修改，衍生作品須以相同授權開源。
+            {LICENSING_NOTICE.codeLicense}
           </>
         ),
       },
       {
         term: '資料版權：',
-        description:
-          '匯率數據原始版權屬臺灣銀行。本專案以自動化方式公開抓取官方牌告，使用前請自行確認是否符合臺灣銀行使用規範。',
+        description: LICENSING_NOTICE.dataCopyright,
       },
       {
         term: '免責聲明：',
-        description:
-          '本工具與臺灣銀行無隸屬關係。資料可能因網路延遲或同步異常而短暫差異。所有匯率僅供參考，實際交易以金融機構公告為準。',
+        description: LICENSING_NOTICE.disclaimer,
       },
     ],
   },

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1｜累計總分：+172
+> 本次分數變化：+1｜累計總分：+173
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-content-page-skeleton-destickify-dedupe
+- 原因：內容頁頂列 sticky＋backdrop-blur 捲動時壓在內容上（使用者裁決頁面上方不應跟隨捲動），且指南頁 FAQ 段與開放資料頁授權聲明存在跨頁逐字重複內容（SEO duplicate content）
+- 解法：PageNavHeader 改靜態頂列（safe-area 移至 ContentPageLayout 容器 pt-safe-top、錨點 scroll-mt 偏移同步縮小、側欄 sticky offset 校正），重複內容以 seo-metadata SSOT 收斂——GUIDE_FAQ_BRIDGE 摘要導流取代指南頁逐字 Q&A、LICENSING_NOTICE 授權聲明唯一歸屬開源頁
 
 - 日期：2026-07-07
 - ID：reward-rw-344-lhci-smoke-authority-guides
