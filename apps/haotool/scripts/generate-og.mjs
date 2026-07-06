@@ -5,7 +5,7 @@
  * 版式：白底、左上 logomark 72×72（64,56）右接 wordmark 高 36（mobile-beauty §6 L1 版位）、
  * 中央標語大字、下方副標、右下 5 工具名稱列；
  * 零漸層零陰影（設計 brief §1.1 扁平鐵律）；中文用系統字型。
- * SSOT：public/brand/logomark.png（L1-b）＋ public/brand/wordmark.svg（字形）＋
+ * SSOT：brand-src/logomark-192.png（L1-b 衍生，不入 dist）＋ public/brand/wordmark.svg（字形）＋
  * src/config/tools.ts（工具名稱）。
  *
  * 執行：node apps/haotool/scripts/generate-og.mjs（依賴 monorepo root 既有 @playwright/test）
@@ -44,7 +44,7 @@ const wordmark = readFileSync(resolve(PUBLIC_DIR, 'brand/wordmark.svg'), 'utf8')
   'width="177.48" height="36"',
 );
 const logomark = `data:image/png;base64,${readFileSync(
-  resolve(PUBLIC_DIR, 'brand/logomark-192.png'),
+  resolve(__dirname, '../brand-src/logomark-192.png'),
 ).toString('base64')}`;
 
 const toolNames = TOOLS.map((tool) => tool.name).join('<span class="dot">·</span>');

@@ -342,16 +342,20 @@ export default function Home() {
       {/* 區 7 — 聯繫 Banner（#1B64DA 全幅；藍實底 ≤15% 規則唯一授權例外 D2）；
           A4 L3-b 插畫掛右下角（§6 N6：僅 ≥1024px、純裝飾、不壓 640px 置中文字）。 */}
       <section aria-labelledby="contact-heading" className="relative bg-banner-bg">
-        <img
-          src="/brand/illus-desk.webp"
-          alt=""
-          width={1152}
-          height={768}
-          loading="lazy"
-          decoding="async"
-          aria-hidden="true"
-          className="banner-illus"
-        />
+        {/* S1：480w＝渲染寬 240px 的 2× 帳；AVIF 主軌＋WebP 備援（§6 格式決策）。
+            定位類掛 picture（img 絕對定位會在 section 流內留下空 inline box）。 */}
+        <picture aria-hidden="true" className="banner-illus">
+          <source type="image/avif" srcSet="/brand/illus-desk.avif" />
+          <img
+            src="/brand/illus-desk.webp"
+            alt=""
+            width={480}
+            height={320}
+            loading="lazy"
+            decoding="async"
+            className="block h-auto w-full"
+          />
+        </picture>
         <div className="shell py-16 md:py-24">
           <Reveal>
             <div className="mx-auto flex max-w-[640px] flex-col items-center text-center">

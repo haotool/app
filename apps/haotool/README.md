@@ -23,18 +23,19 @@ pnpm --filter @app/haotool generate:sitemap # 重新生成 sitemap/robots/llms
 瀏覽器自動化使用 monorepo root 既有 `@playwright/test`，零新增依賴（AVIF 轉檔用 macOS 內建 `sips`）。
 
 ```bash
-node apps/haotool/scripts/generate-icons.mjs       # brand/logomark.png SSOT → PWA icons + favicon.ico
+node apps/haotool/scripts/generate-icons.mjs       # brand-src/logomark.png SSOT → PWA icons + favicon.ico
 node apps/haotool/scripts/generate-og.mjs          # HTML 模板＋logomark → og-image.png（1200×630，≤200KB）
 node apps/haotool/scripts/capture-screenshots.mjs  # live 站 5 工具行動截圖 → AVIF+WebP（520px 寬，單張 ≤60KB）
 ```
 
-素材 SSOT 對照：
+素材 SSOT 對照（`brand-src/` = build-time 源檔不入 dist；`public/brand/` = runtime 引用資產）：
 
+- `brand-src/logomark.png`（L1-b 繩結 monogram）：icons 腳本由此輸出全部 PNG 尺寸與 favicon.ico；
+  `logomark-512/192.png` 為 sips 降採樣衍生檔（192 供 OG 圖嵌入）。
+- `brand-src/illus-desk.png`（L3-b 原檔 1152w）：banner 插畫源檔。
 - `public/brand/wordmark.svg`（+ `wordmark-white.svg`）：手寫幾何向量字形，Header/Footer/OG 共用。
-- `public/brand/logomark.png`（L1-b 繩結 monogram）：icons 腳本由此輸出全部 PNG 尺寸與 favicon.ico；
-  `logomark-512/192.png` 為 sips 降採樣衍生檔。
 - `public/brand/avatar.png`（L2-a 吉祥物，640px）：Home 區 6 與 About 頁作者頭像。
-- `public/brand/illus-desk.{png,webp}`（L3-b 工作檯插畫，1152px 寬）：聯繫 banner 桌面角落裝飾。
+- `public/brand/illus-desk.{avif,webp}`（480w＝240px 渲染 2× 帳）：聯繫 banner 桌面角落裝飾。
 - `public/screenshots/<toolId>-mobile.{avif,webp}`：工具清單以 `src/config/tools.ts` 為準。
 
 ## 結構

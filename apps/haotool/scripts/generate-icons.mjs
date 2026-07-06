@@ -1,7 +1,8 @@
 /**
  * Brand icons 生成腳本（快照制：手動執行、產物 commit）。
  *
- * SSOT：public/brand/logomark.png（L1-b 繩結 monogram，PM E3 素材裁決）。
+ * SSOT：brand-src/logomark.png（L1-b 繩結 monogram，PM E3 素材裁決；
+ * 源檔不入 dist——S2 裁決：build-time 素材一律置於 brand-src/）。
  * 版式：#EFF6FF（--color-primary-bg）實底板＋置中 logomark；
  * rounded 變體圓角 20% 半徑（角落透明）、fullbleed 滿版方形由平台自行套遮罩；
  * maskable 內容置於中央 80% 安全圓內（W3C maskable safe zone）。
@@ -22,7 +23,7 @@ import { chromium } from '@playwright/test';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = resolve(__dirname, '../public');
-const LOGOMARK_PATH = resolve(PUBLIC_DIR, 'brand/logomark.png');
+const LOGOMARK_PATH = resolve(__dirname, '../brand-src/logomark.png');
 
 // 板底色 = --color-primary-bg（品牌五色板內）；logomark 本體維持原色不重繪。
 const PLATE_COLOR = '#EFF6FF';
@@ -179,7 +180,7 @@ try {
   await page.close();
   generateFavicon();
   await verifyPngOutputs(browser);
-  console.log('🎉 icons 生成完畢（SSOT：public/brand/logomark.png）');
+  console.log('🎉 icons 生成完畢（SSOT：brand-src/logomark.png）');
 } finally {
   await browser.close();
 }
