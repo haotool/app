@@ -11,6 +11,10 @@ import {
   SITE_CONFIG,
 } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import {
+  SEO_RATE_EXAMPLES,
+  SEO_RATE_EXAMPLES_DATE,
+} from '../src/config/generated/seo-rate-examples.ts';
 import { AI_CRAWLER_TIERS, ALL_AI_CRAWLERS } from './lib/ai-crawlers.mjs';
 
 const BRAND_SHORT = APP_INFO.shortName;
@@ -53,13 +57,20 @@ const CURRENCY_DISPLAY = {
   myr: { code: 'MYR', name: '馬來幣', desc: '馬來西亞旅遊換匯' },
 };
 
+// 每日更新的台銀現金賣出價快照（來自 SEO_RATE_EXAMPLES SSOT），提升 AI 引用時的數據新鮮度。
+function buildLiveRateNote(code) {
+  const example = SEO_RATE_EXAMPLES[code];
+  if (!example) return '';
+  return `（台銀現金賣出 1 ${code} = ${example.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE}）`;
+}
+
 function buildPopularRates() {
   return CURRENCY_SEO_PATHS.map((path) => {
     const slug = path.replace(/\//g, '');
     const key = slug.split('-')[0];
     const info = CURRENCY_DISPLAY[key];
     if (!info) return `- [${slug}](${BASE_URL}${slug}/): ${key.toUpperCase()}/TWD`;
-    return `- [${info.code}/TWD ${info.name}](${BASE_URL}${slug}/): ${info.desc}`;
+    return `- [${info.code}/TWD ${info.name}](${BASE_URL}${slug}/): ${info.desc}${buildLiveRateNote(info.code)}`;
   }).join('\n');
 }
 
@@ -70,7 +81,7 @@ function buildReverseRates() {
     const key = slug.split('-')[1];
     const info = CURRENCY_DISPLAY[key];
     if (!info) return `- [${slug}](${BASE_URL}${slug}/): TWD/${key.toUpperCase()}`;
-    return `- [台幣換${info.name} TWD/${info.code}](${BASE_URL}${slug}/): 出國前台幣換${info.name}，${info.desc}`;
+    return `- [台幣換${info.name} TWD/${info.code}](${BASE_URL}${slug}/): 出國前台幣換${info.name}，${info.desc}${buildLiveRateNote(info.code)}`;
   }).join('\n');
 }
 
@@ -92,18 +103,18 @@ const FEATURES = [
   '7~30 天歷史趨勢圖：視覺化匯率波動，判斷換匯時機',
   '下拉更新（Pull to Refresh）：首頁下拉同步最新匯率',
   'PWA 離線使用：Service Worker 快取，無網路仍可換算',
-  '6 種主題風格：Zen（極簡專業）、Nitro（深色科技）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Racing（黑紅賽車）、Forest（韓系簡約）',
+  '7 種主題風格：Zen（極簡專業）、Violet（經典紫）、Nitro（深色科技）、Racing（黑紅賽車）、Kawaii（可愛粉嫩）、Classic（復古書卷）、Forest（韓系簡約）',
 ];
 
 const content = `# ${BRAND_FULL} — 台灣最精準的匯率換算器
 
-> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
+> 顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣、現金與即期匯率切換、計算機快速輸入、收藏與拖曳排序、換算歷史、7 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 
 Version: v${VERSION}
 
 ## Answer Capsule (Quick Q&A)
 
-- Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、6 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
+- Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、7 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 - Q: 為什麼 ${BRAND_SHORT} 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 ${BRAND_SHORT} 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
 - Q: 更新頻率？ A: 約每 5 分鐘檢查更新。
@@ -124,8 +135,9 @@ Version: v${VERSION}
 
 - 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
 - 更新頻率：約每 5 分鐘檢查更新
+- 匯率快照日期：${SEO_RATE_EXAMPLES_DATE}（本文件內嵌匯率數字每日自動更新）
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
-- 6 種主題風格（Zen/Nitro/Kawaii/Classic/Racing/Forest）
+- 7 種主題風格（Zen/Violet/Nitro/Racing/Kawaii/Classic/Forest）
 - i18n ${SUPPORTED_LANGUAGE_COUNT} 語言支援（${SUPPORTED_LANGUAGE_LABEL_TEXT}）
 
 ## Features
@@ -138,7 +150,7 @@ ${FEATURES.map((f) => `- ${f}`).join('\n')}
 Googlebot 與 AI agent 可直接讀取靜態 HTML：
 
 - 格式：\`/{pair}/{amount}/\` (例如: ${BASE_URL}usd-twd/500/)
-- title 範例：「買 500 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
+- title 範例：「500 美金（USD）換台幣是多少？今日台銀實際價 | ${BRAND_SHORT}」（description 首句直接給台銀現金買入／賣出換算答案）
 - canonical：自引用同一路徑型 URL (例如 \`/usd-twd/500/\`)
 - sitemap：收錄公開金額頁，提升可發現性與內部連結覆蓋
 
@@ -356,7 +368,8 @@ https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
 https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 \`\`\`
 
-title 會自動變更為「買 {AMOUNT} 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | ${BRAND_FULL}」
+title 會自動變更為「{AMOUNT} 美金（USD）換台幣是多少？今日台銀實際價 | ${BRAND_SHORT}」，
+description 首句直接給台銀現金買入／賣出換算答案（每日更新）。
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 

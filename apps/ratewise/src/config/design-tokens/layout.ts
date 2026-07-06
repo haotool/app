@@ -46,13 +46,13 @@ export const navigationTokens = {
       activeStrokeWidth: 2.5,
       inactiveStrokeWidth: 2,
     },
-    /** Label typography（E1 字階下限 12px：原 8px 升級為 text-2xs） */
+    /** Label typography（E1 字階下限 12px；CJK 不套 uppercase/寬字距，inactive 用主題 muted token 保 AA） */
     label: {
       fontSize: 12,
       fontSizeClass: 'text-2xs',
-      fontWeight: 'font-black',
-      letterSpacing: '0.1em',
-      letterSpacingClass: 'tracking-[0.1em]',
+      fontWeight: 'font-semibold',
+      activeColor: 'text-primary-on-surface',
+      inactiveColor: 'text-text-muted',
     },
     /** Active indicator bar */
     indicator: {
@@ -369,9 +369,9 @@ export const singleConverterLayoutTokens = {
    * #591：iPhone SE（667px 高，short 區間）需保留來源快速金額，隱藏門檻下移一級
    */
   quickAmounts: {
-    /** 容器樣式 */
+    /** 容器樣式（snap-x proximity：滑動後 chip 對齊起點，避免半截停留） */
     container:
-      'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
+      'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto snap-x snap-proximity scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
 
     /** 來源快速金額：tiny (≤650px) 隱藏 */
     fromVisibility: 'tiny:hidden',
@@ -450,6 +450,12 @@ export const quickAmountButtonTokens = {
   },
   /** 觸覺回饋時長 (毫秒) */
   hapticDuration: 30,
+  /**
+   * 完整類別組合（SSOT 字面量，Tailwind JIT 需完整字串）
+   * min-h-9 保觸控目標、snap-start 配合容器 scroll-snap 滑動對齊
+   */
+  pattern:
+    'flex-shrink-0 snap-start min-h-9 cursor-pointer px-3 py-1.5 rounded-xl text-sm font-semibold bg-surface-elevated text-text/70 hover:bg-primary/10 hover:text-primary-on-surface active:bg-primary/20 active:text-primary-on-surface transition-all duration-200 ease-out active:scale-[0.97]',
 } as const;
 
 /**

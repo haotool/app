@@ -21,6 +21,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { Check, X, Info, Copy } from 'lucide-react';
 import { ToastContext, type ToastMessage, type ToastType } from './ToastContext';
+import { zIndexTokens } from '../../config/design-tokens';
 
 /**
  * Toast Provider - Wraps application to enable Toast functionality
@@ -42,7 +43,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {/* Toast 容器 - 右上角定位，安全區域內縮 */}
-      <div className="fixed top-16 right-4 z-[60] flex flex-col items-end gap-2 pointer-events-none">
+      <div
+        className={`fixed top-16 right-4 ${zIndexTokens.toast} flex flex-col items-end gap-2 pointer-events-none`}
+      >
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
         ))}
@@ -104,6 +107,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
    */
   const getStyles = () => {
     switch (type) {
+      // 文字採 hover 深階（各主題 hover 對 surface 對比更強），14px 文字保 AA（WCAG 1.4.3）。
       case 'success':
         return {
           bg: 'bg-primary/15 border border-primary/20',
@@ -118,7 +122,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       case 'error':
         return {
           bg: 'bg-destructive/15 border border-destructive/20',
-          text: 'text-destructive',
+          text: 'text-destructive-hover',
           iconBg: 'bg-destructive/20',
           icon: <X className="w-4 h-4" strokeWidth={2.5} />,
         };
@@ -138,7 +142,6 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
   return (
     <div
       role="alert"
-      aria-live="polite"
       data-testid="toast"
       className={`
         pointer-events-auto

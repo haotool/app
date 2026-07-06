@@ -157,7 +157,7 @@ export const CURRENCY_PERSONAS = {
     keyword: '歐元換台幣',
     popularAmounts: [1, 10, 50, 100, 500, 1000],
     searchQueries: ['100 歐元等於多少台幣', '歐元匯率', '歐元換台幣'],
-    hook: '歐元區各國刷卡接受度落差大——德國、奧地利許多小店只收現金或當地 Girocard，行前配置要因國而異。',
+    hook: '歐元區各國刷卡接受度落差大：德國、奧地利許多小店只收現金或當地 Girocard，行前配置要因國而異。',
     cashCulture:
       '法國、荷蘭與北歐刷卡幾乎無障礙；德國與奧地利許多小店、麵包店與家庭餐廳只收現金或只收當地 Girocard 金融卡，Visa／Mastercard 反而刷不過，還常見 5～10 歐元的刷卡低消。',
     denominationTip:
@@ -354,7 +354,7 @@ export const CURRENCY_PERSONAS = {
     cashCulture:
       '香港刷卡與八達通並行：便利商店、交通與連鎖餐廳幾乎都收八達通；街市、茶餐廳與部分老字號仍以現金為主。',
     denominationTip:
-      '港幣紙鈔由滙豐、中銀香港、渣打三家銀行發行，10 元紙鈔則由政府發行——同面額有多種圖案版本，都是真鈔不必疑慮。',
+      '港幣紙鈔由滙豐、中銀香港、渣打三家銀行發行，10 元紙鈔則由政府發行，因此同面額會有多種圖案版本，都是真鈔不必疑慮。',
     exchangeChannel: '港幣在台灣市區銀行流動性佳、隨換隨有；香港街頭換匯所匯率參差，需比價後再換。',
     travelTip:
       '八達通單卡儲值上限為 3,000 港幣，機場站即可購買，交通、超商一卡搞定；離境前可退卡取回餘額。',
@@ -581,7 +581,7 @@ export const CURRENCY_PERSONAS = {
     keyword: '紐元換台幣',
     popularAmounts: [1, 20, 50, 100, 500, 1000],
     searchQueries: ['100 紐元等於多少台幣', '紐元匯率', '紐元換台幣'],
-    hook: '紐西蘭最小硬幣只到 10 分，現金結帳會四捨五入，刷卡則付原價——這是當地獨特的找零規則。',
+    hook: '紐西蘭最小硬幣只到 10 分，現金結帳會四捨五入，刷卡則付原價，這是當地獨特的找零規則。',
     cashCulture:
       '紐西蘭本地 EFTPOS 金融卡文化成熟，超市、加油站到小鎮咖啡店都能刷；信用卡與 payWave 感應則常被商家加收附加費，結帳前留意櫃台告示。',
     denominationTip:
@@ -625,7 +625,7 @@ export const CURRENCY_PERSONAS = {
     keyword: '瑞士法郎換台幣',
     popularAmounts: [1, 10, 50, 100, 500, 1000],
     searchQueries: ['100 瑞士法郎等於多少台幣', '瑞郎匯率', '瑞士法郎換台幣'],
-    hook: '瑞士物價高、現金卻意外好用——金融卡、TWINT 與 5 分進位規則是當地支付的三個關鍵字。',
+    hook: '瑞士物價高、現金卻意外好用。金融卡、TWINT 與 5 分進位規則是當地支付的三個關鍵字。',
     cashCulture:
       '瑞士央行調查顯示金融卡是最常用的支付方式、現金約占三成店面交易，本地行動支付 TWINT 也常見；山區小站、市集與部分民宿仍偏好現金。',
     denominationTip:
@@ -670,7 +670,7 @@ export const CURRENCY_PERSONAS = {
     keyword: '越南盾換台幣',
     popularAmounts: [10000, 50000, 100000, 500000, 1000000, 5000000],
     searchQueries: ['100000 越南盾多少台幣', '越南盾匯率', '越南幣換台幣'],
-    hook: '越南換匯法規近年大幅收緊——去哪裡換，比匯率數字本身更重要。',
+    hook: '越南換匯法規近年大幅收緊，去哪裡換比匯率數字本身更重要。',
     cashCulture:
       '越南以現金為主，信用卡僅大城市飯店、商場與連鎖餐廳可用；本地掃碼支付快速普及但需當地帳戶，觀光客的主力仍是現金。',
     denominationTip:
@@ -767,7 +767,7 @@ export const CURRENCY_PERSONAS = {
     denominationTip:
       '印尼盾位數多，10 萬與 1 萬紙鈔容易看錯；換匯後當場逐張數鈔、確認無誤再離開櫃台，防範快速摺鈔抽張的手法。',
     exchangeChannel:
-      '合法換匯所須持印尼央行（Bank Indonesia）核發的 KUPVA BB 執照；峇里島可先上央行官方驗證網站查詢合法店家，老牌的 PT Central Kuta 在 Kuta、Seminyak、Ubud 都有分店。網傳「警察認證」是訛傳——認證機構是央行，不是警察。',
+      '合法換匯所須持印尼央行（Bank Indonesia）核發的 KUPVA BB 執照；峇里島可先上央行官方驗證網站查詢合法店家，老牌的 PT Central Kuta 在 Kuta、Seminyak、Ubud 都有分店。網傳「警察認證」是訛傳，認證機構是央行，不是警察。',
     travelTip:
       '帶百元美金新鈔到合法換匯所兌換通常比在台灣直換印尼盾有利；匯率好得離奇的路邊小店直接跳過。',
     faqSpecific: [

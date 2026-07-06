@@ -38,12 +38,14 @@ export function PageNavHeader({
         border-b border-border/50 ${className}`}
     >
       <div className="flex min-h-[44px] items-center gap-3">
+        {/* min-h-11：44px 觸控目標（WCAG 2.5.8）；focus-visible ring（WCAG 2.4.7）＋ active 回饋。 */}
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex shrink-0 items-center gap-1 cursor-pointer
-            text-sm font-medium text-primary-on-surface
-            transition-colors hover:text-primary-hover"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1 cursor-pointer
+            text-sm font-medium text-primary-on-surface rounded
+            transition-colors duration-200 hover:text-primary-hover active:opacity-70
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           aria-label={t('common.back')}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />

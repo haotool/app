@@ -199,6 +199,7 @@ export default function Settings() {
                 className={`
                   relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
                   shadow-sm disabled:opacity-50
+                  focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
                   ${style === option.value ? 'ring-2 ring-offset-2 shadow-md' : ''}
                 `}
                 style={
@@ -256,6 +257,7 @@ export default function Settings() {
               className={`
                 relative p-3 h-20 flex flex-col justify-end overflow-hidden rounded-xl
                 shadow-sm disabled:opacity-50
+                focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
                 ${style === 'custom' ? 'ring-2 ring-offset-2 shadow-md' : ''}
               `}
               style={
@@ -512,24 +514,29 @@ export default function Settings() {
                   {t('settings.splashScreenDesc')}
                 </p>
               </div>
+              {/* 外層 h-11 熱區（WCAG 2.5.8），視覺軌道移入內層 span；補 focus-visible ring（WCAG 2.4.7）。 */}
               <button
                 type="button"
                 role="switch"
                 aria-checked={splashEnabled}
                 aria-label={t('settings.splashScreen')}
                 onClick={handleSplashToggle}
-                className="relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-                style={{
-                  backgroundColor: splashEnabled
-                    ? 'rgb(var(--color-primary))'
-                    : 'rgb(var(--color-border))',
-                }}
+                className="shrink-0 h-11 w-14 -my-2.5 flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                    splashEnabled ? 'translate-x-5' : ''
-                  }`}
-                />
+                  className="relative block w-11 h-6 rounded-full transition-colors duration-200"
+                  style={{
+                    backgroundColor: splashEnabled
+                      ? 'rgb(var(--color-primary))'
+                      : 'rgb(var(--color-border))',
+                  }}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                      splashEnabled ? 'translate-x-5' : ''
+                    }`}
+                  />
+                </span>
               </button>
             </div>
             <motion.button
@@ -537,7 +544,7 @@ export default function Settings() {
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
-              className="w-full px-5 py-3.5 flex items-center justify-center gap-2 text-primary-on-surface hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-3.5 flex items-center justify-center gap-2 text-primary-on-surface hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <Play className="w-3.5 h-3.5" />
               <span className="text-xs font-bold">{t('settings.splashPreview')}</span>
@@ -589,7 +596,7 @@ export default function Settings() {
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
-              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10"
+              className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-inset"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
                 {t('settings.resetTheme')}
@@ -611,49 +618,49 @@ export default function Settings() {
           <div className="card overflow-hidden divide-y divide-border">
             <Link
               to="/faq/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.faq')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/guide/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.usageGuide')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/about/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.aboutUs')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/privacy/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.privacyPolicy')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/open-data/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.openDataApi')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/seo-tech/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.seoTech')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
             </Link>
             <Link
               to="/open-source/"
-              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between group hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset"
             >
               <span className="text-sm font-medium">{t('settings.openSource')}</span>
               <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />

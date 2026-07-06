@@ -57,7 +57,7 @@ export default function Tools() {
       <div className="bg-surface">
         <div className="shell pb-12 pt-16 md:pt-20">
           <h1 className="text-h1 text-text">所有工具</h1>
-          <p className="mt-3 text-body text-text-muted">免費、開源、離線可用——挑一個開始。</p>
+          <p className="mt-3 text-body text-text-muted">免費、開源、離線可用，挑一個開始。</p>
 
           <div
             ref={listRef}

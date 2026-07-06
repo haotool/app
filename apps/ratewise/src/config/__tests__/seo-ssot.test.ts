@@ -200,6 +200,89 @@ describe('SEO SSOT', () => {
     });
   });
 
+  // ─── 幣別頁 title/description CTR 與答案密度守門 ─────────────────────────────
+  describe('幣別頁 title/description answer-first 品質', () => {
+    it('正向頁 title 應含方向關鍵字「對台幣」與新鮮度信號「今日」', () => {
+      const content = getCurrencyLandingPageContent('USD');
+      expect(content.title).toContain('對台幣');
+      expect(content.title).toContain('今日');
+      expect(content.title).toContain('USD/TWD');
+    });
+
+    it('反向頁 title 應含「台幣換」與新鮮度信號「今日」', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      expect(content.title).toContain('台幣換');
+      expect(content.title).toContain('今日');
+      expect(content.title).toContain('TWD/USD');
+    });
+
+    it('有匯率快照的幣別頁 description 首句應含即時賣出價數字與牌告日期', () => {
+      const forward = getCurrencyLandingPageContent('USD');
+      const reverse = getReverseCurrencyLandingPageContent('USD');
+      const ex = SEO_RATE_EXAMPLES['USD']!;
+      expect(forward.description).toContain(`1 USD = ${ex.cashSell} TWD`);
+      expect(forward.description).toMatch(/\d{4}-\d{2}-\d{2} 牌告/);
+      expect(reverse.description).toContain(`1 USD = ${ex.cashSell} TWD`);
+      // 反向頁 description 直接給常見金額換算答案。
+      expect(reverse.description).toContain('台幣約可換');
+    });
+
+    it('現金專屬幣別 description 不得宣稱即期切換（走 spotAvailable 分支）', () => {
+      const forward = getCurrencyLandingPageContent('KRW');
+      const reverse = getReverseCurrencyLandingPageContent('KRW');
+      expect(forward.description).not.toContain('現金與即期匯率切換');
+      expect(reverse.description).not.toContain('現金與即期匯率切換');
+    });
+  });
+
+  // ─── 幣別頁 WebPage + speakable schema ──────────────────────────────────────
+  describe('幣別頁 WebPage Speakable Schema', () => {
+    function findWebPage(jsonLd: readonly Record<string, unknown>[]) {
+      return jsonLd.find((block) => block['@type'] === 'WebPage');
+    }
+
+    it.each(['USD', 'JPY', 'KRW'] as const)(
+      '%s 正向頁 jsonLd 應含 WebPage 且 speakable 嵌套 h1',
+      (code) => {
+        const content = getCurrencyLandingPageContent(code);
+        const webPage = findWebPage(content.jsonLd as Record<string, unknown>[]);
+        expect(webPage).toBeDefined();
+        const speakable = webPage!['speakable'] as Record<string, unknown>;
+        expect(speakable['@type']).toBe('SpeakableSpecification');
+        expect(speakable['cssSelector']).toContain('h1');
+      },
+    );
+
+    it('反向頁 jsonLd 應含 WebPage 且 url 對齊反向 canonical', () => {
+      const content = getReverseCurrencyLandingPageContent('USD');
+      const webPage = findWebPage(content.jsonLd as Record<string, unknown>[]);
+      expect(webPage).toBeDefined();
+      expect(String(webPage!['url'])).toContain('/twd-usd/');
+    });
+  });
+
+  // ─── 幣別頁雙向互鏈 ─────────────────────────────────────────────────────────
+  describe('幣別頁正反向互鏈（relatedGuides）', () => {
+    it.each(['USD', 'JPY', 'KRW'] as const)('%s 正向頁應連到反向頁 /twd-%s/', (code) => {
+      const content = getCurrencyLandingPageContent(code);
+      const hrefs = content.relatedGuides.map((g) => g.href);
+      expect(hrefs).toContain(`/twd-${code.toLowerCase()}/`);
+    });
+
+    it.each(['USD', 'JPY', 'KRW'] as const)('%s 反向頁應連回正向頁 /%s-twd/', (code) => {
+      const content = getReverseCurrencyLandingPageContent(code);
+      const hrefs = content.relatedGuides.map((g) => g.href);
+      expect(hrefs).toContain(`/${code.toLowerCase()}-twd/`);
+    });
+
+    it('互鏈項目應有方向專屬 label 與 description', () => {
+      const forward = getCurrencyLandingPageContent('USD');
+      const crossLink = forward.relatedGuides.find((g) => g.href === '/twd-usd/');
+      expect(crossLink?.label).toBe('台幣換美金');
+      expect(crossLink?.description.length).toBeGreaterThan(0);
+    });
+  });
+
   // ─── Speakable Schema ──────────────────────────────────────────────────────
   describe('buildSpeakableJsonLd()', () => {
     it('應回傳正確的 SpeakableSpecification schema', () => {

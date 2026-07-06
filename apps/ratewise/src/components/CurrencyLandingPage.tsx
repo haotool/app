@@ -145,6 +145,9 @@ export function CurrencyLandingPage({
   const resolvedJsonLd = (() => {
     if (amount === null || !jsonLd) return jsonLd;
 
+    // 金額頁 canonical 與幣對頁不同，移除幣對頁層級的 WebPage 節點避免 @id 錯置。
+    const baseJsonLd = jsonLd.filter((schema) => schema['@type'] !== 'WebPage');
+
     // 金額頁加入 ExchangeRateSpecification（含換算金額）。
     if (amountResult !== null && cashSell !== null) {
       const amountSchema = isTwdToForeign
@@ -164,13 +167,13 @@ export function CurrencyLandingPage({
             amountResult,
             'to-twd',
           );
-      const nonExchangeRateSchemas = jsonLd.filter(
+      const nonExchangeRateSchemas = baseJsonLd.filter(
         (schema) => schema['@type'] !== 'ExchangeRateSpecification',
       );
       return [...nonExchangeRateSchemas, amountSchema];
     }
 
-    return jsonLd;
+    return baseJsonLd;
   })();
 
   const robotsDirective =

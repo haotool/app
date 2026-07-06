@@ -23,8 +23,11 @@ interface UnitExchangeRateOptions {
   exchangeShopRate?: ExchangeShopRate | null;
 }
 
-const hasValidSellRate = (value: number | null | undefined): value is number =>
-  value !== null && value !== undefined;
+// 可用匯率 SSOT guard：資料源異常（0 / NaN / Infinity / 負值）一律視為缺失，走 fallback。
+const isUsableRate = (value: number | null | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
+
+const hasValidSellRate = (value: number | null | undefined): value is number => isUsableRate(value);
 
 /**
  * 取得單一幣別的匯率類型可用性
@@ -121,13 +124,13 @@ export function getExchangeRate(
     const detail = details[code];
     let rate = detail[rateType]?.sell;
 
-    // Fallback 機制：如果當前類型沒有匯率，嘗試另一種類型
-    if (rate == null) {
+    // Fallback 機制：如果當前類型沒有可用匯率（含 0/NaN），嘗試另一種類型
+    if (!isUsableRate(rate)) {
       const fallbackType = rateType === 'spot' ? 'cash' : 'spot';
       rate = detail[fallbackType]?.sell;
 
       // 開發模式：記錄 fallback（幫助調試）
-      if (rate != null) {
+      if (isUsableRate(rate)) {
         logger.debug(`Exchange rate fallback for ${code}`, {
           from: rateType,
           to: fallbackType,
@@ -136,7 +139,7 @@ export function getExchangeRate(
       }
     }
 
-    if (rate != null) {
+    if (isUsableRate(rate)) {
       return rate;
     }
   }
@@ -144,7 +147,7 @@ export function getExchangeRate(
   // 最終 fallback：使用簡化的 exchangeRates
   if (!exchangeRates) return null;
   const rate = exchangeRates[code];
-  if (rate !== null && rate !== undefined && typeof rate === 'number') {
+  if (isUsableRate(rate)) {
     return rate;
   }
 
@@ -255,8 +258,7 @@ export function convertCurrencyAmount(
 
 // ── RateMode 擴充功能 ─────────────────────────────────────────────────────────
 
-const hasValidBuyRate = (value: number | null | undefined): value is number =>
-  value !== null && value !== undefined && value !== 0;
+const hasValidBuyRate = (value: number | null | undefined): value is number => isUsableRate(value);
 
 /**
  * 取得指定貨幣的「買入價」（帶 fallback 機制）
@@ -450,13 +452,9 @@ export function hasOnlyOneRateType(details: Record<string, RateDetails> | undefi
   const currencies = Object.values(details);
   if (currencies.length === 0) return true;
 
-  // 檢查是否所有貨幣都只有一種類型
-  const hasSpot = currencies.some(
-    (d) => d.spot.sell !== null && d.spot.sell !== undefined && d.spot.sell !== 0,
-  );
-  const hasCash = currencies.some(
-    (d) => d.cash.sell !== null && d.cash.sell !== undefined && d.cash.sell !== 0,
-  );
+  // 檢查是否所有貨幣都只有一種類型（optional chaining 防呆畸形資料）
+  const hasSpot = currencies.some((d) => isUsableRate(d.spot?.sell));
+  const hasCash = currencies.some((d) => isUsableRate(d.cash?.sell));
 
   return !(hasSpot && hasCash);
 }

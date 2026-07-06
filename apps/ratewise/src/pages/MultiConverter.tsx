@@ -123,7 +123,7 @@ export default function MultiConverter() {
             <p className="text-text-muted mt-2 mb-6">{t('errors.networkCheckRetry')}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition active:scale-[0.97]"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition-all duration-200 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <RefreshCw size={18} />
               {t('errors.reload')}

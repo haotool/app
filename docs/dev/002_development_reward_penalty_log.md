@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+166
+> 本次分數變化：+5（雙線合併：本線 reward 4＋上游 reward 1）｜累計總分：+170
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,26 @@
 - ID：reward-rw-currency-cta-dead-class-contrast
 - 原因：幣別頁／金額頁主 CTA 使用死類 `text-primary-foreground`（dist CSS 無此類、CSS 變數未定義），實渲染為繼承深藏青字壓 `bg-primary-strong` 僅 3.3:1，34 幣別頁＋金額頁全中（QA-H E6）
 - 解法：CTA 文字改錨 repo 既有白字慣例 `text-white`（`bg-primary-strong` 7 主題白字對比 4.60–7.10:1 均達 AA），並於 raw-primary-text-exposure 守門新增死類全站使用數為 0 的斷言防回退
+
+- 日期：2026-07-06
+- ID：reward-rw-custom-theme-wave-d-fullpage-picker
+- 原因：自訂主題色僅 10 色票、3 背景調、65vh sheet 無即時預覽（整片 sheet 遮住主畫面時使用者看不到跟色效果），互動回饋不足
+- 解法：wave-D 升級——色票擴至 20（測試守門界線同步 16–24）、背景調加薄荷白/玫瑰白（AA 演算選值 4.53/4.56）、BottomSheet 新增 full 尺寸整頁沉浸、頂部即時預覽卡（匯率 pill/趨勢線/CTA 跟色）、色調改圓票所見即所得、選色觸覺回饋與 press 縮放微互動（遵守 E1 hover-scale 清零）
+
+- 日期：2026-07-06
+- ID：reward-rw-star-touch-target-dark-border-sweep
+- 原因：全域反模式掃描發現 MultiConverter 星號收藏鈕觸控目標僅 20px（p-0.5+16px icon）且未收藏態用 opacity-30 稀釋、Favorites 星號鈕垂直 hit 不足、HomepageSEOSection 四處 border-black/5 在深色主題下隱形
+- 解法：星號鈕負邊距擴 hit area 至 36px 不動版面、未收藏態改 text-text-muted/50 hover:text-favorite 色彩 token、Favorites 星號 min-h-11 撐垂直 hit、SEO 卡邊線改 border-border/60 隨主題適配
+
+- 日期：2026-07-06
+- ID：reward-rw-bottomnav-contrast-source-line-polish
+- 原因：BottomNavigation inactive 態用 opacity-[0.35] 稀釋（對比不足且不隨主題切換）、CJK 標籤套 uppercase/0.1em 字距、分隔線硬編碼 border-black；首頁資料來源列含秒數雙時戳在 390px 裁切貼邊
+- 解法：inactive 改主題 token text-text-muted（淺色 slate-500 AA、深色自動切換）、標籤改 font-semibold 無字距、邊線改 border-border/60、z 值吃 zIndexTokens；牌告時間顯示層截斷至 HH:mm＋來源列容器 flex-wrap 防裁切，navigationTokens.bottomNav.label SSOT 同步
+
+- 日期：2026-07-06
+- ID：reward-rw-rating-modal-offscreen-token-fallback
+- 原因：RatingModal 消費 notificationTokens.position 但未設 --notification-mobile-top-offset CSS 變數（僅 UpdatePrompt/PwaInstallGuide 有 inline 設定），行動版 top 退化為 auto 使星評 Modal 整個落在視口外（top=844px），PWA 使用者永遠看不到；星星觸控目標亦僅 32px 低於 WCAG 44px
+- 解法：token 補 CSS 變數 fallback（漏設仍落 header 下方）＋新增 notificationMobilePositionStyle SSOT 供三元件共用；星星升至 44px、🎉 emoji 改品牌 SVG、新增 zIndexTokens scale 收斂 z-50/z-[60]/z-[9999] 散值、快速金額 chips 收斂至 quickAmountButtonTokens.pattern 並加 scroll-snap；補 RatingModal.position 回歸測試 6 例
 
 - 日期：2026-07-06
 - ID：reward-rw-618-564-quote-matrix-multi-basis-pipeline

@@ -74,7 +74,8 @@ https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/
 https://app.haotool.org/ratewise/jpy-twd/{AMOUNT}/
 ```
 
-title 會自動變更為「買 {AMOUNT} 美元要多少新台幣（USD/TWD）— 台銀實際賣出價 | HaoRate 匯率好工具」
+title 會自動變更為「{AMOUNT} 美金（USD）換台幣是多少？今日台銀實際價 | HaoRate」，
+description 首句直接給台銀現金買入／賣出換算答案（每日更新）。
 
 **方案 B：首頁 Deep Link（UX 分享入口，不索引）**
 

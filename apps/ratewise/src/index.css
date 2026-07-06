@@ -1931,7 +1931,7 @@ body {
      ======================================== */
   .custom-theme-picker .react-colorful {
     width: 100%;
-    height: 200px;
+    height: 240px;
   }
 
   .custom-theme-picker .react-colorful__saturation {
@@ -1946,6 +1946,15 @@ body {
   .custom-theme-picker .react-colorful__pointer {
     width: 28px;
     height: 28px;
+    border-width: 3px;
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.2),
+      0 0 0 1px rgb(0 0 0 / 0.05);
+    transition: transform 120ms ease-out;
+  }
+
+  .custom-theme-picker .react-colorful__interactive:active .react-colorful__pointer {
+    transform: translate(-50%, -50%) scale(1.15);
   }
 
   /* 毛玻璃效果 */

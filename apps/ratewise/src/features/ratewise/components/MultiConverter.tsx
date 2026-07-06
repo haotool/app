@@ -1,5 +1,6 @@
 import { Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { quickAmountButtonTokens } from '../../../config/design-tokens';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star } from 'lucide-react';
 import { activeHighlight } from '../../../config/animations';
@@ -161,7 +162,7 @@ export const MultiConverter = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
+      <div className="flex gap-2 mb-4 min-w-0 overflow-x-auto snap-x snap-proximity scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]">
         {(CURRENCY_QUICK_AMOUNTS[baseCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map(
           (amount: number) => (
             <button
@@ -172,14 +173,7 @@ export const MultiConverter = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary-on-surface
-                active:bg-primary/20 active:text-primary-on-surface
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>
@@ -223,13 +217,14 @@ export const MultiConverter = ({
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
                       </div>
                     ) : favorites.includes(code) ? (
+                      /* w-11 h-11 + 負 margin：44px 觸控目標（WCAG 2.5.8）不改列高。 */
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
                         // 熱區 ≥44×44（#638）：負邊距補償使 margin box 維持 24×20，列高不變。
-                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center transition-transform active:scale-95"
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center rounded-full cursor-pointer transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -240,10 +235,10 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center opacity-30 hover:opacity-60 transition-opacity"
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center rounded-full cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.addFavorite')}
                       >
-                        <Star className="w-4 h-4 text-text-muted" />
+                        <Star className="w-4 h-4 text-text-muted/50 hover:text-favorite transition-colors" />
                       </button>
                     )}
                   </div>
@@ -275,7 +270,7 @@ export const MultiConverter = ({
                         calculator.openCalculator(code);
                       }
                     }}
-                    className="text-right text-base font-bold leading-tight cursor-pointer transition hover:opacity-80"
+                    className="text-right text-base font-bold leading-tight cursor-pointer transition-opacity duration-200 hover:opacity-80 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     aria-label={t('multiConverter.amountClickCalculator', {
                       name: t(`currencies.${code}`),
                       code,

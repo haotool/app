@@ -1,7 +1,11 @@
 import React from 'react';
 import { ArrowUpRight, Compass, Download, ExternalLink, MoreHorizontal, X } from 'lucide-react';
 import { APP_INFO } from '../config/app-info';
-import { notificationTokens } from '../config/design-tokens';
+import {
+  notificationTokens,
+  notificationMobilePositionStyle,
+  zIndexTokens,
+} from '../config/design-tokens';
 import {
   type PwaInstallEnvironment,
   readPwaInstallEnvironmentFromBrowser,
@@ -79,7 +83,7 @@ function InAppBrowserCornerPointer() {
   return (
     <div
       data-testid="inapp-corner-pointer"
-      className="pointer-events-none fixed right-3 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-[60] flex animate-point-up-right items-center gap-1.5"
+      className={`pointer-events-none fixed right-3 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] ${zIndexTokens.toast} flex animate-point-up-right items-center gap-1.5`}
       aria-hidden="true"
     >
       <span className="rounded-full bg-[rgb(var(--color-text))]/85 px-2.5 py-1 text-2xs font-bold text-white shadow-card backdrop-blur">
@@ -220,11 +224,7 @@ function PwaInstallGuideClient() {
       {isInAppBrowser ? <InAppBrowserCornerPointer /> : null}
       <aside
         className={`${notificationTokens.position} pointer-events-none -translate-x-1/2`}
-        style={
-          {
-            '--notification-mobile-top-offset': notificationTokens.mobileTopOffset,
-          } as React.CSSProperties
-        }
+        style={notificationMobilePositionStyle as React.CSSProperties}
         role="dialog"
         aria-modal="false"
         aria-labelledby="pwa-install-guide-title"

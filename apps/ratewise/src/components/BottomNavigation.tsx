@@ -4,6 +4,7 @@ import React, { useTransition } from 'react';
 import { useNavigate, useLocation, useHref } from 'react-router-dom';
 import { CreditCard, Globe, Star, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { zIndexTokens } from '../config/design-tokens';
 
 /** 導覽項目型別。 */
 interface NavItem {
@@ -77,11 +78,12 @@ function BottomNavigationItem({
         "
       />
 
-      {/* 圖標（CSS transition 替代 motion，去除 vendor-motion 依賴） */}
+      {/* 圖標（CSS transition 替代 motion，去除 vendor-motion 依賴）
+       * inactive 用主題 muted token（非透明度稀釋）：淺色 slate-500 保 AA，深色主題自動切換 */}
       <div
         className={`
           relative transition-all duration-200
-          ${isActive ? 'scale-110 text-primary-on-surface' : 'scale-100 text-[rgb(var(--color-text-muted))]'}
+          ${isActive ? 'scale-110 text-primary-on-surface' : isPending ? 'text-text-muted' : 'text-text-muted/80'}
           group-active:scale-90
         `}
       >
@@ -99,11 +101,11 @@ function BottomNavigationItem({
         )}
       </div>
 
-      {/* 標籤 - 8px */}
+      {/* 標籤（CJK 不套 uppercase/寬字距；12px 下限見 E1） */}
       <span
         className={`
-          text-2xs font-black uppercase tracking-[0.1em] transition-all duration-200
-          ${isActive ? 'text-primary-on-surface translate-y-0' : 'text-[rgb(var(--color-text-muted))] translate-y-px'}
+          text-2xs font-semibold transition-colors duration-200
+          ${isActive ? 'text-primary-on-surface' : 'text-text-muted'}
         `}
       >
         {t(item.labelKey)}
@@ -140,13 +142,13 @@ export function BottomNavigation() {
 
   return (
     <nav
-      className="
-        fixed bottom-0 inset-x-0 z-30
+      className={`
+        fixed bottom-0 inset-x-0 ${zIndexTokens.navigation}
         bg-background/80 backdrop-blur-xl
-        border-t border-black/[0.02]
+        border-t border-border/60
         md:hidden
         pb-[env(safe-area-inset-bottom,0px)]
-      "
+      `}
       aria-label={t('nav.mainNavigation')}
     >
       <div className="flex h-14 max-w-md mx-auto relative px-4">

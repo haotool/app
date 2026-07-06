@@ -250,6 +250,131 @@ describe('useCurrencyConverter', () => {
     });
   });
 
+  describe('零值與缺匯率時的金額顯示（#zero-placeholder 回歸）', () => {
+    it('輸入 0（USD→TWD，2 位小數）時 toAmount 應為 "0.00" 而非 "0000"', async () => {
+      useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'TWD' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { USD: 31.5, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('0');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('0.00');
+      });
+    });
+
+    it('輸入 0（TWD→JPY，0 位小數）時 toAmount 應為 "0" 而非 "00"', async () => {
+      useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'JPY' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { JPY: 0.21, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('0');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('0');
+      });
+    });
+
+    it('目標欄輸入 0 時 fromAmount 應為 "0.00" 而非 "0000"', async () => {
+      useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'TWD' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { USD: 31.5, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleToAmountChange('0');
+      });
+
+      await waitFor(() => {
+        expect(result.current.fromAmount).toBe('0.00');
+      });
+    });
+
+    it('匯率缺失時 toAmount 應為正規化零字串，不得出現 NaN 或佔位亂碼', async () => {
+      useConverterStore.setState({ fromCurrency: 'USD', toCurrency: 'TWD' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { USD: null, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('100');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('0.00');
+      });
+      expect(result.current.toAmount).not.toContain('NaN');
+    });
+  });
+
+  describe('swap 後狀態一致性', () => {
+    it('swap 應同時互換幣別與金額', async () => {
+      useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'USD' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { USD: 31.5, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('3150');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('100.00');
+      });
+
+      act(() => {
+        result.current.swapCurrencies();
+      });
+
+      expect(result.current.fromCurrency).toBe('USD');
+      expect(result.current.toCurrency).toBe('TWD');
+      // 金額互換後由換算 effect 依新方向重算，來源金額保留原目標值
+      expect(result.current.fromAmount).toBe('100.00');
+      await waitFor(() => {
+        expect(parseFloat(result.current.toAmount)).toBeCloseTo(3150, 0);
+      });
+    });
+
+    it('清空來源金額時 toAmount 應同步清空', async () => {
+      useConverterStore.setState({ fromCurrency: 'TWD', toCurrency: 'USD' });
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { USD: 31.5, TWD: 1 },
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.handleFromAmountChange('');
+      });
+
+      await waitFor(() => {
+        expect(result.current.toAmount).toBe('');
+      });
+    });
+  });
+
   describe('clearAllHistory', () => {
     it('should clear all history entries', () => {
       // Arrange

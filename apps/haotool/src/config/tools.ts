@@ -34,7 +34,7 @@ export const TOOLS: readonly Tool[] = [
     id: 'ratewise',
     name: 'HaoRate 匯率好工具',
     category: '工具類',
-    description: '台銀銀行賣出價即時換算，30 天趨勢圖，離線可用——台灣最精準的匯率工具',
+    description: '台銀銀行賣出價即時換算，30 天趨勢圖，離線可用，台灣最精準的匯率工具',
     path: '/ratewise/',
     iconPath: '/ratewise/pwa-192x192.png',
     techChips: ['React 19', 'PWA', 'SSG'],

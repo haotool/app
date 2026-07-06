@@ -95,7 +95,7 @@ export function CurrencyPicker({
                 aria-selected={isSelected}
                 onClick={() => onSelect(item.code)}
                 data-testid={`currency-option-${item.code}`}
-                className={`flex w-full items-center justify-between rounded-control px-3 min-h-[48px] text-left transition-colors ${
+                className={`flex w-full items-center justify-between rounded-control px-3 min-h-[48px] text-left transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset active:bg-primary/10 ${
                   isSelected ? 'bg-primary/10' : 'hover:bg-surface-elevated'
                 }`}
               >

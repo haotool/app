@@ -11,6 +11,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { transitions } from '../config/animations';
+import { buttonTokens } from '../config/design-tokens';
 import { useBodyScrollLock } from '../features/calculator/hooks/useBodyScrollLock';
 
 // modal 焦點循環涵蓋的可聚焦元素（WCAG 2.4.3）。
@@ -26,8 +27,8 @@ export interface BottomSheetProps {
   /** 關閉按鈕 aria-label。 */
   closeLabel: string;
   children: ReactNode;
-  /** fixed：65vh 固定高；adaptive：內容自適應（max-h 70vh）。 */
-  size?: 'fixed' | 'adaptive';
+  /** fixed：65vh 固定高；adaptive：內容自適應（max-h 70vh）；full：整頁沉浸（近全螢幕，保留頂部縫隙維持 sheet 語意）。 */
+  size?: 'fixed' | 'adaptive' | 'full';
   /** 內容含指標拖曳互動（如選色面板）時關閉整片下拉關閉，避免手勢衝突。 */
   enableDrag?: boolean;
   testId?: string;
@@ -36,6 +37,7 @@ export interface BottomSheetProps {
 const SIZE_CLASS: Record<NonNullable<BottomSheetProps['size']>, string> = {
   fixed: 'h-[65vh]',
   adaptive: 'max-h-[70vh]',
+  full: 'h-[calc(100dvh-1.75rem)]',
 };
 
 export function BottomSheet({
@@ -152,10 +154,11 @@ export function BottomSheet({
             </div>
             <div className="flex items-center justify-between px-5 pb-2">
               <h2 className="text-lg font-semibold text-neutral-text">{title}</h2>
+              {/* WCAG 2.4.7：關閉鈕補 focus-visible ring（buttonTokens.patterns.iconMd，含 44px 熱區）。 */}
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-11 w-11 items-center justify-center text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
+                className={`${buttonTokens.patterns.iconMd} text-neutral-text-muted hover:text-neutral-text-secondary hover:bg-surface-elevated`}
                 aria-label={closeLabel}
               >
                 <svg

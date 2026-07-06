@@ -328,6 +328,11 @@ export default defineConfig(({ mode }) => {
             '**/openapi.json',
             // 非 shell HTML（幣別 landing、金額子頁、about/faq 等）由 NavigationRoute → index.html 處理。
             '**/*/index.html',
+            // 內部工具頁 chunk（僅 dev / VITE_ENABLE_INTERNAL_ROUTES 註冊）非 Tier 1，不佔 precache 預算。
+            '**/assets/UIShowcase-*.js',
+            '**/assets/UpdatePromptTest-*.js',
+            '**/assets/ColorSchemeComparison-*.js',
+            '**/assets/ThemeShowcase-*.js',
           ],
           additionalManifestEntries: [
             { url: 'offline.html', revision: getFileRevision('public/offline.html') },

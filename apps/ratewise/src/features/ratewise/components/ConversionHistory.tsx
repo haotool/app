@@ -157,7 +157,7 @@ export const ConversionHistory = ({ history, onReconvert }: ConversionHistoryPro
             role="group"
             tabIndex={0}
             className="card p-4 flex items-center gap-3 group transition-all duration-200
-                     hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30"
+                     hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             aria-label={t('conversionHistory.entryAriaLabel', {
               from: item.from,
               to: item.to,

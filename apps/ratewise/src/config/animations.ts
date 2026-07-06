@@ -182,7 +182,9 @@ export const segmentedSwitch = {
   /** 容器樣式 token（rounded-card = 20px 三級制容器圓角） */
   containerClass: 'bg-surface-soft rounded-card p-1.5 flex gap-1 relative shadow-inner',
   indicatorClass: 'absolute inset-0 rounded-2xl shadow-sm z-[-1] bg-[rgb(var(--color-surface))]',
-  itemBaseClass: 'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10',
+  // focus-visible ring：鍵盤導覽焦點可見（WCAG 2.4.7），SSOT 供 Favorites tabs 與 Settings 分段控制共用。
+  itemBaseClass:
+    'flex-1 py-3 rounded-2xl flex items-center justify-center gap-1 relative z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-inset',
 } as const;
 
 /**

@@ -170,7 +170,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
           <p className="text-neutral-text-secondary mt-2 mb-6">{t('errors.rateLoadDescription')}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-danger hover:bg-danger-hover text-white font-semibold rounded-xl shadow-lg transition-all duration-200 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <RefreshCw size={18} />
             {t('errors.reloadPage')}
@@ -276,7 +276,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 ) : (
                   <div
                     key="bank-badge"
-                    className="inline-flex items-center gap-2 text-2xs text-text-muted/60"
+                    className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 px-3 text-2xs text-text-muted/60"
                   >
                     <a
                       href="https://rate.bot.com.tw/xrt?Lang=zh-TW"

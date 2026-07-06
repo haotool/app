@@ -184,6 +184,8 @@ const ja = {
     customThemeTonePure: 'ピュアホワイト',
     customThemeToneWarm: 'ウォームホワイト',
     customThemeToneCool: 'クールホワイト',
+    customThemeToneMint: 'ミントホワイト',
+    customThemeToneRose: 'ローズホワイト',
     customThemeReset: 'デフォルトに戻す',
     customThemeContrastNotice: 'この色の文字は読みやすさのため自動的に濃くなります',
     appVersion: 'アプリバージョン',

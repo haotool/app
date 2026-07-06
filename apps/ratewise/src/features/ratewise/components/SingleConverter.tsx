@@ -34,7 +34,10 @@ import {
 } from '../../../services/exchangeRateHistoryService';
 import { mergeLatestTrendPoint, resolveTrendSeries } from './converter-v2/useConverterTrend';
 import { formatExchangeRate, formatAmountDisplay } from '../../../utils/currencyFormatter';
-import { singleConverterLayoutTokens } from '../../../config/design-tokens';
+import {
+  singleConverterLayoutTokens,
+  quickAmountButtonTokens,
+} from '../../../config/design-tokens';
 // 直接 import 以確保離線冷啟動可用
 import { CalculatorKeyboard } from '../../calculator/components/CalculatorKeyboard';
 import { logger } from '../../../utils/logger';
@@ -475,14 +478,7 @@ const SingleConverterLegacy = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary-on-surface
-                active:bg-primary/20 active:text-primary-on-surface
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>
@@ -493,14 +489,14 @@ const SingleConverterLegacy = ({
       <div className={singleConverterLayoutTokens.rateCard.section}>
         {/* 匯率卡片 - 一體化設計，無切分感 */}
         <div
-          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-500 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing} ${singleConverterLayoutTokens.rateCard.cardMinHeight}`}
+          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-300 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing} ${singleConverterLayoutTokens.rateCard.cardMinHeight}`}
         >
           {/*
            * 微光效果 - 極淺的漸層覆蓋
            * 使用 aspect-square + object-cover 確保等比例不變形
            */}
           <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
 
           {/* 匯率資訊區塊 - 透明背景繼承父元素漸層。
@@ -610,6 +606,7 @@ const SingleConverterLegacy = ({
               text-white rounded-full
               transition-all duration-300 ease-out
               active:scale-95
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
               ${isSwapping ? 'scale-90' : ''}
             `}
             aria-label={t('singleConverter.swapCurrencies')}
@@ -625,7 +622,7 @@ const SingleConverterLegacy = ({
 
             {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
             <svg
-              className={`relative z-10 w-5 h-5 transition-transform duration-500 ${
+              className={`relative z-10 w-5 h-5 transition-transform duration-300 ${
                 isSwapping
                   ? '[transform:rotateY(180deg)]'
                   : 'group-hover/swap:[transform:rotateY(180deg)]'
@@ -718,14 +715,7 @@ const SingleConverterLegacy = ({
                   navigator.vibrate(30);
                 }
               }}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
-                bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary-on-surface
-                active:bg-primary/20 active:text-primary-on-surface
-                transition-all duration-200 ease-out
-                active:scale-[0.97]
-              "
+              className={quickAmountButtonTokens.pattern}
             >
               {amount.toLocaleString()}
             </button>
@@ -748,6 +738,7 @@ const SingleConverterLegacy = ({
           text-white font-bold rounded-2xl
           transition-all duration-300 ease-out
           active:scale-[0.98]
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
           group
         `}
       >

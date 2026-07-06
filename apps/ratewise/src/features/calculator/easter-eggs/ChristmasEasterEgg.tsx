@@ -14,6 +14,7 @@ import type { ChristmasEasterEggProps } from './types';
 import { ChristmasTree } from './ChristmasTree';
 import { SnowAnimation } from './SnowAnimation';
 import { CHRISTMAS_EASTER_EGG_DURATION } from './utils';
+import { zIndexTokens } from '../../../config/design-tokens';
 import './styles/christmas.css';
 
 // Use build time year to avoid SSG/hydration mismatch
@@ -68,7 +69,7 @@ export function ChristmasEasterEgg({ isVisible, onClose }: ChristmasEasterEggPro
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-[9999] christmas-background flex flex-col items-center justify-center cursor-pointer"
+          className={`fixed inset-0 ${zIndexTokens.overlay} christmas-background flex flex-col items-center justify-center cursor-pointer`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
