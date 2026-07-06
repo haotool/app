@@ -317,7 +317,7 @@ export const SingleConverterV2 = ({
             1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
           </span>
           <span aria-hidden="true">・</span>
-          <span className="text-primary">{basisLabel}</span>
+          <span className="text-primary-on-surface">{basisLabel}</span>
         </button>
       </div>
 

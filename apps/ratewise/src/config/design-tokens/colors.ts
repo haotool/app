@@ -66,6 +66,9 @@ export const semanticColors = {
     // 白字表面 AA 錨點：custom 主題由演算 clamp 保證對比 ≥4.5:1。
     // 全主題皆定義 --color-primary-strong（theme-css-var-parity 守門），無需 fallback。
     strong: 'rgb(var(--color-primary-strong) / <alpha-value>)',
+    // 文字消費面 primary 錨點（issue #632）：內建主題同 primary 值（視覺不變），
+    // custom 主題由演算 clamp 保證對淺底對比 ≥4.5:1；文字禁止直接用 raw primary。
+    'on-surface': 'rgb(var(--color-primary-on-surface) / <alpha-value>)',
     dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
     darker: 'rgb(var(--color-primary-darker) / <alpha-value>)',
     text: 'rgb(var(--color-primary-text) / <alpha-value>)',

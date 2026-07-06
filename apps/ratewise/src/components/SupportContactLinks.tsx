@@ -19,7 +19,7 @@ const TONE_STYLES = {
     title: 'text-text',
     description: 'text-text-muted',
     item: 'border-border/60 bg-surface-secondary/80 hover:border-primary/30 hover:bg-surface-secondary',
-    icon: 'text-primary',
+    icon: 'text-primary-on-surface',
     label: 'text-text-muted',
     value: 'text-text',
   },

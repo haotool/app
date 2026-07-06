@@ -181,7 +181,7 @@ describe('animations', () => {
     });
 
     it('should have link interaction classes', () => {
-      expect(microInteractionClasses.link).toContain('hover:text-primary');
+      expect(microInteractionClasses.link).toContain('hover:text-primary-on-surface');
     });
 
     it('should have nav item interaction classes', () => {

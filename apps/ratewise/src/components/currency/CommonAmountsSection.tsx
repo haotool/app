@@ -30,11 +30,11 @@ export function CommonAmountsSection({ commonAmounts, pathname }: CommonAmountsS
               to={`${basePath}/${entry.amount}/`}
               className="group flex min-h-11 items-center justify-between gap-3 py-3 transition-colors hover:bg-primary/5"
             >
-              <h3 className="text-sm font-medium text-text transition-colors group-hover:text-primary">
+              <h3 className="text-sm font-medium text-text transition-colors group-hover:text-primary-on-surface">
                 {entry.question}
               </h3>
               <ChevronRight
-                className="h-4 w-4 shrink-0 text-text-muted opacity-60 transition-colors group-hover:text-primary"
+                className="h-4 w-4 shrink-0 text-text-muted opacity-60 transition-colors group-hover:text-primary-on-surface"
                 aria-hidden="true"
               />
             </Link>

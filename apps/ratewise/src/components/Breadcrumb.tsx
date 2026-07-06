@@ -50,7 +50,7 @@ export function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
                 <Link
                   to={item.href}
                   title={item.label}
-                  className="hover:text-primary transition-colors duration-200 hover:underline"
+                  className="hover:text-primary-on-surface transition-colors duration-200 hover:underline"
                 >
                   {item.label}
                 </Link>

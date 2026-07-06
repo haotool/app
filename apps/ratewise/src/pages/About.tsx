@@ -85,7 +85,7 @@ const SECTIONS: readonly ContentSection[] = [
               href={APP_INFO.threadsUrl}
               target="_blank"
               rel="noopener noreferrer me"
-              className="ml-1 text-primary underline"
+              className="ml-1 text-primary-on-surface underline"
             >
               {AUTHOR_PERSON.name}
             </a>
@@ -100,7 +100,7 @@ const SECTIONS: readonly ContentSection[] = [
             href={APP_INFO.threadsUrl}
             target="_blank"
             rel="noopener noreferrer me"
-            className="ml-1 text-primary underline"
+            className="ml-1 text-primary-on-surface underline"
           >
             {APP_INFO.socialHandle}
           </a>
@@ -108,7 +108,9 @@ const SECTIONS: readonly ContentSection[] = [
       },
       {
         term: '聯絡信箱：',
-        description: <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />,
+        description: (
+          <MailtoLink email={APP_INFO.email} className="ml-1 text-primary-on-surface underline" />
+        ),
       },
     ],
   },
@@ -123,7 +125,7 @@ const SECTIONS: readonly ContentSection[] = [
             href={APP_INFO.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 text-primary underline"
+            className="ml-1 text-primary-on-surface underline"
           >
             {APP_INFO.github}
           </a>
@@ -133,19 +135,19 @@ const SECTIONS: readonly ContentSection[] = [
         term: '延伸閱讀：',
         description: (
           <>
-            <Link to="/faq/" className="ml-1 text-primary underline">
+            <Link to="/faq/" className="ml-1 text-primary-on-surface underline">
               常見問題
             </Link>
             <span className="mx-1">·</span>
-            <Link to="/guide/" className="text-primary underline">
+            <Link to="/guide/" className="text-primary-on-surface underline">
               使用指南
             </Link>
             <span className="mx-1">·</span>
-            <Link to="/seo-tech/" className="text-primary underline">
+            <Link to="/seo-tech/" className="text-primary-on-surface underline">
               SEO 技術揭露
             </Link>
             <span className="mx-1">·</span>
-            <Link to="/open-source/" className="text-primary underline">
+            <Link to="/open-source/" className="text-primary-on-surface underline">
               開放原始碼
             </Link>
           </>
@@ -184,7 +186,7 @@ export default function About() {
                 href={APP_INFO.threadsUrl}
                 target="_blank"
                 rel="noopener noreferrer me author"
-                className="text-primary underline"
+                className="text-primary-on-surface underline"
                 itemProp="author"
               >
                 {AUTHOR_PERSON.name}

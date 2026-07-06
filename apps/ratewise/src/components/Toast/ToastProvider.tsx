@@ -107,7 +107,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       case 'success':
         return {
           bg: 'bg-primary/15 border border-primary/20',
-          text: 'text-primary',
+          text: 'text-primary-on-surface',
           iconBg: 'bg-primary/20',
           icon: isCopyMessage ? (
             <Copy className="w-4 h-4" strokeWidth={2.5} />
@@ -126,7 +126,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       default:
         return {
           bg: 'bg-primary/15 border border-primary/20',
-          text: 'text-primary',
+          text: 'text-primary-on-surface',
           iconBg: 'bg-primary/20',
           icon: <Info className="w-4 h-4" strokeWidth={2.5} />,
         };

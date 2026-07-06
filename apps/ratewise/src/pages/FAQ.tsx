@@ -66,15 +66,15 @@ const SECTIONS: readonly ContentSection[] = [
     paragraphs: [
       <React.Fragment key="help">
         可先查看
-        <Link to="/guide/" className="mx-1 text-primary underline">
+        <Link to="/guide/" className="mx-1 text-primary-on-surface underline">
           使用指南
         </Link>
         與
-        <Link to="/about/" className="mx-1 text-primary underline">
+        <Link to="/about/" className="mx-1 text-primary-on-surface underline">
           關於頁面
         </Link>
         ，若仍有問題可直接寄信至
-        <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
+        <MailtoLink email={APP_INFO.email} className="ml-1 text-primary-on-surface underline" />。
       </React.Fragment>,
     ],
   },

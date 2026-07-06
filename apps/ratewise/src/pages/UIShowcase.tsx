@@ -95,7 +95,7 @@ function Section({
 }) {
   return (
     <section className="card p-6 space-y-4">
-      <div className="flex items-center gap-2 text-primary">
+      <div className="flex items-center gap-2 text-primary-on-surface">
         <Icon size={20} />
         <h2 className="text-lg font-bold">{title}</h2>
       </div>
@@ -259,7 +259,7 @@ export default function UIShowcase() {
                           className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                             isActive
                               ? 'bg-primary-strong text-white'
-                              : 'bg-surface-elevated text-primary'
+                              : 'bg-surface-elevated text-primary-on-surface'
                           }`}
                         >
                           <StyleIcon size={24} />
@@ -294,7 +294,7 @@ export default function UIShowcase() {
               <div className="mt-4 p-4 card">
                 <p className="text-text font-semibold">主要文字 (text)</p>
                 <p className="text-text-muted">次要文字 (text-muted)</p>
-                <p className="text-primary">主題色文字 (primary)</p>
+                <p className="text-primary-on-surface">主題色文字 (primary-on-surface)</p>
               </div>
             </Section>
           </div>
@@ -501,7 +501,7 @@ export default function UIShowcase() {
                   <p className="text-sm text-text-muted">使用 .card 類別的基本卡片樣式</p>
                 </div>
                 <div className="card p-4 border-2 border-primary/30">
-                  <h3 className="font-bold text-primary mb-2">強調卡片</h3>
+                  <h3 className="font-bold text-primary-on-surface mb-2">強調卡片</h3>
                   <p className="text-sm text-text-muted">帶有主題色邊框的強調卡片</p>
                 </div>
               </div>
@@ -514,7 +514,7 @@ export default function UIShowcase() {
                   { icon: Star, name: 'Star', color: 'text-favorite' },
                   { icon: Clock, name: 'Clock', color: 'text-text-muted' },
                   { icon: Settings, name: 'Settings', color: 'text-text' },
-                  { icon: ArrowRight, name: 'Arrow', color: 'text-primary' },
+                  { icon: ArrowRight, name: 'Arrow', color: 'text-primary-on-surface' },
                   { icon: RefreshCw, name: 'Refresh', color: 'text-success' },
                   { icon: Copy, name: 'Copy', color: 'text-info' },
                   { icon: Check, name: 'Check', color: 'text-success' },

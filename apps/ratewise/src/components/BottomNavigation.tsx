@@ -81,7 +81,7 @@ function BottomNavigationItem({
       <div
         className={`
           relative transition-all duration-200
-          ${isActive ? 'scale-110 opacity-100 text-primary' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
+          ${isActive ? 'scale-110 opacity-100 text-primary-on-surface' : isPending ? 'opacity-70 scale-100' : 'opacity-[0.35] scale-100'}
           group-active:scale-90
         `}
       >
@@ -103,7 +103,7 @@ function BottomNavigationItem({
       <span
         className={`
           text-2xs font-black uppercase tracking-[0.1em] transition-all duration-200
-          ${isActive ? 'text-primary opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
+          ${isActive ? 'text-primary-on-surface opacity-100 translate-y-0' : isPending ? 'opacity-70 translate-y-px' : 'opacity-[0.35] translate-y-px'}
         `}
       >
         {t(item.labelKey)}
@@ -111,7 +111,7 @@ function BottomNavigationItem({
 
       {/* 選中指示條（靜態，無滑動動畫） */}
       {isActive && (
-        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary))]" />
+        <div className="absolute bottom-0 w-6 h-[3px] rounded-t-full bg-[rgb(var(--color-primary-on-surface))]" />
       )}
     </a>
   );

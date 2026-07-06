@@ -403,9 +403,9 @@ describe('🔴 RED: ConversionHistory 增強功能', () => {
       const mockHistory = createMockHistory();
       render(<ConversionHistory history={mockHistory} />);
 
-      // 新 UI：結果金額使用 text-primary
+      // 新 UI：結果金額使用 text-primary-on-surface
       const resultAmount = screen.getByText('30900');
-      expect(resultAmount).toHaveClass('text-primary');
+      expect(resultAmount).toHaveClass('text-primary-on-surface');
     });
 
     it('應該使用專案標準的動畫過渡', () => {

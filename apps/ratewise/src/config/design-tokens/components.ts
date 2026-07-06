@@ -49,13 +49,13 @@ export const buttonTokens = {
     /** 次要按鈕 - 中視覺權重 */
     secondary: {
       default: 'bg-surface-elevated text-text border border-border',
-      hover: 'hover:bg-surface hover:border-primary/30 hover:text-primary',
+      hover: 'hover:bg-surface hover:border-primary/30 hover:text-primary-on-surface',
       active: 'active:bg-surface-sunken',
     },
     /** 幽靈按鈕 - 低視覺權重 */
     ghost: {
       default: 'bg-transparent text-text',
-      hover: 'hover:bg-surface-elevated hover:text-primary',
+      hover: 'hover:bg-surface-elevated hover:text-primary-on-surface',
       active: 'active:bg-surface-sunken',
     },
     /** 危險按鈕 - 警示操作（E1 無 hover 位移/陰影） */
@@ -71,9 +71,9 @@ export const buttonTokens = {
     primaryMd:
       'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-primary-strong text-white hover:bg-primary-hover active:scale-[0.97]',
     secondaryMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-surface-elevated text-text border border-border hover:bg-surface hover:border-primary/30 hover:text-primary-on-surface active:bg-surface-sunken',
     ghostMd:
-      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary active:bg-surface-sunken',
+      'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-transparent text-text hover:bg-surface-elevated hover:text-primary-on-surface active:bg-surface-sunken',
     dangerMd:
       'inline-flex items-center justify-center font-semibold rounded-2xl cursor-pointer transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-4 py-2 text-base h-10 gap-2 bg-destructive text-white hover:bg-destructive-hover active:scale-[0.97]',
   },
