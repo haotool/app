@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+158
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+160
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-633-first-input-replaces-seed
+- 原因：v2 keypad 以種子播入計算引擎，首次數字鍵串接在預設 1,000 之後（123456789 變 1,000,123,456,789），違反計算機首鍵取代慣例（QA-F P2-1）
+- 解法：回寫閘門開啟前的首顆數字鍵先 clear 再 input（運算子／小數點／退格保留種子串接），實體與虛擬鍵共用同一路徑；stale seed 與拒鍵不開閘紅線改以運算子／小數點驗證，補首鍵取代單元＋e2e 兩路徑測試
+
+- 日期：2026-07-06
+- ID：reward-rw-631-pair-cta-deeplink
+- 原因：pair 頁 AnswerHero 主 CTA 為裸 `/` 未帶深連結參數，SEO 落地點「開始換算 KRW→TWD」卻拿到預設 TWD→JPY（QA-F P1-1），且「立即換算」段與快速答案語意重複
+- 解法：converterHref 於 pair 頁帶 `?from&to`（金額頁維持 `?amount&from&to`），hero 收斂為單一帶參數卡並砍除重複行銷段（PM 授權內容策略修正，parity 差異已申報），補 CTA href 單元測試與落地 e2e
 
 - 日期：2026-07-06
 - ID：reward-haotool-e3-final-review-fixes

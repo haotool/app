@@ -197,6 +197,42 @@ test.describe('RateWise 核心功能測試', () => {
   });
 });
 
+test.describe('幣別頁 CTA 深連結（#631）', () => {
+  // 與 fixtures/test.ts 相同的 base path 解析：本機 preview 服務於 /ratewise/。
+  const BASE_PATH = (
+    process.env['E2E_BASE_PATH'] ??
+    process.env['VITE_RATEWISE_BASE_PATH'] ??
+    '/ratewise/'
+  ).replace(/\/$/, '');
+
+  test('pair 頁主 CTA 帶 ?from&to，落地即正確幣別對（KRW→TWD）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    await page.goto(`${BASE_PATH}/krw-twd/`);
+
+    // CTA 必須帶深連結參數（修正前為裸 /ratewise/，落地變預設 TWD→JPY）。
+    const cta = page.getByRole('link', { name: /開始換算 KRW → TWD/ });
+    await expect(cta).toHaveAttribute('href', /\/\?from=KRW&to=TWD$/);
+
+    await cta.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: `test-results/cta-deeplink-pair-hero-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+    await cta.click();
+    await expect(page).toHaveURL(/from=KRW&to=TWD/);
+
+    // 換算器落地即 KRW→TWD，與按鈕承諾一致。
+    await expect(page.getByLabel('選擇來源貨幣')).toHaveValue('KRW', { timeout: 15_000 });
+    await expect(page.getByLabel('選擇目標貨幣')).toHaveValue('TWD');
+
+    await page.screenshot({
+      path: `test-results/cta-deeplink-landing-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+  });
+});
+
 test.describe('視覺穩定性測試', () => {
   // [fix:2025-11-27] 修復測試超時問題
   // 參考 Playwright 最佳實踐: https://playwright.dev/docs/best-practices

@@ -136,13 +136,9 @@ export function CurrencyLandingPage({
     isTwdToForeign && amount !== null ? buildReverseAmountLadder(currencyCode) : [];
   const ladderRows = isTwdToForeign ? reverseLadder : forwardLadder;
 
-  // 換算器 CTA 深連結格式：/?amount=X&from=CODE&to=TWD（或反向）。
-  const converterHref =
-    amount !== null
-      ? isTwdToForeign
-        ? `/?amount=${amount}&from=TWD&to=${currencyCode}`
-        : `/?amount=${amount}&from=${currencyCode}&to=TWD`
-      : '/';
+  // 換算器 CTA 深連結（#631）：pair 頁帶 ?from&to、金額頁帶 ?amount&from&to，落地即正確幣別對。
+  const pairParams = isTwdToForeign ? `from=TWD&to=${currencyCode}` : `from=${currencyCode}&to=TWD`;
+  const converterHref = amount !== null ? `/?amount=${amount}&${pairParams}` : `/?${pairParams}`;
 
   // 金額頁以金額專用 ExchangeRateSpecification 取代幣對頁基礎匯率 schema，避免同頁重複同型節點。
   const resolvedJsonLd = (() => {
@@ -241,8 +237,6 @@ export function CurrencyLandingPage({
             description={description}
             updatedDate={SEO_RATE_EXAMPLES_DATE}
             quickAnswers={answerCapsule}
-            ctaTitle="立即換算"
-            ctaLead={`立即查看${currencyName}賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。`}
             ctaLabel={
               isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
             }
