@@ -51,7 +51,7 @@ export const navigationTokens = {
       fontSize: 12,
       fontSizeClass: 'text-2xs',
       fontWeight: 'font-semibold',
-      activeColor: 'text-primary',
+      activeColor: 'text-primary-on-surface',
       inactiveColor: 'text-text-muted',
     },
     /** Active indicator bar */

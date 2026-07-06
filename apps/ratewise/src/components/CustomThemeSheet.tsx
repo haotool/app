@@ -305,7 +305,7 @@ export function CustomThemeSheet({
                 />
                 <span
                   className={`text-2xs font-semibold transition-colors duration-150 ${
-                    isActive ? 'text-primary' : 'text-text-muted'
+                    isActive ? 'text-primary-on-surface' : 'text-text-muted'
                   }`}
                 >
                   {toneLabels[tone]}
