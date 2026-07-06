@@ -371,7 +371,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     const converted = convertAmount(amount, fromCurrency, toCurrency);
 
     const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
-    setToAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
+    // 零值/缺匯率一律輸出正規化零字串（如 "0.00"），避免 padEnd 產生 "0000" 亂碼流入歷史記錄與剪貼簿。
+    setToAmount(converted ? converted.toFixed(decimals) : (0).toFixed(decimals));
   }, [fromAmount, fromCurrency, toCurrency, convertAmount]);
 
   const calculateToAmount = useCallback(() => {
@@ -385,7 +386,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     const converted = unitRate ? amount / unitRate : 0;
 
     const decimals = CURRENCY_DEFINITIONS[fromCurrency].decimals;
-    setFromAmount(converted ? converted.toFixed(decimals) : '0'.padEnd(decimals + 2, '0'));
+    setFromAmount(converted ? converted.toFixed(decimals) : (0).toFixed(decimals));
   }, [toAmount, fromCurrency, toCurrency, getResolvedUnitRate]);
 
   // 單幣別換算效果（路由決定顯示，無需依賴 mode 狀態）

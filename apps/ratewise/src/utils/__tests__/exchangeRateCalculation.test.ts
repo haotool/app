@@ -334,6 +334,57 @@ describe('匯率計算邏輯', () => {
     });
   });
 
+  describe('無效匯率值防呆（0 / NaN / Infinity）', () => {
+    const invalidSellDetails: Record<string, RateDetails> = {
+      // sell=0：資料源異常時不可視為有效匯率，應 fallback 到另一類型
+      ZRO: {
+        name: '零值幣',
+        spot: { buy: 10, sell: 0 },
+        cash: { buy: 9.9, sell: 10.2 },
+      },
+      // sell=NaN：不可穿透到計算層
+      NAN: {
+        name: '損毀幣',
+        spot: { buy: NaN, sell: NaN },
+        cash: { buy: null, sell: null },
+      },
+    };
+
+    it('spot.sell=0 時應 fallback 到 cash.sell', () => {
+      expect(getExchangeRate('ZRO' as CurrencyCode, invalidSellDetails, 'spot')).toBe(10.2);
+    });
+
+    it('sell 全為 NaN 且無 fallback 時應返回 null（不得返回 NaN）', () => {
+      expect(getExchangeRate('NAN' as CurrencyCode, invalidSellDetails, 'spot')).toBe(null);
+    });
+
+    it('簡化匯率 fallback 為 0 或 NaN 時應返回 null', () => {
+      const simpleRates = { ZRO: 0, NAN: NaN } as unknown as Record<CurrencyCode, number | null>;
+      expect(getExchangeRate('ZRO' as CurrencyCode, undefined, 'spot', simpleRates)).toBe(null);
+      expect(getExchangeRate('NAN' as CurrencyCode, undefined, 'spot', simpleRates)).toBe(null);
+    });
+
+    it('sell=0 不應被視為可用匯率類型', () => {
+      expect(getCurrencyRateTypeAvailability('ZRO' as CurrencyCode, invalidSellDetails)).toEqual({
+        spot: false,
+        cash: true,
+      });
+    });
+
+    it('getBuyRate 遇 NaN 買入價應走 fallback 而非返回 NaN', () => {
+      const rate = getBuyRate('NAN' as CurrencyCode, invalidSellDetails, 'spot');
+      expect(rate).toBe(null);
+    });
+
+    it('畸形 details（缺 spot/cash 欄位）不得使 hasOnlyOneRateType 崩潰', () => {
+      const malformed = {
+        BAD: { name: '缺欄位幣' },
+      } as unknown as Record<string, RateDetails>;
+      expect(() => hasOnlyOneRateType(malformed)).not.toThrow();
+      expect(hasOnlyOneRateType(malformed)).toBe(true);
+    });
+  });
+
   describe('hasOnlyOneRateType 函數', () => {
     it('應檢測到同時有 spot 和 cash', () => {
       expect(hasOnlyOneRateType(mockRateDetails)).toBe(false);
