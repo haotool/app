@@ -29,14 +29,10 @@ export function PageNavHeader({
     }
   };
 
+  // 靜態頂列（隨內容滾走）：不 sticky、不 backdrop-blur、無壓在內容上的分隔線；
+  // safe-area 適配由 ContentPageLayout 頁面容器的 pt-safe-top 承擔。
   return (
-    <div
-      data-testid="page-nav-header"
-      className={`sticky top-0 z-20 -mx-4 px-4 pb-2.5 mb-6
-        pt-[calc(0.625rem+env(safe-area-inset-top,0px))]
-        bg-background/90 backdrop-blur-md
-        border-b border-border/50 ${className}`}
-    >
+    <div data-testid="page-nav-header" className={`mb-6 ${className}`}>
       <div className="flex min-h-[44px] items-center gap-3">
         {/* min-h-11：44px 觸控目標（WCAG 2.5.8）；focus-visible ring（WCAG 2.4.7）＋ active 回饋。 */}
         <button

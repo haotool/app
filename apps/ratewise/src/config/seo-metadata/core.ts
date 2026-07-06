@@ -1152,7 +1152,7 @@ export const GUIDE_HOW_TO_STEPS = [
   {
     position: 6,
     name: '選擇匯率類型',
-    text: '依換匯情境切換現金匯率或即期匯率。',
+    text: '依你的換匯方式選擇報價類型：臨櫃換現鈔看現金，帳戶轉換或匯款看即期。',
     image: '/screenshots/mobile-features.png',
   },
   {
@@ -1221,6 +1221,29 @@ export const GUIDE_PAGE_SEO = {
     ),
   ],
 } satisfies SEOPageMetadata;
+
+// 指南頁 FAQ 導流摘要 SSOT：問答全文唯一歸屬 /faq/（跨頁重複內容收斂），
+// 指南頁僅保留情境化摘要句，完整答案以連結導向 FAQ 頁。
+export const GUIDE_FAQ_BRIDGE = {
+  title: '❓ 常見問題',
+  summary:
+    '換匯新手最常卡在三件事：現金與即期報價怎麼選、匯率多久同步一次、沒網路時還能不能換算。這些問題的完整說明（含 DCC 與刷卡匯率）都整理在常見問題頁。',
+  linkLabel: '查看完整答案 →',
+  linkHref: '/faq/',
+} as const;
+
+// 授權聲明 SSOT：完整聲明唯一歸屬 /open-source/（跨頁重複內容收斂），
+// 開放資料頁僅保留一句摘要＋導流連結。
+export const LICENSING_NOTICE = {
+  codeLicense: '授權釋出，可自由使用、修改，衍生作品須以相同授權開源。',
+  dataCopyright:
+    '匯率數據原始版權屬臺灣銀行。本專案以自動化方式公開抓取官方牌告，使用前請自行確認是否符合臺灣銀行使用規範。',
+  disclaimer:
+    '本工具與臺灣銀行無隸屬關係。資料可能因網路延遲或同步異常而短暫差異。所有匯率僅供參考，實際交易以金融機構公告為準。',
+  summary: `程式碼以 ${APP_INFO.license} 授權開源；匯率數據原始版權屬臺灣銀行，資料僅供參考，實際交易以金融機構公告為準。`,
+  linkLabel: '查看完整授權聲明 →',
+  linkHref: '/open-source/',
+} as const;
 
 export const OPEN_DATA_PAGE_FAQ = [
   {

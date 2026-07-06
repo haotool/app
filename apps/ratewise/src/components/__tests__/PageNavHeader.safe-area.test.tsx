@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
 /**
- * PageNavHeader safe-area 防回歸測試（issue #601）：
- * PWA standalone（viewport-fit=cover ＋ black-translucent）下，
- * 內容頁 sticky 返回列必須以 env(safe-area-inset-top) 疊加 padding-top，
- * 否則會頂進瀏海被狀態列遮蔽。
+ * 內容頁骨架防回歸測試（issue #601 → 去 sticky 重構）：
+ * 1. 頂列必須為靜態（隨內容滾走）——不得 sticky、不得 backdrop-blur、不得 border-b 壓在內容上。
+ * 2. PWA standalone（viewport-fit=cover ＋ black-translucent）的 safe-area 適配
+ *    改由 ContentPageLayout 頁面容器的 pt-safe-top 承擔，避免頂進瀏海。
  */
 
 import type { ComponentType } from 'react';
@@ -21,9 +21,6 @@ import Privacy from '../../pages/Privacy';
 import OpenData from '../../pages/OpenData';
 import SeoTech from '../../pages/SeoTech';
 import OpenSource from '../../pages/OpenSource';
-
-// 非 standalone 時 env() fallback 為 0px，padding-top 回到基準 0.625rem（10px）。
-const SAFE_AREA_CLASS = 'pt-[calc(0.625rem+env(safe-area-inset-top,0px))]';
 
 // SeoTech 使用 framer-motion whileInView；jsdom 無 IntersectionObserver，需 stub。
 beforeAll(() => {
@@ -43,20 +40,23 @@ beforeAll(() => {
   );
 });
 
-describe('PageNavHeader safe-area', () => {
-  it('sticky 返回列 class 含 safe-area-inset-top 疊加 padding', () => {
+describe('PageNavHeader 靜態頂列', () => {
+  it('頂列不得 sticky／fixed、不得 backdrop-blur、不得 border-b', () => {
     render(
       <BrowserRouter>
         <PageNavHeader breadcrumbItems={[{ label: '首頁', href: '/' }]} />
       </BrowserRouter>,
     );
     const header = screen.getByTestId('page-nav-header');
-    expect(header.className).toContain(SAFE_AREA_CLASS);
-    expect(header.className).toContain('sticky');
+    expect(header.className).not.toContain('sticky');
+    // fixed 同為常駐定位，一併封鎖，防止以 fixed 重新引入常駐頂列。
+    expect(header.className).not.toContain('fixed');
+    expect(header.className).not.toContain('backdrop-blur');
+    expect(header.className).not.toContain('border-b');
   });
 });
 
-describe('內容頁 smoke：返回列均含 safe-area 適配', () => {
+describe('內容頁 smoke：頂列靜態＋容器 safe-area 適配', () => {
   const PAGES: readonly [string, ComponentType][] = [
     ['FAQ', FAQ],
     ['Guide', Guide],
@@ -67,7 +67,7 @@ describe('內容頁 smoke：返回列均含 safe-area 適配', () => {
     ['OpenSource', OpenSource],
   ];
 
-  it.each(PAGES)('%s 頁返回列含 safe-area 類別', (_name, Page) => {
+  it.each(PAGES)('%s 頁頂列為靜態且頁面容器含 pt-safe-top', (_name, Page) => {
     render(
       <BrowserRouter>
         <HelmetProvider>
@@ -75,6 +75,12 @@ describe('內容頁 smoke：返回列均含 safe-area 適配', () => {
         </HelmetProvider>
       </BrowserRouter>,
     );
-    expect(screen.getByTestId('page-nav-header').className).toContain(SAFE_AREA_CLASS);
+    const header = screen.getByTestId('page-nav-header');
+    expect(header.className).not.toContain('sticky');
+    expect(header.className).not.toContain('fixed');
+    // safe-area 由 ContentPageLayout 最外層容器承擔（issue #601 防瀏海遮蔽）。
+    const layoutRoot = header.closest('[data-testid="content-page"]');
+    expect(layoutRoot).not.toBeNull();
+    expect(layoutRoot?.className).toContain('pt-safe-top');
   });
 });

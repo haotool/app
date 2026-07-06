@@ -6,7 +6,7 @@ import { ContentPageLayout } from '../components/content/ContentPageLayout';
 import { ContentPageHeader } from '../components/content/ContentSections';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
-import { OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
+import { LICENSING_NOTICE, OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
 import {
   CDN_DATA_BASE,
@@ -1075,30 +1075,18 @@ const OpenData = () => {
             </div>
           </section>
 
-          {/* ── 授權聲明 ── */}
+          {/* ── 授權聲明：全文唯一歸屬 /open-source/，此處僅保留摘要＋導流連結（重複內容收斂）。 ── */}
           <section className="mb-12">
             <h2 className="mb-4 text-2xl font-semibold text-text">授權聲明</h2>
             <div className="min-w-0 space-y-3 rounded-xl border border-surface-border bg-surface p-5 text-sm leading-relaxed text-text-muted">
+              <p>{LICENSING_NOTICE.summary}</p>
               <p>
-                <span className="font-semibold text-text">程式碼</span>
-                ：以{' '}
-                <a
-                  href={APP_INFO.licenseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-on-surface hover:underline"
+                <Link
+                  to={LICENSING_NOTICE.linkHref}
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary-on-surface hover:underline"
                 >
-                  {APP_INFO.license}
-                </a>{' '}
-                授權釋出，可自由使用、修改，衍生作品須以相同授權開源。
-              </p>
-              <p>
-                <span className="font-semibold text-text">資料版權</span>
-                ：匯率數據原始版權屬臺灣銀行。本專案以自動化方式公開抓取官方牌告，使用前請自行確認是否符合臺灣銀行使用規範。
-              </p>
-              <p>
-                <span className="font-semibold text-text">免責聲明</span>
-                ：本工具與臺灣銀行無隸屬關係。資料可能因網路延遲或同步異常而短暫差異。所有匯率僅供參考，實際交易以金融機構公告為準。
+                  {LICENSING_NOTICE.linkLabel}
+                </Link>
               </p>
             </div>
           </section>

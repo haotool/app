@@ -47,9 +47,13 @@ describe('ContentPageLayout', () => {
     expect(container?.className).toContain('pb-24');
   });
 
-  // sticky 返回列 safe-area 適配由 PageNavHeader.safe-area.test.tsx（#605）守門；
-  // 此處守門錨點連動：sticky 列在 standalone 下變高，錨點目標 scroll-margin 必須同步吃 safe-area（#600）。
-  it('錨點 section 的 scroll-margin-top 疊加 safe-area-inset-top', () => {
+  it('頁面容器承擔 safe-area 適配（頂列改靜態後 pt-safe-top 移至容器）', () => {
+    renderLayout();
+    expect(screen.getByTestId('content-page').className).toContain('pt-safe-top');
+  });
+
+  // 頂列已改靜態（不 sticky），錨點 offset 只需 safe-area ＋小間距（#600 連動調整）。
+  it('錨點 section 的 scroll-margin-top 為 safe-area 加小間距', () => {
     render(
       <BrowserRouter>
         <ContentSections
@@ -58,7 +62,7 @@ describe('ContentPageLayout', () => {
       </BrowserRouter>,
     );
     const section = document.getElementById('anchor-a');
-    expect(section?.className).toContain('scroll-mt-[calc(5rem+env(safe-area-inset-top,0px))]');
+    expect(section?.className).toContain('scroll-mt-[calc(1rem+env(safe-area-inset-top,0px))]');
   });
 });
 

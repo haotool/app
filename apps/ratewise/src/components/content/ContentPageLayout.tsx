@@ -32,7 +32,9 @@ export function ContentPageLayout({
   testId = 'content-page',
 }: ContentPageLayoutProps) {
   return (
-    <div className="min-h-screen bg-background text-text" data-testid={testId}>
+    // pt-safe-top：PWA standalone（viewport-fit=cover）下頂列不頂進瀏海（issue #601）；
+    // 頂列本身為靜態（隨內容滾走），safe-area 由頁面容器統一承擔。
+    <div className="min-h-screen bg-background text-text pt-safe-top" data-testid={testId}>
       {/* 底部保留導覽列高度＋safe-area，避免內容被固定導覽遮擋。 */}
       <div className={`container mx-auto ${WIDTH_CLASS[width]} px-4 pt-4 pb-24 md:pb-10`}>
         <PageNavHeader breadcrumbItems={breadcrumbItems} />
