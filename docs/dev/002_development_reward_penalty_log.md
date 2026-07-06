@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,21 @@
 - ID：reward-haotool-e3-wave-c
 - 原因：使用者要求行動首頁更好看；研究驅動選型後 wave-C 五項（bento/貼紙/pattern/kinetic/pretty）為基線瀏覽器全可見的美感升級核心
 - 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-qa-capture-matrix
+- 原因：E5 wave-D 受改頁需要可重跑的截圖矩陣與 console error 檢核證據（三攻略頁＋AnswerCapsule 消費樣本 × 雙主題 × 雙尺寸，#418 為硬標準 0）
+- 解法：新增 scripts/qa/capture-authority-guides.mjs（20 張截圖＋console/pageerror 收集，非零即失敗），本輪實跑 console errors 0
+
+- 日期：2026-07-06
+- ID：reward-rw-e5d-authority-guide-uiux
+- 原因：三篇 Authority Guide（賣出價/現金即期/刷卡）仍為舊版面——legacy card、無行動版底部導覽、無目錄側跳、圓點 bullet，與 E4/E5 內容頁體系脫節（E5 wave-D）
+- 解法：AuthorityGuidePage 遷移 ContentPageLayout＋六段 IA（answer-first 頁首→目錄側跳→重點整理→分段卡片→FAQ 手風琴→相關連結與 CTA），消費 E4 section renderer 與 E1 token；SEO head/JSON-LD/可見文字與 heading 集合零變動（parity＋heading diff 驗證）
+
+- 日期：2026-07-06
+- ID：neutral-rw-e5d-answer-capsule-e1-token
+- 原因：AnswerCapsule 沿用 legacy `card` 類與任意邊框，與 E4/E5 內容頁 E1 token 體系（rounded-card/panel、hairline、shadow-card）漂移
+- 解法：改 E1 token 卡片＋lucide Zap 標題徽章，可見文字零變動，消費頁（首頁/FAQ/About/Guide/OpenData/攻略頁）樣式一致收斂
 
 - 日期：2026-07-06
 - ID：penalty-rw-459-595-tz-blind-spot
