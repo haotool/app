@@ -228,7 +228,8 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 transition-transform active:scale-95"
+                        // 熱區 ≥44×44（#638）：負邊距補償使 margin box 維持 24×20，列高不變。
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center transition-transform active:scale-95"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -239,7 +240,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                        className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center opacity-30 hover:opacity-60 transition-opacity"
                         aria-label={t('favorites.addFavorite')}
                       >
                         <Star className="w-4 h-4 text-text-muted" />

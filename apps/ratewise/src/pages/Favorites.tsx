@@ -291,7 +291,8 @@ export default function Favorites() {
                                   </div>
                                 ) : (
                                   <button
-                                    className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 transition"
+                                    // 熱區 ≥44×44（#638）：負邊距補償使 margin box 維持 28×22，列高與對齊不變。
+                                    className="min-w-11 min-h-11 -mx-2 -my-[11px] flex-shrink-0 flex items-center justify-center transition"
                                     onClick={() => toggleFavorite(code)}
                                     aria-label={
                                       isFavorite
