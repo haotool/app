@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+158
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-final-review-fixes
+- 原因：epic-final 實測抓到 sticky 隱形幕以 opacity:0 疊頂層攔截點擊且可聚焦（FR-012 於幕 1/2 失效，規格與 QA 雙盲區）；另素材格式偏離未回寫、死資產入 dist、base 前進 002 漂移
+- 解法：keyframes 端點幀 visibility:hidden＋隱形幕互動斷言入 QA；illus 降採 480w AVIF+WebP、源檔遷 brand-src；merge base 收斂 002；SR 逐幕語意裁決回寫 §3.3
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-d
+- 原因：E3 需場景級記憶點與品牌素材落地：sticky 一幕、卡片 morph 轉場、Codex 素材（logomark/吉祥物/插畫）經 PM 視覺關卡選用後待整合
+- 解法：view-timeline sticky 三幕（四重降級）、靜態 vt-name morph、L1-b/L2-a/L3-b 快照制入 public 並重生成 icons/OG；LCP 仍 H1、增量 ≤+2.5KB
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-c
+- 原因：使用者要求行動首頁更好看；研究驅動選型後 wave-C 五項（bento/貼紙/pattern/kinetic/pretty）為基線瀏覽器全可見的美感升級核心
+- 解法：依 mobile-beauty-deep-dive 實作（bento 用 ToolCard variant、kinetic a11y 雙軌、pattern 限信任列）；brief §9 併入 tracked SSOT；預算 wave-C ≤+3.5KB gzip
 
 - 日期：2026-07-06
 - ID：reward-rw-632-custom-primary-contrast-guard
@@ -116,6 +131,11 @@
 - ID：reward-rw-e5b-currency-page-uiux-six-section-ia
 - 原因：34 幣別頁＋金額頁為牆文式段落佈局、視覺語言與 app 端割裂且行動版缺底部導覽，未達韓系 app 水準（E5 wave-B）
 - 解法：重排六段 IA（Answer Hero→報價對比→階梯列表→在地情境卡→FAQ 手風琴→相關連結）共用 presentational 元件組並換 ContentPageLayout 骨架，新增 verify-visible-text-parity 腳本證明 34 頁 dist 可見文字集合等價（純呈現層零文案變動）
+
+- 日期：2026-07-06
+- ID：neutral-haotool-e3-branch-governance
+- 原因：使用者指示 E1+E2 成果併入 experiment/ratewise-product-2026h2、E3 於其上續迭代，路線圖與分支治理需同步
+- 解法：PR #552 rebase 後 squash 併入實驗分支、開 feat/haotool-site-e3 續作、ROADMAP Now/Next 對齊
 
 - 日期：2026-07-06
 - ID：reward-haotool-e2-final-review-fixes

@@ -114,6 +114,35 @@ describe('design tokens 對照（NFR-006）', () => {
     const depths = Array.from(css.matchAll(/--depth:\s*([^;]+);/g), (match) => match[1]);
     expect(depths).toEqual(['8px', '5px', '5px', '3px', '3px']);
   });
+
+  it('wave-C tokens（A5/A6/A7，mobile-beauty §5.1）', () => {
+    expect(tokenValue('--sticker-rotate-1')).toBe('-2deg');
+    expect(tokenValue('--sticker-rotate-2')).toBe('1.5deg');
+    expect(tokenValue('--sticker-rotate-live')).toBe('2deg');
+    expect(tokenValue('--kinetic-y')).toBe('12px');
+    // pattern 為靜態 SVG data URI（零濾鏡）；圓點 r=1.5、24px 方格、--color-border 色。
+    expect(css).toMatch(/--pattern-dots:\s*url\("data:image\/svg\+xml/);
+    expect(css).toContain("circle cx='2' cy='2' r='1.5' fill='%23E2E8F0'");
+  });
+
+  it('A9：全站段落 text-wrap pretty（標題維持 balance）', () => {
+    expect(css).toMatch(/p\s*\{\s*text-wrap:\s*pretty;\s*\}/);
+    expect(css).toMatch(/text-wrap:\s*balance/);
+  });
+
+  it('A9：bento 嵌套圓角守公式 inner = outer − gap（稽核表 #4/#5＋feature 28/24、32/27）', () => {
+    // mini 行動 frame：outer 20 − border 3 = inner 17。
+    expect(css).toMatch(/\.bento-mini-frame\s*\{[^}]*border: 3px solid/);
+    expect(css).toMatch(/\.bento-mini-frame\s*\{[^}]*border-radius: 20px 20px 0 0/);
+    expect(css).toMatch(/\.bento-mini-frame img\s*\{[^}]*border-radius: 17px 17px 0 0/);
+    // feature 行動 frame：outer 28 − border 4 = inner 24（現行 device frame 語彙）。
+    expect(css).toMatch(/\.bento-feature-frame\s*\{[^}]*border: 4px solid/);
+    expect(css).toMatch(/\.bento-feature-frame\s*\{[^}]*border-radius: 28px 28px 0 0/);
+    expect(css).toMatch(/\.bento-feature-frame img\s*\{[^}]*border-radius: 24px 24px 0 0/);
+    // 桌面覆寫：mini/row 24−4=20；feature 32−5=27（同舞台桌面卡）。
+    expect(css).toMatch(/\.bento-mini-frame img\s*\{[^}]*border-radius: 20px 20px 0 0/);
+    expect(css).toMatch(/\.bento-feature-frame img\s*\{[^}]*border-radius: 27px 27px 0 0/);
+  });
 });
 
 describe('扁平鐵律（brief §1.1）', () => {

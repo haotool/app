@@ -33,6 +33,9 @@ export const IMAGE_RESOURCES = [
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/icons/maskable-icon-512x512.png',
+  '/brand/avatar.png',
+  '/brand/illus-desk.avif',
+  '/brand/illus-desk.webp',
 ];
 
 /**

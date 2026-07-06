@@ -1,13 +1,17 @@
 /**
- * Monogram icons 生成腳本（快照制：手動執行、產物 commit）。
+ * Brand icons 生成腳本（快照制：手動執行、產物 commit）。
  *
- * SSOT：public/icons/icon.svg（品牌藍圓角方 20% 半徑＋白色幾何 H）。
- * 產物：
- * - public/icons/icon-192x192.png（圓角、透明角）
- * - public/icons/icon-512x512.png（圓角、透明角）
- * - public/icons/maskable-icon-512x512.png（滿版方形；內容位於 80% safe zone）
- * - public/icons/apple-touch-icon.png（180，滿版方形；iOS 自行套遮罩，透明圓角會變黑角）
- * - public/icons/favicon-32x32.png（圓角、透明角）
+ * SSOT：brand-src/logomark.png（L1-b 繩結 monogram，PM E3 素材裁決；
+ * 源檔不入 dist——S2 裁決：build-time 素材一律置於 brand-src/）。
+ * 版式：#EFF6FF（--color-primary-bg）實底板＋置中 logomark；
+ * rounded 變體圓角 20% 半徑（角落透明）、fullbleed 滿版方形由平台自行套遮罩；
+ * maskable 內容置於中央 80% 安全圓內（W3C maskable safe zone）。
+ * 產物（檔名與 manifest / index.html 引用不變）：
+ * - public/icons/icon-192x192.png（rounded）
+ * - public/icons/icon-512x512.png（rounded）
+ * - public/icons/maskable-icon-512x512.png（fullbleed＋safe zone）
+ * - public/icons/apple-touch-icon.png（180，fullbleed；iOS 自行套遮罩）
+ * - public/icons/favicon-32x32.png（rounded）
  * - public/favicon.ico（零依賴 ICO 容器封裝 32px PNG）
  *
  * 執行：node apps/haotool/scripts/generate-icons.mjs（依賴 monorepo root 既有 @playwright/test）
@@ -19,34 +23,93 @@ import { chromium } from '@playwright/test';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = resolve(__dirname, '../public');
-const ICON_SVG_PATH = resolve(PUBLIC_DIR, 'icons/icon.svg');
+const LOGOMARK_PATH = resolve(__dirname, '../brand-src/logomark.png');
 
-// rounded：icon.svg 原樣（20% 圓角、角落透明）。
-// fullbleed：滿版方形（rx=0）；maskable 與 apple-touch-icon 由平台自行套遮罩。
+// 板底色 = --color-primary-bg（品牌五色板內）；logomark 本體維持原色不重繪。
+const PLATE_COLOR = '#EFF6FF';
+
+// variant：rounded＝20% 圓角、角落透明；fullbleed＝滿版方形。
+// content：fit＝內容最長邊佔 66%；safe＝內容對角線收於 80% 安全圓（maskable）。
 const TARGETS = [
-  { file: 'icons/icon-192x192.png', size: 192, variant: 'rounded' },
-  { file: 'icons/icon-512x512.png', size: 512, variant: 'rounded' },
-  { file: 'icons/maskable-icon-512x512.png', size: 512, variant: 'fullbleed' },
-  { file: 'icons/apple-touch-icon.png', size: 180, variant: 'fullbleed' },
-  { file: 'icons/favicon-32x32.png', size: 32, variant: 'rounded' },
+  { file: 'icons/icon-192x192.png', size: 192, variant: 'rounded', content: 'fit' },
+  { file: 'icons/icon-512x512.png', size: 512, variant: 'rounded', content: 'fit' },
+  { file: 'icons/maskable-icon-512x512.png', size: 512, variant: 'fullbleed', content: 'safe' },
+  { file: 'icons/apple-touch-icon.png', size: 180, variant: 'fullbleed', content: 'fit' },
+  { file: 'icons/favicon-32x32.png', size: 32, variant: 'rounded', content: 'fit' },
 ];
 
-const SVG_SIZE_ATTRS = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"';
-const RECT_ROUNDED = '<rect width="512" height="512" rx="102.4"';
-const RECT_FULLBLEED = '<rect width="512" height="512" rx="0"';
+const FIT_RATIO = 0.66;
 
-function buildSvg(source, { size, variant }) {
-  if (!source.includes(SVG_SIZE_ATTRS) || !source.includes(RECT_ROUNDED)) {
-    throw new Error('icon.svg 屬性格式與腳本預期不符，請勿改動 svg/rect 屬性寫法');
-  }
-  let svg = source.replace(
-    SVG_SIZE_ATTRS,
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"`,
+// 於瀏覽器 canvas 內：讀 logomark alpha bbox → 置中縮放 → 疊上板底輸出 PNG。
+async function renderIcon(page, markDataUri, target) {
+  const dataUrl = await page.evaluate(
+    async ({ markDataUri, size, variant, content, plateColor, fitRatio }) => {
+      const img = new Image();
+      img.src = markDataUri;
+      await img.decode();
+
+      // alpha bbox：以內容實際邊界置中，避免原始畫布留白造成視覺偏移。
+      const probe = document.createElement('canvas');
+      probe.width = img.naturalWidth;
+      probe.height = img.naturalHeight;
+      const probeCtx = probe.getContext('2d');
+      probeCtx.drawImage(img, 0, 0);
+      const { data, width, height } = probeCtx.getImageData(0, 0, probe.width, probe.height);
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          if (data[(y * width + x) * 4 + 3] > 8) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) throw new Error('logomark 內容為全透明，無法生成 icon');
+      const boxW = maxX - minX + 1;
+      const boxH = maxY - minY + 1;
+
+      const scale =
+        content === 'safe'
+          ? (0.8 * size) / Math.hypot(boxW, boxH)
+          : (fitRatio * size) / Math.max(boxW, boxH);
+      const drawW = boxW * scale;
+      const drawH = boxH * scale;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = plateColor;
+      if (variant === 'rounded') {
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, size * 0.2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(0, 0, size, size);
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(
+        img,
+        minX,
+        minY,
+        boxW,
+        boxH,
+        (size - drawW) / 2,
+        (size - drawH) / 2,
+        drawW,
+        drawH,
+      );
+      return canvas.toDataURL('image/png');
+    },
+    { ...target, markDataUri, plateColor: PLATE_COLOR, fitRatio: FIT_RATIO },
   );
-  if (variant === 'fullbleed') {
-    svg = svg.replace(RECT_ROUNDED, RECT_FULLBLEED);
-  }
-  return svg;
+  return Buffer.from(dataUrl.split(',')[1], 'base64');
 }
 
 // 以單尺寸 PNG 封裝 ICO（PNG-in-ICO，所有現代瀏覽器支援）。
@@ -64,22 +127,6 @@ function wrapPngAsIco(png, size) {
   buffer.writeUInt32LE(png.length, 14); // image bytes
   buffer.writeUInt32LE(22, 18); // image offset
   return Buffer.concat([buffer, png]);
-}
-
-async function renderTargets(browser, source) {
-  for (const target of TARGETS) {
-    const page = await browser.newPage({
-      viewport: { width: target.size, height: target.size },
-      deviceScaleFactor: 1,
-    });
-    await page.setContent(
-      `<!doctype html><style>html,body{margin:0}svg{display:block}</style>${buildSvg(source, target)}`,
-    );
-    const png = await page.screenshot({ omitBackground: true });
-    writeFileSync(resolve(PUBLIC_DIR, target.file), png);
-    await page.close();
-    console.log(`✅ ${target.file}（${png.length} bytes）`);
-  }
 }
 
 async function verifyPngOutputs(browser) {
@@ -121,13 +168,19 @@ function generateFavicon() {
   console.log(`✅ favicon.ico（${ico.length} bytes，PNG-in-ICO）`);
 }
 
-const source = readFileSync(ICON_SVG_PATH, 'utf8');
+const markDataUri = `data:image/png;base64,${readFileSync(LOGOMARK_PATH).toString('base64')}`;
 const browser = await chromium.launch();
 try {
-  await renderTargets(browser, source);
+  const page = await browser.newPage();
+  for (const target of TARGETS) {
+    const png = await renderIcon(page, markDataUri, target);
+    writeFileSync(resolve(PUBLIC_DIR, target.file), png);
+    console.log(`✅ ${target.file}（${png.length} bytes）`);
+  }
+  await page.close();
   generateFavicon();
   await verifyPngOutputs(browser);
-  console.log('🎉 icons 生成完畢（SSOT：public/icons/icon.svg）');
+  console.log('🎉 icons 生成完畢（SSOT：brand-src/logomark.png）');
 } finally {
   await browser.close();
 }

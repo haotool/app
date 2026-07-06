@@ -188,3 +188,41 @@ M1–M8 全數核准（差異點定義見 `motion-deep-dive.md` §7）：
 - M7 裁決：F1 **reject**（陳舊匯率與品牌敘事矛盾＋跨 app build 耦合）；F2 納入 **wave-B**（靜態版）。
 - M8 核准：`--dur-count`/count-up 廢止，S3 odometer 取代（§2 token 表與 deep-dive §1.4/§4.4 已同步）。
 - S1 H1 不拆詞段（保 LCP=H1 最高約束）——PM 核准（wave-A 偏離）。
+
+## 9. E3 行動首頁美感升級指令（PM 親撰，2026-07-06 使用者回饋驅動）
+
+> 依據：使用者回饋「手機首頁要更好看、高級動畫展現前端能力」＋ `.claude/product-intel/aesthetics-2026.md`（Top 10 與不採用清單）。
+> 深化規格 SSOT：`.claude/product-intel/mobile-beauty-deep-dive.md`（A1–A9 最終精確參數；本節為指令與裁決記錄）。差異點 N1–N9 已全數裁決，見 §9.2「N 裁決」欄。
+
+### 9.1 北極星與邊界
+
+- 北極星：**390px 首頁 = 一支可滑動的產品發布會**——每屏一個視覺記憶點、排印有呼吸、觸感有物理。
+- 邊界不變：扁平鐵律、LCP=H1、初始 JS ≤150KB、INP<200ms、CLS<0.1、reduced-motion 全降級；「同視口一組動畫」編排硬規則不變。
+
+### 9.2 PM 選型（依 aesthetics-2026 Top 10 裁決）
+
+| 採用 | 技法                                     | 落點與 PM 要求                                                                                                                                                  | N 裁決                                                                                                                                                   |
+| ---- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1   | Bento 工具展示網格（Top10 #1）           | 區 4 全面改版：行動 1 大卡（HaoRate，含真實產品數據元素）＋ 2×2 小卡；桌面 12 欄 bento；卡內維持真實截圖與證據錨點；閱讀順序＝DOM 順序（a11y）                  | N3 核准：mini 卡 <768px 隱藏描述與分類（DOM 完整輸出）；N7 核准：Tools 頁卡格不改；N9 核准：區 4 版式由 mobile-beauty-deep-dive 取代 design-deep-dive §2 |
+| A2   | Sticky 敘事一幕（#2）                    | 區 5 工藝證明改 pin 換幕（三指標逐幕），**全站唯一場景級記憶點**；`view-timeline`＋`@supports`；iOS<26 與 reduced-motion 降級為現行三卡靜態；容器高度預留防 CLS | N8 核准：sticky enhanced 模式下幕內 S4-b draw-in 停用（fallback 卡版保留）；N9 核准：區 5 版式由 mobile-beauty-deep-dive 取代；wave-D                    |
+| A3   | 元素級 View Transition morph（#3）       | Home 工具卡 → /tools/ 同卡 shared element morph（`view-transition-name=tool-<id>`）；兩端長寬比對齊由 designer 解                                               | N4 核准：改用靜態 `view-transition-name`（CSS var＋inline style），意圖等價、實作更簡；wave-D                                                            |
+| A4   | Codex 素材整合                           | L2 頭像換掉區 6 佔位、L1 logomark 入 favicon/manifest/OG 錨點、L3 入區 5 或 banner 角落——以視覺 review 通過的選用版為準；duotone inline SVG 重繪列 E4 候選      | N6 核准：L3 落點選聯繫 banner 角落（區 5 已由 sticky 場景承載記憶點）；wave-D                                                                            |
+| A5   | H2 詞級 kinetic 進場（#5）               | 區 4/5/6 的 H2；詞級 stagger 總長 <700ms；`aria-hidden` 拆詞＋`aria-label` 完整文字雙軌；**H1 永不拆**（epic-final 既有裁決）                                   | N2 核准：落點收斂為區 4/6（區 5 enhanced 幕內排除——同視口一組動畫）                                                                                      |
+| A6   | 貼紙式扁平徽章（#7）                     | hero overline chip 升級（純色底＋1px 邊框＋±2° 旋轉）＋工具卡「Live」角標家族；禁撕邊/濾鏡                                                                      | N5 核准：hero 第二枚貼紙文案「100% FREE」（與信任列統計對帳）                                                                                            |
+| A7   | 幾何 pattern 底紋（#8）                  | 僅限一處：區 3 信任列（dot grid SVG data URI、低對比）；其他區塊禁用                                                                                            | —                                                                                                                                                        |
+| A8   | popover＋`@starting-style`（#9）         | MobileMenu 遷移評估：designer 給遷移設計；若 focus 管理復雜度高於收益可駁回附理由                                                                               | N1 駁回：**不實作**（popover 無 scroll lock/focus trap 原生紅利，遷移複雜度高於收益；維持現行 MobileMenu）                                               |
+| A9   | `text-wrap: pretty`＋圓角紀律稽核（#10） | 全站段落；嵌套圓角 `inner = outer − gap` 全站稽核表                                                                                                             | —                                                                                                                                                        |
+
+### 9.3 明確不採用（v1）
+
+peek 橫向捲列（與 Bento 範式衝突，單一範式原則）、canvas/DOM 粒子、Lottie/Rive runtime、grain 噪點、WebGL、corner-shape 主線、撕邊/紙膠帶質感。
+
+### 9.4 給 designer 的深化要求（已由 mobile-beauty-deep-dive 交付）
+
+1. 390px 逐屏 storyboard（屏 1 hero → 屏 N footer），每屏標注記憶點與動效觸發。
+2. Bento 網格精確規格：行動/桌面軌道定義、每卡內容契約（含 HaoRate 大卡的數據元素用什麼——不得用會過期的匯率值，可用「30 天趨勢 sparkline 形狀」等非時效內容）。
+3. Sticky 一幕：幕數、每幕文案、pin 長度（vh）、timeline 參數、降級版式。
+4. morph：兩端卡幾何對齊方案與 `view-transition-name` 命名規則。
+5. 徽章/pattern/kinetic 的 token 化參數（旋轉角、pattern 密度、stagger 值）。
+6. 素材版位：L1/L2/L3 尺寸與擺放（以 staging 選用版為準；素材未過 review 前給佔位規則）。
+7. 效能帳：每項的 JS/CSS 增量預估，總帳 ≤ +6KB gzip（wave-C ≤ +3.5KB、wave-D 為餘額）。
