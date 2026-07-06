@@ -28,8 +28,9 @@ export function RateInsightSection({
           <p className="mt-2 text-sm leading-relaxed text-text-muted">
             多數匯率工具顯示「中間價」（mid-rate），是買入與賣出的平均值，不是你實際換匯的價格。
             {APP_INFO.shortName} 直接顯示臺灣銀行牌告的「
-            <strong className="font-semibold text-text">現金賣出</strong>」價格—— 你去銀行換{' '}
-            {currencyName} 現鈔時實際要付的台幣金額。
+            <strong className="font-semibold text-text">
+              現金賣出
+            </strong>」價格，也就是你去銀行換 {currencyName} 現鈔時實際要付的台幣金額。
           </p>
         </div>
       </div>

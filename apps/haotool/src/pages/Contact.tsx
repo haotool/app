@@ -48,7 +48,7 @@ export default function Contact() {
         <div className="shell pb-12 pt-16 text-center md:pt-20">
           <h1 className="text-h1 text-text">與我聯繫</h1>
           <p className="mt-3 text-body text-text-muted">
-            合作委託、問題回報都歡迎——24 小時內回覆。
+            合作委託、問題回報都歡迎，24 小時內回覆。
           </p>
         </div>
       </div>

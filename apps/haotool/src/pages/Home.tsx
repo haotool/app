@@ -229,7 +229,7 @@ export default function Home() {
                 </p>
                 <p className="text-body text-text">
                   我是{APP_INFO.author}，{APP_INFO.authorTitle}。{APP_INFO.copyrightStartYear}{' '}
-                  年起，我把生活裡的小麻煩一個個做成免費工具。匯率、分帳、停車、防災——它們都不大，但每一個細節我都當產品在做。
+                  年起，我把生活裡的小麻煩一個個做成免費工具。匯率、分帳、停車、防災，它們都不大，但每一個細節我都當產品在做。
                 </p>
                 <p className="lg:self-start">
                   <GhostLink to="/about/">更多關於我</GhostLink>
@@ -249,7 +249,7 @@ export default function Home() {
                 有想做的產品？我們聊聊。
               </h2>
               <p className="mt-4 text-body text-banner-sub">
-                合作委託、技術顧問，或只是打個招呼——24 小時內回覆。
+                合作委託、技術顧問，或只是打個招呼，24 小時內回覆。
               </p>
               <Link
                 to="/contact/"

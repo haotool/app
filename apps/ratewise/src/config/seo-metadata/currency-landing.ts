@@ -253,7 +253,7 @@ function buildRateExampleSentence(code: string, displayName: string): string {
   const fCash = formatAmount(ex.foreignAtCash);
   const fMid = formatAmount(ex.foreignAtMarketMid);
   const fDiff = formatAmount(ex.diffForeign);
-  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}——兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
+  return `以換 ${twdLabel}元新台幣的${displayName}為例：台灣銀行臨櫃現金實際只能換到 ${fCash} ${code}，而 Google（資料來源：Morningstar）、XE、Wise、Apple 計算機（資料來源：Yahoo Finance）等工具顯示的市場中間價換算結果約為 ${fMid} ${code}，兩者相差約 ${fDiff} ${code}（差距 ${ex.diffPct}%）。若先用中間價估算再去台銀換匯，實際會比預期少換 ${fDiff} ${code}，等於多花了 ${ex.diffTWD} 元新台幣的匯差。（匯差數據每日自動更新，最後更新：${SEO_RATE_EXAMPLES_DATE}）`;
 }
 
 /**
@@ -339,7 +339,7 @@ export function getCurrencyLandingPageContent(
   const faqEntries: FAQEntry[] = [
     {
       question: `為什麼 Google、XE、Wise、Apple 計算機顯示的${displayName}換算金額，和台灣銀行臨櫃換匯的實際結果不同？`,
-      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）顯示的是「市場中間價」——銀行同業批發交易的參考基準，一般消費者換不到這個價格；臨櫃現金換匯適用的是台銀「現金賣出」牌告價。${MID_RATE_SPREAD_NOTE}${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行牌告的${spotAvailable ? '現金賣出與即期賣出價' : '現金賣出價'}，換匯前即可掌握真實兌換金額。`,
+      answer: `Google 匯率（資料來源：Morningstar）、XE、Wise 及 Apple 計算機（資料來源：Yahoo Finance）顯示的是「市場中間價」，也就是銀行同業批發交易的參考基準，一般消費者換不到這個價格；臨櫃現金換匯適用的是台銀「現金賣出」牌告價。${MID_RATE_SPREAD_NOTE}${buildRateExampleSentence(code, displayName)} ${APP_INFO.name}直接顯示臺灣銀行牌告的${spotAvailable ? '現金賣出與即期賣出價' : '現金賣出價'}，換匯前即可掌握真實兌換金額。`,
     },
     // L1 persona 特化 FAQ：每幣別 ≥3 題、含可驗證在地事實。
     ...persona.faqSpecific,
@@ -481,7 +481,7 @@ export function getReverseCurrencyLandingPageContent(
     ...reverse.faqSpecific,
     {
       question: `帶台幣去銀行換${displayName}，要看哪個匯率？`,
-      answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。${APP_INFO.shortName} 直接顯示此數字——這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
+      answer: `你帶台幣去銀行買${displayName}現鈔，銀行是在「賣出」外幣給你，需參考台銀牌告的「現金賣出」價。${APP_INFO.shortName} 直接顯示此數字，這才是你實際要付的台幣金額，而非 Google 或 XE 顯示的市場中間價。`,
     },
     {
       question: `${formatAmount(popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
@@ -568,7 +568,7 @@ export function getReverseCurrencyLandingPageContent(
     ],
     // A03 修正：highlights 收斂為 3 條，其中 2 條來自 persona 特化欄位。
     highlights: [
-      `帶台幣換${displayName}現鈔看台銀「現金賣出」價——這是實際費率，不是 Google 顯示的中間價。`,
+      `帶台幣換${displayName}現鈔看台銀「現金賣出」價：這是實際費率，不是 Google 顯示的中間價。`,
       persona.denominationTip,
       persona.exchangeChannel,
     ],
