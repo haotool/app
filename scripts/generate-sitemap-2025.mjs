@@ -282,6 +282,14 @@ function getLastModDate(path) {
     return getFallbackLastModDate(path);
   }
 
+  // 匯率內容頁 lastmod 錨定匯率快照日期（RATE_PAGE_LASTMOD_POLICY 語意：可見匯率內容）。
+  // 完整 checkout 與 shallow 模式行為一致；避免任何觸及 seo-rate-examples.ts 的程式碼
+  // commit 讓 240+ 頁同日戳，破壞時間戳真實性。快照日期由每日資料排程自然更新。
+  if (isRateContentPath(path)) {
+    const rateContentDate = getRatePageFallbackDate();
+    if (rateContentDate) return rateContentDate;
+  }
+
   const dependencyFiles = getDependencyFilesForPath(path);
   if (!dependencyFiles?.length) {
     console.warn(`⚠️  No dependency mapping for ${path}, using fallback time`);

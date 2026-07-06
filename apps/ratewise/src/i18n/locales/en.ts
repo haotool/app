@@ -112,6 +112,7 @@ const en = {
   // Trend Chart
   trend: {
     cashSellBasis: 'Cash sell rate trend',
+    spotSellBasis: 'Spot sell rate trend',
   },
 
   // Multi Currency Converter

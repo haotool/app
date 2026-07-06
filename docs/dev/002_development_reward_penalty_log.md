@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+164
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+165
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-618-564-quote-matrix-multi-basis-pipeline
+- 原因：歷史趨勢管線僅存現金賣出單一序列，卡片切即期時圖卡基準不一致（#564）；資料層缺即期買賣欄位使 A2 四報價卡構想在 wave-B 降級為對比卡（#618）；另 sitemap 匯率頁 lastmod 於完整 checkout 走 git commit 日期，任何觸及 seo-rate-examples.ts 的 commit 讓 240+ 頁同日戳、時間戳多樣性守門紅燈
+- 解法：history-30d aggregate 由每日檔 details 展開 cashBuy/spotBuy/spotSell 多基準序列（rates 向後相容、30 天自動回補）；趨勢圖基準跟隨費率模式且即期不足誠實回落並同步標註；SEO_RATE_EXAMPLES 補四基準欄位（零漂移遷移）驅動 34 幣別頁四報價卡與缺值誠實態；匯率頁 lastmod 錨定匯率快照日期（與 shallow 模式及 RATE_PAGE_LASTMOD_POLICY 語意一致）
 
 - 日期：2026-07-06
 - ID：reward-rw-639-lh-mobile-perf-85

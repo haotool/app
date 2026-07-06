@@ -5,7 +5,8 @@ import { SingleConverter } from '../SingleConverter';
 import type { CurrencyCode } from '../../types';
 import { CURRENCY_DEFINITIONS } from '../../constants';
 
-vi.mock('../../../../services/exchangeRateHistoryService', () => ({
+vi.mock('../../../../services/exchangeRateHistoryService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../services/exchangeRateHistoryService')>()),
   fetchHistoricalRatesRange: vi.fn().mockResolvedValue([]),
   fetchLatestRates: vi.fn().mockResolvedValue({ lastUpdate: '2025-11-15', rates: {} }),
 }));

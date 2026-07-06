@@ -112,6 +112,7 @@ const zhTW = {
   // Trend Chart
   trend: {
     cashSellBasis: '現金賣出走勢',
+    spotSellBasis: '即期賣出走勢',
   },
 
   // Multi Currency Converter

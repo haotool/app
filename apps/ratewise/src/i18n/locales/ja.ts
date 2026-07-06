@@ -112,6 +112,7 @@ const ja = {
   // Trend Chart
   trend: {
     cashSellBasis: '現金売レートの推移',
+    spotSellBasis: '電信売レートの推移',
   },
 
   // Multi Currency Converter

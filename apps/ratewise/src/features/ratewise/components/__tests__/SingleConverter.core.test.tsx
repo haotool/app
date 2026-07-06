@@ -8,7 +8,8 @@ import { singleConverterLayoutTokens } from '../../../../config/design-tokens';
 import type { ExchangeShopRate } from '../../../../services/moneyboxRateService';
 
 // Mock services
-vi.mock('../../../../services/exchangeRateHistoryService', () => ({
+vi.mock('../../../../services/exchangeRateHistoryService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../../services/exchangeRateHistoryService')>()),
   fetchHistoricalRatesRange: vi.fn().mockResolvedValue([]),
   fetchLatestRates: vi.fn().mockResolvedValue({
     updateTime: '2025/11/29 08:00:00',
@@ -115,7 +116,11 @@ describe('SingleConverter - 核心功能測試', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    // 排除 requestIdleCallback：sinon 只假 request 端不假 cancel 端，
+    // 會與 setupTests 的 cancelIdleCallback stub（clearTimeout）型別衝突。
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+    });
 
     // Mock navigator.vibrate
     Object.defineProperty(navigator, 'vibrate', {

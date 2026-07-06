@@ -183,6 +183,7 @@ export const SingleConverterV2 = ({
     rateSource,
     moneyBoxRate,
     exchangeShopCurrency,
+    rateType,
     maxDays: TREND_FETCH_DAYS,
   });
   const sparklineData = useMemo(() => trend.data.slice(-SPARKLINE_DAYS), [trend.data]);
@@ -245,6 +246,14 @@ export const SingleConverterV2 = ({
     rateSource === 'exchange-shop' && exchangeShopCurrency
       ? t('converterV2.rateBasisExchangeShop')
       : rateType === 'cash'
+        ? t('converterV2.rateBasisCash')
+        : t('converterV2.rateBasisSpot');
+
+  // 趨勢圖基準標註跟隨實際資料序列（#564）：即期序列不足回落現金賣出時標註同步。
+  const trendBasisLabel =
+    rateSource === 'exchange-shop' && exchangeShopCurrency
+      ? t('converterV2.rateBasisExchangeShop')
+      : trend.trendRateType === 'cash'
         ? t('converterV2.rateBasisCash')
         : t('converterV2.rateBasisSpot');
 
@@ -385,7 +394,7 @@ export const SingleConverterV2 = ({
         fromCurrency={fromCurrency}
         toCurrency={toCurrency}
         data={trend.data}
-        basisLabel={basisLabel}
+        basisLabel={trendBasisLabel}
       />
     </div>
   );

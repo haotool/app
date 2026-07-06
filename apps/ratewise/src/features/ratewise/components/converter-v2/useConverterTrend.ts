@@ -6,10 +6,13 @@
 
 import { useEffect, useState } from 'react';
 import type { MiniTrendDataPoint } from '../MiniTrendChart';
-import type { CurrencyCode, RateSource } from '../../types';
+import type { CurrencyCode, RateSource, RateType } from '../../types';
 import {
   fetchHistoricalRatesRange,
   fetchLatestRates,
+  getTrendRate,
+  type HistoricalRateData,
+  type RateSnapshot,
 } from '../../../../services/exchangeRateHistoryService';
 import {
   computeConverterRate,
@@ -23,6 +26,8 @@ export interface UseConverterTrendOptions {
   rateSource: RateSource;
   moneyBoxRate: ExchangeShopRate | null;
   exchangeShopCurrency: CurrencyCode | null;
+  /** 卡片當前費率模式（現金/即期）；趨勢基準跟隨此值（#564）。 */
+  rateType: RateType;
   /** 期望天數；實際回傳以資料源可用範圍為準。 */
   maxDays: number;
 }
@@ -30,6 +35,66 @@ export interface UseConverterTrendOptions {
 export interface UseConverterTrendResult {
   data: MiniTrendDataPoint[];
   isLoading: boolean;
+  /** 實際使用的趨勢基準；即期序列不足時誠實回落現金賣出，標註須跟隨此值。 */
+  trendRateType: RateType;
+}
+
+/** 以指定基準組出歷史點位；任一端缺該基準報價即跳過該日（不推估）。 */
+export function buildTrendHistoryPoints(
+  historicalData: HistoricalRateData[],
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  rateType: RateType,
+): MiniTrendDataPoint[] {
+  return historicalData.flatMap((item) => {
+    const fromRate = getTrendRate(item.data, fromCurrency, rateType);
+    const toRate = getTrendRate(item.data, toCurrency, rateType);
+    if (fromRate === null || toRate === null) return [];
+    return [{ date: item.date, rate: fromRate / toRate }];
+  });
+}
+
+/** 即期序列可繪點不足 2 時回落現金賣出（老 aggregate 無 basisRates 的過渡相容）。 */
+export function resolveTrendSeries(
+  historicalData: HistoricalRateData[],
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  rateType: RateType,
+): { points: MiniTrendDataPoint[]; trendRateType: RateType } {
+  const points = buildTrendHistoryPoints(historicalData, fromCurrency, toCurrency, rateType);
+  if (rateType === 'spot' && points.length < 2) {
+    return {
+      points: buildTrendHistoryPoints(historicalData, fromCurrency, toCurrency, 'cash'),
+      trendRateType: 'cash',
+    };
+  }
+  return { points, trendRateType: rateType };
+}
+
+/** 以趨勢基準合併最新即時點位；最新快照缺該基準報價時不合併。 */
+export function mergeLatestTrendPoint(
+  historyPoints: MiniTrendDataPoint[],
+  latestRates: RateSnapshot | null,
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  rateType: RateType,
+): MiniTrendDataPoint[] {
+  if (!latestRates) return historyPoints;
+
+  const latestFromRate = getTrendRate(latestRates, fromCurrency, rateType);
+  const latestToRate = getTrendRate(latestRates, toCurrency, rateType);
+  if (latestFromRate === null || latestToRate === null) return historyPoints;
+
+  const latestRate = latestFromRate / latestToRate;
+  if (!Number.isFinite(latestRate) || latestRate <= 0) return historyPoints;
+
+  const latestDate =
+    latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
+    new Date().toISOString().slice(0, 10);
+  return [
+    ...historyPoints.filter((point) => point.date !== latestDate),
+    { date: latestDate, rate: latestRate },
+  ];
 }
 
 function getLocalDateKey(date = new Date()): string {
@@ -45,10 +110,12 @@ export function useConverterTrend({
   rateSource,
   moneyBoxRate,
   exchangeShopCurrency,
+  rateType,
   maxDays,
 }: UseConverterTrendOptions): UseConverterTrendResult {
   const [data, setData] = useState<MiniTrendDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [trendRateType, setTrendRateType] = useState<RateType>(rateType);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -95,6 +162,7 @@ export function useConverterTrend({
               : historyPoints;
 
           setData(mergedPoints.sort((a, b) => a.date.localeCompare(b.date)).slice(-maxDays));
+          setTrendRateType(rateType);
           return;
         }
 
@@ -104,30 +172,23 @@ export function useConverterTrend({
         ]);
         if (!isMounted) return;
 
-        const historyPoints: MiniTrendDataPoint[] = historicalData.map((item) => {
-          const fromRate = item.data.rates[fromCurrency] ?? 1;
-          const toRate = item.data.rates[toCurrency] ?? 1;
-          return { date: item.date, rate: fromRate / toRate };
-        });
-
-        let mergedPoints = historyPoints;
-        if (latestRates) {
-          const latestFromRate = latestRates.rates[fromCurrency] ?? 1;
-          const latestToRate = latestRates.rates[toCurrency] ?? 1;
-          const latestRate = latestFromRate / latestToRate;
-
-          if (Number.isFinite(latestRate) && latestRate > 0) {
-            const latestDate =
-              latestRates.updateTime?.split(/\s+/)[0]?.replace(/\//g, '-') ??
-              new Date().toISOString().slice(0, 10);
-            mergedPoints = [
-              ...historyPoints.filter((point) => point.date !== latestDate),
-              { date: latestDate, rate: latestRate },
-            ];
-          }
-        }
+        // 基準跟隨卡片費率模式（#564）；即期序列不足時誠實回落現金賣出。
+        const { points: historyPoints, trendRateType: effectiveRateType } = resolveTrendSeries(
+          historicalData,
+          fromCurrency,
+          toCurrency,
+          rateType,
+        );
+        const mergedPoints = mergeLatestTrendPoint(
+          historyPoints,
+          latestRates,
+          fromCurrency,
+          toCurrency,
+          effectiveRateType,
+        );
 
         setData(mergedPoints.sort((a, b) => a.date.localeCompare(b.date)).slice(-maxDays));
+        setTrendRateType(effectiveRateType);
       } catch {
         if (isMounted) setData([]);
       } finally {
@@ -140,7 +201,7 @@ export function useConverterTrend({
     return () => {
       isMounted = false;
     };
-  }, [fromCurrency, toCurrency, rateSource, moneyBoxRate, exchangeShopCurrency, maxDays]);
+  }, [fromCurrency, toCurrency, rateSource, moneyBoxRate, exchangeShopCurrency, rateType, maxDays]);
 
-  return { data, isLoading };
+  return { data, isLoading, trendRateType };
 }
