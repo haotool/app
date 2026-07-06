@@ -28,7 +28,7 @@ export function HomepageSEOSection() {
       aria-labelledby="homepage-seo-heading"
       className="px-5 pt-5 pb-3 max-w-md mx-auto w-full"
     >
-      <div className="rounded-card border border-black/5 bg-surface shadow-card p-5">
+      <div className="rounded-card border border-border/60 bg-surface shadow-card p-5">
         <p className="text-2xs font-black uppercase tracking-[0.18em] text-primary">
           {content.eyebrow}
         </p>
@@ -71,7 +71,7 @@ export function HomepageSEOSection() {
       </div>
 
       {/* 熱門幣別換算：內部連結區塊，提升幣對落地頁 PageRank 傳遞。 */}
-      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-border/60 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">熱門幣別換算</h2>
 
         <p className="mt-1 text-xs text-text-muted">外幣換台幣</p>
@@ -109,7 +109,7 @@ export function HomepageSEOSection() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-border/60 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">{howTo.name}</h2>
         <p className="mt-2 text-sm leading-6 text-text-muted">{howTo.description}</p>
         <ol className="mt-4 space-y-3">
@@ -127,7 +127,7 @@ export function HomepageSEOSection() {
         </ol>
       </div>
 
-      <div className="mt-4 rounded-card border border-black/5 bg-surface shadow-card p-5">
+      <div className="mt-4 rounded-card border border-border/60 bg-surface shadow-card p-5">
         <h2 className="text-lg font-black text-text">首頁常見問題</h2>
         <div className="mt-4 space-y-3">
           {faqContent?.map((entry, index) => (

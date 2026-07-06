@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-star-touch-target-dark-border-sweep
+- 原因：全域反模式掃描發現 MultiConverter 星號收藏鈕觸控目標僅 20px（p-0.5+16px icon）且未收藏態用 opacity-30 稀釋、Favorites 星號鈕垂直 hit 不足、HomepageSEOSection 四處 border-black/5 在深色主題下隱形
+- 解法：星號鈕負邊距擴 hit area 至 36px 不動版面、未收藏態改 text-text-muted/50 hover:text-favorite 色彩 token、Favorites 星號 min-h-11 撐垂直 hit、SEO 卡邊線改 border-border/60 隨主題適配
 
 - 日期：2026-07-06
 - ID：reward-rw-bottomnav-contrast-source-line-polish

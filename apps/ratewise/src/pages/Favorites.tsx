@@ -291,7 +291,7 @@ export default function Favorites() {
                                   </div>
                                 ) : (
                                   <button
-                                    className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 transition"
+                                    className="w-7 min-h-11 -my-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition"
                                     onClick={() => toggleFavorite(code)}
                                     aria-label={
                                       isFavorite

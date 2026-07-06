@@ -222,7 +222,7 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 transition-transform active:scale-95"
+                        className="-m-2 p-2.5 cursor-pointer transition-transform active:scale-95"
                         aria-label={t('favorites.removeFavorite')}
                       >
                         <Star className="w-4 h-4 text-favorite fill-favorite" />
@@ -233,10 +233,10 @@ export const MultiConverter = ({
                           e.stopPropagation();
                           onToggleFavorite(code);
                         }}
-                        className="p-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                        className="-m-2 p-2.5 cursor-pointer transition-colors"
                         aria-label={t('favorites.addFavorite')}
                       >
-                        <Star className="w-4 h-4 text-text-muted" />
+                        <Star className="w-4 h-4 text-text-muted/50 hover:text-favorite transition-colors" />
                       </button>
                     )}
                   </div>
