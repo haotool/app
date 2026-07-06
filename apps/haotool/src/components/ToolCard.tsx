@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getToolIconUrl, getToolUrl, type Tool } from '../config/tools';
 import { useTilt } from './interactions';
@@ -40,6 +40,11 @@ export default function ToolCard({
   const [screenshotFailed, setScreenshotFailed] = useState(false);
   const tiltRef = useTilt<HTMLDivElement>();
 
+  // A3 morph（mobile-beauty §4.2，N4）：靜態 view-transition-name = tool-<id>，
+  // 兩頁同名自動配對；名稱宣告集中於 CSS .tool-vt（reduced-motion 一鍵歸零）。
+  const rootClass = 'tilt-scene tool-vt h-full';
+  const vtStyle = { '--vt-name': `tool-${tool.id}` } as CSSProperties;
+
   // 截圖窗共用內容（radius 由各版式 frame 承載；default 維持現行 inline 值）。
   const screenshot = (imgClassName: string) =>
     screenshotFailed ? (
@@ -73,7 +78,7 @@ export default function ToolCard({
 
   if (variant === 'feature') {
     return (
-      <div ref={tiltRef} className="tilt-scene h-full">
+      <div ref={tiltRef} className={rootClass} style={vtStyle}>
         <a
           href={getToolUrl(tool)}
           className="tilt-inner press press-scale focus-ring group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-card border border-border bg-surface px-5 pt-5 [--press-scale:0.99] hover:border-primary md:px-6 md:pt-6 lg:flex-row lg:gap-6"
@@ -124,7 +129,7 @@ export default function ToolCard({
 
   if (variant === 'mini' || variant === 'row') {
     return (
-      <div ref={tiltRef} className="tilt-scene h-full">
+      <div ref={tiltRef} className={rootClass} style={vtStyle}>
         <a
           href={getToolUrl(tool)}
           className="tilt-inner press press-scale focus-ring group flex h-full cursor-pointer flex-col overflow-hidden rounded-card border border-border bg-surface px-4 pt-4 [--press-scale:0.99] hover:border-primary lg:flex-row lg:gap-4 lg:px-5 lg:pt-5"
@@ -177,7 +182,7 @@ export default function ToolCard({
   }
 
   return (
-    <div ref={tiltRef} className="tilt-scene h-full">
+    <div ref={tiltRef} className={rootClass} style={vtStyle}>
       <a
         href={getToolUrl(tool)}
         className="tilt-inner press press-scale focus-ring group flex h-full cursor-pointer flex-col overflow-hidden rounded-card border border-border bg-surface px-6 pt-6 [--press-scale:0.99] hover:border-primary"

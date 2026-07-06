@@ -750,6 +750,156 @@ p {
   animation-delay: calc(var(--i, 0) * var(--stagger-word));
 }
 
+/* ============================================================
+ * A2 工藝證明 sticky 敘事一幕 — mobile-beauty §3（全站唯一場景級記憶點）
+ * 預設（基線）＝現行三卡靜態網格：iOS<26／Firefox／reduced-motion／矮視口全走這裡；
+ * enhanced（@supports view()＋no-preference＋min-height 480）＝pin 300svh 三幕逐幕換場。
+ * CLS 防護：pin 高度為 CSS 解析期靜態值（300svh；svh 不隨工具列收合變動），首繪即定案。
+ * ============================================================ */
+.craft-stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .craft-stage {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+/* 幕 overline 僅 enhanced 顯示（fallback 卡版維持現行 icon＋數據結構）。 */
+.craft-overline {
+  display: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-height: 480px) {
+    .craft-pin {
+      /* CLS 防護：高度 = 幕數 3 × 100svh，CSS 靜態宣告。 */
+      height: 300svh;
+      view-timeline: --craft block;
+    }
+    .craft-stage {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: clip;
+      display: grid;
+      grid-template-columns: none;
+      place-items: center;
+      /* 64px = header 高，內容不被壓。 */
+      padding: 64px 20px 24px;
+      margin-top: 0;
+    }
+    .craft-scene {
+      /* 三幕同格疊放；幕動畫僅 opacity＋translateY（compositor-only）。
+       * 用 longhand 宣告：`animation: linear both` 名稱缺省會被 minifier
+       * 摺疊成 animation:none，丟失 fill-mode 使幕間 crossfade 失效。 */
+      grid-area: 1 / 1;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --craft;
+    }
+    .craft-scene-1 {
+      animation-name: craft-hold-out;
+      animation-range: cover 0% cover 45%;
+    }
+    .craft-scene-2 {
+      animation-name: craft-in-out;
+      animation-range: cover 38% cover 62%;
+    }
+    .craft-scene-3 {
+      animation-name: craft-in-hold;
+      animation-range: cover 55% cover 78%;
+    }
+    /* 幕動畫為該視口唯一動畫組：Reveal 進場由 timeline 接管
+     *（motion 寫 inline style，需 important 蓋過）；幕內 draw-in 停用（N8）。 */
+    .craft-reveal {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .craft-icon {
+      display: none;
+    }
+    .craft-overline {
+      display: block;
+    }
+    /* 幕版式：卡片外殼歸零、置中直排（overline → 巨型數據 → 標題句 → 描述 → 錨點）。 */
+    .craft-card {
+      align-items: center;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      text-align: center;
+    }
+    .craft-data {
+      font-size: clamp(56px, 40px + 4.1vw, 88px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .craft-title {
+      font-size: var(--text-h3);
+      line-height: var(--text-h3--line-height);
+    }
+  }
+}
+@keyframes craft-hold-out {
+  0%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes craft-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  28%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes craft-in-hold {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  30%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============================================================
+ * A4 聯繫 banner 桌面角落插畫 — mobile-beauty §6 L3（N6 裁決：banner 右下角）
+ * ≥1024px 限定；行動/平板隱藏（banner 版面唯一焦點是按鈕，D2 精神）。
+ * ============================================================ */
+.banner-illus {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .banner-illus {
+    display: block;
+    position: absolute;
+    right: 48px;
+    bottom: 0;
+    width: 240px;
+    height: auto;
+  }
+}
+
 /* Tools 頁分類切換：卡格 150ms opacity 淡入（無位移） */
 @keyframes fade-in {
   from {
@@ -1076,6 +1226,13 @@ html[data-intro='1'] .intro-follow {
   .site-header {
     view-transition-name: site-header;
   }
+  /* A3 工具卡 morph（mobile-beauty §4，N4）：兩頁靜態同名自動配對；
+   * reduced-motion 下本區塊不生效 → 名稱不宣告，卡片併入 root cross-fade。 */
+  .tool-vt {
+    view-transition-name: var(--vt-name);
+    /* Chrome 125+／Safari 18.4+；不支援僅失去統一調速，name 照常生效。 */
+    view-transition-class: tool-card;
+  }
   @keyframes vt-out {
     to {
       opacity: 0;
@@ -1091,6 +1248,20 @@ html[data-intro='1'] .intro-follow {
       transform: translateY(0);
     }
   }
+}
+
+/* A3 morph 快照樣式（reduced-motion 下無 name → 本組規則自然閒置）：
+ * group 280ms quart 統一調速；快照以高度為準等比縮放、超寬裁切，
+ * 吸收 Home feature（640×552）與 Tools 卡（≈352×420）的長寬比差。 */
+::view-transition-group(.tool-card) {
+  animation-duration: 280ms;
+  animation-timing-function: var(--ease-out-quart);
+}
+::view-transition-old(.tool-card),
+::view-transition-new(.tool-card) {
+  height: 100%;
+  width: auto;
+  overflow: clip;
 }
 
 /* reduced-motion：移除 translate/scale/float/parallax，僅保留 opacity 過渡 */
