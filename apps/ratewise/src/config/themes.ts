@@ -219,8 +219,8 @@ const nitroStyle: StyleDefinition = {
     surface: '15 23 42', // slate-900
     text: '255 255 255',
     textMuted: '203 213 225', // slate-300（修正 slate-500 在深底對比過低、次要文字看不清）
-    primary: '0 150 230', // 霓虹藍（深電光，白字達 3:1 AA，取代過亮 cyan）
-    primaryStrong: '0 150 230', // 同 primary（深色主題維持霓虹視覺）
+    primary: '0 150 230', // 霓虹藍（深電光，圖形/大字維持 3:1；品牌色不動）
+    primaryStrong: '0 113 173', // 同色相加深（#609 白字表面錨點，白字 5.30:1 AA）
     secondary: '129 140 248', // indigo-400
     accent: '0 255 136', // neon green
     border: '30 41 59', // slate-800

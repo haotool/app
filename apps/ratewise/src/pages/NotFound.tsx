@@ -55,13 +55,13 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/faq/"
-              className="px-4 py-2 text-primary-on-surface hover:text-primary-on-surface/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary-on-surface hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               {t('settings.faq')}
             </Link>
             <Link
               to="/about/"
-              className="px-4 py-2 text-primary-on-surface hover:text-primary-on-surface/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary-on-surface hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               {t('settings.aboutUs')}
             </Link>
@@ -75,7 +75,7 @@ export default function NotFound() {
             href="https://github.com/haotool/app/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary-on-surface hover:text-primary-on-surface/80 underline ml-1"
+            className="text-primary-on-surface underline ml-1"
           >
             回報問題
           </a>
