@@ -105,6 +105,9 @@ pnpm format:fix              # prettier --write .
   - `本次分數變化 = reward_count - penalty_count`
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次 commit 前新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」。
+- 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
+- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）。
+- rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 

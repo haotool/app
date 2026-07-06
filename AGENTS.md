@@ -115,7 +115,7 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 | `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                                  | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md` |
 | `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄格式必須與該檔案當前檔頭規範一致；若調整檔頭格式，必須同 PR 同步更新 002 本體 | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md` |
 | `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                          |
-| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 5 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                              |
+| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 6 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                              |
 | `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                                            | hook log / CI                            | `.husky/pre-push`                                |
 | `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
 | `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
@@ -189,6 +189,9 @@ Agent **必須**先完成：
   - `本次分數變化 = reward_count - penalty_count`
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次新增 002 條目時，必須同步更新本次分數變化與累計總分（可放於檔頭摘要行或同批 commit 的 SSOT 文件）。
+- 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
+- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；初始 commit 情境跳過總分鏈驗證。
+- rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 5. 推送與合併（Push & Merge Controls）
 
@@ -205,13 +208,14 @@ Agent **必須**先完成：
 - 執行：`npx --no -- commitlint --edit $1`
 - 規則來源：`commitlint.config.cjs`
 
-### `pre-commit`（Husky，實際 5 步驟）
+### `pre-commit`（Husky，實際 6 步驟）
 
 1. `pnpm lint-staged`（JS/TS 透過 `eslint --fix --no-warn-ignored` + `prettier --write`，避免 ignored file 警告誤擋 commit）
 2. `pnpm typecheck`
 3. `pnpm format`（`prettier --check .`）
 4. `node scripts/verify-ssot-sync.mjs`（僅相關檔變更時）
 5. `node scripts/verify-version-ssot.mjs`（僅版本相關檔變更時）
+6. `node scripts/verify-002-log.mjs`（僅 002 檔變更時；驗證檔頭記分與新增條目一致、累計總分鏈與條目格式）
 
 ### `pre-push`（Husky，快速必要檢查）
 

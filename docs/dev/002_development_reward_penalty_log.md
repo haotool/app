@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1｜累計總分：+173
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+174
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-608-002-score-precommit-guard
+- 原因：002 檔頭記分靠人工核對，14 天內 9 件「本次分數與新增條目不符」（PR #626/#629/#630/#637 等 Codex review threads 累犯），rebase 補救成常態（issue #608）
+- 解法：新增 `scripts/verify-002-log.mjs` 掛入 pre-commit 第 6 步（僅 002 staged 時執行）——自動對帳檔頭計數與 staged 新增條目前綴計數、驗證累計總分鏈（HEAD 前版 + N）、四行模板、ID 唯一性與歷史條目不可刪除；附 18 例 vitest 單元測試並同步 AGENTS.md/CLAUDE.md 記分行固定格式
 
 - 日期：2026-07-07
 - ID：reward-rw-content-page-skeleton-destickify-dedupe
