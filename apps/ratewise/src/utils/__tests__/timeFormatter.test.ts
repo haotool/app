@@ -32,12 +32,12 @@ describe('formatGenericTimeString', () => {
 
   it('should format Taiwan Bank format (YYYY-MM-DD HH:mm:ss)', () => {
     const result = formatGenericTimeString('2025-10-31 03:30:00');
-    expect(result).toBe('10/31 03:30:00');
+    expect(result).toBe('10/31 03:30');
   });
 
   it('should handle date with slash separators', () => {
     const result = formatGenericTimeString('2025/10/31 03:30:00');
-    expect(result).toBe('10/31 03:30:00');
+    expect(result).toBe('10/31 03:30');
   });
 
   it('should handle date only (no time)', () => {
@@ -52,7 +52,7 @@ describe('formatGenericTimeString', () => {
 
   it('should handle time embedded in string', () => {
     const result = formatGenericTimeString('2025-10-31updated:03:30:00');
-    expect(result).toBe('10/31 03:30:00');
+    expect(result).toBe('10/31 03:30');
   });
 
   it('should return original string if unparseable', () => {
@@ -68,7 +68,7 @@ describe('formatGenericTimeString', () => {
 describe('formatDisplayTime', () => {
   it('should format both source and refresh times', () => {
     const result = formatDisplayTime('2025-10-31 03:30:00', '2025-10-31T03:35:00+08:00');
-    expect(result).toBe('來源 10/31 03:30:00 · 刷新 10/31 03:35');
+    expect(result).toBe('來源 10/31 03:30 · 刷新 10/31 03:35');
   });
 
   it('should handle ISO format in lastUpdate as "刷新"', () => {
@@ -78,7 +78,7 @@ describe('formatDisplayTime', () => {
 
   it('should handle Taiwan Bank format in lastUpdate as "來源"', () => {
     const result = formatDisplayTime('2025-10-31 03:30:00', null);
-    expect(result).toBe('來源 10/31 03:30:00');
+    expect(result).toBe('來源 10/31 03:30');
   });
 
   it('should not duplicate same refresh time', () => {

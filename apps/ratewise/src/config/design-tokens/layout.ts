@@ -46,13 +46,13 @@ export const navigationTokens = {
       activeStrokeWidth: 2.5,
       inactiveStrokeWidth: 2,
     },
-    /** Label typography（E1 字階下限 12px：原 8px 升級為 text-2xs） */
+    /** Label typography（E1 字階下限 12px；CJK 不套 uppercase/寬字距，inactive 用主題 muted token 保 AA） */
     label: {
       fontSize: 12,
       fontSizeClass: 'text-2xs',
-      fontWeight: 'font-black',
-      letterSpacing: '0.1em',
-      letterSpacingClass: 'tracking-[0.1em]',
+      fontWeight: 'font-semibold',
+      activeColor: 'text-primary',
+      inactiveColor: 'text-text-muted',
     },
     /** Active indicator bar */
     indicator: {

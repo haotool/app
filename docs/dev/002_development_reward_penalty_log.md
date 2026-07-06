@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-bottomnav-contrast-source-line-polish
+- 原因：BottomNavigation inactive 態用 opacity-[0.35] 稀釋（對比不足且不隨主題切換）、CJK 標籤套 uppercase/0.1em 字距、分隔線硬編碼 border-black；首頁資料來源列含秒數雙時戳在 390px 裁切貼邊
+- 解法：inactive 改主題 token text-text-muted（淺色 slate-500 AA、深色自動切換）、標籤改 font-semibold 無字距、邊線改 border-border/60、z 值吃 zIndexTokens；牌告時間顯示層截斷至 HH:mm＋來源列容器 flex-wrap 防裁切，navigationTokens.bottomNav.label SSOT 同步
 
 - 日期：2026-07-06
 - ID：reward-rw-rating-modal-offscreen-token-fallback
