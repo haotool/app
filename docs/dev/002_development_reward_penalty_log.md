@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-607-offline-install-guide-img
+- 原因：pwa-install/\*\* hero 圖被 globIgnores 排除 precache（708KB 超過 200KB 門檻不宜納入），離線開啟 PWA 安裝導引時大面積破圖覆蓋內容（issue 607）
+- 解法：img onError 時隱藏整個 picture 圖區、文字步驟導引保留（離線誠實原則），補離線降級單元測試並以 Playwright 阻斷圖片請求截圖實證無破圖
 
 - 日期：2026-07-06
 - ID：reward-rw-606-ga4-staging-gate
