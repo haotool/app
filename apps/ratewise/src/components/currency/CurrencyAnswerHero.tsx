@@ -83,7 +83,7 @@ export function CurrencyAnswerHero({
         <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{ctaLead}</p>
         <Link
           to={ctaTo}
-          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control bg-primary-strong px-5 text-sm font-semibold text-primary-foreground transition-all duration-200 ease-out hover:bg-primary-hover active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-auto"
         >
           {ctaLabel}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

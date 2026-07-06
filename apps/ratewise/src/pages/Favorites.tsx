@@ -162,7 +162,7 @@ export default function Favorites() {
             <p className="text-text-muted mt-2 mb-6">{t('errors.dataLoadFailed')}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition active:scale-[0.97]"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary-strong hover:bg-primary-hover text-white font-semibold rounded-xl transition-all duration-200 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <RefreshCw size={18} />
               {t('errors.reload')}
@@ -291,7 +291,7 @@ export default function Favorites() {
                                   </div>
                                 ) : (
                                   <button
-                                    className="w-7 flex-shrink-0 flex items-center justify-center p-0.5 transition"
+                                    className="w-11 h-11 -mx-2 -my-2 flex-shrink-0 flex items-center justify-center rounded-full transition-colors duration-200 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                                     onClick={() => toggleFavorite(code)}
                                     aria-label={
                                       isFavorite
@@ -353,14 +353,17 @@ export default function Favorites() {
                                 </div>
 
                                 {/* 右側：換算按鈕 → 進入單幣別換算頁 */}
+                                {/* min-h-11：44px 觸控目標（WCAG 2.5.8）；Space 需 preventDefault 避免捲動。 */}
                                 <div
-                                  className="flex items-center gap-2 cursor-pointer px-2 py-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition flex-shrink-0"
+                                  className="flex min-h-11 items-center gap-2 cursor-pointer px-2 py-1 -my-1 -mr-2 rounded-lg hover:bg-primary/10 active:scale-[0.97] transition flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                                   onClick={() => !snapshot.isDragging && handleFavoriteClick(code)}
                                   role="button"
                                   tabIndex={0}
                                   onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ')
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
                                       handleFavoriteClick(code);
+                                    }
                                   }}
                                   aria-label={`${t('favorites.goToConvert')} ${code}`}
                                 >
@@ -395,7 +398,7 @@ export default function Favorites() {
               {history.length > 0 && (
                 <button
                   onClick={clearAllHistory}
-                  className="flex items-center gap-1 text-2xs text-destructive hover:bg-destructive/10 px-2 py-1 rounded-lg transition font-bold"
+                  className="flex min-h-11 -my-2 items-center gap-1 text-2xs text-destructive hover:bg-destructive/10 px-2 rounded-lg transition-colors duration-200 font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50"
                 >
                   <Trash2 size={12} />
                   {t('common.clearAll')}
@@ -412,7 +415,7 @@ export default function Favorites() {
                 </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-6 py-2.5 bg-primary-strong text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover active:scale-[0.98]"
+                  className="min-h-11 px-6 bg-primary-strong text-white rounded-xl font-bold text-xs transition-all duration-200 ease-out hover:bg-primary-hover active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   {t('favorites.goToConvert')}
                 </button>

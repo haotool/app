@@ -11,6 +11,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { transitions } from '../config/animations';
+import { buttonTokens } from '../config/design-tokens';
 import { useBodyScrollLock } from '../features/calculator/hooks/useBodyScrollLock';
 
 // modal 焦點循環涵蓋的可聚焦元素（WCAG 2.4.3）。
@@ -152,10 +153,11 @@ export function BottomSheet({
             </div>
             <div className="flex items-center justify-between px-5 pb-2">
               <h2 className="text-lg font-semibold text-neutral-text">{title}</h2>
+              {/* WCAG 2.4.7：關閉鈕補 focus-visible ring（buttonTokens.patterns.iconMd，含 44px 熱區）。 */}
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-11 w-11 items-center justify-center text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
+                className={`${buttonTokens.patterns.iconMd} text-neutral-text-muted hover:text-neutral-text-secondary hover:bg-surface-elevated`}
                 aria-label={closeLabel}
               >
                 <svg

@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { transitions } from '../../../config/animations';
+import { buttonTokens } from '../../../config/design-tokens';
 import type { CalculatorKeyboardProps, KeyDefinition } from '../types';
 import { useCalculator } from '../hooks/useCalculator';
 import { useCalculatorKeyboard } from '../hooks/useCalculatorKeyboard';
@@ -245,9 +246,10 @@ export function CalculatorKeyboard({
                   <h2 className="text-lg font-semibold text-neutral-text">
                     {t('calculator.title')}
                   </h2>
+                  {/* WCAG 2.5.8 觸控目標 ≥44px；WCAG 2.4.7 focus-visible ring（buttonTokens.patterns.iconMd）。 */}
                   <button
                     onClick={onClose}
-                    className="text-neutral-text-muted hover:text-neutral-text-secondary transition-colors"
+                    className={`${buttonTokens.patterns.iconMd} -mr-2.5 text-neutral-text-muted hover:text-neutral-text-secondary hover:bg-surface-elevated`}
                     aria-label={t('calculator.close')}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

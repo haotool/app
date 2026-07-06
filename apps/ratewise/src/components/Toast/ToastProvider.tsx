@@ -104,10 +104,11 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
    */
   const getStyles = () => {
     switch (type) {
+      // 文字採 hover 深階（各主題 hover 對 surface 對比更強），14px 文字保 AA（WCAG 1.4.3）。
       case 'success':
         return {
           bg: 'bg-primary/15 border border-primary/20',
-          text: 'text-primary',
+          text: 'text-primary-hover',
           iconBg: 'bg-primary/20',
           icon: isCopyMessage ? (
             <Copy className="w-4 h-4" strokeWidth={2.5} />
@@ -118,7 +119,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       case 'error':
         return {
           bg: 'bg-destructive/15 border border-destructive/20',
-          text: 'text-destructive',
+          text: 'text-destructive-hover',
           iconBg: 'bg-destructive/20',
           icon: <X className="w-4 h-4" strokeWidth={2.5} />,
         };
@@ -126,7 +127,7 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
       default:
         return {
           bg: 'bg-primary/15 border border-primary/20',
-          text: 'text-primary',
+          text: 'text-primary-hover',
           iconBg: 'bg-primary/20',
           icon: <Info className="w-4 h-4" strokeWidth={2.5} />,
         };
@@ -138,7 +139,6 @@ function Toast({ id: _id, message, type, onClose }: ToastMessage & { onClose: ()
   return (
     <div
       role="alert"
-      aria-live="polite"
       data-testid="toast"
       className={`
         pointer-events-auto
