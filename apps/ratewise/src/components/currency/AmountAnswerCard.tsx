@@ -66,7 +66,7 @@ export function AmountAnswerCard({
             {isTwdToForeign
               ? `${formatNum(Math.round((amount / answerData.marketMid) * 100) / 100)} ${currencyCode}`
               : `${formatNum(Math.round(amount * answerData.marketMid))} TWD`}
-            ——中間價是批發參考價，一般人換不到
+            ；中間價是批發參考價，一般人換不到
           </li>
         </ul>
       )}

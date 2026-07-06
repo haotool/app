@@ -40,7 +40,7 @@ const SKILL_AREAS = [
 // 開發原則三條（§5.2）：序號 tabular 20px/800 品牌藍 + 標題 17px/700 + 一句 muted。
 const PRINCIPLES = [
   { title: '性能是功能', description: '速度不是優化項目，是每個工具的第一個功能。' },
-  { title: '細節是尊重', description: '44px 觸控目標、離線可用、無障礙——細節是對使用者的尊重。' },
+  { title: '細節是尊重', description: '44px 觸控目標、離線可用、無障礙，細節是對使用者的尊重。' },
   { title: '開源是承諾', description: '程式碼公開在 GitHub，品質接受任何人檢視。' },
 ] as const;
 
@@ -67,7 +67,7 @@ export default function About() {
             </h2>
             <div className="space-y-5 text-body leading-[1.7] text-text">
               <p>
-                「HAO」取自中文「好」的拼音。{APP_INFO.shortName} 的理念很純粹——打造真正的
+                「HAO」取自中文「好」的拼音。{APP_INFO.shortName} 的理念很純粹，就是打造真正的
                 <span className="text-primary-strong">好工具</span>
                 ：不是功能的堆砌，而是能解決痛點、用起來舒服的工藝品。
               </p>

@@ -242,7 +242,7 @@ export function CurrencyLandingPage({
             updatedDate={SEO_RATE_EXAMPLES_DATE}
             quickAnswers={answerCapsule}
             ctaTitle="立即換算"
-            ctaLead={`立即查看${currencyName}賣出價——台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。`}
+            ctaLead={`立即查看${currencyName}賣出價：台銀實際牌告，非中間價，讓你換匯前就知道真正要付多少台幣。`}
             ctaLabel={
               isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
             }
