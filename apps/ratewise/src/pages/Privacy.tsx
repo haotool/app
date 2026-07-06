@@ -73,7 +73,7 @@ const SECTIONS: readonly ContentSection[] = [
         description: (
           <>
             你可以在
-            <Link to="/settings/" className="mx-1 text-primary underline">
+            <Link to="/settings/" className="mx-1 text-primary-on-surface underline">
               設定頁
             </Link>
             重設部分本地偏好與快取資料。
@@ -85,7 +85,8 @@ const SECTIONS: readonly ContentSection[] = [
         description: (
           <>
             若對隱私有疑問，可來信
-            <MailtoLink email={APP_INFO.email} className="ml-1 text-primary underline" />。
+            <MailtoLink email={APP_INFO.email} className="ml-1 text-primary-on-surface underline" />
+            。
           </>
         ),
       },
@@ -124,7 +125,7 @@ export default function Privacy() {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary-on-surface"
             >
               {item.title}
             </a>

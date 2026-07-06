@@ -349,14 +349,14 @@ export const singleConverterLayoutTokens = {
       'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted/60',
 
     /** 換錢所 badge 圖示 */
-    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary/70',
+    exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary-on-surface/70',
 
     /** 換錢所 badge 分隔點 */
     exchangeShopBadgeDot: 'text-text-muted/40',
 
     /** 換錢所 badge 來源連結 */
     exchangeShopBadgeLink:
-      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary',
+      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-on-surface',
   },
 
   /**
@@ -412,7 +412,7 @@ export const singleConverterLayoutTokens = {
  *
  * 互動狀態：
  * - 預設：抬升表面背景 + 柔和文字 (bg-surface-elevated text-text/70)
- * - 懸停：主色調淡化 + 主色文字 (bg-primary/10 text-primary)
+ * - 懸停：主色調淡化 + 主色文字 (bg-primary/10 text-primary-on-surface)
  * - 按壓：主色調加深 + 縮放回饋 (bg-primary/20 scale-[0.97])
  *
  * @created 2026-01-25
@@ -433,11 +433,11 @@ export const quickAmountButtonTokens = {
     },
     hover: {
       background: 'bg-primary/10',
-      text: 'text-primary',
+      text: 'text-primary-on-surface',
     },
     active: {
       background: 'bg-primary/20',
-      text: 'text-primary',
+      text: 'text-primary-on-surface',
     },
   },
   /** 微互動效果（E1：hover 縮放/陰影清零，僅保留 press-scale 0.97） */

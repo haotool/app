@@ -184,6 +184,7 @@ const ko = {
     customThemeToneWarm: '웜 화이트',
     customThemeToneCool: '쿨 화이트',
     customThemeReset: '기본 테마로 복원',
+    customThemeContrastNotice: '이 색상의 텍스트는 가독성을 위해 자동으로 어두워집니다',
     appVersion: '앱 버전',
     designSystem: '디자인 시스템',
     techStack: '기술 스택',

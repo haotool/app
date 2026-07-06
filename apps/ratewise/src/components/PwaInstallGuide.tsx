@@ -281,7 +281,7 @@ function PwaInstallGuideClient() {
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                         isPrimaryStep
                           ? 'bg-primary-strong text-white'
-                          : 'bg-primary/10 text-primary'
+                          : 'bg-primary/10 text-primary-on-surface'
                       }`}
                     >
                       {index + 1}
@@ -289,7 +289,10 @@ function PwaInstallGuideClient() {
                     <span className="min-w-0 flex-1">{step}</span>
                     {StepIcon ? (
                       <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
-                        <StepIcon className="relative h-4 w-4 text-primary" aria-hidden="true" />
+                        <StepIcon
+                          className="relative h-4 w-4 text-primary-on-surface"
+                          aria-hidden="true"
+                        />
                       </span>
                     ) : null}
                   </li>

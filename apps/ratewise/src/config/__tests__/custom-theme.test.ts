@@ -117,6 +117,7 @@ describe.each(ALL_TONES.map((tone) => ({ tone })))(
       const text = vars['--color-primary-text'];
       const dark = vars['--color-primary-dark'];
       const darker = vars['--color-primary-darker'];
+      const onSurface = vars['--color-primary-on-surface'];
 
       // 背景調對經演算直出（寫入=清除同一常數集合）
       expect(vars['--color-background']).toBe(toneBackground);
@@ -126,11 +127,13 @@ describe.each(ALL_TONES.map((tone) => ({ tone })))(
       expect(contrast(WHITE, strong), `${hex} strong 白字`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(WHITE, hover), `${hex} hover 白字`).toBeGreaterThanOrEqual(4.5);
 
-      // 有色文字對白底、bg tint 與背景調對（primary-text / dark / darker 均為文字角色）
+      // 有色文字對白底、bg tint 與背景調對
+      // （primary-text / dark / darker / on-surface 均為文字角色，#632 曝露面守門）
       for (const [name, value] of [
         ['text', text],
         ['dark', dark],
         ['darker', darker],
+        ['on-surface', onSurface],
       ] as const) {
         expect(contrast(value, WHITE), `${hex} ${name} on white`).toBeGreaterThanOrEqual(4.5);
         expect(contrast(value, bg), `${hex} ${name} on bg tint`).toBeGreaterThanOrEqual(4.5);

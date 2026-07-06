@@ -185,6 +185,7 @@ const en = {
     customThemeToneWarm: 'Warm White',
     customThemeToneCool: 'Cool White',
     customThemeReset: 'Restore Default Theme',
+    customThemeContrastNotice: 'Text in this color will be darkened automatically for readability',
     appVersion: 'App Version',
     designSystem: 'Design System',
     techStack: 'Tech Stack',

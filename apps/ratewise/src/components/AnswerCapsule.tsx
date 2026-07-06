@@ -13,7 +13,7 @@ export function AnswerCapsule({ title = '快速答案', items }: AnswerCapsulePr
   return (
     <section className="mb-6 rounded-card border border-primary/20 bg-primary/5 p-5 shadow-card">
       <h2 className="flex items-center gap-2 text-xl font-bold leading-tight text-text">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-icon bg-primary/10 text-primary">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-icon bg-primary/10 text-primary-on-surface">
           <Zap className="h-4 w-4" aria-hidden="true" />
         </span>
         {title}

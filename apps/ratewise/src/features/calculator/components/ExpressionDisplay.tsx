@@ -80,7 +80,7 @@ export function ExpressionDisplay({ expression, result, error, preview }: Expres
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }} // iOS 極速回饋：150ms
         >
-          <div className="text-sm text-primary font-medium mb-1">
+          <div className="text-sm text-primary-on-surface font-medium mb-1">
             {t('calculator.calculationResult')}
           </div>
           <div

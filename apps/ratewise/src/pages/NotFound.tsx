@@ -32,7 +32,7 @@ export default function NotFound() {
       <div className="max-w-md w-full text-center">
         {/* 404 Error Display */}
         <div className="mb-8">
-          <h1 className="text-9xl font-bold text-primary mb-4" aria-label="404 錯誤">
+          <h1 className="text-9xl font-bold text-primary-on-surface mb-4" aria-label="404 錯誤">
             404
           </h1>
           <h2 className="text-2xl font-semibold text-text mb-2">{t('notFound.title')}</h2>
@@ -55,13 +55,13 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/faq/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary-on-surface hover:text-primary-on-surface/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               {t('settings.faq')}
             </Link>
             <Link
               to="/about/"
-              className="px-4 py-2 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-primary-on-surface hover:text-primary-on-surface/80 hover:bg-primary/10 rounded-lg transition-colors font-medium"
             >
               {t('settings.aboutUs')}
             </Link>
@@ -75,7 +75,7 @@ export default function NotFound() {
             href="https://github.com/haotool/app/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:text-primary/80 underline ml-1"
+            className="text-primary-on-surface hover:text-primary-on-surface/80 underline ml-1"
           >
             回報問題
           </a>

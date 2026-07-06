@@ -175,8 +175,8 @@ export const MultiConverter = ({
               className="
                 flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold
                 bg-surface-elevated text-text/70
-                hover:bg-primary/10 hover:text-primary
-                active:bg-primary/20 active:text-primary
+                hover:bg-primary/10 hover:text-primary-on-surface
+                active:bg-primary/20 active:text-primary-on-surface
                 transition-all duration-200 ease-out
                 active:scale-[0.97]
               "

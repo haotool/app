@@ -108,7 +108,7 @@ export function CurrencyPicker({
                 </span>
                 {isSelected && (
                   <svg
-                    className="w-5 h-5 text-primary"
+                    className="w-5 h-5 text-primary-on-surface"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

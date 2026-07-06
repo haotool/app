@@ -63,7 +63,7 @@ function getKeyClassName(kind: KeypadKey['kind']): string {
   const base =
     'flex h-[54px] short:h-[44px] items-center justify-center rounded-2xl text-2xl short:text-xl font-semibold select-none min-w-[44px]';
   if (kind === 'operator') {
-    return `${base} bg-primary/10 text-primary`;
+    return `${base} bg-primary/10 text-primary-on-surface`;
   }
   if (kind === 'backspace') {
     return `${base} bg-surface-elevated text-neutral-text-secondary text-xl`;

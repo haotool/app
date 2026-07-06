@@ -95,7 +95,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:bg-primary/5 hover:text-primary-on-surface"
             >
               {item.title}
             </a>
@@ -108,7 +108,10 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
             <ul className="space-y-3">
               {page.highlights.map((highlight) => (
                 <li key={highlight} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                  <CheckCircle2
+                    className="mt-1 h-5 w-5 shrink-0 text-primary-on-surface"
+                    aria-hidden="true"
+                  />
                   <span className="text-base leading-relaxed text-text-muted">{highlight}</span>
                 </li>
               ))}
@@ -126,7 +129,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
                   <Link
                     key={currency.code}
                     to={currency.href}
-                    className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                    className="inline-flex min-h-11 items-center rounded-full border border-border/60 bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:border-primary/30 hover:text-primary-on-surface"
                   >
                     {currency.label}
                   </Link>
@@ -149,7 +152,7 @@ export function AuthorityGuidePage({ page }: AuthorityGuidePageProps) {
               </Link>
               <Link
                 to="/faq/"
-                className="inline-flex min-h-11 items-center justify-center rounded-control border border-primary/20 bg-surface px-5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+                className="inline-flex min-h-11 items-center justify-center rounded-control border border-primary/20 bg-surface px-5 text-sm font-semibold text-primary-on-surface transition-colors hover:bg-primary/5"
               >
                 查看 FAQ
               </Link>

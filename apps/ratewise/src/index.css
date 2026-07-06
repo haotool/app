@@ -242,6 +242,9 @@
     /* 主色深階（showcase Deep 600）：白字實底與淺底文字的 WCAG AA 對比用。
        其他主題未定義時 fallback 回 --color-primary。 */
     --color-primary-strong: 27 100 218; /* #1B64DA */
+    /* 文字消費面 primary 錨點（issue #632）：內建主題同 primary 值（視覺不變），
+       custom 主題由 deriveCustomThemeCssVars 給 AA clamp 值。 */
+    --color-primary-on-surface: 49 130 246; /* 同 primary */
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 59 130 246; /* blue-500 */
     --color-border: 226 232 240;
@@ -431,6 +434,9 @@
     /* 主色深階（showcase Deep 600）：白字實底與淺底文字的 WCAG AA 對比用。
        其他主題未定義時 fallback 回 --color-primary。 */
     --color-primary-strong: 27 100 218; /* #1B64DA */
+    /* 文字消費面 primary 錨點（issue #632）：內建主題同 primary 值（視覺不變），
+       custom 主題由 deriveCustomThemeCssVars 給 AA clamp 值。 */
+    --color-primary-on-surface: 49 130 246; /* 同 primary */
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 59 130 246; /* blue-500 */
     --color-border: 226 232 240;
@@ -617,6 +623,7 @@
     --color-text-muted: 100 116 139;
     --color-primary: 124 58 237; /* violet-600 - 紫色主色 */
     --color-primary-strong: 124 58 237; /* 同 primary（白字對比已達 AA） */
+    --color-primary-on-surface: 124 58 237; /* 同 primary（#632 文字錨點） */
     --color-secondary: 99 102 241; /* indigo-500 - 靛藍輔色 */
     --color-accent: 139 92 246; /* violet-500 */
     --color-border: 226 232 240;
@@ -805,6 +812,7 @@
     --color-text-muted: 203 213 225; /* slate-300（修正 slate-500 在深底對比過低） */
     --color-primary: 0 150 230; /* 霓虹藍（深電光，按鈕白字達 3:1 AA） */
     --color-primary-strong: 0 150 230; /* 同 primary（深色主題維持霓虹視覺） */
+    --color-primary-on-surface: 0 150 230; /* 同 primary（#632 文字錨點） */
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 0 255 136; /* 霓虹綠 */
     --color-border: 30 41 59; /* slate-800 */
@@ -985,6 +993,7 @@
     --color-text-muted: 126 92 100; /* 對 background 5.62:1，AA */
     --color-primary: 255 105 180; /* hot pink */
     --color-primary-strong: 219 39 119; /* pink-600（白字 AA 對比） */
+    --color-primary-on-surface: 255 105 180; /* 同 primary（#632 文字錨點） */
     --color-secondary: 236 72 153; /* pink-500 */
     --color-accent: 255 182 193; /* light pink */
     --color-border: 255 228 225; /* misty rose */
@@ -1167,6 +1176,7 @@
     --color-text-muted: 120 80 60; /* 中棕 */
     --color-primary: 139 69 19; /* saddle brown - 馬鞍棕 */
     --color-primary-strong: 139 69 19; /* 同 primary（白字對比已達 AA） */
+    --color-primary-on-surface: 139 69 19; /* 同 primary（#632 文字錨點） */
     --color-secondary: 161 98 7; /* amber-700 - 琥珀 */
     --color-accent: 180 120 80; /* tan - 棕褐 */
     --color-border: 245 230 220; /* linen - 亞麻 */
@@ -1349,6 +1359,7 @@
     --color-text-muted: 163 163 163; /* neutral-400 */
     --color-primary: 239 68 68; /* red-500 - 賽道紅 */
     --color-primary-strong: 220 38 38; /* red-600（白字 AA 對比 4.83:1） */
+    --color-primary-on-surface: 239 68 68; /* 同 primary（#632 文字錨點） */
     --color-secondary: 129 140 248; /* indigo-400 */
     --color-accent: 248 113 113; /* red-400 */
     --color-border: 38 38 38; /* neutral-800 */
@@ -1529,6 +1540,7 @@
     --color-text-muted: 120 113 108; /* stone-500 */
     --color-primary: 5 150 105; /* emerald-600 - 柔和翠綠 */
     --color-primary-strong: 4 120 87; /* emerald-700（白字 AA 對比 5.49:1） */
+    --color-primary-on-surface: 5 150 105; /* 同 primary（#632 文字錨點） */
     --color-secondary: 132 204 22; /* lime-500 - 青檸 */
     --color-accent: 22 163 74; /* green-600 - 森林綠 */
     --color-border: 231 229 228; /* stone-200 */

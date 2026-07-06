@@ -426,7 +426,7 @@ function TabbedCodeExamples() {
             onClick={() => setActiveId(ex.id)}
             className={`shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               activeId === ex.id
-                ? 'border-primary text-primary'
+                ? 'border-primary text-primary-on-surface'
                 : 'border-transparent text-text-muted hover:text-text'
             }`}
           >
@@ -476,7 +476,7 @@ function UrlCopyRow({
           {label}
         </span>
         {recommended && (
-          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary-on-surface">
             建議
           </span>
         )}
@@ -486,7 +486,7 @@ function UrlCopyRow({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-w-0 flex-1 break-all font-mono text-sm text-primary hover:underline"
+          className="min-w-0 flex-1 break-all font-mono text-sm text-primary-on-surface hover:underline"
         >
           {url}
         </a>
@@ -509,11 +509,13 @@ function ResourceCard({ item }: { item: ResourceCardItem }) {
     'group rounded-xl border border-surface-border bg-surface p-4 transition-colors hover:border-primary/40 hover:bg-surface-elevated';
   const content = (
     <>
-      <div className="mb-1 min-w-0 break-words font-semibold text-text group-hover:text-primary">
+      <div className="mb-1 min-w-0 break-words font-semibold text-text group-hover:text-primary-on-surface">
         {item.title}
       </div>
       <div className="mb-2 min-w-0 break-words text-sm text-text-muted">{item.desc}</div>
-      <div className="min-w-0 break-all font-mono text-xs text-primary">{item.label}</div>
+      <div className="min-w-0 break-all font-mono text-xs text-primary-on-surface">
+        {item.label}
+      </div>
     </>
   );
 
@@ -651,7 +653,7 @@ const OpenData = () => {
                     href={src.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold text-primary hover:underline"
+                    className="font-semibold text-primary-on-surface hover:underline"
                   >
                     {src.name}
                   </a>
@@ -686,7 +688,9 @@ const OpenData = () => {
                   </thead>
                   <tbody className="divide-y divide-surface-border bg-surface">
                     <tr>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">updateTime</td>
+                      <td className="px-4 py-3 font-mono text-xs text-primary-on-surface">
+                        updateTime
+                      </td>
                       <td className="px-4 py-3 break-words text-text">
                         台銀匯率於本系統最後一次<strong>實際變動</strong>的時間（台灣時區）
                       </td>
@@ -696,7 +700,9 @@ const OpenData = () => {
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">timestamp</td>
+                      <td className="px-4 py-3 font-mono text-xs text-primary-on-surface">
+                        timestamp
+                      </td>
                       <td className="px-4 py-3 text-text">同上，UTC ISO 8601 格式</td>
                       <td className="px-4 py-3 text-text-muted">與 updateTime 同步更新</td>
                     </tr>
@@ -782,7 +788,7 @@ const OpenData = () => {
                   className="rounded-xl border border-surface-border bg-surface p-5"
                 >
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                    <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary-on-surface">
                       {ep.method}
                     </span>
                     <code className="rounded bg-surface-elevated px-2 py-0.5 font-mono text-sm text-text">
@@ -808,7 +814,7 @@ const OpenData = () => {
                 href="/ratewise/openapi.json"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-1 break-all font-mono text-primary hover:underline"
+                className="ml-1 break-all font-mono text-primary-on-surface hover:underline"
               >
                 /ratewise/openapi.json
               </a>
@@ -852,7 +858,9 @@ const OpenData = () => {
                   {QUOTE_UNIT_COMPARISON_ROWS.map((row) => (
                     <tr key={row.source}>
                       <td className="px-4 py-3 break-words text-text">{row.source}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">{row.quoteUnit}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-primary-on-surface">
+                        {row.quoteUnit}
+                      </td>
                       <td className="px-4 py-3 break-words text-text-muted">{row.sellMeaning}</td>
                       <td className="px-4 py-3 break-all font-mono text-xs text-text-muted">
                         {row.twdToForeign}
@@ -876,7 +884,7 @@ const OpenData = () => {
                 <tbody className="divide-y divide-surface-border bg-surface">
                   {V2_SCHEMA_FIELDS.map((f) => (
                     <tr key={f.field}>
-                      <td className="px-4 py-3 break-all font-mono text-xs text-primary">
+                      <td className="px-4 py-3 break-all font-mono text-xs text-primary-on-surface">
                         {f.field}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
@@ -901,7 +909,7 @@ const OpenData = () => {
                 <tbody className="divide-y divide-surface-border bg-surface">
                   {SCHEMA_FIELDS.map((f) => (
                     <tr key={f.field}>
-                      <td className="px-4 py-3 break-all font-mono text-xs text-primary">
+                      <td className="px-4 py-3 break-all font-mono text-xs text-primary-on-surface">
                         {f.field}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">
@@ -928,7 +936,7 @@ const OpenData = () => {
                   {RATE_MODE_STRATEGY_ROWS.map((strategy) => (
                     <tr key={strategy.mode}>
                       <td className="px-4 py-3">
-                        <code className="rounded bg-surface-elevated px-1 font-mono text-xs text-primary">
+                        <code className="rounded bg-surface-elevated px-1 font-mono text-xs text-primary-on-surface">
                           {strategy.mode}
                         </code>
                         <span className="ml-2 text-text">{strategy.name}</span>
@@ -960,7 +968,7 @@ const OpenData = () => {
                 <tbody className="divide-y divide-surface-border bg-surface">
                   {PROVIDER_CONTRACT_ROWS.map((provider) => (
                     <tr key={provider.providerId}>
-                      <td className="px-4 py-3 font-mono text-xs text-primary">
+                      <td className="px-4 py-3 font-mono text-xs text-primary-on-surface">
                         {provider.providerId}
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-text-muted">
@@ -999,7 +1007,9 @@ const OpenData = () => {
                     key={c.code}
                     className="min-w-0 rounded-full border border-surface-border bg-surface-elevated px-3 py-1 text-sm"
                   >
-                    <span className="font-mono font-semibold text-primary">{c.code}</span>
+                    <span className="font-mono font-semibold text-primary-on-surface">
+                      {c.code}
+                    </span>
                     <span className="ml-1 break-words text-text-muted">{c.name}</span>
                   </span>
                 ))}
@@ -1024,7 +1034,7 @@ const OpenData = () => {
                   {RATE_LIMIT_ITEMS.map((r) => (
                     <tr key={r.source}>
                       <td className="px-4 py-3 font-medium text-text">{r.source}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-primary">
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-primary-on-surface">
                         {r.limit}
                       </td>
                       <td className="px-4 py-3 break-words text-text-muted">{r.note}</td>
@@ -1043,7 +1053,10 @@ const OpenData = () => {
                   content: (
                     <>
                       商業用途建議聯繫{' '}
-                      <MailtoLink email={APP_INFO.email} className="text-primary underline" />{' '}
+                      <MailtoLink
+                        email={APP_INFO.email}
+                        className="text-primary-on-surface underline"
+                      />{' '}
                       說明使用情境
                     </>
                   ),
@@ -1073,7 +1086,7 @@ const OpenData = () => {
                   href={APP_INFO.licenseUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-primary-on-surface hover:underline"
                 >
                   {APP_INFO.license}
                 </a>{' '}
