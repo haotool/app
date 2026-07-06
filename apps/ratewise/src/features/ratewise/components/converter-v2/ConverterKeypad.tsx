@@ -151,6 +151,23 @@ export function ConverterKeypad({
     }
   };
 
+  // #633：首次數字鍵取代未動過的預設種子（計算機慣例）；閘門開啟後恢復串接語意。
+  // 運算子與小數點沿用種子串接（如 seed + 5），與 v1 post-result 行為一致。
+  const inputWithSeedReplace = useCallback(
+    (value: string) => {
+      if (!hasUserInputRef.current && /^\d$/.test(value)) {
+        clear();
+        input(value);
+        // 邊界：種子為單一數字且首鍵相同（如種子 5 按 5）時表達式不變，effect 不重跑；
+        // 空表達式的數字鍵必被引擎接受，故直接開啟回寫閘門，不依賴表達式變動判斷。
+        hasUserInputRef.current = true;
+        return;
+      }
+      input(value);
+    },
+    [clear, input],
+  );
+
   const handleKeyTap = (key: KeypadKey) => {
     if (key.kind === 'backspace') {
       const wasLongPress = longPressFiredRef.current;
@@ -164,16 +181,16 @@ export function ConverterKeypad({
 
     keyPressedRef.current = true;
     lightHaptic();
-    input(key.value);
+    inputWithSeedReplace(key.value);
   };
 
   // #587：實體鍵盤直通同一計算引擎；鍵盤輸入視同按鍵意圖（與虛擬鍵共用回寫閘門）。
   const handlePhysicalInput = useCallback(
     (value: string) => {
       keyPressedRef.current = true;
-      input(value);
+      inputWithSeedReplace(value);
     },
-    [input],
+    [inputWithSeedReplace],
   );
   const handlePhysicalBackspace = useCallback(() => {
     keyPressedRef.current = true;
