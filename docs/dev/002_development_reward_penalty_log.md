@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+162
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+163
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-rw-638-591-star-hotzone-mobile-polish
+- 原因：收藏／多幣別頁星號 toggle 實測熱區僅 28×22（低於 44×44 產品標準）；SE 667px 因 layout token `short:hidden` 整排隱藏來源快速金額；splash z-999 被 body::before 狀態列模糊帶 z-9999 蓋頂
+- 解法：星號以 min-w/h-11＋負邊距補償撐大熱區（margin box 不變、不與 dnd 把手重疊，補 class 合約迴歸測試）；快速金額隱藏門檻自 short/tiny 下移至 tiny/micro；splash z-index 提至 10000 蓋過模糊帶
 
 - 日期：2026-07-06
 - ID：reward-rw-594-tablet-two-column

@@ -152,6 +152,37 @@ test.describe('RateWise 核心功能測試', () => {
     await expect(getVisibleAppTitle(page)).toBeVisible();
   });
 
+  test('星號收藏 toggle 觸控熱區 bounding box ≥44×44（#638）', async ({ rateWisePage: page }) => {
+    // 收藏頁：修復前實測 28×22，熱區以 min-w/h-11＋負邊距補償撐大。
+    await page
+      .getByRole('link', { name: /收藏|Favorites/i })
+      .first()
+      .click();
+
+    const favStar = page.locator('[data-testid^="star-toggle-"]').first();
+    await expect(favStar).toBeVisible();
+    const favBox = await favStar.boundingBox();
+    expect(favBox).not.toBeNull();
+    expect(favBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(favBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    // 多幣別頁：同款星號按鈕（修復前實測 20×20）。
+    await page.getByRole('link', { name: /多幣別/i }).click();
+    await expect(page.getByTestId('multi-currency-list')).toBeVisible({ timeout: 10000 });
+
+    const multiStar = page
+      .getByTestId('multi-currency-list')
+      .getByRole('button', {
+        name: /加入常用貨幣|移除常用貨幣|Add to favorites|Remove from favorites/i,
+      })
+      .first();
+    await expect(multiStar).toBeVisible();
+    const multiBox = await multiStar.boundingBox();
+    expect(multiBox).not.toBeNull();
+    expect(multiBox?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(multiBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
   test('響應式設計：行動版應該正確顯示', async ({ rateWisePage: page, viewport }) => {
     // 僅在行動裝置尺寸執行
     if (viewport && viewport.width < 768) {

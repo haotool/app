@@ -537,5 +537,21 @@ describe('MultiConverter', () => {
       const removeBtn = screen.getByRole('button', { name: /移除常用貨幣/ });
       expect(removeBtn).toBeInTheDocument();
     });
+
+    it('星號按鈕熱區 ≥44×44：class 含 min-w-11/min-h-11 與負邊距補償（#638）', () => {
+      render(<MultiConverter {...defaultProps} />);
+
+      const removeBtn = screen.getByRole('button', { name: /移除常用貨幣/ });
+      const addBtns = screen.getAllByRole('button', { name: /加入常用貨幣/ });
+      const firstAddBtn = addBtns[0];
+      expect(firstAddBtn).toBeDefined();
+      for (const btn of [removeBtn, firstAddBtn]) {
+        expect(btn?.className).toContain('min-w-11');
+        expect(btn?.className).toContain('min-h-11');
+        // 負邊距補償：margin box 維持 24×20，列高與對齊不變。
+        expect(btn?.className).toContain('-mx-2.5');
+        expect(btn?.className).toContain('-my-3');
+      }
+    });
   });
 });

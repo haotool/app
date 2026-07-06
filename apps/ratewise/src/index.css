@@ -109,7 +109,8 @@
 .ratewise-splash {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  /* #591：高於 body::before 狀態列模糊帶（z-9999），splash 期間頂部品牌畫面連續。 */
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   align-items: center;

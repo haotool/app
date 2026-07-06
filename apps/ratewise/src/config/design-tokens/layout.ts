@@ -364,19 +364,20 @@ export const singleConverterLayoutTokens = {
   /**
    * 快速金額區塊
    *
-   * 隱藏優先順序：來源 (short) → 結果 (tiny)
+   * 隱藏優先順序：來源 (tiny) → 結果 (micro)
    * 快速金額為輔助功能，優先於資料來源隱藏
+   * #591：iPhone SE（667px 高，short 區間）需保留來源快速金額，隱藏門檻下移一級
    */
   quickAmounts: {
     /** 容器樣式 */
     container:
       'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
 
-    /** 來源快速金額：short (≤700px) 隱藏 */
-    fromVisibility: 'short:hidden',
+    /** 來源快速金額：tiny (≤650px) 隱藏 */
+    fromVisibility: 'tiny:hidden',
 
-    /** 結果快速金額：tiny (≤650px) 隱藏 */
-    toVisibility: 'tiny:hidden',
+    /** 結果快速金額：micro (≤600px) 隱藏 */
+    toVisibility: 'micro:hidden',
   },
 
   /**
