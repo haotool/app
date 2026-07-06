@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+153
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-06
+- ID：reward-haotool-e3-wave-d
+- 原因：E3 需場景級記憶點與品牌素材落地：sticky 一幕、卡片 morph 轉場、Codex 素材（logomark/吉祥物/插畫）經 PM 視覺關卡選用後待整合
+- 解法：view-timeline sticky 三幕（四重降級）、靜態 vt-name morph、L1-b/L2-a/L3-b 快照制入 public 並重生成 icons/OG；LCP 仍 H1、增量 ≤+2.5KB
 
 - 日期：2026-07-06
 - ID：reward-haotool-e3-wave-c
