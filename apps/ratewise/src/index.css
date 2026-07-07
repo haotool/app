@@ -238,7 +238,7 @@
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
-    --color-text-muted: 100 116 139;
+    --color-text-muted: 94 110 132; /* slate-500 加深（#641：muted 對 surface-sunken AA ≥ 4.5） */
     --color-primary: 49 130 246; /* #3182F6 - 品牌藍 */
     /* 主色深階（showcase Deep 600）：白字實底與淺底文字的 WCAG AA 對比用。
        其他主題未定義時 fallback 回 --color-primary。 */
@@ -314,7 +314,7 @@
     --color-warning-light: 254 243 199;
     --color-warning-hover: 253 230 138;
     --color-warning-active: 252 211 77;
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
 
     /* Favorite 系列 */
     --color-favorite-light: 254 243 199;
@@ -430,7 +430,7 @@
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
-    --color-text-muted: 100 116 139;
+    --color-text-muted: 94 110 132; /* slate-500 加深（#641：muted 對 surface-sunken AA ≥ 4.5） */
     --color-primary: 49 130 246; /* #3182F6 - 品牌藍 */
     /* 主色深階（showcase Deep 600）：白字實底與淺底文字的 WCAG AA 對比用。
        其他主題未定義時 fallback 回 --color-primary。 */
@@ -506,7 +506,7 @@
     --color-warning-light: 254 243 199;
     --color-warning-hover: 253 230 138;
     --color-warning-active: 252 211 77;
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
 
     /* Favorite 系列 */
     --color-favorite-light: 254 243 199;
@@ -621,7 +621,7 @@
     --color-background: 248 250 252;
     --color-surface: 255 255 255;
     --color-text: 15 23 42;
-    --color-text-muted: 100 116 139;
+    --color-text-muted: 94 110 132; /* slate-500 加深（#641：muted 對 surface-sunken AA ≥ 4.5） */
     --color-primary: 124 58 237; /* violet-600 - 紫色主色 */
     --color-primary-strong: 124 58 237; /* 同 primary（白字對比已達 AA） */
     --color-primary-on-surface: 124 58 237; /* 同 primary（#632 文字錨點） */
@@ -693,7 +693,7 @@
     --color-warning-light: 254 243 199;
     --color-warning-hover: 253 230 138;
     --color-warning-active: 252 211 77;
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
 
     /* Favorite 系列 */
     --color-favorite-light: 254 243 199;
@@ -1049,7 +1049,7 @@
     --color-success-hover: 187 247 208; /* green-200 */
     --color-success-active: 134 239 172; /* green-300 */
     --color-success-foreground: 255 255 255; /* white */
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
     --color-warning-light: 254 249 195; /* yellow-100 - 檸檬黃色階 */
     --color-warning-hover: 254 240 138; /* yellow-200 */
     --color-warning-active: 253 224 71; /* yellow-300 */
@@ -1232,7 +1232,7 @@
     --color-success-hover: 187 247 208; /* green-200 */
     --color-success-active: 134 239 172; /* green-300 */
     --color-success-foreground: 255 255 255; /* white */
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
     --color-warning-light: 254 243 199; /* amber-100 - 琥珀色階 */
     --color-warning-hover: 253 230 138; /* amber-200 */
     --color-warning-active: 252 211 77; /* amber-300 */
@@ -1538,7 +1538,7 @@
     --color-background: 250 250 249; /* stone-50 - 微暖白 */
     --color-surface: 255 255 255;
     --color-text: 28 25 23; /* stone-900 */
-    --color-text-muted: 120 113 108; /* stone-500 */
+    --color-text-muted: 105 99 94; /* stone-500 加深（#641：muted 對 surface-sunken AA ≥ 4.5） */
     --color-primary: 5 150 105; /* emerald-600 - 柔和翠綠 */
     --color-primary-strong: 4 120 87; /* emerald-700（白字 AA 對比 5.49:1） */
     --color-primary-on-surface: 5 150 105; /* 同 primary（#632 文字錨點） */
@@ -1596,7 +1596,7 @@
     --color-success-hover: 187 247 208; /* green-200 */
     --color-success-active: 134 239 172; /* green-300 */
     --color-success-foreground: 255 255 255; /* white */
-    --color-warning-text: var(--color-warning);
+    --color-warning-text: 146 64 14; /* amber-800（#641：text-warning-text 活化後對 warning/10 淺底 AA） */
     --color-warning-light: 254 249 195; /* yellow-100 - 黃色階 */
     --color-warning-hover: 254 240 138; /* yellow-200 */
     --color-warning-active: 253 224 71; /* yellow-300 */

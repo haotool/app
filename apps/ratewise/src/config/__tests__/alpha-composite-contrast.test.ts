@@ -93,6 +93,14 @@ function readVar(body: string, name: string): string {
   return new RegExp(`${name}:\\s*([0-9]+ [0-9]+ [0-9]+)\\s*;`).exec(body)?.[1] ?? '';
 }
 
+/** readVar 加一層 var() 間接解析（--color-warning-text: var(--color-warning) 型）。 */
+function resolveVar(body: string, name: string): string {
+  const direct = readVar(body, name);
+  if (direct) return direct;
+  const indirect = new RegExp(`${name}:\\s*var\\((--color-[\\w-]+)\\)\\s*;`).exec(body)?.[1];
+  return indirect ? readVar(body, indirect) : '';
+}
+
 describe('文字 alpha 稀釋曝露面守門（#609）', () => {
   it('掃描範圍非空（防止路徑失效讓守門空轉）', () => {
     expect(collectSourceFiles(SRC_ROOT).length).toBeGreaterThan(100);
@@ -126,6 +134,42 @@ describe('已收斂消費點的實色錨點合成驗證（#609）', () => {
       expect(
         contrast(textMuted, background),
         `${theme} text-muted on background`,
+      ).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  // #641：text-text-muted 色鍵活化後，muted 消費面擴及 surface / elevated / sunken
+  //（QuoteMatrix/RateInsight sunken 註腳、OpenData elevated 卡等），全底皆須 AA。
+  it.each(themeBlocks)(
+    '[$theme] text-muted 對 surface / surface-elevated / surface-sunken ≥ 4.5:1（#641 活化面）',
+    ({ theme, body }) => {
+      const textMuted = readVar(body, '--color-text-muted');
+      for (const base of [
+        '--color-surface',
+        '--color-surface-elevated',
+        '--color-surface-sunken',
+      ] as const) {
+        const value = readVar(body, base);
+        expect(value, `${theme} 缺少 ${base}`).not.toBe('');
+        expect(contrast(textMuted, value), `${theme} text-muted on ${base}`).toBeGreaterThanOrEqual(
+          4.5,
+        );
+      }
+    },
+  );
+
+  // #641：text-warning-text 色鍵活化（過期匯率警示 banner：bg-warning/10 疊 background）。
+  it.each(themeBlocks)(
+    '[$theme] warning-text 對 warning/10 疊 background 合成底 ≥ 4.5:1（#641 活化面）',
+    ({ theme, body }) => {
+      const warningText = resolveVar(body, '--color-warning-text');
+      const warning = readVar(body, '--color-warning');
+      const background = readVar(body, '--color-background');
+      expect(warningText, `${theme} 缺少 --color-warning-text`).not.toBe('');
+      const banner = composite(warning, background, 0.1);
+      expect(
+        contrast(warningText, banner),
+        `${theme} warning-text on warning/10 banner`,
       ).toBeGreaterThanOrEqual(4.5);
     },
   );

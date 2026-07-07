@@ -340,7 +340,7 @@ export default function SeoTech() {
               <h1 className="text-2xl font-bold mb-2 tracking-tight">
                 {APP_INFO.shortName} SEO 架構
               </h1>
-              <p className="text-sm text-[rgb(var(--color-text-muted))] leading-relaxed max-w-prose">
+              <p className="text-sm text-text-muted leading-relaxed max-w-prose">
                 完整揭露 {APP_INFO.shortName} 所採用的所有搜尋引擎最佳化技術、資料架構與自動化流程。
                 所有數字均從設定檔即時計算，永遠與實際部署狀態同步。
               </p>
@@ -413,23 +413,19 @@ export default function SeoTech() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold">{step.label}</span>
-                        <span className="text-xs text-[rgb(var(--color-text-muted))] truncate">
-                          {step.sub}
-                        </span>
+                        <span className="text-xs text-text-muted truncate">{step.sub}</span>
                       </div>
-                      <p className="text-xs text-[rgb(var(--color-text-muted))]">{step.note}</p>
+                      <p className="text-xs text-text-muted">{step.note}</p>
                     </div>
                     {idx < PIPELINE_STEPS.length - 1 && (
-                      <div className="flex-shrink-0 w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40">
-                        →
-                      </div>
+                      <div className="flex-shrink-0 w-4 h-4 text-text-muted opacity-40">→</div>
                     )}
                   </motion.div>
                 );
               })}
             </div>
             <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <p className="text-xs text-[rgb(var(--color-text-muted))] leading-relaxed">
+              <p className="text-xs text-text-muted leading-relaxed">
                 <span className="font-medium text-primary-on-surface">CDN 端點：</span>{' '}
                 <a
                   href={RATES_API.latestCdn}
@@ -483,7 +479,7 @@ export default function SeoTech() {
                       {cat.examples.map((path) => (
                         <span
                           key={path}
-                          className="font-mono text-xs bg-[rgb(var(--color-background))] px-1.5 py-0.5 rounded-lg text-[rgb(var(--color-text-muted))]"
+                          className="font-mono text-xs bg-[rgb(var(--color-background))] px-1.5 py-0.5 rounded-lg text-text-muted"
                         >
                           {path}
                         </span>
@@ -493,7 +489,7 @@ export default function SeoTech() {
                 );
               })}
             </div>
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-2 pl-1">
+            <p className="text-xs text-text-muted mt-2 pl-1">
               合計 {SEO_PATHS.length} 個可索引路徑，全部收錄於 sitemap.xml
             </p>
           </motion.section>
@@ -531,13 +527,9 @@ export default function SeoTech() {
                         <code className="text-xs font-mono font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded-lg">
                           {schema.type}
                         </code>
-                        <span className="text-xs text-[rgb(var(--color-text-muted))]">
-                          {schema.pages}
-                        </span>
+                        <span className="text-xs text-text-muted">{schema.pages}</span>
                       </div>
-                      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1 leading-relaxed">
-                        {schema.desc}
-                      </p>
+                      <p className="text-xs text-text-muted mt-1 leading-relaxed">{schema.desc}</p>
                     </div>
                   </motion.div>
                 );
@@ -580,11 +572,11 @@ export default function SeoTech() {
                           {file.badge}
                         </span>
                       </div>
-                      <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5 leading-relaxed line-clamp-2">
+                      <p className="text-xs text-text-muted mt-0.5 leading-relaxed line-clamp-2">
                         {file.desc}
                       </p>
                     </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-[rgb(var(--color-text-muted))] opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
+                    <ExternalLink className="w-3.5 h-3.5 text-text-muted opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
                   </motion.a>
                 );
               })}
@@ -623,13 +615,11 @@ export default function SeoTech() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="text-sm font-semibold">{feat.title}</h3>
-                          <span className="text-xs bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] px-1.5 py-0.5 rounded-lg text-[rgb(var(--color-text-muted))] font-mono">
+                          <span className="text-xs bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] px-1.5 py-0.5 rounded-lg text-text-muted font-mono">
                             {feat.tech}
                           </span>
                         </div>
-                        <p className="text-xs text-[rgb(var(--color-text-muted))] leading-relaxed">
-                          {feat.desc}
-                        </p>
+                        <p className="text-xs text-text-muted leading-relaxed">{feat.desc}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -669,10 +659,7 @@ export default function SeoTech() {
                     </div>
                     <ul className="space-y-2">
                       {signal.items.map((item, idx) => (
-                        <li
-                          key={idx}
-                          className="text-xs text-[rgb(var(--color-text-muted))] flex gap-2"
-                        >
+                        <li key={idx} className="text-xs text-text-muted flex gap-2">
                           <span className="flex-shrink-0">•</span>
                           <span>{item}</span>
                         </li>
@@ -682,7 +669,7 @@ export default function SeoTech() {
                 );
               })}
             </motion.div>
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-3 pl-1">
+            <p className="text-xs text-text-muted mt-3 pl-1">
               Google 搜尋品質評估指南強調 E-E-A-T（專業性、權威性、可信度）為
               YMYL（您的錢或生活）內容評分的關鍵。{APP_INFO.shortName}{' '}
               透過透明化揭露、官方資料來源與隱私優先設計強化信號。
@@ -698,7 +685,7 @@ export default function SeoTech() {
             transition={sectionTransition}
           >
             <SectionHeader icon={Code2} title="Prebuild 自動化腳本" />
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3 leading-relaxed">
+            <p className="text-xs text-text-muted mb-3 leading-relaxed">
               每次建置前依序執行 SEO / machine-readable 產線，產生所有必要靜態檔案並串上驗證 gate。
             </p>
             <div className="rounded-2xl border border-[rgb(var(--color-border))] overflow-hidden">
@@ -718,7 +705,7 @@ export default function SeoTech() {
                     <code className="text-xs font-mono text-[rgb(var(--color-text))] block truncate">
                       {script.name}
                     </code>
-                    <p className="text-xs text-[rgb(var(--color-text-muted))]">{script.desc}</p>
+                    <p className="text-xs text-text-muted">{script.desc}</p>
                   </div>
                   <code className="text-xs font-mono text-emerald-600 flex-shrink-0 hidden sm:block">
                     {script.output}
@@ -748,7 +735,7 @@ export default function SeoTech() {
               {/* Arrow */}
               <div className="flex items-center gap-2 px-2">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                <span className="text-xs text-[rgb(var(--color-text-muted))]">生成</span>
+                <span className="text-xs text-text-muted">生成</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
               </div>
               {/* 建置層 */}
@@ -760,7 +747,7 @@ export default function SeoTech() {
               />
               <div className="flex items-center gap-2 px-2">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                <span className="text-xs text-[rgb(var(--color-text-muted))]">渲染</span>
+                <span className="text-xs text-text-muted">渲染</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
               </div>
               {/* SSG 層 */}
@@ -777,7 +764,7 @@ export default function SeoTech() {
               />
               <div className="flex items-center gap-2 px-2">
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                <span className="text-xs text-[rgb(var(--color-text-muted))]">部署</span>
+                <span className="text-xs text-text-muted">部署</span>
                 <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
               </div>
               {/* 邊緣層 */}
@@ -857,8 +844,8 @@ function ArchLayer({
     <div>
       <div className="flex items-center gap-2 mb-2">
         <div className={`w-2 h-2 rounded-full ${color}`} />
-        <span className="text-xs font-semibold text-[rgb(var(--color-text-muted))]">{label}</span>
-        <span className="text-xs text-[rgb(var(--color-text-muted))] opacity-60">— {desc}</span>
+        <span className="text-xs font-semibold text-text-muted">{label}</span>
+        <span className="text-xs text-text-muted opacity-60">— {desc}</span>
       </div>
       <div className="flex flex-wrap gap-1.5 pl-4">
         {items.map((item) => (
@@ -894,13 +881,13 @@ function ResourceLink({
     <>
       <div>
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{sub}</p>
+        <p className="text-xs text-text-muted">{sub}</p>
       </div>
       {external ? (
-        <ExternalLink className="w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40 group-hover:opacity-100 transition-opacity" />
+        <ExternalLink className="w-4 h-4 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity" />
       ) : (
         <svg
-          className="w-4 h-4 text-[rgb(var(--color-text-muted))] opacity-40 group-hover:opacity-100 transition-opacity"
+          className="w-4 h-4 text-text-muted opacity-40 group-hover:opacity-100 transition-opacity"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

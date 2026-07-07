@@ -94,7 +94,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
         <span data-testid="app-title" className="block">
           <BrandWordmark className="text-xl text-[rgb(var(--color-text))]" />
         </span>
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">{t('app.subtitle')}</p>
+        <p className="text-xs text-text-muted mt-1">{t('app.subtitle')}</p>
       </div>
 
       {/* Navigation Items */}
@@ -115,7 +115,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
                 ${
                   isActive
                     ? 'bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-primary-strong,var(--color-primary)))] font-medium'
-                    : 'text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
+                    : 'text-text-muted hover:bg-[rgb(var(--color-border)/0.5)] hover:text-[rgb(var(--color-text))]'
                 }
               `}
               aria-label={t(item.ariaLabelKey)}
@@ -133,7 +133,7 @@ export function SideNavigation({ className = '' }: SideNavigationProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-[rgb(var(--color-border))]">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
+        <p className="text-xs text-text-muted">
           {t('app.version')} {getDisplayVersion()}
         </p>
       </div>

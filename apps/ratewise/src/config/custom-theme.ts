@@ -148,6 +148,8 @@ export const CUSTOM_THEME_CSS_VARS = [
   '--color-warning-light',
   '--color-warning-hover',
   '--color-warning-active',
+  // #641：text-warning-text 活化後，深色調需亮 amber 覆寫（淺色調輸出靜態同值）。
+  '--color-warning-text',
   '--color-favorite-light',
   '--color-highlight-from',
   '--color-highlight-to',
@@ -189,7 +191,8 @@ export type CustomThemeCssVar = (typeof CUSTOM_THEME_CSS_VARS)[number];
  * deriveCustomThemeCssVars 演算規則改版時必須 bump，
  * bootstrap 讀到舊版本快取即整包棄用，消除升級後首幀舊色。
  */
-export const CUSTOM_THEME_DERIVE_VERSION = 1;
+// v2（#641）：淺色靜態 muted 文字加深（sunken AA）＋ warning-text 進覆寫集合。
+export const CUSTOM_THEME_DERIVE_VERSION = 2;
 
 /** 導出結果：CSS 變數名 → 'R G B' 空格分隔三元組（Tailwind rgb(var()) 相容格式）。 */
 export type CustomThemeCssVarMap = Record<CustomThemeCssVar, string>;
@@ -378,7 +381,7 @@ const LIGHT_STATIC_VARS = {
   '--color-surface': '255 255 255',
   '--color-surface-elevated': '248 250 252',
   '--color-text': '15 23 42',
-  '--color-text-muted': '100 116 139',
+  '--color-text-muted': '94 110 132',
   '--color-border': '226 232 240',
   '--color-neutral-light': '241 245 249',
   '--color-neutral': '226 232 240',
@@ -409,6 +412,7 @@ const LIGHT_STATIC_VARS = {
   '--color-warning-light': '254 243 199',
   '--color-warning-hover': '253 230 138',
   '--color-warning-active': '252 211 77',
+  '--color-warning-text': '146 64 14',
   '--color-favorite-light': '254 243 199',
   '--color-highlight-from': '254 252 232',
   '--color-highlight-to': '255 251 235',
@@ -429,6 +433,7 @@ const DARK_STATUS_VARS = {
   '--color-warning-light': '69 26 3',
   '--color-warning-hover': '120 53 15',
   '--color-warning-active': '146 64 14',
+  '--color-warning-text': '251 191 36',
   '--color-favorite-light': '66 32 6',
   '--color-highlight-from': '66 32 6',
   '--color-highlight-to': '69 26 3',
@@ -723,8 +728,8 @@ function isDarkToneSolvable(hsl: Hsl, lightness: number): boolean {
   return Math.max(relativeLuminance(background), relativeLuminance(elevated)) <= 0.09;
 }
 
-/** slate-500（zen 靜態 --color-text-muted）：淺域可解判定的綁定約束。 */
-const LIGHT_STATIC_MUTED: Rgb = { r: 100, g: 116, b: 139 };
+/** zen 靜態 --color-text-muted（#641 加深後值）：淺域可解判定的綁定約束。 */
+const LIGHT_STATIC_MUTED: Rgb = { r: 94, g: 110, b: 132 };
 
 /** 淺域可解判定：zen 靜態 muted 文字對 background ≥ 4.5（淺色派生的最嚴文字對）。 */
 function isLightToneSolvable(hsl: Hsl, lightness: number): boolean {

@@ -153,7 +153,7 @@ const zenStyle: StyleDefinition = {
     background: '248 250 252', // slate-50
     surface: '255 255 255',
     text: '15 23 42', // slate-900
-    textMuted: '100 116 139', // slate-500
+    textMuted: '94 110 132', // slate-500 加深（#641：對 surface-sunken AA ≥ 4.5）
     primary: '49 130 246', // #3182F6 - 品牌藍（與 index.css 渲染值同步）
     primaryStrong: '27 100 218', // #1B64DA - Deep 600（白字 AA 對比）
     secondary: '99 102 241', // indigo-500 - 靛藍輔色（與 index.css 渲染值同步）
@@ -187,7 +187,7 @@ const violetStyle: StyleDefinition = {
     background: '248 250 252', // slate-50
     surface: '255 255 255',
     text: '15 23 42', // slate-900
-    textMuted: '100 116 139', // slate-500
+    textMuted: '94 110 132', // slate-500 加深（#641：對 surface-sunken AA ≥ 4.5）
     primary: '124 58 237', // violet-600 - 經典紫主色
     primaryStrong: '124 58 237', // 同 primary（白字對比已達 AA）
     secondary: '99 102 241', // indigo-500 - 靛藍輔色（與 index.css 渲染值同步）
@@ -362,7 +362,7 @@ const forestStyle: StyleDefinition = {
     background: '250 250 249', // stone-50 - 微暖白
     surface: '255 255 255',
     text: '28 25 23', // stone-900
-    textMuted: '120 113 108', // stone-500
+    textMuted: '105 99 94', // stone-500 加深（#641：對 surface-sunken AA ≥ 4.5）
     primary: '5 150 105', // emerald-600 - 柔和翠綠（韓系簡約降飽和）
     primaryStrong: '4 120 87', // emerald-700（白字 AA 對比 5.49:1）
     secondary: '132 204 22', // lime-500 - 青檸

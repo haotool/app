@@ -132,6 +132,8 @@ export const semanticColors = {
     DEFAULT: 'rgb(var(--color-warning) / <alpha-value>)',
     hover: 'rgb(var(--color-warning-hover) / <alpha-value>)',
     active: 'rgb(var(--color-warning-active) / <alpha-value>)',
+    // #641：補 text-warning-text 色鍵（--color-warning-text 全主題已定義，補鍵前為死類）。
+    text: 'rgb(var(--color-warning-text) / <alpha-value>)',
   },
 
   /**

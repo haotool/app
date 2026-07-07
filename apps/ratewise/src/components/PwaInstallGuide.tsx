@@ -283,7 +283,7 @@ function PwaInstallGuideClient() {
                 </h2>
                 <p
                   id="pwa-install-guide-description"
-                  className="mt-1 text-xs leading-5 text-[rgb(var(--color-text-muted))]"
+                  className="mt-1 text-xs leading-5 text-text-muted"
                 >
                   {guide.description}
                 </p>

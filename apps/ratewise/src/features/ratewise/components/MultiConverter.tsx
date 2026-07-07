@@ -238,7 +238,7 @@ export const MultiConverter = ({
                         className="min-w-11 min-h-11 -mx-2.5 -my-3 flex items-center justify-center rounded-full cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         aria-label={t('favorites.addFavorite')}
                       >
-                        <Star className="w-4 h-4 text-text-muted/50 hover:text-favorite transition-colors" />
+                        <Star className="w-4 h-4 text-text-muted hover:text-favorite transition-colors" />
                       </button>
                     )}
                   </div>
