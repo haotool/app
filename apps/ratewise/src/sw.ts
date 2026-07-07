@@ -524,8 +524,38 @@ registerRoute(
   }),
 );
 
-// manifest 必須 NetworkOnly：SWR 快取會回傳舊版相對 start_url，觸發冷啟動 HTTPS-First 警告。
-registerRoute(({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'), new NetworkOnly());
+// manifest 線上永遠走網路（保持 no-cache＋ETag 條件請求行為，避免 SWR 回舊版相對 start_url
+// 觸發冷啟動 HTTPS-First 警告）；僅離線時回退 runtime cache 副本，消除離線 reload 的
+// manifest ERR_FAILED（issue 656）。不用 Workbox NetworkFirst：navigation 防回歸測試禁用該字樣。
+const MANIFEST_CACHE_NAME = 'manifest-cache';
+
+async function handleManifestRequest({ request }: { request: Request }): Promise<Response> {
+  const cache = await caches.open(MANIFEST_CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    if (response.status === 0 || response.ok) {
+      try {
+        await cache.put(request, response.clone());
+      } catch {
+        // runtime cache 寫入失敗不阻斷線上回應。
+      }
+      return response;
+    }
+    const cached = await cache.match(request);
+    return cached ?? response;
+  } catch (err) {
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw err;
+  }
+}
+
+registerRoute(
+  ({ url }: { url: URL }) => url.pathname.endsWith('.webmanifest'),
+  handleManifestRequest,
+);
 
 // SEO 文字/XML：StaleWhileRevalidate，7 天。
 registerRoute(

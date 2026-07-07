@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-656-manifest-offline-runtime-fallback
+- 原因：manifest.webmanifest 走 NetworkOnly（防 SWR 回舊版相對 start_url），離線 reload 時 fetch 直接失敗產生 ERR_FAILED ×2（issue 656）
+- 解法：改為 handleManifestRequest 自訂 network-first——線上永遠走網路（no-cache＋ETag 條件請求行為不變）成功即寫入 manifest-cache，僅離線／網路失敗時回退 runtime cache 副本、無副本時維持原錯誤不吞錯，sw.test.ts 補 3 項 handler 行為測試與策略守門更新（不引入 Workbox NetworkFirst 保持 navigation 防回歸斷言）
 
 - 日期：2026-07-07
 - ID：reward-rw-655-faq-toc-per-question-anchors
