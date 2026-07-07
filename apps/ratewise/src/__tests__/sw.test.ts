@@ -45,7 +45,13 @@ vi.mock('workbox-routing', () => ({
 vi.mock('workbox-strategies', () => ({
   CacheFirst: class CacheFirst {},
   NetworkOnly: class NetworkOnly {},
-  StaleWhileRevalidate: class StaleWhileRevalidate {},
+  // 捕捉建構參數供快取容量斷言（issue 628）。
+  StaleWhileRevalidate: class StaleWhileRevalidate {
+    options: unknown;
+    constructor(options?: unknown) {
+      this.options = options;
+    }
+  },
 }));
 
 vi.mock('workbox-cacheable-response', () => ({
@@ -53,7 +59,12 @@ vi.mock('workbox-cacheable-response', () => ({
 }));
 
 vi.mock('workbox-expiration', () => ({
-  ExpirationPlugin: class ExpirationPlugin {},
+  ExpirationPlugin: class ExpirationPlugin {
+    config: unknown;
+    constructor(config?: unknown) {
+      this.config = config;
+    }
+  },
 }));
 
 // Mock ServiceWorkerGlobalScope
@@ -399,6 +410,66 @@ describe('Service Worker Cache Strategies', () => {
       const handler = await loadManifestHandler();
 
       await expect(handler({ request: new Request(manifestUrl) })).rejects.toBe(networkError);
+    });
+  });
+
+  describe('history-aggregate-cache（issue 628）', () => {
+    // 台銀與 MoneyBox 兩 provider 的 30 天 aggregate，各有同域/CDN/raw 三個來源 URL。
+    const aggregateUrls = [
+      'https://example.com/ratewise/public/rates/history-30d.json',
+      'https://cdn.jsdelivr.net/gh/user/repo@data/public/rates/history-30d.json',
+      'https://raw.githubusercontent.com/user/repo/data/public/rates/history-30d.json',
+      'https://example.com/ratewise/public/rates/providers/moneybox/history-30d.json',
+      'https://cdn.jsdelivr.net/gh/user/repo@data/public/rates/providers/moneybox/history-30d.json',
+      'https://raw.githubusercontent.com/user/repo/data/public/rates/providers/moneybox/history-30d.json',
+    ];
+
+    interface CapturedStrategy {
+      options?: {
+        cacheName?: string;
+        plugins?: { config?: { maxEntries?: number; maxAgeSeconds?: number } }[];
+      };
+    }
+
+    async function loadAggregateRouteCalls() {
+      await import('../sw.ts');
+      const routing = await import('workbox-routing');
+      const registerRouteMock = routing.registerRoute as unknown as ReturnType<typeof vi.fn>;
+      return registerRouteMock.mock.calls.filter((call: unknown[]) => {
+        if (typeof call[0] !== 'function') return false;
+        try {
+          const probe = {
+            url: new URL(aggregateUrls[0]!),
+            request: new Request(aggregateUrls[0]!),
+          };
+          return Boolean((call[0] as (params: typeof probe) => boolean)(probe));
+        } catch {
+          return false;
+        }
+      });
+    }
+
+    it('同一 route 同時匹配台銀與 MoneyBox 全部 aggregate 來源 URL', async () => {
+      const calls = await loadAggregateRouteCalls();
+      expect(calls).toHaveLength(1);
+      const matcher = calls[0]![0] as (params: { url: URL; request: Request }) => boolean;
+
+      for (const url of aggregateUrls) {
+        expect(matcher({ url: new URL(url), request: new Request(url) })).toBe(true);
+      }
+    });
+
+    it('maxEntries 足以容納全部 aggregate URL 不互相驅逐（≥6，實設 8）', async () => {
+      const calls = await loadAggregateRouteCalls();
+      const strategy = calls[0]![1] as CapturedStrategy;
+      expect(strategy.options?.cacheName).toBe('history-aggregate-cache');
+
+      const expiration = strategy.options?.plugins?.find((plugin) => plugin.config !== undefined);
+      expect(expiration?.config?.maxEntries).toBe(8);
+      // 防回歸：容量必須 ≥ 全部 aggregate 來源 URL 數，否則兩 provider 互相 LRU 驅逐。
+      expect(expiration?.config?.maxEntries).toBeGreaterThanOrEqual(aggregateUrls.length);
+      // 對齊 latest-rate-cache 的 7 天離線備援（線上 SWR 仍每日更新）。
+      expect(expiration?.config?.maxAgeSeconds).toBe(60 * 60 * 24 * 7);
     });
   });
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-628-sw-history-aggregate-eviction
+- 原因：sw.ts 的 history-aggregate-cache maxEntries=1，但 route 同時匹配台銀與 MoneyBox 兩 provider × 同域/CDN/raw 三來源的 30 天 aggregate，互相 LRU 驅逐致離線趨勢圖只剩最後載入的一方（issue 628）
+- 解法：maxEntries 調至 8（≥6 個 aggregate URL 並留 provider 擴充餘裕）、maxAgeSeconds 對齊 latest-rate-cache 的 7 天離線備援（線上 SWR 仍每日更新），sw.test.ts 以捕捉建構參數的 mock 補 route matcher 雙 provider 共存與容量守門測試
 
 - 日期：2026-07-08
 - ID：reward-rw-theme-studio-v3-compact
