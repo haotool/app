@@ -22,7 +22,7 @@ import {
   buildDefaultAlternates,
   buildShareImageJsonLd,
   buildSiteJsonLd,
-} from '../config/seo-metadata';
+} from '../config/seo-metadata/core';
 
 interface SEOProps {
   title?: string;

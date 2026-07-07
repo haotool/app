@@ -42,7 +42,8 @@ import {
   FavoritesSkeleton,
   SettingsSkeleton,
 } from './components/SkeletonLoader';
-import { HOMEPAGE_SEO } from './config/seo-metadata';
+// 首屏模組必須從 core 直接 import，避免 barrel 把幣別頁文案拉進 entry chunk（#647）。
+import { HOMEPAGE_SEO } from './config/seo-metadata/core';
 import { CURRENCY_LANDING_ROUTE_REGISTRY } from './config/currencyLandingRouteRegistry';
 import { logger } from './utils/logger';
 import { isChunkLoadError, recoverFromChunkLoadError } from './utils/chunkLoadRecovery';

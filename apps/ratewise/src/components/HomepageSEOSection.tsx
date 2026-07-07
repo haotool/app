@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CURRENCY_DEFINITIONS } from '../features/ratewise/constants';
-import { HOMEPAGE_SEO } from '../config/seo-metadata';
+import { HOMEPAGE_SEO } from '../config/seo-metadata/core';
 import { AnswerCapsule } from './AnswerCapsule';
 
 /** 熱門幣對：外幣換台幣（依台灣旅遊熱度排序）。 */

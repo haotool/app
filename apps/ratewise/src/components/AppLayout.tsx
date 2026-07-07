@@ -11,7 +11,7 @@ import { PullToRefreshIndicator } from './PullToRefreshIndicator';
 import { useRatingPrompt } from '../hooks/useRatingPrompt';
 import { getResolvedLanguage } from '../i18n';
 import { APP_INFO } from '../config/app-info';
-import { HOMEPAGE_SEO } from '../config/seo-metadata';
+import { HOMEPAGE_SEO } from '../config/seo-metadata/core';
 import { navigationTokens } from '../config/design-tokens';
 import { getTopLevelTransitionDirection } from '../config/animations';
 import { RouteAnalytics } from '@shared/analytics';

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-647-seo-metadata-first-screen-split
+- 原因：seo-metadata barrel 被 routes/SEOHelmet/AppLayout/HomepageSEOSection 靜態 import，`export *` 連帶把 currency-landing＋personas（83KB source）拉進 entry chunk，opt-in 首屏 bundle 預算測試 fail（brotli 267KB > 135KB；135KB 預算對現行 vendor 基底 147KB+ 已不現實）
+- 解法：首屏四模組改直接 import seo-metadata/core（barrel 留給 lazy 頁與測試維持單一路徑），幣別文案落入 34 頁共享 lazy chunk（初始 JS 267.0→251.1KB、app chunk −15.9KB brotli），SSG 254 頁 hash 正規化後零 diff，新增首屏 import 守門測試並將預算重裁為 255KB ratchet（PM 覆核值於 PR 佐證）
 
 - 日期：2026-07-07
 - ID：reward-rw-662-slim-deadclass-j1-snug-tier
