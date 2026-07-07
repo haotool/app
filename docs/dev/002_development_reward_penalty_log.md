@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-651-card-rate-phase2-canary-pipeline
+- 原因：ADR-002 Phase 2 需 data pipeline 以 canary 模式驗證 Visa/MC 清算匯率抓取排程成功率，前提是官方免費 API 不可用且非官方端點被邊緣封鎖，須先實測確認
+- 解法：瀏覽器實測確認 Visa `/cmsapi/fx/rates` 與 MC `conversion-rates` 純 curl 皆 403（Cloudflare/Akamai）、須 headed same-origin context，官方 Developer API 仍需審核＋mutual TLS／訂閱制（前提成立）；新增 fetch-card-rates.mjs（headed＋xvfb 姿態、雙來源逐幣別、schema 契約過關才寫檔）＋card-rates-schema.mjs SSOT＋9 項 contract test，canary workflow 只寫 data 分支 canary/card-rates.json＋成功率記錄（不接前端）並對齊 data-branch-push concurrency、git 3 重試、post-push refresh continue-on-error、outcome 判定、jsDelivr purge 3 重試、連續 3 日失敗自動開 issue，本地實跑 17 幣別雙來源成功佐證
 
 - 日期：2026-07-08
 - ID：reward-rw-624-ssg-localestring-explicit-locale

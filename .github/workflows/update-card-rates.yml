@@ -1,0 +1,275 @@
+# 刷卡匯率 canary 快照（ADR-002 Phase 2）
+#
+# 職責：每日抓取 Visa/MC 清算匯率，寫入 data 分支 canary/card-rates.json（不接前端）。
+# 姿態：headed browser + xvfb（純 fetch 對兩官方端點皆 403，需真瀏覽器 same-origin context）。
+# canary：僅記錄成功率、驗證 schema 契約；連續 3 日失敗自動開 issue 告警。
+# AGPL 隔離：僅參考 ForexRadar 的 workflow 結構，未複製其原始碼。
+
+name: Update Card Rates (Canary)
+
+# 並發控制：與台銀 5 分鐘排程共用 data-branch-push，避免 push race。
+concurrency:
+  group: data-branch-push
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # 每日一次於 14:02 UTC（美東上午後；避開整點降低掉單機率）。
+    # 時點推定依據（MC 無公開權威 refresh 時鐘，2026-07-08 查證）：
+    # - MC 官方僅說明匯率每日更新一次、週末不發布新匯率；第三方長期觀察當日匯率
+    #   需至日中才可用（github.com/XanderXAJ/mastercardConvert Known issues）。
+    # - MC 總部位於美東；取美東營業日上午後（10:02 EDT）為保守時點。
+    # - 實測 Visa cmsapi lastUpdatedVisaRate ≈ 前日 23:50 UTC，14:02 UTC 時兩來源
+    #   當日匯率均已發布。
+    - cron: '2 14 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/fetch-card-rates.mjs'
+      - 'scripts/lib/card-rates-schema.mjs'
+      - '.github/workflows/update-card-rates.yml'
+
+jobs:
+  update-card-rates:
+    runs-on: ubuntu-latest
+
+    # headed 瀏覽器最易掛起；逾時上限防止佔住 data-branch-push 群組癱瘓台銀 5 分鐘排程。
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+      issues: write
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      CANARY_FILE: public/rates/canary/card-rates.json
+      STATUS_FILE: public/rates/canary/card-rates-status.json
+      CONSECUTIVE_FAILURE_THRESHOLD: '3'
+
+    steps:
+      - name: Checkout data branch
+        uses: actions/checkout@v7
+        with:
+          ref: data
+          fetch-depth: 0
+        continue-on-error: true
+
+      - name: Create data branch if not exists
+        if: failure()
+        run: |
+          git checkout -b data main
+          git push -u origin data
+          git checkout data
+
+      - name: Sync fetch scripts from triggering ref
+        run: |
+          # 使用觸發 ref 的腳本版本：schedule 為 main HEAD；push/dispatch 為對應分支。
+          git fetch origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- scripts/fetch-card-rates.mjs
+          git checkout ${{ github.sha }} -- scripts/lib/card-rates-schema.mjs
+          # checkout <sha> -- <path> 會同時寫入 index；必須 unstage，
+          # 否則後續 canary commit 會把程式碼檔混進 data 分支（canary-only 契約）。
+          git restore --staged scripts/fetch-card-rates.mjs scripts/lib/card-rates-schema.mjs
+          mkdir -p public/rates/canary
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Fetch card rates via headed browser (xvfb)
+        id: fetch-rates
+        timeout-minutes: 10
+        continue-on-error: true
+        run: |
+          echo "🤖 Fetching Visa/MC settlement rates via headed browser..."
+          WORK_DIR="$RUNNER_TEMP/card-rates-browser"
+          mkdir -p "$WORK_DIR"
+          cp -r scripts "$WORK_DIR/scripts"
+          pushd "$WORK_DIR" > /dev/null
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund --silent @playwright/test@1.61.1
+          popd > /dev/null
+          # 於暫存目錄執行以解析 @playwright/test，輸出寫回 repo 的 canary 檔。
+          xvfb-run -a node "$WORK_DIR/scripts/fetch-card-rates.mjs" "$GITHUB_WORKSPACE/$CANARY_FILE"
+
+      - name: Record canary success-rate status
+        id: record-status
+        env:
+          FETCH_OUTCOME: ${{ steps.fetch-rates.outcome }}
+          RUN_TRIGGER: ${{ github.event_name }}
+        run: |
+          node -e "
+            const { readFileSync, writeFileSync, mkdirSync, appendFileSync } = require('fs');
+            const path = process.env.STATUS_FILE;
+            const threshold = Number(process.env.CONSECUTIVE_FAILURE_THRESHOLD);
+            const trigger = process.env.RUN_TRIGGER;
+            const ok = process.env.FETCH_OUTCOME === 'success';
+            mkdirSync('public/rates/canary', { recursive: true });
+            let log = [];
+            try { log = JSON.parse(readFileSync(path, 'utf8')).runs ?? []; } catch {}
+            log.push({ date: new Date().toISOString().slice(0, 10), ok, trigger });
+            log = log.slice(-30); // 保留最近 30 筆滾動視窗（涵蓋 14 天 canary）。
+            // 14 天 ≥90% 閘門與連續失敗告警只量測 schedule 排程；
+            // workflow_dispatch 手測與 push 煙霧測試留有紀錄但不污染成功率。
+            const scheduled = log.filter((r) => r.trigger === 'schedule');
+            const recent = scheduled.slice(-threshold);
+            const consecutiveFail = recent.length >= threshold && recent.every((r) => !r.ok);
+            const successRate = scheduled.length
+              ? scheduled.filter((r) => r.ok).length / scheduled.length
+              : 0;
+            writeFileSync(
+              path,
+              JSON.stringify(
+                { runs: log, successRate, scheduledRunCount: scheduled.length },
+                null,
+                2,
+              ) + '\n',
+            );
+            appendFileSync(process.env.GITHUB_OUTPUT, 'consecutive_fail=' + consecutiveFail + '\n');
+            appendFileSync(process.env.GITHUB_OUTPUT, 'success_rate=' + successRate.toFixed(3) + '\n');
+            console.log('canary success rate (schedule-only):', successRate.toFixed(3), 'consecutiveFail:', consecutiveFail);
+          "
+
+      - name: Commit and push canary snapshot
+        id: push-canary
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add "$CANARY_FILE" "$STATUS_FILE" 2>/dev/null || git add "$STATUS_FILE"
+
+          if git diff --cached --quiet; then
+            echo "ℹ️ No canary changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore(card-rates): update canary snapshot - $(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            -m "Visa/MC settlement rates (canary, not wired to frontend)" \
+            -m "🤖 ADR-002 Phase 2 canary pipeline"
+
+          git pull --rebase origin data || true
+          for i in 1 2 3; do
+            echo "📤 Attempting to push (try $i/3)..."
+            if git push origin data; then
+              echo "✅ Push successful"
+              break
+            else
+              if [ $i -lt 3 ]; then
+                echo "⚠️ Push failed, retrying in 5 seconds..."
+                sleep 5
+                git pull --rebase origin data || true
+              else
+                echo "❌ Push failed after 3 attempts"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Purge jsDelivr CDN cache
+        if: steps.fetch-rates.outcome == 'success'
+        run: |
+          echo "🧹 Purging jsDelivr CDN cache..."
+          for URL in \
+            "https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/canary/card-rates.json" \
+            "https://purge.jsdelivr.net/gh/haotool/app@data/public/rates/canary/card-rates-status.json"; do
+            for i in 1 2 3; do
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+              if [ "$HTTP_STATUS" = "200" ]; then
+                echo "✅ Purged ($i): $URL"
+                break
+              else
+                echo "⚠️ Purge attempt $i failed (HTTP $HTTP_STATUS): $URL"
+                if [ $i -lt 3 ]; then sleep 5; fi
+              fi
+            done
+          done
+
+      - name: Refresh canary snapshot from remote data branch
+        id: refresh-remote
+        if: steps.fetch-rates.outcome == 'success'
+        continue-on-error: true
+        run: |
+          # 收尾同步僅用於摘要校對，不得覆蓋已成功的資料推送結果。
+          git rebase --abort 2>/dev/null || true
+          for i in 1 2 3; do
+            echo "🔄 Refreshing canary snapshot from remote (try $i/3)..."
+            if git fetch origin data && git checkout origin/data -- "$CANARY_FILE"; then
+              echo "✅ Remote refresh successful"
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "⚠️ Remote refresh failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+          echo "❌ Remote refresh failed after 3 attempts"
+          exit 1
+
+      - name: Update workflow summary (success)
+        if: steps.fetch-rates.outcome == 'success'
+        run: |
+          echo "# ✅ Card rates canary snapshot updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`data\` → \`$CANARY_FILE\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Canary success rate (schedule-only, rolling):** ${{ steps.record-status.outputs.success_rate }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Currencies:** $(node -p "Object.keys(JSON.parse(require('fs').readFileSync('$CANARY_FILE')).rates).length")" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update time:** $(node -p "JSON.parse(require('fs').readFileSync('$CANARY_FILE')).updateTime")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> Canary 模式：僅寫 data 分支，未接前端（ADR-002 Phase 2，14 天 ≥90% 才進 Phase 3）。" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update workflow summary (remote refresh warning)
+        if: steps.fetch-rates.outcome == 'success' && steps.refresh-remote.outcome == 'failure'
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ Post-push verification warning" >> $GITHUB_STEP_SUMMARY
+          echo "- Canary push succeeded, but GitHub returned a transient error during post-push refresh." >> $GITHUB_STEP_SUMMARY
+          echo "- The workflow kept the successful update and will verify again on the next run." >> $GITHUB_STEP_SUMMARY
+
+      - name: Open alert issue on consecutive failures
+        if: steps.fetch-rates.outcome != 'success' && steps.record-status.outputs.consecutive_fail == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[card-rates-canary] 連續 ${CONSECUTIVE_FAILURE_THRESHOLD} 次抓取失敗"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq 'length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "ℹ️ Alert issue already open, skip"
+            exit 0
+          fi
+          BODY_FILE="$RUNNER_TEMP/card-rates-alert.md"
+          {
+            echo "## 摘要"
+            echo "刷卡匯率 canary pipeline 連續多次抓取失敗（ADR-002 Phase 2）。"
+            echo ""
+            echo "## 背景/證據"
+            echo "- workflow：\`.github/workflows/update-card-rates.yml\`"
+            echo "- 成功率記錄：\`data\` 分支 \`public/rates/canary/card-rates-status.json\`"
+            echo "- 姿態：headed browser + xvfb；官方端點純 fetch 為 403，需真瀏覽器 context"
+            echo ""
+            echo "## 影響"
+            echo "- canary 未達 ≥90% 成功率門檻風險上升；可能觸發 ADR-002 kill criteria 第 3 條（兩輪 14 天 <90%）。"
+            echo ""
+            echo "## 範圍"
+            echo "- 檢查 Visa cmsapi \`/cmsapi/fx/rates\` 與 MC \`conversion-rates\` 端點是否改版"
+            echo "- 檢查邊緣封鎖（Cloudflare/Akamai）姿態是否升級"
+            echo ""
+            echo "## 驗收標準"
+            echo "- 定位失敗根因並修復抓取腳本；canary 恢復連續成功"
+          } > "$BODY_FILE"
+          gh issue create \
+            --title "$TITLE" \
+            --label "bug,severity:p2" \
+            --body-file "$BODY_FILE"
+
+      - name: Fail job to expose persistent outage
+        if: steps.fetch-rates.outcome != 'success'
+        run: |
+          echo "# ⚠️ Card rates canary fetch failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Fetch outcome: ${{ steps.fetch-rates.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Consecutive failure alert: ${{ steps.record-status.outputs.consecutive_fail }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Canary success rate (schedule-only, rolling): ${{ steps.record-status.outputs.success_rate }}" >> $GITHUB_STEP_SUMMARY
+          echo "::error::Card rates canary fetch failed (see canary status log)"
+          exit 1
