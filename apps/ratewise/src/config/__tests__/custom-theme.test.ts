@@ -108,9 +108,9 @@ const ALL_TONES = Object.keys(CUSTOM_BACKGROUND_TONES) as CustomBackgroundTone[]
 const LIGHT_TONES = ALL_TONES.filter((tone) => !isDarkBackgroundTone(tone));
 const DARK_TONES = ALL_TONES.filter((tone) => isDarkBackgroundTone(tone));
 
-// zen 底座固定文字色（[data-style='custom'] 靜態區塊值：slate-900 / slate-500）。
+// zen 底座固定文字色（[data-style='custom'] 靜態區塊值：slate-900 / #641 加深 muted）。
 const BASE_TEXT = '15 23 42';
-const BASE_TEXT_MUTED = '100 116 139';
+const BASE_TEXT_MUTED = '94 110 132';
 
 /**
  * 淺色調新增鍵的 zen 靜態同值合約（獨立宣告，不引用被測模組常數）：
@@ -121,7 +121,7 @@ const EXPECTED_LIGHT_STATIC: Record<string, string> = {
   '--color-surface': '255 255 255',
   '--color-surface-elevated': '248 250 252',
   '--color-text': '15 23 42',
-  '--color-text-muted': '100 116 139',
+  '--color-text-muted': '94 110 132',
   '--color-border': '226 232 240',
   '--color-neutral-light': '241 245 249',
   '--color-neutral': '226 232 240',
@@ -152,6 +152,7 @@ const EXPECTED_LIGHT_STATIC: Record<string, string> = {
   '--color-warning-light': '254 243 199',
   '--color-warning-hover': '253 230 138',
   '--color-warning-active': '252 211 77',
+  '--color-warning-text': '146 64 14',
   '--color-favorite-light': '254 243 199',
   '--color-highlight-from': '254 252 232',
   '--color-highlight-to': '255 251 235',
@@ -399,6 +400,14 @@ describe.each(DARK_TONES.map((tone) => ({ tone })))(
         expect(
           contrast(STATIC_WARNING_TEXT, vars[base]),
           `${hex} warning-text on ${base}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+
+      // #641：深色調 warning-text 覆寫（亮 amber）對深底與 warning 暗 tint AA。
+      for (const base of [...statusBases, '--color-warning-light'] as const) {
+        expect(
+          contrast(vars['--color-warning-text'], vars[base]),
+          `${hex} warning-text override on ${base}`,
         ).toBeGreaterThanOrEqual(4.5);
       }
 

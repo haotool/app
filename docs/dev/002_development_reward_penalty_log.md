@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-641-text-muted-deadclass-activation
+- 原因：tailwind config 缺 `text-muted` 色鍵，全站 ~145 處 38 檔 `text-text-muted` 為死類（dist 零規則、渲染繼承色），另有任意值 `text-[rgb(var(--color-text-muted))]` 分散寫法與 `text-warning-text` 同型缺鍵死類，且無任何守門警示（#640 審查獨立驗證）
+- 解法：補 `'text-muted'` 與 `warning.text` 色鍵（含 `<alpha-value>`）活化死類、任意值寫法統一遷移新類名、alpha 稀釋註腳（/40–/80）收斂實色；活化面 AA 補洞——zen/violet 淺色 muted 加深至 94 110 132、forest 至 105 99 94（sunken 底 ≥4.5:1）、warning-text 落實 amber-800/深色亮 amber（custom-theme derive v2 同步）；新增 text-color-token-guards 雙層守門（編譯層死類清零＋變數層缺 CSS 變數攔截，含突變驗證），7 主題 × 6 頁截圖 diff 逐頁核對
 
 - 日期：2026-07-07
 - ID：reward-rw-647-seo-metadata-first-screen-split

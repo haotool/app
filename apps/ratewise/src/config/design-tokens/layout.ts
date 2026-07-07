@@ -348,19 +348,19 @@ export const singleConverterLayoutTokens = {
     chartHoverHeight:
       'group-hover:h-24 compact:group-hover:h-20 short:group-hover:h-16 tiny:group-hover:h-14 micro:group-hover:h-12 nano:group-hover:h-10',
 
-    /** 換錢所來源 badge 容器（換錢所選中時顯示） */
+    /** 換錢所來源 badge 容器（換錢所選中時顯示）。#641：muted 活化後移除 alpha 稀釋（文字 AA）。 */
     exchangeShopBadge:
-      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted/60',
+      'mx-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-2xs font-medium leading-tight text-text-muted',
 
     /** 換錢所 badge 圖示 */
     exchangeShopBadgeIcon: 'h-3 w-3 shrink-0 text-primary-on-surface',
 
-    /** 換錢所 badge 分隔點 */
-    exchangeShopBadgeDot: 'text-text-muted/40',
+    /** 換錢所 badge 分隔點（裝飾性標點，沿用實色 muted 避免近隱形） */
+    exchangeShopBadgeDot: 'text-text-muted',
 
-    /** 換錢所 badge 來源連結 */
+    /** 換錢所 badge 來源連結。#641：連結文字 AA，移除 alpha 稀釋。 */
     exchangeShopBadgeLink:
-      'text-text-muted/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-on-surface',
+      'text-text-muted underline decoration-dotted underline-offset-2 transition-colors hover:text-primary-on-surface',
   },
 
   /**

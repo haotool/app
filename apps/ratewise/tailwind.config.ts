@@ -1,7 +1,6 @@
 import type { Config } from 'tailwindcss';
 import {
   generateTailwindThemeExtension,
-  spacingTokens,
   typographyTokens,
   breakpointTokens,
   radiusTokens,
@@ -29,11 +28,11 @@ export default {
   theme: {
     ...generateTailwindThemeExtension(),
     extend: {
-      ...generateTailwindThemeExtension().extend,
-      // 字型家族 - 使用 typographyTokens SSOT
+      ...generateTailwindThemeExtension()?.extend,
+      // 字型家族 - 使用 typographyTokens SSOT（展開為可變陣列以符合 Config 型別）
       fontFamily: {
-        sans: typographyTokens.fontFamily.sans,
-        mono: typographyTokens.fontFamily.mono,
+        sans: [...typographyTokens.fontFamily.sans],
+        mono: [...typographyTokens.fontFamily.mono],
       },
       // 自定義間距 - 使用 spacingTokens SSOT 擴展
       spacing: {
@@ -51,6 +50,10 @@ export default {
           sunken: 'rgb(var(--color-surface-sunken) / <alpha-value>)',
         },
         text: 'rgb(var(--color-text) / <alpha-value>)',
+        // #641：text-muted 色鍵（類名 text-text-muted）。text 為 flat 字串鍵無巢狀展開，
+        // Tailwind 解析無歧義；補鍵前 text-text-muted 為死類（dist 零規則、渲染繼承色）。
+        'text-muted': 'rgb(var(--color-text-muted) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
         background: 'rgb(var(--color-background) / <alpha-value>)',
         'background-secondary': 'rgb(var(--color-background-secondary) / <alpha-value>)',
         'background-tertiary': 'rgb(var(--color-background-tertiary) / <alpha-value>)',
@@ -113,7 +116,7 @@ export default {
         'calc-equals-hover': 'rgb(var(--color-calc-equals-hover) / <alpha-value>)',
         'calc-equals-active': 'rgb(var(--color-calc-equals-active) / <alpha-value>)',
         // 保留舊版 token 向後相容
-        ...generateTailwindThemeExtension().extend?.colors,
+        ...generateTailwindThemeExtension()?.extend?.colors,
       },
       // 圓角語義 SSOT（design-tokens/scale.ts radiusTokens）+ Tailwind scale 別名相容
       borderRadius: {

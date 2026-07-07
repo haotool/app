@@ -275,7 +275,7 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
       {basisLabel && (
         <span
           data-testid="trend-basis-label"
-          className="absolute top-1 left-2 z-10 pointer-events-none text-2xs font-medium text-text-muted/80 whitespace-nowrap"
+          className="absolute top-1 left-2 z-10 pointer-events-none text-2xs font-medium text-text-muted whitespace-nowrap"
         >
           {basisLabel}
         </span>
