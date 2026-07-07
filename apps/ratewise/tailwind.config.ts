@@ -170,7 +170,8 @@ export default {
       lg: breakpointTokens.screens.lg.min,
       xl: breakpointTokens.screens.xl.min,
       '2xl': breakpointTokens.screens['2xl'].min,
-      // 高度斷點 - 行動裝置滿版 RWD
+      // 高度斷點 - 行動裝置滿版 RWD（snug 先宣告，讓更小視口梯次後蓋）
+      snug: { raw: breakpointTokens.screens.snug.raw },
       compact: { raw: breakpointTokens.screens.compact.raw },
       short: { raw: breakpointTokens.screens.short.raw },
       tiny: { raw: breakpointTokens.screens.tiny.raw },
@@ -178,6 +179,7 @@ export default {
       nano: { raw: breakpointTokens.screens.nano.raw },
       tall: { raw: breakpointTokens.screens.tall.raw },
       // 極窄寬度斷點 - RateSelector pills 梯次（複雜 screens 下 max-[...] 變體不可用）
+      slim: { raw: breakpointTokens.screens.slim.raw },
       narrow: { raw: breakpointTokens.screens.narrow.raw },
       xnarrow: { raw: breakpointTokens.screens.xnarrow.raw },
     },

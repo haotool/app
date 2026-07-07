@@ -218,7 +218,12 @@ export const breakpointTokens = {
 
     /* ─────────────────────────────────────────────────────────────
      * 高度斷點 (iOS PWA 優化)
+     * 注意：max-height 梯次為累加式 cascade（宣告順序＝覆蓋順序），
+     * snug 必須宣告於 compact 之前，讓更小視口的規則後蓋。
      * ───────────────────────────────────────────────────────────── */
+
+    /** 中高螢幕 - 761–805px 帶（如 360×800），v2 佈局輕度收斂（QA-J J-1） */
+    snug: { raw: '(max-height: 805px)', class: 'snug:' },
 
     /** 中短螢幕 - iPhone 16/15 標準版以下 */
     compact: { raw: '(max-height: 760px)', class: 'compact:' },
@@ -242,6 +247,9 @@ export const breakpointTokens = {
      * 極窄寬度斷點（RateSelector pills 梯次；repo screens 為 object 格式，
      * Tailwind 的 max-[...] 任意變體不會產出，必須用 raw 斷點）
      * ───────────────────────────────────────────────────────────── */
+
+    /** 窄機（≤360px）- 底部導覽上方留白加大（#662，取代死類 max-[360px]） */
+    slim: { raw: '(max-width: 360px)', class: 'slim:' },
 
     /** 極窄寬度第 1 級 - pills icon 隱藏留文字 */
     narrow: { raw: '(max-width: 349px)', class: 'narrow:' },

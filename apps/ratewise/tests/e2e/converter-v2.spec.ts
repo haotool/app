@@ -364,12 +364,29 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
       content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
     });
 
+    // 360×740 / 360×800（QA-J J-1）：snug/compact 壓縮梯次守門，鍵盤底列不得被固定底導覽遮蓋。
     for (const viewport of [
       { width: 390, height: 844 },
       { width: 375, height: 667 },
       { width: 430, height: 932 },
+      { width: 360, height: 740 },
+      { width: 360, height: 800 },
     ]) {
       await page.setViewportSize(viewport);
+
+      // #662：≤360px 寬度時 main 滾動區底部留白必須實際套用 84px（slim 斷點產出守門）。
+      if (viewport.width <= 360) {
+        await expect
+          .poll(
+            () =>
+              page.evaluate(() => {
+                const main = document.querySelector('main');
+                return main ? getComputedStyle(main).paddingBottom : null;
+              }),
+            { message: `${viewport.width}px 寬度 main 底部留白應為 84px` },
+          )
+          .toBe('84px');
+      }
 
       // 一頁完整顯示硬約束：加入 quick chips 後仍不得出現垂直捲動。
       await expect
