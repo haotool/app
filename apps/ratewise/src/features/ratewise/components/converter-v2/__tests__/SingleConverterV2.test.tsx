@@ -5,8 +5,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom/vitest';
 import { SingleConverterV2 } from '../SingleConverterV2';
+import { useConverterTrend } from '../useConverterTrend';
 import type { SingleConverterProps } from '../../SingleConverter';
 import type { CurrencyCode } from '../../../types';
 import type { RateDetails } from '../../../../../utils/offlineStorage';
@@ -1242,5 +1244,402 @@ describe('SingleConverterV2 - 大金額自適應縮放（#590）', () => {
       'aria-label',
       expect.stringContaining('1,636,397.02'),
     );
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-B：運算式列（缺口 5）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('預設與純數字輸入不顯示運算式列（僅計算進行中顯示）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+
+    // 純數字（#633 首鍵取代種子）：無運算子，不視為計算進行中。
+    fireEvent.click(screen.getByTestId('converter-v2-key-7'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+  });
+
+  it('含運算子表達式顯示於活躍列（如「1000 + 5」），settle 後隱藏', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.getByTestId('converter-v2-expression')).toHaveTextContent('1000 + 5');
+
+    // settle（停頓 2s）＝計算結束，運算式列隱藏。
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+  });
+
+  it('CLS 零位移：運算式列為 absolute overlay，不佔版面高度', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    const overlay = screen.getByTestId('converter-v2-expression');
+    expect(overlay.className).toContain('absolute');
+    expect(overlay.className).toContain('pointer-events-none');
+  });
+
+  it('切列（settle 邊界）後運算式列隱藏', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(screen.getByTestId('converter-v2-expression')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+  });
+
+  it('B2 語意變更（swap）取消 settle 同時隱藏運算式列', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    fireEvent.click(screen.getByTestId('converter-v2-swap'));
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-B：換錢所來源切換（缺口 3）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('不支援幣別零暴露：無 exchangeShopCurrency 時不渲染切換鈕', () => {
+    render(<SingleConverterV2 {...buildProps({ onRateSourceChange: vi.fn() })} />);
+
+    expect(screen.queryByTestId('converter-v2-rate-source')).not.toBeInTheDocument();
+  });
+
+  it('支援幣別（KRW）顯示切換鈕，點擊切至換錢所', () => {
+    const onRateSourceChange = vi.fn();
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'TWD',
+          toCurrency: 'KRW',
+          exchangeShopCurrency: 'KRW',
+          onRateSourceChange,
+        })}
+      />,
+    );
+
+    const toggle = screen.getByTestId('converter-v2-rate-source');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(toggle);
+    expect(onRateSourceChange).toHaveBeenCalledWith('exchange-shop');
+  });
+
+  it('換錢所啟用中：chip 標註換錢所（#659 分支）、切換鈕 aria-pressed、再點回銀行', () => {
+    const onRateSourceChange = vi.fn();
+    render(
+      <SingleConverterV2
+        {...buildProps({
+          fromCurrency: 'TWD',
+          toCurrency: 'KRW',
+          rateSource: 'exchange-shop',
+          exchangeShopCurrency: 'KRW',
+          onRateSourceChange,
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId('converter-v2-rate-chip')).toHaveTextContent('換錢所');
+    const toggle = screen.getByTestId('converter-v2-rate-source');
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(toggle);
+    expect(onRateSourceChange).toHaveBeenCalledWith('bank');
+  });
+
+  it('換錢所啟用中 chip tap＝回銀行基準，不切現金／即期', () => {
+    const onRateSourceChange = vi.fn();
+    const props = buildProps({
+      fromCurrency: 'TWD',
+      toCurrency: 'KRW',
+      rateSource: 'exchange-shop',
+      exchangeShopCurrency: 'KRW',
+      onRateSourceChange,
+    });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+
+    expect(onRateSourceChange).toHaveBeenCalledWith('bank');
+    expect(props.onRateTypeChange).not.toHaveBeenCalled();
+  });
+
+  it('B2：pending settle 中切換來源取消寫入（語意變更不寫失真值）', () => {
+    const props = buildProps({
+      fromCurrency: 'TWD',
+      toCurrency: 'KRW',
+      exchangeShopCurrency: 'KRW',
+      onRateSourceChange: vi.fn(),
+    });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-rate-source'));
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-B：SR settle 播報（缺口 10，#620）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('aria-live=polite 摘要區常駐 DOM 且初始為空（SR 註冊 live region 前置條件）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const region = screen.getByTestId('converter-v2-sr-summary');
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region).toHaveTextContent('');
+  });
+
+  it('settle 後播報「{amount} {from} 等於 {result} {to}」，逐鍵期間不播報', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    // 非逐鍵：settle 前不得有播報內容。
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('');
+
+    act(() => {
+      vi.advanceTimersByTime(1700);
+    });
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent(
+      '1,000.00 TWD 等於 31.58 USD',
+    );
+  });
+
+  it('切列 settle 邊界同樣觸發播報（共用同一 settle 事件，無平行計時器）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent(
+      '1,000.00 TWD 等於 31.58 USD',
+    );
+  });
+
+  it('B1 守門共用：金額 0 settle 不播報', () => {
+    const props = buildProps({ fromAmount: '5', toAmount: '0.16' });
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-backspace'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    rerender(<SingleConverterV2 {...props} fromAmount="0" toAmount="0.00" />);
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('');
+  });
+
+  it('視覺零變化：摘要區為 sr-only', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    expect(screen.getByTestId('converter-v2-sr-summary').className).toContain('sr-only');
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-B：趨勢 sheet 強化（缺口 8）', () => {
+  const trendPoints = [
+    { date: '2026-07-01', rate: 31.2 },
+    { date: '2026-07-02', rate: 31.4 },
+    { date: '2026-07-03', rate: 31.6 },
+  ];
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    // 還原檔頭預設 mock，避免污染其他 describe。
+    vi.mocked(useConverterTrend).mockImplementation(() => ({
+      data: [],
+      isLoading: false,
+      trendRateType: 'spot',
+    }));
+  });
+
+  function renderWithRouter(props = buildProps()) {
+    return render(
+      <MemoryRouter>
+        <SingleConverterV2 {...props} />
+      </MemoryRouter>,
+    );
+  }
+
+  function openTrendSheet() {
+    fireEvent.click(screen.getByTestId('converter-v2-sparkline'));
+  }
+
+  it('sheet 內顯示基準切換（現金／即期），點擊切換後標註跟隨', () => {
+    vi.mocked(useConverterTrend).mockImplementation(({ rateType }) => ({
+      data: trendPoints,
+      isLoading: false,
+      trendRateType: rateType,
+    }));
+    renderWithRouter(buildProps({ rateType: 'cash' }));
+    openTrendSheet();
+
+    const cashOption = screen.getByTestId('converter-v2-trend-basis-cash');
+    expect(cashOption).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/基準：現金賣出/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('converter-v2-trend-basis-spot'));
+    expect(screen.getByTestId('converter-v2-trend-basis-spot')).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByText(/基準：即期賣出/)).toBeInTheDocument();
+  });
+
+  it('誠實回落（#564）：KRW 即期序列缺失時切即期，序列與標註同步回落現金賣出', () => {
+    // 模擬 resolveTrendSeries 行為：要求 spot 但可繪點不足 → 回傳 cash 序列＋實際基準 cash。
+    vi.mocked(useConverterTrend).mockImplementation(({ rateType }) =>
+      rateType === 'spot'
+        ? { data: trendPoints, isLoading: false, trendRateType: 'cash' }
+        : { data: trendPoints, isLoading: false, trendRateType: rateType },
+    );
+    renderWithRouter(
+      buildProps({
+        fromCurrency: 'KRW',
+        toCurrency: 'TWD',
+        rateType: 'cash',
+        rateTypeAvailability: { spot: false, cash: true },
+      }),
+    );
+    openTrendSheet();
+
+    fireEvent.click(screen.getByTestId('converter-v2-trend-basis-spot'));
+
+    // 值-標籤同步：實際採用序列為現金 → 標註必須顯示現金賣出，不得宣稱即期。
+    expect(screen.getByText(/基準：現金賣出/)).toBeInTheDocument();
+    expect(screen.queryByText(/基準：即期賣出/)).not.toBeInTheDocument();
+  });
+
+  it('攻略連結：pair 落地頁存在（TWD→USD＝/twd-usd/）時顯示並指向該頁', () => {
+    renderWithRouter();
+    openTrendSheet();
+
+    const link = screen.getByTestId('converter-v2-trend-guide-link');
+    expect(link).toHaveAttribute('href', '/twd-usd/');
+    expect(link).toHaveTextContent('查看 USD 攻略');
+  });
+
+  it('攻略連結：pair 落地頁不存在（USD→JPY）時零暴露', () => {
+    renderWithRouter(buildProps({ fromCurrency: 'USD', toCurrency: 'JPY' }));
+    openTrendSheet();
+
+    expect(screen.queryByTestId('converter-v2-trend-guide-link')).not.toBeInTheDocument();
+  });
+
+  it('換錢所來源時 sheet 隱藏基準切換（無現金／即期語意）', () => {
+    renderWithRouter(
+      buildProps({
+        fromCurrency: 'TWD',
+        toCurrency: 'KRW',
+        rateSource: 'exchange-shop',
+        exchangeShopCurrency: 'KRW',
+        onRateSourceChange: vi.fn(),
+      }),
+    );
+    openTrendSheet();
+
+    expect(screen.queryByTestId('converter-v2-trend-basis-cash')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('converter-v2-trend-basis-spot')).not.toBeInTheDocument();
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-B i18n keys（四語系守門）', () => {
+  const locales = [
+    ['zh-TW', zhTW],
+    ['en', en],
+    ['ja', ja],
+    ['ko', ko],
+  ] as const;
+
+  it.each(locales)('%s 應提供 converterV2.settleAnnouncement（含四個插值槽）', (_name, locale) => {
+    const template = locale.converterV2.settleAnnouncement;
+    expect(template).toEqual(expect.any(String));
+    for (const slot of ['{{amount}}', '{{from}}', '{{result}}', '{{to}}']) {
+      expect(template).toContain(slot);
+    }
+  });
+
+  it.each(locales)(
+    '%s 應提供 converterV2.trendGuideLink 與 trendBasisSwitchLabel',
+    (_name, locale) => {
+      expect(locale.converterV2.trendGuideLink).toContain('{{code}}');
+      expect(locale.converterV2.trendBasisSwitchLabel.length).toBeGreaterThan(0);
+    },
+  );
+
+  it('zh-TW settle 播報格式為「{amount} {from} 等於 {result} {to}」', () => {
+    expect(zhTW.converterV2.settleAnnouncement).toBe('{{amount}} {{from}} 等於 {{result}} {{to}}');
   });
 });

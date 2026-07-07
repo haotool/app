@@ -15,8 +15,10 @@ import {
   lazy,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Store } from 'lucide-react';
 import type { SingleConverterProps } from '../SingleConverter';
 import type { CurrencyCode, RateType } from '../../types';
+import { isCurrencyPagePath, isReverseCurrencyPagePath } from '../../../../config/seo-paths';
 import {
   CURRENCY_DEFINITIONS,
   CURRENCY_QUICK_AMOUNTS,
@@ -69,6 +71,8 @@ interface CurrencyRowProps {
   onActivate: (field: RowField) => void;
   /** 長按（或桌面右鍵）金額列時複製換算結果（E8 缺口 6）。 */
   onCopyResult: () => void;
+  /** 計算進行中的迷你運算式（E8 缺口 5）；僅活躍列顯示，overlay 定位不佔版面高度。 */
+  liveExpression?: string | null;
 }
 
 function CurrencyRow({
@@ -79,6 +83,7 @@ function CurrencyRow({
   onOpenPicker,
   onActivate,
   onCopyResult,
+  liveExpression = null,
 }: CurrencyRowProps) {
   const { t } = useTranslation();
   const display = formatAmountDisplay(amount, currency) || '0';
@@ -163,10 +168,21 @@ function CurrencyRow({
   return (
     <div
       data-testid={`converter-v2-row-${field}`}
-      className={`flex items-center gap-3 px-4 py-3 short:py-1 transition-colors ${
+      className={`relative flex items-center gap-3 px-4 py-3 short:py-1 transition-colors ${
         isActive ? 'bg-primary/5' : ''
       }`}
     >
+      {/* E8 缺口 5：迷你運算式列——absolute overlay 疊在列頂緣，顯示/隱藏零位移（CLS 0）。
+          justify-end＋overflow-hidden：超長表達式左緣截尾，最新輸入（右端）必可見。 */}
+      {isActive && liveExpression && (
+        <div
+          data-testid="converter-v2-expression"
+          aria-hidden="true"
+          className="pointer-events-none absolute right-4 top-0 left-24 flex h-4 items-center justify-end overflow-hidden whitespace-nowrap text-2xs font-medium tabular-nums text-neutral-text-muted"
+        >
+          {liveExpression}
+        </div>
+      )}
       <button
         type="button"
         onClick={() => onOpenPicker(field)}
@@ -266,6 +282,7 @@ export const SingleConverterV2 = ({
   onSwapCurrencies,
   onAddToHistory,
   onRateTypeChange,
+  onRateSourceChange,
   rateSource = DEFAULT_RATE_SOURCE,
   moneyBoxRate = null,
   exchangeShopCurrency = null,
@@ -279,6 +296,15 @@ export const SingleConverterV2 = ({
   const [keypadSession, setKeypadSession] = useState(0);
   // E8 缺口 4：rate chip 顯示方向翻轉（僅顯示層，不改變計價基準與換算引擎）。
   const [isRateFlipped, setIsRateFlipped] = useState(false);
+  // E8 缺口 5：計算進行中的原始表達式（含運算子才視為進行中）；settle／語意變更後清空。
+  const [liveExpression, setLiveExpression] = useState<string | null>(null);
+  // E8 缺口 10（#620）：最近一次 settle 的換算快照，供 aria-live 播報（非逐鍵）。
+  const [settledSnapshot, setSettledSnapshot] = useState<{
+    fromCurrency: CurrencyCode;
+    toCurrency: CurrencyCode;
+    fromAmount: string;
+    toAmount: string;
+  } | null>(null);
 
   // E8 缺口 2：換算 settle（輸入停頓 2s／切列／離開）寫入既有歷史 store。
   // dirty 僅在使用者實際輸入（keypad 回寫、快速金額）後為真；flush 共用 v1 addToHistory API。
@@ -301,12 +327,17 @@ export const SingleConverterV2 = ({
     }
     if (!settleDirtyRef.current) return;
     settleDirtyRef.current = false;
+    // E8 缺口 5：settle 即結束「計算進行中」，運算式列隱藏。
+    setLiveExpression(null);
     const snapshot = settleSnapshotRef.current;
     // B1 守門 1：金額 0／空／非有限值不寫（含 backspace 清到 0 後停頓 2s 路徑）。
     const parsedAmount = parseFloat(snapshot.fromAmount);
     const parsedResult = parseFloat(snapshot.toAmount);
     if (!Number.isFinite(parsedAmount) || parsedAmount === 0) return;
     if (!Number.isFinite(parsedResult) || parsedResult === 0) return;
+    // E8 缺口 10（#620）：settle 播報換算結果，與歷史寫入共用同一 settle 事件；
+    // 置於去重守門之前——同值重輸入仍屬使用者輸入旅程，SR 回饋不因歷史去重而消失。
+    setSettledSnapshot({ ...snapshot });
     // B1 守門 2：與上一筆自動寫入同值（from/to/amount）去重，避免重複紀錄。
     const entryKey = `${snapshot.fromCurrency}|${snapshot.toCurrency}|${snapshot.fromAmount}`;
     if (lastAutoWrittenKeyRef.current === entryKey) return;
@@ -323,6 +354,7 @@ export const SingleConverterV2 = ({
       settleTimerRef.current = null;
     }
     settleDirtyRef.current = false;
+    setLiveExpression(null);
   }, []);
 
   const scheduleHistorySettle = useCallback(() => {
@@ -335,6 +367,20 @@ export const SingleConverterV2 = ({
 
   // 離開（unmount）時 flush 未結算的換算，避免最後一筆遺失。
   useEffect(() => flushHistorySettle, [flushHistorySettle]);
+
+  // E8 缺口 5：keypad 表達式回報。含運算子（首字元後）才視為「計算進行中」；
+  // 純數字與掛載種子不顯示。進行中若已有 pending settle，運算子按鍵同步展延計時
+  // （使用者仍在組式，不提前結算），維持與缺口 2 同一 settle 機制、無平行計時器。
+  const handleExpressionChange = useCallback(
+    (expression: string) => {
+      const inProgress = /[+×÷]/.test(expression) || expression.slice(1).includes('-');
+      setLiveExpression(inProgress ? expression.replace(/([+×÷-])/g, ' $1 ').trim() : null);
+      if (inProgress && settleDirtyRef.current) {
+        scheduleHistorySettle();
+      }
+    },
+    [scheduleHistorySettle],
+  );
 
   const trend = useConverterTrend({
     fromCurrency,
@@ -352,6 +398,32 @@ export const SingleConverterV2 = ({
     if (first === undefined || last === undefined || first === 0) return null;
     return ((last - first) / first) * 100;
   }, [sparklineData]);
+
+  // E8 缺口 8：趨勢 sheet 內的基準切換（現金／即期）。選擇以 pair＋卡片基準為鍵：
+  // pair 或卡片基準變更即回落跟隨卡片（render 期推導，免 effect 重置）。
+  const [sheetBasisSelection, setSheetBasisSelection] = useState<{
+    key: string;
+    basis: RateType;
+  } | null>(null);
+  const sheetBasisKey = `${fromCurrency}|${toCurrency}|${rateType}`;
+  const sheetBasis: RateType =
+    sheetBasisSelection?.key === sheetBasisKey ? sheetBasisSelection.basis : rateType;
+  const handleSheetBasisChange = useCallback(
+    (basis: RateType) => setSheetBasisSelection({ key: sheetBasisKey, basis }),
+    [sheetBasisKey],
+  );
+  // sheet 專屬序列：跟隨 sheet 選擇的基準；即期序列不足時 hook 內
+  // resolveTrendSeries（#564）誠實回落現金並回傳實際採用基準，值與標註同源。
+  const sheetTrend = useConverterTrend({
+    fromCurrency,
+    toCurrency,
+    rateSource,
+    moneyBoxRate,
+    exchangeShopCurrency,
+    rateType: sheetBasis,
+    maxDays: TREND_FETCH_DAYS,
+  });
+  const sheetTrendRateType = sheetTrend.trendRateType ?? sheetBasis;
 
   // 匯率與實際採用 basis 由引擎一次回傳：值與標籤共用同一選價決策（QA-I D1 review）。
   const { rate: exchangeRate, side: rateSide } = getUnitExchangeRateWithBasis(
@@ -477,22 +549,47 @@ export const SingleConverterV2 = ({
       ? t('converterV2.rateBasisExchangeShop')
       : resolveBankBasisLabel(rateSide);
 
-  // 趨勢圖基準標註跟隨實際資料序列（#564）：即期序列不足回落現金賣出時標註同步。
-  const trendBasisLabel =
+  // E8 缺口 3：換錢所來源切換。支援幣別（exchangeShopCurrency 非空）才渲染切換鈕（零暴露）。
+  const isExchangeShopActive = rateSource === 'exchange-shop' && !!exchangeShopCurrency;
+  const canToggleRateSource = !!exchangeShopCurrency && !!onRateSourceChange;
+  const handleToggleRateSource = () => {
+    if (!onRateSourceChange) return;
+    // B2：來源切換後兩列金額以新來源重算，pending settle 語意失真，取消不寫。
+    cancelHistorySettle();
+    onRateSourceChange(isExchangeShopActive ? 'bank' : 'exchange-shop');
+  };
+
+  // 趨勢 sheet 基準標註跟隨 sheet 實際採用序列（#564 誠實回落）：值與標籤同源。
+  const sheetBasisLabel =
     rateSource === 'exchange-shop' && exchangeShopCurrency
       ? t('converterV2.rateBasisExchangeShop')
-      : trend.trendRateType === 'cash'
+      : sheetTrendRateType === 'cash'
         ? t('converterV2.rateBasisCash')
         : t('converterV2.rateBasisSpot');
 
+  // E8 缺口 8：「查看 {幣別} 攻略」連結——以 seo-paths SSOT 判斷該 pair 落地頁存在才顯示。
+  const pairGuidePath = `/${fromCurrency.toLowerCase()}-${toCurrency.toLowerCase()}/`;
+  const trendGuidePath =
+    isCurrencyPagePath(pairGuidePath) || isReverseCurrencyPagePath(pairGuidePath)
+      ? pairGuidePath
+      : null;
+  const trendGuideCode = fromCurrency === 'TWD' ? toCurrency : fromCurrency;
+
   // 切換目標基準不可用時（如 KRW 無即期），chip 進入不可用態並以 tooltip 說明原因。
+  // 換錢所啟用中 chip 語意改為「回銀行基準」，不進入不可用態。
   const nextRateType: RateType = rateType === 'cash' ? 'spot' : 'cash';
-  const isBasisToggleDisabled = !rateTypeAvailability[nextRateType];
+  const isBasisToggleDisabled = !isExchangeShopActive && !rateTypeAvailability[nextRateType];
   const basisUnavailableMessage = t('singleConverter.rateTypeUnavailable', {
     rateType: t(nextRateType === 'spot' ? 'singleConverter.spotRate' : 'singleConverter.cashRate'),
   });
 
   const handleToggleBasis = () => {
+    // 換錢所啟用中：chip tap＝回到銀行基準（對齊 v1 RateSelector pill 語意），不切現金／即期。
+    if (isExchangeShopActive) {
+      cancelHistorySettle();
+      onRateSourceChange?.('bank');
+      return;
+    }
     if (isBasisToggleDisabled) return;
     // B2：基準切換後兩列金額以新基準重算，pending settle 語意失真，取消不寫。
     // 翻轉態不重置（同 pair 內保留，S4）。
@@ -512,7 +609,9 @@ export const SingleConverterV2 = ({
       type="button"
       onClick={handleToggleBasis}
       data-testid="converter-v2-rate-chip"
-      aria-label={t('converterV2.toggleRateBasis')}
+      aria-label={
+        isExchangeShopActive ? t('multiConverter.switchToBank') : t('converterV2.toggleRateBasis')
+      }
       // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
       // RateTypeTooltip 的禁用原因提示將永遠無法觸發（onClick guard 已阻擋切換）。
       aria-disabled={isBasisToggleDisabled || undefined}
@@ -541,6 +640,7 @@ export const SingleConverterV2 = ({
           onOpenPicker={setPickerFor}
           onActivate={handleActivateRow}
           onCopyResult={handleCopyResultSync}
+          liveExpression={liveExpression}
         />
         <div className="relative flex items-center px-4" data-testid="converter-v2-divider">
           <div className="h-px flex-1 bg-border/60" />
@@ -578,6 +678,7 @@ export const SingleConverterV2 = ({
           onOpenPicker={setPickerFor}
           onActivate={handleActivateRow}
           onCopyResult={handleCopyResultSync}
+          liveExpression={liveExpression}
         />
       </div>
 
@@ -590,6 +691,28 @@ export const SingleConverterV2 = ({
           </RateTypeTooltip>
         ) : (
           rateChipButton
+        )}
+        {/* E8 缺口 3：換錢所來源切換鈕（bank ⇄ exchange-shop）。僅支援幣別（如 KRW）渲染，
+            不支援幣別零暴露；與 ⇄ 鈕同規格 icon-only 44px 熱區，320px 視口不溢出。 */}
+        {canToggleRateSource && (
+          <button
+            type="button"
+            onClick={handleToggleRateSource}
+            data-testid="converter-v2-rate-source"
+            aria-label={
+              isExchangeShopActive
+                ? t('multiConverter.switchToBank')
+                : t('singleConverter.switchToExchangeShop')
+            }
+            aria-pressed={isExchangeShopActive}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+              isExchangeShopActive
+                ? 'bg-primary/10 text-primary-on-surface'
+                : 'text-neutral-text-secondary hover:bg-primary/10 hover:text-primary-on-surface'
+            }`}
+          >
+            <Store className="h-4 w-4" aria-hidden="true" />
+          </button>
         )}
         <button
           type="button"
@@ -694,8 +817,31 @@ export const SingleConverterV2 = ({
           key={`${activeRow}-${keypadSession}`}
           initialValue={keypadSeed}
           onValueChange={handleKeypadValue}
+          onExpressionChange={handleExpressionChange}
           keyboardEnabled={pickerFor === null && !isTrendOpen}
         />
+      </div>
+
+      {/* E8 缺口 10（#620）：settle 後以 aria-live 播報換算結果（非逐鍵，節流即 settle 機制本身）。
+          常駐 DOM 供 SR 註冊 live region；視覺隱藏（sr-only），畫面零變化。 */}
+      <div
+        aria-live="polite"
+        role="status"
+        className="sr-only"
+        data-testid="converter-v2-sr-summary"
+      >
+        {settledSnapshot
+          ? t('converterV2.settleAnnouncement', {
+              amount:
+                formatAmountDisplay(settledSnapshot.fromAmount, settledSnapshot.fromCurrency) ||
+                settledSnapshot.fromAmount,
+              from: settledSnapshot.fromCurrency,
+              result:
+                formatAmountDisplay(settledSnapshot.toAmount, settledSnapshot.toCurrency) ||
+                settledSnapshot.toAmount,
+              to: settledSnapshot.toCurrency,
+            })
+          : ''}
       </div>
 
       <CurrencyPickerSheet
@@ -710,8 +856,13 @@ export const SingleConverterV2 = ({
         onClose={() => setIsTrendOpen(false)}
         fromCurrency={fromCurrency}
         toCurrency={toCurrency}
-        data={trend.data}
-        basisLabel={trendBasisLabel}
+        data={sheetTrend.data}
+        basisLabel={sheetBasisLabel}
+        basis={sheetBasis}
+        onBasisChange={handleSheetBasisChange}
+        showBasisToggle={!isExchangeShopActive}
+        guidePath={trendGuidePath}
+        guideCode={trendGuideCode}
       />
     </div>
   );
