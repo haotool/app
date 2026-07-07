@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+177
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+178
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-653-persisted-v2-hydration-two-pass
+- 原因：persisted singleConverterVariant=v2 冷載時，SingleConverter 的 client snapshot 於 hydration 期間即回傳 v2，converterStore rehydrate／遷移觸發的 store 更新會迫使未完成 hydration 的邊界以 v2 內容對 SSG 的 legacy HTML 進行 client render → React #418（間歇、舊 profile 必現，issue #653）
+- 解法：two-pass render——hydration commit 前 uSES 的 client snapshot 一律沿用 server snapshot（legacy），commit 後的 layout effect（paint 前，對齊 RememberedHomeRoute 慣例）才改讀 persisted 偏好；契約測試以 onRecoverableError 收集 hydration 錯誤並以首次 commit 的 layout 階段取樣鑑別壞版（base 還原版與 hydrated 初值 true 版必紅），SSG 255 頁正規化零 diff、Playwright 冷載 console 驗證
 
 - 日期：2026-07-07
 - ID：reward-rw-594-stage3-tablet-reading-width-a11-a12
