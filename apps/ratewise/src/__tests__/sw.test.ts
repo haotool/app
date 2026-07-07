@@ -298,7 +298,7 @@ describe('Service Worker Cache Strategies', () => {
     expect(sourceCode).toContain('new NetworkOnly(');
   });
 
-  it('should fetch manifest.webmanifest with NetworkOnly to avoid stale relative start_url', async () => {
+  it('should fetch manifest.webmanifest network-first with offline runtime cache fallback', async () => {
     const fs = await import('node:fs/promises');
     const path = await import('node:path');
 
@@ -307,6 +307,99 @@ describe('Service Worker Cache Strategies', () => {
 
     expect(sourceCode).toContain("url.pathname.endsWith('.webmanifest')");
     expect(sourceCode).not.toContain('.(webmanifest|txt|xml)$');
+    // issue 656：線上永遠走網路（no-cache＋ETag 條件請求不變），僅離線回退 runtime cache 副本。
+    // 防回歸：manifest 不得改回 SWR／NetworkOnly（前者回舊版相對 start_url 觸發冷啟動
+    // HTTPS-First 警告，後者離線 reload 產生 manifest ERR_FAILED）。
+    expect(sourceCode).toContain('handleManifestRequest');
+    expect(sourceCode).toContain("const MANIFEST_CACHE_NAME = 'manifest-cache'");
+  });
+
+  describe('handleManifestRequest（issue 656）', () => {
+    const manifestUrl = 'https://example.com/ratewise/manifest.webmanifest';
+
+    function createManifestResponse(body: string): Response {
+      return new Response(body, {
+        status: 200,
+        headers: { 'Content-Type': 'application/manifest+json' },
+      });
+    }
+
+    async function loadManifestHandler() {
+      // 先確保 sw.ts 已載入（模組快取，重複 import 為 no-op），再由 registerRoute mock
+      // 擷取 .webmanifest route 的 handler。
+      await import('../sw.ts');
+      const routing = await import('workbox-routing');
+      const registerRouteMock = routing.registerRoute as unknown as ReturnType<typeof vi.fn>;
+      // 其他 route matcher 可能依賴 self.location 等未 stub 全域，探測時以 try/catch 略過。
+      const probe = { url: new URL(manifestUrl), request: new Request(manifestUrl) };
+      const manifestCall = registerRouteMock.mock.calls.find((call: unknown[]) => {
+        if (typeof call[0] !== 'function') return false;
+        try {
+          return Boolean((call[0] as (params: typeof probe) => boolean)(probe));
+        } catch {
+          return false;
+        }
+      });
+      expect(manifestCall).toBeDefined();
+      return manifestCall![1] as (params: { request: Request }) => Promise<Response>;
+    }
+
+    it('線上：回傳網路回應並寫入 manifest-cache', async () => {
+      const manifestCache = { match: vi.fn(), put: vi.fn() };
+      const cachesOpenLocal = vi.fn().mockResolvedValue(manifestCache);
+      vi.stubGlobal('caches', {
+        open: cachesOpenLocal,
+        match: vi.fn(),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn(),
+      });
+      const networkBody = '{"name":"fresh"}';
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createManifestResponse(networkBody)));
+
+      const handler = await loadManifestHandler();
+      const response = await handler({ request: new Request(manifestUrl) });
+
+      expect(await response.text()).toBe(networkBody);
+      expect(cachesOpenLocal).toHaveBeenCalledWith('manifest-cache');
+      expect(manifestCache.put).toHaveBeenCalledTimes(1);
+    });
+
+    it('離線：網路失敗時回退 manifest-cache 副本（零 ERR_FAILED）', async () => {
+      const cachedBody = '{"name":"cached"}';
+      const manifestCache = {
+        match: vi.fn().mockResolvedValue(createManifestResponse(cachedBody)),
+        put: vi.fn(),
+      };
+      vi.stubGlobal('caches', {
+        open: vi.fn().mockResolvedValue(manifestCache),
+        match: vi.fn(),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn(),
+      });
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      const handler = await loadManifestHandler();
+      const response = await handler({ request: new Request(manifestUrl) });
+
+      expect(await response.text()).toBe(cachedBody);
+      expect(manifestCache.put).not.toHaveBeenCalled();
+    });
+
+    it('離線且無快取副本：維持原網路錯誤（不吞錯誤偽裝成功）', async () => {
+      const manifestCache = { match: vi.fn().mockResolvedValue(undefined), put: vi.fn() };
+      vi.stubGlobal('caches', {
+        open: vi.fn().mockResolvedValue(manifestCache),
+        match: vi.fn(),
+        keys: vi.fn().mockResolvedValue([]),
+        delete: vi.fn(),
+      });
+      const networkError = new TypeError('Failed to fetch');
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(networkError));
+
+      const handler = await loadManifestHandler();
+
+      await expect(handler({ request: new Request(manifestUrl) })).rejects.toBe(networkError);
+    });
   });
 
   // 🔴 RED: JS/CSS 應使用 CacheFirst（Vite hash-based filenames 是 immutable）

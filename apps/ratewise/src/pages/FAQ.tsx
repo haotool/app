@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronRight } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { APP_INFO } from '../config/app-info';
 import { MailtoLink } from '../components/MailtoLink';
@@ -26,6 +27,11 @@ function renderFaqAnswer(answer: string): React.ReactNode {
 }
 
 const FAQ_ENTRIES = FAQ_PAGE_SEO.faqContent ?? [];
+// per-question 錨點 id 由 SSOT 條目序位派生（對齊指南頁 step-N 慣例），供 TOC 側跳與分享深連結。
+const FAQ_TOC = FAQ_ENTRIES.map((entry, index) => ({
+  id: `faq-q${index + 1}`,
+  question: entry.question,
+}));
 const LAST_UPDATED = new Date(SITE_SEO.updatedTime).toLocaleDateString('zh-TW', {
   year: 'numeric',
   month: 'long',
@@ -55,7 +61,8 @@ const SECTIONS: readonly ContentSection[] = [
   },
   {
     kind: 'faq',
-    items: FAQ_ENTRIES.map((entry) => ({
+    items: FAQ_ENTRIES.map((entry, index) => ({
+      id: FAQ_TOC[index]?.id,
       question: entry.question,
       answer: renderFaqAnswer(entry.answer),
     })),
@@ -80,8 +87,41 @@ const SECTIONS: readonly ContentSection[] = [
   },
 ];
 
+// TOC 連結清單（行動摺疊與桌面 sticky 側欄共用）。
+function FaqTocLinks() {
+  return (
+    <div className="grid gap-1">
+      {FAQ_TOC.map((item, index) => (
+        <a
+          key={item.id}
+          href={`#${item.id}`}
+          className="inline-flex min-h-11 items-center text-sm text-primary-on-surface transition-colors hover:underline"
+        >
+          {index + 1}. {item.question}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function FAQ() {
   const { t } = useTranslation();
+
+  // 錨點深連結／TOC 側跳：目標為摺疊的 details 時自動展開，確保跳轉後答案可讀。
+  useEffect(() => {
+    const openTargetFaq = () => {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (target instanceof HTMLDetailsElement) {
+        target.open = true;
+      }
+    };
+    openTargetFaq();
+    window.addEventListener('hashchange', openTargetFaq);
+    return () => window.removeEventListener('hashchange', openTargetFaq);
+  }, []);
+
   return (
     <>
       <SEOHelmet
@@ -94,6 +134,7 @@ export default function FAQ() {
       />
 
       <ContentPageLayout
+        width="wide-lg"
         breadcrumbItems={[
           { label: t('nav.home'), href: '/' },
           { label: t('settings.faq'), href: '/faq/' },
@@ -112,10 +153,39 @@ export default function FAQ() {
           }
         />
 
-        {/* AEO/GEO 快速答案：AI 引擎直接引用的核心問答，放在 FAQ 頂部提升引用率。 */}
-        <AnswerCapsule items={FAQ_PAGE_SEO.answerCapsule ?? []} />
+        {/* 目錄對齊指南頁 rail 模式：桌面 sticky 側欄、行動摺疊；整段包在 nav 內
+            （導覽 chrome 不計入可見內容文字，heading outline 亦不變）。 */}
+        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <nav aria-label="常見問題目錄" className="lg:sticky lg:top-6 lg:self-start">
+            {/* 行動版：摺疊目錄（21 題長清單預設收合，不推擠首屏答案內容）。 */}
+            <details className="group rounded-card border border-border/60 bg-surface shadow-card lg:hidden">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-5 [&::-webkit-details-marker]:hidden">
+                <span className="text-base font-semibold leading-normal text-text">
+                  快速導航（{FAQ_TOC.length} 題）
+                </span>
+                <ChevronRight
+                  className="h-5 w-5 shrink-0 text-text-muted transition-transform duration-200 group-open:rotate-90"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div className="border-t border-border/60 px-5 pb-5 pt-3">
+                <FaqTocLinks />
+              </div>
+            </details>
+            {/* 桌面版：sticky 側欄（超出視窗高度時欄內捲動）。 */}
+            <div className="hidden rounded-card border border-border/60 bg-surface p-5 shadow-card lg:block lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+              <p className="mb-3 text-base font-semibold leading-normal text-text">快速導航</p>
+              <FaqTocLinks />
+            </div>
+          </nav>
 
-        <ContentSections sections={SECTIONS} />
+          <div className="min-w-0 space-y-6">
+            {/* AEO/GEO 快速答案：AI 引擎直接引用的核心問答，放在 FAQ 頂部提升引用率。 */}
+            <AnswerCapsule items={FAQ_PAGE_SEO.answerCapsule ?? []} />
+
+            <ContentSections sections={SECTIONS} />
+          </div>
+        </div>
       </ContentPageLayout>
     </>
   );

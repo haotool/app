@@ -29,6 +29,7 @@ import { rateWiseLayoutTokens } from '../../config/design-tokens';
 import type { CurrencyCode, RateSource, RateType } from './types';
 import { CURRENCY_DEFINITIONS, DEFAULT_CONVERTER_MODE } from './constants';
 import { useRememberConverterView } from './hooks/useRememberConverterView';
+import { isDeepLinkEntry } from './components/coldStartRestore';
 import { useConverterStore } from '../../stores/converterStore';
 import {
   getPairRateTypeAvailability,
@@ -37,13 +38,9 @@ import {
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
-  // deep-link（分享連結帶 from/to/amount，或 ?cardRate flag 入口）只是臨時進入，
-  // 不應覆寫上次停留模式偏好；與 RememberedHomeRoute 的 hasDeepLink 豁免同一契約。
-  const isDeepLink =
-    searchParams.has('from') ||
-    searchParams.has('to') ||
-    searchParams.has('amount') ||
-    searchParams.has('cardRate');
+  // deep-link（分享連結或 ?converter=／?cardRate= 等 URL override）只是臨時進入，
+  // 不應覆寫上次停留模式偏好；與 RememberedHomeRoute 的 hasDeepLink 豁免同一契約（#654）。
+  const isDeepLink = isDeepLinkEntry(searchParams);
   // 還原決策完成前（hydrate 中或將導向 multi）不得寫入，否則會把 persist 的 multi 覆寫成 single。
   useRememberConverterView(DEFAULT_CONVERTER_MODE, {
     enabled: !isDeepLink && rememberConverterView,

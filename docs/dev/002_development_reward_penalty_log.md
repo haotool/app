@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-656-manifest-offline-runtime-fallback
+- 原因：manifest.webmanifest 走 NetworkOnly（防 SWR 回舊版相對 start_url），離線 reload 時 fetch 直接失敗產生 ERR_FAILED ×2（issue 656）
+- 解法：改為 handleManifestRequest 自訂 network-first——線上永遠走網路（no-cache＋ETag 條件請求行為不變）成功即寫入 manifest-cache，僅離線／網路失敗時回退 runtime cache 副本、無副本時維持原錯誤不吞錯，sw.test.ts 補 3 項 handler 行為測試與策略守門更新（不引入 Workbox NetworkFirst 保持 navigation 防回歸斷言）
+
+- 日期：2026-07-07
+- ID：reward-rw-655-faq-toc-per-question-anchors
+- 原因：FAQ 頁 21 題長頁無 TOC 與 per-question 錨點（指南頁有快速導航，體驗不一致），題目無 id 不可分享深連結（issue 655）
+- 解法：錨點 id 由 seo-metadata SSOT 條目序位派生（faq-qN，對齊指南頁 step-N 慣例）並掛 scroll-mt safe-area 偏移，TOC 對齊指南頁 rail 模式（桌面 sticky 側欄、行動摺疊）且整段包在 nav 導覽 chrome 內（heading outline 與可見內容文字零變動），hash 深連結與 TOC 側跳自動展開目標 details，FAQ.test.tsx 補 5 項驗收測試
+
+- 日期：2026-07-07
+- ID：reward-rw-654-remembered-redirect-query-exemption
+- 原因：RememberedHomeRoute 深連結豁免採 from/to/amount/cardRate 白名單，?converter=legacy 等白名單外 URL override 進站被 persisted multi redirect 劫持（issue 654）
+- 解法：新增 isDeepLinkEntry 通用豁免（任何帶 query 進站皆視為深連結，取代白名單避免新增參數時漂移），RememberedHomeRoute 與 RateWise 偏好寫入共用同一契約，單元測試補 8 項 query 豁免矩陣與 converter=legacy override 解析斷言
 
 - 日期：2026-07-07
 - ID：reward-rw-e7-theme-studio-wave-b-ux-safety
