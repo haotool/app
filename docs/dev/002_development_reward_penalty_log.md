@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+179
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+180
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-e8-wave-a-v2-completeness
+- 原因：v2 等值雙列相對 v1 缺快速金額、歷史寫入、雙向匯率與複製結果四項能力（E8 簡報缺口 1/2/4/6），且補全不得把 390×844／375×667／430×932 首屏推出視口（一頁完整顯示硬約束）
+- 解法：quick chips 內嵌 keypad 第 0 列（沿用 CURRENCY_QUICK_AMOUNTS SSOT，點擊取代活躍列＋remount 重播種子保 #633 首鍵取代語意）、換算 settle（停頓 2s／切列／unmount）經 addToHistory({notify:false}) 共用 v1 歷史 store API 靜默寫入、chip 旁獨立 ⇄ 鈕翻轉顯示方向（chip 本體 tap 保留基準切換契約）、金額列長按 500ms／桌面右鍵複製走 formatConversionForCopy＋toast 對齊 v1 慣例；≤667 以 short: 梯次壓縮（chips h-7、行距/間距/走勢圖收斂）使 keypad 底緣不被固定導覽列遮蓋，e2e 三視口斷言 scrollHeight===innerHeight＋互動元素底緣 ≤ nav 頂緣＋keypad 30-40% 預算
 
 - 日期：2026-07-07
 - ID：reward-rw-651-card-rate-phase1-estimator

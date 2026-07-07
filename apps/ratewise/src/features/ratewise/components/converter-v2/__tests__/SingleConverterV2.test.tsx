@@ -73,6 +73,12 @@ vi.mock('../useConverterTrend', () => ({
   useConverterTrend: vi.fn(() => ({ data: [], isLoading: false })),
 }));
 
+// toast mock：E8 複製回饋斷言用；同時避免無 provider 時的 console.warn 噪音。
+const { showToastMock } = vi.hoisted(() => ({ showToastMock: vi.fn() }));
+vi.mock('../../../../../components/Toast', () => ({
+  useToast: () => ({ showToast: showToastMock }),
+}));
+
 const mockExchangeRates: Record<CurrencyCode, number | null> = {
   TWD: 1,
   USD: 31.665,
@@ -679,6 +685,503 @@ describe('SingleConverterV2 - 實體鍵盤（#587）', () => {
 
     expect(props.onFromAmountChange).not.toHaveBeenCalled();
     expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-A：快速金額 chips（缺口 1）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('chips 內嵌 keypad 頂列，金額跟隨活躍列幣別（v1 SSOT 常數）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const keypad = screen.getByTestId('converter-v2-keypad');
+    const chips = screen.getByTestId('converter-v2-quick-chips');
+    // chips 必須在 keypad 容器內（單排頂列，不佔獨立區塊）。
+    expect(keypad.contains(chips)).toBe(true);
+    // 活躍列預設 from（TWD）：顯示 TWD 的 SSOT 快速金額。
+    expect(screen.getByTestId('converter-v2-quick-1000')).toHaveTextContent('1,000');
+    expect(screen.getByTestId('converter-v2-quick-5000')).toHaveTextContent('5,000');
+  });
+
+  it('切換活躍列後 chips 跟隨該列幣別（USD SSOT 金額）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+
+    // USD SSOT：10/20/50/100/500；TWD 專屬的 3000 不得出現。
+    expect(screen.getByTestId('converter-v2-quick-20')).toBeInTheDocument();
+    expect(screen.queryByTestId('converter-v2-quick-3000')).not.toBeInTheDocument();
+  });
+
+  it('點擊 chip 取代活躍列金額（非串接）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-quick-500'));
+
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('500');
+    expect(props.onToAmountChange).not.toHaveBeenCalled();
+  });
+
+  it('chip 取代後首顆數字鍵沿用 #633 取代語意（不串接在 chip 金額之後）', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-quick-500'));
+    // 父層回寫後 remount keypad 重播種子（閘門關閉）。
+    rerender(<SingleConverterV2 {...props} fromAmount="500" />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-7'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    // 修正錯誤語意時會回寫 '5007'；正確為取代種子後的 '7'。
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('7');
+  });
+
+  it('S3：chip 點擊觸發 keypad 重播種子，chips 列不 remount（DOM 同一節點、scroll／focus 保留）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const chips = screen.getByTestId('converter-v2-quick-chips');
+    const chip = screen.getByTestId('converter-v2-quick-500');
+    chips.scrollLeft = 120;
+    chip.focus();
+
+    // 點擊 chip：keypadSession +1 → keypad grid remount；chips 位於 key 範圍之外不得重掛。
+    fireEvent.click(chip);
+
+    // DOM 節點同一（未重掛）＝橫向捲動位置與焦點的等效保證。
+    expect(screen.getByTestId('converter-v2-quick-chips')).toBe(chips);
+    expect(screen.getByTestId('converter-v2-quick-500')).toBe(chip);
+    expect(chips.scrollLeft).toBe(120);
+    expect(document.activeElement).toBe(chip);
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-A：歷史記錄 settle 寫入（缺口 2）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('鍵入後停頓 2s 視為 settle，靜默寫入歷史（notify: false）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+    expect(props.onAddToHistory).toHaveBeenCalledWith({ notify: false });
+  });
+
+  it('連續鍵入期間不寫入；停頓後只寫一筆', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('切列視為 settle 邊界：立即 flush，之後不重複寫入', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('離開（unmount）時 flush 未結算的換算', () => {
+    const props = buildProps();
+    const { unmount } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    unmount();
+
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('零輸入不寫入歷史（切列／掛載／unmount 都不觸發）', () => {
+    const props = buildProps();
+    const { unmount } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    unmount();
+
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B1：backspace 清到 0 後停頓 2s 不寫入（金額 0 守門）', () => {
+    const props = buildProps({ fromAmount: '5', toAmount: '0.16' });
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 使用者按 backspace 把活躍列清到 0：keypad 回寫 0 → 父層重算後兩列歸零。
+    fireEvent.click(screen.getByTestId('converter-v2-key-backspace'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(props.onFromAmountChange).toHaveBeenLastCalledWith('0');
+    rerender(<SingleConverterV2 {...props} fromAmount="0" toAmount="0.00" />);
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    // 修正前 settle timer 照寫，歷史出現 0 TWD = 0.00 USD 的無意義紀錄。
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B1：金額為空字串時 settle 不寫入', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-backspace'));
+    rerender(<SingleConverterV2 {...props} fromAmount="" toAmount="" />);
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B1：與上一筆自動寫入同值（from/to/amount）去重；金額變更後恢復寫入', () => {
+    const props = buildProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 第一次 settle：寫入（快照 TWD|USD|1000）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+
+    // 第二次 settle：props 未變（同 from/to/amount）→ 去重跳過。
+    fireEvent.click(screen.getByTestId('converter-v2-key-3'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+
+    // 金額變更後再 settle：識別鍵不同 → 恢復寫入。
+    rerender(<SingleConverterV2 {...props} fromAmount="53" toAmount="1.67" />);
+    fireEvent.click(screen.getByTestId('converter-v2-key-7'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it('B2：pending 中切幣別（picker）取消 settle，不寫入', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-currency-from'));
+    fireEvent.click(screen.getByTestId('currency-option-JPY'));
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    // 修正前 timer 跨幣別變更後照寫，寫入的是變更後重算值（語意失真）。
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B2：pending 中 swap 取消 settle，不寫入', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-swap'));
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B2：pending 中切換現金／即期取消 settle，不寫入', () => {
+    const props = buildProps({ rateType: 'spot' });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(props.onRateTypeChange).toHaveBeenCalledWith('cash');
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  it('B2：picker 選回同幣別＝同 pair，pending settle 保留照常寫入', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    fireEvent.click(screen.getByTestId('converter-v2-currency-from'));
+    fireEvent.click(screen.getByTestId('currency-option-TWD'));
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-A：方向翻轉（缺口 4）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('點擊 ⇄ 鈕翻轉 chip 顯示方向（倒數表示），再點恢復', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    const flip = screen.getByTestId('converter-v2-rate-flip');
+    expect(chip).toHaveTextContent(/1 TWD = .+ USD/);
+    expect(flip).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(flip);
+    expect(chip).toHaveTextContent(/1 USD = .+ TWD/);
+    expect(flip).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(flip);
+    expect(chip).toHaveTextContent(/1 TWD = .+ USD/);
+  });
+
+  it('翻轉僅改顯示：不觸發基準切換、計價標籤不變', () => {
+    const props = buildProps({ rateType: 'spot' });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-flip'));
+
+    expect(props.onRateTypeChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('converter-v2-rate-chip')).toHaveTextContent('即期賣出');
+  });
+
+  it('chip 本體 tap 語意不變：仍切換現金／即期（#659 契約）', () => {
+    const props = buildProps({ rateType: 'spot' });
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-flip'));
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+
+    expect(props.onRateTypeChange).toHaveBeenCalledWith('cash');
+  });
+
+  it('S4：切幣別（picker）重置翻轉態為預設方向（per-pair 檢視偏好）', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const flip = screen.getByTestId('converter-v2-rate-flip');
+    fireEvent.click(flip);
+    expect(flip).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByTestId('converter-v2-currency-from'));
+    fireEvent.click(screen.getByTestId('currency-option-JPY'));
+
+    expect(flip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('S4：swap 重置翻轉態為預設方向', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const flip = screen.getByTestId('converter-v2-rate-flip');
+    fireEvent.click(flip);
+    expect(flip).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByTestId('converter-v2-swap'));
+
+    expect(flip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('S4：同 pair session 內保留翻轉態（選回同幣別、切換基準都不重置）', () => {
+    const props = buildProps({ rateType: 'spot' });
+    render(<SingleConverterV2 {...props} />);
+
+    const flip = screen.getByTestId('converter-v2-rate-flip');
+    fireEvent.click(flip);
+
+    // 選回同幣別＝pair 未變 → 保留。
+    fireEvent.click(screen.getByTestId('converter-v2-currency-from'));
+    fireEvent.click(screen.getByTestId('currency-option-TWD'));
+    expect(flip).toHaveAttribute('aria-pressed', 'true');
+
+    // 切換現金／即期＝同 pair 基準變更 → 保留。
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+    expect(flip).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe('SingleConverterV2 - E8 wave-A：長按複製（缺口 6）', () => {
+  const writeTextMock = vi.fn<(text: string) => Promise<void>>();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    writeTextMock.mockReset().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('S1：長按 500ms 只標記意圖（視覺回饋），writeText 於 pointerup 手勢內執行', async () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const toRow = screen.getByTestId('converter-v2-amount-to');
+    fireEvent.pointerDown(toRow, { button: 0 });
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    // 意圖標記階段：僅視覺回饋，不得於 setTimeout callback 內呼叫 writeText
+    // （脫離 user activation 會使 Safari/iOS 剪貼簿權限失效）。
+    expect(toRow).toHaveAttribute('data-copy-armed', 'true');
+    expect(writeTextMock).not.toHaveBeenCalled();
+
+    // pointerup（使用者手勢同步 context）才提交複製。
+    fireEvent.pointerUp(toRow, { button: 0 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(writeTextMock).toHaveBeenCalledWith('1000 TWD = 31.58 USD');
+    expect(showToastMock).toHaveBeenCalledWith('已複製', 'success');
+    expect(toRow).not.toHaveAttribute('data-copy-armed');
+  });
+
+  it('S1：指標離開（pointerleave）放棄長按，不複製', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const toRow = screen.getByTestId('converter-v2-amount-to');
+    fireEvent.pointerDown(toRow, { button: 0 });
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(toRow).toHaveAttribute('data-copy-armed', 'true');
+
+    fireEvent.pointerLeave(toRow);
+
+    expect(toRow).not.toHaveAttribute('data-copy-armed');
+    expect(writeTextMock).not.toHaveBeenCalled();
+  });
+
+  it('長按複製後鬆手的 click 不切換活躍列（誤觸防護）', async () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const toRow = screen.getByTestId('converter-v2-amount-to');
+    fireEvent.pointerDown(toRow, { button: 0 });
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    fireEvent.pointerUp(toRow, { button: 0 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(toRow);
+
+    // 複製已提交（單次），活躍列維持 from（aria-pressed 不因長按鬆手翻轉）。
+    expect(writeTextMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('converter-v2-amount-from')).toHaveAttribute('aria-pressed', 'true');
+    expect(toRow).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('短按（未達 500ms）不複製，維持切列語意', () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    const toRow = screen.getByTestId('converter-v2-amount-to');
+    fireEvent.pointerDown(toRow, { button: 0 });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    fireEvent.pointerUp(toRow, { button: 0 });
+    fireEvent.click(toRow);
+
+    expect(writeTextMock).not.toHaveBeenCalled();
+    expect(toRow).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('桌面右鍵（contextmenu）等效複製', async () => {
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.contextMenu(screen.getByTestId('converter-v2-amount-from'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(writeTextMock).toHaveBeenCalledWith('1000 TWD = 31.58 USD');
+    expect(showToastMock).toHaveBeenCalledWith('已複製', 'success');
+  });
+
+  it('複製失敗時顯示錯誤 toast', async () => {
+    writeTextMock.mockRejectedValueOnce(new Error('denied'));
+    render(<SingleConverterV2 {...buildProps()} />);
+
+    fireEvent.contextMenu(screen.getByTestId('converter-v2-amount-from'));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(showToastMock).toHaveBeenCalledWith('複製失敗', 'error');
   });
 });
 

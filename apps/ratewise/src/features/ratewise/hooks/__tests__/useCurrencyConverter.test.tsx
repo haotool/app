@@ -121,6 +121,29 @@ describe('useCurrencyConverter', () => {
       expect(mockShowToast).toHaveBeenCalledWith('singleConverter.addedToHistory', 'success');
     });
 
+    it('notify: false 時靜默寫入歷史、不彈 toast（E8 v2 settle 自動寫入）', () => {
+      const mockRates = { USD: 31.5, TWD: 1 };
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: mockRates,
+          rateType: 'spot',
+        }),
+      );
+
+      act(() => {
+        result.current.setFromCurrency('USD');
+        result.current.setToCurrency('TWD');
+        result.current.handleFromAmountChange('100');
+      });
+
+      act(() => {
+        result.current.addToHistory({ notify: false });
+      });
+
+      expect(result.current.history.length).toBe(1);
+      expect(mockShowToast).not.toHaveBeenCalled();
+    });
+
     it('should add entry to history array', () => {
       // Arrange
       const mockRates = {

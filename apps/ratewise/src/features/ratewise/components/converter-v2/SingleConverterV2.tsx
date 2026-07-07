@@ -4,17 +4,35 @@
  * @see .claude/prds/ratewise-e3-converter-v2-design.md
  */
 
-import { useLayoutEffect, useMemo, useRef, useState, Suspense, lazy } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense,
+  lazy,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SingleConverterProps } from '../SingleConverter';
 import type { CurrencyCode, RateType } from '../../types';
-import { CURRENCY_DEFINITIONS, DEFAULT_RATE_MODE, DEFAULT_RATE_SOURCE } from '../../constants';
+import {
+  CURRENCY_DEFINITIONS,
+  CURRENCY_QUICK_AMOUNTS,
+  DEFAULT_RATE_MODE,
+  DEFAULT_RATE_SOURCE,
+} from '../../constants';
 import { formatExchangeRate, formatAmountDisplay } from '../../../../utils/currencyFormatter';
 import {
+  getReciprocalExchangeRate,
   getUnitExchangeRateWithBasis,
   type RateTypeAvailability,
   type UnitRateBasis,
 } from '../../../../utils/exchangeRateCalculation';
+import { copyToClipboard, formatConversionForCopy } from '../../../../utils/clipboard';
+import { useToast } from '../../../../components/Toast';
+import { lightHaptic } from '../../../calculator/utils/haptics';
 import { RateTypeTooltip } from '../../../../components/RateTypeTooltip';
 import { ConverterKeypad } from './ConverterKeypad';
 import { CurrencyPickerSheet } from './CurrencyPickerSheet';
@@ -37,6 +55,10 @@ type RowField = 'from' | 'to';
 const MIN_AMOUNT_FIT_SCALE = 0.5;
 // 縮放抖動容差：避免量測捨入造成 setState 往返。
 const FIT_SCALE_EPSILON = 0.005;
+// E8 缺口 6：長按複製觸發時長，對齊 keypad 長按清空與 v1 歷史長按慣例。
+const LONG_PRESS_COPY_MS = 500;
+// E8 缺口 2：輸入停頓多久視為換算 settle，寫入歷史記錄。
+const HISTORY_SETTLE_MS = 2000;
 
 interface CurrencyRowProps {
   field: RowField;
@@ -45,6 +67,8 @@ interface CurrencyRowProps {
   isActive: boolean;
   onOpenPicker: (field: RowField) => void;
   onActivate: (field: RowField) => void;
+  /** 長按（或桌面右鍵）金額列時複製換算結果（E8 缺口 6）。 */
+  onCopyResult: () => void;
 }
 
 function CurrencyRow({
@@ -54,12 +78,60 @@ function CurrencyRow({
   isActive,
   onOpenPicker,
   onActivate,
+  onCopyResult,
 }: CurrencyRowProps) {
   const { t } = useTranslation();
   const display = formatAmountDisplay(amount, currency) || '0';
   const amountBoxRef = useRef<HTMLDivElement>(null);
   const amountTextRef = useRef<HTMLSpanElement>(null);
   const [fitScale, setFitScale] = useState(1);
+  // 長按複製（S1 transient activation 結構）：500ms 計時器只「標記意圖」與視覺回饋；
+  // 實際 writeText 於 pointerup／contextmenu 使用者手勢同步 context 內執行，
+  // 避免 setTimeout callback 脫離 user activation 導致 Safari/iOS 剪貼簿權限失效。
+  const copyLongPressTimerRef = useRef<number | null>(null);
+  // 意圖已標記（500ms 到達）；沿用至 click 抑制活化切列。
+  const copyArmedRef = useRef(false);
+  // 本次手勢已執行複製；防 pointerup 與 contextmenu 雙路徑重複複製。
+  const copyCommittedRef = useRef(false);
+  const [isCopyArmed, setIsCopyArmed] = useState(false);
+
+  const clearCopyLongPressTimer = () => {
+    if (copyLongPressTimerRef.current !== null) {
+      window.clearTimeout(copyLongPressTimerRef.current);
+      copyLongPressTimerRef.current = null;
+    }
+  };
+
+  const handleCopyPressStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    // 僅主鍵／觸控啟動長按計時；右鍵走 contextmenu 等效路徑。
+    if (e.button !== 0) return;
+    copyArmedRef.current = false;
+    copyCommittedRef.current = false;
+    clearCopyLongPressTimer();
+    copyLongPressTimerRef.current = window.setTimeout(() => {
+      copyArmedRef.current = true;
+      setIsCopyArmed(true);
+    }, LONG_PRESS_COPY_MS);
+  };
+
+  // pointerup：意圖已標記時於手勢同步 context 內執行複製（transient activation 有效）。
+  const handleCopyPressEnd = () => {
+    clearCopyLongPressTimer();
+    setIsCopyArmed(false);
+    if (copyArmedRef.current && !copyCommittedRef.current) {
+      copyCommittedRef.current = true;
+      onCopyResult();
+    }
+  };
+
+  // 指標離開／取消＝放棄本次長按（僅 pointerup 提交複製）。
+  const handleCopyPressAbort = () => {
+    clearCopyLongPressTimer();
+    copyArmedRef.current = false;
+    setIsCopyArmed(false);
+  };
+
+  useEffect(() => clearCopyLongPressTimer, []);
 
   // #590：大金額 fit-to-container——以 transform 縮放（offsetWidth 不受 transform 影響，
   // 單次量測即收斂），right origin 保持右對齊且必保最高位可見。
@@ -91,7 +163,7 @@ function CurrencyRow({
   return (
     <div
       data-testid={`converter-v2-row-${field}`}
-      className={`flex items-center gap-3 px-4 py-3 short:py-1.5 transition-colors ${
+      className={`flex items-center gap-3 px-4 py-3 short:py-1 transition-colors ${
         isActive ? 'bg-primary/5' : ''
       }`}
     >
@@ -119,7 +191,30 @@ function CurrencyRow({
         ref={amountBoxRef}
         role="button"
         tabIndex={0}
-        onClick={() => onActivate(field)}
+        onClick={() => {
+          // 長按意圖已標記時抑制活化，避免複製鬆手誤切活躍列。
+          if (copyArmedRef.current) {
+            copyArmedRef.current = false;
+            copyCommittedRef.current = false;
+            return;
+          }
+          onActivate(field);
+        }}
+        onPointerDown={handleCopyPressStart}
+        onPointerUp={handleCopyPressEnd}
+        onPointerLeave={handleCopyPressAbort}
+        onPointerCancel={handleCopyPressAbort}
+        onContextMenu={(e) => {
+          // 桌面右鍵等效複製（contextmenu 為使用者手勢，activation 有效）；
+          // Android 長按派發 contextmenu 時若意圖已標記，亦在此提交避免 pointercancel 漏掉。
+          e.preventDefault();
+          clearCopyLongPressTimer();
+          if (!copyCommittedRef.current) {
+            copyCommittedRef.current = true;
+            setIsCopyArmed(false);
+            onCopyResult();
+          }
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -127,13 +222,15 @@ function CurrencyRow({
           }
         }}
         data-testid={`converter-v2-amount-${field}`}
+        data-copy-armed={isCopyArmed || undefined}
         aria-label={`${t('converterV2.rowLabel', { code: currency })}: ${display}`}
         aria-pressed={isActive}
-        className={`flex-1 min-w-0 min-h-[44px] flex items-center justify-end rounded-xl px-2 text-right font-bold tabular-nums leading-tight cursor-pointer whitespace-nowrap overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[font-size,color,box-shadow] duration-200 ${
+        // select-none＋touch-callout none：消除長按複製與原生文字選取／放大鏡的手勢衝突（S2）。
+        className={`flex-1 min-w-0 min-h-[44px] flex items-center justify-end rounded-xl px-2 text-right font-bold tabular-nums leading-tight cursor-pointer whitespace-nowrap overflow-hidden select-none [-webkit-touch-callout:none] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-[font-size,color,box-shadow,background-color] duration-200 ${
           isActive
             ? 'text-[32px] short:text-[26px] text-text ring-2 ring-primary/40'
             : 'text-[28px] short:text-[22px] text-neutral-text-secondary'
-        }`}
+        } ${isCopyArmed ? 'bg-primary/10' : ''}`}
       >
         <span
           ref={amountTextRef}
@@ -167,17 +264,77 @@ export const SingleConverterV2 = ({
   onFromAmountChange,
   onToAmountChange,
   onSwapCurrencies,
+  onAddToHistory,
   onRateTypeChange,
   rateSource = DEFAULT_RATE_SOURCE,
   moneyBoxRate = null,
   exchangeShopCurrency = null,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [activeRow, setActiveRow] = useState<RowField>('from');
   const [pickerFor, setPickerFor] = useState<RowField | null>(null);
   const [isTrendOpen, setIsTrendOpen] = useState(false);
   // swap 或切列時遞增，強制 keypad remount 重置表達式為活躍列現值。
   const [keypadSession, setKeypadSession] = useState(0);
+  // E8 缺口 4：rate chip 顯示方向翻轉（僅顯示層，不改變計價基準與換算引擎）。
+  const [isRateFlipped, setIsRateFlipped] = useState(false);
+
+  // E8 缺口 2：換算 settle（輸入停頓 2s／切列／離開）寫入既有歷史 store。
+  // dirty 僅在使用者實際輸入（keypad 回寫、快速金額）後為真；flush 共用 v1 addToHistory API。
+  const settleTimerRef = useRef<number | null>(null);
+  const settleDirtyRef = useRef(false);
+  // B1 去重：最近一筆「自動寫入」的識別鍵（from|to|amount）；手動寫入不在此追蹤範圍。
+  const lastAutoWrittenKeyRef = useRef<string | null>(null);
+  const onAddToHistoryRef = useRef(onAddToHistory);
+  // settle 於 timer／unmount 觸發，以 latest ref 讀取當下最新換算快照與寫入函式。
+  const settleSnapshotRef = useRef({ fromCurrency, toCurrency, fromAmount, toAmount });
+  useEffect(() => {
+    onAddToHistoryRef.current = onAddToHistory;
+    settleSnapshotRef.current = { fromCurrency, toCurrency, fromAmount, toAmount };
+  });
+
+  const flushHistorySettle = useCallback(() => {
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+    if (!settleDirtyRef.current) return;
+    settleDirtyRef.current = false;
+    const snapshot = settleSnapshotRef.current;
+    // B1 守門 1：金額 0／空／非有限值不寫（含 backspace 清到 0 後停頓 2s 路徑）。
+    const parsedAmount = parseFloat(snapshot.fromAmount);
+    const parsedResult = parseFloat(snapshot.toAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount === 0) return;
+    if (!Number.isFinite(parsedResult) || parsedResult === 0) return;
+    // B1 守門 2：與上一筆自動寫入同值（from/to/amount）去重，避免重複紀錄。
+    const entryKey = `${snapshot.fromCurrency}|${snapshot.toCurrency}|${snapshot.fromAmount}`;
+    if (lastAutoWrittenKeyRef.current === entryKey) return;
+    lastAutoWrittenKeyRef.current = entryKey;
+    // 自動寫入不彈 toast（notify: false），避免每次停頓都打斷使用者。
+    onAddToHistoryRef.current({ notify: false });
+  }, []);
+
+  // B2：語意變更（幣別／swap／基準切換）取消 pending settle——timer 跨語意變更後寫入的
+  // 是變更後重算值，非使用者輸入當下的換算，語意已失真，寧可不寫（PM 裁決 cancel 而非 flush）。
+  const cancelHistorySettle = useCallback(() => {
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+    settleDirtyRef.current = false;
+  }, []);
+
+  const scheduleHistorySettle = useCallback(() => {
+    settleDirtyRef.current = true;
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+    }
+    settleTimerRef.current = window.setTimeout(flushHistorySettle, HISTORY_SETTLE_MS);
+  }, [flushHistorySettle]);
+
+  // 離開（unmount）時 flush 未結算的換算，避免最後一筆遺失。
+  useEffect(() => flushHistorySettle, [flushHistorySettle]);
 
   const trend = useConverterTrend({
     fromCurrency,
@@ -215,6 +372,8 @@ export const SingleConverterV2 = ({
 
   const handleActivateRow = (field: RowField) => {
     if (field === activeRow) return;
+    // 切列視為 settle 邊界：先結算上一列的換算再切換。
+    flushHistorySettle();
     setActiveRow(field);
     setKeypadSession((session) => session + 1);
   };
@@ -225,9 +384,49 @@ export const SingleConverterV2 = ({
     } else {
       onToAmountChange(value.toString());
     }
+    scheduleHistorySettle();
   };
 
+  // E8 缺口 1：快速金額點擊＝取代活躍列金額；remount keypad 重播種子並關閉回寫閘門，
+  // 後續首顆數字鍵沿用 #633 取代語意（與紅線回歸一致）。
+  const handleQuickAmount = (value: number) => {
+    if (activeRow === 'from') {
+      onFromAmountChange(value.toString());
+    } else {
+      onToAmountChange(value.toString());
+    }
+    setKeypadSession((session) => session + 1);
+    scheduleHistorySettle();
+  };
+
+  // 快速金額跟隨活躍列幣別（v1 SSOT 常數，禁止複製數值）。
+  const activeCurrency = activeRow === 'from' ? fromCurrency : toCurrency;
+  const quickAmounts = CURRENCY_QUICK_AMOUNTS[activeCurrency] ?? CURRENCY_QUICK_AMOUNTS.TWD;
+
+  // E8 缺口 6：長按／右鍵複製當前換算結果，格式與 toast 對齊 v1 歷史單擊複製慣例。
+  const handleCopyResult = useCallback(async () => {
+    const success = await copyToClipboard(
+      formatConversionForCopy({
+        amount: fromAmount,
+        from: fromCurrency,
+        result: toAmount,
+        to: toCurrency,
+      }),
+    );
+    if (success) {
+      showToast(t('common.copied'), 'success');
+    } else {
+      showToast(t('conversionHistory.copyFailed'), 'error');
+    }
+  }, [fromAmount, fromCurrency, toAmount, toCurrency, showToast, t]);
+  const handleCopyResultSync = useCallback(() => {
+    void handleCopyResult();
+  }, [handleCopyResult]);
+
   const handleSwap = () => {
+    // B2：swap 為語意變更，取消 pending settle；S4：翻轉為 per-pair 檢視偏好，pair 變更即重置。
+    cancelHistorySettle();
+    setIsRateFlipped(false);
     onSwapCurrencies();
     setKeypadSession((session) => session + 1);
     if ('vibrate' in navigator) {
@@ -236,6 +435,14 @@ export const SingleConverterV2 = ({
   };
 
   const handlePickCurrency = (code: CurrencyCode) => {
+    // 幣別實際變更才視為語意變更：B2 取消 pending settle、S4 重置翻轉態（per-pair 檢視偏好）。
+    // 選回同幣別＝同 pair，pending 換算仍有效、翻轉態保留。
+    const pairChanged =
+      pickerFor === 'from' ? code !== fromCurrency : pickerFor === 'to' && code !== toCurrency;
+    if (pairChanged) {
+      cancelHistorySettle();
+      setIsRateFlipped(false);
+    }
     if (pickerFor === 'from') {
       onFromCurrencyChange(code);
     } else if (pickerFor === 'to') {
@@ -287,8 +494,18 @@ export const SingleConverterV2 = ({
 
   const handleToggleBasis = () => {
     if (isBasisToggleDisabled) return;
+    // B2：基準切換後兩列金額以新基準重算，pending settle 語意失真，取消不寫。
+    // 翻轉態不重置（同 pair 內保留，S4）。
+    cancelHistorySettle();
     onRateTypeChange(nextRateType);
   };
+
+  // E8 缺口 4：翻轉僅改變顯示表述（同一報價的倒數），計價基準標籤不變。
+  // chip 本體 tap 維持既有「切換現金／即期」語意（#659/#665 契約與 D3 不可用態不動），
+  // 翻轉走獨立 ⇄ 鈕：兩動作語意分離、誤觸不互相汙染。
+  const displayRate = isRateFlipped ? getReciprocalExchangeRate(exchangeRate) : exchangeRate;
+  const displayBase = isRateFlipped ? toCurrency : fromCurrency;
+  const displayQuote = isRateFlipped ? fromCurrency : toCurrency;
 
   const rateChipButton = (
     <button
@@ -299,12 +516,13 @@ export const SingleConverterV2 = ({
       // 用 aria-disabled 而非原生 disabled：原生 disabled 會吞掉點擊，
       // RateTypeTooltip 的禁用原因提示將永遠無法觸發（onClick guard 已阻擋切換）。
       aria-disabled={isBasisToggleDisabled || undefined}
-      className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface-elevated px-4 text-sm font-semibold tabular-nums text-neutral-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+      // narrow（≤349px）梯次收斂內距與字級，與 ⇄ 鈕同列不溢出 320px 視口（E8 S5）。
+      className={`inline-flex min-h-[44px] items-center gap-1.5 narrow:gap-1 whitespace-nowrap rounded-full bg-surface-elevated px-4 short:px-3 narrow:px-2.5 text-sm narrow:text-xs font-semibold tabular-nums text-neutral-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
         isBasisToggleDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-primary/10'
       }`}
     >
       <span className="text-text">
-        1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
+        1 {displayBase} = {formatExchangeRate(displayRate)} {displayQuote}
       </span>
       <span aria-hidden="true">・</span>
       <span className="text-primary-on-surface">{basisLabel}</span>
@@ -312,7 +530,7 @@ export const SingleConverterV2 = ({
   );
 
   return (
-    <div className="flex flex-col gap-3 short:gap-2" data-testid="converter-v2">
+    <div className="flex flex-col gap-3 short:gap-1.5" data-testid="converter-v2">
       {/* 等值雙列：上下緊貼、完全對等，divider 內嵌 32px swap 鈕 */}
       <div className="rounded-2xl border border-border/60 bg-surface overflow-hidden">
         <CurrencyRow
@@ -322,6 +540,7 @@ export const SingleConverterV2 = ({
           isActive={activeRow === 'from'}
           onOpenPicker={setPickerFor}
           onActivate={handleActivateRow}
+          onCopyResult={handleCopyResultSync}
         />
         <div className="relative flex items-center px-4" data-testid="converter-v2-divider">
           <div className="h-px flex-1 bg-border/60" />
@@ -358,11 +577,13 @@ export const SingleConverterV2 = ({
           isActive={activeRow === 'to'}
           onOpenPicker={setPickerFor}
           onActivate={handleActivateRow}
+          onCopyResult={handleCopyResultSync}
         />
       </div>
 
-      {/* rate chip：一行匯率資訊，tap 切換現金／即期；目標基準不可用時以 tooltip 說明（對齊 v1 RateSelector 慣例）。 */}
-      <div className="flex justify-center">
+      {/* rate chip：一行匯率資訊，tap 切換現金／即期；目標基準不可用時以 tooltip 說明（對齊 v1 RateSelector 慣例）。
+          右側 ⇄ 鈕翻轉顯示方向（E8 缺口 4，顯示層 only）。 */}
+      <div className="flex items-center justify-center gap-1 narrow:gap-0.5">
         {isBasisToggleDisabled ? (
           <RateTypeTooltip message={basisUnavailableMessage} isDisabled={true}>
             {rateChipButton}
@@ -370,6 +591,28 @@ export const SingleConverterV2 = ({
         ) : (
           rateChipButton
         )}
+        <button
+          type="button"
+          onClick={() => setIsRateFlipped((flipped) => !flipped)}
+          data-testid="converter-v2-rate-flip"
+          aria-label={t('converterV2.flipRateDirection')}
+          aria-pressed={isRateFlipped}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-text-secondary transition-colors hover:bg-primary/10 hover:text-primary-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7h13m0 0l-3-3m3 3l-3 3" />
+            <path d="M20 17H7m0 0l3-3m-3 3l3 3" />
+          </svg>
+        </button>
       </div>
 
       {/* sparkline：72px 常態趨勢＋漲跌 chip，tap 展開 65vh 趨勢 sheet */}
@@ -403,7 +646,7 @@ export const SingleConverterV2 = ({
             </span>
           )}
         </div>
-        <div className="h-[72px] short:h-[48px] pointer-events-none">
+        <div className="h-[72px] short:h-[40px] pointer-events-none">
           {sparklineData.length >= 2 ? (
             <Suspense fallback={<TrendChartSkeleton />}>
               <MiniTrendChart data={sparklineData} currencyCode={toCurrency} />
@@ -414,14 +657,46 @@ export const SingleConverterV2 = ({
         </div>
       </div>
 
-      {/* 常駐計算機：輸入目標＝活躍列；key remount 重置種子，掛載為唯讀、僅實際按鍵才回寫。
-          實體鍵盤（#587）於任一 sheet 開啟時停用，避免與 sheet 內搜尋、Esc 語意衝突。 */}
-      <ConverterKeypad
-        key={`${activeRow}-${keypadSession}`}
-        initialValue={keypadSeed}
-        onValueChange={handleKeypadValue}
-        keyboardEnabled={pickerFor === null && !isTrendOpen}
-      />
+      {/* 常駐計算機（含快速金額頂列）：輸入目標＝活躍列；key remount 重置種子，掛載為唯讀、僅實際按鍵才回寫。
+          實體鍵盤（#587）於任一 sheet 開啟時停用，避免與 sheet 內搜尋、Esc 語意衝突。
+          S3：quick chips 位於 remount key 範圍之外（shell 穩定不重掛），
+          點 chip 觸發 keypad 重播種子時，chips 的橫向捲動位置與焦點不受影響。 */}
+      <div
+        data-testid="converter-v2-keypad"
+        role="group"
+        aria-label={t('converterV2.keypadLabel')}
+        className="rounded-2xl bg-surface px-1 pt-3 pb-2 short:pt-1 short:pb-1"
+      >
+        {/* E8 缺口 1：快速金額 chips 內嵌 keypad 第 0 列（單排橫向捲動，不另佔獨立區塊）。
+            點擊語意＝取代活躍列金額（父層 remount 重播種子，沿用 #633 首鍵取代閘門語意）。 */}
+        <div
+          data-testid="converter-v2-quick-chips"
+          role="group"
+          aria-label={t('converterV2.quickAmountsLabel')}
+          className="mb-2 short:mb-1 flex flex-nowrap gap-1.5 overflow-x-auto scrollbar-hide"
+        >
+          {quickAmounts.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              data-testid={`converter-v2-quick-${amount}`}
+              onClick={() => {
+                lightHaptic();
+                handleQuickAmount(amount);
+              }}
+              className="h-9 short:h-7 min-w-0 shrink-0 rounded-full bg-surface-elevated px-3.5 text-sm short:text-xs font-semibold tabular-nums text-text/70 transition-colors hover:bg-primary/10 hover:text-primary-on-surface active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              {amount.toLocaleString()}
+            </button>
+          ))}
+        </div>
+        <ConverterKeypad
+          key={`${activeRow}-${keypadSession}`}
+          initialValue={keypadSeed}
+          onValueChange={handleKeypadValue}
+          keyboardEnabled={pickerFor === null && !isTrendOpen}
+        />
+      </div>
 
       <CurrencyPickerSheet
         isOpen={pickerFor !== null}

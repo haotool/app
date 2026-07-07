@@ -107,6 +107,8 @@ const zhTW = {
     rateBasisMid: '中間價',
     rateBasisExchangeShop: '換錢所',
     toggleRateBasis: '切換現金／即期匯率基準',
+    flipRateDirection: '翻轉匯率顯示方向',
+    quickAmountsLabel: '快速金額',
     keypadLabel: '換算鍵盤',
     keyBackspace: '刪除',
     keyBackspaceHint: '長按清空',
