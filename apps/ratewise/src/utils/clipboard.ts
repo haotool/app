@@ -49,6 +49,8 @@ export async function copyToClipboard(text: string): Promise<boolean> {
  * const text = formatConversionForCopy(entry);
  * // "1000 USD = 30900 TWD"
  */
-export function formatConversionForCopy(entry: ConversionHistoryEntry): string {
+export function formatConversionForCopy(
+  entry: Pick<ConversionHistoryEntry, 'amount' | 'from' | 'result' | 'to'>,
+): string {
   return `${entry.amount} ${entry.from} = ${entry.result} ${entry.to}`;
 }

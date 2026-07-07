@@ -107,6 +107,8 @@ const ko = {
     rateBasisMid: '매매기준율',
     rateBasisExchangeShop: '환전소',
     toggleRateBasis: '현찰／전신환 기준 전환',
+    flipRateDirection: '환율 표시 방향 전환',
+    quickAmountsLabel: '빠른 금액',
     keypadLabel: '환산 키패드',
     keyBackspace: '삭제',
     keyBackspaceHint: '길게 눌러 전체 지우기',

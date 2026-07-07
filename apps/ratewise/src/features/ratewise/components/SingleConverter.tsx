@@ -121,7 +121,8 @@ export interface SingleConverterProps {
   onToAmountChange: (amount: string) => void;
   onQuickAmount: (amount: number) => void;
   onSwapCurrencies: () => void;
-  onAddToHistory: () => void;
+  /** 寫入歷史記錄；v2 settle 自動寫入時以 notify: false 靜默（E8 缺口 2）。 */
+  onAddToHistory: (options?: { notify?: boolean }) => void;
   onRateTypeChange: (type: RateType) => void;
   rateSource?: RateSource;
   moneyBoxRate?: ExchangeShopRate | null;
@@ -755,7 +756,7 @@ const SingleConverterLegacy = ({
        * - 點擊縮放回饋 (active:scale-[0.98])
        */}
       <button
-        onClick={onAddToHistory}
+        onClick={() => onAddToHistory()}
         className={`
           relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
           bg-primary-strong hover:bg-primary-hover

@@ -570,37 +570,43 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     [storeReorderFavorites],
   );
 
-  const addToHistory = useCallback(() => {
-    const timestamp = Date.now();
-    const entry: ConversionHistoryEntry = {
-      from: fromCurrency,
-      to: toCurrency,
-      amount: fromAmount,
-      result: toAmount,
-      time: getRelativeTimeString(timestamp),
-      timestamp,
-      rateType,
-      sourceKind: resolvedProvider.sourceKind,
-      providerId: resolvedProvider.providerId,
-      providerSelectionMode: resolvedProvider.selectionMode,
-      rateMode,
-      schemaVersion: 2,
-    };
+  // notify: false 供 v2 換算 settle 自動寫入（E8 缺口 2）；預設維持 v1 手動加入的 toast 回饋。
+  const addToHistory = useCallback(
+    (options?: { notify?: boolean }) => {
+      const timestamp = Date.now();
+      const entry: ConversionHistoryEntry = {
+        from: fromCurrency,
+        to: toCurrency,
+        amount: fromAmount,
+        result: toAmount,
+        time: getRelativeTimeString(timestamp),
+        timestamp,
+        rateType,
+        sourceKind: resolvedProvider.sourceKind,
+        providerId: resolvedProvider.providerId,
+        providerSelectionMode: resolvedProvider.selectionMode,
+        rateMode,
+        schemaVersion: 2,
+      };
 
-    storeAddToHistory(entry);
-    showToast(t('singleConverter.addedToHistory'), 'success');
-  }, [
-    fromCurrency,
-    toCurrency,
-    fromAmount,
-    toAmount,
-    rateType,
-    resolvedProvider,
-    rateMode,
-    storeAddToHistory,
-    showToast,
-    t,
-  ]);
+      storeAddToHistory(entry);
+      if (options?.notify !== false) {
+        showToast(t('singleConverter.addedToHistory'), 'success');
+      }
+    },
+    [
+      fromCurrency,
+      toCurrency,
+      fromAmount,
+      toAmount,
+      rateType,
+      resolvedProvider,
+      rateMode,
+      storeAddToHistory,
+      showToast,
+      t,
+    ],
+  );
 
   /** 清除全部歷史記錄 */
   const clearAllHistory = useCallback(() => {

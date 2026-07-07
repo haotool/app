@@ -107,6 +107,8 @@ const ja = {
     rateBasisMid: '仲値',
     rateBasisExchangeShop: '両替所',
     toggleRateBasis: '現金／電信レート基準を切り替え',
+    flipRateDirection: 'レート表示方向を反転',
+    quickAmountsLabel: 'クイック金額',
     keypadLabel: '換算キーパッド',
     keyBackspace: '削除',
     keyBackspaceHint: '長押しでクリア',

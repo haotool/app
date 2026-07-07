@@ -107,6 +107,8 @@ const en = {
     rateBasisMid: 'Mid rate',
     rateBasisExchangeShop: 'Exchange shop',
     toggleRateBasis: 'Toggle cash/spot rate basis',
+    flipRateDirection: 'Flip rate display direction',
+    quickAmountsLabel: 'Quick amounts',
     keypadLabel: 'Conversion keypad',
     keyBackspace: 'Delete',
     keyBackspaceHint: 'Long press to clear',

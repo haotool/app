@@ -213,35 +213,30 @@ export function ConverterKeypad({
     respectInteractiveTarget: true,
   });
 
+  // shell（rounded 背景＋quick chips 頂列）由父層持有，位於 remount key 範圍之外（S3）；
+  // 本元件僅渲染會隨活躍列重播種子的按鍵網格。
   return (
-    <div
-      data-testid="converter-v2-keypad"
-      role="group"
-      aria-label={t('converterV2.keypadLabel')}
-      className="rounded-2xl bg-surface px-1 pt-3 pb-2 short:pt-1.5 short:pb-1"
-    >
-      <div className="grid grid-cols-4 gap-2 short:gap-1.5">
-        {KEYPAD_LAYOUT.flat().map((key) => (
-          <motion.button
-            key={key.value}
-            type="button"
-            className={getKeyClassName(key.kind)}
-            whileTap={{ scale: 0.97, opacity: 0.85 }}
-            transition={{ duration: 0.12, ease: 'easeOut' }}
-            aria-label={
-              key.kind === 'backspace'
-                ? `${t('converterV2.keyBackspace')}（${t('converterV2.keyBackspaceHint')}）`
-                : key.label
-            }
-            data-testid={`converter-v2-key-${key.value === 'backspace' ? 'backspace' : key.value}`}
-            onTapStart={key.kind === 'backspace' ? handleBackspacePressStart : undefined}
-            onTap={() => handleKeyTap(key)}
-            onTapCancel={key.kind === 'backspace' ? clearLongPressTimer : undefined}
-          >
-            {key.label}
-          </motion.button>
-        ))}
-      </div>
+    <div className="grid grid-cols-4 gap-2 short:gap-1.5">
+      {KEYPAD_LAYOUT.flat().map((key) => (
+        <motion.button
+          key={key.value}
+          type="button"
+          className={getKeyClassName(key.kind)}
+          whileTap={{ scale: 0.97, opacity: 0.85 }}
+          transition={{ duration: 0.12, ease: 'easeOut' }}
+          aria-label={
+            key.kind === 'backspace'
+              ? `${t('converterV2.keyBackspace')}（${t('converterV2.keyBackspaceHint')}）`
+              : key.label
+          }
+          data-testid={`converter-v2-key-${key.value === 'backspace' ? 'backspace' : key.value}`}
+          onTapStart={key.kind === 'backspace' ? handleBackspacePressStart : undefined}
+          onTap={() => handleKeyTap(key)}
+          onTapCancel={key.kind === 'backspace' ? clearLongPressTimer : undefined}
+        >
+          {key.label}
+        </motion.button>
+      ))}
     </div>
   );
 }

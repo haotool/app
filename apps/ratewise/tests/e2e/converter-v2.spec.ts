@@ -354,12 +354,156 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test('E8 佈局預算：三視口零捲動可見全部互動元素（scrollHeight === innerHeight）', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    await gotoConverterV2(page);
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，量測與截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 375, height: 667 },
+      { width: 430, height: 932 },
+    ]) {
+      await page.setViewportSize(viewport);
+
+      // 一頁完整顯示硬約束：加入 quick chips 後仍不得出現垂直捲動。
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() => ({
+              scrollHeight: document.documentElement.scrollHeight,
+              innerHeight: window.innerHeight,
+            })),
+          { message: `${viewport.width}×${viewport.height} 不得出現垂直捲動` },
+        )
+        .toEqual(
+          expect.objectContaining({
+            scrollHeight: viewport.height,
+            innerHeight: viewport.height,
+          }),
+        );
+
+      // 全部互動元素零捲動可見（含 E8 新增的 quick chips 與 ⇄ 翻轉鈕）；
+      // 可見上限取固定底部導覽列頂緣，避免元素被 fixed nav 遮蓋卻通過視口斷言。
+      const navTop = await page.evaluate(() => {
+        const nav = [...document.querySelectorAll('nav')].find(
+          (el) => getComputedStyle(el).position === 'fixed',
+        );
+        return nav ? nav.getBoundingClientRect().top : window.innerHeight;
+      });
+      for (const testId of [
+        'converter-v2-amount-from',
+        'converter-v2-amount-to',
+        'converter-v2-swap',
+        'converter-v2-rate-chip',
+        'converter-v2-rate-flip',
+        'converter-v2-sparkline',
+        'converter-v2-quick-chips',
+        'converter-v2-key-7',
+        'converter-v2-key-+',
+      ]) {
+        const box = await page.getByTestId(testId).boundingBox();
+        expect(box, `${testId} 於 ${viewport.width}×${viewport.height} 應可見`).not.toBeNull();
+        expect(
+          box!.y + box!.height,
+          `${testId} 底緣不得被固定導覽列（top=${navTop}）遮蓋`,
+        ).toBeLessThanOrEqual(navTop + 0.5);
+        expect(box!.y, `${testId} 頂緣不得高於視口`).toBeGreaterThanOrEqual(-0.5);
+      }
+
+      // keypad 高度預算：30-40%（含 quick chips 頂列）。
+      const keypadBox = await page.getByTestId('converter-v2-keypad').boundingBox();
+      const keypadRatio = keypadBox!.height / viewport.height;
+      expect(keypadRatio, 'keypad 高度應在 30-40% 預算內').toBeGreaterThanOrEqual(0.3);
+      expect(keypadRatio, 'keypad 高度應在 30-40% 預算內').toBeLessThanOrEqual(0.4);
+
+      await page.screenshot({
+        path: `test-results/v2-e8-layout-budget-${viewport.width}x${viewport.height}-${testInfo.project.name}.png`,
+        fullPage: false,
+      });
+    }
+  });
+
+  test('E8 S5：320×844 最小寬度——quick chips／rate chip／⇄ 鈕不溢出', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    await gotoConverterV2(page);
+    await page.setViewportSize({ width: 320, height: 844 });
+
+    // 頁面不得出現水平溢出。
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+        message: '320px 視口不得出現水平捲動',
+      })
+      .toBeLessThanOrEqual(320);
+
+    for (const testId of [
+      'converter-v2-quick-chips',
+      'converter-v2-rate-chip',
+      'converter-v2-rate-flip',
+    ]) {
+      const box = await page.getByTestId(testId).boundingBox();
+      expect(box, `${testId} 於 320px 視口應可見`).not.toBeNull();
+      expect(box!.x, `${testId} 左緣不得超出視口`).toBeGreaterThanOrEqual(-0.5);
+      expect(box!.x + box!.width, `${testId} 右緣不得超出 320px 視口`).toBeLessThanOrEqual(320.5);
+    }
+
+    await page.screenshot({
+      path: `test-results/v2-e8-min-width-320-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+  });
+
+  test('E8 wave-A 互動：quick chip 取代金額、⇄ 翻轉方向、長按複製', async ({
+    rateWisePage: page,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+    // 1. quick chip：取代活躍列金額（非串接在預設 1,000 之後）。
+    const firstChip = page.locator('[data-testid="converter-v2-quick-chips"] button').first();
+    const chipValue = (await firstChip.innerText()).replace(/,/g, '');
+    await firstChip.click();
+    await expect(page.getByTestId('converter-v2-amount-from')).toContainText(
+      Number(chipValue).toLocaleString(),
+    );
+
+    // 2. ⇄ 翻轉：chip 顯示方向反轉，且不改變計價基準（rate chip 標籤仍在）。
+    const rateChip = page.getByTestId('converter-v2-rate-chip');
+    const beforeFlip = await rateChip.innerText();
+    const [, base, quote] = beforeFlip.match(/1 ([A-Z]{3}) = [\d,.]+ ([A-Z]{3})/) ?? [];
+    await page.getByTestId('converter-v2-rate-flip').click();
+    await expect(rateChip).toContainText(`1 ${quote}`);
+    await expect(rateChip).toContainText(` ${base}`);
+    await page.getByTestId('converter-v2-rate-flip').click();
+    await expect(rateChip).toContainText(`1 ${base}`);
+
+    // 3. 長按金額列複製：toast 顯示「已複製」，剪貼簿內容為 v1 慣例格式。
+    await page.getByTestId('converter-v2-amount-to').click({ delay: 700 });
+    await expect(page.getByText('已複製')).toBeVisible();
+    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toMatch(/^[\d.]+ [A-Z]{3} = [\d.]+ [A-Z]{3}$/);
+
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
     await gotoConverterV2(page);
 
     for (const testId of [
       'converter-v2-swap',
       'converter-v2-rate-chip',
+      'converter-v2-rate-flip',
       'converter-v2-key-7',
       'converter-v2-amount-from',
     ]) {
