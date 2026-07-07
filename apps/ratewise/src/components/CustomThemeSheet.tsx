@@ -2,9 +2,10 @@
  * CustomThemeSheet（E2 wave-D＋E7 wave-B/C）：自訂主題色整頁沉浸式選色 sheet。
  *
  * 內容由上而下：即時預覽縮影卡（QA-I #3，真實元件縮影：匯率卡＋品牌 CTA＋底部導覽）→
- * 精選色票（10 格 × 5 欄，QA-I #6 收斂）＋「自訂…」（react-colorful＋HEX 收合為進階項）→
- * 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→ 背景色調八選一（色調圓票）＋
+ * 精選色票（v3 單列 8 格，內建主題近似色剔除）＋「自訂…」（react-colorful＋HEX 收合為進階項）→
+ * 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→ 背景色調單列 6 preset（色調圓票）＋
  * 亮度滑桿（wave-C 連續 tone：任意 L 值 AA 不破）→ 取消／還原預設（二段確認）。
+ * v3 緊湊化合約：390×844 sheet 開啟時上列全部控件一屏內完整可見（零捲動）。
  *
  * 預覽縮影卡合約（wave-C）：只消費與全站相同的 CSS 變數（Tailwind 語義 token），
  * 禁止獨立配色計算——draft previewTheme 已把派生變數即時寫入 documentElement inline vars，
@@ -27,6 +28,7 @@ import { useInlineConfirm } from '../hooks/useInlineConfirm';
 import {
   CUSTOM_PRIMARY_PRESETS,
   CUSTOM_BACKGROUND_TONES,
+  DEFAULT_CUSTOM_PRIMARY,
   backgroundToneValueHex,
   choosePrimaryForeground,
   continuousToneHexAtPosition,
@@ -51,13 +53,12 @@ export interface CustomThemeSheetProps {
   onReset: () => void;
 }
 
-// 淺檔一列（5）＋深檔一列（3，E7 wave-A）：grid-cols-5 下自然分兩排呈現明暗分組。
+// v3 緊湊化：單列 6 preset（淺 3＋深 3）；mint/rose 保留 enum 向後相容
+//（持久化資料仍有效），UI 入口由亮度滑桿的連續 tone 覆蓋。
 const BACKGROUND_TONE_ORDER: readonly CustomBackgroundTone[] = [
   'pure',
   'warm',
   'cool',
-  'mint',
-  'rose',
   'graphite',
   'midnight',
   'black',
@@ -127,13 +128,14 @@ export function CustomThemeSheet({
   }, [isOpen, resetConfirmReset]);
 
   // 「自訂…」進階區（QA-I #6）：色域盤與 HEX 收合；開啟 sheet 時若主色非精選票即自動展開。
+  // v3：預設品牌藍不再屬精選票（內建近似色剔除），視為已知色維持收合（一屏合約）。
   const [showAdvanced, setShowAdvanced] = useState(false);
   useEffect(() => {
     if (isOpen) {
+      const normalized = customPrimary.toUpperCase();
       setShowAdvanced(
-        !CUSTOM_PRIMARY_PRESETS.includes(
-          customPrimary.toUpperCase() as (typeof CUSTOM_PRIMARY_PRESETS)[number],
-        ),
+        normalized !== DEFAULT_CUSTOM_PRIMARY &&
+          !CUSTOM_PRIMARY_PRESETS.includes(normalized as (typeof CUSTOM_PRIMARY_PRESETS)[number]),
       );
     }
     // 僅在 sheet 開啟時機決定初始展開態，不追隨後續選色。
@@ -231,7 +233,7 @@ export function CustomThemeSheet({
             品牌 CTA（bg-primary-strong，與全站 addToHistory 同 token）、底部導覽 active 指示。
             只消費全站語義 token（CSS 變數），draft 即時繼承 inline vars（含深色調）。 */}
         <div
-          className="mb-6 max-h-[120px] overflow-hidden rounded-card border border-border/50 bg-background transition-colors duration-300"
+          className="mb-4 max-h-[120px] overflow-hidden rounded-card border border-border/50 bg-background transition-colors duration-300"
           data-testid="custom-theme-live-preview"
           aria-label={t('settings.customThemePreview')}
         >
@@ -280,12 +282,16 @@ export function CustomThemeSheet({
           </div>
         </div>
 
-        {/* 精選色票（QA-I #6 收斂：10 格 × 5 欄，press 縮放微互動）＋「自訂…」進階展開 */}
-        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-3">
+        {/* 精選色票（v3 緊湊化：單列 8 格不換行；內建主題近似色已剔除——色距測試守門）。
+            熱區高 44px（min-h-11）、寬隨格寬（320px 下 ~35px，WCAG 2.5.8 ≥24px 達標；
+            8 格已滿版，負邊距外擴必與鄰格重疊故不外擴）。圓票兩級收斂：slim（≤360px）
+            h-8＋選中 ring offset 歸零、narrow（≤349px）h-7——經典捲軸環境（e2e headless）
+            格寬再少 ~2px 仍不互貼、ring 不觸鄰票（320px bounding box e2e 守門）。 */}
+        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2">
           {t('settings.customThemePresets')}
         </p>
         <div
-          className="grid grid-cols-5 gap-3 mb-3"
+          className="grid grid-cols-8 mb-2"
           role="group"
           aria-label={t('settings.customThemePresets')}
         >
@@ -296,25 +302,27 @@ export function CustomThemeSheet({
                 key={preset}
                 type="button"
                 onClick={() => handleSelectPreset(preset)}
-                className={`relative mx-auto h-11 w-11 cursor-pointer rounded-full shadow-sm transition-[transform,filter] duration-150 ease-out hover:brightness-110 active:scale-90 motion-reduce:transition-none ${
-                  isActive ? 'ring-2 ring-offset-2 scale-105' : ''
-                }`}
-                style={
-                  {
-                    backgroundColor: preset,
-                    '--tw-ring-color': preset,
-                    '--tw-ring-offset-color': 'rgb(var(--color-surface))',
-                  } as React.CSSProperties
-                }
+                className="group/swatch flex min-h-11 w-full cursor-pointer items-center justify-center"
                 aria-pressed={isActive}
                 aria-label={`${t('styles.custom')} ${preset}`}
               >
-                {isActive && (
-                  <Check
-                    className="absolute inset-0 m-auto h-5 w-5"
-                    style={{ color: choosePrimaryForeground(preset) }}
-                  />
-                )}
+                <span
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-[transform,filter] duration-150 ease-out group-hover/swatch:brightness-110 group-active/swatch:scale-90 motion-reduce:transition-none slim:h-8 slim:w-8 narrow:h-7 narrow:w-7 ${
+                    isActive ? 'ring-2 ring-offset-1 scale-105 slim:ring-offset-0' : ''
+                  }`}
+                  style={
+                    {
+                      backgroundColor: preset,
+                      '--tw-ring-color': preset,
+                      '--tw-ring-offset-color': 'rgb(var(--color-surface))',
+                    } as React.CSSProperties
+                  }
+                  aria-hidden="true"
+                >
+                  {isActive && (
+                    <Check className="h-4 w-4" style={{ color: choosePrimaryForeground(preset) }} />
+                  )}
+                </span>
               </button>
             );
           })}
@@ -322,7 +330,7 @@ export function CustomThemeSheet({
         <button
           type="button"
           onClick={() => setShowAdvanced((prev) => !prev)}
-          className="mb-6 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-control border border-border py-2 text-xs font-bold transition-colors hover:bg-primary/5"
+          className="mb-4 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-control border border-border py-2 text-xs font-bold transition-colors hover:bg-primary/5"
           aria-expanded={showAdvanced}
           data-testid="custom-theme-advanced-toggle"
         >
@@ -336,12 +344,12 @@ export function CustomThemeSheet({
         {showAdvanced && (
           <div data-testid="custom-theme-advanced">
             {/* 二維選色面板（飽和度面板＋色相條，樣式覆寫見 index.css .custom-theme-picker） */}
-            <div className="custom-theme-picker mb-6" data-testid="custom-theme-picker">
+            <div className="custom-theme-picker mb-4" data-testid="custom-theme-picker">
               <HexColorPicker color={customPrimary} onChange={schedulePrimary} />
             </div>
 
             {/* HEX 輸入＋演算預覽 chip（token 消費：raw primary 與 strong 白字錨點） */}
-            <div className="mb-6 flex items-end justify-between gap-3">
+            <div className="mb-4 flex items-end justify-between gap-3">
               <label className="block">
                 <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
                   {t('settings.customThemeHex')}
@@ -401,7 +409,7 @@ export function CustomThemeSheet({
         )}
 
         {/* 可讀性回饋（#632）：過淺主色不硬擋，即時預覽 clamp 後的實效文字色。 */}
-        <div role="status" aria-live="polite" className="mb-5 empty:mb-0 empty:h-0 space-y-2.5">
+        <div role="status" aria-live="polite" className="mb-4 empty:mb-0 empty:h-0 space-y-2.5">
           {/* 近白/近黑主色 gate（QA-I #2＋#670 S3）：警告＋一鍵採用建議色（不硬擋）。 */}
           {contrastGate.isLowContrast && contrastGate.suggestedPrimary && (
             <div
@@ -445,12 +453,12 @@ export function CustomThemeSheet({
           )}
         </div>
 
-        {/* 背景色調八選一：色調圓票直接呈現底色（比文字 segmented 更所見即所得） */}
-        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-3">
+        {/* 背景色調單列 6 preset（v3 緊湊化）：色調圓票直接呈現底色（所見即所得）。 */}
+        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2">
           {t('settings.customThemeBackgroundTone')}
         </p>
         <div
-          className="mb-4 grid grid-cols-5 gap-2"
+          className="mb-3 grid grid-cols-6 gap-1"
           role="group"
           aria-label={t('settings.customThemeBackgroundTone')}
         >
@@ -461,12 +469,12 @@ export function CustomThemeSheet({
                 key={tone}
                 type="button"
                 onClick={() => handleSelectTone(tone)}
-                className="group flex cursor-pointer flex-col items-center gap-1.5"
+                className="group flex cursor-pointer flex-col items-center gap-1"
                 aria-pressed={isActive}
                 data-testid={`background-tone-${tone}`}
               >
                 <span
-                  className={`h-10 w-10 rounded-full border transition-all duration-150 ease-out group-active:scale-90 motion-reduce:transition-none ${
+                  className={`h-9 w-9 rounded-full border transition-all duration-150 ease-out group-active:scale-90 motion-reduce:transition-none ${
                     isActive
                       ? 'border-transparent ring-2 ring-primary ring-offset-2 ring-offset-surface scale-105'
                       : 'border-border group-hover:border-primary/40'
@@ -487,7 +495,7 @@ export function CustomThemeSheet({
         </div>
 
         {/* 亮度滑桿（wave-C 連續 tone）：0＝最深、100＝最淺；任意位置 AA 派生鏈守門。 */}
-        <label className="mb-6 block">
+        <label className="mb-4 block">
           <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
             {t('settings.customThemeToneBrightness')}
           </span>
@@ -500,7 +508,7 @@ export function CustomThemeSheet({
             onChange={(event) => handleToneSlider(Number(event.target.value))}
             onPointerUp={endToneSlide}
             onBlur={endToneSlide}
-            className="custom-tone-slider mt-3 block w-full cursor-pointer"
+            className="custom-tone-slider mt-2 block w-full cursor-pointer"
             style={{ backgroundImage: toneTrackGradient }}
             aria-label={t('settings.customThemeToneBrightness')}
             data-testid="custom-theme-tone-slider"

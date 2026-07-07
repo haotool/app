@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-theme-studio-v3-compact
+- 原因：主題工作室使用者回饋三缺口——精選票兩列且含內建主題近似色（#3182F6 即 zen primary、#8B5CF6≈violet ΔE16.5、#FF6B6B≈racing ΔE16、#EC4899≈kawaii ΔE10、#0EA5E9≈nitro ΔE10.1），且 sheet 內容在 390×844 需上下捲動才能同時操作主色與背景色調
+- 解法：色票重校準為單列 8 格（靛藍/青藍/湖水綠/萊姆綠/琥珀/酒紅/霓虹紫紅/石墨藍灰，與 7 內建 primary CIE76 ΔE\*ab 全部 ≥20 以測試固化、既有 gate 校準測試沿用；預設品牌藍視為已知色維持進階區收合），背景色調收斂單列 6 preset（mint/rose 退 UI、enum 保留向後相容、滑桿連續 tone 覆蓋）＋段落間距收斂與圓票縮 h-9（熱區高 44px、寬隨格寬——320px 下 ~35px 符合 WCAG 2.5.8 最低 24px；slim ≤360px 圓票再縮 h-8 防 320px 互貼，e2e 320×568 bounding box 守門），390×844 sheet 零捲動、375×667 僅 7px 溢出，unit 全綠＋截圖佐證
 
 - 日期：2026-07-08
 - ID：reward-rw-641-text-muted-deadclass-activation

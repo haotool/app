@@ -111,7 +111,7 @@ describe('HEX 欄位修復（QA-I #4）', () => {
   });
 
   it('貼上「#3182f6 」：清洗去 # 空白、統一大寫，Enter commit', () => {
-    const { onSelectPrimary } = renderSheet({ customPrimary: '#FF6B6B' });
+    const { onSelectPrimary } = renderSheet({ customPrimary: '#BE123C' });
     openAdvanced();
     const input = getHexInput();
     fireEvent.focus(input);
@@ -145,9 +145,9 @@ describe('HEX 欄位修復（QA-I #4）', () => {
   });
 
   it('非編輯態顯示值跟隨 customPrimary（色票/色盤變更同步；非精選色自動展開進階區）', () => {
-    renderSheet({ customPrimary: '#14B8A6' });
-    // '#14B8A6' 非精選票 → 進階區自動展開，HEX 欄位直接可見。
-    expect(getHexInput().value).toBe('14B8A6');
+    renderSheet({ customPrimary: '#123456' });
+    // '#123456' 非精選票也非預設品牌藍 → 進階區自動展開，HEX 欄位直接可見。
+    expect(getHexInput().value).toBe('123456');
   });
 });
 
@@ -211,8 +211,8 @@ describe('預覽縮影卡與實際渲染一致性（E7 wave-C，QA-I #3）', () 
   });
 });
 
-describe('色票網格收斂（E7 wave-C，QA-I #6）', () => {
-  it('精選色票 8–12 格全數渲染，「自訂…」預設收合色域盤', () => {
+describe('色票網格收斂（E7 wave-C，QA-I #6＋v3 單列 8 格）', () => {
+  it('精選色票 8 格全數渲染，「自訂…」預設收合色域盤', () => {
     renderSheet();
     for (const preset of CUSTOM_PRIMARY_PRESETS) {
       expect(screen.getByRole('button', { name: `自訂主題色 ${preset}` })).toBeInTheDocument();
@@ -224,8 +224,58 @@ describe('色票網格收斂（E7 wave-C，QA-I #6）', () => {
 
   it('點精選色票觸發 onSelectPrimary（gate 由同一 customPrimary 管道評估）', () => {
     const { onSelectPrimary } = renderSheet();
-    fireEvent.click(screen.getByRole('button', { name: '自訂主題色 #FF6B6B' }));
-    expect(onSelectPrimary).toHaveBeenCalledWith('#FF6B6B');
+    fireEvent.click(screen.getByRole('button', { name: '自訂主題色 #BE123C' }));
+    expect(onSelectPrimary).toHaveBeenCalledWith('#BE123C');
+  });
+
+  it('v3 單列合約：8 票 grid-cols-8 一列不換行、熱區高 44px（min-h-11）', () => {
+    renderSheet();
+    const group = screen.getByRole('group', { name: '精選色票' });
+    expect(group.className).toContain('grid-cols-8');
+    const buttons = Array.from(group.querySelectorAll('button'));
+    expect(buttons).toHaveLength(8);
+    for (const button of buttons) {
+      expect(button.className).toContain('min-h-11');
+    }
+  });
+
+  it('v3 320px 收斂：slim h-8 / narrow h-7 兩級圓票、選中 ring offset 歸零（防互貼/裁切）', () => {
+    renderSheet({ customPrimary: '#BE123C' });
+    const group = screen.getByRole('group', { name: '精選色票' });
+    const circles = Array.from(group.querySelectorAll('span[aria-hidden="true"]'));
+    expect(circles).toHaveLength(8);
+    for (const circle of circles) {
+      expect(circle.className).toContain('h-9');
+      expect(circle.className).toContain('slim:h-8');
+      expect(circle.className).toContain('slim:w-8');
+      expect(circle.className).toContain('narrow:h-7');
+      expect(circle.className).toContain('narrow:w-7');
+    }
+    const active = screen.getByRole('button', { name: '自訂主題色 #BE123C' });
+    const activeCircle = active.querySelector('span[aria-hidden="true"]');
+    expect(activeCircle?.className).toContain('ring-offset-1');
+    expect(activeCircle?.className).toContain('slim:ring-offset-0');
+  });
+
+  it('v3 一屏合約：預設品牌藍開啟時進階區維持收合（非精選但為已知預設色）', () => {
+    renderSheet({ customPrimary: '#3182F6' });
+    expect(screen.queryByTestId('custom-theme-picker')).not.toBeInTheDocument();
+  });
+
+  it('v3 背景色調收斂為單列 6 preset（mint/rose 退出 UI、enum 向後相容）', () => {
+    renderSheet();
+    const group = screen.getByRole('group', { name: '背景色調' });
+    expect(group.className).toContain('grid-cols-6');
+    expect(group.querySelectorAll('button')).toHaveLength(6);
+    for (const tone of ['pure', 'warm', 'cool', 'graphite', 'midnight', 'black']) {
+      expect(screen.getByTestId(`background-tone-${tone}`)).toBeInTheDocument();
+    }
+    expect(screen.queryByTestId('background-tone-mint')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('background-tone-rose')).not.toBeInTheDocument();
+    // mint 持久化值仍合法（enum 未刪）：sheet 可正常渲染、六格圓票皆非選中態。
+    cleanup();
+    renderSheet({ customBackgroundTone: 'mint' });
+    expect(screen.getByTestId('background-tone-pure')).toHaveAttribute('aria-pressed', 'false');
   });
 });
 
