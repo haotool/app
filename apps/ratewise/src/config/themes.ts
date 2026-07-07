@@ -25,6 +25,7 @@
 // 附 .ts 副檔名：themes.ts 亦被 prebuild node 腳本（type stripping）直接載入，需明確副檔名。
 import {
   CUSTOM_THEME_CSS_VARS,
+  CUSTOM_THEME_DERIVE_VERSION,
   DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
   deriveCustomThemeCssVars,
@@ -487,6 +488,42 @@ function updateThemeColorMeta(hex: string): void {
 }
 
 /**
+ * 派生結果快取 key（#619 pre-paint FOUC）：applyTheme 於 custom 模式寫入完整變數 map，
+ * index.html bootstrap 冷啟時讀取並同步套用（含深色背景系與 on-surface），避免閃白。
+ * bootstrap 端以 primary/tone/derive 版本簽章＋'R G B' 格式 allowlist 驗證，簽章不符即棄用。
+ */
+export const CUSTOM_THEME_VARS_CACHE_KEY = 'ratewise-theme-vars';
+
+/** 寫入 bootstrap pre-paint 變數快取（storage 失敗靜默忽略，退回最小 --color-primary 覆寫）。 */
+function persistCustomThemeVarsCache(
+  primaryHex: string,
+  backgroundTone: string,
+  vars: Record<string, string>,
+): void {
+  try {
+    localStorage.setItem(
+      CUSTOM_THEME_VARS_CACHE_KEY,
+      JSON.stringify({
+        p: primaryHex,
+        t: backgroundTone,
+        v: CUSTOM_THEME_DERIVE_VERSION,
+        m: vars,
+      }),
+    );
+  } catch {
+    // 快取僅為 pre-paint 最佳化；寫入失敗不影響 runtime 主題。
+  }
+}
+
+function clearCustomThemeVarsCache(): void {
+  try {
+    localStorage.removeItem(CUSTOM_THEME_VARS_CACHE_KEY);
+  } catch {
+    // 同上：清除失敗無害（bootstrap 有簽章驗證）。
+  }
+}
+
+/**
  * custom 覆寫層：style === 'custom' 時由主色演算導出整組變數寫至 documentElement；
  * 切回內建主題時清除全部 inline 覆寫（靜態 [data-style] 區塊接手）。
  */
@@ -494,6 +531,7 @@ function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void
   if (config.style !== 'custom') {
     CUSTOM_THEME_CSS_VARS.forEach((cssVar) => root.style.removeProperty(cssVar));
     updateThemeColorMeta(ZEN_THEME_COLOR);
+    clearCustomThemeVarsCache();
     return;
   }
 
@@ -508,6 +546,7 @@ function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void
   // 與 bootstrap pre-paint 同為 identity 映射（hex → 'R G B'），保證雙端一致。
   root.style.setProperty('--color-primary', hexToRgbTriple(primaryHex));
   updateThemeColorMeta(primaryHex);
+  persistCustomThemeVarsCache(primaryHex, backgroundTone, derived);
 }
 
 /**

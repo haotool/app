@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { CUSTOM_THEME_DERIVE_VERSION } from './config/custom-theme';
 
 describe('index.html - Static Template (SEOHelmet Architecture)', () => {
   const indexHtmlPath = resolve(__dirname, '..', 'index.html');
@@ -204,23 +205,45 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
     });
   });
 
-  describe('🟢 Custom Theme Bootstrap（E2 pre-paint 最小覆寫）', () => {
+  describe('🟢 Custom Theme Bootstrap（E2 最小覆寫＋E7 wave-A 快取全量 pre-paint）', () => {
+    const bootstrapStart = indexHtmlContent.indexOf('<!-- Theme Initialization');
+    const bootstrapEnd = indexHtmlContent.indexOf('</script>', bootstrapStart);
+    const bootstrap = indexHtmlContent.slice(bootstrapStart, bootstrapEnd);
+
     it('should validate customPrimary with strict hex pattern', () => {
       // 僅接受 #RRGGBB 六碼，與 runtime isValidHexColor 同構。
       expect(indexHtmlContent).toContain('/^#[0-9a-fA-F]{6}$/');
       expect(indexHtmlContent).toContain('customPrimary');
     });
 
-    it('should pre-paint override --color-primary only (identity hex → R G B)', () => {
-      // 只檢查 Theme Initialization bootstrap script 區塊（skeleton SVG 消費變數不在此限）。
-      const bootstrapStart = indexHtmlContent.indexOf('<!-- Theme Initialization');
-      const bootstrapEnd = indexHtmlContent.indexOf('</script>', bootstrapStart);
-      const bootstrap = indexHtmlContent.slice(bootstrapStart, bootstrapEnd);
+    it('should read the derived vars cache with signature and triple-format validation (#619)', () => {
+      // E7 wave-A：pre-paint 讀 applyTheme 持久化的派生快取（含深色背景系與 on-surface），
+      // 深色使用者冷啟不閃白；簽章（primary/tone/derive 版本）或格式不符即整包棄用。
+      expect(bootstrap).toContain("'ratewise-theme-vars'");
+      expect(bootstrap).toContain(
+        `c.p !== p || c.t !== t || c.v !== ${CUSTOM_THEME_DERIVE_VERSION}`,
+      );
+      expect(bootstrap).toContain('/^\\d{1,3} \\d{1,3} \\d{1,3}$/');
+      expect(bootstrap).toContain('customBackgroundTone');
+      // 空 map 防護：--color-primary 鍵必須存在，否則視為壞快取回退最小覆寫。
+      expect(bootstrap).toContain("String(m['--color-primary'])");
+      // skeleton 首繪變數同步（--sk-bg 只認 data-style 靜態區塊，custom 需 inline 供給）。
+      expect(bootstrap).toContain("'--sk-bg'");
+      expect(bootstrap).toContain("'--sk-text'");
+    });
 
-      // 最小覆寫：--color-primary 一鍵 + theme-color meta；完整演算由 applyTheme 接手。
+    it('derive version stamp in bootstrap must match CUSTOM_THEME_DERIVE_VERSION (SSOT sync)', () => {
+      // bootstrap 為 inline script 無法 import，以字面值比對鎖定雙端版本同步；
+      // 演算改版時 bump 常數，本斷言即紅，提醒同步 index.html 字面值。
+      const match = /c\.v !== (\d+)/.exec(bootstrap);
+      expect(match?.[1]).toBe(String(CUSTOM_THEME_DERIVE_VERSION));
+    });
+
+    it('should fall back to minimal --color-primary override without inlining derivation', () => {
+      // 快取缺失/不符的降級：--color-primary 一鍵 + theme-color meta；完整演算由 applyTheme 接手。
       expect(bootstrap).toContain("'--color-primary'");
       expect(bootstrap).toContain('meta[name="theme-color"]');
-      // 不得在 bootstrap 內嵌完整演算（strong/hover 等鍵禁止出現，防雙份漂移）。
+      // 不得在 bootstrap 內嵌演算（strong/hover 等鍵的計算禁止出現，防雙份漂移）。
       expect(bootstrap).not.toContain('--color-primary-strong');
       expect(bootstrap).not.toContain('--color-primary-hover');
     });

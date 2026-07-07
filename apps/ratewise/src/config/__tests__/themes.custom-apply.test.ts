@@ -6,9 +6,10 @@
  * 3. customPrimary 缺失/無效：回退預設自訂主色，不得產生半套覆寫。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyTheme } from '../themes';
+import { applyTheme, CUSTOM_THEME_VARS_CACHE_KEY } from '../themes';
 import {
   CUSTOM_THEME_CSS_VARS,
+  CUSTOM_THEME_DERIVE_VERSION,
   DEFAULT_CUSTOM_PRIMARY,
   deriveCustomThemeCssVars,
 } from '../custom-theme';
@@ -86,6 +87,47 @@ describe('applyTheme - custom 覆寫層', () => {
     const root = document.documentElement;
     expect(root.style.getPropertyValue('--color-background')).toBe('');
     expect(root.style.getPropertyValue('--color-surface-sunken')).toBe('');
+  });
+
+  it('深色背景調（E7 wave-A）寫入整套 neutral scale 覆寫且與演算 SSOT 一致', () => {
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'midnight' });
+    const expected = deriveCustomThemeCssVars('#FF6B6B', 'midnight');
+    const root = document.documentElement;
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => {
+      expect(root.style.getPropertyValue(cssVar), cssVar).toBe(expected[cssVar]);
+    });
+    expect(root.style.getPropertyValue('--color-background')).toBe('15 23 42');
+
+    // 切回內建主題：深色覆寫零殘留
+    applyTheme({ style: 'zen' });
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => {
+      expect(root.style.getPropertyValue(cssVar), `${cssVar} 應被清除`).toBe('');
+    });
+  });
+
+  it('custom 模式持久化 pre-paint 派生快取（#619）；切回內建主題清除', () => {
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: 'graphite' });
+    const raw = localStorage.getItem(CUSTOM_THEME_VARS_CACHE_KEY);
+    expect(raw).not.toBeNull();
+    const cache = JSON.parse(raw ?? '{}') as {
+      p: string;
+      t: string;
+      v: number;
+      m: Record<string, string>;
+    };
+    expect(cache.p).toBe('#FF6B6B');
+    expect(cache.t).toBe('graphite');
+    // derive 版本戳：演算改版即 bump，bootstrap 讀到舊版整包棄用
+    expect(cache.v).toBe(CUSTOM_THEME_DERIVE_VERSION);
+    expect(cache.m).toEqual(deriveCustomThemeCssVars('#FF6B6B', 'graphite'));
+    // bootstrap 端格式 allowlist：全部值必須為 'R G B' 三元組，且 --color-primary 必須存在
+    expect(cache.m['--color-primary']).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/);
+    Object.values(cache.m).forEach((value) => {
+      expect(value).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/);
+    });
+
+    applyTheme({ style: 'zen' });
+    expect(localStorage.getItem(CUSTOM_THEME_VARS_CACHE_KEY)).toBeNull();
   });
 
   it('customPrimary 缺失或無效時回退預設自訂主色', () => {

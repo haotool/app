@@ -12,7 +12,7 @@
  * @see .claude/decisions/ADR-001-react-colorful.md
  */
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, TrendingUp } from 'lucide-react';
@@ -36,12 +36,16 @@ export interface CustomThemeSheetProps {
   onReset: () => void;
 }
 
+// 淺檔一列（5）＋深檔一列（3，E7 wave-A）：grid-cols-5 下自然分兩排呈現明暗分組。
 const BACKGROUND_TONE_ORDER: readonly CustomBackgroundTone[] = [
   'pure',
   'warm',
   'cool',
   'mint',
   'rose',
+  'graphite',
+  'midnight',
+  'black',
 ];
 
 /** 選色觸覺回饋（支援裝置才震動；時長對齊 quickAmountButtonTokens.hapticDuration 語意） */
@@ -82,6 +86,28 @@ export function CustomThemeSheet({
   const isTextClamped = onSurfaceTriple !== derived['--color-primary'];
   const onSurfaceRgb = tripleToRgb(onSurfaceTriple);
 
+  // 選色拖動 16ms debounce（trailing）：全套派生（含深色 neutral scale）高頻執行的效能上限，
+  // 與 deriveCustomThemeCssVars 的 memoize 並用（PM 簡報第 5 節）。
+  const pendingHexRef = useRef<string | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handlePickerChange = useCallback(
+    (hex: string) => {
+      pendingHexRef.current = hex;
+      if (debounceTimerRef.current !== null) return;
+      debounceTimerRef.current = setTimeout(() => {
+        debounceTimerRef.current = null;
+        if (pendingHexRef.current !== null) onSelectPrimary(pendingHexRef.current);
+      }, 16);
+    },
+    [onSelectPrimary],
+  );
+  useEffect(
+    () => () => {
+      if (debounceTimerRef.current !== null) clearTimeout(debounceTimerRef.current);
+    },
+    [],
+  );
+
   const handleHexInput = (raw: string) => {
     const value = raw.startsWith('#') ? raw : `#${raw}`;
     if (isValidHexColor(value)) {
@@ -105,6 +131,9 @@ export function CustomThemeSheet({
     cool: t('settings.customThemeToneCool'),
     mint: t('settings.customThemeToneMint'),
     rose: t('settings.customThemeToneRose'),
+    graphite: t('settings.customThemeToneGraphite'),
+    midnight: t('settings.customThemeToneMidnight'),
+    black: t('settings.customThemeToneBlack'),
   };
 
   return (
@@ -209,7 +238,7 @@ export function CustomThemeSheet({
 
         {/* 二維選色面板（飽和度面板＋色相條，樣式覆寫見 index.css .custom-theme-picker） */}
         <div className="custom-theme-picker mb-6" data-testid="custom-theme-picker">
-          <HexColorPicker color={customPrimary} onChange={(hex) => onSelectPrimary(hex)} />
+          <HexColorPicker color={customPrimary} onChange={handlePickerChange} />
         </div>
 
         {/* HEX 輸入＋演算預覽 chip */}
