@@ -41,6 +41,7 @@ import {
   sliderPositionForToneValue,
   type CustomBackgroundTone,
 } from '../custom-theme';
+import { STYLE_DEFINITIONS } from '../themes';
 
 /** 'R G B' → 相對亮度（WCAG 2.x，獨立實作） */
 function relativeLuminance(triple: string): number {
@@ -501,9 +502,8 @@ describe('custom 主題演算行為合約', () => {
     expect(isValidHexColor(123)).toBe(false);
   });
 
-  it('精選色票 8–12 格（E7 wave-C 收斂，QA-I #6）、格式合法且彼此可區辨', () => {
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeGreaterThanOrEqual(8);
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(12);
+  it('精選色票固定單列 8 格（v3 緊湊化）、格式合法且彼此可區辨', () => {
+    expect(CUSTOM_PRIMARY_PRESETS.length).toBe(8);
     CUSTOM_PRIMARY_PRESETS.forEach((preset) => expect(isValidHexColor(preset)).toBe(true));
     expect(new Set(CUSTOM_PRIMARY_PRESETS).size).toBe(CUSTOM_PRIMARY_PRESETS.length);
   });
@@ -517,6 +517,53 @@ describe('custom 主題演算行為合約', () => {
         ).toBe(false);
       }
     }
+  });
+
+  describe('精選色票 × 內建主題 primary 色距（v3：內建近似色剔除）', () => {
+    // CIE76 ΔE*ab 獨立實作（sRGB → XYZ(D65) → Lab）：不复用被測模組，避免自我驗證盲點。
+    function labOf(hex: string): { L: number; a: number; b: number } {
+      const linear = (channel: number) => {
+        const v = channel / 255;
+        return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      };
+      const r = linear(parseInt(hex.slice(1, 3), 16));
+      const g = linear(parseInt(hex.slice(3, 5), 16));
+      const b = linear(parseInt(hex.slice(5, 7), 16));
+      const x = (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) / 0.95047;
+      const y = r * 0.2126729 + g * 0.7151522 + b * 0.072175;
+      const z = (r * 0.0193339 + g * 0.119192 + b * 0.9503041) / 1.08883;
+      const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+      return { L: 116 * f(y) - 16, a: 500 * (f(x) - f(y)), b: 200 * (f(y) - f(z)) };
+    }
+
+    function deltaE(hexA: string, hexB: string): number {
+      const a = labOf(hexA);
+      const b = labOf(hexB);
+      return Math.hypot(a.L - b.L, a.a - b.a, a.b - b.b);
+    }
+
+    // 門檻裁決：ΔE*ab ≥ 20（JND ≈ 2.3；ΔE < 20 一般視為「同色系不同深淺」，
+    // 內建主題一鍵即可選用，精選票只保留內建沒有的色感）。
+    const MIN_DELTA_E = 20;
+
+    // 內建主題 primary SSOT：STYLE_DEFINITIONS 直出（'R G B' → hex），新內建主題自動納入。
+    const builtinPrimaries = Object.entries(STYLE_DEFINITIONS).map(([style, definition]) => {
+      const [r, g, b] = definition.colors.primary.split(/\s+/).map(Number);
+      const channel = (value: number | undefined) => (value ?? 0).toString(16).padStart(2, '0');
+      return { style, hex: `#${channel(r)}${channel(g)}${channel(b)}`.toUpperCase() };
+    });
+
+    it('內建主題共 7 個（8 票 × 7 內建全配對合約基數）', () => {
+      expect(builtinPrimaries).toHaveLength(7);
+    });
+
+    it.each(
+      CUSTOM_PRIMARY_PRESETS.flatMap((preset) =>
+        builtinPrimaries.map(({ style, hex }) => ({ preset, style, hex })),
+      ),
+    )('$preset × $style（$hex）ΔE*ab ≥ 20', ({ preset, hex }) => {
+      expect(deltaE(preset, hex)).toBeGreaterThanOrEqual(MIN_DELTA_E);
+    });
   });
 
   it('背景色調缺省＝純淨白（zen 現值，向後相容合約）', () => {
