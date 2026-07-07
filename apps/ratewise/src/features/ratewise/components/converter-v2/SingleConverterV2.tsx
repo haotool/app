@@ -168,7 +168,7 @@ function CurrencyRow({
   return (
     <div
       data-testid={`converter-v2-row-${field}`}
-      className={`relative flex items-center gap-3 px-4 py-3 short:py-1 transition-colors ${
+      className={`relative flex items-center gap-3 px-4 py-3 compact:py-1.5 short:py-1 transition-colors ${
         isActive ? 'bg-primary/5' : ''
       }`}
     >
@@ -628,8 +628,10 @@ export const SingleConverterV2 = ({
     </button>
   );
 
+  // QA-J J-1：701–805px 高度帶（如 360×740/360×800）補齊 snug/compact 壓縮梯次，
+  // 鍵盤底列不得被固定底導覽遮蓋；short（≤700px）既有梯次不動。
   return (
-    <div className="flex flex-col gap-3 short:gap-1.5" data-testid="converter-v2">
+    <div className="flex flex-col gap-3 snug:gap-2 short:gap-1.5" data-testid="converter-v2">
       {/* 等值雙列：上下緊貼、完全對等，divider 內嵌 32px swap 鈕 */}
       <div className="rounded-2xl border border-border/60 bg-surface overflow-hidden">
         <CurrencyRow
@@ -769,7 +771,7 @@ export const SingleConverterV2 = ({
             </span>
           )}
         </div>
-        <div className="h-[72px] short:h-[40px] pointer-events-none">
+        <div className="h-[72px] snug:h-[56px] short:h-[40px] pointer-events-none">
           {sparklineData.length >= 2 ? (
             <Suspense fallback={<TrendChartSkeleton />}>
               <MiniTrendChart data={sparklineData} currencyCode={toCurrency} />
@@ -788,7 +790,7 @@ export const SingleConverterV2 = ({
         data-testid="converter-v2-keypad"
         role="group"
         aria-label={t('converterV2.keypadLabel')}
-        className="rounded-2xl bg-surface px-1 pt-3 pb-2 short:pt-1 short:pb-1"
+        className="rounded-2xl bg-surface px-1 pt-3 pb-2 snug:pt-2 short:pt-1 short:pb-1"
       >
         {/* E8 缺口 1：快速金額 chips 內嵌 keypad 第 0 列（單排橫向捲動，不另佔獨立區塊）。
             點擊語意＝取代活躍列金額（父層 remount 重播種子，沿用 #633 首鍵取代閘門語意）。 */}
@@ -807,7 +809,7 @@ export const SingleConverterV2 = ({
                 lightHaptic();
                 handleQuickAmount(amount);
               }}
-              className="h-9 short:h-7 min-w-0 shrink-0 rounded-full bg-surface-elevated px-3.5 text-sm short:text-xs font-semibold tabular-nums text-text/70 transition-colors hover:bg-primary/10 hover:text-primary-on-surface active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="h-9 snug:h-8 short:h-7 min-w-0 shrink-0 rounded-full bg-surface-elevated px-3.5 text-sm short:text-xs font-semibold tabular-nums text-text/70 transition-colors hover:bg-primary/10 hover:text-primary-on-surface active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {amount.toLocaleString()}
             </button>

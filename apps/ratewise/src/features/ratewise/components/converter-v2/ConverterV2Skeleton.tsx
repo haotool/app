@@ -14,7 +14,7 @@ export function ConverterV2Skeleton() {
       data-testid="converter-v2-skeleton"
       role="status"
       aria-live="polite"
-      className="flex flex-col gap-3 short:gap-2"
+      className="flex flex-col gap-3 snug:gap-2 short:gap-2"
     >
       {/* 等值雙列卡：兩列（h-11 幣別鈕＋右對齊金額）＋ divider 內嵌 32px swap 圓 */}
       <div className="rounded-2xl border border-border/60 bg-surface overflow-hidden">
@@ -29,7 +29,7 @@ export function ConverterV2Skeleton() {
                 <div className="h-px flex-1 bg-border/60" />
               </div>
             )}
-            <div className="flex items-center gap-3 px-4 py-3 short:py-1.5">
+            <div className="flex items-center gap-3 px-4 py-3 compact:py-1.5 short:py-1.5">
               <div className="skeleton-shimmer h-11 w-24 shrink-0 rounded-xl" />
               <div className="flex-1 min-w-0 min-h-[44px] flex items-center justify-end px-2">
                 <div className="skeleton-shimmer h-8 short:h-6 w-32 rounded-lg" />
@@ -50,16 +50,19 @@ export function ConverterV2Skeleton() {
           <div className="skeleton-shimmer h-3.5 w-28 rounded" />
           <div className="skeleton-shimmer h-5 w-16 rounded-full" />
         </div>
-        <div className="h-[72px] short:h-[48px] flex items-end pb-1">
+        <div className="h-[72px] snug:h-[56px] short:h-[48px] flex items-end pb-1">
           <div className="skeleton-bg h-full w-full rounded-lg" />
         </div>
       </div>
 
       {/* 常駐計算機：4×4 鍵位（h-[54px]），對齊 ConverterKeypad 尺寸 */}
-      <div className="rounded-2xl bg-surface px-1 pt-3 pb-2 short:pt-1.5 short:pb-1">
+      <div className="rounded-2xl bg-surface px-1 pt-3 pb-2 snug:pt-2 short:pt-1.5 short:pb-1">
         <div className="grid grid-cols-4 gap-2 short:gap-1.5">
           {Array.from({ length: 16 }, (_, i) => (
-            <div key={i} className="skeleton-shimmer h-[54px] short:h-[44px] rounded-2xl" />
+            <div
+              key={i}
+              className="skeleton-shimmer h-[54px] compact:h-[48px] short:h-[44px] rounded-2xl"
+            />
           ))}
         </div>
       </div>

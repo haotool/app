@@ -196,6 +196,7 @@ describe('Design Token System - BDD', () => {
       const { breakpointTokens } = await import('./design-tokens');
       const screens = breakpointTokens.screens;
 
+      expect(screens.snug.raw).toBe('(max-height: 805px)');
       expect(screens.compact.raw).toBe('(max-height: 760px)');
       expect(screens.short.raw).toBe('(max-height: 700px)');
       expect(screens.tiny.raw).toBe('(max-height: 650px)');
@@ -204,10 +205,11 @@ describe('Design Token System - BDD', () => {
       expect(screens.tall.raw).toBe('(min-height: 761px)');
     });
 
-    it('應該有極窄寬度斷點設定（RateSelector pills 梯次）', async () => {
+    it('應該有極窄寬度斷點設定（RateSelector pills 梯次＋slim 底部留白）', async () => {
       const { breakpointTokens } = await import('./design-tokens');
       const screens = breakpointTokens.screens;
 
+      expect(screens.slim.raw).toBe('(max-width: 360px)');
       expect(screens.narrow.raw).toBe('(max-width: 349px)');
       expect(screens.xnarrow.raw).toBe('(max-width: 329px)');
     });
@@ -286,14 +288,49 @@ describe('Design Token System - BDD', () => {
   });
 
   describe('🟢 GREEN: 導覽 main 滾動留白 Token', () => {
-    it('應該導出 narrow 360px 額外 bottom padding', async () => {
+    it('應該導出 slim（≤360px）額外 bottom padding', async () => {
       const { navigationTokens } = await import('./design-tokens');
 
       expect(navigationTokens.mainScroll.paddingBottomClass).toContain(
         'pb-[calc(56px+env(safe-area-inset-bottom,0px))]',
       );
-      expect(navigationTokens.mainScroll.paddingBottomClass).toContain('max-[360px]:pb-[calc(84px');
+      expect(navigationTokens.mainScroll.paddingBottomClass).toContain('slim:pb-[calc(84px');
       expect(navigationTokens.mainScroll.paddingBottomClass).toContain('md:pb-0');
+    });
+
+    // #662 死類守門：repo screens 為 object 格式，max-[...] 任意變體不產 CSS。
+    // 不斷言 token 字串本身，直接以 Tailwind 編譯層驗證類名確實產出對應 media query 規則。
+    // screens 消費與 tailwind.config.ts 相同的 breakpointTokens SSOT（object 形態）。
+    it('paddingBottomClass 應實際產出 ≤360px 的 84px 底部留白 CSS 規則', async () => {
+      const { navigationTokens, breakpointTokens } = await import('./design-tokens');
+      const { default: postcss } = await import('postcss');
+      const { default: tailwindcss } = await import('tailwindcss');
+
+      const result = await postcss([
+        tailwindcss({
+          content: [
+            {
+              raw: `<div class="${navigationTokens.mainScroll.paddingBottomClass}"></div>`,
+              extension: 'html',
+            },
+          ],
+          theme: {
+            screens: {
+              md: breakpointTokens.screens.md.min,
+              slim: { raw: breakpointTokens.screens.slim.raw },
+            },
+          },
+        }),
+      ]).process('@tailwind utilities;', { from: undefined });
+
+      // 基準留白（不分視口）與 slim 加大留白（≤360px）都必須實際產出。
+      expect(result.css).toMatch(
+        /padding-bottom:\s*calc\(56px\s*\+\s*env\(safe-area-inset-bottom,\s*0px\)\)/,
+      );
+      expect(result.css).toMatch(/@media\s*\(max-width:\s*360px\)/);
+      expect(result.css).toMatch(
+        /padding-bottom:\s*calc\(84px\s*\+\s*env\(safe-area-inset-bottom,\s*0px\)\)/,
+      );
     });
   });
 

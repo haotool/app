@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-662-slim-deadclass-j1-snug-tier
+- 原因：repo Tailwind screens 為 object 格式使 layout.ts 的 max-[360px] 任意變體不產 CSS（≤360px 底部留白停留 56px，且 design-tokens.test 以字串斷言反向固化死類）；v2 高度壓縮梯次僅有 short（≤700px），701–805px 帶（360×740/360×800）無任何收斂致鍵盤底列文件位置恆為 749px、被固定底導覽遮 6–66px（QA-J J-1）
+- 解法：比照 #660 raw 斷點模式新增 slim（≤360px）進 breakpointTokens SSOT 並改用 slim: 生效類名，測試改為 postcss+tailwindcss 編譯層斷言實際產出 @media (max-width:360px) 84px 規則；v2 補齊 snug（≤805px 輕度收斂：容器 gap、sparkline、keypad 內距、quick chips）與 compact（≤760px 加深：列內距、鍵高 54→48）兩級梯次（skeleton 同步），short 以下既有梯次零變動，e2e 零捲動矩陣擴 360×740/360×800 並加 ≤360px 寬 main padding-bottom 84px 守門
 
 - 日期：2026-07-07
 - ID：reward-rw-e7-theme-studio-wave-c-final

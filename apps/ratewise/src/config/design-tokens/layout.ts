@@ -84,11 +84,12 @@ export const navigationTokens = {
 
   /**
    * 行動版 main 滾動區底部留白（fixed bottom nav 上方可捲動空間）
-   * narrow 額外 +28px：Galaxy S21 360×800 QA 曾見 CTA 與 bottom nav 重疊
+   * slim（≤360px）額外 +28px：Galaxy S21 360×800 QA 曾見 CTA 與 bottom nav 重疊。
+   * repo screens 為 object 格式，max-[360px] 任意變體不產 CSS（#662），必須用 slim 斷點。
    */
   mainScroll: {
     paddingBottomClass:
-      'pb-[calc(56px+env(safe-area-inset-bottom,0px))] max-[360px]:pb-[calc(84px+env(safe-area-inset-bottom,0px))] md:pb-0',
+      'pb-[calc(56px+env(safe-area-inset-bottom,0px))] slim:pb-[calc(84px+env(safe-area-inset-bottom,0px))] md:pb-0',
   },
 } as const;
 
