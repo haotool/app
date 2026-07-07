@@ -80,6 +80,7 @@ const ja = {
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',
     backToConverter: 'コンバーターに戻る',
+    rateDetailsTitle: '台湾銀行 {{code}} 公示レート',
   },
 
   // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）

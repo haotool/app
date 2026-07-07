@@ -165,10 +165,10 @@ export const pageLayoutTokens = {
  * 2. **漸進隱藏**：依重要性順序隱藏次要元素
  * 3. **等比維持**：漸層/光暈使用 `aspect-ratio` 保持比例
  *
- * ## 元素隱藏優先順序（由先到後）
+ * ## 元素隱藏優先順序（由先到後；E10 fold 後快速金額門檻下移至矩陣外）
  *
- * 1. 快速金額（來源）  - short (≤700px) 隱藏
- * 2. 快速金額（結果）  - tiny (≤650px) 隱藏
+ * 1. 快速金額（來源）  - micro (≤600px) 隱藏
+ * 2. 快速金額（結果）  - nano (≤560px) 隱藏
  * 3. 交換按鈕光暈      - short (≤700px) 隱藏
  * 4. 交換按鈕          - micro (≤600px) 隱藏
  * 5. 資料來源          - nano (≤560px) 隱藏（最後）
@@ -282,6 +282,33 @@ export const multiConverterLayoutTokens = {
  * @version 1.1.0
  */
 export const singleConverterLayoutTokens = {
+  /**
+   * E10 fold 佈局（v1 單幣別整頁）
+   *
+   * fold 合約：首屏底界 = 匯率結果卡（含加入歷史紀錄動作）底緣；
+   * 下方（四價詳情、趨勢卡、資訊區）自然捲動。
+   *
+   * fold 預算以 --app-height 為 SSOT（JS 寫入 visualViewport.height；
+   * CSS fallback 100svh——webview 動態工具列下 svh 為最保守可視高度，不用 100vh/dvh）。
+   * 80px = header 48px + 內容區 pt 16px + 卡片 pt 16px（不扣 1px border：寧可略高，
+   * 確保 fold 下方第一元素落在視口外）。
+   * 內部 pb 抵銷固定底導覽（56px；slim ≤360px 為 84px，對齊 mainScroll token）＋8px 呼吸。
+   * md+ 無行動 fold 壓力（#643 兩欄佈局），全部歸零。
+   */
+  fold: {
+    /** fold 容器：撐滿首屏可用高度，結果卡以 mt-auto 錨定 fold 底緣 */
+    container:
+      'flex flex-col min-h-[calc(var(--app-height,100svh)-80px-env(safe-area-inset-top,0px))] pb-[calc(64px+env(safe-area-inset-bottom,0px))] slim:pb-[calc(92px+env(safe-area-inset-bottom,0px))] md:min-h-0 md:pb-0',
+    /** 結果卡錨定：tall 視口推至 fold 底緣，短視口自然堆疊 */
+    resultAnchor: 'mt-auto',
+  },
+
+  /** fold 下方區塊（四價詳情、趨勢卡）間距 */
+  belowFold: {
+    section: 'mt-4 compact:mt-3.5 short:mt-3 tiny:mt-2.5 micro:mt-2 nano:mt-2',
+    heading: 'mb-2 text-xs font-semibold text-text-muted',
+  },
+
   /** 區塊間距 - 線性遞減 */
   section: {
     className: 'mb-4 compact:mb-3.5 short:mb-3 tiny:mb-2.5 micro:mb-2 nano:mb-2',
@@ -298,18 +325,12 @@ export const singleConverterLayoutTokens = {
       'py-3 text-2xl compact:py-2.5 compact:text-xl short:py-2 short:text-lg tiny:py-1.5 tiny:text-base micro:py-1.5 micro:text-base nano:py-1 nano:text-sm',
   },
 
-  /** 匯率卡片區塊 */
+  /** 匯率結果卡（E10：趨勢圖移出後即 fold 底界卡片） */
   rateCard: {
-    /** 區塊容器 */
-    section:
-      'flex flex-col items-center mb-4 compact:mb-3.5 short:mb-3 tiny:mb-2.5 micro:mb-2 nano:mb-2',
-
-    /** 卡片底部間距 */
-    cardSpacing: 'mb-3 compact:mb-2.5 short:mb-2 tiny:mb-1.5 micro:mb-1.5 nano:mb-1',
-
-    /** 匯率資訊區內距 - micro/nano 頂部 ≥40px，避免 RateSelector 與匯率文字重疊 */
+    /** 匯率資訊區內距 - 各梯次頂部 ≥40px，避免絕對定位 RateSelector 與匯率文字重疊
+     * （E10：short/tiny 原 pt-8/pt-6 不足 pills 佔位 36px，補齊至 40px） */
     infoPadding:
-      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-8 short:pb-4 tiny:pt-6 tiny:pb-3 micro:pt-10 micro:pb-2.5 nano:pt-10 nano:pb-2',
+      'pt-12 pb-6 compact:pt-10 compact:pb-5 short:pt-10 short:pb-4 tiny:pt-10 tiny:pb-3 micro:pt-10 micro:pb-2.5 nano:pt-10 nano:pb-2',
 
     /** 匯率類型按鈕容器定位 */
     rateTypeContainer:
@@ -337,10 +358,6 @@ export const singleConverterLayoutTokens = {
     /** 計價基準 pill 槽位（無 pill 時仍保留高度） */
     rateBasisSlot: 'mt-1.5 flex min-h-6 items-center justify-center',
 
-    /** 匯率卡片本體最小高度（資訊區 + 圖表） */
-    cardMinHeight:
-      'min-h-[10.5rem] compact:min-h-[9.5rem] short:min-h-[8.75rem] tiny:min-h-[8rem] micro:min-h-[7.25rem] nano:min-h-[6.75rem]',
-
     /** 趨勢圖高度 - 線性遞減 */
     chartHeight: 'h-20 compact:h-16 short:h-14 tiny:h-12 micro:h-10 nano:h-8',
 
@@ -366,20 +383,20 @@ export const singleConverterLayoutTokens = {
   /**
    * 快速金額區塊
    *
-   * 隱藏優先順序：來源 (tiny) → 結果 (micro)
-   * 快速金額為輔助功能，優先於資料來源隱藏
-   * #591：iPhone SE（667px 高，short 區間）需保留來源快速金額，隱藏門檻下移一級
+   * E10 fold 合約：快速金額列屬 fold 首屏內容（趨勢卡已移至 fold 下方釋放空間），
+   * fold 視口矩陣（最小 360×640，tiny 區間）內不得隱藏；隱藏門檻下移至矩陣之外。
+   * 隱藏優先順序：來源 (micro ≤600px) → 結果 (nano ≤560px)
    */
   quickAmounts: {
     /** 容器樣式（snap-x proximity：滑動後 chip 對齊起點，避免半截停留） */
     container:
       'flex gap-2 mt-2 compact:mt-1.5 short:mt-1 tiny:mt-1 micro:mt-0.5 nano:mt-0.5 min-w-0 overflow-x-auto snap-x snap-proximity scrollbar-hide [overflow-y:hidden] [-webkit-overflow-scrolling:touch]',
 
-    /** 來源快速金額：tiny (≤650px) 隱藏 */
-    fromVisibility: 'tiny:hidden',
+    /** 來源快速金額：micro (≤600px) 隱藏（fold 矩陣下限 640px 內保持可見） */
+    fromVisibility: 'micro:hidden',
 
-    /** 結果快速金額：micro (≤600px) 隱藏 */
-    toVisibility: 'micro:hidden',
+    /** 結果快速金額：nano (≤560px) 隱藏 */
+    toVisibility: 'nano:hidden',
   },
 
   /**
@@ -398,10 +415,9 @@ export const singleConverterLayoutTokens = {
     glowHidden: 'short:hidden',
   },
 
-  /** 加入歷史按鈕 - micro/nano 維持 WCAG 44px 最小觸控高度 */
+  /** 加入歷史按鈕 - 全梯次維持 WCAG 44px 最小觸控高度（E10 fold 合約） */
   addToHistory: {
-    className:
-      'py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:min-h-11 micro:py-2 nano:min-h-11 nano:py-2',
+    className: 'min-h-11 py-3.5 compact:py-3 short:py-2.5 tiny:py-2 micro:py-2 nano:py-2',
   },
 } as const;
 

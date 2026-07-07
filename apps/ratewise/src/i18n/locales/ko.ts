@@ -80,6 +80,7 @@ const ko = {
     fromAmountLabel: '금액 ({{code}})',
     toAmountLabel: '결과 ({{code}})',
     backToConverter: '환산기로 돌아가기',
+    rateDetailsTitle: '대만은행 {{code}} 고시 환율',
   },
 
   // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）

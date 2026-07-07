@@ -437,7 +437,7 @@ export function getCurrencyLandingPageContent(
       {
         position: 4,
         name: '查看趨勢與歷史',
-        text: '展開匯率卡片可查看 7~30 天歷史趨勢圖，幫助判斷換匯時機。',
+        text: '往下捲動即可查看 30 天歷史趨勢卡，幫助判斷換匯時機。',
       },
     ],
     // A03 修正：highlights 收斂為 3 條，其中 2 條來自 persona 特化欄位。
@@ -592,7 +592,7 @@ export function getReverseCurrencyLandingPageContent(
       {
         position: 4,
         name: '觀察趨勢，決定換匯時機',
-        text: '展開匯率卡片查看 7～30 天歷史趨勢，了解近期匯率高低區間，協助判斷換匯時機。',
+        text: '往下捲動查看 30 天歷史趨勢卡，了解近期匯率高低區間，協助判斷換匯時機。',
       },
     ],
     // A03 修正：highlights 收斂為 3 條，其中 2 條來自 persona 特化欄位。

@@ -80,6 +80,7 @@ const en = {
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',
     backToConverter: 'Back to Converter',
+    rateDetailsTitle: 'Taiwan Bank {{code}} board rates',
   },
 
   // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）

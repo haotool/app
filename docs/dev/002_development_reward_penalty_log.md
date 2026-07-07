@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+196
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-e10-single-fold-layout
+- 原因：v1 單幣別頁趨勢圖內嵌結果卡、快速金額列於小高度被 tiny/micro 隱藏，PWA 首屏無 fold 合約——加入歷史紀錄動作在部分視口需捲動才可見，fold 下方亦無結構化內容
+- 解法：v1 重排為整頁 fold 佈局（輸入→交換→結果卡含歷史動作，以 --app-height fallback 100svh 撐滿首屏並 mt-auto 錨定底緣；臺銀四價詳情＋趨勢卡移至下方捲動區），quick amounts 隱藏門檻下移至 fold 矩陣外（micro/nano）、歷史動作全梯次 min-h-11，新增 8 視口 e2e fold 合約矩陣與 v1/v2 截圖各 8 張，趨勢互動相關 SEO 文案（HowTo/指南/FAQ）同步改為捲動語意
 
 - 日期：2026-07-08
 - ID：reward-rw-682-dockerfile-vite-site-url-arg

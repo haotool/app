@@ -202,10 +202,10 @@ export function AppLayout() {
       <RouteAnalytics />
       {/* 根容器：固定視口高度，啟用 flex 滾動
        * 使用 --app-height（由 JS 設定）而非 100dvh，確保 WebView 環境高度正確。
-       * Fallback：100dvh（JS 尚未執行時，或 SSG 初始渲染）。 */}
+       * Fallback：100svh（JS 尚未執行時，或 SSG 初始渲染；E10 fold 以最保守可視高度計）。 */}
       <div
         className="w-full flex flex-col font-sans bg-[rgb(var(--color-background))] text-[rgb(var(--color-text))] overflow-hidden"
-        style={{ height: 'var(--app-height, 100dvh)' }}
+        style={{ height: 'var(--app-height, 100svh)' }}
       >
         {location.pathname === '/' ? (
           <div className="sr-only">

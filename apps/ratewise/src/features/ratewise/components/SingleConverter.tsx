@@ -421,104 +421,261 @@ const SingleConverterLegacy = ({
     };
   }, [trendData]);
 
+  // E10 fold：四價詳情顯示外幣腿的臺銀牌告（TWD 為計價基準；交叉盤取來源幣）。
+  const detailCurrency = fromCurrency !== 'TWD' ? fromCurrency : toCurrency;
+  const detailQuotes = details?.[detailCurrency];
+  const rateDetailEntries: { key: string; label: string; value: number | null }[] = [
+    {
+      key: 'spot-buy',
+      label: t('converterV2.rateBasisSpotBuy'),
+      value: detailQuotes?.spot.buy ?? null,
+    },
+    {
+      key: 'spot-sell',
+      label: t('converterV2.rateBasisSpot'),
+      value: detailQuotes?.spot.sell ?? null,
+    },
+    {
+      key: 'cash-buy',
+      label: t('converterV2.rateBasisCashBuy'),
+      value: detailQuotes?.cash.buy ?? null,
+    },
+    {
+      key: 'cash-sell',
+      label: t('converterV2.rateBasisCash'),
+      value: detailQuotes?.cash.sell ?? null,
+    },
+  ];
+
   return (
     <>
-      <div className={singleConverterLayoutTokens.section.className}>
-        <label
-          className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
-        >
-          {t('singleConverter.fromAmount')}
-        </label>
-        <div className="relative">
-          <select
-            value={fromCurrency}
-            onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
-            aria-label={t('singleConverter.selectFromCurrency')}
+      {/* E10 fold 首屏：幣別選擇＋金額輸入 → 交換 → 匯率結果卡（含加入歷史紀錄動作）＝fold 底界。
+       * 容器 min-height 以 --app-height（fallback 100svh）撐滿首屏，結果卡 mt-auto 錨定底緣；
+       * fold 下方（四價詳情、趨勢卡、資訊區）自然捲動。 */}
+      <div
+        data-testid="single-converter-fold"
+        className={singleConverterLayoutTokens.fold.container}
+      >
+        <div className={singleConverterLayoutTokens.section.className}>
+          <label
+            className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
           >
-            {CURRENCY_CODES.map((code) => (
-              <option key={code} value={code}>
-                {CURRENCY_DEFINITIONS[code].flag} {code}
-              </option>
-            ))}
-          </select>
-          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
-          <div
-            ref={fromInputRef}
-            role="button"
-            tabIndex={0}
-            data-testid="amount-input"
-            onClick={() => calculator.openCalculator('from')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                calculator.openCalculator('from');
-              }
-            }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
-            aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
-          >
-            {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
-          </div>
-        </div>
-        {/* 快速金額按鈕 - 來源貨幣
-         *
-         * SSOT 設計規範：中性變體（所有轉換器一致）
-         * @see design-tokens.ts - quickAmountButtonTokens
-         *
-         * 響應式設計（行動端單行水平滾動）：
-         * - overflow-x-auto：內容溢出時啟用水平滾動
-         * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-         * - flex-nowrap：防止按鈕換行
-         * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-         *
-         * 互動狀態：
-         * - 預設：抬升表面背景 + 柔和文字
-         * - 懸停：主色調淡化 + 主色文字 + 微幅放大
-         * - 按壓：主色調加深 + 縮放回饋
-         *
-         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
-         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-         */}
-        <div
-          data-testid="quick-amounts-from"
-          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.fromVisibility}`}
-        >
-          {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
-            <button
-              key={amount}
-              onClick={() => {
-                // 直接更新來源金額，繞過 mode 狀態依賴
-                onFromAmountChange(amount.toString());
-                onQuickAmount(amount);
-                if ('vibrate' in navigator) {
-                  navigator.vibrate(30);
+            {t('singleConverter.fromAmount')}
+          </label>
+          <div className="relative">
+            <select
+              value={fromCurrency}
+              onChange={(e) => onFromCurrencyChange(e.target.value as CurrencyCode)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
+              aria-label={t('singleConverter.selectFromCurrency')}
+            >
+              {CURRENCY_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {CURRENCY_DEFINITIONS[code].flag} {code}
+                </option>
+              ))}
+            </select>
+            {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
+            <div
+              ref={fromInputRef}
+              role="button"
+              tabIndex={0}
+              data-testid="amount-input"
+              onClick={() => calculator.openCalculator('from')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  calculator.openCalculator('from');
                 }
               }}
-              className={quickAmountButtonTokens.pattern}
+              className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-surface border-2 border-border/60 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+              aria-label={`${t('singleConverter.fromAmountLabel', { code: fromCurrency })}: ${formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}`}
             >
-              {amount.toLocaleString('zh-TW')}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className={singleConverterLayoutTokens.rateCard.section}>
-        {/* 匯率卡片 - 一體化設計，無切分感 */}
-        <div
-          className={`relative bg-gradient-to-b from-surface-card to-surface-elevated rounded-xl w-full group cursor-pointer hover:shadow-xl transition-all duration-300 border border-border/50 hover:border-primary/30 ${singleConverterLayoutTokens.rateCard.cardSpacing} ${singleConverterLayoutTokens.rateCard.cardMinHeight}`}
-        >
-          {/*
-           * 微光效果 - 極淺的漸層覆蓋
-           * 使用 aspect-square + object-cover 確保等比例不變形
-           */}
-          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {formatAmountDisplay(fromAmount, fromCurrency) || '0.00'}
+            </div>
           </div>
+          {/* 快速金額按鈕 - 來源貨幣
+           *
+           * SSOT 設計規範：中性變體（所有轉換器一致）
+           * @see design-tokens.ts - quickAmountButtonTokens
+           *
+           * 響應式設計（行動端單行水平滾動）：
+           * - overflow-x-auto：內容溢出時啟用水平滾動
+           * - scrollbar-hide：隱藏滾動條保持簡潔美觀
+           * - flex-nowrap：防止按鈕換行
+           * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
+           *
+           * 互動狀態：
+           * - 預設：抬升表面背景 + 柔和文字
+           * - 懸停：主色調淡化 + 主色文字 + 微幅放大
+           * - 按壓：主色調加深 + 縮放回饋
+           *
+           * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
+           * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
+           */}
+          <div
+            data-testid="quick-amounts-from"
+            className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.fromVisibility}`}
+          >
+            {(CURRENCY_QUICK_AMOUNTS[fromCurrency] || CURRENCY_QUICK_AMOUNTS.TWD).map((amount) => (
+              <button
+                key={amount}
+                onClick={() => {
+                  // 直接更新來源金額，繞過 mode 狀態依賴
+                  onFromAmountChange(amount.toString());
+                  onQuickAmount(amount);
+                  if ('vibrate' in navigator) {
+                    navigator.vibrate(30);
+                  }
+                }}
+                className={quickAmountButtonTokens.pattern}
+              >
+                {amount.toLocaleString('zh-TW')}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* 匯率資訊區塊 - 透明背景繼承父元素漸層。
-           * 不設 overflow-hidden：RateTypeTooltip 以 bottom-full 向上彈出，
-           * 剪裁會讓「即期不可用」說明只露出數 px；微光疊層已由上方獨立容器自行剪裁。 */}
+        {/* 交換按鈕列：E10 fold 序置於兩金額輸入之間 */}
+        <div className={`flex justify-center ${singleConverterLayoutTokens.section.className}`}>
+          <div
+            data-testid="swap-button"
+            className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
+          >
+            {/* 交換按鈕 - 平色主色深階（E1 去漸層、白字 AA 錨點） */}
+            <button
+              ref={swapButtonRef}
+              onClick={handleSwap}
+              className={`
+              relative p-3.5
+              bg-primary-strong hover:bg-primary-hover
+              text-white rounded-full
+              transition-all duration-300 ease-out
+              active:scale-95
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+              ${isSwapping ? 'scale-90' : ''}
+            `}
+              aria-label={t('singleConverter.swapCurrencies')}
+              title={t('singleConverter.swapCurrencies')}
+              disabled={isSwapping}
+            >
+              {/* 內部光暈效果 */}
+              <span
+                className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
+                  isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
+                }`}
+              />
+
+              {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
+              <svg
+                className={`relative z-10 w-5 h-5 transition-transform duration-300 ${
+                  isSwapping
+                    ? '[transform:rotateY(180deg)]'
+                    : 'group-hover/swap:[transform:rotateY(180deg)]'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+                <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+            </button>
+
+            {/* 懸停提示標籤 */}
+            <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
+              <span className="text-2xs font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
+                {t('singleConverter.clickToSwap')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className={singleConverterLayoutTokens.section.className}>
+          <label
+            className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
+          >
+            {t('singleConverter.toAmount')}
+          </label>
+          <div className="relative">
+            <select
+              value={toCurrency}
+              onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
+              aria-label={t('singleConverter.selectToCurrency')}
+            >
+              {CURRENCY_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {CURRENCY_DEFINITIONS[code].flag} {code}
+                </option>
+              ))}
+            </select>
+            {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
+            <div
+              ref={toInputRef}
+              role="button"
+              tabIndex={0}
+              data-testid="amount-output"
+              onClick={() => calculator.openCalculator('to')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  calculator.openCalculator('to');
+                }
+              }}
+              className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
+              aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
+            >
+              {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
+            </div>
+          </div>
+          {/* 快速金額按鈕 - 目標貨幣
+           *
+           * SSOT 設計規範：中性變體（所有轉換器一致）
+           * @see design-tokens.ts - quickAmountButtonTokens
+           *
+           * 響應式設計（行動端單行水平滾動）：
+           * - overflow-x-auto：內容溢出時啟用水平滾動
+           * - scrollbar-hide：隱藏滾動條保持簡潔美觀
+           * - flex-nowrap：防止按鈕換行
+           * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
+           *
+           * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
+           * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
+           */}
+          <div
+            data-testid="quick-amounts-to"
+            className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.toVisibility}`}
+          >
+            {quickAmounts.map((amount) => (
+              <button
+                key={amount}
+                onClick={() => {
+                  const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
+                  onToAmountChange(amount.toFixed(decimals));
+                  if ('vibrate' in navigator) {
+                    navigator.vibrate(30);
+                  }
+                }}
+                className={quickAmountButtonTokens.pattern}
+              >
+                {amount.toLocaleString('zh-TW')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 匯率結果卡（E10 fold 底界）：匯率資訊＋加入歷史紀錄動作。
+         * mt-auto 錨定 fold 底緣；不設 overflow-hidden——RateTypeTooltip 以 bottom-full 向上彈出。 */}
+        <div
+          data-testid="rate-result-card"
+          className={`relative w-full rounded-xl border border-border/50 bg-gradient-to-b from-surface-card to-surface-elevated ${singleConverterLayoutTokens.fold.resultAnchor}`}
+        >
+          {/* 匯率資訊區：RateSelector 絕對定位於卡片頂部，infoPadding 預留其空間 */}
           <div
             className={`relative text-center px-4 flex flex-col items-center justify-center rounded-t-xl ${singleConverterLayoutTokens.rateCard.infoPadding}`}
           >
@@ -540,7 +697,7 @@ const SingleConverterLegacy = ({
                 1 {fromCurrency} = {formatExchangeRate(exchangeRate)} {toCurrency}
               </div>
               <div
-                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80 group-hover:opacity-95 transition-opacity`}
+                className={`${singleConverterLayoutTokens.rateCard.rateSubText} tabular-nums text-text-muted font-semibold opacity-80`}
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
@@ -562,10 +719,68 @@ const SingleConverterLegacy = ({
             </div>
           </div>
 
-          {/* 滿版趨勢圖 - 無獨立背景，繼承父元素漸層實現一體化 */}
+          {/* 加入歷史記錄按鈕 - 平色主 CTA（E1）：卡片內收尾，即 fold 底界 */}
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => onAddToHistory()}
+              className={`
+              relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
+              bg-primary-strong hover:bg-primary-hover
+              text-white font-bold rounded-2xl
+              transition-all duration-300 ease-out
+              active:scale-[0.98]
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+              group
+            `}
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                {t('singleConverter.addToHistory')}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ——以下為 fold 下方內容，自然向下捲動—— */}
+
+      {/* 臺銀四價詳情：外幣腿牌告（即期/現金 × 買入/賣出），無報價誠實顯示破折號 */}
+      <section
+        data-testid="rate-details-card"
+        className={singleConverterLayoutTokens.belowFold.section}
+      >
+        <h3 className={singleConverterLayoutTokens.belowFold.heading}>
+          {t('singleConverter.rateDetailsTitle', { code: detailCurrency })}
+        </h3>
+        <dl className="grid grid-cols-2 gap-2">
+          {rateDetailEntries.map((entry) => (
+            <div
+              key={entry.key}
+              className="flex items-baseline justify-between rounded-xl border border-border/50 bg-surface-elevated px-3 py-2"
+            >
+              <dt className="text-xs text-text-muted">{entry.label}</dt>
+              <dd className="text-sm font-semibold tabular-nums text-text">
+                {entry.value !== null ? formatExchangeRate(entry.value) : '—'}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* 趨勢卡：自結果卡移出至 fold 下方（載入策略與基準標註不變） */}
+      <section data-testid="trend-card" className={singleConverterLayoutTokens.belowFold.section}>
+        <div className="group relative w-full overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-surface-card to-surface-elevated">
           <div
             data-testid="trend-chart"
-            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} overflow-hidden rounded-b-xl`}
+            className={`relative w-full ${singleConverterLayoutTokens.rateCard.chartHeight} ${singleConverterLayoutTokens.rateCard.chartHoverHeight} overflow-hidden rounded-xl`}
           >
             <div className="absolute inset-0">
               <ErrorBoundary
@@ -608,178 +823,7 @@ const SingleConverterLegacy = ({
             </div>
           </div>
         </div>
-
-        {/* 轉換按鈕 - 現代化微互動設計
-         *
-         * 設計規範：
-         * - 雙箭頭圖示 (ArrowUpDown) 取代旋轉圖示
-         * - 漸層光環效果 (gradient glow)
-         * - 懸停放大 + 陰影加深
-         * - 點擊縮放 + Y軸旋轉動畫
-         */}
-        <div
-          data-testid="swap-button"
-          className={`${singleConverterLayoutTokens.swap.wrapper} ${singleConverterLayoutTokens.swap.visibility}`}
-        >
-          {/* 交換按鈕 - 平色主色深階（E1 去漸層、白字 AA 錨點） */}
-          <button
-            ref={swapButtonRef}
-            onClick={handleSwap}
-            className={`
-              relative p-3.5
-              bg-primary-strong hover:bg-primary-hover
-              text-white rounded-full
-              transition-all duration-300 ease-out
-              active:scale-95
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-              ${isSwapping ? 'scale-90' : ''}
-            `}
-            aria-label={t('singleConverter.swapCurrencies')}
-            title={t('singleConverter.swapCurrencies')}
-            disabled={isSwapping}
-          >
-            {/* 內部光暈效果 */}
-            <span
-              className={`absolute inset-0 rounded-full bg-white/20 transition-opacity duration-300 ${
-                isSwapping ? 'opacity-100' : 'opacity-0 group-hover/swap:opacity-30'
-              }`}
-            />
-
-            {/* 雙箭頭圖示 - Y軸旋轉動畫 */}
-            <svg
-              className={`relative z-10 w-5 h-5 transition-transform duration-300 ${
-                isSwapping
-                  ? '[transform:rotateY(180deg)]'
-                  : 'group-hover/swap:[transform:rotateY(180deg)]'
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M7 16V4m0 0L3 8m4-4l4 4" />
-              <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
-          </button>
-
-          {/* 懸停提示標籤 */}
-          <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 opacity-0 group-hover/swap:opacity-100 transition-all duration-300 pointer-events-none">
-            <span className="text-2xs font-semibold text-text-muted whitespace-nowrap bg-surface/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-md border border-border/50">
-              {t('singleConverter.clickToSwap')}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className={singleConverterLayoutTokens.section.className}>
-        <label
-          className={`block text-sm font-medium text-neutral-text-secondary ${singleConverterLayoutTokens.label.className}`}
-        >
-          {t('singleConverter.toAmount')}
-        </label>
-        <div className="relative">
-          <select
-            value={toCurrency}
-            onChange={(e) => onToCurrencyChange(e.target.value as CurrencyCode)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary/10 text-text rounded-lg px-2 py-1.5 text-base font-semibold border border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all duration-200"
-            aria-label={t('singleConverter.selectToCurrency')}
-          >
-            {CURRENCY_CODES.map((code) => (
-              <option key={code} value={code}>
-                {CURRENCY_DEFINITIONS[code].flag} {code}
-              </option>
-            ))}
-          </select>
-          {/* 金額輸入框 - 點擊開啟計算機鍵盤 */}
-          <div
-            ref={toInputRef}
-            role="button"
-            tabIndex={0}
-            data-testid="amount-output"
-            onClick={() => calculator.openCalculator('to')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                calculator.openCalculator('to');
-              }
-            }}
-            className={`w-full pl-32 pr-4 ${singleConverterLayoutTokens.amountInput.className} font-bold text-right bg-primary-bg/30 border-2 border-primary/30 rounded-2xl cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-[border-color,box-shadow] duration-300`}
-            aria-label={`${t('singleConverter.toAmountLabel', { code: toCurrency })}: ${formatAmountDisplay(toAmount, toCurrency) || '0.00'}`}
-          >
-            {formatAmountDisplay(toAmount, toCurrency) || '0.00'}
-          </div>
-        </div>
-        {/* 快速金額按鈕 - 目標貨幣
-         *
-         * SSOT 設計規範：中性變體（所有轉換器一致）
-         * @see design-tokens.ts - quickAmountButtonTokens
-         *
-         * 響應式設計（行動端單行水平滾動）：
-         * - overflow-x-auto：內容溢出時啟用水平滾動
-         * - scrollbar-hide：隱藏滾動條保持簡潔美觀
-         * - flex-nowrap：防止按鈕換行
-         * - -webkit-overflow-scrolling: touch：iOS 慣性滾動
-         *
-         * min-w-0：允許 flex 子元素收縮，避免擠壓父容器
-         * @reference [context7:/websites/tailwindcss:overflow-wrap:min-width:2026-01-27]
-         */}
-        <div
-          data-testid="quick-amounts-to"
-          className={`${singleConverterLayoutTokens.quickAmounts.container} ${singleConverterLayoutTokens.quickAmounts.toVisibility}`}
-        >
-          {quickAmounts.map((amount) => (
-            <button
-              key={amount}
-              onClick={() => {
-                const decimals = CURRENCY_DEFINITIONS[toCurrency].decimals;
-                onToAmountChange(amount.toFixed(decimals));
-                if ('vibrate' in navigator) {
-                  navigator.vibrate(30);
-                }
-              }}
-              className={quickAmountButtonTokens.pattern}
-            >
-              {amount.toLocaleString('zh-TW')}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 加入歷史記錄按鈕 - 平色主 CTA（E1）
-       *
-       * 設計規範：
-       * - 平色主色深階背景（白字表面錨定 primary-strong 保 AA）
-       * - 無裝飾性陰影與光澤掃過
-       * - 點擊縮放回饋 (active:scale-[0.98])
-       */}
-      <button
-        onClick={() => onAddToHistory()}
-        className={`
-          relative w-full overflow-hidden ${singleConverterLayoutTokens.addToHistory.className}
-          bg-primary-strong hover:bg-primary-hover
-          text-white font-bold rounded-2xl
-          transition-all duration-300 ease-out
-          active:scale-[0.98]
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-          group
-        `}
-      >
-        <span className="relative z-10 flex items-center justify-center gap-2">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth={2.5}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          {t('singleConverter.addToHistory')}
-        </span>
-      </button>
+      </section>
 
       {/* 計算機鍵盤 Bottom Sheet */}
       <Suspense fallback={null}>

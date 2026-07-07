@@ -272,6 +272,67 @@ describe('SingleConverter - 核心功能測試', () => {
     });
   });
 
+  describe('E10 fold 佈局', () => {
+    it('fold 容器應套用 svh 首屏預算類別，結果卡（含歷史動作）錨定 fold 底緣', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const fold = screen.getByTestId('single-converter-fold');
+      singleConverterLayoutTokens.fold.container.split(' ').forEach((className) => {
+        expect(fold).toHaveClass(className);
+      });
+
+      // 歷史動作位於結果卡內＝fold 底界；結果卡以 mt-auto 錨定 fold 底緣。
+      const resultCard = screen.getByTestId('rate-result-card');
+      expect(resultCard).toHaveClass(singleConverterLayoutTokens.fold.resultAnchor);
+      expect(within(resultCard).getByText('加入歷史記錄')).toBeInTheDocument();
+      expect(fold).toContainElement(resultCard);
+    });
+
+    it('趨勢卡與四價詳情應位於 fold 之外（自然捲動區）', () => {
+      render(<SingleConverter {...mockProps} />);
+
+      const fold = screen.getByTestId('single-converter-fold');
+      expect(within(fold).queryByTestId('trend-chart')).not.toBeInTheDocument();
+
+      const rateDetails = screen.getByTestId('rate-details-card');
+      const trendCard = screen.getByTestId('trend-card');
+      expect(fold).not.toContainElement(rateDetails);
+      expect(fold).not.toContainElement(trendCard);
+      // DOM 序：fold → 四價詳情 → 趨勢卡
+      expect(
+        fold.compareDocumentPosition(rateDetails) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        rateDetails.compareDocumentPosition(trendCard) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('四價詳情應顯示外幣腿臺銀四價，缺報價誠實顯示破折號', () => {
+      render(
+        <SingleConverter
+          {...mockProps}
+          details={{
+            USD: {
+              name: '美元',
+              spot: { buy: 30.87, sell: 30.97 },
+              cash: { buy: 30.4, sell: null },
+            },
+          }}
+        />,
+      );
+
+      const rateDetails = screen.getByTestId('rate-details-card');
+      expect(within(rateDetails).getByText('即期買入')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('即期賣出')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('現金買入')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('現金賣出')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('30.8700')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('30.9700')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('30.4000')).toBeInTheDocument();
+      expect(within(rateDetails).getByText('—')).toBeInTheDocument();
+    });
+  });
+
   describe('匯率類型切換', () => {
     it('should call onRateTypeChange when switching to spot', () => {
       render(<SingleConverter {...mockProps} rateType="cash" />);

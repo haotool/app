@@ -209,8 +209,9 @@
   :root {
     /* App 實際可用高度（由 AppLayout JS 動態寫入）
      * 修正 WebView（Threads/Instagram）與瀏覽器的視口高度擠壓問題。
-     * Fallback 為 100dvh；JS 載入後更新為 window.visualViewport.height。 */
-    --app-height: 100dvh;
+     * Fallback 為 100svh（E10 fold：webview 動態工具列下 svh 為最保守可視高度，
+     * dvh 可能包含宿主 UI 造成溢出）；JS 載入後更新為 window.visualViewport.height。 */
+    --app-height: 100svh;
 
     /* Header Configuration */
     --nav-header-height: 48px;
