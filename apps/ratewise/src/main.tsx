@@ -144,8 +144,8 @@ export const createRoot = ViteReactSSG(
     if (isClient) {
       clearPwaAppReadyMarker();
 
-      // custom 主題完整演算補齊：bootstrap pre-paint 僅覆寫 --color-primary，
-      // 其餘 13 鍵（strong/hover/圖表等）需在任何路由的 client 啟動時由 applyTheme 導出。
+      // custom 主題完整演算補齊：bootstrap pre-paint 讀派生快取（缺失時僅 --color-primary），
+      // client 啟動時由 applyTheme 重新導出全鍵並回寫快取（#619 pre-paint SSOT）。
       const themeConfig = loadThemeConfig();
       if (themeConfig.style === 'custom') {
         applyTheme(themeConfig);

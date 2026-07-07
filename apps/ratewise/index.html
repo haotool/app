@@ -59,6 +59,7 @@
     <script>
       (function () {
         var K = 'ratewise-theme',
+          V = 'ratewise-theme-vars',
           D = 'zen',
           P = '#3182F6',
           A = ['zen', 'violet', 'nitro', 'racing', 'kawaii', 'classic', 'forest', 'custom'];
@@ -74,21 +75,76 @@
           var p = c.customPrimary;
           return typeof p === 'string' && /^#[0-9a-fA-F]{6}$/.test(p) ? p : P;
         }
-        function a(s, p) {
+        function g(c) {
+          if (!Object.prototype.hasOwnProperty.call(c, 'customBackgroundTone')) return 'pure';
+          var t = c.customBackgroundTone;
+          return typeof t === 'string' && /^[a-z]{1,16}$/.test(t) ? t : 'pure';
+        }
+        function w(e, p, t) {
+          /* #619 pre-paint 全量覆寫：讀 applyTheme 持久化的派生變數快取（E7 wave-A），
+             深色背景調冷啟不閃白。簽章（primary/tone/derive 版本 c.v）或 'R G B' 格式
+             不符即整包棄用，不在 bootstrap 內嵌演算（防雙份漂移）。 */
+          try {
+            var raw = localStorage.getItem(V);
+            if (!raw) return false;
+            var c = JSON.parse(raw);
+            if (c === null || typeof c !== 'object' || Array.isArray(c) || c.constructor !== Object)
+              return false;
+            /* c.v = derive 版本戳（CUSTOM_THEME_DERIVE_VERSION，index.html.test 鎖同步）。 */
+            if (c.p !== p || c.t !== t || c.v !== 1) return false;
+            var m = c.m;
+            if (m === null || typeof m !== 'object' || Array.isArray(m) || m.constructor !== Object)
+              return false;
+            var ok = /^\d{1,3} \d{1,3} \d{1,3}$/;
+            /* 空 map / 缺主鍵防護：--color-primary 必須存在，否則視為壞快取走最小覆寫。 */
+            if (!ok.test(String(m['--color-primary']))) return false;
+            var names = Object.keys(m);
+            var i;
+            for (i = 0; i < names.length; i++) {
+              if (!/^--color-[a-z-]{1,40}$/.test(names[i]) || !ok.test(String(m[names[i]])))
+                return false;
+            }
+            for (i = 0; i < names.length; i++) e.style.setProperty(names[i], m[names[i]]);
+            /* skeleton 變數同步：critical CSS 的 --sk-* 只認 data-style 靜態區塊，
+               custom（含深色調）需由快取 inline 供給，否則 body 首繪仍回退 zen 淺色。 */
+            var sk = {
+              '--sk-bg': m['--color-background'],
+              '--sk-surface': m['--color-surface'],
+              '--sk-border': m['--color-border'],
+              '--sk-shimmer': m['--color-neutral-dark'],
+              '--sk-text': m['--color-text'],
+              '--sk-text-muted': m['--color-text-muted'],
+            };
+            for (var n in sk) {
+              if (sk[n]) e.style.setProperty(n, 'rgb(' + sk[n] + ')');
+            }
+            var pt = m['--color-primary'];
+            if (pt) {
+              e.style.setProperty('--sk-accent', 'rgb(' + pt + ' / 0.15)');
+              e.style.setProperty('--sk-accent-shimmer', 'rgb(' + pt + ' / 0.25)');
+            }
+            return true;
+          } catch (err) {
+            return false;
+          }
+        }
+        function a(s, p, t) {
           var e = document.documentElement;
           e.dataset.style = s;
           e.classList.add(s === 'classic' ? 'font-serif' : 'font-sans');
           if (s === 'custom' && p) {
-            /* 最小 pre-paint 覆寫（identity 映射 hex → 'R G B'，與 applyTheme 一致）：
-               --color-primary + theme-color meta；完整演算交給 hydration 後的 applyTheme。 */
-            e.style.setProperty(
-              '--color-primary',
-              parseInt(p.slice(1, 3), 16) +
-                ' ' +
-                parseInt(p.slice(3, 5), 16) +
-                ' ' +
-                parseInt(p.slice(5, 7), 16),
-            );
+            if (!w(e, p, t)) {
+              /* 快取缺失/不符的降級：最小 pre-paint 覆寫（identity 映射 hex → 'R G B'，
+                 與 applyTheme 一致）；完整演算交給 hydration 後的 applyTheme。 */
+              e.style.setProperty(
+                '--color-primary',
+                parseInt(p.slice(1, 3), 16) +
+                  ' ' +
+                  parseInt(p.slice(3, 5), 16) +
+                  ' ' +
+                  parseInt(p.slice(5, 7), 16),
+              );
+            }
             var m = document.querySelector('meta[name="theme-color"]');
             if (m) m.setAttribute('content', p);
           }
@@ -97,9 +153,9 @@
           var t = localStorage.getItem(K);
           var c = t ? JSON.parse(t) : null;
           var s = c ? v(c) : D;
-          a(s, s === 'custom' ? h(c) : null);
+          a(s, s === 'custom' ? h(c) : null, s === 'custom' ? g(c) : null);
         } catch (e) {
-          a(D, null);
+          a(D, null, null);
         }
       })();
     </script>

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+181
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+182
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-e7-theme-studio-wave-a-dark-tones
+- 原因：自訂主題背景調全為淺色檔無深色（韓系對標 Toss 深色是基本盤，E7 簡報缺口 1），且 pre-paint bootstrap 只寫 --color-primary，深色/暖冷白使用者冷啟動閃白（#619＋PR #636 A7 擴大面）
+- 解法：CUSTOM_BACKGROUND_TONES 增石墨/深夜/純黑三深檔（appearance 分流、allowlist 由鍵集合 SSOT 派生），deriveCustomThemeCssVars 深色路徑整套 neutral scale 亮階疊升派生（surface/elevated/sunken/border/text 由 background 導出、有色文字走新增 darkenToContrast 對偶函式 lightenToContrast、主色 tint 以相對亮度上限 clamp 保亮向 clamp 必有解、strong 深底驗證後可用品牌色），CUSTOM_THEME_CSS_VARS 擴至 65 鍵且淺色調輸出 zen 靜態同值（寫入＝清除對稱與淺色零變化雙合約測試背書）；applyTheme 持久化派生快取供 index.html bootstrap 簽章驗證後全量 pre-paint（含 --sk-\* skeleton 變數，快取缺失回退最小覆寫），AA property 擴為 332 輸入色 × 8 tone 全矩陣＋lighten/darken 對稱 property，內建 7 主題 index.css 零 diff，3 深檔 × 7 頁 390×844 截圖與斷 JS 首繪深色證據佐證
 
 - 日期：2026-07-07
 - ID：reward-rw-e8-wave-b-v2-completeness
