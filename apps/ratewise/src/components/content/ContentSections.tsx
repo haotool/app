@@ -20,6 +20,8 @@ export interface ContentListItem {
 export interface ContentFaqItem {
   question: string;
   answer: ReactNode;
+  /** per-question 錨點 id（供 TOC 側跳與分享深連結）。 */
+  id?: string;
 }
 
 export interface ContentLinkItem {
@@ -92,7 +94,8 @@ export function ContentFaqAccordion({ items }: { items: readonly ContentFaqItem[
       {items.map((item) => (
         <details
           key={item.question}
-          className="group rounded-card border border-border/60 bg-surface shadow-card"
+          id={item.id}
+          className="group rounded-card border border-border/60 bg-surface shadow-card scroll-mt-[calc(1rem+env(safe-area-inset-top,0px))]"
         >
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-5 [&::-webkit-details-marker]:hidden">
             <h3 className="text-base font-semibold leading-normal text-text">{item.question}</h3>

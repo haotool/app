@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+184
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-655-faq-toc-per-question-anchors
+- 原因：FAQ 頁 21 題長頁無 TOC 與 per-question 錨點（指南頁有快速導航，體驗不一致），題目無 id 不可分享深連結（issue 655）
+- 解法：錨點 id 由 seo-metadata SSOT 條目序位派生（faq-qN，對齊指南頁 step-N 慣例）並掛 scroll-mt safe-area 偏移，TOC 對齊指南頁 rail 模式（桌面 sticky 側欄、行動摺疊）且整段包在 nav 導覽 chrome 內（heading outline 與可見內容文字零變動），hash 深連結與 TOC 側跳自動展開目標 details，FAQ.test.tsx 補 5 項驗收測試
 
 - 日期：2026-07-07
 - ID：reward-rw-654-remembered-redirect-query-exemption
