@@ -44,6 +44,8 @@ import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
+import { useCustomThemeDraft } from '../hooks/useCustomThemeDraft';
+import { useInlineConfirm } from '../hooks/useInlineConfirm';
 import { STYLE_OPTIONS } from '../config/themes';
 import { choosePrimaryForeground } from '../config/custom-theme';
 import { CustomThemeSheet } from '../components/CustomThemeSheet';
@@ -62,16 +64,8 @@ import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../util
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
-  const {
-    style,
-    setStyle,
-    setCustomPrimary,
-    customPrimary,
-    customBackgroundTone,
-    setCustomBackgroundTone,
-    resetTheme,
-    isLoaded,
-  } = useAppTheme();
+  const { config, style, setStyle, customPrimary, commitCustomTheme, resetTheme, isLoaded } =
+    useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
   const { rateMode, setRateMode, singleConverterVariant, setSingleConverterVariant } =
     useConverterStore();
@@ -88,18 +82,18 @@ export default function Settings() {
   // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
   const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
 
-  // 選色 sheet：點自訂主題卡開啟（即選即用，sheet 內所有操作即時套用）。
-  const [isPickerOpen, setPickerOpen] = useState(false);
+  // 主題工作室 draft 模式（E7 wave-B）：開啟即時預覽全站、關閉 sheet 才 commit persist、
+  // 「取消」回滾開啟前快照。
+  const themeDraft = useCustomThemeDraft({ config, commitCustomTheme });
 
-  const handleCustomCardClick = () => {
-    setStyle('custom');
-    setPickerOpen(true);
-  };
-
+  // 還原預設（回 zen）＝ commit 動作：sheet 內按鈕經二段確認後呼叫，直接收尾 draft。
   const handleResetTheme = () => {
     resetTheme();
-    setPickerOpen(false);
+    themeDraft.discard();
   };
+
+  // 設定頁「還原預設主題」入口與 sheet 內語意統一（QA-I #7），同套二段確認（QA-I D12）。
+  const settingsResetConfirm = useInlineConfirm(resetTheme);
 
   const handleSplashToggle = () => {
     setSplashEnabledState((prev) => {
@@ -249,7 +243,7 @@ export default function Settings() {
             {/* 自訂主題色 — 點擊開啟選色 BottomSheet（即選即用） */}
             <motion.button
               type="button"
-              onClick={handleCustomCardClick}
+              onClick={themeDraft.open}
               disabled={!isLoaded}
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
@@ -306,14 +300,15 @@ export default function Settings() {
             </motion.button>
           </div>
 
-          {/* 選色 BottomSheet：色票＋二維選色＋HEX＋背景色調（即選即用） */}
+          {/* 選色 BottomSheet：色票＋二維選色＋HEX＋背景色調（draft 預覽，關閉才 commit） */}
           <CustomThemeSheet
-            isOpen={isPickerOpen}
-            onClose={() => setPickerOpen(false)}
-            customPrimary={customPrimary}
-            customBackgroundTone={customBackgroundTone}
-            onSelectPrimary={setCustomPrimary}
-            onSelectBackgroundTone={setCustomBackgroundTone}
+            isOpen={themeDraft.isOpen}
+            onClose={themeDraft.commitClose}
+            onCancel={themeDraft.cancel}
+            customPrimary={themeDraft.draftPrimary}
+            customBackgroundTone={themeDraft.draftTone}
+            onSelectPrimary={themeDraft.selectPrimary}
+            onSelectBackgroundTone={themeDraft.selectTone}
             onReset={handleResetTheme}
           />
         </section>
@@ -590,16 +585,21 @@ export default function Settings() {
           </div>
 
           <div className="card overflow-hidden">
+            {/* 入口統一（QA-I #7）：與主題工作室 sheet 同一「還原預設主題」語意＋二段確認。 */}
             <motion.button
-              onClick={resetTheme}
+              onClick={settingsResetConfirm.handlePress}
               disabled={!isLoaded}
               whileHover={segmentedSwitch.item.whileHover}
               whileTap={segmentedSwitch.item.whileTap}
               transition={transitions.instant}
+              aria-live="polite"
               className="w-full px-5 py-4 flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-inset"
+              data-testid="settings-reset-theme"
             >
               <span className="text-xs font-black text-destructive uppercase tracking-widest">
-                {t('settings.resetTheme')}
+                {settingsResetConfirm.isConfirming
+                  ? t('settings.customThemeResetConfirm')
+                  : t('settings.customThemeReset')}
               </span>
               <ShieldAlert className="w-4 h-4 text-destructive opacity-40 group-hover:opacity-100 transition-opacity" />
             </motion.button>

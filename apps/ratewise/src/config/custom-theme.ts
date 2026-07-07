@@ -210,6 +210,18 @@ export function isValidHexColor(value: unknown): value is string {
   return typeof value === 'string' && HEX_COLOR_PATTERN.test(value);
 }
 
+/**
+ * HEX 欄位輸入清洗（E7 wave-B，QA-I #4）：
+ * 去除 #、空白與非 hex 字元，統一大寫並截斷至 6 碼。
+ * 貼上「F8FAFC」「#3182f6 」等髒輸入經本函式後可直接組回 #RRGGBB。
+ */
+export function sanitizeHexInput(raw: string): string {
+  return raw
+    .replace(/[^0-9a-fA-F]/g, '')
+    .toUpperCase()
+    .slice(0, 6);
+}
+
 export function hexToRgb(hex: string): Rgb {
   return {
     r: Number.parseInt(hex.slice(1, 3), 16),
@@ -666,4 +678,51 @@ export function deriveCustomThemeCssVars(
   }
   deriveCache.set(cacheKey, derived);
   return derived;
+}
+
+// ============================================================================
+// 近白/近黑主色 gate（E7 wave-B，QA-I #2＋#670 S3）
+// ============================================================================
+
+/**
+ * gate 警告門檻：raw primary 對當前背景調 background 的對比 < 2:1 即警告（不硬擋）。
+ * 門檻高於圖形面最低要求（1.5:1），保證任何低於 1.5:1 的違規輸入必被 gate 攔截提示。
+ */
+export const PRIMARY_GATE_WARN_CONTRAST = 2;
+
+/** raw primary 圖形面（wordmark、tint、focus ring 基色）對 background 的最低對比要求。 */
+export const PRIMARY_GATE_GRAPHIC_MIN_CONTRAST = 1.5;
+
+export interface PrimaryContrastGate {
+  /** raw primary 對當前背景調 background 的對比值。 */
+  ratio: number;
+  /** 對比 < PRIMARY_GATE_WARN_CONTRAST 時為 true（近白 × 淺調／近黑 × 深調鏡像同機制）。 */
+  isLowContrast: boolean;
+  /** 一鍵採用的最近達標色（淺調 darkenToContrast／深調 lightenToContrast）；未警告時為 null。 */
+  suggestedPrimary: string | null;
+}
+
+/**
+ * 選色輸入層 gate：評估主色對「當前背景調」的圖形面對比。
+ * 不修改派生輸出（--color-primary 維持 identity 映射合約），只提供警告與建議色；
+ * 建議色以 clamp 對偶函式產生（保留色相/飽和度、僅調明度的最近達標色）。
+ */
+export function evaluatePrimaryContrastGate(
+  primaryHex: string,
+  backgroundTone: CustomBackgroundTone = DEFAULT_CUSTOM_BACKGROUND_TONE,
+): PrimaryContrastGate {
+  const hex = isValidHexColor(primaryHex) ? primaryHex : DEFAULT_CUSTOM_PRIMARY;
+  const tone = CUSTOM_BACKGROUND_TONES[backgroundTone];
+  const background = hexToRgb(tone.background);
+  const primary = hexToRgb(hex);
+  const ratio = contrastRatio(primary, background);
+  if (ratio >= PRIMARY_GATE_WARN_CONTRAST) {
+    return { ratio, isLowContrast: false, suggestedPrimary: null };
+  }
+  const hsl = rgbToHsl(primary);
+  const suggested =
+    tone.appearance === 'dark'
+      ? lightenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST)
+      : darkenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST);
+  return { ratio, isLowContrast: true, suggestedPrimary: rgbToHex(suggested) };
 }

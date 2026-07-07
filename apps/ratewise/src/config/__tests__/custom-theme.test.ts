@@ -19,9 +19,12 @@ import {
   CUSTOM_THEME_CSS_VARS,
   DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
+  PRIMARY_GATE_GRAPHIC_MIN_CONTRAST,
+  PRIMARY_GATE_WARN_CONTRAST,
   choosePrimaryForeground,
   darkenToContrast,
   deriveCustomThemeCssVars,
+  evaluatePrimaryContrastGate,
   hexToRgbTriple,
   isDarkBackgroundTone,
   isValidBackgroundTone,
@@ -29,6 +32,7 @@ import {
   lightenToContrast,
   rgbToHsl,
   hexToRgb,
+  sanitizeHexInput,
   type CustomBackgroundTone,
 } from '../custom-theme';
 
@@ -533,6 +537,99 @@ describe('custom 主題演算行為合約', () => {
     }
     for (const tone of DARK_TONES) {
       expect(CUSTOM_BACKGROUND_TONES[tone].surfaceSunken).toBeUndefined();
+    }
+  });
+});
+
+describe('近白/近黑主色 gate property 守門（E7 wave-B，QA-I #2＋#670 S3）', () => {
+  it('warn 門檻（2:1）必須嚴格高於圖形面最低要求（1.5:1）——違規輸入必被 gate 攔截', () => {
+    expect(PRIMARY_GATE_WARN_CONTRAST).toBe(2);
+    expect(PRIMARY_GATE_GRAPHIC_MIN_CONTRAST).toBe(1.5);
+    expect(PRIMARY_GATE_WARN_CONTRAST).toBeGreaterThan(PRIMARY_GATE_GRAPHIC_MIN_CONTRAST);
+  });
+
+  describe.each(ALL_TONES.map((tone) => ({ tone })))('背景調 $tone × 任意輸入色', ({ tone }) => {
+    const toneBackground = hexToTriple(CUSTOM_BACKGROUND_TONES[tone].background);
+    const isDark = isDarkBackgroundTone(tone);
+
+    it.each(allInputs.map((hex) => ({ hex })))(
+      '$hex：ratio 正確、警告態 ⇔ 建議色存在、建議色達標且方向鏡像',
+      ({ hex }) => {
+        const gate = evaluatePrimaryContrastGate(hex, tone);
+
+        // ratio 與獨立對比實作一致。
+        expect(gate.ratio).toBeCloseTo(contrast(hexToTriple(hex), toneBackground), 6);
+
+        // gate 通過 ⇒ raw primary 圖形面對 background 必 ≥ 1.5:1（warn 門檻 2 > 1.5）。
+        if (!gate.isLowContrast) {
+          expect(gate.suggestedPrimary).toBeNull();
+          expect(gate.ratio).toBeGreaterThanOrEqual(PRIMARY_GATE_GRAPHIC_MIN_CONTRAST);
+          return;
+        }
+
+        // 警告態：對比 < 2 且必附一鍵採用建議色。
+        expect(gate.ratio).toBeLessThan(PRIMARY_GATE_WARN_CONTRAST);
+        expect(gate.suggestedPrimary).not.toBeNull();
+        const suggested = gate.suggestedPrimary ?? '';
+        expect(isValidHexColor(suggested)).toBe(true);
+
+        // 建議色為最近達標色：對當前背景調 ≥ 2:1（圖形面 1.5:1 隨之滿足）。
+        expect(
+          contrast(hexToTriple(suggested), toneBackground),
+          `${hex} 建議色 ${suggested} on ${tone}`,
+        ).toBeGreaterThanOrEqual(PRIMARY_GATE_WARN_CONTRAST);
+
+        // 方向鏡像：淺調 darken（近白 gate）、深調 lighten（近黑 gate，#670 S3）。
+        // 容差 1e-3：hex ↔ HSL 往返捨入誤差。
+        const inputLum = relativeLuminance(hexToTriple(hex));
+        const suggestedLum = relativeLuminance(hexToTriple(suggested));
+        if (isDark) {
+          expect(suggestedLum, `${hex} 深調建議色應更亮`).toBeGreaterThanOrEqual(inputLum - 1e-3);
+        } else {
+          expect(suggestedLum, `${hex} 淺調建議色應更深`).toBeLessThanOrEqual(inputLum + 1e-3);
+        }
+      },
+    );
+  });
+
+  it('代表案例：近白 #F8FAFC × 純淨白警告、近黑 #0A0A0A × 深夜警告（鏡像機制）', () => {
+    const nearWhite = evaluatePrimaryContrastGate('#F8FAFC', 'pure');
+    expect(nearWhite.isLowContrast).toBe(true);
+    expect(nearWhite.suggestedPrimary).not.toBeNull();
+
+    const nearBlack = evaluatePrimaryContrastGate('#0A0A0A', 'midnight');
+    expect(nearBlack.isLowContrast).toBe(true);
+    expect(nearBlack.suggestedPrimary).not.toBeNull();
+
+    // 品牌藍在預設背景調不觸發警告（不硬擋、不誤報）。
+    expect(evaluatePrimaryContrastGate(DEFAULT_CUSTOM_PRIMARY, 'pure').isLowContrast).toBe(false);
+    // 近白主色在深色調反而通過（gate 依「當前背景調」評估）。
+    expect(evaluatePrimaryContrastGate('#F8FAFC', 'midnight').isLowContrast).toBe(false);
+  });
+
+  it('無效輸入回退預設自訂主色（與 derive 行為一致）', () => {
+    expect(evaluatePrimaryContrastGate('not-a-color', 'pure')).toEqual(
+      evaluatePrimaryContrastGate(DEFAULT_CUSTOM_PRIMARY, 'pure'),
+    );
+  });
+});
+
+describe('sanitizeHexInput 清洗（E7 wave-B，QA-I #4）', () => {
+  it('去 #、空白與非 hex 字元，統一大寫並截 6 碼', () => {
+    expect(sanitizeHexInput('F8FAFC')).toBe('F8FAFC');
+    expect(sanitizeHexInput('#3182f6 ')).toBe('3182F6');
+    expect(sanitizeHexInput('  #3182F6')).toBe('3182F6');
+    expect(sanitizeHexInput('#3182F6AB')).toBe('3182F6');
+    expect(sanitizeHexInput('rgb(49,130,246)')).toBe('B49130');
+    expect(sanitizeHexInput('xyz')).toBe('');
+    expect(sanitizeHexInput('')).toBe('');
+  });
+
+  it('清洗滿 6 碼即為合法 #RRGGBB（與 isValidHexColor 合約閉環）', () => {
+    for (const dirty of ['f8fafc', '#F8FAFC', ' #f8FaFc ', 'F8FAFCFF']) {
+      const cleaned = sanitizeHexInput(dirty);
+      expect(cleaned).toHaveLength(6);
+      expect(isValidHexColor(`#${cleaned}`)).toBe(true);
     }
   });
 });

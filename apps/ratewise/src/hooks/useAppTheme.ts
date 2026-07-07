@@ -181,35 +181,17 @@ export function useAppTheme() {
     });
   }, []);
 
-  // 設定自訂主色（即選即用：同時切換至 custom 風格並持久化）
-  const setCustomPrimary = useCallback((customPrimary: string) => {
-    if (!isValidHexColor(customPrimary)) return;
-    setConfig((prev) => {
-      const newConfig: ThemeConfig = {
-        style: 'custom',
-        customPrimary,
-        ...(prev.customBackgroundTone && { customBackgroundTone: prev.customBackgroundTone }),
-      };
+  // 提交自訂主題（E7 wave-B draft 語意：sheet 關閉時單次原子持久化主色＋背景調）
+  const commitCustomTheme = useCallback(
+    (customPrimary: string, customBackgroundTone: CustomBackgroundTone) => {
+      if (!isValidHexColor(customPrimary) || !isValidBackgroundTone(customBackgroundTone)) return;
+      const newConfig: ThemeConfig = { style: 'custom', customPrimary, customBackgroundTone };
+      setConfig(newConfig);
       saveThemeConfig(newConfig);
       applyTheme(newConfig);
-      return newConfig;
-    });
-  }, []);
-
-  // 設定背景色調（即選即用：同時切換至 custom 風格並持久化）
-  const setCustomBackgroundTone = useCallback((customBackgroundTone: CustomBackgroundTone) => {
-    if (!isValidBackgroundTone(customBackgroundTone)) return;
-    setConfig((prev) => {
-      const newConfig: ThemeConfig = {
-        style: 'custom',
-        customPrimary: prev.customPrimary ?? DEFAULT_CUSTOM_PRIMARY,
-        customBackgroundTone,
-      };
-      saveThemeConfig(newConfig);
-      applyTheme(newConfig);
-      return newConfig;
-    });
-  }, []);
+    },
+    [],
+  );
 
   // 重置為預設
   const resetTheme = useCallback(() => {
@@ -230,8 +212,7 @@ export function useAppTheme() {
 
     // 操作
     setStyle,
-    setCustomPrimary,
-    setCustomBackgroundTone,
+    commitCustomTheme,
     resetTheme,
   };
 }
