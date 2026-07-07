@@ -9,6 +9,7 @@ import { __resetColdStartRestoreForTests, markRestoreAttempted } from '../coldSt
 import { useConverterStore } from '../../../../stores/converterStore';
 import { CONVERTER_STORE_KEY } from '../../storage-keys';
 import { isCardRateEnabled } from '../../../../config/card-rate-flag';
+import { getConverterV2Variant } from '../../../../config/converter-v2-flag';
 
 vi.mock('../../RateWise', () => ({
   default: ({ rememberConverterView = true }: { rememberConverterView?: boolean }) => (
@@ -84,6 +85,42 @@ describe('RememberedHomeRoute', () => {
 
     expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
     expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  // #654 query 豁免矩陣：任何帶 query 的進站（含白名單外參數）皆豁免 remembered redirect。
+  it.each([
+    '/?from=USD',
+    '/?to=JPY',
+    '/?amount=100',
+    '/?cardRate=on',
+    '/?converter=legacy',
+    '/?converter=v2',
+    '/?utm_source=qa',
+    '/?unknown=1',
+  ])('query 豁免矩陣：%s 進站不導向，即使 lastConverterView=multi', async (entry) => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+
+    renderHome(entry);
+
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('#654：persisted multi＋?converter=legacy 進站落在單幣別且 override 解析為 legacy', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi', singleConverterVariant: 'v2' });
+    // flag 讀取端以 window.location.search 為準（與 cardRate S2 測試同一模式）。
+    window.history.replaceState(null, '', '/?converter=legacy');
+
+    renderHome('/?converter=legacy');
+
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+    expect(getConverterV2Variant()).toBe('legacy');
+
+    window.history.replaceState(null, '', '/');
+    useConverterStore.setState({ singleConverterVariant: 'legacy' });
   });
 
   it('S2：persisted multi＋?cardRate=on 進站不導向（Phase 1 URL 唯一啟用入口）且 flag 生效', async () => {

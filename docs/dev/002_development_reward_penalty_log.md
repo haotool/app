@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+184
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-654-remembered-redirect-query-exemption
+- 原因：RememberedHomeRoute 深連結豁免採 from/to/amount/cardRate 白名單，?converter=legacy 等白名單外 URL override 進站被 persisted multi redirect 劫持（issue 654）
+- 解法：新增 isDeepLinkEntry 通用豁免（任何帶 query 進站皆視為深連結，取代白名單避免新增參數時漂移），RememberedHomeRoute 與 RateWise 偏好寫入共用同一契約，單元測試補 8 項 query 豁免矩陣與 converter=legacy override 解析斷言
 
 - 日期：2026-07-07
 - ID：reward-rw-e7-theme-studio-wave-b-ux-safety

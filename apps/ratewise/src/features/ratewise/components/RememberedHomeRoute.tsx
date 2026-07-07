@@ -3,6 +3,7 @@ import { Navigate, useSearchParams } from 'react-router-dom';
 import RateWise from '../RateWise';
 import { useConverterStore } from '../../../stores/converterStore';
 import {
+  isDeepLinkEntry,
   markRestoreAttempted,
   shouldRestoreToMulti,
   isPersistedMultiPendingStoreSync,
@@ -77,13 +78,9 @@ export function RememberedHomeRoute() {
     };
   }, []);
 
-  // ?cardRate 為刷卡估算 Phase 1 唯一啟用入口（URL override），列入深連結豁免：
-  // persisted multi 不得吞掉該入口（多幣別不支援 card）；通用 query 豁免見 #654 另案。
-  const hasDeepLink =
-    searchParams.has('from') ||
-    searchParams.has('to') ||
-    searchParams.has('amount') ||
-    searchParams.has('cardRate');
+  // 任何帶 query 的進站（?converter=／?cardRate=／?from= 等）皆為 URL override 深連結，
+  // 一律豁免 remembered redirect；通用豁免取代白名單，避免新增參數時漂移（#654）。
+  const hasDeepLink = isDeepLinkEntry(searchParams);
   const restoreToMulti = shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView });
   // hydrate 未完成或即將導向 multi 時，禁止 RateWise 寫入偏好，避免覆寫 persist 的 lastConverterView。
   const allowRememberView = hydrated && !restoreToMulti;

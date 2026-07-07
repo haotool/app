@@ -25,6 +25,14 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * 任何帶 query 的進站一律視為深連結（from/to/amount/cardRate/converter 等 URL override），
+ * 豁免 remembered redirect 與偏好寫入；通用豁免取代參數白名單，避免新增參數時漂移（#654）。
+ */
+export function isDeepLinkEntry(searchParams: URLSearchParams): boolean {
+  return searchParams.toString().length > 0;
+}
+
+/**
  * 讀取 persist 中 lastConverterView；store 尚未同步時供還原決策使用。
  */
 export function readPersistedLastConverterView(): ConverterMode | null {
