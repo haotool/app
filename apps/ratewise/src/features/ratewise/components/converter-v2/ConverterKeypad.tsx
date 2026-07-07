@@ -19,6 +19,8 @@ export interface ConverterKeypadProps {
   initialValue: number;
   /** 鍵入後的即時等值（純數字直出、含運算子時取引擎 preview）。 */
   onValueChange: (value: number) => void;
+  /** 表達式變動即回報原始字串（含掛載種子）；父層據此顯示運算式列（E8 缺口 5）。 */
+  onExpressionChange?: (expression: string) => void;
   /** 實體鍵盤是否啟用；sheet 開啟時由父層關閉，避免與 sheet 鍵盤語意衝突。預設啟用。 */
   keyboardEnabled?: boolean;
 }
@@ -74,6 +76,7 @@ function getKeyClassName(kind: KeypadKey['kind']): string {
 export function ConverterKeypad({
   initialValue,
   onValueChange,
+  onExpressionChange,
   keyboardEnabled = true,
 }: ConverterKeypadProps) {
   const { t } = useTranslation();
@@ -88,6 +91,15 @@ export function ConverterKeypad({
   const prevExpressionRef = useRef(expression);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
+  const onExpressionChangeRef = useRef(onExpressionChange);
+  useEffect(() => {
+    onExpressionChangeRef.current = onExpressionChange;
+  });
+
+  // 表達式回報與回寫閘門分離：掛載種子與每次變動皆回報，可見性判斷交由父層。
+  useEffect(() => {
+    onExpressionChangeRef.current?.(expression);
+  }, [expression]);
 
   // 鍵入即時回寫活躍列：純數字直接送出，含運算子時等引擎 preview（50ms 防抖）。
   useEffect(() => {

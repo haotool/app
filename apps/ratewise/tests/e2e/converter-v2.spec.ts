@@ -497,6 +497,148 @@ test.describe('Converter v2 等值雙列（flag on）', () => {
     expect(consoleErrors).toEqual([]);
   });
 
+  test('E8 wave-B：運算式列進行中顯示（overlay 零位移）、settle 後隱藏＋SR 播報', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+
+    const scrollHeightBefore = await page.evaluate(() => document.documentElement.scrollHeight);
+    expect(await page.getByTestId('converter-v2-expression').count()).toBe(0);
+
+    // 鍵入含運算子表達式：迷你運算式列顯示於活躍列。
+    await page.keyboard.press('Delete');
+    await page.keyboard.type('5+3');
+    await expect(page.getByTestId('converter-v2-expression')).toHaveText('5 + 3');
+
+    // CLS 零位移：overlay 不得改變文件高度（三視口零捲動硬約束不回歸）。
+    const scrollHeightDuring = await page.evaluate(() => document.documentElement.scrollHeight);
+    expect(scrollHeightDuring).toBe(scrollHeightBefore);
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，證據截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+    await page.screenshot({
+      path: `test-results/v2-e8-expression-row-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+
+    // settle（停頓 2s）後運算式列隱藏，SR 摘要區完成播報（#620）。
+    await expect(page.getByTestId('converter-v2-expression')).toHaveCount(0, { timeout: 5000 });
+    await expect(page.getByTestId('converter-v2-sr-summary')).not.toBeEmpty();
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('E8 wave-B：換錢所來源切換——KRW 顯示、切換後 chip 標註、320px 不溢出', async ({
+    rateWisePage: page,
+  }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    // mock 換錢所 provider 端點避免觸外網（latest 與 daily history 均回 200 空物件，
+    // parse 失敗會走 committed fallback snapshot，UI 行為不受影響）。
+    await page.route(
+      (url) => url.toString().includes('/providers/moneybox/'),
+      async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+      },
+    );
+    await gotoConverterV2(page);
+
+    // 預設 pair（TWD/USD）不支援換錢所：零暴露。
+    await expect(page.getByTestId('converter-v2-rate-source')).toHaveCount(0);
+
+    // 換第二列為 KRW：TWD↔KRW 支援換錢所 → 切換鈕出現。
+    await page.getByTestId('converter-v2-currency-to').click();
+    await page.getByTestId('currency-option-KRW').click();
+    const sourceToggle = page.getByTestId('converter-v2-rate-source');
+    await expect(sourceToggle).toBeVisible();
+    await expect(sourceToggle).toHaveAttribute('aria-pressed', 'false');
+
+    // 切至換錢所：chip 基準標註「換錢所」（#659 分支接上）。
+    await sourceToggle.click();
+    await expect(sourceToggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('converter-v2-rate-chip')).toContainText('換錢所');
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，量測與截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+
+    // 320px 最小寬度：chip 列（chip＋來源切換鈕＋⇄ 鈕）不得溢出。
+    await page.setViewportSize({ width: 320, height: 844 });
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+        message: '320px 視口不得出現水平捲動',
+      })
+      .toBeLessThanOrEqual(320);
+    for (const testId of [
+      'converter-v2-rate-chip',
+      'converter-v2-rate-source',
+      'converter-v2-rate-flip',
+    ]) {
+      const box = await page.getByTestId(testId).boundingBox();
+      expect(box, `${testId} 於 320px 視口應可見`).not.toBeNull();
+      expect(box!.x, `${testId} 左緣不得超出視口`).toBeGreaterThanOrEqual(-0.5);
+      expect(box!.x + box!.width, `${testId} 右緣不得超出 320px 視口`).toBeLessThanOrEqual(320.5);
+    }
+    await page.screenshot({
+      path: `test-results/v2-e8-rate-source-320-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('E8 wave-B：趨勢 sheet 基準切換與攻略連結', async ({ rateWisePage: page }, testInfo) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    await gotoConverterV2(page);
+
+    // 展開趨勢 sheet：基準切換（現金／即期）與攻略連結（TWD→外幣 pair 均有 /twd-xxx/ 落地頁）。
+    const fromCode = (await page.getByTestId('converter-v2-currency-from').innerText())
+      .replace(/[^A-Z]/g, '')
+      .toLowerCase();
+    const toCode = (await page.getByTestId('converter-v2-currency-to').innerText())
+      .replace(/[^A-Z]/g, '')
+      .toLowerCase();
+    await page.getByTestId('converter-v2-sparkline').click();
+    await expect(page.getByTestId('converter-v2-trend-sheet')).toBeVisible();
+    await expect(page.getByTestId('converter-v2-trend-basis-cash')).toBeVisible();
+    const guideLink = page.getByTestId('converter-v2-trend-guide-link');
+    await expect(guideLink).toBeVisible();
+    await expect(guideLink).toHaveAttribute('href', new RegExp(`/${fromCode}-${toCode}/$`));
+
+    // 切換基準：radiogroup 選中態跟隨，誠實標註同步（TWD/USD 兩基準俱在，直接切換）。
+    await page.getByTestId('converter-v2-trend-basis-cash').click();
+    await expect(page.getByTestId('converter-v2-trend-basis-cash')).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+
+    // e2e 阻擋 SW 產生的更新失敗 toast 與待測 UI 無關，證據截圖前先隱藏。
+    await page.addStyleTag({
+      content: '[aria-labelledby="update-prompt-title"] { display: none !important; }',
+    });
+    await page.screenshot({
+      path: `test-results/v2-e8-trend-sheet-${testInfo.project.name}.png`,
+      fullPage: false,
+    });
+
+    expect(consoleErrors).toEqual([]);
+  });
+
   test('觸控目標：v2 互動元素 ≥44px', async ({ rateWisePage: page }) => {
     await gotoConverterV2(page);
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+180
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+181
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-e8-wave-b-v2-completeness
+- 原因：v2 等值雙列相對 v1 仍缺換錢所來源切換、運算式可見性、趨勢 sheet 基準切換／攻略導流與鍵盤輸入 SR 播報四項能力（E8 簡報缺口 3/5/8/10，#620），且不得破壞 wave-A 三視口零捲動硬約束與 settle 機制
+- 解法：rate chip 同列新增 icon-only 換錢所切換鈕（exchangeShopCurrency 零暴露守門，接上 #659 既有 basisLabel 分支，換錢所啟用中 chip tap＝回銀行對齊 v1 pill 語意）、keypad 表達式經 onExpressionChange 回報並以 absolute overlay 疊於活躍列頂緣（含運算子才顯示、settle／語意變更即隱藏，零位移零捲動）、趨勢 sheet 內嵌現金／即期 SegmentedControl（sheet 專屬 useConverterTrend 序列走 resolveTrendSeries 誠實回落、值-標籤同源）＋以 seo-paths SSOT 判斷 pair 落地頁存在才渲染「查看 {幣別} 攻略」連結＋MiniTrendChart 傳入 basisLabel 啟用資料點 tooltip 基準標註、settle 事件共用觸發 aria-live=polite sr-only 摘要播報（「{amount} {from} 等於 {result} {to}」4 語系、非逐鍵、B1 零值守門共用）
 
 - 日期：2026-07-07
 - ID：reward-rw-e8-wave-a-v2-completeness
