@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Banknote, Store, TrendingUp } from 'lucide-react';
+import { Banknote, CreditCard, Store, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { segmentedSwitch } from '../../../config/animations';
 import { singleConverterLayoutTokens } from '../../../config/design-tokens';
@@ -12,6 +12,8 @@ interface RateSelectorProps {
   rateSource: RateSource;
   rateTypeAvailability: RateTypeAvailability;
   hasExchangeShop: boolean;
+  /** 刷卡估算 pill（ADR-002 Phase 1）；flag off 或情境不支援時不渲染（零暴露）。 */
+  hasCard?: boolean;
   onRateTypeChange: (type: RateType) => void;
   onRateSourceChange: (source: RateSource) => void;
 }
@@ -38,6 +40,7 @@ export const RateSelector = ({
   rateSource,
   rateTypeAvailability,
   hasExchangeShop,
+  hasCard = false,
   onRateTypeChange,
   onRateSourceChange,
 }: RateSelectorProps) => {
@@ -176,6 +179,39 @@ export const RateSelector = ({
             <span className="relative z-10 leading-none">
               {t('singleConverter.exchangeShopRate')}
             </span>
+          </span>
+        </motion.button>
+      )}
+
+      {/* 刷卡估算 pill（第四選項，ADR-002 Phase 1）：#660 內容驅動佈局直接容納。 */}
+      {hasCard && (
+        <motion.button
+          type="button"
+          data-testid="rate-selector-pill"
+          onClick={() => onRateSourceChange('card')}
+          whileHover={segmentedSwitch.item.whileHover}
+          whileTap={segmentedSwitch.item.whileTap}
+          animate={{
+            opacity: rateSource === 'card' ? 1 : segmentedSwitch.inactiveOpacity,
+          }}
+          className={PILL_HIT_CLASS}
+          aria-pressed={rateSource === 'card'}
+          aria-label={t('singleConverter.switchToCard')}
+        >
+          <span className={pillVisualClass(rateSource === 'card')}>
+            {renderIndicator(rateSource === 'card')}
+            <motion.span
+              className="relative z-10 inline-flex"
+              animate={{
+                scale: rateSource === 'card' ? segmentedSwitch.activeIconScale : 1,
+              }}
+            >
+              <CreditCard
+                className={singleConverterLayoutTokens.rateCard.rateTypeIcon}
+                aria-hidden="true"
+              />
+            </motion.span>
+            <span className="relative z-10 leading-none">{t('singleConverter.cardRate')}</span>
           </span>
         </motion.button>
       )}

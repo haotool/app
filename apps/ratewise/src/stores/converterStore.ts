@@ -34,6 +34,8 @@ import type {
 } from '../features/ratewise/rateProviderTypes';
 import { fromLegacyRateSource, resolveRateTypeForSource } from '../config/rateProviders';
 import {
+  CARD_FEE_PERCENT_DEFAULT,
+  clampCardFeePercent,
   CONVERTER_MODES,
   CONVERTER_V2_VARIANTS,
   CURRENCY_DEFINITIONS,
@@ -100,6 +102,13 @@ interface ConverterState {
   history: ConversionHistoryEntry[];
   /** 多幣別模式的基準貨幣（使用者偏好，與 fromCurrency 隔離）。 */
   baseCurrency: CurrencyCode;
+  /**
+   * 刷卡估算功能開關（ADR-002 Phase 1）。
+   * 讀取端 SSOT 為 config/card-rate-flag.ts（URL override > 本欄位 > 預設 off）。
+   */
+  cardRateEnabled: boolean;
+  /** 刷卡估算海外手續費（百分比，0–3、步進 0.1、預設 1.5）。 */
+  cardFeePercent: number;
 
   // ── Actions ──────────────────────────────────────────────────────────────
   setFromCurrency: (code: CurrencyCode) => void;
@@ -127,6 +136,12 @@ interface ConverterState {
   /** 設定單幣別版面偏好（設定頁「單幣別模式」入口）。 */
   setSingleConverterVariant: (variant: ConverterV2Variant) => void;
 
+  /** 設定刷卡估算功能開關。 */
+  setCardRateEnabled: (enabled: boolean) => void;
+
+  /** 設定刷卡估算手續費（自動夾限 0–3、對齊 0.1 步進）。 */
+  setCardFeePercent: (percent: number) => void;
+
   /** 供單元測試呼叫；亦由 onRehydrateStorage 在內部觸發 */
   __migrateFromLegacy: () => void;
   /** hydrate 後驗證並修復不合法的欄位；由 onRehydrateStorage 自動觸發，亦可由單元測試直接呼叫 */
@@ -147,6 +162,8 @@ type PersistentFields = Pick<
   | 'providerPreference'
   | 'favorites'
   | 'baseCurrency'
+  | 'cardRateEnabled'
+  | 'cardFeePercent'
 >;
 
 const VALID_RATE_MODES: readonly RateMode[] = RATE_MODES;
@@ -227,6 +244,14 @@ function buildSanitizePatch(state: ConverterState): Partial<PersistentFields> | 
   }
   if (!VALID_RATE_SOURCES.includes(state.rateSource)) {
     patch.rateSource = DEFAULT_RATE_SOURCE;
+    dirty = true;
+  }
+  if (typeof state.cardRateEnabled !== 'boolean') {
+    patch.cardRateEnabled = false;
+    dirty = true;
+  }
+  if (clampCardFeePercent(state.cardFeePercent) !== state.cardFeePercent) {
+    patch.cardFeePercent = clampCardFeePercent(state.cardFeePercent);
     dirty = true;
   }
 
@@ -402,6 +427,7 @@ export function categorizeHistoryEntry(entry: ConversionHistoryEntry): Conversio
     return 'legacy';
   }
   if (entry.sourceKind === 'exchange-shop') return 'exchange-shop';
+  if (entry.sourceKind === 'card') return 'card';
   return entry.rateType;
 }
 
@@ -421,6 +447,8 @@ export const useConverterStore = create<ConverterState>()(
       favorites: [...DEFAULT_FAVORITES] as CurrencyCode[],
       history: [],
       baseCurrency: DEFAULT_BASE_CURRENCY,
+      cardRateEnabled: false,
+      cardFeePercent: CARD_FEE_PERCENT_DEFAULT,
 
       // ── Actions ──────────────────────────────────────────────────────────
       setFromCurrency: (code) => set({ fromCurrency: code }),
@@ -488,6 +516,10 @@ export const useConverterStore = create<ConverterState>()(
 
       setSingleConverterVariant: (variant) => set({ singleConverterVariant: variant }),
 
+      setCardRateEnabled: (enabled) => set({ cardRateEnabled: enabled }),
+
+      setCardFeePercent: (percent) => set({ cardFeePercent: clampCardFeePercent(percent) }),
+
       __migrateFromLegacy: () => {
         const patch = buildMigrationPatch(get());
         if (patch) {
@@ -522,6 +554,8 @@ export const useConverterStore = create<ConverterState>()(
         favorites: state.favorites,
         history: state.history,
         baseCurrency: state.baseCurrency,
+        cardRateEnabled: state.cardRateEnabled,
+        cardFeePercent: state.cardFeePercent,
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) return;

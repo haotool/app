@@ -81,6 +81,8 @@ describe('useCurrencyConverter', () => {
       },
       favorites: ['JPY', 'KRW', 'VND', 'THB', 'HKD', 'USD'],
       history: [],
+      singleConverterVariant: 'legacy',
+      cardRateEnabled: false,
     });
   });
 
@@ -764,6 +766,91 @@ describe('useCurrencyConverter', () => {
           providerSelectionMode: 'manual',
         }),
       ).toBe('bank');
+    });
+
+    it('card 來源：single 需 isCardRateAllowed 才生效；multi 一律回落 bank（Phase 1.5 前）', () => {
+      // single + flag on → card 生效
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'single',
+          requestedRateSource: 'card',
+          resolvedSourceKind: 'card',
+          exchangeShopRate: null,
+          isCardRateAllowed: true,
+        }),
+      ).toBe('card');
+
+      // single + flag off（零暴露紅線）→ 回落 bank
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'single',
+          requestedRateSource: 'card',
+          resolvedSourceKind: 'card',
+          exchangeShopRate: null,
+          isCardRateAllowed: false,
+        }),
+      ).toBe('bank');
+
+      // multi → card 不支援，一律 bank
+      expect(
+        resolveEffectiveRateSourceForConversion({
+          mode: 'multi',
+          requestedRateSource: 'card',
+          resolvedSourceKind: 'card',
+          exchangeShopRate: null,
+          isCardRateAllowed: true,
+        }),
+      ).toBe('bank');
+    });
+
+    it('S3：v2 版面下 persisted card 收斂回 bank（缺估算揭露不做半套，併 E8 wave-B）', async () => {
+      useConverterStore.setState({
+        singleConverterVariant: 'v2',
+        cardRateEnabled: true,
+        fromCurrency: 'TWD',
+        toCurrency: 'JPY',
+      });
+      useConverterStore.getState().setRateSource('card');
+      expect(useConverterStore.getState().rateSource).toBe('card');
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, JPY: 0.2 },
+          rateType: 'spot',
+          rateSource: 'card',
+          mode: 'single',
+        }),
+      );
+
+      expect(result.current.isCardRateAvailableInContext).toBe(false);
+      expect(result.current.effectiveRateSource).toBe('bank');
+      // 收斂 effect 將 persisted 偏好寫回 bank（與換錢所不可用 fallback 同一 SSOT effect）。
+      await waitFor(() => {
+        expect(useConverterStore.getState().rateSource).toBe('bank');
+      });
+    });
+
+    it('S3 對照：legacy 版面 flag on 時 card 生效不收斂', () => {
+      useConverterStore.setState({
+        singleConverterVariant: 'legacy',
+        cardRateEnabled: true,
+        fromCurrency: 'TWD',
+        toCurrency: 'JPY',
+      });
+      useConverterStore.getState().setRateSource('card');
+
+      const { result } = renderHook(() =>
+        useCurrencyConverter({
+          exchangeRates: { TWD: 1, JPY: 0.2 },
+          rateType: 'spot',
+          rateSource: 'card',
+          mode: 'single',
+        }),
+      );
+
+      expect(result.current.isCardRateAvailableInContext).toBe(true);
+      expect(result.current.effectiveRateSource).toBe('card');
+      expect(useConverterStore.getState().rateSource).toBe('card');
     });
 
     it('single converter ignores persisted multi mode for quick amounts', () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   CURRENCY_DEFINITIONS,
@@ -35,6 +35,16 @@ import {
 } from '../../../services/moneyboxRateService';
 import { useMoneyBoxRates } from './useMoneyBoxRates';
 import { useMoneyBoxRatesMap } from './useMoneyBoxRatesMap';
+import {
+  getCardRateServerSnapshot,
+  isCardRateEnabled,
+  subscribeCardRateFlag,
+} from '../../../config/card-rate-flag';
+import {
+  getConverterV2ServerSnapshot,
+  getConverterV2Snapshot,
+  subscribeConverterV2Variant,
+} from '../../../config/converter-v2-flag';
 import type { ProviderSelectionMode, ResolvedRateProvider } from '../rateProviderTypes';
 import {
   rankProviderQuotes,
@@ -92,6 +102,7 @@ export function resolveEffectiveRateSourceForConversion({
   resolvedSourceKind,
   exchangeShopRate,
   providerSelectionMode,
+  isCardRateAllowed = false,
 }: {
   mode: 'single' | 'multi';
   requestedRateSource?: RateSource;
@@ -99,10 +110,16 @@ export function resolveEffectiveRateSourceForConversion({
   exchangeShopRate: ExchangeShopRate | null;
   /** providerPreference.mode：'best' 模式下多幣別需依每個 row pair 的可用換錢所匯率決定來源。 */
   providerSelectionMode?: ProviderSelectionMode;
+  /** 刷卡估算可用性（feature flag＋情境）；false 時 card 一律回落銀行（flag off 零暴露）。 */
+  isCardRateAllowed?: boolean;
 }): RateSource {
-  if (mode !== 'multi') return resolvedSourceKind;
+  if (mode !== 'multi') {
+    if (resolvedSourceKind === 'card' && !isCardRateAllowed) return 'bank';
+    return resolvedSourceKind;
+  }
   // 多幣別 SSOT：使用者明選 exchange-shop 或 best 模式偵測到該 row 有換錢所匯率時走換錢所；
   // 否則 fallback 銀行（避免單幣別 single-pair resolvedSourceKind 跨 row 誤套用）。
+  // 刷卡估算 Phase 1 不支援多幣別（Phase 1.5），card 於 multi 一律落銀行。
   if (!exchangeShopRate) return 'bank';
   if (requestedRateSource === 'exchange-shop') return 'exchange-shop';
   if (providerSelectionMode === 'best') return 'exchange-shop';
@@ -128,6 +145,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     providerPreference,
     history,
     baseCurrency,
+    cardFeePercent,
     setFromCurrency,
     setToCurrency,
     setRateMode,
@@ -155,6 +173,29 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     if (toCurrency === 'TWD' && hasExchangeShopProvider(fromCurrency)) return fromCurrency;
     return null;
   }, [fromCurrency, toCurrency]);
+
+  // 刷卡估算可用性 SSOT：flag on＋單幣別 legacy 版面＋貨幣對涉及 TWD（帳單以 TWD 清算）。
+  // v2 版面 Phase 1 缺估算 badge／計算式／手續費／免責揭露，PM 裁決不做半套：
+  // card 收斂回 bank，完整 v2 揭露併 E8 wave-B（ADR-002 UI 邊界備註）。
+  const isCardRateFlagEnabled = useSyncExternalStore(
+    subscribeCardRateFlag,
+    isCardRateEnabled,
+    getCardRateServerSnapshot,
+  );
+  const isConverterV2Active = useSyncExternalStore(
+    subscribeConverterV2Variant,
+    getConverterV2Snapshot,
+    getConverterV2ServerSnapshot,
+  );
+  const isCardRateAvailableInContext = useMemo<boolean>(
+    () =>
+      isCardRateFlagEnabled &&
+      !isConverterV2Active &&
+      mode === 'single' &&
+      fromCurrency !== toCurrency &&
+      (fromCurrency === 'TWD' || toCurrency === 'TWD'),
+    [isCardRateFlagEnabled, isConverterV2Active, mode, fromCurrency, toCurrency],
+  );
 
   const { rate: moneyBoxRate } = useMoneyBoxRates(exchangeShopCurrency);
   const fallbackExchangeShopRate = useMemo((): ExchangeShopRate | null => {
@@ -221,6 +262,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         resolvedSourceKind: resolvedProvider.sourceKind,
         exchangeShopRate: selectedExchangeShopRate,
         providerSelectionMode: providerPreference.mode,
+        isCardRateAllowed: isCardRateAvailableInContext,
       }),
     [
       mode,
@@ -228,6 +270,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       resolvedProvider.sourceKind,
       selectedExchangeShopRate,
       providerPreference.mode,
+      isCardRateAvailableInContext,
     ],
   );
 
@@ -269,12 +312,14 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
         resolvedSourceKind: resolvedProvider.sourceKind,
         exchangeShopRate: pairExchangeShopRate,
         providerSelectionMode: providerPreference.mode,
+        isCardRateAllowed: isCardRateAvailableInContext,
       });
       const exchangeShopRate =
         effectiveSourceKind === 'exchange-shop' ? pairExchangeShopRate : null;
       const unitRate = getUnitExchangeRate(from, to, details, rateType, rateMode, exchangeRates, {
         rateSource: effectiveSourceKind,
         exchangeShopRate,
+        cardFeePercent,
       });
 
       return unitRate;
@@ -290,6 +335,8 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
       multiExchangeShopRatesByCurrency,
       selectedExchangeShopRate,
       providerPreference.mode,
+      isCardRateAvailableInContext,
+      cardFeePercent,
     ],
   );
 
@@ -428,7 +475,11 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     if (rateSource === 'exchange-shop' && !isExchangeShopAvailableInContext) {
       setRateSource('bank');
     }
-  }, [rateSource, isExchangeShopAvailableInContext, setRateSource]);
+    // 刷卡估算同理：flag off／多幣別／貨幣對不涉 TWD 時收斂回銀行。
+    if (rateSource === 'card' && !isCardRateAvailableInContext) {
+      setRateSource('bank');
+    }
+  }, [rateSource, isExchangeShopAvailableInContext, isCardRateAvailableInContext, setRateSource]);
 
   // Handlers
   const handleFromAmountChange = useCallback((value: string) => {
@@ -622,6 +673,7 @@ export const useCurrencyConverter = (options: UseCurrencyConverterOptions = {}) 
     history,
     sortedCurrencies,
     isExchangeShopAvailableInContext,
+    isCardRateAvailableInContext,
     multiExchangeShopCurrencies,
 
     // Setters

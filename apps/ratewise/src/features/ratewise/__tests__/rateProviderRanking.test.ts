@@ -214,6 +214,51 @@ describe('resolveProviderPreference - manual mode', () => {
     expect(resolved.sourceKind).toBe('exchange-shop');
   });
 
+  it('manualProvider 為刷卡估算＋涉及 TWD 的 pair → reason=manual（虛擬 provider 支援）', () => {
+    const preference: RateProviderPreference = {
+      mode: 'manual',
+      manualProvider: { sourceKind: 'card', providerId: 'card-estimate' },
+    };
+
+    for (const [from, to] of [
+      ['USD', 'TWD'],
+      ['TWD', 'JPY'],
+    ] as const) {
+      const resolved = resolveProviderPreference({
+        preference,
+        from,
+        to,
+        rateType: 'spot',
+        quotes: [],
+      });
+      expect(resolved.reason).toBe('manual');
+      expect(resolved.sourceKind).toBe('card');
+      expect(resolved.providerId).toBe('card-estimate');
+    }
+  });
+
+  it('manualProvider 為刷卡估算＋不涉 TWD 的 pair → 退回預設並標記 unsupported-pair', () => {
+    const preference: RateProviderPreference = {
+      mode: 'manual',
+      manualProvider: { sourceKind: 'card', providerId: 'card-estimate' },
+    };
+
+    const resolved = resolveProviderPreference({
+      preference,
+      from: 'USD',
+      to: 'JPY',
+      rateType: 'spot',
+      quotes: [],
+    });
+
+    expect(resolved).toEqual<ResolvedRateProvider>({
+      selectionMode: 'manual',
+      sourceKind: 'bank',
+      providerId: 'bot',
+      reason: 'unsupported-pair',
+    });
+  });
+
   it('manualProvider 未設定（mode=manual 但 manualProvider undefined）→ fallback-default', () => {
     const preference: RateProviderPreference = { mode: 'manual' };
 

@@ -25,9 +25,15 @@ export interface PublicRateProviderMetadata {
   providers: PublicRateProvider[];
 }
 
+/** 公開 API 僅暴露資料 provider；刷卡估算為虛擬 provider（ADR-002），不進公開 metadata。 */
+export type PublicRateSourceKind = 'bank' | 'exchange-shop';
+
+const isPublicSourceKind = (kind: string): kind is PublicRateSourceKind =>
+  kind === 'bank' || kind === 'exchange-shop';
+
 export interface PublicRateProvider {
   providerId: string;
-  sourceKind: 'bank' | 'exchange-shop';
+  sourceKind: PublicRateSourceKind;
   name: string;
   shortName: string;
   supportedCurrencies: string[];
@@ -53,28 +59,32 @@ export function buildPublicRateProviderMetadata(
       supportedSelectionModes: ['manual', 'best'],
       currentSelectionMode: 'manual',
     },
-    providers: getAllRateProviders().map((provider) => {
+    providers: getAllRateProviders().flatMap((provider): PublicRateProvider[] => {
+      const sourceKind = provider.sourceKind;
+      if (!isPublicSourceKind(sourceKind)) return [];
       const currentPath = provider.apiPaths.latest;
       const historyPath = provider.apiPaths.history.replace('{YYYY-MM-DD}', historyDateToken);
-      return {
-        providerId: provider.id,
-        sourceKind: provider.sourceKind,
-        name: provider.label,
-        shortName: provider.shortLabel,
-        supportedCurrencies:
-          provider.supportedCurrencies === 'all'
-            ? allSupportedCurrencies
-            : provider.supportedCurrencies.map(String),
-        supportedRateTypes: [...provider.supportedRateTypes],
-        currentEndpoint: joinEndpoint(options.dataBaseUrl, currentPath),
-        historyEndpoint: joinEndpoint(options.dataBaseUrl, historyPath),
-        ...(options.cdnBaseUrl
-          ? {
-              cdnCurrentEndpoint: joinEndpoint(options.cdnBaseUrl, currentPath),
-              cdnHistoryEndpoint: joinEndpoint(options.cdnBaseUrl, historyPath),
-            }
-          : {}),
-      };
+      return [
+        {
+          providerId: provider.id,
+          sourceKind,
+          name: provider.label,
+          shortName: provider.shortLabel,
+          supportedCurrencies:
+            provider.supportedCurrencies === 'all'
+              ? allSupportedCurrencies
+              : provider.supportedCurrencies.map(String),
+          supportedRateTypes: [...provider.supportedRateTypes],
+          currentEndpoint: joinEndpoint(options.dataBaseUrl, currentPath),
+          historyEndpoint: joinEndpoint(options.dataBaseUrl, historyPath),
+          ...(options.cdnBaseUrl
+            ? {
+                cdnCurrentEndpoint: joinEndpoint(options.cdnBaseUrl, currentPath),
+                cdnHistoryEndpoint: joinEndpoint(options.cdnBaseUrl, historyPath),
+              }
+            : {}),
+        },
+      ];
     }),
   };
 }

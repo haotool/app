@@ -66,10 +66,12 @@ const ko = {
     spotRate: '전신환',
     cashRate: '현금',
     exchangeShopRate: '환전소',
+    cardRate: '카드',
     rateTypeGroup: '환율 유형',
     switchToSpot: '전신환 환율로 전환',
     switchToCash: '현금 환율로 전환',
     switchToExchangeShop: '환전소 환율로 전환',
+    switchToCard: '카드 결제 추정 환율로 전환',
     fallbackRate: '참고값',
     rateTypeUnavailable: '{{rateType}} 환율은 현재 이용할 수 없습니다',
     rateTypeUnavailableForCurrencies:
@@ -78,6 +80,17 @@ const ko = {
     fromAmountLabel: '금액 ({{code}})',
     toAmountLabel: '결과 ({{code}})',
     backToConverter: '환산기로 돌아가기',
+  },
+
+  // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）
+  cardEstimate: {
+    badge: '추정',
+    formula: '= {{basis}} × {{multiplier}}（해외 수수료 {{fee}}% 포함）',
+    feeLabel: '해외 거래 수수료',
+    decreaseFee: '수수료 낮추기',
+    increaseFee: '수수료 높이기',
+    disclaimer: '실제 청구는 카드사 정산일 환율 기준입니다',
+    guideLink: '카드 환율 가이드',
   },
 
   // E3 等值雙列換算 v2（flag: converter-v2）
@@ -276,6 +289,7 @@ const ko = {
       spot: '전신환',
       cash: '현금',
       'exchange-shop': '환전소',
+      card: '카드 추정',
     },
   },
 

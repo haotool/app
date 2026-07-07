@@ -66,10 +66,12 @@ const ja = {
     spotRate: '直物',
     cashRate: '現金',
     exchangeShopRate: '両替所',
+    cardRate: 'カード',
     rateTypeGroup: 'レート種類',
     switchToSpot: '直物レートに切替',
     switchToCash: '現金レートに切替',
     switchToExchangeShop: '両替所レートに切替',
+    switchToCard: 'カード決済推定レートに切替',
     fallbackRate: '参考値',
     rateTypeUnavailable: '{{rateType}}レートは現在利用できません',
     rateTypeUnavailableForCurrencies:
@@ -78,6 +80,17 @@ const ja = {
     fromAmountLabel: '金額 ({{code}})',
     toAmountLabel: '結果 ({{code}})',
     backToConverter: 'コンバーターに戻る',
+  },
+
+  // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）
+  cardEstimate: {
+    badge: '推定',
+    formula: '= {{basis}} × {{multiplier}}（海外手数料 {{fee}}% 込み）',
+    feeLabel: '海外取引手数料',
+    decreaseFee: '手数料を下げる',
+    increaseFee: '手数料を上げる',
+    disclaimer: '実際の請求はカード発行会社の清算日レートによります',
+    guideLink: 'カードレートガイド',
   },
 
   // E3 等值雙列換算 v2（flag: converter-v2）
@@ -276,6 +289,7 @@ const ja = {
       spot: '直物',
       cash: '現金',
       'exchange-shop': '両替所',
+      card: 'カード推定',
     },
   },
 

@@ -8,6 +8,7 @@ import { RememberedHomeRoute } from '../RememberedHomeRoute';
 import { __resetColdStartRestoreForTests, markRestoreAttempted } from '../coldStartRestore';
 import { useConverterStore } from '../../../../stores/converterStore';
 import { CONVERTER_STORE_KEY } from '../../storage-keys';
+import { isCardRateEnabled } from '../../../../config/card-rate-flag';
 
 vi.mock('../../RateWise', () => ({
   default: ({ rememberConverterView = true }: { rememberConverterView?: boolean }) => (
@@ -83,6 +84,21 @@ describe('RememberedHomeRoute', () => {
 
     expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
     expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+  });
+
+  it('S2：persisted multi＋?cardRate=on 進站不導向（Phase 1 URL 唯一啟用入口）且 flag 生效', async () => {
+    vi.spyOn(useConverterStore.persist, 'hasHydrated').mockReturnValue(true);
+    useConverterStore.setState({ lastConverterView: 'multi' });
+    // BrowserRouter 下 URL 反映於 window.location；flag 讀取端據此生效。
+    window.history.replaceState(null, '', '/?cardRate=on');
+
+    renderHome('/?cardRate=on');
+
+    expect(await screen.findByTestId('ratewise-single')).toBeInTheDocument();
+    expect(screen.queryByTestId('multi-page')).not.toBeInTheDocument();
+    expect(isCardRateEnabled()).toBe(true);
+
+    window.history.replaceState(null, '', '/');
   });
 
   it('冷啟動還原後第二次造訪 / 不再導向', async () => {

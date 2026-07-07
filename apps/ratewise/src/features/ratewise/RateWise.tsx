@@ -37,9 +37,13 @@ import {
 
 const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: boolean } = {}) => {
   const [searchParams] = useSearchParams();
-  // deep-link（分享連結帶 from/to/amount）只是臨時進入，不應覆寫上次停留模式偏好。
+  // deep-link（分享連結帶 from/to/amount，或 ?cardRate flag 入口）只是臨時進入，
+  // 不應覆寫上次停留模式偏好；與 RememberedHomeRoute 的 hasDeepLink 豁免同一契約。
   const isDeepLink =
-    searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
+    searchParams.has('from') ||
+    searchParams.has('to') ||
+    searchParams.has('amount') ||
+    searchParams.has('cardRate');
   // 還原決策完成前（hydrate 中或將導向 multi）不得寫入，否則會把 persist 的 multi 覆寫成 single。
   useRememberConverterView(DEFAULT_CONVERTER_MODE, {
     enabled: !isDeepLink && rememberConverterView,
@@ -104,6 +108,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
     moneyBoxRate,
     exchangeShopCurrency,
     effectiveRateSource,
+    isCardRateAvailableInContext,
   } = useCurrencyConverter({ exchangeRates, details, rateType, rateSource, mode: 'single' });
 
   useEffect(() => {
@@ -146,9 +151,10 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
   const handleRateSourceChange = useCallback(
     (nextSource: RateSource) => {
       if (nextSource === 'exchange-shop' && !exchangeShopCurrency) return;
+      if (nextSource === 'card' && !isCardRateAvailableInContext) return;
       setRateSource(nextSource);
     },
-    [exchangeShopCurrency, setRateSource],
+    [exchangeShopCurrency, isCardRateAvailableInContext, setRateSource],
   );
 
   // 首屏使用 build-time rates 直接渲染；只有完全沒有可用資料時才顯示 skeleton。
@@ -236,6 +242,7 @@ const RateWise = ({ rememberConverterView = true }: { rememberConverterView?: bo
                 rateSource={effectiveRateSource}
                 moneyBoxRate={moneyBoxRate}
                 exchangeShopCurrency={exchangeShopCurrency}
+                hasCardRate={isCardRateAvailableInContext}
                 rateMode={rateMode}
                 rateTypeAvailability={rateTypeAvailability}
                 onFromCurrencyChange={setFromCurrency}

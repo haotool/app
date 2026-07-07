@@ -11,7 +11,11 @@ import type { RateDetails } from './offlineStorage';
 import type { CurrencyCode, RateMode, RateSource, RateType } from '../features/ratewise/types';
 import { computeConverterRate, type ExchangeShopRate } from '../services/moneyboxRateService';
 import { logger } from './logger';
-import { DEFAULT_RATE_SOURCE } from '../features/ratewise/constants';
+import {
+  CARD_FEE_PERCENT_DEFAULT,
+  clampCardFeePercent,
+  DEFAULT_RATE_SOURCE,
+} from '../features/ratewise/constants';
 
 export interface RateTypeAvailability {
   spot: boolean;
@@ -21,6 +25,8 @@ export interface RateTypeAvailability {
 interface UnitExchangeRateOptions {
   rateSource?: RateSource;
   exchangeShopRate?: ExchangeShopRate | null;
+  /** 刷卡估算手續費（百分比，0–3）；僅 rateSource='card' 時生效。 */
+  cardFeePercent?: number;
 }
 
 // 可用匯率 SSOT guard：資料源異常（0 / NaN / Infinity / 負值）一律視為缺失，走 fallback。
@@ -483,10 +489,59 @@ function resolveUnitBankRate(
   return { rate, side: fromLeg.side === toLeg.side ? fromLeg.side : 'mixed' };
 }
 
+/** 刷卡估算手續費乘數：1 外幣的 TWD 成本 = 台銀賣出 ×（1＋手續費%）。 */
+export function getCardFeeMultiplier(cardFeePercent: number): number {
+  return 1 + clampCardFeePercent(cardFeePercent) / 100;
+}
+
+/**
+ * 刷卡估算基準 rate type（UI 計算式揭露唯一來源）。
+ * 與賣出腿 fallback 同判準：即期賣出可用即為即期，缺失時誠實揭露現金（KRW 情境）；
+ * card source 下 store rateType 已固定 spot，實際取用側由 pair 可用性決定。
+ */
+export function resolveCardBasisRateType(availability: RateTypeAvailability): RateType {
+  return availability.spot ? 'spot' : 'cash';
+}
+
+// 刷卡估算（ADR-002 Phase 1）：兩方向共用同一 effective rate R = 銀行賣出 ×（1＋手續費）。
+// - 外幣→TWD（刷卡消費估算帳單）：單位匯率 = sell × multiplier
+// - TWD→外幣（預算可刷額度）：單位匯率 = (1 / sell) / multiplier（同一 R 的倒數）
+// 刷卡不存在把外幣賣回銀行的反向交易，故不用買入價；basis side 沿用銀行賣出腿
+// 的實際取用結果（即期缺失回落現金時 side 誠實反映），與 #659 值-標籤同源原則一致。
+function resolveUnitCardRate(
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode,
+  details: Record<string, RateDetails> | undefined,
+  rateType: RateType,
+  exchangeRates: Record<CurrencyCode, number | null> | null | undefined,
+  cardFeePercent: number,
+): UnitExchangeRateWithBasis {
+  const base = resolveUnitBankRate(
+    fromCurrency,
+    toCurrency,
+    details,
+    rateType,
+    'sell',
+    exchangeRates,
+  );
+  const multiplier = getCardFeeMultiplier(cardFeePercent);
+
+  if (fromCurrency === 'TWD' && toCurrency !== 'TWD') {
+    return { rate: base.rate / multiplier, side: base.side };
+  }
+  if (toCurrency === 'TWD' && fromCurrency !== 'TWD') {
+    return { rate: base.rate * multiplier, side: base.side };
+  }
+  // 防禦碼：card 僅支援涉及 TWD 的貨幣對（UI 層已擋非 TWD 對）；
+  // 同幣別或異常交叉輸入不加手續費，直接回銀行賣出腿結果。
+  return base;
+}
+
 /**
  * 取得單位匯率與實際採用的 basis（UI 基準標籤唯一來源）。
  * side 由引擎選價結果回傳（含 fallback 後實際取用側），禁止在 UI 層平行推導。
  * 換錢所報價：TWD→外幣用店家賣出、外幣→TWD 用店家買入（computeConverterRate 語意）。
+ * 刷卡估算：銀行賣出 ×（1＋手續費%），見 resolveUnitCardRate。
  */
 export function getUnitExchangeRateWithBasis(
   fromCurrency: CurrencyCode,
@@ -497,13 +552,28 @@ export function getUnitExchangeRateWithBasis(
   exchangeRates?: Record<CurrencyCode, number | null> | null,
   options: UnitExchangeRateOptions = {},
 ): UnitExchangeRateWithBasis {
-  const { rateSource = DEFAULT_RATE_SOURCE, exchangeShopRate = null } = options;
+  const {
+    rateSource = DEFAULT_RATE_SOURCE,
+    exchangeShopRate = null,
+    cardFeePercent = CARD_FEE_PERCENT_DEFAULT,
+  } = options;
 
   if (rateSource === 'exchange-shop' && exchangeShopRate) {
     const shopRate = computeConverterRate(exchangeShopRate, fromCurrency, toCurrency);
     if (shopRate !== null) {
       return { rate: shopRate, side: toCurrency === 'TWD' ? 'buy' : 'sell' };
     }
+  }
+
+  if (rateSource === 'card') {
+    return resolveUnitCardRate(
+      fromCurrency,
+      toCurrency,
+      details,
+      rateType,
+      exchangeRates,
+      cardFeePercent,
+    );
   }
 
   return resolveUnitBankRate(fromCurrency, toCurrency, details, rateType, rateMode, exchangeRates);

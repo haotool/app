@@ -1,4 +1,5 @@
 import {
+  CARD_ESTIMATE_PROVIDER_ID,
   fromLegacyRateSource,
   getDefaultProvider,
   isProviderSupportedForCurrency,
@@ -96,6 +97,10 @@ function isProviderSupportedForPair(
   to: CurrencyCode,
 ): boolean {
   const HOME_CURRENCY: CurrencyCode = 'TWD';
+  // 刷卡估算為 registry 外虛擬 provider：帳單以 TWD 清算，僅支援涉及 TWD 的貨幣對。
+  if (providerId === CARD_ESTIMATE_PROVIDER_ID) {
+    return from !== to && (from === HOME_CURRENCY || to === HOME_CURRENCY);
+  }
   if (
     isProviderSupportedForCurrency(providerId, from) &&
     isProviderSupportedForCurrency(providerId, to)

@@ -50,7 +50,21 @@ export const CONVERTER_MODES = ['single', 'multi'] as const;
 export const CONVERTER_V2_VARIANTS = ['legacy', 'v2'] as const;
 export const RATE_MODES = ['auto', 'sell', 'mid'] as const;
 export const RATE_TYPES = ['spot', 'cash'] as const;
-export const RATE_SOURCES = ['bank', 'exchange-shop'] as const;
+export const RATE_SOURCES = ['bank', 'exchange-shop', 'card'] as const;
+
+// 刷卡估算手續費（ADR-002 Phase 1）：0–3% 可調、步進 0.1%、預設 1.5%（台灣發卡行普遍值）。
+export const CARD_FEE_PERCENT_MIN = 0;
+export const CARD_FEE_PERCENT_MAX = 3;
+export const CARD_FEE_PERCENT_STEP = 0.1;
+export const CARD_FEE_PERCENT_DEFAULT = 1.5;
+
+/** 手續費夾限至合法區間並對齊 0.1 步進；非數值回落預設值。 */
+export function clampCardFeePercent(value: number): number {
+  if (!Number.isFinite(value)) return CARD_FEE_PERCENT_DEFAULT;
+  const clamped = Math.min(CARD_FEE_PERCENT_MAX, Math.max(CARD_FEE_PERCENT_MIN, value));
+  // 以 10 倍整數運算消除浮點誤差（0.1 步進）。
+  return Math.round(clamped * 10) / 10;
+}
 
 export const DEFAULT_CONVERTER_MODE = 'single';
 /** 單幣別版面預設 legacy（flag off）；須與 converter-v2 flag server snapshot 一致（SSG 紅線）。 */

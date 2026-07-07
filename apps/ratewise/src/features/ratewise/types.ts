@@ -20,7 +20,7 @@ export type RateSource = (typeof RATE_SOURCES)[number];
 export type RateMode = (typeof RATE_MODES)[number];
 export type MultiAmountsState = Record<CurrencyCode, string>;
 
-export type ConversionHistoryCategory = 'spot' | 'cash' | 'exchange-shop' | 'legacy';
+export type ConversionHistoryCategory = 'spot' | 'cash' | 'exchange-shop' | 'card' | 'legacy';
 
 export interface ConversionHistoryEntry {
   from: CurrencyCode;

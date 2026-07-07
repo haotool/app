@@ -33,6 +33,7 @@ describe('RateSelector', () => {
     rateSource: RateSource;
     rateTypeAvailability: RateTypeAvailability;
     hasExchangeShop: boolean;
+    hasCard?: boolean;
     onRateTypeChange: Mock<(type: RateType) => void>;
     onRateSourceChange: Mock<(source: RateSource) => void>;
   }
@@ -122,6 +123,34 @@ describe('RateSelector', () => {
       'Exchange shop',
     );
     expect(screen.queryByRole('button', { name: /換錢所/ })).not.toBeInTheDocument();
+  });
+
+  it('hasCard=false（預設）時不渲染刷卡 pill（flag off 零暴露）', () => {
+    setup({ hasExchangeShop: true });
+
+    expect(screen.queryByRole('button', { name: /刷卡/ })).not.toBeInTheDocument();
+  });
+
+  it('hasCard=true 時顯示刷卡 pill（第四選項）', () => {
+    setup({ hasExchangeShop: true, hasCard: true });
+
+    expect(screen.getByRole('button', { name: /刷卡/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+  });
+
+  it('點刷卡呼叫 onRateSourceChange(card)', () => {
+    const props = setup({ hasCard: true });
+
+    fireEvent.click(screen.getByRole('button', { name: /刷卡/ }));
+
+    expect(props.onRateSourceChange).toHaveBeenCalledWith('card');
+    expect(props.onRateTypeChange).not.toHaveBeenCalled();
+  });
+
+  it('rateSource=card 時刷卡 aria-pressed=true', () => {
+    setup({ hasCard: true, rateSource: 'card' });
+
+    expect(screen.getByRole('button', { name: /刷卡/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
   // #651 前置：佈局改為內容驅動，欄數由 pills 數量隱式決定，禁止回退硬編碼寬度。

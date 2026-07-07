@@ -77,8 +77,13 @@ export function RememberedHomeRoute() {
     };
   }, []);
 
+  // ?cardRate 為刷卡估算 Phase 1 唯一啟用入口（URL override），列入深連結豁免：
+  // persisted multi 不得吞掉該入口（多幣別不支援 card）；通用 query 豁免見 #654 另案。
   const hasDeepLink =
-    searchParams.has('from') || searchParams.has('to') || searchParams.has('amount');
+    searchParams.has('from') ||
+    searchParams.has('to') ||
+    searchParams.has('amount') ||
+    searchParams.has('cardRate');
   const restoreToMulti = shouldRestoreToMulti({ hydrated, hasDeepLink, lastConverterView });
   // hydrate 未完成或即將導向 multi 時，禁止 RateWise 寫入偏好，避免覆寫 persist 的 lastConverterView。
   const allowRememberView = hydrated && !restoreToMulti;

@@ -152,6 +152,11 @@ describe('provider rate type resolution', () => {
       getProviderPrimaryRateType(RATE_PROVIDERS.moneybox),
     );
   });
+
+  it('S1：card 基準固定即期（registry 外虛擬 provider 不得隱式放行 persisted cash）', () => {
+    expect(resolveRateTypeForSource('card', 'cash')).toBe('spot');
+    expect(resolveRateTypeForSource('card', 'spot')).toBe('spot');
+  });
 });
 
 describe('isProviderSupportedForCurrency', () => {

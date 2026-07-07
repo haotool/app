@@ -84,7 +84,22 @@ export function getProviderPrimaryRateType(provider: RateProviderConfig): RateTy
   return provider.supportedRateTypes[0] ?? DEFAULT_RATE_TYPE;
 }
 
+/**
+ * 刷卡估算虛擬 provider（ADR-002 Phase 1）：非資料 provider（無 API endpoint），
+ * 不進 RATE_PROVIDERS registry，避免污染公開 API metadata 與 OpenData 頁（flag off 零暴露）。
+ * 估算基準取自台銀牌告，僅涉及 TWD 的貨幣對可用（刷卡帳單以 TWD 清算）。
+ */
+export const CARD_ESTIMATE_PROVIDER_ID = 'card-estimate' as const;
+
+export const CARD_ESTIMATE_PROVIDER_REF: RateProviderRef = {
+  sourceKind: 'card',
+  providerId: CARD_ESTIMATE_PROVIDER_ID,
+};
+
 export function getDefaultProviderRef(sourceKind: RateSourceKind): RateProviderRef {
+  if (sourceKind === 'card') {
+    return CARD_ESTIMATE_PROVIDER_REF;
+  }
   const provider = getDefaultProvider(sourceKind);
   if (!provider) {
     throw new Error(`Missing default rate provider for ${sourceKind}`);
@@ -103,6 +118,12 @@ export function resolveRateTypeForSource(
   sourceKind: RateSourceKind,
   requestedRateType: RateType,
 ): RateType {
+  // 刷卡估算基準固定即期賣出（ADR-002 SSOT）：card 為 registry 外虛擬 provider，
+  // getDefaultProvider 查無會隱式放行 persisted rateType（如 cash 高估 1–2%），故特例正規化。
+  // 即期缺失回落現金由引擎賣出腿 fallback 處理（KRW 情境不變）。
+  if (sourceKind === 'card') {
+    return 'spot';
+  }
   const provider = getDefaultProvider(sourceKind);
   if (!provider) {
     return requestedRateType;
