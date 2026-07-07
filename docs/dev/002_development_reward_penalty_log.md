@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+182
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-e7-theme-studio-wave-b-ux-safety
+- 原因：主題工作室存在五項 UX 安全缺口（QA-I #2/#4/#5/#7＋#670 S3）——近白/近黑主色無防呆致 wordmark/tint/focus ring 隱形、HEX 欄位無全選/清洗/commit 分離致打字變半殘色碼、即時持久無 draft/取消語意、「恢復預設主題」與「重置主題設定」雙入口命名不一致且無誤觸防護
+- 解法：新增 evaluatePrimaryContrastGate 輸入層 gate（對當前背景調 <2:1 警告不硬擋＋darkenToContrast/lightenToContrast 對偶產生最近達標建議色一鍵採用，warn 門檻 2 > 圖形面 1.5 property 守門全 tone × 332 輸入色）、HEX 欄位改 focus 全選＋sanitizeHexInput 貼上清洗＋blur/Enter 才 commit＋無效值回滾、useCustomThemeDraft 編排 draft 模式（previewTheme 只動 DOM 不寫 pre-paint 快取、關閉 sheet 經 commitCustomTheme 單次原子持久化、取消與元件 unmount 共用同一回滾入口還原開啟前快照且 persist 零寫入、快照 ref 即 commit 後不回滾 guard）、雙入口收斂為「還原預設主題」單一語意（i18n 4 語系）＋useInlineConfirm 二段確認（4 秒逾時自動解除）；derive 演算零改動故 CUSTOM_THEME_DERIVE_VERSION 不 bump，67 鍵合約與防漂移 sync 守門全數不回歸，三視口（390/375/320）gate/HEX/draft 取消流程截圖佐證
 
 - 日期：2026-07-07
 - ID：reward-rw-e7-theme-studio-wave-a-dark-tones

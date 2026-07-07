@@ -83,27 +83,34 @@ describe('useAppTheme - custom 主題持久化（E2）', () => {
     expect(result.current.customPrimary).toBe('#3182F6');
   });
 
-  it('setCustomPrimary 即選即用：切至 custom 並持久化主色', () => {
+  it('commitCustomTheme 原子提交：切至 custom 並持久化主色＋背景調（E7 wave-B）', () => {
     const { result } = renderHook(() => useAppTheme());
 
     act(() => {
-      result.current.setCustomPrimary('#14B8A6');
+      result.current.commitCustomTheme('#14B8A6', 'warm');
     });
 
     expect(result.current.style).toBe('custom');
+    expect(result.current.customPrimary).toBe('#14B8A6');
+    expect(result.current.customBackgroundTone).toBe('warm');
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
       style?: string;
       customPrimary?: string;
+      customBackgroundTone?: string;
     };
     expect(stored.style).toBe('custom');
     expect(stored.customPrimary).toBe('#14B8A6');
+    expect(stored.customBackgroundTone).toBe('warm');
   });
 
-  it('setCustomPrimary 拒絕無效 hex（狀態與儲存皆不變）', () => {
+  it('commitCustomTheme 拒絕無效 hex 或非 allowlist 背景調（狀態與儲存皆不變）', () => {
     const { result } = renderHook(() => useAppTheme());
 
     act(() => {
-      result.current.setCustomPrimary('#FFF');
+      result.current.commitCustomTheme('#FFF', 'pure');
+    });
+    act(() => {
+      result.current.commitCustomTheme('#14B8A6', 'dark' as never);
     });
 
     expect(result.current.style).toBe('zen');
@@ -137,48 +144,23 @@ describe('useAppTheme - custom 主題持久化（E2）', () => {
     expect(invalid.current.customBackgroundTone).toBe('pure');
   });
 
-  it('setCustomBackgroundTone 即選即用：切至 custom、持久化並寫入背景調對', () => {
+  it('commitCustomTheme 寫入背景調對 inline 變數', () => {
     const { result } = renderHook(() => useAppTheme());
 
     act(() => {
-      result.current.setCustomBackgroundTone('cool');
+      result.current.commitCustomTheme('#3182F6', 'cool');
     });
 
     expect(result.current.style).toBe('custom');
     expect(result.current.customBackgroundTone).toBe('cool');
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
-      style?: string;
-      customBackgroundTone?: string;
-    };
-    expect(stored.style).toBe('custom');
-    expect(stored.customBackgroundTone).toBe('cool');
     expect(document.documentElement.style.getPropertyValue('--color-background')).not.toBe('');
-  });
-
-  it('setCustomPrimary 保留既有背景調（不互相覆蓋）', () => {
-    const { result } = renderHook(() => useAppTheme());
-
-    act(() => {
-      result.current.setCustomBackgroundTone('warm');
-    });
-    act(() => {
-      result.current.setCustomPrimary('#14B8A6');
-    });
-
-    expect(result.current.customBackgroundTone).toBe('warm');
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
-      customPrimary?: string;
-      customBackgroundTone?: string;
-    };
-    expect(stored.customPrimary).toBe('#14B8A6');
-    expect(stored.customBackgroundTone).toBe('warm');
   });
 
   it('自 custom 切回內建主題：customPrimary 保留供再次啟用，inline 覆寫清除', () => {
     const { result } = renderHook(() => useAppTheme());
 
     act(() => {
-      result.current.setCustomPrimary('#FF6B6B');
+      result.current.commitCustomTheme('#FF6B6B', 'pure');
     });
     act(() => {
       result.current.setStyle('zen');

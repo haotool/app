@@ -1,34 +1,41 @@
 /**
- * CustomThemeSheet（E2 wave-D）：自訂主題色整頁沉浸式選色 sheet。
+ * CustomThemeSheet（E2 wave-D＋E7 wave-B）：自訂主題色整頁沉浸式選色 sheet。
  *
  * 內容由上而下：即時預覽卡（模擬主畫面元素跟色）→ 精選色票（20 色 × 5 欄）→
- * HexColorPicker（react-colorful，ADR-001）→ HexColorInput＋演算預覽 chip →
- * 背景色調五選一（色調圓票）→ 恢復預設。
- * 即選即用：所有操作即時經 useAppTheme 走 deriveCustomThemeCssVars 管線全 app 跟色；
+ * HexColorPicker（react-colorful，ADR-001）→ HEX 欄位（focus 全選/paste 清洗/blur commit）＋
+ * 演算預覽 chip → 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→
+ * 背景色調八選一（色調圓票）→ 取消／還原預設（二段確認）。
+ * E7 wave-B draft 語意：sheet 開啟期間變更即時預覽全站但不持久化；
+ * 關閉 sheet＝commit、「取消」＝回滾開啟前快照（由 useCustomThemeDraft 編排）。
  * sheet 為整頁（size="full"）遮住主畫面，故頂部預覽卡承擔「所見即所得」回饋。
  * 選色面板為指標拖曳互動，sheet 關閉整片下拉（enableDrag=false）避免手勢衝突。
  *
- * @see .claude/prds/ratewise-e2c-color-picker-design.md
+ * @see .claude/prds/custom-theme-v2-design.md（第 4 節 wave-B、第 6 節 QA-I 對策表）
  * @see .claude/decisions/ADR-001-react-colorful.md
  */
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { HexColorPicker, HexColorInput } from 'react-colorful';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { HexColorPicker } from 'react-colorful';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, TrendingUp } from 'lucide-react';
+import { Check, Plus, TrendingUp, Wand2 } from 'lucide-react';
 import { BottomSheet } from './BottomSheet';
+import { useInlineConfirm } from '../hooks/useInlineConfirm';
 import {
   CUSTOM_PRIMARY_PRESETS,
   CUSTOM_BACKGROUND_TONES,
   choosePrimaryForeground,
   deriveCustomThemeCssVars,
-  isValidHexColor,
+  evaluatePrimaryContrastGate,
+  sanitizeHexInput,
   type CustomBackgroundTone,
 } from '../config/custom-theme';
 
 export interface CustomThemeSheetProps {
   isOpen: boolean;
+  /** 關閉 sheet（X / backdrop / Esc）＝ commit draft。 */
   onClose: () => void;
+  /** 取消＝回滾開啟前快照後關閉。 */
+  onCancel: () => void;
   customPrimary: string;
   customBackgroundTone: CustomBackgroundTone;
   onSelectPrimary: (hex: string) => void;
@@ -63,6 +70,7 @@ function tripleToRgb(triple: string): string {
 export function CustomThemeSheet({
   isOpen,
   onClose,
+  onCancel,
   customPrimary,
   customBackgroundTone,
   onSelectPrimary,
@@ -85,6 +93,18 @@ export function CustomThemeSheet({
   const onSurfaceTriple = derived['--color-primary-on-surface'];
   const isTextClamped = onSurfaceTriple !== derived['--color-primary'];
   const onSurfaceRgb = tripleToRgb(onSurfaceTriple);
+  // 近白/近黑主色 gate（QA-I #2＋#670 S3）：對當前背景調 <2:1 即警告＋建議色（不硬擋）。
+  const contrastGate = useMemo(
+    () => evaluatePrimaryContrastGate(customPrimary, customBackgroundTone),
+    [customPrimary, customBackgroundTone],
+  );
+
+  // 還原預設二段確認（QA-I D12）：sheet 關閉時解除確認態。
+  const resetConfirm = useInlineConfirm(onReset);
+  const resetConfirmReset = resetConfirm.reset;
+  useEffect(() => {
+    if (!isOpen) resetConfirmReset();
+  }, [isOpen, resetConfirmReset]);
 
   // 選色拖動 16ms debounce（trailing）：全套派生（含深色 neutral scale）高頻執行的效能上限，
   // 與 deriveCustomThemeCssVars 的 memoize 並用（PM 簡報第 5 節）。
@@ -108,11 +128,17 @@ export function CustomThemeSheet({
     [],
   );
 
-  const handleHexInput = (raw: string) => {
-    const value = raw.startsWith('#') ? raw : `#${raw}`;
-    if (isValidHexColor(value)) {
-      onSelectPrimary(value.toUpperCase());
+  // HEX 欄位（QA-I #4）：編輯中顯示值與 commit 分離——focus 全選、輸入/貼上即清洗
+  //（去 # 空白、統一大寫、截 6 碼），blur/Enter 才 commit，無效值回滾前值。
+  // null＝非編輯態（顯示值跟隨 customPrimary，色票/色盤變更即時同步）。
+  const [hexFieldDraft, setHexFieldDraft] = useState<string | null>(null);
+  const displayedHex = hexFieldDraft ?? customPrimary.replace('#', '').toUpperCase();
+
+  const commitHexField = () => {
+    if (hexFieldDraft !== null && hexFieldDraft.length === 6) {
+      onSelectPrimary(`#${hexFieldDraft}`);
     }
+    setHexFieldDraft(null);
   };
 
   const handleSelectPreset = (preset: string) => {
@@ -247,16 +273,39 @@ export function CustomThemeSheet({
             <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
               {t('settings.customThemeHex')}
             </span>
-            <HexColorInput
-              color={customPrimary}
-              onChange={handleHexInput}
-              prefixed
-              spellCheck={false}
-              autoComplete="off"
-              className="mt-2 block w-28 min-h-11 rounded-control border border-border bg-transparent px-3 py-2 font-mono text-sm uppercase focus:outline-none focus:ring-2"
+            <span
+              className="mt-2 flex w-32 min-h-11 items-center rounded-control border border-border px-3 py-2 font-mono text-sm focus-within:ring-2"
               style={{ '--tw-ring-color': customPrimary } as React.CSSProperties}
-              aria-label={t('settings.customThemeHex')}
-            />
+            >
+              <span aria-hidden="true" className="opacity-50">
+                #
+              </span>
+              <input
+                type="text"
+                value={displayedHex}
+                onFocus={(event) => {
+                  setHexFieldDraft(sanitizeHexInput(event.target.value));
+                  event.target.select();
+                }}
+                onChange={(event) => setHexFieldDraft(sanitizeHexInput(event.target.value))}
+                onBlur={commitHexField}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    commitHexField();
+                    event.currentTarget.blur();
+                  }
+                }}
+                inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                autoComplete="off"
+                spellCheck={false}
+                enterKeyHint="done"
+                className="w-full bg-transparent uppercase focus:outline-none"
+                aria-label={t('settings.customThemeHex')}
+                data-testid="custom-theme-hex-input"
+              />
+            </span>
           </label>
           <div
             className="flex items-center gap-2"
@@ -283,7 +332,33 @@ export function CustomThemeSheet({
         </div>
 
         {/* 可讀性回饋（#632）：過淺主色不硬擋，即時預覽 clamp 後的實效文字色。 */}
-        <div role="status" aria-live="polite" className="mb-5 empty:mb-0 empty:h-0">
+        <div role="status" aria-live="polite" className="mb-5 empty:mb-0 empty:h-0 space-y-2.5">
+          {/* 近白/近黑主色 gate（QA-I #2＋#670 S3）：警告＋一鍵採用建議色（不硬擋）。 */}
+          {contrastGate.isLowContrast && contrastGate.suggestedPrimary && (
+            <div
+              className="flex items-center gap-3 rounded-control bg-surface-sunken px-3 py-2.5"
+              data-testid="custom-theme-gate-notice"
+            >
+              <p className="min-w-0 flex-1 text-xs leading-relaxed opacity-70">
+                {t('settings.customThemeGateNotice')}
+              </p>
+              <button
+                type="button"
+                onClick={() => onSelectPrimary(contrastGate.suggestedPrimary ?? customPrimary)}
+                className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-control bg-surface px-3 py-2 text-xs font-bold shadow-sm transition-transform active:scale-95 motion-reduce:transition-none"
+                style={{ color: onSurfaceRgb }}
+                data-testid="custom-theme-gate-adopt"
+              >
+                <span
+                  className="h-5 w-5 rounded-full border border-border"
+                  style={{ backgroundColor: contrastGate.suggestedPrimary }}
+                  aria-hidden="true"
+                />
+                <Wand2 className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('settings.customThemeGateAdopt')}
+              </button>
+            </div>
+          )}
           {isTextClamped && (
             <div
               className="flex items-center gap-3 rounded-control bg-surface-sunken px-3 py-2.5"
@@ -344,14 +419,32 @@ export function CustomThemeSheet({
           })}
         </div>
 
-        {/* 恢復預設（回 zen） */}
-        <button
-          type="button"
-          onClick={onReset}
-          className="w-full min-h-11 cursor-pointer rounded-control border border-border py-2.5 text-xs font-bold transition-colors hover:bg-primary/5"
-        >
-          {t('settings.customThemeReset')}
-        </button>
+        {/* 取消（回滾開啟前快照）＋還原預設（回 zen，二段確認） */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="min-h-11 flex-1 cursor-pointer rounded-control border border-border py-2.5 text-xs font-bold transition-colors hover:bg-primary/5"
+            data-testid="custom-theme-cancel"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={resetConfirm.handlePress}
+            aria-live="polite"
+            className={`min-h-11 flex-1 cursor-pointer rounded-control border py-2.5 text-xs font-bold transition-colors ${
+              resetConfirm.isConfirming
+                ? 'border-danger-text text-danger-text bg-danger-bg'
+                : 'border-border hover:bg-primary/5'
+            }`}
+            data-testid="custom-theme-reset"
+          >
+            {resetConfirm.isConfirming
+              ? t('settings.customThemeResetConfirm')
+              : t('settings.customThemeReset')}
+          </button>
+        </div>
       </div>
     </BottomSheet>
   );

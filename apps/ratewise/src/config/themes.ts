@@ -526,12 +526,17 @@ function clearCustomThemeVarsCache(): void {
 /**
  * custom 覆寫層：style === 'custom' 時由主色演算導出整組變數寫至 documentElement；
  * 切回內建主題時清除全部 inline 覆寫（靜態 [data-style] 區塊接手）。
+ * persistVarsCache=false（draft 預覽，E7 wave-B）：只動 DOM，不寫入/清除 pre-paint 快取。
  */
-function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void {
+function applyCustomThemeOverrides(
+  root: HTMLElement,
+  config: ThemeConfig,
+  persistVarsCache: boolean,
+): void {
   if (config.style !== 'custom') {
     CUSTOM_THEME_CSS_VARS.forEach((cssVar) => root.style.removeProperty(cssVar));
     updateThemeColorMeta(ZEN_THEME_COLOR);
-    clearCustomThemeVarsCache();
+    if (persistVarsCache) clearCustomThemeVarsCache();
     return;
   }
 
@@ -546,16 +551,10 @@ function applyCustomThemeOverrides(root: HTMLElement, config: ThemeConfig): void
   // 與 bootstrap pre-paint 同為 identity 映射（hex → 'R G B'），保證雙端一致。
   root.style.setProperty('--color-primary', hexToRgbTriple(primaryHex));
   updateThemeColorMeta(primaryHex);
-  persistCustomThemeVarsCache(primaryHex, backgroundTone, derived);
+  if (persistVarsCache) persistCustomThemeVarsCache(primaryHex, backgroundTone, derived);
 }
 
-/**
- * 將主題變數應用到 DOM
- *
- * @description 使用 data attributes 來控制主題；custom 主題另以 inline CSS 變數覆寫主色系列
- * @param config - 主題配置
- */
-export function applyTheme(config: ThemeConfig): void {
+function applyThemeToDom(config: ThemeConfig, persistVarsCache: boolean): void {
   if (typeof window === 'undefined') return;
 
   const root = document.documentElement;
@@ -578,7 +577,25 @@ export function applyTheme(config: ThemeConfig): void {
     root.classList.remove('font-serif');
   }
 
-  applyCustomThemeOverrides(root, config);
+  applyCustomThemeOverrides(root, config, persistVarsCache);
+}
+
+/**
+ * 將主題變數應用到 DOM
+ *
+ * @description 使用 data attributes 來控制主題；custom 主題另以 inline CSS 變數覆寫主色系列
+ * @param config - 主題配置
+ */
+export function applyTheme(config: ThemeConfig): void {
+  applyThemeToDom(config, true);
+}
+
+/**
+ * draft 預覽套用（E7 wave-B）：全站即時跟色但不寫入 pre-paint 快取。
+ * 主題工作室 sheet 開啟期間的變更走本入口；關閉 sheet commit 時才走 applyTheme。
+ */
+export function previewTheme(config: ThemeConfig): void {
+  applyThemeToDom(config, false);
 }
 
 /**
