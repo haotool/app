@@ -10,7 +10,15 @@
  * @version 2.0.0
  */
 
-import { useState, useEffect, useRef, useSyncExternalStore, Suspense, lazy } from 'react';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useSyncExternalStore,
+  Suspense,
+  lazy,
+} from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 // RefreshCw 已替換為自定義雙箭頭 SVG
 import { useTranslation } from 'react-i18next';
@@ -769,14 +777,41 @@ const SingleConverterLegacy = ({
   );
 };
 
+// SSR 環境呼叫 useLayoutEffect 會產生 React 警告；依 window 存在與否切換，SSR 端退回 useEffect。
+// client 端用 layout effect 於 paint 前同步切換；base 的 uSES 一致性切換由 passive effect
+// 於 paint 後觸發——本修法切換時點更早，不多出可見 legacy 幀。
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+// issue #653：persisted v2 冷載時，hydration 期間的 store 更新會迫使 React 對尚未完成
+// hydration 的邊界改走 client render；此時 client snapshot 已是 v2，與 SSG 的 legacy
+// HTML 不符 → React #418（間歇、舊 profile 必現）。模組級旗標記錄本次 page load 是否
+// 已完成一次 hydration：SPA 導覽 remount 時首幀直接依 persisted 偏好渲染，不重演 two-pass。
+let hasCompletedHydration = false;
+
+// 測試專用：重置 hydration 旗標，模擬新的 page load。
+// eslint-disable-next-line react-refresh/only-export-components
+export function resetConverterHydrationForTests() {
+  hasCompletedHydration = false;
+}
+
 /**
  * 模式分流：converter-v2 flag on 時渲染等值雙列 v2，off 時維持 legacy。
  * server snapshot 固定 legacy，flag off 時 SSG 首頁輸出與現行一致（hydration 紅線）。
+ * two-pass render（#653）：hydration commit 前 client snapshot 一律回傳 legacy
+ * （與 server snapshot 相同），確保 hydration 中任何強制 re-render 都與 SSG 輸出一致；
+ * commit 後的 layout effect（paint 前）才改讀 persisted 偏好，v2 使用者無多餘可見閃爍。
  */
 export const SingleConverter = (props: SingleConverterProps) => {
+  const [hydrated, setHydrated] = useState(hasCompletedHydration);
+
+  useIsomorphicLayoutEffect(() => {
+    hasCompletedHydration = true;
+    setHydrated(true);
+  }, []);
+
   const isV2 = useSyncExternalStore(
     subscribeConverterV2Variant,
-    getConverterV2Snapshot,
+    hydrated ? getConverterV2Snapshot : getConverterV2ServerSnapshot,
     getConverterV2ServerSnapshot,
   );
 
