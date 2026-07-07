@@ -222,7 +222,7 @@ export function CurrencyLandingPage({
       <SEOHelmet {...seoProps} />
 
       <ContentPageLayout
-        width="wide"
+        width="wide-lg"
         breadcrumbItems={[
           { label: t('nav.home'), href: '/' },
           {

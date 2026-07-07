@@ -15,14 +15,18 @@ import type { BreadcrumbItem } from '../Breadcrumb';
 export interface ContentPageLayoutProps {
   breadcrumbItems: BreadcrumbItem[];
   children: ReactNode;
-  /** 內容最大寬度：narrow＝長文閱讀（預設）；wide＝表格／技術頁。 */
-  width?: 'narrow' | 'wide';
+  /**
+   * 內容最大寬度：narrow＝長文閱讀（預設）；wide＝表格／技術頁；
+   * wide-lg＝僅 ≥lg 放寬（供 lg: 兩欄 grid 頁使用，md–lg 帶維持閱讀寬度，#594 三階 A11/A12）。
+   */
+  width?: 'narrow' | 'wide' | 'wide-lg';
   testId?: string;
 }
 
 const WIDTH_CLASS: Record<NonNullable<ContentPageLayoutProps['width']>, string> = {
   narrow: 'max-w-3xl',
   wide: 'max-w-5xl',
+  'wide-lg': 'max-w-3xl lg:max-w-5xl',
 };
 
 export function ContentPageLayout({
