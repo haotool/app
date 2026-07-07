@@ -2,19 +2,19 @@ import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/test';
 
 /**
- * E2 wave-C 自訂主題色 - 選色 BottomSheet 旅程 E2E
+ * E2/E7 自訂主題色 - 主題工作室 BottomSheet 旅程 E2E
  *
- * 旅程（依設計簡報品質閘門）：
- * 1. 設定頁點選「自訂主題色」卡 → 選色 BottomSheet 開啟
- * 2. 點精選色票／在 react-colorful 面板拖曳選色 → 即時全 app 套用
- * 3. 背景色調三選一切換 → background/surface-sunken 淡色對即時套用
- * 4. 重載後主色與背景調仍生效（持久化 + bootstrap/applyTheme）
- * 5. 恢復預設 → 回 zen、inline 覆寫零殘留
+ * 旅程（wave-B draft 語意＋wave-C 主題工作室最終版）：
+ * 1. 設定頁點選「自訂主題色」卡 → 主題工作室 sheet 開啟（預覽縮影卡可見）
+ * 2. 點精選色票／展開「自訂…」在 react-colorful 拖曳選色 → 即時全站預覽（draft 不持久化）
+ * 3. 背景色調切換＋亮度滑桿 → background 即時套用
+ * 4. 關閉 sheet＝commit → 持久化；重載後主色與背景調仍生效（bootstrap/applyTheme）
+ * 5. 還原預設（二段確認）→ 回 zen、inline 覆寫零殘留
  */
 
 const CORAL = '#FF6B6B';
 const CORAL_TRIPLE = '255 107 107';
-// CUSTOM_BACKGROUND_TONES SSOT：warm background #FDF9F3 / zen 現值 pure #F8FAFC。
+// CUSTOM_BACKGROUND_TONES SSOT：warm background #FDF9F3。
 const WARM_BACKGROUND_TRIPLE = '253 249 243';
 
 const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
@@ -44,8 +44,10 @@ const gotoSettings = async (page: Page) => {
   await expect(customCard(page)).toBeVisible();
 };
 
-test.describe('自訂主題色選色 BottomSheet 旅程', () => {
-  test('開 sheet → 拖曳選色 → 背景調切換 → 重載持久 → 恢復預設', async ({ rateWisePage: page }) => {
+test.describe('主題工作室選色旅程（draft/commit 語意）', () => {
+  test('開 sheet → 選色 → 亮度滑桿 → 關閉 commit → 重載持久 → 還原預設', async ({
+    rateWisePage: page,
+  }) => {
     const consoleErrors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error') consoleErrors.push(message.text());
@@ -57,22 +59,23 @@ test.describe('自訂主題色選色 BottomSheet 旅程', () => {
     });
     await page.reload();
 
-    // 1. 進設定頁，點自訂主題卡 → 選色 sheet 開啟
+    // 1. 進設定頁，點自訂主題卡 → 主題工作室開啟（預覽縮影卡承擔所見即所得）
     await gotoSettings(page);
     await customCard(page).click();
     await expect(sheet(page)).toBeVisible();
+    await expect(sheet(page).getByTestId('custom-theme-live-preview')).toBeVisible();
     await expect(sheet(page).getByRole('group', { name: '精選色票' })).toBeVisible();
     expect(await getDataStyle(page)).toBe('custom');
 
-    // 2a. 點珊瑚色票 → 即時全 app 套用
+    // 2a. 點珊瑚色票 → 即時全站預覽（draft：persist 零寫入）
     await sheet(page)
       .getByRole('button', { name: `自訂主題色 ${CORAL}` })
       .click();
     await expect.poll(() => getInlinePrimary(page)).toBe(CORAL_TRIPLE);
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', CORAL);
-    expect(await getStoredTheme(page)).toMatchObject({ style: 'custom', customPrimary: CORAL });
+    expect((await getStoredTheme(page)).customPrimary).not.toBe(CORAL);
 
-    // 2b. react-colorful 飽和度面板拖曳選色 → 主色即時跟隨且持久化
+    // 2b. 展開「自訂…」→ react-colorful 拖曳選色 → 主色即時跟隨（仍為 draft）
+    await sheet(page).getByTestId('custom-theme-advanced-toggle').click();
     const saturation = sheet(page).locator('.react-colorful__saturation');
     const box = await saturation.boundingBox();
     if (!box) throw new Error('saturation panel not visible');
@@ -80,24 +83,31 @@ test.describe('自訂主題色選色 BottomSheet 旅程', () => {
     await page.mouse.down();
     await page.mouse.move(box.x + box.width * 0.82, box.y + box.height * 0.3, { steps: 8 });
     await page.mouse.up();
-    await expect.poll(async () => (await getStoredTheme(page)).customPrimary).not.toBe(CORAL);
-    const draggedHex = (await getStoredTheme(page)).customPrimary ?? '';
-    expect(draggedHex).toMatch(HEX_PATTERN);
+    await expect.poll(() => getInlinePrimary(page)).not.toBe(CORAL_TRIPLE);
     const draggedTriple = await getInlinePrimary(page);
-    expect(draggedTriple).not.toBe(CORAL_TRIPLE);
 
-    // 3. 背景色調切換至暖白 → background 淡色對即時套用並持久化
+    // 3. 背景色調切換至暖白 → background 淡色對即時套用（draft）
     await sheet(page).getByTestId('background-tone-warm').click();
     await expect.poll(() => getInlineVar(page, '--color-background')).toBe(WARM_BACKGROUND_TRIPLE);
-    expect(await getStoredTheme(page)).toMatchObject({
-      style: 'custom',
-      customPrimary: draggedHex,
-      customBackgroundTone: 'warm',
-    });
 
-    // 關閉 sheet 後首頁同步變色（inline 覆寫掛在 documentElement，全路由生效）
+    // 3b. 亮度滑桿拖至深端 → 連續 tone（hex）即時套用深色派生
+    await sheet(page).getByTestId('custom-theme-tone-slider').fill('10');
+    await expect
+      .poll(() => getInlineVar(page, '--color-background'))
+      .not.toBe(WARM_BACKGROUND_TRIPLE);
+
+    // 回到暖白 preset，確立 commit 目標值
+    await sheet(page).getByTestId('background-tone-warm').click();
+    await expect.poll(() => getInlineVar(page, '--color-background')).toBe(WARM_BACKGROUND_TRIPLE);
+
+    // 4. 關閉 sheet＝commit：單次原子持久化主色＋背景調
     await sheet(page).getByRole('button', { name: '關閉' }).click();
     await expect(sheet(page)).not.toBeVisible();
+    const committed = await getStoredTheme(page);
+    expect(committed.style).toBe('custom');
+    expect(committed.customPrimary ?? '').toMatch(HEX_PATTERN);
+    expect(committed.customBackgroundTone).toBe('warm');
+
     await page
       .getByRole('link', { name: /單幣別/i })
       .first()
@@ -105,18 +115,19 @@ test.describe('自訂主題色選色 BottomSheet 旅程', () => {
     await expect(page.getByTestId('amount-input')).toBeVisible();
     expect(await getInlinePrimary(page)).toBe(draggedTriple);
 
-    // 4. 重載仍生效（持久化 + bootstrap pre-paint + applyTheme 完整演算）
+    // 重載仍生效（持久化 + bootstrap pre-paint + applyTheme 完整演算）
     await page.reload({ waitUntil: 'networkidle' });
     await expect(page.getByTestId('amount-input')).toBeVisible();
     expect(await getDataStyle(page)).toBe('custom');
     await expect.poll(() => getInlinePrimary(page)).toBe(draggedTriple);
     await expect.poll(() => getInlineVar(page, '--color-background')).toBe(WARM_BACKGROUND_TRIPLE);
 
-    // 5. 恢復預設 → 回 zen、inline 覆寫零殘留
+    // 5. 還原預設（二段確認）→ 回 zen、inline 覆寫零殘留
     await gotoSettings(page);
     await customCard(page).click();
     await expect(sheet(page)).toBeVisible();
-    await sheet(page).getByRole('button', { name: '恢復預設主題' }).click();
+    await sheet(page).getByTestId('custom-theme-reset').click();
+    await sheet(page).getByTestId('custom-theme-reset').click();
     await expect.poll(() => getDataStyle(page)).toBe('zen');
     await expect(sheet(page)).not.toBeVisible();
     const residual = await page.evaluate(() => {

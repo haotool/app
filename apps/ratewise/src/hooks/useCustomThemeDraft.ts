@@ -15,20 +15,21 @@ import { previewTheme, type ThemeConfig } from '../config/themes';
 import {
   DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
+  isValidBackgroundToneValue,
   isValidHexColor,
-  type CustomBackgroundTone,
+  type CustomBackgroundToneValue,
 } from '../config/custom-theme';
 
 interface CustomThemeDraft {
   primary: string;
-  tone: CustomBackgroundTone;
+  tone: CustomBackgroundToneValue;
 }
 
 export interface UseCustomThemeDraftParams {
   /** 已提交的主題配置（開啟時作為回滾快照）。 */
   config: ThemeConfig;
   /** commit 出口（useAppTheme.commitCustomTheme）。 */
-  commitCustomTheme: (primary: string, tone: CustomBackgroundTone) => void;
+  commitCustomTheme: (primary: string, tone: CustomBackgroundToneValue) => void;
 }
 
 export function useCustomThemeDraft({ config, commitCustomTheme }: UseCustomThemeDraftParams) {
@@ -63,9 +64,9 @@ export function useCustomThemeDraft({ config, commitCustomTheme }: UseCustomThem
   );
 
   const selectTone = useCallback(
-    (tone: CustomBackgroundTone) => {
+    (tone: CustomBackgroundToneValue) => {
       const prev = draftRef.current;
-      if (!prev) return;
+      if (!prev || !isValidBackgroundToneValue(tone)) return;
       applyDraft({ ...prev, tone });
     },
     [applyDraft],

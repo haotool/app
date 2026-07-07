@@ -76,31 +76,34 @@ export function isValidBackgroundTone(value: unknown): value is CustomBackground
 }
 
 /**
- * 精選色票（韓系 fintech 調性，wave-D 擴充至 20 色、5 欄 × 4 列）。
- * 排列邏輯：藍靛系 → 綠青系 → 暖色系 → 粉紫與中性系。
- * 色票彼此可區辨；文字對比由 deriveCustomThemeCssVars 的 AA clamp 保證（測試守門）。
+ * 背景調值域（E7 wave-C 亮度滑桿）：preset enum 或滑桿產生的 #RRGGBB。
+ * `string & {}` 保留 enum 字面量自動補全，同時允許 hex 進 persist schema
+ *（舊 enum 持久化資料與 FOUC 快取簽章原樣有效，向後相容零破壞）。
+ */
+export type CustomBackgroundToneValue = CustomBackgroundTone | (string & {});
+
+/** 背景調值驗證：enum allowlist 或 #RRGGBB 六碼 hex（persist schema 向後相容擴充）。 */
+export function isValidBackgroundToneValue(value: unknown): value is CustomBackgroundToneValue {
+  return isValidBackgroundTone(value) || isValidHexColor(value);
+}
+
+/**
+ * 精選色票（E7 wave-C 收斂，QA-I #6）：21 色與色域盤重疊造成選擇焦慮，
+ * 收斂為 10 格精選（5 欄 × 2 列）＋「自訂…」進 react-colorful。
+ * 分區（設計簡報 3.1）：品牌藍系 → 活力系 → 中性系；韓系飽和度校準——
+ * 全部色票對任一預設背景調 ≥ 2:1（不觸發近白/近黑 gate，測試守門）。
  */
 export const CUSTOM_PRIMARY_PRESETS = [
-  '#3182F6', // Toss 藍
-  '#0EA5E9', // 天空藍
-  '#2563EB', // 皇家藍
-  '#6366F1', // 靛藍
-  '#0891B2', // 青瓷
-  '#14B8A6', // 薄荷
-  '#10B981', // 翡翠
-  '#22C55E', // 清新綠
-  '#84CC16', // 萊姆
-  '#059669', // 松綠
-  '#F59E0B', // 琥珀
-  '#F97316', // 柑橘
-  '#EF4444', // 緋紅
-  '#FF6B6B', // 珊瑚
-  '#D946EF', // 蘭紫
-  '#EC4899', // 櫻花粉
-  '#F43F5E', // 玫瑰紅
-  '#8B5CF6', // 紫羅蘭
-  '#78716C', // 暖石
-  '#64748B', // 石墨
+  '#3182F6', // Toss 藍（品牌藍系）
+  '#0EA5E9', // 天空藍（品牌藍系）
+  '#6366F1', // 靛藍（品牌藍系）
+  '#8B5CF6', // 紫羅蘭（品牌藍系）
+  '#0D9488', // 青瓷（活力系）
+  '#16A34A', // 森林綠（活力系）
+  '#D97706', // 琥珀（活力系）
+  '#FF6B6B', // 珊瑚（活力系）
+  '#EC4899', // 櫻花粉（活力系）
+  '#64748B', // 石墨（中性系）
 ] as const;
 
 /** applyTheme 於 custom 模式寫入 / 切回內建主題時清除的 inline CSS 變數全集。 */
@@ -525,9 +528,13 @@ function deriveDarkThemeCssVars(base: Rgb, hsl: Hsl, backgroundHex: string): Cus
   const neutralDark = neutralAt(0.16);
   const neutralDarker = neutralAt(0.24);
 
-  // 亮字：對最亮底（elevated）clamp，隱含對 background/surface 更高對比。
-  const text = lightenToContrast(neutralHsl, 0.82, elevated, 7);
-  const textMuted = lightenToContrast(neutralHsl, 0.6, elevated, 4.5);
+  // 亮字：對最亮 neutral 底 clamp。低飽和 preset 深檔恆為 elevated（輸出零變化）；
+  // 連續 tone（E7 wave-C）允許高飽和 background，其相對亮度可能反超去飽和 elevated，
+  // 故取兩者較亮者為錨，保證對 background/surface/elevated 全面達標。
+  const brightestNeutral =
+    relativeLuminance(bgRgb) > relativeLuminance(elevated) ? bgRgb : elevated;
+  const text = lightenToContrast(neutralHsl, 0.82, brightestNeutral, 7);
+  const textMuted = lightenToContrast(neutralHsl, 0.6, brightestNeutral, 4.5);
 
   // 主色深 tint（chip / 淺強調底的深色對應）：HSL 明度階對高原生亮度色相（黃/青）
   // 不保證夠深，須以相對亮度上限再 clamp，確保亮向文字 clamp 必有解。
@@ -544,8 +551,8 @@ function deriveDarkThemeCssVars(base: Rgb, hsl: Hsl, backgroundHex: string): Cus
   const light = darkTintAt(0.15, 0.07);
   const active = darkTintAt(0.22, 0.12);
 
-  // 有色文字/圖形錨點取「neutral elevated 與 primary tint」中最亮者（與淺色調鏡像對稱）。
-  const textAnchor = [elevated, bg, light].reduce((lightest, candidate) =>
+  // 有色文字/圖形錨點取「neutral 最亮底與 primary tint」中最亮者（與淺色調鏡像對稱）。
+  const textAnchor = [brightestNeutral, bg, light].reduce((lightest, candidate) =>
     relativeLuminance(candidate) > relativeLuminance(lightest) ? candidate : lightest,
   );
 
@@ -563,7 +570,7 @@ function deriveDarkThemeCssVars(base: Rgb, hsl: Hsl, backgroundHex: string): Cus
   // B1：深色調 danger 文字（跌幅/錯誤訊息等 text-danger 消費點）——
   // red-400（nitro 深色慣例色）起點亮向 clamp，對最亮消費底（elevated 或 danger 暗 tint）≥ 4.5:1；
   // midnight/純黑直接落在 red-400，graphite 等較亮深底自動再提亮。
-  const dangerAnchor = [elevated, DARK_DANGER_BG].reduce((lightest, candidate) =>
+  const dangerAnchor = [brightestNeutral, DARK_DANGER_BG].reduce((lightest, candidate) =>
     relativeLuminance(candidate) > relativeLuminance(lightest) ? candidate : lightest,
   );
   const dangerText = lightenToContrast(RED_400_HSL, RED_400_HSL.l, dangerAnchor, 4.5);
@@ -651,26 +658,47 @@ const DERIVE_CACHE_LIMIT = 64;
  * - background/surface-sunken：由背景色調（CUSTOM_BACKGROUND_TONES SSOT）直出
  *
  * 深色調規則（E7 wave-A）見 deriveDarkThemeCssVars。
+ * 連續 tone（E7 wave-C）：backgroundTone 可為 #RRGGBB——先正規化夾進可解域，
+ * 再依外觀走同一深/淺派生分支（preset enum 派生規則零改動，快取簽章相容）。
  */
 export function deriveCustomThemeCssVars(
   primaryHex: string,
-  backgroundTone: CustomBackgroundTone = DEFAULT_CUSTOM_BACKGROUND_TONE,
+  backgroundTone: CustomBackgroundToneValue = DEFAULT_CUSTOM_BACKGROUND_TONE,
 ): CustomThemeCssVarMap {
   const hex = isValidHexColor(primaryHex) ? primaryHex : DEFAULT_CUSTOM_PRIMARY;
-  const cacheKey = `${hex.toUpperCase()}|${backgroundTone}`;
+  const toneValue = isValidBackgroundToneValue(backgroundTone)
+    ? backgroundTone
+    : DEFAULT_CUSTOM_BACKGROUND_TONE;
+  const cacheKey = `${hex.toUpperCase()}|${toneValue.toUpperCase()}`;
   const cached = deriveCache.get(cacheKey);
   if (cached) return cached;
 
   const base = hexToRgb(hex);
   const hsl = rgbToHsl(base);
-  const tone = CUSTOM_BACKGROUND_TONES[backgroundTone];
-  const derived =
-    tone.appearance === 'dark'
-      ? deriveDarkThemeCssVars(base, hsl, tone.background)
-      : deriveLightThemeCssVars(base, hsl, {
-          background: tone.background,
-          surfaceSunken: tone.surfaceSunken ?? tone.background,
-        });
+  let derived: CustomThemeCssVarMap;
+  if (isValidBackgroundTone(toneValue)) {
+    const tone = CUSTOM_BACKGROUND_TONES[toneValue];
+    derived =
+      tone.appearance === 'dark'
+        ? deriveDarkThemeCssVars(base, hsl, tone.background)
+        : deriveLightThemeCssVars(base, hsl, {
+            background: tone.background,
+            surfaceSunken: tone.surfaceSunken ?? tone.background,
+          });
+  } else {
+    const backgroundHex = normalizeContinuousToneHex(toneValue);
+    if (isDarkBackgroundToneValue(toneValue)) {
+      derived = deriveDarkThemeCssVars(base, hsl, backgroundHex);
+    } else {
+      // 連續淺 tone 的 sunken 對：同色相/飽和度、明度 -0.03（比照 preset 對手調階差）。
+      const bgHsl = rgbToHsl(hexToRgb(backgroundHex));
+      const sunken = shadeAt(bgHsl, Math.max(0, bgHsl.l - 0.03));
+      derived = deriveLightThemeCssVars(base, hsl, {
+        background: backgroundHex,
+        surfaceSunken: rgbToHex(sunken),
+      });
+    }
+  }
 
   if (deriveCache.size >= DERIVE_CACHE_LIMIT) {
     const oldest = deriveCache.keys().next().value;
@@ -678,6 +706,140 @@ export function deriveCustomThemeCssVars(
   }
   deriveCache.set(cacheKey, derived);
   return derived;
+}
+
+// ============================================================================
+// 連續 tone（E7 wave-C 亮度滑桿）：任意 background hex 的正規化與滑桿映射
+// ============================================================================
+
+/** 深/淺分類門檻（相對亮度）：滑桿雙域映射與 hex tone 外觀判定共用。 */
+const CONTINUOUS_TONE_DARK_LUMINANCE_THRESHOLD = 0.3;
+
+/** 深域可解判定：background 與 elevated（L+0.09、飽和度夾 0.22）皆夠暗，亮字 7:1 必有解。 */
+function isDarkToneSolvable(hsl: Hsl, lightness: number): boolean {
+  const background = shadeAt(hsl, lightness);
+  const neutral: Hsl = { h: hsl.h, s: Math.min(hsl.s, 0.22), l: lightness };
+  const elevated = shadeAt(neutral, Math.min(1, lightness + 0.09));
+  return Math.max(relativeLuminance(background), relativeLuminance(elevated)) <= 0.09;
+}
+
+/** slate-500（zen 靜態 --color-text-muted）：淺域可解判定的綁定約束。 */
+const LIGHT_STATIC_MUTED: Rgb = { r: 100, g: 116, b: 139 };
+
+/** 淺域可解判定：zen 靜態 muted 文字對 background ≥ 4.5（淺色派生的最嚴文字對）。 */
+function isLightToneSolvable(hsl: Hsl, lightness: number): boolean {
+  return contrastRatio(LIGHT_STATIC_MUTED, shadeAt(hsl, lightness)) >= 4.5;
+}
+
+/**
+ * 任意 background hex 正規化（總函式保證）：保留色相/飽和度、僅調明度，
+ * 夾進「暗字/亮字必有 AA 解」的可解域。中間灰區為 WCAG 死域
+ *（暗字與亮字皆無 4.5:1 解），依相對亮度就近夾至深域上緣或淺域下緣。
+ * 每步以 hex 往返後的實際值重新判定可解性，保證輸出冪等（捨入誤差防護）。
+ */
+export function normalizeContinuousToneHex(hex: string): string {
+  let candidate = hex.toUpperCase();
+  for (let step = 0; step < 200; step++) {
+    const rgb = hexToRgb(candidate);
+    const hsl = rgbToHsl(rgb);
+    const isDark = relativeLuminance(rgb) < CONTINUOUS_TONE_DARK_LUMINANCE_THRESHOLD;
+    if (isDark ? isDarkToneSolvable(hsl, hsl.l) : isLightToneSolvable(hsl, hsl.l)) {
+      return candidate;
+    }
+    const nextLightness = isDark ? Math.max(0, hsl.l - 0.01) : Math.min(1, hsl.l + 0.01);
+    const next = rgbToHex(shadeAt(hsl, nextLightness));
+    if (next === candidate) return candidate;
+    candidate = next;
+  }
+  return candidate;
+}
+
+/** 背景調值 → 有效 background hex（enum 直出 SSOT；hex 先正規化；無效回退 pure）。 */
+export function backgroundToneValueHex(value: CustomBackgroundToneValue): string {
+  if (isValidBackgroundTone(value)) return CUSTOM_BACKGROUND_TONES[value].background;
+  if (isValidHexColor(value)) return normalizeContinuousToneHex(value);
+  return CUSTOM_BACKGROUND_TONES[DEFAULT_CUSTOM_BACKGROUND_TONE].background;
+}
+
+/** 背景調值外觀判定（enum 走 SSOT 欄位；hex 依正規化後相對亮度）。 */
+export function isDarkBackgroundToneValue(value: CustomBackgroundToneValue): boolean {
+  if (isValidBackgroundTone(value)) return isDarkBackgroundTone(value);
+  if (!isValidHexColor(value)) return false;
+  return (
+    relativeLuminance(hexToRgb(normalizeContinuousToneHex(value))) <
+    CONTINUOUS_TONE_DARK_LUMINANCE_THRESHOLD
+  );
+}
+
+/** 深域滑桿明度下限（近黑仍可辨層次）。 */
+const SLIDER_DARK_MIN_L = 0.02;
+/** 淺域滑桿明度上限（保留與純白的可辨差）。 */
+const SLIDER_LIGHT_MAX_L = 0.99;
+/**
+ * 深域反映射位置上限（review 修正）：0.5 為淺域起點（continuousToneHexAtPosition
+ * 以 position < 0.5 判深域），深 tone 反映射若落在 0.5，thumb 值 50 一經觸碰即映射
+ * 淺域造成深→淺跳變。夾至 0.49（UI 整數 49）保證原地觸碰/微調仍在深域。
+ */
+const SLIDER_DARK_MAX_POSITION = 0.49;
+
+/** 指定色相/飽和度下的深域明度上限（自分類門檻向下搜到可解為止）。 */
+function darkDomainMaxL(hsl: Hsl): number {
+  let lightness = 0.3;
+  while (!isDarkToneSolvable(hsl, lightness) && lightness > SLIDER_DARK_MIN_L) {
+    lightness = Math.max(SLIDER_DARK_MIN_L, lightness - 0.005);
+  }
+  return lightness;
+}
+
+/** 指定色相/飽和度下的淺域明度下限（自中段向上搜到可解為止）。 */
+function lightDomainMinL(hsl: Hsl): number {
+  let lightness = 0.7;
+  while (!isLightToneSolvable(hsl, lightness) && lightness < SLIDER_LIGHT_MAX_L) {
+    lightness = Math.min(SLIDER_LIGHT_MAX_L, lightness + 0.005);
+  }
+  return lightness;
+}
+
+/**
+ * 亮度滑桿位置 → background hex（E7 wave-C）：
+ * position ∈ [0, 1]，0＝最深、1＝最淺；色相/飽和度取自 hueSourceHex（當前背景調），
+ * 前半段映射深域、後半段映射淺域，中間 WCAG 死域不對外曝露——任意位置 AA 必有解。
+ */
+export function continuousToneHexAtPosition(position: number, hueSourceHex: string): string {
+  const clamped = Math.min(1, Math.max(0, position));
+  const source = isValidHexColor(hueSourceHex)
+    ? hueSourceHex
+    : CUSTOM_BACKGROUND_TONES[DEFAULT_CUSTOM_BACKGROUND_TONE].background;
+  const hsl = rgbToHsl(hexToRgb(source));
+  const lightness =
+    clamped < 0.5
+      ? SLIDER_DARK_MIN_L + (clamped / 0.5) * (darkDomainMaxL(hsl) - SLIDER_DARK_MIN_L)
+      : (() => {
+          const minL = lightDomainMinL(hsl);
+          return minL + ((clamped - 0.5) / 0.5) * (SLIDER_LIGHT_MAX_L - minL);
+        })();
+  return normalizeContinuousToneHex(rgbToHex(shadeAt(hsl, lightness)));
+}
+
+/**
+ * 背景調值 → 滑桿位置（continuousToneHexAtPosition 的反映射，供 thumb 定位）。
+ * 域邊界歸屬（review 修正）：深 tone 夾至 ≤0.49（深域內側）、淺 tone 夾至 ≥0.5
+ *（0.5 即淺域起點），UI 整數往返分域不變——原地觸碰滑桿零跳變。
+ */
+export function sliderPositionForToneValue(value: CustomBackgroundToneValue): number {
+  const hex = backgroundToneValueHex(value);
+  const hsl = rgbToHsl(hexToRgb(hex));
+  if (isDarkBackgroundToneValue(value)) {
+    const maxL = darkDomainMaxL(hsl);
+    if (maxL <= SLIDER_DARK_MIN_L) return 0;
+    return Math.min(
+      SLIDER_DARK_MAX_POSITION,
+      Math.max(0, ((hsl.l - SLIDER_DARK_MIN_L) / (maxL - SLIDER_DARK_MIN_L)) * 0.5),
+    );
+  }
+  const minL = lightDomainMinL(hsl);
+  if (minL >= SLIDER_LIGHT_MAX_L) return 1;
+  return Math.min(1, Math.max(0.5, 0.5 + ((hsl.l - minL) / (SLIDER_LIGHT_MAX_L - minL)) * 0.5));
 }
 
 // ============================================================================
@@ -706,23 +868,22 @@ export interface PrimaryContrastGate {
  * 選色輸入層 gate：評估主色對「當前背景調」的圖形面對比。
  * 不修改派生輸出（--color-primary 維持 identity 映射合約），只提供警告與建議色；
  * 建議色以 clamp 對偶函式產生（保留色相/飽和度、僅調明度的最近達標色）。
+ * E7 wave-C：backgroundTone 支援連續 tone hex（與 derive 同一 normalize 入口）。
  */
 export function evaluatePrimaryContrastGate(
   primaryHex: string,
-  backgroundTone: CustomBackgroundTone = DEFAULT_CUSTOM_BACKGROUND_TONE,
+  backgroundTone: CustomBackgroundToneValue = DEFAULT_CUSTOM_BACKGROUND_TONE,
 ): PrimaryContrastGate {
   const hex = isValidHexColor(primaryHex) ? primaryHex : DEFAULT_CUSTOM_PRIMARY;
-  const tone = CUSTOM_BACKGROUND_TONES[backgroundTone];
-  const background = hexToRgb(tone.background);
+  const background = hexToRgb(backgroundToneValueHex(backgroundTone));
   const primary = hexToRgb(hex);
   const ratio = contrastRatio(primary, background);
   if (ratio >= PRIMARY_GATE_WARN_CONTRAST) {
     return { ratio, isLowContrast: false, suggestedPrimary: null };
   }
   const hsl = rgbToHsl(primary);
-  const suggested =
-    tone.appearance === 'dark'
-      ? lightenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST)
-      : darkenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST);
+  const suggested = isDarkBackgroundToneValue(backgroundTone)
+    ? lightenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST)
+    : darkenToContrast(hsl, hsl.l, background, PRIMARY_GATE_WARN_CONTRAST);
   return { ratio, isLowContrast: true, suggestedPrimary: rgbToHex(suggested) };
 }

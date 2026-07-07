@@ -76,9 +76,12 @@
           return typeof p === 'string' && /^#[0-9a-fA-F]{6}$/.test(p) ? p : P;
         }
         function g(c) {
+          /* E7 wave-C：tone 值域 enum | #RRGGBB（亮度滑桿連續 tone），簽章比對沿用原機制。 */
           if (!Object.prototype.hasOwnProperty.call(c, 'customBackgroundTone')) return 'pure';
           var t = c.customBackgroundTone;
-          return typeof t === 'string' && /^[a-z]{1,16}$/.test(t) ? t : 'pure';
+          return typeof t === 'string' && (/^[a-z]{1,16}$/.test(t) || /^#[0-9a-fA-F]{6}$/.test(t))
+            ? t
+            : 'pure';
         }
         function w(e, p, t) {
           /* #619 pre-paint 全量覆寫：讀 applyTheme 持久化的派生變數快取（E7 wave-A），

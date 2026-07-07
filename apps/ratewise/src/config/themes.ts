@@ -30,9 +30,9 @@ import {
   DEFAULT_CUSTOM_PRIMARY,
   deriveCustomThemeCssVars,
   hexToRgbTriple,
-  isValidBackgroundTone,
+  isValidBackgroundToneValue,
   isValidHexColor,
-  type CustomBackgroundTone,
+  type CustomBackgroundToneValue,
 } from './custom-theme.ts';
 
 // ============================================================================
@@ -63,8 +63,11 @@ export interface ThemeConfig {
   style: ThemeStyle;
   /** style === 'custom' 時的使用者主色（#RRGGBB）；切回內建主題時保留以便再次啟用。 */
   customPrimary?: string;
-  /** style === 'custom' 時的背景色調；舊持久化資料缺省時視為 'pure'（向後相容）。 */
-  customBackgroundTone?: CustomBackgroundTone;
+  /**
+   * style === 'custom' 時的背景色調；舊持久化資料缺省時視為 'pure'（向後相容）。
+   * E7 wave-C：值域擴為 enum | #RRGGBB（亮度滑桿連續 tone），舊 enum 資料零破壞。
+   */
+  customBackgroundTone?: CustomBackgroundToneValue;
 }
 
 /**
@@ -543,7 +546,7 @@ function applyCustomThemeOverrides(
   const primaryHex = isValidHexColor(config.customPrimary)
     ? config.customPrimary
     : DEFAULT_CUSTOM_PRIMARY;
-  const backgroundTone = isValidBackgroundTone(config.customBackgroundTone)
+  const backgroundTone = isValidBackgroundToneValue(config.customBackgroundTone)
     ? config.customBackgroundTone
     : DEFAULT_CUSTOM_BACKGROUND_TONE;
   const derived = deriveCustomThemeCssVars(primaryHex, backgroundTone);

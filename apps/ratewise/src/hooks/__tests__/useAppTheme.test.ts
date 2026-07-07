@@ -128,6 +128,27 @@ describe('useAppTheme - custom 主題持久化（E2）', () => {
     expect(result.current.customBackgroundTone).toBe('pure');
   });
 
+  it('連續 tone hex 持久化（E7 wave-C）：#RRGGBB 原樣載入與 commit；舊 enum 資料零破壞', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        style: 'custom',
+        customPrimary: '#FF6B6B',
+        customBackgroundTone: '#10141A',
+      }),
+    );
+    const { result } = renderHook(() => useAppTheme());
+    expect(result.current.customBackgroundTone).toBe('#10141A');
+
+    act(() => {
+      result.current.commitCustomTheme('#FF6B6B', '#F0F4F8');
+    });
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as {
+      customBackgroundTone?: string;
+    };
+    expect(stored.customBackgroundTone).toBe('#F0F4F8');
+  });
+
   it('persisted customBackgroundTone 應原樣載入；無效值回退 pure', () => {
     localStorage.setItem(
       STORAGE_KEY,

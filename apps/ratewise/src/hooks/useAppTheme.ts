@@ -27,9 +27,9 @@ import {
 import {
   DEFAULT_CUSTOM_BACKGROUND_TONE,
   DEFAULT_CUSTOM_PRIMARY,
-  isValidBackgroundTone,
+  isValidBackgroundToneValue,
   isValidHexColor,
-  type CustomBackgroundTone,
+  type CustomBackgroundToneValue,
 } from '../config/custom-theme';
 
 // Storage key（必須與 index.html 中的腳本一致）
@@ -83,8 +83,9 @@ export function loadThemeConfig(): ThemeConfig {
       const customPrimary = isValidHexColor(parsed.customPrimary)
         ? parsed.customPrimary
         : undefined;
-      // customBackgroundTone 走 allowlist 驗證；舊資料缺省不寫入（讀取端視為 pure）。
-      const customBackgroundTone = isValidBackgroundTone(parsed.customBackgroundTone)
+      // customBackgroundTone 走 allowlist | hex 驗證（E7 wave-C 連續 tone）；
+      // 舊資料缺省不寫入（讀取端視為 pure）。
+      const customBackgroundTone = isValidBackgroundToneValue(parsed.customBackgroundTone)
         ? parsed.customBackgroundTone
         : undefined;
       if (typeof rawStyle === 'string') {
@@ -183,8 +184,9 @@ export function useAppTheme() {
 
   // 提交自訂主題（E7 wave-B draft 語意：sheet 關閉時單次原子持久化主色＋背景調）
   const commitCustomTheme = useCallback(
-    (customPrimary: string, customBackgroundTone: CustomBackgroundTone) => {
-      if (!isValidHexColor(customPrimary) || !isValidBackgroundTone(customBackgroundTone)) return;
+    (customPrimary: string, customBackgroundTone: CustomBackgroundToneValue) => {
+      if (!isValidHexColor(customPrimary) || !isValidBackgroundToneValue(customBackgroundTone))
+        return;
       const newConfig: ThemeConfig = { style: 'custom', customPrimary, customBackgroundTone };
       setConfig(newConfig);
       saveThemeConfig(newConfig);

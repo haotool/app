@@ -21,18 +21,24 @@ import {
   DEFAULT_CUSTOM_PRIMARY,
   PRIMARY_GATE_GRAPHIC_MIN_CONTRAST,
   PRIMARY_GATE_WARN_CONTRAST,
+  backgroundToneValueHex,
   choosePrimaryForeground,
+  continuousToneHexAtPosition,
   darkenToContrast,
   deriveCustomThemeCssVars,
   evaluatePrimaryContrastGate,
   hexToRgbTriple,
   isDarkBackgroundTone,
+  isDarkBackgroundToneValue,
   isValidBackgroundTone,
+  isValidBackgroundToneValue,
   isValidHexColor,
   lightenToContrast,
+  normalizeContinuousToneHex,
   rgbToHsl,
   hexToRgb,
   sanitizeHexInput,
+  sliderPositionForToneValue,
   type CustomBackgroundTone,
 } from '../custom-theme';
 
@@ -486,11 +492,22 @@ describe('custom 主題演算行為合約', () => {
     expect(isValidHexColor(123)).toBe(false);
   });
 
-  it('精選色票 16–24 個（wave-D 擴充）、格式合法且彼此可區辨', () => {
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeGreaterThanOrEqual(16);
-    expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(24);
+  it('精選色票 8–12 格（E7 wave-C 收斂，QA-I #6）、格式合法且彼此可區辨', () => {
+    expect(CUSTOM_PRIMARY_PRESETS.length).toBeGreaterThanOrEqual(8);
+    expect(CUSTOM_PRIMARY_PRESETS.length).toBeLessThanOrEqual(12);
     CUSTOM_PRIMARY_PRESETS.forEach((preset) => expect(isValidHexColor(preset)).toBe(true));
     expect(new Set(CUSTOM_PRIMARY_PRESETS).size).toBe(CUSTOM_PRIMARY_PRESETS.length);
+  });
+
+  it('精選色票飽和度校準：任一預設背景調下皆不觸發近白/近黑 gate（QA-I #6 排除近白票）', () => {
+    for (const preset of CUSTOM_PRIMARY_PRESETS) {
+      for (const tone of ALL_TONES) {
+        expect(
+          evaluatePrimaryContrastGate(preset, tone).isLowContrast,
+          `${preset} on ${tone} 不應觸發 gate`,
+        ).toBe(false);
+      }
+    }
   });
 
   it('背景色調缺省＝純淨白（zen 現值，向後相容合約）', () => {
@@ -538,6 +555,234 @@ describe('custom 主題演算行為合約', () => {
     for (const tone of DARK_TONES) {
       expect(CUSTOM_BACKGROUND_TONES[tone].surfaceSunken).toBeUndefined();
     }
+  });
+});
+
+describe('連續 tone 亮度滑桿 property 守門（E7 wave-C：任意 L 值 AA 不破）', () => {
+  // 滑桿全域抽樣（0＝最深、1＝最淺；含深/淺域邊界與死域跳點兩側）。
+  const SLIDER_POSITIONS = [0, 0.1, 0.25, 0.4, 0.499, 0.5, 0.6, 0.75, 0.9, 1] as const;
+  // 色相/飽和度來源：全部 preset tone background＋高飽和/灰階邊界色。
+  const HUE_SOURCES = [
+    ...ALL_TONES.map((tone) => CUSTOM_BACKGROUND_TONES[tone].background),
+    '#FF0000',
+    '#FFFF00',
+    '#00FFFF',
+    '#808080',
+  ];
+
+  /** 深色 hex tone 的 AA 斷言（比照 preset 深色調合約子集）。 */
+  function assertDarkToneAA(hex: string, toneHex: string): void {
+    const vars = deriveCustomThemeCssVars(hex, toneHex);
+    expect(vars['--color-background']).toBe(hexToTriple(toneHex));
+    for (const base of [
+      '--color-background',
+      '--color-surface',
+      '--color-surface-elevated',
+    ] as const) {
+      expect(
+        contrast(vars['--color-text'], vars[base]),
+        `${hex}|${toneHex} text on ${base}`,
+      ).toBeGreaterThanOrEqual(7);
+      expect(
+        contrast(vars['--color-text-muted'], vars[base]),
+        `${hex}|${toneHex} muted on ${base}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+    for (const key of ['--color-primary-strong', '--color-primary-hover'] as const) {
+      expect(contrast(WHITE, vars[key]), `${hex}|${toneHex} ${key} 白字`).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    }
+    for (const textKey of ['--color-primary-text', '--color-primary-on-surface'] as const) {
+      for (const base of [
+        '--color-background',
+        '--color-surface',
+        '--color-surface-elevated',
+        '--color-primary-bg',
+        '--color-primary-light',
+      ] as const) {
+        expect(
+          contrast(vars[textKey], vars[base]),
+          `${hex}|${toneHex} ${textKey} on ${base}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    for (const key of ['--color-primary-ring', '--color-chart-line'] as const) {
+      for (const base of ['--color-background', '--color-surface-elevated'] as const) {
+        expect(
+          contrast(vars[key], vars[base]),
+          `${hex}|${toneHex} ${key} on ${base}`,
+        ).toBeGreaterThanOrEqual(3);
+      }
+    }
+  }
+
+  /** 淺色 hex tone 的 AA 斷言（比照 preset 淺色調合約子集；text/muted 為 zen 靜態值）。 */
+  function assertLightToneAA(hex: string, toneHex: string): void {
+    const vars = deriveCustomThemeCssVars(hex, toneHex);
+    const toneBackground = vars['--color-background'];
+    const toneSunken = vars['--color-surface-sunken'];
+    expect(toneBackground).toBe(hexToTriple(toneHex));
+    expect(
+      contrast(BASE_TEXT_MUTED, toneBackground),
+      `${hex}|${toneHex} muted on background`,
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(BASE_TEXT, toneSunken),
+      `${hex}|${toneHex} text on sunken`,
+    ).toBeGreaterThanOrEqual(4.5);
+    for (const key of ['--color-primary-strong', '--color-primary-hover'] as const) {
+      expect(contrast(WHITE, vars[key]), `${hex}|${toneHex} ${key} 白字`).toBeGreaterThanOrEqual(
+        4.5,
+      );
+    }
+    for (const textKey of ['--color-primary-text', '--color-primary-on-surface'] as const) {
+      for (const base of [WHITE, vars['--color-primary-bg'], toneBackground, toneSunken]) {
+        expect(
+          contrast(vars[textKey], base),
+          `${hex}|${toneHex} ${textKey} AA`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    for (const key of ['--color-primary-ring', '--color-chart-line'] as const) {
+      for (const base of [WHITE, toneBackground, toneSunken]) {
+        expect(contrast(vars[key], base), `${hex}|${toneHex} ${key} 圖形`).toBeGreaterThanOrEqual(
+          3,
+        );
+      }
+    }
+  }
+
+  it.each(HUE_SOURCES.map((source) => ({ source })))(
+    '色相源 $source：滑桿全位置輸出合法 hex、normalize 冪等、深/淺分域正確',
+    ({ source }) => {
+      for (const position of SLIDER_POSITIONS) {
+        const toneHex = continuousToneHexAtPosition(position, source);
+        expect(isValidHexColor(toneHex), `${source}@${position}`).toBe(true);
+        // normalize 冪等：滑桿輸出已在可解域內。
+        expect(normalizeContinuousToneHex(toneHex)).toBe(toneHex);
+        // 前半段深域、後半段淺域（死域不對外曝露）。
+        expect(isDarkBackgroundToneValue(toneHex), `${source}@${position} 分域`).toBe(
+          position < 0.5,
+        );
+      }
+    },
+  );
+
+  it.each(allInputs.map((hex) => ({ hex })))(
+    '$hex × 滑桿連續 L 抽樣：任意位置派生全組變數皆守 AA',
+    ({ hex }) => {
+      for (const position of SLIDER_POSITIONS) {
+        const toneHex = continuousToneHexAtPosition(
+          position,
+          CUSTOM_BACKGROUND_TONES.pure.background,
+        );
+        if (position < 0.5) {
+          assertDarkToneAA(hex, toneHex);
+        } else {
+          assertLightToneAA(hex, toneHex);
+        }
+      }
+    },
+  );
+
+  it('任意 hex 正規化後（含 WCAG 死域中間灰）派生皆守 AA（總函式保證）', () => {
+    for (const raw of ['#888888', '#5A6472', '#B0B6BF', '#404040', '#C81E1E', ...allInputs]) {
+      const normalized = normalizeContinuousToneHex(raw);
+      expect(isValidHexColor(normalized), raw).toBe(true);
+      expect(normalizeContinuousToneHex(normalized), `${raw} 冪等`).toBe(normalized);
+      if (isDarkBackgroundToneValue(normalized)) {
+        assertDarkToneAA(DEFAULT_CUSTOM_PRIMARY, normalized);
+      } else {
+        assertLightToneAA(DEFAULT_CUSTOM_PRIMARY, normalized);
+      }
+    }
+  });
+
+  it('滑桿位置反映射（sliderPositionForToneValue）：值域 [0,1] 且與正映射近似互逆', () => {
+    for (const tone of ALL_TONES) {
+      const position = sliderPositionForToneValue(tone);
+      expect(position).toBeGreaterThanOrEqual(0);
+      expect(position).toBeLessThanOrEqual(1);
+      expect(position < 0.5, `${tone} 深/淺半場`).toBe(isDarkBackgroundTone(tone));
+    }
+    for (const position of SLIDER_POSITIONS) {
+      const toneHex = continuousToneHexAtPosition(
+        position,
+        CUSTOM_BACKGROUND_TONES.pure.background,
+      );
+      // 容差 0.12：近白域 hex 捨入使 HSL 飽和度不穩定，反映射僅需落點鄰近（thumb 定位用）。
+      expect(
+        Math.abs(sliderPositionForToneValue(toneHex) - position),
+        `round-trip @${position}`,
+      ).toBeLessThanOrEqual(0.12);
+    }
+  });
+
+  it('域邊界歸屬（review 修正）：深 tone 反映射 ≤0.49，UI 整數往返分域不變（原地觸碰零跳變）', () => {
+    // 深域上緣構造值：中間灰死域 hex 經 normalize 夾至深域上緣（未 clamp 前反映射會落 0.5）。
+    const darkUpperEdge = normalizeContinuousToneHex('#3A424D');
+    expect(isDarkBackgroundToneValue(darkUpperEdge)).toBe(true);
+    const darkValues = [
+      ...DARK_TONES,
+      '#10141A',
+      darkUpperEdge,
+      continuousToneHexAtPosition(0.49, CUSTOM_BACKGROUND_TONES.pure.background),
+    ];
+    for (const tone of darkValues) {
+      const position = sliderPositionForToneValue(tone);
+      expect(position, `${tone} 深 tone 反映射須在深域內側`).toBeLessThanOrEqual(0.49);
+      // UI 整數化（thumb 值 = round(pos*100)）後重新正映射仍為深色。
+      const uiPosition = Math.round(position * 100) / 100;
+      expect(
+        isDarkBackgroundToneValue(
+          continuousToneHexAtPosition(uiPosition, backgroundToneValueHex(tone)),
+        ),
+        `${tone} UI 往返仍為深色`,
+      ).toBe(true);
+    }
+    // 淺 tone：0.5 即淺域起點，UI 往返仍為淺色（歸屬明確、無鏡像跳變）。
+    for (const tone of LIGHT_TONES) {
+      const position = sliderPositionForToneValue(tone);
+      expect(position).toBeGreaterThanOrEqual(0.5);
+      const uiPosition = Math.round(position * 100) / 100;
+      expect(
+        isDarkBackgroundToneValue(
+          continuousToneHexAtPosition(uiPosition, backgroundToneValueHex(tone)),
+        ),
+        `${tone} UI 往返仍為淺色`,
+      ).toBe(false);
+    }
+  });
+
+  it('backgroundToneValueHex：enum 直出 SSOT、hex 先正規化、無效值回退 pure', () => {
+    for (const tone of ALL_TONES) {
+      expect(backgroundToneValueHex(tone)).toBe(CUSTOM_BACKGROUND_TONES[tone].background);
+    }
+    expect(backgroundToneValueHex('#0F172A')).toBe(normalizeContinuousToneHex('#0F172A'));
+    expect(backgroundToneValueHex('not-a-tone')).toBe(CUSTOM_BACKGROUND_TONES.pure.background);
+  });
+
+  it('isValidBackgroundToneValue：enum | #RRGGBB 皆合法；其餘拒絕（persist schema 擴充合約）', () => {
+    for (const tone of ALL_TONES) {
+      expect(isValidBackgroundToneValue(tone), tone).toBe(true);
+    }
+    expect(isValidBackgroundToneValue('#1E232A')).toBe(true);
+    expect(isValidBackgroundToneValue('#f8fafc')).toBe(true);
+    expect(isValidBackgroundToneValue('dark')).toBe(false);
+    expect(isValidBackgroundToneValue('#FFF')).toBe(false);
+    expect(isValidBackgroundToneValue(null)).toBe(false);
+    expect(isValidBackgroundToneValue(1)).toBe(false);
+  });
+
+  it('derive 對 hex tone 與 enum tone 共用同一快取簽章格式（大小寫不敏感）', () => {
+    const lower = deriveCustomThemeCssVars('#FF6B6B', '#1e232a');
+    const upper = deriveCustomThemeCssVars('#FF6B6B', '#1E232A');
+    expect(upper).toEqual(lower);
+    // enum 派生規則零改動：graphite enum 與其 background hex 的深色派生完全一致。
+    expect(deriveCustomThemeCssVars('#FF6B6B', '#1E232A')).toEqual(
+      deriveCustomThemeCssVars('#FF6B6B', 'graphite'),
+    );
   });
 });
 
