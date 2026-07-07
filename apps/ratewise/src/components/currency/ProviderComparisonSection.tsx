@@ -38,7 +38,7 @@ export function ProviderComparisonSection({
             </div>
             <div className="mt-1 text-xs tabular-nums text-text-muted">
               {isTwdToForeign
-                ? `${rateExample?.exampleTWD.toLocaleString()} TWD ≈ ${rateExample?.foreignAtCash.toLocaleString()} KRW`
+                ? `${rateExample?.exampleTWD.toLocaleString('zh-TW')} TWD ≈ ${rateExample?.foreignAtCash.toLocaleString('zh-TW')} KRW`
                 : '估算值；以台銀牌告現金買入率為準'}
             </div>
           </div>
@@ -68,8 +68,8 @@ export function ProviderComparisonSection({
                 </div>
                 {exampleAmount !== null && rateExample && (
                   <div className="mt-1 text-xs tabular-nums text-text-muted">
-                    {rateExample.exampleTWD.toLocaleString()} TWD ≈ {exampleAmount.toLocaleString()}{' '}
-                    KRW
+                    {rateExample.exampleTWD.toLocaleString('zh-TW')} TWD ≈{' '}
+                    {exampleAmount.toLocaleString('zh-TW')} KRW
                   </div>
                 )}
                 <div className="mt-2 text-2xs text-text-muted">

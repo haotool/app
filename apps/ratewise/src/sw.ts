@@ -399,8 +399,11 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
-        maxEntries: 1,
-        maxAgeSeconds: 60 * 60 * 24, // 1 天（每日更新）
+        // issue 628：台銀＋MoneyBox 兩 provider × 同域/CDN/raw 三來源最多 6 個 URL，
+        // maxEntries: 1 會互相 LRU 驅逐；設 8 保留未來 provider 擴充餘裕。
+        maxEntries: 8,
+        // 對齊 latest-rate-cache 的 7 天離線備援；線上 SWR 仍每日自動更新。
+        maxAgeSeconds: 60 * 60 * 24 * 7,
       }),
     ],
   }),

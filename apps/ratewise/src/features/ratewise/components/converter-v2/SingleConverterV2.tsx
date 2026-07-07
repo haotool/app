@@ -811,7 +811,7 @@ export const SingleConverterV2 = ({
               }}
               className="h-9 snug:h-8 short:h-7 min-w-0 shrink-0 rounded-full bg-surface-elevated px-3.5 text-sm short:text-xs font-semibold tabular-nums text-text/70 transition-colors hover:bg-primary/10 hover:text-primary-on-surface active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              {amount.toLocaleString()}
+              {amount.toLocaleString('zh-TW')}
             </button>
           ))}
         </div>
