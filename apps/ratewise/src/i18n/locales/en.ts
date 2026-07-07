@@ -66,10 +66,12 @@ const en = {
     spotRate: 'Spot',
     cashRate: 'Cash',
     exchangeShopRate: 'Exchange shop',
+    cardRate: 'Card',
     rateTypeGroup: 'Rate type',
     switchToSpot: 'Switch to spot rate',
     switchToCash: 'Switch to cash rate',
     switchToExchangeShop: 'Switch to exchange shop rate',
+    switchToCard: 'Switch to card rate estimate',
     fallbackRate: 'Reference',
     rateTypeUnavailable: '{{rateType}} rate is currently unavailable',
     rateTypeUnavailableForCurrencies:
@@ -78,6 +80,17 @@ const en = {
     fromAmountLabel: 'Amount ({{code}})',
     toAmountLabel: 'Result ({{code}})',
     backToConverter: 'Back to Converter',
+  },
+
+  // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）
+  cardEstimate: {
+    badge: 'Estimate',
+    formula: '= {{basis}} × {{multiplier}} (incl. {{fee}}% foreign transaction fee)',
+    feeLabel: 'Foreign transaction fee',
+    decreaseFee: 'Decrease fee',
+    increaseFee: 'Increase fee',
+    disclaimer: 'Actual charge follows your issuer’s settlement-day rate',
+    guideLink: 'Card rate guide',
   },
 
   // E3 等值雙列換算 v2（flag: converter-v2）
@@ -280,6 +293,7 @@ const en = {
       spot: 'Spot',
       cash: 'Cash',
       'exchange-shop': 'Exchange shop',
+      card: 'Card estimate',
     },
   },
 

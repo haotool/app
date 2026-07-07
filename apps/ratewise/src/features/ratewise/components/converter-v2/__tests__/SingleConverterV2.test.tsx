@@ -363,6 +363,15 @@ describe('SingleConverterV2 - 等值雙列', () => {
     expect(chip).not.toHaveTextContent('現金買入');
   });
 
+  it('S3：v2 Phase 1 不支援刷卡——chip 無「刷卡」字樣（標籤分支已移除，上游已收斂 bank）', () => {
+    // useCurrencyConverter 已保證 v2 下 effectiveRateSource 收斂 bank；
+    // 此測試鎖定 chip 標籤分支移除：即使上游誤傳 card，也不得出現「刷卡」宣稱。
+    render(<SingleConverterV2 {...buildProps({ rateSource: 'card' })} />);
+
+    const chip = screen.getByTestId('converter-v2-rate-chip');
+    expect(chip).not.toHaveTextContent('刷卡');
+  });
+
   it('QA-I D1 review：mid 模式值為中間價且標籤為「中間價」', () => {
     const krwDetails: Record<string, RateDetails> = {
       KRW: {

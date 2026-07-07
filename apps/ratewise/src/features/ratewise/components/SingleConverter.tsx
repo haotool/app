@@ -52,11 +52,14 @@ import { logger } from '../../../utils/logger';
 import {
   getReciprocalExchangeRate,
   getUnitExchangeRate,
+  resolveCardBasisRateType,
 } from '../../../utils/exchangeRateCalculation';
 import type { RateTypeAvailability } from '../../../utils/exchangeRateCalculation';
 import { useCalculatorModal } from '../hooks/useCalculatorModal';
 import { TREND_CHART_DEFER_MS, TREND_CHART_IDLE_TIMEOUT_MS } from '../../../config/performance';
 import { RateSelector } from './RateSelector';
+import { CardEstimateInfo } from './CardEstimateInfo';
+import { useConverterStore } from '../../../stores/converterStore';
 import {
   computeConverterRate,
   fetchExchangeShopHistoricalRatesRange,
@@ -123,6 +126,8 @@ export interface SingleConverterProps {
   rateSource?: RateSource;
   moneyBoxRate?: ExchangeShopRate | null;
   exchangeShopCurrency?: CurrencyCode | null;
+  /** 刷卡估算可用性（flag＋情境）；false 時 pill 不渲染（零暴露）。 */
+  hasCardRate?: boolean;
   onRateSourceChange?: (source: RateSource) => void;
 }
 
@@ -147,9 +152,11 @@ const SingleConverterLegacy = ({
   rateSource = DEFAULT_RATE_SOURCE,
   moneyBoxRate = null,
   exchangeShopCurrency = null,
+  hasCardRate = false,
   onRateSourceChange,
 }: SingleConverterProps) => {
   const { t } = useTranslation();
+  const cardFeePercent = useConverterStore((state) => state.cardFeePercent);
   const [trendData, setTrendData] = useState<MiniTrendDataPoint[]>([]);
   const [_loadingTrend, setLoadingTrend] = useState(false);
   // 趨勢圖實際使用的費率基準；即期序列不足時誠實回落現金賣出，標註跟隨（#564）。
@@ -190,6 +197,7 @@ const SingleConverterLegacy = ({
     {
       rateSource,
       exchangeShopRate: moneyBoxRate,
+      cardFeePercent,
     },
   );
   const reverseRate = getReciprocalExchangeRate(exchangeRate);
@@ -518,6 +526,7 @@ const SingleConverterLegacy = ({
               rateSource={rateSource}
               rateTypeAvailability={rateTypeAvailability}
               hasExchangeShop={!!exchangeShopCurrency}
+              hasCard={hasCardRate}
               onRateTypeChange={onRateTypeChange}
               onRateSourceChange={onRateSourceChange ?? (() => undefined)}
             />
@@ -534,14 +543,21 @@ const SingleConverterLegacy = ({
               >
                 1 {toCurrency} = {formatExchangeRate(reverseRate)} {fromCurrency}
               </div>
-              <div
-                className={singleConverterLayoutTokens.rateCard.rateBasisSlot}
-                aria-hidden="true"
-              >
-                <span className="invisible rounded-full border border-transparent px-2 py-0.5 text-xs">
-                  &#8203;
-                </span>
-              </div>
+              {/* 刷卡估算揭露區：估算 badge＋計算式＋手續費 stepper＋免責（ADR-002 Phase 1）。
+               * 基準揭露由 resolveCardBasisRateType 依 pair 可用性解析（與引擎賣出腿 fallback 同判準）。
+               * 非刷卡來源維持固定高度 slot 避免 CLS。 */}
+              {rateSource === 'card' ? (
+                <CardEstimateInfo basisRateType={resolveCardBasisRateType(rateTypeAvailability)} />
+              ) : (
+                <div
+                  className={singleConverterLayoutTokens.rateCard.rateBasisSlot}
+                  aria-hidden="true"
+                >
+                  <span className="invisible rounded-full border border-transparent px-2 py-0.5 text-xs">
+                    &#8203;
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

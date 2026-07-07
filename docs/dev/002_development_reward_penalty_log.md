@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+178
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+179
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-651-card-rate-phase1-estimator
+- 原因：使用者要求匯率切換加入「刷卡」，但 Visa/MC 無免費官方 API 且非官方 endpoint 已被封鎖（ADR-002），需零爬蟲即可覆蓋約 8 成 job-to-be-done 的先行方案
+- 解法：Phase 1 估算器——card 建模為 RateSource 層級（registry 外虛擬 provider card-estimate，公開 API metadata 零污染），估算引擎走 resolveUnitBankRate 賣出腿 ×（1＋手續費 0–3% 可調、預設 1.5%、persist 進 ratewise-converter），兩方向共用單一 effective rate（互為倒數），rateType 於 card source 經 resolveRateTypeForSource 固定即期（缺失誠實回落現金、值-標籤同源），UI 常駐「估算」badge＋計算式揭露（乘數與引擎 getCardFeeMultiplier 同源）＋卡片內手續費 stepper（點擊深度 1）＋清算日免責連 card-rate-guide，card-rate-flag（URL override > store > 預設 off、?cardRate 列入還原導向深連結豁免）保證 flag off SSG 與 UI 零暴露，v2 版面 Phase 1 缺估算揭露收斂回 bank（併 E8 wave-B）、多幣別 Phase 1.5 前一律回落銀行
 
 - 日期：2026-07-07
 - ID：reward-rw-653-persisted-v2-hydration-two-pass

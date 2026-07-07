@@ -66,10 +66,12 @@ const zhTW = {
     spotRate: '即期',
     cashRate: '現金',
     exchangeShopRate: '換錢所',
+    cardRate: '刷卡',
     rateTypeGroup: '匯率類型',
     switchToSpot: '切換到即期匯率',
     switchToCash: '切換到現金匯率',
     switchToExchangeShop: '切換到換錢所匯率',
+    switchToCard: '切換到刷卡估算匯率',
     fallbackRate: '參考值',
     rateTypeUnavailable: '目前不提供 {{rateType}} 匯率',
     rateTypeUnavailableForCurrencies:
@@ -78,6 +80,17 @@ const zhTW = {
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',
     backToConverter: '返回主換算器',
+  },
+
+  // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）
+  cardEstimate: {
+    badge: '估算',
+    formula: '= {{basis}} × {{multiplier}}（含 {{fee}}% 海外手續費）',
+    feeLabel: '海外交易手續費',
+    decreaseFee: '調低手續費',
+    increaseFee: '調高手續費',
+    disclaimer: '實際扣款以發卡行清算日匯率為準',
+    guideLink: '刷卡匯率指南',
   },
 
   // E3 等值雙列換算 v2（flag: converter-v2）
@@ -275,6 +288,7 @@ const zhTW = {
       spot: '即期',
       cash: '現金',
       'exchange-shop': '換錢所',
+      card: '刷卡估算',
     },
   },
 

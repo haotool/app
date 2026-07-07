@@ -23,6 +23,7 @@ import {
   getBuyRate,
   getMidRate,
   convertCurrencyAmountWithMode,
+  getCardFeeMultiplier,
   getUnitExchangeRate,
   getUnitExchangeRateWithBasis,
 } from '../exchangeRateCalculation';
@@ -739,5 +740,134 @@ describe('getUnitExchangeRateWithBasis — 引擎回傳實際採用 basis（QA-I
 
   it('getUnitExchangeRate 維持回傳純數值（既有呼叫端相容）', () => {
     expect(getUnitExchangeRate('USD', 'TWD', mockRateDetails, 'cash', 'auto')).toBeCloseTo(30.4, 4);
+  });
+});
+
+describe('刷卡估算 rateSource=card（ADR-002 Phase 1）', () => {
+  const cardOptions = (cardFeePercent?: number) => ({
+    rateSource: 'card' as const,
+    exchangeShopRate: null,
+    ...(cardFeePercent === undefined ? {} : { cardFeePercent }),
+  });
+
+  it('外幣→TWD：估算匯率 = 即期賣出 ×（1＋手續費）（USD 30.97 × 1.015）', () => {
+    const result = getUnitExchangeRateWithBasis(
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(1.5),
+    );
+    expect(result.rate).toBeCloseTo(30.97 * 1.015, 8);
+    expect(result.side).toBe('sell');
+  });
+
+  it('TWD→外幣：同一 effective rate 的倒數（(1/30.97)/1.015），兩方向語意一致', () => {
+    const toForeign = getUnitExchangeRateWithBasis(
+      'TWD',
+      'USD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(1.5),
+    );
+    const toTwd = getUnitExchangeRateWithBasis(
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(1.5),
+    );
+    expect(toForeign.rate).toBeCloseTo(1 / 30.97 / 1.015, 10);
+    // 兩方向互為倒數：不存在把外幣賣回銀行的反向交易，共用單一估算匯率 R。
+    expect(toForeign.rate * toTwd.rate).toBeCloseTo(1, 10);
+    expect(toForeign.side).toBe('sell');
+  });
+
+  it('值-標籤耦合：估算值恆等於銀行賣出 × getCardFeeMultiplier（計算式揭露同源）', () => {
+    for (const fee of [0, 0.1, 1.5, 3]) {
+      const bankSell = getUnitExchangeRateWithBasis(
+        'USD',
+        'TWD',
+        mockRateDetails,
+        'spot',
+        'sell',
+      ).rate;
+      const card = getUnitExchangeRateWithBasis(
+        'USD',
+        'TWD',
+        mockRateDetails,
+        'spot',
+        'auto',
+        null,
+        cardOptions(fee),
+      ).rate;
+      expect(card).toBeCloseTo(bankSell * getCardFeeMultiplier(fee), 10);
+    }
+  });
+
+  it('手續費 0%：估算值等於即期賣出原值', () => {
+    const result = getUnitExchangeRateWithBasis(
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(0),
+    );
+    expect(result.rate).toBeCloseTo(30.97, 8);
+  });
+
+  it('未帶手續費參數時使用預設 1.5%', () => {
+    const result = getUnitExchangeRateWithBasis(
+      'USD',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(),
+    );
+    expect(result.rate).toBeCloseTo(30.97 * 1.015, 8);
+  });
+
+  it('手續費超界／非數值：夾限至 0–3、NaN 回落預設（getCardFeeMultiplier 防呆）', () => {
+    expect(getCardFeeMultiplier(5)).toBeCloseTo(1.03, 10);
+    expect(getCardFeeMultiplier(-1)).toBeCloseTo(1, 10);
+    expect(getCardFeeMultiplier(Number.NaN)).toBeCloseTo(1.015, 10);
+  });
+
+  it('即期賣出缺失時誠實回落現金賣出（KRW spot.sell=null → cash.sell=0.024）', () => {
+    const result = getUnitExchangeRateWithBasis(
+      'KRW',
+      'TWD',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(1.5),
+    );
+    expect(result.rate).toBeCloseTo(0.024 * 1.015, 8);
+    expect(result.side).toBe('sell');
+  });
+
+  it('外幣→外幣（防禦碼，UI 層已擋非 TWD 對）：不加手續費，等同銀行賣出交叉匯率', () => {
+    const result = getUnitExchangeRateWithBasis(
+      'USD',
+      'EUR',
+      mockRateDetails,
+      'spot',
+      'auto',
+      null,
+      cardOptions(1.5),
+    );
+    expect(result.rate).toBeCloseTo(30.97 / 34.0, 8);
+    expect(result.side).toBe('sell');
   });
 });
