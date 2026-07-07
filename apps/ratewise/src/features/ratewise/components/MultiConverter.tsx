@@ -175,7 +175,7 @@ export const MultiConverter = ({
               }}
               className={quickAmountButtonTokens.pattern}
             >
-              {amount.toLocaleString()}
+              {amount.toLocaleString('zh-TW')}
             </button>
           ),
         )}

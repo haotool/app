@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-624-ssg-localestring-explicit-locale
+- 原因：seo-metadata/core.ts 與 ProviderComparisonSection 等 SSG 可達模組殘留無參數 toLocaleString()，build 環境（zh-TW）與非 zh-TW 瀏覽器（de-DE/id-ID 等）千分位格式不一致觸發 hydration mismatch（React #418 家族，issue 624）
+- 解法：全站產品源碼 8 處無參數 toLocaleString 統一補 'zh-TW'（含純 client 轉換器，收斂至 currencyFormatter 既有慣例），新增 ssg-locale-guard 靜態掃描守門（禁無 locale toLocale\* 呼叫，含突變驗證），Playwright en-US locale 冷載幣別頁 console 零 #418 佐證
 
 - 日期：2026-07-08
 - ID：reward-rw-628-sw-history-aggregate-eviction

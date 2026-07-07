@@ -787,7 +787,7 @@ export function buildAlternativeProviderFaq(
       const providerTWD = Math.floor(exampleKRW / rateBuy);
       return {
         question: `帶韓元回台灣，可以在${provider.name}先換好台幣嗎？`,
-        answer: `${provider.name}（${provider.nameEn}）同時提供韓元換台幣的現場換匯服務。以 ${exampleKRW.toLocaleString()} 韓元為例，現場換匯約可換 ${providerTWD.toLocaleString()} 台幣（匯率 ${rateBuy.toFixed(1)} KRW/TWD）。返台前在首爾兌換通常比回台灣再換更划算，需現場持韓元現鈔親自前往（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+        answer: `${provider.name}（${provider.nameEn}）同時提供韓元換台幣的現場換匯服務。以 ${exampleKRW.toLocaleString('zh-TW')} 韓元為例，現場換匯約可換 ${providerTWD.toLocaleString('zh-TW')} 台幣（匯率 ${rateBuy.toFixed(1)} KRW/TWD）。返台前在首爾兌換通常比回台灣再換更划算，需現場持韓元現鈔親自前往（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
       };
     }
 
@@ -799,7 +799,7 @@ export function buildAlternativeProviderFaq(
     const diffPct = ((diffKRW / taiwanBankKRW) * 100).toFixed(1);
     return {
       question: `去首爾前，換韓元可以去${provider.name}嗎？比台銀划算多少？`,
-      answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString()} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString()} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString()} 韓元，多換約 ${diffKRW.toLocaleString()} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
+      answer: `${provider.name}（${provider.nameEn}）提供現場現金換匯服務。以 ${exampleTWD.toLocaleString('zh-TW')} 元新台幣為例：台銀現金賣出約可換 ${taiwanBankKRW.toLocaleString('zh-TW')} 韓元，而在明洞現場換匯約可換 ${providerKRW.toLocaleString('zh-TW')} 韓元，多換約 ${diffKRW.toLocaleString('zh-TW')} 韓元（約多 ${diffPct}%）。需注意需現場親自前往，建議出發前確認最新匯率（資料來源：${provider.source}，更新日期 ${provider.rateDate}）。`,
     };
   });
 }

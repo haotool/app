@@ -497,7 +497,7 @@ const SingleConverterLegacy = ({
               }}
               className={quickAmountButtonTokens.pattern}
             >
-              {amount.toLocaleString()}
+              {amount.toLocaleString('zh-TW')}
             </button>
           ))}
         </div>
@@ -742,7 +742,7 @@ const SingleConverterLegacy = ({
               }}
               className={quickAmountButtonTokens.pattern}
             >
-              {amount.toLocaleString()}
+              {amount.toLocaleString('zh-TW')}
             </button>
           ))}
         </div>

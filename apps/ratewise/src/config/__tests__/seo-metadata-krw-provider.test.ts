@@ -19,14 +19,14 @@ describe('buildAlternativeProviderFaq（twd-to-foreign，預設方向）', () =>
   it('FAQ answer 應包含台銀換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
-    expect(answer).toContain(krw.foreignAtCash.toLocaleString());
+    expect(answer).toContain(krw.foreignAtCash.toLocaleString('zh-TW'));
   });
 
   it('FAQ answer 應包含明洞換算金額', () => {
     const faqs = buildAlternativeProviderFaq('KRW', krw);
     const answer = faqs[0]!.answer;
     const myeongdongKRW = Math.floor(krw.exampleTWD * provider.rate);
-    expect(answer).toContain(myeongdongKRW.toLocaleString());
+    expect(answer).toContain(myeongdongKRW.toLocaleString('zh-TW'));
   });
 
   it('FAQ answer 應包含差額百分比（%）', () => {
@@ -63,7 +63,7 @@ describe('buildAlternativeProviderFaq（to-twd，KRW→TWD 方向）', () => {
     const answer = faqs[0]!.answer;
     const rateBuy = provider.rateBuy ?? provider.rate;
     const providerTWD = Math.floor(1_000_000 / rateBuy);
-    expect(answer).toContain(providerTWD.toLocaleString());
+    expect(answer).toContain(providerTWD.toLocaleString('zh-TW'));
   });
 
   it('FAQ answer 應說明需現場前往', () => {
