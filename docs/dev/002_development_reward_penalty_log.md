@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-07
+- ID：reward-rw-e7-theme-studio-wave-c-final
+- 原因：主題工作室仍餘三項 QA-I 缺口（E7 簡報對策 #3/#6＋wave-C）——預覽僅抽象 Aa 字樣且自算配色可能與實際渲染漂移、色票 21 色與色域盤重疊致選擇焦慮、背景色調僅 8 檔 preset 無連續亮度（任意 L 值需 AA 不破且 persist/FOUC 快取相容）
+- 解法：預覽縮影卡改為真實元件縮影（匯率卡 surface 層次＋品牌 CTA bg-primary-strong＋底部導覽 on-surface active 指示，高 ≤120px）且只消費全站語義 token——draft previewTheme inline vars 直接繼承、preview-parity 測試鎖 CTA computed style == token 值並禁止 inline 色值；色票收斂 21→10 格（品牌藍系/活力系/中性系、全票 × 全 tone 不觸發 gate 的校準測試）＋「自訂…」收合 react-colorful 與 HEX（非精選色自動展開）；tone 值域擴為 enum|#RRGGBB（isValidBackgroundToneValue，舊 enum 資料與 FOUC 快取簽章零破壞、derive 規則零改動不 bump 版本戳，bootstrap g() 加收 hex tone），normalizeContinuousToneHex 總函式把任意 hex 夾進可解域（WCAG 死域中間灰就近夾至深域上緣/淺域下緣）、亮度滑桿雙域映射（continuousToneHexAtPosition/sliderPositionForToneValue，16ms debounce 沿用；review 修正深 tone 反映射夾至深域內側 ≤0.49 消除 0.5 邊界跳變、拖動 hue 錨鎖定起始 tone 消除逐步色度漂移），深色派生錨點擴為 max(background, elevated) 支援高飽和連續 tone；property 測試擴充連續 L 抽樣 × 全輸入色矩陣全綠、三視口（390/375/320）× 預覽卡/色票/滑桿/深色滑桿截圖佐證
 
 - 日期：2026-07-07
 - ID：reward-rw-656-manifest-offline-runtime-fallback

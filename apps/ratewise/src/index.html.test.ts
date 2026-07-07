@@ -225,6 +225,8 @@ describe('index.html - Static Template (SEOHelmet Architecture)', () => {
       );
       expect(bootstrap).toContain('/^\\d{1,3} \\d{1,3} \\d{1,3}$/');
       expect(bootstrap).toContain('customBackgroundTone');
+      // E7 wave-C：tone 值域 enum | #RRGGBB（亮度滑桿連續 tone），hex tone 進簽章比對。
+      expect(bootstrap).toContain('/^[a-z]{1,16}$/.test(t) || /^#[0-9a-fA-F]{6}$/.test(t)');
       // 空 map 防護：--color-primary 鍵必須存在，否則視為壞快取回退最小覆寫。
       expect(bootstrap).toContain("String(m['--color-primary'])");
       // skeleton 首繪變數同步（--sk-bg 只認 data-style 靜態區塊，custom 需 inline 供給）。

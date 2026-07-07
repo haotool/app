@@ -130,6 +130,32 @@ describe('applyTheme - custom 覆寫層', () => {
     expect(localStorage.getItem(CUSTOM_THEME_VARS_CACHE_KEY)).toBeNull();
   });
 
+  it('連續 tone hex（E7 wave-C）寫入派生覆寫且 pre-paint 快取簽章帶 hex tone', () => {
+    applyTheme({ style: 'custom', customPrimary: '#FF6B6B', customBackgroundTone: '#10141A' });
+    const expected = deriveCustomThemeCssVars('#FF6B6B', '#10141A');
+    const root = document.documentElement;
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => {
+      expect(root.style.getPropertyValue(cssVar), cssVar).toBe(expected[cssVar]);
+    });
+
+    // FOUC 快取簽章：t 欄位為 hex tone（bootstrap g() 已接受 #RRGGBB）；舊 enum 快取機制不變。
+    const cache = JSON.parse(localStorage.getItem(CUSTOM_THEME_VARS_CACHE_KEY) ?? '{}') as {
+      p: string;
+      t: string;
+      v: number;
+      m: Record<string, string>;
+    };
+    expect(cache.p).toBe('#FF6B6B');
+    expect(cache.t).toBe('#10141A');
+    expect(cache.v).toBe(CUSTOM_THEME_DERIVE_VERSION);
+    expect(cache.m).toEqual(expected);
+
+    applyTheme({ style: 'zen' });
+    CUSTOM_THEME_CSS_VARS.forEach((cssVar) => {
+      expect(root.style.getPropertyValue(cssVar), `${cssVar} 應被清除`).toBe('');
+    });
+  });
+
   it('customPrimary 缺失或無效時回退預設自訂主色', () => {
     applyTheme({ style: 'custom' });
     const expected = deriveCustomThemeCssVars(DEFAULT_CUSTOM_PRIMARY);

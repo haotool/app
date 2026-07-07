@@ -1,33 +1,41 @@
 /**
- * CustomThemeSheet（E2 wave-D＋E7 wave-B）：自訂主題色整頁沉浸式選色 sheet。
+ * CustomThemeSheet（E2 wave-D＋E7 wave-B/C）：自訂主題色整頁沉浸式選色 sheet。
  *
- * 內容由上而下：即時預覽卡（模擬主畫面元素跟色）→ 精選色票（20 色 × 5 欄）→
- * HexColorPicker（react-colorful，ADR-001）→ HEX 欄位（focus 全選/paste 清洗/blur commit）＋
- * 演算預覽 chip → 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→
- * 背景色調八選一（色調圓票）→ 取消／還原預設（二段確認）。
+ * 內容由上而下：即時預覽縮影卡（QA-I #3，真實元件縮影：匯率卡＋品牌 CTA＋底部導覽）→
+ * 精選色票（10 格 × 5 欄，QA-I #6 收斂）＋「自訂…」（react-colorful＋HEX 收合為進階項）→
+ * 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→ 背景色調八選一（色調圓票）＋
+ * 亮度滑桿（wave-C 連續 tone：任意 L 值 AA 不破）→ 取消／還原預設（二段確認）。
+ *
+ * 預覽縮影卡合約（wave-C）：只消費與全站相同的 CSS 變數（Tailwind 語義 token），
+ * 禁止獨立配色計算——draft previewTheme 已把派生變數即時寫入 documentElement inline vars，
+ * 預覽卡直接繼承，與實際渲染一致性由 CustomThemeSheet.preview-parity 測試守門。
+ *
  * E7 wave-B draft 語意：sheet 開啟期間變更即時預覽全站但不持久化；
  * 關閉 sheet＝commit、「取消」＝回滾開啟前快照（由 useCustomThemeDraft 編排）。
- * sheet 為整頁（size="full"）遮住主畫面，故頂部預覽卡承擔「所見即所得」回饋。
  * 選色面板為指標拖曳互動，sheet 關閉整片下拉（enableDrag=false）避免手勢衝突。
  *
- * @see .claude/prds/custom-theme-v2-design.md（第 4 節 wave-B、第 6 節 QA-I 對策表）
+ * @see .claude/prds/custom-theme-v2-design.md（3.1 資訊架構＋第 4 節 wave-C＋第 6 節對策 #3/#6）
  * @see .claude/decisions/ADR-001-react-colorful.md
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, TrendingUp, Wand2 } from 'lucide-react';
+import { Check, ChevronDown, Home, Plus, Settings, Star, TrendingUp, Wand2 } from 'lucide-react';
 import { BottomSheet } from './BottomSheet';
 import { useInlineConfirm } from '../hooks/useInlineConfirm';
 import {
   CUSTOM_PRIMARY_PRESETS,
   CUSTOM_BACKGROUND_TONES,
+  backgroundToneValueHex,
   choosePrimaryForeground,
+  continuousToneHexAtPosition,
   deriveCustomThemeCssVars,
   evaluatePrimaryContrastGate,
   sanitizeHexInput,
+  sliderPositionForToneValue,
   type CustomBackgroundTone,
+  type CustomBackgroundToneValue,
 } from '../config/custom-theme';
 
 export interface CustomThemeSheetProps {
@@ -37,9 +45,9 @@ export interface CustomThemeSheetProps {
   /** 取消＝回滾開啟前快照後關閉。 */
   onCancel: () => void;
   customPrimary: string;
-  customBackgroundTone: CustomBackgroundTone;
+  customBackgroundTone: CustomBackgroundToneValue;
   onSelectPrimary: (hex: string) => void;
-  onSelectBackgroundTone: (tone: CustomBackgroundTone) => void;
+  onSelectBackgroundTone: (tone: CustomBackgroundToneValue) => void;
   onReset: () => void;
 }
 
@@ -62,9 +70,28 @@ function selectionHaptic() {
   }
 }
 
-/** 'R G B' 三元組 → rgb() 字串（預覽區消費演算輸出）。 */
-function tripleToRgb(triple: string): string {
-  return `rgb(${triple.split(' ').join(', ')})`;
+/** 16ms trailing debounce（選色/滑桿拖動共用；與 derive memoize 並用，PM 簡報第 5 節）。 */
+function useTrailingDebounce16<T>(commit: (value: T) => void) {
+  const pendingRef = useRef<T | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const schedule = useCallback(
+    (value: T) => {
+      pendingRef.current = value;
+      if (timerRef.current !== null) return;
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        if (pendingRef.current !== null) commit(pendingRef.current);
+      }, 16);
+    },
+    [commit],
+  );
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+  return schedule;
 }
 
 export function CustomThemeSheet({
@@ -79,20 +106,13 @@ export function CustomThemeSheet({
 }: CustomThemeSheetProps) {
   const { t } = useTranslation();
 
-  // 演算輸出：預覽卡與預覽 chip 共同消費（strong 為白字 AA 錨點）。
+  // clamp/gate 提示邏輯用演算輸出（非預覽渲染；預覽卡只消費 CSS 變數）。
   const derived = useMemo(
     () => deriveCustomThemeCssVars(customPrimary, customBackgroundTone),
     [customPrimary, customBackgroundTone],
   );
-  const strongRgb = tripleToRgb(derived['--color-primary-strong']);
-  const lightRgb = tripleToRgb(derived['--color-primary-light']);
-  const textRgb = tripleToRgb(derived['--color-primary-text']);
-  const chartRgb = tripleToRgb(derived['--color-chart-line']);
-  const toneBackground = CUSTOM_BACKGROUND_TONES[customBackgroundTone].background;
   // 可讀性回饋（#632）：on-surface 被 clamp（≠ raw primary）時提示文字將自動加深。
-  const onSurfaceTriple = derived['--color-primary-on-surface'];
-  const isTextClamped = onSurfaceTriple !== derived['--color-primary'];
-  const onSurfaceRgb = tripleToRgb(onSurfaceTriple);
+  const isTextClamped = derived['--color-primary-on-surface'] !== derived['--color-primary'];
   // 近白/近黑主色 gate（QA-I #2＋#670 S3）：對當前背景調 <2:1 即警告＋建議色（不硬擋）。
   const contrastGate = useMemo(
     () => evaluatePrimaryContrastGate(customPrimary, customBackgroundTone),
@@ -106,27 +126,22 @@ export function CustomThemeSheet({
     if (!isOpen) resetConfirmReset();
   }, [isOpen, resetConfirmReset]);
 
-  // 選色拖動 16ms debounce（trailing）：全套派生（含深色 neutral scale）高頻執行的效能上限，
-  // 與 deriveCustomThemeCssVars 的 memoize 並用（PM 簡報第 5 節）。
-  const pendingHexRef = useRef<string | null>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handlePickerChange = useCallback(
-    (hex: string) => {
-      pendingHexRef.current = hex;
-      if (debounceTimerRef.current !== null) return;
-      debounceTimerRef.current = setTimeout(() => {
-        debounceTimerRef.current = null;
-        if (pendingHexRef.current !== null) onSelectPrimary(pendingHexRef.current);
-      }, 16);
-    },
-    [onSelectPrimary],
-  );
-  useEffect(
-    () => () => {
-      if (debounceTimerRef.current !== null) clearTimeout(debounceTimerRef.current);
-    },
-    [],
-  );
+  // 「自訂…」進階區（QA-I #6）：色域盤與 HEX 收合；開啟 sheet 時若主色非精選票即自動展開。
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      setShowAdvanced(
+        !CUSTOM_PRIMARY_PRESETS.includes(
+          customPrimary.toUpperCase() as (typeof CUSTOM_PRIMARY_PRESETS)[number],
+        ),
+      );
+    }
+    // 僅在 sheet 開啟時機決定初始展開態，不追隨後續選色。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const schedulePrimary = useTrailingDebounce16(onSelectPrimary);
+  const scheduleTone = useTrailingDebounce16(onSelectBackgroundTone);
 
   // HEX 欄位（QA-I #4）：編輯中顯示值與 commit 分離——focus 全選、輸入/貼上即清洗
   //（去 # 空白、統一大寫、截 6 碼），blur/Enter 才 commit，無效值回滾前值。
@@ -146,10 +161,48 @@ export function CustomThemeSheet({
     onSelectPrimary(preset);
   };
 
+  // 亮度滑桿（wave-C 連續 tone）：拖動中以本地值呈現（消除反映射抖動），
+  // 16ms debounce 產生任意 background hex；放開後回歸 prop 反映射位置。
+  const [toneSliderDraft, setToneSliderDraft] = useState<number | null>(null);
+  // 拖動 hue 錨（review 修正）：拖動起始鎖定當前 tone 為色相/飽和度來源，
+  // 過程中不隨 debounced tone 回寫漂移（近黑端 hex 捨入會使色相失真並逐步累積）；
+  // 放開滑桿/點 preset 圓票/關閉 sheet 時釋放，下次拖動以當時 tone 重新取錨。
+  const [toneHueAnchor, setToneHueAnchor] = useState<string | null>(null);
+  const toneSliderValue =
+    toneSliderDraft ?? Math.round(sliderPositionForToneValue(customBackgroundTone) * 100);
+  const toneHueSourceHex = toneHueAnchor ?? backgroundToneValueHex(customBackgroundTone);
+  const handleToneSlider = (raw: number) => {
+    if (toneHueAnchor === null) setToneHueAnchor(toneHueSourceHex);
+    setToneSliderDraft(raw);
+    scheduleTone(continuousToneHexAtPosition(raw / 100, toneHueSourceHex));
+  };
+  const endToneSlide = () => {
+    setToneSliderDraft(null);
+    setToneHueAnchor(null);
+  };
+  useEffect(() => {
+    if (!isOpen) {
+      setToneSliderDraft(null);
+      setToneHueAnchor(null);
+    }
+  }, [isOpen]);
+
   const handleSelectTone = (tone: CustomBackgroundTone) => {
     selectionHaptic();
+    endToneSlide();
     onSelectBackgroundTone(tone);
   };
+
+  // 滑桿軌道渲染實際映射取樣（深域 → 死域跳點 → 淺域），供拖動前預期落點。
+  const toneTrackGradient = useMemo(() => {
+    const stops = [0, 0.25, 0.499, 0.5, 0.75, 1]
+      .map(
+        (position) =>
+          `${continuousToneHexAtPosition(position, toneHueSourceHex)} ${position * 100}%`,
+      )
+      .join(', ');
+    return `linear-gradient(to right, ${stops})`;
+  }, [toneHueSourceHex]);
 
   const toneLabels: Record<CustomBackgroundTone, string> = {
     pure: t('settings.customThemeTonePure'),
@@ -174,60 +227,65 @@ export function CustomThemeSheet({
       testId="custom-theme-sheet"
     >
       <div className="overflow-y-auto px-5 pb-8">
-        {/* 即時預覽卡：整頁 sheet 遮住主畫面，這裡模擬主畫面元素承擔所見即所得 */}
+        {/* 即時預覽縮影卡（QA-I #3）：真實元件縮影——匯率卡（surface 層次＋on-surface 文字）、
+            品牌 CTA（bg-primary-strong，與全站 addToHistory 同 token）、底部導覽 active 指示。
+            只消費全站語義 token（CSS 變數），draft 即時繼承 inline vars（含深色調）。 */}
         <div
-          className="mb-6 rounded-card border border-border/50 p-4 transition-colors duration-300"
-          style={{ backgroundColor: toneBackground }}
+          className="mb-6 max-h-[120px] overflow-hidden rounded-card border border-border/50 bg-background transition-colors duration-300"
           data-testid="custom-theme-live-preview"
           aria-label={t('settings.customThemePreview')}
         >
-          <div className="mb-3 flex items-center justify-between">
-            <span
-              className="rounded-full px-2.5 py-1 text-2xs font-bold transition-colors duration-300"
-              style={{ backgroundColor: lightRgb, color: textRgb }}
-            >
-              1 USD = 32.215 TWD
-            </span>
-            <TrendingUp
-              className="h-4 w-4 transition-colors duration-300"
-              style={{ color: chartRgb }}
-              aria-hidden="true"
-            />
+          <div className="mx-2.5 mt-2.5 rounded-xl bg-surface px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="whitespace-nowrap text-2xs leading-tight text-text-muted">USD→TWD</p>
+                <p className="text-sm font-bold leading-tight tabular-nums text-text">32,215</p>
+              </div>
+              <span className="hidden shrink-0 items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-2xs font-bold text-primary-text min-[360px]:flex">
+                <TrendingUp
+                  className="h-3 w-3 text-[rgb(var(--color-chart-line))]"
+                  aria-hidden="true"
+                />
+                32.215
+              </span>
+              <button
+                type="button"
+                tabIndex={-1}
+                className="pointer-events-none flex shrink-0 items-center gap-1 rounded-xl bg-primary-strong px-2.5 py-1.5 text-2xs font-semibold text-white transition-colors duration-300"
+                aria-hidden="true"
+                data-testid="custom-theme-preview-cta"
+              >
+                <Plus className="h-3 w-3" aria-hidden="true" />
+                {t('singleConverter.addToHistory')}
+              </button>
+            </div>
           </div>
-          {/* 迷你趨勢線：以 chart 色演算輸出即時跟色 */}
-          <svg
-            viewBox="0 0 200 28"
-            className="mb-3 h-7 w-full"
-            aria-hidden="true"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 22 C 25 20, 40 10, 60 12 S 95 24, 120 16 S 165 4, 200 8"
-              fill="none"
-              stroke={chartRgb}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              className="transition-[stroke] duration-300"
-            />
-          </svg>
-          <button
-            type="button"
-            tabIndex={-1}
-            className="pointer-events-none flex min-h-11 w-full items-center justify-center gap-1.5 rounded-2xl text-sm font-semibold text-white transition-colors duration-300"
-            style={{ backgroundColor: strongRgb }}
+          <div
+            className="mt-1.5 flex items-start justify-around border-t border-border/60 px-4 pb-1 pt-1.5"
+            data-testid="custom-theme-preview-nav"
             aria-hidden="true"
           >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            {t('singleConverter.addToHistory')}
-          </button>
+            <span className="relative flex flex-col items-center text-primary-on-surface">
+              <Home className="h-3.5 w-3.5" />
+              <span className="mt-0.5 h-[2.5px] w-4 rounded-t-full bg-[rgb(var(--color-primary-on-surface))]" />
+            </span>
+            <span className="flex flex-col items-center text-text-muted">
+              <Star className="h-3.5 w-3.5" />
+              <span className="mt-0.5 h-[2.5px] w-4" />
+            </span>
+            <span className="flex flex-col items-center text-text-muted">
+              <Settings className="h-3.5 w-3.5" />
+              <span className="mt-0.5 h-[2.5px] w-4" />
+            </span>
+          </div>
         </div>
 
-        {/* 精選色票（20 色 × 5 欄，press 縮放微互動） */}
+        {/* 精選色票（QA-I #6 收斂：10 格 × 5 欄，press 縮放微互動）＋「自訂…」進階展開 */}
         <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-3">
           {t('settings.customThemePresets')}
         </p>
         <div
-          className="grid grid-cols-5 gap-3 mb-6"
+          className="grid grid-cols-5 gap-3 mb-3"
           role="group"
           aria-label={t('settings.customThemePresets')}
         >
@@ -261,75 +319,86 @@ export function CustomThemeSheet({
             );
           })}
         </div>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((prev) => !prev)}
+          className="mb-6 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-control border border-border py-2 text-xs font-bold transition-colors hover:bg-primary/5"
+          aria-expanded={showAdvanced}
+          data-testid="custom-theme-advanced-toggle"
+        >
+          {t('settings.customThemeCustomize')}
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`}
+            aria-hidden="true"
+          />
+        </button>
 
-        {/* 二維選色面板（飽和度面板＋色相條，樣式覆寫見 index.css .custom-theme-picker） */}
-        <div className="custom-theme-picker mb-6" data-testid="custom-theme-picker">
-          <HexColorPicker color={customPrimary} onChange={handlePickerChange} />
-        </div>
+        {showAdvanced && (
+          <div data-testid="custom-theme-advanced">
+            {/* 二維選色面板（飽和度面板＋色相條，樣式覆寫見 index.css .custom-theme-picker） */}
+            <div className="custom-theme-picker mb-6" data-testid="custom-theme-picker">
+              <HexColorPicker color={customPrimary} onChange={schedulePrimary} />
+            </div>
 
-        {/* HEX 輸入＋演算預覽 chip */}
-        <div className="mb-6 flex items-end justify-between gap-3">
-          <label className="block">
-            <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
-              {t('settings.customThemeHex')}
-            </span>
-            <span
-              className="mt-2 flex w-32 min-h-11 items-center rounded-control border border-border px-3 py-2 font-mono text-sm focus-within:ring-2"
-              style={{ '--tw-ring-color': customPrimary } as React.CSSProperties}
-            >
-              <span aria-hidden="true" className="opacity-50">
-                #
-              </span>
-              <input
-                type="text"
-                value={displayedHex}
-                onFocus={(event) => {
-                  setHexFieldDraft(sanitizeHexInput(event.target.value));
-                  event.target.select();
-                }}
-                onChange={(event) => setHexFieldDraft(sanitizeHexInput(event.target.value))}
-                onBlur={commitHexField}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    commitHexField();
-                    event.currentTarget.blur();
-                  }
-                }}
-                inputMode="text"
-                autoCapitalize="characters"
-                autoCorrect="off"
-                autoComplete="off"
-                spellCheck={false}
-                enterKeyHint="done"
-                className="w-full bg-transparent uppercase focus:outline-none"
-                aria-label={t('settings.customThemeHex')}
-                data-testid="custom-theme-hex-input"
-              />
-            </span>
-          </label>
-          <div
-            className="flex items-center gap-2"
-            role="img"
-            aria-label={t('settings.customThemePreview')}
-            data-testid="custom-theme-preview"
-          >
-            <span
-              className="flex h-11 w-14 items-center justify-center rounded-control text-sm font-bold shadow-sm transition-colors duration-300"
-              style={{
-                backgroundColor: customPrimary,
-                color: choosePrimaryForeground(customPrimary),
-              }}
-            >
-              Aa
-            </span>
-            <span
-              className="flex h-11 w-14 items-center justify-center rounded-control text-sm font-bold text-white shadow-sm transition-colors duration-300"
-              style={{ backgroundColor: strongRgb }}
-            >
-              Aa
-            </span>
+            {/* HEX 輸入＋演算預覽 chip（token 消費：raw primary 與 strong 白字錨點） */}
+            <div className="mb-6 flex items-end justify-between gap-3">
+              <label className="block">
+                <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
+                  {t('settings.customThemeHex')}
+                </span>
+                <span
+                  className="mt-2 flex w-32 min-h-11 items-center rounded-control border border-border px-3 py-2 font-mono text-sm focus-within:ring-2"
+                  style={{ '--tw-ring-color': customPrimary } as React.CSSProperties}
+                >
+                  <span aria-hidden="true" className="opacity-50">
+                    #
+                  </span>
+                  <input
+                    type="text"
+                    value={displayedHex}
+                    onFocus={(event) => {
+                      setHexFieldDraft(sanitizeHexInput(event.target.value));
+                      event.target.select();
+                    }}
+                    onChange={(event) => setHexFieldDraft(sanitizeHexInput(event.target.value))}
+                    onBlur={commitHexField}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        commitHexField();
+                        event.currentTarget.blur();
+                      }
+                    }}
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
+                    enterKeyHint="done"
+                    className="w-full bg-transparent uppercase focus:outline-none"
+                    aria-label={t('settings.customThemeHex')}
+                    data-testid="custom-theme-hex-input"
+                  />
+                </span>
+              </label>
+              <div
+                className="flex items-center gap-2"
+                role="img"
+                aria-label={t('settings.customThemePreview')}
+                data-testid="custom-theme-preview"
+              >
+                <span
+                  className="flex h-11 w-14 items-center justify-center rounded-control bg-primary text-sm font-bold shadow-sm transition-colors duration-300"
+                  style={{ color: choosePrimaryForeground(customPrimary) }}
+                >
+                  Aa
+                </span>
+                <span className="flex h-11 w-14 items-center justify-center rounded-control bg-primary-strong text-sm font-bold text-white shadow-sm transition-colors duration-300">
+                  Aa
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 可讀性回饋（#632）：過淺主色不硬擋，即時預覽 clamp 後的實效文字色。 */}
         <div role="status" aria-live="polite" className="mb-5 empty:mb-0 empty:h-0 space-y-2.5">
@@ -345,8 +414,7 @@ export function CustomThemeSheet({
               <button
                 type="button"
                 onClick={() => onSelectPrimary(contrastGate.suggestedPrimary ?? customPrimary)}
-                className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-control bg-surface px-3 py-2 text-xs font-bold shadow-sm transition-transform active:scale-95 motion-reduce:transition-none"
-                style={{ color: onSurfaceRgb }}
+                className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-control bg-surface px-3 py-2 text-xs font-bold text-primary-on-surface shadow-sm transition-transform active:scale-95 motion-reduce:transition-none"
                 data-testid="custom-theme-gate-adopt"
               >
                 <span
@@ -365,8 +433,7 @@ export function CustomThemeSheet({
               data-testid="custom-theme-contrast-notice"
             >
               <span
-                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-compact bg-surface text-sm font-bold shadow-sm"
-                style={{ color: onSurfaceRgb }}
+                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-compact bg-surface text-sm font-bold text-primary-on-surface shadow-sm"
                 aria-hidden="true"
               >
                 Aa
@@ -378,12 +445,12 @@ export function CustomThemeSheet({
           )}
         </div>
 
-        {/* 背景色調五選一：色調圓票直接呈現底色（比文字 segmented 更所見即所得） */}
+        {/* 背景色調八選一：色調圓票直接呈現底色（比文字 segmented 更所見即所得） */}
         <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-3">
           {t('settings.customThemeBackgroundTone')}
         </p>
         <div
-          className="mb-6 grid grid-cols-5 gap-2"
+          className="mb-4 grid grid-cols-5 gap-2"
           role="group"
           aria-label={t('settings.customThemeBackgroundTone')}
         >
@@ -418,6 +485,27 @@ export function CustomThemeSheet({
             );
           })}
         </div>
+
+        {/* 亮度滑桿（wave-C 連續 tone）：0＝最深、100＝最淺；任意位置 AA 派生鏈守門。 */}
+        <label className="mb-6 block">
+          <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
+            {t('settings.customThemeToneBrightness')}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={toneSliderValue}
+            onChange={(event) => handleToneSlider(Number(event.target.value))}
+            onPointerUp={endToneSlide}
+            onBlur={endToneSlide}
+            className="custom-tone-slider mt-3 block w-full cursor-pointer"
+            style={{ backgroundImage: toneTrackGradient }}
+            aria-label={t('settings.customThemeToneBrightness')}
+            data-testid="custom-theme-tone-slider"
+          />
+        </label>
 
         {/* 取消（回滾開啟前快照）＋還原預設（回 zen，二段確認） */}
         <div className="flex gap-3">

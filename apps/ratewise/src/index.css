@@ -1957,6 +1957,46 @@ body {
     transform: translate(-50%, -50%) scale(1.15);
   }
 
+  /* ========================================
+     背景亮度滑桿（E7 wave-C 連續 tone）
+     韓系扁平：軌道呈現實際映射取樣（backgroundImage 由元件 inline 供給），
+     thumb 為白色圓形＋hairline 邊框，樣式比照 react-colorful pointer。
+     ======================================== */
+  .custom-tone-slider {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 28px;
+    border-radius: 9999px;
+    border: 1px solid rgb(var(--color-border));
+    outline-offset: 2px;
+  }
+
+  .custom-tone-slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 3px solid #ffffff;
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.2),
+      0 0 0 1px rgb(0 0 0 / 0.15);
+    cursor: pointer;
+  }
+
+  .custom-tone-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 3px solid #ffffff;
+    box-shadow:
+      0 1px 3px rgb(0 0 0 / 0.2),
+      0 0 0 1px rgb(0 0 0 / 0.15);
+    cursor: pointer;
+  }
+
   /* 毛玻璃效果 */
   .glass {
     background-color: rgb(var(--color-background) / 0.8);
