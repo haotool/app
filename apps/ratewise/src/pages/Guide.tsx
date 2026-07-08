@@ -51,7 +51,7 @@ const FEATURE_SECTIONS: readonly ContentSection[] = [
       },
       {
         title: '歷史匯率趨勢',
-        description: '展開匯率卡片即可查看近 7~30 天走勢，快速理解最近的波動方向。',
+        description: '換算頁往下捲動即可查看近 30 天走勢，快速理解最近的波動方向。',
       },
       {
         title: '收藏常用貨幣',

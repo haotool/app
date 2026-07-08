@@ -890,7 +890,7 @@ export const HOMEPAGE_HOW_TO: HowToData = {
     {
       position: 3,
       name: '查看結果與趨勢',
-      text: '換算結果即時顯示，可展開查看 7~30 天歷史趨勢圖，並切換現金或即期匯率以符合不同換匯情境。',
+      text: '換算結果即時顯示，往下捲動可查看 30 天歷史趨勢圖，並切換現金或即期匯率以符合不同換匯情境。',
     },
     {
       position: 4,
@@ -1158,7 +1158,7 @@ export const GUIDE_HOW_TO_STEPS = [
   {
     position: 7,
     name: '查看歷史趨勢',
-    text: '展開匯率卡片可查看過去 30 天的歷史趨勢圖與波動資訊。',
+    text: '往下捲動即可查看過去 30 天的歷史趨勢圖與波動資訊。',
     image: '/screenshots/desktop-features.png',
   },
   {

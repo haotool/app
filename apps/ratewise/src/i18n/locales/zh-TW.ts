@@ -80,6 +80,7 @@ const zhTW = {
     fromAmountLabel: '轉換金額 ({{code}})',
     toAmountLabel: '轉換結果 ({{code}})',
     backToConverter: '返回主換算器',
+    rateDetailsTitle: '臺灣銀行 {{code}} 牌告匯率',
   },
 
   // 刷卡估算模式（ADR-002 Phase 1，flag: card-rate）

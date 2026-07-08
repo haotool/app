@@ -267,11 +267,20 @@ describe('Design Token System - BDD', () => {
 
       expect(singleConverterLayoutTokens).toBeDefined();
 
-      // 隱藏優先順序：快速金額(來源) → 快速金額(結果) → 交換按鈕 → 資料來源
-      // #591：SE（short 區間）保留來源快速金額，隱藏門檻自 short/tiny 下移至 tiny/micro。
-      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('tiny:hidden');
-      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('micro:hidden');
+      // E10 fold 合約：快速金額列屬首屏內容，fold 矩陣（最小 640px 高）內不得隱藏；
+      // 隱藏門檻下移至矩陣外（來源 micro ≤600px → 結果 nano ≤560px）。
+      expect(singleConverterLayoutTokens.quickAmounts.fromVisibility).toBe('micro:hidden');
+      expect(singleConverterLayoutTokens.quickAmounts.toVisibility).toBe('nano:hidden');
       expect(singleConverterLayoutTokens.swap.visibility).toBe('micro:hidden');
+
+      // E10 fold 容器：以 --app-height（fallback 100svh）計算首屏預算，不用 100vh/dvh；
+      // 內部 pb 抵銷固定底導覽（slim ≤360px 加大），md+ 歸零。
+      expect(singleConverterLayoutTokens.fold.container).toContain('var(--app-height,100svh)');
+      expect(singleConverterLayoutTokens.fold.container).not.toContain('100vh');
+      expect(singleConverterLayoutTokens.fold.container).not.toContain('100dvh');
+      expect(singleConverterLayoutTokens.fold.container).toContain('slim:pb-[calc(92px');
+      expect(singleConverterLayoutTokens.fold.container).toContain('md:min-h-0');
+      expect(singleConverterLayoutTokens.fold.resultAnchor).toBe('mt-auto');
 
       // 流體縮放配置
       expect(singleConverterLayoutTokens.rateCard.chartHeight).toContain('compact:h-16');
@@ -282,8 +291,8 @@ describe('Design Token System - BDD', () => {
       expect(singleConverterLayoutTokens.rateCard.rateTypeButton).toContain('xnarrow:px-1');
       expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('micro:pt-10');
       expect(singleConverterLayoutTokens.rateCard.infoPadding).toContain('nano:pt-10');
-      expect(singleConverterLayoutTokens.addToHistory.className).toContain('micro:min-h-11');
-      expect(singleConverterLayoutTokens.addToHistory.className).toContain('nano:min-h-11');
+      // E10 fold 合約：歷史動作全梯次維持 44px 最小觸控高度。
+      expect(singleConverterLayoutTokens.addToHistory.className).toMatch(/^min-h-11 /);
     });
   });
 
