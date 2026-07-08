@@ -1,12 +1,16 @@
 /**
- * 002 記分守門（issue #608）
+ * 002 記分守門（issue #608；CI 端強制 issue #661）
  *
  * 驗證重點:
- * 1. 檔頭「本次分數變化：+N（reward a、penalty b、neutral c）」與本次 staged 新增條目計數一致
- * 2. 檔頭「累計總分」= 前版（HEAD）累計總分 + N；初始 commit 或前版無法解析時跳過
+ * 1. 檔頭「本次分數變化：+N（reward a、penalty b、neutral c）」與本次新增條目計數一致
+ * 2. 檔頭「累計總分」= 基準版累計總分 + N；初始 commit 或基準版無法解析時跳過
  * 3. 新增條目符合四行模板（日期/ID/原因/解法）、日期為 YYYY-MM-DD、ID 對全檔唯一
+ *
+ * 兩種執行語意共用同一 validate002 核心（無雙實作）:
+ * - pre-commit（預設）：staged 版 vs HEAD 版
+ * - CI（--base-ref <ref>）：HEAD 版 vs merge-base(<ref>, HEAD) 版；檔案未變更時跳過
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 export const LOG_PATH = 'docs/dev/002_development_reward_penalty_log.md';
@@ -106,8 +110,9 @@ export function parseEntries(content) {
 }
 
 /**
- * 核心驗證：比對 staged 內容與前版（HEAD）內容。
- * headContent 為 null 表示初始 commit 情境（跳過總分鏈驗證）。
+ * 核心驗證：比對待驗版本（stagedContent）與基準版本（headContent）。
+ * pre-commit 語意為 staged vs HEAD；CI 語意為 HEAD vs merge-base。
+ * headContent 為 null 表示無基準版本情境（跳過刪除防護與總分鏈驗證）。
  */
 export function validate002({ stagedContent, headContent }) {
   const errors = [];
@@ -203,30 +208,16 @@ export function validate002({ stagedContent, headContent }) {
   return { errors };
 }
 
-function readStaged(filePath) {
+// spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」；物件不存在時回傳 null。
+function gitShow(spec) {
   try {
-    return execSync(`git show :${filePath}`, { encoding: 'utf-8' });
+    return execFileSync('git', ['show', spec], { encoding: 'utf-8' });
   } catch {
     return null;
   }
 }
 
-function readFromHead(filePath) {
-  try {
-    return execSync(`git show HEAD:${filePath}`, { encoding: 'utf-8' });
-  } catch {
-    return null;
-  }
-}
-
-function main() {
-  const stagedContent = readStaged(LOG_PATH);
-  if (stagedContent === null) {
-    console.log(`002 記分守門跳過（${LOG_PATH} 不在 staged set）`);
-    return;
-  }
-
-  const { errors } = validate002({ stagedContent, headContent: readFromHead(LOG_PATH) });
+function report(errors) {
   if (errors.length > 0) {
     console.error('002 記分守門失敗:');
     for (const message of errors) {
@@ -235,6 +226,59 @@ function main() {
     process.exit(1);
   }
   console.log('002 記分守門通過');
+}
+
+// pre-commit 語意：staged 版 vs HEAD 版。
+function runPreCommit() {
+  const stagedContent = gitShow(`:${LOG_PATH}`);
+  if (stagedContent === null) {
+    console.log(`002 記分守門跳過（${LOG_PATH} 不在 staged set）`);
+    return;
+  }
+  report(validate002({ stagedContent, headContent: gitShow(`HEAD:${LOG_PATH}`) }).errors);
+}
+
+// CI 語意：HEAD 版（PR 最終態）vs merge-base 版；只驗整體一致性、不逐 commit。
+function runAgainstBaseRef(baseRef) {
+  let mergeBase;
+  try {
+    mergeBase = execFileSync('git', ['merge-base', baseRef, 'HEAD'], { encoding: 'utf-8' }).trim();
+  } catch {
+    console.error(`002 記分守門失敗：無法解析 merge-base（base ref「${baseRef}」）`);
+    process.exit(1);
+  }
+
+  const currentContent = gitShow(`HEAD:${LOG_PATH}`);
+  const baseContent = gitShow(`${mergeBase}:${LOG_PATH}`);
+
+  if (currentContent === null) {
+    if (baseContent === null) {
+      console.log(`002 記分守門跳過（${LOG_PATH} 不存在）`);
+      return;
+    }
+    report([`${LOG_PATH} 不可刪除（merge-base ${mergeBase.slice(0, 12)} 存在此檔）`]);
+    return;
+  }
+  if (currentContent === baseContent) {
+    console.log(`002 記分守門跳過（${LOG_PATH} 相對 merge-base ${mergeBase.slice(0, 12)} 無變更）`);
+    return;
+  }
+  report(validate002({ stagedContent: currentContent, headContent: baseContent }).errors);
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const flagIndex = args.indexOf('--base-ref');
+  if (flagIndex === -1) {
+    runPreCommit();
+    return;
+  }
+  const baseRef = args[flagIndex + 1];
+  if (!baseRef) {
+    console.error('002 記分守門失敗：--base-ref 需指定基準 ref（例如 origin/main 或 base SHA）');
+    process.exit(1);
+  }
+  runAgainstBaseRef(baseRef);
 }
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;

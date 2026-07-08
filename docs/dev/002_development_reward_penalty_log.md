@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+202
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+203
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-661-002-ci-merge-base-guard
+- 原因：#652 的 002 記分守門只掛 pre-commit，--no-verify 與 GitHub 網頁端 merge/squash 均可繞過；CI 只跑守門單元測試、不對實際 002 檔案 vs merge-base 對帳（issue 661）
+- 解法：verify-002-log.mjs 增設 --base-ref 入口與 pre-commit 共用同一 validate002 核心（HEAD＝PR 最終態 vs merge-base、002 未變更毫秒級跳過、整檔刪除必紅），Quality Checks 於 install 前加 PR 專屬守門步驟（零 npm 依賴搶先紅燈），vitest 補 6 條臨時 git repo 整合測試（計數不符必紅／正確 append／未變更跳過／多 commit 只驗最終態／merge-base 非 base tip／刪檔必紅）並以構造壞版分支本地重演 CI 紅燈
 
 - 日期：2026-07-08
 - ID：reward-rw-666-persisted-hydration-inventory
