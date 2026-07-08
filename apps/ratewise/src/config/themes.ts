@@ -640,6 +640,7 @@ export function getChartColors(): {
   lineColor: string;
   topColor: string;
   bottomColor: string;
+  textColor: string;
 } {
   if (typeof window === 'undefined') {
     // SSR fallback - 使用 Zen 預設值（品牌藍圖表色）
@@ -647,6 +648,7 @@ export function getChartColors(): {
       lineColor: 'rgb(59, 130, 246)',
       topColor: 'rgba(59, 130, 246, 0.25)',
       bottomColor: 'rgba(59, 130, 246, 0)',
+      textColor: 'rgb(15, 23, 42)',
     };
   }
 
@@ -657,12 +659,15 @@ export function getChartColors(): {
   const line = style.getPropertyValue('--color-chart-line').trim() || '99 102 241';
   const top = style.getPropertyValue('--color-chart-area-top').trim() || '99 102 241';
   const bottom = style.getPropertyValue('--color-chart-area-bottom').trim() || '59 130 246';
+  // 主題正文色：TradingView attribution logo 依 layout.textColor 灰階（>160）切換亮/暗版（#687）。
+  const text = style.getPropertyValue('--color-text').trim() || '15 23 42';
 
   // Convert to comma-separated format for Canvas/lightweight-charts
   return {
     lineColor: `rgb(${toCommaSeparatedRgb(line)})`,
     topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.25)`,
     bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0)`,
+    textColor: `rgb(${toCommaSeparatedRgb(text)})`,
   };
 }
 

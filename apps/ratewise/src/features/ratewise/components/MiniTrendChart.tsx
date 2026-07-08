@@ -127,7 +127,10 @@ export function MiniTrendChart({ data, className = '', basisLabel }: MiniTrendCh
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: 'transparent',
+        // 主題正文色（軸線/刻度全隱藏，唯一可見消費者是 TradingView attribution logo）：
+        // 官方 AttributionLogoWidget 依 textColor 灰階 >160 切換亮/暗版，深色主題 logo 不再隱形（#687）。
+        // 原 'transparent' 解析為灰階 0，logo 永遠深色版壓深底。
+        textColor: chartColors.textColor,
       },
       grid: {
         vertLines: { visible: false },

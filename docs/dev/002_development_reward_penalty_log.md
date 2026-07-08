@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+200
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+201
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-687-tv-attribution-logo-theme
+- 原因：MiniTrendChart 設 layout.textColor 為 'transparent'，lightweight-charts 官方 AttributionLogoWidget 以 grayscale(textColor)>160 切換 logo 亮/暗版，transparent 解析為灰階 0 → logo 永遠深色版（#131722）在 nitro/racing/custom 深調近乎不可見（授權標示合規與視覺品質雙重問題，QA-K K-2）
+- 解法：getChartColors 增列 textColor（讀 --color-text，SSR fallback zen），layout.textColor 改吃主題正文色走官方 logo 明暗機制（軸線/刻度全隱藏，textColor 唯一可見消費者即 logo；主題切換本就整座重建圖表），不移除標示；7 內建＋custom 深/淺調瀏覽器矩陣驗證 data-dark 正確、nitro/石墨深調前後截圖佐證，趨勢圖與主題測試 5 檔全綠
 
 - 日期：2026-07-08
 - ID：reward-rw-680-kawaii-nitro-muted-hierarchy
