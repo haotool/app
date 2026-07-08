@@ -25,7 +25,9 @@ import {
   HOMEPAGE_SEO,
   OPEN_DATA_PAGE_SEO,
   SELL_RATE_VS_MID_RATE_PAGE,
+  buildAmountPageRelatedGuides,
   buildForwardAmountLadder,
+  buildPairAmountFaq,
   buildPairAmountSeo,
   buildReverseAmountLadder,
   formatZhAmount,
@@ -276,6 +278,56 @@ describe('phrase budget：模板句收斂', () => {
   });
 });
 
+// ─── 5b. 更新頻率硬承諾防回流（#627） ────────────────────────────────────────
+
+// 更新頻率措辭 SSOT 為 data-freshness.ts 的「約每 5 分鐘檢查更新」；
+// 「每 5 分鐘自動同步/更新」為硬承諾（實際新鮮度依資料來源與 CDN 快取而定），
+// 掃描文案源頭與 tracked 生成物，防止舊措辭回流。
+describe('update-frequency guard：硬承諾防回流（#627）', () => {
+  // (?<!約) 排除軟化措辭「約每 5 分鐘…」；「快取 5 分鐘」等技術建議不含「每」不受影響。
+  const HARD_PROMISE = /(?<!約)每 ?5 ?分鐘|5 分鐘(?:自動同步|即時更新)/;
+
+  const SCAN_FILES = [
+    '../../../seo-paths.config.mjs',
+    '../seo-paths.ts',
+    '../seo-metadata/core.ts',
+    '../seo-metadata/currency-landing.ts',
+    '../../pages/About.tsx',
+    '../../pages/OpenData.tsx',
+    '../../pages/SeoTech.tsx',
+    '../../components/CurrencyLandingPage.tsx',
+    '../../i18n/locales/zh-TW.ts',
+    '../../../scripts/generate-llms-txt.mjs',
+    '../../../scripts/generate-markdown-mirrors.mjs',
+    '../../../scripts/generate-manifest.mjs',
+    '../../../scripts/generate-openapi.mjs',
+    '../../../scripts/generate-api-json.mjs',
+    '../../../public/llms.txt',
+    '../../../public/llms-full.txt',
+    '../../../public/manifest.webmanifest',
+    '../../../public/openapi.json',
+    '../../../public/index.md',
+    '../../../public/about.md',
+    '../../../public/open-data.md',
+    '../../../public/faq.md',
+  ].map((rel) => resolve(__dirname, rel));
+
+  it('guard pattern 自我驗證：咬住硬承諾、放行軟化措辭與技術建議', () => {
+    expect(HARD_PROMISE.test('每 5 分鐘自動同步')).toBe(true);
+    expect(HARD_PROMISE.test('每 5 分鐘更新')).toBe(true);
+    expect(HARD_PROMISE.test('5 分鐘自動同步最新牌告匯率')).toBe(true);
+    expect(HARD_PROMISE.test('查看 5 分鐘即時更新結果')).toBe(true);
+    expect(HARD_PROMISE.test('約每 5 分鐘檢查更新')).toBe(false);
+    expect(HARD_PROMISE.test('建議 client 端快取 5 分鐘')).toBe(false);
+  });
+
+  it.each(SCAN_FILES)('%s 不得含「每 5 分鐘」硬承諾', (file) => {
+    const source = readFileSync(file, 'utf-8');
+    const match = HARD_PROMISE.exec(source);
+    expect(match, `發現更新頻率硬承諾：「${match?.[0]}」`).toBeNull();
+  });
+});
+
 // ─── 6. About FAQ 去機房語言與 answer 級自指涉掃描（#566 SF-2 / SF-3） ────────
 
 describe('About FAQ 使用者導向（#566 SF-2 / SF-3）', () => {
@@ -365,5 +417,50 @@ describe('amount page v2', () => {
         expect(data!.cashBuyEstimate).toBeLessThan(data!.cashSell);
       }
     }
+  });
+});
+
+// ─── 8. 金額頁瘦身三段（#634） ───────────────────────────────────────────────
+
+describe('amount page slim（#634）', () => {
+  it('heading 為 title 問句前綴（H1/title 對齊，含金額與幣別）', () => {
+    const forward = buildPairAmountSeo(50000, 'KRW', '韓元', 'to-twd');
+    expect(forward.heading).toBe('5 萬韓元（50,000 KRW）換台幣是多少？');
+    expect(forward.title.startsWith(forward.heading)).toBe(true);
+
+    const reverse = buildPairAmountSeo(30000, 'JPY', '日圓', 'twd-to-foreign');
+    expect(reverse.heading).toBe('30,000 台幣換多少日圓？');
+    expect(reverse.title.startsWith(reverse.heading)).toBe(true);
+  });
+
+  it('to-twd 金額特化 FAQ 為純計算生成，含當前金額雙向答案與中間價對比', () => {
+    const faq = buildPairAmountFaq(50000, 'KRW', '韓元', 'to-twd');
+    expect(faq.length).toBeGreaterThanOrEqual(2);
+    const copy = faq.flatMap((f) => [f.question, f.answer]).join('\n');
+    expect(copy).toContain('50,000');
+    expect(copy).toContain('KRW');
+    expect(copy).toContain('現金賣出');
+    expect(copy).toContain('中間價');
+  });
+
+  it('twd-to-foreign 金額特化 FAQ 含台幣金額與可換外幣答案', () => {
+    const faq = buildPairAmountFaq(30000, 'JPY', '日圓', 'twd-to-foreign');
+    expect(faq.length).toBeGreaterThanOrEqual(2);
+    const copy = faq.flatMap((f) => [f.question, f.answer]).join('\n');
+    expect(copy).toContain('30,000 台幣');
+    expect(copy).toContain('JPY');
+    expect(copy).toContain('現金賣出');
+  });
+
+  it('導流連結首位指向 pair 主頁完整指南，並保留反向幣對互鏈', () => {
+    const forward = buildAmountPageRelatedGuides('KRW', '韓元', 'to-twd');
+    expect(forward[0]!.href).toBe('/krw-twd/');
+    expect(forward[0]!.label).toContain('完整指南');
+    expect(forward[1]!.href).toBe('/twd-krw/');
+
+    const reverse = buildAmountPageRelatedGuides('JPY', '日圓', 'twd-to-foreign');
+    expect(reverse[0]!.href).toBe('/twd-jpy/');
+    expect(reverse[0]!.label).toContain('完整指南');
+    expect(reverse[1]!.href).toBe('/jpy-twd/');
   });
 });

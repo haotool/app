@@ -1,7 +1,7 @@
 {
   "name": "HaoRate 匯率好工具",
   "short_name": "HaoRate",
-  "description": "HaoRate 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 18 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。",
+  "description": "HaoRate 匯率好工具顯示臺灣銀行牌告實際買賣價（非中間價），支援 18 種貨幣換算，約每 5 分鐘檢查更新，離線可用的 PWA 匯率工具。",
   "theme_color": "#3182F6",
   "background_color": "#F8FAFC",
   "display": "standalone",

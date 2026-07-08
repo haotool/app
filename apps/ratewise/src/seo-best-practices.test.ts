@@ -648,7 +648,8 @@ describe('📊 E-E-A-T Compliance', () => {
     });
 
     it('should mention update frequency', () => {
-      expect(aboutContent).toMatch(/5\s*分鐘/);
+      // #627：更新頻率措辭由 data-freshness.ts SSOT 常數注入，驗證源碼引用常數。
+      expect(aboutContent).toContain('UPDATE_FREQUENCY_PHRASE');
     });
   });
 

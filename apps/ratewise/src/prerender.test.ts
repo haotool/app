@@ -378,9 +378,10 @@ describe('Prerendering Static HTML Generation (SEOHelmet Architecture)', () => {
       const content = readFileSync(usdAmountHtml, 'utf-8');
       const exchangeRateMatches = content.match(/"@type":"ExchangeRateSpecification"/g) ?? [];
       expect(exchangeRateMatches).toHaveLength(1);
-      expect(content).toMatch(
-        /"@type":"ExchangeRateSpecification"[\s\S]*"url":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/,
-      );
+      // #634：金額頁 self-canonical 由麵包屑金額層 item 承接。
+      expect(content).toMatch(/"item":"https:\/\/app\.haotool\.org\/ratewise\/usd-twd\/500\/"/);
+      // #634：金額頁不再輸出與 pair 頁重複的 HowTo schema。
+      expect(content).not.toContain('"@type":"HowTo"');
     });
 
     it('USD/TWD amount page should NOT emit deprecated meta keywords', () => {

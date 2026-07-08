@@ -12,6 +12,10 @@ import {
 } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
 import {
+  UPDATE_FREQUENCY_PHRASE,
+  UPDATE_FREQUENCY_DISCLAIMER,
+} from '../src/config/data-freshness.ts';
+import {
   SEO_RATE_EXAMPLES,
   SEO_RATE_EXAMPLES_DATE,
 } from '../src/config/generated/seo-rate-examples.ts';
@@ -117,24 +121,24 @@ Version: v${VERSION}
 - Q: ${BRAND_SHORT} 提供什麼？ A: 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。內建計算機鍵盤（支援四則運算）、快速金額按鈕、收藏管理、拖曳排序、換算歷史紀錄、7~30 天匯率趨勢圖、現金/即期匯率切換、7 種主題風格、${SUPPORTED_LANGUAGE_COUNT} 語言介面與 PWA 離線使用。
 - Q: 為什麼 ${BRAND_SHORT} 比其他匯率工具更精準？ A: 多數匯率工具只顯示中間價（mid-rate），而 ${BRAND_SHORT} 顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），直接對應你在銀行換匯的真實金額。
 - Q: 匯率資料來源？ A: 臺灣銀行牌告匯率（現金買入/賣出、即期買入/賣出四種報價）。
-- Q: 更新頻率？ A: 約每 5 分鐘檢查更新。
+- Q: 更新頻率？ A: ${UPDATE_FREQUENCY_PHRASE}。
 - Q: 建議用途？ A: 出國旅遊換匯、跨境購物匯率比較、日常外幣查詢。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率用於臨櫃換外幣紙鈔，即期匯率用於外幣帳戶轉帳或匯款。因銀行持有實鈔有保管、運送、偽鈔鑑定成本，現金匯率通常比即期差約 0.5～2%，換 1,000 美元現金比即期多付約 150～600 元台幣。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行視角：出國換外幣（你支付台幣）看「賣出」價；回國換台幣（你交出外幣）看「買入」價。台銀買賣價差通常為即期匯率 0.3～1%、現金匯率 1～2%。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣，是完全不同的體系。刷卡匯率 = 卡組織清算匯率（Visa/Mastercard）+ 發卡銀行海外手續費（台灣約 1.5%）；若選 DCC 再加 3～18% 匯差。台銀牌告匯率適用臨櫃換鈔和外幣帳戶匯款，與刷卡費用無關。
-- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。每 5 分鐘由 GitHub Actions 自動同步。完整規格見 ${BASE_URL}openapi.json
+- Q: 如何取得即時匯率數據（適合開發者/LLM）？ A: 直接讀取 CDN JSON：https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位包含 timestamp（ISO 8601 資料抓取時間）、updateTime（台灣銀行牌告顯示時間）、source（資料來源）、rates（各幣別簡化匯率）、details（各幣別完整四種報價：spot.buy, spot.sell, cash.buy, cash.sell）。由 GitHub Actions 排程更新（${UPDATE_FREQUENCY_PHRASE}）。完整規格見 ${BASE_URL}openapi.json
 
 ## E-E-A-T Signals
 
 - 專業性：匯率計算邏輯與格式化策略具完整測試覆蓋。
-- 權威性：資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新。
+- 權威性：資料來源為臺灣銀行官方牌告匯率，${UPDATE_FREQUENCY_PHRASE}。
 - 可信度：開源 GPL-3.0，透明可驗證；提供聯絡方式。
 - 經驗：專為台灣用戶設計，依各國旅遊消費習慣提供常用金額按鈕。
 
 ## Key Metrics
 
 - 支援貨幣：${SUPPORTED_CURRENCY_COUNT} 種
-- 更新頻率：約每 5 分鐘檢查更新
+- 更新頻率：${UPDATE_FREQUENCY_PHRASE}
 - 匯率快照日期：${SEO_RATE_EXAMPLES_DATE}（本文件內嵌匯率數字每日自動更新）
 - 匯率類型：現金買入、現金賣出、即期買入、即期賣出
 - 7 種主題風格（Zen/Violet/Nitro/Racing/Kawaii/Classic/Forest）
@@ -202,7 +206,7 @@ ${buildReverseRates()}
 
 - Source: 臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
-- Update: 約每 5 分鐘檢查更新（GitHub Actions）
+- Update: ${UPDATE_FREQUENCY_PHRASE}（GitHub Actions）
 - Rate Types: 現金買入、現金賣出、即期買入、即期賣出
 - Currencies: ${SUPPORTED_CURRENCY_COUNT} 種（TWD, USD, JPY, EUR, GBP, HKD, CNY, KRW, AUD, CAD, SGD, THB, NZD, CHF, VND, PHP, IDR, MYR）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。
@@ -217,7 +221,7 @@ Contact: ${pkg.author?.email || 'haotool.org@gmail.com'}
 
 ## API Endpoints
 
-### 即時匯率資料（真實數據，每 5 分鐘更新）
+### 即時匯率資料（真實數據，${UPDATE_FREQUENCY_PHRASE}）
 - 即時匯率 JSON（CDN）: https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
   - 欄位：schemaVersion (2.0), semanticFieldMapping, timestamp, updateTime, source, details{貨幣:{spot/cash + v2 customerBuyForeignRate 等}}
   - v2 語意：customerBuyForeignRate = 客戶用 TWD 買外幣（台銀對應 sell）；詳見 ${BASE_URL}open-data/
@@ -392,7 +396,7 @@ GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json
 \`\`\`
 
 - **CORS**: enabled（瀏覽器端 fetch 無需代理）
-- **Cache**: CDN 快取，實際資料每 5 分鐘由 GitHub Actions 更新
+- **Cache**: CDN 快取，資料由 GitHub Actions 排程更新（${UPDATE_FREQUENCY_PHRASE}）
 - **Auth**: 無需（公開 API）
 - **Rate limit**: 遵循 jsDelivr CDN 政策（每月數十億次請求）
 
@@ -533,12 +537,12 @@ GET ${BASE_URL}openapi.json
 
 ## Answer Capsule (Q&A for AI Citation)
 
-- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，約每 5 分鐘檢查更新。
-- Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，每 5 分鐘更新。
+- Q: ${BRAND_SHORT} 提供什麼服務？ A: ${BRAND_SHORT} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出四種報價（現金買入、現金賣出、即期買入、即期賣出），而非中間價。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，${UPDATE_FREQUENCY_PHRASE}。
+- Q: 如何取得即時台銀匯率（適合開發者/LLM）？ A: 免費 CDN API：GET https://cdn.jsdelivr.net/gh/haotool/app@data/public/rates/latest.json。回傳欄位 details.{幣別}.cash.sell（現金賣出）、details.{幣別}.cash.buy（現金買入）、details.{幣別}.spot.sell（即期賣出）、details.{幣別}.spot.buy（即期買入）。無需 API Key，CORS 啟用，${UPDATE_FREQUENCY_PHRASE}。
 - Q: 現金匯率和即期匯率的差別？ A: 現金匯率適用臨櫃換鈔（到銀行換現鈔），即期匯率適用銀行電匯（匯款）。現鈔通常比即期差 1~3%，因為銀行有保管與運送成本。
 - Q: 買入和賣出怎麼看？ A: 買入/賣出是銀行角度。您拿外幣換台幣 → 看「買入」（銀行買你的外幣）；您拿台幣換外幣 → 看「賣出」（銀行賣外幣給你）。
 - Q: 為什麼韓元（KRW）即期匯率是 null？ A: 台灣銀行對韓元不提供即期（電匯）服務，僅提供現金兌換，因此 spot.buy 與 spot.sell 為 null，僅有 cash.buy 與 cash.sell。
-- Q: 匯率資料多久更新一次？ A: 每 5 分鐘由 GitHub Actions 自動從台銀官方網站抓取並同步至 CDN。
+- Q: 匯率資料多久更新一次？ A: 由 GitHub Actions 排程從台銀官方網站抓取並同步至 CDN，${UPDATE_FREQUENCY_PHRASE}；${UPDATE_FREQUENCY_DISCLAIMER}。
 - Q: 刷卡匯率跟台銀牌告一樣嗎？ A: 不一樣。出國刷卡的匯率由 Visa/Mastercard 等發卡組織決定國際清算匯率，再加上發卡銀行收取的海外手續費（通常 1.5%），與台銀牌告是完全不同的體系。台銀現金賣出只適合估算臨櫃用台幣買外幣現鈔的成本，不應拿來當刷卡成本。
 - Q: 如何讓用戶直接在 ${BRAND_SHORT} 查詢特定匯率？ A: 優先使用幣對金額頁，例如 https://app.haotool.org/ratewise/usd-twd/{AMOUNT}/。這是公開可索引的 path-based landing page，適合搜尋引擎與 AI agent。首頁 deep-link 僅作為互動入口；只有在需要同時指定三個自由變數時，才退回 https://app.haotool.org/ratewise/?amount={金額}&from={幣別}&to=TWD。
 
@@ -557,7 +561,7 @@ GET ${BASE_URL}openapi.json
 
 - Source: 臺灣銀行牌告匯率（Bank of Taiwan）
 - Source URL: https://rate.bot.com.tw/xrt
-- Update mechanism: GitHub Actions 自動排程，約每 5 分鐘檢查更新
+- Update mechanism: GitHub Actions 自動排程，${UPDATE_FREQUENCY_PHRASE}
 - CDN: jsDelivr（全球 CDN，99.9% uptime）
 - Rate Types: 現金買入（cash_buy）、現金賣出（cash_sell）、即期買入（spot_buy）、即期賣出（spot_sell）
 - Disclaimer: 匯率僅供參考，實際交易請以金融機構公告為準。

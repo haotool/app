@@ -126,6 +126,8 @@ export function buildRateDifferenceSentence(input: RateDifferenceSentenceInput):
 export interface PairAmountSeoCopy {
   title: string;
   description: string;
+  /** 金額頁 H1（title 問句段），與 title 對齊消除 H1/title 錯位（#634）。 */
+  heading: string;
 }
 
 // title/H1/description 共用的「中文別名（阿拉伯數字 code）」雙寫法標籤。
@@ -147,25 +149,30 @@ export function buildPairAmountSeo(
   const ex = SEO_RATE_EXAMPLES[currencyCode];
 
   if (direction === 'twd-to-foreign') {
-    const title = `${formatted} 台幣換多少${currencyName}？今日台銀實際價（TWD/${currencyCode}） | ${APP_INFO.shortName}`;
+    const heading = `${formatted} 台幣換多少${currencyName}？`;
+    const title = `${heading}今日台銀實際價（TWD/${currencyCode}） | ${APP_INFO.shortName}`;
     if (!ex) {
       return {
         title,
+        heading,
         description: `${formatted} 台幣可以換多少${currencyName}？${APP_INFO.shortName} 直接顯示台銀牌告現金賣出價（非中間價），出國換匯前先掌握實際能換到的金額。`,
       };
     }
     const foreignAtSell = Math.round(amount / ex.cashSell);
     return {
       title,
+      heading,
       description: `${formatted} 台幣以台銀現金賣出價約可換 ${formatAmount(foreignAtSell)} ${currencyCode}（${SEO_RATE_EXAMPLES_DATE} 牌告，每日更新）。用 Google 中間價估算會高估實際能換到的金額，${APP_INFO.shortName} 直接給你台銀實際牌告與金額階梯對照。`,
     };
   }
 
   const label = buildAmountLabel(amount, currencyCode, currencyName);
-  const title = `${label}換台幣是多少？今日台銀實際價 | ${APP_INFO.shortName}`;
+  const heading = `${label}換台幣是多少？`;
+  const title = `${heading}今日台銀實際價 | ${APP_INFO.shortName}`;
   if (!ex) {
     return {
       title,
+      heading,
       description: `${label}換台幣是多少？${APP_INFO.shortName} 同時顯示台銀現金買入（換回台幣）與現金賣出（買外幣現鈔）兩個方向的實際牌告，非 Google 中間價。`,
     };
   }
@@ -178,8 +185,101 @@ export function buildPairAmountSeo(
       : `${label}換台幣看台銀現金買入價；`;
   return {
     title,
+    heading,
     description: `${buyBackClause}要買 ${formatted} ${currencyName}現鈔約需 ${formatAmount(sellCost)} 元（現金賣出，${SEO_RATE_EXAMPLES_DATE} 牌告，每日更新）。${APP_INFO.shortName} 顯示台銀實際牌告，非 Google 中間價。`,
   };
+}
+
+/**
+ * 金額頁特化 FAQ（#634 瘦身三段之三）：全部由當前金額純計算生成，
+ * 取代金額頁沿用 pair 頁完整 FAQ 造成的複製牆；泛用問題由導流段回 pair 頁承接。
+ */
+export function buildPairAmountFaq(
+  amount: number,
+  currencyCode: string,
+  currencyName: string,
+  direction: 'to-twd' | 'twd-to-foreign' = 'to-twd',
+): FAQEntry[] {
+  const ex = SEO_RATE_EXAMPLES[currencyCode];
+  if (!ex) return [];
+  const formatted = formatAmount(amount);
+
+  if (direction === 'twd-to-foreign') {
+    const foreignAtSell = Math.round(amount / ex.cashSell);
+    const foreignAtMid = Math.round(amount / ex.marketMid);
+    const diffForeign = Math.abs(foreignAtMid - foreignAtSell);
+    return [
+      {
+        question: `${formatted} 台幣以今日牌告可以換多少${currencyName}？`,
+        answer: `以台銀現金賣出價換算，${formatted} 台幣約可換 ${formatAmount(foreignAtSell)} ${currencyCode}（1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 牌告，每日更新）；實際成交以臨櫃牌告為準。`,
+      },
+      {
+        question: `用 Google 中間價估算 ${formatted} 台幣會差多少？`,
+        answer: `Google 顯示的市場中間價換算約 ${formatAmount(foreignAtMid)} ${currencyCode}，但一般人換不到中間價；以台銀實際賣出價計算會少換約 ${formatAmount(diffForeign)} ${currencyCode}，出國換匯請以實際牌告估算預算。`,
+      },
+    ];
+  }
+
+  const sellCost = Math.round(amount * ex.cashSell);
+  const midCost = Math.round(amount * ex.marketMid);
+  const cashBuy = estimateCashBuy(ex);
+  const buyBack = cashBuy != null ? Math.round(amount * cashBuy) : null;
+  return [
+    ...(buyBack != null
+      ? [
+          {
+            question: `${formatted} ${currencyName}換回台幣可以拿到多少？`,
+            answer: `以台銀現金買入估算，${formatted} ${currencyCode} 約可換回 ${formatAmount(buyBack)} 元台幣（${SEO_RATE_EXAMPLES_DATE} 牌告，每日更新）；實際成交以臨櫃牌告為準。`,
+          },
+        ]
+      : []),
+    {
+      question: `買 ${formatted} ${currencyName}現鈔需要多少台幣？`,
+      answer: `以台銀現金賣出價換算，約需 ${formatAmount(sellCost)} 元台幣（1 ${currencyCode} = ${ex.cashSell} TWD，${SEO_RATE_EXAMPLES_DATE} 牌告，每日更新）。`,
+    },
+    {
+      question: `為什麼 ${formatted} ${currencyCode} 的換算結果和 Google 不一樣？`,
+      answer: `Google 顯示的市場中間價換算約 ${formatAmount(midCost)} 元台幣，但一般人換不到中間價；本頁以台銀實際牌告計算為 ${formatAmount(sellCost)} 元，差距約 ${formatAmount(Math.abs(sellCost - midCost))} 元台幣。`,
+    },
+  ];
+}
+
+/**
+ * 金額頁導流連結（#634）：被瘦身移除的完整內容（四種報價、常見金額、在地換匯管道、完整 FAQ）
+ * 以摘要形式導流回 pair 主頁，並保留反向幣對互鏈。
+ */
+export function buildAmountPageRelatedGuides(
+  currencyCode: string,
+  currencyName: string,
+  direction: 'to-twd' | 'twd-to-foreign' = 'to-twd',
+): RelatedGuideLink[] {
+  const code = currencyCode.toLowerCase();
+  if (direction === 'twd-to-foreign') {
+    return [
+      {
+        href: `/twd-${code}/`,
+        label: `台幣換${currencyName}完整指南`,
+        description: `四種報價對比、常用金額對照、${currencyName}換匯管道與完整常見問題`,
+      },
+      {
+        href: `/${code}-twd/`,
+        label: `${currencyName}換台幣`,
+        description: `反向查詢：${currencyName}對台幣即時匯率，換回台幣看台銀現金買入價`,
+      },
+    ];
+  }
+  return [
+    {
+      href: `/${code}-twd/`,
+      label: `${currencyName}對台幣完整指南`,
+      description: `四種報價對比、常用金額對照、${currencyName}換匯管道與完整常見問題`,
+    },
+    {
+      href: `/twd-${code}/`,
+      label: `台幣換${currencyName}`,
+      description: `反向查詢：出國前用台幣換${currencyName}，以台銀實際賣出價估算換匯預算`,
+    },
+  ];
 }
 
 /** 金額頁 Answer Block 資料（雙向答案＋中間價對比，純計算）。 */
@@ -354,11 +454,11 @@ export function getCurrencyLandingPageContent(
       : []),
     {
       question: `買${displayName}今日台銀賣出價是多少？`,
-      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0] ?? 1)}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0] ?? 1)}使用本工具可查看最新牌告匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
       question: `${formatAmount(indexablePopularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看最新換算結果。`,
     },
     {
       question: `出國刷卡的匯率跟 ${APP_INFO.shortName} 顯示的${displayName}台銀牌告匯率一樣嗎？`,
@@ -504,7 +604,7 @@ export function getReverseCurrencyLandingPageContent(
     },
     {
       question: `${formatAmount(popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
-      answer: `${buildTwdToForeignRateSentence(code, popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+      answer: `${buildTwdToForeignRateSentence(code, popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看最新換算結果。`,
     },
     {
       question: `出國刷卡跟換現金哪個比較省？`,

@@ -31,7 +31,7 @@ const OUTPUT = resolve(ROOT, 'src/config/generated/seo-rate-examples.ts');
 const OPTIONAL_MODE = process.env.SEO_RATE_EXAMPLES_OPTIONAL === '1';
 
 const CDN_URL = RATES_API.latestCdn;
-/** MoneyBox CDN URL（每5分鐘由 GitHub Actions 更新，見 update-moneybox-rates.yml） */
+/** MoneyBox CDN URL（GitHub Actions 排程約每 5 分鐘檢查更新，見 update-moneybox-rates.yml） */
 const MONEYBOX_CDN_URL = RATES_API.moneyboxCdn;
 /**
  * 免費市場中間匯率 API（以 TWD 為基準，rates[code] = 1 TWD 可換多少 code）。
@@ -112,7 +112,7 @@ function formatDateInTaipei(date = new Date()) {
 
 /**
  * 從 CDN 取得 MoneyBox 最新 TWD↔KRW 雙向匯率。
- * 資料由 GitHub Actions update-moneybox-rates.yml 每5分鐘更新至 data 分支。
+ * 資料由 GitHub Actions update-moneybox-rates.yml 排程約每 5 分鐘更新至 data 分支。
  * CDN URL 由 RATES_API.moneyboxCdn 提供。
  *
  * sell：換匯所「賣出 KRW」給旅客（旅客持 TWD 換 KRW）的到手匯率。

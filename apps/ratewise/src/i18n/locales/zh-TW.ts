@@ -196,8 +196,8 @@ const zhTW = {
     dataSource: '匯率資料來源',
     taiwanBank: '台灣銀行',
     updateFrequency: '更新頻率',
-    fiveMinutes: '5 分鐘',
-    updateNote: '匯率資料每 5 分鐘自動更新。',
+    fiveMinutes: '約 5 分鐘',
+    updateNote: '匯率資料約每 5 分鐘檢查更新，實際新鮮度依資料來源與快取而定。',
     customThemePresets: '精選色票',
     customThemeCustomize: '自訂…',
     customThemeHex: 'HEX 色碼',
@@ -431,7 +431,7 @@ const zhTW = {
     disclaimer:
       '本服務匯率資料參考臺灣銀行牌告匯率（現金與即期賣出價）· 實際交易匯率以各銀行公告為準',
     disclaimerDesktop:
-      '匯率數據參考臺灣銀行牌告匯率，每 5 分鐘更新。僅供參考，實際交易請以銀行公告為準。',
+      '匯率數據參考臺灣銀行牌告匯率，約每 5 分鐘檢查更新。僅供參考，實際交易請以銀行公告為準。',
     faq: '常見問題',
     about: '關於我們',
     appName: APP_INFO.subtitle,

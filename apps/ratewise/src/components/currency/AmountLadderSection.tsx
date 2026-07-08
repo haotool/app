@@ -14,6 +14,8 @@ export interface AmountLadderSectionProps {
   pathname: string;
   forwardLadder: ForwardLadderRow[];
   reverseLadder: ReverseLadderRow[];
+  /** 金額頁當前金額：對應列標記為本頁（#634），不自我連結。 */
+  highlightAmount?: number | null;
 }
 
 export function AmountLadderSection({
@@ -23,8 +25,27 @@ export function AmountLadderSection({
   pathname,
   forwardLadder,
   reverseLadder,
+  highlightAmount = null,
 }: AmountLadderSectionProps) {
   const basePath = pathname.replace(/\/$/, '');
+
+  // 當前金額列：純文字＋「本頁」標記取代自我連結。
+  const amountCell = (amount: number) =>
+    amount === highlightAmount ? (
+      <span className="font-medium tabular-nums text-text">
+        {formatNum(amount)}
+        <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-2xs font-semibold text-primary-on-surface">
+          本頁
+        </span>
+      </span>
+    ) : (
+      <Link
+        to={`${basePath}/${amount}/`}
+        className="font-medium tabular-nums text-primary-on-surface hover:underline"
+      >
+        {formatNum(amount)}
+      </Link>
+    );
 
   return (
     <div
@@ -66,30 +87,24 @@ export function AmountLadderSection({
         <tbody>
           {isTwdToForeign
             ? reverseLadder.map((row) => (
-                <tr key={row.twdAmount} className="border-b border-border/40 last:border-b-0">
-                  <td className="py-2.5 pr-3">
-                    <Link
-                      to={`${basePath}/${row.twdAmount}/`}
-                      className="font-medium tabular-nums text-primary-on-surface hover:underline"
-                    >
-                      {formatNum(row.twdAmount)}
-                    </Link>
-                  </td>
+                <tr
+                  key={row.twdAmount}
+                  className={`border-b border-border/40 last:border-b-0 ${row.twdAmount === highlightAmount ? 'bg-primary/5' : ''}`}
+                  aria-current={row.twdAmount === highlightAmount ? 'page' : undefined}
+                >
+                  <td className="py-2.5 pr-3">{amountCell(row.twdAmount)}</td>
                   <td className="py-2.5 text-right font-medium tabular-nums text-text">
                     {formatNum(row.foreignAtCashSell)} {currencyCode}
                   </td>
                 </tr>
               ))
             : forwardLadder.map((row) => (
-                <tr key={row.amount} className="border-b border-border/40 last:border-b-0">
-                  <td className="py-2.5 pr-3">
-                    <Link
-                      to={`${basePath}/${row.amount}/`}
-                      className="font-medium tabular-nums text-primary-on-surface hover:underline"
-                    >
-                      {formatNum(row.amount)}
-                    </Link>
-                  </td>
+                <tr
+                  key={row.amount}
+                  className={`border-b border-border/40 last:border-b-0 ${row.amount === highlightAmount ? 'bg-primary/5' : ''}`}
+                  aria-current={row.amount === highlightAmount ? 'page' : undefined}
+                >
+                  <td className="py-2.5 pr-3">{amountCell(row.amount)}</td>
                   <td className="py-2.5 pr-3 text-right tabular-nums text-text-muted">
                     {row.twdAtCashBuy !== null ? `${formatNum(row.twdAtCashBuy)} TWD` : '—'}
                   </td>

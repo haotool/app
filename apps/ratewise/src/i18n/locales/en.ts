@@ -197,8 +197,8 @@ const en = {
     dataSource: 'Exchange Rate Source',
     taiwanBank: 'Taiwan Bank',
     updateFrequency: 'Update Frequency',
-    fiveMinutes: '5 minutes',
-    updateNote: 'Exchange rates are updated every 5 minutes.',
+    fiveMinutes: '~5 minutes',
+    updateNote: 'Rates are checked for updates about every 5 minutes.',
     customThemePresets: 'Curated Colors',
     customThemeCustomize: 'Customize…',
     customThemeHex: 'HEX Code',
@@ -443,7 +443,7 @@ const en = {
     disclaimer:
       'Exchange rates are based on Taiwan Bank official rates (cash and spot selling rates). Actual transaction rates may vary.',
     disclaimerDesktop:
-      'Exchange rates from Taiwan Bank, updated every 5 minutes. For reference only.',
+      'Exchange rates from Taiwan Bank, checked for updates about every 5 minutes. For reference only.',
     faq: 'FAQ',
     about: 'About Us',
     appName: APP_INFO.shortName,
