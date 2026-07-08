@@ -557,11 +557,15 @@ export const useConverterStore = create<ConverterState>()(
         cardRateEnabled: state.cardRateEnabled,
         cardFeePercent: state.cardFeePercent,
       }),
-      onRehydrateStorage: () => (_state, error) => {
-        if (error) return;
+      // issue #666：localStorage 為同步 storage，本回呼於 create() 內同步觸發——
+      // 此時模組綁定 useConverterStore 仍在 TDZ，經其呼叫會拋 ReferenceError 且被
+      // persist middleware 靜默吞掉（遷移／sanitize 全滅、hasHydrated 恆 false）。
+      // 必須使用回呼參數 state（閉包 get/set），不可引用模組綁定。
+      onRehydrateStorage: () => (state, error) => {
+        if (error || !state) return;
         // 舊版個別 key 的一次性遷移
-        useConverterStore.getState().__migrateFromLegacy();
-        useConverterStore.getState().__validateAndSanitize();
+        state.__migrateFromLegacy();
+        state.__validateAndSanitize();
       },
     },
   ),

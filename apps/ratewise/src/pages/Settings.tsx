@@ -38,7 +38,7 @@ import {
   Rows3,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SEOHelmet } from '../components/SEOHelmet';
@@ -46,14 +46,15 @@ import { motion } from 'motion/react';
 import { useAppTheme } from '../hooks/useAppTheme';
 import { useCustomThemeDraft } from '../hooks/useCustomThemeDraft';
 import { useInlineConfirm } from '../hooks/useInlineConfirm';
-import { STYLE_OPTIONS } from '../config/themes';
-import { choosePrimaryForeground } from '../config/custom-theme';
+import { STYLE_OPTIONS, DEFAULT_THEME_CONFIG } from '../config/themes';
+import { choosePrimaryForeground, DEFAULT_CUSTOM_PRIMARY } from '../config/custom-theme';
 import { CustomThemeSheet } from '../components/CustomThemeSheet';
 import { LANGUAGE_OPTIONS, getResolvedLanguage, type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { transitions, segmentedSwitch } from '../config/animations';
 import { APP_ONLY_PAGE_SEO } from '../config/seo-metadata';
 import type { ConverterV2Variant, RateMode } from '../features/ratewise/types';
+import { DEFAULT_CONVERTER_V2_VARIANT, DEFAULT_RATE_MODE } from '../features/ratewise/constants';
 import { useConverterStore } from '../stores/converterStore';
 import {
   subscribeConverterV2Variant,
@@ -62,25 +63,70 @@ import {
 } from '../config/converter-v2-flag';
 import { isSplashEnabled, setSplashEnabled, SPLASH_PREVIEW_EVENT } from '../utils/splashPreference';
 
+// SSR 環境呼叫 useLayoutEffect 會產生 React 警告；依 window 存在與否切換（同 #664 慣例）。
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+// issue #666：/settings 為預渲染頁，persisted 偏好（variant/rateMode/theme/splash）若於
+// 首幀直讀，client render 路徑（hydration de-opt／早期更新／SSG fallback guard）首幀輸出
+// 會偏離 SSG HTML，屬 #653 同族破口。模組級旗標記錄本次 page load 是否已完成一次
+// hydration：SPA 導覽 remount 首幀直接依 persisted 偏好渲染，不重演 two-pass（零閃爍）。
+let hasCompletedHydration = false;
+
+// 測試專用：重置 hydration 旗標，模擬新的 page load。
+// eslint-disable-next-line react-refresh/only-export-components
+export function resetSettingsHydrationForTests() {
+  hasCompletedHydration = false;
+}
+
 export default function Settings() {
   const { t, i18n } = useTranslation();
-  const { config, style, setStyle, customPrimary, commitCustomTheme, resetTheme, isLoaded } =
-    useAppTheme();
+  const {
+    config,
+    style: persistedStyle,
+    setStyle,
+    customPrimary: persistedCustomPrimary,
+    commitCustomTheme,
+    resetTheme,
+    isLoaded,
+  } = useAppTheme();
   const pageSeo = APP_ONLY_PAGE_SEO.settings;
-  const { rateMode, setRateMode, singleConverterVariant, setSingleConverterVariant } =
-    useConverterStore();
+  const {
+    rateMode: persistedRateMode,
+    setRateMode,
+    singleConverterVariant: persistedConverterVariant,
+    setSingleConverterVariant,
+  } = useConverterStore();
+
+  // Two-pass render（#666，比照 #664）：第一 pass（hydration）所有 persisted 欄位一律
+  // 沿用 SSG server snapshot 值，保證任何強制 client render 的首幀輸出與預渲染 HTML 一致；
+  // 第二 pass 由 layout effect 於 paint 前切回 persisted 偏好，無多餘可見預設幀。
+  const [hydrated, setHydrated] = useState(hasCompletedHydration);
+
+  useIsomorphicLayoutEffect(() => {
+    hasCompletedHydration = true;
+    setHydrated(true);
+  }, []);
 
   // URL override 提示：effective 值（含 ?converter= 覆寫）與儲存偏好不一致時顯示 badge。
-  // server snapshot 恆 legacy，與 SSG 輸出一致（hydration 安全）。
+  // server snapshot 恆 legacy；hydration 完成前 client snapshot 也固定走 server 值（同 #664）。
   const effectiveConverterVariant = useSyncExternalStore(
     subscribeConverterV2Variant,
-    getConverterV2Variant,
+    hydrated ? getConverterV2Variant : getConverterV2VariantServerSnapshot,
     getConverterV2VariantServerSnapshot,
   );
-  const isConverterVariantOverridden = effectiveConverterVariant !== singleConverterVariant;
 
-  // 啟動畫面偏好：與 useAppTheme 相同模式（initializer 讀 localStorage，SSR 回傳預設）。
-  const [splashEnabled, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
+  // 啟動畫面偏好：initializer 讀 localStorage（SSR 回傳預設 true）。
+  const [splashEnabledState, setSplashEnabledState] = useState<boolean>(() => isSplashEnabled());
+
+  // 首幀顯示值：hydration 完成前一律用 SSG 預設（zen／品牌藍／auto／legacy／splash on）。
+  const style = hydrated ? persistedStyle : DEFAULT_THEME_CONFIG.style;
+  const customPrimary = hydrated ? persistedCustomPrimary : DEFAULT_CUSTOM_PRIMARY;
+  const rateMode = hydrated ? persistedRateMode : DEFAULT_RATE_MODE;
+  const singleConverterVariant = hydrated
+    ? persistedConverterVariant
+    : DEFAULT_CONVERTER_V2_VARIANT;
+  const splashEnabled = hydrated ? splashEnabledState : true;
+  const isConverterVariantOverridden = effectiveConverterVariant !== singleConverterVariant;
 
   // 主題工作室 draft 模式（E7 wave-B）：開啟即時預覽全站、關閉 sheet 才 commit persist、
   // 「取消」回滾開啟前快照。
