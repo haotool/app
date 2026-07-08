@@ -18,6 +18,7 @@
 
 import { logger } from '../utils/logger';
 import { fetchWithRequestId } from '../utils/requestId';
+import { shareInFlight } from '../utils/shareInFlight';
 import type { CurrencyCode, RateType } from '../features/ratewise/types';
 import { CDN_DATA_BASE, RAW_DATA_BASE, RATES_API } from '../config/api-endpoints';
 
@@ -294,6 +295,10 @@ async function tryFetchAggregate(maxDays: number): Promise<HistoricalRateData[] 
  */
 const cache = new Map<string, { data: unknown; timestamp: number }>();
 
+// 併發去重（#669）：同鍵請求共享同一 in-flight promise——冷快取下雙 hook 同時掛載
+// （卡片＋sheet 趨勢）aggregate 與 latest 各僅發一次，完成後自清。
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
 /** localStorage 歷史數據快取結構 */
 interface StorageHistoryCache {
   version: number;
@@ -510,24 +515,26 @@ export async function fetchLatestRates(): Promise<RateSnapshot> {
     return buildLhciMockRates(new Date());
   }
 
-  try {
-    const data = await fetchWithFallback<RateSnapshot>(
-      CDN_URLS.latest,
-      `${CACHE_KEY_PREFIX}-latest`,
-    );
+  return shareInFlight(inFlightRequests, `${CACHE_KEY_PREFIX}-latest-inflight`, async () => {
+    try {
+      const data = await fetchWithFallback<RateSnapshot>(
+        CDN_URLS.latest,
+        `${CACHE_KEY_PREFIX}-latest`,
+      );
 
-    logger.info(`Latest rates fetched: ${data.updateTime}`, {
-      service: 'exchangeRateHistoryService',
-    });
-    return data;
-  } catch (error) {
-    logger.error(
-      'Failed to fetch latest rates',
-      error instanceof Error ? error : new Error(String(error)),
-      { service: 'exchangeRateHistoryService' },
-    );
-    throw error;
-  }
+      logger.info(`Latest rates fetched: ${data.updateTime}`, {
+        service: 'exchangeRateHistoryService',
+      });
+      return data;
+    } catch (error) {
+      logger.error(
+        'Failed to fetch latest rates',
+        error instanceof Error ? error : new Error(String(error)),
+        { service: 'exchangeRateHistoryService' },
+      );
+      throw error;
+    }
+  });
 }
 
 /**
@@ -578,8 +585,18 @@ export async function fetchHistoricalRates(date: Date): Promise<RateSnapshot> {
 export async function fetchHistoricalRatesRange(
   maxDays: number = CONFIG.MAX_HISTORY_DAYS,
 ): Promise<HistoricalRateData[]> {
-  const startTime = performance.now();
   const totalDays = Math.min(Math.max(1, Math.floor(maxDays)), CONFIG.MAX_HISTORY_DAYS);
+  // 併發去重（#669）：同天數併發請求共享單一 in-flight promise，冷快取 aggregate 僅發一次。
+  return shareInFlight(inFlightRequests, `${CACHE_KEY_PREFIX}-range-${totalDays}-inflight`, () =>
+    fetchHistoricalRatesRangeInternal(totalDays, maxDays),
+  );
+}
+
+async function fetchHistoricalRatesRangeInternal(
+  totalDays: number,
+  maxDays: number,
+): Promise<HistoricalRateData[]> {
+  const startTime = performance.now();
 
   logger.info(`Fetching up to ${totalDays} days of historical rates`, {
     service: 'exchangeRateHistoryService',
@@ -694,6 +711,7 @@ export async function fetchHistoricalRatesRange(
  */
 export function clearCache(includeStorage = false): void {
   cache.clear();
+  inFlightRequests.clear();
   if (includeStorage) {
     try {
       if (typeof localStorage !== 'undefined') {

@@ -185,6 +185,56 @@ describe('fetchHistoricalRatesRange - aggregate endpoint', () => {
     expect(getTrendRate(first!, 'USD', 'spot')).toBeNull();
   });
 
+  it('併發同天數請求共享 in-flight promise：冷快取下 aggregate 僅發一次（#669）', async () => {
+    const mockAggregateData = {
+      updateTime: '2026-07-08T08:00:00+08:00',
+      dates: ['2026-07-07', '2026-07-06'],
+      rates: {
+        TWD: [1, 1],
+        USD: [32.215, 32.2],
+      },
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockAggregateData),
+    } as Response);
+
+    // 模擬卡片＋sheet 雙 hook 同時掛載：兩個併發請求。
+    const [first, second] = await Promise.all([
+      fetchHistoricalRatesRange(30),
+      fetchHistoricalRatesRange(30),
+    ]);
+
+    // 修正前 aggregate 無 in-flight 去重，冷快取請求 ×2（Workers 配額面）。
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toContain('history-30d.json');
+    // 共享同一 promise：兩端拿到同一結果。
+    expect(second).toBe(first);
+    expect(first).toHaveLength(2);
+  });
+
+  it('in-flight 完成後自清：後續請求可重新發出（不變成永久快取）', async () => {
+    const mockAggregateData = {
+      updateTime: '2026-07-08T08:00:00+08:00',
+      dates: ['2026-07-07'],
+      rates: { TWD: [1], USD: [32.2] },
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockAggregateData),
+    } as Response);
+
+    await fetchHistoricalRatesRange(30);
+    // 第一次已完成（in-flight 已清），第二次為新請求（aggregate 路徑本就無記憶體快取）。
+    await fetchHistoricalRatesRange(30);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
   it('請求天數超過 aggregate 可用天數時應 graceful 處理', async () => {
     // Arrange: aggregate 只有 10 天，但請求 30 天
     const dates = Array.from({ length: 10 }, (_, i) => {

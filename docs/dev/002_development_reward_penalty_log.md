@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+203
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+204
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-669-e8-wave-b-residuals
+- 原因：#668 審查三殘項＋QA-J 兩補充——settle 後單按運算子 overlay 無計時器清除、sheet 專屬 useConverterTrend 常駐掛載且 service 無 in-flight 去重致冷快取 aggregate ×2、flushHistorySettle 註解誤稱 aria-live 同值重播、換錢所切換後 SR status 停留舊播報、運算式中間 settle 值（如 505）寫入歷史噪音
+- 解法：handleExpressionChange 於 inProgress 一律（重）排同一 settle 計時（無 pending 時作 overlay 隱藏計時）、shareInFlight util 收斂併發共享（exchangeRateHistoryService＋moneyboxRateService 同套，aggregate/latest 冷快取各 ×1，finally identity check 防 clear 後誤刪）、註解如實改寫（同值不重播）、來源切換排 announce-only settle 重播新值（不寫歷史協調 B2 cancel）、timer settle 落在運算式未完成時只播報不寫入（PM 裁決接受 (a) 格：dirty 延至切列/unmount/visibilitychange hidden 邊界寫最終值，封閉關 app 遺失窗口）；新增 unit 15 條（兩輪紅燈驗證 8＋4 紅）＋全套綠＋converter-v2 e2e 28 綠
 
 - 日期：2026-07-08
 - ID：reward-rw-661-002-ci-merge-base-guard

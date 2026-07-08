@@ -1615,6 +1615,200 @@ describe('SingleConverterV2 - E8 wave-B：趨勢 sheet 強化（缺口 8）', ()
   });
 });
 
+describe('SingleConverterV2 - E8 wave-B 審查殘項（#669）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('第 1 項：settle 後單按運算子（值未變），overlay 沿 settle 計時自動清除且不寫歷史', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    // 先完成一次 settle（dirty 已消化）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+
+    // settle 後單按運算子：值未變（引擎無回寫），overlay 顯示。
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(screen.getByTestId('converter-v2-expression')).toBeInTheDocument();
+
+    // 修正前無 pending settle 時不排計時，overlay 常駐至下次輸入；修正後同一 settle 計時清除。
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+    // overlay 隱藏計時為純視覺清除：不得額外寫入歷史。
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('QA-J J-4：運算式未完成的 timer settle 只播報不寫入歷史，切列邊界才寫入最終值', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    // 1000 + 5 停頓 2s：settle 落在運算式進行中（中間值情境）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    // 修正前中間值寫入歷史造成噪音；修正後 timer settle 不寫入，SR 播報照常。
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent(
+      '1,000.00 TWD 等於 31.58 USD',
+    );
+    expect(screen.queryByTestId('converter-v2-expression')).not.toBeInTheDocument();
+
+    // 切列＝運算式作廢邊界（keypad remount），列值即最終值 → 此時才寫入一筆。
+    fireEvent.click(screen.getByTestId('converter-v2-amount-to'));
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('QA-J J-4 補強：頁面轉入背景（visibilitychange hidden）flush deferred dirty，關 app 不遺失', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    // 1000 + 5 停頓 2s：deferred（運算式未完成不寫入）。
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+
+    try {
+      // 前景態的 visibilitychange（如切回前景）不觸發 flush。
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+      fireEvent(document, new Event('visibilitychange'));
+      expect(props.onAddToHistory).not.toHaveBeenCalled();
+
+      // 轉入背景（PWA 殺程序前最後寫入時機）：deferred dirty 立即寫入最終值。
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      fireEvent(document, new Event('visibilitychange'));
+      expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+
+      // 再次背景切換不重複寫入（dirty 已消化）。
+      fireEvent(document, new Event('visibilitychange'));
+      expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+    } finally {
+      // 還原 prototype getter，避免污染其他測試。
+      delete (document as unknown as Record<string, unknown>)['hidden'];
+    }
+  });
+
+  it('QA-J J-4 補強：unmount 移除 visibilitychange listener（無洩漏）', () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const { unmount } = render(<SingleConverterV2 {...buildProps()} />);
+
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
+
+  it('QA-J J-4：運算式未完成期間語意變更（swap）仍取消不寫（B2 語意不破）', () => {
+    const props = buildProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-+'));
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+
+    // 延後寫入的 dirty 不得跨語意變更存活。
+    fireEvent.click(screen.getByTestId('converter-v2-swap'));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+
+  function buildExchangeShopProps(overrides: Partial<SingleConverterProps> = {}) {
+    return buildProps({
+      fromCurrency: 'TWD',
+      toCurrency: 'KRW',
+      fromAmount: '1000',
+      toAmount: '42000',
+      exchangeShopCurrency: 'KRW',
+      onRateSourceChange: vi.fn(),
+      ...overrides,
+    });
+  }
+
+  it('QA-J J-2：換錢所切換後新值 settle 重播 SR status（announce-only 不寫歷史）', () => {
+    const props = buildExchangeShopProps();
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    // 先 settle 一次：SR 播報銀行來源結果。
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('42,000 KRW');
+
+    // 切換來源：父層以換錢所匯率重算 to 列。
+    fireEvent.click(screen.getByTestId('converter-v2-rate-source'));
+    rerender(<SingleConverterV2 {...props} rateSource="exchange-shop" toAmount="43210" />);
+
+    // 修正前 SR status 停留舊播報；修正後新來源值沿同一 settle 計時自然重播。
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('43,210 KRW');
+    // announce-only：與 B2 cancel 語意協調，不得把來源切換後的重算值寫入歷史。
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('QA-J J-2：換錢所啟用中 chip tap 回銀行同屬來源切換，新值 settle 重播', () => {
+    const props = buildExchangeShopProps({ rateSource: 'exchange-shop', toAmount: '43210' });
+    const { rerender } = render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-key-5'));
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('43,210 KRW');
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-chip'));
+    rerender(<SingleConverterV2 {...props} rateSource="bank" toAmount="42000" />);
+
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('42,000 KRW');
+    expect(props.onAddToHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('QA-J J-2：尚無任何播報時切換來源不排定重播（無 stale status 可修）', () => {
+    const props = buildExchangeShopProps();
+    render(<SingleConverterV2 {...props} />);
+
+    fireEvent.click(screen.getByTestId('converter-v2-rate-source'));
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
+
+    expect(screen.getByTestId('converter-v2-sr-summary')).toHaveTextContent('');
+    expect(props.onAddToHistory).not.toHaveBeenCalled();
+  });
+});
+
 describe('SingleConverterV2 - E8 wave-B i18n keys（四語系守門）', () => {
   const locales = [
     ['zh-TW', zhTW],
