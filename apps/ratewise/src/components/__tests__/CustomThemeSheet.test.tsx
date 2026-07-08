@@ -262,6 +262,24 @@ describe('色票網格收斂（E7 wave-C，QA-I #6＋v3 單列 8 格）', () => 
     expect(screen.queryByTestId('custom-theme-picker')).not.toBeInTheDocument();
   });
 
+  it('#686 320 檔 slim 收斂：預覽卡收合單行摘要（導覽縮影隱藏）＋間距壓縮類就位', () => {
+    renderSheet();
+    // 預覽卡：導覽縮影 slim 隱藏、幣別對與匯率併一行、卡容器間距收斂。
+    expect(screen.getByTestId('custom-theme-preview-nav').className).toContain('slim:hidden');
+    const preview = screen.getByTestId('custom-theme-live-preview');
+    expect(preview.className).toContain('slim:mb-2.5');
+    expect(preview.querySelector('.bg-surface')?.className).toContain('slim:mb-2');
+    expect(preview.querySelector('.min-w-0')?.className).toContain('slim:flex');
+    // 背景色調圓票沿用 slim 兩級收斂模式（與精選色票一致）。
+    const toneCircle = screen
+      .getByTestId('background-tone-pure')
+      .querySelector('span[aria-hidden="true"]');
+    expect(toneCircle?.className).toContain('slim:h-8');
+    // 操作鈕列上方 scroller 底 padding 收斂（零捲動預算）。
+    const scroller = preview.closest('.overflow-y-auto');
+    expect(scroller?.className).toContain('slim:pb-4');
+  });
+
   it('v3 背景色調收斂為單列 6 preset（mint/rose 退出 UI、enum 向後相容）', () => {
     renderSheet();
     const group = screen.getByRole('group', { name: '背景色調' });

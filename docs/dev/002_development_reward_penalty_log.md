@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+198
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+199
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-686-theme-sheet-320-zero-scroll
+- 原因：主題工作室 v3 sheet 在 320×568（iPhone SE1 級）內容 566px > 容器 460px 溢出 106px，自訂亮度滑桿與取消／還原鈕需捲動才可及——#679 一屏零捲動主張在最小視口不成立（issue 686，QA-K K-1）
+- 解法：沿用 slim（≤360px）斷點收斂——預覽卡收合單行摘要（幣別對＋匯率併一行、導覽縮影隱藏，96→54px）＋對比提示 Aa chip 縮 h-7＋色調圓票 h-8＋間距/底 padding 收斂，320×568 內容 566→454px 零捲動（overflow 106→0）且 44px 熱區與 375/390 版面零變動；e2e 320 案補零捲動＋toBeInViewport 守門、unit 補 slim 類就位守門，custom-theme e2e 4/4 與 unit 全綠
 
 - 日期：2026-07-08
 - ID：reward-rw-634-amount-page-slim-dedupe

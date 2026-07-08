@@ -151,7 +151,7 @@ test.describe('主題工作室選色旅程（draft/commit 語意）', () => {
     expect(consoleErrors).toEqual([]);
   });
 
-  test('320px 極窄視口：單列 8 票 bounding box 不互貼、選中 ring 不裁切（v3 slim 收斂）', async ({
+  test('320px 極窄視口：單列 8 票 bounding box 不互貼、選中 ring 不裁切、sheet 零捲動（v3 slim 收斂＋#686）', async ({
     rateWisePage: page,
   }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -163,6 +163,17 @@ test.describe('主題工作室選色旅程（draft/commit 語意）', () => {
     await gotoSettings(page);
     await customCard(page).click();
     await expect(sheet(page)).toBeVisible();
+
+    // #686：320×568 預設態 sheet 零捲動——亮度滑桿與取消/還原鈕首屏完整可及。
+    const scroller = sheet(page).locator('.overflow-y-auto');
+    await expect
+      .poll(() => scroller.evaluate((el) => el.scrollHeight - el.clientHeight))
+      .toBeLessThanOrEqual(0);
+    await expect(sheet(page).getByTestId('custom-theme-tone-slider')).toBeInViewport({
+      ratio: 1,
+    });
+    await expect(sheet(page).getByTestId('custom-theme-cancel')).toBeInViewport({ ratio: 1 });
+    await expect(sheet(page).getByTestId('custom-theme-reset')).toBeInViewport({ ratio: 1 });
 
     const group = sheet(page).getByRole('group', { name: '精選色票' });
     const circles = group.locator('button > span[aria-hidden="true"]');

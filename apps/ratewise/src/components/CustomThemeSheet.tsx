@@ -6,6 +6,8 @@
  * 對比 gate 警告（近白/近黑主色＋一鍵採用建議色）→ 背景色調單列 6 preset（色調圓票）＋
  * 亮度滑桿（wave-C 連續 tone：任意 L 值 AA 不破）→ 取消／還原預設（二段確認）。
  * v3 緊湊化合約：390×844 sheet 開啟時上列全部控件一屏內完整可見（零捲動）。
+ * slim（≤360px，#686）：預覽卡收合為單行摘要（隱藏底部導覽縮影）＋區塊間距收斂，
+ * 320×568 預設態同樣零捲動；44px 熱區與 375+ 版面不變。
  *
  * 預覽縮影卡合約（wave-C）：只消費與全站相同的 CSS 變數（Tailwind 語義 token），
  * 禁止獨立配色計算——draft previewTheme 已把派生變數即時寫入 documentElement inline vars，
@@ -228,18 +230,19 @@ export function CustomThemeSheet({
       enableDrag={false}
       testId="custom-theme-sheet"
     >
-      <div className="overflow-y-auto px-5 pb-8">
+      <div className="overflow-y-auto px-5 pb-8 slim:pb-4">
         {/* 即時預覽縮影卡（QA-I #3）：真實元件縮影——匯率卡（surface 層次＋on-surface 文字）、
             品牌 CTA（bg-primary-strong，與全站 addToHistory 同 token）、底部導覽 active 指示。
-            只消費全站語義 token（CSS 變數），draft 即時繼承 inline vars（含深色調）。 */}
+            只消費全站語義 token（CSS 變數），draft 即時繼承 inline vars（含深色調）。
+            slim（#686 320 檔零捲動）：收合為單行摘要——幣別對＋匯率併一行、導覽縮影隱藏。 */}
         <div
-          className="mb-4 max-h-[120px] overflow-hidden rounded-card border border-border/50 bg-background transition-colors duration-300"
+          className="mb-4 max-h-[120px] overflow-hidden rounded-card border border-border/50 bg-background transition-colors duration-300 slim:mb-2.5"
           data-testid="custom-theme-live-preview"
           aria-label={t('settings.customThemePreview')}
         >
-          <div className="mx-2.5 mt-2.5 rounded-xl bg-surface px-3 py-2">
+          <div className="mx-2.5 mt-2.5 rounded-xl bg-surface px-3 py-2 slim:mx-2 slim:mb-2 slim:mt-2 slim:py-1.5">
             <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
+              <div className="min-w-0 slim:flex slim:items-baseline slim:gap-1.5">
                 <p className="whitespace-nowrap text-2xs leading-tight text-text-muted">USD→TWD</p>
                 <p className="text-sm font-bold leading-tight tabular-nums text-text">32,215</p>
               </div>
@@ -253,7 +256,7 @@ export function CustomThemeSheet({
               <button
                 type="button"
                 tabIndex={-1}
-                className="pointer-events-none flex shrink-0 items-center gap-1 rounded-xl bg-primary-strong px-2.5 py-1.5 text-2xs font-semibold text-white transition-colors duration-300"
+                className="pointer-events-none flex shrink-0 items-center gap-1 rounded-xl bg-primary-strong px-2.5 py-1.5 text-2xs font-semibold text-white transition-colors duration-300 slim:py-1"
                 aria-hidden="true"
                 data-testid="custom-theme-preview-cta"
               >
@@ -263,7 +266,7 @@ export function CustomThemeSheet({
             </div>
           </div>
           <div
-            className="mt-1.5 flex items-start justify-around border-t border-border/60 px-4 pb-1 pt-1.5"
+            className="mt-1.5 flex items-start justify-around border-t border-border/60 px-4 pb-1 pt-1.5 slim:hidden"
             data-testid="custom-theme-preview-nav"
             aria-hidden="true"
           >
@@ -287,11 +290,11 @@ export function CustomThemeSheet({
             8 格已滿版，負邊距外擴必與鄰格重疊故不外擴）。圓票兩級收斂：slim（≤360px）
             h-8＋選中 ring offset 歸零、narrow（≤349px）h-7——經典捲軸環境（e2e headless）
             格寬再少 ~2px 仍不互貼、ring 不觸鄰票（320px bounding box e2e 守門）。 */}
-        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2">
+        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2 slim:mb-1.5">
           {t('settings.customThemePresets')}
         </p>
         <div
-          className="grid grid-cols-8 mb-2"
+          className="grid grid-cols-8 mb-2 slim:mb-1.5"
           role="group"
           aria-label={t('settings.customThemePresets')}
         >
@@ -330,7 +333,7 @@ export function CustomThemeSheet({
         <button
           type="button"
           onClick={() => setShowAdvanced((prev) => !prev)}
-          className="mb-4 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-control border border-border py-2 text-xs font-bold transition-colors hover:bg-primary/5"
+          className="mb-4 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-control border border-border py-2 text-xs font-bold transition-colors hover:bg-primary/5 slim:mb-2.5"
           aria-expanded={showAdvanced}
           data-testid="custom-theme-advanced-toggle"
         >
@@ -409,7 +412,11 @@ export function CustomThemeSheet({
         )}
 
         {/* 可讀性回饋（#632）：過淺主色不硬擋，即時預覽 clamp 後的實效文字色。 */}
-        <div role="status" aria-live="polite" className="mb-4 empty:mb-0 empty:h-0 space-y-2.5">
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 empty:mb-0 empty:h-0 space-y-2.5 slim:mb-2.5"
+        >
           {/* 近白/近黑主色 gate（QA-I #2＋#670 S3）：警告＋一鍵採用建議色（不硬擋）。 */}
           {contrastGate.isLowContrast && contrastGate.suggestedPrimary && (
             <div
@@ -437,11 +444,11 @@ export function CustomThemeSheet({
           )}
           {isTextClamped && (
             <div
-              className="flex items-center gap-3 rounded-control bg-surface-sunken px-3 py-2.5"
+              className="flex items-center gap-3 rounded-control bg-surface-sunken px-3 py-2.5 slim:py-2"
               data-testid="custom-theme-contrast-notice"
             >
               <span
-                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-compact bg-surface text-sm font-bold text-primary-on-surface shadow-sm"
+                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-compact bg-surface text-sm font-bold text-primary-on-surface shadow-sm slim:h-7"
                 aria-hidden="true"
               >
                 Aa
@@ -454,11 +461,11 @@ export function CustomThemeSheet({
         </div>
 
         {/* 背景色調單列 6 preset（v3 緊湊化）：色調圓票直接呈現底色（所見即所得）。 */}
-        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2">
+        <p className="text-2xs font-black uppercase tracking-[0.2em] opacity-40 mb-2 slim:mb-1.5">
           {t('settings.customThemeBackgroundTone')}
         </p>
         <div
-          className="mb-3 grid grid-cols-6 gap-1"
+          className="mb-3 grid grid-cols-6 gap-1 slim:mb-2"
           role="group"
           aria-label={t('settings.customThemeBackgroundTone')}
         >
@@ -469,12 +476,12 @@ export function CustomThemeSheet({
                 key={tone}
                 type="button"
                 onClick={() => handleSelectTone(tone)}
-                className="group flex cursor-pointer flex-col items-center gap-1"
+                className="group flex cursor-pointer flex-col items-center gap-1 slim:gap-0.5"
                 aria-pressed={isActive}
                 data-testid={`background-tone-${tone}`}
               >
                 <span
-                  className={`h-9 w-9 rounded-full border transition-all duration-150 ease-out group-active:scale-90 motion-reduce:transition-none ${
+                  className={`h-9 w-9 rounded-full border transition-all duration-150 ease-out group-active:scale-90 motion-reduce:transition-none slim:h-8 slim:w-8 ${
                     isActive
                       ? 'border-transparent ring-2 ring-primary ring-offset-2 ring-offset-surface scale-105'
                       : 'border-border group-hover:border-primary/40'
@@ -495,7 +502,7 @@ export function CustomThemeSheet({
         </div>
 
         {/* 亮度滑桿（wave-C 連續 tone）：0＝最深、100＝最淺；任意位置 AA 派生鏈守門。 */}
-        <label className="mb-4 block">
+        <label className="mb-4 block slim:mb-2.5">
           <span className="text-2xs font-black uppercase tracking-[0.2em] opacity-40">
             {t('settings.customThemeToneBrightness')}
           </span>
@@ -508,7 +515,7 @@ export function CustomThemeSheet({
             onChange={(event) => handleToneSlider(Number(event.target.value))}
             onPointerUp={endToneSlide}
             onBlur={endToneSlide}
-            className="custom-tone-slider mt-2 block w-full cursor-pointer"
+            className="custom-tone-slider mt-2 block w-full cursor-pointer slim:mt-1.5"
             style={{ backgroundImage: toneTrackGradient }}
             aria-label={t('settings.customThemeToneBrightness')}
             data-testid="custom-theme-tone-slider"
