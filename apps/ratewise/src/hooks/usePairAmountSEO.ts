@@ -24,6 +24,8 @@ export interface UsePairAmountSEOResult {
   seoTitle: string;
   seoDescription: string;
   seoCanonical: string;
+  /** 金額頁特化 H1；非金額頁為 null（沿用 pair 頁 heading）。 */
+  seoHeading: string | null;
   amount: number | null;
   /** 是否屬於 canonical 索引金額頁。 */
   isIndexableAmount: boolean;
@@ -54,6 +56,7 @@ export function usePairAmountSEO({
       seoTitle: defaultTitle,
       seoDescription: defaultDescription,
       seoCanonical: defaultCanonical,
+      seoHeading: null,
       amount: null,
       isIndexableAmount: true,
       isPrerendered: true,
@@ -61,12 +64,11 @@ export function usePairAmountSEO({
   }
 
   const amount = parsed;
-  const { title: seoTitle, description: seoDescription } = buildPairAmountSeo(
-    amount,
-    currencyCode,
-    currencyName,
-    direction,
-  );
+  const {
+    title: seoTitle,
+    description: seoDescription,
+    heading: seoHeading,
+  } = buildPairAmountSeo(amount, currencyCode, currencyName, direction);
 
   const isCanonicalAmountPage = isIndexableAmount(currencyCode, amount, direction);
 
@@ -77,6 +79,7 @@ export function usePairAmountSEO({
     seoTitle,
     seoDescription,
     seoCanonical,
+    seoHeading,
     amount,
     isIndexableAmount: isCanonicalAmountPage,
     isPrerendered: isCanonicalAmountPage,

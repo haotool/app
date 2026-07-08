@@ -25,7 +25,9 @@ import {
   HOMEPAGE_SEO,
   OPEN_DATA_PAGE_SEO,
   SELL_RATE_VS_MID_RATE_PAGE,
+  buildAmountPageRelatedGuides,
   buildForwardAmountLadder,
+  buildPairAmountFaq,
   buildPairAmountSeo,
   buildReverseAmountLadder,
   formatZhAmount,
@@ -415,5 +417,50 @@ describe('amount page v2', () => {
         expect(data!.cashBuyEstimate).toBeLessThan(data!.cashSell);
       }
     }
+  });
+});
+
+// ─── 8. 金額頁瘦身三段（#634） ───────────────────────────────────────────────
+
+describe('amount page slim（#634）', () => {
+  it('heading 為 title 問句前綴（H1/title 對齊，含金額與幣別）', () => {
+    const forward = buildPairAmountSeo(50000, 'KRW', '韓元', 'to-twd');
+    expect(forward.heading).toBe('5 萬韓元（50,000 KRW）換台幣是多少？');
+    expect(forward.title.startsWith(forward.heading)).toBe(true);
+
+    const reverse = buildPairAmountSeo(30000, 'JPY', '日圓', 'twd-to-foreign');
+    expect(reverse.heading).toBe('30,000 台幣換多少日圓？');
+    expect(reverse.title.startsWith(reverse.heading)).toBe(true);
+  });
+
+  it('to-twd 金額特化 FAQ 為純計算生成，含當前金額雙向答案與中間價對比', () => {
+    const faq = buildPairAmountFaq(50000, 'KRW', '韓元', 'to-twd');
+    expect(faq.length).toBeGreaterThanOrEqual(2);
+    const copy = faq.flatMap((f) => [f.question, f.answer]).join('\n');
+    expect(copy).toContain('50,000');
+    expect(copy).toContain('KRW');
+    expect(copy).toContain('現金賣出');
+    expect(copy).toContain('中間價');
+  });
+
+  it('twd-to-foreign 金額特化 FAQ 含台幣金額與可換外幣答案', () => {
+    const faq = buildPairAmountFaq(30000, 'JPY', '日圓', 'twd-to-foreign');
+    expect(faq.length).toBeGreaterThanOrEqual(2);
+    const copy = faq.flatMap((f) => [f.question, f.answer]).join('\n');
+    expect(copy).toContain('30,000 台幣');
+    expect(copy).toContain('JPY');
+    expect(copy).toContain('現金賣出');
+  });
+
+  it('導流連結首位指向 pair 主頁完整指南，並保留反向幣對互鏈', () => {
+    const forward = buildAmountPageRelatedGuides('KRW', '韓元', 'to-twd');
+    expect(forward[0]!.href).toBe('/krw-twd/');
+    expect(forward[0]!.label).toContain('完整指南');
+    expect(forward[1]!.href).toBe('/twd-krw/');
+
+    const reverse = buildAmountPageRelatedGuides('JPY', '日圓', 'twd-to-foreign');
+    expect(reverse[0]!.href).toBe('/twd-jpy/');
+    expect(reverse[0]!.label).toContain('完整指南');
+    expect(reverse[1]!.href).toBe('/jpy-twd/');
   });
 });

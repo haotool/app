@@ -1,7 +1,8 @@
 /**
  * 幣別 SEO 頁面共用元件：34 幣對頁＋金額頁 SSOT 渲染。
- * E5 wave-B 六段 IA：Answer Hero → 報價對比卡 → 階梯表/金額互鏈 → 在地情境卡片組 → FAQ 手風琴 → 相關連結。
- * 純呈現層：SEO head／JSON-LD／內容文字零變動，佈局與樣式全走 E1 token。
+ * pair 頁六段 IA：Answer Hero → 報價對比卡 → 階梯表/金額互鏈 → 在地情境卡片組 → FAQ 手風琴 → 相關連結。
+ * 金額頁瘦身三段（#634）：答案卡（Hero 插槽）→ 階梯表（標記本頁金額）→ 金額特化 FAQ，
+ * 其餘完整內容以導流段連回 pair 主頁，消除 90% 複製牆與 H1/title 錯位。
  * @see .claude/prds/ratewise-e5b-currency-page-uiux-design.md
  */
 
@@ -28,6 +29,8 @@ import { APP_INFO, getCopyrightNotice } from '../config/app-info';
 import { UPDATE_FREQUENCY_PHRASE } from '../config/data-freshness';
 import {
   buildAmountExchangeRateSpecificationJsonLd,
+  buildAmountPageRelatedGuides,
+  buildPairAmountFaq,
   buildRateDifferenceSentence,
   buildForwardAmountLadder,
   buildReverseAmountLadder,
@@ -88,15 +91,16 @@ export function CurrencyLandingPage({
   const { t } = useTranslation();
   const isTwdToForeign = direction === 'twd-to-foreign';
   // Wise-pattern：?amount=X 時覆蓋金額專屬 SEO。
-  const { seoTitle, seoDescription, seoCanonical, amount, isIndexableAmount } = usePairAmountSEO({
-    currencyCode,
-    currencyName,
-    pathname,
-    defaultTitle: title,
-    defaultDescription: description,
-    defaultCanonical: canonical,
-    direction,
-  });
+  const { seoTitle, seoDescription, seoCanonical, seoHeading, amount, isIndexableAmount } =
+    usePairAmountSEO({
+      currencyCode,
+      currencyName,
+      pathname,
+      defaultTitle: title,
+      defaultDescription: description,
+      defaultCanonical: canonical,
+      direction,
+    });
 
   // 靜態匯率（SSG 預渲染用）：供爬蟲在 ?amount= 頁讀取換算結果。
   const rateExample = SEO_RATE_EXAMPLES[currencyCode];
@@ -208,15 +212,101 @@ export function CurrencyLandingPage({
           ]
         : []),
     ],
-    howTo: {
-      name: isTwdToForeign
-        ? `如何查看 TWD 對 ${currencyCode} 匯率`
-        : `如何查看 ${currencyCode} 對 TWD 匯率`,
-      description: `使用 ${APP_INFO.shortName} ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,
-      steps: howToSteps,
-      totalTime: 'PT30S',
-    },
+    // HowTo schema 僅 pair 頁輸出：金額頁與 pair 頁同步驟重複會稀釋結構化訊號（#634）。
+    ...(amount === null
+      ? {
+          howTo: {
+            name: isTwdToForeign
+              ? `如何查看 TWD 對 ${currencyCode} 匯率`
+              : `如何查看 ${currencyCode} 對 TWD 匯率`,
+            description: `使用 ${APP_INFO.shortName} ${howToSteps.length} 步驟快速換算${currencyName}對台幣，並查看歷史趨勢與多幣別。`,
+            steps: howToSteps,
+            totalTime: 'PT30S',
+          },
+        }
+      : {}),
   };
+
+  // 金額頁（#634 瘦身三段）：答案卡＋階梯表（標記本頁）＋金額特化 FAQ，完整內容導流回 pair 主頁。
+  if (amount !== null) {
+    const amountFaqEntries = buildPairAmountFaq(amount, currencyCode, currencyName, direction);
+    const amountRelatedGuides = buildAmountPageRelatedGuides(currencyCode, currencyName, direction);
+
+    return (
+      <>
+        <SEOHelmet {...seoProps} />
+
+        <ContentPageLayout
+          width="wide-lg"
+          breadcrumbItems={[
+            { label: t('nav.home'), href: '/' },
+            {
+              label: isTwdToForeign ? `TWD → ${currencyCode}` : `${currencyCode} → TWD`,
+              href: `${pathname}/`,
+            },
+          ]}
+          testId="currency-landing-page"
+        >
+          <div className="space-y-6">
+            {/* 1. Answer Hero：金額特化 H1（消除 H1/title 錯位）＋換算結果答案卡＋CTA。 */}
+            <CurrencyAnswerHero
+              flag={currencyFlag}
+              heading={seoHeading ?? title}
+              description={seoDescription}
+              updatedDate={SEO_RATE_EXAMPLES_DATE}
+              quickAnswers={[]}
+              ctaLabel={
+                isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
+              }
+              ctaTo={converterHref}
+            >
+              {amountResult !== null && cashSell !== null && (
+                <AmountAnswerCard
+                  amount={amount}
+                  amountResult={amountResult}
+                  cashSell={cashSell}
+                  currencyCode={currencyCode}
+                  isTwdToForeign={isTwdToForeign}
+                  answerData={answerData}
+                  converterHref={converterHref}
+                />
+              )}
+            </CurrencyAnswerHero>
+
+            {/* 2. 金額階梯表：標記本頁金額列，其餘列互鏈至相鄰金額頁。 */}
+            {ladderRows.length > 0 && (
+              <AmountLadderSection
+                isTwdToForeign={isTwdToForeign}
+                currencyCode={currencyCode}
+                currencyName={currencyName}
+                pathname={pathname}
+                forwardLadder={forwardLadder}
+                reverseLadder={reverseLadder}
+                highlightAmount={amount}
+              />
+            )}
+
+            {/* 3. 金額特化 FAQ：僅保留與當前金額直接相關的問答。 */}
+            {amountFaqEntries.length > 0 && (
+              <section>
+                <CurrencySectionHeading icon={HelpCircle}>常見問題</CurrencySectionHeading>
+                <ContentFaqAccordion items={amountFaqEntries} />
+              </section>
+            )}
+
+            {/* 導流段：四種報價、換匯管道與完整 FAQ 收斂於 pair 主頁。 */}
+            <RelatedGuidesSection relatedGuides={amountRelatedGuides} />
+
+            {/* Data Source Notice */}
+            <footer className="text-center text-xs text-text-muted opacity-60">
+              <p>資料來源：臺灣銀行牌告匯率 · {UPDATE_FREQUENCY_PHRASE}</p>
+              <p className="mt-1">{getCopyrightNotice()}</p>
+            </footer>
+          </div>
+        </ContentPageLayout>
+      </>
+    );
+  }
 
   return (
     <>
@@ -235,7 +325,7 @@ export function CurrencyLandingPage({
       >
         {/* #594 二階：≥1024px 六段 IA 轉寬版兩欄 grid（全幅段落標 lg:col-span-2）；<1024px 佈局零變化。 */}
         <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
-          {/* 1. Answer Hero：頁面身分＋（金額頁換算結果）＋快速答案＋CTA。 */}
+          {/* 1. Answer Hero：頁面身分＋快速答案＋CTA。 */}
           <CurrencyAnswerHero
             flag={currencyFlag}
             heading={
@@ -248,19 +338,7 @@ export function CurrencyLandingPage({
               isTwdToForeign ? `開始換算 TWD → ${currencyCode}` : `開始換算 ${currencyCode} → TWD`
             }
             ctaTo={converterHref}
-          >
-            {amount !== null && amountResult !== null && cashSell !== null && (
-              <AmountAnswerCard
-                amount={amount}
-                amountResult={amountResult}
-                cashSell={cashSell}
-                currencyCode={currencyCode}
-                isTwdToForeign={isTwdToForeign}
-                answerData={answerData}
-                converterHref={converterHref}
-              />
-            )}
-          </CurrencyAnswerHero>
+          />
 
           {/* 2. 四報價卡（#618）：現金買/賣＋即期買/賣，缺值幣別誠實顯示不可用態。 */}
           {rateExample && (
@@ -277,24 +355,9 @@ export function CurrencyLandingPage({
             rateDifferenceSentence={rateDifferenceSentence}
           />
 
-          {/* 3. 金額階梯表（金額頁）＋常見金額互鏈（Toss 列表式）。 */}
-          {ladderRows.length > 0 && (
-            <AmountLadderSection
-              isTwdToForeign={isTwdToForeign}
-              currencyCode={currencyCode}
-              currencyName={currencyName}
-              pathname={pathname}
-              forwardLadder={forwardLadder}
-              reverseLadder={reverseLadder}
-            />
-          )}
-          {/* 金額頁另有階梯表佔一半欄（與報價對比卡成對），互鏈改全幅避免奇數子項右側懸空。 */}
+          {/* 3. 常見金額互鏈（Toss 列表式）。 */}
           {commonAmounts.length > 0 && (
-            <CommonAmountsSection
-              commonAmounts={commonAmounts}
-              pathname={pathname}
-              className={ladderRows.length > 0 ? 'lg:col-span-2' : undefined}
-            />
+            <CommonAmountsSection commonAmounts={commonAmounts} pathname={pathname} />
           )}
 
           {/* 4. 在地情境卡片組：匯率重點＋旅遊提示＋換匯管道比較。 */}

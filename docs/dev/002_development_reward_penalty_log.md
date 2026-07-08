@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+197
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+198
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-634-amount-page-slim-dedupe
+- 原因：206 個金額頁與 pair 主頁 90% 內容複製（六段 IA 全量渲染成重複牆）＋H1/title 錯位（H1 沿用 pair 頁泛用標題、title 為金額特化問句），duplicate content 壓 SEO 且閱讀負擔重（issue 634，QA-F P2 淘汰候選 3 裁決）
+- 解法：CurrencyLandingPage 金額頁分支瘦身三段（答案卡＋階梯表標記本頁金額列不自我連結＋buildPairAmountFaq 金額特化 FAQ），其餘 IA 以 buildAmountPageRelatedGuides 導流回 pair 主頁；H1 改 buildPairAmountSeo heading 與 title 對齊、金額頁移除重複 HowTo schema、canonical 自我指向不變；非金額 48 頁 parity 零 diff、206 金額頁平均可見文字 −58%、金額＋幣別 keyword 密度約 6.5→13.2/千字（抽 jpy-twd/10000、krw-twd/50000、usd-twd/100 人工核對）
 
 - 日期：2026-07-08
 - ID：reward-rw-627-update-frequency-honest-ssot

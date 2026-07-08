@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { CurrencyLandingPage } from '../CurrencyLandingPage';
 
@@ -154,5 +154,61 @@ describe('CurrencyLandingPage', () => {
         </MemoryRouter>,
       ),
     ).not.toThrow();
+  });
+
+  // ─── #634: 金額頁瘦身三段（答案卡＋階梯表標記本頁＋金額特化 FAQ＋導流回 pair 主頁）───
+  describe('#634: 金額頁瘦身', () => {
+    const renderAmountPage = () =>
+      render(
+        <MemoryRouter initialEntries={['/krw-twd/50000/']}>
+          <Routes>
+            <Route
+              path="/krw-twd/:amount/"
+              element={
+                <CurrencyLandingPage
+                  {...BASE_PROPS}
+                  answerCapsule={[{ question: '泛用快速答案', answer: '不應出現在金額頁' }]}
+                />
+              }
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+    it('H1 為金額特化問句（消除 H1/title 錯位）', () => {
+      renderAmountPage();
+      expect(
+        screen.getByRole('heading', { level: 1, name: '5 萬韓元（50,000 KRW）換台幣是多少？' }),
+      ).toBeInTheDocument();
+    });
+
+    it('渲染答案卡與階梯表，且當前金額列標記「本頁」不自我連結', () => {
+      renderAmountPage();
+      expect(screen.getByTestId('amount-answer-block')).toBeInTheDocument();
+      expect(screen.getByTestId('amount-ladder')).toBeInTheDocument();
+      expect(screen.getByText('本頁')).toBeInTheDocument();
+      // 當前金額（50,000）不得為連結；相鄰金額（10,000）維持互鏈。
+      expect(screen.queryByRole('link', { name: '50,000' })).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '10,000' })).toHaveAttribute(
+        'href',
+        '/krw-twd/10000/',
+      );
+    });
+
+    it('與 pair 頁重複的六段 IA 不再渲染（快速答案／pair FAQ／常見金額互鏈）', () => {
+      renderAmountPage();
+      expect(screen.queryByRole('heading', { name: '快速答案' })).not.toBeInTheDocument();
+      expect(screen.queryByText('泛用快速答案')).not.toBeInTheDocument();
+      // pair 頁完整 FAQ（BASE_PROPS.faqEntries）被金額特化 FAQ 取代。
+      expect(screen.queryByText('測試問題')).not.toBeInTheDocument();
+      // 常見金額互鏈段（commonAmounts）不再渲染。
+      expect(screen.queryByRole('link', { name: '50000 韓元多少台幣？' })).not.toBeInTheDocument();
+    });
+
+    it('導流段連回 pair 主頁完整指南', () => {
+      renderAmountPage();
+      const guideLink = screen.getByRole('link', { name: /韓元對台幣完整指南/ });
+      expect(guideLink).toHaveAttribute('href', '/krw-twd/');
+    });
   });
 });
