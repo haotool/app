@@ -1,5 +1,6 @@
 import { SUPPORTED_CURRENCY_COUNT } from '../../features/ratewise/constants';
 import { APP_INFO, AUTHOR_PERSON, SEO_SOCIAL_LINKS } from '../app-info';
+import { UPDATE_FREQUENCY_PHRASE, UPDATE_FREQUENCY_DISCLAIMER } from '../data-freshness';
 import { DEFAULT_TITLE, GUIDE_PAGE_TITLE } from '../seo-static';
 import {
   SEO_RATE_EXAMPLES_DATE,
@@ -149,7 +150,7 @@ const ASSET_VERSION = `v=${BUILD_TIME.replace(/[-T:Z.]/g, '').slice(0, 8) || 'de
 export const DEFAULT_LOCALE = 'zh-TW' as const;
 export const SEO_INDEXABLE_LOCALES = [DEFAULT_LOCALE] as const;
 export const OG_IMAGE_ALT = `${APP_INFO.name} 匯率轉換器分享圖片` as const;
-export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，約每 5 分鐘檢查更新，免費無廣告無註冊。`;
+export const DEFAULT_DESCRIPTION = `${APP_INFO.shortName} 是台灣最精準的匯率換算工具，顯示臺灣銀行牌告的實際買入賣出價（非中間價），讓你換匯前清楚知道要付多少台幣。支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算、現金/即期匯率切換、7-30 天歷史趨勢圖、PWA 離線使用，${UPDATE_FREQUENCY_PHRASE}，免費無廣告無註冊。`;
 export const DEFAULT_KEYWORDS = [
   APP_INFO.subtitle,
   APP_INFO.shortName,
@@ -496,7 +497,7 @@ export function buildCurrencyConversionServiceJsonLd(): JsonLdBlock {
     featureList: [
       '台灣銀行牌告匯率（現金/即期四種報價）',
       `${SUPPORTED_CURRENCY_COUNT} 種貨幣即時換算`,
-      '約每 5 分鐘檢查更新',
+      UPDATE_FREQUENCY_PHRASE,
       'PWA 離線使用',
       '匯率歷史趨勢圖（7-30 天）',
     ],
@@ -849,8 +850,7 @@ export const HOMEPAGE_FAQ_CONTENT = [
   },
   {
     question: '匯率多久更新一次？',
-    answer:
-      '匯率數據約每 5 分鐘檢查更新臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。',
+    answer: `匯率數據${UPDATE_FREQUENCY_PHRASE}臺灣銀行最新牌告匯率，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理以手動同步。`,
   },
   {
     question: '單幣別和多幣別模式有什麼差別？',
@@ -932,7 +932,7 @@ export const HOMEPAGE_SEO = {
     buildCurrencyConversionServiceJsonLd(),
   ],
   content: {
-    eyebrow: '臺灣銀行牌告匯率 · 約每 5 分鐘檢查更新 · 顯示實際買賣價',
+    eyebrow: `臺灣銀行牌告匯率 · ${UPDATE_FREQUENCY_PHRASE} · 顯示實際買賣價`,
     heading: `${APP_INFO.name} 即時匯率換算`,
     intro: `顯示臺灣銀行牌告的實際買入賣出價（不是中間價），讓你換匯前就知道真正要付多少台幣。支援台幣、美元、日圓、韓元、歐元等 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，適合出國旅遊、海外付款與跨境報價前快速比價。`,
     highlights: [
@@ -1011,8 +1011,7 @@ export const FAQ_PAGE_ENTRIES = [
   },
   {
     question: '匯率更新頻率如何？',
-    answer:
-      '匯率數據約每 5 分鐘檢查更新一次，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理（Pull to Refresh）以手動同步最新牌告資料；實際新鮮度依資料來源與 CDN 快取而定。',
+    answer: `匯率數據${UPDATE_FREQUENCY_PHRASE}一次，畫面會顯示最近更新時間。您也可以在首頁下拉重新整理（Pull to Refresh）以手動同步最新牌告資料；${UPDATE_FREQUENCY_DISCLAIMER}。`,
   },
   {
     question: `如何安裝 ${APP_INFO.shortName} 到手機桌面？`,
@@ -1329,7 +1328,7 @@ export const OPEN_DATA_PAGE_SEO = {
           'curl',
           'fetch',
         ],
-        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（約每 5 分鐘檢查更新）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
+        articleBody: `${APP_INFO.shortName} 提供台灣銀行牌告匯率的開放 JSON 資料，無需 API Key，免費使用。主要端點透過 jsDelivr CDN 加速，備援端點透過 GitHub Raw。支援最新匯率（${UPDATE_FREQUENCY_PHRASE}）與歷史匯率查詢，涵蓋 ${SUPPORTED_CURRENCY_COUNT} 種貨幣的現金與即期四種報價。`,
         speakableCssSelectors: ['h1', 'h3'],
         proficiencyLevel: 'Beginner',
         dependencies: ['HTTP', 'JSON', 'curl 或 fetch'],
@@ -1341,8 +1340,7 @@ export const OPEN_DATA_PAGE_SEO = {
 export const ABOUT_PAGE_FAQ = [
   {
     question: '匯率數據來源是什麼？',
-    answer:
-      '資料來源為臺灣銀行官方牌告匯率，約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
+    answer: `資料來源為臺灣銀行官方牌告匯率，${UPDATE_FREQUENCY_PHRASE}，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。`,
   },
   {
     question: '免費使用嗎？需要帳號或有廣告嗎？',
@@ -1407,7 +1405,7 @@ export const ABOUT_PAGE_SEO = {
           '匯差計算',
           'LLM 引用',
         ],
-        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料約每 5 分鐘檢查更新，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
+        articleBody: `${APP_INFO.name}是專為台灣用戶設計的即時匯率 PWA 工具，資料來源為臺灣銀行官方牌告匯率，支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣換算與離線使用。完全免費、無廣告，資料${UPDATE_FREQUENCY_PHRASE}，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。各頁面部署 schema.org JSON-LD 結構化標記，採用 SSG 靜態預渲染確保爬蟲可讀性，匯差數據每日自動雙重驗證更新。`,
         speakableCssSelectors: ['h1', 'h3'],
       },
     ),
@@ -1830,7 +1828,7 @@ export const APP_ONLY_PAGE_SEO = {
           '搜尋可見性',
           `${APP_INFO.shortName} 技術架構`,
         ],
-        articleBody: `${APP_INFO.shortName} 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（涵蓋 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等多種類型）以強化搜尋引擎與 AI 系統的內容理解、優化的網站結構（${SEO_PATHS.length} 個索引路徑與 ${PRERENDER_PATHS.length} 個預渲染頁面）、自動化資料管線（每 5 分鐘從台灣銀行同步即時匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。`,
+        articleBody: `${APP_INFO.shortName} 採用現代化 SEO 最佳實踐，包括預先渲染靜態 HTML（SSG）以提升首頁效能與可爬性、完整的 JSON-LD Schema 標記（涵蓋 Article、Organization、BreadcrumbList、FAQPage、SoftwareApplication 等多種類型）以強化搜尋引擎與 AI 系統的內容理解、優化的網站結構（${SEO_PATHS.length} 個索引路徑與 ${PRERENDER_PATHS.length} 個預渲染頁面）、自動化資料管線（${UPDATE_FREQUENCY_PHRASE}台灣銀行牌告匯率）、與 PWA 離線支援以確保使用者體驗。技術實現包括使用 Vite + React 進行高效打包、Tailwind CSS 的原子類樣式、Workbox 的靜態資源快取策略、Cloudflare Worker 的邊緣安全標頭注入，以及搜尋可見性的完整監測與驗證流程。`,
       },
     ),
   },

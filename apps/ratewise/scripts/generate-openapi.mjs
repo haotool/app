@@ -3,6 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { UPDATE_FREQUENCY_PHRASE } from '../src/config/data-freshness.ts';
 import { API_SEMANTICS_DOC, API_SEMANTICS_SCHEMA_VERSION } from '../src/config/api-semantics-v2.ts';
 import { PROVIDER_RATES_PATH } from '../src/config/api-endpoints.ts';
 import { buildPublicRateProviderMetadata } from '../src/config/rateProviderPublicMetadata.ts';
@@ -259,7 +260,7 @@ const currencyRateV2Schema = {
 
 const ratesResponseSchema = {
   type: 'object',
-  description: '匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）',
+  description: `匯率資料回應（由 GitHub Actions 排程更新，${UPDATE_FREQUENCY_PHRASE}）`,
   properties: {
     schemaVersion: {
       type: 'string',
@@ -500,7 +501,7 @@ const openApiSpec = {
     title: `${APP_INFO.shortName} 匯率 API`,
     version: API_VERSION,
     description: [
-      '臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。',
+      `臺灣銀行牌告匯率靜態 JSON API，由 GitHub Actions 排程更新（${UPDATE_FREQUENCY_PHRASE}）。`,
       '',
       '**匯率類型說明：**',
       '- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）',
@@ -580,7 +581,7 @@ const openApiSpec = {
     {
       url: RAW_DATA_BASE,
       description:
-        'GitHub Raw — 無快取端點，每次請求直接取得 data 分支最新版本（每 5 分鐘由 GitHub Actions 同步）。' +
+        `GitHub Raw — 無快取端點，每次請求直接取得 data 分支最新版本（由 GitHub Actions 排程更新，${UPDATE_FREQUENCY_PHRASE}）。` +
         '適合需要確保即時性的場景，但注意 GitHub 對未認證 IP 有速率限制（60 req/hr/IP）。',
     },
   ],
@@ -726,7 +727,7 @@ const openApiSpec = {
         summary: '取得最新匯率',
         description: [
           '取得臺灣銀行最新牌告匯率資料。',
-          '資料每 5 分鐘由 GitHub Actions 自動同步。',
+          `資料由 GitHub Actions 排程更新（${UPDATE_FREQUENCY_PHRASE}）。`,
           '包含各幣別的現金買入、現金賣出、即期買入、即期賣出四種報價。',
           'CDN 端點支援 ETag 條件式請求（If-None-Match），資料未變時回傳 304（零 body）。',
         ].join(' '),

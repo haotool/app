@@ -25,6 +25,7 @@ import { usePairAmountSEO } from '../hooks/usePairAmountSEO';
 import { SEO_RATE_EXAMPLES, SEO_RATE_EXAMPLES_DATE } from '../config/generated/seo-rate-examples';
 import type { AlternativeProvider } from '../config/generated/seo-rate-examples';
 import { APP_INFO, getCopyrightNotice } from '../config/app-info';
+import { UPDATE_FREQUENCY_PHRASE } from '../config/data-freshness';
 import {
   buildAmountExchangeRateSpecificationJsonLd,
   buildRateDifferenceSentence,
@@ -327,7 +328,7 @@ export function CurrencyLandingPage({
 
           {/* Data Source Notice */}
           <footer className="text-center text-xs text-text-muted opacity-60 lg:col-span-2">
-            <p>資料來源：臺灣銀行牌告匯率 · 每 5 分鐘自動更新</p>
+            <p>資料來源：臺灣銀行牌告匯率 · {UPDATE_FREQUENCY_PHRASE}</p>
             <p className="mt-1">{getCopyrightNotice()}</p>
           </footer>
         </div>

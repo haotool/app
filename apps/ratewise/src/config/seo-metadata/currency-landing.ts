@@ -354,11 +354,11 @@ export function getCurrencyLandingPageContent(
       : []),
     {
       question: `買${displayName}今日台銀賣出價是多少？`,
-      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0] ?? 1)}使用本工具可查看 5 分鐘即時更新匯率，點擊「開始換算」輸入任意金額查看結果。`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts[0] ?? 1)}使用本工具可查看最新牌告匯率，點擊「開始換算」輸入任意金額查看結果。`,
     },
     {
       question: `${formatAmount(indexablePopularAmounts.at(-1) ?? 0)} ${displayName}大約等於多少台幣？`,
-      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+      answer: `${buildCashSellRateSentence(code, indexablePopularAmounts.at(-1) ?? 0)}實際匯率以台銀牌告為準，請使用本工具查看最新換算結果。`,
     },
     {
       question: `出國刷卡的匯率跟 ${APP_INFO.shortName} 顯示的${displayName}台銀牌告匯率一樣嗎？`,
@@ -504,7 +504,7 @@ export function getReverseCurrencyLandingPageContent(
     },
     {
       question: `${formatAmount(popularTwdAmounts[2] ?? 30000)} 台幣可以換多少${displayName}？`,
-      answer: `${buildTwdToForeignRateSentence(code, popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看 5 分鐘即時更新結果。`,
+      answer: `${buildTwdToForeignRateSentence(code, popularTwdAmounts[2] ?? 30000)}實際匯率以台銀牌告為準，請使用本工具查看最新換算結果。`,
     },
     {
       question: `出國刷卡跟換現金哪個比較省？`,

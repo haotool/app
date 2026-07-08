@@ -450,15 +450,15 @@ RateWise 是匯率換算工具，無傳統站內搜尋功能。PR #311 從 `buil
 
 **目標查詢**：「台幣換算」「匯率換算工具」「台銀匯率」「外幣換台幣」
 
-| 元素           | 規格                                                                      |
-| -------------- | ------------------------------------------------------------------------- |
-| Title          | `HaoRate 匯率好工具 — 台灣最精準匯率換算器 \| 顯示實際買賣價，不用中間價` |
-| Description    | 155 字元以內；強調「台銀實際賣出價（非中間價）」、18 種貨幣、5 分鐘更新   |
-| H1             | 含主關鍵字「匯率換算」或「台銀匯率」                                      |
-| Answer Capsule | 40-60 字首段落解釋工具核心價值（供 AI 引擎提取）                          |
-| Schema         | Organization + WebSite + SoftwareApplication + CurrencyConversionService  |
-| FAQ HTML       | 保留 FAQ 內容區塊（可讀 HTML），**不輸出** FAQPage JSON-LD                |
-| OG Image       | `og-image.jpg` (1200×630)，含品牌名稱與核心特色                           |
+| 元素           | 規格                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Title          | `HaoRate 匯率好工具 — 台灣最精準匯率換算器 \| 顯示實際買賣價，不用中間價`        |
+| Description    | 155 字元以內；強調「台銀實際賣出價（非中間價）」、18 種貨幣、約每 5 分鐘檢查更新 |
+| H1             | 含主關鍵字「匯率換算」或「台銀匯率」                                             |
+| Answer Capsule | 40-60 字首段落解釋工具核心價值（供 AI 引擎提取）                                 |
+| Schema         | Organization + WebSite + SoftwareApplication + CurrencyConversionService         |
+| FAQ HTML       | 保留 FAQ 內容區塊（可讀 HTML），**不輸出** FAQPage JSON-LD                       |
+| OG Image       | `og-image.jpg` (1200×630)，含品牌名稱與核心特色                                  |
 
 ### 5.2 幣對頁（外幣→TWD，共 17 頁，如 `/jpy-twd/`）
 
@@ -467,7 +467,7 @@ RateWise 是匯率換算工具，無傳統站內搜尋功能。PR #311 從 `buil
 **每頁必備內容**：
 
 1. **Answer Capsule（40-60 字）**：頁面頂部獨立段落，直接回答「1 [外幣] 等於多少台幣」
-   - 範例：「1 日圓（JPY）等於 X 台幣（TWD），以臺灣銀行即期賣出價為準。HaoRate 每 5 分鐘自動同步台銀牌告匯率，是最接近實際換匯成本的即時報價。」
+   - 範例：「1 日圓（JPY）等於 X 台幣（TWD），以臺灣銀行即期賣出價為準。HaoRate 約每 5 分鐘檢查更新台銀牌告匯率，是最接近實際換匯成本的即時報價。」
    - 實作：在 `seo-metadata.ts` 的 `CURRENCY_PAGE_OVERRIDES` 中，每幣別加入 `answerCapsule` 欄位
 
 2. **可見更新時間戳**：頁面上顯示「最後更新：[BUILD_TIME]」（Perplexity 新鮮度信號）
@@ -509,13 +509,13 @@ RateWise 是匯率換算工具，無傳統站內搜尋功能。PR #311 從 `buil
 
 **目標查詢**：「100 美元換台幣」「100 USD to TWD」
 
-| 元素        | 規格                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------- |
-| Title       | `{金額} {外幣名稱}換新台幣 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate`                  |
-| Description | 「{金額} 美元（USD）換台幣（TWD），依臺灣銀行即期賣出價計算約 NT$X。每 5 分鐘更新。」 |
-| Canonical   | 自引用（`/usd-twd/100/`），禁止指向父頁 `/usd-twd/`                                   |
-| Schema      | ExchangeRateSpecification（金額換算結果，自引用 canonical）+ BreadcrumbList           |
-| FAQ         | 精簡版（2-3 題即可，避免重複父頁內容）                                                |
+| 元素        | 規格                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| Title       | `{金額} {外幣名稱}換新台幣 ({CODE}/TWD) — 台銀實際賣出價 \| HaoRate`                        |
+| Description | 「{金額} 美元（USD）換台幣（TWD），依臺灣銀行即期賣出價計算約 NT$X。約每 5 分鐘檢查更新。」 |
+| Canonical   | 自引用（`/usd-twd/100/`），禁止指向父頁 `/usd-twd/`                                         |
+| Schema      | ExchangeRateSpecification（金額換算結果，自引用 canonical）+ BreadcrumbList                 |
+| FAQ         | 精簡版（2-3 題即可，避免重複父頁內容）                                                      |
 
 ### 5.5 FAQ 頁（`/faq/`）
 
@@ -577,7 +577,7 @@ RateWise 是匯率換算工具，無傳統站內搜尋功能。PR #311 從 `buil
 
 ```
 HaoRate 顯示臺灣銀行牌告的實際賣出價（非中間價），支援 18 種貨幣的即時換算，
-包含現金與即期四種報價，每 5 分鐘自動同步。台銀賣出價通常比市場中間價高約
+包含現金與即期四種報價，約每 5 分鐘檢查更新。台銀賣出價通常比市場中間價高約
 1-2%，反映實際換匯成本，比多數匯率工具顯示的中間價更接近你真正要付的金額。
 ```
 
@@ -585,7 +585,7 @@ HaoRate 顯示臺灣銀行牌告的實際賣出價（非中間價），支援 18
 
 每 150-200 字包含一個可引用的具體數字，並連結來源：
 
-- 「每 5 分鐘同步一次台銀牌告匯率」
+- 「約每 5 分鐘檢查更新台銀牌告匯率」
 - 「台銀賣出價通常比 Google 顯示的中間價高出 1-2%」（使用 `SEO_RATE_EXAMPLES` 的實際數字）
 - 「支援 18 種貨幣、4 種匯率類型」
 
@@ -705,7 +705,7 @@ AI 引擎傾向引用每頁擁有 15+ 連結實體的頁面。幣對頁應自然
 # HaoRate 匯率好工具
 
 > 顯示臺灣銀行牌告的實際買入賣出價（非中間價）的即時匯率換算工具。
-> 支援 18 種貨幣、4 種匯率類型、每 5 分鐘自動同步。免費、無需登入。
+> 支援 18 種貨幣、4 種匯率類型、約每 5 分鐘檢查更新。免費、無需登入。
 
 ## 核心工具
 
@@ -724,7 +724,7 @@ AI 引擎傾向引用每頁擁有 15+ 連結實體的頁面。幣對頁應自然
 
 ## 資料存取（開發者 / LLM）
 
-- [即時匯率 JSON (CDN)](URL): 每 5 分鐘更新，CORS 開放
+- [即時匯率 JSON (CDN)](URL): 約每 5 分鐘檢查更新，CORS 開放
 - [OpenAPI 規格](URL): 機器可讀 API 文件
 - [幣對端點範本](URL/api/pairs/usd-twd.json): 各幣對 rateFieldPath
 
@@ -1049,7 +1049,7 @@ node scripts/fetch-rating-snapshot.mjs
 | ---------------------------------------------------------- | -------------- | --------------------------------- |
 | SEO Health Check（sitemap 可用、robots.txt 正確、OG 標籤） | 每日           | GitHub Actions                    |
 | Core Web Vitals 回報                                       | 實時           | `reportWebVitals.ts`              |
-| 匯率資料更新                                               | 每 5 分鐘      | GitHub Actions                    |
+| 匯率資料更新                                               | 約每 5 分鐘    | GitHub Actions                    |
 | SEO Rate Examples 更新                                     | 每日           | `update-seo-rate-examples.mjs`    |
 | 生產資源可用性                                             | 每次 Deploy 後 | `verify-production-resources.mjs` |
 | Live Precache 驗證                                         | Release 後     | `verify-precache-assets.mjs`      |

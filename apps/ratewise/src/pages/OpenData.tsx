@@ -8,6 +8,7 @@ import { AnswerCapsule } from '../components/AnswerCapsule';
 import { MailtoLink } from '../components/MailtoLink';
 import { LICENSING_NOTICE, OPEN_DATA_PAGE_SEO } from '../config/seo-metadata';
 import { APP_INFO } from '../config/app-info';
+import { UPDATE_FREQUENCY_PHRASE } from '../config/data-freshness';
 import {
   CDN_DATA_BASE,
   PROVIDER_RATES_PATH,
@@ -42,7 +43,7 @@ const DATA_SOURCES = [
     label: '同步機制',
     name: 'GitHub Actions',
     url: RATES_API.actionsUrl,
-    note: '每 5 分鐘自動抓取台銀最新牌告，寫入 data 分支 JSON',
+    note: '排程抓取台銀最新牌告寫入 data 分支 JSON，約每 5 分鐘檢查一次',
   },
   {
     label: '建議端點',
@@ -67,7 +68,7 @@ const API_ENDPOINTS = [
     cdnUrl: RATES_API.latestCdn,
     rawUrl: RATES_API.latestRaw,
     description: '最新匯率',
-    badge: '每 5 分鐘更新',
+    badge: UPDATE_FREQUENCY_PHRASE,
     note: '包含 17 種外幣的現金與即期四種報價，TWD 為基準幣；App 匯率模式請依 rateModeStrategies 選取 buy / sell / mid 欄位。',
   },
   {
@@ -96,8 +97,8 @@ const RATE_LIMIT_ITEMS = [
   },
   {
     source: '資料更新頻率',
-    limit: '每 5 分鐘',
-    note: '建議 client 端快取 5 分鐘（與 Actions 更新週期一致）',
+    limit: '約每 5 分鐘',
+    note: '建議 client 端快取 5 分鐘（與 Actions 檢查週期一致）',
   },
 ] as const;
 
@@ -568,7 +569,7 @@ const OpenData = () => {
           <div className="mb-8 flex flex-wrap gap-2">
             {[
               `${SUPPORTED_CURRENCIES.length} 種幣別`,
-              '每 5 分鐘更新',
+              UPDATE_FREQUENCY_PHRASE,
               '無需 API Key',
               'ETag 支援',
               'CDN 全球加速',
@@ -600,7 +601,7 @@ const OpenData = () => {
                   null,
                   {
                     label: 'GitHub Actions',
-                    sub: '每 5 分鐘',
+                    sub: '約每 5 分鐘',
                     color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
                   },
                   null,
@@ -719,7 +720,7 @@ const OpenData = () => {
                     </span>
                   </div>
                   <p className="break-words text-text">
-                    GitHub Actions 每 5 分鐘抓取台銀 CSV 後，會將本次各幣別匯率與前次儲存的
+                    GitHub Actions 約每 5 分鐘抓取台銀 CSV 後，會將本次各幣別匯率與前次儲存的
                     <code className="mx-1 rounded bg-surface-elevated px-1 font-mono text-xs">
                       rates
                     </code>

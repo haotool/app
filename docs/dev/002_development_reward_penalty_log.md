@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+196
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+197
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-627-update-frequency-honest-ssot
+- 原因：seo-paths.config.mjs 與 generate-llms-txt.mjs 等生成源殘留「每 5 分鐘自動同步」硬承諾（TS 版 #519 已軟化），markdown mirrors 與 llms.txt（AI crawler 主要入口）持續輸出舊承諾且雙 SSOT 漂移；Guide/設定頁與四語系 i18n 同樣硬編（issue 627＋PM 範圍擴充）
+- 解法：新增 data-freshness.ts 零依賴措辭 SSOT（約每 5 分鐘檢查更新，mjs/ts 皆可 import），mjs/ts 雙 SITE_CONFIG、core.ts、生成腳本、內容頁、幣別頁 footer、四語系與 README/SEO_MASTER_SSOT 全收斂並重生成 deterministic 生成物（冪等驗證），seo-copy-guard 加 lookbehind 防回流掃描（22 檔源頭＋tracked 生成物，含 pattern 自我驗證）
 
 - 日期：2026-07-08
 - ID：reward-rw-e10-single-fold-layout

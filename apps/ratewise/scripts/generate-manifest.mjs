@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_INFO, APP_MANIFEST } from '../src/config/app-info.ts';
+import { UPDATE_FREQUENCY_PHRASE } from '../src/config/data-freshness.ts';
 import { STYLE_DEFINITIONS } from '../src/config/themes.ts';
 
 // manifest 為靜態單一色，取預設 zen 主題的主色/背景作 SSOT，避免硬編 hex 漂移
@@ -43,7 +44,7 @@ const siteUrl = normalizeSiteUrl(process.env.VITE_SITE_URL || APP_INFO.siteUrl);
 const manifest = {
   name: APP_INFO.name,
   short_name: APP_MANIFEST.shortName,
-  description: `${APP_INFO.name}顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${currencyCount} 種貨幣換算，每 5 分鐘同步，離線可用的 PWA 匯率工具。`,
+  description: `${APP_INFO.name}顯示臺灣銀行牌告實際買賣價（非中間價），支援 ${currencyCount} 種貨幣換算，${UPDATE_FREQUENCY_PHRASE}，離線可用的 PWA 匯率工具。`,
   theme_color: rgbTripletToHex(zenColors.primary),
   background_color: rgbTripletToHex(zenColors.background),
   display: 'standalone',

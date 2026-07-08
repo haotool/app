@@ -43,6 +43,7 @@ import {
 } from '../config/seo-paths';
 import { RATES_API } from '../config/api-endpoints';
 import { APP_INFO } from '../config/app-info';
+import { UPDATE_FREQUENCY_PHRASE } from '../config/data-freshness';
 import { staggerContainerVariants, staggerItemVariants, transitions } from '../config/animations';
 
 // ─── SSOT 計算數據 ──────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ const PIPELINE_STEPS = [
     icon: RefreshCw,
     label: 'GitHub Actions',
     sub: '自動化抓取排程',
-    note: '每 5 分鐘同步一次',
+    note: UPDATE_FREQUENCY_PHRASE,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
   },

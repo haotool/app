@@ -11,6 +11,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE_CONFIG, RAW_DATA_BASE, CDN_DATA_BASE } from '../seo-paths.config.mjs';
 import { APP_INFO } from '../src/config/app-info.ts';
+import { UPDATE_FREQUENCY_PHRASE } from '../src/config/data-freshness.ts';
 import {
   API_SEMANTICS_DOC,
   API_SEMANTICS_SCHEMA_VERSION,
@@ -51,7 +52,7 @@ const latestJson = {
   schemaVersion: API_SEMANTICS_SCHEMA_VERSION,
   semanticsDoc: API_SEMANTICS_DOC.publicUrl,
   semanticFieldMapping: buildSemanticFieldMapping(),
-  description: '臺灣銀行牌告匯率靜態 API — 資料約每 5 分鐘檢查更新，並提供 App 匯率模式欄位對照',
+  description: `臺灣銀行牌告匯率靜態 API — 資料${UPDATE_FREQUENCY_PHRASE}，並提供 App 匯率模式欄位對照`,
   source: '臺灣銀行牌告匯率',
   sourceUrl: 'https://rate.bot.com.tw/xrt',
   updateFrequency: 'every 5 minutes',

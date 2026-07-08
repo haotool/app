@@ -4,6 +4,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { AnswerCapsule } from '../components/AnswerCapsule';
 import { getDisplayVersion } from '../config/version';
 import { APP_INFO, AUTHOR_PERSON, getCopyrightYears } from '../config/app-info';
+import { UPDATE_FREQUENCY_PHRASE } from '../config/data-freshness';
 import { MailtoLink } from '../components/MailtoLink';
 import { ContentPageLayout } from '../components/content/ContentPageLayout';
 import {
@@ -39,7 +40,7 @@ const SECTIONS: readonly ContentSection[] = [
         term: '資料來源：',
         description: '臺灣銀行官方牌告匯率，涵蓋現金買入、現金賣出、即期買入、即期賣出四種報價。',
       },
-      { term: '更新頻率：', description: '每 5 分鐘同步一次，畫面會顯示最近更新時間。' },
+      { term: '更新頻率：', description: `${UPDATE_FREQUENCY_PHRASE}，畫面會顯示最近更新時間。` },
       {
         term: '支援範圍：',
         description: `目前支援 ${SUPPORTED_CURRENCY_COUNT} 種貨幣，包含 TWD 與主要旅遊、留學、跨境付款常用幣別。`,

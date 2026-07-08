@@ -17,7 +17,7 @@ const DEFAULT_PROPS = {
   currencyName: '美元',
   pathname: '/usd-twd',
   defaultTitle: '即時美元匯率 — 台銀實際賣出價 | USD/TWD',
-  defaultDescription: '台銀實際美元賣出價，每 5 分鐘更新。',
+  defaultDescription: '台銀實際美元賣出價，約每 5 分鐘檢查更新。',
   defaultCanonical: 'https://app.haotool.org/ratewise/usd-twd/',
 };
 

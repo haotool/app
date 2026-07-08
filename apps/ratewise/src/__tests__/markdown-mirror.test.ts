@@ -58,7 +58,7 @@ describe('Markdown mirrors', () => {
   it('index.md 含首頁核心文案與功能導引', () => {
     const content = readMd('index');
     expect(content).toMatch(/以台灣銀行牌告匯率做實務換算/);
-    expect(content).toMatch(/5 分鐘自動同步/);
+    expect(content).toMatch(/約每 5 分鐘檢查更新/);
     expect(content).toMatch(/使用指南/);
   });
 

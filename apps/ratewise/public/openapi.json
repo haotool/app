@@ -4,7 +4,7 @@
   "info": {
     "title": "HaoRate 匯率 API",
     "version": "2.1.0",
-    "description": "臺灣銀行牌告匯率靜態 JSON API，每 5 分鐘由 GitHub Actions 自動同步。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
+    "description": "臺灣銀行牌告匯率靜態 JSON API，由 GitHub Actions 排程更新（約每 5 分鐘檢查更新）。\n\n**匯率類型說明：**\n- `cash_buy`（現金買入）：銀行以此價收購外幣現鈔（你拿外幣換台幣）\n- `cash_sell`（現金賣出）：銀行以此價賣出外幣現鈔（你拿台幣換外幣現金）\n- `spot_buy`（即期買入）：電匯/帳戶轉入匯率（你匯款回台灣）\n- `spot_sell`（即期賣出）：電匯/帳戶轉出匯率（你從台灣匯款出去）\n\n**重要提示：** 賣出（sell）= 銀行賣給你外幣的價格 = 你拿台幣換外幣看此價；\n買入（buy）= 銀行收你外幣的價格 = 你拿外幣換台幣看此價。\n\n**App 匯率模式對應：**\n- `auto`：來源外幣用 `{rateType}.buy`，目標外幣用 `{rateType}.sell`；TWD 視為 1。\n- `sell`：來源與目標皆用 `{rateType}.sell`。\n- `mid`：來源與目標皆用 `({rateType}.buy + {rateType}.sell) / 2`。\n\n匯率僅供參考，實際交易請以金融機構公告為準。",
     "contact": {
       "name": "haotool",
       "email": "haotool.org@gmail.com",
@@ -173,7 +173,7 @@
     },
     {
       "url": "https://raw.githubusercontent.com/haotool/app/data",
-      "description": "GitHub Raw — 無快取端點，每次請求直接取得 data 分支最新版本（每 5 分鐘由 GitHub Actions 同步）。適合需要確保即時性的場景，但注意 GitHub 對未認證 IP 有速率限制（60 req/hr/IP）。"
+      "description": "GitHub Raw — 無快取端點，每次請求直接取得 data 分支最新版本（由 GitHub Actions 排程更新，約每 5 分鐘檢查更新）。適合需要確保即時性的場景，但注意 GitHub 對未認證 IP 有速率限制（60 req/hr/IP）。"
     }
   ],
   "paths": {
@@ -427,7 +427,7 @@
     "/public/rates/latest.json": {
       "get": {
         "summary": "取得最新匯率",
-        "description": "取得臺灣銀行最新牌告匯率資料。 資料每 5 分鐘由 GitHub Actions 自動同步。 包含各幣別的現金買入、現金賣出、即期買入、即期賣出四種報價。 CDN 端點支援 ETag 條件式請求（If-None-Match），資料未變時回傳 304（零 body）。",
+        "description": "取得臺灣銀行最新牌告匯率資料。 資料由 GitHub Actions 排程更新（約每 5 分鐘檢查更新）。 包含各幣別的現金買入、現金賣出、即期買入、即期賣出四種報價。 CDN 端點支援 ETag 條件式請求（If-None-Match），資料未變時回傳 304（零 body）。",
         "operationId": "getLatestRates",
         "tags": [
           "匯率資料"
@@ -1102,7 +1102,7 @@
       },
       "RatesResponse": {
         "type": "object",
-        "description": "匯率資料回應（每 5 分鐘由 GitHub Actions 自動同步）",
+        "description": "匯率資料回應（由 GitHub Actions 排程更新，約每 5 分鐘檢查更新）",
         "properties": {
           "schemaVersion": {
             "type": "string",
