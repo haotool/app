@@ -374,6 +374,47 @@ describe('exchangeRateHistoryService', () => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
 
+    it('併發請求共享 in-flight promise：冷快取下 latest 僅發一次（#669）', async () => {
+      const mockResponse = {
+        updateTime: '2026/07/08 10:00:00',
+        source: 'Taiwan Bank',
+        rates: { USD: 32.215 },
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      const [first, second] = await Promise.all([fetchLatestRates(), fetchLatestRates()]);
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(first).toEqual(second);
+    });
+
+    it('併發共享 reject：兩端皆收錯誤且僅發一次，自清後重試成功（無 negative cache）', async () => {
+      vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
+
+      // 共享同一 in-flight promise：失敗也只發一次，兩端皆收 rejection。
+      const settled = await Promise.allSettled([fetchLatestRates(), fetchLatestRates()]);
+      expect(settled.map((outcome) => outcome.status)).toEqual(['rejected', 'rejected']);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      // rejection 完成後 in-flight 自清：重試發出新請求並成功（失敗不被快取）。
+      const mockResponse = {
+        updateTime: '2026/07/08 11:00:00',
+        source: 'Taiwan Bank',
+        rates: { USD: 32.22 },
+      };
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      } as Response);
+
+      await expect(fetchLatestRates()).resolves.toEqual(mockResponse);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
     it('應該為不同日期使用不同的快取 key', async () => {
       const mockResponse1 = {
         updateTime: '2025/10/14 23:39:59',

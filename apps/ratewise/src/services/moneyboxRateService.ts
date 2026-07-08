@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import { shareInFlight } from '../utils/shareInFlight';
 import {
   getExchangeShopProvider,
   hasExchangeShopProvider,
@@ -48,6 +49,9 @@ const historyAggregateCache = new Map<
   string,
   { data: ExchangeShopHistoricalRate[]; timestamp: number }
 >();
+
+// 併發去重（#669）：換錢所模式雙 hook 同時掛載時，同鍵歷史請求共享單一 in-flight promise。
+const historyInFlightRequests = new Map<string, Promise<unknown>>();
 
 interface CacheEntry {
   rate: ExchangeShopRate;
@@ -333,15 +337,18 @@ export async function fetchExchangeShopHistoricalRatesRange(
     return cached.data;
   }
 
-  const result =
-    (await tryFetchExchangeShopAggregate(currency, config, totalDays)) ??
-    (await fetchExchangeShopHistoricalRatesFromDailyEndpoints(currency, config, totalDays));
+  // 併發去重（#669）：TTL cache miss 時同鍵併發請求共享單一 in-flight promise。
+  return shareInFlight(historyInFlightRequests, cacheKey, async () => {
+    const result =
+      (await tryFetchExchangeShopAggregate(currency, config, totalDays)) ??
+      (await fetchExchangeShopHistoricalRatesFromDailyEndpoints(currency, config, totalDays));
 
-  if (result.length > 0) {
-    historyAggregateCache.set(cacheKey, { data: result, timestamp: Date.now() });
-  }
+    if (result.length > 0) {
+      historyAggregateCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    }
 
-  return result;
+    return result;
+  });
 }
 
 export function computeConverterRate(

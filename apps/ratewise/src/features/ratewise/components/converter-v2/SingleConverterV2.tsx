@@ -310,6 +310,10 @@ export const SingleConverterV2 = ({
   // dirty 僅在使用者實際輸入（keypad 回寫、快速金額）後為真；flush 共用 v1 addToHistory API。
   const settleTimerRef = useRef<number | null>(null);
   const settleDirtyRef = useRef(false);
+  // QA-J J-4（#669）：運算式進行中旗標；flush 時讀取，未完成運算式不寫入歷史。
+  const expressionInProgressRef = useRef(false);
+  // QA-J J-2（#669）：來源切換排定的 announce-only settle；flush 僅重播 SR，不寫歷史。
+  const settleAnnouncePendingRef = useRef(false);
   // B1 去重：最近一筆「自動寫入」的識別鍵（from|to|amount）；手動寫入不在此追蹤範圍。
   const lastAutoWrittenKeyRef = useRef<string | null>(null);
   const onAddToHistoryRef = useRef(onAddToHistory);
@@ -320,24 +324,37 @@ export const SingleConverterV2 = ({
     settleSnapshotRef.current = { fromCurrency, toCurrency, fromAmount, toAmount };
   });
 
-  const flushHistorySettle = useCallback(() => {
+  const flushHistorySettle = useCallback((options?: { fromTimer?: boolean }) => {
     if (settleTimerRef.current !== null) {
       window.clearTimeout(settleTimerRef.current);
       settleTimerRef.current = null;
     }
-    if (!settleDirtyRef.current) return;
-    settleDirtyRef.current = false;
-    // E8 缺口 5：settle 即結束「計算進行中」，運算式列隱藏。
+    // E8 缺口 5＋#669 第 1 項：settle 即結束「計算進行中」，運算式列一律隱藏
+    // （含非 dirty 的 overlay 隱藏計時與 announce-only 路徑）。
     setLiveExpression(null);
+    const announcePending = settleAnnouncePendingRef.current;
+    settleAnnouncePendingRef.current = false;
+    const dirty = settleDirtyRef.current;
+    if (!dirty && !announcePending) return;
+    // QA-J J-4（#669）：timer settle 落在運算式未完成（含未閉合運算子）時不寫入歷史——
+    // 中間值（如 500+5 停頓時的 505）只播報不進歷史；dirty 保留，待切列／unmount 等
+    // 邊界 flush（運算式隨 keypad remount 作廢，列值即最終值）才寫入。
+    const deferWrite = options?.fromTimer === true && expressionInProgressRef.current;
+    if (!deferWrite) {
+      settleDirtyRef.current = false;
+    }
     const snapshot = settleSnapshotRef.current;
-    // B1 守門 1：金額 0／空／非有限值不寫（含 backspace 清到 0 後停頓 2s 路徑）。
+    // B1 守門 1：金額 0／空／非有限值不寫不播（含 backspace 清到 0 後停頓 2s 路徑）。
     const parsedAmount = parseFloat(snapshot.fromAmount);
     const parsedResult = parseFloat(snapshot.toAmount);
     if (!Number.isFinite(parsedAmount) || parsedAmount === 0) return;
     if (!Number.isFinite(parsedResult) || parsedResult === 0) return;
     // E8 缺口 10（#620）：settle 播報換算結果，與歷史寫入共用同一 settle 事件；
-    // 置於去重守門之前——同值重輸入仍屬使用者輸入旅程，SR 回饋不因歷史去重而消失。
+    // 置於去重守門之前——同鍵不同結果（匯率更新）時播報不因歷史去重而消失。
+    // aria-live 對完全相同文字不重播（瀏覽器行為），同值 settle 無新播報（#669 第 3 項，如實）。
     setSettledSnapshot({ ...snapshot });
+    // QA-J J-2（#669）：announce-only 重播（來源切換排定）只更新 SR status，不寫歷史。
+    if (!dirty || deferWrite) return;
     // B1 守門 2：與上一筆自動寫入同值（from/to/amount）去重，避免重複紀錄。
     const entryKey = `${snapshot.fromCurrency}|${snapshot.toCurrency}|${snapshot.fromAmount}`;
     if (lastAutoWrittenKeyRef.current === entryKey) return;
@@ -354,32 +371,54 @@ export const SingleConverterV2 = ({
       settleTimerRef.current = null;
     }
     settleDirtyRef.current = false;
+    settleAnnouncePendingRef.current = false;
     setLiveExpression(null);
   }, []);
 
-  const scheduleHistorySettle = useCallback(() => {
-    settleDirtyRef.current = true;
+  // settle 計時（重）排定：dirty 與 announce-only 路徑共用同一 timer，無平行計時器。
+  const scheduleSettleFlush = useCallback(() => {
     if (settleTimerRef.current !== null) {
       window.clearTimeout(settleTimerRef.current);
     }
-    settleTimerRef.current = window.setTimeout(flushHistorySettle, HISTORY_SETTLE_MS);
+    settleTimerRef.current = window.setTimeout(
+      () => flushHistorySettle({ fromTimer: true }),
+      HISTORY_SETTLE_MS,
+    );
   }, [flushHistorySettle]);
+
+  const scheduleHistorySettle = useCallback(() => {
+    settleDirtyRef.current = true;
+    scheduleSettleFlush();
+  }, [scheduleSettleFlush]);
 
   // 離開（unmount）時 flush 未結算的換算，避免最後一筆遺失。
   useEffect(() => flushHistorySettle, [flushHistorySettle]);
 
+  // #669 PM 裁決補強：頁面轉入背景（PWA 殺程序前最後寫入時機）即 flush——
+  // 封閉 deferred dirty（運算式未完成延後寫入）的關 app 遺失窗口。
+  // 採 repo 既有 visibilitychange 慣例（v1 SingleConverter 同款）；非 timer 路徑，列值即最終值。
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) flushHistorySettle();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [flushHistorySettle]);
+
   // E8 缺口 5：keypad 表達式回報。含運算子（首字元後）才視為「計算進行中」；
-  // 純數字與掛載種子不顯示。進行中若已有 pending settle，運算子按鍵同步展延計時
-  // （使用者仍在組式，不提前結算），維持與缺口 2 同一 settle 機制、無平行計時器。
+  // 純數字與掛載種子不顯示。進行中一律（重新）排 settle 計時：有 pending settle 時
+  // 為運算子按鍵展延（使用者仍在組式，不提前結算）；settle 後單按運算子（值未變、
+  // 無 pending settle）時作為 overlay 隱藏計時（#669 第 1 項），同一 settle 機制無平行計時器。
   const handleExpressionChange = useCallback(
     (expression: string) => {
       const inProgress = /[+×÷]/.test(expression) || expression.slice(1).includes('-');
+      expressionInProgressRef.current = inProgress;
       setLiveExpression(inProgress ? expression.replace(/([+×÷-])/g, ' $1 ').trim() : null);
-      if (inProgress && settleDirtyRef.current) {
-        scheduleHistorySettle();
+      if (inProgress) {
+        scheduleSettleFlush();
       }
     },
-    [scheduleHistorySettle],
+    [scheduleSettleFlush],
   );
 
   const trend = useConverterTrend({
@@ -549,6 +588,14 @@ export const SingleConverterV2 = ({
       ? t('converterV2.rateBasisExchangeShop')
       : resolveBankBasisLabel(rateSide);
 
+  // QA-J J-2（#669）：來源切換視為 settle 邊界之一——已有播報時排定 announce-only settle，
+  // 新來源重算值 settle 後重播 SR status（不寫歷史，與 B2 cancel 語意協調）。
+  const scheduleSourceSwitchAnnounce = () => {
+    if (settledSnapshot === null) return;
+    settleAnnouncePendingRef.current = true;
+    scheduleSettleFlush();
+  };
+
   // E8 缺口 3：換錢所來源切換。支援幣別（exchangeShopCurrency 非空）才渲染切換鈕（零暴露）。
   const isExchangeShopActive = rateSource === 'exchange-shop' && !!exchangeShopCurrency;
   const canToggleRateSource = !!exchangeShopCurrency && !!onRateSourceChange;
@@ -556,6 +603,7 @@ export const SingleConverterV2 = ({
     if (!onRateSourceChange) return;
     // B2：來源切換後兩列金額以新來源重算，pending settle 語意失真，取消不寫。
     cancelHistorySettle();
+    scheduleSourceSwitchAnnounce();
     onRateSourceChange(isExchangeShopActive ? 'bank' : 'exchange-shop');
   };
 
@@ -587,6 +635,8 @@ export const SingleConverterV2 = ({
     // 換錢所啟用中：chip tap＝回到銀行基準（對齊 v1 RateSelector pill 語意），不切現金／即期。
     if (isExchangeShopActive) {
       cancelHistorySettle();
+      // 同屬來源切換（QA-J J-2）：新來源重算值 settle 後重播 SR status。
+      scheduleSourceSwitchAnnounce();
       onRateSourceChange?.('bank');
       return;
     }

@@ -113,4 +113,19 @@ describe('fetchExchangeShopHistoricalRatesRange - aggregate endpoint', () => {
 
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('併發同鍵請求共享 in-flight promise：冷快取下 aggregate 僅發一次（#669）', async () => {
+    // maxDays 27 隔開其他 test 共享的 TTL cache key（模擬冷快取）。
+    vi.mocked(fetch).mockResolvedValue(mockJsonResponse(MOCK_AGGREGATE));
+
+    const [first, second] = await Promise.all([
+      fetchExchangeShopHistoricalRatesRange('KRW', 27),
+      fetchExchangeShopHistoricalRatesRange('KRW', 27),
+    ]);
+
+    // 修正前 TTL cache 只擋「先後」呼叫，冷快取「同時」呼叫仍 ×2。
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(second).toBe(first);
+    expect(first).toHaveLength(3);
+  });
 });
