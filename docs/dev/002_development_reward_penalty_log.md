@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+199
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+200
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-680-kawaii-nitro-muted-hierarchy
+- 原因：kawaii/nitro 的 text:muted 層級差僅 1.32/1.48（健康值 2.24–3.43），#678 活化 193 處 muted 死類後弱層級首次大面積曝露；且數學證明 kawaii 只動 muted 上限 1.71（muted 對 surface-sunken AA 4.5 極限），必須連動加深 text
+- 解法：kawaii text 107 74 82→76 53 58、muted 126 92 100→131 96 104（層級差 2.04、muted 對四底最低 4.56 AA、text@0.7 合成 4.486 保住 alpha-composite 歷史斷言、R>G/R>B 色相守門不破，calc-number-text 與 previewText 同步）；nitro muted slate-300→slate-400 148 163 184（層級差 2.56、對三底最低 5.71 AA）；themes.ts↔index.css 雙源同步並重生 offline.html，四守門測試檔＋themes/alpha-composite/raw-primary-text-exposure 全綠，kawaii/nitro × 3 頁前後截圖申報、其餘 5 主題 git diff 值級零變化
 
 - 日期：2026-07-08
 - ID：reward-rw-686-theme-sheet-320-zero-scroll

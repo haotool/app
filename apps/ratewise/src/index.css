@@ -811,7 +811,7 @@
     --color-background: 2 6 23; /* slate-950 */
     --color-surface: 15 23 42; /* slate-900 */
     --color-text: 255 255 255;
-    --color-text-muted: 203 213 225; /* slate-300（修正 slate-500 在深底對比過低） */
+    --color-text-muted: 148 163 184; /* slate-400（#680：text:muted 層級差 2.56；對三底仍 ≥5.7 AA） */
     --color-primary: 0 150 230; /* 霓虹藍（深電光，圖形/大字維持 3:1；品牌色不動） */
     --color-primary-strong: 0 113 173; /* 同色相加深（#609 白字表面錨點，白字 5.30:1 AA） */
     --color-primary-on-surface: 61 187 255; /* #609 白名單覆寫：深色主題文字錨點亮向（對 surface 8.36:1） */
@@ -991,8 +991,8 @@
     /* 核心語義色彩 */
     --color-background: 255 250 244; /* warm cream */
     --color-surface: 255 255 255;
-    --color-text: 107 74 82; /* deep pink-brown（對 background 7.42:1，AA） */
-    --color-text-muted: 126 92 100; /* 對 background 5.62:1，AA */
+    --color-text: 76 53 58; /* deep pink-brown 加深（#680：text:muted 層級差 2.04；對 background 10.78:1） */
+    --color-text-muted: 131 96 104; /* 對 surface-sunken 4.56:1 AA；與 text 層級差 ≥2.0（#680） */
     --color-primary: 255 105 180; /* hot pink */
     --color-primary-strong: 219 39 119; /* pink-600（白字 AA 對比） */
     --color-primary-on-surface: 190 24 93; /* #609 白名單覆寫：hot pink 對白底僅 2.65:1，文字錨點加深至 pink-700（6.04:1） */
@@ -1126,7 +1126,7 @@
 
     /* 數字鍵 - 淺玫瑰色背景（接近白色但帶粉調） */
     --color-calc-number: 255 251 252; /* rose-50 lighter - 比純白柔和 */
-    --color-calc-number-text: 107 74 82; /* deep pink-brown（同 --color-text） */
+    --color-calc-number-text: 76 53 58; /* deep pink-brown（同 --color-text） */
     --color-calc-number-hover: 255 241 242; /* rose-50 */
     --color-calc-number-active: 255 228 230; /* rose-100 */
 
