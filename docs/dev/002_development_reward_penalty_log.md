@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-682-dockerfile-vite-site-url-arg
+- 原因：root Dockerfile builder stage 未宣告 ARG VITE_SITE_URL，Zeabur 服務層環境變數不進入 multi-stage vite build，#613 的 manifest 環境驅動修正於 staging 斷鏈（start_url/scope 仍指向正式站，QA-I D7 根因鏈）；驗證中另揭露 #622 引入 patchedDependencies 後 patch 檔未先 COPY 使容器 pnpm install 必炸（ENOENT patches/），且 .dockerignore 排除 .git 使 builder 內 git fallback 為死碼、兩張 QA 截圖誤入庫
+- 解法：builder stage 補 ARG VITE_SITE_URL（依 Zeabur 官方 multi-stage 文件；不搭 ENV 避免未傳值固化空字串、RUN 內空字串 unset 防護，堵住 import.meta.env 的 ?? 回退鏈污染——Docker 實測 ARG 未傳值於 RUN 為 unset）、install 前補 COPY patches、移除 apk git 與三段 git fallback 死碼、截圖 git rm --cached 出庫（.gitignore 既有 .playwright-mcp/ 防護）；docker build --target builder 兩情境產物驗證 staging manifest 指向 staging、無變數時與 committed manifest 零差異
 
 - 日期：2026-07-08
 - ID：reward-rw-651-card-rate-phase2-canary-pipeline
