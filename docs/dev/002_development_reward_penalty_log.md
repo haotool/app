@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+201
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+202
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-08
+- ID：reward-rw-666-persisted-hydration-inventory
+- 原因：#664 修 SingleConverter 後同構破口殘留——Settings.tsx（預渲染頁）的 variant/rateMode/theme/customPrimary/splash 首幀直讀 persisted 值，client render 路徑首幀輸出偏離 SSG（#653 同族 #418）；盤點中另揭露 converterStore onRehydrateStorage 後置回呼經模組綁定呼叫 getState()，同步 storage 下 create() 內觸發時綁定仍在 TDZ，ReferenceError 被 middleware 吞掉——wave-A 遷移與 sanitize 冷載全滅、hasHydrated 恆 false（真瀏覽器實證）
+- 解法：13 persisted 欄位 × 預渲染頁盤點表入 PR body（3 破口／10 豁免附理由）；Settings 套 #664 同款 two-pass gate（首幀恆 SSG 預設、layout effect paint 前切 persisted、SPA remount 模組旗標不重演）；rehydrate 回呼改用參數 state 走閉包修復 TDZ 死路；新增首幀契約測試 5 條（壞版突變 3 紅）＋ rehydrate 契約 3 條（模組綁定壞版 3 紅）＋ e2e 三組高風險 persisted 組合冷載 console 零錯誤（wave-A 遷移組合於 base 必紅）
 
 - 日期：2026-07-08
 - ID：reward-rw-687-tv-attribution-logo-theme
