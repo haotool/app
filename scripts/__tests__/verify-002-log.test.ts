@@ -258,8 +258,10 @@ describe('validate002', () => {
 describe('--base-ref 模式（CI 語意，issue #661）', () => {
   const SCRIPT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'verify-002-log.mjs');
   // 隔離全域/系統 git config（gpgsign、hooksPath 等），身分改由環境變數提供。
+  // 先剝除繼承的 GIT_* 變數：hook 環境（pre-push 跑 vitest）會注入 GIT_DIR/GIT_INDEX_FILE，
+  // 子行程若繼承會把臨時 repo 的 git 操作導向父 repo。
   const GIT_ENV = {
-    ...process.env,
+    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))),
     GIT_CONFIG_GLOBAL: '/dev/null',
     GIT_CONFIG_SYSTEM: '/dev/null',
     GIT_AUTHOR_NAME: 'vitest',
@@ -306,6 +308,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
     try {
       const stdout = execFileSync('node', [SCRIPT_PATH, '--base-ref', baseRef], {
         cwd: repo,
+        env: GIT_ENV,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],
       });
