@@ -17,12 +17,12 @@ ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
 ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
 ARG VITE_SPLIT_MEOW_BASE_PATH=/split-meow/
+# [fix:2026-07-08] Zeabur 服務層環境變數需宣告 ARG 才會進入 multi-stage build（issue #682）。
+# 不搭配 ENV：未傳值時 ARG 於 RUN 內保持 unset，讓 manifest 與 canonical 回退正式站 SSOT。
+ARG VITE_SITE_URL
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
-
-# 安裝 git 供版本計算使用（node:alpine 預設未內建）
-RUN apk add --no-cache git
 
 WORKDIR /app
 
@@ -37,7 +37,9 @@ ENV BUILD_TIME=${BUILD_TIME}
 ENV CI=true
 
 # Copy package files and pnpm config
+# [fix:2026-07-08] patchedDependencies 的 patch 檔必須先於 install 進入 image（#622 起）。
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 COPY apps/ratewise/package.json ./apps/ratewise/
 COPY apps/nihonname/package.json ./apps/nihonname/
 COPY apps/haotool/package.json ./apps/haotool/
@@ -57,20 +59,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Copy source code
 COPY . .
 
-# Build applications（若外部未提供 build args，於此自動回退計算）
+# Build applications
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
 # [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
 # [2026-07-05] haotool 根站先建（根站優先，見 docs/dev/046 §9）
+# [fix:2026-07-08] 移除 git 回退死碼：.dockerignore 排除 .git，容器內 git 指令必失敗，
+# 版本 metadata 一律由 build args 提供（見 build-docker.sh）。
+# VITE_SITE_URL 傳入空字串時 unset，避免污染 import.meta.env 的 ?? 回退鏈。
 RUN set -eux; \
-  if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
-    export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
-  fi; \
-  if [ -z "${GIT_COMMIT_HASH:-}" ]; then \
-    export GIT_COMMIT_HASH="$(git rev-parse --short HEAD)"; \
-  fi; \
-  if [ -z "${BUILD_TIME:-}" ]; then \
-    export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
-  fi; \
+  if [ -z "${VITE_SITE_URL:-}" ]; then unset VITE_SITE_URL; fi; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
