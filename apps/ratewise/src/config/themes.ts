@@ -222,7 +222,7 @@ const nitroStyle: StyleDefinition = {
     background: '2 6 23', // slate-950
     surface: '15 23 42', // slate-900
     text: '255 255 255',
-    textMuted: '203 213 225', // slate-300（修正 slate-500 在深底對比過低、次要文字看不清）
+    textMuted: '148 163 184', // slate-400（#680：text:muted 層級差 2.56；對三底仍 ≥5.7 AA）
     primary: '0 150 230', // 霓虹藍（深電光，圖形/大字維持 3:1；品牌色不動）
     primaryStrong: '0 113 173', // 同色相加深（#609 白字表面錨點，白字 5.30:1 AA）
     secondary: '129 140 248', // indigo-400
@@ -256,8 +256,8 @@ const kawaiiStyle: StyleDefinition = {
     // 溫暖粉嫩
     background: '255 250 244', // warm cream
     surface: '255 255 255',
-    text: '107 74 82', // deep pink-brown（對 background 7.42:1，AA）
-    textMuted: '126 92 100', // 對 background 5.62:1，AA
+    text: '76 53 58', // deep pink-brown 加深（#680：text:muted 層級差 2.04；對 background 10.78:1）
+    textMuted: '131 96 104', // 對 surface-sunken 4.56:1 AA；與 text 層級差 ≥2.0（#680）
     primary: '255 105 180', // hot pink
     primaryStrong: '219 39 119', // pink-600（白字 AA 對比）
     secondary: '236 72 153', // pink-500
@@ -451,7 +451,7 @@ export const STYLE_OPTIONS: {
     labelEn: 'Kawaii',
     description: '可愛粉嫩',
     previewBg: 'rgb(255, 250, 244)',
-    previewText: 'rgb(107, 74, 82)',
+    previewText: 'rgb(76, 53, 58)',
     previewAccent: 'rgb(255, 105, 180)',
   },
   {
@@ -640,6 +640,7 @@ export function getChartColors(): {
   lineColor: string;
   topColor: string;
   bottomColor: string;
+  textColor: string;
 } {
   if (typeof window === 'undefined') {
     // SSR fallback - 使用 Zen 預設值（品牌藍圖表色）
@@ -647,6 +648,7 @@ export function getChartColors(): {
       lineColor: 'rgb(59, 130, 246)',
       topColor: 'rgba(59, 130, 246, 0.25)',
       bottomColor: 'rgba(59, 130, 246, 0)',
+      textColor: 'rgb(15, 23, 42)',
     };
   }
 
@@ -657,12 +659,15 @@ export function getChartColors(): {
   const line = style.getPropertyValue('--color-chart-line').trim() || '99 102 241';
   const top = style.getPropertyValue('--color-chart-area-top').trim() || '99 102 241';
   const bottom = style.getPropertyValue('--color-chart-area-bottom').trim() || '59 130 246';
+  // 主題正文色：TradingView attribution logo 依 layout.textColor 灰階（>160）切換亮/暗版（#687）。
+  const text = style.getPropertyValue('--color-text').trim() || '15 23 42';
 
   // Convert to comma-separated format for Canvas/lightweight-charts
   return {
     lineColor: `rgb(${toCommaSeparatedRgb(line)})`,
     topColor: `rgba(${toCommaSeparatedRgb(top)}, 0.25)`,
     bottomColor: `rgba(${toCommaSeparatedRgb(bottom)}, 0)`,
+    textColor: `rgb(${toCommaSeparatedRgb(text)})`,
   };
 }
 
