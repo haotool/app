@@ -1,15 +1,187 @@
 import type Phaser from 'phaser';
+import { PLAYER, STAR } from '../core/config';
+import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import type { WaveId } from '../core/types';
+import { fillStarPath } from './fx';
+
+const HEART_TEX = 'hud-heart';
+const STAR_TEX = 'hud-star';
+const HUD_DEPTH = 100;
+
+const WAVE_LABELS: Record<WaveId, string> = {
+  tutorial: '吸入果凍怪吧！',
+  wave1: 'Wave 1',
+  wave2: 'Wave 2',
+  boss: '魔王來襲！',
+};
 
 export interface Hud {
   destroy(): void;
 }
 
-// TODO(US-008)：HP 心心、彈藥星星、Boss HP 條；訂閱 player:damaged、ammo:changed、
-// boss:spawned、boss:damaged 事件更新（onGameEvent）。
-export function createHud(_scene: Phaser.Scene): Hud {
-  return {
-    destroy() {
-      // TODO(US-008)
-    },
-  };
+function ensureHudTextures(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(HEART_TEX)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xff6b8a, 1);
+    g.fillCircle(7, 8, 6.5);
+    g.fillCircle(17, 8, 6.5);
+    g.fillTriangle(1.5, 11, 22.5, 11, 12, 22);
+    g.generateTexture(HEART_TEX, 24, 24);
+    g.destroy();
+  }
+  if (!scene.textures.exists(STAR_TEX)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffd966, 1);
+    fillStarPath(g, 10, 10, 10, 4.2);
+    g.generateTexture(STAR_TEX, 20, 20);
+    g.destroy();
+  }
+}
+
+export function createHud(scene: Phaser.Scene): Hud {
+  ensureHudTextures(scene);
+
+  const bus = scene.events;
+  const unbinders: (() => void)[] = [];
+  const centerX = scene.scale.width / 2;
+  let destroyed = false;
+  let waveText: Phaser.GameObjects.Text | null = null;
+
+  const root = scene.add.container(0, 0).setDepth(HUD_DEPTH).setScrollFactor(0);
+
+  const hearts: Phaser.GameObjects.Image[] = [];
+  for (let i = 0; i < PLAYER.maxHp; i++) {
+    hearts.push(scene.add.image(24 + i * 30, 26, HEART_TEX));
+  }
+  root.add(hearts);
+
+  const ammoStars: Phaser.GameObjects.Image[] = [];
+  for (let i = 0; i < STAR.maxAmmo; i++) {
+    ammoStars.push(scene.add.image(22 + i * 26, 58, STAR_TEX).setAlpha(0.25));
+  }
+  root.add(ammoStars);
+
+  // Boss HP 條：__WHITE 內建紋理拉伸上色，fill 以 scaleX tween 平滑更新。
+  const barWidth = 320;
+  const barHeight = 12;
+  const bossBar = scene.add.container(centerX, 26).setAlpha(0);
+  const barBg = scene.add
+    .image(0, 0, '__WHITE')
+    .setDisplaySize(barWidth + 4, barHeight + 4)
+    .setTint(0x3a3a4a)
+    .setAlpha(0.45);
+  const barFill = scene.add
+    .image(-barWidth / 2, 0, '__WHITE')
+    .setOrigin(0, 0.5)
+    .setDisplaySize(barWidth, barHeight)
+    .setTint(0x9b7bd8);
+  const fullScaleX = barFill.scaleX;
+  bossBar.add([barBg, barFill]);
+  root.add(bossBar);
+
+  function updateHearts(hp: number): void {
+    hearts.forEach((heart, i) => heart.setAlpha(i < hp ? 1 : 0.25));
+    scene.tweens.add({
+      targets: hearts,
+      scale: 1.3,
+      duration: 90,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      delay: scene.tweens.stagger(30),
+    });
+  }
+
+  function updateAmmo(ammo: number): void {
+    ammoStars.forEach((star, i) => {
+      const filled = i < ammo;
+      const wasFilled = star.alpha === 1;
+      star.setAlpha(filled ? 1 : 0.25);
+      if (filled && !wasFilled) {
+        scene.tweens.add({
+          targets: star,
+          scale: { from: 0.4, to: 1 },
+          duration: 220,
+          ease: 'Back.easeOut',
+        });
+      }
+    });
+  }
+
+  function showWaveText(wave: WaveId): void {
+    waveText?.destroy();
+    waveText = scene.add
+      .text(centerX, scene.scale.height * 0.34, WAVE_LABELS[wave], {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '40px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#3a3a4a',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(HUD_DEPTH + 10)
+      .setScrollFactor(0)
+      .setAlpha(0);
+    scene.tweens.chain({
+      targets: waveText,
+      tweens: [
+        { alpha: 1, duration: 200, ease: 'Quad.easeOut' },
+        { alpha: 0, y: '-=20', duration: 300, delay: 900, ease: 'Quad.easeIn' },
+      ],
+      onComplete: () => {
+        waveText?.destroy();
+        waveText = null;
+      },
+    });
+  }
+
+  function bind<K extends GameEventName>(
+    event: K,
+    handler: Parameters<typeof onGameEvent<K>>[2],
+  ): void {
+    onGameEvent(bus, event, handler);
+    unbinders.push(() => offGameEvent(bus, event, handler));
+  }
+
+  bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => updateHearts(hp));
+  bind(GameEvents.AMMO_CHANGED, ({ ammo }) => updateAmmo(ammo));
+  bind(GameEvents.BOSS_SPAWNED, () => {
+    barFill.scaleX = fullScaleX;
+    scene.tweens.add({
+      targets: bossBar,
+      alpha: 1,
+      y: { from: 12, to: 26 },
+      duration: 300,
+      ease: 'Quad.easeOut',
+    });
+  });
+  bind(GameEvents.BOSS_DAMAGED, ({ hp, maxHp }) => {
+    scene.tweens.add({
+      targets: barFill,
+      scaleX: fullScaleX * Math.max(0, hp / maxHp),
+      duration: 180,
+      ease: 'Cubic.easeOut',
+    });
+  });
+  bind(GameEvents.BOSS_PHASE, ({ phase }) => {
+    if (phase === 'p2') barFill.setTint(0xd94b4b);
+  });
+  bind(GameEvents.BOSS_DEFEATED, () => {
+    scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });
+  });
+  bind(GameEvents.WAVE_CHANGED, ({ wave }) => showWaveText(wave));
+
+  function destroy(): void {
+    if (destroyed) return;
+    destroyed = true;
+    unbinders.forEach((off) => off());
+    unbinders.length = 0;
+    waveText?.destroy();
+    waveText = null;
+    root.destroy(true);
+  }
+
+  scene.events.once('shutdown', destroy);
+
+  return { destroy };
 }

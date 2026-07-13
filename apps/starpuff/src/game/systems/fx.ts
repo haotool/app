@@ -1,35 +1,369 @@
 import type Phaser from 'phaser';
+import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+
+export const FX_TEXTURES = {
+  dot: 'fx-dot',
+  star: 'fx-star-particle',
+} as const;
+
+const PASTELS = [0xffb3c7, 0xcbb7f0, 0xd9f29b, 0xffd966, 0xbff3e0];
+
+type FxTarget = Phaser.GameObjects.GameObject & { x: number; y: number };
+interface Scalable {
+  scaleX: number;
+  scaleY: number;
+}
+interface Tintable {
+  setTintFill(color: number): unknown;
+  clearTint(): unknown;
+}
+
+export interface TrailHandle {
+  stop(): void;
+}
 
 export interface FxSystem {
   hitStop(durationMs: number): void;
   shake(intensityPx: number): void;
   flashWhite(target: Phaser.GameObjects.GameObject): void;
+  squashStretch(target: Scalable, intensity?: number): void;
+  popIn(target: Scalable & { alpha: number }, durationMs?: number): void;
+  startInhale(mouth: Phaser.Types.Math.Vector2Like): void;
+  stopInhale(): void;
+  attachTrail(target: Phaser.Types.Math.Vector2Like): TrailHandle;
   damageNumber(x: number, y: number, amount: number): void;
   starBurst(x: number, y: number): void;
+  puff(x: number, y: number): void;
+  confetti(): void;
+  attachPlayer(target: FxTarget): void;
+  attachBoss(target: FxTarget): void;
   destroy(): void;
 }
 
-// TODO(US-006)：GAME_DESIGN §8 Juice 清單全數（hit-stop 60ms、震屏 4px、白閃、
-// squash & stretch、粒子、拖尾、傷害數字、星爆、HP 跳動、按鈕回饋、tween）。
-export function createFx(_scene: Phaser.Scene): FxSystem {
+// 程序化粒子紋理（不依賴 art 資產）：8px 圓點與 16px 五角星。
+export function ensureFxTextures(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(FX_TEXTURES.dot)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(4, 4, 4);
+    g.generateTexture(FX_TEXTURES.dot, 8, 8);
+    g.destroy();
+  }
+  if (!scene.textures.exists(FX_TEXTURES.star)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    fillStarPath(g, 8, 8, 8, 3.4);
+    g.generateTexture(FX_TEXTURES.star, 16, 16);
+    g.destroy();
+  }
+}
+
+export function fillStarPath(
+  g: Phaser.GameObjects.Graphics,
+  cx: number,
+  cy: number,
+  outer: number,
+  inner: number,
+): void {
+  g.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.closePath();
+  g.fillPath();
+}
+
+function canTint(go: object): go is Tintable {
+  return 'setTintFill' in go && 'clearTint' in go;
+}
+
+export function createFx(scene: Phaser.Scene): FxSystem {
+  ensureFxTextures(scene);
+
+  const bus = scene.events;
+  const unbinders: (() => void)[] = [];
+  let playerRef: FxTarget | null = null;
+  let bossRef: FxTarget | null = null;
+  let mouthRef: Phaser.Types.Math.Vector2Like | null = null;
+  let hitStopTimer: Phaser.Time.TimerEvent | null = null;
+  let damageNumberCount = 0;
+  let destroyed = false;
+
+  const burst = scene.add
+    .particles(0, 0, FX_TEXTURES.star, {
+      speed: { min: 60, max: 260 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1.6, end: 0 },
+      alpha: { start: 1, end: 0 },
+      rotate: { min: 0, max: 360 },
+      lifespan: { min: 400, max: 800 },
+      gravityY: 220,
+      tint: [0xffd966, 0xfff3b0, 0xffb3c7],
+      blendMode: 'ADD',
+      emitting: false,
+      maxAliveParticles: 80,
+    })
+    .setDepth(90);
+
+  const puffEmitter = scene.add
+    .particles(0, 0, FX_TEXTURES.dot, {
+      speed: { min: 40, max: 140 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      lifespan: { min: 200, max: 420 },
+      tint: PASTELS,
+      emitting: false,
+      maxAliveParticles: 60,
+    })
+    .setDepth(85);
+
+  // 吸入漩渦：粒子自環形外圈生成、朝嘴前點匯聚（moveTo onEmit 讀取當下位置）。
+  const inhaleEmitter = scene.add
+    .particles(0, 0, FX_TEXTURES.dot, {
+      x: () => mouthRef?.x ?? 0,
+      y: () => mouthRef?.y ?? 0,
+      lifespan: 300,
+      frequency: 24,
+      quantity: 1,
+      scale: { start: 0.9, end: 0.15 },
+      alpha: { start: 0.85, end: 0.1 },
+      tint: [0xffffff, 0xffd966, 0xbff3e0],
+      emitZone: {
+        type: 'random',
+        source: {
+          getRandomPoint: (point) => {
+            const a = Math.random() * Math.PI * 2;
+            const r = 46 + Math.random() * 50;
+            point.x = Math.cos(a) * r;
+            point.y = Math.sin(a) * r;
+          },
+        },
+      },
+      moveToX: () => mouthRef?.x ?? 0,
+      moveToY: () => mouthRef?.y ?? 0,
+      emitting: false,
+      maxAliveParticles: 30,
+    })
+    .setDepth(85);
+
+  const confettiEmitter = scene.add
+    .particles(0, 0, FX_TEXTURES.dot, {
+      x: { min: 0, max: scene.scale.width },
+      y: -12,
+      speedY: { min: 90, max: 200 },
+      speedX: { min: -40, max: 40 },
+      scale: { start: 1.2, end: 0.4 },
+      rotate: { min: 0, max: 360 },
+      lifespan: 2400,
+      frequency: 24,
+      quantity: 2,
+      gravityY: 140,
+      tint: PASTELS,
+      emitting: false,
+      maxAliveParticles: 120,
+    })
+    .setDepth(95)
+    .setScrollFactor(0);
+
+  function hitStop(durationMs: number): void {
+    if (!hitStopTimer) scene.physics.pause();
+    hitStopTimer?.remove();
+    hitStopTimer = scene.time.delayedCall(durationMs, () => {
+      hitStopTimer = null;
+      scene.physics.resume();
+    });
+  }
+
+  function shake(intensityPx: number): void {
+    scene.cameras.main.shake(120, intensityPx / scene.scale.width);
+  }
+
+  function flashWhite(target: Phaser.GameObjects.GameObject): void {
+    if (canTint(target)) {
+      target.setTintFill(0xffffff);
+      scene.time.delayedCall(80, () => {
+        if (target.scene) target.clearTint();
+      });
+      return;
+    }
+    scene.tweens.add({ targets: target, alpha: 0.25, duration: 60, yoyo: true, repeat: 1 });
+  }
+
+  // 進行中不重複觸發：避免以壓扁中的 scale 為基準疊乘造成漂移。
+  const squashTweens = new WeakMap<Scalable, Phaser.Tweens.Tween>();
+
+  function squashStretch(target: Scalable, intensity = 0.22): void {
+    if (squashTweens.get(target)?.isPlaying()) return;
+    squashTweens.set(
+      target,
+      scene.tweens.add({
+        targets: target,
+        scaleX: target.scaleX * (1 + intensity),
+        scaleY: target.scaleY * (1 - intensity),
+        duration: 90,
+        yoyo: true,
+        ease: 'Quad.easeOut',
+      }),
+    );
+  }
+
+  function popIn(target: Scalable & { alpha: number }, durationMs = 260): void {
+    scene.tweens.add({
+      targets: target,
+      scaleX: { from: target.scaleX * 0.3, to: target.scaleX },
+      scaleY: { from: target.scaleY * 0.3, to: target.scaleY },
+      alpha: { from: 0, to: target.alpha },
+      duration: durationMs,
+      ease: 'Back.easeOut',
+    });
+  }
+
+  function damageNumber(x: number, y: number, amount: number): void {
+    if (damageNumberCount >= 12) return;
+    damageNumberCount++;
+    const text = scene.add
+      .text(x, y, `${amount}`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '26px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#3a3a4a',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(96);
+    scene.tweens.add({
+      targets: text,
+      y: y - 46,
+      alpha: { from: 1, to: 0 },
+      duration: 480,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        damageNumberCount--;
+        text.destroy();
+      },
+    });
+  }
+
+  function starBurst(x: number, y: number): void {
+    burst.explode(28, x, y);
+  }
+
+  function puff(x: number, y: number): void {
+    puffEmitter.explode(10, x, y);
+  }
+
+  function confetti(): void {
+    confettiEmitter.start();
+    scene.time.delayedCall(1400, () => confettiEmitter.stop());
+  }
+
+  // 魔王死亡慢動作：Arcade timeScale > 1 為減速，真實時間後恢復。
+  function slowMo(scale: number, durationMs: number): void {
+    scene.physics.world.timeScale = 1 / scale;
+    scene.tweens.timeScale = scale;
+    scene.time.delayedCall(durationMs, () => {
+      scene.physics.world.timeScale = 1;
+      scene.tweens.timeScale = 1;
+    });
+  }
+
+  function bind<K extends GameEventName>(
+    event: K,
+    handler: Parameters<typeof onGameEvent<K>>[2],
+  ): void {
+    onGameEvent(bus, event, handler);
+    unbinders.push(() => offGameEvent(bus, event, handler));
+  }
+
+  bind(GameEvents.PLAYER_DAMAGED, () => {
+    shake(4);
+    if (playerRef?.scene) {
+      flashWhite(playerRef);
+      squashStretch(playerRef as unknown as Scalable, 0.28);
+    }
+  });
+  bind(GameEvents.ENEMY_KILLED, ({ x, y }) => puff(x, y));
+  bind(GameEvents.BOSS_SPAWNED, () => shake(6));
+  bind(GameEvents.BOSS_DAMAGED, ({ damage }) => {
+    hitStop(60);
+    if (bossRef?.scene) {
+      flashWhite(bossRef);
+      damageNumber(bossRef.x, bossRef.y - 70, damage);
+    } else {
+      damageNumber(scene.scale.width / 2, 120, damage);
+    }
+  });
+  bind(GameEvents.BOSS_DEFEATED, ({ x, y }) => {
+    starBurst(x, y);
+    slowMo(0.3, 600);
+  });
+  bind(GameEvents.GAME_WON, () => confetti());
+
+  function destroy(): void {
+    if (destroyed) return;
+    destroyed = true;
+    unbinders.forEach((off) => off());
+    unbinders.length = 0;
+    hitStopTimer?.remove();
+    hitStopTimer = null;
+    [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
+  }
+
+  scene.events.once('shutdown', destroy);
+
   return {
-    hitStop(_durationMs: number) {
-      // TODO(US-006)
+    hitStop,
+    shake,
+    flashWhite,
+    squashStretch,
+    popIn,
+    startInhale(mouth) {
+      mouthRef = mouth;
+      inhaleEmitter.start();
     },
-    shake(_intensityPx: number) {
-      // TODO(US-006)
+    stopInhale() {
+      inhaleEmitter.stop();
     },
-    flashWhite(_target: Phaser.GameObjects.GameObject) {
-      // TODO(US-006)
+    attachTrail(target) {
+      const trail = scene.add
+        .particles(0, 0, FX_TEXTURES.star, {
+          follow: target,
+          speed: { min: 5, max: 30 },
+          scale: { start: 0.7, end: 0 },
+          alpha: { start: 0.8, end: 0 },
+          rotate: { min: 0, max: 360 },
+          lifespan: 260,
+          frequency: 28,
+          blendMode: 'ADD',
+          tint: 0xffd966,
+          maxAliveParticles: 24,
+        })
+        .setDepth(80);
+      return {
+        stop() {
+          if (!trail.scene) return;
+          trail.stop();
+          scene.time.delayedCall(320, () => trail.destroy());
+        },
+      };
     },
-    damageNumber(_x: number, _y: number, _amount: number) {
-      // TODO(US-006)
+    damageNumber,
+    starBurst,
+    puff,
+    confetti,
+    attachPlayer(target) {
+      playerRef = target;
     },
-    starBurst(_x: number, _y: number) {
-      // TODO(US-006)
+    attachBoss(target) {
+      bossRef = target;
     },
-    destroy() {
-      // TODO(US-006)
-    },
+    destroy,
   };
 }
