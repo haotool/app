@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ASSETS } from '../core/assets';
 import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 
@@ -21,6 +22,10 @@ export class BootScene extends Phaser.Scene {
     this.load.on('progress', (value: number) => {
       fill.width = Math.max(1, barWidth * value);
     });
+
+    for (const { key, url } of ASSETS) {
+      this.load.image(key, url);
+    }
   }
 
   create(): void {

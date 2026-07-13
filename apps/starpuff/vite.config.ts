@@ -22,9 +22,10 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         injectRegister: 'auto',
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
           globIgnores: ['**/node_modules/**'],
           cleanupOutdatedCaches: true,
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },
         manifest: {
           id: manifestScope,
@@ -41,16 +42,16 @@ export default defineConfig(({ mode }) => {
           categories: ['games', 'entertainment'],
           icons: [
             {
-              src: 'icons/icon-192.svg',
+              src: 'icons/icon-192.png',
               sizes: '192x192',
-              type: 'image/svg+xml',
+              type: 'image/png',
               purpose: 'any',
             },
             {
-              src: 'icons/icon-512.svg',
+              src: 'icons/icon-512.png',
               sizes: '512x512',
-              type: 'image/svg+xml',
-              purpose: 'any maskable',
+              type: 'image/png',
+              purpose: 'any',
             },
           ],
         },
