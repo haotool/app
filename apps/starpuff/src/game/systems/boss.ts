@@ -92,10 +92,13 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
   };
 
   const flashWhite = () => {
+    // 暫停紅暈呼吸避免 onUpdate 覆蓋白閃 tint。
+    enrageTween?.pause();
     sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     delay(90, () => {
       sprite.setTintMode(Phaser.TintModes.MULTIPLY);
-      if (!enrageTween) sprite.clearTint();
+      if (enrageTween) enrageTween.resume();
+      else sprite.clearTint();
     });
   };
 
