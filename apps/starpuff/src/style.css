@@ -79,11 +79,34 @@ body {
   backdrop-filter: blur(2px);
 }
 
-.ctl-btn:active {
+/* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */
+.ctl-btn:active,
+.ctl-btn.is-pressed {
   background: var(--sp-btn-active);
   transform: scale(0.92);
 }
 
 .ctl-btn-raised {
   margin-bottom: 26px;
+}
+
+/* 橫向持機提示：本遊戲為直向設計。 */
+#rotate-hint {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  #rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sp-bg);
+    color: #3a3a4a;
+    font-family: system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
 }
