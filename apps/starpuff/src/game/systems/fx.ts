@@ -1,4 +1,4 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 
 export const FX_TEXTURES = {
@@ -14,7 +14,8 @@ interface Scalable {
   scaleY: number;
 }
 interface Tintable {
-  setTintFill(color: number): unknown;
+  setTint(color: number): unknown;
+  setTintMode(mode: number): unknown;
   clearTint(): unknown;
 }
 
@@ -79,7 +80,7 @@ export function fillStarPath(
 }
 
 function canTint(go: object): go is Tintable {
-  return 'setTintFill' in go && 'clearTint' in go;
+  return 'setTint' in go && 'setTintMode' in go && 'clearTint' in go;
 }
 
 export function createFx(scene: Phaser.Scene): FxSystem {
@@ -186,9 +187,13 @@ export function createFx(scene: Phaser.Scene): FxSystem {
 
   function flashWhite(target: Phaser.GameObjects.GameObject): void {
     if (canTint(target)) {
-      target.setTintFill(0xffffff);
+      // Phaser 4 已移除 setTintFill(color)，改用 setTint + FILL tint mode。
+      target.setTint(0xffffff);
+      target.setTintMode(Phaser.TintModes.FILL);
       scene.time.delayedCall(80, () => {
-        if (target.scene) target.clearTint();
+        if (!target.scene) return;
+        target.clearTint();
+        target.setTintMode(Phaser.TintModes.MULTIPLY);
       });
       return;
     }
