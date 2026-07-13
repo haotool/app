@@ -52,6 +52,10 @@ describe('combat', () => {
     expect(resolveHit(1, 0, 5, 1200).hp).toBe(0);
   });
 
+  it('resolveHit 已死亡（HP 0）不再結算', () => {
+    expect(resolveHit(0, 0, 1, 1200)).toEqual({ hp: 0, invulnerableMs: 0, damaged: false });
+  });
+
   it('tickTimer 遞減且不低於 0', () => {
     expect(tickTimer(100, 16)).toBe(84);
     expect(tickTimer(10, 16)).toBe(0);

@@ -30,7 +30,9 @@ const HURT_LOCK_MS = 250;
 const BLINK_INTERVAL_MS = 100;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
-  const sprite = scene.physics.add.sprite(x, y, 'hero-idle');
+  // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
+  const tex = (key: string) => (scene.textures.exists(key) ? key : '__WHITE');
+  const sprite = scene.physics.add.sprite(x, y, tex('hero-idle'));
   sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
   sprite.setCollideWorldBounds(true);
   const baseScaleX = sprite.scaleX;
@@ -44,7 +46,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   zoneBody.enable = false;
 
   const stars = scene.physics.add.group({
-    defaultKey: 'fx-star',
+    defaultKey: tex('fx-star'),
     maxSize: 8,
     allowGravity: false,
   });
@@ -63,7 +65,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   const setPose = (next: Pose) => {
     if (pose === next) return;
     pose = next;
-    sprite.setTexture(next);
+    sprite.setTexture(tex(next));
   };
 
   // squash/stretch：先瞬間變形，再 tween 回基準比例。
@@ -88,7 +90,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   const fireStar = () => {
     const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
-    const star = stars.get(fx, sprite.y, 'fx-star') as Phaser.Physics.Arcade.Sprite | null;
+    const star = stars.get(fx, sprite.y, tex('fx-star')) as Phaser.Physics.Arcade.Sprite | null;
     if (!star) return;
     star.setActive(true).setVisible(true);
     star.setDisplaySize(STAR_SIZE, STAR_SIZE);

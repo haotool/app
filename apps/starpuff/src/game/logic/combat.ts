@@ -12,14 +12,14 @@ export interface HitResult {
   damaged: boolean;
 }
 
-// 受擊結算：i-frame 期間免傷，否則扣血並重啟無敵計時。
+// 受擊結算：i-frame 期間或已死亡免傷，否則扣血並重啟無敵計時。
 export function resolveHit(
   hp: number,
   invulnerableMs: number,
   damage: number,
   invulnerableDurationMs: number,
 ): HitResult {
-  if (invulnerableMs > 0) return { hp, invulnerableMs, damaged: false };
+  if (invulnerableMs > 0 || hp <= 0) return { hp, invulnerableMs, damaged: false };
   return { hp: applyDamage(hp, damage), invulnerableMs: invulnerableDurationMs, damaged: true };
 }
 
