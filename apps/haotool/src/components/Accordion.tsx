@@ -1,57 +1,57 @@
-/**
- * Accordion Component
- * Animated FAQ accordion with smooth expand/collapse
- * [context7:/websites/motion-dev-docs:2025-12-14] - Framer Motion integration
- */
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import type { FaqItem } from '../constants';
+import { ChevronDown } from 'lucide-react';
+import type { FaqItem } from '../config/faq';
 
-const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-interface AccordionItemProps {
-  item: FaqItem;
+interface AccordionProps {
+  items: readonly FaqItem[];
 }
 
-export function AccordionItem({ item }: AccordionItemProps) {
-  const [isOpen, setIsOpen] = useState(false);
+/**
+ * FAQ 手風琴（deep-dive §4.3）：一次僅展開一題；grid-rows 0fr→1fr 240ms 展開。
+ * 觸發列 min-height 56px、aria-expanded/aria-controls；reduced-motion 直接切換（CSS 降級）。
+ */
+export default function Accordion({ items }: AccordionProps) {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="border-b border-white/5 last:border-0">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-6 text-left focus:outline-none group"
-        aria-expanded={isOpen}
-      >
-        <span
-          className={`text-base md:text-lg font-medium transition-colors duration-300 ${isOpen ? 'text-brand-400' : 'text-slate-200 group-hover:text-white'}`}
-        >
-          {item.question}
-        </span>
-        <motion.div
-          animate={{ rotate: isOpen ? 45 : 0 }}
-          transition={{ duration: 0.4, ease: EASING_NEBULA }}
-          className={`ml-4 flex-shrink-0 ${isOpen ? 'text-brand-400' : 'text-slate-500'}`}
-        >
-          <Plus className="h-5 w-5" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: EASING_NEBULA }}
-            className="overflow-hidden"
-          >
-            <p className="pb-6 text-slate-400 leading-relaxed font-light">{item.answer}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <ul className="flex flex-col gap-3">
+      {items.map((item, index) => {
+        const open = openIndex === index;
+        return (
+          <li key={item.question} className="rounded-btn border border-border bg-surface">
+            <h3>
+              <button
+                type="button"
+                id={`faq-trigger-${index}`}
+                aria-expanded={open}
+                aria-controls={`faq-panel-${index}`}
+                onClick={() => setOpenIndex(open ? null : index)}
+                className="press focus-ring flex min-h-14 w-full items-center justify-between gap-4 rounded-btn px-5 py-4 text-left text-[16px] font-semibold text-text hover:bg-background active:bg-surface-sunken"
+              >
+                {item.question}
+                <ChevronDown
+                  className="accordion-chevron size-5 shrink-0 text-text-muted"
+                  data-open={open}
+                  aria-hidden="true"
+                />
+              </button>
+            </h3>
+            <div
+              id={`faq-panel-${index}`}
+              role="region"
+              aria-labelledby={`faq-trigger-${index}`}
+              className="accordion-panel"
+              data-open={open}
+            >
+              <div className="overflow-hidden">
+                <p className="px-5 pb-5 text-body-sm leading-[1.7] text-text-muted">
+                  {item.answer}
+                </p>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
-
-export default AccordionItem;

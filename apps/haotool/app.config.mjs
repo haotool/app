@@ -1,44 +1,47 @@
 /**
- * haotool App Configuration - SSOT
+ * HaoTool App Configuration - SSOT
  *
  * ⚠️ 這是唯一的路徑配置來源，所有其他文件必須從這裡引用
  *
  * 使用位置：
  * - src/routes.tsx (路由定義)
  * - vite.config.ts (SSG 預渲染)
- * - scripts/verify-production-seo.mjs (生產環境檢測)
+ * - scripts/generate-sitemap.js (Sitemap / robots / llms 生成)
+ * - scripts/verify-production-seo.mjs (生產環境檢測，經 discoverApps() 自動發現)
  *
- * 格式：統一使用尾斜線結尾（符合 SEO Best Practices 2025）
- *
- * 建立時間: 2025-12-15
- * 依據: [Linus: Single Source of Truth][SEO Best Practices 2025]
+ * 格式：統一使用尾斜線結尾（符合 SEO Best Practices）
  */
 
 /**
- * haotool 所有需要預渲染的 SEO 路徑
+ * HaoTool 所有需要預渲染的 SEO 路徑
  *
- * 總計：4 個路徑
- * - 首頁、專案列表、關於、聯絡
+ * 總計：4 個路徑 — 首頁、工具總覽、關於、聯絡
  */
-export const SEO_PATHS = ['/', '/projects/', '/about/', '/contact/'];
+export const SEO_PATHS = ['/', '/tools/', '/about/', '/contact/'];
 
 /**
- * SEO 配置文件路徑
- * [fix:2026-01-01] 新增 llms.txt 支援 AI 搜尋引擎
- * 參考: https://llmstxt.org/
+ * SEO 配置文件路徑（index.md 為 Agent Discovery mirror）
  */
-export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
+export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt', '/index.md'];
 
 /**
  * 圖片資源路徑（用於生產環境驗證）
  */
 export const IMAGE_RESOURCES = [
-  '/og-image.png', // Open Graph 分享圖片
-  '/favicon.ico', // Favicon
-  '/icons/icon-192x192.png', // PWA icon 192x192
-  '/icons/icon-512x512.png', // PWA icon 512x512
-  '/icons/maskable-icon-512x512.png', // PWA maskable icon
+  '/og-image.png',
+  '/favicon.ico',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/maskable-icon-512x512.png',
+  '/brand/avatar.png',
+  '/brand/illus-desk.avif',
+  '/brand/illus-desk.webp',
 ];
+
+/**
+ * Lighthouse CI smoke audit paths（canonical trailing slash）。
+ */
+export const LIGHTHOUSE_CI_SMOKE_PATHS = ['/', '/tools/', '/about/'];
 
 /**
  * 網站基本配置
@@ -46,10 +49,10 @@ export const IMAGE_RESOURCES = [
 export const SITE_CONFIG = {
   url: 'https://haotool.org/',
   appsHostUrl: 'https://app.haotool.org/',
-  name: 'haotool.org',
-  title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
+  name: 'HaoTool 好工具',
+  title: 'HaoTool 好工具｜免費開源的台灣網頁工具集',
   description:
-    '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 8 打造高品質數位工具：HaoRate 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。全部開源、免費、Lighthouse 90+ 分。',
+    'HaoTool 好工具：免費、開源、不收集個資的台灣網頁工具集。HaoRate 匯率換算、喵喵分帳、停車好工具 ParkKeeper、日本名字產生器、地震知識小學堂，每一個都以產品級標準交付。',
 };
 
 /**
@@ -63,6 +66,7 @@ export const SITE_CONFIG = {
  *   basePath: {development: string, ci: string, production: string},
  *   seoPaths: string[],
  *   siteUrl: string,
+ *   lighthouseSmokePaths: string[],
  *   build: {ssg: boolean, pwa: boolean},
  *   resources: {seoFiles: string[], images: string[]}
  * }}
@@ -70,9 +74,9 @@ export const SITE_CONFIG = {
 export const APP_CONFIG = {
   // 應用識別
   name: 'haotool',
-  displayName: 'haotool.org',
+  displayName: 'HaoTool',
 
-  // 部署路徑配置
+  // 部署路徑配置（根站三環境皆為 /）
   basePath: {
     development: '/',
     ci: '/',
@@ -82,6 +86,7 @@ export const APP_CONFIG = {
   // SEO 路徑
   seoPaths: SEO_PATHS,
   siteUrl: SITE_CONFIG.url,
+  lighthouseSmokePaths: LIGHTHOUSE_CI_SMOKE_PATHS,
 
   // 建置配置
   build: {
@@ -105,7 +110,6 @@ export const APP_CONFIG = {
  */
 export function normalizePath(path) {
   if (path === '/') return '/';
-  // 移除尾斜線後再添加，確保一致性
   return path.replace(/\/+$/, '') + '/';
 }
 

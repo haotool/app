@@ -1,76 +1,78 @@
 /**
- * Meta Tags Generator for SEO
- * [context7:/google/seo-starter-guide:2025-12-14]
+ * Meta Tags Generator for SEO（SSG onPageRendered 注入）
+ * 每頁 title/description 終稿 SSOT（meta 與 JSON-LD WebPage 共用）。
+ * 預算依 PRD §9.1 v2.1：title 15–25 全形字、description 60–78 全形字。
+ * 單語 zh-TW 站不輸出 hreflang（含 x-default）。
  */
+import { APP_INFO } from '../config/app-info';
 
-const SITE_URL = 'https://haotool.org';
-const SITE_NAME = 'haotool.org';
+const SITE_URL = APP_INFO.siteUrl.replace(/\/$/, '');
+const SITE_NAME = APP_INFO.name;
 const DEFAULT_IMAGE = '/og-image.png';
-const TWITTER_HANDLE = '@azlife_1224';
+const TWITTER_HANDLE = APP_INFO.socialHandle;
+const THEME_COLOR = '#3182F6';
+
+export interface RouteMetadata {
+  title: string;
+  description: string;
+  image?: string;
+  type?: 'website' | 'article' | 'profile';
+  keywords?: string[];
+  noindex?: boolean;
+}
 
 /**
- * Route-specific metadata
+ * Route-specific metadata（統一尾斜線 key）
  */
-const ROUTE_METADATA: Record<
-  string,
-  {
-    title: string;
-    description: string;
-    image?: string;
-    type?: 'website' | 'article' | 'profile';
-    keywords?: string[];
-  }
-> = {
+const ROUTE_METADATA: Record<string, RouteMetadata> = {
   '/': {
-    title: 'haotool.org — 阿璋的全端作品集 | React TypeScript 高品質數位工具',
+    title: `${APP_INFO.name}｜免費開源的台灣網頁工具集`,
     description:
-      '「haotool」取自「好工具」的諧音。阿璋以 React 19、TypeScript、Vite 8 打造高品質數位工具：HaoRate 匯率計算機、日本名字產生器、停車好工具 ParkKeeper、地震知識小學堂。融合 3D 互動與動態設計，全部開源、免費、Lighthouse 90+ 分。',
+      `${APP_INFO.name}：免費、開源、不收集個資的台灣網頁工具集。` +
+      '匯率換算、旅遊分帳、停車記錄、日本名字、地震防災五款 PWA，全部離線可用，以產品級標準交付。',
     type: 'website',
     keywords: [
-      '阿璋',
-      'haotool',
+      'HaoTool',
       '好工具',
-      '全端工程師',
-      '作品集',
-      'React',
-      'TypeScript',
-      'PWA',
-      '開源專案',
-      'Web 開發',
-      '匯率計算機',
+      '免費工具',
+      '開源',
+      '匯率換算',
+      '旅遊分帳',
+      '停車記錄',
       '日本名字產生器',
-      '停車好工具',
+      '地震防災',
+      'PWA',
     ],
   },
-  '/projects/': {
-    title: '作品集 | React TypeScript 開源專案展示 — haotool.org',
+  '/tools/': {
+    title: '所有工具｜匯率、分帳、停車、日本名字、防災',
     description:
-      '精選作品展示：HaoRate 即時匯率計算機（30 天歷史圖表）、日本名字產生器（Vite SSG、PWA）、停車好工具 ParkKeeper（GPS 停車記錄）、地震知識小學堂。每個作品 Lighthouse 90+ 分，全部開源免費。',
+      `${APP_INFO.shortName} 全部工具總覽：HaoRate 匯率好工具、喵喵分帳、停車好工具 ParkKeeper、` +
+      '日本名字產生器、地震知識小學堂，全部免費、開源、離線可用。',
     type: 'website',
-    keywords: [
-      '作品集',
-      '開源專案',
-      'React 專案',
-      'TypeScript',
-      'PWA',
-      'HaoRate',
-      '停車好工具',
-      '日本名字產生器',
-    ],
+    keywords: ['工具總覽', '免費工具', '匯率', '分帳', '停車', '日本名字', '地震', 'PWA'],
   },
   '/about/': {
-    title: '關於阿璋 | 全端工程師 React TypeScript — haotool.org',
+    title: `關於 ${APP_INFO.shortName} 與${APP_INFO.author}｜打造好工具的開發哲學`,
     description:
-      '我是阿璋，「haotool」取自「好工具」的諧音，也延伸自我名字的 HAO 音節，代表我對產出的堅持：它必須是個好工具。專精 React 19、TypeScript、Vite、Tailwind CSS，追求 Lighthouse 滿分的開發哲學。',
+      `「HAO」取自「好」的拼音，${APP_INFO.shortName} 的核心理念是打造真正的好工具。` +
+      `認識作者${APP_INFO.author}的開發哲學：效能是功能、細節是尊重、開源是承諾；並了解本站的隱私承諾。`,
     type: 'profile',
-    keywords: ['阿璋', '全端工程師', 'React', 'TypeScript', '技術背景', '開發者', 'haotool'],
+    keywords: ['阿璋', 'HaoTool', '好工具', '全端工程師', '開發哲學', '隱私政策', '開源'],
   },
   '/contact/': {
-    title: '聯繫阿璋 | 合作委託 React 前端開發 — haotool.org',
+    title: `聯繫${APP_INFO.author}｜合作委託、技術顧問與問題回報`,
     description:
-      '有專案想法或合作委託？歡迎透過 Email、GitHub 或 Threads 聯繫阿璋。承接 Web 前端開發、React 應用架構、PWA 設計、3D 互動網頁等技術委託，通常 24 小時內回覆。',
+      '有專案想法或合作委託？形象網站、前端架構規劃、產品原型開發都歡迎聊聊。' +
+      `透過 Email、GitHub 或 Threads 聯繫${APP_INFO.author}，通常 24 小時內回覆。`,
     type: 'website',
-    keywords: ['聯繫', '合作', '委託', '前端開發', 'React', 'PWA'],
+    keywords: ['聯繫', '合作', '委託', '技術顧問', '前端開發', 'React'],
+  },
+  '/404/': {
+    title: `找不到頁面 — ${SITE_NAME}`,
+    description: '這頁不存在，但工具都在。回到 HaoTool 首頁，探索五個免費開源的網頁工具。',
+    type: 'website',
+    noindex: true,
   },
 };
 
@@ -80,6 +82,13 @@ const ROUTE_METADATA: Record<
 function normalizeRoute(route: string): string {
   if (route === '/') return '/';
   return route.endsWith('/') ? route : `${route}/`;
+}
+
+/**
+ * 取得路由文案終稿（JSON-LD WebPage 名稱/描述共用此 SSOT）
+ */
+export function getRouteMetadata(route: string): RouteMetadata | undefined {
+  return ROUTE_METADATA[normalizeRoute(route)];
 }
 
 /**
@@ -106,39 +115,31 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
     return '';
   }
   const canonicalUrl = `${SITE_URL}${normalizedRoute}`;
-  const imageUrl = metadata.image ? `${SITE_URL}${metadata.image}` : `${SITE_URL}${DEFAULT_IMAGE}`;
-
-  void buildTime; // Used for documentation, suppress unused warning
+  const imageUrl = `${SITE_URL}${metadata.image ?? DEFAULT_IMAGE}`;
 
   const tags: string[] = [];
 
-  // Title tag (replaces the static one from index.html)
   tags.push(`<title>${escapeHtml(metadata.title)}</title>`);
-
-  // Basic Meta Tags
   tags.push(`<meta name="description" content="${escapeHtml(metadata.description)}" />`);
 
   if (metadata.keywords && metadata.keywords.length > 0) {
-    tags.push(`<meta name="keywords" content="${metadata.keywords?.join(', ') ?? ''}" />`);
+    tags.push(`<meta name="keywords" content="${metadata.keywords.join(', ')}" />`);
   }
 
-  tags.push(`<meta name="author" content="阿璋 | ${SITE_NAME}" />`);
-  tags.push(`<meta property="article:author" content="阿璋" />`);
-  tags.push(`<meta property="article:published_time" content="2025-01-01T00:00:00Z" />`);
-  tags.push(`<meta property="article:modified_time" content="${buildTime}" />`);
-  tags.push(
-    `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
-  );
-  tags.push(
-    `<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />`,
-  );
+  tags.push(`<meta name="author" content="${APP_INFO.author} | ${SITE_NAME}" />`);
 
-  // Canonical URL
-  tags.push(`<link rel="canonical" href="${canonicalUrl}" />`);
-
-  // Hreflang
-  tags.push(`<link rel="alternate" hreflang="zh-TW" href="${canonicalUrl}" />`);
-  tags.push(`<link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />`);
+  if (metadata.noindex) {
+    tags.push(`<meta name="robots" content="noindex, follow" />`);
+  } else {
+    tags.push(
+      `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+    );
+    tags.push(
+      `<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />`,
+    );
+    // Canonical 僅輸出於可索引頁；單語站不輸出 hreflang（PRD §9.1 v2.1）。
+    tags.push(`<link rel="canonical" href="${canonicalUrl}" />`);
+  }
 
   // Open Graph Tags
   tags.push(`<meta property="og:type" content="${metadata.type ?? 'website'}" />`);
@@ -160,13 +161,10 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
   tags.push(`<meta name="twitter:title" content="${escapeHtml(metadata.title)}" />`);
   tags.push(`<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`);
   tags.push(`<meta name="twitter:image" content="${imageUrl}" />`);
-  tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(metadata.title)}" />`);
 
   // Additional Meta Tags
-  tags.push(`<meta name="theme-color" content="#6366f1" />`);
+  tags.push(`<meta name="theme-color" content="${THEME_COLOR}" />`);
   tags.push(`<meta name="format-detection" content="telephone=no" />`);
-
-  // Last Modified
   tags.push(`<meta http-equiv="last-modified" content="${buildTime}" />`);
 
   return tags.join('\n');

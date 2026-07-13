@@ -1,94 +1,118 @@
-/**
- * MobileMenu Component - Full-screen mobile navigation overlay
- * [update:2025-12-16] - Added from .example/haotool.org-v1.0.6
- * [context7:/websites/motion-dev-docs:2025-12-16]
- */
-import React from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-
-const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { APP_INFO } from '../config/app-info';
+import Wordmark from './Wordmark';
+import { buttonClass } from './Button';
+import { NAV_ITEMS } from './nav-items';
 
 interface MobileMenuProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  onNavigate: (e: React.MouseEvent<HTMLAnchorElement>, id: string) => void;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate }) => {
-  const menuVariants: Variants = {
-    closed: { y: '-100%', opacity: 0 },
-    open: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: EASING_NEBULA,
-      },
-    },
-    exit: {
-      y: '-100%',
-      opacity: 0,
-      transition: {
-        duration: 0.4,
-        ease: [0.33, 1, 0.68, 1],
-      },
-    },
-  };
+/**
+ * 全屏行動選單（deep-dive §4.7）：白實底 overlay、鎖 body scroll、Esc 關閉、focus trap。
+ * 開合 240ms opacity + translateY(8px)（reduced-motion 僅 opacity）；關閉態以 inert 移出焦點鏈。
+ */
+export default function MobileMenu({ open, onClose }: MobileMenuProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-  const containerVariants: Variants = {
-    closed: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
-    open: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
-  };
+  useEffect(() => {
+    if (!open) return undefined;
+    const overlay = overlayRef.current;
+    if (!overlay) return undefined;
 
-  const linkVariants: Variants = {
-    closed: { y: 20, opacity: 0 },
-    open: { y: 0, opacity: 1, transition: { duration: 0.4, ease: 'easeOut' } },
-  };
+    document.body.style.overflow = 'hidden';
 
-  const navLinks = [
-    { id: '#projects', label: '作品集' },
-    { id: '#about', label: '關於' },
-    { id: '#contact', label: '聯繫' },
-  ];
+    const focusables = () =>
+      Array.from(overlay.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+    focusables()[0]?.focus();
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusables();
+      const first = items[0];
+      const last = items.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [open, onClose]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial="closed"
-          animate="open"
-          exit="exit"
-          variants={menuVariants}
-          className="fixed inset-0 z-40 bg-[#020617]/98 backdrop-blur-2xl pt-32 px-8 flex flex-col md:hidden"
+    <div
+      ref={overlayRef}
+      id="mobile-menu"
+      className="mobile-menu fixed inset-0 z-(--z-overlay) flex flex-col bg-surface md:hidden"
+      data-open={open}
+      inert={!open}
+    >
+      <div className="flex h-16 shrink-0 items-center justify-between px-5">
+        <Link to="/" viewTransition className="focus-ring press hover:opacity-80" onClick={onClose}>
+          <span className="sr-only">{APP_INFO.shortName} 首頁</span>
+          <Wordmark />
+        </Link>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="關閉選單"
+          className="press press-scale focus-ring inline-flex size-11 items-center justify-center rounded-icon text-text hover:bg-background"
         >
-          <motion.div
-            className="flex flex-col gap-10 text-3xl font-light text-white tracking-tight"
-            variants={containerVariants}
-            initial="closed"
-            animate="open"
-          >
-            {navLinks.map((link) => (
-              <motion.a
-                key={link.id}
-                href={link.id}
-                onClick={(e) => {
-                  onNavigate(e, link.id);
-                  onClose();
-                }}
-                variants={linkVariants}
-                className="border-b border-white/5 pb-6 flex justify-between items-center group cursor-pointer"
-                whileTap={{ scale: 0.98, color: '#818cf8' }}
-              >
-                <span>{link.label}</span>
-                <ArrowRight className="text-brand-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-              </motion.a>
-            ))}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+          <X className="size-6" aria-hidden="true" />
+        </button>
+      </div>
 
-export default MobileMenu;
+      <nav aria-label="主導覽" className="flex-1 overflow-y-auto">
+        <ul>
+          {NAV_ITEMS.map((item) => (
+            <li key={item.to} className="border-b border-border">
+              <Link
+                to={item.to}
+                viewTransition
+                onClick={onClose}
+                className="press focus-ring-inset flex h-14 items-center px-5 text-[22px] font-bold text-text hover:bg-background active:bg-background"
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="shrink-0 space-y-4 px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-4">
+        <a
+          href={APP_INFO.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="press focus-ring inline-flex h-11 items-center text-[15px] font-medium text-text hover:text-primary-strong"
+        >
+          GitHub
+        </a>
+        <Link
+          to="/contact/"
+          viewTransition
+          onClick={onClose}
+          className={buttonClass('primary', 'w-full')}
+        >
+          聊聊你的專案
+        </Link>
+      </div>
+    </div>
+  );
+}

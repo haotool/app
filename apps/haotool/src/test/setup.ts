@@ -1,254 +1,72 @@
 /**
- * Test Setup
- * Configures vitest for React testing
+ * Test Setup — Vitest + Testing Library
+ * jsdom 未實作 matchMedia / IntersectionObserver / ResizeObserver，
+ * motion（useInView / MotionConfig reducedMotion）與 HeroStage 需以最小 stub 補齊。
  */
 import '@testing-library/jest-dom/vitest';
-import { vi, expect } from 'vitest';
-import * as matchers from '@testing-library/jest-dom/matchers';
+import { configure } from '@testing-library/react';
+import { vi } from 'vitest';
 
-// [fix:2025-12-25] 顯式擴展 expect 以確保 jest-dom matchers 可用
-expect.extend(matchers);
-import { type PropsWithChildren } from 'react';
-import * as React from 'react';
+// 冷 cache 首跑時 lazy route chunk 的 vite-node 轉換可能超過預設 1s，
+// 統一提高 async utils timeout 消除 CI 冷啟間歇紅（Testing Library 官方 configure API）。
+configure({ asyncUtilTimeout: 5000 });
 
-// Mock motion value type
-interface MockMotionValue {
-  get: () => number;
-  set: () => void;
-  on: () => () => void;
-  onChange?: () => () => void;
-  destroy?: () => void;
-}
-
-// Create mock motion value factory
-function createMockMotionValue(value = 0): MockMotionValue {
-  return {
-    get: () => value,
-    set: () => void 0,
-    on: () => () => void 0,
-    onChange: () => () => void 0,
-    destroy: () => void 0,
-  };
-}
-
-// Filter out framer-motion specific props
-function filterMotionProps(props: Record<string, unknown>): Record<string, unknown> {
-  const {
-    initial: _initial,
-    animate: _animate,
-    exit: _exit,
-    transition: _transition,
-    whileHover: _whileHover,
-    whileInView: _whileInView,
-    whileTap: _whileTap,
-    variants: _variants,
-    viewport: _viewport,
-    layoutId: _layoutId,
-    layout: _layout,
-    style,
-    ...rest
-  } = props;
-  return { ...rest, style: style };
-}
-
-// Create motion component factory
-function createMotionComponent(Tag: keyof React.JSX.IntrinsicElements) {
-  const Component = ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => {
-    const filteredProps = filterMotionProps(props);
-    return React.createElement(Tag, filteredProps, children);
-  };
-  Component.displayName = `motion.${String(Tag)}`;
-  return Component;
-}
-
-// Mock framer-motion with inline implementation
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: createMotionComponent('div'),
-    span: createMotionComponent('span'),
-    h1: createMotionComponent('h1'),
-    h2: createMotionComponent('h2'),
-    h3: createMotionComponent('h3'),
-    p: createMotionComponent('p'),
-    a: createMotionComponent('a'),
-    button: createMotionComponent('button'),
-    section: createMotionComponent('section'),
-    header: createMotionComponent('header'),
-    footer: createMotionComponent('footer'),
-    nav: createMotionComponent('nav'),
-    ul: createMotionComponent('ul'),
-    li: createMotionComponent('li'),
-    img: createMotionComponent('img'),
-    article: createMotionComponent('article'),
-    aside: createMotionComponent('aside'),
-    main: createMotionComponent('main'),
-  },
-  AnimatePresence: ({ children }: PropsWithChildren) => children,
-  MotionConfig: ({ children }: PropsWithChildren) => children,
-  useInView: () => true,
-  useSpring: (value: number) => createMockMotionValue(value),
-  useTransform: () => createMockMotionValue(0),
-  useMotionValue: (value: number) => createMockMotionValue(value),
-  useAnimation: () => ({
-    start: () => Promise.resolve(),
-    stop: () => void 0,
-    set: () => void 0,
-  }),
-  useScroll: () => ({
-    scrollY: createMockMotionValue(0),
-    scrollX: createMockMotionValue(0),
-    scrollYProgress: createMockMotionValue(0),
-    scrollXProgress: createMockMotionValue(0),
-  }),
-  useMotionTemplate: (strings: TemplateStringsArray, ...values: unknown[]) => {
-    // Simple template literal implementation - just return empty string for tests
-    void values;
-    return strings.join('');
-  },
-}));
-
-// Mock @react-three/fiber
-vi.mock('@react-three/fiber', () => ({
-  Canvas: ({ children }: PropsWithChildren) =>
-    React.createElement('div', { 'data-testid': 'three-canvas' }, children),
-  useFrame: () => void 0,
-  useThree: () => ({
-    mouse: { x: 0, y: 0 },
-    viewport: { width: 1, height: 1 },
-    gl: {},
-    camera: {},
-    scene: {},
-    size: { width: 800, height: 600 },
-  }),
-}));
-
-// Mock @react-three/drei
-vi.mock('@react-three/drei', () => ({
-  Float: ({ children }: PropsWithChildren) => children,
-  Environment: () => null,
-  MeshTransmissionMaterial: () => null,
-  ContactShadows: () => null,
-  PerformanceMonitor: ({ children }: PropsWithChildren) => children,
-  Lightformer: () => null,
-}));
-
-// Mock @react-three/postprocessing
-vi.mock('@react-three/postprocessing', () => ({
-  EffectComposer: ({ children }: PropsWithChildren) => children,
-  Bloom: () => null,
-  Noise: () => null,
-}));
-
-// Mock lenis for smooth scroll
-vi.mock('lenis', () => ({
-  default: class Lenis {
-    raf(): void {
-      /* mock */
-    }
-    scrollTo(): void {
-      /* mock */
-    }
-    stop(): void {
-      /* mock */
-    }
-    start(): void {
-      /* mock */
-    }
-    destroy(): void {
-      /* mock */
-    }
-    on(): () => void {
-      return () => void 0;
-    }
-    off(): void {
-      /* mock */
-    }
-  },
-}));
-
-// Mock ResizeObserver (required for @react-three/fiber)
-class MockResizeObserver {
-  constructor(_callback: ResizeObserverCallback) {
-    // Mock implementation
+if (typeof window !== 'undefined') {
+  // jsdom 未實作捲動 API；ScrollRestoration 與錨點捲動需 no-op stub 避免 Not implemented 噪音。
+  window.scrollTo = vi.fn();
+  if (typeof window.HTMLElement.prototype.scrollIntoView !== 'function') {
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
   }
-  disconnect(): void {
-    // Mock implementation
+
+  if (typeof window.matchMedia !== 'function') {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
   }
-  observe(): void {
-    // Mock implementation
+
+  if (typeof window.IntersectionObserver !== 'function') {
+    class IntersectionObserverStub implements IntersectionObserver {
+      readonly root = null;
+      readonly rootMargin = '';
+      readonly thresholds: readonly number[] = [];
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+      takeRecords = (): IntersectionObserverEntry[] => [];
+    }
+    Object.defineProperty(window, 'IntersectionObserver', {
+      writable: true,
+      value: IntersectionObserverStub,
+    });
+    Object.defineProperty(globalThis, 'IntersectionObserver', {
+      writable: true,
+      value: IntersectionObserverStub,
+    });
   }
-  unobserve(): void {
-    // Mock implementation
+
+  if (typeof window.ResizeObserver !== 'function') {
+    class ResizeObserverStub implements ResizeObserver {
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+    Object.defineProperty(window, 'ResizeObserver', {
+      writable: true,
+      value: ResizeObserverStub,
+    });
+    Object.defineProperty(globalThis, 'ResizeObserver', {
+      writable: true,
+      value: ResizeObserverStub,
+    });
   }
 }
-
-global.ResizeObserver = MockResizeObserver;
-
-// Mock IntersectionObserver
-class MockIntersectionObserver {
-  readonly root: Element | null = null;
-  readonly rootMargin: string = '';
-  readonly thresholds: readonly number[] = [];
-
-  constructor(callback: IntersectionObserverCallback) {
-    // Immediately call callback with empty entries
-    setTimeout(() => {
-      callback([], this);
-    }, 0);
-  }
-
-  disconnect(): void {
-    // Mock implementation
-  }
-  observe(): void {
-    // Mock implementation
-  }
-  unobserve(): void {
-    // Mock implementation
-  }
-  takeRecords(): IntersectionObserverEntry[] {
-    return [];
-  }
-}
-
-global.IntersectionObserver = MockIntersectionObserver;
-
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: (): void => {
-      // Mock implementation
-    },
-    removeListener: (): void => {
-      // Mock implementation
-    },
-    addEventListener: (): void => {
-      // Mock implementation
-    },
-    removeEventListener: (): void => {
-      // Mock implementation
-    },
-    dispatchEvent: () => false,
-  }),
-});
-
-// Mock scroll behavior
-Object.defineProperty(window, 'scrollTo', {
-  writable: true,
-  value: (): void => {
-    // Mock implementation
-  },
-});
-
-// Mock requestAnimationFrame
-global.requestAnimationFrame = (callback: FrameRequestCallback): number => {
-  return setTimeout(() => callback(0), 0) as unknown as number;
-};
-
-global.cancelAnimationFrame = (handle: number): void => {
-  clearTimeout(handle);
-};

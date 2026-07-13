@@ -37,6 +37,7 @@ export default tseslint.config(
       '**/*.cjs',
       '**/tests/e2e/**', // E2E 測試使用獨立的 Playwright TypeScript 配置
       '**/e2e/**', // E2E 測試目錄（split-meow 等 apps 使用此路徑）
+      '**/tests/**/*.mjs', // 獨立 QA 稽核腳本（Playwright standalone，比照 scripts/*.mjs）
       '**/playwright.config.ts', // Playwright 配置文件
     ],
     'Local Workspace Ignores',
