@@ -1,0 +1,31 @@
+export const ASSETS: { key: string; url: string }[] = [
+  { key: 'hero-idle', url: new URL('../../assets/sprites/hero-idle.webp', import.meta.url).href },
+  {
+    key: 'hero-inhale',
+    url: new URL('../../assets/sprites/hero-inhale.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-puffed',
+    url: new URL('../../assets/sprites/hero-puffed.webp', import.meta.url).href,
+  },
+  { key: 'hero-hurt', url: new URL('../../assets/sprites/hero-hurt.webp', import.meta.url).href },
+  {
+    key: 'minion-jelly',
+    url: new URL('../../assets/sprites/minion-jelly.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-floaty',
+    url: new URL('../../assets/sprites/minion-floaty.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-spiky',
+    url: new URL('../../assets/sprites/minion-spiky.webp', import.meta.url).href,
+  },
+  { key: 'boss-idle', url: new URL('../../assets/sprites/boss-idle.webp', import.meta.url).href },
+  {
+    key: 'boss-enraged',
+    url: new URL('../../assets/sprites/boss-enraged.webp', import.meta.url).href,
+  },
+  { key: 'fx-star', url: new URL('../../assets/sprites/fx-star.webp', import.meta.url).href },
+  { key: 'bg-arena', url: new URL('../../assets/sprites/bg-arena.webp', import.meta.url).href },
+];
