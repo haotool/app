@@ -1,182 +1,181 @@
 /**
- * Contact Page Component
- * Contact information and social links
+ * 聯繫頁（design-deep-dive §5.3 + PRD §5.4 委託資訊區）：
+ * 頁首 → 三張聯絡卡 → 委託資訊（承接範圍 / 三步流程 / SLA 承諾列）。
+ * Email 卡不可整卡點擊（互動集中於複製鈕；FR-005 預填主旨連結為卡內 MailtoLink）；
+ * GitHub / Threads 整卡外連。SSG HTML 零 mailto: href（CF Email Obfuscation 治理）。
  */
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Github, AtSign, Check, Copy, ExternalLink } from 'lucide-react';
-import { SOCIAL_LINKS, APP_NAME } from '../constants';
+import { useCallback, useRef, useState } from 'react';
+import { ArrowUpRight, AtSign, Github, Mail } from 'lucide-react';
+import { AUTHOR_CONTACT_LINK_MAP } from '../config/app-info';
+import CopyField from '../components/CopyField';
+import MailtoLink from '../components/MailtoLink';
+import Reveal from '../components/Reveal';
+import SectionHeading from '../components/SectionHeading';
+import Toast, { type ToastMessage } from '../components/Toast';
 
-const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
+// 三張聯絡卡資料 SSOT：config/app-info 的作者聯絡連結。
+const EMAIL_CONTACT = AUTHOR_CONTACT_LINK_MAP.email;
+const GITHUB_CONTACT = AUTHOR_CONTACT_LINK_MAP.github;
+const THREADS_CONTACT = AUTHOR_CONTACT_LINK_MAP.threads;
 
-interface ContactMethod {
-  icon: typeof Mail;
-  label: string;
-  value: string;
-  displayValue?: string;
-  href: string;
-  isCopyable?: boolean;
-  isExternal?: boolean;
-  color: 'brand' | 'slate' | 'purple';
-}
+const CARD_CLASS = 'flex items-center gap-4 rounded-card border border-border bg-surface p-6';
+const ICON_WRAP_CLASS =
+  'inline-flex size-12 shrink-0 items-center justify-center rounded-icon bg-primary-bg';
 
-const CONTACT_METHODS: ContactMethod[] = [
-  {
-    icon: Mail,
-    label: 'Email',
-    value: SOCIAL_LINKS.email,
-    displayValue: 'Gmail 信箱（點擊複製）',
-    href: `mailto:${SOCIAL_LINKS.email}`,
-    isCopyable: true,
-    color: 'brand',
-  },
-  {
-    icon: Github,
-    label: 'GitHub',
-    value: '@azlife',
-    href: SOCIAL_LINKS.github,
-    isExternal: true,
-    color: 'slate',
-  },
-  {
-    icon: AtSign,
-    label: 'Threads',
-    value: '@azlife_1224',
-    href: SOCIAL_LINKS.threads,
-    isExternal: true,
-    color: 'purple',
-  },
-];
+// 委託資訊（PRD §5.4）：承接範圍與合作流程三步。
+const HIRE_SCOPES = ['Web 前端', 'PWA', '效能優化', '技術顧問'] as const;
+
+const HIRE_STEPS = [
+  { title: '聊需求', description: '說說你想解決的問題，快速對齊方向與範圍。' },
+  { title: '報價與時程', description: '給出明確報價與交付時程，沒有隱藏成本。' },
+  { title: '迭代交付', description: '小步交付、隨時看得到進度，驗收後才算完成。' },
+] as const;
 
 export default function Contact() {
-  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const toastId = useRef(0);
 
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedItem(label);
-      setTimeout(() => setCopiedItem(null), 2000);
-    } catch {
-      console.error('Failed to copy to clipboard');
-    }
-  };
+  const showToast = useCallback((message: string, success: boolean) => {
+    toastId.current += 1;
+    setToast({ id: toastId.current, message, success });
+  }, []);
+
+  const dismissToast = useCallback(() => setToast(null), []);
 
   return (
-    <div className="min-h-screen pt-24 pb-20 flex items-center">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: EASING_NEBULA }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block px-3 py-1 mb-6 text-xs font-medium tracking-wider uppercase bg-brand-500/10 text-brand-400 rounded-full border border-brand-500/20">
-            Get in Touch
-          </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-            與我{' '}
-            <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
-              聯繫
-            </span>
-          </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
-            有問題或想法想討論？歡迎透過以下方式與我聯繫，我會盡快回覆您。
+    <>
+      <div className="bg-surface">
+        <div className="shell pb-12 pt-16 text-center md:pt-20">
+          <h1 className="text-h1 text-text">與我聯繫</h1>
+          <p className="mt-3 text-body text-text-muted">
+            合作委託、問題回報都歡迎——24 小時內回覆。
           </p>
-        </motion.div>
-
-        {/* Contact Methods */}
-        <div className="grid gap-4 max-w-lg mx-auto mb-16">
-          {CONTACT_METHODS.map((method, index) => (
-            <motion.div
-              key={method.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1, ease: EASING_NEBULA }}
-            >
-              <div className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-brand-500/30 hover:bg-white/[0.04] transition-all">
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors
-                    ${method.color === 'brand' ? 'bg-brand-500/10 text-brand-400 group-hover:bg-brand-500/20' : ''}
-                    ${method.color === 'slate' ? 'bg-white/5 text-slate-400 group-hover:bg-white/10' : ''}
-                    ${method.color === 'purple' ? 'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20' : ''}
-                  `}
-                >
-                  <method.icon className="h-5 w-5" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
-                    {method.label}
-                  </p>
-                  <p className="text-white font-medium truncate">
-                    {method.displayValue ?? method.value}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {method.isCopyable && (
-                    <motion.button
-                      onClick={() => void copyToClipboard(method.value, method.label)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                      aria-label={`Copy ${method.label}`}
-                    >
-                      <AnimatePresence mode="wait" initial={false}>
-                        {copiedItem === method.label ? (
-                          <motion.div
-                            key="check"
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.5, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            <Check className="h-4 w-4 text-green-400" />
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="copy"
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.5, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.button>
-                  )}
-
-                  {method.isExternal && (
-                    <a
-                      href={method.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                      aria-label={`Open ${method.label}`}
-                    >
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">{method.label}</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
         </div>
-
-        {/* Footer Note */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-center"
-        >
-          <p className="text-slate-500 text-sm">通常會在 24 小時內回覆 · {APP_NAME}</p>
-        </motion.div>
       </div>
-    </div>
+
+      <div className="bg-surface">
+        <div className="shell pb-20">
+          <ul className="mx-auto flex max-w-[512px] flex-col gap-4">
+            <li className={CARD_CLASS}>
+              <span className={ICON_WRAP_CLASS}>
+                <Mail className="size-6 text-primary-strong" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[17px] font-bold text-text">{EMAIL_CONTACT.label}</h2>
+                <div className="mt-2">
+                  <CopyField value={EMAIL_CONTACT.value} onToast={showToast} />
+                </div>
+                <MailtoLink
+                  email={EMAIL_CONTACT.value}
+                  subject="專案合作洽詢"
+                  className="press focus-ring mt-2 inline-flex text-caption text-text-muted hover:text-primary-strong"
+                >
+                  或直接開啟郵件程式 →
+                </MailtoLink>
+              </div>
+            </li>
+
+            <li>
+              <a
+                href={GITHUB_CONTACT.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`press press-scale focus-ring group cursor-pointer [--press-scale:0.99] hover:border-primary ${CARD_CLASS}`}
+              >
+                <span className={ICON_WRAP_CLASS}>
+                  <Github
+                    className="size-6 text-primary-strong"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[17px] font-bold text-text">{GITHUB_CONTACT.label}</h2>
+                  <p className="mt-0.5 text-sm text-text-muted">看程式碼、開 issue 或參與討論。</p>
+                </div>
+                <ArrowUpRight
+                  className="size-5 shrink-0 text-text-muted ease-out-quart motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+
+            <li>
+              <a
+                href={THREADS_CONTACT.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`press press-scale focus-ring group cursor-pointer [--press-scale:0.99] hover:border-primary ${CARD_CLASS}`}
+              >
+                <span className={ICON_WRAP_CLASS}>
+                  <AtSign
+                    className="size-6 text-primary-strong"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[17px] font-bold text-text">{THREADS_CONTACT.label}</h2>
+                  <p className="mt-0.5 text-sm text-text-muted">
+                    {THREADS_CONTACT.value} — 日常分享與快速提問。
+                  </p>
+                </div>
+                <ArrowUpRight
+                  className="size-5 shrink-0 text-text-muted ease-out-quart motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* 委託資訊（PRD §5.4）：承接範圍 → 合作流程三步 → SLA 承諾列（deep-dive 承諾列併於此，避免同句重複） */}
+      <section aria-labelledby="hire-heading" className="bg-background">
+        <div className="shell section-pad">
+          <Reveal>
+            <SectionHeading
+              overline="WORK WITH ME"
+              id="hire-heading"
+              title="委託與合作"
+              sub="從一頁式網站到完整 PWA，這些是我能幫上忙的事。"
+            />
+
+            <ul className="mt-8 flex flex-wrap justify-center gap-2" aria-label="承接範圍">
+              {HIRE_SCOPES.map((scope) => (
+                <li
+                  key={scope}
+                  className="rounded-chip border border-border bg-surface px-4 py-2 text-[15px] font-medium text-text"
+                >
+                  {scope}
+                </li>
+              ))}
+            </ul>
+
+            <ol className="mx-auto mt-8 grid max-w-[720px] grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+              {HIRE_STEPS.map((step, index) => (
+                <li key={step.title} className="rounded-card border border-border bg-surface p-6">
+                  <span
+                    className="text-[20px] font-extrabold tabular-nums text-primary-strong"
+                    aria-hidden="true"
+                  >
+                    {index + 1}
+                  </span>
+                  <h3 className="mt-2 text-[17px] font-bold text-text">{step.title}</h3>
+                  <p className="mt-1 text-body-sm text-text-muted">{step.description}</p>
+                </li>
+              ))}
+            </ol>
+
+            <p className="mt-8 flex items-center justify-center gap-2 text-center text-caption text-text-muted">
+              <span className="size-2 rounded-full bg-success" aria-hidden="true" />
+              通常在 24 小時內回覆。
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      <Toast toast={toast} onDismiss={dismissToast} />
+    </>
   );
 }

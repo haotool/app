@@ -168,6 +168,9 @@
       "yaml@>=2.0.0 <2.8.3": "2.8.3",
       "smol-toml@<1.6.1": "1.6.1",
       "@vitest/coverage-v8": "4.1.5"
+    },
+    "patchedDependencies": {
+      "vite-react-ssg@0.8.9": "patches/vite-react-ssg@0.8.9.patch"
     }
   }
 }

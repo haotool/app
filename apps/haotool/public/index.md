@@ -1,52 +1,66 @@
-# haotool.org
+# HaoTool 好工具
 
-haotool.org is a public portfolio and tool hub built by Azhan. It collects small, focused web tools built with React, TypeScript, Vite, PWA patterns, and Cloudflare edge delivery.
+HaoTool 好工具（https://haotool.org/）是由台灣全端工程師阿璋打造的免費開源網頁工具站，收錄 5 個以 React 19、TypeScript、Vite 與 PWA 打造的上線工具。無廣告、不收集個資，全部以 GPL-3.0 開源。
 
 ## Agent Discovery
 
-- HTML home: https://app.haotool.org/
-- Markdown mirror: https://app.haotool.org/index.md
-- API catalog: https://app.haotool.org/.well-known/api-catalog
-- Agent skills index: https://app.haotool.org/.well-known/agent-skills/index.json
-- robots.txt: https://app.haotool.org/robots.txt
-- llms.txt: https://app.haotool.org/llms.txt
+- HTML home: https://haotool.org/
+- Markdown mirror: https://haotool.org/index.md
+- llms.txt: https://haotool.org/llms.txt
+- Sitemap: https://haotool.org/sitemap.xml
+- robots.txt: https://haotool.org/robots.txt
+- API catalog: https://haotool.org/.well-known/api-catalog
+- Agent skills index: https://haotool.org/.well-known/agent-skills/index.json
 
 ## Public Tools
 
-### HaoRate
+### HaoRate 匯率好工具
 
 - URL: https://app.haotool.org/ratewise/
-- Purpose: Reference exchange-rate conversion with Taiwan Bank data.
+- 定位: 台銀銀行賣出價即時換算，30 天趨勢圖，離線可用——台灣最精準的匯率工具
 - Agent resources:
   - Markdown mirror: https://app.haotool.org/ratewise/index.md
   - OpenAPI: https://app.haotool.org/ratewise/openapi.json
   - Documentation: https://app.haotool.org/ratewise/open-data/
   - Health probe: https://app.haotool.org/ratewise/__network_probe__
 
-### NihonName
+### 喵喵分帳 Split Meow
 
-- URL: https://app.haotool.org/nihonname/
-- Purpose: Chinese-surname to Japanese-name generator with romanization and historical context.
+- URL: https://app.haotool.org/split-meow/
+- 定位: 貓咪主題旅遊分帳，費用分類、一鍵分享結算結果，完全離線
 
-### ParkKeeper
+### 停車好工具 ParkKeeper
 
 - URL: https://app.haotool.org/park-keeper/
-- Purpose: Offline-first parking record and return-to-car helper for Taiwan drivers.
+- 定位: GPS 記錄車位、羅盤導航回車，多語系、離線優先
 
-### Quake School
+### 日本名字產生器 NihonName
+
+- URL: https://app.haotool.org/nihonname/
+- 定位: 中文姓氏產生道地日文名，100+ 漢姓對照與歷史脈絡
+
+### 地震知識小學堂
 
 - URL: https://app.haotool.org/quake-school/
-- Purpose: Interactive earthquake education and disaster-prevention learning.
+- 定位: 18 道互動測驗＋動畫，搞懂規模與震度，離線防災學習
+
+## Core Pages
+
+- [首頁](https://haotool.org/)：品牌介紹與五個工具入口
+- [所有工具](https://haotool.org/tools/)：工具總覽與分類
+- [關於](https://haotool.org/about/)：品牌故事、開發哲學、FAQ 與隱私承諾
+- [聯繫](https://haotool.org/contact/)：合作委託與問題回報（24 小時內回覆）
 
 ## Usage Notes
 
-- HaoRate exchange rates are reference values only; actual transaction rates depend on the financial institution.
-- The site does not currently publish OAuth/OIDC authorization metadata, OAuth protected-resource metadata, MCP server cards, or WebMCP browser tools because those product capabilities are not exposed publicly yet.
+- HaoRate 匯率為台灣銀行牌告「銀行賣出價」參考值，實際成交匯率依各金融機構為準。
+- 本站尚未公開 OAuth/OIDC authorization metadata、OAuth protected-resource metadata、MCP server cards 或 WebMCP browser tools；上述能力公開前不提供對應端點。
 
 ## Contact
 
 - Website: https://haotool.org/
-- GitHub: https://github.com/haotool/app
 - Email: haotool.org@gmail.com
+- GitHub: https://github.com/haotool/app
+- Threads: https://www.threads.net/@azlife_1224
 
-Last updated: 2026-04-28
+最後更新：2026-07-13

@@ -1,860 +1,387 @@
 /**
- * Home Page Component
- * Portfolio homepage with hero section, stats, and featured projects
- * [update:2025-12-16] - Aligned with .example/haotool.org-v1.0.6
- * [context7:/darkroomengineering/lenis:2025-12-16] - Smooth scroll integration
- * [context7:/websites/motion-dev-docs:2025-12-16] - Framer Motion animations
- * [context7:@react-three/fiber:2025-12-16] - 3D hero integration
+ * 首頁（design-deep-dive §2 八區；Header/Footer 由 Layout 提供）。
+ * Hero 為 SSG 靜態內容（LCP = H1 文字；S1 開場僅位移不動透明度）；首屏以下 whileInView once。
  */
-import { type ComponentType, useState, useEffect, useRef, useCallback } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence, MotionConfig } from 'framer-motion';
-import Lenis from 'lenis';
-import { ArrowRight, Github, Sparkles, Menu, X, AtSign, Mail } from 'lucide-react';
-import { Counter } from '../components/Counter';
-import { ProjectCard } from '../components/ProjectCard';
-import { AccordionItem } from '../components/Accordion';
-import { TextReveal } from '../components/TextReveal';
-import Toast from '../components/Toast';
-import { STATS, PROJECTS, FAQS, SOCIAL_LINKS, APP_NAME } from '../constants';
-import MobileMenu from '../components/MobileMenu';
-import ThreeHeroFallback from '../components/ThreeHeroFallback';
+import { Link } from 'react-router-dom';
+import type { CSSProperties } from 'react';
+import { Gauge, Scale, ShieldCheck } from 'lucide-react';
+import { APP_INFO } from '../config/app-info';
+import { TOOLS } from '../config/tools';
+import { buttonClass, GhostLink } from '../components/Button';
+import HeroChips from '../components/HeroChips';
+import HeroStage from '../components/HeroStage';
+import { useMagnetic } from '../components/interactions';
+import Reveal from '../components/Reveal';
+import ScrollProgress from '../components/ScrollProgress';
+import SectionHeading from '../components/SectionHeading';
+import StatItem from '../components/StatItem';
+import StickerBadge from '../components/StickerBadge';
+import ToolCard from '../components/ToolCard';
 
-const EASING_NEBULA: [number, number, number, number] = [0.16, 1, 0.3, 1];
-type ThreeHeroComponent = ComponentType<{ isCtaHovered: boolean }>;
-type SectionBackgroundComponent = ComponentType;
+// 信任列統計（§2 區 3）：符號為靜態字元，不參與 count-up。
+const STATS = [
+  { value: TOOLS.length, label: '個上線產品' },
+  { value: 100, suffix: '%', label: '開源免費' },
+  { value: 0, label: '廣告與追蹤' },
+  { value: 90, suffix: '+', label: 'Lighthouse 分數' },
+] as const;
 
-// [SEO-fix:2026-01-07] 檢測是否為 Lighthouse/PageSpeed 環境（避免 3D 超時）
-const isLighthouseBot = (): boolean => {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent.toLowerCase();
-  return ua.includes('lighthouse') || ua.includes('pagespeed') || ua.includes('googlebot');
-};
+// A1 bento 網格放置序（mobile-beauty §2.1）：DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序。
+const BENTO_SLOTS = [
+  'bento-feature',
+  'bento-sm-a',
+  'bento-sm-b',
+  'bento-wide-a',
+  'bento-wide-b',
+] as const;
+
+// A1 feature 數據帶（HaoRate 專屬、零時效數值）：靜態 sparkline 形狀＋幣別徽章牆。
+// 禁止清單：匯率值、更新時間、漲跌百分比——一切會過期的內容（PM 9.2 A1 硬規則）。
+const FEATURE_CURRENCIES = ['USD', 'JPY', 'KRW', 'EUR', 'GBP'] as const;
+
+const featureDataBand = (
+  <div className="mt-4 flex flex-col gap-2" data-testid="feature-data-band">
+    <div className="flex items-center gap-3">
+      <svg
+        viewBox="0 0 120 32"
+        width={120}
+        height={32}
+        aria-hidden="true"
+        className="shrink-0 text-primary"
+      >
+        <path
+          d="M2 26 L14 22 L26 24 L38 17 L50 19 L62 12 L74 14 L86 9 L98 11 L110 5 L118 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx={118} cy={6} r={3} fill="currentColor" />
+      </svg>
+      <span className="text-caption text-text-muted">30 天趨勢</span>
+    </div>
+    <ul className="flex flex-wrap gap-1.5">
+      {FEATURE_CURRENCIES.map((code) => (
+        <li
+          key={code}
+          className="rounded-chip bg-surface-sunken px-2 py-0.5 text-caption text-text-muted"
+        >
+          {code}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+// 工藝證明三幕（A2，mobile-beauty §3.1 文案終稿）＋ FR-012 證據錨點。
+// 同一份 DOM 雙版式：enhanced＝sticky 幕（overline→巨型數據→標題句→描述→錨點）；
+// fallback＝現行三卡網格（icon＋數據＋標題＋描述＋錨點一一對應）。
+const CRAFT_PROOFS = [
+  {
+    icon: Gauge,
+    overline: 'PERFORMANCE',
+    data: <>LCP &lt;2s</>,
+    title: '快，是第一個功能。',
+    description: 'Lighthouse 90+，打開 DevTools 就能對帳。',
+    evidenceLabel: '查看 Lighthouse 報告',
+    evidenceHref: `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(APP_INFO.siteUrl)}`,
+  },
+  {
+    icon: ShieldCheck,
+    overline: 'RELIABILITY',
+    data: (
+      <>
+        100% <span className="text-primary-strong">離線</span>
+      </>
+    ),
+    title: '斷網，也照常工作。',
+    description: 'PWA 離線可用，測試與 CI 全綠才出貨。',
+    evidenceLabel: '查看原始碼與測試',
+    evidenceHref: APP_INFO.github,
+  },
+  {
+    icon: Scale,
+    overline: 'HONESTY',
+    data: <>GPL-3.0</>,
+    title: '程式碼公開，歡迎檢視。',
+    description: '零廣告、零追蹤、零個資收集。',
+    evidenceLabel: '查看授權條款',
+    evidenceHref: APP_INFO.licenseUrl,
+  },
+] as const;
 
 export default function Home() {
-  const [isCtaHovered, setIsCtaHovered] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [ThreeHeroComponent, setThreeHeroComponent] = useState<ThreeHeroComponent | null>(null);
-  const [SectionBackgroundComponent, setSectionBackgroundComponent] =
-    useState<SectionBackgroundComponent | null>(null);
-  const lenisRef = useRef<Lenis | null>(null);
-
-  // [SEO-fix:2026-01-07] IntersectionObserver 延遲載入 3D 場景
-  // [context7:/websites/react_dev_reference:2026-01-07]
-  const [show3D, setShow3D] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
-
-  // IntersectionObserver 回調 - 使用 useCallback 避免重複創建
-  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
-    const entry = entries[0];
-    if (entry?.isIntersecting) {
-      setShow3D(true);
-    }
-  }, []);
-
-  // [context7:/websites/react_dev_reference:2026-01-07] useEffect cleanup pattern
-  useEffect(() => {
-    // 如果是 Lighthouse/PageSpeed 環境，不載入 3D
-    if (isLighthouseBot()) {
-      return;
-    }
-
-    const heroElement = heroRef.current;
-    if (!heroElement) return;
-
-    const observer = new IntersectionObserver(handleIntersection, {
-      rootMargin: '100px', // 提前 100px 開始載入
-      threshold: 0.01,
-    });
-
-    observer.observe(heroElement);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [handleIntersection]);
-
-  // client-only 裝飾背景：mount 後再載入，避免 SSG HTML 產生 Suspense boundary 標記。
-  useEffect(() => {
-    let isCancelled = false;
-
-    void import('../components/SectionBackground').then((module) => {
-      if (!isCancelled) {
-        setSectionBackgroundComponent(() => module.default);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
-
-  // 3D Hero 僅在實際需要時才載入，保留 code splitting 並避免首頁 hydration mismatch。
-  useEffect(() => {
-    if (!show3D || ThreeHeroComponent) {
-      return;
-    }
-
-    let isCancelled = false;
-
-    void import('../components/ThreeHero').then((module) => {
-      if (!isCancelled) {
-        setThreeHeroComponent(() => module.default);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [show3D, ThreeHeroComponent]);
-
-  // Initialize Lenis Smooth Scroll
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      touchMultiplier: 2,
-    });
-
-    lenisRef.current = lenis;
-
-    let rafId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
-
-    rafId = requestAnimationFrame(raf);
-
-    return () => {
-      lenis.destroy();
-      lenisRef.current = null;
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  // Lock/Unlock scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      lenisRef.current?.stop();
-    } else {
-      lenisRef.current?.start();
-    }
-  }, [isMobileMenuOpen]);
-
-  // Universal Navigation Handler
-  const handleNavClick = (
-    e: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>,
-    targetId: string,
-  ) => {
-    e.preventDefault();
-    setIsMobileMenuOpen(false);
-
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(targetId, {
-        offset: -80,
-        duration: 1.5,
-      });
-    } else {
-      const element = document.querySelector(targetId);
-      element?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Scroll Animations for Navbar
-  const { scrollY } = useScroll();
-  const navHeight = useTransform(scrollY, [0, 100], [80, 64]);
-  const navBackground = useTransform(
-    scrollY,
-    [0, 100],
-    ['rgba(2, 6, 23, 0)', 'rgba(2, 6, 23, 0.9)'],
-  );
-  const navBackdrop = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
-  const navBorder = useTransform(
-    scrollY,
-    [0, 100],
-    ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.05)'],
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    show: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.8,
-        ease: EASING_NEBULA,
-      },
-    },
-  };
-
-  const textContainerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.03,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const featuredProjects = PROJECTS.filter((p) => p.featured);
-
-  const copyEmail = () => {
-    void navigator.clipboard.writeText(SOCIAL_LINKS.email);
-    setToastMessage('Email copied to clipboard');
-  };
+  // S5-b magnetic hover（範圍收斂：hero 主/次 CTA；Header GitHub 鈕於 Header 內）。
+  const primaryCtaRef = useMagnetic<HTMLAnchorElement>();
+  const secondaryCtaRef = useMagnetic<HTMLAnchorElement>();
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen bg-[#020617] text-slate-200 selection:bg-brand-500/30 font-sans overflow-x-hidden">
-        {/* Toast Notification */}
-        <AnimatePresence>
-          {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
-        </AnimatePresence>
-
-        {/* Deep Space Background Gradients */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-20%] left-[-10%] w-[1200px] h-[1200px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-900/30 via-[#020617]/0 to-transparent blur-[120px] opacity-60" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[1000px] h-[1000px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-[#020617]/0 to-transparent blur-[100px] opacity-40" />
-        </div>
-
-        {/* Navigation */}
-        <motion.nav
-          style={{
-            height: navHeight,
-            backgroundColor: navBackground,
-            backdropFilter: navBackdrop,
-            borderBottom: `1px solid`,
-            borderColor: navBorder,
-          }}
-          className="fixed top-0 left-0 right-0 z-50 flex items-center"
-        >
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: EASING_NEBULA }}
-              className="flex items-center gap-3 group cursor-pointer z-50"
-              onClick={(e) => {
-                e.preventDefault();
-                if (lenisRef.current) lenisRef.current.scrollTo(0);
-                else window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <div className="relative h-6 w-6 flex items-center justify-center">
-                <div className="absolute inset-0 bg-brand-500 rounded blur-[3px] opacity-40 group-hover:opacity-80 transition-opacity" />
-                <div className="relative h-2.5 w-2.5 bg-slate-100 rounded-sm z-10 shadow-sm" />
+    <>
+      {/* S4-c：僅 Home（敘事長頁）掛載 1px scroll progress。 */}
+      <ScrollProgress />
+      {/* 區 2 — Hero（白底；文字在上、舞台在後 — D8） */}
+      <section aria-labelledby="hero-heading" className="bg-surface">
+        <div className="shell flex flex-col gap-10 pb-[72px] pt-12 lg:grid lg:grid-cols-[minmax(0,560px)_minmax(0,512px)] lg:items-center lg:gap-12 lg:pb-28 lg:pt-24">
+          {/* <1024：文字區撐滿首屏可視高（100svh − header 64 − pt 48 − gap 40），
+              舞台整體移出首屏 → LCP 元素保證為 H1 文字（PRD §10.2 MUST）；桌面版式不變。 */}
+          <div className="relative flex min-h-[calc(100svh-152px)] flex-col justify-center lg:min-h-0">
+            {/* 文字容器 z-index 1、chips z-index 0（S2：chips 置於文字之下）。 */}
+            <div className="relative z-[1] flex flex-col">
+              {/* A6 貼紙徽章列（mobile-beauty §1 屏 1）：靜態旋轉、不新增動畫、首屏第一幀即繪製；
+                  padding-block 2px 吸收 ±2° 縱向溢出。 */}
+              <div className="flex items-center gap-2 self-start py-0.5">
+                <StickerBadge variant="primary" withDot>
+                  OPEN SOURCE · 台灣
+                </StickerBadge>
+                <StickerBadge variant="ink">100% FREE</StickerBadge>
               </div>
-              <span className="font-bold tracking-tight text-white group-hover:text-brand-300 transition-colors">
-                {APP_NAME}
-              </span>
-            </motion.div>
-
-            {/* Desktop Nav */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, ease: EASING_NEBULA }}
-              className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300"
-            >
-              <a
-                href="#projects"
-                onClick={(e) => handleNavClick(e, '#projects')}
-                className="hover:text-white transition-colors"
-              >
-                作品集
-              </a>
-              <a
-                href="#about"
-                onClick={(e) => handleNavClick(e, '#about')}
-                className="hover:text-white transition-colors"
-              >
-                關於
-              </a>
-              <a
-                href="#contact"
-                onClick={(e) => handleNavClick(e, '#contact')}
-                className="hover:text-white transition-colors"
-              >
-                聯繫
-              </a>
-            </motion.div>
-
-            <div className="flex items-center gap-4">
-              <motion.a
-                href="#contact"
-                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '#contact')}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: EASING_NEBULA }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="hidden md:block rounded-full bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-white/10 transition-colors border border-white/5 backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:border-brand-500/20"
-              >
-                Contact
-              </motion.a>
-
-              {/* Mobile Hamburger */}
-              <button
-                className="md:hidden z-50 text-white p-2"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? <X /> : <Menu />}
-              </button>
-            </div>
-          </div>
-        </motion.nav>
-
-        {/* Mobile Menu Overlay */}
-        <MobileMenu
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          onNavigate={handleNavClick}
-        />
-
-        {/* Main Content */}
-        <main id="main-content">
-          {/* Hero Section */}
-          <section
-            ref={heroRef}
-            className="relative flex min-h-screen items-center pt-24 pb-12 overflow-hidden"
-          >
-            {/* [SEO-fix:2026-01-07] 3D Background with IntersectionObserver lazy loading */}
-            {/* Main 3D Background - Full screen absolute positioning */}
-            {show3D && ThreeHeroComponent ? (
-              <ThreeHeroComponent isCtaHovered={isCtaHovered} />
-            ) : (
-              <ThreeHeroFallback />
-            )}
-
-            {/* Mobile Overlay to ensure text readability against 3D */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-[#020617]/50 md:hidden z-0 pointer-events-none" />
-
-            <div className="relative z-10 mx-auto max-w-7xl px-6 grid md:grid-cols-12 gap-8 md:gap-12 items-center w-full pointer-events-none">
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="md:col-span-8 lg:col-span-7 pointer-events-auto"
-              >
-                <motion.div
-                  variants={itemVariants}
-                  className="inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-900/30 px-3 py-1 mb-6 md:mb-8 backdrop-blur-md"
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-                  </span>
-                  <span className="text-[10px] font-bold text-brand-200 tracking-[0.2em] uppercase">
-                    Open for Commissions
-                  </span>
-                </motion.div>
-
-                <motion.h1
-                  variants={textContainerVariants}
-                  className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-white leading-[1.1] mb-6"
-                >
-                  <div className="overflow-hidden">
-                    <TextReveal text="Design" />
-                  </div>
-                  {/* Fixed: Use a single unified motion span for 'Engineering.' to guarantee correct gradient display.
-                    Background clipping on split text components (inline-blocks) is unreliable in many browsers. */}
-                  <motion.span
-                    initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    transition={{ duration: 1.0, ease: EASING_NEBULA, delay: 0.2 }}
-                    className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-white to-purple-300 animate-gradient-x pb-2 pr-1"
-                  >
-                    Engineering.
-                  </motion.span>
-                </motion.h1>
-
-                <motion.div
-                  variants={textContainerVariants}
-                  className="text-base sm:text-lg text-slate-300 md:text-slate-400 max-w-lg leading-relaxed font-light mb-8 md:mb-10 shadow-black drop-shadow-md md:drop-shadow-none"
-                >
-                  <TextReveal text="「haotool」取自「好工具」的諧音，代表這裡產出的每一個工具，都必須實用且優雅。" />
-                  <br className="hidden sm:block" />
-                  <TextReveal text="融合 3D 互動、動態設計與 React 架構，打造令人過目不忘的網頁體驗。" />
-                </motion.div>
-
-                <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
-                  <a
-                    href="#projects"
-                    onClick={(e) => handleNavClick(e, '#projects')}
-                    onMouseEnter={() => setIsCtaHovered(true)}
-                    onMouseLeave={() => setIsCtaHovered(false)}
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.96 }}
-                      className="group relative flex items-center gap-2 rounded-full bg-white pl-8 pr-6 py-3.5 text-sm font-bold text-black transition-all hover:bg-slate-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] cursor-pointer"
-                    >
-                      瀏覽作品
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition-transform group-hover:translate-x-1">
-                        <ArrowRight className="h-3 w-3" />
-                      </div>
-                    </motion.div>
-                  </a>
-                  <motion.a
-                    href={SOCIAL_LINKS.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.96 }}
-                    onMouseEnter={() => setIsCtaHovered(true)}
-                    onMouseLeave={() => setIsCtaHovered(false)}
-                    className="group flex items-center gap-2 rounded-full bg-white/5 px-6 py-3.5 text-sm font-medium text-white ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-brand-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] backdrop-blur-md"
-                  >
-                    <Github className="h-4 w-4" />
-                    GitHub
-                  </motion.a>
-                </motion.div>
-              </motion.div>
-            </div>
-
-            {/* Scroll Indicator */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5, duration: 1 }}
-              className="absolute bottom-6 left-6 md:left-auto md:right-10 hidden md:flex flex-col items-center gap-4 z-20 mix-blend-difference"
-            >
-              <div className="h-16 w-[1px] bg-gradient-to-b from-transparent via-slate-400 to-transparent" />
-            </motion.div>
-          </section>
-
-          {/* Stats Section */}
-          <section className="relative z-10 border-y border-white/[0.03] bg-[#020617]/50 backdrop-blur-sm py-12 md:py-16">
-            <div className="mx-auto max-w-7xl px-6">
-              <dl className="grid grid-cols-2 gap-y-10 gap-x-8 md:grid-cols-4">
-                {STATS.map((stat, idx) => (
-                  <div key={idx} className="flex flex-col items-start space-y-1">
-                    <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-                      {stat.label}
-                    </dt>
-                    <dd className="text-3xl md:text-4xl font-light tracking-tight text-white font-sans">
-                      <Counter value={stat.value} suffix={stat.suffix} />
-                    </dd>
-                  </div>
-                ))}
-                <div className="flex flex-col items-start space-y-1">
-                  <dt className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-                    Current Focus
-                  </dt>
-                  <dd className="flex items-center gap-2 text-brand-300 pt-1">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-                    </span>
-                    <span className="font-mono text-xs md:text-sm text-slate-300">
-                      Advanced Shaders
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </section>
-
-          {/* Featured Projects Section */}
-          <section id="projects" className="py-20 md:py-32 relative z-10">
-            {/* Auxiliary 3D Background for Projects */}
-            {SectionBackgroundComponent ? <SectionBackgroundComponent /> : null}
-
-            <div className="max-w-7xl mx-auto px-6 relative z-10">
-              <div className="mb-12 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.8, ease: EASING_NEBULA }}
-                >
-                  <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-4 md:mb-6">
-                    Selected Works
-                  </h2>
-                  <p className="text-slate-300 max-w-md text-base md:text-lg font-light leading-relaxed">
-                    結合實用性與娛樂性的數位實驗。
-                  </p>
-                </motion.div>
-              </div>
-
-              {/* Projects Grid */}
-              <div className="grid sm:grid-cols-2 gap-6 mb-12">
-                {featuredProjects.map((project, index) => (
-                  <ProjectCard key={project.id} project={project} index={index} />
-                ))}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2, ease: EASING_NEBULA }}
-                className="flex justify-center"
-              >
+              {/* S1：H1 整體單一 spring（僅 translateY、透明度恆 1）。
+                  不拆詞段——inline-block 詞段會把 H1 文字拆成多個小 LCP 候選，
+                  使 LCP 被副文段落搶走，違反 8.1 不可動搖約束「LCP=H1」（實測驗證）。 */}
+              <h1 id="hero-heading" className="intro-h1 mt-4 text-display text-text">
+                把好想法，
+                <br />
+                做成<span className="text-primary-strong">好工具</span>。
+              </h1>
+              <p className="intro-follow mt-5 max-w-none text-body text-text-muted lg:max-w-[30ch]">
+                我是{APP_INFO.author}
+                。從匯率、分帳到防災教育，每一個工具都以產品級標準交付，免費且開源。
+              </p>
+              <div className="intro-follow mt-8 flex flex-col gap-3 md:flex-row">
+                {/* S5-b：內層 magnet-item 承載 ±4px 位移，避免與外層 :active scale 衝突。 */}
                 <a
-                  href="#projects"
-                  onClick={(e) => handleNavClick(e, '#projects')}
-                  className="group inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 font-medium transition-colors"
+                  ref={primaryCtaRef}
+                  href="#tools"
+                  className={buttonClass('primary', 'w-full md:w-auto')}
                 >
-                  查看所有作品
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <span className="magnet-item">看看我做的工具</span>
                 </a>
-              </motion.div>
-            </div>
-          </section>
-
-          {/* About & FAQ Section */}
-          <section
-            id="about"
-            className="py-20 md:py-24 bg-gradient-to-b from-transparent via-brand-900/10 to-transparent border-y border-white/[0.02] relative z-10"
-          >
-            <div className="max-w-7xl mx-auto px-6">
-              {/* Intro Text */}
-              <motion.div
-                className="max-w-3xl mb-16 md:mb-20"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: EASING_NEBULA }}
-              >
-                <div className="inline-block mb-6">
-                  <span className="text-brand-300 font-mono text-xs tracking-wider uppercase border border-brand-500/20 px-2 py-1 rounded bg-brand-500/5 shadow-[0_0_10px_rgba(99,102,241,0.1)]">
-                    About the craft
-                  </span>
-                </div>
-                <h2 className="text-3xl font-bold text-white mb-6 md:mb-8 md:text-4xl tracking-tight">
-                  Bridging Design & Engineering
-                </h2>
-                <div className="prose prose-invert prose-lg text-slate-400 font-light text-base md:text-lg">
-                  <p className="mb-6">
-                    「haotool」取自「好工具」的諧音，代表這裡產出的每一個專案，都必須是個
-                    <span className="text-white font-medium">好工具</span>。
-                  </p>
-                  <p className="mb-6">
-                    在程式碼的世界裡，我追求的不僅是功能實現，更是感官的延伸。我相信好的使用者體驗來自於對細節的偏執——從
-                    <span className="text-slate-200 mx-1 border-b border-brand-500/30">
-                      60fps 的流暢度
-                    </span>
-                    到
-                    <span className="text-slate-200 mx-1 border-b border-brand-500/30">
-                      像素級的對齊
-                    </span>
-                    。
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Feature & FAQ Grid */}
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-                {/* Left Column: Feature Highlight */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.1 }}
+                <Link
+                  ref={secondaryCtaRef}
+                  to="/contact/"
+                  viewTransition
+                  className={buttonClass('secondary', 'w-full md:w-auto')}
                 >
-                  <div className="group relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/5 ring-1 ring-white/5 p-1 transition-all hover:ring-brand-500/40 hover:shadow-[0_0_40px_rgba(99,102,241,0.1)] h-full">
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="relative rounded-xl bg-[#050505] p-6 md:p-8 overflow-hidden h-full flex flex-col">
-                      {/* Subtle Grid Background */}
-                      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black,transparent)] pointer-events-none" />
-
-                      <div className="relative z-10 flex-1">
-                        <div className="flex items-center gap-4 mb-6">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400">
-                            <Sparkles className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-base md:text-lg font-bold text-white">技術堆疊</h3>
-                            <p className="text-xs text-slate-500 font-mono mt-0.5">
-                              Modern Web Stack
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className="text-slate-300 mb-6 text-sm leading-relaxed">
-                          專注於現代 Web 開發技術，追求效能、可維護性與開發體驗的最佳平衡。
-                        </p>
-
-                        <div className="flex flex-wrap gap-2 mt-auto">
-                          {[
-                            'React 19',
-                            'TypeScript',
-                            'Tailwind',
-                            'Vite',
-                            'Framer Motion',
-                            'PWA',
-                          ].map((tech) => (
-                            <span
-                              key={tech}
-                              className="text-xs font-mono text-brand-300 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20"
-                            >
-                              {tech}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Right Column: FAQ */}
-                <motion.div
-                  className="flex flex-col h-full"
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.2 }}
-                >
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 md:mb-8">
-                    FAQ
-                  </h3>
-                  <div className="space-y-1">
-                    {FAQS.map((faq, i) => (
-                      <AccordionItem key={i} item={faq} />
-                    ))}
-                  </div>
-                </motion.div>
+                  <span className="magnet-item">和我聊專案</span>
+                </Link>
               </div>
             </div>
-          </section>
+            <HeroChips />
+          </div>
+          <HeroStage />
+        </div>
+      </section>
 
-          {/* Contact Section */}
-          <section id="contact" className="py-20 md:py-32 relative z-10">
-            <div className="max-w-7xl mx-auto px-6">
-              {/* Header */}
-              <motion.div
-                className="mb-16"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: EASING_NEBULA }}
-              >
-                <div className="inline-block mb-6">
-                  <span className="text-brand-300 font-mono text-xs tracking-wider uppercase border border-brand-500/20 px-2 py-1 rounded bg-brand-500/5 shadow-[0_0_10px_rgba(99,102,241,0.1)]">
-                    Get in Touch
+      {/* 區 3 — 信任列（淺灰底；banner 型窄區節奏例外）；A7 dot-grid pattern 全站唯一授權處 */}
+      <section aria-labelledby="stats-heading" className="trust-pattern">
+        <div className="shell py-12 md:py-20">
+          <Reveal>
+            <p
+              id="stats-heading"
+              className="text-center text-overline uppercase text-primary-strong"
+            >
+              不是作品集，是已上線的產品
+            </p>
+          </Reveal>
+          <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-6">
+            {STATS.map((stat) => (
+              <li key={stat.label}>
+                <StatItem
+                  value={stat.value}
+                  label={stat.label}
+                  {...('suffix' in stat ? { suffix: stat.suffix } : {})}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* 區 4 — 工具展示（白底） */}
+      <section id="tools" aria-labelledby="tools-heading" className="scroll-mt-20 bg-surface">
+        <div className="shell section-pad">
+          <Reveal>
+            {/* A5 H2 詞級 kinetic（僅區 4/6，N2）：aria-label 完整句＋aria-hidden 拆詞雙軌。 */}
+            <SectionHeading
+              overline="TOOLS"
+              id="tools-heading"
+              kineticWords={['五個', '正在服務', '真實使用者', '的工具']}
+              sub="不是 demo，每一個都上線、可安裝、離線可用。"
+            />
+          </Reveal>
+          {/* A1 bento：行動 2 欄（feature 跨滿＋2×2 mini）／桌面 12 欄 3 列；
+              DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序（禁止 grid 放置交叉）。 */}
+          <ul className="bento mt-12">
+            {TOOLS.map((tool, index) => (
+              <li key={tool.id} data-tool-id={tool.id} className={BENTO_SLOTS[index]}>
+                <Reveal className="h-full" delay={index * 0.07}>
+                  <ToolCard
+                    tool={tool}
+                    variant={index === 0 ? 'feature' : 'mini'}
+                    {...(index === 0 ? { extra: featureDataBand } : {})}
+                  />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-8 text-center">
+            <GhostLink to="/tools/">查看全部工具</GhostLink>
+          </p>
+        </div>
+      </section>
+
+      {/* 區 5 — 工藝證明 sticky 一幕（A2，mobile-beauty §3）：
+          標題組置於 pin 容器之前（不進幕、走既有 Reveal）；同一份 DOM 雙版式——
+          enhanced（view-timeline）＝pin 300svh 三幕逐幕換場；
+          fallback（iOS<26／Firefox／reduced-motion／矮視口）＝現行三卡靜態網格。 */}
+      <section aria-labelledby="craft-heading" className="bg-background">
+        <div className="shell pt-[var(--space-section)]">
+          <Reveal>
+            <SectionHeading
+              overline="CRAFT"
+              id="craft-heading"
+              title="產品級，是可以被驗證的"
+              sub="每一項數字都可以在 Lighthouse 與原始碼裡對帳。"
+            />
+          </Reveal>
+        </div>
+        <div className="craft-pin">
+          <ul className="craft-stage shell mt-12 pb-[var(--space-section)]">
+            {CRAFT_PROOFS.map((proof, index) => (
+              <li key={proof.overline} className={`craft-scene craft-scene-${index + 1}`}>
+                {/* enhanced 模式 Reveal 由 .craft-reveal 中性化（幕動畫為該視口唯一動畫組）。 */}
+                <Reveal className="craft-reveal h-full" delay={index * 0.07}>
+                  <div className="craft-card flex h-full flex-col items-start gap-4 rounded-card border border-border bg-surface px-6 py-7">
+                    <p className="craft-overline text-overline uppercase text-primary-strong">
+                      {proof.overline}
+                    </p>
+                    {/* S4-b draw-in 僅 fallback 卡版生效（N8：enhanced 幕內停用、icon 整格隱藏）。 */}
+                    <span
+                      className="craft-icon inline-flex size-10 items-center justify-center rounded-icon bg-primary-bg"
+                      style={{ '--draw-delay': `${index * 70}ms` } as CSSProperties}
+                    >
+                      <proof.icon
+                        className="draw-in size-6 text-primary-strong"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <p className="craft-data text-[20px] font-extrabold tabular-nums leading-[1.4] text-text">
+                      {proof.data}
+                    </p>
+                    <div>
+                      <h3 className="craft-title text-caption font-bold text-text">
+                        {proof.title}
+                      </h3>
+                      <p className="mt-1 text-body-sm text-text-muted">{proof.description}</p>
+                    </div>
+                    <GhostLink href={proof.evidenceHref} external className="mt-auto">
+                      {proof.evidenceLabel}
+                    </GhostLink>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* 區 6 — 作者（白底；整組單次 reveal 不 stagger） */}
+      <section aria-labelledby="author-heading" className="bg-surface">
+        <div className="shell section-pad">
+          <Reveal>
+            <div className="flex flex-col items-center gap-8 text-center lg:grid lg:grid-cols-[320px_1fr] lg:items-center lg:gap-16 lg:text-left">
+              {/* A4 L2-a 吉祥物頭像（mobile-beauty §6）：容器尺寸與佔位期一致 → 零 CLS。 */}
+              <div className="flex size-[200px] items-center justify-center overflow-hidden rounded-deco bg-primary-bg lg:size-[320px]">
+                <img
+                  src="/brand/avatar.png"
+                  alt="阿璋的吉祥物頭像——手持扳手的品牌藍小方塊"
+                  width={640}
+                  height={640}
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-contain"
+                />
+              </div>
+              <div className="flex max-w-[60ch] flex-col gap-4">
+                {/* A5 kinetic（區 6，3 段、570ms）：品牌色 span 併入所屬段；AT 讀 aria-label 完整句。 */}
+                <h2
+                  id="author-heading"
+                  className="text-h2 text-text"
+                  aria-label="寫程式之前，先想像使用的人。"
+                >
+                  <span aria-hidden="true">
+                    <span className="kinetic-word" style={{ '--i': 0 } as CSSProperties}>
+                      寫程式之前，
+                    </span>
+                    <span className="kinetic-word" style={{ '--i': 1 } as CSSProperties}>
+                      先想像
+                    </span>
+                    <span className="kinetic-word" style={{ '--i': 2 } as CSSProperties}>
+                      <span className="text-primary-strong">使用的人</span>。
+                    </span>
                   </span>
-                </div>
-                <h2 className="text-3xl font-bold text-white md:text-5xl tracking-tighter mb-6">
-                  Let&apos;s Build Something
                 </h2>
-                <p className="text-slate-300 max-w-2xl text-base md:text-lg font-light leading-relaxed">
-                  有專案想法？或只是想聊聊技術？隨時歡迎透過以下方式聯繫。
+                <p className="text-caption text-text-muted">
+                  {APP_INFO.author} · {APP_INFO.authorTitle} · Since {APP_INFO.copyrightStartYear}
                 </p>
-              </motion.div>
-
-              {/* Contact Grid */}
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
-                {/* Left: Author Info */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.1 }}
-                >
-                  <div className="group relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/5 ring-1 ring-white/5 p-1 transition-all hover:ring-brand-500/40 hover:shadow-[0_0_40px_rgba(99,102,241,0.1)] h-full">
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="relative rounded-xl bg-[#050505] p-6 md:p-8 overflow-hidden h-full flex flex-col">
-                      {/* Grid Background */}
-                      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black,transparent)] pointer-events-none" />
-
-                      <div className="relative z-10 flex-1">
-                        <div className="flex items-center gap-4 mb-6">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400">
-                            <Sparkles className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-base md:text-lg font-bold text-white">阿璋</h3>
-                            <p className="text-xs text-slate-500 font-mono mt-0.5">
-                              Full-Stack Developer
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className="text-slate-300 mb-6 text-sm leading-relaxed">
-                          專注於現代 Web 技術與 3D
-                          互動體驗，致力於打造兼具實用性與美感的數位產品。從概念設計到程式實作，追求每個細節的完美呈現。
-                        </p>
-
-                        <div className="flex items-center gap-2 mt-auto">
-                          <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          <span className="text-xs text-slate-500">Open for commissions</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Right: Contact Methods */}
-                <motion.div
-                  className="flex flex-col h-full"
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASING_NEBULA, delay: 0.2 }}
-                >
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 md:mb-8">
-                    Contact Methods
-                  </h3>
-                  <div className="space-y-4 flex-1">
-                    {/* Threads */}
-                    <motion.a
-                      href={SOCIAL_LINKS.threads}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileHover={{ x: 4 }}
-                      className="group block relative overflow-hidden rounded-xl bg-[#0a0a0a] border border-white/5 p-4 transition-all hover:border-brand-500/40 hover:bg-white/5"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400 group-hover:bg-brand-500/20 transition-colors">
-                          <AtSign className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-mono text-slate-500 mb-0.5">Threads</div>
-                          <div className="text-sm font-semibold text-white">@azlife_1224</div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-brand-400 transition-colors" />
-                      </div>
-                    </motion.a>
-
-                    {/* GitHub */}
-                    <motion.a
-                      href={SOCIAL_LINKS.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileHover={{ x: 4 }}
-                      className="group block relative overflow-hidden rounded-xl bg-[#0a0a0a] border border-white/5 p-4 transition-all hover:border-brand-500/40 hover:bg-white/5"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400 group-hover:bg-brand-500/20 transition-colors">
-                          <Github className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-xs font-mono text-slate-500 mb-0.5">GitHub</div>
-                          <div className="text-sm font-semibold text-white">haotool/app</div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-brand-400 transition-colors" />
-                      </div>
-                    </motion.a>
-
-                    {/* Email */}
-                    <motion.button
-                      onClick={copyEmail}
-                      whileHover={{ x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="group w-full block relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-500/10 to-purple-500/10 border border-brand-500/20 p-4 transition-all hover:border-brand-500/40 hover:from-brand-500/20 hover:to-purple-500/20"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/20 border border-brand-500/30 text-brand-400 group-hover:bg-brand-500/30 transition-colors">
-                          <Mail className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="text-xs font-mono text-brand-400 mb-0.5">Email</div>
-                          <div className="text-sm font-semibold text-white">複製信箱地址</div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-brand-400 transition-colors" />
-                      </div>
-                    </motion.button>
-                  </div>
-                </motion.div>
+                <p className="text-body text-text">
+                  我是{APP_INFO.author}，{APP_INFO.authorTitle}。{APP_INFO.copyrightStartYear}{' '}
+                  年起，我把生活裡的小麻煩一個個做成免費工具。匯率、分帳、停車、防災——它們都不大，但每一個細節我都當產品在做。
+                </p>
+                <p className="lg:self-start">
+                  <GhostLink to="/about/">更多關於我</GhostLink>
+                </p>
               </div>
             </div>
-          </section>
-        </main>
-        {/* End main content */}
-
-        <div className="sr-only" aria-hidden="true">
-          <span rel="author">阿璋 (Ah Zhang)</span>
-          <time dateTime="2025-01-01">Published: 2025-01-01</time>
+          </Reveal>
         </div>
+      </section>
 
-        {/* Footer */}
-        <footer className="border-t border-white/[0.03] py-8 relative z-10">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <address className="not-italic flex items-center gap-3">
-                <div className="relative h-5 w-5 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-brand-500 rounded blur-[2px] opacity-40" />
-                  <div className="relative h-2 w-2 bg-slate-100 rounded-sm z-10" />
-                </div>
-                <span className="text-sm text-slate-500">
-                  © {new Date().getFullYear()}{' '}
-                  <a href="/about/" rel="author" className="hover:text-slate-400 transition-colors">
-                    阿璋 (Ah Zhang)
-                  </a>{' '}
-                  · {APP_NAME}
-                </span>
-              </address>
-
-              <div className="flex items-center gap-6">
-                <a
-                  href="/about/"
-                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-                >
-                  About
-                </a>
-                <a
-                  href="/contact/"
-                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-                >
-                  Contact
-                </a>
-                <a
-                  href="/about/#privacy"
-                  className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-                >
-                  Privacy
-                </a>
-                <a
-                  href={SOCIAL_LINKS.threads}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-500 hover:text-white transition-colors"
-                  aria-label="Threads (@阿璋)"
-                >
-                  <AtSign className="h-5 w-5" aria-hidden="true" />
-                  <span className="sr-only">Threads (@阿璋)</span>
-                </a>
-                <a
-                  href={SOCIAL_LINKS.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-500 hover:text-white transition-colors"
-                  aria-label="GitHub (@azlife)"
-                >
-                  <Github className="h-5 w-5" aria-hidden="true" />
-                  <span className="sr-only">GitHub (@azlife)</span>
-                </a>
-                <button
-                  onClick={copyEmail}
-                  className="text-slate-500 hover:text-white transition-colors"
-                  aria-label="Copy email"
-                >
-                  <Mail className="h-5 w-5" />
-                </button>
-              </div>
+      {/* 區 7 — 聯繫 Banner（#1B64DA 全幅；藍實底 ≤15% 規則唯一授權例外 D2）；
+          A4 L3-b 插畫掛右下角（§6 N6：僅 ≥1024px、純裝飾、不壓 640px 置中文字）。 */}
+      <section aria-labelledby="contact-heading" className="relative bg-banner-bg">
+        {/* S1：480w＝渲染寬 240px 的 2× 帳；AVIF 主軌＋WebP 備援（§6 格式決策）。
+            定位類掛 picture（img 絕對定位會在 section 流內留下空 inline box）。 */}
+        <picture aria-hidden="true" className="banner-illus">
+          <source type="image/avif" srcSet="/brand/illus-desk.avif" />
+          <img
+            src="/brand/illus-desk.webp"
+            alt=""
+            width={480}
+            height={320}
+            loading="lazy"
+            decoding="async"
+            className="block h-auto w-full"
+          />
+        </picture>
+        <div className="shell py-16 md:py-24">
+          <Reveal>
+            <div className="mx-auto flex max-w-[640px] flex-col items-center text-center">
+              <h2 id="contact-heading" className="text-h2 text-banner-text">
+                有想做的產品？我們聊聊。
+              </h2>
+              <p className="mt-4 text-body text-banner-sub">
+                合作委託、技術顧問，或只是打個招呼——24 小時內回覆。
+              </p>
+              <Link
+                to="/contact/"
+                viewTransition
+                className={buttonClass(
+                  'banner',
+                  'mt-3 w-full max-w-[360px] md:w-auto md:max-w-none',
+                )}
+              >
+                聊聊你的專案
+              </Link>
+              <GhostLink to="/about/#faq" inverse className="mt-8">
+                先看常見問題
+              </GhostLink>
             </div>
-          </div>
-        </footer>
-      </div>
-    </MotionConfig>
+          </Reveal>
+        </div>
+      </section>
+    </>
   );
 }

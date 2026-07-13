@@ -1,35 +1,30 @@
 import { defineConfig, loadEnv } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import viteCompression from 'vite-plugin-compression';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import dns from 'node:dns';
+// root-scope SW allow/denylist SSOT：與行為測試共用（046 §5 防護）。
+import { HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST, SIBLING_APP_DENYLIST } from './src/config/sw-routes';
 
-// [fix:2025-12-13] 確保 localhost 解析一致性（Node.js v17+ DNS 變更）
+// 確保 localhost 解析一致性（Node.js v17+ DNS 變更）。
 dns.setDefaultResultOrder('verbatim');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST = [
-  /^\/$/,
-  /^\/projects(?:\/.*)?$/,
-  /^\/about(?:\/.*)?$/,
-  /^\/contact(?:\/.*)?$/,
-];
-const SIBLING_APP_DENYLIST = [
-  /^\/ratewise(?:\/.*)?$/,
-  /^\/nihonname(?:\/.*)?$/,
-  /^\/park-keeper(?:\/.*)?$/,
-  /^\/quake-school(?:\/.*)?$/,
-];
 
-/**
- * 自動生成版本號
- */
 function readPackageVersion(): string {
   const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+  return packageJson.version;
+}
+
+// F2「正在打造」列（motion-deep-dive §3 F2）：build-time 讀 ratewise 版本，零 runtime fetch。
+function readRatewiseVersion(): string {
+  const packageJson = JSON.parse(
+    readFileSync(resolve(__dirname, '../ratewise/package.json'), 'utf-8'),
+  );
   return packageJson.version;
 }
 
@@ -53,17 +48,10 @@ export default defineConfig(({ mode }) => {
   const appVersion = generateVersion();
   const buildTime = new Date().toISOString();
 
-  // [fix:2025-12-13] haotool 專案使用根路徑
-  // 生產/CI 預設 /，本地開發也使用 /
-  const baseFromEnv =
-    env['VITE_HAOTOOL_BASE_PATH'] ??
-    process.env['VITE_HAOTOOL_BASE_PATH'] ??
-    env['VITE_haotool_BASE_PATH'] ??
-    process.env['VITE_haotool_BASE_PATH'];
-  const base = baseFromEnv ?? '/';
+  // haotool 為根站，三環境 base 預設 /（SSOT：app.config.mjs basePath）。
+  const base = env['VITE_HAOTOOL_BASE_PATH'] ?? process.env['VITE_HAOTOOL_BASE_PATH'] ?? '/';
 
   const manifestScope = base.endsWith('/') ? base : `${base}/`;
-  const manifestStartUrl = manifestScope;
 
   return {
     base,
@@ -80,6 +68,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __BUILD_TIME__: JSON.stringify(buildTime),
+      __LATEST_SHIP__: JSON.stringify(readRatewiseVersion()),
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
     },
@@ -89,41 +78,25 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      tailwindcss(),
       react(),
-      // 版本號注入
       {
         name: 'inject-version-meta',
         transformIndexHtml(html) {
           return html.replace(/__APP_VERSION__/g, appVersion).replace(/__BUILD_TIME__/g, buildTime);
         },
       },
-      // Brotli 壓縮
-      viteCompression({
-        algorithm: 'brotliCompress',
-        ext: '.br',
-        threshold: 1024,
-        deleteOriginFile: false,
-      }),
-      // Gzip 備用
-      viteCompression({
-        algorithm: 'gzip',
-        ext: '.gz',
-        threshold: 1024,
-        deleteOriginFile: false,
-      }),
       VitePWA({
         base,
-        registerType: 'autoUpdate',
+        // prompt 模式：新 SW 進入 waiting 狀態，防止版本撕裂導致 Load failed（對齊 RateWise 治理）。
+        registerType: 'prompt',
         injectRegister: 'auto',
         workbox: {
           globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,avif,webp}'],
-          globIgnores: ['**/node_modules/**', 'rates/**/*.json'],
+          globIgnores: ['**/node_modules/**'],
           ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
-          // root-scope SW 只能處理 haotool 自身路由，避免吞掉同網域子 app。
           navigateFallbackAllowlist: HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST,
           navigateFallbackDenylist: SIBLING_APP_DENYLIST,
-          clientsClaim: true,
-          skipWaiting: true,
           cleanupOutdatedCaches: true,
           navigationPreload: false,
           runtimeCaching: [
@@ -164,19 +137,18 @@ export default defineConfig(({ mode }) => {
           ],
         },
         manifest: {
-          id: manifestStartUrl,
-          name: 'haotool.org - Digital Portfolio',
-          short_name: 'haotool',
-          description:
-            'Full-stack developer portfolio showcasing high-performance web applications built with modern technologies.',
-          theme_color: '#6366f1',
-          background_color: '#050505',
+          id: manifestScope,
+          name: 'HaoTool 好工具',
+          short_name: 'HaoTool',
+          description: '免費、開源、不收集個資的台灣網頁工具集。',
+          theme_color: '#3182F6',
+          background_color: '#F8FAFC',
           display: 'standalone',
           orientation: 'portrait',
           scope: manifestScope,
-          start_url: manifestStartUrl,
-          categories: ['portfolio', 'development', 'technology'],
-          lang: 'en',
+          start_url: manifestScope,
+          categories: ['utilities', 'productivity'],
+          lang: 'zh-TW',
           icons: [
             {
               src: 'icons/icon-192x192.png',
@@ -207,20 +179,17 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            // Skip manualChunks for SSR build (react is external)
+            // SSR build 跳過 manualChunks（react 為 external）。
             if (typeof process !== 'undefined' && process.env['SSR'] === 'true') {
               return undefined;
             }
             if (id.includes('node_modules')) {
-              // [fix:2025-12-13] 將 react-router-dom 與 react 合併到同一 chunk
-              // 避免 createContext 在模組載入時未定義的問題
-              // [context7:remix-run/react-router:2025-12-13]
-              if (
-                id.includes('react') ||
-                id.includes('scheduler') ||
-                id.includes('react-router-dom') ||
-                id.includes('@remix-run')
-              ) {
+              // react-router-dom 與 react 合併同一 chunk，避免 createContext 載入順序問題。
+              // 以套件路徑段精確比對：避免 motion/framer-motion（pnpm 路徑含 react peer 字串）
+              // 被吞進 vendor，破壞 LazyMotion features 的 async 按需載入。
+              const vendorPattern =
+                /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?(?:react|react-dom|scheduler|react-router-dom|react-router|@remix-run)\//;
+              if (vendorPattern.test(id)) {
                 return 'vendor';
               }
             }
@@ -231,33 +200,23 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 600,
     },
     ssgOptions: {
-      script: 'async',
-      // [fix:2025-12-13] formatting 設為 'none' 以避免 Hydration Failed errors
-      // [context7:/daydreamer-riri/vite-react-ssg:2025-12-13]
+      // defer：確保 vite-react-ssg hydration data 在 React bootstrap 前就緒（park-keeper 先例）。
+      script: 'defer',
+      // formatting none：避免 Hydration Failed errors。
       formatting: 'none',
-      // [fix:2026-01-01] 使用 nested dirStyle 確保產生目錄結構 (/path/index.html)
-      // 配合 nginx 尾斜線重定向，避免 SEO 重複內容問題
-      // 參考: https://www.clickrank.ai/seo-academy/urls-and-seo/trailing-slash/
+      // nested dirStyle：產出 /path/index.html，配合尾斜線 SEO 策略。
       dirStyle: 'nested',
-      // [SEO:2025-12-13] 優化 Critical CSS 配置以改善渲染阻塞
-      beastiesOptions: {
-        preload: 'media',
-        pruneSource: true,
-        inlineThreshold: 0,
-        fonts: true,
-        preloadFonts: true,
-      },
-      // [fix:2026-01-01] 從 SSOT (app.config.mjs) 動態導入路由
-      // vite-react-ssg 使用不帶尾斜線的路徑，dirStyle: 'nested' 會產生 /path/index.html
-      // 參考: https://github.com/Daydreamer-riri/vite-react-ssg
+      // 停用 beasties：Tailwind v4 @layer utilities 無法被正確抽取（park-keeper 先例）。
+      beastiesOptions: false,
+      // 從 SSOT (app.config.mjs) 動態導入路由；/404 額外預渲染供 nginx error_page 使用。
       async includedRoutes() {
         const { SEO_PATHS } = await import('./app.config.mjs');
-        // 將帶尾斜線的 SEO_PATHS 轉換為不帶尾斜線（根路徑除外）
-        // 例如: '/about/' -> '/about', '/' -> '/'
-        return SEO_PATHS.map((path: string) => (path === '/' ? path : path.replace(/\/$/, '')));
+        const seoRoutes = SEO_PATHS.map((path: string) =>
+          path === '/' ? path : path.replace(/\/$/, ''),
+        );
+        return [...seoRoutes, '/404'];
       },
-      // [fix:2025-12-13] 使用 onPageRendered hook 注入 JSON-LD 和 Meta Tags
-      // [fix:2026-02-12] 移除重複 description 與替換 title，避免 SEO 重複內容
+      // onPageRendered：先清除 index.html 靜態 SEO 標籤再注入 per-route meta + JSON-LD（防重複）。
       async onPageRendered(route, renderedHTML) {
         const { getJsonLdForRoute, jsonLdToScriptTags } = await import('./src/seo/jsonld');
         const { getMetaTagsForRoute } = await import('./src/seo/meta-tags');
@@ -267,8 +226,6 @@ export default defineConfig(({ mode }) => {
         const scriptTags = jsonLdToScriptTags(jsonLd);
 
         let html = renderedHTML;
-
-        // Remove all SEO tags from index.html to avoid duplicates
         html = html.replace(/<title>[^<]*<\/title>/gi, '');
         html = html.replace(/<meta[^>]*name="description"[^>]*>/gis, '');
         html = html.replace(/<meta[^>]*name="keywords"[^>]*>/gis, '');
@@ -278,8 +235,6 @@ export default defineConfig(({ mode }) => {
         html = html.replace(/<meta[^>]*property="og:[^"]*"[^>]*>/gis, '');
         html = html.replace(/<meta[^>]*name="twitter:[^"]*"[^>]*>/gis, '');
         html = html.replace(/<!-- SEO Meta Tags -->/gi, '');
-        html = html.replace(/<!-- Open Graph \/ Facebook -->/gi, '');
-        html = html.replace(/<!-- Twitter -->/gi, '');
 
         return html.replace('</head>', `${metaTags}\n${scriptTags}</head>`);
       },
