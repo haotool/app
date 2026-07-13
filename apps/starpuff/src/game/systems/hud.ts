@@ -1,183 +1,186 @@
 import type Phaser from 'phaser';
 import { PLAYER, STAR } from '../core/config';
-import { GameEvents, offGameEvent, onGameEvent, type GameEventPayloads } from '../core/events';
+import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import type { WaveId } from '../core/types';
+import { fillStarPath } from './fx';
 
-type Payload<K extends keyof GameEventPayloads> = GameEventPayloads[K];
+const HEART_TEX = 'hud-heart';
+const STAR_TEX = 'hud-star';
+const HUD_DEPTH = 100;
+
+const WAVE_LABELS: Record<WaveId, string> = {
+  tutorial: '吸入果凍怪吧！',
+  wave1: 'Wave 1',
+  wave2: 'Wave 2',
+  boss: '魔王來襲！',
+};
 
 export interface Hud {
   destroy(): void;
 }
 
-const DEPTH = 100;
-const BAR_W = 300;
-const BAR_H = 14;
-const BOSS_COLOR_P1 = 0x9b7bd8;
-const BOSS_COLOR_P2 = 0xff6b6b;
-const WAVE_LABELS: Record<WaveId, string> = {
-  tutorial: '準備開始！',
-  wave1: '第 1 波',
-  wave2: '第 2 波',
-  boss: '魔王來襲！',
-};
+function ensureHudTextures(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(HEART_TEX)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xff6b8a, 1);
+    g.fillCircle(7, 8, 6.5);
+    g.fillCircle(17, 8, 6.5);
+    g.fillTriangle(1.5, 11, 22.5, 11, 12, 22);
+    g.generateTexture(HEART_TEX, 24, 24);
+    g.destroy();
+  }
+  if (!scene.textures.exists(STAR_TEX)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffd966, 1);
+    fillStarPath(g, 10, 10, 10, 4.2);
+    g.generateTexture(STAR_TEX, 20, 20);
+    g.destroy();
+  }
+}
 
 export function createHud(scene: Phaser.Scene): Hud {
-  const { width, height } = scene.scale;
-  const uiText = (
-    x: number,
-    y: number,
-    content: string,
-    fontSize: string,
-    color: string,
-  ): Phaser.GameObjects.Text =>
-    scene.add
-      .text(x, y, content, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize,
-        fontStyle: 'bold',
-        color,
-        stroke: '#FFFFFF',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(DEPTH);
+  ensureHudTextures(scene);
 
-  const hearts = Array.from({ length: PLAYER.maxHp }, (_, i) =>
-    uiText(34 + i * 32, 32, '♥', '28px', '#FF6B8A'),
-  );
-  const stars = Array.from({ length: STAR.maxAmmo }, (_, i) =>
-    uiText(32 + i * 30, 68, '★', '24px', '#FFB300').setAlpha(0.22),
-  );
-
-  const barX = (width - BAR_W) / 2;
-  const barY = 100;
-  const bossBg = scene.add.graphics().setScrollFactor(0).setDepth(DEPTH).setVisible(false);
-  bossBg.fillStyle(0x3a3a4a, 0.55);
-  bossBg.fillRoundedRect(barX - 3, barY - 3, BAR_W + 6, BAR_H + 6, (BAR_H + 6) / 2);
-  const bossFill = scene.add.graphics().setScrollFactor(0).setDepth(DEPTH).setVisible(false);
-  const bossLabel = uiText(width / 2, barY - 18, '果凍王', '16px', '#6B5AA0').setVisible(false);
-
-  const bossRatio = { value: 1 };
-  let bossColor = BOSS_COLOR_P1;
-  let bossTween: Phaser.Tweens.Tween | null = null;
-
-  const drawBossFill = () => {
-    bossFill.clear();
-    const w = BAR_W * Math.max(0, Math.min(1, bossRatio.value));
-    if (w < 1) return;
-    bossFill.fillStyle(bossColor, 1);
-    bossFill.fillRoundedRect(barX, barY, w, BAR_H, Math.min(BAR_H / 2, w / 2));
-  };
-
-  const waveText = uiText(width / 2, height * 0.32, '', '36px', '#3A3A4A').setAlpha(0);
-
-  const setHearts = (hp: number) => {
-    hearts.forEach((heart, i) => heart.setAlpha(i < hp ? 1 : 0.22));
-  };
-  const setStars = (ammo: number) => {
-    stars.forEach((star, i) => star.setAlpha(i < ammo ? 1 : 0.22));
-  };
-
-  let prevAmmo = 0;
+  const bus = scene.events;
+  const unbinders: (() => void)[] = [];
+  const centerX = scene.scale.width / 2;
   let destroyed = false;
+  let waveText: Phaser.GameObjects.Text | null = null;
 
-  const onPlayerDamaged = (payload: Payload<'player:damaged'>) => {
-    setHearts(payload.hp);
+  const root = scene.add.container(0, 0).setDepth(HUD_DEPTH).setScrollFactor(0);
+
+  const hearts: Phaser.GameObjects.Image[] = [];
+  for (let i = 0; i < PLAYER.maxHp; i++) {
+    hearts.push(scene.add.image(24 + i * 30, 26, HEART_TEX));
+  }
+  root.add(hearts);
+
+  const ammoStars: Phaser.GameObjects.Image[] = [];
+  for (let i = 0; i < STAR.maxAmmo; i++) {
+    ammoStars.push(scene.add.image(22 + i * 26, 58, STAR_TEX).setAlpha(0.25));
+  }
+  root.add(ammoStars);
+
+  // Boss HP 條：__WHITE 內建紋理拉伸上色，fill 以 scaleX tween 平滑更新。
+  const barWidth = 320;
+  const barHeight = 12;
+  const bossBar = scene.add.container(centerX, 26).setAlpha(0);
+  const barBg = scene.add
+    .image(0, 0, '__WHITE')
+    .setDisplaySize(barWidth + 4, barHeight + 4)
+    .setTint(0x3a3a4a)
+    .setAlpha(0.45);
+  const barFill = scene.add
+    .image(-barWidth / 2, 0, '__WHITE')
+    .setOrigin(0, 0.5)
+    .setDisplaySize(barWidth, barHeight)
+    .setTint(0x9b7bd8);
+  const fullScaleX = barFill.scaleX;
+  bossBar.add([barBg, barFill]);
+  root.add(bossBar);
+
+  function updateHearts(hp: number): void {
+    hearts.forEach((heart, i) => heart.setAlpha(i < hp ? 1 : 0.25));
     scene.tweens.add({
       targets: hearts,
-      scale: 1.35,
+      scale: 1.3,
       duration: 90,
       yoyo: true,
       ease: 'Quad.easeOut',
-      delay: scene.tweens.stagger(40),
+      delay: scene.tweens.stagger(30),
     });
-  };
+  }
 
-  const onAmmoChanged = (payload: Payload<'ammo:changed'>) => {
-    setStars(payload.ammo);
-    const gained = stars[payload.ammo - 1];
-    if (payload.ammo > prevAmmo && gained) {
-      scene.tweens.add({
-        targets: gained,
-        scale: 1.5,
-        duration: 110,
-        yoyo: true,
-        ease: 'Back.easeOut',
-      });
-    }
-    prevAmmo = payload.ammo;
-  };
-
-  const onBossSpawned = () => {
-    bossRatio.value = 1;
-    bossColor = BOSS_COLOR_P1;
-    drawBossFill();
-    [bossBg, bossFill, bossLabel].forEach((obj) => obj.setVisible(true).setAlpha(0));
-    scene.tweens.add({ targets: [bossBg, bossFill, bossLabel], alpha: 1, duration: 300 });
-  };
-
-  const onBossDamaged = (payload: Payload<'boss:damaged'>) => {
-    bossTween?.remove();
-    bossTween = scene.tweens.add({
-      targets: bossRatio,
-      value: payload.hp / payload.maxHp,
-      duration: 180,
-      ease: 'Quad.easeOut',
-      onUpdate: drawBossFill,
+  function updateAmmo(ammo: number): void {
+    ammoStars.forEach((star, i) => {
+      const filled = i < ammo;
+      const wasFilled = star.alpha === 1;
+      star.setAlpha(filled ? 1 : 0.25);
+      if (filled && !wasFilled) {
+        scene.tweens.add({
+          targets: star,
+          scale: { from: 0.4, to: 1 },
+          duration: 220,
+          ease: 'Back.easeOut',
+        });
+      }
     });
-  };
+  }
 
-  const onBossPhase = (payload: Payload<'boss:phase'>) => {
-    bossColor = payload.phase === 'p2' ? BOSS_COLOR_P2 : BOSS_COLOR_P1;
-    drawBossFill();
-  };
-
-  const onBossDefeated = () => {
-    scene.tweens.add({
-      targets: [bossBg, bossFill, bossLabel],
-      alpha: 0,
-      duration: 400,
-      onComplete: () => [bossBg, bossFill, bossLabel].forEach((obj) => obj.setVisible(false)),
-    });
-  };
-
-  const onWaveChanged = (payload: Payload<'wave:changed'>) => {
-    scene.tweens.killTweensOf(waveText);
-    waveText.setText(WAVE_LABELS[payload.wave]).setAlpha(0).setScale(0.8);
+  function showWaveText(wave: WaveId): void {
+    waveText?.destroy();
+    waveText = scene.add
+      .text(centerX, scene.scale.height * 0.34, WAVE_LABELS[wave], {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '40px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#3a3a4a',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(HUD_DEPTH + 10)
+      .setScrollFactor(0)
+      .setAlpha(0);
     scene.tweens.chain({
       targets: waveText,
       tweens: [
-        { alpha: 1, scale: 1, duration: 200, ease: 'Back.easeOut' },
-        { alpha: 0, duration: 300, delay: 800 },
+        { alpha: 1, duration: 200, ease: 'Quad.easeOut' },
+        { alpha: 0, y: '-=20', duration: 300, delay: 900, ease: 'Quad.easeIn' },
       ],
+      onComplete: () => {
+        waveText?.destroy();
+        waveText = null;
+      },
     });
-  };
+  }
 
-  const destroy = () => {
+  function bind<K extends GameEventName>(
+    event: K,
+    handler: Parameters<typeof onGameEvent<K>>[2],
+  ): void {
+    onGameEvent(bus, event, handler);
+    unbinders.push(() => offGameEvent(bus, event, handler));
+  }
+
+  bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => updateHearts(hp));
+  bind(GameEvents.AMMO_CHANGED, ({ ammo }) => updateAmmo(ammo));
+  bind(GameEvents.BOSS_SPAWNED, () => {
+    barFill.scaleX = fullScaleX;
+    scene.tweens.add({
+      targets: bossBar,
+      alpha: 1,
+      y: { from: 12, to: 26 },
+      duration: 300,
+      ease: 'Quad.easeOut',
+    });
+  });
+  bind(GameEvents.BOSS_DAMAGED, ({ hp, maxHp }) => {
+    scene.tweens.add({
+      targets: barFill,
+      scaleX: fullScaleX * Math.max(0, hp / maxHp),
+      duration: 180,
+      ease: 'Cubic.easeOut',
+    });
+  });
+  bind(GameEvents.BOSS_PHASE, ({ phase }) => {
+    if (phase === 'p2') barFill.setTint(0xd94b4b);
+  });
+  bind(GameEvents.BOSS_DEFEATED, () => {
+    scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });
+  });
+  bind(GameEvents.WAVE_CHANGED, ({ wave }) => showWaveText(wave));
+
+  function destroy(): void {
     if (destroyed) return;
     destroyed = true;
-    offGameEvent(scene.events, GameEvents.PLAYER_DAMAGED, onPlayerDamaged);
-    offGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
-    offGameEvent(scene.events, GameEvents.BOSS_SPAWNED, onBossSpawned);
-    offGameEvent(scene.events, GameEvents.BOSS_DAMAGED, onBossDamaged);
-    offGameEvent(scene.events, GameEvents.BOSS_PHASE, onBossPhase);
-    offGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
-    offGameEvent(scene.events, GameEvents.WAVE_CHANGED, onWaveChanged);
-    scene.events.off('shutdown', destroy);
-    bossTween?.remove();
-    [...hearts, ...stars, bossBg, bossFill, bossLabel, waveText].forEach((obj) => obj.destroy());
-  };
+    unbinders.forEach((off) => off());
+    unbinders.length = 0;
+    waveText?.destroy();
+    waveText = null;
+    root.destroy(true);
+  }
 
-  setHearts(PLAYER.maxHp);
-  setStars(0);
-  onGameEvent(scene.events, GameEvents.PLAYER_DAMAGED, onPlayerDamaged);
-  onGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
-  onGameEvent(scene.events, GameEvents.BOSS_SPAWNED, onBossSpawned);
-  onGameEvent(scene.events, GameEvents.BOSS_DAMAGED, onBossDamaged);
-  onGameEvent(scene.events, GameEvents.BOSS_PHASE, onBossPhase);
-  onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
-  onGameEvent(scene.events, GameEvents.WAVE_CHANGED, onWaveChanged);
   scene.events.once('shutdown', destroy);
 
   return { destroy };
