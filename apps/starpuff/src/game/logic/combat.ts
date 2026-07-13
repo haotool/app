@@ -6,6 +6,37 @@ export function applyDamage(hp: number, damage: number): number {
   return Math.max(0, hp - damage);
 }
 
+export interface HitResult {
+  hp: number;
+  invulnerableMs: number;
+  damaged: boolean;
+}
+
+// 受擊結算：i-frame 期間或已死亡免傷，否則扣血並重啟無敵計時。
+export function resolveHit(
+  hp: number,
+  invulnerableMs: number,
+  damage: number,
+  invulnerableDurationMs: number,
+): HitResult {
+  if (invulnerableMs > 0 || hp <= 0) return { hp, invulnerableMs, damaged: false };
+  return { hp: applyDamage(hp, damage), invulnerableMs: invulnerableDurationMs, damaged: true };
+}
+
+export function tickTimer(remainingMs: number, deltaMs: number): number {
+  return Math.max(0, remainingMs - deltaMs);
+}
+
+// 擊退：遠離傷害來源並向上抬升；與來源同 x 時預設向右退。
+export function knockbackVelocity(
+  x: number,
+  sourceX: number,
+  speed: number,
+  lift: number,
+): { x: number; y: number } {
+  return { x: x < sourceX ? -speed : speed, y: lift };
+}
+
 export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
@@ -15,7 +46,7 @@ export function canInhale(kind: EnemyKind): boolean {
   return kind !== 'spiky';
 }
 
-// TODO(US-003)：吸入錐形範圍判定精化（角度限制）。
+// 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。
 export function isInInhaleRange(
   playerX: number,
   playerY: number,
@@ -27,5 +58,5 @@ export function isInInhaleRange(
   const dx = targetX - playerX;
   const dy = targetY - playerY;
   const facingOk = Math.sign(dx) === facingX || dx === 0;
-  return facingOk && dx * dx + dy * dy <= rangePx * rangePx;
+  return facingOk && dx * dx + dy * dy <= rangePx * rangePx && Math.abs(dy) <= Math.abs(dx);
 }

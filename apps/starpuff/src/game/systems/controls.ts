@@ -16,8 +16,14 @@ export interface ControlsSystem {
   destroy(): void;
 }
 
-// TODO(US-002): 綁定 DOM 虛擬按鍵（index.html [data-btn]）與鍵盤備援（←→ / Z 跳 / X 吸射）。
-export function createControls(_scene: Phaser.Scene): ControlsSystem {
+type ButtonName = 'left' | 'right' | 'a' | 'b';
+
+type KeyMap = Record<'LEFT' | 'RIGHT' | 'Z' | 'X', Phaser.Input.Keyboard.Key>;
+
+// 按壓視覺回饋 class；樣式規則由整合層在 style.css 補上。
+const PRESSED_CLASS = 'is-pressed';
+
+export function createControls(scene: Phaser.Scene): ControlsSystem {
   const state: ControlsState = {
     left: false,
     right: false,
@@ -26,13 +32,58 @@ export function createControls(_scene: Phaser.Scene): ControlsSystem {
     actionPressed: false,
     actionHeld: false,
   };
+
+  // DOM 虛擬按鍵：pointer 事件各自獨立，天然支援方向 + 跳/吸多點同按。
+  const held: Record<ButtonName, boolean> = { left: false, right: false, a: false, b: false };
+  const cleanups: (() => void)[] = [];
+
+  document.querySelectorAll<HTMLElement>('[data-btn]').forEach((el) => {
+    const name = el.dataset['btn'] as ButtonName | undefined;
+    if (!name || !(name in held)) return;
+    const set = (down: boolean) => (event: PointerEvent) => {
+      event.preventDefault();
+      held[name] = down;
+      el.classList.toggle(PRESSED_CLASS, down);
+    };
+    const press = set(true);
+    const release = set(false);
+    el.addEventListener('pointerdown', press, { passive: false });
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointercancel', release);
+    el.addEventListener('pointerleave', release);
+    cleanups.push(() => {
+      el.removeEventListener('pointerdown', press);
+      el.removeEventListener('pointerup', release);
+      el.removeEventListener('pointercancel', release);
+      el.removeEventListener('pointerleave', release);
+      el.classList.remove(PRESSED_CLASS);
+    });
+  });
+
+  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,Z,X') as KeyMap | undefined;
+
+  let prevJumpHeld = false;
+  let prevActionHeld = false;
+
   return {
     state,
     update() {
-      // TODO(US-002)
+      state.left = held.left || keys?.LEFT.isDown === true;
+      state.right = held.right || keys?.RIGHT.isDown === true;
+
+      const jumpHeld = held.a || keys?.Z.isDown === true;
+      state.jumpPressed = jumpHeld && !prevJumpHeld;
+      state.jumpHeld = jumpHeld;
+      prevJumpHeld = jumpHeld;
+
+      const actionHeld = held.b || keys?.X.isDown === true;
+      state.actionPressed = actionHeld && !prevActionHeld;
+      state.actionHeld = actionHeld;
+      prevActionHeld = actionHeld;
     },
     destroy() {
-      // TODO(US-002)
+      cleanups.forEach((fn) => fn());
+      cleanups.length = 0;
     },
   };
 }
