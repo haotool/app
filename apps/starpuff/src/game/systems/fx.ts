@@ -1,314 +1,316 @@
-import type Phaser from 'phaser';
-import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import Phaser from 'phaser';
+import { GameEvents, offGameEvent, onGameEvent, type GameEventPayloads } from '../core/events';
+import type { EnemyKind } from '../core/types';
 
-export const FX_TEXTURES = {
-  dot: 'fx-dot',
-  star: 'fx-star-particle',
-} as const;
-
-const PASTELS = [0xffb3c7, 0xcbb7f0, 0xd9f29b, 0xffd966, 0xbff3e0];
-
-type FxTarget = Phaser.GameObjects.GameObject & { x: number; y: number };
-interface Scalable {
-  scaleX: number;
-  scaleY: number;
-}
-interface Tintable {
-  setTintFill(color: number): unknown;
-  clearTint(): unknown;
-}
-
-export interface TrailHandle {
-  stop(): void;
-}
+type Payload<K extends keyof GameEventPayloads> = GameEventPayloads[K];
+type ScaleTarget = object & { scaleX: number; scaleY: number };
+type TrailTarget = Phaser.GameObjects.GameObject & Phaser.Types.Math.Vector2Like;
 
 export interface FxSystem {
   hitStop(durationMs: number): void;
   shake(intensityPx: number): void;
   flashWhite(target: Phaser.GameObjects.GameObject): void;
-  squashStretch(target: Scalable, intensity?: number): void;
-  popIn(target: Scalable & { alpha: number }, durationMs?: number): void;
-  startInhale(mouth: Phaser.Types.Math.Vector2Like): void;
+  squashStretch(target: ScaleTarget, strength?: number): void;
+  startInhale(target: Phaser.Types.Math.Vector2Like, directionX: 1 | -1): void;
   stopInhale(): void;
-  attachTrail(target: Phaser.Types.Math.Vector2Like): TrailHandle;
+  attachStarTrail(target: TrailTarget): () => void;
+  trackBoss(target: Phaser.Types.Math.Vector2Like | null): void;
   damageNumber(x: number, y: number, amount: number): void;
   starBurst(x: number, y: number): void;
-  puff(x: number, y: number): void;
   confetti(): void;
-  attachPlayer(target: FxTarget): void;
-  attachBoss(target: FxTarget): void;
   destroy(): void;
 }
 
-// 程序化粒子紋理（不依賴 art 資產）：8px 圓點與 16px 五角星。
-export function ensureFxTextures(scene: Phaser.Scene): void {
-  if (!scene.textures.exists(FX_TEXTURES.dot)) {
-    const g = scene.add.graphics();
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(4, 4, 4);
-    g.generateTexture(FX_TEXTURES.dot, 8, 8);
+const DOT_KEY = 'fx-dot';
+const STAR_KEY = 'fx-star';
+const GOLD = 0xffd966;
+const CONFETTI_TINTS = [0xff6b6b, 0xffd966, 0x7bd88f, 0x6bc5ff, 0xcbb7f0] as const;
+const ENEMY_POP_TINTS: Record<EnemyKind, number> = {
+  jelly: 0xffb3c7,
+  floaty: 0xcbb7f0,
+  spiky: 0xd9f29b,
+};
+
+// 缺 texture 時以 graphics 產生粒子紋理；美術 stream 預載正式 fx-star 後自動略過。
+function ensureParticleTextures(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(DOT_KEY)) {
+    const g = scene.add.graphics().setVisible(false);
+    g.fillStyle(0xffffff, 1).fillCircle(4, 4, 4);
+    g.generateTexture(DOT_KEY, 8, 8);
     g.destroy();
   }
-  if (!scene.textures.exists(FX_TEXTURES.star)) {
-    const g = scene.add.graphics();
-    g.fillStyle(0xffffff, 1);
-    fillStarPath(g, 8, 8, 8, 3.4);
-    g.generateTexture(FX_TEXTURES.star, 16, 16);
+  if (!scene.textures.exists(STAR_KEY)) {
+    const g = scene.add.graphics().setVisible(false);
+    const points: Phaser.Math.Vector2[] = [];
+    for (let i = 0; i < 10; i += 1) {
+      const radius = i % 2 === 0 ? 7.5 : 3.2;
+      const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+      points.push(
+        new Phaser.Math.Vector2(8 + radius * Math.cos(angle), 8 + radius * Math.sin(angle)),
+      );
+    }
+    g.fillStyle(0xffffff, 1).fillPoints(points, true);
+    g.generateTexture(STAR_KEY, 16, 16);
     g.destroy();
   }
-}
-
-export function fillStarPath(
-  g: Phaser.GameObjects.Graphics,
-  cx: number,
-  cy: number,
-  outer: number,
-  inner: number,
-): void {
-  g.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 === 0 ? outer : inner;
-    const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    const x = cx + Math.cos(a) * r;
-    const y = cy + Math.sin(a) * r;
-    if (i === 0) g.moveTo(x, y);
-    else g.lineTo(x, y);
-  }
-  g.closePath();
-  g.fillPath();
-}
-
-function canTint(go: object): go is Tintable {
-  return 'setTintFill' in go && 'clearTint' in go;
 }
 
 export function createFx(scene: Phaser.Scene): FxSystem {
-  ensureFxTextures(scene);
+  ensureParticleTextures(scene);
 
-  const bus = scene.events;
-  const unbinders: (() => void)[] = [];
-  let playerRef: FxTarget | null = null;
-  let bossRef: FxTarget | null = null;
-  let mouthRef: Phaser.Types.Math.Vector2Like | null = null;
-  let hitStopTimer: Phaser.Time.TimerEvent | null = null;
-  let damageNumberCount = 0;
-  let destroyed = false;
-
-  const burst = scene.add
-    .particles(0, 0, FX_TEXTURES.star, {
-      speed: { min: 60, max: 260 },
-      angle: { min: 0, max: 360 },
-      scale: { start: 1.6, end: 0 },
+  let enemyPopTint = 0xffffff;
+  const enemyPop = scene.add
+    .particles(0, 0, DOT_KEY, {
+      speed: { min: 80, max: 220 },
+      lifespan: 420,
+      scale: { start: 0.8, end: 0 },
       alpha: { start: 1, end: 0 },
-      rotate: { min: 0, max: 360 },
-      lifespan: { min: 400, max: 800 },
-      gravityY: 220,
-      tint: [0xffd966, 0xfff3b0, 0xffb3c7],
-      blendMode: 'ADD',
+      tint: () => enemyPopTint,
       emitting: false,
-      maxAliveParticles: 80,
+      maxAliveParticles: 40,
     })
-    .setDepth(90);
+    .setDepth(80);
 
-  const puffEmitter = scene.add
-    .particles(0, 0, FX_TEXTURES.dot, {
-      speed: { min: 40, max: 140 },
-      angle: { min: 0, max: 360 },
-      scale: { start: 1, end: 0 },
-      alpha: { start: 0.9, end: 0 },
-      lifespan: { min: 200, max: 420 },
-      tint: PASTELS,
+  const starBurstEmitter = scene.add
+    .particles(0, 0, STAR_KEY, {
+      speed: { min: 140, max: 460 },
+      gravityY: 500,
+      lifespan: { min: 900, max: 1600 },
+      rotate: { start: 0, end: 360 },
+      scale: { start: 1, end: 0.15 },
+      alpha: { start: 1, end: 0 },
+      tint: GOLD,
+      blendMode: 'ADD',
       emitting: false,
       maxAliveParticles: 60,
     })
-    .setDepth(85);
+    .setDepth(80);
 
-  // 吸入漩渦：粒子自環形外圈生成、朝嘴前點匯聚（moveTo onEmit 讀取當下位置）。
-  const inhaleEmitter = scene.add
-    .particles(0, 0, FX_TEXTURES.dot, {
-      x: () => mouthRef?.x ?? 0,
-      y: () => mouthRef?.y ?? 0,
-      lifespan: 300,
-      frequency: 24,
-      quantity: 1,
-      scale: { start: 0.9, end: 0.15 },
-      alpha: { start: 0.85, end: 0.1 },
-      tint: [0xffffff, 0xffd966, 0xbff3e0],
-      emitZone: {
-        type: 'random',
-        source: {
-          getRandomPoint: (point) => {
-            const a = Math.random() * Math.PI * 2;
-            const r = 46 + Math.random() * 50;
-            point.x = Math.cos(a) * r;
-            point.y = Math.sin(a) * r;
-          },
-        },
-      },
-      moveToX: () => mouthRef?.x ?? 0,
-      moveToY: () => mouthRef?.y ?? 0,
-      emitting: false,
-      maxAliveParticles: 30,
-    })
-    .setDepth(85);
-
-  const confettiEmitter = scene.add
-    .particles(0, 0, FX_TEXTURES.dot, {
-      x: { min: 0, max: scene.scale.width },
-      y: -12,
-      speedY: { min: 90, max: 200 },
-      speedX: { min: -40, max: 40 },
-      scale: { start: 1.2, end: 0.4 },
-      rotate: { min: 0, max: 360 },
-      lifespan: 2400,
-      frequency: 24,
+  // 吸入漩渦：粒子自外環生成並於生命週期結束時抵達嘴前（moveTo 收束）。
+  const inhaleRing = {
+    getRandomPoint: (point: Phaser.Types.Math.Vector2Like) => {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 24 + Math.random() * 32;
+      point.x = Math.cos(angle) * radius;
+      point.y = Math.sin(angle) * radius;
+    },
+  };
+  const inhaleVortex = scene.add
+    .particles(0, 0, DOT_KEY, {
+      emitZone: { type: 'random' as const, source: inhaleRing },
+      moveToX: 0,
+      moveToY: 0,
+      lifespan: 320,
+      frequency: 36,
       quantity: 2,
-      gravityY: 140,
-      tint: PASTELS,
+      scale: { start: 0.9, end: 0.2 },
+      alpha: { start: 0.9, end: 0.15 },
+      tint: 0xfff3b0,
       emitting: false,
-      maxAliveParticles: 120,
+      maxAliveParticles: 24,
     })
-    .setDepth(95)
-    .setScrollFactor(0);
+    .setDepth(80);
 
-  function hitStop(durationMs: number): void {
-    if (!hitStopTimer) scene.physics.pause();
+  const confettiTopEdge = {
+    getRandomPoint: (point: Phaser.Types.Math.Vector2Like) => {
+      point.x = Math.random() * scene.scale.width;
+      point.y = -8;
+    },
+  };
+  const confettiEmitter = scene.add
+    .particles(0, 0, DOT_KEY, {
+      emitZone: { type: 'random' as const, source: confettiTopEdge },
+      gravityY: 420,
+      speedX: { min: -60, max: 60 },
+      speedY: { min: 40, max: 120 },
+      rotate: { start: 0, end: 540 },
+      lifespan: 2200,
+      quantity: 2,
+      frequency: 24,
+      scale: { start: 0.9, end: 0.5 },
+      tint: () => CONFETTI_TINTS[Math.floor(Math.random() * CONFETTI_TINTS.length)] ?? GOLD,
+      emitting: false,
+      maxAliveParticles: 90,
+    })
+    .setDepth(95);
+
+  const squashTweens = new WeakMap<ScaleTarget, Phaser.Tweens.Tween>();
+  const squashBase = new WeakMap<ScaleTarget, { x: number; y: number }>();
+  let bossTarget: Phaser.Types.Math.Vector2Like | null = null;
+  let hitStopTimer: Phaser.Time.TimerEvent | null = null;
+  let slowMoTimer: Phaser.Time.TimerEvent | null = null;
+  let destroyed = false;
+
+  const restoreTimeScale = () => {
+    scene.physics.world.timeScale = 1;
+    scene.tweens.timeScale = 1;
+  };
+
+  // Arcade timeScale 越大越慢（1/scale），TweenManager timeScale 越小越慢（scale）。
+  const slowMotion = (scale: number, durationMs: number) => {
+    scene.physics.world.timeScale = 1 / scale;
+    scene.tweens.timeScale = scale;
+    slowMoTimer?.remove();
+    slowMoTimer = scene.time.delayedCall(durationMs, restoreTimeScale);
+  };
+
+  const hitStop = (durationMs: number) => {
+    scene.physics.pause();
     hitStopTimer?.remove();
     hitStopTimer = scene.time.delayedCall(durationMs, () => {
-      hitStopTimer = null;
       scene.physics.resume();
+      hitStopTimer = null;
     });
-  }
+  };
 
-  function shake(intensityPx: number): void {
+  const shake = (intensityPx: number) => {
     scene.cameras.main.shake(120, intensityPx / scene.scale.width);
-  }
+  };
 
-  function flashWhite(target: Phaser.GameObjects.GameObject): void {
-    if (canTint(target)) {
-      target.setTintFill(0xffffff);
-      scene.time.delayedCall(80, () => {
-        if (target.scene) target.clearTint();
-      });
+  const flashWhite = (target: Phaser.GameObjects.GameObject) => {
+    const tintable = target as Partial<{
+      setTintFill(color: number): unknown;
+      clearTint(): unknown;
+    }>;
+    if (typeof tintable.setTintFill !== 'function' || typeof tintable.clearTint !== 'function') {
       return;
     }
-    scene.tweens.add({ targets: target, alpha: 0.25, duration: 60, yoyo: true, repeat: 1 });
-  }
+    tintable.setTintFill(0xffffff);
+    scene.time.delayedCall(70, () => tintable.clearTint?.());
+  };
 
-  function squashStretch(target: Scalable, intensity = 0.22): void {
-    scene.tweens.add({
+  const squashStretch = (target: ScaleTarget, strength = 0.25) => {
+    const base = squashBase.get(target) ?? { x: target.scaleX, y: target.scaleY };
+    squashBase.set(target, base);
+    squashTweens.get(target)?.remove();
+    target.scaleX = base.x;
+    target.scaleY = base.y;
+    const tween = scene.tweens.add({
       targets: target,
-      scaleX: target.scaleX * (1 + intensity),
-      scaleY: target.scaleY * (1 - intensity),
+      scaleX: base.x * (1 + strength),
+      scaleY: base.y * (1 - strength),
       duration: 90,
       yoyo: true,
       ease: 'Quad.easeOut',
     });
-  }
+    squashTweens.set(target, tween);
+  };
 
-  function popIn(target: Scalable & { alpha: number }, durationMs = 260): void {
-    scene.tweens.add({
-      targets: target,
-      scaleX: { from: target.scaleX * 0.3, to: target.scaleX },
-      scaleY: { from: target.scaleY * 0.3, to: target.scaleY },
-      alpha: { from: 0, to: target.alpha },
-      duration: durationMs,
-      ease: 'Back.easeOut',
-    });
-  }
+  const startInhale = (target: Phaser.Types.Math.Vector2Like, directionX: 1 | -1) => {
+    inhaleVortex.startFollow(target, directionX * 36, 0);
+    inhaleVortex.start();
+  };
 
-  function damageNumber(x: number, y: number, amount: number): void {
-    if (damageNumberCount >= 12) return;
-    damageNumberCount++;
+  const stopInhale = () => {
+    inhaleVortex.stop();
+    inhaleVortex.stopFollow();
+  };
+
+  const attachStarTrail = (target: TrailTarget) => {
+    const trail = scene.add
+      .particles(0, 0, STAR_KEY, {
+        follow: target,
+        speed: { min: 10, max: 40 },
+        lifespan: 350,
+        frequency: 34,
+        scale: { start: 0.55, end: 0 },
+        alpha: { start: 0.9, end: 0 },
+        rotate: { min: 0, max: 360 },
+        tint: GOLD,
+        blendMode: 'ADD',
+        maxAliveParticles: 14,
+      })
+      .setDepth(80);
+    let stopped = false;
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      trail.stop();
+      scene.time.delayedCall(400, () => trail.destroy());
+    };
+    target.once('destroy', stop);
+    return stop;
+  };
+
+  const trackBoss = (target: Phaser.Types.Math.Vector2Like | null) => {
+    bossTarget = target;
+  };
+
+  const damageNumber = (x: number, y: number, amount: number) => {
     const text = scene.add
-      .text(x, y, `${amount}`, {
+      .text(x + Phaser.Math.Between(-10, 10), y, `${amount}`, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '26px',
         fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: '#3a3a4a',
-        strokeThickness: 5,
+        color: '#FF6B6B',
+        stroke: '#FFFFFF',
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
-      .setDepth(96);
+      .setScale(0.6)
+      .setDepth(90);
     scene.tweens.add({
       targets: text,
       y: y - 46,
-      alpha: { from: 1, to: 0 },
-      duration: 480,
-      ease: 'Cubic.easeOut',
-      onComplete: () => {
-        damageNumberCount--;
-        text.destroy();
-      },
+      alpha: 0,
+      scale: 1.15,
+      duration: 650,
+      ease: 'Quad.easeOut',
+      onComplete: () => text.destroy(),
     });
-  }
+  };
 
-  function starBurst(x: number, y: number): void {
-    burst.explode(28, x, y);
-  }
+  const starBurst = (x: number, y: number) => {
+    starBurstEmitter.explode(30, x, y);
+  };
 
-  function puff(x: number, y: number): void {
-    puffEmitter.explode(10, x, y);
-  }
+  const confetti = () => {
+    confettiEmitter.start(0, 1400);
+  };
 
-  function confetti(): void {
-    confettiEmitter.start();
-    scene.time.delayedCall(1400, () => confettiEmitter.stop());
-  }
-
-  // 魔王死亡慢動作：Arcade timeScale > 1 為減速，真實時間後恢復。
-  function slowMo(scale: number, durationMs: number): void {
-    scene.physics.world.timeScale = 1 / scale;
-    scene.tweens.timeScale = scale;
-    scene.time.delayedCall(durationMs, () => {
-      scene.physics.world.timeScale = 1;
-      scene.tweens.timeScale = 1;
-    });
-  }
-
-  function bind<K extends GameEventName>(
-    event: K,
-    handler: Parameters<typeof onGameEvent<K>>[2],
-  ): void {
-    onGameEvent(bus, event, handler);
-    unbinders.push(() => offGameEvent(bus, event, handler));
-  }
-
-  bind(GameEvents.PLAYER_DAMAGED, () => {
-    shake(4);
-    if (playerRef?.scene) {
-      flashWhite(playerRef);
-      squashStretch(playerRef as unknown as Scalable, 0.28);
-    }
-  });
-  bind(GameEvents.ENEMY_KILLED, ({ x, y }) => puff(x, y));
-  bind(GameEvents.BOSS_SPAWNED, () => shake(6));
-  bind(GameEvents.BOSS_DAMAGED, ({ damage }) => {
-    hitStop(60);
-    if (bossRef?.scene) {
-      flashWhite(bossRef);
-      damageNumber(bossRef.x, bossRef.y - 70, damage);
-    } else {
-      damageNumber(scene.scale.width / 2, 120, damage);
-    }
-  });
-  bind(GameEvents.BOSS_DEFEATED, ({ x, y }) => {
-    starBurst(x, y);
-    slowMo(0.3, 600);
-  });
-  bind(GameEvents.GAME_WON, () => confetti());
-
-  function destroy(): void {
+  const destroy = () => {
     if (destroyed) return;
     destroyed = true;
-    unbinders.forEach((off) => off());
-    unbinders.length = 0;
+    offGameEvent(scene.events, GameEvents.PLAYER_DAMAGED, onPlayerDamaged);
+    offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyKilled);
+    offGameEvent(scene.events, GameEvents.BOSS_DAMAGED, onBossDamaged);
+    offGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
+    offGameEvent(scene.events, GameEvents.GAME_WON, onGameWon);
+    scene.events.off('shutdown', destroy);
     hitStopTimer?.remove();
-    hitStopTimer = null;
-    [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
-  }
+    slowMoTimer?.remove();
+    restoreTimeScale();
+    if (scene.physics.world.isPaused) scene.physics.resume();
+    [enemyPop, starBurstEmitter, inhaleVortex, confettiEmitter].forEach((emitter) =>
+      emitter.destroy(),
+    );
+  };
 
+  const onPlayerDamaged = () => {
+    shake(4);
+    scene.cameras.main.flash(90, 255, 255, 255);
+  };
+  const onEnemyKilled = (payload: Payload<'enemy:killed'>) => {
+    enemyPopTint = ENEMY_POP_TINTS[payload.kind];
+    enemyPop.explode(10, payload.x, payload.y);
+  };
+  const onBossDamaged = (payload: Payload<'boss:damaged'>) => {
+    hitStop(60);
+    if (bossTarget) damageNumber(bossTarget.x, bossTarget.y - 46, payload.damage);
+  };
+  const onBossDefeated = (payload: Payload<'boss:defeated'>) => {
+    starBurst(payload.x, payload.y);
+    slowMotion(0.3, 600);
+  };
+  const onGameWon = () => {
+    confetti();
+  };
+
+  onGameEvent(scene.events, GameEvents.PLAYER_DAMAGED, onPlayerDamaged);
+  onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyKilled);
+  onGameEvent(scene.events, GameEvents.BOSS_DAMAGED, onBossDamaged);
+  onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
+  onGameEvent(scene.events, GameEvents.GAME_WON, onGameWon);
   scene.events.once('shutdown', destroy);
 
   return {
@@ -316,47 +318,13 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     shake,
     flashWhite,
     squashStretch,
-    popIn,
-    startInhale(mouth) {
-      mouthRef = mouth;
-      inhaleEmitter.start();
-    },
-    stopInhale() {
-      inhaleEmitter.stop();
-    },
-    attachTrail(target) {
-      const trail = scene.add
-        .particles(0, 0, FX_TEXTURES.star, {
-          follow: target,
-          speed: { min: 5, max: 30 },
-          scale: { start: 0.7, end: 0 },
-          alpha: { start: 0.8, end: 0 },
-          rotate: { min: 0, max: 360 },
-          lifespan: 260,
-          frequency: 28,
-          blendMode: 'ADD',
-          tint: 0xffd966,
-          maxAliveParticles: 24,
-        })
-        .setDepth(80);
-      return {
-        stop() {
-          if (!trail.scene) return;
-          trail.stop();
-          scene.time.delayedCall(320, () => trail.destroy());
-        },
-      };
-    },
+    startInhale,
+    stopInhale,
+    attachStarTrail,
+    trackBoss,
     damageNumber,
     starBurst,
-    puff,
     confetti,
-    attachPlayer(target) {
-      playerRef = target;
-    },
-    attachBoss(target) {
-      bossRef = target;
-    },
     destroy,
   };
 }
