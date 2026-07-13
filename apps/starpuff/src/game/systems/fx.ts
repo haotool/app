@@ -195,15 +195,22 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     scene.tweens.add({ targets: target, alpha: 0.25, duration: 60, yoyo: true, repeat: 1 });
   }
 
+  // 進行中不重複觸發：避免以壓扁中的 scale 為基準疊乘造成漂移。
+  const squashTweens = new WeakMap<Scalable, Phaser.Tweens.Tween>();
+
   function squashStretch(target: Scalable, intensity = 0.22): void {
-    scene.tweens.add({
-      targets: target,
-      scaleX: target.scaleX * (1 + intensity),
-      scaleY: target.scaleY * (1 - intensity),
-      duration: 90,
-      yoyo: true,
-      ease: 'Quad.easeOut',
-    });
+    if (squashTweens.get(target)?.isPlaying()) return;
+    squashTweens.set(
+      target,
+      scene.tweens.add({
+        targets: target,
+        scaleX: target.scaleX * (1 + intensity),
+        scaleY: target.scaleY * (1 - intensity),
+        duration: 90,
+        yoyo: true,
+        ease: 'Quad.easeOut',
+      }),
+    );
   }
 
   function popIn(target: Scalable & { alpha: number }, durationMs = 260): void {
