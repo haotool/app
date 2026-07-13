@@ -12,7 +12,8 @@ export interface WaveRunner {
 }
 
 const SPAWN_MARGIN_X = 48;
-const SPAWN_AIR_Y = 260;
+// 飄飄鳥定高飄移；500 在跳躍＋拍翅可達範圍內（260 會超出吸入錐形造成無法清場）。
+const SPAWN_AIR_Y = 500;
 const SPAWN_DROP_Y = 700;
 
 const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';

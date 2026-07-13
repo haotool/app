@@ -28,7 +28,8 @@ const PLATFORMS = [
   { x: 362, y: 536, w: 130 },
 ] as const;
 const SPAWN_EDGE_X = 48;
-const SPAWN_AIR_Y = 260;
+// 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度。
+const SPAWN_AIR_Y = 500;
 const SPAWN_DROP_Y = 700;
 const MOUTH_OFFSET_X = 26;
 const SWALLOW_RANGE_PX = 46;
