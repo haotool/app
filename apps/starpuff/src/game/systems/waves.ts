@@ -8,6 +8,7 @@ import type { EnemySystem } from './enemies';
 export interface WaveRunner {
   start(): void;
   update(deltaMs: number): void;
+  noteInput(): void;
   destroy(): void;
 }
 
@@ -17,12 +18,17 @@ const SPAWN_AIR_Y = 500;
 const SPAWN_DROP_Y = 700;
 
 const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';
+// 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
+const TUTORIAL_INPUT_LINGER_MS = 1000;
+const TUTORIAL_MAX_MS = 6000;
 
 export function createWaveRunner(scene: Phaser.Scene, enemies: EnemySystem): WaveRunner {
   let state: WaveModelState | null = null;
   let stopped = false;
   let spawnCounter = 0;
   let tutorialText: Phaser.GameObjects.Text | null = null;
+  let tutorialAgeMs = 0;
+  let tutorialDismissAtMs = TUTORIAL_MAX_MS;
 
   // 魔王擊破後停止補生，避免勝利演出期間持續生怪。
   const onBossDefeated = (): void => {
@@ -72,6 +78,8 @@ export function createWaveRunner(scene: Phaser.Scene, enemies: EnemySystem): Wav
     start() {
       state = createWaveState();
       stopped = false;
+      tutorialAgeMs = 0;
+      tutorialDismissAtMs = TUTORIAL_MAX_MS;
       onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       emitGameEvent(scene.events, GameEvents.WAVE_CHANGED, { wave: state.wave });
       showTutorial();
@@ -79,13 +87,21 @@ export function createWaveRunner(scene: Phaser.Scene, enemies: EnemySystem): Wav
 
     update(deltaMs: number) {
       if (!state || stopped) return;
+      if (tutorialText) {
+        tutorialAgeMs += deltaMs;
+        if (tutorialAgeMs >= tutorialDismissAtMs) dismissTutorial();
+      }
       const result = advanceWave(state, { deltaMs, aliveEnemies: enemies.aliveCount() });
       state = result.state;
       if (result.waveChanged) {
         emitGameEvent(scene.events, GameEvents.WAVE_CHANGED, { wave: result.waveChanged });
-        dismissTutorial();
       }
       for (const kind of result.spawns) spawnFromEdge(kind);
+    },
+
+    noteInput() {
+      if (!tutorialText) return;
+      tutorialDismissAtMs = Math.min(tutorialDismissAtMs, tutorialAgeMs + TUTORIAL_INPUT_LINGER_MS);
     },
 
     destroy() {

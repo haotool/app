@@ -51,7 +51,6 @@ export class GameScene extends Phaser.Scene {
   private finished = false;
   private bossDown = false;
   private wasInhaling = false;
-  private prevShockwaves = 0;
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private unbinders: (() => void)[] = [];
@@ -71,7 +70,6 @@ export class GameScene extends Phaser.Scene {
     this.finished = false;
     this.bossDown = false;
     this.wasInhaling = false;
-    this.prevShockwaves = 0;
     this.minionDropCount = 0;
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
@@ -117,6 +115,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.player) return;
     this.controls.update();
     if (!this.finished) {
+      this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.syncJumpSfx();
       this.syncInhale();
@@ -127,7 +126,6 @@ export class GameScene extends Phaser.Scene {
     this.waves.update(deltaMs);
     this.boss.update(deltaMs);
     this.syncStarTrails();
-    this.syncSlamSfx();
   }
 
   forceWin(): void {
@@ -191,9 +189,10 @@ export class GameScene extends Phaser.Scene {
     });
 
     // group vs sprite 的回調參數順序不保證，取非魔王側為星彈。
+    // 入場動畫與死亡演出期間（非 active）星彈直接穿過，不消耗。
     this.physics.add.overlap(stars, bossBody, (a, b) => {
       const star = asSprite(a === bossBody ? b : a);
-      if (!star.active) return;
+      if (!star.active || !this.boss.isActive()) return;
       this.player.onStarHit(star, 'boss');
       this.boss.applyDamage(STAR.damage);
     });
@@ -358,10 +357,9 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // slam 落地幀無契約事件，以震波出現邊緣判定配音。
-  private syncSlamSfx(): void {
-    const active = this.boss.getShockwaves().countActive(true);
-    if (active > 0 && this.prevShockwaves === 0) playSfx('boss-slam');
-    this.prevShockwaves = active;
+  // 教學浮字：偵測首次任一操作輸入，交由 waves 排程淡出。
+  private syncTutorialInput(): void {
+    const { left, right, jumpHeld, actionHeld } = this.controls.state;
+    if (left || right || jumpHeld || actionHeld) this.waves.noteInput();
   }
 }
