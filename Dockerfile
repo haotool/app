@@ -48,6 +48,10 @@ COPY apps/split-meow/package.json ./apps/split-meow/
 COPY apps/starpuff/package.json ./apps/starpuff/
 COPY apps/shared/package.json ./apps/shared/
 
+# [fix:2026-07-14] patchedDependencies 需要 patch 檔於安裝時可讀（pnpm 讀檔算 hash）
+# 必須在 pnpm install 前先複製 patches/，否則 frozen install 報 ENOENT 導致 Zeabur build 失敗
+COPY patches ./patches/
+
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
 # Zeabur 可能自動設置 NODE_ENV=production，導致 devDependencies 被跳過
 # Builder 階段需要 devDependencies（TypeScript, Vite 等構建工具）
