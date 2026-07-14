@@ -653,7 +653,10 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋演出（§24）：金光 popIn + 專屬 jingle + 浮字（既有 fx 組合）。
   private eggCelebration(message: string): void {
     playSfx('jingle');
-    const { x, y } = this.player.sprite;
+    const { y } = this.player.sprite;
+    // 浮字夾限於鏡頭視野內，避免世界邊緣觸發時被裁切。
+    const view = this.cameras.main.worldView;
+    const x = Phaser.Math.Clamp(this.player.sprite.x, view.x + 110, view.right - 110);
     const glow = this.add
       .image(x, y, 'fx-star')
       .setDisplaySize(130, 130)
