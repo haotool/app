@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { ConnectionBanner } from './ConnectionBanner';
+import { ToastHost } from './ToastHost';
+import { DisclaimerDialog } from './DisclaimerDialog';
 import { startMarketFeed } from '../services/marketFeed';
 
 export function AppShell() {
@@ -14,6 +16,8 @@ export function AppShell() {
         <Outlet />
       </main>
       <BottomNav />
+      <ToastHost />
+      <DisclaimerDialog />
     </div>
   );
 }

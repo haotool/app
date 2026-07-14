@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { expect, vi } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import { DISCLAIMER_STORAGE_KEY } from './config/trading';
 
 expect.extend(matchers);
 
@@ -84,5 +85,7 @@ if (hasWindow) {
 
   beforeEach(() => {
     store = {};
+    // 預設視為已確認免責聲明；DisclaimerDialog 專屬測試會自行移除此值。
+    store[DISCLAIMER_STORAGE_KEY] = '1';
   });
 }

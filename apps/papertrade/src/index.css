@@ -93,6 +93,56 @@
   }
 }
 
+@keyframes sheet-in-kf {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes dialog-in-kf {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-kf {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-in-kf {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes warning-pulse-kf {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
 .flash-long {
   display: inline-block;
   animation: flash-long-kf 300ms ease-out;
@@ -108,10 +158,44 @@
   animation: skeleton-pulse-kf 1.4s ease-in-out infinite;
 }
 
+.sheet-in {
+  animation: sheet-in-kf 280ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+
+.dialog-in {
+  animation: dialog-in-kf 200ms ease-out;
+}
+
+.backdrop-in {
+  animation: fade-in-kf 200ms ease-out;
+}
+
+.toast-in {
+  animation: toast-in-kf 240ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+
+.warning-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid var(--color-warning);
+  animation: warning-pulse-kf 1.2s ease-in-out 3;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .flash-long,
   .flash-short,
-  .skeleton-pulse {
+  .skeleton-pulse,
+  .sheet-in,
+  .dialog-in,
+  .backdrop-in,
+  .toast-in {
+    animation: none;
+  }
+
+  .warning-pulse::after {
     animation: none;
   }
 }
