@@ -83,25 +83,36 @@ function canTint(go: object): go is Tintable {
   return 'setTint' in go && 'setTintMode' in go && 'clearTint' in go;
 }
 
-// 落點預警：粉色橢圓標記以 0.5s 週期淡入淡出脈動，durationMs 後自毀。
+// 落點預警：白描邊粉色橢圓標記，淡入後持續脈動，durationMs 後淡出自毀。
 export function spawnTelegraph(
   scene: Phaser.Scene,
   x: number,
   y: number,
   durationMs: number,
 ): void {
-  const mark = scene.add.ellipse(x, y, 52, 18, 0xff8fb3, 0);
-  const blinkMs = 250;
+  const mark = scene.add.ellipse(x, y, 64, 22, 0xff6fa5, 0.85).setAlpha(0);
+  mark.setStrokeStyle(3, 0xffffff, 0.9);
   scene.tweens.add({
     targets: mark,
-    alpha: 0.55,
-    scaleX: { from: 0.6, to: 1 },
-    scaleY: { from: 0.6, to: 1 },
-    duration: blinkMs,
-    yoyo: true,
-    repeat: Math.max(0, Math.round(durationMs / (blinkMs * 2)) - 1),
-    ease: 'Sine.easeInOut',
-    onComplete: () => mark.destroy(),
+    alpha: { from: 0, to: 1 },
+    scaleX: { from: 0.5, to: 1 },
+    scaleY: { from: 0.5, to: 1 },
+    duration: 180,
+    ease: 'Back.easeOut',
+    onComplete: () => {
+      scene.tweens.add({
+        targets: mark,
+        alpha: 0.45,
+        duration: 220,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    },
+  });
+  scene.time.delayedCall(durationMs, () => {
+    scene.tweens.killTweensOf(mark);
+    scene.tweens.add({ targets: mark, alpha: 0, duration: 120, onComplete: () => mark.destroy() });
   });
 }
 
