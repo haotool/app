@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { CANVAS } from '../core/config';
 import { GameEvents, offGameEvent, onGameEvent } from '../core/events';
-import { LevelEvents, type LevelId, type LevelQuotaPayload } from '../core/types';
+import { LevelEvents, type EnemyKind, type LevelId, type LevelQuotaPayload } from '../core/types';
 import {
   advanceLevelSpawn,
   createLevelRun,
@@ -23,9 +23,15 @@ export interface WaveRunner {
 }
 
 const SPAWN_MARGIN_X = 48;
-// 飄飄鳥定高飄移；500 在跳躍＋拍翅可達範圍內（260 會超出吸入錐形造成無法清場）。
-const SPAWN_AIR_Y = 500;
-const SPAWN_DROP_Y = 700;
+// 生成高度按品種：floaty 定高飄移（500 在跳躍＋拍翅可達範圍內）；
+// puffy 高空下飄（§16）；其餘自地面上方落入。
+const SPAWN_Y: Record<EnemyKind, number> = {
+  jelly: 700,
+  floaty: 500,
+  spiky: 700,
+  puffy: 150,
+  chompy: 700,
+};
 
 const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
@@ -81,7 +87,7 @@ export function createWaveRunner(
         if (x < SPAWN_MARGIN_X) return;
       }
     }
-    enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+    enemies.spawn(kind, x, SPAWN_Y[kind]);
   }
 
   function showTutorial(): void {

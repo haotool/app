@@ -1,4 +1,4 @@
-export type EnemyKind = 'jelly' | 'floaty' | 'spiky';
+export type EnemyKind = 'jelly' | 'floaty' | 'spiky' | 'puffy' | 'chompy';
 
 export type LevelId = 1 | 2 | 3 | 4;
 

@@ -233,9 +233,12 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(stars, this.enemies.getGroup(), (star, enemy) => {
       const target = enemy as Phaser.GameObjects.GameObject;
-      if (!asSprite(star).active || !this.enemies.kindOf(target)) return;
-      this.player.onStarHit(star as Phaser.GameObjects.GameObject, 'minion');
-      this.enemies.kill(target);
+      const s = asSprite(star);
+      if (!s.active || !this.enemies.kindOf(target)) return;
+      const outcome = this.enemies.damage(target, STAR.damage);
+      if (outcome === 'ignored') return;
+      // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
+      this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
     });
 
     // group vs sprite 的回調參數順序不保證，取非魔王側為星彈。
@@ -243,8 +246,16 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(stars, bossBody, (a, b) => {
       const star = asSprite(a === bossBody ? b : a);
       if (!star.active || !this.boss.isActive()) return;
-      this.player.onStarHit(star, 'boss');
+      this.player.onStarHit(star, 'absorb');
       this.boss.applyDamage(STAR.damage);
+    });
+
+    // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
+    this.physics.add.overlap(this.player.sprite, this.enemies.getHazards(), (_p, hz) => {
+      const hazard = asSprite(hz);
+      if (!hazard.active || this.finished || this.transitioning) return;
+      hazard.disableBody(true, true);
+      this.player.takeDamage(ENEMY.touchDamage, hazard.x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.enemies.getGroup(), (_p, enemy) => {

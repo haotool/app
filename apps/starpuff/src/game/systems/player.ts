@@ -5,7 +5,8 @@ import type { EnemyKind } from '../core/types';
 import { canInhale, clampAmmo, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
 import type { ControlsState } from './controls';
 
-export type StarTarget = 'minion' | 'boss';
+// 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
+export type StarHitMode = 'pierce' | 'absorb';
 
 export interface PlayerHandle {
   sprite: Phaser.Physics.Arcade.Sprite;
@@ -16,7 +17,7 @@ export interface PlayerHandle {
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
   getStars(): Phaser.Physics.Arcade.Group;
-  onStarHit(star: Phaser.GameObjects.GameObject, target: StarTarget): void;
+  onStarHit(star: Phaser.GameObjects.GameObject, mode: StarHitMode): void;
   destroy(): void;
 }
 
@@ -227,9 +228,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     getStars() {
       return stars;
     },
-    onStarHit(star: Phaser.GameObjects.GameObject, target: StarTarget) {
+    onStarHit(star: Phaser.GameObjects.GameObject, mode: StarHitMode) {
       const s = star as Phaser.Physics.Arcade.Sprite;
-      if (target === 'boss') {
+      if (mode === 'absorb') {
         recycleStar(s);
         return;
       }

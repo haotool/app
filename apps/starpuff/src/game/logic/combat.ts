@@ -41,9 +41,9 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 刺刺瓜不可吸入（GAME_DESIGN §5）。
+// 刺刺瓜與咬咬花不可吸入（GAME_DESIGN §5、§16）。
 export function canInhale(kind: EnemyKind): boolean {
-  return kind !== 'spiky';
+  return kind !== 'spiky' && kind !== 'chompy';
 }
 
 // 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。
