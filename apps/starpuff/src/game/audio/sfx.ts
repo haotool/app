@@ -1,5 +1,4 @@
 import { zzfx, ZZFX } from 'zzfx';
-import { STAR_FLAVORS } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 
 export type SfxName =
@@ -15,6 +14,10 @@ export type SfxName =
   | 'chomp'
   | 'boss-roar'
   | 'boss-slam'
+  | 'charge'
+  | 'starstorm'
+  | 'slam-down'
+  | 'jingle'
   | 'win'
   | 'lose';
 
@@ -34,6 +37,14 @@ const PARAMS: Record<Exclude<SfxName, 'inhale'>, number[]> = {
   chomp: [0.55, 0.05, 230, 0.01, 0.04, 0.1, 2, 1.7, -7, 0, 0, 0, 0, 0.2],
   'boss-roar': [0.8, 0.1, 64, 0.05, 0.22, 0.45, 3, 1.2, 0, 0, -25, 0.15, 0, 0.6],
   'boss-slam': [0.8, 0.05, 95, 0.01, 0.09, 0.32, 2, 1.7, -11, 0, 0, 0, 0, 0.8],
+  // 連吞升級（§23）：上揚雙音強化提示。
+  charge: [0.55, 0.02, 440, 0.01, 0.08, 0.18, 0, 1.7, 0, 0, 220, 0.06],
+  // 星暴（§23）：低頻轟鳴 + 上行泛音掃頻。
+  starstorm: [0.9, 0.05, 110, 0.03, 0.3, 0.6, 2, 1.4, 4, 0.2, 180, 0.12, 0.1, 0.3],
+  // 下衝擊落地（§23）：短促重擊。
+  'slam-down': [0.7, 0.05, 130, 0.01, 0.06, 0.26, 2, 1.8, -9, 0, 0, 0, 0, 0.6],
+  // 彩蛋 jingle（§24）：明亮琶音。
+  jingle: [0.6, 0.02, 659.25, 0.02, 0.14, 0.28, 0, 1.6, 0, 0, 262, 0.06, 0.07],
   win: [0.6, 0.02, 523.25, 0.02, 0.18, 0.3, 0, 1.5, 0, 0, 130, 0.07, 0.08],
   lose: [0.6, 0.02, 260, 0.03, 0.2, 0.5, 0, 1.3, -4, -0.15],
 };
@@ -95,7 +106,8 @@ export function bindSfxToEvents(bus: Bus): () => void {
     playSfx('swallow');
   });
   bind(GameEvents.ENEMY_KILLED, () => playSfx('hit'));
-  bind(GameEvents.STAR_FIRED, ({ flavor }) => playSfx('shoot', STAR_FLAVORS[flavor].sfxPitch));
+  // 發射 pitch（§23）：payload 已含強化 -15% 規則後的最終倍率。
+  bind(GameEvents.STAR_FIRED, ({ pitch }) => playSfx('shoot', pitch));
   bind(GameEvents.BOSS_SPAWNED, () => playSfx('boss-roar'));
   bind(GameEvents.BOSS_PHASE, () => playSfx('boss-roar'));
   bind(GameEvents.BOSS_DAMAGED, () => playSfx('hit'));

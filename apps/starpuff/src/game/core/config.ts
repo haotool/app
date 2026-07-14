@@ -1,8 +1,9 @@
-// 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20，凍結）。
+// 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20–§21，凍結）。
 // 純資料模組（不 import phaser）：vitest node 環境可直接載入驗證。
+// v3 橫式畫布（§21）：854×480，Scale.FIT + CENTER_BOTH。
 export const CANVAS = {
-  width: 480,
-  height: 854,
+  width: 854,
+  height: 480,
 } as const;
 
 export const GRAVITY_Y = 900;
@@ -77,6 +78,45 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
     sfxPitch: 0.85,
   },
 } as const;
+
+// 吞噬連鎖（§23）：彈匣槽位各自帶屬性與強化態，後進先出發射。
+export interface MagazineSlot {
+  flavor: StarFlavor;
+  charged: boolean;
+  gold: boolean;
+}
+
+// 強化星（§23）：同種連吞 ×2 該槽升級；金邊 tint 同時用於 HUD 槽位金邊與金星彈。
+export const CHARGED_STAR = {
+  damageMultiplier: 1.6,
+  sizeMultiplier: 1.4,
+  pitchMultiplier: 0.85,
+  tint: 0xffc93c,
+} as const;
+
+// 星暴（§23）：彈匣全滿長按 B 0.8s，清場全小怪 + 魔王 12 傷，清空彈匣。
+export const STARSTORM = {
+  holdMs: 800,
+  bossDamage: 12,
+} as const;
+
+// 下衝擊（§23）：空中 down+B 快速下墜，落地 60px 衝擊波（傷害 2、擊退），零彈藥消耗。
+export const SLAM = {
+  fallVelocityY: 700,
+  radiusPx: 60,
+  damage: 2,
+  cooldownMs: 1200,
+  knockbackSpeed: 260,
+  knockbackLift: -180,
+} as const;
+
+// 金星彈（§24 第三關彩蛋）：單發傷害 20。
+export const GOLD_STAR = {
+  damage: 20,
+} as const;
+
+// 彩蛋 HP 上限（§24）：彩虹果凍可將 HP 上限自 5 提升至 6。
+export const EGG_HP_CAP = 6;
 
 export const ENEMY = {
   hp: 1,

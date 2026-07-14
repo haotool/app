@@ -1,9 +1,10 @@
 import type Phaser from 'phaser';
 
-// 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住。
+// 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）。
 export interface ControlsState {
   left: boolean;
   right: boolean;
+  down: boolean;
   jumpPressed: boolean;
   jumpHeld: boolean;
   actionPressed: boolean;
@@ -16,56 +17,133 @@ export interface ControlsSystem {
   destroy(): void;
 }
 
-type ButtonName = 'left' | 'right' | 'a' | 'b';
+type ButtonName = 'a' | 'b';
 
-type KeyMap = Record<'LEFT' | 'RIGHT' | 'Z' | 'X', Phaser.Input.Keyboard.Key>;
+type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X', Phaser.Input.Keyboard.Key>;
 
 // 按壓視覺回饋 class；樣式規則由整合層在 style.css 補上。
 const PRESSED_CLASS = 'is-pressed';
+const ENGAGED_CLASS = 'is-engaged';
+// 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
+const JOY_RADIUS = 60;
+const JOY_DEADZONE = 12;
+// 下向判定閾值：需明確下壓過半徑一半，避免斜向移動誤觸下衝擊（§23）。
+export const JOY_DOWN_THRESHOLD = JOY_RADIUS * 0.5;
+
+export function isJoyDown(dy: number): boolean {
+  return dy > JOY_DOWN_THRESHOLD;
+}
 
 export function createControls(scene: Phaser.Scene): ControlsSystem {
   const state: ControlsState = {
     left: false,
     right: false,
+    down: false,
     jumpPressed: false,
     jumpHeld: false,
     actionPressed: false,
     actionHeld: false,
   };
 
-  // DOM 虛擬按鍵：pointer 事件各自獨立，天然支援方向 + 跳/吸多點同按。
-  const held: Record<ButtonName, boolean> = { left: false, right: false, a: false, b: false };
+  const held: Record<ButtonName, boolean> = { a: false, b: false };
+  const joy = { id: null as number | null, dx: 0, dy: 0 };
   const cleanups: (() => void)[] = [];
 
-  // 虛擬按鍵僅遊戲場景顯示（修復包 B）：controls 系統生命週期即 GameScene 生命週期。
+  // 虛擬手柄僅遊戲場景顯示：controls 系統生命週期即 GameScene 生命週期。
   const controlsRoot = document.getElementById('controls');
   controlsRoot?.classList.add('is-active');
   cleanups.push(() => controlsRoot?.classList.remove('is-active'));
 
+  const on = <K extends keyof HTMLElementEventMap>(
+    el: HTMLElement,
+    type: K,
+    handler: (event: HTMLElementEventMap[K]) => void,
+  ): void => {
+    el.addEventListener(type, handler as EventListener, { passive: false });
+    cleanups.push(() => el.removeEventListener(type, handler as EventListener));
+  };
+
+  // 合成事件（e2e/QA）無 active pointer，setPointerCapture 會擲 NotFoundError；捕捉失敗不影響輸入。
+  const capture = (el: HTMLElement, pointerId: number) => {
+    try {
+      el.setPointerCapture(pointerId);
+    } catch {
+      /* noop */
+    }
+  };
+
+  // 左半屏浮動搖桿：底環定錨落點、浮球隨指，抬指淡出；pointerId 分路支援與 A/B 同按。
+  const zone = document.getElementById('joy-zone');
+  const ring = zone?.querySelector<HTMLElement>('.joy-ring') ?? null;
+  const thumb = zone?.querySelector<HTMLElement>('.joy-thumb') ?? null;
+  if (zone && ring && thumb) {
+    const center = { x: 0, y: 0 };
+    const place = (el: HTMLElement, x: number, y: number) => {
+      el.style.transform = `translate(${x - el.offsetWidth / 2}px, ${y - el.offsetHeight / 2}px)`;
+    };
+    const reset = () => {
+      joy.id = null;
+      joy.dx = 0;
+      joy.dy = 0;
+      zone.classList.remove(ENGAGED_CLASS);
+    };
+    on(zone, 'pointerdown', (event) => {
+      event.preventDefault();
+      if (joy.id !== null) return;
+      joy.id = event.pointerId;
+      center.x = event.clientX;
+      center.y = event.clientY;
+      place(ring, center.x, center.y);
+      place(thumb, center.x, center.y);
+      zone.classList.add(ENGAGED_CLASS);
+      capture(zone, event.pointerId);
+    });
+    on(zone, 'pointermove', (event) => {
+      if (event.pointerId !== joy.id) return;
+      event.preventDefault();
+      const dx = event.clientX - center.x;
+      const dy = event.clientY - center.y;
+      const len = Math.hypot(dx, dy);
+      const clamp = len > JOY_RADIUS ? JOY_RADIUS / len : 1;
+      joy.dx = dx * clamp;
+      joy.dy = dy * clamp;
+      place(thumb, center.x + joy.dx, center.y + joy.dy);
+    });
+    const release = (event: PointerEvent) => {
+      if (event.pointerId === joy.id) reset();
+    };
+    on(zone, 'pointerup', release);
+    on(zone, 'pointercancel', release);
+    cleanups.push(reset);
+  }
+
+  // 右側 A/B 圖形圓鍵：釋放以 pointerup/pointercancel 為準（setPointerCapture 保證收到），防卡鍵。
   document.querySelectorAll<HTMLElement>('[data-btn]').forEach((el) => {
     const name = el.dataset['btn'] as ButtonName | undefined;
     if (!name || !(name in held)) return;
-    const set = (down: boolean) => (event: PointerEvent) => {
+    let activeId: number | null = null;
+    on(el, 'pointerdown', (event) => {
       event.preventDefault();
-      held[name] = down;
-      el.classList.toggle(PRESSED_CLASS, down);
+      activeId = event.pointerId;
+      held[name] = true;
+      el.classList.add(PRESSED_CLASS);
+      capture(el, event.pointerId);
+    });
+    const release = (event: PointerEvent) => {
+      if (event.pointerId !== activeId) return;
+      activeId = null;
+      held[name] = false;
+      el.classList.remove(PRESSED_CLASS);
     };
-    const press = set(true);
-    const release = set(false);
-    el.addEventListener('pointerdown', press, { passive: false });
-    el.addEventListener('pointerup', release);
-    el.addEventListener('pointercancel', release);
-    el.addEventListener('pointerleave', release);
+    on(el, 'pointerup', release);
+    on(el, 'pointercancel', release);
     cleanups.push(() => {
-      el.removeEventListener('pointerdown', press);
-      el.removeEventListener('pointerup', release);
-      el.removeEventListener('pointercancel', release);
-      el.removeEventListener('pointerleave', release);
+      held[name] = false;
       el.classList.remove(PRESSED_CLASS);
     });
   });
 
-  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,Z,X') as KeyMap | undefined;
+  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,DOWN,Z,X') as KeyMap | undefined;
 
   let prevJumpHeld = false;
   let prevActionHeld = false;
@@ -73,8 +151,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   return {
     state,
     update() {
-      state.left = held.left || keys?.LEFT.isDown === true;
-      state.right = held.right || keys?.RIGHT.isDown === true;
+      state.left = joy.dx < -JOY_DEADZONE || keys?.LEFT.isDown === true;
+      state.right = joy.dx > JOY_DEADZONE || keys?.RIGHT.isDown === true;
+      state.down = isJoyDown(joy.dy) || keys?.DOWN.isDown === true;
 
       const jumpHeld = held.a || keys?.Z.isDown === true;
       state.jumpPressed = jumpHeld && !prevJumpHeld;

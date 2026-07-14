@@ -13,6 +13,7 @@ declare global {
       skipToBoss: () => void;
       spawn: (kind: string, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
+      probe: () => { x: number; scrollX: number };
     };
   }
 }
@@ -55,8 +56,11 @@ test('點開始進入 GameScene：遊戲運行且 HUD 狀態就緒', async ({ pa
   await startGame(page);
   // HUD 由 PLAYER_DAMAGED/AMMO_CHANGED 事件驅動；初始狀態以 debug hook 驗證。
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵（無文字節點）。
+  await expect(page.locator('#joy-zone')).toBeVisible();
   const buttons = page.locator('[data-btn]');
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(2);
+  await expect(buttons.first()).toHaveText('');
   await page.waitForTimeout(1500);
   expect(errors).toEqual([]);
 });
@@ -81,9 +85,10 @@ test('第一關補滿配額出星星門，走入後轉場進第二關', async ({
   await startGame(page);
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(1);
   // 注入擊殺配額加速：星星門於世界右端生成，按住右行走向門。
+  // 走門全程約 12s + 轉場 2s；全套連跑時機器負載會再拉長，上限放寬至 30s。
   await page.evaluate(() => window.__sp.fillQuota());
   await page.keyboard.down('ArrowRight');
-  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 20000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 30000 }).toBe(2);
   await page.keyboard.up('ArrowRight');
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
@@ -118,13 +123,13 @@ test('吞 puffy 賦星：彈匣轉珊瑚屬性，發射命中後屬性保留', a
   // 先按住吸入，再於吸入錐前方受控生成 puffy（高空下飄會落入錐內被拉近吞下）。
   await page.keyboard.down('X');
   await page.waitForTimeout(250);
-  await page.evaluate(() => window.__sp.spawn('puffy', 190, 650));
+  await page.evaluate(() => window.__sp.spawn('puffy', 190, 320));
   await expect
     .poll(() => page.evaluate(() => window.__sp.ammo()), { timeout: 8000 })
     .toEqual({ ammo: 1, flavor: 'puffy' });
   await page.keyboard.up('X');
   // 於彈道上生成標準靶（jelly 落地靜止），點按發射爆裂星命中（AoE 小爆走 burstSmall 管線）。
-  await page.evaluate(() => window.__sp.spawn('jelly', 300, 720));
+  await page.evaluate(() => window.__sp.spawn('jelly', 300, 350));
   await page.waitForTimeout(400);
   // 點按發射：需跨至少一個遊戲幀（Phaser 逐幀輪詢 isDown），80ms 仍低於吸入閾值。
   await page.keyboard.down('X');
@@ -150,6 +155,37 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
     .toBe('Result');
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  // 長按吸入期間依序餵怪吞滿三槽（同種連吞會升級同槽，故混搭三種）。
+  await page.keyboard.down('X');
+  await page.waitForTimeout(250);
+  await page.evaluate(() => window.__sp.spawn('jelly', 185, 340));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(1);
+  await page.evaluate(() => window.__sp.spawn('puffy', 190, 300));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(2);
+  await page.evaluate(() => window.__sp.spawn('floaty', 190, 345));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(3);
+  // 滿彈匣持續長按 0.8s → 星暴：清空彈匣（清場斷言以彈匣歸零 + 零錯誤為準）。
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
+  await page.keyboard.up('X');
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('彩蛋 reach-x：開局反向走到世界最左緣獲 +1 HP（§24）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await page.keyboard.down('ArrowLeft');
+  // 起點 x=100 → 最左緣 maxX 60；HP 上限升至 6。
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp()), { timeout: 8000 }).toBe(6);
+  await page.keyboard.up('ArrowLeft');
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });

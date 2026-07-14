@@ -1,4 +1,6 @@
 import type { EnemyKind, LevelId } from '../core/types';
+import { canInhale } from './combat';
+import type { EasterEggSpec } from './eggs';
 
 // 關卡資料 SSOT（GAME_DESIGN §15，pure TS 不 import phaser），vitest 對象。
 // GameScene 與 waves runner 一律讀表驅動，禁止每關硬編碼分支。
@@ -26,16 +28,19 @@ export interface LevelSpec {
   safeZoneTailPx: number;
   enemyMix: readonly EnemyMixEntry[];
   platforms: readonly PlatformSpec[];
+  easterEggs: readonly EasterEggSpec[];
   boss: boolean;
   tutorial: boolean;
 }
 
+// v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
+// 層高 336 / 272（單段爬升 ≤82px，跳躍 -420 可達），節奏依 encounter spacing 每 300–650px 一組。
 export const LEVELS: readonly LevelSpec[] = [
   {
     id: 1,
     nameZh: '果凍草原',
     bgKey: 'bg-meadow',
-    worldWidth: 1680,
+    worldWidth: 2700,
     killQuota: 6,
     spawnIntervalMs: 2600,
     maxOnScreen: 3,
@@ -45,9 +50,12 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'floaty', weight: 0.4 },
     ],
     platforms: [
-      { x: 520, y: 696, w: 160 },
-      { x: 880, y: 614, w: 150 },
+      { x: 700, y: 336, w: 180 },
+      { x: 1400, y: 336, w: 170 },
+      { x: 2050, y: 320, w: 160 },
     ],
+    // §24 彩蛋一：開局反向走到世界最左緣（玩家起點 x=100）。
+    easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
     boss: false,
     tutorial: true,
   },
@@ -55,7 +63,7 @@ export const LEVELS: readonly LevelSpec[] = [
     id: 2,
     nameZh: '雲朵高台',
     bgKey: 'bg-heights',
-    worldWidth: 1920,
+    worldWidth: 3100,
     killQuota: 9,
     spawnIntervalMs: 1800,
     maxOnScreen: 4,
@@ -66,12 +74,15 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'puffy', weight: 0.25 },
     ],
     platforms: [
-      { x: 380, y: 696, w: 140 },
-      { x: 620, y: 614, w: 130 },
-      { x: 860, y: 532, w: 130 },
-      { x: 1100, y: 614, w: 140 },
-      { x: 1340, y: 696, w: 150 },
+      { x: 450, y: 336, w: 150 },
+      { x: 760, y: 272, w: 140 },
+      { x: 1250, y: 336, w: 150 },
+      { x: 1560, y: 272, w: 140 },
+      { x: 2050, y: 336, w: 150 },
+      { x: 2400, y: 300, w: 140 },
     ],
+    // §24 彩蛋二：最高雲朵平台（層高 272）連續站上 3 次。
+    easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
     boss: false,
     tutorial: false,
   },
@@ -79,7 +90,7 @@ export const LEVELS: readonly LevelSpec[] = [
     id: 3,
     nameZh: '星空回廊',
     bgKey: 'bg-arena',
-    worldWidth: 2160,
+    worldWidth: 3500,
     killQuota: 10,
     spawnIntervalMs: 1300,
     maxOnScreen: 5,
@@ -93,12 +104,17 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'chompy', weight: 0.2 },
     ],
     platforms: [
-      { x: 350, y: 696, w: 120 },
-      { x: 580, y: 614, w: 110 },
-      { x: 820, y: 532, w: 110 },
-      { x: 1150, y: 696, w: 140 },
-      { x: 1420, y: 614, w: 120 },
-      { x: 1620, y: 696, w: 130 },
+      { x: 400, y: 336, w: 130 },
+      { x: 700, y: 272, w: 120 },
+      { x: 1050, y: 336, w: 130 },
+      { x: 1450, y: 300, w: 130 },
+      { x: 1800, y: 336, w: 120 },
+      { x: 2150, y: 272, w: 120 },
+      { x: 2600, y: 336, w: 130 },
+    ],
+    // §24 彩蛋三：依序連吞 jelly→floaty→puffy。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['jelly', 'floaty', 'puffy'] },
     ],
     boss: false,
     tutorial: false,
@@ -107,7 +123,7 @@ export const LEVELS: readonly LevelSpec[] = [
     id: 4,
     nameZh: '魔王城',
     bgKey: 'bg-throne',
-    worldWidth: 480,
+    worldWidth: 854,
     killQuota: 0,
     spawnIntervalMs: 3500,
     maxOnScreen: 2,
@@ -117,6 +133,8 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'floaty', weight: 0.4 },
     ],
     platforms: [],
+    // §24 彩蛋四：魔王可擊打後 5 秒內命中皇冠（首擊）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
     boss: true,
     tutorial: false,
   },
@@ -155,6 +173,8 @@ export function recordKill(state: LevelRunState): LevelRunState {
 export interface LevelSpawnTick {
   deltaMs: number;
   aliveEnemies: number;
+  // 反卡死（§26）：玩家彈藥 0 且場上無可吸怪的飢荒狀態。
+  starving?: boolean;
 }
 
 export interface LevelSpawnResult {
@@ -164,8 +184,12 @@ export interface LevelSpawnResult {
 
 // spawn 節流：間隔到期且未達同屏上限才生成；開門後停止（尾端 release）。
 // 達上限時 timer 停在間隔值，空位一出現即刻補生。
+// 反卡死保證律（§26）：boss 期彈藥飢荒立即補生，不等生成間隔。
 export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): LevelSpawnResult {
   const level = getLevel(state.levelId);
+  if (tick.starving && level.boss) {
+    return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
+  }
   const spawnTimerMs = Math.min(state.spawnTimerMs + tick.deltaMs, level.spawnIntervalMs);
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
     return { state: { ...state, spawnTimerMs }, spawn: false };
@@ -185,6 +209,15 @@ export function pickEnemyKind(level: LevelSpec, rand01: number): EnemyKind {
     if (threshold < 0) return entry.kind;
   }
   return level.enemyMix[level.enemyMix.length - 1]?.kind ?? 'jelly';
+}
+
+// 反卡死保證律（§26）：飢荒時覆蓋權重，僅自可吸子集抽選。
+export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolean): EnemyKind {
+  if (!starving) return pickEnemyKind(level, rand01);
+  const inhalable = level.enemyMix.filter((entry) => canInhale(entry.kind));
+  if (inhalable.length === 0) return 'jelly';
+  const forced: LevelSpec = { ...level, enemyMix: inhalable };
+  return pickEnemyKind(forced, rand01);
 }
 
 // 尾端安全區：星星門前禁 spawn 的喘息帶。

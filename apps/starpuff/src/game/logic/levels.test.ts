@@ -8,14 +8,15 @@ import {
   isInSafeTail,
   nextLevelId,
   pickEnemyKind,
+  pickSpawnKind,
   recordKill,
   type LevelRunState,
 } from './levels';
 
 describe('LEVELS 資料（GAME_DESIGN §15）', () => {
-  it('四關依序為 1-4 且參數符合 §15 表', () => {
+  it('四關依序為 1-4 且參數符合 §15/§21 表（v3 橫式世界寬）', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4]);
-    expect(LEVELS.map((l) => l.worldWidth)).toEqual([1680, 1920, 2160, 480]);
+    expect(LEVELS.map((l) => l.worldWidth)).toEqual([2700, 3100, 3500, 854]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([2600, 1800, 1300, 3500]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2]);
@@ -53,12 +54,15 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     expect(boss.enemyMix.every((entry) => canInhale(entry.kind))).toBe(true);
   });
 
-  it('平台位於世界範圍內且向上爬升可跳達（≤82px）', () => {
+  it('平台位於世界範圍內、雙層以內且向上爬升可跳達（≤82px）', () => {
+    const groundTop = 400; // 主地面頂（480 - 80）
     for (const level of LEVELS) {
-      let prevY = 774; // 主地面頂（854 - 80）
+      let prevY = groundTop;
       for (const platform of level.platforms) {
         expect(platform.x - platform.w / 2).toBeGreaterThanOrEqual(0);
         expect(platform.x + platform.w / 2).toBeLessThanOrEqual(level.worldWidth);
+        // 雙層以內（§21）：最高層不超過 272（自地面兩段爬升）。
+        expect(platform.y).toBeGreaterThanOrEqual(272);
         // 向上爬升不得超過單跳最高 98px 的安全值；向下落無限制。
         expect(prevY - platform.y).toBeLessThanOrEqual(82);
         prevY = platform.y;
@@ -144,12 +148,41 @@ describe('pickEnemyKind 加權抽選', () => {
   });
 });
 
+describe('反卡死保證律（§26）', () => {
+  it('飢荒時 pickSpawnKind 覆蓋權重，任何 rand 皆抽出可吸怪', () => {
+    const level = getLevel(3); // spiky 0.3 + chompy 0.2 佔半
+    for (const rand of [0, 0.25, 0.5, 0.75, 0.999]) {
+      expect(canInhale(pickSpawnKind(level, rand, true))).toBe(true);
+    }
+  });
+
+  it('非飢荒時 pickSpawnKind 等同加權抽選', () => {
+    const level = getLevel(3);
+    for (const rand of [0, 0.4, 0.8]) {
+      expect(pickSpawnKind(level, rand, false)).toBe(pickEnemyKind(level, rand));
+    }
+  });
+
+  it('boss 期飢荒立即補生，不等生成間隔', () => {
+    const state = createLevelRun(4);
+    const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(true);
+    expect(result.state.spawnTimerMs).toBe(0);
+  });
+
+  it('非 boss 關飢荒僅覆蓋品種，生成節奏不變', () => {
+    const state = createLevelRun(1);
+    const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(false);
+  });
+});
+
 describe('isInSafeTail 尾端安全區', () => {
   it('世界末端 safeZoneTailPx 內為安全區', () => {
-    const level = getLevel(1); // worldWidth 1680, tail 480
-    expect(isInSafeTail(level, 1199)).toBe(false);
-    expect(isInSafeTail(level, 1200)).toBe(true);
-    expect(isInSafeTail(level, 1680)).toBe(true);
+    const level = getLevel(1); // worldWidth 2700, tail 480
+    expect(isInSafeTail(level, 2219)).toBe(false);
+    expect(isInSafeTail(level, 2220)).toBe(true);
+    expect(isInSafeTail(level, 2700)).toBe(true);
   });
 
   it('boss 關無安全區', () => {

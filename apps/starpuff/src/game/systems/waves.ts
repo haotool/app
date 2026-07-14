@@ -7,7 +7,7 @@ import {
   createLevelRun,
   getLevel,
   isInSafeTail,
-  pickEnemyKind,
+  pickSpawnKind,
   recordKill,
   type LevelRunState,
 } from '../logic/levels';
@@ -18,22 +18,23 @@ export interface WaveRunner {
   update(deltaMs: number): void;
   noteInput(): void;
   isGateOpen(): boolean;
+  getQuota(): { killCount: number; killQuota: number };
   forceQuota(): void;
   destroy(): void;
 }
 
 const SPAWN_MARGIN_X = 48;
-// 生成高度按品種：floaty 定高飄移（500 在跳躍＋拍翅可達範圍內）；
+// 生成高度按品種（橫式地面頂 y=400）：floaty 定高飄移（240 在跳躍＋拍翅可達範圍內）；
 // puffy 高空下飄（§16）；其餘自地面上方落入。
 const SPAWN_Y: Record<EnemyKind, number> = {
-  jelly: 700,
-  floaty: 500,
-  spiky: 700,
-  puffy: 150,
-  chompy: 700,
+  jelly: 330,
+  floaty: 240,
+  spiky: 330,
+  puffy: 80,
+  chompy: 330,
 };
 
-const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';
+const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
 const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;
@@ -48,9 +49,15 @@ export function createWaveRunner(
   let run: LevelRunState = createLevelRun(levelId);
   let stopped = false;
   let spawnCounter = 0;
+  // 反卡死（§26）：以 AMMO_CHANGED 事件追蹤彈藥量，判定飢荒強制補可吸怪。
+  let playerAmmo = 0;
   let tutorialText: Phaser.GameObjects.Text | null = null;
   let tutorialAgeMs = 0;
   let tutorialDismissAtMs = TUTORIAL_MAX_MS;
+
+  const onAmmoChanged = ({ ammo }: { ammo: number }): void => {
+    playerAmmo = ammo;
+  };
 
   // 魔王擊破後停止補生，避免勝利演出期間持續生怪。
   const onBossDefeated = (): void => {
@@ -77,9 +84,9 @@ export function createWaveRunner(
 
   // 生成位置：玩家前方視野外側；落在尾端安全區時改由後方入場，兩側皆無合法位即跳過。
   // 單屏魔王關（boss）沿用左右邊緣交替入場。
-  function spawnAhead(): void {
+  function spawnAhead(starving: boolean): void {
     spawnCounter += 1;
-    const kind = pickEnemyKind(level, Math.random());
+    const kind = pickSpawnKind(level, Math.random(), starving);
     let x: number;
     if (level.boss) {
       x = spawnCounter % 2 === 0 ? level.worldWidth - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
@@ -136,6 +143,7 @@ export function createWaveRunner(
       onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       onGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
+      onGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
       emitGameEvent(scene.events, GameEvents.LEVEL_CHANGED, {
         levelId: level.id,
         nameZh: level.nameZh,
@@ -150,9 +158,14 @@ export function createWaveRunner(
         tutorialAgeMs += deltaMs;
         if (tutorialAgeMs >= tutorialDismissAtMs) dismissTutorial();
       }
-      const result = advanceLevelSpawn(run, { deltaMs, aliveEnemies: enemies.aliveCount() });
+      const starving = playerAmmo <= 0 && enemies.aliveInhalableCount() === 0;
+      const result = advanceLevelSpawn(run, {
+        deltaMs,
+        aliveEnemies: enemies.aliveCount(),
+        starving,
+      });
       run = result.state;
-      if (result.spawn) spawnAhead();
+      if (result.spawn) spawnAhead(starving);
     },
 
     noteInput() {
@@ -164,6 +177,11 @@ export function createWaveRunner(
       return run.gateOpen;
     },
 
+    // 深度 QA 觀測點（US-025）：當前配額進度。
+    getQuota() {
+      return { killCount: run.killCount, killQuota: level.killQuota };
+    },
+
     // e2e 除錯鉤子：直接補滿配額觸發開門，仍走正式事件管道。
     forceQuota() {
       while (!level.boss && !run.gateOpen && !stopped) run = recordAndAnnounce(run);
@@ -173,6 +191,7 @@ export function createWaveRunner(
       offGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       offGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
+      offGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
       if (tutorialText) {
         scene.tweens.killTweensOf(tutorialText);
         tutorialText.destroy();

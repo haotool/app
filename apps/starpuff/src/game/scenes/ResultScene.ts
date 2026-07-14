@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { CANVAS } from '../core/config';
 import { SceneKeys, type GameResultData } from '../core/types';
+import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { createFx } from '../systems/fx';
 
 export class ResultScene extends Phaser.Scene {
   private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
+  private backdrop: BackgroundHandle | null = null;
 
   constructor() {
     super(SceneKeys.Result);
@@ -25,21 +27,28 @@ export class ResultScene extends Phaser.Scene {
     const seconds = (this.result.timeMs / 1000).toFixed(1);
     const won = this.result.result === 'won';
 
-    if (this.textures.exists('bg-arena')) {
-      const bg = this.add.image(centerX, CANVAS.height / 2, 'bg-arena');
-      bg.setScale(Math.max(CANVAS.width / bg.width, CANVAS.height / bg.height));
-      // 敗北灰階：背景降飽和營造挫敗感。
-      if (!won) bg.setTint(0x9a9aa8);
+    // 勝利：星空回廊緩捲 + 金塵緩落；敗北：靜止背景 + 降飽和覆層。
+    this.backdrop = createMenuBackdrop(this, {
+      bgKey: 'bg-arena',
+      autoScrollPxPerSec: won ? 8 : 0,
+      clouds: won,
+      ambience: won ? 'bg-throne' : undefined,
+    });
+    this.events.once('shutdown', () => this.backdrop?.destroy());
+    if (!won) {
+      this.add
+        .rectangle(centerX, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x9a9aa8, 0.4)
+        .setDepth(-5);
     }
 
     const heroKey = won ? 'hero-puffed' : 'hero-hurt';
     if (this.textures.exists(heroKey)) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.48, heroKey);
-      hero.setDisplaySize(180, 180);
+      const hero = this.add.image(centerX, CANVAS.height * 0.5, heroKey);
+      hero.setDisplaySize(130, 130);
       if (!won) hero.setTint(0xbcbcc8);
       this.tweens.add({
         targets: hero,
-        y: '-=12',
+        y: '-=10',
         duration: 1300,
         yoyo: true,
         repeat: -1,
@@ -48,13 +57,13 @@ export class ResultScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.24, won ? '勝利！' : '失敗…', {
+      .text(centerX, CANVAS.height * 0.18, won ? '勝利！' : '失敗…', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '64px',
+        fontSize: '54px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: won ? '#e8a33d' : '#6e6e80',
-        strokeThickness: 10,
+        strokeThickness: 9,
       })
       .setOrigin(0.5);
 
@@ -63,9 +72,9 @@ export class ResultScene extends Phaser.Scene {
       ? `用時 ${seconds} 秒｜${this.result.deaths === 0 ? '無傷通關！' : `死亡 ${this.result.deaths} 次`}`
       : `用時 ${seconds} 秒`;
     this.add
-      .text(centerX, CANVAS.height * 0.32, stats, {
+      .text(centerX, CANVAS.height * 0.31, stats, {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '26px',
+        fontSize: '22px',
         color: won ? '#5a4a2a' : '#5a5a6e',
       })
       .setOrigin(0.5);
@@ -75,11 +84,11 @@ export class ResultScene extends Phaser.Scene {
     const retryButton = this.add
       .text(centerX, CANVAS.height * 0.68, won ? '再玩一次' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '32px',
+        fontSize: '28px',
         fontStyle: 'bold',
         color: '#3a3a4a',
         backgroundColor: '#bff3e0',
-        padding: { x: 36, y: 18 },
+        padding: { x: 32, y: 14 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -98,5 +107,9 @@ export class ResultScene extends Phaser.Scene {
       );
     retryButton.on('pointerdown', retry);
     this.input.keyboard?.once('keydown-ENTER', retry);
+  }
+
+  override update(_time: number, deltaMs: number): void {
+    this.backdrop?.update(deltaMs);
   }
 }

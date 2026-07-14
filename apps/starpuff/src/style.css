@@ -11,95 +11,174 @@
   box-sizing: border-box;
 }
 
+/* iOS 直通全鏈（§22 / recon A.1）：user-select 鏈抑制長按 loupe，touch-callout 關長按選單；
+   須設在實際被 hit-test 的元素及其祖先，缺一層即漏。 */
 html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--sp-bg);
-  touch-action: none;
-  overscroll-behavior: none;
+body,
+#app,
+#app canvas,
+#controls,
+#joy-zone,
+.ctl-btn {
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* PWA 高度用 100vh（recon A.2）：standalone 冷啟動禁 100dvh。 */
+html,
+body {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--sp-bg);
+  overscroll-behavior: none;
+}
+
+/* 置中由 Phaser Scale autoCenter（margin）負責；flex 置中會與其疊加造成水平偏移。 */
 #app {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 #app canvas {
   display: block;
-  touch-action: none;
 }
 
-/* 虛擬按鍵：左下方向鍵、右下 A/B，熱區 >= 56px；僅遊戲場景顯示（is-active 由 controls 系統切換）。 */
+/* 虛擬手柄（§21）：左半屏浮動搖桿 + 右下 A/B 斜排；僅遊戲場景顯示（is-active 由 controls 系統切換）。 */
 #controls {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 10;
   display: none;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  padding-left: calc(16px + env(safe-area-inset-left));
-  padding-right: calc(16px + env(safe-area-inset-right));
   pointer-events: none;
 }
 
 #controls.is-active {
-  display: flex;
+  display: block;
 }
 
-.controls-left,
+/* 左半屏搖桿觸控區：頂部保留 20px phantom 緩衝、左緣避開瀏海 inset（recon B.9）。 */
+#joy-zone {
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  left: env(safe-area-inset-left, 0px);
+  width: 50%;
+  pointer-events: auto;
+}
+
+.joy-ring,
+.joy-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.18s ease-out;
+  will-change: transform;
+}
+
+.joy-ring {
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--sp-btn-border);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.joy-thumb {
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+#joy-zone.is-engaged .joy-ring,
+#joy-zone.is-engaged .joy-thumb {
+  opacity: 1;
+}
+
+/* 右側 A/B 斜排：A 右下 72px、B 於其左上 45 度 64px、圓心間距 84px（邊距 ≥16px）。 */
 .controls-right {
-  display: flex;
-  gap: 14px;
-  align-items: flex-end;
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  width: 128px;
+  height: 128px;
 }
 
 .ctl-btn {
-  width: 64px;
-  height: 64px;
-  min-width: 56px;
-  min-height: 56px;
+  position: absolute;
   border-radius: 50%;
   border: 2px solid var(--sp-btn-border);
-  background: var(--sp-btn);
-  color: rgba(58, 58, 74, 0.75);
-  font-size: 22px;
-  font-weight: 700;
-  font-family: system-ui, sans-serif;
   pointer-events: auto;
-  touch-action: none;
   cursor: pointer;
   backdrop-filter: blur(2px);
+  transition: transform 0.08s ease-out;
+}
+
+/* 圖形鍵帽（無文字節點）：A 上跳箭頭、B 五角星，clip-path 純 CSS 繪製。 */
+.ctl-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.ctl-btn-a {
+  right: 0;
+  bottom: 0;
+  width: 72px;
+  height: 72px;
+  background: rgba(140, 224, 190, 0.55);
+}
+
+.ctl-btn-a::after {
+  width: 30px;
+  height: 28px;
+  clip-path: polygon(50% 0%, 100% 62%, 68% 62%, 68% 100%, 32% 100%, 32% 62%, 0% 62%);
+}
+
+.ctl-btn-b {
+  right: 64px;
+  bottom: 64px;
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 160, 190, 0.55);
+}
+
+.ctl-btn-b::after {
+  width: 30px;
+  height: 30px;
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
 }
 
 /* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */
-.ctl-btn:active,
 .ctl-btn.is-pressed {
   background: var(--sp-btn-active);
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
-.ctl-btn-raised {
-  margin-bottom: 26px;
-}
-
-/* 橫向持機提示：本遊戲為直向設計。 */
+/* 直向持機提示（§21）：本遊戲為橫式設計，portrait 顯示轉橫遮罩。 */
 #rotate-hint {
   display: none;
 }
 
-@media (orientation: landscape) and (max-height: 480px) {
+@media (orientation: portrait) {
   #rotate-hint {
     position: fixed;
     inset: 0;

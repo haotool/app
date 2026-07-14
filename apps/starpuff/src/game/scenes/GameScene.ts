@@ -1,5 +1,15 @@
 import Phaser from 'phaser';
-import { CANVAS, ENEMY, INHALE, PLAYER, STAR_FLAVORS, type StarFlavor } from '../core/config';
+import {
+  CANVAS,
+  EGG_HP_CAP,
+  ENEMY,
+  INHALE,
+  PLAYER,
+  SLAM,
+  STARSTORM,
+  STAR_FLAVORS,
+  type StarFlavor,
+} from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -9,8 +19,16 @@ import {
 } from '../core/events';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
-import { canInhale, isInInhaleRange } from '../logic/combat';
+import { canInhale, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import {
+  advanceEgg,
+  createEggProgress,
+  type EasterEggSpec,
+  type EggEvent,
+  type EggProgress,
+} from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -23,9 +41,9 @@ import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 const GROUND_HEIGHT = 80;
 const GROUND_TOP = CANVAS.height - GROUND_HEIGHT;
 const SPAWN_EDGE_X = 48;
-// 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度。
-const SPAWN_AIR_Y = 500;
-const SPAWN_DROP_Y = 700;
+// 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度（橫式地面頂 y=400）。
+const SPAWN_AIR_Y = 240;
+const SPAWN_DROP_Y = 330;
 const MOUTH_OFFSET_X = 26;
 const SWALLOW_RANGE_PX = 46;
 const PULL_BASE_SPEED = 160;
@@ -70,7 +88,11 @@ export class GameScene extends Phaser.Scene {
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private gate: Phaser.GameObjects.Container | null = null;
+  // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
+  private eggProgress: EggProgress[] = [];
+  private bossActiveAt = -1;
   private unbinders: (() => void)[] = [];
+  private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
   private enemies!: EnemySystem;
@@ -99,9 +121,11 @@ export class GameScene extends Phaser.Scene {
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
     this.gate = null;
+    this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
+    this.bossActiveAt = -1;
 
     this.physics.world.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
-    this.addBackground();
+    this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
 
     this.controls = createControls(this);
@@ -115,7 +139,9 @@ export class GameScene extends Phaser.Scene {
     const unbindSfx = bindSfxToEvents(this.events);
 
     this.cameras.main.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
-    this.cameras.main.startFollow(this.player.sprite, true, 0.08, 0.08);
+    // 剛性跟隨（US-022 / recon 硬規則 9）：lerp 1,1 消除 lerp×roundPixels 逐幀往返跳動；
+    // boss 關單屏不跟隨，避免剛性跟隨在 preRender 覆寫入場運鏡的 pan/zoom。
+    if (!this.level.boss) this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
 
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));
@@ -128,8 +154,10 @@ export class GameScene extends Phaser.Scene {
 
     this.boss.onMinionDrop(() => this.spawnBossMinion());
 
-    // shutdown 僅清理 Phaser 不接管的資源：scene.events 監聽、DOM 監聽、音訊迴圈。
-    // 顯示物件 / group / tween / timer 由 Phaser DisplayList 與 UpdateList 於 shutdown 自動銷毀。
+    // shutdown 清理 Phaser 不接管的資源：scene.events 監聽（restart 不重建 emitter，
+    // 未解除即跨局累積）、DOM 監聽、音訊迴圈。player 的 PRE/POST_UPDATE bob 掛鉤必須
+    // 在此解除；fx/hud 自掛 shutdown 自清，enemies/boss 無 scene.events 與 DOM 監聽，
+    // 其 group/timer/tween 由 Phaser 系統先行銷毀，不得在此重複呼叫（group 已失效）。
     this.events.once('shutdown', () => {
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
@@ -137,6 +165,8 @@ export class GameScene extends Phaser.Scene {
       stopSfx('inhale');
       this.waves.destroy();
       this.controls.destroy();
+      this.background.destroy();
+      this.player.destroy();
     });
 
     this.waves.start();
@@ -145,12 +175,14 @@ export class GameScene extends Phaser.Scene {
 
   override update(_time: number, deltaMs: number): void {
     if (!this.player) return;
+    this.background.update(deltaMs);
     this.controls.update();
     if (!this.finished && !this.transitioning) {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.syncJumpSfx();
       this.syncInhale();
+      this.syncEggs();
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -184,29 +216,6 @@ export class GameScene extends Phaser.Scene {
 
   private restartWith(data: GameSceneData): void {
     this.scene.restart(data);
-  }
-
-  private addBackground(): void {
-    // v2 背景美術另批入庫；紋理缺件時退回 bg-arena。
-    const key = this.textures.exists(this.level.bgKey) ? this.level.bgKey : 'bg-arena';
-    if (this.textures.exists(key)) {
-      const src = this.textures.get(key).getSourceImage() as { width: number; height: number };
-      const scale = Math.max(CANVAS.width / src.width, CANVAS.height / src.height);
-      for (let x = 0; x < this.level.worldWidth; x += src.width * scale) {
-        this.add
-          .image(x, CANVAS.height / 2, key)
-          .setOrigin(0, 0.5)
-          .setScale(scale);
-      }
-    } else {
-      this.add.rectangle(
-        this.level.worldWidth / 2,
-        CANVAS.height / 2,
-        this.level.worldWidth,
-        CANVAS.height,
-        0xd6ecff,
-      );
-    }
   }
 
   private addTerrain(): {
@@ -244,7 +253,7 @@ export class GameScene extends Phaser.Scene {
       const s = asSprite(star);
       if (!s.active || !this.enemies.kindOf(target)) return;
       const spec = STAR_FLAVORS[this.starFlavorOf(s)];
-      const outcome = this.enemies.damage(target, spec.damage);
+      const outcome = this.enemies.damage(target, this.starDamageOf(s));
       if (outcome === 'ignored') return;
       if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
@@ -259,7 +268,7 @@ export class GameScene extends Phaser.Scene {
       const spec = STAR_FLAVORS[this.starFlavorOf(star)];
       if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
       this.player.onStarHit(star, 'absorb');
-      this.boss.applyDamage(spec.damage);
+      this.boss.applyDamage(this.starDamageOf(star));
     });
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
@@ -321,11 +330,24 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => {
       this.playerHp = hp;
     });
+    bind(GameEvents.PLAYER_HEALED, ({ hp }) => {
+      this.playerHp = hp;
+    });
+    // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
+    bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
+    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => this.resolveSlamImpact(x, y));
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
     bind(GameEvents.BOSS_DAMAGED, ({ hp }) => {
       this.bossHp = hp;
+      if (this.bossActiveAt >= 0) {
+        this.feedEggs({ kind: 'boss-hit', sinceActiveMs: this.time.now - this.bossActiveAt });
+      }
+    });
+    // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
+    bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
+      if (canInhale(kind)) this.feedEggs({ kind: 'swallow', flavor: kind });
     });
     // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
@@ -551,8 +573,159 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // 彩蛋逐幀事件（§24）：世界座標與平台站立；魔王可擊打起點供時間窗計算。
+  private syncEggs(): void {
+    if (this.level.boss && this.bossActiveAt < 0 && this.boss.isActive()) {
+      this.bossActiveAt = this.time.now;
+    }
+    if (this.eggProgress.every((progress) => progress.done)) return;
+    this.feedEggs({ kind: 'position', x: this.player.sprite.x });
+    this.feedEggs({ kind: 'stand', platformY: this.standingPlatformY() });
+  }
+
+  // 站立平台判定：腳底貼齊平台頂（rect 高 16 → 頂 = y - 8）且 x 落於平台範圍。
+  private standingPlatformY(): number | null {
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (!body.blocked.down && !body.touching.down) return null;
+    for (const spec of this.level.platforms) {
+      if (
+        Math.abs(body.bottom - (spec.y - 8)) <= 4 &&
+        Math.abs(this.player.sprite.x - spec.x) <= spec.w / 2 + 12
+      ) {
+        return spec.y;
+      }
+    }
+    return null;
+  }
+
+  private feedEggs(event: EggEvent): void {
+    this.level.easterEggs.forEach((spec, i) => {
+      const progress = this.eggProgress[i];
+      if (!progress || progress.done) return;
+      const result = advanceEgg(spec, progress, event);
+      this.eggProgress[i] = result.progress;
+      if (result.triggered) this.grantEggReward(spec);
+    });
+  }
+
+  // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
+  private grantEggReward(spec: EasterEggSpec): void {
+    switch (spec.reward) {
+      case 'hp-up':
+        this.player.heal(1, EGG_HP_CAP);
+        this.eggCelebration('彩虹果凍 +1 HP');
+        break;
+      case 'full-magazine':
+        this.player.grantFullMagazine();
+        this.eggCelebration('星星雨！彈匣全滿');
+        break;
+      case 'gold-star':
+        this.player.grantGoldStar();
+        this.eggCelebration('金星彈入匣！');
+        break;
+      case 'heal':
+        // 滿血時 heal 無感（player.heal 靜默略過）：fallback 改給滿彈匣，獎勵必有回饋。
+        if (this.playerHp >= PLAYER.maxHp) {
+          this.player.grantFullMagazine();
+          this.eggCelebration('皇冠火花！彈匣全滿');
+        } else {
+          this.player.heal(1, PLAYER.maxHp);
+          this.eggCelebration('皇冠火花 +1 HP');
+        }
+        break;
+      default: {
+        const exhaustive: never = spec.reward;
+        void exhaustive;
+      }
+    }
+  }
+
+  // 彩蛋演出（§24）：金光 popIn + 專屬 jingle + 浮字（既有 fx 組合）。
+  private eggCelebration(message: string): void {
+    playSfx('jingle');
+    const { y } = this.player.sprite;
+    // 浮字夾限於鏡頭視野內，避免世界邊緣觸發時被裁切。
+    const view = this.cameras.main.worldView;
+    const x = Phaser.Math.Clamp(this.player.sprite.x, view.x + 110, view.right - 110);
+    const glow = this.add
+      .image(x, y, 'fx-star')
+      .setDisplaySize(130, 130)
+      .setTint(0xffc93c)
+      .setAlpha(0)
+      .setDepth(94);
+    this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.9, to: 0 },
+      scale: { from: glow.scale * 0.3, to: glow.scale * 1.7 },
+      duration: 750,
+      ease: 'Quad.easeOut',
+      onComplete: () => glow.destroy(),
+    });
+    this.fx.starBurst(x, y - 20);
+    const label = this.add
+      .text(x, y - 64, message, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        color: '#ffc93c',
+        stroke: '#3a3a4a',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(96);
+    this.tweens.add({
+      targets: label,
+      y: y - 118,
+      alpha: { from: 1, to: 0 },
+      duration: 1200,
+      ease: 'Cubic.easeOut',
+      onComplete: () => label.destroy(),
+    });
+  }
+
   private starFlavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {
     return (star.getData('flavor') as StarFlavor | undefined) ?? 'jelly';
+  }
+
+  // 星彈傷害（§23）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入。
+  private starDamageOf(star: Phaser.Physics.Arcade.Sprite): number {
+    return (
+      (star.getData('damage') as number | undefined) ?? STAR_FLAVORS[this.starFlavorOf(star)].damage
+    );
+  }
+
+  // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
+  private resolveStarstorm(): void {
+    this.cameras.main.flash(280, 255, 255, 255);
+    this.fx.shake(12);
+    const view = this.cameras.main.worldView;
+    for (let i = 0; i < 6; i += 1) {
+      this.time.delayedCall(i * 90, () =>
+        this.fx.starBurst(
+          view.x + Math.random() * view.width,
+          view.y + Math.random() * view.height * 0.6,
+        ),
+      );
+    }
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child.active) this.enemies.kill(child);
+    }
+    if (this.boss.isActive()) this.boss.applyDamage(STARSTORM.bossDamage);
+  }
+
+  // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。
+  private resolveSlamImpact(x: number, y: number): void {
+    this.fx.shake(6);
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > SLAM.radiusPx) continue;
+      const outcome = this.enemies.damage(child, SLAM.damage);
+      if (outcome === 'hurt') {
+        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed, SLAM.knockbackLift);
+        enemy.setVelocity(kb.x, kb.y);
+      }
+    }
   }
 
   // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。

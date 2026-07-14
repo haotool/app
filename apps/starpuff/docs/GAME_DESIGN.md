@@ -1,11 +1,11 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v2.0（PM 親撰；v2 新增 §15-§18 關卡系統）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v3.0（PM 親撰；v3 橫式轉向與技能組合 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
-- 直向（portrait）四關側向卷軸動作遊戲：三關走動探索 + 魔王關（Boss Rush 收尾），單局 2–4 分鐘，可無限重玩。
+- 橫式（landscape）四關側向卷軸動作遊戲：三關走動探索 + 魔王關（Boss Rush 收尾），單局 2–4 分鐘，可無限重玩。
 - 原創 IP：主角與怪物皆為原創設計（果凍星球世界觀），嚴禁使用任天堂卡比之名稱、造型、配色構圖。
 - 目標體驗：Q 彈、可愛、爽快——大量擠壓拉伸、粒子、震屏、音效回饋。
 
@@ -21,8 +21,8 @@
 
 ## 4. 操作（行動裝置優先）
 
-- 左下：◀ ▶ 方向鍵（大拇指熱區，56px+）。
-- 右下：Ⓐ 跳躍（空中連按＝拍翅漂浮，最多 3 次，落地重置）；Ⓑ 吸/射（無彈藥＝按住吸入；有彈藥＝點按發射，長按仍可吸）。
+- 左半屏：浮動搖桿（觸點即中心、半徑 60px、死區 12px；水平移動 + 下向偵測供下衝擊，規格見 §21）。
+- 右側：A/B 圖形圓鍵手柄斜排——A 跳躍（空中連按＝拍翅漂浮，最多 3 次，落地重置）；B 吸/射（無彈藥＝按住吸入；有彈藥＝點按發射，長按仍可吸）。
 - 鍵盤（桌機備援）：←→ / Z 跳 / X 吸射。
 - 全域：`touch-action: none`、禁雙擊縮放、首次觸控解鎖 AudioContext。
 
@@ -48,7 +48,7 @@
 - 玩家：移速 220px/s、跳躍初速 -420、漂浮升力 -260、重力 900。
 - 吸入：長按 ≥150ms 啟動、錐形範圍 140px、拉力漸增；吞下 +1 彈藥（上限 3）。
 - 星彈：傷害 5、速度 520、穿透 1 隻小怪、命中魔王消失。
-- 邏輯畫布：480×854（Scale.FIT + autoCenter）；解析度採 Scale.FIT 自適應，不做 DPR cap（欄位已於修復包 B 移除）。
+- 邏輯畫布：854×480（橫式，Scale.FIT + autoCenter，§21）；解析度採 Scale.FIT 自適應，不做 DPR cap（欄位已於修復包 B 移除）。
 
 ## 8. Juice 清單（品質關鍵，全數必做）
 
@@ -95,8 +95,8 @@ src/game/audio/    sfx.ts bgm.ts
 src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 ```
 
-- 事件契約（`events.ts`，跨系統唯一溝通管道）：
-  `player:damaged, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, boss:spawned, boss:damaged, boss:phase, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
+- 事件契約（`events.ts`，跨系統唯一溝通管道；v3 增列 `player:healed` 與 `skill:*` 技能結算事件）：
+  `player:damaged, player:healed, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, skill:starstorm, skill:slam-landed, boss:spawned, boss:damaged, boss:phase, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
 
 ## 12. 品質門檻
 
@@ -121,6 +121,8 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 
 流程改為：Title → Stage 1 → 2 → 3 → 4（魔王）→ Result。死亡重試當前關；通關進下一關（轉場卡全屏 1.2s：關卡編號+名稱+緩動）。
 
+下表世界寬為 v2 直向值，v3 已由 §21 橫式世界尺寸取代（S1 2700 / S2 3100 / S3 3500 / S4 854 單屏）：
+
 | #   | 關卡     | 場景（bg key） | 世界寬              | 擊殺配額 | 生成間隔                | 怪物組合                         | 難度設計                                     |
 | --- | -------- | -------------- | ------------------- | -------- | ----------------------- | -------------------------------- | -------------------------------------------- |
 | 1   | 果凍草原 | bg-meadow      | 1680px              | 6        | 2600ms                  | jelly 60%、floaty 40%            | 教學關：平台低差、無地形威脅、幾乎不死       |
@@ -128,7 +130,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 | 3   | 星空回廊 | bg-arena       | 2160px              | 10       | 1300ms                  | 五種混編、可吸怪佔比 50%         | 密度高壓、chompy 卡口、彈藥管理壓力          |
 | 4   | 魔王城   | bg-throne      | 480px（單屏 arena） | —        | 補生 3500ms（僅可吸怪） | Jellord + jelly/floaty 補給      | §6 + §17 強化演出                            |
 
-- 走動：關卡 1-3 為側向卷軸（`camera.startFollow(player, true, 0.08, 0.08)` + `setBounds(0,0,worldW,854)`；world 物理邊界同步）。
+- 走動：關卡 1-3 為側向卷軸（v3 定案：`camera.startFollow(player, false, 1, 1)` 剛性跟隨 + `roundPixels: false` + `setBounds(0,0,worldW,480)`；world 物理邊界同步；緣由見 §25 抖動修復定案）。
 - 通關條件：擊殺配額達成後右端出現「星星門」（fx-star 放大 + 光暈脈動 + 浮動 tween，graphics 組合，不新增美術），走入即過關。
 - 關卡資料契約（levels.ts）：`{ id, nameZh, bgKey, worldWidth, killQuota, spawnIntervalMs, maxOnScreen, safeZoneTailPx, enemyMix: {kind,weight}[], platforms: {x,y,w}[] }`——GameScene 依資料驅動，禁止每關寫死邏輯分支。
 - 尾端 release：每關末 `safeZoneTailPx: 480` 禁 spawn（星星門前喘息區，鋸齒 tension-release）。`maxOnScreen`：S1 3、S2 4、S3 5。
@@ -158,7 +160,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 
 ## 18. 動畫流暢度打磨清單（全實體）
 
-走路彈跳（玩家移動時 y 微幅 bob + 輕微傾斜）、落地塵埃圈（著地速度 >300 觸發）、所有敵人生成 popIn（scale 0→1 back.out）、死亡 squash 消失、星星門吸入過關演出（玩家縮小旋轉飛入）、轉場卡緩動（slide+fade）、鏡頭跟隨 lerp 0.08 平滑。
+走路彈跳（玩家移動時 y 微幅 bob + 輕微傾斜）、落地塵埃圈（著地速度 >300 觸發）、所有敵人生成 popIn（scale 0→1 back.out）、死亡 squash 消失、星星門吸入過關演出（玩家縮小旋轉飛入）、轉場卡緩動（slide+fade）、鏡頭剛性跟隨 lerp(1,1)（v3 定案；lerp×roundPixels 逐幀往返跳動的根因修復見 §25 抖動修復定案）。
 
 ## 19. v2 美術資產增補（codex 專用；生成尺寸同 §10 規範）
 
@@ -183,3 +185,60 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 - HUD 彈藥星星依屬性上色；發射音效 pitch 依屬性微調（標準 1.0／疾風 1.15／爆裂 0.85）。
 - 實作契約：`swallow(kind)` 記錄 flavor → `fireStar(flavor)` → `STAR_FLAVORS` 常數表（core/config.ts）。
 - KISS 底線：不做技能樹、不做冷卻、不做 UI 選單——吞什麼射什麼，一眼可懂。
+
+## 21. v3 橫式轉向（PM 親撰）
+
+- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape；直向持機時顯示「請轉橫」遮罩（反轉現有偵測）。
+- 世界尺寸：高 480；寬放大至 S1 2700 / S2 3100 / S3 3500（視野變寬 1.78 倍，維持等效走動時長）；平台改雙層以內（天花板變低），高度差以跳躍 -420 可達為準。
+- HUD 重排：頂列橫排——HP 心心左上、STAGE 標示中上、配額右上；Boss 條頂中置。全部 HUD 圖示改 graphics 繪製（星形/心形程序化），全遊戲禁用 emoji 與文字字元鍵帽。
+- 虛擬手柄（參考實體手柄配置）：左側浮動搖桿（觸點即中心、半徑 60px、死區 12px、水平為主 + 下向偵測供下衝擊）；右側 A（跳，右下）/ B（吸/射，A 左上 45 度）雙鍵 64px+ 斜排、間距 16px+；橫持 iPhone safe-area 側邊 inset 必須套用。按鍵一律 canvas/CSS 繪製圖形（無文字節點）。
+
+## 22. iOS 觸控直通（研究回寫後定稿）
+
+- 已知基線：控制層與 canvas 套 `-webkit-touch-callout: none`、`-webkit-user-select: none`、`user-select: none`、`touch-action: none`、`-webkit-tap-highlight-color: transparent`；pointerdown/contextmenu preventDefault；按鍵不含可選取文字（無障礙走 aria-label）。
+- 長按放大鏡（iOS 17+ text loupe）根除：按鍵去文字化 + callout/select 全關 + 必要時 touchstart passive:false preventDefault——以調研結論為準補齊。
+- 研究項：Safari gesturestart 縮放攔截、standalone PWA 與瀏覽器內差異、audio unlock 於橫式的相容性。
+
+## 23. 技能組合 v3：吞噬連鎖（表驅動，logic/skills.ts）
+
+- 三屬性沿用 §20；新增連鎖規則：
+  - 同種連吞 ×2：該槽升級為強化星（傷害 ×1.6、尺寸 ×1.4、pitch -15%、金邊 tint）。
+  - 彈匣全滿長按 B 0.8s：星暴大招——清場全部小怪 + 魔王 12 傷，震屏 + 白閃 + 星雨粒子，清空彈匣。
+  - 空中搖桿下 + B：下衝擊——加速下墜，落地 60px 衝擊波（傷害 2、擊退小怪），CD 1.2s，零彈藥消耗。
+- 彈匣槽各自帶 flavor 與強化態，後進先出發射；HUD 槽位顯示屬性色 + 強化金邊。
+
+## 24. 關卡彩蛋（data-driven：levels.ts easterEggs[]）
+
+| 關  | 觸發                        | 獎勵                  | 演出                            |
+| --- | --------------------------- | --------------------- | ------------------------------- |
+| 1   | 開局反向走到世界最左緣      | 彩虹果凍 +1 HP        | 金光 popIn + 專屬 jingle + 浮字 |
+| 2   | 最高雲朵平台連續站上 3 次   | 星星雨（瞬間滿彈匣）  | 星雨粒子 + jingle               |
+| 3   | 依序連吞 jelly→floaty→puffy | 金星彈一發（傷害 20） | 金彈入匣特寫 + jingle           |
+| 4   | 開場 5 秒內命中皇冠         | +1 HP                 | 皇冠火花 + jingle               |
+
+- 觸發器型別化：`'reach-x' | 'stand-count' | 'eat-sequence' | 'crown-early-hit'`；每關至多觸發一次；純邏輯可測。
+
+## 25. 背景連續感與視覺升級
+
+- 每關背景改「橫向無縫平鋪」新資產（§27），tileSprite 雙層視差：遠景 scrollFactor 0.25、近景 0.6；接縫若可見改鏡像平鋪。
+- 共用漂浮雲層（透明平鋪帶）恆速漂移；每關主題 ambience 粒子（草原花瓣/高台雲絮/回廊星塵/王座金塵，密度低於 8 顆同屏）。
+- 色彩分級：每關極輕 tint overlay（alpha 0.06）統一色調。
+- 動作抖動修復定案（US-022 調查結論）：根因為 camera lerp 次像素捲動 × roundPixels 量化的逐幀往返跳動——修法為剛性跟隨 `lerp(1,1)` + `roundPixels: false`（非 pixel-art 美術）；walk bob 改 PRE/POST_UPDATE 視覺偏移掛鉤不污染物理；全實體動作平滑化（tween ease 統一 Sine 系）。
+
+## 26. 反卡死保證（softlock 防護，全部 MUST）
+
+- Spawner 保證律：玩家彈藥 0 且場上無可吸怪時，下一隻生成強制可吸（覆蓋權重）；boss 期同律且立即補生（不等間隔）。
+- 星星門必達：配額達成即於可達地面生成，overlap 高度涵蓋跳躍弧線。
+- 場景無坑洞設計維持（無墜落死）；世界邊界實牆。
+- visibilitychange：切背景暫停物理與計時，回前景恢復（修 v2 P3 遺留）。
+- 深度探索 QA 劇本：邊緣紮營 5 分鐘、只殺不可吸怪、彈藥歸零僵持、暫停/恢復循環、快速連死——全數不得卡關。
+
+## 27. v3 美術資產（codex 專用；橫向平鋪）
+
+| 檔名             | 內容         | 規格                                    |
+| ---------------- | ------------ | --------------------------------------- |
+| bg-meadow-l.png  | 果凍草原橫景 | 1536×512、水平無縫平鋪、底 1/4 乾淨地帶 |
+| bg-heights-l.png | 雲朵高台橫景 | 同上、中段留平台空間                    |
+| bg-arena-l.png   | 星空回廊橫景 | 同上、星塵粉紫調                        |
+| bg-throne-l.png  | 魔王城橫景   | 同上、紫金王座廳                        |
+| fx-clouds.png    | 共用漂浮雲層 | 1024×256、透明、水平無縫平鋪            |

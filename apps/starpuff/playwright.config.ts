@@ -15,8 +15,8 @@ export default defineConfig({
   projects: [
     {
       name: 'Mobile Chrome',
-      // iPhone 13 視窗（390×844）跑 chromium：CI 免額外下載 webkit。
-      use: { ...devices['iPhone 13'], browserName: 'chromium' },
+      // iPhone 13 橫持視窗（844×390）跑 chromium：CI 免額外下載 webkit。
+      use: { ...devices['iPhone 13 landscape'], browserName: 'chromium' },
     },
   ],
   webServer: {

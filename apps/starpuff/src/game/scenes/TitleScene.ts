@@ -3,29 +3,60 @@ import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
+import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addMuteButton } from '../systems/hud';
 
+const TITLE_GLOW_TEX = 'title-glow';
+
+// 主角光暈：同心圓遞減 alpha 模擬柔光，供脈動 tween 使用。
+function ensureGlowTexture(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TITLE_GLOW_TEX)) return;
+  const g = scene.add.graphics();
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle(0xfff3d6, 0.05 + i * 0.035);
+    g.fillCircle(90, 90, 88 - i * 12);
+  }
+  g.generateTexture(TITLE_GLOW_TEX, 180, 180);
+  g.destroy();
+}
+
 export class TitleScene extends Phaser.Scene {
+  private backdrop: BackgroundHandle | null = null;
+
   constructor() {
     super(SceneKeys.Title);
   }
 
   create(): void {
     const centerX = CANVAS.width / 2;
+    this.backdrop = createMenuBackdrop(this, {
+      bgKey: 'bg-meadow',
+      autoScrollPxPerSec: 12,
+      clouds: true,
+      ambience: 'bg-meadow',
+    });
+    this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
 
-    if (this.textures.exists('bg-arena')) {
-      const bg = this.add.image(centerX, CANVAS.height / 2, 'bg-arena');
-      bg.setScale(Math.max(CANVAS.width / bg.width, CANVAS.height / bg.height));
-    }
-
     if (this.textures.exists('hero-idle')) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.46, 'hero-idle');
-      hero.setDisplaySize(220, 220);
+      ensureGlowTexture(this);
+      const heroY = CANVAS.height * 0.45;
+      const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
+      const hero = this.add.image(centerX, heroY, 'hero-idle');
+      hero.setDisplaySize(150, 150);
       this.tweens.add({
-        targets: hero,
-        y: '-=16',
+        targets: [hero, glow],
+        y: '-=14',
         duration: 1400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.55, to: 1 },
+        scale: glow.scale * 1.12,
+        duration: 1100,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -33,20 +64,20 @@ export class TitleScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.2, '星噗噗', {
+      .text(centerX, CANVAS.height * 0.15, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '72px',
+        fontSize: '58px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#7a5fb8',
-        strokeThickness: 10,
+        strokeThickness: 9,
       })
       .setOrigin(0.5);
 
     this.add
       .text(centerX, CANVAS.height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '26px',
+        fontSize: '22px',
         color: '#7a5fb8',
       })
       .setOrigin(0.5);
@@ -54,11 +85,11 @@ export class TitleScene extends Phaser.Scene {
     const startButton = this.add
       .text(centerX, CANVAS.height * 0.66, '開始遊戲', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '32px',
+        fontSize: '28px',
         fontStyle: 'bold',
         color: '#3a3a4a',
         backgroundColor: '#bff3e0',
-        padding: { x: 36, y: 18 },
+        padding: { x: 32, y: 14 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -73,9 +104,9 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.add
-      .text(centerX, CANVAS.height * 0.74, '◀▶ 移動｜Ⓐ 跳躍｜Ⓑ 長按吸入・點按發射', {
+      .text(centerX, CANVAS.height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '17px',
+        fontSize: '16px',
         color: '#5a5a6e',
       })
       .setOrigin(0.5);
@@ -88,5 +119,9 @@ export class TitleScene extends Phaser.Scene {
     };
     startButton.on('pointerdown', start);
     this.input.keyboard?.once('keydown-ENTER', start);
+  }
+
+  override update(_time: number, deltaMs: number): void {
+    this.backdrop?.update(deltaMs);
   }
 }
