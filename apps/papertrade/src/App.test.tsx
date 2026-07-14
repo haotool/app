@@ -26,19 +26,23 @@ describe('App shell', () => {
     }
   });
 
-  it('renders trade placeholder page', () => {
+  it('renders the trade page with an order form', () => {
     renderAt('/trade');
-    expect(screen.getByRole('heading', { name: '交易' })).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: '下單表單' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '買多' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '賣空' })).toBeInTheDocument();
   });
 
-  it('renders assets placeholder page', () => {
+  it('renders the assets page with equity summary', () => {
     renderAt('/assets');
-    expect(screen.getByRole('heading', { name: '資產' })).toBeInTheDocument();
+    expect(screen.getByText('總權益（USDT）')).toBeInTheDocument();
+    expect(screen.getByText('尚無平倉紀錄')).toBeInTheDocument();
   });
 
   it('renders settings page with disclaimer', () => {
     renderAt('/settings');
-    expect(screen.getByText(/模擬交易工具/)).toBeInTheDocument();
+    expect(screen.getByText(/純模擬交易工具/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '重置模擬資金' })).toBeInTheDocument();
   });
 
   it('redirects unknown paths to markets page', () => {
