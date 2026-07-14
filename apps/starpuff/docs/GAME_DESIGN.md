@@ -170,6 +170,63 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 | minion-puffy.png  | 氣球魨（2048 透明）                                                      | 珊瑚粉 #FFA8A0、短圓刺、驚訝圓眼   |
 | minion-chompy.png | 咬咬花（2048 透明）                                                      | 鵝黃 #F5E6A8、花瓣嘴微張、莖葉底座 |
 
+## 21. v3 橫式轉向（PM 親撰）
+
+- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape；直向持機時顯示「請轉橫」遮罩（反轉現有偵測）。
+- 世界尺寸：高 480；寬放大至 S1 2700 / S2 3100 / S3 3500（視野變寬 1.78 倍，維持等效走動時長）；平台改雙層以內（天花板變低），高度差以跳躍 -420 可達為準。
+- HUD 重排：頂列橫排——HP 心心左上、STAGE 標示中上、配額右上；Boss 條頂中置。全部 HUD 圖示改 graphics 繪製（星形/心形程序化），全遊戲禁用 emoji 與文字字元鍵帽。
+- 虛擬手柄（參考實體手柄配置）：左側浮動搖桿（觸點即中心、半徑 60px、死區 12px、水平為主 + 下向偵測供下衝擊）；右側 A（跳，右下）/ B（吸/射，A 左上 45 度）雙鍵 64px+ 斜排、間距 16px+；橫持 iPhone safe-area 側邊 inset 必須套用。按鍵一律 canvas/CSS 繪製圖形（無文字節點）。
+
+## 22. iOS 觸控直通（研究回寫後定稿）
+
+- 已知基線：控制層與 canvas 套 `-webkit-touch-callout: none`、`-webkit-user-select: none`、`user-select: none`、`touch-action: none`、`-webkit-tap-highlight-color: transparent`；pointerdown/contextmenu preventDefault；按鍵不含可選取文字（無障礙走 aria-label）。
+- 長按放大鏡（iOS 17+ text loupe）根除：按鍵去文字化 + callout/select 全關 + 必要時 touchstart passive:false preventDefault——以調研結論為準補齊。
+- 研究項：Safari gesturestart 縮放攔截、standalone PWA 與瀏覽器內差異、audio unlock 於橫式的相容性。
+
+## 23. 技能組合 v3：吞噬連鎖（表驅動，logic/skills.ts）
+
+- 三屬性沿用 §20；新增連鎖規則：
+  - 同種連吞 ×2：該槽升級為強化星（傷害 ×1.6、尺寸 ×1.4、pitch -15%、金邊 tint）。
+  - 彈匣全滿長按 B 0.8s：星暴大招——清場全部小怪 + 魔王 12 傷，震屏 + 白閃 + 星雨粒子，清空彈匣。
+  - 空中搖桿下 + B：下衝擊——加速下墜，落地 60px 衝擊波（傷害 2、擊退小怪），CD 1.2s，零彈藥消耗。
+- 彈匣槽各自帶 flavor 與強化態，後進先出發射；HUD 槽位顯示屬性色 + 強化金邊。
+
+## 24. 關卡彩蛋（data-driven：levels.ts easterEggs[]）
+
+| 關  | 觸發                        | 獎勵                  | 演出                            |
+| --- | --------------------------- | --------------------- | ------------------------------- |
+| 1   | 開局反向走到世界最左緣      | 彩虹果凍 +1 HP        | 金光 popIn + 專屬 jingle + 浮字 |
+| 2   | 最高雲朵平台連續站上 3 次   | 星星雨（瞬間滿彈匣）  | 星雨粒子 + jingle               |
+| 3   | 依序連吞 jelly→floaty→puffy | 金星彈一發（傷害 20） | 金彈入匣特寫 + jingle           |
+| 4   | 開場 5 秒內命中皇冠         | +1 HP                 | 皇冠火花 + jingle               |
+
+- 觸發器型別化：`'reach-x' | 'stand-count' | 'eat-sequence' | 'crown-early-hit'`；每關至多觸發一次；純邏輯可測。
+
+## 25. 背景連續感與視覺升級
+
+- 每關背景改「橫向無縫平鋪」新資產（§27），tileSprite 雙層視差：遠景 scrollFactor 0.25、近景 0.6；接縫若可見改鏡像平鋪。
+- 共用漂浮雲層（透明平鋪帶）恆速漂移；每關主題 ambience 粒子（草原花瓣/高台雲絮/回廊星塵/王座金塵，密度低於 8 顆同屏）。
+- 色彩分級：每關極輕 tint overlay（alpha 0.06）統一色調。
+- 動作抖動修復（調查性）：診斷 walk bob 與物理速度互擾、camera lerp 與 roundPixels 捨入、squash tween 疊加——根因修復後全實體動作平滑化（tween ease 統一 Sine 系）。
+
+## 26. 反卡死保證（softlock 防護，全部 MUST）
+
+- Spawner 保證律：玩家彈藥 0 且場上無可吸怪時，下一隻生成強制可吸（覆蓋權重）；boss 期同律且立即補生（不等間隔）。
+- 星星門必達：配額達成即於可達地面生成，overlap 高度涵蓋跳躍弧線。
+- 場景無坑洞設計維持（無墜落死）；世界邊界實牆。
+- visibilitychange：切背景暫停物理與計時，回前景恢復（修 v2 P3 遺留）。
+- 深度探索 QA 劇本：邊緣紮營 5 分鐘、只殺不可吸怪、彈藥歸零僵持、暫停/恢復循環、快速連死——全數不得卡關。
+
+## 27. v3 美術資產（codex 專用；橫向平鋪）
+
+| 檔名                | 內容         | 規格                                    |
+| ------------------- | ------------ | --------------------------------------- |
+| bg-meadow-l.png     | 果凍草原橫景 | 1536×512、水平無縫平鋪、底 1/4 乾淨地帶 |
+| bg-heights-l.png    | 雲朵高台橫景 | 同上、中段留平台空間                    |
+| bg-arena-l.png      | 星空回廊橫景 | 同上、星塵粉紫調                        |
+| bg-throne-l.png     | 魔王城橫景   | 同上、紫金王座廳                        |
+| fx-clouds-strip.png | 共用漂浮雲層 | 1024×256、透明、水平無縫平鋪            |
+
 ## 20. 技能系統：吞噬賦星（v2.1，PM 親撰）
 
 吞下的怪決定星彈屬性（最後吞下者覆蓋既有彈藥屬性），表驅動實作（config 一張表，禁止散落分支）：
