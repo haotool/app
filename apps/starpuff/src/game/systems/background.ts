@@ -1,0 +1,295 @@
+import Phaser from 'phaser';
+import { CANVAS } from '../core/config';
+import type { LevelSpec } from '../logic/levels';
+import { fillStarPath } from './fx';
+
+// 背景視覺系統（§25 / recon C.7）：橫向無縫雙層視差 + 共用雲層 + 每關 ambience 粒子 + 色彩分級。
+// tileSprite 一律 ≤ 邏輯 viewport、scrollFactor(0) + 手動 tilePositionX，與 camera 跟隨解耦。
+
+export interface BackgroundHandle {
+  update(deltaMs: number): void;
+  destroy(): void;
+}
+
+const NEAR_FACTOR = 0.6;
+const FAR_FACTOR = 0.25;
+const CLOUD_DRIFT_PX_PER_SEC = 8;
+const CLOUD_ALPHA = 0.55;
+const GRADE_ALPHA = 0.06;
+const GRADE_DEPTH = 85;
+const DEPTH_BG = -20;
+const DEPTH_CLOUDS = -18;
+const DEPTH_AMBIENCE = -8;
+// §25：ambience 同屏 ≤8 顆、低頻生成。
+const AMBIENCE_MAX = 8;
+const AMBIENCE_FREQ_MS = 1400;
+
+const AMB_TEXTURES = {
+  petal: 'bg-amb-petal',
+  wisp: 'bg-amb-wisp',
+  mote: 'bg-amb-mote',
+  dot: 'bg-amb-dot',
+} as const;
+
+interface AmbienceSpec {
+  texture: string;
+  tint: number[];
+  blend: 'ADD' | 'NORMAL';
+  alpha: number;
+  scale: { start: number; end: number };
+  speedY: { min: number; max: number };
+  tumble: boolean;
+}
+
+interface ThemeSpec {
+  grade: number;
+  ambience: AmbienceSpec;
+}
+
+// 主題以關卡 bgKey 索引（§25：花瓣/雲絮/星塵/金塵；分級 tint 統一 alpha 0.06）。
+const THEMES: Record<string, ThemeSpec> = {
+  'bg-meadow': {
+    grade: 0x8fe0a8,
+    ambience: {
+      texture: AMB_TEXTURES.petal,
+      tint: [0xffb3c7, 0xffd1e0, 0xffe9f2],
+      blend: 'NORMAL',
+      alpha: 0.85,
+      scale: { start: 1, end: 0.7 },
+      speedY: { min: 32, max: 58 },
+      tumble: true,
+    },
+  },
+  'bg-heights': {
+    grade: 0x9ec9ff,
+    ambience: {
+      texture: AMB_TEXTURES.wisp,
+      tint: [0xffffff],
+      blend: 'NORMAL',
+      alpha: 0.5,
+      scale: { start: 1.15, end: 0.8 },
+      speedY: { min: 18, max: 34 },
+      tumble: false,
+    },
+  },
+  'bg-arena': {
+    grade: 0xb28bf0,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0xcbb7f0, 0xfff3b0, 0xa78bfa],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.9, end: 0.3 },
+      speedY: { min: 22, max: 40 },
+      tumble: true,
+    },
+  },
+  'bg-throne': {
+    grade: 0xdfae4e,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xffd966, 0xffe9a8],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.85, end: 0.25 },
+      speedY: { min: 16, max: 30 },
+      tumble: false,
+    },
+  },
+};
+
+function ensureAmbienceTextures(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(AMB_TEXTURES.petal)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    g.fillEllipse(7, 5, 13, 8);
+    g.generateTexture(AMB_TEXTURES.petal, 14, 10);
+    g.destroy();
+  }
+  if (!scene.textures.exists(AMB_TEXTURES.wisp)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 0.5);
+    g.fillEllipse(13, 6, 26, 11);
+    g.fillStyle(0xffffff, 0.75);
+    g.fillEllipse(13, 6, 18, 7);
+    g.generateTexture(AMB_TEXTURES.wisp, 26, 12);
+    g.destroy();
+  }
+  if (!scene.textures.exists(AMB_TEXTURES.mote)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    fillStarPath(g, 6, 6, 6, 2.6);
+    g.generateTexture(AMB_TEXTURES.mote, 12, 12);
+    g.destroy();
+  }
+  if (!scene.textures.exists(AMB_TEXTURES.dot)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(3, 3, 3);
+    g.generateTexture(AMB_TEXTURES.dot, 6, 6);
+    g.destroy();
+  }
+}
+
+// 512 高圖以 cover 邏輯等比放大貼齊畫布（高度主導 480/512），藝術底帶對齊世界地面。
+function coverScale(scene: Phaser.Scene, key: string): number {
+  const src = scene.textures.get(key).getSourceImage() as { width: number; height: number };
+  return Math.max(CANVAS.width / src.width, CANVAS.height / src.height);
+}
+
+function addCoverTile(scene: Phaser.Scene, key: string): Phaser.GameObjects.TileSprite {
+  const tile = scene.add
+    .tileSprite(0, 0, CANVAS.width, CANVAS.height, key)
+    .setOrigin(0, 0)
+    .setScrollFactor(0)
+    .setDepth(DEPTH_BG);
+  tile.setTileScale(coverScale(scene, key));
+  return tile;
+}
+
+function addClouds(scene: Phaser.Scene): Phaser.GameObjects.TileSprite {
+  return scene.add
+    .tileSprite(0, 4, CANVAS.width, 256, 'fx-clouds')
+    .setOrigin(0, 0)
+    .setScrollFactor(0)
+    .setDepth(DEPTH_CLOUDS)
+    .setAlpha(CLOUD_ALPHA);
+}
+
+// 粒子走世界座標：x 於發射當下讀取相機捲動，落下後相機自然掠過（同 fx.ts inhale 模式）。
+function addAmbience(
+  scene: Phaser.Scene,
+  spec: AmbienceSpec,
+): Phaser.GameObjects.Particles.ParticleEmitter {
+  ensureAmbienceTextures(scene);
+  return scene.add
+    .particles(0, 0, spec.texture, {
+      x: () => scene.cameras.main.scrollX + Phaser.Math.Between(-30, CANVAS.width + 30),
+      y: -16,
+      speedY: { min: spec.speedY.min, max: spec.speedY.max },
+      speedX: { min: -16, max: 16 },
+      scale: { start: spec.scale.start, end: spec.scale.end },
+      alpha: { start: spec.alpha, end: 0, ease: 'Quad.easeIn' },
+      rotate: spec.tumble ? { start: 0, end: 200 } : 0,
+      lifespan: { min: 8000, max: 11000 },
+      frequency: AMBIENCE_FREQ_MS,
+      quantity: 1,
+      blendMode: spec.blend,
+      tint: spec.tint,
+      maxAliveParticles: AMBIENCE_MAX,
+    })
+    .setDepth(DEPTH_AMBIENCE);
+}
+
+function addGrade(scene: Phaser.Scene, color: number): Phaser.GameObjects.Rectangle {
+  return scene.add
+    .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, color, GRADE_ALPHA)
+    .setScrollFactor(0)
+    .setDepth(GRADE_DEPTH);
+}
+
+// 一站式關卡背景：平鋪關雙層視差（近景 0.6 / 遠景雲 0.25 + 自漂移）；魔王關單張置中 cover。
+export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec): BackgroundHandle {
+  const key = `${level.bgKey}-l`;
+  const theme = THEMES[level.bgKey];
+  const objects: Phaser.GameObjects.GameObject[] = [];
+  let near: Phaser.GameObjects.TileSprite | null = null;
+  let clouds: Phaser.GameObjects.TileSprite | null = null;
+  let nearScale = 1;
+  let driftMs = 0;
+  let destroyed = false;
+
+  if (!scene.textures.exists(key)) {
+    objects.push(
+      scene.add
+        .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0xd6ecff)
+        .setScrollFactor(0)
+        .setDepth(DEPTH_BG),
+    );
+  } else if (level.boss) {
+    const img = scene.add
+      .image(CANVAS.width / 2, CANVAS.height / 2, key)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_BG);
+    img.setScale(coverScale(scene, key));
+    objects.push(img);
+  } else {
+    near = addCoverTile(scene, key);
+    nearScale = near.tileScaleX;
+    clouds = addClouds(scene);
+    objects.push(near, clouds);
+  }
+
+  if (theme) {
+    objects.push(addAmbience(scene, theme.ambience));
+    objects.push(addGrade(scene, theme.grade));
+  }
+
+  return {
+    update(deltaMs: number): void {
+      if (destroyed) return;
+      driftMs += deltaMs;
+      const scrollX = scene.cameras.main.scrollX;
+      // tilePosition 以紋理像素計，除以 tileScale 使螢幕視差係數精確為 0.6 / 0.25。
+      if (near) near.tilePositionX = (scrollX * NEAR_FACTOR) / nearScale;
+      if (clouds) {
+        clouds.tilePositionX = scrollX * FAR_FACTOR + (driftMs / 1000) * CLOUD_DRIFT_PX_PER_SEC;
+      }
+    },
+    destroy(): void {
+      if (destroyed) return;
+      destroyed = true;
+      objects.forEach((obj) => obj.destroy());
+      objects.length = 0;
+    },
+  };
+}
+
+export interface MenuBackdropOptions {
+  bgKey: string;
+  autoScrollPxPerSec?: number;
+  clouds?: boolean;
+  ambience?: string;
+}
+
+// 選單背景（Title / Result）：無相機捲動，平鋪緩慢自捲動 + 雲層漂移 + 可選 ambience。
+export function createMenuBackdrop(
+  scene: Phaser.Scene,
+  options: MenuBackdropOptions,
+): BackgroundHandle {
+  const key = `${options.bgKey}-l`;
+  const autoScroll = options.autoScrollPxPerSec ?? 0;
+  const objects: Phaser.GameObjects.GameObject[] = [];
+  let tile: Phaser.GameObjects.TileSprite | null = null;
+  let clouds: Phaser.GameObjects.TileSprite | null = null;
+  let tileScale = 1;
+  let driftMs = 0;
+  let destroyed = false;
+
+  if (scene.textures.exists(key)) {
+    tile = addCoverTile(scene, key);
+    tileScale = tile.tileScaleX;
+    objects.push(tile);
+    if (options.clouds) {
+      clouds = addClouds(scene);
+      objects.push(clouds);
+    }
+  }
+  const theme = options.ambience ? THEMES[options.ambience] : undefined;
+  if (theme) objects.push(addAmbience(scene, theme.ambience));
+
+  return {
+    update(deltaMs: number): void {
+      if (destroyed) return;
+      driftMs += deltaMs;
+      if (tile) tile.tilePositionX = ((driftMs / 1000) * autoScroll) / tileScale;
+      if (clouds) clouds.tilePositionX = (driftMs / 1000) * CLOUD_DRIFT_PX_PER_SEC;
+    },
+    destroy(): void {
+      if (destroyed) return;
+      destroyed = true;
+      objects.forEach((obj) => obj.destroy());
+      objects.length = 0;
+    },
+  };
+}
