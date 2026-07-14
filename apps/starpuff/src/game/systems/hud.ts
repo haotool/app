@@ -1,19 +1,12 @@
 import type Phaser from 'phaser';
 import { PLAYER, STAR } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
-import type { WaveId } from '../core/types';
+import { LevelEvents, type LevelChangedPayload, type LevelQuotaPayload } from '../core/types';
 import { fillStarPath } from './fx';
 
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
 const HUD_DEPTH = 100;
-
-const WAVE_LABELS: Record<WaveId, string> = {
-  tutorial: '吸入果凍怪吧！',
-  wave1: 'Wave 1',
-  wave2: 'Wave 2',
-  boss: '魔王來襲！',
-};
 
 export interface Hud {
   destroy(): void;
@@ -61,6 +54,19 @@ export function createHud(scene: Phaser.Scene): Hud {
   }
   root.add(ammoStars);
 
+  // 關卡標示與擊殺配額進度（§15）：boss 關無配額，僅顯示關卡名。
+  const labelStyle = {
+    fontFamily: 'system-ui, sans-serif',
+    fontSize: '18px',
+    fontStyle: 'bold',
+    color: '#3a3a4a',
+    stroke: '#ffffff',
+    strokeThickness: 4,
+  };
+  const stageText = scene.add.text(12, 78, '', labelStyle);
+  const quotaText = scene.add.text(12, 102, '', labelStyle);
+  root.add([stageText, quotaText]);
+
   // Boss HP 條：__WHITE 內建紋理拉伸上色，fill 以 scaleX tween 平滑更新。
   const barWidth = 320;
   const barHeight = 12;
@@ -107,10 +113,10 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
-  function showWaveText(wave: WaveId): void {
+  function showAnnounce(message: string): void {
     waveText?.destroy();
     waveText = scene.add
-      .text(centerX, scene.scale.height * 0.34, WAVE_LABELS[wave], {
+      .text(centerX, scene.scale.height * 0.34, message, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '40px',
         fontStyle: 'bold',
@@ -169,7 +175,30 @@ export function createHud(scene: Phaser.Scene): Hud {
   bind(GameEvents.BOSS_DEFEATED, () => {
     scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });
   });
-  bind(GameEvents.WAVE_CHANGED, ({ wave }) => showWaveText(wave));
+
+  // 關卡事件（LevelEvents）尚未併入 GameEvents 契約，先以未型別匯流排訂閱。
+  const onLevelChanged = (payload: LevelChangedPayload): void => {
+    const isBoss = payload.killQuota <= 0;
+    stageText.setText(`STAGE ${payload.levelId} ${payload.nameZh}`);
+    quotaText.setText(isBoss ? '' : `⭐ 0/${payload.killQuota}`);
+    showAnnounce(isBoss ? '魔王來襲！' : `STAGE ${payload.levelId} ${payload.nameZh}`);
+  };
+  const onLevelQuota = (payload: LevelQuotaPayload): void => {
+    if (payload.killQuota <= 0) return;
+    const clamped = Math.min(payload.killCount, payload.killQuota);
+    quotaText.setText(`⭐ ${clamped}/${payload.killQuota}`);
+  };
+  const onGateOpened = (): void => {
+    quotaText.setText('⭐ 星星門開啟！往右前進');
+  };
+  bus.on(LevelEvents.LEVEL_CHANGED, onLevelChanged);
+  bus.on(LevelEvents.LEVEL_QUOTA, onLevelQuota);
+  bus.on(LevelEvents.LEVEL_GATE_OPENED, onGateOpened);
+  unbinders.push(() => {
+    bus.off(LevelEvents.LEVEL_CHANGED, onLevelChanged);
+    bus.off(LevelEvents.LEVEL_QUOTA, onLevelQuota);
+    bus.off(LevelEvents.LEVEL_GATE_OPENED, onGateOpened);
+  });
 
   function destroy(): void {
     if (destroyed) return;
