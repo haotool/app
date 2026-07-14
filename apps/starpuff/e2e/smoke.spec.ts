@@ -89,6 +89,27 @@ test('第一關補滿配額出星星門，走入後轉場進第二關', async ({
   expect(errors).toEqual([]);
 });
 
+test('魔王戰敗北進 Result 敗北畫面，再戰直接回魔王關', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => window.__sp.skipToBoss());
+  await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 15000 })
+    .toBeGreaterThan(0);
+  // 魔王關死亡＝敗北進結算（Stage 1-3 死亡仍為重試當前關）。
+  await page.evaluate(() => window.__sp.lose());
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
+    .toBe('Result');
+  // 再戰魔王按鈕位於畫布 68% 高度（ResultScene 佈局）；敗北重試直接回第 4 關。
+  await clickCanvas(page, 0.5, 0.68);
+  await expect.poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 }).toBe('Game');
+  await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
 test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);

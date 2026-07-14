@@ -4,7 +4,7 @@ import { SceneKeys, type GameResultData } from '../core/types';
 import { createFx } from '../systems/fx';
 
 export class ResultScene extends Phaser.Scene {
-  private result: GameResultData = { result: 'won', timeMs: 0 };
+  private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
 
   constructor() {
     super(SceneKeys.Result);
@@ -14,6 +14,9 @@ export class ResultScene extends Phaser.Scene {
     this.result = {
       result: data.result ?? 'won',
       timeMs: data.timeMs ?? 0,
+      deaths: data.deaths ?? 0,
+      levelId: data.levelId ?? 1,
+      carryMs: data.carryMs ?? 0,
     };
   }
 
@@ -55,8 +58,12 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // 勝利加列本輪總死亡次數（PM 裁決）；零死亡給嘉獎文案。
+    const stats = won
+      ? `用時 ${seconds} 秒｜${this.result.deaths === 0 ? '無傷通關！' : `死亡 ${this.result.deaths} 次`}`
+      : `用時 ${seconds} 秒`;
     this.add
-      .text(centerX, CANVAS.height * 0.32, `用時 ${seconds} 秒`, {
+      .text(centerX, CANVAS.height * 0.32, stats, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '26px',
         color: won ? '#5a4a2a' : '#5a5a6e',
@@ -66,7 +73,7 @@ export class ResultScene extends Phaser.Scene {
     if (won) createFx(this).confetti();
 
     const retryButton = this.add
-      .text(centerX, CANVAS.height * 0.68, '再玩一次', {
+      .text(centerX, CANVAS.height * 0.68, won ? '再玩一次' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '32px',
         fontStyle: 'bold',
@@ -77,7 +84,18 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
-    const retry = () => this.scene.start(SceneKeys.Game);
+    // 敗北重試直接回到戰敗關卡（魔王關），延續本輪用時與死亡計數；勝利重試開新一輪。
+    const retry = () =>
+      this.scene.start(
+        SceneKeys.Game,
+        won
+          ? {}
+          : {
+              levelId: this.result.levelId,
+              carryMs: this.result.carryMs,
+              deaths: this.result.deaths,
+            },
+      );
     retryButton.on('pointerdown', retry);
     this.input.keyboard?.once('keydown-ENTER', retry);
   }

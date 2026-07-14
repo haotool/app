@@ -45,6 +45,7 @@ const TRANSITION_CARD_MS = 1200;
 interface GameSceneData {
   levelId?: LevelId;
   carryMs?: number;
+  deaths?: number;
 }
 
 const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
@@ -58,6 +59,8 @@ export class GameScene extends Phaser.Scene {
   private level!: LevelSpec;
   // 已完成關卡的累計用時；GAME_WON 回報四關總和。
   private carryMs = 0;
+  // 本輪累計死亡次數：跨關卡重試與敗北重試皆延續，勝利畫面展示。
+  private deaths = 0;
   private startedAt = 0;
   private finished = false;
   private transitioning = false;
@@ -82,6 +85,7 @@ export class GameScene extends Phaser.Scene {
   init(data: GameSceneData): void {
     this.currentLevelId = data.levelId ?? 1;
     this.carryMs = data.carryMs ?? 0;
+    this.deaths = data.deaths ?? 0;
   }
 
   create(): void {
@@ -160,8 +164,12 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.finish('won');
   }
 
+  // e2e 鉤子：模擬死亡結果（魔王關敗北進結算、其餘重試當前關）。
   forceLose(): void {
-    if (this.scene.isActive() && !this.finished && !this.transitioning) this.retryLevel();
+    if (!this.scene.isActive() || this.finished || this.transitioning) return;
+    this.deaths += 1;
+    if (this.level.boss) this.finish('lost');
+    else this.retryLevel();
   }
 
   // e2e 鉤子：直接補滿配額觸發星星門。
@@ -319,10 +327,13 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.BOSS_DAMAGED, ({ hp }) => {
       this.bossHp = hp;
     });
+    // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
+      this.deaths += 1;
       this.player.sprite.setVisible(false);
       this.fx.puff(x, y);
-      this.retryLevel();
+      if (this.level.boss) this.finish('lost');
+      else this.retryLevel();
     });
     bind(GameEvents.BOSS_DEFEATED, () => {
       this.bossDown = true;
@@ -341,7 +352,11 @@ export class GameScene extends Phaser.Scene {
     playSfx('lose');
     (this.player.sprite.body as Phaser.Physics.Arcade.Body).stop();
     this.time.delayedCall(RETRY_DELAY_MS, () =>
-      this.restartWith({ levelId: this.currentLevelId, carryMs: this.carryMs }),
+      this.restartWith({
+        levelId: this.currentLevelId,
+        carryMs: this.carryMs,
+        deaths: this.deaths,
+      }),
     );
   }
 
@@ -445,19 +460,28 @@ export class GameScene extends Phaser.Scene {
       ease: 'Quad.easeIn',
     });
     const carryMs = this.carryMs + (this.time.now - this.startedAt);
-    this.time.delayedCall(TRANSITION_CARD_MS, () => this.restartWith({ levelId: next, carryMs }));
+    this.time.delayedCall(TRANSITION_CARD_MS, () =>
+      this.restartWith({ levelId: next, carryMs, deaths: this.deaths }),
+    );
   }
 
   private finish(result: 'won' | 'lost'): void {
     if (this.finished) return;
     this.finished = true;
     this.fx.stopInhale();
+    stopSfx('inhale');
     (this.player.sprite.body as Phaser.Physics.Arcade.Body).stop();
     const timeMs = this.carryMs + (this.time.now - this.startedAt);
     emitGameEvent(this.events, result === 'won' ? GameEvents.GAME_WON : GameEvents.GAME_LOST, {
       timeMs,
     });
-    const data: GameResultData = { result, timeMs };
+    const data: GameResultData = {
+      result,
+      timeMs,
+      deaths: this.deaths,
+      levelId: this.currentLevelId,
+      carryMs: this.carryMs,
+    };
     this.time.delayedCall(result === 'won' ? 1300 : 900, () =>
       this.scene.start(SceneKeys.Result, data),
     );
