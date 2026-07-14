@@ -1,8 +1,9 @@
-// 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20，凍結）。
+// 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20–§21，凍結）。
 // 純資料模組（不 import phaser）：vitest node 環境可直接載入驗證。
+// v3 橫式畫布（§21）：854×480，Scale.FIT + CENTER_BOTH。
 export const CANVAS = {
-  width: 480,
-  height: 854,
+  width: 854,
+  height: 480,
 } as const;
 
 export const GRAVITY_Y = 900;

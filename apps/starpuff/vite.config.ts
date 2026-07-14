@@ -40,7 +40,7 @@ export default defineConfig(async ({ mode }) => {
           theme_color: '#BFF3E0',
           background_color: '#FDEFF6',
           display: 'standalone',
-          orientation: 'portrait',
+          orientation: 'landscape',
           scope: manifestScope,
           start_url: manifestScope,
           lang: 'zh-TW',

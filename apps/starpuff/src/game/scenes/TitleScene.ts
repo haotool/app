@@ -20,11 +20,11 @@ export class TitleScene extends Phaser.Scene {
     }
 
     if (this.textures.exists('hero-idle')) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.46, 'hero-idle');
-      hero.setDisplaySize(220, 220);
+      const hero = this.add.image(centerX, CANVAS.height * 0.45, 'hero-idle');
+      hero.setDisplaySize(150, 150);
       this.tweens.add({
         targets: hero,
-        y: '-=16',
+        y: '-=14',
         duration: 1400,
         yoyo: true,
         repeat: -1,
@@ -33,20 +33,20 @@ export class TitleScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.2, '星噗噗', {
+      .text(centerX, CANVAS.height * 0.15, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '72px',
+        fontSize: '58px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#7a5fb8',
-        strokeThickness: 10,
+        strokeThickness: 9,
       })
       .setOrigin(0.5);
 
     this.add
       .text(centerX, CANVAS.height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '26px',
+        fontSize: '22px',
         color: '#7a5fb8',
       })
       .setOrigin(0.5);
@@ -54,11 +54,11 @@ export class TitleScene extends Phaser.Scene {
     const startButton = this.add
       .text(centerX, CANVAS.height * 0.66, '開始遊戲', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '32px',
+        fontSize: '28px',
         fontStyle: 'bold',
         color: '#3a3a4a',
         backgroundColor: '#bff3e0',
-        padding: { x: 36, y: 18 },
+        padding: { x: 32, y: 14 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -73,9 +73,9 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.add
-      .text(centerX, CANVAS.height * 0.74, '◀▶ 移動｜Ⓐ 跳躍｜Ⓑ 長按吸入・點按發射', {
+      .text(centerX, CANVAS.height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '17px',
+        fontSize: '16px',
         color: '#5a5a6e',
       })
       .setOrigin(0.5);

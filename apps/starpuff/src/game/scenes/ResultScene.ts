@@ -34,12 +34,12 @@ export class ResultScene extends Phaser.Scene {
 
     const heroKey = won ? 'hero-puffed' : 'hero-hurt';
     if (this.textures.exists(heroKey)) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.48, heroKey);
-      hero.setDisplaySize(180, 180);
+      const hero = this.add.image(centerX, CANVAS.height * 0.5, heroKey);
+      hero.setDisplaySize(130, 130);
       if (!won) hero.setTint(0xbcbcc8);
       this.tweens.add({
         targets: hero,
-        y: '-=12',
+        y: '-=10',
         duration: 1300,
         yoyo: true,
         repeat: -1,
@@ -48,13 +48,13 @@ export class ResultScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.24, won ? '勝利！' : '失敗…', {
+      .text(centerX, CANVAS.height * 0.18, won ? '勝利！' : '失敗…', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '64px',
+        fontSize: '54px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: won ? '#e8a33d' : '#6e6e80',
-        strokeThickness: 10,
+        strokeThickness: 9,
       })
       .setOrigin(0.5);
 
@@ -63,9 +63,9 @@ export class ResultScene extends Phaser.Scene {
       ? `用時 ${seconds} 秒｜${this.result.deaths === 0 ? '無傷通關！' : `死亡 ${this.result.deaths} 次`}`
       : `用時 ${seconds} 秒`;
     this.add
-      .text(centerX, CANVAS.height * 0.32, stats, {
+      .text(centerX, CANVAS.height * 0.31, stats, {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '26px',
+        fontSize: '22px',
         color: won ? '#5a4a2a' : '#5a5a6e',
       })
       .setOrigin(0.5);
@@ -75,11 +75,11 @@ export class ResultScene extends Phaser.Scene {
     const retryButton = this.add
       .text(centerX, CANVAS.height * 0.68, won ? '再玩一次' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '32px',
+        fontSize: '28px',
         fontStyle: 'bold',
         color: '#3a3a4a',
         backgroundColor: '#bff3e0',
-        padding: { x: 36, y: 18 },
+        padding: { x: 32, y: 14 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
