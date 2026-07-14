@@ -28,7 +28,6 @@ export interface FxSystem {
   shake(intensityPx: number): void;
   flashWhite(target: Phaser.GameObjects.GameObject): void;
   squashStretch(target: Scalable, intensity?: number): void;
-  popIn(target: Scalable & { alpha: number }, durationMs?: number): void;
   startInhale(mouth: Phaser.Types.Math.Vector2Like): void;
   stopInhale(): void;
   attachTrail(target: Phaser.Types.Math.Vector2Like): TrailHandle;
@@ -81,6 +80,22 @@ export function fillStarPath(
 
 function canTint(go: object): go is Tintable {
   return 'setTint' in go && 'setTintMode' in go && 'clearTint' in go;
+}
+
+// 生成彈入：自 30% 縮放淡入回彈至原尺寸；供 enemies 等系統於 spawn 時直接呼叫。
+export function popIn(
+  scene: Phaser.Scene,
+  target: Scalable & { alpha: number },
+  durationMs = 260,
+): void {
+  scene.tweens.add({
+    targets: target,
+    scaleX: { from: target.scaleX * 0.3, to: target.scaleX },
+    scaleY: { from: target.scaleY * 0.3, to: target.scaleY },
+    alpha: { from: 0, to: target.alpha },
+    duration: durationMs,
+    ease: 'Back.easeOut',
+  });
 }
 
 // 落點預警：白描邊粉色橢圓標記，淡入後持續脈動，durationMs 後淡出自毀。
@@ -251,17 +266,6 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     );
   }
 
-  function popIn(target: Scalable & { alpha: number }, durationMs = 260): void {
-    scene.tweens.add({
-      targets: target,
-      scaleX: { from: target.scaleX * 0.3, to: target.scaleX },
-      scaleY: { from: target.scaleY * 0.3, to: target.scaleY },
-      alpha: { from: 0, to: target.alpha },
-      duration: durationMs,
-      ease: 'Back.easeOut',
-    });
-  }
-
   function damageNumber(x: number, y: number, amount: number): void {
     if (damageNumberCount >= 12) return;
     damageNumberCount++;
@@ -361,7 +365,6 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     shake,
     flashWhite,
     squashStretch,
-    popIn,
     startInhale(mouth) {
       mouthRef = mouth;
       inhaleEmitter.start();

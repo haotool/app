@@ -17,7 +17,6 @@ ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
 ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
 ARG VITE_SPLIT_MEOW_BASE_PATH=/split-meow/
-ARG VITE_STARPUFF_BASE_PATH=/starpuff/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -83,7 +82,7 @@ RUN set -eux; \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
   VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
   VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow && \
-  VITE_STARPUFF_BASE_PATH=/starpuff/ pnpm build:starpuff
+  pnpm build:starpuff
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/

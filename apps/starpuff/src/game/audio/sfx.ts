@@ -34,8 +34,10 @@ const INHALE_PARAMS = [0.3, 0, 150, 0.04, 0.35, 0.1, 4, 0.6, 0, 0, 0, 0, 0, 0.5]
 
 let inhaleSource: AudioBufferSourceNode | null = null;
 let inhaleSamples: number[] | null = null;
+let muted = false;
 
 export function playSfx(name: SfxName): void {
+  if (muted) return;
   if (name === 'inhale') {
     if (inhaleSource) return;
     inhaleSamples ??= ZZFX.buildSamples(...INHALE_PARAMS);
@@ -43,6 +45,12 @@ export function playSfx(name: SfxName): void {
     return;
   }
   zzfx(...PARAMS[name]);
+}
+
+// 靜音時同步停掉進行中的 inhale 迴圈，避免殘留長音。
+export function setSfxMuted(nextMuted: boolean): void {
+  muted = nextMuted;
+  if (muted) stopSfx('inhale');
 }
 
 export function stopSfx(name: SfxName): void {

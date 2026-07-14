@@ -28,4 +28,18 @@ export const ASSETS: { key: string; url: string }[] = [
   },
   { key: 'fx-star', url: new URL('../../assets/sprites/fx-star.webp', import.meta.url).href },
   { key: 'bg-arena', url: new URL('../../assets/sprites/bg-arena.webp', import.meta.url).href },
+  { key: 'bg-meadow', url: new URL('../../assets/sprites/bg-meadow.webp', import.meta.url).href },
+  {
+    key: 'bg-heights',
+    url: new URL('../../assets/sprites/bg-heights.webp', import.meta.url).href,
+  },
+  { key: 'bg-throne', url: new URL('../../assets/sprites/bg-throne.webp', import.meta.url).href },
+  {
+    key: 'minion-puffy',
+    url: new URL('../../assets/sprites/minion-puffy.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-chompy',
+    url: new URL('../../assets/sprites/minion-chompy.webp', import.meta.url).href,
+  },
 ];

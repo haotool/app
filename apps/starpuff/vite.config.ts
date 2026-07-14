@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(({ mode }) => {
-  const base = mode === 'production' || process.env['CI'] ? '/starpuff/' : '/';
+export default defineConfig(async ({ mode }) => {
+  // basePath SSOT：app.config.mjs（動態 import，鏡像 quake-school includedRoutes 模式）。
+  const { APP_CONFIG } = await import('./app.config.mjs');
+  const base =
+    mode === 'production' || process.env['CI']
+      ? APP_CONFIG.basePath.production
+      : APP_CONFIG.basePath.development;
   const manifestScope = base;
 
   return {
@@ -52,6 +57,18 @@ export default defineConfig(({ mode }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
+            },
+            {
+              src: 'icons/icon-192-maskable.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+            {
+              src: 'icons/icon-512-maskable.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
             },
           ],
         },

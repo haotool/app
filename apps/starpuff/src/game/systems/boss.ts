@@ -269,21 +269,8 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: sprite.x, y: sprite.y });
-    // 慢動作 0.5s（實時計時），恢復後星爆並淡出。
-    scene.tweens.timeScale = 0.3;
-    scene.physics.world.timeScale = 3;
-    delay(500, () => {
-      scene.tweens.timeScale = 1;
-      scene.physics.world.timeScale = 1;
-      const burst = scene.add.particles(0, 0, 'boss-jelly-ball', {
-        speed: { min: 120, max: 340 },
-        scale: { start: 0.9, end: 0 },
-        lifespan: 650,
-        blendMode: 'ADD',
-        emitting: false,
-      });
-      burst.explode(28, sprite.x, sprite.y);
-      delay(900, () => burst.destroy());
+    // 慢動作與星爆統一由 fx 系統的 BOSS_DEFEATED 監聽處理（單一權責）；600ms 對齊 fx slowMo 結束後淡出。
+    delay(600, () => {
       scene.tweens.add({
         targets: sprite,
         scaleX: 0,

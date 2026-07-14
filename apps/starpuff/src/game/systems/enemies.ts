@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CANVAS } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
+import { popIn } from './fx';
 
 export interface EnemyTarget {
   x: number;
@@ -89,12 +90,18 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       body.enable = true;
       body.reset(x, y);
+      // 命中寬容：碰撞體縮至視覺 90%（spiky 85%），setSize 以未縮放的 frame 尺寸為基準。
+      const hitboxScale = kind === 'spiky' ? 0.85 : 0.9;
+      body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
       body.setCollideWorldBounds(true);
       body.setAllowGravity(kind !== 'floaty');
       // spiky 以 bounce=1 碰牆自動折返。
       body.setBounce(kind === 'spiky' ? 1 : 0, 0);
       const inward = x < CANVAS.width / 2 ? 1 : -1;
       body.setVelocity(kind === 'spiky' ? SPIKY_SPEED * inward : 0, 0);
+
+      // 生成彈入；wobble 延後啟動避免同時操作 scale。
+      popIn(scene, sprite);
 
       // wobble idle：果凍感擠壓拉伸。
       scene.tweens.add({
@@ -105,6 +112,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
+        delay: 260,
       });
 
       emitGameEvent(scene.events, GameEvents.ENEMY_SPAWNED, { kind, x, y });
