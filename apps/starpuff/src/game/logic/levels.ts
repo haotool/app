@@ -30,8 +30,6 @@ export interface LevelSpec {
   tutorial: boolean;
 }
 
-// L2 puffy、L3 五種混編待 enemies.ts 擴充（US-016）後回填；
-// 現以既有三種代位並維持 §15 可吸怪佔比（L2 65%、L3 50%）。
 export const LEVELS: readonly LevelSpec[] = [
   {
     id: 1,
@@ -65,7 +63,7 @@ export const LEVELS: readonly LevelSpec[] = [
     enemyMix: [
       { kind: 'floaty', weight: 0.4 },
       { kind: 'spiky', weight: 0.35 },
-      { kind: 'jelly', weight: 0.25 },
+      { kind: 'puffy', weight: 0.25 },
     ],
     platforms: [
       { x: 380, y: 696, w: 140 },
@@ -86,10 +84,13 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1300,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
+    // 五種混編，可吸怪（jelly/floaty/puffy）佔比 50%（§15）。
     enemyMix: [
-      { kind: 'jelly', weight: 0.25 },
-      { kind: 'floaty', weight: 0.25 },
-      { kind: 'spiky', weight: 0.5 },
+      { kind: 'jelly', weight: 0.15 },
+      { kind: 'floaty', weight: 0.15 },
+      { kind: 'puffy', weight: 0.2 },
+      { kind: 'spiky', weight: 0.3 },
+      { kind: 'chompy', weight: 0.2 },
     ],
     platforms: [
       { x: 350, y: 696, w: 120 },
