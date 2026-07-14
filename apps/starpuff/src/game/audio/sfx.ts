@@ -1,4 +1,5 @@
 import { zzfx, ZZFX } from 'zzfx';
+import { STAR_FLAVORS } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 
 export type SfxName =
@@ -40,7 +41,8 @@ let inhaleSource: AudioBufferSourceNode | null = null;
 let inhaleSamples: number[] | null = null;
 let muted = false;
 
-export function playSfx(name: SfxName): void {
+// pitchScale 以頻率倍率微調音高（§20：發射音依星彈屬性分色）。
+export function playSfx(name: SfxName, pitchScale = 1): void {
   if (muted) return;
   if (name === 'inhale') {
     if (inhaleSource) return;
@@ -48,7 +50,14 @@ export function playSfx(name: SfxName): void {
     inhaleSource = ZZFX.playSamples([inhaleSamples], 0.8, 1, 0, true);
     return;
   }
-  zzfx(...PARAMS[name]);
+  const params = PARAMS[name];
+  if (pitchScale === 1) {
+    zzfx(...params);
+    return;
+  }
+  const pitched = [...params];
+  pitched[2] = (pitched[2] ?? 0) * pitchScale;
+  zzfx(...pitched);
 }
 
 // 靜音時同步停掉進行中的 inhale 迴圈，避免殘留長音。
@@ -83,7 +92,7 @@ export function bindSfxToEvents(bus: Bus): () => void {
     playSfx('swallow');
   });
   bind(GameEvents.ENEMY_KILLED, () => playSfx('hit'));
-  bind(GameEvents.STAR_FIRED, () => playSfx('shoot'));
+  bind(GameEvents.STAR_FIRED, ({ flavor }) => playSfx('shoot', STAR_FLAVORS[flavor].sfxPitch));
   bind(GameEvents.BOSS_SPAWNED, () => playSfx('boss-roar'));
   bind(GameEvents.BOSS_PHASE, () => playSfx('boss-roar'));
   bind(GameEvents.BOSS_DAMAGED, () => playSfx('hit'));

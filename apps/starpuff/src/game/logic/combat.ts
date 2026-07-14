@@ -1,3 +1,4 @@
+import type { StarFlavor } from '../core/config';
 import type { EnemyKind } from '../core/types';
 
 // 純戰鬥數值邏輯（不 import phaser），vitest 對象；上限等常數由呼叫端（config.ts）傳入。
@@ -41,8 +42,8 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 刺刺瓜與咬咬花不可吸入（GAME_DESIGN §5、§16）。
-export function canInhale(kind: EnemyKind): boolean {
+// 刺刺瓜與咬咬花不可吸入（GAME_DESIGN §5、§16）；可吸怪即星彈屬性來源（§20）。
+export function canInhale(kind: EnemyKind): kind is StarFlavor {
   return kind !== 'spiky' && kind !== 'chompy';
 }
 

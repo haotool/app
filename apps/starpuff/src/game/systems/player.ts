@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { FORGIVENESS, INHALE, PLAYER, STAR } from '../core/config';
+import { FORGIVENESS, INHALE, PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale, clampAmmo, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
@@ -64,6 +64,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   let hp: number = PLAYER.maxHp;
   let ammo = 0;
+  // 星彈屬性（§20）：最後吞下者覆蓋；空彈匣時維持前值，僅影響下次吞前的顯示。
+  let flavor: StarFlavor = 'jelly';
   let facing: 1 | -1 = 1;
   let flapsUsed = 0;
   let invulnerableMs = 0;
@@ -102,22 +104,28 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   };
 
   const fireStar = () => {
+    const spec = STAR_FLAVORS[flavor];
     const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
     const star = stars.get(fx, sprite.y, tex('fx-star')) as Phaser.Physics.Arcade.Sprite | null;
     if (!star) return;
     star.setActive(true).setVisible(true);
     star.setDisplaySize(STAR_SIZE, STAR_SIZE);
+    // 標準星保留原金黃星彈藝術；疾風/爆裂依屬性上色。
+    if (flavor === 'jelly') star.clearTint();
+    else star.setTint(spec.tint);
     const body = star.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(fx, sprite.y);
-    star.setData('pierce', STAR.pierceCount);
-    star.setVelocityX(facing * STAR.speed);
+    star.setData('pierce', spec.pierceCount);
+    star.setData('flavor', flavor);
+    star.setVelocityX(facing * spec.speed);
     ammo = clampAmmo(ammo - 1, STAR.maxAmmo);
-    emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, { ammo, maxAmmo: STAR.maxAmmo });
+    emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, { ammo, maxAmmo: STAR.maxAmmo, flavor });
     emitGameEvent(scene.events, GameEvents.STAR_FIRED, {
       x: fx,
       y: sprite.y,
       directionX: facing,
+      flavor,
     });
   };
 
@@ -211,9 +219,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     swallow(kind: EnemyKind) {
       if (!canInhale(kind)) return false;
+      flavor = kind;
       ammo = clampAmmo(ammo + 1, STAR.maxAmmo);
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
-      emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, { ammo, maxAmmo: STAR.maxAmmo });
+      emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, { ammo, maxAmmo: STAR.maxAmmo, flavor });
       return true;
     },
     isInhaling() {

@@ -1,10 +1,8 @@
-import Phaser from 'phaser';
-
-// 遊戲數值 SSOT（GAME_DESIGN §5–§7，凍結）。
+// 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20，凍結）。
+// 純資料模組（不 import phaser）：vitest node 環境可直接載入驗證。
 export const CANVAS = {
   width: 480,
   height: 854,
-  dprCap: 2,
 } as const;
 
 export const GRAVITY_Y = 900;
@@ -33,10 +31,51 @@ export const INHALE = {
 } as const;
 
 export const STAR = {
-  damage: 5,
-  speed: 520,
-  pierceCount: 1,
   maxAmmo: 3,
+} as const;
+
+// 吞噬賦星（§20）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
+export type StarFlavor = 'jelly' | 'floaty' | 'puffy';
+
+export interface StarFlavorSpec {
+  damage: number;
+  speed: number;
+  pierceCount: number;
+  // 屬性顯示色：HUD 彈藥星上色用；標準星的星彈藝術已是金黃，發射時不套 tint。
+  tint: number;
+  aoeRadiusPx: number;
+  aoeDamage: number;
+  sfxPitch: number;
+}
+
+export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
+  jelly: {
+    damage: 5,
+    speed: 520,
+    pierceCount: 1,
+    tint: 0xffd966,
+    aoeRadiusPx: 0,
+    aoeDamage: 0,
+    sfxPitch: 1,
+  },
+  floaty: {
+    damage: 5,
+    speed: 650,
+    pierceCount: 2,
+    tint: 0xa78bfa,
+    aoeRadiusPx: 0,
+    aoeDamage: 0,
+    sfxPitch: 1.15,
+  },
+  puffy: {
+    damage: 5,
+    speed: 520,
+    pierceCount: 0,
+    tint: 0xff8a80,
+    aoeRadiusPx: 60,
+    aoeDamage: 2,
+    sfxPitch: 0.85,
+  },
 } as const;
 
 export const ENEMY = {
@@ -44,24 +83,4 @@ export const ENEMY = {
   touchDamage: 1,
 } as const;
 
-// 魔王戰數值（§6）由 pure logic 的 bossFsm.ts 持有，避免 SSOT 重複。
-
-export const GAME_CONFIG: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: 'app',
-  backgroundColor: '#FDEFF6',
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: CANVAS.width,
-    height: CANVAS.height,
-  },
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { x: 0, y: GRAVITY_Y },
-    },
-  },
-  pixelArt: false,
-  roundPixels: true,
-};
+// 魔王戰數值（§6）由 pure logic 的 bossFsm.ts 持有；Phaser GameConfig 由 main.ts 組裝。

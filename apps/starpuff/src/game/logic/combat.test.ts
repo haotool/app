@@ -21,10 +21,12 @@ describe('combat', () => {
     expect(clampAmmo(2, 3)).toBe(2);
   });
 
-  it('spiky 不可吸入，其餘可吸', () => {
+  it('spiky 與 chompy 不可吸入，其餘可吸（吞下即賦星屬性來源）', () => {
     expect(canInhale('spiky')).toBe(false);
+    expect(canInhale('chompy')).toBe(false);
     expect(canInhale('jelly')).toBe(true);
     expect(canInhale('floaty')).toBe(true);
+    expect(canInhale('puffy')).toBe(true);
   });
 
   it('isInInhaleRange 依朝向與距離判定', () => {

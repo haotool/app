@@ -1,3 +1,4 @@
+import type { StarFlavor } from './config';
 import type { BossPhase, EnemyKind, WaveId } from './types';
 
 // 事件契約：跨系統唯一溝通管道（GAME_DESIGN §11，凍結）。
@@ -24,11 +25,11 @@ export type GameEventName = (typeof GameEvents)[keyof typeof GameEvents];
 export interface GameEventPayloads {
   [GameEvents.PLAYER_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.PLAYER_DIED]: { x: number; y: number };
-  [GameEvents.AMMO_CHANGED]: { ammo: number; maxAmmo: number };
+  [GameEvents.AMMO_CHANGED]: { ammo: number; maxAmmo: number; flavor: StarFlavor };
   [GameEvents.ENEMY_SPAWNED]: { kind: EnemyKind; x: number; y: number };
   [GameEvents.ENEMY_INHALED]: { kind: EnemyKind };
   [GameEvents.ENEMY_KILLED]: { kind: EnemyKind; x: number; y: number };
-  [GameEvents.STAR_FIRED]: { x: number; y: number; directionX: 1 | -1 };
+  [GameEvents.STAR_FIRED]: { x: number; y: number; directionX: 1 | -1; flavor: StarFlavor };
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.BOSS_PHASE]: { phase: BossPhase };

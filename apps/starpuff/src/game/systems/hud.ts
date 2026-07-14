@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { PLAYER, STAR } from '../core/config';
+import { PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { LevelEvents, type LevelChangedPayload, type LevelQuotaPayload } from '../core/types';
 import { fillStarPath } from './fx';
@@ -97,10 +97,13 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
-  function updateAmmo(ammo: number): void {
+  // 彈藥星依星彈屬性上色（§20）；HUD 星紋理本體為金黃，標準星以白 tint 保留原色。
+  function updateAmmo(ammo: number, flavor: StarFlavor): void {
+    const tint = flavor === 'jelly' ? 0xffffff : STAR_FLAVORS[flavor].tint;
     ammoStars.forEach((star, i) => {
       const filled = i < ammo;
       const wasFilled = star.alpha === 1;
+      star.setTint(tint);
       star.setAlpha(filled ? 1 : 0.25);
       if (filled && !wasFilled) {
         scene.tweens.add({
@@ -150,7 +153,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   }
 
   bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => updateHearts(hp));
-  bind(GameEvents.AMMO_CHANGED, ({ ammo }) => updateAmmo(ammo));
+  bind(GameEvents.AMMO_CHANGED, ({ ammo, flavor }) => updateAmmo(ammo, flavor));
   bind(GameEvents.BOSS_SPAWNED, () => {
     barFill.scaleX = fullScaleX;
     scene.tweens.add({

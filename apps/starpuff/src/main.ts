@@ -1,14 +1,31 @@
 import Phaser from 'phaser';
 import './style.css';
-import { GAME_CONFIG } from './game/core/config';
+import { CANVAS, GRAVITY_Y } from './game/core/config';
 import { SceneKeys } from './game/core/types';
 import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
 
+// Phaser 接線集中於此；數值 SSOT 由 config.ts（純資料）供給。
 const game = new Phaser.Game({
-  ...GAME_CONFIG,
+  type: Phaser.AUTO,
+  parent: 'app',
+  backgroundColor: '#FDEFF6',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: CANVAS.width,
+    height: CANVAS.height,
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { x: 0, y: GRAVITY_Y },
+    },
+  },
+  pixelArt: false,
+  roundPixels: true,
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 

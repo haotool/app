@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS, ENEMY, INHALE, PLAYER, STAR } from '../core/config';
+import { CANVAS, ENEMY, INHALE, PLAYER, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -235,8 +235,10 @@ export class GameScene extends Phaser.Scene {
       const target = enemy as Phaser.GameObjects.GameObject;
       const s = asSprite(star);
       if (!s.active || !this.enemies.kindOf(target)) return;
-      const outcome = this.enemies.damage(target, STAR.damage);
+      const spec = STAR_FLAVORS[this.starFlavorOf(s)];
+      const outcome = this.enemies.damage(target, spec.damage);
       if (outcome === 'ignored') return;
+      if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
       this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
     });
@@ -246,8 +248,10 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(stars, bossBody, (a, b) => {
       const star = asSprite(a === bossBody ? b : a);
       if (!star.active || !this.boss.isActive()) return;
+      const spec = STAR_FLAVORS[this.starFlavorOf(star)];
+      if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
       this.player.onStarHit(star, 'absorb');
-      this.boss.applyDamage(STAR.damage);
+      this.boss.applyDamage(spec.damage);
     });
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
@@ -523,6 +527,27 @@ export class GameScene extends Phaser.Scene {
         this.mouth.y,
         PULL_BASE_SPEED + (INHALE.rangePx - dist) * PULL_GAIN,
       );
+    }
+  }
+
+  private starFlavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {
+    return (star.getData('flavor') as StarFlavor | undefined) ?? 'jelly';
+  }
+
+  // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。
+  private explodeStar(
+    x: number,
+    y: number,
+    spec: (typeof STAR_FLAVORS)[StarFlavor],
+    exclude: Phaser.GameObjects.GameObject | null,
+  ): void {
+    this.fx.starBurst(x, y);
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child === exclude || !child.active) continue;
+      const enemy = asSprite(child);
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= spec.aoeRadiusPx) {
+        this.enemies.damage(child, spec.aoeDamage);
+      }
     }
   }
 
