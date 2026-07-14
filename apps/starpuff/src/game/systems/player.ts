@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { CANVAS, INHALE, PLAYER, STAR } from '../core/config';
+import { INHALE, PLAYER, STAR } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale, clampAmmo, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
@@ -160,9 +160,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       else if (ammo > 0) setPose('hero-puffed');
       else setPose('hero-idle');
 
+      // 卷軸世界以相機視野為界回收星彈。
+      const view = scene.cameras.main.worldView;
       for (const child of stars.getChildren()) {
         const star = child as Phaser.Physics.Arcade.Sprite;
-        if (star.active && (star.x < -40 || star.x > CANVAS.width + 40)) recycleStar(star);
+        if (star.active && (star.x < view.x - 40 || star.x > view.right + 40)) recycleStar(star);
       }
     },
     takeDamage(damage: number, sourceX: number) {
