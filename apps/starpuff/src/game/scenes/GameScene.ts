@@ -62,6 +62,7 @@ export class GameScene extends Phaser.Scene {
   private finished = false;
   private transitioning = false;
   private bossDown = false;
+  private prevVy = 0;
   private wasInhaling = false;
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
@@ -458,12 +459,14 @@ export class GameScene extends Phaser.Scene {
     this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }
 
-  // 跳躍/拍翅無契約事件，以當幀速度變化判定配音。
+  // 跳躍/拍翅無契約事件，以速度轉變判定配音（buffer 觸發的跳躍無當幀按壓）。
   private syncJumpSfx(): void {
-    if (!this.controls.state.jumpPressed) return;
     const vy = (this.player.sprite.body as Phaser.Physics.Arcade.Body).velocity.y;
-    if (vy === PLAYER.jumpVelocity) playSfx('jump');
-    else if (vy === PLAYER.floatLift) playSfx('flap');
+    if (vy !== this.prevVy) {
+      if (vy === PLAYER.jumpVelocity) playSfx('jump');
+      else if (vy === PLAYER.floatLift) playSfx('flap');
+    }
+    this.prevVy = vy;
   }
 
   private syncInhale(): void {

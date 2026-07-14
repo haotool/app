@@ -12,23 +12,29 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 
-// e2e 測試鉤子：查詢場景狀態與強制勝敗。
+// e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 declare global {
   interface Window {
     __sp: {
       scene: () => string;
+      stage: () => number;
       bossHp: () => number;
       playerHp: () => number;
       win: () => void;
       lose: () => void;
+      fillQuota: () => void;
+      skipToBoss: () => void;
     };
   }
 }
 window.__sp = {
   scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
+  stage: () => gameScene().currentLevelId,
   bossHp: () => gameScene().bossHp,
   playerHp: () => gameScene().playerHp,
   win: () => gameScene().forceWin(),
   lose: () => gameScene().forceLose(),
+  fillQuota: () => gameScene().forceGate(),
+  skipToBoss: () => gameScene().skipToBoss(),
 };

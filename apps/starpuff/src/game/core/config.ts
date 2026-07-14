@@ -18,6 +18,15 @@ export const PLAYER = {
   maxFlaps: 3,
 } as const;
 
+// 觸控寬容度硬規則（GAME_DESIGN §15.1，全關卡生效）。
+export const FORGIVENESS = {
+  coyoteMs: 150,
+  jumpBufferMs: 160,
+  hurtboxWidthRatio: 0.75,
+  hurtboxHeightRatio: 0.8,
+  hurtLockMs: 250,
+} as const;
+
 export const INHALE = {
   holdThresholdMs: 150,
   rangePx: 140,
