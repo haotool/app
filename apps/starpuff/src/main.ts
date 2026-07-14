@@ -13,14 +13,13 @@ import { restoreMutePreference } from './game/systems/hud';
 restoreMutePreference();
 
 // iOS 觸控直通（§22 / recon checklist）：長按 loupe 的觸發點是按住不動的 touchstart，
-// pointerdown preventDefault 不足，app 層需 passive:false 保險；三指以上留給系統手勢。
-document.getElementById('app')?.addEventListener(
-  'touchstart',
-  (event) => {
-    if (event.touches.length <= 2) event.preventDefault();
-  },
-  { passive: false },
-);
+// pointerdown preventDefault 不足，app 與控制層需 passive:false 保險；三指以上留給系統手勢。
+const blockTouchStart = (event: TouchEvent): void => {
+  if (event.touches.length <= 2) event.preventDefault();
+};
+for (const id of ['app', 'controls']) {
+  document.getElementById(id)?.addEventListener('touchstart', blockTouchStart, { passive: false });
+}
 // Safari pinch 縮放攔截；contextmenu 關長按/右鍵選單。
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
