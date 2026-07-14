@@ -14,7 +14,7 @@ const SCREENSHOT_DIR = path.join(REPO_ROOT, 'screenshots');
 mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
 const BASE_URL = process.env.QA_BASE_URL ?? 'http://localhost:4176';
-const TOOL_ORDER = ['ratewise', 'split-meow', 'park-keeper', 'nihonname', 'quake-school'];
+const TOOL_ORDER = ['ratewise', 'starpuff', 'split-meow', 'park-keeper', 'nihonname'];
 
 const results = [];
 function check(name, pass, detail = '') {

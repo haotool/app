@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>星噗噗 StarPuff｜吸入果凍怪的 Q 彈動作小遊戲</title>
+    <meta name="theme-color" content="#BFF3E0" />
+    <meta
+      name="description"
+      content="直向 Boss Rush 動作小遊戲：吸入果凍怪、化為星彈、擊敗果凍王。免安裝、離線可玩。"
+    />
+    <meta property="og:title" content="星噗噗 StarPuff" />
+    <meta property="og:description" content="吸入果凍怪、化為星彈、擊敗果凍王的 Q 彈動作小遊戲。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://app.haotool.org/starpuff/" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="StarPuff" />
+    <link rel="icon" href="icons/favicon.png" type="image/png" />
+    <meta property="og:image" content="https://app.haotool.org/starpuff/icons/og-image.png" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="rotate-hint">請將裝置轉為直向遊玩</div>
+    <div id="controls">
+      <div class="controls-left">
+        <button type="button" class="ctl-btn" data-btn="left" aria-label="向左移動">◀</button>
+        <button type="button" class="ctl-btn" data-btn="right" aria-label="向右移動">▶</button>
+      </div>
+      <div class="controls-right">
+        <button type="button" class="ctl-btn" data-btn="b" aria-label="吸入或發射">B</button>
+        <button type="button" class="ctl-btn ctl-btn-raised" data-btn="a" aria-label="跳躍">
+          A
+        </button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

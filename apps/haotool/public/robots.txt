@@ -13,6 +13,7 @@ Content-Signal: search=yes, ai-train=no, ai-input=yes
 
 Sitemap: https://haotool.org/sitemap.xml
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
+Sitemap: https://app.haotool.org/starpuff/sitemap.xml
 Sitemap: https://app.haotool.org/split-meow/sitemap.xml
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml

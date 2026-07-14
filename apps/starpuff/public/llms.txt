@@ -1,0 +1,25 @@
+# 星噗噗（StarPuff）
+# https://app.haotool.org/starpuff/
+
+> 星噗噗是一款免費的直向 Boss Rush 動作小遊戲 PWA：吸入果凍怪、化為星彈、擊敗果凍王。免安裝、離線可玩，由 haotool.org 出品。
+
+## 玩法
+
+- 移動與跳躍：左右移動、A 鍵跳躍，閃避果凍怪與 Boss 攻擊
+- 吸入與發射：B 鍵吸入果凍怪，再次按下化為星彈反擊
+- Boss Rush：波次推進，最終挑戰果凍王
+- 觸控與鍵盤：手機虛擬按鍵與桌面鍵盤皆可遊玩
+- 離線使用：PWA 安裝後免網路可玩
+- 直向設計：手機直持最佳體驗
+
+## 頁面
+
+- [遊戲主頁](https://app.haotool.org/starpuff/): 標題畫面、遊戲關卡、Boss 戰
+
+## 技術
+
+- TypeScript + Vite 8
+- Phaser 4 遊戲引擎
+- ZzFX 程序化音效
+- VitePWA Service Worker
+- 完全離線可用

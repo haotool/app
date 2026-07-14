@@ -20,4 +20,5 @@ export const SIBLING_APP_DENYLIST: RegExp[] = [
   /^\/park-keeper(?:\/.*)?$/,
   /^\/quake-school(?:\/.*)?$/,
   /^\/split-meow(?:\/.*)?$/,
+  /^\/starpuff(?:\/.*)?$/,
 ];

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+112
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+113
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-14
+- ID：reward-starpuff-24h-multiagent-game-delivery
+- 原因：24h 衝刺需求「卡比風四關手機 PWA 遊戲」以多代理 worktree 管線交付（五種原創怪/三屬性技能/魔王三段演出），期間環境級中斷致五代理同時陣亡，靠 commit-early 與驗屍紀律零成果損失收斂
+- 解法：epic/starpuff 全 commit 過 hooks，53 unit + 7 e2e 綠、深度 QA 攻擊矩陣 A–H 全 PASS（avg 100fps）、三席×兩輪多模型終審收斂後開 PR 上線
 
 - 日期：2026-07-05
 - ID：reward-rw-dark-theme-content-pages-unreadable

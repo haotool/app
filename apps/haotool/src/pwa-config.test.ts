@@ -23,12 +23,16 @@ describe('haotool PWA scope guard（行為級）', () => {
     },
   );
 
-  it.each(['/split-meow/foo', '/ratewise/', '/nihonname/a/b', '/park-keeper', '/quake-school/x'])(
-    'denylist 命中 sibling app 路徑 %s',
-    (pathname) => {
-      expect(matchesAny(SIBLING_APP_DENYLIST, pathname)).toBe(true);
-    },
-  );
+  it.each([
+    '/split-meow/foo',
+    '/ratewise/',
+    '/nihonname/a/b',
+    '/park-keeper',
+    '/quake-school/x',
+    '/starpuff/',
+  ])('denylist 命中 sibling app 路徑 %s', (pathname) => {
+    expect(matchesAny(SIBLING_APP_DENYLIST, pathname)).toBe(true);
+  });
 
   it('allowlist 不得命中前綴相似的非自身路徑（/toolsfoo）', () => {
     expect(matchesAny(HAOTOOL_NAVIGATE_FALLBACK_ALLOWLIST, '/toolsfoo')).toBe(false);
@@ -40,9 +44,16 @@ describe('haotool PWA scope guard（行為級）', () => {
     }
   });
 
-  it('denylist 覆蓋全部五個 sibling apps', () => {
+  it('denylist 覆蓋全部六個 sibling apps', () => {
     const sources = SIBLING_APP_DENYLIST.map((pattern) => pattern.source);
-    for (const sibling of ['ratewise', 'nihonname', 'park-keeper', 'quake-school', 'split-meow']) {
+    for (const sibling of [
+      'ratewise',
+      'nihonname',
+      'park-keeper',
+      'quake-school',
+      'split-meow',
+      'starpuff',
+    ]) {
       expect(sources.some((source) => source.includes(sibling))).toBe(true);
     }
   });

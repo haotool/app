@@ -1,0 +1,116 @@
+:root {
+  --sp-bg: #fdeff6;
+  --sp-btn: rgba(255, 255, 255, 0.35);
+  --sp-btn-border: rgba(255, 255, 255, 0.55);
+  --sp-btn-active: rgba(255, 255, 255, 0.6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--sp-bg);
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* 虛擬按鍵：左下方向鍵、右下 A/B，熱區 >= 56px；僅遊戲場景顯示（is-active 由 controls 系統切換）。 */
+#controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  pointer-events: none;
+}
+
+#controls.is-active {
+  display: flex;
+}
+
+.controls-left,
+.controls-right {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.ctl-btn {
+  width: 64px;
+  height: 64px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--sp-btn-border);
+  background: var(--sp-btn);
+  color: rgba(58, 58, 74, 0.75);
+  font-size: 22px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+
+/* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */
+.ctl-btn:active,
+.ctl-btn.is-pressed {
+  background: var(--sp-btn-active);
+  transform: scale(0.92);
+}
+
+.ctl-btn-raised {
+  margin-bottom: 26px;
+}
+
+/* 橫向持機提示：本遊戲為直向設計。 */
+#rotate-hint {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  #rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sp-bg);
+    color: #3a3a4a;
+    font-family: system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+}
