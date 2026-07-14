@@ -185,12 +185,25 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     });
   }
 
+  // 死亡消失（§18，與 popIn 對稱）：立即停用互動，0.15s squash-to-zero 播畢後隱藏回收。
   function kill(enemy: Phaser.GameObjects.GameObject): void {
     const kind = kindOf(enemy);
     if (!kind) return;
     const sprite = enemy as Phaser.Physics.Arcade.Sprite;
     const { x, y } = sprite;
-    deactivate(sprite);
+    scene.tweens.killTweensOf(sprite);
+    const body = sprite.body as Phaser.Physics.Arcade.Body;
+    body.stop();
+    body.enable = false;
+    sprite.setActive(false);
+    scene.tweens.add({
+      targets: sprite,
+      scaleX: sprite.scaleX * 1.5,
+      scaleY: 0,
+      duration: 150,
+      ease: 'Quad.easeIn',
+      onComplete: () => sprite.setVisible(false),
+    });
     emitGameEvent(scene.events, GameEvents.ENEMY_KILLED, { kind, x, y });
   }
 
@@ -264,6 +277,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       const sprite = group.get(x, y, TEXTURES[kind]) as Phaser.Physics.Arcade.Sprite | null;
       if (!sprite) return;
 
+      // 池重用防護：死亡 squash tween 可能仍在播放，先清除再重設外觀。
+      scene.tweens.killTweensOf(sprite);
       sprite.setActive(true).setVisible(true);
       sprite.setTexture(TEXTURES[kind]);
       sprite.setDisplaySize(SIZE, SIZE);
