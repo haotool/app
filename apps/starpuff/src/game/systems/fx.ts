@@ -25,6 +25,11 @@ export interface TrailHandle {
   stop(): void;
 }
 
+export interface TrailOptions {
+  tint?: number;
+  lifespan?: number;
+}
+
 export interface FxSystem {
   hitStop(durationMs: number): void;
   shake(intensityPx: number): void;
@@ -32,9 +37,10 @@ export interface FxSystem {
   squashStretch(target: Scalable, intensity?: number): void;
   startInhale(mouth: Phaser.Types.Math.Vector2Like): void;
   stopInhale(): void;
-  attachTrail(target: Phaser.Types.Math.Vector2Like): TrailHandle;
+  attachTrail(target: Phaser.Types.Math.Vector2Like, opts?: TrailOptions): TrailHandle;
   damageNumber(x: number, y: number, amount: number): void;
   starBurst(x: number, y: number): void;
+  burstSmall(x: number, y: number, tint: number): void;
   puff(x: number, y: number): void;
   confetti(): void;
   attachPlayer(target: FxTarget): void;
@@ -138,6 +144,58 @@ export function landingDust(scene: Phaser.Scene, x: number, y: number): void {
     .setDepth(85);
   dust.explode(16);
   scene.time.delayedCall(600, () => dust.destroy());
+}
+
+// 星彈拖尾：per-star 專屬 emitter；opts 依星彈屬性調 tint / lifespan（§20）。
+export function attachTrail(
+  scene: Phaser.Scene,
+  target: Phaser.Types.Math.Vector2Like,
+  opts: TrailOptions = {},
+): TrailHandle {
+  ensureFxTextures(scene);
+  const lifespan = opts.lifespan ?? 260;
+  const trail = scene.add
+    .particles(0, 0, FX_TEXTURES.star, {
+      follow: target,
+      speed: { min: 5, max: 30 },
+      scale: { start: 0.7, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      rotate: { min: 0, max: 360 },
+      lifespan,
+      frequency: 28,
+      blendMode: 'ADD',
+      tint: opts.tint ?? 0xffd966,
+      maxAliveParticles: 24,
+    })
+    .setDepth(80);
+  return {
+    stop() {
+      if (!trail.scene) return;
+      trail.stop();
+      scene.time.delayedCall(lifespan + 60, () => trail.destroy());
+    },
+  };
+}
+
+// 爆裂星命中小爆：命中點 30px 內短促迸發，播畢自毀（§20，取代 starBurst 代位）。
+export function burstSmall(scene: Phaser.Scene, x: number, y: number, tint: number): void {
+  ensureFxTextures(scene);
+  const spark = scene.add
+    .particles(x, y, FX_TEXTURES.star, {
+      speed: { min: 40, max: 130 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 0.9, end: 0 },
+      alpha: { start: 1, end: 0 },
+      rotate: { min: 0, max: 360 },
+      lifespan: { min: 140, max: 230 },
+      tint,
+      blendMode: 'ADD',
+      emitting: false,
+      maxAliveParticles: 14,
+    })
+    .setDepth(90);
+  spark.explode(12);
+  scene.time.delayedCall(320, () => spark.destroy());
 }
 
 // 落點預警：白描邊粉色橢圓標記，淡入後持續脈動，durationMs 後淡出自毀。
@@ -502,31 +560,10 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     stopInhale() {
       inhaleEmitter.stop();
     },
-    attachTrail(target) {
-      const trail = scene.add
-        .particles(0, 0, FX_TEXTURES.star, {
-          follow: target,
-          speed: { min: 5, max: 30 },
-          scale: { start: 0.7, end: 0 },
-          alpha: { start: 0.8, end: 0 },
-          rotate: { min: 0, max: 360 },
-          lifespan: 260,
-          frequency: 28,
-          blendMode: 'ADD',
-          tint: 0xffd966,
-          maxAliveParticles: 24,
-        })
-        .setDepth(80);
-      return {
-        stop() {
-          if (!trail.scene) return;
-          trail.stop();
-          scene.time.delayedCall(320, () => trail.destroy());
-        },
-      };
-    },
+    attachTrail: (target, opts) => attachTrail(scene, target, opts),
     damageNumber,
     starBurst,
+    burstSmall: (x, y, tint) => burstSmall(scene, x, y, tint),
     puff,
     confetti,
     attachPlayer(target) {

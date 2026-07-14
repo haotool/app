@@ -4,6 +4,7 @@ import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale, clampAmmo, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
 import type { ControlsState } from './controls';
+import { attachTrail, type TrailHandle } from './fx';
 
 // 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
 export type StarHitMode = 'pierce' | 'absorb';
@@ -14,6 +15,7 @@ export interface PlayerHandle {
   takeDamage(damage: number, sourceX: number): void;
   swallow(kind: EnemyKind): boolean;
   isInhaling(): boolean;
+  getAmmoState(): { ammo: number; flavor: StarFlavor };
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
   getStars(): Phaser.Physics.Arcade.Group;
@@ -34,6 +36,9 @@ const WALK_TILT_RAD = 0.05;
 const WALK_BOB_PX = 3;
 // §18 落地塵埃圈：著地速度 >300 觸發。
 const DUST_FALL_SPEED = 300;
+// §20 星彈拖尾：疾風星拖尾加長 ×1.6，其餘維持基準長度；tint 依屬性表上色。
+const TRAIL_LIFESPAN_MS = 260;
+const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
@@ -122,6 +127,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   };
 
   const recycleStar = (star: Phaser.Physics.Arcade.Sprite) => {
+    (star.getData('fxTrail') as TrailHandle | undefined)?.stop();
+    star.setData('fxTrail', undefined);
     star.setActive(false).setVisible(false);
     const body = star.body as Phaser.Physics.Arcade.Body;
     body.stop();
@@ -143,6 +150,13 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     body.reset(fx, sprite.y);
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', flavor);
+    star.setData(
+      'fxTrail',
+      attachTrail(scene, star, {
+        tint: spec.tint,
+        lifespan: flavor === 'floaty' ? WIND_TRAIL_LIFESPAN_MS : TRAIL_LIFESPAN_MS,
+      }),
+    );
     star.setVelocityX(facing * spec.speed);
     ammo = clampAmmo(ammo - 1, STAR.maxAmmo);
     emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, { ammo, maxAmmo: STAR.maxAmmo, flavor });
@@ -268,6 +282,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     isInhaling() {
       return inhaling;
+    },
+    getAmmoState() {
+      return { ammo, flavor };
     },
     getFacing() {
       return facing;

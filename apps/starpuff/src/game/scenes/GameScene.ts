@@ -562,7 +562,7 @@ export class GameScene extends Phaser.Scene {
     spec: (typeof STAR_FLAVORS)[StarFlavor],
     exclude: Phaser.GameObjects.GameObject | null,
   ): void {
-    this.fx.starBurst(x, y);
+    this.fx.burstSmall(x, y, spec.tint);
     for (const child of this.enemies.getGroup().getChildren()) {
       if (child === exclude || !child.active) continue;
       const enemy = asSprite(child);
