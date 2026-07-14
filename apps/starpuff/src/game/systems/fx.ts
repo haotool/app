@@ -83,6 +83,28 @@ function canTint(go: object): go is Tintable {
   return 'setTint' in go && 'setTintMode' in go && 'clearTint' in go;
 }
 
+// 落點預警：粉色橢圓標記以 0.5s 週期淡入淡出脈動，durationMs 後自毀。
+export function spawnTelegraph(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  durationMs: number,
+): void {
+  const mark = scene.add.ellipse(x, y, 52, 18, 0xff8fb3, 0);
+  const blinkMs = 250;
+  scene.tweens.add({
+    targets: mark,
+    alpha: 0.55,
+    scaleX: { from: 0.6, to: 1 },
+    scaleY: { from: 0.6, to: 1 },
+    duration: blinkMs,
+    yoyo: true,
+    repeat: Math.max(0, Math.round(durationMs / (blinkMs * 2)) - 1),
+    ease: 'Sine.easeInOut',
+    onComplete: () => mark.destroy(),
+  });
+}
+
 export function createFx(scene: Phaser.Scene): FxSystem {
   ensureFxTextures(scene);
 

@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
+import { CANVAS, GRAVITY_Y } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { createBossFsm, type BossCommand } from '../logic/bossFsm';
+import { playSfx } from '../audio/sfx';
+import { spawnTelegraph } from './fx';
 
 export interface BossHandle {
   spawn(): void;
   applyDamage(amount: number): void;
   update(deltaMs: number): void;
   destroy(): void;
+  isActive(): boolean;
   getBody(): Phaser.GameObjects.GameObject;
   getProjectiles(): Phaser.Physics.Arcade.Group;
   getShockwaves(): Phaser.Physics.Arcade.Group;
@@ -20,6 +23,11 @@ const BOSS_H = 130;
 const STAND_Y = GROUND_TOP - BOSS_H / 2;
 const SIDE_X = { left: 110, right: CANVAS.width - 110 } as const;
 const ENRAGE_TINT = { r: 255, g: 107, b: 107 } as const;
+// 招式預警時長：rain 落點標記、slam 蓄力前搖、dash 閃白抖動。
+const RAIN_TELEGRAPH_MS = 500;
+const SLAM_WINDUP_MS = 350;
+const DASH_WINDUP_MS = 300;
+const SLAM_WINDUP_TINT = 0xff9d9d;
 
 // 佔位材質：正式 sprite 由美術 stream 交付，缺件時以圓形烘焙保底避免 runtime crash。
 function ensureTextures(scene: Phaser.Scene): void {
@@ -49,6 +57,8 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
 
   const sprite = scene.physics.add.sprite(SIDE_X.right, -BOSS_H, 'boss-idle');
   sprite.setDisplaySize(BOSS_W, BOSS_H);
+  const baseScaleX = sprite.scaleX;
+  const baseScaleY = sprite.scaleY;
   const body = sprite.body as Phaser.Physics.Arcade.Body;
   body.setAllowGravity(false);
   body.setImmovable(true);
@@ -106,22 +116,37 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     scene.tweens.add({ targets: sprite, angle: 4, duration: 45, yoyo: true, repeat: 3 });
   };
 
+  // 拋物線落地時間解析解，反推彈幕落點與飛行時間。
+  const rainLanding = (x0: number, y0: number, vx: number, vy: number) => {
+    const t = (-vy + Math.sqrt(vy * vy + 2 * GRAVITY_Y * (GROUND_TOP - y0))) / GRAVITY_Y;
+    return { x: x0 + vx * t, flightMs: t * 1000 };
+  };
+
   const launchRain = (count: number) => {
     const stagger = 660 / count / fsm.speedFactor;
     for (let i = 0; i < count; i += 1) {
       delay(i * stagger, () => {
         if (dying) return;
-        const ball = projectiles.get(
-          sprite.x,
-          sprite.y - BOSS_H / 2,
-          'boss-jelly-ball',
-        ) as Phaser.Physics.Arcade.Sprite | null;
-        if (!ball) return;
-        ball.enableBody(true, sprite.x, sprite.y - BOSS_H / 2, true, true);
-        ball.setVelocity(
-          Phaser.Math.Between(60, 230) * (Math.random() < 0.5 ? -1 : 1),
-          Phaser.Math.Between(-520, -340),
-        );
+        // 先抽定軌道並於落點顯示預警標記，0.5s 後才發射；標記持續閃爍至彈著。
+        const startX = sprite.x;
+        const startY = sprite.y - BOSS_H / 2;
+        const vx = Phaser.Math.Between(60, 230) * (Math.random() < 0.5 ? -1 : 1);
+        const vy = Phaser.Math.Between(-520, -340);
+        const land = rainLanding(startX, startY, vx, vy);
+        if (land.x >= 0 && land.x <= CANVAS.width) {
+          spawnTelegraph(scene, land.x, GROUND_TOP - 6, RAIN_TELEGRAPH_MS + land.flightMs);
+        }
+        delay(RAIN_TELEGRAPH_MS, () => {
+          if (dying) return;
+          const ball = projectiles.get(
+            startX,
+            startY,
+            'boss-jelly-ball',
+          ) as Phaser.Physics.Arcade.Sprite | null;
+          if (!ball) return;
+          ball.enableBody(true, startX, startY, true, true);
+          ball.setVelocity(vx, vy);
+        });
       });
     }
   };
@@ -140,18 +165,40 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
   const doSlam = () => {
     wobble.pause();
     const sf = fsm.speedFactor;
-    scene.tweens.chain({
+    // 前搖 0.35s：squash 蓄力 + 微紅 tint + 音效預告，之後才起跳。
+    enrageTween?.pause();
+    sprite.setTint(SLAM_WINDUP_TINT);
+    playSfx('boss-slam');
+    scene.tweens.add({
       targets: sprite,
-      tweens: [
-        { y: STAND_Y - 170, duration: 300 / sf, ease: 'Quad.easeOut' },
-        { y: STAND_Y, duration: 180 / sf, ease: 'Quad.easeIn' },
-        { scaleX: sprite.scaleX * 1.22, scaleY: sprite.scaleY * 0.78, duration: 90, yoyo: true },
-      ],
-      onComplete: () => {
-        wobble.resume();
-      },
+      scaleX: baseScaleX * 1.18,
+      scaleY: baseScaleY * 0.8,
+      duration: SLAM_WINDUP_MS,
+      ease: 'Quad.easeOut',
     });
-    delay(480 / sf, () => {
+    delay(SLAM_WINDUP_MS, () => {
+      if (dying) return;
+      if (enrageTween) enrageTween.resume();
+      else sprite.clearTint();
+      scene.tweens.chain({
+        targets: sprite,
+        tweens: [
+          {
+            y: STAND_Y - 170,
+            scaleX: baseScaleX,
+            scaleY: baseScaleY,
+            duration: 300 / sf,
+            ease: 'Quad.easeOut',
+          },
+          { y: STAND_Y, duration: 180 / sf, ease: 'Quad.easeIn' },
+          { scaleX: baseScaleX * 1.22, scaleY: baseScaleY * 0.78, duration: 90, yoyo: true },
+        ],
+        onComplete: () => {
+          wobble.resume();
+        },
+      });
+    });
+    delay(SLAM_WINDUP_MS + 480 / sf, () => {
       if (dying) return;
       scene.cameras.main.shake(180, 0.008);
       spawnShockwave(1);
@@ -164,15 +211,30 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     side = side === 'right' ? 'left' : 'right';
     const targetX = SIDE_X[side];
     sprite.setFlipX(side === 'left');
-    scene.tweens.chain({
+    // 前搖 0.3s：面向衝刺側白閃兩次 + 原地抖動，之後才衝刺。
+    flashWhite();
+    delay(150, () => {
+      if (!dying) flashWhite();
+    });
+    scene.tweens.add({
       targets: sprite,
-      tweens: [
-        { x: targetX, duration: 550 / fsm.speedFactor, ease: 'Sine.easeIn' },
-        { scaleX: sprite.scaleX * 1.28, scaleY: sprite.scaleY * 0.76, duration: 110, yoyo: true },
-      ],
-      onComplete: () => {
-        wobble.resume();
-      },
+      x: sprite.x + (targetX > sprite.x ? 6 : -6),
+      duration: 25,
+      yoyo: true,
+      repeat: 5,
+    });
+    delay(DASH_WINDUP_MS, () => {
+      if (dying) return;
+      scene.tweens.chain({
+        targets: sprite,
+        tweens: [
+          { x: targetX, duration: 550 / fsm.speedFactor, ease: 'Sine.easeIn' },
+          { scaleX: baseScaleX * 1.28, scaleY: baseScaleY * 0.76, duration: 110, yoyo: true },
+        ],
+        onComplete: () => {
+          wobble.resume();
+        },
+      });
     });
   };
 
@@ -302,6 +364,9 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
       projectiles.destroy(true);
       shockwaves.destroy(true);
       sprite.destroy();
+    },
+    isActive() {
+      return active;
     },
     getBody() {
       return sprite;
