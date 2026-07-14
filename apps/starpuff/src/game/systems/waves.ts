@@ -23,14 +23,14 @@ export interface WaveRunner {
 }
 
 const SPAWN_MARGIN_X = 48;
-// 生成高度按品種：floaty 定高飄移（500 在跳躍＋拍翅可達範圍內）；
+// 生成高度按品種（橫式地面頂 y=400）：floaty 定高飄移（240 在跳躍＋拍翅可達範圍內）；
 // puffy 高空下飄（§16）；其餘自地面上方落入。
 const SPAWN_Y: Record<EnemyKind, number> = {
-  jelly: 700,
-  floaty: 500,
-  spiky: 700,
-  puffy: 150,
-  chompy: 700,
+  jelly: 330,
+  floaty: 240,
+  spiky: 330,
+  puffy: 80,
+  chompy: 330,
 };
 
 const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';
