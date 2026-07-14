@@ -38,6 +38,25 @@ global.ResizeObserver = vi.fn(function (this: ResizeObserver) {
   this.disconnect = vi.fn();
 }) as unknown as typeof ResizeObserver;
 
+// 測試環境禁止真實 WebSocket 連線；行為驗證由各測試自行 stub。
+class NoopWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
+  readyState = NoopWebSocket.CONNECTING;
+  onopen: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+  onclose: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  constructor(public url: string) {}
+  send = vi.fn();
+  close(): void {
+    this.readyState = NoopWebSocket.CLOSED;
+  }
+}
+vi.stubGlobal('WebSocket', NoopWebSocket);
+
 if (hasWindow) {
   let store: Record<string, string> = {};
   const memoryStorage: Storage = {

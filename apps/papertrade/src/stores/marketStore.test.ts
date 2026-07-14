@@ -19,7 +19,11 @@ describe('useMarketStore', () => {
 
   it('stores a full ticker snapshot', () => {
     useMarketStore.getState().setTicker(btcTicker);
-    expect(useMarketStore.getState().tickers.BTCUSDT).toEqual(btcTicker);
+    expect(useMarketStore.getState().tickers.BTCUSDT).toEqual({
+      ...btcTicker,
+      direction: null,
+      revision: 1,
+    });
   });
 
   it('merges delta patches into existing ticker', () => {
@@ -30,6 +34,22 @@ describe('useMarketStore', () => {
     expect(ticker?.lastPrice).toBe(64500);
     expect(ticker?.volume24h).toBe(81000);
     expect(ticker?.highPrice24h).toBe(65000);
+  });
+
+  it('tracks tick direction and revision on price changes', () => {
+    const { setTicker, patchTicker } = useMarketStore.getState();
+    setTicker(btcTicker);
+    patchTicker('BTCUSDT', { lastPrice: 64500 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.direction).toBe('up');
+    expect(useMarketStore.getState().tickers.BTCUSDT?.revision).toBe(2);
+
+    patchTicker('BTCUSDT', { lastPrice: 64400 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.direction).toBe('down');
+    expect(useMarketStore.getState().tickers.BTCUSDT?.revision).toBe(3);
+
+    patchTicker('BTCUSDT', { volume24h: 90000 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.direction).toBe('down');
+    expect(useMarketStore.getState().tickers.BTCUSDT?.revision).toBe(3);
   });
 
   it('ignores patches for symbols without a snapshot', () => {
