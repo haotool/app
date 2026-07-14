@@ -478,9 +478,9 @@ export function createFx(scene: Phaser.Scene): FxSystem {
       targets: crown,
       tweens: [
         { y: y - 150, duration: 320, ease: 'Quad.easeOut' },
-        { y: restY, duration: 420, ease: 'Quad.easeIn', onComplete: () => playSfx('hit') },
+        { y: restY, duration: 420, ease: 'Quad.easeIn', onComplete: () => playSfx('metal') },
         { y: restY - 46, duration: 180, ease: 'Quad.easeOut' },
-        { y: restY, duration: 200, ease: 'Quad.easeIn', onComplete: () => playSfx('hit') },
+        { y: restY, duration: 200, ease: 'Quad.easeIn', onComplete: () => playSfx('metal', 1.12) },
         { y: restY - 18, duration: 120, ease: 'Quad.easeOut' },
         { y: restY, duration: 140, ease: 'Quad.easeIn' },
       ],
