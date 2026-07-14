@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CANVAS } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
+import { canInhale } from '../logic/combat';
 import { playSfx } from '../audio/sfx';
 import { popIn } from './fx';
 
@@ -22,6 +23,7 @@ export interface EnemySystem {
   getHazards(): Phaser.Physics.Arcade.Group;
   setTarget(target: EnemyTarget | null): void;
   aliveCount(): number;
+  aliveInhalableCount(): number;
   update(deltaMs: number): void;
   destroy(): void;
 }
@@ -373,6 +375,16 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
     aliveCount() {
       return group.countActive(true);
+    },
+
+    // 反卡死（§26）：場上可吸怪數，供 spawner 保證律判定彈藥飢荒。
+    aliveInhalableCount() {
+      let count = 0;
+      for (const child of group.getChildren()) {
+        const kind = kindOf(child);
+        if (kind && canInhale(kind)) count += 1;
+      }
+      return count;
     },
 
     update(deltaMs: number) {

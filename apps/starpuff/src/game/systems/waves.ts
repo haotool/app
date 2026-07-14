@@ -7,7 +7,7 @@ import {
   createLevelRun,
   getLevel,
   isInSafeTail,
-  pickEnemyKind,
+  pickSpawnKind,
   recordKill,
   type LevelRunState,
 } from '../logic/levels';
@@ -48,9 +48,15 @@ export function createWaveRunner(
   let run: LevelRunState = createLevelRun(levelId);
   let stopped = false;
   let spawnCounter = 0;
+  // 反卡死（§26）：以 AMMO_CHANGED 事件追蹤彈藥量，判定飢荒強制補可吸怪。
+  let playerAmmo = 0;
   let tutorialText: Phaser.GameObjects.Text | null = null;
   let tutorialAgeMs = 0;
   let tutorialDismissAtMs = TUTORIAL_MAX_MS;
+
+  const onAmmoChanged = ({ ammo }: { ammo: number }): void => {
+    playerAmmo = ammo;
+  };
 
   // 魔王擊破後停止補生，避免勝利演出期間持續生怪。
   const onBossDefeated = (): void => {
@@ -77,9 +83,9 @@ export function createWaveRunner(
 
   // 生成位置：玩家前方視野外側；落在尾端安全區時改由後方入場，兩側皆無合法位即跳過。
   // 單屏魔王關（boss）沿用左右邊緣交替入場。
-  function spawnAhead(): void {
+  function spawnAhead(starving: boolean): void {
     spawnCounter += 1;
-    const kind = pickEnemyKind(level, Math.random());
+    const kind = pickSpawnKind(level, Math.random(), starving);
     let x: number;
     if (level.boss) {
       x = spawnCounter % 2 === 0 ? level.worldWidth - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
@@ -136,6 +142,7 @@ export function createWaveRunner(
       onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       onGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
+      onGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
       emitGameEvent(scene.events, GameEvents.LEVEL_CHANGED, {
         levelId: level.id,
         nameZh: level.nameZh,
@@ -150,9 +157,14 @@ export function createWaveRunner(
         tutorialAgeMs += deltaMs;
         if (tutorialAgeMs >= tutorialDismissAtMs) dismissTutorial();
       }
-      const result = advanceLevelSpawn(run, { deltaMs, aliveEnemies: enemies.aliveCount() });
+      const starving = playerAmmo <= 0 && enemies.aliveInhalableCount() === 0;
+      const result = advanceLevelSpawn(run, {
+        deltaMs,
+        aliveEnemies: enemies.aliveCount(),
+        starving,
+      });
       run = result.state;
-      if (result.spawn) spawnAhead();
+      if (result.spawn) spawnAhead(starving);
     },
 
     noteInput() {
@@ -173,6 +185,7 @@ export function createWaveRunner(
       offGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       offGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       offGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
+      offGameEvent(scene.events, GameEvents.AMMO_CHANGED, onAmmoChanged);
       if (tutorialText) {
         scene.tweens.killTweensOf(tutorialText);
         tutorialText.destroy();

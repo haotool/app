@@ -1,4 +1,5 @@
 import type { EnemyKind, LevelId } from '../core/types';
+import { canInhale } from './combat';
 
 // 關卡資料 SSOT（GAME_DESIGN §15，pure TS 不 import phaser），vitest 對象。
 // GameScene 與 waves runner 一律讀表驅動，禁止每關硬編碼分支。
@@ -160,6 +161,8 @@ export function recordKill(state: LevelRunState): LevelRunState {
 export interface LevelSpawnTick {
   deltaMs: number;
   aliveEnemies: number;
+  // 反卡死（§26）：玩家彈藥 0 且場上無可吸怪的飢荒狀態。
+  starving?: boolean;
 }
 
 export interface LevelSpawnResult {
@@ -169,8 +172,12 @@ export interface LevelSpawnResult {
 
 // spawn 節流：間隔到期且未達同屏上限才生成；開門後停止（尾端 release）。
 // 達上限時 timer 停在間隔值，空位一出現即刻補生。
+// 反卡死保證律（§26）：boss 期彈藥飢荒立即補生，不等生成間隔。
 export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): LevelSpawnResult {
   const level = getLevel(state.levelId);
+  if (tick.starving && level.boss) {
+    return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
+  }
   const spawnTimerMs = Math.min(state.spawnTimerMs + tick.deltaMs, level.spawnIntervalMs);
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
     return { state: { ...state, spawnTimerMs }, spawn: false };
@@ -190,6 +197,15 @@ export function pickEnemyKind(level: LevelSpec, rand01: number): EnemyKind {
     if (threshold < 0) return entry.kind;
   }
   return level.enemyMix[level.enemyMix.length - 1]?.kind ?? 'jelly';
+}
+
+// 反卡死保證律（§26）：飢荒時覆蓋權重，僅自可吸子集抽選。
+export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolean): EnemyKind {
+  if (!starving) return pickEnemyKind(level, rand01);
+  const inhalable = level.enemyMix.filter((entry) => canInhale(entry.kind));
+  if (inhalable.length === 0) return 'jelly';
+  const forced: LevelSpec = { ...level, enemyMix: inhalable };
+  return pickEnemyKind(forced, rand01);
 }
 
 // 尾端安全區：星星門前禁 spawn 的喘息帶。

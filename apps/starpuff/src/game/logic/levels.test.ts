@@ -8,6 +8,7 @@ import {
   isInSafeTail,
   nextLevelId,
   pickEnemyKind,
+  pickSpawnKind,
   recordKill,
   type LevelRunState,
 } from './levels';
@@ -144,6 +145,35 @@ describe('pickEnemyKind 加權抽選', () => {
   it('rand01=1 邊界退回末位種類', () => {
     const level = getLevel(1);
     expect(pickEnemyKind(level, 1)).toBe('floaty');
+  });
+});
+
+describe('反卡死保證律（§26）', () => {
+  it('飢荒時 pickSpawnKind 覆蓋權重，任何 rand 皆抽出可吸怪', () => {
+    const level = getLevel(3); // spiky 0.3 + chompy 0.2 佔半
+    for (const rand of [0, 0.25, 0.5, 0.75, 0.999]) {
+      expect(canInhale(pickSpawnKind(level, rand, true))).toBe(true);
+    }
+  });
+
+  it('非飢荒時 pickSpawnKind 等同加權抽選', () => {
+    const level = getLevel(3);
+    for (const rand of [0, 0.4, 0.8]) {
+      expect(pickSpawnKind(level, rand, false)).toBe(pickEnemyKind(level, rand));
+    }
+  });
+
+  it('boss 期飢荒立即補生，不等生成間隔', () => {
+    const state = createLevelRun(4);
+    const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(true);
+    expect(result.state.spawnTimerMs).toBe(0);
+  });
+
+  it('非 boss 關飢荒僅覆蓋品種，生成節奏不變', () => {
+    const state = createLevelRun(1);
+    const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(false);
   });
 });
 
