@@ -398,7 +398,8 @@ export class GameScene extends Phaser.Scene {
     const spec = getLevel(next);
     playSfx('win');
     const cover = this.add
-      .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x3a3a4a, 0)
+      .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x3a3a4a)
+      .setAlpha(0)
       .setScrollFactor(0)
       .setDepth(200);
     const label = this.add
