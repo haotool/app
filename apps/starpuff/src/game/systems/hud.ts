@@ -6,6 +6,8 @@ import { fillStarPath } from './fx';
 
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
+const SPEAKER_ON_TEX = 'hud-spk-on';
+const SPEAKER_OFF_TEX = 'hud-spk-off';
 const HUD_DEPTH = 100;
 const MUTE_STORAGE_KEY = 'sp-muted';
 
@@ -13,19 +15,47 @@ export interface Hud {
   destroy(): void;
 }
 
+// 喇叭圖形（§21 去文字化）：喇叭錐體 + 聲波弧；靜音態改斜線覆蓋。
+function ensureSpeakerTextures(scene: Phaser.Scene): void {
+  const drawBody = (g: Phaser.GameObjects.Graphics) => {
+    g.fillStyle(0x3a3a4a, 0.85);
+    g.fillRect(4, 11, 6, 8);
+    g.fillTriangle(10, 15, 17, 7, 17, 23);
+  };
+  if (!scene.textures.exists(SPEAKER_ON_TEX)) {
+    const g = scene.add.graphics();
+    drawBody(g);
+    g.lineStyle(2.5, 0x3a3a4a, 0.85);
+    g.beginPath();
+    g.arc(18, 15, 5, -0.9, 0.9);
+    g.strokePath();
+    g.beginPath();
+    g.arc(18, 15, 9, -0.9, 0.9);
+    g.strokePath();
+    g.generateTexture(SPEAKER_ON_TEX, 30, 30);
+    g.destroy();
+  }
+  if (!scene.textures.exists(SPEAKER_OFF_TEX)) {
+    const g = scene.add.graphics();
+    drawBody(g);
+    g.lineStyle(3, 0xd94b4b, 0.9);
+    g.lineBetween(4, 4, 26, 26);
+    g.generateTexture(SPEAKER_OFF_TEX, 30, 30);
+    g.destroy();
+  }
+}
+
 // 右上角靜音鈕（修復包 B）：Title 與 Game 場景共用；狀態經 localStorage 跨次保存。
 export function addMuteButton(scene: Phaser.Scene): void {
-  const label = () => (isMuted() ? '🔇' : '🔊');
+  ensureSpeakerTextures(scene);
+  const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
   const button = scene.add
-    .text(scene.scale.width - 12, 12, label(), {
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '28px',
-      padding: { x: 10, y: 10 },
-    })
-    .setOrigin(1, 0)
+    .image(scene.scale.width - 26, 26, texture())
     .setDepth(HUD_DEPTH + 20)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
+  // 觸控熱區擴至 48px（HIG 44pt+）：以紋理中心向外擴張，不放大視覺。
+  (button.input?.hitArea as Phaser.Geom.Rectangle | undefined)?.setTo(-9, -9, 48, 48);
   button.on('pointerdown', () => {
     const next = !isMuted();
     setMuted(next);
@@ -35,7 +65,7 @@ export function addMuteButton(scene: Phaser.Scene): void {
     } catch {
       /* noop */
     }
-    button.setText(label());
+    button.setTexture(texture());
   });
 }
 
@@ -92,7 +122,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   }
   root.add(ammoStars);
 
-  // 關卡標示與擊殺配額進度（§15）：boss 關無配額，僅顯示關卡名。
+  // 頂列橫排（§21）：HP 左上、STAGE 中上、配額（星形+數字）右上、Boss 條頂中。
   const labelStyle = {
     fontFamily: 'system-ui, sans-serif',
     fontSize: '18px',
@@ -101,14 +131,15 @@ export function createHud(scene: Phaser.Scene): Hud {
     stroke: '#ffffff',
     strokeThickness: 4,
   };
-  const stageText = scene.add.text(12, 78, '', labelStyle);
-  const quotaText = scene.add.text(12, 102, '', labelStyle);
-  root.add([stageText, quotaText]);
+  const stageText = scene.add.text(centerX, 26, '', labelStyle).setOrigin(0.5);
+  const quotaIcon = scene.add.image(scene.scale.width - 64, 26, STAR_TEX).setVisible(false);
+  const quotaText = scene.add.text(scene.scale.width - 78, 26, '', labelStyle).setOrigin(1, 0.5);
+  root.add([stageText, quotaIcon, quotaText]);
 
   // Boss HP 條：__WHITE 內建紋理拉伸上色，fill 以 scaleX tween 平滑更新。
   const barWidth = 320;
   const barHeight = 12;
-  const bossBar = scene.add.container(centerX, 26).setAlpha(0);
+  const bossBar = scene.add.container(centerX, 52).setAlpha(0);
   const barBg = scene.add
     .image(0, 0, '__WHITE')
     .setDisplaySize(barWidth + 4, barHeight + 4)
@@ -197,7 +228,7 @@ export function createHud(scene: Phaser.Scene): Hud {
     scene.tweens.add({
       targets: bossBar,
       alpha: 1,
-      y: { from: 12, to: 26 },
+      y: { from: 38, to: 52 },
       duration: 300,
       ease: 'Quad.easeOut',
     });
@@ -220,15 +251,16 @@ export function createHud(scene: Phaser.Scene): Hud {
   bind(GameEvents.LEVEL_CHANGED, ({ levelId, nameZh, killQuota }) => {
     const isBoss = killQuota <= 0;
     stageText.setText(`STAGE ${levelId} ${nameZh}`);
-    quotaText.setText(isBoss ? '' : `⭐ 0/${killQuota}`);
+    quotaIcon.setVisible(!isBoss);
+    quotaText.setText(isBoss ? '' : `0/${killQuota}`);
     showAnnounce(isBoss ? '魔王來襲！' : `STAGE ${levelId} ${nameZh}`);
   });
   bind(GameEvents.LEVEL_QUOTA, ({ killCount, killQuota }) => {
     if (killQuota <= 0) return;
-    quotaText.setText(`⭐ ${Math.min(killCount, killQuota)}/${killQuota}`);
+    quotaText.setText(`${Math.min(killCount, killQuota)}/${killQuota}`);
   });
   bind(GameEvents.LEVEL_GATE_OPENED, () => {
-    quotaText.setText('⭐ 星星門開啟！往右前進');
+    quotaText.setText('星星門開啟！往右前進');
   });
 
   function destroy(): void {
