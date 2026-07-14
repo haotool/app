@@ -4,10 +4,13 @@ declare global {
   interface Window {
     __sp: {
       scene: () => string;
+      stage: () => number;
       bossHp: () => number;
       playerHp: () => number;
       win: () => void;
       lose: () => void;
+      fillQuota: () => void;
+      skipToBoss: () => void;
     };
   }
 }
@@ -68,5 +71,37 @@ test('強制勝利進 Result，再玩一次回到 GameScene', async ({ page }) =
   await expect.poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 }).toBe('Game');
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
   await page.waitForTimeout(1000);
+  expect(errors).toEqual([]);
+});
+
+test('第一關補滿配額出星星門，走入後轉場進第二關', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(1);
+  // 注入擊殺配額加速：星星門於世界右端生成，按住右行走向門。
+  await page.evaluate(() => window.__sp.fillQuota());
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 20000 }).toBe(2);
+  await page.keyboard.up('ArrowRight');
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => window.__sp.skipToBoss());
+  await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  // 魔王入場演出完成後 bossHp 就緒。
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 15000 })
+    .toBeGreaterThan(0);
+  await page.evaluate(() => window.__sp.win());
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
+    .toBe('Result');
+  await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });
