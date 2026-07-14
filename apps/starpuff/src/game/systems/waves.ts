@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { CANVAS } from '../core/config';
-import { GameEvents, offGameEvent, onGameEvent } from '../core/events';
-import { LevelEvents, type EnemyKind, type LevelId, type LevelQuotaPayload } from '../core/types';
+import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
+import type { EnemyKind, LevelId } from '../core/types';
 import {
   advanceLevelSpawn,
   createLevelRun,
@@ -65,9 +65,13 @@ export function createWaveRunner(
 
   function recordAndAnnounce(state: LevelRunState): LevelRunState {
     const next = recordKill(state);
-    const payload: LevelQuotaPayload = { killCount: next.killCount, killQuota: level.killQuota };
-    scene.events.emit(LevelEvents.LEVEL_QUOTA, payload);
-    if (!state.gateOpen && next.gateOpen) scene.events.emit(LevelEvents.LEVEL_GATE_OPENED);
+    emitGameEvent(scene.events, GameEvents.LEVEL_QUOTA, {
+      killCount: next.killCount,
+      killQuota: level.killQuota,
+    });
+    if (!state.gateOpen && next.gateOpen) {
+      emitGameEvent(scene.events, GameEvents.LEVEL_GATE_OPENED, { levelId: level.id });
+    }
     return next;
   }
 
@@ -132,7 +136,7 @@ export function createWaveRunner(
       onGameEvent(scene.events, GameEvents.BOSS_DEFEATED, onBossDefeated);
       onGameEvent(scene.events, GameEvents.ENEMY_KILLED, onEnemyRemoved);
       onGameEvent(scene.events, GameEvents.ENEMY_INHALED, onEnemyRemoved);
-      scene.events.emit(LevelEvents.LEVEL_CHANGED, {
+      emitGameEvent(scene.events, GameEvents.LEVEL_CHANGED, {
         levelId: level.id,
         nameZh: level.nameZh,
         killQuota: level.killQuota,

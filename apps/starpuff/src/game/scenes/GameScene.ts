@@ -7,7 +7,7 @@ import {
   onGameEvent,
   type GameEventName,
 } from '../core/events';
-import { LevelEvents, SceneKeys, type GameResultData, type LevelId } from '../core/types';
+import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { canInhale, isInInhaleRange } from '../logic/combat';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
@@ -329,10 +329,7 @@ export class GameScene extends Phaser.Scene {
       this.bossHp = 0;
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
-
-    const onGateOpened = (): void => this.spawnGate();
-    this.events.on(LevelEvents.LEVEL_GATE_OPENED, onGateOpened);
-    this.unbinders.push(() => this.events.off(LevelEvents.LEVEL_GATE_OPENED, onGateOpened));
+    bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
   }
 
   // 死亡重試當前關：已完成關卡的累計用時保留，當前關計時重來。

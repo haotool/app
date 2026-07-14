@@ -1,7 +1,6 @@
 import type Phaser from 'phaser';
 import { PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
-import { LevelEvents, type LevelChangedPayload, type LevelQuotaPayload } from '../core/types';
 import { fillStarPath } from './fx';
 
 const HEART_TEX = 'hud-heart';
@@ -179,28 +178,18 @@ export function createHud(scene: Phaser.Scene): Hud {
     scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });
   });
 
-  // 關卡事件（LevelEvents）尚未併入 GameEvents 契約，先以未型別匯流排訂閱。
-  const onLevelChanged = (payload: LevelChangedPayload): void => {
-    const isBoss = payload.killQuota <= 0;
-    stageText.setText(`STAGE ${payload.levelId} ${payload.nameZh}`);
-    quotaText.setText(isBoss ? '' : `⭐ 0/${payload.killQuota}`);
-    showAnnounce(isBoss ? '魔王來襲！' : `STAGE ${payload.levelId} ${payload.nameZh}`);
-  };
-  const onLevelQuota = (payload: LevelQuotaPayload): void => {
-    if (payload.killQuota <= 0) return;
-    const clamped = Math.min(payload.killCount, payload.killQuota);
-    quotaText.setText(`⭐ ${clamped}/${payload.killQuota}`);
-  };
-  const onGateOpened = (): void => {
+  bind(GameEvents.LEVEL_CHANGED, ({ levelId, nameZh, killQuota }) => {
+    const isBoss = killQuota <= 0;
+    stageText.setText(`STAGE ${levelId} ${nameZh}`);
+    quotaText.setText(isBoss ? '' : `⭐ 0/${killQuota}`);
+    showAnnounce(isBoss ? '魔王來襲！' : `STAGE ${levelId} ${nameZh}`);
+  });
+  bind(GameEvents.LEVEL_QUOTA, ({ killCount, killQuota }) => {
+    if (killQuota <= 0) return;
+    quotaText.setText(`⭐ ${Math.min(killCount, killQuota)}/${killQuota}`);
+  });
+  bind(GameEvents.LEVEL_GATE_OPENED, () => {
     quotaText.setText('⭐ 星星門開啟！往右前進');
-  };
-  bus.on(LevelEvents.LEVEL_CHANGED, onLevelChanged);
-  bus.on(LevelEvents.LEVEL_QUOTA, onLevelQuota);
-  bus.on(LevelEvents.LEVEL_GATE_OPENED, onGateOpened);
-  unbinders.push(() => {
-    bus.off(LevelEvents.LEVEL_CHANGED, onLevelChanged);
-    bus.off(LevelEvents.LEVEL_QUOTA, onLevelQuota);
-    bus.off(LevelEvents.LEVEL_GATE_OPENED, onGateOpened);
   });
 
   function destroy(): void {
