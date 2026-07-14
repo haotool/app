@@ -28,6 +28,7 @@ import {
   type EggProgress,
 } from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -91,6 +92,7 @@ export class GameScene extends Phaser.Scene {
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
   private unbinders: (() => void)[] = [];
+  private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
   private enemies!: EnemySystem;
@@ -123,7 +125,7 @@ export class GameScene extends Phaser.Scene {
     this.bossActiveAt = -1;
 
     this.physics.world.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
-    this.addBackground();
+    this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
 
     this.controls = createControls(this);
@@ -161,6 +163,7 @@ export class GameScene extends Phaser.Scene {
       stopSfx('inhale');
       this.waves.destroy();
       this.controls.destroy();
+      this.background.destroy();
     });
 
     this.waves.start();
@@ -169,6 +172,7 @@ export class GameScene extends Phaser.Scene {
 
   override update(_time: number, deltaMs: number): void {
     if (!this.player) return;
+    this.background.update(deltaMs);
     this.controls.update();
     if (!this.finished && !this.transitioning) {
       this.syncTutorialInput();
@@ -209,29 +213,6 @@ export class GameScene extends Phaser.Scene {
 
   private restartWith(data: GameSceneData): void {
     this.scene.restart(data);
-  }
-
-  private addBackground(): void {
-    // v2 背景美術另批入庫；紋理缺件時退回 bg-arena。
-    const key = this.textures.exists(this.level.bgKey) ? this.level.bgKey : 'bg-arena';
-    if (this.textures.exists(key)) {
-      const src = this.textures.get(key).getSourceImage() as { width: number; height: number };
-      const scale = Math.max(CANVAS.width / src.width, CANVAS.height / src.height);
-      for (let x = 0; x < this.level.worldWidth; x += src.width * scale) {
-        this.add
-          .image(x, CANVAS.height / 2, key)
-          .setOrigin(0, 0.5)
-          .setScale(scale);
-      }
-    } else {
-      this.add.rectangle(
-        this.level.worldWidth / 2,
-        CANVAS.height / 2,
-        this.level.worldWidth,
-        CANVAS.height,
-        0xd6ecff,
-      );
-    }
   }
 
   private addTerrain(): {

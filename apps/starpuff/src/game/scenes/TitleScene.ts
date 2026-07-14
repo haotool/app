@@ -3,29 +3,60 @@ import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
+import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addMuteButton } from '../systems/hud';
 
+const TITLE_GLOW_TEX = 'title-glow';
+
+// 主角光暈：同心圓遞減 alpha 模擬柔光，供脈動 tween 使用。
+function ensureGlowTexture(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TITLE_GLOW_TEX)) return;
+  const g = scene.add.graphics();
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle(0xfff3d6, 0.05 + i * 0.035);
+    g.fillCircle(90, 90, 88 - i * 12);
+  }
+  g.generateTexture(TITLE_GLOW_TEX, 180, 180);
+  g.destroy();
+}
+
 export class TitleScene extends Phaser.Scene {
+  private backdrop: BackgroundHandle | null = null;
+
   constructor() {
     super(SceneKeys.Title);
   }
 
   create(): void {
     const centerX = CANVAS.width / 2;
+    this.backdrop = createMenuBackdrop(this, {
+      bgKey: 'bg-meadow',
+      autoScrollPxPerSec: 12,
+      clouds: true,
+      ambience: 'bg-meadow',
+    });
+    this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
 
-    if (this.textures.exists('bg-arena')) {
-      const bg = this.add.image(centerX, CANVAS.height / 2, 'bg-arena');
-      bg.setScale(Math.max(CANVAS.width / bg.width, CANVAS.height / bg.height));
-    }
-
     if (this.textures.exists('hero-idle')) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.45, 'hero-idle');
+      ensureGlowTexture(this);
+      const heroY = CANVAS.height * 0.45;
+      const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
+      const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
       this.tweens.add({
-        targets: hero,
+        targets: [hero, glow],
         y: '-=14',
         duration: 1400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.55, to: 1 },
+        scale: glow.scale * 1.12,
+        duration: 1100,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -88,5 +119,9 @@ export class TitleScene extends Phaser.Scene {
     };
     startButton.on('pointerdown', start);
     this.input.keyboard?.once('keydown-ENTER', start);
+  }
+
+  override update(_time: number, deltaMs: number): void {
+    this.backdrop?.update(deltaMs);
   }
 }

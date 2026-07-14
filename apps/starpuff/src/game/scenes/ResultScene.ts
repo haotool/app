@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { CANVAS } from '../core/config';
 import { SceneKeys, type GameResultData } from '../core/types';
+import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { createFx } from '../systems/fx';
 
 export class ResultScene extends Phaser.Scene {
   private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
+  private backdrop: BackgroundHandle | null = null;
 
   constructor() {
     super(SceneKeys.Result);
@@ -25,11 +27,18 @@ export class ResultScene extends Phaser.Scene {
     const seconds = (this.result.timeMs / 1000).toFixed(1);
     const won = this.result.result === 'won';
 
-    if (this.textures.exists('bg-arena')) {
-      const bg = this.add.image(centerX, CANVAS.height / 2, 'bg-arena');
-      bg.setScale(Math.max(CANVAS.width / bg.width, CANVAS.height / bg.height));
-      // 敗北灰階：背景降飽和營造挫敗感。
-      if (!won) bg.setTint(0x9a9aa8);
+    // 勝利：星空回廊緩捲 + 金塵緩落；敗北：靜止背景 + 降飽和覆層。
+    this.backdrop = createMenuBackdrop(this, {
+      bgKey: 'bg-arena',
+      autoScrollPxPerSec: won ? 8 : 0,
+      clouds: won,
+      ambience: won ? 'bg-throne' : undefined,
+    });
+    this.events.once('shutdown', () => this.backdrop?.destroy());
+    if (!won) {
+      this.add
+        .rectangle(centerX, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x9a9aa8, 0.4)
+        .setDepth(-5);
     }
 
     const heroKey = won ? 'hero-puffed' : 'hero-hurt';
@@ -98,5 +107,9 @@ export class ResultScene extends Phaser.Scene {
       );
     retryButton.on('pointerdown', retry);
     this.input.keyboard?.once('keydown-ENTER', retry);
+  }
+
+  override update(_time: number, deltaMs: number): void {
+    this.backdrop?.update(deltaMs);
   }
 }
