@@ -329,8 +329,6 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           delay: 260,
         });
       }
-
-      emitGameEvent(scene.events, GameEvents.ENEMY_SPAWNED, { kind, x, y });
     },
 
     kill,

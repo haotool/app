@@ -8,7 +8,6 @@ export const GameEvents = {
   PLAYER_DAMAGED: 'player:damaged',
   PLAYER_DIED: 'player:died',
   AMMO_CHANGED: 'ammo:changed',
-  ENEMY_SPAWNED: 'enemy:spawned',
   ENEMY_INHALED: 'enemy:inhaled',
   ENEMY_KILLED: 'enemy:killed',
   STAR_FIRED: 'star:fired',
@@ -29,7 +28,6 @@ export interface GameEventPayloads {
   [GameEvents.PLAYER_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.PLAYER_DIED]: { x: number; y: number };
   [GameEvents.AMMO_CHANGED]: { ammo: number; maxAmmo: number; flavor: StarFlavor };
-  [GameEvents.ENEMY_SPAWNED]: { kind: EnemyKind; x: number; y: number };
   [GameEvents.ENEMY_INHALED]: { kind: EnemyKind };
   [GameEvents.ENEMY_KILLED]: { kind: EnemyKind; x: number; y: number };
   [GameEvents.STAR_FIRED]: { x: number; y: number; directionX: 1 | -1; flavor: StarFlavor };

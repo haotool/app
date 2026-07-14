@@ -29,14 +29,24 @@ export function addMuteButton(scene: Phaser.Scene): void {
   button.on('pointerdown', () => {
     const next = !isMuted();
     setMuted(next);
-    localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
+    // 隱私模式下 localStorage 可能拋錯：靜音仍生效，僅不跨次保存。
+    try {
+      localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
+    } catch {
+      /* noop */
+    }
     button.setText(label());
   });
 }
 
 // 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
 export function restoreMutePreference(): void {
-  setMuted(localStorage.getItem(MUTE_STORAGE_KEY) === '1');
+  // 隱私模式下 localStorage 可能拋錯：維持預設不靜音。
+  try {
+    setMuted(localStorage.getItem(MUTE_STORAGE_KEY) === '1');
+  } catch {
+    /* noop */
+  }
 }
 
 function ensureHudTextures(scene: Phaser.Scene): void {

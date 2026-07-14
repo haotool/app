@@ -482,7 +482,7 @@ export function createFx(scene: Phaser.Scene): FxSystem {
         { y: restY - 46, duration: 180, ease: 'Quad.easeOut' },
         { y: restY, duration: 200, ease: 'Quad.easeIn', onComplete: () => playSfx('metal', 1.12) },
         { y: restY - 18, duration: 120, ease: 'Quad.easeOut' },
-        { y: restY, duration: 140, ease: 'Quad.easeIn' },
+        { y: restY, duration: 140, ease: 'Quad.easeIn', onComplete: () => playSfx('metal', 0.9) },
       ],
     });
   }
@@ -539,8 +539,12 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     destroyed = true;
     unbinders.forEach((off) => off());
     unbinders.length = 0;
-    hitStopTimer?.remove();
-    hitStopTimer = null;
+    // hit-stop 進行中被銷毀（如 scene restart）：先恢復物理，避免殘留暫停。
+    if (hitStopTimer) {
+      hitStopTimer.remove();
+      hitStopTimer = null;
+      scene.physics.resume();
+    }
     [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
     phaseVignette?.destroy();
     phaseDimmer?.destroy();
