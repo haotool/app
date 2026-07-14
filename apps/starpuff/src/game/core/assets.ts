@@ -27,13 +27,6 @@ export const ASSETS: { key: string; url: string }[] = [
     url: new URL('../../assets/sprites/boss-enraged.webp', import.meta.url).href,
   },
   { key: 'fx-star', url: new URL('../../assets/sprites/fx-star.webp', import.meta.url).href },
-  { key: 'bg-arena', url: new URL('../../assets/sprites/bg-arena.webp', import.meta.url).href },
-  { key: 'bg-meadow', url: new URL('../../assets/sprites/bg-meadow.webp', import.meta.url).href },
-  {
-    key: 'bg-heights',
-    url: new URL('../../assets/sprites/bg-heights.webp', import.meta.url).href,
-  },
-  { key: 'bg-throne', url: new URL('../../assets/sprites/bg-throne.webp', import.meta.url).href },
   {
     key: 'bg-meadow-l',
     url: new URL('../../assets/sprites/bg-meadow-l.webp', import.meta.url).href,
