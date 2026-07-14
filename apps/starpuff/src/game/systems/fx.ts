@@ -98,6 +98,26 @@ export function popIn(
   });
 }
 
+// 落地塵埃圈：地面向外揚起的一次性塵粒，播畢自毀；供 boss 入場落地等模組層呼叫。
+export function landingDust(scene: Phaser.Scene, x: number, y: number): void {
+  ensureFxTextures(scene);
+  const dust = scene.add
+    .particles(x, y, FX_TEXTURES.dot, {
+      speed: { min: 70, max: 200 },
+      angle: { min: 185, max: 355 },
+      scale: { start: 1.3, end: 0 },
+      alpha: { start: 0.85, end: 0 },
+      lifespan: { min: 260, max: 480 },
+      gravityY: 300,
+      tint: [0xe8d9c8, 0xd9c8b8, 0xfff1e0],
+      emitting: false,
+      maxAliveParticles: 24,
+    })
+    .setDepth(85);
+  dust.explode(16);
+  scene.time.delayedCall(600, () => dust.destroy());
+}
+
 // 落點預警：白描邊粉色橢圓標記，淡入後持續脈動，durationMs 後淡出自毀。
 export function spawnTelegraph(
   scene: Phaser.Scene,

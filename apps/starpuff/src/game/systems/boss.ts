@@ -3,7 +3,7 @@ import { CANVAS, GRAVITY_Y } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { playSfx } from '../audio/sfx';
-import { spawnTelegraph } from './fx';
+import { landingDust, spawnTelegraph } from './fx';
 
 export interface BossHandle {
   spawn(): void;
@@ -28,6 +28,25 @@ const RAIN_TELEGRAPH_MS = 500;
 const SLAM_WINDUP_MS = 350;
 const DASH_WINDUP_MS = 300;
 const SLAM_WINDUP_TINT = 0xff9d9d;
+
+// 入場運鏡（§17）：黑幕淡入 → 推近王座 1.2s → 三段彈跳落座 → 吼叫 → 相機復位後開戰。
+const INTRO_FADE_MS = 280;
+const INTRO_PUSH_MS = 1200;
+const INTRO_ZOOM = 1.45;
+const INTRO_ROAR_MS = 820;
+const INTRO_RESET_MS = 550;
+const INTRO_FADE_RGB = [24, 18, 34] as const;
+// 推近焦點貼齊畫布右下（王座落點側），確保取景不超出畫布邊界。
+const INTRO_FOCUS = {
+  x: CANVAS.width - CANVAS.width / INTRO_ZOOM / 2,
+  y: CANVAS.height - CANVAS.height / INTRO_ZOOM / 2,
+} as const;
+// 三段彈跳落座：首段自空中墜落，後兩段遞減回彈；每段落地觸發震屏+塵埃+音效。
+const INTRO_BOUNCES = [
+  { apexOffset: 0, riseMs: 0, fallMs: 460, shake: 0.012 },
+  { apexOffset: 120, riseMs: 250, fallMs: 230, shake: 0.009 },
+  { apexOffset: 52, riseMs: 180, fallMs: 170, shake: 0.006 },
+] as const;
 
 // 佔位材質：正式 sprite 由美術 stream 交付，缺件時以圓形烘焙保底避免 runtime crash。
 function ensureTextures(scene: Phaser.Scene): void {
@@ -282,19 +301,87 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     });
   };
 
-  return {
-    spawn() {
-      emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
-      scene.tweens.add({
+  const landFx = (shakeIntensity: number, withSquash: boolean) => {
+    landingDust(scene, sprite.x, GROUND_TOP - 4);
+    playSfx('boss-slam');
+    scene.cameras.main.shake(150, shakeIntensity);
+    if (!withSquash) return;
+    scene.tweens.add({
+      targets: sprite,
+      scaleX: baseScaleX * 1.2,
+      scaleY: baseScaleY * 0.78,
+      duration: 90,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+    });
+  };
+
+  const introDrop = () => {
+    const steps: Phaser.Types.Tweens.TweenBuilderConfig[] = [];
+    INTRO_BOUNCES.forEach((bounce, index) => {
+      if (bounce.riseMs > 0) {
+        steps.push({
+          targets: sprite,
+          y: STAND_Y - bounce.apexOffset,
+          duration: bounce.riseMs,
+          ease: 'Quad.easeOut',
+        });
+      }
+      const isLast = index === INTRO_BOUNCES.length - 1;
+      steps.push({
         targets: sprite,
         y: STAND_Y,
-        duration: 900,
-        ease: 'Bounce.easeOut',
-        onComplete: () => {
-          scene.cameras.main.shake(300, 0.015);
-          wobble.play();
-          active = true;
-        },
+        duration: bounce.fallMs,
+        ease: 'Quad.easeIn',
+        onComplete: () => landFx(bounce.shake, !isLast),
+      });
+    });
+    scene.tweens.chain({ tweens: steps, onComplete: introRoar });
+  };
+
+  // 吼叫漣漪：BOSS_SPAWNED 於此發出（boss-roar 音效與震屏由事件綁定驅動），再疊 zoom 脈動。
+  const introRoar = () => {
+    emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
+    scene.tweens.add({
+      targets: scene.cameras.main,
+      zoom: INTRO_ZOOM * 1.06,
+      duration: 130,
+      yoyo: true,
+      repeat: 2,
+      ease: 'Sine.easeInOut',
+    });
+    scene.tweens.add({
+      targets: sprite,
+      scaleX: baseScaleX * 1.14,
+      scaleY: baseScaleY * 1.1,
+      duration: 170,
+      yoyo: true,
+      repeat: 1,
+      ease: 'Sine.easeInOut',
+    });
+    delay(INTRO_ROAR_MS, introReset);
+  };
+
+  const introReset = () => {
+    const cam = scene.cameras.main;
+    cam.pan(CANVAS.width / 2, CANVAS.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
+    cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
+    delay(INTRO_RESET_MS, () => {
+      wobble.play();
+      active = true;
+    });
+  };
+
+  return {
+    spawn() {
+      const cam = scene.cameras.main;
+      const [red, green, blue] = INTRO_FADE_RGB;
+      cam.fadeOut(INTRO_FADE_MS, red, green, blue);
+      cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        cam.pan(INTRO_FOCUS.x, INTRO_FOCUS.y, INTRO_PUSH_MS, 'Sine.easeInOut');
+        cam.zoomTo(INTRO_ZOOM, INTRO_PUSH_MS, 'Sine.easeInOut');
+        cam.fadeIn(INTRO_FADE_MS + 140, red, green, blue);
+        delay(INTRO_PUSH_MS, introDrop);
       });
     },
     applyDamage(amount: number) {
