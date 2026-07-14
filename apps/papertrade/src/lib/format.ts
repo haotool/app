@@ -37,3 +37,8 @@ export function formatAmount(value: number, maxDecimals = 3): string {
     maximumFractionDigits: maxDecimals,
   });
 }
+
+export function formatClockTime(epochMs: number): string {
+  if (!Number.isFinite(epochMs)) return '--';
+  return new Date(epochMs).toLocaleTimeString('en-GB', { hour12: false });
+}

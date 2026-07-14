@@ -39,7 +39,6 @@ global.ResizeObserver = vi.fn(function (this: ResizeObserver) {
   this.disconnect = vi.fn();
 }) as unknown as typeof ResizeObserver;
 
-// 測試環境禁止真實 WebSocket 連線；行為驗證由各測試自行 stub。
 class NoopWebSocket {
   static readonly CONNECTING = 0;
   static readonly OPEN = 1;

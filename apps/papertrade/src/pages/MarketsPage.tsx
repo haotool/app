@@ -42,7 +42,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
       >
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-caption font-semibold text-text"
-          style={{ backgroundColor: `${meta.accent}33` }}
+          style={{ backgroundColor: `color-mix(in srgb, ${meta.accent} 20%, transparent)` }}
         >
           {meta.base.slice(0, 3)}
         </span>

@@ -100,7 +100,10 @@ export function CandleChart({ bars, seriesKey }: CandleChartProps) {
     });
 
     handlesRef.current = { chart, candles, volume };
-    volumeMapperRef.current = buildVolumeMapper(`${longColor}99`, `${shortColor}99`);
+    volumeMapperRef.current = buildVolumeMapper(
+      readToken('--color-long-volume'),
+      readToken('--color-short-volume'),
+    );
     renderedRef.current = null;
 
     return () => {

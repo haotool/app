@@ -21,8 +21,22 @@
   --color-long-bg: rgb(22 199 132 / 10%);
   --color-short-bg: rgb(234 57 67 / 10%);
 
+  --color-long-volume: rgba(22, 199, 132, 0.6);
+  --color-short-volume: rgba(234, 57, 67, 0.6);
+
   --color-warning: #f0b90b;
   --color-danger: #ea3943;
+
+  --color-accent-btc: #f7931a;
+  --color-accent-eth: #627eea;
+  --color-accent-sol: #9945ff;
+  --color-accent-xrp: #0a93dc;
+  --color-accent-doge: #c2a633;
+  --color-accent-bnb: #f3ba2f;
+  --color-accent-ada: #0033ad;
+  --color-accent-ltc: #8e9aaf;
+  --color-accent-link: #2a5ada;
+  --color-accent-avax: #e84142;
 
   --text-price-xl: 28px;
   --text-price-xl--line-height: 34px;

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatAmount, formatCompact, formatPrice, formatSignedPercent } from './format';
+import {
+  formatAmount,
+  formatClockTime,
+  formatCompact,
+  formatPrice,
+  formatSignedPercent,
+} from './format';
 
 describe('formatPrice', () => {
   it('uses one decimal for large prices', () => {
@@ -66,5 +72,15 @@ describe('formatAmount', () => {
 
   it('returns placeholder for non-finite values', () => {
     expect(formatAmount(Number.NaN)).toBe('--');
+  });
+});
+
+describe('formatClockTime', () => {
+  it('formats epoch milliseconds as HH:mm:ss', () => {
+    expect(formatClockTime(Date.UTC(2026, 0, 1, 0, 0, 0))).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+  });
+
+  it('returns placeholder for non-finite values', () => {
+    expect(formatClockTime(Number.NaN)).toBe('--');
   });
 });

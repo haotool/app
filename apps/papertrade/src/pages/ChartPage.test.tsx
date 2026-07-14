@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
@@ -21,14 +21,11 @@ vi.mock('../services/marketFeed', () => ({
   startMarketFeed: vi.fn(() => vi.fn()),
 }));
 
-const orderbookStops: Mock[] = [];
+const { subscribeMock } = vi.hoisted(() => ({ subscribeMock: vi.fn() }));
+
 vi.mock('../services/marketWs', () => ({
   marketWs: {
-    subscribe: vi.fn(() => {
-      const stop = vi.fn();
-      orderbookStops.push(stop);
-      return stop;
-    }),
+    subscribe: subscribeMock,
     onStatus: vi.fn(() => vi.fn()),
     getStatus: vi.fn(() => 'connected'),
   },
@@ -56,7 +53,8 @@ describe('ChartPage', () => {
   beforeEach(() => {
     useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
     useKlinesMock.mockClear();
-    orderbookStops.length = 0;
+    subscribeMock.mockClear();
+    subscribeMock.mockImplementation(() => vi.fn());
   });
 
   it('shows symbol header with live price and stats', async () => {
@@ -84,6 +82,16 @@ describe('ChartPage', () => {
     expect(screen.getByRole('tab', { name: '5m' })).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('keeps timeframe chips at the 44px touch target minimum', async () => {
+    renderChart('/chart/BTCUSDT');
+    const tablist = await screen.findByRole('tablist', { name: '時間框架' });
+    const chips = within(tablist).getAllByRole('tab');
+    expect(chips.length).toBeGreaterThan(0);
+    for (const chip of chips) {
+      expect(chip).toHaveClass('min-h-11');
+    }
+  });
+
   it('redirects invalid symbols back to markets', async () => {
     renderChart('/chart/NOPEUSDT');
     expect(await screen.findByRole('searchbox', { name: '搜尋交易對' })).toBeInTheDocument();
@@ -95,9 +103,13 @@ describe('ChartPage', () => {
     expect(useKlinesMock).toHaveBeenCalledWith('BTCUSDT', '60');
   });
 
-  it('renders order book section and buy/sell CTAs preselecting the pair', async () => {
+  it('renders order book tab and buy/sell CTAs preselecting the pair', async () => {
     renderChart('/chart/BTCUSDT');
-    expect(await screen.findByRole('heading', { name: '訂單簿' })).toBeInTheDocument();
+    const tablist = await screen.findByRole('tablist', { name: '市場資訊' });
+    expect(within(tablist).getByRole('tab', { name: '訂單簿' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(screen.getByRole('link', { name: '買多' })).toHaveAttribute(
       'href',
       '/trade?symbol=BTCUSDT',
@@ -106,6 +118,16 @@ describe('ChartPage', () => {
       'href',
       '/trade?symbol=BTCUSDT',
     );
+  });
+
+  it('switches to the recent trades tab and subscribes to publicTrade', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    await user.click(await screen.findByRole('tab', { name: '最新成交' }));
+    expect(screen.getByRole('tab', { name: '最新成交' })).toHaveAttribute('aria-selected', 'true');
+    expect(subscribeMock).toHaveBeenCalledWith('publicTrade.BTCUSDT', expect.any(Function));
+    expect(screen.getByLabelText('最新成交載入中')).toBeInTheDocument();
   });
 
   it('shows error state when history fails', async () => {

@@ -20,16 +20,16 @@ export interface SymbolMeta {
 }
 
 export const SYMBOL_META: Record<MarketSymbol, SymbolMeta> = {
-  BTCUSDT: { base: 'BTC', name: 'Bitcoin', accent: '#F7931A' },
-  ETHUSDT: { base: 'ETH', name: 'Ethereum', accent: '#627EEA' },
-  SOLUSDT: { base: 'SOL', name: 'Solana', accent: '#9945FF' },
-  XRPUSDT: { base: 'XRP', name: 'XRP', accent: '#0A93DC' },
-  DOGEUSDT: { base: 'DOGE', name: 'Dogecoin', accent: '#C2A633' },
-  BNBUSDT: { base: 'BNB', name: 'BNB', accent: '#F3BA2F' },
-  ADAUSDT: { base: 'ADA', name: 'Cardano', accent: '#0033AD' },
-  LTCUSDT: { base: 'LTC', name: 'Litecoin', accent: '#8E9AAF' },
-  LINKUSDT: { base: 'LINK', name: 'Chainlink', accent: '#2A5ADA' },
-  AVAXUSDT: { base: 'AVAX', name: 'Avalanche', accent: '#E84142' },
+  BTCUSDT: { base: 'BTC', name: 'Bitcoin', accent: 'var(--color-accent-btc)' },
+  ETHUSDT: { base: 'ETH', name: 'Ethereum', accent: 'var(--color-accent-eth)' },
+  SOLUSDT: { base: 'SOL', name: 'Solana', accent: 'var(--color-accent-sol)' },
+  XRPUSDT: { base: 'XRP', name: 'XRP', accent: 'var(--color-accent-xrp)' },
+  DOGEUSDT: { base: 'DOGE', name: 'Dogecoin', accent: 'var(--color-accent-doge)' },
+  BNBUSDT: { base: 'BNB', name: 'BNB', accent: 'var(--color-accent-bnb)' },
+  ADAUSDT: { base: 'ADA', name: 'Cardano', accent: 'var(--color-accent-ada)' },
+  LTCUSDT: { base: 'LTC', name: 'Litecoin', accent: 'var(--color-accent-ltc)' },
+  LINKUSDT: { base: 'LINK', name: 'Chainlink', accent: 'var(--color-accent-link)' },
+  AVAXUSDT: { base: 'AVAX', name: 'Avalanche', accent: 'var(--color-accent-avax)' },
 };
 
 export function isMarketSymbol(value: string): value is MarketSymbol {
@@ -66,4 +66,6 @@ export const KLINE_HISTORY_LIMIT = 1000;
 export const SPARKLINE_POINTS = 24;
 export const SPARKLINE_INTERVAL: TimeframeId = '60';
 export const SPARKLINE_CACHE_TTL_MS = 5 * 60 * 1000;
+export const SPARKLINE_MAX_CONCURRENCY = 3;
 export const ORDERBOOK_DISPLAY_LEVELS = 8;
+export const TRADES_DISPLAY_LIMIT = 30;
