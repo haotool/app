@@ -80,7 +80,7 @@ export const LEVELS: readonly LevelSpec[] = [
     nameZh: '星空回廊',
     bgKey: 'bg-arena',
     worldWidth: 2160,
-    killQuota: 12,
+    killQuota: 10,
     spawnIntervalMs: 1300,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
@@ -109,7 +109,7 @@ export const LEVELS: readonly LevelSpec[] = [
     bgKey: 'bg-throne',
     worldWidth: 480,
     killQuota: 0,
-    spawnIntervalMs: 4500,
+    spawnIntervalMs: 3500,
     maxOnScreen: 2,
     safeZoneTailPx: 0,
     enemyMix: [

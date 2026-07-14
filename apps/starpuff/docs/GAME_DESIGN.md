@@ -125,8 +125,8 @@ src/game/logic/    combat.ts bossFsm.ts waveModel.ts ← pure TS，vitest 對象
 | --- | -------- | -------------- | ------------------- | -------- | ----------------------- | -------------------------------- | -------------------------------------------- |
 | 1   | 果凍草原 | bg-meadow      | 1680px              | 6        | 2600ms                  | jelly 60%、floaty 40%            | 教學關：平台低差、無地形威脅、幾乎不死       |
 | 2   | 雲朵高台 | bg-heights     | 1920px              | 9        | 1800ms                  | floaty 40%、spiky 35%、puffy 25% | 垂直平台跳躍、spiky 巡邏走道、puffy 空中封位 |
-| 3   | 星空回廊 | bg-arena       | 2160px              | 12       | 1300ms                  | 五種混編、可吸怪佔比 50%         | 密度高壓、chompy 卡口、彈藥管理壓力          |
-| 4   | 魔王城   | bg-throne      | 480px（單屏 arena） | —        | 補生 4500ms（僅可吸怪） | Jellord + jelly/floaty 補給      | §6 + §17 強化演出                            |
+| 3   | 星空回廊 | bg-arena       | 2160px              | 10       | 1300ms                  | 五種混編、可吸怪佔比 50%         | 密度高壓、chompy 卡口、彈藥管理壓力          |
+| 4   | 魔王城   | bg-throne      | 480px（單屏 arena） | —        | 補生 3500ms（僅可吸怪） | Jellord + jelly/floaty 補給      | §6 + §17 強化演出                            |
 
 - 走動：關卡 1-3 為側向卷軸（`camera.startFollow(player, true, 0.08, 0.08)` + `setBounds(0,0,worldW,854)`；world 物理邊界同步）。
 - 通關條件：擊殺配額達成後右端出現「星星門」（fx-star 放大 + 光暈脈動 + 浮動 tween，graphics 組合，不新增美術），走入即過關。

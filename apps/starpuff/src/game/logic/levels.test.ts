@@ -16,8 +16,8 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
   it('四關依序為 1-4 且參數符合 §15 表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([1680, 1920, 2160, 480]);
-    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 12, 0]);
-    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([2600, 1800, 1300, 4500]);
+    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0]);
+    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([2600, 1800, 1300, 3500]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0]);
   });
