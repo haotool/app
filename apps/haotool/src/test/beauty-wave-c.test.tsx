@@ -27,10 +27,12 @@ const ratewise = TOOLS.find((tool) => tool.id === 'ratewise');
 if (!ratewise) throw new Error('缺少 ratewise 工具資料');
 
 describe('A1 bento 網格（Home 區 4）', () => {
-  it('bento 卡片 DOM 順序 = TOOLS SSOT 順序，且 slot class 依序放置（閱讀順序不交叉）', () => {
+  it('bento 卡片 DOM 順序 = TOOLS SSOT 前 5 個（策展），且 slot class 依序放置（閱讀順序不交叉）', () => {
     const { container } = renderHome();
     const items = Array.from(container.querySelectorAll<HTMLLIElement>('.bento > li'));
-    expect(items.map((item) => item.dataset['toolId'])).toEqual(TOOLS.map((tool) => tool.id));
+    expect(items.map((item) => item.dataset['toolId'])).toEqual(
+      TOOLS.slice(0, 5).map((tool) => tool.id),
+    );
     expect(items.map((item) => item.className)).toEqual([
       'bento-feature',
       'bento-sm-a',

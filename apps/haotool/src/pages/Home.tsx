@@ -27,6 +27,7 @@ const STATS = [
 ] as const;
 
 // A1 bento 網格放置序（mobile-beauty §2.1）：DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序。
+// 槽位固定 5 格；TOOLS 超出槽位數時首頁僅策展前 5 個，完整清單由 /tools/ 承載。
 const BENTO_SLOTS = [
   'bento-feature',
   'bento-sm-a',
@@ -34,6 +35,8 @@ const BENTO_SLOTS = [
   'bento-wide-a',
   'bento-wide-b',
 ] as const;
+
+const BENTO_TOOLS = TOOLS.slice(0, BENTO_SLOTS.length);
 
 // A1 feature 數據帶（HaoRate 專屬、零時效數值）：靜態 sparkline 形狀＋幣別徽章牆。
 // 禁止清單：匯率值、更新時間、漲跌百分比——一切會過期的內容（PM 9.2 A1 硬規則）。
@@ -213,7 +216,7 @@ export default function Home() {
           {/* A1 bento：行動 2 欄（feature 跨滿＋2×2 mini）／桌面 12 欄 3 列；
               DOM 順序 = TOOLS SSOT 順序 = 視覺閱讀順序（禁止 grid 放置交叉）。 */}
           <ul className="bento mt-12">
-            {TOOLS.map((tool, index) => (
+            {BENTO_TOOLS.map((tool, index) => (
               <li key={tool.id} data-tool-id={tool.id} className={BENTO_SLOTS[index]}>
                 <Reveal className="h-full" delay={index * 0.07}>
                   <ToolCard

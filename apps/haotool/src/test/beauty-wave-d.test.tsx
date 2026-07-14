@@ -138,7 +138,7 @@ describe('A3 View Transition morph（靜態 view-transition-name，N4）', () =>
     const names = Array.from(container.querySelectorAll<HTMLElement>('.bento .tool-vt')).map(
       (node) => node.style.getPropertyValue('--vt-name'),
     );
-    expect(names).toEqual(TOOLS.map((tool) => `tool-${tool.id}`));
+    expect(names).toEqual(TOOLS.slice(0, 5).map((tool) => `tool-${tool.id}`));
     expect(new Set(names).size).toBe(names.length);
   });
 

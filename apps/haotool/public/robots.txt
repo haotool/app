@@ -17,6 +17,7 @@ Sitemap: https://app.haotool.org/split-meow/sitemap.xml
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
+Sitemap: https://app.haotool.org/starpuff/sitemap.xml
 
 # --- Tier 1: TRAINING (基礎模型訓練語料) ---
 User-agent: GPTBot

@@ -80,6 +80,16 @@ export const TOOLS: readonly Tool[] = [
     techChips: ['React 19', 'SSG', 'SVG 動畫'],
     status: 'live',
   },
+  {
+    id: 'starpuff',
+    name: '星噗噗 StarPuff',
+    category: '創意類',
+    description: '吸入果凍怪、擊敗果凍王的可愛動作小遊戲',
+    path: '/starpuff/',
+    iconPath: '/starpuff/icons/icon-192.png',
+    techChips: ['TypeScript', 'Phaser', 'PWA'],
+    status: 'live',
+  },
 ] as const;
 
 /**
