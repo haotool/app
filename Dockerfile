@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for haotool.org Apps
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/)
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/), starpuff (/starpuff/)
 # [2026-07-05] haotool 根站 v2 回歸根路徑（重建依據 docs/dev/046 §9）
 # syntax=docker/dockerfile:1
 
@@ -17,6 +17,7 @@ ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
 ARG VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/
 ARG VITE_PARK_KEEPER_BASE_PATH=/park-keeper/
 ARG VITE_SPLIT_MEOW_BASE_PATH=/split-meow/
+ARG VITE_STARPUFF_BASE_PATH=/starpuff/
 
 # Enable corepack for pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
@@ -44,6 +45,7 @@ COPY apps/haotool/package.json ./apps/haotool/
 COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
 COPY apps/split-meow/package.json ./apps/split-meow/
+COPY apps/starpuff/package.json ./apps/starpuff/
 COPY apps/shared/package.json ./apps/shared/
 
 # [fix:2025-11-06] 安裝依賴時禁用 Husky 並清空 NODE_ENV
@@ -76,7 +78,8 @@ RUN set -eux; \
   VITE_NIHONNAME_BASE_PATH=/nihonname/ pnpm build:nihonname && \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
   VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
-  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow
+  VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow && \
+  VITE_STARPUFF_BASE_PATH=/starpuff/ pnpm build:starpuff
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
@@ -120,12 +123,16 @@ COPY --from=builder /app/apps/park-keeper/dist /usr/share/nginx/html/park-keeper
 # Copy split-meow static assets
 COPY --from=builder /app/apps/split-meow/dist /usr/share/nginx/html/split-meow-app
 
+# Copy starpuff static assets
+COPY --from=builder /app/apps/starpuff/dist /usr/share/nginx/html/starpuff-app
+
 # 創建符號連結以支援路由
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
     ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
     ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
     ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper && \
-    ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow
+    ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow && \
+    ln -s /usr/share/nginx/html/starpuff-app /usr/share/nginx/html/starpuff
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
