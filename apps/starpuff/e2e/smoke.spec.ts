@@ -13,6 +13,7 @@ declare global {
       skipToBoss: () => void;
       spawn: (kind: string, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
+      probe: () => { x: number; scrollX: number };
     };
   }
 }
@@ -55,8 +56,11 @@ test('點開始進入 GameScene：遊戲運行且 HUD 狀態就緒', async ({ pa
   await startGame(page);
   // HUD 由 PLAYER_DAMAGED/AMMO_CHANGED 事件驅動；初始狀態以 debug hook 驗證。
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵（無文字節點）。
+  await expect(page.locator('#joy-zone')).toBeVisible();
   const buttons = page.locator('[data-btn]');
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(2);
+  await expect(buttons.first()).toHaveText('');
   await page.waitForTimeout(1500);
   expect(errors).toEqual([]);
 });
@@ -118,13 +122,13 @@ test('吞 puffy 賦星：彈匣轉珊瑚屬性，發射命中後屬性保留', a
   // 先按住吸入，再於吸入錐前方受控生成 puffy（高空下飄會落入錐內被拉近吞下）。
   await page.keyboard.down('X');
   await page.waitForTimeout(250);
-  await page.evaluate(() => window.__sp.spawn('puffy', 190, 650));
+  await page.evaluate(() => window.__sp.spawn('puffy', 190, 320));
   await expect
     .poll(() => page.evaluate(() => window.__sp.ammo()), { timeout: 8000 })
     .toEqual({ ammo: 1, flavor: 'puffy' });
   await page.keyboard.up('X');
   // 於彈道上生成標準靶（jelly 落地靜止），點按發射爆裂星命中（AoE 小爆走 burstSmall 管線）。
-  await page.evaluate(() => window.__sp.spawn('jelly', 300, 720));
+  await page.evaluate(() => window.__sp.spawn('jelly', 300, 350));
   await page.waitForTimeout(400);
   // 點按發射：需跨至少一個遊戲幀（Phaser 逐幀輪詢 isDown），80ms 仍低於吸入閾值。
   await page.keyboard.down('X');
