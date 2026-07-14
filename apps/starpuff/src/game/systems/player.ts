@@ -28,6 +28,12 @@ const STAR_SIZE = 24;
 const KNOCKBACK_SPEED = 234;
 const KNOCKBACK_LIFT = -286;
 const BLINK_INTERVAL_MS = 100;
+// §18 走路 bob：地面移動時輕微傾斜 + 縱向微彈（純視覺，不影響 hurtbox）。
+const WALK_BOB_OMEGA = 0.02;
+const WALK_TILT_RAD = 0.05;
+const WALK_BOB_PX = 3;
+// §18 落地塵埃圈：著地速度 >300 觸發。
+const DUST_FALL_SPEED = 300;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
@@ -75,7 +81,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let jumpBufferMs = 0;
   let inhaling = false;
   let wasOnGround = false;
+  let walkMs = 0;
+  let lastVy = 0;
   let pose: Pose = 'hero-idle';
+  const baseOriginY = sprite.displayOriginY;
 
   const setPose = (next: Pose) => {
     if (pose === next) return;
@@ -93,6 +102,22 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       scaleY: baseScaleY,
       duration: 160,
       ease: 'Back.easeOut',
+    });
+  };
+
+  // 落地塵埃圈：腳邊白描邊橢圓擴散淡出（graphics 組合，不依賴 fx.ts）。
+  const spawnDustRing = () => {
+    const ring = scene.add
+      .ellipse(sprite.x, sprite.y + PLAYER_SIZE / 2 - 4, 26, 10)
+      .setStrokeStyle(3, 0xffffff, 0.7);
+    scene.tweens.add({
+      targets: ring,
+      scaleX: 2.4,
+      scaleY: 1.8,
+      alpha: 0,
+      duration: 320,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
     });
   };
 
@@ -144,7 +169,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         coyoteMs = tickTimer(coyoteMs, deltaMs);
       }
       jumpBufferMs = tickTimer(jumpBufferMs, deltaMs);
-      if (onGround && !wasOnGround) squashStretch(1.25, 0.75);
+      if (onGround && !wasOnGround) {
+        squashStretch(1.25, 0.75);
+        if (lastVy > DUST_FALL_SPEED) spawnDustRing();
+      }
       wasOnGround = onGround;
 
       if (hurtLockMs <= 0) {
@@ -187,6 +215,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       sprite.setAlpha(
         invulnerableMs > 0 && Math.floor(invulnerableMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1,
       );
+
+      // 走路 bob：|sin| 造雙頻小彈跳，傾斜隨面向擺動；停走或離地即復位。
+      if (onGround && body.velocity.x !== 0) {
+        walkMs += deltaMs;
+        const wave = Math.sin(walkMs * WALK_BOB_OMEGA);
+        sprite.setRotation(facing * wave * WALK_TILT_RAD);
+        sprite.displayOriginY = baseOriginY + Math.abs(wave) * (WALK_BOB_PX / baseScaleY);
+      } else if (walkMs !== 0) {
+        walkMs = 0;
+        sprite.setRotation(0);
+        sprite.displayOriginY = baseOriginY;
+      }
+      lastVy = body.velocity.y;
 
       if (invulnerableMs > 0) setPose('hero-hurt');
       else if (controls.actionHeld && ammo === 0) setPose('hero-inhale');
