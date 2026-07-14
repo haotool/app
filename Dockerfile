@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for haotool.org Apps
-# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/), starpuff (/starpuff/)
+# Includes: haotool (root), ratewise (/ratewise/), nihonname (/nihonname/), quake-school (/quake-school/), park-keeper (/park-keeper/), split-meow (/split-meow/), starpuff (/starpuff/), papertrade (/papertrade/)
 # [2026-07-05] haotool 根站 v2 回歸根路徑（重建依據 docs/dev/046 §9）
 # syntax=docker/dockerfile:1
 
@@ -45,6 +45,7 @@ COPY apps/quake-school/package.json ./apps/quake-school/
 COPY apps/park-keeper/package.json ./apps/park-keeper/
 COPY apps/split-meow/package.json ./apps/split-meow/
 COPY apps/starpuff/package.json ./apps/starpuff/
+COPY apps/papertrade/package.json ./apps/papertrade/
 COPY apps/shared/package.json ./apps/shared/
 
 # [fix:2026-07-14] patchedDependencies 需要 patch 檔於安裝時可讀（pnpm 讀檔算 hash）
@@ -82,7 +83,8 @@ RUN set -eux; \
   VITE_QUAKE_SCHOOL_BASE_PATH=/quake-school/ pnpm build:quake-school && \
   VITE_PARK_KEEPER_BASE_PATH=/park-keeper/ pnpm build:park-keeper && \
   VITE_SPLIT_MEOW_BASE_PATH=/split-meow/ pnpm build:split-meow && \
-  pnpm build:starpuff
+  pnpm build:starpuff && \
+  pnpm build:papertrade
 
 # [fix:2025-12-30] 驗證 sitemaps 已生成並包含在構建中
 # Sitemaps 應該在 dist/ 目錄（構建輸出）而非 public/
@@ -129,13 +131,17 @@ COPY --from=builder /app/apps/split-meow/dist /usr/share/nginx/html/split-meow-a
 # Copy starpuff static assets
 COPY --from=builder /app/apps/starpuff/dist /usr/share/nginx/html/starpuff-app
 
+# Copy papertrade static assets
+COPY --from=builder /app/apps/papertrade/dist /usr/share/nginx/html/papertrade-app
+
 # 創建符號連結以支援路由
 RUN ln -s /usr/share/nginx/html/ratewise-app /usr/share/nginx/html/ratewise && \
     ln -s /usr/share/nginx/html/nihonname-app /usr/share/nginx/html/nihonname && \
     ln -s /usr/share/nginx/html/quake-school-app /usr/share/nginx/html/quake-school && \
     ln -s /usr/share/nginx/html/park-keeper-app /usr/share/nginx/html/park-keeper && \
     ln -s /usr/share/nginx/html/split-meow-app /usr/share/nginx/html/split-meow && \
-    ln -s /usr/share/nginx/html/starpuff-app /usr/share/nginx/html/starpuff
+    ln -s /usr/share/nginx/html/starpuff-app /usr/share/nginx/html/starpuff && \
+    ln -s /usr/share/nginx/html/papertrade-app /usr/share/nginx/html/papertrade
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
