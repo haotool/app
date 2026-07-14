@@ -14,8 +14,10 @@ export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 export const IMAGE_RESOURCES = [
   '/icons/favicon.png',
   '/icons/icon-192.png',
+  '/icons/icon-192-maskable.png',
   '/icons/icon-192.svg',
   '/icons/icon-512.png',
+  '/icons/icon-512-maskable.png',
   '/icons/icon-512.svg',
   '/icons/og-image.png',
 ];
