@@ -34,6 +34,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 | **[Quake-School](./apps/quake-school/)** | 互動式地震科學教育平台                         | Live | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**   | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[StarPuff](./apps/starpuff/)**         | 吸入果凍怪、擊敗果凍王的直向 Boss Rush 小遊戲  | Live | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
 | **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### 應用特色
@@ -262,6 +263,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 | **[Quake-School](./apps/quake-school/)** | Interactive earthquake science education            | Live   | [app.haotool.org/quake-school](https://app.haotool.org/quake-school/) |
 | **[Park Keeper](./apps/park-keeper/)**   | Parking lot navigator with GPS compass + i18n       | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | Cat-themed trip expense splitter with share + emoji | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
+| **[StarPuff](./apps/starpuff/)**         | Vertical boss-rush action mini game with Phaser     | Live   | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
 | **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage       | Live   | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### Tech Stack
