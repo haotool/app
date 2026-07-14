@@ -85,9 +85,10 @@ test('第一關補滿配額出星星門，走入後轉場進第二關', async ({
   await startGame(page);
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(1);
   // 注入擊殺配額加速：星星門於世界右端生成，按住右行走向門。
+  // 走門全程約 12s + 轉場 2s；全套連跑時機器負載會再拉長，上限放寬至 30s。
   await page.evaluate(() => window.__sp.fillQuota());
   await page.keyboard.down('ArrowRight');
-  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 20000 }).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 30000 }).toBe(2);
   await page.keyboard.up('ArrowRight');
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
@@ -154,6 +155,37 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
     .toBe('Result');
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  // 長按吸入期間依序餵怪吞滿三槽（同種連吞會升級同槽，故混搭三種）。
+  await page.keyboard.down('X');
+  await page.waitForTimeout(250);
+  await page.evaluate(() => window.__sp.spawn('jelly', 185, 340));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(1);
+  await page.evaluate(() => window.__sp.spawn('puffy', 190, 300));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(2);
+  await page.evaluate(() => window.__sp.spawn('floaty', 190, 345));
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(3);
+  // 滿彈匣持續長按 0.8s → 星暴：清空彈匣（清場斷言以彈匣歸零 + 零錯誤為準）。
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
+  await page.keyboard.up('X');
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('彩蛋 reach-x：開局反向走到世界最左緣獲 +1 HP（§24）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await page.keyboard.down('ArrowLeft');
+  // 起點 x=100 → 最左緣 maxX 60；HP 上限升至 6。
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp()), { timeout: 8000 }).toBe(6);
+  await page.keyboard.up('ArrowLeft');
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });
