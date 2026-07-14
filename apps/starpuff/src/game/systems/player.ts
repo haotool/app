@@ -24,8 +24,8 @@ type Pose = 'hero-idle' | 'hero-inhale' | 'hero-puffed' | 'hero-hurt';
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
-const KNOCKBACK_SPEED = 180;
-const KNOCKBACK_LIFT = -220;
+const KNOCKBACK_SPEED = 234;
+const KNOCKBACK_LIFT = -286;
 const HURT_LOCK_MS = 250;
 const BLINK_INTERVAL_MS = 100;
 

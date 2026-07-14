@@ -14,7 +14,7 @@ export const PLAYER = {
   jumpVelocity: -420,
   floatLift: -260,
   maxHp: 5,
-  invulnerableMs: 1200,
+  invulnerableMs: 1500,
   maxFlaps: 3,
 } as const;
 

@@ -41,19 +41,19 @@ describe('combat', () => {
   });
 
   it('resolveHit 正常受擊：扣血並啟動 i-frame', () => {
-    expect(resolveHit(5, 0, 1, 1200)).toEqual({ hp: 4, invulnerableMs: 1200, damaged: true });
+    expect(resolveHit(5, 0, 1, 1500)).toEqual({ hp: 4, invulnerableMs: 1500, damaged: true });
   });
 
   it('resolveHit i-frame 期間免傷且不重置計時', () => {
-    expect(resolveHit(4, 300, 1, 1200)).toEqual({ hp: 4, invulnerableMs: 300, damaged: false });
+    expect(resolveHit(4, 300, 1, 1500)).toEqual({ hp: 4, invulnerableMs: 300, damaged: false });
   });
 
   it('resolveHit HP 不低於 0', () => {
-    expect(resolveHit(1, 0, 5, 1200).hp).toBe(0);
+    expect(resolveHit(1, 0, 5, 1500).hp).toBe(0);
   });
 
   it('resolveHit 已死亡（HP 0）不再結算', () => {
-    expect(resolveHit(0, 0, 1, 1200)).toEqual({ hp: 0, invulnerableMs: 0, damaged: false });
+    expect(resolveHit(0, 0, 1, 1500)).toEqual({ hp: 0, invulnerableMs: 0, damaged: false });
   });
 
   it('tickTimer 遞減且不低於 0', () => {
