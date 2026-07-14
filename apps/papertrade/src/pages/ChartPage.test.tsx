@@ -39,6 +39,7 @@ const useKlinesMock = useKlines as Mock;
 const btcTicker: Ticker = {
   symbol: 'BTCUSDT',
   lastPrice: 64486.1,
+  markPrice: 64486.1,
   price24hPcnt: 0.038264,
   highPrice24h: 65000,
   lowPrice24h: 61848,

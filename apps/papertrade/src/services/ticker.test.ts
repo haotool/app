@@ -17,19 +17,44 @@ const snapshotMessage = {
 };
 
 describe('parseTickerMessage', () => {
-  it('parses a full snapshot into a ticker', () => {
+  it('parses a full snapshot into a ticker with markPrice fallback to lastPrice', () => {
     const update = parseTickerMessage(snapshotMessage);
     expect(update).toEqual({
       kind: 'snapshot',
       ticker: {
         symbol: 'BTCUSDT',
         lastPrice: 64486.1,
+        markPrice: 64486.1,
         price24hPcnt: 0.038264,
         highPrice24h: 65000,
         lowPrice24h: 61848,
         turnover24h: 5122660654.3565,
         volume24h: 80648.719,
       },
+    });
+  });
+
+  it('prefers explicit markPrice over lastPrice in snapshots', () => {
+    const update = parseTickerMessage({
+      ...snapshotMessage,
+      data: { ...snapshotMessage.data, markPrice: '64490.55' },
+    });
+    expect(update?.kind).toBe('snapshot');
+    if (update?.kind === 'snapshot') {
+      expect(update.ticker.markPrice).toBe(64490.55);
+    }
+  });
+
+  it('includes markPrice in delta patches', () => {
+    const update = parseTickerMessage({
+      topic: 'tickers.BTCUSDT',
+      type: 'delta',
+      data: { symbol: 'BTCUSDT', markPrice: '64490.55' },
+    });
+    expect(update).toEqual({
+      kind: 'delta',
+      symbol: 'BTCUSDT',
+      patch: { markPrice: 64490.55 },
     });
   });
 

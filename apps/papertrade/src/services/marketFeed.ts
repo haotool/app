@@ -2,6 +2,7 @@ import { SYMBOLS } from '../config/market';
 import { marketWs } from './marketWs';
 import { parseTickerMessage } from './ticker';
 import { useMarketStore } from '../stores/marketStore';
+import { useTradeStore } from '../stores/tradeStore';
 
 export function startMarketFeed(): () => void {
   const { setTicker, patchTicker, setWsStatus } = useMarketStore.getState();
@@ -16,6 +17,10 @@ export function startMarketFeed(): () => void {
         setTicker(update.ticker);
       } else {
         patchTicker(update.symbol, update.patch);
+      }
+      const ticker = useMarketStore.getState().tickers[symbol];
+      if (ticker !== undefined) {
+        useTradeStore.getState().applyTick(symbol, ticker.markPrice, Date.now());
       }
     }),
   );

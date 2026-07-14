@@ -13,6 +13,7 @@ vi.mock('../services/sparkline', () => ({
 const btcTicker: Ticker = {
   symbol: 'BTCUSDT',
   lastPrice: 64486.1,
+  markPrice: 64486.1,
   price24hPcnt: 0.038264,
   highPrice24h: 65000,
   lowPrice24h: 61848,
@@ -23,6 +24,7 @@ const btcTicker: Ticker = {
 const ethTicker: Ticker = {
   symbol: 'ETHUSDT',
   lastPrice: 3421.55,
+  markPrice: 3421.55,
   price24hPcnt: -0.0212,
   highPrice24h: 3600,
   lowPrice24h: 3300,

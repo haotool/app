@@ -4,6 +4,7 @@ import { isMarketSymbol, type MarketSymbol } from '../config/market';
 export interface Ticker {
   symbol: MarketSymbol;
   lastPrice: number;
+  markPrice: number;
   price24hPcnt: number;
   highPrice24h: number;
   lowPrice24h: number;
@@ -16,6 +17,7 @@ const wsTickerSchema = z.object({
   data: z.object({
     symbol: z.string(),
     lastPrice: z.string().optional(),
+    markPrice: z.string().optional(),
     price24hPcnt: z.string().optional(),
     highPrice24h: z.string().optional(),
     lowPrice24h: z.string().optional(),
@@ -30,6 +32,7 @@ export type TickerUpdate =
 
 const NUMERIC_FIELDS = [
   'lastPrice',
+  'markPrice',
   'price24hPcnt',
   'highPrice24h',
   'lowPrice24h',
@@ -72,6 +75,7 @@ export function parseTickerMessage(message: unknown): TickerUpdate | null {
       ticker: {
         symbol: data.symbol,
         lastPrice,
+        markPrice: patch.markPrice ?? lastPrice,
         price24hPcnt,
         highPrice24h,
         lowPrice24h,
