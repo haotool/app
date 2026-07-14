@@ -324,6 +324,8 @@ gh pr merge <PR_NUMBER> --squash --delete-branch=false
 
 **Cloudflare 邊緣同步**：release 需確認 `security-headers` worker 也已部署；`wrangler deploy` 需 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`；secret 缺失時明確 `skip` 並回報，不可假設 edge 已同步。完整 SOP 見 `AGENTS.md` § security-headers Worker 部署 SOP。
 
+**Zeabur Dockerfile 覆寫 split-brain**：GH/Zeabur 部署 success 但新路徑 404、build log 建置鏈與 repo `Dockerfile` 不符（`rg "pnpm build:" Dockerfile` 對照 log 缺步驟）→ 查 Zeabur `spec.source.dockerfile` 是否殘留排障貼入的舊版覆寫；修法：`updateDockerfile(serviceID, dockerfile: "")` 清空恢復 repo SSOT 後 redeploy。詳見 `docs/DEPLOYMENT.md` § Zeabur 服務層 Dockerfile 覆寫治理。
+
 ## Cloudflare SEO 直通實踐（CF SEO Straight-Path Patterns）
 
 基於 2026-03 SEO 審核執行歷史提煉，避免重蹈彎路。

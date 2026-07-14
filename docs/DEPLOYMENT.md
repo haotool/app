@@ -146,6 +146,22 @@ curl -I http://localhost:8080/park-keeper/about/ | head -n 5
 - Cloudflare：設定 `CLOUDFLARE_ZONE_ID` 與 `CLOUDFLARE_API_TOKEN`。
 - 無 API 時：依腳本輸出清單於 CDN 後台手動操作。
 
+### Zeabur 服務層 Dockerfile 覆寫治理
+
+> 2026-07-14 P0 事故：Zeabur service `app` 的 `spec.source.dockerfile` 殘留排障期間貼入的舊版覆寫，完全取代 repo `Dockerfile`，導致 main 新程式碼（如 `apps/starpuff`）未進入生產映像而 404。
+
+- **必須（MUST）**：Zeabur 服務層 `spec.source.dockerfile` 非空時，**完全覆蓋** repo 根目錄 `Dockerfile` 與 `zbpack.json` 指向的建置定義；平台不會合併兩者，也不會自動同步 repo 更新。
+- **必須（MUST）**：排障期間若曾透過 Dashboard 或 GraphQL 貼入臨時 Dockerfile，收工時必須清空覆寫以恢復 repo SSOT，再觸發 redeploy。清空範例（不含 token）：
+  ```graphql
+  mutation {
+    updateDockerfile(serviceID: "<SERVICE_ID>", dockerfile: "") {
+      ok
+    }
+  }
+  ```
+- **必須（MUST）**：部署異常（GH/Zeabur 顯示 success 但新路徑 404、或 build log 與預期不符）時，比對 Zeabur build log 建置鏈與 repo `Dockerfile`：以 `rg "pnpm build:" Dockerfile` 列出預期步驟，對照 log 是否缺漏（例如缺 `pnpm build:starpuff` 或 stage-1 `COPY` 步數不符）。
+- **建議（RECOMMENDED）**：變更 Zeabur 服務設定（Dockerfile 覆寫、環境變數、build 參數）前，先讀出並保存當前設定備份（例如 GraphQL `service { spec { source { dockerfile } } }` 或 Dashboard 匯出），以便事故後比對與還原。
+
 ### Release Workflow 與 Cloudflare Worker 同步
 
 - `Release` workflow 在 `main` push 時，會先嘗試部署 `security-headers/wrangler.jsonc` 對應的 Cloudflare Worker，再執行 CDN purge；有版本變更時則會一併建立 GitHub release/tag。

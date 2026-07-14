@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+113
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+113
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-14
+- ID：neutral-zeabur-dockerfile-override-p0
+- 原因：Zeabur service 層 spec.source.dockerfile 殘留昨日排障貼入的舊版覆寫，蓋掉 repo Dockerfile 致 starpuff 上線後生產 404（split-brain：首頁卡片在、app 本體缺）
+- 解法：GraphQL updateDockerfile 清空覆寫恢復 repo SSOT + redeploy，11/11 資源復綠；SOP 落檔 DEPLOYMENT.md 防重演
 
 - 日期：2026-07-14
 - ID：reward-starpuff-24h-multiagent-game-delivery
