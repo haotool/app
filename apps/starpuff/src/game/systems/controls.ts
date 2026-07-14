@@ -57,6 +57,15 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     cleanups.push(() => el.removeEventListener(type, handler as EventListener));
   };
 
+  // 合成事件（e2e/QA）無 active pointer，setPointerCapture 會擲 NotFoundError；捕捉失敗不影響輸入。
+  const capture = (el: HTMLElement, pointerId: number) => {
+    try {
+      el.setPointerCapture(pointerId);
+    } catch {
+      /* noop */
+    }
+  };
+
   // 左半屏浮動搖桿：底環定錨落點、浮球隨指，抬指淡出；pointerId 分路支援與 A/B 同按。
   const zone = document.getElementById('joy-zone');
   const ring = zone?.querySelector<HTMLElement>('.joy-ring') ?? null;
@@ -78,10 +87,10 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       joy.id = event.pointerId;
       center.x = event.clientX;
       center.y = event.clientY;
-      zone.setPointerCapture(event.pointerId);
       place(ring, center.x, center.y);
       place(thumb, center.x, center.y);
       zone.classList.add(ENGAGED_CLASS);
+      capture(zone, event.pointerId);
     });
     on(zone, 'pointermove', (event) => {
       if (event.pointerId !== joy.id) return;
@@ -110,9 +119,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     on(el, 'pointerdown', (event) => {
       event.preventDefault();
       activeId = event.pointerId;
-      el.setPointerCapture(event.pointerId);
       held[name] = true;
       el.classList.add(PRESSED_CLASS);
+      capture(el, event.pointerId);
     });
     const release = (event: PointerEvent) => {
       if (event.pointerId !== activeId) return;
