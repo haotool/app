@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import { playSfx } from '../audio/sfx';
 
 export const FX_TEXTURES = {
   dot: 'fx-dot',
   star: 'fx-star-particle',
+  crown: 'fx-crown',
 } as const;
 
 const PASTELS = [0xffb3c7, 0xcbb7f0, 0xd9f29b, 0xffd966, 0xbff3e0];
@@ -54,6 +56,26 @@ export function ensureFxTextures(scene: Phaser.Scene): void {
     g.fillStyle(0xffffff, 1);
     fillStarPath(g, 8, 8, 8, 3.4);
     g.generateTexture(FX_TEXTURES.star, 16, 16);
+    g.destroy();
+  }
+  if (!scene.textures.exists(FX_TEXTURES.crown)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0xffc93c, 1);
+    g.beginPath();
+    g.moveTo(2, 30);
+    g.lineTo(4, 10);
+    g.lineTo(14, 20);
+    g.lineTo(23, 2);
+    g.lineTo(32, 20);
+    g.lineTo(42, 10);
+    g.lineTo(44, 30);
+    g.closePath();
+    g.fillPath();
+    g.fillStyle(0xffe28a, 1);
+    g.fillRect(2, 26, 42, 4);
+    g.fillStyle(0xff6fa5, 1);
+    g.fillCircle(23, 24, 3.4);
+    g.generateTexture(FX_TEXTURES.crown, 46, 32);
     g.destroy();
   }
 }
@@ -387,6 +409,43 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     phaseDimmer = null;
   }
 
+  // 皇冠戰利品：自魔王頭頂拋物線滾落，落地彈兩下後靜置。
+  function dropCrown(x: number, y: number): void {
+    const crown = scene.add.image(x, y - 62, FX_TEXTURES.crown).setDepth(91);
+    const restY = y + 50;
+    const drift = Phaser.Math.Between(50, 80) * (x > scene.scale.width / 2 ? -1 : 1);
+    scene.tweens.add({ targets: crown, x: x + drift, duration: 950, ease: 'Sine.easeOut' });
+    scene.tweens.add({ targets: crown, angle: -360, duration: 740, ease: 'Sine.easeOut' });
+    scene.tweens.chain({
+      targets: crown,
+      tweens: [
+        { y: y - 150, duration: 320, ease: 'Quad.easeOut' },
+        { y: restY, duration: 420, ease: 'Quad.easeIn', onComplete: () => playSfx('hit') },
+        { y: restY - 46, duration: 180, ease: 'Quad.easeOut' },
+        { y: restY, duration: 200, ease: 'Quad.easeIn', onComplete: () => playSfx('hit') },
+        { y: restY - 18, duration: 120, ease: 'Quad.easeOut' },
+        { y: restY, duration: 140, ease: 'Quad.easeIn' },
+      ],
+    });
+  }
+
+  // 擊破多段演出（§17）：時緩 0.3× → 連環小爆 ×6（每爆小震）→ 全屏白閃 → 大星爆 → 皇冠落地。
+  function defeatSequence(x: number, y: number): void {
+    slowMo(0.3, 600);
+    clearPhaseOverlays();
+    for (let i = 0; i < 6; i += 1) {
+      scene.time.delayedCall(i * 150, () => {
+        burst.explode(10, x + Phaser.Math.Between(-60, 60), y + Phaser.Math.Between(-50, 50));
+        shake(3);
+      });
+    }
+    scene.time.delayedCall(900, () => {
+      scene.cameras.main.flash(220, 255, 255, 255);
+      starBurst(x, y);
+      dropCrown(x, y);
+    });
+  }
+
   function bind<K extends GameEventName>(
     event: K,
     handler: Parameters<typeof onGameEvent<K>>[2],
@@ -414,11 +473,7 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     }
   });
   bind(GameEvents.BOSS_PHASE, () => phaseShock());
-  bind(GameEvents.BOSS_DEFEATED, ({ x, y }) => {
-    clearPhaseOverlays();
-    starBurst(x, y);
-    slowMo(0.3, 600);
-  });
+  bind(GameEvents.BOSS_DEFEATED, ({ x, y }) => defeatSequence(x, y));
   bind(GameEvents.GAME_WON, () => confetti());
 
   function destroy(): void {
