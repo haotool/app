@@ -11,17 +11,30 @@
   box-sizing: border-box;
 }
 
+/* iOS 直通全鏈（§22 / recon A.1）：user-select 鏈抑制長按 loupe，touch-callout 關長按選單；
+   須設在實際被 hit-test 的元素及其祖先，缺一層即漏。 */
+html,
+body,
+#app,
+#app canvas,
+#controls,
+#joy-zone,
+.ctl-btn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* PWA 高度用 100vh（recon A.2）：standalone 冷啟動禁 100dvh。 */
 html,
 body {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
   background: var(--sp-bg);
-  touch-action: none;
   overscroll-behavior: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
 }
 
 #app {
@@ -34,7 +47,6 @@ body {
 
 #app canvas {
   display: block;
-  touch-action: none;
 }
 
 /* 虛擬手柄（§21）：左半屏浮動搖桿 + 右下 A/B 斜排；僅遊戲場景顯示（is-active 由 controls 系統切換）。 */
@@ -50,15 +62,14 @@ body {
   display: block;
 }
 
-/* 左半屏搖桿觸控區：頂部保留 20px phantom 緩衝（recon B.9）。 */
+/* 左半屏搖桿觸控區：頂部保留 20px phantom 緩衝、左緣避開瀏海 inset（recon B.9）。 */
 #joy-zone {
   position: absolute;
   top: 20px;
   bottom: 0;
-  left: 0;
+  left: env(safe-area-inset-left, 0px);
   width: 50%;
   pointer-events: auto;
-  touch-action: none;
 }
 
 .joy-ring,
@@ -105,7 +116,6 @@ body {
   border-radius: 50%;
   border: 2px solid var(--sp-btn-border);
   pointer-events: auto;
-  touch-action: none;
   cursor: pointer;
   backdrop-filter: blur(2px);
   transition: transform 0.08s ease-out;

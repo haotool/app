@@ -12,6 +12,19 @@ import { restoreMutePreference } from './game/systems/hud';
 
 restoreMutePreference();
 
+// iOS 觸控直通（§22 / recon checklist）：長按 loupe 的觸發點是按住不動的 touchstart，
+// pointerdown preventDefault 不足，app 層需 passive:false 保險；三指以上留給系統手勢。
+document.getElementById('app')?.addEventListener(
+  'touchstart',
+  (event) => {
+    if (event.touches.length <= 2) event.preventDefault();
+  },
+  { passive: false },
+);
+// Safari pinch 縮放攔截；contextmenu 關長按/右鍵選單。
+document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+document.addEventListener('contextmenu', (event) => event.preventDefault());
+
 // Phaser 接線集中於此；數值 SSOT 由 config.ts（純資料）供給。
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -34,9 +47,26 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 
+// iOS orientationchange 後 viewport 尺寸非同步就緒，延遲 350ms 再刷新 Scale（recon C.9）。
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => game.scale.refresh(), 350);
+});
+
+const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
+
+// 反卡死（§26）：切背景暫停遊戲場景（物理與計時一併停止），回前景恢復。
+document.addEventListener('visibilitychange', () => {
+  const plugin = gameScene()?.scene;
+  if (!plugin) return;
+  if (document.hidden) {
+    if (plugin.isActive()) plugin.pause();
+  } else if (plugin.isPaused()) {
+    plugin.resume();
+  }
+});
+
 // e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
 // 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口。
-const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 declare global {
   interface Window {
     __sp: {
