@@ -6,6 +6,9 @@ import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
+import { restoreMutePreference } from './game/systems/hud';
+
+restoreMutePreference();
 
 // Phaser 接線集中於此；數值 SSOT 由 config.ts（純資料）供給。
 const game = new Phaser.Game({
@@ -30,6 +33,7 @@ const game = new Phaser.Game({
 });
 
 // e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
+// 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口。
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 declare global {
   interface Window {
@@ -45,13 +49,15 @@ declare global {
     };
   }
 }
-window.__sp = {
-  scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
-  stage: () => gameScene().currentLevelId,
-  bossHp: () => gameScene().bossHp,
-  playerHp: () => gameScene().playerHp,
-  win: () => gameScene().forceWin(),
-  lose: () => gameScene().forceLose(),
-  fillQuota: () => gameScene().forceGate(),
-  skipToBoss: () => gameScene().skipToBoss(),
-};
+if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+  window.__sp = {
+    scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
+    stage: () => gameScene().currentLevelId,
+    bossHp: () => gameScene().bossHp,
+    playerHp: () => gameScene().playerHp,
+    win: () => gameScene().forceWin(),
+    lose: () => gameScene().forceLose(),
+    fillQuota: () => gameScene().forceGate(),
+    skipToBoss: () => gameScene().skipToBoss(),
+  };
+}

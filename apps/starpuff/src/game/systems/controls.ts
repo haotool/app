@@ -37,6 +37,11 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   const held: Record<ButtonName, boolean> = { left: false, right: false, a: false, b: false };
   const cleanups: (() => void)[] = [];
 
+  // 虛擬按鍵僅遊戲場景顯示（修復包 B）：controls 系統生命週期即 GameScene 生命週期。
+  const controlsRoot = document.getElementById('controls');
+  controlsRoot?.classList.add('is-active');
+  cleanups.push(() => controlsRoot?.classList.remove('is-active'));
+
   document.querySelectorAll<HTMLElement>('[data-btn]').forEach((el) => {
     const name = el.dataset['btn'] as ButtonName | undefined;
     if (!name || !(name in held)) return;

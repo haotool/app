@@ -37,14 +37,14 @@ body {
   touch-action: none;
 }
 
-/* 虛擬按鍵：左下方向鍵、右下 A/B，熱區 >= 56px。 */
+/* 虛擬按鍵：左下方向鍵、右下 A/B，熱區 >= 56px；僅遊戲場景顯示（is-active 由 controls 系統切換）。 */
 #controls {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 10;
-  display: flex;
+  display: none;
   justify-content: space-between;
   align-items: flex-end;
   padding: 16px;
@@ -52,6 +52,10 @@ body {
   padding-left: calc(16px + env(safe-area-inset-left));
   padding-right: calc(16px + env(safe-area-inset-right));
   pointer-events: none;
+}
+
+#controls.is-active {
+  display: flex;
 }
 
 .controls-left,

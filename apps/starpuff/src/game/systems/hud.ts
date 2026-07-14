@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { isMuted, setMuted } from '../audio/mute';
 import { PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { fillStarPath } from './fx';
@@ -6,9 +7,36 @@ import { fillStarPath } from './fx';
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
 const HUD_DEPTH = 100;
+const MUTE_STORAGE_KEY = 'sp-muted';
 
 export interface Hud {
   destroy(): void;
+}
+
+// 右上角靜音鈕（修復包 B）：Title 與 Game 場景共用；狀態經 localStorage 跨次保存。
+export function addMuteButton(scene: Phaser.Scene): void {
+  const label = () => (isMuted() ? '🔇' : '🔊');
+  const button = scene.add
+    .text(scene.scale.width - 12, 12, label(), {
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '28px',
+      padding: { x: 10, y: 10 },
+    })
+    .setOrigin(1, 0)
+    .setDepth(HUD_DEPTH + 20)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true });
+  button.on('pointerdown', () => {
+    const next = !isMuted();
+    setMuted(next);
+    localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
+    button.setText(label());
+  });
+}
+
+// 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
+export function restoreMutePreference(): void {
+  setMuted(localStorage.getItem(MUTE_STORAGE_KEY) === '1');
 }
 
 function ensureHudTextures(scene: Phaser.Scene): void {
@@ -32,6 +60,7 @@ function ensureHudTextures(scene: Phaser.Scene): void {
 
 export function createHud(scene: Phaser.Scene): Hud {
   ensureHudTextures(scene);
+  addMuteButton(scene);
 
   const bus = scene.events;
   const unbinders: (() => void)[] = [];

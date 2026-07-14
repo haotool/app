@@ -3,6 +3,7 @@ import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
+import { addMuteButton } from '../systems/hud';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -11,6 +12,7 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     const centerX = CANVAS.width / 2;
+    addMuteButton(this);
 
     if (this.textures.exists('bg-arena')) {
       const bg = this.add.image(centerX, CANVAS.height / 2, 'bg-arena');
