@@ -35,6 +35,23 @@ export const ASSETS: { key: string; url: string }[] = [
   },
   { key: 'bg-throne', url: new URL('../../assets/sprites/bg-throne.webp', import.meta.url).href },
   {
+    key: 'bg-meadow-l',
+    url: new URL('../../assets/sprites/bg-meadow-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-heights-l',
+    url: new URL('../../assets/sprites/bg-heights-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-arena-l',
+    url: new URL('../../assets/sprites/bg-arena-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-throne-l',
+    url: new URL('../../assets/sprites/bg-throne-l.webp', import.meta.url).href,
+  },
+  { key: 'fx-clouds', url: new URL('../../assets/sprites/fx-clouds.webp', import.meta.url).href },
+  {
     key: 'minion-puffy',
     url: new URL('../../assets/sprites/minion-puffy.webp', import.meta.url).href,
   },
