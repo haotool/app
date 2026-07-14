@@ -33,7 +33,7 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   chompy: 330,
 };
 
-const TUTORIAL_TEXT = '◀▶ 移動　Ⓐ 跳躍\nⒷ 長按吸入・點按發射';
+const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
 const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;
