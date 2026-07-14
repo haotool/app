@@ -18,6 +18,7 @@ export interface WaveRunner {
   update(deltaMs: number): void;
   noteInput(): void;
   isGateOpen(): boolean;
+  getQuota(): { killCount: number; killQuota: number };
   forceQuota(): void;
   destroy(): void;
 }
@@ -174,6 +175,11 @@ export function createWaveRunner(
 
     isGateOpen() {
       return run.gateOpen;
+    },
+
+    // 深度 QA 觀測點（US-025）：當前配額進度。
+    getQuota() {
+      return { killCount: run.killCount, killQuota: level.killQuota };
     },
 
     // e2e 除錯鉤子：直接補滿配額觸發開門，仍走正式事件管道。

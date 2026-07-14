@@ -4,6 +4,7 @@ import { CANVAS, GRAVITY_Y } from './game/core/config';
 import { SceneKeys, type EnemyKind } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
+import type { WaveRunner } from './game/systems/waves';
 import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
@@ -82,12 +83,18 @@ declare global {
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
       probe: () => { x: number; scrollX: number };
+      alive: () => { total: number; inhalable: number };
+      gateOpen: () => boolean;
+      quota: () => { killCount: number; killQuota: number };
+      listeners: (event: string) => number;
+      enemies: () => { kind: string; x: number; y: number }[];
     };
   }
 }
 if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
   // 受控 spawn 與彈匣查詢（US-018）：以型別斷言讀場景私有系統，production 不暴露。
-  const internals = () => gameScene() as unknown as { enemies: EnemySystem; player: PlayerHandle };
+  const internals = () =>
+    gameScene() as unknown as { enemies: EnemySystem; player: PlayerHandle; waves: WaveRunner };
   window.__sp = {
     scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
     stage: () => gameScene().currentLevelId,
@@ -101,5 +108,23 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     ammo: () => internals().player.getAmmoState(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。
     probe: () => ({ x: internals().player.sprite.x, scrollX: gameScene().cameras.main.scrollX }),
+    // 反卡死深度 QA 觀測點（US-025）：場上敵數、開門狀態與事件監聽數。
+    alive: () => ({
+      total: internals().enemies.aliveCount(),
+      inhalable: internals().enemies.aliveInhalableCount(),
+    }),
+    gateOpen: () => internals().waves.isGateOpen(),
+    quota: () => internals().waves.getQuota(),
+    listeners: (event: string) => gameScene().events.listenerCount(event),
+    enemies: () => {
+      const list: { kind: string; x: number; y: number }[] = [];
+      for (const child of internals().enemies.getGroup().getChildren()) {
+        const kind = internals().enemies.kindOf(child);
+        if (!kind) continue;
+        const sprite = child as unknown as { x: number; y: number };
+        list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+      }
+      return list;
+    },
   };
 }
