@@ -1,7 +1,7 @@
 /**
  * Tools Data - Single Source of Truth
  *
- * 工具卡資料 SSOT（PRD §5.2 五工具）
+ * 工具卡資料 SSOT
  * 連結一律為相對於 app.haotool.org 網域根的路徑，host 由 APP_INFO.appsHostUrl 集中管理。
  */
 import { APP_INFO } from './app-info';
@@ -58,6 +58,16 @@ export const TOOLS: readonly Tool[] = [
     path: '/split-meow/',
     iconPath: '/split-meow/icons/icon-192.png',
     techChips: ['React 19', 'PWA', 'Tailwind v4'],
+    status: 'live',
+  },
+  {
+    id: 'papertrade',
+    name: '紙上交易所 PaperTrade',
+    category: '工具類',
+    description: '真實即時行情×模擬資金，零風險練習加密貨幣合約交易',
+    path: '/papertrade/',
+    iconPath: '/papertrade/icons/icon-192.png',
+    techChips: ['React 19', 'PWA', '即時行情'],
     status: 'live',
   },
   {

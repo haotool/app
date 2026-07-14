@@ -30,6 +30,7 @@ describe('haotool PWA scope guard（行為級）', () => {
     '/park-keeper',
     '/quake-school/x',
     '/starpuff/',
+    '/papertrade/chart/BTCUSDT',
   ])('denylist 命中 sibling app 路徑 %s', (pathname) => {
     expect(matchesAny(SIBLING_APP_DENYLIST, pathname)).toBe(true);
   });
@@ -44,7 +45,7 @@ describe('haotool PWA scope guard（行為級）', () => {
     }
   });
 
-  it('denylist 覆蓋全部六個 sibling apps', () => {
+  it('denylist 覆蓋全部七個 sibling apps', () => {
     const sources = SIBLING_APP_DENYLIST.map((pattern) => pattern.source);
     for (const sibling of [
       'ratewise',
@@ -53,6 +54,7 @@ describe('haotool PWA scope guard（行為級）', () => {
       'quake-school',
       'split-meow',
       'starpuff',
+      'papertrade',
     ]) {
       expect(sources.some((source) => source.includes(sibling))).toBe(true);
     }

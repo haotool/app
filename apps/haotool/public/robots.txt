@@ -15,6 +15,7 @@ Sitemap: https://haotool.org/sitemap.xml
 Sitemap: https://app.haotool.org/ratewise/sitemap.xml
 Sitemap: https://app.haotool.org/starpuff/sitemap.xml
 Sitemap: https://app.haotool.org/split-meow/sitemap.xml
+Sitemap: https://app.haotool.org/papertrade/sitemap.xml
 Sitemap: https://app.haotool.org/park-keeper/sitemap.xml
 Sitemap: https://app.haotool.org/nihonname/sitemap.xml
 Sitemap: https://app.haotool.org/quake-school/sitemap.xml
