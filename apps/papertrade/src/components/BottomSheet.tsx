@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface BottomSheetProps {
   open: boolean;
@@ -10,6 +11,7 @@ interface BottomSheetProps {
 
 export function BottomSheet({ open, title, onClose, children }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -58,7 +60,7 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
             type="button"
             aria-label="關閉"
             onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-control text-text-3 active:bg-surface-2"
+            className="flex size-11 items-center justify-center rounded-control text-text-3 active:bg-surface-2"
           >
             <X size={18} aria-hidden />
           </button>

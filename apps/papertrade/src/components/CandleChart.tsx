@@ -145,5 +145,13 @@ export function CandleChart({ bars, seriesKey }: CandleChartProps) {
     };
   }, [bars, seriesKey]);
 
-  return <div ref={containerRef} className="h-full w-full" data-testid="candle-chart" />;
+  return (
+    <div
+      ref={containerRef}
+      role="img"
+      aria-label="K 線蠟燭圖與成交量"
+      className="h-full w-full"
+      data-testid="candle-chart"
+    />
+  );
 }

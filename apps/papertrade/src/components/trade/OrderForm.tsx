@@ -160,7 +160,7 @@ export function OrderForm({
               setError(null);
             }}
             className={clsx(
-              'min-h-9 flex-1 rounded-[10px] text-label transition-colors',
+              'min-h-11 flex-1 rounded-[10px] text-label transition-colors',
               mode === id ? 'bg-surface font-semibold text-text' : 'text-text-3',
             )}
           >
@@ -191,7 +191,7 @@ export function OrderForm({
           <button
             type="button"
             onClick={toggleUnit}
-            className="rounded px-1.5 py-0.5 text-caption font-medium text-primary active:bg-primary/10"
+            className="relative rounded px-1.5 py-0.5 text-caption font-medium text-primary after:absolute after:-inset-2.5 active:bg-primary/10"
           >
             {unit === 'usdt' ? 'USDT' : base} ⇄
           </button>
@@ -219,7 +219,7 @@ export function OrderForm({
             key={pct}
             type="button"
             onClick={() => applyPercent(pct)}
-            className="min-h-8 flex-1 rounded bg-surface-2 text-caption text-text-2 tabular-nums active:bg-border"
+            className="min-h-11 flex-1 rounded bg-surface-2 text-caption text-text-2 tabular-nums active:bg-border"
           >
             {pct}%
           </button>

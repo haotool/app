@@ -22,6 +22,31 @@ function resolveInitialSymbol(raw: string | null): MarketSymbol {
   return DEFAULT_SYMBOL;
 }
 
+function TradePageSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 px-4 pb-4 pt-4" aria-label="交易頁載入中">
+      <div className="flex items-center justify-between">
+        <span className="skeleton-pulse h-11 w-36 rounded-control" />
+        <span className="skeleton-pulse h-11 w-16 rounded-control" />
+      </div>
+      <div className="flex gap-3">
+        <div className="flex flex-[0.58] flex-col gap-2.5">
+          <span className="skeleton-pulse h-11 w-full rounded-control" />
+          <span className="skeleton-pulse h-11 w-full rounded-control" />
+          <span className="skeleton-pulse h-11 w-full rounded-control" />
+          <span className="skeleton-pulse h-12 w-full rounded-control" />
+        </div>
+        <div className="flex flex-[0.42] flex-col gap-1.5">
+          {Array.from({ length: 8 }, (_, index) => (
+            <span key={index} className="skeleton-pulse h-5 w-full rounded" />
+          ))}
+        </div>
+      </div>
+      <span className="skeleton-pulse h-24 w-full rounded-card" />
+    </div>
+  );
+}
+
 export function TradePage() {
   const [searchParams] = useSearchParams();
   const [symbol, setSymbol] = useState<MarketSymbol>(() =>
@@ -40,6 +65,10 @@ export function TradePage() {
   function handlePriceSelect(price: number) {
     setMode('limit');
     setLimitPrice(trimNumberInput(price, 6));
+  }
+
+  if (ticker === undefined) {
+    return <TradePageSkeleton />;
   }
 
   return (
@@ -64,24 +93,20 @@ export function TradePage() {
               <span className="text-text-3">/USDT</span>
               <ChevronDown size={16} className="text-text-3" aria-hidden />
             </span>
-            {ticker !== undefined ? (
-              <PriceFlash
-                direction={ticker.direction}
-                revision={ticker.revision}
-                className="block text-label"
-              >
-                {formatPrice(ticker.lastPrice)}
-              </PriceFlash>
-            ) : (
-              <span className="skeleton-pulse mt-0.5 block h-4 w-20 rounded" />
-            )}
+            <PriceFlash
+              direction={ticker.direction}
+              revision={ticker.revision}
+              className="block text-label"
+            >
+              {formatPrice(ticker.lastPrice)}
+            </PriceFlash>
           </span>
         </button>
         <button
           type="button"
           onClick={() => setSheet('leverage')}
           aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
-          className="min-h-9 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
+          className="min-h-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
         >
           {formatAmount(leverage, 1)}x
         </button>

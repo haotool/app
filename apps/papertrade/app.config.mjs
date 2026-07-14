@@ -2,7 +2,14 @@ export const SEO_PATHS = ['/'];
 
 export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 
-export const IMAGE_RESOURCES = ['/favicon.svg'];
+export const IMAGE_RESOURCES = [
+  '/favicon.svg',
+  '/apple-touch-icon.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-512-maskable.png',
+  '/icons/icon-512.svg',
+];
 
 export const SITE_CONFIG = {
   url: 'https://app.haotool.org/papertrade/',
@@ -26,7 +33,7 @@ export const APP_CONFIG = {
 
   build: {
     ssg: false,
-    pwa: false,
+    pwa: true,
   },
 
   resources: {

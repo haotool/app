@@ -10,7 +10,8 @@
 
   --color-text: #f2f4f8;
   --color-text-2: #9aa4b2;
-  --color-text-3: #5d6875;
+  /* 較設計初稿 #5D6875 提亮一階，於 --color-bg 上達 WCAG AA 4.5:1。 */
+  --color-text-3: #707c8c;
 
   --color-primary: #4f7cff;
   --color-primary-hover: #6b90ff;
@@ -72,6 +73,11 @@
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
     overscroll-behavior-y: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
 

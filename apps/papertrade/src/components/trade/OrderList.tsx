@@ -52,7 +52,7 @@ export function OrderList() {
                     pushToast({ tone: order.side, title: '已撤銷掛單' });
                   }
                 }}
-                className="min-h-9 shrink-0 rounded-control border border-border px-3 text-caption text-text-2 active:bg-surface-2"
+                className="min-h-11 shrink-0 rounded-control border border-border px-3 text-caption text-text-2 active:bg-surface-2"
               >
                 撤單
               </button>

@@ -103,7 +103,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               setError(null);
             }}
             className={clsx(
-              'min-h-9 flex-1 rounded-[10px] text-label transition-colors',
+              'min-h-11 flex-1 rounded-[10px] text-label transition-colors',
               mode === id ? 'bg-surface font-semibold text-text' : 'text-text-3',
             )}
           >
@@ -143,7 +143,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               type="button"
               onClick={() => setPercent(preset)}
               className={clsx(
-                'min-h-9 flex-1 rounded text-caption tabular-nums transition-colors',
+                'min-h-11 flex-1 rounded text-caption tabular-nums transition-colors',
                 percent === preset
                   ? 'bg-primary/15 font-semibold text-primary'
                   : 'bg-surface-2 text-text-2 active:bg-border',

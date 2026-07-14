@@ -4,6 +4,7 @@ import { BottomNav } from './BottomNav';
 import { ConnectionBanner } from './ConnectionBanner';
 import { ToastHost } from './ToastHost';
 import { DisclaimerDialog } from './DisclaimerDialog';
+import { UpdatePrompt } from './UpdatePrompt';
 import { startMarketFeed } from '../services/marketFeed';
 
 export function AppShell() {
@@ -17,6 +18,7 @@ export function AppShell() {
       </main>
       <BottomNav />
       <ToastHost />
+      <UpdatePrompt />
       <DisclaimerDialog />
     </div>
   );

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { routes } from './routes';
+import { useMarketStore } from './stores/marketStore';
 import { useTradeStore } from './stores/tradeStore';
 import { createInitialAccount } from './engine/engine';
 import { DISCLAIMER_STORAGE_KEY } from './config/trading';
@@ -26,7 +27,25 @@ describe('App shell', () => {
     }
   });
 
-  it('renders the trade page with an order form', () => {
+  it('shows a page-level skeleton on the trade page before market data arrives', () => {
+    useMarketStore.setState({ tickers: {}, wsStatus: 'connecting' });
+    renderAt('/trade');
+    expect(screen.getByLabelText('交易頁載入中')).toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: '下單表單' })).not.toBeInTheDocument();
+  });
+
+  it('renders the trade page with an order form once the ticker is ready', () => {
+    useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
+    useMarketStore.getState().setTicker({
+      symbol: 'BTCUSDT',
+      lastPrice: 60000,
+      markPrice: 60000,
+      price24hPcnt: 0.01,
+      highPrice24h: 61000,
+      lowPrice24h: 59000,
+      turnover24h: 1000000,
+      volume24h: 500,
+    });
     renderAt('/trade');
     expect(screen.getByRole('form', { name: '下單表單' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '買多' })).toBeInTheDocument();

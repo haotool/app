@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { DISCLAIMER_STORAGE_KEY } from '../config/trading';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export const DISCLAIMER_TEXT =
   'PaperTrade 為純模擬交易工具，使用虛擬資金，不涉及任何真實下單與金流，內容不構成投資建議。行情數據來源為 Bybit 公開市場行情，可能存在延遲或誤差。';
@@ -15,6 +16,12 @@ function readAcknowledged(): boolean {
 
 export function DisclaimerDialog() {
   const [acknowledged, setAcknowledged] = useState(readAcknowledged);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, !acknowledged);
+
+  useEffect(() => {
+    if (!acknowledged) dialogRef.current?.focus();
+  }, [acknowledged]);
 
   if (acknowledged) return null;
 
@@ -31,10 +38,12 @@ export function DisclaimerDialog() {
     <div className="fixed inset-0 z-50 mx-auto flex max-w-lg items-center justify-center px-6">
       <div className="backdrop-in absolute inset-0 bg-bg/70 backdrop-blur-sm" aria-hidden />
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-label="免責聲明"
-        className="dialog-in relative z-10 w-full rounded-card border border-border bg-surface p-5"
+        tabIndex={-1}
+        className="dialog-in relative z-10 w-full rounded-card border border-border bg-surface p-5 outline-none"
       >
         <span className="flex size-11 items-center justify-center rounded-control bg-warning/15 text-warning">
           <ShieldAlert size={22} aria-hidden />
