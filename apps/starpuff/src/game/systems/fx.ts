@@ -336,6 +336,57 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     });
   }
 
+  let phaseVignette: Phaser.GameObjects.Rectangle | null = null;
+  let phaseDimmer: Phaser.GameObjects.Rectangle | null = null;
+
+  const fullscreenRect = (color: number, depth: number): Phaser.GameObjects.Rectangle =>
+    scene.add
+      .rectangle(
+        scene.scale.width / 2,
+        scene.scale.height / 2,
+        scene.scale.width,
+        scene.scale.height,
+        color,
+        1,
+      )
+      .setAlpha(0)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+  // P2 轉換震撼（§17）：時停 0.4s → 背景暗化 + 紫 vignette 常駐脈動 → 相機微震 2s → 皇冠星火。
+  function phaseShock(): void {
+    if (phaseVignette) return;
+    hitStop(400);
+    phaseDimmer = fullscreenRect(0x241436, 88);
+    scene.tweens.add({ targets: phaseDimmer, alpha: 0.18, duration: 700, ease: 'Sine.easeOut' });
+    phaseVignette = fullscreenRect(0x7a3df0, 90);
+    scene.tweens.add({
+      targets: phaseVignette,
+      alpha: { from: 0.14, to: 0.05 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    scene.cameras.main.shake(2000, 0.0022);
+    if (bossRef?.scene) burst.explode(24, bossRef.x, bossRef.y - 70);
+  }
+
+  function clearPhaseOverlays(): void {
+    for (const rect of [phaseVignette, phaseDimmer]) {
+      if (!rect) continue;
+      scene.tweens.killTweensOf(rect);
+      scene.tweens.add({
+        targets: rect,
+        alpha: 0,
+        duration: 400,
+        onComplete: () => rect.destroy(),
+      });
+    }
+    phaseVignette = null;
+    phaseDimmer = null;
+  }
+
   function bind<K extends GameEventName>(
     event: K,
     handler: Parameters<typeof onGameEvent<K>>[2],
@@ -362,7 +413,9 @@ export function createFx(scene: Phaser.Scene): FxSystem {
       damageNumber(scene.scale.width / 2, 120, damage);
     }
   });
+  bind(GameEvents.BOSS_PHASE, () => phaseShock());
   bind(GameEvents.BOSS_DEFEATED, ({ x, y }) => {
+    clearPhaseOverlays();
     starBurst(x, y);
     slowMo(0.3, 600);
   });
@@ -376,6 +429,8 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     hitStopTimer?.remove();
     hitStopTimer = null;
     [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
+    phaseVignette?.destroy();
+    phaseDimmer?.destroy();
   }
 
   scene.events.once('shutdown', destroy);
