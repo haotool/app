@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-*: initial;
+
+  --color-bg: #0b0e14;
+  --color-surface: #12161f;
+  --color-surface-2: #1a2029;
+  --color-border: #232b36;
+
+  --color-text: #f2f4f8;
+  --color-text-2: #9aa4b2;
+  --color-text-3: #5d6875;
+
+  --color-primary: #4f7cff;
+  --color-primary-hover: #6b90ff;
+  --color-primary-pressed: #3d63d9;
+
+  --color-long: #16c784;
+  --color-short: #ea3943;
+  --color-long-bg: rgb(22 199 132 / 10%);
+  --color-short-bg: rgb(234 57 67 / 10%);
+
+  --color-warning: #f0b90b;
+  --color-danger: #ea3943;
+
+  --text-price-xl: 28px;
+  --text-price-xl--line-height: 34px;
+  --text-price-lg: 20px;
+  --text-price-lg--line-height: 26px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-label: 13px;
+  --text-label--line-height: 18px;
+  --text-caption: 11px;
+  --text-caption--line-height: 14px;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans TC',
+    sans-serif;
+}
+
+:root {
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+}
+
+@keyframes flash-long-kf {
+  0% {
+    color: var(--color-long);
+    transform: scale(1.02);
+  }
+  100% {
+    color: inherit;
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-short-kf {
+  0% {
+    color: var(--color-short);
+    transform: scale(1.02);
+  }
+  100% {
+    color: inherit;
+    transform: scale(1);
+  }
+}
+
+@keyframes skeleton-pulse-kf {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.flash-long {
+  display: inline-block;
+  animation: flash-long-kf 300ms ease-out;
+}
+
+.flash-short {
+  display: inline-block;
+  animation: flash-short-kf 300ms ease-out;
+}
+
+.skeleton-pulse {
+  background-color: var(--color-surface-2);
+  animation: skeleton-pulse-kf 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-long,
+  .flash-short,
+  .skeleton-pulse {
+    animation: none;
+  }
+}
