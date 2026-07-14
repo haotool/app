@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(({ mode }) => {
-  const base = mode === 'production' || process.env['CI'] ? '/starpuff/' : '/';
+export default defineConfig(async ({ mode }) => {
+  // basePath SSOT：app.config.mjs（動態 import，鏡像 quake-school includedRoutes 模式）。
+  const { APP_CONFIG } = await import('./app.config.mjs');
+  const base =
+    mode === 'production' || process.env['CI']
+      ? APP_CONFIG.basePath.production
+      : APP_CONFIG.basePath.development;
   const manifestScope = base;
 
   return {
