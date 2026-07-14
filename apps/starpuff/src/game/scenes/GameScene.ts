@@ -154,8 +154,10 @@ export class GameScene extends Phaser.Scene {
 
     this.boss.onMinionDrop(() => this.spawnBossMinion());
 
-    // shutdown 僅清理 Phaser 不接管的資源：scene.events 監聽、DOM 監聽、音訊迴圈。
-    // 顯示物件 / group / tween / timer 由 Phaser DisplayList 與 UpdateList 於 shutdown 自動銷毀。
+    // shutdown 清理 Phaser 不接管的資源：scene.events 監聽（restart 不重建 emitter，
+    // 未解除即跨局累積）、DOM 監聽、音訊迴圈。player 的 PRE/POST_UPDATE bob 掛鉤必須
+    // 在此解除；fx/hud 自掛 shutdown 自清，enemies/boss 無 scene.events 與 DOM 監聽，
+    // 其 group/timer/tween 由 Phaser 系統先行銷毀，不得在此重複呼叫（group 已失效）。
     this.events.once('shutdown', () => {
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
@@ -164,6 +166,7 @@ export class GameScene extends Phaser.Scene {
       this.waves.destroy();
       this.controls.destroy();
       this.background.destroy();
+      this.player.destroy();
     });
 
     this.waves.start();
@@ -621,8 +624,14 @@ export class GameScene extends Phaser.Scene {
         this.eggCelebration('金星彈入匣！');
         break;
       case 'heal':
-        this.player.heal(1, PLAYER.maxHp);
-        this.eggCelebration('皇冠火花 +1 HP');
+        // 滿血時 heal 無感（player.heal 靜默略過）：fallback 改給滿彈匣，獎勵必有回饋。
+        if (this.playerHp >= PLAYER.maxHp) {
+          this.player.grantFullMagazine();
+          this.eggCelebration('皇冠火花！彈匣全滿');
+        } else {
+          this.player.heal(1, PLAYER.maxHp);
+          this.eggCelebration('皇冠火花 +1 HP');
+        }
         break;
       default: {
         const exhaustive: never = spec.reward;

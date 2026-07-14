@@ -27,6 +27,12 @@ const ENGAGED_CLASS = 'is-engaged';
 // 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
 const JOY_RADIUS = 60;
 const JOY_DEADZONE = 12;
+// 下向判定閾值：需明確下壓過半徑一半，避免斜向移動誤觸下衝擊（§23）。
+export const JOY_DOWN_THRESHOLD = JOY_RADIUS * 0.5;
+
+export function isJoyDown(dy: number): boolean {
+  return dy > JOY_DOWN_THRESHOLD;
+}
 
 export function createControls(scene: Phaser.Scene): ControlsSystem {
   const state: ControlsState = {
@@ -147,7 +153,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     update() {
       state.left = joy.dx < -JOY_DEADZONE || keys?.LEFT.isDown === true;
       state.right = joy.dx > JOY_DEADZONE || keys?.RIGHT.isDown === true;
-      state.down = joy.dy > JOY_DEADZONE || keys?.DOWN.isDown === true;
+      state.down = isJoyDown(joy.dy) || keys?.DOWN.isDown === true;
 
       const jumpHeld = held.a || keys?.Z.isDown === true;
       state.jumpPressed = jumpHeld && !prevJumpHeld;
