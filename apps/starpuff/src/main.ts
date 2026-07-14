@@ -42,8 +42,10 @@ const game = new Phaser.Game({
       gravity: { x: 0, y: GRAVITY_Y },
     },
   },
+  // 非 pixel-art 美術關閉 roundPixels（US-022 / recon C.8）：與 camera 跟隨的次像素
+  // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
-  roundPixels: true,
+  roundPixels: false,
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 
@@ -80,6 +82,7 @@ declare global {
       skipToBoss: () => void;
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
+      probe: () => { x: number; scrollX: number };
     };
   }
 }
@@ -97,5 +100,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     skipToBoss: () => gameScene().skipToBoss(),
     spawn: (kind, x = 240, y = 300) => internals().enemies.spawn(kind, x, y),
     ammo: () => internals().player.getAmmoState(),
+    // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。
+    probe: () => ({ x: internals().player.sprite.x, scrollX: gameScene().cameras.main.scrollX }),
   };
 }

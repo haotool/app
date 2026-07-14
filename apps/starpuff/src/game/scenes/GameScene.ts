@@ -115,7 +115,9 @@ export class GameScene extends Phaser.Scene {
     const unbindSfx = bindSfxToEvents(this.events);
 
     this.cameras.main.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
-    this.cameras.main.startFollow(this.player.sprite, true, 0.08, 0.08);
+    // 剛性跟隨（US-022 / recon 硬規則 9）：lerp 1,1 消除 lerp×roundPixels 逐幀往返跳動；
+    // boss 關單屏不跟隨，避免剛性跟隨在 preRender 覆寫入場運鏡的 pan/zoom。
+    if (!this.level.boss) this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
 
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));

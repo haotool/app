@@ -1,4 +1,4 @@
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { FORGIVENESS, INHALE, PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
@@ -89,7 +89,18 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let walkMs = 0;
   let lastVy = 0;
   let pose: Pose = 'hero-idle';
-  const baseOriginY = sprite.displayOriginY;
+
+  // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
+  // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
+  let bobOffset = 0;
+  const applyBob = () => {
+    sprite.y -= bobOffset;
+  };
+  const revertBob = () => {
+    sprite.y += bobOffset;
+  };
+  scene.events.on(Phaser.Scenes.Events.POST_UPDATE, applyBob);
+  scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
 
   const setPose = (next: Pose) => {
     if (pose === next) return;
@@ -231,15 +242,16 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       );
 
       // 走路 bob：|sin| 造雙頻小彈跳，傾斜隨面向擺動；停走或離地即復位。
+      // bob 僅寫入視覺 y 偏移（PRE/POST_UPDATE 掛鉤），與 squash 的 scale 通道互不干涉。
       if (onGround && body.velocity.x !== 0) {
         walkMs += deltaMs;
         const wave = Math.sin(walkMs * WALK_BOB_OMEGA);
         sprite.setRotation(facing * wave * WALK_TILT_RAD);
-        sprite.displayOriginY = baseOriginY + Math.abs(wave) * (WALK_BOB_PX / baseScaleY);
+        bobOffset = Math.abs(wave) * WALK_BOB_PX;
       } else if (walkMs !== 0) {
         walkMs = 0;
         sprite.setRotation(0);
-        sprite.displayOriginY = baseOriginY;
+        bobOffset = 0;
       }
       lastVy = body.velocity.y;
 
@@ -306,6 +318,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       else recycleStar(s);
     },
     destroy() {
+      scene.events.off(Phaser.Scenes.Events.POST_UPDATE, applyBob);
+      scene.events.off(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
       scene.tweens.killTweensOf(sprite);
       sprite.destroy();
       zone.destroy();
