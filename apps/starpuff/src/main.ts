@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import './style.css';
 import { CANVAS, GRAVITY_Y } from './game/core/config';
-import { SceneKeys } from './game/core/types';
+import { SceneKeys, type EnemyKind } from './game/core/types';
+import type { EnemySystem } from './game/systems/enemies';
+import type { PlayerHandle } from './game/systems/player';
 import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
@@ -46,10 +48,14 @@ declare global {
       lose: () => void;
       fillQuota: () => void;
       skipToBoss: () => void;
+      spawn: (kind: EnemyKind, x?: number, y?: number) => void;
+      ammo: () => { ammo: number; flavor: string };
     };
   }
 }
 if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+  // 受控 spawn 與彈匣查詢（US-018）：以型別斷言讀場景私有系統，production 不暴露。
+  const internals = () => gameScene() as unknown as { enemies: EnemySystem; player: PlayerHandle };
   window.__sp = {
     scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
     stage: () => gameScene().currentLevelId,
@@ -59,5 +65,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     lose: () => gameScene().forceLose(),
     fillQuota: () => gameScene().forceGate(),
     skipToBoss: () => gameScene().skipToBoss(),
+    spawn: (kind, x = 240, y = 300) => internals().enemies.spawn(kind, x, y),
+    ammo: () => internals().player.getAmmoState(),
   };
 }

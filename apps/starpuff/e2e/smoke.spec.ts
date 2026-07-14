@@ -11,6 +11,8 @@ declare global {
       lose: () => void;
       fillQuota: () => void;
       skipToBoss: () => void;
+      spawn: (kind: string, x?: number, y?: number) => void;
+      ammo: () => { ammo: number; flavor: string };
     };
   }
 }
@@ -106,6 +108,31 @@ test('魔王戰敗北進 Result 敗北畫面，再戰直接回魔王關', async 
   await clickCanvas(page, 0.5, 0.68);
   await expect.poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 }).toBe('Game');
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('吞 puffy 賦星：彈匣轉珊瑚屬性，發射命中後屬性保留', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  // 先按住吸入，再於吸入錐前方受控生成 puffy（高空下飄會落入錐內被拉近吞下）。
+  await page.keyboard.down('X');
+  await page.waitForTimeout(250);
+  await page.evaluate(() => window.__sp.spawn('puffy', 190, 650));
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.ammo()), { timeout: 8000 })
+    .toEqual({ ammo: 1, flavor: 'puffy' });
+  await page.keyboard.up('X');
+  // 於彈道上生成標準靶（jelly 落地靜止），點按發射爆裂星命中（AoE 小爆走 burstSmall 管線）。
+  await page.evaluate(() => window.__sp.spawn('jelly', 300, 720));
+  await page.waitForTimeout(400);
+  // 點按發射：需跨至少一個遊戲幀（Phaser 逐幀輪詢 isDown），80ms 仍低於吸入閾值。
+  await page.keyboard.down('X');
+  await page.waitForTimeout(80);
+  await page.keyboard.up('X');
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
+  // 空彈匣維持前值屬性（§20）；命中演出期間零 console error。
+  expect(await page.evaluate(() => window.__sp.ammo().flavor)).toBe('puffy');
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });
