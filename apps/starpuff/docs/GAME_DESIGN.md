@@ -56,14 +56,14 @@ hit-stop 60ms、震屏 4px、受擊白閃、squash & stretch（跳躍/落地/吸
 
 ## 9. 音效（zzfx，零音檔資產）
 
-jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、boss-roar、boss-slam、win、lose；BGM 用 zzfxm 短循環（原創簡短旋律）。首次觸控後 resume AudioContext（iOS 必須）。
+jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。
 
 ## 10. 美術資產規格（codex imagegen 專用；除此之外嚴禁動用 codex）
 
 統一風格關鍵詞（每次生成必附）：
 `kawaii chibi jelly creature, soft pastel palette, thick rounded soft outline, glossy jelly highlight, flat cel shading, clean high-quality mobile game sprite, centered, full body`
 
-透明需求資產以 flat #00ff00 背景生成後去背。生成尺寸 2048×2048（bg 為 1024×1536），交付至 `apps/starpuff/src/assets/sprites/`。
+透明需求資產以 flat #00ff00 背景生成後去背。生成尺寸 2048×2048（bg 為 1024×1536），交付至 `apps/starpuff/src/assets/sprites/`。表列 `.png` 為生成源檔名；實際入庫交付為同名 `.webp`（q82 壓縮，透明保留）。
 
 | 檔名              | 內容                                        | 備註                                                 |
 | ----------------- | ------------------------------------------- | ---------------------------------------------------- |
