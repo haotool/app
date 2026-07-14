@@ -5,7 +5,7 @@
 
 ## 1. 產品定位
 
-- 直向（portrait）單場景 Boss Rush 動作遊戲，單局 2–4 分鐘，可無限重玩。
+- 直向（portrait）四關側向卷軸動作遊戲：三關走動探索 + 魔王關（Boss Rush 收尾），單局 2–4 分鐘，可無限重玩。
 - 原創 IP：主角與怪物皆為原創設計（果凍星球世界觀），嚴禁使用任天堂卡比之名稱、造型、配色構圖。
 - 目標體驗：Q 彈、可愛、爽快——大量擠壓拉伸、粒子、震屏、音效回饋。
 
@@ -15,9 +15,9 @@
 
 ## 3. 場景流程
 
-`BootScene`（載入+進度條）→ `TitleScene`（標題、開始按鈕、音效提示）→ `GameScene`（波次→魔王戰）→ `ResultScene`（勝/敗、再玩一次）。
+`BootScene`（載入+進度條）→ `TitleScene`（標題、開始按鈕、音效提示）→ `GameScene`（四關制）→ `ResultScene`（勝/敗、再玩一次）。
 
-波次腳本：開場浮字教學 → Wave1：果凍丁 ×3 → Wave2：混合 ×4 → 魔王入場動畫（震屏+吼叫）→ Boss 戰（期間持續補生 1–2 隻小怪供彈藥）→ 勝利星爆 / 失敗。
+四關制流程：Title → Stage 1-3 側向卷軸（擊殺配額達成 → 星星門開啟 → 走入過關）→ Stage 4 魔王戰（入場動畫 → Boss 戰，期間補生可吸小怪供彈藥）→ 勝利星爆 / 敗北。死亡處理：Stage 1-3 重試當前關；魔王關進敗北結算。關卡資料驅動細節見 §15。
 
 ## 4. 操作（行動裝置優先）
 
@@ -48,7 +48,7 @@
 - 玩家：移速 220px/s、跳躍初速 -420、漂浮升力 -260、重力 900。
 - 吸入：長按 ≥150ms 啟動、錐形範圍 140px、拉力漸增；吞下 +1 彈藥（上限 3）。
 - 星彈：傷害 5、速度 520、穿透 1 隻小怪、命中魔王消失。
-- 邏輯畫布：480×854（Scale.FIT + autoCenter，DPR 上限 2）。
+- 邏輯畫布：480×854（Scale.FIT + autoCenter）；解析度採 Scale.FIT 自適應，不做 DPR cap（欄位已於修復包 B 移除）。
 
 ## 8. Juice 清單（品質關鍵，全數必做）
 
@@ -56,7 +56,7 @@ hit-stop 60ms、震屏 4px、受擊白閃、squash & stretch（跳躍/落地/吸
 
 ## 9. 音效（zzfx，零音檔資產）
 
-jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。
+jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠落地）、pop（puffy 爆裂）、chomp（咬咬花咬合）、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。靜音偏好存 localStorage（sp-muted）。
 
 ## 10. 美術資產規格（codex imagegen 專用；除此之外嚴禁動用 codex）
 
@@ -92,11 +92,11 @@ src/game/core/     config.ts events.ts types.ts     ← scaffold 定義，凍結
 src/game/scenes/   Boot/Title/Game/Result           ← 整合 stream 專屬
 src/game/systems/  player controls enemies waves boss fx hud
 src/game/audio/    sfx.ts bgm.ts
-src/game/logic/    combat.ts bossFsm.ts waveModel.ts ← pure TS，vitest 對象
+src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 ```
 
 - 事件契約（`events.ts`，跨系統唯一溝通管道）：
-  `player:damaged, player:died, ammo:changed, enemy:spawned, enemy:inhaled, enemy:killed, star:fired, boss:spawned, boss:damaged, boss:phase, boss:defeated, wave:changed, game:won, game:lost`
+  `player:damaged, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, boss:spawned, boss:damaged, boss:phase, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
 
 ## 12. 品質門檻
 
@@ -132,7 +132,7 @@ src/game/logic/    combat.ts bossFsm.ts waveModel.ts ← pure TS，vitest 對象
 - 通關條件：擊殺配額達成後右端出現「星星門」（fx-star 放大 + 光暈脈動 + 浮動 tween，graphics 組合，不新增美術），走入即過關。
 - 關卡資料契約（levels.ts）：`{ id, nameZh, bgKey, worldWidth, killQuota, spawnIntervalMs, maxOnScreen, safeZoneTailPx, enemyMix: {kind,weight}[], platforms: {x,y,w}[] }`——GameScene 依資料驅動，禁止每關寫死邏輯分支。
 - 尾端 release：每關末 `safeZoneTailPx: 480` 禁 spawn（星星門前喘息區，鋸齒 tension-release）。`maxOnScreen`：S1 3、S2 4、S3 5。
-- HUD 增列：左上關卡標示（`1-1` 式）+ 擊殺配額進度（`⭐ 3/8`）。
+- HUD 增列：左上 `STAGE N 關卡名` + 配額 `⭐ n/quota`。
 
 ### 15.1 觸控寬容度硬規則（調研回寫，全關卡生效）
 
@@ -154,11 +154,21 @@ src/game/logic/    combat.ts bossFsm.ts waveModel.ts ← pure TS，vitest 對象
 - 入場運鏡：黑幕淡入 → 相機從王座緩推近（pan+zoom 1.2s）→ Jellord 三段彈跳落座（每段落地震屏+塵埃圈）→ 吼叫（畫面漣漪 + boss-roar）→ 戰鬥開始。
 - P2 轉換震撼：時停 0.4s → 全屏紫色 vignette 脈動常駐 → 果凍地震（相機持續微震 2s）→ 皇冠迸出星火粒子 → 背景色調轉暗（tint 疊層）。
 - 擊破多段演出：時緩 0.3× → 連環小爆 ×6（隨機體表位置、間隔 150ms）→ 全屏白閃 → 大星爆 → 皇冠拋物線落地彈兩下（金屬音）→ 勝利。
-- 全程 60fps 預算內：粒子單發上限 40、vignette 用單一半透明 rect 疊層。
+- 粒子預算：單一發射器 maxAliveParticles ≤120（勝利彩帶峰值例外），單次 burst ≤40；以實機 60fps 實測為準（QA 實測 avg 100fps）；vignette 用單一半透明 rect 疊層。
 
 ## 18. 動畫流暢度打磨清單（全實體）
 
 走路彈跳（玩家移動時 y 微幅 bob + 輕微傾斜）、落地塵埃圈（著地速度 >300 觸發）、所有敵人生成 popIn（scale 0→1 back.out）、死亡 squash 消失、星星門吸入過關演出（玩家縮小旋轉飛入）、轉場卡緩動（slide+fade）、鏡頭跟隨 lerp 0.08 平滑。
+
+## 19. v2 美術資產增補（codex 專用；生成尺寸同 §10 規範）
+
+| 檔名              | 內容                                                                     | 備註                               |
+| ----------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| bg-meadow.png     | 直向果凍草原：粉綠草丘、果凍花、奶油雲（1024×1536 不透明）               | 底 1/3 乾淨地面                    |
+| bg-heights.png    | 直向雲朵高台：高空粉藍雲海、遠景漂浮果凍島（1024×1536 不透明）           | 底 1/3 乾淨、中段留平台視覺空間    |
+| bg-throne.png     | 直向魔王城王座廳：葡萄紫果凍城、金冠紋飾、戲劇但可愛（1024×1536 不透明） | 底 1/3 乾淨、頂部王座剪影          |
+| minion-puffy.png  | 氣球魨（2048 透明）                                                      | 珊瑚粉 #FFA8A0、短圓刺、驚訝圓眼   |
+| minion-chompy.png | 咬咬花（2048 透明）                                                      | 鵝黃 #F5E6A8、花瓣嘴微張、莖葉底座 |
 
 ## 20. 技能系統：吞噬賦星（v2.1，PM 親撰）
 
@@ -173,13 +183,3 @@ src/game/logic/    combat.ts bossFsm.ts waveModel.ts ← pure TS，vitest 對象
 - HUD 彈藥星星依屬性上色；發射音效 pitch 依屬性微調（標準 1.0／疾風 1.15／爆裂 0.85）。
 - 實作契約：`swallow(kind)` 記錄 flavor → `fireStar(flavor)` → `STAR_FLAVORS` 常數表（core/config.ts）。
 - KISS 底線：不做技能樹、不做冷卻、不做 UI 選單——吞什麼射什麼，一眼可懂。
-
-## 19. v2 美術資產增補（codex 專用；生成尺寸同 §10 規範）
-
-| 檔名              | 內容                                                                     | 備註                               |
-| ----------------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| bg-meadow.png     | 直向果凍草原：粉綠草丘、果凍花、奶油雲（1024×1536 不透明）               | 底 1/3 乾淨地面                    |
-| bg-heights.png    | 直向雲朵高台：高空粉藍雲海、遠景漂浮果凍島（1024×1536 不透明）           | 底 1/3 乾淨、中段留平台視覺空間    |
-| bg-throne.png     | 直向魔王城王座廳：葡萄紫果凍城、金冠紋飾、戲劇但可愛（1024×1536 不透明） | 底 1/3 乾淨、頂部王座剪影          |
-| minion-puffy.png  | 氣球魨（2048 透明）                                                      | 珊瑚粉 #FFA8A0、短圓刺、驚訝圓眼   |
-| minion-chompy.png | 咬咬花（2048 透明）                                                      | 鵝黃 #F5E6A8、花瓣嘴微張、莖葉底座 |
