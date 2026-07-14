@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+113
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+114
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-15
+- ID：reward-starpuff-v3-landscape-overhaul
+- 原因：使用者回饋 v2 直向版四痛點（iPhone 長按放大鏡、觸控位置、角色抖動、背景不連續），需 24h 內橫式改版並加技能組合/彩蛋/反卡死保證
+- 解法：v3 橫式手柄改版以量化證據收斂（抖動 150 幀 118 次反轉歸零、監聽洩漏 restart×5 恆定、反卡死五劇本全 PASS、92 unit+9 e2e 綠、三席×兩輪終審 APPROVE）
 
 - 日期：2026-07-14
 - ID：neutral-zeabur-dockerfile-override-p0
