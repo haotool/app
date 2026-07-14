@@ -95,11 +95,17 @@ describe('ChartPage', () => {
     expect(useKlinesMock).toHaveBeenCalledWith('BTCUSDT', '60');
   });
 
-  it('renders order book section and buy/sell CTAs', async () => {
+  it('renders order book section and buy/sell CTAs preselecting the pair', async () => {
     renderChart('/chart/BTCUSDT');
     expect(await screen.findByRole('heading', { name: '訂單簿' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '買多' })).toHaveAttribute('href', '/trade');
-    expect(screen.getByRole('link', { name: '賣空' })).toHaveAttribute('href', '/trade');
+    expect(screen.getByRole('link', { name: '買多' })).toHaveAttribute(
+      'href',
+      '/trade?symbol=BTCUSDT',
+    );
+    expect(screen.getByRole('link', { name: '賣空' })).toHaveAttribute(
+      'href',
+      '/trade?symbol=BTCUSDT',
+    );
   });
 
   it('shows error state when history fails', async () => {

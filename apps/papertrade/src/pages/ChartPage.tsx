@@ -128,13 +128,13 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
 
       <div className="sticky bottom-[calc(3.5rem+var(--sab))] mt-2 flex gap-3 bg-bg/95 px-4 py-3 backdrop-blur">
         <Link
-          to="/trade"
+          to={`/trade?symbol=${symbol}`}
           className="flex h-12 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
         >
           買多
         </Link>
         <Link
-          to="/trade"
+          to={`/trade?symbol=${symbol}`}
           className="flex h-12 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
         >
           賣空
