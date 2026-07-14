@@ -1,5 +1,14 @@
 import Phaser from 'phaser';
-import { CANVAS, ENEMY, INHALE, PLAYER, STAR_FLAVORS, type StarFlavor } from '../core/config';
+import {
+  CANVAS,
+  ENEMY,
+  INHALE,
+  PLAYER,
+  SLAM,
+  STARSTORM,
+  STAR_FLAVORS,
+  type StarFlavor,
+} from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -9,7 +18,7 @@ import {
 } from '../core/events';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
-import { canInhale, isInInhaleRange } from '../logic/combat';
+import { canInhale, isInInhaleRange, knockbackVelocity } from '../logic/combat';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
@@ -246,7 +255,7 @@ export class GameScene extends Phaser.Scene {
       const s = asSprite(star);
       if (!s.active || !this.enemies.kindOf(target)) return;
       const spec = STAR_FLAVORS[this.starFlavorOf(s)];
-      const outcome = this.enemies.damage(target, spec.damage);
+      const outcome = this.enemies.damage(target, this.starDamageOf(s));
       if (outcome === 'ignored') return;
       if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
@@ -261,7 +270,7 @@ export class GameScene extends Phaser.Scene {
       const spec = STAR_FLAVORS[this.starFlavorOf(star)];
       if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
       this.player.onStarHit(star, 'absorb');
-      this.boss.applyDamage(spec.damage);
+      this.boss.applyDamage(this.starDamageOf(star));
     });
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
@@ -323,6 +332,12 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => {
       this.playerHp = hp;
     });
+    bind(GameEvents.PLAYER_HEALED, ({ hp }) => {
+      this.playerHp = hp;
+    });
+    // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
+    bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
+    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => this.resolveSlamImpact(x, y));
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
@@ -555,6 +570,47 @@ export class GameScene extends Phaser.Scene {
 
   private starFlavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {
     return (star.getData('flavor') as StarFlavor | undefined) ?? 'jelly';
+  }
+
+  // 星彈傷害（§23）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入。
+  private starDamageOf(star: Phaser.Physics.Arcade.Sprite): number {
+    return (
+      (star.getData('damage') as number | undefined) ?? STAR_FLAVORS[this.starFlavorOf(star)].damage
+    );
+  }
+
+  // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
+  private resolveStarstorm(): void {
+    this.cameras.main.flash(280, 255, 255, 255);
+    this.fx.shake(12);
+    const view = this.cameras.main.worldView;
+    for (let i = 0; i < 6; i += 1) {
+      this.time.delayedCall(i * 90, () =>
+        this.fx.starBurst(
+          view.x + Math.random() * view.width,
+          view.y + Math.random() * view.height * 0.6,
+        ),
+      );
+    }
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child.active) this.enemies.kill(child);
+    }
+    if (this.boss.isActive()) this.boss.applyDamage(STARSTORM.bossDamage);
+  }
+
+  // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。
+  private resolveSlamImpact(x: number, y: number): void {
+    this.fx.shake(6);
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > SLAM.radiusPx) continue;
+      const outcome = this.enemies.damage(child, SLAM.damage);
+      if (outcome === 'hurt') {
+        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed, SLAM.knockbackLift);
+        enemy.setVelocity(kb.x, kb.y);
+      }
+    }
   }
 
   // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。

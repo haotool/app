@@ -115,6 +115,9 @@ export const GOLD_STAR = {
   damage: 20,
 } as const;
 
+// 彩蛋 HP 上限（§24）：彩虹果凍可將 HP 上限自 5 提升至 6。
+export const EGG_HP_CAP = 6;
+
 export const ENEMY = {
   hp: 1,
   touchDamage: 1,

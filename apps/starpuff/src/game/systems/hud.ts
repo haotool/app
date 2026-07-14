@@ -1,11 +1,19 @@
 import type Phaser from 'phaser';
 import { isMuted, setMuted } from '../audio/mute';
-import { PLAYER, STAR, STAR_FLAVORS, type StarFlavor } from '../core/config';
+import {
+  CHARGED_STAR,
+  EGG_HP_CAP,
+  PLAYER,
+  STAR,
+  STAR_FLAVORS,
+  type MagazineSlot,
+} from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { fillStarPath } from './fx';
 
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
+const SLOT_RING_TEX = 'hud-slot-ring';
 const SPEAKER_ON_TEX = 'hud-spk-on';
 const SPEAKER_OFF_TEX = 'hud-spk-off';
 const HUD_DEPTH = 100;
@@ -96,6 +104,14 @@ function ensureHudTextures(scene: Phaser.Scene): void {
     g.generateTexture(STAR_TEX, 20, 20);
     g.destroy();
   }
+  // 強化槽金邊（§23）：星形外圈描邊，charged/gold 槽位顯示。
+  if (!scene.textures.exists(SLOT_RING_TEX)) {
+    const g = scene.add.graphics();
+    g.lineStyle(2.5, CHARGED_STAR.tint, 1);
+    g.strokeCircle(14, 14, 12);
+    g.generateTexture(SLOT_RING_TEX, 28, 28);
+    g.destroy();
+  }
 }
 
 export function createHud(scene: Phaser.Scene): Hud {
@@ -110,17 +126,21 @@ export function createHud(scene: Phaser.Scene): Hud {
 
   const root = scene.add.container(0, 0).setDepth(HUD_DEPTH).setScrollFactor(0);
 
+  // 心心至彩蛋上限 6（§24）：第 6 顆僅在超額治療時顯示。
   const hearts: Phaser.GameObjects.Image[] = [];
-  for (let i = 0; i < PLAYER.maxHp; i++) {
-    hearts.push(scene.add.image(24 + i * 30, 26, HEART_TEX));
+  for (let i = 0; i < EGG_HP_CAP; i++) {
+    hearts.push(scene.add.image(24 + i * 30, 26, HEART_TEX).setVisible(i < PLAYER.maxHp));
   }
   root.add(hearts);
 
   const ammoStars: Phaser.GameObjects.Image[] = [];
+  const slotRings: Phaser.GameObjects.Image[] = [];
   for (let i = 0; i < STAR.maxAmmo; i++) {
     ammoStars.push(scene.add.image(22 + i * 26, 58, STAR_TEX).setAlpha(0.25));
+    slotRings.push(scene.add.image(22 + i * 26, 58, SLOT_RING_TEX).setVisible(false));
   }
   root.add(ammoStars);
+  root.add(slotRings);
 
   // 頂列橫排（§21）：HP 左上、STAGE 中上、配額（星形+數字）右上、Boss 條頂中。
   const labelStyle = {
@@ -155,7 +175,10 @@ export function createHud(scene: Phaser.Scene): Hud {
   root.add(bossBar);
 
   function updateHearts(hp: number): void {
-    hearts.forEach((heart, i) => heart.setAlpha(i < hp ? 1 : 0.25));
+    hearts.forEach((heart, i) => {
+      heart.setVisible(i < PLAYER.maxHp || i < hp);
+      heart.setAlpha(i < hp ? 1 : 0.25);
+    });
     scene.tweens.add({
       targets: hearts,
       scale: 1.3,
@@ -166,22 +189,33 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
-  // 彈藥星依星彈屬性上色（§20）；HUD 星紋理本體為金黃，標準星以白 tint 保留原色。
-  function updateAmmo(ammo: number, flavor: StarFlavor): void {
-    const tint = flavor === 'jelly' ? 0xffffff : STAR_FLAVORS[flavor].tint;
+  // 槽位彈匣（§23）：每槽依屬性上色、charged/gold 加金邊；標準星白 tint 保留原色。
+  function updateAmmo(magazine: readonly MagazineSlot[]): void {
     ammoStars.forEach((star, i) => {
-      const filled = i < ammo;
+      const slot = magazine[i];
       const wasFilled = star.alpha === 1;
-      star.setTint(tint);
-      star.setAlpha(filled ? 1 : 0.25);
-      if (filled && !wasFilled) {
-        scene.tweens.add({
-          targets: star,
-          scale: { from: 0.4, to: 1 },
-          duration: 220,
-          ease: 'Back.easeOut',
-        });
+      if (slot) {
+        star.setTint(
+          slot.gold
+            ? CHARGED_STAR.tint
+            : slot.flavor === 'jelly'
+              ? 0xffffff
+              : STAR_FLAVORS[slot.flavor].tint,
+        );
+        star.setAlpha(1);
+        if (!wasFilled) {
+          scene.tweens.add({
+            targets: star,
+            scale: { from: 0.4, to: 1 },
+            duration: 220,
+            ease: 'Back.easeOut',
+          });
+        }
+      } else {
+        star.setTint(0xffffff);
+        star.setAlpha(0.25);
       }
+      slotRings[i]?.setVisible(Boolean(slot && (slot.charged || slot.gold)));
     });
   }
 
@@ -222,7 +256,8 @@ export function createHud(scene: Phaser.Scene): Hud {
   }
 
   bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => updateHearts(hp));
-  bind(GameEvents.AMMO_CHANGED, ({ ammo, flavor }) => updateAmmo(ammo, flavor));
+  bind(GameEvents.PLAYER_HEALED, ({ hp }) => updateHearts(hp));
+  bind(GameEvents.AMMO_CHANGED, ({ magazine }) => updateAmmo(magazine));
   bind(GameEvents.BOSS_SPAWNED, () => {
     barFill.scaleX = fullScaleX;
     scene.tweens.add({
