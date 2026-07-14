@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import {
   CANVAS,
+  EGG_HP_CAP,
   ENEMY,
   INHALE,
   PLAYER,
@@ -19,6 +20,13 @@ import {
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { canInhale, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import {
+  advanceEgg,
+  createEggProgress,
+  type EasterEggSpec,
+  type EggEvent,
+  type EggProgress,
+} from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
@@ -79,6 +87,9 @@ export class GameScene extends Phaser.Scene {
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private gate: Phaser.GameObjects.Container | null = null;
+  // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
+  private eggProgress: EggProgress[] = [];
+  private bossActiveAt = -1;
   private unbinders: (() => void)[] = [];
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
@@ -108,6 +119,8 @@ export class GameScene extends Phaser.Scene {
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
     this.gate = null;
+    this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
+    this.bossActiveAt = -1;
 
     this.physics.world.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
     this.addBackground();
@@ -162,6 +175,7 @@ export class GameScene extends Phaser.Scene {
       this.player.update(this.controls.state, deltaMs);
       this.syncJumpSfx();
       this.syncInhale();
+      this.syncEggs();
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -343,6 +357,13 @@ export class GameScene extends Phaser.Scene {
     });
     bind(GameEvents.BOSS_DAMAGED, ({ hp }) => {
       this.bossHp = hp;
+      if (this.bossActiveAt >= 0) {
+        this.feedEggs({ kind: 'boss-hit', sinceActiveMs: this.time.now - this.bossActiveAt });
+      }
+    });
+    // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
+    bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
+      if (canInhale(kind)) this.feedEggs({ kind: 'swallow', flavor: kind });
     });
     // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
@@ -566,6 +587,107 @@ export class GameScene extends Phaser.Scene {
         PULL_BASE_SPEED + (INHALE.rangePx - dist) * PULL_GAIN,
       );
     }
+  }
+
+  // 彩蛋逐幀事件（§24）：世界座標與平台站立；魔王可擊打起點供時間窗計算。
+  private syncEggs(): void {
+    if (this.level.boss && this.bossActiveAt < 0 && this.boss.isActive()) {
+      this.bossActiveAt = this.time.now;
+    }
+    if (this.eggProgress.every((progress) => progress.done)) return;
+    this.feedEggs({ kind: 'position', x: this.player.sprite.x });
+    this.feedEggs({ kind: 'stand', platformY: this.standingPlatformY() });
+  }
+
+  // 站立平台判定：腳底貼齊平台頂（rect 高 16 → 頂 = y - 8）且 x 落於平台範圍。
+  private standingPlatformY(): number | null {
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (!body.blocked.down && !body.touching.down) return null;
+    for (const spec of this.level.platforms) {
+      if (
+        Math.abs(body.bottom - (spec.y - 8)) <= 4 &&
+        Math.abs(this.player.sprite.x - spec.x) <= spec.w / 2 + 12
+      ) {
+        return spec.y;
+      }
+    }
+    return null;
+  }
+
+  private feedEggs(event: EggEvent): void {
+    this.level.easterEggs.forEach((spec, i) => {
+      const progress = this.eggProgress[i];
+      if (!progress || progress.done) return;
+      const result = advanceEgg(spec, progress, event);
+      this.eggProgress[i] = result.progress;
+      if (result.triggered) this.grantEggReward(spec);
+    });
+  }
+
+  // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
+  private grantEggReward(spec: EasterEggSpec): void {
+    switch (spec.reward) {
+      case 'hp-up':
+        this.player.heal(1, EGG_HP_CAP);
+        this.eggCelebration('彩虹果凍 +1 HP');
+        break;
+      case 'full-magazine':
+        this.player.grantFullMagazine();
+        this.eggCelebration('星星雨！彈匣全滿');
+        break;
+      case 'gold-star':
+        this.player.grantGoldStar();
+        this.eggCelebration('金星彈入匣！');
+        break;
+      case 'heal':
+        this.player.heal(1, PLAYER.maxHp);
+        this.eggCelebration('皇冠火花 +1 HP');
+        break;
+      default: {
+        const exhaustive: never = spec.reward;
+        void exhaustive;
+      }
+    }
+  }
+
+  // 彩蛋演出（§24）：金光 popIn + 專屬 jingle + 浮字（既有 fx 組合）。
+  private eggCelebration(message: string): void {
+    playSfx('jingle');
+    const { x, y } = this.player.sprite;
+    const glow = this.add
+      .image(x, y, 'fx-star')
+      .setDisplaySize(130, 130)
+      .setTint(0xffc93c)
+      .setAlpha(0)
+      .setDepth(94);
+    this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.9, to: 0 },
+      scale: { from: glow.scale * 0.3, to: glow.scale * 1.7 },
+      duration: 750,
+      ease: 'Quad.easeOut',
+      onComplete: () => glow.destroy(),
+    });
+    this.fx.starBurst(x, y - 20);
+    const label = this.add
+      .text(x, y - 64, message, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        color: '#ffc93c',
+        stroke: '#3a3a4a',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(96);
+    this.tweens.add({
+      targets: label,
+      y: y - 118,
+      alpha: { from: 1, to: 0 },
+      duration: 1200,
+      ease: 'Cubic.easeOut',
+      onComplete: () => label.destroy(),
+    });
   }
 
   private starFlavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {

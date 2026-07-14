@@ -1,5 +1,6 @@
 import type { EnemyKind, LevelId } from '../core/types';
 import { canInhale } from './combat';
+import type { EasterEggSpec } from './eggs';
 
 // 關卡資料 SSOT（GAME_DESIGN §15，pure TS 不 import phaser），vitest 對象。
 // GameScene 與 waves runner 一律讀表驅動，禁止每關硬編碼分支。
@@ -27,6 +28,7 @@ export interface LevelSpec {
   safeZoneTailPx: number;
   enemyMix: readonly EnemyMixEntry[];
   platforms: readonly PlatformSpec[];
+  easterEggs: readonly EasterEggSpec[];
   boss: boolean;
   tutorial: boolean;
 }
@@ -52,6 +54,8 @@ export const LEVELS: readonly LevelSpec[] = [
       { x: 1400, y: 336, w: 170 },
       { x: 2050, y: 320, w: 160 },
     ],
+    // §24 彩蛋一：開局反向走到世界最左緣（玩家起點 x=100）。
+    easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
     boss: false,
     tutorial: true,
   },
@@ -77,6 +81,8 @@ export const LEVELS: readonly LevelSpec[] = [
       { x: 2050, y: 336, w: 150 },
       { x: 2400, y: 300, w: 140 },
     ],
+    // §24 彩蛋二：最高雲朵平台（層高 272）連續站上 3 次。
+    easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
     boss: false,
     tutorial: false,
   },
@@ -106,6 +112,10 @@ export const LEVELS: readonly LevelSpec[] = [
       { x: 2150, y: 272, w: 120 },
       { x: 2600, y: 336, w: 130 },
     ],
+    // §24 彩蛋三：依序連吞 jelly→floaty→puffy。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['jelly', 'floaty', 'puffy'] },
+    ],
     boss: false,
     tutorial: false,
   },
@@ -123,6 +133,8 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'floaty', weight: 0.4 },
     ],
     platforms: [],
+    // §24 彩蛋四：魔王可擊打後 5 秒內命中皇冠（首擊）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
     boss: true,
     tutorial: false,
   },
