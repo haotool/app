@@ -1,6 +1,10 @@
 import { LEVERAGE_MAX, LEVERAGE_MIN, MAINTENANCE_MARGIN_RATE } from '../config/trading';
 import { type Side } from './types';
 
+export function roundUsdt(value: number): number {
+  return Math.round(value * 1e8) / 1e8;
+}
+
 export function notionalValue(qty: number, price: number): number {
   return qty * price;
 }

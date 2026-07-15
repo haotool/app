@@ -1,23 +1,25 @@
 import { type MarketSymbol } from '../config/market';
+import { INITIAL_BALANCE_USDT, MAKER_FEE_RATE, TAKER_FEE_RATE } from '../config/trading';
 import {
-  INITIAL_BALANCE_USDT,
-  MAKER_FEE_RATE,
-  MIN_ORDER_NOTIONAL_USDT,
-  TAKER_FEE_RATE,
-} from '../config/trading';
-import {
-  averageEntryPrice,
-  isValidLeverage,
   liquidationPrice,
   notionalValue,
   orderFee,
   requiredMargin,
+  roundUsdt,
   unrealizedPnl,
 } from './math';
 import {
+  closeSlice,
+  createId,
+  executeOpen,
+  QTY_EPSILON,
+  replacePosition,
+  validateOpenInput,
+  type TradeError,
+  type TradeResult,
+} from './execution';
+import {
   type Account,
-  type ClosedTrade,
-  type CloseReason,
   type LimitOrder,
   type Position,
   type Side,
@@ -25,15 +27,7 @@ import {
   type TrailingConfig,
 } from './types';
 
-export type TradeError =
-  | 'invalid-leverage'
-  | 'invalid-qty'
-  | 'invalid-price'
-  | 'below-min-notional'
-  | 'insufficient-balance'
-  | 'not-found';
-
-export type TradeResult = { ok: true; account: Account } | { ok: false; error: TradeError };
+export { type TradeError, type TradeResult } from './execution';
 
 export interface OpenParams {
   symbol: MarketSymbol;
@@ -79,155 +73,11 @@ export interface AccountMetrics {
   equity: number;
 }
 
-const QTY_EPSILON = 1e-9;
 // 觸價比較的相對容差：吸收 liquidationPrice 浮點運算誤差，避免 mark 恰好等於強平價時漏觸發。
 const PRICE_EPSILON_RATIO = 1e-9;
 
-function createId(): string {
-  return crypto.randomUUID();
-}
-
 export function createInitialAccount(): Account {
   return { balance: INITIAL_BALANCE_USDT, positions: [], orders: [], history: [] };
-}
-
-function validateOpenInput(qty: number, price: number, leverage: number): TradeError | null {
-  if (!isValidLeverage(leverage)) return 'invalid-leverage';
-  if (!Number.isFinite(qty) || qty <= 0) return 'invalid-qty';
-  if (!Number.isFinite(price) || price <= 0) return 'invalid-price';
-  if (notionalValue(qty, price) < MIN_ORDER_NOTIONAL_USDT) return 'below-min-notional';
-  return null;
-}
-
-function replacePosition(positions: Position[], next: Position): Position[] {
-  return positions.map((position) => (position.id === next.id ? next : position));
-}
-
-function removePosition(positions: Position[], id: string): Position[] {
-  return positions.filter((position) => position.id !== id);
-}
-
-interface CloseSlice {
-  account: Account;
-  trade: ClosedTrade;
-}
-
-function closeSlice(
-  account: Account,
-  position: Position,
-  qty: number,
-  exitPrice: number,
-  feeRate: number,
-  reason: CloseReason,
-  now: number,
-): CloseSlice {
-  const fraction = Math.min(qty / position.qty, 1);
-  const releasedMargin = position.margin * fraction;
-  const isLiquidation = reason === 'liquidation';
-  const pnl = isLiquidation
-    ? -releasedMargin
-    : unrealizedPnl(position.side, position.entryPrice, exitPrice, qty);
-  const fee = isLiquidation ? 0 : orderFee(notionalValue(qty, exitPrice), feeRate);
-
-  const trade: ClosedTrade = {
-    id: createId(),
-    symbol: position.symbol,
-    side: position.side,
-    qty,
-    entryPrice: position.entryPrice,
-    exitPrice,
-    realizedPnl: pnl,
-    fee,
-    reason,
-    closedAt: now,
-  };
-
-  const remainingQty = position.qty - qty;
-  const positions =
-    remainingQty <= QTY_EPSILON
-      ? removePosition(account.positions, position.id)
-      : replacePosition(account.positions, {
-          ...position,
-          qty: remainingQty,
-          margin: position.margin - releasedMargin,
-        });
-
-  return {
-    account: {
-      ...account,
-      balance: account.balance + releasedMargin + pnl - fee,
-      positions,
-      history: [trade, ...account.history],
-    },
-    trade,
-  };
-}
-
-interface ExecuteOpenParams extends OpenParams {
-  feeRate: number;
-  now: number;
-}
-
-function executeOpen(account: Account, params: ExecuteOpenParams): TradeResult {
-  const { symbol, side, qty, price, leverage, feeRate, now } = params;
-  const existing = account.positions.find((position) => position.symbol === symbol);
-
-  if (existing !== undefined && existing.side !== side) {
-    const reduceQty = Math.min(qty, existing.qty);
-    const reduced = closeSlice(account, existing, reduceQty, price, feeRate, 'manual', now).account;
-    const remainderQty = qty - reduceQty;
-    if (remainderQty <= QTY_EPSILON) return { ok: true, account: reduced };
-    return executeOpen(reduced, { ...params, qty: remainderQty });
-  }
-
-  const notional = notionalValue(qty, price);
-  const margin = requiredMargin(notional, leverage);
-  const fee = orderFee(notional, feeRate);
-  const cost = margin + fee;
-  if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
-
-  if (existing !== undefined) {
-    const mergedQty = existing.qty + qty;
-    const mergedEntry = averageEntryPrice(existing.qty, existing.entryPrice, qty, price);
-    const mergedMargin = existing.margin + margin;
-    const merged: Position = {
-      ...existing,
-      qty: mergedQty,
-      entryPrice: mergedEntry,
-      margin: mergedMargin,
-      leverage: notionalValue(mergedQty, mergedEntry) / mergedMargin,
-    };
-    return {
-      ok: true,
-      account: {
-        ...account,
-        balance: account.balance - cost,
-        positions: replacePosition(account.positions, merged),
-      },
-    };
-  }
-
-  const position: Position = {
-    id: createId(),
-    symbol,
-    side,
-    qty,
-    entryPrice: price,
-    margin,
-    leverage,
-    openedAt: now,
-    takeProfit: null,
-    stopLoss: null,
-    trailing: null,
-  };
-  return {
-    ok: true,
-    account: {
-      ...account,
-      balance: account.balance - cost,
-      positions: [...account.positions, position],
-    },
-  };
 }
 
 export function openMarket(account: Account, params: OpenParams): TradeResult {
@@ -268,8 +118,8 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
   if (error !== null) return { ok: false, error };
 
   const notional = notionalValue(qty, limitPrice);
-  const margin = requiredMargin(notional, leverage);
-  const fee = orderFee(notional, MAKER_FEE_RATE);
+  const margin = roundUsdt(requiredMargin(notional, leverage));
+  const fee = roundUsdt(orderFee(notional, MAKER_FEE_RATE));
   const cost = margin + fee;
   if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
 
@@ -288,16 +138,29 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
   };
   return {
     ok: true,
-    account: { ...account, balance: account.balance - cost, orders: [...account.orders, order] },
+    account: {
+      ...account,
+      balance: roundUsdt(account.balance - cost),
+      orders: [...account.orders, order],
+    },
   };
+}
+
+function pendingCloseQty(account: Account, positionId: string): number {
+  return account.orders.reduce(
+    (sum, order) =>
+      order.kind === 'close' && order.positionId === positionId ? sum + order.qty : sum,
+    0,
+  );
 }
 
 export function placeCloseLimit(account: Account, params: CloseLimitParams): TradeResult {
   const { positionId, qty, limitPrice } = params;
   const position = account.positions.find((candidate) => candidate.id === positionId);
   if (position === undefined) return { ok: false, error: 'not-found' };
-  if (!Number.isFinite(qty) || qty <= 0 || qty > position.qty + QTY_EPSILON) {
-    return { ok: false, error: 'invalid-qty' };
+  if (!Number.isFinite(qty) || qty <= 0) return { ok: false, error: 'invalid-qty' };
+  if (qty > position.qty - pendingCloseQty(account, positionId) + QTY_EPSILON) {
+    return { ok: false, error: 'exceeds-position' };
   }
   if (!Number.isFinite(limitPrice) || limitPrice <= 0) return { ok: false, error: 'invalid-price' };
 
@@ -325,7 +188,7 @@ export function cancelOrder(account: Account, orderId: string): TradeResult {
     ok: true,
     account: {
       ...account,
-      balance: account.balance + refund,
+      balance: roundUsdt(account.balance + refund),
       orders: account.orders.filter((candidate) => candidate.id !== orderId),
     },
   };
@@ -337,7 +200,11 @@ export function setTakeProfit(
   price: number | null,
 ): TradeResult {
   return updatePosition(account, positionId, (position) => {
-    if (price !== null && (!Number.isFinite(price) || price <= 0)) return null;
+    if (price === null) return { ...position, takeProfit: null };
+    if (!Number.isFinite(price) || price <= 0) return 'invalid-price';
+    const directionValid =
+      position.side === 'long' ? price > position.entryPrice : price < position.entryPrice;
+    if (!directionValid) return 'invalid-tp-direction';
     return { ...position, takeProfit: price };
   });
 }
@@ -348,7 +215,11 @@ export function setStopLoss(
   price: number | null,
 ): TradeResult {
   return updatePosition(account, positionId, (position) => {
-    if (price !== null && (!Number.isFinite(price) || price <= 0)) return null;
+    if (price === null) return { ...position, stopLoss: null };
+    if (!Number.isFinite(price) || price <= 0) return 'invalid-price';
+    const directionValid =
+      position.side === 'long' ? price < position.entryPrice : price > position.entryPrice;
+    if (!directionValid) return 'invalid-sl-direction';
     return { ...position, stopLoss: price };
   });
 }
@@ -366,7 +237,7 @@ export function setTrailingStop(
       !Number.isFinite(params.distance) ||
       params.distance <= 0
     ) {
-      return null;
+      return 'invalid-price';
     }
     const trailing: TrailingConfig = {
       activationPrice: params.activationPrice,
@@ -381,12 +252,12 @@ export function setTrailingStop(
 function updatePosition(
   account: Account,
   positionId: string,
-  updater: (position: Position) => Position | null,
+  updater: (position: Position) => Position | TradeError,
 ): TradeResult {
   const position = account.positions.find((candidate) => candidate.id === positionId);
   if (position === undefined) return { ok: false, error: 'not-found' };
   const next = updater(position);
-  if (next === null) return { ok: false, error: 'invalid-price' };
+  if (typeof next === 'string') return { ok: false, error: next };
   return { ok: true, account: { ...account, positions: replacePosition(account.positions, next) } };
 }
 
@@ -428,10 +299,10 @@ function advanceTrailing(position: Position, mark: number): TrailingCheck | null
   const extreme =
     position.side === 'long' ? Math.max(previousExtreme, mark) : Math.min(previousExtreme, mark);
   const pullback = position.side === 'long' ? extreme - mark : mark - extreme;
-  return {
-    trailing: { ...trailing, extremePrice: extreme },
-    triggered: pullback >= trailing.distance,
-  };
+  const triggered = pullback >= trailing.distance;
+  // 極值未推進且未觸發時回傳原 reference，避免每 tick 產生新帳戶狀態觸發 persist。
+  if (!triggered && extreme === trailing.extremePrice) return { trailing, triggered: false };
+  return { trailing: { ...trailing, extremePrice: extreme }, triggered };
 }
 
 export interface TickResult {
@@ -554,7 +425,8 @@ export function processTick(
     current = processPosition(current, position, mark, now, events);
   }
 
-  for (const order of account.orders) {
+  const pendingOrders = current.orders;
+  for (const order of pendingOrders) {
     if (order.symbol !== symbol) continue;
     const stillPending = current.orders.some((candidate) => candidate.id === order.id);
     if (!stillPending) continue;
@@ -563,7 +435,7 @@ export function processTick(
       if (!isOpenLimitFillable(order, mark)) continue;
       const refunded: Account = {
         ...current,
-        balance: current.balance + order.margin + order.fee,
+        balance: roundUsdt(current.balance + order.margin + order.fee),
         orders: current.orders.filter((candidate) => candidate.id !== order.id),
       };
       const filled = executeOpen(refunded, {

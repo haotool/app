@@ -12,8 +12,10 @@ import {
   setTakeProfit,
   setTrailingStop,
 } from './engine';
+import { roundUsdt } from './math';
 import { type Account, type Position } from './types';
 import { INITIAL_BALANCE_USDT } from '../config/trading';
+import { type MarketSymbol } from '../config/market';
 
 const NOW = 1_800_000_000_000;
 
@@ -57,6 +59,7 @@ describe('openMarket', () => {
     expect(position.qty).toBe(0.1);
     expect(position.entryPrice).toBe(60000);
     expect(position.margin).toBe(600);
+    expect(position.openFee).toBeCloseTo(3.3, 8);
     expect(position.leverage).toBe(10);
     expect(position.openedAt).toBe(NOW);
   });
@@ -188,6 +191,7 @@ describe('closePositionMarket', () => {
     const trade = account.history[0];
     expect(trade?.realizedPnl).toBeCloseTo(100, 8);
     expect(trade?.fee).toBeCloseTo(fee, 8);
+    expect(trade?.openFee).toBeCloseTo(3.3, 8);
     expect(trade?.reason).toBe('manual');
     expect(trade?.closedAt).toBe(NOW);
   });
@@ -207,10 +211,12 @@ describe('closePositionMarket', () => {
     const position = onlyPosition(account);
     expect(position.qty).toBeCloseTo(0.15, 10);
     expect(position.margin).toBeCloseTo(900, 8);
+    expect(position.openFee).toBeCloseTo(4.95, 8);
     expect(position.entryPrice).toBe(60000);
 
     const fee = 61000 * 0.05 * 0.00055;
     expect(account.balance).toBeCloseTo(balanceBefore + 300 + 50 - fee, 8);
+    expect(account.history[0]?.openFee).toBeCloseTo(1.65, 8);
   });
 
   it('rejects invalid fraction or unknown position', () => {
@@ -364,7 +370,20 @@ describe('close limit orders', () => {
       qty: 0.2,
       limitPrice: 61000,
     });
-    expect(result).toEqual({ ok: false, error: 'invalid-qty' });
+    expect(result).toEqual({ ok: false, error: 'exceeds-position' });
+  });
+
+  it('rejects a close limit when pending close orders already cover the position', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const id = onlyPosition(account).id;
+    const first = placeCloseLimit(account, { positionId: id, qty: 0.06, limitPrice: 61000 });
+    if (!first.ok) throw new Error(first.error);
+
+    const second = placeCloseLimit(first.account, { positionId: id, qty: 0.06, limitPrice: 62000 });
+    expect(second).toEqual({ ok: false, error: 'exceeds-position' });
+
+    const within = placeCloseLimit(first.account, { positionId: id, qty: 0.04, limitPrice: 62000 });
+    expect(within.ok).toBe(true);
   });
 
   it('drops close orders whose position disappeared', () => {
@@ -449,6 +468,41 @@ describe('take profit and stop loss', () => {
     if (!cleared.ok) throw new Error(cleared.error);
     expect(onlyPosition(cleared.account).takeProfit).toBeNull();
   });
+
+  it('rejects wrong-direction TP/SL for longs', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const id = onlyPosition(account).id;
+    expect(setTakeProfit(account, id, 59000)).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(setTakeProfit(account, id, 60000)).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(setStopLoss(account, id, 61000)).toEqual({ ok: false, error: 'invalid-sl-direction' });
+  });
+
+  it('rejects wrong-direction TP/SL for shorts', () => {
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    const id = onlyPosition(opened.account).id;
+    expect(setTakeProfit(opened.account, id, 61000)).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(setStopLoss(opened.account, id, 59000)).toEqual({
+      ok: false,
+      error: 'invalid-sl-direction',
+    });
+  });
 });
 
 describe('trailing stop', () => {
@@ -483,6 +537,16 @@ describe('trailing stop', () => {
     expect(closed.account.history[0]?.exitPrice).toBe(61290);
     expect(closed.account.history[0]?.realizedPnl).toBeCloseTo(129, 8);
     expect(closed.events.some((event) => event.type === 'trailing')).toBe(true);
+  });
+
+  it('returns the same account reference when the extreme does not advance', () => {
+    let account = withTrailing(openLong(createInitialAccount(), 0.1, 60000, 10));
+    account = processTick(account, 'BTCUSDT', 61000, NOW).account;
+    account = processTick(account, 'BTCUSDT', 61800, NOW).account;
+
+    const idle = processTick(account, 'BTCUSDT', 61500, NOW);
+    expect(idle.account).toBe(account);
+    expect(idle.events).toEqual([]);
   });
 
   it('tracks minima for shorts', () => {
@@ -558,6 +622,253 @@ describe('liquidation', () => {
 
     const ticked = processTick(withSl.account, 'BTCUSDT', 54000, NOW);
     expect(ticked.account.history[0]?.reason).toBe('liquidation');
+  });
+});
+
+describe('ledger invariant', () => {
+  function ledgerLhs(account: Account): number {
+    const positionMargin = account.positions.reduce((sum, position) => sum + position.margin, 0);
+    const positionOpenFee = account.positions.reduce((sum, position) => sum + position.openFee, 0);
+    const orderReserved = account.orders.reduce((sum, order) => sum + order.margin + order.fee, 0);
+    const historyFees = account.history.reduce((sum, trade) => sum + trade.fee + trade.openFee, 0);
+    const realized = account.history.reduce((sum, trade) => sum + trade.realizedPnl, 0);
+    return (
+      account.balance + positionMargin + positionOpenFee + orderReserved + historyFees - realized
+    );
+  }
+
+  function expectInvariant(account: Account) {
+    expect(roundUsdt(ledgerLhs(account))).toBe(INITIAL_BALANCE_USDT);
+  }
+
+  it('holds across a deterministic mixed sequence of every operation type', () => {
+    let account = createInitialAccount();
+    expectInvariant(account);
+
+    account = openLong(account, 0.1, 60000, 10);
+    expectInvariant(account);
+
+    account = openLong(account, 0.05, 62000, 25);
+    expectInvariant(account);
+
+    const reversed = openMarket(account, {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 0.08,
+      price: 61500,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!reversed.ok) throw new Error(reversed.error);
+    account = reversed.account;
+    expectInvariant(account);
+
+    const limit = placeLimitOrder(account, {
+      symbol: 'ETHUSDT',
+      side: 'long',
+      qty: 0.5,
+      limitPrice: 2900,
+      leverage: 5,
+      now: NOW,
+    });
+    if (!limit.ok) throw new Error(limit.error);
+    account = limit.account;
+    expectInvariant(account);
+
+    account = processTick(account, 'ETHUSDT', 2890, NOW).account;
+    expect(account.positions.some((position) => position.symbol === 'ETHUSDT')).toBe(true);
+    expectInvariant(account);
+
+    const ethId = account.positions.find((position) => position.symbol === 'ETHUSDT')?.id;
+    if (ethId === undefined) throw new Error('no eth position');
+    const closeLimit = placeCloseLimit(account, {
+      positionId: ethId,
+      qty: 0.2,
+      limitPrice: 3050,
+      now: NOW,
+    });
+    if (!closeLimit.ok) throw new Error(closeLimit.error);
+    account = closeLimit.account;
+    expectInvariant(account);
+
+    account = processTick(account, 'ETHUSDT', 3060, NOW).account;
+    expectInvariant(account);
+
+    const btcId = account.positions.find((position) => position.symbol === 'BTCUSDT')?.id;
+    if (btcId === undefined) throw new Error('no btc position');
+    const withTp = setTakeProfit(account, btcId, 63000);
+    if (!withTp.ok) throw new Error(withTp.error);
+    const withTrailing = setTrailingStop(withTp.account, btcId, {
+      activationPrice: 62500,
+      distance: 300,
+    });
+    if (!withTrailing.ok) throw new Error(withTrailing.error);
+    account = withTrailing.account;
+    expectInvariant(account);
+
+    account = processTick(account, 'BTCUSDT', 63100, NOW).account;
+    expect(account.positions.some((position) => position.symbol === 'BTCUSDT')).toBe(false);
+    expectInvariant(account);
+
+    account = openLong(account, 0.1, 60000, 50);
+    account = processTick(account, 'BTCUSDT', 30000, NOW).account;
+    expect(account.history[0]?.reason).toBe('liquidation');
+    expectInvariant(account);
+
+    account = openLong(account, 0.2, 60000, 10);
+    const partialClose = closePositionMarket(account, {
+      positionId: onlyPosition(account).id,
+      fraction: 0.37,
+      price: 60750,
+      now: NOW,
+    });
+    if (!partialClose.ok) throw new Error(partialClose.error);
+    account = partialClose.account;
+    expectInvariant(account);
+
+    const cancelable = placeLimitOrder(account, {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.05,
+      limitPrice: 55000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!cancelable.ok) throw new Error(cancelable.error);
+    account = cancelable.account;
+    expectInvariant(account);
+
+    const orderId = account.orders.at(-1)?.id;
+    if (orderId === undefined) throw new Error('no order');
+    const cancelled = cancelOrder(account, orderId);
+    if (!cancelled.ok) throw new Error(cancelled.error);
+    account = cancelled.account;
+    expectInvariant(account);
+  });
+
+  it('holds under randomized operation sequences (property-style)', () => {
+    function mulberry32(seed: number): () => number {
+      let a = seed >>> 0;
+      return () => {
+        a = (a + 0x6d2b79f5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const symbols: MarketSymbol[] = ['BTCUSDT', 'ETHUSDT'];
+    const leverages = [1, 5, 10, 25, 50, 125];
+
+    for (let seed = 1; seed <= 5; seed += 1) {
+      const rng = mulberry32(seed * 7919);
+      const marks: Record<MarketSymbol, number> = {
+        BTCUSDT: 60000,
+        ETHUSDT: 3000,
+        SOLUSDT: 150,
+        XRPUSDT: 2,
+        DOGEUSDT: 0.3,
+        BNBUSDT: 600,
+        ADAUSDT: 1,
+        LTCUSDT: 100,
+        LINKUSDT: 20,
+        AVAXUSDT: 40,
+      };
+      let account = createInitialAccount();
+
+      const randomSide = () => (rng() < 0.5 ? ('long' as const) : ('short' as const));
+      const randomLeverage = () => leverages[Math.floor(rng() * leverages.length)] ?? 10;
+      const randomQty = (mark: number) => (50 + rng() * 2000) / mark;
+      const randomPosition = (): Position | undefined =>
+        account.positions[Math.floor(rng() * account.positions.length)];
+
+      for (let step = 0; step < 300; step += 1) {
+        const symbol = symbols[Math.floor(rng() * symbols.length)] ?? 'BTCUSDT';
+        const mark = marks[symbol];
+        const roll = rng();
+
+        if (roll < 0.22) {
+          const result = openMarket(account, {
+            symbol,
+            side: randomSide(),
+            qty: randomQty(mark),
+            price: mark,
+            leverage: randomLeverage(),
+            now: NOW,
+          });
+          if (result.ok) account = result.account;
+        } else if (roll < 0.34) {
+          const result = placeLimitOrder(account, {
+            symbol,
+            side: randomSide(),
+            qty: randomQty(mark),
+            limitPrice: mark * (0.92 + rng() * 0.16),
+            leverage: randomLeverage(),
+            now: NOW,
+          });
+          if (result.ok) account = result.account;
+        } else if (roll < 0.44) {
+          const position = randomPosition();
+          if (position !== undefined) {
+            const result = placeCloseLimit(account, {
+              positionId: position.id,
+              qty: position.qty * (0.2 + rng() * 0.9),
+              limitPrice: marks[position.symbol] * (0.95 + rng() * 0.1),
+              now: NOW,
+            });
+            if (result.ok) account = result.account;
+          }
+        } else if (roll < 0.5) {
+          const order = account.orders[Math.floor(rng() * account.orders.length)];
+          if (order !== undefined) {
+            const result = cancelOrder(account, order.id);
+            if (result.ok) account = result.account;
+          }
+        } else if (roll < 0.58) {
+          const position = randomPosition();
+          if (position !== undefined) {
+            const result = closePositionMarket(account, {
+              positionId: position.id,
+              fraction: rng(),
+              price: marks[position.symbol],
+              now: NOW,
+            });
+            if (result.ok) account = result.account;
+          }
+        } else if (roll < 0.68) {
+          const position = randomPosition();
+          if (position !== undefined) {
+            const tp = setTakeProfit(
+              account,
+              position.id,
+              position.entryPrice * (0.9 + rng() * 0.2),
+            );
+            if (tp.ok) account = tp.account;
+            const sl = setStopLoss(account, position.id, position.entryPrice * (0.9 + rng() * 0.2));
+            if (sl.ok) account = sl.account;
+          }
+        } else if (roll < 0.74) {
+          const position = randomPosition();
+          if (position !== undefined) {
+            const positionMark = marks[position.symbol];
+            const result = setTrailingStop(account, position.id, {
+              activationPrice: positionMark * (0.97 + rng() * 0.06),
+              distance: positionMark * (0.002 + rng() * 0.01),
+            });
+            if (result.ok) account = result.account;
+          }
+        } else {
+          const nextMark = Math.max(mark * (0.9 + rng() * 0.2), 0.0001);
+          marks[symbol] = nextMark;
+          account = processTick(account, symbol, nextMark, NOW).account;
+        }
+
+        expectInvariant(account);
+      }
+
+      expect(account.history.length).toBeGreaterThan(0);
+    }
   });
 });
 

@@ -75,7 +75,7 @@ describe('AssetsPage', () => {
     const historySection = screen.getByRole('region', { name: '平倉歷史' });
     expect(screen.getByText('+100')).toBeInTheDocument();
     expect(historySection).toHaveTextContent('手動');
-    expect(historySection).toHaveTextContent(/手續費 3\.355/);
+    expect(historySection).toHaveTextContent(/手續費 6\.655/);
   });
 
   it('resets the account after confirmation', async () => {

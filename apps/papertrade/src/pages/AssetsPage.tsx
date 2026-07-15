@@ -136,7 +136,7 @@ export function AssetsPage() {
                     {formatPrice(trade.entryPrice)} → 平 {formatPrice(trade.exitPrice)}
                   </p>
                   <p className="mt-0.5 flex justify-between text-caption text-text-3 tabular-nums">
-                    <span>手續費 {formatAmount(trade.fee, 4)} USDT</span>
+                    <span>手續費 {formatAmount(trade.openFee + trade.fee, 4)} USDT</span>
                     <span>{formatTime(trade.closedAt)}</span>
                   </p>
                 </li>

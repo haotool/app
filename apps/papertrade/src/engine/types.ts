@@ -18,6 +18,7 @@ export interface Position {
   qty: number;
   entryPrice: number;
   margin: number;
+  openFee: number;
   leverage: number;
   openedAt: number;
   takeProfit: number | null;
@@ -50,6 +51,7 @@ export interface ClosedTrade {
   exitPrice: number;
   realizedPnl: number;
   fee: number;
+  openFee: number;
   reason: CloseReason;
   closedAt: number;
 }
