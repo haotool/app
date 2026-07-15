@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import { SceneKeys, type GameResultData } from '../core/types';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { createFx } from '../systems/fx';
-import { addDomButton } from '../systems/hud';
+import { addDomButton, bindMenuRelayout } from '../systems/hud';
 
 export class ResultScene extends Phaser.Scene {
   private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
@@ -24,7 +23,8 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
-    const centerX = CANVAS.width / 2;
+    const { width, height } = this.scale;
+    const centerX = width / 2;
     const seconds = (this.result.timeMs / 1000).toFixed(1);
     const won = this.result.result === 'won';
 
@@ -36,15 +36,14 @@ export class ResultScene extends Phaser.Scene {
       ambience: won ? 'bg-throne' : undefined,
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
+    bindMenuRelayout(this, this.result);
     if (!won) {
-      this.add
-        .rectangle(centerX, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x9a9aa8, 0.4)
-        .setDepth(-5);
+      this.add.rectangle(centerX, height / 2, width, height, 0x9a9aa8, 0.4).setDepth(-5);
     }
 
     const heroKey = won ? 'hero-puffed' : 'hero-hurt';
     if (this.textures.exists(heroKey)) {
-      const hero = this.add.image(centerX, CANVAS.height * 0.5, heroKey);
+      const hero = this.add.image(centerX, height * 0.5, heroKey);
       hero.setDisplaySize(130, 130);
       if (!won) hero.setTint(0xbcbcc8);
       this.tweens.add({
@@ -58,7 +57,7 @@ export class ResultScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.18, won ? '勝利！' : '失敗…', {
+      .text(centerX, height * 0.18, won ? '勝利！' : '失敗…', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '54px',
         fontStyle: 'bold',
@@ -73,7 +72,7 @@ export class ResultScene extends Phaser.Scene {
       ? `用時 ${seconds} 秒｜${this.result.deaths === 0 ? '無傷通關！' : `死亡 ${this.result.deaths} 次`}`
       : `用時 ${seconds} 秒`;
     this.add
-      .text(centerX, CANVAS.height * 0.31, stats, {
+      .text(centerX, height * 0.31, stats, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
         color: won ? '#5a4a2a' : '#5a5a6e',
@@ -83,7 +82,7 @@ export class ResultScene extends Phaser.Scene {
     if (won) createFx(this).confetti();
 
     const retryButton = this.add
-      .text(centerX, CANVAS.height * 0.68, won ? '再玩一次' : '再戰魔王', {
+      .text(centerX, height * 0.68, won ? '再玩一次' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '28px',
         fontStyle: 'bold',

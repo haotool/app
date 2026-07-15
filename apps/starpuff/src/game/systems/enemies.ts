@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
@@ -117,6 +116,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   });
   let target: EnemyTarget | null = null;
   let elapsedMs = 0;
+
+  // 無 target 時的朝向啟發改讀當前鏡頭中心（§28 動態視寬，禁硬編 854）。
+  const viewCenterX = () => scene.cameras.main.scrollX + scene.scale.width / 2;
 
   function kindOf(enemy: Phaser.GameObjects.GameObject): EnemyKind | null {
     return enemy.active ? ((enemy.getData('kind') as EnemyKind | undefined) ?? null) : null;
@@ -309,8 +311,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       // spiky 以 bounce=1 碰牆自動折返；chompy 定點紮根。
       body.setBounce(kind === 'spiky' ? 1 : 0, 0);
       body.setImmovable(kind === 'chompy');
-      // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回畫面中心啟發。
-      const inward = target ? (target.x >= x ? 1 : -1) : x < CANVAS.width / 2 ? 1 : -1;
+      // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回當前鏡頭中心啟發。
+      const inward = target ? (target.x >= x ? 1 : -1) : x < viewCenterX() ? 1 : -1;
       if (kind === 'spiky') body.setVelocity(SPIKY_SPEED * inward, 0);
       else if (kind === 'puffy') body.setVelocity(0, PUFFY_FALL_SPEED);
       else body.setVelocity(0, 0);
@@ -406,7 +408,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
               break;
             }
             sprite.setData('hopMs', 0);
-            const targetX = target?.x ?? CANVAS.width / 2;
+            const targetX = target?.x ?? viewCenterX();
             const direction = targetX >= sprite.x ? 1 : -1;
             body.setVelocity(direction * JELLY_HOP_VX, JELLY_HOP_VY);
             break;

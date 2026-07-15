@@ -87,6 +87,17 @@ export function restoreMutePreference(): void {
   }
 }
 
+// 選單場景視寬自適應（§28）：邏輯寬變更時以原資料重啟場景重排（選單輕量無局內狀態）；
+// 寬未變的 refresh（旋轉同寬、僅殼位移）不重啟。
+export function bindMenuRelayout(scene: Phaser.Scene, restartData?: object): void {
+  const createdWidth = scene.scale.width;
+  const onResize = (gameSize: { width: number }): void => {
+    if (gameSize.width !== createdWidth) scene.scene.restart(restartData);
+  };
+  scene.scale.on('resize', onResize);
+  scene.events.once('shutdown', () => scene.scale.off('resize', onResize));
+}
+
 // 場景 DOM 備援鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
 // 透明 DOM 鈕承接（hit-test 隨殼旋轉自然正確）。幾何以遊戲邏輯座標換算 canvas CSS px，
 // 隨 scale resize 重算；監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。

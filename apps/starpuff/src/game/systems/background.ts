@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import type { LevelSpec } from '../logic/levels';
 import { fillStarPath } from './fx';
 
@@ -132,14 +131,15 @@ function ensureAmbienceTextures(scene: Phaser.Scene): void {
 }
 
 // 512 高圖以 cover 邏輯等比放大貼齊畫布（高度主導 480/512），藝術底帶對齊世界地面。
+// 視寬動態（§28）：一律讀當下 scale 尺寸，禁硬編 854。
 function coverScale(scene: Phaser.Scene, key: string): number {
   const src = scene.textures.get(key).getSourceImage() as { width: number; height: number };
-  return Math.max(CANVAS.width / src.width, CANVAS.height / src.height);
+  return Math.max(scene.scale.width / src.width, scene.scale.height / src.height);
 }
 
 function addCoverTile(scene: Phaser.Scene, key: string): Phaser.GameObjects.TileSprite {
   const tile = scene.add
-    .tileSprite(0, 0, CANVAS.width, CANVAS.height, key)
+    .tileSprite(0, 0, scene.scale.width, scene.scale.height, key)
     .setOrigin(0, 0)
     .setScrollFactor(0)
     .setDepth(DEPTH_BG);
@@ -149,7 +149,7 @@ function addCoverTile(scene: Phaser.Scene, key: string): Phaser.GameObjects.Tile
 
 function addClouds(scene: Phaser.Scene): Phaser.GameObjects.TileSprite {
   return scene.add
-    .tileSprite(0, 4, CANVAS.width, 256, 'fx-clouds')
+    .tileSprite(0, 4, scene.scale.width, 256, 'fx-clouds')
     .setOrigin(0, 0)
     .setScrollFactor(0)
     .setDepth(DEPTH_CLOUDS)
@@ -164,7 +164,7 @@ function addAmbience(
   ensureAmbienceTextures(scene);
   return scene.add
     .particles(0, 0, spec.texture, {
-      x: () => scene.cameras.main.scrollX + Phaser.Math.Between(-30, CANVAS.width + 30),
+      x: () => scene.cameras.main.scrollX + Phaser.Math.Between(-30, scene.scale.width + 30),
       y: -16,
       speedY: { min: spec.speedY.min, max: spec.speedY.max },
       speedX: { min: -16, max: 16 },
@@ -182,10 +182,20 @@ function addAmbience(
 }
 
 function addGrade(scene: Phaser.Scene, color: number): Phaser.GameObjects.Rectangle {
+  const { width, height } = scene.scale;
   return scene.add
-    .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, color, GRADE_ALPHA)
+    .rectangle(width / 2, height / 2, width, height, color, GRADE_ALPHA)
     .setScrollFactor(0)
     .setDepth(GRADE_DEPTH);
+}
+
+// 視寬變更重排（§28 resize 回呼）：滿版元素（平鋪層/雲層/分級/單張 cover）依新視寬調整，
+// 場景 shutdown 時解除監聽。
+function bindViewResize(scene: Phaser.Scene, relayout: () => void): () => void {
+  scene.scale.on('resize', relayout);
+  const off = () => scene.scale.off('resize', relayout);
+  scene.events.once('shutdown', off);
+  return off;
 }
 
 // 一站式關卡背景：平鋪關雙層視差（近景 0.6 / 遠景雲 0.25 + 自漂移）；魔王關單張置中 cover。
@@ -199,20 +209,24 @@ export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec):
   let driftMs = 0;
   let destroyed = false;
 
+  let fallback: Phaser.GameObjects.Rectangle | null = null;
+  let bossImg: Phaser.GameObjects.Image | null = null;
+  let grade: Phaser.GameObjects.Rectangle | null = null;
+
   if (!scene.textures.exists(key)) {
-    objects.push(
-      scene.add
-        .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0xd6ecff)
-        .setScrollFactor(0)
-        .setDepth(DEPTH_BG),
-    );
-  } else if (level.boss) {
-    const img = scene.add
-      .image(CANVAS.width / 2, CANVAS.height / 2, key)
+    const { width, height } = scene.scale;
+    fallback = scene.add
+      .rectangle(width / 2, height / 2, width, height, 0xd6ecff)
       .setScrollFactor(0)
       .setDepth(DEPTH_BG);
-    img.setScale(coverScale(scene, key));
-    objects.push(img);
+    objects.push(fallback);
+  } else if (level.boss) {
+    bossImg = scene.add
+      .image(scene.scale.width / 2, scene.scale.height / 2, key)
+      .setScrollFactor(0)
+      .setDepth(DEPTH_BG);
+    bossImg.setScale(coverScale(scene, key));
+    objects.push(bossImg);
   } else {
     near = addCoverTile(scene, key);
     nearScale = near.tileScaleX;
@@ -222,8 +236,18 @@ export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec):
 
   if (theme) {
     objects.push(addAmbience(scene, theme.ambience));
-    objects.push(addGrade(scene, theme.grade));
+    grade = addGrade(scene, theme.grade);
+    objects.push(grade);
   }
+
+  const offResize = bindViewResize(scene, () => {
+    const { width, height } = scene.scale;
+    near?.setSize(width, height);
+    clouds?.setSize(width, 256);
+    fallback?.setPosition(width / 2, height / 2).setSize(width, height);
+    grade?.setPosition(width / 2, height / 2).setSize(width, height);
+    if (bossImg) bossImg.setPosition(width / 2, height / 2).setScale(coverScale(scene, key));
+  });
 
   return {
     update(deltaMs: number): void {
@@ -239,6 +263,7 @@ export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec):
     destroy(): void {
       if (destroyed) return;
       destroyed = true;
+      offResize();
       objects.forEach((obj) => obj.destroy());
       objects.length = 0;
     },
@@ -278,6 +303,12 @@ export function createMenuBackdrop(
   const theme = options.ambience ? THEMES[options.ambience] : undefined;
   if (theme) objects.push(addAmbience(scene, theme.ambience));
 
+  const offResize = bindViewResize(scene, () => {
+    const { width, height } = scene.scale;
+    tile?.setSize(width, height);
+    clouds?.setSize(width, 256);
+  });
+
   return {
     update(deltaMs: number): void {
       if (destroyed) return;
@@ -288,6 +319,7 @@ export function createMenuBackdrop(
     destroy(): void {
       if (destroyed) return;
       destroyed = true;
+      offResize();
       objects.forEach((obj) => obj.destroy());
       objects.length = 0;
     },

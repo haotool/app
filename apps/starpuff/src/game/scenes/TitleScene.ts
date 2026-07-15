@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
-import { addDomButton, addMuteButton } from '../systems/hud';
+import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -28,7 +27,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const centerX = CANVAS.width / 2;
+    const { width, height } = this.scale;
+    const centerX = width / 2;
     this.backdrop = createMenuBackdrop(this, {
       bgKey: 'bg-meadow',
       autoScrollPxPerSec: 12,
@@ -37,10 +37,11 @@ export class TitleScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
+    bindMenuRelayout(this);
 
     if (this.textures.exists('hero-idle')) {
       ensureGlowTexture(this);
-      const heroY = CANVAS.height * 0.45;
+      const heroY = height * 0.45;
       const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
@@ -64,7 +65,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.15, '星噗噗', {
+      .text(centerX, height * 0.15, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '58px',
         fontStyle: 'bold',
@@ -75,7 +76,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(centerX, CANVAS.height * 0.27, 'StarPuff', {
+      .text(centerX, height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
         color: '#7a5fb8',
@@ -83,7 +84,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const startButton = this.add
-      .text(centerX, CANVAS.height * 0.66, '開始遊戲', {
+      .text(centerX, height * 0.66, '開始遊戲', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '28px',
         fontStyle: 'bold',
@@ -104,7 +105,7 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.add
-      .text(centerX, CANVAS.height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
+      .text(centerX, height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '16px',
         color: '#5a5a6e',
