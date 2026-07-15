@@ -951,7 +951,8 @@ export function HistoryTab() {
               const exp = expenses.find((e) => e.id === pendingDeleteId);
               const fallback =
                 exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized');
-              return t('history.deleted_toast', { label: exp?.note ? exp.note : fallback });
+              const label = exp && exp.note.length > 0 ? exp.note : fallback;
+              return t('history.deleted_toast', { label });
             })()}
           </span>
           <button
