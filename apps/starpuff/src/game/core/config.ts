@@ -118,6 +118,15 @@ export const SLAM = {
   knockbackLift: -180,
 } as const;
 
+// 空中疾衝（§30）：空中雙擊 A（350ms 窗）朝面向水平疾衝 180px/0.18s；無敵幀、CD 2s、衝撞傷害 1。
+export const AIR_DASH = {
+  doubleTapWindowMs: 350,
+  distancePx: 180,
+  durationMs: 180,
+  cooldownMs: 2000,
+  damage: 1,
+} as const;
+
 // 金星彈（§24 第三關彩蛋）：單發傷害 20。
 export const GOLD_STAR = {
   damage: 20,

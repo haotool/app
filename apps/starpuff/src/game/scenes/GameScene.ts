@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import {
+  AIR_DASH,
   EGG_HP_CAP,
   ENEMY,
   INHALE,
@@ -309,6 +310,11 @@ export class GameScene extends Phaser.Scene {
       const kind = this.enemies.kindOf(enemy as Phaser.GameObjects.GameObject);
       if (!kind || this.finished || this.transitioning) return;
       const target = asSprite(enemy);
+      // 疾衝衝撞（§30）：無敵幀期間衝撞小怪傷害 1，不結算觸碰傷害。
+      if (this.player.isAirDashing()) {
+        this.enemies.damage(enemy as Phaser.GameObjects.GameObject, AIR_DASH.damage);
+        return;
+      }
       // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
       const { x, y } = this.player.sprite;
       if (

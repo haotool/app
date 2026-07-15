@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CHARGED_STAR, GOLD_STAR, STARSTORM, type MagazineSlot } from '../core/config';
+import { AIR_DASH, CHARGED_STAR, GOLD_STAR, STARSTORM, type MagazineSlot } from '../core/config';
 import {
+  advanceAirDash,
   advanceStarstormHold,
+  airDashSpeed,
+  createAirDashState,
   fillMagazine,
+  isAirDashing,
   popTopSlot,
   pushGoldStar,
   resolveActionPress,
@@ -12,6 +16,7 @@ import {
   starstormProgress,
   starstormReady,
   swallowIntoMagazine,
+  type AirDashState,
 } from './skills';
 
 const slot = (flavor: MagazineSlot['flavor'], charged = false, gold = false): MagazineSlot => ({
@@ -135,6 +140,66 @@ describe('resolveActionPress（§23 B 鍵決策）', () => {
   it('放開短於吸入閾值視為點按發射', () => {
     expect(shouldFireOnRelease(100)).toBe(true);
     expect(shouldFireOnRelease(150)).toBe(false);
+  });
+});
+
+describe('advanceAirDash（§30 空中疾衝）', () => {
+  const tap = (state: AirDashState, deltaMs: number, airborne = true) =>
+    advanceAirDash(state, { deltaMs, jumpPressed: true, airborne });
+  const idle = (state: AirDashState, deltaMs: number, airborne = true) =>
+    advanceAirDash(state, { deltaMs, jumpPressed: false, airborne });
+
+  it('空中雙擊 350ms 窗內觸發疾衝並進入 2s CD', () => {
+    let result = tap(createAirDashState(), 16);
+    expect(result.trigger).toBe(false);
+    result = idle(result.state, 200);
+    result = tap(result.state, 16);
+    expect(result.trigger).toBe(true);
+    expect(isAirDashing(result.state)).toBe(true);
+    expect(result.state.dashLeftMs).toBe(AIR_DASH.durationMs);
+    expect(result.state.cooldownMs).toBe(AIR_DASH.cooldownMs);
+  });
+
+  it('超過雙擊窗不觸發，該按壓改記為新首擊', () => {
+    let result = tap(createAirDashState(), 16);
+    result = idle(result.state, 400);
+    result = tap(result.state, 16);
+    expect(result.trigger).toBe(false);
+    result = tap(result.state, 100);
+    expect(result.trigger).toBe(true);
+  });
+
+  it('落地重置雙擊窗；地面按壓不列入首擊', () => {
+    let result = tap(createAirDashState(), 16);
+    result = idle(result.state, 50, false);
+    result = tap(result.state, 50);
+    expect(result.trigger).toBe(false);
+    const grounded = tap(createAirDashState(), 16, false);
+    const airTap = tap(grounded.state, 100);
+    expect(airTap.trigger).toBe(false);
+  });
+
+  it('CD 期間雙擊不觸發，CD 耗盡後可再衝', () => {
+    let result = tap(createAirDashState(), 16);
+    result = tap(result.state, 100);
+    expect(result.trigger).toBe(true);
+    result = idle(result.state, 500);
+    result = tap(result.state, 16);
+    result = tap(result.state, 100);
+    expect(result.trigger).toBe(false);
+    result = idle(result.state, AIR_DASH.cooldownMs);
+    result = tap(result.state, 16);
+    result = tap(result.state, 100);
+    expect(result.trigger).toBe(true);
+  });
+
+  it('疾衝 0.18s 後結束；等效速度 1000px/s（180px/0.18s）', () => {
+    let result = tap(createAirDashState(), 16);
+    result = tap(result.state, 100);
+    expect(isAirDashing(result.state)).toBe(true);
+    result = idle(result.state, AIR_DASH.durationMs);
+    expect(isAirDashing(result.state)).toBe(false);
+    expect(airDashSpeed()).toBe(1000);
   });
 });
 
