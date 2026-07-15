@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import {
-  CANVAS,
   EGG_HP_CAP,
   ENEMY,
   INHALE,
@@ -8,6 +7,7 @@ import {
   SLAM,
   STARSTORM,
   STAR_FLAVORS,
+  VIEW,
   type StarFlavor,
 } from '../core/config';
 import {
@@ -39,7 +39,7 @@ import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
 const GROUND_HEIGHT = 80;
-const GROUND_TOP = CANVAS.height - GROUND_HEIGHT;
+const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 const SPAWN_EDGE_X = 48;
 // 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度（橫式地面頂 y=400）。
 const SPAWN_AIR_Y = 240;
@@ -92,6 +92,7 @@ export class GameScene extends Phaser.Scene {
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
   private unbinders: (() => void)[] = [];
+  private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
@@ -124,12 +125,13 @@ export class GameScene extends Phaser.Scene {
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
 
-    this.physics.world.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
+    this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
+    this.terrainGround = ground;
 
     this.controls = createControls(this);
-    const startX = this.level.boss ? this.level.worldWidth / 2 : 100;
+    const startX = this.level.boss ? this.worldWidth() / 2 : 100;
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
@@ -138,10 +140,12 @@ export class GameScene extends Phaser.Scene {
     createHud(this);
     const unbindSfx = bindSfxToEvents(this.events);
 
-    this.cameras.main.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
+    this.cameras.main.setBounds(0, 0, this.worldWidth(), VIEW.height);
     // 剛性跟隨（US-022 / recon 硬規則 9）：lerp 1,1 消除 lerp×roundPixels 逐幀往返跳動；
     // boss 關單屏不跟隨，避免剛性跟隨在 preRender 覆寫入場運鏡的 pan/zoom。
     if (!this.level.boss) this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
+    this.scale.on('resize', this.onScaleResize);
+    this.unbinders.push(() => this.scale.off('resize', this.onScaleResize));
 
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));
@@ -218,14 +222,32 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
+  // 世界有效寬（§28）：捲軸關讀關卡資料；boss 單屏關 = 當前視寬（854–1200 動態）。
+  private worldWidth(): number {
+    return this.level.boss ? this.scale.width : this.level.worldWidth;
+  }
+
+  // 視寬變更回呼（recon-v4 B.3）：僅更新 bounds 與佈局，禁止 setGameSize（防循環）。
+  // 相機尺寸由 Phaser CameraManager 於 RESIZE 事件自動同步。
+  private onScaleResize = (): void => {
+    const width = this.worldWidth();
+    this.physics.world.setBounds(0, 0, width, VIEW.height);
+    this.cameras.main.setBounds(0, 0, width, VIEW.height);
+    if (this.level.boss && this.terrainGround) {
+      this.terrainGround.setPosition(width / 2, VIEW.height - GROUND_HEIGHT / 2);
+      this.terrainGround.setSize(width, GROUND_HEIGHT);
+      (this.terrainGround.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+    }
+  };
+
   private addTerrain(): {
     ground: Phaser.GameObjects.Rectangle;
     platforms: Phaser.GameObjects.Rectangle[];
   } {
     const ground = this.add.rectangle(
-      this.level.worldWidth / 2,
-      CANVAS.height - GROUND_HEIGHT / 2,
-      this.level.worldWidth,
+      this.worldWidth() / 2,
+      VIEW.height - GROUND_HEIGHT / 2,
+      this.worldWidth(),
       GROUND_HEIGHT,
       0xbff3e0,
       0.9,
@@ -385,7 +407,7 @@ export class GameScene extends Phaser.Scene {
   // 星星門：fx-star 放大 + 光暈脈動 + 浮動 tween（graphics 組合，不新增美術）。
   private spawnGate(): void {
     if (this.gate || this.level.boss) return;
-    const gx = this.level.worldWidth - GATE_MARGIN_X;
+    const gx = this.worldWidth() - GATE_MARGIN_X;
     const glow = this.add.image(0, 0, 'fx-star').setDisplaySize(150, 150).setAlpha(0.35);
     const core = this.add.image(0, 0, 'fx-star').setDisplaySize(96, 96);
     const gate = this.add.container(gx, GATE_Y, [glow, core]);
@@ -445,14 +467,15 @@ export class GameScene extends Phaser.Scene {
     const next = nextLevelId(this.currentLevelId);
     if (next === null) return;
     const spec = getLevel(next);
+    const { width, height } = this.scale;
     playSfx('win');
     const cover = this.add
-      .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x3a3a4a)
+      .rectangle(width / 2, height / 2, width, height, 0x3a3a4a)
       .setAlpha(0)
       .setScrollFactor(0)
       .setDepth(200);
     const label = this.add
-      .text(CANVAS.width / 2 + 90, CANVAS.height / 2, `STAGE ${spec.id}\n${spec.nameZh}`, {
+      .text(width / 2 + 90, height / 2, `STAGE ${spec.id}\n${spec.nameZh}`, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '52px',
         fontStyle: 'bold',
@@ -469,7 +492,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: label,
       alpha: 1,
-      x: CANVAS.width / 2,
+      x: width / 2,
       duration: 420,
       delay: 120,
       ease: 'Back.easeOut',
@@ -513,7 +536,7 @@ export class GameScene extends Phaser.Scene {
   private spawnBossMinion(): void {
     const kinds = this.level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
-    const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.level.worldWidth - SPAWN_EDGE_X;
+    const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
     this.minionDropCount += 1;
     this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }

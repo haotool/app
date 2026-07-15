@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CANVAS, GRAVITY_Y } from '../core/config';
+import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { playSfx } from '../audio/sfx';
@@ -17,11 +17,12 @@ export interface BossHandle {
   onMinionDrop(handler: () => void): void;
 }
 
-const GROUND_TOP = CANVAS.height - 80;
+const GROUND_TOP = VIEW.height - 80;
 const BOSS_W = 150;
 const BOSS_H = 130;
 const STAND_Y = GROUND_TOP - BOSS_H / 2;
-const SIDE_X = { left: 110, right: CANVAS.width - 110 } as const;
+// 單屏佈局邊距（§28）：左右落點依當前視寬計算，禁硬編 854。
+const SIDE_MARGIN_X = 110;
 const ENRAGE_TINT = { r: 255, g: 107, b: 107 } as const;
 // 招式預警時長：rain 落點標記、slam 蓄力前搖、dash 閃白抖動。
 const RAIN_TELEGRAPH_MS = 500;
@@ -36,11 +37,6 @@ const INTRO_ZOOM = 1.45;
 const INTRO_ROAR_MS = 820;
 const INTRO_RESET_MS = 550;
 const INTRO_FADE_RGB = [24, 18, 34] as const;
-// 推近焦點貼齊畫布右下（王座落點側），確保取景不超出畫布邊界。
-const INTRO_FOCUS = {
-  x: CANVAS.width - CANVAS.width / INTRO_ZOOM / 2,
-  y: CANVAS.height - CANVAS.height / INTRO_ZOOM / 2,
-} as const;
 // 三段彈跳落座：首段自空中墜落，後兩段遞減回彈；每段落地觸發震屏+塵埃+音效。
 const INTRO_BOUNCES = [
   { apexOffset: 0, riseMs: 0, fallMs: 460, shake: 0.012 },
@@ -72,9 +68,13 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
   const timers: Phaser.Time.TimerEvent[] = [];
   let active = false;
   let dying = false;
-  let side: keyof typeof SIDE_X = 'right';
+  let side: 'left' | 'right' = 'right';
 
-  const sprite = scene.physics.add.sprite(SIDE_X.right, -BOSS_H, 'boss-idle');
+  const viewW = () => scene.scale.width;
+  const sideX = (which: 'left' | 'right') =>
+    which === 'left' ? SIDE_MARGIN_X : viewW() - SIDE_MARGIN_X;
+
+  const sprite = scene.physics.add.sprite(sideX('right'), -BOSS_H, 'boss-idle');
   sprite.setDisplaySize(BOSS_W, BOSS_H);
   const baseScaleX = sprite.scaleX;
   const baseScaleY = sprite.scaleY;
@@ -152,7 +152,7 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
         const vx = Phaser.Math.Between(60, 230) * (Math.random() < 0.5 ? -1 : 1);
         const vy = Phaser.Math.Between(-520, -340);
         const land = rainLanding(startX, startY, vx, vy);
-        if (land.x >= 0 && land.x <= CANVAS.width) {
+        if (land.x >= 0 && land.x <= viewW()) {
           spawnTelegraph(scene, land.x, GROUND_TOP - 6, RAIN_TELEGRAPH_MS + land.flightMs);
         }
         delay(RAIN_TELEGRAPH_MS, () => {
@@ -228,7 +228,7 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
   const doDash = () => {
     wobble.pause();
     side = side === 'right' ? 'left' : 'right';
-    const targetX = SIDE_X[side];
+    const targetX = sideX(side);
     sprite.setFlipX(side === 'left');
     // 前搖 0.3s：面向衝刺側白閃兩次 + 原地抖動，之後才衝刺。
     flashWhite();
@@ -364,7 +364,7 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
 
   const introReset = () => {
     const cam = scene.cameras.main;
-    cam.pan(CANVAS.width / 2, CANVAS.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
+    cam.pan(viewW() / 2, VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
     cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
     delay(INTRO_RESET_MS, () => {
       wobble.play();
@@ -376,9 +376,12 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     spawn() {
       const cam = scene.cameras.main;
       const [red, green, blue] = INTRO_FADE_RGB;
+      // 推近焦點貼齊畫布右下（王座落點側）依當前視寬計算，確保取景不超出畫布邊界。
+      const focusX = viewW() - viewW() / INTRO_ZOOM / 2;
+      const focusY = VIEW.height - VIEW.height / INTRO_ZOOM / 2;
       cam.fadeOut(INTRO_FADE_MS, red, green, blue);
       cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        cam.pan(INTRO_FOCUS.x, INTRO_FOCUS.y, INTRO_PUSH_MS, 'Sine.easeInOut');
+        cam.pan(focusX, focusY, INTRO_PUSH_MS, 'Sine.easeInOut');
         cam.zoomTo(INTRO_ZOOM, INTRO_PUSH_MS, 'Sine.easeInOut');
         cam.fadeIn(INTRO_FADE_MS + 140, red, green, blue);
         delay(INTRO_PUSH_MS, introDrop);
@@ -421,13 +424,13 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;
         const falling = (ball.body as Phaser.Physics.Arcade.Body).velocity.y > 0;
-        if ((falling && ball.y > GROUND_TOP - 10) || ball.x < -40 || ball.x > CANVAS.width + 40) {
+        if ((falling && ball.y > GROUND_TOP - 10) || ball.x < -40 || ball.x > viewW() + 40) {
           killProjectile(ball);
         }
       });
       shockwaves.getMatching('active', true).forEach((obj) => {
         const wave = obj as Phaser.Physics.Arcade.Sprite;
-        if (wave.x < -60 || wave.x > CANVAS.width + 60) killProjectile(wave);
+        if (wave.x < -60 || wave.x > viewW() + 60) killProjectile(wave);
       });
     },
     destroy() {

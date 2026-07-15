@@ -53,7 +53,8 @@ function ensureSpeakerTextures(scene: Phaser.Scene): void {
   }
 }
 
-// 右上角靜音鈕（修復包 B）：Title 與 Game 場景共用；狀態經 localStorage 跨次保存。
+// 右上角靜音鈕（修復包 B）：Title 與 Game 場景共用；狀態經 localStorage 跨次保存；
+// 右緣錨定隨視寬變更重排（§28）。
 export function addMuteButton(scene: Phaser.Scene): void {
   ensureSpeakerTextures(scene);
   const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
@@ -62,6 +63,11 @@ export function addMuteButton(scene: Phaser.Scene): void {
     .setDepth(HUD_DEPTH + 20)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
+  const anchor = (): void => {
+    button.setX(scene.scale.width - 26);
+  };
+  scene.scale.on('resize', anchor);
+  scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
   // 觸控熱區擴至 48px（HIG 44pt+）：以紋理中心向外擴張，不放大視覺。
   (button.input?.hitArea as Phaser.Geom.Rectangle | undefined)?.setTo(-9, -9, 48, 48);
   button.on('pointerdown', () => {
@@ -168,7 +174,6 @@ export function createHud(scene: Phaser.Scene): Hud {
 
   const bus = scene.events;
   const unbinders: (() => void)[] = [];
-  const centerX = scene.scale.width / 2;
   let destroyed = false;
   let waveText: Phaser.GameObjects.Text | null = null;
 
@@ -199,15 +204,15 @@ export function createHud(scene: Phaser.Scene): Hud {
     stroke: '#ffffff',
     strokeThickness: 4,
   };
-  const stageText = scene.add.text(centerX, 26, '', labelStyle).setOrigin(0.5);
-  const quotaIcon = scene.add.image(scene.scale.width - 64, 26, STAR_TEX).setVisible(false);
-  const quotaText = scene.add.text(scene.scale.width - 78, 26, '', labelStyle).setOrigin(1, 0.5);
+  const stageText = scene.add.text(0, 26, '', labelStyle).setOrigin(0.5);
+  const quotaIcon = scene.add.image(0, 26, STAR_TEX).setVisible(false);
+  const quotaText = scene.add.text(0, 26, '', labelStyle).setOrigin(1, 0.5);
   root.add([stageText, quotaIcon, quotaText]);
 
   // Boss HP 條：__WHITE 內建紋理拉伸上色，fill 以 scaleX tween 平滑更新。
   const barWidth = 320;
   const barHeight = 12;
-  const bossBar = scene.add.container(centerX, 52).setAlpha(0);
+  const bossBar = scene.add.container(0, 52).setAlpha(0);
   const barBg = scene.add
     .image(0, 0, '__WHITE')
     .setDisplaySize(barWidth + 4, barHeight + 4)
@@ -221,6 +226,19 @@ export function createHud(scene: Phaser.Scene): Hud {
   const fullScaleX = barFill.scaleX;
   bossBar.add([barBg, barFill]);
   root.add(bossBar);
+
+  // 頂列錨定重排（§28）：中上/右上元素依當前視寬定位；resize 事件觸發重錨。
+  function relayout(): void {
+    const width = scene.scale.width;
+    stageText.setX(width / 2);
+    bossBar.setX(width / 2);
+    quotaIcon.setX(width - 64);
+    quotaText.setX(width - 78);
+    waveText?.setX(width / 2);
+  }
+  relayout();
+  scene.scale.on('resize', relayout);
+  unbinders.push(() => scene.scale.off('resize', relayout));
 
   function updateHearts(hp: number): void {
     hearts.forEach((heart, i) => {
@@ -270,7 +288,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   function showAnnounce(message: string): void {
     waveText?.destroy();
     waveText = scene.add
-      .text(centerX, scene.scale.height * 0.34, message, {
+      .text(scene.scale.width / 2, scene.scale.height * 0.34, message, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '40px',
         fontStyle: 'bold',

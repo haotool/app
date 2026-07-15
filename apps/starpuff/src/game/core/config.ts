@@ -14,12 +14,6 @@ export function computeLogicalWidth(shellW: number, shellH: number): number {
   return Math.min(VIEW.maxWidth, Math.max(VIEW.minWidth, raw));
 }
 
-// v3 凍結畫布過渡別名：視寬一律改讀 scene.scale.width，本別名於響應寬幅遷移 commit 移除。
-export const CANVAS = {
-  width: VIEW.minWidth,
-  height: VIEW.height,
-} as const;
-
 export const GRAVITY_Y = 900;
 
 export const PLAYER = {

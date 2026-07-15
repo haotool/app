@@ -88,7 +88,8 @@ export function createWaveRunner(
     const kind = pickSpawnKind(level, Math.random(), starving);
     let x: number;
     if (level.boss) {
-      x = spawnCounter % 2 === 0 ? level.worldWidth - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+      // boss 單屏世界寬 = 當前視寬（§28），右緣入場點隨之計算。
+      x = spawnCounter % 2 === 0 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
     } else {
       // 生成邊距讀動態視寬（§28）：玩家前方「視野外側」隨邏輯寬 854–1200 變化。
       const scrollX = scene.cameras.main.scrollX;
