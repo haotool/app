@@ -13,6 +13,7 @@ import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
 import {
   maxOpenNotional,
+  parseOrderForm,
   parsePositiveInput,
   TRADE_ERROR_MESSAGES,
   trimNumberInput,
@@ -102,25 +103,31 @@ export function OrderForm({
   }
 
   function submit(side: Side) {
-    if (amountValue === null || qty === null || qty <= 0) {
-      setError('請輸入有效的數量');
-      return;
-    }
-
-    let result;
+    let price: number;
     if (mode === 'market') {
       if (markPrice === undefined) {
         setError('行情尚未就緒，請稍候');
         return;
       }
-      result = openMarketOrder({ symbol, side, qty, price: markPrice, leverage });
+      price = markPrice;
     } else {
       if (limitPriceValue === null) {
         setError('請輸入大於 0 的限價');
         return;
       }
-      result = placeLimitOrder({ symbol, side, qty, limitPrice: limitPriceValue, leverage });
+      price = limitPriceValue;
     }
+
+    const parsed = parseOrderForm({ amount, unit, price, leverage });
+    if (!parsed.ok) {
+      setError(parsed.message);
+      return;
+    }
+
+    const result =
+      mode === 'market'
+        ? openMarketOrder({ symbol, side, qty: parsed.qty, price: parsed.price, leverage })
+        : placeLimitOrder({ symbol, side, qty: parsed.qty, limitPrice: parsed.price, leverage });
 
     if (!result.ok) {
       setError(TRADE_ERROR_MESSAGES[result.error]);
@@ -133,7 +140,7 @@ export function OrderForm({
     pushToast({
       tone: side,
       title: mode === 'market' ? `市價${sideText}成功` : `限價${sideText}掛單成功`,
-      description: `${base}/USDT ${formatAmount(qty, QTY_DISPLAY_DECIMALS)} ${base}`,
+      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base}`,
     });
   }
 
@@ -191,7 +198,7 @@ export function OrderForm({
           <button
             type="button"
             onClick={toggleUnit}
-            className="relative rounded px-1.5 py-0.5 text-caption font-medium text-primary after:absolute after:-inset-2.5 active:bg-primary/10"
+            className="flex min-h-11 items-center rounded px-2 text-caption font-medium text-primary active:bg-primary/10"
           >
             {unit === 'usdt' ? 'USDT' : base} ⇄
           </button>

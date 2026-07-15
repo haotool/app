@@ -44,7 +44,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
         type="button"
         aria-label="關閉通知"
         onClick={() => onDismiss(toast.id)}
-        className="-m-1 p-1 text-text-3"
+        className="-my-2.5 -mr-2.5 flex size-11 shrink-0 items-center justify-center text-text-3"
       >
         ×
       </button>

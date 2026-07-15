@@ -38,7 +38,7 @@ function TradePageSkeleton() {
         </div>
         <div className="flex flex-[0.42] flex-col gap-1.5">
           {Array.from({ length: 8 }, (_, index) => (
-            <span key={index} className="skeleton-pulse h-5 w-full rounded" />
+            <span key={index} className="skeleton-pulse h-10 w-full rounded" />
           ))}
         </div>
       </div>
@@ -124,7 +124,7 @@ export function TradePage() {
           />
         </div>
         <div className="min-w-0 flex-[0.42]">
-          <CompactOrderBook symbol={symbol} levels={7} onPriceSelect={handlePriceSelect} />
+          <CompactOrderBook symbol={symbol} levels={4} onPriceSelect={handlePriceSelect} />
         </div>
       </div>
 
@@ -151,21 +151,25 @@ export function TradePage() {
         )}
       </section>
 
-      <PairSelectorSheet
-        open={sheet === 'pair'}
-        selected={symbol}
-        onClose={() => setSheet(null)}
-        onSelect={(next) => {
-          setSymbol(next);
-          setLimitPrice('');
-        }}
-      />
-      <LeverageSheet
-        open={sheet === 'leverage'}
-        leverage={leverage}
-        onClose={() => setSheet(null)}
-        onConfirm={setLeverage}
-      />
+      {sheet === 'pair' && (
+        <PairSelectorSheet
+          open
+          selected={symbol}
+          onClose={() => setSheet(null)}
+          onSelect={(next) => {
+            setSymbol(next);
+            setLimitPrice('');
+          }}
+        />
+      )}
+      {sheet === 'leverage' && (
+        <LeverageSheet
+          open
+          leverage={leverage}
+          onClose={() => setSheet(null)}
+          onConfirm={setLeverage}
+        />
+      )}
     </div>
   );
 }

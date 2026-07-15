@@ -106,7 +106,7 @@ export function CompactOrderBook({
     return (
       <div className="flex flex-col gap-1.5" aria-label="訂單簿載入中">
         {Array.from({ length: levels * 2 }, (_, index) => (
-          <span key={index} className="skeleton-pulse h-5 w-full rounded" />
+          <span key={index} className="skeleton-pulse h-10 w-full rounded" />
         ))}
       </div>
     );
@@ -121,7 +121,7 @@ export function CompactOrderBook({
         <button
           type="button"
           onClick={() => onPriceSelect?.(price)}
-          className="relative flex h-6 w-full items-center justify-between px-1 text-left"
+          className="relative flex min-h-11 w-full items-center justify-between px-1 text-left"
         >
           <span
             aria-hidden

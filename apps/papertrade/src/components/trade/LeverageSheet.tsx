@@ -13,13 +13,8 @@ interface LeverageSheetProps {
 export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSheetProps) {
   const [draft, setDraft] = useState(leverage);
 
-  function handleClose() {
-    setDraft(leverage);
-    onClose();
-  }
-
   return (
-    <BottomSheet open={open} title="調整槓桿" onClose={handleClose}>
+    <BottomSheet open={open} title="調整槓桿" onClose={onClose}>
       <p className="text-center text-price-xl font-semibold tabular-nums text-primary">{draft}x</p>
       <input
         type="range"
