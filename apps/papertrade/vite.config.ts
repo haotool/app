@@ -67,7 +67,14 @@ export default defineConfig(({ mode }) => {
             '**/*.svg',
             '**/*.webmanifest',
           ],
-          globIgnores: ['**/node_modules/**', '**/sitemap.xml', '**/robots.txt', '**/llms.txt'],
+          // og-image 僅供社群分享爬蟲抓取，不進離線 precache。
+          globIgnores: [
+            '**/node_modules/**',
+            '**/sitemap.xml',
+            '**/robots.txt',
+            '**/llms.txt',
+            '**/og-image.png',
+          ],
         },
         manifest: {
           id: manifestScope,

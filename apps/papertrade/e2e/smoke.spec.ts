@@ -1,117 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
-
-const SYMBOLS = [
-  'BTCUSDT',
-  'ETHUSDT',
-  'SOLUSDT',
-  'XRPUSDT',
-  'DOGEUSDT',
-  'BNBUSDT',
-  'ADAUSDT',
-  'LTCUSDT',
-  'LINKUSDT',
-  'AVAXUSDT',
-];
-
-const PRICES: Record<string, number> = { BTCUSDT: 60000, ETHUSDT: 3000 };
-
-function priceOf(symbol: string): number {
-  return PRICES[symbol] ?? 100;
-}
-
-function tickerMessage(symbol: string) {
-  const price = String(priceOf(symbol));
-  return JSON.stringify({
-    topic: `tickers.${symbol}`,
-    type: 'snapshot',
-    data: {
-      symbol,
-      lastPrice: price,
-      markPrice: price,
-      price24hPcnt: '0.012',
-      highPrice24h: String(priceOf(symbol) * 1.05),
-      lowPrice24h: String(priceOf(symbol) * 0.95),
-      turnover24h: '123456789',
-      volume24h: '54321',
-    },
-  });
-}
-
-function orderbookMessage(topic: string) {
-  const symbol = topic.split('.').at(-1) ?? 'BTCUSDT';
-  const mid = priceOf(symbol);
-  return JSON.stringify({
-    topic,
-    type: 'snapshot',
-    data: {
-      s: symbol,
-      b: [
-        [String(mid * 0.999), '1.5'],
-        [String(mid * 0.998), '2.5'],
-      ],
-      a: [
-        [String(mid * 1.001), '1.2'],
-        [String(mid * 1.002), '3.1'],
-      ],
-      u: 100,
-    },
-  });
-}
-
-function klineRestBody(url: URL): string {
-  const symbol = url.searchParams.get('symbol') ?? 'BTCUSDT';
-  const limit = Math.min(Number(url.searchParams.get('limit') ?? '200'), 200);
-  const close = priceOf(symbol);
-  const now = Math.floor(Date.now() / 60_000) * 60_000;
-  const list = Array.from({ length: limit }, (_, index) => {
-    const start = now - index * 60_000;
-    return [
-      String(start),
-      String(close * 0.99),
-      String(close * 1.01),
-      String(close * 0.98),
-      String(close),
-      '12.5',
-      '750000',
-    ];
-  });
-  return JSON.stringify({ retCode: 0, retMsg: 'OK', result: { category: 'linear', symbol, list } });
-}
-
-async function mockBybit(page: Page) {
-  await page.route('**/v5/market/kline*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: klineRestBody(new URL(route.request().url())),
-    });
-  });
-
-  await page.routeWebSocket(/stream\.bybit\.com/, (ws) => {
-    ws.onMessage((message) => {
-      const parsed = JSON.parse(String(message)) as { op?: string; args?: string[] };
-      if (parsed.op === 'ping') {
-        ws.send(JSON.stringify({ op: 'pong' }));
-        return;
-      }
-      if (parsed.op !== 'subscribe') return;
-      for (const topic of parsed.args ?? []) {
-        if (topic.startsWith('tickers.')) {
-          ws.send(tickerMessage(topic.slice('tickers.'.length)));
-        } else if (topic.startsWith('orderbook.')) {
-          ws.send(orderbookMessage(topic));
-        }
-      }
-    });
-  });
-}
-
-async function acknowledgeDisclaimer(page: Page) {
-  const dialog = page.getByRole('alertdialog', { name: '免責聲明' });
-  await expect(dialog).toBeVisible();
-  await page.getByRole('button', { name: '我已了解，開始模擬交易' }).click();
-  await expect(dialog).toBeHidden();
-}
+import { test, expect } from '@playwright/test';
+import { acknowledgeDisclaimer, mockBybit } from './support/mock-bybit';
 
 test.describe('PaperTrade smoke journey', () => {
   test('markets → chart → trade → open → close', async ({ page }) => {
@@ -130,7 +18,7 @@ test.describe('PaperTrade smoke journey', () => {
     await expect(page.getByRole('tab', { name: '訂單簿' })).toBeVisible();
 
     await page.getByRole('link', { name: '買多' }).click();
-    await expect(page).toHaveURL(/\/papertrade\/trade\?symbol=BTCUSDT$/);
+    await expect(page).toHaveURL(/\/papertrade\/trade\?symbol=BTCUSDT&side=long$/);
 
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('6000');
     await page.getByRole('button', { name: '買多' }).click();

@@ -5,6 +5,7 @@ export const SEO_FILES = ['/sitemap.xml', '/robots.txt', '/llms.txt'];
 export const IMAGE_RESOURCES = [
   '/favicon.svg',
   '/apple-touch-icon.png',
+  '/og-image.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',
