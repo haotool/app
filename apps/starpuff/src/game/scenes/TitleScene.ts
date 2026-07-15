@@ -4,7 +4,7 @@ import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
-import { openKeyConfig } from '../systems/keyConfig';
+import { closeKeyConfig, isKeyConfigOpen, openKeyConfig } from '../systems/keyConfig';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -36,7 +36,10 @@ export class TitleScene extends Phaser.Scene {
       clouds: true,
       ambience: 'bg-meadow',
     });
-    this.events.once('shutdown', () => this.backdrop?.destroy());
+    this.events.once('shutdown', () => {
+      this.backdrop?.destroy();
+      closeKeyConfig();
+    });
     addMuteButton(this);
     bindMenuRelayout(this);
 
@@ -125,6 +128,7 @@ export class TitleScene extends Phaser.Scene {
 
     // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM，再進入遊戲。
     const start = () => {
+      if (isKeyConfigOpen()) return;
       unlockAudio();
       startBgm();
       this.scene.start(SceneKeys.Game);

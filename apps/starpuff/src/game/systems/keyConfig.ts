@@ -1,8 +1,8 @@
 import {
   applyLayoutToDom,
   clampKeyPositionForLayer,
+  getDefaultLayout,
   loadLayout,
-  resetLayout,
   saveLayout,
   type ControlLayout,
 } from '../core/layout';
@@ -13,9 +13,14 @@ import { isPortrait, pointerToLocal } from './controls';
 // snapshot 且不儲存）。KISS：不做網格對齊與進階編輯器。
 
 let open = false;
+let dismissWithoutSave: (() => void) | null = null;
 
 export function isKeyConfigOpen(): boolean {
   return open;
+}
+
+export function closeKeyConfig(): void {
+  dismissWithoutSave?.();
 }
 
 function addAction(bar: HTMLElement, action: string, label: string, onPress: () => void): void {
@@ -67,11 +72,18 @@ export function openKeyConfig(onClose?: () => void): void {
     shell.classList.remove('is-configuring');
     controls.classList.remove('is-config');
     open = false;
+    dismissWithoutSave = null;
     onClose?.();
   };
 
+  const cancelWithoutSave = (): void => {
+    applyLayoutToDom(layer, original);
+    teardown();
+  };
+  dismissWithoutSave = cancelWithoutSave;
+
   addAction(bar, 'reset', '恢復預設', () => {
-    Object.assign(working, structuredClone(resetLayout()));
+    Object.assign(working, getDefaultLayout());
     applyLayoutToDom(layer, working);
   });
   addAction(bar, 'save', '儲存並返回', () => {
@@ -79,10 +91,7 @@ export function openKeyConfig(onClose?: () => void): void {
     teardown();
   });
   // 取消：還原進入時 snapshot、不寫入 localStorage。
-  addAction(bar, 'cancel', '取消', () => {
-    applyLayoutToDom(layer, original);
-    teardown();
-  });
+  addAction(bar, 'cancel', '取消', cancelWithoutSave);
 
   // 拖曳：座標經 pointerToLocal 轉 keys-layer 局部空間（portrait 旋轉殼換軸），
   // 中心點比例即時寫回 working 並套用（即時預覽）。

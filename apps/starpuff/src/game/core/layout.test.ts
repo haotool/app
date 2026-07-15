@@ -6,6 +6,7 @@ import {
   LAYOUT_SCHEMA_VERSION,
   clampKeyPosition,
   clampKeyPositionForLayer,
+  getDefaultLayout,
   parseLayout,
 } from './layout';
 
@@ -46,6 +47,16 @@ describe('clampKeyPositionForLayer', () => {
       const short = clampKeyPositionForLayer(pos.cx, pos.cy, 820, 300, btnPx);
       expect(short.cy * 300 + btnPx / 2).toBeLessThanOrEqual(300);
     }
+  });
+});
+
+describe('getDefaultLayout', () => {
+  it('回傳預設布局深拷貝且不讀寫儲存', () => {
+    const layout = getDefaultLayout();
+    expect(layout).toEqual(DEFAULT_LAYOUT);
+    expect(layout).not.toBe(DEFAULT_LAYOUT);
+    layout.a.cx = 0;
+    expect(DEFAULT_LAYOUT.a.cx).not.toBe(0);
   });
 });
 

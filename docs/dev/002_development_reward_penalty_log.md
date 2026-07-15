@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+116
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+115
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：penalty-starpuff-keyconfig-reset-preview
+- 原因：按鈕配置「恢復預設」預覽誤呼叫 resetLayout 立即清除 localStorage，取消後重載仍遺失自訂布局；標題場景 Enter 開始未攔截且 shutdown 未關閉配置覆層
+- 解法：getDefaultLayout 純預覽＋closeKeyConfig 於 TitleScene shutdown/Enter 守門；vitest 守門 getDefaultLayout 不觸碰儲存
 
 - 日期：2026-07-16
 - ID：neutral-papertrade-test-timeout-flaky
