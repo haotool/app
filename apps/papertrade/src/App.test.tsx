@@ -53,7 +53,7 @@ describe('App shell', () => {
   });
 
   it('renders the assets page with equity summary', () => {
-    renderAt('/assets');
+    renderAt('/portfolio');
     expect(screen.getByText('總權益（USDT）')).toBeInTheDocument();
     expect(screen.getByText('尚無平倉紀錄')).toBeInTheDocument();
   });

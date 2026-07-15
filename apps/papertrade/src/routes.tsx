@@ -36,7 +36,8 @@ export const routes: RouteObject[] = [
         ),
       },
       { path: 'trade', element: <TradePage /> },
-      { path: 'assets', element: <AssetsPage /> },
+      // 路由禁用 assets：與 Vite 靜態目錄 /assets/ 撞名會被 nginx 擋成 403。
+      { path: 'portfolio', element: <AssetsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

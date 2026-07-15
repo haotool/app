@@ -169,7 +169,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     if (positionId === undefined) throw new Error('no position');
     useTradeStore.getState().closeMarketOrder({ positionId, fraction: 0.5, price: 61000 });
 
-    renderRoute('/assets');
+    renderRoute('/portfolio');
     expectNoViolations();
 
     await user.click(screen.getByRole('button', { name: '重置模擬資金' }));
