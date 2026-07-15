@@ -162,6 +162,7 @@ declare global {
       quota: () => { killCount: number; killQuota: number };
       listeners: (event: string) => number;
       enemies: () => { kind: string; x: number; y: number }[];
+      view: () => { width: number; height: number };
     };
   }
 }
@@ -190,6 +191,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     gateOpen: () => internals().waves.isGateOpen(),
     quota: () => internals().waves.getQuota(),
     listeners: (event: string) => gameScene().events.listenerCount(event),
+    // 響應寬幅觀測點（US-028）：回報當前邏輯視寬（854–1200）與固定邏輯高。
+    view: () => ({ width: game.scale.width, height: game.scale.height }),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       for (const child of internals().enemies.getGroup().getChildren()) {
