@@ -309,6 +309,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
+    // zappy 放電環（§30）同走此 hazards 管線結算，不另設 overlap。
     this.physics.add.overlap(this.player.sprite, this.enemies.getHazards(), (_p, hz) => {
       const hazard = asSprite(hz);
       if (!hazard.active || this.finished || this.transitioning) return;

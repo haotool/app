@@ -95,8 +95,8 @@ src/game/audio/    sfx.ts bgm.ts
 src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 ```
 
-- 事件契約（`events.ts`，跨系統唯一溝通管道；v3 增列 `player:healed` 與 `skill:*` 技能結算事件）：
-  `player:damaged, player:healed, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, skill:starstorm, skill:slam-landed, boss:spawned, boss:damaged, boss:phase, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
+- 事件契約（`events.ts`，跨系統唯一溝通管道；v3 增列 `player:healed` 與 `skill:*` 技能結算事件；v4 增列 `boss:quake` P3 全場震落事件）：
+  `player:damaged, player:healed, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, skill:starstorm, skill:slam-landed, boss:spawned, boss:damaged, boss:phase, boss:quake, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
 
 ## 12. 品質門檻
 
@@ -188,7 +188,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 
 ## 21. v3 橫式轉向（PM 親撰）
 
-- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape；直向持機時顯示「請轉橫」遮罩（反轉現有偵測）。
+- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape（v4 已由 §28 免轉向旋轉殼取代：manifest 不鎖 orientation）；直向持機時顯示「請轉橫」遮罩（v4 已由 §28 免轉向旋轉殼取代：遮罩廢除）。
 - 世界尺寸：高 480；寬放大至 S1 2700 / S2 3100 / S3 3500（視野變寬 1.78 倍，維持等效走動時長）；平台改雙層以內（天花板變低），高度差以跳躍 -420 可達為準。
 - HUD 重排：頂列橫排——HP 心心左上、STAGE 標示中上、配額右上；Boss 條頂中置。全部 HUD 圖示改 graphics 繪製（星形/心形程序化），全遊戲禁用 emoji 與文字字元鍵帽。
 - 虛擬手柄（參考實體手柄配置）：左側浮動搖桿（觸點即中心、半徑 60px、死區 12px、水平為主 + 下向偵測供下衝擊）；右側 A（跳，右下）/ B（吸/射，A 左上 45 度）雙鍵 64px+ 斜排、間距 16px+；橫持 iPhone safe-area 側邊 inset 必須套用。按鍵一律 canvas/CSS 繪製圖形（無文字節點）。
@@ -233,6 +233,16 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 - visibilitychange：切背景暫停物理與計時，回前景恢復（修 v2 P3 遺留）。
 - 深度探索 QA 劇本：邊緣紮營 5 分鐘、只殺不可吸怪、彈藥歸零僵持、暫停/恢復循環、快速連死——全數不得卡關。
 
+## 27. v3 美術資產（codex 專用；橫向平鋪）
+
+| 檔名             | 內容         | 規格                                    |
+| ---------------- | ------------ | --------------------------------------- |
+| bg-meadow-l.png  | 果凍草原橫景 | 1536×512、水平無縫平鋪、底 1/4 乾淨地帶 |
+| bg-heights-l.png | 雲朵高台橫景 | 同上、中段留平台空間                    |
+| bg-arena-l.png   | 星空回廊橫景 | 同上、星塵粉紫調                        |
+| bg-throne-l.png  | 魔王城橫景   | 同上、紫金王座廳                        |
+| fx-clouds.png    | 共用漂浮雲層 | 1024×256、透明、水平無縫平鋪            |
+
 ## 28. v4 免轉向橫式與響應寬幅（PM 親撰）
 
 - 免轉向：偵測 portrait viewport 時，以 CSS 旋轉容器方案將整個遊戲容器（canvas + DOM 控制層）旋轉 90 度呈現橫式——使用者直持手機即玩，不再顯示轉橫遮罩（遮罩廢除）。技術定案依調研回寫（Phaser 4 相容性、pointer 座標映射、safe-area 換軸）。
@@ -273,20 +283,10 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 | props-arena.png   | 回廊道具條：水晶簇/星柱/光苔/浮石 4 件           | 2048×512 透明 |
 | props-throne.png  | 王座道具條：旗幟/燭台/王冠雕像/寶箱 4 件         | 2048×512 透明 |
 
-道具條以固定 4 等分切割（512×512/件），佈景密度規範見 §32。
+道具條以固定 4 等分切割（512×512/件），佈景密度規範見 §32。表列 `.png` 為生成源檔名（§10 慣例）；實際入庫交付為切割後之 `prop-{meadow,heights,arena,throne}-1..4.webp` 與 `minion-*.webp`（q82、透明保留），資產鍵與檔名對齊 `core/assets.ts` 註冊表。
 
 ## 32. 場景裝飾密度規範
 
 - 每關地面帶每 400-600px 佈置 1-2 件主題道具（levels.ts decor 資料驅動、隨機微縮放 0.9-1.1 與 y 抖動）；深度在玩家後、平台前。
 - 道具純裝飾無碰撞（KISS）；可破壞磚除外（§29）。
 - 同屏道具上限 6 件防雜訊；與 ambience 粒子總量合併預算（同屏繪製物 ≤14）。
-
-## 27. v3 美術資產（codex 專用；橫向平鋪）
-
-| 檔名             | 內容         | 規格                                    |
-| ---------------- | ------------ | --------------------------------------- |
-| bg-meadow-l.png  | 果凍草原橫景 | 1536×512、水平無縫平鋪、底 1/4 乾淨地帶 |
-| bg-heights-l.png | 雲朵高台橫景 | 同上、中段留平台空間                    |
-| bg-arena-l.png   | 星空回廊橫景 | 同上、星塵粉紫調                        |
-| bg-throne-l.png  | 魔王城橫景   | 同上、紫金王座廳                        |
-| fx-clouds.png    | 共用漂浮雲層 | 1024×256、透明、水平無縫平鋪            |
