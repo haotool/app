@@ -1,6 +1,6 @@
 {
   "name": "ratewise-monorepo",
-  "version": "2.27.1",
+  "version": "2.27.2",
   "private": true,
   "license": "GPL-3.0",
   "author": {
@@ -24,7 +24,8 @@
     "build:park-keeper": "pnpm --filter @app/park-keeper build",
     "build:split-meow": "pnpm --filter @app/split-meow build",
     "build:starpuff": "pnpm --filter @app/starpuff build",
-    "build:all": "pnpm build:haotool && pnpm build:ratewise && pnpm build:nihonname && pnpm build:quake-school && pnpm build:park-keeper && pnpm build:split-meow && pnpm build:starpuff",
+    "build:papertrade": "pnpm --filter @app/papertrade build",
+    "build:all": "pnpm build:haotool && pnpm build:ratewise && pnpm build:nihonname && pnpm build:quake-school && pnpm build:park-keeper && pnpm build:split-meow && pnpm build:starpuff && pnpm build:papertrade",
     "preview": "pnpm --filter @app/ratewise preview",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",

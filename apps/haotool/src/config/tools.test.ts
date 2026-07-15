@@ -1,12 +1,12 @@
 /**
- * Tools SSOT Tests — 6 工具、連結格式、分類 enum
+ * Tools SSOT Tests — 7 工具、連結格式、分類 enum
  */
 import { describe, it, expect } from 'vitest';
 import { TOOLS, TOOL_CATEGORIES, getActiveCategories, getToolIconUrl, getToolUrl } from './tools';
 
 describe('TOOLS SSOT', () => {
-  it('包含 6 個工具', () => {
-    expect(TOOLS).toHaveLength(6);
+  it('包含 7 個工具', () => {
+    expect(TOOLS).toHaveLength(7);
   });
 
   it('id 唯一且涵蓋全部子 app', () => {
@@ -20,6 +20,7 @@ describe('TOOLS SSOT', () => {
         'nihonname',
         'quake-school',
         'starpuff',
+        'papertrade',
       ]),
     );
   });
