@@ -17,8 +17,6 @@ import {
   placeCloseLimit,
   placeLimitOrder,
   processTick,
-  setStopLoss,
-  setTakeProfit,
   setTakeProfitStopLoss,
   setTrailingStop,
   type CloseLimitParams,
@@ -203,8 +201,6 @@ interface TradeState {
   placeLimitOrder: (params: Omit<LimitParams, 'now'>) => TradeActionResult;
   placeCloseLimitOrder: (params: Omit<CloseLimitParams, 'now'>) => TradeActionResult;
   cancelPendingOrder: (orderId: string) => TradeActionResult;
-  setPositionTakeProfit: (positionId: string, price: number | null) => TradeActionResult;
-  setPositionStopLoss: (positionId: string, price: number | null) => TradeActionResult;
   setPositionTpSl: (
     positionId: string,
     takeProfit: number | null,
@@ -240,10 +236,6 @@ export const useTradeStore = create<TradeState>()(
         placeLimitOrder: (params) => commit(placeLimitOrder(get().account, params)),
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
-        setPositionTakeProfit: (positionId, price) =>
-          commit(setTakeProfit(get().account, positionId, price)),
-        setPositionStopLoss: (positionId, price) =>
-          commit(setStopLoss(get().account, positionId, price)),
         // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
         setPositionTpSl: (positionId, takeProfit, stopLoss) =>
           commit(setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss)),
@@ -274,8 +266,8 @@ export const useTradeStore = create<TradeState>()(
       version: TRADE_STORAGE_VERSION,
       storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
-      // 版本不符一律重置為初始帳戶，避免舊 schema 汙染引擎狀態。
-      migrate: () => ({ account: createInitialAccount() }),
+      // 版本不符一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
+      migrate: () => ({}),
       merge: (persisted, current) => {
         const parsed = parsePersistedTradeState(persisted);
         if (parsed === null) {

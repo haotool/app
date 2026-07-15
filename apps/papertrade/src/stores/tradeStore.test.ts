@@ -165,6 +165,25 @@ describe('useTradeStore', () => {
     ).toHaveLength(1);
   });
 
+  it('resets with the same one-time warning toast when the persisted version is stale', async () => {
+    // 版本不符的重置不得靜默：必須沿用存檔失效的一次性告知路徑。
+    window.localStorage.setItem(
+      TRADE_STORAGE_KEY,
+      JSON.stringify({
+        state: { account: { ...createInitialAccount(), balance: 7777 } },
+        version: TRADE_STORAGE_VERSION - 1,
+      }),
+    );
+    await useTradeStore.persist.rehydrate();
+
+    const { account, toasts } = useTradeStore.getState();
+    expect(account.balance).toBe(INITIAL_BALANCE_USDT);
+    expect(account.positions).toEqual([]);
+    expect(
+      toasts.filter((toast) => toast.tone === 'warning' && toast.title.includes('重置')),
+    ).toHaveLength(1);
+  });
+
   it('rehydrates a valid persisted account without a reset toast', async () => {
     const account = { ...createInitialAccount(), balance: 8888 };
     window.localStorage.setItem(

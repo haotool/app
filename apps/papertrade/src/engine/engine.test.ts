@@ -405,6 +405,40 @@ describe('limit orders', () => {
       price: 59000,
     });
   });
+
+  it('falls back to the limit price when a full-margin short marketable limit cannot fill at mark', () => {
+    // 滿倉 short：預扣以 limit 計，mark 高於 limit 使名目變大而超出預扣，
+    // 必須回退以使用者保證的限價成交，不得靜默失敗讓掛單滯留。
+    const placed = placeLimitOrder(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      limitPrice: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+    expect(placed.account.balance).toBeCloseTo(10000 - 1.66 * 6012, 8);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 63000, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+    expect(filled.account.positions).toHaveLength(1);
+
+    const position = filled.account.positions[0];
+    expect(position?.side).toBe('short');
+    expect(position?.entryPrice).toBe(60000);
+    expect(position?.margin).toBeCloseTo(9960, 8);
+    expect(filled.account.balance).toBeCloseTo(20.08, 8);
+    expect(filled.account.balance).toBeGreaterThanOrEqual(0);
+    expect(parsePersistedTradeState({ account: filled.account })).not.toBeNull();
+    expect(filled.events).toContainEqual({
+      type: 'limit-filled',
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      price: 60000,
+    });
+  });
 });
 
 describe('close limit orders', () => {

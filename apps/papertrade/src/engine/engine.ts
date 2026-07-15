@@ -420,7 +420,7 @@ function processPosition(
   };
 }
 
-// 觸發後一律以 mark 成交（限價或更優），marketable 掛單不得以劣於市價的限價成交。
+// 觸發後優先以 mark 成交（限價或更優）；開倉單資金不足時回退以限價成交，見 processTick。
 function isOpenLimitFillable(order: LimitOrder, mark: number): boolean {
   return order.side === 'long' ? mark <= order.limitPrice : mark >= order.limitPrice;
 }
@@ -456,15 +456,20 @@ export function processTick(
         balance: roundUsdt(current.balance + order.margin + order.fee),
         orders: current.orders.filter((candidate) => candidate.id !== order.id),
       };
-      const filled = executeOpen(refunded, {
+      const openParams = {
         symbol: order.symbol,
         side: order.side,
         qty: order.qty,
-        price: mark,
         leverage: order.leverage,
         feeRate: MAKER_FEE_RATE,
         now,
-      });
+      };
+      // 先以 mark（更優價）成交；滿倉時 short 的 mark 名目可超出按 limit 預扣的額度，
+      // 回退以使用者保證的限價成交（成本恰等於預扣，帳本恆安全），避免掛單靜默滯留。
+      const atMark = executeOpen(refunded, { ...openParams, price: mark });
+      const filled = atMark.ok
+        ? atMark
+        : executeOpen(refunded, { ...openParams, price: order.limitPrice });
       if (filled.ok) {
         current = filled.account;
         events.push({
@@ -472,7 +477,7 @@ export function processTick(
           symbol: order.symbol,
           side: order.side,
           qty: order.qty,
-          price: mark,
+          price: atMark.ok ? mark : order.limitPrice,
         });
       }
       continue;
