@@ -6,6 +6,8 @@ import { routes } from '../routes';
 import { useKlines } from '../hooks/useKlines';
 import { useMarketStore } from '../stores/marketStore';
 import { type Ticker } from '../services/ticker';
+// 預載 lazy 路由模組：避免高負載並行時 chunk transform 吃掉 findBy timeout。
+import './ChartPage';
 
 const { retryMock } = vi.hoisted(() => ({ retryMock: vi.fn() }));
 
