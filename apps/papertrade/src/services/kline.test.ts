@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchKlines, mergeKline, parseKlineMessage, type Kline } from './kline';
+import { fetchKlines, mergeKline, mergeKlineHistory, parseKlineMessage, type Kline } from './kline';
 
 function bar(time: number, close = 100): Kline {
   return { time, open: 99, high: 101, low: 98, close, volume: 10 };
@@ -184,5 +184,35 @@ describe('mergeKline', () => {
     const bars = [bar(100)];
     mergeKline(bars, bar(160));
     expect(bars).toHaveLength(1);
+  });
+});
+
+describe('mergeKlineHistory', () => {
+  it('backfills a gap by overlaying the fresh range over existing bars', () => {
+    const existing = [bar(60), bar(120, 100)];
+    const fresh = [bar(120, 101), bar(180, 105), bar(240, 106)];
+    const merged = mergeKlineHistory(existing, fresh);
+    expect(merged.map((candle) => candle.time)).toEqual([60, 120, 180, 240]);
+    expect(merged[1]?.close).toBe(101);
+  });
+
+  it('keeps existing bars newer than the fresh range', () => {
+    const existing = [bar(60), bar(300, 110)];
+    const fresh = [bar(120), bar(180)];
+    const merged = mergeKlineHistory(existing, fresh);
+    expect(merged.map((candle) => candle.time)).toEqual([60, 120, 180, 300]);
+  });
+
+  it('returns existing bars when the fresh range is empty', () => {
+    const existing = [bar(60)];
+    expect(mergeKlineHistory(existing, [])).toBe(existing);
+  });
+
+  it('replaces everything when the fresh range covers all existing bars', () => {
+    const existing = [bar(120, 100)];
+    const fresh = [bar(60), bar(120, 108), bar(180)];
+    const merged = mergeKlineHistory(existing, fresh);
+    expect(merged.map((candle) => candle.time)).toEqual([60, 120, 180]);
+    expect(merged[1]?.close).toBe(108);
   });
 });

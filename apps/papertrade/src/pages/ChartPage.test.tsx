@@ -7,8 +7,15 @@ import { useKlines } from '../hooks/useKlines';
 import { useMarketStore } from '../stores/marketStore';
 import { type Ticker } from '../services/ticker';
 
+const { retryMock } = vi.hoisted(() => ({ retryMock: vi.fn() }));
+
 vi.mock('../hooks/useKlines', () => ({
-  useKlines: vi.fn(() => ({ bars: [], status: 'ready', seriesKey: 'BTCUSDT:60' })),
+  useKlines: vi.fn(() => ({
+    bars: [],
+    status: 'ready',
+    seriesKey: 'BTCUSDT:60',
+    retry: retryMock,
+  })),
 }));
 
 vi.mock('../components/CandleChart', () => ({
@@ -53,6 +60,13 @@ describe('ChartPage', () => {
   beforeEach(() => {
     useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
     useKlinesMock.mockClear();
+    useKlinesMock.mockReturnValue({
+      bars: [],
+      status: 'ready',
+      seriesKey: 'BTCUSDT:60',
+      retry: retryMock,
+    });
+    retryMock.mockClear();
     subscribeMock.mockClear();
     subscribeMock.mockImplementation(() => vi.fn());
   });
@@ -112,11 +126,11 @@ describe('ChartPage', () => {
     );
     expect(screen.getByRole('link', { name: '買多' })).toHaveAttribute(
       'href',
-      '/trade?symbol=BTCUSDT',
+      '/trade?symbol=BTCUSDT&side=long',
     );
     expect(screen.getByRole('link', { name: '賣空' })).toHaveAttribute(
       'href',
-      '/trade?symbol=BTCUSDT',
+      '/trade?symbol=BTCUSDT&side=short',
     );
   });
 
@@ -130,9 +144,18 @@ describe('ChartPage', () => {
     expect(screen.getByLabelText('最新成交載入中')).toBeInTheDocument();
   });
 
-  it('shows error state when history fails', async () => {
-    useKlinesMock.mockReturnValue({ bars: [], status: 'error', seriesKey: 'BTCUSDT:60' });
+  it('shows error state with a retry button when history fails', async () => {
+    const user = userEvent.setup();
+    useKlinesMock.mockReturnValue({
+      bars: [],
+      status: 'error',
+      seriesKey: 'BTCUSDT:60',
+      retry: retryMock,
+    });
     renderChart('/chart/BTCUSDT');
     expect(await screen.findByText(/載入失敗/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '重試' }));
+    expect(retryMock).toHaveBeenCalledTimes(1);
   });
 });

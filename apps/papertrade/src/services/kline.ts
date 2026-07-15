@@ -115,3 +115,13 @@ export function mergeKline(bars: Kline[], incoming: Kline): Kline[] {
   }
   return bars;
 }
+
+// 重連回補：以 REST 重抓的序列覆蓋重疊區間，保留兩端不重疊的既有 bar，確保無空洞。
+export function mergeKlineHistory(existing: Kline[], fresh: Kline[]): Kline[] {
+  const firstFresh = fresh[0];
+  const lastFresh = fresh.at(-1);
+  if (firstFresh === undefined || lastFresh === undefined) return existing;
+  const older = existing.filter((bar) => bar.time < firstFresh.time);
+  const newer = existing.filter((bar) => bar.time > lastFresh.time);
+  return [...older, ...fresh, ...newer];
+}

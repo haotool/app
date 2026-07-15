@@ -4,13 +4,15 @@ import { useKlines } from './useKlines';
 import { type Kline } from '../services/kline';
 import type * as KlineModule from '../services/kline';
 
-const { fetchKlinesMock, subscribeMock } = vi.hoisted(() => ({
+const { fetchKlinesMock, subscribeMock, onStatusMock, getStatusMock } = vi.hoisted(() => ({
   fetchKlinesMock: vi.fn(),
   subscribeMock: vi.fn(),
+  onStatusMock: vi.fn(),
+  getStatusMock: vi.fn(),
 }));
 
 vi.mock('../services/marketWs', () => ({
-  marketWs: { subscribe: subscribeMock },
+  marketWs: { subscribe: subscribeMock, onStatus: onStatusMock, getStatus: getStatusMock },
 }));
 
 vi.mock('../services/kline', async (importOriginal) => {
@@ -39,13 +41,21 @@ function wsKlinePayload(startSec: number, close: number) {
   };
 }
 
+type StatusHandler = (status: 'idle' | 'connecting' | 'connected' | 'reconnecting') => void;
+
 describe('useKlines', () => {
   let topicHandlers: Map<string, (message: unknown) => void>;
   let stopSpies: Mock[];
+  let statusHandlers: Set<StatusHandler>;
+
+  function emitStatus(status: Parameters<StatusHandler>[0]) {
+    statusHandlers.forEach((handler) => handler(status));
+  }
 
   beforeEach(() => {
     topicHandlers = new Map();
     stopSpies = [];
+    statusHandlers = new Set();
     subscribeMock.mockReset();
     subscribeMock.mockImplementation((topic: string, handler: (message: unknown) => void) => {
       topicHandlers.set(topic, handler);
@@ -53,6 +63,14 @@ describe('useKlines', () => {
       stopSpies.push(stop);
       return stop;
     });
+    onStatusMock.mockReset();
+    onStatusMock.mockImplementation((handler: StatusHandler) => {
+      statusHandlers.add(handler);
+      handler('connected');
+      return () => statusHandlers.delete(handler);
+    });
+    getStatusMock.mockReset();
+    getStatusMock.mockReturnValue('connected');
     fetchKlinesMock.mockReset();
   });
 
@@ -137,5 +155,51 @@ describe('useKlines', () => {
     const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.bars).toHaveLength(0);
+  });
+
+  it('refetches history after a reconnect and backfills the gap', async () => {
+    fetchKlinesMock.mockResolvedValueOnce([bar(60), bar(120, 100)]);
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(1);
+
+    // 斷線期間漏掉 time=180：重連後應重抓 REST 並回補，序列無空洞。
+    fetchKlinesMock.mockResolvedValueOnce([bar(120, 101), bar(180, 105), bar(240, 106)]);
+    await act(async () => {
+      emitStatus('reconnecting');
+      emitStatus('connected');
+      await Promise.resolve();
+    });
+
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(2);
+    await waitFor(() =>
+      expect(result.current.bars.map((candle) => candle.time)).toEqual([60, 120, 180, 240]),
+    );
+    expect(result.current.bars[1]?.close).toBe(101);
+  });
+
+  it('does not refetch while the connection stays healthy', async () => {
+    fetchKlinesMock.mockResolvedValue([bar(60)]);
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    await act(async () => {
+      emitStatus('connected');
+      await Promise.resolve();
+    });
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('recovers from the error state via retry', async () => {
+    fetchKlinesMock.mockRejectedValueOnce(new Error('boom'));
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    fetchKlinesMock.mockResolvedValueOnce([bar(60)]);
+    act(() => {
+      result.current.retry();
+    });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(result.current.bars).toHaveLength(1);
   });
 });

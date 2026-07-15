@@ -78,12 +78,19 @@ function SymbolHeader({ symbol }: { symbol: MarketSymbol }) {
 
 // kline tick 只重渲此子樹，隔離 SymbolHeader／訂單簿／CTA。
 function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: TimeframeId }) {
-  const { bars, status, seriesKey } = useKlines(symbol, timeframe);
+  const { bars, status, seriesKey, retry } = useKlines(symbol, timeframe);
 
   if (status === 'error') {
     return (
-      <div className="flex h-full items-center justify-center text-label text-text-3">
-        歷史 K 線載入失敗，請稍後再試
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-label text-text-3">
+        <p>歷史 K 線載入失敗</p>
+        <button
+          type="button"
+          onClick={retry}
+          className="min-h-11 min-w-11 rounded-control bg-surface-2 px-4 text-label font-medium text-text-2 active:bg-border"
+        >
+          重試
+        </button>
       </div>
     );
   }
@@ -173,13 +180,13 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
 
       <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur">
         <Link
-          to={`/trade?symbol=${symbol}`}
+          to={`/trade?symbol=${symbol}&side=long`}
           className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
         >
           買多
         </Link>
         <Link
-          to={`/trade?symbol=${symbol}`}
+          to={`/trade?symbol=${symbol}&side=short`}
           className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
         >
           賣空
