@@ -244,10 +244,14 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     },
 
     destroy() {
+      // 顯示物件與物理 body 交 Phaser scene shutdown 統一銷毀；此處只清引用與觀測點。
       oneWay.length = 0;
       moving.length = 0;
       springs.length = 0;
       breakables.length = 0;
+      if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+        (window as unknown as { __spStage?: unknown }).__spStage = undefined;
+      }
     },
   };
 }

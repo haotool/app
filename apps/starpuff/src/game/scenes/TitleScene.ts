@@ -83,6 +83,7 @@ export class TitleScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const startButton = this.add
       .text(centerX, height * 0.66, '開始遊戲', {
         fontFamily: 'system-ui, sans-serif',
@@ -92,8 +93,7 @@ export class TitleScene extends Phaser.Scene {
         backgroundColor: '#bff3e0',
         padding: { x: 32, y: 14 },
       })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
+      .setOrigin(0.5);
 
     this.tweens.add({
       targets: startButton,
@@ -118,9 +118,9 @@ export class TitleScene extends Phaser.Scene {
       startBgm();
       this.scene.start(SceneKeys.Game);
     };
-    startButton.on('pointerdown', start);
     this.input.keyboard?.once('keydown-ENTER', start);
-    // 旋轉殼 DOM 備援（recon-v4 A.3）：覆蓋 canvas 開始鈕的透明 DOM 鈕，portrait 可靠命中。
+    // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
+    // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
     addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start);
   }
 

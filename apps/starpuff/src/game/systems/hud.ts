@@ -104,9 +104,10 @@ export function bindMenuRelayout(scene: Phaser.Scene, restartData?: object): voi
   scene.events.once('shutdown', () => scene.scale.off('resize', onResize));
 }
 
-// 場景 DOM 備援鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
-// 透明 DOM 鈕承接（hit-test 隨殼旋轉自然正確）。幾何以遊戲邏輯座標換算 canvas CSS px，
-// 隨 scale resize 重算；監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
+// 場景 DOM 鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
+// 透明 DOM 鈕作為唯一指標命中路徑（hit-test 隨殼旋轉自然正確；canvas 同熱區不掛
+// interactive，杜絕雙命中）。幾何以遊戲邏輯座標換算 canvas CSS px，隨 scale resize 重算；
+// 監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
 export function addDomButton(
   scene: Phaser.Scene,
   label: string,

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
+import { resolveShellyHit, tickShelly, tickZappy, type ShellyState } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import { popIn } from './fx';
 
@@ -89,30 +90,25 @@ const CHOMPY_COOL_MS = 1200;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
 // shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 1.5s（無敵、碰牆反彈）→ 暈眩 1s 可吸可殺（§30）。
+// 三態時序由 logic/enemyFsm.ts 決策；此處僅保留呈現層速度/縮放/擺動參數。
 const SHELLY_WALK_SPEED = 60;
 const SHELLY_SPIN_SPEED = 320;
-const SHELLY_SPIN_MS = 1500;
-const SHELLY_STUN_MS = 1000;
 const SHELLY_SPIN_OMEGA = 0.02;
 const SHELLY_SHELL_SCALE = 0.82;
 const SHELLY_WADDLE_OMEGA = 0.008;
 const SHELLY_WADDLE_RAD = 0.08;
 // zappy：緩慢懸浮追蹤；每 3s 放電環（半徑 70、前搖 0.5s 閃爍預警）（§30）。
+// 放電週期時序由 logic/enemyFsm.ts 決策。
 const ZAPPY_SPEED = 40;
 const ZAPPY_BOB_SPEED = 14;
 const ZAPPY_BOB_OMEGA = 0.003;
-const ZAPPY_INTERVAL_MS = 3000;
-const ZAPPY_WINDUP_MS = 500;
 const ZAPPY_RING_RADIUS = 70;
 const ZAPPY_RING_ACTIVE_MS = 200;
-const ZAPPY_FLICKER_MS = 80;
 // 穿透星停留重疊時的重複結算保護（須大於星彈穿越 hitbox 的時間）。
 const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
 
 type ChompyState = 'idle' | 'windup' | 'bite' | 'cool';
-
-type ShellyState = 'walk' | 'spin' | 'stun';
 
 export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   for (const kind of Object.keys(TEXTURES) as EnemyKind[]) {
@@ -282,49 +278,53 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     (sprite.body as Phaser.Physics.Arcade.Body).setVelocityX(SHELLY_SPIN_SPEED * direction);
   }
 
+  // 三態時序由 enemyFsm 決策；本函式只負責呈現層（速度、旋轉、著色、縮放復原）。
   function updateShelly(sprite: Phaser.Physics.Arcade.Sprite, deltaMs: number): void {
-    const state = sprite.getData('state') as ShellyState;
-    const stateMs = (sprite.getData('stateMs') as number) + deltaMs;
-    sprite.setData('stateMs', stateMs);
+    const tick = tickShelly(
+      sprite.getData('state') as ShellyState,
+      sprite.getData('stateMs') as number,
+      deltaMs,
+    );
+    sprite.setData('state', tick.state);
+    sprite.setData('stateMs', tick.stateMs);
     const body = sprite.body as Phaser.Physics.Arcade.Body;
-    switch (state) {
+    if (tick.entered === 'stun') {
+      // 旋轉期滿：停速著灰進暈眩（可吸/可擊殺窗）。
+      body.setVelocityX(0);
+      sprite.setTint(0xcfcfcf);
+      return;
+    }
+    if (tick.entered === 'walk') {
+      // 暈眩期滿：復原外觀回巡邏。
+      sprite.clearTint();
+      sprite.setRotation(0);
+      const bsx = sprite.getData('baseSX') as number;
+      const bsy = sprite.getData('baseSY') as number;
+      sprite.setScale(bsx, bsy);
+      return;
+    }
+    switch (tick.state) {
       case 'walk': {
         // 巡邏：恆速走動、bounce 折返；被外力夾停時恢復。
         if (body.velocity.x === 0) {
           const direction = target && target.x < sprite.x ? -1 : 1;
           body.setVelocityX(SHELLY_WALK_SPEED * direction);
         }
-        sprite.setRotation(Math.sin(stateMs * SHELLY_WADDLE_OMEGA) * SHELLY_WADDLE_RAD);
+        sprite.setRotation(Math.sin(tick.stateMs * SHELLY_WADDLE_OMEGA) * SHELLY_WADDLE_RAD);
         break;
       }
       case 'spin': {
-        if (stateMs >= SHELLY_SPIN_MS) {
-          sprite.setData('state', 'stun');
-          sprite.setData('stateMs', 0);
-          body.setVelocityX(0);
-          sprite.setTint(0xcfcfcf);
-          break;
-        }
         if (body.velocity.x === 0) body.setVelocityX(SHELLY_SPIN_SPEED);
         sprite.rotation += Math.sign(body.velocity.x) * SHELLY_SPIN_OMEGA * deltaMs;
         break;
       }
       case 'stun': {
-        // 暈眩 1s（可吸/可擊殺）：昏沉搖擺，時滿復原回巡邏。
-        sprite.setRotation(Math.sin(stateMs * 0.02) * 0.25);
-        if (stateMs >= SHELLY_STUN_MS) {
-          sprite.setData('state', 'walk');
-          sprite.setData('stateMs', 0);
-          sprite.clearTint();
-          sprite.setRotation(0);
-          const bsx = sprite.getData('baseSX') as number;
-          const bsy = sprite.getData('baseSY') as number;
-          sprite.setScale(bsx, bsy);
-        }
+        // 暈眩 1s（可吸/可擊殺）：昏沉搖擺。
+        sprite.setRotation(Math.sin(tick.stateMs * 0.02) * 0.25);
         break;
       }
       default: {
-        const exhaustive: never = state;
+        const exhaustive: never = tick.state;
         void exhaustive;
       }
     }
@@ -466,9 +466,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       if ((sprite.getData('dmgCdMs') as number) > 0) return 'ignored';
       // 殼殼二段（§30）：巡邏首發轉縮殼旋轉（不扣血）；旋轉期無敵；暈眩期正常結算。
       if (kind === 'shelly') {
-        const state = sprite.getData('state') as ShellyState;
-        if (state === 'spin') return 'ignored';
-        if (state === 'walk') {
+        const outcome = resolveShellyHit(sprite.getData('state') as ShellyState);
+        if (outcome === 'immune') return 'ignored';
+        if (outcome === 'enter-spin') {
           sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
           flashWhite(sprite);
           enterShellySpin(sprite);
@@ -588,18 +588,17 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
             break;
           }
           case 'zappy': {
-            const zapMs = (sprite.getData('zapMs') as number) + deltaMs;
-            if (zapMs >= ZAPPY_INTERVAL_MS) {
-              sprite.setData('zapMs', 0);
+            // 放電週期時序由 enemyFsm 決策；此處僅結算呈現與物理。
+            const tick = tickZappy(sprite.getData('zapMs') as number, deltaMs);
+            sprite.setData('zapMs', tick.zapMs);
+            if (tick.phase === 'discharge') {
               sprite.clearTint();
               zapRing(sprite.x, sprite.y);
-            } else if (zapMs >= ZAPPY_INTERVAL_MS - ZAPPY_WINDUP_MS) {
+            } else if (tick.phase === 'windup') {
               // 前搖 0.5s：定身 + 明暗交替閃爍預警。
-              sprite.setData('zapMs', zapMs);
               body.setVelocity(0, 0);
-              sprite.setTint(Math.floor(zapMs / ZAPPY_FLICKER_MS) % 2 === 0 ? 0xffffff : 0xffe28a);
+              sprite.setTint(tick.flickerBright ? 0xffffff : 0xffe28a);
             } else {
-              sprite.setData('zapMs', zapMs);
               // 緩慢懸浮追蹤玩家 + 正弦上下漂浮。
               const phase = sprite.getData('phase') as number;
               const bob = Math.sin(elapsedMs * ZAPPY_BOB_OMEGA + phase) * ZAPPY_BOB_SPEED;

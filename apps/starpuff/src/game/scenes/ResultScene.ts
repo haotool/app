@@ -81,6 +81,7 @@ export class ResultScene extends Phaser.Scene {
 
     if (won) createFx(this).confetti();
 
+    // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const retryButton = this.add
       .text(centerX, height * 0.68, won ? '再玩一次' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
@@ -90,8 +91,7 @@ export class ResultScene extends Phaser.Scene {
         backgroundColor: '#bff3e0',
         padding: { x: 32, y: 14 },
       })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
+      .setOrigin(0.5);
 
     // 敗北重試直接回到戰敗關卡（魔王關），延續本輪用時與死亡計數；勝利重試開新一輪。
     const retry = () =>
@@ -105,9 +105,9 @@ export class ResultScene extends Phaser.Scene {
               deaths: this.result.deaths,
             },
       );
-    retryButton.on('pointerdown', retry);
     this.input.keyboard?.once('keydown-ENTER', retry);
-    // 旋轉殼 DOM 備援（recon-v4 A.3）：覆蓋 canvas 重試鈕的透明 DOM 鈕，portrait 可靠命中。
+    // 重試鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
+    // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
     addDomButton(this, retryButton.text, { x: centerX, y: retryButton.y, w: 220, h: 72 }, retry);
   }
 

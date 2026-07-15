@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
-import { GRAVITY_Y, VIEW, computeLogicalWidth } from './game/core/config';
+import { GRAVITY_Y, VIEW } from './game/core/config';
+import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { SceneKeys, type EnemyKind } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
@@ -9,7 +10,6 @@ import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
-import { pointerToLocal } from './game/systems/controls';
 import { restoreMutePreference } from './game/systems/hud';
 
 restoreMutePreference();
@@ -26,21 +26,6 @@ document
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-// 量測基準（硬規則 5）：殼 clientWidth/Height 為 layout 值，不受 CSS rotate 影響，
-// 即 canvas CSS px 所在的殼局部座標空間。
-function measureShell(): { w: number; h: number } | null {
-  const shell = document.getElementById('game-shell');
-  if (!shell || shell.clientWidth <= 0 || shell.clientHeight <= 0) return null;
-  return { w: shell.clientWidth, h: shell.clientHeight };
-}
-
-// boot 定寬（recon-v4 B.2）：模組執行時殼與樣式已就緒，直接以殼比例決定初始邏輯寬，
-// 場景自 create 起讀到的 scale.width 即為正確值。
-const initialShell = measureShell();
-const initialWidth = initialShell
-  ? computeLogicalWidth(initialShell.w, initialShell.h)
-  : VIEW.minWidth;
-
 // Phaser 接線集中於此；數值 SSOT 由 config.ts（純資料）供給。
 // 置中由 #app CSS grid 負責（NO_CENTER）：autoCenter margin 在旋轉殼下讀 canvas AABB
 // （寬高互換）會算出錯誤偏移。
@@ -51,7 +36,7 @@ const game = new Phaser.Game({
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.NO_CENTER,
-    width: initialWidth,
+    width: initialShellWidth(),
     height: VIEW.height,
   },
   physics: {
@@ -67,66 +52,8 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 
-// FIT 的 canvas 樣式以 parentSize 計算，而 ScaleManager 每次 refresh 內部都以
-// getBoundingClientRect 重量測 parent——旋轉殼下該 AABB 寬高互換，會把 canvas 誤縮成
-// 直式。改寫量測原語為殼局部尺寸，所有內部 refresh 路徑一次矯正。
-game.scale.getParentBounds = function getShellBounds(): boolean {
-  const shell = measureShell();
-  if (!shell) return false;
-  const parentSize = this.parentSize;
-  if (parentSize.width === shell.w && parentSize.height === shell.h) return false;
-  parentSize.setSize(shell.w, shell.h);
-  return true;
-};
-
-// canvas 指標補償（recon-v4 A.3 備選）：portrait 殼旋轉下 Phaser 以 canvasBounds AABB 反推
-// 座標會錯位（phaser#7175）。改寫座標轉換原語：先轉 canvas 局部座標（90 度逆變換）再換算
-// 邏輯座標，殘存 canvas 互動（靜音鈕等）兩種持向皆正確；landscape 走原生路徑。
-const nativeTransformPointer = game.input.transformPointer.bind(game.input);
-game.input.transformPointer = (pointer, pageX, pageY, wasMove) => {
-  if (!window.matchMedia('(orientation: portrait)').matches) {
-    nativeTransformPointer(pointer, pageX, pageY, wasMove);
-    return;
-  }
-  const canvas = game.canvas;
-  const local = pointerToLocal(
-    canvas.getBoundingClientRect(),
-    canvas.clientWidth,
-    canvas.clientHeight,
-    true,
-    pageX - window.scrollX,
-    pageY - window.scrollY,
-  );
-  pointer.prevPosition.set(pointer.position.x, pointer.position.y);
-  pointer.position.set(
-    (local.x * game.scale.width) / canvas.clientWidth,
-    (local.y * game.scale.height) / canvas.clientHeight,
-  );
-};
-
-// 旋轉殼佈局（recon-v4 A/B）：CSS 殼先穩定 → 量測殼 → setGameSize → refresh + updateBounds。
-// setGameSize 只在此呼叫（硬規則 7）；scale resize 事件內禁止再呼叫。
-function applyShellLayout(): void {
-  const shell = measureShell();
-  if (!shell) return;
-  const width = computeLogicalWidth(shell.w, shell.h);
-  game.scale.getParentBounds();
-  if (width !== game.scale.width) game.scale.setGameSize(width, VIEW.height);
-  game.scale.refresh();
-  game.scale.updateBounds();
-}
-
-// resize 節流 150ms；orientationchange 後 iOS viewport 尺寸非同步就緒，延遲 350ms（recon C.9）。
-let layoutTimer: ReturnType<typeof setTimeout> | undefined;
-function scheduleLayout(delayMs: number): void {
-  clearTimeout(layoutTimer);
-  layoutTimer = setTimeout(applyShellLayout, delayMs);
-}
-window.addEventListener('resize', () => scheduleLayout(150));
-window.addEventListener('orientationchange', () => scheduleLayout(350));
-
-// boot 定寬：READY 時殼 CSS 已穩定，依殼比例一次設定邏輯寬（854–1200）。
-game.events.once(Phaser.Core.Events.READY, applyShellLayout);
+// 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
+initShellLayout(game);
 
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 
