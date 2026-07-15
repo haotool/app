@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { parsePersistedTradeState, useTradeStore } from './tradeStore';
+import { flushTradePersist, parsePersistedTradeState, useTradeStore } from './tradeStore';
 import { createInitialAccount } from '../engine/engine';
 import { INITIAL_BALANCE_USDT, TRADE_STORAGE_KEY } from '../config/trading';
 
@@ -7,6 +7,7 @@ const NOW = 1_800_000_000_000;
 
 function resetStore() {
   useTradeStore.setState({ account: createInitialAccount(), toasts: [] });
+  flushTradePersist();
 }
 
 describe('useTradeStore', () => {
@@ -105,7 +106,7 @@ describe('useTradeStore', () => {
     expect(account.history).toEqual([]);
   });
 
-  it('persists the account to localStorage', () => {
+  it('debounces persist writes and lands the latest state after flush', () => {
     useTradeStore.getState().openMarketOrder({
       symbol: 'BTCUSDT',
       side: 'long',
@@ -113,6 +114,9 @@ describe('useTradeStore', () => {
       price: 60000,
       leverage: 10,
     });
+    expect(window.localStorage.getItem(TRADE_STORAGE_KEY)).not.toContain('BTCUSDT');
+
+    flushTradePersist();
     const raw = window.localStorage.getItem(TRADE_STORAGE_KEY);
     expect(raw).not.toBeNull();
     expect(raw).toContain('BTCUSDT');
@@ -158,6 +162,7 @@ describe('parsePersistedTradeState', () => {
             qty: 0.1,
             entryPrice: 60000,
             margin: 600,
+            openFee: 3.3,
             leverage: 10,
             openedAt: NOW,
             takeProfit: null,
@@ -195,6 +200,7 @@ describe('parsePersistedTradeState', () => {
             exitPrice: 60000,
             realizedPnl: 50,
             fee: 1.65,
+            openFee: 1.6225,
             reason: 'manual',
             closedAt: NOW,
           },
@@ -202,5 +208,32 @@ describe('parsePersistedTradeState', () => {
       },
     };
     expect(parsePersistedTradeState(state)).toEqual(state);
+  });
+
+  it('rejects legacy payloads without the openFee ledger fields', () => {
+    expect(
+      parsePersistedTradeState({
+        account: {
+          balance: 9000,
+          positions: [
+            {
+              id: 'p1',
+              symbol: 'BTCUSDT',
+              side: 'long',
+              qty: 0.1,
+              entryPrice: 60000,
+              margin: 600,
+              leverage: 10,
+              openedAt: NOW,
+              takeProfit: null,
+              stopLoss: null,
+              trailing: null,
+            },
+          ],
+          orders: [],
+          history: [],
+        },
+      }),
+    ).toBeNull();
   });
 });

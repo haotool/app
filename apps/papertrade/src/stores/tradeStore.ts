@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { z } from 'zod';
 import { SYMBOLS, type MarketSymbol } from '../config/market';
 import {
@@ -31,6 +31,7 @@ import {
 import { type Account, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice } from '../lib/format';
+import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 
 export type ToastTone = 'long' | 'short' | 'warning';
 
@@ -63,6 +64,7 @@ const positionSchema = z.object({
   qty: positiveNumber,
   entryPrice: positiveNumber,
   margin: positiveNumber,
+  openFee: nonNegativeNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
   openedAt: finiteNumber,
   takeProfit: positiveNumber.nullable(),
@@ -93,6 +95,7 @@ const closedTradeSchema = z.object({
   exitPrice: positiveNumber,
   realizedPnl: finiteNumber,
   fee: nonNegativeNumber,
+  openFee: nonNegativeNumber,
   reason: z.enum(['manual', 'tp', 'sl', 'trailing', 'liquidation']),
   closedAt: finiteNumber,
 });
@@ -115,6 +118,14 @@ export function parsePersistedTradeState(value: unknown): PersistedTradeState | 
   if (!parsed.success) return null;
   return parsed.data;
 }
+
+const tradeStorage = createDebouncedStorage(window.localStorage, PERSIST_DEBOUNCE_MS);
+
+export function flushTradePersist(): void {
+  tradeStorage.flush();
+}
+
+window.addEventListener('pagehide', flushTradePersist);
 
 function sideLabel(side: 'long' | 'short'): string {
   return side === 'long' ? '多' : '空';
@@ -243,6 +254,7 @@ export const useTradeStore = create<TradeState>()(
     {
       name: TRADE_STORAGE_KEY,
       version: TRADE_STORAGE_VERSION,
+      storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
       // 版本不符一律重置為初始帳戶，避免舊 schema 汙染引擎狀態。
       migrate: () => ({ account: createInitialAccount() }),
