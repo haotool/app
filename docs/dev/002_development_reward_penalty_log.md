@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+117
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-15
+- ID：penalty-starpuff-pwa-stale-update-check
+- 原因：v1 裁決 autoUpdate 接受風險時未評估已安裝用戶的更新檢查頻率盲點——瀏覽器僅 navigation 觸發 SW 更新檢查，iOS standalone 喚回不觸發，致 v1-v3 舊用戶長期滯留舊版
+- 解法：改用 virtual:pwa-register 顯式 registerSW，掛每 60 分鐘週期檢查與 visibilitychange 回前景節流檢查（官方 periodic-sw-updates SOP），實機模擬驗證喚回後自動完成更新
 
 - 日期：2026-07-15
 - ID：reward-starpuff-v4-norotate-elements

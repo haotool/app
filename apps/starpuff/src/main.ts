@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import './pwa';
 import './style.css';
 import { GRAVITY_Y, VIEW } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
