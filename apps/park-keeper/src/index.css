@@ -16,6 +16,16 @@
   --color-bg: #f8fafc;
   --color-surface: #ffffff;
   --color-text: #0f172a;
+  /* [issue #714] 主題 token 擴充（accent/secondary/textMuted），供後續 stream 動態依主題寫入，
+     預設值對齊 Zen（minimalist）主題色，與既有 5 個 token 一致。 */
+  --color-accent: #3b82f6;
+  --color-secondary: #f1f5f9;
+  --color-text-muted: #64748b;
+  /* PWA 更新提示語意色（成功/失敗），與主題無關，供 UpdatePrompt 收斂硬編 Tailwind 色票使用。 */
+  --color-success-from: #10b981;
+  --color-success-to: #14b8a6;
+  --color-danger-from: #f43f5e;
+  --color-danger-to: #ef4444;
 }
 
 body {

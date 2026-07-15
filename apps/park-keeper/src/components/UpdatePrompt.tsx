@@ -8,7 +8,7 @@
  * - SSR 安全：window undefined 時回傳 null
  */
 import { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useUpdatePrompt } from '@app/park-keeper/hooks/useUpdatePrompt';
 
@@ -22,6 +22,7 @@ export function UpdatePrompt() {
 
 function UpdatePromptClient() {
   const { t } = useTranslation();
+  const shouldReduceMotion = useReducedMotion();
   const dismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { offlineReady, setOfflineReady, isUpdating, updateFailed, handleUpdate, handleDismiss } =
     useUpdatePrompt();
@@ -49,22 +50,22 @@ function UpdatePromptClient() {
           aria-live={isAlert ? 'assertive' : 'polite'}
           className="fixed bottom-6 left-1/2 z-50 pointer-events-none"
           style={{ x: '-50%' }}
-          initial={{ opacity: 0, y: 16, scale: 0.95 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0.15 }
+              : { type: 'spring', stiffness: 340, damping: 28 }
+          }
         >
           <div
-            className={`
-              pointer-events-auto
-              flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl
-              text-sm font-medium text-white
-              ${
-                updateFailed
-                  ? 'bg-gradient-to-r from-rose-500 to-red-500'
-                  : 'bg-gradient-to-r from-emerald-500 to-teal-500'
-              }
-            `}
+            className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-medium text-white"
+            style={{
+              backgroundImage: updateFailed
+                ? 'linear-gradient(to right, var(--color-danger-from), var(--color-danger-to))'
+                : 'linear-gradient(to right, var(--color-success-from), var(--color-success-to))',
+            }}
           >
             {/* 圖示 */}
             <span aria-hidden="true" className="text-base leading-none">
@@ -86,7 +87,7 @@ function UpdatePromptClient() {
                 onClick={() => void handleUpdate()}
                 aria-label={t('pwa.actionRetry')}
                 className="
-                  ml-1 px-3 py-1 rounded-full text-xs font-bold
+                  ml-1 min-h-11 px-3 flex items-center justify-center rounded-full text-xs font-bold
                   bg-white/20 hover:bg-white/35 active:bg-white/15
                   transition-colors duration-150
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60
@@ -99,7 +100,7 @@ function UpdatePromptClient() {
               onClick={handleDismiss}
               aria-label={t('pwa.actionDismiss')}
               className="
-                p-1 rounded-full
+                min-w-11 min-h-11 flex items-center justify-center rounded-full
                 bg-white/15 hover:bg-white/30 active:bg-white/10
                 transition-colors duration-150
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60

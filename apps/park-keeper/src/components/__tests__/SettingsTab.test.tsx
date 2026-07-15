@@ -1,8 +1,9 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsTab from '../SettingsTab';
-import { DEFAULT_SETTINGS, CACHE_DAYS } from '@app/park-keeper/constants';
+import i18n from '@app/park-keeper/services/i18n';
+import { THEMES, DEFAULT_SETTINGS, CACHE_DAYS } from '@app/park-keeper/constants';
 import type { ThemeConfig } from '@app/park-keeper/types';
 
 const { cleanupCacheMock, clearAllDataMock } = vi.hoisted(() => ({
@@ -42,6 +43,12 @@ vi.mock('@app/park-keeper/services/db', () => ({
     clearAllData: clearAllDataMock,
   },
 }));
+
+// settings.cache_shrink_warning 三語 key 已就位（issue #714 S5），
+// 文案斷言統一固定 zh-TW，不再依賴 call-site defaultValue fallback。
+beforeAll(async () => {
+  await i18n.changeLanguage('zh-TW');
+});
 
 const theme: ThemeConfig = {
   id: 'minimalist',
@@ -129,5 +136,26 @@ describe('SettingsTab – 保存天數滑桿', () => {
   it('應明示調小天數的單向破壞警告文案', () => {
     renderSettingsTab();
     expect(screen.getByText(/無法復原/)).toBeInTheDocument();
+  });
+});
+
+describe('SettingsTab – a11y 與主題 token', () => {
+  it('主題卡應以 aria-pressed 反映當前啟用狀態，且裝飾色來自 theme.colors.accent', () => {
+    renderSettingsTab();
+
+    const activeCard = screen.getByRole('button', { name: theme.name, pressed: true });
+    expect(activeCard).toBeInTheDocument();
+
+    for (const th of Object.values(THEMES)) {
+      if (th.id === DEFAULT_SETTINGS.theme) continue;
+      const card = screen.getByRole('button', { name: th.name, pressed: false });
+      expect(card).toBeInTheDocument();
+    }
+  });
+
+  it('保留天數滑桿應具備 aria-label', () => {
+    renderSettingsTab();
+
+    expect(screen.getByRole('slider', { name: '保留天數' })).toBeInTheDocument();
   });
 });

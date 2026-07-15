@@ -4,8 +4,21 @@
  * within the monorepo SSG architecture.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, LayoutGroup, type Variants } from 'motion/react';
-import { Plus, Settings as SettingsIcon, Car, Search, List as ListIcon } from 'lucide-react';
+import {
+  motion,
+  AnimatePresence,
+  LayoutGroup,
+  useReducedMotion,
+  type Variants,
+} from 'motion/react';
+import {
+  Plus,
+  Settings as SettingsIcon,
+  Car,
+  Search,
+  List as ListIcon,
+  AlertTriangle,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
@@ -17,6 +30,7 @@ import NavOverlay from '@app/park-keeper/components/NavOverlay';
 import SettingsTab from '@app/park-keeper/components/SettingsTab';
 import BrandLogo from '@app/park-keeper/components/BrandLogo';
 import RecordCard from '@app/park-keeper/components/RecordCard';
+import ListSkeleton from '@app/park-keeper/components/ListSkeleton';
 import {
   NAV_CONTENT_H,
   NAV_ICON_SIZE,
@@ -51,6 +65,13 @@ const pageVariants: Variants = {
   },
 };
 
+/** prefers-reduced-motion 版本：僅保留淡入淡出，移除位移/縮放/模糊。 */
+const reducedPageVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15 } },
+  exit: { opacity: 0, transition: { duration: 0.1 } },
+};
+
 // ---------------------------------------------------------------------------
 // HOME PAGE
 // ---------------------------------------------------------------------------
@@ -60,6 +81,8 @@ interface HomeProps {
 
 export default function Home({ initialTab = 'list' }: HomeProps) {
   const { t, i18n } = useTranslation();
+  const shouldReduceMotion = useReducedMotion();
+  const activePageVariants = shouldReduceMotion ? reducedPageVariants : pageVariants;
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -78,18 +101,27 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
   const [navRecord, setNavRecord] = useState<ParkingRecord | null>(null);
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [storageUnavailable, setStorageUnavailable] = useState(false);
 
   const minimalistTheme = THEMES['minimalist'];
   const theme = THEMES[settings.theme] ?? minimalistTheme ?? THEMES['racing'];
   if (!theme) throw new Error('Theme config not found');
 
   const loadRecords = useCallback(async () => {
-    const data = await dbService.getRecords();
-    setRecords(data);
+    try {
+      const data = await dbService.getRecords();
+      setRecords(data);
+    } catch {
+      setStorageUnavailable(true);
+    }
   }, []);
 
   useEffect(() => {
     const init = async () => {
+      if (typeof window !== 'undefined' && !('indexedDB' in window)) {
+        setStorageUnavailable(true);
+      }
       // 讀取失敗回退預設並照常標記已載入，避免清理排程與 SW 對齊僵死。
       let savedSettings = DEFAULT_SETTINGS;
       try {
@@ -103,6 +135,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
       await dbService.runStartupCleanup(savedSettings.cacheDurationDays);
       await loadRecords();
+      setIsLoading(false);
     };
     void init();
   }, [i18n, loadRecords]);
@@ -263,7 +296,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('record.search')}
-                  className="w-full h-10 pl-9 pr-3 rounded-full text-[11px] font-bold outline-none bg-black/4 focus:bg-white/50 focus:shadow-sm transition-all"
+                  aria-label={t('record.search')}
+                  className="w-full h-11 pl-9 pr-3 rounded-full text-[11px] font-bold outline-none bg-black/4 focus:bg-white/50 focus:shadow-sm transition-all"
                 />
               </div>
             )}
@@ -276,40 +310,57 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             {currentTab === 'list' ? (
               <motion.div
                 key="list"
-                variants={pageVariants}
+                variants={activePageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40"
               >
-                <div className="max-w-md mx-auto space-y-5">
-                  {filteredRecords.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-10">
-                      <Car size={60} strokeWidth={1.5} />
-                      <p className="font-black text-sm uppercase mt-4 tracking-[0.2em]">
-                        {t('record.empty')}
-                      </p>
-                    </div>
-                  ) : (
-                    filteredRecords.map((r) => (
-                      <RecordCard
-                        key={r.id}
-                        record={r}
-                        theme={theme}
-                        onDelete={handleDelete}
-                        onUpdate={handleUpdate}
-                        onNavigate={setNavRecord}
-                        cacheDurationDays={settings.cacheDurationDays}
-                        miniMapText={miniMapText}
-                      />
-                    ))
-                  )}
-                </div>
+                {isLoading ? (
+                  <ListSkeleton theme={theme} />
+                ) : (
+                  <div className="max-w-md mx-auto space-y-5">
+                    {storageUnavailable && (
+                      <div
+                        role="alert"
+                        className="flex items-center gap-3 p-4 rounded-2xl text-xs font-bold"
+                        style={{
+                          backgroundColor: `${theme.colors.primary}10`,
+                          color: theme.colors.primary,
+                        }}
+                      >
+                        <AlertTriangle size={18} className="shrink-0" />
+                        <span>{t('error.storage_unavailable')}</span>
+                      </div>
+                    )}
+                    {filteredRecords.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-20 opacity-10">
+                        <Car size={60} strokeWidth={1.5} />
+                        <p className="font-black text-sm uppercase mt-4 tracking-[0.2em]">
+                          {t('record.empty')}
+                        </p>
+                      </div>
+                    ) : (
+                      filteredRecords.map((r) => (
+                        <RecordCard
+                          key={r.id}
+                          record={r}
+                          theme={theme}
+                          onDelete={handleDelete}
+                          onUpdate={handleUpdate}
+                          onNavigate={setNavRecord}
+                          cacheDurationDays={settings.cacheDurationDays}
+                          miniMapText={miniMapText}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.div
                 key="settings"
-                variants={pageVariants}
+                variants={activePageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
@@ -399,6 +450,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               <motion.button
                 type="button"
                 onClick={() => setShowQuickEntry(true)}
+                aria-label={t('action.add_record')}
                 whileTap={{ scale: 0.9, rotate: 90 }}
                 whileHover={{ scale: 1.05 }}
                 className="w-16 h-16 rounded-full flex items-center justify-center shadow-elevation-3 border-4 transition-colors"
@@ -461,8 +513,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="fixed bottom-24 left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
-              style={{ backgroundColor: theme.colors.primary, color: '#fff' }}
+              className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
+              style={{
+                bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+                backgroundColor: theme.colors.primary,
+                color: '#fff',
+              }}
             >
               <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
             </motion.div>
