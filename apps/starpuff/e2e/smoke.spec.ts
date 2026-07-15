@@ -14,6 +14,7 @@ declare global {
       spawn: (kind: string, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
       probe: () => { x: number; scrollX: number };
+      quota: () => { killCount: number; killQuota: number };
     };
   }
 }
@@ -175,6 +176,46 @@ test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async
   await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
   await page.keyboard.up('X');
   await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('空中疾衝（§30）：空中雙擊 A 水平位移、無敵衝撞擊殺小怪', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  // 起跳離地（Z = A 鍵）；離地後才計入雙擊窗。
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(60);
+  await page.keyboard.up('Z');
+  await page.waitForTimeout(120);
+  // 疾衝路徑上豎排三隻 floaty（y 帶 250-330 覆蓋任何合理疾衝高度；floaty 無重力定高）。
+  const before = await page.evaluate(() => window.__sp.probe());
+  await page.evaluate(() => {
+    const x = window.__sp.probe().x + 90;
+    window.__sp.spawn('floaty', x, 250);
+    window.__sp.spawn('floaty', x, 290);
+    window.__sp.spawn('floaty', x, 330);
+  });
+  // 空中雙擊 A（350ms 窗）：首擊拍翅、二擊觸發疾衝。
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Z');
+  await page.waitForTimeout(60);
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Z');
+  // 疾衝 180px/0.18s：無左右輸入下水平位移即疾衝證據。
+  await expect
+    .poll(async () => (await page.evaluate(() => window.__sp.probe())).x - before.x, {
+      timeout: 4000,
+    })
+    .toBeGreaterThan(120);
+  // 無敵幀：衝撞穿牆後 HP 不掉；衝撞傷害 1 擊殺路徑上小怪（擊殺計入配額）。
+  expect(await page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.quota().killCount), { timeout: 4000 })
+    .toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(600);
   expect(errors).toEqual([]);
 });
 

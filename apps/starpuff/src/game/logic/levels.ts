@@ -68,10 +68,12 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1800,
     maxOnScreen: 4,
     safeZoneTailPx: 480,
+    // v4 §30 權重重配：shelly 15% 入編，可吸（floaty+puffy）維持 ≥50%。
     enemyMix: [
-      { kind: 'floaty', weight: 0.4 },
-      { kind: 'spiky', weight: 0.35 },
-      { kind: 'puffy', weight: 0.25 },
+      { kind: 'floaty', weight: 0.35 },
+      { kind: 'spiky', weight: 0.3 },
+      { kind: 'puffy', weight: 0.2 },
+      { kind: 'shelly', weight: 0.15 },
     ],
     platforms: [
       { x: 450, y: 336, w: 150 },
@@ -95,13 +97,14 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1300,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
-    // 五種混編，可吸怪（jelly/floaty/puffy）佔比 50%（§15）。
+    // 混編高壓（§15）+ v4 §30 權重重配：zappy 15% 入編，可吸佔比維持 ≥50%。
     enemyMix: [
       { kind: 'jelly', weight: 0.15 },
-      { kind: 'floaty', weight: 0.15 },
-      { kind: 'puffy', weight: 0.2 },
-      { kind: 'spiky', weight: 0.3 },
+      { kind: 'floaty', weight: 0.1 },
+      { kind: 'puffy', weight: 0.15 },
+      { kind: 'spiky', weight: 0.25 },
       { kind: 'chompy', weight: 0.2 },
+      { kind: 'zappy', weight: 0.15 },
     ],
     platforms: [
       { x: 400, y: 336, w: 130 },

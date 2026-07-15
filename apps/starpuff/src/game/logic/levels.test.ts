@@ -35,18 +35,23 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     }
   });
 
-  it('L2 權重為 §15 正式表（floaty 40/spiky 35/puffy 25）', () => {
+  it('L2 權重重配（§30）：shelly 15% 入編，可吸佔比 ≥50%', () => {
     const mix = Object.fromEntries(getLevel(2).enemyMix.map((e) => [e.kind, e.weight]));
-    expect(mix).toEqual({ floaty: 0.4, spiky: 0.35, puffy: 0.25 });
+    expect(mix).toEqual({ floaty: 0.35, spiky: 0.3, puffy: 0.2, shelly: 0.15 });
+    const inhalable = getLevel(2)
+      .enemyMix.filter((e) => canInhale(e.kind))
+      .reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L3 五種混編且可吸怪佔比 50%', () => {
+  it('L3 六種混編（§30 zappy 15%）且可吸怪佔比 ≥50%', () => {
     const mix = getLevel(3).enemyMix;
     expect(mix.map((e) => e.kind).sort()).toEqual(
-      ['chompy', 'floaty', 'jelly', 'puffy', 'spiky'].sort(),
+      ['chompy', 'floaty', 'jelly', 'puffy', 'spiky', 'zappy'].sort(),
     );
+    expect(mix.find((e) => e.kind === 'zappy')?.weight).toBe(0.15);
     const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
-    expect(inhalable).toBeCloseTo(0.5, 5);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
   it('boss 關僅補生可吸怪', () => {
