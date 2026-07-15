@@ -24,6 +24,8 @@ const resources = {
       'settings.storage': 'Storage & Cache',
       'settings.days': 'Days',
       'settings.cache_desc': 'Images older than this are removed.',
+      'settings.cache_shrink_warning':
+        'Lowering the days immediately removes older photos. This cannot be undone.',
       'settings.danger': 'MAINTENANCE',
       'settings.erase': 'DELETE ALL DATA',
       'settings.app_info': 'APP INFO',
@@ -67,7 +69,7 @@ const resources = {
       'about.privacy_p1':
         'All data from this app is stored locally on your device and never uploaded to any server. We do not collect, track, or share your personal information.',
       'about.privacy_p2':
-        'Parking records (plate number, floor, photos, coordinates, etc.) are for your personal use only and remain fully under your control. You can export or clear all records anytime in Settings.',
+        'Parking records (plate number, floor, photos, coordinates, etc.) are for your personal use only and remain fully under your control. You can clear all records anytime in Settings.',
       'about.privacy_p3':
         'If you use the GPS location feature, location data is only used within the app and never transmitted to third parties.',
       'nav.arrived': 'ARRIVED',
@@ -128,6 +130,7 @@ const resources = {
       'settings.storage': '儲存與快取',
       'settings.days': '保留天數',
       'settings.cache_desc': '超過此天數的照片將自動清除。',
+      'settings.cache_shrink_warning': '調小天數將立即清除較舊照片，且無法復原。',
       'settings.danger': '資料管理',
       'settings.erase': '清除所有資料',
       'settings.app_info': '應用程式資訊',
@@ -139,7 +142,7 @@ const resources = {
       'record.delete': '刪除停車記錄 {{plate}}',
       'record.view_photo': '查看停車照片',
       'record.photo_alt': '停車照片',
-      'record.no_map': '無地圖資料',
+      'record.no_map': '無地圖',
       'record.navigate': '導航',
       'record.saving': '正在儲存...',
       'error.image': '圖片處理失敗',
@@ -168,7 +171,7 @@ const resources = {
       'about.privacy_p1':
         '本應用程式所有資料均儲存於您的裝置本機，不會上傳至任何伺服器。我們不收集、不追蹤、不分享您的個人資訊。',
       'about.privacy_p2':
-        '停車紀錄（車牌、樓層、照片、座標等）僅供您個人使用，完全由您掌控。您可隨時在設定中匯出或清除所有紀錄。',
+        '停車紀錄（車牌、樓層、照片、座標等）僅供您個人使用，完全由您掌控。您可隨時在設定中清除所有紀錄。',
       'about.privacy_p3': '若使用 GPS 定位功能，定位資料僅在應用程式內使用，不會傳輸至第三方。',
       'nav.arrived': '已抵達',
       'nav.indoor_mode': '室內模式',
@@ -227,6 +230,8 @@ const resources = {
       'settings.storage': 'ストレージとキャッシュ',
       'settings.days': '日',
       'settings.cache_desc': 'これより古い画像は削除されます。',
+      'settings.cache_shrink_warning':
+        '日数を減らすと古い写真がすぐに削除されます。元に戻せません。',
       'settings.danger': '管理',
       'settings.erase': 'すべてのデータを消去',
       'settings.app_info': 'アプリ情報',
@@ -251,7 +256,7 @@ const resources = {
       'footer.about': 'このアプリについて',
       'footer.settings': '設定',
       'footer.privacy': 'プライバシー',
-      'footer.rights_reserved': '無断複写・転載を禁じます。',
+      'footer.rights_reserved': '全著作権所有。',
       'about.subtitle': 'スマート駐車記録＆ナビゲーション PWA',
       'about.features_heading': '機能',
       'about.feature.gps.title': 'GPS記録',
@@ -270,7 +275,7 @@ const resources = {
       'about.privacy_p1':
         '本アプリのすべてのデータはお使いの端末内にのみ保存され、サーバーにアップロードされることはありません。個人情報の収集、追跡、共有は行いません。',
       'about.privacy_p2':
-        '駐車記録（ナンバープレート、階数、写真、座標など）はご本人のみが利用でき、完全にご自身で管理いただけます。設定からいつでも記録の書き出しや削除が可能です。',
+        '駐車記録（ナンバープレート、階数、写真、座標など）はご本人のみが利用でき、完全にご自身で管理いただけます。設定からいつでもすべての記録を削除できます。',
       'about.privacy_p3':
         'GPS位置情報機能を使用する場合、位置情報はアプリ内でのみ使用され、第三者に送信されることはありません。',
       'nav.arrived': '到着',

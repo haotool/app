@@ -19,6 +19,7 @@ const NEW_KEYS = [
   'record.saving',
   'error.storage_unavailable',
   'action.add_record',
+  'settings.cache_shrink_warning',
   'footer.about',
   'footer.settings',
   'footer.privacy',

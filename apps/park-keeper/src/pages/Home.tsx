@@ -167,6 +167,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     document.documentElement.style.setProperty('--color-bg', theme.colors.background);
     document.documentElement.style.setProperty('--color-surface', theme.colors.surface);
     document.documentElement.style.setProperty('--color-text', theme.colors.text);
+    document.documentElement.style.setProperty('--color-accent', theme.colors.accent);
+    document.documentElement.style.setProperty('--color-secondary', theme.colors.secondary);
+    document.documentElement.style.setProperty('--color-text-muted', theme.colors.textMuted);
 
     const hex = theme.colors.primary.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -510,9 +513,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         <AnimatePresence>
           {toast && (
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
+              initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
               className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
               style={{
                 bottom: 'calc(6rem + env(safe-area-inset-bottom))',
