@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+115
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -42,6 +42,11 @@
 - ID：reward-starpuff-v4-norotate-elements
 - 原因：v4 需求「直持免轉向、寬幅隨螢幕、平台元素與更豐富內容」涉及 CSS 旋轉殼與 Phaser 私有 API 補償的高風險結構改造
 - 解法：旋轉殼模組化（shellLayout+enemyFsm 純邏輯 21 案守門測）、四平台元素表驅動、疾衝/新怪x2/魔王P3；140 unit+12 e2e 綠、深度 QA 七劇本全 PASS、三席終審收斂 APPROVE（可維護性 8）
+
+- 日期：2026-07-15
+- ID：reward-papertrade-favicon-deep-link-404
+- 原因：index.html 的 favicon 與 apple-touch-icon 用相對路徑，深層路由（/papertrade/chart/BTCUSDT）下解析為 /papertrade/chart/favicon.svg 致 404
+- 解法：改用 Vite %BASE_URL% 慣例（對齊 nihonname 寫法）展開為 /papertrade/ 絕對路徑，build 後驗證 dist/index.html、246 unit 與 typecheck/format 全綠
 
 - 日期：2026-07-15
 - ID：reward-papertrade-wave5-final-convergence
