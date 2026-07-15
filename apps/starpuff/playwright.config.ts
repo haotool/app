@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  // 星星門走查全程約 12s，全套連跑＋retry tracing 下實測可逼近 30s 預設上限，放寬至 60s。
+  timeout: 60_000,
   fullyParallel: false,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
@@ -17,7 +19,7 @@ export default defineConfig({
       name: 'Mobile Chrome',
       // iPhone 13 橫持視窗（844×390）跑 chromium：CI 免額外下載 webkit。
       use: { ...devices['iPhone 13 landscape'], browserName: 'chromium' },
-      testMatch: /smoke\.spec\.ts/,
+      testMatch: /(smoke|v5)\.spec\.ts/,
     },
     {
       name: 'Mobile Chrome Portrait',
