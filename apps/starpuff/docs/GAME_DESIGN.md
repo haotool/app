@@ -1,7 +1,7 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v4.0（PM 親撰；v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v5.0（PM 親撰；v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
@@ -290,3 +290,51 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 每關地面帶每 400-600px 佈置 1-2 件主題道具（levels.ts decor 資料驅動、隨機微縮放 0.9-1.1 與 y 抖動）；深度在玩家後、平台前。
 - 道具純裝飾無碰撞（KISS）；可破壞磚除外（§29）。
 - 同屏道具上限 6 件防雜訊；與 ambience 粒子總量合併預算（同屏繪製物 ≤14）。
+
+## 33. v5 iOS PWA UX 調研回寫（2026-07-15 定稿）
+
+調研結論與對應實作（出處：MDN `BaseAudioContext.state`、MDN CSS env()、Polypane safe-area 指南、iOS PWA 安全區實測筆記 gist/fozzedout、Steven Hoober thumb-zone 研究、Smashing Magazine 拇指觸控統計）：
+
+| #   | 結論                                                                                     | 實作                                                                                                             |
+| --- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | `viewport-fit=cover` 缺失時 `env(safe-area-inset-*)` 全為 0，Safari 以黑邊 letterbox     | 既有 meta 已含 cover（複查通過，未重工）                                                                         |
+| 2   | standalone 邊到邊需 `apple-mobile-web-app-status-bar-style: black-translucent`           | v5 補上該 meta                                                                                                   |
+| 3   | 橫持瀏海機頂緣存在 phantom 觸控死區（inset 回報 0 仍吃事件），建議頂緣 ≥20px 緩衝        | `#keys-layer` top 取 `max(20px, env(top))`；joy-zone 既有 20px 緩衝維持                                          |
+| 4   | `env()` 值冷啟動/轉向可能為 0 或 stale，須設 `max(Npx, env(...))` 地板                   | keys-layer 四向皆 `max()` 地板（20/12px）                                                                        |
+| 5   | iOS standalone 冷啟動 `100dvh` 不可靠                                                    | 維持 v4 `100vh` 決策（複查，未重工）                                                                             |
+| 6   | iOS 切 app/背景後 AudioContext 進非標準 `interrupted` 態，`resume()` 須於手勢堆疊內呼叫  | sfx.ts `resumeAudio()`（`state !== 'running'` 即 resume）＋全域 pointerdown 復聲保險＋暫停選單「繼續」手勢內恢復 |
+| 7   | 觸控目標 ≥44pt（Apple HIG）；拇指自然熱區在底部/下側緣，食指可達區在裝置上緣（雙手橫持） | 全按鍵 ≥44px（A 76 / B 72 / 暫停與靜音 hit 48 / 選單鈕 ≥52）；布局見 §34                                         |
+| 8   | 長按 loupe/選字/callout/雙擊縮放攔截                                                     | v3/v4 已滅（touch-callout/user-select/touch-action/gesturestart 全鏈，複查通過，未重工）                         |
+| 9   | `position: fixed` 根元素於 iOS 26 鍵盤場景會裁切 app shell                               | 本遊戲無文字輸入，維持 fixed 殼；記錄為已知邊界                                                                  |
+
+## 34. v5 控制布局重設計與按鈕自訂
+
+- 人體工學定案（§33 條目 7）：雙手橫持時拇指錨於下側角、食指自然落在裝置上緣——A 跳躍維持右下（拇指連打），B 吸/射移至右側偏上（食指按壓；與 A 垂直遠離杜絕誤觸）；方向搖桿維持左半屏。
+- 布局 SSOT：`core/layout.ts`——按鍵中心以 keys-layer 安全區內比例（cx/cy 0-1）表示，直橫持共用；`DEFAULT_LAYOUT`：A (0.92, 0.78)、B (0.92, 0.34)。
+- `#keys-layer`：安全區內鋪滿的定位容器（四向 `max()` 地板＋portrait 換軸表），按鍵以 `left/top %` + `translate(-50%,-50%)` 定位。
+- 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。
+
+## 35. v5 暫停系統與離頁自動暫停
+
+- HUD 暫停鍵：頂列右上（靜音鈕左側 48px，top-right 硬熱區遠離戰鬥區），雙豎條圖形紋理、48px 觸控目標；配額顯示左移讓位。桌機備援：ESC / P。
+- 暫停選單（`systems/pause.ts`，DOM 覆層——旋轉殼下 hit-test 天然正確、覆蓋虛擬鍵防誤觸）：繼續／重新開始／回主選單。
+- 全停語義：`scene.pause(Game)`（物理/計時/tween/輸入輪詢全停）＋ `AudioContext.suspend()`（BGM 與 SFX 全停）。
+- 重新開始＝重置當前關卡全狀態（血量/彈藥/擊殺數/計時/實體經 scene.restart 重生），保留已完成關卡累計用時與本輪死亡數。
+- 離頁自動暫停：`visibilitychange`（hidden）與 `pagehide` 即開暫停選單；回前景停在選單、玩家點「繼續」才接續（取代 §26 的自動恢復，杜絕回前景瞬間被偷襲）。音訊恢復一律走手勢堆疊內 `resume()`（§33 條目 6），刻意暫停期間全域復聲保險不生效。
+- 與 PWA 週期更新 hooks（main.ts `import './pwa'`）共存：兩者互不依賴，同檔並列。
+
+## 36. v5 開場主選單與圖鑑/技能介紹
+
+- Title 開場動畫：主標縮放彈出（Back.easeOut）、副標延遲淡入、主角自天而降 Bounce 落定＋光暈淡入；維持既有美術風格與 zzfx 音效（選單按壓 pop）。
+- 主選單：開始遊戲（主鈕）＋次選單列 圖鑑／技能介紹／按鈕配置（DOM 鈕承接命中，data-menu 標識）。
+- 圖鑑/技能介紹（`CodexScene` 單場景雙分頁，資料 SSOT `core/codex.ts`，立繪一律取既有 sprite 資產、禁止新美術）：
+  - 圖鑑分頁：全 8 角色（jelly/floaty/spiky/puffy/chompy/shelly/zappy/boss）4×2 網格——立繪＋名稱＋行為一句話＋可吸/不可吸圓點標記。
+  - 技能分頁：吸入／星彈三系（含來源怪物對應）／強化星／星暴／下衝擊／空中疾衝／漂浮，雙欄列表（名稱＋操作＋效果）。
+  - 分頁切換以 scene.restart 重建（選單輕量無局內狀態）；ESC 或返回鈕回 Title。
+
+## 37. v5 全元素位置稽核
+
+- 稽核腳本：`scripts/capture-audit.mjs`——Title/Game/Boss/Result（＋v5 新頁）於 390×844（直握旋轉殼）與 926×428（寬幅橫持）截圖至 `screenshots/starpuff-v5-audit/{before,after}/`。
+- 檢查項：HUD（血條/彈藥/擊殺進度/計時/boss 條）、虛擬鍵、彩蛋提示、教學文字——重疊/出界/safe-area 裁切/離熱區過遠。
+- v5 修正：暫停鍵擠入頂列後配額右錨左移（width-112/126）避免熱區重疊；B 鍵離開 A 鍵斜上緊鄰位，垂直間距 ≥80px。
+- Boss 條頂中置於兩檔寬皆不與左上心心、右上配額/暫停/靜音重疊（854 與 1200 邏輯寬實測）。

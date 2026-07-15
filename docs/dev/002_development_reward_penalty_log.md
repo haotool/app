@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+116
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+117
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-15
+- ID：reward-starpuff-v5-controls-pause-codex
+- 原因：v5 需求（iOS PWA UX 修正、食指/拇指分工布局、按鈕自訂、暫停/離頁接續、開場與圖鑑）需在旋轉殼與 DOM/canvas 混合命中架構上一次落地且不回歸 v4
+- 解法：layout/codex 純資料 SSOT＋DOM 覆層（暫停選單/按鈕配置）迴避旋轉殼 canvas 指標錯位；154 unit＋17 e2e 綠、390×844 與 926×428 before/after 稽核截圖、GAME_DESIGN v5.0 §33-§37 落檔
 
 - 日期：2026-07-15
 - ID：penalty-starpuff-pwa-stale-update-check
