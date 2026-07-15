@@ -2,13 +2,17 @@
  * SettingsTab – Original design with gradient decorations and animated lang
  * 自 pages/Home.tsx 純搬移抽出（issue #711 S0），行為零變更。
  */
+import { useEffect, useRef } from 'react';
 import { motion, LayoutGroup } from 'motion/react';
 import { Trash2, Check, Palette, Globe, Database, ShieldAlert, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/types';
-import { THEMES } from '@app/park-keeper/constants';
+import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { getVersionInfo } from '@app/park-keeper/config/version';
+
+// 滑桿拖曳防抖：停止拖曳後才執行單次清理，避免每 tick 全掃 IndexedDB。
+const CACHE_CLEANUP_DEBOUNCE_MS = 500;
 
 // ---------------------------------------------------------------------------
 // SETTING GROUP
@@ -48,6 +52,14 @@ export default function SettingsTab({
 }) {
   const { t, i18n } = useTranslation();
   const versionInfo = getVersionInfo();
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // 卸載時清除待執行清理；漏掉的清理由啟動/前景喚醒排程接手。
+      if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
+    };
+  }, []);
 
   const handleLanguageChange = (lang: LanguageType) => {
     void i18n.changeLanguage(lang);
@@ -61,10 +73,13 @@ export default function SettingsTab({
     }
   };
 
-  const handleCacheChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCacheChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const days = parseInt(e.target.value, 10);
     updateSettings({ ...settings, cacheDurationDays: days });
-    await dbService.cleanupCache(days);
+    if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
+    cleanupTimerRef.current = setTimeout(() => {
+      void dbService.cleanupCache(days);
+    }, CACHE_CLEANUP_DEBOUNCE_MS);
   };
 
   return (
@@ -172,15 +187,18 @@ export default function SettingsTab({
             </div>
             <input
               type="range"
-              min="1"
-              max="30"
+              min={CACHE_DAYS.MIN}
+              max={CACHE_DAYS.MAX}
               value={settings.cacheDurationDays}
-              onChange={(e) => void handleCacheChange(e)}
+              onChange={handleCacheChange}
               className="w-full h-1.5 bg-black/5 rounded-lg appearance-none cursor-pointer accent-current"
               style={{ accentColor: theme.colors.primary }}
             />
             <p className="text-[10px] mt-4 opacity-40 font-medium text-center">
               {t('settings.cache_desc')}
+            </p>
+            <p className="text-[10px] mt-1.5 font-medium text-center text-red-500/70">
+              {t('settings.cache_shrink_warning', '調小天數將立即清除較舊照片，且無法復原。')}
             </p>
           </div>
         </SettingGroup>

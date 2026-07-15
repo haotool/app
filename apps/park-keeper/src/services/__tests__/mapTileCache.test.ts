@@ -1,5 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { syncMapTileCacheConfig, TILE_CACHE_CONFIG_MESSAGE } from '../mapTileCache';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  persistTileCacheDays,
+  readPersistedTileCacheDays,
+  syncMapTileCacheConfig,
+  TILE_CACHE_CONFIG_MESSAGE,
+} from '../mapTileCache';
 
 describe('syncMapTileCacheConfig', () => {
   const originalServiceWorker = navigator.serviceWorker;
@@ -84,5 +89,57 @@ describe('syncMapTileCacheConfig', () => {
       'Unable to sync tile cache config with service worker:',
       expect.any(Error),
     );
+  });
+});
+
+describe('tile cache days 持久化（SW 冷啟/更新不重設使用者天數）', () => {
+  const cacheStore = new Map<string, Response>();
+  const mockCache = {
+    put: vi.fn((request: Request, response: Response) => {
+      cacheStore.set(request.url, response);
+      return Promise.resolve();
+    }),
+    match: vi.fn((request: Request) => Promise.resolve(cacheStore.get(request.url))),
+  };
+
+  beforeEach(() => {
+    cacheStore.clear();
+    vi.stubGlobal('caches', {
+      open: vi.fn(() => Promise.resolve(mockCache)),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('persist 後 read 應讀回相同天數', async () => {
+    await persistTileCacheDays(30);
+    await expect(readPersistedTileCacheDays()).resolves.toBe(30);
+  });
+
+  it('無持久值時應回傳 null', async () => {
+    await expect(readPersistedTileCacheDays()).resolves.toBeNull();
+  });
+
+  it('越界持久值讀回時應 clamp 至合法範圍', async () => {
+    await persistTileCacheDays(999);
+    await expect(readPersistedTileCacheDays()).resolves.toBe(30);
+  });
+
+  it('毀損內容應回傳 null 而非拋錯', async () => {
+    await persistTileCacheDays(14);
+    const [url] = [...cacheStore.keys()];
+    cacheStore.set(url!, new Response('not-json'));
+    await expect(readPersistedTileCacheDays()).resolves.toBeNull();
+  });
+
+  it('caches 不可用時 persist/read 應靜默失敗', async () => {
+    vi.stubGlobal('caches', {
+      open: vi.fn(() => Promise.reject(new Error('cache unavailable'))),
+    });
+    await expect(persistTileCacheDays(10)).resolves.toBeUndefined();
+    await expect(readPersistedTileCacheDays()).resolves.toBeNull();
   });
 });

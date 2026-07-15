@@ -11,6 +11,10 @@ const STORES = {
   SETTINGS: 'settings',
 };
 
+// 啟動/前景喚醒清理的 session 節流：短時間重複觸發不重複全掃。
+const STARTUP_CLEANUP_MIN_INTERVAL_MS = 5 * 60 * 1000;
+let lastStartupCleanupAt = 0;
+
 // Low-level IDB wrapper with error handling
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
@@ -169,6 +173,15 @@ export const dbService: StorageService = {
     return new Promise((resolve) => {
       tx.oncomplete = () => resolve(cleanedCount);
     });
+  },
+
+  async runStartupCleanup(daysToKeep: number): Promise<number> {
+    const now = Date.now();
+    if (now - lastStartupCleanupAt < STARTUP_CLEANUP_MIN_INTERVAL_MS) {
+      return 0;
+    }
+    lastStartupCleanupAt = now;
+    return this.cleanupCache(daysToKeep);
   },
 
   async clearAllData(): Promise<void> {

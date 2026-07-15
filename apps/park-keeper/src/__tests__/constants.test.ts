@@ -1,4 +1,4 @@
-import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import { THEMES, DEFAULT_SETTINGS, CACHE_DAYS, clampCacheDays } from '@app/park-keeper/constants';
 
 const REQUIRED_THEME_KEYS = [
   'id',
@@ -55,8 +55,24 @@ describe('constants', () => {
     it('should have correct defaults', () => {
       expect(DEFAULT_SETTINGS.theme).toBe('minimalist');
       expect(DEFAULT_SETTINGS.language).toBe('zh-TW');
-      expect(DEFAULT_SETTINGS.cacheDurationDays).toBe(7);
+      expect(DEFAULT_SETTINGS.cacheDurationDays).toBe(CACHE_DAYS.DEFAULT);
       expect(DEFAULT_SETTINGS.notificationsEnabled).toBe(true);
+    });
+  });
+
+  describe('CACHE_DAYS', () => {
+    it('should pin the retention SSOT contract values', () => {
+      expect(CACHE_DAYS).toEqual({ MIN: 1, MAX: 30, DEFAULT: 7 });
+    });
+
+    it('clampCacheDays should clamp and round into [MIN, MAX]', () => {
+      expect(clampCacheDays(0)).toBe(CACHE_DAYS.MIN);
+      expect(clampCacheDays(-5)).toBe(CACHE_DAYS.MIN);
+      expect(clampCacheDays(31)).toBe(CACHE_DAYS.MAX);
+      expect(clampCacheDays(999)).toBe(CACHE_DAYS.MAX);
+      expect(clampCacheDays(7.4)).toBe(7);
+      expect(clampCacheDays(7.6)).toBe(8);
+      expect(clampCacheDays(15)).toBe(15);
     });
   });
 });

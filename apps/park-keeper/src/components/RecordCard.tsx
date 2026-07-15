@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
+import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
 import PhotoViewerModal from './PhotoViewerModal';
 
@@ -65,7 +66,7 @@ export default function RecordCard({
   onDelete,
   onUpdate,
   onNavigate,
-  cacheDurationDays = 7,
+  cacheDurationDays = CACHE_DAYS.DEFAULT,
   miniMapText,
 }: RecordCardProps) {
   const [isEditing, setIsEditing] = useState(false);
