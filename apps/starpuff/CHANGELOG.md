@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.3.1
+
+### Patch Changes
+
+- cdae90b: 修復魔王入場動畫期間提前生怪，補生計時等入場完成後才啟動
+
 ## 0.3.0
 
 ### Minor Changes
