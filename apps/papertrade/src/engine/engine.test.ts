@@ -439,6 +439,36 @@ describe('limit orders', () => {
       price: 60000,
     });
   });
+
+  it('liquidates immediately when a fallback fill opens past its liquidation price', () => {
+    // 滿倉 short limit 遇暴漲 mark：回退以 60000 成交後，70000 已越過 10x 強平價，
+    // 必須在同一 tick 立即強平，不得把負權益倉位留到下一筆 ticker。
+    const placed = placeLimitOrder(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      limitPrice: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const ticked = processTick(placed.account, 'BTCUSDT', 70000, NOW);
+    expect(ticked.account.orders).toHaveLength(0);
+    expect(ticked.account.positions).toHaveLength(0);
+    expect(ticked.events).toContainEqual({
+      type: 'limit-filled',
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      price: 60000,
+    });
+    expect(ticked.events).toContainEqual(
+      expect.objectContaining({ type: 'liquidation', symbol: 'BTCUSDT', side: 'short' }),
+    );
+    expect(ticked.account.balance).toBeGreaterThanOrEqual(0);
+    expect(parsePersistedTradeState({ account: ticked.account })).not.toBeNull();
+  });
 });
 
 describe('close limit orders', () => {

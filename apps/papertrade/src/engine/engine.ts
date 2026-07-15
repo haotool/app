@@ -517,6 +517,13 @@ export function processTick(
     });
   }
 
+  // 回退成交可能直接生成已越過強平價的倉位（滿倉 short limit 遇暴漲 mark）；
+  // 以同一 mark 立即重跑強平檢查，不把負權益倉位留到下一筆 ticker（review #702）。
+  const settled = current.positions.find((candidate) => candidate.symbol === symbol);
+  if (settled !== undefined && isLiquidated(settled, mark)) {
+    current = processPosition(current, settled, mark, now, events);
+  }
+
   return { account: current, events };
 }
 

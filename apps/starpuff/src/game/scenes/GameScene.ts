@@ -216,7 +216,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
     if (!this.finished && !this.transitioning) this.applyInhalePull();
-    this.waves.update(deltaMs);
+    // 魔王關補生等入場運鏡完成（boss active）才推進，避免入場中生怪干擾玩家（review #698）。
+    if (!this.level.boss || this.boss.isActive()) this.waves.update(deltaMs);
     this.boss.update(deltaMs);
     this.syncStarTrails();
   }

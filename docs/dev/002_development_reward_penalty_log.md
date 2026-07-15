@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+116
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：reward-review-thread-convergence-batch
+- 原因：#696–#708 累積 11 條未解決 Codex review threads——魔王入場中補生、papertrade 回退成交漏強平檢查、haotool deep QA 硬編 5 卡、根站 CSP 擋工具圖示、Zeabur SOP 未鏡像 AGENTS.md（keyConfig 重置與 Title 覆層兩條已由 #718 先行落地）
+- 解法：批次最小修復——魔王關 waves 等 boss active、processTick 尾端以同 mark 重跑強平（補 vitest 案例）、QA 改策展前 5＋404 全量對照、Worker v5.9 根站 img-src 允許 app.haotool.org、AGENTS.md 鏡像 Zeabur 覆寫治理；tween 平台 direct control 依 PM 裁決撤下轉 debt issue（manual delta 搬運已上線有 e2e 覆蓋）；#701 搖桿座標與 #702 短空限價滯留經查已由 v4 rewrite 與 fallback fill 修復，全部 11 條回覆證據後 resolve
+
+- 日期：2026-07-16
+- ID：penalty-697-dockerfile-hotfix-missing-002
+- 原因：#697 Dockerfile ENOENT hotfix 提交未依 AGT-LOG-01 附 002 條目，追溯證據缺口由 review thread 揭露
+- 解法：本批補錄——#697 根因為 #622 引入 patchedDependencies 後容器 install 前未 COPY patches/，修法為 install 前補 COPY patches（同鏈 #685 條目已記錄技術細節），流程面補齊 002 追溯
 
 - 日期：2026-07-16
 - ID：penalty-starpuff-keyconfig-reset-preview
