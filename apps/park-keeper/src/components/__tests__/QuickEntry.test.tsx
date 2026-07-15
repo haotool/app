@@ -226,7 +226,66 @@ describe('QuickEntry - 車牌自動載入與清空功能', () => {
       </I18nextProvider>,
     );
 
-    await waitFor(() => expect(plateInput).toHaveValue('ABC-1234'));
+    // 重開後重新查詢 DOM，避免 stale 節點參照。
+    await waitFor(() => expect(screen.getByPlaceholderText(/車牌/i)).toHaveValue('ABC-1234'));
+  });
+
+  it('清空車號後儲存成功，不得抹除上次真實車號記憶', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const onClose = vi.fn();
+
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={onClose} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    // 第一次以真實車號儲存成功。
+    fireEvent.change(screen.getByPlaceholderText(/車牌/i), { target: { value: 'ABC-1234' } });
+    fireEvent.click(screen.getByText('B2'));
+    await waitFor(() => expect(plateMemory.get()).toBe('ABC-1234'));
+
+    // 關閉再重開面板（常駐掛載，重置 saveStatus 進入下一輪）。
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={false} onClose={onClose} />
+      </I18nextProvider>,
+    );
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={onClose} />
+      </I18nextProvider>,
+    );
+
+    // 第二次清空車號直接儲存：空 commit 為 no-op，記憶不得被抹除。
+    const plateInput = screen.getByPlaceholderText(/車牌/i);
+    fireEvent.change(plateInput, { target: { value: '' } });
+    fireEvent.click(screen.getByText('1F'));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+
+    expect(plateMemory.get()).toBe('ABC-1234');
+  });
+
+  it('onSave 失敗（reject）時不得寫入記憶', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('save failed'));
+    const onClose = vi.fn();
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={onClose} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText(/車牌/i), { target: { value: 'FAIL-0001' } });
+    fireEvent.click(screen.getByText('B3'));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+
+    // 儲存失敗：記憶不得被寫入。
+    expect(plateMemory.get()).toBeNull();
   });
 
   it('輸入過程中不落 storage，僅於儲存成功時 commit', async () => {

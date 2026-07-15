@@ -9,13 +9,11 @@ function safeGet(key: string): string | null {
   }
 }
 
+// 空值視為 no-op，不覆寫既有記憶；清除記憶只走 clear()。
 function safeCommit(key: string, value: string): void {
+  if (!value.trim()) return;
   try {
-    if (value) {
-      localStorage.setItem(key, value);
-    } else {
-      localStorage.removeItem(key);
-    }
+    localStorage.setItem(key, value);
   } catch {
     // 隱私模式或儲存空間不足時靜默降級，不影響操作流程。
   }

@@ -161,9 +161,16 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     };
 
     await new Promise((r) => setTimeout(r, 600));
-    await onSave(recordData);
-    // 僅於儲存成功時才正式寫入記憶。
-    plateMemory.commit(plate);
+    try {
+      await onSave(recordData);
+    } catch {
+      // 儲存失敗：不寫記憶、不關面板，恢復可重試狀態。
+      setSaveStatus('idle');
+      vibrate([50, 50, 50]);
+      return;
+    }
+    // 僅於儲存成功時才正式寫入記憶；空車號不覆寫既有記憶（清記憶只走 clear）。
+    if (plate.trim()) plateMemory.commit(plate);
     plateMemory.commitFloor(floorValue);
     setSaveStatus('success');
     setTimeout(() => onClose(), 400);

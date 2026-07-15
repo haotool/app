@@ -11,10 +11,11 @@ describe('plateMemory', () => {
       expect(plateMemory.get()).toBe('ABC-1234');
     });
 
-    it('should remove memory when committing an empty string', () => {
+    it('should treat empty/whitespace commit as no-op and keep existing memory', () => {
       plateMemory.commit('ABC-1234');
       plateMemory.commit('');
-      expect(plateMemory.get()).toBeNull();
+      plateMemory.commit('   ');
+      expect(plateMemory.get()).toBe('ABC-1234');
     });
 
     it('should clear memory via clear()', () => {
