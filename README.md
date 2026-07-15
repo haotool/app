@@ -35,6 +35,7 @@ haotool Apps 是一個專業的 pnpm Monorepo，包含多個高品質的 React 1
 | **[Park Keeper](./apps/park-keeper/)**   | 停車場導航工具，GPS 指引 + 多語言（i18n）      | Live | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | 貓咪主題旅遊帳單分攤計算機，支援費用分類與分享 | Live | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
 | **[StarPuff](./apps/starpuff/)**         | 吸入果凍怪、擊敗果凍王的直向 Boss Rush 小遊戲  | Live | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
+| **[PaperTrade](./apps/papertrade/)**     | 零風險模擬合約交易所，串接真實加密貨幣行情     | Live | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
 | **[haotool](./apps/haotool/)**           | 專案展示平台，3D 互動首頁                      | Live | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### 應用特色
@@ -148,6 +149,8 @@ pnpm --filter @app/nihonname dev     # NihonName (http://localhost:3002)
 pnpm --filter @app/quake-school dev  # Quake-School (http://localhost:3003)
 pnpm --filter @app/park-keeper dev   # Park Keeper (http://localhost:3004)
 pnpm --filter @app/split-meow dev    # Split Meow (http://localhost:3005)
+pnpm --filter @app/starpuff dev      # StarPuff (http://localhost:3007)
+pnpm --filter @app/papertrade dev    # PaperTrade (http://localhost:5173)
 pnpm --filter @app/haotool dev       # haotool (http://localhost:3000)
 ```
 
@@ -198,6 +201,8 @@ haotool-app/
 │   ├── quake-school/     # 地震知識小學堂
 │   ├── park-keeper/      # 停車場導航工具
 │   ├── split-meow/       # 貓咪分帳計算機
+│   ├── starpuff/         # 直向 Boss Rush 小遊戲
+│   ├── papertrade/       # 模擬合約交易所
 │   ├── haotool/          # 專案展示平台
 │   └── shared/           # 共用模組
 ├── docs/                 # 文檔
@@ -264,6 +269,7 @@ haotool Apps is a professional pnpm Monorepo containing multiple high-quality Re
 | **[Park Keeper](./apps/park-keeper/)**   | Parking lot navigator with GPS compass + i18n       | Live   | [app.haotool.org/park-keeper](https://app.haotool.org/park-keeper/)   |
 | **[Split Meow](./apps/split-meow/)**     | Cat-themed trip expense splitter with share + emoji | Live   | [app.haotool.org/split-meow](https://app.haotool.org/split-meow/)     |
 | **[StarPuff](./apps/starpuff/)**         | Vertical boss-rush action mini game with Phaser     | Live   | [app.haotool.org/starpuff](https://app.haotool.org/starpuff/)         |
+| **[PaperTrade](./apps/papertrade/)**     | Risk-free crypto perpetual paper-trading exchange   | Live   | [app.haotool.org/papertrade](https://app.haotool.org/papertrade/)     |
 | **[haotool](./apps/haotool/)**           | Project showcase with 3D interactive homepage       | Live   | [app.haotool.org](https://app.haotool.org/)                           |
 
 ### Tech Stack

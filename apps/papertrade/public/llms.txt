@@ -1,0 +1,29 @@
+# PaperTrade 模擬交易所
+# https://app.haotool.org/papertrade/
+
+> PaperTrade 是一款免費的模擬合約交易所，串接 Bybit 公開即時行情，讓使用者零風險練習加密貨幣永續合約交易，由 haotool.org 出品。
+
+## 功能
+
+- 即時行情：10 個 USDT 永續交易對即時價格、24 小時漲跌與成交量
+- 專業圖表：蠟燭圖＋成交量、多時間框架（1m～1W）、即時更新
+- 訂單簿：即時買賣盤深度預覽
+- 模擬交易：市價／限價開倉、槓桿、止盈止損、強平模擬（開發中）
+- 資產管理：模擬資金、持倉損益、平倉歷史（開發中）
+- 完全免費：無帳號、無 KYC、資料僅存於本地
+
+## 頁面
+
+- [行情](https://app.haotool.org/papertrade/): 即時交易對清單與搜尋
+
+## 技術
+
+- React 19 + TypeScript + Vite 8
+- Bybit v5 公開 WebSocket／REST 行情
+- lightweight-charts 專業金融圖表
+- Zustand 狀態管理
+- 純前端，模擬資料僅存於瀏覽器本地
+
+## 免責聲明
+
+本站為模擬交易工具，非投資建議；行情數據來源為 Bybit 公開 API。

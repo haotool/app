@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+114
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-15
+- ID：reward-papertrade-wave5-final-convergence
+- 原因：PR 702 終審 Fable 91/100 列 4 Major（marketable 限價劣價成交致負餘額靜默重置、100% 快捷鈕必拒單、WS 重連 K 線 gap、README 未同步）與多項 Minor 待收斂
+- 解法：TDD 修限價成交價=mark（限價或更優）＋槓桿 clamp＋persist schema 對齊引擎輸出域並補損壞重置 toast、100% 改向下截斷、重連 REST 回補、TP/SL 原子化、history cap 200、今日變化、og:image＋WebApplication JSON-LD、e2e 三旅程（限價成交/TP/強平）、README 補 papertrade（244 unit＋12 e2e 綠）
+
+- 日期：2026-07-15
+- ID：reward-papertrade-app-initial
+- 原因：需求為零風險模擬合約交易所新 app（真實 Bybit 行情＋本地撮合引擎），需以多輪審查與深度 QA 收斂到可上 PR 的產品級品質
+- 解法：papertrade 以 20 commits 交付（引擎帳本不變量守護、208 unit＋6 e2e 綠、Grok 三輪 APPROVE 8.5/10、深度 QA 0 P0/P1，P2 觸控寬度與訂單簿密度回修並建立 hitTarget 寬度守門）
 
 - 日期：2026-07-15
 - ID：reward-starpuff-v3-landscape-overhaul
