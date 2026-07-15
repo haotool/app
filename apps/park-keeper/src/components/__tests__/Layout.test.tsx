@@ -1,6 +1,8 @@
+import { beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Layout from '../Layout';
+import i18n from '@app/park-keeper/services/i18n';
 
 const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true } as const;
 
@@ -18,6 +20,11 @@ function renderWithRouter(initialEntries: string[] = ['/']) {
 }
 
 describe('Layout', () => {
+  beforeAll(async () => {
+    // 統一固定為 zh-TW，避免測試斷言隨 navigator.language 飄動（對應 e2e/helpers.ts 慣例）。
+    await i18n.changeLanguage('zh-TW');
+  });
+
   it('should hide footer on immersive app routes', () => {
     renderWithRouter();
     expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
@@ -35,9 +42,9 @@ describe('Layout', () => {
 
   it('should render navigation links (About, Settings, Privacy) on about route', () => {
     renderWithRouter(['/about']);
-    expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Privacy' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '關於' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '設定' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '隱私權' })).toBeInTheDocument();
   });
 
   it('should have current year in copyright on about route', () => {

@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SITE_CONFIG } from '../../app.config.mjs';
 
 const APP_NAME = SITE_CONFIG.name;
@@ -10,9 +11,12 @@ function normalizePathname(pathname: string) {
 }
 
 export default function Layout() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const normalizedPathname = normalizePathname(pathname);
   const showFooter = normalizedPathname === '/about';
+  const footerLinkCls =
+    'inline-block px-3.5 py-3.5 -mx-3.5 -my-3.5 hover:text-slate-300 transition-colors';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,24 +30,24 @@ export default function Layout() {
             <a
               href="https://app.haotool.org/about/"
               rel="author"
-              className="hover:text-slate-400 transition-colors"
+              className="inline-block px-1 py-1.5 -mx-1 -my-1.5 hover:text-slate-400 transition-colors"
             >
               阿璋 (Ah Zhang)
             </a>{' '}
-            · {APP_NAME}. All rights reserved.
+            · {APP_NAME}. {t('footer.rights_reserved')}
           </address>
           <nav
             className="flex items-center justify-center gap-4 text-xs text-slate-400 mt-2"
             aria-label="Footer"
           >
-            <Link to="/about/" className="hover:text-slate-300 transition-colors">
-              About
+            <Link to="/about/" className={footerLinkCls}>
+              {t('footer.about')}
             </Link>
-            <Link to="/settings/" className="hover:text-slate-300 transition-colors">
-              Settings
+            <Link to="/settings/" className={footerLinkCls}>
+              {t('footer.settings')}
             </Link>
-            <Link to="/about/#privacy" className="hover:text-slate-300 transition-colors">
-              Privacy
+            <Link to="/about/#privacy" className={footerLinkCls}>
+              {t('footer.privacy')}
             </Link>
           </nav>
         </footer>

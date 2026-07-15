@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, beforeAll } from 'vitest';
 import About from '../About';
+import i18n from '@app/park-keeper/services/i18n';
 
 vi.mock('motion/react', () => {
   const motionProps = ['initial', 'animate', 'whileInView', 'viewport', 'transition', 'exit'];
@@ -29,6 +30,11 @@ vi.mock('motion/react', () => {
 });
 
 describe('About', () => {
+  beforeAll(async () => {
+    // 統一固定為 zh-TW，避免測試斷言隨 navigator.language 飄動（對應 e2e/helpers.ts 慣例）。
+    await i18n.changeLanguage('zh-TW');
+  });
+
   it('should render the heading "停車好工具"', () => {
     render(<About />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('停車好工具');

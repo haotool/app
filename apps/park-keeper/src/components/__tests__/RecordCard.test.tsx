@@ -28,6 +28,33 @@ vi.mock('motion/react', () => {
   };
 });
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, string>) => {
+      const map: Record<string, string> = {
+        'record.plate': '車牌號碼',
+        'record.yesterday': '昨天',
+        'record.edit_plate': '編輯車牌 {{plate}}',
+        'record.edit_plate_icon': '編輯車牌',
+        'record.delete': '刪除停車記錄 {{plate}}',
+        'record.view_photo': '查看停車照片',
+        'record.photo_alt': '停車照片',
+        'record.no_map': 'No Map',
+        'record.navigate': '導航',
+        'record.saving': '正在儲存...',
+      };
+      let str = map[key] ?? key;
+      if (opts) {
+        for (const [k, v] of Object.entries(opts)) {
+          str = str.replace(`{{${k}}}`, v);
+        }
+      }
+      return str;
+    },
+    i18n: { language: 'zh-TW' },
+  }),
+}));
+
 vi.mock('../MiniMap', () => ({
   default: ({ onPhotoClick }: { onPhotoClick?: () => void }) => (
     <div
@@ -228,7 +255,7 @@ describe('RecordCard', () => {
     );
     expect(onDelete).toHaveBeenCalledWith(currentRecord.id);
 
-    fireEvent.click(screen.getByRole('button', { name: /navigate/i }));
+    fireEvent.click(screen.getByRole('button', { name: /導航/ }));
     expect(onNavigate).toHaveBeenCalledWith(expect.objectContaining({ id: currentRecord.id }));
     expect(screen.getByText(/靠近電梯口/)).toBeInTheDocument();
   });
