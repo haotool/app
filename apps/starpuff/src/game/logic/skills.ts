@@ -163,6 +163,12 @@ export function isAirDashing(state: AirDashState): boolean {
   return state.dashLeftMs > 0;
 }
 
+// 疾衝退還拍翅（§30 手感）：雙擊第二拍觸發疾衝當幀，退還首拍實際消耗的拍翅次數；
+// 首拍未耗拍翅（coyote 跳、buffer 記帳）不退，避免憑空生出額度。
+export function refundDashFlap(flapsUsed: number, firstTapFlapped: boolean): number {
+  return firstTapFlapped ? Math.max(0, flapsUsed - 1) : flapsUsed;
+}
+
 // 疾衝水平速度：180px / 0.18s = 1000px/s。
 export function airDashSpeed(): number {
   return (AIR_DASH.distancePx / AIR_DASH.durationMs) * 1000;

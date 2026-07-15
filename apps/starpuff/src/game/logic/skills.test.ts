@@ -9,6 +9,7 @@ import {
   isAirDashing,
   popTopSlot,
   pushGoldStar,
+  refundDashFlap,
   resolveActionPress,
   shouldFireOnRelease,
   starDamage,
@@ -200,6 +201,24 @@ describe('advanceAirDash（§30 空中疾衝）', () => {
     result = idle(result.state, AIR_DASH.durationMs);
     expect(isAirDashing(result.state)).toBe(false);
     expect(airDashSpeed()).toBe(1000);
+  });
+
+  it('成功疾衝不減拍翅餘額：首拍消耗於觸發當幀退還（§30 手感）', () => {
+    // 模擬雙擊全程：首拍走拍翅分支消耗 1 次，第二拍觸發疾衝後當幀退還。
+    let flapsUsed = 0;
+    let result = tap(createAirDashState(), 16);
+    expect(result.trigger).toBe(false);
+    flapsUsed += 1;
+    result = tap(result.state, 100);
+    expect(result.trigger).toBe(true);
+    flapsUsed = refundDashFlap(flapsUsed, true);
+    expect(flapsUsed).toBe(0);
+  });
+
+  it('首拍未耗拍翅（coyote 跳/buffer 記帳）不退還，退還下限為 0', () => {
+    expect(refundDashFlap(2, false)).toBe(2);
+    expect(refundDashFlap(0, false)).toBe(0);
+    expect(refundDashFlap(0, true)).toBe(0);
   });
 });
 

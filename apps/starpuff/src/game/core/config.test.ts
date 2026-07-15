@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAR, STAR_FLAVORS } from './config';
+import { STAR, STAR_FLAVORS, computeLogicalWidth } from './config';
 
 // 吞噬賦星效果表（GAME_DESIGN §20）：表驅動 SSOT 的守門測試。
 describe('STAR_FLAVORS（§20）', () => {
@@ -36,5 +36,27 @@ describe('STAR_FLAVORS（§20）', () => {
 
   it('彈匣上限 3 不受屬性影響', () => {
     expect(STAR.maxAmmo).toBe(3);
+  });
+});
+
+// 響應寬幅邊界（§28）：clamp(round(aspect×480), 854, 1200) 的守門測試。
+describe('computeLogicalWidth（§28 邊界）', () => {
+  it('下限 clamp：窄比殼（1024×768 → raw 640）收斂至最小寬 854', () => {
+    expect(computeLogicalWidth(1024, 768)).toBe(854);
+  });
+
+  it('上限 clamp：極寬殼（5000×480 → raw 5000）收斂至最大寬 1200', () => {
+    expect(computeLogicalWidth(5000, 480)).toBe(1200);
+  });
+
+  it('邊界精確值直通：854×480 與 1200×480 不受 clamp 影響', () => {
+    expect(computeLogicalWidth(854, 480)).toBe(854);
+    expect(computeLogicalWidth(1200, 480)).toBe(1200);
+  });
+
+  it('極窄與無效量測回退最小寬：直式誤量（390×844）與零尺寸', () => {
+    expect(computeLogicalWidth(390, 844)).toBe(854);
+    expect(computeLogicalWidth(0, 480)).toBe(854);
+    expect(computeLogicalWidth(854, 0)).toBe(854);
   });
 });

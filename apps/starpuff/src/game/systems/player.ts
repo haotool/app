@@ -22,6 +22,7 @@ import {
   isAirDashing,
   popTopSlot,
   pushGoldStar,
+  refundDashFlap,
   resolveActionPress,
   shouldFireOnRelease,
   starDamage,
@@ -131,8 +132,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let slamming = false;
   let slamCdMs = 0;
   // 空中疾衝（§30）：雙擊偵測與 CD 走 skills 純狀態機；殘影快照計時。
+  // lastAirTapFlapped：首拍是否實際消耗拍翅，供疾衝觸發當幀退還（refundDashFlap）。
   let airDash = createAirDashState();
   let ghostMs = 0;
+  let lastAirTapFlapped = false;
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
@@ -326,7 +329,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         airborne: !onGround,
       });
       airDash = dashTick.state;
-      if (dashTick.trigger) startAirDash();
+      if (dashTick.trigger) {
+        // 疾衝手感（§30）：首拍消耗的拍翅當幀退還，成功疾衝不折損漂浮資源。
+        flapsUsed = refundDashFlap(flapsUsed, lastAirTapFlapped);
+        lastAirTapFlapped = false;
+        startAirDash();
+      }
 
       if (hurtLockMs <= 0 && isAirDashing(airDash)) {
         // 疾衝進行中：鎖定面向水平速度並抵銷重力，殘影按間隔快照；其餘輸入凍結。
@@ -354,14 +362,17 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           if (onGround || coyoteMs > 0) {
             coyoteMs = 0;
             jumpBufferMs = 0;
+            lastAirTapFlapped = false;
             sprite.setVelocityY(PLAYER.jumpVelocity);
             squashStretch(0.8, 1.25);
           } else if (controls.jumpPressed && flapsUsed < PLAYER.maxFlaps) {
             flapsUsed += 1;
+            lastAirTapFlapped = true;
             sprite.setVelocityY(PLAYER.floatLift);
             squashStretch(0.9, 1.12);
           } else if (controls.jumpPressed) {
             jumpBufferMs = FORGIVENESS.jumpBufferMs;
+            lastAirTapFlapped = false;
           }
         }
 
