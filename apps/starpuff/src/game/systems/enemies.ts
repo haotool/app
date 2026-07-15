@@ -18,6 +18,8 @@ export interface EnemySystem {
   damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome;
   removeInhaled(enemy: Phaser.GameObjects.GameObject): void;
   kindOf(enemy: Phaser.GameObjects.GameObject): EnemyKind | null;
+  // 個體可吸判定（§30）：kind 規則 + 個體狀態（shelly 僅暈眩時可吸）。
+  isInhalable(enemy: Phaser.GameObjects.GameObject): boolean;
   getGroup(): Phaser.Physics.Arcade.Group;
   getHazards(): Phaser.Physics.Arcade.Group;
   setTarget(target: EnemyTarget | null): void;
@@ -27,13 +29,14 @@ export interface EnemySystem {
   destroy(): void;
 }
 
-// texture keys 凍結（GAME_DESIGN §10、§19）；缺圖時以同色圓角色塊代替。
+// texture keys 凍結（GAME_DESIGN §10、§19、§31）；缺圖時以同色圓角色塊代替。
 const TEXTURES: Record<EnemyKind, string> = {
   jelly: 'minion-jelly',
   floaty: 'minion-floaty',
   spiky: 'minion-spiky',
   puffy: 'minion-puffy',
   chompy: 'minion-chompy',
+  shelly: 'minion-shelly',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -42,15 +45,18 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   spiky: 0xd9f29b,
   puffy: 0xffa8a0,
   chompy: 0xf5e6a8,
+  shelly: 0x7fd8c8,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
+// shelly 的「HP 2 段」由狀態機承擔：walk 首發轉縮殼、stun 期一擊斃（§30）。
 const HP: Record<EnemyKind, number> = {
   jelly: 1,
   floaty: 1,
   spiky: 1,
   puffy: 1,
   chompy: 10,
+  shelly: 1,
 };
 
 const SIZE = 40;
@@ -79,11 +85,22 @@ const CHOMPY_BITE_MS = 300;
 const CHOMPY_COOL_MS = 1200;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
+// shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 1.5s（無敵、碰牆反彈）→ 暈眩 1s 可吸可殺（§30）。
+const SHELLY_WALK_SPEED = 60;
+const SHELLY_SPIN_SPEED = 320;
+const SHELLY_SPIN_MS = 1500;
+const SHELLY_STUN_MS = 1000;
+const SHELLY_SPIN_OMEGA = 0.02;
+const SHELLY_SHELL_SCALE = 0.82;
+const SHELLY_WADDLE_OMEGA = 0.008;
+const SHELLY_WADDLE_RAD = 0.08;
 // 穿透星停留重疊時的重複結算保護（須大於星彈穿越 hitbox 的時間）。
 const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
 
 type ChompyState = 'idle' | 'windup' | 'bite' | 'cool';
+
+type ShellyState = 'walk' | 'spin' | 'stun';
 
 export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   for (const kind of Object.keys(TEXTURES) as EnemyKind[]) {
@@ -211,6 +228,66 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     emitGameEvent(scene.events, GameEvents.ENEMY_KILLED, { kind, x, y });
   }
 
+  // 縮殼旋轉衝刺（§30）：朝玩家側 1.5s 高速滾動，期間無敵、碰牆由 bounce 反彈。
+  function enterShellySpin(sprite: Phaser.Physics.Arcade.Sprite): void {
+    playSfx('shell-spin');
+    sprite.setData('state', 'spin');
+    sprite.setData('stateMs', 0);
+    const bsx = sprite.getData('baseSX') as number;
+    const bsy = sprite.getData('baseSY') as number;
+    sprite.setScale(bsx * SHELLY_SHELL_SCALE, bsy * SHELLY_SHELL_SCALE);
+    const direction = target && target.x < sprite.x ? -1 : 1;
+    (sprite.body as Phaser.Physics.Arcade.Body).setVelocityX(SHELLY_SPIN_SPEED * direction);
+  }
+
+  function updateShelly(sprite: Phaser.Physics.Arcade.Sprite, deltaMs: number): void {
+    const state = sprite.getData('state') as ShellyState;
+    const stateMs = (sprite.getData('stateMs') as number) + deltaMs;
+    sprite.setData('stateMs', stateMs);
+    const body = sprite.body as Phaser.Physics.Arcade.Body;
+    switch (state) {
+      case 'walk': {
+        // 巡邏：恆速走動、bounce 折返；被外力夾停時恢復。
+        if (body.velocity.x === 0) {
+          const direction = target && target.x < sprite.x ? -1 : 1;
+          body.setVelocityX(SHELLY_WALK_SPEED * direction);
+        }
+        sprite.setRotation(Math.sin(stateMs * SHELLY_WADDLE_OMEGA) * SHELLY_WADDLE_RAD);
+        break;
+      }
+      case 'spin': {
+        if (stateMs >= SHELLY_SPIN_MS) {
+          sprite.setData('state', 'stun');
+          sprite.setData('stateMs', 0);
+          body.setVelocityX(0);
+          sprite.setTint(0xcfcfcf);
+          break;
+        }
+        if (body.velocity.x === 0) body.setVelocityX(SHELLY_SPIN_SPEED);
+        sprite.rotation += Math.sign(body.velocity.x) * SHELLY_SPIN_OMEGA * deltaMs;
+        break;
+      }
+      case 'stun': {
+        // 暈眩 1s（可吸/可擊殺）：昏沉搖擺，時滿復原回巡邏。
+        sprite.setRotation(Math.sin(stateMs * 0.02) * 0.25);
+        if (stateMs >= SHELLY_STUN_MS) {
+          sprite.setData('state', 'walk');
+          sprite.setData('stateMs', 0);
+          sprite.clearTint();
+          sprite.setRotation(0);
+          const bsx = sprite.getData('baseSX') as number;
+          const bsy = sprite.getData('baseSY') as number;
+          sprite.setScale(bsx, bsy);
+        }
+        break;
+      }
+      default: {
+        const exhaustive: never = state;
+        void exhaustive;
+      }
+    }
+  }
+
   function updateChompy(sprite: Phaser.Physics.Arcade.Sprite, deltaMs: number): void {
     const state = sprite.getData('state') as ChompyState;
     const stateMs = (sprite.getData('stateMs') as number) + deltaMs;
@@ -295,7 +372,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       sprite.setData('phase', Math.random() * Math.PI * 2);
       sprite.setData('hp', HP[kind]);
       sprite.setData('dmgCdMs', 0);
-      sprite.setData('state', 'idle');
+      sprite.setData('state', kind === 'shelly' ? 'walk' : 'idle');
       sprite.setData('stateMs', 0);
       sprite.setData('baseSX', sprite.scaleX);
       sprite.setData('baseSY', sprite.scaleY);
@@ -308,20 +385,21 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
       body.setCollideWorldBounds(true);
       body.setAllowGravity(kind !== 'floaty' && kind !== 'puffy');
-      // spiky 以 bounce=1 碰牆自動折返；chompy 定點紮根。
-      body.setBounce(kind === 'spiky' ? 1 : 0, 0);
+      // spiky/shelly 以 bounce=1 碰牆自動折返；chompy 定點紮根。
+      body.setBounce(kind === 'spiky' || kind === 'shelly' ? 1 : 0, 0);
       body.setImmovable(kind === 'chompy');
       // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回當前鏡頭中心啟發。
       const inward = target ? (target.x >= x ? 1 : -1) : x < viewCenterX() ? 1 : -1;
       if (kind === 'spiky') body.setVelocity(SPIKY_SPEED * inward, 0);
       else if (kind === 'puffy') body.setVelocity(0, PUFFY_FALL_SPEED);
+      else if (kind === 'shelly') body.setVelocity(SHELLY_WALK_SPEED * inward, 0);
       else body.setVelocity(0, 0);
 
       // 生成彈入；wobble 延後啟動避免同時操作 scale。
       popIn(scene, sprite);
 
-      // wobble idle：果凍感擠壓拉伸；chompy 的 scale 由咬合狀態機控制，不掛 wobble。
-      if (kind !== 'chompy') {
+      // wobble idle：果凍感擠壓拉伸；chompy/shelly 的 scale 由各自狀態機控制，不掛 wobble。
+      if (kind !== 'chompy' && kind !== 'shelly') {
         scene.tweens.add({
           targets: sprite,
           scaleX: sprite.scaleX * 1.08,
@@ -343,6 +421,17 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       if (!kind) return 'ignored';
       const sprite = enemy as Phaser.Physics.Arcade.Sprite;
       if ((sprite.getData('dmgCdMs') as number) > 0) return 'ignored';
+      // 殼殼二段（§30）：巡邏首發轉縮殼旋轉（不扣血）；旋轉期無敵；暈眩期正常結算。
+      if (kind === 'shelly') {
+        const state = sprite.getData('state') as ShellyState;
+        if (state === 'spin') return 'ignored';
+        if (state === 'walk') {
+          sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
+          flashWhite(sprite);
+          enterShellySpin(sprite);
+          return 'hurt';
+        }
+      }
       sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
       const hp = (sprite.getData('hp') as number) - amount;
       if (hp > 0) {
@@ -362,6 +451,13 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     },
 
     kindOf,
+
+    // 個體可吸判定（§30）：kind 規則疊加個體狀態，shelly 僅暈眩窗可吸。
+    isInhalable(enemy: Phaser.GameObjects.GameObject): boolean {
+      const kind = kindOf(enemy);
+      if (!kind) return false;
+      return canInhale(kind, enemy.getData('state') === 'stun');
+    },
 
     getGroup() {
       return group;
@@ -384,7 +480,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       let count = 0;
       for (const child of group.getChildren()) {
         const kind = kindOf(child);
-        if (kind && canInhale(kind)) count += 1;
+        if (kind && canInhale(kind, child.getData('state') === 'stun')) count += 1;
       }
       return count;
     },
@@ -442,6 +538,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           case 'chompy': {
             body.setVelocityX(0);
             updateChompy(sprite, deltaMs);
+            break;
+          }
+          case 'shelly': {
+            updateShelly(sprite, deltaMs);
             break;
           }
           default: {

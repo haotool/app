@@ -12,7 +12,7 @@ import {
 } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
-import { canInhale, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
+import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
 import {
   advanceStarstormHold,
   fillMagazine,
@@ -408,10 +408,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       emitGameEvent(scene.events, GameEvents.PLAYER_HEALED, { hp, maxHp: hpCap });
     },
     swallow(kind: EnemyKind) {
-      if (!canInhale(kind)) return false;
-      const result = swallowIntoMagazine(magazine, kind);
+      // 個體狀態（shelly 暈眩窗）由 GameScene 的 isInhalable 先行把關；此處只換算屬性。
+      const flavor = inhaleFlavor(kind);
+      if (!flavor) return false;
+      const result = swallowIntoMagazine(magazine, flavor);
       magazine = result.magazine;
-      lastFlavor = kind;
+      lastFlavor = flavor;
       // 連吞升級（§23）：強化音效；金邊視覺由 HUD 與發射端依槽位狀態呈現。
       if (result.charged) playSfx('charge');
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });

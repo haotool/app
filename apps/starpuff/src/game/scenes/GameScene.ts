@@ -19,7 +19,7 @@ import {
 } from '../core/events';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
-import { canInhale, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
 import {
   advanceEgg,
   createEggProgress,
@@ -305,11 +305,11 @@ export class GameScene extends Phaser.Scene {
       const kind = this.enemies.kindOf(enemy as Phaser.GameObjects.GameObject);
       if (!kind || this.finished || this.transitioning) return;
       const target = asSprite(enemy);
-      // 吸入錐形內的可吸怪交由吞下流程，不結算觸碰傷害。
+      // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
       const { x, y } = this.player.sprite;
       if (
         this.player.isInhaling() &&
-        canInhale(kind) &&
+        this.enemies.isInhalable(enemy as Phaser.GameObjects.GameObject) &&
         isInInhaleRange(x, y, this.player.getFacing(), target.x, target.y, INHALE.rangePx)
       ) {
         return;
@@ -369,7 +369,8 @@ export class GameScene extends Phaser.Scene {
     });
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
-      if (canInhale(kind)) this.feedEggs({ kind: 'swallow', flavor: kind });
+      const flavor = inhaleFlavor(kind);
+      if (flavor) this.feedEggs({ kind: 'swallow', flavor });
     });
     // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
@@ -576,8 +577,9 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = this.player.sprite;
       const facing = this.player.getFacing();
       if (!isInInhaleRange(x, y, facing, enemy.x, enemy.y, INHALE.rangePx)) continue;
-      if (!canInhale(kind)) {
-        enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
+      if (!this.enemies.isInhalable(enemy)) {
+        // 旋轉衝刺中的殼殼為無敵段，不受吸力彈開；其餘不可吸怪照舊彈開。
+        if (enemy.getData('state') !== 'spin') enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
         continue;
       }
       const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.mouth.x, this.mouth.y);

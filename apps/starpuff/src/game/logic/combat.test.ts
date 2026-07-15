@@ -3,6 +3,7 @@ import {
   applyDamage,
   canInhale,
   clampAmmo,
+  inhaleFlavor,
   isInInhaleRange,
   knockbackVelocity,
   resolveHit,
@@ -27,6 +28,22 @@ describe('combat', () => {
     expect(canInhale('jelly')).toBe(true);
     expect(canInhale('floaty')).toBe(true);
     expect(canInhale('puffy')).toBe(true);
+  });
+
+  it('shelly 僅暈眩時可吸（§30）；未帶狀態預設不可吸', () => {
+    expect(canInhale('shelly')).toBe(false);
+    expect(canInhale('shelly', false)).toBe(false);
+    expect(canInhale('shelly', true)).toBe(true);
+    expect(canInhale('spiky', true)).toBe(false);
+  });
+
+  it('inhaleFlavor 吸入屬性換算：shelly 得標準星、不可吸者為 null', () => {
+    expect(inhaleFlavor('jelly')).toBe('jelly');
+    expect(inhaleFlavor('floaty')).toBe('floaty');
+    expect(inhaleFlavor('puffy')).toBe('puffy');
+    expect(inhaleFlavor('shelly')).toBe('jelly');
+    expect(inhaleFlavor('spiky')).toBeNull();
+    expect(inhaleFlavor('chompy')).toBeNull();
   });
 
   it('isInInhaleRange 依朝向與距離判定', () => {
