@@ -77,6 +77,8 @@ const resources = {
         default_name: '使用者',
         version: '版本',
         rate_updated: '換錢所匯率 · 更新 {{time}}',
+        rate_stale: '（可能過時）',
+        rate_retry: '匯率更新失敗，點此重試',
         auto_detected: '自動偵測',
       },
       trip: {
@@ -171,6 +173,8 @@ const resources = {
         default_name: 'User',
         version: 'Version',
         rate_updated: 'MoneyBox rate · Updated {{time}}',
+        rate_stale: '(may be outdated)',
+        rate_retry: 'Rate update failed — tap to retry',
         auto_detected: 'Auto-detected',
       },
       trip: {
@@ -265,6 +269,8 @@ const resources = {
         default_name: '사용자',
         version: '버전',
         rate_updated: '환전소 환율 · 업데이트 {{time}}',
+        rate_stale: '(오래되었을 수 있음)',
+        rate_retry: '환율 업데이트 실패, 탭하여 재시도',
         auto_detected: '자동 감지',
       },
       trip: {
@@ -359,6 +365,8 @@ const resources = {
         default_name: 'ユーザー',
         version: 'バージョン',
         rate_updated: '両替所レート · 更新 {{time}}',
+        rate_stale: '（古い可能性あり）',
+        rate_retry: 'レート更新失敗、タップして再試行',
         auto_detected: '自動検出',
       },
       trip: {

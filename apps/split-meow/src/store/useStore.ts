@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { randomAvatarSeed } from '../lib/avatar';
+import { fetchMoneyboxRate } from '../lib/exchangeRate';
 import i18n from '../i18n';
 import type { CurrencyCode } from '../config/currencies';
 
@@ -94,8 +95,10 @@ interface AppState {
   currencyManuallySet: boolean;
   krwPerTwd: number | null;
   rateUpdatedAt: string | null;
+  rateUpdatedAtIso: string | null;
+  rateFetchFailed: boolean;
   setCurrency: (code: CurrencyCode, manual?: boolean) => void;
-  setExchangeRate: (krwPerTwd: number, updatedAt: string) => void;
+  refreshExchangeRate: () => Promise<void>;
 }
 
 // 初始成員使用固定 seed，確保每次新安裝頭像一致（boring-avatars deterministic）
@@ -132,6 +135,25 @@ const generateRandomName = (): string => {
   return `${p}${s}`;
 };
 
+export const STORAGE_VERSION = 1;
+
+// persist v1：物化 legacy 記錄的隱式 TWD fallback，讓資料自帶幣別（獨立導出供測試驗證）。
+export function migratePersistedState(persisted: unknown, version: number): AppState {
+  const state = persisted as AppState;
+  if (version < 1 && Array.isArray(state.expenses)) {
+    state.expenses = state.expenses.map((e) =>
+      e.currency
+        ? e
+        : {
+            ...e,
+            currency: 'TWD' as const,
+            exchangeRateKrwPerTwd: e.exchangeRateKrwPerTwd ?? null,
+          },
+    );
+  }
+  return state;
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
@@ -157,6 +179,8 @@ export const useStore = create<AppState>()(
       currencyManuallySet: false,
       krwPerTwd: null,
       rateUpdatedAt: null,
+      rateUpdatedAtIso: null,
+      rateFetchFailed: false,
 
       addTrip: (name) =>
         set((state) => {
@@ -322,10 +346,25 @@ export const useStore = create<AppState>()(
               },
         ),
 
-      setExchangeRate: (krwPerTwd, updatedAt) => set({ krwPerTwd, rateUpdatedAt: updatedAt }),
+      refreshExchangeRate: async () => {
+        try {
+          const { krwPerTwd, updatedAt, updatedAtIso } = await fetchMoneyboxRate();
+          set({
+            krwPerTwd,
+            rateUpdatedAt: updatedAt,
+            rateUpdatedAtIso: updatedAtIso,
+            rateFetchFailed: false,
+          });
+        } catch {
+          // 離線或來源異常：沿用 persist 快取值，UI 顯示可重試狀態。
+          set({ rateFetchFailed: true });
+        }
+      },
     }),
     {
       name: 'split-meow-storage',
+      version: STORAGE_VERSION,
+      migrate: migratePersistedState,
     },
   ),
 );

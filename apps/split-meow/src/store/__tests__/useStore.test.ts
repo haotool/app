@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from 'react';
-import { useStore } from '../useStore';
+import { useStore, migratePersistedState, type ExpenseRecord } from '../useStore';
 
 /** 每次測試前重置 store 到乾淨初始狀態 */
 function resetStore() {
@@ -331,6 +331,39 @@ describe('useStore', () => {
       const s = useStore.getState();
       expect(s.calculatorValue).toBe('');
       expect(s.currencyManuallySet).toBe(false);
+    });
+  });
+
+  // ── persist migrate v1（legacy 幣別物化）───────────────────
+  describe('persist migrate v1', () => {
+    const legacyExpense = {
+      id: 'e1',
+      tripId: 'trip-1',
+      type: 'split_evenly',
+      participantIds: ['me'],
+      paidBy: 'me',
+      totalAmount: 300,
+      perPersonAmounts: { me: 300 },
+      note: '',
+      createdAt: 1,
+    } as ExpenseRecord;
+
+    it('缺 currency 舊記錄物化為 TWD、匯率快照補 null', () => {
+      const migrated = migratePersistedState({ expenses: [legacyExpense] }, 0);
+      expect(migrated.expenses[0]?.currency).toBe('TWD');
+      expect(migrated.expenses[0]?.exchangeRateKrwPerTwd).toBeNull();
+    });
+
+    it('已有 KRW 快照的記錄不變', () => {
+      const krwExpense = { ...legacyExpense, currency: 'KRW', exchangeRateKrwPerTwd: 43.5 };
+      const migrated = migratePersistedState({ expenses: [krwExpense] }, 0);
+      expect(migrated.expenses[0]?.currency).toBe('KRW');
+      expect(migrated.expenses[0]?.exchangeRateKrwPerTwd).toBe(43.5);
+    });
+
+    it('版本已為 1 時原樣通過', () => {
+      const migrated = migratePersistedState({ expenses: [legacyExpense] }, 1);
+      expect(migrated.expenses[0]?.currency).toBeUndefined();
     });
   });
 

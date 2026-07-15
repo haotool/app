@@ -6,6 +6,7 @@ import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
 import { CURRENCIES, type CurrencyCode, confirmMixedCurrencyIfNeeded } from '../config/currencies';
+import { isRateStale } from '../lib/exchangeRate';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -28,6 +29,9 @@ export function SettingsTab() {
     currencyManuallySet,
     setCurrency,
     rateUpdatedAt,
+    rateUpdatedAtIso,
+    rateFetchFailed,
+    refreshExchangeRate,
     expenses,
     currentTripId,
   } = useStore();
@@ -251,7 +255,19 @@ export function SettingsTab() {
             {rateUpdatedAt && (
               <p className="text-[11px] text-on-surface-variant/50 pl-10">
                 {t('settings.rate_updated', { time: rateUpdatedAt })}
+                {isRateStale(rateUpdatedAtIso) && (
+                  <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
+                )}
               </p>
+            )}
+            {rateFetchFailed && (
+              <button
+                onClick={() => void refreshExchangeRate()}
+                className="flex items-center gap-1 pl-10 text-[11px] font-medium text-error cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[12px]">refresh</span>
+                {t('settings.rate_retry')}
+              </button>
             )}
           </div>
           <button

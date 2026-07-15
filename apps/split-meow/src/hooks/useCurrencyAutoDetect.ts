@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { detectCurrencyFromTimezone, wouldCreateMixedCurrencyTrip } from '../config/currencies';
-import { fetchMoneyboxRate } from '../lib/exchangeRate';
+import { isRateStale } from '../lib/exchangeRate';
 
 /**
  * App 啟動時執行一次：
- * 1. 始終嘗試從 moneybox CDN 取得最新匯率（TWD 賣出價）
+ * 1. 從 moneybox CDN 取得最新匯率（TWD 賣出價）；回前景且快照過期時 refetch（TTL 6h）
  * 2. 若使用者未手動設定幣別，依時區自動切換
  *    - Asia/Seoul → KRW
  *    - Asia/Taipei → TWD
@@ -13,27 +13,40 @@ import { fetchMoneyboxRate } from '../lib/exchangeRate';
  */
 export function useCurrencyAutoDetect() {
   useEffect(() => {
-    const { currencyManuallySet, setCurrency, setExchangeRate, currency, expenses, currentTripId } =
-      useStore.getState();
+    const {
+      currencyManuallySet,
+      setCurrency,
+      refreshExchangeRate,
+      currency,
+      expenses,
+      currentTripId,
+    } = useStore.getState();
 
     // 無論如何都更新匯率（供換算提示使用）
-    fetchMoneyboxRate()
-      .then(({ krwPerTwd, updatedAt }) => {
-        setExchangeRate(krwPerTwd, updatedAt);
-      })
-      .catch(() => {
-        // 靜默失敗：離線時沿用 persist 快取值
-      });
+    void refreshExchangeRate();
+
+    // PWA 長開場景：回前景時快照過期即 refetch。
+    const onVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        isRateStale(useStore.getState().rateUpdatedAtIso)
+      ) {
+        void useStore.getState().refreshExchangeRate();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     // 使用者手動選過幣別 → 尊重其選擇，不覆蓋
-    if (currencyManuallySet) return;
+    if (!currencyManuallySet) {
+      const detected = detectCurrencyFromTimezone();
+      if (detected) {
+        const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
+        if (!wouldCreateMixedCurrencyTrip(tripExpenses, currency, detected)) {
+          setCurrency(detected, false);
+        }
+      }
+    }
 
-    const detected = detectCurrencyFromTimezone();
-    if (!detected) return;
-
-    const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, detected)) return;
-
-    setCurrency(detected, false);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []); // 僅 mount 時執行一次
 }

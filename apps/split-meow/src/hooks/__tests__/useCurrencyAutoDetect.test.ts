@@ -1,11 +1,20 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type * as CurrenciesModule from '../../config/currencies';
+import type * as ExchangeRateModule from '../../lib/exchangeRate';
 import { useStore } from '../../store/useStore';
 
-vi.mock('../../lib/exchangeRate', () => ({
-  fetchMoneyboxRate: vi.fn().mockResolvedValue({ krwPerTwd: 43.5, updatedAt: '2026-01-01' }),
-}));
+vi.mock('../../lib/exchangeRate', async (importOriginal) => {
+  const actual = await importOriginal<typeof ExchangeRateModule>();
+  return {
+    ...actual,
+    fetchMoneyboxRate: vi.fn().mockResolvedValue({
+      krwPerTwd: 43.5,
+      updatedAt: '2026-01-01',
+      updatedAtIso: '2026-01-01T00:00:00Z',
+    }),
+  };
+});
 
 vi.mock('../../config/currencies', async (importOriginal) => {
   const actual = await importOriginal<typeof CurrenciesModule>();
@@ -17,15 +26,25 @@ vi.mock('../../config/currencies', async (importOriginal) => {
 
 import { useCurrencyAutoDetect } from '../useCurrencyAutoDetect';
 import { detectCurrencyFromTimezone } from '../../config/currencies';
+import { fetchMoneyboxRate } from '../../lib/exchangeRate';
 
 describe('useCurrencyAutoDetect', () => {
   beforeEach(() => {
     vi.mocked(detectCurrencyFromTimezone).mockReturnValue('KRW');
+    vi.mocked(fetchMoneyboxRate).mockResolvedValue({
+      krwPerTwd: 43.5,
+      updatedAt: '2026-01-01',
+      updatedAtIso: '2026-01-01T00:00:00Z',
+    });
     useStore.setState({
       currency: 'TWD',
       currencyManuallySet: false,
       currentTripId: 'default-trip',
       expenses: [],
+      krwPerTwd: null,
+      rateUpdatedAt: null,
+      rateUpdatedAtIso: null,
+      rateFetchFailed: false,
     });
   });
 
@@ -64,5 +83,58 @@ describe('useCurrencyAutoDetect', () => {
     await waitFor(() => {
       expect(useStore.getState().currency).toBe('KRW');
     });
+  });
+
+  it('成功取得匯率時寫入 ISO 時間戳並清除失敗旗標', async () => {
+    useStore.setState({ rateFetchFailed: true });
+    renderHook(() => useCurrencyAutoDetect());
+
+    await waitFor(() => {
+      const s = useStore.getState();
+      expect(s.krwPerTwd).toBe(43.5);
+      expect(s.rateUpdatedAtIso).toBe('2026-01-01T00:00:00Z');
+      expect(s.rateFetchFailed).toBe(false);
+    });
+  });
+
+  it('fetch 失敗時標記 rateFetchFailed 且沿用快取值', async () => {
+    vi.mocked(fetchMoneyboxRate).mockRejectedValue(new Error('offline'));
+    useStore.setState({ krwPerTwd: 40, rateUpdatedAt: 'cached' });
+
+    renderHook(() => useCurrencyAutoDetect());
+
+    await waitFor(() => {
+      expect(useStore.getState().rateFetchFailed).toBe(true);
+    });
+    expect(useStore.getState().krwPerTwd).toBe(40);
+  });
+
+  it('回前景且快照過期時 refetch', async () => {
+    renderHook(() => useCurrencyAutoDetect());
+    await waitFor(() => {
+      expect(fetchMoneyboxRate).toHaveBeenCalledTimes(1);
+    });
+
+    // 快照過期（>6h）→ visibilitychange 觸發 refetch
+    useStore.setState({ rateUpdatedAtIso: '2020-01-01T00:00:00Z' });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await waitFor(() => {
+      expect(fetchMoneyboxRate).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('回前景但快照未過期時不 refetch', async () => {
+    renderHook(() => useCurrencyAutoDetect());
+    await waitFor(() => {
+      expect(fetchMoneyboxRate).toHaveBeenCalledTimes(1);
+    });
+
+    useStore.setState({ rateUpdatedAtIso: new Date().toISOString() });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    // 等待微任務排空後仍只呼叫一次
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fetchMoneyboxRate).toHaveBeenCalledTimes(1);
   });
 });
