@@ -9,7 +9,11 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
-import { TILE_CACHE_CONFIG_MESSAGE } from './services/mapTileCache';
+import {
+  persistTileCacheDays,
+  readPersistedTileCacheDays,
+  TILE_CACHE_CONFIG_MESSAGE,
+} from './services/mapTileCache';
 import { CACHE_DAYS, clampCacheDays } from './constants';
 
 declare const self: ServiceWorkerGlobalScope & {
@@ -29,8 +33,16 @@ const TILE_CACHE_PATTERNS = [
   /^https:\/\/(?:[a-d]\.)?basemaps\.cartocdn\.com\//i,
 ];
 
-let tileCacheDays: number = CACHE_DAYS.DEFAULT;
+// null = 本次 SW 生命週期尚未載入持久值；冷啟動先讀回，避免模組變數重設為預設值。
+let tileCacheDays: number | null = null;
 let lastTilePruneAt = 0;
+
+async function getTileCacheDays(): Promise<number> {
+  if (tileCacheDays === null) {
+    tileCacheDays = (await readPersistedTileCacheDays()) ?? CACHE_DAYS.DEFAULT;
+  }
+  return tileCacheDays;
+}
 
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
@@ -151,7 +163,7 @@ async function refreshTileRequest(request: Request, days: number) {
 registerRoute(
   ({ request }: { request: Request }) => isTileRequest(request),
   async ({ request, event }: { request: Request; event: ExtendableEvent }) => {
-    const currentDays = clampCacheDays(tileCacheDays);
+    const currentDays = await getTileCacheDays();
     const cacheName = getTileCacheName(currentDays);
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
@@ -224,7 +236,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       await self.clients.claim();
-      await syncTileCacheBuckets(tileCacheDays);
+      // 先讀持久化天數再同步 bucket，SW 更新不得誤刪使用者既有 bucket。
+      await syncTileCacheBuckets(await getTileCacheDays());
     })(),
   );
 });
@@ -243,5 +256,7 @@ self.addEventListener('message', (event) => {
   }
 
   tileCacheDays = clampCacheDays(data.cacheDurationDays);
-  event.waitUntil(syncTileCacheBuckets(tileCacheDays));
+  event.waitUntil(
+    Promise.all([persistTileCacheDays(tileCacheDays), syncTileCacheBuckets(tileCacheDays)]),
+  );
 });

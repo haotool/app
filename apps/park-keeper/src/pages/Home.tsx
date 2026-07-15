@@ -71,6 +71,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     ariaStaticLabel: t('map.aria_static'),
   };
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [records, setRecords] = useState<ParkingRecord[]>([]);
   const [currentTab, setCurrentTab] = useState<'list' | 'settings'>(initialTab);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
@@ -91,6 +92,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     const init = async () => {
       const savedSettings = await dbService.getSettings();
       setSettings(savedSettings);
+      setSettingsLoaded(true);
       void i18n.changeLanguage(savedSettings.language);
       // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
       await dbService.runStartupCleanup(savedSettings.cacheDurationDays);
@@ -125,8 +127,10 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
   }, [theme]);
 
   useEffect(() => {
+    // 設定載入前不得送出預設值，否則會覆寫 SW 已持久化的使用者天數。
+    if (!settingsLoaded) return;
     void syncMapTileCacheConfig(settings.cacheDurationDays);
-  }, [settings.cacheDurationDays]);
+  }, [settingsLoaded, settings.cacheDurationDays]);
 
   const updateSettings = useCallback((next: AppSettings) => {
     setSettings(next);
