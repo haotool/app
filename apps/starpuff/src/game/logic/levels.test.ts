@@ -9,9 +9,12 @@ import {
   nextLevelId,
   pickEnemyKind,
   pickSpawnKind,
-  recordKill,
   type LevelRunState,
+  type LevelSpec,
+  type StageElementSpec,
+  recordKill,
 } from './levels';
+import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15）', () => {
   it('四關依序為 1-4 且參數符合 §15/§21 表（v3 橫式世界寬）', () => {
@@ -72,6 +75,96 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
 
   it('getLevel 未知 id 擲錯', () => {
     expect(() => getLevel(9 as never)).toThrow();
+  });
+
+  const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
+    level.elements.filter((element) => element.kind === kind);
+
+  it('v4 元素依 §29 推進：S1 單向、S2 +移動+彈簧、S3 +可破壞磚、boss 關僅裝飾', () => {
+    for (const id of [1, 2, 3] as const) {
+      const count = elementsOf(getLevel(id), 'oneway').length;
+      expect(count).toBeGreaterThanOrEqual(2);
+      expect(count).toBeLessThanOrEqual(4);
+    }
+    for (const id of [2, 3] as const) {
+      for (const kind of ['moving', 'spring'] as const) {
+        const count = elementsOf(getLevel(id), kind).length;
+        expect(count).toBeGreaterThanOrEqual(1);
+        expect(count).toBeLessThanOrEqual(2);
+      }
+    }
+    expect(elementsOf(getLevel(1), 'moving')).toEqual([]);
+    expect(elementsOf(getLevel(1), 'spring')).toEqual([]);
+    expect(elementsOf(getLevel(2), 'breakable')).toEqual([]);
+    const bricks = elementsOf(getLevel(3), 'breakable').length;
+    expect(bricks).toBeGreaterThanOrEqual(2);
+    expect(bricks).toBeLessThanOrEqual(3);
+    expect(getLevel(4).elements).toEqual([]);
+    expect(getLevel(4).decor.length).toBeGreaterThan(0);
+  });
+
+  it('v4 平台型元素於世界內、層高合法且移動掃程不出界（§29）', () => {
+    const groundTop = 400;
+    for (const level of LEVELS) {
+      for (const element of level.elements) {
+        if (element.kind === 'spring' || element.kind === 'breakable') continue;
+        const half = element.w / 2;
+        expect(element.x - half).toBeGreaterThanOrEqual(0);
+        expect(element.x + half).toBeLessThanOrEqual(level.worldWidth);
+        expect(element.y).toBeGreaterThanOrEqual(272);
+        expect(element.y).toBeLessThan(groundTop);
+        // 自地面單跳可達（≤82px 安全值）；更高層由既有平台週邊接應。
+        if (element.kind === 'moving') {
+          const sweepEnd = element.axis === 'x' ? element.x + element.range : element.y;
+          const sweepEndY = element.axis === 'y' ? element.y + element.range : element.y;
+          if (element.axis === 'x') {
+            expect(sweepEnd - half).toBeGreaterThanOrEqual(0);
+            expect(sweepEnd + half).toBeLessThanOrEqual(level.worldWidth);
+          }
+          expect(sweepEndY).toBeGreaterThanOrEqual(272);
+          expect(sweepEndY).toBeLessThan(groundTop);
+        }
+      }
+    }
+  });
+
+  it('可破壞磚為地面獨立磚（§29 反卡死）：單跳可越過、彼此不成牆、不擋星星門', () => {
+    for (const level of LEVELS) {
+      const bricks = elementsOf(level, 'breakable');
+      const xs = bricks.map((brick) => brick.x).sort((a, b) => a - b);
+      for (const brick of bricks) {
+        if (brick.kind !== 'breakable') continue;
+        // 立於地面（中心 y = 400 - 20）：磚高 40 遠低於單跳最高 98px，破壞前必可繞行。
+        expect(brick.y).toBe(400 - BRICK_SIZE / 2);
+        expect(['ammo', 'hp']).toContain(brick.loot);
+        // 星星門區（worldWidth-120 ±45）不得被磚佔據。
+        expect(Math.abs(brick.x - (level.worldWidth - 120))).toBeGreaterThan(45 + BRICK_SIZE);
+      }
+      for (let i = 1; i < xs.length; i += 1) {
+        expect((xs[i] ?? 0) - (xs[i - 1] ?? 0)).toBeGreaterThan(BRICK_SIZE * 3);
+      }
+    }
+  });
+
+  it('佈景密度符合 §32：間距 400-600、任一 1200 視窗 ≤6、key 對應關卡主題', () => {
+    for (const level of LEVELS) {
+      const theme = level.bgKey.replace('bg-', '');
+      for (const decor of level.decor) {
+        expect(decor.key).toMatch(new RegExp(`^prop-${theme}-[1-4]$`));
+        expect(decor.x).toBeGreaterThanOrEqual(0);
+        expect(decor.x).toBeLessThanOrEqual(level.worldWidth);
+      }
+      const xs = level.decor.map((decor) => decor.x).sort((a, b) => a - b);
+      // boss 關單屏僅裝飾，不套滾動關間距節奏。
+      if (!level.boss) {
+        for (let i = 1; i < xs.length; i += 1) {
+          const gap = (xs[i] ?? 0) - (xs[i - 1] ?? 0);
+          expect(gap).toBeGreaterThanOrEqual(400);
+          expect(gap).toBeLessThanOrEqual(600);
+        }
+      }
+      expect(maxDecorInWindow(xs, 1200)).toBeLessThanOrEqual(6);
+    }
   });
 
   it('nextLevelId 依 1→2→3→4→null 推進', () => {
