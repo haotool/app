@@ -23,11 +23,13 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30）', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30），殼殼標條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
     expect(inhalable).toEqual(new Set(['jelly', 'floaty', 'puffy', 'zappy']));
+    expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
+    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(1);
   });
 
   it('名稱與行為描述皆非空', () => {

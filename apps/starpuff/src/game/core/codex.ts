@@ -8,6 +8,8 @@ export interface CodexMonster {
   nameZh: string;
   behavior: string;
   inhalable: boolean;
+  // 條件可吸（§30 殼殼）：平時彈開、暈眩窗可吸——badge 顯示「條件可吸」。
+  conditional?: boolean;
 }
 
 export const CODEX_MONSTERS: readonly CodexMonster[] = [
@@ -52,6 +54,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     nameZh: '殼殼',
     behavior: '受擊縮殼旋轉衝刺，暈眩時才可吸',
     inhalable: false,
+    conditional: true,
   },
   {
     kind: 'zappy',

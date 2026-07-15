@@ -52,7 +52,8 @@ export function pointerToLocal(
   return { x: localW / 2 + dy, y: localH / 2 - dx };
 }
 
-const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
+// 直持判定單一出口：controls／keyConfig／shellLayout 共用，避免定義漂移。
+export const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
 
 function toLocal(el: HTMLElement, event: PointerEvent): { x: number; y: number } {
   return pointerToLocal(

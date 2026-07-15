@@ -69,7 +69,8 @@ const pauseOnLeave = (): void => {
   if (document.hidden) openPauseMenu(game);
 };
 document.addEventListener('visibilitychange', pauseOnLeave);
-window.addEventListener('pagehide', () => openPauseMenu(game));
+// pagehide 同走 hidden 檢查（審查修復）：作為漏接 visibilitychange 的備援，避免雙觸發。
+window.addEventListener('pagehide', pauseOnLeave);
 
 // e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
 // 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口。
@@ -94,6 +95,8 @@ declare global {
       enemies: () => { kind: string; x: number; y: number }[];
       view: () => { width: number; height: number };
       paused: () => boolean;
+      scenePaused: () => boolean;
+      gameTime: () => number;
       codexTab: () => string;
     };
   }
@@ -125,8 +128,10 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     listeners: (event: string) => gameScene().events.listenerCount(event),
     // 響應寬幅觀測點（US-028）：回報當前邏輯視寬（854–1200）與固定邏輯高。
     view: () => ({ width: game.scale.width, height: game.scale.height }),
-    // v5 觀測點（§35/§36）：暫停選單開啟態與圖鑑當前分頁。
+    // v5 觀測點（§35/§36）：暫停選單開啟態、場景真暫停態（sys.isPaused）、場景時鐘與圖鑑分頁。
     paused: () => isGamePaused(),
+    scenePaused: () => game.scene.isPaused(SceneKeys.Game),
+    gameTime: () => gameScene()?.time.now ?? -1,
     codexTab: () => game.scene.getScene<CodexScene>(SceneKeys.Codex)?.tab ?? '',
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];

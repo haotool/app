@@ -1,10 +1,11 @@
 import type Phaser from 'phaser';
 import { SceneKeys } from '../core/types';
 import { resumeAudio, suspendAudio } from '../audio/sfx';
+import { isKeyConfigOpen } from './keyConfig';
 
-// 暫停系統（GAME_DESIGN §35）：DOM 覆層選單（旋轉殼下 hit-test 天然正確）+ 場景級
-// scene.pause（物理/計時/tween 全停）+ AudioContext suspend（BGM 與 SFX 全停）。
-// 離頁自動暫停（visibilitychange/pagehide）與 HUD 暫停鍵共用同一入口，冪等可重入。
+// 暫停系統（GAME_DESIGN §35）：DOM 覆層選單（旋轉殼下 hit-test 天然正確）+ SceneManager
+// 級 pause（sys.pause 立即生效，非 ScenePlugin queueOp 的下一幀）+ AudioContext suspend
+// （BGM 與 SFX 全停）。ESC/HUD 暫停鍵/離頁三入口共用此單一入口，冪等可重入。
 
 interface RestartableGameScene extends Phaser.Scene {
   restartCurrentLevel(): void;
@@ -44,12 +45,16 @@ function close(): void {
 
 export function openPauseMenu(game: Phaser.Game): void {
   if (overlay) return;
-  const plugin = game.scene.getScene(SceneKeys.Game)?.scene;
-  if (!plugin?.isActive()) return;
+  // 按鈕配置模式中不觸發暫停選單（配置僅存在於 Title，此為離頁事件的防疊保險）。
+  if (isKeyConfigOpen()) return;
+  const manager = game.scene;
+  // 守門：運行中且未暫停才可開（isPaused 明確排除已暫停態，不依賴 isActive 單一語意）。
+  if (!manager.isActive(SceneKeys.Game) || manager.isPaused(SceneKeys.Game)) return;
   const shell = document.getElementById('game-shell');
   if (!shell) return;
 
-  plugin.pause();
+  // SceneManager.pause 直呼 sys.pause 立即生效：物理/計時/tween 當幀凍結。
+  manager.pause(SceneKeys.Game);
   suspendAudio();
 
   overlay = document.createElement('div');
@@ -63,17 +68,17 @@ export function openPauseMenu(game: Phaser.Game): void {
 
   addButton(card, 'resume', '繼續', () => {
     close();
-    plugin.resume();
+    manager.resume(SceneKeys.Game);
   });
   addButton(card, 'restart', '重新開始', () => {
     close();
-    plugin.resume();
-    (game.scene.getScene(SceneKeys.Game) as RestartableGameScene).restartCurrentLevel();
+    manager.resume(SceneKeys.Game);
+    (manager.getScene(SceneKeys.Game) as RestartableGameScene).restartCurrentLevel();
   });
   addButton(card, 'quit', '回主選單', () => {
     close();
-    game.scene.stop(SceneKeys.Game);
-    game.scene.start(SceneKeys.Title);
+    manager.stop(SceneKeys.Game);
+    manager.start(SceneKeys.Title);
   });
 
   overlay.appendChild(card);

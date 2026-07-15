@@ -14,13 +14,16 @@ export interface ControlLayout {
 export const LAYOUT_STORAGE_KEY = 'sp-key-layout';
 export const LAYOUT_SCHEMA_VERSION = 1;
 
-// 拖曳夾限：按鍵中心須離安全區邊緣一段比例，保證觸控目標完整落在畫面內。
+// 儲存值粗夾限：持久化資料反序列化時的邊界保護（不知實際層尺寸，取保守比例）。
 export const KEY_CLAMP = {
   minX: 0.05,
   maxX: 0.95,
   minY: 0.1,
   maxY: 0.9,
 } as const;
+
+// 動態夾限邊距：按鍵中心離安全區邊緣至少 半徑 + pad，短 keys-layer 也不溢出。
+export const KEY_EDGE_PAD_PX = 4;
 
 // 人體工學預設（§34 調研定案）：A 跳躍居右下拇指熱區；B 吸/射移右側偏上供食指按壓，
 // 兩鍵垂直遠離杜絕誤觸。
@@ -34,6 +37,23 @@ export function clampKeyPosition(cx: number, cy: number): KeyPosition {
   return {
     cx: Math.min(KEY_CLAMP.maxX, Math.max(KEY_CLAMP.minX, cx)),
     cy: Math.min(KEY_CLAMP.maxY, Math.max(KEY_CLAMP.minY, cy)),
+  };
+}
+
+// 依實際層尺寸與按鍵尺寸動態夾限（審查修復：固定比例未計鍵半徑，短層會溢出）；
+// 邊距超過半層的退化情境（極小層）收斂至置中。
+export function clampKeyPositionForLayer(
+  cx: number,
+  cy: number,
+  layerW: number,
+  layerH: number,
+  btnPx: number,
+): KeyPosition {
+  const marginX = Math.min(0.5, (btnPx / 2 + KEY_EDGE_PAD_PX) / layerW);
+  const marginY = Math.min(0.5, (btnPx / 2 + KEY_EDGE_PAD_PX) / layerH);
+  return {
+    cx: Math.min(1 - marginX, Math.max(marginX, cx)),
+    cy: Math.min(1 - marginY, Math.max(marginY, cy)),
   };
 }
 
@@ -97,11 +117,25 @@ export function toPercent(fraction: number): string {
 }
 
 // 套用布局至 DOM：keys-layer 內以中心點百分比定位（translate(-50%,-50%) 由 CSS 負責）。
+// 層可量測（顯示中）時以實際尺寸＋鍵尺寸動態夾限，避免舊儲存值在短層溢出；
+// 隱藏狀態（Title 啟動套用）量測為 0 則原樣寫入，待 controls 進場重套時矯正。
 export function applyLayoutToDom(root: ParentNode, layout: ControlLayout): void {
   for (const name of ['a', 'b'] as const) {
     const el = root.querySelector<HTMLElement>(`[data-btn="${name}"]`);
     if (!el) continue;
-    el.style.left = toPercent(layout[name].cx);
-    el.style.top = toPercent(layout[name].cy);
+    const layer = el.parentElement;
+    const measurable =
+      layer !== null && layer.clientWidth > 0 && layer.clientHeight > 0 && el.offsetWidth > 0;
+    const pos = measurable
+      ? clampKeyPositionForLayer(
+          layout[name].cx,
+          layout[name].cy,
+          layer.clientWidth,
+          layer.clientHeight,
+          el.offsetWidth,
+        )
+      : layout[name];
+    el.style.left = toPercent(pos.cx);
+    el.style.top = toPercent(pos.cy);
   }
 }

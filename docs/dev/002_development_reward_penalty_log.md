@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+117
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：penalty-starpuff-v5-review-pause-gaps
+- 原因：v5 首版審查（Grok/Sonnet REQUEST_CHANGES）揭示實作缺口——暫停走 ScenePlugin queueOp 非立即生效、suspend 未停吸入迴圈音、按鍵夾限未計鍵半徑會在短層溢出、配置模式缺取消、GAME_DESIGN 新舊章節互斥
+- 解法：改 SceneManager 立即 pause/resume＋isPaused 守門、suspendAudio 顯式 stopSfx(inhale)、clampKeyPositionForLayer 動態夾限（vitest 短層守門）、配置取消還原 snapshot 不落儲存、§4/§21/§26 加取代標註；e2e 補 scenePaused/時鐘凍結/配額歸零/boss 暫停/取消路徑五案
 
 - 日期：2026-07-15
 - ID：reward-starpuff-v5-controls-pause-codex

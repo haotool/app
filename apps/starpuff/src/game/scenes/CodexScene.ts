@@ -148,15 +148,15 @@ export class CodexScene extends Phaser.Scene {
           color: TEXT_DARK,
         })
         .setOrigin(0.5);
-      // 可吸標記：圓點 + 文字（綠=可吸、灰=不可吸），禁 emoji。
+      // 可吸標記：圓點 + 文字（綠=可吸、琥珀=條件可吸、灰=不可吸），禁 emoji。
       const badge = this.add.container(cx, top + 102);
-      const dotColor = monster.inhalable ? 0x3dbb8a : 0x9a9aa8;
+      const dotColor = monster.inhalable ? 0x3dbb8a : monster.conditional ? 0xe8a33d : 0x9a9aa8;
       const label = this.add
-        .text(6, 0, monster.inhalable ? '可吸' : '不可吸', {
+        .text(6, 0, monster.inhalable ? '可吸' : monster.conditional ? '條件可吸' : '不可吸', {
           fontFamily: 'system-ui, sans-serif',
           fontSize: '13px',
           fontStyle: 'bold',
-          color: monster.inhalable ? '#2e8a67' : TEXT_SOFT,
+          color: monster.inhalable ? '#2e8a67' : monster.conditional ? '#a56a1f' : TEXT_SOFT,
         })
         .setOrigin(0.5);
       const dot = this.add.circle(label.x - label.width / 2 - 8, 0, 4, dotColor);

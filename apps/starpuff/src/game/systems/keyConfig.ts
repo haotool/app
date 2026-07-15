@@ -1,18 +1,16 @@
 import {
   applyLayoutToDom,
-  clampKeyPosition,
+  clampKeyPositionForLayer,
   loadLayout,
   resetLayout,
   saveLayout,
   type ControlLayout,
 } from '../core/layout';
-import { pointerToLocal } from './controls';
+import { isPortrait, pointerToLocal } from './controls';
 
 // 按鈕配置模式（GAME_DESIGN §34）：純 DOM 實作——直接拖曳真實虛擬鍵即時預覽，
-// 儲存 localStorage（schema 版本化於 core/layout.ts）、一鍵恢復預設。KISS：不做網格
-// 對齊與進階編輯器。
-
-const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
+// 儲存 localStorage（schema 版本化於 core/layout.ts）、恢復預設與取消（還原進入時
+// snapshot 且不儲存）。KISS：不做網格對齊與進階編輯器。
 
 let open = false;
 
@@ -42,11 +40,13 @@ export function openKeyConfig(onClose?: () => void): void {
   if (!shell || !controls || !layer) return;
   open = true;
 
+  // snapshot 供「取消」還原；先掛顯示 class 再套布局，使動態夾限可量測層尺寸。
   const working: ControlLayout = structuredClone(loadLayout());
-  applyLayoutToDom(layer, working);
+  const original: ControlLayout = structuredClone(working);
 
   shell.classList.add('is-configuring');
   controls.classList.add('is-config');
+  applyLayoutToDom(layer, working);
 
   const backdrop = document.createElement('div');
   backdrop.className = 'cfg-overlay';
@@ -78,6 +78,11 @@ export function openKeyConfig(onClose?: () => void): void {
     saveLayout(working);
     teardown();
   });
+  // 取消：還原進入時 snapshot、不寫入 localStorage。
+  addAction(bar, 'cancel', '取消', () => {
+    applyLayoutToDom(layer, original);
+    teardown();
+  });
 
   // 拖曳：座標經 pointerToLocal 轉 keys-layer 局部空間（portrait 旋轉殼換軸），
   // 中心點比例即時寫回 working 並套用（即時預覽）。
@@ -107,7 +112,14 @@ export function openKeyConfig(onClose?: () => void): void {
         event.clientX,
         event.clientY,
       );
-      working[name] = clampKeyPosition(local.x / layer.clientWidth, local.y / layer.clientHeight);
+      // 動態夾限含鍵半徑（審查修復）：短 keys-layer 也保證圓鍵完整在層內。
+      working[name] = clampKeyPositionForLayer(
+        local.x / layer.clientWidth,
+        local.y / layer.clientHeight,
+        layer.clientWidth,
+        layer.clientHeight,
+        el.offsetWidth,
+      );
       applyLayoutToDom(layer, working);
     };
     const onUp = (event: PointerEvent): void => {

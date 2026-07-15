@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LAYOUT,
   KEY_CLAMP,
+  KEY_EDGE_PAD_PX,
   LAYOUT_SCHEMA_VERSION,
   clampKeyPosition,
+  clampKeyPositionForLayer,
   parseLayout,
 } from './layout';
 
@@ -15,6 +17,35 @@ describe('clampKeyPosition', () => {
   it('超界座標夾限至邊界', () => {
     expect(clampKeyPosition(-1, 2)).toEqual({ cx: KEY_CLAMP.minX, cy: KEY_CLAMP.maxY });
     expect(clampKeyPosition(1.5, -0.2)).toEqual({ cx: KEY_CLAMP.maxX, cy: KEY_CLAMP.minY });
+  });
+});
+
+describe('clampKeyPositionForLayer', () => {
+  it('短 keys-layer（300px 高）以真實鍵尺寸夾限，圓鍵完整不溢出', () => {
+    // 76px A 鍵於 820×300 層：邊距 = (38+4)/尺寸；四角極值皆須留足半徑。
+    const high = clampKeyPositionForLayer(0.98, 0.98, 820, 300, 76);
+    expect(high.cx * 820 + 38 + KEY_EDGE_PAD_PX).toBeLessThanOrEqual(820 + 1e-6);
+    expect(high.cy * 300 + 38 + KEY_EDGE_PAD_PX).toBeLessThanOrEqual(300 + 1e-6);
+    const low = clampKeyPositionForLayer(0.01, 0.01, 820, 300, 76);
+    expect(low.cx * 820 - 38 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
+    expect(low.cy * 300 - 38 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
+  });
+
+  it('範圍內座標不受影響；極小層退化為置中不拋錯', () => {
+    expect(clampKeyPositionForLayer(0.5, 0.5, 820, 358, 72)).toEqual({ cx: 0.5, cy: 0.5 });
+    expect(clampKeyPositionForLayer(0.9, 0.1, 60, 60, 76)).toEqual({ cx: 0.5, cy: 0.5 });
+  });
+
+  it('預設布局於驗收基準層（844×390 殼 → 820×358 層）與短層皆不溢出', () => {
+    for (const [key, btnPx] of [
+      ['a', 76],
+      ['b', 72],
+    ] as const) {
+      const pos = DEFAULT_LAYOUT[key];
+      expect(clampKeyPositionForLayer(pos.cx, pos.cy, 820, 358, btnPx)).toEqual(pos);
+      const short = clampKeyPositionForLayer(pos.cx, pos.cy, 820, 300, btnPx);
+      expect(short.cy * 300 + btnPx / 2).toBeLessThanOrEqual(300);
+    }
   });
 });
 

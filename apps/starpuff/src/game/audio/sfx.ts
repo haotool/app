@@ -148,6 +148,8 @@ let intentionallySuspended = false;
 
 export function suspendAudio(): void {
   intentionallySuspended = true;
+  // 迴圈音源顯式停止（審查修復）：suspend 只凍結 context，resume 後迴圈會殘留續播。
+  stopSfx('inhale');
   const ctx = ZZFX.audioContext;
   if (ctx.state === 'running') void ctx.suspend();
 }
