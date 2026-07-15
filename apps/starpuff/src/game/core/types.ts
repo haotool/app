@@ -20,6 +20,7 @@ export interface GameResultData {
 export const SceneKeys = {
   Boot: 'Boot',
   Title: 'Title',
+  Map: 'Map',
   Game: 'Game',
   Result: 'Result',
   Codex: 'Codex',
