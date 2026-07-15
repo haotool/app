@@ -6,7 +6,7 @@ import { motion, LayoutGroup } from 'motion/react';
 import { Trash2, Check, Palette, Globe, Database, ShieldAlert, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/types';
-import { THEMES } from '@app/park-keeper/constants';
+import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 
@@ -172,8 +172,8 @@ export default function SettingsTab({
             </div>
             <input
               type="range"
-              min="1"
-              max="30"
+              min={CACHE_DAYS.MIN}
+              max={CACHE_DAYS.MAX}
               value={settings.cacheDurationDays}
               onChange={(e) => void handleCacheChange(e)}
               className="w-full h-1.5 bg-black/5 rounded-lg appearance-none cursor-pointer accent-current"

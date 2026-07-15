@@ -67,9 +67,15 @@ export const THEMES: Record<string, ThemeConfig> = {
   },
 };
 
+// 保存天數 SSOT：照片清理、SW tile TTL、設定滑桿共用同一組邊界與預設值。
+export const CACHE_DAYS = { MIN: 1, MAX: 30, DEFAULT: 7 } as const;
+
+export const clampCacheDays = (value: number): number =>
+  Math.min(CACHE_DAYS.MAX, Math.max(CACHE_DAYS.MIN, Math.round(value)));
+
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'minimalist',
   language: 'zh-TW',
-  cacheDurationDays: 7,
+  cacheDurationDays: CACHE_DAYS.DEFAULT,
   notificationsEnabled: true,
 };

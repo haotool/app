@@ -10,6 +10,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { TILE_CACHE_CONFIG_MESSAGE } from './services/mapTileCache';
+import { CACHE_DAYS, clampCacheDays } from './constants';
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: {
@@ -19,7 +20,6 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_TILE_CACHE_DAYS = 7;
 const TILE_CACHE_PREFIX = 'park-keeper-map-tiles';
 const TILE_METADATA_PATH = '/__park_keeper_tile_meta__';
 const TILE_CACHEABLE_STATUSES = [0, 200];
@@ -29,7 +29,7 @@ const TILE_CACHE_PATTERNS = [
   /^https:\/\/(?:[a-d]\.)?basemaps\.cartocdn\.com\//i,
 ];
 
-let tileCacheDays = DEFAULT_TILE_CACHE_DAYS;
+let tileCacheDays: number = CACHE_DAYS.DEFAULT;
 let lastTilePruneAt = 0;
 
 cleanupOutdatedCaches();
@@ -49,7 +49,6 @@ registerRoute(
 const isTileRequest = (request: Request) =>
   TILE_CACHE_PATTERNS.some((pattern) => pattern.test(request.url));
 
-const clampCacheDays = (value: number) => Math.min(30, Math.max(1, Math.round(value)));
 const getTileCacheName = (days: number) => `${TILE_CACHE_PREFIX}-${clampCacheDays(days)}d`;
 const getTileCacheEntryLimit = (days: number) => 120 + clampCacheDays(days) * 60;
 

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { motion, useMotionValue } from 'motion/react';
 import type { ThemeConfig } from '@app/park-keeper/types';
+import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useMapPerformance, calculateTileSettings } from '@app/park-keeper/hooks/useMapPerformance';
 
 interface MiniMapProps {
@@ -304,7 +305,7 @@ function MapController({
   zoomEnabled,
   autoFitTrackedPositions,
   recenterRequestId,
-  cacheDurationDays = 7,
+  cacheDurationDays = CACHE_DAYS.DEFAULT,
   trackedViewportInsets,
 }: {
   center: [number, number];
@@ -946,7 +947,7 @@ export default function MiniMap({
   onLocationSelect,
   className = '',
   mapKey,
-  cacheDurationDays = 7,
+  cacheDurationDays = CACHE_DAYS.DEFAULT,
   photoData,
   onPhotoClick,
   parkedHeading = 0,
