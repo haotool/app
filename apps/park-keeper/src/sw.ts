@@ -38,9 +38,11 @@ let tileCacheDays: number | null = null;
 let lastTilePruneAt = 0;
 
 async function getTileCacheDays(): Promise<number> {
-  if (tileCacheDays === null) {
-    tileCacheDays = (await readPersistedTileCacheDays()) ?? CACHE_DAYS.DEFAULT;
-  }
+  if (tileCacheDays !== null) return tileCacheDays;
+  const persisted = await readPersistedTileCacheDays();
+  // TOCTOU 防護：await 期間可能已被 config 訊息寫入，不得以預設值覆寫。
+  if (tileCacheDays !== null) return tileCacheDays;
+  tileCacheDays = persisted ?? CACHE_DAYS.DEFAULT;
   return tileCacheDays;
 }
 
@@ -236,8 +238,12 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       await self.clients.claim();
-      // 先讀持久化天數再同步 bucket，SW 更新不得誤刪使用者既有 bucket。
-      await syncTileCacheBuckets(await getTileCacheDays());
+      const persisted = await readPersistedTileCacheDays();
+      // 無持久值（既有使用者首次升級）：不得同步/刪任何 bucket，等 client config。
+      if (persisted === null) return;
+      // 競態防護：config 訊息已寫入時以其值為準。
+      if (tileCacheDays === null) tileCacheDays = persisted;
+      await syncTileCacheBuckets(tileCacheDays);
     })(),
   );
 });
