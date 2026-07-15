@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+116
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：neutral-papertrade-test-timeout-flaky
+- 原因：papertrade 首測承擔全量模組載入在並行負載下逼近 5s 上限致 CI flaky
+- 解法：project 級 testTimeout 單點放寬至 15s
 
 - 日期：2026-07-16
 - ID：penalty-starpuff-v5-review-pause-gaps
