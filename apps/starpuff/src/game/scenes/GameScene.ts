@@ -35,6 +35,7 @@ import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
 import { createHud } from '../systems/hud';
+import { openPauseMenu } from '../systems/pause';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
@@ -159,6 +160,15 @@ export class GameScene extends Phaser.Scene {
     this.scale.on('resize', this.onScaleResize);
     this.unbinders.push(() => this.scale.off('resize', this.onScaleResize));
 
+    // 桌機暫停備援（§35）：ESC / P 開啟暫停選單；觸控走 HUD 暫停鍵。
+    const onPauseKey = (): void => openPauseMenu(this.game);
+    this.input.keyboard?.on('keydown-ESC', onPauseKey);
+    this.input.keyboard?.on('keydown-P', onPauseKey);
+    this.unbinders.push(() => {
+      this.input.keyboard?.off('keydown-ESC', onPauseKey);
+      this.input.keyboard?.off('keydown-P', onPauseKey);
+    });
+
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));
     this.enemies.setTarget(this.player.sprite);
@@ -231,6 +241,16 @@ export class GameScene extends Phaser.Scene {
   // e2e 鉤子：跳至魔王關直達魔王戰。
   skipToBoss(): void {
     if (this.scene.isActive()) this.restartWith({ levelId: 4, carryMs: 0 });
+  }
+
+  // 暫停選單「重新開始」（§35）：重置當前關卡全狀態（血量/彈藥/擊殺/計時/實體由
+  // create 重建），保留已完成關卡累計用時與本輪死亡數。
+  restartCurrentLevel(): void {
+    this.restartWith({
+      levelId: this.currentLevelId,
+      carryMs: this.carryMs,
+      deaths: this.deaths,
+    });
   }
 
   private restartWith(data: GameSceneData): void {

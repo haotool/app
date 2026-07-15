@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { VIEW, computeLogicalWidth } from './config';
-import { pointerToLocal } from '../systems/controls';
+import { isPortrait, pointerToLocal } from '../systems/controls';
 
 // v4 旋轉殼佈局模組（recon-v4 A/B）：殼量測、Phaser 量測/指標原語補償、resize 節流
 // 集中於此；main.ts 以 initialShellWidth() 定 boot 寬後，僅需呼叫 initShellLayout(game)。
@@ -55,7 +55,7 @@ export function initShellLayout(game: Phaser.Game): void {
   // 邏輯座標，殘存 canvas 互動（靜音鈕等）兩種持向皆正確；landscape 走原生路徑。
   const nativeTransformPointer = game.input.transformPointer.bind(game.input);
   game.input.transformPointer = (pointer, pageX, pageY, wasMove) => {
-    if (!window.matchMedia('(orientation: portrait)').matches) {
+    if (!isPortrait()) {
       nativeTransformPointer(pointer, pageX, pageY, wasMove);
       return;
     }

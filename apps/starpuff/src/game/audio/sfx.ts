@@ -141,6 +141,25 @@ export function bindSfxToEvents(bus: Bus): () => void {
   };
 }
 
+// 暫停系統音訊全停（§35）：suspend 停 BGM 與 SFX；resume 同時涵蓋 iOS 切背景後的
+// 非標準 'interrupted' 態（§33 調研：!== 'running' 即需 resume，且須在手勢堆疊內呼叫）。
+// intentionallySuspended 區分「刻意暫停」與「系統中斷」：前者不被手勢保險喚回。
+let intentionallySuspended = false;
+
+export function suspendAudio(): void {
+  intentionallySuspended = true;
+  // 迴圈音源顯式停止（審查修復）：suspend 只凍結 context，resume 後迴圈會殘留續播。
+  stopSfx('inhale');
+  const ctx = ZZFX.audioContext;
+  if (ctx.state === 'running') void ctx.suspend();
+}
+
+export function resumeAudio(): void {
+  intentionallySuspended = false;
+  const ctx = ZZFX.audioContext;
+  if (ctx.state !== 'running') void ctx.resume();
+}
+
 let unlocked = false;
 
 // iOS Safari：首次使用者手勢 resume AudioContext 並播靜音 blip（recon-tech 模式）。
@@ -155,4 +174,13 @@ export function unlockAudio(): void {
 if (typeof window !== 'undefined') {
   window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
   window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+  // 回前景復聲保險（§33）：iOS 切 app 後 context 進 interrupted，任一手勢內喚回；
+  // 刻意暫停（暫停選單）期間不喚回，由選單「繼續」統一恢復。
+  window.addEventListener(
+    'pointerdown',
+    () => {
+      if (unlocked && !intentionallySuspended) resumeAudio();
+    },
+    { passive: true },
+  );
 }

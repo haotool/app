@@ -20,8 +20,14 @@ body,
 #app canvas,
 #controls,
 #joy-zone,
+#keys-layer,
 .ctl-btn,
-.dom-btn {
+.dom-btn,
+.pause-overlay,
+.pause-btn,
+.cfg-overlay,
+.cfg-bar,
+.cfg-btn {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -130,13 +136,15 @@ body {
   opacity: 1;
 }
 
-/* 右側 A/B 斜排：A 右下 72px、B 於其左上 45 度 64px、圓心間距 84px（邊距 ≥16px）。 */
-.controls-right {
+/* 按鍵層（§34）：安全區內鋪滿的定位容器，A/B 以中心點百分比自由擺位（自訂布局 SSOT：
+   core/layout.ts）。max() 地板值涵蓋無瀏海機型與 iOS 頂緣 phantom 死區（§33 調研）。 */
+#keys-layer {
   position: absolute;
-  right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  width: 128px;
-  height: 128px;
+  top: max(20px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
 }
 
 .ctl-btn {
@@ -146,6 +154,7 @@ body {
   pointer-events: auto;
   cursor: pointer;
   backdrop-filter: blur(2px);
+  transform: translate(-50%, -50%);
   transition: transform 0.08s ease-out;
 }
 
@@ -158,11 +167,13 @@ body {
   background: rgba(255, 255, 255, 0.92);
 }
 
+/* 預設位置鏡像 core/layout.ts DEFAULT_LAYOUT（JS 載入布局前的無閃動 fallback）：
+   A 跳躍右下拇指熱區、B 吸/射右側偏上食指區（§34 人體工學定案）。 */
 .ctl-btn-a {
-  right: 0;
-  bottom: 0;
-  width: 72px;
-  height: 72px;
+  left: 92%;
+  top: 78%;
+  width: 76px;
+  height: 76px;
   background: rgba(140, 224, 190, 0.55);
 }
 
@@ -173,10 +184,10 @@ body {
 }
 
 .ctl-btn-b {
-  right: 64px;
-  bottom: 64px;
-  width: 64px;
-  height: 64px;
+  left: 92%;
+  top: 34%;
+  width: 72px;
+  height: 72px;
   background: rgba(255, 160, 190, 0.55);
 }
 
@@ -200,19 +211,21 @@ body {
 /* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */
 .ctl-btn.is-pressed {
   background: var(--sp-btn-active);
-  transform: scale(0.9);
+  transform: translate(-50%, -50%) scale(0.9);
 }
 
-/* safe-area 換軸（recon-v4 A.1）：portrait 殼轉 90° 後，裝置 top inset 對應殼左緣、
-   left inset 對應殼下緣；landscape 維持 v3 直讀。 */
+/* safe-area 換軸（recon-v4 A.1）：portrait 殼轉 90° 後（裝置 top→殼左、right→殼上、
+   bottom→殼右、left→殼下）；landscape 維持 v3 直讀。 */
 @media (orientation: portrait) {
   #joy-zone {
     left: env(safe-area-inset-top, 0px);
   }
 
-  .controls-right {
-    right: calc(16px + env(safe-area-inset-bottom, 0px));
-    bottom: calc(12px + env(safe-area-inset-left, 0px));
+  #keys-layer {
+    top: max(20px, env(safe-area-inset-right, 0px));
+    right: max(12px, env(safe-area-inset-bottom, 0px));
+    bottom: max(12px, env(safe-area-inset-left, 0px));
+    left: max(12px, env(safe-area-inset-top, 0px));
   }
 }
 
@@ -225,4 +238,120 @@ body {
   background: transparent;
   pointer-events: auto;
   cursor: pointer;
+}
+
+/* 暫停選單（§35）：全屏 DOM 覆層置頂，遮蔽下層虛擬鍵；按鈕 ≥48px 觸控目標。 */
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(58, 58, 74, 0.55);
+  pointer-events: auto;
+}
+
+.pause-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 30px;
+  border-radius: 20px;
+  border: 2px solid rgba(122, 95, 184, 0.35);
+  background: rgba(253, 239, 246, 0.96);
+}
+
+.pause-title {
+  font:
+    700 22px system-ui,
+    sans-serif;
+  color: #3a3a4a;
+}
+
+.pause-btn {
+  min-width: 200px;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 2px solid rgba(122, 95, 184, 0.4);
+  background: #ffffff;
+  font:
+    700 18px system-ui,
+    sans-serif;
+  color: #3a3a4a;
+  cursor: pointer;
+}
+
+.pause-btn[data-pause='resume'] {
+  background: #bff3e0;
+}
+
+.pause-btn[data-pause='restart'] {
+  background: #ffd1e0;
+}
+
+.pause-btn:active {
+  transform: scale(0.96);
+}
+
+/* 按鈕配置模式（§34）：半透明底襯低於 #controls（z 10），虛擬鍵浮於其上可拖曳；
+   操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。 */
+.cfg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: rgba(58, 58, 74, 0.4);
+  pointer-events: none;
+}
+
+.cfg-bar {
+  position: absolute;
+  z-index: 40;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.cfg-hint {
+  font:
+    600 15px system-ui,
+    sans-serif;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.cfg-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 2px solid rgba(122, 95, 184, 0.4);
+  background: #ffffff;
+  font:
+    700 15px system-ui,
+    sans-serif;
+  color: #3a3a4a;
+  cursor: pointer;
+}
+
+.cfg-btn[data-cfg='save'] {
+  background: #bff3e0;
+}
+
+/* 配置模式強制顯示按鍵層並抑制場景 DOM 鈕誤觸。 */
+#controls.is-config {
+  display: block;
+}
+
+#game-shell.is-configuring .dom-btn {
+  pointer-events: none;
+}
+
+.ctl-btn.is-dragging {
+  border-color: #ffd966;
+  box-shadow: 0 0 0 4px rgba(255, 217, 102, 0.45);
 }

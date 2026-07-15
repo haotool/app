@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { applyLayoutToDom, loadLayout } from '../core/layout';
 
 // 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）。
 export interface ControlsState {
@@ -51,7 +52,8 @@ export function pointerToLocal(
   return { x: localW / 2 + dy, y: localH / 2 - dx };
 }
 
-const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
+// 直持判定單一出口：controls／keyConfig／shellLayout 共用，避免定義漂移。
+export const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
 
 function toLocal(el: HTMLElement, event: PointerEvent): { x: number; y: number } {
   return pointerToLocal(
@@ -83,6 +85,8 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   const controlsRoot = document.getElementById('controls');
   controlsRoot?.classList.add('is-active');
   cleanups.push(() => controlsRoot?.classList.remove('is-active'));
+  // 進場套用使用者自訂布局（§34）：配置模式儲存後下一局即生效。
+  if (controlsRoot) applyLayoutToDom(controlsRoot, loadLayout());
 
   const on = <K extends keyof HTMLElementEventMap>(
     el: HTMLElement,

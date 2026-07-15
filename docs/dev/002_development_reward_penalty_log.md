@@ -18,6 +18,16 @@
 - 原因：papertrade 首測承擔全量模組載入在並行負載下逼近 5s 上限致 CI flaky
 - 解法：project 級 testTimeout 單點放寬至 15s
 
+- 日期：2026-07-16
+- ID：penalty-starpuff-v5-review-pause-gaps
+- 原因：v5 首版審查（Grok/Sonnet REQUEST_CHANGES）揭示實作缺口——暫停走 ScenePlugin queueOp 非立即生效、suspend 未停吸入迴圈音、按鍵夾限未計鍵半徑會在短層溢出、配置模式缺取消、GAME_DESIGN 新舊章節互斥
+- 解法：改 SceneManager 立即 pause/resume＋isPaused 守門、suspendAudio 顯式 stopSfx(inhale)、clampKeyPositionForLayer 動態夾限（vitest 短層守門）、配置取消還原 snapshot 不落儲存、§4/§21/§26 加取代標註；e2e 補 scenePaused/時鐘凍結/配額歸零/boss 暫停/取消路徑五案
+
+- 日期：2026-07-15
+- ID：reward-starpuff-v5-controls-pause-codex
+- 原因：v5 需求（iOS PWA UX 修正、食指/拇指分工布局、按鈕自訂、暫停/離頁接續、開場與圖鑑）需在旋轉殼與 DOM/canvas 混合命中架構上一次落地且不回歸 v4
+- 解法：layout/codex 純資料 SSOT＋DOM 覆層（暫停選單/按鈕配置）迴避旋轉殼 canvas 指標錯位；154 unit＋17 e2e 綠、390×844 與 926×428 before/after 稽核截圖、GAME_DESIGN v5.0 §33-§37 落檔
+
 - 日期：2026-07-15
 - ID：penalty-starpuff-pwa-stale-update-check
 - 原因：v1 裁決 autoUpdate 接受風險時未評估已安裝用戶的更新檢查頻率盲點——瀏覽器僅 navigation 觸發 SW 更新檢查，iOS standalone 喚回不觸發，致 v1-v3 舊用戶長期滯留舊版

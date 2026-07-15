@@ -10,12 +10,14 @@ import {
 } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { fillStarPath } from './fx';
+import { openPauseMenu } from './pause';
 
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
 const SLOT_RING_TEX = 'hud-slot-ring';
 const SPEAKER_ON_TEX = 'hud-spk-on';
 const SPEAKER_OFF_TEX = 'hud-spk-off';
+const PAUSE_TEX = 'hud-pause';
 const HUD_DEPTH = 100;
 const MUTE_STORAGE_KEY = 'sp-muted';
 
@@ -83,6 +85,31 @@ export function addMuteButton(scene: Phaser.Scene): void {
   });
 }
 
+// 遊戲場景暫停鍵（§35）：與靜音鈕同列（top-right 硬熱區，避開戰鬥區），48px 觸控目標；
+// 圖形雙豎條（禁 emoji/文字鍵帽），pointerdown 開啟暫停選單。
+export function addPauseButton(scene: Phaser.Scene): void {
+  if (!scene.textures.exists(PAUSE_TEX)) {
+    const g = scene.add.graphics();
+    g.fillStyle(0x3a3a4a, 0.85);
+    g.fillRoundedRect(6, 4, 7, 22, 3);
+    g.fillRoundedRect(17, 4, 7, 22, 3);
+    g.generateTexture(PAUSE_TEX, 30, 30);
+    g.destroy();
+  }
+  const button = scene.add
+    .image(scene.scale.width - 74, 26, PAUSE_TEX)
+    .setDepth(HUD_DEPTH + 20)
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true });
+  const anchor = (): void => {
+    button.setX(scene.scale.width - 74);
+  };
+  scene.scale.on('resize', anchor);
+  scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
+  (button.input?.hitArea as Phaser.Geom.Rectangle | undefined)?.setTo(-9, -9, 48, 48);
+  button.on('pointerdown', () => openPauseMenu(scene.game));
+}
+
 // 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
 export function restoreMutePreference(): void {
   // 隱私模式下 localStorage 可能拋錯：維持預設不靜音。
@@ -113,6 +140,7 @@ export function addDomButton(
   label: string,
   rect: { x: number; y: number; w: number; h: number },
   onPress: () => void,
+  menuId?: string,
 ): void {
   const shell = document.getElementById('game-shell');
   if (!shell) return;
@@ -121,6 +149,7 @@ export function addDomButton(
   button.type = 'button';
   button.className = 'dom-btn';
   button.setAttribute('aria-label', label);
+  if (menuId) button.dataset['menu'] = menuId;
   const relayout = (): void => {
     const sx = canvas.clientWidth / scene.scale.width;
     const sy = canvas.clientHeight / scene.scale.height;
@@ -172,6 +201,7 @@ function ensureHudTextures(scene: Phaser.Scene): void {
 export function createHud(scene: Phaser.Scene): Hud {
   ensureHudTextures(scene);
   addMuteButton(scene);
+  addPauseButton(scene);
 
   const bus = scene.events;
   const unbinders: (() => void)[] = [];
@@ -229,12 +259,13 @@ export function createHud(scene: Phaser.Scene): Hud {
   root.add(bossBar);
 
   // 頂列錨定重排（§28）：中上/右上元素依當前視寬定位；resize 事件觸發重錨。
+  // 右上鍵位序（§35）：靜音 width-26、暫停 width-74，配額左移讓位（48px 間距不疊熱區）。
   function relayout(): void {
     const width = scene.scale.width;
     stageText.setX(width / 2);
     bossBar.setX(width / 2);
-    quotaIcon.setX(width - 64);
-    quotaText.setX(width - 78);
+    quotaIcon.setX(width - 112);
+    quotaText.setX(width - 126);
     waveText?.setX(width / 2);
   }
   relayout();

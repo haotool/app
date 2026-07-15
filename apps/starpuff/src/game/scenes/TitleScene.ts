@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { SceneKeys } from '../core/types';
+import { SceneKeys, type CodexTab } from '../core/types';
 import { startBgm } from '../audio/bgm';
-import { unlockAudio } from '../audio/sfx';
+import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
+import { openKeyConfig } from '../systems/keyConfig';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -41,14 +42,26 @@ export class TitleScene extends Phaser.Scene {
 
     if (this.textures.exists('hero-idle')) {
       ensureGlowTexture(this);
-      const heroY = height * 0.45;
+      const heroY = height * 0.44;
       const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
+      // 開場入場（§36）：主角自天而降 Bounce 落定，光暈淡入。
+      hero.setY(heroY - 90).setAlpha(0);
+      glow.setAlpha(0);
+      this.tweens.add({
+        targets: hero,
+        y: heroY,
+        alpha: 1,
+        duration: 650,
+        ease: 'Bounce.easeOut',
+      });
+      this.tweens.add({ targets: glow, alpha: 0.55, duration: 500, delay: 350 });
       this.tweens.add({
         targets: [hero, glow],
         y: '-=14',
         duration: 1400,
+        delay: 700,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -58,13 +71,15 @@ export class TitleScene extends Phaser.Scene {
         alpha: { from: 0.55, to: 1 },
         scale: glow.scale * 1.12,
         duration: 1100,
+        delay: 700,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
       });
     }
 
-    this.add
+    // logo 動畫入場（§36）：主標縮放彈出 + 副標延遲淡入。
+    const logo = this.add
       .text(centerX, height * 0.15, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '58px',
@@ -73,15 +88,19 @@ export class TitleScene extends Phaser.Scene {
         stroke: '#7a5fb8',
         strokeThickness: 9,
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScale(0);
+    this.tweens.add({ targets: logo, scale: 1, duration: 520, ease: 'Back.easeOut' });
 
-    this.add
+    const subtitle = this.add
       .text(centerX, height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
         color: '#7a5fb8',
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setAlpha(0);
+    this.tweens.add({ targets: subtitle, alpha: 1, duration: 400, delay: 300 });
 
     // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const startButton = this.add
@@ -104,14 +123,6 @@ export class TitleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    this.add
-      .text(centerX, height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '16px',
-        color: '#5a5a6e',
-      })
-      .setOrigin(0.5);
-
     // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM，再進入遊戲。
     const start = () => {
       unlockAudio();
@@ -121,7 +132,52 @@ export class TitleScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ENTER', start);
     // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
     // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
-    addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start);
+    addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start, 'start');
+
+    // 次選單列（§36）：圖鑑／技能介紹／按鈕配置，觸控目標 56px 高。
+    const secondaryY = height * 0.85;
+    const secondarySpacing = 190;
+    const entries: { label: string; menuId: string; onPress: () => void }[] = [
+      { label: '圖鑑', menuId: 'codex', onPress: () => this.openCodex('monsters') },
+      { label: '技能介紹', menuId: 'skills', onPress: () => this.openCodex('skills') },
+      {
+        label: '按鈕配置',
+        menuId: 'config',
+        onPress: () => {
+          unlockAudio();
+          playSfx('pop');
+          openKeyConfig();
+        },
+      },
+    ];
+    entries.forEach((entry, i) => {
+      const x = centerX + (i - 1) * secondarySpacing;
+      const visual = this.add
+        .text(x, secondaryY, entry.label, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '19px',
+          fontStyle: 'bold',
+          color: '#3a3a4a',
+          backgroundColor: '#ffffff',
+          padding: { x: 20, y: 10 },
+        })
+        .setOrigin(0.5)
+        .setAlpha(0);
+      this.tweens.add({ targets: visual, alpha: 0.92, duration: 350, delay: 420 + i * 90 });
+      addDomButton(
+        this,
+        entry.label,
+        { x, y: secondaryY, w: 176, h: 56 },
+        entry.onPress,
+        entry.menuId,
+      );
+    });
+  }
+
+  private openCodex(tab: CodexTab): void {
+    unlockAudio();
+    playSfx('pop');
+    this.scene.start(SceneKeys.Codex, { tab });
   }
 
   override update(_time: number, deltaMs: number): void {
