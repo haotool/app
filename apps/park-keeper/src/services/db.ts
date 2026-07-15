@@ -1,5 +1,8 @@
 import type { AppSettings, ParkingRecord, StorageService } from '@app/park-keeper/types';
 import { DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import { plateMemory } from '@app/park-keeper/services/plateMemory';
+
+const LANGUAGE_STORAGE_KEY = 'park-keeper-language';
 
 const DB_NAME = 'ParkKeeperDB';
 const DB_VERSION = 1;
@@ -170,12 +173,20 @@ export const dbService: StorageService = {
 
   async clearAllData(): Promise<void> {
     const db = await openDB();
-    const tx = db.transaction([STORES.RECORDS], 'readwrite');
+    const tx = db.transaction([STORES.RECORDS, STORES.SETTINGS], 'readwrite');
     tx.objectStore(STORES.RECORDS).clear();
-    return new Promise((resolve, reject) => {
+    tx.objectStore(STORES.SETTINGS).clear();
+    await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error ?? new Error('DB error'));
     });
+
+    plateMemory.clear();
+    try {
+      localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    } catch {
+      // 靜默降級。
+    }
   },
 
   async exportData(format: 'json' | 'csv'): Promise<string> {
