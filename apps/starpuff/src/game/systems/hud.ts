@@ -87,6 +87,43 @@ export function restoreMutePreference(): void {
   }
 }
 
+// 場景 DOM 備援鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
+// 透明 DOM 鈕承接（hit-test 隨殼旋轉自然正確）。幾何以遊戲邏輯座標換算 canvas CSS px，
+// 隨 scale resize 重算；監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
+export function addDomButton(
+  scene: Phaser.Scene,
+  label: string,
+  rect: { x: number; y: number; w: number; h: number },
+  onPress: () => void,
+): void {
+  const shell = document.getElementById('game-shell');
+  if (!shell) return;
+  const canvas = scene.game.canvas;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'dom-btn';
+  button.setAttribute('aria-label', label);
+  const relayout = (): void => {
+    const sx = canvas.clientWidth / scene.scale.width;
+    const sy = canvas.clientHeight / scene.scale.height;
+    button.style.left = `${canvas.offsetLeft + (rect.x - rect.w / 2) * sx}px`;
+    button.style.top = `${canvas.offsetTop + (rect.y - rect.h / 2) * sy}px`;
+    button.style.width = `${rect.w * sx}px`;
+    button.style.height = `${rect.h * sy}px`;
+  };
+  relayout();
+  shell.appendChild(button);
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    onPress();
+  });
+  scene.scale.on('resize', relayout);
+  scene.events.once('shutdown', () => {
+    scene.scale.off('resize', relayout);
+    button.remove();
+  });
+}
+
 function ensureHudTextures(scene: Phaser.Scene): void {
   if (!scene.textures.exists(HEART_TEX)) {
     const g = scene.add.graphics();

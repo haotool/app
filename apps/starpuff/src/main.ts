@@ -9,6 +9,7 @@ import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
+import { pointerToLocal } from './game/systems/controls';
 import { restoreMutePreference } from './game/systems/hud';
 
 restoreMutePreference();
@@ -76,6 +77,31 @@ game.scale.getParentBounds = function getShellBounds(): boolean {
   if (parentSize.width === shell.w && parentSize.height === shell.h) return false;
   parentSize.setSize(shell.w, shell.h);
   return true;
+};
+
+// canvas 指標補償（recon-v4 A.3 備選）：portrait 殼旋轉下 Phaser 以 canvasBounds AABB 反推
+// 座標會錯位（phaser#7175）。改寫座標轉換原語：先轉 canvas 局部座標（90 度逆變換）再換算
+// 邏輯座標，殘存 canvas 互動（靜音鈕等）兩種持向皆正確；landscape 走原生路徑。
+const nativeTransformPointer = game.input.transformPointer.bind(game.input);
+game.input.transformPointer = (pointer, pageX, pageY, wasMove) => {
+  if (!window.matchMedia('(orientation: portrait)').matches) {
+    nativeTransformPointer(pointer, pageX, pageY, wasMove);
+    return;
+  }
+  const canvas = game.canvas;
+  const local = pointerToLocal(
+    canvas.getBoundingClientRect(),
+    canvas.clientWidth,
+    canvas.clientHeight,
+    true,
+    pageX - window.scrollX,
+    pageY - window.scrollY,
+  );
+  pointer.prevPosition.set(pointer.position.x, pointer.position.y);
+  pointer.position.set(
+    (local.x * game.scale.width) / canvas.clientWidth,
+    (local.y * game.scale.height) / canvas.clientHeight,
+  );
 };
 
 // 旋轉殼佈局（recon-v4 A/B）：CSS 殼先穩定 → 量測殼 → setGameSize → refresh + updateBounds。

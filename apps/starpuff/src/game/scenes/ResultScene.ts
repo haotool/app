@@ -3,6 +3,7 @@ import { CANVAS } from '../core/config';
 import { SceneKeys, type GameResultData } from '../core/types';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { createFx } from '../systems/fx';
+import { addDomButton } from '../systems/hud';
 
 export class ResultScene extends Phaser.Scene {
   private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
@@ -107,6 +108,8 @@ export class ResultScene extends Phaser.Scene {
       );
     retryButton.on('pointerdown', retry);
     this.input.keyboard?.once('keydown-ENTER', retry);
+    // 旋轉殼 DOM 備援（recon-v4 A.3）：覆蓋 canvas 重試鈕的透明 DOM 鈕，portrait 可靠命中。
+    addDomButton(this, retryButton.text, { x: centerX, y: retryButton.y, w: 220, h: 72 }, retry);
   }
 
   override update(_time: number, deltaMs: number): void {

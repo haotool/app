@@ -4,7 +4,7 @@ import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
-import { addMuteButton } from '../systems/hud';
+import { addDomButton, addMuteButton } from '../systems/hud';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -119,6 +119,8 @@ export class TitleScene extends Phaser.Scene {
     };
     startButton.on('pointerdown', start);
     this.input.keyboard?.once('keydown-ENTER', start);
+    // 旋轉殼 DOM 備援（recon-v4 A.3）：覆蓋 canvas 開始鈕的透明 DOM 鈕，portrait 可靠命中。
+    addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start);
   }
 
   override update(_time: number, deltaMs: number): void {
