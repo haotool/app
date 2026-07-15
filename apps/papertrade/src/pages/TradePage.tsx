@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Inbox } from 'lucide-react';
-import { DEFAULT_SYMBOL, isMarketSymbol, SYMBOL_META, type MarketSymbol } from '../config/market';
+import {
+  DEFAULT_SYMBOL,
+  isMarketSymbol,
+  SYMBOL_META,
+  TRADE_ORDERBOOK_LEVELS,
+  type MarketSymbol,
+} from '../config/market';
 import { DEFAULT_LEVERAGE } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
@@ -9,6 +15,7 @@ import { formatAmount, formatPrice } from '../lib/format';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
+import { type Side } from '../engine/types';
 import { LeverageSheet } from '../components/trade/LeverageSheet';
 import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
 import { PositionCard } from '../components/trade/PositionCard';
@@ -20,6 +27,10 @@ type SheetKind = 'pair' | 'leverage' | null;
 function resolveInitialSymbol(raw: string | null): MarketSymbol {
   if (raw !== null && isMarketSymbol(raw)) return raw;
   return DEFAULT_SYMBOL;
+}
+
+function resolveInitialSide(raw: string | null): Side | null {
+  return raw === 'long' || raw === 'short' ? raw : null;
 }
 
 function TradePageSkeleton() {
@@ -52,6 +63,8 @@ export function TradePage() {
   const [symbol, setSymbol] = useState<MarketSymbol>(() =>
     resolveInitialSymbol(searchParams.get('symbol')),
   );
+  // 圖表頁 CTA 帶入的方向：僅作視覺預選強調，不代下單。
+  const [emphasisSide] = useState<Side | null>(() => resolveInitialSide(searchParams.get('side')));
   const [leverage, setLeverage] = useState(DEFAULT_LEVERAGE);
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [mode, setMode] = useState<OrderMode>('market');
@@ -121,10 +134,15 @@ export function TradePage() {
             onModeChange={setMode}
             limitPrice={limitPrice}
             onLimitPriceChange={setLimitPrice}
+            emphasisSide={emphasisSide}
           />
         </div>
         <div className="min-w-0 flex-[0.42]">
-          <CompactOrderBook symbol={symbol} levels={6} onPriceSelect={handlePriceSelect} />
+          <CompactOrderBook
+            symbol={symbol}
+            levels={TRADE_ORDERBOOK_LEVELS}
+            onPriceSelect={handlePriceSelect}
+          />
         </div>
       </div>
 

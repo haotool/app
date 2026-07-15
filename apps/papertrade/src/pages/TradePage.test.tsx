@@ -68,6 +68,18 @@ describe('TradePage', () => {
     ).toBeInTheDocument();
   });
 
+  it('emphasizes the CTA-preselected side and dims the other', () => {
+    renderTrade('/trade?symbol=BTCUSDT&side=short');
+    expect(screen.getByRole('button', { name: '買多' })).toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '賣空' })).not.toHaveClass('opacity-55');
+  });
+
+  it('keeps both side buttons at full emphasis without a side param', () => {
+    renderTrade('/trade?symbol=BTCUSDT');
+    expect(screen.getByRole('button', { name: '買多' })).not.toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '賣空' })).not.toHaveClass('opacity-55');
+  });
+
   it('places a market long order and shows the position card', async () => {
     const user = userEvent.setup();
     renderTrade();
@@ -161,6 +173,19 @@ describe('TradePage', () => {
     expect(notional).toBeLessThan(25000);
   });
 
+  it('opens a position deterministically via the 100% preset on a fresh account', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '100%' }));
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    const { account } = useTradeStore.getState();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(account.positions).toHaveLength(1);
+    expect(account.balance).toBeGreaterThanOrEqual(0);
+  });
+
   it('sets take profit from the position card sheet', async () => {
     const user = userEvent.setup();
     renderTrade();
@@ -190,5 +215,28 @@ describe('TradePage', () => {
     expect(account.history).toHaveLength(1);
     expect(account.history[0]?.reason).toBe('manual');
     expect(screen.getByText('尚無持倉')).toBeInTheDocument();
+  });
+
+  it('reports the engine-realized pnl in the close toast, not the preview value', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    act(() => {
+      useMarketStore.getState().setTicker({ ...btcTicker, lastPrice: 61000, markPrice: 61000 });
+    });
+
+    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '確認平倉' }));
+
+    const closeToast = useTradeStore
+      .getState()
+      .toasts.find((toast) => toast.title.includes('市價平倉成功'));
+    expect(closeToast?.description).toBe('+100 USDT');
+
+    const trade = useTradeStore.getState().account.history[0];
+    expect(trade?.realizedPnl).toBeCloseTo(100, 8);
   });
 });

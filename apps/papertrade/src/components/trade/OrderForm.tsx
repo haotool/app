@@ -30,6 +30,8 @@ interface OrderFormProps {
   onModeChange: (mode: OrderMode) => void;
   limitPrice: string;
   onLimitPriceChange: (value: string) => void;
+  // 圖表頁 CTA 帶入的預選方向：強調該側按鈕、淡化另一側。
+  emphasisSide?: Side | null;
 }
 
 const MODE_TABS: { id: OrderMode; label: string }[] = [
@@ -44,6 +46,7 @@ export function OrderForm({
   onModeChange,
   limitPrice,
   onLimitPriceChange,
+  emphasisSide = null,
 }: OrderFormProps) {
   const [unit, setUnit] = useState<AmountUnit>('usdt');
   const [amount, setAmount] = useState('');
@@ -266,14 +269,20 @@ export function OrderForm({
         <button
           type="button"
           onClick={() => submit('long')}
-          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg active:opacity-90"
+          className={clsx(
+            'flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg active:opacity-90',
+            emphasisSide === 'short' && 'opacity-55',
+          )}
         >
           買多
         </button>
         <button
           type="button"
           onClick={() => submit('short')}
-          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text active:opacity-90"
+          className={clsx(
+            'flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text active:opacity-90',
+            emphasisSide === 'long' && 'opacity-55',
+          )}
         >
           賣空
         </button>

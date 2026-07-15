@@ -52,13 +52,12 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
         setError(TRADE_ERROR_MESSAGES[result.error]);
         return;
       }
+      // toast 呈現引擎實際成交結果，而非 UI 預覽值。
+      const realized = result.trade.realizedPnl;
       pushToast({
-        tone: (previewPnl ?? 0) >= 0 ? 'long' : 'short',
+        tone: realized >= 0 ? 'long' : 'short',
         title: `市價平倉成功（${percent}%）`,
-        description:
-          previewPnl !== null
-            ? `${previewPnl >= 0 ? '+' : '−'}${formatAmount(Math.abs(previewPnl), 2)} USDT`
-            : undefined,
+        description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
       });
     } else {
       if (limitPriceValue === null) {

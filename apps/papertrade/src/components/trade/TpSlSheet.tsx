@@ -23,8 +23,7 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   const [tp, setTp] = useState(position.takeProfit?.toString() ?? '');
   const [sl, setSl] = useState(position.stopLoss?.toString() ?? '');
   const [error, setError] = useState<string | null>(null);
-  const setPositionTakeProfit = useTradeStore((state) => state.setPositionTakeProfit);
-  const setPositionStopLoss = useTradeStore((state) => state.setPositionStopLoss);
+  const setPositionTpSl = useTradeStore((state) => state.setPositionTpSl);
 
   function confirm() {
     const tpValue = tp.trim() === '' ? null : parsePositiveInput(tp);
@@ -38,14 +37,10 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
       return;
     }
 
-    const tpResult = setPositionTakeProfit(position.id, tpValue);
-    if (!tpResult.ok) {
-      setError(TRADE_ERROR_MESSAGES[tpResult.error]);
-      return;
-    }
-    const slResult = setPositionStopLoss(position.id, slValue);
-    if (!slResult.ok) {
-      setError(TRADE_ERROR_MESSAGES[slResult.error]);
+    // 單一原子 action：TP／SL 任一驗證失敗都不會留下半套設定。
+    const result = setPositionTpSl(position.id, tpValue, slValue);
+    if (!result.ok) {
+      setError(TRADE_ERROR_MESSAGES[result.error]);
       return;
     }
     setError(null);

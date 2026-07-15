@@ -68,4 +68,6 @@ export const SPARKLINE_INTERVAL: TimeframeId = '60';
 export const SPARKLINE_CACHE_TTL_MS = 5 * 60 * 1000;
 export const SPARKLINE_MAX_CONCURRENCY = 3;
 export const ORDERBOOK_DISPLAY_LEVELS = 8;
+// 交易頁緊湊訂單簿檔位：42% 欄寬下 6 檔可與下單表單等高對齊。
+export const TRADE_ORDERBOOK_LEVELS = 6;
 export const TRADES_DISPLAY_LIMIT = 30;
