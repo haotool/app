@@ -44,3 +44,8 @@ export function averageEntryPrice(
 export function isValidLeverage(leverage: number): boolean {
   return Number.isFinite(leverage) && leverage >= LEVERAGE_MIN && leverage <= LEVERAGE_MAX;
 }
+
+// 合併倉位的衍生槓桿因 margin 捨入可能微幅越界，夾回合法域以維持 persist schema 恆成立。
+export function clampLeverage(leverage: number): number {
+  return Math.min(LEVERAGE_MAX, Math.max(LEVERAGE_MIN, leverage));
+}

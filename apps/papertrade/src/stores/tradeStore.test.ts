@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { flushTradePersist, parsePersistedTradeState, useTradeStore } from './tradeStore';
 import { createInitialAccount } from '../engine/engine';
-import { INITIAL_BALANCE_USDT, TRADE_STORAGE_KEY } from '../config/trading';
+import { INITIAL_BALANCE_USDT, TRADE_STORAGE_KEY, TRADE_STORAGE_VERSION } from '../config/trading';
 
 const NOW = 1_800_000_000_000;
 
@@ -43,6 +43,47 @@ describe('useTradeStore', () => {
     });
     expect(result).toEqual({ ok: false, error: 'insufficient-balance' });
     expect(useTradeStore.getState().account).toBe(before);
+  });
+
+  it('applies TP/SL atomically: a rejected SL leaves the position untouched', () => {
+    const opened = useTradeStore.getState().openMarketOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    expect(opened.ok).toBe(true);
+
+    const before = useTradeStore.getState().account;
+    const positionId = before.positions[0]?.id ?? '';
+    // 多單止損須低於開倉價；61000 方向錯誤，有效 TP 不得被半套寫入。
+    const result = useTradeStore.getState().setPositionTpSl(positionId, 62000, 61000);
+    expect(result).toEqual({ ok: false, error: 'invalid-sl-direction' });
+
+    const after = useTradeStore.getState().account;
+    expect(after).toBe(before);
+    expect(after.positions[0]?.takeProfit).toBeNull();
+    expect(after.positions[0]?.stopLoss).toBeNull();
+  });
+
+  it('applies TP/SL atomically when both prices are valid', () => {
+    const opened = useTradeStore.getState().openMarketOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    expect(opened.ok).toBe(true);
+
+    const positionId = useTradeStore.getState().account.positions[0]?.id ?? '';
+    const result = useTradeStore.getState().setPositionTpSl(positionId, 62000, 58000);
+    expect(result).toEqual({ ok: true });
+
+    const position = useTradeStore.getState().account.positions[0];
+    expect(position?.takeProfit).toBe(62000);
+    expect(position?.stopLoss).toBe(58000);
   });
 
   it('skips ticks without exposure on the symbol', () => {
@@ -106,6 +147,37 @@ describe('useTradeStore', () => {
     expect(account.history).toEqual([]);
   });
 
+  it('resets with a one-time warning toast when persisted data is corrupted', async () => {
+    window.localStorage.setItem(
+      TRADE_STORAGE_KEY,
+      JSON.stringify({
+        state: { account: { balance: -5, positions: [], orders: [], history: [] } },
+        version: TRADE_STORAGE_VERSION,
+      }),
+    );
+    await useTradeStore.persist.rehydrate();
+
+    const { account, toasts } = useTradeStore.getState();
+    expect(account.balance).toBe(INITIAL_BALANCE_USDT);
+    expect(account.positions).toEqual([]);
+    expect(
+      toasts.filter((toast) => toast.tone === 'warning' && toast.title.includes('重置')),
+    ).toHaveLength(1);
+  });
+
+  it('rehydrates a valid persisted account without a reset toast', async () => {
+    const account = { ...createInitialAccount(), balance: 8888 };
+    window.localStorage.setItem(
+      TRADE_STORAGE_KEY,
+      JSON.stringify({ state: { account }, version: TRADE_STORAGE_VERSION }),
+    );
+    await useTradeStore.persist.rehydrate();
+
+    const state = useTradeStore.getState();
+    expect(state.account.balance).toBe(8888);
+    expect(state.toasts.some((toast) => toast.tone === 'warning')).toBe(false);
+  });
+
   it('debounces persist writes and lands the latest state after flush', () => {
     useTradeStore.getState().openMarketOrder({
       symbol: 'BTCUSDT',
@@ -148,6 +220,34 @@ describe('parsePersistedTradeState', () => {
         },
       }),
     ).toBeNull();
+  });
+
+  it('accepts a kept position whose margin rounded down to zero (engine edge output)', () => {
+    // 極小殘餘量的部分平倉可使 margin 捨入至 0：schema 不得比引擎輸出域更嚴。
+    const state = {
+      account: {
+        balance: 9000,
+        positions: [
+          {
+            id: 'p1',
+            symbol: 'DOGEUSDT',
+            side: 'long',
+            qty: 0.000002,
+            entryPrice: 0.3,
+            margin: 0,
+            openFee: 0,
+            leverage: 125,
+            openedAt: NOW,
+            takeProfit: null,
+            stopLoss: null,
+            trailing: null,
+          },
+        ],
+        orders: [],
+        history: [],
+      },
+    };
+    expect(parsePersistedTradeState(state)).toEqual(state);
   });
 
   it('accepts a persisted account with an open position and orders', () => {

@@ -12,6 +12,9 @@ export const CLOSE_PERCENT_PRESETS = [25, 50, 75, 100] as const;
 export const LEVERAGE_PRESETS = [1, 5, 10, 25, 50, 75, 100, 125] as const;
 export const QTY_DISPLAY_DECIMALS = 6;
 
+// 平倉歷史僅保留最近 N 筆，避免長期使用讓 persist payload 無上限膨脹。
+export const HISTORY_MAX_ENTRIES = 200;
+
 export const TOAST_DURATION_MS = 4500;
 export const TOAST_MAX_VISIBLE = 3;
 

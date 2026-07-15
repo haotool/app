@@ -20,6 +20,7 @@ import {
 } from './execution';
 import {
   type Account,
+  type ClosedTrade,
   type LimitOrder,
   type Position,
   type Side,
@@ -90,7 +91,11 @@ export function openMarket(account: Account, params: OpenParams): TradeResult {
   });
 }
 
-export function closePositionMarket(account: Account, params: CloseParams): TradeResult {
+export type CloseTradeResult =
+  | { ok: true; account: Account; trade: ClosedTrade }
+  | { ok: false; error: TradeError };
+
+export function closePositionMarket(account: Account, params: CloseParams): CloseTradeResult {
   const { positionId, fraction, price } = params;
   if (!Number.isFinite(fraction) || fraction <= 0 || fraction > 1) {
     return { ok: false, error: 'invalid-qty' };
@@ -100,7 +105,7 @@ export function closePositionMarket(account: Account, params: CloseParams): Trad
   if (position === undefined) return { ok: false, error: 'not-found' };
 
   const qty = fraction >= 1 ? position.qty : position.qty * fraction;
-  const { account: next } = closeSlice(
+  const { account: next, trade } = closeSlice(
     account,
     position,
     qty,
@@ -109,7 +114,7 @@ export function closePositionMarket(account: Account, params: CloseParams): Trad
     'manual',
     params.now ?? Date.now(),
   );
-  return { ok: true, account: next };
+  return { ok: true, account: next, trade };
 }
 
 export function placeLimitOrder(account: Account, params: LimitParams): TradeResult {
@@ -222,6 +227,18 @@ export function setStopLoss(
     if (!directionValid) return 'invalid-sl-direction';
     return { ...position, stopLoss: price };
   });
+}
+
+// 原子套用 TP/SL：任一驗證失敗即整筆拒絕，不留半套設定。
+export function setTakeProfitStopLoss(
+  account: Account,
+  positionId: string,
+  takeProfit: number | null,
+  stopLoss: number | null,
+): TradeResult {
+  const tpResult = setTakeProfit(account, positionId, takeProfit);
+  if (!tpResult.ok) return tpResult;
+  return setStopLoss(tpResult.account, positionId, stopLoss);
 }
 
 export function setTrailingStop(
@@ -403,6 +420,7 @@ function processPosition(
   };
 }
 
+// 觸發後一律以 mark 成交（限價或更優），marketable 掛單不得以劣於市價的限價成交。
 function isOpenLimitFillable(order: LimitOrder, mark: number): boolean {
   return order.side === 'long' ? mark <= order.limitPrice : mark >= order.limitPrice;
 }
@@ -442,7 +460,7 @@ export function processTick(
         symbol: order.symbol,
         side: order.side,
         qty: order.qty,
-        price: order.limitPrice,
+        price: mark,
         leverage: order.leverage,
         feeRate: MAKER_FEE_RATE,
         now,
@@ -454,7 +472,7 @@ export function processTick(
           symbol: order.symbol,
           side: order.side,
           qty: order.qty,
-          price: order.limitPrice,
+          price: mark,
         });
       }
       continue;
@@ -475,7 +493,7 @@ export function processTick(
       current,
       target,
       qty,
-      order.limitPrice,
+      mark,
       MAKER_FEE_RATE,
       'manual',
       now,
@@ -489,7 +507,7 @@ export function processTick(
       symbol: order.symbol,
       side: order.side,
       qty,
-      price: order.limitPrice,
+      price: mark,
       pnl: trade.realizedPnl,
     });
   }

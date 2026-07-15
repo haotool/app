@@ -19,6 +19,7 @@ import {
   processTick,
   setStopLoss,
   setTakeProfit,
+  setTakeProfitStopLoss,
   setTrailingStop,
   type CloseLimitParams,
   type CloseParams,
@@ -28,7 +29,7 @@ import {
   type TradeResult,
   type TrailingParams,
 } from '../engine/engine';
-import { type Account, type TradeEvent } from '../engine/types';
+import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
@@ -43,6 +44,8 @@ export interface ToastItem {
 }
 
 export type TradeActionResult = { ok: true } | { ok: false; error: TradeError };
+
+export type CloseActionResult = { ok: true; trade: ClosedTrade } | { ok: false; error: TradeError };
 
 const sideSchema = z.enum(['long', 'short']);
 const symbolSchema = z.enum(SYMBOLS);
@@ -63,7 +66,8 @@ const positionSchema = z.object({
   side: sideSchema,
   qty: positiveNumber,
   entryPrice: positiveNumber,
-  margin: positiveNumber,
+  // margin 為衍生欄位：極小殘餘量部分平倉的捨入可使其為 0，域須與引擎輸出一致。
+  margin: nonNegativeNumber,
   openFee: nonNegativeNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
   openedAt: finiteNumber,
@@ -195,12 +199,17 @@ interface TradeState {
   account: Account;
   toasts: ToastItem[];
   openMarketOrder: (params: Omit<OpenParams, 'now'>) => TradeActionResult;
-  closeMarketOrder: (params: Omit<CloseParams, 'now'>) => TradeActionResult;
+  closeMarketOrder: (params: Omit<CloseParams, 'now'>) => CloseActionResult;
   placeLimitOrder: (params: Omit<LimitParams, 'now'>) => TradeActionResult;
   placeCloseLimitOrder: (params: Omit<CloseLimitParams, 'now'>) => TradeActionResult;
   cancelPendingOrder: (orderId: string) => TradeActionResult;
   setPositionTakeProfit: (positionId: string, price: number | null) => TradeActionResult;
   setPositionStopLoss: (positionId: string, price: number | null) => TradeActionResult;
+  setPositionTpSl: (
+    positionId: string,
+    takeProfit: number | null,
+    stopLoss: number | null,
+  ) => TradeActionResult;
   setPositionTrailing: (positionId: string, params: TrailingParams | null) => TradeActionResult;
   applyTick: (symbol: MarketSymbol, mark: number, now: number) => void;
   resetAccount: () => void;
@@ -221,7 +230,13 @@ export const useTradeStore = create<TradeState>()(
         account: createInitialAccount(),
         toasts: [],
         openMarketOrder: (params) => commit(openMarket(get().account, params)),
-        closeMarketOrder: (params) => commit(closePositionMarket(get().account, params)),
+        closeMarketOrder: (params) => {
+          // 回傳引擎實際成交結果，供 UI 以真實值（非預覽值）呈現。
+          const result = closePositionMarket(get().account, params);
+          if (!result.ok) return result;
+          set({ account: result.account });
+          return { ok: true, trade: result.trade };
+        },
         placeLimitOrder: (params) => commit(placeLimitOrder(get().account, params)),
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
@@ -229,6 +244,9 @@ export const useTradeStore = create<TradeState>()(
           commit(setTakeProfit(get().account, positionId, price)),
         setPositionStopLoss: (positionId, price) =>
           commit(setStopLoss(get().account, positionId, price)),
+        // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
+        setPositionTpSl: (positionId, takeProfit, stopLoss) =>
+          commit(setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss)),
         setPositionTrailing: (positionId, params) =>
           commit(setTrailingStop(get().account, positionId, params)),
         applyTick: (symbol, mark, now) => {
@@ -260,7 +278,20 @@ export const useTradeStore = create<TradeState>()(
       migrate: () => ({ account: createInitialAccount() }),
       merge: (persisted, current) => {
         const parsed = parsePersistedTradeState(persisted);
-        if (parsed === null) return current;
+        if (parsed === null) {
+          // 首次使用（無存檔）不提示；存檔存在但損壞時重置並一次性告知。
+          if (persisted === null || persisted === undefined) return current;
+          return {
+            ...current,
+            toasts: appendToasts(current.toasts, [
+              {
+                tone: 'warning',
+                title: '模擬帳戶已重置',
+                description: '偵測到本機存檔損壞，已重新配發初始資金。',
+              },
+            ]),
+          };
+        }
         return { ...current, account: parsed.account };
       },
     },

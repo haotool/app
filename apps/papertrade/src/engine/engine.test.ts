@@ -10,12 +10,14 @@ import {
   processTick,
   setStopLoss,
   setTakeProfit,
+  setTakeProfitStopLoss,
   setTrailingStop,
 } from './engine';
 import { roundUsdt } from './math';
 import { type Account, type Position } from './types';
-import { INITIAL_BALANCE_USDT } from '../config/trading';
+import { HISTORY_MAX_ENTRIES, INITIAL_BALANCE_USDT } from '../config/trading';
 import { type MarketSymbol } from '../config/market';
+import { parsePersistedTradeState } from '../stores/tradeStore';
 
 const NOW = 1_800_000_000_000;
 
@@ -117,6 +119,17 @@ describe('openMarket', () => {
     expect(position.margin).toBeCloseTo(1220, 8);
     expect(position.leverage).toBeCloseTo(10, 8);
     expect(account.positions).toHaveLength(1);
+  });
+
+  it('clamps merged derived leverage into [1, 125] despite rounding drift', () => {
+    // 兩筆 125x 合併時 margin 各自 roundUsdt，衍生槓桿可能微幅越界（實證 125.0000002）。
+    let account = openLong(createInitialAccount(), 0.0011, 60000.13, 125);
+    account = openLong(account, 0.00307, 61234.57, 125);
+
+    const position = onlyPosition(account);
+    expect(position.leverage).toBeLessThanOrEqual(125);
+    expect(position.leverage).toBeGreaterThanOrEqual(1);
+    expect(position.leverage).toBeCloseTo(125, 6);
   });
 
   it('reduces the opposite position first', () => {
@@ -230,6 +243,37 @@ describe('closePositionMarket', () => {
       { ok: false, error: 'not-found' },
     );
   });
+
+  it('returns the executed trade so callers can report actual fill results', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const result = closePositionMarket(account, {
+      positionId: onlyPosition(account).id,
+      fraction: 1,
+      price: 61000,
+      now: NOW,
+    });
+    if (!result.ok) throw new Error(result.error);
+    expect(result.trade.realizedPnl).toBeCloseTo(100, 8);
+    expect(result.trade.exitPrice).toBe(61000);
+    expect(result.trade.qty).toBeCloseTo(0.1, 10);
+  });
+
+  it('caps closed-trade history at HISTORY_MAX_ENTRIES keeping the newest entries', () => {
+    let account = createInitialAccount();
+    for (let index = 0; index < HISTORY_MAX_ENTRIES + 5; index += 1) {
+      account = openLong(account, 0.001, 60000, 10);
+      const closed = closePositionMarket(account, {
+        positionId: onlyPosition(account).id,
+        fraction: 1,
+        price: 60000,
+        now: NOW + index,
+      });
+      if (!closed.ok) throw new Error(closed.error);
+      account = closed.account;
+    }
+    expect(account.history).toHaveLength(HISTORY_MAX_ENTRIES);
+    expect(account.history[0]?.closedAt).toBe(NOW + HISTORY_MAX_ENTRIES + 4);
+  });
 });
 
 describe('limit orders', () => {
@@ -291,15 +335,16 @@ describe('limit orders', () => {
     expect(filled.account.orders).toHaveLength(0);
     expect(filled.account.positions).toHaveLength(1);
 
+    // 限價或更優：以觸發當下 mark 成交。
     const position = filled.account.positions[0];
-    expect(position?.entryPrice).toBe(58000);
-    expect(position?.margin).toBeCloseTo(580, 8);
+    expect(position?.entryPrice).toBe(57900);
+    expect(position?.margin).toBeCloseTo(579, 8);
     expect(filled.events).toContainEqual({
       type: 'limit-filled',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
-      price: 58000,
+      price: 57900,
     });
   });
 
@@ -318,7 +363,7 @@ describe('limit orders', () => {
 
     const filled = processTick(placed.account, 'BTCUSDT', 62100, NOW);
     expect(filled.account.positions[0]?.side).toBe('short');
-    expect(filled.account.positions[0]?.entryPrice).toBe(62000);
+    expect(filled.account.positions[0]?.entryPrice).toBe(62100);
   });
 
   it('ignores ticks of other symbols', () => {
@@ -332,6 +377,33 @@ describe('limit orders', () => {
     if (!placed.ok) throw new Error(placed.error);
     const ticked = processTick(placed.account, 'ETHUSDT', 100, NOW);
     expect(ticked.account.orders).toHaveLength(1);
+  });
+
+  it('fills a marketable open limit at the mark, not at the worse limit price', () => {
+    // 買單限價 60000 高於 mark 59000：依「限價或更優」語意應以 mark 成交。
+    const placed = placeLimitOrder(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      limitPrice: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 59000, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+
+    const position = filled.account.positions[0];
+    expect(position?.entryPrice).toBe(59000);
+    expect(position?.margin).toBeCloseTo(590, 8);
+    expect(filled.events).toContainEqual({
+      type: 'limit-filled',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 59000,
+    });
   });
 });
 
@@ -400,6 +472,49 @@ describe('close limit orders', () => {
     expect(ticked.account.orders).toHaveLength(0);
     expect(ticked.account.positions).toHaveLength(0);
     expect(ticked.account.history).toHaveLength(1);
+  });
+
+  it('fills a marketable close limit at the mark and never drives balance negative', () => {
+    // Fable 場景：滿倉開多後掛 1 USDT 平倉限價（marketable），必須以 mark 成交而非劣價。
+    const account = openLong(createInitialAccount(), 1.6, 60000, 10);
+    const placed = placeCloseLimit(account, {
+      positionId: onlyPosition(account).id,
+      qty: 1.6,
+      limitPrice: 1,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 60000, NOW);
+    expect(filled.account.positions).toHaveLength(0);
+    expect(filled.account.orders).toHaveLength(0);
+    expect(filled.account.history[0]?.exitPrice).toBe(60000);
+    expect(filled.account.balance).toBeGreaterThanOrEqual(0);
+    expect(filled.events).toContainEqual({
+      type: 'close-filled',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 1.6,
+      price: 60000,
+      pnl: 0,
+    });
+  });
+
+  it('fills a resting close limit at the crossing mark (limit or better)', () => {
+    // 掛單價 61000，mark 跳到 61200 才觸發：成交價應為更優的 61200。
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const placed = placeCloseLimit(account, {
+      positionId: onlyPosition(account).id,
+      qty: 0.1,
+      limitPrice: 61000,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 61200, NOW);
+    expect(filled.account.positions).toHaveLength(0);
+    expect(filled.account.history[0]?.exitPrice).toBe(61200);
+    expect(filled.account.history[0]?.realizedPnl).toBeCloseTo(120, 8);
   });
 });
 
@@ -481,6 +596,25 @@ describe('take profit and stop loss', () => {
       error: 'invalid-tp-direction',
     });
     expect(setStopLoss(account, id, 61000)).toEqual({ ok: false, error: 'invalid-sl-direction' });
+  });
+
+  it('applies TP and SL atomically: an invalid pair rejects without partial state', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const id = onlyPosition(account).id;
+
+    // SL 方向錯誤：整筆拒絕，回傳 error 供呼叫端不落任何半套。
+    const invalid = setTakeProfitStopLoss(account, id, 61000, 62000);
+    expect(invalid).toEqual({ ok: false, error: 'invalid-sl-direction' });
+
+    const valid = setTakeProfitStopLoss(account, id, 61000, 59000);
+    if (!valid.ok) throw new Error(valid.error);
+    expect(onlyPosition(valid.account).takeProfit).toBe(61000);
+    expect(onlyPosition(valid.account).stopLoss).toBe(59000);
+
+    const cleared = setTakeProfitStopLoss(valid.account, id, null, null);
+    if (!cleared.ok) throw new Error(cleared.error);
+    expect(onlyPosition(cleared.account).takeProfit).toBeNull();
+    expect(onlyPosition(cleared.account).stopLoss).toBeNull();
   });
 
   it('rejects wrong-direction TP/SL for shorts', () => {
@@ -639,6 +773,8 @@ describe('ledger invariant', () => {
 
   function expectInvariant(account: Account) {
     expect(roundUsdt(ledgerLhs(account))).toBe(INITIAL_BALANCE_USDT);
+    // 引擎任何操作後的帳戶必須恆通過 persist schema，杜絕自產狀態觸發靜默重置。
+    expect(parsePersistedTradeState({ account })).not.toBeNull();
   }
 
   it('holds across a deterministic mixed sequence of every operation type', () => {
@@ -811,10 +947,11 @@ describe('ledger invariant', () => {
         } else if (roll < 0.44) {
           const position = randomPosition();
           if (position !== undefined) {
+            // 涵蓋深度 marketable 平倉限價（Fable 場景一般化）：0.6–1.4 倍 mark。
             const result = placeCloseLimit(account, {
               positionId: position.id,
               qty: position.qty * (0.2 + rng() * 0.9),
-              limitPrice: marks[position.symbol] * (0.95 + rng() * 0.1),
+              limitPrice: marks[position.symbol] * (0.6 + rng() * 0.8),
               now: NOW,
             });
             if (result.ok) account = result.account;

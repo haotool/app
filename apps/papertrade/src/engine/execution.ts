@@ -1,7 +1,8 @@
 import { type MarketSymbol } from '../config/market';
-import { MIN_ORDER_NOTIONAL_USDT } from '../config/trading';
+import { HISTORY_MAX_ENTRIES, MIN_ORDER_NOTIONAL_USDT } from '../config/trading';
 import {
   averageEntryPrice,
+  clampLeverage,
   isValidLeverage,
   notionalValue,
   orderFee,
@@ -105,7 +106,7 @@ export function closeSlice(
       ...account,
       balance: roundUsdt(account.balance + releasedMargin + pnl - fee),
       positions,
-      history: [trade, ...account.history],
+      history: [trade, ...account.history].slice(0, HISTORY_MAX_ENTRIES),
     },
     trade,
   };
@@ -149,7 +150,7 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
       entryPrice: mergedEntry,
       margin: mergedMargin,
       openFee: roundUsdt(existing.openFee + fee),
-      leverage: notionalValue(mergedQty, mergedEntry) / mergedMargin,
+      leverage: clampLeverage(notionalValue(mergedQty, mergedEntry) / mergedMargin),
     };
     return {
       ok: true,
