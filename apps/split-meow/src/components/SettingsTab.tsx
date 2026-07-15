@@ -108,9 +108,10 @@ export function SettingsTab() {
           </button>
           <button
             onClick={() => setIsEditing(true)}
-            className="absolute bottom-0 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-primary text-on-primary border-2 border-surface-container-lowest shadow-ambient active:scale-90 duration-200 z-10"
+            aria-label={t('settings.edit_name')}
+            className="absolute -bottom-2 -right-2 w-11 h-11 flex items-center justify-center rounded-full bg-primary text-on-primary border-2 border-surface-container-lowest shadow-ambient active:scale-90 duration-200 z-10"
           >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
+            <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
         </div>
         <div className="space-y-1 w-full max-w-xs">
@@ -199,21 +200,27 @@ export function SettingsTab() {
               <span className="material-symbols-outlined text-primary">language</span>
               <span className="font-medium">{t('settings.language')}</span>
             </div>
-            <div className="flex gap-1 bg-surface-container rounded-full p-1">
+            <div className="flex flex-wrap gap-1 bg-surface-container rounded-full p-1">
               {LANGUAGES.map((lang) => {
                 const isActive = currentLang === lang.id;
                 return (
                   <button
                     key={lang.id}
                     onClick={() => handleLanguageChange(lang.id)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                    aria-pressed={isActive}
+                    className={`flex items-center gap-1 min-h-9 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       isActive
                         ? 'bg-primary-container text-on-primary-container shadow-ambient'
                         : 'text-on-surface-variant hover:bg-surface-container-high'
                     }`}
                   >
-                    <span>{lang.flag}</span>
-                    <span className="hidden sm:inline">{lang.name}</span>
+                    <span aria-hidden="true">{lang.flag}</span>
+                    <span>{lang.name}</span>
+                    {isActive && (
+                      <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
+                        check
+                      </span>
+                    )}
                   </button>
                 );
               })}

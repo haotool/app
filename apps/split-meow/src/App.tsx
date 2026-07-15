@@ -42,7 +42,8 @@ function ShareButton() {
       <button
         onClick={() => void handleShare()}
         title={t('app.share')}
-        className="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-90 transition-all duration-200 cursor-pointer"
+        aria-label={t('app.share')}
+        className="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-primary active:scale-90 transition-all duration-200 cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]">{copied ? 'check' : 'share'}</span>
       </button>

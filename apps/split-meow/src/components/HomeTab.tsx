@@ -249,7 +249,8 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                 'shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
                 showCategoryPicker ? 'bg-primary-container' : '',
               )}
-              aria-label={t('home.note_placeholder')}
+              aria-label={t('home.pick_category')}
+              aria-expanded={showCategoryPicker}
             >
               {expenseCategory ? (
                 <span className="text-base leading-none">
@@ -281,9 +282,12 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             {expenseNote && (
               <button
                 onClick={() => setExpenseNote('')}
+                aria-label={t('common.clear')}
                 className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                  close
+                </span>
               </button>
             )}
           </div>
@@ -301,8 +305,10 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                     setExpenseCategory(isActive ? null : cat.id);
                     setShowCategoryPicker(false);
                   }}
+                  aria-label={t(`home.category_${cat.id}`)}
+                  aria-pressed={isActive}
                   className={cn(
-                    'flex-1 py-1.5 rounded-full text-base transition-all active:scale-90 cursor-pointer',
+                    'flex-1 min-h-11 rounded-full text-base transition-all active:scale-90 cursor-pointer',
                     isActive
                       ? 'bg-primary-container shadow-ambient'
                       : 'bg-surface-container text-on-surface-variant/60 hover:bg-surface-container-high',

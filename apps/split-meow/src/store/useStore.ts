@@ -89,6 +89,8 @@ interface AppState {
   toggleSettlement: (key: string) => void;
   catPlayMode: boolean;
   toggleCatPlayMode: () => void;
+  payerHintSeen: boolean;
+  dismissPayerHint: () => void;
 
   // 幣別
   currency: CurrencyCode;
@@ -175,6 +177,7 @@ export const useStore = create<AppState>()(
       expenseCategory: null,
       settledPayments: [],
       catPlayMode: false,
+      payerHintSeen: false,
       currency: 'TWD',
       currencyManuallySet: false,
       krwPerTwd: null,
@@ -332,6 +335,8 @@ export const useStore = create<AppState>()(
         })),
 
       toggleCatPlayMode: () => set((state) => ({ catPlayMode: !state.catPlayMode })),
+
+      dismissPayerHint: () => set({ payerHintSeen: true }),
 
       // 幣別實變時同步清空未儲存 draft：原幣數字不可直接掛上新幣別標籤（涵蓋手動與自動偵測）。
       setCurrency: (code, manual = true) =>

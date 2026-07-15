@@ -199,12 +199,19 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
               onPawParticle(rect.left + rect.width / 2 - 9, rect.top + rect.height / 2 - 9);
             }
           }}
+          aria-label={btn.label === '⌫' ? t('home.backspace') : btn.label}
           className={cn(
             'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
             btn.class,
           )}
         >
-          {btn.icon ? <span className="material-symbols-outlined">{btn.icon}</span> : btn.label}
+          {btn.icon ? (
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {btn.icon}
+            </span>
+          ) : (
+            btn.label
+          )}
         </button>
       ))}
       <button

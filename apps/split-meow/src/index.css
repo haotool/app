@@ -135,6 +135,24 @@
   pointer-events: none;
 }
 
+/* G9：尊重減少動態偏好——粒子降級為純淡出。 */
+@keyframes particle-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paw-particle {
+    animation: particle-fade 0.4s ease-out forwards;
+  }
+  .cat-particle {
+    animation: particle-fade 0.6s ease-out forwards;
+  }
+}
+
 /* G11/G15：Home 固定底部面板高度受控（直向 ≤55dvh；短視窗保障可見內容區 ≥40% 視高）。 */
 .home-panel-fixed {
   max-height: 55dvh;

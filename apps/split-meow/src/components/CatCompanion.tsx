@@ -8,18 +8,29 @@
  *   react    → 點擊時跳動，0.5s 後回 idle
  */
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 
 type CatState = 'idle' | 'walking' | 'react';
 
+// 減少動態偏好：停用呼吸/走動/跳動，互動降級為淡入淡出（G9）。
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 export function CatCompanion() {
+  const { t } = useTranslation();
   const [catState, setCatState] = useState<CatState>('idle');
   const [showHeart, setShowHeart] = useState(false);
   const [walkX, setWalkX] = useState(0);
   const walkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reduceMotion = prefersReducedMotion();
 
   // 排程下一次 walking
   const scheduleWalk = () => {
+    if (prefersReducedMotion()) return;
     const delay = 8000 + Math.random() * 7000;
     walkTimerRef.current = setTimeout(() => {
       setCatState('walking');
@@ -68,7 +79,7 @@ export function CatCompanion() {
             <motion.span
               key="heart"
               initial={{ opacity: 1, y: 0, scale: 1 }}
-              animate={{ opacity: 0, y: -32, scale: 1.4 }}
+              animate={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -32, scale: 1.4 }}
               exit={{}}
               transition={{ duration: 0.6 }}
               className="absolute -top-8 left-1/2 -translate-x-1/2 text-lg pointer-events-none"
@@ -82,20 +93,24 @@ export function CatCompanion() {
         {/* 貓咪本體 */}
         <motion.button
           onClick={handleClick}
-          aria-label="貓咪夥伴"
+          aria-label={t('app.cat_companion')}
           animate={
-            catState === 'idle'
-              ? { scale: [1, 1.03, 1], x: 0 }
-              : catState === 'walking'
-                ? { x: walkX }
-                : { scale: [1, 1.35, 0.9, 1], x: 0 }
+            reduceMotion
+              ? { x: 0 }
+              : catState === 'idle'
+                ? { scale: [1, 1.03, 1], x: 0 }
+                : catState === 'walking'
+                  ? { x: walkX }
+                  : { scale: [1, 1.35, 0.9, 1], x: 0 }
           }
           transition={
-            catState === 'idle'
-              ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-              : catState === 'walking'
-                ? { duration: 1.2, ease: 'easeInOut' }
-                : { duration: 0.45, ease: 'easeOut' }
+            reduceMotion
+              ? { duration: 0 }
+              : catState === 'idle'
+                ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                : catState === 'walking'
+                  ? { duration: 1.2, ease: 'easeInOut' }
+                  : { duration: 0.45, ease: 'easeOut' }
           }
           onAnimationComplete={catState === 'walking' ? onWalkComplete : undefined}
           className="text-4xl cursor-pointer active:scale-90 transition-transform pointer-events-auto"

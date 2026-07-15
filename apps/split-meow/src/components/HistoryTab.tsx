@@ -229,16 +229,17 @@ export function HistoryTab() {
 
   const shareSummary = async () => {
     const tripName = trips.find((tr) => tr.id === currentTripId)?.name ?? t('history.title');
+    const shareTitle = `${t('app.title')} — ${tripName}`;
     const lines: string[] = [
-      `🐾 喵喵分帳 — ${tripName}`,
+      `🐾 ${shareTitle}`,
       `${'─'.repeat(24)}`,
       isMixedCurrency
         ? `⚠️ ${t('history.mixed_currency_warning')}`
-        : `💰 總花費：${formatAmount(totalSpent, tripCurrency)}`,
+        : `💰 ${t('history.share_total', { amount: formatAmount(totalSpent, tripCurrency) })}`,
       '',
     ];
     if (tripExpenses.length > 0) {
-      lines.push(`📋 費用明細（${tripExpenses.length} 筆）`);
+      lines.push(`📋 ${t('history.share_expense_count', { count: tripExpenses.length })}`);
       tripExpenses.forEach((exp) => {
         const payer = members.find((m) => m.id === exp.paidBy)?.name ?? t('history.unknown_payer');
         const emoji = exp.category ? (CATEGORY_EMOJI[exp.category] ?? '') : '•';
@@ -246,13 +247,13 @@ export function HistoryTab() {
           exp.note ||
           (exp.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
         lines.push(
-          `${emoji} ${label}  ${formatAmount(exp.totalAmount, expenseCurrency(exp))}（${payer} 付）`,
+          `${emoji} ${label}  ${formatAmount(exp.totalAmount, expenseCurrency(exp))}${t('history.share_paid_by', { name: payer })}`,
         );
       });
       lines.push('');
     }
     if (settlements.length > 0 && !isMixedCurrency) {
-      lines.push(`💸 結清方式`);
+      lines.push(`💸 ${t('history.settlements')}`);
       settlements.forEach((s) => {
         const from = members.find((m) => m.id === s.from)?.name ?? s.from;
         const to = members.find((m) => m.id === s.to)?.name ?? s.to;
@@ -261,10 +262,10 @@ export function HistoryTab() {
       lines.push('');
     }
     lines.push('─'.repeat(24));
-    lines.push('用喵喵分帳輕鬆分帳 🐱');
+    lines.push(t('history.share_footer'));
     const text = lines.join('\n');
     if (navigator.share) {
-      await navigator.share({ title: `喵喵分帳 — ${tripName}`, text });
+      await navigator.share({ title: shareTitle, text });
     } else {
       await navigator.clipboard.writeText(text);
     }
@@ -369,7 +370,17 @@ export function HistoryTab() {
                     isSettled && 'opacity-50',
                   )}
                 >
-                  <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
+                  {/* 誰付誰方向視覺化：付款人 → 收款人 */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
+                    <span
+                      className="material-symbols-outlined text-[18px] text-primary"
+                      aria-hidden="true"
+                    >
+                      arrow_forward
+                    </span>
+                    <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p
                       className={cn(
@@ -388,7 +399,6 @@ export function HistoryTab() {
                       </p>
                     )}
                   </div>
-                  <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
                   <div
                     className={cn(
                       'rounded-full px-3 py-1 shrink-0 transition-colors',
@@ -496,7 +506,7 @@ export function HistoryTab() {
                   {/* 展開明細 */}
                   <div
                     className={cn(
-                      'grid transition-all duration-300 ease-in-out',
+                      'grid transition-all duration-200 ease-in-out',
                       isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                     )}
                   >
@@ -619,8 +629,16 @@ export function HistoryTab() {
 
         {tripExpenses.length === 0 ? (
           <div className="text-center p-8 bg-surface-container-low rounded-[2rem] text-on-surface-variant">
-            <span className="material-symbols-outlined text-4xl mb-2 opacity-50">receipt_long</span>
+            <span className="material-symbols-outlined text-4xl mb-2 opacity-50" aria-hidden="true">
+              receipt_long
+            </span>
             <p>{t('history.no_expenses')}</p>
+            <button
+              onClick={() => useStore.getState().setActiveTab('home')}
+              className="mt-4 min-h-11 px-6 py-2.5 rounded-full bg-primary text-on-primary text-sm font-semibold active:scale-95 transition-transform cursor-pointer"
+            >
+              {t('history.cta_first')}
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -666,9 +684,12 @@ export function HistoryTab() {
                         softDelete(exp.id);
                         setSwipedId(null);
                       }}
-                      className="flex items-center justify-center text-on-error active:scale-90 transition-transform"
+                      aria-label={t('history.delete_title')}
+                      className="w-11 h-11 flex items-center justify-center text-on-error active:scale-90 transition-transform"
                     >
-                      <span className="material-symbols-outlined text-2xl">delete</span>
+                      <span className="material-symbols-outlined text-2xl" aria-hidden="true">
+                        delete
+                      </span>
                     </button>
                   </div>
                   <div
@@ -771,7 +792,7 @@ export function HistoryTab() {
                     {/* 展開詳情 */}
                     <div
                       className={cn(
-                        'grid transition-all duration-300 ease-in-out',
+                        'grid transition-all duration-200 ease-in-out',
                         isExpanded
                           ? 'grid-rows-[1fr] opacity-100 mt-4 pt-4 border-t border-outline-variant/20'
                           : 'grid-rows-[0fr] opacity-0',
@@ -917,17 +938,16 @@ export function HistoryTab() {
           <span className="text-sm">
             {(() => {
               const exp = expenses.find((e) => e.id === pendingDeleteId);
-              const label =
-                exp?.note ??
-                (exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
-              return `已刪除「${label}」`;
+              const fallback =
+                exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized');
+              return t('history.deleted_toast', { label: exp?.note ? exp.note : fallback });
             })()}
           </span>
           <button
             onClick={undoDelete}
-            className="text-sm font-semibold text-primary ml-4 px-2 py-1 rounded-lg active:opacity-70 transition-opacity"
+            className="text-sm font-semibold text-primary ml-4 min-h-11 px-3 py-1 rounded-lg active:opacity-70 transition-opacity"
           >
-            復原
+            {t('history.undo')}
           </button>
         </div>
       )}
@@ -1016,9 +1036,12 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
           <h2 className="text-base font-semibold text-on-surface">{t('history.edit_title')}</h2>
           <button
             onClick={onClose}
-            className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+            aria-label={t('common.close')}
+            className="w-11 h-11 -mr-2 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+              close
+            </span>
           </button>
         </div>
 
