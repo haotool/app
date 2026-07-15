@@ -15,6 +15,12 @@ declare global {
       ammo: () => { ammo: number; flavor: string };
       probe: () => { x: number; scrollX: number };
     };
+    // v4 stage 系統觀測點（stage.ts 掛載，dev/test 限定）。
+    __spStage: {
+      playerY: () => number;
+      bricksAlive: () => number;
+    };
+    __minY: number;
   }
 }
 
@@ -175,6 +181,37 @@ test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async
   await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
   await page.keyboard.up('X');
   await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('S2 彈簧墊超級跳：走上彈簧的騰空峰值遠高於一般跳可達（§29）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  // 進第二關：補配額後持續右行走入星星門（同既有轉場測試路徑）。
+  await page.evaluate(() => window.__sp.fillQuota());
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 30000 }).toBe(2);
+  await page.keyboard.up('ArrowRight');
+  // S2 再補配額停止生成，確保走查段無敵潮干擾（開門後 spawn 停止，星星門在 x=2980 不會誤觸）。
+  await page.evaluate(() => window.__sp.fillQuota());
+  // 取樣騰空高度（y 越小越高）：一般跳峰值約 278、擊退浮空約 331，彈簧 -640 峰值約 148；
+  // 門檻 240 僅彈簧可達，對兩側皆有充足裕度。
+  await page.evaluate(() => {
+    window.__minY = 999;
+    const timer = setInterval(() => {
+      if (window.__sp.scene() !== 'Game') return;
+      window.__minY = Math.min(window.__minY, window.__spStage.playerY());
+    }, 40);
+    setTimeout(() => clearInterval(timer), 15000);
+  });
+  // 場景已重啟，重按方向鍵註冊新 Key；x=1150 地面彈簧 walk-over 觸發，走過 1400 涵蓋整段彈跳。
+  await page.keyboard.down('ArrowRight');
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 15000 })
+    .toBeGreaterThan(1400);
+  await page.keyboard.up('ArrowRight');
+  expect(await page.evaluate(() => window.__minY)).toBeLessThan(240);
+  await page.waitForTimeout(500);
   expect(errors).toEqual([]);
 });
 

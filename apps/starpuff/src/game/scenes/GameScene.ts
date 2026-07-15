@@ -35,6 +35,7 @@ import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
 import { createHud } from '../systems/hud';
 import { createPlayer, type PlayerHandle } from '../systems/player';
+import { createStage, type StageHandle } from '../systems/stage';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
@@ -100,6 +101,7 @@ export class GameScene extends Phaser.Scene {
   private waves!: WaveRunner;
   private boss!: BossHandle;
   private fx!: FxSystem;
+  private stage!: StageHandle;
 
   constructor() {
     super(SceneKeys.Game);
@@ -129,6 +131,12 @@ export class GameScene extends Phaser.Scene {
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
     this.terrainGround = ground;
+    // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；
+    // hooks 以閉包延遲解析（player/enemies 於後續建立，呼叫時已就緒）。
+    this.stage = createStage(this, this.level, {
+      player: () => this.player,
+      spawnAmmoMinion: (x, y) => this.enemies.spawn('jelly', x, y),
+    });
 
     this.controls = createControls(this);
     const startX = this.level.boss ? this.worldWidth() / 2 : 100;
@@ -171,6 +179,7 @@ export class GameScene extends Phaser.Scene {
       this.controls.destroy();
       this.background.destroy();
       this.player.destroy();
+      this.stage.destroy();
     });
 
     this.waves.start();
@@ -184,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.finished && !this.transitioning) {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
+      this.stage.update(this.controls.state);
       this.syncJumpSfx();
       this.syncInhale();
       this.syncEggs();
@@ -338,6 +348,29 @@ export class GameScene extends Phaser.Scene {
       if (!shockwave.active || this.finished || this.transitioning) return;
       this.player.takeDamage(BOSS.bodyDamage, shockwave.x);
     });
+
+    // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
+    this.physics.add.collider(
+      this.player.sprite,
+      this.stage.getOneWay(),
+      undefined,
+      this.stage.canLandOneWay,
+    );
+    this.physics.add.collider(this.player.sprite, this.stage.getMoving());
+    this.physics.add.collider(this.player.sprite, this.stage.getBreakables());
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.stage.getSprings(),
+      this.stage.onSpringOverlap,
+    );
+    this.physics.add.overlap(stars, this.stage.getBreakables(), (a, b) => {
+      const brick = (this.stage.getBreakables() as unknown[]).includes(a) ? a : b;
+      const star = asSprite(brick === a ? b : a);
+      if (!star.active) return;
+      if (this.stage.breakBrick(brick as Phaser.GameObjects.GameObject)) {
+        this.player.onStarHit(star, 'absorb');
+      }
+    });
   }
 
   private bindEvents(): void {
@@ -357,7 +390,11 @@ export class GameScene extends Phaser.Scene {
     });
     // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
     bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
-    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => this.resolveSlamImpact(x, y));
+    // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
+    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
+      this.resolveSlamImpact(x, y);
+      this.stage.damageBricksInRadius(x, y, SLAM.radiusPx);
+    });
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
