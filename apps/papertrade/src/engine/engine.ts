@@ -479,6 +479,17 @@ export function processTick(
           qty: order.qty,
           price: atMark.ok ? mark : order.limitPrice,
         });
+        // 回退成交可能生成/合併出已越過強平價的倉位（滿倉 short limit 遇暴漲 mark）；
+        // 在處理後續訂單前以同一 mark 立即強平，並同步清除指向該倉位的 close 掛單，
+        // 避免事件順序失真與孤兒掛單殘留到下一筆 ticker（review #719）。
+        const settled = current.positions.find((candidate) => candidate.symbol === symbol);
+        if (settled !== undefined && isLiquidated(settled, mark)) {
+          current = processPosition(current, settled, mark, now, events);
+          current = {
+            ...current,
+            orders: current.orders.filter((candidate) => candidate.positionId !== settled.id),
+          };
+        }
       }
       continue;
     }
@@ -515,13 +526,6 @@ export function processTick(
       price: mark,
       pnl: trade.realizedPnl,
     });
-  }
-
-  // 回退成交可能直接生成已越過強平價的倉位（滿倉 short limit 遇暴漲 mark）；
-  // 以同一 mark 立即重跑強平檢查，不把負權益倉位留到下一筆 ticker（review #702）。
-  const settled = current.positions.find((candidate) => candidate.symbol === symbol);
-  if (settled !== undefined && isLiquidated(settled, mark)) {
-    current = processPosition(current, settled, mark, now, events);
   }
 
   return { account: current, events };
