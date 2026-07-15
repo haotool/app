@@ -2,9 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useStore, type Member, type ExpenseRecord } from '../store/useStore';
 import {
+  convertAmount,
   formatAmount,
   getCurrencySymbol,
-  formatKrwAsTwd,
   resolveExpenseCurrency,
   resolveTripCurrency,
   isMixedCurrencyTrip,
@@ -121,16 +121,18 @@ function ParticipantAvatars({
 
 export function HistoryTab() {
   const { t } = useTranslation();
-  const { expenses, members, trips, currentTripId, currency, settledPayments } = useStore(
-    useShallow((s) => ({
-      expenses: s.expenses,
-      members: s.members,
-      trips: s.trips,
-      currentTripId: s.currentTripId,
-      currency: s.currency,
-      settledPayments: s.settledPayments,
-    })),
-  );
+  const { expenses, members, trips, currentTripId, currency, krwPerTwd, settledPayments } =
+    useStore(
+      useShallow((s) => ({
+        expenses: s.expenses,
+        members: s.members,
+        trips: s.trips,
+        currentTripId: s.currentTripId,
+        currency: s.currency,
+        krwPerTwd: s.krwPerTwd,
+        settledPayments: s.settledPayments,
+      })),
+    );
   const deleteExpense = useStore((s) => s.deleteExpense);
   const updateExpenseNote = useStore((s) => s.updateExpenseNote);
   const updateExpense = useStore((s) => s.updateExpense);
@@ -726,12 +728,20 @@ export function HistoryTab() {
                           <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
                             {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
-                          {expenseCurrency(exp) === 'KRW' &&
-                            formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd) && (
+                          {(() => {
+                            // 快照幣別 ≠ 全域幣別時顯示 ≈ 參考：KRW 用記帳當下快照匯率，TWD 用當前匯率（即期參考）。
+                            const from = expenseCurrency(exp);
+                            if (from === currency) return null;
+                            const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
+                            const rate = from === 'KRW' ? exp.exchangeRateKrwPerTwd : krwPerTwd;
+                            const approx = convertAmount(exp.totalAmount, from, to, rate);
+                            if (approx === null) return null;
+                            return (
                               <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
-                                ≈ {formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd)}
+                                ≈ {formatAmount(approx, to)}
                               </p>
-                            )}
+                            );
+                          })()}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>

@@ -113,6 +113,18 @@ describe('HomeTab', () => {
     expect(screen.queryByText(/≈ NT\$/)).not.toBeInTheDocument();
   });
 
+  it('KRW ₩10,000 draft 切 TWD 後不得顯示 NT$ 10,000（回歸 R1）', () => {
+    useStore.setState({ calculatorValue: '10000', currency: 'KRW' });
+    renderWith(<HomeTab />);
+
+    act(() => {
+      useStore.getState().setCurrency('TWD');
+    });
+
+    const el = document.querySelector('h1');
+    expect(el?.textContent ?? '').not.toContain('10,000');
+  });
+
   it('itemized 模式停用目前焦點成員後會自動切換到仍有效的成員', () => {
     useStore.setState({
       splitMode: 'itemized',
@@ -206,6 +218,45 @@ describe('HistoryTab', () => {
     renderWith(<HistoryTab />);
     expect(document.body.textContent).toContain('NT$');
     expect(document.body.textContent).not.toContain('₩');
+  });
+
+  it('TWD 300 快照在全域 KRW、krwPerTwd=40 顯示 ≈ ₩12,000', () => {
+    useStore.setState({
+      expenses: [{ ...EXPENSE_1, currency: 'TWD' }],
+      currency: 'KRW',
+      krwPerTwd: 40,
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.getByText(/≈ ₩12,000/)).toBeInTheDocument();
+  });
+
+  it('KRW 9000 快照（rate 45）在全域 TWD 顯示 ≈ NT$ 200', () => {
+    useStore.setState({
+      expenses: [{ ...EXPENSE_1, totalAmount: 9000, currency: 'KRW', exchangeRateKrwPerTwd: 45 }],
+      currency: 'TWD',
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.getByText(/≈ NT\$ 200/)).toBeInTheDocument();
+  });
+
+  it('快照幣別 = 全域幣別時不顯示 ≈ 提示', () => {
+    useStore.setState({
+      expenses: [{ ...EXPENSE_1, currency: 'TWD' }],
+      currency: 'TWD',
+      krwPerTwd: 40,
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.queryByText(/≈/)).not.toBeInTheDocument();
+  });
+
+  it('rate 缺失（null）時不顯示 ≈ 提示', () => {
+    useStore.setState({
+      expenses: [{ ...EXPENSE_1, totalAmount: 9000, currency: 'KRW', exchangeRateKrwPerTwd: null }],
+      currency: 'TWD',
+      krwPerTwd: null,
+    });
+    renderWith(<HistoryTab />);
+    expect(screen.queryByText(/≈/)).not.toBeInTheDocument();
   });
 
   it('多筆消費顯示 settlement 區塊', () => {

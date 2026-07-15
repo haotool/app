@@ -6,7 +6,7 @@ import { MemberList } from './MemberList';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useEffect, useRef, useState } from 'react';
-import { formatAmount } from '../config/currencies';
+import { convertAmount, formatAmount } from '../config/currencies';
 
 interface HomeTabProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -133,14 +133,18 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
               {formatAmount(totalAmount, currency)}
             </h1>
-            {/* 換算提示：另一幣別的近似金額 */}
-            {krwPerTwd && totalAmount > 0 && (
-              <p className="text-xs text-on-surface-variant/50 mt-1">
-                {currency === 'KRW'
-                  ? `≈ NT$ ${Math.round(totalAmount / krwPerTwd).toLocaleString('zh-TW')}`
-                  : `≈ ₩${Math.round(totalAmount * krwPerTwd).toLocaleString('ko-KR')}`}
-              </p>
-            )}
+            {/* 換算提示：另一幣別的近似金額（derived only，rate 無效時隱藏） */}
+            {totalAmount > 0 &&
+              (() => {
+                const to = currency === 'KRW' ? 'TWD' : 'KRW';
+                const approx = convertAmount(totalAmount, currency, to, krwPerTwd);
+                if (approx === null) return null;
+                return (
+                  <p className="text-xs text-on-surface-variant/50 mt-1">
+                    ≈ {formatAmount(approx, to)}
+                  </p>
+                );
+              })()}
             {splitMode === 'split_evenly' && activeMembers.length > 0 && (
               <p className="text-sm text-on-surface-variant mt-2">
                 {t('home.perPerson')}{' '}

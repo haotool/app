@@ -302,4 +302,55 @@ describe('useStore', () => {
       expect(useStore.getState().expenses[0]?.note).toBe('晚餐');
     });
   });
+
+  // ── 幣別切換 draft 清理（回歸 R1/R3）───────────────────────
+  describe('setCurrency draft 清理', () => {
+    it('KRW draft 切 TWD 時清空 calculatorValue', () => {
+      useStore.setState({ calculatorValue: '10000', currency: 'KRW' });
+      act(() => useStore.getState().setCurrency('TWD'));
+      const s = useStore.getState();
+      expect(s.calculatorValue).toBe('');
+      expect(s.currency).toBe('TWD');
+    });
+
+    it('itemizedValues 一併清空', () => {
+      useStore.setState({ itemizedValues: { me: '9000' }, currency: 'KRW' });
+      act(() => useStore.getState().setCurrency('TWD'));
+      expect(useStore.getState().itemizedValues).toEqual({});
+    });
+
+    it('相同幣別重設不清 draft', () => {
+      useStore.setState({ calculatorValue: '10000', currency: 'KRW' });
+      act(() => useStore.getState().setCurrency('KRW'));
+      expect(useStore.getState().calculatorValue).toBe('10000');
+    });
+
+    it('自動偵測（manual=false）同樣清空', () => {
+      useStore.setState({ calculatorValue: '30000', currency: 'KRW', currencyManuallySet: false });
+      act(() => useStore.getState().setCurrency('TWD', false));
+      const s = useStore.getState();
+      expect(s.calculatorValue).toBe('');
+      expect(s.currencyManuallySet).toBe(false);
+    });
+  });
+
+  // ── saveExpense 幣別快照（回歸 R2 資料污染）────────────────
+  describe('saveExpense 幣別快照（回歸 R2）', () => {
+    it('切換幣別後儲存的記錄快照為新幣別且金額為新輸入', () => {
+      useStore.setState({ calculatorValue: '10000', currency: 'KRW', krwPerTwd: 45 });
+      act(() => useStore.getState().setCurrency('TWD'));
+      act(() => useStore.getState().setCalculatorValue('300'));
+      act(() => useStore.getState().saveExpense());
+      const exp = useStore.getState().expenses[0]!;
+      expect(exp.totalAmount).toBe(300);
+      expect(exp.currency).toBe('TWD');
+    });
+
+    it('切換幣別後直接儲存不得產生記錄（draft 已清空）', () => {
+      useStore.setState({ calculatorValue: '10000', currency: 'KRW' });
+      act(() => useStore.getState().setCurrency('TWD'));
+      act(() => useStore.getState().saveExpense());
+      expect(useStore.getState().expenses).toHaveLength(0);
+    });
+  });
 });

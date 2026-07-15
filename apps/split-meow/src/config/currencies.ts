@@ -115,10 +115,22 @@ export function computeMemberBalances(
 }
 
 /**
- * 將 KRW 金額依匯率快照換算為 TWD 顯示字串（用於 KRW 記帳時的副標）。
+ * 顯示層唯一換算入口（derived only，結果禁止回寫帳本）。
  * rate 為 1 TWD = rate KRW（賣出價）；rate 無效時回傳 null 表示無法換算。
  */
-export function formatKrwAsTwd(krwAmount: number, rate: number | null | undefined): string | null {
+export function convertAmount(
+  amount: number,
+  from: CurrencyCode,
+  to: CurrencyCode,
+  rate: number | null | undefined,
+): number | null {
+  if (from === to) return amount;
   if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) return null;
-  return formatAmount(krwAmount / rate, 'TWD');
+  return from === 'KRW' ? amount / rate : amount * rate;
+}
+
+/** convertAmount 的 KRW→TWD 顯示特例（KRW 記帳副標）。 */
+export function formatKrwAsTwd(krwAmount: number, rate: number | null | undefined): string | null {
+  const twd = convertAmount(krwAmount, 'KRW', 'TWD', rate);
+  return twd === null ? null : formatAmount(twd, 'TWD');
 }

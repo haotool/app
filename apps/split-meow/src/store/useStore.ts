@@ -309,7 +309,18 @@ export const useStore = create<AppState>()(
 
       toggleCatPlayMode: () => set((state) => ({ catPlayMode: !state.catPlayMode })),
 
-      setCurrency: (code, manual = true) => set({ currency: code, currencyManuallySet: manual }),
+      // 幣別實變時同步清空未儲存 draft：原幣數字不可直接掛上新幣別標籤（涵蓋手動與自動偵測）。
+      setCurrency: (code, manual = true) =>
+        set((state) =>
+          state.currency === code
+            ? { currencyManuallySet: manual }
+            : {
+                currency: code,
+                currencyManuallySet: manual,
+                calculatorValue: '',
+                itemizedValues: {},
+              },
+        ),
 
       setExchangeRate: (krwPerTwd, updatedAt) => set({ krwPerTwd, rateUpdatedAt: updatedAt }),
     }),
