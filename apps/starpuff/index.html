@@ -27,28 +27,29 @@
     <meta property="og:image" content="https://app.haotool.org/starpuff/icons/og-image.png" />
   </head>
   <body>
-    <div id="app"></div>
-    <div id="rotate-hint">請將手機轉橫遊玩</div>
-    <div id="controls">
-      <div id="joy-zone" role="application" aria-label="虛擬搖桿：拖曳移動">
-        <div class="joy-ring" aria-hidden="true"></div>
-        <div class="joy-thumb" aria-hidden="true"></div>
-      </div>
-      <div class="controls-right">
-        <div
-          class="ctl-btn ctl-btn-b"
-          role="button"
-          tabindex="0"
-          data-btn="b"
-          aria-label="吸入或發射"
-        ></div>
-        <div
-          class="ctl-btn ctl-btn-a"
-          role="button"
-          tabindex="0"
-          data-btn="a"
-          aria-label="跳躍"
-        ></div>
+    <div id="game-shell">
+      <div id="app"></div>
+      <div id="controls">
+        <div id="joy-zone" role="application" aria-label="虛擬搖桿：拖曳移動">
+          <div class="joy-ring" aria-hidden="true"></div>
+          <div class="joy-thumb" aria-hidden="true"></div>
+        </div>
+        <div class="controls-right">
+          <div
+            class="ctl-btn ctl-btn-b"
+            role="button"
+            tabindex="0"
+            data-btn="b"
+            aria-label="吸入或發射"
+          ></div>
+          <div
+            class="ctl-btn ctl-btn-a"
+            role="button"
+            tabindex="0"
+            data-btn="a"
+            aria-label="跳躍"
+          ></div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

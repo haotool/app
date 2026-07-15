@@ -15,11 +15,13 @@
    須設在實際被 hit-test 的元素及其祖先，缺一層即漏。 */
 html,
 body,
+#game-shell,
 #app,
 #app canvas,
 #controls,
 #joy-zone,
-.ctl-btn {
+.ctl-btn,
+.dom-btn {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -37,10 +39,38 @@ body {
   overscroll-behavior: none;
 }
 
-/* 置中由 Phaser Scale autoCenter（margin）負責；flex 置中會與其疊加造成水平偏移。 */
+/* 旋轉殼（§28 / recon-v4 A.1）：包裹 canvas 與控制層，portrait 整殼轉 90° 呈現橫式。 */
+#game-shell {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* portrait：殼旋轉 90°、寬高互換（旋轉後殼寬=裝置高、殼高=裝置寬），不鎖裝置方向。
+   rotate(90deg) 搭配 left:100%（origin 錨在裝置右上角）：殼左緣=裝置頂緣、殼下緣=裝置左緣，
+   與 safe-area 換軸表一致。 */
+@media (orientation: portrait) {
+  #game-shell {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(90deg);
+    transform-origin: left top;
+  }
+}
+
+/* 置中改由 CSS grid 單一負責（v4）：autoCenter margin 在旋轉殼下混用視口 AABB 與殼局部
+   尺寸而錯位，Phaser 設為 NO_CENTER。祖先 #game-shell 帶 transform 時 fixed 退化為以殼
+   為 containing block，inset:0 即填滿殼。 */
 #app {
   position: fixed;
   inset: 0;
+  display: grid;
+  place-items: center;
 }
 
 #app canvas {
@@ -173,23 +203,26 @@ body {
   transform: scale(0.9);
 }
 
-/* 直向持機提示（§21）：本遊戲為橫式設計，portrait 顯示轉橫遮罩。 */
-#rotate-hint {
-  display: none;
+/* safe-area 換軸（recon-v4 A.1）：portrait 殼轉 90° 後，裝置 top inset 對應殼左緣、
+   left inset 對應殼下緣；landscape 維持 v3 直讀。 */
+@media (orientation: portrait) {
+  #joy-zone {
+    left: env(safe-area-inset-top, 0px);
+  }
+
+  .controls-right {
+    right: calc(16px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(12px + env(safe-area-inset-left, 0px));
+  }
 }
 
-@media (orientation: portrait) {
-  #rotate-hint {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--sp-bg);
-    color: #3a3a4a;
-    font-family: system-ui, sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-  }
+/* 場景 DOM 備援鈕（recon-v4 A.3）：CSS 旋轉下 Phaser canvas 指標錯位，Title/Result
+   的開始與重試改由殼內透明 DOM 鈕承接（hit-test 隨殼旋轉自然正確）。 */
+.dom-btn {
+  position: absolute;
+  z-index: 20;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
 }

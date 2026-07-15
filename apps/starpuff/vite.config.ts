@@ -40,7 +40,7 @@ export default defineConfig(async ({ mode }) => {
           theme_color: '#BFF3E0',
           background_color: '#FDEFF6',
           display: 'standalone',
-          orientation: 'landscape',
+          // v4 免轉向（§28）：旋轉殼自適應 portrait/landscape，移除 orientation 鎖。
           scope: manifestScope,
           start_url: manifestScope,
           lang: 'zh-TW',

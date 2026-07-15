@@ -1,9 +1,23 @@
 // 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20–§21，凍結）。
 // 純資料模組（不 import phaser）：vitest node 環境可直接載入驗證。
-// v3 橫式畫布（§21）：854×480，Scale.FIT + CENTER_BOTH。
-export const CANVAS = {
-  width: 854,
+// v4 響應寬幅（§28）：邏輯高固定 480，邏輯寬依殼比例 854–1200 動態。
+export const VIEW = {
+  minWidth: 854,
+  maxWidth: 1200,
   height: 480,
+} as const;
+
+// 殼（旋轉後）尺寸 → 邏輯寬：clamp(round(aspect×480), 854, 1200)；量測不足時回退最小寬。
+export function computeLogicalWidth(shellW: number, shellH: number): number {
+  if (shellW <= 0 || shellH <= 0) return VIEW.minWidth;
+  const raw = Math.round((shellW / shellH) * VIEW.height);
+  return Math.min(VIEW.maxWidth, Math.max(VIEW.minWidth, raw));
+}
+
+// v3 凍結畫布過渡別名：視寬一律改讀 scene.scale.width，本別名於響應寬幅遷移 commit 移除。
+export const CANVAS = {
+  width: VIEW.minWidth,
+  height: VIEW.height,
 } as const;
 
 export const GRAVITY_Y = 900;
