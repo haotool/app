@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
 import { GRAVITY_Y, VIEW } from './game/core/config';
+import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { SceneKeys, type EnemyKind } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
@@ -10,9 +11,13 @@ import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
+import { CodexScene } from './game/scenes/CodexScene';
 import { restoreMutePreference } from './game/systems/hud';
+import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
 restoreMutePreference();
+// 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。
+applyLayoutToDom(document, loadLayout());
 
 // iOS 觸控直通（§22 / recon checklist）：長按 loupe 的觸發點是按住不動的 touchstart，
 // pointerdown preventDefault 不足，殼層需 passive:false 保險；三指以上留給系統手勢。
@@ -49,7 +54,7 @@ const game = new Phaser.Game({
   // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
   roundPixels: false,
-  scene: [BootScene, TitleScene, GameScene, ResultScene],
+  scene: [BootScene, TitleScene, GameScene, ResultScene, CodexScene],
 });
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
@@ -57,16 +62,13 @@ initShellLayout(game);
 
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 
-// 反卡死（§26）：切背景暫停遊戲場景（物理與計時一併停止），回前景恢復。
-document.addEventListener('visibilitychange', () => {
-  const plugin = gameScene()?.scene;
-  if (!plugin) return;
-  if (document.hidden) {
-    if (plugin.isActive()) plugin.pause();
-  } else if (plugin.isPaused()) {
-    plugin.resume();
-  }
-});
+// 離頁自動暫停（§35，取代 §26 自動恢復）：隱藏時開啟暫停選單（scene.pause + 音訊
+// suspend 由選單統一處理），回前景停在選單由玩家點「繼續」接續，杜絕回來即被偷襲。
+const pauseOnLeave = (): void => {
+  if (document.hidden) openPauseMenu(game);
+};
+document.addEventListener('visibilitychange', pauseOnLeave);
+window.addEventListener('pagehide', () => openPauseMenu(game));
 
 // e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
 // 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口。
@@ -90,6 +92,8 @@ declare global {
       listeners: (event: string) => number;
       enemies: () => { kind: string; x: number; y: number }[];
       view: () => { width: number; height: number };
+      paused: () => boolean;
+      codexTab: () => string;
     };
   }
 }
@@ -120,6 +124,9 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     listeners: (event: string) => gameScene().events.listenerCount(event),
     // 響應寬幅觀測點（US-028）：回報當前邏輯視寬（854–1200）與固定邏輯高。
     view: () => ({ width: game.scale.width, height: game.scale.height }),
+    // v5 觀測點（§35/§36）：暫停選單開啟態與圖鑑當前分頁。
+    paused: () => isGamePaused(),
+    codexTab: () => game.scene.getScene<CodexScene>(SceneKeys.Codex)?.tab ?? '',
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       for (const child of internals().enemies.getGroup().getChildren()) {
