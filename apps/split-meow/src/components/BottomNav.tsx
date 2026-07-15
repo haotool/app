@@ -8,7 +8,7 @@ export function BottomNav() {
   const { t } = useTranslation();
   const navRef = useRef<HTMLElement>(null);
 
-  /** nav 實際高度 → CSS 變數 --nav-h，讓 BottomSheet 精準對齊 */
+  /** nav 實際高度 → CSS 變數 --nav-h（--chrome-bottom SSOT 的輸入） */
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;

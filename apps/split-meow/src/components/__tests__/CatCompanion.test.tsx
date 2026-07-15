@@ -9,7 +9,7 @@ describe('CatCompanion', () => {
 
   it('點擊時應進入 react 狀態並顯示愛心', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    render(<CatCompanion bottomOffset={96} />);
+    render(<CatCompanion />);
 
     const button = screen.getByRole('button', { name: '貓咪夥伴' });
     fireEvent.click(button);

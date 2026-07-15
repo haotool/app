@@ -11,7 +11,7 @@ import {
   computeMemberBalances,
 } from '../config/currencies';
 import { format } from 'date-fns';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/utils';
 import { MemberAvatar } from './MemberAvatar';
 
@@ -175,6 +175,15 @@ export function HistoryTab() {
     setSwipedId(null);
   };
 
+  // undo toast 佔位發布為 CSS 變數：其他浮層（UpdatePrompt）據此上移，拇指區不互疊（G3）。
+  useEffect(() => {
+    if (!pendingDeleteId) return;
+    document.documentElement.style.setProperty('--undo-toast-h', '64px');
+    return () => {
+      document.documentElement.style.removeProperty('--undo-toast-h');
+    };
+  }, [pendingDeleteId]);
+
   // 向後相容：舊資料可能含 0 元成員，讀取時過濾
   const tripExpenses = expenses
     .filter((e) => e.tripId === currentTripId && e.id !== pendingDeleteId)
@@ -262,7 +271,10 @@ export function HistoryTab() {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ paddingBottom: 'calc(var(--chrome-bottom) + 2.5rem)' }}
+    >
       <div className="mb-8">
         <h1 className="text-3xl font-medium text-on-surface tracking-tight mb-2">
           {t('history.title')}
@@ -622,6 +634,7 @@ export function HistoryTab() {
               return (
                 <div
                   key={exp.id}
+                  data-testid="expense-card"
                   className="relative overflow-hidden rounded-[2rem] shadow-ambient"
                   onTouchStart={(e) => {
                     if (swipedId && swipedId !== exp.id) setSwipedId(null);
@@ -896,7 +909,11 @@ export function HistoryTab() {
         })()}
 
       {pendingDeleteId && (
-        <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
+        <div
+          data-testid="undo-toast"
+          className="fixed left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300"
+          style={{ bottom: 'var(--overlay-bottom)' }}
+        >
           <span className="text-sm">
             {(() => {
               const exp = expenses.find((e) => e.id === pendingDeleteId);
@@ -934,7 +951,10 @@ interface EditExpenseSheetProps {
 function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseSheetProps) {
   const { t } = useTranslation();
   const globalCurrency = useStore((s) => s.currency);
-  const tripExpenses = useStore((s) => s.expenses.filter((e) => e.tripId === s.currentTripId));
+  // selector 不可回傳新陣列（getSnapshot 不穩定會觸發無限迴圈）；filter 於 render 內派生。
+  const allExpenses = useStore((s) => s.expenses);
+  const currentTripId = useStore((s) => s.currentTripId);
+  const tripExpenses = allExpenses.filter((e) => e.tripId === currentTripId);
   const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
   const expenseCurrency = resolveExpenseCurrency(expense, tripCurrency);
   const isEvenly = expense.type === 'split_evenly';
@@ -988,7 +1008,10 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
       }}
     >
       <div className="absolute inset-0 bg-scrim/40" onClick={onClose} />
-      <div className="relative w-full bg-surface-container-low rounded-t-[2rem] p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300 space-y-4">
+      <div
+        className="relative w-full bg-surface-container-low rounded-t-[2rem] p-6 animate-in slide-in-from-bottom-4 duration-300 space-y-4"
+        style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-on-surface">{t('history.edit_title')}</h2>
           <button

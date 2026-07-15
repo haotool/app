@@ -67,14 +67,19 @@
   --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-label: 'Plus Jakarta Sans', sans-serif;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* 窄屏斷點：<23rem（368px）視為極窄（Fold 344 / 320），header 品牌縮為圖示。 */
+  --breakpoint-xs: 23rem;
 }
 
 /**
- * iOS safe-area-inset-bottom をJSから読めるようにCSS変数として公開
- * BottomSheetの高さ計算に使用
+ * 底部 chrome 佔用 SSOT：--nav-h 由 BottomNav 以 ResizeObserver 寫入。
+ * 所有捲動容器 padding-bottom 與浮層 bottom 一律由 --chrome-bottom / --overlay-bottom 推導。
  */
 :root {
   --sab: env(safe-area-inset-bottom, 0px);
+  --chrome-bottom: calc(var(--nav-h, 62px) + 0.5rem + env(safe-area-inset-bottom, 0px));
+  --overlay-bottom: calc(var(--chrome-bottom) + 8px);
 }
 
 @layer base {
@@ -128,6 +133,16 @@
 .cat-particle {
   animation: cat-celebrate 1.2s ease-out forwards;
   pointer-events: none;
+}
+
+/* G11/G15：Home 固定底部面板高度受控（直向 ≤55dvh；短視窗保障可見內容區 ≥40% 視高）。 */
+.home-panel-fixed {
+  max-height: 55dvh;
+}
+@media (max-height: 640px) {
+  .home-panel-fixed {
+    max-height: calc(60dvh - 64px - env(safe-area-inset-top, 0px) - var(--chrome-bottom));
+  }
 }
 
 /* Hide scrollbar for horizontal lists */

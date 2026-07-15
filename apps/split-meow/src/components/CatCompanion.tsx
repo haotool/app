@@ -12,11 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 type CatState = 'idle' | 'walking' | 'react';
 
-interface CatCompanionProps {
-  bottomOffset?: number; // BottomNav 高度，預設 80px
-}
-
-export function CatCompanion({ bottomOffset = 80 }: CatCompanionProps) {
+export function CatCompanion() {
   const [catState, setCatState] = useState<CatState>('idle');
   const [showHeart, setShowHeart] = useState(false);
   const [walkX, setWalkX] = useState(0);
@@ -61,7 +57,10 @@ export function CatCompanion({ bottomOffset = 80 }: CatCompanionProps) {
   };
 
   return (
-    <div className="fixed right-4 z-40 select-none" style={{ bottom: bottomOffset + 8 }}>
+    <div
+      className="fixed right-4 z-40 select-none pointer-events-none"
+      style={{ bottom: 'calc(var(--overlay-bottom, 78px) + var(--home-panel-h, 0px))' }}
+    >
       <div className="relative">
         {/* 愛心噴出 */}
         <AnimatePresence>
@@ -99,7 +98,7 @@ export function CatCompanion({ bottomOffset = 80 }: CatCompanionProps) {
                 : { duration: 0.45, ease: 'easeOut' }
           }
           onAnimationComplete={catState === 'walking' ? onWalkComplete : undefined}
-          className="text-4xl cursor-pointer active:scale-90 transition-transform"
+          className="text-4xl cursor-pointer active:scale-90 transition-transform pointer-events-auto"
           style={{ lineHeight: 1 }}
         >
           {catState === 'react' ? '😸' : '🐱'}

@@ -83,7 +83,10 @@ export function SettingsTab() {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-28">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8"
+      style={{ paddingBottom: 'calc(var(--chrome-bottom) + 2.5rem)' }}
+    >
       <section className="flex flex-col items-center text-center space-y-6">
         <div className="relative group">
           <button

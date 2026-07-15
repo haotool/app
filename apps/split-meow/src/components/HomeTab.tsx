@@ -44,17 +44,31 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelH, setPanelH] = useState(400);
   const [keyboardH, setKeyboardH] = useState(0);
+  // 矮視窗（<480px 高，多為手機橫向）：面板改為流式佈局，主內容永遠可捲動抵達。
+  const [isShortViewport, setIsShortViewport] = useState(false);
 
-  // Track panel height → drives content paddingBottom
+  // Track panel height → drives content paddingBottom；固定模式時發布 --home-panel-h 供貓咪層避讓。
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      if (entry) setPanelH(entry.contentRect.height);
+      if (entry) {
+        setPanelH(entry.contentRect.height);
+        if (!isShortViewport) {
+          document.documentElement.style.setProperty(
+            '--home-panel-h',
+            `${Math.round(entry.contentRect.height)}px`,
+          );
+        }
+      }
     });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    if (isShortViewport) document.documentElement.style.removeProperty('--home-panel-h');
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--home-panel-h');
+    };
+  }, [isShortViewport]);
 
   // Detect system keyboard via visualViewport (iOS PWA / Android Chrome)
   useEffect(() => {
@@ -65,6 +79,14 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     update();
     window.visualViewport?.addEventListener('resize', update);
     return () => window.visualViewport?.removeEventListener('resize', update);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-height: 479px)');
+    const update = () => setIsShortViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
   const activeMembers = members.filter((m) => m.isActive);
@@ -94,14 +116,16 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
   // 系統鍵盤開啟時：面板移至鍵盤上方；否則：固定在 BottomNav 上方
   const isKeyboardOpen = keyboardH > 0;
-  const panelBottom = isKeyboardOpen
-    ? `${keyboardH}px`
-    : 'calc(0.5rem + var(--nav-h, 62px) + env(safe-area-inset-bottom, 0px))';
+  const panelBottom = isKeyboardOpen ? `${keyboardH}px` : 'var(--chrome-bottom)';
 
   return (
     <div
       className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-      style={{ paddingBottom: panelH + 80 }}
+      style={{
+        paddingBottom: isShortViewport
+          ? 'calc(var(--chrome-bottom) + 1rem)'
+          : `calc(${panelH + 16}px + var(--chrome-bottom))`,
+      }}
     >
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
@@ -196,11 +220,19 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         </div>
       )}
 
-      {/* Fixed Bottom Panel：取代 BottomSheet，避免系統鍵盤遮蓋計算機 */}
+      {/* 固定底部面板（G11）：直向 max-height 受控＋內部可捲；矮視窗（橫向）改流式，主內容永遠可達 */}
       <div
         ref={panelRef}
-        className="fixed inset-x-0 z-40 max-w-lg mx-auto rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2"
-        style={{ bottom: panelBottom, transition: 'bottom 0.15s ease-out' }}
+        data-testid="home-panel"
+        className={cn(
+          'z-40 max-w-lg rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2',
+          isShortViewport
+            ? 'relative -mx-4 mt-4'
+            : 'home-panel-fixed fixed inset-x-0 mx-auto overflow-y-auto overscroll-contain',
+        )}
+        style={
+          isShortViewport ? undefined : { bottom: panelBottom, transition: 'bottom 0.15s ease-out' }
+        }
       >
         {/* 裝飾性把手（不可拖動） */}
         <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2" />

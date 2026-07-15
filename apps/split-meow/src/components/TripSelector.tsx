@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
@@ -9,6 +9,20 @@ export function TripSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newTripName, setNewTripName] = useState('');
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 下拉錨定隨可視邊界收斂：左右各保留 1rem 安全邊界，窄屏（Fold 344）不出界。
+  // 首次繪製前量測寫入 margin-left（避免與 enter 動畫的 transform 衝突；關閉即卸載，無需重置）。
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const menu = menuRef.current;
+    if (!menu) return;
+    const anchorLeft = menu.getBoundingClientRect().left;
+    const menuW = menu.offsetWidth;
+    const vw = window.innerWidth;
+    const desired = Math.min(Math.max(anchorLeft, 16), Math.max(vw - 16 - menuW, 16));
+    menu.style.marginLeft = `${desired - anchorLeft}px`;
+  }, [isOpen]);
 
   const currentTrip = trips.find((trip) => trip.id === currentTripId);
 
@@ -26,6 +40,8 @@ export function TripSelector() {
     <div className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-testid="trip-selector-button"
+        title={currentTrip?.name}
         className="w-full flex items-center gap-1 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors shadow-ambient"
       >
         <span className="font-medium text-sm truncate min-w-0 flex-1 text-left">
@@ -45,7 +61,11 @@ export function TripSelector() {
               setIsAdding(false);
             }}
           />
-          <div className="absolute top-full mt-2 left-0 w-64 bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div
+            ref={menuRef}
+            data-testid="trip-selector-menu"
+            className="absolute top-full mt-2 left-0 w-[min(16rem,calc(100vw-2rem))] bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          >
             <div className="max-h-60 overflow-y-auto p-2 space-y-1">
               {trips.map((trip) => (
                 <button

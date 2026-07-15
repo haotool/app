@@ -14,7 +14,8 @@ function UpdatePromptClient() {
 
   return (
     <div
-      className="fixed bottom-24 left-1/2 z-[60] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 rounded-3xl border border-outline-variant/30 bg-surface-bright/95 px-4 py-3 shadow-ambient backdrop-blur-xl"
+      className="fixed left-1/2 z-[60] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 rounded-3xl border border-outline-variant/30 bg-surface-bright/95 px-4 py-3 shadow-ambient backdrop-blur-xl"
+      style={{ bottom: 'calc(var(--overlay-bottom) + var(--undo-toast-h, 0px))' }}
       role={needRefresh ? 'alert' : 'status'}
       aria-live={needRefresh ? 'assertive' : 'polite'}
     >
