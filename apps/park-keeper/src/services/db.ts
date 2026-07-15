@@ -107,8 +107,9 @@ export const dbService: StorageService = {
         request.onerror = () => reject(request.error ?? new Error('DB error'));
       });
     } catch (error) {
+      // 不得靜默回空陣列：讓呼叫端（Home）能呈現 IndexedDB 失敗狀態（issue #714）。
       console.error('Get Records Error:', error);
-      return [];
+      throw error instanceof Error ? error : new Error('Failed to load records.');
     }
   },
 

@@ -78,7 +78,10 @@ export default function SettingsTab({
     updateSettings({ ...settings, cacheDurationDays: days });
     if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
     cleanupTimerRef.current = setTimeout(() => {
-      void dbService.cleanupCache(days);
+      // getRecords 改為 throw 後（issue #714），避免滑桿操作產生 unhandled rejection。
+      dbService.cleanupCache(days).catch((error: unknown) => {
+        console.error('Cleanup cache failed:', error);
+      });
     }, CACHE_CLEANUP_DEBOUNCE_MS);
   };
 
