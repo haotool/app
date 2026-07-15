@@ -92,10 +92,24 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       const savedSettings = await dbService.getSettings();
       setSettings(savedSettings);
       void i18n.changeLanguage(savedSettings.language);
+      // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
+      await dbService.runStartupCleanup(savedSettings.cacheDurationDays);
       await loadRecords();
     };
     void init();
   }, [i18n, loadRecords]);
+
+  // 前景喚醒觸發清理（iOS 無 Periodic Background Sync，見 research §C8）。
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      void dbService.runStartupCleanup(settings.cacheDurationDays).then((cleaned) => {
+        if (cleaned > 0) void loadRecords();
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [settings.cacheDurationDays, loadRecords]);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--color-primary', theme.colors.primary);
