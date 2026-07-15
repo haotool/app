@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+115
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+116
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-15
+- ID：reward-papertrade-wave5-final-convergence
+- 原因：PR 702 終審 Fable 91/100 列 4 Major（marketable 限價劣價成交致負餘額靜默重置、100% 快捷鈕必拒單、WS 重連 K 線 gap、README 未同步）與多項 Minor 待收斂
+- 解法：TDD 修限價成交價=mark（限價或更優）＋槓桿 clamp＋persist schema 對齊引擎輸出域並補損壞重置 toast、100% 改向下截斷、重連 REST 回補、TP/SL 原子化、history cap 200、今日變化、og:image＋WebApplication JSON-LD、e2e 三旅程（限價成交/TP/強平）、README 補 papertrade（244 unit＋12 e2e 綠）
 
 - 日期：2026-07-15
 - ID：reward-papertrade-app-initial
