@@ -52,4 +52,77 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'minion-chompy',
     url: new URL('../../assets/sprites/minion-chompy.webp', import.meta.url).href,
   },
+  {
+    key: 'minion-shelly',
+    url: new URL('../../assets/sprites/minion-shelly.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-zappy',
+    url: new URL('../../assets/sprites/minion-zappy.webp', import.meta.url).href,
+  },
+  // v4 主題道具（§31/§32）：道具條 4 等分切割後逐件註冊，佈景資料驅動於 levels.ts decor。
+  {
+    key: 'prop-meadow-1',
+    url: new URL('../../assets/sprites/prop-meadow-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-meadow-2',
+    url: new URL('../../assets/sprites/prop-meadow-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-meadow-3',
+    url: new URL('../../assets/sprites/prop-meadow-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-meadow-4',
+    url: new URL('../../assets/sprites/prop-meadow-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-heights-1',
+    url: new URL('../../assets/sprites/prop-heights-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-heights-2',
+    url: new URL('../../assets/sprites/prop-heights-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-heights-3',
+    url: new URL('../../assets/sprites/prop-heights-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-heights-4',
+    url: new URL('../../assets/sprites/prop-heights-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-arena-1',
+    url: new URL('../../assets/sprites/prop-arena-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-arena-2',
+    url: new URL('../../assets/sprites/prop-arena-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-arena-3',
+    url: new URL('../../assets/sprites/prop-arena-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-arena-4',
+    url: new URL('../../assets/sprites/prop-arena-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-throne-1',
+    url: new URL('../../assets/sprites/prop-throne-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-throne-2',
+    url: new URL('../../assets/sprites/prop-throne-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-throne-3',
+    url: new URL('../../assets/sprites/prop-throne-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-throne-4',
+    url: new URL('../../assets/sprites/prop-throne-4.webp', import.meta.url).href,
+  },
 ];
