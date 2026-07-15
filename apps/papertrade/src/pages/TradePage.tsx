@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import clsx from 'clsx';
 import { ChevronDown, Inbox } from 'lucide-react';
 import {
   DEFAULT_SYMBOL,
@@ -11,8 +12,9 @@ import {
 import { DEFAULT_LEVERAGE } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
-import { formatAmount, formatPrice } from '../lib/format';
+import { formatAmount, formatFundingRate, formatPrice } from '../lib/format';
 import { CoinBadge } from '../components/CoinBadge';
+import { FundingCountdown } from '../components/FundingCountdown';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
@@ -119,6 +121,23 @@ export function TradePage() {
           {formatAmount(leverage, 1)}x
         </button>
       </header>
+
+      <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
+        <span>資金費率</span>
+        <span
+          className={clsx(
+            'tabular-nums',
+            ticker.fundingRate === undefined
+              ? 'text-text-2'
+              : ticker.fundingRate >= 0
+                ? 'text-long'
+                : 'text-short',
+          )}
+        >
+          {ticker.fundingRate !== undefined ? formatFundingRate(ticker.fundingRate) : '--'}
+        </span>
+        <FundingCountdown nextFundingTime={ticker.nextFundingTime} className="tabular-nums" />
+      </div>
 
       <div className="flex gap-3 px-4">
         <div className="min-w-0 flex-[0.58]">

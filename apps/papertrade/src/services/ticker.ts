@@ -10,6 +10,10 @@ export interface Ticker {
   lowPrice24h: number;
   turnover24h: number;
   volume24h: number;
+  // 永續合約資訊欄位：期貨或缺值時 Bybit 可能回空字串，一律容忍缺值。
+  fundingRate?: number;
+  nextFundingTime?: number;
+  openInterestValue?: number;
 }
 
 const wsTickerSchema = z.object({
@@ -23,6 +27,9 @@ const wsTickerSchema = z.object({
     lowPrice24h: z.string().optional(),
     turnover24h: z.string().optional(),
     volume24h: z.string().optional(),
+    fundingRate: z.string().optional(),
+    nextFundingTime: z.string().optional(),
+    openInterestValue: z.string().optional(),
   }),
 });
 
@@ -38,6 +45,9 @@ const NUMERIC_FIELDS = [
   'lowPrice24h',
   'turnover24h',
   'volume24h',
+  'fundingRate',
+  'nextFundingTime',
+  'openInterestValue',
 ] as const;
 
 type NumericField = (typeof NUMERIC_FIELDS)[number];
@@ -51,7 +61,8 @@ export function parseTickerMessage(message: unknown): TickerUpdate | null {
   const patch: Partial<Record<NumericField, number>> = {};
   for (const field of NUMERIC_FIELDS) {
     const raw = data[field];
-    if (raw === undefined) continue;
+    // 空字串 Number('') 為 0，會誤植假值，視同缺值。
+    if (raw === undefined || raw === '') continue;
     const value = Number(raw);
     if (Number.isFinite(value)) {
       patch[field] = value;
@@ -81,6 +92,9 @@ export function parseTickerMessage(message: unknown): TickerUpdate | null {
         lowPrice24h,
         turnover24h,
         volume24h,
+        fundingRate: patch.fundingRate,
+        nextFundingTime: patch.nextFundingTime,
+        openInterestValue: patch.openInterestValue,
       },
     };
   }

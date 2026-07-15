@@ -3,6 +3,8 @@ import {
   formatAmount,
   formatClockTime,
   formatCompact,
+  formatCountdown,
+  formatFundingRate,
   formatPrice,
   formatSignedPercent,
 } from './format';
@@ -72,6 +74,48 @@ describe('formatAmount', () => {
 
   it('returns placeholder for non-finite values', () => {
     expect(formatAmount(Number.NaN)).toBe('--');
+  });
+});
+
+describe('formatFundingRate', () => {
+  it('formats positive rates with plus sign and four decimals', () => {
+    expect(formatFundingRate(0.0001)).toBe('+0.0100%');
+  });
+
+  it('keeps minus sign for negative rates', () => {
+    expect(formatFundingRate(-0.005)).toBe('-0.5000%');
+  });
+
+  it('formats zero without sign', () => {
+    expect(formatFundingRate(0)).toBe('0.0000%');
+  });
+
+  it('returns placeholder for non-finite values', () => {
+    expect(formatFundingRate(Number.NaN)).toBe('--');
+  });
+});
+
+describe('formatCountdown', () => {
+  it('formats under an hour as mm:ss', () => {
+    expect(formatCountdown(65_000)).toBe('01:05');
+  });
+
+  it('formats an hour and above as h:mm:ss', () => {
+    expect(formatCountdown(3_600_000)).toBe('1:00:00');
+    expect(formatCountdown(7 * 3_600_000 + 59 * 60_000 + 59_000)).toBe('7:59:59');
+  });
+
+  it('rolls from h:mm:ss down to mm:ss at the hour boundary', () => {
+    expect(formatCountdown(3_599_000)).toBe('59:59');
+  });
+
+  it('clamps to 00:00 after crossing the settlement moment', () => {
+    expect(formatCountdown(0)).toBe('00:00');
+    expect(formatCountdown(-15_000)).toBe('00:00');
+  });
+
+  it('returns placeholder for non-finite values', () => {
+    expect(formatCountdown(Number.NaN)).toBe('--:--');
   });
 });
 

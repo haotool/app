@@ -19,6 +19,9 @@ export function tickerMessage(symbol: string, price = priceOf(symbol)): string {
       lowPrice24h: String(priceOf(symbol) * 0.95),
       turnover24h: '123456789',
       volume24h: '54321',
+      fundingRate: '0.0001',
+      nextFundingTime: String(Date.now() + 4 * 3_600_000),
+      openInterestValue: '32824881841.75',
     },
   });
 }

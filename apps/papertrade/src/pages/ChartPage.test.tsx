@@ -51,6 +51,9 @@ const btcTicker: Ticker = {
   lowPrice24h: 61848,
   turnover24h: 5122660654,
   volume24h: 80648.719,
+  fundingRate: 0.0001,
+  nextFundingTime: Date.now() + 2 * 3_600_000,
+  openInterestValue: 32824881841.75,
 };
 
 function renderChart(path: string) {
@@ -81,6 +84,39 @@ describe('ChartPage', () => {
     expect(screen.getByText('64,486.1')).toBeInTheDocument();
     expect(screen.getByText('+3.83%')).toBeInTheDocument();
     expect(screen.getByText('65,000.0')).toBeInTheDocument();
+  });
+
+  it('shows funding rate with direction color, countdown and open interest', async () => {
+    useMarketStore.getState().setTicker(btcTicker);
+    renderChart('/chart/BTCUSDT');
+
+    await screen.findByRole('heading', { name: /BTC/ });
+    expect(screen.getByText('資金費率')).toBeInTheDocument();
+    expect(screen.getByText('+0.0100%')).toHaveClass('text-long');
+    expect(screen.getByText(/^\d+:\d{2}:\d{2}$|^\d{2}:\d{2}$/)).toBeInTheDocument();
+    expect(screen.getByText('持倉量')).toBeInTheDocument();
+    expect(screen.getByText('32.82B')).toBeInTheDocument();
+  });
+
+  it('colors negative funding rates with the short tone', async () => {
+    useMarketStore.getState().setTicker({ ...btcTicker, fundingRate: -0.005 });
+    renderChart('/chart/BTCUSDT');
+
+    await screen.findByRole('heading', { name: /BTC/ });
+    expect(screen.getByText('-0.5000%')).toHaveClass('text-short');
+  });
+
+  it('falls back to placeholders when funding fields are missing', async () => {
+    useMarketStore.getState().setTicker({
+      ...btcTicker,
+      fundingRate: undefined,
+      nextFundingTime: undefined,
+      openInterestValue: undefined,
+    });
+    renderChart('/chart/BTCUSDT');
+
+    await screen.findByRole('heading', { name: /BTC/ });
+    expect(screen.getByText('--:--')).toBeInTheDocument();
   });
 
   it('requests klines with default timeframe', async () => {
