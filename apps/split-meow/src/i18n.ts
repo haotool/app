@@ -79,6 +79,7 @@ const resources = {
         rate_updated: '換錢所匯率 · 更新 {{time}}',
         rate_stale: '（可能過時）',
         rate_retry: '匯率更新失敗，點此重試',
+        currency_switch_draft_confirm: '切換幣別將清除未儲存的金額，確定要繼續嗎？',
         auto_detected: '自動偵測',
       },
       trip: {
@@ -95,6 +96,11 @@ const resources = {
         close: '關閉',
       },
       payer: { label: '付款人：{{name}}' },
+      common: { confirm: '確認', cancel: '取消' },
+      dialog: {
+        currency_title: '切換幣別',
+        mixed_title: '混用幣別',
+      },
       defaults: {
         trip_name: '今天聚餐',
         my_name: '我',
@@ -175,6 +181,7 @@ const resources = {
         rate_updated: 'MoneyBox rate · Updated {{time}}',
         rate_stale: '(may be outdated)',
         rate_retry: 'Rate update failed — tap to retry',
+        currency_switch_draft_confirm: 'Switching currency clears the unsaved amount. Continue?',
         auto_detected: 'Auto-detected',
       },
       trip: {
@@ -191,6 +198,11 @@ const resources = {
         close: 'Close',
       },
       payer: { label: 'Paid by: {{name}}' },
+      common: { confirm: 'Confirm', cancel: 'Cancel' },
+      dialog: {
+        currency_title: 'Switch Currency',
+        mixed_title: 'Mixed Currencies',
+      },
       defaults: {
         trip_name: "Today's Outing",
         my_name: 'Me',
@@ -271,6 +283,8 @@ const resources = {
         rate_updated: '환전소 환율 · 업데이트 {{time}}',
         rate_stale: '(오래되었을 수 있음)',
         rate_retry: '환율 업데이트 실패, 탭하여 재시도',
+        currency_switch_draft_confirm:
+          '통화를 전환하면 저장되지 않은 금액이 지워집니다. 계속하시겠습니까?',
         auto_detected: '자동 감지',
       },
       trip: {
@@ -287,6 +301,11 @@ const resources = {
         close: '닫기',
       },
       payer: { label: '결제자: {{name}}' },
+      common: { confirm: '확인', cancel: '취소' },
+      dialog: {
+        currency_title: '통화 전환',
+        mixed_title: '통화 혼용',
+      },
       defaults: {
         trip_name: '오늘의 외출',
         my_name: '나',
@@ -367,6 +386,8 @@ const resources = {
         rate_updated: '両替所レート · 更新 {{time}}',
         rate_stale: '（古い可能性あり）',
         rate_retry: 'レート更新失敗、タップして再試行',
+        currency_switch_draft_confirm:
+          '通貨を切り替えると未保存の金額がクリアされます。続行しますか？',
         auto_detected: '自動検出',
       },
       trip: {
@@ -383,6 +404,11 @@ const resources = {
         close: '閉じる',
       },
       payer: { label: '支払者：{{name}}' },
+      common: { confirm: '確認', cancel: 'キャンセル' },
+      dialog: {
+        currency_title: '通貨の切り替え',
+        mixed_title: '通貨の混在',
+      },
       defaults: {
         trip_name: '今日のお出かけ',
         my_name: '私',

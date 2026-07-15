@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
-import { confirmMixedCurrencyIfNeeded } from '../config/currencies';
+import { wouldCreateMixedCurrencyTrip } from '../config/currencies';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface CalculatorProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -35,16 +37,12 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
       ? evaluateExpression(currentValue) > 0
       : Object.values(itemizedValues).some((v) => evaluateExpression(v) > 0);
 
+  const [showMixedConfirm, setShowMixedConfirm] = useState(false);
+
   const handleSave = () => {
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-    if (
-      !confirmMixedCurrencyIfNeeded(
-        tripExpenses,
-        currency,
-        currency,
-        t('history.mixed_currency_confirm'),
-      )
-    ) {
+    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, currency)) {
+      setShowMixedConfirm(true);
       return;
     }
     saveExpense();
@@ -231,6 +229,16 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
           </div>
         )}
       </button>
+      <ConfirmDialog
+        open={showMixedConfirm}
+        title={t('dialog.mixed_title')}
+        message={t('history.mixed_currency_confirm')}
+        onConfirm={() => {
+          setShowMixedConfirm(false);
+          saveExpense();
+        }}
+        onCancel={() => setShowMixedConfirm(false)}
+      />
     </div>
   );
 }

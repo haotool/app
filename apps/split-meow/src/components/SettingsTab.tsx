@@ -5,8 +5,9 @@ import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
-import { CURRENCIES, type CurrencyCode, confirmMixedCurrencyIfNeeded } from '../config/currencies';
+import { CURRENCIES, type CurrencyCode, wouldCreateMixedCurrencyTrip } from '../config/currencies';
 import { isRateStale } from '../lib/exchangeRate';
+import { ConfirmDialog } from './ConfirmDialog';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -34,10 +35,16 @@ export function SettingsTab() {
     refreshExchangeRate,
     expenses,
     currentTripId,
+    calculatorValue,
+    itemizedValues,
   } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
+  const [currencyConfirm, setCurrencyConfirm] = useState<{
+    code: CurrencyCode;
+    message: string;
+  } | null>(null);
   const displayVersion = getDisplayVersion();
 
   // resolvedLanguage は supportedLngs に一致した確定済みの言語コードを返す
@@ -58,17 +65,21 @@ export function SettingsTab() {
   const handleCurrencyChange = (code: CurrencyCode) => {
     if (code === currency) return;
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-    if (
-      !confirmMixedCurrencyIfNeeded(
-        tripExpenses,
-        currency,
-        code,
-        t('history.mixed_currency_confirm'),
-      )
-    ) {
+    const messages: string[] = [];
+    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, code)) {
+      messages.push(t('history.mixed_currency_confirm'));
+    }
+    // 切換會清空未儲存 draft（R7）：draft 非空時先告知。
+    const hasDraft =
+      calculatorValue.trim() !== '' || Object.values(itemizedValues).some((v) => v.trim() !== '');
+    if (hasDraft) {
+      messages.push(t('settings.currency_switch_draft_confirm'));
+    }
+    if (messages.length === 0) {
+      setCurrency(code, true);
       return;
     }
-    setCurrency(code, true);
+    setCurrencyConfirm({ code, message: messages.join('\n\n') });
   };
 
   return (
@@ -310,6 +321,17 @@ export function SettingsTab() {
           {t('settings.version')}&nbsp;{displayVersion}
         </p>
       </footer>
+
+      <ConfirmDialog
+        open={currencyConfirm !== null}
+        title={t('dialog.currency_title')}
+        message={currencyConfirm?.message ?? ''}
+        onConfirm={() => {
+          if (currencyConfirm) setCurrency(currencyConfirm.code, true);
+          setCurrencyConfirm(null);
+        }}
+        onCancel={() => setCurrencyConfirm(null)}
+      />
     </div>
   );
 }

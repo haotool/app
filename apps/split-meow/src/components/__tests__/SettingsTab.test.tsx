@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 import { SettingsTab } from '../SettingsTab';
@@ -87,7 +87,6 @@ describe('SettingsTab', () => {
   });
 
   it('切換幣別若會混幣需確認，取消則不變更', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     useStore.setState({
       currency: 'TWD',
       currentTripId: 'default-trip',
@@ -108,13 +107,16 @@ describe('SettingsTab', () => {
     });
     renderSettings();
     fireEvent.click(screen.getByText('₩'));
-    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
+
+    const dialog = screen.getByRole('alertdialog');
+    expect(dialog).toHaveTextContent(i18n.t('history.mixed_currency_confirm'));
+
+    fireEvent.click(screen.getByText(i18n.t('common.cancel')));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(useStore.getState().currency).toBe('TWD');
-    confirmSpy.mockRestore();
   });
 
   it('切換幣別若會混幣且確認則變更', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     useStore.setState({
       currency: 'TWD',
       currentTripId: 'default-trip',
@@ -135,8 +137,42 @@ describe('SettingsTab', () => {
     });
     renderSettings();
     fireEvent.click(screen.getByText('₩'));
-    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
+    fireEvent.click(screen.getByText(i18n.t('common.confirm')));
+
     expect(useStore.getState().currency).toBe('KRW');
-    confirmSpy.mockRestore();
+  });
+
+  it('draft 非空時切換幣別先告知將清除未儲存金額', () => {
+    useStore.setState({
+      currency: 'TWD',
+      currentTripId: 'default-trip',
+      expenses: [],
+      calculatorValue: '10000',
+    });
+    renderSettings();
+    fireEvent.click(screen.getByText('₩'));
+
+    const dialog = screen.getByRole('alertdialog');
+    expect(dialog).toHaveTextContent(i18n.t('settings.currency_switch_draft_confirm'));
+
+    fireEvent.click(screen.getByText(i18n.t('common.confirm')));
+    const s = useStore.getState();
+    expect(s.currency).toBe('KRW');
+    expect(s.calculatorValue).toBe('');
+  });
+
+  it('draft 為空且無混幣風險時切換幣別不需確認', () => {
+    useStore.setState({
+      currency: 'TWD',
+      currentTripId: 'default-trip',
+      expenses: [],
+      calculatorValue: '',
+      itemizedValues: {},
+    });
+    renderSettings();
+    fireEvent.click(screen.getByText('₩'));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(useStore.getState().currency).toBe('KRW');
   });
 });
