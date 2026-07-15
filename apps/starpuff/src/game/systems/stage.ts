@@ -161,11 +161,15 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
   // 深度 QA / e2e 觀測點：僅開發與測試環境掛載（main.ts __sp 由結構線持有，避免跨線衝突）。
   if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
-    (window as unknown as { __spStage?: { playerY(): number; bricksAlive(): number } }).__spStage =
-      {
-        playerY: () => hooks.player().sprite.y,
-        bricksAlive: () => breakables.filter((brick) => brick.active).length,
-      };
+    (
+      window as unknown as {
+        __spStage?: { playerY(): number; bricksAlive(): number; movers(): number[][] };
+      }
+    ).__spStage = {
+      playerY: () => hooks.player().sprite.y,
+      bricksAlive: () => breakables.filter((brick) => brick.active).length,
+      movers: () => moving.map((plat) => [Math.round(plat.x), Math.round(plat.y)]),
+    };
   }
 
   return {
