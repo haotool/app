@@ -18,6 +18,8 @@ export const GameEvents = {
   BOSS_SPAWNED: 'boss:spawned',
   BOSS_DAMAGED: 'boss:damaged',
   BOSS_PHASE: 'boss:phase',
+  // P3 狂暴皇冠（§30）：slam 附加全場震落，站立玩家強制彈起由 GameScene 結算。
+  BOSS_QUAKE: 'boss:quake',
   BOSS_DEFEATED: 'boss:defeated',
   LEVEL_CHANGED: 'level:changed',
   LEVEL_QUOTA: 'level:quota',
@@ -52,6 +54,7 @@ export interface GameEventPayloads {
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.BOSS_PHASE]: { phase: BossPhase };
+  [GameEvents.BOSS_QUAKE]: { x: number; y: number };
   [GameEvents.BOSS_DEFEATED]: { x: number; y: number };
   [GameEvents.LEVEL_CHANGED]: { levelId: LevelId; nameZh: string; killQuota: number };
   [GameEvents.LEVEL_QUOTA]: { killCount: number; killQuota: number };

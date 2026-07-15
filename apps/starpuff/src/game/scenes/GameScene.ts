@@ -52,6 +52,9 @@ const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
+// P3（§30）：進場時停 0.3s；全場震落強制彈起初速。
+const P3_HITSTOP_MS = 300;
+const QUAKE_BOUNCE_VY = -360;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
 // 星星門：位於世界右端、地面上方；演出時玩家縮小旋轉飛入。
@@ -150,6 +153,7 @@ export class GameScene extends Phaser.Scene {
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));
     this.enemies.setTarget(this.player.sprite);
+    this.boss.setTarget(this.player.sprite);
 
     this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
     this.physics.add.collider(this.enemies.getGroup(), ground);
@@ -367,6 +371,11 @@ export class GameScene extends Phaser.Scene {
         this.feedEggs({ kind: 'boss-hit', sinceActiveMs: this.time.now - this.bossActiveAt });
       }
     });
+    // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
+    bind(GameEvents.BOSS_PHASE, ({ phase }) => {
+      if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
+    });
+    bind(GameEvents.BOSS_QUAKE, () => this.resolveBossQuake());
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
       const flavor = inhaleFlavor(kind);
@@ -736,6 +745,14 @@ export class GameScene extends Phaser.Scene {
       if (child.active) this.enemies.kill(child);
     }
     if (this.boss.isActive()) this.boss.applyDamage(STARSTORM.bossDamage);
+  }
+
+  // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
+  private resolveBossQuake(): void {
+    if (this.finished || this.transitioning) return;
+    this.fx.shake(10);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
   }
 
   // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。

@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
-import { createBossFsm, type BossCommand } from '../logic/bossFsm';
+import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { playSfx } from '../audio/sfx';
-import { landingDust, spawnTelegraph } from './fx';
+import { burstSmall, landingDust, spawnTelegraph } from './fx';
 
 export interface BossHandle {
   spawn(): void;
@@ -14,6 +14,8 @@ export interface BossHandle {
   getBody(): Phaser.GameObjects.GameObject;
   getProjectiles(): Phaser.Physics.Arcade.Group;
   getShockwaves(): Phaser.Physics.Arcade.Group;
+  // P3 追蹤彈目標（§30）：GameScene 注入玩家參照，與 enemies.setTarget 同模式。
+  setTarget(target: { x: number; y: number } | null): void;
   onMinionDrop(handler: () => void): void;
 }
 
@@ -24,6 +26,13 @@ const STAND_Y = GROUND_TOP - BOSS_H / 2;
 // 單屏佈局邊距（§28）：左右落點依當前視寬計算，禁硬編 854。
 const SIDE_MARGIN_X = 110;
 const ENRAGE_TINT = { r: 255, g: 107, b: 107 } as const;
+// P3 狂暴皇冠（§30）：體色金紫交替閃爍；追蹤彈緩速跟蹤 2s 後直線加速。
+const P3_GOLD = { r: 255, g: 217, b: 102 } as const;
+const P3_PURPLE = { r: 155, g: 123, b: 216 } as const;
+const P3_FLICKER_MS = 420;
+const HOMING_TRACK_SPEED = 120;
+const HOMING_STRAIGHT_SPEED = 300;
+const HOMING_TINT = 0xffd966;
 // 招式預警時長：rain 落點標記、slam 蓄力前搖、dash 閃白抖動。
 const RAIN_TELEGRAPH_MS = 500;
 const SLAM_WINDUP_MS = 350;
@@ -69,6 +78,7 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
   let active = false;
   let dying = false;
   let side: 'left' | 'right' = 'right';
+  let target: { x: number; y: number } | null = null;
 
   const viewW = () => scene.scale.width;
   const sideX = (which: 'left' | 'right') =>
@@ -103,21 +113,55 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
 
   let enrageTween: Phaser.Tweens.Tween | null = null;
 
-  const startEnrage = () => {
-    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+  interface Rgb {
+    r: number;
+    g: number;
+    b: number;
+  }
+
+  // 體色呼吸循環：兩色間往返插值；P2 白→紅、P3 金→紫共用。
+  const startTintCycle = (from: Rgb, to: Rgb, durationMs: number) => {
+    enrageTween?.destroy();
+    const mix = (a: number, b: number, v: number) => Math.round(a + (b - a) * v);
     enrageTween = scene.tweens.addCounter({
       from: 0,
       to: 1,
-      duration: 700,
+      duration: durationMs,
       yoyo: true,
       repeat: -1,
       onUpdate: (tween) => {
         const v = tween.getValue() ?? 0;
-        const g = Math.round(255 - (255 - ENRAGE_TINT.g) * v);
-        const b = Math.round(255 - (255 - ENRAGE_TINT.b) * v);
-        sprite.setTint((ENRAGE_TINT.r << 16) | (g << 8) | b);
+        sprite.setTint(
+          (mix(from.r, to.r, v) << 16) | (mix(from.g, to.g, v) << 8) | mix(from.b, to.b, v),
+        );
       },
     });
+  };
+
+  const startEnrage = () => {
+    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    startTintCycle({ r: 255, g: 255, b: 255 }, ENRAGE_TINT, 700);
+  };
+
+  // P3 進場演出（§30）：皇冠射出星環衝擊波（金色擴散環 + 星火），時停 0.3s 由 GameScene 接線。
+  const startP3 = () => {
+    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    startTintCycle(P3_GOLD, P3_PURPLE, P3_FLICKER_MS);
+    const crownX = sprite.x;
+    const crownY = sprite.y - BOSS_H * 0.55;
+    const ring = scene.add
+      .circle(crownX, crownY, 26, 0xffd966, 0)
+      .setStrokeStyle(6, 0xffd966, 0.95)
+      .setDepth(92);
+    scene.tweens.add({
+      targets: ring,
+      scale: 7,
+      alpha: 0,
+      duration: 700,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+    burstSmall(scene, crownX, crownY, 0xffd966);
   };
 
   const flashWhite = () => {
@@ -141,6 +185,17 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     return { x: x0 + vx * t, flightMs: t * 1000 };
   };
 
+  const spawnBall = (x: number, y: number): Phaser.Physics.Arcade.Sprite | null => {
+    const ball = projectiles.get(x, y, 'boss-jelly-ball') as Phaser.Physics.Arcade.Sprite | null;
+    if (!ball) return null;
+    ball.enableBody(true, x, y, true, true);
+    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時須復位。
+    ball.clearTint();
+    ball.setData('homingMs', 0);
+    (ball.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
+    return ball;
+  };
+
   const launchRain = (count: number) => {
     const stagger = 660 / count / fsm.speedFactor;
     for (let i = 0; i < count; i += 1) {
@@ -157,15 +212,26 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
         }
         delay(RAIN_TELEGRAPH_MS, () => {
           if (dying) return;
-          const ball = projectiles.get(
-            startX,
-            startY,
-            'boss-jelly-ball',
-          ) as Phaser.Physics.Arcade.Sprite | null;
-          if (!ball) return;
-          ball.enableBody(true, startX, startY, true, true);
-          ball.setVelocity(vx, vy);
+          const ball = spawnBall(startX, startY);
+          ball?.setVelocity(vx, vy);
         });
+      });
+    }
+  };
+
+  // P3 追蹤彈（§30）：金色彈上拋散開後緩速跟蹤玩家 2s，到期沿航向直線加速。
+  const launchHomingRain = (count: number) => {
+    const stagger = 660 / count / fsm.speedFactor;
+    for (let i = 0; i < count; i += 1) {
+      delay(i * stagger, () => {
+        if (dying) return;
+        const ball = spawnBall(sprite.x, sprite.y - BOSS_H / 2);
+        if (!ball) return;
+        ball.setTint(HOMING_TINT);
+        ball.setData('homingMs', BOSS.homingTrackMs);
+        const body = ball.body as Phaser.Physics.Arcade.Body;
+        body.setAllowGravity(false);
+        body.setVelocity(Phaser.Math.Between(-120, 120), Phaser.Math.Between(-260, -160));
       });
     }
   };
@@ -181,7 +247,7 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     wave.setVelocity(directionX * 320 * fsm.speedFactor, 0);
   };
 
-  const doSlam = () => {
+  const doSlam = (quake: boolean) => {
     wobble.pause();
     const sf = fsm.speedFactor;
     // 前搖 0.35s：squash 蓄力 + 微紅 tint + 音效預告，之後才起跳。
@@ -222,6 +288,8 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
       scene.cameras.main.shake(180, 0.008);
       spawnShockwave(1);
       spawnShockwave(-1);
+      // P3 全場震落（§30）：站立玩家強制彈起由 GameScene 接線結算。
+      if (quake) emitGameEvent(scene.events, GameEvents.BOSS_QUAKE, { x: sprite.x, y: sprite.y });
     });
   };
 
@@ -262,10 +330,11 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
       case 'idle':
         return;
       case 'rain':
-        launchRain(command.count);
+        if (command.homing) launchHomingRain(command.count);
+        else launchRain(command.count);
         return;
       case 'slam':
-        doSlam();
+        doSlam(command.quake);
         return;
       case 'dash':
         doDash();
@@ -401,7 +470,8 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
             });
             break;
           case 'phase':
-            startEnrage();
+            if (event.phase === 'p3') startP3();
+            else startEnrage();
             emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
             break;
           case 'minionDrop':
@@ -423,7 +493,23 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
       if (command) runCommand(command);
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;
-        const falling = (ball.body as Phaser.Physics.Arcade.Body).velocity.y > 0;
+        const body = ball.body as Phaser.Physics.Arcade.Body;
+        // P3 追蹤彈：跟蹤期逐幀導向玩家；到期沿當前航向直線加速（§30）。
+        const homingMs = (ball.getData('homingMs') as number | undefined) ?? 0;
+        if (homingMs > 0) {
+          const remaining = homingMs - deltaMs;
+          ball.setData('homingMs', Math.max(0, remaining));
+          if (remaining > 0 && target) {
+            scene.physics.moveTo(ball, target.x, target.y, HOMING_TRACK_SPEED);
+          } else {
+            const heading = Math.atan2(body.velocity.y, body.velocity.x);
+            body.setVelocity(
+              Math.cos(heading) * HOMING_STRAIGHT_SPEED,
+              Math.sin(heading) * HOMING_STRAIGHT_SPEED,
+            );
+          }
+        }
+        const falling = body.velocity.y > 0;
         if ((falling && ball.y > GROUND_TOP - 10) || ball.x < -40 || ball.x > viewW() + 40) {
           killProjectile(ball);
         }
@@ -453,6 +539,9 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     },
     getShockwaves() {
       return shockwaves;
+    },
+    setTarget(next: { x: number; y: number } | null) {
+      target = next;
     },
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);

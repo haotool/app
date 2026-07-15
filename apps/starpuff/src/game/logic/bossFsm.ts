@@ -5,10 +5,14 @@ import type { BossAction, BossPhase } from '../core/types';
 export const BOSS = {
   maxHp: 60,
   phase2HpRatio: 0.5,
+  // P3 狂暴皇冠（§30）：HP ≤25% 進入；rain 改追蹤彈 ×5、slam 附加全場震落。
+  phase3HpRatio: 0.25,
   bodyDamage: 1,
   enrageSpeedMultiplier: 1.3,
   jellyRainCountP1: 5,
   jellyRainCountP2: 7,
+  homingRainCount: 5,
+  homingTrackMs: 2000,
   minionSpawnHpStep: 10,
   idleMs: 1200,
   rainDurationMs: 1200,
@@ -16,17 +20,25 @@ export const BOSS = {
   dashDurationMs: 1400,
 } as const;
 
+const SPEED_FACTORS: Record<BossPhase, number> = {
+  p1: 1,
+  p2: BOSS.enrageSpeedMultiplier,
+  p3: BOSS.enrageSpeedMultiplier,
+};
+
 export function phaseForHp(hp: number, maxHp: number): BossPhase {
+  if (hp <= maxHp * BOSS.phase3HpRatio) return 'p3';
   return hp <= maxHp * BOSS.phase2HpRatio ? 'p2' : 'p1';
 }
 
 export function jellyRainCount(phase: BossPhase): number {
+  if (phase === 'p3') return BOSS.homingRainCount;
   return phase === 'p2' ? BOSS.jellyRainCountP2 : BOSS.jellyRainCountP1;
 }
 
-// P1：idle → jellyRain → idle → slam → …；P2 追加 dash。
+// P1：idle → jellyRain → idle → slam → …；P2/P3 追加 dash。
 export function attackCycle(phase: BossPhase): readonly BossAction[] {
-  return phase === 'p2' ? ['jellyRain', 'slam', 'dash'] : ['jellyRain', 'slam'];
+  return phase === 'p1' ? ['jellyRain', 'slam'] : ['jellyRain', 'slam', 'dash'];
 }
 
 export function nextAction(phase: BossPhase, previous: BossAction | null): BossAction {
@@ -37,10 +49,11 @@ export function nextAction(phase: BossPhase, previous: BossAction | null): BossA
 }
 
 // tick 輸出給呈現層的指令：進入攻擊發攻擊指令，返回待機發 idle。
+// P3（§30）：rain 帶 homing 旗標（追蹤彈）、slam 帶 quake 旗標（全場震落）。
 export type BossCommand =
   | { kind: 'idle' }
-  | { kind: 'rain'; count: number }
-  | { kind: 'slam' }
+  | { kind: 'rain'; count: number; homing: boolean }
+  | { kind: 'slam'; quake: boolean }
   | { kind: 'dash' };
 
 export type BossHitEvent =
@@ -69,7 +82,7 @@ export function createBossFsm(): BossFsm {
   let damageSinceDrop = 0;
   let defeated = false;
 
-  const speedFactor = (): number => (phase === 'p2' ? BOSS.enrageSpeedMultiplier : 1);
+  const speedFactor = (): number => SPEED_FACTORS[phase];
 
   // 時長於進入狀態當下依階段速度換算，P2 全節奏 ×1.3。
   const durationMs = (action: BossAction): number => {
@@ -94,9 +107,9 @@ export function createBossFsm(): BossFsm {
       case 'idle':
         return { kind: 'idle' };
       case 'jellyRain':
-        return { kind: 'rain', count: jellyRainCount(phase) };
+        return { kind: 'rain', count: jellyRainCount(phase), homing: phase === 'p3' };
       case 'slam':
-        return { kind: 'slam' };
+        return { kind: 'slam', quake: phase === 'p3' };
       case 'dash':
         return { kind: 'dash' };
       default: {
@@ -145,9 +158,10 @@ export function createBossFsm(): BossFsm {
       const events: BossHitEvent[] = [{ kind: 'damaged', hp }];
       const nextPhase = phaseForHp(hp, BOSS.maxHp);
       if (nextPhase !== phase) {
+        // 狂暴即時生效：剩餘計時依新舊速度係數換算（p2→p3 同速不重複縮短）。
+        const previousFactor = SPEED_FACTORS[phase];
         phase = nextPhase;
-        // 狂暴即時生效：剩餘計時同步換算至新節奏。
-        timerMs /= BOSS.enrageSpeedMultiplier;
+        timerMs *= previousFactor / SPEED_FACTORS[phase];
         events.push({ kind: 'phase', phase });
       }
       if (hp > 0) {
