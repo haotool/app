@@ -77,7 +77,6 @@
  * 所有捲動容器 padding-bottom 與浮層 bottom 一律由 --chrome-bottom / --overlay-bottom 推導。
  */
 :root {
-  --sab: env(safe-area-inset-bottom, 0px);
   --chrome-bottom: calc(var(--nav-h, 62px) + 0.5rem + env(safe-area-inset-bottom, 0px));
   --overlay-bottom: calc(var(--chrome-bottom) + 8px);
 }

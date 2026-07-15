@@ -227,15 +227,6 @@ export function SettingsTab() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-[2rem] hover:bg-surface-container transition-colors">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary">notifications_active</span>
-              <span className="font-medium">{t('settings.push_notifications')}</span>
-            </div>
-            <div className="w-12 h-6 bg-primary rounded-full relative p-1 cursor-pointer">
-              <div className="w-4 h-4 bg-on-primary rounded-full absolute right-1"></div>
-            </div>
-          </div>
           {/* Currency Selector */}
           <div className="p-5 bg-surface-container-low rounded-[2rem] space-y-3">
             <div className="flex items-center justify-between">
