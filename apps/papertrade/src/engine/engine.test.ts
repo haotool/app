@@ -439,6 +439,78 @@ describe('limit orders', () => {
       price: 60000,
     });
   });
+
+  it('liquidates immediately when a fallback fill opens past its liquidation price', () => {
+    // 滿倉 short limit 遇暴漲 mark：回退以 60000 成交後，70000 已越過 10x 強平價，
+    // 必須在同一 tick 立即強平，不得把負權益倉位留到下一筆 ticker。
+    const placed = placeLimitOrder(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      limitPrice: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const ticked = processTick(placed.account, 'BTCUSDT', 70000, NOW);
+    expect(ticked.account.orders).toHaveLength(0);
+    expect(ticked.account.positions).toHaveLength(0);
+    expect(ticked.events).toContainEqual({
+      type: 'limit-filled',
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.66,
+      price: 60000,
+    });
+    expect(ticked.events).toContainEqual(
+      expect.objectContaining({ type: 'liquidation', symbol: 'BTCUSDT', side: 'short' }),
+    );
+    expect(ticked.account.balance).toBeGreaterThanOrEqual(0);
+    expect(parsePersistedTradeState({ account: ticked.account })).not.toBeNull();
+  });
+
+  it('removes close orders tied to a position liquidated by a fallback fill in the same tick', () => {
+    // 既有 2x short 掛 59000 平倉單，再滿倉 10x short fallback @60000 合併後越過強平價：
+    // 同 tick 強平必須同步清除指向該倉位的 close 掛單，不留孤兒單到下一筆 ticker。
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 0.05,
+      price: 60000,
+      leverage: 2,
+      now: NOW,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    const positionId = opened.account.positions[0]?.id ?? '';
+
+    const withClose = placeCloseLimit(opened.account, {
+      positionId,
+      qty: 0.05,
+      limitPrice: 59000,
+      now: NOW,
+    });
+    if (!withClose.ok) throw new Error(withClose.error);
+
+    const placed = placeLimitOrder(withClose.account, {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 1.4,
+      limitPrice: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const ticked = processTick(placed.account, 'BTCUSDT', 70000, NOW);
+    expect(ticked.account.positions).toHaveLength(0);
+    expect(ticked.account.orders).toHaveLength(0);
+    expect(ticked.events).toContainEqual(
+      expect.objectContaining({ type: 'liquidation', symbol: 'BTCUSDT', side: 'short' }),
+    );
+    expect(ticked.account.balance).toBeGreaterThanOrEqual(0);
+    expect(parsePersistedTradeState({ account: ticked.account })).not.toBeNull();
+  });
 });
 
 describe('close limit orders', () => {

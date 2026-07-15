@@ -25,6 +25,9 @@ const { module: toolsModule } = await runnerImport(
 );
 const { TOOLS, getToolUrl } = toolsModule;
 
+// 首頁 bento 槽位數（對齊 Home.tsx BENTO_SLOTS）：首頁僅策展前 N 個工具，完整清單在 /tools/。
+const BENTO_SLOT_COUNT = 5;
+
 const SIZES = [
   { w: 375, h: 667, name: '375' },
   { w: 390, h: 844, name: '390' },
@@ -312,17 +315,17 @@ async function runHomeInteractions(browser) {
       heroCtaContactHref === '/contact/',
     );
 
-    // 5 張工具卡 href 正確
+    // 首頁 bento 策展前 5 個工具卡 href 正確（完整清單由 /tools/ 承載，對齊 Home.tsx BENTO_TOOLS）
     await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
     const cardHrefs = await page.$$eval('#tools a[href^="https://app.haotool.org"]', (as) =>
       as.map((a) => a.getAttribute('href')),
     );
-    const expectedHrefs = TOOLS.map(getToolUrl);
+    const expectedHrefs = TOOLS.slice(0, BENTO_SLOT_COUNT).map(getToolUrl);
     const allMatch = expectedHrefs.every((href) => cardHrefs.includes(href));
     record(
       report.interactions,
-      '5 張工具卡 href 對照 tools.ts 全部正確',
-      allMatch && cardHrefs.length === 5,
+      `首頁策展前 ${BENTO_SLOT_COUNT} 張工具卡 href 對照 tools.ts 正確`,
+      allMatch && cardHrefs.length === BENTO_SLOT_COUNT,
       `expected=${JSON.stringify(expectedHrefs)} actual=${JSON.stringify(cardHrefs)}`,
     );
 
@@ -646,8 +649,8 @@ async function runNotFoundInteractions(browser) {
     const expectedHrefs = TOOLS.map(getToolUrl);
     record(
       report.interactions,
-      '404 頁 5 個工具連結 href 正確',
-      expectedHrefs.every((h) => toolLinks.includes(h)) && toolLinks.length === 5,
+      `404 頁 ${TOOLS.length} 個工具連結 href 正確`,
+      expectedHrefs.every((h) => toolLinks.includes(h)) && toolLinks.length === TOOLS.length,
       `actual=${JSON.stringify(toolLinks)}`,
     );
 

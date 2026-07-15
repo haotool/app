@@ -1,13 +1,14 @@
 /* global HTMLRewriter, performance */
 
 /**
- * 安全標頭 Worker v5.8
+ * 安全標頭 Worker v5.9
  *
  * 處理 Cloudflare 無法以固定規則精準表達的安全邏輯。
  * 固定站點級政策由 Cloudflare Edge 管理，Worker 專注於路由分層 CSP、
  * CSP report、分享圖 CORS 與 ratewise 跨域隔離。
  *
  * 變更記錄：
+ * - v5.9: haotool 根站 img-src 允許 app.haotool.org，修復 canonical 站工具卡圖示被 CSP 擋下
  * - v5.8: papertrade CSP 移除未使用的 Google Fonts style/font 白名單，收斂攻擊面
  * - v5.7: 新增 papertrade CSP profile，connect-src 允許 Bybit 公開行情 WS 與 REST
  * - v5.6: haotool 根站 v2 同步：HTML 路徑改 /tools/、discovery skill 更新為 5 工具工具站敘事、LLM 文件清單補根站 llms.txt
@@ -34,7 +35,7 @@
  * - v3.6: 改用 HTMLRewriter 解析 inline script
  */
 
-const SECURITY_POLICY_VERSION = '5.8';
+const SECURITY_POLICY_VERSION = '5.9';
 const CSP_REPORT_MAX_BYTES = 16 * 1024;
 const HASHED_ASSET_PATH = /^\/(?:[^/]+\/)?assets\/[^/]+-[A-Za-z0-9_-]{6,12}\.(?:js|css|mjs)$/;
 
@@ -474,6 +475,8 @@ const HAOTOOL_HTML_PROFILE = createHtmlProfile({
 	scriptSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 	styleSources: ['https://fonts.googleapis.com'],
 	fontSources: ['https://fonts.gstatic.com'],
+	// 根站（haotool.org）工具卡圖示解析為 app.haotool.org 絕對 URL，需納入 img-src。
+	imgSources: ['https://app.haotool.org'],
 	connectSources: [CLOUDFLARE_INSIGHTS_SCRIPT],
 });
 
