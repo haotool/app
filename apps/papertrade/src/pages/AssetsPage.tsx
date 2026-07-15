@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import clsx from 'clsx';
 import { History } from 'lucide-react';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
@@ -7,6 +8,7 @@ import { type CloseReason } from '../engine/types';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { resolveDailyEquityBaseline } from '../lib/dailyEquity';
 import { ResetAccountButton } from '../components/ResetAccountButton';
 
 const REASON_LABELS: Record<CloseReason, string> = {
@@ -44,12 +46,30 @@ export function AssetsPage() {
   const metrics = getAccountMetrics(account, marks);
   const upnlPositive = metrics.totalUpnl >= 0;
 
+  // 當日起始權益以本地日界快照；掛載時解析一次，跨日於下次進入頁面時重建。
+  const [dailyBaseline] = useState(() =>
+    resolveDailyEquityBaseline(window.localStorage, new Date(), metrics.equity),
+  );
+  const dailyChange = metrics.equity - dailyBaseline;
+  const dailyChangePercent = dailyBaseline > 0 ? (dailyChange / dailyBaseline) * 100 : null;
+  const dailyPositive = dailyChange >= 0;
+
   return (
     <div className="flex flex-col px-4 pb-6">
       <header className="pb-4 pt-5">
         <p className="text-caption text-text-3">總權益（USDT）</p>
         <p className="mt-1 text-price-xl font-semibold tabular-nums">
           {formatAmount(metrics.equity, 2)}
+        </p>
+        <p
+          className={clsx(
+            'mt-1 text-label font-medium tabular-nums',
+            dailyPositive ? 'text-long' : 'text-short',
+          )}
+        >
+          今日變化 {signedUsdt(dailyChange)}
+          {dailyChangePercent !== null &&
+            `（${dailyChangePercent >= 0 ? '+' : '−'}${Math.abs(dailyChangePercent).toFixed(2)}%）`}
         </p>
       </header>
 

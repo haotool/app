@@ -6,6 +6,7 @@ import { routes } from '../routes';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { createInitialAccount } from '../engine/engine';
+import { DAILY_EQUITY_STORAGE_KEY, localDateKey } from '../lib/dailyEquity';
 import { type Ticker } from '../services/ticker';
 
 vi.mock('../services/marketWs', () => ({
@@ -38,6 +39,7 @@ function renderAssets() {
 
 describe('AssetsPage', () => {
   beforeEach(() => {
+    window.localStorage.removeItem(DAILY_EQUITY_STORAGE_KEY);
     useTradeStore.setState({ account: createInitialAccount(), toasts: [] });
     useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
     useMarketStore.getState().setTicker(btcTicker);
@@ -57,6 +59,32 @@ describe('AssetsPage', () => {
     expect(screen.getByText('600')).toBeInTheDocument();
     expect(screen.getByText('+100')).toBeInTheDocument();
     expect(screen.getByText('10,096.7')).toBeInTheDocument();
+  });
+
+  it('shows the daily change against the stored local-day baseline', () => {
+    window.localStorage.setItem(
+      DAILY_EQUITY_STORAGE_KEY,
+      JSON.stringify({ date: localDateKey(new Date()), equity: 10000 }),
+    );
+    useTradeStore.getState().openMarketOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    renderAssets();
+
+    // equity 10096.7 vs 起始 10000 → +96.7（+0.97%）。
+    expect(screen.getByText(/今日變化 \+96\.7（\+0\.97%）/)).toBeInTheDocument();
+  });
+
+  it('starts the day at zero change when no baseline exists yet', () => {
+    renderAssets();
+    expect(screen.getByText(/今日變化 \+0（\+0\.00%）/)).toBeInTheDocument();
+    expect(window.localStorage.getItem(DAILY_EQUITY_STORAGE_KEY)).toContain(
+      localDateKey(new Date()),
+    );
   });
 
   it('lists closed trades with fee and reason', () => {
