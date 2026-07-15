@@ -1,5 +1,11 @@
 # @app/papertrade
 
+## 0.2.1
+
+### Patch Changes
+
+- 2e9da3c: 測試穩定性修正，無使用者可見行為變更
+
 ## 0.2.0
 
 ### Minor Changes
