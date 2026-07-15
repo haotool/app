@@ -22,6 +22,10 @@ export const SceneKeys = {
   Title: 'Title',
   Game: 'Game',
   Result: 'Result',
+  Codex: 'Codex',
 } as const;
+
+// 圖鑑/技能介紹分頁（§36）。
+export type CodexTab = 'monsters' | 'skills';
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];
