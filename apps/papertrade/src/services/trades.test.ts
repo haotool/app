@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { mergeTrades, parseTradeMessage, type PublicTrade } from './trades';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  backfillTrades,
+  fetchRecentTrades,
+  mergeTrades,
+  parseTradeMessage,
+  type PublicTrade,
+} from './trades';
 
 const message = {
   topic: 'publicTrade.BTCUSDT',
@@ -54,5 +60,92 @@ describe('mergeTrades', () => {
 
   it('returns the same reference when nothing arrives', () => {
     expect(mergeTrades(existing, [], 10)).toBe(existing);
+  });
+});
+
+describe('backfillTrades', () => {
+  const wsAccumulated: PublicTrade[] = [
+    { id: 'w2', time: 400, side: 'sell', price: 101, size: 2 },
+    { id: 'w1', time: 300, side: 'buy', price: 100, size: 1 },
+  ];
+
+  it('appends history after live trades and dedupes by id', () => {
+    const history: PublicTrade[] = [
+      { id: 'w1', time: 300, side: 'buy', price: 100, size: 1 },
+      { id: 'h1', time: 200, side: 'sell', price: 99, size: 3 },
+      { id: 'h2', time: 100, side: 'buy', price: 98, size: 4 },
+    ];
+    const merged = backfillTrades(wsAccumulated, history, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['w2', 'w1', 'h1', 'h2']);
+  });
+
+  it('caps the merged list at the limit', () => {
+    const history: PublicTrade[] = [
+      { id: 'h1', time: 200, side: 'sell', price: 99, size: 3 },
+      { id: 'h2', time: 100, side: 'buy', price: 98, size: 4 },
+    ];
+    expect(backfillTrades(wsAccumulated, history, 3)).toHaveLength(3);
+  });
+});
+
+describe('fetchRecentTrades', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(body: unknown, ok = true) {
+    const fetchMock = vi.fn<(input: string | URL) => Promise<unknown>>(() =>
+      Promise.resolve({ ok, status: ok ? 200 : 500, json: () => Promise.resolve(body) }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('fetches and parses recent trades newest first', async () => {
+    const fetchMock = stubFetch({
+      retCode: 0,
+      result: {
+        list: [
+          { execId: 'e1', price: '64000.5', size: '0.01', side: 'Buy', time: '1700000000200' },
+          { execId: 'e2', price: '64000.0', size: '0.20', side: 'Sell', time: '1700000000100' },
+        ],
+      },
+    });
+
+    const trades = await fetchRecentTrades('BTCUSDT', 30);
+    expect(trades).toEqual<PublicTrade[]>([
+      { id: 'e1', time: 1700000000200, side: 'buy', price: 64000.5, size: 0.01 },
+      { id: 'e2', time: 1700000000100, side: 'sell', price: 64000, size: 0.2 },
+    ]);
+
+    const url = String(fetchMock.mock.calls[0]?.[0]);
+    expect(url).toContain('/v5/market/recent-trade?');
+    expect(url).toContain('category=linear');
+    expect(url).toContain('symbol=BTCUSDT');
+    expect(url).toContain('limit=30');
+  });
+
+  it('throws on non-ok response', async () => {
+    stubFetch({}, false);
+    await expect(fetchRecentTrades('BTCUSDT', 30)).rejects.toThrow();
+  });
+
+  it('throws on invalid payload or retCode', async () => {
+    stubFetch({ retCode: 10001, result: { list: [] } });
+    await expect(fetchRecentTrades('BTCUSDT', 30)).rejects.toThrow();
+  });
+
+  it('drops rows with non-numeric fields', async () => {
+    stubFetch({
+      retCode: 0,
+      result: {
+        list: [
+          { execId: 'ok', price: '100', size: '1', side: 'Buy', time: '1700000000000' },
+          { execId: 'bad', price: 'oops', size: '1', side: 'Sell', time: '1700000000001' },
+        ],
+      },
+    });
+    const trades = await fetchRecentTrades('BTCUSDT', 30);
+    expect(trades.map((trade) => trade.id)).toEqual(['ok']);
   });
 });

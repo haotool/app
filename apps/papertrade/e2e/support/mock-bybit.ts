@@ -44,6 +44,30 @@ export function orderbookMessage(topic: string): string {
   });
 }
 
+export function publicTradeMessage(topic: string): string {
+  const symbol = topic.split('.').at(-1) ?? 'BTCUSDT';
+  const price = priceOf(symbol);
+  return JSON.stringify({
+    topic,
+    type: 'snapshot',
+    data: [{ i: `${symbol}-t1`, T: Date.now(), S: 'Buy', p: String(price), v: '0.5' }],
+  });
+}
+
+function recentTradeRestBody(url: URL): string {
+  const symbol = url.searchParams.get('symbol') ?? 'BTCUSDT';
+  const price = priceOf(symbol);
+  const now = Date.now();
+  const list = Array.from({ length: 10 }, (_, index) => ({
+    execId: `${symbol}-r${index}`,
+    price: String(price),
+    size: '0.25',
+    side: index % 2 === 0 ? 'Buy' : 'Sell',
+    time: String(now - index * 1000),
+  }));
+  return JSON.stringify({ retCode: 0, retMsg: 'OK', result: { category: 'linear', list } });
+}
+
 function klineRestBody(url: URL): string {
   const symbol = url.searchParams.get('symbol') ?? 'BTCUSDT';
   const limit = Math.min(Number(url.searchParams.get('limit') ?? '200'), 200);
@@ -78,6 +102,14 @@ export async function mockBybit(page: Page): Promise<MockMarket> {
     });
   });
 
+  await page.route('**/v5/market/recent-trade*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: recentTradeRestBody(new URL(route.request().url())),
+    });
+  });
+
   let socket: WebSocketRoute | null = null;
   await page.routeWebSocket(/stream\.bybit\.com/, (ws) => {
     socket = ws;
@@ -93,6 +125,8 @@ export async function mockBybit(page: Page): Promise<MockMarket> {
           ws.send(tickerMessage(topic.slice('tickers.'.length)));
         } else if (topic.startsWith('orderbook.')) {
           ws.send(orderbookMessage(topic));
+        } else if (topic.startsWith('publicTrade.')) {
+          ws.send(publicTradeMessage(topic));
         }
       }
     });
