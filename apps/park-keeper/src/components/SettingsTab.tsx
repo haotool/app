@@ -2,7 +2,7 @@
  * SettingsTab – Original design with gradient decorations and animated lang
  * 自 pages/Home.tsx 純搬移抽出（issue #711 S0），行為零變更。
  */
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, LayoutGroup } from 'motion/react';
 import { Trash2, Check, Palette, Globe, Database, ShieldAlert, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -53,6 +53,13 @@ export default function SettingsTab({
   const { t, i18n } = useTranslation();
   const versionInfo = getVersionInfo();
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // 卸載時清除待執行清理；漏掉的清理由啟動/前景喚醒排程接手。
+      if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
+    };
+  }, []);
 
   const handleLanguageChange = (lang: LanguageType) => {
     void i18n.changeLanguage(lang);

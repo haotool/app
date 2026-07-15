@@ -61,14 +61,14 @@ const theme: ThemeConfig = {
 };
 
 function renderSettingsTab(updateSettings = vi.fn()) {
-  render(
+  const view = render(
     <SettingsTab
       settings={{ ...DEFAULT_SETTINGS }}
       updateSettings={updateSettings}
       theme={theme}
     />,
   );
-  return updateSettings;
+  return { updateSettings, unmount: view.unmount };
 }
 
 describe('SettingsTab – 保存天數滑桿', () => {
@@ -104,7 +104,7 @@ describe('SettingsTab – 保存天數滑桿', () => {
   });
 
   it('每次拖曳 tick 仍即時更新設定值（UI 與持久化不防抖）', () => {
-    const updateSettings = renderSettingsTab();
+    const { updateSettings } = renderSettingsTab();
     const slider = screen.getByRole('slider');
 
     fireEvent.change(slider, { target: { value: '10' } });
@@ -113,6 +113,17 @@ describe('SettingsTab – 保存天數滑桿', () => {
     expect(updateSettings).toHaveBeenLastCalledWith(
       expect.objectContaining({ cacheDurationDays: 20 }),
     );
+  });
+
+  it('卸載時清除待執行的防抖清理 timer', () => {
+    const { unmount } = renderSettingsTab();
+    const slider = screen.getByRole('slider');
+
+    fireEvent.change(slider, { target: { value: '3' } });
+    unmount();
+
+    vi.advanceTimersByTime(600);
+    expect(cleanupCacheMock).not.toHaveBeenCalled();
   });
 
   it('應明示調小天數的單向破壞警告文案', () => {
