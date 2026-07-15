@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMarketWsClient, type WsStatus } from './marketWs';
-import { WS_PING_INTERVAL_MS, WS_RECONNECT_BASE_MS } from '../config/market';
+import { WS_PING_INTERVAL_MS, WS_RECONNECT_BASE_MS, WS_SILENCE_TIMEOUT_MS } from '../config/market';
 
 class MockWebSocket {
   static readonly CONNECTING = 0;
@@ -110,7 +110,11 @@ describe('createMarketWsClient', () => {
     const socket = latestSocket();
     socket.simulateOpen();
 
-    vi.advanceTimersByTime(WS_PING_INTERVAL_MS * 2);
+    // 每 10 秒餵一則 tick 模擬常態行情，避免觸發靜默 watchdog。
+    for (let elapsed = 0; elapsed < WS_PING_INTERVAL_MS * 2; elapsed += 10_000) {
+      vi.advanceTimersByTime(10_000);
+      socket.simulateMessage({ topic: 'tickers.BTCUSDT', data: {} });
+    }
     const pings = socket.sentOps().filter((op) => op.op === 'ping');
     expect(pings).toHaveLength(2);
   });
@@ -199,5 +203,78 @@ describe('createMarketWsClient', () => {
     socket.onmessage?.({ data: 'not-json' });
     expect(handler).not.toHaveBeenCalled();
     expect(client.getStatus()).toBe('connected');
+  });
+
+  describe('silence watchdog', () => {
+    it('marks reconnecting and force-reconnects a half-open socket after silence timeout', () => {
+      const client = createMarketWsClient('wss://test');
+      const statuses: WsStatus[] = [];
+      client.onStatus((status) => statuses.push(status));
+      client.subscribe('tickers.BTCUSDT', vi.fn());
+
+      const first = latestSocket();
+      first.simulateOpen();
+      // 半開連線：close() 不會回呼 onclose，僅能靠訊息靜默偵測。
+      const closeSpy = vi.fn(() => {
+        first.readyState = MockWebSocket.CLOSED;
+      });
+      first.close = closeSpy;
+
+      vi.advanceTimersByTime(WS_SILENCE_TIMEOUT_MS);
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+      expect(client.getStatus()).toBe('reconnecting');
+      expect(statuses).toContain('reconnecting');
+      expect(MockWebSocket.instances).toHaveLength(1);
+
+      vi.advanceTimersByTime(WS_RECONNECT_BASE_MS);
+      expect(MockWebSocket.instances).toHaveLength(2);
+
+      const second = latestSocket();
+      second.simulateOpen();
+      expect(second.sentOps()).toContainEqual({ op: 'subscribe', args: ['tickers.BTCUSDT'] });
+      expect(client.getStatus()).toBe('connected');
+    });
+
+    it('any message including topicless pong resets the silence timer', () => {
+      const client = createMarketWsClient('wss://test');
+      client.subscribe('tickers.BTCUSDT', vi.fn());
+      const socket = latestSocket();
+      socket.simulateOpen();
+
+      vi.advanceTimersByTime(WS_SILENCE_TIMEOUT_MS - 1_000);
+      socket.simulateMessage({ op: 'pong' });
+      vi.advanceTimersByTime(WS_SILENCE_TIMEOUT_MS - 1_000);
+      expect(client.getStatus()).toBe('connected');
+      expect(MockWebSocket.instances).toHaveLength(1);
+
+      vi.advanceTimersByTime(1_000);
+      expect(client.getStatus()).toBe('reconnecting');
+    });
+
+    it('recovers when a stalled connecting socket never opens', () => {
+      const client = createMarketWsClient('wss://test');
+      client.subscribe('tickers.BTCUSDT', vi.fn());
+      const socket = latestSocket();
+      socket.close = vi.fn(() => {
+        socket.readyState = MockWebSocket.CLOSED;
+      });
+
+      vi.advanceTimersByTime(WS_SILENCE_TIMEOUT_MS);
+      expect(client.getStatus()).toBe('reconnecting');
+      vi.advanceTimersByTime(WS_RECONNECT_BASE_MS);
+      expect(MockWebSocket.instances).toHaveLength(2);
+    });
+
+    it('does not fire after teardown', () => {
+      const client = createMarketWsClient('wss://test');
+      const stop = client.subscribe('tickers.BTCUSDT', vi.fn());
+      const socket = latestSocket();
+      socket.simulateOpen();
+
+      stop();
+      vi.advanceTimersByTime(WS_SILENCE_TIMEOUT_MS * 2);
+      expect(client.getStatus()).toBe('idle');
+      expect(MockWebSocket.instances).toHaveLength(1);
+    });
   });
 });
