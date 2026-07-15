@@ -37,13 +37,19 @@ describe('combat', () => {
     expect(canInhale('spiky', true)).toBe(false);
   });
 
-  it('inhaleFlavor 吸入屬性換算：shelly 得標準星、不可吸者為 null', () => {
+  it('inhaleFlavor 吸入屬性換算：shelly 得標準星、zappy 得疾風星、不可吸者為 null', () => {
     expect(inhaleFlavor('jelly')).toBe('jelly');
     expect(inhaleFlavor('floaty')).toBe('floaty');
     expect(inhaleFlavor('puffy')).toBe('puffy');
     expect(inhaleFlavor('shelly')).toBe('jelly');
+    expect(inhaleFlavor('zappy')).toBe('floaty');
     expect(inhaleFlavor('spiky')).toBeNull();
     expect(inhaleFlavor('chompy')).toBeNull();
+  });
+
+  it('zappy 恆可吸（§30）', () => {
+    expect(canInhale('zappy')).toBe(true);
+    expect(canInhale('zappy', true)).toBe(true);
   });
 
   it('isInInhaleRange 依朝向與距離判定', () => {

@@ -37,6 +37,7 @@ const TEXTURES: Record<EnemyKind, string> = {
   puffy: 'minion-puffy',
   chompy: 'minion-chompy',
   shelly: 'minion-shelly',
+  zappy: 'minion-zappy',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -46,6 +47,7 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   puffy: 0xffa8a0,
   chompy: 0xf5e6a8,
   shelly: 0x7fd8c8,
+  zappy: 0xe8d88a,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -57,6 +59,7 @@ const HP: Record<EnemyKind, number> = {
   puffy: 1,
   chompy: 10,
   shelly: 1,
+  zappy: 1,
 };
 
 const SIZE = 40;
@@ -94,6 +97,15 @@ const SHELLY_SPIN_OMEGA = 0.02;
 const SHELLY_SHELL_SCALE = 0.82;
 const SHELLY_WADDLE_OMEGA = 0.008;
 const SHELLY_WADDLE_RAD = 0.08;
+// zappy：緩慢懸浮追蹤；每 3s 放電環（半徑 70、前搖 0.5s 閃爍預警）（§30）。
+const ZAPPY_SPEED = 40;
+const ZAPPY_BOB_SPEED = 14;
+const ZAPPY_BOB_OMEGA = 0.003;
+const ZAPPY_INTERVAL_MS = 3000;
+const ZAPPY_WINDUP_MS = 500;
+const ZAPPY_RING_RADIUS = 70;
+const ZAPPY_RING_ACTIVE_MS = 200;
+const ZAPPY_FLICKER_MS = 80;
 // 穿透星停留重疊時的重複結算保護（須大於星彈穿越 hitbox 的時間）。
 const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
@@ -182,6 +194,36 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       body.setSize(SPIKE_SIZE, SPIKE_SIZE);
       body.setVelocity(vx, vy);
     }
+  }
+
+  // 放電環（§30）：環形 graphics 脈衝 + 圓形 hitbox 短暫啟用；傷害結算走既有 hazards 管線。
+  function zapRing(x: number, y: number): void {
+    playSfx('zap');
+    const ring = scene.add
+      .circle(x, y, ZAPPY_RING_RADIUS, 0xfff3b0, 0.16)
+      .setStrokeStyle(4, 0xffe28a, 0.95)
+      .setDepth(60);
+    ring.setScale(0.25);
+    scene.tweens.add({
+      targets: ring,
+      scale: 1,
+      alpha: { from: 1, to: 0 },
+      duration: 340,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+    const zap = spawnHazard(x, y);
+    if (!zap) return;
+    zap.setVisible(false);
+    zap.setData('hazardKind', 'zap');
+    zap.setData('lifeMs', ZAPPY_RING_ACTIVE_MS);
+    const body = zap.body as Phaser.Physics.Arcade.Body;
+    // 圓形 hitbox 以 frame 中心定位；池回收重用時 setSize 會自動復位為矩形。
+    body.setCircle(
+      ZAPPY_RING_RADIUS,
+      zap.width / 2 - ZAPPY_RING_RADIUS,
+      zap.height / 2 - ZAPPY_RING_RADIUS,
+    );
   }
 
   // 咬合 hitbox：嘴部朝玩家側，僅啟用 0.3s；視覺由 chompy 本體咬合動畫承擔。
@@ -369,6 +411,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       sprite.setTintMode(Phaser.TintModes.MULTIPLY);
       sprite.setData('kind', kind);
       sprite.setData('hopMs', 0);
+      sprite.setData('zapMs', 0);
       sprite.setData('phase', Math.random() * Math.PI * 2);
       sprite.setData('hp', HP[kind]);
       sprite.setData('dmgCdMs', 0);
@@ -384,7 +427,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       const hitboxScale = kind === 'spiky' ? 0.85 : 0.9;
       body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
       body.setCollideWorldBounds(true);
-      body.setAllowGravity(kind !== 'floaty' && kind !== 'puffy');
+      body.setAllowGravity(kind !== 'floaty' && kind !== 'puffy' && kind !== 'zappy');
       // spiky/shelly 以 bounce=1 碰牆自動折返；chompy 定點紮根。
       body.setBounce(kind === 'spiky' || kind === 'shelly' ? 1 : 0, 0);
       body.setImmovable(kind === 'chompy');
@@ -542,6 +585,34 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           }
           case 'shelly': {
             updateShelly(sprite, deltaMs);
+            break;
+          }
+          case 'zappy': {
+            const zapMs = (sprite.getData('zapMs') as number) + deltaMs;
+            if (zapMs >= ZAPPY_INTERVAL_MS) {
+              sprite.setData('zapMs', 0);
+              sprite.clearTint();
+              zapRing(sprite.x, sprite.y);
+            } else if (zapMs >= ZAPPY_INTERVAL_MS - ZAPPY_WINDUP_MS) {
+              // 前搖 0.5s：定身 + 明暗交替閃爍預警。
+              sprite.setData('zapMs', zapMs);
+              body.setVelocity(0, 0);
+              sprite.setTint(Math.floor(zapMs / ZAPPY_FLICKER_MS) % 2 === 0 ? 0xffffff : 0xffe28a);
+            } else {
+              sprite.setData('zapMs', zapMs);
+              // 緩慢懸浮追蹤玩家 + 正弦上下漂浮。
+              const phase = sprite.getData('phase') as number;
+              const bob = Math.sin(elapsedMs * ZAPPY_BOB_OMEGA + phase) * ZAPPY_BOB_SPEED;
+              if (target) {
+                const angle = Math.atan2(target.y - sprite.y, target.x - sprite.x);
+                body.setVelocity(
+                  Math.cos(angle) * ZAPPY_SPEED,
+                  Math.sin(angle) * ZAPPY_SPEED + bob,
+                );
+              } else {
+                body.setVelocity(0, bob);
+              }
+            }
             break;
           }
           default: {
