@@ -364,6 +364,7 @@ export function HistoryTab() {
               return (
                 <div
                   key={i}
+                  data-testid="settlement-row"
                   onClick={() => toggleSettlement(settlementKey)}
                   className={cn(
                     'bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient cursor-pointer transition-opacity active:scale-[0.98] transition-transform',
@@ -857,9 +858,14 @@ export function HistoryTab() {
                                 e.stopPropagation();
                                 setEditingExpenseId(exp.id);
                               }}
-                              className="text-xs text-primary flex items-center gap-1 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                              className="text-xs text-primary flex items-center gap-1 min-h-11 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[14px]">edit</span>{' '}
+                              <span
+                                className="material-symbols-outlined text-[14px]"
+                                aria-hidden="true"
+                              >
+                                edit
+                              </span>{' '}
                               {t('history.edit')}
                             </button>
                             <button
@@ -867,10 +873,15 @@ export function HistoryTab() {
                                 e.stopPropagation();
                                 softDelete(exp.id);
                               }}
-                              className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                              className="text-xs text-error flex items-center gap-1 min-h-11 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                               title={t('history.delete_title')}
                             >
-                              <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
+                              <span
+                                className="material-symbols-outlined text-[14px]"
+                                aria-hidden="true"
+                              >
+                                delete
+                              </span>{' '}
                               {t('history.delete')}
                             </button>
                           </div>
