@@ -12,6 +12,7 @@ import { DEFAULT_LEVERAGE } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { CoinBadge } from '../components/CoinBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
@@ -93,13 +94,7 @@ export function TradePage() {
           aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
           className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
         >
-          <span
-            aria-hidden
-            className="flex size-8 items-center justify-center rounded-full text-caption font-semibold text-bg"
-            style={{ backgroundColor: meta.accent }}
-          >
-            {meta.base.slice(0, 2)}
-          </span>
+          <CoinBadge symbol={symbol} />
           <span>
             <span className="flex items-center gap-1 text-body font-semibold">
               {meta.base}

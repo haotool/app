@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import clsx from 'clsx';
 import { SYMBOLS, SYMBOL_META, type MarketSymbol } from '../config/market';
 import { useMarketStore } from '../stores/marketStore';
 import { fetchSparkline } from '../services/sparkline';
 import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
+import { CoinBadge } from '../components/CoinBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { Sparkline } from '../components/Sparkline';
 
@@ -40,12 +41,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
         to={`/chart/${symbol}`}
         className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 transition-colors active:bg-surface-2"
       >
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-caption font-semibold text-text"
-          style={{ backgroundColor: `color-mix(in srgb, ${meta.accent} 20%, transparent)` }}
-        >
-          {meta.base.slice(0, 3)}
-        </span>
+        <CoinBadge symbol={symbol} size="md" variant="soft" />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-body font-medium">
             {meta.base}
@@ -107,7 +103,7 @@ export function MarketsPage() {
     <section>
       <header className="sticky top-0 z-10 bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
         <h1 className="mb-3 text-price-lg font-semibold">行情</h1>
-        <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface px-3">
+        <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">
           <Search size={18} className="shrink-0 text-text-3" aria-hidden />
           <input
             type="search"
@@ -115,8 +111,20 @@ export function MarketsPage() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜尋交易對"
             aria-label="搜尋交易對"
-            className="w-full bg-transparent text-body text-text outline-none placeholder:text-text-3"
+            className="min-h-11 w-full bg-transparent text-body text-text outline-none placeholder:text-text-3"
           />
+          {query !== '' ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="清除搜尋"
+              className="flex size-11 shrink-0 items-center justify-center text-text-3 active:text-text"
+            >
+              <X size={16} aria-hidden />
+            </button>
+          ) : (
+            <span className="w-3 shrink-0" aria-hidden />
+          )}
         </label>
       </header>
       {visibleSymbols.length === 0 ? (

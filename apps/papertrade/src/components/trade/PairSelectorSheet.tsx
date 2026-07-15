@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
+import { CoinBadge } from '../CoinBadge';
 import { SYMBOLS, SYMBOL_META, type MarketSymbol } from '../../config/market';
 import { useMarketStore } from '../../stores/marketStore';
 import { formatPrice, formatSignedPercent } from '../../lib/format';
@@ -34,13 +35,7 @@ export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSel
                   isSelected ? 'bg-primary/10' : 'active:bg-surface-2',
                 )}
               >
-                <span
-                  aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-caption font-semibold text-bg"
-                  style={{ backgroundColor: meta.accent }}
-                >
-                  {meta.base.slice(0, 2)}
-                </span>
+                <CoinBadge symbol={symbol} />
                 <span className="flex-1">
                   <span className="block text-body font-medium">
                     {meta.base}
