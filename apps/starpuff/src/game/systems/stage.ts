@@ -146,6 +146,39 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     });
   }
 
+  // 彈簧發射單一出口：物理 overlap 與掃掠背擋（§43）共用，cooldown 閘去重。
+  function tryLaunchSpring(spring: Phaser.GameObjects.Rectangle): void {
+    const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
+    const lockedUntil = (spring.getData('lockedUntil') as number | undefined) ?? 0;
+    if (!canSpringLaunch(scene.time.now, lockedUntil, body.velocity.y)) return;
+    spring.setData('lockedUntil', scene.time.now + SPRING_COOLDOWN_MS);
+    body.setVelocityY(SPRING_VELOCITY_Y);
+    playSfx('spring');
+    scene.tweens.add({
+      targets: spring,
+      scaleY: 0.55,
+      duration: 80,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+    });
+  }
+
+  // 彈簧掃掠背擋（§43，鏡像星星門 syncGateSweep）：Arcade 靜態 overlap 存在間歇漏檢，
+  // walk-over 幾何判定補判——腳底落在簧頂帶且水平投影重疊即發射。
+  function sweepSprings(body: Phaser.Physics.Arcade.Body): void {
+    for (const spring of springs) {
+      const sb = spring.body as Phaser.Physics.Arcade.StaticBody;
+      if (
+        body.right > sb.left - 6 &&
+        body.left < sb.right + 6 &&
+        body.bottom >= sb.top - 8 &&
+        body.bottom <= sb.bottom + 10
+      ) {
+        tryLaunchSpring(spring);
+      }
+    }
+  }
+
   function breakBrick(target: Phaser.GameObjects.GameObject): boolean {
     const brick = asRect(target);
     if (!brick.active) return false;
@@ -196,6 +229,8 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         dropUntilMs = scene.time.now + DROP_THROUGH_MS;
         if (body.velocity.y < 0) body.setVelocityY(30);
       }
+
+      sweepSprings(body);
     },
 
     getOneWay: () => oneWay,
@@ -215,20 +250,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
     // 彈簧（recon C.3）：-640 超級跳 + 冷卻 300ms + squash + 專屬音；上升中不觸發。
     onSpringOverlap: (a, b) => {
-      const spring = asRect(hasFlag(a, 'spring') ? a : b);
-      const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
-      const lockedUntil = (spring.getData('lockedUntil') as number | undefined) ?? 0;
-      if (!canSpringLaunch(scene.time.now, lockedUntil, body.velocity.y)) return;
-      spring.setData('lockedUntil', scene.time.now + SPRING_COOLDOWN_MS);
-      body.setVelocityY(SPRING_VELOCITY_Y);
-      playSfx('spring');
-      scene.tweens.add({
-        targets: spring,
-        scaleY: 0.55,
-        duration: 80,
-        yoyo: true,
-        ease: 'Quad.easeOut',
-      });
+      tryLaunchSpring(asRect(hasFlag(a, 'spring') ? a : b));
     },
 
     breakBrick,

@@ -13,17 +13,24 @@ import {
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
+import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
+  SHELL_SHIELD,
   advanceAirDash,
+  advanceShield,
   advanceStarstormHold,
   airDashSpeed,
   createAirDashState,
+  createShieldState,
   fillMagazine,
   isAirDashing,
+  isFrontalHit,
+  isTopShelly,
   popTopSlot,
   pushGoldStar,
   refundDashFlap,
   resolveActionPress,
+  resolveShieldBlock,
   shouldFireOnRelease,
   starDamage,
   starPitch,
@@ -50,6 +57,8 @@ export interface PlayerHandle {
   getMagazine(): readonly MagazineSlot[];
   grantFullMagazine(): void;
   grantGoldStar(): void;
+  grantStar(flavor: StarFlavor): void;
+  isShieldRaised(): boolean;
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
   getStars(): Phaser.Physics.Arcade.Group;
@@ -131,6 +140,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let stormHoldMs = 0;
   let slamming = false;
   let slamCdMs = 0;
+  // 手感（§41）：上一幀水平目標速度供邊緣偵測（起跑/急停/轉身塵埃一次性觸發）。
+  let prevMoveTarget = 0;
+  // 殼盾（§40）：舉盾 FSM 與格擋後短無敵，與受擊 i-frame 分離避免誤入受傷表現。
+  let shield = createShieldState();
+  let blockInvulnMs = 0;
+  let wasShieldRaised = false;
   // 空中疾衝（§30）：雙擊偵測與 CD 走 skills 純狀態機；殘影快照計時。
   // lastAirTapFlapped：首拍是否實際消耗拍翅，供疾衝觸發當幀退還（refundDashFlap）。
   let airDash = createAirDashState();
@@ -183,6 +198,52 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
     });
+  };
+
+  // 移動塵埃（§41）：起跑/急停/轉身腳邊小塵點，向行進反方向踢出後淡逝（預算 ≤4 顆/次）。
+  const spawnMoveDust = (event: MoveFxEvent) => {
+    const body = sprite.body as Phaser.Physics.Arcade.Body;
+    const kickDir = event === 'hard-stop' ? Math.sign(body.velocity.x) || facing : -facing;
+    const count = event === 'turn' ? 4 : 3;
+    for (let i = 0; i < count; i += 1) {
+      const puff = scene.add
+        .circle(
+          sprite.x - kickDir * (4 + Math.random() * 10),
+          sprite.y + PLAYER_SIZE / 2 - 6 + Math.random() * 4,
+          2.5 + Math.random() * 2,
+          0xffffff,
+          0.65,
+        )
+        .setDepth(sprite.depth - 1);
+      scene.tweens.add({
+        targets: puff,
+        x: puff.x + kickDir * (14 + Math.random() * 22),
+        y: puff.y - (4 + Math.random() * 10),
+        alpha: 0,
+        scale: 0.4,
+        duration: 260 + Math.random() * 90,
+        ease: 'Quad.easeOut',
+        onComplete: () => puff.destroy(),
+      });
+    }
+    // 轉身（§41）：小幅擠壓遮蓋翻面瞬間，翻面讀感平滑。
+    if (event === 'turn') squashStretch(0.86, 1.1);
+  };
+
+  // 殼盾面前弧盾（§40）：面向側青綠弧線 + 淡填充，逐幀重繪。
+  const shieldGfx = scene.add.graphics().setDepth(94);
+  const drawShield = () => {
+    shieldGfx.clear();
+    if (!shield.raised) return;
+    const cx = sprite.x + facing * 14;
+    const base = facing === 1 ? 0 : Math.PI;
+    shieldGfx.fillStyle(0x7fd8c8, 0.18);
+    shieldGfx.slice(cx, sprite.y, 36, base - 1.05, base + 1.05, false);
+    shieldGfx.fillPath();
+    shieldGfx.lineStyle(4, 0x7fd8c8, 0.95);
+    shieldGfx.beginPath();
+    shieldGfx.arc(cx, sprite.y, 36, base - 1.05, base + 1.05, false);
+    shieldGfx.strokePath();
   };
 
   // 星暴進度環（§23）：玩家頭頂充能弧線，逐幀重繪。
@@ -296,6 +357,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       invulnerableMs = tickTimer(invulnerableMs, deltaMs);
       hurtLockMs = tickTimer(hurtLockMs, deltaMs);
       slamCdMs = tickTimer(slamCdMs, deltaMs);
+      blockInvulnMs = tickTimer(blockInvulnMs, deltaMs);
 
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       const onGround = body.blocked.down || body.touching.down;
@@ -345,15 +407,23 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           spawnGhost();
         }
       } else if (hurtLockMs <= 0) {
-        if (controls.left) {
-          sprite.setVelocityX(-PLAYER.moveSpeed);
-          facing = -1;
-        } else if (controls.right) {
-          sprite.setVelocityX(PLAYER.moveSpeed);
-          facing = 1;
-        } else {
-          sprite.setVelocityX(0);
-        }
+        // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
+        // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
+        const moveTarget = controls.left
+          ? -PLAYER.moveSpeed
+          : controls.right
+            ? PLAYER.moveSpeed
+            : 0;
+        if (moveTarget !== 0) facing = moveTarget > 0 ? 1 : -1;
+        const moveFx = detectMoveFx({
+          onGround,
+          prevTarget: prevMoveTarget,
+          target: moveTarget,
+          velocityX: body.velocity.x,
+        });
+        if (moveFx) spawnMoveDust(moveFx);
+        prevMoveTarget = moveTarget;
+        sprite.setVelocityX(approachVelocity(body.velocity.x, moveTarget, deltaMs));
 
         // 寬容度（§15.1）：coyote 期內離台仍可起跳；提前按跳以 buffer 落地即跳。
         // 疾衝觸發當幀的按壓已被疾衝消耗，不再進入跳躍/拍翅分支。
@@ -376,13 +446,15 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           }
         }
 
-        // B 鍵決策（§23）：空中 down+B 下衝擊；滿匣延遲至放開結算（點按發射 vs 長按星暴）。
+        // B 鍵決策（§23/§40）：空中 down+B 下衝擊；滿匣與頂槽殼盾星延遲至放開結算
+        // （點按發射 vs 長按星暴/舉盾）。
         if (controls.actionPressed) {
           const command = resolveActionPress({
             airborne: !onGround,
             down: controls.down,
             slamCooldownMs: slamCdMs,
             ammo: magazine.length,
+            topIsShelly: isTopShelly(magazine),
           });
           if (command === 'slam') startSlam();
           else if (command === 'fire') fireStar();
@@ -414,7 +486,17 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       drawStormRing();
 
       actionHoldMs = controls.actionHeld ? actionHoldMs + deltaMs : 0;
-      inhaling = actionHoldMs >= INHALE.holdThresholdMs;
+      // 殼盾（§40）：頂槽殼盾星且未滿匣時，長按改舉正面護盾（取代吸入語意）；
+      // 滿匣長按維持星暴優先，肌肉記憶不變。
+      shield = advanceShield(shield, {
+        deltaMs,
+        held: controls.actionHeld && actionHoldMs >= INHALE.holdThresholdMs && hurtLockMs <= 0,
+        eligible: isTopShelly(magazine) && magazine.length < STAR.maxAmmo,
+      });
+      if (shield.raised && !wasShieldRaised) playSfx('shell-spin');
+      wasShieldRaised = shield.raised;
+      drawShield();
+      inhaling = actionHoldMs >= INHALE.holdThresholdMs && !shield.raised;
       zoneBody.enable = inhaling;
       zone.setPosition(sprite.x + facing * (INHALE.rangePx / 2), sprite.y);
 
@@ -452,6 +534,26 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     takeDamage(damage: number, sourceX: number) {
       // 疾衝無敵幀（§30）：衝刺期間免傷。
       if (isAirDashing(airDash)) return;
+      // 格擋後短無敵（§40）：防同一接觸連續結算。
+      if (blockInvulnMs > 0) return;
+      // 殼盾格擋（§40）：舉盾中的正面傷害——消耗頂槽、入 CD、發反擊事件，不掉血不擊退。
+      if (shield.raised && isFrontalHit(facing, sprite.x, sourceX)) {
+        const popped = popTopSlot(magazine);
+        magazine = popped.magazine;
+        if (popped.slot) lastFlavor = popped.slot.flavor;
+        shield = resolveShieldBlock();
+        blockInvulnMs = SHELL_SHIELD.blockInvulnMs;
+        drawShield();
+        squashStretch(1.15, 0.88);
+        playSfx('metal');
+        emitAmmo();
+        emitGameEvent(scene.events, GameEvents.SKILL_SHIELD_BLOCK, {
+          x: sprite.x,
+          y: sprite.y,
+          facing,
+        });
+        return;
+      }
       const result = resolveHit(hp, invulnerableMs, damage, PLAYER.invulnerableMs);
       if (!result.damaged) return;
       hp = result.hp;
@@ -510,6 +612,15 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       magazine = pushGoldStar(magazine);
       emitAmmo();
     },
+    // e2e/QA 受控賦星：直接吞入指定屬性，走正式 swallow 管線維持連吞語意。
+    grantStar(flavor: StarFlavor) {
+      magazine = swallowIntoMagazine(magazine, flavor).magazine;
+      lastFlavor = flavor;
+      emitAmmo();
+    },
+    isShieldRaised() {
+      return shield.raised;
+    },
     getFacing() {
       return facing;
     },
@@ -534,6 +645,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       scene.events.off(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
       scene.tweens.killTweensOf(sprite);
       stormRing.destroy();
+      shieldGfx.destroy();
       sprite.destroy();
       zone.destroy();
       stars.destroy(true);

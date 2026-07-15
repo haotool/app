@@ -18,9 +18,11 @@ import {
   onGameEvent,
   type GameEventName,
 } from '../core/events';
+import { loadSave, persistSave, recordLevelClear, recordSecret } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
 import {
   advanceEgg,
   createEggProgress,
@@ -64,7 +66,10 @@ const RETRY_DELAY_MS = 350;
 const GATE_MARGIN_X = 120;
 const GATE_Y = GROUND_TOP - 90;
 const GATE_ABSORB_MS = 700;
-const TRANSITION_CARD_MS = 1200;
+// 過關星爆停留短拍後進世界地圖（§39：通關後自動進入）。
+const MAP_ENTER_DELAY_MS = 500;
+// 雷鏈跳電演出（§40）：折線閃電段淡出時長。
+const BOLT_FADE_MS = 200;
 
 interface GameSceneData {
   levelId?: LevelId;
@@ -94,6 +99,7 @@ export class GameScene extends Phaser.Scene {
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private gate: Phaser.GameObjects.Container | null = null;
+  private prevPlayerX = 0;
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
@@ -212,6 +218,7 @@ export class GameScene extends Phaser.Scene {
       this.syncJumpSfx();
       this.syncInhale();
       this.syncEggs();
+      this.syncGateSweep();
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -241,6 +248,11 @@ export class GameScene extends Phaser.Scene {
   // e2e 鉤子：跳至魔王關直達魔王戰。
   skipToBoss(): void {
     if (this.scene.isActive()) this.restartWith({ levelId: 4, carryMs: 0 });
+  }
+
+  // e2e 鉤子：直達任一關（各關反卡關走查用）。
+  gotoLevel(levelId: LevelId): void {
+    if (this.scene.isActive()) this.restartWith({ levelId, carryMs: 0 });
   }
 
   // 暫停選單「重新開始」（§35）：重置當前關卡全狀態（血量/彈藥/擊殺/計時/實體由
@@ -313,6 +325,8 @@ export class GameScene extends Phaser.Scene {
       const outcome = this.enemies.damage(target, this.starDamageOf(s));
       if (outcome === 'ignored') return;
       if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
+      // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
+      if (spec.chainCount > 0) this.chainLightning(s.x, s.y, spec, target);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
       this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
     });
@@ -324,6 +338,8 @@ export class GameScene extends Phaser.Scene {
       if (!star.active || !this.boss.isActive()) return;
       const spec = STAR_FLAVORS[this.starFlavorOf(star)];
       if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
+      // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
+      if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
       this.player.onStarHit(star, 'absorb');
       this.boss.applyDamage(this.starDamageOf(star));
     });
@@ -426,6 +442,10 @@ export class GameScene extends Phaser.Scene {
       this.resolveSlamImpact(x, y);
       this.stage.damageBricksInRadius(x, y, SLAM.radiusPx);
     });
+    // 殼盾格擋成功（§40）：正面反擊星爆，波及面前小怪。
+    bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
+      this.resolveShieldCounter(x, y, facing),
+    );
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
@@ -456,6 +476,8 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.BOSS_DEFEATED, () => {
       this.bossDown = true;
       this.bossHp = 0;
+      // 存檔寫入時機（§38）：魔王擊破即記通關與該關用時。
+      persistSave(recordLevelClear(loadSave(), this.currentLevelId, this.levelTimeMs()));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
     bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
@@ -509,9 +531,20 @@ export class GameScene extends Phaser.Scene {
     const zone = this.add.zone(gx, GATE_Y, 90, 150);
     this.physics.add.existing(zone, true);
     this.physics.add.overlap(this.player.sprite, zone, () => this.completeLevel());
+    this.prevPlayerX = this.player.sprite.x;
   }
 
-  // 過關演出：玩家縮小旋轉飛入門 → 轉場卡 → 下一關。
+  // 星星門必達背擋（§26）：大 delta 幀（背景卡頓/GC/低階機掉幀）可在兩次 collider
+  // 檢查間隧穿 90px 判定區——以門心 x 掃掠線補判，任一幀跨越即視為入門。
+  private syncGateSweep(): void {
+    if (!this.gate) return;
+    const x = this.player.sprite.x;
+    const crossed = (this.prevPlayerX - this.gate.x) * (x - this.gate.x) <= 0;
+    this.prevPlayerX = x;
+    if (crossed) this.completeLevel();
+  }
+
+  // 過關演出（§39）：玩家縮小旋轉飛入門 → 寫入存檔 → 世界地圖（揭霧下一關節點）。
   private completeLevel(): void {
     if (this.finished || this.transitioning || !this.gate) return;
     this.transitioning = true;
@@ -521,6 +554,8 @@ export class GameScene extends Phaser.Scene {
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     body.stop();
     body.enable = false;
+    // 存檔寫入時機（§38）：通關即記錄，演出中斷（切頁/重載）不掉進度。
+    persistSave(recordLevelClear(loadSave(), this.currentLevelId, this.levelTimeMs()));
     this.tweens.add({
       targets: this.player.sprite,
       x: this.gate.x,
@@ -531,57 +566,17 @@ export class GameScene extends Phaser.Scene {
       ease: 'Cubic.easeIn',
       onComplete: () => {
         this.fx.starBurst(this.gate?.x ?? this.player.sprite.x, this.gate?.y ?? GATE_Y);
-        this.showTransitionCard();
+        playSfx('win');
+        this.time.delayedCall(MAP_ENTER_DELAY_MS, () =>
+          this.scene.start(SceneKeys.Map, { reveal: nextLevelId(this.currentLevelId) }),
+        );
       },
     });
   }
 
-  // 轉場卡：全屏「STAGE N 關卡名」slide + fade 1.2s 後載入下一關。
-  private showTransitionCard(): void {
-    const next = nextLevelId(this.currentLevelId);
-    if (next === null) return;
-    const spec = getLevel(next);
-    const { width, height } = this.scale;
-    playSfx('win');
-    const cover = this.add
-      .rectangle(width / 2, height / 2, width, height, 0x3a3a4a)
-      .setAlpha(0)
-      .setScrollFactor(0)
-      .setDepth(200);
-    const label = this.add
-      .text(width / 2 + 90, height / 2, `STAGE ${spec.id}\n${spec.nameZh}`, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '52px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        align: 'center',
-        stroke: '#7a5fb8',
-        strokeThickness: 8,
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setScrollFactor(0)
-      .setDepth(201);
-    this.tweens.add({ targets: cover, alpha: 0.94, duration: 250, ease: 'Quad.easeOut' });
-    this.tweens.add({
-      targets: label,
-      alpha: 1,
-      x: width / 2,
-      duration: 420,
-      delay: 120,
-      ease: 'Back.easeOut',
-    });
-    this.tweens.add({
-      targets: [cover, label],
-      alpha: 0,
-      duration: 260,
-      delay: TRANSITION_CARD_MS - 260,
-      ease: 'Quad.easeIn',
-    });
-    const carryMs = this.carryMs + (this.time.now - this.startedAt);
-    this.time.delayedCall(TRANSITION_CARD_MS, () =>
-      this.restartWith({ levelId: next, carryMs, deaths: this.deaths }),
-    );
+  // 當前關卡淨用時：死亡重試會重置 startedAt，等同本次成功嘗試的用時。
+  private levelTimeMs(): number {
+    return this.time.now - this.startedAt;
   }
 
   private finish(result: 'won' | 'lost'): void {
@@ -708,6 +703,8 @@ export class GameScene extends Phaser.Scene {
 
   // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
   private grantEggReward(spec: EasterEggSpec): void {
+    // 存檔寫入時機（§38）：彩蛋觸發即記錄（trigger 型別為關內唯一 id）。
+    persistSave(recordSecret(loadSave(), this.currentLevelId, spec.trigger));
     switch (spec.reward) {
       case 'hp-up':
         this.player.heal(1, EGG_HP_CAP);
@@ -832,6 +829,76 @@ export class GameScene extends Phaser.Scene {
         enemy.setVelocity(kb.x, kb.y);
       }
     }
+  }
+
+  // 殼盾反擊星爆（§40）：盾面前定點星爆，波及面前 90px 小怪。
+  private resolveShieldCounter(x: number, y: number, facing: 1 | -1): void {
+    const originX = x + facing * 30;
+    this.fx.starBurst(originX, y);
+    this.fx.shake(5);
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      if (
+        Phaser.Math.Distance.Between(originX, y, enemy.x, enemy.y) <= SHELL_SHIELD.counterRadiusPx
+      ) {
+        this.enemies.damage(child, SHELL_SHIELD.counterDamage);
+      }
+    }
+  }
+
+  // 雷鏈跳電（§40）：命中點半徑內取最近 chainCount 隻依序跳電，折線閃電演出。
+  private chainLightning(
+    x: number,
+    y: number,
+    spec: (typeof STAR_FLAVORS)[StarFlavor],
+    exclude: Phaser.GameObjects.GameObject | null,
+  ): void {
+    const candidates: { x: number; y: number; ref: Phaser.GameObjects.GameObject }[] = [];
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active || child === exclude) continue;
+      const enemy = asSprite(child);
+      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
+    }
+    const targets = pickChainTargets(x, y, candidates, spec.chainCount, spec.chainRadiusPx);
+    if (targets.length === 0) return;
+    playSfx('zap');
+    let fromX = x;
+    let fromY = y;
+    for (const target of targets) {
+      this.drawBolt(fromX, fromY, target.x, target.y);
+      this.fx.burstSmall(target.x, target.y, spec.tint);
+      this.enemies.damage(target.ref, spec.chainDamage);
+      fromX = target.x;
+      fromY = target.y;
+    }
+  }
+
+  // 折線閃電：兩點間三段隨機垂直抖動折線，快速淡出自毀。
+  private drawBolt(x1: number, y1: number, x2: number, y2: number): void {
+    const bolt = this.add.graphics().setDepth(93);
+    bolt.lineStyle(3, 0xffe28a, 1);
+    bolt.beginPath();
+    bolt.moveTo(x1, y1);
+    const nx = -(y2 - y1);
+    const ny = x2 - x1;
+    const len = Math.hypot(nx, ny) || 1;
+    for (const t of [0.25, 0.5, 0.75]) {
+      const jitter = (Math.random() - 0.5) * 22;
+      bolt.lineTo(
+        x1 + (x2 - x1) * t + (nx / len) * jitter,
+        y1 + (y2 - y1) * t + (ny / len) * jitter,
+      );
+    }
+    bolt.lineTo(x2, y2);
+    bolt.strokePath();
+    this.tweens.add({
+      targets: bolt,
+      alpha: 0,
+      duration: BOLT_FADE_MS,
+      ease: 'Quad.easeIn',
+      onComplete: () => bolt.destroy(),
+    });
   }
 
   // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。
