@@ -17,6 +17,7 @@ interface QuickEntryProps {
   onSave: (record: Partial<ParkingRecord>) => void | Promise<void>;
   isVisible: boolean;
   onClose: () => void;
+  cacheDurationDays?: number;
 }
 
 const panelVariants: Variants = {
@@ -46,7 +47,13 @@ const itemVariants: Variants = {
   },
 };
 
-export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickEntryProps) {
+export default function QuickEntry({
+  theme,
+  onSave,
+  isVisible,
+  onClose,
+  cacheDurationDays,
+}: QuickEntryProps) {
   const { t } = useTranslation();
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
@@ -313,6 +320,7 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
                           allowZoom={false}
                           showZoomControl={false}
                           lockBounds={true}
+                          cacheDurationDays={cacheDurationDays}
                           text={miniMapText}
                           onLocationSelect={(la, ln) => setLocation({ lat: la, lng: ln })}
                         />

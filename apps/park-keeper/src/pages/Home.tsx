@@ -311,6 +311,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           onSave={handleSave}
           isVisible={showQuickEntry}
           onClose={() => setShowQuickEntry(false)}
+          cacheDurationDays={settings.cacheDurationDays}
         />
 
         {/* NavOverlay */}
