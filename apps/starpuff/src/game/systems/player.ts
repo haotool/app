@@ -12,12 +12,17 @@ import {
 } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
-import { canInhale, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
+import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
 import {
+  advanceAirDash,
   advanceStarstormHold,
+  airDashSpeed,
+  createAirDashState,
   fillMagazine,
+  isAirDashing,
   popTopSlot,
   pushGoldStar,
+  refundDashFlap,
   resolveActionPress,
   shouldFireOnRelease,
   starDamage,
@@ -40,6 +45,7 @@ export interface PlayerHandle {
   heal(amount: number, hpCap: number): void;
   swallow(kind: EnemyKind): boolean;
   isInhaling(): boolean;
+  isAirDashing(): boolean;
   getAmmoState(): { ammo: number; flavor: StarFlavor };
   getMagazine(): readonly MagazineSlot[];
   grantFullMagazine(): void;
@@ -67,6 +73,9 @@ const DUST_FALL_SPEED = 300;
 // §20 星彈拖尾：疾風星拖尾加長 ×1.6，其餘維持基準長度；tint 依屬性表上色。
 const TRAIL_LIFESPAN_MS = 260;
 const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
+// §30 疾衝殘影：本體貼圖 alpha 快照間隔與淡出時長（不依賴 fx 新 API）。
+const DASH_GHOST_INTERVAL_MS = 30;
+const DASH_GHOST_FADE_MS = 200;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
@@ -122,6 +131,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let stormHoldMs = 0;
   let slamming = false;
   let slamCdMs = 0;
+  // 空中疾衝（§30）：雙擊偵測與 CD 走 skills 純狀態機；殘影快照計時。
+  // lastAirTapFlapped：首拍是否實際消耗拍翅，供疾衝觸發當幀退還（refundDashFlap）。
+  let airDash = createAirDashState();
+  let ghostMs = 0;
+  let lastAirTapFlapped = false;
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
@@ -251,6 +265,31 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     squashStretch(0.8, 1.3);
   };
 
+  // 疾衝殘影（§30）：本體貼圖 alpha 快照淡出自毀。
+  const spawnGhost = () => {
+    const ghost = scene.add
+      .image(sprite.x, sprite.y, sprite.texture.key)
+      .setDisplaySize(PLAYER_SIZE, PLAYER_SIZE)
+      .setFlipX(facing === -1)
+      .setAlpha(0.35)
+      .setDepth(sprite.depth - 1);
+    scene.tweens.add({
+      targets: ghost,
+      alpha: 0,
+      duration: DASH_GHOST_FADE_MS,
+      onComplete: () => ghost.destroy(),
+    });
+  };
+
+  // 疾衝啟動（§30）：面向水平疾衝，橫向拉伸 + 專屬音。
+  const startAirDash = () => {
+    playSfx('dash');
+    ghostMs = 0;
+    sprite.setVelocity(facing * airDashSpeed(), 0);
+    squashStretch(1.3, 0.8);
+    spawnGhost();
+  };
+
   return {
     sprite,
     update(controls: ControlsState, deltaMs: number) {
@@ -283,7 +322,29 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       wasOnGround = onGround;
 
-      if (hurtLockMs <= 0) {
+      // 空中疾衝（§30）：雙擊窗與 CD 恆時推進；hurtLock 期按壓不列入雙擊。
+      const dashTick = advanceAirDash(airDash, {
+        deltaMs,
+        jumpPressed: controls.jumpPressed && hurtLockMs <= 0,
+        airborne: !onGround,
+      });
+      airDash = dashTick.state;
+      if (dashTick.trigger) {
+        // 疾衝手感（§30）：首拍消耗的拍翅當幀退還，成功疾衝不折損漂浮資源。
+        flapsUsed = refundDashFlap(flapsUsed, lastAirTapFlapped);
+        lastAirTapFlapped = false;
+        startAirDash();
+      }
+
+      if (hurtLockMs <= 0 && isAirDashing(airDash)) {
+        // 疾衝進行中：鎖定面向水平速度並抵銷重力，殘影按間隔快照；其餘輸入凍結。
+        sprite.setVelocity(facing * airDashSpeed(), 0);
+        ghostMs += deltaMs;
+        if (ghostMs >= DASH_GHOST_INTERVAL_MS) {
+          ghostMs = 0;
+          spawnGhost();
+        }
+      } else if (hurtLockMs <= 0) {
         if (controls.left) {
           sprite.setVelocityX(-PLAYER.moveSpeed);
           facing = -1;
@@ -295,19 +356,23 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         }
 
         // 寬容度（§15.1）：coyote 期內離台仍可起跳；提前按跳以 buffer 落地即跳。
+        // 疾衝觸發當幀的按壓已被疾衝消耗，不再進入跳躍/拍翅分支。
         const wantsJump = controls.jumpPressed || (onGround && jumpBufferMs > 0);
-        if (wantsJump) {
+        if (wantsJump && !dashTick.trigger) {
           if (onGround || coyoteMs > 0) {
             coyoteMs = 0;
             jumpBufferMs = 0;
+            lastAirTapFlapped = false;
             sprite.setVelocityY(PLAYER.jumpVelocity);
             squashStretch(0.8, 1.25);
           } else if (controls.jumpPressed && flapsUsed < PLAYER.maxFlaps) {
             flapsUsed += 1;
+            lastAirTapFlapped = true;
             sprite.setVelocityY(PLAYER.floatLift);
             squashStretch(0.9, 1.12);
           } else if (controls.jumpPressed) {
             jumpBufferMs = FORGIVENESS.jumpBufferMs;
+            lastAirTapFlapped = false;
           }
         }
 
@@ -385,6 +450,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
     },
     takeDamage(damage: number, sourceX: number) {
+      // 疾衝無敵幀（§30）：衝刺期間免傷。
+      if (isAirDashing(airDash)) return;
       const result = resolveHit(hp, invulnerableMs, damage, PLAYER.invulnerableMs);
       if (!result.damaged) return;
       hp = result.hp;
@@ -408,10 +475,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       emitGameEvent(scene.events, GameEvents.PLAYER_HEALED, { hp, maxHp: hpCap });
     },
     swallow(kind: EnemyKind) {
-      if (!canInhale(kind)) return false;
-      const result = swallowIntoMagazine(magazine, kind);
+      // 個體狀態（shelly 暈眩窗）由 GameScene 的 isInhalable 先行把關；此處只換算屬性。
+      const flavor = inhaleFlavor(kind);
+      if (!flavor) return false;
+      const result = swallowIntoMagazine(magazine, flavor);
       magazine = result.magazine;
-      lastFlavor = kind;
+      lastFlavor = flavor;
       // 連吞升級（§23）：強化音效；金邊視覺由 HUD 與發射端依槽位狀態呈現。
       if (result.charged) playSfx('charge');
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
@@ -420,6 +489,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     isInhaling() {
       return inhaling;
+    },
+    isAirDashing() {
+      return isAirDashing(airDash);
     },
     getAmmoState() {
       return {

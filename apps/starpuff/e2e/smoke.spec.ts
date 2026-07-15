@@ -14,7 +14,14 @@ declare global {
       spawn: (kind: string, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
       probe: () => { x: number; scrollX: number };
+      quota: () => { killCount: number; killQuota: number };
     };
+    // v4 stage 系統觀測點（stage.ts 掛載，dev/test 限定）。
+    __spStage: {
+      playerY: () => number;
+      bricksAlive: () => number;
+    };
+    __minY: number;
   }
 }
 
@@ -175,6 +182,77 @@ test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async
   await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
   await page.keyboard.up('X');
   await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+test('空中疾衝（§30）：空中雙擊 A 水平位移、無敵衝撞擊殺小怪', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  // 起跳離地（Z = A 鍵）；離地後才計入雙擊窗。
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(60);
+  await page.keyboard.up('Z');
+  await page.waitForTimeout(120);
+  // 疾衝路徑上豎排三隻 floaty（y 帶 250-330 覆蓋任何合理疾衝高度；floaty 無重力定高）。
+  const before = await page.evaluate(() => window.__sp.probe());
+  await page.evaluate(() => {
+    const x = window.__sp.probe().x + 90;
+    window.__sp.spawn('floaty', x, 250);
+    window.__sp.spawn('floaty', x, 290);
+    window.__sp.spawn('floaty', x, 330);
+  });
+  // 空中雙擊 A（350ms 窗）：首擊拍翅、二擊觸發疾衝。
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Z');
+  await page.waitForTimeout(60);
+  await page.keyboard.down('Z');
+  await page.waitForTimeout(50);
+  await page.keyboard.up('Z');
+  // 疾衝 180px/0.18s：無左右輸入下水平位移即疾衝證據。
+  await expect
+    .poll(async () => (await page.evaluate(() => window.__sp.probe())).x - before.x, {
+      timeout: 4000,
+    })
+    .toBeGreaterThan(120);
+  // 無敵幀：衝撞穿牆後 HP 不掉；衝撞傷害 1 擊殺路徑上小怪（擊殺計入配額）。
+  expect(await page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.quota().killCount), { timeout: 4000 })
+    .toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(600);
+  expect(errors).toEqual([]);
+});
+
+test('S2 彈簧墊超級跳：走上彈簧的騰空峰值遠高於一般跳可達（§29）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  // 進第二關：補配額後持續右行走入星星門（同既有轉場測試路徑）。
+  await page.evaluate(() => window.__sp.fillQuota());
+  await page.keyboard.down('ArrowRight');
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 30000 }).toBe(2);
+  await page.keyboard.up('ArrowRight');
+  // S2 再補配額停止生成，確保走查段無敵潮干擾（開門後 spawn 停止，星星門在 x=2980 不會誤觸）。
+  await page.evaluate(() => window.__sp.fillQuota());
+  // 取樣騰空高度（y 越小越高）：一般跳峰值約 278、擊退浮空約 331，彈簧 -640 峰值約 148；
+  // 門檻 240 僅彈簧可達，對兩側皆有充足裕度。
+  await page.evaluate(() => {
+    window.__minY = 999;
+    const timer = setInterval(() => {
+      if (window.__sp.scene() !== 'Game') return;
+      window.__minY = Math.min(window.__minY, window.__spStage.playerY());
+    }, 40);
+    setTimeout(() => clearInterval(timer), 15000);
+  });
+  // 場景已重啟，重按方向鍵註冊新 Key；x=1150 地面彈簧 walk-over 觸發，走過 1400 涵蓋整段彈跳。
+  await page.keyboard.down('ArrowRight');
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.probe().x), { timeout: 15000 })
+    .toBeGreaterThan(1400);
+  await page.keyboard.up('ArrowRight');
+  expect(await page.evaluate(() => window.__minY)).toBeLessThan(240);
+  await page.waitForTimeout(500);
   expect(errors).toEqual([]);
 });
 

@@ -42,9 +42,24 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 刺刺瓜與咬咬花不可吸入（GAME_DESIGN §5、§16）；可吸怪即星彈屬性來源（§20）。
-export function canInhale(kind: EnemyKind): kind is StarFlavor {
-  return kind !== 'spiky' && kind !== 'chompy';
+// 可吸怪的星彈屬性對照（§20/§30）：shelly 暈眩可吸以標準星計、zappy 得疾風星；不可吸者無屬性。
+const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
+  jelly: 'jelly',
+  floaty: 'floaty',
+  puffy: 'puffy',
+  shelly: 'jelly',
+  zappy: 'floaty',
+};
+
+export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {
+  return INHALE_FLAVORS[kind] ?? null;
+}
+
+// 刺刺瓜與咬咬花不可吸入（§5、§16）；殼殼僅暈眩時可吸（§30），stunned 由呼叫端傳入；
+// 未帶狀態時 shelly 視為不可吸（spawner 保證律與權重驗證取保守值）。
+export function canInhale(kind: EnemyKind, stunned = false): boolean {
+  if (kind === 'shelly') return stunned;
+  return inhaleFlavor(kind) !== null;
 }
 
 // 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。

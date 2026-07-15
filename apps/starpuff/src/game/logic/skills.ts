@@ -1,4 +1,5 @@
 import {
+  AIR_DASH,
   CHARGED_STAR,
   GOLD_STAR,
   INHALE,
@@ -104,4 +105,71 @@ export function resolveActionPress(opts: {
 // 滿匣延遲發射：放開時短於吸入閾值視為點按 → 發射。
 export function shouldFireOnRelease(holdMs: number): boolean {
   return holdMs < INHALE.holdThresholdMs;
+}
+
+// 空中疾衝（§30）：雙擊偵測 + CD 純狀態機。sinceTapMs 只累計「空中」按壓，
+// 落地即重置（地面按 A 為跳躍，不列入雙擊首擊）。
+export interface AirDashState {
+  sinceTapMs: number;
+  dashLeftMs: number;
+  cooldownMs: number;
+}
+
+export function createAirDashState(): AirDashState {
+  return { sinceTapMs: Number.POSITIVE_INFINITY, dashLeftMs: 0, cooldownMs: 0 };
+}
+
+export interface AirDashTick {
+  deltaMs: number;
+  jumpPressed: boolean;
+  airborne: boolean;
+}
+
+export interface AirDashResult {
+  state: AirDashState;
+  trigger: boolean;
+}
+
+export function advanceAirDash(state: AirDashState, tick: AirDashTick): AirDashResult {
+  const next: AirDashState = {
+    sinceTapMs: state.sinceTapMs + tick.deltaMs,
+    dashLeftMs: Math.max(0, state.dashLeftMs - tick.deltaMs),
+    cooldownMs: Math.max(0, state.cooldownMs - tick.deltaMs),
+  };
+  if (!tick.airborne) {
+    next.sinceTapMs = Number.POSITIVE_INFINITY;
+    return { state: next, trigger: false };
+  }
+  if (!tick.jumpPressed) return { state: next, trigger: false };
+  if (
+    next.sinceTapMs <= AIR_DASH.doubleTapWindowMs &&
+    next.cooldownMs <= 0 &&
+    next.dashLeftMs <= 0
+  ) {
+    return {
+      state: {
+        sinceTapMs: Number.POSITIVE_INFINITY,
+        dashLeftMs: AIR_DASH.durationMs,
+        cooldownMs: AIR_DASH.cooldownMs,
+      },
+      trigger: true,
+    };
+  }
+  next.sinceTapMs = 0;
+  return { state: next, trigger: false };
+}
+
+export function isAirDashing(state: AirDashState): boolean {
+  return state.dashLeftMs > 0;
+}
+
+// 疾衝退還拍翅（§30 手感）：雙擊第二拍觸發疾衝當幀，退還首拍實際消耗的拍翅次數；
+// 首拍未耗拍翅（coyote 跳、buffer 記帳）不退，避免憑空生出額度。
+export function refundDashFlap(flapsUsed: number, firstTapFlapped: boolean): number {
+  return firstTapFlapped ? Math.max(0, flapsUsed - 1) : flapsUsed;
+}
+
+// 疾衝水平速度：180px / 0.18s = 1000px/s。
+export function airDashSpeed(): number {
+  return (AIR_DASH.distancePx / AIR_DASH.durationMs) * 1000;
 }

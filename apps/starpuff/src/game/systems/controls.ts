@@ -34,6 +34,36 @@ export function isJoyDown(dy: number): boolean {
   return dy > JOY_DOWN_THRESHOLD;
 }
 
+// 螢幕座標 → 元素局部座標（recon-v4 A.3）：clientX/Y 不反映祖先 CSS rotate，portrait 殼內
+// 需做 90 度 CW 逆變換（localDx = screenDy、localDy = -screenDx）；以 AABB 中心為樞軸，
+// 局部尺寸取 layout 值（clientWidth/Height）。純函式供 vitest 驗證。
+export function pointerToLocal(
+  rect: { left: number; top: number; width: number; height: number },
+  localW: number,
+  localH: number,
+  rotated: boolean,
+  screenX: number,
+  screenY: number,
+): { x: number; y: number } {
+  const dx = screenX - (rect.left + rect.width / 2);
+  const dy = screenY - (rect.top + rect.height / 2);
+  if (!rotated) return { x: localW / 2 + dx, y: localH / 2 + dy };
+  return { x: localW / 2 + dy, y: localH / 2 - dx };
+}
+
+const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
+
+function toLocal(el: HTMLElement, event: PointerEvent): { x: number; y: number } {
+  return pointerToLocal(
+    el.getBoundingClientRect(),
+    el.clientWidth,
+    el.clientHeight,
+    isPortrait(),
+    event.clientX,
+    event.clientY,
+  );
+}
+
 export function createControls(scene: Phaser.Scene): ControlsSystem {
   const state: ControlsState = {
     left: false,
@@ -73,6 +103,8 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   };
 
   // 左半屏浮動搖桿：底環定錨落點、浮球隨指，抬指淡出；pointerId 分路支援與 A/B 同按。
+  // 座標一律先轉 zone 局部空間（recon-v4 A.3）：portrait 旋轉殼下 clientX/Y 軸向互換，
+  // 定錨與位移全在局部空間計算，兩種持向共用同一套邏輯。
   const zone = document.getElementById('joy-zone');
   const ring = zone?.querySelector<HTMLElement>('.joy-ring') ?? null;
   const thumb = zone?.querySelector<HTMLElement>('.joy-thumb') ?? null;
@@ -91,8 +123,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       event.preventDefault();
       if (joy.id !== null) return;
       joy.id = event.pointerId;
-      center.x = event.clientX;
-      center.y = event.clientY;
+      const local = toLocal(zone, event);
+      center.x = local.x;
+      center.y = local.y;
       place(ring, center.x, center.y);
       place(thumb, center.x, center.y);
       zone.classList.add(ENGAGED_CLASS);
@@ -101,8 +134,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     on(zone, 'pointermove', (event) => {
       if (event.pointerId !== joy.id) return;
       event.preventDefault();
-      const dx = event.clientX - center.x;
-      const dy = event.clientY - center.y;
+      const local = toLocal(zone, event);
+      const dx = local.x - center.x;
+      const dy = local.y - center.y;
       const len = Math.hypot(dx, dy);
       const clamp = len > JOY_RADIUS ? JOY_RADIUS / len : 1;
       joy.dx = dx * clamp;

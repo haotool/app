@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
-import { CANVAS, GRAVITY_Y } from './game/core/config';
+import { GRAVITY_Y, VIEW } from './game/core/config';
+import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { SceneKeys, type EnemyKind } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
@@ -14,27 +15,29 @@ import { restoreMutePreference } from './game/systems/hud';
 restoreMutePreference();
 
 // iOS 觸控直通（§22 / recon checklist）：長按 loupe 的觸發點是按住不動的 touchstart，
-// pointerdown preventDefault 不足，app 與控制層需 passive:false 保險；三指以上留給系統手勢。
+// pointerdown preventDefault 不足，殼層需 passive:false 保險；三指以上留給系統手勢。
 const blockTouchStart = (event: TouchEvent): void => {
   if (event.touches.length <= 2) event.preventDefault();
 };
-for (const id of ['app', 'controls']) {
-  document.getElementById(id)?.addEventListener('touchstart', blockTouchStart, { passive: false });
-}
+document
+  .getElementById('game-shell')
+  ?.addEventListener('touchstart', blockTouchStart, { passive: false });
 // Safari pinch 縮放攔截；contextmenu 關長按/右鍵選單。
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 
 // Phaser 接線集中於此；數值 SSOT 由 config.ts（純資料）供給。
+// 置中由 #app CSS grid 負責（NO_CENTER）：autoCenter margin 在旋轉殼下讀 canvas AABB
+// （寬高互換）會算出錯誤偏移。
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
   backgroundColor: '#FDEFF6',
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: CANVAS.width,
-    height: CANVAS.height,
+    autoCenter: Phaser.Scale.NO_CENTER,
+    width: initialShellWidth(),
+    height: VIEW.height,
   },
   physics: {
     default: 'arcade',
@@ -49,10 +52,8 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, GameScene, ResultScene],
 });
 
-// iOS orientationchange 後 viewport 尺寸非同步就緒，延遲 350ms 再刷新 Scale（recon C.9）。
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => game.scale.refresh(), 350);
-});
+// 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
+initShellLayout(game);
 
 const gameScene = () => game.scene.getScene<GameScene>(SceneKeys.Game);
 
@@ -88,6 +89,7 @@ declare global {
       quota: () => { killCount: number; killQuota: number };
       listeners: (event: string) => number;
       enemies: () => { kind: string; x: number; y: number }[];
+      view: () => { width: number; height: number };
     };
   }
 }
@@ -116,6 +118,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     gateOpen: () => internals().waves.isGateOpen(),
     quota: () => internals().waves.getQuota(),
     listeners: (event: string) => gameScene().events.listenerCount(event),
+    // 響應寬幅觀測點（US-028）：回報當前邏輯視寬（854–1200）與固定邏輯高。
+    view: () => ({ width: game.scale.width, height: game.scale.height }),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       for (const child of internals().enemies.getGroup().getChildren()) {

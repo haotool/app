@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import {
-  CANVAS,
+  AIR_DASH,
   EGG_HP_CAP,
   ENEMY,
   INHALE,
@@ -8,6 +8,7 @@ import {
   SLAM,
   STARSTORM,
   STAR_FLAVORS,
+  VIEW,
   type StarFlavor,
 } from '../core/config';
 import {
@@ -19,7 +20,7 @@ import {
 } from '../core/events';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
-import { canInhale, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
 import {
   advanceEgg,
   createEggProgress,
@@ -35,11 +36,12 @@ import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
 import { createHud } from '../systems/hud';
 import { createPlayer, type PlayerHandle } from '../systems/player';
+import { createStage, type StageHandle } from '../systems/stage';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
 const GROUND_HEIGHT = 80;
-const GROUND_TOP = CANVAS.height - GROUND_HEIGHT;
+const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 const SPAWN_EDGE_X = 48;
 // 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度（橫式地面頂 y=400）。
 const SPAWN_AIR_Y = 240;
@@ -52,6 +54,9 @@ const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
+// P3（§30）：進場時停 0.3s；全場震落強制彈起初速。
+const P3_HITSTOP_MS = 300;
+const QUAKE_BOUNCE_VY = -360;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
 // 星星門：位於世界右端、地面上方；演出時玩家縮小旋轉飛入。
@@ -92,6 +97,7 @@ export class GameScene extends Phaser.Scene {
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
   private unbinders: (() => void)[] = [];
+  private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
@@ -99,6 +105,7 @@ export class GameScene extends Phaser.Scene {
   private waves!: WaveRunner;
   private boss!: BossHandle;
   private fx!: FxSystem;
+  private stage!: StageHandle;
 
   constructor() {
     super(SceneKeys.Game);
@@ -124,12 +131,19 @@ export class GameScene extends Phaser.Scene {
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
 
-    this.physics.world.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
+    this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
+    this.terrainGround = ground;
+    // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；
+    // hooks 以閉包延遲解析（player/enemies 於後續建立，呼叫時已就緒）。
+    this.stage = createStage(this, this.level, {
+      player: () => this.player,
+      spawnAmmoMinion: (x, y) => this.enemies.spawn('jelly', x, y),
+    });
 
     this.controls = createControls(this);
-    const startX = this.level.boss ? this.level.worldWidth / 2 : 100;
+    const startX = this.level.boss ? this.worldWidth() / 2 : 100;
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
@@ -138,14 +152,17 @@ export class GameScene extends Phaser.Scene {
     createHud(this);
     const unbindSfx = bindSfxToEvents(this.events);
 
-    this.cameras.main.setBounds(0, 0, this.level.worldWidth, CANVAS.height);
+    this.cameras.main.setBounds(0, 0, this.worldWidth(), VIEW.height);
     // 剛性跟隨（US-022 / recon 硬規則 9）：lerp 1,1 消除 lerp×roundPixels 逐幀往返跳動；
     // boss 關單屏不跟隨，避免剛性跟隨在 preRender 覆寫入場運鏡的 pan/zoom。
     if (!this.level.boss) this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
+    this.scale.on('resize', this.onScaleResize);
+    this.unbinders.push(() => this.scale.off('resize', this.onScaleResize));
 
     this.fx.attachPlayer(this.player.sprite);
     this.fx.attachBoss(asSprite(this.boss.getBody()));
     this.enemies.setTarget(this.player.sprite);
+    this.boss.setTarget(this.player.sprite);
 
     this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
     this.physics.add.collider(this.enemies.getGroup(), ground);
@@ -167,6 +184,7 @@ export class GameScene extends Phaser.Scene {
       this.controls.destroy();
       this.background.destroy();
       this.player.destroy();
+      this.stage.destroy();
     });
 
     this.waves.start();
@@ -180,6 +198,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.finished && !this.transitioning) {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
+      this.stage.update(this.controls.state);
       this.syncJumpSfx();
       this.syncInhale();
       this.syncEggs();
@@ -218,14 +237,32 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
+  // 世界有效寬（§28）：捲軸關讀關卡資料；boss 單屏關 = 當前視寬（854–1200 動態）。
+  private worldWidth(): number {
+    return this.level.boss ? this.scale.width : this.level.worldWidth;
+  }
+
+  // 視寬變更回呼（recon-v4 B.3）：僅更新 bounds 與佈局，禁止 setGameSize（防循環）。
+  // 相機尺寸由 Phaser CameraManager 於 RESIZE 事件自動同步。
+  private onScaleResize = (): void => {
+    const width = this.worldWidth();
+    this.physics.world.setBounds(0, 0, width, VIEW.height);
+    this.cameras.main.setBounds(0, 0, width, VIEW.height);
+    if (this.level.boss && this.terrainGround) {
+      this.terrainGround.setPosition(width / 2, VIEW.height - GROUND_HEIGHT / 2);
+      this.terrainGround.setSize(width, GROUND_HEIGHT);
+      (this.terrainGround.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+    }
+  };
+
   private addTerrain(): {
     ground: Phaser.GameObjects.Rectangle;
     platforms: Phaser.GameObjects.Rectangle[];
   } {
     const ground = this.add.rectangle(
-      this.level.worldWidth / 2,
-      CANVAS.height - GROUND_HEIGHT / 2,
-      this.level.worldWidth,
+      this.worldWidth() / 2,
+      VIEW.height - GROUND_HEIGHT / 2,
+      this.worldWidth(),
       GROUND_HEIGHT,
       0xbff3e0,
       0.9,
@@ -272,6 +309,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
+    // zappy 放電環（§30）同走此 hazards 管線結算，不另設 overlap。
     this.physics.add.overlap(this.player.sprite, this.enemies.getHazards(), (_p, hz) => {
       const hazard = asSprite(hz);
       if (!hazard.active || this.finished || this.transitioning) return;
@@ -283,11 +321,16 @@ export class GameScene extends Phaser.Scene {
       const kind = this.enemies.kindOf(enemy as Phaser.GameObjects.GameObject);
       if (!kind || this.finished || this.transitioning) return;
       const target = asSprite(enemy);
-      // 吸入錐形內的可吸怪交由吞下流程，不結算觸碰傷害。
+      // 疾衝衝撞（§30）：無敵幀期間衝撞小怪傷害 1，不結算觸碰傷害。
+      if (this.player.isAirDashing()) {
+        this.enemies.damage(enemy as Phaser.GameObjects.GameObject, AIR_DASH.damage);
+        return;
+      }
+      // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
       const { x, y } = this.player.sprite;
       if (
         this.player.isInhaling() &&
-        canInhale(kind) &&
+        this.enemies.isInhalable(enemy as Phaser.GameObjects.GameObject) &&
         isInInhaleRange(x, y, this.player.getFacing(), target.x, target.y, INHALE.rangePx)
       ) {
         return;
@@ -316,6 +359,29 @@ export class GameScene extends Phaser.Scene {
       if (!shockwave.active || this.finished || this.transitioning) return;
       this.player.takeDamage(BOSS.bodyDamage, shockwave.x);
     });
+
+    // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
+    this.physics.add.collider(
+      this.player.sprite,
+      this.stage.getOneWay(),
+      undefined,
+      this.stage.canLandOneWay,
+    );
+    this.physics.add.collider(this.player.sprite, this.stage.getMoving());
+    this.physics.add.collider(this.player.sprite, this.stage.getBreakables());
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.stage.getSprings(),
+      this.stage.onSpringOverlap,
+    );
+    this.physics.add.overlap(stars, this.stage.getBreakables(), (a, b) => {
+      const brick = (this.stage.getBreakables() as unknown[]).includes(a) ? a : b;
+      const star = asSprite(brick === a ? b : a);
+      if (!star.active) return;
+      if (this.stage.breakBrick(brick as Phaser.GameObjects.GameObject)) {
+        this.player.onStarHit(star, 'absorb');
+      }
+    });
   }
 
   private bindEvents(): void {
@@ -335,7 +401,11 @@ export class GameScene extends Phaser.Scene {
     });
     // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
     bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
-    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => this.resolveSlamImpact(x, y));
+    // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
+    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
+      this.resolveSlamImpact(x, y);
+      this.stage.damageBricksInRadius(x, y, SLAM.radiusPx);
+    });
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
@@ -345,9 +415,15 @@ export class GameScene extends Phaser.Scene {
         this.feedEggs({ kind: 'boss-hit', sinceActiveMs: this.time.now - this.bossActiveAt });
       }
     });
+    // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
+    bind(GameEvents.BOSS_PHASE, ({ phase }) => {
+      if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
+    });
+    bind(GameEvents.BOSS_QUAKE, () => this.resolveBossQuake());
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
-      if (canInhale(kind)) this.feedEggs({ kind: 'swallow', flavor: kind });
+      const flavor = inhaleFlavor(kind);
+      if (flavor) this.feedEggs({ kind: 'swallow', flavor });
     });
     // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
@@ -385,7 +461,7 @@ export class GameScene extends Phaser.Scene {
   // 星星門：fx-star 放大 + 光暈脈動 + 浮動 tween（graphics 組合，不新增美術）。
   private spawnGate(): void {
     if (this.gate || this.level.boss) return;
-    const gx = this.level.worldWidth - GATE_MARGIN_X;
+    const gx = this.worldWidth() - GATE_MARGIN_X;
     const glow = this.add.image(0, 0, 'fx-star').setDisplaySize(150, 150).setAlpha(0.35);
     const core = this.add.image(0, 0, 'fx-star').setDisplaySize(96, 96);
     const gate = this.add.container(gx, GATE_Y, [glow, core]);
@@ -445,14 +521,15 @@ export class GameScene extends Phaser.Scene {
     const next = nextLevelId(this.currentLevelId);
     if (next === null) return;
     const spec = getLevel(next);
+    const { width, height } = this.scale;
     playSfx('win');
     const cover = this.add
-      .rectangle(CANVAS.width / 2, CANVAS.height / 2, CANVAS.width, CANVAS.height, 0x3a3a4a)
+      .rectangle(width / 2, height / 2, width, height, 0x3a3a4a)
       .setAlpha(0)
       .setScrollFactor(0)
       .setDepth(200);
     const label = this.add
-      .text(CANVAS.width / 2 + 90, CANVAS.height / 2, `STAGE ${spec.id}\n${spec.nameZh}`, {
+      .text(width / 2 + 90, height / 2, `STAGE ${spec.id}\n${spec.nameZh}`, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '52px',
         fontStyle: 'bold',
@@ -469,7 +546,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({
       targets: label,
       alpha: 1,
-      x: CANVAS.width / 2,
+      x: width / 2,
       duration: 420,
       delay: 120,
       ease: 'Back.easeOut',
@@ -513,7 +590,7 @@ export class GameScene extends Phaser.Scene {
   private spawnBossMinion(): void {
     const kinds = this.level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
-    const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.level.worldWidth - SPAWN_EDGE_X;
+    const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
     this.minionDropCount += 1;
     this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }
@@ -553,8 +630,9 @@ export class GameScene extends Phaser.Scene {
       const { x, y } = this.player.sprite;
       const facing = this.player.getFacing();
       if (!isInInhaleRange(x, y, facing, enemy.x, enemy.y, INHALE.rangePx)) continue;
-      if (!canInhale(kind)) {
-        enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
+      if (!this.enemies.isInhalable(enemy)) {
+        // 旋轉衝刺中的殼殼為無敵段，不受吸力彈開；其餘不可吸怪照舊彈開。
+        if (enemy.getData('state') !== 'spin') enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
         continue;
       }
       const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.mouth.x, this.mouth.y);
@@ -711,6 +789,14 @@ export class GameScene extends Phaser.Scene {
       if (child.active) this.enemies.kill(child);
     }
     if (this.boss.isActive()) this.boss.applyDamage(STARSTORM.bossDamage);
+  }
+
+  // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
+  private resolveBossQuake(): void {
+    if (this.finished || this.transitioning) return;
+    this.fx.shake(10);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
   }
 
   // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。

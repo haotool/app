@@ -1,10 +1,18 @@
 // 遊戲數值 SSOT（GAME_DESIGN §5–§7、§20–§21，凍結）。
 // 純資料模組（不 import phaser）：vitest node 環境可直接載入驗證。
-// v3 橫式畫布（§21）：854×480，Scale.FIT + CENTER_BOTH。
-export const CANVAS = {
-  width: 854,
+// v4 響應寬幅（§28）：邏輯高固定 480，邏輯寬依殼比例 854–1200 動態。
+export const VIEW = {
+  minWidth: 854,
+  maxWidth: 1200,
   height: 480,
 } as const;
+
+// 殼（旋轉後）尺寸 → 邏輯寬：clamp(round(aspect×480), 854, 1200)；量測不足時回退最小寬。
+export function computeLogicalWidth(shellW: number, shellH: number): number {
+  if (shellW <= 0 || shellH <= 0) return VIEW.minWidth;
+  const raw = Math.round((shellW / shellH) * VIEW.height);
+  return Math.min(VIEW.maxWidth, Math.max(VIEW.minWidth, raw));
+}
 
 export const GRAVITY_Y = 900;
 
@@ -108,6 +116,15 @@ export const SLAM = {
   cooldownMs: 1200,
   knockbackSpeed: 260,
   knockbackLift: -180,
+} as const;
+
+// 空中疾衝（§30）：空中雙擊 A（350ms 窗）朝面向水平疾衝 180px/0.18s；無敵幀、CD 2s、衝撞傷害 1。
+export const AIR_DASH = {
+  doubleTapWindowMs: 350,
+  distancePx: 180,
+  durationMs: 180,
+  cooldownMs: 2000,
+  damage: 1,
 } as const;
 
 // 金星彈（§24 第三關彩蛋）：單發傷害 20。

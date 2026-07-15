@@ -1,7 +1,7 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v3.0（PM 親撰；v3 橫式轉向與技能組合 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v4.0（PM 親撰；v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
@@ -48,7 +48,7 @@
 - 玩家：移速 220px/s、跳躍初速 -420、漂浮升力 -260、重力 900。
 - 吸入：長按 ≥150ms 啟動、錐形範圍 140px、拉力漸增；吞下 +1 彈藥（上限 3）。
 - 星彈：傷害 5、速度 520、穿透 1 隻小怪、命中魔王消失。
-- 邏輯畫布：854×480（橫式，Scale.FIT + autoCenter，§21）；解析度採 Scale.FIT 自適應，不做 DPR cap（欄位已於修復包 B 移除）。
+- 邏輯畫布：854×480（橫式，Scale.FIT；v4 改 NO_CENTER 由旋轉殼定位，見 §28）；解析度採 Scale.FIT 自適應，不做 DPR cap（欄位已於修復包 B 移除）。
 
 ## 8. Juice 清單（品質關鍵，全數必做）
 
@@ -95,8 +95,8 @@ src/game/audio/    sfx.ts bgm.ts
 src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 ```
 
-- 事件契約（`events.ts`，跨系統唯一溝通管道；v3 增列 `player:healed` 與 `skill:*` 技能結算事件）：
-  `player:damaged, player:healed, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, skill:starstorm, skill:slam-landed, boss:spawned, boss:damaged, boss:phase, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
+- 事件契約（`events.ts`，跨系統唯一溝通管道；v3 增列 `player:healed` 與 `skill:*` 技能結算事件；v4 增列 `boss:quake` P3 全場震落事件）：
+  `player:damaged, player:healed, player:died, ammo:changed, enemy:inhaled, enemy:killed, star:fired, skill:starstorm, skill:slam-landed, boss:spawned, boss:damaged, boss:phase, boss:quake, boss:defeated, level:changed, level:quota, level:gate-opened, game:won, game:lost`
 
 ## 12. 品質門檻
 
@@ -188,7 +188,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 
 ## 21. v3 橫式轉向（PM 親撰）
 
-- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape；直向持機時顯示「請轉橫」遮罩（反轉現有偵測）。
+- 邏輯畫布 854×480（橫式），Scale.FIT + CENTER_BOTH；manifest orientation 改 landscape（v4 已由 §28 免轉向旋轉殼取代：manifest 不鎖 orientation）；直向持機時顯示「請轉橫」遮罩（v4 已由 §28 免轉向旋轉殼取代：遮罩廢除）。
 - 世界尺寸：高 480；寬放大至 S1 2700 / S2 3100 / S3 3500（視野變寬 1.78 倍，維持等效走動時長）；平台改雙層以內（天花板變低），高度差以跳躍 -420 可達為準。
 - HUD 重排：頂列橫排——HP 心心左上、STAGE 標示中上、配額右上；Boss 條頂中置。全部 HUD 圖示改 graphics 繪製（星形/心形程序化），全遊戲禁用 emoji 與文字字元鍵帽。
 - 虛擬手柄（參考實體手柄配置）：左側浮動搖桿（觸點即中心、半徑 60px、死區 12px、水平為主 + 下向偵測供下衝擊）；右側 A（跳，右下）/ B（吸/射，A 左上 45 度）雙鍵 64px+ 斜排、間距 16px+；橫持 iPhone safe-area 側邊 inset 必須套用。按鍵一律 canvas/CSS 繪製圖形（無文字節點）。
@@ -242,3 +242,51 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 | bg-arena-l.png   | 星空回廊橫景 | 同上、星塵粉紫調                        |
 | bg-throne-l.png  | 魔王城橫景   | 同上、紫金王座廳                        |
 | fx-clouds.png    | 共用漂浮雲層 | 1024×256、透明、水平無縫平鋪            |
+
+## 28. v4 免轉向橫式與響應寬幅（PM 親撰）
+
+- 免轉向：偵測 portrait viewport 時，以 CSS 旋轉容器方案將整個遊戲容器（canvas + DOM 控制層）旋轉 90 度呈現橫式——使用者直持手機即玩，不再顯示轉橫遮罩（遮罩廢除）。技術定案依調研回寫（Phaser 4 相容性、pointer 座標映射、safe-area 換軸）。
+- 響應寬幅：邏輯高固定 480，寬依裝置比例擴展（下限 854、上限 1200）；Scale 模式依調研定案（EXPAND/RESIZE 擇一）。HUD 錨定鏡頭邊緣自適應；世界生成邊距、星星門偵測、boss 單屏佈局以動態視寬計算，禁止硬編 854。
+- 驗收基準機型：390×844（iPhone 13 直持）、430×932（Pro Max 直持）、844×390（橫持）三態皆可玩。
+
+## 29. v4 平台玩法元素包（調研回寫後定案數值）
+
+Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 KISS）：
+
+| 元素     | 行為                                                              | 關卡配置         |
+| -------- | ----------------------------------------------------------------- | ---------------- |
+| 單向平台 | 下方可穿上方可站（checkCollision.down only）；搖桿下+跳可下落穿透 | S1 起每關 2-4 個 |
+| 移動平台 | 水平/垂直往返（tween 驅動 + 玩家載運）                            | S2 起 1-2 個     |
+| 彈簧墊   | 踩上彈跳 -640（超級跳）、squash 動畫 + 專屬音                     | S2 起 1-2 個     |
+| 可破壞磚 | 星彈或下衝擊破壞、碎裂粒子、內藏獎勵（彈藥/HP 小回復）            | S3 起 2-3 個     |
+
+- 全部元素 data-driven 進 levels.ts platforms/elements 資料；純邏輯可測。
+- 反卡死約束：元素佈局不得製造不可達區域；可破壞磚不得阻擋唯一路徑（破壞前繞行可過）。
+
+## 30. v4 內容擴充：新技能、新怪物、魔王 P3（PM 親撰）
+
+- 新技能「空中疾衝 Air Dash」：空中雙擊 A（或搖桿方向+雙擊）朝面向水平疾衝 180px、0.18s、無敵幀、CD 2s；殘影拖尾 fx；衝撞小怪傷害 1。
+- 新怪物 ×2（全原創）：
+  - 殼殼 Shelly：藍綠硬殼龜果凍。第一發星彈 → 縮殼旋轉衝刺 1.5s（期間無敵、傷害 1）→ 停下暈眩 1s（可吸/可擊殺）。HP 2 段。不可直接吸（縮殼後暈眩時可吸）。
+  - 雷雷 Zappy：薰衣草黃電氣水母。緩慢懸浮追蹤，每 3s 放電環（半徑 70px、傷害 1、前搖 0.5s 閃爍預警）。可吸（吸入得疾風星）。HP 1。
+- 魔王 P3（HP ≤ 25%）：狂暴皇冠——rain 改追蹤彈 ×5（緩速跟蹤 2s 後直線）、slam 觸發全場單向平台震落效果（站立玩家強制彈起）、體色金紫閃爍；P3 進場演出：皇冠射出星環衝擊波 + 時停 0.3s。
+- 關卡怪物組合更新：S2 加 shelly 15%、S3 加 zappy 15%（權重重配，可吸佔比維持 ≥50%）。
+
+## 31. v4 美術資產（codex 專用）
+
+| 檔名              | 內容                                             | 規格          |
+| ----------------- | ------------------------------------------------ | ------------- |
+| minion-shelly.png | 殼殼：藍綠 #7FD8C8 硬殼龜果凍、圓殼紋、憨笑      | 2048 透明     |
+| minion-zappy.png  | 雷雷：薰衣草黃 #E8D88A 電氣水母、火花觸鬚、瞇眼  | 2048 透明     |
+| props-meadow.png  | 草原道具條：果凍蘑菇/花叢/小石/木牌 4 件橫排等距 | 2048×512 透明 |
+| props-heights.png | 高台道具條：氣球/雲絮/風向旗/星星燈 4 件         | 2048×512 透明 |
+| props-arena.png   | 回廊道具條：水晶簇/星柱/光苔/浮石 4 件           | 2048×512 透明 |
+| props-throne.png  | 王座道具條：旗幟/燭台/王冠雕像/寶箱 4 件         | 2048×512 透明 |
+
+道具條以固定 4 等分切割（512×512/件），佈景密度規範見 §32。表列 `.png` 為生成源檔名（§10 慣例）；實際入庫交付為切割後之 `prop-{meadow,heights,arena,throne}-1..4.webp` 與 `minion-*.webp`（q82、透明保留），資產鍵與檔名對齊 `core/assets.ts` 註冊表。
+
+## 32. 場景裝飾密度規範
+
+- 每關地面帶每 400-600px 佈置 1-2 件主題道具（levels.ts decor 資料驅動、隨機微縮放 0.9-1.1 與 y 抖動）；深度在玩家後、平台前。
+- 道具純裝飾無碰撞（KISS）；可破壞磚除外（§29）。
+- 同屏道具上限 6 件防雜訊；與 ambience 粒子總量合併預算（同屏繪製物 ≤14）。

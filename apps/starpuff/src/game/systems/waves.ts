@@ -1,5 +1,4 @@
 import type Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
 import type { EnemyKind, LevelId } from '../core/types';
 import {
@@ -32,6 +31,8 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   spiky: 330,
   puffy: 80,
   chompy: 330,
+  shelly: 330,
+  zappy: 240,
 };
 
 const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
@@ -89,10 +90,12 @@ export function createWaveRunner(
     const kind = pickSpawnKind(level, Math.random(), starving);
     let x: number;
     if (level.boss) {
-      x = spawnCounter % 2 === 0 ? level.worldWidth - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+      // boss 單屏世界寬 = 當前視寬（§28），右緣入場點隨之計算。
+      x = spawnCounter % 2 === 0 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
     } else {
+      // 生成邊距讀動態視寬（§28）：玩家前方「視野外側」隨邏輯寬 854–1200 變化。
       const scrollX = scene.cameras.main.scrollX;
-      x = scrollX + CANVAS.width + SPAWN_MARGIN_X + Math.random() * SPAWN_MARGIN_X;
+      x = scrollX + scene.scale.width + SPAWN_MARGIN_X + Math.random() * SPAWN_MARGIN_X;
       if (x > level.worldWidth || isInSafeTail(level, x)) {
         x = scrollX - SPAWN_MARGIN_X - Math.random() * SPAWN_MARGIN_X;
         if (x < SPAWN_MARGIN_X) return;
@@ -103,7 +106,7 @@ export function createWaveRunner(
 
   function showTutorial(): void {
     tutorialText = scene.add
-      .text(CANVAS.width / 2, CANVAS.height * 0.3, TUTORIAL_TEXT, {
+      .text(scene.scale.width / 2, scene.scale.height * 0.3, TUTORIAL_TEXT, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '24px',
         color: '#3a3a4a',

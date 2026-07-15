@@ -20,20 +20,24 @@ function collectCommands(fsm: BossFsm, totalMs: number, stepMs = 16): BossComman
 }
 
 describe('bossFsm 基礎規則', () => {
-  it('HP 高於 50% 為 p1、等於或低於 50% 為 p2', () => {
+  it('HP 高於 50% 為 p1、低於等於 50% 為 p2、低於等於 25% 為 p3', () => {
     expect(phaseForHp(31, BOSS.maxHp)).toBe('p1');
     expect(phaseForHp(30, BOSS.maxHp)).toBe('p2');
-    expect(phaseForHp(1, BOSS.maxHp)).toBe('p2');
+    expect(phaseForHp(16, BOSS.maxHp)).toBe('p2');
+    expect(phaseForHp(15, BOSS.maxHp)).toBe('p3');
+    expect(phaseForHp(1, BOSS.maxHp)).toBe('p3');
   });
 
-  it('jellyRain 顆數：p1 為 5、p2 為 7', () => {
+  it('jellyRain 顆數：p1 為 5、p2 為 7、p3 追蹤彈 5', () => {
     expect(jellyRainCount('p1')).toBe(5);
     expect(jellyRainCount('p2')).toBe(7);
+    expect(jellyRainCount('p3')).toBe(5);
   });
 
-  it('p2 招式循環包含 dash，p1 不含', () => {
+  it('p2/p3 招式循環包含 dash，p1 不含', () => {
     expect(attackCycle('p1')).not.toContain('dash');
     expect(attackCycle('p2')).toContain('dash');
+    expect(attackCycle('p3')).toContain('dash');
   });
 
   it('nextAction 依循環推進並回繞', () => {
@@ -42,6 +46,7 @@ describe('bossFsm 基礎規則', () => {
     expect(nextAction('p1', 'slam')).toBe('jellyRain');
     expect(nextAction('p2', 'slam')).toBe('dash');
     expect(nextAction('p2', 'dash')).toBe('jellyRain');
+    expect(nextAction('p3', 'slam')).toBe('dash');
   });
 });
 
@@ -80,7 +85,7 @@ describe('createBossFsm 階段切換', () => {
     expect(fsm.speedFactor).toBe(BOSS.enrageSpeedMultiplier);
   });
 
-  it('p2 循環含 dash 且 rain 升為 7 顆', () => {
+  it('p2 循環含 dash 且 rain 升為 7 顆（非追蹤）', () => {
     const fsm = createBossFsm();
     fsm.takeDamage(30);
     const commands = collectCommands(fsm, 10000);
@@ -88,7 +93,15 @@ describe('createBossFsm 階段切換', () => {
     expect(kinds).toContain('dash');
     const rains = commands.filter((c) => c.kind === 'rain');
     expect(rains.length).toBeGreaterThan(0);
-    for (const rain of rains) expect(rain).toEqual({ kind: 'rain', count: 7 });
+    for (const rain of rains) expect(rain).toEqual({ kind: 'rain', count: 7, homing: false });
+  });
+
+  it('p2 slam 不帶震落旗標', () => {
+    const fsm = createBossFsm();
+    fsm.takeDamage(30);
+    const slams = collectCommands(fsm, 10000).filter((c) => c.kind === 'slam');
+    expect(slams.length).toBeGreaterThan(0);
+    for (const slam of slams) expect(slam).toEqual({ kind: 'slam', quake: false });
   });
 
   it('p2 節奏加速：idle 時長縮短為 1/1.3', () => {
@@ -97,6 +110,41 @@ describe('createBossFsm 階段切換', () => {
     const enragedIdleMs = BOSS.idleMs / BOSS.enrageSpeedMultiplier;
     expect(collectCommands(fsm, enragedIdleMs - 50, 1)).toEqual([]);
     expect(fsm.tick(60)?.kind).toBe('rain');
+  });
+
+  it('損血跨 25% 閾值發 p3 phase 事件，速度維持 1.3', () => {
+    const fsm = createBossFsm();
+    fsm.takeDamage(30);
+    expect(fsm.phase).toBe('p2');
+    const events = fsm.takeDamage(15);
+    expect(events).toContainEqual({ kind: 'phase', phase: 'p3' });
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.speedFactor).toBe(BOSS.enrageSpeedMultiplier);
+  });
+
+  it('p1 直落 p3：單發 phase 事件即為 p3', () => {
+    const fsm = createBossFsm();
+    const events = fsm.takeDamage(45);
+    expect(events.filter((e) => e.kind === 'phase')).toEqual([{ kind: 'phase', phase: 'p3' }]);
+  });
+
+  it('p3 循環：rain 為追蹤彈 ×5、slam 帶震落旗標、含 dash', () => {
+    const fsm = createBossFsm();
+    fsm.takeDamage(45);
+    const commands = collectCommands(fsm, 12000);
+    const rains = commands.filter((c) => c.kind === 'rain');
+    expect(rains.length).toBeGreaterThan(0);
+    for (const rain of rains) expect(rain).toEqual({ kind: 'rain', count: 5, homing: true });
+    const slams = commands.filter((c) => c.kind === 'slam');
+    expect(slams.length).toBeGreaterThan(0);
+    for (const slam of slams) expect(slam).toEqual({ kind: 'slam', quake: true });
+    expect(commands.map((c) => c.kind)).toContain('dash');
+  });
+
+  it('追蹤彈常數符合 §30：緩速跟蹤 2s', () => {
+    expect(BOSS.homingRainCount).toBe(5);
+    expect(BOSS.homingTrackMs).toBe(2000);
+    expect(BOSS.phase3HpRatio).toBe(0.25);
   });
 });
 

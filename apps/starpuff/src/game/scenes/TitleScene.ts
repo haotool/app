@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
-import { CANVAS } from '../core/config';
 import { SceneKeys } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
-import { addMuteButton } from '../systems/hud';
+import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -28,7 +27,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const centerX = CANVAS.width / 2;
+    const { width, height } = this.scale;
+    const centerX = width / 2;
     this.backdrop = createMenuBackdrop(this, {
       bgKey: 'bg-meadow',
       autoScrollPxPerSec: 12,
@@ -37,10 +37,11 @@ export class TitleScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
+    bindMenuRelayout(this);
 
     if (this.textures.exists('hero-idle')) {
       ensureGlowTexture(this);
-      const heroY = CANVAS.height * 0.45;
+      const heroY = height * 0.45;
       const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
@@ -64,7 +65,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     this.add
-      .text(centerX, CANVAS.height * 0.15, '星噗噗', {
+      .text(centerX, height * 0.15, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '58px',
         fontStyle: 'bold',
@@ -75,15 +76,16 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(centerX, CANVAS.height * 0.27, 'StarPuff', {
+      .text(centerX, height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
         color: '#7a5fb8',
       })
       .setOrigin(0.5);
 
+    // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const startButton = this.add
-      .text(centerX, CANVAS.height * 0.66, '開始遊戲', {
+      .text(centerX, height * 0.66, '開始遊戲', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '28px',
         fontStyle: 'bold',
@@ -91,8 +93,7 @@ export class TitleScene extends Phaser.Scene {
         backgroundColor: '#bff3e0',
         padding: { x: 32, y: 14 },
       })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
+      .setOrigin(0.5);
 
     this.tweens.add({
       targets: startButton,
@@ -104,7 +105,7 @@ export class TitleScene extends Phaser.Scene {
     });
 
     this.add
-      .text(centerX, CANVAS.height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
+      .text(centerX, height * 0.85, '左搖桿 移動｜綠鍵 跳躍｜粉鍵 長按吸入・點按發射', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '16px',
         color: '#5a5a6e',
@@ -117,8 +118,10 @@ export class TitleScene extends Phaser.Scene {
       startBgm();
       this.scene.start(SceneKeys.Game);
     };
-    startButton.on('pointerdown', start);
     this.input.keyboard?.once('keydown-ENTER', start);
+    // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
+    // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
+    addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start);
   }
 
   override update(_time: number, deltaMs: number): void {

@@ -1,8 +1,8 @@
-export type EnemyKind = 'jelly' | 'floaty' | 'spiky' | 'puffy' | 'chompy';
+export type EnemyKind = 'jelly' | 'floaty' | 'spiky' | 'puffy' | 'chompy' | 'shelly' | 'zappy';
 
 export type LevelId = 1 | 2 | 3 | 4;
 
-export type BossPhase = 'p1' | 'p2';
+export type BossPhase = 'p1' | 'p2' | 'p3';
 
 export type BossAction = 'idle' | 'jellyRain' | 'slam' | 'dash';
 
