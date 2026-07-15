@@ -6,11 +6,11 @@ import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
 import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
 import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
+import { plateMemory } from '@app/park-keeper/services/plateMemory';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
 const FLOORS = ['B3', 'B2', 'B1', '1F', '2F', '3F', '4F', 'Custom'];
-const LAST_PLATE_KEY = 'park-keeper:last-plate';
 
 interface QuickEntryProps {
   theme: ThemeConfig;
@@ -58,14 +58,8 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     ariaInteractiveTrackingLabel: t('map.aria_interactive_tracking'),
     ariaStaticLabel: t('map.aria_static'),
   };
-  const [plate, setPlate] = useState(() => {
-    try {
-      return localStorage.getItem(LAST_PLATE_KEY) ?? '';
-    } catch {
-      return '';
-    }
-  });
-  const [selectedFloor, setSelectedFloor] = useState('');
+  const [plate, setPlate] = useState(() => plateMemory.get() ?? '');
+  const [selectedFloor, setSelectedFloor] = useState(() => plateMemory.getFloor() ?? '');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -111,10 +105,11 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
   useEffect(() => {
     if (isVisible) {
       startPrecisionTracking();
+      // 開啟面板時以上次已儲存的記憶預填，覆蓋關閉前未儲存的暫時輸入。
+      setPlate(plateMemory.get() ?? '');
+      setSelectedFloor(plateMemory.getFloor() ?? '');
     } else {
       stopTracking();
-      // ✅ 不在關閉時清空車牌，保留給下次使用
-      setSelectedFloor('');
       setNotes('');
       setPhoto(null);
       setPhotoError(false);
@@ -124,19 +119,6 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
     }
     return () => stopTracking();
   }, [isVisible, startPrecisionTracking, stopTracking]);
-
-  // ✅ 同步車牌至 localStorage
-  useEffect(() => {
-    try {
-      if (plate) {
-        localStorage.setItem(LAST_PLATE_KEY, plate);
-      } else {
-        localStorage.removeItem(LAST_PLATE_KEY);
-      }
-    } catch {
-      // Silently fail in environments without localStorage
-    }
-  }, [plate]);
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,8 +162,10 @@ export default function QuickEntry({ theme, onSave, isVisible, onClose }: QuickE
 
     await new Promise((r) => setTimeout(r, 600));
     await onSave(recordData);
+    // 僅於儲存成功時才正式寫入記憶。
+    plateMemory.commit(plate);
+    plateMemory.commitFloor(floorValue);
     setSaveStatus('success');
-    // ✅ 車牌透過 localStorage 保留，關閉面板即可
     setTimeout(() => onClose(), 400);
   };
 
