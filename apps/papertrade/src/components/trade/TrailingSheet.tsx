@@ -65,7 +65,7 @@ export function TrailingSheet({ open, position, onClose }: TrailingSheetProps) {
             setError(null);
           }}
           placeholder="0.0"
-          className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+          className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
         />
       </label>
       <label className="mt-3 flex flex-col gap-1">
@@ -79,7 +79,7 @@ export function TrailingSheet({ open, position, onClose }: TrailingSheetProps) {
             setError(null);
           }}
           placeholder="0.0"
-          className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+          className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
         />
       </label>
 
@@ -94,7 +94,7 @@ export function TrailingSheet({ open, position, onClose }: TrailingSheetProps) {
           <button
             type="button"
             onClick={clearTrailing}
-            className="flex h-12 flex-1 items-center justify-center rounded-control border border-border text-body text-text-2 active:bg-surface-2"
+            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control border border-border text-body text-text-2 active:bg-surface-2"
           >
             移除追蹤
           </button>
@@ -102,7 +102,7 @@ export function TrailingSheet({ open, position, onClose }: TrailingSheetProps) {
         <button
           type="button"
           onClick={confirm}
-          className="flex h-12 flex-1 items-center justify-center rounded-control bg-primary text-body font-semibold text-text active:bg-primary-pressed"
+          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-primary text-body font-semibold text-text active:bg-primary-pressed"
         >
           確認
         </button>

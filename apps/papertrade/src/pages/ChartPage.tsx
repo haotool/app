@@ -123,7 +123,7 @@ function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
             aria-selected={tab === id}
             onClick={() => setTab(id)}
             className={clsx(
-              'min-h-11 border-b-2 pb-1 text-label transition-colors',
+              'min-h-11 min-w-11 border-b-2 pb-1 text-label transition-colors',
               tab === id
                 ? 'border-primary font-semibold text-text'
                 : 'border-transparent text-text-3',
@@ -154,7 +154,7 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
             aria-selected={timeframe === id}
             onClick={() => setTimeframe(id)}
             className={clsx(
-              'min-h-11 shrink-0 rounded-control px-3 text-label transition-colors',
+              'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
               timeframe === id
                 ? 'bg-primary/15 font-semibold text-primary'
                 : 'text-text-3 active:bg-surface-2',
@@ -174,13 +174,13 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
       <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur">
         <Link
           to={`/trade?symbol=${symbol}`}
-          className="flex h-12 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
+          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
         >
           買多
         </Link>
         <Link
           to={`/trade?symbol=${symbol}`}
-          className="flex h-12 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
+          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
         >
           賣空
         </Link>

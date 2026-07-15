@@ -39,7 +39,7 @@ export function BottomNav() {
               end={end}
               className={({ isActive }) =>
                 clsx(
-                  'flex h-full min-h-11 flex-col items-center justify-center gap-0.5 text-caption transition-colors',
+                  'flex h-full min-h-11 w-full flex-col items-center justify-center gap-0.5 text-caption transition-colors',
                   isActive ? 'text-primary' : 'text-text-3',
                 )
               }

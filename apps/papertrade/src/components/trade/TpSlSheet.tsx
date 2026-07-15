@@ -71,7 +71,7 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
             setError(null);
           }}
           placeholder="未設定"
-          className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-long"
+          className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-long"
         />
         {tpPreview !== null && (
           <span className="text-caption text-text-3 tabular-nums">觸發預估損益 {tpPreview}</span>
@@ -88,7 +88,7 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
             setError(null);
           }}
           placeholder="未設定"
-          className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-short"
+          className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-short"
         />
         {slPreview !== null && (
           <span className="text-caption text-text-3 tabular-nums">觸發預估損益 {slPreview}</span>

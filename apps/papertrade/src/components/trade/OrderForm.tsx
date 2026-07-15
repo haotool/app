@@ -167,7 +167,7 @@ export function OrderForm({
               setError(null);
             }}
             className={clsx(
-              'min-h-11 flex-1 rounded-[10px] text-label transition-colors',
+              'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
               mode === id ? 'bg-surface font-semibold text-text' : 'text-text-3',
             )}
           >
@@ -187,7 +187,7 @@ export function OrderForm({
             placeholder={
               markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
             }
-            className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+            className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
           />
         </label>
       )}
@@ -198,7 +198,7 @@ export function OrderForm({
           <button
             type="button"
             onClick={toggleUnit}
-            className="flex min-h-11 items-center rounded px-2 text-caption font-medium text-primary active:bg-primary/10"
+            className="flex min-h-11 min-w-11 items-center rounded px-2 text-caption font-medium text-primary active:bg-primary/10"
           >
             {unit === 'usdt' ? 'USDT' : base} ⇄
           </button>
@@ -213,20 +213,24 @@ export function OrderForm({
           }}
           placeholder="0.0"
           aria-label={`數量（${unit === 'usdt' ? 'USDT' : base}）`}
-          className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+          className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
         />
         {converted !== null && (
           <span className="text-caption text-text-3 tabular-nums">{converted}</span>
         )}
       </label>
 
-      <div className="flex gap-1.5" role="group" aria-label="數量快捷比例">
-        {SIZE_PERCENT_PRESETS.map((pct) => (
+      {/* 3+2 網格讓每顆快捷鈕在 58% 欄寬下仍有 ≥60px 觸控寬。 */}
+      <div className="grid grid-cols-6 gap-1" role="group" aria-label="數量快捷比例">
+        {SIZE_PERCENT_PRESETS.map((pct, index) => (
           <button
             key={pct}
             type="button"
             onClick={() => applyPercent(pct)}
-            className="min-h-11 flex-1 rounded bg-surface-2 text-caption text-text-2 tabular-nums active:bg-border"
+            className={clsx(
+              'min-h-11 w-full rounded bg-surface-2 text-caption text-text-2 tabular-nums active:bg-border',
+              index < 3 ? 'col-span-2' : 'col-span-3',
+            )}
           >
             {pct}%
           </button>
@@ -262,14 +266,14 @@ export function OrderForm({
         <button
           type="button"
           onClick={() => submit('long')}
-          className="flex h-12 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg active:opacity-90"
+          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg active:opacity-90"
         >
           買多
         </button>
         <button
           type="button"
           onClick={() => submit('short')}
-          className="flex h-12 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text active:opacity-90"
+          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text active:opacity-90"
         >
           賣空
         </button>

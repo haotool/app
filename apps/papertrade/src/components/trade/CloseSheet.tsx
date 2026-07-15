@@ -103,7 +103,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               setError(null);
             }}
             className={clsx(
-              'min-h-11 flex-1 rounded-[10px] text-label transition-colors',
+              'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
               mode === id ? 'bg-surface font-semibold text-text' : 'text-text-3',
             )}
           >
@@ -124,7 +124,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               setError(null);
             }}
             placeholder={mark !== undefined ? trimNumberInput(mark, 6) : '0.0'}
-            className="h-11 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+            className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
           />
         </label>
       )}
@@ -143,7 +143,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               type="button"
               onClick={() => setPercent(preset)}
               className={clsx(
-                'min-h-11 flex-1 rounded text-caption tabular-nums transition-colors',
+                'min-h-11 min-w-11 flex-1 rounded text-caption tabular-nums transition-colors',
                 percent === preset
                   ? 'bg-primary/15 font-semibold text-primary'
                   : 'bg-surface-2 text-text-2 active:bg-border',

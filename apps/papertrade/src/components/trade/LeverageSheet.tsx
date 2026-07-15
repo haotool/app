@@ -37,7 +37,7 @@ export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSh
             type="button"
             onClick={() => setDraft(preset)}
             className={clsx(
-              'min-h-11 rounded-control text-label tabular-nums transition-colors',
+              'min-h-11 w-full rounded-control text-label tabular-nums transition-colors',
               draft === preset
                 ? 'bg-primary/15 font-semibold text-primary'
                 : 'bg-surface-2 text-text-2 active:bg-border',

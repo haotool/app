@@ -111,21 +111,21 @@ export function PositionCard({ position }: { position: Position }) {
         <button
           type="button"
           onClick={() => setSheet('tpsl')}
-          className="min-h-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
         >
           止盈止損
         </button>
         <button
           type="button"
           onClick={() => setSheet('trailing')}
-          className="min-h-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
         >
           追蹤止損
         </button>
         <button
           type="button"
           onClick={() => setSheet('close')}
-          className="min-h-11 flex-1 rounded-control bg-primary/15 text-label font-medium text-primary active:bg-primary/25"
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary/15 text-label font-medium text-primary active:bg-primary/25"
         >
           平倉
         </button>

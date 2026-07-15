@@ -38,7 +38,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
     <li>
       <Link
         to={`/chart/${symbol}`}
-        className="flex min-h-16 items-center gap-3 px-4 py-2.5 transition-colors active:bg-surface-2"
+        className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 transition-colors active:bg-surface-2"
       >
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-caption font-semibold text-text"

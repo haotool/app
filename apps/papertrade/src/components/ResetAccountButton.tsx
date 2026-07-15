@@ -30,7 +30,7 @@ export function ResetAccountButton() {
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="flex h-12 flex-1 items-center justify-center rounded-control border border-border text-body text-text-2 active:bg-surface-2"
+            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control border border-border text-body text-text-2 active:bg-surface-2"
           >
             取消
           </button>
@@ -41,7 +41,7 @@ export function ResetAccountButton() {
               setConfirming(false);
               pushToast({ tone: 'warning', title: '模擬資金已重置' });
             }}
-            className="flex h-12 flex-1 items-center justify-center rounded-control bg-danger text-body font-semibold text-text active:opacity-90"
+            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-danger text-body font-semibold text-text active:opacity-90"
           >
             確認重置
           </button>

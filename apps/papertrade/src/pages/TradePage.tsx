@@ -37,7 +37,7 @@ function TradePageSkeleton() {
           <span className="skeleton-pulse h-12 w-full rounded-control" />
         </div>
         <div className="flex flex-[0.42] flex-col gap-1.5">
-          {Array.from({ length: 8 }, (_, index) => (
+          {Array.from({ length: 12 }, (_, index) => (
             <span key={index} className="skeleton-pulse h-10 w-full rounded" />
           ))}
         </div>
@@ -78,7 +78,7 @@ export function TradePage() {
           type="button"
           onClick={() => setSheet('pair')}
           aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
-          className="flex min-h-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
+          className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
         >
           <span
             aria-hidden
@@ -106,7 +106,7 @@ export function TradePage() {
           type="button"
           onClick={() => setSheet('leverage')}
           aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
-          className="min-h-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
+          className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
         >
           {formatAmount(leverage, 1)}x
         </button>
@@ -124,7 +124,7 @@ export function TradePage() {
           />
         </div>
         <div className="min-w-0 flex-[0.42]">
-          <CompactOrderBook symbol={symbol} levels={4} onPriceSelect={handlePriceSelect} />
+          <CompactOrderBook symbol={symbol} levels={6} onPriceSelect={handlePriceSelect} />
         </div>
       </div>
 

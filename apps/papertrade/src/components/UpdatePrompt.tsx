@@ -28,7 +28,7 @@ function UpdatePromptClient() {
             <button
               type="button"
               onClick={handleUpdate}
-              className="min-h-11 rounded-control bg-primary px-3 text-label font-semibold text-text active:bg-primary-pressed"
+              className="min-h-11 min-w-11 rounded-control bg-primary px-3 text-label font-semibold text-text active:bg-primary-pressed"
             >
               立即更新
             </button>
@@ -36,7 +36,7 @@ function UpdatePromptClient() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="min-h-11 rounded-control bg-surface-2 px-3 text-label text-text-2 active:bg-border"
+            className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label text-text-2 active:bg-border"
           >
             關閉
           </button>
