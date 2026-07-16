@@ -208,6 +208,9 @@ describe('HistoryTab', () => {
     expect(screen.queryByTestId('expense-card')).not.toBeInTheDocument();
     const toast = screen.getByTestId('undo-toast');
     expect(toast).toHaveTextContent(i18n.t('history.undo'));
+
+    // n1：toast 佔位以實高發布 --undo-toast-h（jsdom offsetHeight=0 → 僅間距 8px）
+    expect(document.documentElement.style.getPropertyValue('--undo-toast-h')).not.toBe('');
   });
 
   it('有 currency 快照的 KRW 支出以 ₩ 顯示金額', () => {

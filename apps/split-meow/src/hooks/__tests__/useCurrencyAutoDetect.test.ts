@@ -164,4 +164,97 @@ describe('useCurrencyAutoDetect', () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(fetchMoneyboxRate).toHaveBeenCalledTimes(1);
   });
+
+  // ── R11 自動偵測生命週期：draft 非空 → 空時重跑偵測 ──────────────────────────
+
+  it('R11：首載 draft 阻擋後，draft 清空即自動切換', async () => {
+    useStore.setState({ calculatorValue: '30000' });
+
+    renderHook(() => useCurrencyAutoDetect());
+
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+    expect(useStore.getState().currency).toBe('TWD');
+
+    // 使用者 AC 清空 → draft 非空轉空 → 重跑偵測並靜默切換
+    useStore.setState({ calculatorValue: '' });
+
+    expect(useStore.getState().currency).toBe('KRW');
+    expect(useStore.getState().currencyManuallySet).toBe(false);
+  });
+
+  it('R11：itemized draft 清空同樣重跑偵測', async () => {
+    useStore.setState({ itemizedValues: { me: '9000' } });
+
+    renderHook(() => useCurrencyAutoDetect());
+
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+    expect(useStore.getState().currency).toBe('TWD');
+
+    useStore.setState({ itemizedValues: {} });
+
+    expect(useStore.getState().currency).toBe('KRW');
+  });
+
+  it('R11：手動設定過幣別後 draft 清空不切換', async () => {
+    useStore.setState({ calculatorValue: '30000' });
+
+    renderHook(() => useCurrencyAutoDetect());
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+
+    // 使用者手動選定 TWD（manual=true）後清空 draft → 尊重選擇，不覆蓋
+    useStore.getState().setCurrency('TWD', true);
+    useStore.setState({ calculatorValue: '' });
+
+    expect(useStore.getState().currency).toBe('TWD');
+    expect(useStore.getState().currencyManuallySet).toBe(true);
+  });
+
+  it('R11：draft 清空但有混幣風險時不切換（guard 照舊）', async () => {
+    useStore.setState({
+      calculatorValue: '500',
+      expenses: [
+        {
+          id: 'exp-1',
+          tripId: 'default-trip',
+          type: 'split_evenly',
+          participantIds: ['me'],
+          paidBy: 'me',
+          totalAmount: 100,
+          perPersonAmounts: { me: 100 },
+          note: '',
+          createdAt: 1,
+          currency: 'TWD',
+        },
+      ],
+    });
+
+    renderHook(() => useCurrencyAutoDetect());
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+
+    useStore.setState({ calculatorValue: '' });
+
+    expect(useStore.getState().currency).toBe('TWD');
+  });
+
+  it('R11：unmount 後 draft 清空不再觸發偵測（訂閱已清理）', async () => {
+    useStore.setState({ calculatorValue: '30000' });
+
+    const { unmount } = renderHook(() => useCurrencyAutoDetect());
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+
+    unmount();
+    useStore.setState({ calculatorValue: '' });
+
+    expect(useStore.getState().currency).toBe('TWD');
+  });
 });

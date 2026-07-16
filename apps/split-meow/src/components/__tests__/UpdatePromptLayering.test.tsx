@@ -1,6 +1,8 @@
 /**
  * 浮層層級迴歸：更新橫幅必須永不被其他浮層蓋住（brief G3 浮層 scale）。
  * EditExpenseSheet（z-[60]）開啟時，UpdatePrompt 的 z 階必須嚴格更高。
+ * bottom offset 必須同時計入 --home-panel-h 與 --undo-toast-h：
+ * Home 固定面板開啟時橫幅不得疊在鍵盤末列上（Sonnet Blocking 迴歸）。
  */
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -83,5 +85,19 @@ describe('UpdatePrompt 層級', () => {
 
     expect(sheetZ).toBeGreaterThan(0);
     expect(bannerZ).toBeGreaterThan(sheetZ);
+  });
+
+  it('bottom offset 計入 --home-panel-h 與 --undo-toast-h（不遮 Home 鍵盤與 undo toast）', () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <UpdatePrompt />
+      </I18nextProvider>,
+    );
+
+    const banner = screen.getByRole('alert');
+    // jsdom 無版面引擎：以 style 計算式鎖定 SSOT 變數消費（實際座標由 QA 量測驗證）。
+    expect(banner.style.bottom).toContain('var(--overlay-bottom)');
+    expect(banner.style.bottom).toContain('var(--undo-toast-h, 0px)');
+    expect(banner.style.bottom).toContain('var(--home-panel-h, 0px)');
   });
 });

@@ -76,6 +76,17 @@ describe('SettingsTab', () => {
     expect(hasPersonRemove).toBe(true);
   });
 
+  it('刪除成員鈕具無障礙名稱且圖示 aria-hidden（m2）', () => {
+    renderSettings();
+    const deleteBtns = screen.getAllByRole('button', { name: i18n.t('settings.delete_member') });
+    expect(deleteBtns.length).toBeGreaterThan(0);
+    for (const btn of deleteBtns) {
+      expect(btn.querySelector('.material-symbols-outlined')?.getAttribute('aria-hidden')).toBe(
+        'true',
+      );
+    }
+  });
+
   it('點擊新增成員按鈕新增成員', () => {
     renderSettings();
     const addBtns = Array.from(document.querySelectorAll('button .material-symbols-outlined'));
