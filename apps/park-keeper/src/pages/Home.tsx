@@ -430,6 +430,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         onDelete={handleDelete}
                         onUpdate={handleUpdate}
                         onNavigate={setNavRecord}
+                        // 僅一筆且該筆即 hero 時降為精簡列，避免同筆照片/導航資訊重複
+                        //（round-2 Composer U-R2-02；管理操作編輯/刪除/備註仍保留）。
+                        compact={records.length === 1 && r.id === latestRecord?.id}
                         cacheDurationDays={settings.cacheDurationDays}
                         miniMapText={miniMapText}
                       />
@@ -602,7 +605,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
             className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
             style={{
-              bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+              // FAB 熱區頂緣約在底部 88px（56px 導覽列＋32px 突出）、進場位移 20px：
+              // 7.5rem 保證 toast 全程（含進場動畫）不遮 FAB（round-2 Composer U-R2-01）。
+              bottom: 'calc(7.5rem + env(safe-area-inset-bottom))',
               backgroundColor: theme.colors.primary,
               color: ON_PRIMARY_COLOR,
             }}

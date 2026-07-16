@@ -246,6 +246,22 @@ describe('RecordCard', () => {
     expect(screen.queryByText(/N\/A/)).toBeNull();
   });
 
+  it('compact 精簡列隱藏照片＋地圖列，保留車牌編輯與刪除（issue #733）', () => {
+    renderRecordCard({ notes: '柱子旁' }, { compact: true });
+
+    expect(screen.queryByTestId('record-card-media')).toBeNull();
+    // 管理操作與備註不受影響。
+    expect(screen.getByLabelText('編輯車牌')).toBeInTheDocument();
+    expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
+    expect(screen.getByText(/柱子旁/)).toBeInTheDocument();
+  });
+
+  it('預設（非 compact）照片＋地圖列照常渲染', () => {
+    renderRecordCard();
+
+    expect(screen.getByTestId('record-card-media')).toBeInTheDocument();
+  });
+
   it('應該支援刪除與導航操作，並顯示備註', () => {
     const notes = '靠近電梯口';
     const {

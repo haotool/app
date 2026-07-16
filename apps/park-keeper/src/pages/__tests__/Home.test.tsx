@@ -174,4 +174,41 @@ describe('Home', () => {
     // 樓層 display 級字存在
     expect(screen.getAllByText('B2').length).toBeGreaterThan(0);
   });
+
+  it('僅一筆記錄時列表卡降為精簡列，避免與 hero 卡同筆資訊重複（issue #733）', async () => {
+    const record: ParkingRecord = {
+      id: 'r1',
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      timestamp: Date.now() - 60_000,
+      hasPhoto: false,
+    };
+    mockGetRecords.mockResolvedValue([record]);
+
+    renderHome();
+
+    await screen.findByTestId('pickup-hero-card');
+    // 精簡列：照片＋地圖列不渲染；車牌編輯與刪除等管理操作保留。
+    expect(screen.queryByTestId('record-card-media')).toBeNull();
+    expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
+  });
+
+  it('兩筆以上記錄時列表卡維持完整卡（含照片＋地圖列）', async () => {
+    const base = {
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      hasPhoto: false,
+    };
+    mockGetRecords.mockResolvedValue([
+      { ...base, id: 'r1', timestamp: Date.now() - 60_000 },
+      { ...base, id: 'r2', plateNumber: 'XYZ-5678', timestamp: Date.now() - 120_000 },
+    ] satisfies ParkingRecord[]);
+
+    renderHome();
+
+    await screen.findByTestId('pickup-hero-card');
+    expect(screen.getAllByTestId('record-card-media')).toHaveLength(2);
+  });
 });
