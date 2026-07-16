@@ -8,15 +8,15 @@ import type { Page } from '@playwright/test';
 export const TEXT = {
   platePlaceholder: '車牌號碼',
   tabSettings: '設定',
+  addRecord: '新增停車紀錄',
 } as const;
 
 /**
- * FAB（快速記錄按鈕）目前沒有 aria-label（issue #717 待補），
- * 以「底部導覽列中唯一沒有 aria-label 的 button」定位，
- * 避免依賴會隨版本改動的 class 名稱。
+ * FAB（快速記錄按鈕）aria-label 已於 issue #714 補上（action.add_record key），
+ * 改以 getByRole 定位，避免依賴會隨版本改動的 class 名稱。
  */
 export function getFab(page: Page) {
-  return page.locator('nav button:not([aria-label])');
+  return page.getByRole('button', { name: TEXT.addRecord });
 }
 
 /**

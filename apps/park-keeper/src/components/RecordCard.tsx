@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';
@@ -37,8 +38,9 @@ interface RecordCardProps {
   };
 }
 
-/** 智慧時間顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→完整日期 */
-function formatSmartTime(timestamp: number): string {
+/** 智慧時間顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→完整日期。
+ *  locale 採 i18n.language，避免與使用者選定的應用程式語言不一致。 */
+function formatSmartTime(timestamp: number, locale: string, yesterdayLabel: string): string {
   const now = new Date();
   const d = new Date(timestamp);
 
@@ -46,17 +48,17 @@ function formatSmartTime(timestamp: number): string {
   const yesterdayStart = todayStart - 86400000;
   const weekStart = todayStart - 6 * 86400000;
 
-  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
   if (timestamp >= todayStart) {
     return timeStr;
   } else if (timestamp >= yesterdayStart) {
-    return `昨天 ${timeStr}`;
+    return `${yesterdayLabel} ${timeStr}`;
   } else if (timestamp >= weekStart) {
-    const weekday = d.toLocaleDateString([], { weekday: 'short' });
+    const weekday = d.toLocaleDateString(locale, { weekday: 'short' });
     return `${weekday} ${timeStr}`;
   } else {
-    return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' }) + ' ' + timeStr;
+    return d.toLocaleDateString(locale, { month: 'numeric', day: 'numeric' }) + ' ' + timeStr;
   }
 }
 
@@ -69,6 +71,7 @@ export default function RecordCard({
   cacheDurationDays = CACHE_DAYS.DEFAULT,
   miniMapText,
 }: RecordCardProps) {
+  const { t, i18n } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(record.plateNumber);
   const [displayPlate, setDisplayPlate] = useState(record.plateNumber);
@@ -190,7 +193,7 @@ export default function RecordCard({
                     borderColor: theme.colors.primary,
                     backgroundColor: theme.colors.background,
                   }}
-                  placeholder="車牌號碼"
+                  placeholder={t('record.plate')}
                 />
                 {isSaving && (
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -208,16 +211,16 @@ export default function RecordCard({
                   type="button"
                   className="font-black text-base leading-none mb-1 cursor-text text-left hover:opacity-70 transition-opacity"
                   onClick={handleEditStart}
-                  aria-label={`編輯車牌 ${displayPlate}`}
+                  aria-label={t('record.edit_plate', { plate: displayPlate })}
                 >
                   {displayPlate}
                 </button>
                 <button
                   type="button"
                   onClick={handleEditStart}
-                  className="opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity"
-                  title="編輯車牌"
-                  aria-label="編輯車牌"
+                  className="p-4 -m-4 opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity"
+                  title={t('record.edit_plate_icon')}
+                  aria-label={t('record.edit_plate_icon')}
                 >
                   <Edit2 size={14} style={{ color: theme.colors.primary }} />
                 </button>
@@ -236,7 +239,7 @@ export default function RecordCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {formatSmartTime(record.timestamp)}
+                {formatSmartTime(record.timestamp, i18n.language, t('record.yesterday'))}
               </span>
             </div>
           </div>
@@ -244,8 +247,8 @@ export default function RecordCard({
         <button
           type="button"
           onClick={() => void onDelete(record.id)}
-          className="p-2 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
-          aria-label={`刪除停車記錄 ${displayPlate}`}
+          className="p-4 -m-4 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
+          aria-label={t('record.delete', { plate: displayPlate })}
         >
           <Trash2 size={16} />
         </button>
@@ -259,11 +262,11 @@ export default function RecordCard({
               type="button"
               onClick={() => setShowPhotoModal(true)}
               className="w-full h-full cursor-pointer"
-              aria-label="查看停車照片"
+              aria-label={t('record.view_photo')}
             >
               <img
                 src={record.photoData}
-                alt="停車照片"
+                alt={t('record.photo_alt')}
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -294,16 +297,19 @@ export default function RecordCard({
             </Suspense>
           ) : (
             <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
-              No Map
+              {t('record.no_map')}
             </div>
           )}
           <div
             className="absolute inset-0 z-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
             style={{ backgroundColor: `${theme.colors.primary}66` }}
           >
-            <Navigation size={28} className="text-white drop-shadow-2xl animate-bounce mb-1" />
+            <Navigation
+              size={28}
+              className="text-white drop-shadow-2xl animate-bounce motion-reduce:animate-none mb-1"
+            />
             <span className="text-[8px] font-black text-white uppercase tracking-widest">
-              NAVIGATE
+              {t('record.navigate')}
             </span>
           </div>
         </button>
@@ -324,7 +330,7 @@ export default function RecordCard({
           style={{ color: theme.colors.primary }}
         >
           <Loader2 size={12} className="animate-spin" />
-          <span>正在儲存...</span>
+          <span>{t('record.saving')}</span>
         </motion.div>
       )}
 
@@ -334,7 +340,7 @@ export default function RecordCard({
         createPortal(
           <PhotoViewerModal
             src={record.photoData}
-            alt="Parking spot"
+            alt={t('record.photo_alt')}
             onClose={() => setShowPhotoModal(false)}
           />,
           document.body,

@@ -78,7 +78,10 @@ export default function SettingsTab({
     updateSettings({ ...settings, cacheDurationDays: days });
     if (cleanupTimerRef.current) clearTimeout(cleanupTimerRef.current);
     cleanupTimerRef.current = setTimeout(() => {
-      void dbService.cleanupCache(days);
+      // getRecords 改為 throw 後（issue #714），避免滑桿操作產生 unhandled rejection。
+      dbService.cleanupCache(days).catch((error: unknown) => {
+        console.error('Cleanup cache failed:', error);
+      });
     }, CACHE_CLEANUP_DEBOUNCE_MS);
   };
 
@@ -96,20 +99,13 @@ export default function SettingsTab({
           <div className="grid grid-cols-2 gap-4">
             {Object.values(THEMES).map((th) => {
               const isActive = settings.theme === th.id;
-              const decorColor =
-                th.id === 'racing'
-                  ? '#00D4FF'
-                  : th.id === 'cute'
-                    ? '#FF69B4'
-                    : th.id === 'minimalist'
-                      ? '#2C3E50'
-                      : '#8B4513';
 
               return (
                 <button
                   key={th.id}
                   type="button"
                   onClick={() => updateSettings({ ...settings, theme: th.id })}
+                  aria-pressed={isActive}
                   className={`relative p-4 h-24 flex items-end overflow-hidden rounded-xl transition-all shadow-sm ${isActive ? 'ring-2 ring-offset-2' : ''}`}
                   style={
                     {
@@ -121,7 +117,7 @@ export default function SettingsTab({
                 >
                   <div
                     className="absolute top-0 right-0 w-20 h-20 opacity-10 -mr-6 -mt-6 rounded-full"
-                    style={{ backgroundColor: decorColor }}
+                    style={{ backgroundColor: th.colors.accent }}
                   />
                   <div className="flex justify-between items-center w-full relative z-10">
                     <span className={`font-bold ${th.font}`}>{th.name}</span>
@@ -191,6 +187,7 @@ export default function SettingsTab({
               max={CACHE_DAYS.MAX}
               value={settings.cacheDurationDays}
               onChange={handleCacheChange}
+              aria-label={t('settings.days')}
               className="w-full h-1.5 bg-black/5 rounded-lg appearance-none cursor-pointer accent-current"
               style={{ accentColor: theme.colors.primary }}
             />

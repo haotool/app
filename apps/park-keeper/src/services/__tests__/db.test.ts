@@ -49,6 +49,18 @@ describe('dbService', () => {
       expect(records).toHaveLength(1);
       expect(records[0]!.plateNumber).toBe('NEW');
     });
+
+    it('should throw (not return []) when openDB fails, so UI can surface the error', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const openSpy = vi.spyOn(indexedDB, 'open').mockImplementation(() => {
+        throw new Error('openDB boom');
+      });
+
+      await expect(dbService.getRecords()).rejects.toThrow('openDB boom');
+
+      openSpy.mockRestore();
+      errorSpy.mockRestore();
+    });
   });
 
   describe('deleteRecord', () => {
