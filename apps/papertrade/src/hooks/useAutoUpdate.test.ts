@@ -86,6 +86,14 @@ describe('useAutoUpdate', () => {
     expect(mocks.updateServiceWorker).toHaveBeenCalledOnce();
   });
 
+  it('suppresses the library default reload so controllerchange stays the single reload owner', () => {
+    renderHook(() => useAutoUpdate());
+    expect(mocks.options?.onNeedReload).toBeTypeOf('function');
+    // 呼叫不得觸發導航：reload 權責唯一屬 controllerchange 監聽。
+    mocks.options?.onNeedReload?.();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('reloads exactly once on controllerchange and sets the update flag', () => {
     const container = new FakeServiceWorkerContainer();
     container.controller = {};

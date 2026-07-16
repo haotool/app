@@ -6,6 +6,8 @@ export const UPDATE_TOAST_FLAG_KEY = 'papertrade:sw-updated';
 export const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 export const VISIBILITY_CHECK_THROTTLE_MS = 5 * 60 * 1000;
 
+const noop = () => undefined;
+
 // PWA 自動更新：SW 端維持 prompt 型控制（sw.ts 收到 SKIP_WAITING 才 skipWaiting），
 // client 端偵測到新版即自動送 SKIP_WAITING，controllerchange 後原子 reload 切版。
 // 不改用 autoUpdate 模式：新 SW 立即接管會使舊頁 lazy chunk 失效（版本撕裂前科）。
@@ -18,6 +20,9 @@ export function useAutoUpdate(): void {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    // 壓制 vite-plugin-pwa 的預設 reload：切版統一由下方 controllerchange 監聽負責，
+    // 原生事件涵蓋他分頁觸發與 register 前的時序窗口，維持單一 reload 權責。
+    onNeedReload: noop,
     onRegisteredSW(_, registration) {
       registrationRef.current = registration ?? null;
     },

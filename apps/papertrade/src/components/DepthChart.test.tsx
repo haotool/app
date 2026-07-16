@@ -122,6 +122,23 @@ describe('DepthChart', () => {
     mockRect(surface);
     fireEvent.click(surface, { clientX: 100 });
 
-    expect(screen.getByText('點按圖表查看檔位累計量')).toBeInTheDocument();
+    expect(screen.getByText('點按或以方向鍵探索檔位累計量')).toBeInTheDocument();
+  });
+
+  it('steps the probe with arrow keys and clears it with Escape', () => {
+    render(<DepthChart symbol="BTCUSDT" />);
+    act(() => handlers[0]?.(snapshot(100)));
+    flushSample();
+
+    const surface = screen.getByRole('button', { name: '探索市場深度檔位' });
+
+    // 域 [98,102]，自中間價 100 起步進 2%（0.08）：右移入賣側首檔 101。
+    for (let index = 0; index < 13; index += 1) {
+      fireEvent.keyDown(surface, { key: 'ArrowRight' });
+    }
+    expect(screen.getByText(/賣 101\.00/)).toBeInTheDocument();
+
+    fireEvent.keyDown(surface, { key: 'Escape' });
+    expect(screen.getByText('點按或以方向鍵探索檔位累計量')).toBeInTheDocument();
   });
 });

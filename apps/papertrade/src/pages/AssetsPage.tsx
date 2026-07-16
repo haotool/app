@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { ChartColumn, History } from 'lucide-react';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
-import { QTY_DISPLAY_DECIMALS } from '../config/trading';
+import { HISTORY_MAX_ENTRIES, QTY_DISPLAY_DECIMALS } from '../config/trading';
 import { getAccountMetrics } from '../engine/engine';
 import { type ClosedTrade, type CloseReason } from '../engine/types';
 import { useMarketStore } from '../stores/marketStore';
@@ -55,7 +55,14 @@ function PracticeStatsSection({ history }: { history: ClosedTrade[] }) {
 
   return (
     <section aria-label="練習統計" className="pt-6">
-      <h2 className="text-label font-medium text-text-2">練習統計</h2>
+      <h2 className="text-label font-medium text-text-2">
+        練習統計
+        {history.length >= HISTORY_MAX_ENTRIES && (
+          <span className="ml-1 text-caption font-normal text-text-3">
+            （近 {HISTORY_MAX_ENTRIES} 筆）
+          </span>
+        )}
+      </h2>
       {history.length === 0 ? (
         <EmptyState
           icon={ChartColumn}
@@ -74,11 +81,11 @@ function PracticeStatsSection({ history }: { history: ClosedTrade[] }) {
           </StatCard>
           <StatCard label="總手續費">{formatAmount(stats.totalFees, 2)}</StatCard>
           <StatCard label="最大單筆盈/虧">
-            <span className="text-long">
+            <span className={stats.maxWin === null ? 'text-text-3' : 'text-long'}>
               {stats.maxWin === null ? '--' : signedUsdt(stats.maxWin)}
             </span>
             <span className="text-text-3"> / </span>
-            <span className="text-short">
+            <span className={stats.maxLoss === null ? 'text-text-3' : 'text-short'}>
               {stats.maxLoss === null ? '--' : signedUsdt(stats.maxLoss)}
             </span>
           </StatCard>

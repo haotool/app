@@ -9,6 +9,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 export interface RegisterSWOptions {
   immediate?: boolean;
+  onNeedReload?: () => void;
   onNeedRefresh?: () => void;
   onOfflineReady?: () => void;
   onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;

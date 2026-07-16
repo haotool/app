@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { DEPTH_REDRAW_INTERVAL_MS, type MarketSymbol } from '../config/market';
 import { useOrderbook } from '../hooks/useOrderbook';
 import {
@@ -106,11 +106,24 @@ export function DepthChart({ symbol }: DepthChartProps) {
     setProbePrice(profile.domainMin + ratio * domainSpan);
   }
 
+  // 鍵盤等效：左右鍵以域寬 2% 步進探針（未設時自中間價起），Escape 清除。
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape') {
+      setProbePrice(null);
+      return;
+    }
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const step = domainSpan * 0.02 * (event.key === 'ArrowLeft' ? -1 : 1);
+    const base = probePrice ?? profile.midPrice ?? 0;
+    setProbePrice(Math.min(Math.max(base + step, profile.domainMin), profile.domainMax));
+  }
+
   return (
     <section aria-label="市場深度" className="p-3">
-      <p className="mb-1.5 px-1 text-caption text-text-3 tabular-nums">
+      <p aria-live="polite" className="mb-1.5 px-1 text-caption text-text-3 tabular-nums">
         {hit === null ? (
-          '點按圖表查看檔位累計量'
+          '點按或以方向鍵探索檔位累計量'
         ) : (
           <>
             <span className={hit.side === 'bid' ? 'text-long' : 'text-short'}>
@@ -122,8 +135,12 @@ export function DepthChart({ symbol }: DepthChartProps) {
       </p>
       <div
         data-testid="depth-chart"
-        className="relative h-40 touch-manipulation"
+        role="button"
+        tabIndex={0}
+        aria-label="探索市場深度檔位"
+        className="relative h-40 touch-manipulation rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         onClick={handleTap}
+        onKeyDown={handleKeyDown}
       >
         <svg
           role="img"

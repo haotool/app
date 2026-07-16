@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+124
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+125
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-final-seat-convergence
+- 原因：PR #734 雙終審席（Sonnet 89/96 REQUEST CHANGES、Fable 96/97 APPROVE）交叉指出 useAutoUpdate 未壓制 vite-plugin-pwa 內建 controlling reload 形成雙重 reload 路徑，另有練習統計 200 筆截斷未標註、深度圖探針無鍵盤等效與 null 盈虧誤著色
+- 解法：useRegisterSW 補 onNeedReload 空回呼收斂單一 reload 權責（mock 同步補型別＋壓制測試）、練習統計達上限顯示「近 200 筆」副標且 null 盈虧改中性色、深度圖補 role/tabIndex/方向鍵步進與 Escape 清除（含測試），371 unit 全綠
 
 - 日期：2026-07-17
 - ID：reward-papertrade-r3-wave2-depth-indicators
