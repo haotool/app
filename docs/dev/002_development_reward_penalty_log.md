@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+120
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-park-keeper-round2-convergence
+- 原因：round-2 四席產線評分（90-99/85-100）殘項需一波收斂且兩席可維護性 7.5 未達 gate
+- 解法：SW 精確導覽路由改由 SEO_PATHS 同源派生＋formatPlate/方位字直立/compact 精簡列＋MiniMap 946→337 純搬移拆檔；617 unit＋44 e2e 綠、審查 8.5/10 APPROVE
+
+- 日期：2026-07-17
+- ID：penalty-park-keeper-sw-route-fix-not-generalized
+- 原因：S6 修 /about SW 回落殼 hydration 時未推廣到同類預渲染頁，/add 與 /guide 於產線被兩席評分揪出同型 #418
+- 解法：修法一律 SSOT 化（清單派生）取代單點修補，同類頁面全數自動涵蓋並以 ssg-sw e2e 守門
 
 - 日期：2026-07-17
 - ID：neutral-workspace-deps-minor-refresh
