@@ -283,7 +283,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               <button
                 onClick={() => setExpenseNote('')}
                 aria-label={t('common.clear')}
-                className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
+                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
               >
                 <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
                   close
@@ -325,26 +325,32 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2">
           <button
             onClick={() => setSplitMode('split_evenly')}
+            aria-pressed={splitMode === 'split_evenly'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
+              'flex-1 flex items-center justify-center gap-1.5 min-h-11 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'split_evenly'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
-            <span className="material-symbols-outlined text-[14px] leading-none">call_split</span>
+            <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden="true">
+              call_split
+            </span>
             {t('home.split_evenly')}
           </button>
           <button
             onClick={() => setSplitMode('itemized')}
+            aria-pressed={splitMode === 'itemized'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
+              'flex-1 flex items-center justify-center gap-1.5 min-h-11 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'itemized'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
-            <span className="material-symbols-outlined text-[14px] leading-none">edit_note</span>
+            <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden="true">
+              edit_note
+            </span>
             {t('home.itemized')}
           </button>
         </div>

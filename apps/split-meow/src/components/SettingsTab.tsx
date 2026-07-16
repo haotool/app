@@ -208,7 +208,7 @@ export function SettingsTab() {
                     key={lang.id}
                     onClick={() => handleLanguageChange(lang.id)}
                     aria-pressed={isActive}
-                    className={`flex items-center gap-1 min-h-9 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 min-h-11 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       isActive
                         ? 'bg-primary-container text-on-primary-container shadow-ambient'
                         : 'text-on-surface-variant hover:bg-surface-container-high'
@@ -250,8 +250,9 @@ export function SettingsTab() {
                     <button
                       key={code}
                       onClick={() => handleCurrencyChange(code)}
+                      aria-pressed={isActive}
                       className={cn(
-                        'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
+                        'flex items-center gap-1.5 min-h-11 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
                         isActive
                           ? 'bg-primary-container text-on-primary-container shadow-ambient'
                           : 'text-on-surface-variant hover:bg-surface-container-high',
@@ -275,12 +276,17 @@ export function SettingsTab() {
             {rateFetchFailed && (
               <button
                 onClick={() => void refreshExchangeRate()}
-                className="flex items-center gap-1 pl-10 text-[11px] font-medium text-error cursor-pointer"
+                className="flex items-center gap-1 min-h-11 pl-10 text-[11px] font-medium text-error cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[12px]">refresh</span>
+                <span className="material-symbols-outlined text-[12px]" aria-hidden="true">
+                  refresh
+                </span>
                 {t('settings.rate_retry')}
               </button>
             )}
+            <p className="text-[11px] text-on-surface-variant/50 pl-10">
+              {t('settings.currency_note')}
+            </p>
           </div>
           <button
             onClick={toggleCatPlayMode}

@@ -95,6 +95,7 @@ const resources = {
         rate_stale: '（可能過時）',
         rate_retry: '匯率更新失敗，點此重試',
         currency_switch_draft_confirm: '切換幣別將清除未儲存的金額，確定要繼續嗎？',
+        currency_note: '切換只影響之後的新記帳，不會改變任何歷史金額',
         auto_detected: '自動偵測',
       },
       trip: {
@@ -217,6 +218,7 @@ const resources = {
         rate_stale: '(may be outdated)',
         rate_retry: 'Rate update failed — tap to retry',
         currency_switch_draft_confirm: 'Switching currency clears the unsaved amount. Continue?',
+        currency_note: 'Only affects new expenses — past amounts never change',
         auto_detected: 'Auto-detected',
       },
       trip: {
@@ -340,6 +342,7 @@ const resources = {
         rate_retry: '환율 업데이트 실패, 탭하여 재시도',
         currency_switch_draft_confirm:
           '통화를 전환하면 저장되지 않은 금액이 지워집니다. 계속하시겠습니까?',
+        currency_note: '이후의 새 지출에만 적용되며 과거 금액은 변경되지 않습니다',
         auto_detected: '자동 감지',
       },
       trip: {
@@ -463,6 +466,7 @@ const resources = {
         rate_retry: 'レート更新失敗、タップして再試行',
         currency_switch_draft_confirm:
           '通貨を切り替えると未保存の金額がクリアされます。続行しますか？',
+        currency_note: '今後の新しい記録にのみ適用され、過去の金額は変わりません',
         auto_detected: '自動検出',
       },
       trip: {

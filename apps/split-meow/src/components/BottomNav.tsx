@@ -54,6 +54,7 @@ export function BottomNav() {
               <span
                 className="material-symbols-outlined text-[20px] leading-none"
                 style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                aria-hidden="true"
               >
                 {item.icon}
               </span>

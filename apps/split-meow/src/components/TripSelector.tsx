@@ -48,7 +48,10 @@ export function TripSelector() {
         <span className="font-medium text-sm truncate min-w-0 flex-1 text-left">
           {currentTrip?.name ?? t('trip.placeholder')}
         </span>
-        <span className="material-symbols-outlined text-sm text-on-surface-variant shrink-0">
+        <span
+          className="material-symbols-outlined text-sm text-on-surface-variant shrink-0"
+          aria-hidden="true"
+        >
           {isOpen ? 'expand_less' : 'expand_more'}
         </span>
       </button>

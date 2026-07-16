@@ -226,7 +226,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
       >
         {t('home.complete')}
         {canSave && (
-          <div className="absolute -right-2 -bottom-2 opacity-20">
+          <div className="absolute -right-2 -bottom-2 opacity-20" aria-hidden="true">
             <span
               className="material-symbols-outlined text-5xl"
               style={{ transform: 'rotate(15deg)' }}
