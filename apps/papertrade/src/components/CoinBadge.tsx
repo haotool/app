@@ -7,7 +7,6 @@ interface CoinBadgeProps {
   variant?: 'solid' | 'soft';
 }
 
-// 幣種縮寫完整顯示（2–4 字）不截斷；4 字縮小字級收進圓框。
 export function CoinBadge({ symbol, size = 'sm', variant = 'solid' }: CoinBadgeProps) {
   const meta = SYMBOL_META[symbol];
   return (

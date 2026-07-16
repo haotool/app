@@ -10,7 +10,6 @@ interface EmptyStateProps {
   className?: string;
 }
 
-// 空狀態統一版型：圖示＋一句話＋（選配）補述與 CTA。
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
     <div

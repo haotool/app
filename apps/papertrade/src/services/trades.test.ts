@@ -61,6 +61,33 @@ describe('mergeTrades', () => {
   it('returns the same reference when nothing arrives', () => {
     expect(mergeTrades(existing, [], 10)).toBe(existing);
   });
+
+  it('dedupes by id when the WS repeats trades already backfilled from REST', () => {
+    // REST-first 競態：REST 回填先落地，WS 隨後推送同 execId。
+    const restFilled: PublicTrade[] = [
+      { id: 'e1', time: 300, side: 'buy', price: 101, size: 1 },
+      { id: 'e2', time: 200, side: 'sell', price: 100, size: 2 },
+    ];
+    const incoming = parseTradeMessage({
+      data: [{ i: 'e1', T: 300, S: 'Buy', p: '101', v: '1' }],
+    });
+
+    const merged = mergeTrades(restFilled, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['e1', 'e2']);
+  });
+
+  it('keeps the incoming version of a duplicated id and caps at the limit', () => {
+    const restFilled: PublicTrade[] = [
+      { id: 'e1', time: 300, side: 'buy', price: 101, size: 1 },
+      { id: 'e2', time: 200, side: 'sell', price: 100, size: 2 },
+      { id: 'e3', time: 100, side: 'buy', price: 99, size: 3 },
+    ];
+    const incoming: PublicTrade[] = [{ id: 'e2', time: 200, side: 'sell', price: 100.5, size: 9 }];
+
+    const merged = mergeTrades(restFilled, incoming, 2);
+    expect(merged.map((trade) => trade.id)).toEqual(['e2', 'e1']);
+    expect(merged[0]?.size).toBe(9);
+  });
 });
 
 describe('backfillTrades', () => {

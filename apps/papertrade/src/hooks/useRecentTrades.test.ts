@@ -76,6 +76,21 @@ describe('useRecentTrades', () => {
     expect(result.current.map((item) => item.id)).toEqual(['live1', 'h1']);
   });
 
+  it('dedupes live trades that repeat ids already backfilled from REST', async () => {
+    // REST-first 競態：回填先完成，WS 隨後重推同 execId 不得出現重複列。
+    fetchRecentTradesMock.mockResolvedValue([trade('e1', 300), trade('h1', 200)]);
+
+    const { result } = renderHook(() => useRecentTrades('BTCUSDT'));
+    await waitFor(() => {
+      expect(result.current.map((item) => item.id)).toEqual(['e1', 'h1']);
+    });
+
+    act(() => {
+      topicHandlers.get('publicTrade.BTCUSDT')?.(wsTradePayload('e1', 300));
+    });
+    expect(result.current.map((item) => item.id)).toEqual(['e1', 'h1']);
+  });
+
   it('keeps accumulating live trades when the backfill fails', async () => {
     fetchRecentTradesMock.mockRejectedValue(new Error('offline'));
 

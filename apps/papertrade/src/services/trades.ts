@@ -47,7 +47,11 @@ export function mergeTrades(
 ): PublicTrade[] {
   if (incoming.length === 0) return current;
   // Bybit 陣列內舊到新；顯示採新到舊，故反轉後前插。
-  return [...incoming].reverse().concat(current).slice(0, limit);
+  // REST-first 競態下 WS 可能重推已回填的 execId：依 id 去重，同 id 以 incoming 為準。
+  const next = [...incoming].reverse();
+  const seen = new Set(next.map((trade) => trade.id));
+  const deduped = current.filter((trade) => !seen.has(trade.id));
+  return next.concat(deduped).slice(0, limit);
 }
 
 // REST 回填墊在既有即時成交之後，同 id 以即時推送為準。
