@@ -28,7 +28,6 @@ import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
 import { pendingCtaPhoto } from '@app/park-keeper/services/pendingCtaPhoto';
 import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
-import { UpdatePrompt } from '@app/park-keeper/components/UpdatePrompt';
 import NavOverlay from '@app/park-keeper/components/NavOverlay';
 import SettingsTab from '@app/park-keeper/components/SettingsTab';
 import BrandLogo from '@app/park-keeper/components/BrandLogo';
@@ -611,7 +610,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      <UpdatePrompt />
     </LayoutGroup>
   );
 }
