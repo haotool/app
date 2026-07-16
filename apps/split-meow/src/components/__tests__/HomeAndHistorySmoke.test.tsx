@@ -121,8 +121,10 @@ describe('HomeTab', () => {
       useStore.getState().setCurrency('TWD');
     });
 
-    const el = document.querySelector('h1');
-    expect(el?.textContent ?? '').not.toContain('10,000');
+    // draft 已清空、畫面回到空狀態提示，且不得殘留任何幣別標籤的 10,000
+    expect(useStore.getState().calculatorValue).toBe('');
+    expect(screen.getByText(i18n.t('home.empty_hint_evenly'))).toBeInTheDocument();
+    expect(screen.queryByText(/NT\$\s*10,000|₩10,000/)).not.toBeInTheDocument();
   });
 
   it('itemized 模式停用目前焦點成員後會自動切換到仍有效的成員', () => {
@@ -177,34 +179,35 @@ describe('HistoryTab', () => {
     expect(screen.getAllByText('Dinner 晚餐').length).toBeGreaterThan(0);
   });
 
-  it('點擊消費行展開', () => {
+  it('點擊消費行展開顯示分攤明細', () => {
     useStore.setState({ expenses: [EXPENSE_1] });
     renderWith(<HistoryTab />);
-    // Find a clickable row — any element with the amount text
-    const rows = Array.from(document.querySelectorAll('div[class*="cursor-pointer"]'));
-    if (rows[0]) {
-      fireEvent.click(rows[0]);
-    }
-    expect(document.body).toBeTruthy();
+    const card = screen.getByTestId('expense-card');
+    const row = card.querySelector('div[class*="cursor-pointer"]');
+    expect(row).not.toBeNull();
+    fireEvent.click(row as HTMLElement);
+
+    expect(screen.getByText(i18n.t('history.breakdown'))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t('history.edit'))).toBeInTheDocument();
   });
 
-  it('展開後可點擊刪除按鈕', () => {
+  it('展開後點擊刪除進入軟刪除並顯示 undo toast', () => {
     useStore.setState({ expenses: [EXPENSE_1] });
     renderWith(<HistoryTab />);
-    // Expand the row first
-    const rows = Array.from(document.querySelectorAll('div[class*="cursor-pointer"]'));
-    if (rows[0]) fireEvent.click(rows[0]);
+    const card = screen.getByTestId('expense-card');
+    fireEvent.click(card.querySelector('div[class*="cursor-pointer"]')!);
 
-    const deleteBtns = Array.from(document.querySelectorAll('button')).filter(
-      (b) => b.querySelector('.material-symbols-outlined')?.textContent?.trim() === 'delete',
+    const deleteBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent?.trim().endsWith(i18n.t('history.delete')),
     );
-    if (deleteBtns[0]) {
-      fireEvent.click(deleteBtns[0]);
-      // 軟刪除：費用進入 pending 狀態，5 秒後才真正移除
-      // 此時 store 仍有該筆費用，但 UI 已將卡片從列表隱藏
-      expect(useStore.getState().expenses).toHaveLength(1);
-      expect(document.body).toBeTruthy();
-    }
+    expect(deleteBtn).toBeDefined();
+    fireEvent.click(deleteBtn as HTMLElement);
+
+    // 軟刪除：store 仍保留該筆，但卡片自列表隱藏並出現 undo toast
+    expect(useStore.getState().expenses).toHaveLength(1);
+    expect(screen.queryByTestId('expense-card')).not.toBeInTheDocument();
+    const toast = screen.getByTestId('undo-toast');
+    expect(toast).toHaveTextContent(i18n.t('history.undo'));
   });
 
   it('有 currency 快照的 KRW 支出以 ₩ 顯示金額', () => {
@@ -277,8 +280,10 @@ describe('HistoryTab', () => {
       ],
     });
     renderWith(<HistoryTab />);
-    // Should render settlement amounts somewhere
-    expect(document.body).toBeTruthy();
+    // me 墊付 300（分攤 150/150）＋ m1 墊付 60（分攤 30/30）→ m1 應付 me 120
+    expect(screen.getByText(i18n.t('history.settlements'))).toBeInTheDocument();
+    const row = screen.getByTestId('settlement-row');
+    expect(row).toHaveTextContent('NT$ 120');
   });
 
   it('混幣行程顯示警告並隱藏總額與結算（避免跨幣別錯誤加總）', () => {
