@@ -135,7 +135,7 @@ export class TitleScene extends Phaser.Scene {
       startBgm();
       const challenge = currentChallenge(loadSave());
       if (challenge === null) this.scene.start(SceneKeys.Map, {});
-      else this.scene.start(SceneKeys.Game, { levelId: challenge, carryMs: 0, deaths: 0 });
+      else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0 });
     };
     this.input.keyboard?.once('keydown-ENTER', start);
     // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，

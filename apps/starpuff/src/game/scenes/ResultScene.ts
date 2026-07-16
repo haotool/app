@@ -5,7 +5,7 @@ import { createFx } from '../systems/fx';
 import { addDomButton, bindMenuRelayout } from '../systems/hud';
 
 export class ResultScene extends Phaser.Scene {
-  private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1, carryMs: 0 };
+  private result: GameResultData = { result: 'won', timeMs: 0, deaths: 0, levelId: 1 };
   private backdrop: BackgroundHandle | null = null;
 
   constructor() {
@@ -18,7 +18,6 @@ export class ResultScene extends Phaser.Scene {
       timeMs: data.timeMs ?? 0,
       deaths: data.deaths ?? 0,
       levelId: data.levelId ?? 1,
-      carryMs: data.carryMs ?? 0,
     };
   }
 
@@ -100,7 +99,6 @@ export class ResultScene extends Phaser.Scene {
         ? this.scene.start(SceneKeys.Map, {})
         : this.scene.start(SceneKeys.Game, {
             levelId: this.result.levelId,
-            carryMs: this.result.carryMs,
             deaths: this.result.deaths,
           });
     this.input.keyboard?.once('keydown-ENTER', retry);

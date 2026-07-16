@@ -40,6 +40,8 @@ export class MapScene extends Phaser.Scene {
   private backdrop: BackgroundHandle | null = null;
   private reveal: LevelId | null = null;
   private resetArmed = false;
+  // 武裝時刻採牆鐘（Date.now）：高負載下場景時鐘落後牆鐘，確認窗以真實時間計才安全。
+  private resetArmedAt = 0;
   private resetTimer: Phaser.Time.TimerEvent | null = null;
 
   constructor() {
@@ -49,6 +51,7 @@ export class MapScene extends Phaser.Scene {
   init(data: MapSceneData): void {
     this.reveal = data.reveal ?? null;
     this.resetArmed = false;
+    this.resetArmedAt = 0;
     this.resetTimer = null;
   }
 
@@ -224,7 +227,11 @@ export class MapScene extends Phaser.Scene {
               alpha: 1,
               duration: REVEAL_FADE_MS,
               ease: 'Back.easeOut',
-              onComplete: () => this.pulseNode(node),
+              onComplete: () => {
+                this.pulseNode(node);
+                // 揭霧競態防護（§39）：入口鈕延至揭霧演出完成才掛，杜絕霧下誤觸。
+                this.addNodeButton(level.id, level.nameZh, x, y);
+              },
             });
           });
         } else {
@@ -232,17 +239,22 @@ export class MapScene extends Phaser.Scene {
         }
       }
 
-      // 已解鎖節點（open/cleared）以 DOM 鈕承接命中（旋轉殼 hit-test 正確）。
-      if (status !== 'locked') {
-        addDomButton(
-          this,
-          `進入 ${level.nameZh}`,
-          { x, y, w: NODE_RADIUS * 2 + 20, h: NODE_RADIUS * 2 + 20 },
-          () => this.enterLevel(level.id),
-          `node-${level.id}`,
-        );
+      // 已解鎖節點（open/cleared）以 DOM 鈕承接命中（旋轉殼 hit-test 正確）；
+      // 揭霧中的節點由揭霧 onComplete 延遲掛鈕。
+      if (status !== 'locked' && !revealing) {
+        this.addNodeButton(level.id, level.nameZh, x, y);
       }
     });
+  }
+
+  private addNodeButton(levelId: LevelId, nameZh: string, x: number, y: number): void {
+    addDomButton(
+      this,
+      `進入 ${nameZh}`,
+      { x, y, w: NODE_RADIUS * 2 + 20, h: NODE_RADIUS * 2 + 20 },
+      () => this.enterLevel(levelId),
+      `node-${levelId}`,
+    );
   }
 
   // 當前可挑戰節點脈動（§39）。
@@ -260,7 +272,7 @@ export class MapScene extends Phaser.Scene {
   private enterLevel(levelId: LevelId): void {
     unlockAudio();
     playSfx('pop');
-    this.scene.start(SceneKeys.Game, { levelId, carryMs: 0, deaths: 0 });
+    this.scene.start(SceneKeys.Game, { levelId, deaths: 0 });
   }
 
   private addBackButton(): void {
@@ -308,10 +320,15 @@ export class MapScene extends Phaser.Scene {
       '重置進度',
       { x: visual.x, y: visual.y, w: 150, h: 52 },
       () => {
-        if (!this.resetArmed) {
+        // 武裝逾時以牆鐘判定（場景時鐘可能落後）：逾時視同未武裝，重新進入武裝態。
+        const expired = Date.now() - this.resetArmedAt > RESET_ARM_MS;
+        if (!this.resetArmed || expired) {
           this.resetArmed = true;
+          this.resetArmedAt = Date.now();
           playSfx('pop');
           visual.setText('確定重置？').setBackgroundColor('#ffb0b0');
+          // 文案自動還原為視覺提示；武裝有效性由上方牆鐘判定把關。
+          this.resetTimer?.remove();
           this.resetTimer = this.time.delayedCall(RESET_ARM_MS, () => {
             this.resetArmed = false;
             visual.setText('重置進度').setBackgroundColor('#ffffff');

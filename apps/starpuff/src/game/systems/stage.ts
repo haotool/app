@@ -8,6 +8,7 @@ import {
   SPRING_VELOCITY_Y,
   canSpringLaunch,
   shouldDropThrough,
+  springSweepHit,
 } from '../logic/stageModel';
 import { playSfx } from '../audio/sfx';
 import { burstSmall, ensureFxTextures } from './fx';
@@ -163,16 +164,24 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     });
   }
 
-  // 彈簧掃掠背擋（§43，鏡像星星門 syncGateSweep）：Arcade 靜態 overlap 存在間歇漏檢，
-  // walk-over 幾何判定補判——腳底落在簧頂帶且水平投影重疊即發射。
+  // 彈簧掃掠背擋（§43，鏡像星星門 syncGateSweep）：彈簧 overlap 為 direct pair，
+  // Phaser 4 實測間歇漏檢——以前後幀掃掠 x 區間幾何補判（含高速穿越），不得移除；
+  // 重複觸發由 canSpringLaunch 冷卻閘去重。
+  let prevSweepX: number | null = null;
   function sweepSprings(body: Phaser.Physics.Arcade.Body): void {
+    const currX = hooks.player().sprite.x;
+    const prevX = prevSweepX ?? currX;
+    prevSweepX = currX;
+    const halfWidth = body.width / 2;
     for (const spring of springs) {
       const sb = spring.body as Phaser.Physics.Arcade.StaticBody;
       if (
-        body.right > sb.left - 6 &&
-        body.left < sb.right + 6 &&
-        body.bottom >= sb.top - 8 &&
-        body.bottom <= sb.bottom + 10
+        springSweepHit(prevX, currX, halfWidth, body.bottom, {
+          left: sb.left,
+          right: sb.right,
+          top: sb.top,
+          bottom: sb.bottom,
+        })
       ) {
         tryLaunchSpring(spring);
       }

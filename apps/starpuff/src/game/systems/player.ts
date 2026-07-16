@@ -31,6 +31,7 @@ import {
   refundDashFlap,
   resolveActionPress,
   resolveShieldBlock,
+  shieldEligible,
   shouldFireOnRelease,
   starDamage,
   starPitch,
@@ -486,17 +487,18 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       drawStormRing();
 
       actionHoldMs = controls.actionHeld ? actionHoldMs + deltaMs : 0;
-      // 殼盾（§40）：頂槽殼盾星且未滿匣時，長按改舉正面護盾（取代吸入語意）；
-      // 滿匣長按維持星暴優先，肌肉記憶不變。
+      // 殼盾（§40 輸入矩陣）：殼盾情境（頂槽殼盾星且未滿匣）長按語意固定為舉盾——
+      // 舉盾中與盾 CD 中皆抑制吸入，不回落；滿匣長按維持星暴優先，肌肉記憶不變。
+      const inShieldContext = shieldEligible(magazine);
       shield = advanceShield(shield, {
         deltaMs,
         held: controls.actionHeld && actionHoldMs >= INHALE.holdThresholdMs && hurtLockMs <= 0,
-        eligible: isTopShelly(magazine) && magazine.length < STAR.maxAmmo,
+        eligible: inShieldContext && hurtLockMs <= 0,
       });
       if (shield.raised && !wasShieldRaised) playSfx('shell-spin');
       wasShieldRaised = shield.raised;
       drawShield();
-      inhaling = actionHoldMs >= INHALE.holdThresholdMs && !shield.raised;
+      inhaling = actionHoldMs >= INHALE.holdThresholdMs && !shield.raised && !inShieldContext;
       zoneBody.enable = inhaling;
       zone.setPosition(sprite.x + facing * (INHALE.rangePx / 2), sprite.y);
 

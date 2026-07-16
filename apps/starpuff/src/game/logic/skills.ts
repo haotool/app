@@ -198,6 +198,12 @@ export function isTopShelly(magazine: readonly MagazineSlot[]): boolean {
   return top?.flavor === 'shelly' && !top.gold;
 }
 
+// 殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣——此情境下長按語意固定為舉盾，
+// 盾 CD 中或舉盾中皆不得回落為吸入（點按發射不受影響）；滿匣長按維持星暴優先。
+export function shieldEligible(magazine: readonly MagazineSlot[]): boolean {
+  return isTopShelly(magazine) && magazine.length < STAR.maxAmmo;
+}
+
 // 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星且未滿匣；
 // CD 中不可舉盾，放開或條件消失即放下。
 export function advanceShield(

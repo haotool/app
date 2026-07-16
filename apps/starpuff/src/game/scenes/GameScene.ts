@@ -18,7 +18,7 @@ import {
   onGameEvent,
   type GameEventName,
 } from '../core/events';
-import { loadSave, persistSave, recordLevelClear, recordSecret } from '../core/save';
+import { loadSave, persistSave, recordLevelClear, recordSecret, type SaveData } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
@@ -31,6 +31,7 @@ import {
   type EggProgress,
 } from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
@@ -65,6 +66,8 @@ const RETRY_DELAY_MS = 350;
 // 星星門：位於世界右端、地面上方；演出時玩家縮小旋轉飛入。
 const GATE_MARGIN_X = 120;
 const GATE_Y = GROUND_TOP - 90;
+const GATE_ZONE_W = 90;
+const GATE_ZONE_H = 150;
 const GATE_ABSORB_MS = 700;
 // 過關星爆停留短拍後進世界地圖（§39：通關後自動進入）。
 const MAP_ENTER_DELAY_MS = 500;
@@ -73,7 +76,6 @@ const BOLT_FADE_MS = 200;
 
 interface GameSceneData {
   levelId?: LevelId;
-  carryMs?: number;
   deaths?: number;
 }
 
@@ -86,9 +88,10 @@ export class GameScene extends Phaser.Scene {
   currentLevelId: LevelId = 1;
 
   private level!: LevelSpec;
-  // 已完成關卡的累計用時；GAME_WON 回報四關總和。
-  private carryMs = 0;
-  // 本輪累計死亡次數：跨關卡重試與敗北重試皆延續，勝利畫面展示。
+  // 存檔 session 快取（§38）：create 載入一次，事件時就地更新＋單次 persist，
+  // 避免每次寫入重複 loadSave 解析。
+  private save!: SaveData;
+  // 本關累計死亡次數：死亡重試與敗北重試皆延續，結算畫面展示。
   private deaths = 0;
   private startedAt = 0;
   private finished = false;
@@ -99,6 +102,7 @@ export class GameScene extends Phaser.Scene {
   private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private gate: Phaser.GameObjects.Container | null = null;
+  private gateRect: BoundsRect | null = null;
   private prevPlayerX = 0;
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
@@ -120,12 +124,12 @@ export class GameScene extends Phaser.Scene {
 
   init(data: GameSceneData): void {
     this.currentLevelId = data.levelId ?? 1;
-    this.carryMs = data.carryMs ?? 0;
     this.deaths = data.deaths ?? 0;
   }
 
   create(): void {
     this.level = getLevel(this.currentLevelId);
+    this.save = loadSave();
     this.startedAt = this.time.now;
     this.finished = false;
     this.transitioning = false;
@@ -135,6 +139,7 @@ export class GameScene extends Phaser.Scene {
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
     this.gate = null;
+    this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
 
@@ -248,20 +253,19 @@ export class GameScene extends Phaser.Scene {
 
   // e2e 鉤子：跳至魔王關直達魔王戰。
   skipToBoss(): void {
-    if (this.scene.isActive()) this.restartWith({ levelId: 4, carryMs: 0 });
+    if (this.scene.isActive()) this.restartWith({ levelId: 4 });
   }
 
   // e2e 鉤子：直達任一關（各關反卡關走查用）。
   gotoLevel(levelId: LevelId): void {
-    if (this.scene.isActive()) this.restartWith({ levelId, carryMs: 0 });
+    if (this.scene.isActive()) this.restartWith({ levelId });
   }
 
   // 暫停選單「重新開始」（§35）：重置當前關卡全狀態（血量/彈藥/擊殺/計時/實體由
-  // create 重建），保留已完成關卡累計用時與本輪死亡數。
+  // create 重建），保留本輪死亡數。
   restartCurrentLevel(): void {
     this.restartWith({
       levelId: this.currentLevelId,
-      carryMs: this.carryMs,
       deaths: this.deaths,
     });
   }
@@ -478,7 +482,7 @@ export class GameScene extends Phaser.Scene {
       this.bossDown = true;
       this.bossHp = 0;
       // 存檔寫入時機（§38）：魔王擊破即記通關與該關用時。
-      persistSave(recordLevelClear(loadSave(), this.currentLevelId, this.levelTimeMs()));
+      persistSave(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
     bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
@@ -495,7 +499,6 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(RETRY_DELAY_MS, () =>
       this.restartWith({
         levelId: this.currentLevelId,
-        carryMs: this.carryMs,
         deaths: this.deaths,
       }),
     );
@@ -503,7 +506,7 @@ export class GameScene extends Phaser.Scene {
 
   // 星星門：fx-star 放大 + 光暈脈動 + 浮動 tween（graphics 組合，不新增美術）。
   private spawnGate(): void {
-    if (this.gate || this.level.boss) return;
+    if (this.gate || this.level.boss || this.finished || this.transitioning) return;
     const gx = this.worldWidth() - GATE_MARGIN_X;
     const glow = this.add.image(0, 0, 'fx-star').setDisplaySize(150, 150).setAlpha(0.35);
     const core = this.add.image(0, 0, 'fx-star').setDisplaySize(96, 96);
@@ -529,20 +532,40 @@ export class GameScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    const zone = this.add.zone(gx, GATE_Y, 90, 150);
+    const zone = this.add.zone(gx, GATE_Y, GATE_ZONE_W, GATE_ZONE_H);
     this.physics.add.existing(zone, true);
     this.physics.add.overlap(this.player.sprite, zone, () => this.completeLevel());
+    this.gateRect = {
+      left: gx - GATE_ZONE_W / 2,
+      right: gx + GATE_ZONE_W / 2,
+      top: GATE_Y - GATE_ZONE_H / 2,
+      bottom: GATE_Y + GATE_ZONE_H / 2,
+    };
     this.prevPlayerX = this.player.sprite.x;
+    // 門生在身後（§43）：開門瞬間玩家已在門區內或門心右側（右緣紮營），直接判入門。
+    if (this.playerCrossedGate(this.prevPlayerX)) this.completeLevel();
   }
 
-  // 星星門必達背擋（§26）：大 delta 幀（背景卡頓/GC/低階機掉幀）可在兩次 collider
-  // 檢查間隧穿 90px 判定區——以門心 x 掃掠線補判，任一幀跨越即視為入門。
+  // 星星門必達背擋（§26/§43）：門 overlap 為 direct pair，Phaser 4 實測間歇漏檢——
+  // 逐幀以 crossedGate 幾何判定補判（跨門心/站門心右側/AABB 交疊），不得移除。
   private syncGateSweep(): void {
     if (!this.gate) return;
     const x = this.player.sprite.x;
-    const crossed = (this.prevPlayerX - this.gate.x) * (x - this.gate.x) <= 0;
+    const crossed = this.playerCrossedGate(this.prevPlayerX);
     this.prevPlayerX = x;
     if (crossed) this.completeLevel();
+  }
+
+  private playerCrossedGate(prevX: number): boolean {
+    if (!this.gate || !this.gateRect) return false;
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    return crossedGate(
+      prevX,
+      this.player.sprite.x,
+      this.gate.x,
+      { left: body.left, right: body.right, top: body.top, bottom: body.bottom },
+      this.gateRect,
+    );
   }
 
   // 過關演出（§39）：玩家縮小旋轉飛入門 → 寫入存檔 → 世界地圖（揭霧下一關節點）。
@@ -556,7 +579,7 @@ export class GameScene extends Phaser.Scene {
     body.stop();
     body.enable = false;
     // 存檔寫入時機（§38）：通關即記錄，演出中斷（切頁/重載）不掉進度。
-    persistSave(recordLevelClear(loadSave(), this.currentLevelId, this.levelTimeMs()));
+    persistSave(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
     this.tweens.add({
       targets: this.player.sprite,
       x: this.gate.x,
@@ -586,7 +609,7 @@ export class GameScene extends Phaser.Scene {
     this.fx.stopInhale();
     stopSfx('inhale');
     (this.player.sprite.body as Phaser.Physics.Arcade.Body).stop();
-    const timeMs = this.carryMs + (this.time.now - this.startedAt);
+    const timeMs = this.levelTimeMs();
     emitGameEvent(this.events, result === 'won' ? GameEvents.GAME_WON : GameEvents.GAME_LOST, {
       timeMs,
     });
@@ -595,7 +618,6 @@ export class GameScene extends Phaser.Scene {
       timeMs,
       deaths: this.deaths,
       levelId: this.currentLevelId,
-      carryMs: this.carryMs,
     };
     this.time.delayedCall(result === 'won' ? 1300 : 900, () =>
       this.scene.start(SceneKeys.Result, data),
@@ -705,7 +727,7 @@ export class GameScene extends Phaser.Scene {
   // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
   private grantEggReward(spec: EasterEggSpec): void {
     // 存檔寫入時機（§38）：彩蛋觸發即記錄（trigger 型別為關內唯一 id）。
-    persistSave(recordSecret(loadSave(), this.currentLevelId, spec.trigger));
+    persistSave(recordSecret(this.save, this.currentLevelId, spec.trigger));
     switch (spec.reward) {
       case 'hp-up':
         this.player.heal(1, EGG_HP_CAP);

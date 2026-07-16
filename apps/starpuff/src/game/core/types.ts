@@ -8,13 +8,13 @@ export type BossAction = 'idle' | 'jellyRain' | 'slam' | 'dash';
 
 export type GameResult = 'won' | 'lost';
 
-// 結算資料：deaths 為本輪累計死亡；levelId/carryMs 供敗北後直接重試魔王關。
+// 結算資料：deaths 為本輪累計死亡；levelId 供敗北後直接重試魔王關。
+// v6 hub 模型（§39）：各關獨立計時，timeMs 即該關用時，carryMs 累計語義廢除。
 export interface GameResultData {
   result: GameResult;
   timeMs: number;
   deaths: number;
   levelId: LevelId;
-  carryMs: number;
 }
 
 export const SceneKeys = {
