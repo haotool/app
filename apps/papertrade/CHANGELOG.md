@@ -1,5 +1,23 @@
 # @app/papertrade
 
+## 0.2.3
+
+### Patch Changes
+
+- cdae90b: 回退成交產生已越過強平價的倉位時，同一 tick 立即強平，不再殘留負權益倉位到下一筆行情
+
+## 0.2.2
+
+### Patch Changes
+
+- 573f06b: 修復深層路由（如 /papertrade/chart/BTCUSDT）下 favicon 與 apple-touch-icon 404：分頁圖示與加入主畫面圖示在所有頁面正常顯示。
+
+## 0.2.1
+
+### Patch Changes
+
+- 2e9da3c: 測試穩定性修正，無使用者可見行為變更
+
 ## 0.2.0
 
 ### Minor Changes

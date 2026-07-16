@@ -102,13 +102,17 @@ export function saveLayout(layout: ControlLayout): void {
   }
 }
 
+export function getDefaultLayout(): ControlLayout {
+  return structuredClone(DEFAULT_LAYOUT);
+}
+
 export function resetLayout(): ControlLayout {
   try {
     localStorage.removeItem(LAYOUT_STORAGE_KEY);
   } catch {
     /* noop */
   }
-  return DEFAULT_LAYOUT;
+  return getDefaultLayout();
 }
 
 // 座標序列化為百分比字串：toFixed(2) 避免浮點尾數（0.92*100 = 92.00000000000001）。

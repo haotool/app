@@ -19,6 +19,21 @@
 - 解法：save/movement/skills 純邏輯 SSOT＋MapScene data-driven hub；門/彈簧補幾何掃掠背擋（syncGateSweep/sweepSprings）根治漏檢；187 unit＋28 e2e 綠、GAME_DESIGN v6.0 §38-§43 落檔
 
 - 日期：2026-07-16
+- ID：reward-review-thread-convergence-batch
+- 原因：#696–#708 累積 11 條未解決 Codex review threads——魔王入場中補生、papertrade 回退成交漏強平檢查、haotool deep QA 硬編 5 卡、根站 CSP 擋工具圖示、Zeabur SOP 未鏡像 AGENTS.md（keyConfig 重置與 Title 覆層兩條已由 #718 先行落地）
+- 解法：批次最小修復——魔王關 waves 等 boss active、processTick 尾端以同 mark 重跑強平（補 vitest 案例）、QA 改策展前 5＋404 全量對照、Worker v5.9 根站 img-src 允許 app.haotool.org、AGENTS.md 鏡像 Zeabur 覆寫治理；tween 平台 direct control 依 PM 裁決撤下轉 debt issue（manual delta 搬運已上線有 e2e 覆蓋）；#701 搖桿座標與 #702 短空限價滯留經查已由 v4 rewrite 與 fallback fill 修復，全部 11 條回覆證據後 resolve
+
+- 日期：2026-07-16
+- ID：penalty-697-dockerfile-hotfix-missing-002
+- 原因：#697 Dockerfile ENOENT hotfix 提交未依 AGT-LOG-01 附 002 條目，追溯證據缺口由 review thread 揭露
+- 解法：本批補錄——#697 根因為 #622 引入 patchedDependencies 後容器 install 前未 COPY patches/，修法為 install 前補 COPY patches（同鏈 #685 條目已記錄技術細節），流程面補齊 002 追溯
+
+- 日期：2026-07-16
+- ID：penalty-starpuff-keyconfig-reset-preview
+- 原因：按鈕配置「恢復預設」預覽誤呼叫 resetLayout 立即清除 localStorage，取消後重載仍遺失自訂布局；標題場景 Enter 開始未攔截且 shutdown 未關閉配置覆層
+- 解法：getDefaultLayout 純預覽＋closeKeyConfig 於 TitleScene shutdown/Enter 守門；vitest 守門 getDefaultLayout 不觸碰儲存
+
+- 日期：2026-07-16
 - ID：neutral-papertrade-test-timeout-flaky
 - 原因：papertrade 首測承擔全量模組載入在並行負載下逼近 5s 上限致 CI flaky
 - 解法：project 級 testTimeout 單點放寬至 15s
@@ -42,6 +57,11 @@
 - ID：reward-starpuff-v4-norotate-elements
 - 原因：v4 需求「直持免轉向、寬幅隨螢幕、平台元素與更豐富內容」涉及 CSS 旋轉殼與 Phaser 私有 API 補償的高風險結構改造
 - 解法：旋轉殼模組化（shellLayout+enemyFsm 純邏輯 21 案守門測）、四平台元素表驅動、疾衝/新怪x2/魔王P3；140 unit+12 e2e 綠、深度 QA 七劇本全 PASS、三席終審收斂 APPROVE（可維護性 8）
+
+- 日期：2026-07-15
+- ID：reward-papertrade-favicon-deep-link-404
+- 原因：index.html 的 favicon 與 apple-touch-icon 用相對路徑，深層路由（/papertrade/chart/BTCUSDT）下解析為 /papertrade/chart/favicon.svg 致 404
+- 解法：改用 Vite %BASE_URL% 慣例（對齊 nihonname 寫法）展開為 /papertrade/ 絕對路徑，build 後驗證 dist/index.html、246 unit 與 typecheck/format 全綠
 
 - 日期：2026-07-15
 - ID：reward-papertrade-wave5-final-convergence
