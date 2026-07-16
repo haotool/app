@@ -66,7 +66,8 @@ test('走動手感（§45）：步頻傾角振盪且 bob 起伏；idle 傾角歸
   await page.keyboard.up('ArrowRight');
   const rotations = new Set(samples.map((sample) => sample.rotation.toFixed(4)));
   expect(rotations.size).toBeGreaterThanOrEqual(4);
-  expect(Math.max(...samples.map((sample) => sample.bob))).toBeGreaterThan(1);
+  // bob 門檻 0.5（峰值 3.2）：低幀率取樣可能落在波谷附近，>1 實測偶發 0.84 flaky。
+  expect(Math.max(...samples.map((sample) => sample.bob))).toBeGreaterThan(0.5);
   expect(Math.max(...samples.map((sample) => Math.abs(sample.rotation)))).toBeGreaterThan(0.02);
   // 停走復位：步頻傾角與 bob 歸零（低幀率下 onGround 瞬斷可留 airTilt 微角，容忍 <0.02）。
   await page.waitForTimeout(600);

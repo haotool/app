@@ -4,6 +4,7 @@ import {
   FORGIVENESS,
   INHALE,
   PLAYER,
+  SCATTER_FAN_VY,
   SLAM,
   STAR,
   getMix,
@@ -342,7 +343,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     lastFlavor = slot.flavor;
     const scatter = slot.mix !== undefined ? getMix(slot.mix).scatterCount : 0;
     if (scatter > 1) {
-      for (let i = 0; i < scatter; i += 1) launchStar(slot, (i - (scatter - 1) / 2) * 90);
+      for (let i = 0; i < scatter; i += 1) {
+        launchStar(slot, (i - (scatter - 1) / 2) * SCATTER_FAN_VY);
+      }
     } else {
       launchStar(slot, 0);
     }

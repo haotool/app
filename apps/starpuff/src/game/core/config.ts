@@ -286,6 +286,9 @@ export const STAR_MIXES: readonly StarMixSpec[] = [
   },
 ] as const;
 
+// 散射扇形（§46 碎鑽星）：分裂彈上下錯開的垂直初速間距。
+export const SCATTER_FAN_VY = 90;
+
 // 無序配對查表：吞入順序無關；查無配方回 null（沿用 §23 推新槽規則）。
 export function findMix(a: StarFlavor, b: StarFlavor): StarMixSpec | null {
   return (

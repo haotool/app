@@ -114,7 +114,7 @@ const HAZARD_POOL_SIZE = 24;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
 // 脈衝環 hitbox 啟用時長（zappy 放電/glowy 光脈衝共用）。
-const GLOWY_RING_ACTIVE_MS = 200;
+const PULSE_RING_ACTIVE_MS = 200;
 // 凍結態（§46）：冰藍著色。
 const FREEZE_TINT = 0xbfe8ff;
 // 穿透星停留重疊時的重複結算保護（須大於星彈穿越 hitbox 的時間）。
@@ -226,7 +226,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     if (!zap) return;
     zap.setVisible(false);
     zap.setData('hazardKind', 'zap');
-    zap.setData('lifeMs', GLOWY_RING_ACTIVE_MS);
+    zap.setData('lifeMs', PULSE_RING_ACTIVE_MS);
     const body = zap.body as Phaser.Physics.Arcade.Body;
     // 圓形 hitbox 以 frame 中心定位；池回收重用時 setSize 會自動復位為矩形。
     body.setCircle(radius, zap.width / 2 - radius, zap.height / 2 - radius);
@@ -243,17 +243,21 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     (bite.body as Phaser.Physics.Arcade.Body).setSize(BITE_SIZE, BITE_SIZE);
   }
 
+  // 變體識別色回套（§48）：白閃/凍結清 tint 後統一恢復精英 tint（一般怪即清色）。
+  function restoreTint(sprite: Phaser.Physics.Arcade.Sprite): void {
+    sprite.clearTint();
+    const eliteTint = sprite.getData('eliteTint') as number | undefined;
+    if (eliteTint !== undefined && sprite.getData('elite') === true) sprite.setTint(eliteTint);
+  }
+
   // Phaser 4 無 setTintFill(color)：受擊白閃改用 setTint + FILL tint mode。
-  // 精英（§48）閃後回套變體 tint，避免白閃洗掉精英識別色。
   function flashWhite(sprite: Phaser.Physics.Arcade.Sprite): void {
     sprite.setTint(0xffffff);
     sprite.setTintMode(Phaser.TintModes.FILL);
     scene.time.delayedCall(FLASH_MS, () => {
       if (!sprite.scene) return;
-      sprite.clearTint();
       sprite.setTintMode(Phaser.TintModes.MULTIPLY);
-      const eliteTint = sprite.getData('eliteTint') as number | undefined;
-      if (eliteTint !== undefined && sprite.getData('elite') === true) sprite.setTint(eliteTint);
+      restoreTint(sprite);
     });
   }
 
@@ -516,12 +520,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           sprite.setData('frozenMs', left);
           body.setVelocityX(0);
           if (!body.allowGravity) body.setVelocityY(0);
-          if (left === 0) {
-            sprite.clearTint();
-            const eliteTint = sprite.getData('eliteTint') as number | undefined;
-            if (eliteTint !== undefined && sprite.getData('elite') === true)
-              sprite.setTint(eliteTint);
-          }
+          if (left === 0) restoreTint(sprite);
           continue;
         }
         const kind = sprite.getData('kind') as EnemyKind;
