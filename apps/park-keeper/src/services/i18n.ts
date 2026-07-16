@@ -515,6 +515,14 @@ export function getStoredLanguage(): string | null {
   return initialStoredLanguage;
 }
 
+// 語言變更唯一寫入路徑（issue #725 雙來源收斂）：
+// changeLanguage 經 LanguageDetector cache 寫入 localStorage＝啟動還原 SSOT（Layout 讀取）；
+// IDB settings.language 為同批副本，由呼叫端（SettingsTab updateSettings）一併保存，
+// 不得再由 IDB 反向驅動 i18n（Home/Add init 不呼叫 changeLanguage）。
+export function setAppLanguage(lang: (typeof SUPPORTED_LANGUAGES)[number]): void {
+  void i18n.changeLanguage(lang);
+}
+
 // 固定 lng='zh-TW'：SSG（Node）與 client 首屏語言一致，杜絕 /about hydration 文字不一致（React #418）。
 // 建置環境的 navigator 偵測會解析成英文，故不得以偵測結果決定首屏語言；
 // 使用者偏好於 hydration 完成後由 Layout 還原（changeLanguage 仍寫入 localStorage 快取）。

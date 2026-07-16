@@ -12,7 +12,9 @@ const FOCUSABLE_SELECTOR = [
 /**
  * Modal dialog a11y 行為（issue #725）：Esc 關閉＋Tab focus trap＋
  * 開啟時聚焦容器、關閉時還原焦點。容器需設 tabIndex={-1}。
- * 背景 inert 由宿主控制（Home 主容器 inert 屬性），非本 hook 職責。
+ * 背景隔離由宿主控制（Home 主容器），非本 hook 職責：
+ * - inert 屬性最低支援 Chrome/Edge 102、Safari 15.5、Firefox 112；
+ * - 更舊環境由宿主同步設定 aria-hidden＋pointer-events-none 作為 fallback。
  */
 export function useModalDialog(
   containerRef: RefObject<HTMLElement | null>,

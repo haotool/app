@@ -815,7 +815,9 @@ export default function NavOverlay({
           }}
         />
 
+        {/* 無備註時內容垂直置中，收斂底部留白（Sonnet U6）。 */}
         <div
+          data-testid="nav-info-card"
           className={`relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto ${record.notes ? '' : 'justify-center'}`}
         >
           {/* 照片＋樓層列 */}

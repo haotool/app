@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Minus, Plus, RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 
 interface PhotoViewerModalProps {
   src: string;
@@ -38,26 +39,19 @@ export default function PhotoViewerModal({
 }: PhotoViewerModalProps) {
   const { t } = useTranslation();
   const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   // scaleRef 讓 native event handler 取得最新 scale（避免 stale closure）
   const scaleRef = useRef(1);
   const pinchRef = useRef<{ startDist: number; startScale: number } | null>(null);
   const lastTapRef = useRef(-Infinity);
 
+  // Modal a11y 與 NavOverlay/QuickEntry 同源：Esc＋focus trap＋焦點還原（issue #725 審查收斂）。
+  useModalDialog(containerRef, true, onClose);
+
   useEffect(() => {
     scaleRef.current = scale;
   }, [scale]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   // 非被動 touchmove：pinch 縮放需要 preventDefault() 阻止頁面縮放
   useEffect(() => {
@@ -105,14 +99,16 @@ export default function PhotoViewerModal({
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`${containerClassName} z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm`}
+      className={`${containerClassName} z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm outline-none`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={t('photo.viewer_label')}
+      tabIndex={-1}
     >
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/types';
 import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { setAppLanguage } from '@app/park-keeper/services/i18n';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 
 // 滑桿拖曳防抖：停止拖曳後才執行單次清理，避免每 tick 全掃 IndexedDB。
@@ -50,7 +51,7 @@ export default function SettingsTab({
   updateSettings: (s: AppSettings) => void;
   theme: ThemeConfig;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const versionInfo = getVersionInfo();
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,7 +63,8 @@ export default function SettingsTab({
   }, []);
 
   const handleLanguageChange = (lang: LanguageType) => {
-    void i18n.changeLanguage(lang);
+    // 單一寫入路徑：setAppLanguage 寫 i18n＋localStorage（還原 SSOT），IDB 副本同批保存。
+    setAppLanguage(lang);
     updateSettings({ ...settings, language: lang });
   };
 

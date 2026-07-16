@@ -78,6 +78,21 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
+/** 教學入口：對比 ≥4.5:1（text @0.8）＋觸控熱區 ≥44×44；載入態與內容態共用。 */
+function GuideEntryLink({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="text-center">
+      <Link
+        to="/guide"
+        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+        style={{ color }}
+      >
+        {label}
+      </Link>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // HOME PAGE
 // ---------------------------------------------------------------------------
@@ -86,7 +101,7 @@ interface HomeProps {
 }
 
 export default function Home({ initialTab = 'list' }: HomeProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
   const activePageVariants = shouldReduceMotion ? reducedPageVariants : pageVariants;
   const miniMapText = {
@@ -138,7 +153,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       }
       setSettings(savedSettings);
       setSettingsLoaded(true);
-      void i18n.changeLanguage(savedSettings.language);
       // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
       // 清理失敗（含 getRecords 拋錯）不得阻斷啟動；儲存層可用性由 loadRecords 錯誤路徑呈現。
       try {
@@ -150,7 +164,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       setIsLoading(false);
     };
     void init();
-  }, [i18n, loadRecords]);
+  }, [loadRecords]);
 
   // 前景喚醒與 BFCache 還原觸發清理（iOS 無 Periodic Background Sync，見 research §C8）。
   useEffect(() => {
@@ -273,13 +287,15 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
 
   // 浮層（QuickEntry sheet / NavOverlay）開啟時背景 inert，
   // 阻絕背景互動與 a11y tree 露出（issue #725 modal 語意）。
+  // aria-hidden＋pointer-events-none 為 inert 未支援環境（Safari <15.5）的雙保險。
   const overlayOpen = showQuickEntry || navRecord !== null;
 
   return (
     <LayoutGroup>
       <div
         inert={overlayOpen}
-        className="h-screen w-full flex flex-col overflow-hidden font-sans"
+        aria-hidden={overlayOpen || undefined}
+        className={`h-screen w-full flex flex-col overflow-hidden font-sans ${overlayOpen ? 'pointer-events-none' : ''}`}
         style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
         {/* Premium Header */}
@@ -340,7 +356,21 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40"
               >
                 {isLoading ? (
-                  <ListSkeleton theme={theme} />
+                  // 載入態與 SSG 殼（HomeShell）同構：hero CTA＋教學入口原位保留，
+                  // 僅列表區顯示骨架——消除水合後閃爍與二次 LCP 候選（issue #725 審查收斂）。
+                  <>
+                    <div className="max-w-md mx-auto space-y-5 mb-5">
+                      <QuickCaptureCta
+                        theme={theme}
+                        variant="hero"
+                        label={t('home.quick_record_cta')}
+                        hint={t('record.photo_tap')}
+                        onPhotoSelected={handleCtaPhoto}
+                      />
+                      <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
+                    </div>
+                    <ListSkeleton theme={theme} />
+                  </>
                 ) : (
                   <div className="max-w-md mx-auto space-y-5">
                     {storageUnavailable && (
@@ -383,16 +413,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         onPhotoSelected={handleCtaPhoto}
                       />
                     )}
-                    {/* 教學入口：對比 ≥4.5:1（text @0.8）＋觸控熱區 ≥44×44（min-h/w-11） */}
-                    <div className="text-center">
-                      <Link
-                        to="/guide"
-                        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
-                        style={{ color: theme.colors.text }}
-                      >
-                        {t('guide.entry')}
-                      </Link>
-                    </div>
+                    <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
                     {records.length === 0 && (
                       <div className="flex flex-col items-center justify-center pt-12 pb-6 text-center">
                         <Car size={56} strokeWidth={1.5} className="opacity-20" aria-hidden />

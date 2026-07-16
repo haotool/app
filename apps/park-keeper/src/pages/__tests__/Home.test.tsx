@@ -104,6 +104,9 @@ describe('Home', () => {
     const { container } = renderHome();
 
     expect(container.querySelector('.animate-pulse')).not.toBeNull();
+    // 載入態與 SSG 殼同構：hero CTA 與教學入口原位保留（消閃爍/二次 LCP 候選）。
+    expect(screen.getByTestId('quick-record-cta')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '捷徑教學' })).toBeInTheDocument();
 
     resolveRecords([]);
 

@@ -7,14 +7,20 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { useModalDialog } from '../useModalDialog';
 
-function Harness({ onClose }: { onClose: () => void }) {
+function Harness({
+  onClose,
+  initialActive = true,
+}: {
+  onClose: () => void;
+  initialActive?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(true);
+  const [active, setActive] = useState(initialActive);
   useModalDialog(ref, active, onClose);
 
   return (
     <>
-      <button type="button" data-testid="outside">
+      <button type="button" data-testid="outside" onClick={() => setActive(true)}>
         outside
       </button>
       <button type="button" data-testid="deactivate" onClick={() => setActive(false)}>
@@ -64,16 +70,18 @@ describe('useModalDialog', () => {
     rectStub.mockRestore();
   });
 
-  it('關閉（active=false）時還原先前焦點', () => {
-    render(<Harness onClose={() => {}} />);
+  it('關閉（active=false）時焦點還原到開啟前的觸發元素', () => {
+    render(<Harness onClose={() => {}} initialActive={false} />);
 
     const outside = screen.getByTestId('outside');
-    const deactivate = screen.getByTestId('deactivate');
 
-    // 模擬開啟前焦點在外部按鈕：restore 目標為 activeElement 快照，
-    // 此處直接驗證 active=false 後焦點不再停留於 dialog。
-    fireEvent.click(deactivate);
-    expect(document.activeElement).not.toBe(screen.queryByRole('dialog'));
-    expect([outside, deactivate, document.body]).toContain(document.activeElement);
+    // 開啟前焦點在觸發按鈕 → 開啟後移入 dialog → 關閉後精確還原到觸發按鈕。
+    outside.focus();
+    fireEvent.click(outside);
+    expect(document.activeElement).toBe(screen.getByRole('dialog'));
+
+    fireEvent.click(screen.getByTestId('deactivate'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(outside);
   });
 });

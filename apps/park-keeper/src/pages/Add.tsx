@@ -36,12 +36,11 @@ export default function Add() {
         console.warn('Settings load failed, using defaults', error);
       }
       setSettings(savedSettings);
-      void i18n.changeLanguage(savedSettings.language);
       // 捷徑使用者可能長期只走 /add：入頁即觸發保存天數清理，失敗靜默不阻斷記錄流程。
       dbService.runStartupCleanup(savedSettings.cacheDurationDays).catch(() => undefined);
     };
     void init();
-  }, [i18n]);
+  }, []);
 
   // 主題 token 接線與 Home 共用 hook，涵蓋完整 token 集合。
   useThemeTokens(theme);

@@ -108,6 +108,42 @@ describe('NavOverlay - modal a11y', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('資訊卡兩態渲染：無備註垂直置中收斂留白、有備註恢復頂對齊並顯示備註', () => {
+    // 無備註：justify-center 消底部留白（Sonnet U6）。
+    vi.mocked(useNavigation).mockReturnValue(
+      navState as unknown as ReturnType<typeof useNavigation>,
+    );
+    const { unmount } = render(
+      <I18nextProvider i18n={i18n}>
+        <NavOverlay
+          record={{ ...record, notes: '' }}
+          theme={theme}
+          onClose={vi.fn()}
+          cacheDurationDays={7}
+        />
+      </I18nextProvider>,
+    );
+    expect(screen.getByTestId('nav-info-card').className).toContain('justify-center');
+    unmount();
+
+    // 有備註：頂對齊並渲染備註內容。
+    vi.mocked(useNavigation).mockReturnValue(
+      navState as unknown as ReturnType<typeof useNavigation>,
+    );
+    render(
+      <I18nextProvider i18n={i18n}>
+        <NavOverlay
+          record={{ ...record, notes: '停在柱子 B2-17 旁' }}
+          theme={theme}
+          onClose={vi.fn()}
+          cacheDurationDays={7}
+        />
+      </I18nextProvider>,
+    );
+    expect(screen.getByTestId('nav-info-card').className).not.toContain('justify-center');
+    expect(screen.getByText('停在柱子 B2-17 旁')).toBeInTheDocument();
+  });
+
   it('校準卡提供手動重新偵測按鈕（reduced-motion 下不依賴系統自動）', () => {
     const recheck = vi.fn();
     vi.mocked(useNavigation).mockReturnValue({
