@@ -19,6 +19,8 @@ interface MiniMapProps {
   lockBounds?: boolean;
   autoFitTrackedPositions?: boolean;
   showRecenterButton?: boolean;
+  /** 位置圖例（目前位置/車輛位置）。背景層用法（NavOverlay）可關閉避免與 header 重疊。 */
+  showLegend?: boolean;
   recenterLabel?: string;
   text?: Partial<MiniMapText>;
   onLocationSelect?: (lat: number, lng: number) => void;
@@ -131,7 +133,7 @@ const calculateMaxBounds = (
   ];
 };
 
-const createMarkerLabelBadge = (label: string, backgroundColor: string) => {
+const createMarkerLabelBadge = (label: string, backgroundColor: string, textColor: string) => {
   return `
     <div style="
       position:absolute;
@@ -141,7 +143,7 @@ const createMarkerLabelBadge = (label: string, backgroundColor: string) => {
       padding:3px 8px;
       border-radius:999px;
       background:${backgroundColor};
-      color:#fff;
+      color:${textColor};
       border:1px solid rgba(255,255,255,0.24);
       box-shadow:0 2px 8px rgba(0,0,0,0.2);
       font:700 10px/1 system-ui,-apple-system,sans-serif;
@@ -152,12 +154,19 @@ const createMarkerLabelBadge = (label: string, backgroundColor: string) => {
     ">${label}</div>`;
 };
 
+/** Marker 標籤徽章配色：surface 底＋text 字，跟隨主題（深色主題自動深底白字）。 */
+const badgeColorsFromTheme = (theme: ThemeConfig) => ({
+  bg: `${theme.colors.surface}E6`,
+  text: theme.colors.text,
+});
+
 const createPremiumCarIcon = (
   color: string,
   isInteractive: boolean,
   showLabel: boolean,
   markerLabel: string,
-  rotationDegrees = 0,
+  rotationDegrees: number,
+  labelColors: { bg: string; text: string },
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -173,7 +182,9 @@ const createPremiumCarIcon = (
       </circle>`
     : '';
 
-  const label = showLabel ? createMarkerLabelBadge(markerLabel, '#0f172ad9') : '';
+  const label = showLabel
+    ? createMarkerLabelBadge(markerLabel, labelColors.bg, labelColors.text)
+    : '';
 
   const svgString = `
     <div style="width:40px;height:60px;position:relative;overflow:visible">
@@ -202,10 +213,11 @@ const createPremiumCarIcon = (
 };
 
 const createUserIcon = (
-  heading = 0,
-  color = '#3b82f6',
-  showLabel = false,
-  markerLabel = DEFAULT_MINI_MAP_TEXT.markerUserLabel,
+  heading: number,
+  color: string,
+  showLabel: boolean,
+  markerLabel: string,
+  labelColors: { bg: string; text: string },
 ) => {
   // 標籤放在光束上方，偏移需大於光束高度（~29px + margin）。
   const labelHtml = showLabel
@@ -216,8 +228,8 @@ const createUserIcon = (
         transform:translateX(-50%);
         padding:3px 8px;
         border-radius:999px;
-        background:#2563ebeb;
-        color:#fff;
+        background:${labelColors.bg};
+        color:${labelColors.text};
         border:1px solid rgba(255,255,255,0.24);
         box-shadow:0 2px 8px rgba(0,0,0,0.2);
         font:700 10px/1 system-ui,-apple-system,sans-serif;
@@ -502,169 +514,14 @@ function MapController({
   return null;
 }
 
-function PhotoClickableMarker({
-  position,
-  icon,
-  onPhotoClick,
-  zIndexOffset,
-  onPhotoPositionChange,
-}: {
-  position: [number, number];
-  icon: L.DivIcon;
-  onPhotoClick?: () => void;
-  zIndexOffset?: number;
-  onPhotoPositionChange?: (offset: { x: number; y: number }) => void;
-}) {
-  const markerRef = useRef<L.Marker>(null);
-
-  // Handle photo thumbnail clicks and drag via event delegation
-  useEffect(() => {
-    const marker = markerRef.current;
-    if (!marker) return undefined;
-    let frameId: number | null = null;
-    let markerElement: HTMLElement | null = null;
-
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let currentOffsetX = 0;
-    let currentOffsetY = 10; // 預設：照片置於 car 上方 10px 處
-    let touchIdentifier: number | null = null;
-
-    const handlePointerDown = (e: PointerEvent | TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.classList.contains('draggable-photo')) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-
-      if ('touches' in e && e.touches[0]) {
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        touchIdentifier = touch.identifier;
-      } else if ('clientX' in e && 'clientY' in e) {
-        startX = e.clientX;
-        startY = e.clientY;
-      }
-
-      // Parse current position from style
-      const computedStyle = window.getComputedStyle(target);
-      const matrix = new DOMMatrixReadOnly(computedStyle.transform);
-      currentOffsetX = matrix.m41;
-      currentOffsetY = parseInt(target.style.top || '10px', 10);
-    };
-
-    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
-      if (!isDragging) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      let clientX: number, clientY: number;
-      if ('touches' in e) {
-        const touch = Array.from(e.touches).find((t) => t.identifier === touchIdentifier);
-        if (!touch) return;
-        clientX = touch.clientX;
-        clientY = touch.clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-
-      const deltaX = clientX - startX;
-      const deltaY = clientY - startY;
-
-      const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
-      const newOffsetY = Math.max(0, Math.min(80, currentOffsetY + deltaY));
-
-      const photoElement = markerElement?.querySelector('.draggable-photo');
-      if (photoElement instanceof HTMLElement) {
-        photoElement.style.top = `${newOffsetY}px`;
-        photoElement.style.left = `calc(50% + ${newOffsetX}px)`;
-      }
-    };
-
-    const handlePointerUp = (e: PointerEvent | TouchEvent) => {
-      if (!isDragging) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = false;
-      touchIdentifier = null;
-
-      const photoElement = markerElement?.querySelector('.draggable-photo');
-      if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
-        const finalY = parseInt(photoElement.style.top ?? '10px', 10);
-        const leftValue = photoElement.style.left ?? '50%';
-        const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
-        const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
-
-        onPhotoPositionChange({ x: finalX, y: finalY });
-      }
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('parking-photo-thumbnail') && !isDragging) {
-        e.stopPropagation();
-        onPhotoClick?.();
-      }
-    };
-
-    const bindEventHandlers = () => {
-      const element = marker.getElement();
-      if (!element) {
-        frameId = window.requestAnimationFrame(bindEventHandlers);
-        return;
-      }
-
-      markerElement = element;
-      markerElement.addEventListener('click', handleClick);
-      markerElement.addEventListener('pointerdown', handlePointerDown as EventListener);
-      markerElement.addEventListener('pointermove', handlePointerMove as EventListener);
-      markerElement.addEventListener('pointerup', handlePointerUp as EventListener);
-      markerElement.addEventListener('touchstart', handlePointerDown as EventListener, {
-        passive: false,
-      });
-      markerElement.addEventListener('touchmove', handlePointerMove as EventListener, {
-        passive: false,
-      });
-      markerElement.addEventListener('touchend', handlePointerUp as EventListener);
-    };
-
-    bindEventHandlers();
-
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-      markerElement?.removeEventListener('click', handleClick);
-      markerElement?.removeEventListener('pointerdown', handlePointerDown as EventListener);
-      markerElement?.removeEventListener('pointermove', handlePointerMove as EventListener);
-      markerElement?.removeEventListener('pointerup', handlePointerUp as EventListener);
-      markerElement?.removeEventListener('touchstart', handlePointerDown as EventListener);
-      markerElement?.removeEventListener('touchmove', handlePointerMove as EventListener);
-      markerElement?.removeEventListener('touchend', handlePointerUp as EventListener);
-    };
-  }, [onPhotoClick, onPhotoPositionChange]);
-
-  return <Marker position={position} ref={markerRef} icon={icon} zIndexOffset={zIndexOffset} />;
-}
-
 function DraggableMarker({
   position,
   onDragEnd,
   icon,
-  onPhotoClick,
-  onPhotoPositionChange,
 }: {
   position: [number, number];
   onDragEnd: (pos: L.LatLng) => void;
   icon: L.DivIcon;
-  onPhotoClick?: () => void;
-  onPhotoPositionChange?: (offset: { x: number; y: number }) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const eventHandlers = useMemo(
@@ -676,139 +533,6 @@ function DraggableMarker({
     }),
     [onDragEnd],
   );
-
-  // Handle photo thumbnail clicks and drag via event delegation
-  useEffect(() => {
-    const marker = markerRef.current;
-    if (!marker) return undefined;
-    let frameId: number | null = null;
-    let markerElement: HTMLElement | null = null;
-
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let currentOffsetX = 0;
-    let currentOffsetY = 10; // 預設：照片置於 car 上方 10px 處
-    let touchIdentifier: number | null = null;
-
-    const handlePointerDown = (e: PointerEvent | TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.classList.contains('draggable-photo')) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-
-      if ('touches' in e && e.touches[0]) {
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        touchIdentifier = touch.identifier;
-      } else if ('clientX' in e && 'clientY' in e) {
-        startX = e.clientX;
-        startY = e.clientY;
-      }
-
-      // Parse current position from style
-      const computedStyle = window.getComputedStyle(target);
-      const matrix = new DOMMatrixReadOnly(computedStyle.transform);
-      currentOffsetX = matrix.m41;
-      currentOffsetY = parseInt(target.style.top || '10px', 10);
-    };
-
-    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
-      if (!isDragging) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      let clientX: number, clientY: number;
-      if ('touches' in e) {
-        const touch = Array.from(e.touches).find((t) => t.identifier === touchIdentifier);
-        if (!touch) return;
-        clientX = touch.clientX;
-        clientY = touch.clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-
-      const deltaX = clientX - startX;
-      const deltaY = clientY - startY;
-
-      const newOffsetX = Math.max(-50, Math.min(50, currentOffsetX + deltaX));
-      const newOffsetY = Math.max(0, Math.min(80, currentOffsetY + deltaY));
-
-      const photoElement = markerElement?.querySelector('.draggable-photo');
-      if (photoElement instanceof HTMLElement) {
-        photoElement.style.top = `${newOffsetY}px`;
-        photoElement.style.left = `calc(50% + ${newOffsetX}px)`;
-      }
-    };
-
-    const handlePointerUp = (e: PointerEvent | TouchEvent) => {
-      if (!isDragging) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = false;
-      touchIdentifier = null;
-
-      const photoElement = markerElement?.querySelector('.draggable-photo');
-      if (photoElement instanceof HTMLElement && onPhotoPositionChange) {
-        const finalY = parseInt(photoElement.style.top ?? '10px', 10);
-        const leftValue = photoElement.style.left ?? '50%';
-        const match = /calc\(50% \+ (-?\d+)px\)/.exec(leftValue);
-        const finalX = match?.[1] ? parseInt(match[1], 10) : 0;
-
-        onPhotoPositionChange({ x: finalX, y: finalY });
-      }
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('parking-photo-thumbnail') && !isDragging) {
-        e.stopPropagation();
-        onPhotoClick?.();
-      }
-    };
-
-    const bindEventHandlers = () => {
-      const element = marker.getElement();
-      if (!element) {
-        frameId = window.requestAnimationFrame(bindEventHandlers);
-        return;
-      }
-
-      markerElement = element;
-      markerElement.addEventListener('click', handleClick);
-      markerElement.addEventListener('pointerdown', handlePointerDown as EventListener);
-      markerElement.addEventListener('pointermove', handlePointerMove as EventListener);
-      markerElement.addEventListener('pointerup', handlePointerUp as EventListener);
-      markerElement.addEventListener('touchstart', handlePointerDown as EventListener, {
-        passive: false,
-      });
-      markerElement.addEventListener('touchmove', handlePointerMove as EventListener, {
-        passive: false,
-      });
-      markerElement.addEventListener('touchend', handlePointerUp as EventListener);
-    };
-
-    bindEventHandlers();
-
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-      markerElement?.removeEventListener('click', handleClick);
-      markerElement?.removeEventListener('pointerdown', handlePointerDown as EventListener);
-      markerElement?.removeEventListener('pointermove', handlePointerMove as EventListener);
-      markerElement?.removeEventListener('pointerup', handlePointerUp as EventListener);
-      markerElement?.removeEventListener('touchstart', handlePointerDown as EventListener);
-      markerElement?.removeEventListener('touchmove', handlePointerMove as EventListener);
-      markerElement?.removeEventListener('touchend', handlePointerUp as EventListener);
-    };
-  }, [onPhotoClick, onPhotoPositionChange]);
 
   return (
     <Marker
@@ -858,21 +582,35 @@ const INIT_OFFSET = { dx: 12 + 8, dy: -(PHOTO_OVERLAY_SIZE / 2) };
 
 /**
  * 照片 overlay — 初始定位在車輛右側，跟隨車輛在地圖平移／縮放時同步移動。
- * 使用者拖曳後更新相對偏移，下次地圖移動仍從新偏移位置跟隨。
+ * 使用者拖曳後更新相對偏移並透過 onOffsetCommit 通知父層持久化；
+ * 開啟時 initialOffset（record.photoOffset）優先於預設位置。
  */
 function DraggablePhotoOverlay({
   src,
   onPhotoClick,
   containerRef,
   carPixelPos,
+  initialOffset,
+  onOffsetCommit,
 }: {
   src: string;
   onPhotoClick?: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
   carPixelPos: { x: number; y: number } | null;
+  initialOffset?: { x: number; y: number };
+  onOffsetCommit?: (offset: { x: number; y: number }) => void;
 }) {
+  // 初始偏移只在掛載時取一次（record.photoOffset 或預設車輛右側）。
+  const [initial] = useState(() => {
+    const offset = initialOffset ? { dx: initialOffset.x, dy: initialOffset.y } : INIT_OFFSET;
+    return {
+      offset,
+      x: carPixelPos ? carPixelPos.x + offset.dx : offset.dx,
+      y: carPixelPos ? carPixelPos.y + offset.dy : offset.dy,
+    };
+  });
   // 記錄使用者選定的相對偏移（相對車輛錨點像素位置）。
-  const offsetRef = useRef(INIT_OFFSET);
+  const offsetRef = useRef(initial.offset);
   // 穩定參照，讓 onDragEnd 讀取最新 carPixelPos 而不產生 stale closure。
   const carPosRef = useRef(carPixelPos);
   useEffect(() => {
@@ -881,10 +619,8 @@ function DraggablePhotoOverlay({
 
   const dragOccurred = useRef(false);
 
-  const initX = carPixelPos ? carPixelPos.x + INIT_OFFSET.dx : INIT_OFFSET.dx;
-  const initY = carPixelPos ? carPixelPos.y + INIT_OFFSET.dy : INIT_OFFSET.dy;
-  const x = useMotionValue(initX);
-  const y = useMotionValue(initY);
+  const x = useMotionValue(initial.x);
+  const y = useMotionValue(initial.y);
 
   // 地圖平移／縮放時，依儲存的相對偏移同步更新絕對像素位置。
   useEffect(() => {
@@ -907,10 +643,11 @@ function DraggablePhotoOverlay({
         dragOccurred.current = true;
       }}
       onDragEnd={() => {
-        // 拖曳結束後，計算新的相對偏移，供下次地圖移動時使用。
+        // 拖曳結束後，計算新的相對偏移，供下次地圖移動時使用並通知父層寫入 DB。
         const pos = carPosRef.current;
         if (pos) {
           offsetRef.current = { dx: x.get() - pos.x, dy: y.get() - pos.y };
+          onOffsetCommit?.({ x: offsetRef.current.dx, y: offsetRef.current.dy });
         }
       }}
       onClick={() => {
@@ -942,6 +679,7 @@ export default function MiniMap({
   lockBounds = !interactive,
   autoFitTrackedPositions = false,
   showRecenterButton = false,
+  showLegend = true,
   recenterLabel = 'Recenter map',
   text,
   onLocationSelect,
@@ -952,8 +690,8 @@ export default function MiniMap({
   onPhotoClick,
   parkedHeading = 0,
   trackedViewportInsets,
-  photoOffset: _photoOffset,
-  onPhotoPositionChange: _onPhotoPositionChange,
+  photoOffset,
+  onPhotoPositionChange,
 }: MiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [carPixelPos, setCarPixelPos] = useState<{ x: number; y: number } | null>(null);
@@ -985,7 +723,7 @@ export default function MiniMap({
   const shouldLockBounds = lockBounds;
   const mapText = useMemo<MiniMapText>(() => ({ ...DEFAULT_MINI_MAP_TEXT, ...text }), [text]);
   const showPositionLabels = interactive && userPosition !== undefined;
-  const showPositionLegend = interactive && userPosition !== undefined;
+  const showPositionLegend = showLegend && interactive && userPosition !== undefined;
   const [recenterRequestId, setRecenterRequestId] = useState(0);
   const effectiveTrackedViewportInsets = useMemo<MapViewportInsets>(
     () => ({
@@ -1027,18 +765,20 @@ export default function MiniMap({
         showPositionLabels,
         mapText.markerCarLabel,
         parkedHeading,
+        badgeColorsFromTheme(theme),
       ),
-    [theme.colors.primary, interactive, mapText.markerCarLabel, showPositionLabels, parkedHeading],
+    [theme, interactive, mapText.markerCarLabel, showPositionLabels, parkedHeading],
   );
   const userIcon = useMemo(
     () =>
       createUserIcon(
         heading,
-        interactive ? '#3b82f6' : theme.colors.accent,
+        theme.colors.accent,
         showPositionLabels,
         mapText.markerUserLabel,
+        badgeColorsFromTheme(theme),
       ),
-    [heading, interactive, mapText.markerUserLabel, showPositionLabels, theme.colors.accent],
+    [heading, mapText.markerUserLabel, showPositionLabels, theme],
   );
 
   // ARIA label for accessibility
@@ -1115,23 +855,24 @@ export default function MiniMap({
             position={centerPosition}
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
-            onPhotoClick={onPhotoClick}
           />
         ) : (
-          <PhotoClickableMarker
-            position={centerPosition}
-            icon={carIcon}
-            onPhotoClick={onPhotoClick}
-          />
+          <Marker position={centerPosition} icon={carIcon} />
         )}
         {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
       </MapContainer>
       {showPositionLegend && (
         <div className="absolute top-3 left-3 z-[430] pointer-events-none">
-          <div className="rounded-2xl bg-white/90 backdrop-blur-md border border-black/10 shadow-[0_4px_16px_rgba(0,0,0,0.12)] px-3 py-2 flex items-center gap-3">
+          <div
+            className="rounded-2xl backdrop-blur-md border border-black/10 shadow-[0_4px_16px_rgba(0,0,0,0.12)] px-3 py-2 flex items-center gap-3"
+            style={{ backgroundColor: `${theme.colors.surface}E6`, color: theme.colors.text }}
+          >
             <div className="flex items-center gap-1.5">
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-white shadow-sm" />
-              <span className="text-[10px] font-black tracking-tight text-slate-700 whitespace-nowrap">
+              <span
+                className="relative inline-flex h-2.5 w-2.5 rounded-full ring-2 ring-white shadow-sm"
+                style={{ backgroundColor: theme.colors.accent }}
+              />
+              <span className="text-[10px] font-black tracking-tight whitespace-nowrap">
                 {mapText.legendCurrentLabel}
               </span>
             </div>
@@ -1141,7 +882,7 @@ export default function MiniMap({
                 className="inline-flex h-2.5 w-2.5 rounded-sm shadow-sm border border-white/70"
                 style={{ backgroundColor: theme.colors.primary }}
               />
-              <span className="text-[10px] font-black tracking-tight text-slate-700 whitespace-nowrap">
+              <span className="text-[10px] font-black tracking-tight whitespace-nowrap">
                 {mapText.legendCarLabel}
               </span>
             </div>
@@ -1194,6 +935,8 @@ export default function MiniMap({
           onPhotoClick={onPhotoClick}
           containerRef={containerRef}
           carPixelPos={carPixelPos}
+          initialOffset={photoOffset}
+          onOffsetCommit={onPhotoPositionChange}
         />
       )}
     </div>

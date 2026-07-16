@@ -199,6 +199,23 @@ describe('useNavigation hook', () => {
     expect(result.current.deviceTilt).toBe(30);
   });
 
+  it('adopts first heading sample directly (no ramp-up from 0 after grant)', () => {
+    const { result } = renderHook(() => useNavigation(mockRecord));
+
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 270,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+
+    // 首樣本直採：單一事件即顯示 270，不從 0 以 EMA 爬升
+    expect(result.current.heading).toBe(270);
+  });
+
   it('should compute isPhoneFlat with hysteresis correctly', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 
@@ -344,6 +361,220 @@ describe('useNavigation hook', () => {
     });
 
     expect(result.current.heading).toBe(0);
+  });
+
+  it('freezes heading display for sub-deadband noise after convergence', () => {
+    const { result } = renderHook(() => useNavigation(mockRecord));
+
+    // 收斂至 90°
+    for (let i = 0; i < 60; i++) {
+      act(() => {
+        orientationHandler?.({
+          webkitCompassHeading: 90,
+          alpha: null,
+          beta: 10,
+          gamma: 0,
+          absolute: false,
+        } as unknown as Event);
+      });
+    }
+    const settled = result.current.heading;
+
+    // ±0.5° 感測噪聲：顯示值必須凍結不動
+    for (const noisy of [90.5, 89.5, 90.4, 89.6]) {
+      act(() => {
+        orientationHandler?.({
+          webkitCompassHeading: noisy,
+          alpha: null,
+          beta: 10,
+          gamma: 0,
+          absolute: false,
+        } as unknown as Event);
+      });
+    }
+    expect(result.current.heading).toBe(settled);
+
+    // 明確轉向（+45°）：顯示值必須解凍更新
+    for (let i = 0; i < 30; i++) {
+      act(() => {
+        orientationHandler?.({
+          webkitCompassHeading: 135,
+          alpha: null,
+          beta: 10,
+          gamma: 0,
+          absolute: false,
+        } as unknown as Event);
+      });
+    }
+    expect(result.current.heading).toBeGreaterThan(125);
+  });
+
+  it('exposes compassAccuracy and needsCalibration from webkitCompassAccuracy', () => {
+    const { result } = renderHook(() => useNavigation(mockRecord));
+
+    expect(result.current.needsCalibration).toBe(false);
+
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 10,
+        webkitCompassAccuracy: 45,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.compassAccuracy).toBe(45);
+    expect(result.current.needsCalibration).toBe(true);
+
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 10,
+        webkitCompassAccuracy: 10,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.needsCalibration).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Compass permission state machine（iOS 13+ 手勢授權流程）
+// ---------------------------------------------------------------------------
+describe('useNavigation - compass permission (iOS gesture flow)', () => {
+  const mockRecord: ParkingRecord = {
+    id: 'perm-test',
+    plateNumber: 'PERM-001',
+    floor: 'B1',
+    timestamp: Date.now(),
+    hasPhoto: false,
+    latitude: 25.033,
+    longitude: 121.565,
+  };
+
+  let orientationListenerCount = 0;
+
+  beforeEach(() => {
+    orientationListenerCount = 0;
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      vibrate: vi.fn(),
+      geolocation: {
+        watchPosition: vi.fn(() => 42),
+        clearWatch: vi.fn(),
+      },
+    });
+    const origAddListener = window.addEventListener.bind(window);
+    vi.spyOn(window, 'addEventListener').mockImplementation(
+      (type: string, handler: EventListenerOrEventListenerObject) => {
+        if (type === 'deviceorientation') orientationListenerCount += 1;
+        else origAddListener(type, handler);
+      },
+    );
+    vi.spyOn(window, 'removeEventListener').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('starts as granted and attaches listeners when requestPermission API absent (Android/desktop)', () => {
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    expect(result.current.permissionState).toBe('granted');
+    expect(orientationListenerCount).toBe(1);
+    unmount();
+  });
+
+  it('starts as prompt without listeners when requestPermission API exists (iOS)', () => {
+    vi.stubGlobal(
+      'DeviceOrientationEvent',
+      Object.assign(class extends Event {}, {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    expect(result.current.permissionState).toBe('prompt');
+    expect(orientationListenerCount).toBe(0);
+    unmount();
+  });
+
+  it('transitions to granted and attaches listeners after user-gesture grant', async () => {
+    vi.stubGlobal(
+      'DeviceOrientationEvent',
+      Object.assign(class extends Event {}, {
+        requestPermission: vi.fn().mockResolvedValue('granted'),
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    await act(async () => {
+      await result.current.requestCompassPermission();
+    });
+    expect(result.current.permissionState).toBe('granted');
+    expect(orientationListenerCount).toBe(1);
+    unmount();
+  });
+
+  it('transitions to denied when user rejects', async () => {
+    vi.stubGlobal(
+      'DeviceOrientationEvent',
+      Object.assign(class extends Event {}, {
+        requestPermission: vi.fn().mockResolvedValue('denied'),
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    await act(async () => {
+      await result.current.requestCompassPermission();
+    });
+    expect(result.current.permissionState).toBe('denied');
+    expect(orientationListenerCount).toBe(0);
+    unmount();
+  });
+
+  it('transitions to denied on rejected promise without unhandled rejection', async () => {
+    vi.stubGlobal(
+      'DeviceOrientationEvent',
+      Object.assign(class extends Event {}, {
+        requestPermission: vi.fn().mockRejectedValue(new Error('NotAllowedError')),
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    await act(async () => {
+      await result.current.requestCompassPermission();
+    });
+    expect(result.current.permissionState).toBe('denied');
+    unmount();
+  });
+
+  it('retry after denial can recover to granted', async () => {
+    const requestPermission = vi
+      .fn()
+      .mockResolvedValueOnce('denied')
+      .mockResolvedValueOnce('granted');
+    vi.stubGlobal(
+      'DeviceOrientationEvent',
+      Object.assign(class extends Event {}, { requestPermission }),
+    );
+
+    const { result, unmount } = renderHook(() => useNavigation(mockRecord));
+    await act(async () => {
+      await result.current.requestCompassPermission();
+    });
+    expect(result.current.permissionState).toBe('denied');
+
+    await act(async () => {
+      await result.current.requestCompassPermission();
+    });
+    expect(result.current.permissionState).toBe('granted');
+    expect(orientationListenerCount).toBe(1);
+    unmount();
   });
 });
 
