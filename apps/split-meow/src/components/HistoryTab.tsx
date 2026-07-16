@@ -1033,16 +1033,17 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
   };
 
   return (
+    // modal 層級必須高於 BottomNav（z-50），否則同 z 下 DOM 較晚的 nav 會攔截 CTA 點擊（G3）。
     <div
-      className="fixed inset-0 z-50 flex items-end"
+      className="fixed inset-0 z-[60] flex items-end"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-scrim/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         className="relative w-full bg-surface-container-low rounded-t-[2rem] p-6 animate-in slide-in-from-bottom-4 duration-300 space-y-4"
-        style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))' }}
+        style={{ paddingBottom: 'calc(var(--chrome-bottom) + 1rem)' }}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-on-surface">{t('history.edit_title')}</h2>
