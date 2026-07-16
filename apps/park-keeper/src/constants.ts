@@ -26,8 +26,9 @@ export const THEMES: Record<string, ThemeConfig> = {
       accent: '#FFFFBA', // Pastel Yellow (Cream)
       background: '#FFFAF4', // Very light warm white
       surface: '#FFFFFF',
-      text: '#8E7C80', // Softer Warm Grey (less harsh than black)
-      textMuted: '#C5B4B6',
+      // 暖粉灰調加深至 WCAG AA：text 5.66:1、textMuted 4.61:1（on #FFFAF4），保留粉彩柔和感。
+      text: '#755F63',
+      textMuted: '#826D73',
     },
     font: 'font-cute',
     borderRadius: '28px', // Rounder
@@ -67,9 +68,14 @@ export const THEMES: Record<string, ThemeConfig> = {
   },
 };
 
+// 保存天數 SSOT：照片清理、SW tile TTL、設定滑桿共用同一組邊界與預設值。
+export const CACHE_DAYS = { MIN: 1, MAX: 30, DEFAULT: 7 } as const;
+
+export const clampCacheDays = (value: number): number =>
+  Math.min(CACHE_DAYS.MAX, Math.max(CACHE_DAYS.MIN, Math.round(value)));
+
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'minimalist',
   language: 'zh-TW',
-  cacheDurationDays: 7,
-  notificationsEnabled: true,
+  cacheDurationDays: CACHE_DAYS.DEFAULT,
 };

@@ -146,14 +146,8 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.ts',
         injectManifest: {
-          globPatterns: [
-            '**/*.js',
-            '**/*.css',
-            '**/*.html',
-            '**/*.json',
-            '**/*.svg',
-            '**/*.webmanifest',
-          ],
+          // dist 無需 precache 的 .json（.vite/ 建置產物不進 SW），保留清單避免無匹配警告。
+          globPatterns: ['**/*.js', '**/*.css', '**/*.html', '**/*.svg', '**/*.webmanifest'],
           globIgnores: ['**/node_modules/**'],
         },
         manifest: {
@@ -179,6 +173,18 @@ export default defineConfig(({ mode }) => {
               purpose: 'any maskable',
             },
           ],
+          // Android/Desktop 長按圖示捷徑；iOS 不支援 shortcuts，改走 Shortcuts + webapp://。
+          // url 相對 manifest 位置解析（scope 內）：./add?from=shortcut → <base>/add?from=shortcut。
+          // 單一參數契約：from ∈ {'shortcut'}（與 /add query 白名單一致，無第二語意）。
+          shortcuts: [
+            {
+              name: '快速記錄',
+              short_name: '快速記錄',
+              description: '直達快速記錄模式，拍照記錄停車位置',
+              url: './add?from=shortcut',
+              icons: [{ src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' }],
+            },
+          ],
         },
       }),
     ],
@@ -198,12 +204,15 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (typeof process !== 'undefined' && process.env['SSR'] === 'true') return undefined;
             if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('scheduler')) return 'vendor-react';
+              // leaflet 系不指派 chunk：唯一消費者 MiniMap 為 lazy import，
+              // 交由 bundler 自然落入 MiniMap 非同步 chunk；若指派 vendor chunk
+              // 會被 react 判斷吸入初始載入圖（react-leaflet 含 'react' 字串，LCP 回歸根因）。
+              if (id.includes('leaflet')) return undefined;
               if (id.includes('react-router-dom') || id.includes('@remix-run'))
                 return 'vendor-router';
               if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
-              if (id.includes('leaflet') || id.includes('react-leaflet')) return 'vendor-map';
               if (id.includes('i18next')) return 'vendor-i18n';
+              if (id.includes('react') || id.includes('scheduler')) return 'vendor-react';
             }
             return undefined;
           },

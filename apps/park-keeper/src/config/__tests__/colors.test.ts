@@ -1,16 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  NORTH_COLOR,
-  ARRIVED_COLOR,
-  WARNING_COLOR,
-  ARRIVED_BORDER,
-  ARRIVED_GLOW,
-  WARNING_BORDER,
-  WARNING_GLOW,
-  WARNING_RING_STROKE,
-  WARNING_SCREEN_FILL,
-  WARNING_LABEL,
-} from '../colors';
+import { NORTH_COLOR, ARRIVED_COLOR, WARNING_COLOR, ARRIVED_BORDER, ARRIVED_GLOW } from '../colors';
 
 // ---------------------------------------------------------------------------
 // SSOT 色彩常數 — 確保所有語意色彩由單一來源定義
@@ -58,11 +47,6 @@ describe('rgba 衍生常數', () => {
   it.each([
     ['ARRIVED_BORDER', ARRIVED_BORDER],
     ['ARRIVED_GLOW', ARRIVED_GLOW],
-    ['WARNING_BORDER', WARNING_BORDER],
-    ['WARNING_GLOW', WARNING_GLOW],
-    ['WARNING_RING_STROKE', WARNING_RING_STROKE],
-    ['WARNING_SCREEN_FILL', WARNING_SCREEN_FILL],
-    ['WARNING_LABEL', WARNING_LABEL],
   ])('%s 符合 rgba() 格式', (_name, value) => {
     expect(value).toMatch(RGBA_RE);
   });
@@ -73,18 +57,6 @@ describe('rgba 衍生常數', () => {
 
   it('ARRIVED_GLOW 含綠色 channel（34,197,94）', () => {
     expect(ARRIVED_GLOW).toContain('34,197,94');
-  });
-
-  it('WARNING_BORDER 含紅色 channel（239,68,68）', () => {
-    expect(WARNING_BORDER).toContain('239,68,68');
-  });
-
-  it('WARNING_GLOW 含紅色 channel（239,68,68）', () => {
-    expect(WARNING_GLOW).toContain('239,68,68');
-  });
-
-  it('WARNING_RING_STROKE 含紅色 channel（239,68,68）', () => {
-    expect(WARNING_RING_STROKE).toContain('239,68,68');
   });
 
   it('ARRIVED_BORDER alpha 高於 ARRIVED_GLOW alpha（border 較不透明）', () => {

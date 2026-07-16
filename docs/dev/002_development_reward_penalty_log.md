@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+120
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,26 @@
 - ID：reward-starpuff-v7-feel-depth
 - 原因：v7 需求（疾衝移除/下衝擊改下+跳/走動手感根修/混合星彈/新怪/中魔王）需一次收斂，且 jitter 排查揭露 fixedStep 60Hz 錯拍為位移層唯一異常、fixedStep:false 低幀率會重力穿地（彈簧 8 連測 1-2 次失效）不可採
 - 解法：resolveJumpPress 輸入矩陣+walkFeel 步頻系統（維持 fixedStep:true，姿態層根修）、STAR_MIXES 六式混合表、drilly/glowy FSM、levels elite 軟鎖門房（60s 逾時保險），218 unit＋33 e2e 全綠、GAME_DESIGN v7.0 §44-§49 落檔
+
+- 日期：2026-07-17
+- ID：neutral-workspace-deps-minor-refresh
+- 原因：workspace minor/patch 依賴批次更新與 starpuff 死依賴（vitest 環境為 node 卻裝 jsdom）清理
+- 解法：pnpm -r update 收斂 in-range 最新（vite 8.1.5、vitest 4.1.10、vite-plugin-pwa 1.3.0 等），同步回釘 @vitest/coverage-v8 對齊 vitest 版本避免 peer 不相容，回退造成 format drift 的 prettier 3.9.x 與造成 581 條新 lint 錯誤的 eslint-plugin-react-hooks 7.1.x，七道驗證閘（format/lint/typecheck/test/build/starpuff e2e 28 條/PWA dist sanity）全綠
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-uiux-2026h2-epic
+- 原因：park-keeper 需求（捷徑直達拍照、車號記憶、保存天數 SSOT、羅盤重造、行動 UIUX 極致化）需在 7 個並行 stream＋四模型評分閉環下一次交付且不回歸
+- 解法：worktree 隔離 7 stream（審查鏈逐一 APPROVE 後 no-ff 併 epic）＋round-1 四席 61 項缺陷收斂（51 fixed）＋pre-release 三合一稽核；598 unit＋34 e2e 綠、LH P96/A100、iOS 旅程 2 taps
+
+- 日期：2026-07-16
+- ID：penalty-park-keeper-s6-paper-checkoff
+- 原因：S6 核銷表將 Sonnet U6 標 fixed 但 diff 無對應實作（紙上核銷），靠審查員誠實性抽查揭露
+- 解法：真修 U6 並全表自查一輪，核銷紀律改為「每項 fixed 必附對應 commit SHA」且審查必抽查 diff 對帳
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-pwa-update-global
+- 原因：pre-release 稽核發現 UpdatePrompt 僅掛 Home，捷徑直入 /add 的舊版 PWA 會卡在 waiting 不更新
+- 解法：UpdatePrompt 提升 Layout 全域掛載（四路由單元測試鎖定），沿用 prompt 模式＋線上自動 updateServiceWorker 防版本撕裂
 
 - 日期：2026-07-16
 - ID：neutral-starpuff-v6-codeql-secret-naming
