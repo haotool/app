@@ -7,7 +7,7 @@
 // 對應正式瀏覽器環境；jsdom 預設不含 IndexedDB。
 import 'fake-indexeddb/auto';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import Home from '../Home';
@@ -70,6 +70,7 @@ vi.mock('@app/park-keeper/services/db', () => ({
     getSettings: mockGetSettings,
     getRecords: mockGetRecords,
     saveSettings: vi.fn(),
+    deleteRecord: vi.fn().mockResolvedValue(undefined),
     runStartupCleanup: vi.fn().mockResolvedValue(0),
   },
 }));
@@ -210,5 +211,39 @@ describe('Home', () => {
 
     await screen.findByTestId('pickup-hero-card');
     expect(screen.getAllByTestId('record-card-media')).toHaveLength(2);
+  });
+
+  it('兩筆記錄刪除一筆後，剩餘一筆列表卡即時降為精簡列（issue #733）', async () => {
+    const base = {
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      hasPhoto: false,
+    };
+    const remaining = { ...base, id: 'r1', timestamp: Date.now() - 60_000 };
+    const removed = {
+      ...base,
+      id: 'r2',
+      plateNumber: 'XYZ-5678',
+      timestamp: Date.now() - 120_000,
+    };
+    mockGetRecords
+      .mockResolvedValueOnce([remaining, removed] satisfies ParkingRecord[])
+      .mockResolvedValueOnce([remaining] satisfies ParkingRecord[]);
+
+    renderHome();
+
+    await screen.findByTestId('pickup-hero-card');
+    expect(screen.getAllByTestId('record-card-media')).toHaveLength(2);
+
+    fireEvent.click(screen.getByLabelText('刪除停車記錄 XYZ-5678'));
+
+    // 刪除後重載列表：僅剩一筆且該筆即 hero → 照片＋地圖列即時收合。
+    await waitFor(() => {
+      expect(screen.queryByTestId('record-card-media')).toBeNull();
+    });
+    // 剩餘卡管理操作（刪除入口）仍保留，hero 卡不受影響。
+    expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
+    expect(screen.getByTestId('pickup-hero-card')).toBeInTheDocument();
   });
 });
