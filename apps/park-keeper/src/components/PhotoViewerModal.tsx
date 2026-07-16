@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Minus, Plus, RotateCcw, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PhotoViewerModalProps {
   src: string;
@@ -13,7 +14,21 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 5;
 const SCALE_STEP = 0.25;
 
+/** 單指下滑關閉：位移閾值（px）。 */
+export const SWIPE_DISMISS_OFFSET_PX = 110;
+/** 單指下滑關閉：速度閾值（px/s）。 */
+export const SWIPE_DISMISS_VELOCITY = 800;
+
 const clampScale = (value: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+
+/**
+ * 單指下滑關閉判定：僅在未放大（scale<=1）時生效，
+ * 放大狀態下的拖曳保留為平移瀏覽，不誤觸關閉。
+ */
+export function shouldDismissOnDragEnd(scale: number, offsetY: number, velocityY: number): boolean {
+  if (scale > 1) return false;
+  return offsetY > SWIPE_DISMISS_OFFSET_PX || velocityY > SWIPE_DISMISS_VELOCITY;
+}
 
 export default function PhotoViewerModal({
   src,
@@ -21,6 +36,7 @@ export default function PhotoViewerModal({
   onClose,
   containerClassName = 'fixed inset-0',
 }: PhotoViewerModalProps) {
+  const { t } = useTranslation();
   const [scale, setScale] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
   // scaleRef 讓 native event handler 取得最新 scale（避免 stale closure）
@@ -96,7 +112,7 @@ export default function PhotoViewerModal({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="照片檢視器"
+      aria-label={t('photo.viewer_label')}
     >
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button
@@ -106,7 +122,7 @@ export default function PhotoViewerModal({
             setScale((current) => clampScale(current - SCALE_STEP));
           }}
           className="h-11 w-11 rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
-          aria-label="縮小照片"
+          aria-label={t('photo.zoom_out')}
         >
           <Minus className="mx-auto" size={18} />
         </button>
@@ -117,7 +133,7 @@ export default function PhotoViewerModal({
             setScale((current) => clampScale(current + SCALE_STEP));
           }}
           className="h-11 w-11 rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
-          aria-label="放大照片"
+          aria-label={t('photo.zoom_in')}
         >
           <Plus className="mx-auto" size={18} />
         </button>
@@ -128,7 +144,7 @@ export default function PhotoViewerModal({
             setScale(1);
           }}
           className="h-11 w-11 rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
-          aria-label="重設照片位置"
+          aria-label={t('photo.reset')}
         >
           <RotateCcw className="mx-auto" size={16} />
         </button>
@@ -139,14 +155,14 @@ export default function PhotoViewerModal({
             onClose();
           }}
           className="h-11 w-11 rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
-          aria-label="關閉照片"
+          aria-label={t('photo.close')}
         >
           <X className="mx-auto" size={18} />
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-[11px] font-bold tracking-wide text-white/85 backdrop-blur-md">
-        雙指縮放 · 雙擊切換 · 拖曳移動
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-[11px] font-bold tracking-wide text-white/85 backdrop-blur-md whitespace-nowrap">
+        {t('photo.gesture_hint')}
       </div>
 
       <motion.img
@@ -156,6 +172,12 @@ export default function PhotoViewerModal({
         drag={true}
         dragMomentum={false}
         dragElastic={0.08}
+        onDragEnd={(_event, info) => {
+          // 未放大時單指下滑（或快速甩動）關閉檢視器。
+          if (shouldDismissOnDragEnd(scaleRef.current, info.offset.y, info.velocity.y)) {
+            onClose();
+          }
+        }}
         onClick={(event) => event.stopPropagation()}
         onWheel={(event) => {
           event.stopPropagation();
