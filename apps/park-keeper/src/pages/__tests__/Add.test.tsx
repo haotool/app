@@ -74,6 +74,21 @@ describe('Add - /add 快速記錄頁', () => {
     expect(container.innerHTML).not.toContain('alert(1)');
   });
 
+  it('白名單大小寫敏感：from=Shortcut 視為未知值靜默降級', async () => {
+    renderAdd('/add?from=Shortcut');
+
+    await screen.findByTestId('quick-entry-stub');
+    expect(screen.getByLabelText(i18n.t('action.back_home'))).toBeInTheDocument();
+  });
+
+  it('多值 from 取第一個：from=evil&from=shortcut 視為未知值靜默降級', async () => {
+    renderAdd('/add?from=evil&from=shortcut');
+
+    await screen.findByTestId('quick-entry-stub');
+    // URLSearchParams.get 取首值 evil，不在白名單 → 降級顯示返回鍵。
+    expect(screen.getByLabelText(i18n.t('action.back_home'))).toBeInTheDocument();
+  });
+
   it('儲存成功後顯示摘要（樓層/車號/未記錄位置）與返回首頁', async () => {
     const saveSpy = vi.spyOn(dbService, 'saveRecord').mockResolvedValue(undefined);
 
