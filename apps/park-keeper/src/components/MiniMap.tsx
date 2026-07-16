@@ -163,8 +163,8 @@ const createPremiumCarIcon = (
   isInteractive: boolean,
   showLabel: boolean,
   markerLabel: string,
-  rotationDegrees = 0,
-  labelColors = { bg: '#0f172ad9', text: '#fff' },
+  rotationDegrees: number,
+  labelColors: { bg: string; text: string },
 ) => {
   const filterDef = isInteractive
     ? `<filter id="carGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -213,9 +213,9 @@ const createPremiumCarIcon = (
 const createUserIcon = (
   heading: number,
   color: string,
-  showLabel = false,
-  markerLabel = DEFAULT_MINI_MAP_TEXT.markerUserLabel,
-  labelColors = { bg: '#2563ebeb', text: '#fff' },
+  showLabel: boolean,
+  markerLabel: string,
+  labelColors: { bg: string; text: string },
 ) => {
   // 標籤放在光束上方，偏移需大於光束高度（~29px + margin）。
   const labelHtml = showLabel
