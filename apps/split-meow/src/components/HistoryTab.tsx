@@ -377,7 +377,16 @@ export function HistoryTab() {
                 <div
                   key={i}
                   data-testid="settlement-row"
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSettled}
                   onClick={() => toggleSettlement(settlementKey)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleSettlement(settlementKey);
+                    }
+                  }}
                   className={cn(
                     'bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient cursor-pointer transition-opacity active:scale-[0.98] transition-transform',
                     isSettled && 'opacity-50',
@@ -462,6 +471,9 @@ export function HistoryTab() {
               return (
                 <div
                   key={memberId}
+                  role={isSettled ? undefined : 'button'}
+                  tabIndex={isSettled ? undefined : 0}
+                  aria-expanded={isSettled ? undefined : isOpen}
                   className={cn(
                     'bg-surface-container-lowest rounded-[1.5rem] shadow-ambient overflow-hidden transition-all duration-300',
                     !isSettled && 'cursor-pointer',
@@ -469,6 +481,13 @@ export function HistoryTab() {
                   onClick={() => {
                     if (isSettled) return;
                     setExpandedMemberId(isOpen ? null : memberId);
+                  }}
+                  onKeyDown={(e) => {
+                    if (isSettled || e.target !== e.currentTarget) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedMemberId(isOpen ? null : memberId);
+                    }
                   }}
                 >
                   {/* 摘要列 */}
@@ -516,8 +535,9 @@ export function HistoryTab() {
                     )}
                   </div>
 
-                  {/* 展開明細 */}
+                  {/* 展開明細；收合時 inert 消除幻影可聚焦項 */}
                   <div
+                    inert={!isOpen || undefined}
                     className={cn(
                       'grid transition-all duration-200 ease-in-out',
                       isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
@@ -661,6 +681,18 @@ export function HistoryTab() {
               const isThisSwiped = swipedId === exp.id;
               const isThisActive = draggingId === exp.id;
               const offset = isThisActive ? liveDragOffset : isThisSwiped ? SWIPE_REVEAL : 0;
+              const toggleExpand = () => {
+                if (isEditingNote) return;
+                if (didSwipeRef.current) {
+                  didSwipeRef.current = false;
+                  return;
+                }
+                if (isThisSwiped) {
+                  setSwipedId(null);
+                  return;
+                }
+                setExpandedId(isExpanded ? null : exp.id);
+              };
 
               return (
                 <div
@@ -706,17 +738,17 @@ export function HistoryTab() {
                     </button>
                   </div>
                   <div
-                    onClick={() => {
-                      if (isEditingNote) return;
-                      if (didSwipeRef.current) {
-                        didSwipeRef.current = false;
-                        return;
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    onClick={toggleExpand}
+                    onKeyDown={(e) => {
+                      // 只回應卡片本體聚焦時的按鍵；內部備註輸入/按鈕的 Enter 不觸發展開切換。
+                      if (e.target !== e.currentTarget) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpand();
                       }
-                      if (isThisSwiped) {
-                        setSwipedId(null);
-                        return;
-                      }
-                      setExpandedId(isExpanded ? null : exp.id);
                     }}
                     style={{
                       transform: `translateX(-${offset}px)`,
@@ -802,8 +834,9 @@ export function HistoryTab() {
                       </div>
                     </div>
 
-                    {/* 展開詳情 */}
+                    {/* 展開詳情；收合時 inert 移出焦點與無障礙樹，消除幻影可聚焦項 */}
                     <div
+                      inert={!isExpanded || undefined}
                       className={cn(
                         'grid transition-all duration-200 ease-in-out',
                         isExpanded
