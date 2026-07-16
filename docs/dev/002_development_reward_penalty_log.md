@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+119
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-starpuff-v7-feel-depth
+- 原因：v7 需求（疾衝移除/下衝擊改下+跳/走動手感根修/混合星彈/新怪/中魔王）需一次收斂，且 jitter 排查揭露 fixedStep 60Hz 錯拍為位移層唯一異常、fixedStep:false 低幀率會重力穿地（彈簧 8 連測 1-2 次失效）不可採
+- 解法：resolveJumpPress 輸入矩陣+walkFeel 步頻系統（維持 fixedStep:true，姿態層根修）、STAR_MIXES 六式混合表、drilly/glowy FSM、levels elite 軟鎖門房（60s 逾時保險），218 unit＋33 e2e 全綠、GAME_DESIGN v7.0 §44-§49 落檔
 
 - 日期：2026-07-16
 - ID：neutral-starpuff-v6-codeql-secret-naming
