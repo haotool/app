@@ -59,7 +59,7 @@ function moveRouterHydrationScript(html) {
 }
 
 function generateNonTrailingSlashPages() {
-  const ssgDirs = ['about', 'settings'];
+  const ssgDirs = ['about', 'settings', 'add', 'guide'];
   console.log('\n🔗 Generating non-trailing-slash HTML files...');
   for (const dir of ssgDirs) {
     const indexPath = resolve(distDir, dir, 'index.html');

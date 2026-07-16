@@ -179,6 +179,17 @@ export default defineConfig(({ mode }) => {
               purpose: 'any maskable',
             },
           ],
+          // Android/Desktop 長按圖示捷徑；iOS 不支援 shortcuts，改走 Shortcuts + webapp://。
+          // url 相對 manifest 位置解析（scope 內）：./add?quick=1 → <base>/add?quick=1。
+          shortcuts: [
+            {
+              name: '快速記錄',
+              short_name: '快速記錄',
+              description: '直達快速記錄模式，拍照記錄停車位置',
+              url: './add?quick=1',
+              icons: [{ src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' }],
+            },
+          ],
         },
       }),
     ],
