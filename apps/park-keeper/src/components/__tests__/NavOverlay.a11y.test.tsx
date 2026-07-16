@@ -49,6 +49,7 @@ const navState = {
   permissionState: 'granted' as const,
   requestCompassPermission: vi.fn(),
   needsCalibration: false,
+  recheckCalibration: vi.fn(),
 };
 
 function renderOverlay(onClose = vi.fn(), stateOverrides: Partial<typeof navState> = {}) {
@@ -105,6 +106,23 @@ describe('NavOverlay - modal a11y', () => {
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('校準卡提供手動重新偵測按鈕（reduced-motion 下不依賴系統自動）', () => {
+    const recheck = vi.fn();
+    vi.mocked(useNavigation).mockReturnValue({
+      ...navState,
+      needsCalibration: true,
+      recheckCalibration: recheck,
+    } as unknown as ReturnType<typeof useNavigation>);
+    render(
+      <I18nextProvider i18n={i18n}>
+        <NavOverlay record={record} theme={theme} onClose={vi.fn()} cacheDurationDays={7} />
+      </I18nextProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '重新偵測精度' }));
+    expect(recheck).toHaveBeenCalledTimes(1);
   });
 
   it('抵達態雙關閉入口 aria 可區分（頂部 X vs 抵達 CTA）', () => {

@@ -216,6 +216,41 @@ describe('useNavigation hook', () => {
     expect(result.current.heading).toBe(270);
   });
 
+  it('recheckCalibration 清除精度快照，needsCalibration 立即解除（手動重新偵測入口）', () => {
+    const { result } = renderHook(() => useNavigation(mockRecord));
+
+    // webkitCompassAccuracy 45 > 30 → 需要校準。
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 90,
+        webkitCompassAccuracy: 45,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.needsCalibration).toBe(true);
+
+    act(() => {
+      result.current.recheckCalibration();
+    });
+    expect(result.current.needsCalibration).toBe(false);
+
+    // 下一筆感測事件仍低精度 → 重新判定需要校準（非永久關閉）。
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 92,
+        webkitCompassAccuracy: 50,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+    expect(result.current.needsCalibration).toBe(true);
+  });
+
   it('should compute isPhoneFlat with hysteresis correctly', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 

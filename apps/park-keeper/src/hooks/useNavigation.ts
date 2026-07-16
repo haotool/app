@@ -298,6 +298,12 @@ export function useNavigation(record: ParkingRecord) {
   const hasValidLocation = userLoc !== null;
   const needsCalibration = needsCompassCalibration(compassAccuracy);
 
+  // 手動重新偵測精度（校準卡按鈕）：清除既有精度快照，改由下一筆感測事件重新判定；
+  // reduced-motion 或事件停滯時不再只能等系統自動恢復（issue #725 Gemini P2）。
+  const recheckCalibration = useCallback(() => {
+    setCompassAccuracy(null);
+  }, []);
+
   return {
     userLoc,
     heading,
@@ -318,5 +324,6 @@ export function useNavigation(record: ParkingRecord) {
     requestCompassPermission,
     compassAccuracy,
     needsCalibration,
+    recheckCalibration,
   };
 }
