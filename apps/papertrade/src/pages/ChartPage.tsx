@@ -69,45 +69,49 @@ function SymbolHeader({
           </span>
         )}
       </div>
-      {/* 375px 下橫向捲動；各項 shrink-0 固定寬避免跳動（設計 SSOT）。 */}
+      {/* 各項 min-w 固定：載入中 `--` 與實值等寬，避免統計列跳動（設計 SSOT）。 */}
       <dl className="mt-2 flex gap-4 overflow-x-auto text-caption text-text-3">
-        <div className="flex shrink-0 gap-1">
+        <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h高</dt>
           <dd className="text-text-2 tabular-nums">
             {ticker ? formatPrice(ticker.highPrice24h) : '--'}
           </dd>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h低</dt>
           <dd className="text-text-2 tabular-nums">
             {ticker ? formatPrice(ticker.lowPrice24h) : '--'}
           </dd>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex min-w-20 shrink-0 gap-1">
           <dt>24h額</dt>
           <dd className="text-text-2 tabular-nums">
             {ticker ? formatCompact(ticker.turnover24h) : '--'}
           </dd>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex min-w-40 shrink-0 gap-1">
           <dt>資金費率</dt>
-          <dd
-            className={clsx(
-              'tabular-nums',
-              ticker?.fundingRate === undefined
-                ? 'text-text-2'
-                : ticker.fundingRate >= 0
-                  ? 'text-long'
-                  : 'text-short',
-            )}
-          >
-            {ticker?.fundingRate !== undefined ? formatFundingRate(ticker.fundingRate) : '--'}
-          </dd>
-          <dd className="text-text-2">
-            <FundingCountdown nextFundingTime={ticker?.nextFundingTime} className="tabular-nums" />
+          <dd className="flex gap-1 tabular-nums">
+            <span
+              className={clsx(
+                ticker?.fundingRate === undefined
+                  ? 'text-text-2'
+                  : ticker.fundingRate >= 0
+                    ? 'text-long'
+                    : 'text-short',
+              )}
+            >
+              {ticker?.fundingRate !== undefined ? formatFundingRate(ticker.fundingRate) : '--'}
+            </span>
+            <span className="text-text-2">
+              <FundingCountdown
+                nextFundingTime={ticker?.nextFundingTime}
+                className="tabular-nums"
+              />
+            </span>
           </dd>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex min-w-20 shrink-0 gap-1">
           <dt>持倉量</dt>
           <dd className="text-text-2 tabular-nums">
             {ticker?.openInterestValue !== undefined

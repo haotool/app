@@ -38,6 +38,29 @@ describe('useMarketPrefsStore', () => {
     expect(stored.version).toBe(MARKET_PREFS_STORAGE_VERSION);
     expect(stored.state).toEqual({ favorites: ['SOLUSDT'] });
   });
+
+  it('hydrates persisted favorites for the current version', async () => {
+    window.localStorage.setItem(
+      MARKET_PREFS_STORAGE_KEY,
+      JSON.stringify({
+        state: { favorites: ['ETHUSDT'] },
+        version: MARKET_PREFS_STORAGE_VERSION,
+      }),
+    );
+
+    await useMarketPrefsStore.persist.rehydrate();
+    expect(useMarketPrefsStore.getState().favorites).toEqual(['ETHUSDT']);
+  });
+
+  it('resets to defaults when hydrating a stale persisted version', async () => {
+    window.localStorage.setItem(
+      MARKET_PREFS_STORAGE_KEY,
+      JSON.stringify({ state: { favorites: ['BTCUSDT'] }, version: 0 }),
+    );
+
+    await useMarketPrefsStore.persist.rehydrate();
+    expect(useMarketPrefsStore.getState().favorites).toEqual([]);
+  });
 });
 
 describe('parsePersistedMarketPrefs', () => {
