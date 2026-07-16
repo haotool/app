@@ -4,6 +4,7 @@
  * within the monorepo SSG architecture.
  */
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   motion,
   AnimatePresence,
@@ -15,6 +16,7 @@ import {
   Plus,
   Settings as SettingsIcon,
   Car,
+  Camera,
   Search,
   List as ListIcon,
   AlertTriangle,
@@ -347,6 +349,28 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         <span>{t('error.storage_unavailable')}</span>
                       </div>
                     )}
+                    {/* 首屏快速記錄 CTA：iOS 捷徑 webapp:// 只開首頁，此按鈕是 3-taps 預算第一步。 */}
+                    <div className="space-y-1.5">
+                      <Link
+                        to="/add"
+                        className="flex items-center justify-center gap-3 w-full h-20 rounded-3xl text-white text-lg font-black tracking-wide active:scale-[0.98] transition-transform"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
+                        }}
+                      >
+                        <Camera size={26} strokeWidth={2.5} />
+                        {t('home.quick_record_cta')}
+                      </Link>
+                      <div className="text-center">
+                        <Link
+                          to="/guide"
+                          className="text-[11px] font-bold opacity-40 underline underline-offset-2 hover:opacity-60 transition-opacity"
+                        >
+                          {t('guide.entry')}
+                        </Link>
+                      </div>
+                    </div>
                     {filteredRecords.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-20 opacity-10">
                         <Car size={60} strokeWidth={1.5} />
