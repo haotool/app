@@ -19,6 +19,8 @@ interface MiniMapProps {
   lockBounds?: boolean;
   autoFitTrackedPositions?: boolean;
   showRecenterButton?: boolean;
+  /** 位置圖例（目前位置/車輛位置）。背景層用法（NavOverlay）可關閉避免與 header 重疊。 */
+  showLegend?: boolean;
   recenterLabel?: string;
   text?: Partial<MiniMapText>;
   onLocationSelect?: (lat: number, lng: number) => void;
@@ -677,6 +679,7 @@ export default function MiniMap({
   lockBounds = !interactive,
   autoFitTrackedPositions = false,
   showRecenterButton = false,
+  showLegend = true,
   recenterLabel = 'Recenter map',
   text,
   onLocationSelect,
@@ -720,7 +723,7 @@ export default function MiniMap({
   const shouldLockBounds = lockBounds;
   const mapText = useMemo<MiniMapText>(() => ({ ...DEFAULT_MINI_MAP_TEXT, ...text }), [text]);
   const showPositionLabels = interactive && userPosition !== undefined;
-  const showPositionLegend = interactive && userPosition !== undefined;
+  const showPositionLegend = showLegend && interactive && userPosition !== undefined;
   const [recenterRequestId, setRecenterRequestId] = useState(0);
   const effectiveTrackedViewportInsets = useMemo<MapViewportInsets>(
     () => ({

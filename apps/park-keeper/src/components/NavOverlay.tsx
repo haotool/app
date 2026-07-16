@@ -84,7 +84,8 @@ const COMPASS_THEME_STYLES: Record<ThemeType, CompassThemeStyle> = {
     outerRingWidth: 2.5,
     outerRingOpacity: 0.25,
     neonGlowRadius: 0,
-    wedgeIdleOpacity: 0.5,
+    // 粉彩 primary 飽和度低，楔形 idle 提高補償可見度。
+    wedgeIdleOpacity: 0.65,
   },
   minimalist: {
     tickWidthScale: 0.8,
@@ -306,11 +307,12 @@ export default function NavOverlay({
               showZoomControl={false}
               lockBounds={false}
               autoFitTrackedPositions={true}
-              showRecenterButton={true}
+              showRecenterButton={false}
+              showLegend={false}
               recenterLabel={t('map.recenter_both')}
               cacheDurationDays={cacheDurationDays}
               text={miniMapText}
-              className="grayscale-[0.35] opacity-90"
+              className="grayscale-[0.5] opacity-70"
               mapKey={`nav-${record.id}`}
               photoData={record.photoData}
               onPhotoClick={() => setShowPhotoModal(true)}
