@@ -40,8 +40,13 @@ export function useCurrencyAutoDetect() {
     if (!currencyManuallySet) {
       const detected = detectCurrencyFromTimezone();
       if (detected) {
+        const { calculatorValue, itemizedValues } = useStore.getState();
+        // draft 非空時跳過自動切換（靜默保護，不清使用者未儲存輸入）；手動切換仍走 ConfirmDialog。
+        const hasDraft =
+          calculatorValue.trim() !== '' ||
+          Object.values(itemizedValues).some((v) => v.trim() !== '');
         const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-        if (!wouldCreateMixedCurrencyTrip(tripExpenses, currency, detected)) {
+        if (!hasDraft && !wouldCreateMixedCurrencyTrip(tripExpenses, currency, detected)) {
           setCurrency(detected, false);
         }
       }

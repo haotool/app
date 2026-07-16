@@ -41,6 +41,8 @@ describe('useCurrencyAutoDetect', () => {
       currencyManuallySet: false,
       currentTripId: 'default-trip',
       expenses: [],
+      calculatorValue: '',
+      itemizedValues: {},
       krwPerTwd: null,
       rateUpdatedAt: null,
       rateUpdatedAtIso: null,
@@ -83,6 +85,31 @@ describe('useCurrencyAutoDetect', () => {
     await waitFor(() => {
       expect(useStore.getState().currency).toBe('KRW');
     });
+  });
+
+  it('draft 非空時跳過自動切換，幣別與 draft 均保留（Blocking#3）', async () => {
+    useStore.setState({ calculatorValue: '30000' });
+
+    renderHook(() => useCurrencyAutoDetect());
+
+    // 匯率 fetch 完成後仍未切幣，證明非時序巧合
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+    expect(useStore.getState().currency).toBe('TWD');
+    expect(useStore.getState().calculatorValue).toBe('30000');
+  });
+
+  it('itemized draft 非空時同樣跳過自動切換', async () => {
+    useStore.setState({ itemizedValues: { me: '9000' } });
+
+    renderHook(() => useCurrencyAutoDetect());
+
+    await waitFor(() => {
+      expect(useStore.getState().krwPerTwd).toBe(43.5);
+    });
+    expect(useStore.getState().currency).toBe('TWD');
+    expect(useStore.getState().itemizedValues).toEqual({ me: '9000' });
   });
 
   it('成功取得匯率時寫入 ISO 時間戳並清除失敗旗標', async () => {
