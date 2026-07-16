@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+116
+> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+117
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-uiux-2026h2-epic
+- 原因：park-keeper 需求（捷徑直達拍照、車號記憶、保存天數 SSOT、羅盤重造、行動 UIUX 極致化）需在 7 個並行 stream＋四模型評分閉環下一次交付且不回歸
+- 解法：worktree 隔離 7 stream（審查鏈逐一 APPROVE 後 no-ff 併 epic）＋round-1 四席 61 項缺陷收斂（51 fixed）＋pre-release 三合一稽核；598 unit＋34 e2e 綠、LH P96/A100、iOS 旅程 2 taps
+
+- 日期：2026-07-16
+- ID：penalty-park-keeper-s6-paper-checkoff
+- 原因：S6 核銷表將 Sonnet U6 標 fixed 但 diff 無對應實作（紙上核銷），靠審查員誠實性抽查揭露
+- 解法：真修 U6 並全表自查一輪，核銷紀律改為「每項 fixed 必附對應 commit SHA」且審查必抽查 diff 對帳
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-pwa-update-global
+- 原因：pre-release 稽核發現 UpdatePrompt 僅掛 Home，捷徑直入 /add 的舊版 PWA 會卡在 waiting 不更新
+- 解法：UpdatePrompt 提升 Layout 全域掛載（四路由單元測試鎖定），沿用 prompt 模式＋線上自動 updateServiceWorker 防版本撕裂
 
 - 日期：2026-07-16
 - ID：neutral-papertrade-test-timeout-flaky
