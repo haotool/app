@@ -346,3 +346,163 @@ describe('QuickEntry - 車牌自動載入與清空功能', () => {
     );
   });
 });
+
+describe('QuickEntry - GPS 拒絕卡', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-TW');
+    global.localStorage.clear();
+
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: mockGeolocation,
+      vibrate: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  function mockGeoDenied() {
+    mockGeolocation.watchPosition.mockImplementation((_success, error) => {
+      error?.({
+        code: 1,
+        message: 'User denied Geolocation',
+      } as GeolocationPositionError);
+      return 1;
+    });
+  }
+
+  it('GPS 拒絕時顯示 location_denied 卡與重試按鈕，不得回退台北 101 預設座標', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: i18n.t('action.retry') })).toBeInTheDocument();
+    // 不得靜默存台北 101：地圖不應以預設座標渲染。
+    expect(screen.queryByTestId('mini-map')).not.toBeInTheDocument();
+  });
+
+  it('GPS 拒絕仍可儲存，但經緯度必須為 undefined 且卡片明示未記錄位置', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+    expect(screen.getByText(i18n.t('record.no_location'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('B2'));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+
+    const saved = onSave.mock.calls[0]![0] as { latitude?: number; longitude?: number };
+    expect(saved.latitude).toBeUndefined();
+    expect(saved.longitude).toBeUndefined();
+  });
+
+  it('點擊重試按鈕後重新啟動定位並在成功時清除拒絕卡', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+
+    // 第二次請求改為成功。
+    mockGeolocation.watchPosition.mockImplementation((success) => {
+      success({
+        coords: { latitude: 25.033, longitude: 121.5654, accuracy: 10, heading: null },
+      } as GeolocationPosition);
+      return 2;
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('action.retry') }));
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.queryByText(i18n.t('error.location_denied'))).not.toBeInTheDocument();
+  });
+});
+
+describe('QuickEntry - fullscreen 模式', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-TW');
+    global.localStorage.clear();
+
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: mockGeolocation,
+      vibrate: vi.fn(),
+    });
+
+    mockGeolocation.watchPosition.mockImplementation((success) => {
+      success({
+        coords: { latitude: 25.033, longitude: 121.5654, accuracy: 10, heading: null },
+      } as GeolocationPosition);
+      return 1;
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('fullscreen 模式渲染巨型拍照 CTA（label 直包 file input），無 bottom sheet 把手', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          mode="fullscreen"
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    // 巨型 CTA：拍照 label 存在且直包 capture input。
+    const fileInput = document.querySelector('input[type="file"][capture="environment"]');
+    expect(fileInput).toBeInTheDocument();
+    expect(fileInput?.closest('label')).not.toBeNull();
+
+    // 全螢幕模式不渲染 sheet 把手與 backdrop。
+    expect(document.querySelector('[data-testid="quick-entry-handle"]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).not.toBeInTheDocument();
+  });
+
+  it('sheet 模式維持既有把手與 backdrop 行為', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    expect(document.querySelector('[data-testid="quick-entry-handle"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).toBeInTheDocument();
+  });
+});
