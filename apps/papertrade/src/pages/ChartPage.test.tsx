@@ -203,6 +203,27 @@ describe('ChartPage', () => {
     expect(screen.getByLabelText('深度圖載入中')).toBeInTheDocument();
   });
 
+  it('stops the depth orderbook subscription when switching to the trades tab', async () => {
+    const user = userEvent.setup();
+    const stops: Mock[] = [];
+    subscribeMock.mockImplementation(() => {
+      const stop = vi.fn();
+      stops.push(stop);
+      return stop;
+    });
+    renderChart('/chart/BTCUSDT');
+
+    // 進深度分頁後，最後一筆訂閱即深度圖的 orderbook feed（訂單簿面板已先卸載）。
+    await user.click(await screen.findByRole('tab', { name: '深度' }));
+    expect(subscribeMock).toHaveBeenLastCalledWith('orderbook.50.BTCUSDT', expect.any(Function));
+    const depthStop = stops.at(-1);
+    expect(depthStop).toBeDefined();
+    expect(depthStop).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('tab', { name: '最新成交' }));
+    expect(depthStop).toHaveBeenCalledTimes(1);
+  });
+
   it('toggles indicator overlays via chips and persists the selection', async () => {
     const user = userEvent.setup();
     renderChart('/chart/BTCUSDT');
