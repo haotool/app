@@ -26,6 +26,7 @@ import type { ParkingRecord, AppSettings, ThemeConfig } from '@app/park-keeper/t
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
+import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import { UpdatePrompt } from '@app/park-keeper/components/UpdatePrompt';
 import NavOverlay from '@app/park-keeper/components/NavOverlay';
@@ -243,21 +244,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     };
   }, [settings.cacheDurationDays, loadRecords]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary', theme.colors.primary);
-    document.documentElement.style.setProperty('--color-bg', theme.colors.background);
-    document.documentElement.style.setProperty('--color-surface', theme.colors.surface);
-    document.documentElement.style.setProperty('--color-text', theme.colors.text);
-    document.documentElement.style.setProperty('--color-accent', theme.colors.accent);
-    document.documentElement.style.setProperty('--color-secondary', theme.colors.secondary);
-    document.documentElement.style.setProperty('--color-text-muted', theme.colors.textMuted);
-
-    const hex = theme.colors.primary.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    document.documentElement.style.setProperty('--color-primary-rgb', `${r}, ${g}, ${b}`);
-  }, [theme]);
+  useThemeTokens(theme);
 
   useEffect(() => {
     // 設定載入前不得送出預設值，否則會覆寫 SW 已持久化的使用者天數。

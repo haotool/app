@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 
 export default function Add() {
@@ -36,16 +37,14 @@ export default function Add() {
       }
       setSettings(savedSettings);
       void i18n.changeLanguage(savedSettings.language);
+      // 捷徑使用者可能長期只走 /add：入頁即觸發保存天數清理，失敗靜默不阻斷記錄流程。
+      dbService.runStartupCleanup(savedSettings.cacheDurationDays).catch(() => undefined);
     };
     void init();
   }, [i18n]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary', theme.colors.primary);
-    document.documentElement.style.setProperty('--color-bg', theme.colors.background);
-    document.documentElement.style.setProperty('--color-surface', theme.colors.surface);
-    document.documentElement.style.setProperty('--color-text', theme.colors.text);
-  }, [theme]);
+  // 主題 token 接線與 Home 共用 hook，涵蓋完整 token 集合。
+  useThemeTokens(theme);
 
   const handleSave = useCallback(async (data: Partial<ParkingRecord>) => {
     const newRecord: ParkingRecord = {

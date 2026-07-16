@@ -115,4 +115,47 @@ describe('Add - /add 快速記錄頁', () => {
 
     saveSpy.mockRestore();
   });
+
+  it('入頁觸發 runStartupCleanup 且主題 token 完整接線（issue #725）', async () => {
+    const cleanupSpy = vi.spyOn(dbService, 'runStartupCleanup').mockResolvedValue(0);
+
+    renderAdd('/add');
+    await screen.findByTestId('quick-entry-stub');
+
+    await waitFor(() => expect(cleanupSpy).toHaveBeenCalledTimes(1));
+
+    // 主題 token 集合與 Home 一致（含 accent/secondary/text-muted/primary-rgb）。
+    const rootStyle = document.documentElement.style;
+    for (const token of [
+      '--color-primary',
+      '--color-bg',
+      '--color-surface',
+      '--color-text',
+      '--color-accent',
+      '--color-secondary',
+      '--color-text-muted',
+      '--color-primary-rgb',
+    ]) {
+      expect(rootStyle.getPropertyValue(token)).not.toBe('');
+    }
+
+    cleanupSpy.mockRestore();
+  });
+
+  it('runStartupCleanup 失敗不阻斷 /add 記錄流程', async () => {
+    const cleanupSpy = vi
+      .spyOn(dbService, 'runStartupCleanup')
+      .mockRejectedValue(new Error('cleanup boom'));
+    const saveSpy = vi.spyOn(dbService, 'saveRecord').mockResolvedValue(undefined);
+
+    renderAdd('/add');
+
+    fireEvent.click(await screen.findByText('stub-save'));
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('add.summary_hint'))).toBeInTheDocument();
+    });
+
+    cleanupSpy.mockRestore();
+    saveSpy.mockRestore();
+  });
 });
