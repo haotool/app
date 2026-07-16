@@ -6,19 +6,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 import { TILE_CACHE_CONFIG_MESSAGE } from '@app/park-keeper/services/mapTileCache';
+import { SEO_PATHS } from '../../app.config.mjs';
 
 const { registerRouteCalls } = vi.hoisted(() => ({
   registerRouteCalls: [] as unknown[][],
 }));
 
+interface BoundHandler {
+  boundUrl: string;
+}
+
+interface NavigationRouteOptions {
+  allowlist?: RegExp[];
+  denylist?: RegExp[];
+}
+
 vi.mock('workbox-precaching', () => ({
   cleanupOutdatedCaches: vi.fn(),
-  createHandlerBoundToURL: vi.fn(() => vi.fn()),
+  // 記錄綁定 URL，供導覽路由測試斷言 handler 對應的預快取 HTML。
+  createHandlerBoundToURL: vi.fn((url: string): BoundHandler => ({ boundUrl: url })),
   precacheAndRoute: vi.fn(),
 }));
 vi.mock('workbox-routing', () => ({
   NavigationRoute: class {
-    constructor(..._args: unknown[]) {}
+    handler: BoundHandler;
+    options: NavigationRouteOptions | undefined;
+    constructor(handler: BoundHandler, options?: NavigationRouteOptions) {
+      this.handler = handler;
+      this.options = options;
+    }
   },
   registerRoute: vi.fn((...args: unknown[]) => {
     registerRouteCalls.push(args);
@@ -216,5 +232,65 @@ describe('sw.ts tile 天數 activate/config 決策', () => {
     expect(bucket30.store.has(tileRequest.url)).toBe(true);
     const buckets = await fakeCaches.keys();
     expect(buckets).not.toContain(`${TILE_PREFIX}-7d`);
+  });
+
+  describe('SSG 導覽精確路由（issue #733：SEO_PATHS SSOT 派生）', () => {
+    // 與 sw.ts / postbuild.js 相同派生規則；vitest 環境 BASE_URL 為 '/'。
+    const expectedPages = SEO_PATHS.filter((path) => path !== '/').map((path) =>
+      path.replaceAll('/', ''),
+    );
+
+    interface NavigationRouteLike {
+      handler: BoundHandler;
+      options?: NavigationRouteOptions;
+    }
+
+    const getNavigationRoutes = async (): Promise<NavigationRouteLike[]> => {
+      const { NavigationRoute } = await import('workbox-routing');
+      return registerRouteCalls
+        .map((args) => args[0])
+        .filter((route): route is NavigationRouteLike => route instanceof NavigationRoute);
+    };
+
+    it('SEO_PATHS 至少涵蓋 about/add/guide/settings（round-2 缺陷頁全數在列）', () => {
+      expect(expectedPages).toEqual(expect.arrayContaining(['about', 'add', 'guide', 'settings']));
+    });
+
+    it('每個預渲染頁註冊精確 NavigationRoute 綁定該頁 index.html，且 pattern 容忍 querystring', async () => {
+      await loadSw();
+      const navRoutes = await getNavigationRoutes();
+
+      for (const page of expectedPages) {
+        const route = navRoutes.find((item) => item.handler.boundUrl === `/${page}/index.html`);
+        expect(route, `missing NavigationRoute for /${page}`).toBeDefined();
+
+        const allowlist = route?.options?.allowlist ?? [];
+        expect(allowlist).toHaveLength(1);
+        const pattern = allowlist[0]!;
+        expect(pattern.test(`/${page}`)).toBe(true);
+        expect(pattern.test(`/${page}/`)).toBe(true);
+        expect(pattern.test(`/${page}?from=shortcut`)).toBe(true);
+        expect(pattern.test(`/${page}extra`)).toBe(false);
+        expect(pattern.test('/')).toBe(false);
+      }
+    });
+
+    it('index.html fallback 導覽路由 denylist 排除所有預渲染頁，避免回落首頁殼觸發 React 418', async () => {
+      await loadSw();
+      const navRoutes = await getNavigationRoutes();
+
+      const fallbackRoute = navRoutes.find((item) => item.handler.boundUrl === '/index.html');
+      expect(fallbackRoute).toBeDefined();
+
+      const denylist = fallbackRoute?.options?.denylist ?? [];
+      for (const page of expectedPages) {
+        const denied = denylist.some(
+          (pattern) => pattern.test(`/${page}`) && pattern.test(`/${page}?from=shortcut`),
+        );
+        expect(denied, `fallback denylist must exclude /${page}`).toBe(true);
+      }
+      // 首頁本身不得被 denylist 誤傷。
+      expect(denylist.some((pattern) => pattern.test('/'))).toBe(false);
+    });
   });
 });
