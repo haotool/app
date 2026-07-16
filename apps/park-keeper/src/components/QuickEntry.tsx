@@ -12,6 +12,11 @@ const MiniMap = lazy(() => import('./MiniMap'));
 
 const FLOORS = ['B3', 'B2', 'B1', '1F', '2F', '3F', '4F', 'Custom'];
 
+// 觸覺回饋：不支援的平台（iOS Safari）靜默略過。模組層宣告確保 hook 依賴穩定。
+const vibrate = (pattern: number | number[] = 15) => {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+};
+
 interface QuickEntryProps {
   theme: ThemeConfig;
   onSave: (record: Partial<ParkingRecord>) => void | Promise<void>;
@@ -98,10 +103,6 @@ export default function QuickEntry({
   const watchId = useRef<number | null>(null);
   const { heading: parkedHeading } = useDeviceOrientation({ enabled: isVisible });
 
-  const vibrate = (pattern: number | number[] = 15) => {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  };
-
   const stopTracking = useCallback(() => {
     if (watchId.current !== null && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchId.current);
@@ -131,18 +132,24 @@ export default function QuickEntry({
     );
   }, [stopTracking]);
 
+  // 壓縮任務世代序號：面板關閉或新任務啟動時遞增，過期 resolve 不得寫回狀態。
+  const photoJobRef = useRef(0);
+
   const processPhotoFile = useCallback(async (file: File) => {
+    const job = ++photoJobRef.current;
     setIsProcessing(true);
     setPhotoError(false);
     try {
       const compressed = await compressImage(file, 1024, 0.7);
+      if (job !== photoJobRef.current) return;
       setPhoto(compressed);
-      if (navigator.vibrate) navigator.vibrate(50);
+      vibrate(50);
     } catch {
+      if (job !== photoJobRef.current) return;
       setPhotoError(true);
-      if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+      vibrate([50, 50, 50]);
     } finally {
-      setIsProcessing(false);
+      if (job === photoJobRef.current) setIsProcessing(false);
     }
   }, []);
 
@@ -156,9 +163,12 @@ export default function QuickEntry({
       if (initialPhotoFile) void processPhotoFile(initialPhotoFile);
     } else {
       stopTracking();
+      // 作廢仍在壓縮中的任務，避免關閉後 resolve 殘留照片。
+      photoJobRef.current += 1;
       setNotes('');
       setPhoto(null);
       setPhotoError(false);
+      setIsProcessing(false);
       setSaveStatus('idle');
       setCustomFloorMode(false);
       setLocationHeading(null);

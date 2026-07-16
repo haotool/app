@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import Home from '../Home';
 import i18n from '@app/park-keeper/services/i18n';
@@ -90,7 +91,12 @@ describe('Home × dbService（openDB 失敗整合路徑）', () => {
   });
 
   it('openDB 失敗時應顯示 error.storage_unavailable 錯誤卡（role=alert）', async () => {
-    render(<Home />);
+    // 首屏含 <Link>（快速記錄/教學入口），需 Router context。
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('無法讀取本機資料庫');

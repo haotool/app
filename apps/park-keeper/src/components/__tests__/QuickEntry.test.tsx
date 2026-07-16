@@ -4,6 +4,7 @@ import { I18nextProvider } from 'react-i18next';
 import QuickEntry from '../QuickEntry';
 import i18n from '@app/park-keeper/services/i18n';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
+import { compressImage } from '@app/park-keeper/services/imageUtils';
 import type { ThemeConfig } from '@app/park-keeper/types';
 
 // Mock MiniMap component
@@ -529,5 +530,60 @@ describe('QuickEntry - fullscreen 模式', () => {
     await waitFor(() =>
       expect(screen.getByAltText(i18n.t('record.photo_alt'))).toBeInTheDocument(),
     );
+  });
+
+  it('關閉面板後才完成的壓縮不得殘留照片（generation token 防護）', async () => {
+    let resolveCompress: ((value: string) => void) | undefined;
+    vi.mocked(compressImage).mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveCompress = resolve;
+        }),
+    );
+
+    const file = new File(['photo'], 'slow.jpg', { type: 'image/jpeg' });
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={file}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(resolveCompress).toBeDefined());
+
+    // 壓縮完成前關閉面板，再讓過期任務 resolve。
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={false}
+          onClose={vi.fn()}
+          initialPhotoFile={null}
+        />
+      </I18nextProvider>,
+    );
+    resolveCompress!('data:image/jpeg;base64,stale');
+
+    // 重新開啟（無帶入照片）：過期 resolve 不得殘留照片。
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={null}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.queryByAltText(i18n.t('record.photo_alt'))).not.toBeInTheDocument();
   });
 });

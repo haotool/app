@@ -25,7 +25,7 @@ test.describe('首屏快速記錄 CTA', () => {
 
     // 快速記錄面板開啟且照片已預設帶入。
     await expect(page.getByTestId('quick-entry-handle')).toBeVisible();
-    await expect(page.getByAltText('車位照片')).toBeVisible();
+    await expect(page.getByAltText('停車照片')).toBeVisible();
 
     // 樓層 tap 即儲存，關閉面板後紀錄出現在列表。
     await page.getByRole('button', { name: 'B2', exact: true }).click();

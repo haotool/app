@@ -8,6 +8,7 @@
 import 'fake-indexeddb/auto';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import Home from '../Home';
 import { DEFAULT_SETTINGS } from '@app/park-keeper/constants';
@@ -70,8 +71,18 @@ vi.mock('@app/park-keeper/services/db', () => ({
     getSettings: mockGetSettings,
     getRecords: mockGetRecords,
     saveSettings: vi.fn(),
+    runStartupCleanup: vi.fn().mockResolvedValue(0),
   },
 }));
+
+// 首屏含 <Link>（快速記錄/教學入口），需 Router context。
+function renderHome() {
+  return render(
+    <MemoryRouter>
+      <Home />
+    </MemoryRouter>,
+  );
+}
 
 describe('Home', () => {
   beforeAll(async () => {
@@ -90,7 +101,7 @@ describe('Home', () => {
       }),
     );
 
-    const { container } = render(<Home />);
+    const { container } = renderHome();
 
     expect(container.querySelector('.animate-pulse')).not.toBeNull();
 
@@ -106,7 +117,7 @@ describe('Home', () => {
   it('IndexedDB 讀取失敗時顯示錯誤提示卡（role=alert）', async () => {
     mockGetRecords.mockRejectedValue(new Error('boom'));
 
-    render(<Home />);
+    renderHome();
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('無法讀取本機資料庫');
@@ -115,7 +126,7 @@ describe('Home', () => {
   it('FAB 應具備可翻譯的 aria-label', async () => {
     mockGetRecords.mockResolvedValue([]);
 
-    render(<Home />);
+    renderHome();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '新增停車紀錄' })).toBeInTheDocument();

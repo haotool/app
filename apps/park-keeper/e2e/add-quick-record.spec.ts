@@ -30,7 +30,7 @@ test.describe('/add 快速記錄旅程', () => {
       buffer: Buffer.from(TEST_PHOTO_BASE64, 'base64'),
     });
 
-    await expect(page.getByAltText('車位照片')).toBeVisible();
+    await expect(page.getByAltText('停車照片')).toBeVisible();
 
     // 樓層 chip 即儲存。
     await page.getByRole('button', { name: 'B2', exact: true }).click();
