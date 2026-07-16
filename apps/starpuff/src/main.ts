@@ -51,8 +51,11 @@ const game = new Phaser.Game({
     default: 'arcade',
     arcade: {
       gravity: { x: 0, y: GRAVITY_Y },
-      // Phaser 4.2.1 Arcade RTree broadphase 間歇漏檢 overlap 配對（吸入/星彈/門/彈簧
-      // 皆可重現，v5 基準亦然）；實體數 ≤40 直接枚舉配對，關閉 tree 根治（§26/§43）。
+      // Phaser 4.2.1 動態 RTree broadphase 間歇漏檢（§43 歸因）：useTree 只影響
+      // sprite vs Group 配對（吸入區/星彈/觸碰 vs enemies group）——實體數 ≤40，
+      // 關閉 tree 改直接枚舉根治該類漏檢。門/彈簧為 direct pair（collideSpriteVsSprite
+      // 直呼 separate、從不查 tree），本設定救不到它們，必要背擋為 GameScene 的
+      // syncGateSweep 與 stage 的 sweepSprings 幾何掃掠，不得視為冗餘移除。
       useTree: false,
     },
   },

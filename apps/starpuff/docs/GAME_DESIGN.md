@@ -338,6 +338,7 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 檢查項：HUD（血條/彈藥/擊殺進度/計時/boss 條）、虛擬鍵、彩蛋提示、教學文字——重疊/出界/safe-area 裁切/離熱區過遠。
 - v5 修正：暫停鍵擠入頂列後配額右錨左移（width-112/126）避免熱區重疊；B 鍵離開 A 鍵斜上緊鄰位，垂直間距 ≥80px。
 - Boss 條頂中置於兩檔寬皆不與左上心心、右上配額/暫停/靜音重疊（854 與 1200 邏輯寬實測）。
+- v6 增列：版本號頁腳（§42）置於 Title 底緣中央（height-6、12px 小字），不與次選單列（height×0.85）重疊。
 
 ---
 
@@ -404,4 +405,6 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 | 4   | Boss Rush：彈幕閱讀＋補給循環        | 開場 5s 內命中皇冠拿彩蛋；補生小怪吞成滿匣憋星暴（12 傷）；P3 靠拍翅躲全場震落 | 吸補生小怪（飢荒立即補生）→ 點射果凍王，僅跳躍閃 slam/dash 即可磨死 | 0（HP 60 擊破制）/ 補生 3500ms / jelly＋floaty（全可吸）                    |
 
 - 反卡關驗證（e2e 沿用 `__sp` 鉤子）：L1「全程僅用基礎動作通關」全流程案；L2/L3 `gotoLevel` 走查——飢荒必補可吸怪斷言＋地面路徑（含磚前繞跳）必達星星門；存檔重載、地圖解鎖、關卡重玩、殼盾格擋、雷鏈跳電各自獨立案。
-- 靜態 overlap 必達背擋（§26 擴充）：實測 Phaser 4.2.1 Arcade「動態 body vs 靜態 body」overlap 存在跨版本間歇漏檢（v5 基準亦可重現：彈簧 walk-over 6 次 3 失敗、星星門走入間歇不觸發）——關鍵通過判定不得只依賴物理 overlap，一律加幾何背擋：星星門門心 x 掃掠線（`syncGateSweep`）、彈簧腳底帶掃掠（`sweepSprings`），與原 overlap 共用單一觸發出口（cooldown/transitioning 閘去重）。
+- 靜態 overlap 必達背擋（§26 擴充，歸因定稿）：實測 Phaser 4.2.1 Arcade overlap 存在間歇漏檢（v5 基準亦可重現：彈簧 walk-over 6 次 3 失敗、星星門走入間歇不觸發），修復分兩軌、因果不可混淆——
+  - `useTree: false`（main.ts）：只服務 sprite vs **Group** 配對（吸入區/星彈/觸碰 vs enemies group 走 `collideSpriteVsGroup` 的動態 RTree broadphase），關閉後改直接枚舉，根治該類漏檢；
+  - 門/彈簧為 **direct pair**（`collideSpriteVsSprite` 直呼 `separate`、從不查 RTree）——`useTree:false` 對它們無效，真正有效且必要的是幾何掃掠背擋：星星門 `crossedGate`（跨門心/站門心右側/AABB 交疊三重判定，含 spawnGate 時已越門直判）與彈簧 `springSweepHit`（前後幀掃掠 x 區間，補高速穿越），純函式落 `logic/stageModel.ts` 供 vitest 守門，與原 overlap 共用單一觸發出口（transitioning/lockedUntil 閘去重）。**明文禁止未來把掃掠背擋當冗餘刪除。**
