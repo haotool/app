@@ -175,8 +175,11 @@ export function SettingsTab() {
                   onClick={() => deleteMember(member.id)}
                   className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors cursor-pointer"
                   title={t('settings.delete_member')}
+                  aria-label={t('settings.delete_member')}
                 >
-                  <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                  <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                    person_remove
+                  </span>
                 </button>
               )}
             </div>

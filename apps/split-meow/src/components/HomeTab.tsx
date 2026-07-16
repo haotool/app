@@ -246,7 +246,8 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                 noteInputRef.current?.blur();
               }}
               className={cn(
-                'shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
+                // 44px 命中區（G1）：負邊距維持備註列高不變，與右側清除鈕同模式。
+                'shrink-0 w-11 h-11 -my-2.5 -ml-3 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
                 showCategoryPicker ? 'bg-primary-container' : '',
               )}
               aria-label={t('home.pick_category')}

@@ -151,6 +151,7 @@ export function HistoryTab() {
   const SWIPE_REVEAL = 76;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoToastRef = useRef<HTMLDivElement>(null);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const softDelete = (id: string) => {
@@ -176,10 +177,19 @@ export function HistoryTab() {
   };
 
   // undo toast 佔位發布為 CSS 變數：其他浮層（UpdatePrompt）據此上移，拇指區不互疊（G3）。
+  // ResizeObserver 寫入實高（與 --nav-h 同模式）：ko/ja 長標籤換行時偏移仍正確。
   useEffect(() => {
     if (!pendingDeleteId) return;
-    document.documentElement.style.setProperty('--undo-toast-h', '64px');
+    const el = undoToastRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--undo-toast-h', `${el.offsetHeight + 8}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
     return () => {
+      ro.disconnect();
       document.documentElement.style.removeProperty('--undo-toast-h');
     };
   }, [pendingDeleteId]);
@@ -338,9 +348,11 @@ export function HistoryTab() {
                 onClick={() => {
                   void shareSummary();
                 }}
-                className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-container/40 hover:bg-primary-container px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 min-h-11 text-xs font-medium text-primary bg-primary-container/40 hover:bg-primary-container px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[14px]">share</span>
+                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                  share
+                </span>
                 {t('app.share')}
               </button>
             )}
@@ -942,6 +954,7 @@ export function HistoryTab() {
 
       {pendingDeleteId && (
         <div
+          ref={undoToastRef}
           data-testid="undo-toast"
           className="fixed left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300"
           style={{ bottom: 'var(--overlay-bottom)' }}
@@ -1115,8 +1128,9 @@ function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseShee
                 <button
                   key={m.id}
                   onClick={() => setEditPayerId(m.id)}
+                  aria-pressed={editPayerId === m.id}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer',
+                    'flex items-center gap-1.5 min-h-11 px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer',
                     editPayerId === m.id
                       ? 'bg-primary text-on-primary shadow-sm'
                       : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high',
