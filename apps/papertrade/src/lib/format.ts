@@ -38,6 +38,24 @@ export function formatAmount(value: number, maxDecimals = 3): string {
   });
 }
 
+export function formatFundingRate(rate: number): string {
+  if (!Number.isFinite(rate)) return '--';
+  const percent = rate * 100;
+  const sign = percent > 0 ? '+' : '';
+  return `${sign}${percent.toFixed(4)}%`;
+}
+
+export function formatCountdown(msRemaining: number): string {
+  if (!Number.isFinite(msRemaining)) return '--:--';
+  const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
 export function formatClockTime(epochMs: number): string {
   if (!Number.isFinite(epochMs)) return '--';
   return new Date(epochMs).toLocaleTimeString('en-GB', { hour12: false });

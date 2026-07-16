@@ -20,7 +20,7 @@ const TABS: TabItem[] = [
   { to: '/', label: '行情', icon: TrendingUp, end: true },
   { to: '/chart', label: '圖表', icon: ChartCandlestick },
   { to: '/trade', label: '交易', icon: ArrowLeftRight },
-  { to: '/assets', label: '資產', icon: Wallet },
+  { to: '/portfolio', label: '資產', icon: Wallet },
   { to: '/settings', label: '設定', icon: Settings },
 ];
 

@@ -33,7 +33,7 @@ const btcTicker: Ticker = {
 };
 
 function renderAssets() {
-  const router = createMemoryRouter(routes, { initialEntries: ['/assets'] });
+  const router = createMemoryRouter(routes, { initialEntries: ['/portfolio'] });
   return render(<RouterProvider router={router} />);
 }
 

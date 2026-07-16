@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+116
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+118
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：reward-papertrade-r2-final-convergence
+- 原因：PR #727 雙終審席（Sonnet 93 REQUEST CHANGES、Fable 96 APPROVE）合議指出快切 sheet 搜尋框無清除 affordance、mergeTrades 重推舊 execId 錯序、funding 顯示兩頁重複、handleClose 死碼與 card-in 註解失真
+- 解法：TDD 落地快切 sheet 44px 清除鈕（清除後 focus 回輸入框）、merge 去重後按 time 降冪穩定排序、抽共用 FundingRateBadge 替換兩頁、移除死碼防禦並修正註解，316 unit＋26 e2e 全綠（快切 spec 連跑 2 輪穩定）
+
+- 日期：2026-07-16
+- ID：reward-papertrade-r2-uiux-iteration
+- 原因：R2 體驗迭代需一次收斂 QA 稽核 72 分的斷線提示不可靠、/portfolio 白屏、成交首開空列與旗艦資訊（資金費率/持倉量/自選）缺失，且不得回歸 R1
+- 解法：watchlist＋資金費率倒數＋OI＋symbol 快切與行動端修復全落地，經 Grok 兩輪審查 APPROVE 8.5/10 與 QA 復測 86/100 零 P0/P1，末項 P2 統計列重排後 375px 首屏視口驗證通過，308 unit＋26 e2e 全綠
 
 - 日期：2026-07-16
 - ID：reward-review-thread-convergence-batch

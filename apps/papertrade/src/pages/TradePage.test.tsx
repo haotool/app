@@ -34,6 +34,8 @@ const btcTicker: Ticker = {
   lowPrice24h: 59000,
   turnover24h: 1000000,
   volume24h: 500,
+  fundingRate: -0.0002,
+  nextFundingTime: Date.now() + 3_600_000,
 };
 
 const ethTicker: Ticker = {
@@ -66,6 +68,13 @@ describe('TradePage', () => {
     expect(
       screen.getByRole('button', { name: /切換交易對，目前為 ETH\/USDT/ }),
     ).toBeInTheDocument();
+  });
+
+  it('shows the funding rate with direction color and a countdown', () => {
+    renderTrade('/trade?symbol=BTCUSDT');
+    expect(screen.getByText('資金費率')).toBeInTheDocument();
+    expect(screen.getByText('-0.0200%')).toHaveClass('text-short');
+    expect(screen.getByText(/^\d+:\d{2}:\d{2}$|^\d{2}:\d{2}$/)).toBeInTheDocument();
   });
 
   it('emphasizes the CTA-preselected side and dims the other', () => {
