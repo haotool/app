@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import {
-  AIR_DASH,
   EGG_HP_CAP,
   ENEMY,
   INHALE,
@@ -9,7 +8,11 @@ import {
   STARSTORM,
   STAR_FLAVORS,
   VIEW,
+  getMix,
+  type MixId,
   type StarFlavor,
+  type StarFlavorSpec,
+  type StarMixSpec,
 } from '../core/config';
 import {
   GameEvents,
@@ -73,6 +76,13 @@ const GATE_ABSORB_MS = 700;
 const MAP_ENTER_DELAY_MS = 500;
 // 雷鏈跳電演出（§40）：折線閃電段淡出時長。
 const BOLT_FADE_MS = 200;
+// 中魔王精英房（§48）：接近臂距武裝；軟鎖門擊敗開門、60s 逾時自動開門防卡關。
+const ELITE_ARM_DISTANCE_PX = 480;
+const ELITE_DOOR_TIMEOUT_MS = 60_000;
+const ELITE_DOOR_W = 26;
+const ELITE_DOOR_OFFSET_PX = 300;
+// 回復食物（§48 精英掉落）：拾取回復 2 HP（上限依當前 hpCap）。
+const HEAL_FOOD_HP = 2;
 
 interface GameSceneData {
   levelId?: LevelId;
@@ -94,6 +104,8 @@ export class GameScene extends Phaser.Scene {
   // 本關累計死亡次數：死亡重試與敗北重試皆延續，結算畫面展示。
   private deaths = 0;
   private startedAt = 0;
+  // 魔王擊破瞬間鎖存的通關用時（審查修復 #724）；非 boss 關恆 null 走即時計算。
+  private clearTimeMs: number | null = null;
   private finished = false;
   private transitioning = false;
   private bossDown = false;
@@ -107,6 +119,14 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
+  // 中魔王精英（§48）：armed 武裝後生成精英與軟鎖門；done 後不再武裝。
+  private eliteArmed = false;
+  private eliteDone = false;
+  private eliteRef: Phaser.Physics.Arcade.Sprite | null = null;
+  private eliteDoor: Phaser.GameObjects.Rectangle | null = null;
+  private eliteDoorCollider: Phaser.Physics.Arcade.Collider | null = null;
+  private eliteTimer: Phaser.Time.TimerEvent | null = null;
+  private eliteBar: Phaser.GameObjects.Graphics | null = null;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
@@ -131,6 +151,7 @@ export class GameScene extends Phaser.Scene {
     this.level = getLevel(this.currentLevelId);
     this.save = loadSave();
     this.startedAt = this.time.now;
+    this.clearTimeMs = null;
     this.finished = false;
     this.transitioning = false;
     this.bossDown = false;
@@ -142,6 +163,13 @@ export class GameScene extends Phaser.Scene {
     this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
+    this.eliteArmed = false;
+    this.eliteDone = false;
+    this.eliteRef = null;
+    this.eliteDoor = null;
+    this.eliteDoorCollider = null;
+    this.eliteTimer = null;
+    this.eliteBar = null;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     this.background = createParallaxBackground(this, this.level);
@@ -224,6 +252,8 @@ export class GameScene extends Phaser.Scene {
       this.syncInhale();
       this.syncEggs();
       this.syncGateSweep();
+      this.syncElite();
+      this.steerHomingStars(deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -249,6 +279,20 @@ export class GameScene extends Phaser.Scene {
   // e2e 鉤子：直接補滿配額觸發星星門。
   forceGate(): void {
     if (this.scene.isActive()) this.waves.forceQuota();
+  }
+
+  // e2e 鉤子（§48）：以正式傷害管線秒殺場上精英。
+  slayElite(): void {
+    if (this.scene.isActive() && this.eliteRef?.active) this.enemies.damage(this.eliteRef, 999);
+  }
+
+  // e2e 觀測點（§48）：精英房狀態與軟鎖門位置。
+  eliteState(): { armed: boolean; done: boolean; doorX: number | null } {
+    return {
+      armed: this.eliteArmed,
+      done: this.eliteDone,
+      doorX: this.eliteDoor?.x ?? null,
+    };
   }
 
   // e2e 鉤子：跳至魔王關直達魔王戰。
@@ -326,12 +370,15 @@ export class GameScene extends Phaser.Scene {
       const target = enemy as Phaser.GameObjects.GameObject;
       const s = asSprite(star);
       if (!s.active || !this.enemies.kindOf(target)) return;
-      const spec = STAR_FLAVORS[this.starFlavorOf(s)];
+      const spec = this.starSpecOf(s);
       const outcome = this.enemies.damage(target, this.starDamageOf(s));
       if (outcome === 'ignored') return;
       if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
       // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
       if (spec.chainCount > 0) this.chainLightning(s.x, s.y, spec, target);
+      // 凝光星（§46）：命中處生成凍結光域。
+      const mix = this.starMixOf(s);
+      if (mix && mix.freezeRadiusPx > 0) this.freezeField(s.x, s.y, mix, target);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
       this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
     });
@@ -341,10 +388,12 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(stars, bossBody, (a, b) => {
       const star = asSprite(a === bossBody ? b : a);
       if (!star.active || !this.boss.isActive()) return;
-      const spec = STAR_FLAVORS[this.starFlavorOf(star)];
+      const spec = this.starSpecOf(star);
       if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
       // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
       if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
+      const mix = this.starMixOf(star);
+      if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix, null);
       this.player.onStarHit(star, 'absorb');
       this.boss.applyDamage(this.starDamageOf(star));
     });
@@ -361,12 +410,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player.sprite, this.enemies.getGroup(), (_p, enemy) => {
       const kind = this.enemies.kindOf(enemy as Phaser.GameObjects.GameObject);
       if (!kind || this.finished || this.transitioning) return;
+      // 半入地無害態（§47 drilly 潛地/前搖）：不結算觸碰傷害。
+      if (this.enemies.isPhasedOut(enemy as Phaser.GameObjects.GameObject)) return;
       const target = asSprite(enemy);
-      // 疾衝衝撞（§30）：無敵幀期間衝撞小怪傷害 1，不結算觸碰傷害。
-      if (this.player.isAirDashing()) {
-        this.enemies.damage(enemy as Phaser.GameObjects.GameObject, AIR_DASH.damage);
-        return;
-      }
       // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
       const { x, y } = this.player.sprite;
       if (
@@ -481,8 +527,10 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.BOSS_DEFEATED, () => {
       this.bossDown = true;
       this.bossHp = 0;
-      // 存檔寫入時機（§38）：魔王擊破即記通關與該關用時。
-      persistSave(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
+      // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
+      // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
+      this.clearTimeMs = this.levelTimeMs();
+      persistSave(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
     bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
@@ -609,7 +657,7 @@ export class GameScene extends Phaser.Scene {
     this.fx.stopInhale();
     stopSfx('inhale');
     (this.player.sprite.body as Phaser.Physics.Arcade.Body).stop();
-    const timeMs = this.levelTimeMs();
+    const timeMs = this.clearTimeMs ?? this.levelTimeMs();
     emitGameEvent(this.events, result === 'won' ? GameEvents.GAME_WON : GameEvents.GAME_LOST, {
       timeMs,
     });
@@ -669,8 +717,10 @@ export class GameScene extends Phaser.Scene {
       const facing = this.player.getFacing();
       if (!isInInhaleRange(x, y, facing, enemy.x, enemy.y, INHALE.rangePx)) continue;
       if (!this.enemies.isInhalable(enemy)) {
-        // 旋轉衝刺中的殼殼為無敵段，不受吸力彈開；其餘不可吸怪照舊彈開。
-        if (enemy.getData('state') !== 'spin') enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
+        // 旋轉衝刺中的殼殼為無敵段、半入地 drilly（§47）不受吸力彈開；其餘照舊彈開。
+        if (enemy.getData('state') !== 'spin' && !this.enemies.isPhasedOut(enemy)) {
+          enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
+        }
         continue;
       }
       const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.mouth.x, this.mouth.y);
@@ -687,6 +737,144 @@ export class GameScene extends Phaser.Scene {
         PULL_BASE_SPEED + (INHALE.rangePx - dist) * PULL_GAIN,
       );
     }
+  }
+
+  // 中魔王精英（§48）：接近武裝——生成精英與軟鎖門；開門後偵測擊敗結算掉落。
+  // 開門（fillQuota/配額達成）後不再武裝：關卡已進尾端 release 節奏。
+  private syncElite(): void {
+    const spec = this.level.elite;
+    if (!spec || this.eliteDone || this.level.boss) return;
+    if (!this.eliteArmed) {
+      if (this.waves.isGateOpen()) return;
+      if (this.player.sprite.x < spec.x - ELITE_ARM_DISTANCE_PX) return;
+      this.armElite();
+      return;
+    }
+    this.updateEliteBar();
+    // 擊敗偵測：精英為不可吸個體，active 熄滅即為擊殺。
+    if (this.eliteRef && !this.eliteRef.active) this.resolveEliteDefeat();
+  }
+
+  private armElite(): void {
+    const spec = this.level.elite;
+    if (!spec) return;
+    this.eliteArmed = true;
+    this.eliteRef = this.enemies.spawnElite(spec.kind, spec.x, GROUND_TOP - 40, {
+      hp: spec.hp,
+      scale: spec.scale,
+      tint: spec.tint,
+      speedMul: spec.speedMul,
+    });
+    if (!this.eliteRef) {
+      this.eliteDone = true;
+      return;
+    }
+    playSfx('boss-roar');
+    this.fx.shake(6);
+    // 軟鎖門：果凍色半透明門柱擋前進；可退不可進，擊敗或逾時開門。
+    const doorX = spec.x + ELITE_DOOR_OFFSET_PX;
+    const door = this.add
+      .rectangle(doorX, GROUND_TOP / 2, ELITE_DOOR_W, GROUND_TOP, 0xff9ec4, 0.45)
+      .setStrokeStyle(3, 0xffffff, 0.8)
+      .setDepth(70);
+    this.physics.add.existing(door, true);
+    this.eliteDoor = door;
+    this.eliteDoorCollider = this.physics.add.collider(this.player.sprite, door);
+    this.tweens.add({
+      targets: door,
+      alpha: { from: 0.45, to: 0.7 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    this.eliteBar = this.add.graphics().setDepth(71);
+    // 逾時保險（§48 反卡關）：60s 未擊敗自動開門，精英留場可略過。
+    this.eliteTimer = this.time.delayedCall(ELITE_DOOR_TIMEOUT_MS, () => this.openEliteDoor());
+  }
+
+  private updateEliteBar(): void {
+    if (!this.eliteBar) return;
+    this.eliteBar.clear();
+    const elite = this.eliteRef;
+    const spec = this.level.elite;
+    if (!elite || !elite.active || !spec) return;
+    const ratio = Math.max(0, (elite.getData('hp') as number) / spec.hp);
+    const w = 56;
+    const x = elite.x - w / 2;
+    const y = elite.y - 52;
+    this.eliteBar.fillStyle(0x3a3a4a, 0.6);
+    this.eliteBar.fillRect(x - 1.5, y - 1.5, w + 3, 8);
+    this.eliteBar.fillStyle(0xd94b4b, 1);
+    this.eliteBar.fillRect(x, y, w * ratio, 5);
+  }
+
+  // 開門：淡出門柱並解除碰撞；擊敗與逾時共用單一出口。
+  private openEliteDoor(): void {
+    this.eliteTimer?.remove();
+    this.eliteTimer = null;
+    this.eliteDoorCollider?.destroy();
+    this.eliteDoorCollider = null;
+    const door = this.eliteDoor;
+    this.eliteDoor = null;
+    if (door) {
+      this.tweens.killTweensOf(door);
+      this.fx.burstSmall(door.x, GROUND_TOP - 60, 0xff9ec4);
+      this.tweens.add({
+        targets: door,
+        alpha: 0,
+        scaleY: 0.1,
+        duration: 350,
+        ease: 'Quad.easeIn',
+        onComplete: () => door.destroy(),
+      });
+    }
+  }
+
+  // 精英擊敗（§48）：開門 + 掉落稀有味小怪與回復食物。
+  private resolveEliteDefeat(): void {
+    if (this.eliteDone) return;
+    this.eliteDone = true;
+    const spec = this.level.elite;
+    this.eliteRef = null;
+    this.eliteBar?.destroy();
+    this.eliteBar = null;
+    this.openEliteDoor();
+    if (!spec) return;
+    playSfx('jingle');
+    this.fx.starBurst(spec.x, GROUND_TOP - 80);
+    // 稀有味掉落：正式 spawn 管線，吞下即得稀有星味。
+    this.enemies.spawn(spec.rewardFlavor, spec.x - 60, GROUND_TOP - 120);
+    this.dropHealFood(spec.x + 60, GROUND_TOP - 100);
+  }
+
+  // 回復食物：心形拾取物，觸碰回復 2 HP；15s 未拾取自動淡逝。
+  private dropHealFood(x: number, y: number): void {
+    const food = this.add.image(x, y, 'hud-heart').setDisplaySize(30, 30).setDepth(72);
+    this.tweens.add({
+      targets: food,
+      y: y - 10,
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    const zone = this.add.zone(x, y, 44, 60);
+    this.physics.add.existing(zone, true);
+    const cleanup = (): void => {
+      this.tweens.killTweensOf(food);
+      food.destroy();
+      zone.destroy();
+    };
+    this.physics.add.overlap(this.player.sprite, zone, () => {
+      if (!food.active) return;
+      this.player.heal(HEAL_FOOD_HP, this.playerHp > PLAYER.maxHp ? EGG_HP_CAP : PLAYER.maxHp);
+      playSfx('swallow');
+      cleanup();
+    });
+    this.time.delayedCall(15_000, () => {
+      if (food.active) cleanup();
+    });
   }
 
   // 彩蛋逐幀事件（§24）：世界座標與平台站立；魔王可擊打起點供時間窗計算。
@@ -805,11 +993,20 @@ export class GameScene extends Phaser.Scene {
     return (star.getData('flavor') as StarFlavor | undefined) ?? 'jelly';
   }
 
+  // 混合星規格（§46）：發射端寫入 mix id；非混合彈回 null。
+  private starMixOf(star: Phaser.Physics.Arcade.Sprite): StarMixSpec | null {
+    const id = star.getData('mix') as MixId | null | undefined;
+    return id ? getMix(id) : null;
+  }
+
+  // 彈道有效規格單一出口（§46）：混合彈讀配方表，其餘讀屬性表。
+  private starSpecOf(star: Phaser.Physics.Arcade.Sprite): StarFlavorSpec {
+    return this.starMixOf(star) ?? STAR_FLAVORS[this.starFlavorOf(star)];
+  }
+
   // 星彈傷害（§23）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入。
   private starDamageOf(star: Phaser.Physics.Arcade.Sprite): number {
-    return (
-      (star.getData('damage') as number | undefined) ?? STAR_FLAVORS[this.starFlavorOf(star)].damage
-    );
+    return (star.getData('damage') as number | undefined) ?? this.starSpecOf(star).damage;
   }
 
   // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
@@ -874,7 +1071,7 @@ export class GameScene extends Phaser.Scene {
   private chainLightning(
     x: number,
     y: number,
-    spec: (typeof STAR_FLAVORS)[StarFlavor],
+    spec: StarFlavorSpec,
     exclude: Phaser.GameObjects.GameObject | null,
   ): void {
     const candidates: { x: number; y: number; ref: Phaser.GameObjects.GameObject }[] = [];
@@ -924,11 +1121,80 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // 凝光星凍結場（§46）：命中處光域擴散，域內小怪凍結停擺（主目標一併凍結）。
+  private freezeField(
+    x: number,
+    y: number,
+    mix: StarMixSpec,
+    exclude: Phaser.GameObjects.GameObject | null,
+  ): void {
+    const field = this.add
+      .circle(x, y, mix.freezeRadiusPx, 0xdff2ff, 0.22)
+      .setStrokeStyle(3, 0xbfe8ff, 0.9)
+      .setDepth(59)
+      .setScale(0.3);
+    this.tweens.add({
+      targets: field,
+      scale: 1,
+      duration: 220,
+      ease: 'Quad.easeOut',
+    });
+    this.tweens.add({
+      targets: field,
+      alpha: 0,
+      delay: mix.freezeMs - 300,
+      duration: 300,
+      onComplete: () => field.destroy(),
+    });
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= mix.freezeRadiusPx + 20) {
+        this.enemies.freeze(child, mix.freezeMs);
+      }
+    }
+    void exclude;
+  }
+
+  // 追電星導引（§46）：飛行中朝最近小怪限速轉向；每幀最大轉角 ∝ deltaMs。
+  private steerHomingStars(deltaMs: number): void {
+    const HOMING_RANGE_PX = 320;
+    const TURN_RAD_PER_MS = 0.006;
+    for (const child of this.player.getStars().getChildren()) {
+      const star = asSprite(child);
+      if (!star.active) continue;
+      const mix = this.starMixOf(star);
+      if (!mix?.homing) continue;
+      let nearest: Phaser.Physics.Arcade.Sprite | null = null;
+      let bestSq = HOMING_RANGE_PX * HOMING_RANGE_PX;
+      for (const candidate of this.enemies.getGroup().getChildren()) {
+        if (!candidate.active) continue;
+        const enemy = asSprite(candidate);
+        const dSq = (enemy.x - star.x) ** 2 + (enemy.y - star.y) ** 2;
+        if (dSq < bestSq) {
+          bestSq = dSq;
+          nearest = enemy;
+        }
+      }
+      if (!nearest) continue;
+      const body = star.body as Phaser.Physics.Arcade.Body;
+      const speed = body.velocity.length() || mix.speed;
+      const current = Math.atan2(body.velocity.y, body.velocity.x);
+      const desired = Math.atan2(nearest.y - star.y, nearest.x - star.x);
+      let diff = desired - current;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const step = Math.min(Math.abs(diff), TURN_RAD_PER_MS * deltaMs) * Math.sign(diff);
+      const angle = current + step;
+      body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    }
+  }
+
   // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。
   private explodeStar(
     x: number,
     y: number,
-    spec: (typeof STAR_FLAVORS)[StarFlavor],
+    spec: StarFlavorSpec,
     exclude: Phaser.GameObjects.GameObject | null,
   ): void {
     this.fx.burstSmall(x, y, spec.tint);

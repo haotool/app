@@ -6,7 +6,7 @@ import {
   PLAYER,
   SLAM,
   STAR,
-  STAR_FLAVORS,
+  getMix,
   type MagazineSlot,
   type StarFlavor,
 } from '../core/config';
@@ -16,32 +16,30 @@ import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
   SHELL_SHIELD,
-  advanceAirDash,
   advanceShield,
   advanceStarstormHold,
-  airDashSpeed,
-  createAirDashState,
   createShieldState,
   fillMagazine,
-  isAirDashing,
   isFrontalHit,
   isTopShelly,
   popTopSlot,
   pushGoldStar,
-  refundDashFlap,
   resolveActionPress,
+  resolveJumpPress,
   resolveShieldBlock,
   shieldEligible,
   shouldFireOnRelease,
+  slotSpec,
   starDamage,
   starPitch,
   starstormProgress,
   starstormReady,
   swallowIntoMagazine,
 } from '../logic/skills';
+import { advanceStride, airTilt, idleBreath, strideBob, strideTilt } from '../logic/walkFeel';
 import { playSfx } from '../audio/sfx';
 import type { ControlsState } from './controls';
-import { attachTrail, type TrailHandle } from './fx';
+import { FX_TEXTURES, attachTrail, ensureFxTextures, type TrailHandle } from './fx';
 
 // 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
 export type StarHitMode = 'pierce' | 'absorb';
@@ -53,8 +51,9 @@ export interface PlayerHandle {
   heal(amount: number, hpCap: number): void;
   swallow(kind: EnemyKind): boolean;
   isInhaling(): boolean;
-  isAirDashing(): boolean;
-  getAmmoState(): { ammo: number; flavor: StarFlavor };
+  getAmmoState(): { ammo: number; flavor: StarFlavor; mix: string | null };
+  // 走動手感觀測點（§45 e2e）：當幀傾角與 bob 偏移。
+  getWalkVisual(): { rotation: number; bob: number; vy: number };
   getMagazine(): readonly MagazineSlot[];
   grantFullMagazine(): void;
   grantGoldStar(): void;
@@ -74,18 +73,11 @@ const STAR_SIZE = 24;
 const KNOCKBACK_SPEED = 234;
 const KNOCKBACK_LIFT = -286;
 const BLINK_INTERVAL_MS = 100;
-// §18 走路 bob：地面移動時輕微傾斜 + 縱向微彈（純視覺，不影響 hurtbox）。
-const WALK_BOB_OMEGA = 0.02;
-const WALK_TILT_RAD = 0.05;
-const WALK_BOB_PX = 3;
 // §18 落地塵埃圈：著地速度 >300 觸發。
 const DUST_FALL_SPEED = 300;
 // §20 星彈拖尾：疾風星拖尾加長 ×1.6，其餘維持基準長度；tint 依屬性表上色。
 const TRAIL_LIFESPAN_MS = 260;
 const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
-// §30 疾衝殘影：本體貼圖 alpha 快照間隔與淡出時長（不依賴 fx 新 API）。
-const DASH_GHOST_INTERVAL_MS = 30;
-const DASH_GHOST_FADE_MS = 200;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
@@ -133,7 +125,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let jumpBufferMs = 0;
   let inhaling = false;
   let wasOnGround = false;
-  let walkMs = 0;
+  // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
+  let stridePhase = 0;
   let lastVy = 0;
   let pose: Pose = 'hero-idle';
   // 技能狀態（§23）：滿匣延遲發射旗標、星暴充能、下衝擊 CD。
@@ -147,11 +140,6 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let shield = createShieldState();
   let blockInvulnMs = 0;
   let wasShieldRaised = false;
-  // 空中疾衝（§30）：雙擊偵測與 CD 走 skills 純狀態機；殘影快照計時。
-  // lastAirTapFlapped：首拍是否實際消耗拍翅，供疾衝觸發當幀退還（refundDashFlap）。
-  let airDash = createAirDashState();
-  let ghostMs = 0;
-  let lastAirTapFlapped = false;
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
@@ -231,6 +219,20 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     if (event === 'turn') squashStretch(0.86, 1.1);
   };
 
+  // 腳塵（§45）：單一池化 emitter，落腳拍點 explode 2 顆；行進反向輕踢後淡逝。
+  ensureFxTextures(scene);
+  const footDust = scene.add
+    .particles(0, 0, FX_TEXTURES.dot, {
+      speed: { min: 18, max: 55 },
+      angle: { min: 200, max: 340 },
+      scale: { start: 0.65, end: 0 },
+      alpha: { start: 0.55, end: 0 },
+      lifespan: { min: 150, max: 260 },
+      emitting: false,
+      maxAliveParticles: 12,
+    })
+    .setDepth(9);
+
   // 殼盾面前弧盾（§40）：面向側青綠弧線 + 淡填充，逐幀重繪。
   const shieldGfx = scene.add.graphics().setDepth(94);
   const drawShield = () => {
@@ -277,24 +279,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     });
   };
 
-  // 後進先出發射（§23）：頂槽決定屬性；強化/金星放大尺寸並套金邊 tint。
-  const fireStar = () => {
-    const popped = popTopSlot(magazine);
-    const slot = popped.slot;
-    if (!slot) return;
-    const spec = STAR_FLAVORS[slot.flavor];
+  // 單發彈體生成（§23/§46）：尺寸/著色/拖尾/彈道資料單一出口；vy 供散射扇形。
+  const launchStar = (slot: MagazineSlot, vy: number) => {
+    const spec = slotSpec(slot);
     const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
     const star = stars.get(fx, sprite.y, tex('fx-star')) as Phaser.Physics.Arcade.Sprite | null;
     if (!star) return;
-    magazine = popped.magazine;
-    lastFlavor = slot.flavor;
     const boosted = slot.charged || slot.gold;
     const size = boosted ? STAR_SIZE * CHARGED_STAR.sizeMultiplier : STAR_SIZE;
     star.setActive(true).setVisible(true);
     star.setDisplaySize(size, size);
-    // 標準星保留原金黃星彈藝術；疾風/爆裂依屬性上色；強化/金星套金邊 tint。
+    // 標準星保留原金黃星彈藝術；其餘依屬性/配方上色；強化/金星套金邊 tint。
     if (boosted) star.setTint(CHARGED_STAR.tint);
-    else if (slot.flavor === 'jelly') star.clearTint();
+    else if (slot.flavor === 'jelly' && slot.mix === undefined) star.clearTint();
     else star.setTint(spec.tint);
     const body = star.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
@@ -302,6 +299,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     star.setData('damage', starDamage(slot));
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
+    star.setData('mix', slot.mix ?? null);
     star.setData(
       'fxTrail',
       attachTrail(scene, star, {
@@ -309,10 +307,25 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         lifespan: slot.flavor === 'floaty' ? WIND_TRAIL_LIFESPAN_MS : TRAIL_LIFESPAN_MS,
       }),
     );
-    star.setVelocityX(facing * spec.speed);
+    star.setVelocity(facing * spec.speed, vy);
+  };
+
+  // 後進先出發射（§23/§46）：頂槽決定屬性；混合星散射時分裂為小幅上下扇形。
+  const fireStar = () => {
+    const popped = popTopSlot(magazine);
+    const slot = popped.slot;
+    if (!slot) return;
+    magazine = popped.magazine;
+    lastFlavor = slot.flavor;
+    const scatter = slot.mix !== undefined ? getMix(slot.mix).scatterCount : 0;
+    if (scatter > 1) {
+      for (let i = 0; i < scatter; i += 1) launchStar(slot, (i - (scatter - 1) / 2) * 90);
+    } else {
+      launchStar(slot, 0);
+    }
     emitAmmo();
     emitGameEvent(scene.events, GameEvents.STAR_FIRED, {
-      x: fx,
+      x: sprite.x + facing * (PLAYER_SIZE / 2 + 8),
       y: sprite.y,
       directionX: facing,
       flavor: slot.flavor,
@@ -325,31 +338,6 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     slamming = true;
     sprite.setVelocityY(SLAM.fallVelocityY);
     squashStretch(0.8, 1.3);
-  };
-
-  // 疾衝殘影（§30）：本體貼圖 alpha 快照淡出自毀。
-  const spawnGhost = () => {
-    const ghost = scene.add
-      .image(sprite.x, sprite.y, sprite.texture.key)
-      .setDisplaySize(PLAYER_SIZE, PLAYER_SIZE)
-      .setFlipX(facing === -1)
-      .setAlpha(0.35)
-      .setDepth(sprite.depth - 1);
-    scene.tweens.add({
-      targets: ghost,
-      alpha: 0,
-      duration: DASH_GHOST_FADE_MS,
-      onComplete: () => ghost.destroy(),
-    });
-  };
-
-  // 疾衝啟動（§30）：面向水平疾衝，橫向拉伸 + 專屬音。
-  const startAirDash = () => {
-    playSfx('dash');
-    ghostMs = 0;
-    sprite.setVelocity(facing * airDashSpeed(), 0);
-    squashStretch(1.3, 0.8);
-    spawnGhost();
   };
 
   return {
@@ -385,29 +373,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       wasOnGround = onGround;
 
-      // 空中疾衝（§30）：雙擊窗與 CD 恆時推進；hurtLock 期按壓不列入雙擊。
-      const dashTick = advanceAirDash(airDash, {
-        deltaMs,
-        jumpPressed: controls.jumpPressed && hurtLockMs <= 0,
-        airborne: !onGround,
-      });
-      airDash = dashTick.state;
-      if (dashTick.trigger) {
-        // 疾衝手感（§30）：首拍消耗的拍翅當幀退還，成功疾衝不折損漂浮資源。
-        flapsUsed = refundDashFlap(flapsUsed, lastAirTapFlapped);
-        lastAirTapFlapped = false;
-        startAirDash();
-      }
-
-      if (hurtLockMs <= 0 && isAirDashing(airDash)) {
-        // 疾衝進行中：鎖定面向水平速度並抵銷重力，殘影按間隔快照；其餘輸入凍結。
-        sprite.setVelocity(facing * airDashSpeed(), 0);
-        ghostMs += deltaMs;
-        if (ghostMs >= DASH_GHOST_INTERVAL_MS) {
-          ghostMs = 0;
-          spawnGhost();
-        }
-      } else if (hurtLockMs <= 0) {
+      if (hurtLockMs <= 0) {
         // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
         // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
         const moveTarget = controls.left
@@ -426,39 +392,46 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         prevMoveTarget = moveTarget;
         sprite.setVelocityX(approachVelocity(body.velocity.x, moveTarget, deltaMs));
 
-        // 寬容度（§15.1）：coyote 期內離台仍可起跳；提前按跳以 buffer 落地即跳。
-        // 疾衝觸發當幀的按壓已被疾衝消耗，不再進入跳躍/拍翅分支。
-        const wantsJump = controls.jumpPressed || (onGround && jumpBufferMs > 0);
-        if (wantsJump && !dashTick.trigger) {
-          if (onGround || coyoteMs > 0) {
-            coyoteMs = 0;
-            jumpBufferMs = 0;
-            lastAirTapFlapped = false;
-            sprite.setVelocityY(PLAYER.jumpVelocity);
-            squashStretch(0.8, 1.25);
-          } else if (controls.jumpPressed && flapsUsed < PLAYER.maxFlaps) {
-            flapsUsed += 1;
-            lastAirTapFlapped = true;
-            sprite.setVelocityY(PLAYER.floatLift);
-            squashStretch(0.9, 1.12);
-          } else if (controls.jumpPressed) {
-            jumpBufferMs = FORGIVENESS.jumpBufferMs;
-            lastAirTapFlapped = false;
+        // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
+        // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
+        // 層 shouldDropThrough 裁決並覆蓋跳躍脈衝（§29 既有優先序）。
+        const jumpCommand =
+          controls.jumpPressed && !slamming
+            ? resolveJumpPress({
+                airborne: !onGround,
+                down: controls.down,
+                slamCooldownMs: slamCdMs,
+              })
+            : 'jump';
+        if (jumpCommand === 'slam') {
+          startSlam();
+        } else {
+          // 寬容度（§15.1）：coyote 期內離台仍可起跳；提前按跳以 buffer 落地即跳。
+          const wantsJump = controls.jumpPressed || (onGround && jumpBufferMs > 0);
+          if (wantsJump) {
+            if (onGround || coyoteMs > 0) {
+              coyoteMs = 0;
+              jumpBufferMs = 0;
+              sprite.setVelocityY(PLAYER.jumpVelocity);
+              squashStretch(0.8, 1.25);
+            } else if (controls.jumpPressed && flapsUsed < PLAYER.maxFlaps) {
+              flapsUsed += 1;
+              sprite.setVelocityY(PLAYER.floatLift);
+              squashStretch(0.9, 1.12);
+            } else if (controls.jumpPressed) {
+              jumpBufferMs = FORGIVENESS.jumpBufferMs;
+            }
           }
         }
 
-        // B 鍵決策（§23/§40）：空中 down+B 下衝擊；滿匣與頂槽殼盾星延遲至放開結算
+        // B 鍵決策（§23/§40）：滿匣與頂槽殼盾星延遲至放開結算
         // （點按發射 vs 長按星暴/舉盾）。
         if (controls.actionPressed) {
           const command = resolveActionPress({
-            airborne: !onGround,
-            down: controls.down,
-            slamCooldownMs: slamCdMs,
             ammo: magazine.length,
             topIsShelly: isTopShelly(magazine),
           });
-          if (command === 'slam') startSlam();
-          else if (command === 'fire') fireStar();
+          if (command === 'fire') fireStar();
           else if (command === 'defer') deferredFire = true;
         }
       }
@@ -507,17 +480,40 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         invulnerableMs > 0 && Math.floor(invulnerableMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1,
       );
 
-      // 走路 bob：|sin| 造雙頻小彈跳，傾斜隨面向擺動；停走或離地即復位。
-      // bob 僅寫入視覺 y 偏移（PRE/POST_UPDATE 掛鉤），與 squash 的 scale 通道互不干涉。
+      // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
+      // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
+      // 地面靜止走 idle 呼吸（scale 通道，squash tween 進行中讓位）。
+      // 呼吸殘留復位：離開 idle 後 scale 回基準（squash tween 進行中讓 tween 主導）。
+      const normalizeBreath = (): void => {
+        if (!scene.tweens.isTweening(sprite) && sprite.scaleY !== baseScaleY) {
+          sprite.setScale(baseScaleX, baseScaleY);
+        }
+      };
       if (onGround && body.velocity.x !== 0) {
-        walkMs += deltaMs;
-        const wave = Math.sin(walkMs * WALK_BOB_OMEGA);
-        sprite.setRotation(facing * wave * WALK_TILT_RAD);
-        bobOffset = Math.abs(wave) * WALK_BOB_PX;
-      } else if (walkMs !== 0) {
-        walkMs = 0;
-        sprite.setRotation(0);
+        normalizeBreath();
+        const speedRatio = Math.abs(body.velocity.x) / PLAYER.moveSpeed;
+        const tick = advanceStride(stridePhase, speedRatio, deltaMs);
+        stridePhase = tick.phase;
+        if (tick.footstep) {
+          footDust.explode(2, sprite.x - facing * 10, sprite.y + PLAYER_SIZE / 2 - 5);
+          playSfx('footstep');
+        }
+        sprite.setRotation(facing * strideTilt(stridePhase, speedRatio));
+        bobOffset = strideBob(stridePhase, speedRatio);
+      } else if (!onGround) {
+        normalizeBreath();
+        stridePhase = 0;
         bobOffset = 0;
+        sprite.setRotation(facing * airTilt(body.velocity.y));
+      } else {
+        if (stridePhase !== 0 || sprite.rotation !== 0) {
+          stridePhase = 0;
+          sprite.setRotation(0);
+          bobOffset = 0;
+        }
+        if (!scene.tweens.isTweening(sprite)) {
+          sprite.setScale(baseScaleX, baseScaleY * (1 + idleBreath(scene.time.now)));
+        }
       }
       lastVy = body.velocity.y;
 
@@ -534,8 +530,6 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
     },
     takeDamage(damage: number, sourceX: number) {
-      // 疾衝無敵幀（§30）：衝刺期間免傷。
-      if (isAirDashing(airDash)) return;
       // 格擋後短無敵（§40）：防同一接觸連續結算。
       if (blockInvulnMs > 0) return;
       // 殼盾格擋（§40）：舉盾中的正面傷害——消耗頂槽、入 CD、發反擊事件，不掉血不擊退。
@@ -585,8 +579,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const result = swallowIntoMagazine(magazine, flavor);
       magazine = result.magazine;
       lastFlavor = flavor;
-      // 連吞升級（§23）：強化音效；金邊視覺由 HUD 與發射端依槽位狀態呈現。
+      // 連吞升級（§23）強化音效；混合合成（§46）沿用 jingle 短奏提示。
       if (result.charged) playSfx('charge');
+      else if (result.mixed) playSfx('jingle');
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
       emitAmmo();
       return true;
@@ -594,13 +589,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     isInhaling() {
       return inhaling;
     },
-    isAirDashing() {
-      return isAirDashing(airDash);
-    },
     getAmmoState() {
+      const top = magazine[magazine.length - 1];
       return {
         ammo: magazine.length,
-        flavor: magazine[magazine.length - 1]?.flavor ?? lastFlavor,
+        flavor: top?.flavor ?? lastFlavor,
+        mix: top?.mix ?? null,
+      };
+    },
+    getWalkVisual() {
+      return {
+        rotation: sprite.rotation,
+        bob: bobOffset,
+        vy: (sprite.body as Phaser.Physics.Arcade.Body).velocity.y,
       };
     },
     getMagazine() {
@@ -646,6 +647,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, applyBob);
       scene.events.off(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
       scene.tweens.killTweensOf(sprite);
+      footDust.destroy();
       stormRing.destroy();
       shieldGfx.destroy();
       sprite.destroy();

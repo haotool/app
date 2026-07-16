@@ -42,24 +42,26 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 可吸怪的星彈屬性對照（§20/§30/§40）：v6 起 shelly 得殼盾星、zappy 得雷鏈星
-// （取代 v4 的標準星/疾風星代位）；不可吸者無屬性。
+// 可吸怪的星彈屬性對照（§20/§30/§40/§47）：v6 起 shelly 得殼盾星、zappy 得雷鏈星；
+// v7 起 drilly 得重鑽星（破土窗）、glowy 得流光星；不可吸者無屬性。
 const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   jelly: 'jelly',
   floaty: 'floaty',
   puffy: 'puffy',
   shelly: 'shelly',
   zappy: 'zappy',
+  drilly: 'drilly',
+  glowy: 'glowy',
 };
 
 export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {
   return INHALE_FLAVORS[kind] ?? null;
 }
 
-// 刺刺瓜與咬咬花不可吸入（§5、§16）；殼殼僅暈眩時可吸（§30），stunned 由呼叫端傳入；
-// 未帶狀態時 shelly 視為不可吸（spawner 保證律與權重驗證取保守值）。
-export function canInhale(kind: EnemyKind, stunned = false): boolean {
-  if (kind === 'shelly') return stunned;
+// 刺刺瓜與咬咬花不可吸入（§5、§16）；殼殼僅暈眩窗（§30）、鑽地者僅破土窗（§47）可吸，
+// exposed 由呼叫端依個體狀態傳入；未帶狀態時視為不可吸（spawner 保證律與權重驗證取保守值）。
+export function canInhale(kind: EnemyKind, exposed = false): boolean {
+  if (kind === 'shelly' || kind === 'drilly') return exposed;
   return inhaleFlavor(kind) !== null;
 }
 

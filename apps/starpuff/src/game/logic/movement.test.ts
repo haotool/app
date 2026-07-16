@@ -34,7 +34,7 @@ describe('approachVelocity（§41 加減速曲線）', () => {
     expect(turn).toBeLessThan(PLAYER.moveSpeed);
   });
 
-  it('超速殘速（擊退/疾衝）夾回常速帶，維持疾衝距離契約', () => {
+  it('超速殘速（擊退）夾回常速帶，不留殘速滑行', () => {
     expect(approachVelocity(1000, PLAYER.moveSpeed, 16)).toBe(PLAYER.moveSpeed);
     expect(approachVelocity(-1000, -PLAYER.moveSpeed, 16)).toBe(-PLAYER.moveSpeed);
     const stopping = approachVelocity(1000, 0, 16);
@@ -42,7 +42,7 @@ describe('approachVelocity（§41 加減速曲線）', () => {
     expect(stopping).toBeGreaterThan(0);
   });
 
-  it('疾衝結束（1000）鬆手：夾速後沿減速鏈收斂至 0，不留殘速滑行', () => {
+  it('超速殘速（1000）鬆手：夾速後沿減速鏈收斂至 0', () => {
     let v = 1000;
     let elapsed = 0;
     while (v !== 0 && elapsed < 1000) {

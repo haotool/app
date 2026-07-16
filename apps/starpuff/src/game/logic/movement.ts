@@ -7,7 +7,7 @@ import { PLAYER } from '../core/config';
 const SNAP_EPSILON = 8;
 
 export function approachVelocity(current: number, target: number, deltaMs: number): number {
-  // 超速殘速（疾衝/擊退）先夾回常速帶：維持疾衝距離契約（v5 為逐幀瞬時覆寫，無殘速滑行）。
+  // 超速殘速（擊退）先夾回常速帶，避免殘速滑行（v5 為逐幀瞬時覆寫）。
   const capped =
     Math.abs(current) > PLAYER.moveSpeed ? Math.sign(current) * PLAYER.moveSpeed : current;
   const dt = deltaMs / 1000;

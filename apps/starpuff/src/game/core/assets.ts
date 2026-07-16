@@ -60,6 +60,14 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'minion-zappy',
     url: new URL('../../assets/sprites/minion-zappy.webp', import.meta.url).href,
   },
+  {
+    key: 'minion-drilly',
+    url: new URL('../../assets/sprites/minion-drilly.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-glowy',
+    url: new URL('../../assets/sprites/minion-glowy.webp', import.meta.url).href,
+  },
   // v4 主題道具（§31/§32）：道具條 4 等分切割後逐件註冊，佈景資料驅動於 levels.ts decor。
   {
     key: 'prop-meadow-1',

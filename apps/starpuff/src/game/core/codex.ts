@@ -64,6 +64,21 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     inhalable: true,
   },
   {
+    kind: 'drilly',
+    textureKey: 'minion-drilly',
+    nameZh: '鑽鑽鼴',
+    behavior: '潛地僅露鰭追擊，破土窗吞下得重鑽星',
+    inhalable: false,
+    conditional: true,
+  },
+  {
+    kind: 'glowy',
+    textureKey: 'minion-glowy',
+    nameZh: '提燈水母',
+    behavior: '緩慢漂浮週期光脈衝，吞下得流光星',
+    inhalable: true,
+  },
+  {
     kind: 'boss',
     textureKey: 'boss-idle',
     nameZh: '果凍王',
@@ -87,12 +102,18 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   {
     nameZh: '星彈五系',
     howTo: '有彈藥時點按吸入鍵',
-    detail: '吞什麼射什麼：果凍丁標準星／飄飄疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星',
+    detail:
+      '吞什麼射什麼：果凍丁標準星／飄飄疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星，另有鑽鑽鼴重鑽星與提燈水母流光星',
   },
   {
     nameZh: '強化星',
     howTo: '同種怪連吞兩隻',
     detail: '該槽升級金邊強化星，傷害 1.6 倍',
+  },
+  {
+    nameZh: '混合星彈',
+    howTo: '依序吞兩隻不同怪',
+    detail: '配方成立即合成混合星（共六式）：疾光／巨爆／追電／雷爆／碎鑽／凝光，威力獨特',
   },
   {
     nameZh: '星暴',
@@ -101,13 +122,8 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
   {
     nameZh: '下衝擊',
-    howTo: '空中搖桿下＋吸入鍵',
-    detail: '加速下墜，落地衝擊波擊退小怪、可破磚',
-  },
-  {
-    nameZh: '空中疾衝',
-    howTo: '空中雙擊跳躍鍵',
-    detail: '朝面向疾衝一段距離，無敵幀衝撞小怪',
+    howTo: '空中搖桿下＋跳躍鍵',
+    detail: '加速下墜，落地衝擊波擊退小怪、可破磚；腹中含怪也可觸發',
   },
   {
     nameZh: '殼盾',
