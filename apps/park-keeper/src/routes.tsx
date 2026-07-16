@@ -12,6 +12,8 @@ import { ClientOnly } from 'vite-react-ssg';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import About from './pages/About';
+import Add from './pages/Add';
+import Guide from './pages/Guide';
 
 export const routes: RouteRecord[] = [
   {
@@ -26,6 +28,16 @@ export const routes: RouteRecord[] = [
       {
         path: 'settings',
         element: <ClientOnly fallback={null}>{() => <Home initialTab="settings" />}</ClientOnly>,
+      },
+      {
+        // 快速記錄依賴 IndexedDB / geolocation，僅客戶端渲染。
+        path: 'add',
+        element: <ClientOnly fallback={null}>{() => <Add />}</ClientOnly>,
+      },
+      {
+        // 教學頁文案走 i18n（語言偵測在客戶端），避免 SSG 與 hydration 語言不一致。
+        path: 'guide',
+        element: <ClientOnly fallback={null}>{() => <Guide />}</ClientOnly>,
       },
     ],
   },

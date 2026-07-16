@@ -4,11 +4,17 @@ import { I18nextProvider } from 'react-i18next';
 import QuickEntry from '../QuickEntry';
 import i18n from '@app/park-keeper/services/i18n';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
+import { compressImage } from '@app/park-keeper/services/imageUtils';
 import type { ThemeConfig } from '@app/park-keeper/types';
 
 // Mock MiniMap component
 vi.mock('../MiniMap', () => ({
   default: vi.fn(() => <div data-testid="mini-map">MiniMap</div>),
+}));
+
+// jsdom 無真實 canvas，壓縮管線以 stub 取代（僅驗證帶入流程）。
+vi.mock('@app/park-keeper/services/imageUtils', () => ({
+  compressImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,stub')),
 }));
 
 // Mock hooks
@@ -344,5 +350,240 @@ describe('QuickEntry - 車牌自動載入與清空功能', () => {
     await waitFor(() =>
       expect(screen.getByText('3F').className).toContain('bg-[var(--color-primary)]'),
     );
+  });
+});
+
+describe('QuickEntry - GPS 拒絕卡', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-TW');
+    global.localStorage.clear();
+
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: mockGeolocation,
+      vibrate: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  function mockGeoDenied() {
+    mockGeolocation.watchPosition.mockImplementation((_success, error) => {
+      error?.({
+        code: 1,
+        message: 'User denied Geolocation',
+      } as GeolocationPositionError);
+      return 1;
+    });
+  }
+
+  it('GPS 拒絕時顯示 location_denied 卡與重試按鈕，不得回退台北 101 預設座標', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: i18n.t('action.retry') })).toBeInTheDocument();
+    // 不得靜默存台北 101：地圖不應以預設座標渲染。
+    expect(screen.queryByTestId('mini-map')).not.toBeInTheDocument();
+  });
+
+  it('GPS 拒絕仍可儲存，但經緯度必須為 undefined 且卡片明示未記錄位置', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+    expect(screen.getByText(i18n.t('record.no_location'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('B2'));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+
+    const saved = onSave.mock.calls[0]![0] as { latitude?: number; longitude?: number };
+    expect(saved.latitude).toBeUndefined();
+    expect(saved.longitude).toBeUndefined();
+  });
+
+  it('點擊重試按鈕後重新啟動定位並在成功時清除拒絕卡', async () => {
+    mockGeoDenied();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={onSave} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('error.location_denied'))).toBeInTheDocument();
+    });
+
+    // 第二次請求改為成功。
+    mockGeolocation.watchPosition.mockImplementation((success) => {
+      success({
+        coords: { latitude: 25.033, longitude: 121.5654, accuracy: 10, heading: null },
+      } as GeolocationPosition);
+      return 2;
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('action.retry') }));
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.queryByText(i18n.t('error.location_denied'))).not.toBeInTheDocument();
+  });
+});
+
+describe('QuickEntry - fullscreen 模式', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-TW');
+    global.localStorage.clear();
+
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: mockGeolocation,
+      vibrate: vi.fn(),
+    });
+
+    mockGeolocation.watchPosition.mockImplementation((success) => {
+      success({
+        coords: { latitude: 25.033, longitude: 121.5654, accuracy: 10, heading: null },
+      } as GeolocationPosition);
+      return 1;
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('fullscreen 模式渲染巨型拍照 CTA（label 直包 file input），無 bottom sheet 把手', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          mode="fullscreen"
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    // 巨型 CTA：拍照 label 存在且直包 capture input。
+    const fileInput = document.querySelector('input[type="file"][capture="environment"]');
+    expect(fileInput).toBeInTheDocument();
+    expect(fileInput?.closest('label')).not.toBeNull();
+
+    // 全螢幕模式不渲染 sheet 把手與 backdrop。
+    expect(document.querySelector('[data-testid="quick-entry-handle"]')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).not.toBeInTheDocument();
+  });
+
+  it('sheet 模式維持既有把手與 backdrop 行為', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    expect(document.querySelector('[data-testid="quick-entry-handle"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).toBeInTheDocument();
+  });
+
+  it('initialPhotoFile 於開啟時直接帶入照片預覽（首屏 CTA 拍照直達流程）', async () => {
+    const file = new File(['photo'], 'cta.jpg', { type: 'image/jpeg' });
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={file}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByAltText(i18n.t('record.photo_alt'))).toBeInTheDocument(),
+    );
+  });
+
+  it('關閉面板後才完成的壓縮不得殘留照片（generation token 防護）', async () => {
+    let resolveCompress: ((value: string) => void) | undefined;
+    vi.mocked(compressImage).mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveCompress = resolve;
+        }),
+    );
+
+    const file = new File(['photo'], 'slow.jpg', { type: 'image/jpeg' });
+    const { rerender } = render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={file}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(resolveCompress).toBeDefined());
+
+    // 壓縮完成前關閉面板，再讓過期任務 resolve。
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={false}
+          onClose={vi.fn()}
+          initialPhotoFile={null}
+        />
+      </I18nextProvider>,
+    );
+    resolveCompress!('data:image/jpeg;base64,stale');
+
+    // 重新開啟（無帶入照片）：過期 resolve 不得殘留照片。
+    rerender(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={null}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.queryByAltText(i18n.t('record.photo_alt'))).not.toBeInTheDocument();
   });
 });

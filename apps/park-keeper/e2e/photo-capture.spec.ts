@@ -13,13 +13,15 @@ test.describe('拍照流程模擬', () => {
     await getFab(page).click();
     await expect(page.getByPlaceholder(TEXT.platePlaceholder)).toBeVisible();
 
-    await page.locator('input[type="file"]').setInputFiles({
+    // 首屏 CTA 亦有 file input，以 testid 鎖定 QuickEntry 面板內的 input。
+    await page.getByTestId('quick-entry-photo-input').setInputFiles({
       name: 'test-photo.png',
       mimeType: 'image/png',
       buffer: Buffer.from(TEST_PHOTO_BASE64, 'base64'),
     });
 
-    await expect(page.getByAltText('Parking spot')).toBeVisible();
+    // Home init 會將語言設為 zh-TW，alt 走 i18n record.photo_alt。
+    await expect(page.getByAltText('停車照片')).toBeVisible();
 
     const floorChip = page.getByRole('button', { name: 'B3', exact: true });
     await expect(floorChip).toBeVisible();

@@ -6,7 +6,10 @@ interface PageMeta {
   title: string;
   description: string;
   keywords: string;
+  robots?: string;
 }
+
+const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1';
 
 const ROUTE_META: Record<string, PageMeta> = {
   '/': {
@@ -27,6 +30,20 @@ const ROUTE_META: Record<string, PageMeta> = {
       '自訂停車好工具的介面主題、語言與快取設定。支援 Zen、Nitro、Kawaii、Classic 四種風格。',
     keywords: '停車好工具,設定,主題,語言,快取',
   },
+  // 功能頁：noindex，不入 sitemap。
+  '/add/': {
+    title: '快速記錄 | 停車好工具',
+    description: '一鍵拍照記錄停車位置：拍柱位照、選樓層、自動帶入車號，3 步內完成停車記錄。',
+    keywords: '快速記錄,停車,拍照,停車好工具',
+    robots: 'noindex, follow',
+  },
+  '/guide/': {
+    title: '捷徑設定教學 | 停車好工具',
+    description:
+      'iOS 捷徑藍牙斷線自動化與 Android 長按圖示捷徑設定教學，下車瞬間自動開啟快速記錄。',
+    keywords: '捷徑,自動化,藍牙,iOS,Android,停車好工具',
+    robots: 'noindex, follow',
+  },
 };
 
 export function getMetaTagsForRoute(route: string, buildTime: string): string {
@@ -42,7 +59,7 @@ export function getMetaTagsForRoute(route: string, buildTime: string): string {
     <meta name="description" content="${meta.description}" />
     <meta name="keywords" content="${meta.keywords}" />
     <meta name="author" content="阿璋 (Ah Zhang)" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="robots" content="${meta.robots ?? DEFAULT_ROBOTS}" />
     <link rel="canonical" href="${canonicalUrl}" />
 
     <!-- Open Graph / Facebook -->
