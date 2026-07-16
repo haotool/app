@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { AIR_DASH, CHARGED_STAR, GOLD_STAR, STARSTORM, type MagazineSlot } from '../core/config';
 import {
+  SHELL_SHIELD,
   advanceAirDash,
+  advanceShield,
   advanceStarstormHold,
   airDashSpeed,
   createAirDashState,
+  createShieldState,
   fillMagazine,
   isAirDashing,
+  isFrontalHit,
+  isTopShelly,
+  pickChainTargets,
   popTopSlot,
   pushGoldStar,
   refundDashFlap,
   resolveActionPress,
+  resolveShieldBlock,
+  shieldEligible,
   shouldFireOnRelease,
   starDamage,
   starPitch,
@@ -141,6 +149,108 @@ describe('resolveActionPress（§23 B 鍵決策）', () => {
   it('放開短於吸入閾值視為點按發射', () => {
     expect(shouldFireOnRelease(100)).toBe(true);
     expect(shouldFireOnRelease(150)).toBe(false);
+  });
+
+  it('頂槽殼盾星按下走延遲（§40）：點按發射與長按舉盾於放開分化', () => {
+    expect(
+      resolveActionPress({
+        airborne: false,
+        down: false,
+        slamCooldownMs: 0,
+        ammo: 1,
+        topIsShelly: true,
+      }),
+    ).toBe('defer');
+    expect(
+      resolveActionPress({
+        airborne: false,
+        down: false,
+        slamCooldownMs: 0,
+        ammo: 1,
+        topIsShelly: false,
+      }),
+    ).toBe('fire');
+  });
+});
+
+describe('殼盾 FSM（§40）', () => {
+  it('isTopShelly 僅頂槽殼盾星成立；金星不算', () => {
+    expect(isTopShelly([slot('shelly')])).toBe(true);
+    expect(isTopShelly([slot('shelly'), slot('jelly')])).toBe(false);
+    expect(isTopShelly([slot('shelly', false, true)])).toBe(false);
+    expect(isTopShelly([])).toBe(false);
+  });
+
+  it('長按且頂槽殼盾星才舉盾；條件消失即放下', () => {
+    let state = advanceShield(createShieldState(), { deltaMs: 16, held: true, eligible: true });
+    expect(state.raised).toBe(true);
+    state = advanceShield(state, { deltaMs: 16, held: false, eligible: true });
+    expect(state.raised).toBe(false);
+    state = advanceShield(state, { deltaMs: 16, held: true, eligible: false });
+    expect(state.raised).toBe(false);
+  });
+
+  it('格擋成功入 4s CD，CD 中不可再舉盾，期滿恢復', () => {
+    let state = resolveShieldBlock();
+    expect(state.raised).toBe(false);
+    expect(state.cooldownMs).toBe(SHELL_SHIELD.cooldownMs);
+    state = advanceShield(state, { deltaMs: 1000, held: true, eligible: true });
+    expect(state.raised).toBe(false);
+    state = advanceShield(state, { deltaMs: SHELL_SHIELD.cooldownMs, held: true, eligible: true });
+    expect(state.raised).toBe(true);
+  });
+
+  it('殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣成立；滿匣或頂槽非殼盾不成立', () => {
+    expect(shieldEligible([slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly'), slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly')])).toBe(false);
+    expect(shieldEligible([])).toBe(false);
+    // 滿匣頂槽殼盾星：長按讓位星暴，不屬殼盾情境。
+    expect(shieldEligible([slot('jelly'), slot('floaty'), slot('shelly')])).toBe(false);
+  });
+
+  it('殼盾情境長按不回落吸入：盾 CD 中 raised 恆 false，但情境仍成立（吸入抑制依情境判定）', () => {
+    // 模擬 player.ts 長按達閾值後的吸入判定：inhaling = !raised && !shieldEligible。
+    const magazine = [slot('shelly')];
+    let state = resolveShieldBlock();
+    state = advanceShield(state, { deltaMs: 16, held: true, eligible: shieldEligible(magazine) });
+    expect(state.raised).toBe(false);
+    const inhaling = !state.raised && !shieldEligible(magazine);
+    expect(inhaling).toBe(false);
+    // CD 期滿長按恢復舉盾（仍非吸入）。
+    state = advanceShield(state, {
+      deltaMs: SHELL_SHIELD.cooldownMs,
+      held: true,
+      eligible: shieldEligible(magazine),
+    });
+    expect(state.raised).toBe(true);
+  });
+
+  it('isFrontalHit 正面判定：面向側與同 x 為正面，背面不格擋', () => {
+    expect(isFrontalHit(1, 100, 160)).toBe(true);
+    expect(isFrontalHit(1, 100, 40)).toBe(false);
+    expect(isFrontalHit(-1, 100, 40)).toBe(true);
+    expect(isFrontalHit(-1, 100, 160)).toBe(false);
+    expect(isFrontalHit(1, 100, 100)).toBe(true);
+  });
+});
+
+describe('雷鏈目標選擇（§40）', () => {
+  const at = (x: number, y: number) => ({ x, y });
+
+  it('半徑內取最近 N 隻並由近至遠排序', () => {
+    const targets = pickChainTargets(0, 0, [at(100, 0), at(50, 0), at(200, 0)], 2, 160);
+    expect(targets).toEqual([at(50, 0), at(100, 0)]);
+  });
+
+  it('半徑外目標不入鏈；不足 N 隻取實際數', () => {
+    expect(pickChainTargets(0, 0, [at(300, 0)], 2, 160)).toEqual([]);
+    expect(pickChainTargets(0, 0, [at(40, 30)], 2, 160)).toEqual([at(40, 30)]);
+  });
+
+  it('count 0 或負值回空陣列', () => {
+    expect(pickChainTargets(0, 0, [at(10, 0)], 0, 160)).toEqual([]);
+    expect(pickChainTargets(0, 0, [at(10, 0)], -1, 160)).toEqual([]);
   });
 });
 

@@ -18,6 +18,10 @@ export const GRAVITY_Y = 900;
 
 export const PLAYER = {
   moveSpeed: 220,
+  // v6 手感（§41）：水平速度加減速曲線——起步約 0.16s 達全速、鬆手約 0.11s 停定，
+  // 反向轉身以加減速率疊加保持靈敏。
+  accelPxPerSec2: 1400,
+  decelPxPerSec2: 2000,
   jumpVelocity: -420,
   floatLift: -260,
   maxHp: 5,
@@ -43,8 +47,9 @@ export const STAR = {
   maxAmmo: 3,
 } as const;
 
-// 吞噬賦星（§20）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
-export type StarFlavor = 'jelly' | 'floaty' | 'puffy';
+// 吞噬賦星（§20/§40）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
+// v6 新增殼盾星（shelly）與雷鏈星（zappy），星彈三系擴為五系。
+export type StarFlavor = 'jelly' | 'floaty' | 'puffy' | 'shelly' | 'zappy';
 
 export interface StarFlavorSpec {
   damage: number;
@@ -54,6 +59,10 @@ export interface StarFlavorSpec {
   tint: number;
   aoeRadiusPx: number;
   aoeDamage: number;
+  // 雷鏈（§40）：命中後跳電至半徑內最近 chainCount 隻小怪，各受 chainDamage。
+  chainCount: number;
+  chainRadiusPx: number;
+  chainDamage: number;
   sfxPitch: number;
 }
 
@@ -65,6 +74,9 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
     tint: 0xffd966,
     aoeRadiusPx: 0,
     aoeDamage: 0,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
     sfxPitch: 1,
   },
   floaty: {
@@ -74,6 +86,9 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
     tint: 0xa78bfa,
     aoeRadiusPx: 0,
     aoeDamage: 0,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
     sfxPitch: 1.15,
   },
   puffy: {
@@ -83,7 +98,34 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
     tint: 0xff8a80,
     aoeRadiusPx: 60,
     aoeDamage: 2,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
     sfxPitch: 0.85,
+  },
+  shelly: {
+    damage: 5,
+    speed: 480,
+    pierceCount: 0,
+    tint: 0x7fd8c8,
+    aoeRadiusPx: 0,
+    aoeDamage: 0,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
+    sfxPitch: 0.95,
+  },
+  zappy: {
+    damage: 5,
+    speed: 585,
+    pierceCount: 0,
+    tint: 0xffe28a,
+    aoeRadiusPx: 0,
+    aoeDamage: 0,
+    chainCount: 2,
+    chainRadiusPx: 160,
+    chainDamage: 3,
+    sfxPitch: 1.25,
   },
 } as const;
 

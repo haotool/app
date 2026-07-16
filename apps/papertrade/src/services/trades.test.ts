@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { mergeTrades, parseTradeMessage, type PublicTrade } from './trades';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  backfillTrades,
+  fetchRecentTrades,
+  mergeTrades,
+  parseTradeMessage,
+  type PublicTrade,
+} from './trades';
 
 const message = {
   topic: 'publicTrade.BTCUSDT',
@@ -54,5 +60,145 @@ describe('mergeTrades', () => {
 
   it('returns the same reference when nothing arrives', () => {
     expect(mergeTrades(existing, [], 10)).toBe(existing);
+  });
+
+  it('dedupes by id when the WS repeats trades already backfilled from REST', () => {
+    // REST-first 競態：REST 回填先落地，WS 隨後推送同 execId。
+    const restFilled: PublicTrade[] = [
+      { id: 'e1', time: 300, side: 'buy', price: 101, size: 1 },
+      { id: 'e2', time: 200, side: 'sell', price: 100, size: 2 },
+    ];
+    const incoming = parseTradeMessage({
+      data: [{ i: 'e1', T: 300, S: 'Buy', p: '101', v: '1' }],
+    });
+
+    const merged = mergeTrades(restFilled, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['e1', 'e2']);
+  });
+
+  it('keeps the incoming version of a duplicated id and caps at the limit', () => {
+    const restFilled: PublicTrade[] = [
+      { id: 'e1', time: 300, side: 'buy', price: 101, size: 1 },
+      { id: 'e2', time: 200, side: 'sell', price: 100, size: 2 },
+      { id: 'e3', time: 100, side: 'buy', price: 99, size: 3 },
+    ];
+    const incoming: PublicTrade[] = [{ id: 'e2', time: 200, side: 'sell', price: 100.5, size: 9 }];
+
+    const merged = mergeTrades(restFilled, incoming, 2);
+    expect(merged.map((trade) => trade.id)).toEqual(['e1', 'e2']);
+    expect(merged[1]?.size).toBe(9);
+  });
+
+  it('keeps newest-first order when the WS re-pushes an older execId', () => {
+    // 重連窗口下 WS 可能重推較舊成交，不得把舊成交搬到列表頭。
+    const current: PublicTrade[] = [
+      { id: 'n1', time: 400, side: 'buy', price: 102, size: 1 },
+      { id: 'o1', time: 100, side: 'sell', price: 99, size: 1 },
+    ];
+    const incoming: PublicTrade[] = [{ id: 'o2', time: 200, side: 'buy', price: 100, size: 1 }];
+
+    const merged = mergeTrades(current, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['n1', 'o2', 'o1']);
+  });
+
+  it('keeps the original relative order for trades sharing the same timestamp', () => {
+    const current: PublicTrade[] = [
+      { id: 'b2', time: 200, side: 'sell', price: 100, size: 2 },
+      { id: 'b1', time: 200, side: 'buy', price: 100, size: 1 },
+    ];
+    const incoming: PublicTrade[] = [
+      { id: 'c1', time: 200, side: 'buy', price: 101, size: 1 },
+      { id: 'c2', time: 200, side: 'sell', price: 101, size: 2 },
+    ];
+
+    const merged = mergeTrades(current, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['c2', 'c1', 'b2', 'b1']);
+  });
+});
+
+describe('backfillTrades', () => {
+  const wsAccumulated: PublicTrade[] = [
+    { id: 'w2', time: 400, side: 'sell', price: 101, size: 2 },
+    { id: 'w1', time: 300, side: 'buy', price: 100, size: 1 },
+  ];
+
+  it('appends history after live trades and dedupes by id', () => {
+    const history: PublicTrade[] = [
+      { id: 'w1', time: 300, side: 'buy', price: 100, size: 1 },
+      { id: 'h1', time: 200, side: 'sell', price: 99, size: 3 },
+      { id: 'h2', time: 100, side: 'buy', price: 98, size: 4 },
+    ];
+    const merged = backfillTrades(wsAccumulated, history, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['w2', 'w1', 'h1', 'h2']);
+  });
+
+  it('caps the merged list at the limit', () => {
+    const history: PublicTrade[] = [
+      { id: 'h1', time: 200, side: 'sell', price: 99, size: 3 },
+      { id: 'h2', time: 100, side: 'buy', price: 98, size: 4 },
+    ];
+    expect(backfillTrades(wsAccumulated, history, 3)).toHaveLength(3);
+  });
+});
+
+describe('fetchRecentTrades', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(body: unknown, ok = true) {
+    const fetchMock = vi.fn<(input: string | URL) => Promise<unknown>>(() =>
+      Promise.resolve({ ok, status: ok ? 200 : 500, json: () => Promise.resolve(body) }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('fetches and parses recent trades newest first', async () => {
+    const fetchMock = stubFetch({
+      retCode: 0,
+      result: {
+        list: [
+          { execId: 'e1', price: '64000.5', size: '0.01', side: 'Buy', time: '1700000000200' },
+          { execId: 'e2', price: '64000.0', size: '0.20', side: 'Sell', time: '1700000000100' },
+        ],
+      },
+    });
+
+    const trades = await fetchRecentTrades('BTCUSDT', 30);
+    expect(trades).toEqual<PublicTrade[]>([
+      { id: 'e1', time: 1700000000200, side: 'buy', price: 64000.5, size: 0.01 },
+      { id: 'e2', time: 1700000000100, side: 'sell', price: 64000, size: 0.2 },
+    ]);
+
+    const url = String(fetchMock.mock.calls[0]?.[0]);
+    expect(url).toContain('/v5/market/recent-trade?');
+    expect(url).toContain('category=linear');
+    expect(url).toContain('symbol=BTCUSDT');
+    expect(url).toContain('limit=30');
+  });
+
+  it('throws on non-ok response', async () => {
+    stubFetch({}, false);
+    await expect(fetchRecentTrades('BTCUSDT', 30)).rejects.toThrow();
+  });
+
+  it('throws on invalid payload or retCode', async () => {
+    stubFetch({ retCode: 10001, result: { list: [] } });
+    await expect(fetchRecentTrades('BTCUSDT', 30)).rejects.toThrow();
+  });
+
+  it('drops rows with non-numeric fields', async () => {
+    stubFetch({
+      retCode: 0,
+      result: {
+        list: [
+          { execId: 'ok', price: '100', size: '1', side: 'Buy', time: '1700000000000' },
+          { execId: 'bad', price: 'oops', size: '1', side: 'Sell', time: '1700000000001' },
+        ],
+      },
+    });
+    const trades = await fetchRecentTrades('BTCUSDT', 30);
+    expect(trades.map((trade) => trade.id)).toEqual(['ok']);
   });
 });

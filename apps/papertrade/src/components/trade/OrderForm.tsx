@@ -143,7 +143,7 @@ export function OrderForm({
     pushToast({
       tone: side,
       title: mode === 'market' ? `市價${sideText}成功` : `限價${sideText}掛單成功`,
-      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base}`,
+      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price)}`,
     });
   }
 

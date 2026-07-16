@@ -15,6 +15,8 @@ export const GameEvents = {
   STAR_FIRED: 'star:fired',
   SKILL_STARSTORM: 'skill:starstorm',
   SKILL_SLAM_LANDED: 'skill:slam-landed',
+  // v6 殼盾（§40）：成功格擋由 player 發出，GameScene 結算反擊星爆。
+  SKILL_SHIELD_BLOCK: 'skill:shield-block',
   BOSS_SPAWNED: 'boss:spawned',
   BOSS_DAMAGED: 'boss:damaged',
   BOSS_PHASE: 'boss:phase',
@@ -51,6 +53,7 @@ export interface GameEventPayloads {
   };
   [GameEvents.SKILL_STARSTORM]: { x: number; y: number };
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
+  [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.BOSS_PHASE]: { phase: BossPhase };

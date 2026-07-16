@@ -12,6 +12,9 @@ import { DEFAULT_LEVERAGE } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { CoinBadge } from '../components/CoinBadge';
+import { EmptyState } from '../components/EmptyState';
+import { FundingRateBadge } from '../components/FundingRateBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
@@ -93,13 +96,7 @@ export function TradePage() {
           aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
           className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
         >
-          <span
-            aria-hidden
-            className="flex size-8 items-center justify-center rounded-full text-caption font-semibold text-bg"
-            style={{ backgroundColor: meta.accent }}
-          >
-            {meta.base.slice(0, 2)}
-          </span>
+          <CoinBadge symbol={symbol} />
           <span>
             <span className="flex items-center gap-1 text-body font-semibold">
               {meta.base}
@@ -124,6 +121,11 @@ export function TradePage() {
           {formatAmount(leverage, 1)}x
         </button>
       </header>
+
+      <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
+        <span>資金費率</span>
+        <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+      </div>
 
       <div className="flex gap-3 px-4">
         <div className="min-w-0 flex-[0.58]">
@@ -153,11 +155,12 @@ export function TradePage() {
           目前持倉 <span className="tabular-nums">({positions.length})</span>
         </h2>
         {positions.length === 0 ? (
-          <div className="mt-2 flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-4 py-8 text-center">
-            <Inbox size={26} className="text-text-3" aria-hidden />
-            <p className="text-label text-text-2">尚無持倉</p>
-            <p className="text-caption text-text-3">送出第一筆模擬訂單，體驗零風險合約交易。</p>
-          </div>
+          <EmptyState
+            icon={Inbox}
+            title="尚無持倉"
+            description="送出第一筆模擬訂單，體驗零風險合約交易。"
+            className="mt-2"
+          />
         ) : (
           <ul className="mt-2 flex flex-col gap-2.5">
             {positions.map((position) => (

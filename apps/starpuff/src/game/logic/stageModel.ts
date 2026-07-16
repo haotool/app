@@ -20,6 +20,53 @@ export function shouldDropThrough(
   return down && jumpPressed && onOneWayPlatform;
 }
 
+// AABB 邊界（§43 掃掠背擋共用形狀）。
+export interface BoundsRect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+// 星星門到達判定（§43）：門/彈簧為 direct pair overlap，Phaser 4 實測間歇漏檢，
+// 本函式為必要幾何背擋。三重判定：站於門心右側（含 spawnGate 時已越門）、
+// 前後幀跨越門心 x（含等值，高速隧穿）、玩家 AABB 與門判定區相交（停在門區左半）。
+export function crossedGate(
+  prevX: number,
+  currX: number,
+  gateX: number,
+  player: BoundsRect,
+  zone: BoundsRect,
+): boolean {
+  if (currX >= gateX) return true;
+  if ((prevX - gateX) * (currX - gateX) <= 0) return true;
+  return (
+    player.right > zone.left &&
+    player.left < zone.right &&
+    player.top < zone.bottom &&
+    player.bottom > zone.top
+  );
+}
+
+// 彈簧掃掠命中（§43）：以前後幀掃掠 x 區間補判高速穿越；縱向以腳底帶（簧頂 -8 至
+// 簧底 +10）判定；重複觸發由 canSpringLaunch 的 lockedUntil 冷卻閘去重。
+export function springSweepHit(
+  prevX: number,
+  currX: number,
+  halfWidth: number,
+  bottom: number,
+  spring: BoundsRect,
+): boolean {
+  const sweptLeft = Math.min(prevX, currX) - halfWidth;
+  const sweptRight = Math.max(prevX, currX) + halfWidth;
+  return (
+    sweptRight > spring.left - 6 &&
+    sweptLeft < spring.right + 6 &&
+    bottom >= spring.top - 8 &&
+    bottom <= spring.bottom + 10
+  );
+}
+
 // 佈景密度（§32）：任一視窗寬內道具數上限（同屏 ≤6 驗證用）。
 export function maxDecorInWindow(xs: readonly number[], windowPx: number): number {
   const sorted = [...xs].sort((a, b) => a - b);

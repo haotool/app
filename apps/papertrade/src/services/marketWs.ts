@@ -3,6 +3,7 @@ import {
   WS_PING_INTERVAL_MS,
   WS_RECONNECT_BASE_MS,
   WS_RECONNECT_MAX_MS,
+  WS_SILENCE_TIMEOUT_MS,
 } from '../config/market';
 
 export type WsStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting';
@@ -31,6 +32,7 @@ export function createMarketWsClient(url: string): MarketWsClient {
   let reconnectAttempt = 0;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let silenceTimer: ReturnType<typeof setTimeout> | null = null;
   const topicHandlers = new Map<string, Set<MessageHandler>>();
   const statusHandlers = new Set<StatusHandler>();
 
@@ -65,6 +67,37 @@ export function createMarketWsClient(url: string): MarketWsClient {
     }
   }
 
+  function stopSilenceWatchdog(): void {
+    if (silenceTimer !== null) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
+  }
+
+  function resetSilenceWatchdog(): void {
+    stopSilenceWatchdog();
+    silenceTimer = setTimeout(handleSilence, WS_SILENCE_TIMEOUT_MS);
+  }
+
+  // 封鎖/斷網時 WS 常呈半開且不觸發 close 事件：以訊息靜默判定失聯並強制重連。
+  function handleSilence(): void {
+    silenceTimer = null;
+    if (ws === null) return;
+    const socket = ws;
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onclose = null;
+    ws = null;
+    socket.close();
+    stopPing();
+    if (topicHandlers.size === 0) {
+      setStatus('idle');
+      return;
+    }
+    setStatus('reconnecting');
+    scheduleReconnect();
+  }
+
   function handleOpen(): void {
     reconnectAttempt = 0;
     setStatus('connected');
@@ -73,9 +106,11 @@ export function createMarketWsClient(url: string): MarketWsClient {
       send({ op: 'subscribe', args: topics });
     }
     startPing();
+    resetSilenceWatchdog();
   }
 
   function handleMessage(event: MessageEvent): void {
+    resetSilenceWatchdog();
     let message: unknown;
     try {
       message = JSON.parse(String(event.data));
@@ -96,6 +131,7 @@ export function createMarketWsClient(url: string): MarketWsClient {
 
   function handleClose(): void {
     stopPing();
+    stopSilenceWatchdog();
     ws = null;
     if (topicHandlers.size === 0) {
       setStatus('idle');
@@ -113,11 +149,14 @@ export function createMarketWsClient(url: string): MarketWsClient {
     socket.onopen = handleOpen;
     socket.onmessage = handleMessage;
     socket.onclose = handleClose;
+    // 握手掛住同樣不觸發 close，於連線期即啟動靜默保護。
+    resetSilenceWatchdog();
   }
 
   function teardown(): void {
     clearReconnectTimer();
     stopPing();
+    stopSilenceWatchdog();
     reconnectAttempt = 0;
     if (ws !== null) {
       ws.onopen = null;

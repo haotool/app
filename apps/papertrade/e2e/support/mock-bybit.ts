@@ -19,6 +19,9 @@ export function tickerMessage(symbol: string, price = priceOf(symbol)): string {
       lowPrice24h: String(priceOf(symbol) * 0.95),
       turnover24h: '123456789',
       volume24h: '54321',
+      fundingRate: '0.0001',
+      nextFundingTime: String(Date.now() + 4 * 3_600_000),
+      openInterestValue: '32824881841.75',
     },
   });
 }
@@ -42,6 +45,30 @@ export function orderbookMessage(topic: string): string {
       u: 100,
     },
   });
+}
+
+export function publicTradeMessage(topic: string): string {
+  const symbol = topic.split('.').at(-1) ?? 'BTCUSDT';
+  const price = priceOf(symbol);
+  return JSON.stringify({
+    topic,
+    type: 'snapshot',
+    data: [{ i: `${symbol}-t1`, T: Date.now(), S: 'Buy', p: String(price), v: '0.5' }],
+  });
+}
+
+function recentTradeRestBody(url: URL): string {
+  const symbol = url.searchParams.get('symbol') ?? 'BTCUSDT';
+  const price = priceOf(symbol);
+  const now = Date.now();
+  const list = Array.from({ length: 10 }, (_, index) => ({
+    execId: `${symbol}-r${index}`,
+    price: String(price),
+    size: '0.25',
+    side: index % 2 === 0 ? 'Buy' : 'Sell',
+    time: String(now - index * 1000),
+  }));
+  return JSON.stringify({ retCode: 0, retMsg: 'OK', result: { category: 'linear', list } });
 }
 
 function klineRestBody(url: URL): string {
@@ -78,6 +105,14 @@ export async function mockBybit(page: Page): Promise<MockMarket> {
     });
   });
 
+  await page.route('**/v5/market/recent-trade*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: recentTradeRestBody(new URL(route.request().url())),
+    });
+  });
+
   let socket: WebSocketRoute | null = null;
   await page.routeWebSocket(/stream\.bybit\.com/, (ws) => {
     socket = ws;
@@ -93,6 +128,8 @@ export async function mockBybit(page: Page): Promise<MockMarket> {
           ws.send(tickerMessage(topic.slice('tickers.'.length)));
         } else if (topic.startsWith('orderbook.')) {
           ws.send(orderbookMessage(topic));
+        } else if (topic.startsWith('publicTrade.')) {
+          ws.send(publicTradeMessage(topic));
         }
       }
     });
