@@ -14,6 +14,7 @@ import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatFundingRate, formatPrice } from '../lib/format';
 import { CoinBadge } from '../components/CoinBadge';
+import { EmptyState } from '../components/EmptyState';
 import { FundingCountdown } from '../components/FundingCountdown';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook } from '../components/OrderBookPanel';
@@ -167,11 +168,12 @@ export function TradePage() {
           目前持倉 <span className="tabular-nums">({positions.length})</span>
         </h2>
         {positions.length === 0 ? (
-          <div className="mt-2 flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-4 py-8 text-center">
-            <Inbox size={26} className="text-text-3" aria-hidden />
-            <p className="text-label text-text-2">尚無持倉</p>
-            <p className="text-caption text-text-3">送出第一筆模擬訂單，體驗零風險合約交易。</p>
-          </div>
+          <EmptyState
+            icon={Inbox}
+            title="尚無持倉"
+            description="送出第一筆模擬訂單，體驗零風險合約交易。"
+            className="mt-2"
+          />
         ) : (
           <ul className="mt-2 flex flex-col gap-2.5">
             {positions.map((position) => (
