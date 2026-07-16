@@ -25,6 +25,7 @@ import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
+import { pendingCtaPhoto } from '@app/park-keeper/services/pendingCtaPhoto';
 import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import { UpdatePrompt } from '@app/park-keeper/components/UpdatePrompt';
@@ -266,6 +267,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     setCtaPhotoFile(file);
     setShowQuickEntry(true);
   }, []);
+
+  // 接手 SSG 殼（HomeShell）hydration 前開啟相機的照片，不落失使用者輸入。
+  useEffect(() => pendingCtaPhoto.subscribe(handleCtaPhoto), [handleCtaPhoto]);
 
   // 浮層（QuickEntry sheet / NavOverlay）開啟時背景 inert，
   // 阻絕背景互動與 a11y tree 露出（issue #725 modal 語意）。
