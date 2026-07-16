@@ -512,6 +512,42 @@ describe('QuickEntry - fullscreen 模式', () => {
     expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).toBeInTheDocument();
   });
 
+  it('sheet 模式具 modal dialog 語意且 Esc 觸發 onClose（issue #725）', async () => {
+    const onClose = vi.fn();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={onClose} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    const dialog = screen.getByRole('dialog', { name: i18n.t('add.title') });
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    // 開啟時焦點移入 dialog 容器（focus trap 起點）。
+    expect(document.activeElement).toBe(dialog);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('fullscreen 模式為頁面內容，不得帶 dialog 語意', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          mode="fullscreen"
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('initialPhotoFile 於開啟時直接帶入照片預覽（首屏 CTA 拍照直達流程）', async () => {
     const file = new File(['photo'], 'cta.jpg', { type: 'image/jpeg' });
 

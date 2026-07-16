@@ -345,9 +345,14 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     setShowQuickEntry(true);
   }, []);
 
+  // 浮層（QuickEntry sheet / NavOverlay）開啟時背景 inert，
+  // 阻絕背景互動與 a11y tree 露出（issue #725 modal 語意）。
+  const overlayOpen = showQuickEntry || navRecord !== null;
+
   return (
     <LayoutGroup>
       <div
+        inert={overlayOpen}
         className="h-screen w-full flex flex-col overflow-hidden font-sans"
         style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
@@ -500,35 +505,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           </AnimatePresence>
         </main>
 
-        {/* QuickEntry */}
-        <QuickEntry
-          theme={theme}
-          onSave={handleSave}
-          isVisible={showQuickEntry}
-          onClose={() => {
-            setShowQuickEntry(false);
-            // 清除 CTA 已拍照片，避免下次開啟面板誤帶舊照。
-            setCtaPhotoFile(null);
-          }}
-          cacheDurationDays={settings.cacheDurationDays}
-          initialPhotoFile={ctaPhotoFile}
-        />
-
-        {/* NavOverlay */}
-        <AnimatePresence>
-          {navRecord && (
-            <NavOverlay
-              record={navRecord}
-              theme={theme}
-              onClose={() => setNavRecord(null)}
-              cacheDurationDays={settings.cacheDurationDays}
-              onPhotoOffsetChange={(offset) => {
-                void handleUpdate(navRecord.id, { photoOffset: offset });
-              }}
-            />
-          )}
-        </AnimatePresence>
-
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
             避免 pb-safe-bottom 吃掉可見內容高度。 */}
@@ -638,26 +614,56 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           {/* Safe area spacer：獨立元素，不影響內容高度計算 */}
           <div className="pb-safe-bottom" />
         </nav>
-
-        {/* Toast (centered pill) */}
-        <AnimatePresence>
-          {toast && (
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
-              animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
-              className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
-              style={{
-                bottom: 'calc(6rem + env(safe-area-inset-bottom))',
-                backgroundColor: theme.colors.primary,
-                color: '#fff',
-              }}
-            >
-              <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* 浮層置於 inert 主容器之外：開啟時背景被隔離、浮層自身保持可互動 */}
+      {/* QuickEntry */}
+      <QuickEntry
+        theme={theme}
+        onSave={handleSave}
+        isVisible={showQuickEntry}
+        onClose={() => {
+          setShowQuickEntry(false);
+          // 清除 CTA 已拍照片，避免下次開啟面板誤帶舊照。
+          setCtaPhotoFile(null);
+        }}
+        cacheDurationDays={settings.cacheDurationDays}
+        initialPhotoFile={ctaPhotoFile}
+      />
+
+      {/* NavOverlay */}
+      <AnimatePresence>
+        {navRecord && (
+          <NavOverlay
+            record={navRecord}
+            theme={theme}
+            onClose={() => setNavRecord(null)}
+            cacheDurationDays={settings.cacheDurationDays}
+            onPhotoOffsetChange={(offset) => {
+              void handleUpdate(navRecord.id, { photoOffset: offset });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toast (centered pill) */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+            className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
+            style={{
+              bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+              backgroundColor: theme.colors.primary,
+              color: '#fff',
+            }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <UpdatePrompt />
     </LayoutGroup>
   );

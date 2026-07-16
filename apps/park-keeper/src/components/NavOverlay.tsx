@@ -3,7 +3,7 @@
  * 佈局：MiniMap 全幅背景層 → 上 55% 羅盤盤面（玻璃圓盤浮層）→ 下 45% 資訊卡。
  * 主題差異化以 token＋樣式參數實現（COMPASS_THEME_STYLES），不 fork 元件。
  */
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   ArrowUp,
@@ -48,6 +48,7 @@ import {
   ARRIVED_BORDER,
   ARRIVED_GLOW,
 } from '@app/park-keeper/config/colors';
+import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -216,6 +217,17 @@ export default function NavOverlay({
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   // 照片位置調整模式：盤面暫時淡出，地圖層顯示可拖曳照片（持久化鏈不變）。
   const [photoEditMode, setPhotoEditMode] = useState(false);
+
+  // Modal a11y：dialog 語意＋focus trap＋Esc（issue #725 對齊 PhotoViewerModal 模式）。
+  // Esc 於照片檢視器開啟時讓位（其自有 Esc 關閉），以 ref 鏡像避免同一事件內讀到舊 state。
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const showPhotoModalRef = useRef(false);
+  useEffect(() => {
+    showPhotoModalRef.current = showPhotoModal;
+  }, [showPhotoModal]);
+  useModalDialog(dialogRef, true, () => {
+    if (!showPhotoModalRef.current) onClose();
+  });
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -284,10 +296,15 @@ export default function NavOverlay({
 
   return (
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('nav.dialog_label')}
+      tabIndex={-1}
       initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.05 }}
-      className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
+      className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh outline-none"
       style={{ backgroundColor: theme.colors.background }}
     >
       {/* 0. Map background layer。照片平時不上地圖（資訊卡 96px 縮圖為唯一焦點）；
@@ -596,6 +613,9 @@ export default function NavOverlay({
                         exit={{ opacity: 0, y: 4, scale: 0.92 }}
                         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                         onClick={onClose}
+                        // 與頂部 X 的「關閉導航」區分 accessible name，
+                        // 消除 SR/語音控制歧義與 e2e strict-mode 衝突（issue #725 P2）。
+                        aria-label={t('nav.arrived_close_cta')}
                         className="mt-1 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
                         style={{ backgroundColor: ARRIVED_COLOR }}
                       >

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
 import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
+import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
 
@@ -102,6 +103,10 @@ export default function QuickEntry({
   const [locationHeading, setLocationHeading] = useState<number | null>(null);
   const watchId = useRef<number | null>(null);
   const { heading: parkedHeading } = useDeviceOrientation({ enabled: isVisible });
+
+  // Sheet 模式為 modal：dialog 語意＋focus trap＋Esc（fullscreen 為 /add 頁面內容，不套用）。
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useModalDialog(sheetRef, isVisible && !isFullscreen, onClose);
 
   const stopTracking = useCallback(() => {
     if (watchId.current !== null && navigator.geolocation) {
@@ -527,11 +532,16 @@ export default function QuickEntry({
             className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
           />
           <motion.div
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('add.title')}
+            tabIndex={-1}
             variants={panelVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto overflow-hidden border-t border-white/10"
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto overflow-hidden border-t border-white/10 outline-none"
             style={{ backgroundColor: theme.colors.background }}
           >
             <div
