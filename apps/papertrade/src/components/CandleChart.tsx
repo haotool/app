@@ -82,6 +82,7 @@ export function CandleChart({ bars, seriesKey, indicators }: CandleChartProps) {
     const container = containerRef.current;
     if (container === null) return undefined;
 
+    const lineSeries = lineSeriesRef.current;
     const longColor = readToken('--color-long');
     const shortColor = readToken('--color-short');
     const chart = createChart(container, {
@@ -135,7 +136,7 @@ export function CandleChart({ bars, seriesKey, indicators }: CandleChartProps) {
       handlesRef.current = null;
       volumeMapperRef.current = null;
       renderedRef.current = null;
-      lineSeriesRef.current.clear();
+      lineSeries.clear();
     };
   }, []);
 
