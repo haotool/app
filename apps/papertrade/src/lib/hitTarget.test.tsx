@@ -148,6 +148,25 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expectNoViolations();
   });
 
+  it('pair selector with a non-empty query (clear button rendered) passes', async () => {
+    const user = userEvent.setup();
+    renderRoute('/trade');
+
+    await user.click(screen.getByRole('button', { name: /切換交易對/ }));
+    await user.type(screen.getByRole('searchbox', { name: '搜尋交易對' }), 'btc');
+    expect(screen.getByRole('button', { name: '清除搜尋' })).toBeInTheDocument();
+    expectNoViolations();
+  });
+
+  it('markets page with a non-empty query (clear button rendered) passes', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    await user.type(screen.getByRole('searchbox', { name: '搜尋交易對' }), 'btc');
+    expect(screen.getByRole('button', { name: '清除搜尋' })).toBeInTheDocument();
+    expectNoViolations();
+  });
+
   it('tp/sl, trailing and close sheets pass', async () => {
     const user = userEvent.setup();
     renderRoute('/trade');
