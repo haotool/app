@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import clsx from 'clsx';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { BottomSheet } from '../BottomSheet';
 import { CoinBadge } from '../CoinBadge';
 import { SYMBOL_META, type MarketSymbol } from '../../config/market';
@@ -65,24 +65,25 @@ function PairRow({
 
 export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSelectorSheetProps) {
   const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const visibleSymbols = filterSymbolsByQuery(query);
-
-  // 關閉時重置搜尋，避免父層保持掛載時殘留上次查詢。
-  const handleClose = () => {
-    setQuery('');
-    onClose();
-  };
 
   const handlePick = (symbol: MarketSymbol) => {
     onSelect(symbol);
-    handleClose();
+    onClose();
+  };
+
+  const handleClearQuery = () => {
+    setQuery('');
+    inputRef.current?.focus();
   };
 
   return (
-    <BottomSheet open={open} title="選擇交易對" onClose={handleClose}>
-      <label className="mb-2 flex h-11 items-center gap-2 rounded-control border border-border bg-surface-2 px-3">
+    <BottomSheet open={open} title="選擇交易對" onClose={onClose}>
+      <label className="mb-2 flex h-11 items-center gap-2 rounded-control border border-border bg-surface-2 pl-3">
         <Search size={16} className="shrink-0 text-text-3" aria-hidden />
         <input
+          ref={inputRef}
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -90,6 +91,18 @@ export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSel
           aria-label="搜尋交易對"
           className="min-h-11 w-full bg-transparent text-body text-text outline-none placeholder:text-text-3"
         />
+        {query !== '' ? (
+          <button
+            type="button"
+            onClick={handleClearQuery}
+            aria-label="清除搜尋"
+            className="flex size-11 shrink-0 items-center justify-center text-text-3 active:text-text"
+          >
+            <X size={16} aria-hidden />
+          </button>
+        ) : (
+          <span className="w-3 shrink-0" aria-hidden />
+        )}
       </label>
       {visibleSymbols.length === 0 ? (
         <p className="py-8 text-center text-label text-text-3">找不到符合的交易對</p>

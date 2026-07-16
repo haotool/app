@@ -12,9 +12,9 @@ import {
 } from '../config/market';
 import { useKlines } from '../hooks/useKlines';
 import { useMarketStore } from '../stores/marketStore';
-import { formatCompact, formatFundingRate, formatPrice, formatSignedPercent } from '../lib/format';
+import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
 import { CandleChart } from '../components/CandleChart';
-import { FundingCountdown } from '../components/FundingCountdown';
+import { FundingRateBadge } from '../components/FundingRateBadge';
 import { OrderBookPanel } from '../components/OrderBookPanel';
 import { RecentTrades } from '../components/RecentTrades';
 import { PriceFlash } from '../components/PriceFlash';
@@ -74,24 +74,11 @@ function SymbolHeader({
       <dl className="mt-2 flex gap-4 overflow-x-auto text-caption text-text-3">
         <div className="flex min-w-40 shrink-0 gap-1">
           <dt>資金費率</dt>
-          <dd className="flex gap-1 tabular-nums">
-            <span
-              className={clsx(
-                ticker?.fundingRate === undefined
-                  ? 'text-text-2'
-                  : ticker.fundingRate >= 0
-                    ? 'text-long'
-                    : 'text-short',
-              )}
-            >
-              {ticker?.fundingRate !== undefined ? formatFundingRate(ticker.fundingRate) : '--'}
-            </span>
-            <span className="text-text-2">
-              <FundingCountdown
-                nextFundingTime={ticker?.nextFundingTime}
-                className="tabular-nums"
-              />
-            </span>
+          <dd>
+            <FundingRateBadge
+              rate={ticker?.fundingRate}
+              nextFundingTime={ticker?.nextFundingTime}
+            />
           </dd>
         </div>
         <div className="flex min-w-20 shrink-0 gap-1">

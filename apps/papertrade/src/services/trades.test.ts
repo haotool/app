@@ -85,8 +85,34 @@ describe('mergeTrades', () => {
     const incoming: PublicTrade[] = [{ id: 'e2', time: 200, side: 'sell', price: 100.5, size: 9 }];
 
     const merged = mergeTrades(restFilled, incoming, 2);
-    expect(merged.map((trade) => trade.id)).toEqual(['e2', 'e1']);
-    expect(merged[0]?.size).toBe(9);
+    expect(merged.map((trade) => trade.id)).toEqual(['e1', 'e2']);
+    expect(merged[1]?.size).toBe(9);
+  });
+
+  it('keeps newest-first order when the WS re-pushes an older execId', () => {
+    // 重連窗口下 WS 可能重推較舊成交，不得把舊成交搬到列表頭。
+    const current: PublicTrade[] = [
+      { id: 'n1', time: 400, side: 'buy', price: 102, size: 1 },
+      { id: 'o1', time: 100, side: 'sell', price: 99, size: 1 },
+    ];
+    const incoming: PublicTrade[] = [{ id: 'o2', time: 200, side: 'buy', price: 100, size: 1 }];
+
+    const merged = mergeTrades(current, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['n1', 'o2', 'o1']);
+  });
+
+  it('keeps the original relative order for trades sharing the same timestamp', () => {
+    const current: PublicTrade[] = [
+      { id: 'b2', time: 200, side: 'sell', price: 100, size: 2 },
+      { id: 'b1', time: 200, side: 'buy', price: 100, size: 1 },
+    ];
+    const incoming: PublicTrade[] = [
+      { id: 'c1', time: 200, side: 'buy', price: 101, size: 1 },
+      { id: 'c2', time: 200, side: 'sell', price: 101, size: 2 },
+    ];
+
+    const merged = mergeTrades(current, incoming, 10);
+    expect(merged.map((trade) => trade.id)).toEqual(['c2', 'c1', 'b2', 'b1']);
   });
 });
 

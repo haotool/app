@@ -51,7 +51,11 @@ export function mergeTrades(
   const next = [...incoming].reverse();
   const seen = new Set(next.map((trade) => trade.id));
   const deduped = current.filter((trade) => !seen.has(trade.id));
-  return next.concat(deduped).slice(0, limit);
+  // 重連窗口 WS 可能重推較舊成交：合併後按 time 降冪穩定排序，維持新到舊不變量。
+  return next
+    .concat(deduped)
+    .sort((a, b) => b.time - a.time)
+    .slice(0, limit);
 }
 
 // REST 回填墊在既有即時成交之後，同 id 以即時推送為準。

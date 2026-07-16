@@ -55,6 +55,23 @@ describe('PairSelectorSheet', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('shows a clear button only while a query exists and clears back to the full list', async () => {
+    const user = userEvent.setup();
+    render(<PairSelectorSheet open selected="BTCUSDT" onClose={vi.fn()} onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole('button', { name: '清除搜尋' })).not.toBeInTheDocument();
+
+    const input = screen.getByRole('searchbox', { name: '搜尋交易對' });
+    await user.type(input, 'eth');
+    expect(screen.queryByRole('button', { name: /BTC/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '清除搜尋' }));
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+    expect(screen.getByRole('button', { name: /BTC/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '清除搜尋' })).not.toBeInTheDocument();
+  });
+
   it('re-renders only the ticked symbol row on a single ticker update', () => {
     render(<PairSelectorSheet open selected="BTCUSDT" onClose={vi.fn()} onSelect={vi.fn()} />);
 

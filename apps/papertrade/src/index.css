@@ -219,7 +219,7 @@
   animation: toast-in-kf 240ms cubic-bezier(0.32, 0.72, 0.24, 1);
 }
 
-/* 持倉卡入場回饋：成交後新卡淡入上移一次，強化下單成功感。 */
+/* 持倉卡入場回饋：卡片任一掛載（含成交新增、返回頁面）皆重播一次淡入上移。 */
 .card-in {
   animation: card-in-kf 240ms ease-out;
 }
