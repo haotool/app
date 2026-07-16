@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
+// Leaflet CSS 隨 lazy chunk 載入，移出 index.html render-blocking 路徑（unpkg 第三方請求一併移除）。
+import 'leaflet/dist/leaflet.css';
 import { motion, useMotionValue } from 'motion/react';
 import type { ThemeConfig } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';

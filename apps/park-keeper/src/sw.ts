@@ -49,11 +49,23 @@ async function getTileCacheDays(): Promise<number> {
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
+// /about 為唯一真 SSG 內容頁：導覽必須綁定其精確預快取 HTML。
+// 若回落 index.html（首頁殼）會使 client 以 /about 樹 hydrate 首頁 HTML，
+// 觸發 React 418（issue #725 P0；e2e 因 serviceWorkers block 曾漏攔）。
+// Workbox 以 pathname+search 比對，pattern 需容忍任意 querystring。
+const ABOUT_NAV_PATTERN = new RegExp(`^${import.meta.env.BASE_URL}about/?(?:\\?.*)?$`);
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL(`${import.meta.env.BASE_URL}about/index.html`), {
+    allowlist: [ABOUT_NAV_PATTERN],
+  }),
+);
+
 const navigationHandler = createHandlerBoundToURL(`${import.meta.env.BASE_URL}index.html`);
 registerRoute(
   new NavigationRoute(navigationHandler, {
     denylist: [
       /^\/api/,
+      ABOUT_NAV_PATTERN,
       /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/,
       /\.(?:js|css|json|woff|woff2)$/,
     ],

@@ -130,7 +130,8 @@ describe('PhotoViewerModal', () => {
     expect(getImage().style.transform).toBe('scale(1.25)');
 
     act(() => {
-      fireEvent.keyDown(window, { key: 'Escape' });
+      // useModalDialog 掛 document listener：以 document 為事件目標（真實鍵盤事件會冒泡經過）。
+      fireEvent.keyDown(document, { key: 'Escape' });
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });

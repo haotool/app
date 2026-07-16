@@ -16,7 +16,6 @@ import {
   Plus,
   Settings as SettingsIcon,
   Car,
-  Camera,
   Search,
   List as ListIcon,
   AlertTriangle,
@@ -26,13 +25,18 @@ import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
+import { pendingCtaPhoto } from '@app/park-keeper/services/pendingCtaPhoto';
+import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 import { UpdatePrompt } from '@app/park-keeper/components/UpdatePrompt';
 import NavOverlay from '@app/park-keeper/components/NavOverlay';
 import SettingsTab from '@app/park-keeper/components/SettingsTab';
 import BrandLogo from '@app/park-keeper/components/BrandLogo';
 import RecordCard from '@app/park-keeper/components/RecordCard';
+import PickupHeroCard from '@app/park-keeper/components/PickupHeroCard';
+import QuickCaptureCta from '@app/park-keeper/components/QuickCaptureCta';
 import ListSkeleton from '@app/park-keeper/components/ListSkeleton';
+import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 import {
   NAV_CONTENT_H,
   NAV_ICON_SIZE,
@@ -74,6 +78,21 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
+/** 教學入口：對比 ≥4.5:1（text @0.8）＋觸控熱區 ≥44×44；載入態與內容態共用。 */
+function GuideEntryLink({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="text-center">
+      <Link
+        to="/guide"
+        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+        style={{ color }}
+      >
+        {label}
+      </Link>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // HOME PAGE
 // ---------------------------------------------------------------------------
@@ -82,7 +101,7 @@ interface HomeProps {
 }
 
 export default function Home({ initialTab = 'list' }: HomeProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
   const activePageVariants = shouldReduceMotion ? reducedPageVariants : pageVariants;
   const miniMapText = {
@@ -134,7 +153,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       }
       setSettings(savedSettings);
       setSettingsLoaded(true);
-      void i18n.changeLanguage(savedSettings.language);
       // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
       // 清理失敗（含 getRecords 拋錯）不得阻斷啟動；儲存層可用性由 loadRecords 錯誤路徑呈現。
       try {
@@ -146,7 +164,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       setIsLoading(false);
     };
     void init();
-  }, [i18n, loadRecords]);
+  }, [loadRecords]);
 
   // 前景喚醒與 BFCache 還原觸發清理（iOS 無 Periodic Background Sync，見 research §C8）。
   useEffect(() => {
@@ -176,21 +194,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     };
   }, [settings.cacheDurationDays, loadRecords]);
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary', theme.colors.primary);
-    document.documentElement.style.setProperty('--color-bg', theme.colors.background);
-    document.documentElement.style.setProperty('--color-surface', theme.colors.surface);
-    document.documentElement.style.setProperty('--color-text', theme.colors.text);
-    document.documentElement.style.setProperty('--color-accent', theme.colors.accent);
-    document.documentElement.style.setProperty('--color-secondary', theme.colors.secondary);
-    document.documentElement.style.setProperty('--color-text-muted', theme.colors.textMuted);
-
-    const hex = theme.colors.primary.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    document.documentElement.style.setProperty('--color-primary-rgb', `${r}, ${g}, ${b}`);
-  }, [theme]);
+  useThemeTokens(theme);
 
   useEffect(() => {
     // 設定載入前不得送出預設值，否則會覆寫 SW 已持久化的使用者天數。
@@ -270,10 +274,28 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     );
   });
 
+  // 首屏 IA 狀態驅動雙模式（design brief 裁決）：現役記錄 = 最新一筆（getRecords 依時間降冪）。
+  const latestRecord = records[0] ?? null;
+
+  const handleCtaPhoto = useCallback((file: File) => {
+    setCtaPhotoFile(file);
+    setShowQuickEntry(true);
+  }, []);
+
+  // 接手 SSG 殼（HomeShell）hydration 前開啟相機的照片，不落失使用者輸入。
+  useEffect(() => pendingCtaPhoto.subscribe(handleCtaPhoto), [handleCtaPhoto]);
+
+  // 浮層（QuickEntry sheet / NavOverlay）開啟時背景 inert，
+  // 阻絕背景互動與 a11y tree 露出（issue #725 modal 語意）。
+  // aria-hidden＋pointer-events-none 為 inert 未支援環境（Safari <15.5）的雙保險。
+  const overlayOpen = showQuickEntry || navRecord !== null;
+
   return (
     <LayoutGroup>
       <div
-        className="h-screen w-full flex flex-col overflow-hidden font-sans"
+        inert={overlayOpen}
+        aria-hidden={overlayOpen || undefined}
+        className={`h-screen w-full flex flex-col overflow-hidden font-sans ${overlayOpen ? 'pointer-events-none' : ''}`}
         style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
         {/* Premium Header */}
@@ -334,7 +356,21 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40"
               >
                 {isLoading ? (
-                  <ListSkeleton theme={theme} />
+                  // 載入態與 SSG 殼（HomeShell）同構：hero CTA＋教學入口原位保留，
+                  // 僅列表區顯示骨架——消除水合後閃爍與二次 LCP 候選（issue #725 審查收斂）。
+                  <>
+                    <div className="max-w-md mx-auto space-y-5 mb-5">
+                      <QuickCaptureCta
+                        theme={theme}
+                        variant="hero"
+                        label={t('home.quick_record_cta')}
+                        hint={t('record.photo_tap')}
+                        onPhotoSelected={handleCtaPhoto}
+                      />
+                      <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
+                    </div>
+                    <ListSkeleton theme={theme} />
+                  </>
                 ) : (
                   <div className="max-w-md mx-auto space-y-5">
                     {storageUnavailable && (
@@ -350,70 +386,54 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         <span>{t('error.storage_unavailable')}</span>
                       </div>
                     )}
-                    {/* 首屏拍照 hero：iOS 捷徑 webapp:// 只開首頁，label 直包 capture input，
-                        一 tap 即開系統相機；拍照(1)→樓層(=儲存)(2) 共 2 taps。 */}
-                    <div className="space-y-1.5">
-                      <label
-                        data-testid="quick-record-cta"
-                        className="flex flex-col items-center justify-center gap-3 w-full min-h-[30dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
-                        style={{
-                          backgroundColor: theme.colors.primary,
-                          boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
-                        }}
-                      >
-                        <Camera size={44} strokeWidth={2.25} />
-                        <span className="text-lg font-black tracking-wide">
-                          {t('home.quick_record_cta')}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
-                          {t('record.photo_tap')}
-                        </span>
-                        <input
-                          data-testid="quick-record-cta-input"
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setCtaPhotoFile(file);
-                              setShowQuickEntry(true);
-                            }
-                            e.target.value = '';
-                          }}
+                    {/* 首屏 IA 狀態驅動雙模式（design brief 裁決）：
+                        有現役記錄 → 取車 hero 卡置頂 + 次要拍照 CTA；
+                        無記錄 → 拍照 CTA hero（≥30dvh）置頂 + 空狀態 + 教學入口。 */}
+                    {latestRecord ? (
+                      <>
+                        <PickupHeroCard
+                          record={latestRecord}
+                          theme={theme}
+                          onNavigate={setNavRecord}
                         />
-                      </label>
-                      <div className="text-center">
-                        <Link
-                          to="/guide"
-                          className="text-[11px] font-bold opacity-40 underline underline-offset-2 hover:opacity-60 transition-opacity"
-                        >
-                          {t('guide.entry')}
-                        </Link>
-                      </div>
-                    </div>
-                    {filteredRecords.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-20 opacity-10">
-                        <Car size={60} strokeWidth={1.5} />
-                        <p className="font-black text-sm uppercase mt-4 tracking-[0.2em]">
+                        <QuickCaptureCta
+                          theme={theme}
+                          variant="compact"
+                          label={t('home.quick_record_cta')}
+                          hint={t('record.photo_tap')}
+                          onPhotoSelected={handleCtaPhoto}
+                        />
+                      </>
+                    ) : (
+                      <QuickCaptureCta
+                        theme={theme}
+                        variant="hero"
+                        label={t('home.quick_record_cta')}
+                        hint={t('record.photo_tap')}
+                        onPhotoSelected={handleCtaPhoto}
+                      />
+                    )}
+                    <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
+                    {records.length === 0 && (
+                      <div className="flex flex-col items-center justify-center pt-12 pb-6 text-center">
+                        <Car size={56} strokeWidth={1.5} className="opacity-20" aria-hidden />
+                        <p className="font-black text-sm uppercase mt-4 tracking-[0.2em] opacity-70">
                           {t('record.empty')}
                         </p>
                       </div>
-                    ) : (
-                      filteredRecords.map((r) => (
-                        <RecordCard
-                          key={r.id}
-                          record={r}
-                          theme={theme}
-                          onDelete={handleDelete}
-                          onUpdate={handleUpdate}
-                          onNavigate={setNavRecord}
-                          cacheDurationDays={settings.cacheDurationDays}
-                          miniMapText={miniMapText}
-                        />
-                      ))
                     )}
+                    {filteredRecords.map((r) => (
+                      <RecordCard
+                        key={r.id}
+                        record={r}
+                        theme={theme}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                        onNavigate={setNavRecord}
+                        cacheDurationDays={settings.cacheDurationDays}
+                        miniMapText={miniMapText}
+                      />
+                    ))}
                   </div>
                 )}
               </motion.div>
@@ -431,35 +451,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             )}
           </AnimatePresence>
         </main>
-
-        {/* QuickEntry */}
-        <QuickEntry
-          theme={theme}
-          onSave={handleSave}
-          isVisible={showQuickEntry}
-          onClose={() => {
-            setShowQuickEntry(false);
-            // 清除 CTA 已拍照片，避免下次開啟面板誤帶舊照。
-            setCtaPhotoFile(null);
-          }}
-          cacheDurationDays={settings.cacheDurationDays}
-          initialPhotoFile={ctaPhotoFile}
-        />
-
-        {/* NavOverlay */}
-        <AnimatePresence>
-          {navRecord && (
-            <NavOverlay
-              record={navRecord}
-              theme={theme}
-              onClose={() => setNavRecord(null)}
-              cacheDurationDays={settings.cacheDurationDays}
-              onPhotoOffsetChange={(offset) => {
-                void handleUpdate(navRecord.id, { photoOffset: offset });
-              }}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
@@ -525,7 +516,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   boxShadow: `${theme.colors.primary}66 0px 8px 25px`,
                 }}
               >
-                <Plus size={32} stroke="#fff" strokeWidth={3} />
+                <Plus size={32} stroke={ON_PRIMARY_COLOR} strokeWidth={3} />
               </motion.button>
             </div>
 
@@ -570,26 +561,56 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           {/* Safe area spacer：獨立元素，不影響內容高度計算 */}
           <div className="pb-safe-bottom" />
         </nav>
-
-        {/* Toast (centered pill) */}
-        <AnimatePresence>
-          {toast && (
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
-              animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
-              className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
-              style={{
-                bottom: 'calc(6rem + env(safe-area-inset-bottom))',
-                backgroundColor: theme.colors.primary,
-                color: '#fff',
-              }}
-            >
-              <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* 浮層置於 inert 主容器之外：開啟時背景被隔離、浮層自身保持可互動 */}
+      {/* QuickEntry */}
+      <QuickEntry
+        theme={theme}
+        onSave={handleSave}
+        isVisible={showQuickEntry}
+        onClose={() => {
+          setShowQuickEntry(false);
+          // 清除 CTA 已拍照片，避免下次開啟面板誤帶舊照。
+          setCtaPhotoFile(null);
+        }}
+        cacheDurationDays={settings.cacheDurationDays}
+        initialPhotoFile={ctaPhotoFile}
+      />
+
+      {/* NavOverlay */}
+      <AnimatePresence>
+        {navRecord && (
+          <NavOverlay
+            record={navRecord}
+            theme={theme}
+            onClose={() => setNavRecord(null)}
+            cacheDurationDays={settings.cacheDurationDays}
+            onPhotoOffsetChange={(offset) => {
+              void handleUpdate(navRecord.id, { photoOffset: offset });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toast (centered pill) */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
+            className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
+            style={{
+              bottom: 'calc(6rem + env(safe-area-inset-bottom))',
+              backgroundColor: theme.colors.primary,
+              color: ON_PRIMARY_COLOR,
+            }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <UpdatePrompt />
     </LayoutGroup>
   );

@@ -56,7 +56,8 @@ describe('constants', () => {
       expect(DEFAULT_SETTINGS.theme).toBe('minimalist');
       expect(DEFAULT_SETTINGS.language).toBe('zh-TW');
       expect(DEFAULT_SETTINGS.cacheDurationDays).toBe(CACHE_DAYS.DEFAULT);
-      expect(DEFAULT_SETTINGS.notificationsEnabled).toBe(true);
+      // notificationsEnabled 死設定已移除（issue #725 P2，S3 註記技術債）。
+      expect(DEFAULT_SETTINGS).not.toHaveProperty('notificationsEnabled');
     });
   });
 

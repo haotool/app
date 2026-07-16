@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/types';
 import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { setAppLanguage } from '@app/park-keeper/services/i18n';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 
 // 滑桿拖曳防抖：停止拖曳後才執行單次清理，避免每 tick 全掃 IndexedDB。
@@ -50,7 +51,7 @@ export default function SettingsTab({
   updateSettings: (s: AppSettings) => void;
   theme: ThemeConfig;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const versionInfo = getVersionInfo();
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,7 +63,8 @@ export default function SettingsTab({
   }, []);
 
   const handleLanguageChange = (lang: LanguageType) => {
-    void i18n.changeLanguage(lang);
+    // 單一寫入路徑：setAppLanguage 寫 i18n＋localStorage（還原 SSOT），IDB 副本同批保存。
+    setAppLanguage(lang);
     updateSettings({ ...settings, language: lang });
   };
 
@@ -137,10 +139,11 @@ export default function SettingsTab({
         <SettingGroup icon={Globe} title={t('settings.language')} theme={theme}>
           <LayoutGroup>
             <div className="bg-black/5 rounded-[20px] p-1.5 flex gap-1 relative shadow-inner">
+              {/* 以語言原生名稱為唯一識別（不用 emoji 旗幟：SR 朗讀不一致且與語言非一對一）。 */}
               {[
-                { id: 'en', flag: '🇺🇸', name: 'English' },
-                { id: 'zh-TW', flag: '🇹🇼', name: '繁體中文' },
-                { id: 'ja', flag: '🇯🇵', name: '日本語' },
+                { id: 'en', name: 'English' },
+                { id: 'zh-TW', name: '繁體中文' },
+                { id: 'ja', name: '日本語' },
               ].map((lang) => {
                 const isActive = settings.language === lang.id;
                 return (
@@ -158,8 +161,7 @@ export default function SettingsTab({
                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <span className="text-xl mb-1 filter drop-shadow-sm">{lang.flag}</span>
-                    <span className="text-[10px] font-bold">{lang.name}</span>
+                    <span className="text-sm font-bold">{lang.name}</span>
                   </button>
                 );
               })}

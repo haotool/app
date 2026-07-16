@@ -22,8 +22,13 @@ const resources = {
       'record.no_location': 'No location recorded',
       'record.processing': 'PROCESSING...',
       'record.clear_plate': 'Clear plate number',
+      'record.remove_photo': 'Remove photo',
       'record.zone_placeholder': 'Zone...',
+      'record.plate_unset': 'No plate',
       'home.quick_record_cta': 'Quick Record',
+      'home.pickup_label': 'Pick up my car',
+      'home.pickup_hero_aria': 'Navigate to {{floor}} to pick up your car',
+      'home.just_now': 'Just now',
       'add.title': 'Quick Record',
       'add.summary_hint': 'Your parking spot has been saved.',
       'action.back_home': 'Back to Home',
@@ -70,6 +75,11 @@ const resources = {
       'record.navigate': 'NAVIGATE',
       'record.saving': 'Saving...',
       'error.image': 'Error processing image.',
+      'error.photo_cancelled': 'Photo not captured',
+      'error.photo_source_help':
+        "Retake the photo or pick one from your library. If the camera won't open, check camera permission in system settings.",
+      'action.retake_photo': 'Retake photo',
+      'action.dismiss': 'Got it',
       'error.location_denied': 'Location access denied. Please enable GPS to record parking spot.',
       'error.storage_unavailable': 'Unable to access local storage. Some features may not work.',
       'action.retry': 'Enable Location',
@@ -101,11 +111,10 @@ const resources = {
         'Parking records (plate number, floor, photos, coordinates, etc.) are for your personal use only and remain fully under your control. You can clear all records anytime in Settings.',
       'about.privacy_p3':
         'If you use the GPS location feature, location data is only used within the app and never transmitted to third parties.',
-      'nav.arrived': 'ARRIVED',
-      'nav.indoor_mode': 'INDOOR MODE',
-      'nav.steps': 'STEPS',
-      'nav.hold_flat': 'Hold Phone Flat',
-      'nav.adjust_bearing': 'Turn',
+      'nav.arrived': 'Arrived',
+      'nav.indoor_mode': 'Indoor Mode',
+      'nav.steps': 'Steps',
+      'nav.hold_flat': 'Hold your phone flat',
       'nav.straight': 'Go Straight',
       'nav.slight_right': 'Bear Right',
       'nav.turn_right': 'Turn Right',
@@ -113,13 +122,12 @@ const resources = {
       'nav.turn_left': 'Turn Left',
       'nav.unit_meters': 'Meters',
       'nav.close_nav': 'Close Navigation',
-      'nav.phone_top': 'PHONE TOP',
-      'nav.guide_hint': 'Align phone with arrow',
+      'nav.dialog_label': 'Compass navigation',
+      'nav.arrived_close_cta': 'Arrived, close navigation',
       'compass.n': 'N',
       'compass.e': 'E',
       'compass.s': 'S',
       'compass.w': 'W',
-      'nav.declination': 'MAG DEC',
       'nav.gps_waiting': 'Locating...',
       'nav.gps_label': 'GPS',
       'nav.enable_compass_title': 'Enable Compass',
@@ -132,8 +140,8 @@ const resources = {
       'nav.permission_retry': 'Retry',
       'nav.calibrate_title': 'Compass Needs Calibration',
       'nav.calibrate_desc': 'Wave your phone in a figure-8 motion until accuracy recovers.',
-      'nav.aligned': 'THIS WAY',
-      'nav.wedge_target': 'Target bearing',
+      'nav.calibrate_recheck': 'Check accuracy again',
+      'nav.aligned': 'This Way',
       'photo.viewer_label': 'Photo viewer',
       'photo.zoom_in': 'Zoom in',
       'photo.zoom_out': 'Zoom out',
@@ -179,8 +187,13 @@ const resources = {
       'record.no_location': '未記錄位置',
       'record.processing': '處理中...',
       'record.clear_plate': '清空車牌',
+      'record.remove_photo': '移除照片',
       'record.zone_placeholder': '自訂樓層/區域...',
+      'record.plate_unset': '未填車號',
       'home.quick_record_cta': '快速記錄',
+      'home.pickup_label': '取車',
+      'home.pickup_hero_aria': '導航前往 {{floor}} 取車',
+      'home.just_now': '剛剛',
       'add.title': '快速記錄',
       'add.summary_hint': '停車位置已儲存。',
       'action.back_home': '返回首頁',
@@ -225,6 +238,11 @@ const resources = {
       'record.navigate': '導航',
       'record.saving': '正在儲存...',
       'error.image': '圖片處理失敗',
+      'error.photo_cancelled': '未完成拍照',
+      'error.photo_source_help':
+        '可重新拍照或改從相簿選擇；若相機無法開啟，請檢查系統設定中的相機權限。',
+      'action.retake_photo': '重新拍照',
+      'action.dismiss': '知道了',
       'error.location_denied': '無法取得位置，請啟用 GPS 以記錄車位。',
       'error.storage_unavailable': '無法讀取本機資料庫，部分功能可能無法使用。',
       'action.retry': '啟用定位',
@@ -256,7 +274,6 @@ const resources = {
       'nav.indoor_mode': '室內模式',
       'nav.steps': '步數',
       'nav.hold_flat': '請平放手機',
-      'nav.adjust_bearing': '校準方向',
       'nav.straight': '保持直行',
       'nav.slight_right': '稍微右轉',
       'nav.turn_right': '向右轉',
@@ -264,13 +281,12 @@ const resources = {
       'nav.turn_left': '向左轉',
       'nav.unit_meters': '公尺',
       'nav.close_nav': '關閉導航',
-      'nav.phone_top': '手機上方',
-      'nav.guide_hint': '對準箭頭方向前進',
+      'nav.dialog_label': '羅盤導航',
+      'nav.arrived_close_cta': '已抵達，關閉導航',
       'compass.n': '北',
       'compass.e': '東',
       'compass.s': '南',
       'compass.w': '西',
-      'nav.declination': '磁偏補正',
       'nav.gps_waiting': '定位中...',
       'nav.gps_label': 'GPS',
       'nav.enable_compass_title': '啟用羅盤',
@@ -281,8 +297,8 @@ const resources = {
       'nav.permission_retry': '重試',
       'nav.calibrate_title': '羅盤需要校準',
       'nav.calibrate_desc': '請以 8 字形揮動手機，直到精度恢復。',
+      'nav.calibrate_recheck': '重新偵測精度',
       'nav.aligned': '就是這個方向',
-      'nav.wedge_target': '目標方位',
       'photo.viewer_label': '照片檢視器',
       'photo.zoom_in': '放大照片',
       'photo.zoom_out': '縮小照片',
@@ -327,8 +343,13 @@ const resources = {
       'record.no_location': '位置未記録',
       'record.processing': '処理中...',
       'record.clear_plate': 'ナンバーをクリア',
+      'record.remove_photo': '写真を削除',
       'record.zone_placeholder': 'エリア...',
+      'record.plate_unset': 'ナンバー未登録',
       'home.quick_record_cta': 'クイック記録',
+      'home.pickup_label': '車へ戻る',
+      'home.pickup_hero_aria': '{{floor}} へナビして車を取りに行く',
+      'home.just_now': 'たった今',
       'add.title': 'クイック記録',
       'add.summary_hint': '駐車位置を保存しました。',
       'action.back_home': 'ホームに戻る',
@@ -375,6 +396,11 @@ const resources = {
       'record.navigate': 'ナビ',
       'record.saving': '保存中...',
       'error.image': '画像の処理エラー',
+      'error.photo_cancelled': '撮影が完了していません',
+      'error.photo_source_help':
+        '再撮影するか、アルバムから選択してください。カメラが開かない場合は、システム設定のカメラ権限を確認してください。',
+      'action.retake_photo': '再撮影',
+      'action.dismiss': 'OK',
       'error.location_denied': '位置情報のアクセスが拒否されました。',
       'error.storage_unavailable':
         'ローカルデータベースにアクセスできません。一部機能が使用できない場合があります。',
@@ -409,8 +435,7 @@ const resources = {
       'nav.arrived': '到着',
       'nav.indoor_mode': '屋内モード',
       'nav.steps': '歩数',
-      'nav.hold_flat': 'スマホを平らに',
-      'nav.adjust_bearing': '回転',
+      'nav.hold_flat': 'スマホを水平に持ってください',
       'nav.straight': '直進',
       'nav.slight_right': 'やや右へ',
       'nav.turn_right': '右折',
@@ -418,17 +443,16 @@ const resources = {
       'nav.turn_left': '左折',
       'nav.unit_meters': 'メートル',
       'nav.close_nav': 'ナビを閉じる',
-      'nav.phone_top': '携帯電話の上部',
-      'nav.guide_hint': '矢印に合わせて進む',
+      'nav.dialog_label': 'コンパスナビ',
+      'nav.arrived_close_cta': '到着済み、ナビを閉じる',
       'compass.n': '北',
       'compass.e': '東',
       'compass.s': '南',
       'compass.w': '西',
-      'nav.declination': '磁気偏角',
       'nav.gps_waiting': '位置確認中...',
       'nav.gps_label': 'GPS',
       'nav.enable_compass_title': 'コンパスを有効にする',
-      'nav.enable_compass_desc': '車の方向を示すには、モーションと方向へのアクセスが必要です。',
+      'nav.enable_compass_desc': '愛車の方向を示すため、モーションと方向情報の利用許可が必要です。',
       'nav.enable_compass_cta': 'コンパスを有効にする',
       'nav.permission_denied_title': 'コンパスへのアクセスが拒否されました',
       'nav.permission_denied_desc':
@@ -436,8 +460,8 @@ const resources = {
       'nav.permission_retry': '再試行',
       'nav.calibrate_title': 'コンパスの調整が必要です',
       'nav.calibrate_desc': '精度が回復するまで、スマホを8の字に動かしてください。',
+      'nav.calibrate_recheck': '精度を再チェック',
       'nav.aligned': 'この方向です',
-      'nav.wedge_target': '目標方位',
       'photo.viewer_label': '写真ビューア',
       'photo.zoom_in': '写真を拡大',
       'photo.zoom_out': '写真を縮小',
@@ -468,16 +492,50 @@ const resources = {
 const canUseBrowserLanguageStorage =
   typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
 
+/** 語言偏好 localStorage 鍵（LanguageDetector 快取與 Layout 還原共用 SSOT）。 */
+export const LANGUAGE_STORAGE_KEY = 'park-keeper-language';
+
+/** 支援語言清單（還原偏好時的白名單）。 */
+export const SUPPORTED_LANGUAGES = ['en', 'zh-TW', 'ja'] as const;
+
+// init 會經 LanguageDetector cache 將 lng 寫回 localStorage，
+// 必須在 init 前擷取既有偏好，否則使用者偏好會被 zh-TW 覆蓋。
+const initialStoredLanguage: string | null = (() => {
+  if (!canUseBrowserLanguageStorage) return null;
+  try {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+})();
+
+/** 取得 init 前擷取的使用者語言偏好；無偏好或儲存不可用時回傳 null。 */
+export function getStoredLanguage(): string | null {
+  return initialStoredLanguage;
+}
+
+// 語言變更唯一寫入路徑（issue #725 雙來源收斂）：
+// changeLanguage 經 LanguageDetector cache 寫入 localStorage＝啟動還原 SSOT（Layout 讀取）；
+// IDB settings.language 為同批副本，由呼叫端（SettingsTab updateSettings）一併保存，
+// 不得再由 IDB 反向驅動 i18n（Home/Add init 不呼叫 changeLanguage）。
+export function setAppLanguage(lang: (typeof SUPPORTED_LANGUAGES)[number]): void {
+  void i18n.changeLanguage(lang);
+}
+
+// 固定 lng='zh-TW'：SSG（Node）與 client 首屏語言一致，杜絕 /about hydration 文字不一致（React #418）。
+// 建置環境的 navigator 偵測會解析成英文，故不得以偵測結果決定首屏語言；
+// 使用者偏好於 hydration 完成後由 Layout 還原（changeLanguage 仍寫入 localStorage 快取）。
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'zh-TW',
     fallbackLng: 'zh-TW',
     detection: {
-      order: canUseBrowserLanguageStorage ? ['localStorage', 'navigator'] : ['navigator'],
       caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
-      lookupLocalStorage: 'park-keeper-language',
+      lookupLocalStorage: LANGUAGE_STORAGE_KEY,
     },
     interpolation: { escapeValue: false },
   });

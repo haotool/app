@@ -146,14 +146,8 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.ts',
         injectManifest: {
-          globPatterns: [
-            '**/*.js',
-            '**/*.css',
-            '**/*.html',
-            '**/*.json',
-            '**/*.svg',
-            '**/*.webmanifest',
-          ],
+          // dist 無需 precache 的 .json（.vite/ 建置產物不進 SW），保留清單避免無匹配警告。
+          globPatterns: ['**/*.js', '**/*.css', '**/*.html', '**/*.svg', '**/*.webmanifest'],
           globIgnores: ['**/node_modules/**'],
         },
         manifest: {
@@ -210,12 +204,15 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (typeof process !== 'undefined' && process.env['SSR'] === 'true') return undefined;
             if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('scheduler')) return 'vendor-react';
+              // leaflet 系不指派 chunk：唯一消費者 MiniMap 為 lazy import，
+              // 交由 bundler 自然落入 MiniMap 非同步 chunk；若指派 vendor chunk
+              // 會被 react 判斷吸入初始載入圖（react-leaflet 含 'react' 字串，LCP 回歸根因）。
+              if (id.includes('leaflet')) return undefined;
               if (id.includes('react-router-dom') || id.includes('@remix-run'))
                 return 'vendor-router';
               if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
-              if (id.includes('leaflet') || id.includes('react-leaflet')) return 'vendor-map';
               if (id.includes('i18next')) return 'vendor-i18n';
+              if (id.includes('react') || id.includes('scheduler')) return 'vendor-react';
             }
             return undefined;
           },

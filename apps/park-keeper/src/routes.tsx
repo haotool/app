@@ -11,6 +11,7 @@ import type { RouteRecord } from 'vite-react-ssg';
 import { ClientOnly } from 'vite-react-ssg';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import HomeShell from './pages/HomeShell';
 import About from './pages/About';
 import Add from './pages/Add';
 import Guide from './pages/Guide';
@@ -21,8 +22,9 @@ export const routes: RouteRecord[] = [
     element: <Layout />,
     children: [
       {
+        // 首頁 fallback 用同構靜態殼：LCP 由 SSG HTML 直出（issue #725 P0）。
         index: true,
-        element: <ClientOnly fallback={null}>{() => <Home />}</ClientOnly>,
+        element: <ClientOnly fallback={<HomeShell />}>{() => <Home />}</ClientOnly>,
       },
       { path: 'about', element: <About /> },
       {

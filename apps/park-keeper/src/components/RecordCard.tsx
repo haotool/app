@@ -213,12 +213,18 @@ export default function RecordCard({
                   onClick={handleEditStart}
                   aria-label={t('record.edit_plate', { plate: displayPlate })}
                 >
-                  {displayPlate}
+                  {/* N/A 為未填車號 sentinel：以待填文案呈現，避免像資料錯誤。 */}
+                  {displayPlate === 'N/A' ? (
+                    <span className="opacity-45">{t('record.plate_unset')}</span>
+                  ) : (
+                    displayPlate
+                  )}
                 </button>
+                {/* 觸控無 hover：編輯入口常駐可見（issue #725 P2）。 */}
                 <button
                   type="button"
                   onClick={handleEditStart}
-                  className="p-4 -m-4 opacity-0 group-hover:opacity-30 hover:!opacity-100 transition-opacity"
+                  className="p-4 -m-4 opacity-45 hover:opacity-100 transition-opacity"
                   title={t('record.edit_plate_icon')}
                   aria-label={t('record.edit_plate_icon')}
                 >
@@ -247,7 +253,7 @@ export default function RecordCard({
         <button
           type="button"
           onClick={() => void onDelete(record.id)}
-          className="p-4 -m-4 opacity-10 hover:opacity-100 hover:text-red-500 transition-all"
+          className="p-4 -m-4 opacity-45 hover:opacity-100 hover:text-red-500 transition-all"
           aria-label={t('record.delete', { plate: displayPlate })}
         >
           <Trash2 size={16} />
@@ -280,7 +286,7 @@ export default function RecordCard({
         <button
           type="button"
           onClick={() => onNavigate(record)}
-          className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform group relative"
+          className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform relative"
         >
           {record.latitude != null && record.longitude != null ? (
             <Suspense fallback={<div className="w-full h-full animate-pulse bg-gray-200" />}>
@@ -300,15 +306,13 @@ export default function RecordCard({
               {t('record.no_map')}
             </div>
           )}
+          {/* 觸控無 hover：導航 affordance 改常駐角標 pill（issue #725 P2）。 */}
           <div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-            style={{ backgroundColor: `${theme.colors.primary}66` }}
+            className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full shadow-md pointer-events-none"
+            style={{ backgroundColor: `${theme.colors.primary}E6` }}
           >
-            <Navigation
-              size={28}
-              className="text-white drop-shadow-2xl animate-bounce motion-reduce:animate-none mb-1"
-            />
-            <span className="text-[8px] font-black text-white uppercase tracking-widest">
+            <Navigation size={11} className="text-white" />
+            <span className="text-[9px] font-black text-white uppercase tracking-widest">
               {t('record.navigate')}
             </span>
           </div>

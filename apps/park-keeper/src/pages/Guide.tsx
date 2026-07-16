@@ -30,7 +30,7 @@ export default function Guide() {
         <Link
           to="/"
           aria-label={t('action.back_home')}
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors mb-6"
+          className="inline-flex items-center gap-2 min-h-11 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors mb-4"
         >
           <ArrowLeft size={18} />
           {t('action.back_home')}

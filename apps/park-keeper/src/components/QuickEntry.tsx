@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, type Variants } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'motion/react';
 import { Camera, Trash2, Check, Grid, Loader2, AlertCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
 import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
+import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
+import { WARNING_COLOR } from '@app/park-keeper/config/colors';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -66,6 +68,18 @@ const itemVariants: Variants = {
   },
 };
 
+// prefers-reduced-motion：僅保留淡入淡出，移除位移/縮放/彈簧（issue #725）。
+const reducedPanelVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15, when: 'beforeChildren' } },
+  exit: { opacity: 0, transition: { duration: 0.1 } },
+};
+
+const reducedItemVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15 } },
+};
+
 export default function QuickEntry({
   theme,
   onSave,
@@ -77,6 +91,10 @@ export default function QuickEntry({
 }: QuickEntryProps) {
   const { t } = useTranslation();
   const isFullscreen = mode === 'fullscreen';
+  const shouldReduceMotion = useReducedMotion();
+  const activePanelVariants = shouldReduceMotion ? reducedPanelVariants : panelVariants;
+  const activeFullscreenVariants = shouldReduceMotion ? reducedPanelVariants : fullscreenVariants;
+  const activeItemVariants = shouldReduceMotion ? reducedItemVariants : itemVariants;
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -88,6 +106,7 @@ export default function QuickEntry({
     ariaStaticLabel: t('map.aria_static'),
   };
   const [plate, setPlate] = useState(() => plateMemory.get() ?? '');
+  const [plateHistory, setPlateHistory] = useState<string[]>(() => plateMemory.getHistory());
   const [selectedFloor, setSelectedFloor] = useState(() => plateMemory.getFloor() ?? '');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -96,12 +115,17 @@ export default function QuickEntry({
   const [isLocating, setIsLocating] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [photoError, setPhotoError] = useState(false);
+  // 照片來源引導卡（issue #725）：process＝讀取/壓縮失敗、cancelled＝相機取消或未取得照片。
+  const [photoIssue, setPhotoIssue] = useState<'process' | 'cancelled' | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [locationHeading, setLocationHeading] = useState<number | null>(null);
   const watchId = useRef<number | null>(null);
   const { heading: parkedHeading } = useDeviceOrientation({ enabled: isVisible });
+
+  // Sheet 模式為 modal：dialog 語意＋focus trap＋Esc（fullscreen 為 /add 頁面內容，不套用）。
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useModalDialog(sheetRef, isVisible && !isFullscreen, onClose);
 
   const stopTracking = useCallback(() => {
     if (watchId.current !== null && navigator.geolocation) {
@@ -138,15 +162,16 @@ export default function QuickEntry({
   const processPhotoFile = useCallback(async (file: File) => {
     const job = ++photoJobRef.current;
     setIsProcessing(true);
-    setPhotoError(false);
     try {
       const compressed = await compressImage(file, 1024, 0.7);
       if (job !== photoJobRef.current) return;
       setPhoto(compressed);
+      // 成功才清除引導卡，避免 mode="wait" 期間多段 children 切換造成視覺跳動。
+      setPhotoIssue(null);
       vibrate(50);
     } catch {
       if (job !== photoJobRef.current) return;
-      setPhotoError(true);
+      setPhotoIssue('process');
       vibrate([50, 50, 50]);
     } finally {
       if (job === photoJobRef.current) setIsProcessing(false);
@@ -159,6 +184,7 @@ export default function QuickEntry({
       // 開啟面板時以上次已儲存的記憶預填，覆蓋關閉前未儲存的暫時輸入。
       setPlate(plateMemory.get() ?? '');
       setSelectedFloor(plateMemory.getFloor() ?? '');
+      setPlateHistory(plateMemory.getHistory());
       // 首屏 CTA 已拍好的照片直接帶入（宿主於關閉時清除，避免重開誤帶舊照）。
       if (initialPhotoFile) void processPhotoFile(initialPhotoFile);
     } else {
@@ -167,7 +193,7 @@ export default function QuickEntry({
       photoJobRef.current += 1;
       setNotes('');
       setPhoto(null);
-      setPhotoError(false);
+      setPhotoIssue(null);
       setIsProcessing(false);
       setSaveStatus('idle');
       setCustomFloorMode(false);
@@ -232,7 +258,7 @@ export default function QuickEntry({
   const formContent = (
     <>
       <motion.div
-        variants={itemVariants}
+        variants={activeItemVariants}
         className={isFullscreen ? 'flex flex-col gap-4' : 'flex gap-4 h-36'}
       >
         <div
@@ -260,30 +286,59 @@ export default function QuickEntry({
                     vibrate(10);
                     setPhoto(null);
                   }}
-                  className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white backdrop-blur-md"
+                  aria-label={t('record.remove_photo')}
+                  className="absolute top-1 right-1 min-w-11 min-h-11 flex items-center justify-center bg-black/60 rounded-full text-white backdrop-blur-md"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={14} />
                 </motion.button>
               </motion.div>
-            ) : photoError ? (
+            ) : photoIssue ? (
+              /* 照片來源引導卡：說明＋重新拍照＋返回，不得死路（issue #725）。 */
               <motion.div
-                key="error"
+                key="issue"
+                data-testid="photo-issue-card"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center text-center p-2 w-full"
+                className="flex flex-col items-center justify-center text-center px-3 py-2 w-full gap-1.5"
               >
-                <AlertCircle className="text-red-500 mb-2" size={24} />
-                <span className="text-[10px] font-bold text-red-500 mb-3">{t('error.image')}</span>
-                <button
-                  onClick={() => {
-                    vibrate(10);
-                    setPhotoError(false);
-                  }}
-                  className="px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                <AlertCircle className="shrink-0" size={20} style={{ color: WARNING_COLOR }} />
+                <span
+                  className="text-[10px] font-bold leading-snug"
+                  style={{ color: WARNING_COLOR }}
                 >
-                  {t('action.retry_generic')}
-                </button>
+                  {photoIssue === 'process' ? t('error.image') : t('error.photo_cancelled')}
+                </span>
+                <span className="text-[9px] font-medium leading-snug opacity-60">
+                  {t('error.photo_source_help')}
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <label
+                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide text-white cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    onClick={() => vibrate(10)}
+                  >
+                    {t('action.retake_photo')}
+                    <input
+                      data-testid="photo-issue-retake-input"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => void handlePhoto(e)}
+                      disabled={isProcessing}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      vibrate(10);
+                      setPhotoIssue(null);
+                    }}
+                    className="px-3 py-1.5 bg-black/5 rounded-full text-[10px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                  >
+                    {t('action.dismiss')}
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.label
@@ -319,6 +374,14 @@ export default function QuickEntry({
                   capture="environment"
                   className="hidden"
                   onChange={(e) => void handlePhoto(e)}
+                  // 使用者取消相機/選擇器（或相機無法開啟被系統關閉）→ 顯示引導卡。
+                  // React 僅對 dialog 綁 cancel，file input 需原生監聽（React 19 ref cleanup）。
+                  ref={(el) => {
+                    if (!el) return undefined;
+                    const onCancel = () => setPhotoIssue('cancelled');
+                    el.addEventListener('cancel', onCancel);
+                    return () => el.removeEventListener('cancel', onCancel);
+                  }}
                   disabled={isProcessing}
                 />
               </motion.label>
@@ -335,8 +398,8 @@ export default function QuickEntry({
               data-testid="location-denied-card"
               className="w-full h-full flex flex-col items-center justify-center text-center gap-1.5 px-3 py-2"
             >
-              <AlertCircle className="text-red-500 shrink-0" size={16} />
-              <span className="text-[9px] font-bold text-red-500 leading-snug">
+              <AlertCircle className="shrink-0" size={16} style={{ color: WARNING_COLOR }} />
+              <span className="text-[9px] font-bold leading-snug" style={{ color: WARNING_COLOR }}>
                 {t('error.location_denied')}
               </span>
               <span className="text-[8px] font-black uppercase tracking-wide opacity-40">
@@ -348,7 +411,8 @@ export default function QuickEntry({
                   vibrate(10);
                   startPrecisionTracking();
                 }}
-                className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                style={{ backgroundColor: `${WARNING_COLOR}14`, color: WARNING_COLOR }}
               >
                 {t('action.retry')}
               </button>
@@ -382,7 +446,7 @@ export default function QuickEntry({
         </div>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="relative">
           <input
             type="text"
@@ -405,6 +469,26 @@ export default function QuickEntry({
             </button>
           )}
         </div>
+        {/* 歷史車號一鍵切換（design brief 旅程 A #3）：去重排除當前輸入值 */}
+        {plateHistory.filter((p) => p !== plate).length > 0 && (
+          <div className="flex flex-wrap gap-2" data-testid="plate-history-chips">
+            {plateHistory
+              .filter((p) => p !== plate)
+              .map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    vibrate(10);
+                    setPlate(p);
+                  }}
+                  className="min-h-11 px-4 rounded-full text-xs font-black tracking-wide bg-[var(--color-surface)] border border-[color:var(--color-primary)]/15 text-[var(--color-text)] active:scale-95 transition-transform"
+                >
+                  {p}
+                </button>
+              ))}
+          </div>
+        )}
         <textarea
           value={notes}
           onChange={(e) => {
@@ -419,7 +503,7 @@ export default function QuickEntry({
         />
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">
             {t('record.floor')}
@@ -497,7 +581,7 @@ export default function QuickEntry({
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            variants={fullscreenVariants}
+            variants={activeFullscreenVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -527,11 +611,16 @@ export default function QuickEntry({
             className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
           />
           <motion.div
-            variants={panelVariants}
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('add.title')}
+            tabIndex={-1}
+            variants={activePanelVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-x-0 bottom-0 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto overflow-hidden border-t border-white/10"
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col pointer-events-auto overflow-hidden border-t border-white/10 outline-none"
             style={{ backgroundColor: theme.colors.background }}
           >
             <div

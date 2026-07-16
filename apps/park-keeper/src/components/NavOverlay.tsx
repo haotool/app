@@ -3,7 +3,7 @@
  * 佈局：MiniMap 全幅背景層 → 上 55% 羅盤盤面（玻璃圓盤浮層）→ 下 45% 資訊卡。
  * 主題差異化以 token＋樣式參數實現（COMPASS_THEME_STYLES），不 fork 元件。
  */
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   ArrowUp,
@@ -23,7 +23,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ThemeConfig, ThemeType, ParkingRecord } from '@app/park-keeper/types';
+import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 import {
@@ -47,101 +47,17 @@ import {
   WARNING_COLOR,
   ARRIVED_BORDER,
   ARRIVED_GLOW,
+  ON_PRIMARY_COLOR,
 } from '@app/park-keeper/config/colors';
+import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
+import { useScreenWakeLock } from '@app/park-keeper/hooks/useScreenWakeLock';
+import { COMPASS_THEME_STYLES } from '@app/park-keeper/config/compassThemeStyles';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
-// ---------------------------------------------------------------------------
-// 主題差異化樣式參數（brief：Nitro 霓虹描邊／Kawaii 粉彩圓潤／Zen 細線極簡／Classic 銅色調）
-// ---------------------------------------------------------------------------
-interface CompassThemeStyle {
-  /** 刻度線寬係數。 */
-  tickWidthScale: number;
-  /** 刻度端點形狀（Kawaii 圓頭）。 */
-  tickLinecap: 'round' | 'butt';
-  /** 外環線寬。 */
-  outerRingWidth: number;
-  /** 外環不透明度。 */
-  outerRingOpacity: number;
-  /** 盤面霓虹光暈（SVG drop-shadow filter 強度，0 = 無）。 */
-  neonGlowRadius: number;
-  /** 楔形未對準時不透明度。 */
-  wedgeIdleOpacity: number;
-}
-
-const COMPASS_THEME_STYLES: Record<ThemeType, CompassThemeStyle> = {
-  racing: {
-    tickWidthScale: 1,
-    tickLinecap: 'butt',
-    outerRingWidth: 1.6,
-    outerRingOpacity: 0.55,
-    neonGlowRadius: 6,
-    wedgeIdleOpacity: 0.4,
-  },
-  cute: {
-    tickWidthScale: 1.5,
-    tickLinecap: 'round',
-    outerRingWidth: 2.5,
-    outerRingOpacity: 0.25,
-    neonGlowRadius: 0,
-    // 粉彩 primary 飽和度低，楔形 idle 提高補償可見度。
-    wedgeIdleOpacity: 0.65,
-  },
-  minimalist: {
-    tickWidthScale: 0.8,
-    tickLinecap: 'butt',
-    outerRingWidth: 0.8,
-    outerRingOpacity: 0.14,
-    neonGlowRadius: 0,
-    wedgeIdleOpacity: 0.32,
-  },
-  literary: {
-    tickWidthScale: 1.1,
-    tickLinecap: 'butt',
-    outerRingWidth: 2,
-    outerRingOpacity: 0.35,
-    neonGlowRadius: 0,
-    wedgeIdleOpacity: 0.38,
-  },
-};
-
 /** 對準觸覺脈衝（Android；iOS 不支援 vibrate 靜默降級）。 */
 const ALIGNED_VIBRATE_PATTERN = [30, 40, 30];
-
-// ---------------------------------------------------------------------------
-// Screen Wake Lock：導航時防熄屏；hidden 釋放、回前景重新取得（iOS 18.4+ 修復）。
-// ---------------------------------------------------------------------------
-function useScreenWakeLock() {
-  useEffect(() => {
-    if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return undefined;
-
-    let sentinel: WakeLockSentinel | null = null;
-    let disposed = false;
-
-    const request = async () => {
-      try {
-        sentinel = await navigator.wakeLock.request('screen');
-      } catch {
-        // 低電量模式或平台拒絕：靜默降級，不影響導航功能。
-        sentinel = null;
-      }
-    };
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && !disposed) void request();
-    };
-
-    void request();
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      disposed = true;
-      document.removeEventListener('visibilitychange', handleVisibility);
-      void sentinel?.release().catch(() => undefined);
-    };
-  }, []);
-}
 
 // ---------------------------------------------------------------------------
 // DirectionIcon – Lucide icon mapped from DirectionIconType
@@ -216,6 +132,17 @@ export default function NavOverlay({
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   // 照片位置調整模式：盤面暫時淡出，地圖層顯示可拖曳照片（持久化鏈不變）。
   const [photoEditMode, setPhotoEditMode] = useState(false);
+
+  // Modal a11y：dialog 語意＋focus trap＋Esc（issue #725 對齊 PhotoViewerModal 模式）。
+  // Esc 於照片檢視器開啟時讓位（其自有 Esc 關閉），以 ref 鏡像避免同一事件內讀到舊 state。
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const showPhotoModalRef = useRef(false);
+  useEffect(() => {
+    showPhotoModalRef.current = showPhotoModal;
+  }, [showPhotoModal]);
+  useModalDialog(dialogRef, true, () => {
+    if (!showPhotoModalRef.current) onClose();
+  });
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -242,6 +169,7 @@ export default function NavOverlay({
     permissionState,
     requestCompassPermission,
     needsCalibration,
+    recheckCalibration,
   } = nav;
 
   useScreenWakeLock();
@@ -270,7 +198,9 @@ export default function NavOverlay({
     isAligned(relativeRotation);
 
   // 對準瞬間觸發一次觸覺脈衝（edge trigger；iOS 無 vibrate 靜默略過）。
-  useEffect(() => {
+  // useLayoutEffect：與 Hub 邊框視覺變化同一 commit tick 觸發，
+  // 消除 useEffect 排程造成的 ~50ms 視覺/觸覺不同步（issue #725 Gemini P3）。
+  useLayoutEffect(() => {
     if (aligned && typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(ALIGNED_VIBRATE_PATTERN);
     }
@@ -284,10 +214,15 @@ export default function NavOverlay({
 
   return (
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('nav.dialog_label')}
+      tabIndex={-1}
       initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.05 }}
-      className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
+      className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh outline-none"
       style={{ backgroundColor: theme.colors.background }}
     >
       {/* 0. Map background layer。照片平時不上地圖（資訊卡 96px 縮圖為唯一焦點）；
@@ -329,26 +264,39 @@ export default function NavOverlay({
         </Suspense>
       </div>
 
-      {/* 1. Top Header：車牌＋關閉 */}
+      {/* 1. Top Header：車牌＋關閉。
+          車牌改毛玻璃 pill 自帶底色（不依賴漸層供對比），漸層收短且提前透明，
+          避免雜背景主題下與盤面頂緣視覺干涉（issue #725 Gemini P1）。 */}
       <div
         className="absolute top-0 inset-x-0 z-30 px-5 pt-safe-top flex justify-between items-start pointer-events-none"
         style={{
-          background: `linear-gradient(to bottom, ${theme.colors.background} 0%, ${theme.colors.background}CC 55%, transparent 100%)`,
+          background: `linear-gradient(to bottom, ${theme.colors.background}F2 0%, ${theme.colors.background}A6 45%, transparent 78%)`,
         }}
       >
-        <div className="pointer-events-auto mt-2 pb-6">
-          <div className="flex items-center gap-2">
+        <div className="pointer-events-auto mt-2 pb-4">
+          <div
+            className="flex items-center gap-2 backdrop-blur-2xl rounded-2xl pl-1.5 pr-3.5 py-1.5 shadow-lg"
+            style={{
+              backgroundColor: `${theme.colors.surface}CC`,
+              border: `1px solid ${theme.colors.text}10`,
+            }}
+          >
             <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md"
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: `${theme.colors.primary}20`, color: theme.colors.primary }}
             >
               <Car size={16} />
             </div>
             <h2
-              className="text-2xl font-black tracking-tighter drop-shadow-sm"
+              className="text-2xl font-black tracking-tighter"
               style={{ color: theme.colors.text }}
             >
-              {record.plateNumber}
+              {/* N/A 為未填車號 sentinel：與 RecordCard/hero 卡一致顯示待填文案。 */}
+              {record.plateNumber === 'N/A' ? (
+                <span className="opacity-50 text-lg">{t('record.plate_unset')}</span>
+              ) : (
+                record.plateNumber
+              )}
             </h2>
           </div>
         </div>
@@ -596,6 +544,9 @@ export default function NavOverlay({
                         exit={{ opacity: 0, y: 4, scale: 0.92 }}
                         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                         onClick={onClose}
+                        // 與頂部 X 的「關閉導航」區分 accessible name，
+                        // 消除 SR/語音控制歧義與 e2e strict-mode 衝突（issue #725 P2）。
+                        aria-label={t('nav.arrived_close_cta')}
                         className="mt-1 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
                         style={{ backgroundColor: ARRIVED_COLOR }}
                       >
@@ -826,6 +777,19 @@ export default function NavOverlay({
                       >
                         {t('nav.calibrate_desc')}
                       </p>
+                      {/* 手動重新偵測：不依賴系統自動恢復（reduced-motion 下唯一離場入口）。 */}
+                      <button
+                        type="button"
+                        onClick={recheckCalibration}
+                        className="mt-1 w-full min-h-11 px-4 rounded-2xl font-black text-sm shadow active:scale-95 transition-transform"
+                        style={{
+                          backgroundColor: `${theme.colors.text}0D`,
+                          color: theme.colors.text,
+                          border: `1px solid ${theme.colors.text}1F`,
+                        }}
+                      >
+                        {t('nav.calibrate_recheck')}
+                      </button>
                     </>
                   )}
                 </div>
@@ -851,7 +815,11 @@ export default function NavOverlay({
           }}
         />
 
-        <div className="relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto">
+        {/* 無備註時內容垂直置中，收斂底部留白（Sonnet U6）。 */}
+        <div
+          data-testid="nav-info-card"
+          className={`relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto ${record.notes ? '' : 'justify-center'}`}
+        >
           {/* 照片＋樓層列 */}
           <div className="flex items-center gap-4">
             {record.photoData ? (
@@ -949,7 +917,7 @@ export default function NavOverlay({
                 className="ml-auto min-h-11 px-3.5 rounded-2xl flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide shrink-0 active:scale-95 transition-transform"
                 style={
                   photoEditMode
-                    ? { backgroundColor: theme.colors.primary, color: '#fff' }
+                    ? { backgroundColor: theme.colors.primary, color: ON_PRIMARY_COLOR }
                     : {
                         backgroundColor: `${theme.colors.text}0A`,
                         color: theme.colors.text,
