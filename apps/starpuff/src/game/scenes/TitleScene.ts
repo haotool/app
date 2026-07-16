@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { currentChallenge, loadSave } from '../core/save';
 import { SceneKeys, type CodexTab } from '../core/types';
 import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
@@ -126,22 +127,34 @@ export class TitleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM，再進入遊戲。
+    // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM；接續當前可挑戰關（§39），
+    // 全通關後改開世界地圖供重玩選關。
     const start = () => {
       if (isKeyConfigOpen()) return;
       unlockAudio();
       startBgm();
-      this.scene.start(SceneKeys.Game);
+      const challenge = currentChallenge(loadSave());
+      if (challenge === null) this.scene.start(SceneKeys.Map, {});
+      else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0 });
     };
     this.input.keyboard?.once('keydown-ENTER', start);
     // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
     // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
     addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start, 'start');
 
-    // 次選單列（§36）：圖鑑／技能介紹／按鈕配置，觸控目標 56px 高。
+    // 次選單列（§36/§39）：世界地圖／圖鑑／技能介紹／按鈕配置，觸控目標 56px 高。
     const secondaryY = height * 0.85;
-    const secondarySpacing = 190;
+    const secondarySpacing = 180;
     const entries: { label: string; menuId: string; onPress: () => void }[] = [
+      {
+        label: '世界地圖',
+        menuId: 'map',
+        onPress: () => {
+          unlockAudio();
+          playSfx('pop');
+          this.scene.start(SceneKeys.Map, {});
+        },
+      },
       { label: '圖鑑', menuId: 'codex', onPress: () => this.openCodex('monsters') },
       { label: '技能介紹', menuId: 'skills', onPress: () => this.openCodex('skills') },
       {
@@ -155,7 +168,7 @@ export class TitleScene extends Phaser.Scene {
       },
     ];
     entries.forEach((entry, i) => {
-      const x = centerX + (i - 1) * secondarySpacing;
+      const x = centerX + (i - (entries.length - 1) / 2) * secondarySpacing;
       const visual = this.add
         .text(x, secondaryY, entry.label, {
           fontFamily: 'system-ui, sans-serif',
@@ -171,11 +184,21 @@ export class TitleScene extends Phaser.Scene {
       addDomButton(
         this,
         entry.label,
-        { x, y: secondaryY, w: 176, h: 56 },
+        { x, y: secondaryY, w: 168, h: 56 },
         entry.onPress,
         entry.menuId,
       );
     });
+
+    // 版本頁腳（§42）：package.json version + git SHA，經 Vite define 嵌入。
+    this.add
+      .text(centerX, height - 6, __APP_VERSION__, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '12px',
+        color: '#7a5fb8',
+      })
+      .setOrigin(0.5, 1)
+      .setAlpha(0.75);
   }
 
   private openCodex(tab: CodexTab): void {

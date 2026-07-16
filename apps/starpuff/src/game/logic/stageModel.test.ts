@@ -3,8 +3,11 @@ import {
   SPRING_COOLDOWN_MS,
   SPRING_VELOCITY_Y,
   canSpringLaunch,
+  crossedGate,
   maxDecorInWindow,
   shouldDropThrough,
+  springSweepHit,
+  type BoundsRect,
 } from './stageModel';
 
 describe('canSpringLaunch 彈簧觸發閘（§29 / recon C.3）', () => {
@@ -46,5 +49,78 @@ describe('maxDecorInWindow 同屏密度（§32）', () => {
   it('空佈景回 0；單件回 1', () => {
     expect(maxDecorInWindow([], 1200)).toBe(0);
     expect(maxDecorInWindow([400], 1200)).toBe(1);
+  });
+});
+
+// 星星門幾何背擋（§43）：L1 實際幾何——門心 2580、判定區 90×150（2535-2625、235-385）。
+describe('crossedGate 星星門到達判定（§43）', () => {
+  const GATE_X = 2580;
+  const zone: BoundsRect = { left: 2535, right: 2625, top: 235, bottom: 385 };
+  const playerAt = (x: number): BoundsRect => ({
+    left: x - 18,
+    right: x + 18,
+    top: 361,
+    bottom: 400,
+  });
+
+  it('停在門區左半（未達門心）：AABB 交疊即判入門', () => {
+    expect(crossedGate(2540, 2540, GATE_X, playerAt(2540), zone)).toBe(true);
+  });
+
+  it('高速隧穿：單幀自區左外跳至區右外，跨門心即判入門', () => {
+    expect(crossedGate(2500, 2660, GATE_X, playerAt(2660), zone)).toBe(true);
+  });
+
+  it('跨門心（含等值落點）判入門', () => {
+    expect(crossedGate(2579, 2581, GATE_X, playerAt(2581), zone)).toBe(true);
+    expect(crossedGate(2570, GATE_X, GATE_X, playerAt(GATE_X), zone)).toBe(true);
+  });
+
+  it('生成時已越門（prev=curr 於門心右側、甚至區右外）直接判入門', () => {
+    expect(crossedGate(2682, 2682, GATE_X, playerAt(2682), zone)).toBe(true);
+    expect(crossedGate(2600, 2600, GATE_X, playerAt(2600), zone)).toBe(true);
+  });
+
+  it('重生後 prev 重置於起點：遠離門區不誤觸', () => {
+    expect(crossedGate(100, 100, GATE_X, playerAt(100), zone)).toBe(false);
+    expect(crossedGate(100, 320, GATE_X, playerAt(320), zone)).toBe(false);
+  });
+
+  it('自右向左回頭跨門心（門生在身後補救路徑）亦判入門', () => {
+    expect(crossedGate(2650, 2560, GATE_X, playerAt(2560), zone)).toBe(true);
+  });
+});
+
+// 彈簧掃掠背擋（§43）：L2 實際幾何——彈簧中心 (1150, 391)、44×18（1128-1172、382-400）。
+describe('springSweepHit 彈簧掃掠命中（§43）', () => {
+  const spring: BoundsRect = { left: 1128, right: 1172, top: 382, bottom: 400 };
+  const HALF_W = 18;
+  const GROUND_BOTTOM = 400;
+
+  it('走上簧面：腳底帶內且水平交疊命中', () => {
+    expect(springSweepHit(1140, 1150, HALF_W, GROUND_BOTTOM, spring)).toBe(true);
+  });
+
+  it('高速穿越：單幀自簧左外跳至簧右外，掃掠區間補判命中', () => {
+    expect(springSweepHit(1050, 1250, HALF_W, GROUND_BOTTOM, spring)).toBe(true);
+  });
+
+  it('腳底帶外不命中：騰空掠過（bottom 高於簧頂帶）或深陷（低於簧底 +10）', () => {
+    expect(springSweepHit(1140, 1160, HALF_W, spring.top - 9, spring)).toBe(false);
+    expect(springSweepHit(1140, 1160, HALF_W, spring.bottom + 11, spring)).toBe(false);
+  });
+
+  it('水平未達（含掃掠區間）不命中', () => {
+    expect(springSweepHit(1000, 1090, HALF_W, GROUND_BOTTOM, spring)).toBe(false);
+  });
+
+  it('同幀去重與 lockedUntil：首發後冷卻閘擋重複發射', () => {
+    // 掃掠與 overlap 同幀雙報：命中判定皆真，發射由 canSpringLaunch 冷卻去重。
+    expect(springSweepHit(1140, 1150, HALF_W, GROUND_BOTTOM, spring)).toBe(true);
+    const now = 5000;
+    expect(canSpringLaunch(now, 0, 0)).toBe(true);
+    const lockedUntil = now + SPRING_COOLDOWN_MS;
+    expect(canSpringLaunch(now, lockedUntil, 0)).toBe(false);
+    expect(canSpringLaunch(lockedUntil, lockedUntil, 0)).toBe(true);
   });
 });

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+118
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+119
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：neutral-starpuff-v6-codeql-secret-naming
+- 原因：CodeQL js/clear-text-storage-of-sensitive-data 高風險告警——存檔模組 recordSecret/secretsFound 命名使啟發式誤判彩蛋進度為敏感資料明文儲存（sp-save 僅存關卡進度，v6 未發布無既存用戶資料）
+- 解法：全鏈更名 egg 語彙（recordEgg/eggsFound/eggId），typecheck＋203 unit 綠，告警經 head 重掃自然關閉
+
+- 日期：2026-07-16
+- ID：reward-starpuff-v6-save-worldmap-skills
+- 原因：v6 需求（存檔/迷霧世界地圖/版本號/移動手感/殼盾雷鏈/攻略 PoC）需改接 hub 流程一次落地，且實測揭露 v5 既存 Phaser 4 靜態 overlap 間歇漏檢（星星門/彈簧，v5 基準彈簧 6 跑 3 敗）
+- 解法：save/movement/skills 純邏輯 SSOT＋MapScene data-driven hub；門/彈簧補幾何掃掠背擋（syncGateSweep/sweepSprings）根治漏檢；187 unit＋28 e2e 綠、GAME_DESIGN v6.0 §38-§43 落檔
 
 - 日期：2026-07-16
 - ID：reward-papertrade-r2-final-convergence

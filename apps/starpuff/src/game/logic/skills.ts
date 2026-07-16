@@ -87,8 +87,8 @@ export function starstormProgress(holdMs: number): number {
   return Math.min(1, holdMs / STARSTORM.holdMs);
 }
 
-// B 鍵按下當幀的動作決策（§23）：空中下+B 優先下衝擊（CD 中不誤射）；
-// 滿匣延遲至放開結算，區分點按發射與長按星暴。
+// B 鍵按下當幀的動作決策（§23/§40）：空中下+B 優先下衝擊（CD 中不誤射）；
+// 滿匣延遲至放開結算，區分點按發射與長按星暴；頂槽殼盾星同走延遲，長按改舉盾。
 export type ActionCommand = 'slam' | 'fire' | 'defer' | 'none';
 
 export function resolveActionPress(opts: {
@@ -96,10 +96,11 @@ export function resolveActionPress(opts: {
   down: boolean;
   slamCooldownMs: number;
   ammo: number;
+  topIsShelly?: boolean;
 }): ActionCommand {
   if (opts.airborne && opts.down) return opts.slamCooldownMs <= 0 ? 'slam' : 'none';
   if (opts.ammo <= 0) return 'none';
-  return opts.ammo >= STAR.maxAmmo ? 'defer' : 'fire';
+  return opts.ammo >= STAR.maxAmmo || opts.topIsShelly === true ? 'defer' : 'fire';
 }
 
 // 滿匣延遲發射：放開時短於吸入閾值視為點按 → 發射。
@@ -172,4 +173,77 @@ export function refundDashFlap(flapsUsed: number, firstTapFlapped: boolean): num
 // 疾衝水平速度：180px / 0.18s = 1000px/s。
 export function airDashSpeed(): number {
   return (AIR_DASH.distancePx / AIR_DASH.durationMs) * 1000;
+}
+
+// 殼盾（§40）：頂槽殼盾星長按舉正面護盾——格擋一次即消耗頂槽並反擊星爆，CD 4s。
+// 滿彈匣長按維持星暴優先（§23 肌肉記憶不變），故 eligible 僅在未滿匣成立。
+export const SHELL_SHIELD = {
+  cooldownMs: 4000,
+  blockInvulnMs: 800,
+  counterRadiusPx: 90,
+  counterDamage: 3,
+} as const;
+
+export interface ShieldState {
+  raised: boolean;
+  cooldownMs: number;
+}
+
+export function createShieldState(): ShieldState {
+  return { raised: false, cooldownMs: 0 };
+}
+
+export function isTopShelly(magazine: readonly MagazineSlot[]): boolean {
+  const top = magazine[magazine.length - 1];
+  return top?.flavor === 'shelly' && !top.gold;
+}
+
+// 殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣——此情境下長按語意固定為舉盾，
+// 盾 CD 中或舉盾中皆不得回落為吸入（點按發射不受影響）；滿匣長按維持星暴優先。
+export function shieldEligible(magazine: readonly MagazineSlot[]): boolean {
+  return isTopShelly(magazine) && magazine.length < STAR.maxAmmo;
+}
+
+// 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星且未滿匣；
+// CD 中不可舉盾，放開或條件消失即放下。
+export function advanceShield(
+  state: ShieldState,
+  tick: { deltaMs: number; held: boolean; eligible: boolean },
+): ShieldState {
+  const cooldownMs = Math.max(0, state.cooldownMs - tick.deltaMs);
+  return { raised: tick.held && tick.eligible && cooldownMs <= 0, cooldownMs };
+}
+
+// 成功格擋：放下護盾並進 CD；頂槽消耗與反擊星爆由呼叫端結算。
+export function resolveShieldBlock(): ShieldState {
+  return { raised: false, cooldownMs: SHELL_SHIELD.cooldownMs };
+}
+
+// 正面判定（§40 正面護盾）：傷害來源位於面向側；同 x 視為正面（貼身重疊保護）。
+export function isFrontalHit(facing: 1 | -1, playerX: number, sourceX: number): boolean {
+  return sourceX === playerX || Math.sign(sourceX - playerX) === facing;
+}
+
+// 雷鏈目標選擇（§40）：命中點半徑內取最近 count 隻，由近至遠排序；純函式供 vitest。
+export interface ChainCandidate {
+  x: number;
+  y: number;
+}
+
+export function pickChainTargets<T extends ChainCandidate>(
+  originX: number,
+  originY: number,
+  candidates: readonly T[],
+  count: number,
+  radiusPx: number,
+): T[] {
+  return candidates
+    .map((candidate) => ({
+      candidate,
+      distSq: (candidate.x - originX) ** 2 + (candidate.y - originY) ** 2,
+    }))
+    .filter((entry) => entry.distSq <= radiusPx * radiusPx)
+    .sort((a, b) => a.distSq - b.distSq)
+    .slice(0, Math.max(0, count))
+    .map((entry) => entry.candidate);
 }

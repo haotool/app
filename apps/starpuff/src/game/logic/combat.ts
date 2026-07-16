@@ -42,13 +42,14 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 可吸怪的星彈屬性對照（§20/§30）：shelly 暈眩可吸以標準星計、zappy 得疾風星；不可吸者無屬性。
+// 可吸怪的星彈屬性對照（§20/§30/§40）：v6 起 shelly 得殼盾星、zappy 得雷鏈星
+// （取代 v4 的標準星/疾風星代位）；不可吸者無屬性。
 const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   jelly: 'jelly',
   floaty: 'floaty',
   puffy: 'puffy',
-  shelly: 'jelly',
-  zappy: 'floaty',
+  shelly: 'shelly',
+  zappy: 'zappy',
 };
 
 export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {

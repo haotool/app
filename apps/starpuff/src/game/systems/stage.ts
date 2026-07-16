@@ -8,6 +8,7 @@ import {
   SPRING_VELOCITY_Y,
   canSpringLaunch,
   shouldDropThrough,
+  springSweepHit,
 } from '../logic/stageModel';
 import { playSfx } from '../audio/sfx';
 import { burstSmall, ensureFxTextures } from './fx';
@@ -146,6 +147,47 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     });
   }
 
+  // 彈簧發射單一出口：物理 overlap 與掃掠背擋（§43）共用，cooldown 閘去重。
+  function tryLaunchSpring(spring: Phaser.GameObjects.Rectangle): void {
+    const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
+    const lockedUntil = (spring.getData('lockedUntil') as number | undefined) ?? 0;
+    if (!canSpringLaunch(scene.time.now, lockedUntil, body.velocity.y)) return;
+    spring.setData('lockedUntil', scene.time.now + SPRING_COOLDOWN_MS);
+    body.setVelocityY(SPRING_VELOCITY_Y);
+    playSfx('spring');
+    scene.tweens.add({
+      targets: spring,
+      scaleY: 0.55,
+      duration: 80,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+    });
+  }
+
+  // 彈簧掃掠背擋（§43，鏡像星星門 syncGateSweep）：彈簧 overlap 為 direct pair，
+  // Phaser 4 實測間歇漏檢——以前後幀掃掠 x 區間幾何補判（含高速穿越），不得移除；
+  // 重複觸發由 canSpringLaunch 冷卻閘去重。
+  let prevSweepX: number | null = null;
+  function sweepSprings(body: Phaser.Physics.Arcade.Body): void {
+    const currX = hooks.player().sprite.x;
+    const prevX = prevSweepX ?? currX;
+    prevSweepX = currX;
+    const halfWidth = body.width / 2;
+    for (const spring of springs) {
+      const sb = spring.body as Phaser.Physics.Arcade.StaticBody;
+      if (
+        springSweepHit(prevX, currX, halfWidth, body.bottom, {
+          left: sb.left,
+          right: sb.right,
+          top: sb.top,
+          bottom: sb.bottom,
+        })
+      ) {
+        tryLaunchSpring(spring);
+      }
+    }
+  }
+
   function breakBrick(target: Phaser.GameObjects.GameObject): boolean {
     const brick = asRect(target);
     if (!brick.active) return false;
@@ -196,6 +238,8 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         dropUntilMs = scene.time.now + DROP_THROUGH_MS;
         if (body.velocity.y < 0) body.setVelocityY(30);
       }
+
+      sweepSprings(body);
     },
 
     getOneWay: () => oneWay,
@@ -215,20 +259,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
     // 彈簧（recon C.3）：-640 超級跳 + 冷卻 300ms + squash + 專屬音；上升中不觸發。
     onSpringOverlap: (a, b) => {
-      const spring = asRect(hasFlag(a, 'spring') ? a : b);
-      const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
-      const lockedUntil = (spring.getData('lockedUntil') as number | undefined) ?? 0;
-      if (!canSpringLaunch(scene.time.now, lockedUntil, body.velocity.y)) return;
-      spring.setData('lockedUntil', scene.time.now + SPRING_COOLDOWN_MS);
-      body.setVelocityY(SPRING_VELOCITY_Y);
-      playSfx('spring');
-      scene.tweens.add({
-        targets: spring,
-        scaleY: 0.55,
-        duration: 80,
-        yoyo: true,
-        ease: 'Quad.easeOut',
-      });
+      tryLaunchSpring(asRect(hasFlag(a, 'spring') ? a : b));
     },
 
     breakBrick,

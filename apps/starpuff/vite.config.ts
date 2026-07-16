@@ -1,5 +1,21 @@
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+// 版本 SSOT（§42）：package.json version + short git SHA，經 define 嵌入 bundle。
+function resolveAppVersion(): string {
+  const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+    version: string;
+  };
+  let sha = 'nogit';
+  try {
+    sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    /* 無 git 環境（如 CI 淺層打包）時保留 nogit 標記。 */
+  }
+  return `v${pkg.version}+${sha}`;
+}
 
 export default defineConfig(async ({ mode }) => {
   // basePath SSOT：app.config.mjs（動態 import，鏡像 quake-school includedRoutes 模式）。
@@ -12,6 +28,9 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     base,
+    define: {
+      __APP_VERSION__: JSON.stringify(resolveAppVersion()),
+    },
     server: {
       port: 3007,
       strictPort: true,

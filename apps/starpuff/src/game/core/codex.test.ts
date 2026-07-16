@@ -50,10 +50,16 @@ describe('CODEX_SKILLS', () => {
     }
   });
 
-  it('涵蓋核心操作：吸入／星彈三系／星暴／下衝擊／空中疾衝', () => {
+  it('涵蓋核心操作：吸入／星彈五系／星暴／下衝擊／空中疾衝／殼盾／雷鏈', () => {
     const names = new Set(CODEX_SKILLS.map((skill) => skill.nameZh));
-    for (const required of ['吸入', '星彈三系', '星暴', '下衝擊', '空中疾衝']) {
+    for (const required of ['吸入', '星彈五系', '星暴', '下衝擊', '空中疾衝', '殼盾', '雷鏈']) {
       expect(names.has(required)).toBe(true);
     }
+  });
+
+  it('v6 新技能標注來源怪物（§40）：殼盾對應殼殼、雷鏈對應雷雷', () => {
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.detail).toContain('護盾');
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.howTo).toContain('殼盾星');
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '雷鏈')?.howTo).toContain('雷雷');
   });
 });

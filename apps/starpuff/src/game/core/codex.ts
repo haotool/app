@@ -52,7 +52,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     kind: 'shelly',
     textureKey: 'minion-shelly',
     nameZh: '殼殼',
-    behavior: '受擊縮殼旋轉衝刺，暈眩時才可吸',
+    behavior: '受擊縮殼旋轉衝刺，暈眩時吞下得殼盾星',
     inhalable: false,
     conditional: true,
   },
@@ -60,7 +60,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     kind: 'zappy',
     textureKey: 'minion-zappy',
     nameZh: '雷雷',
-    behavior: '懸浮追蹤放電環，吞下得疾風星',
+    behavior: '懸浮追蹤放電環，吞下得雷鏈星',
     inhalable: true,
   },
   {
@@ -85,9 +85,9 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     detail: '把可吸怪拉進嘴裡吞下，+1 彈藥（上限 3）',
   },
   {
-    nameZh: '星彈三系',
+    nameZh: '星彈五系',
     howTo: '有彈藥時點按吸入鍵',
-    detail: '吞什麼射什麼：果凍丁標準星／飄飄雷雷疾風星／氣球魨爆裂星',
+    detail: '吞什麼射什麼：果凍丁標準星／飄飄疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星',
   },
   {
     nameZh: '強化星',
@@ -108,6 +108,16 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     nameZh: '空中疾衝',
     howTo: '空中雙擊跳躍鍵',
     detail: '朝面向疾衝一段距離，無敵幀衝撞小怪',
+  },
+  {
+    nameZh: '殼盾',
+    howTo: '頂槽殼盾星時長按吸入鍵',
+    detail: '舉正面護盾格擋一次攻擊，成功格擋觸發反擊星爆（冷卻 4 秒、消耗該槽）',
+  },
+  {
+    nameZh: '雷鏈',
+    howTo: '吞雷雷後點按發射',
+    detail: '雷鏈星命中後跳電至最近兩隻小怪，各受 3 點電擊',
   },
   {
     nameZh: '漂浮',
