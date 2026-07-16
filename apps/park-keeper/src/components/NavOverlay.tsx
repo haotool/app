@@ -1,6 +1,7 @@
 /**
- * NavOverlay – Full-screen compass navigation (original "liquid glass" design)
- * 自 pages/Home.tsx 純搬移抽出（issue #711 S0）；props 契約凍結，行為零變更。
+ * NavOverlay – 全螢幕羅盤導航（issue #716 視覺重造）
+ * 佈局：MiniMap 全幅背景層 → 上 55% 羅盤盤面（玻璃圓盤浮層）→ 下 45% 資訊卡。
+ * 主題差異化以 token＋樣式參數實現（COMPASS_THEME_STYLES），不 fork 元件。
  */
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
@@ -12,6 +13,7 @@ import {
   ArrowUpLeft,
   Car,
   Check,
+  Compass,
   MapPin,
   X,
   Navigation,
@@ -20,7 +22,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
+import type { ThemeConfig, ThemeType, ParkingRecord } from '@app/park-keeper/types';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 import {
@@ -30,6 +32,8 @@ import {
   tickLength,
   tickStrokeWidth,
   tickOpacity,
+  targetWedgePath,
+  isAligned,
   COMPASS_CX,
   COMPASS_CY,
   COMPASS_OUTER_R,
@@ -42,12 +46,100 @@ import {
   WARNING_COLOR,
   ARRIVED_BORDER,
   ARRIVED_GLOW,
-  WARNING_BORDER,
-  WARNING_GLOW,
 } from '@app/park-keeper/config/colors';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
+
+// ---------------------------------------------------------------------------
+// 主題差異化樣式參數（brief：Nitro 霓虹描邊／Kawaii 粉彩圓潤／Zen 細線極簡／Classic 銅色調）
+// ---------------------------------------------------------------------------
+interface CompassThemeStyle {
+  /** 刻度線寬係數。 */
+  tickWidthScale: number;
+  /** 刻度端點形狀（Kawaii 圓頭）。 */
+  tickLinecap: 'round' | 'butt';
+  /** 外環線寬。 */
+  outerRingWidth: number;
+  /** 外環不透明度。 */
+  outerRingOpacity: number;
+  /** 盤面霓虹光暈（SVG drop-shadow filter 強度，0 = 無）。 */
+  neonGlowRadius: number;
+  /** 楔形未對準時不透明度。 */
+  wedgeIdleOpacity: number;
+}
+
+const COMPASS_THEME_STYLES: Record<ThemeType, CompassThemeStyle> = {
+  racing: {
+    tickWidthScale: 1,
+    tickLinecap: 'butt',
+    outerRingWidth: 1.6,
+    outerRingOpacity: 0.55,
+    neonGlowRadius: 6,
+    wedgeIdleOpacity: 0.4,
+  },
+  cute: {
+    tickWidthScale: 1.5,
+    tickLinecap: 'round',
+    outerRingWidth: 2.5,
+    outerRingOpacity: 0.25,
+    neonGlowRadius: 0,
+    wedgeIdleOpacity: 0.5,
+  },
+  minimalist: {
+    tickWidthScale: 0.8,
+    tickLinecap: 'butt',
+    outerRingWidth: 0.8,
+    outerRingOpacity: 0.14,
+    neonGlowRadius: 0,
+    wedgeIdleOpacity: 0.32,
+  },
+  literary: {
+    tickWidthScale: 1.1,
+    tickLinecap: 'butt',
+    outerRingWidth: 2,
+    outerRingOpacity: 0.35,
+    neonGlowRadius: 0,
+    wedgeIdleOpacity: 0.38,
+  },
+};
+
+/** 對準觸覺脈衝（Android；iOS 不支援 vibrate 靜默降級）。 */
+const ALIGNED_VIBRATE_PATTERN = [30, 40, 30];
+
+// ---------------------------------------------------------------------------
+// Screen Wake Lock：導航時防熄屏；hidden 釋放、回前景重新取得（iOS 18.4+ 修復）。
+// ---------------------------------------------------------------------------
+function useScreenWakeLock() {
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return undefined;
+
+    let sentinel: WakeLockSentinel | null = null;
+    let disposed = false;
+
+    const request = async () => {
+      try {
+        sentinel = await navigator.wakeLock.request('screen');
+      } catch {
+        // 低電量模式或平台拒絕：靜默降級，不影響導航功能。
+        sentinel = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && !disposed) void request();
+    };
+
+    void request();
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      disposed = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
+      void sentinel?.release().catch(() => undefined);
+    };
+  }, []);
+}
 
 // ---------------------------------------------------------------------------
 // DirectionIcon – Lucide icon mapped from DirectionIconType
@@ -76,7 +168,33 @@ function DirectionIcon({
   }
 }
 
-interface NavOverlayProps {
+// ---------------------------------------------------------------------------
+// 8 字校準動畫（SVG lemniscate；reduced-motion 時顯示靜態路徑）
+// ---------------------------------------------------------------------------
+function CalibrationFigureEight({ color, animate }: { color: string; animate: boolean }) {
+  // 雙圓相扣的 8 字路徑（水平 lemniscate 近似）。
+  const path =
+    'M 60 30 C 60 10, 30 10, 30 30 C 30 50, 60 50, 60 30 C 60 10, 90 10, 90 30 C 90 50, 60 50, 60 30';
+  return (
+    <svg viewBox="0 0 120 60" className="w-28 h-14" aria-hidden="true">
+      <path
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.35"
+      />
+      {animate && (
+        <circle r="5" fill={color}>
+          <animateMotion dur="2.4s" repeatCount="indefinite" path={path} />
+        </circle>
+      )}
+    </svg>
+  );
+}
+
+export interface NavOverlayProps {
   record: ParkingRecord;
   theme: ThemeConfig;
   onClose: () => void;
@@ -117,22 +235,14 @@ export default function NavOverlay({
     arrivedState,
     hasValidLocation,
     isPhoneFlat,
+    permissionState,
+    requestCompassPermission,
+    needsCalibration,
   } = nav;
 
-  const isDarkTheme = theme.id === 'racing' || theme.id === 'minimalist';
-  const glassStyle = isDarkTheme
-    ? {
-        bg: 'bg-slate-900/70',
-        border: 'border-white/20',
-        text: 'text-white',
-        subText: 'text-white/70',
-      }
-    : {
-        bg: 'bg-white/80',
-        border: 'border-black/10',
-        text: 'text-slate-900',
-        subText: 'text-slate-900/70',
-      };
+  useScreenWakeLock();
+
+  const compassStyle = COMPASS_THEME_STYLES[theme.id];
 
   const arrived = arrivedState;
   const [showArrivedCTA, setShowArrivedCTA] = useState(false);
@@ -147,8 +257,26 @@ export default function NavOverlay({
     };
   }, [arrived]);
 
+  // 對準判定：權限已授予、GPS 有效、非抵達/室內，誤差 <10°。
+  const aligned =
+    permissionState === 'granted' &&
+    hasValidLocation &&
+    !arrived &&
+    !isIndoor &&
+    isAligned(relativeRotation);
+
+  // 對準瞬間觸發一次觸覺脈衝（edge trigger；iOS 無 vibrate 靜默略過）。
+  useEffect(() => {
+    if (aligned && typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(ALIGNED_VIBRATE_PATTERN);
+    }
+  }, [aligned]);
+
   const direction = getDirectionInfo(relativeRotation);
   const directionHint = t(direction.i18nKey);
+
+  const compassBlocked = permissionState !== 'granted';
+  const showCalibration = permissionState === 'granted' && needsCalibration;
 
   return (
     <motion.div
@@ -158,115 +286,8 @@ export default function NavOverlay({
       className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
       style={{ backgroundColor: theme.colors.background }}
     >
-      {/* 1. Top Header */}
-      <div
-        className="absolute top-0 inset-x-0 h-32 z-30 px-6 pt-safe-top flex justify-between items-start pointer-events-none"
-        style={{
-          background: `linear-gradient(to bottom, ${theme.colors.background} 0%, ${theme.colors.background}E6 60%, transparent 100%)`,
-        }}
-      >
-        <div className="pointer-events-auto mt-2">
-          <div className="flex items-center gap-2 mb-1">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md"
-              style={{ backgroundColor: `${theme.colors.primary}20`, color: theme.colors.primary }}
-            >
-              <Car size={16} />
-            </div>
-            <h2
-              className="text-3xl font-black tracking-tighter drop-shadow-sm"
-              style={{ color: theme.colors.text }}
-            >
-              {record.plateNumber}
-            </h2>
-          </div>
-          <div
-            className="flex items-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] opacity-80 pl-10"
-            style={{ color: theme.colors.primary }}
-          >
-            <MapPin size={12} strokeWidth={3} /> {t('record.floor')} • {record.floor}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('nav.close_nav')}
-          className="pointer-events-auto w-11 h-11 mt-2 flex items-center justify-center backdrop-blur-2xl rounded-full transition-all active:scale-90 shadow-lg"
-          style={{
-            backgroundColor: `${theme.colors.surface}80`,
-            color: theme.colors.text,
-            border: `1px solid ${theme.colors.text}10`,
-          }}
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* 2. Liquid Glass HUD */}
-      <div className="absolute top-28 left-4 right-4 z-30 pointer-events-none flex flex-col items-center">
-        <motion.div
-          initial={shouldReduceMotion ? false : { y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className={`backdrop-blur-2xl saturate-150 border rounded-4xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-between relative overflow-hidden w-full max-w-sm ${glassStyle.bg} ${glassStyle.border}`}
-        >
-          <div className="flex items-center gap-4 relative z-10">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors duration-500 shadow-lg"
-              style={{
-                backgroundColor: !hasValidLocation
-                  ? '#f59e0b'
-                  : isIndoor
-                    ? '#fb923c'
-                    : theme.colors.primary,
-                color: '#fff',
-              }}
-            >
-              {!hasValidLocation ? (
-                <motion.div
-                  animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [1, 0.35, 1] }}
-                  transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-                >
-                  <Navigation size={24} />
-                </motion.div>
-              ) : isIndoor ? (
-                <Footprints size={24} />
-              ) : (
-                <Navigation2 size={24} strokeWidth={3} className="rotate-45" />
-              )}
-            </div>
-            <div>
-              <p
-                className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${glassStyle.subText}`}
-              >
-                {!hasValidLocation
-                  ? t('nav.gps_waiting')
-                  : isIndoor
-                    ? t('nav.indoor_mode')
-                    : t('record.distance')}
-              </p>
-              <div className="flex items-baseline gap-1">
-                <p className={`text-2xl font-black tracking-tight ${glassStyle.text}`}>
-                  {!hasValidLocation
-                    ? '···'
-                    : isIndoor
-                      ? stepCount
-                      : distance !== null
-                        ? Math.round(distance)
-                        : '--'}
-                </p>
-                {hasValidLocation && (
-                  <span className={`text-xs font-bold uppercase ${glassStyle.subText}`}>
-                    {isIndoor ? t('nav.steps') : t('nav.unit_meters')}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* 3. Map Layer (Background) */}
-      <div className="flex-1 relative z-0">
+      {/* 0. Map background layer（全幅；照片拖曳持久化入口保留於地圖層） */}
+      <div className="absolute inset-0 z-0">
         <Suspense
           fallback={
             <div className="w-full h-full" style={{ background: theme.colors.background }} />
@@ -289,12 +310,12 @@ export default function NavOverlay({
               recenterLabel={t('map.recenter_both')}
               cacheDurationDays={cacheDurationDays}
               text={miniMapText}
-              className="grayscale-[0.2]"
+              className="grayscale-[0.35] opacity-90"
               mapKey={`nav-${record.id}`}
               photoData={record.photoData}
               onPhotoClick={() => setShowPhotoModal(true)}
               parkedHeading={record.parkedHeading}
-              trackedViewportInsets={{ top: 148, right: 36, bottom: 332, left: 36 }}
+              trackedViewportInsets={{ top: 108, right: 36, bottom: 400, left: 36 }}
               photoOffset={record.photoOffset}
               onPhotoPositionChange={onPhotoOffsetChange}
             />
@@ -302,319 +323,596 @@ export default function NavOverlay({
         </Suspense>
       </div>
 
-      {/* 4. Professional Compass Deck */}
+      {/* 1. Top Header：車牌＋關閉 */}
       <div
-        className="absolute bottom-0 inset-x-0 h-[45vh] border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] -mt-8 z-20 overflow-hidden pb-safe-bottom"
+        className="absolute top-0 inset-x-0 z-30 px-5 pt-safe-top flex justify-between items-start pointer-events-none"
+        style={{
+          background: `linear-gradient(to bottom, ${theme.colors.background} 0%, ${theme.colors.background}CC 55%, transparent 100%)`,
+        }}
+      >
+        <div className="pointer-events-auto mt-2 pb-6">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md"
+              style={{ backgroundColor: `${theme.colors.primary}20`, color: theme.colors.primary }}
+            >
+              <Car size={16} />
+            </div>
+            <h2
+              className="text-2xl font-black tracking-tighter drop-shadow-sm"
+              style={{ color: theme.colors.text }}
+            >
+              {record.plateNumber}
+            </h2>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('nav.close_nav')}
+          className="pointer-events-auto w-11 h-11 mt-2 flex items-center justify-center backdrop-blur-2xl rounded-full transition-all active:scale-90 shadow-lg"
+          style={{
+            backgroundColor: `${theme.colors.surface}CC`,
+            color: theme.colors.text,
+            border: `1px solid ${theme.colors.text}10`,
+          }}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* 2. 上 55%：羅盤盤面（玻璃圓盤浮於地圖上） */}
+      <div className="absolute top-0 inset-x-0 h-[55%] z-20 flex items-center justify-center pointer-events-none pt-16">
+        <div className="relative w-76 h-76 max-w-[88vw] max-h-[42vh] aspect-square flex items-center justify-center">
+          {/* 玻璃盤面底：讓刻度在地圖上保持可讀 */}
+          <div
+            className="absolute inset-0 rounded-full backdrop-blur-xl"
+            style={{
+              backgroundColor: `${theme.colors.background}B8`,
+              boxShadow:
+                compassStyle.neonGlowRadius > 0
+                  ? `0 0 ${compassStyle.neonGlowRadius * 4}px ${theme.colors.primary}59, 0 18px 48px rgba(0,0,0,0.28)`
+                  : '0 18px 48px rgba(0,0,0,0.18)',
+              border: `${compassStyle.outerRingWidth}px solid ${
+                compassStyle.neonGlowRadius > 0 ? theme.colors.primary : theme.colors.text
+              }${compassStyle.neonGlowRadius > 0 ? '' : '1F'}`,
+            }}
+          />
+
+          {/* SVG 刻度環（world-locked 旋轉） */}
+          <motion.div
+            className="absolute inset-0"
+            style={{ rotate: -trueAnimHeading, opacity: compassBlocked ? 0.2 : 1 }}
+            transition={{ type: 'spring', stiffness: 50, damping: 15 }}
+          >
+            <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
+              <circle
+                cx={COMPASS_CX}
+                cy={COMPASS_CY}
+                r={COMPASS_OUTER_R}
+                fill="none"
+                stroke={arrived ? ARRIVED_COLOR : theme.colors.text}
+                strokeWidth={arrived ? 2 : compassStyle.outerRingWidth}
+                opacity={arrived ? 0.45 : compassStyle.outerRingOpacity}
+              />
+              {/* 刻度線群組（N 紅錨點、30° 主刻度） */}
+              {Array.from({ length: 36 }).map((_, i) => {
+                const angle = i * 10;
+                const isNorth = i === COMPASS_NORTH_INDEX;
+                const tLen = tickLength(i);
+                return (
+                  <g key={i} transform={`rotate(${angle} ${COMPASS_CX} ${COMPASS_CY})`}>
+                    <line
+                      x1={COMPASS_CX}
+                      y1={COMPASS_TICK_START_Y}
+                      x2={COMPASS_CX}
+                      y2={COMPASS_TICK_START_Y + tLen}
+                      stroke={isNorth ? NORTH_COLOR : theme.colors.text}
+                      strokeWidth={tickStrokeWidth(i) * compassStyle.tickWidthScale}
+                      opacity={tickOpacity(i)}
+                      strokeLinecap={compassStyle.tickLinecap}
+                    />
+                  </g>
+                );
+              })}
+              {/* 方位角ラベル — 絕對座標渲染，不使用反向旋轉，排除定位偏移 bug */}
+              {[0, 9, 18, 27].map((i) => {
+                if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
+                const { x, y } = cardinalLabelPosition(i);
+                const isNorth = i === COMPASS_NORTH_INDEX;
+                return (
+                  <text
+                    key={`cardinal-${i}`}
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill={isNorth ? NORTH_COLOR : theme.colors.text}
+                    fontSize="20"
+                    fontWeight="900"
+                    opacity={isNorth ? 1 : 0.85}
+                  >
+                    {i === COMPASS_NORTH_INDEX
+                      ? t('compass.n')
+                      : i === 9
+                        ? t('compass.e')
+                        : i === 18
+                          ? t('compass.s')
+                          : t('compass.w')}
+                  </text>
+                );
+              })}
+            </svg>
+          </motion.div>
+
+          {/* 目標方位 ±15° 楔形（world-locked：外層抵銷手機朝向、內層指向目標） */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{
+              opacity: compassBlocked
+                ? 0
+                : !hasValidLocation
+                  ? 0.2
+                  : arrived
+                    ? 0
+                    : isIndoor
+                      ? 0.35
+                      : 1,
+            }}
+            transition={{ duration: 0.6 }}
+            style={{ rotate: -trueAnimHeading }}
+          >
+            <motion.div
+              className="w-full h-full"
+              style={{ rotate: animTargetBearing }}
+              transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+            >
+              <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
+                <path
+                  d={targetWedgePath()}
+                  fill={theme.colors.primary}
+                  opacity={aligned ? 1 : compassStyle.wedgeIdleOpacity}
+                  style={{
+                    filter: aligned
+                      ? `drop-shadow(0 0 ${8 + compassStyle.neonGlowRadius}px ${theme.colors.primary})`
+                      : undefined,
+                    transition: 'opacity 0.35s ease, filter 0.35s ease',
+                  }}
+                />
+                {/* 楔形尖端車位錨點（圓形＋向上箭頭） */}
+                <g transform={`translate(${COMPASS_CX} 14)`}>
+                  <circle
+                    r="11"
+                    fill={theme.colors.primary}
+                    opacity={aligned ? 1 : 0.85}
+                    style={{
+                      filter: aligned ? `drop-shadow(0 0 6px ${theme.colors.primary})` : undefined,
+                    }}
+                  />
+                  <path
+                    d="M 0 -4.5 L 4.5 3.5 L 0 1.5 L -4.5 3.5 Z"
+                    fill={theme.colors.background}
+                  />
+                </g>
+              </svg>
+            </motion.div>
+          </motion.div>
+
+          {/* 中心 Hub：距離超大等寬數字（brief：display 級） */}
+          <motion.div
+            className="absolute w-40 h-40 rounded-full border-2 flex flex-col items-center justify-center z-10 overflow-hidden"
+            animate={{
+              borderColor: arrived
+                ? ARRIVED_BORDER
+                : aligned
+                  ? theme.colors.primary
+                  : `${theme.colors.text}12`,
+              boxShadow: arrived
+                ? `0 0 0 8px ${ARRIVED_GLOW}, 0 8px 32px rgba(0,0,0,0.14)`
+                : aligned
+                  ? `0 0 0 6px ${theme.colors.primary}1F, 0 8px 32px rgba(0,0,0,0.14)`
+                  : '0 8px 32px rgba(0,0,0,0.12)',
+            }}
+            transition={{ duration: 0.45 }}
+            style={{
+              backgroundColor: `${theme.colors.background}E0`,
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+            }}
+          >
+            <AnimatePresence mode="wait">
+              {compassBlocked ? (
+                /* ── 權限未授予：Hub 淡置示意 ── */
+                <motion.div
+                  key="blocked"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <Compass size={30} style={{ color: theme.colors.textMuted }} />
+                </motion.div>
+              ) : arrived ? (
+                /* ── 抵達狀態 ── */
+                <motion.div
+                  key="arrived"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 16 }}
+                  className="flex flex-col items-center gap-0.5 px-2"
+                >
+                  <Check size={34} style={{ color: ARRIVED_COLOR }} strokeWidth={2.5} />
+                  <p
+                    className="text-[11px] font-black uppercase tracking-[0.22em]"
+                    style={{ color: ARRIVED_COLOR }}
+                  >
+                    {t('nav.arrived')}
+                  </p>
+                  <AnimatePresence>
+                    {showArrivedCTA && (
+                      <motion.button
+                        key="cta"
+                        type="button"
+                        initial={{ opacity: 0, y: 6, scale: 0.88 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.92 }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                        onClick={onClose}
+                        className="mt-1 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
+                        style={{ backgroundColor: ARRIVED_COLOR }}
+                      >
+                        {t('nav.close_nav')}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ) : !hasValidLocation ? (
+                /* ── GPS 等待狀態 ── */
+                <motion.div
+                  key="no-gps"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-0.5"
+                >
+                  <motion.div
+                    animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [1, 0.3, 1] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                  >
+                    <Navigation size={22} style={{ color: theme.colors.primary }} />
+                  </motion.div>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-widest"
+                    style={{ color: theme.colors.primary }}
+                  >
+                    {t('nav.gps_label')}
+                  </p>
+                  <p
+                    className="text-[7px] font-bold uppercase tracking-[0.18em]"
+                    style={{ color: theme.colors.text, opacity: 0.35 }}
+                  >
+                    {t('nav.gps_waiting')}
+                  </p>
+                </motion.div>
+              ) : (
+                /* ── 正常導航狀態：超大等寬距離 ── */
+                <motion.div
+                  key="normal"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center w-full px-2"
+                >
+                  <p
+                    className="text-5xl font-black tracking-tight leading-none tabular-nums"
+                    style={{ color: aligned ? theme.colors.primary : theme.colors.text }}
+                  >
+                    {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
+                  </p>
+                  <p
+                    className="text-[9px] font-bold uppercase tracking-widest mt-1"
+                    style={{ color: theme.colors.text, opacity: 0.4 }}
+                  >
+                    {isIndoor ? t('nav.steps') : t('nav.unit_meters')}
+                  </p>
+
+                  <div
+                    className="w-8 h-px my-1.5"
+                    style={{ backgroundColor: `${theme.colors.text}15` }}
+                  />
+
+                  {/* 對準文案 or 方向提示 */}
+                  <AnimatePresence mode="wait">
+                    {aligned ? (
+                      <motion.div
+                        key="aligned"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.25 }}
+                        className="flex flex-col items-center gap-0"
+                        aria-live="polite"
+                      >
+                        <ArrowUp size={18} color={theme.colors.primary} strokeWidth={3.5} />
+                        <p
+                          className="mt-0.5 text-[10px] font-black uppercase tracking-[0.12em]"
+                          style={{ color: theme.colors.primary }}
+                        >
+                          {t('nav.aligned')}
+                        </p>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="direction"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.25 }}
+                        className="flex flex-col items-center gap-0"
+                        aria-label={directionHint}
+                      >
+                        <DirectionIcon
+                          type={direction.iconType}
+                          size={18}
+                          color={theme.colors.primary}
+                        />
+                        <p
+                          className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.15em]"
+                          style={{ color: theme.colors.text, opacity: 0.5 }}
+                        >
+                          {isIndoor ? t('nav.indoor_mode') : directionHint}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* 平放提示：半透明覆層 pill（不打斷 Hub 視覺脈絡） */}
+          <AnimatePresence>
+            {!compassBlocked && !isPhoneFlat && !arrived && (
+              <motion.div
+                key="hold-flat"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none whitespace-nowrap"
+                style={{
+                  backgroundColor: `${theme.colors.surface}D9`,
+                  border: `1px solid ${WARNING_COLOR}59`,
+                }}
+              >
+                <Smartphone size={12} color={WARNING_COLOR} />
+                <span
+                  className="text-[10px] font-black uppercase tracking-[0.12em]"
+                  style={{ color: WARNING_COLOR }}
+                >
+                  {t('nav.hold_flat')}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 權限卡／校準卡（蓋盤面中央，可互動） */}
+          <AnimatePresence>
+            {(compassBlocked || showCalibration) && (
+              <motion.div
+                key={
+                  permissionState === 'denied' ? 'denied' : showCalibration ? 'calibrate' : 'prompt'
+                }
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                className="absolute inset-x-2 top-1/2 -translate-y-1/2 z-30 pointer-events-auto"
+              >
+                <div
+                  className="mx-auto max-w-[17rem] rounded-3xl p-5 backdrop-blur-2xl shadow-[0_16px_48px_rgba(0,0,0,0.22)] flex flex-col items-center text-center gap-2"
+                  style={{
+                    backgroundColor: `${theme.colors.surface}F0`,
+                    border: `1px solid ${theme.colors.text}14`,
+                  }}
+                >
+                  {permissionState === 'prompt' ? (
+                    <>
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                        style={{
+                          backgroundColor: `${theme.colors.primary}1A`,
+                          color: theme.colors.primary,
+                        }}
+                      >
+                        <Compass size={24} />
+                      </div>
+                      <p className="text-sm font-black" style={{ color: theme.colors.text }}>
+                        {t('nav.enable_compass_title')}
+                      </p>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: theme.colors.textMuted }}
+                      >
+                        {t('nav.enable_compass_desc')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void requestCompassPermission()}
+                        className="mt-1 w-full min-h-11 px-4 rounded-2xl font-black text-sm text-white shadow-lg active:scale-95 transition-transform"
+                        style={{ backgroundColor: theme.colors.primary }}
+                      >
+                        {t('nav.enable_compass_cta')}
+                      </button>
+                    </>
+                  ) : permissionState === 'denied' ? (
+                    <>
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                        style={{ backgroundColor: `${WARNING_COLOR}1A`, color: WARNING_COLOR }}
+                      >
+                        <Compass size={24} />
+                      </div>
+                      <p className="text-sm font-black" style={{ color: theme.colors.text }}>
+                        {t('nav.permission_denied_title')}
+                      </p>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: theme.colors.textMuted }}
+                      >
+                        {t('nav.permission_denied_desc')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void requestCompassPermission()}
+                        className="mt-1 w-full min-h-11 px-4 rounded-2xl font-black text-sm shadow active:scale-95 transition-transform"
+                        style={{
+                          backgroundColor: `${theme.colors.text}0D`,
+                          color: theme.colors.text,
+                          border: `1px solid ${theme.colors.text}1F`,
+                        }}
+                      >
+                        {t('nav.permission_retry')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <CalibrationFigureEight
+                        color={theme.colors.primary}
+                        animate={!shouldReduceMotion}
+                      />
+                      <p className="text-sm font-black" style={{ color: theme.colors.text }}>
+                        {t('nav.calibrate_title')}
+                      </p>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: theme.colors.textMuted }}
+                      >
+                        {t('nav.calibrate_desc')}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* 3. 下 45%：資訊卡（照片 96px 縮圖＋樓層＋距離＋備註） */}
+      <div
+        className="absolute bottom-0 inset-x-0 h-[45%] z-20 border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] overflow-hidden"
         style={{
           backgroundColor: theme.colors.background,
           borderColor: `${theme.colors.text}10`,
         }}
       >
         <div
-          className="absolute inset-0 opacity-[0.05]"
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
           style={{
             backgroundImage: `radial-gradient(circle at center, ${theme.colors.text} 1px, transparent 1px)`,
             backgroundSize: '24px 24px',
           }}
         />
 
-        <div className="w-full h-full flex flex-col items-center justify-center pt-2 pb-2">
-          <div className="mb-3 flex flex-col items-center">
-            <ArrowUp size={20} style={{ color: theme.colors.primary }} strokeWidth={3} />
-            <span
-              className="text-[10px] font-black uppercase tracking-[0.28em]"
-              style={{ color: theme.colors.primary }}
-            >
-              {t('nav.phone_top')}
-            </span>
-          </div>
-
-          {/* Main Compass Dial */}
-          <div className="relative w-72 h-72 flex items-center justify-center">
-            {/* SVG Compass Ring */}
-            <motion.div
-              className="absolute inset-0"
-              style={{ rotate: -trueAnimHeading }}
-              transition={{ type: 'spring', stiffness: 50, damping: 15 }}
-            >
-              <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
-                {/* Outer compass boundary ring – turns green on arrival */}
-                <circle
-                  cx={COMPASS_CX}
-                  cy={COMPASS_CY}
-                  r={COMPASS_OUTER_R}
-                  fill="none"
-                  stroke={arrived ? ARRIVED_COLOR : theme.colors.text}
-                  strokeWidth={arrived ? 2 : 1}
-                  opacity={arrived ? 0.45 : 0.1}
-                />
-                {/* 刻度線群組 */}
-                {Array.from({ length: 36 }).map((_, i) => {
-                  const angle = i * 10;
-                  const isNorth = i === COMPASS_NORTH_INDEX;
-                  const tLen = tickLength(i);
-                  return (
-                    <g key={i} transform={`rotate(${angle} ${COMPASS_CX} ${COMPASS_CY})`}>
-                      <line
-                        x1={COMPASS_CX}
-                        y1={COMPASS_TICK_START_Y}
-                        x2={COMPASS_CX}
-                        y2={COMPASS_TICK_START_Y + tLen}
-                        stroke={isNorth ? NORTH_COLOR : theme.colors.text}
-                        strokeWidth={tickStrokeWidth(i)}
-                        opacity={tickOpacity(i)}
-                        strokeLinecap="round"
-                      />
-                    </g>
-                  );
-                })}
-                {/* 方位角ラベル — 絕對座標渲染，不使用反向旋轉，排除定位偏移 bug */}
-                {[0, 9, 18, 27].map((i) => {
-                  if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
-                  const { x, y } = cardinalLabelPosition(i);
-                  const isNorth = i === COMPASS_NORTH_INDEX;
-                  return (
-                    <text
-                      key={`cardinal-${i}`}
-                      x={x}
-                      y={y}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fill={isNorth ? NORTH_COLOR : theme.colors.text}
-                      fontSize="20"
-                      fontWeight="900"
-                      opacity={isNorth ? 1 : 0.85}
-                    >
-                      {i === COMPASS_NORTH_INDEX
-                        ? t('compass.n')
-                        : i === 9
-                          ? t('compass.e')
-                          : i === 18
-                            ? t('compass.s')
-                            : t('compass.w')}
-                    </text>
-                  );
-                })}
-              </svg>
-            </motion.div>
-
-            {/* Target Pointer – fades: arrived → 0 (jitter at ~0m), indoor → 0.4, no GPS → 0.25 */}
-            <motion.div
-              className="absolute inset-0"
-              animate={{ opacity: !hasValidLocation ? 0.25 : arrived ? 0 : isIndoor ? 0.4 : 1 }}
-              transition={{ duration: 0.6 }}
-              style={{ rotate: -trueAnimHeading }}
-            >
-              <motion.div
-                className="w-full h-full"
-                style={{ rotate: animTargetBearing }}
-                transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+        <div className="relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto">
+          {/* 照片＋樓層列 */}
+          <div className="flex items-center gap-4">
+            {record.photoData ? (
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                aria-label={t('record.view_photo')}
+                className="shrink-0 w-24 h-24 rounded-3xl overflow-hidden shadow-lg active:scale-95 transition-transform"
+                style={{ border: `2px solid ${theme.colors.surface}` }}
               >
-                <div className="absolute top-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                  <div
-                    className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg"
-                    style={{ backgroundColor: `${theme.colors.primary}E6` }}
-                  >
-                    {t('map.marker_car')}
-                  </div>
-                  <div
-                    className="w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-b-[32px]"
-                    style={{
-                      borderBottomColor: theme.colors.primary,
-                      filter: `drop-shadow(0 0 10px ${theme.colors.primary}80) drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
-                    }}
-                  />
-                  <div
-                    className="w-1 h-5 rounded-full opacity-60"
-                    style={{ backgroundColor: theme.colors.primary }}
-                  />
-                </div>
-              </motion.div>
-            </motion.div>
+                <img
+                  src={record.photoData}
+                  alt={t('record.photo_alt')}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ) : (
+              <div
+                className="shrink-0 w-24 h-24 rounded-3xl flex items-center justify-center"
+                style={{
+                  backgroundColor: `${theme.colors.text}08`,
+                  border: `1px dashed ${theme.colors.text}1F`,
+                }}
+              >
+                <Car size={28} style={{ color: theme.colors.textMuted, opacity: 0.5 }} />
+              </div>
+            )}
 
-            {/* Center Hub – 所有導航資訊的唯一視覺中心 */}
-            <motion.div
-              className="absolute w-36 h-36 rounded-full border-2 flex flex-col items-center justify-center z-10 overflow-hidden"
-              animate={{
-                borderColor: arrived
-                  ? ARRIVED_BORDER
-                  : !isPhoneFlat && hasValidLocation
-                    ? WARNING_BORDER
-                    : `${theme.colors.text}10`,
-                boxShadow: arrived
-                  ? `0 0 0 8px ${ARRIVED_GLOW}, 0 8px 32px rgba(0,0,0,0.14)`
-                  : !isPhoneFlat && hasValidLocation
-                    ? `0 0 0 5px ${WARNING_GLOW}, 0 8px 32px rgba(0,0,0,0.14)`
-                    : '0 8px 32px rgba(0,0,0,0.12)',
-              }}
-              transition={{ duration: 0.45 }}
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1"
+                style={{ color: theme.colors.primary }}
+              >
+                <MapPin size={11} strokeWidth={3} /> {t('record.floor')}
+              </p>
+              <p
+                className="text-5xl font-black tracking-tighter leading-tight truncate"
+                style={{ color: theme.colors.text }}
+              >
+                {record.floor}
+              </p>
+            </div>
+          </div>
+
+          {/* 距離／狀態列 */}
+          <div className="flex items-center gap-3 mt-4">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: `${theme.colors.background}D4`,
-                backdropFilter: 'blur(14px)',
-                WebkitBackdropFilter: 'blur(14px)',
+                backgroundColor: !hasValidLocation
+                  ? `${WARNING_COLOR}1A`
+                  : `${theme.colors.primary}14`,
+                color: !hasValidLocation ? WARNING_COLOR : theme.colors.primary,
               }}
             >
-              {/* 手機未平放時的外圈脈衝提示 */}
-              {!isPhoneFlat && hasValidLocation && !arrived && (
-                <motion.div
-                  className="absolute inset-0 rounded-full border border-red-400 pointer-events-none"
-                  animate={
-                    shouldReduceMotion
-                      ? { opacity: 0.35 }
-                      : { scale: [1, 1.05, 1], opacity: [0.55, 0.1, 0.55] }
-                  }
-                  transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
-                />
+              {!hasValidLocation ? (
+                <Navigation size={16} />
+              ) : isIndoor ? (
+                <Footprints size={16} />
+              ) : (
+                <Navigation2 size={16} strokeWidth={3} className="rotate-45" />
               )}
-
-              <AnimatePresence mode="wait">
-                {arrived ? (
-                  /* ── 抵達狀態 ── */
-                  <motion.div
-                    key="arrived"
-                    initial={{ scale: 0.6, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                    className="flex flex-col items-center gap-0.5 px-2"
-                  >
-                    <Check size={32} style={{ color: ARRIVED_COLOR }} strokeWidth={2.5} />
-                    <p
-                      className="text-[11px] font-black uppercase tracking-[0.22em]"
-                      style={{ color: ARRIVED_COLOR }}
-                    >
-                      {t('nav.arrived')}
-                    </p>
-                    <AnimatePresence>
-                      {showArrivedCTA && (
-                        <motion.button
-                          key="cta"
-                          type="button"
-                          initial={{ opacity: 0, y: 6, scale: 0.88 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 4, scale: 0.92 }}
-                          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                          onClick={onClose}
-                          className="mt-1 px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
-                          style={{ backgroundColor: ARRIVED_COLOR }}
-                        >
-                          {t('nav.close_nav')}
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ) : !hasValidLocation ? (
-                  /* ── GPS 等待狀態 ── */
-                  <motion.div
-                    key="no-gps"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-0.5"
-                  >
-                    <motion.div
-                      animate={shouldReduceMotion ? { opacity: 0.7 } : { opacity: [1, 0.3, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                    >
-                      <Navigation size={22} style={{ color: theme.colors.primary }} />
-                    </motion.div>
-                    <p
-                      className="text-[10px] font-bold uppercase tracking-widest"
-                      style={{ color: theme.colors.primary }}
-                    >
-                      GPS
-                    </p>
-                    <p
-                      className="text-[7px] font-bold uppercase tracking-[0.18em]"
-                      style={{ color: theme.colors.text, opacity: 0.35 }}
-                    >
-                      {t('nav.gps_waiting')}
-                    </p>
-                  </motion.div>
-                ) : (
-                  /* ── 正常導航狀態 ── */
-                  <motion.div
-                    key="normal"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center w-full px-2"
-                  >
-                    {/* 距離 / 步數 */}
-                    <p
-                      className="text-3xl font-black tracking-tight leading-none"
-                      style={{ color: theme.colors.text }}
-                    >
-                      {isIndoor ? stepCount : distance !== null ? Math.round(distance) : '--'}
-                    </p>
-                    <p
-                      className="text-[9px] font-bold uppercase tracking-widest mt-0.5"
-                      style={{ color: theme.colors.text, opacity: 0.4 }}
-                    >
-                      {isIndoor ? t('nav.steps') : t('nav.unit_meters')}
-                    </p>
-
-                    {/* 分隔線 */}
-                    <div
-                      className="w-8 h-px my-1.5"
-                      style={{ backgroundColor: `${theme.colors.text}15` }}
-                    />
-
-                    {/* 方向 or 手機平放提示（互斥） */}
-                    <AnimatePresence mode="wait">
-                      {!isPhoneFlat ? (
-                        <motion.div
-                          key="hold-flat"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.25 }}
-                          className="flex flex-col items-center gap-0.5"
-                        >
-                          <motion.div
-                            animate={
-                              shouldReduceMotion ? { rotate: 12 } : { rotate: [14, -14, 14] }
-                            }
-                            transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                          >
-                            <Smartphone size={16} color={WARNING_COLOR} />
-                          </motion.div>
-                          <p
-                            className="text-[7px] font-black uppercase tracking-[0.14em]"
-                            style={{ color: WARNING_COLOR, opacity: 0.9 }}
-                          >
-                            {t('nav.hold_flat')}
-                          </p>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="direction"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.25 }}
-                          className="flex flex-col items-center gap-0"
-                          aria-label={directionHint}
-                        >
-                          <DirectionIcon
-                            type={direction.iconType}
-                            size={20}
-                            color={theme.colors.primary}
-                          />
-                          <p
-                            className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.15em]"
-                            style={{ color: theme.colors.text, opacity: 0.5 }}
-                          >
-                            {isIndoor ? t('nav.indoor_mode') : directionHint}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span
+                className="text-xl font-black tabular-nums"
+                style={{ color: theme.colors.text }}
+              >
+                {!hasValidLocation
+                  ? '···'
+                  : isIndoor
+                    ? stepCount
+                    : distance !== null
+                      ? Math.round(distance)
+                      : '--'}
+              </span>
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: theme.colors.textMuted }}
+              >
+                {!hasValidLocation
+                  ? t('nav.gps_waiting')
+                  : isIndoor
+                    ? t('nav.steps')
+                    : t('nav.unit_meters')}
+              </span>
+            </div>
           </div>
+
+          {/* 備註 */}
+          {record.notes && (
+            <p
+              className="mt-3 text-sm leading-relaxed line-clamp-2"
+              style={{ color: theme.colors.textMuted }}
+            >
+              {record.notes}
+            </p>
+          )}
         </div>
       </div>
 
@@ -622,7 +920,7 @@ export default function NavOverlay({
       {showPhotoModal && record.photoData && (
         <PhotoViewerModal
           src={record.photoData}
-          alt="Parking spot"
+          alt={t('record.photo_alt')}
           onClose={() => setShowPhotoModal(false)}
           containerClassName="absolute inset-0"
         />
