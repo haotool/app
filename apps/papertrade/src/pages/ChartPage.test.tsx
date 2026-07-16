@@ -98,6 +98,15 @@ describe('ChartPage', () => {
     expect(screen.getByText('32.82B')).toBeInTheDocument();
   });
 
+  it('orders stats with funding rate and open interest first', async () => {
+    useMarketStore.getState().setTicker(btcTicker);
+    renderChart('/chart/BTCUSDT');
+
+    await screen.findByRole('heading', { name: /BTC/ });
+    const labels = screen.getAllByRole('term').map((node) => node.textContent);
+    expect(labels).toEqual(['資金費率', '持倉量', '24h高', '24h低', '24h額']);
+  });
+
   it('colors negative funding rates with the short tone', async () => {
     useMarketStore.getState().setTicker({ ...btcTicker, fundingRate: -0.005 });
     renderChart('/chart/BTCUSDT');

@@ -70,25 +70,8 @@ function SymbolHeader({
         )}
       </div>
       {/* 各項 min-w 固定：載入中 `--` 與實值等寬，避免統計列跳動（設計 SSOT）。 */}
+      {/* 排序 v1.2：資金費率與持倉量置前，375px 首屏可視（QA 可發現性裁決）。 */}
       <dl className="mt-2 flex gap-4 overflow-x-auto text-caption text-text-3">
-        <div className="flex min-w-24 shrink-0 gap-1">
-          <dt>24h高</dt>
-          <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.highPrice24h) : '--'}
-          </dd>
-        </div>
-        <div className="flex min-w-24 shrink-0 gap-1">
-          <dt>24h低</dt>
-          <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.lowPrice24h) : '--'}
-          </dd>
-        </div>
-        <div className="flex min-w-20 shrink-0 gap-1">
-          <dt>24h額</dt>
-          <dd className="text-text-2 tabular-nums">
-            {ticker ? formatCompact(ticker.turnover24h) : '--'}
-          </dd>
-        </div>
         <div className="flex min-w-40 shrink-0 gap-1">
           <dt>資金費率</dt>
           <dd className="flex gap-1 tabular-nums">
@@ -117,6 +100,24 @@ function SymbolHeader({
             {ticker?.openInterestValue !== undefined
               ? formatCompact(ticker.openInterestValue)
               : '--'}
+          </dd>
+        </div>
+        <div className="flex min-w-24 shrink-0 gap-1">
+          <dt>24h高</dt>
+          <dd className="text-text-2 tabular-nums">
+            {ticker ? formatPrice(ticker.highPrice24h) : '--'}
+          </dd>
+        </div>
+        <div className="flex min-w-24 shrink-0 gap-1">
+          <dt>24h低</dt>
+          <dd className="text-text-2 tabular-nums">
+            {ticker ? formatPrice(ticker.lowPrice24h) : '--'}
+          </dd>
+        </div>
+        <div className="flex min-w-20 shrink-0 gap-1">
+          <dt>24h額</dt>
+          <dd className="text-text-2 tabular-nums">
+            {ticker ? formatCompact(ticker.turnover24h) : '--'}
           </dd>
         </div>
       </dl>
