@@ -590,6 +590,29 @@ describe('QuickEntry - fullscreen 模式', () => {
     expect(screen.queryByTestId('photo-issue-card')).toBeNull();
   });
 
+  it('歷史車號 chips 一鍵切換（排除當前輸入值）', async () => {
+    localStorage.setItem('park-keeper:last-plate', 'AAA-1111');
+    localStorage.setItem('park-keeper:plate-history', JSON.stringify(['AAA-1111', 'BBB-2222']));
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    // 當前值 AAA-1111 不重複出現在 chips；BBB-2222 可一鍵切換。
+    const chips = screen.getByTestId('plate-history-chips');
+    expect(chips).toHaveTextContent('BBB-2222');
+    expect(chips).not.toHaveTextContent('AAA-1111');
+
+    fireEvent.click(screen.getByRole('button', { name: 'BBB-2222' }));
+    expect(screen.getByPlaceholderText(/車牌/i)).toHaveValue('BBB-2222');
+    // 切換後原車號進入 chips 供切回。
+    expect(screen.getByTestId('plate-history-chips')).toHaveTextContent('AAA-1111');
+  });
+
   it('fullscreen 模式為頁面內容，不得帶 dialog 語意', async () => {
     render(
       <I18nextProvider i18n={i18n}>

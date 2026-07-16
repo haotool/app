@@ -53,13 +53,10 @@ describe('Layout', () => {
     expect(copyrightEl).toBeInTheDocument();
   });
 
-  it('should have sr-only metadata', () => {
+  it('should not render hidden sr-only metadata（issue #725 移除硬編日期隱藏文字）', () => {
     renderWithRouter();
-    const srOnlyDiv = document.querySelector('.sr-only');
-    expect(srOnlyDiv).toBeInTheDocument();
-    expect(srOnlyDiv).toHaveAttribute('aria-hidden', 'true');
-    expect(srOnlyDiv).toContainElement(document.querySelector('span[rel="author"]'));
-    expect(srOnlyDiv).toContainElement(document.querySelector('time[dateTime="2026-02-25"]'));
+    expect(document.querySelector('.sr-only')).toBeNull();
+    expect(document.querySelector('time[dateTime="2026-02-25"]')).toBeNull();
   });
 
   it('should render Outlet content', () => {

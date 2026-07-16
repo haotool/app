@@ -60,10 +60,6 @@ export default function Layout() {
           </nav>
         </footer>
       )}
-      <div className="sr-only" aria-hidden="true">
-        <span rel="author">阿璋 (Ah Zhang)</span>
-        <time dateTime="2026-02-25">Published: 2026-02-25</time>
-      </div>
     </div>
   );
 }

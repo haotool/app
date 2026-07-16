@@ -35,6 +35,7 @@ import BrandLogo from '@app/park-keeper/components/BrandLogo';
 import RecordCard from '@app/park-keeper/components/RecordCard';
 import PickupHeroCard from '@app/park-keeper/components/PickupHeroCard';
 import ListSkeleton from '@app/park-keeper/components/ListSkeleton';
+import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 import {
   NAV_CONTENT_H,
   NAV_ICON_SIZE,
@@ -128,7 +129,7 @@ function QuickCaptureCta({
   return (
     <label
       data-testid="quick-record-cta"
-      className="flex flex-col items-center justify-center gap-3 w-full min-h-[30dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
+      className="flex flex-col items-center justify-center gap-3 w-full min-h-[32dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
       style={{
         backgroundColor: theme.colors.primary,
         boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
@@ -556,7 +557,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   boxShadow: `${theme.colors.primary}66 0px 8px 25px`,
                 }}
               >
-                <Plus size={32} stroke="#fff" strokeWidth={3} />
+                <Plus size={32} stroke={ON_PRIMARY_COLOR} strokeWidth={3} />
               </motion.button>
             </div>
 
@@ -644,7 +645,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             style={{
               bottom: 'calc(6rem + env(safe-area-inset-bottom))',
               backgroundColor: theme.colors.primary,
-              color: '#fff',
+              color: ON_PRIMARY_COLOR,
             }}
           >
             <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>

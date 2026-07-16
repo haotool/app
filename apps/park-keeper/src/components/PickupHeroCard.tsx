@@ -5,6 +5,7 @@
 import { useTranslation } from 'react-i18next';
 import { Car, Clock, MapPin, Navigation } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
+import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 
 /** 經過時間標籤：<1 分鐘回傳 null（由呼叫端顯示「剛剛」），其餘走 Intl 相對時間。 */
 export function formatElapsed(timestamp: number, locale: string): string | null {
@@ -96,7 +97,7 @@ export default function PickupHeroCard({ record, theme, onNavigate }: PickupHero
           className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
           style={{ backgroundColor: theme.colors.primary }}
         >
-          <Navigation size={24} color="#fff" strokeWidth={2.5} />
+          <Navigation size={24} color={ON_PRIMARY_COLOR} strokeWidth={2.5} />
         </span>
       </div>
     </button>

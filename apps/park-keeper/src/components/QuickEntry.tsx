@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { motion, AnimatePresence, type Variants } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'motion/react';
 import { Camera, Trash2, Check, Grid, Loader2, AlertCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
@@ -7,6 +7,7 @@ import { compressImage } from '@app/park-keeper/services/imageUtils';
 import { useDeviceOrientation } from '@app/park-keeper/hooks/useDeviceOrientation';
 import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
+import { WARNING_COLOR } from '@app/park-keeper/config/colors';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -67,6 +68,18 @@ const itemVariants: Variants = {
   },
 };
 
+// prefers-reduced-motion：僅保留淡入淡出，移除位移/縮放/彈簧（issue #725）。
+const reducedPanelVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15, when: 'beforeChildren' } },
+  exit: { opacity: 0, transition: { duration: 0.1 } },
+};
+
+const reducedItemVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15 } },
+};
+
 export default function QuickEntry({
   theme,
   onSave,
@@ -78,6 +91,10 @@ export default function QuickEntry({
 }: QuickEntryProps) {
   const { t } = useTranslation();
   const isFullscreen = mode === 'fullscreen';
+  const shouldReduceMotion = useReducedMotion();
+  const activePanelVariants = shouldReduceMotion ? reducedPanelVariants : panelVariants;
+  const activeFullscreenVariants = shouldReduceMotion ? reducedPanelVariants : fullscreenVariants;
+  const activeItemVariants = shouldReduceMotion ? reducedItemVariants : itemVariants;
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -89,6 +106,7 @@ export default function QuickEntry({
     ariaStaticLabel: t('map.aria_static'),
   };
   const [plate, setPlate] = useState(() => plateMemory.get() ?? '');
+  const [plateHistory, setPlateHistory] = useState<string[]>(() => plateMemory.getHistory());
   const [selectedFloor, setSelectedFloor] = useState(() => plateMemory.getFloor() ?? '');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -166,6 +184,7 @@ export default function QuickEntry({
       // 開啟面板時以上次已儲存的記憶預填，覆蓋關閉前未儲存的暫時輸入。
       setPlate(plateMemory.get() ?? '');
       setSelectedFloor(plateMemory.getFloor() ?? '');
+      setPlateHistory(plateMemory.getHistory());
       // 首屏 CTA 已拍好的照片直接帶入（宿主於關閉時清除，避免重開誤帶舊照）。
       if (initialPhotoFile) void processPhotoFile(initialPhotoFile);
     } else {
@@ -239,7 +258,7 @@ export default function QuickEntry({
   const formContent = (
     <>
       <motion.div
-        variants={itemVariants}
+        variants={activeItemVariants}
         className={isFullscreen ? 'flex flex-col gap-4' : 'flex gap-4 h-36'}
       >
         <div
@@ -267,9 +286,10 @@ export default function QuickEntry({
                     vibrate(10);
                     setPhoto(null);
                   }}
-                  className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white backdrop-blur-md"
+                  aria-label={t('record.remove_photo')}
+                  className="absolute top-1 right-1 min-w-11 min-h-11 flex items-center justify-center bg-black/60 rounded-full text-white backdrop-blur-md"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={14} />
                 </motion.button>
               </motion.div>
             ) : photoIssue ? (
@@ -282,8 +302,11 @@ export default function QuickEntry({
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center justify-center text-center px-3 py-2 w-full gap-1.5"
               >
-                <AlertCircle className="text-red-500 shrink-0" size={20} />
-                <span className="text-[10px] font-bold text-red-500 leading-snug">
+                <AlertCircle className="shrink-0" size={20} style={{ color: WARNING_COLOR }} />
+                <span
+                  className="text-[10px] font-bold leading-snug"
+                  style={{ color: WARNING_COLOR }}
+                >
                   {photoIssue === 'process' ? t('error.image') : t('error.photo_cancelled')}
                 </span>
                 <span className="text-[9px] font-medium leading-snug opacity-60">
@@ -375,8 +398,8 @@ export default function QuickEntry({
               data-testid="location-denied-card"
               className="w-full h-full flex flex-col items-center justify-center text-center gap-1.5 px-3 py-2"
             >
-              <AlertCircle className="text-red-500 shrink-0" size={16} />
-              <span className="text-[9px] font-bold text-red-500 leading-snug">
+              <AlertCircle className="shrink-0" size={16} style={{ color: WARNING_COLOR }} />
+              <span className="text-[9px] font-bold leading-snug" style={{ color: WARNING_COLOR }}>
                 {t('error.location_denied')}
               </span>
               <span className="text-[8px] font-black uppercase tracking-wide opacity-40">
@@ -388,7 +411,8 @@ export default function QuickEntry({
                   vibrate(10);
                   startPrecisionTracking();
                 }}
-                className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                style={{ backgroundColor: `${WARNING_COLOR}14`, color: WARNING_COLOR }}
               >
                 {t('action.retry')}
               </button>
@@ -422,7 +446,7 @@ export default function QuickEntry({
         </div>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="relative">
           <input
             type="text"
@@ -445,6 +469,26 @@ export default function QuickEntry({
             </button>
           )}
         </div>
+        {/* 歷史車號一鍵切換（design brief 旅程 A #3）：去重排除當前輸入值 */}
+        {plateHistory.filter((p) => p !== plate).length > 0 && (
+          <div className="flex flex-wrap gap-2" data-testid="plate-history-chips">
+            {plateHistory
+              .filter((p) => p !== plate)
+              .map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    vibrate(10);
+                    setPlate(p);
+                  }}
+                  className="min-h-11 px-4 rounded-full text-xs font-black tracking-wide bg-[var(--color-surface)] border border-[color:var(--color-primary)]/15 text-[var(--color-text)] active:scale-95 transition-transform"
+                >
+                  {p}
+                </button>
+              ))}
+          </div>
+        )}
         <textarea
           value={notes}
           onChange={(e) => {
@@ -459,7 +503,7 @@ export default function QuickEntry({
         />
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-4">
+      <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">
             {t('record.floor')}
@@ -537,7 +581,7 @@ export default function QuickEntry({
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            variants={fullscreenVariants}
+            variants={activeFullscreenVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -572,7 +616,7 @@ export default function QuickEntry({
             aria-modal="true"
             aria-label={t('add.title')}
             tabIndex={-1}
-            variants={panelVariants}
+            variants={activePanelVariants}
             initial="hidden"
             animate="visible"
             exit="exit"

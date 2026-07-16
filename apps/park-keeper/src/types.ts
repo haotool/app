@@ -40,7 +40,6 @@ export interface AppSettings {
   theme: ThemeType;
   language: LanguageType;
   cacheDurationDays: number;
-  notificationsEnabled: boolean;
 }
 
 // Service Types

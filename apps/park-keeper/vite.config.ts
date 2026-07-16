@@ -146,14 +146,8 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.ts',
         injectManifest: {
-          globPatterns: [
-            '**/*.js',
-            '**/*.css',
-            '**/*.html',
-            '**/*.json',
-            '**/*.svg',
-            '**/*.webmanifest',
-          ],
+          // dist 無需 precache 的 .json（.vite/ 建置產物不進 SW），保留清單避免無匹配警告。
+          globPatterns: ['**/*.js', '**/*.css', '**/*.html', '**/*.svg', '**/*.webmanifest'],
           globIgnores: ['**/node_modules/**'],
         },
         manifest: {

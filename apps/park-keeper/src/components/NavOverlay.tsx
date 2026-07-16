@@ -47,6 +47,7 @@ import {
   WARNING_COLOR,
   ARRIVED_BORDER,
   ARRIVED_GLOW,
+  ON_PRIMARY_COLOR,
 } from '@app/park-keeper/config/colors';
 import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import PhotoViewerModal from './PhotoViewerModal';
@@ -871,7 +872,9 @@ export default function NavOverlay({
           }}
         />
 
-        <div className="relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto">
+        <div
+          className={`relative w-full h-full flex flex-col px-6 pt-6 pb-safe-bottom max-w-md mx-auto ${record.notes ? '' : 'justify-center'}`}
+        >
           {/* 照片＋樓層列 */}
           <div className="flex items-center gap-4">
             {record.photoData ? (
@@ -969,7 +972,7 @@ export default function NavOverlay({
                 className="ml-auto min-h-11 px-3.5 rounded-2xl flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide shrink-0 active:scale-95 transition-transform"
                 style={
                   photoEditMode
-                    ? { backgroundColor: theme.colors.primary, color: '#fff' }
+                    ? { backgroundColor: theme.colors.primary, color: ON_PRIMARY_COLOR }
                     : {
                         backgroundColor: `${theme.colors.text}0A`,
                         color: theme.colors.text,

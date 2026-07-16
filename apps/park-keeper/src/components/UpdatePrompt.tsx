@@ -48,8 +48,9 @@ function UpdatePromptClient() {
           key="update-prompt"
           role={isAlert ? 'alert' : 'status'}
           aria-live={isAlert ? 'assertive' : 'polite'}
-          className="fixed bottom-6 left-1/2 z-50 pointer-events-none"
-          style={{ x: '-50%' }}
+          // 提升至底部導覽列與 FAB 之上，避免 toast 遮擋主要操作（issue #725 P2）。
+          className="fixed left-1/2 z-50 pointer-events-none"
+          style={{ x: '-50%', bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
           initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }}

@@ -77,5 +77,4 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'minimalist',
   language: 'zh-TW',
   cacheDurationDays: CACHE_DAYS.DEFAULT,
-  notificationsEnabled: true,
 };

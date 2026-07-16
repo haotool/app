@@ -87,5 +87,34 @@ describe('plateMemory', () => {
       expect(() => plateMemory.commitFloor('B2')).not.toThrow();
       vi.unstubAllGlobals();
     });
+
+    it('getHistory() should return [] instead of throwing', () => {
+      vi.stubGlobal('localStorage', throwingStorage);
+      expect(plateMemory.getHistory()).toEqual([]);
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('歷史車號（issue #725 一鍵切換）', () => {
+    it('commit 依序累積歷史，最新在前且去重', () => {
+      plateMemory.commit('AAA-1111');
+      plateMemory.commit('BBB-2222');
+      plateMemory.commit('AAA-1111');
+      expect(plateMemory.getHistory()).toEqual(['AAA-1111', 'BBB-2222']);
+    });
+
+    it('歷史上限 3 筆，超出淘汰最舊', () => {
+      for (const p of ['A-1', 'B-2', 'C-3', 'D-4']) plateMemory.commit(p);
+      expect(plateMemory.getHistory()).toEqual(['D-4', 'C-3', 'B-2']);
+    });
+
+    it('clear() 一併清除歷史；壞資料回退空陣列', () => {
+      plateMemory.commit('AAA-1111');
+      plateMemory.clear();
+      expect(plateMemory.getHistory()).toEqual([]);
+
+      localStorage.setItem('park-keeper:plate-history', '{not-json');
+      expect(plateMemory.getHistory()).toEqual([]);
+    });
   });
 });

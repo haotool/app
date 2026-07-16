@@ -142,7 +142,7 @@ describe('Home', () => {
       expect(screen.getByTestId('quick-record-cta')).toBeInTheDocument();
     });
     // hero 變體：≥30dvh 置頂
-    expect(screen.getByTestId('quick-record-cta').className).toContain('min-h-[30dvh]');
+    expect(screen.getByTestId('quick-record-cta').className).toContain('min-h-[32dvh]');
     expect(screen.queryByTestId('pickup-hero-card')).toBeNull();
 
     const guideLink = screen.getByRole('link', { name: '捷徑教學' });
@@ -168,7 +168,7 @@ describe('Home', () => {
     // DOM 順序：hero 卡在 CTA 之前（取車任務優先）
     expect(hero.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // compact 變體：不再佔 30dvh
-    expect(cta.className).not.toContain('min-h-[30dvh]');
+    expect(cta.className).not.toContain('min-h-[32dvh]');
     // 樓層 display 級字存在
     expect(screen.getAllByText('B2').length).toBeGreaterThan(0);
   });
