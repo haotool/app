@@ -59,6 +59,7 @@ vi.mock('@app/park-keeper/services/mapTileCache', () => ({
 describe('Home × dbService（openDB 失敗整合路徑）', () => {
   let errorSpy: ReturnType<typeof vi.spyOn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;
+  const originalIndexedDB = Object.getOwnPropertyDescriptor(window, 'indexedDB');
 
   beforeAll(async () => {
     await i18n.changeLanguage('zh-TW');
@@ -80,6 +81,12 @@ describe('Home × dbService（openDB 失敗整合路徑）', () => {
   afterAll(() => {
     errorSpy.mockRestore();
     warnSpy.mockRestore();
+    // 還原 window.indexedDB，避免污染同 worker 後續測試檔。
+    if (originalIndexedDB) {
+      Object.defineProperty(window, 'indexedDB', originalIndexedDB);
+    } else {
+      delete (window as { indexedDB?: IDBFactory }).indexedDB;
+    }
   });
 
   it('openDB 失敗時應顯示 error.storage_unavailable 錯誤卡（role=alert）', async () => {

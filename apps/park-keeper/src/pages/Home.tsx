@@ -133,7 +133,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
       setSettingsLoaded(true);
       void i18n.changeLanguage(savedSettings.language);
       // 冷啟動即執行照片保存天數清理，再載入列表以反映清理結果。
-      await dbService.runStartupCleanup(savedSettings.cacheDurationDays);
+      // 清理失敗（含 getRecords 拋錯）不得阻斷啟動；儲存層可用性由 loadRecords 錯誤路徑呈現。
+      try {
+        await dbService.runStartupCleanup(savedSettings.cacheDurationDays);
+      } catch (error) {
+        console.warn('Startup cleanup failed', error);
+      }
       await loadRecords();
       setIsLoading(false);
     };
@@ -143,9 +148,15 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
   // 前景喚醒與 BFCache 還原觸發清理（iOS 無 Periodic Background Sync，見 research §C8）。
   useEffect(() => {
     const runCleanup = () => {
-      void dbService.runStartupCleanup(settings.cacheDurationDays).then((cleaned) => {
-        if (cleaned > 0) void loadRecords();
-      });
+      dbService
+        .runStartupCleanup(settings.cacheDurationDays)
+        .then((cleaned) => {
+          if (cleaned > 0) void loadRecords();
+        })
+        .catch((error: unknown) => {
+          // 前景喚醒清理失敗僅記錄，不阻斷 app（getRecords 拋錯時避免 unhandled rejection）。
+          console.warn('Foreground cleanup failed', error);
+        });
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') runCleanup();
