@@ -7,8 +7,8 @@ import {
   nodeStatus,
   parseSave,
   recordLevelClear,
-  recordSecret,
-  secretsFoundCount,
+  recordEgg,
+  eggsFoundCount,
 } from './save';
 
 const clearedSave = (raw: object) => JSON.stringify({ schemaVersion: SAVE_SCHEMA_VERSION, ...raw });
@@ -31,14 +31,14 @@ describe('parseSave（§38 容錯）', () => {
     const save = parseSave(
       clearedSave({
         levels: {
-          1: { cleared: true, bestTimeMs: 42000, secretsFound: ['reach-x'] },
-          2: { cleared: 'yes', bestTimeMs: 1, secretsFound: [] },
-          9: { cleared: true, bestTimeMs: 1, secretsFound: [] },
+          1: { cleared: true, bestTimeMs: 42000, eggsFound: ['reach-x'] },
+          2: { cleared: 'yes', bestTimeMs: 1, eggsFound: [] },
+          9: { cleared: true, bestTimeMs: 1, eggsFound: [] },
         },
         lastPlayedAt: 123,
       }),
     );
-    expect(save.levels[1]).toEqual({ cleared: true, bestTimeMs: 42000, secretsFound: ['reach-x'] });
+    expect(save.levels[1]).toEqual({ cleared: true, bestTimeMs: 42000, eggsFound: ['reach-x'] });
     expect(save.levels[2]).toBeUndefined();
     expect(save.lastPlayedAt).toBe(123);
   });
@@ -47,19 +47,19 @@ describe('parseSave（§38 容錯）', () => {
     const save = parseSave(
       clearedSave({
         highestClearedLevel: 4,
-        levels: { 1: { cleared: true, bestTimeMs: 1000, secretsFound: [] } },
+        levels: { 1: { cleared: true, bestTimeMs: 1000, eggsFound: [] } },
       }),
     );
     expect(save.highestClearedLevel).toBe(1);
   });
 
-  it('secretsFound 去重、bestTimeMs 負值夾為 0', () => {
+  it('eggsFound 去重、bestTimeMs 負值夾為 0', () => {
     const save = parseSave(
       clearedSave({
-        levels: { 1: { cleared: true, bestTimeMs: -5, secretsFound: ['a', 'a', 'b'] } },
+        levels: { 1: { cleared: true, bestTimeMs: -5, eggsFound: ['a', 'a', 'b'] } },
       }),
     );
-    expect(save.levels[1]?.secretsFound).toEqual(['a', 'b']);
+    expect(save.levels[1]?.eggsFound).toEqual(['a', 'b']);
     expect(save.levels[1]?.bestTimeMs).toBe(0);
   });
 });
@@ -89,14 +89,14 @@ describe('recordLevelClear（§38 寫入時機）', () => {
   });
 });
 
-describe('recordSecret（§38 彩蛋持久化）', () => {
+describe('recordEgg（§38 彩蛋持久化）', () => {
   it('同 id 去重、不影響通關態', () => {
-    let save = recordSecret(createDefaultSave(), 1, 'reach-x');
-    save = recordSecret(save, 1, 'reach-x');
-    expect(save.levels[1]?.secretsFound).toEqual(['reach-x']);
+    let save = recordEgg(createDefaultSave(), 1, 'reach-x');
+    save = recordEgg(save, 1, 'reach-x');
+    expect(save.levels[1]?.eggsFound).toEqual(['reach-x']);
     expect(save.levels[1]?.cleared).toBe(false);
-    expect(secretsFoundCount(save, 1)).toBe(1);
-    expect(secretsFoundCount(save, 2)).toBe(0);
+    expect(eggsFoundCount(save, 1)).toBe(1);
+    expect(eggsFoundCount(save, 2)).toBe(0);
   });
 });
 

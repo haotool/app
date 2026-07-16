@@ -20,7 +20,7 @@ declare global {
       save: () => {
         schemaVersion: number;
         highestClearedLevel: number;
-        levels: Record<string, { cleared: boolean; bestTimeMs: number; secretsFound: string[] }>;
+        levels: Record<string, { cleared: boolean; bestTimeMs: number; eggsFound: string[] }>;
       };
     };
   }
@@ -40,7 +40,7 @@ async function presetSave(page: Page, clearedLevels: number[]): Promise<void> {
   await page.addInitScript((cleared: number[]) => {
     const levels: Record<string, object> = {};
     for (const id of cleared) {
-      levels[String(id)] = { cleared: true, bestTimeMs: 32100, secretsFound: [] };
+      levels[String(id)] = { cleared: true, bestTimeMs: 32100, eggsFound: [] };
     }
     localStorage.setItem(
       'sp-save',

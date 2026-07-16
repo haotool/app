@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+119
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+119
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-16
+- ID：neutral-starpuff-v6-codeql-secret-naming
+- 原因：CodeQL js/clear-text-storage-of-sensitive-data 高風險告警——存檔模組 recordSecret/secretsFound 命名使啟發式誤判彩蛋進度為敏感資料明文儲存（sp-save 僅存關卡進度，v6 未發布無既存用戶資料）
+- 解法：全鏈更名 egg 語彙（recordEgg/eggsFound/eggId），typecheck＋203 unit 綠，告警經 head 重掃自然關閉
 
 - 日期：2026-07-16
 - ID：reward-starpuff-v6-save-worldmap-skills

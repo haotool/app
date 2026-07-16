@@ -18,7 +18,7 @@ declare global {
       gotoLevel?: (levelId: number) => void;
       save?: () => {
         highestClearedLevel: number;
-        levels: Record<string, { cleared: boolean; bestTimeMs: number; secretsFound: string[] }>;
+        levels: Record<string, { cleared: boolean; bestTimeMs: number; eggsFound: string[] }>;
       };
     };
     // v4 stage 系統觀測點（stage.ts 掛載，dev/test 限定）。

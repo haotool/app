@@ -5,7 +5,7 @@ import {
   loadSave,
   nodeStatus,
   resetSave,
-  secretsFoundCount,
+  eggsFoundCount,
   type SaveData,
 } from '../core/save';
 import { SceneKeys, type LevelId } from '../core/types';
@@ -81,7 +81,7 @@ export class MapScene extends Phaser.Scene {
 
     // 彩蛋計數（§39）：found/total，total 由關卡資料推導。
     const secretTotal = LEVELS.reduce((sum, level) => sum + level.easterEggs.length, 0);
-    const secretFound = LEVELS.reduce((sum, level) => sum + secretsFoundCount(save, level.id), 0);
+    const secretFound = LEVELS.reduce((sum, level) => sum + eggsFoundCount(save, level.id), 0);
     this.add
       .text(width / 2, 70, `彩蛋 ${secretFound}/${secretTotal}`, {
         fontFamily: 'system-ui, sans-serif',

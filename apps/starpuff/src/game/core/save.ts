@@ -6,7 +6,7 @@ import type { LevelId } from './types';
 export interface LevelSaveEntry {
   cleared: boolean;
   bestTimeMs: number;
-  secretsFound: string[];
+  eggsFound: string[];
 }
 
 export interface SaveData {
@@ -37,8 +37,8 @@ function isLevelEntry(value: unknown): value is LevelSaveEntry {
     typeof entry['cleared'] === 'boolean' &&
     typeof entry['bestTimeMs'] === 'number' &&
     Number.isFinite(entry['bestTimeMs']) &&
-    Array.isArray(entry['secretsFound']) &&
-    entry['secretsFound'].every((item) => typeof item === 'string')
+    Array.isArray(entry['eggsFound']) &&
+    entry['eggsFound'].every((item) => typeof item === 'string')
   );
 }
 
@@ -59,7 +59,7 @@ export function parseSave(raw: string | null): SaveData {
       save.levels[id] = {
         cleared: entry.cleared,
         bestTimeMs: Math.max(0, entry.bestTimeMs),
-        secretsFound: [...new Set(entry.secretsFound)],
+        eggsFound: [...new Set(entry.eggsFound)],
       };
     }
     save.highestClearedLevel = deriveHighestCleared(save);
@@ -101,7 +101,7 @@ export function persistSave(save: SaveData): void {
 function levelEntry(save: SaveData, levelId: LevelId): LevelSaveEntry {
   const existing = save.levels[levelId];
   if (existing) return existing;
-  const entry: LevelSaveEntry = { cleared: false, bestTimeMs: 0, secretsFound: [] };
+  const entry: LevelSaveEntry = { cleared: false, bestTimeMs: 0, eggsFound: [] };
   save.levels[levelId] = entry;
   return entry;
 }
@@ -116,10 +116,10 @@ export function recordLevelClear(save: SaveData, levelId: LevelId, timeMs: numbe
   return save;
 }
 
-// 彩蛋記錄：secretId 於該關去重；觸發即寫（跨局持久，隱藏內容不阻主線）。
-export function recordSecret(save: SaveData, levelId: LevelId, secretId: string): SaveData {
+// 彩蛋記錄：eggId 於該關去重；觸發即寫（跨局持久，隱藏內容不阻主線）。
+export function recordEgg(save: SaveData, levelId: LevelId, eggId: string): SaveData {
   const entry = levelEntry(save, levelId);
-  if (!entry.secretsFound.includes(secretId)) entry.secretsFound.push(secretId);
+  if (!entry.eggsFound.includes(eggId)) entry.eggsFound.push(eggId);
   save.lastPlayedAt = Date.now();
   return save;
 }
@@ -154,6 +154,6 @@ export function currentChallenge(save: SaveData): LevelId | null {
   return null;
 }
 
-export function secretsFoundCount(save: SaveData, levelId: LevelId): number {
-  return save.levels[levelId]?.secretsFound.length ?? 0;
+export function eggsFoundCount(save: SaveData, levelId: LevelId): number {
+  return save.levels[levelId]?.eggsFound.length ?? 0;
 }

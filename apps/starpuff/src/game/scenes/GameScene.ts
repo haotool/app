@@ -18,7 +18,7 @@ import {
   onGameEvent,
   type GameEventName,
 } from '../core/events';
-import { loadSave, persistSave, recordLevelClear, recordSecret, type SaveData } from '../core/save';
+import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
@@ -727,7 +727,7 @@ export class GameScene extends Phaser.Scene {
   // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
   private grantEggReward(spec: EasterEggSpec): void {
     // 存檔寫入時機（§38）：彩蛋觸發即記錄（trigger 型別為關內唯一 id）。
-    persistSave(recordSecret(this.save, this.currentLevelId, spec.trigger));
+    persistSave(recordEgg(this.save, this.currentLevelId, spec.trigger));
     switch (spec.reward) {
       case 'hp-up':
         this.player.heal(1, EGG_HP_CAP);

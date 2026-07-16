@@ -346,10 +346,10 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 
 ## 38. 存檔系統（core/save.ts 為 SSOT，pure TS 可測）
 
-- localStorage `sp-save` schema v1：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, secretsFound: string[] } }, lastPlayedAt }`。
+- localStorage `sp-save` schema v1：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, eggsFound: string[] } }, lastPlayedAt }`。
 - 寫入時機：通關（星星門吸入當下即寫，演出中斷不掉進度）、魔王擊破、彩蛋觸發（`trigger` 型別字串為關內唯一 id）。
 - 容錯（沿用 §34 sp-key-layout parse/fallback 模式）：schema 版本不符、形狀損毀、隱私模式拋錯——一律回退預設值；`highestClearedLevel` 由關卡條目重新推導，不信任持久化值。
-- `bestTimeMs`＝該關單次成功嘗試的最短用時（死亡重試重計）；`secretsFound` 去重持久化，跨局累計。
+- `bestTimeMs`＝該關單次成功嘗試的最短用時（死亡重試重計）；`eggsFound` 去重持久化，跨局累計。
 - 重置進度：世界地圖左下「重置進度」兩步確認（武裝態 3s 未確認自動退回），僅清 `sp-save`（按鍵布局 `sp-key-layout`、靜音 `sp-muted` 不動）。全新存檔不顯示入口。
 - 偏離備註：任務原文「設定頁加重置進度」——本遊戲無設定頁（按鈕配置為鍵位編輯器，語義不符），重置入口落於世界地圖（進度顯示與進度管理同場景，KISS）。
 
