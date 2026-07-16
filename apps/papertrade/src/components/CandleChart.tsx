@@ -1,17 +1,26 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   CandlestickSeries,
   createChart,
   HistogramSeries,
+  LineSeries,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts';
 import { type Kline } from '../services/kline';
+import {
+  computeIndicatorLine,
+  INDICATORS,
+  type IndicatorId,
+  type IndicatorPoint,
+} from '../lib/indicators';
+import { formatPrice } from '../lib/format';
 
 interface CandleChartProps {
   bars: Kline[];
   seriesKey: string;
+  indicators: IndicatorId[];
 }
 
 interface ChartHandles {
@@ -48,11 +57,26 @@ function buildVolumeMapper(longColor: string, shortColor: string) {
   });
 }
 
-export function CandleChart({ bars, seriesKey }: CandleChartProps) {
+function toLinePoint(point: IndicatorPoint) {
+  return { time: point.time as UTCTimestamp, value: point.value };
+}
+
+export function CandleChart({ bars, seriesKey, indicators }: CandleChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const handlesRef = useRef<ChartHandles | null>(null);
   const volumeMapperRef = useRef<ReturnType<typeof buildVolumeMapper> | null>(null);
   const renderedRef = useRef<RenderedState | null>(null);
+  const lineSeriesRef = useRef(new Map<IndicatorId, ISeriesApi<'Line'>>());
+
+  const indicatorLines = useMemo(() => {
+    const lines = new Map<IndicatorId, IndicatorPoint[]>();
+    for (const definition of INDICATORS) {
+      if (indicators.includes(definition.id)) {
+        lines.set(definition.id, computeIndicatorLine(bars, definition));
+      }
+    }
+    return lines;
+  }, [bars, indicators]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -111,6 +135,7 @@ export function CandleChart({ bars, seriesKey }: CandleChartProps) {
       handlesRef.current = null;
       volumeMapperRef.current = null;
       renderedRef.current = null;
+      lineSeriesRef.current.clear();
     };
   }, []);
 
@@ -138,20 +163,79 @@ export function CandleChart({ bars, seriesKey }: CandleChartProps) {
       handles.chart.timeScale().scrollToRealTime();
     }
 
+    // 指標線與開關同步：新開補掛、關閉移除；既有線沿蠟燭的增量／重設判準寫入。
+    for (const definition of INDICATORS) {
+      const series = lineSeriesRef.current.get(definition.id);
+      const line = indicatorLines.get(definition.id);
+
+      if (line === undefined) {
+        if (series !== undefined) {
+          handles.chart.removeSeries(series);
+          lineSeriesRef.current.delete(definition.id);
+        }
+        continue;
+      }
+
+      if (series === undefined) {
+        const created = handles.chart.addSeries(LineSeries, {
+          color: readToken(definition.colorToken),
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: false,
+        });
+        created.setData(line.map(toLinePoint));
+        lineSeriesRef.current.set(definition.id, created);
+        continue;
+      }
+
+      const lastPoint = line.at(-1);
+      if (isIncrementalUpdate && lastPoint !== undefined) {
+        series.update(toLinePoint(lastPoint));
+      } else {
+        series.setData(line.map(toLinePoint));
+      }
+    }
+
     renderedRef.current = {
       seriesKey,
       lastTime: last?.time ?? 0,
       length: bars.length,
     };
-  }, [bars, seriesKey]);
+  }, [bars, seriesKey, indicatorLines]);
+
+  const captions = INDICATORS.filter((definition) => indicatorLines.has(definition.id)).map(
+    (definition) => {
+      const lastPoint = indicatorLines.get(definition.id)?.at(-1);
+      return {
+        id: definition.id,
+        colorToken: definition.colorToken,
+        text: `${definition.label} ${lastPoint === undefined ? '--' : formatPrice(lastPoint.value)}`,
+      };
+    },
+  );
 
   return (
-    <div
-      ref={containerRef}
-      role="img"
-      aria-label="K 線蠟燭圖與成交量"
-      className="h-full w-full"
-      data-testid="candle-chart"
-    />
+    <div className="relative h-full w-full">
+      <div
+        ref={containerRef}
+        role="img"
+        aria-label="K 線蠟燭圖與成交量"
+        className="h-full w-full"
+        data-testid="candle-chart"
+      />
+      {captions.length > 0 && (
+        <div
+          aria-label="指標當前值"
+          className="pointer-events-none absolute left-2 top-1 z-10 flex flex-wrap gap-x-2.5 text-caption tabular-nums"
+        >
+          {captions.map((caption) => (
+            <span key={caption.id} style={{ color: `var(${caption.colorToken})` }}>
+              {caption.text}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
