@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：penalty-starpuff-v7-review-gamescene-regrowth
+- 原因：三席審查（Grok 行為/Sonnet SSOT/Composer KISS）發現 v7 交付缺口——GameScene 回沉 1282 行、教學×公告重疊、精英出房致 60s 保險失效、主角對比 1.81:1 遺留、五系文案未同步七系；另已推送 commit 訊息含過時測試數字（不 force 重寫，僅此註記）
+- 解法：行為修復（教學 y0.46/首遇 toast/clampEliteX 房界/剪影描邊 10.23:1—Glow filter 因 SwiftShader 崩幀棄用）＋三支獨立 refactor（eliteRoom 206 行、homing/pickInRadius 純函式、enemyUpdates 機械搬移——GameScene 1282→1113、enemies 871→552）＋P2 順修六項，228 unit＋33 e2e 全綠
 
 - 日期：2026-07-17
 - ID：reward-starpuff-v7-feel-depth

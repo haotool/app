@@ -395,6 +395,9 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 
 ## 43. 每關攻略 PoC 與反卡關驗證
 
+（本節怪物權重與招式為 v6 定案值；L2/L3 波次已由 §47 取代——glowy/drilly 入編後之現值以
+`levels.ts` 與 §47/§49 為準，下表保留 v6 歷史攻略脈絡。）
+
 設計意圖 → 最佳打法 → 無技能保底打法（僅移動＋吸入＋星彈必可通關，§26 保證律背書）逐關表：
 
 | 關  | 設計意圖                             | 最佳打法                                                                       | 無技能保底打法                                                      | 難度曲線（quota/interval/構成）                                             |
@@ -448,6 +451,9 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
   - 落腳拍點（|sin| 每半週期回零）：池化腳塵 emitter explode ×2＋低量 footstep zzfx。
   - idle 呼吸：週期 2.4s、scaleY ±1.8%（squash tween 進行中讓位）。
   - 既有起跳 stretch / 落地 squash / 起跑急停轉身塵埃（§41）維持不動。
+  - 主角輪廓對比（三席審查補修）：深紫剪影背襯（本體 1.1 倍 FILL tint image，POST_UPDATE
+    鏡像貼圖/翻面/縮放/bob），草原亮底對比 1.81:1 提升至實測 10.23:1（≥3:1 門檻）；
+    不用 Glow filter——SwiftShader/低階 GPU 逐幀模糊採樣致幀率崩跌。
 - 幀證據：`screenshots/starpuff-v6/before/`（v6 基準連拍）與 `screenshots/starpuff-v6/after/`
   （v7 步頻連拍＋idle 呼吸）；e2e 行為斷言走 `__sp.walk()`（rotation 振盪、bob>0、停走歸零）。
 
@@ -461,6 +467,9 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
     滿匣改吞維持覆蓋頂槽（§20），混合槽在頂被覆蓋即取消；滿匣且頂槽配方成立時優先合成。
   - **anti-softlock 硬規則：混合星永不為破關必需——基礎星彈恆可通關**（配方僅為威力加成，
     關卡配額/魔王皆可純標準星磨死；§26 飢荒保證律不變）。
+  - 首遇情境提示（三席審查補修）：本 session 首次取得某味/首次合成某配方時，頂部 toast
+    一行文案（名稱＋一句效果，SSOT `core/codex.ts` FLAVOR_HINTS/MIX_HINTS）；seen 集合
+    僅存 session 記憶體，不動 save schema。
 - 混合表（六式；效果自 穿透/追蹤/散射/爆炸/凍結場/連鎖電 擇優組合）：
 
 | 配方   | 成分            | 效果                                                                      | tint    | pitch |
@@ -503,6 +512,8 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 反卡關雙保險：60s 逾時自動開門（精英留場可略過）；星星門已開（配額達成）後不再
   武裝——關卡已進尾端 release 節奏，既有走查路徑不受影響。精英不可吸、擊殺計入配額；
   白閃後回套變體 tint 維持精英識別。
+- 房界箝制（三席審查補修）：精英越房界（左界鏡像門距、右界門前內縮 48px）即回夾並朝
+  房內反向（`stageModel.clampEliteX` 純函式），不出房追殺，60s 開門保險恆有效。
 
 ## 49. v7 每關攻略 PoC 與節奏補訂（引入→練習→考驗→獎勵）
 
