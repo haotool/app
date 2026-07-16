@@ -35,10 +35,11 @@ import {
   type EggProgress,
 } from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
-import { clampEliteX, crossedGate, type BoundsRect } from '../logic/stageModel';
+import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
+import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
 import { createHud } from '../systems/hud';
@@ -77,15 +78,6 @@ const GATE_ABSORB_MS = 700;
 const MAP_ENTER_DELAY_MS = 500;
 // 雷鏈跳電演出（§40）：折線閃電段淡出時長。
 const BOLT_FADE_MS = 200;
-// 中魔王精英房（§48）：接近臂距武裝；軟鎖門擊敗開門、60s 逾時自動開門防卡關。
-const ELITE_ARM_DISTANCE_PX = 480;
-const ELITE_DOOR_TIMEOUT_MS = 60_000;
-const ELITE_DOOR_W = 26;
-const ELITE_DOOR_OFFSET_PX = 300;
-// 房界內縮（§48）：右界留精英半身＋門柱寬，箝制點不與門柱重疊。
-const ELITE_ROOM_INSET_PX = 48;
-// 回復食物（§48 精英掉落）：拾取回復 2 HP（上限依當前 hpCap）。
-const HEAL_FOOD_HP = 2;
 
 interface GameSceneData {
   levelId?: LevelId;
@@ -126,14 +118,8 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
-  // 中魔王精英（§48）：armed 武裝後生成精英與軟鎖門；done 後不再武裝。
-  private eliteArmed = false;
-  private eliteDone = false;
-  private eliteRef: Phaser.Physics.Arcade.Sprite | null = null;
-  private eliteDoor: Phaser.GameObjects.Rectangle | null = null;
-  private eliteDoorCollider: Phaser.Physics.Arcade.Collider | null = null;
-  private eliteTimer: Phaser.Time.TimerEvent | null = null;
-  private eliteBar: Phaser.GameObjects.Graphics | null = null;
+  // 中魔王精英房（§48）：全流程委派 systems/eliteRoom.ts，本場景只留逐幀呼叫。
+  private eliteRoom!: EliteRoomHandle;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
@@ -170,13 +156,6 @@ export class GameScene extends Phaser.Scene {
     this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
-    this.eliteArmed = false;
-    this.eliteDone = false;
-    this.eliteRef = null;
-    this.eliteDoor = null;
-    this.eliteDoorCollider = null;
-    this.eliteTimer = null;
-    this.eliteBar = null;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     this.background = createParallaxBackground(this, this.level);
@@ -197,6 +176,14 @@ export class GameScene extends Phaser.Scene {
     this.boss = createBoss(this);
     this.fx = createFx(this);
     createHud(this);
+    // 精英房（§48）：boss 關無精英；hooks 閉包延遲解析既有系統。
+    this.eliteRoom = createEliteRoom(this, this.level.boss ? null : this.level.elite, GROUND_TOP, {
+      player: () => this.player,
+      enemies: () => this.enemies,
+      fx: () => this.fx,
+      playerHp: () => this.playerHp,
+      gateOpen: () => this.waves.isGateOpen(),
+    });
     const unbindSfx = bindSfxToEvents(this.events);
 
     this.cameras.main.setBounds(0, 0, this.worldWidth(), VIEW.height);
@@ -259,7 +246,7 @@ export class GameScene extends Phaser.Scene {
       this.syncInhale();
       this.syncEggs();
       this.syncGateSweep();
-      this.syncElite();
+      this.eliteRoom.update();
       this.steerHomingStars(deltaMs);
     }
     this.enemies.update(deltaMs);
@@ -290,16 +277,12 @@ export class GameScene extends Phaser.Scene {
 
   // e2e 鉤子（§48）：以正式傷害管線秒殺場上精英。
   slayElite(): void {
-    if (this.scene.isActive() && this.eliteRef?.active) this.enemies.damage(this.eliteRef, 999);
+    if (this.scene.isActive()) this.eliteRoom.slay();
   }
 
   // e2e 觀測點（§48）：精英房狀態與軟鎖門位置。
   eliteState(): { armed: boolean; done: boolean; doorX: number | null } {
-    return {
-      armed: this.eliteArmed,
-      done: this.eliteDone,
-      doorX: this.eliteDoor?.x ?? null,
-    };
+    return this.eliteRoom.state();
   }
 
   // e2e 鉤子：跳至魔王關直達魔王戰。
@@ -753,158 +736,6 @@ export class GameScene extends Phaser.Scene {
         PULL_BASE_SPEED + (INHALE.rangePx - dist) * PULL_GAIN,
       );
     }
-  }
-
-  // 中魔王精英（§48）：接近武裝——生成精英與軟鎖門；開門後偵測擊敗結算掉落。
-  // 開門（fillQuota/配額達成）後不再武裝：關卡已進尾端 release 節奏。
-  private syncElite(): void {
-    const spec = this.level.elite;
-    if (!spec || this.eliteDone || this.level.boss) return;
-    if (!this.eliteArmed) {
-      if (this.waves.isGateOpen()) return;
-      if (this.player.sprite.x < spec.x - ELITE_ARM_DISTANCE_PX) return;
-      this.armElite();
-      return;
-    }
-    this.updateEliteBar();
-    // 房界箝制（§48 審查修復）：精英不出房追殺——越界回夾反向，60s 開門保險恆有效。
-    if (this.eliteRef?.active) {
-      const body = this.eliteRef.body as Phaser.Physics.Arcade.Body;
-      const clamped = clampEliteX(
-        this.eliteRef.x,
-        body.velocity.x,
-        spec.x - ELITE_DOOR_OFFSET_PX,
-        spec.x + ELITE_DOOR_OFFSET_PX - ELITE_ROOM_INSET_PX,
-      );
-      if (clamped.x !== this.eliteRef.x) {
-        this.eliteRef.setX(clamped.x);
-        body.setVelocityX(clamped.velocityX);
-      }
-    }
-    // 擊敗偵測：精英為不可吸個體，active 熄滅即為擊殺。
-    if (this.eliteRef && !this.eliteRef.active) this.resolveEliteDefeat();
-  }
-
-  private armElite(): void {
-    const spec = this.level.elite;
-    if (!spec) return;
-    this.eliteArmed = true;
-    this.eliteRef = this.enemies.spawnElite(spec.kind, spec.x, GROUND_TOP - 40, {
-      hp: spec.hp,
-      scale: spec.scale,
-      tint: spec.tint,
-      speedMul: spec.speedMul,
-    });
-    if (!this.eliteRef) {
-      this.eliteDone = true;
-      return;
-    }
-    playSfx('boss-roar');
-    this.fx.shake(6);
-    // 軟鎖門：果凍色半透明門柱擋前進；可退不可進，擊敗或逾時開門。
-    const doorX = spec.x + ELITE_DOOR_OFFSET_PX;
-    const door = this.add
-      .rectangle(doorX, GROUND_TOP / 2, ELITE_DOOR_W, GROUND_TOP, 0xff9ec4, 0.45)
-      .setStrokeStyle(3, 0xffffff, 0.8)
-      .setDepth(70);
-    this.physics.add.existing(door, true);
-    this.eliteDoor = door;
-    this.eliteDoorCollider = this.physics.add.collider(this.player.sprite, door);
-    this.tweens.add({
-      targets: door,
-      alpha: { from: 0.45, to: 0.7 },
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    this.eliteBar = this.add.graphics().setDepth(71);
-    // 逾時保險（§48 反卡關）：60s 未擊敗自動開門，精英留場可略過。
-    this.eliteTimer = this.time.delayedCall(ELITE_DOOR_TIMEOUT_MS, () => this.openEliteDoor());
-  }
-
-  private updateEliteBar(): void {
-    if (!this.eliteBar) return;
-    this.eliteBar.clear();
-    const elite = this.eliteRef;
-    const spec = this.level.elite;
-    if (!elite || !elite.active || !spec) return;
-    const ratio = Math.max(0, (elite.getData('hp') as number) / spec.hp);
-    const w = 56;
-    const x = elite.x - w / 2;
-    const y = elite.y - 52;
-    this.eliteBar.fillStyle(0x3a3a4a, 0.6);
-    this.eliteBar.fillRect(x - 1.5, y - 1.5, w + 3, 8);
-    this.eliteBar.fillStyle(0xd94b4b, 1);
-    this.eliteBar.fillRect(x, y, w * ratio, 5);
-  }
-
-  // 開門：淡出門柱並解除碰撞；擊敗與逾時共用單一出口。
-  private openEliteDoor(): void {
-    this.eliteTimer?.remove();
-    this.eliteTimer = null;
-    this.eliteDoorCollider?.destroy();
-    this.eliteDoorCollider = null;
-    const door = this.eliteDoor;
-    this.eliteDoor = null;
-    if (door) {
-      this.tweens.killTweensOf(door);
-      this.fx.burstSmall(door.x, GROUND_TOP - 60, 0xff9ec4);
-      this.tweens.add({
-        targets: door,
-        alpha: 0,
-        scaleY: 0.1,
-        duration: 350,
-        ease: 'Quad.easeIn',
-        onComplete: () => door.destroy(),
-      });
-    }
-  }
-
-  // 精英擊敗（§48）：開門 + 掉落稀有味小怪與回復食物。
-  private resolveEliteDefeat(): void {
-    if (this.eliteDone) return;
-    this.eliteDone = true;
-    const spec = this.level.elite;
-    this.eliteRef = null;
-    this.eliteBar?.destroy();
-    this.eliteBar = null;
-    this.openEliteDoor();
-    if (!spec) return;
-    playSfx('jingle');
-    this.fx.starBurst(spec.x, GROUND_TOP - 80);
-    // 稀有味掉落：正式 spawn 管線，吞下即得稀有星味。
-    this.enemies.spawn(spec.rewardFlavor, spec.x - 60, GROUND_TOP - 120);
-    this.dropHealFood(spec.x + 60, GROUND_TOP - 100);
-  }
-
-  // 回復食物：心形拾取物，觸碰回復 2 HP；15s 未拾取自動淡逝。
-  private dropHealFood(x: number, y: number): void {
-    const food = this.add.image(x, y, 'hud-heart').setDisplaySize(30, 30).setDepth(72);
-    this.tweens.add({
-      targets: food,
-      y: y - 10,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    const zone = this.add.zone(x, y, 44, 60);
-    this.physics.add.existing(zone, true);
-    const cleanup = (): void => {
-      this.tweens.killTweensOf(food);
-      food.destroy();
-      zone.destroy();
-    };
-    this.physics.add.overlap(this.player.sprite, zone, () => {
-      if (!food.active) return;
-      this.player.heal(HEAL_FOOD_HP, this.playerHp > PLAYER.maxHp ? EGG_HP_CAP : PLAYER.maxHp);
-      playSfx('swallow');
-      cleanup();
-    });
-    this.time.delayedCall(15_000, () => {
-      if (food.active) cleanup();
-    });
   }
 
   // 彩蛋逐幀事件（§24）：世界座標與平台站立；魔王可擊打起點供時間窗計算。
