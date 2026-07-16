@@ -26,6 +26,10 @@ const THEMES = [
   { name: 'Classic', file: 'classic' },
 ];
 
+// 1x1 透明 PNG：模擬拍照（與 e2e/helpers.ts TEST_PHOTO_BASE64 同源）。
+const TEST_PHOTO_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
 const browser = await chromium.launch();
 const context = await browser.newContext({
   viewport: { width: 390, height: 844 },
@@ -45,9 +49,18 @@ page.on('console', (msg) => {
 
 await page.goto(BASE_URL);
 
-// 1. 建立停車記錄（FAB → 樓層 chip auto-save）
+// 1. 建立停車記錄（FAB → 注入照片 → 樓層 chip auto-save）
 await page.getByRole('button', { name: '新增停車紀錄' }).click();
 await page.getByPlaceholder('車牌號碼').waitFor();
+await page
+  .locator('input[type="file"]')
+  .first()
+  .setInputFiles({
+    name: 'poc-photo.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(TEST_PHOTO_BASE64, 'base64'),
+  });
+await page.getByAltText('停車照片').waitFor();
 await page.getByRole('button', { name: 'B3', exact: true }).click();
 await page.getByRole('button', { name: /導航/ }).waitFor();
 
@@ -87,6 +100,22 @@ for (const theme of THEMES) {
 
   await page.getByRole('button', { name: '關閉導航' }).click();
   await page.waitForTimeout(300);
+}
+
+// 照片調整模式展示（僅 round 3+）：資訊卡「調整照片」→ 盤面淡出、地圖顯示可拖照片。
+if (Number(round) >= 3) {
+  await page.getByRole('button', { name: '新增停車紀錄' }).waitFor();
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: /導航/ }).click();
+  await page.getByRole('button', { name: '關閉導航' }).waitFor();
+  await page.getByRole('button', { name: '調整照片位置' }).click();
+  await page.waitForTimeout(900);
+  const editPath = `${outDir}/poc-round-${round}-photo-edit.png`;
+  await page.screenshot({ path: editPath });
+  console.log(`captured ${editPath}`);
+  await page.getByRole('button', { name: '完成' }).click();
+  await page.waitForTimeout(400);
+  await page.getByRole('button', { name: '關閉導航' }).click();
 }
 
 // 對準態展示（僅 round 2+）：heading 對齊目標 bearing（車位在使用者西南 ≈225°）
