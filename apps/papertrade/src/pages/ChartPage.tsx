@@ -12,8 +12,11 @@ import {
 } from '../config/market';
 import { useKlines } from '../hooks/useKlines';
 import { useMarketStore } from '../stores/marketStore';
+import { useMarketPrefsStore } from '../stores/marketPrefsStore';
 import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
+import { INDICATORS } from '../lib/indicators';
 import { CandleChart } from '../components/CandleChart';
+import { DepthChart } from '../components/DepthChart';
 import { FundingRateBadge } from '../components/FundingRateBadge';
 import { OrderBookPanel } from '../components/OrderBookPanel';
 import { RecentTrades } from '../components/RecentTrades';
@@ -115,6 +118,7 @@ function SymbolHeader({
 // kline tick 只重渲此子樹，隔離 SymbolHeader／訂單簿／CTA。
 function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: TimeframeId }) {
   const { bars, status, seriesKey, retry } = useKlines(symbol, timeframe);
+  const indicators = useMarketPrefsStore((state) => state.indicators);
 
   if (status === 'error') {
     return (
@@ -133,7 +137,7 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
 
   return (
     <>
-      <CandleChart bars={bars} seriesKey={seriesKey} />
+      <CandleChart bars={bars} seriesKey={seriesKey} indicators={indicators} />
       {status === 'loading' && (
         <div className="absolute inset-0 skeleton-pulse rounded-card" aria-label="圖表載入中" />
       )}
@@ -141,12 +145,55 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
   );
 }
 
-type MarketPanelTab = 'orderbook' | 'trades';
+function IndicatorChips() {
+  const indicators = useMarketPrefsStore((state) => state.indicators);
+  const toggleIndicator = useMarketPrefsStore((state) => state.toggleIndicator);
+
+  return (
+    <div role="group" aria-label="技術指標" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
+      {INDICATORS.map((definition) => {
+        const active = indicators.includes(definition.id);
+        return (
+          <button
+            key={definition.id}
+            type="button"
+            aria-pressed={active}
+            onClick={() => toggleIndicator(definition.id)}
+            className={clsx(
+              'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+              active ? 'bg-surface-2 font-semibold' : 'text-text-3 active:bg-surface-2',
+            )}
+            style={active ? { color: `var(${definition.colorToken})` } : undefined}
+          >
+            {definition.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+type MarketPanelTab = 'orderbook' | 'trades' | 'depth';
 
 const MARKET_PANEL_TABS: { id: MarketPanelTab; label: string }[] = [
   { id: 'orderbook', label: '訂單簿' },
   { id: 'trades', label: '最新成交' },
+  { id: 'depth', label: '深度' },
 ];
+
+// 非啟用分頁不掛載：未顯示的面板不訂閱、不計算、不渲染。
+function MarketPanelBody({ tab, symbol }: { tab: MarketPanelTab; symbol: MarketSymbol }) {
+  switch (tab) {
+    case 'orderbook':
+      return <OrderBookPanel symbol={symbol} />;
+    case 'trades':
+      return <RecentTrades symbol={symbol} />;
+    case 'depth':
+      return <DepthChart symbol={symbol} />;
+    default:
+      return tab satisfies never;
+  }
+}
 
 function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
   const [tab, setTab] = useState<MarketPanelTab>('orderbook');
@@ -176,7 +223,7 @@ function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
           </button>
         ))}
       </div>
-      {tab === 'orderbook' ? <OrderBookPanel symbol={symbol} /> : <RecentTrades symbol={symbol} />}
+      <MarketPanelBody tab={tab} symbol={symbol} />
     </section>
   );
 }
@@ -195,7 +242,11 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
     <section className="flex flex-col pb-[4.5rem]">
       <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
 
-      <div role="tablist" aria-label="時間框架" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
+      <div
+        role="tablist"
+        aria-label="時間框架"
+        className="flex gap-1.5 overflow-x-auto px-4 pb-1.5"
+      >
         {TIMEFRAMES.map(({ id, label }) => (
           <button
             key={id}
@@ -214,6 +265,8 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
           </button>
         ))}
       </div>
+
+      <IndicatorChips />
 
       <div className="relative mx-2 h-[45dvh]">
         <ChartArea symbol={symbol} timeframe={timeframe} />
