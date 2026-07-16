@@ -29,10 +29,10 @@ export interface UseRegisterSWReturn {
 export function useRegisterSW(_options?: RegisterSWOptions): UseRegisterSWReturn {
   const [needRefresh, setNeedRefresh] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
-
-  const updateServiceWorker = async (_reloadPage?: boolean): Promise<void> => {
+  // 與真實實作一致：updateServiceWorker 參照跨 render 穩定，避免依賴此值的 effect 反覆重跑。
+  const [updateServiceWorker] = useState(() => async (_reloadPage?: boolean): Promise<void> => {
     return Promise.resolve();
-  };
+  });
 
   return {
     needRefresh: [needRefresh, setNeedRefresh],

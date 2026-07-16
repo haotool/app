@@ -4,11 +4,12 @@ import { BottomNav } from './BottomNav';
 import { ConnectionBanner } from './ConnectionBanner';
 import { ToastHost } from './ToastHost';
 import { DisclaimerDialog } from './DisclaimerDialog';
-import { UpdatePrompt } from './UpdatePrompt';
+import { useAutoUpdate } from '../hooks/useAutoUpdate';
 import { startMarketFeed } from '../services/marketFeed';
 
 export function AppShell() {
   useEffect(() => startMarketFeed(), []);
+  useAutoUpdate();
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg text-text">
@@ -18,7 +19,6 @@ export function AppShell() {
       </main>
       <BottomNav />
       <ToastHost />
-      <UpdatePrompt />
       <DisclaimerDialog />
     </div>
   );
