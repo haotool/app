@@ -29,7 +29,7 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     await heroCard.click();
 
     // NavOverlay 開啟：關閉鈕（aria-label）＋資訊卡樓層 display 大字（text-5xl 僅存在於資訊卡）
-    const closeButton = page.getByRole('button', { name: '關閉導航' });
+    const closeButton = page.getByRole('button', { name: '關閉導航', exact: true });
     await expect(closeButton).toBeVisible();
     await expect(page.locator('p.text-5xl', { hasText: 'B3' })).toBeVisible();
 

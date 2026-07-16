@@ -52,7 +52,6 @@ vi.mock('@app/park-keeper/components/QuickEntry', () => ({ default: () => null }
 vi.mock('@app/park-keeper/components/NavOverlay', () => ({ default: () => null }));
 vi.mock('@app/park-keeper/components/SettingsTab', () => ({ default: () => null }));
 vi.mock('@app/park-keeper/components/BrandLogo', () => ({ default: () => null }));
-vi.mock('@app/park-keeper/components/UpdatePrompt', () => ({ UpdatePrompt: () => null }));
 vi.mock('@app/park-keeper/services/mapTileCache', () => ({
   syncMapTileCacheConfig: vi.fn().mockResolvedValue(undefined),
 }));
