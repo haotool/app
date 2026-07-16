@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+122
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+124
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave2-depth-indicators
+- 原因：R3 Wave-2 要求圖表頁提供市場深度圖與 MA/EMA 指標疊加，需在 orderbook tick 風暴下控制重繪並沿用既有 chart 生命週期（Grok 審查後追認補記）
+- 解法：depth/indicators 純函式 SSOT、SVG 自繪深度圖 300ms 取樣節流、CandleChart LineSeries 隨開關補掛/移除與增量 update、偏好 persist 進 marketPrefsStore v2，360 unit＋28 e2e 綠
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave1-pwa-autoupdate
+- 原因：R3 Wave-1 要求已安裝 PWA 舊用戶免點按自動收到新版，且不得改 autoUpdate 重蹈版本撕裂前科（Grok 審查後追認補記）
+- 解法：維持 prompt 型 SW，useAutoUpdate 偵測 needRefresh 自動 SKIP_WAITING→controllerchange 單次 reload（hadController/reloading 防重入），60 分週期＋回前景節流檢查更新，7 案單元測試與真瀏覽器雙版本切版實測通過
 
 - 日期：2026-07-17
 - ID：reward-papertrade-r3-wave3-desktop-dual-column
