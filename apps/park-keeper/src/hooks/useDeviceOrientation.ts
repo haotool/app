@@ -12,7 +12,7 @@ import {
   getDeviceTilt,
   isPhoneFlatFromTilt,
   smoothHeading,
-  HEADING_FREEZE_DEADBAND_DEG,
+  applyHeadingFreeze,
 } from '@app/park-keeper/services/deviceOrientation';
 
 export interface DeviceOrientationState {
@@ -94,16 +94,9 @@ export function useDeviceOrientation(
             : smoothHeading(smoothedRef.current, compassHeading);
         smoothedRef.current = smoothed;
 
-        const anchor = frozenRef.current;
-        let frozen = false;
-        if (anchor !== null) {
-          let anchorDiff = smoothed - anchor;
-          if (anchorDiff > 180) anchorDiff -= 360;
-          else if (anchorDiff < -180) anchorDiff += 360;
-          frozen = Math.abs(anchorDiff) < HEADING_FREEZE_DEADBAND_DEG;
-        }
-        if (!frozen) {
-          frozenRef.current = smoothed;
+        const freeze = applyHeadingFreeze(frozenRef.current, smoothed);
+        frozenRef.current = freeze.anchor;
+        if (!freeze.frozen) {
           setHeading(smoothed);
         }
       }

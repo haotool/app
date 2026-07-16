@@ -6,6 +6,7 @@ import {
   getCompassAccuracy,
   needsCompassCalibration,
   smoothHeading,
+  applyHeadingFreeze,
   COMPASS_LOW_ACCURACY_THRESHOLD_DEG,
   HEADING_FREEZE_DEADBAND_DEG,
   type CompassOrientationEvent,
@@ -78,5 +79,32 @@ describe('smoothHeading', () => {
   it('凍結死區常數為正且小於 5°（顯示級死區）', () => {
     expect(HEADING_FREEZE_DEADBAND_DEG).toBeGreaterThan(0);
     expect(HEADING_FREEZE_DEADBAND_DEG).toBeLessThan(5);
+  });
+});
+
+describe('applyHeadingFreeze', () => {
+  it('首樣本（anchor=null）不凍結，錨點更新為平滑值', () => {
+    expect(applyHeadingFreeze(null, 90)).toEqual({ frozen: false, anchor: 90 });
+  });
+
+  it('死區內噪聲凍結，錨點保持不動', () => {
+    const result = applyHeadingFreeze(90, 90 + HEADING_FREEZE_DEADBAND_DEG - 0.1);
+    expect(result.frozen).toBe(true);
+    expect(result.anchor).toBe(90);
+  });
+
+  it('超過死區解凍，錨點更新為新平滑值', () => {
+    const next = 90 + HEADING_FREEZE_DEADBAND_DEG + 0.5;
+    expect(applyHeadingFreeze(90, next)).toEqual({ frozen: false, anchor: next });
+  });
+
+  it('359↔0 wrap：跨界小差凍結、跨界大差解凍', () => {
+    expect(applyHeadingFreeze(359.5, 0.2).frozen).toBe(true);
+    expect(applyHeadingFreeze(359.5, 5).frozen).toBe(false);
+  });
+
+  it('自訂死區生效', () => {
+    expect(applyHeadingFreeze(90, 93, 5).frozen).toBe(true);
+    expect(applyHeadingFreeze(90, 93, 2).frozen).toBe(false);
   });
 });

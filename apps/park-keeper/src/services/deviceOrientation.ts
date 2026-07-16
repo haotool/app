@@ -69,6 +69,27 @@ export function smoothHeading(prev: number, raw: number, alpha = 0.25): number {
   return (((prev + alpha * diff) % 360) + 360) % 360;
 }
 
+/**
+ * 靜止凍結判定：平滑值與顯示錨點的最短弧差低於死區時凍結顯示。
+ * anchor 為 null（首樣本）不凍結；解凍時錨點更新為當前平滑值。
+ * 純函式，錨點 ref 由呼叫端持有。
+ */
+export function applyHeadingFreeze(
+  anchor: number | null,
+  smoothed: number,
+  deadbandDeg: number = HEADING_FREEZE_DEADBAND_DEG,
+): { frozen: boolean; anchor: number } {
+  if (anchor !== null) {
+    let diff = smoothed - anchor;
+    if (diff > 180) diff -= 360;
+    else if (diff < -180) diff += 360;
+    if (Math.abs(diff) < deadbandDeg) {
+      return { frozen: true, anchor };
+    }
+  }
+  return { frozen: false, anchor: smoothed };
+}
+
 export function getDeviceTilt(event: CompassOrientationEvent): number | null {
   if (typeof event.beta === 'number') {
     return Math.abs(event.beta);

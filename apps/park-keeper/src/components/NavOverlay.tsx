@@ -15,6 +15,7 @@ import {
   Check,
   Compass,
   MapPin,
+  Move,
   X,
   Navigation,
   Navigation2,
@@ -213,6 +214,8 @@ export default function NavOverlay({
   const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  // 照片位置調整模式：盤面暫時淡出，地圖層顯示可拖曳照片（持久化鏈不變）。
+  const [photoEditMode, setPhotoEditMode] = useState(false);
   const miniMapText = {
     markerCarLabel: t('map.marker_car'),
     markerUserLabel: t('map.marker_you'),
@@ -287,7 +290,8 @@ export default function NavOverlay({
       className="fixed inset-0 z-1000 flex flex-col overflow-hidden font-sans min-h-dvh"
       style={{ backgroundColor: theme.colors.background }}
     >
-      {/* 0. Map background layer（全幅；照片拖曳持久化入口保留於地圖層） */}
+      {/* 0. Map background layer。照片平時不上地圖（資訊卡 96px 縮圖為唯一焦點）；
+          照片位置調整模式才顯示可拖曳照片，photoOffset 持久化鏈不變。 */}
       <div className="absolute inset-0 z-0">
         <Suspense
           fallback={
@@ -312,9 +316,9 @@ export default function NavOverlay({
               recenterLabel={t('map.recenter_both')}
               cacheDurationDays={cacheDurationDays}
               text={miniMapText}
-              className="grayscale-[0.5] opacity-70"
+              className={photoEditMode ? '' : 'grayscale-[0.5] opacity-70'}
               mapKey={`nav-${record.id}`}
-              photoData={record.photoData}
+              photoData={photoEditMode ? record.photoData : undefined}
               onPhotoClick={() => setShowPhotoModal(true)}
               parkedHeading={record.parkedHeading}
               trackedViewportInsets={{ top: 108, right: 36, bottom: 400, left: 36 }}
@@ -363,8 +367,39 @@ export default function NavOverlay({
         </button>
       </div>
 
-      {/* 2. 上 55%：羅盤盤面（玻璃圓盤浮於地圖上） */}
-      <div className="absolute top-0 inset-x-0 h-[55%] z-20 flex items-center justify-center pointer-events-none pt-16">
+      {/* 照片調整模式提示 pill */}
+      <AnimatePresence>
+        {photoEditMode && (
+          <motion.div
+            key="photo-edit-hint"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="absolute top-28 inset-x-0 z-30 flex justify-center pointer-events-none"
+          >
+            <div
+              className="px-4 py-2 rounded-full backdrop-blur-md text-xs font-bold shadow-lg"
+              style={{
+                backgroundColor: `${theme.colors.surface}E6`,
+                color: theme.colors.text,
+                border: `1px solid ${theme.colors.text}14`,
+              }}
+            >
+              {t('nav.photo_adjust_hint')}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 2. 上 55%：羅盤盤面（玻璃圓盤浮於地圖上）；照片調整模式時淡出讓位 */}
+      <div
+        className="absolute top-0 inset-x-0 h-[55%] z-20 flex items-center justify-center pointer-events-none pt-16"
+        style={{
+          opacity: photoEditMode ? 0 : 1,
+          visibility: photoEditMode ? 'hidden' : 'visible',
+          transition: 'opacity 0.3s ease, visibility 0.3s ease',
+        }}
+      >
         <div className="relative w-76 h-76 max-w-[88vw] max-h-[42vh] aspect-square flex items-center justify-center">
           {/* 玻璃盤面底：讓刻度在地圖上保持可讀 */}
           <div
@@ -861,7 +896,7 @@ export default function NavOverlay({
             </div>
           </div>
 
-          {/* 距離／狀態列 */}
+          {/* 距離／狀態列（右端：照片位置調整入口） */}
           <div className="flex items-center gap-3 mt-4">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -904,6 +939,28 @@ export default function NavOverlay({
                     : t('nav.unit_meters')}
               </span>
             </div>
+
+            {record.photoData && record.latitude != null && record.longitude != null && (
+              <button
+                type="button"
+                onClick={() => setPhotoEditMode((v) => !v)}
+                aria-label={photoEditMode ? t('nav.photo_adjust_done') : t('nav.photo_adjust')}
+                aria-pressed={photoEditMode}
+                className="ml-auto min-h-11 px-3.5 rounded-2xl flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide shrink-0 active:scale-95 transition-transform"
+                style={
+                  photoEditMode
+                    ? { backgroundColor: theme.colors.primary, color: '#fff' }
+                    : {
+                        backgroundColor: `${theme.colors.text}0A`,
+                        color: theme.colors.text,
+                        border: `1px solid ${theme.colors.text}1A`,
+                      }
+                }
+              >
+                {photoEditMode ? <Check size={14} strokeWidth={3} /> : <Move size={14} />}
+                {photoEditMode ? t('nav.photo_adjust_done') : t('nav.photo_adjust')}
+              </button>
+            )}
           </div>
 
           {/* 備註 */}

@@ -199,6 +199,23 @@ describe('useNavigation hook', () => {
     expect(result.current.deviceTilt).toBe(30);
   });
 
+  it('adopts first heading sample directly (no ramp-up from 0 after grant)', () => {
+    const { result } = renderHook(() => useNavigation(mockRecord));
+
+    act(() => {
+      orientationHandler?.({
+        webkitCompassHeading: 270,
+        alpha: null,
+        beta: 10,
+        gamma: 0,
+        absolute: false,
+      } as unknown as Event);
+    });
+
+    // 首樣本直採：單一事件即顯示 270，不從 0 以 EMA 爬升
+    expect(result.current.heading).toBe(270);
+  });
+
   it('should compute isPhoneFlat with hysteresis correctly', () => {
     const { result } = renderHook(() => useNavigation(mockRecord));
 

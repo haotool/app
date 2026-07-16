@@ -7,7 +7,7 @@ import {
   isPhoneFlatFromTilt,
   needsCompassCalibration,
   smoothHeading,
-  HEADING_FREEZE_DEADBAND_DEG,
+  applyHeadingFreeze,
 } from '@app/park-keeper/services/deviceOrientation';
 
 // ---------------------------------------------------------------------------
@@ -132,7 +132,8 @@ export function useNavigation(record: ParkingRecord) {
   const [animHeading, setAnimHeading] = useState(0);
   const prevHeadingRef = useRef(0);
   const virtualHeadingRef = useRef(0);
-  const smoothedHeadingRef = useRef(0);
+  // null = 尚無樣本；首樣本直採（不從 0 EMA 爬升），與 useDeviceOrientation 同款。
+  const smoothedHeadingRef = useRef<number | null>(null);
   // 靜止凍結錨點：顯示值與平滑值偏差低於死區時不更新，消除感測噪聲微震。
   const frozenHeadingRef = useRef<number | null>(null);
   const [deviceTilt, setDeviceTilt] = useState(0);
@@ -229,21 +230,15 @@ export function useNavigation(record: ParkingRecord) {
       setCompassAccuracy(getCompassAccuracy(e));
 
       if (h !== null) {
-        const smoothed = smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);
+        const smoothed =
+          smoothedHeadingRef.current === null
+            ? h
+            : smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);
         smoothedHeadingRef.current = smoothed;
 
-        // 靜止凍結：平滑值與顯示錨點的最短弧差低於死區時，不更新顯示值。
-        const anchor = frozenHeadingRef.current;
-        let frozen = false;
-        if (anchor !== null) {
-          let anchorDiff = smoothed - anchor;
-          if (anchorDiff > 180) anchorDiff -= 360;
-          else if (anchorDiff < -180) anchorDiff += 360;
-          frozen = Math.abs(anchorDiff) < HEADING_FREEZE_DEADBAND_DEG;
-        }
-        if (!frozen) {
-          frozenHeadingRef.current = smoothed;
-
+        const freeze = applyHeadingFreeze(frozenHeadingRef.current, smoothed);
+        frozenHeadingRef.current = freeze.anchor;
+        if (!freeze.frozen) {
           let diff = smoothed - prevHeadingRef.current;
           if (diff > 180) diff -= 360;
           else if (diff < -180) diff += 360;
