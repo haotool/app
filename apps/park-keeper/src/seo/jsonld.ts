@@ -55,6 +55,10 @@ function createBreadcrumb(route: string): JsonLdObject {
     items.push({ name: '關於', url: `${BASE_URL}/about/` });
   } else if (route === '/settings/' || route === '/settings') {
     items.push({ name: '設定', url: `${BASE_URL}/settings/` });
+  } else if (route === '/add/' || route === '/add') {
+    items.push({ name: '快速記錄', url: `${BASE_URL}/add/` });
+  } else if (route === '/guide/' || route === '/guide') {
+    items.push({ name: '捷徑教學', url: `${BASE_URL}/guide/` });
   }
 
   return {

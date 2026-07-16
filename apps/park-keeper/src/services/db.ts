@@ -1,5 +1,8 @@
 import type { AppSettings, ParkingRecord, StorageService } from '@app/park-keeper/types';
 import { DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import { plateMemory } from '@app/park-keeper/services/plateMemory';
+
+const LANGUAGE_STORAGE_KEY = 'park-keeper-language';
 
 const DB_NAME = 'ParkKeeperDB';
 const DB_VERSION = 1;
@@ -7,6 +10,10 @@ const STORES = {
   RECORDS: 'records',
   SETTINGS: 'settings',
 };
+
+// 啟動/前景喚醒清理的 session 節流：短時間重複觸發不重複全掃。
+const STARTUP_CLEANUP_MIN_INTERVAL_MS = 5 * 60 * 1000;
+let lastStartupCleanupAt = 0;
 
 // Low-level IDB wrapper with error handling
 const openDB = (): Promise<IDBDatabase> => {
@@ -100,8 +107,9 @@ export const dbService: StorageService = {
         request.onerror = () => reject(request.error ?? new Error('DB error'));
       });
     } catch (error) {
+      // 不得靜默回空陣列：讓呼叫端（Home）能呈現 IndexedDB 失敗狀態（issue #714）。
       console.error('Get Records Error:', error);
-      return [];
+      throw error instanceof Error ? error : new Error('Failed to load records.');
     }
   },
 
@@ -168,14 +176,31 @@ export const dbService: StorageService = {
     });
   },
 
+  async runStartupCleanup(daysToKeep: number): Promise<number> {
+    const now = Date.now();
+    if (now - lastStartupCleanupAt < STARTUP_CLEANUP_MIN_INTERVAL_MS) {
+      return 0;
+    }
+    lastStartupCleanupAt = now;
+    return this.cleanupCache(daysToKeep);
+  },
+
   async clearAllData(): Promise<void> {
     const db = await openDB();
-    const tx = db.transaction([STORES.RECORDS], 'readwrite');
+    const tx = db.transaction([STORES.RECORDS, STORES.SETTINGS], 'readwrite');
     tx.objectStore(STORES.RECORDS).clear();
-    return new Promise((resolve, reject) => {
+    tx.objectStore(STORES.SETTINGS).clear();
+    await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error ?? new Error('DB error'));
     });
+
+    plateMemory.clear();
+    try {
+      localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    } catch {
+      // 靜默降級。
+    }
   },
 
   async exportData(format: 'json' | 'csv'): Promise<string> {

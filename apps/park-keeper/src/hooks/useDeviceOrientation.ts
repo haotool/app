@@ -11,6 +11,8 @@ import {
   getCompassHeading,
   getDeviceTilt,
   isPhoneFlatFromTilt,
+  smoothHeading,
+  applyHeadingFreeze,
 } from '@app/park-keeper/services/deviceOrientation';
 
 export interface DeviceOrientationState {
@@ -54,6 +56,8 @@ export function useDeviceOrientation(
   const [tilt, setTilt] = useState<number | null>(null);
   const [isPhoneFlat, setIsPhoneFlat] = useState(false);
   const isPhoneFlatRef = useRef(false);
+  const smoothedRef = useRef<number | null>(null);
+  const frozenRef = useRef<number | null>(null);
   const [isSupported] = useState(
     () => typeof window !== 'undefined' && 'DeviceOrientationEvent' in window,
   );
@@ -82,7 +86,19 @@ export function useDeviceOrientation(
       const deviceTilt = getDeviceTilt(event);
 
       if (compassHeading !== null && compassHeading !== undefined) {
-        setHeading(compassHeading);
+        // 與 useNavigation 同款 wrap-safe EMA 平滑＋靜止凍結死區。
+        // 首個樣本直接採用，避免顯示值從 0 緩慢爬升。
+        const smoothed =
+          smoothedRef.current === null
+            ? compassHeading
+            : smoothHeading(smoothedRef.current, compassHeading);
+        smoothedRef.current = smoothed;
+
+        const freeze = applyHeadingFreeze(frozenRef.current, smoothed);
+        frozenRef.current = freeze.anchor;
+        if (!freeze.frozen) {
+          setHeading(smoothed);
+        }
       }
 
       if (deviceTilt !== null) {

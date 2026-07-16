@@ -99,3 +99,66 @@ export function cardinalLabelPosition(
     y: COMPASS_CY - radius * Math.cos(θ),
   };
 }
+
+// ---------------------------------------------------------------------------
+// 目標方位楔形（annular sector）
+// ---------------------------------------------------------------------------
+
+/** 目標方位楔形半角（度）：車位方向 ±15° 高亮帶。 */
+export const TARGET_WEDGE_HALF_ANGLE_DEG = 15;
+
+/** 楔形內半徑（環帶內緣，避開中心 Hub）。 */
+export const TARGET_WEDGE_INNER_R = 78;
+
+/** 楔形外半徑（環帶外緣，落在刻度內側）。 */
+export const TARGET_WEDGE_OUTER_R = 126;
+
+/** 對準判定閾值（度）：相對誤差小於此值視為對準（brief：誤差 <10°）。 */
+export const ALIGNED_THRESHOLD_DEG = 10;
+
+/** 極座標（0°=正上方/北，順時針）轉 SVG 座標。 */
+function polarPoint(cx: number, cy: number, r: number, angleDeg: number): { x: number; y: number } {
+  const θ = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.sin(θ), y: cy - r * Math.cos(θ) };
+}
+
+/**
+ * 產生指向正北（正上方）的環帶扇形 SVG path。
+ * 使用時置於旋轉群組內，由 transform rotate 對準目標方位。
+ *
+ * @param halfAngleDeg 半角（扇形展開 ±halfAngleDeg）
+ * @param innerR       環帶內半徑
+ * @param outerR       環帶外半徑
+ */
+export function targetWedgePath(
+  halfAngleDeg: number = TARGET_WEDGE_HALF_ANGLE_DEG,
+  innerR: number = TARGET_WEDGE_INNER_R,
+  outerR: number = TARGET_WEDGE_OUTER_R,
+): string {
+  const cx = COMPASS_CX;
+  const cy = COMPASS_CY;
+  const startOuter = polarPoint(cx, cy, outerR, -halfAngleDeg);
+  const endOuter = polarPoint(cx, cy, outerR, halfAngleDeg);
+  const startInner = polarPoint(cx, cy, innerR, halfAngleDeg);
+  const endInner = polarPoint(cx, cy, innerR, -halfAngleDeg);
+  const fmt = (n: number) => Number(n.toFixed(3));
+  return [
+    `M ${fmt(startOuter.x)} ${fmt(startOuter.y)}`,
+    `A ${outerR} ${outerR} 0 0 1 ${fmt(endOuter.x)} ${fmt(endOuter.y)}`,
+    `L ${fmt(startInner.x)} ${fmt(startInner.y)}`,
+    `A ${innerR} ${innerR} 0 0 0 ${fmt(endInner.x)} ${fmt(endInner.y)}`,
+    'Z',
+  ].join(' ');
+}
+
+/**
+ * 依相對旋轉角（目標方位 − 手機朝向，0–360°）判定是否對準。
+ * 對準 = 誤差落在 ±threshold 內（含 wrap）。
+ */
+export function isAligned(
+  relativeRotation: number,
+  thresholdDeg: number = ALIGNED_THRESHOLD_DEG,
+): boolean {
+  const r = ((relativeRotation % 360) + 360) % 360;
+  return r <= thresholdDeg || r >= 360 - thresholdDeg;
+}

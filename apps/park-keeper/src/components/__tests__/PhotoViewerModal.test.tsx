@@ -1,7 +1,28 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import PhotoViewerModal from '../PhotoViewerModal';
+import PhotoViewerModal, {
+  shouldDismissOnDragEnd,
+  SWIPE_DISMISS_OFFSET_PX,
+  SWIPE_DISMISS_VELOCITY,
+} from '../PhotoViewerModal';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'photo.viewer_label': '照片檢視器',
+        'photo.zoom_in': '放大照片',
+        'photo.zoom_out': '縮小照片',
+        'photo.reset': '重設照片位置',
+        'photo.close': '關閉照片',
+        'photo.gesture_hint': '雙指縮放 · 雙擊切換 · 下滑關閉',
+      };
+      return map[key] ?? key;
+    },
+    i18n: { language: 'zh-TW' },
+  }),
+}));
 
 vi.mock('motion/react', () => {
   const motionProps = ['initial', 'animate', 'whileInView', 'viewport', 'transition', 'exit'];
@@ -109,7 +130,8 @@ describe('PhotoViewerModal', () => {
     expect(getImage().style.transform).toBe('scale(1.25)');
 
     act(() => {
-      fireEvent.keyDown(window, { key: 'Escape' });
+      // useModalDialog 掛 document listener：以 document 為事件目標（真實鍵盤事件會冒泡經過）。
+      fireEvent.keyDown(document, { key: 'Escape' });
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -125,7 +147,7 @@ describe('PhotoViewerModal', () => {
 
   it('應顯示行動裝置操作提示文字', () => {
     render(<PhotoViewerModal src="data:image/png;base64,abc" alt="停車照片" onClose={vi.fn()} />);
-    expect(screen.getByText('雙指縮放 · 雙擊切換 · 拖曳移動')).toBeInTheDocument();
+    expect(screen.getByText('雙指縮放 · 雙擊切換 · 下滑關閉')).toBeInTheDocument();
   });
 
   describe('雙擊切換縮放', () => {
@@ -196,5 +218,32 @@ describe('PhotoViewerModal', () => {
       });
       expect(img.style.transform).toBe('scale(1)');
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shouldDismissOnDragEnd – 單指下滑關閉判定（issue #716）
+// ---------------------------------------------------------------------------
+describe('shouldDismissOnDragEnd', () => {
+  it('未放大＋下滑超過位移閾值 → 關閉', () => {
+    expect(shouldDismissOnDragEnd(1, SWIPE_DISMISS_OFFSET_PX + 1, 0)).toBe(true);
+  });
+
+  it('未放大＋快速下甩（速度閾值）→ 關閉', () => {
+    expect(shouldDismissOnDragEnd(1, 20, SWIPE_DISMISS_VELOCITY + 1)).toBe(true);
+  });
+
+  it('未放大＋小幅拖曳 → 不關閉', () => {
+    expect(shouldDismissOnDragEnd(1, 40, 100)).toBe(false);
+  });
+
+  it('放大狀態（scale>1）拖曳保留為平移，不關閉', () => {
+    expect(
+      shouldDismissOnDragEnd(2.5, SWIPE_DISMISS_OFFSET_PX + 100, SWIPE_DISMISS_VELOCITY + 100),
+    ).toBe(false);
+  });
+
+  it('上滑（負位移）不關閉', () => {
+    expect(shouldDismissOnDragEnd(1, -200, -900)).toBe(false);
   });
 });

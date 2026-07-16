@@ -9,6 +9,7 @@
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { SEO_PATHS } from '../app.config.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(__dirname, '..', 'dist');
@@ -59,7 +60,8 @@ function moveRouterHydrationScript(html) {
 }
 
 function generateNonTrailingSlashPages() {
-  const ssgDirs = ['about', 'settings'];
+  // 由 SSOT 派生（排除首頁），避免第二份路由清單漂移。
+  const ssgDirs = SEO_PATHS.filter((path) => path !== '/').map((path) => path.replaceAll('/', ''));
   console.log('\n🔗 Generating non-trailing-slash HTML files...');
   for (const dir of ssgDirs) {
     const indexPath = resolve(distDir, dir, 'index.html');
