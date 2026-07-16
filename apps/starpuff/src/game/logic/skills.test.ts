@@ -18,6 +18,7 @@ import {
   refundDashFlap,
   resolveActionPress,
   resolveShieldBlock,
+  shieldEligible,
   shouldFireOnRelease,
   starDamage,
   starPitch,
@@ -196,6 +197,32 @@ describe('殼盾 FSM（§40）', () => {
     state = advanceShield(state, { deltaMs: 1000, held: true, eligible: true });
     expect(state.raised).toBe(false);
     state = advanceShield(state, { deltaMs: SHELL_SHIELD.cooldownMs, held: true, eligible: true });
+    expect(state.raised).toBe(true);
+  });
+
+  it('殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣成立；滿匣或頂槽非殼盾不成立', () => {
+    expect(shieldEligible([slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly'), slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly')])).toBe(false);
+    expect(shieldEligible([])).toBe(false);
+    // 滿匣頂槽殼盾星：長按讓位星暴，不屬殼盾情境。
+    expect(shieldEligible([slot('jelly'), slot('floaty'), slot('shelly')])).toBe(false);
+  });
+
+  it('殼盾情境長按不回落吸入：盾 CD 中 raised 恆 false，但情境仍成立（吸入抑制依情境判定）', () => {
+    // 模擬 player.ts 長按達閾值後的吸入判定：inhaling = !raised && !shieldEligible。
+    const magazine = [slot('shelly')];
+    let state = resolveShieldBlock();
+    state = advanceShield(state, { deltaMs: 16, held: true, eligible: shieldEligible(magazine) });
+    expect(state.raised).toBe(false);
+    const inhaling = !state.raised && !shieldEligible(magazine);
+    expect(inhaling).toBe(false);
+    // CD 期滿長按恢復舉盾（仍非吸入）。
+    state = advanceShield(state, {
+      deltaMs: SHELL_SHIELD.cooldownMs,
+      held: true,
+      eligible: shieldEligible(magazine),
+    });
     expect(state.raised).toBe(true);
   });
 
