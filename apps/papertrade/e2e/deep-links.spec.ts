@@ -57,3 +57,16 @@ test.describe('圖表最新成交', () => {
     await expect(tradeList.getByRole('listitem').first()).toBeVisible();
   });
 });
+
+test.describe('圖表市場深度', () => {
+  test('切換深度分頁後渲染深度曲線與中間價', async ({ page }) => {
+    await mockBybit(page);
+    await page.goto('/papertrade/chart/BTCUSDT');
+    await acknowledgeDisclaimer(page);
+
+    await page.getByRole('tab', { name: '深度' }).click();
+    await expect(page.getByRole('img', { name: '市場深度圖' })).toBeVisible();
+    await expect(page.getByTestId('depth-bid-area')).toBeVisible();
+    await expect(page.getByTestId('depth-ask-area')).toBeVisible();
+  });
+});
