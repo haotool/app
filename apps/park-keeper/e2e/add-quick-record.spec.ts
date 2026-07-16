@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEST_PHOTO_BASE64 } from './helpers';
+import { TEXT, TEST_PHOTO_BASE64 } from './helpers';
 
 /**
  * /add 快速記錄旅程：直達 → 注入照片 → 樓層儲存 → 摘要 → 返回首頁後紀錄出現。
@@ -22,7 +22,7 @@ test.describe('/add 快速記錄旅程', () => {
     await page.goto('add');
 
     // 巨型拍照 CTA：label 直包 capture input（無程式化喚起）。
-    const fileInput = page.locator('input[type="file"][capture="environment"]');
+    const fileInput = page.getByTestId('quick-entry-photo-input');
     await expect(fileInput).toBeAttached();
     await fileInput.setInputFiles({
       name: 'test-photo.png',
@@ -36,7 +36,7 @@ test.describe('/add 快速記錄旅程', () => {
     await page.getByRole('button', { name: 'B2', exact: true }).click();
 
     // 儲存成功摘要與返回首頁（摘要 CTA 有可見文字；header 返回箭頭僅 aria-label）。
-    await expect(page.getByText('停車位置已儲存。')).toBeVisible();
+    await expect(page.getByTestId('add-summary')).toBeVisible();
     const backHome = page.getByRole('link', { name: '返回首頁' }).filter({ hasText: '返回首頁' });
     await expect(backHome).toBeVisible();
 
@@ -50,11 +50,42 @@ test.describe('/add 快速記錄旅程', () => {
 
   test('from=shortcut 隱藏返回鍵；未知 from 值靜默降級', async ({ page }) => {
     await page.goto('add?from=shortcut');
-    await expect(page.locator('input[type="file"][capture="environment"]')).toBeAttached();
+    await expect(page.getByTestId('quick-entry-photo-input')).toBeAttached();
     await expect(page.getByRole('link', { name: '返回首頁' })).toHaveCount(0);
 
     await page.goto('add?from=unknown-value');
-    await expect(page.locator('input[type="file"][capture="environment"]')).toBeAttached();
+    await expect(page.getByTestId('quick-entry-photo-input')).toBeAttached();
     await expect(page.getByRole('link', { name: '返回首頁' })).toHaveCount(1);
+  });
+
+  test('plateMemory 種子後 /add 車號與樓層自動預填', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('park-keeper:last-plate', 'AB-1234');
+      localStorage.setItem('park-keeper:last-floor', '3F');
+    });
+
+    await page.goto('add');
+
+    await expect(page.getByPlaceholder(TEXT.platePlaceholder)).toHaveValue('AB-1234');
+    // 上次樓層預選高亮（selected 樣式使用 primary 背景 class）。
+    await expect(page.getByRole('button', { name: '3F', exact: true })).toHaveClass(
+      /bg-\[var\(--color-primary\)\]/,
+    );
+  });
+});
+
+test.describe('/add GPS 拒絕情境', () => {
+  // 不授予 geolocation 權限：watchPosition 直接回錯誤（PERMISSION_DENIED）。
+  test('顯示 GPS 拒絕卡且仍可儲存並明示未記錄位置', async ({ page }) => {
+    await page.goto('add');
+
+    const deniedCard = page.getByTestId('location-denied-card');
+    await expect(deniedCard).toBeVisible();
+    await expect(deniedCard.getByRole('button', { name: '啟用定位' })).toBeVisible();
+
+    // 無座標仍可儲存：樓層 tap 即儲存，摘要明示未記錄位置。
+    await page.getByRole('button', { name: 'B1', exact: true }).click();
+    await expect(page.getByTestId('add-summary')).toBeVisible();
+    await expect(page.getByTestId('add-summary-no-location')).toBeVisible();
   });
 });

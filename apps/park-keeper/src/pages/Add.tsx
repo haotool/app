@@ -94,7 +94,10 @@ export default function Add() {
       {/* Layout 已提供 main landmark，此處用 div 避免巢狀 main。 */}
       <div className="flex-1 pb-safe-bottom">
         {savedRecord && !formVisible ? (
-          <div className="max-w-md mx-auto px-6 pt-10 flex flex-col items-center text-center gap-4">
+          <div
+            data-testid="add-summary"
+            className="max-w-md mx-auto px-6 pt-10 flex flex-col items-center text-center gap-4"
+          >
             <CheckCircle2 size={64} className="text-[var(--color-primary)]" strokeWidth={1.5} />
             <p className="text-sm font-bold opacity-60">{t('add.summary_hint')}</p>
             <div
@@ -106,7 +109,10 @@ export default function Add() {
                 {savedRecord.plateNumber}・{savedTime}
               </div>
               {savedRecord.latitude === undefined && (
-                <div className="text-[10px] font-black uppercase tracking-wide opacity-40 mt-2">
+                <div
+                  data-testid="add-summary-no-location"
+                  className="text-[10px] font-black uppercase tracking-wide opacity-40 mt-2"
+                >
                   {t('record.no_location')}
                 </div>
               )}
