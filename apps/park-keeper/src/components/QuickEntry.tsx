@@ -97,7 +97,8 @@ export default function QuickEntry({
   const [isLocating, setIsLocating] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [photoError, setPhotoError] = useState(false);
+  // 照片來源引導卡（issue #725）：process＝讀取/壓縮失敗、cancelled＝相機取消或未取得照片。
+  const [photoIssue, setPhotoIssue] = useState<'process' | 'cancelled' | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
   const [locationHeading, setLocationHeading] = useState<number | null>(null);
@@ -143,15 +144,16 @@ export default function QuickEntry({
   const processPhotoFile = useCallback(async (file: File) => {
     const job = ++photoJobRef.current;
     setIsProcessing(true);
-    setPhotoError(false);
     try {
       const compressed = await compressImage(file, 1024, 0.7);
       if (job !== photoJobRef.current) return;
       setPhoto(compressed);
+      // 成功才清除引導卡，避免 mode="wait" 期間多段 children 切換造成視覺跳動。
+      setPhotoIssue(null);
       vibrate(50);
     } catch {
       if (job !== photoJobRef.current) return;
-      setPhotoError(true);
+      setPhotoIssue('process');
       vibrate([50, 50, 50]);
     } finally {
       if (job === photoJobRef.current) setIsProcessing(false);
@@ -172,7 +174,7 @@ export default function QuickEntry({
       photoJobRef.current += 1;
       setNotes('');
       setPhoto(null);
-      setPhotoError(false);
+      setPhotoIssue(null);
       setIsProcessing(false);
       setSaveStatus('idle');
       setCustomFloorMode(false);
@@ -270,25 +272,50 @@ export default function QuickEntry({
                   <Trash2 size={12} />
                 </motion.button>
               </motion.div>
-            ) : photoError ? (
+            ) : photoIssue ? (
+              /* 照片來源引導卡：說明＋重新拍照＋返回，不得死路（issue #725）。 */
               <motion.div
-                key="error"
+                key="issue"
+                data-testid="photo-issue-card"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center text-center p-2 w-full"
+                className="flex flex-col items-center justify-center text-center px-3 py-2 w-full gap-1.5"
               >
-                <AlertCircle className="text-red-500 mb-2" size={24} />
-                <span className="text-[10px] font-bold text-red-500 mb-3">{t('error.image')}</span>
-                <button
-                  onClick={() => {
-                    vibrate(10);
-                    setPhotoError(false);
-                  }}
-                  className="px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-wide active:scale-95 transition-transform"
-                >
-                  {t('action.retry_generic')}
-                </button>
+                <AlertCircle className="text-red-500 shrink-0" size={20} />
+                <span className="text-[10px] font-bold text-red-500 leading-snug">
+                  {photoIssue === 'process' ? t('error.image') : t('error.photo_cancelled')}
+                </span>
+                <span className="text-[9px] font-medium leading-snug opacity-60">
+                  {t('error.photo_source_help')}
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <label
+                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide text-white cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    onClick={() => vibrate(10)}
+                  >
+                    {t('action.retake_photo')}
+                    <input
+                      data-testid="photo-issue-retake-input"
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => void handlePhoto(e)}
+                      disabled={isProcessing}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      vibrate(10);
+                      setPhotoIssue(null);
+                    }}
+                    className="px-3 py-1.5 bg-black/5 rounded-full text-[10px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                  >
+                    {t('action.dismiss')}
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.label
@@ -324,6 +351,14 @@ export default function QuickEntry({
                   capture="environment"
                   className="hidden"
                   onChange={(e) => void handlePhoto(e)}
+                  // 使用者取消相機/選擇器（或相機無法開啟被系統關閉）→ 顯示引導卡。
+                  // React 僅對 dialog 綁 cancel，file input 需原生監聽（React 19 ref cleanup）。
+                  ref={(el) => {
+                    if (!el) return undefined;
+                    const onCancel = () => setPhotoIssue('cancelled');
+                    el.addEventListener('cancel', onCancel);
+                    return () => el.removeEventListener('cancel', onCancel);
+                  }}
                   disabled={isProcessing}
                 />
               </motion.label>

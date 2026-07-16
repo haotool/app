@@ -531,6 +531,65 @@ describe('QuickEntry - fullscreen 模式', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('相機取消（input cancel 事件）顯示照片來源引導卡，重新拍照與返回不得死路', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    fireEvent(screen.getByTestId('quick-entry-photo-input'), new Event('cancel'));
+
+    const card = await screen.findByTestId('photo-issue-card');
+    expect(card).toHaveTextContent(i18n.t('error.photo_cancelled'));
+    expect(card).toHaveTextContent(i18n.t('error.photo_source_help'));
+    // 重新拍照入口仍為 label+capture input（無程式化喚起）。
+    expect(screen.getByTestId('photo-issue-retake-input')).toHaveAttribute(
+      'capture',
+      'environment',
+    );
+
+    // 返回：關閉引導卡回到拍照 label（等待退場動畫移除節點）。
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('action.dismiss') }));
+    await waitFor(() => expect(screen.queryByTestId('photo-issue-card')).toBeNull(), {
+      timeout: 4000,
+    });
+    expect(screen.getByTestId('quick-entry-photo-input')).toBeInTheDocument();
+  });
+
+  it('壓縮失敗顯示讀取失敗引導卡，重新拍照成功後恢復照片預覽', async () => {
+    vi.mocked(compressImage).mockRejectedValueOnce(new Error('broken image'));
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={mockTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    const file = new File(['x'], 'broken.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByTestId('quick-entry-photo-input'), {
+      target: { files: [file] },
+    });
+
+    const card = await screen.findByTestId('photo-issue-card');
+    expect(card).toHaveTextContent(i18n.t('error.image'));
+
+    // 由引導卡重新拍照（第二次壓縮成功）→ 照片預覽出現、卡片消失。
+    // AnimatePresence mode=wait 於 jsdom（rAF stub）退場較慢，放寬等待上限。
+    fireEvent.change(screen.getByTestId('photo-issue-retake-input'), {
+      target: { files: [new File(['y'], 'ok.jpg', { type: 'image/jpeg' })] },
+    });
+    await waitFor(
+      () => expect(screen.getByAltText(i18n.t('record.photo_alt'))).toBeInTheDocument(),
+      { timeout: 4000 },
+    );
+    expect(screen.queryByTestId('photo-issue-card')).toBeNull();
+  });
+
   it('fullscreen 模式為頁面內容，不得帶 dialog 語意', async () => {
     render(
       <I18nextProvider i18n={i18n}>

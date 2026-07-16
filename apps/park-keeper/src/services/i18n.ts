@@ -74,6 +74,11 @@ const resources = {
       'record.navigate': 'NAVIGATE',
       'record.saving': 'Saving...',
       'error.image': 'Error processing image.',
+      'error.photo_cancelled': 'Photo not captured',
+      'error.photo_source_help':
+        "Retake the photo or pick one from your library. If the camera won't open, check camera permission in system settings.",
+      'action.retake_photo': 'Retake photo',
+      'action.dismiss': 'Got it',
       'error.location_denied': 'Location access denied. Please enable GPS to record parking spot.',
       'error.storage_unavailable': 'Unable to access local storage. Some features may not work.',
       'action.retry': 'Enable Location',
@@ -235,6 +240,11 @@ const resources = {
       'record.navigate': '導航',
       'record.saving': '正在儲存...',
       'error.image': '圖片處理失敗',
+      'error.photo_cancelled': '未完成拍照',
+      'error.photo_source_help':
+        '可重新拍照或改從相簿選擇；若相機無法開啟，請檢查系統設定中的相機權限。',
+      'action.retake_photo': '重新拍照',
+      'action.dismiss': '知道了',
       'error.location_denied': '無法取得位置，請啟用 GPS 以記錄車位。',
       'error.storage_unavailable': '無法讀取本機資料庫，部分功能可能無法使用。',
       'action.retry': '啟用定位',
@@ -391,6 +401,11 @@ const resources = {
       'record.navigate': 'ナビ',
       'record.saving': '保存中...',
       'error.image': '画像の処理エラー',
+      'error.photo_cancelled': '撮影が完了していません',
+      'error.photo_source_help':
+        '再撮影するか、アルバムから選択してください。カメラが開かない場合は、システム設定のカメラ権限を確認してください。',
+      'action.retake_photo': '再撮影',
+      'action.dismiss': 'OK',
       'error.location_denied': '位置情報のアクセスが拒否されました。',
       'error.storage_unavailable':
         'ローカルデータベースにアクセスできません。一部機能が使用できない場合があります。',
