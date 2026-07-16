@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.4.1
+
+### Patch Changes
+
+- acacb7b: 依賴維護更新，無使用者可見行為變更。
+
 ## 0.4.0
 
 ### Minor Changes
