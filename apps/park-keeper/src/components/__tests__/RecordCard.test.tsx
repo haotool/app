@@ -33,6 +33,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, opts?: Record<string, string>) => {
       const map: Record<string, string> = {
         'record.plate': '車牌號碼',
+        'record.plate_unset': '未填車號',
         'record.yesterday': '昨天',
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
@@ -236,6 +237,29 @@ describe('RecordCard', () => {
 
     expect(screen.getByRole('button', { name: `編輯車牌 ${record.plateNumber}` })).toBeVisible();
     expect(errorSpy).toHaveBeenCalledWith('Failed to update plate number:', expect.any(Error));
+  });
+
+  it('未填車號（sentinel）應顯示待填文案而非裸露 N/A（formatPlate SSOT）', () => {
+    renderRecordCard({ plateNumber: 'N/A' });
+
+    expect(screen.getByText('未填車號')).toBeInTheDocument();
+    expect(screen.queryByText(/N\/A/)).toBeNull();
+  });
+
+  it('compact 精簡列隱藏照片＋地圖列，保留車牌編輯與刪除（issue #733）', () => {
+    renderRecordCard({ notes: '柱子旁' }, { compact: true });
+
+    expect(screen.queryByTestId('record-card-media')).toBeNull();
+    // 管理操作與備註不受影響。
+    expect(screen.getByLabelText('編輯車牌')).toBeInTheDocument();
+    expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
+    expect(screen.getByText(/柱子旁/)).toBeInTheDocument();
+  });
+
+  it('預設（非 compact）照片＋地圖列照常渲染', () => {
+    renderRecordCard();
+
+    expect(screen.getByTestId('record-card-media')).toBeInTheDocument();
   });
 
   it('應該支援刪除與導航操作，並顯示備註', () => {

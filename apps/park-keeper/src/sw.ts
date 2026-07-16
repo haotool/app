@@ -15,6 +15,7 @@ import {
   TILE_CACHE_CONFIG_MESSAGE,
 } from './services/mapTileCache';
 import { CACHE_DAYS, clampCacheDays } from './constants';
+import { SEO_PATHS } from '../app.config.mjs';
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: {
@@ -49,23 +50,33 @@ async function getTileCacheDays(): Promise<number> {
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-// /about 為唯一真 SSG 內容頁：導覽必須綁定其精確預快取 HTML。
-// 若回落 index.html（首頁殼）會使 client 以 /about 樹 hydrate 首頁 HTML，
-// 觸發 React 418（issue #725 P0；e2e 因 serviceWorkers block 曾漏攔）。
-// Workbox 以 pathname+search 比對，pattern 需容忍任意 querystring。
-const ABOUT_NAV_PATTERN = new RegExp(`^${import.meta.env.BASE_URL}about/?(?:\\?.*)?$`);
-registerRoute(
-  new NavigationRoute(createHandlerBoundToURL(`${import.meta.env.BASE_URL}about/index.html`), {
-    allowlist: [ABOUT_NAV_PATTERN],
-  }),
-);
+// 預渲染頁導覽必須綁定各自的精確預快取 HTML（issue #733 SSOT 化）：
+// 清單由 app.config.mjs SEO_PATHS 派生，與 vite includedRoutes / postbuild 同源，
+// 禁止逐頁硬編第三份清單。若回落 index.html（首頁殼），client 會以該頁路由樹
+// hydrate 首頁 HTML，觸發 React 418（issue #725 /about 前例；round-2 於 /add、/guide 再現）。
+// Workbox 以 pathname+search 比對，pattern 需容忍 trailing slash 與任意 querystring。
+const ssgNavRoutes = SEO_PATHS.filter((path) => path !== '/').map((path) => {
+  const page = path.replaceAll('/', '');
+  return {
+    pattern: new RegExp(`^${import.meta.env.BASE_URL}${page}/?(?:\\?.*)?$`),
+    htmlUrl: `${import.meta.env.BASE_URL}${page}/index.html`,
+  };
+});
+
+for (const { pattern, htmlUrl } of ssgNavRoutes) {
+  registerRoute(
+    new NavigationRoute(createHandlerBoundToURL(htmlUrl), {
+      allowlist: [pattern],
+    }),
+  );
+}
 
 const navigationHandler = createHandlerBoundToURL(`${import.meta.env.BASE_URL}index.html`);
 registerRoute(
   new NavigationRoute(navigationHandler, {
     denylist: [
       /^\/api/,
-      ABOUT_NAV_PATTERN,
+      ...ssgNavRoutes.map((route) => route.pattern),
       /\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif)$/,
       /\.(?:js|css|json|woff|woff2)$/,
     ],

@@ -15,6 +15,7 @@ import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-r
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
+import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -25,6 +26,8 @@ interface RecordCardProps {
   onDelete: (id: string) => void | Promise<void>;
   onUpdate: (id: string, updates: Partial<ParkingRecord>) => void | Promise<void>;
   onNavigate: (record: ParkingRecord) => void;
+  /** 精簡列：隱藏照片＋地圖列。單筆記錄與 hero 卡並列時避免同筆資訊重複（issue #733）。 */
+  compact?: boolean;
   cacheDurationDays?: number;
   miniMapText: {
     markerCarLabel: string;
@@ -68,6 +71,7 @@ export default function RecordCard({
   onDelete,
   onUpdate,
   onNavigate,
+  compact = false,
   cacheDurationDays = CACHE_DAYS.DEFAULT,
   miniMapText,
 }: RecordCardProps) {
@@ -213,9 +217,11 @@ export default function RecordCard({
                   onClick={handleEditStart}
                   aria-label={t('record.edit_plate', { plate: displayPlate })}
                 >
-                  {/* N/A 為未填車號 sentinel：以待填文案呈現，避免像資料錯誤。 */}
-                  {displayPlate === 'N/A' ? (
-                    <span className="opacity-45">{t('record.plate_unset')}</span>
+                  {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，避免裸露佔位值像資料錯誤。 */}
+                  {isPlateUnset(displayPlate) ? (
+                    <span className="opacity-45">
+                      {formatPlateLabel(displayPlate, t('record.plate_unset'))}
+                    </span>
                   ) : (
                     displayPlate
                   )}
@@ -260,64 +266,66 @@ export default function RecordCard({
         </button>
       </div>
 
-      {/* Photo + Map row */}
-      <div className="flex gap-2.5 h-36 mb-4">
-        <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
-          {record.photoData ? (
-            <button
-              type="button"
-              onClick={() => setShowPhotoModal(true)}
-              className="w-full h-full cursor-pointer"
-              aria-label={t('record.view_photo')}
-            >
-              <img
-                src={record.photoData}
-                alt={t('record.photo_alt')}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </button>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center opacity-20">
-              <Car size={20} />
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate(record)}
-          className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform relative"
-        >
-          {record.latitude != null && record.longitude != null ? (
-            <Suspense fallback={<div className="w-full h-full animate-pulse bg-gray-200" />}>
-              <MiniMap
-                lat={record.latitude}
-                lng={record.longitude}
-                theme={theme}
-                interactive={false}
-                cacheDurationDays={cacheDurationDays}
-                text={miniMapText}
-                mapKey={record.id}
-                parkedHeading={record.parkedHeading}
-              />
-            </Suspense>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
-              {t('record.no_map')}
-            </div>
-          )}
-          {/* 觸控無 hover：導航 affordance 改常駐角標 pill（issue #725 P2）。 */}
-          <div
-            className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full shadow-md pointer-events-none"
-            style={{ backgroundColor: `${theme.colors.primary}E6` }}
-          >
-            <Navigation size={11} className="text-white" />
-            <span className="text-[9px] font-black text-white uppercase tracking-widest">
-              {t('record.navigate')}
-            </span>
+      {/* Photo + Map row（compact 精簡列隱藏：hero 卡已承載照片與導航入口） */}
+      {!compact && (
+        <div data-testid="record-card-media" className="flex gap-2.5 h-36 mb-4">
+          <div className="flex-[1.2] rounded-2xl overflow-hidden bg-black/5 shadow-inner">
+            {record.photoData ? (
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                className="w-full h-full cursor-pointer"
+                aria-label={t('record.view_photo')}
+              >
+                <img
+                  src={record.photoData}
+                  alt={t('record.photo_alt')}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center opacity-20">
+                <Car size={20} />
+              </div>
+            )}
           </div>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => onNavigate(record)}
+            className="flex-1 rounded-2xl overflow-hidden bg-black/5 shadow-inner border border-black/2 cursor-pointer active:scale-95 transition-transform relative"
+          >
+            {record.latitude != null && record.longitude != null ? (
+              <Suspense fallback={<div className="w-full h-full animate-pulse bg-gray-200" />}>
+                <MiniMap
+                  lat={record.latitude}
+                  lng={record.longitude}
+                  theme={theme}
+                  interactive={false}
+                  cacheDurationDays={cacheDurationDays}
+                  text={miniMapText}
+                  mapKey={record.id}
+                  parkedHeading={record.parkedHeading}
+                />
+              </Suspense>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
+                {t('record.no_map')}
+              </div>
+            )}
+            {/* 觸控無 hover：導航 affordance 改常駐角標 pill（issue #725 P2）。 */}
+            <div
+              className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full shadow-md pointer-events-none"
+              style={{ backgroundColor: `${theme.colors.primary}E6` }}
+            >
+              <Navigation size={11} className="text-white" />
+              <span className="text-[9px] font-black text-white uppercase tracking-widest">
+                {t('record.navigate')}
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
 
       {record.notes && (
         <p className="text-[11px] opacity-60 bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic">

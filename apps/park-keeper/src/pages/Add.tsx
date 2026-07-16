@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { formatPlateLabel, PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
 import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
 import QuickEntry from '@app/park-keeper/components/QuickEntry';
 
@@ -48,7 +49,7 @@ export default function Add() {
   const handleSave = useCallback(async (data: Partial<ParkingRecord>) => {
     const newRecord: ParkingRecord = {
       id: crypto.randomUUID(),
-      plateNumber: data.plateNumber ?? 'N/A',
+      plateNumber: data.plateNumber ?? PLATE_UNSET_SENTINEL,
       floor: data.floor ?? '?',
       notes: data.notes ?? '',
       timestamp: Date.now(),
@@ -104,7 +105,8 @@ export default function Add() {
             >
               <div className="text-4xl font-black tracking-tight">{savedRecord.floor}</div>
               <div className="text-sm font-bold opacity-60 mt-1">
-                {savedRecord.plateNumber}・{savedTime}
+                {/* 未填車號 sentinel 經 formatPlate SSOT 轉換（round-2 Sonnet R2-U2 第 4 渲染點）。 */}
+                {formatPlateLabel(savedRecord.plateNumber, t('record.plate_unset'))}・{savedTime}
               </div>
               {savedRecord.latitude === undefined && (
                 <div

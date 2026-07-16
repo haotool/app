@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Car, Clock, MapPin, Navigation } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
+import { formatPlateLabel } from '@app/park-keeper/services/formatPlate';
 
 /** 經過時間標籤：<1 分鐘回傳 null（由呼叫端顯示「剛剛」），其餘走 Intl 相對時間。 */
 export function formatElapsed(timestamp: number, locale: string): string | null {
@@ -27,7 +28,7 @@ interface PickupHeroCardProps {
 export default function PickupHeroCard({ record, theme, onNavigate }: PickupHeroCardProps) {
   const { t, i18n } = useTranslation();
   const elapsed = formatElapsed(record.timestamp, i18n.language) ?? t('home.just_now');
-  const plateLabel = record.plateNumber === 'N/A' ? t('record.plate_unset') : record.plateNumber;
+  const plateLabel = formatPlateLabel(record.plateNumber, t('record.plate_unset'));
 
   return (
     <button
