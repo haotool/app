@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getStoredLanguage } from '../services/i18n';
 import { SITE_CONFIG } from '../../app.config.mjs';
 
 const APP_NAME = SITE_CONFIG.name;
@@ -11,8 +13,14 @@ function normalizePathname(pathname: string) {
 }
 
 export default function Layout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    // 首屏一律以 zh-TW hydrate（與 SSG 一致），掛載後才還原使用者語言偏好。
+    const stored = getStoredLanguage();
+    if (stored && stored !== i18n.language) void i18n.changeLanguage(stored);
+  }, [i18n]);
   const normalizedPathname = normalizePathname(pathname);
   const showFooter = normalizedPathname === '/about';
   const footerLinkCls =

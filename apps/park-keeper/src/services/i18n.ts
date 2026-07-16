@@ -468,16 +468,42 @@ const resources = {
 const canUseBrowserLanguageStorage =
   typeof window !== 'undefined' && import.meta.env.MODE !== 'test';
 
+/** 語言偏好 localStorage 鍵（LanguageDetector 快取與 Layout 還原共用 SSOT）。 */
+export const LANGUAGE_STORAGE_KEY = 'park-keeper-language';
+
+/** 支援語言清單（還原偏好時的白名單）。 */
+export const SUPPORTED_LANGUAGES = ['en', 'zh-TW', 'ja'] as const;
+
+// init 會經 LanguageDetector cache 將 lng 寫回 localStorage，
+// 必須在 init 前擷取既有偏好，否則使用者偏好會被 zh-TW 覆蓋。
+const initialStoredLanguage: string | null = (() => {
+  if (!canUseBrowserLanguageStorage) return null;
+  try {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+})();
+
+/** 取得 init 前擷取的使用者語言偏好；無偏好或儲存不可用時回傳 null。 */
+export function getStoredLanguage(): string | null {
+  return initialStoredLanguage;
+}
+
+// 固定 lng='zh-TW'：SSG（Node）與 client 首屏語言一致，杜絕 /about hydration 文字不一致（React #418）。
+// 建置環境的 navigator 偵測會解析成英文，故不得以偵測結果決定首屏語言；
+// 使用者偏好於 hydration 完成後由 Layout 還原（changeLanguage 仍寫入 localStorage 快取）。
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'zh-TW',
     fallbackLng: 'zh-TW',
     detection: {
-      order: canUseBrowserLanguageStorage ? ['localStorage', 'navigator'] : ['navigator'],
       caches: canUseBrowserLanguageStorage ? ['localStorage'] : [],
-      lookupLocalStorage: 'park-keeper-language',
+      lookupLocalStorage: LANGUAGE_STORAGE_KEY,
     },
     interpolation: { escapeValue: false },
   });
