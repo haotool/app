@@ -28,6 +28,13 @@
   --color-warning: #f0b90b;
   --color-danger: #ea3943;
 
+  /* K 線指標疊加線：暗底對比足夠且互相可辨，避開多空綠紅與主色藍。 */
+  --color-indicator-1: #f0b90b;
+  --color-indicator-2: #e064c8;
+  --color-indicator-3: #9b7dff;
+  --color-indicator-4: #3ac9e8;
+  --color-indicator-5: #f2814d;
+
   --color-accent-btc: #f7931a;
   --color-accent-eth: #627eea;
   --color-accent-sol: #9945ff;

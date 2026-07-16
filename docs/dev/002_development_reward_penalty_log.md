@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+120
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+125
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,31 @@
 - ID：penalty-park-keeper-sw-route-fix-not-generalized
 - 原因：S6 修 /about SW 回落殼 hydration 時未推廣到同類預渲染頁，/add 與 /guide 於產線被兩席評分揪出同型 #418
 - 解法：修法一律 SSOT 化（清單派生）取代單點修補，同類頁面全數自動涵蓋並以 ssg-sw e2e 守門
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-final-seat-convergence
+- 原因：PR #734 雙終審席（Sonnet 89/96 REQUEST CHANGES、Fable 96/97 APPROVE）交叉指出 useAutoUpdate 未壓制 vite-plugin-pwa 內建 controlling reload 形成雙重 reload 路徑，另有練習統計 200 筆截斷未標註、深度圖探針無鍵盤等效與 null 盈虧誤著色
+- 解法：useRegisterSW 補 onNeedReload 空回呼收斂單一 reload 權責（mock 同步補型別＋壓制測試）、練習統計達上限顯示「近 200 筆」副標且 null 盈虧改中性色、深度圖補 role/tabIndex/方向鍵步進與 Escape 清除（含測試），371 unit 全綠
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave2-depth-indicators
+- 原因：R3 Wave-2 要求圖表頁提供市場深度圖與 MA/EMA 指標疊加，需在 orderbook tick 風暴下控制重繪並沿用既有 chart 生命週期（Grok 審查後追認補記）
+- 解法：depth/indicators 純函式 SSOT、SVG 自繪深度圖 300ms 取樣節流、CandleChart LineSeries 隨開關補掛/移除與增量 update、偏好 persist 進 marketPrefsStore v2，360 unit＋28 e2e 綠
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave1-pwa-autoupdate
+- 原因：R3 Wave-1 要求已安裝 PWA 舊用戶免點按自動收到新版，且不得改 autoUpdate 重蹈版本撕裂前科（Grok 審查後追認補記）
+- 解法：維持 prompt 型 SW，useAutoUpdate 偵測 needRefresh 自動 SKIP_WAITING→controllerchange 單次 reload（hadController/reloading 防重入），60 分週期＋回前景節流檢查更新，7 案單元測試與真瀏覽器雙版本切版實測通過
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-desktop-dual-column
+- 原因：R3 Wave-3 要求 ≥1024px 桌機體驗：圖表頁右欄常駐市場面板、交易頁寬版留白優化、行情頁 max-w 容器，且不得改動行動版
+- 解法：AppShell lg:max-w-6xl 放寬外殼，圖表頁以 lg:grid 雙欄常駐 MarketPanels（單一掛載、行動版原樣堆疊），交易/行情/資產/設定頁補 lg max-w 容器，桌機與行動雙視口真瀏覽器截圖驗證 console error=0
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-practice-stats
+- 原因：R3 Wave-3 要求資產頁提供練習統計儀表板，需從平倉紀錄推導勝率與損益總覽並涵蓋強平/部分平倉樣本
+- 解法：新增 computePracticeStats 純函式（總交易數/勝率/總損益/總手續費/最大盈虧/獲利因子）與 closeSlice 實產樣本測試，資產頁新增六卡統計 section 與空狀態
 
 - 日期：2026-07-17
 - ID：neutral-workspace-deps-minor-refresh

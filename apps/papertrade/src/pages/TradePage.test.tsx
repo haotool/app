@@ -70,6 +70,20 @@ describe('TradePage', () => {
     ).toBeInTheDocument();
   });
 
+  it('syncs the symbol to the query string when switching pairs', async () => {
+    const user = userEvent.setup();
+    const router = createMemoryRouter(routes, { initialEntries: ['/trade?symbol=BTCUSDT'] });
+    render(<RouterProvider router={router} />);
+
+    await user.click(screen.getByRole('button', { name: /切換交易對，目前為 BTC\/USDT/ }));
+    await user.click(screen.getByRole('button', { name: /^ETH/ }));
+
+    expect(router.state.location.search).toBe('?symbol=ETHUSDT');
+    expect(
+      screen.getByRole('button', { name: /切換交易對，目前為 ETH\/USDT/ }),
+    ).toBeInTheDocument();
+  });
+
   it('shows the funding rate with direction color and a countdown', () => {
     renderTrade('/trade?symbol=BTCUSDT');
     expect(screen.getByText('資金費率')).toBeInTheDocument();

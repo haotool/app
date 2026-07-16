@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import clsx from 'clsx';
-import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Info, TrendingDown, TrendingUp } from 'lucide-react';
 import { useTradeStore, type ToastItem } from '../stores/tradeStore';
 import { TOAST_DURATION_MS } from '../config/trading';
 
@@ -8,12 +8,14 @@ const TONE_STYLES = {
   long: 'border-long/40 text-long',
   short: 'border-short/40 text-short',
   warning: 'border-warning text-warning',
+  info: 'border-primary/40 text-primary',
 } as const;
 
 const TONE_ICONS = {
   long: TrendingUp,
   short: TrendingDown,
   warning: AlertTriangle,
+  info: Info,
 } as const;
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {

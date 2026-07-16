@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import clsx from 'clsx';
-import { Search, X } from 'lucide-react';
+import { Search, SearchX, X } from 'lucide-react';
 import { BottomSheet } from '../BottomSheet';
 import { CoinBadge } from '../CoinBadge';
+import { EmptyState } from '../EmptyState';
 import { SYMBOL_META, type MarketSymbol } from '../../config/market';
 import { useMarketStore } from '../../stores/marketStore';
 import { formatPrice, formatSignedPercent } from '../../lib/format';
@@ -105,7 +106,12 @@ export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSel
         )}
       </label>
       {visibleSymbols.length === 0 ? (
-        <p className="py-8 text-center text-label text-text-3">找不到符合的交易對</p>
+        <EmptyState
+          size="sm"
+          icon={SearchX}
+          title="找不到符合的交易對"
+          description="試試其他關鍵字或幣種代號。"
+        />
       ) : (
         <ul className="flex flex-col">
           {visibleSymbols.map((symbol) => (
