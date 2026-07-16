@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import clsx from 'clsx';
+import { ChevronDown } from 'lucide-react';
 import {
   DEFAULT_TIMEFRAME,
   isMarketSymbol,
@@ -17,8 +18,15 @@ import { FundingCountdown } from '../components/FundingCountdown';
 import { OrderBookPanel } from '../components/OrderBookPanel';
 import { RecentTrades } from '../components/RecentTrades';
 import { PriceFlash } from '../components/PriceFlash';
+import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
 
-function SymbolHeader({ symbol }: { symbol: MarketSymbol }) {
+function SymbolHeader({
+  symbol,
+  onOpenPicker,
+}: {
+  symbol: MarketSymbol;
+  onOpenPicker: () => void;
+}) {
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const meta = SYMBOL_META[symbol];
 
@@ -26,10 +34,18 @@ function SymbolHeader({ symbol }: { symbol: MarketSymbol }) {
     <header className="px-4 pb-3 pt-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-body font-semibold">
-            {meta.base}
-            <span className="text-text-3">/USDT 永續</span>
-          </h1>
+          <button
+            type="button"
+            onClick={onOpenPicker}
+            aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
+            className="-ml-1 flex min-h-11 min-w-11 items-center gap-1 rounded-control px-1 text-left active:bg-surface-2"
+          >
+            <h1 className="text-body font-semibold">
+              {meta.base}
+              <span className="text-text-3">/USDT 永續</span>
+            </h1>
+            <ChevronDown size={16} className="text-text-3" aria-hidden />
+          </button>
           {ticker ? (
             <PriceFlash
               direction={ticker.direction}
@@ -173,12 +189,19 @@ function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
   );
 }
 
-function ChartView({ symbol }: { symbol: MarketSymbol }) {
-  const [timeframe, setTimeframe] = useState<TimeframeId>(DEFAULT_TIMEFRAME);
+interface ChartViewProps {
+  symbol: MarketSymbol;
+  timeframe: TimeframeId;
+  onTimeframeChange: (timeframe: TimeframeId) => void;
+}
+
+function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
+  const navigate = useNavigate();
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className="flex flex-col pb-[4.5rem]">
-      <SymbolHeader symbol={symbol} />
+      <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
 
       <div role="tablist" aria-label="時間框架" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
         {TIMEFRAMES.map(({ id, label }) => (
@@ -187,7 +210,7 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
             type="button"
             role="tab"
             aria-selected={timeframe === id}
-            onClick={() => setTimeframe(id)}
+            onClick={() => onTimeframeChange(id)}
             className={clsx(
               'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
               timeframe === id
@@ -220,14 +243,32 @@ function ChartView({ symbol }: { symbol: MarketSymbol }) {
           賣空
         </Link>
       </div>
+
+      {pickerOpen && (
+        <PairSelectorSheet
+          open
+          selected={symbol}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(next) => navigate(`/chart/${next}`)}
+        />
+      )}
     </section>
   );
 }
 
 export function ChartPage() {
   const { symbol } = useParams<{ symbol: string }>();
+  // 時間框架掛在路由層級：symbol 快切（key remount）後仍保留當前 TF（設計 SSOT）。
+  const [timeframe, setTimeframe] = useState<TimeframeId>(DEFAULT_TIMEFRAME);
   if (symbol === undefined || !isMarketSymbol(symbol)) {
     return <Navigate to="/" replace />;
   }
-  return <ChartView key={symbol} symbol={symbol} />;
+  return (
+    <ChartView
+      key={symbol}
+      symbol={symbol}
+      timeframe={timeframe}
+      onTimeframeChange={setTimeframe}
+    />
+  );
 }

@@ -182,6 +182,35 @@ describe('ChartPage', () => {
     expect(screen.getByLabelText('最新成交載入中')).toBeInTheDocument();
   });
 
+  it('switches symbol via the pair sheet and keeps the current timeframe', async () => {
+    const user = userEvent.setup();
+    useMarketStore.getState().setTicker(btcTicker);
+    renderChart('/chart/BTCUSDT');
+
+    await user.click(await screen.findByRole('tab', { name: '5m' }));
+    expect(useKlinesMock).toHaveBeenLastCalledWith('BTCUSDT', '5');
+
+    await user.click(screen.getByRole('button', { name: /切換交易對，目前為 BTC\/USDT/ }));
+    const sheet = screen.getByRole('dialog', { name: '選擇交易對' });
+    await user.click(within(sheet).getByRole('button', { name: /ETH\/USDT/ }));
+
+    expect(await screen.findByRole('heading', { name: /ETH/ })).toBeInTheDocument();
+    expect(useKlinesMock).toHaveBeenLastCalledWith('ETHUSDT', '5');
+    expect(screen.getByRole('tab', { name: '5m' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('filters the pair sheet list with the search box', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    await user.click(await screen.findByRole('button', { name: /切換交易對/ }));
+    const sheet = screen.getByRole('dialog', { name: '選擇交易對' });
+    await user.type(within(sheet).getByRole('searchbox', { name: '搜尋交易對' }), 'sol');
+
+    expect(within(sheet).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(sheet).getByRole('button', { name: /SOL\/USDT/ })).toBeInTheDocument();
+  });
+
   it('shows error state with a retry button when history fails', async () => {
     const user = userEvent.setup();
     useKlinesMock.mockReturnValue({

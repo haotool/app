@@ -16,6 +16,31 @@ async function openMarketLong(page: Page, usdt: string): Promise<void> {
   await expect(page.getByText('目前持倉 (1)')).toBeVisible();
 }
 
+test.describe('圖表 symbol 快切', () => {
+  test('從 header 開啟快切 sheet 搜尋切換後保留當前時間框架', async ({ page }) => {
+    await mockBybit(page);
+    await page.goto('/papertrade/chart/BTCUSDT');
+    await acknowledgeDisclaimer(page);
+    await expect(page.getByRole('heading', { name: /BTC/ })).toBeVisible();
+
+    const tf5m = page.getByRole('tab', { name: '5m', exact: true });
+    await tf5m.click();
+    await expect(tf5m).toHaveAttribute('aria-selected', 'true');
+
+    await page.getByRole('button', { name: /切換交易對，目前為 BTC\/USDT/ }).click();
+    const sheet = page.getByRole('dialog', { name: '選擇交易對' });
+    await expect(sheet).toBeVisible();
+
+    await sheet.getByRole('searchbox', { name: '搜尋交易對' }).fill('eth');
+    await sheet.getByRole('button', { name: /ETH\/USDT/ }).click();
+
+    await expect(page).toHaveURL(/\/papertrade\/chart\/ETHUSDT$/);
+    await expect(page.getByRole('heading', { name: /ETH/ })).toBeVisible();
+    await expect(page.getByText('3,000.0').first()).toBeVisible();
+    await expect(tf5m).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 test.describe('PaperTrade trading journeys', () => {
   test('resting limit order fills when the mark crosses the limit price', async ({ page }) => {
     const market = await enterTradePage(page);
