@@ -176,4 +176,36 @@ describe('NavOverlay - modal a11y', () => {
     expect(closeButtons).toHaveLength(2);
     expect(new Set(names).size).toBe(2);
   });
+
+  it('未填車號（sentinel）頂部車牌 pill 顯示待填文案而非裸露 N/A（formatPlate SSOT）', () => {
+    vi.mocked(useNavigation).mockReturnValue(
+      navState as unknown as ReturnType<typeof useNavigation>,
+    );
+    render(
+      <I18nextProvider i18n={i18n}>
+        <NavOverlay
+          record={{ ...record, plateNumber: 'N/A' }}
+          theme={theme}
+          onClose={vi.fn()}
+          cacheDurationDays={7}
+        />
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByText('未填車號')).toBeInTheDocument();
+    expect(screen.queryByText(/N\/A/)).toBeNull();
+  });
+
+  it('刻度環旋轉時方位文字以自身錨點反向抵銷保持直立（issue #733）', () => {
+    renderOverlay(vi.fn(), { trueAnimHeading: 90 });
+
+    const cardinalTexts = Array.from(document.querySelectorAll('text'));
+    expect(cardinalTexts).toHaveLength(4);
+    for (const textEl of cardinalTexts) {
+      const x = textEl.getAttribute('x');
+      const y = textEl.getAttribute('y');
+      // 回轉 +heading（容器 -heading 的相反數），旋轉中心即文字錨點。
+      expect(textEl.getAttribute('transform')).toBe(`rotate(90 ${x} ${y})`);
+    }
+  });
 });

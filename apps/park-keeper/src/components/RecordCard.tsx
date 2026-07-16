@@ -15,6 +15,7 @@ import { Car, Trash2, MapPin, Clock, Navigation, Loader2, Edit2 } from 'lucide-r
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
+import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -213,9 +214,11 @@ export default function RecordCard({
                   onClick={handleEditStart}
                   aria-label={t('record.edit_plate', { plate: displayPlate })}
                 >
-                  {/* N/A 為未填車號 sentinel：以待填文案呈現，避免像資料錯誤。 */}
-                  {displayPlate === 'N/A' ? (
-                    <span className="opacity-45">{t('record.plate_unset')}</span>
+                  {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，避免裸露佔位值像資料錯誤。 */}
+                  {isPlateUnset(displayPlate) ? (
+                    <span className="opacity-45">
+                      {formatPlateLabel(displayPlate, t('record.plate_unset'))}
+                    </span>
                   ) : (
                     displayPlate
                   )}

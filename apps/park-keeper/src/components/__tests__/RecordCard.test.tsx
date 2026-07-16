@@ -33,6 +33,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, opts?: Record<string, string>) => {
       const map: Record<string, string> = {
         'record.plate': '車牌號碼',
+        'record.plate_unset': '未填車號',
         'record.yesterday': '昨天',
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
@@ -236,6 +237,13 @@ describe('RecordCard', () => {
 
     expect(screen.getByRole('button', { name: `編輯車牌 ${record.plateNumber}` })).toBeVisible();
     expect(errorSpy).toHaveBeenCalledWith('Failed to update plate number:', expect.any(Error));
+  });
+
+  it('未填車號（sentinel）應顯示待填文案而非裸露 N/A（formatPlate SSOT）', () => {
+    renderRecordCard({ plateNumber: 'N/A' });
+
+    expect(screen.getByText('未填車號')).toBeInTheDocument();
+    expect(screen.queryByText(/N\/A/)).toBeNull();
   });
 
   it('應該支援刪除與導航操作，並顯示備註', () => {

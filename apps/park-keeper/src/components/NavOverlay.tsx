@@ -28,6 +28,7 @@ import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavig
 import type { DirectionIconType } from '@app/park-keeper/hooks/useNavigation';
 import {
   cardinalLabelPosition,
+  cardinalLabelUprightTransform,
   isCardinalIndex,
   isMajorIndex,
   tickLength,
@@ -52,6 +53,7 @@ import {
 import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { useScreenWakeLock } from '@app/park-keeper/hooks/useScreenWakeLock';
 import { COMPASS_THEME_STYLES } from '@app/park-keeper/config/compassThemeStyles';
+import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -291,9 +293,11 @@ export default function NavOverlay({
               className="text-2xl font-black tracking-tighter"
               style={{ color: theme.colors.text }}
             >
-              {/* N/A 為未填車號 sentinel：與 RecordCard/hero 卡一致顯示待填文案。 */}
-              {record.plateNumber === 'N/A' ? (
-                <span className="opacity-50 text-lg">{t('record.plate_unset')}</span>
+              {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，與 RecordCard/hero 卡一致。 */}
+              {isPlateUnset(record.plateNumber) ? (
+                <span className="opacity-50 text-lg">
+                  {formatPlateLabel(record.plateNumber, t('record.plate_unset'))}
+                </span>
               ) : (
                 record.plateNumber
               )}
@@ -400,7 +404,8 @@ export default function NavOverlay({
                   </g>
                 );
               })}
-              {/* 方位角ラベル — 絕對座標渲染，不使用反向旋轉，排除定位偏移 bug */}
+              {/* 方位角ラベル — 絕對座標渲染＋以自身錨點反向抵銷容器旋轉，
+                  轉身時 N/E/S/W 保持直立可辨（issue #733；旋轉中心即文字錨點，無定位偏移）。 */}
               {[0, 9, 18, 27].map((i) => {
                 if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
                 const { x, y } = cardinalLabelPosition(i);
@@ -410,6 +415,7 @@ export default function NavOverlay({
                     key={`cardinal-${i}`}
                     x={x}
                     y={y}
+                    transform={cardinalLabelUprightTransform(i, trueAnimHeading)}
                     textAnchor="middle"
                     dominantBaseline="central"
                     fill={isNorth ? NORTH_COLOR : theme.colors.text}

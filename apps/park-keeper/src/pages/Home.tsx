@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
+import { PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
 import { pendingCtaPhoto } from '@app/park-keeper/services/pendingCtaPhoto';
 import { useThemeTokens } from '@app/park-keeper/hooks/useThemeTokens';
@@ -210,7 +211,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     async (data: Partial<ParkingRecord>) => {
       const newRecord: ParkingRecord = {
         id: crypto.randomUUID(),
-        plateNumber: data.plateNumber ?? 'N/A',
+        plateNumber: data.plateNumber ?? PLATE_UNSET_SENTINEL,
         floor: data.floor ?? '?',
         notes: data.notes ?? '',
         timestamp: Date.now(),
