@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from 'react';
-import { useStore, migratePersistedState, type ExpenseRecord } from '../useStore';
+import {
+  useStore,
+  migratePersistedState,
+  mergePersistedState,
+  type ExpenseRecord,
+} from '../useStore';
 
 /** 每次測試前重置 store 到乾淨初始狀態 */
 function resetStore() {
@@ -364,6 +369,63 @@ describe('useStore', () => {
     it('版本已為 1 時原樣通過', () => {
       const migrated = migratePersistedState({ expenses: [legacyExpense] }, 1);
       expect(migrated.expenses[0]?.currency).toBeUndefined();
+    });
+
+    it('不改寫輸入物件（純函式）', () => {
+      const persisted = { expenses: [legacyExpense] };
+      migratePersistedState(persisted, 0);
+      expect(persisted.expenses[0]).toBe(legacyExpense);
+      expect(persisted.expenses[0]?.currency).toBeUndefined();
+    });
+  });
+
+  // ── 無 version 欄位的 v0 blob（zustand 跳過 migrate，靠 merge 物化）───
+  describe('無 version blob rehydrate（deep-qa B 場景）', () => {
+    const legacyExpense = {
+      id: 'legacy-1',
+      tripId: 'default-trip',
+      type: 'split_evenly',
+      participantIds: ['me'],
+      paidBy: 'me',
+      totalAmount: 900,
+      perPersonAmounts: { me: 900 },
+      note: 'Legacy Dinner',
+      createdAt: 1,
+    } as ExpenseRecord;
+
+    it('mergePersistedState 物化缺 currency 記錄且不動已有快照', () => {
+      const merged = mergePersistedState(
+        { expenses: [legacyExpense, { ...legacyExpense, id: 'krw', currency: 'KRW' }] },
+        useStore.getState(),
+      );
+      expect(merged.expenses[0]?.currency).toBe('TWD');
+      expect(merged.expenses[0]?.exchangeRateKrwPerTwd).toBeNull();
+      expect(merged.expenses[1]?.currency).toBe('KRW');
+    });
+
+    it('注入無 version blob → rehydrate 物化成功，後續寫回蓋章 version 1', async () => {
+      localStorage.setItem(
+        'split-meow-storage',
+        JSON.stringify({ state: { expenses: [legacyExpense] } }),
+      );
+
+      await useStore.persist.rehydrate();
+
+      const exp = useStore.getState().expenses[0];
+      expect(exp?.currency).toBe('TWD');
+      expect(exp?.exchangeRateKrwPerTwd).toBeNull();
+      expect(exp?.note).toBe('Legacy Dinner');
+
+      // 任一 set 觸發 persist 寫回：version 蓋章為 1，且寫回內容已物化
+      act(() => useStore.getState().setActiveTab('history'));
+      const blob = JSON.parse(localStorage.getItem('split-meow-storage') ?? '{}') as {
+        version: number;
+        state: { expenses: ExpenseRecord[] };
+      };
+      expect(blob.version).toBe(1);
+      expect(blob.state.expenses[0]?.currency).toBe('TWD');
+
+      localStorage.removeItem('split-meow-storage');
     });
   });
 

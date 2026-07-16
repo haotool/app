@@ -139,19 +139,28 @@ const generateRandomName = (): string => {
 
 export const STORAGE_VERSION = 1;
 
-// persist v1：物化 legacy 記錄的隱式 TWD fallback，讓資料自帶幣別（獨立導出供測試驗證）。
+// 物化單筆 legacy 記錄的隱式 TWD fallback（純函式，不改寫輸入）。
+function materializeExpenseCurrency(e: ExpenseRecord): ExpenseRecord {
+  return e.currency
+    ? e
+    : { ...e, currency: 'TWD' as const, exchangeRateKrwPerTwd: e.exchangeRateKrwPerTwd ?? null };
+}
+
+// persist v1：物化 legacy 記錄，讓資料自帶幣別（不可變回傳，獨立導出供測試驗證）。
 export function migratePersistedState(persisted: unknown, version: number): AppState {
   const state = persisted as AppState;
   if (version < 1 && Array.isArray(state.expenses)) {
-    state.expenses = state.expenses.map((e) =>
-      e.currency
-        ? e
-        : {
-            ...e,
-            currency: 'TWD' as const,
-            exchangeRateKrwPerTwd: e.exchangeRateKrwPerTwd ?? null,
-          },
-    );
+    return { ...state, expenses: state.expenses.map(materializeExpenseCurrency) };
+  }
+  return state;
+}
+
+// zustand persist 僅在 blob 帶「數字 version 且不相符」時呼叫 migrate；
+// 真正無 version 欄位的 v0 blob 會跳過 migrate，故於每次 rehydrate 的 merge 物化（冪等）。
+export function mergePersistedState(persisted: unknown, current: AppState): AppState {
+  const state = { ...current, ...(persisted as Partial<AppState>) };
+  if (Array.isArray(state.expenses)) {
+    state.expenses = state.expenses.map(materializeExpenseCurrency);
   }
   return state;
 }
@@ -370,6 +379,7 @@ export const useStore = create<AppState>()(
       name: 'split-meow-storage',
       version: STORAGE_VERSION,
       migrate: migratePersistedState,
+      merge: mergePersistedState,
     },
   ),
 );
