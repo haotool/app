@@ -1,7 +1,11 @@
-import { useLayoutEffect, useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
+
+// 下拉選單尺寸 SSOT：寬度上限 16rem、視窗左右各保留 1rem 安全邊界。
+const MENU_MAX_WIDTH_PX = 256;
+const EDGE_GUTTER_PX = 16;
 
 export function TripSelector() {
   const { t } = useTranslation();
@@ -9,20 +13,20 @@ export function TripSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newTripName, setNewTripName] = useState('');
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuLayout, setMenuLayout] = useState({ left: 0, width: MENU_MAX_WIDTH_PX });
 
-  // 下拉錨定隨可視邊界收斂：左右各保留 1rem 安全邊界，窄屏（Fold 344）不出界。
-  // 首次繪製前量測寫入 margin-left（避免與 enter 動畫的 transform 衝突；關閉即卸載，無需重置）。
-  useLayoutEffect(() => {
-    if (!isOpen) return;
-    const menu = menuRef.current;
-    if (!menu) return;
-    const anchorLeft = menu.getBoundingClientRect().left;
-    const menuW = menu.offsetWidth;
+  // 開啟當下以錨點位置計算選單版位（宣告式 state 驅動）：窄屏（Fold 344）不出界。
+  const openMenu = (anchor: HTMLElement) => {
+    const anchorLeft = anchor.getBoundingClientRect().left;
     const vw = window.innerWidth;
-    const desired = Math.min(Math.max(anchorLeft, 16), Math.max(vw - 16 - menuW, 16));
-    menu.style.marginLeft = `${desired - anchorLeft}px`;
-  }, [isOpen]);
+    const width = Math.min(MENU_MAX_WIDTH_PX, vw - EDGE_GUTTER_PX * 2);
+    const desiredLeft = Math.min(
+      Math.max(anchorLeft, EDGE_GUTTER_PX),
+      Math.max(vw - EDGE_GUTTER_PX - width, EDGE_GUTTER_PX),
+    );
+    setMenuLayout({ left: desiredLeft - anchorLeft, width });
+    setIsOpen(true);
+  };
 
   const currentTrip = trips.find((trip) => trip.id === currentTripId);
 
@@ -39,7 +43,7 @@ export function TripSelector() {
   return (
     <div className="relative w-full">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => (isOpen ? setIsOpen(false) : openMenu(e.currentTarget))}
         data-testid="trip-selector-button"
         title={currentTrip?.name}
         aria-expanded={isOpen}
@@ -66,9 +70,9 @@ export function TripSelector() {
             }}
           />
           <div
-            ref={menuRef}
             data-testid="trip-selector-menu"
-            className="absolute top-full mt-2 left-0 w-[min(16rem,calc(100vw-2rem))] bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+            style={{ left: menuLayout.left, width: menuLayout.width }}
+            className="absolute top-full mt-2 bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
           >
             <div className="max-h-60 overflow-y-auto p-2 space-y-1">
               {trips.map((trip) => (
