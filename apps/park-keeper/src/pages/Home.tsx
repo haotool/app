@@ -100,6 +100,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
   const [records, setRecords] = useState<ParkingRecord[]>([]);
   const [currentTab, setCurrentTab] = useState<'list' | 'settings'>(initialTab);
   const [showQuickEntry, setShowQuickEntry] = useState(false);
+  const [ctaPhotoFile, setCtaPhotoFile] = useState<File | null>(null);
   const [navRecord, setNavRecord] = useState<ParkingRecord | null>(null);
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<string | null>(null);
@@ -349,19 +350,40 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         <span>{t('error.storage_unavailable')}</span>
                       </div>
                     )}
-                    {/* 首屏快速記錄 CTA：iOS 捷徑 webapp:// 只開首頁，此按鈕是 3-taps 預算第一步。 */}
+                    {/* 首屏拍照 hero：iOS 捷徑 webapp:// 只開首頁，label 直包 capture input，
+                        一 tap 即開系統相機；拍照(1)→樓層(=儲存)(2) 共 2 taps。 */}
                     <div className="space-y-1.5">
-                      <Link
-                        to="/add"
-                        className="flex items-center justify-center gap-3 w-full h-20 rounded-3xl text-white text-lg font-black tracking-wide active:scale-[0.98] transition-transform"
+                      <label
+                        data-testid="quick-record-cta"
+                        className="flex flex-col items-center justify-center gap-3 w-full min-h-[30dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
                         style={{
                           backgroundColor: theme.colors.primary,
                           boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
                         }}
                       >
-                        <Camera size={26} strokeWidth={2.5} />
-                        {t('home.quick_record_cta')}
-                      </Link>
+                        <Camera size={44} strokeWidth={2.25} />
+                        <span className="text-lg font-black tracking-wide">
+                          {t('home.quick_record_cta')}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                          {t('record.photo_tap')}
+                        </span>
+                        <input
+                          data-testid="quick-record-cta-input"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setCtaPhotoFile(file);
+                              setShowQuickEntry(true);
+                            }
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                       <div className="text-center">
                         <Link
                           to="/guide"
@@ -415,8 +437,13 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           theme={theme}
           onSave={handleSave}
           isVisible={showQuickEntry}
-          onClose={() => setShowQuickEntry(false)}
+          onClose={() => {
+            setShowQuickEntry(false);
+            // 清除 CTA 已拍照片，避免下次開啟面板誤帶舊照。
+            setCtaPhotoFile(null);
+          }}
           cacheDurationDays={settings.cacheDurationDays}
+          initialPhotoFile={ctaPhotoFile}
         />
 
         {/* NavOverlay */}

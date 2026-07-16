@@ -20,6 +20,8 @@ interface QuickEntryProps {
   cacheDurationDays?: number;
   // fullscreen：/add 快速記錄頁全螢幕模式；sheet（預設）：既有 bottom sheet 行為不變。
   mode?: 'sheet' | 'fullscreen';
+  // 首屏拍照 CTA 已取得的照片：開啟面板時直接帶入，走同一條壓縮管線。
+  initialPhotoFile?: File | null;
 }
 
 const panelVariants: Variants = {
@@ -66,6 +68,7 @@ export default function QuickEntry({
   onClose,
   cacheDurationDays,
   mode = 'sheet',
+  initialPhotoFile = null,
 }: QuickEntryProps) {
   const { t } = useTranslation();
   const isFullscreen = mode === 'fullscreen';
@@ -128,12 +131,29 @@ export default function QuickEntry({
     );
   }, [stopTracking]);
 
+  const processPhotoFile = useCallback(async (file: File) => {
+    setIsProcessing(true);
+    setPhotoError(false);
+    try {
+      const compressed = await compressImage(file, 1024, 0.7);
+      setPhoto(compressed);
+      if (navigator.vibrate) navigator.vibrate(50);
+    } catch {
+      setPhotoError(true);
+      if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isVisible) {
       startPrecisionTracking();
       // 開啟面板時以上次已儲存的記憶預填，覆蓋關閉前未儲存的暫時輸入。
       setPlate(plateMemory.get() ?? '');
       setSelectedFloor(plateMemory.getFloor() ?? '');
+      // 首屏 CTA 已拍好的照片直接帶入（宿主於關閉時清除，避免重開誤帶舊照）。
+      if (initialPhotoFile) void processPhotoFile(initialPhotoFile);
     } else {
       stopTracking();
       setNotes('');
@@ -145,24 +165,13 @@ export default function QuickEntry({
       setLocationDenied(false);
     }
     return () => stopTracking();
-  }, [isVisible, startPrecisionTracking, stopTracking]);
+  }, [isVisible, startPrecisionTracking, stopTracking, initialPhotoFile, processPhotoFile]);
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsProcessing(true);
-      setPhotoError(false);
-      try {
-        const compressed = await compressImage(file, 1024, 0.7);
-        setPhoto(compressed);
-        vibrate(50);
-      } catch {
-        setPhotoError(true);
-        vibrate([50, 50, 50]);
-      } finally {
-        setIsProcessing(false);
-        e.target.value = '';
-      }
+      await processPhotoFile(file);
+      e.target.value = '';
     }
   };
 
@@ -294,6 +303,7 @@ export default function QuickEntry({
                   {isProcessing ? t('record.processing') : t('record.photo_tap')}
                 </span>
                 <input
+                  data-testid="quick-entry-photo-input"
                   type="file"
                   accept="image/*"
                   capture="environment"
@@ -311,7 +321,10 @@ export default function QuickEntry({
           }`}
         >
           {showLocationDeniedCard ? (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center gap-1.5 px-3 py-2">
+            <div
+              data-testid="location-denied-card"
+              className="w-full h-full flex flex-col items-center justify-center text-center gap-1.5 px-3 py-2"
+            >
               <AlertCircle className="text-red-500 shrink-0" size={16} />
               <span className="text-[9px] font-bold text-red-500 leading-snug">
                 {t('error.location_denied')}

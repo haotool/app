@@ -11,6 +11,11 @@ vi.mock('../MiniMap', () => ({
   default: vi.fn(() => <div data-testid="mini-map">MiniMap</div>),
 }));
 
+// jsdom 無真實 canvas，壓縮管線以 stub 取代（僅驗證帶入流程）。
+vi.mock('@app/park-keeper/services/imageUtils', () => ({
+  compressImage: vi.fn(() => Promise.resolve('data:image/jpeg;base64,stub')),
+}));
+
 // Mock hooks
 vi.mock('@app/park-keeper/hooks/useDeviceOrientation', () => ({
   useDeviceOrientation: vi.fn(() => ({
@@ -504,5 +509,25 @@ describe('QuickEntry - fullscreen 模式', () => {
 
     expect(document.querySelector('[data-testid="quick-entry-handle"]')).toBeInTheDocument();
     expect(document.querySelector('[data-testid="quick-entry-backdrop"]')).toBeInTheDocument();
+  });
+
+  it('initialPhotoFile 於開啟時直接帶入照片預覽（首屏 CTA 拍照直達流程）', async () => {
+    const file = new File(['photo'], 'cta.jpg', { type: 'image/jpeg' });
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry
+          theme={mockTheme}
+          onSave={vi.fn()}
+          isVisible={true}
+          onClose={vi.fn()}
+          initialPhotoFile={file}
+        />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByAltText(i18n.t('record.photo_alt'))).toBeInTheDocument(),
+    );
   });
 });
