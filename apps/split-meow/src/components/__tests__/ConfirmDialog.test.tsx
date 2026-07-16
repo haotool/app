@@ -44,6 +44,12 @@ describe('ConfirmDialog', () => {
     expect(document.activeElement).toBe(confirmBtn);
   });
 
+  it('initialFocus=cancel 時焦點落在取消鍵（破壞性場景）', () => {
+    renderDialog({ initialFocus: 'cancel' });
+    const cancelBtn = screen.getByText(i18n.t('common.cancel')).closest('button');
+    expect(document.activeElement).toBe(cancelBtn);
+  });
+
   it('點擊確認/取消觸發對應 callback', () => {
     const { onConfirm, onCancel } = renderDialog();
     fireEvent.click(screen.getByText(i18n.t('common.confirm')));

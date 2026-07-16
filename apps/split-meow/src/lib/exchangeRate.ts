@@ -33,5 +33,9 @@ export async function fetchMoneyboxRate(): Promise<MoneyboxRate> {
   if (typeof sell !== 'number' || !Number.isFinite(sell) || sell <= 0) {
     throw new Error('TWD sell rate missing or invalid');
   }
+  // timestamp 供 TTL 判斷；缺失或不可解析視為 feed 異常，避免寫入後永遠 stale 造成前景熱迴圈。
+  if (typeof data.timestamp !== 'string' || !Number.isFinite(Date.parse(data.timestamp))) {
+    throw new Error('timestamp missing or invalid');
+  }
   return { krwPerTwd: sell, updatedAt: data.updateTime, updatedAtIso: data.timestamp };
 }

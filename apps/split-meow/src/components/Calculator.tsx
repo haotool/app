@@ -240,6 +240,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
         open={showMixedConfirm}
         title={t('dialog.mixed_title')}
         message={t('history.mixed_currency_confirm')}
+        initialFocus="cancel"
         onConfirm={() => {
           setShowMixedConfirm(false);
           saveExpense();

@@ -333,6 +333,7 @@ export function SettingsTab() {
         open={currencyConfirm !== null}
         title={t('dialog.currency_title')}
         message={currencyConfirm?.message ?? ''}
+        initialFocus="cancel"
         onConfirm={() => {
           if (currencyConfirm) setCurrency(currencyConfirm.code, true);
           setCurrencyConfirm(null);

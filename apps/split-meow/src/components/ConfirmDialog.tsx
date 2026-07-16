@@ -7,6 +7,8 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  /** 破壞性操作（清空 draft、混幣）預設聚焦取消，避免 Enter/誤觸直接確認。 */
+  initialFocus?: 'confirm' | 'cancel';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,19 +20,21 @@ export function ConfirmDialog({
   message,
   confirmLabel,
   cancelLabel,
+  initialFocus = 'confirm',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const messageId = useId();
 
   useEffect(() => {
     if (!open) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    confirmRef.current?.focus();
+    (initialFocus === 'cancel' ? cancelRef : confirmRef).current?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -56,7 +60,7 @@ export function ConfirmDialog({
       document.removeEventListener('keydown', onKeyDown);
       previouslyFocused?.focus();
     };
-  }, [open, onCancel]);
+  }, [open, onCancel, initialFocus]);
 
   if (!open) return null;
 
@@ -85,6 +89,7 @@ export function ConfirmDialog({
         </p>
         <div className="flex gap-3 pt-2">
           <button
+            ref={cancelRef}
             onClick={onCancel}
             className="flex-1 min-h-11 py-3 rounded-2xl bg-surface-container text-on-surface-variant text-sm font-medium transition-colors hover:bg-surface-container-high cursor-pointer"
           >

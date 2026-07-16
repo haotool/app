@@ -61,4 +61,16 @@ describe('fetchMoneyboxRate', () => {
     stubFetch({}, false);
     await expect(fetchMoneyboxRate()).rejects.toThrow('HTTP 500');
   });
+
+  it('timestamp 缺失或不可解析時擲錯（避免永遠 stale 熱迴圈）', async () => {
+    stubFetch({ updateTime: 't', rates: { TWD: { buy: 46, sell: 45, base: 1 } } });
+    await expect(fetchMoneyboxRate()).rejects.toThrow('timestamp missing or invalid');
+
+    stubFetch({
+      timestamp: 'not-a-date',
+      updateTime: 't',
+      rates: { TWD: { buy: 46, sell: 45, base: 1 } },
+    });
+    await expect(fetchMoneyboxRate()).rejects.toThrow('timestamp missing or invalid');
+  });
 });
