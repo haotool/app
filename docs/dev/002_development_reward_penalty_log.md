@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+120
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+120
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：neutral-workspace-deps-minor-refresh
+- 原因：workspace minor/patch 依賴批次更新與 starpuff 死依賴（vitest 環境為 node 卻裝 jsdom）清理
+- 解法：pnpm -r update 收斂 in-range 最新（vite 8.1.5、vitest 4.1.10、vite-plugin-pwa 1.3.0 等），同步回釘 @vitest/coverage-v8 對齊 vitest 版本避免 peer 不相容，回退造成 format drift 的 prettier 3.9.x 與造成 581 條新 lint 錯誤的 eslint-plugin-react-hooks 7.1.x，七道驗證閘（format/lint/typecheck/test/build/starpuff e2e 28 條/PWA dist sanity）全綠
 
 - 日期：2026-07-16
 - ID：reward-park-keeper-uiux-2026h2-epic
