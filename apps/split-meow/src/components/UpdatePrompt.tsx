@@ -13,8 +13,10 @@ function UpdatePromptClient() {
   if (!visible) return null;
 
   return (
+    // 浮層 scale：nav z-50 < sheet z-[60] < dialog z-[70] < 更新橫幅 z-[80]。
+    // 更新橫幅必須永不被蓋（編輯 sheet、確認 dialog 開啟時也要能看到新版提示）。
     <div
-      className="fixed left-1/2 z-[60] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 rounded-3xl border border-outline-variant/30 bg-surface-bright/95 px-4 py-3 shadow-ambient backdrop-blur-xl"
+      className="fixed left-1/2 z-[80] w-[min(560px,calc(100vw-24px))] -translate-x-1/2 rounded-3xl border border-outline-variant/30 bg-surface-bright/95 px-4 py-3 shadow-ambient backdrop-blur-xl"
       style={{ bottom: 'calc(var(--overlay-bottom) + var(--undo-toast-h, 0px))' }}
       role={needRefresh ? 'alert' : 'status'}
       aria-live={needRefresh ? 'assertive' : 'polite'}
