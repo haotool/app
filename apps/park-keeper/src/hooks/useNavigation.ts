@@ -2,9 +2,42 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ParkingRecord } from '@app/park-keeper/types';
 import {
   getCompassHeading,
+  getCompassAccuracy,
   getDeviceTilt,
   isPhoneFlatFromTilt,
+  needsCompassCalibration,
+  smoothHeading,
+  HEADING_FREEZE_DEADBAND_DEG,
 } from '@app/park-keeper/services/deviceOrientation';
+
+// ---------------------------------------------------------------------------
+// Compass permission（iOS 13+ requestPermission 需使用者手勢）
+// ---------------------------------------------------------------------------
+
+/**
+ * 羅盤感測器權限狀態：
+ * - granted：可掛 listener（Android/桌面無 requestPermission 函式時視為 granted）
+ * - prompt：iOS 需使用者手勢觸發授權，UI 應顯示「啟用羅盤」按鈕卡
+ * - denied：被拒（含非手勢環境呼叫被 reject），UI 顯示開啟設定引導與重試
+ */
+export type CompassPermissionState = 'granted' | 'prompt' | 'denied';
+
+interface PermissionRequester {
+  requestPermission?: () => Promise<string>;
+}
+
+function getOrientationPermissionRequester(): (() => Promise<string>) | null {
+  if (typeof DeviceOrientationEvent === 'undefined') return null;
+  const requestPermission = (DeviceOrientationEvent as unknown as PermissionRequester)
+    .requestPermission;
+  return typeof requestPermission === 'function' ? requestPermission : null;
+}
+
+function getMotionPermissionRequester(): (() => Promise<string>) | null {
+  if (typeof DeviceMotionEvent === 'undefined') return null;
+  const requestPermission = (DeviceMotionEvent as unknown as PermissionRequester).requestPermission;
+  return typeof requestPermission === 'function' ? requestPermission : null;
+}
 
 // ---------------------------------------------------------------------------
 // Direction utilities
@@ -65,17 +98,6 @@ export const estimateMagneticDeclination = (lat: number, lng: number) => {
   return baseDec + latCorr + lngCorr;
 };
 
-/**
- * Exponential Moving Average low-pass filter for heading smoothing.
- * Handles circular wraparound (0/360 boundary) correctly.
- */
-function smoothHeading(prev: number, raw: number, alpha = 0.3): number {
-  let diff = raw - prev;
-  if (diff > 180) diff -= 360;
-  else if (diff < -180) diff += 360;
-  return (((prev + alpha * diff) % 360) + 360) % 360;
-}
-
 // ---------------------------------------------------------------------------
 // 導航閾值常數（SSOT：所有閾值在此定義並 export，外部可直接引用不重複硬編碼）
 // ---------------------------------------------------------------------------
@@ -111,6 +133,8 @@ export function useNavigation(record: ParkingRecord) {
   const prevHeadingRef = useRef(0);
   const virtualHeadingRef = useRef(0);
   const smoothedHeadingRef = useRef(0);
+  // 靜止凍結錨點：顯示值與平滑值偏差低於死區時不更新，消除感測噪聲微震。
+  const frozenHeadingRef = useRef<number | null>(null);
   const [deviceTilt, setDeviceTilt] = useState(0);
   const [isPhoneFlat, setIsPhoneFlat] = useState(false);
   const isPhoneFlatRef = useRef(false);
@@ -125,6 +149,11 @@ export function useNavigation(record: ParkingRecord) {
   const isIndoorRef = useRef(false);
   const [arrivedState, setArrivedState] = useState(false);
   const [magneticDeclination, setMagneticDeclination] = useState(0);
+  // iOS 無手勢呼叫 requestPermission 必被拒；初始為 prompt，由 UI 手勢觸發授權。
+  const [permissionState, setPermissionState] = useState<CompassPermissionState>(() =>
+    getOrientationPermissionRequester() ? 'prompt' : 'granted',
+  );
+  const [compassAccuracy, setCompassAccuracy] = useState<number | null>(null);
   const watchId = useRef<number | null>(null);
   const lastStepTime = useRef(0);
 
@@ -143,6 +172,7 @@ export function useNavigation(record: ParkingRecord) {
     }
   }, []);
 
+  // GPS 追蹤：與感測器權限無關，進入導航即開始。
   useEffect(() => {
     if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
 
@@ -182,21 +212,46 @@ export function useNavigation(record: ParkingRecord) {
       );
     }
 
+    return () => {
+      if (watchId.current && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+    };
+  }, [record]);
+
+  // 感測器 listener：僅在 granted 後掛載（iOS 授權前事件不觸發，Android 直接 granted）。
+  useEffect(() => {
+    if (permissionState !== 'granted') return undefined;
+
     const handleOrientation = (e: DeviceOrientationEvent) => {
       const h = getCompassHeading(e);
       const tilt = getDeviceTilt(e);
+      setCompassAccuracy(getCompassAccuracy(e));
 
       if (h !== null) {
         const smoothed = smoothHeading(smoothedHeadingRef.current, h, HEADING_SMOOTHING_ALPHA);
         smoothedHeadingRef.current = smoothed;
 
-        let diff = smoothed - prevHeadingRef.current;
-        if (diff > 180) diff -= 360;
-        else if (diff < -180) diff += 360;
-        virtualHeadingRef.current += diff;
-        prevHeadingRef.current = smoothed;
-        setHeading(smoothed);
-        setAnimHeading(virtualHeadingRef.current);
+        // 靜止凍結：平滑值與顯示錨點的最短弧差低於死區時，不更新顯示值。
+        const anchor = frozenHeadingRef.current;
+        let frozen = false;
+        if (anchor !== null) {
+          let anchorDiff = smoothed - anchor;
+          if (anchorDiff > 180) anchorDiff -= 360;
+          else if (anchorDiff < -180) anchorDiff += 360;
+          frozen = Math.abs(anchorDiff) < HEADING_FREEZE_DEADBAND_DEG;
+        }
+        if (!frozen) {
+          frozenHeadingRef.current = smoothed;
+
+          let diff = smoothed - prevHeadingRef.current;
+          if (diff > 180) diff -= 360;
+          else if (diff < -180) diff += 360;
+          virtualHeadingRef.current += diff;
+          prevHeadingRef.current = smoothed;
+          setHeading(smoothed);
+          setAnimHeading(virtualHeadingRef.current);
+        }
       }
       if (tilt !== null) {
         setDeviceTilt(tilt);
@@ -208,35 +263,45 @@ export function useNavigation(record: ParkingRecord) {
       }
     };
 
-    const requestPermission = (
-      DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
-    ).requestPermission;
-    if (typeof requestPermission === 'function') {
-      void requestPermission().then((res: string) => {
-        if (res === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation as EventListener);
-          window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener);
-          window.addEventListener('devicemotion', handleMotion);
-        }
-      });
-    } else {
-      window.addEventListener('deviceorientation', handleOrientation as EventListener);
-      window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener);
-      window.addEventListener('devicemotion', handleMotion);
-    }
+    window.addEventListener('deviceorientation', handleOrientation as EventListener);
+    window.addEventListener('deviceorientationabsolute', handleOrientation as EventListener);
+    window.addEventListener('devicemotion', handleMotion);
 
     return () => {
-      if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
       window.removeEventListener('deviceorientation', handleOrientation as EventListener);
       window.removeEventListener('deviceorientationabsolute', handleOrientation as EventListener);
       window.removeEventListener('devicemotion', handleMotion);
     };
-  }, [record, handleMotion]);
+  }, [permissionState, handleMotion]);
+
+  // 必須在使用者手勢（tap handler）同步呼叫堆疊內執行，否則 iOS 直接 reject。
+  const requestCompassPermission = useCallback(async () => {
+    const requestOrientation = getOrientationPermissionRequester();
+    if (!requestOrientation) {
+      setPermissionState('granted');
+      return;
+    }
+    try {
+      const res = await requestOrientation();
+      if (res === 'granted') {
+        // DeviceMotion（步數計數）為 iOS 獨立權限；失敗靜默降級，不阻斷羅盤。
+        const requestMotion = getMotionPermissionRequester();
+        if (requestMotion) await requestMotion().catch(() => undefined);
+        setPermissionState('granted');
+      } else {
+        setPermissionState('denied');
+      }
+    } catch {
+      // NotAllowedError（非手勢呼叫）或使用者拒絕 → 顯示引導卡。
+      setPermissionState('denied');
+    }
+  }, []);
 
   const trueHeading = (heading + magneticDeclination + 360) % 360;
   const relativeRotation = (targetBearing - trueHeading + 360) % 360;
   const trueAnimHeading = animHeading + magneticDeclination;
   const hasValidLocation = userLoc !== null;
+  const needsCalibration = needsCompassCalibration(compassAccuracy);
 
   return {
     userLoc,
@@ -254,5 +319,9 @@ export function useNavigation(record: ParkingRecord) {
     isPhoneFlat,
     arrivedState,
     hasValidLocation,
+    permissionState,
+    requestCompassPermission,
+    compassAccuracy,
+    needsCalibration,
   };
 }
