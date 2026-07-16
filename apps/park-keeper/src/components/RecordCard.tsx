@@ -213,7 +213,12 @@ export default function RecordCard({
                   onClick={handleEditStart}
                   aria-label={t('record.edit_plate', { plate: displayPlate })}
                 >
-                  {displayPlate}
+                  {/* N/A 為未填車號 sentinel：以待填文案呈現，避免像資料錯誤。 */}
+                  {displayPlate === 'N/A' ? (
+                    <span className="opacity-45">{t('record.plate_unset')}</span>
+                  ) : (
+                    displayPlate
+                  )}
                 </button>
                 <button
                   type="button"

@@ -132,4 +132,44 @@ describe('Home', () => {
       expect(screen.getByRole('button', { name: '新增停車紀錄' })).toBeInTheDocument();
     });
   });
+
+  it('空狀態：拍照 CTA hero 置頂，教學入口具 44px 熱區 class', async () => {
+    mockGetRecords.mockResolvedValue([]);
+
+    renderHome();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quick-record-cta')).toBeInTheDocument();
+    });
+    // hero 變體：≥30dvh 置頂
+    expect(screen.getByTestId('quick-record-cta').className).toContain('min-h-[30dvh]');
+    expect(screen.queryByTestId('pickup-hero-card')).toBeNull();
+
+    const guideLink = screen.getByRole('link', { name: '捷徑教學' });
+    expect(guideLink.className).toContain('min-h-11');
+  });
+
+  it('有現役記錄：取車 hero 卡置頂、拍照 CTA 降為 compact 且列於 hero 之後', async () => {
+    const record: ParkingRecord = {
+      id: 'r1',
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      timestamp: Date.now() - 60_000,
+      hasPhoto: false,
+    };
+    mockGetRecords.mockResolvedValue([record]);
+
+    renderHome();
+
+    const hero = await screen.findByTestId('pickup-hero-card');
+    const cta = screen.getByTestId('quick-record-cta');
+
+    // DOM 順序：hero 卡在 CTA 之前（取車任務優先）
+    expect(hero.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // compact 變體：不再佔 30dvh
+    expect(cta.className).not.toContain('min-h-[30dvh]');
+    // 樓層 display 級字存在
+    expect(screen.getAllByText('B2').length).toBeGreaterThan(0);
+  });
 });

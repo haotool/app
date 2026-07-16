@@ -21,12 +21,12 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     await expect(page.getByPlaceholder(TEXT.platePlaceholder)).toBeVisible();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
 
-    // auto-save 後面板收合，列表出現記錄卡（附座標 → 顯示導航地圖按鈕）
-    const navigateButton = page.getByRole('button', { name: /導航/ });
-    await expect(navigateButton).toBeVisible();
+    // auto-save 後面板收合，首屏出現取車 hero 卡（issue #725 IA：tap 直入羅盤導引）
+    const heroCard = page.getByTestId('pickup-hero-card');
+    await expect(heroCard).toBeVisible();
 
-    // 2. 開啟羅盤導航
-    await navigateButton.click();
+    // 2. 由 hero 卡開啟羅盤導航
+    await heroCard.click();
 
     // NavOverlay 開啟：關閉鈕（aria-label）＋資訊卡樓層 display 大字（text-5xl 僅存在於資訊卡）
     const closeButton = page.getByRole('button', { name: '關閉導航' });
