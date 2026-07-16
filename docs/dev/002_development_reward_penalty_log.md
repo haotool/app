@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+120
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-practice-stats
+- 原因：R3 Wave-3 要求資產頁提供練習統計儀表板，需從平倉紀錄推導勝率與損益總覽並涵蓋強平/部分平倉樣本
+- 解法：新增 computePracticeStats 純函式（總交易數/勝率/總損益/總手續費/最大盈虧/獲利因子）與 closeSlice 實產樣本測試，資產頁新增六卡統計 section 與空狀態
 
 - 日期：2026-07-17
 - ID：neutral-workspace-deps-minor-refresh
