@@ -188,7 +188,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 vshort:gap-1">
       {buttons.map((btn, i) => (
         <button
           key={i}
@@ -201,7 +201,8 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
           }}
           aria-label={btn.label === '⌫' ? t('home.backspace') : btn.label}
           className={cn(
-            'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
+            // 極矮視窗鍵高降至 44px（G1 下限），多露一列鍵盤。
+            'h-12 sm:h-13 vshort:h-11 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
             btn.class,
           )}
         >

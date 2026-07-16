@@ -225,7 +225,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         ref={panelRef}
         data-testid="home-panel"
         className={cn(
-          'z-40 max-w-lg rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2',
+          'z-40 max-w-lg rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2 vshort:pt-1',
           isShortViewport
             ? 'relative -mx-4 mt-4'
             : 'home-panel-fixed fixed inset-x-0 mx-auto overflow-y-auto overscroll-contain',
@@ -234,11 +234,11 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
           isShortViewport ? undefined : { bottom: panelBottom, transition: 'bottom 0.15s ease-out' }
         }
       >
-        {/* 裝飾性把手（不可拖動） */}
-        <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2" />
+        {/* 裝飾性把手（不可拖動）；極矮視窗隱藏換取鍵盤可見高度 */}
+        <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2 vshort:hidden" />
 
         {/* Note Input */}
-        <div className="mx-4 mt-1 mb-2">
+        <div className="mx-4 mt-1 mb-2 vshort:mt-0 vshort:mb-1">
           <div className="flex items-center gap-2 bg-surface-container rounded-full px-4 py-2">
             <button
               onClick={() => {
@@ -323,7 +323,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         )}
 
         {/* Mode Toggle */}
-        <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2">
+        <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2 vshort:mb-1">
           <button
             onClick={() => setSplitMode('split_evenly')}
             aria-pressed={splitMode === 'split_evenly'}
@@ -368,7 +368,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
             />
 
-            <div className="px-1 pb-2 touch-manipulation">
+            <div className="px-1 pb-2 vshort:pb-1 touch-manipulation">
               <Calculator onPawParticle={onPawParticle} />
             </div>
           </>
@@ -410,7 +410,7 @@ function DockInfo(props: {
 
   if (activeMembersCount <= 0 || totalAmount <= 0) {
     return (
-      <p className="text-xs text-center text-on-surface-variant mb-2 opacity-60">
+      <p className="text-xs text-center text-on-surface-variant mb-2 vshort:mb-1 opacity-60">
         {t('home.save_hint')}
       </p>
     );

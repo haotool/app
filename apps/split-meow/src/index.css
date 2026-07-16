@@ -152,13 +152,20 @@
   }
 }
 
-/* G11/G15：Home 固定底部面板高度受控（直向 ≤55dvh；短視窗保障可見內容區 ≥40% 視高）。 */
+/* 極矮視窗變體（≤640px 高）：面板次要列壓縮換取多露一列鍵盤；觸控目標維持 ≥44px（G1）。 */
+@custom-variant vshort {
+  @media (max-height: 640px) {
+    @slot;
+  }
+}
+
+/* G11/G15：Home 固定底部面板高度受控（直向 ≤55dvh；極矮視窗面板上方保留 ≥40dvh+8px 可見內容）。 */
 .home-panel-fixed {
   max-height: 55dvh;
 }
 @media (max-height: 640px) {
   .home-panel-fixed {
-    max-height: calc(60dvh - 64px - env(safe-area-inset-top, 0px) - var(--chrome-bottom));
+    max-height: calc(60dvh - 8px - env(safe-area-inset-top, 0px) - var(--chrome-bottom));
   }
 }
 
