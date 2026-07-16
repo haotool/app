@@ -107,8 +107,9 @@ export function createWaveRunner(
   }
 
   function showTutorial(): void {
+    // 教學浮字 y=0.46：與 STAGE 公告（hud y=0.34）垂直錯開，進關 1.4s 內不再同屏重疊。
     tutorialText = scene.add
-      .text(scene.scale.width / 2, scene.scale.height * 0.3, TUTORIAL_TEXT, {
+      .text(scene.scale.width / 2, scene.scale.height * 0.46, TUTORIAL_TEXT, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '24px',
         color: '#3a3a4a',

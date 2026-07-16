@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ASSETS } from './assets';
-import { CODEX_MONSTERS, CODEX_SKILLS } from './codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
   it('收錄全部九種小怪與魔王（v7 drilly/glowy 入鑑）', () => {
@@ -53,10 +53,18 @@ describe('CODEX_SKILLS', () => {
     }
   });
 
-  it('涵蓋核心操作：吸入／星彈五系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
+  it('涵蓋核心操作：吸入／星彈七系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
     const names = new Set(CODEX_SKILLS.map((skill) => skill.nameZh));
-    for (const required of ['吸入', '星彈五系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
+    for (const required of ['吸入', '星彈七系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
       expect(names.has(required)).toBe(true);
+    }
+  });
+
+  it('首遇提示（§46/§47）：七味與六式配方文案齊備非空', () => {
+    expect(Object.keys(FLAVOR_HINTS)).toHaveLength(7);
+    expect(Object.keys(MIX_HINTS)).toHaveLength(6);
+    for (const hint of [...Object.values(FLAVOR_HINTS), ...Object.values(MIX_HINTS)]) {
+      expect(hint.length).toBeGreaterThan(0);
     }
   });
 

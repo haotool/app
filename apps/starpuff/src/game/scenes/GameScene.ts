@@ -21,6 +21,7 @@ import {
   onGameEvent,
   type GameEventName,
 } from '../core/events';
+import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
 import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
@@ -34,7 +35,7 @@ import {
   type EggProgress,
 } from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
-import { crossedGate, type BoundsRect } from '../logic/stageModel';
+import { clampEliteX, crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
 import { createControls, type ControlsSystem } from '../systems/controls';
@@ -81,6 +82,8 @@ const ELITE_ARM_DISTANCE_PX = 480;
 const ELITE_DOOR_TIMEOUT_MS = 60_000;
 const ELITE_DOOR_W = 26;
 const ELITE_DOOR_OFFSET_PX = 300;
+// 房界內縮（§48）：右界留精英半身＋門柱寬，箝制點不與門柱重疊。
+const ELITE_ROOM_INSET_PX = 48;
 // 回復食物（§48 精英掉落）：拾取回復 2 HP（上限依當前 hpCap）。
 const HEAL_FOOD_HP = 2;
 
@@ -91,6 +94,10 @@ interface GameSceneData {
 
 const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
   obj as Phaser.Physics.Arcade.Sprite;
+
+// 星味首遇提示（§46/§47）：seen 僅存 session 記憶體（跨關卡重試保留、重載重置），
+// 不動 save schema。
+const seenFlavorHints = new Set<string>();
 
 export class GameScene extends Phaser.Scene {
   playerHp: number = PLAYER.maxHp;
@@ -486,6 +493,15 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.PLAYER_HEALED, ({ hp }) => {
       this.playerHp = hp;
     });
+    // 星味首遇提示（§46/§47）：新取得的味/配方必經頂槽，首見即 toast 一次。
+    bind(GameEvents.AMMO_CHANGED, ({ magazine }) => {
+      const top = magazine[magazine.length - 1];
+      if (!top || top.gold) return;
+      const key = top.mix ?? top.flavor;
+      if (seenFlavorHints.has(key)) return;
+      seenFlavorHints.add(key);
+      this.flavorToast(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
+    });
     // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
     bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
     // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
@@ -751,6 +767,20 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.updateEliteBar();
+    // 房界箝制（§48 審查修復）：精英不出房追殺——越界回夾反向，60s 開門保險恆有效。
+    if (this.eliteRef?.active) {
+      const body = this.eliteRef.body as Phaser.Physics.Arcade.Body;
+      const clamped = clampEliteX(
+        this.eliteRef.x,
+        body.velocity.x,
+        spec.x - ELITE_DOOR_OFFSET_PX,
+        spec.x + ELITE_DOOR_OFFSET_PX - ELITE_ROOM_INSET_PX,
+      );
+      if (clamped.x !== this.eliteRef.x) {
+        this.eliteRef.setX(clamped.x);
+        body.setVelocityX(clamped.velocityX);
+      }
+    }
     // 擊敗偵測：精英為不可吸個體，active 熄滅即為擊殺。
     if (this.eliteRef && !this.eliteRef.active) this.resolveEliteDefeat();
   }
@@ -944,6 +974,31 @@ export class GameScene extends Phaser.Scene {
         void exhaustive;
       }
     }
+  }
+
+  // 星味首遇 toast（§46/§47）：頂部橫幅下方一行小字，淡入停留後上飄淡出。
+  private flavorToast(message: string): void {
+    const toast = this.add
+      .text(this.scale.width / 2, this.scale.height * 0.22, message, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '19px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#7a5fb8',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(110)
+      .setScrollFactor(0)
+      .setAlpha(0);
+    this.tweens.chain({
+      targets: toast,
+      tweens: [
+        { alpha: 1, duration: 220, ease: 'Quad.easeOut' },
+        { alpha: 0, y: '-=16', duration: 360, delay: 1600, ease: 'Quad.easeIn' },
+      ],
+      onComplete: () => toast.destroy(),
+    });
   }
 
   // 彩蛋演出（§24）：金光 popIn + 專屬 jingle + 浮字（既有 fx 組合）。

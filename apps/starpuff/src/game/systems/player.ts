@@ -70,6 +70,9 @@ type Pose = 'hero-idle' | 'hero-inhale' | 'hero-puffed' | 'hero-hurt';
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
+// 主角描邊（§45）：深紫近黑剪影色與放大比（48px 本體外露約 2.4px 輪廓環）。
+const HERO_OUTLINE_COLOR = 0x2f2a3d;
+const HERO_OUTLINE_SCALE = 1.1;
 const KNOCKBACK_SPEED = 234;
 const KNOCKBACK_LIFT = -286;
 const BLINK_INTERVAL_MS = 100;
@@ -82,11 +85,29 @@ const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
   const tex = (key: string) => (scene.textures.exists(key) ? key : '__WHITE');
+  // 主角輪廓對比（§45 審查修復）：深紫剪影背襯作描邊，淡色底（草原 1.81:1）提升至 ≥3:1。
+  // 先建 image 使其繪於本體之後（免 depth 調度）；FILL tint 整面上色為剪影；
+  // 不用 Phaser 4 Glow filter——實測 SwiftShader/低階 GPU 下每幀模糊採樣致幀率崩跌。
+  const silhouette = scene.add.image(x, y, tex('hero-idle'));
+  silhouette.setDisplaySize(PLAYER_SIZE * HERO_OUTLINE_SCALE, PLAYER_SIZE * HERO_OUTLINE_SCALE);
+  silhouette.setTint(HERO_OUTLINE_COLOR);
+  silhouette.setTintMode(Phaser.TintModes.FILL);
   const sprite = scene.physics.add.sprite(x, y, tex('hero-idle'));
   sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
   sprite.setCollideWorldBounds(true);
   const baseScaleX = sprite.scaleX;
   const baseScaleY = sprite.scaleY;
+
+  // 剪影逐幀鏡像本體（POST_UPDATE，含 bob 偏移後座標）：貼圖/位置/翻面/縮放/透明全同步。
+  const syncSilhouette = () => {
+    if (silhouette.texture.key !== sprite.texture.key) silhouette.setTexture(sprite.texture.key);
+    silhouette.setPosition(sprite.x, sprite.y);
+    silhouette.setRotation(sprite.rotation);
+    silhouette.setFlipX(sprite.flipX);
+    silhouette.setScale(sprite.scaleX * HERO_OUTLINE_SCALE, sprite.scaleY * HERO_OUTLINE_SCALE);
+    silhouette.setAlpha(sprite.alpha);
+    silhouette.setVisible(sprite.visible);
+  };
 
   // 寬容度 hurtbox（§15.1）：視覺 75%W×80%H，貼齊腳底（setSize 以未縮放 frame 像素為單位）。
   {
@@ -152,6 +173,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   };
   scene.events.on(Phaser.Scenes.Events.POST_UPDATE, applyBob);
   scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
+  // 剪影同步掛在 applyBob 之後（同事件註冊序）：取到含 bob 的最終視覺座標。
+  scene.events.on(Phaser.Scenes.Events.POST_UPDATE, syncSilhouette);
 
   const setPose = (next: Pose) => {
     if (pose === next) return;
@@ -646,10 +669,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     destroy() {
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, applyBob);
       scene.events.off(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
+      scene.events.off(Phaser.Scenes.Events.POST_UPDATE, syncSilhouette);
       scene.tweens.killTweensOf(sprite);
       footDust.destroy();
       stormRing.destroy();
       shieldGfx.destroy();
+      silhouette.destroy();
       sprite.destroy();
       zone.destroy();
       stars.destroy(true);
