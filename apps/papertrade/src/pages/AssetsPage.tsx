@@ -9,6 +9,7 @@ import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
 import { resolveDailyEquityBaseline } from '../lib/dailyEquity';
+import { EmptyState } from '../components/EmptyState';
 import { ResetAccountButton } from '../components/ResetAccountButton';
 
 const REASON_LABELS: Record<CloseReason, string> = {
@@ -104,11 +105,12 @@ export function AssetsPage() {
           平倉歷史 <span className="tabular-nums">({account.history.length})</span>
         </h2>
         {account.history.length === 0 ? (
-          <div className="mt-2 flex flex-col items-center gap-2 rounded-card border border-border bg-surface px-4 py-8 text-center">
-            <History size={26} className="text-text-3" aria-hidden />
-            <p className="text-label text-text-2">尚無平倉紀錄</p>
-            <p className="text-caption text-text-3">完成第一筆交易後，紀錄會顯示在這裡。</p>
-          </div>
+          <EmptyState
+            icon={History}
+            title="尚無平倉紀錄"
+            description="完成第一筆交易後，紀錄會顯示在這裡。"
+            className="mt-2"
+          />
         ) : (
           <ul className="mt-2 flex flex-col gap-2">
             {account.history.map((trade) => {
@@ -121,8 +123,11 @@ export function AssetsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="flex items-center gap-1.5 text-label font-medium">
-                      {SYMBOL_META[trade.symbol].base}
-                      <span className="text-text-3">/USDT</span>
+                      {/* pair 名收成單一節點，避免窄幅下「BTC」與「/USDT」被拆行。 */}
+                      <span className="whitespace-nowrap">
+                        {SYMBOL_META[trade.symbol].base}
+                        <span className="text-text-3">/USDT</span>
+                      </span>
                       <span
                         className={clsx(
                           'rounded px-1 py-0.5 text-caption',

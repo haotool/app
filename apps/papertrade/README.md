@@ -28,6 +28,10 @@ pnpm --filter @app/papertrade lint
 
 CSP `connect-src` 白名單（security-headers worker 管理）：`wss://stream.bybit.com`、`https://api.bybit.com`。
 
+## 部署注意事項
+
+- SPA 路由名稱不得與 Vite 靜態產出目錄（`/assets/` 等）同名：nginx 會以目錄優先攔截硬導航回 403（R2 事故：`/assets` 已改名 `/portfolio`）。
+
 ## 架構速覽
 
 - `src/config/`：市場常數與交易參數 SSOT（symbols、時框、費率、槓桿範圍）。

@@ -36,7 +36,8 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 mx-auto flex max-w-lg items-end justify-center">
+    // 桌機 ≥768px 改置中 dialog（設計 SSOT）；動畫切換由 .sheet-in 的 media query 處理。
+    <div className="fixed inset-0 z-40 mx-auto flex max-w-lg items-end justify-center md:items-center md:px-6">
       <button
         type="button"
         aria-label="關閉視窗"
@@ -49,9 +50,9 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="sheet-in relative z-10 max-h-[86dvh] w-full overflow-y-auto rounded-t-[20px] border-t border-border bg-surface pb-[max(1rem,var(--sab))] outline-none"
+        className="sheet-in relative z-10 max-h-[86dvh] w-full overflow-y-auto rounded-t-[20px] border-t border-border bg-surface pb-[max(1rem,var(--sab))] outline-none md:max-h-[80dvh] md:max-w-md md:rounded-[20px] md:border md:pb-4"
       >
-        <div className="flex justify-center pt-2.5" aria-hidden>
+        <div className="flex justify-center pt-2.5 md:hidden" aria-hidden>
           <span className="h-1 w-9 rounded-full bg-border" />
         </div>
         <header className="flex min-h-11 items-center justify-between px-4 pt-1.5">

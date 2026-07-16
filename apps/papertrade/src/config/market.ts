@@ -61,6 +61,8 @@ export const BYBIT_REST_URL = 'https://api.bybit.com';
 export const WS_PING_INTERVAL_MS = 20_000;
 export const WS_RECONNECT_BASE_MS = 1_000;
 export const WS_RECONNECT_MAX_MS = 30_000;
+// tickers 常態每秒多則；靜默超過此值視為半開連線（斷網不觸發 close 事件）。
+export const WS_SILENCE_TIMEOUT_MS = 12_000;
 
 export const KLINE_HISTORY_LIMIT = 1000;
 export const SPARKLINE_POINTS = 24;

@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../routes';
+// 預載 lazy 路由模組：避免高負載並行時 chunk transform 吃掉 findBy timeout。
+import '../pages/ChartPage';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { createInitialAccount, openMarket, placeLimitOrder } from '../engine/engine';
@@ -169,7 +171,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     if (positionId === undefined) throw new Error('no position');
     useTradeStore.getState().closeMarketOrder({ positionId, fraction: 0.5, price: 61000 });
 
-    renderRoute('/assets');
+    renderRoute('/portfolio');
     expectNoViolations();
 
     await user.click(screen.getByRole('button', { name: '重置模擬資金' }));

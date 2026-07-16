@@ -33,7 +33,7 @@ export function PositionCard({ position }: { position: Position }) {
   const base = SYMBOL_META[position.symbol].base;
 
   return (
-    <article className="rounded-card border border-border bg-surface p-3.5">
+    <article className="card-in rounded-card border border-border bg-surface p-3.5">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-body font-semibold">

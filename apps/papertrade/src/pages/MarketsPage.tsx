@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, SearchX, Star, X } from 'lucide-react';
 import clsx from 'clsx';
-import { SYMBOLS, SYMBOL_META, type MarketSymbol } from '../config/market';
+import { SYMBOL_META, type MarketSymbol } from '../config/market';
 import { useMarketStore } from '../stores/marketStore';
+import { useMarketPrefsStore } from '../stores/marketPrefsStore';
 import { fetchSparkline } from '../services/sparkline';
 import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
+import { filterSymbolsByQuery } from '../lib/symbolSearch';
+import { CoinBadge } from '../components/CoinBadge';
+import { EmptyState } from '../components/EmptyState';
 import { PriceFlash } from '../components/PriceFlash';
 import { Sparkline } from '../components/Sparkline';
+
+type MarketListTab = 'all' | 'favorites';
+
+const LIST_TABS: { id: MarketListTab; label: string }[] = [
+  { id: 'all', label: '全部' },
+  { id: 'favorites', label: '自選' },
+];
 
 function useSparklineData(symbol: MarketSymbol): number[] {
   const [data, setData] = useState<number[]>([]);
@@ -29,23 +40,40 @@ function useSparklineData(symbol: MarketSymbol): number[] {
   return data;
 }
 
+function FavoriteToggle({ symbol }: { symbol: MarketSymbol }) {
+  const isFavorite = useMarketPrefsStore((state) => state.favorites.includes(symbol));
+  const toggleFavorite = useMarketPrefsStore((state) => state.toggleFavorite);
+  const pair = `${SYMBOL_META[symbol].base}/USDT`;
+
+  return (
+    <button
+      type="button"
+      aria-label={isFavorite ? `移除自選 ${pair}` : `加入自選 ${pair}`}
+      aria-pressed={isFavorite}
+      onClick={() => toggleFavorite(symbol)}
+      className="flex size-11 shrink-0 items-center justify-center rounded-control active:bg-surface-2"
+    >
+      <Star
+        size={18}
+        aria-hidden
+        className={isFavorite ? 'fill-warning text-warning' : 'text-text-3'}
+      />
+    </button>
+  );
+}
+
 function MarketRow({ symbol }: { symbol: MarketSymbol }) {
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const sparkline = useSparklineData(symbol);
   const meta = SYMBOL_META[symbol];
 
   return (
-    <li>
+    <li className="flex items-center pr-2">
       <Link
         to={`/chart/${symbol}`}
-        className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 transition-colors active:bg-surface-2"
+        className="flex min-h-16 w-full min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 pr-1 transition-colors active:bg-surface-2"
       >
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-caption font-semibold text-text"
-          style={{ backgroundColor: `color-mix(in srgb, ${meta.accent} 20%, transparent)` }}
-        >
-          {meta.base.slice(0, 3)}
-        </span>
+        <CoinBadge symbol={symbol} size="md" variant="soft" />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-body font-medium">
             {meta.base}
@@ -83,31 +111,28 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
           )}
         </span>
       </Link>
+      <FavoriteToggle symbol={symbol} />
     </li>
   );
 }
 
 export function MarketsPage() {
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<MarketListTab>('all');
+  const favorites = useMarketPrefsStore((state) => state.favorites);
 
-  const visibleSymbols = useMemo(() => {
-    const keyword = query.trim().toUpperCase();
-    if (keyword === '') return [...SYMBOLS];
-    return SYMBOLS.filter((symbol) => {
-      const meta = SYMBOL_META[symbol];
-      return (
-        symbol.includes(keyword) ||
-        meta.base.includes(keyword) ||
-        meta.name.toUpperCase().includes(keyword)
-      );
-    });
-  }, [query]);
+  const visibleSymbols = useMemo(
+    () => filterSymbolsByQuery(query, tab === 'favorites' ? favorites : undefined),
+    [query, tab, favorites],
+  );
+
+  const showFavoritesEmpty = tab === 'favorites' && favorites.length === 0 && query.trim() === '';
 
   return (
     <section>
       <header className="sticky top-0 z-10 bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
         <h1 className="mb-3 text-price-lg font-semibold">行情</h1>
-        <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface px-3">
+        <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">
           <Search size={18} className="shrink-0 text-text-3" aria-hidden />
           <input
             type="search"
@@ -115,12 +140,61 @@ export function MarketsPage() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜尋交易對"
             aria-label="搜尋交易對"
-            className="w-full bg-transparent text-body text-text outline-none placeholder:text-text-3"
+            className="min-h-11 w-full bg-transparent text-body text-text outline-none placeholder:text-text-3"
           />
+          {query !== '' ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label="清除搜尋"
+              className="flex size-11 shrink-0 items-center justify-center text-text-3 active:text-text"
+            >
+              <X size={16} aria-hidden />
+            </button>
+          ) : (
+            <span className="w-3 shrink-0" aria-hidden />
+          )}
         </label>
+        <div
+          role="tablist"
+          aria-label="行情清單"
+          className="mt-3 flex rounded-control bg-surface-2 p-0.5"
+        >
+          {LIST_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={clsx(
+                'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
+                tab === id ? 'bg-surface font-semibold text-text' : 'text-text-3',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </header>
-      {visibleSymbols.length === 0 ? (
-        <p className="px-4 py-10 text-center text-label text-text-3">找不到符合的交易對</p>
+      {showFavoritesEmpty ? (
+        <EmptyState icon={Star} title="輕點星號加入自選" className="mx-4 mt-4" />
+      ) : visibleSymbols.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title="找不到符合的交易對"
+          description="試試其他關鍵字或幣種代號。"
+          className="mx-4 mt-4"
+          action={
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="mt-1 min-h-11 min-w-11 rounded-control bg-surface-2 px-4 text-label font-medium text-text-2 active:bg-border"
+            >
+              清除搜尋
+            </button>
+          }
+        />
       ) : (
         <ul className="divide-y divide-border/60">
           {visibleSymbols.map((symbol) => (
