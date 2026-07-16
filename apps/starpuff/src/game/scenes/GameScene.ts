@@ -25,7 +25,13 @@ import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
 import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
-import { inhaleFlavor, isInInhaleRange, knockbackVelocity } from '../logic/combat';
+import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
+import {
+  HOMING_RANGE_PX,
+  HOMING_TURN_RAD_PER_MS,
+  nearestInRange,
+  steerTowardTarget,
+} from '../logic/homing';
 import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
 import {
   advanceEgg,
@@ -368,7 +374,7 @@ export class GameScene extends Phaser.Scene {
       if (spec.chainCount > 0) this.chainLightning(s.x, s.y, spec, target);
       // 凝光星（§46）：命中處生成凍結光域。
       const mix = this.starMixOf(s);
-      if (mix && mix.freezeRadiusPx > 0) this.freezeField(s.x, s.y, mix, target);
+      if (mix && mix.freezeRadiusPx > 0) this.freezeField(s.x, s.y, mix);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
       this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
     });
@@ -383,7 +389,7 @@ export class GameScene extends Phaser.Scene {
       // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
       if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
       const mix = this.starMixOf(star);
-      if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix, null);
+      if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix);
       this.player.onStarHit(star, 'absorb');
       this.boss.applyDamage(this.starDamageOf(star));
     });
@@ -1007,13 +1013,9 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // 凝光星凍結場（§46）：命中處光域擴散，域內小怪凍結停擺（主目標一併凍結）。
-  private freezeField(
-    x: number,
-    y: number,
-    mix: StarMixSpec,
-    exclude: Phaser.GameObjects.GameObject | null,
-  ): void {
+  // 凝光星凍結場（§46）：命中處光域擴散，域內小怪凍結停擺（主目標一併凍結）；
+  // 選敵下沉 combat.pickInRadius，Scene 只管視覺 tween 與凍結套用。
+  private freezeField(x: number, y: number, mix: StarMixSpec): void {
     const field = this.add
       .circle(x, y, mix.freezeRadiusPx, 0xdff2ff, 0.22)
       .setStrokeStyle(3, 0xbfe8ff, 0.9)
@@ -1032,47 +1034,45 @@ export class GameScene extends Phaser.Scene {
       duration: 300,
       onComplete: () => field.destroy(),
     });
+    const candidates: { x: number; y: number; ref: Phaser.GameObjects.GameObject }[] = [];
     for (const child of this.enemies.getGroup().getChildren()) {
       if (!child.active) continue;
       const enemy = asSprite(child);
-      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= mix.freezeRadiusPx + 20) {
-        this.enemies.freeze(child, mix.freezeMs);
-      }
+      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
     }
-    void exclude;
+    for (const target of pickInRadius(x, y, candidates, mix.freezeRadiusPx + 20)) {
+      this.enemies.freeze(target.ref, mix.freezeMs);
+    }
   }
 
-  // 追電星導引（§46）：飛行中朝最近小怪限速轉向；每幀最大轉角 ∝ deltaMs。
+  // 追電星導引（§46）：飛行中朝最近小怪限速轉向；鎖敵與轉向數學下沉 logic/homing.ts，
+  // Scene 只管 body velocity 套用。
   private steerHomingStars(deltaMs: number): void {
-    const HOMING_RANGE_PX = 320;
-    const TURN_RAD_PER_MS = 0.006;
     for (const child of this.player.getStars().getChildren()) {
       const star = asSprite(child);
       if (!star.active) continue;
       const mix = this.starMixOf(star);
       if (!mix?.homing) continue;
-      let nearest: Phaser.Physics.Arcade.Sprite | null = null;
-      let bestSq = HOMING_RANGE_PX * HOMING_RANGE_PX;
+      const candidates: { x: number; y: number }[] = [];
       for (const candidate of this.enemies.getGroup().getChildren()) {
         if (!candidate.active) continue;
         const enemy = asSprite(candidate);
-        const dSq = (enemy.x - star.x) ** 2 + (enemy.y - star.y) ** 2;
-        if (dSq < bestSq) {
-          bestSq = dSq;
-          nearest = enemy;
-        }
+        candidates.push({ x: enemy.x, y: enemy.y });
       }
+      const nearest = nearestInRange(star.x, star.y, candidates, HOMING_RANGE_PX);
       if (!nearest) continue;
       const body = star.body as Phaser.Physics.Arcade.Body;
-      const speed = body.velocity.length() || mix.speed;
-      const current = Math.atan2(body.velocity.y, body.velocity.x);
-      const desired = Math.atan2(nearest.y - star.y, nearest.x - star.x);
-      let diff = desired - current;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      const step = Math.min(Math.abs(diff), TURN_RAD_PER_MS * deltaMs) * Math.sign(diff);
-      const angle = current + step;
-      body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+      const steered = steerTowardTarget(
+        body.velocity.x,
+        body.velocity.y,
+        star.x,
+        star.y,
+        nearest.x,
+        nearest.y,
+        mix.speed,
+        HOMING_TURN_RAD_PER_MS * deltaMs,
+      );
+      body.setVelocity(steered.vx, steered.vy);
     }
   }
 

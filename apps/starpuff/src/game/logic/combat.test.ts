@@ -6,6 +6,7 @@ import {
   inhaleFlavor,
   isInInhaleRange,
   knockbackVelocity,
+  pickInRadius,
   resolveHit,
   tickTimer,
 } from './combat';
@@ -91,5 +92,18 @@ describe('combat', () => {
     expect(knockbackVelocity(100, 200, 180, -220)).toEqual({ x: -180, y: -220 });
     expect(knockbackVelocity(200, 100, 180, -220)).toEqual({ x: 180, y: -220 });
     expect(knockbackVelocity(100, 100, 180, -220)).toEqual({ x: 180, y: -220 });
+  });
+});
+
+describe('pickInRadius（§46 半徑選敵）', () => {
+  const at = (x: number, y: number) => ({ x, y });
+
+  it('圓域內全取（含邊界）、域外排除、順序保持', () => {
+    const picked = pickInRadius(0, 0, [at(50, 0), at(0, 100), at(101, 0), at(-60, -60)], 100);
+    expect(picked).toEqual([at(50, 0), at(0, 100), at(-60, -60)]);
+  });
+
+  it('空候選回空陣列', () => {
+    expect(pickInRadius(0, 0, [], 100)).toEqual([]);
   });
 });

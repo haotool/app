@@ -65,6 +65,24 @@ export function canInhale(kind: EnemyKind, exposed = false): boolean {
   return inhaleFlavor(kind) !== null;
 }
 
+// 半徑選敵（§46 凝光星等範圍效果共用）：圓域內全取，不排序不限量；純函式供 vitest。
+export interface RadiusCandidate {
+  x: number;
+  y: number;
+}
+
+export function pickInRadius<T extends RadiusCandidate>(
+  originX: number,
+  originY: number,
+  candidates: readonly T[],
+  radiusPx: number,
+): T[] {
+  return candidates.filter(
+    (candidate) =>
+      (candidate.x - originX) ** 2 + (candidate.y - originY) ** 2 <= radiusPx * radiusPx,
+  );
+}
+
 // 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。
 export function isInInhaleRange(
   playerX: number,
