@@ -26,8 +26,9 @@ export const THEMES: Record<string, ThemeConfig> = {
       accent: '#FFFFBA', // Pastel Yellow (Cream)
       background: '#FFFAF4', // Very light warm white
       surface: '#FFFFFF',
-      text: '#8E7C80', // Softer Warm Grey (less harsh than black)
-      textMuted: '#C5B4B6',
+      // 暖粉灰調加深至 WCAG AA：text 5.66:1、textMuted 4.61:1（on #FFFAF4），保留粉彩柔和感。
+      text: '#755F63',
+      textMuted: '#826D73',
     },
     font: 'font-cute',
     borderRadius: '28px', // Rounder
