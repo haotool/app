@@ -110,7 +110,7 @@ export function AssetsPage() {
   const dailyPositive = dailyChange >= 0;
 
   return (
-    <div className="flex flex-col px-4 pb-6">
+    <div className="flex flex-col px-4 pb-6 lg:mx-auto lg:max-w-2xl">
       <header className="pb-4 pt-5">
         <p className="text-caption text-text-3">總權益（USDT）</p>
         <p className="mt-1 text-price-xl font-semibold tabular-nums">

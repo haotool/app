@@ -12,7 +12,7 @@ export function AppShell() {
   useAutoUpdate();
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg text-text">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col bg-bg text-text lg:max-w-6xl">
       <ConnectionBanner />
       <main className="flex-1 pb-[calc(3.5rem+var(--sab))]">
         <Outlet />

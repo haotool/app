@@ -239,37 +239,40 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <section className="flex flex-col pb-[4.5rem]">
-      <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
+    // 桌機（lg）雙欄：左欄圖表、右欄常駐市場面板；行動版維持原有直向堆疊。
+    <section className="flex flex-col pb-[4.5rem] lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-4 lg:px-4">
+      <div className="flex flex-col lg:min-w-0">
+        <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
 
-      <div
-        role="tablist"
-        aria-label="時間框架"
-        className="flex gap-1.5 overflow-x-auto px-4 pb-1.5"
-      >
-        {TIMEFRAMES.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={timeframe === id}
-            onClick={() => onTimeframeChange(id)}
-            className={clsx(
-              'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
-              timeframe === id
-                ? 'bg-primary/15 font-semibold text-primary'
-                : 'text-text-3 active:bg-surface-2',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <div
+          role="tablist"
+          aria-label="時間框架"
+          className="flex gap-1.5 overflow-x-auto px-4 pb-1.5"
+        >
+          {TIMEFRAMES.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={timeframe === id}
+              onClick={() => onTimeframeChange(id)}
+              className={clsx(
+                'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+                timeframe === id
+                  ? 'bg-primary/15 font-semibold text-primary'
+                  : 'text-text-3 active:bg-surface-2',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-      <IndicatorChips />
+        <IndicatorChips />
 
-      <div className="relative mx-2 h-[45dvh]">
-        <ChartArea symbol={symbol} timeframe={timeframe} />
+        <div className="relative mx-2 h-[45dvh] lg:h-[32rem]">
+          <ChartArea symbol={symbol} timeframe={timeframe} />
+        </div>
       </div>
 
       <MarketPanels symbol={symbol} />

@@ -4,7 +4,7 @@ import { ResetAccountButton } from '../components/ResetAccountButton';
 
 export function SettingsPage() {
   return (
-    <div className="flex flex-col gap-4 px-4 pb-6 pt-5">
+    <div className="flex flex-col gap-4 px-4 pb-6 pt-5 lg:mx-auto lg:max-w-2xl">
       <h1 className="text-price-lg font-semibold">設定</h1>
 
       <section

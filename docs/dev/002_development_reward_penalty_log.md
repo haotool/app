@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+121
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+122
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-desktop-dual-column
+- 原因：R3 Wave-3 要求 ≥1024px 桌機體驗：圖表頁右欄常駐市場面板、交易頁寬版留白優化、行情頁 max-w 容器，且不得改動行動版
+- 解法：AppShell lg:max-w-6xl 放寬外殼，圖表頁以 lg:grid 雙欄常駐 MarketPanels（單一掛載、行動版原樣堆疊），交易/行情/資產/設定頁補 lg max-w 容器，桌機與行動雙視口真瀏覽器截圖驗證 console error=0
 
 - 日期：2026-07-17
 - ID：reward-papertrade-r3-wave3-practice-stats
