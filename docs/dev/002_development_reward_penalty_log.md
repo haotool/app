@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+125
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+126
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-starpuff-v8-world-expansion
+- 原因：StarPuff 內容止於四關單魔王，v8 需擴張世界（3 新關/3 新怪/第二魔王/九系星彈）且不得破壞舊存檔與 anti-softlock 不變式
+- 解法：FSM-first 表驅動擴充（noctraFsm/updraft/enemyFsm 純函式配單測）＋LevelSpec 契約改版（elites 陣列/boss 品種），素材 Codex 配額 6/6 生成入庫，261 unit＋40 e2e 全綠且舊 v1 存檔七節點相容
 
 - 日期：2026-07-17
 - ID：neutral-ci-release-pr-checks-dispatch
