@@ -6,12 +6,17 @@ import { canInhale } from '../logic/combat';
 import {
   BOOMY_FSM,
   GUSTY_FSM,
+  MIRRI_FSM,
   SPORA_FSM,
   gustWindPush,
   resolveDrillyHit,
+  resolveMagnoStarHit,
+  resolveMirriStarHit,
   resolveShellyHit,
   tickBoomerangBody,
   type DrillyState,
+  type MagnoPhase,
+  type MirriState,
   type ShellyState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
@@ -64,6 +69,11 @@ export interface EnemySystem {
   isInhalable(enemy: Phaser.GameObjects.GameObject): boolean;
   // 半入地無害態（§47 drilly 潛地/前搖）：觸碰不結算傷害、吸力不彈開。
   isPhasedOut(enemy: Phaser.GameObjects.GameObject): boolean;
+  // 磁場星彈免傷（§59 magno field）：星彈命中吸附失效；下砸/波及/接觸照常結算。
+  isStarImmune(enemy: Phaser.GameObjects.GameObject): boolean;
+  // 鏡面反射（§59 mirri mirror）：星彈命中不結算，由 GameScene 分流生成反射彈。
+  isReflective(enemy: Phaser.GameObjects.GameObject): boolean;
+  reflectStar(x: number, y: number, towardX: number, towardY: number): void;
   getGroup(): Phaser.Physics.Arcade.Group;
   getHazards(): Phaser.Physics.Arcade.Group;
   setTarget(target: EnemyTarget | null): void;
@@ -87,6 +97,8 @@ const TEXTURES: Record<EnemyKind, string> = {
   spora: 'minion-spora',
   gusty: 'minion-gusty',
   boomy: 'minion-boomy',
+  magno: 'minion-magno',
+  mirri: 'minion-mirri',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -102,6 +114,8 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   spora: 0xa8d8a0,
   gusty: 0xa8cbf0,
   boomy: 0xe8a878,
+  magno: 0x8a98c8,
+  mirri: 0xd8dce8,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -120,6 +134,8 @@ const HP: Record<EnemyKind, number> = {
   spora: 1,
   gusty: 1,
   boomy: 1,
+  magno: 1,
+  mirri: 1,
 };
 
 const SIZE = 40;
@@ -314,6 +330,24 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(0, -14);
   }
 
+  // 鏡面反射彈（§59）：星彈被鏡面態反射為朝玩家的傷害彈，走既有 hazards 管線。
+  function reflectStar(x: number, y: number, towardX: number, towardY: number): void {
+    playSfx('metal', 1.15);
+    const bolt = spawnHazard(x, y);
+    if (!bolt) return;
+    bolt.setTexture('fx-star').setVisible(true);
+    bolt.setDisplaySize(18, 18);
+    bolt.setTint(0xd8dce8);
+    bolt.setData('hazardKind', 'reflect');
+    bolt.setData('lifeMs', MIRRI_FSM.reflectLifeMs);
+    const body = bolt.body as Phaser.Physics.Arcade.Body;
+    body.setSize(14, 14);
+    const dx = towardX - x;
+    const dy = towardY - y;
+    const dist = Math.hypot(dx, dy) || 1;
+    body.setVelocity((dx / dist) * MIRRI_FSM.reflectSpeed, (dy / dist) * MIRRI_FSM.reflectSpeed);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -443,8 +477,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           ? 'burrow'
           : kind === 'gusty'
             ? 'drift'
-            : 'idle',
+            : kind === 'mirri'
+              ? 'roam'
+              : 'idle',
     );
+    // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
+    sprite.setData('magnoPhase', kind === 'magno' ? 'idle' : undefined);
     sprite.setData('stateMs', 0);
     // gusty（§52）：航高鎖存供俯衝後回升。
     sprite.setData('baseY', y);
@@ -465,8 +503,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         kind !== 'glowy' &&
         kind !== 'gusty',
     );
-    // spiky/shelly/boomy 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
-    body.setBounce(kind === 'spiky' || kind === 'shelly' || kind === 'boomy' ? 1 : 0, 0);
+    // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
+    body.setBounce(
+      kind === 'spiky' || kind === 'shelly' || kind === 'boomy' || kind === 'mirri' ? 1 : 0,
+      0,
+    );
     body.setImmovable(kind === 'chompy' || kind === 'spora');
     // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回當前鏡頭中心啟發。
     const inward = target ? (target.x >= x ? 1 : -1) : x < viewCenterX() ? 1 : -1;
@@ -614,6 +655,20 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     isPhasedOut(enemy: Phaser.GameObjects.GameObject): boolean {
       return kindOf(enemy) === 'drilly' && enemy.getData('state') !== 'surfaced';
     },
+
+    // 磁場星彈免傷（§59）：僅 magno field 相位；近戰/下砸/波及/吸入不受影響。
+    isStarImmune(enemy: Phaser.GameObjects.GameObject): boolean {
+      if (kindOf(enemy) !== 'magno') return false;
+      return resolveMagnoStarHit(enemy.getData('magnoPhase') as MagnoPhase) === 'immune';
+    },
+
+    // 鏡面反射（§59）：僅 mirri mirror 態；反射彈生成由 GameScene 於星彈 overlap 呼叫。
+    isReflective(enemy: Phaser.GameObjects.GameObject): boolean {
+      if (kindOf(enemy) !== 'mirri') return false;
+      return resolveMirriStarHit(enemy.getData('state') as MirriState) === 'reflect';
+    },
+
+    reflectStar,
 
     getGroup() {
       return group;

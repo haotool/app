@@ -101,6 +101,20 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     inhalable: true,
   },
   {
+    kind: 'magno',
+    textureKey: 'minion-magno',
+    nameZh: '磁極獸',
+    behavior: '週期磁場吸偏星彈，吞下得雷鏈星',
+    inhalable: true,
+  },
+  {
+    kind: 'mirri',
+    textureKey: 'minion-mirri',
+    nameZh: '鏡面蟲',
+    behavior: '鏡面態反射星彈，吞下得迴旋星',
+    inhalable: true,
+  },
+  {
     kind: 'boss',
     textureKey: 'boss-idle',
     nameZh: '果凍王',

@@ -119,10 +119,10 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物 7×2 網格（v8 十四格：十二小怪＋雙魔王）：立繪 + 名稱 + 行為 + 可吸標記。
+  // 全怪物 8×2 網格（v9 十六格：十四小怪＋雙魔王）：立繪 + 名稱 + 行為 + 可吸標記。
   private renderMonsters(): void {
     const { width } = this.scale;
-    const cols = 7;
+    const cols = 8;
     const cellW = Math.min(170, (width - 50) / cols);
     const gridLeft = width / 2 - (cellW * cols) / 2;
     const rowTops = [116, 282];

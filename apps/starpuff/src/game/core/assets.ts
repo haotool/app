@@ -85,6 +85,21 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'boss-noctra',
     url: new URL('../../assets/sprites/boss-noctra.webp', import.meta.url).href,
   },
+  // v9 星化與挑戰（§61）：hero 三形態＋新怪兩種；背景重用既有（不生成新背景）。
+  { key: 'hero-volt', url: new URL('../../assets/sprites/hero-volt.webp', import.meta.url).href },
+  { key: 'hero-gale', url: new URL('../../assets/sprites/hero-gale.webp', import.meta.url).href },
+  {
+    key: 'hero-shell',
+    url: new URL('../../assets/sprites/hero-shell.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-magno',
+    url: new URL('../../assets/sprites/minion-magno.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-mirri',
+    url: new URL('../../assets/sprites/minion-mirri.webp', import.meta.url).href,
+  },
   {
     key: 'bg-canyon-l',
     url: new URL('../../assets/sprites/bg-canyon-l.webp', import.meta.url).href,

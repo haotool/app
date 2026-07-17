@@ -34,6 +34,7 @@ import { SceneKeys, type BossKind, type GameResultData, type LevelId } from '../
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
+import { magnetPull } from '../logic/enemyFsm';
 import {
   HOMING_RANGE_PX,
   HOMING_TURN_RAD_PER_MS,
@@ -277,6 +278,7 @@ export class GameScene extends Phaser.Scene {
       this.syncGateSweep();
       for (const room of this.eliteRooms) room.update();
       this.steerHomingStars(deltaMs);
+      this.steerMagnetizedStars(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
     }
@@ -403,6 +405,21 @@ export class GameScene extends Phaser.Scene {
       const target = enemy as Phaser.GameObjects.GameObject;
       const s = asSprite(star);
       if (!s.active || !this.enemies.kindOf(target)) return;
+      // 磁場星彈免傷（§59 magno field）：星彈吸附於磁殼失效，近戰/下砸路徑不受影響。
+      if (this.enemies.isStarImmune(target)) {
+        this.fx.burstSmall(s.x, s.y, 0x8ab0e8);
+        playSfx('metal', 0.7);
+        this.player.onStarHit(s, 'absorb');
+        return;
+      }
+      // 鏡面反射（§59 mirri mirror）：星彈改生成朝玩家的反射彈（反射彈有傷害）。
+      if (this.enemies.isReflective(target)) {
+        const mirri = asSprite(enemy);
+        this.enemies.reflectStar(mirri.x, mirri.y, this.player.sprite.x, this.player.sprite.y);
+        this.fx.burstSmall(s.x, s.y, 0xf0f4ff);
+        this.player.onStarHit(s, 'absorb');
+        return;
+      }
       const spec = this.starSpecOf(s);
       const outcome = this.enemies.damage(target, this.starDamageOf(s));
       if (outcome === 'ignored') return;
@@ -1278,6 +1295,35 @@ export class GameScene extends Phaser.Scene {
         HOMING_TURN_RAD_PER_MS * deltaMs,
       );
       body.setVelocity(steered.vx, steered.vy);
+    }
+  }
+
+  // 磁場吸偏（§59 magno field）：域內玩家星彈逐幀被拉向磁極獸；數學下沉 logic/enemyFsm。
+  private steerMagnetizedStars(deltaMs: number): void {
+    const magnos: { x: number; y: number }[] = [];
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active || this.enemies.kindOf(child) !== 'magno') continue;
+      if (child.getData('magnoPhase') !== 'field') continue;
+      const magno = asSprite(child);
+      magnos.push({ x: magno.x, y: magno.y });
+    }
+    if (magnos.length === 0) return;
+    for (const child of this.player.getStars().getChildren()) {
+      const star = asSprite(child);
+      if (!star.active) continue;
+      const body = star.body as Phaser.Physics.Arcade.Body;
+      for (const magno of magnos) {
+        const pulled = magnetPull(
+          star.x,
+          star.y,
+          body.velocity.x,
+          body.velocity.y,
+          magno.x,
+          magno.y,
+          deltaMs,
+        );
+        body.setVelocity(pulled.vx, pulled.vy);
+      }
     }
   }
 

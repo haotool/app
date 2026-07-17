@@ -3,7 +3,7 @@ import { ASSETS } from './assets';
 import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部十二種小怪與雙魔王（v8 spora/gusty/boomy/noctra 入鑑）', () => {
+  it('收錄全部十四種小怪與雙魔王（v9 magno/mirri 入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -17,6 +17,8 @@ describe('CODEX_MONSTERS', () => {
       'spora',
       'gusty',
       'boomy',
+      'magno',
+      'mirri',
       'boss',
       'noctra',
     ]);
@@ -29,12 +31,23 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52），殼殼與鑽鑽鼴標條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59），殼殼與鑽鑽鼴標條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
     expect(inhalable).toEqual(
-      new Set(['jelly', 'floaty', 'puffy', 'zappy', 'glowy', 'spora', 'gusty', 'boomy']),
+      new Set([
+        'jelly',
+        'floaty',
+        'puffy',
+        'zappy',
+        'glowy',
+        'spora',
+        'gusty',
+        'boomy',
+        'magno',
+        'mirri',
+      ]),
     );
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.find((m) => m.kind === 'drilly')?.conditional).toBe(true);
