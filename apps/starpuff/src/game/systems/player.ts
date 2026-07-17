@@ -675,9 +675,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
               launchWindBlade();
             }
           } else if (!transform.form) {
+            // 變身資格成立時同走延遲（§57）：點按放開仍發射、長按 0.6s 交星化。
             const command = resolveActionPress({
               ammo: magazine.length,
               topIsShelly: isTopShelly(magazine),
+              transformEligible: eligibleForm(magazine) !== null,
             });
             if (command === 'fire') fireStar();
             else if (command === 'defer') deferredFire = true;

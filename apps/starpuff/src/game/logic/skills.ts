@@ -108,13 +108,20 @@ export function starstormProgress(holdMs: number): number {
   return Math.min(1, holdMs / STARSTORM.holdMs);
 }
 
-// B 鍵按下當幀的動作決策（§23/§40）：滿匣延遲至放開結算，區分點按發射與長按星暴；
-// 頂槽殼盾星同走延遲，長按改舉盾。v7 起下衝擊改由跳躍鍵矩陣觸發（resolveJumpPress）。
+// B 鍵按下當幀的動作決策（§23/§40/§57）：滿匣延遲至放開結算，區分點按發射與長按星暴；
+// 頂槽殼盾星同走延遲，長按改舉盾；變身資格成立（同系 ≥3 星）同走延遲，長按改星化。
+// v7 起下衝擊改由跳躍鍵矩陣觸發（resolveJumpPress）。
 export type ActionCommand = 'fire' | 'defer' | 'none';
 
-export function resolveActionPress(opts: { ammo: number; topIsShelly?: boolean }): ActionCommand {
+export function resolveActionPress(opts: {
+  ammo: number;
+  topIsShelly?: boolean;
+  transformEligible?: boolean;
+}): ActionCommand {
   if (opts.ammo <= 0) return 'none';
-  return opts.ammo >= STAR.maxAmmo || opts.topIsShelly === true ? 'defer' : 'fire';
+  return opts.ammo >= STAR.maxAmmo || opts.topIsShelly === true || opts.transformEligible === true
+    ? 'defer'
+    : 'fire';
 }
 
 // 跳躍鍵輸入矩陣（§44，v7）：空中「下＋跳」＝下衝擊（吞含/puffed 狀態不影響；

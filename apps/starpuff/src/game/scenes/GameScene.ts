@@ -792,9 +792,10 @@ export class GameScene extends Phaser.Scene {
   private spawnMercyHeart(): void {
     const side = this.mercyRng() < 0.5 ? -1 : 1;
     const offset = 120 + this.mercyRng() * 120;
-    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, 60, this.worldWidth() - 60);
+    // 夾限下界 50：玩家貼世界左牆（hurtbox 右緣 ~31）時拾取帶仍可觸及（anti-softlock）。
+    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, 50, this.worldWidth() - 50);
     const groundY = GROUND_TOP - 22;
-    const airborne = this.mercyRng() < 0.5;
+    const airborne = this.mercyRng() >= 0.5;
     const y = airborne ? 150 : groundY;
     playSfx('reveal');
     this.fx.burstSmall(x, y, 0xff9ec4);
@@ -817,6 +818,11 @@ export class GameScene extends Phaser.Scene {
   // e2e 鉤子（§62）：以正式受擊管線壓低血量（i-frame 期間自然免傷，呼叫端輪詢）。
   hurtPlayer(damage: number): void {
     if (this.scene.isActive()) this.player.takeDamage(damage, this.player.sprite.x + 1);
+  }
+
+  // e2e 觀測點（§62）：本命累計愛心生成數。
+  mercySpawnedCount(): number {
+    return this.mercy.spawned;
   }
 
   private finish(result: 'won' | 'lost'): void {
