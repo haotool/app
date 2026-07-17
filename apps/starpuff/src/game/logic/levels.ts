@@ -1,4 +1,4 @@
-import type { EnemyKind, LevelId } from '../core/types';
+import type { BossKind, EnemyKind, LevelId } from '../core/types';
 import { canInhale } from './combat';
 import type { EasterEggSpec } from './eggs';
 
@@ -19,6 +19,7 @@ export interface PlatformSpec {
 
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
+// v8 上升氣流柱（§51）：zone 型非碰撞，x 為柱心、topY 為升力終止高、w 為柱寬。
 export type StageElementSpec =
   | { kind: 'oneway'; x: number; y: number; w: number }
   | {
@@ -31,7 +32,8 @@ export type StageElementSpec =
       durationMs: number;
     }
   | { kind: 'spring'; x: number; y: number }
-  | { kind: 'breakable'; x: number; y: number; loot: 'ammo' | 'hp' };
+  | { kind: 'breakable'; x: number; y: number; loot: 'ammo' | 'hp' }
+  | { kind: 'updraft'; x: number; topY: number; w: number };
 
 // 主題道具佈景（§31/§32）：純裝飾無碰撞，key 對應 assets.ts 的 prop-<theme>-<1..4>。
 export interface DecorSpec {
@@ -51,6 +53,8 @@ export interface EliteSpec {
   rewardFlavor: EnemyKind;
 }
 
+// v8 契約變更（§50）：elite 單值改 elites 陣列（L6 雙精英）；boss 改品種標記
+//（'jellord'／'noctra'／null，truthy 語意與舊 boolean 相容）。
 export interface LevelSpec {
   id: LevelId;
   nameZh: string;
@@ -65,8 +69,8 @@ export interface LevelSpec {
   elements: readonly StageElementSpec[];
   decor: readonly DecorSpec[];
   easterEggs: readonly EasterEggSpec[];
-  elite: EliteSpec | null;
-  boss: boolean;
+  elites: readonly EliteSpec[];
+  boss: BossKind | null;
   tutorial: boolean;
 }
 
@@ -108,16 +112,18 @@ export const LEVELS: readonly LevelSpec[] = [
     // §24 彩蛋一：開局反向走到世界最左緣（玩家起點 x=100）。
     easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
     // §48：粉紅暴走果凍丁——跳頻與衝量 1.5 倍，擊敗掉流光味。
-    elite: {
-      kind: 'jelly',
-      x: 1500,
-      hp: 10,
-      scale: 1.6,
-      tint: 0xff6fa5,
-      speedMul: 1.5,
-      rewardFlavor: 'glowy',
-    },
-    boss: false,
+    elites: [
+      {
+        kind: 'jelly',
+        x: 1500,
+        hp: 10,
+        scale: 1.6,
+        tint: 0xff6fa5,
+        speedMul: 1.5,
+        rewardFlavor: 'glowy',
+      },
+    ],
+    boss: null,
     tutorial: true,
   },
   {
@@ -163,16 +169,18 @@ export const LEVELS: readonly LevelSpec[] = [
     // §24 彩蛋二：最高雲朵平台（層高 272）連續站上 3 次。
     easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
     // §48：鋼青重殼殼——血量池制（不入縮殼循環）、走速 1.4 倍，擊敗掉重鑽味。
-    elite: {
-      kind: 'shelly',
-      x: 1700,
-      hp: 14,
-      scale: 1.55,
-      tint: 0x5aa8c8,
-      speedMul: 1.4,
-      rewardFlavor: 'drilly',
-    },
-    boss: false,
+    elites: [
+      {
+        kind: 'shelly',
+        x: 1700,
+        hp: 14,
+        scale: 1.55,
+        tint: 0x5aa8c8,
+        speedMul: 1.4,
+        rewardFlavor: 'drilly',
+      },
+    ],
+    boss: null,
     tutorial: false,
   },
   {
@@ -229,16 +237,18 @@ export const LEVELS: readonly LevelSpec[] = [
       { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['jelly', 'floaty', 'puffy'] },
     ],
     // §48：暗紫狂咬花——前搖/冷卻縮時 1.6 倍攻速，擊敗掉流光味。
-    elite: {
-      kind: 'chompy',
-      x: 1900,
-      hp: 20,
-      scale: 1.5,
-      tint: 0x8a5fd8,
-      speedMul: 1.6,
-      rewardFlavor: 'glowy',
-    },
-    boss: false,
+    elites: [
+      {
+        kind: 'chompy',
+        x: 1900,
+        hp: 20,
+        scale: 1.5,
+        tint: 0x8a5fd8,
+        speedMul: 1.6,
+        rewardFlavor: 'glowy',
+      },
+    ],
+    boss: null,
     tutorial: false,
   },
   {
@@ -266,8 +276,179 @@ export const LEVELS: readonly LevelSpec[] = [
     // §24 彩蛋四：魔王可擊打後 5 秒內命中皇冠（首擊）。
     easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
     // §48：魔王關無中魔王（Boss 即高潮）。
-    elite: null,
-    boss: true,
+    elites: [],
+    boss: 'jellord',
+    tutorial: false,
+  },
+  // v8 世界擴張（§50）——L5 翔風峽谷：上升氣流柱垂直分層探索、Gusty 主場。
+  {
+    id: 5,
+    nameZh: '翔風峽谷',
+    bgKey: 'bg-canyon',
+    worldWidth: 3300,
+    killQuota: 10,
+    spawnIntervalMs: 1500,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §52 入編：gusty 主場 30%＋spora 20%；可吸佔比 0.8（gusty/floaty/spora/jelly）。
+    enemyMix: [
+      { kind: 'gusty', weight: 0.3 },
+      { kind: 'spora', weight: 0.2 },
+      { kind: 'spiky', weight: 0.2 },
+      { kind: 'floaty', weight: 0.15 },
+      { kind: 'jelly', weight: 0.15 },
+    ],
+    // §51 垂直分層：208 高台僅氣流柱可達（anti-softlock：主線走地面雙層即可）。
+    platforms: [
+      { x: 500, y: 336, w: 150 },
+      { x: 1000, y: 208, w: 130 },
+      { x: 1420, y: 336, w: 150 },
+      { x: 1900, y: 208, w: 130 },
+      { x: 2350, y: 300, w: 140 },
+      { x: 2820, y: 336, w: 140 },
+    ],
+    elements: [
+      { kind: 'updraft', x: 1000, topY: 150, w: 96 },
+      { kind: 'updraft', x: 1900, topY: 150, w: 96 },
+      { kind: 'updraft', x: 2600, topY: 170, w: 96 },
+      { kind: 'oneway', x: 700, y: 320, w: 140 },
+      { kind: 'oneway', x: 2150, y: 336, w: 140 },
+      { kind: 'spring', x: 1550, y: 391 },
+    ],
+    // §55 重用評估：峽谷天空道具沿用 heights 主題（氣球/雲絮/風旗/星燈）。
+    decor: [
+      { key: 'prop-heights-1', x: 300 },
+      { key: 'prop-heights-2', x: 850 },
+      { key: 'prop-heights-3', x: 1400 },
+      { key: 'prop-heights-4', x: 1950 },
+      { key: 'prop-heights-1', x: 2500 },
+      { key: 'prop-heights-2', x: 3000 },
+    ],
+    // §24 彩蛋五：乘氣流連續兩次站上 208 高台。
+    easterEggs: [{ trigger: 'stand-count', reward: 'hp-up', platformY: 208, count: 2 }],
+    // §52：狂風飄鳥——俯衝與側風強化 1.4 倍，擊敗掉迴旋味（迴旋星先行體驗）。
+    elites: [
+      {
+        kind: 'gusty',
+        x: 1650,
+        hp: 16,
+        scale: 1.5,
+        tint: 0x6fa8dc,
+        speedMul: 1.4,
+        rewardFlavor: 'boomy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+  },
+  // L6 迴聲石廊：Boomy 迴旋彈道主場＋移動平台/彈簧複合陣＋雙精英、全怪種高密度混編。
+  {
+    id: 6,
+    nameZh: '迴聲石廊',
+    bgKey: 'bg-gallery',
+    worldWidth: 3600,
+    killQuota: 12,
+    spawnIntervalMs: 1200,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §52 全怪種混編（十二種）：可吸佔比 0.72（shelly/drilly 條件可吸保守不計）。
+    enemyMix: [
+      { kind: 'boomy', weight: 0.16 },
+      { kind: 'spora', weight: 0.12 },
+      { kind: 'gusty', weight: 0.1 },
+      { kind: 'spiky', weight: 0.1 },
+      { kind: 'jelly', weight: 0.08 },
+      { kind: 'floaty', weight: 0.08 },
+      { kind: 'puffy', weight: 0.08 },
+      { kind: 'chompy', weight: 0.08 },
+      { kind: 'zappy', weight: 0.07 },
+      { kind: 'shelly', weight: 0.06 },
+      { kind: 'drilly', weight: 0.04 },
+      { kind: 'glowy', weight: 0.03 },
+    ],
+    platforms: [
+      { x: 420, y: 336, w: 140 },
+      { x: 760, y: 272, w: 130 },
+      { x: 1150, y: 336, w: 140 },
+      { x: 1750, y: 300, w: 130 },
+      { x: 2200, y: 336, w: 140 },
+      { x: 2650, y: 272, w: 120 },
+      { x: 3050, y: 336, w: 130 },
+    ],
+    // §29 複合陣：雙移動平台＋雙彈簧＋破磚支線。
+    elements: [
+      { kind: 'oneway', x: 950, y: 320, w: 130 },
+      { kind: 'oneway', x: 2430, y: 320, w: 130 },
+      { kind: 'moving', x: 1450, y: 320, w: 120, axis: 'x', range: 160, durationMs: 2200 },
+      { kind: 'moving', x: 2900, y: 336, w: 120, axis: 'y', range: -56, durationMs: 2000 },
+      { kind: 'spring', x: 1900, y: 391 },
+      { kind: 'spring', x: 3200, y: 391 },
+      { kind: 'breakable', x: 600, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2050, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：石廊沿用 arena 主題道具（水晶/星柱/光苔/浮石）。
+    decor: [
+      { key: 'prop-arena-1', x: 320 },
+      { key: 'prop-arena-2', x: 870 },
+      { key: 'prop-arena-3', x: 1420 },
+      { key: 'prop-arena-4', x: 1970 },
+      { key: 'prop-arena-1', x: 2520 },
+      { key: 'prop-arena-2', x: 3070 },
+    ],
+    // §24 彩蛋六：依序連吞 boomy→zappy（電鋸迴旋配方預告）。
+    easterEggs: [{ trigger: 'eat-sequence', reward: 'gold-star', sequence: ['boomy', 'zappy'] }],
+    // §52 雙精英：重殼迴力守衛（前段）＋暗雷水母（後段），房距 1200px 不重疊。
+    elites: [
+      {
+        kind: 'boomy',
+        x: 1300,
+        hp: 16,
+        scale: 1.5,
+        tint: 0x8fb8e8,
+        speedMul: 1.3,
+        rewardFlavor: 'glowy',
+      },
+      {
+        kind: 'zappy',
+        x: 2500,
+        hp: 18,
+        scale: 1.5,
+        tint: 0x9b6fd8,
+        speedMul: 1.5,
+        rewardFlavor: 'drilly',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+  },
+  // L7 蝕月王座：第二魔王暗月蝠王 Noctra（§54，空中型三階段）。
+  {
+    id: 7,
+    nameZh: '蝕月王座',
+    bgKey: 'bg-eclipse',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 3200,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26 飢荒保證律）：gusty 歸疾風味。
+    enemyMix: [
+      { kind: 'jelly', weight: 0.4 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'gusty', weight: 0.3 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-throne-1', x: 110 },
+      { key: 'prop-throne-2', x: 320 },
+      { key: 'prop-throne-3', x: 540 },
+      { key: 'prop-throne-4', x: 750 },
+    ],
+    // §24 彩蛋七：蝠王可擊打後 5 秒內首次命中。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
+    elites: [],
+    boss: 'noctra',
     tutorial: false,
   },
 ];

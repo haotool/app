@@ -7,9 +7,15 @@ export type EnemyKind =
   | 'shelly'
   | 'zappy'
   | 'drilly'
-  | 'glowy';
+  | 'glowy'
+  | 'spora'
+  | 'gusty'
+  | 'boomy';
 
-export type LevelId = 1 | 2 | 3 | 4;
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+// v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
+export type BossKind = 'jellord' | 'noctra';
 
 export type BossPhase = 'p1' | 'p2' | 'p3';
 

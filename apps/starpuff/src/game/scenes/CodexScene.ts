@@ -118,43 +118,43 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物 5×2 網格（v7 十隻）：立繪 + 名稱 + 行為一句話 + 可吸/不可吸標記。
+  // 全怪物 7×2 網格（v8 十四格：十二小怪＋雙魔王）：立繪 + 名稱 + 行為 + 可吸標記。
   private renderMonsters(): void {
     const { width } = this.scale;
-    const cols = 5;
-    const cellW = Math.min(220, (width - 60) / cols);
+    const cols = 7;
+    const cellW = Math.min(170, (width - 50) / cols);
     const gridLeft = width / 2 - (cellW * cols) / 2;
-    const rowTops = [122, 278];
+    const rowTops = [116, 282];
     CODEX_MONSTERS.forEach((monster, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
-      const top = rowTops[row] ?? 122;
-      const sprite = this.add.image(cx, top + 36, monster.textureKey);
-      const scale = 60 / Math.max(sprite.width, sprite.height);
+      const top = rowTops[row] ?? 116;
+      const sprite = this.add.image(cx, top + 30, monster.textureKey);
+      const scale = 50 / Math.max(sprite.width, sprite.height);
       sprite.setScale(scale);
       this.tweens.add({
         targets: sprite,
         scale: { from: 0, to: scale },
         duration: 320,
-        delay: index * 55,
+        delay: index * 45,
         ease: 'Back.easeOut',
       });
       this.add
-        .text(cx, top + 80, monster.nameZh, {
+        .text(cx, top + 66, monster.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '17px',
+          fontSize: '15px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
         .setOrigin(0.5);
       // 可吸標記：圓點 + 文字（綠=可吸、琥珀=條件可吸、灰=不可吸），禁 emoji。
-      const badge = this.add.container(cx, top + 102);
+      const badge = this.add.container(cx, top + 86);
       const dotColor = monster.inhalable ? 0x3dbb8a : monster.conditional ? 0xe8a33d : 0x9a9aa8;
       const label = this.add
         .text(6, 0, monster.inhalable ? '可吸' : monster.conditional ? '條件可吸' : '不可吸', {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           fontStyle: 'bold',
           color: monster.inhalable ? '#2e8a67' : monster.conditional ? '#a56a1f' : TEXT_SOFT,
         })
@@ -162,12 +162,13 @@ export class CodexScene extends Phaser.Scene {
       const dot = this.add.circle(label.x - label.width / 2 - 8, 0, 4, dotColor);
       badge.add([dot, label]);
       this.add
-        .text(cx, top + 122, monster.behavior, {
+        .text(cx, top + 102, monster.behavior, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '12px',
+          fontSize: '11px',
           color: TEXT_SOFT,
           align: 'center',
-          wordWrap: { width: cellW - 14 },
+          // CJK 無空白斷詞：必須逐字換行，否則 7 欄窄格橫向溢出相鄰格。
+          wordWrap: { width: cellW - 10, useAdvancedWrap: true },
         })
         .setOrigin(0.5, 0);
     });

@@ -42,8 +42,9 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
   return Math.min(maxAmmo, Math.max(0, ammo));
 }
 
-// 可吸怪的星彈屬性對照（§20/§30/§40/§47）：v6 起 shelly 得殼盾星、zappy 得雷鏈星；
-// v7 起 drilly 得重鑽星（破土窗）、glowy 得流光星；不可吸者無屬性。
+// 可吸怪的星彈屬性對照（§20/§30/§40/§47/§52）：v6 起 shelly 得殼盾星、zappy 得雷鏈星；
+// v7 起 drilly 得重鑽星（破土窗）、glowy 得流光星；v8 起 spora 得孢子星、boomy 得迴旋星、
+// gusty 歸入既有疾風味（避免味數爆炸）；不可吸者無屬性。
 const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   jelly: 'jelly',
   floaty: 'floaty',
@@ -52,6 +53,9 @@ const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   zappy: 'zappy',
   drilly: 'drilly',
   glowy: 'glowy',
+  spora: 'spora',
+  gusty: 'floaty',
+  boomy: 'boomy',
 };
 
 export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {

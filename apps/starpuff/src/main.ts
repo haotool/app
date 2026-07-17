@@ -107,6 +107,7 @@ declare global {
       walk: () => { rotation: number; bob: number; vy: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
       slayElite: () => void;
+      damageBoss: (amount: number) => void;
       save: () => SaveData;
       probe: () => { x: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
@@ -148,6 +149,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     walk: () => internals().player.getWalkVisual(),
     elite: () => gameScene().eliteState(),
     slayElite: () => gameScene().slayElite(),
+    // v8 鉤子（§54 e2e）：以正式傷害管線打魔王，階段/死亡走完整 FSM 事件流。
+    damageBoss: (amount) => gameScene().damageBoss(amount),
     // 存檔觀測點（§38）：回傳解析後 sp-save（含容錯回退）。
     save: () => loadSave(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。

@@ -125,6 +125,32 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 2, 1000);
     save = recordLevelClear(save, 3, 1000);
     save = recordLevelClear(save, 4, 1000);
+    expect(currentChallenge(save)).toBe(5);
+    save = recordLevelClear(save, 5, 1000);
+    save = recordLevelClear(save, 6, 1000);
+    save = recordLevelClear(save, 7, 1000);
     expect(currentChallenge(save)).toBeNull();
+  });
+
+  it('v8 存檔相容（§50）：舊 v1 存檔（1-4 通關）載入後 L5 開放、L6/L7 鎖定且不損資料', () => {
+    const legacy = JSON.stringify({
+      schemaVersion: 1,
+      highestClearedLevel: 4,
+      levels: {
+        1: { cleared: true, bestTimeMs: 41000, eggsFound: ['reach-x'] },
+        2: { cleared: true, bestTimeMs: 52000, eggsFound: [] },
+        3: { cleared: true, bestTimeMs: 63000, eggsFound: [] },
+        4: { cleared: true, bestTimeMs: 74000, eggsFound: [] },
+      },
+      lastPlayedAt: 1700000000000,
+    });
+    const save = parseSave(legacy);
+    expect(save.highestClearedLevel).toBe(4);
+    expect(save.levels[1]?.bestTimeMs).toBe(41000);
+    expect(nodeStatus(save, 4)).toBe('cleared');
+    expect(nodeStatus(save, 5)).toBe('open');
+    expect(nodeStatus(save, 6)).toBe('locked');
+    expect(nodeStatus(save, 7)).toBe('locked');
+    expect(currentChallenge(save)).toBe(5);
   });
 });

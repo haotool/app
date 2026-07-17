@@ -324,6 +324,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
     star.setData('mix', slot.mix ?? null);
+    // 迴旋星（§53）：標記迴旋彈道由 GameScene 逐幀驅動；非迴旋彈清殘留。
+    star.setData('boomMs', spec.boomerang ? 0 : null);
+    star.setData('boomDir', facing);
+    star.setRotation(0);
     star.setData(
       'fxTrail',
       attachTrail(scene, star, {

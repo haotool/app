@@ -12,10 +12,13 @@ function run(spec: EasterEggSpec, events: readonly EggEvent[]): boolean[] {
 }
 
 describe('LEVELS easterEggs 資料（§24）', () => {
-  it('四關各掛一顆彩蛋且觸發型別對表', () => {
-    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1]);
+  it('七關各掛一顆彩蛋且觸發型別對表', () => {
+    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.trigger)).toEqual([
       'reach-x',
+      'stand-count',
+      'eat-sequence',
+      'crown-early-hit',
       'stand-count',
       'eat-sequence',
       'crown-early-hit',
@@ -25,7 +28,17 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'full-magazine',
       'gold-star',
       'heal',
+      'hp-up',
+      'gold-star',
+      'heal',
     ]);
+  });
+
+  it('L5 彩蛋高台（§51）：目標層高存在於平台表且為氣流柱可達高台', () => {
+    const egg = LEVELS[4]?.easterEggs[0];
+    if (egg?.trigger !== 'stand-count') throw new Error('L5 彩蛋型別不符');
+    expect(LEVELS[4]?.platforms.some((p) => p.y === egg.platformY)).toBe(true);
+    expect(egg.platformY).toBeLessThan(272);
   });
 
   it('L2 彩蛋平台層高存在於平台表（272 為最高層）', () => {

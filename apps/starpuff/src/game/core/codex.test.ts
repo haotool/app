@@ -3,7 +3,7 @@ import { ASSETS } from './assets';
 import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部九種小怪與魔王（v7 drilly/glowy 入鑑）', () => {
+  it('收錄全部十二種小怪與雙魔王（v8 spora/gusty/boomy/noctra 入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -14,7 +14,11 @@ describe('CODEX_MONSTERS', () => {
       'zappy',
       'drilly',
       'glowy',
+      'spora',
+      'gusty',
+      'boomy',
       'boss',
+      'noctra',
     ]);
   });
 
@@ -25,11 +29,13 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47），殼殼與鑽鑽鼴標條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52），殼殼與鑽鑽鼴標條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
-    expect(inhalable).toEqual(new Set(['jelly', 'floaty', 'puffy', 'zappy', 'glowy']));
+    expect(inhalable).toEqual(
+      new Set(['jelly', 'floaty', 'puffy', 'zappy', 'glowy', 'spora', 'gusty', 'boomy']),
+    );
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.find((m) => m.kind === 'drilly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(2);
@@ -53,16 +59,16 @@ describe('CODEX_SKILLS', () => {
     }
   });
 
-  it('涵蓋核心操作：吸入／星彈七系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
+  it('涵蓋核心操作：吸入／星彈九系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
     const names = new Set(CODEX_SKILLS.map((skill) => skill.nameZh));
-    for (const required of ['吸入', '星彈七系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
+    for (const required of ['吸入', '星彈九系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
       expect(names.has(required)).toBe(true);
     }
   });
 
-  it('首遇提示（§46/§47）：七味與六式配方文案齊備非空', () => {
-    expect(Object.keys(FLAVOR_HINTS)).toHaveLength(7);
-    expect(Object.keys(MIX_HINTS)).toHaveLength(6);
+  it('首遇提示（§46/§47/§53）：九味與九式配方文案齊備非空', () => {
+    expect(Object.keys(FLAVOR_HINTS)).toHaveLength(9);
+    expect(Object.keys(MIX_HINTS)).toHaveLength(9);
     for (const hint of [...Object.values(FLAVOR_HINTS), ...Object.values(MIX_HINTS)]) {
       expect(hint.length).toBeGreaterThan(0);
     }

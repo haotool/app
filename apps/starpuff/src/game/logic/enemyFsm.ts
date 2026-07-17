@@ -124,3 +124,128 @@ export function tickGlowy(glowMs: number, deltaMs: number): GlowyTick {
   }
   return { glowMs: next, phase: 'drift', progress: 0 };
 }
+
+// 孢子菇 Spora 週期（§52）：定點紮根 idle → 末段 0.7s 預警圈擴張 windup → 週期滿向上
+// 噴孢子雲 burst（雲滯留 cloudMs 區域拒止，走 hazards 管線）；沿 glowy 單計時器模式。
+export const SPORA_FSM = {
+  intervalMs: 3600,
+  windupMs: 700,
+  cloudMs: 1600,
+  cloudRadiusPx: 66,
+  cloudOffsetY: -64,
+} as const;
+
+export type SporaPhase = 'idle' | 'windup' | 'burst';
+
+export interface SporaTick {
+  sporaMs: number;
+  phase: SporaPhase;
+  // windup 期預警擴張進度 0..1；其餘相位恆 0。
+  progress: number;
+}
+
+export function tickSpora(sporaMs: number, deltaMs: number): SporaTick {
+  const next = sporaMs + deltaMs;
+  if (next >= SPORA_FSM.intervalMs) return { sporaMs: 0, phase: 'burst', progress: 0 };
+  const windupStart = SPORA_FSM.intervalMs - SPORA_FSM.windupMs;
+  if (next >= windupStart) {
+    return { sporaMs: next, phase: 'windup', progress: (next - windupStart) / SPORA_FSM.windupMs };
+  }
+  return { sporaMs: next, phase: 'idle', progress: 0 };
+}
+
+// 風飄鳥 Gusty 四態（§52）：水平漂移 drift →（玩家進觸發域）→ 前搖 windup 0.5s（懸停
+// 抖動）→ 俯衝 dive 0.6s（朝鎖定點高速撲擊）→ 回升 recover 0.9s → drift。
+export const GUSTY_FSM = {
+  windupMs: 500,
+  diveMs: 600,
+  recoverMs: 900,
+  triggerRangePx: 200,
+  diveSpeed: 340,
+  // 側風（§52）：drift 期近域對玩家的水平位移推移（positional drift，不與速度控制器對抗）。
+  windRangeX: 130,
+  windRangeY: 90,
+  windDriftPxPerSec: 60,
+} as const;
+
+export type GustyState = 'drift' | 'windup' | 'dive' | 'recover';
+
+export interface GustyTick {
+  state: GustyState;
+  stateMs: number;
+  entered: GustyState | null;
+}
+
+export function tickGusty(
+  state: GustyState,
+  stateMs: number,
+  deltaMs: number,
+  shouldDive: boolean,
+): GustyTick {
+  const next = stateMs + deltaMs;
+  if (state === 'drift' && shouldDive) return { state: 'windup', stateMs: 0, entered: 'windup' };
+  if (state === 'windup' && next >= GUSTY_FSM.windupMs)
+    return { state: 'dive', stateMs: 0, entered: 'dive' };
+  if (state === 'dive' && next >= GUSTY_FSM.diveMs)
+    return { state: 'recover', stateMs: 0, entered: 'recover' };
+  if (state === 'recover' && next >= GUSTY_FSM.recoverMs)
+    return { state: 'drift', stateMs: 0, entered: 'drift' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 側風推移方向（§52）：drift 期玩家位於作用域內時，被推離 gusty 的水平方向；域外為 0。
+export function gustWindPush(
+  playerX: number,
+  playerY: number,
+  gustyX: number,
+  gustyY: number,
+): -1 | 0 | 1 {
+  if (Math.abs(playerX - gustyX) > GUSTY_FSM.windRangeX) return 0;
+  if (Math.abs(playerY - gustyY) > GUSTY_FSM.windRangeY) return 0;
+  return playerX < gustyX ? -1 : 1;
+}
+
+// 迴力殼 Boomy 四態（§52）：巡邏 walk → 週期滿前搖 windup 0.5s（定身舉殼）→ 投擲 throw
+//（生成迴旋殼刃，去而復返雙判定）→ 冷卻 cool 1.4s → walk。
+// 殼刃彈道：去程 360×0.8/2 ≈ 144px；壽命 2×turnMs＋緩衝，逾時必回收（anti-softlock）。
+export const BOOMY_FSM = {
+  walkMs: 2200,
+  windupMs: 500,
+  coolMs: 1400,
+  shellSpeed: 360,
+  shellTurnMs: 800,
+  shellLifeMs: 2000,
+} as const;
+
+export type BoomyState = 'walk' | 'windup' | 'throw' | 'cool';
+
+export interface BoomyTick {
+  state: BoomyState;
+  stateMs: number;
+  entered: BoomyState | null;
+}
+
+export function tickBoomy(state: BoomyState, stateMs: number, deltaMs: number): BoomyTick {
+  const next = stateMs + deltaMs;
+  if (state === 'walk' && next >= BOOMY_FSM.walkMs)
+    return { state: 'windup', stateMs: 0, entered: 'windup' };
+  if (state === 'windup' && next >= BOOMY_FSM.windupMs)
+    return { state: 'throw', stateMs: 0, entered: 'throw' };
+  // throw 為單幀事件態：呈現層生成殼刃後即入冷卻。
+  if (state === 'throw') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= BOOMY_FSM.coolMs)
+    return { state: 'walk', stateMs: 0, entered: 'walk' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 迴旋彈道（§52/§53 共用）：去程勻減速、turnMs 折返點反向，2×turnMs 回到原點等速；
+// 敵方殼刃與玩家迴旋星同走此純函式，回程亦有判定。
+export function boomerangVelocity(
+  elapsedMs: number,
+  directionX: 1 | -1,
+  speed: number,
+  turnMs: number,
+): number {
+  const progress = Math.max(-1, 1 - elapsedMs / turnMs);
+  return speed * directionX * progress;
+}

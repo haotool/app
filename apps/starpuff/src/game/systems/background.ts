@@ -45,6 +45,15 @@ interface ThemeSpec {
   ambience: AmbienceSpec;
 }
 
+// v8 貼圖重用別名（§55）：L6 迴聲石廊重用星空回廊橫景，以 grade/ambience 變化辨識。
+const TEXTURE_ALIAS: Record<string, string> = {
+  'bg-gallery': 'bg-arena',
+};
+
+function textureKeyOf(bgKey: string): string {
+  return `${TEXTURE_ALIAS[bgKey] ?? bgKey}-l`;
+}
+
 // 主題以關卡 bgKey 索引（§25：花瓣/雲絮/星塵/金塵；分級 tint 統一 alpha 0.06）。
 const THEMES: Record<string, ThemeSpec> = {
   'bg-meadow': {
@@ -92,6 +101,43 @@ const THEMES: Record<string, ThemeSpec> = {
       alpha: 0.85,
       scale: { start: 0.85, end: 0.25 },
       speedY: { min: 16, max: 30 },
+      tumble: false,
+    },
+  },
+  // v8 新 biome（§55）：峽谷暖風絮／石廊回聲光塵／蝕月銀星塵。
+  'bg-canyon': {
+    grade: 0xf0b088,
+    ambience: {
+      texture: AMB_TEXTURES.wisp,
+      tint: [0xfff1e0, 0xffe3ce],
+      blend: 'NORMAL',
+      alpha: 0.45,
+      scale: { start: 1.1, end: 0.7 },
+      speedY: { min: 20, max: 38 },
+      tumble: false,
+    },
+  },
+  'bg-gallery': {
+    grade: 0x8a6fd0,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0xa8c8f0, 0xd8e8ff, 0xc9b8ff],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.9, end: 0.3 },
+      speedY: { min: 24, max: 42 },
+      tumble: true,
+    },
+  },
+  'bg-eclipse': {
+    grade: 0x4e4478,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xd8d0f0, 0xffe9a8],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.8, end: 0.25 },
+      speedY: { min: 14, max: 26 },
       tumble: false,
     },
   },
@@ -200,7 +246,7 @@ function bindViewResize(scene: Phaser.Scene, relayout: () => void): () => void {
 
 // 一站式關卡背景：平鋪關雙層視差（近景 0.6 / 遠景雲 0.25 + 自漂移）；魔王關單張置中 cover。
 export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec): BackgroundHandle {
-  const key = `${level.bgKey}-l`;
+  const key = textureKeyOf(level.bgKey);
   const theme = THEMES[level.bgKey];
   const objects: Phaser.GameObjects.GameObject[] = [];
   let near: Phaser.GameObjects.TileSprite | null = null;
