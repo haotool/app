@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import clsx from 'clsx';
 import { SYMBOL_META, type MarketSymbol } from '../../config/market';
+import { type BestQuote } from '../OrderBookPanel';
 import {
   MAKER_FEE_RATE,
   QTY_DISPLAY_DECIMALS,
@@ -33,6 +34,8 @@ interface OrderFormProps {
   onLimitPriceChange: (value: string) => void;
   // 圖表頁 CTA 帶入的預選方向：強調該側按鈕、淡化另一側。
   emphasisSide?: Side | null;
+  // 訂單簿頂檔快照：買1／賣1 快捷鈕點擊時讀取，不隨簿 tick 重渲表單。
+  bestQuoteRef?: RefObject<BestQuote>;
 }
 
 const MODE_TABS: { id: OrderMode; label: string }[] = [
@@ -48,6 +51,7 @@ export function OrderForm({
   limitPrice,
   onLimitPriceChange,
   emphasisSide = null,
+  bestQuoteRef,
 }: OrderFormProps) {
   const [unit, setUnit] = useState<AmountUnit>('usdt');
   const [amount, setAmount] = useState('');
@@ -99,6 +103,13 @@ export function OrderForm({
         ? trimNumberInput(notional, 2)
         : trimNumberInput(notional / priceForCalc, QTY_DISPLAY_DECIMALS),
     );
+  }
+
+  function applyBestQuote(side: keyof BestQuote) {
+    const price = bestQuoteRef?.current[side] ?? null;
+    if (price === null) return;
+    setError(null);
+    onLimitPriceChange(trimNumberInput(price, 6));
   }
 
   function toggleUnit() {
@@ -160,6 +171,10 @@ export function OrderForm({
   const liqPreviewShort =
     priceForCalc !== null ? liquidationPrice('short', priceForCalc, leverage) : null;
 
+  const notional = qty !== null && priceForCalc !== null ? qty * priceForCalc : null;
+  const marginPreview = notional !== null ? notional / leverage : null;
+  const feePreview = notional !== null ? notional * feeRate : null;
+
   return (
     <form
       aria-label="下單表單"
@@ -188,19 +203,39 @@ export function OrderForm({
       </div>
 
       {mode === 'limit' && (
-        <label className="flex flex-col gap-1">
+        // 快捷鈕不得包在 label 內：label 點擊會轉發回 input，改以 aria-label 提供名稱。
+        <div className="flex flex-col gap-1">
           <span className="text-caption text-text-3">限價（USDT）</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={limitPrice}
-            onChange={(event) => onLimitPriceChange(event.target.value)}
-            placeholder={
-              markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
-            }
-            className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
-          />
-        </label>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={limitPrice}
+              onChange={(event) => onLimitPriceChange(event.target.value)}
+              placeholder={
+                markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
+              }
+              aria-label="限價（USDT）"
+              className="h-11 min-w-0 flex-1 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={() => applyBestQuote('bid')}
+              aria-label="帶入買1價"
+              className="min-h-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-long active:bg-border"
+            >
+              買1
+            </button>
+            <button
+              type="button"
+              onClick={() => applyBestQuote('ask')}
+              aria-label="帶入賣1價"
+              className="min-h-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-short active:bg-border"
+            >
+              賣1
+            </button>
+          </div>
+        </div>
       )}
 
       <label className="flex flex-col gap-1">
@@ -277,6 +312,18 @@ export function OrderForm({
         <div className="flex justify-between">
           <dt className="text-text-3">可用資金</dt>
           <dd className="text-text-2 tabular-nums">{formatAmount(available, 2)} USDT</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-text-3">保證金</dt>
+          <dd className="text-text-2 tabular-nums">
+            {marginPreview !== null ? `≈ ${formatAmount(marginPreview, 2)} USDT` : '--'}
+          </dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-text-3">預估手續費（{mode === 'limit' ? 'Maker' : 'Taker'}）</dt>
+          <dd className="text-text-2 tabular-nums">
+            {feePreview !== null ? `≈ ${formatAmount(feePreview, 4)} USDT` : '--'}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-text-3">多單預估強平</dt>

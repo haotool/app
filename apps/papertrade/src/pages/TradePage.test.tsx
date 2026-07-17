@@ -285,6 +285,64 @@ describe('TradePage', () => {
     expect(account.balance).toBeGreaterThanOrEqual(0);
   });
 
+  it('fills best bid and best ask via the limit quick buttons', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    act(() => {
+      wsHandlers.get('orderbook.50.BTCUSDT')?.({
+        type: 'snapshot',
+        data: {
+          b: [['59900', '1.5']],
+          a: [['60100', '2']],
+          u: 100,
+        },
+      });
+    });
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.click(screen.getByRole('button', { name: '帶入買1價' }));
+    expect(screen.getByRole('textbox', { name: '限價（USDT）' })).toHaveValue('59900');
+
+    await user.click(screen.getByRole('button', { name: '帶入賣1價' }));
+    expect(screen.getByRole('textbox', { name: '限價（USDT）' })).toHaveValue('60100');
+  });
+
+  it('previews margin and taker fee for the entered amount', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    expect(screen.getByText('保證金')).toBeInTheDocument();
+    const feeTerm = screen.getByText('預估手續費（Taker）');
+    expect(feeTerm).toBeInTheDocument();
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    // 6000/10 = 600 保證金；6000×0.00055 = 3.3 taker 手續費。
+    expect(screen.getByText('≈ 600 USDT')).toBeInTheDocument();
+    expect(screen.getByText('≈ 3.3 USDT')).toBeInTheDocument();
+  });
+
+  it('shows placeholders for margin and fee when the amount is empty and maker fee in limit mode', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    const dl = screen.getByText('保證金').closest('dl');
+    expect(dl).not.toBeNull();
+    expect(within(dl as HTMLElement).getAllByText('--').length).toBeGreaterThanOrEqual(2);
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    expect(screen.getByText('預估手續費（Maker）')).toBeInTheDocument();
+  });
+
+  it('explains the isolated margin mode from the header pill', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '保證金模式說明：逐倉' }));
+    const sheet = screen.getByRole('dialog', { name: '保證金模式' });
+    expect(within(sheet).getByText(/逐倉/)).toBeInTheDocument();
+  });
+
   it('sets take profit from the position card sheet', async () => {
     const user = userEvent.setup();
     renderTrade();

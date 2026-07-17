@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import clsx from 'clsx';
 import { ORDERBOOK_DISPLAY_LEVELS, type MarketSymbol } from '../config/market';
 import { type OrderBookLevel } from '../services/orderbook';
@@ -91,10 +91,17 @@ export function OrderBookPanel({ symbol }: OrderBookPanelProps) {
   );
 }
 
+// 頂檔報價快照：以 ref 供下單表單點擊時讀取，避免訂單簿 tick 重渲表單。
+export interface BestQuote {
+  bid: number | null;
+  ask: number | null;
+}
+
 interface CompactOrderBookProps {
   symbol: MarketSymbol;
   levels?: number;
   onPriceSelect?: (price: number) => void;
+  quoteRef?: RefObject<BestQuote>;
 }
 
 // 中線錨定訂單簿的高度預算：檔位列 44px 觸控、表頭與中間價列為固定開銷估值。
@@ -150,10 +157,17 @@ export function CompactOrderBook({
   symbol,
   levels = ORDERBOOK_DISPLAY_LEVELS,
   onPriceSelect,
+  quoteRef,
 }: CompactOrderBookProps) {
   const book = useOrderbook(symbol);
   const rootRef = useRef<HTMLElement>(null);
   const [sideLevels, setSideLevels] = useState(levels);
+
+  useEffect(() => {
+    if (quoteRef !== undefined) {
+      quoteRef.current = { bid: book.bids[0]?.[0] ?? null, ask: book.asks[0]?.[0] ?? null };
+    }
+  }, [quoteRef, book]);
 
   useEffect(() => {
     const root = rootRef.current;
