@@ -14,6 +14,11 @@ export const TRADE_ERROR_MESSAGES: Record<TradeError, string> = {
   'not-found': '找不到對應的持倉',
 };
 
+export const TPSL_INPUT_MESSAGES = {
+  tp: '止盈價須為大於 0 的數字',
+  sl: '止損價須為大於 0 的數字',
+} as const;
+
 const positiveInputSchema = z.coerce.number().finite().positive();
 
 export function parsePositiveInput(value: string): number | null {

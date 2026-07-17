@@ -1,5 +1,6 @@
 import { useState, type RefObject } from 'react';
 import clsx from 'clsx';
+import { ChevronDown } from 'lucide-react';
 import { SYMBOL_META, type MarketSymbol } from '../../config/market';
 import { type BestQuote } from '../OrderBookPanel';
 import {
@@ -17,6 +18,7 @@ import {
   maxOpenNotional,
   parseOrderForm,
   parsePositiveInput,
+  TPSL_INPUT_MESSAGES,
   TRADE_ERROR_MESSAGES,
   trimNumberInput,
 } from '../../lib/tradeForm';
@@ -56,6 +58,9 @@ export function OrderForm({
   const [unit, setUnit] = useState<AmountUnit>('usdt');
   const [amount, setAmount] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [tpslOpen, setTpslOpen] = useState(false);
+  const [tp, setTp] = useState('');
+  const [sl, setSl] = useState('');
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const available = useTradeStore((state) => state.account.balance);
@@ -124,6 +129,16 @@ export function OrderForm({
     setUnit(nextUnit);
   }
 
+  // 收合即清空：已輸入值不留存，送出永遠只帶展開中的欄位，狀態單一真相。
+  function toggleTpsl() {
+    if (tpslOpen) {
+      setTp('');
+      setSl('');
+    }
+    setTpslOpen(!tpslOpen);
+    setError(null);
+  }
+
   function submit(side: Side) {
     let price: number;
     if (mode === 'market') {
@@ -146,10 +161,37 @@ export function OrderForm({
       return;
     }
 
+    const tpValue = tp.trim() === '' ? undefined : parsePositiveInput(tp);
+    if (tpValue === null) {
+      setError(TPSL_INPUT_MESSAGES.tp);
+      return;
+    }
+    const slValue = sl.trim() === '' ? undefined : parsePositiveInput(sl);
+    if (slValue === null) {
+      setError(TPSL_INPUT_MESSAGES.sl);
+      return;
+    }
+
     const result =
       mode === 'market'
-        ? openMarketOrder({ symbol, side, qty: parsed.qty, price: parsed.price, leverage })
-        : placeLimitOrder({ symbol, side, qty: parsed.qty, limitPrice: parsed.price, leverage });
+        ? openMarketOrder({
+            symbol,
+            side,
+            qty: parsed.qty,
+            price: parsed.price,
+            leverage,
+            tp: tpValue,
+            sl: slValue,
+          })
+        : placeLimitOrder({
+            symbol,
+            side,
+            qty: parsed.qty,
+            limitPrice: parsed.price,
+            leverage,
+            tp: tpValue,
+            sl: slValue,
+          });
 
     if (!result.ok) {
       setError(TRADE_ERROR_MESSAGES[result.error]);
@@ -158,6 +200,8 @@ export function OrderForm({
 
     setError(null);
     setAmount('');
+    setTp('');
+    setSl('');
     const sideText = side === 'long' ? '買多' : '賣空';
     pushToast({
       tone: side,
@@ -341,6 +385,54 @@ export function OrderForm({
           </dd>
         </div>
       </dl>
+
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={toggleTpsl}
+          aria-expanded={tpslOpen}
+          className="flex min-h-11 w-full items-center justify-between rounded-control text-caption text-text-2 active:bg-surface-2"
+        >
+          止盈/止損（選填）
+          <ChevronDown
+            size={16}
+            className={clsx('text-text-3 transition-transform', tpslOpen && 'rotate-180')}
+            aria-hidden
+          />
+        </button>
+        {tpslOpen && (
+          <>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption text-text-3">止盈價（USDT）</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={tp}
+                onChange={(event) => {
+                  setTp(event.target.value);
+                  setError(null);
+                }}
+                placeholder="未設定"
+                className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-long"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption text-text-3">止損價（USDT）</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={sl}
+                onChange={(event) => {
+                  setSl(event.target.value);
+                  setError(null);
+                }}
+                placeholder="未設定"
+                className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-short"
+              />
+            </label>
+          </>
+        )}
+      </div>
 
       {error !== null && (
         <p role="alert" className="rounded bg-short-bg px-2.5 py-1.5 text-caption text-short">

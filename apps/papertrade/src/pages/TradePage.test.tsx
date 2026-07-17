@@ -343,6 +343,119 @@ describe('TradePage', () => {
     expect(within(sheet).getByText(/逐倉/)).toBeInTheDocument();
   });
 
+  it('renders the tp/sl section collapsed by default and expands on toggle', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    const toggle = screen.getByRole('button', { name: '止盈/止損（選填）' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('textbox', { name: /止盈價/ })).not.toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('textbox', { name: /止盈價/ })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /止損價/ })).toBeInTheDocument();
+  });
+
+  it('clears entered tp/sl on collapse so collapsed values never attach', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    const toggle = screen.getByRole('button', { name: '止盈/止損（選填）' });
+    await user.click(toggle);
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
+    await user.type(screen.getByRole('textbox', { name: /止損價/ }), '59000');
+    await user.click(toggle);
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+    expect(useTradeStore.getState().account.positions[0]?.takeProfit).toBeNull();
+    expect(useTradeStore.getState().account.positions[0]?.stopLoss).toBeNull();
+
+    await user.click(toggle);
+    expect(screen.getByRole('textbox', { name: /止盈價/ })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: /止損價/ })).toHaveValue('');
+  });
+
+  it('opens a market order with tp/sl applied and shown on the position card', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
+    await user.type(screen.getByRole('textbox', { name: /止損價/ }), '59000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    const position = useTradeStore.getState().account.positions[0];
+    expect(position?.takeProfit).toBe(61000);
+    expect(position?.stopLoss).toBe(59000);
+    expect(screen.getByText(/止盈 61,000/)).toBeInTheDocument();
+    expect(screen.getByText(/止損 59,000/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows an inline error for a wrong-direction tp and keeps the account unchanged', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('止盈價須優於開倉價（多單高於、空單低於）');
+    expect(useTradeStore.getState().account.positions).toHaveLength(0);
+    expect(useTradeStore.getState().account.balance).toBe(10000);
+  });
+
+  it('shows an inline error for a non-numeric tp input', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), 'abc');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('止盈價須為大於 0 的數字');
+  });
+
+  it('attaches tp/sl to a placed limit order', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '58000');
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
+    await user.type(screen.getByRole('textbox', { name: /止損價/ }), '57000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '5800');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    const order = useTradeStore.getState().account.orders[0];
+    expect(order?.takeProfit).toBe(59000);
+    expect(order?.stopLoss).toBe(57000);
+  });
+
+  it('opens via the 100% slider combined with tp/sl without rejection', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    fireEvent.change(screen.getByRole('slider', { name: '數量比例' }), {
+      target: { value: '100' },
+    });
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
+    await user.type(screen.getByRole('textbox', { name: /止損價/ }), '59000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    const position = useTradeStore.getState().account.positions[0];
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(position?.takeProfit).toBe(61000);
+    expect(position?.stopLoss).toBe(59000);
+  });
+
   it('sets take profit from the position card sheet', async () => {
     const user = userEvent.setup();
     renderTrade();
