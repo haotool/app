@@ -1,11 +1,12 @@
 import type { MagazineSlot, StarFlavor } from '../core/config';
+import type { TransformForm } from '../core/types';
 
 // 星化變身純狀態機（GAME_DESIGN §57，不 import phaser），vitest 對象。
 // 觸發語意：彈匣同系星彈 ×3（滿匣）長按吸入鍵 0.6s＝變身，優先於星暴（§23 滿匣長按
 // 僅在非同系滿匣時維持星暴語意）；變身期間吸入停用、B 鍵改役形態技，再長按 0.6s 提前
 // 解除（不返彈）。anti-softlock：變身永不為破關必需，全關卡純標準星保底線不變。
 
-export type TransformForm = 'volt' | 'gale' | 'shell';
+export type { TransformForm } from '../core/types';
 
 export const TRANSFORM = {
   holdMs: 600,

@@ -5,15 +5,26 @@ import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { playSfx } from '../audio/sfx';
 import { burstSmall, landingDust, spawnTelegraph } from './fx';
 
+// EX 變體選項與擊破分裂 hook（§58）：分裂生成走 GameScene 正式 spawn 管線。
+export interface BossOptions {
+  ex?: boolean;
+  onSplit?: (x: number, y: number, count: number) => void;
+}
+
+// 傷害來源（§57/§58）：volt＝雷化鏈電束（可中斷 Noctra 召喚）、reflect＝殼化反彈回傷。
+export type BossDamageSource = 'star' | 'volt' | 'reflect';
+
 export interface BossHandle {
   spawn(): void;
-  applyDamage(amount: number): void;
+  applyDamage(amount: number, source?: BossDamageSource): void;
   update(deltaMs: number): void;
   destroy(): void;
   isActive(): boolean;
   getBody(): Phaser.GameObjects.GameObject;
   getProjectiles(): Phaser.Physics.Arcade.Group;
   getShockwaves(): Phaser.Physics.Arcade.Group;
+  // 魔王頭頂 hit window（§58）：下砸命中頭頂時嘗試觸發暈眩，成功回 true（品種各自裁決）。
+  trySlamStun(): boolean;
   // P3 追蹤彈目標（§30）：GameScene 注入玩家參照，與 enemies.setTarget 同模式。
   setTarget(target: { x: number; y: number } | null): void;
   onMinionDrop(handler: () => void): void;
@@ -69,16 +80,18 @@ function ensureTextures(scene: Phaser.Scene): void {
   bake('boss-shockwave', 0xb69df0, 60, 16);
 }
 
-export function createBoss(scene: Phaser.Scene): BossHandle {
+export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): BossHandle {
   ensureTextures(scene);
 
-  const fsm = createBossFsm();
+  const fsm = createBossFsm({ ex: options.ex === true });
   const minionHandlers: (() => void)[] = [];
   const timers: Phaser.Time.TimerEvent[] = [];
   let active = false;
   let dying = false;
   let side: 'left' | 'right' = 'right';
   let target: { x: number; y: number } | null = null;
+  // 頭頂命中短暈（§58）：暈眩窗內不重複觸發。
+  let stunUntilMs = 0;
 
   const viewW = () => scene.scale.width;
   const sideX = (which: 'left' | 'right') =>
@@ -189,9 +202,10 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     const ball = projectiles.get(x, y, 'boss-jelly-ball') as Phaser.Physics.Arcade.Sprite | null;
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
-    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時須復位。
+    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時 / 反彈標記須復位。
     ball.clearTint();
     ball.setData('homingMs', 0);
+    ball.setData('reflected', false);
     (ball.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
     return ball;
   };
@@ -438,6 +452,8 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     delay(INTRO_RESET_MS, () => {
       wobble.play();
       active = true;
+      // EX 入場變色（§58）：緋紅呼吸循環作為變體識別基調（P2/P3 轉換色照常覆蓋）。
+      if (options.ex) startTintCycle({ r: 255, g: 255, b: 255 }, { r: 216, g: 75, b: 106 }, 900);
     });
   };
 
@@ -479,6 +495,10 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
             break;
           case 'defeated':
             dieSequence();
+            break;
+          case 'split':
+            // EX 擊破分裂（§58）：於魔王位置生成小果凍，走 GameScene 正式 spawn 管線。
+            options.onSplit?.(sprite.x, sprite.y, event.count);
             break;
           default: {
             const unhandled: never = event;
@@ -530,6 +550,30 @@ export function createBoss(scene: Phaser.Scene): BossHandle {
     },
     isActive() {
       return active;
+    },
+    // 頭頂命中短暈（§58）：任何時點命中頭頂皆可觸發；暈眩窗內防連續重觸。
+    trySlamStun() {
+      if (!active || dying || scene.time.now < stunUntilMs) return false;
+      stunUntilMs = scene.time.now + BOSS.slamStunMs;
+      fsm.stun(BOSS.slamStunMs);
+      playSfx('metal', 0.7);
+      // 暈眩演出：灰化＋昏沉搖擺，期滿復原（enrage 呼吸循環讓位後回復）。
+      enrageTween?.pause();
+      sprite.setTint(0xcfcfcf);
+      scene.tweens.add({
+        targets: sprite,
+        angle: { from: -6, to: 6 },
+        duration: 180,
+        yoyo: true,
+        repeat: Math.floor(BOSS.slamStunMs / 360),
+      });
+      delay(BOSS.slamStunMs, () => {
+        if (dying) return;
+        sprite.setAngle(0);
+        if (enrageTween) enrageTween.resume();
+        else sprite.clearTint();
+      });
+      return true;
     },
     getBody() {
       return sprite;

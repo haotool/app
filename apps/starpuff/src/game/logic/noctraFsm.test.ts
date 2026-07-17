@@ -120,3 +120,52 @@ describe('createNoctraFsm takeDamage（事件流）', () => {
     expect(command?.kind).toBe('barrage');
   });
 });
+
+describe('EX 變體（§58）', () => {
+  it('HP ×1.5（105）、節奏 ×1.15；P3 循環追加 eclipse', () => {
+    const fsm = createNoctraFsm({ ex: true });
+    expect(fsm.maxHp).toBe(105);
+    expect(fsm.speedFactor).toBeCloseTo(1.15, 5);
+    expect(noctraAttackCycle('p3', true)).toEqual(['barrage', 'sweep', 'bomb', 'eclipse']);
+    expect(noctraAttackCycle('p3')).toEqual(['barrage', 'sweep', 'bomb']);
+  });
+
+  it('EX P3 走完循環會發出 eclipse 指令（含矩陣參數）', () => {
+    const fsm = createNoctraFsm({ ex: true });
+    fsm.takeDamage(75);
+    expect(fsm.phase).toBe('p3');
+    const kinds: string[] = [];
+    for (let i = 0; i < 2000 && !kinds.includes('eclipse'); i += 1) {
+      const command = fsm.tick(50);
+      if (command && command.kind !== 'hover') kinds.push(command.kind);
+    }
+    expect(kinds).toContain('eclipse');
+  });
+});
+
+describe('雷化中斷召喚與俯衝長暈（§58）', () => {
+  const driveTo = (fsm: ReturnType<typeof createNoctraFsm>, kind: string): boolean => {
+    for (let i = 0; i < 2000; i += 1) {
+      const command = fsm.tick(50);
+      if (command?.kind === kind) return true;
+    }
+    return false;
+  };
+
+  it('interruptSummon 僅於召喚態成立：成功回 hover 並回 true', () => {
+    const fsm = createNoctraFsm();
+    expect(fsm.interruptSummon()).toBe(false);
+    fsm.takeDamage(30);
+    expect(driveTo(fsm, 'summon')).toBe(true);
+    expect(fsm.state).toBe('summon');
+    expect(fsm.interruptSummon()).toBe(true);
+    expect(fsm.state).toBe('hover');
+  });
+
+  it('stun 停拍 diveStunMs：期間無指令、期滿恢復', () => {
+    const fsm = createNoctraFsm();
+    fsm.stun(NOCTRA.diveStunMs);
+    expect(fsm.tick(NOCTRA.diveStunMs - 1)).toBeNull();
+    expect(fsm.tick(1)).not.toBeNull();
+  });
+});

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
-import { SceneKeys, type CodexTab } from '../core/types';
+import { loadSave } from '../core/save';
+import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
 import { playSfx } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
@@ -148,6 +149,16 @@ export class CodexScene extends Phaser.Scene {
           color: TEXT_DARK,
         })
         .setOrigin(0.5);
+      // EX 紀念星章（§58）：EX 擊破過的魔王條目掛紫星。
+      const exLevel: Partial<Record<string, LevelId>> = { boss: 4, noctra: 7 };
+      const exLevelId = exLevel[monster.kind];
+      if (exLevelId !== undefined && loadSave().levels[exLevelId]?.exCleared === true) {
+        this.add
+          .image(cx + 26, top + 12, 'fx-star')
+          .setDisplaySize(20, 20)
+          .setTint(0x9b7bd8)
+          .setDepth(6);
+      }
       // 可吸標記：圓點 + 文字（綠=可吸、琥珀=條件可吸、灰=不可吸），禁 emoji。
       const badge = this.add.container(cx, top + 86);
       const dotColor = monster.inhalable ? 0x3dbb8a : monster.conditional ? 0xe8a33d : 0x9a9aa8;

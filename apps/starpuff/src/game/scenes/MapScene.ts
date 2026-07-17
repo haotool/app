@@ -192,6 +192,8 @@ export class MapScene extends Phaser.Scene {
             strokeThickness: 3,
           })
           .setOrigin(0.5);
+        // EX 挑戰（§58）：已通關魔王節點的第二入口；EX 通關掛紀念星章（紫星）。
+        if (level.boss) this.addExEntrance(level.id, level.nameZh, x, y, save);
       }
 
       if (status === 'open' && !revealing) this.pulseNode(node);
@@ -262,6 +264,59 @@ export class MapScene extends Phaser.Scene {
     );
   }
 
+  // EX 挑戰第二入口（§58）：節點上方小徽鈕；EX 已通關改掛紫星紀念章＋可重玩。
+  private addExEntrance(
+    levelId: LevelId,
+    nameZh: string,
+    x: number,
+    y: number,
+    save: SaveData,
+  ): void {
+    const exY = y - NODE_RADIUS - 26;
+    const exCleared = save.levels[levelId]?.exCleared === true;
+    const badge = this.add
+      .text(x, exY, 'EX 挑戰', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '13px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        backgroundColor: exCleared ? '#7a5fb8' : '#d84b6a',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5)
+      .setDepth(8);
+    this.tweens.add({
+      targets: badge,
+      scale: 1.08,
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    if (exCleared) {
+      const star = this.add
+        .image(x - NODE_RADIUS + 4, y - NODE_RADIUS + 6, 'fx-star')
+        .setDisplaySize(26, 26)
+        .setTint(0x9b7bd8)
+        .setDepth(6);
+      this.tweens.add({
+        targets: star,
+        angle: -8,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
+    addDomButton(
+      this,
+      `EX 挑戰 ${nameZh}`,
+      { x, y: exY, w: 108, h: 44 },
+      () => this.enterLevel(levelId, true),
+      `node-${levelId}-ex`,
+    );
+  }
+
   // 當前可挑戰節點脈動（§39）。
   private pulseNode(node: Phaser.GameObjects.Container): void {
     this.tweens.add({
@@ -274,12 +329,12 @@ export class MapScene extends Phaser.Scene {
     });
   }
 
-  private enterLevel(levelId: LevelId): void {
+  private enterLevel(levelId: LevelId, ex = false): void {
     unlockAudio();
     // 地圖進關同步啟動 BGM（審查修復 #724）：startBgm 冪等，重複呼叫不疊音軌。
     startBgm();
     playSfx('pop');
-    this.scene.start(SceneKeys.Game, { levelId, deaths: 0 });
+    this.scene.start(SceneKeys.Game, { levelId, deaths: 0, ex });
   }
 
   private addBackButton(): void {

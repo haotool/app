@@ -22,7 +22,14 @@ import {
   type GameEventName,
 } from '../core/events';
 import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
-import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
+import {
+  loadSave,
+  persistSave,
+  recordEgg,
+  recordExClear,
+  recordLevelClear,
+  type SaveData,
+} from '../core/save';
 import { SceneKeys, type BossKind, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
@@ -34,6 +41,7 @@ import {
   steerTowardTarget,
 } from '../logic/homing';
 import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
+import { GALE_FLIGHT, SHELL_REFLECT, TRANSFORM_FORMS, VOLT_BEAM } from '../logic/transform';
 import {
   advanceEgg,
   createEggProgress,
@@ -90,6 +98,8 @@ const BOLT_FADE_MS = 200;
 interface GameSceneData {
   levelId?: LevelId;
   deaths?: number;
+  // EX 變體挑戰（§58）：已通關魔王節點的第二入口。
+  ex?: boolean;
 }
 
 const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
@@ -110,6 +120,8 @@ export class GameScene extends Phaser.Scene {
   private save!: SaveData;
   // 本關累計死亡次數：死亡重試與敗北重試皆延續，結算畫面展示。
   private deaths = 0;
+  // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
+  private exMode = false;
   private startedAt = 0;
   // 魔王擊破瞬間鎖存的通關用時（審查修復 #724）；非 boss 關恆 null 走即時計算。
   private clearTimeMs: number | null = null;
@@ -148,6 +160,7 @@ export class GameScene extends Phaser.Scene {
   init(data: GameSceneData): void {
     this.currentLevelId = data.levelId ?? 1;
     this.deaths = data.deaths ?? 0;
+    this.exMode = data.ex === true;
   }
 
   create(): void {
@@ -438,6 +451,13 @@ export class GameScene extends Phaser.Scene {
       // 半入地無害態（§47 drilly 潛地/前搖）：不結算觸碰傷害。
       if (this.enemies.isPhasedOut(enemy as Phaser.GameObjects.GameObject)) return;
       const target = asSprite(enemy);
+      // 雷化帶電體（§57）：接觸對小怪放電（damage CD 節流），玩家觸碰傷害照常結算。
+      const contactDamage = this.playerFormSpec()?.contactDamage ?? 0;
+      if (contactDamage > 0) {
+        const zapped = this.enemies.damage(enemy as Phaser.GameObjects.GameObject, contactDamage);
+        if (zapped !== 'ignored') this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
+        if (zapped === 'killed') return;
+      }
       // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
       const { x, y } = this.player.sprite;
       if (
@@ -456,14 +476,45 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player.sprite, bossBody, () => {
       if (this.finished || this.transitioning || this.bossDown) return;
-      this.player.takeDamage(this.bossTouchDamage, asSprite(bossBody).x);
+      const boss = asSprite(bossBody);
+      const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+      // 魔王頭頂 hit window（§58）：下砸命中上半身＝頭頂——嘗試觸發暈眩並回彈，免體傷。
+      if (this.player.isSlamming() && playerBody.bottom <= boss.y) {
+        const stunned = this.boss.trySlamStun();
+        this.player.onSlamBounce();
+        this.fx.burstSmall(this.player.sprite.x, playerBody.bottom, 0xffd966);
+        if (stunned) this.fx.shake(8);
+        return;
+      }
+      this.player.takeDamage(this.bossTouchDamage, boss.x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getProjectiles(), (_p, ball) => {
       const projectile = asSprite(ball);
       if (!projectile.active || this.finished || this.transitioning) return;
+      if (projectile.getData('reflected') === true) return;
+      // 殼化反彈（§57/§58）：彈幕不傷身，反向射回魔王（反傷走 reflect 管線結算）。
+      if (this.playerFormSpec()?.reflectProjectiles) {
+        projectile.setData('reflected', true);
+        projectile.setTint(TRANSFORM_FORMS.shell.tint);
+        (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+        const boss = asSprite(this.boss.getBody());
+        this.physics.moveTo(projectile, boss.x, boss.y, SHELL_REFLECT.speed);
+        playSfx('metal');
+        return;
+      }
       projectile.disableBody(true, true);
       this.player.takeDamage(this.bossTouchDamage, projectile.x);
+    });
+
+    // 反彈彈幕回傷（§57/§58）：僅帶反彈標記的彈體對魔王結算。
+    this.physics.add.overlap(bossBody, this.boss.getProjectiles(), (a, b) => {
+      const projectile = asSprite(a === bossBody ? b : a);
+      if (!projectile.active || projectile.getData('reflected') !== true) return;
+      if (!this.boss.isActive()) return;
+      projectile.disableBody(true, true);
+      this.fx.burstSmall(projectile.x, projectile.y, TRANSFORM_FORMS.shell.tint);
+      this.boss.applyDamage(SHELL_REFLECT.damage, 'reflect');
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getShockwaves(), (_p, wave) => {
@@ -525,12 +576,17 @@ export class GameScene extends Phaser.Scene {
     // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
     bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
       this.resolveSlamImpact(x, y);
-      this.stage.damageBricksInRadius(x, y, SLAM.radiusPx);
+      this.stage.damageBricksInRadius(x, y, this.slamRadiusPx());
     });
     // 殼盾格擋成功（§40）：正面反擊星爆，波及面前小怪。
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
       this.resolveShieldCounter(x, y, facing),
     );
+    // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、此處結算世界效果。
+    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) => {
+      if (kind === 'volt-beam') this.resolveVoltBeam(x, y, facing);
+      else this.resolveGaleLanding(x, y);
+    });
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
@@ -564,7 +620,9 @@ export class GameScene extends Phaser.Scene {
       // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
       // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
       this.clearTimeMs = this.levelTimeMs();
-      persistSave(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
+      // EX 擊破（§58）：僅記 exCleared 紀念星章，不動一般通關與最佳時間。
+      if (this.exMode) persistSave(recordExClear(this.save, this.currentLevelId));
+      else persistSave(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
     bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
@@ -732,10 +790,25 @@ export class GameScene extends Phaser.Scene {
   private buildBoss(kind: BossKind): { handle: BossHandle; bodyDamage: number } {
     switch (kind) {
       case 'jellord':
-        return { handle: createBoss(this), bodyDamage: BOSS.bodyDamage };
+        return {
+          handle: createBoss(this, {
+            ex: this.exMode,
+            // EX 擊破分裂（§58）：於魔王位置生成小果凍，走正式 spawn 管線。
+            onSplit: (x, y, count) => {
+              for (let i = 0; i < count; i += 1) {
+                this.enemies.spawn('jelly', x + (i - (count - 1) / 2) * 46, y - 20);
+              }
+            },
+          }),
+          bodyDamage: BOSS.bodyDamage,
+        };
       case 'noctra':
         return {
-          handle: createNoctra(this, { summonFloaty: (cap) => this.summonFloaty(cap) }),
+          handle: createNoctra(
+            this,
+            { summonFloaty: (cap) => this.summonFloaty(cap) },
+            { ex: this.exMode },
+          ),
           bodyDamage: NOCTRA.bodyDamage,
         };
       default: {
@@ -987,13 +1060,25 @@ export class GameScene extends Phaser.Scene {
     if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
   }
 
+  // 玩家當前形態規格（§57）：未變身為 null。
+  private playerFormSpec(): (typeof TRANSFORM_FORMS)['volt'] | null {
+    const form = this.player.getTransformState().form;
+    return form ? TRANSFORM_FORMS[form] : null;
+  }
+
+  // 下衝擊有效半徑（§57）：殼化下砸範圍加倍。
+  private slamRadiusPx(): number {
+    return SLAM.radiusPx * (this.playerFormSpec()?.slamRadiusMul ?? 1);
+  }
+
   // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。
   private resolveSlamImpact(x: number, y: number): void {
     this.fx.shake(6);
+    const radius = this.slamRadiusPx();
     for (const child of this.enemies.getGroup().getChildren()) {
       if (!child.active) continue;
       const enemy = asSprite(child);
-      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > SLAM.radiusPx) continue;
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > radius) continue;
       const outcome = this.enemies.damage(child, SLAM.damage);
       if (outcome === 'hurt') {
         const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed, SLAM.knockbackLift);
@@ -1014,6 +1099,67 @@ export class GameScene extends Phaser.Scene {
         Phaser.Math.Distance.Between(originX, y, enemy.x, enemy.y) <= SHELL_SHIELD.counterRadiusPx
       ) {
         this.enemies.damage(child, SHELL_SHIELD.counterDamage);
+      }
+    }
+  }
+
+  // 雷化鏈電束（§57）：短程面向側取最近目標（小怪或魔王）主傷，再沿雷鏈跳電波及。
+  private resolveVoltBeam(x: number, y: number, facing: 1 | -1): void {
+    interface BeamTarget {
+      x: number;
+      y: number;
+      ref: Phaser.GameObjects.GameObject | null;
+    }
+    const candidates: BeamTarget[] = [];
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
+    }
+    if (this.boss.isActive()) {
+      const body = asSprite(this.boss.getBody());
+      candidates.push({ x: body.x, y: body.y, ref: null });
+    }
+    const inFront = candidates.filter((c) => Math.sign(c.x - x) === facing || c.x === x);
+    const target = pickChainTargets(x, y, inFront, 1, VOLT_BEAM.rangePx)[0];
+    if (!target) return;
+    playSfx('zap');
+    this.drawBolt(x, y, target.x, target.y);
+    this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
+    if (target.ref) this.enemies.damage(target.ref, VOLT_BEAM.damage);
+    else this.boss.applyDamage(VOLT_BEAM.damage, 'volt');
+    // 跳電波及：以主目標為原點取最近小怪（排除主目標）。
+    const rest = candidates.filter((c) => c.ref && c.ref !== target.ref);
+    let fromX = target.x;
+    let fromY = target.y;
+    for (const hop of pickChainTargets(
+      target.x,
+      target.y,
+      rest,
+      VOLT_BEAM.chainCount,
+      VOLT_BEAM.rangePx,
+    )) {
+      this.drawBolt(fromX, fromY, hop.x, hop.y);
+      this.fx.burstSmall(hop.x, hop.y, TRANSFORM_FORMS.volt.tint);
+      if (hop.ref) this.enemies.damage(hop.ref, VOLT_BEAM.chainDamage);
+      fromX = hop.x;
+      fromY = hop.y;
+    }
+  }
+
+  // 風化落地衝擊（§57）：小範圍傷害＋輕擊退（半徑/傷害低於下衝擊，零彈藥消耗）。
+  private resolveGaleLanding(x: number, y: number): void {
+    this.fx.shake(3);
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = asSprite(child);
+      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > GALE_FLIGHT.landingRadiusPx) {
+        continue;
+      }
+      const outcome = this.enemies.damage(child, GALE_FLIGHT.landingDamage);
+      if (outcome === 'hurt') {
+        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed * 0.7, SLAM.knockbackLift);
+        enemy.setVelocity(kb.x, kb.y);
       }
     }
   }

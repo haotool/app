@@ -6,6 +6,7 @@ import {
   isLevelUnlocked,
   nodeStatus,
   parseSave,
+  recordExClear,
   recordLevelClear,
   recordEgg,
   eggsFoundCount,
@@ -38,7 +39,12 @@ describe('parseSave（§38 容錯）', () => {
         lastPlayedAt: 123,
       }),
     );
-    expect(save.levels[1]).toEqual({ cleared: true, bestTimeMs: 42000, eggsFound: ['reach-x'] });
+    expect(save.levels[1]).toEqual({
+      cleared: true,
+      bestTimeMs: 42000,
+      eggsFound: ['reach-x'],
+      exCleared: false,
+    });
     expect(save.levels[2]).toBeUndefined();
     expect(save.lastPlayedAt).toBe(123);
   });
@@ -130,6 +136,31 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 6, 1000);
     save = recordLevelClear(save, 7, 1000);
     expect(currentChallenge(save)).toBeNull();
+  });
+
+  it('v9 exCleared（§58）：additive 欄位——舊檔缺省 false、僅信任明確 true、記錄不動一般通關', () => {
+    // 舊存檔缺 exCleared：載入回落 false，不 crash。
+    const legacy = parseSave(
+      clearedSave({ levels: { 4: { cleared: true, bestTimeMs: 74000, eggsFound: [] } } }),
+    );
+    expect(legacy.levels[4]?.exCleared).toBe(false);
+    // 損毀值（非 true）一律回落 false；明確 true 保留。
+    const dirty = parseSave(
+      clearedSave({
+        levels: {
+          4: { cleared: true, bestTimeMs: 1, eggsFound: [], exCleared: 'yes' },
+          7: { cleared: true, bestTimeMs: 1, eggsFound: [], exCleared: true },
+        },
+      }),
+    );
+    expect(dirty.levels[4]?.exCleared).toBe(false);
+    expect(dirty.levels[7]?.exCleared).toBe(true);
+    // recordExClear 僅標記星章：cleared/bestTime 不動。
+    let save = recordLevelClear(createDefaultSave(), 4, 30000);
+    save = recordExClear(save, 4);
+    expect(save.levels[4]?.exCleared).toBe(true);
+    expect(save.levels[4]?.cleared).toBe(true);
+    expect(save.levels[4]?.bestTimeMs).toBe(30000);
   });
 
   it('v8 存檔相容（§50）：舊 v1 存檔（1-4 通關）載入後 L5 開放、L6/L7 鎖定且不損資料', () => {

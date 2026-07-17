@@ -1,4 +1,5 @@
 import type { BossPhase } from '../core/types';
+import { EX_MODS } from './bossFsm';
 
 // 暗月蝠王 Noctra FSM 純邏輯（GAME_DESIGN §54，不 import phaser），vitest 對象。
 // 平行於 bossFsm.ts 的表驅動模式：phase truth 全數收斂於此，禁止散落 scene。
@@ -23,9 +24,22 @@ export const NOCTRA = {
   summonDurationMs: 900,
   barrageDurationMs: 1400,
   sweepDurationMs: 1700,
+  eclipseDurationMs: 1500,
+  // 俯衝落地 hit window（§58）：窗內頭頂下砸觸發長暈。
+  diveStunWindowMs: 600,
+  diveStunMs: 1800,
 } as const;
 
-export type NoctraAction = 'hover' | 'bomb' | 'dive' | 'summon' | 'barrage' | 'sweep';
+// Noctra EX 專屬（§58）：月蝕彈幕矩陣——分列直落彈網、每波留缺口通道。
+export const EX_NOCTRA = {
+  eclipseCols: 9,
+  eclipseRows: 2,
+  eclipseGapCols: 2,
+  eclipseFallSpeed: 150,
+  eclipseRowDelayMs: 520,
+} as const;
+
+export type NoctraAction = 'hover' | 'bomb' | 'dive' | 'summon' | 'barrage' | 'sweep' | 'eclipse';
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
@@ -38,15 +52,16 @@ export function noctraPhaseForHp(hp: number, maxHp: number): BossPhase {
   return hp <= maxHp * NOCTRA.phase2HpRatio ? 'p2' : 'p1';
 }
 
-// 三階段招式循環（§54）：P1 盤旋投彈＋俯衝；P2 俯衝連擊＋召喚；P3 狂暴彈幕＋全場俯掠。
-export function noctraAttackCycle(phase: BossPhase): readonly NoctraAction[] {
+// 三階段招式循環（§54/§58）：P1 盤旋投彈＋俯衝；P2 俯衝連擊＋召喚；P3 狂暴彈幕＋全場俯掠；
+// EX P3 追加月蝕彈幕矩陣（表驅動，禁止散落 scene）。
+export function noctraAttackCycle(phase: BossPhase, ex = false): readonly NoctraAction[] {
   switch (phase) {
     case 'p1':
       return ['bomb', 'dive'];
     case 'p2':
       return ['bomb', 'dive', 'dive', 'summon'];
     case 'p3':
-      return ['barrage', 'sweep', 'bomb'];
+      return ex ? ['barrage', 'sweep', 'bomb', 'eclipse'] : ['barrage', 'sweep', 'bomb'];
     default: {
       const unhandled: never = phase;
       throw new Error(`未知階段：${String(unhandled)}`);
@@ -58,8 +73,9 @@ export function noctraNextAction(
   phase: BossPhase,
   previous: NoctraAction | null,
   cycleIndex: number,
+  ex = false,
 ): { action: NoctraAction; cycleIndex: number } {
-  const cycle = noctraAttackCycle(phase);
+  const cycle = noctraAttackCycle(phase, ex);
   if (previous === null) return { action: cycle[0] ?? 'hover', cycleIndex: 0 };
   const index = (cycleIndex + 1) % cycle.length;
   return { action: cycle[index] ?? 'hover', cycleIndex: index };
@@ -76,7 +92,8 @@ export type NoctraCommand =
   | { kind: 'dive' }
   | { kind: 'summon'; cap: number }
   | { kind: 'barrage'; count: number }
-  | { kind: 'sweep' };
+  | { kind: 'sweep' }
+  | { kind: 'eclipse'; cols: number; rows: number; gapCols: number };
 
 export type NoctraHitEvent =
   | { kind: 'damaged'; hp: number }
@@ -93,10 +110,20 @@ export interface NoctraFsm {
   readonly defeated: boolean;
   tick(deltaMs: number): NoctraCommand | null;
   takeDamage(amount: number): NoctraHitEvent[];
+  // 俯衝落地窗頭頂命中長暈（§58）：回盤旋並停拍 durationMs。
+  stun(durationMs: number): void;
+  // 雷化鏈電中斷召喚（§58）：僅召喚態可中斷，成功回 true。
+  interruptSummon(): boolean;
 }
 
-export function createNoctraFsm(): NoctraFsm {
-  let hp: number = NOCTRA.maxHp;
+export interface NoctraFsmOptions {
+  ex?: boolean;
+}
+
+export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
+  const ex = options.ex === true;
+  const maxHp = Math.round(NOCTRA.maxHp * (ex ? EX_MODS.hpMul : 1));
+  let hp: number = maxHp;
   let phase: BossPhase = 'p1';
   let state: NoctraAction = 'hover';
   let lastAttack: NoctraAction | null = null;
@@ -105,7 +132,7 @@ export function createNoctraFsm(): NoctraFsm {
   let damageSinceDrop = 0;
   let defeated = false;
 
-  const speedFactor = (): number => SPEED_FACTORS[phase];
+  const speedFactor = (): number => SPEED_FACTORS[phase] * (ex ? EX_MODS.speedMul : 1);
 
   const durationMs = (action: NoctraAction): number => {
     switch (action) {
@@ -121,6 +148,8 @@ export function createNoctraFsm(): NoctraFsm {
         return NOCTRA.barrageDurationMs / speedFactor();
       case 'sweep':
         return NOCTRA.sweepDurationMs / speedFactor();
+      case 'eclipse':
+        return NOCTRA.eclipseDurationMs / speedFactor();
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -142,6 +171,13 @@ export function createNoctraFsm(): NoctraFsm {
         return { kind: 'barrage', count: NOCTRA.barrageCount };
       case 'sweep':
         return { kind: 'sweep' };
+      case 'eclipse':
+        return {
+          kind: 'eclipse',
+          cols: EX_NOCTRA.eclipseCols,
+          rows: EX_NOCTRA.eclipseRows,
+          gapCols: EX_NOCTRA.eclipseGapCols,
+        };
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -154,7 +190,7 @@ export function createNoctraFsm(): NoctraFsm {
       return hp;
     },
     get maxHp() {
-      return NOCTRA.maxHp;
+      return maxHp;
     },
     get phase() {
       return phase;
@@ -173,7 +209,7 @@ export function createNoctraFsm(): NoctraFsm {
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'hover') {
-        const next = noctraNextAction(phase, lastAttack, cycleIndex);
+        const next = noctraNextAction(phase, lastAttack, cycleIndex, ex);
         state = next.action;
         cycleIndex = next.cycleIndex;
         lastAttack = state;
@@ -188,7 +224,7 @@ export function createNoctraFsm(): NoctraFsm {
       if (defeated || amount <= 0) return [];
       hp = Math.max(0, hp - amount);
       const events: NoctraHitEvent[] = [{ kind: 'damaged', hp }];
-      const nextPhase = noctraPhaseForHp(hp, NOCTRA.maxHp);
+      const nextPhase = noctraPhaseForHp(hp, maxHp);
       if (nextPhase !== phase) {
         const previousFactor = SPEED_FACTORS[phase];
         phase = nextPhase;
@@ -209,6 +245,17 @@ export function createNoctraFsm(): NoctraFsm {
         events.push({ kind: 'defeated' });
       }
       return events;
+    },
+    stun(durationMs: number): void {
+      if (defeated) return;
+      state = 'hover';
+      timerMs = durationMs;
+    },
+    interruptSummon(): boolean {
+      if (defeated || state !== 'summon') return false;
+      state = 'hover';
+      timerMs = NOCTRA.idleMs / speedFactor();
+      return true;
     },
   };
 }

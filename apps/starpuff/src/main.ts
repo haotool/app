@@ -103,6 +103,7 @@ declare global {
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
+      transform: () => { form: string | null; remainingMs: number };
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
@@ -151,6 +152,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       internals().player.grantStar(flavor);
     },
     shieldRaised: () => internals().player.isShieldRaised(),
+    // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
+    transform: () => internals().player.getTransformState(),
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
