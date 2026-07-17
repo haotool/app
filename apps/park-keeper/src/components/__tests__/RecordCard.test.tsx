@@ -246,6 +246,14 @@ describe('RecordCard', () => {
     expect(screen.queryByText(/N\/A/)).toBeNull();
   });
 
+  it('未填車號（sentinel）時編輯／刪除按鈕 accessible name 走 formatPlate，不裸露 N/A（round-3 Grok/Sonnet P2）', () => {
+    renderRecordCard({ plateNumber: 'N/A' });
+
+    expect(screen.getByRole('button', { name: '編輯車牌 未填車號' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '刪除停車記錄 未填車號' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /N\/A/ })).toBeNull();
+  });
+
   it('compact 精簡列隱藏照片＋地圖列，保留車牌編輯與刪除（issue #733）', () => {
     renderRecordCard({ notes: '柱子旁' }, { compact: true });
 
