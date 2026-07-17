@@ -121,6 +121,21 @@ describe('G1 觸控目標 ≥44px（min-h-11 class 鎖定）', () => {
     expect(share?.className).toContain('min-h-11');
   });
 
+  it('History：展開後新增備注鈕（min-h-11）與備注確認鈕（w-11 h-11）', () => {
+    useStore.setState({ expenses: [EXPENSE] });
+    renderWith(<HistoryTab />);
+
+    fireEvent.click(screen.getByTestId('expense-card').querySelector('button[aria-expanded]')!);
+
+    const addNote = screen.getByText(i18n.t('history.add_note')).closest('button');
+    expect(addNote?.className).toContain('min-h-11');
+
+    fireEvent.click(addNote!);
+    const confirm = screen.getByRole('button', { name: i18n.t('common.confirm') });
+    expect(confirm.className).toContain('w-11');
+    expect(confirm.className).toContain('h-11');
+  });
+
   it('EditExpenseSheet：付款人 chips', () => {
     useStore.setState({ expenses: [EXPENSE] });
     renderWith(<HistoryTab />);
