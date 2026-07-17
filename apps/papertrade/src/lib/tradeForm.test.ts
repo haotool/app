@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maxOpenNotional, parseOrderForm, trimNumberInput } from './tradeForm';
+import { amountToPercent, maxOpenNotional, parseOrderForm, trimNumberInput } from './tradeForm';
 import { TAKER_FEE_RATE } from '../config/trading';
 
 describe('trimNumberInput', () => {
@@ -39,6 +39,34 @@ describe('maxOpenNotional + trimNumberInput integration', () => {
         expect(margin + fee).toBeLessThanOrEqual(balance);
       }
     }
+  });
+});
+
+describe('amountToPercent', () => {
+  it('maps a usdt amount to its share of max notional, rounded', () => {
+    expect(amountToPercent(5000, 'usdt', 60000, 10000)).toBe(50);
+    expect(amountToPercent(3333, 'usdt', null, 10000)).toBe(33);
+  });
+
+  it('converts base amounts through the price', () => {
+    expect(amountToPercent(0.05, 'base', 60000, 10000)).toBe(30);
+  });
+
+  it('clamps to the 0-100 range', () => {
+    expect(amountToPercent(25000, 'usdt', 60000, 10000)).toBe(100);
+    expect(amountToPercent(0.0001, 'usdt', 60000, 10000)).toBe(0);
+  });
+
+  it('returns 0 without amount, price for base unit, or positive max notional', () => {
+    expect(amountToPercent(null, 'usdt', 60000, 10000)).toBe(0);
+    expect(amountToPercent(1, 'base', null, 10000)).toBe(0);
+    expect(amountToPercent(5000, 'usdt', 60000, 0)).toBe(0);
+  });
+
+  it('round-trips the 100% fill back to 100', () => {
+    const maxNotional = maxOpenNotional(10000, 10, TAKER_FEE_RATE);
+    const filled = Number(trimNumberInput(maxNotional, 2));
+    expect(amountToPercent(filled, 'usdt', 60000, maxNotional)).toBe(100);
   });
 });
 

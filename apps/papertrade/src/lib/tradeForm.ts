@@ -71,7 +71,20 @@ export function maxOpenNotional(available: number, leverage: number, feeRate: nu
   return available / (1 / leverage + feeRate);
 }
 
-// 向下截斷而非四捨五入：快捷鈕回填的數量不得超過來源上限（進位會使 100% 必然拒單）。
+// 滑桿位置＝amount 對最大可開名目價值的比例；base 單位需價格換算，無價格時視為 0。
+export function amountToPercent(
+  amountValue: number | null,
+  unit: AmountUnit,
+  price: number | null,
+  maxNotional: number,
+): number {
+  if (amountValue === null || maxNotional <= 0) return 0;
+  const notional = unit === 'usdt' ? amountValue : price === null ? null : amountValue * price;
+  if (notional === null) return 0;
+  return Math.min(100, Math.max(0, Math.round((notional / maxNotional) * 100)));
+}
+
+// 向下截斷而非四捨五入：比例回填的數量不得超過來源上限（進位會使 100% 必然拒單）。
 // toPrecision(15) 先吸收乘法浮點偽差，避免 0.29*100=28.999... 被誤截成 0.28。
 export function trimNumberInput(value: number, decimals: number): string {
   const factor = 10 ** decimals;

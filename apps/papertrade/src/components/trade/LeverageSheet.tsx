@@ -16,16 +16,29 @@ export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSh
   return (
     <BottomSheet open={open} title="調整槓桿" onClose={onClose}>
       <p className="text-center text-price-xl font-semibold tabular-nums text-primary">{draft}x</p>
-      <input
-        type="range"
-        aria-label="槓桿倍數"
-        min={LEVERAGE_MIN}
-        max={LEVERAGE_MAX}
-        step={1}
-        value={draft}
-        onChange={(event) => setDraft(Number(event.target.value))}
-        className="mt-4 h-11 w-full accent-primary"
-      />
+      <div className="relative mt-4">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+          style={{
+            width: `calc(10px + (100% - 20px) * ${(draft - LEVERAGE_MIN) / (LEVERAGE_MAX - LEVERAGE_MIN)})`,
+          }}
+        />
+        <input
+          type="range"
+          aria-label="槓桿倍數"
+          min={LEVERAGE_MIN}
+          max={LEVERAGE_MAX}
+          step={1}
+          value={draft}
+          onChange={(event) => setDraft(Number(event.target.value))}
+          className="range-input relative"
+        />
+      </div>
       <div className="mt-1 flex justify-between text-caption text-text-3 tabular-nums">
         <span>{LEVERAGE_MIN}x</span>
         <span>{LEVERAGE_MAX}x</span>

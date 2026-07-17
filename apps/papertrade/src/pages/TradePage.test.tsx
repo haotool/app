@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -184,23 +184,68 @@ describe('TradePage', () => {
     expect(screen.getByRole('textbox', { name: '限價（USDT）' })).toHaveValue('59900');
   });
 
-  it('applies percent presets to the amount input', async () => {
-    const user = userEvent.setup();
+  it('writes the amount from the percent slider', () => {
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '25%' }));
+    const slider = screen.getByRole('slider', { name: '數量比例' });
+    fireEvent.change(slider, { target: { value: '25' } });
+
     const input = screen.getByRole('textbox', { name: '數量（USDT）' });
     expect(input).not.toHaveValue('');
     const notional = Number((input as HTMLInputElement).value);
     expect(notional).toBeGreaterThan(20000);
     expect(notional).toBeLessThan(25000);
+    expect(slider).toHaveValue('25');
+    expect(slider).toHaveAttribute('aria-valuetext', '25%');
   });
 
-  it('opens a position deterministically via the 100% preset on a fresh account', async () => {
+  it('reflects manual amount input on the slider position', async () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '100%' }));
+    // maxNotional ≈ 99453：一半金額應顯示 50%。
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '49726');
+    const slider = screen.getByRole('slider', { name: '數量比例' });
+    expect(slider).toHaveValue('50');
+    expect(slider).toHaveAttribute('aria-valuetext', '50%');
+  });
+
+  it('clamps the slider at 100% for oversized manual amounts', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '200000');
+    expect(screen.getByRole('slider', { name: '數量比例' })).toHaveValue('100');
+  });
+
+  it('clears the amount when the slider is dragged back to 0', () => {
+    renderTrade();
+
+    const slider = screen.getByRole('slider', { name: '數量比例' });
+    fireEvent.change(slider, { target: { value: '50' } });
+    fireEvent.change(slider, { target: { value: '0' } });
+    expect(screen.getByRole('textbox', { name: '數量（USDT）' })).toHaveValue('');
+  });
+
+  it('disables the slider in limit mode until a limit price is entered', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    const slider = screen.getByRole('slider', { name: '數量比例' });
+    expect(slider).toBeDisabled();
+
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '58000');
+    expect(slider).toBeEnabled();
+  });
+
+  it('opens a position deterministically via the 100% slider on a fresh account', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    fireEvent.change(screen.getByRole('slider', { name: '數量比例' }), {
+      target: { value: '100' },
+    });
     await user.click(screen.getByRole('button', { name: '買多' }));
 
     const { account } = useTradeStore.getState();

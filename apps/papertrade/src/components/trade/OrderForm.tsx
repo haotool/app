@@ -4,7 +4,7 @@ import { SYMBOL_META, type MarketSymbol } from '../../config/market';
 import {
   MAKER_FEE_RATE,
   QTY_DISPLAY_DECIMALS,
-  SIZE_PERCENT_PRESETS,
+  SIZE_SLIDER_TICKS,
   TAKER_FEE_RATE,
 } from '../../config/trading';
 import { liquidationPrice } from '../../engine/math';
@@ -12,6 +12,7 @@ import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
 import {
+  amountToPercent,
   maxOpenNotional,
   parseOrderForm,
   parsePositiveInput,
@@ -81,11 +82,18 @@ export function OrderForm({
         : `≈ ${formatAmount(qty * priceForCalc, 2)} USDT`
       : null;
 
+  const maxNotional = maxOpenNotional(available, leverage, feeRate);
+  const sliderPct = amountToPercent(amountValue, unit, priceForCalc, maxNotional);
+  const sliderDisabled = priceForCalc === null || maxNotional <= 0;
+
   function applyPercent(pct: number) {
     if (priceForCalc === null) return;
-    const notional = maxOpenNotional(available, leverage, feeRate) * (pct / 100);
-    if (notional <= 0) return;
     setError(null);
+    const notional = maxNotional * (pct / 100);
+    if (notional <= 0) {
+      setAmount('');
+      return;
+    }
     setAmount(
       unit === 'usdt'
         ? trimNumberInput(notional, 2)
@@ -223,21 +231,46 @@ export function OrderForm({
         )}
       </label>
 
-      {/* 3+2 網格讓每顆快捷鈕在 58% 欄寬下仍有 ≥60px 觸控寬。 */}
-      <div className="grid grid-cols-6 gap-1" role="group" aria-label="數量快捷比例">
-        {SIZE_PERCENT_PRESETS.map((pct, index) => (
-          <button
-            key={pct}
-            type="button"
-            onClick={() => applyPercent(pct)}
-            className={clsx(
-              'min-h-11 w-full rounded bg-surface-2 text-caption text-text-2 tabular-nums active:bg-border',
-              index < 3 ? 'col-span-2' : 'col-span-3',
-            )}
-          >
-            {pct}%
-          </button>
-        ))}
+      {/* 滑桿＝amount 對最大可開的比例投影：amount 為單一真相，拖曳依 % 回寫。
+          軌道自繪；填充與刻度以 calc 對齊 20px 把手的行程（兩端各內縮 10px）。 */}
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+            style={{ width: `calc(10px + (100% - 20px) * ${sliderPct / 100})` }}
+          />
+          {SIZE_SLIDER_TICKS.map((tick) => (
+            <span
+              key={tick}
+              aria-hidden
+              className={clsx(
+                'pointer-events-none absolute top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full',
+                sliderPct >= tick && !sliderDisabled ? 'bg-primary' : 'bg-border',
+              )}
+              style={{ left: `calc(10px + (100% - 20px) * ${tick / 100})` }}
+            />
+          ))}
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={sliderPct}
+            disabled={sliderDisabled}
+            onChange={(event) => applyPercent(Number(event.target.value))}
+            aria-label="數量比例"
+            aria-valuetext={`${sliderPct}%`}
+            className="range-input relative"
+          />
+        </div>
+        <span className="w-10 shrink-0 text-right text-caption text-text-2 tabular-nums">
+          {sliderPct}%
+        </span>
       </div>
 
       <dl className="flex flex-col gap-1 text-caption">
