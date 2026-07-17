@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+126
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,11 @@
 - ID：reward-starpuff-v8-world-expansion
 - 原因：StarPuff 內容止於四關單魔王，v8 需擴張世界（3 新關/3 新怪/第二魔王/九系星彈）且不得破壞舊存檔與 anti-softlock 不變式
 - 解法：FSM-first 表驅動擴充（noctraFsm/updraft/enemyFsm 純函式配單測）＋LevelSpec 契約改版（elites 陣列/boss 品種），素材 Codex 配額 6/6 生成入庫，261 unit＋40 e2e 全綠且舊 v1 存檔七節點相容
+
+- 日期：2026-07-17
+- ID：reward-park-keeper-lcp-inline-defer
+- 原因：產線 LH P 中位 92 卡 PRD ≥95 gate，根因為 render-blocking CSS 鏈＋head module 鏈綁死 LCP＋edge TTFB
+- 解法：CSS 內聯 SSG HTML＋JS 延後 load 注入（A/B 實證全延後 100 vs 保留 preload 97、互動代價僅 +183ms、CTA 橋接防拍照落失）＋LCP entry 面積約束；本地 LH ×5 中位 100（LCP -69%），CSP 產線相容經 response header 實證
 
 - 日期：2026-07-17
 - ID：neutral-ci-release-pr-checks-dispatch
