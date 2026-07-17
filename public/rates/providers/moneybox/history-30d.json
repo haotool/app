@@ -1,12 +1,12 @@
 {
   "providerId": "moneybox",
-  "generatedAt": "2026-07-17T01:07:04.756Z",
+  "generatedAt": "2026-07-17T04:21:36.379Z",
   "snapshots": [
     {
       "date": "2026-07-17",
       "raw": {
-        "timestamp": "2026-07-17T01:07:04.557Z",
-        "updateTime": "2026/07/17 10:07:04",
+        "timestamp": "2026-07-17T04:21:35.913Z",
+        "updateTime": "2026/07/17 13:21:35",
         "source": "MoneyBox (明洞換匯所聯盟)",
         "sourceUrl": "https://moneybox-exchange.com/zh-CHT/exchange",
         "apiUrl": "https://cems.moneybox.or.kr/api/cmd.php?cmd=C011&key=U1D8I4W7V6S1L3U4F3I4",
@@ -15,7 +15,7 @@
           "USD": {
             "currency": "USD",
             "base": 1481.5,
-            "buy": 1485,
+            "buy": 1483,
             "sell": 1468,
             "spbuy": 1507.42,
             "spsell": 1455.58
@@ -24,7 +24,7 @@
             "currency": "JPY",
             "base": 912.48,
             "buy": 915,
-            "sell": 905,
+            "sell": 906,
             "spbuy": 928.44,
             "spsell": 896.52
           },
@@ -32,14 +32,14 @@
             "currency": "CNY",
             "base": 218.74,
             "buy": 217.9,
-            "sell": 216,
+            "sell": 216.2,
             "spbuy": 229.67,
             "spsell": 207.81
           },
           "EUR": {
             "currency": "EUR",
             "base": 1695.35,
-            "buy": 1695,
+            "buy": 1693,
             "sell": 1675,
             "spbuy": 1729.08,
             "spsell": 1661.62
@@ -56,7 +56,7 @@
             "currency": "TWD",
             "base": 45.9,
             "buy": 44.9,
-            "sell": 44,
+            "sell": 44.5,
             "spbuy": 51.91,
             "spsell": 41.31
           },
@@ -72,7 +72,7 @@
             "currency": "THB",
             "base": 44.1,
             "buy": 46,
-            "sell": 45,
+            "sell": 45.4,
             "spbuy": 46.3,
             "spsell": 41.46
           },
@@ -111,7 +111,7 @@
           "AUD": {
             "currency": "AUD",
             "base": 1036.46,
-            "buy": 1035,
+            "buy": 1029,
             "sell": 1025,
             "spbuy": 1056.87,
             "spsell": 1016.05
