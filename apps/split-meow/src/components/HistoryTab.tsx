@@ -560,17 +560,26 @@ export function HistoryTab() {
                                   e.preventDefault();
                                   commitNote(exp.id);
                                 }}
-                                className="shrink-0 text-primary cursor-pointer"
+                                aria-label={t('common.confirm')}
+                                className="shrink-0 w-11 h-11 -my-2 -mr-2.5 flex items-center justify-center text-primary cursor-pointer"
                               >
-                                <span className="material-symbols-outlined text-[16px]">check</span>
+                                <span
+                                  className="material-symbols-outlined text-[16px]"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>
                               </button>
                             </div>
                           ) : (
                             <button
                               onClick={(e) => startEditNote(exp.id, exp.note, e)}
-                              className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
+                              className="flex items-center gap-1.5 min-h-11 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
                             >
-                              <span className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors">
+                              <span
+                                className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors"
+                                aria-hidden="true"
+                              >
                                 {exp.note ? 'edit' : 'add'}
                               </span>
                               <span className={cn(exp.note ? 'text-on-surface' : 'opacity-60')}>
