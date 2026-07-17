@@ -5,10 +5,12 @@ import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
 import {
   BOOMY_FSM,
+  GUSTY_FSM,
   SPORA_FSM,
-  boomerangVelocity,
+  gustWindPush,
   resolveDrillyHit,
   resolveShellyHit,
+  tickBoomerangBody,
   type DrillyState,
   type ShellyState,
 } from '../logic/enemyFsm';
@@ -54,6 +56,8 @@ export interface EnemySystem {
   freeze(enemy: Phaser.GameObjects.GameObject, durationMs: number): void;
   // 孢子緩速（§53 孢子星/毒爆雲）：緩速期水平速度封頂＋週期輕持續傷，期滿自復。
   applySlow(enemy: Phaser.GameObjects.GameObject, slowMs: number, dotDamage: number): void;
+  // 環境力（§52 Gusty 側風）：對玩家的水平位移推移，由 GameScene 逐幀委派。
+  applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number): void;
   removeInhaled(enemy: Phaser.GameObjects.GameObject): void;
   kindOf(enemy: Phaser.GameObjects.GameObject): EnemyKind | null;
   // 個體可吸判定（§30/§47）：kind 規則 + 個體狀態（shelly 暈眩窗、drilly 破土窗）；精英不可吸。
@@ -419,7 +423,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setTintMode(Phaser.TintModes.MULTIPLY);
     sprite.setData('kind', kind);
     sprite.setData('hopMs', 0);
-    sprite.setData('zapMs', 0);
+    // 週期計時（zappy 放電／glowy 脈衝／spora 噴發共用單計時器欄位）。
+    sprite.setData('cycleMs', 0);
     sprite.setData('phase', Math.random() * Math.PI * 2);
     sprite.setData('hp', HP[kind]);
     sprite.setData('dmgCdMs', 0);
@@ -583,6 +588,20 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       sprite.setTint(SLOW_TINT);
     },
 
+    // 側風推移（§52 Gusty）：drift 期近域對玩家水平位移推移（positional drift，
+    // 不與移動速度控制器對抗）；同域多隻不疊加——合力僅取符號方向、恆速推移（KISS）。
+    applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number) {
+      let push = 0;
+      for (const child of group.getChildren()) {
+        if (!child.active || kindOf(child) !== 'gusty') continue;
+        if (child.getData('state') !== 'drift') continue;
+        const gusty = child as Phaser.Physics.Arcade.Sprite;
+        push += gustWindPush(player.x, player.y, gusty.x, gusty.y);
+      }
+      if (push === 0) return;
+      player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
+    },
+
     // 個體可吸判定（§30/§47）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
     isInhalable(enemy: Phaser.GameObjects.GameObject): boolean {
       const kind = kindOf(enemy);
@@ -676,15 +695,20 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           continue;
         }
         hazard.setData('lifeMs', lifeMs);
-        // 迴旋殼刃（§52）：去而復返速度曲線＋自旋；孢子雲緩升淡出。
+        // 迴旋殼刃（§52）：去而復返驅動走共用 tickBoomerangBody（與迴旋星單一實作）＋自旋；
+        // 孢子雲緩升淡出。
         const boomMs = hazard.getData('boomMs') as number | undefined;
         if (boomMs !== undefined && hazard.getData('hazardKind') === 'boomerang') {
-          const next = boomMs + deltaMs;
-          hazard.setData('boomMs', next);
           const direction = hazard.getData('boomDir') as 1 | -1;
-          (hazard.body as Phaser.Physics.Arcade.Body).setVelocityX(
-            boomerangVelocity(next, direction, BOOMY_FSM.shellSpeed, BOOMY_FSM.shellTurnMs),
+          const next = tickBoomerangBody(
+            hazard.body as Phaser.Physics.Arcade.Body,
+            boomMs,
+            direction,
+            BOOMY_FSM.shellSpeed,
+            BOOMY_FSM.shellTurnMs,
+            deltaMs,
           );
+          hazard.setData('boomMs', next);
           hazard.rotation += direction * SHELL_SPIN_RAD * deltaMs;
         } else if (hazard.getData('hazardKind') === 'spore') {
           hazard.setAlpha(Math.min(0.8, (lifeMs / SPORA_FSM.cloudMs) * 1.2));

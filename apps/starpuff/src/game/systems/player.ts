@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import {
+  BOOMERANG,
   CHARGED_STAR,
   FORGIVENESS,
   INHALE,
@@ -14,6 +15,7 @@ import {
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
+import { tickBoomerangBody } from '../logic/enemyFsm';
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
   SHELL_SHIELD,
@@ -82,6 +84,8 @@ const DUST_FALL_SPEED = 300;
 // §20 星彈拖尾：疾風星拖尾加長 ×1.6，其餘維持基準長度；tint 依屬性表上色。
 const TRAIL_LIFESPAN_MS = 260;
 const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
+// 迴旋星自旋角速度（§53，與殼刃同值）。
+const BOOM_SPIN_RAD = 0.02;
 
 export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
@@ -324,9 +328,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
     star.setData('mix', slot.mix ?? null);
-    // 迴旋星（§53）：標記迴旋彈道由 GameScene 逐幀驅動；非迴旋彈清殘留。
+    // 迴旋星（§53）：標記迴旋彈道由本系統 steerBoomerangStars 逐幀驅動；非迴旋彈清殘留。
     star.setData('boomMs', spec.boomerang ? 0 : null);
     star.setData('boomDir', facing);
+    star.setData('boomSpeed', spec.speed);
     star.setRotation(0);
     star.setData(
       'fxTrail',
@@ -368,6 +373,31 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     slamming = true;
     sprite.setVelocityY(SLAM.fallVelocityY);
     squashStretch(0.8, 1.3);
+  };
+
+  // 迴旋星（§53）：去而復返速度曲線逐幀驅動＋自旋；逾時回收（anti-softlock 壽命上限）。
+  const steerBoomerangStars = (deltaMs: number): void => {
+    for (const child of stars.getChildren()) {
+      const star = child as Phaser.Physics.Arcade.Sprite;
+      if (!star.active) continue;
+      const boomMs = star.getData('boomMs') as number | null | undefined;
+      if (boomMs === null || boomMs === undefined) continue;
+      if (boomMs + deltaMs >= BOOMERANG.lifetimeMs) {
+        recycleStar(star);
+        continue;
+      }
+      const direction = star.getData('boomDir') as 1 | -1;
+      const next = tickBoomerangBody(
+        star.body as Phaser.Physics.Arcade.Body,
+        boomMs,
+        direction,
+        star.getData('boomSpeed') as number,
+        BOOMERANG.turnMs,
+        deltaMs,
+      );
+      star.setData('boomMs', next);
+      star.rotation += direction * BOOM_SPIN_RAD * deltaMs;
+    }
   };
 
   return {
@@ -552,12 +582,13 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       else if (magazine.length > 0) setPose('hero-puffed');
       else setPose('hero-idle');
 
-      // 卷軸世界以相機視野為界回收星彈。
+      // 卷軸世界以相機視野為界回收星彈；迴旋星另走壽命與回程驅動。
       const view = scene.cameras.main.worldView;
       for (const child of stars.getChildren()) {
         const star = child as Phaser.Physics.Arcade.Sprite;
         if (star.active && (star.x < view.x - 40 || star.x > view.right + 40)) recycleStar(star);
       }
+      steerBoomerangStars(deltaMs);
     },
     takeDamage(damage: number, sourceX: number) {
       // 格擋後短無敵（§40）：防同一接觸連續結算。

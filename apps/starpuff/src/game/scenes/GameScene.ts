@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import {
-  BOOMERANG,
   EGG_HP_CAP,
   ENEMY,
   INHALE,
@@ -24,10 +23,9 @@ import {
 } from '../core/events';
 import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
 import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
-import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
+import { SceneKeys, type BossKind, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
-import { GUSTY_FSM, boomerangVelocity, gustWindPush } from '../logic/enemyFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import {
   HOMING_RANGE_PX,
@@ -138,6 +136,8 @@ export class GameScene extends Phaser.Scene {
   private enemies!: EnemySystem;
   private waves!: WaveRunner;
   private boss!: BossHandle;
+  // 魔王體傷（§54）：由 buildBoss 工廠隨品種一次取齊。
+  private bossTouchDamage: number = BOSS.bodyDamage;
   private fx!: FxSystem;
   private stage!: StageHandle;
 
@@ -183,11 +183,10 @@ export class GameScene extends Phaser.Scene {
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
-    // 雙魔王（§54）：依關卡資料品種擇一建立，BossHandle 介面與事件契約共用。
-    this.boss =
-      this.level.boss === 'noctra'
-        ? createNoctra(this, { summonFloaty: (cap) => this.summonFloaty(cap) })
-        : createBoss(this);
+    // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
+    const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
+    this.boss = bossKit.handle;
+    this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
     createHud(this);
     // 精英房（§48/§52）：boss 關無精英；一關可多房，hooks 閉包延遲解析既有系統。
@@ -265,8 +264,8 @@ export class GameScene extends Phaser.Scene {
       this.syncGateSweep();
       for (const room of this.eliteRooms) room.update();
       this.steerHomingStars(deltaMs);
-      this.steerBoomerangStars(deltaMs);
-      this.syncGustWind(deltaMs);
+      // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
+      this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -457,20 +456,20 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player.sprite, bossBody, () => {
       if (this.finished || this.transitioning || this.bossDown) return;
-      this.player.takeDamage(this.bossBodyDamage(), asSprite(bossBody).x);
+      this.player.takeDamage(this.bossTouchDamage, asSprite(bossBody).x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getProjectiles(), (_p, ball) => {
       const projectile = asSprite(ball);
       if (!projectile.active || this.finished || this.transitioning) return;
       projectile.disableBody(true, true);
-      this.player.takeDamage(this.bossBodyDamage(), projectile.x);
+      this.player.takeDamage(this.bossTouchDamage, projectile.x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getShockwaves(), (_p, wave) => {
       const shockwave = asSprite(wave);
       if (!shockwave.active || this.finished || this.transitioning) return;
-      this.player.takeDamage(this.bossBodyDamage(), shockwave.x);
+      this.player.takeDamage(this.bossTouchDamage, shockwave.x);
     });
 
     // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
@@ -728,9 +727,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // 魔王體傷（§54）：依品種讀對應 FSM 常數表。
-  private bossBodyDamage(): number {
-    return this.level.boss === 'noctra' ? NOCTRA.bodyDamage : BOSS.bodyDamage;
+  // 魔王品種工廠（§54）：BossKind 唯一分派點（呈現層 handle＋體傷常數一次取齊）；
+  // 新增品種未接線將於編譯期 never 守衛失敗。
+  private buildBoss(kind: BossKind): { handle: BossHandle; bodyDamage: number } {
+    switch (kind) {
+      case 'jellord':
+        return { handle: createBoss(this), bodyDamage: BOSS.bodyDamage };
+      case 'noctra':
+        return {
+          handle: createNoctra(this, { summonFloaty: (cap) => this.summonFloaty(cap) }),
+          bodyDamage: NOCTRA.bodyDamage,
+        };
+      default: {
+        const unhandled: never = kind;
+        throw new Error(`未知魔王品種：${String(unhandled)}`);
+      }
+    }
   }
 
   // 跳躍/拍翅無契約事件，以速度轉變判定配音（buffer 觸發的跳躍無當幀按壓）。
@@ -1121,43 +1133,6 @@ export class GameScene extends Phaser.Scene {
       );
       body.setVelocity(steered.vx, steered.vy);
     }
-  }
-
-  // 迴旋星（§53）：去而復返速度曲線逐幀驅動＋自旋；逾時回收（anti-softlock 壽命上限）。
-  private steerBoomerangStars(deltaMs: number): void {
-    for (const child of this.player.getStars().getChildren()) {
-      const star = asSprite(child);
-      if (!star.active) continue;
-      const boomMs = star.getData('boomMs') as number | null | undefined;
-      if (boomMs === null || boomMs === undefined) continue;
-      const next = boomMs + deltaMs;
-      if (next >= BOOMERANG.lifetimeMs) {
-        this.player.onStarHit(star, 'absorb');
-        continue;
-      }
-      star.setData('boomMs', next);
-      const direction = star.getData('boomDir') as 1 | -1;
-      const spec = this.starSpecOf(star);
-      (star.body as Phaser.Physics.Arcade.Body).setVelocityX(
-        boomerangVelocity(next, direction, spec.speed, BOOMERANG.turnMs),
-      );
-      star.rotation += direction * 0.02 * deltaMs;
-    }
-  }
-
-  // 側風推移（§52 Gusty）：drift 期近域對玩家水平位移推移（positional drift，
-  // 不與移動速度控制器對抗）；多隻同域效果疊加。
-  private syncGustWind(deltaMs: number): void {
-    let push = 0;
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active || this.enemies.kindOf(child) !== 'gusty') continue;
-      if (child.getData('state') !== 'drift') continue;
-      const gusty = asSprite(child);
-      push += gustWindPush(this.player.sprite.x, this.player.sprite.y, gusty.x, gusty.y);
-    }
-    if (push === 0) return;
-    const clamped = Math.sign(push);
-    this.player.sprite.x += clamped * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
   }
 
   // 爆裂星 AoE（§20/§53）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算；

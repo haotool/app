@@ -249,3 +249,22 @@ export function boomerangVelocity(
   const progress = Math.max(-1, 1 - elapsedMs / turnMs);
   return speed * directionX * progress;
 }
+
+// 迴旋彈體逐幀驅動（§52 殼刃／§53 迴旋星單一實作）：推進計時並寫入水平速度，
+// 回傳推進後計時；壽命裁決與自旋留在呼叫端。body 以結構型別注入，維持 logic 層零 phaser。
+export interface BoomerangBody {
+  setVelocityX(value: number): unknown;
+}
+
+export function tickBoomerangBody(
+  body: BoomerangBody,
+  boomMs: number,
+  directionX: 1 | -1,
+  speed: number,
+  turnMs: number,
+  deltaMs: number,
+): number {
+  const next = boomMs + deltaMs;
+  body.setVelocityX(boomerangVelocity(next, directionX, speed, turnMs));
+  return next;
+}
