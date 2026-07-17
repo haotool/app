@@ -7,6 +7,7 @@ import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertAmount, formatAmount } from '../config/currencies';
+import { isRateStale } from '../lib/exchangeRate';
 
 interface HomeTabProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -28,6 +29,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     setExpenseCategory,
     currency,
     krwPerTwd,
+    rateUpdatedAtIso,
   } = useStore();
 
   const CATEGORIES = [
@@ -171,7 +173,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
               {formatAmount(totalAmount, currency)}
             </h1>
-            {/* 換算提示：另一幣別的近似金額（derived only，rate 無效時隱藏） */}
+            {/* 換算提示：另一幣別的近似金額（derived only，rate 無效時隱藏）；快照過期附 stale 短標（R10）。 */}
             {totalAmount > 0 &&
               (() => {
                 const to = currency === 'KRW' ? 'TWD' : 'KRW';
@@ -180,6 +182,9 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                 return (
                   <p className="text-xs text-on-surface-variant/50 mt-1">
                     ≈ {formatAmount(approx, to)}
+                    {isRateStale(rateUpdatedAtIso) && (
+                      <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
+                    )}
                   </p>
                 );
               })()}

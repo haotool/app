@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/utils';
+import { isRateStale } from '../lib/exchangeRate';
 import { MemberAvatar } from './MemberAvatar';
 import { EditExpenseSheet } from './EditExpenseSheet';
 import { SettlementSection, BalancesSection } from './SettlementSection';
@@ -82,18 +83,27 @@ function ParticipantAvatars({
 
 export function HistoryTab() {
   const { t } = useTranslation();
-  const { expenses, members, trips, currentTripId, currency, krwPerTwd, settledPayments } =
-    useStore(
-      useShallow((s) => ({
-        expenses: s.expenses,
-        members: s.members,
-        trips: s.trips,
-        currentTripId: s.currentTripId,
-        currency: s.currency,
-        krwPerTwd: s.krwPerTwd,
-        settledPayments: s.settledPayments,
-      })),
-    );
+  const {
+    expenses,
+    members,
+    trips,
+    currentTripId,
+    currency,
+    krwPerTwd,
+    rateUpdatedAtIso,
+    settledPayments,
+  } = useStore(
+    useShallow((s) => ({
+      expenses: s.expenses,
+      members: s.members,
+      trips: s.trips,
+      currentTripId: s.currentTripId,
+      currency: s.currency,
+      krwPerTwd: s.krwPerTwd,
+      rateUpdatedAtIso: s.rateUpdatedAtIso,
+      settledPayments: s.settledPayments,
+    })),
+  );
   const deleteExpense = useStore((s) => s.deleteExpense);
   const updateExpenseNote = useStore((s) => s.updateExpenseNote);
   const updateExpense = useStore((s) => s.updateExpense);
@@ -497,6 +507,7 @@ export function HistoryTab() {
                           </p>
                           {(() => {
                             // 快照幣別 ≠ 全域幣別時顯示 ≈ 參考：KRW 用記帳當下快照匯率，TWD 用當前匯率（即期參考）。
+                            // 匯率快照過期時附 stale 短標，維持參考值狀態誠實（R10）。
                             const from = expenseCurrency(exp);
                             if (from === currency) return null;
                             const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
@@ -504,9 +515,16 @@ export function HistoryTab() {
                             const approx = convertAmount(exp.totalAmount, from, to, rate);
                             if (approx === null) return null;
                             return (
-                              <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
-                                ≈ {formatAmount(approx, to)}
-                              </p>
+                              <>
+                                <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
+                                  ≈ {formatAmount(approx, to)}
+                                </p>
+                                {isRateStale(rateUpdatedAtIso) && (
+                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                    {t('settings.rate_stale')}
+                                  </p>
+                                )}
+                              </>
                             );
                           })()}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
