@@ -422,7 +422,11 @@ export function HistoryTab() {
                     else setSwipedId(null);
                   }}
                 >
-                  <div className="absolute inset-y-0 right-0 w-[76px] bg-error flex items-center justify-center">
+                  {/* 未滑出時 inert：隱藏破壞性控制項不得鍵盤可達（與收合明細同模式）；鍵盤刪除路徑＝展開卡內刪除鈕。 */}
+                  <div
+                    inert={!isThisSwiped || undefined}
+                    className="absolute inset-y-0 right-0 w-[76px] bg-error flex items-center justify-center"
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
