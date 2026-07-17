@@ -60,11 +60,27 @@ export function ToastHost() {
 
   if (toasts.length === 0) return null;
 
+  // info（離線就緒／已更新）停靠底部 nav 上緣，不遮擋頂部搜尋框與 tabs；
+  // 交易與風險 toast 維持頂部滑入（設計 SSOT）。
+  const topToasts = toasts.filter((toast) => toast.tone !== 'info');
+  const infoToasts = toasts.filter((toast) => toast.tone === 'info');
+
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-50 mx-auto flex max-w-lg flex-col gap-2 px-4">
-      {toasts.map((toast) => (
-        <ToastCard key={toast.id} toast={toast} onDismiss={dismissToast} />
-      ))}
-    </div>
+    <>
+      {topToasts.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 top-2 z-50 mx-auto flex max-w-lg flex-col gap-2 px-4">
+          {topToasts.map((toast) => (
+            <ToastCard key={toast.id} toast={toast} onDismiss={dismissToast} />
+          ))}
+        </div>
+      )}
+      {infoToasts.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4rem+var(--sab))] z-50 mx-auto flex max-w-lg flex-col gap-2 px-4">
+          {infoToasts.map((toast) => (
+            <ToastCard key={toast.id} toast={toast} onDismiss={dismissToast} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }

@@ -36,7 +36,7 @@ export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSh
           step={1}
           value={draft}
           onChange={(event) => setDraft(Number(event.target.value))}
-          className="range-input relative"
+          className="range-input relative h-11 w-full"
         />
       </div>
       <div className="mt-1 flex justify-between text-caption text-text-3 tabular-nums">

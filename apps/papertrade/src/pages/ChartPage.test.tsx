@@ -203,6 +203,53 @@ describe('ChartPage', () => {
     expect(screen.getByLabelText('深度圖載入中')).toBeInTheDocument();
   });
 
+  it('scrolls the panel back into view when its top is outside the viewport on tab switch', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    const tablist = await screen.findByRole('tablist', { name: '市場資訊' });
+    const section = tablist.closest('section')!;
+    const scrollSpy = vi.fn();
+    section.scrollIntoView = scrollSpy;
+    vi.spyOn(section, 'getBoundingClientRect').mockReturnValue({ top: -120 } as DOMRect);
+
+    await user.click(within(tablist).getByRole('tab', { name: '最新成交' }));
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+  });
+
+  it('uses instant scrolling under prefers-reduced-motion', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    const tablist = await screen.findByRole('tablist', { name: '市場資訊' });
+    const section = tablist.closest('section')!;
+    const scrollSpy = vi.fn();
+    section.scrollIntoView = scrollSpy;
+    vi.spyOn(section, 'getBoundingClientRect').mockReturnValue({ top: -120 } as DOMRect);
+    (window.matchMedia as Mock).mockImplementationOnce((query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    await user.click(within(tablist).getByRole('tab', { name: '最新成交' }));
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+  });
+
+  it('keeps the viewport still when the panel top is already visible', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    const tablist = await screen.findByRole('tablist', { name: '市場資訊' });
+    const section = tablist.closest('section')!;
+    const scrollSpy = vi.fn();
+    section.scrollIntoView = scrollSpy;
+
+    await user.click(within(tablist).getByRole('tab', { name: '最新成交' }));
+    expect(scrollSpy).not.toHaveBeenCalled();
+  });
+
   it('stops the depth orderbook subscription when switching to the trades tab', async () => {
     const user = userEvent.setup();
     const stops: Mock[] = [];

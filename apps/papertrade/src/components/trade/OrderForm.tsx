@@ -300,7 +300,7 @@ export function OrderForm({
             onChange={(event) => applyPercent(Number(event.target.value))}
             aria-label="數量比例"
             aria-valuetext={`${sliderPct}%`}
-            className="range-input relative"
+            className="range-input relative h-11 w-full"
           />
         </div>
         <span className="w-10 shrink-0 text-right text-caption text-text-2 tabular-nums">

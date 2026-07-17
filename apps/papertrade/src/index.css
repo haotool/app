@@ -96,12 +96,11 @@
 }
 
 /* 交易滑桿共用造型（OrderForm 數量比例、LeverageSheet 槓桿同視覺族）：
-   原生 range 僅保留 20px 把手與 44px 觸控高度，軌道透明、由使用端自繪填充與刻度。 */
+   原生 range 僅保留 20px 把手，軌道透明、由使用端自繪填充與刻度；
+   尺寸由使用端以 h-11 w-full 宣告（44px 觸控幾何守門以 class 掃蕩）。 */
 .range-input {
   appearance: none;
   display: block;
-  width: 100%;
-  height: 44px;
   background: transparent;
   cursor: pointer;
 }
