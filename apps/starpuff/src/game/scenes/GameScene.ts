@@ -23,8 +23,9 @@ import {
 } from '../core/events';
 import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
 import { loadSave, persistSave, recordLevelClear, recordEgg, type SaveData } from '../core/save';
-import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
+import { SceneKeys, type BossKind, type GameResultData, type LevelId } from '../core/types';
 import { BOSS } from '../logic/bossFsm';
+import { NOCTRA } from '../logic/noctraFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import {
   HOMING_RANGE_PX,
@@ -44,6 +45,7 @@ import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
 import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
+import { createNoctra } from '../systems/noctra';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -124,8 +126,8 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
-  // 中魔王精英房（§48）：全流程委派 systems/eliteRoom.ts，本場景只留逐幀呼叫。
-  private eliteRoom!: EliteRoomHandle;
+  // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
+  private eliteRooms: EliteRoomHandle[] = [];
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
@@ -134,6 +136,8 @@ export class GameScene extends Phaser.Scene {
   private enemies!: EnemySystem;
   private waves!: WaveRunner;
   private boss!: BossHandle;
+  // 魔王體傷（§54）：由 buildBoss 工廠隨品種一次取齊。
+  private bossTouchDamage: number = BOSS.bodyDamage;
   private fx!: FxSystem;
   private stage!: StageHandle;
 
@@ -179,17 +183,23 @@ export class GameScene extends Phaser.Scene {
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
-    this.boss = createBoss(this);
+    // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
+    const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
+    this.boss = bossKit.handle;
+    this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
     createHud(this);
-    // 精英房（§48）：boss 關無精英；hooks 閉包延遲解析既有系統。
-    this.eliteRoom = createEliteRoom(this, this.level.boss ? null : this.level.elite, GROUND_TOP, {
+    // 精英房（§48/§52）：boss 關無精英；一關可多房，hooks 閉包延遲解析既有系統。
+    const eliteHooks = {
       player: () => this.player,
       enemies: () => this.enemies,
       fx: () => this.fx,
       playerHp: () => this.playerHp,
       gateOpen: () => this.waves.isGateOpen(),
-    });
+    };
+    this.eliteRooms = (this.level.boss ? [] : this.level.elites).map((spec) =>
+      createEliteRoom(this, spec, GROUND_TOP, eliteHooks),
+    );
     const unbindSfx = bindSfxToEvents(this.events);
 
     this.cameras.main.setBounds(0, 0, this.worldWidth(), VIEW.height);
@@ -247,13 +257,15 @@ export class GameScene extends Phaser.Scene {
     if (!this.finished && !this.transitioning) {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
-      this.stage.update(this.controls.state);
+      this.stage.update(this.controls.state, deltaMs);
       this.syncJumpSfx();
       this.syncInhale();
       this.syncEggs();
       this.syncGateSweep();
-      this.eliteRoom.update();
+      for (const room of this.eliteRooms) room.update();
       this.steerHomingStars(deltaMs);
+      // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
+      this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -281,19 +293,31 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.waves.forceQuota();
   }
 
-  // e2e 鉤子（§48）：以正式傷害管線秒殺場上精英。
+  // e2e 鉤子（§48/§52）：以正式傷害管線秒殺當前武裝中的精英（多房依進度逐房）。
   slayElite(): void {
-    if (this.scene.isActive()) this.eliteRoom.slay();
+    if (!this.scene.isActive()) return;
+    const room = this.eliteRooms.find((candidate) => {
+      const state = candidate.state();
+      return state.armed && !state.done;
+    });
+    room?.slay();
   }
 
-  // e2e 觀測點（§48）：精英房狀態與軟鎖門位置。
+  // e2e 觀測點（§48/§52）：回報第一個未完成房的狀態（單房關語意不變）；全完成回末房。
   eliteState(): { armed: boolean; done: boolean; doorX: number | null } {
-    return this.eliteRoom.state();
+    const pending = this.eliteRooms.find((room) => !room.state().done);
+    const room = pending ?? this.eliteRooms[this.eliteRooms.length - 1];
+    return room ? room.state() : { armed: false, done: true, doorX: null };
   }
 
   // e2e 鉤子：跳至魔王關直達魔王戰。
   skipToBoss(): void {
     if (this.scene.isActive()) this.restartWith({ levelId: 4 });
+  }
+
+  // e2e 鉤子（§54）：以正式傷害管線對魔王結算傷害（階段轉換/死亡走完整 FSM 事件流）。
+  damageBoss(amount: number): void {
+    if (this.scene.isActive()) this.boss.applyDamage(amount);
   }
 
   // e2e 鉤子：直達任一關（各關反卡關走查用）。
@@ -372,11 +396,16 @@ export class GameScene extends Phaser.Scene {
       if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
       // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
       if (spec.chainCount > 0) this.chainLightning(s.x, s.y, spec, target);
+      // 孢子星（§53）：命中未死目標套緩速＋輕持續傷。
+      if (spec.slowMs > 0 && outcome === 'hurt') {
+        this.enemies.applySlow(target, spec.slowMs, spec.dotDamage);
+      }
       // 凝光星（§46）：命中處生成凍結光域。
       const mix = this.starMixOf(s);
       if (mix && mix.freezeRadiusPx > 0) this.freezeField(s.x, s.y, mix);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
-      this.player.onStarHit(s, outcome === 'killed' ? 'pierce' : 'absorb');
+      // 迴旋星（§53）：命中不吸收——依穿透結算，保留回程判定。
+      this.player.onStarHit(s, outcome === 'killed' || spec.boomerang ? 'pierce' : 'absorb');
     });
 
     // group vs sprite 的回調參數順序不保證，取非魔王側為星彈。
@@ -427,20 +456,20 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player.sprite, bossBody, () => {
       if (this.finished || this.transitioning || this.bossDown) return;
-      this.player.takeDamage(BOSS.bodyDamage, asSprite(bossBody).x);
+      this.player.takeDamage(this.bossTouchDamage, asSprite(bossBody).x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getProjectiles(), (_p, ball) => {
       const projectile = asSprite(ball);
       if (!projectile.active || this.finished || this.transitioning) return;
       projectile.disableBody(true, true);
-      this.player.takeDamage(BOSS.bodyDamage, projectile.x);
+      this.player.takeDamage(this.bossTouchDamage, projectile.x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.boss.getShockwaves(), (_p, wave) => {
       const shockwave = asSprite(wave);
       if (!shockwave.active || this.finished || this.transitioning) return;
-      this.player.takeDamage(BOSS.bodyDamage, shockwave.x);
+      this.player.takeDamage(this.bossTouchDamage, shockwave.x);
     });
 
     // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
@@ -683,7 +712,37 @@ export class GameScene extends Phaser.Scene {
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
     const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
     this.minionDropCount += 1;
-    this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+    this.enemies.spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+  }
+
+  // Noctra 召喚（§54 P2）：依場上 floaty 現量夾限至 cap，走正式 spawn 管線。
+  private summonFloaty(cap: number): void {
+    let alive = 0;
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child.active && this.enemies.kindOf(child) === 'floaty') alive += 1;
+    }
+    for (let i = 0; i < cap - alive; i += 1) {
+      const x = i % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
+      this.enemies.spawn('floaty', x, SPAWN_AIR_Y);
+    }
+  }
+
+  // 魔王品種工廠（§54）：BossKind 唯一分派點（呈現層 handle＋體傷常數一次取齊）；
+  // 新增品種未接線將於編譯期 never 守衛失敗。
+  private buildBoss(kind: BossKind): { handle: BossHandle; bodyDamage: number } {
+    switch (kind) {
+      case 'jellord':
+        return { handle: createBoss(this), bodyDamage: BOSS.bodyDamage };
+      case 'noctra':
+        return {
+          handle: createNoctra(this, { summonFloaty: (cap) => this.summonFloaty(cap) }),
+          bodyDamage: NOCTRA.bodyDamage,
+        };
+      default: {
+        const unhandled: never = kind;
+        throw new Error(`未知魔王品種：${String(unhandled)}`);
+      }
+    }
   }
 
   // 跳躍/拍翅無契約事件，以速度轉變判定配音（buffer 觸發的跳躍無當幀按壓）。
@@ -1076,7 +1135,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // 爆裂星 AoE（§20）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算。
+  // 爆裂星 AoE（§20/§53）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算；
+  // 毒爆雲（slowMs > 0）對波及未死者加套緩速持續傷。
   private explodeStar(
     x: number,
     y: number,
@@ -1088,7 +1148,10 @@ export class GameScene extends Phaser.Scene {
       if (child === exclude || !child.active) continue;
       const enemy = asSprite(child);
       if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= spec.aoeRadiusPx) {
-        this.enemies.damage(child, spec.aoeDamage);
+        const outcome = this.enemies.damage(child, spec.aoeDamage);
+        if (spec.slowMs > 0 && outcome === 'hurt') {
+          this.enemies.applySlow(child, spec.slowMs, spec.dotDamage);
+        }
       }
     }
   }

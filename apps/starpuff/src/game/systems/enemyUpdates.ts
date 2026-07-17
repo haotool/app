@@ -2,11 +2,18 @@ import Phaser from 'phaser';
 import type { EnemyKind } from '../core/types';
 import {
   GLOWY_FSM,
+  GUSTY_FSM,
+  SPORA_FSM,
+  tickBoomy,
   tickDrilly,
   tickGlowy,
+  tickGusty,
   tickShelly,
+  tickSpora,
   tickZappy,
+  type BoomyState,
   type DrillyState,
+  type GustyState,
   type ShellyState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
@@ -57,8 +64,67 @@ const DRILLY_TELEGRAPH_OFFSET_Y = 12.8;
 const GLOWY_SPEED = 26;
 const GLOWY_BOB_SPEED = 12;
 const GLOWY_BOB_OMEGA = 0.0022;
+// gusty（§52）：漂移速度與呼吸浮動；俯衝速度由 GUSTY_FSM 持有。
+const GUSTY_DRIFT_SPEED = 70;
+const GUSTY_DRIFT_OMEGA = 0.0012;
+const GUSTY_BOB_SPEED = 16;
+const GUSTY_BOB_OMEGA = 0.0026;
+// boomy（§52）：巡邏走速與殼刃投擲高度偏移。
+const BOOMY_WALK_SPEED = 55;
+const BOOMY_THROW_OFFSET_Y = -6;
 
 type ChompyState = 'idle' | 'windup' | 'bite' | 'cool';
+
+// windup 預警圈共用（§47 glowy／§52 spora）：首幀建立、逐幀依進度擴張至滿半徑；
+// 期滿或離開前搖由 clearWindupRing 回收，ring 實例掛 sprite data 隨個體生命週期。
+interface WindupRingSpec {
+  radius: number;
+  fill: number;
+  fillAlpha: number;
+  stroke: number;
+  strokeAlpha: number;
+}
+
+const GLOWY_RING: WindupRingSpec = {
+  radius: GLOWY_FSM.pulseRadiusPx,
+  fill: 0xfff7d6,
+  fillAlpha: 0.08,
+  stroke: 0xffe9a8,
+  strokeAlpha: 0.8,
+};
+
+const SPORA_RING: WindupRingSpec = {
+  radius: SPORA_FSM.cloudRadiusPx,
+  fill: 0xbce8a0,
+  fillAlpha: 0.1,
+  stroke: 0xa8d8a0,
+  strokeAlpha: 0.85,
+};
+
+function updateWindupRing(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  x: number,
+  y: number,
+  spec: WindupRingSpec,
+  progress: number,
+): void {
+  let ring = sprite.getData('warnRing') as Phaser.GameObjects.Arc | undefined;
+  if (!ring) {
+    ring = ctx.scene.add
+      .circle(x, y, spec.radius, spec.fill, spec.fillAlpha)
+      .setStrokeStyle(3, spec.stroke, spec.strokeAlpha)
+      .setDepth(59);
+    sprite.setData('warnRing', ring);
+  }
+  ring.setPosition(x, y);
+  ring.setScale(0.2 + progress * 0.8);
+}
+
+function clearWindupRing(sprite: Phaser.Physics.Arcade.Sprite): void {
+  (sprite.getData('warnRing') as Phaser.GameObjects.Arc | undefined)?.destroy();
+  sprite.setData('warnRing', undefined);
+}
 
 // AI 對外依賴最小面：target/elapsedMs 為即時值（getter），其餘為 enemies.ts 內部管線回呼。
 export interface EnemyUpdateContext {
@@ -69,6 +135,9 @@ export interface EnemyUpdateContext {
   pulseRing(x: number, y: number, radius: number, strokeTint: number): void;
   spawnBite(chompy: Phaser.Physics.Arcade.Sprite): void;
   popPuffy(sprite: Phaser.Physics.Arcade.Sprite): void;
+  // v8（§52）：孢子雲區域拒止與迴旋殼刃，皆走 hazards 管線。
+  spawnSporeCloud(x: number, y: number): void;
+  spawnBoomerang(x: number, y: number, directionX: 1 | -1): void;
 }
 
 // 三態時序由 enemyFsm 決策；本函式只負責呈現層（速度、旋轉、著色、縮放復原）。
@@ -189,13 +258,11 @@ function updateGlowy(
   sprite: Phaser.Physics.Arcade.Sprite,
   deltaMs: number,
 ): void {
-  const tick = tickGlowy(sprite.getData('zapMs') as number, deltaMs);
-  sprite.setData('zapMs', tick.glowMs);
+  const tick = tickGlowy(sprite.getData('cycleMs') as number, deltaMs);
+  sprite.setData('cycleMs', tick.glowMs);
   const body = sprite.body as Phaser.Physics.Arcade.Body;
-  const warn = sprite.getData('warnRing') as Phaser.GameObjects.Arc | undefined;
   if (tick.phase === 'pulse') {
-    warn?.destroy();
-    sprite.setData('warnRing', undefined);
+    clearWindupRing(sprite);
     sprite.clearTint();
     ctx.pulseRing(sprite.x, sprite.y, GLOWY_FSM.pulseRadiusPx, 0xffe9a8);
     return;
@@ -203,21 +270,11 @@ function updateGlowy(
   if (tick.phase === 'windup') {
     // 預警圈先行：由小到滿半徑擴張，脈衝前明確可讀。
     body.setVelocity(0, 0);
-    let ring = warn;
-    if (!ring) {
-      ring = ctx.scene.add
-        .circle(sprite.x, sprite.y, GLOWY_FSM.pulseRadiusPx, 0xfff7d6, 0.08)
-        .setStrokeStyle(3, 0xffe9a8, 0.8)
-        .setDepth(59);
-      sprite.setData('warnRing', ring);
-    }
-    ring.setPosition(sprite.x, sprite.y);
-    ring.setScale(0.2 + tick.progress * 0.8);
+    updateWindupRing(ctx, sprite, sprite.x, sprite.y, GLOWY_RING, tick.progress);
     sprite.setTint(Math.floor(tick.glowMs / 90) % 2 === 0 ? 0xffffff : 0xffe9a8);
     return;
   }
-  warn?.destroy();
-  sprite.setData('warnRing', undefined);
+  clearWindupRing(sprite);
   sprite.clearTint();
   const phase = sprite.getData('phase') as number;
   const bob = Math.sin(ctx.elapsedMs * GLOWY_BOB_OMEGA + phase) * GLOWY_BOB_SPEED;
@@ -226,6 +283,165 @@ function updateGlowy(
     body.setVelocity(Math.cos(angle) * GLOWY_SPEED, Math.sin(angle) * GLOWY_SPEED + bob);
   } else {
     body.setVelocity(0, bob);
+  }
+}
+
+// 孢子菇（§52）：定點紮根；週期時序由 enemyFsm 決策——windup 預警圈擴張、
+// 週期滿向上噴孢子雲（滯留區域拒止走 hazards 管線）。
+function updateSpora(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const tick = tickSpora(sprite.getData('cycleMs') as number, deltaMs);
+  sprite.setData('cycleMs', tick.sporaMs);
+  if (tick.phase === 'burst') {
+    clearWindupRing(sprite);
+    sprite.clearTint();
+    ctx.spawnSporeCloud(sprite.x, sprite.y + SPORA_FSM.cloudOffsetY);
+    return;
+  }
+  if (tick.phase === 'windup') {
+    // 預警圈於噴發位置先行擴張，脈衝前明確可讀（同 glowy 模式）。
+    updateWindupRing(
+      ctx,
+      sprite,
+      sprite.x,
+      sprite.y + SPORA_FSM.cloudOffsetY,
+      SPORA_RING,
+      tick.progress,
+    );
+    sprite.setTint(Math.floor(tick.sporaMs / 100) % 2 === 0 ? 0xffffff : 0xbce8a0);
+    return;
+  }
+  clearWindupRing(sprite);
+  sprite.clearTint();
+  // idle 呼吸：定點輕微擠壓律動（scale 由本狀態機持有，不掛 wobble tween）。
+  const bsx = sprite.getData('baseSX') as number;
+  const bsy = sprite.getData('baseSY') as number;
+  const breath = Math.sin(ctx.elapsedMs * 0.003);
+  sprite.setScale(bsx * (1 + breath * 0.04), bsy * (1 - breath * 0.03));
+}
+
+// 風飄鳥（§52）：四態時序由 enemyFsm 決策；drift 水平漂移＋正弦浮動、windup 懸停
+// 抖動預警、dive 朝鎖定點高速撲擊、recover 回升原航高。側風推移由
+// enemies.applyEnvironmentalForces 結算（GameScene 逐幀委派）。
+function updateGusty(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const target = ctx.target;
+  const state = sprite.getData('state') as GustyState;
+  // 觸發俯衝：drift 期玩家位於斜下方觸發域內。
+  const shouldDive =
+    state === 'drift' &&
+    target !== null &&
+    target.y > sprite.y + 30 &&
+    Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y) <=
+      GUSTY_FSM.triggerRangePx;
+  const tick = tickGusty(state, sprite.getData('stateMs') as number, deltaMs, shouldDive);
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  if (tick.entered === 'windup') {
+    body.setVelocity(0, 0);
+  } else if (tick.entered === 'dive') {
+    playSfx('flap');
+    // 俯衝鎖定：前搖結束當下的玩家位置，之後不再修正（可預判閃避）。
+    const aimX = target?.x ?? sprite.x;
+    const aimY = target?.y ?? sprite.y + 120;
+    const angle = Math.atan2(aimY - sprite.y, aimX - sprite.x);
+    body.setVelocity(
+      Math.cos(angle) * GUSTY_FSM.diveSpeed * mul,
+      Math.sin(angle) * GUSTY_FSM.diveSpeed * mul,
+    );
+  } else if (tick.entered === 'recover') {
+    body.setVelocity(0, -120);
+  } else if (tick.entered === 'drift') {
+    body.setVelocity(0, 0);
+  }
+  switch (tick.state) {
+    case 'drift': {
+      const phase = sprite.getData('phase') as number;
+      const bob = Math.sin(ctx.elapsedMs * GUSTY_BOB_OMEGA + phase) * GUSTY_BOB_SPEED;
+      body.setVelocity(
+        Math.cos(ctx.elapsedMs * GUSTY_DRIFT_OMEGA + phase) * GUSTY_DRIFT_SPEED * mul,
+        bob,
+      );
+      sprite.setRotation(0);
+      break;
+    }
+    case 'windup': {
+      // 前搖：懸停抖動預警。
+      sprite.setRotation(Math.sin(tick.stateMs * 0.06) * 0.14);
+      break;
+    }
+    case 'dive': {
+      sprite.setRotation(Math.sign(body.velocity.x) * 0.22);
+      break;
+    }
+    case 'recover': {
+      sprite.setRotation(0);
+      // 回升至航高後懸停等待轉 drift。
+      if (sprite.y <= (sprite.getData('baseY') as number)) body.setVelocityY(0);
+      break;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
+  }
+}
+
+// 迴力殼（§52）：四態時序由 enemyFsm 決策；walk 緩速巡邏、windup 定身舉殼預警、
+// throw 投擲迴旋殼刃（去而復返雙判定）、cool 冷卻。
+function updateBoomy(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const tick = tickBoomy(
+    sprite.getData('state') as BoomyState,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+  );
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  if (tick.entered === 'windup') {
+    body.setVelocityX(0);
+  } else if (tick.entered === 'cool' || tick.entered === 'walk') {
+    sprite.setRotation(0);
+  }
+  if (tick.state === 'throw') {
+    const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+    ctx.spawnBoomerang(sprite.x + direction * 20, sprite.y + BOOMY_THROW_OFFSET_Y, direction);
+    return;
+  }
+  switch (tick.state) {
+    case 'walk': {
+      if (body.velocity.x === 0) {
+        const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+        body.setVelocityX(BOOMY_WALK_SPEED * mul * direction);
+      }
+      sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.06);
+      break;
+    }
+    case 'windup': {
+      // 前搖：定身舉殼抖動。
+      sprite.setRotation(Math.sin(tick.stateMs * 0.05) * 0.16);
+      break;
+    }
+    case 'cool': {
+      break;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
   }
 }
 
@@ -367,10 +583,22 @@ export function updateEnemyKind(
       updateGlowy(ctx, sprite, deltaMs);
       break;
     }
+    case 'spora': {
+      updateSpora(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'gusty': {
+      updateGusty(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'boomy': {
+      updateBoomy(ctx, sprite, deltaMs);
+      break;
+    }
     case 'zappy': {
       // 放電週期時序由 enemyFsm 決策；此處僅結算呈現與物理。
-      const tick = tickZappy(sprite.getData('zapMs') as number, deltaMs);
-      sprite.setData('zapMs', tick.zapMs);
+      const tick = tickZappy(sprite.getData('cycleMs') as number, deltaMs);
+      sprite.setData('cycleMs', tick.zapMs);
       if (tick.phase === 'discharge') {
         sprite.clearTint();
         ctx.pulseRing(sprite.x, sprite.y, ZAPPY_RING_RADIUS, 0xffe28a);
@@ -379,12 +607,16 @@ export function updateEnemyKind(
         body.setVelocity(0, 0);
         sprite.setTint(tick.flickerBright ? 0xffffff : 0xffe28a);
       } else {
-        // 緩慢懸浮追蹤玩家 + 正弦上下漂浮。
+        // 緩慢懸浮追蹤玩家 + 正弦上下漂浮；精英倍率（§48/§52）強化追速。
         const phase = sprite.getData('phase') as number;
+        const mul = (sprite.getData('eliteMul') as number) ?? 1;
         const bob = Math.sin(ctx.elapsedMs * ZAPPY_BOB_OMEGA + phase) * ZAPPY_BOB_SPEED;
         if (ctx.target) {
           const angle = Math.atan2(ctx.target.y - sprite.y, ctx.target.x - sprite.x);
-          body.setVelocity(Math.cos(angle) * ZAPPY_SPEED, Math.sin(angle) * ZAPPY_SPEED + bob);
+          body.setVelocity(
+            Math.cos(angle) * ZAPPY_SPEED * mul,
+            Math.sin(angle) * ZAPPY_SPEED * mul + bob,
+          );
         } else {
           body.setVelocity(0, bob);
         }

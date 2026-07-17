@@ -1,10 +1,16 @@
 import Phaser from 'phaser';
+import { SPORA_SLOW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
 import {
+  BOOMY_FSM,
+  GUSTY_FSM,
+  SPORA_FSM,
+  gustWindPush,
   resolveDrillyHit,
   resolveShellyHit,
+  tickBoomerangBody,
   type DrillyState,
   type ShellyState,
 } from '../logic/enemyFsm';
@@ -48,6 +54,10 @@ export interface EnemySystem {
   damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome;
   // 凍結場（§46 凝光星）：域內小怪凍結停擺，期滿自復。
   freeze(enemy: Phaser.GameObjects.GameObject, durationMs: number): void;
+  // 孢子緩速（§53 孢子星/毒爆雲）：緩速期水平速度封頂＋週期輕持續傷，期滿自復。
+  applySlow(enemy: Phaser.GameObjects.GameObject, slowMs: number, dotDamage: number): void;
+  // 環境力（§52 Gusty 側風）：對玩家的水平位移推移，由 GameScene 逐幀委派。
+  applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number): void;
   removeInhaled(enemy: Phaser.GameObjects.GameObject): void;
   kindOf(enemy: Phaser.GameObjects.GameObject): EnemyKind | null;
   // 個體可吸判定（§30/§47）：kind 規則 + 個體狀態（shelly 暈眩窗、drilly 破土窗）；精英不可吸。
@@ -63,7 +73,7 @@ export interface EnemySystem {
   destroy(): void;
 }
 
-// texture keys 凍結（GAME_DESIGN §10、§19、§31）；缺圖時以同色圓角色塊代替。
+// texture keys 凍結（GAME_DESIGN §10、§19、§31、§55）；缺圖時以同色圓角色塊代替。
 const TEXTURES: Record<EnemyKind, string> = {
   jelly: 'minion-jelly',
   floaty: 'minion-floaty',
@@ -74,6 +84,9 @@ const TEXTURES: Record<EnemyKind, string> = {
   zappy: 'minion-zappy',
   drilly: 'minion-drilly',
   glowy: 'minion-glowy',
+  spora: 'minion-spora',
+  gusty: 'minion-gusty',
+  boomy: 'minion-boomy',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -86,6 +99,9 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   zappy: 0xe8d88a,
   drilly: 0xd8a26b,
   glowy: 0xffe9a8,
+  spora: 0xa8d8a0,
+  gusty: 0xa8cbf0,
+  boomy: 0xe8a878,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -101,6 +117,9 @@ const HP: Record<EnemyKind, number> = {
   zappy: 1,
   drilly: 1,
   glowy: 1,
+  spora: 1,
+  gusty: 1,
+  boomy: 1,
 };
 
 const SIZE = 40;
@@ -110,6 +129,12 @@ const SPIKE_TEX = 'hazard-spike';
 const SPIKE_SPEED = 220;
 const SPIKE_LIFE_MS = 600;
 const SPIKE_SIZE = 12;
+// v8 hazards（§52）：孢子雲滯留區與迴旋殼刃。
+const SPORE_TEX = 'hazard-spore';
+const SPORE_SIZE = 28;
+const SHELL_TEX = 'hazard-shell';
+const SHELL_SIZE = 22;
+const SHELL_SPIN_RAD = 0.02;
 const HAZARD_POOL_SIZE = 24;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
@@ -117,6 +142,8 @@ const BITE_SIZE = 42;
 const PULSE_RING_ACTIVE_MS = 200;
 // 凍結態（§46）：冰藍著色。
 const FREEZE_TINT = 0xbfe8ff;
+// 孢子緩速態（§53）：孢綠著色。
+const SLOW_TINT = 0xbce8a0;
 // 穿透星停留重疊時的重複結算保護（須大於星彈穿越 hitbox 的時間）。
 const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
@@ -139,6 +166,29 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       .fillTriangle(SPIKE_SIZE / 2, 0, SPIKE_SIZE, SPIKE_SIZE / 2, 0, SPIKE_SIZE / 2)
       .fillTriangle(0, SPIKE_SIZE / 2, SPIKE_SIZE, SPIKE_SIZE / 2, SPIKE_SIZE / 2, SPIKE_SIZE)
       .generateTexture(SPIKE_TEX, SPIKE_SIZE, SPIKE_SIZE)
+      .destroy();
+  }
+  // 孢子雲（§52）：柔和三圓簇孢子團。
+  if (!scene.textures.exists(SPORE_TEX)) {
+    scene.add
+      .graphics()
+      .fillStyle(0xbce8a0, 0.85)
+      .fillCircle(SPORE_SIZE / 2, SPORE_SIZE / 2, SPORE_SIZE / 2 - 2)
+      .fillStyle(0xa8d8a0, 0.9)
+      .fillCircle(SPORE_SIZE / 2 - 7, SPORE_SIZE / 2 + 4, 8)
+      .fillCircle(SPORE_SIZE / 2 + 7, SPORE_SIZE / 2 + 3, 7)
+      .generateTexture(SPORE_TEX, SPORE_SIZE, SPORE_SIZE)
+      .destroy();
+  }
+  // 迴旋殼刃（§52）：雙圓疊色殼片，旋轉由 update 迴圈驅動。
+  if (!scene.textures.exists(SHELL_TEX)) {
+    scene.add
+      .graphics()
+      .fillStyle(0xe8a878, 1)
+      .fillCircle(SHELL_SIZE / 2, SHELL_SIZE / 2, SHELL_SIZE / 2 - 1)
+      .fillStyle(0xf5d8b8, 1)
+      .fillCircle(SHELL_SIZE / 2 + 5, SHELL_SIZE / 2 - 3, SHELL_SIZE / 2 - 7)
+      .generateTexture(SHELL_TEX, SHELL_SIZE, SHELL_SIZE)
       .destroy();
   }
 
@@ -174,6 +224,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     const hazard = hazards.get(x, y, SPIKE_TEX) as Phaser.Physics.Arcade.Sprite | null;
     if (!hazard) return null;
     hazard.setActive(true);
+    // 池回收重用：外觀屬性統一復位，避免沿用前種 hazard 的殘留樣式。
+    hazard.setAlpha(1);
+    hazard.setRotation(0);
+    hazard.setData('boomMs', undefined);
     const body = hazard.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(x, y);
@@ -243,6 +297,40 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     (bite.body as Phaser.Physics.Arcade.Body).setSize(BITE_SIZE, BITE_SIZE);
   }
 
+  // 孢子雲（§52）：噴發位置滯留區域拒止，圓形 hitbox 存活 cloudMs；命中即散（走既有管線）。
+  function spawnSporeCloud(x: number, y: number): void {
+    playSfx('pop', 0.7);
+    const cloud = spawnHazard(x, y);
+    if (!cloud) return;
+    cloud.setTexture(SPORE_TEX).setVisible(true);
+    cloud.setDisplaySize(SPORA_FSM.cloudRadiusPx * 2, SPORA_FSM.cloudRadiusPx * 2);
+    cloud.setAlpha(0.8);
+    cloud.setRotation(0);
+    cloud.setData('hazardKind', 'spore');
+    cloud.setData('lifeMs', SPORA_FSM.cloudMs);
+    const body = cloud.body as Phaser.Physics.Arcade.Body;
+    const radius = SPORA_FSM.cloudRadiusPx * (cloud.width / cloud.displayWidth);
+    body.setCircle(radius, cloud.width / 2 - radius, cloud.height / 2 - radius);
+    body.setVelocity(0, -14);
+  }
+
+  // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
+  function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
+    playSfx('shell-spin', 1.2);
+    const shell = spawnHazard(x, y);
+    if (!shell) return;
+    shell.setTexture(SHELL_TEX).setVisible(true);
+    shell.setDisplaySize(SHELL_SIZE, SHELL_SIZE);
+    shell.setAlpha(1);
+    shell.setData('hazardKind', 'boomerang');
+    shell.setData('lifeMs', BOOMY_FSM.shellLifeMs);
+    shell.setData('boomMs', 0);
+    shell.setData('boomDir', directionX);
+    const body = shell.body as Phaser.Physics.Arcade.Body;
+    body.setSize(SHELL_SIZE, SHELL_SIZE);
+    body.setVelocity(BOOMY_FSM.shellSpeed * directionX, 0);
+  }
+
   // 變體識別色回套（§48）：白閃/凍結清 tint 後統一恢復精英 tint（一般怪即清色）。
   function restoreTint(sprite: Phaser.Physics.Arcade.Sprite): void {
     sprite.clearTint();
@@ -310,6 +398,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     viewCenterX,
     pulseRing,
     spawnBite,
+    spawnSporeCloud,
+    spawnBoomerang,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
@@ -333,16 +423,31 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setTintMode(Phaser.TintModes.MULTIPLY);
     sprite.setData('kind', kind);
     sprite.setData('hopMs', 0);
-    sprite.setData('zapMs', 0);
+    // 週期計時（zappy 放電／glowy 脈衝／spora 噴發共用單計時器欄位）。
+    sprite.setData('cycleMs', 0);
     sprite.setData('phase', Math.random() * Math.PI * 2);
     sprite.setData('hp', HP[kind]);
     sprite.setData('dmgCdMs', 0);
     sprite.setData('frozenMs', 0);
+    sprite.setData('slowMs', 0);
+    sprite.setData('dotDamage', 0);
+    sprite.setData('dotAccMs', 0);
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);
-    sprite.setData('state', kind === 'shelly' ? 'walk' : kind === 'drilly' ? 'burrow' : 'idle');
+    sprite.setData(
+      'state',
+      kind === 'shelly' || kind === 'boomy'
+        ? 'walk'
+        : kind === 'drilly'
+          ? 'burrow'
+          : kind === 'gusty'
+            ? 'drift'
+            : 'idle',
+    );
     sprite.setData('stateMs', 0);
+    // gusty（§52）：航高鎖存供俯衝後回升。
+    sprite.setData('baseY', y);
     sprite.setData('baseSX', sprite.scaleX);
     sprite.setData('baseSY', sprite.scaleY);
 
@@ -354,11 +459,15 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
     body.setCollideWorldBounds(true);
     body.setAllowGravity(
-      kind !== 'floaty' && kind !== 'puffy' && kind !== 'zappy' && kind !== 'glowy',
+      kind !== 'floaty' &&
+        kind !== 'puffy' &&
+        kind !== 'zappy' &&
+        kind !== 'glowy' &&
+        kind !== 'gusty',
     );
-    // spiky/shelly 以 bounce=1 碰牆自動折返；chompy 定點紮根。
-    body.setBounce(kind === 'spiky' || kind === 'shelly' ? 1 : 0, 0);
-    body.setImmovable(kind === 'chompy');
+    // spiky/shelly/boomy 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
+    body.setBounce(kind === 'spiky' || kind === 'shelly' || kind === 'boomy' ? 1 : 0, 0);
+    body.setImmovable(kind === 'chompy' || kind === 'spora');
     // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回當前鏡頭中心啟發。
     const inward = target ? (target.x >= x ? 1 : -1) : x < viewCenterX() ? 1 : -1;
     if (kind === 'spiky') body.setVelocity(SPIKY_SPEED * inward, 0);
@@ -369,8 +478,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     // 生成彈入；wobble 延後啟動避免同時操作 scale。
     popIn(scene, sprite);
 
-    // wobble idle：果凍感擠壓拉伸；chompy/shelly/drilly 的 scale 由各自狀態機控制，不掛 wobble。
-    if (kind !== 'chompy' && kind !== 'shelly' && kind !== 'drilly') {
+    // wobble idle：果凍感擠壓拉伸；chompy/shelly/drilly/spora 的 scale 由各自狀態機控制，
+    // 不掛 wobble。
+    if (kind !== 'chompy' && kind !== 'shelly' && kind !== 'drilly' && kind !== 'spora') {
       scene.tweens.add({
         targets: sprite,
         scaleX: sprite.scaleX * 1.08,
@@ -383,6 +493,44 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       });
     }
     return sprite;
+  }
+
+  // 星彈與波及共用傷害入口：扣點未死白閃，歸零致死；puffy 死於星彈時爆刺。
+  // 抽為內部函式供孢子持續傷（§53）於 update 迴圈共用同一結算管線。
+  function damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome {
+    const kind = kindOf(enemy);
+    if (!kind) return 'ignored';
+    const sprite = enemy as Phaser.Physics.Arcade.Sprite;
+    if ((sprite.getData('dmgCdMs') as number) > 0) return 'ignored';
+    // 殼殼二段（§30）：巡邏首發轉縮殼旋轉（不扣血）；旋轉期無敵；暈眩期正常結算。
+    // 精英殼殼（§48）不入縮殼循環，直接走血量池。
+    if (kind === 'shelly' && sprite.getData('elite') !== true) {
+      const outcome = resolveShellyHit(sprite.getData('state') as ShellyState);
+      if (outcome === 'immune') return 'ignored';
+      if (outcome === 'enter-spin') {
+        sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
+        flashWhite(sprite);
+        enterShellySpin(sprite);
+        return 'hurt';
+      }
+    }
+    // 鑽地者（§47）：潛地/前搖半入地免傷，破土窗正常結算。
+    if (
+      kind === 'drilly' &&
+      resolveDrillyHit(sprite.getData('state') as DrillyState) === 'immune'
+    ) {
+      return 'ignored';
+    }
+    sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
+    const hp = (sprite.getData('hp') as number) - amount;
+    if (hp > 0) {
+      sprite.setData('hp', hp);
+      flashWhite(sprite);
+      return 'hurt';
+    }
+    if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
+    kill(enemy);
+    return 'killed';
   }
 
   return {
@@ -407,42 +555,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
     kill,
 
-    // 星彈與波及共用傷害入口：扣點未死白閃，歸零致死；puffy 死於星彈時爆刺。
-    damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome {
-      const kind = kindOf(enemy);
-      if (!kind) return 'ignored';
-      const sprite = enemy as Phaser.Physics.Arcade.Sprite;
-      if ((sprite.getData('dmgCdMs') as number) > 0) return 'ignored';
-      // 殼殼二段（§30）：巡邏首發轉縮殼旋轉（不扣血）；旋轉期無敵；暈眩期正常結算。
-      // 精英殼殼（§48）不入縮殼循環，直接走血量池。
-      if (kind === 'shelly' && sprite.getData('elite') !== true) {
-        const outcome = resolveShellyHit(sprite.getData('state') as ShellyState);
-        if (outcome === 'immune') return 'ignored';
-        if (outcome === 'enter-spin') {
-          sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
-          flashWhite(sprite);
-          enterShellySpin(sprite);
-          return 'hurt';
-        }
-      }
-      // 鑽地者（§47）：潛地/前搖半入地免傷，破土窗正常結算。
-      if (
-        kind === 'drilly' &&
-        resolveDrillyHit(sprite.getData('state') as DrillyState) === 'immune'
-      ) {
-        return 'ignored';
-      }
-      sprite.setData('dmgCdMs', DAMAGE_COOLDOWN_MS);
-      const hp = (sprite.getData('hp') as number) - amount;
-      if (hp > 0) {
-        sprite.setData('hp', hp);
-        flashWhite(sprite);
-        return 'hurt';
-      }
-      if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
-      kill(enemy);
-      return 'killed';
-    },
+    damage,
 
     // 被吸走時僅回收；enemy:inhaled 由吸入系統（US-003）於吞下時發出。
     removeInhaled(enemy: Phaser.GameObjects.GameObject) {
@@ -462,6 +575,31 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       body.setVelocityX(0);
       if (!body.allowGravity) body.setVelocityY(0);
+    },
+
+    // 孢子緩速（§53）：緩速計時＋每 tick 輕持續傷；水平速度封頂於 update 迴圈結算。
+    applySlow(enemy: Phaser.GameObjects.GameObject, slowMs: number, dotDamage: number) {
+      const kind = kindOf(enemy);
+      if (!kind) return;
+      const sprite = enemy as Phaser.Physics.Arcade.Sprite;
+      sprite.setData('slowMs', slowMs);
+      sprite.setData('dotDamage', dotDamage);
+      sprite.setData('dotAccMs', 0);
+      sprite.setTint(SLOW_TINT);
+    },
+
+    // 側風推移（§52 Gusty）：drift 期近域對玩家水平位移推移（positional drift，
+    // 不與移動速度控制器對抗）；同域多隻不疊加——合力僅取符號方向、恆速推移（KISS）。
+    applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number) {
+      let push = 0;
+      for (const child of group.getChildren()) {
+        if (!child.active || kindOf(child) !== 'gusty') continue;
+        if (child.getData('state') !== 'drift') continue;
+        const gusty = child as Phaser.Physics.Arcade.Sprite;
+        push += gustWindPush(player.x, player.y, gusty.x, gusty.y);
+      }
+      if (push === 0) return;
+      player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
     },
 
     // 個體可吸判定（§30/§47）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
@@ -525,6 +663,24 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         }
         const kind = sprite.getData('kind') as EnemyKind;
         updateEnemyKind(updateCtx, sprite, kind, deltaMs);
+        // 孢子緩速（§53）：AI 寫速後統一封頂水平速度＋週期輕持續傷；期滿復色。
+        const slowMs = (sprite.getData('slowMs') as number) ?? 0;
+        if (slowMs > 0 && sprite.active) {
+          const left = Math.max(0, slowMs - deltaMs);
+          sprite.setData('slowMs', left);
+          body.setVelocityX(
+            Phaser.Math.Clamp(body.velocity.x, -SPORA_SLOW.speedCapPx, SPORA_SLOW.speedCapPx),
+          );
+          const dotDamage = (sprite.getData('dotDamage') as number) ?? 0;
+          const dotAccMs = ((sprite.getData('dotAccMs') as number) ?? 0) + deltaMs;
+          if (dotDamage > 0 && dotAccMs >= SPORA_SLOW.dotTickMs) {
+            sprite.setData('dotAccMs', 0);
+            damage(sprite, dotDamage);
+          } else {
+            sprite.setData('dotAccMs', dotAccMs);
+          }
+          if (left === 0 && sprite.active) restoreTint(sprite);
+        }
       }
 
       for (const child of hazards.getChildren()) {
@@ -536,8 +692,26 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           body.stop();
           body.enable = false;
           hazard.setActive(false).setVisible(false);
-        } else {
-          hazard.setData('lifeMs', lifeMs);
+          continue;
+        }
+        hazard.setData('lifeMs', lifeMs);
+        // 迴旋殼刃（§52）：去而復返驅動走共用 tickBoomerangBody（與迴旋星單一實作）＋自旋；
+        // 孢子雲緩升淡出。
+        const boomMs = hazard.getData('boomMs') as number | undefined;
+        if (boomMs !== undefined && hazard.getData('hazardKind') === 'boomerang') {
+          const direction = hazard.getData('boomDir') as 1 | -1;
+          const next = tickBoomerangBody(
+            hazard.body as Phaser.Physics.Arcade.Body,
+            boomMs,
+            direction,
+            BOOMY_FSM.shellSpeed,
+            BOOMY_FSM.shellTurnMs,
+            deltaMs,
+          );
+          hazard.setData('boomMs', next);
+          hazard.rotation += direction * SHELL_SPIN_RAD * deltaMs;
+        } else if (hazard.getData('hazardKind') === 'spore') {
+          hazard.setAlpha(Math.min(0.8, (lifeMs / SPORA_FSM.cloudMs) * 1.2));
         }
       }
     },

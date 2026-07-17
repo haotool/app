@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PLAYER } from '../core/config';
+import { PLAYER, VIEW } from '../core/config';
 import type { LevelSpec } from '../logic/levels';
 import {
   BRICK_SIZE,
@@ -10,8 +10,9 @@ import {
   shouldDropThrough,
   springSweepHit,
 } from '../logic/stageModel';
+import { isInUpdraft, updraftLift, type UpdraftZone } from '../logic/updraft';
 import { playSfx } from '../audio/sfx';
-import { burstSmall, ensureFxTextures } from './fx';
+import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
 import type { PlayerHandle } from './player';
 
 // v4 平台玩法元素 + 主題道具佈景（GAME_DESIGN §29/§31/§32，recon-v4 C 節配方）。
@@ -30,7 +31,7 @@ export interface StageHooks {
 }
 
 export interface StageHandle {
-  update(input: StageInput): void;
+  update(input: StageInput, deltaMs: number): void;
   getOneWay(): Phaser.GameObjects.Rectangle[];
   getMoving(): Phaser.GameObjects.Rectangle[];
   getSprings(): Phaser.GameObjects.Rectangle[];
@@ -51,8 +52,11 @@ const SPRING_TINT = 0xff8a80;
 const BRICK_TINT = 0xd9c7f0;
 const BRICK_EDGE = 0x9a86c8;
 // 主地面頂 y=400（480-80）；道具貼地微沉 4px 增加著地感。
+const GROUND_TOP = VIEW.height - 80;
 const DECOR_BASE_Y = 404;
 const DECOR_BASE_PX = 112;
+// 上升氣流柱（§51）：柱體淡色與上飄粒子（池化，單柱同活 ≤10）。
+const UPDRAFT_TINT = 0xdff2ff;
 
 const asRect = (obj: unknown): Phaser.GameObjects.Rectangle => obj as Phaser.GameObjects.Rectangle;
 
@@ -65,6 +69,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   const moving: Phaser.GameObjects.Rectangle[] = [];
   const springs: Phaser.GameObjects.Rectangle[] = [];
   const breakables: Phaser.GameObjects.Rectangle[] = [];
+  const updrafts: UpdraftZone[] = [];
   let dropUntilMs = 0;
 
   // 佈景先建、元素後建：同深度下維持 平台 < 佈景 < 元素 < 玩家 的繪製序（§32）。
@@ -129,6 +134,31 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         scene.physics.add.existing(rect, true);
         rect.setData('loot', spec.loot);
         breakables.push(rect);
+        break;
+      }
+      case 'updraft': {
+        // zone 型非碰撞（§51）：柱體淡色視覺＋上飄氣流粒子；升力於 update 逐幀結算。
+        const height = GROUND_TOP - spec.topY;
+        scene.add
+          .rectangle(spec.x, spec.topY + height / 2, spec.w, height, UPDRAFT_TINT, 0.12)
+          .setDepth(-4);
+        // 氣流粒子池化（顯示物件交 scene shutdown 統一銷毀）。
+        scene.add
+          .particles(0, 0, FX_TEXTURES.dot, {
+            x: { min: spec.x - spec.w / 2 + 8, max: spec.x + spec.w / 2 - 8 },
+            y: GROUND_TOP - 6,
+            speedY: { min: -220, max: -140 },
+            speedX: { min: -8, max: 8 },
+            scale: { start: 0.6, end: 0.15 },
+            alpha: { start: 0.5, end: 0 },
+            lifespan: { min: 900, max: 1400 },
+            frequency: 130,
+            quantity: 1,
+            tint: [0xffffff, 0xdff2ff],
+            maxAliveParticles: 10,
+          })
+          .setDepth(-3);
+        updrafts.push({ x: spec.x, topY: spec.topY, w: spec.w });
         break;
       }
       default: {
@@ -214,8 +244,19 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     };
   }
 
+  // 上升氣流升力（§51）：柱域內逐幀向上加速、升速夾限；卡頂交還重力（anti-softlock）。
+  function applyUpdrafts(body: Phaser.Physics.Arcade.Body, deltaMs: number): void {
+    if (updrafts.length === 0) return;
+    const player = hooks.player().sprite;
+    for (const zone of updrafts) {
+      if (!isInUpdraft(player.x, player.y, zone, GROUND_TOP)) continue;
+      body.setVelocityY(updraftLift(body.velocity.y, deltaMs, body.blocked.up));
+      return;
+    }
+  }
+
   return {
-    update(input: StageInput) {
+    update(input: StageInput, deltaMs: number) {
       const player = hooks.player();
       const body = player.sprite.body as Phaser.Physics.Arcade.Body;
 
@@ -239,6 +280,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         if (body.velocity.y < 0) body.setVelocityY(30);
       }
 
+      applyUpdrafts(body, deltaMs);
       sweepSprings(body);
     },
 
@@ -280,6 +322,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       moving.length = 0;
       springs.length = 0;
       breakables.length = 0;
+      updrafts.length = 0;
       if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         (window as unknown as { __spStage?: unknown }).__spStage = undefined;
       }

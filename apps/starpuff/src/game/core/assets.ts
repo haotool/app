@@ -68,6 +68,31 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'minion-glowy',
     url: new URL('../../assets/sprites/minion-glowy.webp', import.meta.url).href,
   },
+  // v8 世界擴張（§55）：新怪三種＋第二魔王＋L5/L7 新 biome 橫景。
+  {
+    key: 'minion-spora',
+    url: new URL('../../assets/sprites/minion-spora.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-gusty',
+    url: new URL('../../assets/sprites/minion-gusty.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-boomy',
+    url: new URL('../../assets/sprites/minion-boomy.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-noctra',
+    url: new URL('../../assets/sprites/boss-noctra.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-canyon-l',
+    url: new URL('../../assets/sprites/bg-canyon-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-eclipse-l',
+    url: new URL('../../assets/sprites/bg-eclipse-l.webp', import.meta.url).href,
+  },
   // v4 主題道具（§31/§32）：道具條 4 等分切割後逐件註冊，佈景資料驅動於 levels.ts decor。
   {
     key: 'prop-meadow-1',

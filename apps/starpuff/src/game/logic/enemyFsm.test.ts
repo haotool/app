@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { canInhale } from './combat';
 import {
+  BOOMY_FSM,
   DRILLY_FSM,
   GLOWY_FSM,
+  GUSTY_FSM,
   SHELLY_FSM,
+  SPORA_FSM,
   ZAPPY_FSM,
+  boomerangVelocity,
+  gustWindPush,
   resolveDrillyHit,
   resolveShellyHit,
+  tickBoomy,
   tickDrilly,
   tickGlowy,
+  tickGusty,
   tickShelly,
+  tickSpora,
   tickZappy,
   type ShellyState,
   type ZappyPhase,
@@ -155,5 +163,89 @@ describe('Glowy 週期（§47）', () => {
 
   it('脈衝半徑 80（§47 定值）', () => {
     expect(GLOWY_FSM.pulseRadiusPx).toBe(80);
+  });
+});
+
+describe('Spora 週期（§52）', () => {
+  it('idle → 末段 windup 預警擴張 → 週期滿 burst 且歸零重啟', () => {
+    expect(tickSpora(1000, 16).phase).toBe('idle');
+    const windupStart = SPORA_FSM.intervalMs - SPORA_FSM.windupMs;
+    const early = tickSpora(windupStart, 16);
+    expect(early.phase).toBe('windup');
+    expect(early.progress).toBeGreaterThan(0);
+    expect(early.progress).toBeLessThan(0.1);
+    expect(tickSpora(SPORA_FSM.intervalMs - 16, 16)).toEqual({
+      sporaMs: 0,
+      phase: 'burst',
+      progress: 0,
+    });
+  });
+
+  it('孢子雲規格（§52 定值）：半徑 66、滯留 1.6s、噴發位於頭頂上方', () => {
+    expect(SPORA_FSM.cloudRadiusPx).toBe(66);
+    expect(SPORA_FSM.cloudMs).toBe(1600);
+    expect(SPORA_FSM.cloudOffsetY).toBeLessThan(0);
+  });
+
+  it('孢子菇恆可吸（吞下得孢子星）', () => {
+    expect(canInhale('spora')).toBe(true);
+  });
+});
+
+describe('Gusty 四態時序（§52）', () => {
+  it('drift 觸發俯衝條件成立當 tick 轉 windup', () => {
+    expect(tickGusty('drift', 500, 16, false)).toEqual({
+      state: 'drift',
+      stateMs: 516,
+      entered: null,
+    });
+    expect(tickGusty('drift', 500, 16, true)).toEqual({
+      state: 'windup',
+      stateMs: 0,
+      entered: 'windup',
+    });
+  });
+
+  it('windup 0.5s → dive 0.6s → recover 0.9s → drift 完整循環', () => {
+    expect(tickGusty('windup', GUSTY_FSM.windupMs - 16, 16, false).entered).toBe('dive');
+    expect(tickGusty('dive', GUSTY_FSM.diveMs - 16, 16, false).entered).toBe('recover');
+    expect(tickGusty('recover', GUSTY_FSM.recoverMs - 16, 16, false).entered).toBe('drift');
+  });
+
+  it('側風方向（§52）：域內推離 gusty、域外為 0', () => {
+    expect(gustWindPush(900, 240, 1000, 240)).toBe(-1);
+    expect(gustWindPush(1100, 240, 1000, 240)).toBe(1);
+    expect(gustWindPush(1200, 240, 1000, 240)).toBe(0);
+    expect(gustWindPush(1000, 400, 1000, 240)).toBe(0);
+  });
+
+  it('風飄鳥恆可吸且歸入疾風味（避免味數爆炸）', () => {
+    expect(canInhale('gusty')).toBe(true);
+  });
+});
+
+describe('Boomy 四態時序與迴旋彈道（§52）', () => {
+  it('walk 2.2s → windup 0.5s → throw（單幀事件態）→ cool 1.4s → walk', () => {
+    expect(tickBoomy('walk', BOOMY_FSM.walkMs - 16, 16).entered).toBe('windup');
+    expect(tickBoomy('windup', BOOMY_FSM.windupMs - 16, 16).entered).toBe('throw');
+    expect(tickBoomy('throw', 0, 16)).toEqual({ state: 'cool', stateMs: 0, entered: 'cool' });
+    expect(tickBoomy('cool', BOOMY_FSM.coolMs - 16, 16).entered).toBe('walk');
+  });
+
+  it('boomerangVelocity：去程勻減速、turnMs 歸零、2×turnMs 反向等速且不再加速', () => {
+    expect(boomerangVelocity(0, 1, 360, 800)).toBe(360);
+    expect(boomerangVelocity(400, 1, 360, 800)).toBeCloseTo(180, 5);
+    expect(boomerangVelocity(800, 1, 360, 800)).toBe(0);
+    expect(boomerangVelocity(1600, 1, 360, 800)).toBe(-360);
+    expect(boomerangVelocity(2400, 1, 360, 800)).toBe(-360);
+    expect(boomerangVelocity(0, -1, 360, 800)).toBe(-360);
+  });
+
+  it('殼刃壽命上限涵蓋雙程（anti-softlock §56）：lifeMs ≥ 2×turnMs', () => {
+    expect(BOOMY_FSM.shellLifeMs).toBeGreaterThanOrEqual(BOOMY_FSM.shellTurnMs * 2);
+  });
+
+  it('迴力殼恆可吸（吞下得迴旋星）', () => {
+    expect(canInhale('boomy')).toBe(true);
   });
 });

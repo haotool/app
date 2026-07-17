@@ -47,10 +47,19 @@ export const STAR = {
   maxAmmo: 3,
 } as const;
 
-// 吞噬賦星（§20/§40/§47）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
-// v6 新增殼盾星（shelly）與雷鏈星（zappy）；v7 新增重鑽星（drilly）與流光星（glowy），
-// 星彈擴為七系。
-export type StarFlavor = 'jelly' | 'floaty' | 'puffy' | 'shelly' | 'zappy' | 'drilly' | 'glowy';
+// 吞噬賦星（§20/§40/§47/§53）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
+// v6 新增殼盾星（shelly）與雷鏈星（zappy）；v7 新增重鑽星（drilly）與流光星（glowy）；
+// v8 新增孢子星（spora）與迴旋星（boomy），星彈擴為九系。
+export type StarFlavor =
+  | 'jelly'
+  | 'floaty'
+  | 'puffy'
+  | 'shelly'
+  | 'zappy'
+  | 'drilly'
+  | 'glowy'
+  | 'spora'
+  | 'boomy';
 
 export interface StarFlavorSpec {
   damage: number;
@@ -64,65 +73,60 @@ export interface StarFlavorSpec {
   chainCount: number;
   chainRadiusPx: number;
   chainDamage: number;
+  // 孢子緩速（§53）：命中緩速 slowMs 並每 tick 結算 dotDamage 輕持續傷；0 為無效果。
+  slowMs: number;
+  dotDamage: number;
+  // 迴旋（§53）：去而復返雙判定彈道；回程由 boomerangVelocity 純函式驅動。
+  boomerang: boolean;
   sfxPitch: number;
 }
 
+// 九系共用零值基底：各系僅覆寫有效欄位，避免表格噪音。
+const FLAVOR_BASE = {
+  aoeRadiusPx: 0,
+  aoeDamage: 0,
+  chainCount: 0,
+  chainRadiusPx: 0,
+  chainDamage: 0,
+  slowMs: 0,
+  dotDamage: 0,
+  boomerang: false,
+} as const;
+
 export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
-  jelly: {
-    damage: 5,
-    speed: 520,
-    pierceCount: 1,
-    tint: 0xffd966,
-    aoeRadiusPx: 0,
-    aoeDamage: 0,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
-    sfxPitch: 1,
-  },
+  jelly: { ...FLAVOR_BASE, damage: 5, speed: 520, pierceCount: 1, tint: 0xffd966, sfxPitch: 1 },
   floaty: {
+    ...FLAVOR_BASE,
     damage: 5,
     speed: 650,
     pierceCount: 2,
     tint: 0xa78bfa,
-    aoeRadiusPx: 0,
-    aoeDamage: 0,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
     sfxPitch: 1.15,
   },
   puffy: {
+    ...FLAVOR_BASE,
     damage: 5,
     speed: 520,
     pierceCount: 0,
     tint: 0xff8a80,
     aoeRadiusPx: 60,
     aoeDamage: 2,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
     sfxPitch: 0.85,
   },
   shelly: {
+    ...FLAVOR_BASE,
     damage: 5,
     speed: 480,
     pierceCount: 0,
     tint: 0x7fd8c8,
-    aoeRadiusPx: 0,
-    aoeDamage: 0,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
     sfxPitch: 0.95,
   },
   zappy: {
+    ...FLAVOR_BASE,
     damage: 5,
     speed: 585,
     pierceCount: 0,
     tint: 0xffe28a,
-    aoeRadiusPx: 0,
-    aoeDamage: 0,
     chainCount: 2,
     chainRadiusPx: 160,
     chainDamage: 3,
@@ -130,29 +134,44 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
   },
   // 重鑽星（§47 Drilly）：低速高傷、穿透 2——貼近鑽地者「硬掘」性格。
   drilly: {
+    ...FLAVOR_BASE,
     damage: 7,
     speed: 430,
     pierceCount: 2,
     tint: 0xd8a26b,
-    aoeRadiusPx: 0,
-    aoeDamage: 0,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
     sfxPitch: 0.75,
   },
   // 流光星（§47 Glowy）：中速、命中處留 90px 光域對域內敵持續結算（GameScene 呈現）。
   glowy: {
+    ...FLAVOR_BASE,
     damage: 5,
     speed: 540,
     pierceCount: 0,
     tint: 0xffe9a8,
     aoeRadiusPx: 90,
     aoeDamage: 2,
-    chainCount: 0,
-    chainRadiusPx: 0,
-    chainDamage: 0,
     sfxPitch: 1.1,
+  },
+  // 孢子星（§53 Spora）：命中緩速 2.2s＋輕持續傷（每 tick 1，走 enemies 中央結算）。
+  spora: {
+    ...FLAVOR_BASE,
+    damage: 4,
+    speed: 500,
+    pierceCount: 0,
+    tint: 0xa8d8a0,
+    slowMs: 2200,
+    dotDamage: 1,
+    sfxPitch: 0.9,
+  },
+  // 迴旋星（§53 Boomy）：去程＋回程雙判定；回程由 GameScene 逐幀轉向（boomerangVelocity）。
+  boomy: {
+    ...FLAVOR_BASE,
+    damage: 5,
+    speed: 520,
+    pierceCount: 1,
+    tint: 0xe8a878,
+    boomerang: true,
+    sfxPitch: 1.05,
   },
 } as const;
 
@@ -165,7 +184,7 @@ export interface MagazineSlot {
   mix?: MixId;
 }
 
-// 雙味混合星彈（§46）：依序吞兩隻不同怪且配方存在 → 頂槽合成混合星（佔 1 槽）。
+// 雙味混合星彈（§46/§53）：依序吞兩隻不同怪且配方存在 → 頂槽合成混合星（佔 1 槽）。
 // 硬規則：混合星永不為破關必需——基礎星彈恆可通關（anti-softlock）。
 export type MixId =
   | 'swiftlight'
@@ -173,7 +192,10 @@ export type MixId =
   | 'voltseeker'
   | 'thunderburst'
   | 'shardrill'
-  | 'gleamfield';
+  | 'gleamfield'
+  | 'sporeblast'
+  | 'voltsaw'
+  | 'galewheel';
 
 export interface StarMixSpec extends StarFlavorSpec {
   id: MixId;
@@ -190,19 +212,15 @@ export interface StarMixSpec extends StarFlavorSpec {
 }
 
 const MIX_BASE = {
-  aoeRadiusPx: 0,
-  aoeDamage: 0,
-  chainCount: 0,
-  chainRadiusPx: 0,
-  chainDamage: 0,
+  ...FLAVOR_BASE,
   homing: false,
   scatterCount: 0,
   freezeRadiusPx: 0,
   freezeMs: 0,
 } as const;
 
-// 六組配方（§46 混合表）：效果自 穿透/追蹤/散射/爆炸/凍結場/連鎖電 擇優組合，
-// 各具獨特 tint 與 sfxPitch；視覺拖尾由發射端依 tint 上色。
+// 九組配方（§46 六式＋§53 三式）：效果自 穿透/追蹤/散射/爆炸/凍結場/連鎖電/緩速/迴旋
+// 擇優組合，各具獨特 tint 與 sfxPitch；視覺拖尾由發射端依 tint 上色。
 export const STAR_MIXES: readonly StarMixSpec[] = [
   {
     ...MIX_BASE,
@@ -284,10 +302,68 @@ export const STAR_MIXES: readonly StarMixSpec[] = [
     freezeRadiusPx: 100,
     freezeMs: 1500,
   },
+  // 毒爆雲（§53）：AoE 爆炸＋域內緩速持續傷（爆炸＋緩速場）。
+  {
+    ...MIX_BASE,
+    id: 'sporeblast',
+    nameZh: '毒爆雲',
+    pair: ['spora', 'puffy'],
+    damage: 5,
+    speed: 480,
+    pierceCount: 0,
+    tint: 0xbce8a0,
+    sfxPitch: 0.75,
+    aoeRadiusPx: 90,
+    aoeDamage: 3,
+    slowMs: 2600,
+    dotDamage: 1,
+  },
+  // 電鋸迴旋（§53）：迴旋雙判定＋每次命中跳電（迴旋＋連鎖電，回程同樣鏈電）。
+  {
+    ...MIX_BASE,
+    id: 'voltsaw',
+    nameZh: '電鋸迴旋',
+    pair: ['boomy', 'zappy'],
+    damage: 5,
+    speed: 480,
+    pierceCount: 1,
+    tint: 0xf5d878,
+    sfxPitch: 1.28,
+    boomerang: true,
+    chainCount: 2,
+    chainRadiusPx: 160,
+    chainDamage: 3,
+  },
+  // 迴風刃（§53 第三式裁量）：高速長弧迴旋、雙程各穿透 2——廣域掃割手感。
+  {
+    ...MIX_BASE,
+    id: 'galewheel',
+    nameZh: '迴風刃',
+    pair: ['boomy', 'floaty'],
+    damage: 5,
+    speed: 620,
+    pierceCount: 2,
+    tint: 0xc8dcf5,
+    sfxPitch: 1.4,
+    boomerang: true,
+  },
 ] as const;
 
 // 散射扇形（§46 碎鑽星）：分裂彈上下錯開的垂直初速間距。
 export const SCATTER_FAN_VY = 90;
+
+// 孢子緩速（§53）：緩速期水平速度上限與持續傷 tick 間隔（enemies.update 中央結算）。
+export const SPORA_SLOW = {
+  speedCapPx: 60,
+  dotTickMs: 700,
+} as const;
+
+// 迴旋彈道（§53）：去程勻減速至折返點反向，總程 2×turnMs；逾時由發射端回收。
+// 去程距離 = speed×turnMs/2（迴旋星 520×0.9/2 ≈ 234px）。
+export const BOOMERANG = {
+  turnMs: 900,
+  lifetimeMs: 2200,
+} as const;
 
 // 無序配對查表：吞入順序無關；查無配方回 null（沿用 §23 推新槽規則）。
 export function findMix(a: StarFlavor, b: StarFlavor): StarMixSpec | null {

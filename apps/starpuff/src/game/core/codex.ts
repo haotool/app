@@ -4,7 +4,7 @@ import type { MixId, StarFlavor } from './config';
 import type { EnemyKind } from './types';
 
 export interface CodexMonster {
-  kind: EnemyKind | 'boss';
+  kind: EnemyKind | 'boss' | 'noctra';
   textureKey: string;
   nameZh: string;
   behavior: string;
@@ -80,10 +80,38 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     inhalable: true,
   },
   {
+    kind: 'spora',
+    textureKey: 'minion-spora',
+    nameZh: '孢子菇',
+    behavior: '定點週期噴孢子雲，吞下得孢子星',
+    inhalable: true,
+  },
+  {
+    kind: 'gusty',
+    textureKey: 'minion-gusty',
+    nameZh: '風飄鳥',
+    behavior: '漂移俯衝帶側風，吞下得疾風星',
+    inhalable: true,
+  },
+  {
+    kind: 'boomy',
+    textureKey: 'minion-boomy',
+    nameZh: '迴力殼',
+    behavior: '投擲去而復返殼刃，吞下得迴旋星',
+    inhalable: true,
+  },
+  {
     kind: 'boss',
     textureKey: 'boss-idle',
     nameZh: '果凍王',
     behavior: '果凍雨、震地、衝刺三階段魔王',
+    inhalable: false,
+  },
+  {
+    kind: 'noctra',
+    textureKey: 'boss-noctra',
+    nameZh: '暗月蝠王',
+    behavior: '投彈、俯衝、彈幕俯掠空中魔王',
     inhalable: false,
   },
 ] as const;
@@ -101,10 +129,10 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     detail: '把可吸怪拉進嘴裡吞下，+1 彈藥（上限 3）',
   },
   {
-    nameZh: '星彈七系',
+    nameZh: '星彈九系',
     howTo: '有彈藥時點按吸入鍵',
     detail:
-      '吞什麼射什麼：果凍丁標準星／飄飄疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星／鑽鑽鼴重鑽星／提燈水母流光星',
+      '吞什麼射什麼：果凍丁標準星／飄飄與風飄鳥疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星／鑽鑽鼴重鑽星／提燈水母流光星／孢子菇孢子星／迴力殼迴旋星',
   },
   {
     nameZh: '強化星',
@@ -114,7 +142,8 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   {
     nameZh: '混合星彈',
     howTo: '依序吞兩隻不同怪',
-    detail: '配方成立即合成混合星（共六式）：疾光／巨爆／追電／雷爆／碎鑽／凝光，威力獨特',
+    detail:
+      '配方成立即合成混合星（共九式）：疾光／巨爆／追電／雷爆／碎鑽／凝光／毒爆雲／電鋸迴旋／迴風刃',
   },
   {
     nameZh: '星暴',
@@ -143,7 +172,7 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
 ] as const;
 
-// 星味首遇提示（§46/§47）：GameScene 於本 session 首次取得該味/配方時 toast 一行文案。
+// 星味首遇提示（§46/§47/§53）：GameScene 於本 session 首次取得該味/配方時 toast 一行文案。
 export const FLAVOR_HINTS: Record<StarFlavor, string> = {
   jelly: '標準星：直線速射',
   floaty: '疾風星：高速直射穿透兩敵',
@@ -152,6 +181,8 @@ export const FLAVOR_HINTS: Record<StarFlavor, string> = {
   zappy: '雷鏈星：命中跳電最近兩敵',
   drilly: '重鑽星：低速重擊穿透',
   glowy: '流光星：命中光域波及周圍',
+  spora: '孢子星：命中緩速並持續掉血',
+  boomy: '迴旋星：去而復返雙程判定',
 };
 
 export const MIX_HINTS: Record<MixId, string> = {
@@ -161,4 +192,7 @@ export const MIX_HINTS: Record<MixId, string> = {
   thunderburst: '雷爆星合成！爆炸加三連鎖電',
   shardrill: '碎鑽星合成！三發扇形重擊',
   gleamfield: '凝光星合成！命中凍結光域',
+  sporeblast: '毒爆雲合成！爆炸加緩速毒域',
+  voltsaw: '電鋸迴旋合成！雙程迴旋沿路鏈電',
+  galewheel: '迴風刃合成！高速長弧雙程穿透',
 };

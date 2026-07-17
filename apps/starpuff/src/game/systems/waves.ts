@@ -35,6 +35,9 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   zappy: 240,
   drilly: 330,
   glowy: 240,
+  spora: 330,
+  gusty: 220,
+  boomy: 330,
 };
 
 const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';

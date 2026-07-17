@@ -16,13 +16,16 @@ import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const ACCENT = '#7a5fb8';
-const NODE_RADIUS = 34;
+const NODE_RADIUS = 30;
 // 節點主題色鏡像關卡 bg 主色調（data-driven 自 LEVELS bgKey）。
 const NODE_TINTS: Record<string, number> = {
   'bg-meadow': 0xbff3e0,
   'bg-heights': 0xa8d8f0,
   'bg-arena': 0xcbb7f0,
   'bg-throne': 0x9b7bd8,
+  'bg-canyon': 0xf5c9a8,
+  'bg-gallery': 0xb8a8e8,
+  'bg-eclipse': 0x8478c8,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;
@@ -106,10 +109,11 @@ export class MapScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ESC', () => this.scene.start(SceneKeys.Title));
   }
 
+  // v8 七節點（§50）：鋸齒路徑橫排；節點半徑收斂 30 保留名牌間距。
   private nodePosition(index: number): { x: number; y: number } {
     const { width } = this.scale;
-    const xs = [0.16, 0.38, 0.6, 0.82];
-    const ys = [292, 236, 292, 244];
+    const xs = [0.08, 0.21, 0.34, 0.47, 0.6, 0.73, 0.88];
+    const ys = [292, 232, 292, 240, 296, 234, 288];
     return { x: width * (xs[index] ?? 0.5), y: ys[index] ?? 270 };
   }
 

@@ -5,6 +5,7 @@ import {
   STARSTORM,
   STAR_MIXES,
   findMix,
+  getMix,
   type MagazineSlot,
 } from '../core/config';
 import {
@@ -108,17 +109,32 @@ describe('雙味混合（§46）', () => {
     expect(result.magazine).toEqual([slot('jelly', true), slot('floaty')]);
   });
 
-  it('六組配方齊備且成分皆為合法星味、無重複配對', () => {
-    expect(STAR_MIXES).toHaveLength(6);
+  it('九組配方齊備且成分皆為合法星味、無重複配對（§46 六式＋§53 三式）', () => {
+    expect(STAR_MIXES).toHaveLength(9);
     const keys = new Set(
       STAR_MIXES.map((mix) => [...mix.pair].sort((a, b) => a.localeCompare(b)).join('+')),
     );
-    expect(keys.size).toBe(6);
+    expect(keys.size).toBe(9);
     for (const mix of STAR_MIXES) {
       expect(mix.pair[0]).not.toBe(mix.pair[1]);
       expect(findMix(mix.pair[0], mix.pair[1])?.id).toBe(mix.id);
       expect(findMix(mix.pair[1], mix.pair[0])?.id).toBe(mix.id);
     }
+  });
+
+  it('v8 新配方（§53）：毒爆雲緩速場、電鋸迴旋鏈電、迴風刃雙程穿透', () => {
+    const sporeblast = swallowIntoMagazine([slot('spora')], 'puffy');
+    expect(sporeblast.mixed).toBe('sporeblast');
+    const voltsaw = swallowIntoMagazine([slot('boomy')], 'zappy');
+    expect(voltsaw.mixed).toBe('voltsaw');
+    const galewheel = swallowIntoMagazine([slot('floaty')], 'boomy');
+    expect(galewheel.mixed).toBe('galewheel');
+    expect(getMix('sporeblast').slowMs).toBeGreaterThan(0);
+    expect(getMix('sporeblast').aoeRadiusPx).toBeGreaterThan(0);
+    expect(getMix('voltsaw').boomerang).toBe(true);
+    expect(getMix('voltsaw').chainCount).toBeGreaterThan(0);
+    expect(getMix('galewheel').boomerang).toBe(true);
+    expect(getMix('galewheel').pierceCount).toBe(2);
   });
 
   it('anti-softlock：基礎星彈（jelly 單味）不屬任何配方觸發條件的必要前提', () => {

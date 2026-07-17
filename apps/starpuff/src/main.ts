@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import './pwa';
 import './style.css';
-import { GRAVITY_Y, VIEW, type StarFlavor } from './game/core/config';
+import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { loadSave, type SaveData } from './game/core/save';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
@@ -107,6 +107,7 @@ declare global {
       walk: () => { rotation: number; bob: number; vy: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
       slayElite: () => void;
+      damageBoss: (amount: number) => void;
       save: () => SaveData;
       probe: () => { x: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
@@ -140,14 +141,23 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // 各關反卡關走查鉤子（§43）。
     gotoLevel: (levelId) => gameScene().gotoLevel(levelId),
     spawn: (kind, x = 240, y = 300) => internals().enemies.spawn(kind, x, y),
-    // v6 受控賦星與盾態觀測（§40 e2e）：走正式 swallow 管線。
-    grantStar: (flavor) => internals().player.grantStar(flavor),
+    // v6 受控賦星與盾態觀測（§40 e2e）：走正式 swallow 管線；
+    // 鉤子入口校驗星味（e2e 傳任意字串），非法值拒絕並警示。
+    grantStar: (flavor) => {
+      if (!(flavor in STAR_FLAVORS)) {
+        console.warn(`grantStar 未知星味：${String(flavor)}`);
+        return;
+      }
+      internals().player.grantStar(flavor);
+    },
     shieldRaised: () => internals().player.isShieldRaised(),
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
     elite: () => gameScene().eliteState(),
     slayElite: () => gameScene().slayElite(),
+    // v8 鉤子（§54 e2e）：以正式傷害管線打魔王，階段/死亡走完整 FSM 事件流。
+    damageBoss: (amount) => gameScene().damageBoss(amount),
     // 存檔觀測點（§38）：回傳解析後 sp-save（含容錯回退）。
     save: () => loadSave(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。

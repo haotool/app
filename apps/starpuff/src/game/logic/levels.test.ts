@@ -16,19 +16,21 @@ import {
 } from './levels';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15）', () => {
-  it('四關依序為 1-4 且參數符合 §15/§21 表（v3 橫式世界寬）', () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4]);
-    expect(LEVELS.map((l) => l.worldWidth)).toEqual([2700, 3100, 3500, 854]);
-    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0]);
-    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([2600, 1800, 1300, 3500]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2]);
-    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0]);
+describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
+  it('七關依序為 1-7 且參數符合 §15/§21/§50 表', () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(LEVELS.map((l) => l.worldWidth)).toEqual([2700, 3100, 3500, 854, 3300, 3600, 854]);
+    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0]);
+    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
+      2600, 1800, 1300, 3500, 1500, 1200, 3200,
+    ]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 2]);
+    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0, 480, 480, 0]);
   });
 
-  it('僅第 4 關為 boss 關；僅第 1 關帶教學', () => {
-    expect(LEVELS.map((l) => l.boss)).toEqual([false, false, false, true]);
-    expect(LEVELS.map((l) => l.tutorial)).toEqual([true, false, false, false]);
+  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學', () => {
+    expect(LEVELS.map((l) => l.boss)).toEqual([null, null, null, 'jellord', null, null, 'noctra']);
+    expect(LEVELS.map((l) => l.tutorial)).toEqual([true, false, false, false, false, false, false]);
   });
 
   it('每關 enemyMix 權重總和為 1', () => {
@@ -56,41 +58,112 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('中魔王精英（§48）：走動關皆配置、boss 關無；房址居關卡中段且獎勵為可吸稀有味', () => {
+  it('中魔王精英（§48/§52）：走動關皆配置、boss 關無；房址落於安全帶且獎勵為稀有味', () => {
     for (const level of LEVELS) {
       if (level.boss) {
-        expect(level.elite).toBeNull();
+        expect(level.elites).toEqual([]);
         continue;
       }
-      const elite = level.elite;
-      expect(elite).not.toBeNull();
-      if (!elite) continue;
-      expect(elite.x).toBeGreaterThan(level.worldWidth * 0.35);
-      expect(elite.x).toBeLessThan(level.worldWidth * 0.65);
-      expect(elite.hp).toBeGreaterThanOrEqual(10);
-      expect(elite.speedMul).toBeGreaterThan(1);
-      // 稀有味必為可吸屬性怪（glowy 恆可吸、drilly 破土窗可吸）。
-      expect(['drilly', 'glowy']).toContain(elite.rewardFlavor);
+      expect(level.elites.length).toBeGreaterThanOrEqual(1);
+      for (const elite of level.elites) {
+        // 多房關（L6 雙精英）放寬至 25%-75% 帶；房界不得越出世界。
+        expect(elite.x).toBeGreaterThan(level.worldWidth * 0.25);
+        expect(elite.x).toBeLessThan(level.worldWidth * 0.75);
+        expect(elite.x + 300).toBeLessThan(level.worldWidth - level.safeZoneTailPx);
+        expect(elite.hp).toBeGreaterThanOrEqual(10);
+        expect(elite.speedMul).toBeGreaterThan(1);
+        // 稀有味必為可吸屬性怪（glowy/spora/boomy 恆可吸、drilly 破土窗可吸）。
+        expect(['drilly', 'glowy', 'spora', 'boomy']).toContain(elite.rewardFlavor);
+      }
+      // 雙精英房（§52）不重疊：房心距 ≥ 2×門距（600px）。
+      for (let i = 1; i < level.elites.length; i += 1) {
+        const prev = level.elites[i - 1];
+        const curr = level.elites[i];
+        expect((curr?.x ?? 0) - (prev?.x ?? 0)).toBeGreaterThanOrEqual(600);
+      }
     }
   });
 
-  it('boss 關僅補生可吸怪', () => {
-    const boss = getLevel(4);
-    expect(boss.enemyMix.every((entry) => canInhale(entry.kind))).toBe(true);
+  it('boss 關僅補生可吸怪（L4/L7）', () => {
+    for (const id of [4, 7] as const) {
+      expect(getLevel(id).enemyMix.every((entry) => canInhale(entry.kind))).toBe(true);
+    }
   });
 
-  it('平台位於世界範圍內、雙層以內且向上爬升可跳達（≤82px）', () => {
+  it('L5 氣流關（§51/§52）：gusty 主場、含 spora、可吸佔比 ≥50%', () => {
+    const mix = getLevel(5).enemyMix;
+    expect(mix.find((e) => e.kind === 'gusty')?.weight).toBeGreaterThanOrEqual(0.25);
+    expect(mix.some((e) => e.kind === 'spora')).toBe(true);
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('L6 全怪種高密度混編（§52）：十二種全數入編、可吸佔比 ≥50%', () => {
+    const mix = getLevel(6).enemyMix;
+    expect(mix.map((e) => e.kind).sort()).toEqual(
+      [
+        'boomy',
+        'chompy',
+        'drilly',
+        'floaty',
+        'glowy',
+        'gusty',
+        'jelly',
+        'puffy',
+        'shelly',
+        'spiky',
+        'spora',
+        'zappy',
+      ].sort(),
+    );
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  // 高台（y < 272）必須被氣流柱涵蓋（anti-softlock §56）：柱域水平涵蓋且柱頂高於平台。
+  const updraftServed = (level: LevelSpec, platform: { x: number; y: number; w: number }) =>
+    level.elements.some(
+      (element) =>
+        element.kind === 'updraft' &&
+        Math.abs(element.x - platform.x) <= (element.w + platform.w) / 2 &&
+        element.topY < platform.y,
+    );
+
+  it('平台位於世界範圍內；雙層以內或氣流柱可達（§21/§51）；向上爬升可跳達（≤82px）', () => {
     const groundTop = 400; // 主地面頂（480 - 80）
     for (const level of LEVELS) {
       let prevY = groundTop;
       for (const platform of level.platforms) {
         expect(platform.x - platform.w / 2).toBeGreaterThanOrEqual(0);
         expect(platform.x + platform.w / 2).toBeLessThanOrEqual(level.worldWidth);
-        // 雙層以內（§21）：最高層不超過 272（自地面兩段爬升）。
-        expect(platform.y).toBeGreaterThanOrEqual(272);
-        // 向上爬升不得超過單跳最高 98px 的安全值；向下落無限制。
-        expect(prevY - platform.y).toBeLessThanOrEqual(82);
-        prevY = platform.y;
+        if (platform.y < 272) {
+          // v8 高台（§51）：超出雙層的平台必為氣流柱服務對象，且不逼近世界頂。
+          expect(platform.y).toBeGreaterThanOrEqual(190);
+          expect(updraftServed(level, platform)).toBe(true);
+        } else {
+          // 向上爬升不得超過單跳最高 98px 的安全值；向下落無限制；氣流高台不入跳鏈。
+          expect(prevY - platform.y).toBeLessThanOrEqual(82);
+        }
+        if (platform.y >= 272) prevY = platform.y;
+      }
+    }
+  });
+
+  it('氣流柱（§51）：僅 L5 配置、柱域於世界內、柱頂留頂部安全帶（≥100px）', () => {
+    for (const level of LEVELS) {
+      const updrafts = level.elements.filter((element) => element.kind === 'updraft');
+      if (level.id !== 5) {
+        expect(updrafts).toEqual([]);
+        continue;
+      }
+      expect(updrafts.length).toBeGreaterThanOrEqual(2);
+      for (const zone of updrafts) {
+        if (zone.kind !== 'updraft') continue;
+        expect(zone.x - zone.w / 2).toBeGreaterThanOrEqual(0);
+        expect(zone.x + zone.w / 2).toBeLessThanOrEqual(level.worldWidth);
+        // 卡頂防護（§56）：柱頂距世界頂 ≥100px，升力止於柱頂自然拋出。
+        expect(zone.topY).toBeGreaterThanOrEqual(100);
+        expect(zone.topY).toBeLessThan(400);
       }
     }
   });
@@ -103,12 +176,12 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     level.elements.filter((element) => element.kind === kind);
 
   it('v4 元素依 §29 推進：S1 單向、S2 +移動+彈簧、S3 +可破壞磚、boss 關僅裝飾', () => {
-    for (const id of [1, 2, 3] as const) {
+    for (const id of [1, 2, 3, 5, 6] as const) {
       const count = elementsOf(getLevel(id), 'oneway').length;
       expect(count).toBeGreaterThanOrEqual(2);
       expect(count).toBeLessThanOrEqual(4);
     }
-    for (const id of [2, 3] as const) {
+    for (const id of [2, 3, 6] as const) {
       for (const kind of ['moving', 'spring'] as const) {
         const count = elementsOf(getLevel(id), kind).length;
         expect(count).toBeGreaterThanOrEqual(1);
@@ -121,8 +194,11 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     const bricks = elementsOf(getLevel(3), 'breakable').length;
     expect(bricks).toBeGreaterThanOrEqual(2);
     expect(bricks).toBeLessThanOrEqual(3);
-    expect(getLevel(4).elements).toEqual([]);
-    expect(getLevel(4).decor.length).toBeGreaterThan(0);
+    // boss 關（L4/L7）僅裝飾。
+    for (const id of [4, 7] as const) {
+      expect(getLevel(id).elements).toEqual([]);
+      expect(getLevel(id).decor.length).toBeGreaterThan(0);
+    }
   });
 
   it('v4 平台型元素於世界內、層高合法且移動掃程不出界（§29）', () => {
@@ -130,6 +206,7 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     for (const level of LEVELS) {
       for (const element of level.elements) {
         if (element.kind === 'spring' || element.kind === 'breakable') continue;
+        if (element.kind === 'updraft') continue;
         const half = element.w / 2;
         expect(element.x - half).toBeGreaterThanOrEqual(0);
         expect(element.x + half).toBeLessThanOrEqual(level.worldWidth);
@@ -169,8 +246,14 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
   });
 
   it('佈景密度符合 §32：間距 400-600、任一 1200 視窗 ≤6、key 對應關卡主題', () => {
+    // v8 道具主題重用（§55）：新 biome 沿用既有主題道具條。
+    const decorTheme: Record<string, string> = {
+      'bg-canyon': 'heights',
+      'bg-gallery': 'arena',
+      'bg-eclipse': 'throne',
+    };
     for (const level of LEVELS) {
-      const theme = level.bgKey.replace('bg-', '');
+      const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
       for (const decor of level.decor) {
         expect(decor.key).toMatch(new RegExp(`^prop-${theme}-[1-4]$`));
         expect(decor.x).toBeGreaterThanOrEqual(0);
@@ -189,11 +272,14 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     }
   });
 
-  it('nextLevelId 依 1→2→3→4→null 推進', () => {
+  it('nextLevelId 依 1→…→7→null 推進', () => {
     expect(nextLevelId(1)).toBe(2);
     expect(nextLevelId(2)).toBe(3);
     expect(nextLevelId(3)).toBe(4);
-    expect(nextLevelId(4)).toBeNull();
+    expect(nextLevelId(4)).toBe(5);
+    expect(nextLevelId(5)).toBe(6);
+    expect(nextLevelId(6)).toBe(7);
+    expect(nextLevelId(7)).toBeNull();
   });
 });
 
