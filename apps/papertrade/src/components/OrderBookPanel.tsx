@@ -5,6 +5,7 @@ import { type OrderBookLevel } from '../services/orderbook';
 import { useOrderbook } from '../hooks/useOrderbook';
 import { useMarketStore } from '../stores/marketStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { fitSideLevels } from '../lib/orderbookLayout';
 import { PriceFlash } from './PriceFlash';
 
 interface OrderBookPanelProps {
@@ -102,17 +103,6 @@ interface CompactOrderBookProps {
   levels?: number;
   onPriceSelect?: (price: number) => void;
   quoteRef?: RefObject<BestQuote>;
-}
-
-// 中線錨定訂單簿的高度預算：檔位列 44px 觸控、表頭與中間價列為固定開銷估值。
-const BOOK_ROW_PX = 44;
-const BOOK_OVERHEAD_PX = 70;
-const MIN_SIDE_LEVELS = 3;
-
-// 依可用高度裁單側檔數：最少各 3 檔（不足時由容器內部捲動吸收）。
-export function fitSideLevels(height: number, maxLevels: number): number {
-  const fit = Math.floor((height - BOOK_OVERHEAD_PX) / 2 / BOOK_ROW_PX);
-  return Math.min(maxLevels, Math.max(MIN_SIDE_LEVELS, fit));
 }
 
 // 中間價列自行訂閱 ticker：價格 tick 不重渲整本訂單簿。

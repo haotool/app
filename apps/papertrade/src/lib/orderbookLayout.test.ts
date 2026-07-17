@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fitSideLevels } from './OrderBookPanel';
+import { fitSideLevels } from './orderbookLayout';
 
 describe('fitSideLevels', () => {
   it('caps at the max levels when height is plentiful', () => {
