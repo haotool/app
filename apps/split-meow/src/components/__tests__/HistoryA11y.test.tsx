@@ -94,11 +94,12 @@ describe('費用卡展開觸發器', () => {
     renderHistory();
     const trigger = getCardTrigger();
 
-    const details = getCard().querySelector('div[inert]');
+    // 觸發器相鄰的明細容器（swipe 揭露層另有獨立 inert 治理）
+    const details = getCard().querySelector('button[aria-expanded] + div[inert]');
     expect(details).not.toBeNull();
 
     fireEvent.click(trigger);
-    expect(getCard().querySelector('div[inert]')).toBeNull();
+    expect(getCard().querySelector('button[aria-expanded] + div[inert]')).toBeNull();
   });
 
   it('內部備註輸入的 Enter 不觸發卡片收合', () => {
@@ -114,6 +115,48 @@ describe('費用卡展開觸發器', () => {
     fireEvent.keyDown(noteInput, { key: 'Enter' });
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  });
+});
+
+describe('swipe 揭露的刪除鈕（隱藏破壞性控制項）', () => {
+  function getSwipeDeleteButton(): HTMLElement {
+    // 展開卡內刪除鈕的 accessible name 為「刪除」文字；swipe 鈕以 delete_title 全名區分
+    return screen.getByRole('button', { name: i18n.t('history.delete_title') });
+  }
+
+  function swipeCardOpen(card: HTMLElement) {
+    fireEvent.touchStart(card, { touches: [{ clientX: 200 }] });
+    fireEvent.touchMove(card, { touches: [{ clientX: 100 }] });
+    fireEvent.touchEnd(card);
+  }
+
+  it('未滑出時位於 inert 容器內：不在 Tab 順序、Enter 無法觸發刪除', () => {
+    renderHistory();
+
+    // inert 由瀏覽器原生阻斷聚焦與啟動；結構鎖定未滑出狀態必為 inert 子樹
+    expect(getSwipeDeleteButton().closest('[inert]')).not.toBeNull();
+  });
+
+  it('左滑揭露後解除 inert，點擊觸發軟刪除', () => {
+    renderHistory();
+    const card = getCard();
+
+    swipeCardOpen(card);
+    const btn = getSwipeDeleteButton();
+    expect(btn.closest('[inert]')).toBeNull();
+
+    fireEvent.click(btn);
+    expect(screen.getByTestId('undo-toast')).toBeInTheDocument();
+    expect(screen.queryByTestId('expense-card')).not.toBeInTheDocument();
+  });
+
+  it('展開卡內的刪除鈕（鍵盤刪除路徑）不受 swipe 治理影響', () => {
+    renderHistory();
+
+    fireEvent.click(getCardTrigger());
+    const inlineDelete = screen.getByRole('button', { name: i18n.t('history.delete') });
+    expect(inlineDelete.closest('[inert]')).toBeNull();
+    expect(inlineDelete.className).toContain('min-h-11');
   });
 });
 

@@ -101,3 +101,55 @@ test('EditExpenseSheet 的 Save 可真實點擊且不誤觸 BottomNav', async ({
   await expect(page.getByRole('heading', { name: 'Trip History' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'NT$ 450' })).toBeVisible();
 });
+
+/**
+ * G1 幾何鎖定（wave-6b）：關鍵觸控目標以真實 boundingBox 斷言 ≥44px。
+ * jsdom 無版面引擎，class 斷言無法保證實高——class 被改壞時此測試必紅。
+ */
+test('關鍵觸控目標實測 boundingBox ≥44px', async ({ page }) => {
+  const MIN = 44;
+  const expectMinSize = async (
+    locator: ReturnType<typeof page.getByRole>,
+    label: string,
+    both = false,
+  ) => {
+    const box = await locator.boundingBox();
+    if (!box) throw new Error(`${label} has no bounding box`);
+    expect(box.height, `${label} height`).toBeGreaterThanOrEqual(MIN);
+    if (both) expect(box.width, `${label} width`).toBeGreaterThanOrEqual(MIN);
+  };
+
+  await page.goto('/');
+
+  // UpdatePrompt CTA：等待離線就緒橫幅入場，量測 Close 後關閉
+  const banner = page.getByRole('status');
+  await banner.waitFor({ state: 'visible', timeout: 15_000 });
+  const bannerClose = banner.getByRole('button', { name: 'Close' });
+  await expectMinSize(bannerClose, 'UpdatePrompt Close CTA');
+  await bannerClose.click();
+  await expect(banner).toHaveCount(0);
+
+  // Home：備註類別觸發鈕（icon 鈕，雙軸 ≥44）
+  await expectMinSize(page.getByRole('button', { name: 'Pick category' }), '類別觸發', true);
+
+  // 記一筆 300 → History
+  await page.getByRole('button', { name: '3', exact: true }).click();
+  const zero = page.getByRole('button', { name: '0', exact: true });
+  await zero.click();
+  await zero.click();
+  await page.getByRole('button', { name: /Done/ }).click();
+  await expect(page.getByTestId('expense-card')).toHaveCount(1);
+
+  // History：分享鈕（header 分享鈕在 main 之外，以 main 限定範圍；exact 避免子字串誤中）
+  await expectMinSize(
+    page.getByRole('main').getByRole('button', { name: 'Share', exact: true }),
+    'History 分享',
+  );
+
+  // 展開卡 → 新增備注 → 備注確認 check（icon 鈕，雙軸 ≥44）
+  await page.getByTestId('expense-card').first().click();
+  const addNote = page.getByRole('button', { name: 'Add note' });
+  await expectMinSize(addNote, '新增備注');
+  await addNote.click();
+  await expectMinSize(page.getByRole('button', { name: 'Confirm' }), '備注確認', true);
+});
