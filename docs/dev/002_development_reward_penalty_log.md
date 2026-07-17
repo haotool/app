@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+126
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+126
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：neutral-park-keeper-aria-plate-followthrough
+- 原因：round-3 兩席同源揪出 RecordCard aria-label 仍插裸 N/A——formatPlate SSOT 收斂時 accessible name 面向漏稽核
+- 解法：兩按鈕 aria-label 改走 formatPlateLabel 同源值＋全域 aria/title/alt 車號插值稽核清單留檔＋accessible name 斷言鎖定
 
 - 日期：2026-07-17
 - ID：reward-park-keeper-lcp-inline-defer
