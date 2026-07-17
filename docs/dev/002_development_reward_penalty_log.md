@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+128
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-18
+- ID：penalty-starpuff-v8-noctra-unwinnable
+- 原因：v8 出貨的 Noctra 盤旋高度使有效輸出窗僅剩俯衝縫，保底標準星路線名存實亡——實測普通/熟練 bot 勝率皆 0% 才暴露，難度驗收未以行為實測把關
+- 解法：§63 全參數根修（HOVER_Y/落地滯留/telegraph/彈幕/HP/補給側/準星輔助/魔王房慈悲 override）並以雙水準 bot 勝率門檻（普通 ≥40%、熟練 ≥80%）實測收斂後定案
 
 - 日期：2026-07-17
 - ID：reward-starpuff-v9-transform-challenge
