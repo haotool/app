@@ -143,12 +143,15 @@ export function TradePage() {
             emphasisSide={emphasisSide}
           />
         </div>
-        <div className="min-w-0 flex-[0.42]">
-          <CompactOrderBook
-            symbol={symbol}
-            levels={TRADE_ORDERBOOK_LEVELS}
-            onPriceSelect={handlePriceSelect}
-          />
+        {/* 右欄等高契約：cell 不參與撐高，訂單簿以 absolute 填滿左欄表單自然高度。 */}
+        <div className="relative min-w-0 flex-[0.42]">
+          <div className="absolute inset-0">
+            <CompactOrderBook
+              symbol={symbol}
+              levels={TRADE_ORDERBOOK_LEVELS}
+              onPriceSelect={handlePriceSelect}
+            />
+          </div>
         </div>
       </div>
 

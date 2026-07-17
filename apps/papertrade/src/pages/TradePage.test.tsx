@@ -184,6 +184,37 @@ describe('TradePage', () => {
     expect(screen.getByRole('textbox', { name: '限價（USDT）' })).toHaveValue('59900');
   });
 
+  it('anchors the mid price row between asks and bids and fills the limit price on tap', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    act(() => {
+      wsHandlers.get('orderbook.50.BTCUSDT')?.({
+        type: 'snapshot',
+        data: {
+          b: [['59900', '1.5']],
+          a: [['60100', '2']],
+          u: 100,
+        },
+      });
+    });
+
+    const bookButtons = within(screen.getByRole('region', { name: '訂單簿' })).getAllByRole(
+      'button',
+    );
+    const labels = bookButtons.map((button) => button.textContent ?? '');
+    const askIndex = labels.findIndex((label) => label.includes('60,100'));
+    const midIndex = labels.findIndex((label) => label.includes('標記'));
+    const bidIndex = labels.findIndex((label) => label.includes('59,900'));
+    expect(askIndex).toBeGreaterThanOrEqual(0);
+    expect(askIndex).toBeLessThan(midIndex);
+    expect(midIndex).toBeLessThan(bidIndex);
+
+    await user.click(screen.getByRole('button', { name: /以最新價 60,000\.0 帶入限價/ }));
+    expect(screen.getByRole('tab', { name: '限價' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: '限價（USDT）' })).toHaveValue('60000');
+  });
+
   it('writes the amount from the percent slider', () => {
     renderTrade();
 
