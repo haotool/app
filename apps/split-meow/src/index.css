@@ -67,14 +67,18 @@
   --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-label: 'Plus Jakarta Sans', sans-serif;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* 窄屏斷點：<23rem（368px）視為極窄（Fold 344 / 320），header 品牌縮為圖示。 */
+  --breakpoint-xs: 23rem;
 }
 
 /**
- * iOS safe-area-inset-bottom をJSから読めるようにCSS変数として公開
- * BottomSheetの高さ計算に使用
+ * 底部 chrome 佔用 SSOT：--nav-h 由 BottomNav 以 ResizeObserver 寫入。
+ * 所有捲動容器 padding-bottom 與浮層 bottom 一律由 --chrome-bottom / --overlay-bottom 推導。
  */
 :root {
-  --sab: env(safe-area-inset-bottom, 0px);
+  --chrome-bottom: calc(var(--nav-h, 62px) + 0.5rem + env(safe-area-inset-bottom, 0px));
+  --overlay-bottom: calc(var(--chrome-bottom) + 8px);
 }
 
 @layer base {
@@ -128,6 +132,44 @@
 .cat-particle {
   animation: cat-celebrate 1.2s ease-out forwards;
   pointer-events: none;
+}
+
+/* G9：尊重減少動態偏好——粒子降級為純淡出。 */
+@keyframes particle-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paw-particle {
+    animation: particle-fade 0.4s ease-out forwards;
+  }
+  .cat-particle {
+    animation: particle-fade 0.6s ease-out forwards;
+  }
+}
+
+/* 極矮視窗變體（≤640px 高）：面板次要列壓縮換取多露一列鍵盤；觸控目標維持 ≥44px（G1）。 */
+@custom-variant vshort {
+  @media (max-height: 640px) {
+    @slot;
+  }
+}
+
+/* G11/G15：面板高度採「上方內容保留優先」連續模型（單一公式，消除 640px 斷點跳變缺口）。
+   上方保留 --home-top-reserve = max(40dvh, 296px + safe-area-top)：
+   px 下限保障矮視窗（320×568 等）header＋金額卡＋成員列完整可點
+   （G15 行為驗收＝成員 chips elementFromPoint 命中自身）。
+   面板 max-height = 100dvh − 上方保留 − 底部 chrome，再以 55dvh 封頂（G11 直向上限）。
+   溢出的鍵盤列由面板內捲抵達；未捲到底時 HomeTab 顯示捲動暗示漸層。 */
+:root {
+  --home-top-reserve: max(40dvh, calc(296px + env(safe-area-inset-top, 0px)));
+}
+.home-panel-fixed {
+  max-height: min(55dvh, calc(100dvh - var(--home-top-reserve) - var(--chrome-bottom)));
 }
 
 /* Hide scrollbar for horizontal lists */

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 import { Calculator } from '../Calculator';
@@ -102,8 +102,7 @@ describe('Calculator', () => {
     expect(useStore.getState().calculatorValue).toBe('');
   });
 
-  it('混幣記帳前需確認，取消則不儲存', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('混幣記帳前顯示品牌化確認對話框，取消則不儲存', () => {
     useStore.setState({
       calculatorValue: '100',
       currency: 'KRW',
@@ -124,13 +123,43 @@ describe('Calculator', () => {
       ],
     });
     renderCalc();
-    const allBtns = document.querySelectorAll('button');
-    const saveBtn = allBtns[allBtns.length - 1]!;
-    fireEvent.click(saveBtn);
-    expect(confirmSpy).toHaveBeenCalledWith(i18n.t('history.mixed_currency_confirm'));
+    fireEvent.click(screen.getByText(i18n.t('home.complete')));
+
+    const dialog = screen.getByRole('alertdialog');
+    expect(dialog).toHaveTextContent(i18n.t('history.mixed_currency_confirm'));
+
+    fireEvent.click(screen.getByText(i18n.t('common.cancel')));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(useStore.getState().expenses).toHaveLength(1);
     expect(useStore.getState().calculatorValue).toBe('100');
-    confirmSpy.mockRestore();
+  });
+
+  it('混幣記帳確認後儲存', () => {
+    useStore.setState({
+      calculatorValue: '100',
+      currency: 'KRW',
+      currentTripId: 'default-trip',
+      expenses: [
+        {
+          id: 'exp-1',
+          tripId: 'default-trip',
+          type: 'split_evenly',
+          participantIds: ['me'],
+          paidBy: 'me',
+          totalAmount: 100,
+          perPersonAmounts: { me: 100 },
+          note: '',
+          createdAt: 1,
+          currency: 'TWD',
+        },
+      ],
+    });
+    renderCalc();
+    fireEvent.click(screen.getByText(i18n.t('home.complete')));
+    fireEvent.click(screen.getByText(i18n.t('common.confirm')));
+
+    expect(useStore.getState().expenses).toHaveLength(2);
+    expect(useStore.getState().calculatorValue).toBe('');
   });
 
   it('itemized 模式下無 focusedMemberId 時按鍵不更新值', () => {

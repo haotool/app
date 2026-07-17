@@ -2,59 +2,21 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useStore, type Member, type ExpenseRecord } from '../store/useStore';
 import {
+  convertAmount,
   formatAmount,
-  getCurrencySymbol,
-  formatKrwAsTwd,
   resolveExpenseCurrency,
   resolveTripCurrency,
   isMixedCurrencyTrip,
   computeMemberBalances,
 } from '../config/currencies';
 import { format } from 'date-fns';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/utils';
+import { isRateStale } from '../lib/exchangeRate';
 import { MemberAvatar } from './MemberAvatar';
-
-interface Settlement {
-  from: string;
-  to: string;
-  amount: number;
-}
-
-function calculateSettlements(balances: Record<string, number>): Settlement[] {
-  const creditors = Object.entries(balances)
-    .filter(([, b]) => b > 0.01)
-    .map(([id, amount]) => ({ id, amount }))
-    .sort((a, b) => b.amount - a.amount);
-
-  const debtors = Object.entries(balances)
-    .filter(([, b]) => b < -0.01)
-    .map(([id, amount]) => ({ id, amount: -amount }))
-    .sort((a, b) => b.amount - a.amount);
-
-  const settlements: Settlement[] = [];
-  let ci = 0;
-  let di = 0;
-
-  while (ci < creditors.length && di < debtors.length) {
-    const credit = creditors[ci];
-    const debt = debtors[di];
-    if (!credit || !debt) break;
-    const amount = Math.min(credit.amount, debt.amount);
-
-    if (amount > 0.01) {
-      settlements.push({ from: debt.id, to: credit.id, amount });
-    }
-
-    credit.amount -= amount;
-    debt.amount -= amount;
-
-    if (credit.amount < 0.01) ci++;
-    if (debt.amount < 0.01) di++;
-  }
-
-  return settlements;
-}
+import { EditExpenseSheet } from './EditExpenseSheet';
+import { SettlementSection, BalancesSection } from './SettlementSection';
+import { calculateSettlements } from '../lib/settlements';
 
 /** 最多顯示 MAX_AVATAR 個頭像，其餘以 +N 呈現 */
 const MAX_AVATAR = 3;
@@ -100,7 +62,10 @@ function ParticipantAvatars({
                 className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"
                 title="payer"
               >
-                <span className="material-symbols-outlined text-[8px] text-on-primary leading-none">
+                <span
+                  className="material-symbols-outlined text-[8px] text-on-primary leading-none"
+                  aria-hidden="true"
+                >
                   payments
                 </span>
               </span>
@@ -121,13 +86,24 @@ function ParticipantAvatars({
 
 export function HistoryTab() {
   const { t } = useTranslation();
-  const { expenses, members, trips, currentTripId, currency, settledPayments } = useStore(
+  const {
+    expenses,
+    members,
+    trips,
+    currentTripId,
+    currency,
+    krwPerTwd,
+    rateUpdatedAtIso,
+    settledPayments,
+  } = useStore(
     useShallow((s) => ({
       expenses: s.expenses,
       members: s.members,
       trips: s.trips,
       currentTripId: s.currentTripId,
       currency: s.currency,
+      krwPerTwd: s.krwPerTwd,
+      rateUpdatedAtIso: s.rateUpdatedAtIso,
       settledPayments: s.settledPayments,
     })),
   );
@@ -136,7 +112,6 @@ export function HistoryTab() {
   const updateExpense = useStore((s) => s.updateExpense);
   const toggleSettlement = useStore((s) => s.toggleSettlement);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteValue, setEditingNoteValue] = useState('');
   const noteInputRef = useRef<HTMLInputElement>(null);
@@ -149,6 +124,7 @@ export function HistoryTab() {
   const SWIPE_REVEAL = 76;
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoToastRef = useRef<HTMLDivElement>(null);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   const softDelete = (id: string) => {
@@ -173,6 +149,24 @@ export function HistoryTab() {
     setSwipedId(null);
   };
 
+  // undo toast 佔位發布為 CSS 變數：其他浮層（UpdatePrompt）據此上移，拇指區不互疊（G3）。
+  // ResizeObserver 寫入實高（與 --nav-h 同模式）：ko/ja 長標籤換行時偏移仍正確。
+  useEffect(() => {
+    if (!pendingDeleteId) return;
+    const el = undoToastRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty('--undo-toast-h', `${el.offsetHeight + 8}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--undo-toast-h');
+    };
+  }, [pendingDeleteId]);
+
   // 向後相容：舊資料可能含 0 元成員，讀取時過濾
   const tripExpenses = expenses
     .filter((e) => e.tripId === currentTripId && e.id !== pendingDeleteId)
@@ -194,8 +188,7 @@ export function HistoryTab() {
   const balances = isMixedCurrency ? {} : computeMemberBalances(tripExpenses);
   const settlements = isMixedCurrency ? [] : calculateSettlements(balances);
 
-  const startEditNote = (expId: string, currentNote: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const startEditNote = (expId: string, currentNote: string) => {
     setEditingNoteId(expId);
     setEditingNoteValue(currentNote);
     // 等 DOM 更新後 focus
@@ -218,16 +211,17 @@ export function HistoryTab() {
 
   const shareSummary = async () => {
     const tripName = trips.find((tr) => tr.id === currentTripId)?.name ?? t('history.title');
+    const shareTitle = `${t('app.title')} — ${tripName}`;
     const lines: string[] = [
-      `🐾 喵喵分帳 — ${tripName}`,
+      `🐾 ${shareTitle}`,
       `${'─'.repeat(24)}`,
       isMixedCurrency
         ? `⚠️ ${t('history.mixed_currency_warning')}`
-        : `💰 總花費：${formatAmount(totalSpent, tripCurrency)}`,
+        : `💰 ${t('history.share_total', { amount: formatAmount(totalSpent, tripCurrency) })}`,
       '',
     ];
     if (tripExpenses.length > 0) {
-      lines.push(`📋 費用明細（${tripExpenses.length} 筆）`);
+      lines.push(`📋 ${t('history.share_expense_count', { count: tripExpenses.length })}`);
       tripExpenses.forEach((exp) => {
         const payer = members.find((m) => m.id === exp.paidBy)?.name ?? t('history.unknown_payer');
         const emoji = exp.category ? (CATEGORY_EMOJI[exp.category] ?? '') : '•';
@@ -235,13 +229,13 @@ export function HistoryTab() {
           exp.note ||
           (exp.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
         lines.push(
-          `${emoji} ${label}  ${formatAmount(exp.totalAmount, expenseCurrency(exp))}（${payer} 付）`,
+          `${emoji} ${label}  ${formatAmount(exp.totalAmount, expenseCurrency(exp))}${t('history.share_paid_by', { name: payer })}`,
         );
       });
       lines.push('');
     }
     if (settlements.length > 0 && !isMixedCurrency) {
-      lines.push(`💸 結清方式`);
+      lines.push(`💸 ${t('history.settlements')}`);
       settlements.forEach((s) => {
         const from = members.find((m) => m.id === s.from)?.name ?? s.from;
         const to = members.find((m) => m.id === s.to)?.name ?? s.to;
@@ -250,17 +244,20 @@ export function HistoryTab() {
       lines.push('');
     }
     lines.push('─'.repeat(24));
-    lines.push('用喵喵分帳輕鬆分帳 🐱');
+    lines.push(t('history.share_footer'));
     const text = lines.join('\n');
     if (navigator.share) {
-      await navigator.share({ title: `喵喵分帳 — ${tripName}`, text });
+      await navigator.share({ title: shareTitle, text });
     } else {
       await navigator.clipboard.writeText(text);
     }
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ paddingBottom: 'calc(var(--chrome-bottom) + 2.5rem)' }}
+    >
       <div className="mb-8">
         <h1 className="text-3xl font-medium text-on-surface tracking-tight mb-2">
           {t('history.title')}
@@ -270,7 +267,7 @@ export function HistoryTab() {
 
       <section className="grid grid-cols-2 gap-4 mb-10">
         <div className="col-span-2 bg-surface-container-lowest p-8 rounded-[2rem] flex flex-col justify-between relative overflow-hidden shadow-ambient">
-          <div className="absolute top-[-10px] right-[-10px] opacity-10">
+          <div className="absolute top-[-10px] right-[-10px] opacity-10" aria-hidden="true">
             <span
               className="material-symbols-outlined text-[120px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -323,9 +320,11 @@ export function HistoryTab() {
                 onClick={() => {
                   void shareSummary();
                 }}
-                className="flex items-center gap-1 text-xs font-medium text-primary bg-primary-container/40 hover:bg-primary-container px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 min-h-11 text-xs font-medium text-primary bg-primary-container/40 hover:bg-primary-container px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[14px]">share</span>
+                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                  share
+                </span>
                 {t('app.share')}
               </button>
             )}
@@ -335,266 +334,24 @@ export function HistoryTab() {
 
       {/* 結清方式 */}
       {settlements.length > 0 && !isMixedCurrency && (
-        <section className="mb-10">
-          <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
-            {t('history.settlements')}
-          </h3>
-          <div className="space-y-3">
-            {settlements.map((s, i) => {
-              const fromMember = members.find((m) => m.id === s.from);
-              const toMember = members.find((m) => m.id === s.to);
-              if (!fromMember || !toMember) return null;
-              const settlementKey = `${currentTripId ?? ''}:${s.from}:${s.to}`;
-              const isSettled = settledPayments.includes(settlementKey);
-              return (
-                <div
-                  key={i}
-                  onClick={() => toggleSettlement(settlementKey)}
-                  className={cn(
-                    'bg-surface-container-lowest p-4 rounded-[1.5rem] flex items-center gap-3 shadow-ambient cursor-pointer transition-opacity active:scale-[0.98] transition-transform',
-                    isSettled && 'opacity-50',
-                  )}
-                >
-                  <MemberAvatar seed={fromMember.avatarUrl} alt={fromMember.name} size={36} />
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        'text-sm text-on-surface-variant leading-snug',
-                        isSettled && 'line-through',
-                      )}
-                    >
-                      {t('history.pay_to', {
-                        from: fromMember.name,
-                        to: toMember.name,
-                      })}
-                    </p>
-                    {isSettled && (
-                      <p className="text-xs text-tertiary font-medium mt-0.5">
-                        {t('history.balance_settled')}
-                      </p>
-                    )}
-                  </div>
-                  <MemberAvatar seed={toMember.avatarUrl} alt={toMember.name} size={36} />
-                  <div
-                    className={cn(
-                      'rounded-full px-3 py-1 shrink-0 transition-colors',
-                      isSettled
-                        ? 'bg-tertiary-container text-on-tertiary-container'
-                        : 'bg-secondary-container text-on-secondary-container',
-                    )}
-                  >
-                    <span className="text-sm font-bold">
-                      {isSettled ? (
-                        <span
-                          className="material-symbols-outlined text-[16px] leading-none"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          check_circle
-                        </span>
-                      ) : (
-                        formatAmount(s.amount, tripCurrency)
-                      )}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <SettlementSection
+          settlements={settlements}
+          members={members}
+          currentTripId={currentTripId}
+          tripCurrency={tripCurrency}
+          settledPayments={settledPayments}
+          onToggle={toggleSettlement}
+        />
       )}
 
       {/* 各人結算 */}
       {!isMixedCurrency && Object.keys(balances).length > 0 && (
-        <section className="mb-10">
-          <h3 className="text-xs font-medium uppercase tracking-widest text-outline px-2 mb-4">
-            {t('history.balances')}
-          </h3>
-          <div className="space-y-3">
-            {Object.entries(balances).map(([memberId, amount]) => {
-              const member = members.find((m) => m.id === memberId);
-              if (!member) return null;
-              const isOwed = amount > 0;
-              const isSettled = Math.abs(amount) < 0.01;
-              const isOpen = expandedMemberId === memberId;
-
-              // 與此成員相關的消費（有參與的）
-              const memberExpenses = tripExpenses.filter(
-                (e) => e.paidBy === memberId || memberId in e.perPersonAmounts,
-              );
-
-              return (
-                <div
-                  key={memberId}
-                  className={cn(
-                    'bg-surface-container-lowest rounded-[1.5rem] shadow-ambient overflow-hidden transition-all duration-300',
-                    !isSettled && 'cursor-pointer',
-                  )}
-                  onClick={() => {
-                    if (isSettled) return;
-                    setExpandedMemberId(isOpen ? null : memberId);
-                  }}
-                >
-                  {/* 摘要列 */}
-                  <div className="p-4 flex items-center gap-3">
-                    <MemberAvatar seed={member.avatarUrl} alt={member.name} size={40} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-on-surface truncate">{member.name}</p>
-                      {isSettled ? (
-                        <p className="text-xs text-on-surface-variant/60">
-                          {t('history.balance_settled')}
-                        </p>
-                      ) : (
-                        <p
-                          className={cn(
-                            'text-xs font-medium',
-                            isOwed ? 'text-secondary' : 'text-error',
-                          )}
-                        >
-                          {isOwed ? t('history.owed') : t('history.owing')}
-                          {' · '}
-                          {t('history.tap_to_detail')}
-                        </p>
-                      )}
-                    </div>
-                    {!isSettled && (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className={cn(
-                            'text-sm font-bold px-3 py-1 rounded-full',
-                            isOwed
-                              ? 'bg-secondary-container text-on-secondary-container'
-                              : 'bg-error-container text-on-error-container',
-                          )}
-                        >
-                          {isOwed ? '+' : '-'}
-                          {formatAmount(Math.abs(amount), tripCurrency)}
-                        </span>
-                        <span
-                          className="material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300"
-                          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                        >
-                          expand_more
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 展開明細 */}
-                  <div
-                    className={cn(
-                      'grid transition-all duration-300 ease-in-out',
-                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
-                    )}
-                  >
-                    <div className="overflow-hidden">
-                      <div
-                        className="px-4 pb-4 space-y-2 border-t border-outline-variant/15 pt-3"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {memberExpenses.map((exp, idx) => {
-                          const isPayer = exp.paidBy === memberId;
-                          const share = exp.perPersonAmounts[memberId] ?? 0;
-                          const net = (isPayer ? exp.totalAmount : 0) - share;
-                          const expLabel =
-                            exp.note ||
-                            (exp.type === 'split_evenly'
-                              ? t('history.split_evenly')
-                              : t('history.itemized'));
-
-                          return (
-                            <div
-                              key={exp.id}
-                              className={cn(
-                                'rounded-2xl bg-surface-container-low p-3 space-y-2',
-                                idx > 0 && '',
-                              )}
-                            >
-                              {/* 消費標題 */}
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-on-surface truncate max-w-[140px]">
-                                  {expLabel}
-                                </span>
-                                <span className="text-[10px] text-on-surface-variant/60 shrink-0">
-                                  {format(exp.createdAt, 'M/d HH:mm')}
-                                </span>
-                              </div>
-
-                              {/* 墊付行（只有付款人才有） */}
-                              {isPayer && (
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="flex items-center gap-1.5 text-secondary">
-                                    <span className="material-symbols-outlined text-[13px]">
-                                      payments
-                                    </span>
-                                    {t('history.balance_paid')}
-                                  </span>
-                                  <span className="font-semibold text-secondary">
-                                    +{formatAmount(exp.totalAmount, expenseCurrency(exp))}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* 分攤行 */}
-                              {share > 0.01 && (
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="flex items-center gap-1.5 text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-[13px]">
-                                      group
-                                    </span>
-                                    {t('history.balance_share')}
-                                  </span>
-                                  <span className="font-semibold text-error">
-                                    -{formatAmount(share, expenseCurrency(exp))}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* 小計 */}
-                              <div className="flex items-center justify-between text-xs border-t border-outline-variant/20 pt-1.5">
-                                <span className="text-on-surface-variant/70">
-                                  {t('history.balance_net')}
-                                </span>
-                                <span
-                                  className={cn(
-                                    'font-bold',
-                                    net > 0.01
-                                      ? 'text-secondary'
-                                      : net < -0.01
-                                        ? 'text-error'
-                                        : 'text-on-surface-variant',
-                                  )}
-                                >
-                                  {net > 0.01 ? '+' : net < -0.01 ? '-' : ''}
-                                  {formatAmount(Math.abs(net), expenseCurrency(exp))}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {/* 合計 */}
-                        <div className="flex items-center justify-between pt-1 px-1">
-                          <span className="text-xs font-medium text-on-surface-variant uppercase tracking-wider">
-                            {t('history.balance_total')}
-                          </span>
-                          <span
-                            className={cn(
-                              'text-base font-bold',
-                              isOwed ? 'text-secondary' : 'text-error',
-                            )}
-                          >
-                            {isOwed ? '+' : '-'}
-                            {formatAmount(Math.abs(amount), tripCurrency)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <BalancesSection
+          balances={balances}
+          members={members}
+          tripExpenses={tripExpenses}
+          tripCurrency={tripCurrency}
+        />
       )}
 
       {/* 近期活動 */}
@@ -605,8 +362,16 @@ export function HistoryTab() {
 
         {tripExpenses.length === 0 ? (
           <div className="text-center p-8 bg-surface-container-low rounded-[2rem] text-on-surface-variant">
-            <span className="material-symbols-outlined text-4xl mb-2 opacity-50">receipt_long</span>
+            <span className="material-symbols-outlined text-4xl mb-2 opacity-50" aria-hidden="true">
+              receipt_long
+            </span>
             <p>{t('history.no_expenses')}</p>
+            <button
+              onClick={() => useStore.getState().setActiveTab('home')}
+              className="mt-4 min-h-11 px-6 py-2.5 rounded-full bg-primary text-on-primary text-sm font-semibold active:scale-95 transition-transform cursor-pointer"
+            >
+              {t('history.cta_first')}
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -616,10 +381,23 @@ export function HistoryTab() {
               const isThisSwiped = swipedId === exp.id;
               const isThisActive = draggingId === exp.id;
               const offset = isThisActive ? liveDragOffset : isThisSwiped ? SWIPE_REVEAL : 0;
+              const toggleExpand = () => {
+                if (isEditingNote) return;
+                if (didSwipeRef.current) {
+                  didSwipeRef.current = false;
+                  return;
+                }
+                if (isThisSwiped) {
+                  setSwipedId(null);
+                  return;
+                }
+                setExpandedId(isExpanded ? null : exp.id);
+              };
 
               return (
                 <div
                   key={exp.id}
+                  data-testid="expense-card"
                   className="relative overflow-hidden rounded-[2rem] shadow-ambient"
                   onTouchStart={(e) => {
                     if (swipedId && swipedId !== exp.id) setSwipedId(null);
@@ -644,31 +422,26 @@ export function HistoryTab() {
                     else setSwipedId(null);
                   }}
                 >
-                  <div className="absolute inset-y-0 right-0 w-[76px] bg-error flex items-center justify-center">
+                  {/* 未滑出時 inert：隱藏破壞性控制項不得鍵盤可達（與收合明細同模式）；鍵盤刪除路徑＝展開卡內刪除鈕。 */}
+                  <div
+                    inert={!isThisSwiped || undefined}
+                    className="absolute inset-y-0 right-0 w-[76px] bg-error flex items-center justify-center"
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         softDelete(exp.id);
                         setSwipedId(null);
                       }}
-                      className="flex items-center justify-center text-on-error active:scale-90 transition-transform"
+                      aria-label={t('history.delete_title')}
+                      className="w-11 h-11 flex items-center justify-center text-on-error active:scale-90 transition-transform"
                     >
-                      <span className="material-symbols-outlined text-2xl">delete</span>
+                      <span className="material-symbols-outlined text-2xl" aria-hidden="true">
+                        delete
+                      </span>
                     </button>
                   </div>
                   <div
-                    onClick={() => {
-                      if (isEditingNote) return;
-                      if (didSwipeRef.current) {
-                        didSwipeRef.current = false;
-                        return;
-                      }
-                      if (isThisSwiped) {
-                        setSwipedId(null);
-                        return;
-                      }
-                      setExpandedId(isExpanded ? null : exp.id);
-                    }}
                     style={{
                       transform: `translateX(-${offset}px)`,
                       transition: isThisActive
@@ -676,9 +449,15 @@ export function HistoryTab() {
                         : 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                       willChange: isThisActive ? 'transform' : 'auto',
                     }}
-                    className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-colors relative cursor-pointer"
+                    className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-colors relative"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    {/* 觸發器＝標題列原生 button（鍵盤啟動由瀏覽器保證）；展開內容移出觸發器，消除巢狀 button。 */}
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={toggleExpand}
+                      className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+                    >
                       {/* 左側：頭像堆疊 */}
                       <ParticipantAvatars
                         participantIds={exp.participantIds}
@@ -726,12 +505,28 @@ export function HistoryTab() {
                           <p className="font-bold text-on-surface whitespace-nowrap text-base sm:text-lg">
                             {formatAmount(exp.totalAmount, expenseCurrency(exp))}
                           </p>
-                          {expenseCurrency(exp) === 'KRW' &&
-                            formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd) && (
-                              <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
-                                ≈ {formatKrwAsTwd(exp.totalAmount, exp.exchangeRateKrwPerTwd)}
-                              </p>
-                            )}
+                          {(() => {
+                            // 快照幣別 ≠ 全域幣別時顯示 ≈ 參考：KRW 用記帳當下快照匯率，TWD 用當前匯率（即期參考）。
+                            // 匯率快照過期時附 stale 短標，維持參考值狀態誠實（R10）。
+                            const from = expenseCurrency(exp);
+                            if (from === currency) return null;
+                            const to = from === 'KRW' ? ('TWD' as const) : ('KRW' as const);
+                            const rate = from === 'KRW' ? exp.exchangeRateKrwPerTwd : krwPerTwd;
+                            const approx = convertAmount(exp.totalAmount, from, to, rate);
+                            if (approx === null) return null;
+                            return (
+                              <>
+                                <p className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap">
+                                  ≈ {formatAmount(approx, to)}
+                                </p>
+                                {isRateStale(rateUpdatedAtIso) && (
+                                  <p className="text-[10px] font-medium text-tertiary whitespace-nowrap">
+                                    {t('settings.rate_stale')}
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()}
                           <p className="text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {t('history.participants', { count: exp.participantIds.length })}
                           </p>
@@ -739,16 +534,18 @@ export function HistoryTab() {
                         <span
                           className="material-symbols-outlined text-on-surface-variant transition-transform duration-300 shrink-0"
                           style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                          aria-hidden="true"
                         >
                           expand_more
                         </span>
                       </div>
-                    </div>
+                    </button>
 
-                    {/* 展開詳情 */}
+                    {/* 展開詳情；收合時 inert 移出焦點與無障礙樹，消除幻影可聚焦項 */}
                     <div
+                      inert={!isExpanded || undefined}
                       className={cn(
-                        'grid transition-all duration-300 ease-in-out',
+                        'grid transition-all duration-200 ease-in-out',
                         isExpanded
                           ? 'grid-rows-[1fr] opacity-100 mt-4 pt-4 border-t border-outline-variant/20'
                           : 'grid-rows-[0fr] opacity-0',
@@ -756,10 +553,13 @@ export function HistoryTab() {
                     >
                       <div className="overflow-hidden">
                         {/* 備注編輯 */}
-                        <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="mb-3">
                           {isEditingNote ? (
                             <div className="flex items-center gap-2 bg-surface-container rounded-full px-3 py-1.5">
-                              <span className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0">
+                              <span
+                                className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0"
+                                aria-hidden="true"
+                              >
                                 label
                               </span>
                               <input
@@ -782,17 +582,26 @@ export function HistoryTab() {
                                   e.preventDefault();
                                   commitNote(exp.id);
                                 }}
-                                className="shrink-0 text-primary cursor-pointer"
+                                aria-label={t('common.confirm')}
+                                className="shrink-0 w-11 h-11 -my-2 -mr-2.5 flex items-center justify-center text-primary cursor-pointer"
                               >
-                                <span className="material-symbols-outlined text-[16px]">check</span>
+                                <span
+                                  className="material-symbols-outlined text-[16px]"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>
                               </button>
                             </div>
                           ) : (
                             <button
-                              onClick={(e) => startEditNote(exp.id, exp.note, e)}
-                              className="flex items-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
+                              onClick={() => startEditNote(exp.id, exp.note)}
+                              className="flex items-center gap-1.5 min-h-11 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
                             >
-                              <span className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors">
+                              <span
+                                className="material-symbols-outlined text-[13px] group-hover/note:text-primary transition-colors"
+                                aria-hidden="true"
+                              >
                                 {exp.note ? 'edit' : 'add'}
                               </span>
                               <span className={cn(exp.note ? 'text-on-surface' : 'opacity-60')}>
@@ -809,24 +618,28 @@ export function HistoryTab() {
                           </span>
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingExpenseId(exp.id);
-                              }}
-                              className="text-xs text-primary flex items-center gap-1 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                              onClick={() => setEditingExpenseId(exp.id)}
+                              className="text-xs text-primary flex items-center gap-1 min-h-11 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[14px]">edit</span>{' '}
+                              <span
+                                className="material-symbols-outlined text-[14px]"
+                                aria-hidden="true"
+                              >
+                                edit
+                              </span>{' '}
                               {t('history.edit')}
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                softDelete(exp.id);
-                              }}
-                              className="text-xs text-error flex items-center gap-1 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                              onClick={() => softDelete(exp.id)}
+                              className="text-xs text-error flex items-center gap-1 min-h-11 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                               title={t('history.delete_title')}
                             >
-                              <span className="material-symbols-outlined text-[14px]">delete</span>{' '}
+                              <span
+                                className="material-symbols-outlined text-[14px]"
+                                aria-hidden="true"
+                              >
+                                delete
+                              </span>{' '}
                               {t('history.delete')}
                             </button>
                           </div>
@@ -886,195 +699,29 @@ export function HistoryTab() {
         })()}
 
       {pendingDeleteId && (
-        <div className="fixed bottom-24 left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300">
+        <div
+          ref={undoToastRef}
+          data-testid="undo-toast"
+          className="fixed left-4 right-4 z-50 flex items-center justify-between bg-on-surface text-surface rounded-2xl px-4 py-3 shadow-xl animate-in slide-in-from-bottom-4 duration-300"
+          style={{ bottom: 'var(--overlay-bottom)' }}
+        >
           <span className="text-sm">
             {(() => {
               const exp = expenses.find((e) => e.id === pendingDeleteId);
-              const label =
-                exp?.note ??
-                (exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized'));
-              return `已刪除「${label}」`;
+              const fallback =
+                exp?.type === 'split_evenly' ? t('history.split_evenly') : t('history.itemized');
+              const label = exp && exp.note.length > 0 ? exp.note : fallback;
+              return t('history.deleted_toast', { label });
             })()}
           </span>
           <button
             onClick={undoDelete}
-            className="text-sm font-semibold text-primary ml-4 px-2 py-1 rounded-lg active:opacity-70 transition-opacity"
+            className="text-sm font-semibold text-primary ml-4 min-h-11 px-3 py-1 rounded-lg active:opacity-70 transition-opacity"
           >
-            復原
+            {t('history.undo')}
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-// ── EditExpenseSheet ─────────────────────────────────────────────────────────
-
-interface EditExpenseSheetProps {
-  expense: ExpenseRecord;
-  members: Member[];
-  onSave: (
-    patch: Partial<
-      Pick<ExpenseRecord, 'totalAmount' | 'perPersonAmounts' | 'participantIds' | 'paidBy'>
-    >,
-  ) => void;
-  onClose: () => void;
-}
-
-function EditExpenseSheet({ expense, members, onSave, onClose }: EditExpenseSheetProps) {
-  const { t } = useTranslation();
-  const globalCurrency = useStore((s) => s.currency);
-  const tripExpenses = useStore((s) => s.expenses.filter((e) => e.tripId === s.currentTripId));
-  const tripCurrency = resolveTripCurrency(tripExpenses, globalCurrency);
-  const expenseCurrency = resolveExpenseCurrency(expense, tripCurrency);
-  const isEvenly = expense.type === 'split_evenly';
-
-  const [totalInput, setTotalInput] = useState(
-    isEvenly ? String(Math.round(expense.totalAmount)) : '',
-  );
-
-  const [perPersonInputs, setPerPersonInputs] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    Object.entries(expense.perPersonAmounts).forEach(([id, amt]) => {
-      init[id] = String(Math.round(amt));
-    });
-    return init;
-  });
-
-  const [editPayerId, setEditPayerId] = useState(expense.paidBy);
-
-  const handleSave = () => {
-    if (isEvenly) {
-      const total = parseFloat(totalInput);
-      if (!Number.isFinite(total) || total <= 0) return;
-      const participantIds = expense.participantIds;
-      const split = total / participantIds.length;
-      const perPersonAmounts: Record<string, number> = {};
-      participantIds.forEach((id) => {
-        perPersonAmounts[id] = split;
-      });
-      onSave({ totalAmount: total, perPersonAmounts, paidBy: editPayerId });
-    } else {
-      const perPersonAmounts: Record<string, number> = {};
-      let total = 0;
-      Object.entries(perPersonInputs).forEach(([id, val]) => {
-        const n = parseFloat(val);
-        if (Number.isFinite(n) && n > 0) {
-          perPersonAmounts[id] = n;
-          total += n;
-        }
-      });
-      if (total <= 0) return;
-      const participantIds = Object.keys(perPersonAmounts);
-      onSave({ totalAmount: total, perPersonAmounts, participantIds, paidBy: editPayerId });
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="absolute inset-0 bg-scrim/40" onClick={onClose} />
-      <div className="relative w-full bg-surface-container-low rounded-t-[2rem] p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-on-surface">{t('history.edit_title')}</h2>
-          <button
-            onClick={onClose}
-            className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        </div>
-
-        {isEvenly ? (
-          <div className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3">
-            <span className="text-on-surface-variant text-sm font-medium shrink-0">
-              {getCurrencySymbol(expenseCurrency)}
-            </span>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={totalInput}
-              onChange={(e) => setTotalInput(e.target.value)}
-              className="flex-1 bg-transparent text-lg font-semibold text-on-surface outline-none"
-              autoFocus
-            />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {expense.participantIds.map((id) => {
-              const m = members.find((x) => x.id === id);
-              if (!m) return null;
-              return (
-                <div
-                  key={id}
-                  className="flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-2.5"
-                >
-                  <MemberAvatar seed={m.avatarUrl} alt={m.name} size={28} />
-                  <span className="flex-1 text-sm font-medium text-on-surface truncate">
-                    {m.name}
-                  </span>
-                  <span className="text-on-surface-variant text-sm shrink-0">
-                    {getCurrencySymbol(expenseCurrency)}
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={perPersonInputs[id] ?? ''}
-                    onChange={(e) =>
-                      setPerPersonInputs((prev) => ({ ...prev, [id]: e.target.value }))
-                    }
-                    className="w-20 bg-transparent text-sm font-semibold text-on-surface outline-none text-right"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div>
-          <p className="text-xs font-medium text-on-surface-variant mb-2">
-            {t('history.edit_payer')}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {members
-              .filter((m) => expense.participantIds.includes(m.id))
-              .map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setEditPayerId(m.id)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all cursor-pointer',
-                    editPayerId === m.id
-                      ? 'bg-primary text-on-primary shadow-sm'
-                      : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high',
-                  )}
-                >
-                  <MemberAvatar seed={m.avatarUrl} alt={m.name} size={20} />
-                  {m.name}
-                </button>
-              ))}
-          </div>
-        </div>
-
-        <div className="flex gap-3 pt-1">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-2xl bg-surface-container text-on-surface-variant text-sm font-medium transition-colors hover:bg-surface-container-high cursor-pointer"
-          >
-            {t('history.cancel')}
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 py-3 rounded-2xl bg-primary text-on-primary text-sm font-semibold transition-colors active:scale-95 cursor-pointer"
-          >
-            {t('history.save')}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

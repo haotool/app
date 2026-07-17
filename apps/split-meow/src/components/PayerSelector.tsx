@@ -16,7 +16,8 @@ export function PayerSelector() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label={t('payer.label', { name: payer?.name })}
-        className="flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
+        aria-expanded={isOpen}
+        className="min-h-11 flex items-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container rounded-full transition-colors text-sm shadow-ambient"
       >
         <MemberAvatar seed={payer?.avatarUrl ?? ''} alt={payer?.name} size={24} />
         <span className="font-medium text-on-surface max-w-[56px] truncate">{payer?.name}</span>
@@ -28,7 +29,7 @@ export function PayerSelector() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-56 bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute top-full mt-2 right-0 w-[min(14rem,calc(100vw-2rem))] bg-surface-container-lowest rounded-[2rem] shadow-ambient border border-outline-variant/20 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="max-h-60 overflow-y-auto p-2 space-y-1">
               {members.map((member) => (
                 <button
