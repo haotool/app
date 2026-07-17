@@ -14,13 +14,18 @@ const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 150;
 const BODY_H = 110;
 // 空中型（§54）：常態盤旋高度與側緣邊距。
-const HOVER_Y = 168;
-const SIDE_MARGIN_X = 130;
+// 難度根修（實測席稽核）：168 → 246——含 ±14 呼吸浮動下，單跳頂點星彈（y≈282）
+// 恆在命中帶（|Δy| < 星半徑＋碰撞半高 ≈59）內，地面保底線（單跳點射）穩定成立；
+// 拍翅為加成非必需。
+const HOVER_Y = 246;
+// 難度根修：130 → 190——收窄盤旋掃幅，牆側留出玩家可站的安全喘息帶（錨點打法成立）。
+const SIDE_MARGIN_X = 190;
 // 俯掠帶高度（§54 P3）：站立可躲（帶底 330 < 站立頂 ~360）、跳躍會撞。
 const SWEEP_Y = 280;
 // 招式預警時長：dive 落點標記、sweep 橫帶閃爍、bomb 落點標記提前量。
-const DIVE_TELEGRAPH_MS = 550;
-const SWEEP_TELEGRAPH_MS = 600;
+// 難度根修：dive 550 → 720、sweep 600 → 750（普通反應 250-400ms 可讀可躲）。
+const DIVE_TELEGRAPH_MS = 720;
+const SWEEP_TELEGRAPH_MS = 750;
 const BOMB_PREDROP_MS = 300;
 const BARRAGE_SPEED = 170;
 const BOMB_TINT = 0x9f8fe8;
@@ -218,6 +223,8 @@ export function createNoctra(
             y: HOVER_Y,
             duration: 420 / fsm.speedFactor,
             ease: 'Quad.easeOut',
+            // 落地滯留（難度根修）：貼地 hold 給地面水平星彈明確輸出窗後才回升。
+            delay: NOCTRA.diveHoldMs / fsm.speedFactor,
           },
         ],
         onComplete: () => {
@@ -488,12 +495,14 @@ export function createNoctra(
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 盤旋駕駛：水平緩擺＋垂直呼吸浮動；演出 tween 接管期間讓位。
+      // 難度根修：掃速 0.0009 → 0.0007——峰值橫移降至玩家走速以下（P1 約 208px/s），
+      // 保持間距的走位真正可行（原值 267px/s 追過玩家 220px/s）。
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
         const span = viewW() / 2 - SIDE_MARGIN_X;
-        sprite.x = viewW() / 2 + Math.sin(hoverMs * 0.0009) * span;
+        sprite.x = viewW() / 2 + Math.sin(hoverMs * 0.0007) * span;
         sprite.y = HOVER_Y + Math.sin(hoverMs * 0.0021) * 14;
-        sprite.setFlipX(Math.cos(hoverMs * 0.0009) < 0);
+        sprite.setFlipX(Math.cos(hoverMs * 0.0007) < 0);
       }
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;

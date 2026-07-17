@@ -4,29 +4,43 @@ import { EX_MODS } from './bossFsm';
 // 暗月蝠王 Noctra FSM 純邏輯（GAME_DESIGN §54，不 import phaser），vitest 對象。
 // 平行於 bossFsm.ts 的表驅動模式：phase truth 全數收斂於此，禁止散落 scene。
 
+// v9 難度根修（§54，實測席稽核）：v8 出貨值（idle 1100/bomb 4/dive 連擊/barrage 10）
+// 實測普通與熟練 bot 勝率皆 0%——有效輸出窗僅剩俯衝縫；本表為調參後基準值，
+// EX 沿用本基準再乘 EX 係數。
 export const NOCTRA = {
-  maxHp: 70,
+  // 血量（難度根修：70 → 52）：hit window 修復後以雙水準 bot 勝率門檻
+  //（普通 ≥40%/熟練 ≥80%）收斂定案——TTK 對齊補給經濟，普通玩家標準星
+  // 保底線約 40-60s 擊破。
+  maxHp: 52,
   phase2HpRatio: 0.6,
   phase3HpRatio: 0.3,
   bodyDamage: 1,
-  enrageSpeedMultiplier: 1.25,
-  // P1 盤旋投彈；P3 彈幕改放射狀。
-  bombCountP1: 4,
-  bombCountP2: 5,
-  barrageCount: 10,
+  // 狂暴節奏（難度根修：1.25 → 1.15）：P2/P3 壓力回落可讀帶。
+  enrageSpeedMultiplier: 1.15,
+  // P1 盤旋投彈；P3 彈幕改放射狀（難度根修：4/5/10 → 2/3/7——bot 實測 P1/P2
+  // 落彈鏈與 P3 放射彈為主要死因，勝率門檻 40%/80% 收斂後定案）。
+  bombCountP1: 2,
+  bombCountP2: 3,
+  barrageCount: 7,
   // P2 召喚 floaty 上限（場上同時存活數，超額召喚令由呈現層依現量夾限）。
   summonCap: 2,
-  // 補給節奏（anti-softlock）：每損 10 HP 掉補給小怪，與果凍王同律。
-  minionSpawnHpStep: 10,
-  idleMs: 1100,
+  // 補給節奏（anti-softlock）：每損 8 HP 掉補給小怪（難度根修：10 → 8，
+  // 輸出愈多彈藥愈順，正回饋取代枯竭）。
+  minionSpawnHpStep: 8,
+  // 招式間隙（難度根修：1100 → 1600，表觀 hit window 抬至 ≥55%）。
+  idleMs: 1600,
   bombDurationMs: 1300,
-  diveDurationMs: 1500,
+  // 俯衝全程（難度根修：1500 → 2100）：涵蓋前搖 720＋下落＋落地滯留＋回升，
+  // EX 最高速率（×1.4375）下 telegraph（不隨速率縮放）仍不與下一招重疊。
+  diveDurationMs: 2100,
   summonDurationMs: 900,
   barrageDurationMs: 1400,
   sweepDurationMs: 1700,
   eclipseDurationMs: 1500,
-  // 俯衝落地 hit window（§58）：窗內頭頂下砸觸發長暈。
-  diveStunWindowMs: 600,
+  // 俯衝落地滯留（難度根修）：貼地 hold 給地面水平星彈明確輸出窗。
+  diveHoldMs: 300,
+  // 俯衝落地 hit window（§58）：窗內頭頂下砸觸發長暈（涵蓋滯留＋回升起始）。
+  diveStunWindowMs: 900,
   diveStunMs: 1800,
 } as const;
 
@@ -52,14 +66,14 @@ export function noctraPhaseForHp(hp: number, maxHp: number): BossPhase {
   return hp <= maxHp * NOCTRA.phase2HpRatio ? 'p2' : 'p1';
 }
 
-// 三階段招式循環（§54/§58）：P1 盤旋投彈＋俯衝；P2 俯衝連擊＋召喚；P3 狂暴彈幕＋全場俯掠；
-// EX P3 追加月蝕彈幕矩陣（表驅動，禁止散落 scene）。
+// 三階段招式循環（§54/§58）：P1 盤旋投彈＋俯衝；P2 俯衝＋召喚（難度根修：
+// 雙 dive 連擊改單次）；P3 狂暴彈幕＋全場俯掠；EX P3 追加月蝕彈幕矩陣（表驅動）。
 export function noctraAttackCycle(phase: BossPhase, ex = false): readonly NoctraAction[] {
   switch (phase) {
     case 'p1':
       return ['bomb', 'dive'];
     case 'p2':
-      return ['bomb', 'dive', 'dive', 'summon'];
+      return ['bomb', 'dive', 'summon'];
     case 'p3':
       return ex ? ['barrage', 'sweep', 'bomb', 'eclipse'] : ['barrage', 'sweep', 'bomb'];
     default: {

@@ -24,9 +24,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
-      2600, 1800, 1300, 3500, 1500, 1200, 3200, 1400, 1150,
+      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150,
     ]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 2, 5, 5]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0, 480, 480, 0, 480, 480]);
   });
 

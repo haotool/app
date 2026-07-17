@@ -36,6 +36,7 @@ import { NOCTRA } from '../logic/noctraFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
+  BOSS_AIM_ASSIST,
   HOMING_RANGE_PX,
   HOMING_TURN_RAD_PER_MS,
   nearestInRange,
@@ -292,6 +293,7 @@ export class GameScene extends Phaser.Scene {
       this.syncGateSweep();
       for (const room of this.eliteRooms) room.update();
       this.steerHomingStars(deltaMs);
+      this.steerBossAimAssist(deltaMs);
       this.steerMagnetizedStars(deltaMs);
       this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
@@ -783,6 +785,7 @@ export class GameScene extends Phaser.Scene {
       hp: this.playerHp,
       maxHp: PLAYER.maxHp,
       rng: this.mercyRng,
+      bossRoom: this.level.boss !== null,
     });
     this.mercy = result.state;
     if (result.spawn) this.spawnMercyHeart();
@@ -823,6 +826,15 @@ export class GameScene extends Phaser.Scene {
   // e2e 觀測點（§62）：本命累計愛心生成數。
   mercySpawnedCount(): number {
     return this.mercy.spawned;
+  }
+
+  // e2e 觀測點（§54 難度 bot）：魔王本體與彈幕群（座標/迴避取樣用）。
+  bossBody(): Phaser.GameObjects.GameObject {
+    return this.boss.getBody();
+  }
+
+  bossProjectiles(): Phaser.Physics.Arcade.Group {
+    return this.boss.getProjectiles();
   }
 
   private finish(result: 'won' | 'lost'): void {
@@ -1329,6 +1341,36 @@ export class GameScene extends Phaser.Scene {
     }
     for (const target of pickInRadius(x, y, candidates, mix.freezeRadiusPx + 20)) {
       this.enemies.freeze(target.ref, mix.freezeMs);
+    }
+  }
+
+  // 魔王房準星輔助（§54 難度根修）：一般星彈對活動中魔王微幅導向——地面水平彈
+  // 自然上彎入盤旋帶，保底線不依賴拍翅精度；轉率遠低於追電星、大致對向才生效。
+  private steerBossAimAssist(deltaMs: number): void {
+    if (!this.level.boss || !this.boss.isActive() || this.bossDown) return;
+    const body = asSprite(this.boss.getBody());
+    for (const child of this.player.getStars().getChildren()) {
+      const star = asSprite(child);
+      if (!star.active) continue;
+      // 追電星有自己的導向；迴旋星彈道由回程驅動，皆不疊加輔助。
+      if (this.starMixOf(star)?.homing || this.starSpecOf(star).boomerang) continue;
+      const starBody = star.body as Phaser.Physics.Arcade.Body;
+      const towardBoss = Math.sign(body.x - star.x);
+      if (towardBoss !== 0 && Math.sign(starBody.velocity.x) !== towardBoss) continue;
+      if (Phaser.Math.Distance.Between(star.x, star.y, body.x, body.y) > BOSS_AIM_ASSIST.rangePx) {
+        continue;
+      }
+      const steered = steerTowardTarget(
+        starBody.velocity.x,
+        starBody.velocity.y,
+        star.x,
+        star.y,
+        body.x,
+        body.y,
+        this.starSpecOf(star).speed,
+        BOSS_AIM_ASSIST.turnRadPerMs * deltaMs,
+      );
+      starBody.setVelocity(steered.vx, steered.vy);
     }
   }
 

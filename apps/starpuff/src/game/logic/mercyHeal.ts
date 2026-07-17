@@ -17,6 +17,12 @@ export const MERCY_HEAL = {
   maxPerLife: 2,
   // 拾取回復量。
   healHp: 1,
+  // 魔王房 override（§54/§62 難度稽核）：boss 戰典型長度 20-60s，一般門檻（60s）
+  // 形同虛設——放寬為絕對血量 ≤2、12s 起評、18s 冷卻、60% 機率；上限沿用。
+  bossHpMax: 2,
+  bossMinElapsedMs: 12_000,
+  bossCooldownMs: 18_000,
+  bossChance: 0.6,
 } as const;
 
 export interface MercyState {
@@ -37,6 +43,8 @@ export interface MercyTick {
   hp: number;
   maxHp: number;
   rng: () => number;
+  // 魔王房（含 EX）走 override 門檻（§54）。
+  bossRoom?: boolean;
 }
 
 export interface MercyResult {
@@ -51,13 +59,20 @@ export function advanceMercyHeal(state: MercyState, tick: MercyTick): MercyResul
     return { state: { ...state, sinceEvalMs }, spawn: false };
   }
   const rearmed: MercyState = { ...state, sinceEvalMs: 0 };
+  const boss = tick.bossRoom === true;
+  const hpOk = boss
+    ? tick.hp <= MERCY_HEAL.bossHpMax
+    : tick.hp <= tick.maxHp * MERCY_HEAL.hpRatioMax;
+  const minElapsedMs = boss ? MERCY_HEAL.bossMinElapsedMs : MERCY_HEAL.minElapsedMs;
+  const cooldownMs = boss ? MERCY_HEAL.bossCooldownMs : MERCY_HEAL.cooldownMs;
+  const chance = boss ? MERCY_HEAL.bossChance : MERCY_HEAL.chance;
   const eligible =
     tick.hp > 0 &&
-    tick.hp <= tick.maxHp * MERCY_HEAL.hpRatioMax &&
-    tick.elapsedMs >= MERCY_HEAL.minElapsedMs &&
+    hpOk &&
+    tick.elapsedMs >= minElapsedMs &&
     state.spawned < MERCY_HEAL.maxPerLife &&
-    tick.elapsedMs - state.lastSpawnElapsedMs >= MERCY_HEAL.cooldownMs;
-  if (!eligible || tick.rng() >= MERCY_HEAL.chance) return { state: rearmed, spawn: false };
+    tick.elapsedMs - state.lastSpawnElapsedMs >= cooldownMs;
+  if (!eligible || tick.rng() >= chance) return { state: rearmed, spawn: false };
   return {
     state: {
       sinceEvalMs: 0,

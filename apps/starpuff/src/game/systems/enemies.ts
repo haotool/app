@@ -77,6 +77,7 @@ export interface EnemySystem {
   getGroup(): Phaser.Physics.Arcade.Group;
   getHazards(): Phaser.Physics.Arcade.Group;
   setTarget(target: EnemyTarget | null): void;
+  targetX(): number | null;
   aliveCount(): number;
   aliveInhalableCount(): number;
   update(deltaMs: number): void;
@@ -680,6 +681,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
     setTarget(next: EnemyTarget | null) {
       target = next;
+    },
+
+    // 目標水平位置（§54 難度根修）：boss 房補給遠側生成用；無目標回 null。
+    targetX() {
+      return target?.x ?? null;
     },
 
     aliveCount() {

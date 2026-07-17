@@ -73,3 +73,45 @@ describe('advanceMercyHeal 慈悲補血決策（§62）', () => {
     expect(createMercyState().spawned).toBe(0);
   });
 });
+
+describe('魔王房 override（§54 難度稽核）', () => {
+  it('boss 房：HP ≤2 絕對門檻、12s 起評、18s 冷卻、60% 機率', () => {
+    const state = createMercyState();
+    // 一般門檻不過（hp 2 > 5/3、elapsed 25s < 60s），boss 房通過。
+    expect(advanceMercyHeal(state, { ...baseTick, hp: 2, elapsedMs: 25_000 }).spawn).toBe(false);
+    expect(
+      advanceMercyHeal(state, { ...baseTick, hp: 2, elapsedMs: 25_000, bossRoom: true }).spawn,
+    ).toBe(true);
+    // boss 房時間門檻：12s 邊界。
+    expect(
+      advanceMercyHeal(state, { ...baseTick, hp: 1, elapsedMs: 11_999, bossRoom: true }).spawn,
+    ).toBe(false);
+    // boss 房機率上界 0.6。
+    expect(
+      advanceMercyHeal(state, {
+        ...baseTick,
+        hp: 1,
+        elapsedMs: 25_000,
+        bossRoom: true,
+        rng: () => 0.6,
+      }).spawn,
+    ).toBe(false);
+  });
+
+  it('boss 房冷卻 18s：生成後 18s 內不再生成', () => {
+    let state = createMercyState();
+    state = advanceMercyHeal(state, {
+      ...baseTick,
+      hp: 1,
+      elapsedMs: 25_000,
+      bossRoom: true,
+    }).state;
+    expect(state.spawned).toBe(1);
+    expect(
+      advanceMercyHeal(state, { ...baseTick, hp: 1, elapsedMs: 42_999, bossRoom: true }).spawn,
+    ).toBe(false);
+    expect(
+      advanceMercyHeal(state, { ...baseTick, hp: 1, elapsedMs: 43_000, bossRoom: true }).spawn,
+    ).toBe(true);
+  });
+});

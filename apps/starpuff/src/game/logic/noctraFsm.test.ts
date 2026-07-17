@@ -21,17 +21,15 @@ describe('noctraPhaseForHp（§54 三階段門檻）', () => {
 });
 
 describe('noctraAttackCycle（表驅動招式循環）', () => {
-  it('P1 盤旋投彈＋俯衝；P2 俯衝連擊＋召喚；P3 彈幕＋俯掠＋投彈', () => {
+  it('P1 盤旋投彈＋俯衝；P2 俯衝＋召喚（難度根修單 dive）；P3 彈幕＋俯掠＋投彈', () => {
     expect(noctraAttackCycle('p1')).toEqual(['bomb', 'dive']);
-    expect(noctraAttackCycle('p2')).toEqual(['bomb', 'dive', 'dive', 'summon']);
+    expect(noctraAttackCycle('p2')).toEqual(['bomb', 'dive', 'summon']);
     expect(noctraAttackCycle('p3')).toEqual(['barrage', 'sweep', 'bomb']);
   });
 
   it('nextAction 依循環游標推進且環回', () => {
     let cursor = noctraNextAction('p2', null, 0);
     expect(cursor.action).toBe('bomb');
-    cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
-    expect(cursor.action).toBe('dive');
     cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
     expect(cursor.action).toBe('dive');
     cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
@@ -68,24 +66,24 @@ describe('createNoctraFsm tick（節奏與指令）', () => {
     for (let i = 0; i < 400; i += 1) {
       const command = fsm.tick(50);
       if (command && command.kind !== 'hover') commands.push(command);
-      if (commands.length >= 4) break;
+      if (commands.length >= 3) break;
     }
-    expect(commands.map((c) => c.kind)).toEqual(['bomb', 'dive', 'dive', 'summon']);
-    const summon = commands[3];
-    if (summon?.kind !== 'summon') throw new Error('第四招應為召喚');
+    expect(commands.map((c) => c.kind)).toEqual(['bomb', 'dive', 'summon']);
+    const summon = commands[2];
+    if (summon?.kind !== 'summon') throw new Error('第三招應為召喚');
     expect(summon.cap).toBe(NOCTRA.summonCap);
   });
 });
 
 describe('createNoctraFsm takeDamage（事件流）', () => {
-  it('受擊發 damaged；跨門檻發 phase；每損 10 發 minionDrop', () => {
+  it('受擊發 damaged；跨門檻發 phase；每損 8 發 minionDrop', () => {
     const fsm = createNoctraFsm();
     const events = fsm.takeDamage(10);
-    expect(events).toContainEqual({ kind: 'damaged', hp: 60 });
+    expect(events).toContainEqual({ kind: 'damaged', hp: 42 });
     expect(events).toContainEqual({ kind: 'minionDrop' });
     expect(events.find((e) => e.kind === 'phase')).toBeUndefined();
-    // 60 → 42 跨 p2 門檻（70×0.6=42）。
-    const phaseEvents = fsm.takeDamage(18);
+    // 42 → 31 跨 p2 門檻（52×0.6=31.2）。
+    const phaseEvents = fsm.takeDamage(11);
     expect(phaseEvents).toContainEqual({ kind: 'phase', phase: 'p2' });
   });
 
@@ -122,9 +120,9 @@ describe('createNoctraFsm takeDamage（事件流）', () => {
 });
 
 describe('EX 變體（§58）', () => {
-  it('HP ×1.5（105）、節奏 ×1.15；P3 循環追加 eclipse', () => {
+  it('HP ×1.5（78）、節奏 ×1.15；P3 循環追加 eclipse', () => {
     const fsm = createNoctraFsm({ ex: true });
-    expect(fsm.maxHp).toBe(105);
+    expect(fsm.maxHp).toBe(78);
     expect(fsm.speedFactor).toBeCloseTo(1.15, 5);
     expect(noctraAttackCycle('p3', true)).toEqual(['barrage', 'sweep', 'bomb', 'eclipse']);
     expect(noctraAttackCycle('p3')).toEqual(['barrage', 'sweep', 'bomb']);
@@ -132,7 +130,7 @@ describe('EX 變體（§58）', () => {
 
   it('EX P3 走完循環會發出 eclipse 指令（含矩陣參數）', () => {
     const fsm = createNoctraFsm({ ex: true });
-    fsm.takeDamage(75);
+    fsm.takeDamage(56);
     expect(fsm.phase).toBe('p3');
     const kinds: string[] = [];
     for (let i = 0; i < 2000 && !kinds.includes('eclipse'); i += 1) {
@@ -167,5 +165,25 @@ describe('雷化中斷召喚與俯衝長暈（§58）', () => {
     fsm.stun(NOCTRA.diveStunMs);
     expect(fsm.tick(NOCTRA.diveStunMs - 1)).toBeNull();
     expect(fsm.tick(1)).not.toBeNull();
+  });
+});
+
+describe('難度根修基準值（§54 實測席稽核）', () => {
+  it('彈幕壓力：bomb 2/3、barrage 7；招式間隙 1600ms、HP 52（bot 勝率門檻收斂值）', () => {
+    expect(NOCTRA.bombCountP1).toBe(2);
+    expect(NOCTRA.bombCountP2).toBe(3);
+    expect(NOCTRA.barrageCount).toBe(7);
+    expect(NOCTRA.idleMs).toBe(1600);
+    expect(NOCTRA.maxHp).toBe(52);
+    expect(NOCTRA.enrageSpeedMultiplier).toBeCloseTo(1.15, 5);
+  });
+
+  it('俯衝輸出窗：落地滯留 300ms、暈眩窗涵蓋滯留、全程時長容納 EX 最高速率', () => {
+    expect(NOCTRA.diveHoldMs).toBe(300);
+    expect(NOCTRA.diveStunWindowMs).toBeGreaterThanOrEqual(NOCTRA.diveHoldMs);
+    // EX P2/P3 最高速率 1.25×1.15：telegraph 720（不縮放）＋演出段仍須落在招式時長內。
+    const maxSpeed = NOCTRA.enrageSpeedMultiplier * 1.15;
+    const presentation = 720 + (320 + NOCTRA.diveHoldMs + 420) / maxSpeed;
+    expect(NOCTRA.diveDurationMs / maxSpeed).toBeGreaterThanOrEqual(presentation);
   });
 });

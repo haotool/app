@@ -433,14 +433,15 @@ export const LEVELS: readonly LevelSpec[] = [
     bgKey: 'bg-eclipse',
     worldWidth: 854,
     killQuota: 0,
-    spawnIntervalMs: 3200,
-    maxOnScreen: 2,
+    // 難度根修（§54）：供給怪定位是彈藥非第二傷害源——間隔 3200 → 4500、同屏 2 → 1、
+    // 移除俯衝型 gusty（疾風味由 floaty 供給）；彈藥保證由飢荒立即補生承擔（§26）。
+    spawnIntervalMs: 4500,
+    maxOnScreen: 1,
     safeZoneTailPx: 0,
-    // 補生全可吸（§26 飢荒保證律）：gusty 歸疾風味；v9（§58）加 zappy 供雷化斷召路徑。
+    // 補生全可吸（§26 飢荒保證律）；v9（§58）加 zappy 供雷化斷召路徑。
     enemyMix: [
-      { kind: 'jelly', weight: 0.35 },
-      { kind: 'floaty', weight: 0.25 },
-      { kind: 'gusty', weight: 0.2 },
+      { kind: 'jelly', weight: 0.45 },
+      { kind: 'floaty', weight: 0.35 },
       { kind: 'zappy', weight: 0.2 },
     ],
     platforms: [],
