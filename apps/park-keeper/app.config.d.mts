@@ -1,4 +1,9 @@
+// 預渲染路徑全集（vite.config.ts includedRoutes 與 postbuild ssgDirs 消費）。
 export declare const SEO_PATHS: string[];
+// noindex 功能頁：需預渲染但不入 sitemap 與生產 SEO 語義驗證。
+export declare const NOINDEX_PATHS: string[];
+// sitemap 對外路徑 = SEO_PATHS - NOINDEX_PATHS（sitemap.xml 與 verify-sitemap-ssg 消費）。
+export declare const SITEMAP_PATHS: string[];
 export declare const SEO_FILES: string[];
 export declare const IMAGE_RESOURCES: string[];
 export declare const SITE_CONFIG: {

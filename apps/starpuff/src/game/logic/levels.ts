@@ -39,6 +39,18 @@ export interface DecorSpec {
   x: number;
 }
 
+// 中魔王精英（§48）：關卡中段一隻既有怪變體（tint+scale+血量+FSM 倍率，零新美術）。
+// 擊敗掉落稀有味小怪與回復食物；精英房軟鎖門擊敗開門、60s 逾時自動開門防卡關。
+export interface EliteSpec {
+  kind: EnemyKind;
+  x: number;
+  hp: number;
+  scale: number;
+  tint: number;
+  speedMul: number;
+  rewardFlavor: EnemyKind;
+}
+
 export interface LevelSpec {
   id: LevelId;
   nameZh: string;
@@ -53,6 +65,7 @@ export interface LevelSpec {
   elements: readonly StageElementSpec[];
   decor: readonly DecorSpec[];
   easterEggs: readonly EasterEggSpec[];
+  elite: EliteSpec | null;
   boss: boolean;
   tutorial: boolean;
 }
@@ -94,6 +107,16 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋一：開局反向走到世界最左緣（玩家起點 x=100）。
     easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
+    // §48：粉紅暴走果凍丁——跳頻與衝量 1.5 倍，擊敗掉流光味。
+    elite: {
+      kind: 'jelly',
+      x: 1500,
+      hp: 10,
+      scale: 1.6,
+      tint: 0xff6fa5,
+      speedMul: 1.5,
+      rewardFlavor: 'glowy',
+    },
     boss: false,
     tutorial: true,
   },
@@ -106,12 +129,13 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1800,
     maxOnScreen: 4,
     safeZoneTailPx: 480,
-    // v4 §30 權重重配：shelly 15% 入編，可吸（floaty+puffy）維持 ≥50%。
+    // v4 §30 權重重配 + v7 §47 glowy 10% 入編：可吸佔比維持 ≥50%。
     enemyMix: [
-      { kind: 'floaty', weight: 0.35 },
-      { kind: 'spiky', weight: 0.3 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'spiky', weight: 0.25 },
       { kind: 'puffy', weight: 0.2 },
       { kind: 'shelly', weight: 0.15 },
+      { kind: 'glowy', weight: 0.1 },
     ],
     platforms: [
       { x: 450, y: 336, w: 150 },
@@ -138,6 +162,16 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋二：最高雲朵平台（層高 272）連續站上 3 次。
     easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
+    // §48：鋼青重殼殼——血量池制（不入縮殼循環）、走速 1.4 倍，擊敗掉重鑽味。
+    elite: {
+      kind: 'shelly',
+      x: 1700,
+      hp: 14,
+      scale: 1.55,
+      tint: 0x5aa8c8,
+      speedMul: 1.4,
+      rewardFlavor: 'drilly',
+    },
     boss: false,
     tutorial: false,
   },
@@ -150,14 +184,17 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1300,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
-    // 混編高壓（§15）+ v4 §30 權重重配：zappy 15% 入編，可吸佔比維持 ≥50%。
+    // 混編高壓（§15）+ v7 §47 drilly/glowy 入編（八種）：可吸佔比維持 ≥50%
+    // （drilly 僅破土窗可吸，保守值不計入）。
     enemyMix: [
       { kind: 'jelly', weight: 0.15 },
       { kind: 'floaty', weight: 0.1 },
-      { kind: 'puffy', weight: 0.15 },
-      { kind: 'spiky', weight: 0.25 },
-      { kind: 'chompy', weight: 0.2 },
-      { kind: 'zappy', weight: 0.15 },
+      { kind: 'puffy', weight: 0.1 },
+      { kind: 'spiky', weight: 0.2 },
+      { kind: 'chompy', weight: 0.15 },
+      { kind: 'zappy', weight: 0.1 },
+      { kind: 'drilly', weight: 0.1 },
+      { kind: 'glowy', weight: 0.1 },
     ],
     platforms: [
       { x: 400, y: 336, w: 130 },
@@ -191,6 +228,16 @@ export const LEVELS: readonly LevelSpec[] = [
     easterEggs: [
       { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['jelly', 'floaty', 'puffy'] },
     ],
+    // §48：暗紫狂咬花——前搖/冷卻縮時 1.6 倍攻速，擊敗掉流光味。
+    elite: {
+      kind: 'chompy',
+      x: 1900,
+      hp: 20,
+      scale: 1.5,
+      tint: 0x8a5fd8,
+      speedMul: 1.6,
+      rewardFlavor: 'glowy',
+    },
     boss: false,
     tutorial: false,
   },
@@ -218,6 +265,8 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋四：魔王可擊打後 5 秒內命中皇冠（首擊）。
     easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
+    // §48：魔王關無中魔王（Boss 即高潮）。
+    elite: null,
     boss: true,
     tutorial: false,
   },

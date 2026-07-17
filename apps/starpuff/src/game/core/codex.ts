@@ -1,5 +1,6 @@
 // 圖鑑與技能介紹資料 SSOT（GAME_DESIGN §36）：內容鏡像 §5/§16/§20/§23/§30 設定表，
 // 純資料模組供 CodexScene 呈現與 vitest 驗證；立繪一律取既有 sprite 資產鍵。
+import type { MixId, StarFlavor } from './config';
 import type { EnemyKind } from './types';
 
 export interface CodexMonster {
@@ -52,7 +53,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     kind: 'shelly',
     textureKey: 'minion-shelly',
     nameZh: '殼殼',
-    behavior: '受擊縮殼旋轉衝刺，暈眩時才可吸',
+    behavior: '受擊縮殼旋轉衝刺，暈眩時吞下得殼盾星',
     inhalable: false,
     conditional: true,
   },
@@ -60,7 +61,22 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     kind: 'zappy',
     textureKey: 'minion-zappy',
     nameZh: '雷雷',
-    behavior: '懸浮追蹤放電環，吞下得疾風星',
+    behavior: '懸浮追蹤放電環，吞下得雷鏈星',
+    inhalable: true,
+  },
+  {
+    kind: 'drilly',
+    textureKey: 'minion-drilly',
+    nameZh: '鑽鑽鼴',
+    behavior: '潛地僅露鰭追擊，破土窗吞下得重鑽星',
+    inhalable: false,
+    conditional: true,
+  },
+  {
+    kind: 'glowy',
+    textureKey: 'minion-glowy',
+    nameZh: '提燈水母',
+    behavior: '緩慢漂浮週期光脈衝，吞下得流光星',
     inhalable: true,
   },
   {
@@ -85,14 +101,20 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     detail: '把可吸怪拉進嘴裡吞下，+1 彈藥（上限 3）',
   },
   {
-    nameZh: '星彈三系',
+    nameZh: '星彈七系',
     howTo: '有彈藥時點按吸入鍵',
-    detail: '吞什麼射什麼：果凍丁標準星／飄飄雷雷疾風星／氣球魨爆裂星',
+    detail:
+      '吞什麼射什麼：果凍丁標準星／飄飄疾風星／氣球魨爆裂星／殼殼殼盾星／雷雷雷鏈星／鑽鑽鼴重鑽星／提燈水母流光星',
   },
   {
     nameZh: '強化星',
     howTo: '同種怪連吞兩隻',
     detail: '該槽升級金邊強化星，傷害 1.6 倍',
+  },
+  {
+    nameZh: '混合星彈',
+    howTo: '依序吞兩隻不同怪',
+    detail: '配方成立即合成混合星（共六式）：疾光／巨爆／追電／雷爆／碎鑽／凝光，威力獨特',
   },
   {
     nameZh: '星暴',
@@ -101,13 +123,18 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
   {
     nameZh: '下衝擊',
-    howTo: '空中搖桿下＋吸入鍵',
-    detail: '加速下墜，落地衝擊波擊退小怪、可破磚',
+    howTo: '空中搖桿下＋跳躍鍵',
+    detail: '加速下墜，落地衝擊波擊退小怪、可破磚；腹中含怪也可觸發',
   },
   {
-    nameZh: '空中疾衝',
-    howTo: '空中雙擊跳躍鍵',
-    detail: '朝面向疾衝一段距離，無敵幀衝撞小怪',
+    nameZh: '殼盾',
+    howTo: '頂槽殼盾星時長按吸入鍵',
+    detail: '舉正面護盾格擋一次攻擊，成功格擋觸發反擊星爆（冷卻 4 秒、消耗該槽）',
+  },
+  {
+    nameZh: '雷鏈',
+    howTo: '吞雷雷後點按發射',
+    detail: '雷鏈星命中後跳電至最近兩隻小怪，各受 3 點電擊',
   },
   {
     nameZh: '漂浮',
@@ -115,3 +142,23 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     detail: '拍翅最多三次延長滯空，落地重置',
   },
 ] as const;
+
+// 星味首遇提示（§46/§47）：GameScene 於本 session 首次取得該味/配方時 toast 一行文案。
+export const FLAVOR_HINTS: Record<StarFlavor, string> = {
+  jelly: '標準星：直線速射',
+  floaty: '疾風星：高速直射穿透兩敵',
+  puffy: '爆裂星：命中小範圍爆炸',
+  shelly: '殼盾星：長按舉盾格擋反擊',
+  zappy: '雷鏈星：命中跳電最近兩敵',
+  drilly: '重鑽星：低速重擊穿透',
+  glowy: '流光星：命中光域波及周圍',
+};
+
+export const MIX_HINTS: Record<MixId, string> = {
+  swiftlight: '疾光星合成！三重穿透高速直射',
+  bigblast: '巨爆星合成！大範圍爆炸',
+  voltseeker: '追電星合成！追蹤最近敵再跳電',
+  thunderburst: '雷爆星合成！爆炸加三連鎖電',
+  shardrill: '碎鑽星合成！三發扇形重擊',
+  gleamfield: '凝光星合成！命中凍結光域',
+};

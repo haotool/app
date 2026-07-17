@@ -40,7 +40,6 @@ export interface AppSettings {
   theme: ThemeType;
   language: LanguageType;
   cacheDurationDays: number;
-  notificationsEnabled: boolean;
 }
 
 // Service Types
@@ -52,6 +51,7 @@ export interface StorageService {
   getSettings(): Promise<AppSettings>;
   saveSettings(settings: AppSettings): Promise<void>;
   cleanupCache(daysToKeep: number): Promise<number>;
+  runStartupCleanup(daysToKeep: number): Promise<number>;
   clearAllData(): Promise<void>;
   exportData(format: 'json' | 'csv'): Promise<string>;
 }

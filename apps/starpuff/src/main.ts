@@ -1,15 +1,17 @@
 import Phaser from 'phaser';
 import './pwa';
 import './style.css';
-import { GRAVITY_Y, VIEW } from './game/core/config';
+import { GRAVITY_Y, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
+import { loadSave, type SaveData } from './game/core/save';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
-import { SceneKeys, type EnemyKind } from './game/core/types';
+import { SceneKeys, type EnemyKind, type LevelId } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
 import type { PlayerHandle } from './game/systems/player';
 import type { WaveRunner } from './game/systems/waves';
 import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
+import { MapScene } from './game/scenes/MapScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
 import { CodexScene } from './game/scenes/CodexScene';
@@ -49,13 +51,24 @@ const game = new Phaser.Game({
     default: 'arcade',
     arcade: {
       gravity: { x: 0, y: GRAVITY_Y },
+      // Phaser 4.2.1 動態 RTree broadphase 間歇漏檢（§43 歸因）：useTree 只影響
+      // sprite vs Group 配對（吸入區/星彈/觸碰 vs enemies group）——實體數 ≤40，
+      // 關閉 tree 改直接枚舉根治該類漏檢。門/彈簧為 direct pair（collideSpriteVsSprite
+      // 直呼 separate、從不查 tree），本設定救不到它們，必要背擋為 GameScene 的
+      // syncGateSweep 與 stage 的 sweepSprings 幾何掃掠，不得視為冗餘移除。
+      useTree: false,
+      // 走動抖動歸因（§45）：非跟隨段的幀間位移 0/3.667/7.333px 跳動源於 fixedStep
+      // 60Hz 與渲染幀率錯拍（單一渲染幀吞 0/1/2 個物理步）；剛性跟隨段 screen-space
+      // 實測恆 0（角色與捲軸同步），玩家可感抖動來自視覺姿態層而非位移層。
+      // 實測 fixedStep:false 在低幀率下重力穿地（8 連測 1-2 次沉地 ~80px、彈簧判定帶
+      // 失效），故維持預設 fixedStep:true（確定性物理），禁止以 variable step 掩蓋。
     },
   },
   // 非 pixel-art 美術關閉 roundPixels（US-022 / recon C.8）：與 camera 跟隨的次像素
   // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
   roundPixels: false,
-  scene: [BootScene, TitleScene, GameScene, ResultScene, CodexScene],
+  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene],
 });
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
@@ -73,10 +86,11 @@ document.addEventListener('visibilitychange', pauseOnLeave);
 window.addEventListener('pagehide', pauseOnLeave);
 
 // e2e 測試鉤子：查詢場景/關卡狀態、強制勝敗、補滿配額與直達魔王關。
-// 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口。
+// 僅開發與測試環境掛載（修復包 B）：production bundle 不暴露除錯入口；
+// version（§42）為唯一例外，production 也掛載供現場排障。
 declare global {
   interface Window {
-    __sp: {
+    __sp: { version: () => string } & Partial<{
       scene: () => string;
       stage: () => number;
       bossHp: () => number;
@@ -85,8 +99,15 @@ declare global {
       lose: () => void;
       fillQuota: () => void;
       skipToBoss: () => void;
+      gotoLevel: (levelId: LevelId) => void;
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
-      ammo: () => { ammo: number; flavor: string };
+      grantStar: (flavor: StarFlavor) => void;
+      shieldRaised: () => boolean;
+      ammo: () => { ammo: number; flavor: string; mix: string | null };
+      walk: () => { rotation: number; bob: number; vy: number };
+      elite: () => { armed: boolean; done: boolean; doorX: number | null };
+      slayElite: () => void;
+      save: () => SaveData;
       probe: () => { x: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
       gateOpen: () => boolean;
@@ -98,14 +119,16 @@ declare global {
       scenePaused: () => boolean;
       gameTime: () => number;
       codexTab: () => string;
-    };
+    }>;
   }
 }
+window.__sp = { version: () => __APP_VERSION__ };
 if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
   // 受控 spawn 與彈匣查詢（US-018）：以型別斷言讀場景私有系統，production 不暴露。
   const internals = () =>
     gameScene() as unknown as { enemies: EnemySystem; player: PlayerHandle; waves: WaveRunner };
   window.__sp = {
+    version: () => __APP_VERSION__,
     scene: () => game.scene.getScenes(true)[0]?.scene.key ?? '',
     stage: () => gameScene().currentLevelId,
     bossHp: () => gameScene().bossHp,
@@ -114,8 +137,19 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     lose: () => gameScene().forceLose(),
     fillQuota: () => gameScene().forceGate(),
     skipToBoss: () => gameScene().skipToBoss(),
+    // 各關反卡關走查鉤子（§43）。
+    gotoLevel: (levelId) => gameScene().gotoLevel(levelId),
     spawn: (kind, x = 240, y = 300) => internals().enemies.spawn(kind, x, y),
+    // v6 受控賦星與盾態觀測（§40 e2e）：走正式 swallow 管線。
+    grantStar: (flavor) => internals().player.grantStar(flavor),
+    shieldRaised: () => internals().player.isShieldRaised(),
     ammo: () => internals().player.getAmmoState(),
+    // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
+    walk: () => internals().player.getWalkVisual(),
+    elite: () => gameScene().eliteState(),
+    slayElite: () => gameScene().slayElite(),
+    // 存檔觀測點（§38）：回傳解析後 sp-save（含容錯回退）。
+    save: () => loadSave(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。
     probe: () => ({ x: internals().player.sprite.x, scrollX: gameScene().cameras.main.scrollX }),
     // 反卡死深度 QA 觀測點（US-025）：場上敵數、開門狀態與事件監聽數。

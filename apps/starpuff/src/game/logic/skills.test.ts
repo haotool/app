@@ -1,23 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { AIR_DASH, CHARGED_STAR, GOLD_STAR, STARSTORM, type MagazineSlot } from '../core/config';
 import {
-  advanceAirDash,
+  CHARGED_STAR,
+  GOLD_STAR,
+  STARSTORM,
+  STAR_MIXES,
+  findMix,
+  type MagazineSlot,
+} from '../core/config';
+import {
+  SHELL_SHIELD,
+  advanceShield,
   advanceStarstormHold,
-  airDashSpeed,
-  createAirDashState,
+  createShieldState,
   fillMagazine,
-  isAirDashing,
+  isFrontalHit,
+  isTopShelly,
+  pickChainTargets,
   popTopSlot,
   pushGoldStar,
-  refundDashFlap,
   resolveActionPress,
+  resolveJumpPress,
+  resolveShieldBlock,
+  shieldEligible,
   shouldFireOnRelease,
+  slotSpec,
   starDamage,
   starPitch,
   starstormProgress,
   starstormReady,
   swallowIntoMagazine,
-  type AirDashState,
 } from './skills';
 
 const slot = (flavor: MagazineSlot['flavor'], charged = false, gold = false): MagazineSlot => ({
@@ -45,21 +56,88 @@ describe('swallowIntoMagazine（§23 槽位模型）', () => {
     expect(result.charged).toBe(false);
   });
 
-  it('異種吞入疊新槽（後進先出）', () => {
-    const result = swallowIntoMagazine([slot('jelly')], 'floaty');
-    expect(result.magazine).toEqual([slot('jelly'), slot('floaty')]);
+  it('異種吞入且無配方疊新槽（後進先出）', () => {
+    const result = swallowIntoMagazine([slot('jelly')], 'shelly');
+    expect(result.magazine).toEqual([slot('jelly'), slot('shelly')]);
+    expect(result.mixed).toBeNull();
   });
 
-  it('滿匣改吞覆蓋頂槽（§20 最後吞下者覆蓋）', () => {
+  it('滿匣改吞（無配方）覆蓋頂槽（§20 最後吞下者覆蓋）', () => {
     const full = [slot('jelly'), slot('floaty'), slot('puffy')];
-    const result = swallowIntoMagazine(full, 'jelly');
-    expect(result.magazine).toEqual([slot('jelly'), slot('floaty'), slot('jelly')]);
+    const result = swallowIntoMagazine(full, 'shelly');
+    expect(result.magazine).toEqual([slot('jelly'), slot('floaty'), slot('shelly')]);
   });
 
   it('金星槽不參與連吞升級', () => {
     const result = swallowIntoMagazine([slot('jelly', false, true)], 'jelly');
     expect(result.magazine).toEqual([slot('jelly', false, true), slot('jelly')]);
     expect(result.charged).toBe(false);
+  });
+});
+
+describe('雙味混合（§46）', () => {
+  it('頂槽素槽異種且配方存在 → 合成混合星佔原槽（順序無關）', () => {
+    const forward = swallowIntoMagazine([slot('jelly')], 'floaty');
+    expect(forward.mixed).toBe('swiftlight');
+    expect(forward.magazine).toEqual([
+      { flavor: 'jelly', charged: false, gold: false, mix: 'swiftlight' },
+    ]);
+    const reversed = swallowIntoMagazine([slot('floaty')], 'jelly');
+    expect(reversed.mixed).toBe('swiftlight');
+  });
+
+  it('滿匣頂槽配方成立時優先合成（不覆蓋）', () => {
+    const full = [slot('shelly'), slot('floaty'), slot('puffy')];
+    const result = swallowIntoMagazine(full, 'zappy');
+    expect(result.mixed).toBe('thunderburst');
+    expect(result.magazine).toHaveLength(3);
+    expect(result.magazine[2]?.mix).toBe('thunderburst');
+  });
+
+  it('混合槽為終態：再吞任何怪推新槽，不再混不再強化', () => {
+    const mixed = swallowIntoMagazine([slot('jelly')], 'floaty').magazine;
+    const next = swallowIntoMagazine(mixed, 'zappy');
+    expect(next.mixed).toBeNull();
+    expect(next.magazine).toHaveLength(2);
+    expect(next.magazine[1]).toEqual(slot('zappy'));
+  });
+
+  it('強化槽不參與混合（推新槽）', () => {
+    const result = swallowIntoMagazine([slot('jelly', true)], 'floaty');
+    expect(result.mixed).toBeNull();
+    expect(result.magazine).toEqual([slot('jelly', true), slot('floaty')]);
+  });
+
+  it('六組配方齊備且成分皆為合法星味、無重複配對', () => {
+    expect(STAR_MIXES).toHaveLength(6);
+    const keys = new Set(
+      STAR_MIXES.map((mix) => [...mix.pair].sort((a, b) => a.localeCompare(b)).join('+')),
+    );
+    expect(keys.size).toBe(6);
+    for (const mix of STAR_MIXES) {
+      expect(mix.pair[0]).not.toBe(mix.pair[1]);
+      expect(findMix(mix.pair[0], mix.pair[1])?.id).toBe(mix.id);
+      expect(findMix(mix.pair[1], mix.pair[0])?.id).toBe(mix.id);
+    }
+  });
+
+  it('anti-softlock：基礎星彈（jelly 單味）不屬任何配方觸發條件的必要前提', () => {
+    // 混合僅為加成：無配方對照仍可正常疊槽/覆蓋，主線清怪只需基礎星彈。
+    expect(findMix('jelly', 'shelly')).toBeNull();
+    const plain = swallowIntoMagazine([], 'jelly');
+    expect(plain.magazine).toEqual([slot('jelly')]);
+  });
+
+  it('混合槽傷害與音高讀配方表（slotSpec 單一出口）', () => {
+    const mixedSlot: MagazineSlot = {
+      flavor: 'jelly',
+      charged: false,
+      gold: false,
+      mix: 'bigblast',
+    };
+    expect(slotSpec(mixedSlot).damage).toBe(6);
+    expect(starDamage(mixedSlot)).toBe(6);
+    expect(starPitch(mixedSlot)).toBeCloseTo(0.7, 5);
   });
 });
 
@@ -107,118 +185,124 @@ describe('星暴充能（§23 滿匣長按 0.8s）', () => {
   });
 });
 
-describe('resolveActionPress（§23 B 鍵決策）', () => {
-  it('空中 down+B 且 CD 完 → 下衝擊', () => {
-    expect(resolveActionPress({ airborne: true, down: true, slamCooldownMs: 0, ammo: 2 })).toBe(
-      'slam',
-    );
-  });
-
-  it('下衝擊 CD 中不誤射', () => {
-    expect(resolveActionPress({ airborne: true, down: true, slamCooldownMs: 500, ammo: 2 })).toBe(
-      'none',
-    );
-  });
-
-  it('地面 down+B 不觸發下衝擊，照常發射', () => {
-    expect(resolveActionPress({ airborne: false, down: true, slamCooldownMs: 0, ammo: 2 })).toBe(
-      'fire',
-    );
-  });
-
-  it('滿匣按下延遲至放開結算（星暴或點按）', () => {
-    expect(resolveActionPress({ airborne: false, down: false, slamCooldownMs: 0, ammo: 3 })).toBe(
-      'defer',
-    );
+describe('resolveActionPress（§23 B 鍵決策，v7 起與下衝擊解耦）', () => {
+  it('有彈藥點按發射；滿匣延遲至放開結算（星暴或點按）', () => {
+    expect(resolveActionPress({ ammo: 2 })).toBe('fire');
+    expect(resolveActionPress({ ammo: 3 })).toBe('defer');
   });
 
   it('空彈匣按下無動作（保留吸入語意）', () => {
-    expect(resolveActionPress({ airborne: false, down: false, slamCooldownMs: 0, ammo: 0 })).toBe(
-      'none',
-    );
+    expect(resolveActionPress({ ammo: 0 })).toBe('none');
   });
 
   it('放開短於吸入閾值視為點按發射', () => {
     expect(shouldFireOnRelease(100)).toBe(true);
     expect(shouldFireOnRelease(150)).toBe(false);
   });
+
+  it('頂槽殼盾星按下走延遲（§40）：點按發射與長按舉盾於放開分化', () => {
+    expect(resolveActionPress({ ammo: 1, topIsShelly: true })).toBe('defer');
+    expect(resolveActionPress({ ammo: 1, topIsShelly: false })).toBe('fire');
+  });
 });
 
-describe('advanceAirDash（§30 空中疾衝）', () => {
-  const tap = (state: AirDashState, deltaMs: number, airborne = true) =>
-    advanceAirDash(state, { deltaMs, jumpPressed: true, airborne });
-  const idle = (state: AirDashState, deltaMs: number, airborne = true) =>
-    advanceAirDash(state, { deltaMs, jumpPressed: false, airborne });
-
-  it('空中雙擊 350ms 窗內觸發疾衝並進入 2s CD', () => {
-    let result = tap(createAirDashState(), 16);
-    expect(result.trigger).toBe(false);
-    result = idle(result.state, 200);
-    result = tap(result.state, 16);
-    expect(result.trigger).toBe(true);
-    expect(isAirDashing(result.state)).toBe(true);
-    expect(result.state.dashLeftMs).toBe(AIR_DASH.durationMs);
-    expect(result.state.cooldownMs).toBe(AIR_DASH.cooldownMs);
+describe('resolveJumpPress（§44 跳躍鍵輸入矩陣）', () => {
+  it('空中「下＋跳」且 CD 完 → 下衝擊；吞含狀態無關（矩陣不讀彈匣）', () => {
+    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0 })).toBe('slam');
   });
 
-  it('超過雙擊窗不觸發，該按壓改記為新首擊', () => {
-    let result = tap(createAirDashState(), 16);
-    result = idle(result.state, 400);
-    result = tap(result.state, 16);
-    expect(result.trigger).toBe(false);
-    result = tap(result.state, 100);
-    expect(result.trigger).toBe(true);
+  it('下衝擊 CD 中回落一般跳躍鏈（拍翅/buffer），不吞輸入', () => {
+    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 500 })).toBe('jump');
   });
 
-  it('落地重置雙擊窗；地面按壓不列入首擊', () => {
-    let result = tap(createAirDashState(), 16);
-    result = idle(result.state, 50, false);
-    result = tap(result.state, 50);
-    expect(result.trigger).toBe(false);
-    const grounded = tap(createAirDashState(), 16, false);
-    const airTap = tap(grounded.state, 100);
-    expect(airTap.trigger).toBe(false);
+  it('空中未壓下 → 一般跳躍鏈（拍翅）', () => {
+    expect(resolveJumpPress({ airborne: true, down: false, slamCooldownMs: 0 })).toBe('jump');
   });
 
-  it('CD 期間雙擊不觸發，CD 耗盡後可再衝', () => {
-    let result = tap(createAirDashState(), 16);
-    result = tap(result.state, 100);
-    expect(result.trigger).toBe(true);
-    result = idle(result.state, 500);
-    result = tap(result.state, 16);
-    result = tap(result.state, 100);
-    expect(result.trigger).toBe(false);
-    result = idle(result.state, AIR_DASH.cooldownMs);
-    result = tap(result.state, 16);
-    result = tap(result.state, 100);
-    expect(result.trigger).toBe(true);
+  it('地面「下＋跳」→ 一般跳躍（單向平台下穿由 stage 層 shouldDropThrough 覆蓋裁決）', () => {
+    expect(resolveJumpPress({ airborne: false, down: true, slamCooldownMs: 0 })).toBe('jump');
+    expect(resolveJumpPress({ airborne: false, down: false, slamCooldownMs: 0 })).toBe('jump');
+  });
+});
+
+describe('殼盾 FSM（§40）', () => {
+  it('isTopShelly 僅頂槽殼盾星成立；金星不算', () => {
+    expect(isTopShelly([slot('shelly')])).toBe(true);
+    expect(isTopShelly([slot('shelly'), slot('jelly')])).toBe(false);
+    expect(isTopShelly([slot('shelly', false, true)])).toBe(false);
+    expect(isTopShelly([])).toBe(false);
   });
 
-  it('疾衝 0.18s 後結束；等效速度 1000px/s（180px/0.18s）', () => {
-    let result = tap(createAirDashState(), 16);
-    result = tap(result.state, 100);
-    expect(isAirDashing(result.state)).toBe(true);
-    result = idle(result.state, AIR_DASH.durationMs);
-    expect(isAirDashing(result.state)).toBe(false);
-    expect(airDashSpeed()).toBe(1000);
+  it('長按且頂槽殼盾星才舉盾；條件消失即放下', () => {
+    let state = advanceShield(createShieldState(), { deltaMs: 16, held: true, eligible: true });
+    expect(state.raised).toBe(true);
+    state = advanceShield(state, { deltaMs: 16, held: false, eligible: true });
+    expect(state.raised).toBe(false);
+    state = advanceShield(state, { deltaMs: 16, held: true, eligible: false });
+    expect(state.raised).toBe(false);
   });
 
-  it('成功疾衝不減拍翅餘額：首拍消耗於觸發當幀退還（§30 手感）', () => {
-    // 模擬雙擊全程：首拍走拍翅分支消耗 1 次，第二拍觸發疾衝後當幀退還。
-    let flapsUsed = 0;
-    let result = tap(createAirDashState(), 16);
-    expect(result.trigger).toBe(false);
-    flapsUsed += 1;
-    result = tap(result.state, 100);
-    expect(result.trigger).toBe(true);
-    flapsUsed = refundDashFlap(flapsUsed, true);
-    expect(flapsUsed).toBe(0);
+  it('格擋成功入 4s CD，CD 中不可再舉盾，期滿恢復', () => {
+    let state = resolveShieldBlock();
+    expect(state.raised).toBe(false);
+    expect(state.cooldownMs).toBe(SHELL_SHIELD.cooldownMs);
+    state = advanceShield(state, { deltaMs: 1000, held: true, eligible: true });
+    expect(state.raised).toBe(false);
+    state = advanceShield(state, { deltaMs: SHELL_SHIELD.cooldownMs, held: true, eligible: true });
+    expect(state.raised).toBe(true);
   });
 
-  it('首拍未耗拍翅（coyote 跳/buffer 記帳）不退還，退還下限為 0', () => {
-    expect(refundDashFlap(2, false)).toBe(2);
-    expect(refundDashFlap(0, false)).toBe(0);
-    expect(refundDashFlap(0, true)).toBe(0);
+  it('殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣成立；滿匣或頂槽非殼盾不成立', () => {
+    expect(shieldEligible([slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly'), slot('shelly')])).toBe(true);
+    expect(shieldEligible([slot('jelly')])).toBe(false);
+    expect(shieldEligible([])).toBe(false);
+    // 滿匣頂槽殼盾星：長按讓位星暴，不屬殼盾情境。
+    expect(shieldEligible([slot('jelly'), slot('floaty'), slot('shelly')])).toBe(false);
+  });
+
+  it('殼盾情境長按不回落吸入：盾 CD 中 raised 恆 false，但情境仍成立（吸入抑制依情境判定）', () => {
+    // 模擬 player.ts 長按達閾值後的吸入判定：inhaling = !raised && !shieldEligible。
+    const magazine = [slot('shelly')];
+    let state = resolveShieldBlock();
+    state = advanceShield(state, { deltaMs: 16, held: true, eligible: shieldEligible(magazine) });
+    expect(state.raised).toBe(false);
+    const inhaling = !state.raised && !shieldEligible(magazine);
+    expect(inhaling).toBe(false);
+    // CD 期滿長按恢復舉盾（仍非吸入）。
+    state = advanceShield(state, {
+      deltaMs: SHELL_SHIELD.cooldownMs,
+      held: true,
+      eligible: shieldEligible(magazine),
+    });
+    expect(state.raised).toBe(true);
+  });
+
+  it('isFrontalHit 正面判定：面向側與同 x 為正面，背面不格擋', () => {
+    expect(isFrontalHit(1, 100, 160)).toBe(true);
+    expect(isFrontalHit(1, 100, 40)).toBe(false);
+    expect(isFrontalHit(-1, 100, 40)).toBe(true);
+    expect(isFrontalHit(-1, 100, 160)).toBe(false);
+    expect(isFrontalHit(1, 100, 100)).toBe(true);
+  });
+});
+
+describe('雷鏈目標選擇（§40）', () => {
+  const at = (x: number, y: number) => ({ x, y });
+
+  it('半徑內取最近 N 隻並由近至遠排序', () => {
+    const targets = pickChainTargets(0, 0, [at(100, 0), at(50, 0), at(200, 0)], 2, 160);
+    expect(targets).toEqual([at(50, 0), at(100, 0)]);
+  });
+
+  it('半徑外目標不入鏈；不足 N 隻取實際數', () => {
+    expect(pickChainTargets(0, 0, [at(300, 0)], 2, 160)).toEqual([]);
+    expect(pickChainTargets(0, 0, [at(40, 30)], 2, 160)).toEqual([at(40, 30)]);
+  });
+
+  it('count 0 或負值回空陣列', () => {
+    expect(pickChainTargets(0, 0, [at(10, 0)], 0, 160)).toEqual([]);
+    expect(pickChainTargets(0, 0, [at(10, 0)], -1, 160)).toEqual([]);
   });
 });
 

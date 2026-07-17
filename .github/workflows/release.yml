@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
@@ -102,6 +103,20 @@ jobs:
           #       → "Allow GitHub Actions to create and approve pull requests" enabled
           # If this fails with HTTP 403, ask an org admin to enable the setting.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GITHUB_TOKEN 建立的 PR 不觸發 pull_request CI（防遞迴）；workflow_dispatch 為官方例外。
+      - name: Trigger CI for release PR
+        if: steps.changesets.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code origin refs/heads/changeset-release/main >/dev/null 2>&1; then
+            gh workflow run ci.yml --ref changeset-release/main
+            echo "Dispatched CI workflow on changeset-release/main"
+          else
+            echo "changeset-release/main branch not found, skipping CI dispatch"
+          fi
 
       - name: Report Release PR status
         if: steps.changesets.outcome == 'failure'

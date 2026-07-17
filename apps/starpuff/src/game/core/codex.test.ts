@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ASSETS } from './assets';
-import { CODEX_MONSTERS, CODEX_SKILLS } from './codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部七種小怪與魔王', () => {
+  it('收錄全部九種小怪與魔王（v7 drilly/glowy 入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -12,6 +12,8 @@ describe('CODEX_MONSTERS', () => {
       'chompy',
       'shelly',
       'zappy',
+      'drilly',
+      'glowy',
       'boss',
     ]);
   });
@@ -23,13 +25,14 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30），殼殼標條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47），殼殼與鑽鑽鼴標條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
-    expect(inhalable).toEqual(new Set(['jelly', 'floaty', 'puffy', 'zappy']));
+    expect(inhalable).toEqual(new Set(['jelly', 'floaty', 'puffy', 'zappy', 'glowy']));
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
-    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(1);
+    expect(CODEX_MONSTERS.find((m) => m.kind === 'drilly')?.conditional).toBe(true);
+    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(2);
   });
 
   it('名稱與行為描述皆非空', () => {
@@ -50,10 +53,30 @@ describe('CODEX_SKILLS', () => {
     }
   });
 
-  it('涵蓋核心操作：吸入／星彈三系／星暴／下衝擊／空中疾衝', () => {
+  it('涵蓋核心操作：吸入／星彈七系／混合星彈／星暴／下衝擊／殼盾／雷鏈', () => {
     const names = new Set(CODEX_SKILLS.map((skill) => skill.nameZh));
-    for (const required of ['吸入', '星彈三系', '星暴', '下衝擊', '空中疾衝']) {
+    for (const required of ['吸入', '星彈七系', '混合星彈', '星暴', '下衝擊', '殼盾', '雷鏈']) {
       expect(names.has(required)).toBe(true);
     }
+  });
+
+  it('首遇提示（§46/§47）：七味與六式配方文案齊備非空', () => {
+    expect(Object.keys(FLAVOR_HINTS)).toHaveLength(7);
+    expect(Object.keys(MIX_HINTS)).toHaveLength(6);
+    for (const hint of [...Object.values(FLAVOR_HINTS), ...Object.values(MIX_HINTS)]) {
+      expect(hint.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('v7 下衝擊操作說明對齊輸入矩陣（§44）：下＋跳躍鍵、吞含可觸發', () => {
+    const slam = CODEX_SKILLS.find((skill) => skill.nameZh === '下衝擊');
+    expect(slam?.howTo).toContain('跳躍鍵');
+    expect(slam?.detail).toContain('腹中含怪');
+  });
+
+  it('v6 新技能標注來源怪物（§40）：殼盾對應殼殼、雷鏈對應雷雷', () => {
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.detail).toContain('護盾');
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '殼盾')?.howTo).toContain('殼盾星');
+    expect(CODEX_SKILLS.find((skill) => skill.nameZh === '雷鏈')?.howTo).toContain('雷雷');
   });
 });

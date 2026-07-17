@@ -38,7 +38,10 @@ function resolveInitialSide(raw: string | null): Side | null {
 
 function TradePageSkeleton() {
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4 pt-4" aria-label="交易頁載入中">
+    <div
+      className="flex flex-col gap-4 px-4 pb-4 pt-4 lg:mx-auto lg:max-w-3xl"
+      aria-label="交易頁載入中"
+    >
       <div className="flex items-center justify-between">
         <span className="skeleton-pulse h-11 w-36 rounded-control" />
         <span className="skeleton-pulse h-11 w-16 rounded-control" />
@@ -62,7 +65,7 @@ function TradePageSkeleton() {
 }
 
 export function TradePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [symbol, setSymbol] = useState<MarketSymbol>(() =>
     resolveInitialSymbol(searchParams.get('symbol')),
   );
@@ -88,7 +91,8 @@ export function TradePage() {
   }
 
   return (
-    <div className="flex flex-col pb-4">
+    // pb-8：持倉卡操作鈕與固定 bottom nav 之間預留間距（375×812 免捲動可點）。
+    <div className="flex flex-col pb-8 lg:mx-auto lg:max-w-3xl">
       <header className="flex items-center justify-between px-4 pb-3 pt-4">
         <button
           type="button"
@@ -127,7 +131,7 @@ export function TradePage() {
         <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
       </div>
 
-      <div className="flex gap-3 px-4">
+      <div className="flex gap-3 px-4 lg:gap-6">
         <div className="min-w-0 flex-[0.58]">
           <OrderForm
             symbol={symbol}
@@ -180,6 +184,15 @@ export function TradePage() {
           onSelect={(next) => {
             setSymbol(next);
             setLimitPrice('');
+            // 同步 URL（replace 不堆歷史）：快切後可分享／重整回到同交易對，與圖表頁對稱。
+            setSearchParams(
+              (prev) => {
+                const params = new URLSearchParams(prev);
+                params.set('symbol', next);
+                return params;
+              },
+              { replace: true },
+            );
           }}
         />
       )}

@@ -5,6 +5,7 @@
  *
  * 使用位置：
  * - vite.config.ts (SSG 路徑)
+ * - src/sw.ts (SW 精確導覽路由派生)
  * - scripts/generate-sitemap.js (Sitemap 生成)
  * - scripts/verify-production-seo.mjs (生產環境檢測)
  *
@@ -15,12 +16,22 @@
  */
 
 /**
- * Park-Keeper 所有需要預渲染的 SEO 路徑
+ * Park-Keeper 所有需要預渲染的路徑（vite.config.ts includedRoutes 消費）
  *
- * 總計：3 個路徑
- * - 首頁、關於、設定
+ * 總計：5 個路徑
+ * - 首頁、關於、設定、快速記錄（/add/）、捷徑教學（/guide/）
  */
-export const SEO_PATHS = ['/', '/about/', '/settings/'];
+export const SEO_PATHS = ['/', '/about/', '/settings/', '/add/', '/guide/'];
+
+/**
+ * noindex 功能頁：需預渲染（首次冷訪直達）但不入 sitemap 與生產 SEO 語義驗證
+ */
+export const NOINDEX_PATHS = ['/add/', '/guide/'];
+
+/**
+ * sitemap 對外路徑（sitemap.xml 與 verify-sitemap-ssg 消費）
+ */
+export const SITEMAP_PATHS = SEO_PATHS.filter((path) => !NOINDEX_PATHS.includes(path));
 
 /**
  * SEO 配置文件路徑
@@ -61,7 +72,7 @@ export const APP_CONFIG = {
     production: '/park-keeper/',
   },
 
-  seoPaths: SEO_PATHS,
+  seoPaths: SITEMAP_PATHS,
   siteUrl: SITE_CONFIG.url,
 
   build: {

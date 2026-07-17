@@ -129,7 +129,7 @@ export function MarketsPage() {
   const showFavoritesEmpty = tab === 'favorites' && favorites.length === 0 && query.trim() === '';
 
   return (
-    <section>
+    <section className="lg:mx-auto lg:max-w-2xl">
       <header className="sticky top-0 z-10 bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
         <h1 className="mb-3 text-price-lg font-semibold">行情</h1>
         <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">

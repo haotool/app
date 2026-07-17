@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { dbService } from '@app/park-keeper/services/db';
 import { DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import { plateMemory } from '@app/park-keeper/services/plateMemory';
 import type { ParkingRecord, LanguageType } from '@app/park-keeper/types';
 
 function makeRecord(overrides: Partial<ParkingRecord> = {}): ParkingRecord {
@@ -47,6 +48,18 @@ describe('dbService', () => {
       const records = await dbService.getRecords();
       expect(records).toHaveLength(1);
       expect(records[0]!.plateNumber).toBe('NEW');
+    });
+
+    it('should throw (not return []) when openDB fails, so UI can surface the error', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const openSpy = vi.spyOn(indexedDB, 'open').mockImplementation(() => {
+        throw new Error('openDB boom');
+      });
+
+      await expect(dbService.getRecords()).rejects.toThrow('openDB boom');
+
+      openSpy.mockRestore();
+      errorSpy.mockRestore();
     });
   });
 
@@ -123,6 +136,36 @@ describe('dbService', () => {
 
       const records = await dbService.getRecords();
       expect(records).toHaveLength(0);
+    });
+
+    it('should reset settings store to defaults', async () => {
+      await dbService.saveSettings({
+        ...DEFAULT_SETTINGS,
+        theme: 'racing',
+        language: 'en' as LanguageType,
+      });
+      await dbService.clearAllData();
+
+      const settings = await dbService.getSettings();
+      expect(settings).toEqual(DEFAULT_SETTINGS);
+    });
+
+    it('should clear plate/floor memory (P0：清除所有資料須聯動車號記憶)', async () => {
+      plateMemory.commit('ABC-1234');
+      plateMemory.commitFloor('B2');
+
+      await dbService.clearAllData();
+
+      expect(plateMemory.get()).toBeNull();
+      expect(plateMemory.getFloor()).toBeNull();
+    });
+
+    it('should clear persisted language preference key', async () => {
+      localStorage.setItem('park-keeper-language', 'en');
+
+      await dbService.clearAllData();
+
+      expect(localStorage.getItem('park-keeper-language')).toBeNull();
     });
   });
 

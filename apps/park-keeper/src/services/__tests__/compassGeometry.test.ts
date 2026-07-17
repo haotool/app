@@ -6,6 +6,9 @@ import {
   tickStrokeWidth,
   tickOpacity,
   cardinalLabelPosition,
+  cardinalLabelUprightTransform,
+  targetWedgePath,
+  isAligned,
   COMPASS_CX,
   COMPASS_CY,
   COMPASS_OUTER_R,
@@ -14,6 +17,9 @@ import {
   CARDINAL_LABEL_RADIUS,
   TICK_STEP_DEG,
   TICK_COUNT,
+  TARGET_WEDGE_INNER_R,
+  TARGET_WEDGE_OUTER_R,
+  ALIGNED_THRESHOLD_DEG,
 } from '../compassGeometry';
 
 // ---------------------------------------------------------------------------
@@ -166,5 +172,107 @@ describe('cardinalLabelPosition', () => {
     const pos36 = cardinalLabelPosition(36, R);
     expect(pos36.x).toBeCloseTo(pos0.x, 5);
     expect(pos36.y).toBeCloseTo(pos0.y, 5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// targetWedgePath / isAligned（issue #716 目標方位楔形）
+// ---------------------------------------------------------------------------
+describe('targetWedgePath', () => {
+  const parseNumbers = (path: string): number[] =>
+    (path.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+
+  it('預設參數產生封閉環帶扇形（M/A/L/A/Z 結構）', () => {
+    const path = targetWedgePath();
+    expect(path.startsWith('M ')).toBe(true);
+    expect(path.endsWith('Z')).toBe(true);
+    expect(path.match(/A /g)).toHaveLength(2);
+    expect(path.match(/L /g)).toHaveLength(1);
+  });
+
+  it('楔形以正北為軸對稱：左右端點 x 對 CX 鏡射、y 相等', () => {
+    const path = targetWedgePath(15, TARGET_WEDGE_INNER_R, TARGET_WEDGE_OUTER_R);
+    const nums = parseNumbers(path);
+    // M x0 y0 A r r 0 0 1 x1 y1 L x2 y2 A r r 0 0 0 x3 y3 Z
+    const x0 = nums[0]!;
+    const y0 = nums[1]!;
+    const x1 = nums[7]!;
+    const y1 = nums[8]!;
+    expect(x0 + x1).toBeCloseTo(2 * COMPASS_CX, 2);
+    expect(y0).toBeCloseTo(y1, 3);
+  });
+
+  it('外弧端點落在 outerR 圓上、內弧端點落在 innerR 圓上', () => {
+    const inner = 80;
+    const outer = 120;
+    const nums = parseNumbers(targetWedgePath(15, inner, outer));
+    const distFromCenter = (x: number, y: number) => Math.hypot(x - COMPASS_CX, y - COMPASS_CY);
+    expect(distFromCenter(nums[0]!, nums[1]!)).toBeCloseTo(outer, 1);
+    const xInner = nums[9]!;
+    const yInner = nums[10]!;
+    expect(distFromCenter(xInner, yInner)).toBeCloseTo(inner, 1);
+  });
+
+  it('半角 15° 時外弧端點位於 ±15° 極角', () => {
+    const nums = parseNumbers(targetWedgePath(15, 78, 126));
+    const x0 = nums[0]!;
+    const y0 = nums[1]!;
+    // -15°：x = CX + 126*sin(-15°), y = CY - 126*cos(-15°)
+    expect(x0).toBeCloseTo(COMPASS_CX + 126 * Math.sin((-15 * Math.PI) / 180), 1);
+    expect(y0).toBeCloseTo(COMPASS_CY - 126 * Math.cos((-15 * Math.PI) / 180), 1);
+  });
+});
+
+describe('isAligned', () => {
+  it('0°（正對目標）對準', () => {
+    expect(isAligned(0)).toBe(true);
+  });
+
+  it('±閾值內對準（含 wrap 到 350°+）', () => {
+    expect(isAligned(ALIGNED_THRESHOLD_DEG)).toBe(true);
+    expect(isAligned(360 - ALIGNED_THRESHOLD_DEG)).toBe(true);
+    expect(isAligned(355)).toBe(true);
+  });
+
+  it('超出閾值不對準', () => {
+    expect(isAligned(ALIGNED_THRESHOLD_DEG + 1)).toBe(false);
+    expect(isAligned(180)).toBe(false);
+    expect(isAligned(349)).toBe(false);
+  });
+
+  it('負角與 >360 正規化', () => {
+    expect(isAligned(-5)).toBe(true);
+    expect(isAligned(365)).toBe(true);
+    expect(isAligned(-180)).toBe(false);
+  });
+
+  it('自訂閾值生效', () => {
+    expect(isAligned(20, 25)).toBe(true);
+    expect(isAligned(20, 15)).toBe(false);
+  });
+});
+
+describe('cardinalLabelUprightTransform', () => {
+  it('以標籤自身錨點為旋轉中心（與 cardinalLabelPosition 同座標）', () => {
+    for (const i of [0, 9, 18, 27]) {
+      const { x, y } = cardinalLabelPosition(i);
+      expect(cardinalLabelUprightTransform(i, 45)).toBe(`rotate(45 ${x} ${y})`);
+    }
+  });
+
+  it('回轉角等於容器旋轉的相反數：容器 -heading、文字 +heading 抵銷後直立', () => {
+    expect(cardinalLabelUprightTransform(0, 270)).toBe(
+      `rotate(270 ${COMPASS_CX} ${COMPASS_CY - CARDINAL_LABEL_RADIUS})`,
+    );
+  });
+
+  it('heading 0 時為零旋轉（初始態不位移不變形）', () => {
+    const { x, y } = cardinalLabelPosition(9);
+    expect(cardinalLabelUprightTransform(9, 0)).toBe(`rotate(0 ${x} ${y})`);
+  });
+
+  it('自訂半徑時旋轉中心跟隨對應座標', () => {
+    const { x, y } = cardinalLabelPosition(18, 80);
+    expect(cardinalLabelUprightTransform(18, 30, 80)).toBe(`rotate(30 ${x} ${y})`);
   });
 });

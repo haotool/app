@@ -28,6 +28,34 @@ vi.mock('motion/react', () => {
   };
 });
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, string>) => {
+      const map: Record<string, string> = {
+        'record.plate': '車牌號碼',
+        'record.plate_unset': '未填車號',
+        'record.yesterday': '昨天',
+        'record.edit_plate': '編輯車牌 {{plate}}',
+        'record.edit_plate_icon': '編輯車牌',
+        'record.delete': '刪除停車記錄 {{plate}}',
+        'record.view_photo': '查看停車照片',
+        'record.photo_alt': '停車照片',
+        'record.no_map': 'No Map',
+        'record.navigate': '導航',
+        'record.saving': '正在儲存...',
+      };
+      let str = map[key] ?? key;
+      if (opts) {
+        for (const [k, v] of Object.entries(opts)) {
+          str = str.replace(`{{${k}}}`, v);
+        }
+      }
+      return str;
+    },
+    i18n: { language: 'zh-TW' },
+  }),
+}));
+
 vi.mock('../MiniMap', () => ({
   default: ({ onPhotoClick }: { onPhotoClick?: () => void }) => (
     <div
@@ -211,6 +239,37 @@ describe('RecordCard', () => {
     expect(errorSpy).toHaveBeenCalledWith('Failed to update plate number:', expect.any(Error));
   });
 
+  it('未填車號（sentinel）應顯示待填文案而非裸露 N/A（formatPlate SSOT）', () => {
+    renderRecordCard({ plateNumber: 'N/A' });
+
+    expect(screen.getByText('未填車號')).toBeInTheDocument();
+    expect(screen.queryByText(/N\/A/)).toBeNull();
+  });
+
+  it('未填車號（sentinel）時編輯／刪除按鈕 accessible name 走 formatPlate，不裸露 N/A（round-3 Grok/Sonnet P2）', () => {
+    renderRecordCard({ plateNumber: 'N/A' });
+
+    expect(screen.getByRole('button', { name: '編輯車牌 未填車號' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '刪除停車記錄 未填車號' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /N\/A/ })).toBeNull();
+  });
+
+  it('compact 精簡列隱藏照片＋地圖列，保留車牌編輯與刪除（issue #733）', () => {
+    renderRecordCard({ notes: '柱子旁' }, { compact: true });
+
+    expect(screen.queryByTestId('record-card-media')).toBeNull();
+    // 管理操作與備註不受影響。
+    expect(screen.getByLabelText('編輯車牌')).toBeInTheDocument();
+    expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
+    expect(screen.getByText(/柱子旁/)).toBeInTheDocument();
+  });
+
+  it('預設（非 compact）照片＋地圖列照常渲染', () => {
+    renderRecordCard();
+
+    expect(screen.getByTestId('record-card-media')).toBeInTheDocument();
+  });
+
   it('應該支援刪除與導航操作，並顯示備註', () => {
     const notes = '靠近電梯口';
     const {
@@ -228,7 +287,7 @@ describe('RecordCard', () => {
     );
     expect(onDelete).toHaveBeenCalledWith(currentRecord.id);
 
-    fireEvent.click(screen.getByRole('button', { name: /navigate/i }));
+    fireEvent.click(screen.getByRole('button', { name: /導航/ }));
     expect(onNavigate).toHaveBeenCalledWith(expect.objectContaining({ id: currentRecord.id }));
     expect(screen.getByText(/靠近電梯口/)).toBeInTheDocument();
   });

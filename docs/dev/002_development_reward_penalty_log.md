@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+119
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,96 @@
 - ID：reward-splitmeow-ux-excellence-4model-100
 - 原因：多模型評審迭代三輪收斂 SplitMeow 行動 UX 與貨幣正確性至四席雙 100
 - 解法：三輪 wave 修復+評分席複驗+PR 合併
+
+- 日期：2026-07-17
+- ID：neutral-park-keeper-aria-plate-followthrough
+- 原因：round-3 兩席同源揪出 RecordCard aria-label 仍插裸 N/A——formatPlate SSOT 收斂時 accessible name 面向漏稽核
+- 解法：兩按鈕 aria-label 改走 formatPlateLabel 同源值＋全域 aria/title/alt 車號插值稽核清單留檔＋accessible name 斷言鎖定
+
+- 日期：2026-07-17
+- ID：reward-park-keeper-lcp-inline-defer
+- 原因：產線 LH P 中位 92 卡 PRD ≥95 gate，根因為 render-blocking CSS 鏈＋head module 鏈綁死 LCP＋edge TTFB
+- 解法：CSS 內聯 SSG HTML＋JS 延後 load 注入（A/B 實證全延後 100 vs 保留 preload 97、互動代價僅 +183ms、CTA 橋接防拍照落失）＋LCP entry 面積約束；本地 LH ×5 中位 100（LCP -69%），CSP 產線相容經 response header 實證
+
+- 日期：2026-07-17
+- ID：neutral-ci-release-pr-checks-dispatch
+- 原因：changesets/action 以 GITHUB_TOKEN 開 release PR 時 pull_request 不觸發 CI，branch protection 缺 Quality Checks 致 auto-merge 永久 BLOCKED
+- 解法：release.yml changesets 成功後以 workflow_dispatch 補跑 `gh workflow run ci.yml --ref changeset-release/main`（GITHUB_TOKEN 允許的防遞迴例外）
+
+- 日期：2026-07-17
+- ID：reward-park-keeper-round2-convergence
+- 原因：round-2 四席產線評分（90-99/85-100）殘項需一波收斂且兩席可維護性 7.5 未達 gate
+- 解法：SW 精確導覽路由改由 SEO_PATHS 同源派生＋formatPlate/方位字直立/compact 精簡列＋MiniMap 946→337 純搬移拆檔；617 unit＋44 e2e 綠、審查 8.5/10 APPROVE
+
+- 日期：2026-07-17
+- ID：penalty-park-keeper-sw-route-fix-not-generalized
+- 原因：S6 修 /about SW 回落殼 hydration 時未推廣到同類預渲染頁，/add 與 /guide 於產線被兩席評分揪出同型 #418
+- 解法：修法一律 SSOT 化（清單派生）取代單點修補，同類頁面全數自動涵蓋並以 ssg-sw e2e 守門
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-final-seat-convergence
+- 原因：PR #734 雙終審席（Sonnet 89/96 REQUEST CHANGES、Fable 96/97 APPROVE）交叉指出 useAutoUpdate 未壓制 vite-plugin-pwa 內建 controlling reload 形成雙重 reload 路徑，另有練習統計 200 筆截斷未標註、深度圖探針無鍵盤等效與 null 盈虧誤著色
+- 解法：useRegisterSW 補 onNeedReload 空回呼收斂單一 reload 權責（mock 同步補型別＋壓制測試）、練習統計達上限顯示「近 200 筆」副標且 null 盈虧改中性色、深度圖補 role/tabIndex/方向鍵步進與 Escape 清除（含測試），371 unit 全綠
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave2-depth-indicators
+- 原因：R3 Wave-2 要求圖表頁提供市場深度圖與 MA/EMA 指標疊加，需在 orderbook tick 風暴下控制重繪並沿用既有 chart 生命週期（Grok 審查後追認補記）
+- 解法：depth/indicators 純函式 SSOT、SVG 自繪深度圖 300ms 取樣節流、CandleChart LineSeries 隨開關補掛/移除與增量 update、偏好 persist 進 marketPrefsStore v2，360 unit＋28 e2e 綠
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave1-pwa-autoupdate
+- 原因：R3 Wave-1 要求已安裝 PWA 舊用戶免點按自動收到新版，且不得改 autoUpdate 重蹈版本撕裂前科（Grok 審查後追認補記）
+- 解法：維持 prompt 型 SW，useAutoUpdate 偵測 needRefresh 自動 SKIP_WAITING→controllerchange 單次 reload（hadController/reloading 防重入），60 分週期＋回前景節流檢查更新，7 案單元測試與真瀏覽器雙版本切版實測通過
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-desktop-dual-column
+- 原因：R3 Wave-3 要求 ≥1024px 桌機體驗：圖表頁右欄常駐市場面板、交易頁寬版留白優化、行情頁 max-w 容器，且不得改動行動版
+- 解法：AppShell lg:max-w-6xl 放寬外殼，圖表頁以 lg:grid 雙欄常駐 MarketPanels（單一掛載、行動版原樣堆疊），交易/行情/資產/設定頁補 lg max-w 容器，桌機與行動雙視口真瀏覽器截圖驗證 console error=0
+
+- 日期：2026-07-17
+- ID：reward-papertrade-r3-wave3-practice-stats
+- 原因：R3 Wave-3 要求資產頁提供練習統計儀表板，需從平倉紀錄推導勝率與損益總覽並涵蓋強平/部分平倉樣本
+- 解法：新增 computePracticeStats 純函式（總交易數/勝率/總損益/總手續費/最大盈虧/獲利因子）與 closeSlice 實產樣本測試，資產頁新增六卡統計 section 與空狀態
+
+- 日期：2026-07-17
+- ID：penalty-starpuff-v7-review-gamescene-regrowth
+- 原因：三席審查（Grok 行為/Sonnet SSOT/Composer KISS）發現 v7 交付缺口——GameScene 回沉 1282 行、教學×公告重疊、精英出房致 60s 保險失效、主角對比 1.81:1 遺留、五系文案未同步七系；另已推送 commit 訊息含過時測試數字（不 force 重寫，僅此註記）
+- 解法：行為修復（教學 y0.46/首遇 toast/clampEliteX 房界/剪影描邊 10.23:1—Glow filter 因 SwiftShader 崩幀棄用）＋三支獨立 refactor（eliteRoom 206 行、homing/pickInRadius 純函式、enemyUpdates 機械搬移——GameScene 1282→1113、enemies 871→552）＋P2 順修六項，228 unit＋33 e2e 全綠
+
+- 日期：2026-07-17
+- ID：reward-starpuff-v7-feel-depth
+- 原因：v7 需求（疾衝移除/下衝擊改下+跳/走動手感根修/混合星彈/新怪/中魔王）需一次收斂，且 jitter 排查揭露 fixedStep 60Hz 錯拍為位移層唯一異常、fixedStep:false 低幀率會重力穿地（彈簧 8 連測 1-2 次失效）不可採
+- 解法：resolveJumpPress 輸入矩陣+walkFeel 步頻系統（維持 fixedStep:true，姿態層根修）、STAR_MIXES 六式混合表、drilly/glowy FSM、levels elite 軟鎖門房（60s 逾時保險），218 unit＋33 e2e 全綠、GAME_DESIGN v7.0 §44-§49 落檔
+
+- 日期：2026-07-17
+- ID：neutral-workspace-deps-minor-refresh
+- 原因：workspace minor/patch 依賴批次更新與 starpuff 死依賴（vitest 環境為 node 卻裝 jsdom）清理
+- 解法：pnpm -r update 收斂 in-range 最新（vite 8.1.5、vitest 4.1.10、vite-plugin-pwa 1.3.0 等），同步回釘 @vitest/coverage-v8 對齊 vitest 版本避免 peer 不相容，回退造成 format drift 的 prettier 3.9.x 與造成 581 條新 lint 錯誤的 eslint-plugin-react-hooks 7.1.x，七道驗證閘（format/lint/typecheck/test/build/starpuff e2e 28 條/PWA dist sanity）全綠
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-uiux-2026h2-epic
+- 原因：park-keeper 需求（捷徑直達拍照、車號記憶、保存天數 SSOT、羅盤重造、行動 UIUX 極致化）需在 7 個並行 stream＋四模型評分閉環下一次交付且不回歸
+- 解法：worktree 隔離 7 stream（審查鏈逐一 APPROVE 後 no-ff 併 epic）＋round-1 四席 61 項缺陷收斂（51 fixed）＋pre-release 三合一稽核；598 unit＋34 e2e 綠、LH P96/A100、iOS 旅程 2 taps
+
+- 日期：2026-07-16
+- ID：penalty-park-keeper-s6-paper-checkoff
+- 原因：S6 核銷表將 Sonnet U6 標 fixed 但 diff 無對應實作（紙上核銷），靠審查員誠實性抽查揭露
+- 解法：真修 U6 並全表自查一輪，核銷紀律改為「每項 fixed 必附對應 commit SHA」且審查必抽查 diff 對帳
+
+- 日期：2026-07-16
+- ID：reward-park-keeper-pwa-update-global
+- 原因：pre-release 稽核發現 UpdatePrompt 僅掛 Home，捷徑直入 /add 的舊版 PWA 會卡在 waiting 不更新
+- 解法：UpdatePrompt 提升 Layout 全域掛載（四路由單元測試鎖定），沿用 prompt 模式＋線上自動 updateServiceWorker 防版本撕裂
+
+- 日期：2026-07-16
+- ID：neutral-starpuff-v6-codeql-secret-naming
+- 原因：CodeQL js/clear-text-storage-of-sensitive-data 高風險告警——存檔模組 recordSecret/secretsFound 命名使啟發式誤判彩蛋進度為敏感資料明文儲存（sp-save 僅存關卡進度，v6 未發布無既存用戶資料）
+- 解法：全鏈更名 egg 語彙（recordEgg/eggsFound/eggId），typecheck＋203 unit 綠，告警經 head 重掃自然關閉
+
+- 日期：2026-07-16
+- ID：reward-starpuff-v6-save-worldmap-skills
+- 原因：v6 需求（存檔/迷霧世界地圖/版本號/移動手感/殼盾雷鏈/攻略 PoC）需改接 hub 流程一次落地，且實測揭露 v5 既存 Phaser 4 靜態 overlap 間歇漏檢（星星門/彈簧，v5 基準彈簧 6 跑 3 敗）
+- 解法：save/movement/skills 純邏輯 SSOT＋MapScene data-driven hub；門/彈簧補幾何掃掠背擋（syncGateSweep/sweepSprings）根治漏檢；187 unit＋28 e2e 綠、GAME_DESIGN v6.0 §38-§43 落檔
 
 - 日期：2026-07-16
 - ID：reward-papertrade-r2-final-convergence

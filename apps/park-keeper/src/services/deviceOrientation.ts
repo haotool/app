@@ -1,5 +1,6 @@
 export interface CompassOrientationEvent extends DeviceOrientationEvent {
   webkitCompassHeading?: number;
+  webkitCompassAccuracy?: number;
 }
 
 /**
@@ -27,6 +28,66 @@ export function getCompassHeading(event: CompassOrientationEvent): number | null
   }
 
   return null;
+}
+
+/**
+ * 讀取 iOS webkitCompassAccuracy（heading 誤差度數）。
+ * 正值 = ±誤差度數（典型 ~10，最差 45）；負值 = 裝置無精度估計。
+ * Android 無此欄位 → 回傳 null（不觸發校準引導）。
+ */
+export function getCompassAccuracy(event: CompassOrientationEvent): number | null {
+  return typeof event.webkitCompassAccuracy === 'number' ? event.webkitCompassAccuracy : null;
+}
+
+/**
+ * 低精度判定閾值（度）。超過此誤差（或負值無估計）視為需要 8 字校準。
+ * iOS 最差精度為 45°，正常約 10°；取 30° 為引導觸發點。
+ */
+export const COMPASS_LOW_ACCURACY_THRESHOLD_DEG = 30;
+
+/** 依 webkitCompassAccuracy 判定是否需要顯示校準引導。null（Android/無資料）不觸發。 */
+export function needsCompassCalibration(accuracy: number | null): boolean {
+  if (accuracy === null) return false;
+  return accuracy < 0 || accuracy > COMPASS_LOW_ACCURACY_THRESHOLD_DEG;
+}
+
+/**
+ * Heading 顯示凍結死區（度）。
+ * 靜止時感測器噪聲（±1° 級）不更新顯示值，避免羅盤微震；
+ * 與凍結錨點的累積偏移超過死區即解凍，緩慢旋轉不會永久卡死。
+ */
+export const HEADING_FREEZE_DEADBAND_DEG = 1.2;
+
+/**
+ * Heading 指數平滑（wrap-safe EMA）。
+ * 最短弧差處理 359°↔0° 邊界；alpha 越低越平滑、延遲越大（建議 0.2–0.35）。
+ */
+export function smoothHeading(prev: number, raw: number, alpha = 0.25): number {
+  let diff = raw - prev;
+  if (diff > 180) diff -= 360;
+  else if (diff < -180) diff += 360;
+  return (((prev + alpha * diff) % 360) + 360) % 360;
+}
+
+/**
+ * 靜止凍結判定：平滑值與顯示錨點的最短弧差低於死區時凍結顯示。
+ * anchor 為 null（首樣本）不凍結；解凍時錨點更新為當前平滑值。
+ * 純函式，錨點 ref 由呼叫端持有。
+ */
+export function applyHeadingFreeze(
+  anchor: number | null,
+  smoothed: number,
+  deadbandDeg: number = HEADING_FREEZE_DEADBAND_DEG,
+): { frozen: boolean; anchor: number } {
+  if (anchor !== null) {
+    let diff = smoothed - anchor;
+    if (diff > 180) diff -= 360;
+    else if (diff < -180) diff += 360;
+    if (Math.abs(diff) < deadbandDeg) {
+      return { frozen: true, anchor };
+    }
+  }
+  return { frozen: false, anchor: smoothed };
 }
 
 export function getDeviceTilt(event: CompassOrientationEvent): number | null {

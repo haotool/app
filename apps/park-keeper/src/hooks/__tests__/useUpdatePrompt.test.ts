@@ -123,4 +123,14 @@ describe('useUpdatePrompt', () => {
     });
     expect(mockUpdateServiceWorker).not.toHaveBeenCalled();
   });
+
+  it('needRefresh + 在線：自動觸發 updateServiceWorker(true)（pre-release 稽核 C-P0 正向案）', async () => {
+    vi.stubGlobal('navigator', { ...navigator, onLine: true });
+    g['__mockNeedRefresh'] = true;
+    renderHook(() => useUpdatePrompt());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockUpdateServiceWorker).toHaveBeenCalledWith(true);
+  });
 });
