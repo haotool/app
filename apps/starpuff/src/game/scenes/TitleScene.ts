@@ -137,7 +137,10 @@ export class TitleScene extends Phaser.Scene {
       if (challenge === null) this.scene.start(SceneKeys.Map, {});
       else this.scene.start(SceneKeys.Game, { levelId: challenge, deaths: 0 });
     };
-    this.input.keyboard?.once('keydown-ENTER', start);
+    // 持續監聽（審查修復 #718）：once 會被配置面板開啟時的無效 Enter 消耗，
+    // 導致關閉面板後快捷鍵失效；start 內部已以 isKeyConfigOpen 擋無效觸發。
+    this.input.keyboard?.on('keydown-ENTER', start);
+    this.events.once('shutdown', () => this.input.keyboard?.off('keydown-ENTER', start));
     // 開始鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，
     // 兩種持向 hit-test 皆正確；canvas 同熱區不再掛 interactive，杜絕雙命中。
     addDomButton(this, '開始遊戲', { x: centerX, y: startButton.y, w: 220, h: 72 }, start, 'start');

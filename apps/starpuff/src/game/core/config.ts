@@ -47,9 +47,10 @@ export const STAR = {
   maxAmmo: 3,
 } as const;
 
-// 吞噬賦星（§20/§40）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
-// v6 新增殼盾星（shelly）與雷鏈星（zappy），星彈三系擴為五系。
-export type StarFlavor = 'jelly' | 'floaty' | 'puffy' | 'shelly' | 'zappy';
+// 吞噬賦星（§20/§40/§47）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
+// v6 新增殼盾星（shelly）與雷鏈星（zappy）；v7 新增重鑽星（drilly）與流光星（glowy），
+// 星彈擴為七系。
+export type StarFlavor = 'jelly' | 'floaty' | 'puffy' | 'shelly' | 'zappy' | 'drilly' | 'glowy';
 
 export interface StarFlavorSpec {
   damage: number;
@@ -127,13 +128,180 @@ export const STAR_FLAVORS: Record<StarFlavor, StarFlavorSpec> = {
     chainDamage: 3,
     sfxPitch: 1.25,
   },
+  // 重鑽星（§47 Drilly）：低速高傷、穿透 2——貼近鑽地者「硬掘」性格。
+  drilly: {
+    damage: 7,
+    speed: 430,
+    pierceCount: 2,
+    tint: 0xd8a26b,
+    aoeRadiusPx: 0,
+    aoeDamage: 0,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
+    sfxPitch: 0.75,
+  },
+  // 流光星（§47 Glowy）：中速、命中處留 90px 光域對域內敵持續結算（GameScene 呈現）。
+  glowy: {
+    damage: 5,
+    speed: 540,
+    pierceCount: 0,
+    tint: 0xffe9a8,
+    aoeRadiusPx: 90,
+    aoeDamage: 2,
+    chainCount: 0,
+    chainRadiusPx: 0,
+    chainDamage: 0,
+    sfxPitch: 1.1,
+  },
 } as const;
 
-// 吞噬連鎖（§23）：彈匣槽位各自帶屬性與強化態，後進先出發射。
+// 吞噬連鎖（§23/§46）：彈匣槽位各自帶屬性與強化態，後進先出發射；
+// mix 為混合星配方 id（§46 雙味混合），混合槽為終態（不可再強化/再混）。
 export interface MagazineSlot {
   flavor: StarFlavor;
   charged: boolean;
   gold: boolean;
+  mix?: MixId;
+}
+
+// 雙味混合星彈（§46）：依序吞兩隻不同怪且配方存在 → 頂槽合成混合星（佔 1 槽）。
+// 硬規則：混合星永不為破關必需——基礎星彈恆可通關（anti-softlock）。
+export type MixId =
+  | 'swiftlight'
+  | 'bigblast'
+  | 'voltseeker'
+  | 'thunderburst'
+  | 'shardrill'
+  | 'gleamfield';
+
+export interface StarMixSpec extends StarFlavorSpec {
+  id: MixId;
+  nameZh: string;
+  // 無序配對：吞入順序不影響配方成立。
+  pair: readonly [StarFlavor, StarFlavor];
+  // 追蹤（§46 追電星）：飛行中朝最近小怪轉向。
+  homing: boolean;
+  // 散射（§46 碎鑽星）：發射時分裂為 N 發小幅上下扇形。
+  scatterCount: number;
+  // 凍結場（§46 凝光星）：命中處生成光域，域內小怪凍結。
+  freezeRadiusPx: number;
+  freezeMs: number;
+}
+
+const MIX_BASE = {
+  aoeRadiusPx: 0,
+  aoeDamage: 0,
+  chainCount: 0,
+  chainRadiusPx: 0,
+  chainDamage: 0,
+  homing: false,
+  scatterCount: 0,
+  freezeRadiusPx: 0,
+  freezeMs: 0,
+} as const;
+
+// 六組配方（§46 混合表）：效果自 穿透/追蹤/散射/爆炸/凍結場/連鎖電 擇優組合，
+// 各具獨特 tint 與 sfxPitch；視覺拖尾由發射端依 tint 上色。
+export const STAR_MIXES: readonly StarMixSpec[] = [
+  {
+    ...MIX_BASE,
+    id: 'swiftlight',
+    nameZh: '疾光星',
+    pair: ['jelly', 'floaty'],
+    damage: 5,
+    speed: 780,
+    pierceCount: 3,
+    tint: 0xfff1c4,
+    sfxPitch: 1.35,
+  },
+  {
+    ...MIX_BASE,
+    id: 'bigblast',
+    nameZh: '巨爆星',
+    pair: ['jelly', 'puffy'],
+    damage: 6,
+    speed: 480,
+    pierceCount: 0,
+    tint: 0xff9d7a,
+    sfxPitch: 0.7,
+    aoeRadiusPx: 110,
+    aoeDamage: 4,
+  },
+  {
+    ...MIX_BASE,
+    id: 'voltseeker',
+    nameZh: '追電星',
+    pair: ['floaty', 'zappy'],
+    damage: 5,
+    speed: 560,
+    pierceCount: 0,
+    tint: 0xc9b8ff,
+    sfxPitch: 1.3,
+    chainCount: 2,
+    chainRadiusPx: 160,
+    chainDamage: 3,
+    homing: true,
+  },
+  {
+    ...MIX_BASE,
+    id: 'thunderburst',
+    nameZh: '雷爆星',
+    pair: ['puffy', 'zappy'],
+    damage: 6,
+    speed: 520,
+    pierceCount: 0,
+    tint: 0xffd24d,
+    sfxPitch: 0.9,
+    aoeRadiusPx: 70,
+    aoeDamage: 3,
+    chainCount: 3,
+    chainRadiusPx: 180,
+    chainDamage: 3,
+  },
+  {
+    ...MIX_BASE,
+    id: 'shardrill',
+    nameZh: '碎鑽星',
+    pair: ['shelly', 'drilly'],
+    damage: 6,
+    speed: 470,
+    pierceCount: 1,
+    tint: 0x9adfd2,
+    sfxPitch: 0.8,
+    scatterCount: 3,
+  },
+  {
+    ...MIX_BASE,
+    id: 'gleamfield',
+    nameZh: '凝光星',
+    pair: ['drilly', 'glowy'],
+    damage: 5,
+    speed: 520,
+    pierceCount: 0,
+    tint: 0xfff7d6,
+    sfxPitch: 1.15,
+    freezeRadiusPx: 100,
+    freezeMs: 1500,
+  },
+] as const;
+
+// 散射扇形（§46 碎鑽星）：分裂彈上下錯開的垂直初速間距。
+export const SCATTER_FAN_VY = 90;
+
+// 無序配對查表：吞入順序無關；查無配方回 null（沿用 §23 推新槽規則）。
+export function findMix(a: StarFlavor, b: StarFlavor): StarMixSpec | null {
+  return (
+    STAR_MIXES.find(
+      (mix) => (mix.pair[0] === a && mix.pair[1] === b) || (mix.pair[0] === b && mix.pair[1] === a),
+    ) ?? null
+  );
+}
+
+export function getMix(id: MixId): StarMixSpec {
+  const mix = STAR_MIXES.find((spec) => spec.id === id);
+  if (!mix) throw new Error(`未定義的混合配方 id：${id}`);
+  return mix;
 }
 
 // 強化星（§23）：同種連吞 ×2 該槽升級；金邊 tint 同時用於 HUD 槽位金邊與金星彈。
@@ -150,7 +318,8 @@ export const STARSTORM = {
   bossDamage: 12,
 } as const;
 
-// 下衝擊（§23）：空中 down+B 快速下墜，落地 60px 衝擊波（傷害 2、擊退），零彈藥消耗。
+// 下衝擊（§44）：空中「下＋跳躍鍵」快速下墜（吞含狀態不影響觸發），
+// 落地 60px 衝擊波（傷害 2、擊退），零彈藥消耗。
 export const SLAM = {
   fallVelocityY: 700,
   radiusPx: 60,
@@ -158,15 +327,6 @@ export const SLAM = {
   cooldownMs: 1200,
   knockbackSpeed: 260,
   knockbackLift: -180,
-} as const;
-
-// 空中疾衝（§30）：空中雙擊 A（350ms 窗）朝面向水平疾衝 180px/0.18s；無敵幀、CD 2s、衝撞傷害 1。
-export const AIR_DASH = {
-  doubleTapWindowMs: 350,
-  distancePx: 180,
-  durationMs: 180,
-  cooldownMs: 2000,
-  damage: 1,
 } as const;
 
 // 金星彈（§24 第三關彩蛋）：單發傷害 20。

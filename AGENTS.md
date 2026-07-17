@@ -497,6 +497,7 @@ git push origin main     # pre-push 自動驗證
 8. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
 9. 若一般 PR 與 release PR 連續合併，合併 release PR 前必須確認前一個 main SHA 的 Zeabur production deployment 已完成；避免較舊 SHA 在 release SHA 後才 active，造成正式站版本回退。
 10. Release workflow 若在 `Wait for RateWise production deployment` 失敗，必須查 GitHub deployments；若最新 release SHA 已成功部署但較舊 SHA 隨後 active，需以最小 PR 重新觸發最新 main 部署，並重新跑正式站 `app-version` 與 live precache 驗證。
+11. changesets/action 以 `GITHUB_TOKEN` 開/更新 release PR 時，`pull_request` 事件不觸發 CI（防遞迴規則）；`release.yml` 在 changesets 成功後必須 `gh workflow run ci.yml --ref changeset-release/main` 補觸發 `Quality Checks`。手動排障：`gh workflow run ci.yml --ref changeset-release/main`。
 
 **GitHub Actions Node 24 控制**：
 

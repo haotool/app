@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { canInhale } from './combat';
 import {
+  DRILLY_FSM,
+  GLOWY_FSM,
   SHELLY_FSM,
   ZAPPY_FSM,
+  resolveDrillyHit,
   resolveShellyHit,
+  tickDrilly,
+  tickGlowy,
   tickShelly,
   tickZappy,
   type ShellyState,
@@ -92,5 +98,62 @@ describe('Zappy 放電週期（§30）', () => {
     expect(phases[58]).toBe('windup');
     expect(phases[59]).toBe('discharge');
     expect(phases[60]).toBe('chase');
+  });
+});
+
+describe('Drilly 三態時序（§47）', () => {
+  it('潛地 2.2s → 前搖 0.5s → 破土 1.4s → 回潛，entered 逐段回報', () => {
+    expect(tickDrilly('burrow', DRILLY_FSM.burrowMs - 17, 16).state).toBe('burrow');
+    expect(tickDrilly('burrow', DRILLY_FSM.burrowMs - 16, 16)).toEqual({
+      state: 'windup',
+      stateMs: 0,
+      entered: 'windup',
+    });
+    expect(tickDrilly('windup', DRILLY_FSM.windupMs - 16, 16)).toEqual({
+      state: 'surfaced',
+      stateMs: 0,
+      entered: 'surfaced',
+    });
+    expect(tickDrilly('surfaced', DRILLY_FSM.surfacedMs - 16, 16)).toEqual({
+      state: 'burrow',
+      stateMs: 0,
+      entered: 'burrow',
+    });
+  });
+
+  it('受擊決策：潛地/前搖免傷（半入地），破土窗正常結算', () => {
+    expect(resolveDrillyHit('burrow')).toBe('immune');
+    expect(resolveDrillyHit('windup')).toBe('immune');
+    expect(resolveDrillyHit('surfaced')).toBe('vulnerable');
+  });
+
+  it('可吸窗與 FSM 對齊：僅 surfaced 暴露窗可吸（canInhale 保守值 false）', () => {
+    expect(canInhale('drilly')).toBe(false);
+    expect(canInhale('drilly', true)).toBe(true);
+    expect(canInhale('glowy')).toBe(true);
+  });
+});
+
+describe('Glowy 週期（§47）', () => {
+  it('drift 段不預警；末段 0.9s windup 進度 0..1 遞增；週期滿釋放脈衝並歸零', () => {
+    expect(tickGlowy(1000, 16).phase).toBe('drift');
+    expect(tickGlowy(1000, 16).progress).toBe(0);
+    const start = GLOWY_FSM.intervalMs - GLOWY_FSM.windupMs;
+    const early = tickGlowy(start, 16);
+    expect(early.phase).toBe('windup');
+    expect(early.progress).toBeGreaterThan(0);
+    expect(early.progress).toBeLessThan(0.1);
+    const late = tickGlowy(GLOWY_FSM.intervalMs - 32, 16);
+    expect(late.phase).toBe('windup');
+    expect(late.progress).toBeGreaterThan(0.9);
+    expect(tickGlowy(GLOWY_FSM.intervalMs - 16, 16)).toEqual({
+      glowMs: 0,
+      phase: 'pulse',
+      progress: 0,
+    });
+  });
+
+  it('脈衝半徑 80（§47 定值）', () => {
+    expect(GLOWY_FSM.pulseRadiusPx).toBe(80);
   });
 });

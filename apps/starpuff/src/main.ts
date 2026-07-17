@@ -57,6 +57,11 @@ const game = new Phaser.Game({
       // 直呼 separate、從不查 tree），本設定救不到它們，必要背擋為 GameScene 的
       // syncGateSweep 與 stage 的 sweepSprings 幾何掃掠，不得視為冗餘移除。
       useTree: false,
+      // 走動抖動歸因（§45）：非跟隨段的幀間位移 0/3.667/7.333px 跳動源於 fixedStep
+      // 60Hz 與渲染幀率錯拍（單一渲染幀吞 0/1/2 個物理步）；剛性跟隨段 screen-space
+      // 實測恆 0（角色與捲軸同步），玩家可感抖動來自視覺姿態層而非位移層。
+      // 實測 fixedStep:false 在低幀率下重力穿地（8 連測 1-2 次沉地 ~80px、彈簧判定帶
+      // 失效），故維持預設 fixedStep:true（確定性物理），禁止以 variable step 掩蓋。
     },
   },
   // 非 pixel-art 美術關閉 roundPixels（US-022 / recon C.8）：與 camera 跟隨的次像素
@@ -98,7 +103,10 @@ declare global {
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
-      ammo: () => { ammo: number; flavor: string };
+      ammo: () => { ammo: number; flavor: string; mix: string | null };
+      walk: () => { rotation: number; bob: number; vy: number };
+      elite: () => { armed: boolean; done: boolean; doorX: number | null };
+      slayElite: () => void;
       save: () => SaveData;
       probe: () => { x: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
@@ -136,6 +144,10 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     grantStar: (flavor) => internals().player.grantStar(flavor),
     shieldRaised: () => internals().player.isShieldRaised(),
     ammo: () => internals().player.getAmmoState(),
+    // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
+    walk: () => internals().player.getWalkVisual(),
+    elite: () => gameScene().eliteState(),
+    slayElite: () => gameScene().slayElite(),
     // 存檔觀測點（§38）：回傳解析後 sp-save（含容錯回退）。
     save: () => loadSave(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。

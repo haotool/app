@@ -67,6 +67,19 @@ export function springSweepHit(
   );
 }
 
+// 精英房箝制（§48）：精英追擊不越房界——越界回夾並朝房內反向（比照巡邏折返），
+// 玩家離房後精英不出房追殺，60s 逾時開門保險恆有效。
+export function clampEliteX(
+  x: number,
+  velocityX: number,
+  left: number,
+  right: number,
+): { x: number; velocityX: number } {
+  if (x < left) return { x: left, velocityX: Math.abs(velocityX) };
+  if (x > right) return { x: right, velocityX: -Math.abs(velocityX) };
+  return { x, velocityX };
+}
+
 // 佈景密度（§32）：任一視窗寬內道具數上限（同屏 ≤6 驗證用）。
 export function maxDecorInWindow(xs: readonly number[], windowPx: number): number {
   const sorted = [...xs].sort((a, b) => a - b);

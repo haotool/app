@@ -19,6 +19,11 @@
 - 解法：CSS 內聯 SSG HTML＋JS 延後 load 注入（A/B 實證全延後 100 vs 保留 preload 97、互動代價僅 +183ms、CTA 橋接防拍照落失）＋LCP entry 面積約束；本地 LH ×5 中位 100（LCP -69%），CSP 產線相容經 response header 實證
 
 - 日期：2026-07-17
+- ID：neutral-ci-release-pr-checks-dispatch
+- 原因：changesets/action 以 GITHUB_TOKEN 開 release PR 時 pull_request 不觸發 CI，branch protection 缺 Quality Checks 致 auto-merge 永久 BLOCKED
+- 解法：release.yml changesets 成功後以 workflow_dispatch 補跑 `gh workflow run ci.yml --ref changeset-release/main`（GITHUB_TOKEN 允許的防遞迴例外）
+
+- 日期：2026-07-17
 - ID：reward-park-keeper-round2-convergence
 - 原因：round-2 四席產線評分（90-99/85-100）殘項需一波收斂且兩席可維護性 7.5 未達 gate
 - 解法：SW 精確導覽路由改由 SEO_PATHS 同源派生＋formatPlate/方位字直立/compact 精簡列＋MiniMap 946→337 純搬移拆檔；617 unit＋44 e2e 綠、審查 8.5/10 APPROVE
@@ -52,6 +57,16 @@
 - ID：reward-papertrade-r3-wave3-practice-stats
 - 原因：R3 Wave-3 要求資產頁提供練習統計儀表板，需從平倉紀錄推導勝率與損益總覽並涵蓋強平/部分平倉樣本
 - 解法：新增 computePracticeStats 純函式（總交易數/勝率/總損益/總手續費/最大盈虧/獲利因子）與 closeSlice 實產樣本測試，資產頁新增六卡統計 section 與空狀態
+
+- 日期：2026-07-17
+- ID：penalty-starpuff-v7-review-gamescene-regrowth
+- 原因：三席審查（Grok 行為/Sonnet SSOT/Composer KISS）發現 v7 交付缺口——GameScene 回沉 1282 行、教學×公告重疊、精英出房致 60s 保險失效、主角對比 1.81:1 遺留、五系文案未同步七系；另已推送 commit 訊息含過時測試數字（不 force 重寫，僅此註記）
+- 解法：行為修復（教學 y0.46/首遇 toast/clampEliteX 房界/剪影描邊 10.23:1—Glow filter 因 SwiftShader 崩幀棄用）＋三支獨立 refactor（eliteRoom 206 行、homing/pickInRadius 純函式、enemyUpdates 機械搬移——GameScene 1282→1113、enemies 871→552）＋P2 順修六項，228 unit＋33 e2e 全綠
+
+- 日期：2026-07-17
+- ID：reward-starpuff-v7-feel-depth
+- 原因：v7 需求（疾衝移除/下衝擊改下+跳/走動手感根修/混合星彈/新怪/中魔王）需一次收斂，且 jitter 排查揭露 fixedStep 60Hz 錯拍為位移層唯一異常、fixedStep:false 低幀率會重力穿地（彈簧 8 連測 1-2 次失效）不可採
+- 解法：resolveJumpPress 輸入矩陣+walkFeel 步頻系統（維持 fixedStep:true，姿態層根修）、STAR_MIXES 六式混合表、drilly/glowy FSM、levels elite 軟鎖門房（60s 逾時保險），218 unit＋33 e2e 全綠、GAME_DESIGN v7.0 §44-§49 落檔
 
 - 日期：2026-07-17
 - ID：neutral-workspace-deps-minor-refresh
