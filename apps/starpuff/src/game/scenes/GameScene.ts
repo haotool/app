@@ -51,6 +51,12 @@ import {
   type EggProgress,
 } from '../logic/eggs';
 import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import {
+  MERCY_HEAL,
+  advanceMercyHeal,
+  createMercyState,
+  type MercyState,
+} from '../logic/mercyHeal';
 import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import { createBoss, type BossHandle } from '../systems/boss';
@@ -61,6 +67,7 @@ import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
 import { createHud } from '../systems/hud';
 import { openPauseMenu } from '../systems/pause';
+import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
@@ -123,6 +130,10 @@ export class GameScene extends Phaser.Scene {
   private deaths = 0;
   // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
   private exMode = false;
+  // 慈悲補血（§62）：每關每命狀態（create 重建即歸零）；rng/時間快轉供 e2e 注入。
+  private mercy: MercyState = createMercyState();
+  private mercyRng: () => number = Math.random;
+  private mercyWarpMs = 0;
   private startedAt = 0;
   // 魔王擊破瞬間鎖存的通關用時（審查修復 #724）；非 boss 關恆 null 走即時計算。
   private clearTimeMs: number | null = null;
@@ -180,6 +191,9 @@ export class GameScene extends Phaser.Scene {
     this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
+    this.mercy = createMercyState();
+    this.mercyRng = Math.random;
+    this.mercyWarpMs = 0;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     this.background = createParallaxBackground(this, this.level);
@@ -279,6 +293,7 @@ export class GameScene extends Phaser.Scene {
       for (const room of this.eliteRooms) room.update();
       this.steerHomingStars(deltaMs);
       this.steerMagnetizedStars(deltaMs);
+      this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
     }
@@ -758,6 +773,50 @@ export class GameScene extends Phaser.Scene {
   // 當前關卡淨用時：死亡重試會重置 startedAt，等同本次成功嘗試的用時。
   private levelTimeMs(): number {
     return this.time.now - this.startedAt;
+  }
+
+  // 慈悲補血（§62）：每 5s 評估低血久戰保底；一般關與魔王關（含 EX）皆啟用。
+  private advanceMercy(deltaMs: number): void {
+    const result = advanceMercyHeal(this.mercy, {
+      deltaMs,
+      elapsedMs: this.levelTimeMs() + this.mercyWarpMs,
+      hp: this.playerHp,
+      maxHp: PLAYER.maxHp,
+      rng: this.mercyRng,
+    });
+    this.mercy = result.state;
+    if (result.spawn) this.spawnMercyHeart();
+  }
+
+  // 愛心生成（§62）：隨機空中緩降型或地面定點型；落點沿地面錨點、夾限世界內必可達。
+  private spawnMercyHeart(): void {
+    const side = this.mercyRng() < 0.5 ? -1 : 1;
+    const offset = 120 + this.mercyRng() * 120;
+    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, 60, this.worldWidth() - 60);
+    const groundY = GROUND_TOP - 22;
+    const airborne = this.mercyRng() < 0.5;
+    const y = airborne ? 150 : groundY;
+    playSfx('reveal');
+    this.fx.burstSmall(x, y, 0xff9ec4);
+    spawnHealPickup(
+      this,
+      x,
+      y,
+      { player: () => this.player, playerHp: () => this.playerHp },
+      { healHp: MERCY_HEAL.healHp, ...(airborne ? { driftToY: groundY } : {}) },
+    );
+  }
+
+  // e2e 鉤子（§62）：時間快轉＋RNG 固定必中，供慈悲補血守門案觸發。
+  mercyWarp(ms: number): void {
+    if (!this.scene.isActive()) return;
+    this.mercyWarpMs += ms;
+    this.mercyRng = () => 0;
+  }
+
+  // e2e 鉤子（§62）：以正式受擊管線壓低血量（i-frame 期間自然免傷，呼叫端輪詢）。
+  hurtPlayer(damage: number): void {
+    if (this.scene.isActive()) this.player.takeDamage(damage, this.player.sprite.x + 1);
   }
 
   private finish(result: 'won' | 'lost'): void {

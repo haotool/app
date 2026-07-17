@@ -104,6 +104,8 @@ declare global {
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
       transform: () => { form: string | null; remainingMs: number };
+      mercyWarp: (ms: number) => void;
+      hurtPlayer: (damage: number) => void;
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
@@ -154,6 +156,9 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     shieldRaised: () => internals().player.isShieldRaised(),
     // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
     transform: () => internals().player.getTransformState(),
+    // v9 慈悲補血鉤子（§62 e2e）：時間快轉＋RNG 必中、正式受擊管線壓血。
+    mercyWarp: (ms) => gameScene().mercyWarp(ms),
+    hurtPlayer: (damage) => gameScene().hurtPlayer(damage),
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
