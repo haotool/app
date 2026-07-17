@@ -62,7 +62,10 @@ function ParticipantAvatars({
                 className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"
                 title="payer"
               >
-                <span className="material-symbols-outlined text-[8px] text-on-primary leading-none">
+                <span
+                  className="material-symbols-outlined text-[8px] text-on-primary leading-none"
+                  aria-hidden="true"
+                >
                   payments
                 </span>
               </span>
@@ -185,8 +188,7 @@ export function HistoryTab() {
   const balances = isMixedCurrency ? {} : computeMemberBalances(tripExpenses);
   const settlements = isMixedCurrency ? [] : calculateSettlements(balances);
 
-  const startEditNote = (expId: string, currentNote: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const startEditNote = (expId: string, currentNote: string) => {
     setEditingNoteId(expId);
     setEditingNoteValue(currentNote);
     // 等 DOM 更新後 focus
@@ -265,7 +267,7 @@ export function HistoryTab() {
 
       <section className="grid grid-cols-2 gap-4 mb-10">
         <div className="col-span-2 bg-surface-container-lowest p-8 rounded-[2rem] flex flex-col justify-between relative overflow-hidden shadow-ambient">
-          <div className="absolute top-[-10px] right-[-10px] opacity-10">
+          <div className="absolute top-[-10px] right-[-10px] opacity-10" aria-hidden="true">
             <span
               className="material-symbols-outlined text-[120px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -436,18 +438,6 @@ export function HistoryTab() {
                     </button>
                   </div>
                   <div
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={isExpanded}
-                    onClick={toggleExpand}
-                    onKeyDown={(e) => {
-                      // 只回應卡片本體聚焦時的按鍵；內部備註輸入/按鈕的 Enter 不觸發展開切換。
-                      if (e.target !== e.currentTarget) return;
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleExpand();
-                      }
-                    }}
                     style={{
                       transform: `translateX(-${offset}px)`,
                       transition: isThisActive
@@ -455,9 +445,15 @@ export function HistoryTab() {
                         : 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                       willChange: isThisActive ? 'transform' : 'auto',
                     }}
-                    className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-colors relative cursor-pointer"
+                    className="bg-surface-container-lowest p-5 rounded-[2rem] flex flex-col group hover:bg-surface-container-low transition-colors relative"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    {/* 觸發器＝標題列原生 button（鍵盤啟動由瀏覽器保證）；展開內容移出觸發器，消除巢狀 button。 */}
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={toggleExpand}
+                      className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+                    >
                       {/* 左側：頭像堆疊 */}
                       <ParticipantAvatars
                         participantIds={exp.participantIds}
@@ -534,11 +530,12 @@ export function HistoryTab() {
                         <span
                           className="material-symbols-outlined text-on-surface-variant transition-transform duration-300 shrink-0"
                           style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                          aria-hidden="true"
                         >
                           expand_more
                         </span>
                       </div>
-                    </div>
+                    </button>
 
                     {/* 展開詳情；收合時 inert 移出焦點與無障礙樹，消除幻影可聚焦項 */}
                     <div
@@ -552,10 +549,13 @@ export function HistoryTab() {
                     >
                       <div className="overflow-hidden">
                         {/* 備注編輯 */}
-                        <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="mb-3">
                           {isEditingNote ? (
                             <div className="flex items-center gap-2 bg-surface-container rounded-full px-3 py-1.5">
-                              <span className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0">
+                              <span
+                                className="material-symbols-outlined text-[15px] text-on-surface-variant shrink-0"
+                                aria-hidden="true"
+                              >
                                 label
                               </span>
                               <input
@@ -591,7 +591,7 @@ export function HistoryTab() {
                             </div>
                           ) : (
                             <button
-                              onClick={(e) => startEditNote(exp.id, exp.note, e)}
+                              onClick={() => startEditNote(exp.id, exp.note)}
                               className="flex items-center gap-1.5 min-h-11 text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group/note"
                             >
                               <span
@@ -614,10 +614,7 @@ export function HistoryTab() {
                           </span>
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingExpenseId(exp.id);
-                              }}
+                              onClick={() => setEditingExpenseId(exp.id)}
                               className="text-xs text-primary flex items-center gap-1 min-h-11 hover:bg-primary-container/50 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                             >
                               <span
@@ -629,10 +626,7 @@ export function HistoryTab() {
                               {t('history.edit')}
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                softDelete(exp.id);
-                              }}
+                              onClick={() => softDelete(exp.id)}
                               className="text-xs text-error flex items-center gap-1 min-h-11 hover:bg-error-container px-3 py-1.5 rounded-full transition-colors cursor-pointer"
                               title={t('history.delete_title')}
                             >

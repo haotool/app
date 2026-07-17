@@ -183,7 +183,7 @@ describe('HistoryTab', () => {
     useStore.setState({ expenses: [EXPENSE_1] });
     renderWith(<HistoryTab />);
     const card = screen.getByTestId('expense-card');
-    const row = card.querySelector('div[class*="cursor-pointer"]');
+    const row = card.querySelector('button[aria-expanded]');
     expect(row).not.toBeNull();
     fireEvent.click(row as HTMLElement);
 
@@ -195,7 +195,7 @@ describe('HistoryTab', () => {
     useStore.setState({ expenses: [EXPENSE_1] });
     renderWith(<HistoryTab />);
     const card = screen.getByTestId('expense-card');
-    fireEvent.click(card.querySelector('div[class*="cursor-pointer"]')!);
+    fireEvent.click(card.querySelector('button[aria-expanded]')!);
 
     const deleteBtn = Array.from(document.querySelectorAll('button')).find((b) =>
       b.textContent?.trim().endsWith(i18n.t('history.delete')),

@@ -1,7 +1,7 @@
 /**
  * History 卡鍵盤可達性（G10 / Sonnet Major 迴歸）：
- * 展開觸發器必須可 Tab 聚焦、Enter/Space 切換並曝露 aria-expanded；
- * 收合內容必須 inert，消除螢幕閱讀器的幻影可聚焦項。
+ * 展開觸發器為標題列原生 button（Enter/Space 啟動由瀏覽器保證），
+ * 展開內容移出觸發器（無巢狀 button），收合時 inert 消除幻影可聚焦項。
  */
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -35,9 +35,12 @@ function renderHistory() {
   );
 }
 
+function getCard(): HTMLElement {
+  return screen.getByTestId('expense-card');
+}
+
 function getCardTrigger(): HTMLElement {
-  const card = screen.getByTestId('expense-card');
-  const trigger = card.querySelector('[role="button"][aria-expanded]');
+  const trigger = getCard().querySelector('button[aria-expanded]');
   expect(trigger).not.toBeNull();
   return trigger as HTMLElement;
 }
@@ -56,46 +59,56 @@ beforeEach(() => {
 });
 
 describe('費用卡展開觸發器', () => {
-  it('可聚焦且曝露 role/aria-expanded', () => {
+  it('觸發器為原生 button、可聚焦且曝露 aria-expanded', () => {
     renderHistory();
     const trigger = getCardTrigger();
 
-    expect(trigger.getAttribute('role')).toBe('button');
+    expect(trigger.tagName).toBe('BUTTON');
     expect(trigger.tabIndex).toBe(0);
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('Enter 展開、Space 收合，aria-expanded 同步', () => {
+  it('啟動觸發器切換展開，aria-expanded 同步', () => {
     renderHistory();
     const trigger = getCardTrigger();
 
-    fireEvent.keyDown(trigger, { key: 'Enter' });
+    // 原生 button 的 Enter/Space 啟動由瀏覽器對映為 click。
+    fireEvent.click(trigger);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText(i18n.t('history.breakdown'))).toBeInTheDocument();
 
-    fireEvent.keyDown(trigger, { key: ' ' });
+    fireEvent.click(trigger);
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('觸發器內無巢狀互動元素，展開內容位於觸發器外', () => {
+    renderHistory();
+    const trigger = getCardTrigger();
+
+    fireEvent.click(trigger);
+    expect(trigger.querySelector('button, input, [role="button"]')).toBeNull();
+    expect(trigger.contains(screen.getByText(i18n.t('history.breakdown')))).toBe(false);
   });
 
   it('收合時展開內容為 inert（無幻影可聚焦項），展開後解除', () => {
     renderHistory();
     const trigger = getCardTrigger();
 
-    const details = trigger.querySelector('div[inert]');
+    const details = getCard().querySelector('div[inert]');
     expect(details).not.toBeNull();
 
-    fireEvent.keyDown(trigger, { key: 'Enter' });
-    expect(trigger.querySelector('div[inert]')).toBeNull();
+    fireEvent.click(trigger);
+    expect(getCard().querySelector('div[inert]')).toBeNull();
   });
 
   it('內部備註輸入的 Enter 不觸發卡片收合', () => {
     renderHistory();
     const trigger = getCardTrigger();
 
-    fireEvent.keyDown(trigger, { key: 'Enter' });
+    fireEvent.click(trigger);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
 
-    // 開啟備註編輯 → 在 input 內按 Enter（事件冒泡至卡片）
+    // 開啟備註編輯 → 在 input 內按 Enter（事件冒泡至卡片容器）
     fireEvent.click(screen.getByText(i18n.t('history.add_note')));
     const noteInput = screen.getByPlaceholderText(i18n.t('history.note_placeholder'));
     fireEvent.keyDown(noteInput, { key: 'Enter' });

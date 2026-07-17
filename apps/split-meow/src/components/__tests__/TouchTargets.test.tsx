@@ -127,7 +127,7 @@ describe('G1 觸控目標 ≥44px（min-h-11 class 鎖定）', () => {
 
     // 展開消費卡 → Edit 開啟 sheet
     const card = screen.getByTestId('expense-card');
-    fireEvent.click(card.querySelector('div[class*="cursor-pointer"]')!);
+    fireEvent.click(card.querySelector('button[aria-expanded]')!);
     fireEvent.click(screen.getByText(i18n.t('history.edit')));
 
     const payerHeading = screen.getByText(i18n.t('history.edit_payer'));

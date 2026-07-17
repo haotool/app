@@ -74,7 +74,7 @@ describe('UpdatePrompt 層級', () => {
 
     // 展開消費卡 → 點 Edit 開啟 EditExpenseSheet
     const card = screen.getByTestId('expense-card');
-    fireEvent.click(card.querySelector('div[class*="cursor-pointer"]')!);
+    fireEvent.click(card.querySelector('button[aria-expanded]')!);
     fireEvent.click(screen.getByText(i18n.t('history.edit')));
 
     const sheetHeading = screen.getByText(i18n.t('history.edit_title'));

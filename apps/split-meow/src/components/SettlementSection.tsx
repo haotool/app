@@ -100,6 +100,7 @@ export function SettlementSection({
                     <span
                       className="material-symbols-outlined text-[16px] leading-none"
                       style={{ fontVariationSettings: "'FILL' 1" }}
+                      aria-hidden="true"
                     >
                       check_circle
                     </span>
@@ -212,6 +213,7 @@ export function BalancesSection({
                     <span
                       className="material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300"
                       style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      aria-hidden="true"
                     >
                       expand_more
                     </span>
@@ -264,7 +266,10 @@ export function BalancesSection({
                           {isPayer && (
                             <div className="flex items-center justify-between text-xs">
                               <span className="flex items-center gap-1.5 text-secondary">
-                                <span className="material-symbols-outlined text-[13px]">
+                                <span
+                                  className="material-symbols-outlined text-[13px]"
+                                  aria-hidden="true"
+                                >
                                   payments
                                 </span>
                                 {t('history.balance_paid')}
@@ -279,7 +284,12 @@ export function BalancesSection({
                           {share > 0.01 && (
                             <div className="flex items-center justify-between text-xs">
                               <span className="flex items-center gap-1.5 text-on-surface-variant">
-                                <span className="material-symbols-outlined text-[13px]">group</span>
+                                <span
+                                  className="material-symbols-outlined text-[13px]"
+                                  aria-hidden="true"
+                                >
+                                  group
+                                </span>
                                 {t('history.balance_share')}
                               </span>
                               <span className="font-semibold text-error">

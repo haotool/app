@@ -154,7 +154,10 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
         {totalAmount === 0 ? (
           <div className="py-2 flex flex-col items-center gap-2 animate-in fade-in duration-300">
-            <span className="material-symbols-outlined text-5xl text-on-surface-variant/25 select-none">
+            <span
+              className="material-symbols-outlined text-5xl text-on-surface-variant/25 select-none"
+              aria-hidden="true"
+            >
               pets
             </span>
             <p className="text-sm text-on-surface-variant/60">
