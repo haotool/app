@@ -73,4 +73,33 @@ describe('pendingCtaPhoto', () => {
     channel.subscribe(recovered);
     expect(recovered).toHaveBeenCalledExactlyOnceWith(file);
   });
+
+  // HTML 內聯橋接（issue #738）：postbuild bootstrap 將 hydration 前的 CTA 照片
+  // 暫存 window.__pkCtaPhoto 並發 pk:cta-photo 事件；模組須涵蓋兩種載入順序。
+  describe('pre-hydration 橋接領養', () => {
+    it('橋接照片先於模組載入（window.__pkCtaPhoto 已存在）：import 後訂閱即取回', async () => {
+      const file = makeFile('bridge-before.jpg');
+      window.__pkCtaPhoto = file;
+
+      const channel = await loadFresh();
+      expect(window.__pkCtaPhoto).toBeUndefined();
+
+      const callback = vi.fn();
+      channel.subscribe(callback);
+      expect(callback).toHaveBeenCalledExactlyOnceWith(file);
+    });
+
+    it('橋接事件晚於模組載入（pk:cta-photo dispatch）：訂閱者即時收到', async () => {
+      const channel = await loadFresh();
+      const callback = vi.fn();
+      channel.subscribe(callback);
+
+      const file = makeFile('bridge-after.jpg');
+      window.__pkCtaPhoto = file;
+      window.dispatchEvent(new Event('pk:cta-photo'));
+
+      expect(window.__pkCtaPhoto).toBeUndefined();
+      expect(callback).toHaveBeenCalledExactlyOnceWith(file);
+    });
+  });
 });

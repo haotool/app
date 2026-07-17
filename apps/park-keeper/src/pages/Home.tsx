@@ -417,7 +417,10 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     {records.length === 0 && (
                       <div className="flex flex-col items-center justify-center pt-12 pb-6 text-center">
                         <Car size={56} strokeWidth={1.5} className="opacity-20" aria-hidden />
-                        <p className="font-black text-sm uppercase mt-4 tracking-[0.2em] opacity-70">
+                        {/* text-xs（非 text-sm）：此段為 hydration 後才出現的文字，繪製面積
+                            必須小於 SSG 殼首屏最大文字（header wordmark），否則會觸發更晚的
+                            LCP entry，把 LCP 綁到 JS 載入鏈上（issue #738）。 */}
+                        <p className="font-black text-xs uppercase mt-4 tracking-[0.2em] opacity-70">
                           {t('record.empty')}
                         </p>
                       </div>
