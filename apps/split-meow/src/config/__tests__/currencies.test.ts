@@ -3,6 +3,7 @@ import {
   formatAmount,
   detectCurrencyFromTimezone,
   getCurrencySymbol,
+  convertAmount,
   formatKrwAsTwd,
   resolveExpenseCurrency,
   resolveTripCurrency,
@@ -67,6 +68,28 @@ describe('detectCurrencyFromTimezone', () => {
   it('未知時區 → null', () => {
     mockTimezone('America/New_York');
     expect(detectCurrencyFromTimezone()).toBeNull();
+  });
+});
+
+describe('convertAmount', () => {
+  it('KRW→TWD 除以 rate', () => {
+    expect(convertAmount(10000, 'KRW', 'TWD', 40)).toBe(250);
+  });
+
+  it('TWD→KRW 乘以 rate', () => {
+    expect(convertAmount(250, 'TWD', 'KRW', 40)).toBe(10000);
+  });
+
+  it('同幣別回原值且不需 rate', () => {
+    expect(convertAmount(123, 'TWD', 'TWD', null)).toBe(123);
+  });
+
+  it('rate 無效回 null', () => {
+    expect(convertAmount(100, 'KRW', 'TWD', 0)).toBeNull();
+    expect(convertAmount(100, 'KRW', 'TWD', -1)).toBeNull();
+    expect(convertAmount(100, 'KRW', 'TWD', null)).toBeNull();
+    expect(convertAmount(100, 'KRW', 'TWD', undefined)).toBeNull();
+    expect(convertAmount(100, 'KRW', 'TWD', Number.NaN)).toBeNull();
   });
 });
 

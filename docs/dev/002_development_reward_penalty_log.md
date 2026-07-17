@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+126
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,16 @@
 - ID：reward-starpuff-v8-world-expansion
 - 原因：StarPuff 內容止於四關單魔王，v8 需擴張世界（3 新關/3 新怪/第二魔王/九系星彈）且不得破壞舊存檔與 anti-softlock 不變式
 - 解法：FSM-first 表驅動擴充（noctraFsm/updraft/enemyFsm 純函式配單測）＋LevelSpec 契約改版（elites 陣列/boss 品種），素材 Codex 配額 6/6 生成入庫，261 unit＋40 e2e 全綠且舊 v1 存檔七節點相容
+
+- 日期：2026-07-17
+- ID：reward-splitmeow-ux-excellence-4model-100
+- 原因：多模型評審迭代三輪收斂 SplitMeow 行動 UX 與貨幣正確性至四席雙 100
+- 解法：三輪 wave 修復+評分席複驗+PR 合併
+
+- 日期：2026-07-17
+- ID：neutral-park-keeper-aria-plate-followthrough
+- 原因：round-3 兩席同源揪出 RecordCard aria-label 仍插裸 N/A——formatPlate SSOT 收斂時 accessible name 面向漏稽核
+- 解法：兩按鈕 aria-label 改走 formatPlateLabel 同源值＋全域 aria/title/alt 車號插值稽核清單留檔＋accessible name 斷言鎖定
 
 - 日期：2026-07-17
 - ID：reward-park-keeper-lcp-inline-defer

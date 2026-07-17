@@ -166,6 +166,9 @@ export default function RecordCard({
     }
   };
 
+  // accessible name（aria-label）與可見文字統一走 formatPlate SSOT，避免裸露 N/A sentinel（round-3 P2）。
+  const plateLabel = formatPlateLabel(displayPlate, t('record.plate_unset'));
+
   return (
     <div
       className="rounded-4xl p-5 shadow-elevation-2 border border-black/1 overflow-hidden"
@@ -215,13 +218,11 @@ export default function RecordCard({
                   type="button"
                   className="font-black text-base leading-none mb-1 cursor-text text-left hover:opacity-70 transition-opacity"
                   onClick={handleEditStart}
-                  aria-label={t('record.edit_plate', { plate: displayPlate })}
+                  aria-label={t('record.edit_plate', { plate: plateLabel })}
                 >
                   {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，避免裸露佔位值像資料錯誤。 */}
                   {isPlateUnset(displayPlate) ? (
-                    <span className="opacity-45">
-                      {formatPlateLabel(displayPlate, t('record.plate_unset'))}
-                    </span>
+                    <span className="opacity-45">{plateLabel}</span>
                   ) : (
                     displayPlate
                   )}
@@ -260,7 +261,7 @@ export default function RecordCard({
           type="button"
           onClick={() => void onDelete(record.id)}
           className="p-4 -m-4 opacity-45 hover:opacity-100 hover:text-red-500 transition-all"
-          aria-label={t('record.delete', { plate: displayPlate })}
+          aria-label={t('record.delete', { plate: plateLabel })}
         >
           <Trash2 size={16} />
         </button>

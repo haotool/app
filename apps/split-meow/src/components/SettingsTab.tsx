@@ -5,7 +5,9 @@ import { MemberAvatar } from './MemberAvatar';
 import i18n, { type SupportedLanguage } from '../i18n';
 import { getDisplayVersion } from '../config/version';
 import { cn } from '../lib/utils';
-import { CURRENCIES, type CurrencyCode, confirmMixedCurrencyIfNeeded } from '../config/currencies';
+import { CURRENCIES, type CurrencyCode, wouldCreateMixedCurrencyTrip } from '../config/currencies';
+import { isRateStale } from '../lib/exchangeRate';
+import { ConfirmDialog } from './ConfirmDialog';
 
 const LANGUAGES: { id: SupportedLanguage; flag: string; name: string }[] = [
   { id: 'zh-TW', flag: '🇹🇼', name: '繁中' },
@@ -28,12 +30,21 @@ export function SettingsTab() {
     currencyManuallySet,
     setCurrency,
     rateUpdatedAt,
+    rateUpdatedAtIso,
+    rateFetchFailed,
+    refreshExchangeRate,
     expenses,
     currentTripId,
+    calculatorValue,
+    itemizedValues,
   } = useStore();
   const me = members.find((m) => m.id === 'me') ?? members[0] ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(me?.name ?? '');
+  const [currencyConfirm, setCurrencyConfirm] = useState<{
+    code: CurrencyCode;
+    message: string;
+  } | null>(null);
   const displayVersion = getDisplayVersion();
 
   // resolvedLanguage は supportedLngs に一致した確定済みの言語コードを返す
@@ -54,21 +65,28 @@ export function SettingsTab() {
   const handleCurrencyChange = (code: CurrencyCode) => {
     if (code === currency) return;
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-    if (
-      !confirmMixedCurrencyIfNeeded(
-        tripExpenses,
-        currency,
-        code,
-        t('history.mixed_currency_confirm'),
-      )
-    ) {
+    const messages: string[] = [];
+    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, code)) {
+      messages.push(t('history.mixed_currency_confirm'));
+    }
+    // 切換會清空未儲存 draft（R7）：draft 非空時先告知。
+    const hasDraft =
+      calculatorValue.trim() !== '' || Object.values(itemizedValues).some((v) => v.trim() !== '');
+    if (hasDraft) {
+      messages.push(t('settings.currency_switch_draft_confirm'));
+    }
+    if (messages.length === 0) {
+      setCurrency(code, true);
       return;
     }
-    setCurrency(code, true);
+    setCurrencyConfirm({ code, message: messages.join('\n\n') });
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-28">
+    <div
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8"
+      style={{ paddingBottom: 'calc(var(--chrome-bottom) + 2.5rem)' }}
+    >
       <section className="flex flex-col items-center text-center space-y-6">
         <div className="relative group">
           <button
@@ -90,9 +108,10 @@ export function SettingsTab() {
           </button>
           <button
             onClick={() => setIsEditing(true)}
-            className="absolute bottom-0 right-0 w-8 h-8 flex items-center justify-center rounded-full bg-primary text-on-primary border-2 border-surface-container-lowest shadow-ambient active:scale-90 duration-200 z-10"
+            aria-label={t('settings.edit_name')}
+            className="absolute -bottom-2 -right-2 w-11 h-11 flex items-center justify-center rounded-full bg-primary text-on-primary border-2 border-surface-container-lowest shadow-ambient active:scale-90 duration-200 z-10"
           >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
+            <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
         </div>
         <div className="space-y-1 w-full max-w-xs">
@@ -156,8 +175,11 @@ export function SettingsTab() {
                   onClick={() => deleteMember(member.id)}
                   className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors cursor-pointer"
                   title={t('settings.delete_member')}
+                  aria-label={t('settings.delete_member')}
                 >
-                  <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                  <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                    person_remove
+                  </span>
                 </button>
               )}
             </div>
@@ -181,36 +203,33 @@ export function SettingsTab() {
               <span className="material-symbols-outlined text-primary">language</span>
               <span className="font-medium">{t('settings.language')}</span>
             </div>
-            <div className="flex gap-1 bg-surface-container rounded-full p-1">
+            <div className="flex flex-wrap gap-1 bg-surface-container rounded-full p-1">
               {LANGUAGES.map((lang) => {
                 const isActive = currentLang === lang.id;
                 return (
                   <button
                     key={lang.id}
                     onClick={() => handleLanguageChange(lang.id)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                    aria-pressed={isActive}
+                    className={`flex items-center gap-1 min-h-11 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
                       isActive
                         ? 'bg-primary-container text-on-primary-container shadow-ambient'
                         : 'text-on-surface-variant hover:bg-surface-container-high'
                     }`}
                   >
-                    <span>{lang.flag}</span>
-                    <span className="hidden sm:inline">{lang.name}</span>
+                    <span aria-hidden="true">{lang.flag}</span>
+                    <span>{lang.name}</span>
+                    {isActive && (
+                      <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
+                        check
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-5 bg-surface-container-low rounded-[2rem] hover:bg-surface-container transition-colors">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-primary">notifications_active</span>
-              <span className="font-medium">{t('settings.push_notifications')}</span>
-            </div>
-            <div className="w-12 h-6 bg-primary rounded-full relative p-1 cursor-pointer">
-              <div className="w-4 h-4 bg-on-primary rounded-full absolute right-1"></div>
-            </div>
-          </div>
           {/* Currency Selector */}
           <div className="p-5 bg-surface-container-low rounded-[2rem] space-y-3">
             <div className="flex items-center justify-between">
@@ -234,8 +253,9 @@ export function SettingsTab() {
                     <button
                       key={code}
                       onClick={() => handleCurrencyChange(code)}
+                      aria-pressed={isActive}
                       className={cn(
-                        'flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
+                        'flex items-center gap-1.5 min-h-11 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer',
                         isActive
                           ? 'bg-primary-container text-on-primary-container shadow-ambient'
                           : 'text-on-surface-variant hover:bg-surface-container-high',
@@ -251,8 +271,25 @@ export function SettingsTab() {
             {rateUpdatedAt && (
               <p className="text-[11px] text-on-surface-variant/50 pl-10">
                 {t('settings.rate_updated', { time: rateUpdatedAt })}
+                {isRateStale(rateUpdatedAtIso) && (
+                  <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
+                )}
               </p>
             )}
+            {rateFetchFailed && (
+              <button
+                onClick={() => void refreshExchangeRate()}
+                className="flex items-center gap-1 min-h-11 pl-10 text-[11px] font-medium text-error cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[12px]" aria-hidden="true">
+                  refresh
+                </span>
+                {t('settings.rate_retry')}
+              </button>
+            )}
+            <p className="text-[11px] text-on-surface-variant/50 pl-10">
+              {t('settings.currency_note')}
+            </p>
           </div>
           <button
             onClick={toggleCatPlayMode}
@@ -294,6 +331,18 @@ export function SettingsTab() {
           {t('settings.version')}&nbsp;{displayVersion}
         </p>
       </footer>
+
+      <ConfirmDialog
+        open={currencyConfirm !== null}
+        title={t('dialog.currency_title')}
+        message={currencyConfirm?.message ?? ''}
+        initialFocus="cancel"
+        onConfirm={() => {
+          if (currencyConfirm) setCurrency(currencyConfirm.code, true);
+          setCurrencyConfirm(null);
+        }}
+        onCancel={() => setCurrencyConfirm(null)}
+      />
     </div>
   );
 }

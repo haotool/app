@@ -8,7 +8,7 @@ export function BottomNav() {
   const { t } = useTranslation();
   const navRef = useRef<HTMLElement>(null);
 
-  /** nav 實際高度 → CSS 變數 --nav-h，讓 BottomSheet 精準對齊 */
+  /** nav 實際高度 → CSS 變數 --nav-h（--chrome-bottom SSOT 的輸入） */
   useEffect(() => {
     const el = navRef.current;
     if (!el) return;
@@ -42,6 +42,8 @@ export function BottomNav() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 rounded-full transition-all active:scale-95 duration-200 cursor-pointer min-w-[64px]',
                 isActive
@@ -52,6 +54,7 @@ export function BottomNav() {
               <span
                 className="material-symbols-outlined text-[20px] leading-none"
                 style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                aria-hidden="true"
               >
                 {item.icon}
               </span>

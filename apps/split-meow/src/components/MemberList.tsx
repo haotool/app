@@ -6,7 +6,15 @@ import { MemberAvatar } from './MemberAvatar';
 
 export function MemberList() {
   const { t } = useTranslation();
-  const { members, payerId, setPayerId, toggleMemberActive, addMember } = useStore();
+  const {
+    members,
+    payerId,
+    setPayerId,
+    toggleMemberActive,
+    addMember,
+    payerHintSeen,
+    dismissPayerHint,
+  } = useStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
 
@@ -16,6 +24,7 @@ export function MemberList() {
       longPressTriggered.current = true;
       if ('vibrate' in navigator) navigator.vibrate(30);
       setPayerId(memberId);
+      dismissPayerHint();
       timerRef.current = null;
     }, 500);
   };
@@ -53,12 +62,14 @@ export function MemberList() {
               e.preventDefault();
               if ('vibrate' in navigator) navigator.vibrate(30);
               setPayerId(member.id);
+              dismissPayerHint();
             }}
+            aria-pressed={member.isActive}
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-full transition-all active:scale-95 shadow-ambient',
+              'flex items-center gap-2 min-h-11 px-3 py-1.5 rounded-full transition-all active:scale-95 shadow-ambient',
               member.isActive
                 ? 'bg-secondary-container text-on-secondary-container'
-                : 'bg-surface-container-low text-on-surface-variant opacity-60 hover:opacity-100',
+                : 'bg-surface-container-low text-on-surface-variant opacity-60 hover:opacity-100 border border-dashed border-outline-variant/60',
             )}
           >
             <div className="relative shrink-0">
@@ -81,8 +92,15 @@ export function MemberList() {
         aria-label={t('home.add_member')}
         className="w-11 h-11 flex items-center justify-center bg-primary-container text-on-primary-container rounded-full active:scale-90 transition-transform shadow-ambient"
       >
-        <span className="material-symbols-outlined">add</span>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          add
+        </span>
       </button>
+      {!payerHintSeen && (
+        <p className="w-full text-center text-[11px] text-on-surface-variant/60 mt-1">
+          {t('home.payer_hint')}
+        </p>
+      )}
     </div>
   );
 }

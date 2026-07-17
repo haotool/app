@@ -5,8 +5,9 @@ import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
-import { useEffect, useRef, useState } from 'react';
-import { formatAmount } from '../config/currencies';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { convertAmount, formatAmount } from '../config/currencies';
+import { isRateStale } from '../lib/exchangeRate';
 
 interface HomeTabProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -28,6 +29,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     setExpenseCategory,
     currency,
     krwPerTwd,
+    rateUpdatedAtIso,
   } = useStore();
 
   const CATEGORIES = [
@@ -44,17 +46,40 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelH, setPanelH] = useState(400);
   const [keyboardH, setKeyboardH] = useState(0);
+  // 矮視窗（<480px 高，多為手機橫向）：面板改為流式佈局，主內容永遠可捲動抵達。
+  const [isShortViewport, setIsShortViewport] = useState(false);
+  // 面板內容溢出且未捲到底時顯示捲動暗示漸層（G11 內捲可發現性）。
+  const [showPanelScrollHint, setShowPanelScrollHint] = useState(false);
 
-  // Track panel height → drives content paddingBottom
+  const updatePanelScrollHint = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    setShowPanelScrollHint(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+  }, []);
+
+  // Track panel height → drives content paddingBottom；固定模式時發布 --home-panel-h 供貓咪層避讓。
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      if (entry) setPanelH(entry.contentRect.height);
+      if (entry) {
+        setPanelH(entry.contentRect.height);
+        if (!isShortViewport) {
+          document.documentElement.style.setProperty(
+            '--home-panel-h',
+            `${Math.round(entry.contentRect.height)}px`,
+          );
+        }
+        updatePanelScrollHint();
+      }
     });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    if (isShortViewport) document.documentElement.style.removeProperty('--home-panel-h');
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--home-panel-h');
+    };
+  }, [isShortViewport, updatePanelScrollHint]);
 
   // Detect system keyboard via visualViewport (iOS PWA / Android Chrome)
   useEffect(() => {
@@ -66,6 +91,19 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     window.visualViewport?.addEventListener('resize', update);
     return () => window.visualViewport?.removeEventListener('resize', update);
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-height: 479px)');
+    const update = () => setIsShortViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // 內容組成改變（類別列展開、鍵盤開闔、模式切換）時重算捲動暗示；尺寸變化由 ResizeObserver 覆蓋。
+  useEffect(() => {
+    updatePanelScrollHint();
+  }, [showCategoryPicker, keyboardH, splitMode, updatePanelScrollHint]);
 
   const activeMembers = members.filter((m) => m.isActive);
 
@@ -94,14 +132,16 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
   // 系統鍵盤開啟時：面板移至鍵盤上方；否則：固定在 BottomNav 上方
   const isKeyboardOpen = keyboardH > 0;
-  const panelBottom = isKeyboardOpen
-    ? `${keyboardH}px`
-    : 'calc(0.5rem + var(--nav-h, 62px) + env(safe-area-inset-bottom, 0px))';
+  const panelBottom = isKeyboardOpen ? `${keyboardH}px` : 'var(--chrome-bottom)';
 
   return (
     <div
       className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-      style={{ paddingBottom: panelH + 80 }}
+      style={{
+        paddingBottom: isShortViewport
+          ? 'calc(var(--chrome-bottom) + 1rem)'
+          : `calc(${panelH + 16}px + var(--chrome-bottom))`,
+      }}
     >
       {/* Amount Display Card */}
       <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-ambient px-6 py-5 mb-4 text-center">
@@ -114,7 +154,10 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
 
         {totalAmount === 0 ? (
           <div className="py-2 flex flex-col items-center gap-2 animate-in fade-in duration-300">
-            <span className="material-symbols-outlined text-5xl text-on-surface-variant/25 select-none">
+            <span
+              className="material-symbols-outlined text-5xl text-on-surface-variant/25 select-none"
+              aria-hidden="true"
+            >
               pets
             </span>
             <p className="text-sm text-on-surface-variant/60">
@@ -133,14 +176,21 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             <h1 className="text-4xl sm:text-5xl font-headline font-semibold tracking-tight text-on-surface leading-none break-all">
               {formatAmount(totalAmount, currency)}
             </h1>
-            {/* 換算提示：另一幣別的近似金額 */}
-            {krwPerTwd && totalAmount > 0 && (
-              <p className="text-xs text-on-surface-variant/50 mt-1">
-                {currency === 'KRW'
-                  ? `≈ NT$ ${Math.round(totalAmount / krwPerTwd).toLocaleString('zh-TW')}`
-                  : `≈ ₩${Math.round(totalAmount * krwPerTwd).toLocaleString('ko-KR')}`}
-              </p>
-            )}
+            {/* 換算提示：另一幣別的近似金額（derived only，rate 無效時隱藏）；快照過期附 stale 短標（R10）。 */}
+            {totalAmount > 0 &&
+              (() => {
+                const to = currency === 'KRW' ? 'TWD' : 'KRW';
+                const approx = convertAmount(totalAmount, currency, to, krwPerTwd);
+                if (approx === null) return null;
+                return (
+                  <p className="text-xs text-on-surface-variant/50 mt-1">
+                    ≈ {formatAmount(approx, to)}
+                    {isRateStale(rateUpdatedAtIso) && (
+                      <span className="ml-1 text-tertiary">{t('settings.rate_stale')}</span>
+                    )}
+                  </p>
+                );
+              })()}
             {splitMode === 'split_evenly' && activeMembers.length > 0 && (
               <p className="text-sm text-on-surface-variant mt-2">
                 {t('home.perPerson')}{' '}
@@ -192,17 +242,26 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         </div>
       )}
 
-      {/* Fixed Bottom Panel：取代 BottomSheet，避免系統鍵盤遮蓋計算機 */}
+      {/* 固定底部面板（G11）：直向 max-height 受控＋內部可捲；矮視窗（橫向）改流式，主內容永遠可達 */}
       <div
         ref={panelRef}
-        className="fixed inset-x-0 z-40 max-w-lg mx-auto rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2"
-        style={{ bottom: panelBottom, transition: 'bottom 0.15s ease-out' }}
+        data-testid="home-panel"
+        className={cn(
+          'z-40 max-w-lg rounded-t-[2rem] bg-surface shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.10)] pt-2 vshort:pt-1',
+          isShortViewport
+            ? 'relative -mx-4 mt-4'
+            : 'home-panel-fixed fixed inset-x-0 mx-auto overflow-y-auto overscroll-contain',
+        )}
+        style={
+          isShortViewport ? undefined : { bottom: panelBottom, transition: 'bottom 0.15s ease-out' }
+        }
+        onScroll={updatePanelScrollHint}
       >
-        {/* 裝飾性把手（不可拖動） */}
-        <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2" />
+        {/* 裝飾性把手（不可拖動）；極矮視窗隱藏換取鍵盤可見高度 */}
+        <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2 vshort:hidden" />
 
         {/* Note Input */}
-        <div className="mx-4 mt-1 mb-2">
+        <div className="mx-4 mt-1 mb-2 vshort:mt-0 vshort:mb-1">
           <div className="flex items-center gap-2 bg-surface-container rounded-full px-4 py-2">
             <button
               onClick={() => {
@@ -210,10 +269,12 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                 noteInputRef.current?.blur();
               }}
               className={cn(
-                'shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
+                // 44px 命中區（G1）：負邊距維持備註列高不變，與右側清除鈕同模式。
+                'shrink-0 w-11 h-11 -my-2.5 -ml-3 flex items-center justify-center rounded-full transition-all cursor-pointer active:scale-90',
                 showCategoryPicker ? 'bg-primary-container' : '',
               )}
-              aria-label={t('home.note_placeholder')}
+              aria-label={t('home.pick_category')}
+              aria-expanded={showCategoryPicker}
             >
               {expenseCategory ? (
                 <span className="text-base leading-none">
@@ -245,9 +306,12 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             {expenseNote && (
               <button
                 onClick={() => setExpenseNote('')}
-                className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
+                aria-label={t('common.clear')}
+                className="w-11 h-11 -my-2.5 -mr-3 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer shrink-0"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                  close
+                </span>
               </button>
             )}
           </div>
@@ -265,8 +329,10 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
                     setExpenseCategory(isActive ? null : cat.id);
                     setShowCategoryPicker(false);
                   }}
+                  aria-label={t(`home.category_${cat.id}`)}
+                  aria-pressed={isActive}
                   className={cn(
-                    'flex-1 py-1.5 rounded-full text-base transition-all active:scale-90 cursor-pointer',
+                    'flex-1 min-h-11 rounded-full text-base transition-all active:scale-90 cursor-pointer',
                     isActive
                       ? 'bg-primary-container shadow-ambient'
                       : 'bg-surface-container text-on-surface-variant/60 hover:bg-surface-container-high',
@@ -280,29 +346,35 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         )}
 
         {/* Mode Toggle */}
-        <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2">
+        <div className="flex p-0.5 mx-4 bg-surface-container rounded-full mb-2 vshort:mb-1">
           <button
             onClick={() => setSplitMode('split_evenly')}
+            aria-pressed={splitMode === 'split_evenly'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
+              'flex-1 flex items-center justify-center gap-1.5 min-h-11 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'split_evenly'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
-            <span className="material-symbols-outlined text-[14px] leading-none">call_split</span>
+            <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden="true">
+              call_split
+            </span>
             {t('home.split_evenly')}
           </button>
           <button
             onClick={() => setSplitMode('itemized')}
+            aria-pressed={splitMode === 'itemized'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
+              'flex-1 flex items-center justify-center gap-1.5 min-h-11 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer',
               splitMode === 'itemized'
                 ? 'bg-surface-container-lowest text-primary shadow-ambient'
                 : 'text-on-surface-variant hover:bg-surface-container-high',
             )}
           >
-            <span className="material-symbols-outlined text-[14px] leading-none">edit_note</span>
+            <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden="true">
+              edit_note
+            </span>
             {t('home.itemized')}
           </button>
         </div>
@@ -319,11 +391,21 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
               focusedMemberName={members.find((m) => m.id === focusedMemberId)?.name}
             />
 
-            <div className="px-1 pb-2 touch-manipulation">
+            <div className="px-1 pb-2 vshort:pb-1 touch-manipulation">
               <Calculator onPawParticle={onPawParticle} />
             </div>
           </>
         )}
+
+        {/* 捲動暗示漸層（複用 App 底部漸層遮罩模式）：sticky 貼齊面板可視底緣，零佔位。 */}
+        <div
+          data-testid="panel-scroll-hint"
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none sticky bottom-0 -mt-8 h-8 bg-gradient-to-t from-surface to-transparent transition-opacity duration-200',
+            showPanelScrollHint ? 'opacity-100' : 'opacity-0',
+          )}
+        />
       </div>
     </div>
   );
@@ -361,7 +443,7 @@ function DockInfo(props: {
 
   if (activeMembersCount <= 0 || totalAmount <= 0) {
     return (
-      <p className="text-xs text-center text-on-surface-variant mb-2 opacity-60">
+      <p className="text-xs text-center text-on-surface-variant mb-2 vshort:mb-1 opacity-60">
         {t('home.save_hint')}
       </p>
     );

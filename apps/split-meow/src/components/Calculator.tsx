@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import { cn } from '../lib/utils';
 import { evaluateExpression } from '../lib/evaluateExpression';
-import { confirmMixedCurrencyIfNeeded } from '../config/currencies';
+import { wouldCreateMixedCurrencyTrip } from '../config/currencies';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface CalculatorProps {
   onPawParticle?: (x: number, y: number) => void;
@@ -35,16 +37,12 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
       ? evaluateExpression(currentValue) > 0
       : Object.values(itemizedValues).some((v) => evaluateExpression(v) > 0);
 
+  const [showMixedConfirm, setShowMixedConfirm] = useState(false);
+
   const handleSave = () => {
     const tripExpenses = expenses.filter((e) => e.tripId === currentTripId);
-    if (
-      !confirmMixedCurrencyIfNeeded(
-        tripExpenses,
-        currency,
-        currency,
-        t('history.mixed_currency_confirm'),
-      )
-    ) {
+    if (wouldCreateMixedCurrencyTrip(tripExpenses, currency, currency)) {
+      setShowMixedConfirm(true);
       return;
     }
     saveExpense();
@@ -190,7 +188,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 vshort:gap-1">
       {buttons.map((btn, i) => (
         <button
           key={i}
@@ -201,12 +199,20 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
               onPawParticle(rect.left + rect.width / 2 - 9, rect.top + rect.height / 2 - 9);
             }
           }}
+          aria-label={btn.label === '⌫' ? t('home.backspace') : btn.label}
           className={cn(
-            'h-12 sm:h-13 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
+            // 極矮視窗鍵高降至 44px（G1 下限），多露一列鍵盤。
+            'h-12 sm:h-13 vshort:h-11 flex items-center justify-center rounded-full active:scale-95 transition-all select-none shadow-ambient',
             btn.class,
           )}
         >
-          {btn.icon ? <span className="material-symbols-outlined">{btn.icon}</span> : btn.label}
+          {btn.icon ? (
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {btn.icon}
+            </span>
+          ) : (
+            btn.label
+          )}
         </button>
       ))}
       <button
@@ -221,7 +227,7 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
       >
         {t('home.complete')}
         {canSave && (
-          <div className="absolute -right-2 -bottom-2 opacity-20">
+          <div className="absolute -right-2 -bottom-2 opacity-20" aria-hidden="true">
             <span
               className="material-symbols-outlined text-5xl"
               style={{ transform: 'rotate(15deg)' }}
@@ -231,6 +237,17 @@ export function Calculator({ onPawParticle }: CalculatorProps = {}) {
           </div>
         )}
       </button>
+      <ConfirmDialog
+        open={showMixedConfirm}
+        title={t('dialog.mixed_title')}
+        message={t('history.mixed_currency_confirm')}
+        initialFocus="cancel"
+        onConfirm={() => {
+          setShowMixedConfirm(false);
+          saveExpense();
+        }}
+        onCancel={() => setShowMixedConfirm(false)}
+      />
     </div>
   );
 }

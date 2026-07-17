@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { evaluateExpression } from '../lib/evaluateExpression';
 import { randomAvatarSeed } from '../lib/avatar';
+import { fetchMoneyboxRate } from '../lib/exchangeRate';
 import i18n from '../i18n';
 import type { CurrencyCode } from '../config/currencies';
 
@@ -88,14 +89,18 @@ interface AppState {
   toggleSettlement: (key: string) => void;
   catPlayMode: boolean;
   toggleCatPlayMode: () => void;
+  payerHintSeen: boolean;
+  dismissPayerHint: () => void;
 
   // 幣別
   currency: CurrencyCode;
   currencyManuallySet: boolean;
   krwPerTwd: number | null;
   rateUpdatedAt: string | null;
+  rateUpdatedAtIso: string | null;
+  rateFetchFailed: boolean;
   setCurrency: (code: CurrencyCode, manual?: boolean) => void;
-  setExchangeRate: (krwPerTwd: number, updatedAt: string) => void;
+  refreshExchangeRate: () => Promise<void>;
 }
 
 // 初始成員使用固定 seed，確保每次新安裝頭像一致（boring-avatars deterministic）
@@ -132,6 +137,34 @@ const generateRandomName = (): string => {
   return `${p}${s}`;
 };
 
+export const STORAGE_VERSION = 1;
+
+// 物化單筆 legacy 記錄的隱式 TWD fallback（純函式，不改寫輸入）。
+function materializeExpenseCurrency(e: ExpenseRecord): ExpenseRecord {
+  return e.currency
+    ? e
+    : { ...e, currency: 'TWD' as const, exchangeRateKrwPerTwd: e.exchangeRateKrwPerTwd ?? null };
+}
+
+// persist v1：物化 legacy 記錄，讓資料自帶幣別（不可變回傳，獨立導出供測試驗證）。
+export function migratePersistedState(persisted: unknown, version: number): AppState {
+  const state = persisted as AppState;
+  if (version < 1 && Array.isArray(state.expenses)) {
+    return { ...state, expenses: state.expenses.map(materializeExpenseCurrency) };
+  }
+  return state;
+}
+
+// zustand persist 僅在 blob 帶「數字 version 且不相符」時呼叫 migrate；
+// 真正無 version 欄位的 v0 blob 會跳過 migrate，故於每次 rehydrate 的 merge 物化（冪等）。
+export function mergePersistedState(persisted: unknown, current: AppState): AppState {
+  const state = { ...current, ...(persisted as Partial<AppState>) };
+  if (Array.isArray(state.expenses)) {
+    state.expenses = state.expenses.map(materializeExpenseCurrency);
+  }
+  return state;
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
@@ -153,10 +186,13 @@ export const useStore = create<AppState>()(
       expenseCategory: null,
       settledPayments: [],
       catPlayMode: false,
+      payerHintSeen: false,
       currency: 'TWD',
       currencyManuallySet: false,
       krwPerTwd: null,
       rateUpdatedAt: null,
+      rateUpdatedAtIso: null,
+      rateFetchFailed: false,
 
       addTrip: (name) =>
         set((state) => {
@@ -309,12 +345,41 @@ export const useStore = create<AppState>()(
 
       toggleCatPlayMode: () => set((state) => ({ catPlayMode: !state.catPlayMode })),
 
-      setCurrency: (code, manual = true) => set({ currency: code, currencyManuallySet: manual }),
+      dismissPayerHint: () => set({ payerHintSeen: true }),
 
-      setExchangeRate: (krwPerTwd, updatedAt) => set({ krwPerTwd, rateUpdatedAt: updatedAt }),
+      // 幣別實變時同步清空未儲存 draft：原幣數字不可直接掛上新幣別標籤（涵蓋手動與自動偵測）。
+      setCurrency: (code, manual = true) =>
+        set((state) =>
+          state.currency === code
+            ? { currencyManuallySet: manual }
+            : {
+                currency: code,
+                currencyManuallySet: manual,
+                calculatorValue: '',
+                itemizedValues: {},
+              },
+        ),
+
+      refreshExchangeRate: async () => {
+        try {
+          const { krwPerTwd, updatedAt, updatedAtIso } = await fetchMoneyboxRate();
+          set({
+            krwPerTwd,
+            rateUpdatedAt: updatedAt,
+            rateUpdatedAtIso: updatedAtIso,
+            rateFetchFailed: false,
+          });
+        } catch {
+          // 離線或來源異常：沿用 persist 快取值，UI 顯示可重試狀態。
+          set({ rateFetchFailed: true });
+        }
+      },
     }),
     {
       name: 'split-meow-storage',
+      version: STORAGE_VERSION,
+      migrate: migratePersistedState,
+      merge: mergePersistedState,
     },
   ),
 );
