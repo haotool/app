@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+127
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：reward-starpuff-v9-transform-challenge
+- 原因：StarPuff 魔王攻略單一化且七關內容見頂，v9 需星化變身/EX 變體/雙新怪/九關與慈悲補血保底，並確保舊存檔與 anti-softlock 不變式
+- 解法：transform/mercyHeal 純狀態機配單測＋FSM 表驅動 EX（split/eclipse/暈眩 hit window）＋exCleared additive 存檔欄位，拾取判定沿 §43 幾何掃掠根修 direct pair 漏檢；304 unit＋46 e2e 全綠且 v8 舊檔九節點相容
 
 - 日期：2026-07-17
 - ID：penalty-starpuff-v8-gamescene-backflow
