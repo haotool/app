@@ -9,6 +9,7 @@ import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { GEO_TIMEOUT_MS } from '@app/park-keeper/hooks/useNavigation';
 import { WARNING_COLOR } from '@app/park-keeper/config/colors';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
+import { PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
 
 const MiniMap = lazy(() => import('./MiniMap'));
 
@@ -218,7 +219,7 @@ export default function QuickEntry({
     vibrate([20, 40]);
 
     const recordData: Partial<ParkingRecord> = {
-      plateNumber: plate || 'N/A',
+      plateNumber: plate || PLATE_UNSET_SENTINEL,
       floor: floorValue,
       notes: notes.trim(),
       photoData: photo ?? undefined,

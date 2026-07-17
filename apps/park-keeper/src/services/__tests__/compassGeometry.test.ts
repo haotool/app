@@ -6,6 +6,7 @@ import {
   tickStrokeWidth,
   tickOpacity,
   cardinalLabelPosition,
+  cardinalLabelUprightTransform,
   targetWedgePath,
   isAligned,
   COMPASS_CX,
@@ -248,5 +249,30 @@ describe('isAligned', () => {
   it('自訂閾值生效', () => {
     expect(isAligned(20, 25)).toBe(true);
     expect(isAligned(20, 15)).toBe(false);
+  });
+});
+
+describe('cardinalLabelUprightTransform', () => {
+  it('以標籤自身錨點為旋轉中心（與 cardinalLabelPosition 同座標）', () => {
+    for (const i of [0, 9, 18, 27]) {
+      const { x, y } = cardinalLabelPosition(i);
+      expect(cardinalLabelUprightTransform(i, 45)).toBe(`rotate(45 ${x} ${y})`);
+    }
+  });
+
+  it('回轉角等於容器旋轉的相反數：容器 -heading、文字 +heading 抵銷後直立', () => {
+    expect(cardinalLabelUprightTransform(0, 270)).toBe(
+      `rotate(270 ${COMPASS_CX} ${COMPASS_CY - CARDINAL_LABEL_RADIUS})`,
+    );
+  });
+
+  it('heading 0 時為零旋轉（初始態不位移不變形）', () => {
+    const { x, y } = cardinalLabelPosition(9);
+    expect(cardinalLabelUprightTransform(9, 0)).toBe(`rotate(0 ${x} ${y})`);
+  });
+
+  it('自訂半徑時旋轉中心跟隨對應座標', () => {
+    const { x, y } = cardinalLabelPosition(18, 80);
+    expect(cardinalLabelUprightTransform(18, 30, 80)).toBe(`rotate(30 ${x} ${y})`);
   });
 });

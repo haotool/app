@@ -5,6 +5,7 @@
  *
  * 使用位置：
  * - vite.config.ts (SSG 路徑)
+ * - src/sw.ts (SW 精確導覽路由派生)
  * - scripts/generate-sitemap.js (Sitemap 生成)
  * - scripts/verify-production-seo.mjs (生產環境檢測)
  *

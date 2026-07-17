@@ -32,7 +32,7 @@ import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 
-export type ToastTone = 'long' | 'short' | 'warning';
+export type ToastTone = 'long' | 'short' | 'warning' | 'info';
 
 export interface ToastItem {
   id: string;

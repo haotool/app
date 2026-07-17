@@ -29,6 +29,14 @@ vi.mock('@app/park-keeper/components/QuickEntry', () => ({
         >
           stub-save
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            void Promise.resolve(onSave({ floor: 'B1', hasPhoto: false })).then(onClose);
+          }}
+        >
+          stub-save-no-plate
+        </button>
       </div>
     ) : null,
 }));
@@ -112,6 +120,25 @@ describe('Add - /add 快速記錄頁', () => {
     // header 返回箭頭（aria-label）與摘要 CTA（可見文字）同名，斷言摘要 CTA 存在。
     const backLinks = screen.getAllByRole('link', { name: i18n.t('action.back_home') });
     expect(backLinks.some((el) => el.textContent === i18n.t('action.back_home'))).toBe(true);
+
+    saveSpy.mockRestore();
+  });
+
+  it('未填車號儲存後摘要顯示待填文案而非裸露 N/A（formatPlate SSOT，round-2 R2-U2）', async () => {
+    const saveSpy = vi.spyOn(dbService, 'saveRecord').mockResolvedValue(undefined);
+
+    renderAdd('/add');
+
+    fireEvent.click(await screen.findByText('stub-save-no-plate'));
+
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('add.summary_hint'))).toBeInTheDocument();
+    });
+    // 儲存層仍以 sentinel 佔位。
+    expect(saveSpy.mock.calls[0]![0].plateNumber).toBe('N/A');
+    // 顯示層與 RecordCard／PickupHeroCard／NavOverlay 一致：待填文案，不裸露 N/A。
+    expect(screen.getByText(new RegExp(i18n.t('record.plate_unset')))).toBeInTheDocument();
+    expect(screen.queryByText(/N\/A/)).toBeNull();
 
     saveSpy.mockRestore();
   });

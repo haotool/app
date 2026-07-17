@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -101,9 +101,35 @@ describe('AssetsPage', () => {
 
     renderAssets();
     const historySection = screen.getByRole('region', { name: '平倉歷史' });
-    expect(screen.getByText('+100')).toBeInTheDocument();
+    expect(within(historySection).getByText('+100')).toBeInTheDocument();
     expect(historySection).toHaveTextContent('手動');
     expect(historySection).toHaveTextContent(/手續費 6\.655/);
+  });
+
+  it('shows practice stats derived from closed trades', () => {
+    useTradeStore.getState().openMarketOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    const positionId = useTradeStore.getState().account.positions[0]?.id;
+    if (positionId === undefined) throw new Error('no position');
+    useTradeStore.getState().closeMarketOrder({ positionId, fraction: 1, price: 61000 });
+
+    renderAssets();
+    const statsSection = screen.getByRole('region', { name: '練習統計' });
+    expect(within(statsSection).getByText('100.0%')).toBeInTheDocument();
+    expect(within(statsSection).getByText('∞')).toBeInTheDocument();
+    expect(within(statsSection).getAllByText('+100')).toHaveLength(2);
+    expect(statsSection).toHaveTextContent(/總手續費6\.65/);
+    expect(statsSection).toHaveTextContent(/\+100 \/ --/);
+  });
+
+  it('shows the stats empty state without closed trades', () => {
+    renderAssets();
+    expect(screen.getByText('尚無統計資料')).toBeInTheDocument();
   });
 
   it('resets the account after confirmation', async () => {

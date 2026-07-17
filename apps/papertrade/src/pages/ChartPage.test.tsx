@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { routes } from '../routes';
 import { useKlines } from '../hooks/useKlines';
 import { useMarketStore } from '../stores/marketStore';
+import { useMarketPrefsStore } from '../stores/marketPrefsStore';
 import { type Ticker } from '../services/ticker';
 // 預載 lazy 路由模組：避免高負載並行時 chunk transform 吃掉 findBy timeout。
 import './ChartPage';
@@ -21,8 +22,8 @@ vi.mock('../hooks/useKlines', () => ({
 }));
 
 vi.mock('../components/CandleChart', () => ({
-  CandleChart: ({ seriesKey }: { seriesKey: string }) => (
-    <div data-testid="candle-chart">{seriesKey}</div>
+  CandleChart: ({ seriesKey, indicators }: { seriesKey: string; indicators: string[] }) => (
+    <div data-testid="candle-chart">{`${seriesKey}|${indicators.join(',')}`}</div>
   ),
 }));
 
@@ -64,6 +65,7 @@ function renderChart(path: string) {
 describe('ChartPage', () => {
   beforeEach(() => {
     useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
+    useMarketPrefsStore.setState({ favorites: [], indicators: [] });
     useKlinesMock.mockClear();
     useKlinesMock.mockReturnValue({
       bars: [],
@@ -189,6 +191,81 @@ describe('ChartPage', () => {
     expect(screen.getByRole('tab', { name: '最新成交' })).toHaveAttribute('aria-selected', 'true');
     expect(subscribeMock).toHaveBeenCalledWith('publicTrade.BTCUSDT', expect.any(Function));
     expect(screen.getByLabelText('最新成交載入中')).toBeInTheDocument();
+  });
+
+  it('switches to the depth tab and subscribes to the orderbook feed', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    await user.click(await screen.findByRole('tab', { name: '深度' }));
+    expect(screen.getByRole('tab', { name: '深度' })).toHaveAttribute('aria-selected', 'true');
+    expect(subscribeMock).toHaveBeenCalledWith('orderbook.50.BTCUSDT', expect.any(Function));
+    expect(screen.getByLabelText('深度圖載入中')).toBeInTheDocument();
+  });
+
+  it('stops the depth orderbook subscription when switching to the trades tab', async () => {
+    const user = userEvent.setup();
+    const stops: Mock[] = [];
+    subscribeMock.mockImplementation(() => {
+      const stop = vi.fn();
+      stops.push(stop);
+      return stop;
+    });
+    renderChart('/chart/BTCUSDT');
+
+    // 進深度分頁後，最後一筆訂閱即深度圖的 orderbook feed（訂單簿面板已先卸載）。
+    await user.click(await screen.findByRole('tab', { name: '深度' }));
+    expect(subscribeMock).toHaveBeenLastCalledWith('orderbook.50.BTCUSDT', expect.any(Function));
+    const depthStop = stops.at(-1);
+    expect(depthStop).toBeDefined();
+    expect(depthStop).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('tab', { name: '最新成交' }));
+    expect(depthStop).toHaveBeenCalledTimes(1);
+  });
+
+  it('toggles indicator overlays via chips and persists the selection', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    const group = await screen.findByRole('group', { name: '技術指標' });
+    const ma7 = within(group).getByRole('button', { name: 'MA7' });
+    expect(ma7).toHaveAttribute('aria-pressed', 'false');
+    expect(ma7).toHaveClass('min-h-11');
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|');
+
+    await user.click(ma7);
+    expect(ma7).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|ma7');
+    expect(useMarketPrefsStore.getState().indicators).toEqual(['ma7']);
+
+    await user.click(within(group).getByRole('button', { name: 'EMA12' }));
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|ma7,ema12');
+
+    await user.click(ma7);
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|ema12');
+    expect(useMarketPrefsStore.getState().indicators).toEqual(['ema12']);
+  });
+
+  it('keeps the persisted indicators applied after a symbol switch', async () => {
+    const user = userEvent.setup();
+    useMarketPrefsStore.setState({ favorites: [], indicators: ['ma25'] });
+    useMarketStore.getState().setTicker(btcTicker);
+    renderChart('/chart/BTCUSDT');
+
+    expect(await screen.findByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|ma25');
+
+    await user.click(screen.getByRole('button', { name: /切換交易對，目前為 BTC\/USDT/ }));
+    const sheet = screen.getByRole('dialog', { name: '選擇交易對' });
+    await user.click(within(sheet).getByRole('button', { name: /ETH\/USDT/ }));
+
+    await screen.findByRole('heading', { name: /ETH/ });
+    const group = screen.getByRole('group', { name: '技術指標' });
+    expect(within(group).getByRole('button', { name: 'MA25' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('|ma25');
   });
 
   it('switches symbol via the pair sheet and keeps the current timeframe', async () => {

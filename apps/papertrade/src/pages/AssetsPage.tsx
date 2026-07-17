@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { History } from 'lucide-react';
+import { ChartColumn, History } from 'lucide-react';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
-import { QTY_DISPLAY_DECIMALS } from '../config/trading';
+import { HISTORY_MAX_ENTRIES, QTY_DISPLAY_DECIMALS } from '../config/trading';
 import { getAccountMetrics } from '../engine/engine';
-import { type CloseReason } from '../engine/types';
+import { type ClosedTrade, type CloseReason } from '../engine/types';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
 import { resolveDailyEquityBaseline } from '../lib/dailyEquity';
+import { computePracticeStats } from '../lib/practiceStats';
 import { EmptyState } from '../components/EmptyState';
 import { ResetAccountButton } from '../components/ResetAccountButton';
 
@@ -35,6 +36,66 @@ function formatTime(timestamp: number): string {
   });
 }
 
+function formatProfitFactor(value: number | null): string {
+  if (value === null) return '--';
+  return Number.isFinite(value) ? value.toFixed(2) : '∞';
+}
+
+function StatCard({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="rounded-card border border-border bg-surface p-3">
+      <dt className="text-caption text-text-3">{label}</dt>
+      <dd className="mt-1 text-label font-medium tabular-nums">{children}</dd>
+    </div>
+  );
+}
+
+function PracticeStatsSection({ history }: { history: ClosedTrade[] }) {
+  const stats = computePracticeStats(history);
+
+  return (
+    <section aria-label="練習統計" className="pt-6">
+      <h2 className="text-label font-medium text-text-2">
+        練習統計
+        {history.length >= HISTORY_MAX_ENTRIES && (
+          <span className="ml-1 text-caption font-normal text-text-3">
+            （近 {HISTORY_MAX_ENTRIES} 筆）
+          </span>
+        )}
+      </h2>
+      {history.length === 0 ? (
+        <EmptyState
+          icon={ChartColumn}
+          title="尚無統計資料"
+          description="完成第一筆平倉後，這裡會統計你的練習成果。"
+          className="mt-2"
+        />
+      ) : (
+        <dl className="mt-2 grid grid-cols-3 gap-2">
+          <StatCard label="總交易數">{stats.totalTrades}</StatCard>
+          <StatCard label="勝率">{(stats.winRate * 100).toFixed(1)}%</StatCard>
+          <StatCard label="總實現損益">
+            <span className={stats.totalPnl >= 0 ? 'text-long' : 'text-short'}>
+              {signedUsdt(stats.totalPnl)}
+            </span>
+          </StatCard>
+          <StatCard label="總手續費">{formatAmount(stats.totalFees, 2)}</StatCard>
+          <StatCard label="最大單筆盈/虧">
+            <span className={stats.maxWin === null ? 'text-text-3' : 'text-long'}>
+              {stats.maxWin === null ? '--' : signedUsdt(stats.maxWin)}
+            </span>
+            <span className="text-text-3"> / </span>
+            <span className={stats.maxLoss === null ? 'text-text-3' : 'text-short'}>
+              {stats.maxLoss === null ? '--' : signedUsdt(stats.maxLoss)}
+            </span>
+          </StatCard>
+          <StatCard label="獲利因子">{formatProfitFactor(stats.profitFactor)}</StatCard>
+        </dl>
+      )}
+    </section>
+  );
+}
+
 export function AssetsPage() {
   const account = useTradeStore((state) => state.account);
   const tickers = useMarketStore((state) => state.tickers);
@@ -56,7 +117,7 @@ export function AssetsPage() {
   const dailyPositive = dailyChange >= 0;
 
   return (
-    <div className="flex flex-col px-4 pb-6">
+    <div className="flex flex-col px-4 pb-6 lg:mx-auto lg:max-w-2xl">
       <header className="pb-4 pt-5">
         <p className="text-caption text-text-3">總權益（USDT）</p>
         <p className="mt-1 text-price-xl font-semibold tabular-nums">
@@ -99,6 +160,8 @@ export function AssetsPage() {
           </dd>
         </div>
       </dl>
+
+      <PracticeStatsSection history={account.history} />
 
       <section aria-label="平倉歷史" className="pt-6">
         <h2 className="text-label font-medium text-text-2">

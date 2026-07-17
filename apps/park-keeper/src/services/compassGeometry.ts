@@ -100,6 +100,21 @@ export function cardinalLabelPosition(
   };
 }
 
+/**
+ * 方位角ラベル直立抵銷 transform（issue #733）：
+ * 刻度環容器旋轉 -heading 時，文字以自身錨點回轉 +heading，
+ * 位置不變、字形保持直立（對齊 Apple 指南針／Google Maps 羅盤慣例）。
+ * 旋轉中心必須用 cardinalLabelPosition 的同一座標，避免 rotate 中心錯誤造成定位偏移。
+ */
+export function cardinalLabelUprightTransform(
+  i: number,
+  headingDeg: number,
+  radius: number = CARDINAL_LABEL_RADIUS,
+): string {
+  const { x, y } = cardinalLabelPosition(i, radius);
+  return `rotate(${headingDeg} ${x} ${y})`;
+}
+
 // ---------------------------------------------------------------------------
 // 目標方位楔形（annular sector）
 // ---------------------------------------------------------------------------
