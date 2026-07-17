@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+126
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：penalty-starpuff-v8-gamescene-backflow
+- 原因：v8 三席審查（Composer 席 Blocking）揪出迴旋星駕駛與側風結算回灌 GameScene（違反系統下沉慣例）且迴旋彈道驅動迴圈於星彈/殼刃雙份實作
+- 解法：steerBoomerangStars 回沉 player、側風收斂 enemies.applyEnvironmentalForces、抽單一 tickBoomerangBody 共用，另補 BossKind exhaustive 工廠與 windupRing helper；261 unit＋40 e2e 全綠
 
 - 日期：2026-07-17
 - ID：reward-starpuff-v8-world-expansion
