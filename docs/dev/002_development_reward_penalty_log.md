@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 6、penalty 1、neutral 0）｜累計總分：+125
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+125
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-17
+- ID：neutral-ci-release-pr-checks-dispatch
+- 原因：changesets/action 以 GITHUB_TOKEN 開 release PR 時 pull_request 不觸發 CI，branch protection 缺 Quality Checks 致 auto-merge 永久 BLOCKED
+- 解法：release.yml changesets 成功後以 workflow_dispatch 補跑 `gh workflow run ci.yml --ref changeset-release/main`（GITHUB_TOKEN 允許的防遞迴例外）
 
 - 日期：2026-07-17
 - ID：reward-park-keeper-round2-convergence
