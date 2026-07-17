@@ -38,23 +38,40 @@ describe('LEVELS 資料（GAME_DESIGN §15）', () => {
     }
   });
 
-  it('L2 權重重配（§30）：shelly 15% 入編，可吸佔比 ≥50%', () => {
+  it('L2 權重重配（§30/§47）：shelly 15% + glowy 10% 入編，可吸佔比 ≥50%', () => {
     const mix = Object.fromEntries(getLevel(2).enemyMix.map((e) => [e.kind, e.weight]));
-    expect(mix).toEqual({ floaty: 0.35, spiky: 0.3, puffy: 0.2, shelly: 0.15 });
+    expect(mix).toEqual({ floaty: 0.3, spiky: 0.25, puffy: 0.2, shelly: 0.15, glowy: 0.1 });
     const inhalable = getLevel(2)
       .enemyMix.filter((e) => canInhale(e.kind))
       .reduce((sum, e) => sum + e.weight, 0);
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L3 六種混編（§30 zappy 15%）且可吸怪佔比 ≥50%', () => {
+  it('L3 八種混編（§47 drilly/glowy 入編）且可吸怪佔比 ≥50%（drilly 保守不計）', () => {
     const mix = getLevel(3).enemyMix;
     expect(mix.map((e) => e.kind).sort()).toEqual(
-      ['chompy', 'floaty', 'jelly', 'puffy', 'spiky', 'zappy'].sort(),
+      ['chompy', 'drilly', 'floaty', 'glowy', 'jelly', 'puffy', 'spiky', 'zappy'].sort(),
     );
-    expect(mix.find((e) => e.kind === 'zappy')?.weight).toBe(0.15);
     const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('中魔王精英（§48）：走動關皆配置、boss 關無；房址居關卡中段且獎勵為可吸稀有味', () => {
+    for (const level of LEVELS) {
+      if (level.boss) {
+        expect(level.elite).toBeNull();
+        continue;
+      }
+      const elite = level.elite;
+      expect(elite).not.toBeNull();
+      if (!elite) continue;
+      expect(elite.x).toBeGreaterThan(level.worldWidth * 0.35);
+      expect(elite.x).toBeLessThan(level.worldWidth * 0.65);
+      expect(elite.hp).toBeGreaterThanOrEqual(10);
+      expect(elite.speedMul).toBeGreaterThan(1);
+      // 稀有味必為可吸屬性怪（glowy 恆可吸、drilly 破土窗可吸）。
+      expect(['drilly', 'glowy']).toContain(elite.rewardFlavor);
+    }
   });
 
   it('boss 關僅補生可吸怪', () => {

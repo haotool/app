@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import {
   currentChallenge,
@@ -271,6 +272,8 @@ export class MapScene extends Phaser.Scene {
 
   private enterLevel(levelId: LevelId): void {
     unlockAudio();
+    // 地圖進關同步啟動 BGM（審查修復 #724）：startBgm 冪等，重複呼叫不疊音軌。
+    startBgm();
     playSfx('pop');
     this.scene.start(SceneKeys.Game, { levelId, deaths: 0 });
   }

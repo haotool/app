@@ -3,6 +3,7 @@ import {
   SPRING_COOLDOWN_MS,
   SPRING_VELOCITY_Y,
   canSpringLaunch,
+  clampEliteX,
   crossedGate,
   maxDecorInWindow,
   shouldDropThrough,
@@ -122,5 +123,20 @@ describe('springSweepHit 彈簧掃掠命中（§43）', () => {
     const lockedUntil = now + SPRING_COOLDOWN_MS;
     expect(canSpringLaunch(now, lockedUntil, 0)).toBe(false);
     expect(canSpringLaunch(lockedUntil, lockedUntil, 0)).toBe(true);
+  });
+});
+
+describe('clampEliteX（§48 精英房箝制）', () => {
+  it('房內不動：座標與速度原樣返回', () => {
+    expect(clampEliteX(1500, 130, 1200, 1760)).toEqual({ x: 1500, velocityX: 130 });
+  });
+
+  it('越左界回夾並朝房內（正向）反向', () => {
+    expect(clampEliteX(1180, -130, 1200, 1760)).toEqual({ x: 1200, velocityX: 130 });
+  });
+
+  it('越右界（門前）回夾並朝房內（負向）反向，逾時開門保險不受追殺影響', () => {
+    expect(clampEliteX(1790, 130, 1200, 1760)).toEqual({ x: 1760, velocityX: -130 });
+    expect(clampEliteX(1790, -50, 1200, 1760)).toEqual({ x: 1760, velocityX: -50 });
   });
 });

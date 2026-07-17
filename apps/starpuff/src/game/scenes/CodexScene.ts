@@ -118,11 +118,11 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物 4×2 網格：立繪 + 名稱 + 行為一句話 + 可吸/不可吸標記。
+  // 全怪物 5×2 網格（v7 十隻）：立繪 + 名稱 + 行為一句話 + 可吸/不可吸標記。
   private renderMonsters(): void {
     const { width } = this.scale;
-    const cols = 4;
-    const cellW = Math.min(250, (width - 60) / cols);
+    const cols = 5;
+    const cellW = Math.min(220, (width - 60) / cols);
     const gridLeft = width / 2 - (cellW * cols) / 2;
     const rowTops = [122, 278];
     CODEX_MONSTERS.forEach((monster, index) => {

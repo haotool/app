@@ -6,6 +6,7 @@ import {
   PLAYER,
   STAR,
   STAR_FLAVORS,
+  getMix,
   type MagazineSlot,
 } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
@@ -188,10 +189,10 @@ function ensureHudTextures(scene: Phaser.Scene): void {
     g.generateTexture(STAR_TEX, 20, 20);
     g.destroy();
   }
-  // 強化槽金邊（§23）：星形外圈描邊，charged/gold 槽位顯示。
+  // 槽位外圈（§23/§46）：白底描邊供 tint 上色——charged/gold 金邊、混合槽第二味色。
   if (!scene.textures.exists(SLOT_RING_TEX)) {
     const g = scene.add.graphics();
-    g.lineStyle(2.5, CHARGED_STAR.tint, 1);
+    g.lineStyle(2.5, 0xffffff, 1);
     g.strokeCircle(14, 14, 12);
     g.generateTexture(SLOT_RING_TEX, 28, 28);
     g.destroy();
@@ -287,18 +288,22 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
-  // 槽位彈匣（§23）：每槽依屬性上色、charged/gold 加金邊；標準星白 tint 保留原色。
+  // 槽位彈匣（§23/§46）：每槽依屬性上色、charged/gold 金邊；混合槽星芯配方色、
+  // 外圈第二味色（雙色可讀）；標準星白 tint 保留原色。
   function updateAmmo(magazine: readonly MagazineSlot[]): void {
     ammoStars.forEach((star, i) => {
       const slot = magazine[i];
       const wasFilled = star.alpha === 1;
       if (slot) {
+        const mix = slot.mix !== undefined ? getMix(slot.mix) : null;
         star.setTint(
-          slot.gold
-            ? CHARGED_STAR.tint
-            : slot.flavor === 'jelly'
-              ? 0xffffff
-              : STAR_FLAVORS[slot.flavor].tint,
+          mix
+            ? mix.tint
+            : slot.gold
+              ? CHARGED_STAR.tint
+              : slot.flavor === 'jelly'
+                ? 0xffffff
+                : STAR_FLAVORS[slot.flavor].tint,
         );
         star.setAlpha(1);
         if (!wasFilled) {
@@ -309,11 +314,23 @@ export function createHud(scene: Phaser.Scene): Hud {
             ease: 'Back.easeOut',
           });
         }
+        const ring = slotRings[i];
+        if (ring) {
+          if (mix) {
+            // 第二味外圈：配對中非首味成分的屬性色。
+            const second = mix.pair[0] === slot.flavor ? mix.pair[1] : mix.pair[0];
+            ring.setVisible(true).setTint(STAR_FLAVORS[second].tint);
+          } else if (slot.charged || slot.gold) {
+            ring.setVisible(true).setTint(CHARGED_STAR.tint);
+          } else {
+            ring.setVisible(false);
+          }
+        }
       } else {
         star.setTint(0xffffff);
         star.setAlpha(0.25);
+        slotRings[i]?.setVisible(false);
       }
-      slotRings[i]?.setVisible(Boolean(slot && (slot.charged || slot.gold)));
     });
   }
 
