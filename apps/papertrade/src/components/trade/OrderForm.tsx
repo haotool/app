@@ -322,7 +322,10 @@ export function OrderForm({
         <div className="flex justify-between">
           <dt className="text-text-3">預估手續費（{mode === 'limit' ? 'Maker' : 'Taker'}）</dt>
           <dd className="text-text-2 tabular-nums">
-            {feePreview !== null ? `≈ ${formatAmount(feePreview, 4)} USDT` : '--'}
+            {/* 小額手續費以 4 位小數避免顯示為 0；一般金額 2 位即可單行收納。 */}
+            {feePreview !== null
+              ? `≈ ${formatAmount(feePreview, feePreview < 1 ? 4 : 2)} USDT`
+              : '--'}
           </dd>
         </div>
         <div className="flex justify-between">

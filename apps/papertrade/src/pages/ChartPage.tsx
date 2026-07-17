@@ -210,10 +210,11 @@ function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
 
   return (
     <section ref={sectionRef}>
+      {/* lg 由右欄 wrapper 統一補 pt-4：tab 列頂緣對齊左欄 pair 標題列（R3 P2-3）。 */}
       <div
         role="tablist"
         aria-label="市場資訊"
-        className="flex gap-4 border-b border-border px-4 pt-4"
+        className="flex gap-4 border-b border-border px-4 pt-4 lg:pt-0"
       >
         {MARKET_PANEL_TABS.map(({ id, label }) => (
           <button
@@ -286,7 +287,7 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
       </div>
 
       {/* lg 改停靠右欄底（static 入流），不再視窗置中浮蓋左欄圖表（R3 P2-2）。 */}
-      <div className="lg:min-w-0">
+      <div className="lg:min-w-0 lg:pt-4">
         <MarketPanels symbol={symbol} />
 
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur lg:static lg:z-auto lg:mx-0 lg:max-w-none lg:bg-transparent lg:px-4 lg:pb-0 lg:backdrop-blur-none">

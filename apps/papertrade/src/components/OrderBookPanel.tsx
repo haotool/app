@@ -120,11 +120,12 @@ function MidPriceRow({
   }
 
   return (
+    // flex-wrap：42% 欄寬放不下同列時，標記價換行靠左，不得截斷。
     <button
       type="button"
       onClick={() => onPriceSelect?.(ticker.lastPrice)}
       aria-label={`以最新價 ${formatPrice(ticker.lastPrice)} 帶入限價`}
-      className="my-0.5 flex min-h-11 w-full items-center justify-between gap-1 border-y border-border px-1 text-left"
+      className="my-0.5 flex min-h-11 w-full flex-wrap items-center justify-between gap-x-1 border-y border-border px-1 text-left"
     >
       <PriceFlash
         direction={ticker.direction}
@@ -136,7 +137,7 @@ function MidPriceRow({
       >
         {formatPrice(ticker.lastPrice)}
       </PriceFlash>
-      <span className="shrink-0 text-caption text-text-3 tabular-nums">
+      <span className="text-caption text-text-3 tabular-nums">
         標記 {formatPrice(ticker.markPrice)}
       </span>
     </button>
