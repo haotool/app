@@ -1,5 +1,15 @@
 # @app/park-keeper
 
+## 1.2.0
+
+### Minor Changes
+
+- 5f2a428: Park-Keeper 首屏速度大幅提升：行動網路下首頁可視時間（LCP）縮短逾六成，開啟 app 立即看到拍照入口，不再等待載入。
+
+### Patch Changes
+
+- d9b53c2: 無障礙修正：未填車號的記錄卡在螢幕閱讀器朗讀編輯／刪除按鈕時，改唸「未填車號」而非「N/A」。
+
 ## 1.1.1
 
 ### Patch Changes
