@@ -5,7 +5,7 @@ import { Calculator } from './Calculator';
 import { MemberList } from './MemberList';
 import { MemberAvatar } from './MemberAvatar';
 import { cn } from '../lib/utils';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertAmount, formatAmount } from '../config/currencies';
 
 interface HomeTabProps {
@@ -46,6 +46,14 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
   const [keyboardH, setKeyboardH] = useState(0);
   // 矮視窗（<480px 高，多為手機橫向）：面板改為流式佈局，主內容永遠可捲動抵達。
   const [isShortViewport, setIsShortViewport] = useState(false);
+  // 面板內容溢出且未捲到底時顯示捲動暗示漸層（G11 內捲可發現性）。
+  const [showPanelScrollHint, setShowPanelScrollHint] = useState(false);
+
+  const updatePanelScrollHint = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    setShowPanelScrollHint(el.scrollHeight - el.scrollTop - el.clientHeight > 8);
+  }, []);
 
   // Track panel height → drives content paddingBottom；固定模式時發布 --home-panel-h 供貓咪層避讓。
   useEffect(() => {
@@ -60,6 +68,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             `${Math.round(entry.contentRect.height)}px`,
           );
         }
+        updatePanelScrollHint();
       }
     });
     ro.observe(el);
@@ -68,7 +77,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
       ro.disconnect();
       document.documentElement.style.removeProperty('--home-panel-h');
     };
-  }, [isShortViewport]);
+  }, [isShortViewport, updatePanelScrollHint]);
 
   // Detect system keyboard via visualViewport (iOS PWA / Android Chrome)
   useEffect(() => {
@@ -88,6 +97,11 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, []);
+
+  // 內容組成改變（類別列展開、鍵盤開闔、模式切換）時重算捲動暗示；尺寸變化由 ResizeObserver 覆蓋。
+  useEffect(() => {
+    updatePanelScrollHint();
+  }, [showCategoryPicker, keyboardH, splitMode, updatePanelScrollHint]);
 
   const activeMembers = members.filter((m) => m.isActive);
 
@@ -233,6 +247,7 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
         style={
           isShortViewport ? undefined : { bottom: panelBottom, transition: 'bottom 0.15s ease-out' }
         }
+        onScroll={updatePanelScrollHint}
       >
         {/* 裝飾性把手（不可拖動）；極矮視窗隱藏換取鍵盤可見高度 */}
         <div className="w-10 h-1 rounded-full bg-on-surface/10 mx-auto mb-2 vshort:hidden" />
@@ -373,6 +388,16 @@ export function HomeTab({ onPawParticle }: HomeTabProps = {}) {
             </div>
           </>
         )}
+
+        {/* 捲動暗示漸層（複用 App 底部漸層遮罩模式）：sticky 貼齊面板可視底緣，零佔位。 */}
+        <div
+          data-testid="panel-scroll-hint"
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none sticky bottom-0 -mt-8 h-8 bg-gradient-to-t from-surface to-transparent transition-opacity duration-200',
+            showPanelScrollHint ? 'opacity-100' : 'opacity-0',
+          )}
+        />
       </div>
     </div>
   );

@@ -159,14 +159,17 @@
   }
 }
 
-/* G11/G15：Home 固定底部面板高度受控（直向 ≤55dvh；極矮視窗面板上方保留 ≥40dvh+8px 可見內容）。 */
-.home-panel-fixed {
-  max-height: 55dvh;
+/* G11/G15：面板高度採「上方內容保留優先」連續模型（單一公式，消除 640px 斷點跳變缺口）。
+   上方保留 --home-top-reserve = max(40dvh, 296px + safe-area-top)：
+   px 下限保障矮視窗（320×568 等）header＋金額卡＋成員列完整可點
+   （G15 行為驗收＝成員 chips elementFromPoint 命中自身）。
+   面板 max-height = 100dvh − 上方保留 − 底部 chrome，再以 55dvh 封頂（G11 直向上限）。
+   溢出的鍵盤列由面板內捲抵達；未捲到底時 HomeTab 顯示捲動暗示漸層。 */
+:root {
+  --home-top-reserve: max(40dvh, calc(296px + env(safe-area-inset-top, 0px)));
 }
-@media (max-height: 640px) {
-  .home-panel-fixed {
-    max-height: calc(60dvh - 8px - env(safe-area-inset-top, 0px) - var(--chrome-bottom));
-  }
+.home-panel-fixed {
+  max-height: min(55dvh, calc(100dvh - var(--home-top-reserve) - var(--chrome-bottom)));
 }
 
 /* Hide scrollbar for horizontal lists */
