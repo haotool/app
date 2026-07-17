@@ -45,6 +45,11 @@ describe('eligibleForm 變身資格（§57）', () => {
       'shell',
     );
   });
+
+  it('強化槽計 2 發：連吞三隻同系（[強化,單發]）即達標；單一強化槽（2 發）未達', () => {
+    expect(eligibleForm([slot('zappy', { charged: true }), slot('zappy')])).toBe('volt');
+    expect(eligibleForm([slot('zappy', { charged: true })])).toBeNull();
+  });
 });
 
 describe('resolveTransformHold 長按裁決（§57）', () => {

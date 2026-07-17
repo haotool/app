@@ -730,9 +730,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       drawStormRing();
 
       actionHoldMs = controls.actionHeld ? actionHoldMs + deltaMs : 0;
-      // 殼盾（§40 輸入矩陣）：殼盾情境（頂槽殼盾星且未滿匣）長按語意固定為舉盾——
-      // 舉盾中與盾 CD 中皆抑制吸入，不回落；滿匣長按維持星暴優先，肌肉記憶不變。
-      const inShieldContext = shieldEligible(magazine);
+      // 殼盾（§40/§57 輸入矩陣）：殼盾情境（頂槽殼盾星且未滿匣）長按語意固定為舉盾——
+      // 舉盾中與盾 CD 中皆抑制吸入，不回落；滿匣長按維持星暴優先；殼盾星 ×3（變身
+      // 充能情境）長按讓位星化。
+      const inShieldContext = shieldEligible(magazine) && !transformCharging && !transform.form;
       shield = advanceShield(shield, {
         deltaMs,
         held: controls.actionHeld && actionHoldMs >= INHALE.holdThresholdMs && hurtLockMs <= 0,

@@ -111,17 +111,19 @@ const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
   shelly: 'shell',
 };
 
-// 變身資格（§57）：滿匣三槽同系可變身味、非金非混（強化槽同味計入）。
+// 變身資格（§57）：彈匣全數同系可變身味、非金非混，同系星彈合計 ≥3 發——
+// 強化槽為連吞兩發合成（§23），計 2 發（三連吞 [強化,單發] 即達標）。
 export function eligibleForm(magazine: readonly MagazineSlot[]): TransformForm | null {
-  if (magazine.length < TRANSFORM.requiredStars) return null;
   const first = magazine[0];
   if (!first) return null;
   const form = FORM_BY_FLAVOR[first.flavor];
   if (!form) return null;
+  let stars = 0;
   for (const slot of magazine) {
     if (slot.gold || slot.mix !== undefined || slot.flavor !== first.flavor) return null;
+    stars += slot.charged ? 2 : 1;
   }
-  return form;
+  return stars >= TRANSFORM.requiredStars ? form : null;
 }
 
 export interface TransformState {
