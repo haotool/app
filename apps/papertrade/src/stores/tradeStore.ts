@@ -86,6 +86,9 @@ const orderSchema = z.object({
   fee: nonNegativeNumber,
   positionId: z.string().min(1).nullable(),
   createdAt: finiteNumber,
+  // R4-6 新增選填欄位：舊版存檔缺 key 時以 null 補齊，免 storage version bump。
+  takeProfit: positiveNumber.nullable().default(null),
+  stopLoss: positiveNumber.nullable().default(null),
 });
 
 const closedTradeSchema = z.object({

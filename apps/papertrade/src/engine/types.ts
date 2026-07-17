@@ -40,6 +40,8 @@ export interface LimitOrder {
   fee: number;
   positionId: string | null;
   createdAt: number;
+  takeProfit: number | null;
+  stopLoss: number | null;
 }
 
 export interface ClosedTrade {

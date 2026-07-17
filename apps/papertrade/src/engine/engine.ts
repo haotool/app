@@ -15,6 +15,7 @@ import {
   QTY_EPSILON,
   replacePosition,
   validateOpenInput,
+  validateOpenTpSl,
   type TradeError,
   type TradeResult,
 } from './execution';
@@ -37,6 +38,8 @@ export interface OpenParams {
   price: number;
   leverage: number;
   now?: number;
+  tp?: number;
+  sl?: number;
 }
 
 export interface CloseParams {
@@ -53,6 +56,8 @@ export interface LimitParams {
   limitPrice: number;
   leverage: number;
   now?: number;
+  tp?: number;
+  sl?: number;
 }
 
 export interface CloseLimitParams {
@@ -82,7 +87,9 @@ export function createInitialAccount(): Account {
 }
 
 export function openMarket(account: Account, params: OpenParams): TradeResult {
-  const error = validateOpenInput(params.qty, params.price, params.leverage);
+  const error =
+    validateOpenInput(params.qty, params.price, params.leverage) ??
+    validateOpenTpSl(params.side, params.price, params.tp, params.sl);
   if (error !== null) return { ok: false, error };
   return executeOpen(account, {
     ...params,
@@ -119,7 +126,9 @@ export function closePositionMarket(account: Account, params: CloseParams): Clos
 
 export function placeLimitOrder(account: Account, params: LimitParams): TradeResult {
   const { symbol, side, qty, limitPrice, leverage } = params;
-  const error = validateOpenInput(qty, limitPrice, leverage);
+  const error =
+    validateOpenInput(qty, limitPrice, leverage) ??
+    validateOpenTpSl(side, limitPrice, params.tp, params.sl);
   if (error !== null) return { ok: false, error };
 
   const notional = notionalValue(qty, limitPrice);
@@ -140,6 +149,8 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
     fee,
     positionId: null,
     createdAt: params.now ?? Date.now(),
+    takeProfit: params.tp ?? null,
+    stopLoss: params.sl ?? null,
   };
   return {
     ok: true,
@@ -181,6 +192,8 @@ export function placeCloseLimit(account: Account, params: CloseLimitParams): Tra
     fee: 0,
     positionId,
     createdAt: params.now ?? Date.now(),
+    takeProfit: null,
+    stopLoss: null,
   };
   return { ok: true, account: { ...account, orders: [...account.orders, order] } };
 }
@@ -463,6 +476,8 @@ export function processTick(
         leverage: order.leverage,
         feeRate: MAKER_FEE_RATE,
         now,
+        tp: order.takeProfit ?? undefined,
+        sl: order.stopLoss ?? undefined,
       };
       // 先以 mark（更優價）成交；滿倉時 short 的 mark 名目可超出按 limit 預扣的額度，
       // 回退以使用者保證的限價成交（成本恰等於預扣，帳本恆安全），避免掛單靜默滯留。

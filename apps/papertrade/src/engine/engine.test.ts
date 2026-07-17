@@ -183,6 +183,206 @@ describe('openMarket', () => {
   });
 });
 
+describe('open with tp/sl (R4-6)', () => {
+  const base = { symbol: 'BTCUSDT', qty: 0.1, leverage: 10, now: NOW } as const;
+
+  it('applies tp and sl atomically on a market open', () => {
+    const result = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 61000,
+      sl: 59000,
+    });
+    if (!result.ok) throw new Error(result.error);
+    const position = onlyPosition(result.account);
+    expect(position.takeProfit).toBe(61000);
+    expect(position.stopLoss).toBe(59000);
+  });
+
+  it('leaves tp/sl unset when omitted', () => {
+    const result = openMarket(createInitialAccount(), { ...base, side: 'long', price: 60000 });
+    if (!result.ok) throw new Error(result.error);
+    expect(onlyPosition(result.account).takeProfit).toBeNull();
+    expect(onlyPosition(result.account).stopLoss).toBeNull();
+  });
+
+  it('accepts tp-only and sl-only opens', () => {
+    const tpOnly = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'short',
+      price: 60000,
+      tp: 59000,
+    });
+    if (!tpOnly.ok) throw new Error(tpOnly.error);
+    expect(onlyPosition(tpOnly.account).takeProfit).toBe(59000);
+    expect(onlyPosition(tpOnly.account).stopLoss).toBeNull();
+
+    const slOnly = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'short',
+      price: 60000,
+      sl: 61000,
+    });
+    if (!slOnly.ok) throw new Error(slOnly.error);
+    expect(onlyPosition(slOnly.account).takeProfit).toBeNull();
+    expect(onlyPosition(slOnly.account).stopLoss).toBe(61000);
+  });
+
+  it('rejects wrong-direction tp/sl for both sides without mutating the account', () => {
+    const account = createInitialAccount();
+    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 59000 })).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 61000 })).toEqual({
+      ok: false,
+      error: 'invalid-sl-direction',
+    });
+    expect(openMarket(account, { ...base, side: 'short', price: 60000, tp: 61000 })).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(openMarket(account, { ...base, side: 'short', price: 60000, sl: 59000 })).toEqual({
+      ok: false,
+      error: 'invalid-sl-direction',
+    });
+    expect(account.positions).toHaveLength(0);
+    expect(account.balance).toBe(INITIAL_BALANCE_USDT);
+  });
+
+  it('rejects tp/sl equal to entry and non-positive values', () => {
+    const account = createInitialAccount();
+    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 60000 })).toEqual({
+      ok: false,
+      error: 'invalid-tp-direction',
+    });
+    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 0 })).toEqual({
+      ok: false,
+      error: 'invalid-price',
+    });
+    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: Number.NaN })).toEqual({
+      ok: false,
+      error: 'invalid-price',
+    });
+  });
+
+  it('rejects a valid tp combined with an invalid sl as one atomic order', () => {
+    const result = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 61000,
+      sl: 62000,
+    });
+    expect(result).toEqual({ ok: false, error: 'invalid-sl-direction' });
+  });
+
+  it('keeps the existing tp/sl when scaling in, ignoring form values', () => {
+    const first = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 61000,
+      sl: 59000,
+    });
+    if (!first.ok) throw new Error(first.error);
+
+    const scaled = openMarket(first.account, {
+      ...base,
+      side: 'long',
+      price: 60200,
+      tp: 65000,
+      sl: 58000,
+    });
+    if (!scaled.ok) throw new Error(scaled.error);
+
+    const position = onlyPosition(scaled.account);
+    expect(scaled.account.positions).toHaveLength(1);
+    expect(position.takeProfit).toBe(61000);
+    expect(position.stopLoss).toBe(59000);
+  });
+
+  it('triggers a market-open tp exactly like a sheet-set tp', () => {
+    const opened = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 61000,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+
+    const triggered = processTick(opened.account, 'BTCUSDT', 61050, NOW);
+    expect(triggered.account.positions).toHaveLength(0);
+    expect(triggered.account.history[0]?.reason).toBe('tp');
+    expect(triggered.events.some((event) => event.type === 'tp')).toBe(true);
+  });
+
+  it('validates limit tp/sl against the limit price and records them on the order', () => {
+    const rejected = placeLimitOrder(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      limitPrice: 58000,
+      tp: 57000,
+    });
+    expect(rejected).toEqual({ ok: false, error: 'invalid-tp-direction' });
+
+    const placed = placeLimitOrder(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      limitPrice: 58000,
+      tp: 59000,
+      sl: 57000,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+    expect(placed.account.orders[0]?.takeProfit).toBe(59000);
+    expect(placed.account.orders[0]?.stopLoss).toBe(57000);
+  });
+
+  it('transfers tp/sl from a filled limit order onto the new position', () => {
+    const placed = placeLimitOrder(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      limitPrice: 58000,
+      tp: 59000,
+      sl: 57000,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 57900, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+    const position = filled.account.positions[0];
+    expect(position?.takeProfit).toBe(59000);
+    expect(position?.stopLoss).toBe(57000);
+  });
+
+  it('keeps the existing position tp/sl when a limit fill merges into it', () => {
+    const opened = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 62000,
+      sl: 58500,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+
+    const placed = placeLimitOrder(opened.account, {
+      ...base,
+      side: 'long',
+      limitPrice: 59000,
+      tp: 63000,
+      sl: 58000,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 58900, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+    expect(filled.account.positions).toHaveLength(1);
+    expect(filled.account.positions[0]?.takeProfit).toBe(62000);
+    expect(filled.account.positions[0]?.stopLoss).toBe(58500);
+  });
+});
+
 describe('closePositionMarket', () => {
   it('closes 100% and records history with fee', () => {
     let account = openLong(createInitialAccount(), 0.1, 60000, 10);

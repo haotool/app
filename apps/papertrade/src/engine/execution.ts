@@ -45,6 +45,24 @@ export function validateOpenInput(qty: number, price: number, leverage: number):
   return null;
 }
 
+// 開倉附帶 TP/SL 驗證：entry 基準＝市價用當前 mark、限價用限價；方向規則與持倉設定一致。
+export function validateOpenTpSl(
+  side: Side,
+  entry: number,
+  tp: number | undefined,
+  sl: number | undefined,
+): TradeError | null {
+  if (tp !== undefined) {
+    if (!Number.isFinite(tp) || tp <= 0) return 'invalid-price';
+    if (side === 'long' ? tp <= entry : tp >= entry) return 'invalid-tp-direction';
+  }
+  if (sl !== undefined) {
+    if (!Number.isFinite(sl) || sl <= 0) return 'invalid-price';
+    if (side === 'long' ? sl >= entry : sl <= entry) return 'invalid-sl-direction';
+  }
+  return null;
+}
+
 export function replacePosition(positions: Position[], next: Position): Position[] {
   return positions.map((position) => (position.id === next.id ? next : position));
 }
@@ -120,10 +138,12 @@ export interface ExecuteOpenParams {
   leverage: number;
   feeRate: number;
   now: number;
+  tp?: number;
+  sl?: number;
 }
 
 export function executeOpen(account: Account, params: ExecuteOpenParams): TradeResult {
-  const { symbol, side, qty, price, leverage, feeRate, now } = params;
+  const { symbol, side, qty, price, leverage, feeRate, now, tp, sl } = params;
   const existing = account.positions.find((position) => position.symbol === symbol);
 
   if (existing !== undefined && existing.side !== side) {
@@ -141,6 +161,7 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
   if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
 
   if (existing !== undefined) {
+    // 加倉合併沿用原持倉既有 TP/SL，不以本次表單值覆蓋（R3 終審裁決）。
     const mergedQty = existing.qty + qty;
     const mergedEntry = averageEntryPrice(existing.qty, existing.entryPrice, qty, price);
     const mergedMargin = roundUsdt(existing.margin + margin);
@@ -172,8 +193,8 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
     openFee: fee,
     leverage,
     openedAt: now,
-    takeProfit: null,
-    stopLoss: null,
+    takeProfit: tp ?? null,
+    stopLoss: sl ?? null,
     trailing: null,
   };
   return {
