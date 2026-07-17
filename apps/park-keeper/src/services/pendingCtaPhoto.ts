@@ -10,6 +10,7 @@ let subscriber: ((file: File) => void) | null = null;
 declare global {
   interface Window {
     __pkCtaPhoto?: File;
+    __pkCtaPhotoAdopt?: () => void;
   }
 }
 
@@ -46,5 +47,11 @@ export const pendingCtaPhoto = {
 
 if (typeof window !== 'undefined') {
   adoptPrehydrationPhoto();
+  // 單一持有者：模組重複評估（測試 resetModules、極端雙載入）時移除前手監聽，
+  // 確保橋接事件只由最新模組實例領養，避免檔案被過期閉包搶先消費。
+  if (window.__pkCtaPhotoAdopt) {
+    window.removeEventListener('pk:cta-photo', window.__pkCtaPhotoAdopt);
+  }
+  window.__pkCtaPhotoAdopt = adoptPrehydrationPhoto;
   window.addEventListener('pk:cta-photo', adoptPrehydrationPhoto);
 }
