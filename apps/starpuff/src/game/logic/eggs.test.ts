@@ -12,8 +12,8 @@ function run(spec: EasterEggSpec, events: readonly EggEvent[]): boolean[] {
 }
 
 describe('LEVELS easterEggs 資料（§24）', () => {
-  it('七關各掛一顆彩蛋且觸發型別對表', () => {
-    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1]);
+  it('九關各掛一顆彩蛋且觸發型別對表', () => {
+    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.trigger)).toEqual([
       'reach-x',
       'stand-count',
@@ -22,6 +22,8 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'stand-count',
       'eat-sequence',
       'crown-early-hit',
+      'eat-sequence',
+      'eat-sequence',
     ]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.reward)).toEqual([
       'hp-up',
@@ -31,6 +33,8 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'hp-up',
       'gold-star',
       'heal',
+      'gold-star',
+      'full-magazine',
     ]);
   });
 

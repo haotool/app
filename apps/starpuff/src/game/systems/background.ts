@@ -46,8 +46,11 @@ interface ThemeSpec {
 }
 
 // v8 貼圖重用別名（§55）：L6 迴聲石廊重用星空回廊橫景，以 grade/ambience 變化辨識。
+// v9（§60）：L8 磁極洞窟重用蝕月夜景、L9 鏡影迴廊重用星空回廊，均不生成新背景。
 const TEXTURE_ALIAS: Record<string, string> = {
   'bg-gallery': 'bg-arena',
+  'bg-cavern': 'bg-eclipse',
+  'bg-mirror': 'bg-arena',
 };
 
 function textureKeyOf(bgKey: string): string {
@@ -139,6 +142,31 @@ const THEMES: Record<string, ThemeSpec> = {
       scale: { start: 0.8, end: 0.25 },
       speedY: { min: 14, max: 26 },
       tumble: false,
+    },
+  },
+  // v9 新 biome（§60）：磁極洞窟鋼藍磁塵／鏡影迴廊銀鏡光塵。
+  'bg-cavern': {
+    grade: 0x6a80c8,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0x8ab0e8, 0xd8e0f5],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.75, end: 0.25 },
+      speedY: { min: 16, max: 30 },
+      tumble: false,
+    },
+  },
+  'bg-mirror': {
+    grade: 0xb8c8e0,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0xf0f4ff, 0xd8dce8, 0xc9d8ff],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.9, end: 0.3 },
+      speedY: { min: 22, max: 40 },
+      tumble: true,
     },
   },
 };

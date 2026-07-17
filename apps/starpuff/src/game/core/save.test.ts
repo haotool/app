@@ -135,7 +135,27 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 5, 1000);
     save = recordLevelClear(save, 6, 1000);
     save = recordLevelClear(save, 7, 1000);
+    expect(currentChallenge(save)).toBe(8);
+    save = recordLevelClear(save, 8, 1000);
+    save = recordLevelClear(save, 9, 1000);
     expect(currentChallenge(save)).toBeNull();
+  });
+
+  it('v9 存檔相容（§60）：v8 存檔（1-7 通關）載入後 L8 開放、L9 鎖定', () => {
+    const entry = { cleared: true, bestTimeMs: 45000, eggsFound: [] };
+    const save = parseSave(
+      JSON.stringify({
+        schemaVersion: 1,
+        highestClearedLevel: 7,
+        levels: { 1: entry, 2: entry, 3: entry, 4: entry, 5: entry, 6: entry, 7: entry },
+        lastPlayedAt: 1700000000000,
+      }),
+    );
+    expect(save.highestClearedLevel).toBe(7);
+    expect(nodeStatus(save, 8)).toBe('open');
+    expect(nodeStatus(save, 9)).toBe('locked');
+    expect(currentChallenge(save)).toBe(8);
+    expect(save.levels[7]?.exCleared).toBe(false);
   });
 
   it('v9 exCleared（§58）：additive 欄位——舊檔缺省 false、僅信任明確 true、記錄不動一般通關', () => {
