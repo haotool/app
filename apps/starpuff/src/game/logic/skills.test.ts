@@ -227,20 +227,52 @@ describe('resolveActionPress（§23 B 鍵決策，v7 起與下衝擊解耦）', 
 
 describe('resolveJumpPress（§44 跳躍鍵輸入矩陣）', () => {
   it('空中「下＋跳」且 CD 完 → 下衝擊；吞含狀態無關（矩陣不讀彈匣）', () => {
-    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0 })).toBe('slam');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('slam');
   });
 
   it('下衝擊 CD 中回落一般跳躍鏈（拍翅/buffer），不吞輸入', () => {
-    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 500 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 500, recentlyGroundedMs: 0 }),
+    ).toBe('jump');
   });
 
   it('空中未壓下 → 一般跳躍鏈（拍翅）', () => {
-    expect(resolveJumpPress({ airborne: true, down: false, slamCooldownMs: 0 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: false, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('jump');
   });
 
   it('地面「下＋跳」→ 一般跳躍（單向平台下穿由 stage 層 shouldDropThrough 覆蓋裁決）', () => {
-    expect(resolveJumpPress({ airborne: false, down: true, slamCooldownMs: 0 })).toBe('jump');
-    expect(resolveJumpPress({ airborne: false, down: false, slamCooldownMs: 0 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: false, down: true, slamCooldownMs: 0, recentlyGroundedMs: 150 }),
+    ).toBe('jump');
+    expect(
+      resolveJumpPress({
+        airborne: false,
+        down: false,
+        slamCooldownMs: 0,
+        recentlyGroundedMs: 150,
+      }),
+    ).toBe('jump');
+  });
+
+  // 熱修回歸（§77）：落地擠壓迴圈使站立時接觸旗標以 ~20Hz 抖動，「假空中」幀
+  // 曾把站台下＋跳誤判成下砸並貫穿平台。coyote 窗內視同在地，不得下砸。
+  it('假空中（coyote 窗內）「下＋跳」→ 一般跳躍鏈，不觸發下砸', () => {
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 120 }),
+    ).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 1 }),
+    ).toBe('jump');
+  });
+
+  it('真空中（coyote 歸零）「下＋跳」→ 下砸維持 v7 語義', () => {
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('slam');
   });
 });
 
@@ -322,6 +354,20 @@ describe('雷鏈目標選擇（§40）', () => {
   it('count 0 或負值回空陣列', () => {
     expect(pickChainTargets(0, 0, [at(10, 0)], 0, 160)).toEqual([]);
     expect(pickChainTargets(0, 0, [at(10, 0)], -1, 160)).toEqual([]);
+  });
+
+  // v10 觀察項收尾（§68 分裂型剋制）：resolveVoltBeam 的多本體/碎晶盾混合候選
+  // 走同一 pickChainTargets 決策——主傷取最近存活本體、跳電波及依距離涵蓋盾與另一本體。
+  it('多本體與碎晶盾混合候選：主傷取最近本體、跳電依距序涵蓋盾與另一本體', () => {
+    const twinA = { x: 60, y: 0, kind: 'body' };
+    const twinB = { x: 150, y: 0, kind: 'body' };
+    const shield = { x: 100, y: 20, kind: 'shield' };
+    const minion = { x: 210, y: 0, kind: 'minion' };
+    const primary = pickChainTargets(0, 0, [twinB, shield, twinA, minion], 1, 160)[0];
+    expect(primary).toEqual(twinA);
+    // 跳電自主目標起算：盾（距 45）先於另一本體（距 90）、半徑外小怪不入鏈。
+    const hops = pickChainTargets(twinA.x, twinA.y, [twinB, shield, minion], 2, 120);
+    expect(hops).toEqual([shield, twinB]);
   });
 });
 

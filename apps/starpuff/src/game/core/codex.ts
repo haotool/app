@@ -115,6 +115,21 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     inhalable: true,
   },
   {
+    kind: 'bubbla',
+    textureKey: 'minion-bubbla',
+    nameZh: '焦糖泡',
+    behavior: '糖漿潛伏週期躍出，躍出時吞下得爆裂星',
+    inhalable: false,
+    conditional: true,
+  },
+  {
+    kind: 'splatta',
+    textureKey: 'minion-splatta',
+    nameZh: '熔糖投手',
+    behavior: '舉勺拋糖球留灼斑，吞下得孢子星',
+    inhalable: true,
+  },
+  {
     kind: 'boss',
     textureKey: 'boss-idle',
     nameZh: '果凍王',

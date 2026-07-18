@@ -55,6 +55,10 @@ const TEXTURE_ALIAS: Record<string, string> = {
   'bg-lumen': 'bg-arena',
   'bg-magnetic': 'bg-eclipse',
   'bg-prism': 'bg-arena',
+  // v11（§76）：四區四關共用焙糖火山橫景，以 grade 區分（丘陵/河谷/窯道/王窯）。
+  'bg-valley': 'bg-kiln',
+  'bg-kilnway': 'bg-kiln',
+  'bg-kilnhall': 'bg-kiln',
 };
 
 function textureKeyOf(bgKey: string): string {
@@ -207,6 +211,55 @@ const THEMES: Record<string, ThemeSpec> = {
       alpha: 0.85,
       scale: { start: 0.75, end: 0.25 },
       speedY: { min: 16, max: 30 },
+      tumble: false,
+    },
+  },
+  // v11 四區 biome（§76）：焙糖火山四關 grade 遞暖遞深＋窯煙/糖珠 ambience。
+  'bg-kiln': {
+    grade: 0xf5c890,
+    ambience: {
+      texture: AMB_TEXTURES.wisp,
+      tint: [0xfff1e0, 0xffd8b0],
+      blend: 'NORMAL',
+      alpha: 0.45,
+      scale: { start: 1.1, end: 0.7 },
+      speedY: { min: 18, max: 34 },
+      tumble: false,
+    },
+  },
+  'bg-valley': {
+    grade: 0xe8a868,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xf2b26b, 0xffd8a0],
+      blend: 'ADD',
+      alpha: 0.8,
+      scale: { start: 0.8, end: 0.25 },
+      speedY: { min: 16, max: 30 },
+      tumble: false,
+    },
+  },
+  'bg-kilnway': {
+    grade: 0xd08850,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xe89040, 0xffc880],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.8, end: 0.25 },
+      speedY: { min: 18, max: 32 },
+      tumble: false,
+    },
+  },
+  'bg-kilnhall': {
+    grade: 0xb86838,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xffb060, 0xffe0a0],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.85, end: 0.25 },
+      speedY: { min: 14, max: 26 },
       tumble: false,
     },
   },

@@ -46,6 +46,7 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
 // v7 起 drilly 得重鑽星（破土窗）、glowy 得流光星；v8 起 spora 得孢子星、boomy 得迴旋星、
 // gusty 歸入既有疾風味（避免味數爆炸）；不可吸者無屬性。
 // v9 起 magno 歸雷鏈味、mirri 歸迴旋味（§59，均歸既有味系不加新味）。
+// v11 起 bubbla 歸爆裂味（躍出窗）、splatta 歸孢子味（§73 零新味裁決延續）。
 const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   jelly: 'jelly',
   floaty: 'floaty',
@@ -59,16 +60,19 @@ const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   boomy: 'boomy',
   magno: 'zappy',
   mirri: 'boomy',
+  bubbla: 'puffy',
+  splatta: 'spora',
 };
 
 export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {
   return INHALE_FLAVORS[kind] ?? null;
 }
 
-// 刺刺瓜與咬咬花不可吸入（§5、§16）；殼殼僅暈眩窗（§30）、鑽地者僅破土窗（§47）可吸，
-// exposed 由呼叫端依個體狀態傳入；未帶狀態時視為不可吸（spawner 保證律與權重驗證取保守值）。
+// 刺刺瓜與咬咬花不可吸入（§5、§16）；殼殼僅暈眩窗（§30）、鑽地者僅破土窗（§47）、
+// 焦糖泡僅躍出窗（§73）可吸，exposed 由呼叫端依個體狀態傳入；
+// 未帶狀態時視為不可吸（spawner 保證律與權重驗證取保守值）。
 export function canInhale(kind: EnemyKind, exposed = false): boolean {
-  if (kind === 'shelly' || kind === 'drilly') return exposed;
+  if (kind === 'shelly' || kind === 'drilly' || kind === 'bubbla') return exposed;
   return inhaleFlavor(kind) !== null;
 }
 
@@ -88,6 +92,19 @@ export function pickInRadius<T extends RadiusCandidate>(
     (candidate) =>
       (candidate.x - originX) ** 2 + (candidate.y - originY) ** 2 <= radiusPx * radiusPx,
   );
+}
+
+// 吸入接觸豁免（§77）：被吸入中的怪對玩家無接觸傷害——拉力逐幀刷新豁免窗，
+// 吸入中斷（鬆開/轉向/離錐）後窗過期即恢復傷害性；未被吸的其他怪不受影響，
+// 風險回報保留（非吸入全程無敵）。窗長 250ms：涵蓋拉力幀間隔與貼身吞下前緣。
+export const INHALE_GRACE_MS = 250;
+
+export function inhaleGraceUntil(nowMs: number): number {
+  return nowMs + INHALE_GRACE_MS;
+}
+
+export function isContactHarmless(nowMs: number, graceUntilMs: number): boolean {
+  return nowMs < graceUntilMs;
 }
 
 // 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。

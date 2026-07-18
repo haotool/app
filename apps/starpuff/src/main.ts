@@ -113,6 +113,7 @@ declare global {
       bossShots: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
+      crouch: () => number;
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
       slayElite: () => void;
       damageBoss: (amount: number) => void;
@@ -128,6 +129,8 @@ declare global {
       scenePaused: () => boolean;
       gameTime: () => number;
       codexTab: () => string;
+      twinHud: () => { active: boolean; aRatio: number; bRatio: number };
+      tide: () => { waterY: number; phase: string } | null;
     }>;
   }
 }
@@ -189,6 +192,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
+    // §77 觀測點：蹲姿比例（0..1）。
+    crouch: () => internals().player.getCrouch(),
     elite: () => gameScene().eliteState(),
     slayElite: () => gameScene().slayElite(),
     // v8 鉤子（§54 e2e）：以正式傷害管線打魔王，階段/死亡走完整 FSM 事件流。
@@ -212,13 +217,24 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     scenePaused: () => game.scene.isPaused(SceneKeys.Game),
     gameTime: () => gameScene()?.time.now ?? -1,
     codexTab: () => game.scene.getScene<CodexScene>(SceneKeys.Codex)?.tab ?? '',
+    // v11 觀測點（§70 收尾/§71 e2e）：HUD 雙節狀態、潮汐水位/相位（噴口相位走 __spStage）。
+    twinHud: () =>
+      (gameScene().registry.get('twinHud') as
+        | { active: boolean; aRatio: number; bRatio: number }
+        | undefined) ?? { active: false, aRatio: 0, bRatio: 0 },
+    tide: () => gameScene().tideState(),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
-      for (const child of internals().enemies.getGroup().getChildren()) {
-        const kind = internals().enemies.kindOf(child);
-        if (!kind) continue;
-        const sprite = child as unknown as { x: number; y: number };
-        list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+      // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
+      try {
+        for (const child of internals().enemies.getGroup().getChildren()) {
+          const kind = internals().enemies.kindOf(child);
+          if (!kind) continue;
+          const sprite = child as unknown as { x: number; y: number };
+          list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+        }
+      } catch {
+        return list;
       }
       return list;
     },

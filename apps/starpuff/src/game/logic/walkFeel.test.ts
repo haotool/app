@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { WALK_BOB_PX, advanceStride, airTilt, idleBreath, strideBob, strideTilt } from './walkFeel';
+import {
+  WALK_BOB_PX,
+  advanceCrouch,
+  advanceStride,
+  airTilt,
+  idleBreath,
+  strideBob,
+  strideTilt,
+} from './walkFeel';
 
 describe('advanceStride（§45 速度驅動步頻）', () => {
   it('全速走動相位穩定推進；步頻 3.2Hz 下一秒約 6.4 次落腳', () => {
@@ -68,5 +76,31 @@ describe('idleBreath / airTilt（§45 姿態）', () => {
     expect(airTilt(500)).toBeGreaterThan(0);
     expect(airTilt(-99999)).toBe(-0.1);
     expect(airTilt(99999)).toBe(0.14);
+  });
+});
+
+describe('advanceCrouch 蹲姿狀態轉換（§77）', () => {
+  it('持續壓下 120ms 內線性升至 1 並夾限', () => {
+    let crouch = 0;
+    crouch = advanceCrouch(crouch, true, 60);
+    expect(crouch).toBeCloseTo(0.5);
+    crouch = advanceCrouch(crouch, true, 60);
+    expect(crouch).toBe(1);
+    expect(advanceCrouch(crouch, true, 500)).toBe(1);
+  });
+
+  it('鬆開後同速率回落至 0 並夾限', () => {
+    let crouch = 1;
+    crouch = advanceCrouch(crouch, false, 60);
+    expect(crouch).toBeCloseTo(0.5);
+    crouch = advanceCrouch(crouch, false, 60);
+    expect(crouch).toBe(0);
+    expect(advanceCrouch(crouch, false, 500)).toBe(0);
+  });
+
+  it('中途換向自當前比例續行（不跳變）', () => {
+    const half = advanceCrouch(0, true, 60);
+    const back = advanceCrouch(half, false, 30);
+    expect(back).toBeCloseTo(0.25);
   });
 });
