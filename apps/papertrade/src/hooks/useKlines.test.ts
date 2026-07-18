@@ -207,6 +207,47 @@ describe('useKlines', () => {
     expect(result.current.bars[1]?.close).toBe(101);
   });
 
+  it('applies only the latest refresh when two refreshes resolve out of order', async () => {
+    const resolvers: ((bars: Kline[]) => void)[] = [];
+    fetchKlinesMock.mockImplementation(
+      () =>
+        new Promise<Kline[]>((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await act(async () => {
+      resolvers[0]?.([bar(60), bar(120, 100)]);
+      await Promise.resolve();
+    });
+    expect(result.current.status).toBe('ready');
+
+    // 兩次重連 refresh 交錯在途：後發（第 3 次請求）先完成。
+    await act(async () => {
+      emitStatus('reconnecting');
+      emitStatus('connected');
+      emitStatus('reconnecting');
+      emitStatus('connected');
+      await Promise.resolve();
+    });
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      resolvers[2]?.([bar(120, 108), bar(180, 110)]);
+      await Promise.resolve();
+    });
+    expect(result.current.bars.map((candle) => candle.time)).toEqual([60, 120, 180]);
+    expect(result.current.bars[1]?.close).toBe(108);
+
+    // 舊請求（第 2 次）後完成：必須被序號守門丟棄，不得覆寫較新序列。
+    await act(async () => {
+      resolvers[1]?.([bar(120, 101)]);
+      await Promise.resolve();
+    });
+    expect(result.current.bars.map((candle) => candle.time)).toEqual([60, 120, 180]);
+    expect(result.current.bars[1]?.close).toBe(108);
+  });
+
   it('does not refetch while the connection stays healthy', async () => {
     fetchKlinesMock.mockResolvedValue([bar(60)]);
     const { result } = renderHook(() => useKlines('BTCUSDT', '60'));

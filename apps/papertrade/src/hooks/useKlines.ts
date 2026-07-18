@@ -45,6 +45,8 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
     let bars = cached ?? EMPTY_BARS;
     let historyReady = cached !== undefined;
     let cancelPrefetch: (() => void) | null = null;
+    // 快取起步 refresh 與重連回補可並發：以請求序號守門，僅最新請求的結果可套用，防止舊回應覆寫新序列。
+    let requestSeq = 0;
 
     function startPrefetch() {
       if (cancelled || cancelPrefetch !== null) return;
@@ -54,9 +56,11 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
     }
 
     function loadHistory(mode: 'initial' | 'refresh') {
+      requestSeq += 1;
+      const seq = requestSeq;
       fetchKlinesBySymbol(symbol, interval, KLINE_HISTORY_LIMIT)
         .then((history) => {
-          if (cancelled) return;
+          if (cancelled || seq !== requestSeq) return;
           // refresh（快取起步或重連回補）：覆蓋重疊區間並保留兩端既有 bar，序列無空洞。
           bars = mode === 'refresh' && historyReady ? mergeKlineHistory(bars, history) : history;
           historyReady = true;
@@ -66,7 +70,7 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
         })
         .catch(() => {
           // refresh 失敗保留既有序列，等待下一次重連或使用者重試。
-          if (!cancelled && mode === 'initial') {
+          if (!cancelled && seq === requestSeq && mode === 'initial') {
             setFeed({ key, bars: EMPTY_BARS, status: 'error' });
           }
         });
