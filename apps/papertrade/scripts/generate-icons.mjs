@@ -1,9 +1,9 @@
 /**
  * PWA icons 生成腳本（快照制：手動執行、產物 commit）。
- * 設計 SSOT 內嵌於本檔：深色底＋紅綠藍三根上升蠟燭，色值對齊 src/index.css tokens。
+ * 設計 SSOT＝public/favicon.svg（手寫向量）；本檔讀源派生 maskable 變體與各尺寸 PNG。
  * 執行：node apps/papertrade/scripts/generate-icons.mjs（依賴 app 內 @playwright/test）
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -11,38 +11,41 @@ import { chromium } from '@playwright/test';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = resolve(__dirname, '../public');
 
-const COLORS = {
-  bg: '#0B0E14',
-  short: '#EA3943',
-  long: '#16C784',
-  primary: '#4F7CFF',
-};
+const FAVICON_SVG = readFileSync(resolve(PUBLIC_DIR, 'favicon.svg'), 'utf8');
 
-function candle(cx, bodyTop, wickTop, wickBottom, color) {
-  const bodyHeight = 120;
-  const bodyWidth = 64;
-  return [
-    `<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBottom}" stroke="${color}" stroke-width="16" stroke-linecap="round"/>`,
-    `<rect x="${cx - bodyWidth / 2}" y="${bodyTop}" width="${bodyWidth}" height="${bodyHeight}" rx="12" fill="${color}"/>`,
-  ].join('\n  ');
+// 以 id 錨點對源 SVG 做變體改寫；錨點缺失時直接失敗，避免靜默產出破圖。
+function mustReplace(svg, pattern, replacement, anchor) {
+  if (!pattern.test(svg)) {
+    throw new Error(`favicon.svg 缺少 ${anchor} 錨點，請維持 id 結構後重跑`);
+  }
+  return svg.replace(pattern, replacement);
 }
 
-const CANDLES = [
-  candle(136, 272, 240, 408, COLORS.short),
-  candle(256, 200, 168, 336, COLORS.long),
-  candle(376, 136, 104, 272, COLORS.primary),
-].join('\n  ');
+// maskable：背景滿版（遮罩由 OS 套用）、移除描邊、mark 縮至 80% 安全圓內。
+function buildMaskableSvg() {
+  const bgFill = FAVICON_SVG.match(/<rect id="frame-bg"[^>]*fill="([^"]+)"/)?.[1];
+  if (!bgFill) {
+    throw new Error('favicon.svg 缺少 frame-bg 錨點，請維持 id 結構後重跑');
+  }
+  let svg = FAVICON_SVG;
+  svg = mustReplace(
+    svg,
+    /<rect id="frame-bg"[^>]*\/>/,
+    `<rect width="512" height="512" fill="${bgFill}"/>`,
+    'frame-bg',
+  );
+  svg = mustReplace(svg, /\s*<rect id="frame-border"[^>]*\/>/, '', 'frame-border');
+  svg = mustReplace(
+    svg,
+    /<g id="mark">/,
+    '<g id="mark" transform="translate(256 256) scale(0.9) translate(-256 -256)">',
+    'mark',
+  );
+  return svg;
+}
 
 function buildSvg(variant) {
-  const background =
-    variant === 'maskable'
-      ? `<rect width="512" height="512" fill="${COLORS.bg}"/>`
-      : `<rect width="512" height="512" rx="115" fill="${COLORS.bg}"/>`;
-  const content =
-    variant === 'maskable'
-      ? `<g transform="translate(256 256) scale(0.8) translate(-256 -256)">\n  ${CANDLES}\n  </g>`
-      : CANDLES;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">\n  ${background}\n  ${content}\n</svg>\n`;
+  return variant === 'maskable' ? buildMaskableSvg() : FAVICON_SVG;
 }
 
 const TARGETS = [

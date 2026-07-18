@@ -1,9 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="115" fill="#0B0E14"/>
-  <line x1="136" y1="240" x2="136" y2="408" stroke="#EA3943" stroke-width="16" stroke-linecap="round"/>
-  <rect x="104" y="272" width="64" height="120" rx="12" fill="#EA3943"/>
-  <line x1="256" y1="168" x2="256" y2="336" stroke="#16C784" stroke-width="16" stroke-linecap="round"/>
-  <rect x="224" y="200" width="64" height="120" rx="12" fill="#16C784"/>
-  <line x1="376" y1="104" x2="376" y2="272" stroke="#4F7CFF" stroke-width="16" stroke-linecap="round"/>
-  <rect x="344" y="136" width="64" height="120" rx="12" fill="#4F7CFF"/>
+  <defs>
+    <linearGradient id="pt-edge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4F7CFF"/>
+      <stop offset="1" stop-color="#16C784"/>
+    </linearGradient>
+  </defs>
+  <rect id="frame-bg" width="512" height="512" rx="113" fill="#0B0E14"/>
+  <rect id="frame-border" x="2" y="2" width="508" height="508" rx="111" fill="none" stroke="url(#pt-edge)" stroke-width="4" opacity="0.6"/>
+  <g id="mark">
+    <line x1="188" y1="132" x2="188" y2="412" stroke="#16C784" stroke-width="16" stroke-linecap="round"/>
+    <rect x="140" y="168" width="96" height="216" rx="20" fill="#16C784"/>
+    <line x1="324" y1="100" x2="324" y2="308" stroke="#EA3943" stroke-width="16" stroke-linecap="round"/>
+    <rect x="276" y="136" width="96" height="128" rx="20" fill="#EA3943"/>
+  </g>
 </svg>
