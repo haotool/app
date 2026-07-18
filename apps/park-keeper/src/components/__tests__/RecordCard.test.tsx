@@ -35,6 +35,7 @@ vi.mock('react-i18next', () => ({
         'record.plate': '車牌號碼',
         'record.plate_unset': '未填車號',
         'record.yesterday': '昨天',
+        'home.just_now': '剛剛',
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
         'record.delete': '刪除停車記錄 {{plate}}',
@@ -268,6 +269,13 @@ describe('RecordCard', () => {
     renderRecordCard();
 
     expect(screen.getByTestId('record-card-media')).toBeInTheDocument();
+  });
+
+  it('時間顯示統一走 formatSmartTime 相對時間 SSOT，不再使用日曆格式（issue #753）', () => {
+    renderRecordCard({ timestamp: Date.now() - 3 * 3_600_000 });
+
+    expect(screen.getByText('3 小時前')).toBeInTheDocument();
+    expect(screen.queryByText('昨天')).toBeNull();
   });
 
   it('應該支援刪除與導航操作，並顯示備註', () => {

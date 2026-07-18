@@ -4,7 +4,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
-import PickupHeroCard, { formatElapsed } from '../PickupHeroCard';
+import PickupHeroCard from '../PickupHeroCard';
 import { THEMES } from '@app/park-keeper/constants';
 import type { ParkingRecord } from '@app/park-keeper/types';
 import i18n from '@app/park-keeper/services/i18n';
@@ -65,14 +65,15 @@ describe('PickupHeroCard', () => {
     expect(screen.getByText('未填車號')).toBeInTheDocument();
     expect(screen.queryByText('N/A')).toBeNull();
   });
-});
 
-describe('formatElapsed', () => {
-  it('依經過時間回傳分鐘/小時/天級相對時間；<1 分鐘回傳 null', () => {
-    const now = Date.now();
-    expect(formatElapsed(now - 10_000, 'zh-TW')).toBeNull();
-    expect(formatElapsed(now - 5 * 60_000, 'zh-TW')).toBe('5 分鐘前');
-    expect(formatElapsed(now - 3 * 3_600_000, 'zh-TW')).toBe('3 小時前');
-    expect(formatElapsed(now - 2 * 86_400_000, 'zh-TW')).toBe('2 天前');
+  it('<1 分鐘顯示「剛剛」（時間 SSOT：與 formatSmartTime 共用邏輯）', () => {
+    render(
+      <PickupHeroCard
+        record={{ ...baseRecord, timestamp: Date.now() - 10_000 }}
+        theme={theme}
+        onNavigate={() => {}}
+      />,
+    );
+    expect(screen.getByText('剛剛')).toBeInTheDocument();
   });
 });

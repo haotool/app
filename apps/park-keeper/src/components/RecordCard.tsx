@@ -16,6 +16,7 @@ import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
 import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
+import { formatSmartTime } from '@app/park-keeper/services/formatSmartTime';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -39,30 +40,6 @@ interface RecordCardProps {
     ariaInteractiveTrackingLabel: string;
     ariaStaticLabel: string;
   };
-}
-
-/** 智慧時間顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→完整日期。
- *  locale 採 i18n.language，避免與使用者選定的應用程式語言不一致。 */
-function formatSmartTime(timestamp: number, locale: string, yesterdayLabel: string): string {
-  const now = new Date();
-  const d = new Date(timestamp);
-
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 86400000;
-  const weekStart = todayStart - 6 * 86400000;
-
-  const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-
-  if (timestamp >= todayStart) {
-    return timeStr;
-  } else if (timestamp >= yesterdayStart) {
-    return `${yesterdayLabel} ${timeStr}`;
-  } else if (timestamp >= weekStart) {
-    const weekday = d.toLocaleDateString(locale, { weekday: 'short' });
-    return `${weekday} ${timeStr}`;
-  } else {
-    return d.toLocaleDateString(locale, { month: 'numeric', day: 'numeric' }) + ' ' + timeStr;
-  }
 }
 
 export default function RecordCard({
@@ -252,7 +229,7 @@ export default function RecordCard({
               </span>
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {formatSmartTime(record.timestamp, i18n.language, t('record.yesterday'))}
+                {formatSmartTime(record.timestamp, i18n.language, t('home.just_now'))}
               </span>
             </div>
           </div>
