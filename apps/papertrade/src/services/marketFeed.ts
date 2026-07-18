@@ -3,13 +3,16 @@ import { marketWs } from './marketWs';
 import { parseTickerMessage } from './ticker';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
+import { isPprSymbol, PPR_ENABLED } from '../features/ppr/config';
+import { startPprFeed } from '../features/ppr/feed';
 
 export function startMarketFeed(): () => void {
   const { setTicker, patchTicker, setWsStatus } = useMarketStore.getState();
 
   const stopStatus = marketWs.onStatus(setWsStatus);
 
-  const stops = SYMBOLS.map((symbol) =>
+  // ppr 來源 symbol 不進真實 Bybit 訂閱清單：由本地合成 feed 供數（單點路由匯流點）。
+  const stops = SYMBOLS.filter((symbol) => !isPprSymbol(symbol)).map((symbol) =>
     marketWs.subscribe(`tickers.${symbol}`, (message) => {
       const update = parseTickerMessage(message);
       if (update === null) return;
@@ -25,8 +28,11 @@ export function startMarketFeed(): () => void {
     }),
   );
 
+  const stopPpr = PPR_ENABLED ? startPprFeed() : null;
+
   return () => {
     stops.forEach((stop) => stop());
     stopStatus();
+    stopPpr?.();
   };
 }

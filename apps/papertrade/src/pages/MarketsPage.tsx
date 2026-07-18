@@ -5,13 +5,14 @@ import clsx from 'clsx';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
 import { useMarketStore } from '../stores/marketStore';
 import { useMarketPrefsStore } from '../stores/marketPrefsStore';
-import { fetchSparkline } from '../services/sparkline';
+import { fetchSparklineBySymbol } from '../lib/marketSource';
 import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
 import { filterSymbolsByQuery } from '../lib/symbolSearch';
 import { CoinBadge } from '../components/CoinBadge';
 import { EmptyState } from '../components/EmptyState';
 import { PriceFlash } from '../components/PriceFlash';
 import { Sparkline } from '../components/Sparkline';
+import { PprTag } from '../features/ppr/PprBadge';
 
 type MarketListTab = 'all' | 'favorites';
 
@@ -25,7 +26,7 @@ function useSparklineData(symbol: MarketSymbol): number[] {
 
   useEffect(() => {
     let cancelled = false;
-    fetchSparkline(symbol)
+    fetchSparklineBySymbol(symbol)
       .then((closes) => {
         if (!cancelled) setData(closes);
       })
@@ -75,9 +76,12 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
       >
         <CoinBadge symbol={symbol} size="md" variant="soft" />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-body font-medium">
-            {meta.base}
-            <span className="text-text-3">/USDT</span>
+          <span className="flex items-center gap-1.5 text-body font-medium">
+            <span>
+              {meta.base}
+              <span className="text-text-3">/USDT</span>
+            </span>
+            <PprTag symbol={symbol} />
           </span>
           <span className="truncate text-caption text-text-3">
             量 {ticker ? formatCompact(ticker.turnover24h) : '--'}

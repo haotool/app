@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type MarketSymbol } from '../config/market';
 import { applyOrderbookMessage, EMPTY_ORDER_BOOK, type OrderBook } from '../services/orderbook';
-import { marketWs } from '../services/marketWs';
+import { marketWsFor } from '../lib/marketSource';
 
 export function useOrderbook(symbol: MarketSymbol): OrderBook {
   const [epoch, setEpoch] = useState(0);
@@ -13,7 +13,7 @@ export function useOrderbook(symbol: MarketSymbol): OrderBook {
   useEffect(() => {
     const key = `${symbol}:${epoch}`;
     let book = EMPTY_ORDER_BOOK;
-    const stop = marketWs.subscribe(`orderbook.50.${symbol}`, (message) => {
+    const stop = marketWsFor(symbol).subscribe(`orderbook.50.${symbol}`, (message) => {
       const update = applyOrderbookMessage(book, message);
       book = update.book;
       setState({ key, book });

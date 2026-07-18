@@ -25,6 +25,7 @@ import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
 import { PositionCard } from '../components/trade/PositionCard';
 import { OrderList } from '../components/trade/OrderList';
 import { trimNumberInput } from '../lib/tradeForm';
+import { PprDisclaimerChip } from '../features/ppr/PprBadge';
 
 type SheetKind = 'pair' | 'leverage' | 'margin' | null;
 
@@ -148,6 +149,7 @@ export function TradePage() {
         <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
           <span>資金費率</span>
           <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+          <PprDisclaimerChip symbol={symbol} />
         </div>
       </div>
 

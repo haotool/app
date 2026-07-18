@@ -1,6 +1,8 @@
 # 幣別 icon 來源聲明（NOTICE）
 
-本目錄內全部 `*.svg` 幣別圖示 vendor 自下列上游專案，未做內容修改：
+例外：`ppr.svg` 為本專案自製（虛構迷因幣 PPR 泡泡幣，見 `src/features/ppr/`），非上游 vendor。
+
+本目錄內其餘 `*.svg` 幣別圖示 vendor 自下列上游專案，未做內容修改：
 
 - 上游專案：[spothq/cryptocurrency-icons](https://github.com/spothq/cryptocurrency-icons)
 - 取用路徑：`svg/color/<symbol>.svg`

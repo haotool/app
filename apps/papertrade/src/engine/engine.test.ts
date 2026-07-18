@@ -1407,6 +1407,7 @@ describe('ledger invariant', () => {
         LTCUSDT: 100,
         LINKUSDT: 20,
         AVAXUSDT: 40,
+        PPRUSDT: 0.042,
       };
       let account = createInitialAccount();
 

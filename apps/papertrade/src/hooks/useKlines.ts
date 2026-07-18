@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { KLINE_HISTORY_LIMIT, type MarketSymbol, type TimeframeId } from '../config/market';
-import {
-  fetchKlines,
-  mergeKline,
-  mergeKlineHistory,
-  parseKlineMessage,
-  type Kline,
-} from '../services/kline';
-import { marketWs } from '../services/marketWs';
+import { mergeKline, mergeKlineHistory, parseKlineMessage, type Kline } from '../services/kline';
+import { fetchKlinesBySymbol, marketWsFor } from '../lib/marketSource';
 import { getCachedKlines, prefetchIdleTimeframes, setCachedKlines } from '../lib/klineCache';
 
 export type KlineStatus = 'loading' | 'ready' | 'error';
@@ -45,6 +39,7 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
   useEffect(() => {
     let cancelled = false;
     const key = `${symbol}:${interval}:${epoch}`;
+    const ws = marketWsFor(symbol);
     // SWR：命中快取即以快取序列起步（render 層已同步顯示），背景 revalidate 靜默更新。
     const cached = getCachedKlines(symbol, interval);
     let bars = cached ?? EMPTY_BARS;
@@ -54,12 +49,12 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
     function startPrefetch() {
       if (cancelled || cancelPrefetch !== null) return;
       cancelPrefetch = prefetchIdleTimeframes(symbol, interval, (prefetchSymbol, prefetchTf) =>
-        fetchKlines(prefetchSymbol, prefetchTf, KLINE_HISTORY_LIMIT),
+        fetchKlinesBySymbol(prefetchSymbol, prefetchTf, KLINE_HISTORY_LIMIT),
       );
     }
 
     function loadHistory(mode: 'initial' | 'refresh') {
-      fetchKlines(symbol, interval, KLINE_HISTORY_LIMIT)
+      fetchKlinesBySymbol(symbol, interval, KLINE_HISTORY_LIMIT)
         .then((history) => {
           if (cancelled) return;
           // refresh（快取起步或重連回補）：覆蓋重疊區間並保留兩端既有 bar，序列無空洞。
@@ -79,7 +74,7 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
 
     loadHistory(historyReady ? 'refresh' : 'initial');
 
-    const stop = marketWs.subscribe(`kline.${interval}.${symbol}`, (message) => {
+    const stop = ws.subscribe(`kline.${interval}.${symbol}`, (message) => {
       if (cancelled || !historyReady) return;
       const incoming = parseKlineMessage(message);
       if (incoming.length === 0) return;
@@ -90,8 +85,8 @@ export function useKlines(symbol: MarketSymbol, interval: TimeframeId): KlineFee
     });
 
     // WS 斷線期間的 K 線不會重送：偵測 reconnecting→connected 後重抓 REST 回補缺口。
-    let wasReconnecting = marketWs.getStatus() === 'reconnecting';
-    const stopStatus = marketWs.onStatus((status) => {
+    let wasReconnecting = ws.getStatus() === 'reconnecting';
+    const stopStatus = ws.onStatus((status) => {
       if (status === 'reconnecting') {
         wasReconnecting = true;
         return;

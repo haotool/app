@@ -9,6 +9,8 @@ export const SYMBOLS = [
   'LTCUSDT',
   'LINKUSDT',
   'AVAXUSDT',
+  // 本地合成迷因幣（features/ppr）：是否為 ppr 來源由 isPprSymbol() 判斷，此處僅註冊。
+  'PPRUSDT',
 ] as const;
 
 export type MarketSymbol = (typeof SYMBOLS)[number];
@@ -30,6 +32,7 @@ export const SYMBOL_META: Record<MarketSymbol, SymbolMeta> = {
   LTCUSDT: { base: 'LTC', name: 'Litecoin', accent: 'var(--color-accent-ltc)' },
   LINKUSDT: { base: 'LINK', name: 'Chainlink', accent: 'var(--color-accent-link)' },
   AVAXUSDT: { base: 'AVAX', name: 'Avalanche', accent: 'var(--color-accent-avax)' },
+  PPRUSDT: { base: 'PPR', name: 'PPR 泡泡幣', accent: 'var(--color-accent-ppr)' },
 };
 
 export function isMarketSymbol(value: string): value is MarketSymbol {
