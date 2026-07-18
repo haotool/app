@@ -11,7 +11,9 @@ export const THEMES: Record<string, ThemeConfig> = {
       background: '#020617', // 改為極深 Slate，強化對比
       surface: '#0f172a',
       text: '#ffffff',
-      textMuted: '#64748b',
+      // textMuted 加亮至 WCAG AA：4.63:1（on #020617），修正首屏底部導覽列 inactive tab
+      // 對比不足問題（原 #64748b 僅 4.24:1，issue #753 主題對比修復）。
+      textMuted: '#6b7a91',
     },
     font: 'font-racing',
     borderRadius: '0px',
@@ -67,6 +69,13 @@ export const THEMES: Record<string, ThemeConfig> = {
     animationType: 'tween',
   },
 };
+
+/**
+ * cute 主題 wordmark 漸層色 token（issue #753 主題對比修復）。
+ * 原 #FF9A9E／#FFB7B2（on #FFFAF4）對比僅 1.60–1.95:1，嚴重低於 WCAG AA；
+ * 改用深玫瑰調三色，對比 4.80–5.45:1，保留 cute 主題粉色識別但可讀。
+ */
+export const CUTE_WORDMARK_GRADIENT = ['#C2255C', '#D0296B', '#C2255C'] as const;
 
 // 保存天數 SSOT：照片清理、SW tile TTL、設定滑桿共用同一組邊界與預設值。
 export const CACHE_DAYS = { MIN: 1, MAX: 30, DEFAULT: 7 } as const;

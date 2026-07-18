@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ParkingRecord, AppSettings, ThemeConfig } from '@app/park-keeper/types';
-import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import { THEMES, DEFAULT_SETTINGS, CUTE_WORDMARK_GRADIENT } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
@@ -45,7 +45,6 @@ import {
   NAV_INDICATOR_LAYOUT_ID,
   NAV_INDICATOR_TRANSITION,
   NAV_LABEL_BASE_CLS,
-  NAV_LABEL_INACTIVE_CLS,
   NAV_TAB_GAP_CLS,
 } from '@app/park-keeper/config/navBar';
 
@@ -354,7 +353,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               <BrandLogo theme={theme} />
               {theme.id === 'cute' ? (
                 <h1
-                  className={`text-3xl font-black tracking-normal ${theme.font} bg-clip-text text-transparent bg-linear-to-r from-[#FF9A9E] via-[#FFB7B2] to-[#FF9A9E] drop-shadow-[0_2px_2px_rgba(0,0,0,0.05)]`}
+                  className={`text-3xl font-black tracking-normal ${theme.font} bg-clip-text text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.05)]`}
+                  style={{
+                    // 對比修至 AA（issue #753）：CUTE_WORDMARK_GRADIENT 三色 4.80–5.45:1（on #FFFAF4）。
+                    backgroundImage: `linear-gradient(to right, ${CUTE_WORDMARK_GRADIENT.join(', ')})`,
+                  }}
                 >
                   ParkKeeper
                 </h1>
@@ -529,9 +532,13 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 onClick={() => setCurrentTab('list')}
                 className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
+                {/* inactive 對比修至 AA（issue #753）：改用 theme.colors.textMuted 全不透明度，
+                    取代 opacity-30 dimming（原做法在部分主題背景下對比 <3:1）。 */}
                 <div
-                  className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
-                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                  className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : ''}`}
+                  style={{
+                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   <ListIcon
                     size={NAV_ICON_SIZE}
@@ -541,8 +548,10 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   />
                 </div>
                 <span
-                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'list' ? NAV_LABEL_INACTIVE_CLS : ''}`}
-                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                  className={NAV_LABEL_BASE_CLS}
+                  style={{
+                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   {t('tab.list')}
                 </span>
@@ -567,8 +576,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
                 <div
-                  className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
-                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                  className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : ''}`}
+                  style={{
+                    color:
+                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   <SettingsIcon
                     size={NAV_ICON_SIZE}
@@ -578,8 +590,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   />
                 </div>
                 <span
-                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'settings' ? NAV_LABEL_INACTIVE_CLS : ''}`}
-                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                  className={NAV_LABEL_BASE_CLS}
+                  style={{
+                    color:
+                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   {t('tab.settings')}
                 </span>

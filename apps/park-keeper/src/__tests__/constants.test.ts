@@ -1,4 +1,27 @@
-import { THEMES, DEFAULT_SETTINGS, CACHE_DAYS, clampCacheDays } from '@app/park-keeper/constants';
+import {
+  THEMES,
+  DEFAULT_SETTINGS,
+  CACHE_DAYS,
+  clampCacheDays,
+  CUTE_WORDMARK_GRADIENT,
+} from '@app/park-keeper/constants';
+
+// WCAG 2.x 相對亮度／對比比率（無第三方依賴，issue #753 主題對比 AA 迴歸測試）。
+function toLinear(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+function relativeLuminance(hex: string): number {
+  const r = toLinear(parseInt(hex.slice(1, 3), 16));
+  const g = toLinear(parseInt(hex.slice(3, 5), 16));
+  const b = toLinear(parseInt(hex.slice(5, 7), 16));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrastRatio(hexA: string, hexB: string): number {
+  const lA = relativeLuminance(hexA);
+  const lB = relativeLuminance(hexB);
+  return (Math.max(lA, lB) + 0.05) / (Math.min(lA, lB) + 0.05);
+}
 
 const REQUIRED_THEME_KEYS = [
   'id',
@@ -58,6 +81,20 @@ describe('constants', () => {
       expect(DEFAULT_SETTINGS.cacheDurationDays).toBe(CACHE_DAYS.DEFAULT);
       // notificationsEnabled 死設定已移除（issue #725 P2，S3 註記技術債）。
       expect(DEFAULT_SETTINGS).not.toHaveProperty('notificationsEnabled');
+    });
+  });
+
+  describe('主題對比 AA 迴歸（issue #753）', () => {
+    it('racing textMuted 對其背景色對比須 ≥4.5:1（底部導覽列 inactive tab）', () => {
+      const { textMuted, background } = THEMES['racing']!.colors;
+      expect(contrastRatio(textMuted, background)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it('CUTE_WORDMARK_GRADIENT 三色對 cute 背景色對比須 ≥4.5:1（首屏 wordmark）', () => {
+      const { background } = THEMES['cute']!.colors;
+      for (const stop of CUTE_WORDMARK_GRADIENT) {
+        expect(contrastRatio(stop, background)).toBeGreaterThanOrEqual(4.5);
+      }
     });
   });
 
