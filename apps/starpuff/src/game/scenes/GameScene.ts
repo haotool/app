@@ -40,6 +40,7 @@ import {
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
+import { SYRONA } from '../logic/syronaFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
@@ -83,6 +84,7 @@ import { createBoss, type BossDamageSource, type BossHandle } from '../systems/b
 import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createNoctra } from '../systems/noctra';
 import { createPrismix } from '../systems/prismix';
+import { createSyrona } from '../systems/syrona';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -321,6 +323,16 @@ export class GameScene extends Phaser.Scene {
     this.boss.setTarget(this.player.sprite);
 
     this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
+    // 場控魔王 arena 浮台（§74 Syrona）：呈現層動態佈建，此處接玩家 collider。
+    const bossPlatforms = this.boss.getPlatforms?.() ?? [];
+    if (bossPlatforms.length > 0) {
+      this.physics.add.collider(this.player.sprite, bossPlatforms, undefined, (_p, platform) => {
+        const rect = platform as Phaser.GameObjects.Rectangle;
+        const rectBody = rect.body as Phaser.Physics.Arcade.StaticBody;
+        const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+        return playerBody.velocity.y >= 0 && playerBody.bottom <= rectBody.top + 6;
+      });
+    }
     this.physics.add.collider(this.enemies.getGroup(), ground);
     this.addOverlaps();
     this.bindEvents();
@@ -376,6 +388,7 @@ export class GameScene extends Phaser.Scene {
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
       this.advanceTide(deltaMs);
+      this.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -441,6 +454,12 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.restartWith({ levelId });
   }
 
+  // e2e 觀測點（§71）：潮汐水位與相位；無潮汐關回 null。
+  tideState(): { waterY: number; phase: string } | null {
+    if (!this.tide) return null;
+    return { waterY: Math.round(this.tide.waterY()), phase: this.tide.phase() };
+  }
+
   // 暫停選單「重新開始」（§35）：重置當前關卡全狀態（血量/彈藥/擊殺/計時/實體由
   // create 重建），保留本輪死亡數。
   restartCurrentLevel(): void {
@@ -487,6 +506,20 @@ export class GameScene extends Phaser.Scene {
     this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
     const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
     body.setVelocity(soaked.vx, soaked.vy);
+  }
+
+  // 場控魔王噴口供力（§74 Syrona）：呈現層持有幾何與相位，此處逐幀委派結算。
+  private applyBossVents(deltaMs: number): void {
+    if (!this.boss.getVentLift) return;
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    const lifted = this.boss.getVentLift(
+      this.player.sprite.x,
+      this.player.sprite.y,
+      body.velocity.y,
+      deltaMs,
+      body.blocked.up,
+    );
+    if (lifted !== null) body.setVelocityY(lifted);
   }
 
   // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
@@ -1181,6 +1214,29 @@ export class GameScene extends Phaser.Scene {
             { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: PRISMIX.bodyDamage,
+        };
+      case 'syrona':
+        return {
+          handle: createSyrona(
+            this,
+            {
+              summonBubbla: (cap) => this.summonMinion('bubbla', cap),
+              // 窯風三連（§75）：呈現層單一真值，GameScene 餵彩蛋＋窯火謝幕演出。
+              onVentEgg: () => {
+                this.feedEggs({ kind: 'vent-hit-count' });
+                this.cameras.main.flash(320, 255, 214, 140);
+                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
+              },
+              // 場控潮汐（§74）：沿 GameScene 單一潮汐管線（浸水/生成過濾自然生效）。
+              startTide: (spec) => {
+                this.tide?.destroy();
+                this.tide = createTide(this, spec, this.worldWidth());
+              },
+              boilTide: (spec) => this.tide?.setSpec(spec),
+            },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
+          ),
+          bodyDamage: SYRONA.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

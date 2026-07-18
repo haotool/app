@@ -3,7 +3,7 @@ import { ASSETS } from './assets';
 import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部十四種小怪與雙魔王（v9 magno/mirri 入鑑）', () => {
+  it('收錄全部十六種小怪與雙魔王（v11 bubbla/splatta 入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -19,19 +19,21 @@ describe('CODEX_MONSTERS', () => {
       'boomy',
       'magno',
       'mirri',
+      'bubbla',
+      'splatta',
       'boss',
       'noctra',
     ]);
   });
 
-  it('立繪鍵一律對應既有資產註冊表（禁止新美術）', () => {
+  it('立繪鍵一律對應既有資產註冊表（禁止新美術；v11 素材批註冊後生效）', () => {
     const registered = new Set(ASSETS.map((asset) => asset.key));
     for (const monster of CODEX_MONSTERS) {
       expect(registered.has(monster.textureKey)).toBe(true);
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59），殼殼與鑽鑽鼴標條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73），三種條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
@@ -47,11 +49,13 @@ describe('CODEX_MONSTERS', () => {
         'boomy',
         'magno',
         'mirri',
+        'splatta',
       ]),
     );
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.find((m) => m.kind === 'drilly')?.conditional).toBe(true);
-    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(2);
+    expect(CODEX_MONSTERS.find((m) => m.kind === 'bubbla')?.conditional).toBe(true);
+    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(3);
   });
 
   it('名稱與行為描述皆非空', () => {

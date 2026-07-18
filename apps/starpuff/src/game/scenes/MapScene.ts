@@ -16,10 +16,11 @@ import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const ACCENT = '#7a5fb8';
-// v10 十二節點過渡（§67）：節點半徑收斂 24 容納單頁；分區分頁最遲 v12 落地（主計畫 §2.2）。
-const NODE_RADIUS = 24;
-// 三階鋸齒高度（§67）：相鄰節點名牌垂直錯層；魔王節點（L4/L7/L12）固定落最高階，
-// EX 徽鈕上方淨空恆成立。
+// v11 十六節點過渡（§76）：節點半徑再收斂 20（854 寬間距 ≈51px 可容納單頁）；
+// 分區分頁最遲 v12 落地（主計畫 §2.2）。
+const NODE_RADIUS = 20;
+// 三階鋸齒高度（§67/§76）：相鄰節點名牌垂直錯層；12 項循環下四魔王節點
+//（L4/L7/L12/L16）恰全落最高階，EX 徽鈕上方淨空恆成立。
 const NODE_YS = [300, 262, 300, 224, 300, 262, 224, 300, 262, 300, 262, 224] as const;
 // 節點主題色鏡像關卡 bg 主色調（data-driven 自 LEVELS bgKey）。
 const NODE_TINTS: Record<string, number> = {
@@ -35,6 +36,11 @@ const NODE_TINTS: Record<string, number> = {
   'bg-lumen': 0x9fe8d8,
   'bg-magnetic': 0xa89ae0,
   'bg-prism': 0xc5a8e8,
+  // v11 四區焙糖火山（§72/§74）。
+  'bg-kiln': 0xf2b26b,
+  'bg-valley': 0xe89040,
+  'bg-kilnway': 0xd07830,
+  'bg-kilnhall': 0xc86828,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;
@@ -181,11 +187,11 @@ export class MapScene extends Phaser.Scene {
       const circle = this.add
         .circle(0, 0, level.boss ? NODE_RADIUS + 4 : NODE_RADIUS, tint, 1)
         .setStrokeStyle(4, status === 'locked' ? 0x9a9aa8 : 0xffffff, 0.95);
-      // 雙位數關號縮字級（§67 十二節點）：半徑 24 圓內維持可讀。
+      // 雙位數關號縮字級（§67/§76 十六節點）：半徑 20 圓內維持可讀。
       const numeral = this.add
         .text(0, 0, `${level.id}`, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: level.id >= 10 ? '20px' : '24px',
+          fontSize: level.id >= 10 ? '17px' : '20px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
@@ -195,7 +201,7 @@ export class MapScene extends Phaser.Scene {
       const name = this.add
         .text(x, y + NODE_RADIUS + 20, level.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '15px',
+          fontSize: '13px',
           fontStyle: 'bold',
           color: '#ffffff',
           stroke: TEXT_DARK,
@@ -219,9 +225,9 @@ export class MapScene extends Phaser.Scene {
         });
         const best = save.levels[level.id]?.bestTimeMs ?? 0;
         this.add
-          .text(x, y + NODE_RADIUS + 44, `最佳 ${(best / 1000).toFixed(1)}s`, {
+          .text(x, y + NODE_RADIUS + 42, `最佳 ${(best / 1000).toFixed(1)}s`, {
             fontFamily: 'system-ui, sans-serif',
-            fontSize: '13px',
+            fontSize: '12px',
             color: '#ffffff',
             stroke: TEXT_DARK,
             strokeThickness: 3,

@@ -30,9 +30,9 @@ export function createDefaultSave(): SaveData {
   };
 }
 
-// v10 三區完結（§67）：12 節點；schema v1 不變——舊存檔（≤9 關條目）原樣載入，
+// v11 四區完結（§76）：16 節點；schema v1 不變——舊存檔（≤12 關條目）原樣載入，
 // 新節點依解鎖規則自然呈鎖定態。
-const LEVEL_IDS: readonly LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const LEVEL_IDS: readonly LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 function isLevelEntry(value: unknown): value is LevelSaveEntry {
   if (typeof value !== 'object' || value === null) return false;

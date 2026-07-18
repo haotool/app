@@ -128,6 +128,8 @@ declare global {
       scenePaused: () => boolean;
       gameTime: () => number;
       codexTab: () => string;
+      twinHud: () => { active: boolean; aRatio: number; bRatio: number };
+      tide: () => { waterY: number; phase: string } | null;
     }>;
   }
 }
@@ -212,6 +214,12 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     scenePaused: () => game.scene.isPaused(SceneKeys.Game),
     gameTime: () => gameScene()?.time.now ?? -1,
     codexTab: () => game.scene.getScene<CodexScene>(SceneKeys.Codex)?.tab ?? '',
+    // v11 觀測點（§70 收尾/§71 e2e）：HUD 雙節狀態、潮汐水位/相位（噴口相位走 __spStage）。
+    twinHud: () =>
+      (gameScene().registry.get('twinHud') as
+        | { active: boolean; aRatio: number; bRatio: number }
+        | undefined) ?? { active: false, aRatio: 0, bRatio: 0 },
+    tide: () => gameScene().tideState(),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       for (const child of internals().enemies.getGroup().getChildren()) {
