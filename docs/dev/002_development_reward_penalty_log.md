@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+127
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-18
+- ID：reward-park-keeper-r5-onprimary-sweep
+- 原因：round-4 四席揪出 onPrimary 殘債散佈 9 處（Racing/Kawaii 核心流程對比 1.37-2.49）＋權限卡遮關閉鈕可見不可點＋空態卡 label-in-name
+- 解法：text-white 全庫終掃判定表歸零（含 ARRIVED_ON_COLOR 新 token 與 UpdatePrompt 漸層深化）＋z-50 逃生附 RED 驗證 e2e＋accessible name 全文化；659 unit＋52 e2e 綠、+9 守門測試
+
+- 日期：2026-07-18
+- ID：penalty-park-keeper-onprimary-third-recurrence
+- 原因：onPrimary 同型債第三次復發（formatPlate→SW 路由→token 前景），前兩輪修復均只掃指名點未做全庫終掃
+- 解法：sentinel/token 類修復一律附全庫 grep 判定表（改/留每項附理由）＋token 迴歸斷言鎖熱點，審查必抽查判定表
 
 - 日期：2026-07-18
 - ID：penalty-papertrade-r4-orderbook-fit-dead-path
