@@ -52,6 +52,8 @@ interface MiniMapProps {
   mapKey?: string;
   cacheDurationDays?: number;
   photoData?: string;
+  /** 照片錨可否拖曳（預設 true；導航頁常態為錨點、編輯模式才開啟）。 */
+  photoDraggable?: boolean;
   onPhotoClick?: () => void;
   parkedHeading?: number;
   trackedViewportInsets?: Partial<MapViewportInsets>;
@@ -80,6 +82,7 @@ export default function MiniMap({
   mapKey,
   cacheDurationDays = CACHE_DAYS.DEFAULT,
   photoData,
+  photoDraggable = true,
   onPhotoClick,
   parkedHeading = 0,
   trackedViewportInsets,
@@ -330,6 +333,7 @@ export default function MiniMap({
           carPixelPos={carPixelPos}
           initialOffset={photoOffset}
           onOffsetCommit={onPhotoPositionChange}
+          draggable={photoDraggable}
         />
       )}
     </div>
