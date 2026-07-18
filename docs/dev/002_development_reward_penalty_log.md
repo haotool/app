@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+128
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-18
+- ID：penalty-papertrade-r4-orderbook-fit-dead-path
+- 原因：R4 訂單簿空簿骨架 early-return 未掛 rootRef、effect deps 又不含資料旗標，ResizeObserver 永不 observe 使檔數自適應整條失效；unit 以 no-op RO mock、e2e 僅斷言等高，CI 綠燈掩蓋出貨
+- 解法：骨架移入恆掛 ref 的 section 使首次 commit 即 observe，補可觸發的 RO unit mock 與 e2e 檔數/無內捲斷言，並收斂終審其餘發現（交易對切換殘留、加倉 hint 誤示、死常數、toast 與資金費率列重疊）
 
 - 日期：2026-07-18
 - ID：reward-papertrade-r4-trade-uiux
