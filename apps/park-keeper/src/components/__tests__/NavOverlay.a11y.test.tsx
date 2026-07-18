@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import NavOverlay from '../NavOverlay';
 import i18n from '@app/park-keeper/services/i18n';
 import { THEMES } from '@app/park-keeper/constants';
+import { ARRIVED_ON_COLOR } from '@app/park-keeper/config/colors';
 import type { ParkingRecord, ThemeConfig } from '@app/park-keeper/types';
 import { useNavigation, type CompassPermissionState } from '@app/park-keeper/hooks/useNavigation';
 
@@ -232,6 +233,10 @@ describe('NavOverlay - modal a11y', () => {
     // 兩顆按鈕 accessible name 必須不同，避免 SR/語音控制歧義與 e2e strict-mode 衝突。
     expect(closeButtons).toHaveLength(2);
     expect(new Set(names).size).toBe(2);
+
+    // 抵達 CTA 前景色跟隨 ARRIVED_ON_COLOR token：白字 on ARRIVED 綠僅 2.28:1（round-4 Sonnet F2）。
+    const arrivedCta = screen.getByRole('button', { name: '已抵達，關閉導航' });
+    expect(arrivedCta).toHaveStyle({ color: ARRIVED_ON_COLOR });
   });
 
   it('未填車號（sentinel）頂部車牌 pill 顯示待填文案而非裸露 N/A（formatPlate SSOT）', () => {

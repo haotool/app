@@ -315,7 +315,8 @@ export default function QuickEntry({
                 </span>
                 <div className="flex items-center gap-2 mt-1">
                   <label
-                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide text-white cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    style={{ color: theme.colors.onPrimary }}
                     onClick={() => vibrate(10)}
                   >
                     {t('action.retake_photo')}
@@ -529,8 +530,9 @@ export default function QuickEntry({
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               className={`h-14 rounded-2xl text-[13px] font-black border-2 flex items-center justify-center relative overflow-hidden
-                ${selectedFloor === f ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg' : 'bg-[var(--color-surface)] border-black/5 text-[var(--color-text)]'}
+                ${selectedFloor === f ? 'bg-[var(--color-primary)] border-[var(--color-primary)] shadow-lg' : 'bg-[var(--color-surface)] border-black/5 text-[var(--color-text)]'}
                 ${saveStatus !== 'idle' && selectedFloor !== f ? 'opacity-20' : ''}`}
+              style={selectedFloor === f ? { color: theme.colors.onPrimary } : undefined}
             >
               {saveStatus === 'saving' && selectedFloor === f ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -565,7 +567,8 @@ export default function QuickEntry({
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => void triggerAutoSave(selectedFloor)}
-                  className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg"
+                  className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg"
+                  style={{ color: theme.colors.onPrimary }}
                 >
                   <Check size={24} />
                 </motion.button>

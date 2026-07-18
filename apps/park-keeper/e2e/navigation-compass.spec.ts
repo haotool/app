@@ -207,6 +207,33 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     await expect(enableButton).toHaveCount(0);
     await expect(page.getByTestId('compass-arc')).toBeVisible();
   });
+
+  test('權限卡覆蓋時關閉導航仍可一鍵點擊離開（issue #759 逃生路徑）', async ({ page }) => {
+    // 模擬 iOS 13+ 權限手勢流：進入導航即顯示權限全覆蓋卡。
+    await page.addInitScript(() => {
+      (
+        DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
+      ).requestPermission = () => Promise.resolve('granted');
+      (
+        DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }
+      ).requestPermission = () => Promise.resolve('granted');
+    });
+
+    await page.goto('/');
+    await getManualEntryTrigger(page).click();
+    await page.getByRole('button', { name: 'B3', exact: true }).click();
+    await page.getByTestId('pickup-hero-card').click();
+
+    // 權限卡覆蓋中（未授權）。
+    await expect(page.getByRole('button', { name: '啟用羅盤' })).toBeVisible();
+
+    // 關閉導航必須通過 Playwright actionability hit-test（非 force），
+    // 覆蓋層不得攔截點擊——可見但不可點即假 affordance（round-4 Grok 實測）。
+    const closeButton = page.getByRole('button', { name: '關閉導航', exact: true });
+    await closeButton.click();
+    await expect(closeButton).not.toBeVisible();
+    await expect(getManualEntryTrigger(page)).toBeVisible();
+  });
 });
 
 /**

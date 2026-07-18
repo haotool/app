@@ -2,6 +2,7 @@
  * NavPermissionSheet – 羅盤權限／校準全覆蓋卡（自 NavOverlay 純搬移拆出）。
  * 全頁覆蓋屬設計意圖：prompt（iOS 手勢授權）、denied（重試引導）、
  * calibrate（8 字校準＋手動重新偵測）三態。
+ * 覆蓋層 z-40 低於 NavOverlay header（z-50）：三態下「關閉導航」恆可點（issue #759）。
  */
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Compass } from 'lucide-react';
