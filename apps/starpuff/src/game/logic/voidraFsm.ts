@@ -1,7 +1,7 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
 
-// 蝕星魔核 Voidra FSM 純邏輯（GAME_DESIGN §81，不 import phaser），vitest 對象。
+// 蝕星魔核 Voidra FSM 純邏輯（GAME_DESIGN §82，不 import phaser），vitest 對象。
 // 場控收束型三段（主計畫 §6.3 v12 定案：P2＝定點轟炸生存段）：
 // P1 王座戰（重力牽引/星屑彈環/虛空爪擊）→ P2 生存段（核心升頂不可及、40s 波次表
 // 定點轟炸、3 次過熱窗＝唯一輸出窗、沿途空投 5 枚星屑）→ P3 核心決戰（全場低重力
@@ -69,7 +69,7 @@ export const VOIDRA_SURVIVAL = {
   ] as readonly SurvivalWave[],
 } as const;
 
-// Voidra EX 專屬差分（§81）：P2 轟炸密度 +25%（呈現層 meteor 間隔 ÷1.25）、
+// Voidra EX 專屬差分（§82）：P2 轟炸密度 +25%（呈現層 meteor 間隔 ÷1.25）、
 // P3 螺旋三層；HP 沿 EX_MODS 共用 ×1.5（兩魔王既成慣例，主計畫 §12-v1.2）。
 export const EX_VOIDRA = {
   bombardmentDensityMul: 1.25,
@@ -103,7 +103,7 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p3: VOIDRA.enrageSpeedMultiplier,
 };
 
-// 三階段招式循環（§81）：P1 牽引/彈環/爪擊；P2 波次表驅動（無循環）；P3 彈幕/潮汐。
+// 三階段招式循環（§82）：P1 牽引/彈環/爪擊；P2 波次表驅動（無循環）；P3 彈幕/潮汐。
 export function voidraAttackCycle(phase: BossPhase): readonly VoidraAction[] {
   switch (phase) {
     case 'p1':
@@ -132,9 +132,9 @@ export interface VoidraFsm {
   readonly shardsCollected: number;
   tick(deltaMs: number): VoidraCommand | null;
   takeDamage(amount: number): VoidraHitEvent[];
-  // 星屑收集（§82 星核共鳴單一真值）：滿 5 枚回 complete（僅回報一次）。
+  // 星屑收集（§83 星核共鳴單一真值）：滿 5 枚回 complete（僅回報一次）。
   collectShard(): { collected: number; complete: boolean };
-  // 段起點重試（§81 anti-softlock）：P2/P3 死亡不回滾整場，重置至該段起點。
+  // 段起點重試（§82 anti-softlock）：P2/P3 死亡不回滾整場，重置至該段起點。
   resetToPhase(phase: 'p2' | 'p3'): void;
 }
 
@@ -227,7 +227,7 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
     events.push({ kind: 'phase', phase: next });
   };
 
-  // P2 免傷帶（§81 唯一輸出窗）：過熱窗外核心升頂不可及，任何傷害忽略。
+  // P2 免傷帶（§82 唯一輸出窗）：過熱窗外核心升頂不可及，任何傷害忽略。
   const survivalImmune = (): boolean =>
     phase === 'p2' && !(survivalMs >= 0 && survivalMs < overheatUntilMs);
 

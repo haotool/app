@@ -18,7 +18,7 @@ import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const ACCENT = '#7a5fb8';
-// v12 分區分頁（§77）：每頁 ≤5 節點，半徑回復 24（v11 單頁 20 節點極限已解除）。
+// v12 分區分頁（§78）：每頁 ≤5 節點，半徑回復 24（v11 單頁 20 節點極限已解除）。
 const NODE_RADIUS = 24;
 // 頁內鋸齒高度：走動關 300/262 交錯、魔王節點固定最高階 224（EX 徽鈕淨空恆成立）。
 const NODE_Y_LOW = 300;
@@ -43,7 +43,7 @@ const NODE_TINTS: Record<string, number> = {
   'bg-valley': 0xe89040,
   'bg-kilnway': 0xd07830,
   'bg-kilnhall': 0xc86828,
-  // v12 五區星核聖域（§80）。
+  // v12 五區星核聖域（§81）。
   'bg-astral': 0xc8b8f0,
   'bg-meteorfield': 0xa898e8,
   'bg-starcourt': 0x8878d0,
@@ -57,11 +57,11 @@ const RESET_ARM_MS = 3000;
 
 interface MapSceneData {
   reveal?: LevelId | null;
-  // 分頁狀態（§77）：頁籤切換以 restart 帶入；缺省由進度推導。
+  // 分頁狀態（§78）：頁籤切換以 restart 帶入；缺省由進度推導。
   page?: number;
 }
 
-// 迷霧世界地圖（GAME_DESIGN §39/§77）：分區分頁——每區一頁、頁籤直達已解鎖區；
+// 迷霧世界地圖（GAME_DESIGN §39/§78）：分區分頁——每區一頁、頁籤直達已解鎖區；
 // 節點 data-driven 自 LEVELS 區間過濾；未解鎖蓋迷霧＋問號、已通關顯示星星與最佳
 // 用時、當前可挑戰節點脈動；點擊已解鎖節點直接進入該關。禁自由漫遊大地圖（KISS）。
 export class MapScene extends Phaser.Scene {
@@ -150,7 +150,7 @@ export class MapScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ESC', () => this.scene.start(SceneKeys.Title));
   }
 
-  // 當前分頁（§77）：優先 restart 帶入的頁籤選擇；其次揭霧節點所屬區；
+  // 當前分頁（§78）：優先 restart 帶入的頁籤選擇；其次揭霧節點所屬區；
   // 缺省為當前可挑戰關所屬區（全通關回末頁）。
   private resolveZone(save: SaveData, pages: readonly ZoneSpec[]): ZoneSpec {
     const targetId =
@@ -163,12 +163,12 @@ export class MapScene extends Phaser.Scene {
     return matched;
   }
 
-  // 區解鎖（§77 分頁即區域錨點）：區首關解鎖＝前區魔王已擊破。
+  // 區解鎖（§78 分頁即區域錨點）：區首關解鎖＝前區魔王已擊破。
   private isZoneUnlocked(save: SaveData, zone: ZoneSpec): boolean {
     return isLevelUnlocked(save, zone.firstLevelId as LevelId);
   }
 
-  // 頁籤列（§77）：已解鎖區可直達（等效快速旅行）；未解鎖區灰顯無入口。
+  // 頁籤列（§78）：已解鎖區可直達（等效快速旅行）；未解鎖區灰顯無入口。
   private renderZoneTabs(save: SaveData, pages: readonly ZoneSpec[], activeZone: ZoneSpec): void {
     const { width } = this.scale;
     const tabW = Math.min(150, (width - 60) / pages.length);
@@ -202,7 +202,7 @@ export class MapScene extends Phaser.Scene {
     });
   }
 
-  // 頁標頭（§77 引用 P-11 分項透明化）：該區彩蛋 found/total。
+  // 頁標頭（§78 引用 P-11 分項透明化）：該區彩蛋 found/total。
   private renderZoneHeader(save: SaveData, zone: ZoneSpec): void {
     const inZone = levelsInZone(zone, LEVELS);
     const total = inZone.reduce((sum, level) => sum + level.easterEggs.length, 0);

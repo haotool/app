@@ -1,4 +1,4 @@
-// 流星雨純邏輯（GAME_DESIGN §78，不 import phaser），vitest 對象。
+// 流星雨純邏輯（GAME_DESIGN §79，不 import phaser），vitest 對象。
 // 關卡級環境彈幕（主計畫 §5 L18）：落點預警 0.8s → 隕星直墜（可被星彈擊碎）→
 // 落地餘燼 0.4s 後消散。anti-softlock（§10.2-7）：預警 ≥0.7s、開門後門前 ±120px
 // 禁投、同屏 ≤3（效能預算）；玩家所在縱帶 ±48px 禁投（交叉不變式 14 滯空無水平

@@ -90,10 +90,10 @@ export interface LevelSpec {
   arenaBuff?: BuffId;
   // v11 糖漿潮汐（§71）：關卡級週期漲落；dry-window 不變式見 levels.test。
   tide?: TideSpec;
-  // v12 低重力（§80）：關卡級重力係數（缺省 1.0＝既有零回歸），GameScene 進關單點注入；
+  // v12 低重力（§81）：關卡級重力係數（缺省 1.0＝既有零回歸），GameScene 進關單點注入；
   // 值域 [0.5, 1.0] 由 levels.test 守門（主計畫 §10.2-6）。
   gravityScale?: number;
-  // v12 流星雨（§78）：關卡級環境彈幕；預警/排除帶不變式見 logic/meteor.ts 與 levels.test。
+  // v12 流星雨（§79）：關卡級環境彈幕；預警/排除帶不變式見 logic/meteor.ts 與 levels.test。
   meteor?: MeteorSpec;
 }
 

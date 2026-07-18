@@ -190,7 +190,7 @@ export class GameScene extends Phaser.Scene {
   private eliteRooms: EliteRoomHandle[] = [];
 
   private tide: TideHandle | null = null;
-  // 流星雨（§78）：關卡級環境彈幕；無配置關為 null。
+  // 流星雨（§79）：關卡級環境彈幕；無配置關為 null。
   private meteor: MeteorSystem | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
@@ -274,7 +274,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
-    // 流星雨（§78）：關卡級配置建立；落點排除與傷害結算見 advanceMeteors/addOverlaps。
+    // 流星雨（§79）：關卡級配置建立；落點排除與傷害結算見 advanceMeteors/addOverlaps。
     this.meteor = this.level.meteor ? createMeteorSystem(this, this.level.meteor) : null;
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
       adjustSpawn: (kind, y) =>
@@ -538,7 +538,7 @@ export class GameScene extends Phaser.Scene {
     body.setVelocity(soaked.vx, soaked.vy);
   }
 
-  // 流星雨逐幀結算（§78）：波次推進委派呈現層；排除帶＝玩家縱帶＋開門後門前帶。
+  // 流星雨逐幀結算（§79）：波次推進委派呈現層；排除帶＝玩家縱帶＋開門後門前帶。
   private advanceMeteors(deltaMs: number): void {
     if (!this.meteor) return;
     const view = this.cameras.main.worldView;
@@ -550,7 +550,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // e2e 觀測點（§78）：墜落中/餘燼/預警圈數量；無流星雨關回 null。
+  // e2e 觀測點（§79）：墜落中/餘燼/預警圈數量；無流星雨關回 null。
   meteorState(): { falling: number; embers: number; telegraphs: number } | null {
     return this.meteor?.state() ?? null;
   }
@@ -846,7 +846,7 @@ export class GameScene extends Phaser.Scene {
       this.damagePlayer(this.bossTouchDamage, shockwave.x);
     });
 
-    // 流星雨（§78）：隕星可被星彈擊碎（碎裂演出、星彈吸收）；隕星與餘燼命中玩家
+    // 流星雨（§79）：隕星可被星彈擊碎（碎裂演出、星彈吸收）；隕星與餘燼命中玩家
     // 走 damagePlayer 單一入口（i-frame/護盾泡自然生效），隕星命中即碎。
     if (this.meteor) {
       const meteorGroup = this.meteor.getMeteors();

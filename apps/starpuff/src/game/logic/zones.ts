@@ -1,6 +1,6 @@
 import type { LevelSpec } from './levels';
 
-// 五區分頁資料 SSOT（GAME_DESIGN §77，主計畫 §2.2，不 import phaser），vitest 對象。
+// 五區分頁資料 SSOT（GAME_DESIGN §78，主計畫 §2.2，不 import phaser），vitest 對象。
 // 分區分頁地圖：每區一頁＋頁籤導航；區解鎖＝區首關解鎖（前區魔王擊破）。
 // 節點清單由 LEVELS 實際條目推導（區間過濾），關卡逐列車擴充時分頁零改動。
 // 區間端點取 number：LevelId 聯集隨列車逐步擴充，分區表先行涵蓋全 20 關藍圖。

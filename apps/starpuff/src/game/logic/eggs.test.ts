@@ -164,7 +164,7 @@ describe('advanceEgg：twin-finish（§70）', () => {
   });
 });
 
-describe('advanceEgg：survive-collect（§82）', () => {
+describe('advanceEgg：survive-collect（§83）', () => {
   const spec: EasterEggSpec = { trigger: 'survive-collect', reward: 'full-magazine' };
 
   it('收到星核共鳴事件觸發一次並鎖存；無關事件不推進', () => {

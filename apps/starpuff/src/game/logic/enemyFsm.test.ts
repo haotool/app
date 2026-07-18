@@ -437,7 +437,7 @@ describe('Splatta 四態時序（§73 熔糖投手）', () => {
   });
 });
 
-describe('Twinkla 三態時序（§79 星屑幽靈）', () => {
+describe('Twinkla 三態時序（§80 星屑幽靈）', () => {
   it('虛化期滿轉星光前搖，前搖期滿實體化，實體期滿回虛化', () => {
     expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 17, 16).state).toBe('phased');
     expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 16, 16)).toEqual({
@@ -472,7 +472,7 @@ describe('Twinkla 三態時序（§79 星屑幽靈）', () => {
   });
 });
 
-describe('Cometa 四態時序（§79 彗尾飛魚）', () => {
+describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
   it('巡游遇觸發轉鎖定，鎖定期滿俯衝，俯衝期滿回升再巡游', () => {
     expect(tickCometa('glide', 500, 16, false).state).toBe('glide');
     expect(tickCometa('glide', 500, 16, true)).toEqual({

@@ -10,7 +10,7 @@ import {
 } from '../logic/meteor';
 import { playSfx } from '../audio/sfx';
 
-// 流星雨呈現層（GAME_DESIGN §78）：波次節拍/落點抽選由 logic/meteor.ts 純函式導出，
+// 流星雨呈現層（GAME_DESIGN §79）：波次節拍/落點抽選由 logic/meteor.ts 純函式導出，
 // 本模組負責預警圈、隕星墜落、著地餘燼與碎裂演出；傷害結算由 GameScene overlap 承接。
 
 const GROUND_TOP = VIEW.height - 80;

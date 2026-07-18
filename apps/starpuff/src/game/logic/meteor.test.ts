@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { METEOR, advanceMeteorTimer, meteorSpawnY, pickMeteorX } from './meteor';
 
-describe('流星雨純邏輯（§78 / 主計畫 §10.2-7）', () => {
+describe('流星雨純邏輯（§79 / 主計畫 §10.2-7）', () => {
   it('預警時長 ≥0.7s（anti-softlock 不變式）且同屏上限 3', () => {
     expect(METEOR.telegraphMs).toBeGreaterThanOrEqual(700);
     expect(METEOR.maxOnScreen).toBe(3);

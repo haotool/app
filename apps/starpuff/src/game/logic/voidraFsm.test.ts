@@ -23,7 +23,7 @@ function tickUntil(
   return null;
 }
 
-describe('Voidra 常數與波次表（§81，主計畫 §6.3/§10.2-8）', () => {
+describe('Voidra 常數與波次表（§82，主計畫 §6.3/§10.2-8）', () => {
   it('HP 階梯 110 > Syrona 90；閾值 70%/40%；裂核大窗 ≥3.5s', () => {
     expect(VOIDRA.maxHp).toBe(110);
     expect(VOIDRA.p2HpRatio).toBe(0.7);
@@ -221,7 +221,7 @@ describe('Voidra FSM：段起點重試（resetToPhase）', () => {
   });
 });
 
-describe('Voidra EX 差分（§81）', () => {
+describe('Voidra EX 差分（§82）', () => {
   it('HP 沿 EX_MODS ×1.5＝165；螺旋三層；P2 密度倍率 1.25', () => {
     const fsm = createVoidraFsm({ ex: true });
     expect(fsm.maxHp).toBe(Math.round(110 * EX_MODS.hpMul));

@@ -6,7 +6,7 @@ import type { StarFlavor } from '../core/config';
 // GameScene 收到 twinFinish 事件即餵入，本模組只負責鎖存與獎勵對表。
 // v11（§75）：vent-hit-count 窯風三連——乘噴口升空命中計數由 syrona 呈現層持有
 //（沿 twin-finish 單一真值模式），滿 3 次事件餵入即鎖存。
-// v12（§82）：survive-collect 星核共鳴——P2 生存段星屑收集計數由 voidra FSM 持有
+// v12（§83）：survive-collect 星核共鳴——P2 生存段星屑收集計數由 voidra FSM 持有
 //（單一真值），5 枚全收事件餵入即鎖存。
 
 export type EggReward = 'hp-up' | 'full-magazine' | 'gold-star' | 'heal';

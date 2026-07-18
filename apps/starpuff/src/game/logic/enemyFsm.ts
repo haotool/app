@@ -454,7 +454,7 @@ export function tickSplatta(
   return { state, stateMs: next, entered: null };
 }
 
-// 星屑幽靈 Twinkla 三態（§79）：虛化 phased 2.0s（半透明、不可吸不可傷、穿身無害）→
+// 星屑幽靈 Twinkla 三態（§80）：虛化 phased 2.0s（半透明、不可吸不可傷、穿身無害）→
 // 星光聚攏前搖 shimmer 0.5s（telegraph）→ 實體 solid 1.8s（緩慢追飄，可吸可傷窗）→ 回虛化。
 export const TWINKLA_FSM = {
   phasedMs: 2000,
@@ -490,14 +490,14 @@ export function tickTwinkla(
   return { state, stateMs: next, entered: null };
 }
 
-// 受擊決策（§79）：僅實體窗正常結算，虛化/前搖穿身免傷（沿 drilly 慣例）。
+// 受擊決策（§80）：僅實體窗正常結算，虛化/前搖穿身免傷（沿 drilly 慣例）。
 export type TwinklaHitOutcome = 'immune' | 'vulnerable';
 
 export function resolveTwinklaHit(state: TwinklaState): TwinklaHitOutcome {
   return state === 'solid' ? 'vulnerable' : 'immune';
 }
 
-// 彗尾飛魚 Cometa 四態（§79）：高處巡游 glide →（玩家進觸發域）→ 鎖定前搖 lock 0.55s
+// 彗尾飛魚 Cometa 四態（§80）：高處巡游 glide →（玩家進觸發域）→ 鎖定前搖 lock 0.55s
 //（閃爍，鎖定後不修正）→ 斜向俯衝 dash 0.6s（420px/s，沿路拖 damaging 彗尾）→
 // 回升 recover → glide。恆可吸（疾風味）。
 export const COMETA_FSM = {
