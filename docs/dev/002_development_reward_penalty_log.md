@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-park-keeper-r6-axe-guard
+- 原因：round-5 廣域掃描揭示「每輪稽核都有新死角」meta 問題（Settings 頁 opacity dimming 存活四輪未被抓）＋無任何 a11y 自動化守門
+- 解法：opacity dimming 全庫歸零（判定表 39 改/16 留）＋axe e2e 常駐守門（五路由×雙主題全規則集 0 violations，首跑即抓 2 條未知缺陷）＋Kawaii 文字階層守門＋/about 對比處方；662 unit＋72 e2e 綠
 
 - 日期：2026-07-18
 - ID：reward-park-keeper-r5-onprimary-sweep
