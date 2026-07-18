@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { EX_NOCTRA, NOCTRA, createNoctraFsm, type NoctraCommand } from '../logic/noctraFsm';
+import { NOCTRA_FLIGHT, approachPoint, hoverPatternPoint } from '../logic/noctraFlight';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
@@ -13,13 +14,9 @@ import { spawnTelegraph } from './fx';
 const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 150;
 const BODY_H = 110;
-// 空中型（§54）：常態盤旋高度與側緣邊距。
-// 難度根修（實測席稽核）：168 → 246——含 ±14 呼吸浮動下，單跳頂點星彈（y≈282）
-// 恆在命中帶（|Δy| < 星半徑＋碰撞半高 ≈59）內，地面保底線（單跳點射）穩定成立；
-// 拍翅為加成非必需。
-const HOVER_Y = 246;
-// 難度根修：130 → 190——收窄盤旋掃幅，牆側留出玩家可站的安全喘息帶（錨點打法成立）。
-const SIDE_MARGIN_X = 190;
+// 空中型（§54）：常態盤旋高度（§63 難度根修 168 → 246）——含 ±14 呼吸浮動下，
+// 單跳頂點星彈恆在命中帶內；數值 SSOT 已收斂 logic/noctraFlight.ts（§64）。
+const HOVER_Y = NOCTRA_FLIGHT.hoverY;
 // 俯掠帶高度（§54 P3）：站立可躲（帶底 330 < 站立頂 ~360）、跳躍會撞。
 const SWEEP_Y = 280;
 // 招式預警時長：dive 落點標記、sweep 橫帶閃爍、bomb 落點標記提前量。
@@ -495,14 +492,19 @@ export function createNoctra(
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 盤旋駕駛：水平緩擺＋垂直呼吸浮動；演出 tween 接管期間讓位。
-      // 難度根修：掃速 0.0009 → 0.0007——峰值橫移降至玩家走速以下（P1 約 208px/s），
-      // 保持間距的走位真正可行（原值 267px/s 追過玩家 220px/s）。
+      // §64 P0 熱修：接管結束改速度上限逼近歸位（logic/noctraFlight），禁止相位
+      // 座標直寫——俯衝/俯掠/長暈返空一律連續飛行，杜絕瞬移；貼軌後逐幀貼合目標。
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
-        const span = viewW() / 2 - SIDE_MARGIN_X;
-        sprite.x = viewW() / 2 + Math.sin(hoverMs * 0.0007) * span;
-        sprite.y = HOVER_Y + Math.sin(hoverMs * 0.0021) * 14;
-        sprite.setFlipX(Math.cos(hoverMs * 0.0007) < 0);
+        const target = hoverPatternPoint(hoverMs, viewW());
+        const next = approachPoint(
+          { x: sprite.x, y: sprite.y },
+          target,
+          NOCTRA_FLIGHT.maxSpeedPxPerSec * fsm.speedFactor,
+          deltaMs,
+        );
+        sprite.setPosition(next.x, next.y);
+        sprite.setFlipX(Math.cos(hoverMs * NOCTRA_FLIGHT.swayFreq) < 0);
       }
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;
