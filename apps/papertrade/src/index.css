@@ -70,16 +70,31 @@
 }
 
 @layer base {
+  /* App 級體感（ADR-R5-02）：鎖字級自動放大、全向禁 overscroll 鏈、去 tap 高亮與文字選取。 */
   html {
     background-color: var(--color-bg);
     color: var(--color-text);
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
   }
 
+  /* manipulation＝pan-x pan-y pinch-zoom 別名：去 double-tap zoom 與點擊延遲，不擋捲動；
+     body 級覆蓋全子樹（含非互動區），全站圖表無自訂 pinch 手勢故安全。 */
   body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   :focus-visible {
