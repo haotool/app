@@ -4,7 +4,7 @@ import { type Position } from '../../engine/types';
 import { useTradeStore } from '../../stores/tradeStore';
 import { unrealizedPnl } from '../../engine/math';
 import { formatAmount, formatPrice } from '../../lib/format';
-import { parsePositiveInput, TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
+import { parsePositiveInput, TPSL_INPUT_MESSAGES, TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 
 interface TpSlSheetProps {
   open: boolean;
@@ -29,11 +29,11 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
     const tpValue = tp.trim() === '' ? null : parsePositiveInput(tp);
     const slValue = sl.trim() === '' ? null : parsePositiveInput(sl);
     if (tp.trim() !== '' && tpValue === null) {
-      setError('止盈價須為大於 0 的數字');
+      setError(TPSL_INPUT_MESSAGES.tp);
       return;
     }
     if (sl.trim() !== '' && slValue === null) {
-      setError('止損價須為大於 0 的數字');
+      setError(TPSL_INPUT_MESSAGES.sl);
       return;
     }
 

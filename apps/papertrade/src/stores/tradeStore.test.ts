@@ -307,6 +307,8 @@ describe('parsePersistedTradeState', () => {
             fee: 0.64,
             positionId: null,
             createdAt: NOW,
+            takeProfit: 3000,
+            stopLoss: 3400,
           },
         ],
         history: [
@@ -327,6 +329,30 @@ describe('parsePersistedTradeState', () => {
       },
     };
     expect(parsePersistedTradeState(state)).toEqual(state);
+  });
+
+  it('fills null tp/sl for legacy orders persisted before R4-6', () => {
+    const legacyOrder = {
+      id: 'o1',
+      kind: 'open',
+      symbol: 'ETHUSDT',
+      side: 'short',
+      qty: 1,
+      limitPrice: 3200,
+      leverage: 5,
+      margin: 640,
+      fee: 0.64,
+      positionId: null,
+      createdAt: NOW,
+    };
+    const parsed = parsePersistedTradeState({
+      account: { balance: 9000, positions: [], orders: [legacyOrder], history: [] },
+    });
+    expect(parsed?.account.orders[0]).toEqual({
+      ...legacyOrder,
+      takeProfit: null,
+      stopLoss: null,
+    });
   });
 
   it('rejects legacy payloads without the openFee ledger fields', () => {

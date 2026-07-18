@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { ChevronDown } from 'lucide-react';
@@ -197,13 +197,24 @@ function MarketPanelBody({ tab, symbol }: { tab: MarketPanelTab; symbol: MarketS
 
 function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
   const [tab, setTab] = useState<MarketPanelTab>('orderbook');
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // 切換分頁時若面板頂部已捲出視口，回捲對齊；reduced-motion 改瞬時捲動。
+  function selectTab(next: MarketPanelTab) {
+    setTab(next);
+    const section = sectionRef.current;
+    if (section === null || section.getBoundingClientRect().top >= 0) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    section.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
 
   return (
-    <section>
+    <section ref={sectionRef}>
+      {/* lg 由右欄 wrapper 統一補 pt-4：tab 列頂緣對齊左欄 pair 標題列（R3 P2-3）。 */}
       <div
         role="tablist"
         aria-label="市場資訊"
-        className="flex gap-4 border-b border-border px-4 pt-4"
+        className="flex gap-4 border-b border-border px-4 pt-4 lg:pt-0"
       >
         {MARKET_PANEL_TABS.map(({ id, label }) => (
           <button
@@ -211,7 +222,7 @@ function MarketPanels({ symbol }: { symbol: MarketSymbol }) {
             type="button"
             role="tab"
             aria-selected={tab === id}
-            onClick={() => setTab(id)}
+            onClick={() => selectTab(id)}
             className={clsx(
               'min-h-11 min-w-11 border-b-2 pb-1 text-label transition-colors',
               tab === id
@@ -275,21 +286,24 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
         </div>
       </div>
 
-      <MarketPanels symbol={symbol} />
+      {/* lg 改停靠右欄底（static 入流），不再視窗置中浮蓋左欄圖表（R3 P2-2）。 */}
+      <div className="lg:min-w-0 lg:pt-4">
+        <MarketPanels symbol={symbol} />
 
-      <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur">
-        <Link
-          to={`/trade?symbol=${symbol}&side=long`}
-          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
-        >
-          買多
-        </Link>
-        <Link
-          to={`/trade?symbol=${symbol}&side=short`}
-          className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
-        >
-          賣空
-        </Link>
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur lg:static lg:z-auto lg:mx-0 lg:max-w-none lg:bg-transparent lg:px-4 lg:pb-0 lg:backdrop-blur-none">
+          <Link
+            to={`/trade?symbol=${symbol}&side=long`}
+            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
+          >
+            買多
+          </Link>
+          <Link
+            to={`/trade?symbol=${symbol}&side=short`}
+            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
+          >
+            賣空
+          </Link>
+        </div>
       </div>
 
       {pickerOpen && (

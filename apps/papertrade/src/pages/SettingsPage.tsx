@@ -1,6 +1,7 @@
 import { Info, ShieldAlert } from 'lucide-react';
 import { DISCLAIMER_TEXT } from '../components/DisclaimerDialog';
 import { ResetAccountButton } from '../components/ResetAccountButton';
+import { APP_VERSION } from '../config/version';
 
 export function SettingsPage() {
   return (
@@ -18,6 +19,7 @@ export function SettingsPage() {
             零風險模擬合約交易所。行情為 Bybit
             公開即時數據，下單、持倉與損益全部在你的裝置上以虛擬資金模擬計算。
           </p>
+          <p className="mt-2 text-caption text-text-3 tabular-nums">版本 v{APP_VERSION}</p>
         </div>
       </section>
 

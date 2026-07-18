@@ -29,19 +29,20 @@ export function tickerMessage(symbol: string, price = priceOf(symbol)): string {
 export function orderbookMessage(topic: string): string {
   const symbol = topic.split('.').at(-1) ?? 'BTCUSDT';
   const mid = priceOf(symbol);
+  // 各 6 檔＝交易頁 TRADE_ORDERBOOK_LEVELS 上限，供檔數自適應裁切驗證；首檔維持 ±0.1%。
   return JSON.stringify({
     topic,
     type: 'snapshot',
     data: {
       s: symbol,
-      b: [
-        [String(mid * 0.999), '1.5'],
-        [String(mid * 0.998), '2.5'],
-      ],
-      a: [
-        [String(mid * 1.001), '1.2'],
-        [String(mid * 1.002), '3.1'],
-      ],
+      b: Array.from({ length: 6 }, (_, index) => [
+        String((mid * (1000 - index - 1)) / 1000),
+        String(1.5 + index),
+      ]),
+      a: Array.from({ length: 6 }, (_, index) => [
+        String((mid * (1000 + index + 1)) / 1000),
+        String(1.2 + index),
+      ]),
       u: 100,
     },
   });

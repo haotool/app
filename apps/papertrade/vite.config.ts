@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { APP_CONFIG, SITE_CONFIG } from './app.config.mjs';
 
 const _require = createRequire(import.meta.url);
+const { version: appVersion } = _require('./package.json') as { version: string };
 
 // [fix] Vite 8 dev server plugin container does not invoke resolveId hooks that use the new
 // @rolldown/pluginutils filter syntax. vite-plugin-pwa only strips the filter when
@@ -118,6 +119,9 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    define: {
+      __APP_VERSION__: JSON.stringify(appVersion),
+    },
     resolve: {
       alias: {
         '@app/papertrade': resolve(__dirname, './src'),

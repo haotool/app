@@ -136,6 +136,25 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expectNoViolations();
   });
 
+  it('trade page limit mode, tp/sl fold and margin sheet pass', async () => {
+    const user = userEvent.setup();
+    renderRoute('/trade');
+    feedOrderbook();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    expect(screen.getByRole('button', { name: '帶入買1價' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '帶入賣1價' })).toBeInTheDocument();
+    expectNoViolations();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    expect(screen.getByRole('textbox', { name: /止盈價/ })).toBeInTheDocument();
+    expectNoViolations();
+
+    await user.click(screen.getByRole('button', { name: '保證金模式說明：逐倉' }));
+    expect(screen.getByRole('dialog', { name: '保證金模式' })).toBeInTheDocument();
+    expectNoViolations();
+  });
+
   it('pair selector and leverage sheets pass', async () => {
     const user = userEvent.setup();
     renderRoute('/trade');

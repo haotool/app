@@ -7,7 +7,7 @@ export const LEVERAGE_MAX = 125;
 export const DEFAULT_LEVERAGE = 10;
 export const MIN_ORDER_NOTIONAL_USDT = 5;
 
-export const SIZE_PERCENT_PRESETS = [10, 25, 50, 75, 100] as const;
+export const SIZE_SLIDER_TICKS = [0, 25, 50, 75, 100] as const;
 export const CLOSE_PERCENT_PRESETS = [25, 50, 75, 100] as const;
 export const LEVERAGE_PRESETS = [1, 5, 10, 25, 50, 75, 100, 125] as const;
 export const QTY_DISPLAY_DECIMALS = 6;

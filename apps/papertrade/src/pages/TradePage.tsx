@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Inbox } from 'lucide-react';
 import {
@@ -12,11 +12,12 @@ import { DEFAULT_LEVERAGE } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { BottomSheet } from '../components/BottomSheet';
 import { CoinBadge } from '../components/CoinBadge';
 import { EmptyState } from '../components/EmptyState';
 import { FundingRateBadge } from '../components/FundingRateBadge';
 import { PriceFlash } from '../components/PriceFlash';
-import { CompactOrderBook } from '../components/OrderBookPanel';
+import { CompactOrderBook, type BestQuote } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
 import { type Side } from '../engine/types';
 import { LeverageSheet } from '../components/trade/LeverageSheet';
@@ -25,7 +26,7 @@ import { PositionCard } from '../components/trade/PositionCard';
 import { OrderList } from '../components/trade/OrderList';
 import { trimNumberInput } from '../lib/tradeForm';
 
-type SheetKind = 'pair' | 'leverage' | null;
+type SheetKind = 'pair' | 'leverage' | 'margin' | null;
 
 function resolveInitialSymbol(raw: string | null): MarketSymbol {
   if (raw !== null && isMarketSymbol(raw)) return raw;
@@ -78,6 +79,7 @@ export function TradePage() {
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const positions = useTradeStore((state) => state.account.positions);
+  const bestQuoteRef = useRef<BestQuote>({ bid: null, ask: null });
 
   const meta = SYMBOL_META[symbol];
 
@@ -116,14 +118,24 @@ export function TradePage() {
             </PriceFlash>
           </span>
         </button>
-        <button
-          type="button"
-          onClick={() => setSheet('leverage')}
-          aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
-          className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
-        >
-          {formatAmount(leverage, 1)}x
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSheet('margin')}
+            aria-label="保證金模式說明：逐倉"
+            className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
+          >
+            逐倉
+          </button>
+          <button
+            type="button"
+            onClick={() => setSheet('leverage')}
+            aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
+            className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
+          >
+            {formatAmount(leverage, 1)}x
+          </button>
+        </div>
       </header>
 
       <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
@@ -133,7 +145,9 @@ export function TradePage() {
 
       <div className="flex gap-3 px-4 lg:gap-6">
         <div className="min-w-0 flex-[0.58]">
+          {/* key=symbol：切換交易對重置表單內部狀態（數量、TP/SL 值與展開態），避免跨幣殘留。 */}
           <OrderForm
+            key={symbol}
             symbol={symbol}
             leverage={leverage}
             mode={mode}
@@ -141,14 +155,19 @@ export function TradePage() {
             limitPrice={limitPrice}
             onLimitPriceChange={setLimitPrice}
             emphasisSide={emphasisSide}
+            bestQuoteRef={bestQuoteRef}
           />
         </div>
-        <div className="min-w-0 flex-[0.42]">
-          <CompactOrderBook
-            symbol={symbol}
-            levels={TRADE_ORDERBOOK_LEVELS}
-            onPriceSelect={handlePriceSelect}
-          />
+        {/* 右欄等高契約：cell 不參與撐高，訂單簿以 absolute 填滿左欄表單自然高度。 */}
+        <div className="relative min-w-0 flex-[0.42]">
+          <div className="absolute inset-0">
+            <CompactOrderBook
+              symbol={symbol}
+              levels={TRADE_ORDERBOOK_LEVELS}
+              onPriceSelect={handlePriceSelect}
+              quoteRef={bestQuoteRef}
+            />
+          </div>
         </div>
       </div>
 
@@ -203,6 +222,13 @@ export function TradePage() {
           onClose={() => setSheet(null)}
           onConfirm={setLeverage}
         />
+      )}
+      {sheet === 'margin' && (
+        <BottomSheet open title="保證金模式" onClose={() => setSheet(null)}>
+          <p className="pb-2 text-label leading-relaxed text-text-2">
+            本模擬固定採「逐倉」隔離保證金：每筆持倉的保證金與損益各自獨立，觸發強平時僅損失該筆持倉的保證金，不會動用帳戶其餘可用資金。
+          </p>
+        </BottomSheet>
       )}
     </div>
   );
