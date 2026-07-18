@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-crouch-dropready-ux
+- 原因：下跳穿落缺乏可供發現的視覺回饋——蹲下無姿態變化、玩家無從得知「跳鍵此刻＝下跳」，操作可信度低
+- 解法：蹲姿走 POST_UPDATE 視覺通道（乘算壓扁＋下沉、PRE_UPDATE 還原，物理不見蹲縮防擠壓迴圈同型）＋跳鍵 is-drop-ready 變琥珀與箭頭翻轉朝下（純 CSS 圖形鍵帽零文字）；advanceCrouch 純函式 3 單測＋指示決策 2 單測，真瀏覽器驗證蹲→變色→穿落→還原全鏈
 
 - 日期：2026-07-19
 - ID：penalty-starpuff-downjump-squash-loop

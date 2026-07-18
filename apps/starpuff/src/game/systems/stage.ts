@@ -39,6 +39,8 @@ export interface StageHooks {
 
 export interface StageHandle {
   update(input: StageInput, deltaMs: number): void;
+  // 下跳就緒（§71）：壓下且站在單向平台上（跳鍵此刻＝下跳），供 HUD 跳鍵指示。
+  isDropReady(down: boolean): boolean;
   getOneWay(): Phaser.GameObjects.Rectangle[];
   getMoving(): Phaser.GameObjects.Rectangle[];
   getSprings(): Phaser.GameObjects.Rectangle[];
@@ -440,6 +442,11 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       applyUpdrafts(body, deltaMs);
       sweepSprings(body);
       applyWarp(body);
+    },
+
+    isDropReady(down: boolean) {
+      const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
+      return shouldDropThrough(down, true, standingOnOneWay(body));
     },
 
     getOneWay: () => oneWay,

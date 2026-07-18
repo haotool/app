@@ -214,6 +214,17 @@ body {
   transform: translate(-50%, -50%) scale(0.9);
 }
 
+/* 下跳指示（§71）：可穿落狀態跳鍵轉琥珀、箭頭翻轉朝下（圖形鍵帽，無文字）；
+   鬆開或離開可穿落狀態由 controls 系統移除 class 即還原。 */
+.ctl-btn-a.is-drop-ready {
+  background: rgba(255, 190, 105, 0.72);
+  border-color: rgba(255, 235, 200, 0.95);
+}
+
+.ctl-btn-a.is-drop-ready::after {
+  transform: rotate(180deg);
+}
+
 /* safe-area 換軸（recon-v4 A.1）：portrait 殼轉 90° 後（裝置 top→殼左、right→殼上、
    bottom→殼右、left→殼下）；landscape 維持 v3 直讀。 */
 @media (orientation: portrait) {

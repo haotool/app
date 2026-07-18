@@ -385,6 +385,8 @@ export class GameScene extends Phaser.Scene {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
+      // 下跳指示（§71）：壓下＋站台（跳鍵此刻＝下跳）→ 跳鍵變色與箭頭翻轉。
+      this.controls.setDropReady(this.stage.isDropReady(this.controls.state.down));
       this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();

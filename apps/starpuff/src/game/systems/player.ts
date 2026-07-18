@@ -57,7 +57,14 @@ import {
   transformProgress,
   type TransformState,
 } from '../logic/transform';
-import { advanceStride, airTilt, idleBreath, strideBob, strideTilt } from '../logic/walkFeel';
+import {
+  advanceCrouch,
+  advanceStride,
+  airTilt,
+  idleBreath,
+  strideBob,
+  strideTilt,
+} from '../logic/walkFeel';
 import { playSfx } from '../audio/sfx';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
@@ -75,6 +82,8 @@ export interface PlayerHandle {
   getAmmoState(): { ammo: number; flavor: StarFlavor; mix: string | null };
   // 走動手感觀測點（§45 e2e）：當幀傾角與 bob 偏移。
   getWalkVisual(): { rotation: number; bob: number; vy: number };
+  // 蹲姿觀測點（§71 e2e）：0..1 蹲姿比例。
+  getCrouch(): number;
   getMagazine(): readonly MagazineSlot[];
   grantFullMagazine(): void;
   grantGoldStar(): void;
@@ -118,6 +127,11 @@ const SHELL_GUARD_MS = 400;
 // 落地擠壓最低著地速度（§71）：微速重新接觸（擠壓迴圈回落 15-30）不再觸發擠壓，
 // 切斷「落地擠壓 → 身體縮小 → 離台 → 再落地」的自持迴圈。
 const LANDING_SQUASH_MIN_VY = 120;
+// 蹲姿視覺（§71）：橫向外擴＋縱向壓扁＋輕微下沉；走 POST_UPDATE 視覺通道，
+// PRE_UPDATE 還原——物理永不見蹲縮，杜絕擠壓迴圈同型問題。
+const CROUCH_SQUASH_X = 0.14;
+const CROUCH_SQUASH_Y = 0.22;
+const CROUCH_SINK_PX = 3;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -214,12 +228,27 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
+  // 蹲姿（§71）同走此通道：乘算擠壓疊加當幀既有 scale（落地擠壓/呼吸不衝突），
+  // 還原以套用當下的比例快照為準，物理 updateBounds 永遠讀到未蹲縮的 scale。
   let bobOffset = 0;
+  let crouch = 0;
+  const crouchApplied = { sx: 1, sy: 1, sink: 0 };
   const applyBob = () => {
     sprite.y -= bobOffset;
+    crouchApplied.sx = 1 + CROUCH_SQUASH_X * crouch;
+    crouchApplied.sy = 1 - CROUCH_SQUASH_Y * crouch;
+    crouchApplied.sink = CROUCH_SINK_PX * crouch;
+    if (crouch > 0) {
+      sprite.setScale(sprite.scaleX * crouchApplied.sx, sprite.scaleY * crouchApplied.sy);
+      sprite.y += crouchApplied.sink;
+    }
   };
   const revertBob = () => {
     sprite.y += bobOffset;
+    if (crouchApplied.sink > 0 || crouchApplied.sx !== 1) {
+      sprite.setScale(sprite.scaleX / crouchApplied.sx, sprite.scaleY / crouchApplied.sy);
+      sprite.y -= crouchApplied.sink;
+    }
   };
   scene.events.on(Phaser.Scenes.Events.POST_UPDATE, applyBob);
   scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
@@ -783,6 +812,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const blinkMs = effectiveInvulnMs(invulnerableMs, stormInvulnMs);
       sprite.setAlpha(blinkMs > 0 && Math.floor(blinkMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1);
 
+      // 蹲姿（§71）：地面壓下即蹲——120ms 內壓扁＋下沉；離地或鬆開同速率還原。
+      crouch = advanceCrouch(crouch, controls.down && onGround && !slamming, deltaMs);
+
       // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
       // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
       // 地面靜止走 idle 呼吸（scale 通道，squash tween 進行中讓位）。
@@ -931,6 +963,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         bob: bobOffset,
         vy: (sprite.body as Phaser.Physics.Arcade.Body).velocity.y,
       };
+    },
+    getCrouch() {
+      return crouch;
     },
     getMagazine() {
       return magazine;

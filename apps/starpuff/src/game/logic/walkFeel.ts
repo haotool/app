@@ -46,6 +46,16 @@ export function idleBreath(elapsedMs: number): number {
   return Math.sin(elapsedMs * BREATH_HZ * 2 * Math.PI * 0.001) * BREATH_AMPLITUDE;
 }
 
+// 蹲姿比例（§71）：壓下 0→1、鬆開 1→0，全程 120ms 線性；呈現層以比例導出
+// squash 與下沉（POST_UPDATE 視覺通道，物理不見蹲縮）。
+const CROUCH_EASE_MS = 120;
+
+export function advanceCrouch(current: number, held: boolean, deltaMs: number): number {
+  const step = deltaMs / CROUCH_EASE_MS;
+  const next = held ? current + step : current - step;
+  return Math.min(1, Math.max(0, next));
+}
+
 // 空中姿態角：上升（vy<0）後仰、下墜（vy>0）前傾；面向由呼叫端乘上。
 export function airTilt(velocityY: number): number {
   return Math.min(AIR_TILT_MAX, Math.max(AIR_TILT_MIN, velocityY * AIR_TILT_PER_VY));
