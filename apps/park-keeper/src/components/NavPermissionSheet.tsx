@@ -94,8 +94,8 @@ export default function NavPermissionSheet({
                 <button
                   type="button"
                   onClick={() => void requestCompassPermission()}
-                  className="mt-1 w-full min-h-11 px-4 rounded-2xl font-black text-sm text-white shadow-lg active:scale-95 transition-transform"
-                  style={{ backgroundColor: theme.colors.primary }}
+                  className="mt-1 w-full min-h-11 px-4 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-transform"
+                  style={{ backgroundColor: theme.colors.primary, color: theme.colors.onPrimary }}
                 >
                   {t('nav.enable_compass_cta')}
                 </button>

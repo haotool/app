@@ -13,12 +13,12 @@ import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { useNavigation, getDirectionInfo } from '@app/park-keeper/hooks/useNavigation';
 import { isAligned, computeDeckGeometry } from '@app/park-keeper/services/compassGeometry';
 import type { DeckGeometry } from '@app/park-keeper/services/compassGeometry';
-import { WARNING_COLOR, ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
+import { WARNING_COLOR } from '@app/park-keeper/config/colors';
 import { useModalDialog } from '@app/park-keeper/hooks/useModalDialog';
 import { useScreenWakeLock } from '@app/park-keeper/hooks/useScreenWakeLock';
 import { COMPASS_THEME_STYLES } from '@app/park-keeper/config/compassThemeStyles';
 import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
-import { formatElapsed } from './PickupHeroCard';
+import { formatSmartTime } from '@app/park-keeper/services/formatSmartTime';
 import CompassArcStage from './CompassArcStage';
 import CompassCapsule from './CompassCapsule';
 import NavPermissionSheet from './NavPermissionSheet';
@@ -143,7 +143,7 @@ export default function NavOverlay({
   }, []);
   const geo: DeckGeometry | null = stageSize ? computeDeckGeometry(stageSize.w, stageSize.h) : null;
 
-  const elapsed = formatElapsed(record.timestamp, i18n.language) ?? t('home.just_now');
+  const elapsed = formatSmartTime(record.timestamp, i18n.language, t('home.just_now'));
   // 區域變數收窄型別，供 JSX 使用（避免 non-null assertion）。
   const recordLat = record.latitude;
   const recordLng = record.longitude;
@@ -269,7 +269,7 @@ export default function NavOverlay({
             className="absolute right-4 bottom-9 z-20 min-h-11 px-3.5 rounded-2xl flex items-center gap-1.5 font-black text-[11px] uppercase tracking-wide backdrop-blur-md active:scale-95 transition-transform shadow-lg"
             style={
               photoEditMode
-                ? { backgroundColor: theme.colors.primary, color: ON_PRIMARY_COLOR }
+                ? { backgroundColor: theme.colors.primary, color: theme.colors.onPrimary }
                 : {
                     backgroundColor: `${theme.colors.surface}CC`,
                     color: theme.colors.text,

@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import NavOverlay from '../NavOverlay';
 import i18n from '@app/park-keeper/services/i18n';
 import { THEMES } from '@app/park-keeper/constants';
-import type { ParkingRecord } from '@app/park-keeper/types';
-import { useNavigation } from '@app/park-keeper/hooks/useNavigation';
+import type { ParkingRecord, ThemeConfig } from '@app/park-keeper/types';
+import { useNavigation, type CompassPermissionState } from '@app/park-keeper/hooks/useNavigation';
 
 vi.mock('../MiniMap', () => ({
   default: vi.fn((props: { onPhotoClick?: () => void }) => (
@@ -71,20 +71,24 @@ const navState = {
   arrivedState: false,
   hasValidLocation: true,
   isPhoneFlat: true,
-  permissionState: 'granted' as const,
+  permissionState: 'granted' as CompassPermissionState,
   requestCompassPermission: vi.fn(),
   needsCalibration: false,
   recheckCalibration: vi.fn(),
 };
 
-function renderOverlay(onClose = vi.fn(), stateOverrides: Partial<typeof navState> = {}) {
+function renderOverlay(
+  onClose = vi.fn(),
+  stateOverrides: Partial<typeof navState> = {},
+  themeOverride: ThemeConfig = theme,
+) {
   vi.mocked(useNavigation).mockReturnValue({
     ...navState,
     ...stateOverrides,
   } as unknown as ReturnType<typeof useNavigation>);
   render(
     <I18nextProvider i18n={i18n}>
-      <NavOverlay record={record} theme={theme} onClose={onClose} cacheDurationDays={7} />
+      <NavOverlay record={record} theme={themeOverride} onClose={onClose} cacheDurationDays={7} />
     </I18nextProvider>,
   );
   return onClose;
@@ -261,5 +265,25 @@ describe('NavOverlay - modal a11y', () => {
       // 回轉 +heading（容器 -heading 的相反數），旋轉中心即文字錨點。
       expect(textEl.getAttribute('transform')).toBe(`rotate(90 ${x} ${y})`);
     }
+  });
+
+  // primary 底前景色跨流收斂（issue #753 onPrimary token；R4 整合回歸）：
+  // racing 主題 onPrimary 為近黑（非白），若元件硬編白字會在此主題下對比嚴重不足。
+  it('權限卡「啟用羅盤」按鈕前景色跟隨主題 onPrimary token（非硬編白字）', () => {
+    const racingTheme = THEMES['racing']!;
+    renderOverlay(vi.fn(), { permissionState: 'prompt' }, racingTheme);
+
+    const enableButton = screen.getByRole('button', { name: '啟用羅盤' });
+    expect(enableButton).toHaveStyle({ color: racingTheme.colors.onPrimary });
+  });
+
+  it('照片位置調整按鈕啟用態前景色跟隨主題 onPrimary token（非硬編白字）', () => {
+    const racingTheme = THEMES['racing']!;
+    renderOverlay(vi.fn(), {}, racingTheme);
+
+    fireEvent.click(screen.getByRole('button', { name: '調整照片位置' }));
+    expect(screen.getByRole('button', { name: '完成' })).toHaveStyle({
+      color: racingTheme.colors.onPrimary,
+    });
   });
 });
