@@ -16,7 +16,11 @@ import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const ACCENT = '#7a5fb8';
-const NODE_RADIUS = 30;
+// v10 十二節點過渡（§67）：節點半徑收斂 24 容納單頁；分區分頁最遲 v12 落地（主計畫 §2.2）。
+const NODE_RADIUS = 24;
+// 三階鋸齒高度（§67）：相鄰節點名牌垂直錯層；魔王節點（L4/L7/L12）固定落最高階，
+// EX 徽鈕上方淨空恆成立。
+const NODE_YS = [300, 262, 300, 224, 300, 262, 224, 300, 262, 300, 262, 224] as const;
 // 節點主題色鏡像關卡 bg 主色調（data-driven 自 LEVELS bgKey）。
 const NODE_TINTS: Record<string, number> = {
   'bg-meadow': 0xbff3e0,
@@ -28,6 +32,9 @@ const NODE_TINTS: Record<string, number> = {
   'bg-eclipse': 0x8478c8,
   'bg-cavern': 0x8a98c8,
   'bg-mirror': 0xd8dce8,
+  'bg-lumen': 0x9fe8d8,
+  'bg-magnetic': 0xa89ae0,
+  'bg-prism': 0xc5a8e8,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;
@@ -136,12 +143,12 @@ export class MapScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ESC', () => this.scene.start(SceneKeys.Title));
   }
 
-  // v9 九節點（§60）：鋸齒路徑橫排；節點半徑收斂 30 保留名牌間距。
+  // v10 十二節點（§67）：橫向等距由節點數推導（禁硬編視寬），三階鋸齒高度表定。
   private nodePosition(index: number): { x: number; y: number } {
     const { width } = this.scale;
-    const xs = [0.06, 0.165, 0.27, 0.375, 0.48, 0.585, 0.69, 0.795, 0.9];
-    const ys = [292, 232, 292, 240, 296, 234, 288, 238, 292];
-    return { x: width * (xs[index] ?? 0.5), y: ys[index] ?? 270 };
+    const count = Math.max(LEVELS.length, 2);
+    const ratio = 0.052 + (0.896 * index) / (count - 1);
+    return { x: width * ratio, y: NODE_YS[index % NODE_YS.length] ?? 270 };
   }
 
   // 節點間虛線路徑：等距圓點沿線段鋪設；未解鎖段降透明度。
@@ -174,10 +181,11 @@ export class MapScene extends Phaser.Scene {
       const circle = this.add
         .circle(0, 0, level.boss ? NODE_RADIUS + 4 : NODE_RADIUS, tint, 1)
         .setStrokeStyle(4, status === 'locked' ? 0x9a9aa8 : 0xffffff, 0.95);
+      // 雙位數關號縮字級（§67 十二節點）：半徑 24 圓內維持可讀。
       const numeral = this.add
         .text(0, 0, `${level.id}`, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '30px',
+          fontSize: level.id >= 10 ? '20px' : '24px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
@@ -185,9 +193,9 @@ export class MapScene extends Phaser.Scene {
       node.add([circle, numeral]);
 
       const name = this.add
-        .text(x, y + NODE_RADIUS + 22, level.nameZh, {
+        .text(x, y + NODE_RADIUS + 20, level.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '17px',
+          fontSize: '15px',
           fontStyle: 'bold',
           color: '#ffffff',
           stroke: TEXT_DARK,

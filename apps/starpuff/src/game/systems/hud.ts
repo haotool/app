@@ -257,7 +257,28 @@ export function createHud(scene: Phaser.Scene): Hud {
     .setDisplaySize(barWidth, barHeight)
     .setTint(0x9b7bd8);
   const fullScaleX = barFill.scaleX;
-  bossBar.add([barBg, barFill]);
+  // 雙節顯示（§68 雙子獨立血條）：同一 bossBar 內雙填充＋中央分隔 tick，零新面板；
+  // BOSS_TWIN_HP active=false 回落單節。
+  const twinFillA = scene.add
+    .image(-barWidth / 2, 0, '__WHITE')
+    .setOrigin(0, 0.5)
+    .setDisplaySize(barWidth / 2 - 2, barHeight)
+    .setTint(0xffb8d8)
+    .setVisible(false);
+  const twinFillB = scene.add
+    .image(2, 0, '__WHITE')
+    .setOrigin(0, 0.5)
+    .setDisplaySize(barWidth / 2 - 2, barHeight)
+    .setTint(0x9ecbff)
+    .setVisible(false);
+  const twinHalfScaleX = twinFillA.scaleX;
+  const twinDivider = scene.add
+    .image(0, 0, '__WHITE')
+    .setDisplaySize(3, barHeight + 6)
+    .setTint(0xffffff)
+    .setAlpha(0.9)
+    .setVisible(false);
+  bossBar.add([barBg, barFill, twinFillA, twinFillB, twinDivider]);
   root.add(bossBar);
 
   // 頂列錨定重排（§28）：中上/右上元素依當前視寬定位；resize 事件觸發重錨。
@@ -421,6 +442,17 @@ export function createHud(scene: Phaser.Scene): Hud {
   });
   bind(GameEvents.BOSS_PHASE, ({ phase }) => {
     if (phase === 'p2') barFill.setTint(0xd94b4b);
+  });
+  // 雙節切換（§68）：分裂期各半條依雙子血量獨立縮放；合體/擊破回落單節。
+  bind(GameEvents.BOSS_TWIN_HP, ({ hpA, hpB, maxHp, active }) => {
+    barFill.setVisible(!active);
+    twinFillA.setVisible(active);
+    twinFillB.setVisible(active);
+    twinDivider.setVisible(active);
+    if (!active) return;
+    const half = maxHp / 2;
+    twinFillA.scaleX = twinHalfScaleX * Math.max(0, Math.min(1, hpA / half));
+    twinFillB.scaleX = twinHalfScaleX * Math.max(0, Math.min(1, hpB / half));
   });
   bind(GameEvents.BOSS_DEFEATED, () => {
     scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });

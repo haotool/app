@@ -47,10 +47,14 @@ interface ThemeSpec {
 
 // v8 貼圖重用別名（§55）：L6 迴聲石廊重用星空回廊橫景，以 grade/ambience 變化辨識。
 // v9（§60）：L8 磁極洞窟重用蝕月夜景、L9 鏡影迴廊重用星空回廊，均不生成新背景。
+// v10（§66/§67）：L10 幽光晶湖重用星空回廊、L11 磁晶險徑重用蝕月夜景，均以 grade 區分。
 const TEXTURE_ALIAS: Record<string, string> = {
   'bg-gallery': 'bg-arena',
   'bg-cavern': 'bg-eclipse',
   'bg-mirror': 'bg-arena',
+  'bg-lumen': 'bg-arena',
+  'bg-magnetic': 'bg-eclipse',
+  'bg-prism': 'bg-arena',
 };
 
 function textureKeyOf(bgKey: string): string {
@@ -167,6 +171,43 @@ const THEMES: Record<string, ThemeSpec> = {
       scale: { start: 0.9, end: 0.3 },
       speedY: { min: 22, max: 40 },
       tumble: true,
+    },
+  },
+  // v10 新 biome（§66/§67/§68）：幽光晶湖冰青湖光塵／磁晶險徑磁紫晶塵／稜晶王殿虹彩稜塵。
+  'bg-prism': {
+    grade: 0xc5a8e8,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0xe8dcff, 0xffd8e8, 0xc8e8ff],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.9, end: 0.3 },
+      speedY: { min: 18, max: 32 },
+      tumble: true,
+    },
+  },
+  'bg-lumen': {
+    grade: 0x5fd0c8,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0x9fe8d8, 0xdffff5, 0x7fd8c8],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.85, end: 0.3 },
+      speedY: { min: 18, max: 34 },
+      tumble: true,
+    },
+  },
+  'bg-magnetic': {
+    grade: 0x7a6ad0,
+    ambience: {
+      texture: AMB_TEXTURES.dot,
+      tint: [0xb0a0e8, 0x8ab0e8, 0xd8d0f0],
+      blend: 'ADD',
+      alpha: 0.85,
+      scale: { start: 0.75, end: 0.25 },
+      speedY: { min: 16, max: 30 },
+      tumble: false,
     },
   },
 };

@@ -28,6 +28,12 @@ export interface BossHandle {
   // P3 追蹤彈目標（§30）：GameScene 注入玩家參照，與 enemies.setTarget 同模式。
   setTarget(target: { x: number; y: number } | null): void;
   onMinionDrop(handler: () => void): void;
+  // 多本體魔王（§68 雙子）：星彈/接觸/下砸逐本體接線；未實作視為單本體（getBody）。
+  getBodies?(): Phaser.Physics.Arcade.Sprite[];
+  // 命中位置歸屬（§68 雙子獨立血條）：依最近存活本體結算受擊側；未實作走 applyDamage。
+  applyDamageAt?(amount: number, x: number, y: number, source?: BossDamageSource): void;
+  // 環繞護盾（§68 P3 碎晶盾）：可擊破的星彈屏障群；未實作視為無護盾。
+  getShields?(): Phaser.Physics.Arcade.Group;
 }
 
 const GROUND_TOP = VIEW.height - 80;

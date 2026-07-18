@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+127
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -22,6 +22,11 @@
 - ID：penalty-park-keeper-onprimary-third-recurrence
 - 原因：onPrimary 同型債第三次復發（formatPlate→SW 路由→token 前景），前兩輪修復均只掃指名點未做全庫終掃
 - 解法：sentinel/token 類修復一律附全庫 grep 判定表（改/留每項附理由）＋token 迴歸斷言鎖熱點，審查必抽查判定表
+
+- 日期：2026-07-18
+- ID：reward-starpuff-v10-prism-finale
+- 原因：StarPuff 三區未完結且魔王關缺補給節奏設計，v10 需星門折躍/L10-L12/卡點重生/分裂型魔王 Prismix 與前室增益體系，並在 hotfix 並行下維持 anti-softlock 與零回歸
+- 解法：warp/checkpoint/prismixFsm/buffs 純邏輯先行（357 單測）＋多本體 BossHandle 選配契約與雙節血條，1200 寬真星彈保底線實測打穿三階段，兩席獨立審查雙 APPROVE 後四項 should-fix 全收斂；52 E2E 全綠且與 v9.1 熱修 rebase 交互驗證
 
 - 日期：2026-07-18
 - ID：penalty-papertrade-r4-orderbook-fit-dead-path

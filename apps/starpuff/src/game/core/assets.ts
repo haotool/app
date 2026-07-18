@@ -108,6 +108,11 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'bg-eclipse-l',
     url: new URL('../../assets/sprites/bg-eclipse-l.webp', import.meta.url).href,
   },
+  // v10 三區完結（§68）：第三魔王稜晶雙子；L10-L12 背景重用既有貼圖（§66/§67）。
+  {
+    key: 'boss-prismix',
+    url: new URL('../../assets/sprites/boss-prismix.webp', import.meta.url).href,
+  },
   // v4 主題道具（§31/§32）：道具條 4 等分切割後逐件註冊，佈景資料驅動於 levels.ts decor。
   {
     key: 'prop-meadow-1',

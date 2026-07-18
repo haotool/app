@@ -24,6 +24,9 @@ export const GameEvents = {
   BOSS_PHASE: 'boss:phase',
   // P3 狂暴皇冠（§30）：slam 附加全場震落，站立玩家強制彈起由 GameScene 結算。
   BOSS_QUAKE: 'boss:quake',
+  // v10 雙子獨立血條（§68）：producer systems/prismix（split/受擊/掙扎/合體），
+  // consumer systems/hud（魔王條雙節顯示；active false 回落單節）。
+  BOSS_TWIN_HP: 'boss:twin-hp',
   BOSS_DEFEATED: 'boss:defeated',
   LEVEL_CHANGED: 'level:changed',
   LEVEL_QUOTA: 'level:quota',
@@ -67,6 +70,7 @@ export interface GameEventPayloads {
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.BOSS_PHASE]: { phase: BossPhase };
   [GameEvents.BOSS_QUAKE]: { x: number; y: number };
+  [GameEvents.BOSS_TWIN_HP]: { hpA: number; hpB: number; maxHp: number; active: boolean };
   [GameEvents.BOSS_DEFEATED]: { x: number; y: number };
   [GameEvents.LEVEL_CHANGED]: { levelId: LevelId; nameZh: string; killQuota: number };
   [GameEvents.LEVEL_QUOTA]: { killCount: number; killQuota: number };
