@@ -227,10 +227,13 @@ export function DraggableMarker({
   position,
   onDragEnd,
   icon,
+  title,
 }: {
   position: [number, number];
   onDragEnd: (pos: L.LatLng) => void;
   icon: L.DivIcon;
+  /** 鍵盤可聚焦 marker（role=button）的 accessible name（R6 axe aria-command-name）。 */
+  title?: string;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const eventHandlers = useMemo(
@@ -251,6 +254,7 @@ export function DraggableMarker({
       ref={markerRef}
       icon={icon}
       zIndexOffset={1000}
+      title={title}
     />
   );
 }

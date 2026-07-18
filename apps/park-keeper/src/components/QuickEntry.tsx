@@ -449,7 +449,8 @@ export default function QuickEntry({
               </Suspense>
               <div className="absolute top-3 left-3 z-10 flex items-center gap-2 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-xl shadow-sm">
                 <div className={`w-2 h-2 rounded-full ${gpsIndicatorClass}`} />
-                <span className="text-[8px] font-black uppercase text-gray-500 tracking-tighter">
+                {/* gray-700（R6）：gray-500 on 白 chip 僅 4.83:1，axe 取樣偏差下無安全餘裕。 */}
+                <span className="text-[8px] font-black uppercase text-gray-700 tracking-tighter">
                   {isLocating ? t('nav.gps_waiting') : `${locationAccuracy?.toFixed(0) ?? '?'}m`}
                 </span>
               </div>
@@ -525,7 +526,9 @@ export default function QuickEntry({
           >
             {t('record.floor')}
           </span>
-          <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full animate-pulse">
+          {/* 提示 pill 用 text 實色（R6 掃蕩）：Kawaii pastel primary 當字色僅 1.66:1；
+              移除 animate-pulse——文字 opacity 脈動同屬 dimming 反模式且不尊重 reduced-motion。 */}
+          <span className="text-[9px] font-bold text-[var(--color-text)] bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full">
             {t('record.save_hint')}
           </span>
         </div>
@@ -535,6 +538,8 @@ export default function QuickEntry({
               key={f}
               layout
               disabled={saveStatus !== 'idle'}
+              // Custom chip 僅 icon，須有 accessible name（R6 axe button-name）。
+              aria-label={f === 'Custom' ? t('record.custom_floor') : undefined}
               onClick={() => {
                 if (f === 'Custom') {
                   vibrate(10);

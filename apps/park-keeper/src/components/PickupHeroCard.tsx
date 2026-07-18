@@ -52,9 +52,10 @@ export default function PickupHeroCard({ record, theme, onNavigate }: PickupHero
             />
           </div>
         )}
+        {/* 徽章文字用 text 實色（R6 掃蕩）：Kawaii pastel primary on 白 surface 僅 1.66:1。 */}
         <span
           className="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.18em] backdrop-blur-md"
-          style={{ backgroundColor: `${theme.colors.surface}E6`, color: theme.colors.primary }}
+          style={{ backgroundColor: `${theme.colors.surface}E6`, color: theme.colors.text }}
         >
           <MapPin size={10} strokeWidth={3} />
           {t('home.pickup_label')}

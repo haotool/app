@@ -563,10 +563,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     }
                   />
                 </div>
+                {/* active 標籤字色用 text（R6 axe 守門）：Kawaii pastel primary 當字色僅
+                    1.66:1；active 視覺由 icon primary 色＋indicator bar 承擔。 */}
                 <span
                   className={NAV_LABEL_BASE_CLS}
                   style={{
-                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                    color: currentTab === 'list' ? theme.colors.text : theme.colors.textMuted,
                   }}
                 >
                   {t('tab.list')}
@@ -608,8 +610,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 <span
                   className={NAV_LABEL_BASE_CLS}
                   style={{
-                    color:
-                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                    color: currentTab === 'settings' ? theme.colors.text : theme.colors.textMuted,
                   }}
                 >
                   {t('tab.settings')}
