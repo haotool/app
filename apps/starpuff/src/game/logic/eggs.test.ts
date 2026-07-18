@@ -12,8 +12,8 @@ function run(spec: EasterEggSpec, events: readonly EggEvent[]): boolean[] {
 }
 
 describe('LEVELS easterEggs 資料（§24）', () => {
-  it('九關各掛一顆彩蛋且觸發型別對表', () => {
-    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  it('十一關各掛一顆彩蛋且觸發型別對表', () => {
+    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.trigger)).toEqual([
       'reach-x',
       'stand-count',
@@ -23,6 +23,8 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'eat-sequence',
       'crown-early-hit',
       'eat-sequence',
+      'eat-sequence',
+      'stand-count',
       'eat-sequence',
     ]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.reward)).toEqual([
@@ -35,7 +37,16 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'heal',
       'gold-star',
       'full-magazine',
+      'hp-up',
+      'gold-star',
     ]);
+  });
+
+  it('L10 彩蛋高台（§65）：目標層高存在於平台表且為星門折躍專屬高台', () => {
+    const egg = LEVELS[9]?.easterEggs[0];
+    if (egg?.trigger !== 'stand-count') throw new Error('L10 彩蛋型別不符');
+    expect(LEVELS[9]?.platforms.some((p) => p.y === egg.platformY)).toBe(true);
+    expect(egg.platformY).toBeLessThan(272);
   });
 
   it('L5 彩蛋高台（§51）：目標層高存在於平台表且為氣流柱可達高台', () => {

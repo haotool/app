@@ -3,6 +3,7 @@ import { canInhale } from './combat';
 import {
   LEVELS,
   advanceLevelSpawn,
+  checkpointRespawnX,
   createLevelRun,
   getLevel,
   isInSafeTail,
@@ -14,23 +15,26 @@ import {
   type StageElementSpec,
   recordKill,
 } from './levels';
+import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
-  it('九關依序為 1-9 且參數符合 §15/§21/§50/§60 表', () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
+  it('十一關依序為 1-11 且參數符合 §15/§21/§50/§60/§65/§66 表', () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
-      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700,
+      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700,
     ]);
-    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12]);
+    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
-      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150,
+      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100,
     ]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5]);
-    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0, 480, 480, 0, 480, 480]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5]);
+    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
+      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480,
+    ]);
   });
 
-  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學、L8 帶星化提示', () => {
+  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學、L8/L10 帶提示', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -39,6 +43,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
       null,
       null,
       'noctra',
+      null,
+      null,
       null,
       null,
     ]);
@@ -52,8 +58,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
       false,
       false,
       false,
+      false,
+      false,
     ]);
     expect(getLevel(8).hint).toContain('星化');
+    expect(getLevel(10).hint).toContain('折躍');
   });
 
   it('每關 enemyMix 權重總和為 1', () => {
@@ -166,6 +175,28 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
+  it('L10 幽光晶湖（§65）：mirri/glowy 雙主場、含 zappy 湊電鋸配方、可吸佔比 ≥50%', () => {
+    const mix = getLevel(10).enemyMix;
+    expect(mix.find((e) => e.kind === 'mirri')?.weight).toBeGreaterThanOrEqual(0.2);
+    expect(mix.find((e) => e.kind === 'glowy')?.weight).toBeGreaterThanOrEqual(0.2);
+    expect(mix.some((e) => e.kind === 'zappy')).toBe(true);
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('L11 磁晶險徑（§66）：磁×躍複合混編、雙精英房距 ≥600、可吸佔比 ≥50%', () => {
+    const level = getLevel(11);
+    for (const kind of ['magno', 'mirri', 'drilly', 'boomy', 'spora'] as const) {
+      expect(level.enemyMix.some((e) => e.kind === kind)).toBe(true);
+    }
+    expect(level.elites).toHaveLength(2);
+    expect(level.elites.map((e) => e.kind)).toEqual(['magno', 'drilly']);
+    const inhalable = level.enemyMix
+      .filter((e) => canInhale(e.kind))
+      .reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
   // 高台（y < 272）必須被氣流柱涵蓋（anti-softlock §56）：柱域水平涵蓋且柱頂高於平台。
   const updraftServed = (level: LevelSpec, platform: { x: number; y: number; w: number }) =>
     level.elements.some(
@@ -175,7 +206,16 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
         element.topY < platform.y,
     );
 
-  it('平台位於世界範圍內；雙層以內或氣流柱可達（§21/§51）；向上爬升可跳達（≤82px）', () => {
+  // v10 折躍高台（§65）：星門出口位於平台水平投影內且高於平台頂，落下即著台。
+  const warpServed = (level: LevelSpec, platform: { x: number; y: number; w: number }) =>
+    level.elements.some(
+      (element) =>
+        element.kind === 'warp' &&
+        Math.abs(element.x - platform.x) <= platform.w / 2 + 20 &&
+        element.y < platform.y,
+    );
+
+  it('平台位於世界內；雙層以內或氣流柱/星門可達（§21/§51/§65）；向上爬升可跳達（≤82px）', () => {
     const groundTop = 400; // 主地面頂（480 - 80）
     for (const level of LEVELS) {
       let prevY = groundTop;
@@ -183,9 +223,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
         expect(platform.x - platform.w / 2).toBeGreaterThanOrEqual(0);
         expect(platform.x + platform.w / 2).toBeLessThanOrEqual(level.worldWidth);
         if (platform.y < 272) {
-          // v8 高台（§51）：超出雙層的平台必為氣流柱服務對象，且不逼近世界頂。
+          // v8 高台（§51）／v10 折躍高台（§65）：超出雙層的平台必有升降服務，不逼近世界頂。
           expect(platform.y).toBeGreaterThanOrEqual(190);
-          expect(updraftServed(level, platform)).toBe(true);
+          expect(updraftServed(level, platform) || warpServed(level, platform)).toBe(true);
         } else {
           // 向上爬升不得超過單跳最高 98px 的安全值；向下落無限制；氣流高台不入跳鏈。
           expect(prevY - platform.y).toBeLessThanOrEqual(82);
@@ -215,19 +255,92 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
   });
 
   it('getLevel 未知 id 擲錯', () => {
-    expect(() => getLevel(10 as never)).toThrow();
+    expect(() => getLevel(13 as never)).toThrow();
   });
 
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
     level.elements.filter((element) => element.kind === kind);
 
+  // 就地站立中心（§65 星門跳入制驗算）：門正下方最高可站面頂 - 玩家半身 20。
+  const standCenterAt = (level: LevelSpec, x: number, belowY: number): number => {
+    let surfaceTop = 400;
+    const consider = (px: number, py: number, pw: number) => {
+      const top = py - 8;
+      if (Math.abs(px - x) <= pw / 2 && top >= belowY) surfaceTop = Math.min(surfaceTop, top);
+    };
+    for (const platform of level.platforms) consider(platform.x, platform.y, platform.w);
+    for (const element of level.elements) {
+      if (element.kind === 'oneway' || element.kind === 'moving') {
+        consider(element.x, element.y, element.w);
+      }
+    }
+    return surfaceTop - 20;
+  };
+
+  it('星門折躍不變式（§65/§10.2-3/-15）：僅 L10/L11、必成對、跳入制高度、精英房互斥', () => {
+    for (const level of LEVELS) {
+      const warps = level.elements.filter((element) => element.kind === 'warp');
+      if (level.id !== 10 && level.id !== 11) {
+        expect(warps).toEqual([]);
+        continue;
+      }
+      expect(warps.length).toBeGreaterThanOrEqual(2);
+      // 必成對：同 pairId 恰兩門。
+      const byPair = new Map<string, number>();
+      for (const gate of warps) {
+        if (gate.kind !== 'warp') continue;
+        byPair.set(gate.pairId, (byPair.get(gate.pairId) ?? 0) + 1);
+      }
+      for (const count of byPair.values()) expect(count).toBe(2);
+      for (const gate of warps) {
+        if (gate.kind !== 'warp') continue;
+        // 世界內淨空且遠離星星門區。
+        expect(gate.x).toBeGreaterThan(96);
+        expect(gate.x).toBeLessThan(level.worldWidth - 96);
+        expect(Math.abs(gate.x - (level.worldWidth - 120))).toBeGreaterThan(165);
+        // 跳入制：門心高於就地站立中心 ≥56px（500ms 冷卻期內落地必脫離觸發半徑，
+        // 杜絕站立誤觸與出門回彈循環），且 ≤138px（單跳＋觸發半徑可達）。
+        const standCenter = standCenterAt(level, gate.x, gate.y);
+        expect(standCenter - gate.y).toBeGreaterThanOrEqual(WARP.triggerRadiusPx + 16);
+        expect(standCenter - gate.y).toBeLessThanOrEqual(98 + WARP.triggerRadiusPx);
+        // 交叉不變式 15：門不落於精英房界（±300）內側，含觸發半徑緩衝。
+        for (const elite of level.elites) {
+          expect(Math.abs(gate.x - elite.x)).toBeGreaterThan(300 + WARP.triggerRadiusPx);
+        }
+      }
+    }
+  });
+
+  it('卡點關中點重生（§66）：僅 L11 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+    for (const level of LEVELS) {
+      if (level.id !== 11) {
+        expect(level.checkpointX).toBeUndefined();
+        continue;
+      }
+      const checkpoint = level.checkpointX ?? 0;
+      expect(Math.abs(checkpoint - level.worldWidth * 0.5)).toBeLessThanOrEqual(50);
+      for (const elite of level.elites) {
+        expect(Math.abs(checkpoint - elite.x)).toBeGreaterThan(300);
+      }
+    }
+  });
+
+  it('checkpointRespawnX：越過中點才回中點，未過或無 checkpoint 回 null', () => {
+    const level = getLevel(11);
+    expect(checkpointRespawnX(level, 100)).toBeNull();
+    expect(checkpointRespawnX(level, 1849)).toBeNull();
+    expect(checkpointRespawnX(level, 1850)).toBe(1850);
+    expect(checkpointRespawnX(level, 3600)).toBe(1850);
+    expect(checkpointRespawnX(getLevel(10), 3000)).toBeNull();
+  });
+
   it('v4 元素依 §29 推進：S1 單向、S2 +移動+彈簧、S3 +可破壞磚、boss 關佈局特化', () => {
-    for (const id of [1, 2, 3, 5, 6, 8, 9] as const) {
+    for (const id of [1, 2, 3, 5, 6, 8, 9, 10, 11] as const) {
       const count = elementsOf(getLevel(id), 'oneway').length;
       expect(count).toBeGreaterThanOrEqual(2);
       expect(count).toBeLessThanOrEqual(4);
     }
-    for (const id of [2, 3, 6, 8, 9] as const) {
+    for (const id of [2, 3, 6, 8, 9, 10, 11] as const) {
       for (const kind of ['moving', 'spring'] as const) {
         const count = elementsOf(getLevel(id), kind).length;
         expect(count).toBeGreaterThanOrEqual(1);
@@ -301,6 +414,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
       'bg-eclipse': 'throne',
       'bg-cavern': 'arena',
       'bg-mirror': 'arena',
+      'bg-lumen': 'arena',
+      'bg-magnetic': 'arena',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -322,7 +437,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
     }
   });
 
-  it('nextLevelId 依 1→…→9→null 推進', () => {
+  it('nextLevelId 依 1→…→11→null 推進', () => {
     expect(nextLevelId(1)).toBe(2);
     expect(nextLevelId(2)).toBe(3);
     expect(nextLevelId(3)).toBe(4);
@@ -331,7 +446,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
     expect(nextLevelId(6)).toBe(7);
     expect(nextLevelId(7)).toBe(8);
     expect(nextLevelId(8)).toBe(9);
-    expect(nextLevelId(9)).toBeNull();
+    expect(nextLevelId(9)).toBe(10);
+    expect(nextLevelId(10)).toBe(11);
+    expect(nextLevelId(11)).toBeNull();
   });
 });
 

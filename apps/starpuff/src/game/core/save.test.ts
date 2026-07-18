@@ -138,7 +138,37 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(currentChallenge(save)).toBe(8);
     save = recordLevelClear(save, 8, 1000);
     save = recordLevelClear(save, 9, 1000);
+    // v10 三區完結（§66）：L9 之後接續 L10/L11。
+    expect(currentChallenge(save)).toBe(10);
+    save = recordLevelClear(save, 10, 1000);
+    save = recordLevelClear(save, 11, 1000);
     expect(currentChallenge(save)).toBeNull();
+  });
+
+  it('v10 存檔相容（§66）：v9 存檔（1-9 通關）載入後 L10 開放、L11 鎖定', () => {
+    const entry = { cleared: true, bestTimeMs: 45000, eggsFound: [] };
+    const save = parseSave(
+      JSON.stringify({
+        schemaVersion: 1,
+        highestClearedLevel: 9,
+        levels: {
+          1: entry,
+          2: entry,
+          3: entry,
+          4: entry,
+          5: entry,
+          6: entry,
+          7: entry,
+          8: entry,
+          9: entry,
+        },
+        lastPlayedAt: 1700000000000,
+      }),
+    );
+    expect(save.highestClearedLevel).toBe(9);
+    expect(nodeStatus(save, 10)).toBe('open');
+    expect(nodeStatus(save, 11)).toBe('locked');
+    expect(currentChallenge(save)).toBe(10);
   });
 
   it('v9 存檔相容（§60）：v8 存檔（1-7 通關）載入後 L8 開放、L9 鎖定', () => {
