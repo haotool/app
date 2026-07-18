@@ -10,7 +10,7 @@ import {
   shouldDropThrough,
   springSweepHit,
 } from '../logic/stageModel';
-import { isInUpdraft, updraftLift, type UpdraftZone } from '../logic/updraft';
+import { isInUpdraft, updraftLift, ventPhase, type UpdraftZone } from '../logic/updraft';
 import { tryWarp, type WarpGate } from '../logic/warp';
 import { playSfx } from '../audio/sfx';
 import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
@@ -60,6 +60,11 @@ const DECOR_BASE_Y = 404;
 const DECOR_BASE_PX = 112;
 // 上升氣流柱（§51）：柱體淡色與上飄粒子（池化，單柱同活 ≤10）。
 const UPDRAFT_TINT = 0xdff2ff;
+// 熱泉噴口（§72）：暖蒸汽色；telegraph 期柱體微亮預警。
+const VENT_TINT = 0xffe0c0;
+const VENT_IDLE_ALPHA = 0.03;
+const VENT_TELEGRAPH_ALPHA = 0.1;
+const VENT_ERUPT_ALPHA = 0.2;
 // 星門折躍（§66）：星環視覺按 pairId 輪流取色，白閃 0.2s 相機硬切。
 const WARP_TINTS = [0x9fe8ff, 0xffb3e0, 0xc9f0a8] as const;
 const WARP_FLASH_MS = 200;
@@ -76,6 +81,13 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   const springs: Phaser.GameObjects.Rectangle[] = [];
   const breakables: Phaser.GameObjects.Rectangle[] = [];
   const updrafts: UpdraftZone[] = [];
+  // 週期噴口視覺（§72）：柱體/粒子隨相位開闔；恆常柱（無 periodMs）不入此表。
+  const ventVisuals: {
+    zone: UpdraftZone;
+    column: Phaser.GameObjects.Rectangle;
+    particles: Phaser.GameObjects.Particles.ParticleEmitter;
+  }[] = [];
+  let stageElapsedMs = 0;
   const warpGates: WarpGate[] = [];
   const warpPairTints = new Map<string, number>();
   let warpLockedUntilMs = 0;
@@ -148,13 +160,22 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         break;
       }
       case 'updraft': {
-        // zone 型非碰撞（§51）：柱體淡色視覺＋上飄氣流粒子；升力於 update 逐幀結算。
+        // zone 型非碰撞（§51/§72）：柱體淡色視覺＋上飄氣流粒子；升力於 update 逐幀結算。
+        // 週期噴口（§72）：periodMs 有值＝間歇噴發，柱體/粒子隨相位開闔＋蒸汽預警。
         const height = GROUND_TOP - spec.topY;
-        scene.add
-          .rectangle(spec.x, spec.topY + height / 2, spec.w, height, UPDRAFT_TINT, 0.12)
+        const isVent = spec.periodMs !== undefined;
+        const column = scene.add
+          .rectangle(
+            spec.x,
+            spec.topY + height / 2,
+            spec.w,
+            height,
+            isVent ? VENT_TINT : UPDRAFT_TINT,
+            0.12,
+          )
           .setDepth(-4);
         // 氣流粒子池化（顯示物件交 scene shutdown 統一銷毀）。
-        scene.add
+        const particles = scene.add
           .particles(0, 0, FX_TEXTURES.dot, {
             x: { min: spec.x - spec.w / 2 + 8, max: spec.x + spec.w / 2 - 8 },
             y: GROUND_TOP - 6,
@@ -165,11 +186,19 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
             lifespan: { min: 900, max: 1400 },
             frequency: 130,
             quantity: 1,
-            tint: [0xffffff, 0xdff2ff],
+            tint: isVent ? [0xffffff, VENT_TINT] : [0xffffff, UPDRAFT_TINT],
             maxAliveParticles: 10,
           })
           .setDepth(-3);
-        updrafts.push({ x: spec.x, topY: spec.topY, w: spec.w });
+        const zone: UpdraftZone = {
+          x: spec.x,
+          topY: spec.topY,
+          w: spec.w,
+          ...(spec.periodMs !== undefined ? { periodMs: spec.periodMs } : {}),
+          ...(spec.dutyPct !== undefined ? { dutyPct: spec.dutyPct } : {}),
+        };
+        updrafts.push(zone);
+        if (isVent) ventVisuals.push({ zone, column, particles });
         break;
       }
       case 'warp': {
@@ -297,6 +326,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
           bricksAlive(): number;
           movers(): number[][];
           warps(): number[][];
+          vents(): number[][];
         };
       }
     ).__spStage = {
@@ -304,17 +334,43 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       bricksAlive: () => breakables.filter((brick) => brick.active).length,
       movers: () => moving.map((plat) => [Math.round(plat.x), Math.round(plat.y)]),
       warps: () => warpGates.map((gate) => [gate.x, gate.y]),
+      // 週期噴口相位觀測（§72 e2e）：[x, 噴發中 1/0]。
+      vents: () =>
+        ventVisuals.map((vent) => [
+          vent.zone.x,
+          ventPhase(stageElapsedMs, vent.zone) === 'erupt' ? 1 : 0,
+        ]),
     };
   }
 
-  // 上升氣流升力（§51）：柱域內逐幀向上加速、升速夾限；卡頂交還重力（anti-softlock）。
+  // 上升氣流升力（§51/§72）：柱域內逐幀向上加速、升速夾限；卡頂交還重力（anti-softlock）；
+  // 週期噴口僅噴發相位供力（telegraph/idle 斷供）。
   function applyUpdrafts(body: Phaser.Physics.Arcade.Body, deltaMs: number): void {
     if (updrafts.length === 0) return;
     const player = hooks.player().sprite;
     for (const zone of updrafts) {
+      if (ventPhase(stageElapsedMs, zone) !== 'erupt') continue;
       if (!isInUpdraft(player.x, player.y, zone, GROUND_TOP)) continue;
       body.setVelocityY(updraftLift(body.velocity.y, deltaMs, body.blocked.up));
       return;
+    }
+  }
+
+  // 週期噴口視覺同步（§72）：idle 幾近隱形 → telegraph 蒸汽微亮（0.5s 預警）→
+  // 噴發滿量粒子；恆常柱不經此路徑（零回歸）。
+  function syncVentVisuals(): void {
+    for (const vent of ventVisuals) {
+      const phase = ventPhase(stageElapsedMs, vent.zone);
+      if (phase === 'erupt') {
+        vent.column.setFillStyle(VENT_TINT, VENT_ERUPT_ALPHA);
+        if (!vent.particles.emitting) vent.particles.start();
+      } else {
+        vent.column.setFillStyle(
+          VENT_TINT,
+          phase === 'telegraph' ? VENT_TELEGRAPH_ALPHA : VENT_IDLE_ALPHA,
+        );
+        if (vent.particles.emitting) vent.particles.stop();
+      }
     }
   }
 
@@ -339,8 +395,10 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
   return {
     update(input: StageInput, deltaMs: number) {
+      stageElapsedMs += deltaMs;
       const player = hooks.player();
       const body = player.sprite.body as Phaser.Physics.Arcade.Body;
+      syncVentVisuals();
 
       // 移動平台 delta 搬運（recon C.2）：tween 先於物理步進，逐幀將位移轉嫁站立玩家。
       for (const plat of moving) {
@@ -406,6 +464,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       springs.length = 0;
       breakables.length = 0;
       updrafts.length = 0;
+      ventVisuals.length = 0;
       warpGates.length = 0;
       if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         (window as unknown as { __spStage?: unknown }).__spStage = undefined;
