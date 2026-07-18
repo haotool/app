@@ -346,6 +346,100 @@ export function resolveMirriStarHit(state: MirriState): MirriStarHitOutcome {
   return state === 'mirror' ? 'reflect' : 'vulnerable';
 }
 
+// 焦糖泡 Bubbla 四態（§73）：糖漿中潛伏 submerged（僅露頂，不可吸不可傷）→ 漣漪前搖
+// ripple 0.6s（telegraph）→ 拋物躍出 leap（頂點滯空 0.4s，可吸可傷窗）→ 回潛 dive。
+export const BUBBLA_FSM = {
+  submergedMs: 2200,
+  rippleMs: 600,
+  // leap = 上升 0.5s ＋ 頂點滯空 0.4s ＋ 下落 0.5s。
+  leapMs: 1400,
+  leapRiseMs: 500,
+  leapHangMs: 400,
+  leapHeightPx: 96,
+  diveMs: 500,
+} as const;
+
+export type BubblaState = 'submerged' | 'ripple' | 'leap' | 'dive';
+
+export interface BubblaTick {
+  state: BubblaState;
+  stateMs: number;
+  entered: BubblaState | null;
+}
+
+export function tickBubbla(state: BubblaState, stateMs: number, deltaMs: number): BubblaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'submerged' && next >= BUBBLA_FSM.submergedMs)
+    return { state: 'ripple', stateMs: 0, entered: 'ripple' };
+  if (state === 'ripple' && next >= BUBBLA_FSM.rippleMs)
+    return { state: 'leap', stateMs: 0, entered: 'leap' };
+  if (state === 'leap' && next >= BUBBLA_FSM.leapMs)
+    return { state: 'dive', stateMs: 0, entered: 'dive' };
+  if (state === 'dive' && next >= BUBBLA_FSM.diveMs)
+    return { state: 'submerged', stateMs: 0, entered: 'submerged' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 受擊決策（§73）：僅躍出窗正常結算，其餘半潛免傷（沿 drilly 慣例）。
+export type BubblaHitOutcome = 'immune' | 'vulnerable';
+
+export function resolveBubblaHit(state: BubblaState): BubblaHitOutcome {
+  return state === 'leap' ? 'vulnerable' : 'immune';
+}
+
+// 躍出拋物高度（相對潛伏基準的位移，負值向上）：升坡→頂點滯空→落坡，純函式供呈現層。
+export function bubblaLeapOffsetY(leapMs: number): number {
+  const { leapRiseMs, leapHangMs, leapMs: totalMs, leapHeightPx } = BUBBLA_FSM;
+  const clamped = Math.max(0, Math.min(leapMs, totalMs));
+  if (clamped <= leapRiseMs) {
+    const progress = clamped / leapRiseMs;
+    // easeOut 升坡：起跳快、近頂緩；+0 防 -0 汙染呼叫端比較。
+    return -leapHeightPx * (1 - (1 - progress) * (1 - progress)) + 0;
+  }
+  if (clamped <= leapRiseMs + leapHangMs) return -leapHeightPx;
+  const fallMs = totalMs - leapRiseMs - leapHangMs;
+  const progress = (clamped - leapRiseMs - leapHangMs) / fallMs;
+  // easeIn 落坡：離頂緩、落地快；+0 防 -0 汙染呼叫端比較。
+  return -leapHeightPx * (1 - progress * progress) + 0;
+}
+
+// 熔糖投手 Splatta 四態（§73）：緩走 patrol → 舉勺瞄準 aim 0.5s → 投擲 lob（單幀事件態，
+// 呈現層生成拋物糖球；落地留 1.2s 灼燙糖斑走 hazards 管線）→ 冷卻 cool 1.6s → patrol。
+export const SPLATTA_FSM = {
+  patrolMs: 2400,
+  aimMs: 500,
+  coolMs: 1600,
+  walkSpeed: 55,
+  // 拋物糖球初速與壽命（逾時必回收，anti-softlock §56）。
+  blobSpeedX: 180,
+  blobSpeedY: -320,
+  blobLifeMs: 2400,
+  // 灼燙糖斑滯留時長與尺寸。
+  spotMs: 1200,
+  spotRadiusPx: 26,
+} as const;
+
+export type SplattaState = 'patrol' | 'aim' | 'lob' | 'cool';
+
+export interface SplattaTick {
+  state: SplattaState;
+  stateMs: number;
+  entered: SplattaState | null;
+}
+
+export function tickSplatta(state: SplattaState, stateMs: number, deltaMs: number): SplattaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'patrol' && next >= SPLATTA_FSM.patrolMs)
+    return { state: 'aim', stateMs: 0, entered: 'aim' };
+  if (state === 'aim' && next >= SPLATTA_FSM.aimMs)
+    return { state: 'lob', stateMs: 0, entered: 'lob' };
+  // lob 為單幀事件態：呈現層生成糖球後即入冷卻（沿 boomy throw 慣例）。
+  if (state === 'lob') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= SPLATTA_FSM.coolMs)
+    return { state: 'patrol', stateMs: 0, entered: 'patrol' };
+  return { state, stateMs: next, entered: null };
+}
+
 // 迴旋彈道（§52/§53 共用）：去程勻減速、turnMs 折返點反向，2×turnMs 回到原點等速；
 // 敵方殼刃與玩家迴旋星同走此純函式，回程亦有判定。
 export function boomerangVelocity(

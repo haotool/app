@@ -2,28 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { canInhale } from './combat';
 import {
   BOOMY_FSM,
+  BUBBLA_FSM,
   DRILLY_FSM,
   GLOWY_FSM,
   GUSTY_FSM,
   MAGNO_FSM,
   MIRRI_FSM,
   SHELLY_FSM,
+  SPLATTA_FSM,
   SPORA_FSM,
   ZAPPY_FSM,
   boomerangVelocity,
+  bubblaLeapOffsetY,
   gustWindPush,
   magnetPull,
+  resolveBubblaHit,
   resolveDrillyHit,
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
   tickBoomy,
+  tickBubbla,
   tickDrilly,
   tickGlowy,
   tickGusty,
   tickMagno,
   tickMirri,
   tickShelly,
+  tickSplatta,
   tickSpora,
   tickZappy,
   type ShellyState,
@@ -323,5 +329,92 @@ describe('鏡面蟲 Mirri（§59）', () => {
     expect(MIRRI_FSM.reflectLifeMs).toBeGreaterThan(0);
     expect(MIRRI_FSM.reflectLifeMs).toBeLessThanOrEqual(3000);
     expect(canInhale('mirri')).toBe(true);
+  });
+});
+
+describe('Bubbla 四態時序（§73 焦糖泡）', () => {
+  it('潛伏期滿轉漣漪前搖，前搖期滿躍出', () => {
+    expect(tickBubbla('submerged', BUBBLA_FSM.submergedMs - 17, 16).state).toBe('submerged');
+    expect(tickBubbla('submerged', BUBBLA_FSM.submergedMs - 16, 16)).toEqual({
+      state: 'ripple',
+      stateMs: 0,
+      entered: 'ripple',
+    });
+    expect(tickBubbla('ripple', BUBBLA_FSM.rippleMs - 16, 16)).toEqual({
+      state: 'leap',
+      stateMs: 0,
+      entered: 'leap',
+    });
+  });
+
+  it('躍出期滿回潛，回潛期滿再潛伏', () => {
+    expect(tickBubbla('leap', BUBBLA_FSM.leapMs - 16, 16)).toEqual({
+      state: 'dive',
+      stateMs: 0,
+      entered: 'dive',
+    });
+    expect(tickBubbla('dive', BUBBLA_FSM.diveMs - 16, 16)).toEqual({
+      state: 'submerged',
+      stateMs: 0,
+      entered: 'submerged',
+    });
+  });
+
+  it('受擊決策：僅躍出窗可吸可傷，潛伏/前搖/回潛免傷', () => {
+    expect(resolveBubblaHit('leap')).toBe('vulnerable');
+    expect(resolveBubblaHit('submerged')).toBe('immune');
+    expect(resolveBubblaHit('ripple')).toBe('immune');
+    expect(resolveBubblaHit('dive')).toBe('immune');
+  });
+
+  it('條件可吸（§73）：canInhale 未帶狀態取保守值 false、躍出窗 true', () => {
+    expect(canInhale('bubbla')).toBe(false);
+    expect(canInhale('bubbla', true)).toBe(true);
+  });
+
+  it('躍出拋物高度：起跳與落回為 0、頂點滯空段維持峰值', () => {
+    expect(bubblaLeapOffsetY(0)).toBe(0);
+    expect(bubblaLeapOffsetY(BUBBLA_FSM.leapMs)).toBe(0);
+    const risenMs = BUBBLA_FSM.leapRiseMs;
+    expect(bubblaLeapOffsetY(risenMs)).toBe(-BUBBLA_FSM.leapHeightPx);
+    // 頂點滯空 0.4s（§73）：滯空段全程維持峰值高度。
+    expect(bubblaLeapOffsetY(risenMs + BUBBLA_FSM.leapHangMs / 2)).toBe(-BUBBLA_FSM.leapHeightPx);
+    expect(bubblaLeapOffsetY(risenMs + BUBBLA_FSM.leapHangMs)).toBe(-BUBBLA_FSM.leapHeightPx);
+    // 中途上升為單調遞升（負向）。
+    expect(bubblaLeapOffsetY(risenMs / 2)).toBeLessThan(0);
+    expect(bubblaLeapOffsetY(risenMs / 2)).toBeGreaterThan(-BUBBLA_FSM.leapHeightPx);
+  });
+});
+
+describe('Splatta 四態時序（§73 熔糖投手）', () => {
+  it('緩走期滿轉舉勺瞄準，瞄準期滿投擲', () => {
+    expect(tickSplatta('patrol', SPLATTA_FSM.patrolMs - 17, 16).state).toBe('patrol');
+    expect(tickSplatta('patrol', SPLATTA_FSM.patrolMs - 16, 16)).toEqual({
+      state: 'aim',
+      stateMs: 0,
+      entered: 'aim',
+    });
+    expect(tickSplatta('aim', SPLATTA_FSM.aimMs - 16, 16)).toEqual({
+      state: 'lob',
+      stateMs: 0,
+      entered: 'lob',
+    });
+  });
+
+  it('lob 為單幀事件態：下一 tick 即入冷卻，冷卻期滿回巡邏', () => {
+    expect(tickSplatta('lob', 0, 16)).toEqual({ state: 'cool', stateMs: 0, entered: 'cool' });
+    expect(tickSplatta('cool', SPLATTA_FSM.coolMs - 16, 16)).toEqual({
+      state: 'patrol',
+      stateMs: 0,
+      entered: 'patrol',
+    });
+  });
+
+  it('恆可吸歸孢子味（§73 黏緩語意一致）；糖斑壽命有界（anti-softlock §56）', () => {
+    expect(canInhale('splatta')).toBe(true);
+    expect(SPLATTA_FSM.blobLifeMs).toBeGreaterThan(0);
+    expect(SPLATTA_FSM.blobLifeMs).toBeLessThanOrEqual(3000);
+    expect(SPLATTA_FSM.spotMs).toBeGreaterThan(0);
+    expect(SPLATTA_FSM.spotMs).toBeLessThanOrEqual(3000);
   });
 });

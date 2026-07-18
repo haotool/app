@@ -40,6 +40,9 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   boomy: 330,
   magno: 330,
   mirri: 330,
+  // v11（§73）：bubbla 貼地潛伏、splatta 地面緩走。
+  bubbla: 330,
+  splatta: 330,
 };
 
 const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
