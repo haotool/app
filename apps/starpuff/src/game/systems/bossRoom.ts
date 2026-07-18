@@ -16,10 +16,15 @@ const GROUND_TOP = VIEW.height - 80;
 const DOOR_W = 26;
 // 進 arena 判定緣：越過前室右緣一小段即鎖門（重試自前室起）。
 const ENTER_MARGIN_PX = 34;
-const HEART_X = 130;
-const SUPPLY_XS = [90, 175, 260] as const;
+const HEART_X = 120;
+// 補給怪落於廊道前段（入口反應帶之外、台座拾取帶 224+ 之前）：朝玩家走來即吸食
+// 補彈節奏，台座帶保持乾淨——甫拾護盾不被補給怪觸碰瞬間打破。
+const SUPPLY_XS = [140, 180, 215] as const;
 const PEDESTAL_XS = [250, 330] as const;
-const PICKUP_HALF = 26;
+// 拾取帶（§43 幾何判定慣例）：縱向放寬至 ±36——台座 icon 與站立頭頂帶交疊裕度 ≥18px，
+// 杜絕低幀率下 bob 相位造成的間歇漏拾。
+const PICKUP_HALF_W = 26;
+const PICKUP_HALF_H = 36;
 // arena 高風險位投放（§68）：10s 未拾自動淡逝；EX 刷新減半（v10＝EX 不投放）。
 const ARENA_BUFF_EXPIRE_MS = 10_000;
 const BUFF_TEXTURES: Record<BuffId, string> = {
@@ -161,7 +166,7 @@ export function createBossRoom(
     floats.push(entry);
   }
 
-  // 增益二選一台座（§68）：取一消一的風險回報抉擇。
+  // 增益二選一台座（§68）：取一消一的風險回報抉擇；icon 貼台頂（站立頭頂帶內）。
   const pedestalPair: FloatingBuff[] = [];
   (level.anteroomBuffs ?? []).forEach((id, index) => {
     const x = PEDESTAL_XS[index] ?? 250 + index * 80;
@@ -170,7 +175,7 @@ export function createBossRoom(
       .setStrokeStyle(3, 0xffffff, 0.85)
       .setDepth(70);
     objects.push(pillar);
-    spawnFloatingBuff(id, x, GROUND_TOP - 58, pedestalPair, null);
+    spawnFloatingBuff(id, x, GROUND_TOP - 46, pedestalPair, null);
   });
 
   function removeFloat(entry: FloatingBuff): void {
@@ -191,10 +196,10 @@ export function createBossRoom(
 
   // 拾取判定沿 §43 幾何掃掠慣例：AABB 交疊或前後幀水平掃掠跨越，高速走過必中。
   function sweepFloat(entry: FloatingBuff, body: Phaser.Physics.Arcade.Body): boolean {
-    const left = entry.icon.x - PICKUP_HALF;
-    const right = entry.icon.x + PICKUP_HALF;
-    const top = entry.icon.y - PICKUP_HALF - 6;
-    const bottom = entry.icon.y + PICKUP_HALF + 6;
+    const left = entry.icon.x - PICKUP_HALF_W;
+    const right = entry.icon.x + PICKUP_HALF_W;
+    const top = entry.icon.y - PICKUP_HALF_H;
+    const bottom = entry.icon.y + PICKUP_HALF_H;
     const currX = body.center.x;
     const prevX = entry.prevPlayerX ?? currX;
     entry.prevPlayerX = currX;
@@ -235,6 +240,24 @@ export function createBossRoom(
     .setVisible(false);
   const hudRing = scene.add.graphics().setScrollFactor(0).setDepth(101);
   objects.push(hudIcon, hudRing);
+
+  // 深度 QA 觀測點：拾取判定分量（DEV/test 限定）。
+  if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+    (
+      window as unknown as { __spBossRoom?: { floats(): number[][]; probe(): number[] } }
+    ).__spBossRoom = {
+      floats: () => floats.map((entry) => [Math.round(entry.icon.x), Math.round(entry.icon.y)]),
+      probe: () => {
+        const body = hooks.player().sprite.body as Phaser.Physics.Arcade.Body;
+        return [
+          Math.round(body.left),
+          Math.round(body.right),
+          Math.round(body.top),
+          Math.round(body.bottom),
+        ];
+      },
+    };
+  }
 
   return {
     update() {

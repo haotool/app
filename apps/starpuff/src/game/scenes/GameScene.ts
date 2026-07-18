@@ -179,6 +179,8 @@ export class GameScene extends Phaser.Scene {
   // 魔王關體系（§68）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
   private buff: BuffState = createBuffState();
+  // e2e 觀測（§68）：本局累計增益拾取數——護盾可能拾取後旋即格擋消耗，快照式觀測會漏。
+  private buffPickups = 0;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
@@ -240,6 +242,7 @@ export class GameScene extends Phaser.Scene {
 
     this.controls = createControls(this);
     this.buff = createBuffState();
+    this.buffPickups = 0;
     // 前室魔王關（§68）：自廊道起點入場；一般魔王關維持 arena 中央。
     const startX = this.level.boss
       ? this.level.anteroomPx !== undefined
@@ -344,6 +347,7 @@ export class GameScene extends Phaser.Scene {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
+      this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
       this.syncInhale();
@@ -436,6 +440,18 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
+  // 低幀率沉地防護（§45 已知引擎行為：極端掉幀下重力穿透地面分離）：主地面全寬無坑洞
+  //（§26），玩家軀體「完整」沒入地面帶即回貼地表——正常著地（腳底=地面頂）永不觸發，
+  // 不取代既有碰撞與掃掠守門。
+  private clampAboveGround(): void {
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (body.top <= GROUND_TOP + 2 || body.velocity.y < 0) return;
+    const { x: vx } = body.velocity;
+    const lift = body.bottom - GROUND_TOP;
+    body.reset(this.player.sprite.x, this.player.sprite.y - lift);
+    body.setVelocity(vx, 0);
+  }
+
   // 世界有效寬（§28）：捲軸關讀關卡資料；boss 關 = 前室寬＋當前視寬（854–1200 動態）。
   private worldWidth(): number {
     if (!this.level.boss) return this.level.worldWidth;
@@ -450,6 +466,7 @@ export class GameScene extends Phaser.Scene {
   // 短期增益（§68）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
   private applyBuff(id: BuffId): void {
     this.buff = pickupBuff(this.buff, id);
+    this.buffPickups += 1;
     this.player.setBuffMoveMods(buffSpeedMul(this.buff), buffAccelMul(this.buff));
     this.flavorToast(`${BUFF_SPECS[id].nameZh}！短暫強化`);
   }
@@ -465,13 +482,15 @@ export class GameScene extends Phaser.Scene {
     this.bossRoom?.updateBuffHud(this.buff);
   }
 
-  // 玩家受擊單一入口（§68 護盾泡）：持盾期吸收 1 次任意傷害（彈幕/接觸/hazard）後破盾。
+  // 玩家受擊單一入口（§68 護盾泡）：持盾期吸收 1 次任意傷害（彈幕/接觸/hazard）後破盾；
+  // 破盾走 0 傷受擊管線取得擊退＋i-frame，杜絕同一接觸下一幀連擊。
   private damagePlayer(damage: number, sourceX: number): void {
     const block = consumeShieldBlock(this.buff);
     if (block.blocked) {
       this.buff = block.state;
       this.fx.burstSmall(this.player.sprite.x, this.player.sprite.y, BUFF_SPECS.shield.tint);
       playSfx('metal');
+      this.player.takeDamage(0, sourceX);
       return;
     }
     this.player.takeDamage(damage, sourceX);
@@ -656,10 +675,12 @@ export class GameScene extends Phaser.Scene {
       asSprite(enemy).setData('inhalePull', true);
     });
 
-    // 觸碰與頭頂 hit window（§58/§67）：多本體逐一接線，停用本體不結算。
+    // 觸碰與頭頂 hit window（§58/§67）：多本體逐一接線，停用本體不結算；
+    // 入場運鏡期（非 active）傷害雙向靜默——降落中的魔王不得對走位玩家先手。
     for (const touchBody of this.bossBodies()) {
       this.physics.add.overlap(this.player.sprite, touchBody, () => {
         if (this.finished || this.transitioning || this.bossDown) return;
+        if (!this.boss.isActive()) return;
         if (!(touchBody.body as Phaser.Physics.Arcade.Body).enable) return;
         const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
         // 魔王頭頂 hit window（§58）：下砸命中上半身＝頭頂——嘗試觸發暈眩並回彈，免體傷。
@@ -1022,6 +1043,11 @@ export class GameScene extends Phaser.Scene {
   // e2e 觀測點（§62）：本命累計愛心生成數。
   mercySpawnedCount(): number {
     return this.mercy.spawned;
+  }
+
+  // e2e 觀測點（§68）：當前短期增益狀態與本局累計拾取數。
+  buffState(): { id: string | null; remainingMs: number; pickups: number } {
+    return { id: this.buff.id, remainingMs: this.buff.remainingMs, pickups: this.buffPickups };
   }
 
   // e2e 觀測點（§54 難度 bot）：魔王本體與彈幕群（座標/迴避取樣用）。
