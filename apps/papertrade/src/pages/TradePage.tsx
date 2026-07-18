@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, Inbox } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import {
   DEFAULT_SYMBOL,
@@ -15,7 +15,6 @@ import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
 import { BottomSheet } from '../components/BottomSheet';
 import { CoinBadge } from '../components/CoinBadge';
-import { EmptyState } from '../components/EmptyState';
 import { FundingRateBadge } from '../components/FundingRateBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook, type BestQuote } from '../components/OrderBookPanel';
@@ -180,19 +179,13 @@ export function TradePage() {
         </div>
       </div>
 
-      <OrderList />
-
-      <section aria-label="目前持倉" className="px-4 pt-4">
+      {/* R5-5：持倉與委託雙區塊堆疊同顯（非 tab），空狀態單行精簡。 */}
+      <section aria-label="持倉" className="px-4 pt-4">
         <h2 className="text-label font-medium text-text-2">
-          目前持倉 <span className="tabular-nums">({positions.length})</span>
+          持倉 <span className="tabular-nums">({positions.length})</span>
         </h2>
         {positions.length === 0 ? (
-          <EmptyState
-            icon={Inbox}
-            title="尚無持倉"
-            description="送出第一筆模擬訂單，體驗零風險合約交易。"
-            className="mt-2"
-          />
+          <p className="mt-2 text-caption text-text-3">尚無持倉</p>
         ) : (
           <ul className="mt-2 flex flex-col gap-2.5">
             {positions.map((position) => (
@@ -203,6 +196,8 @@ export function TradePage() {
           </ul>
         )}
       </section>
+
+      <OrderList />
 
       {sheet === 'pair' && (
         <PairSelectorSheet

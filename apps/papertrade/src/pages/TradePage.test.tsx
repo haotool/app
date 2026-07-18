@@ -113,8 +113,21 @@ describe('TradePage', () => {
     const { account } = useTradeStore.getState();
     expect(account.positions).toHaveLength(1);
     expect(account.positions[0]?.qty).toBeCloseTo(0.1, 10);
-    expect(screen.getByText('目前持倉', { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '持倉' })).toBeInTheDocument();
     expect(screen.getByText('強平價')).toBeInTheDocument();
+  });
+
+  it('stacks the positions and open orders blocks with slim empty captions', () => {
+    renderTrade();
+
+    const positionSection = screen.getByRole('region', { name: '持倉' });
+    const orderSection = screen.getByRole('region', { name: '當前委託' });
+    expect(within(positionSection).getByText('尚無持倉')).toBeInTheDocument();
+    expect(within(orderSection).getByText('尚無委託')).toBeInTheDocument();
+    // 堆疊順序：持倉區在委託區之前。
+    expect(
+      positionSection.compareDocumentPosition(orderSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('shows an inline error when amount is missing', async () => {
@@ -156,7 +169,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '買多' }));
 
     expect(useTradeStore.getState().account.orders).toHaveLength(1);
-    const orderList = screen.getByRole('region', { name: '目前掛單' });
+    const orderList = screen.getByRole('region', { name: '當前委託' });
     expect(within(orderList).getByText(/58,000/)).toBeInTheDocument();
 
     await user.click(within(orderList).getByRole('button', { name: '撤單' }));
