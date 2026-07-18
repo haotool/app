@@ -55,6 +55,7 @@ const theme: ThemeConfig = {
   name: 'Zen',
   colors: {
     primary: '#1e293b',
+    onPrimary: '#ffffff',
     secondary: '#f1f5f9',
     accent: '#3b82f6',
     background: '#f8fafc',

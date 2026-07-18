@@ -181,6 +181,7 @@ export const mockTheme: ThemeConfig = {
   name: 'Minimalist',
   colors: {
     primary: '#8b5cf6',
+    onPrimary: '#ffffff',
     secondary: '#3b82f6',
     accent: '#10b981',
     background: '#ffffff',

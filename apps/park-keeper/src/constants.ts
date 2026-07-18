@@ -6,12 +6,16 @@ export const THEMES: Record<string, ThemeConfig> = {
     name: 'Nitro',
     colors: {
       primary: '#00f2ff', // 提高飽和度
+      // primary 底前景色：14.55:1（on #00f2ff），CTA 深字取代白字（issue #753 審查收斂）。
+      onPrimary: '#020617',
       secondary: '#ff00ff',
       accent: '#ffff00',
       background: '#020617', // 改為極深 Slate，強化對比
       surface: '#0f172a',
       text: '#ffffff',
-      textMuted: '#64748b',
+      // textMuted 加亮至 WCAG AA：5.50:1（on #020617）、4.87:1（on #0f172a surface），
+      // 同時滿足底部導覽 inactive tab 與 surface 卡片次要文字（issue #753 主題對比修復）。
+      textMuted: '#7387a3',
     },
     font: 'font-racing',
     borderRadius: '0px',
@@ -22,6 +26,8 @@ export const THEMES: Record<string, ThemeConfig> = {
     name: 'Kawaii',
     colors: {
       primary: '#FFB3BA', // Lighter Pastel Pink (Strawberry Milk)
+      // primary 底前景色：深莓紅 7.58:1（on #FFB3BA），取代白字 1.69:1（issue #753 審查收斂）。
+      onPrimary: '#5c1a2a',
       secondary: '#BAE1FF', // Pastel Blue (Sky)
       accent: '#FFFFBA', // Pastel Yellow (Cream)
       background: '#FFFAF4', // Very light warm white
@@ -39,6 +45,7 @@ export const THEMES: Record<string, ThemeConfig> = {
     name: 'Zen',
     colors: {
       primary: '#1e293b',
+      onPrimary: '#ffffff', // 14.63:1（on #1e293b）。
       secondary: '#f1f5f9',
       accent: '#3b82f6',
       background: '#f8fafc',
@@ -55,6 +62,7 @@ export const THEMES: Record<string, ThemeConfig> = {
     name: 'Classic',
     colors: {
       primary: '#7c2d12',
+      onPrimary: '#ffffff', // 9.37:1（on #7c2d12）。
       secondary: '#ffedd5',
       accent: '#ea580c',
       background: '#fffafb',
@@ -67,6 +75,13 @@ export const THEMES: Record<string, ThemeConfig> = {
     animationType: 'tween',
   },
 };
+
+/**
+ * cute 主題 wordmark 漸層色 token（issue #753 主題對比修復）。
+ * 原 #FF9A9E／#FFB7B2（on #FFFAF4）對比僅 1.60–1.95:1，嚴重低於 WCAG AA；
+ * 改用深玫瑰調三色，對比 4.80–5.45:1，保留 cute 主題粉色識別但可讀。
+ */
+export const CUTE_WORDMARK_GRADIENT = ['#C2255C', '#D0296B', '#C2255C'] as const;
 
 // 保存天數 SSOT：照片清理、SW tile TTL、設定滑桿共用同一組邊界與預設值。
 export const CACHE_DAYS = { MIN: 1, MAX: 30, DEFAULT: 7 } as const;

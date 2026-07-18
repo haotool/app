@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { getFab, TEXT, TEST_PHOTO_BASE64 } from './helpers';
+import { getManualEntryTrigger, TEXT, TEST_PHOTO_BASE64 } from './helpers';
 
 /**
  * 零遮蔽量化守門（issue #752）：楔形 path 取樣 200 點經 screen CTM 轉螢幕座標，
@@ -47,8 +47,8 @@ test.describe('記錄 → 羅盤導航旅程', () => {
   test('儲存記錄後開啟導航：弧形 deck 渲染、heading 注入、資訊列與關閉', async ({ page }) => {
     await page.goto('/');
 
-    // 1. 快速記錄：FAB → 樓層 chip 觸發 auto-save
-    await getFab(page).click();
+    // 1. 快速記錄：手動記錄（不拍照） → 樓層 chip 觸發 auto-save
+    await getManualEntryTrigger(page).click();
     await expect(page.getByPlaceholder(TEXT.platePlaceholder)).toBeVisible();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
 
@@ -109,7 +109,7 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     // 4. 關閉導航回列表
     await closeButton.click();
     await expect(closeButton).not.toBeVisible();
-    await expect(getFab(page)).toBeVisible();
+    await expect(getManualEntryTrigger(page)).toBeVisible();
   });
 
   test('照片錨：photo-overlay 在地圖區內，不被 deck 與平放 pill 遮蓋', async ({
@@ -118,8 +118,8 @@ test.describe('記錄 → 羅盤導航旅程', () => {
   }) => {
     await page.goto('/');
 
-    // 含照片記錄：FAB → 注入測試圖片 → 樓層 chip auto-save。
-    await getFab(page).click();
+    // 含照片記錄：手動記錄 → 注入測試圖片 → 樓層 chip auto-save。
+    await getManualEntryTrigger(page).click();
     await page.getByTestId('quick-entry-photo-input').setInputFiles({
       name: 'test-photo.png',
       mimeType: 'image/png',
@@ -193,7 +193,7 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     });
 
     await page.goto('/');
-    await getFab(page).click();
+    await getManualEntryTrigger(page).click();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
 
     await page.getByTestId('pickup-hero-card').click();
@@ -223,7 +223,7 @@ test.describe('矮視高／橫向降級方向膠囊', () => {
     await page.setViewportSize({ width: 375, height: 553 });
     await page.goto('/');
 
-    await getFab(page).click();
+    await getManualEntryTrigger(page).click();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
     await page.getByTestId('pickup-hero-card').click();
 
@@ -240,7 +240,7 @@ test.describe('矮視高／橫向降級方向膠囊', () => {
     await page.setViewportSize({ width: 844, height: 390 });
     await page.goto('/');
 
-    await getFab(page).click();
+    await getManualEntryTrigger(page).click();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
     await page.getByTestId('pickup-hero-card').click();
 

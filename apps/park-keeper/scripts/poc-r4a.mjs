@@ -199,8 +199,8 @@ async function runScenario(browser, scenario) {
   });
 
   await page.goto(BASE);
-  // 建立記錄（FAB →（可選）注入照片 → B3 auto-save）。
-  await page.getByRole('button', { name: '新增停車紀錄' }).click();
+  // 建立記錄（手動記錄 →（可選）注入照片 → B3 auto-save；FAB 已於 issue #753 移除）。
+  await page.getByRole('button', { name: '手動記錄（不拍照）' }).click();
   if (scenario.photo) {
     await page.getByTestId('quick-entry-photo-input').setInputFiles({
       name: 'poc-photo.png',
