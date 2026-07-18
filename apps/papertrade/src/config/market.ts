@@ -69,9 +69,9 @@ export const SPARKLINE_POINTS = 24;
 export const SPARKLINE_INTERVAL: TimeframeId = '60';
 export const SPARKLINE_CACHE_TTL_MS = 5 * 60 * 1000;
 export const SPARKLINE_MAX_CONCURRENCY = 3;
-export const ORDERBOOK_DISPLAY_LEVELS = 8;
+export const ORDERBOOK_DISPLAY_LEVELS = 10;
 // 交易頁緊湊訂單簿單側檔數上限；實際檔數依左欄表單高度動態裁切（最少各 3 檔）。
-export const TRADE_ORDERBOOK_LEVELS = 6;
+export const TRADE_ORDERBOOK_LEVELS = 10;
 export const TRADES_DISPLAY_LIMIT = 30;
 // 深度圖重繪節流：訂單簿 tick 遠高於視覺需求，取樣間隔內只重繪一次。
 export const DEPTH_REDRAW_INTERVAL_MS = 300;

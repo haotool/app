@@ -1,5 +1,5 @@
-// 中線錨定訂單簿的高度預算：檔位列 44px 觸控、表頭與中間價列為固定開銷估值。
-export const BOOK_ROW_PX = 44;
+// 中線錨定訂單簿的高度預算：檔位列 32px 密度列（ADR-R5-01）、表頭與中間價列為固定開銷估值。
+export const BOOK_ROW_PX = 32;
 export const BOOK_OVERHEAD_PX = 70;
 export const MIN_SIDE_LEVELS = 3;
 

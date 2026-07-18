@@ -182,10 +182,12 @@ export function CompactOrderBook({
     const isBid = side === 'bid';
     return rows.map(([price, size]) => (
       <li key={`${side}-${price}`}>
+        {/* 32px 密度列（ADR-R5-01）：點擊僅帶入限價、錯誤成本低，以 data-dense-row 豁免 44px 掃蕩。 */}
         <button
           type="button"
+          data-dense-row
           onClick={() => onPriceSelect?.(price)}
-          className="relative flex min-h-11 w-full items-center justify-between px-1 text-left"
+          className="relative flex h-8 w-full items-center justify-between px-1 text-left"
         >
           <span
             aria-hidden
@@ -219,7 +221,7 @@ export function CompactOrderBook({
       {loading ? (
         <div className="flex h-full flex-col gap-1.5 overflow-hidden" aria-label="訂單簿載入中">
           {Array.from({ length: levels * 2 }, (_, index) => (
-            <span key={index} className="skeleton-pulse h-10 w-full shrink-0 rounded" />
+            <span key={index} className="skeleton-pulse h-7 w-full shrink-0 rounded" />
           ))}
         </div>
       ) : (
