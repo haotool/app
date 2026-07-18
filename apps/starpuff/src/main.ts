@@ -109,6 +109,7 @@ declare global {
       mercyCount: () => number;
       buff: () => { id: string | null; remainingMs: number };
       bossPos: () => { x: number; y: number };
+      bossBodies: () => { x: number; y: number }[];
       bossShots: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
@@ -171,6 +172,11 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       const body = gameScene().bossBody() as unknown as { x: number; y: number };
       return { x: Math.round(body.x), y: Math.round(body.y) };
     },
+    // v10 觀測點（§67 e2e）：多本體座標（雙子迴避取樣）。
+    bossBodies: () =>
+      gameScene()
+        .bossBodyPositions()
+        .map((pos) => ({ x: Math.round(pos.x), y: Math.round(pos.y) })),
     bossShots: () => {
       const shots: { x: number; y: number }[] = [];
       for (const child of gameScene().bossProjectiles().getChildren()) {

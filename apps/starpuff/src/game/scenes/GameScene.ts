@@ -1055,6 +1055,13 @@ export class GameScene extends Phaser.Scene {
     return this.boss.getBody();
   }
 
+  // e2e 觀測點（§67 多本體）：全部存活本體座標（雙子迴避取樣用）。
+  bossBodyPositions(): { x: number; y: number }[] {
+    return this.bossBodies()
+      .filter((body) => (body.body as Phaser.Physics.Arcade.Body).enable)
+      .map((body) => ({ x: body.x, y: body.y }));
+  }
+
   bossProjectiles(): Phaser.Physics.Arcade.Group {
     return this.boss.getProjectiles();
   }
