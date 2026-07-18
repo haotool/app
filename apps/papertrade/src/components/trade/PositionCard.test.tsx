@@ -46,7 +46,7 @@ describe('PositionCard', () => {
     const position = seedLongPosition();
     render(<PositionCard position={position} />);
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const { account, toasts } = useTradeStore.getState();
     expect(account.positions).toHaveLength(0);
@@ -63,11 +63,20 @@ describe('PositionCard', () => {
     const position = seedLongPosition();
     render(<PositionCard position={position} />);
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const { account, toasts } = useTradeStore.getState();
     expect(account.positions).toHaveLength(1);
     expect(toasts.some((item) => item.tone === 'warning' && item.title === '平倉失敗')).toBe(true);
+  });
+
+  it('renders the action row in the R5-5 order: close, partial, tp/sl, trailing', () => {
+    useMarketStore.getState().setTicker(btcTicker);
+    const position = seedLongPosition();
+    render(<PositionCard position={position} />);
+
+    const labels = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(labels).toEqual(['平倉', '部分', '止盈止損', '追蹤']);
   });
 
   it('opens the partial close sheet from the partial button', async () => {

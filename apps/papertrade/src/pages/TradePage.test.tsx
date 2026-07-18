@@ -598,7 +598,7 @@ describe('TradePage', () => {
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
     await user.click(screen.getByRole('button', { name: '買多' }));
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const { account } = useTradeStore.getState();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -634,7 +634,7 @@ describe('TradePage', () => {
       useMarketStore.getState().setTicker({ ...btcTicker, lastPrice: 61000, markPrice: 61000 });
     });
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const closeToast = useTradeStore
       .getState()

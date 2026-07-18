@@ -134,7 +134,24 @@ export function PositionCard({ position }: { position: Position }) {
         </p>
       )}
 
+      {/* R5-5 操作列順序：平倉 → 部分 → 止盈止損 → 追蹤，一鍵平倉 primary 置首。 */}
       <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          aria-label="市價全平"
+          onClick={closeAtMarket}
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary text-label font-semibold text-text active:bg-primary-pressed"
+        >
+          平倉
+        </button>
+        <button
+          type="button"
+          aria-label="部分平倉"
+          onClick={() => setSheet('close')}
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary/15 text-label font-medium text-primary active:bg-primary/25"
+        >
+          部分
+        </button>
         <button
           type="button"
           onClick={() => setSheet('tpsl')}
@@ -148,21 +165,6 @@ export function PositionCard({ position }: { position: Position }) {
           className="min-h-11 min-w-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
         >
           追蹤
-        </button>
-        <button
-          type="button"
-          aria-label="部分平倉"
-          onClick={() => setSheet('close')}
-          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary/15 text-label font-medium text-primary active:bg-primary/25"
-        >
-          部分
-        </button>
-        <button
-          type="button"
-          onClick={closeAtMarket}
-          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary text-label font-semibold text-text active:bg-primary-pressed"
-        >
-          平倉
         </button>
       </div>
 
