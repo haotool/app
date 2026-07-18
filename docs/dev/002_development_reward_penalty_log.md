@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-downjump-squash-loop
+- 原因：落地擠壓 squash 每次重新接觸即觸發，縮小 body 使腳底離台形成 ~20Hz 自持迴圈，接觸旗標抖動讓站台「下＋跳」2/3 機率被 v7 下砸誤判接管並以單步 22px 位移貫穿單向平台（worldstep 逐步 trace 實證），地形粉紅平台又從未接入下穿系統——生產站台下跳穿落回歸
+- 解法：落地擠壓加最低著地速度閘（120）切斷迴圈、resolveJumpPress 增 recentlyGroundedMs（coyote 窗內視同在地禁下砸）、站台判定抽 restingOnOneWay 純函式（接觸旗標或沉降幾何擇一）、著地帶 oneWayLandBand 依單步位移動態放寬防隧穿、粉紅平台掛 canLandOneWay 與 terrainOneWay 統一下穿；10 新單測（367 全綠）＋真瀏覽器接觸穩定度 120/120 步實證
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v11-kiln-finale

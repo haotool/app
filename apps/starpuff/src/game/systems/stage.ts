@@ -7,6 +7,8 @@ import {
   SPRING_COOLDOWN_MS,
   SPRING_VELOCITY_Y,
   canSpringLaunch,
+  oneWayLandBand,
+  restingOnOneWay,
   shouldDropThrough,
   springSweepHit,
 } from '../logic/stageModel';
@@ -31,6 +33,8 @@ export interface StageHooks {
   spawnAmmoMinion(x: number, y: number): void;
   // 折躍瞬移通知（§66）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
   onWarp?(x: number): void;
+  // 地形單向平台（§71）：GameScene addTerrain 的粉紅平台納入同一套下穿裁決。
+  terrainOneWay?(): Phaser.GameObjects.Rectangle[];
 }
 
 export interface StageHandle {
@@ -254,13 +258,26 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     }
   }
 
-  // 站立判定沿用 GameScene 平台慣例：腳底貼齊頂緣 ±4 且水平投影重疊。
+  // 站台判定（§71 熱修）：落地擠壓迴圈使接觸旗標抖動，改用 restingOnOneWay
+  //（接觸旗標或沉降幾何擇一）；地形粉紅平台（terrainOneWay hook）納入同一裁決。
   function standingOnOneWay(body: Phaser.Physics.Arcade.Body): boolean {
-    if (!body.blocked.down && !body.touching.down) return false;
-    return oneWay.some((rect) => {
+    const player = {
+      contactDown: body.blocked.down || body.touching.down,
+      velocityY: body.velocity.y,
+      bottom: body.bottom,
+      left: body.left,
+      right: body.right,
+    };
+    const onRect = (rect: Phaser.GameObjects.Rectangle): boolean => {
       const rb = rect.body as Phaser.Physics.Arcade.StaticBody;
-      return Math.abs(body.bottom - rb.top) <= 4 && body.right > rb.left && body.left < rb.right;
-    });
+      return restingOnOneWay(player, {
+        left: rb.left,
+        right: rb.right,
+        top: rb.top,
+        bottom: rb.bottom,
+      });
+    };
+    return oneWay.some(onRect) || (hooks.terrainOneWay?.() ?? []).some(onRect);
   }
 
   // 彈簧發射單一出口：物理 overlap 與掃掠背擋（§43）共用，cooldown 閘去重。
@@ -430,14 +447,18 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     getSprings: () => springs,
     getBreakables: () => breakables,
 
-    // 單向著地（recon C.1）：僅下落且腳底不低於頂緣 +6 才碰撞；下穿窗內一律放行。
+    // 單向著地（recon C.1）：僅下落且腳底不低於頂緣著地帶才碰撞；下穿窗內一律放行。
+    // §71 熱修：著地帶依單步位移動態放寬（oneWayLandBand），杜絕下砸/高處落下隧穿。
     canLandOneWay: (a, b) => {
       if (scene.time.now < dropUntilMs) return false;
       const aIsPlatform = hasFlag(a, 'oneway');
       const rect = asRect(aIsPlatform ? a : b);
       const other = (aIsPlatform ? b : a) as { body: Phaser.Physics.Arcade.Body };
       const rb = rect.body as Phaser.Physics.Arcade.StaticBody;
-      return other.body.velocity.y >= 0 && other.body.bottom <= rb.top + 6;
+      return (
+        other.body.velocity.y >= 0 &&
+        other.body.bottom <= rb.top + oneWayLandBand(other.body.deltaAbsY())
+      );
     },
 
     // 彈簧（recon C.3）：-640 超級跳 + 冷卻 300ms + squash + 專屬音；上升中不觸發。

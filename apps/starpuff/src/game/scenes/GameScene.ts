@@ -189,6 +189,8 @@ export class GameScene extends Phaser.Scene {
   private buffPickups = 0;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
+  // 地形單向平台（§71）：交 stage 統一下穿裁決（與 elements oneway 同權）。
+  private terrainPlatforms: Phaser.GameObjects.Rectangle[] = [];
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
@@ -235,6 +237,7 @@ export class GameScene extends Phaser.Scene {
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
     this.terrainGround = ground;
+    this.terrainPlatforms = platforms;
     // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；
     // hooks 以閉包延遲解析（player/enemies 於後續建立，呼叫時已就緒）。
     this.stage = createStage(this, this.level, {
@@ -244,6 +247,8 @@ export class GameScene extends Phaser.Scene {
       onWarp: (x) => {
         this.prevPlayerX = x;
       },
+      // §71：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
+      terrainOneWay: () => this.terrainPlatforms,
     });
 
     this.controls = createControls(this);
@@ -322,7 +327,15 @@ export class GameScene extends Phaser.Scene {
     this.enemies.setTarget(this.player.sprite);
     this.boss.setTarget(this.player.sprite);
 
-    this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
+    this.physics.add.collider(this.player.sprite, ground);
+    // §71：粉紅平台改走 canLandOneWay 裁決——下穿窗放行、高速著地帶動態放寬。
+    this.physics.add.collider(
+      this.player.sprite,
+      platforms,
+      undefined,
+      this.stage.canLandOneWay,
+      this,
+    );
     // 場控魔王 arena 浮台（§74 Syrona）：呈現層動態佈建，此處接玩家 collider。
     const bossPlatforms = this.boss.getPlatforms?.() ?? [];
     if (bossPlatforms.length > 0) {
@@ -589,6 +602,8 @@ export class GameScene extends Phaser.Scene {
       body.checkCollision.down = false;
       body.checkCollision.left = false;
       body.checkCollision.right = false;
+      // §71：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
+      platform.setData('oneway', true);
       return platform;
     });
     return { ground, platforms };

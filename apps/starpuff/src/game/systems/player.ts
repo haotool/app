@@ -115,6 +115,9 @@ const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 const BOOM_SPIN_RAD = 0.02;
 // 殼化護體窗（§57）：減傷池實扣 0 時的短無敵，防同一接觸逐幀重複結算。
 const SHELL_GUARD_MS = 400;
+// 落地擠壓最低著地速度（§71）：微速重新接觸（擠壓迴圈回落 15-30）不再觸發擠壓，
+// 切斷「落地擠壓 → 身體縮小 → 離台 → 再落地」的自持迴圈。
+const LANDING_SQUASH_MIN_VY = 120;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -587,7 +590,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       jumpBufferMs = tickTimer(jumpBufferMs, deltaMs);
       if (onGround && !wasOnGround) {
-        squashStretch(1.25, 0.75);
+        // §71：僅真實落地（下砸或帶速著地）擠壓；微速重新接觸不觸發，防自持迴圈。
+        if (slamming || lastVy > LANDING_SQUASH_MIN_VY) squashStretch(1.25, 0.75);
         // 下衝擊著地（§23）：加強塵埃 + 專屬音 + 事件交 GameScene 結算衝擊波。
         if (slamming) {
           slamming = false;
@@ -634,12 +638,14 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
         // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
         // 層 shouldDropThrough 裁決並覆蓋跳躍脈衝（§29 既有優先序）。
+        // §71：coyote 窗內視同在地（接觸旗標抖動免疫），下砸僅真空中觸發。
         const jumpCommand =
           controls.jumpPressed && !slamming
             ? resolveJumpPress({
                 airborne: !onGround,
                 down: controls.down,
                 slamCooldownMs: slamCdMs,
+                recentlyGroundedMs: coyoteMs,
               })
             : 'jump';
         if (jumpCommand === 'slam') {
