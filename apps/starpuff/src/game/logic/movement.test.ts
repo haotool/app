@@ -34,6 +34,26 @@ describe('approachVelocity（§41 加減速曲線）', () => {
     expect(turn).toBeLessThan(PLAYER.moveSpeed);
   });
 
+  it('提速目標（§57 雷化/§69 疾風靴）：速帽尊重目標值，可持續達到提速全速', () => {
+    const boosted = PLAYER.moveSpeed * 1.3;
+    let v = 0;
+    for (let i = 0; i < 60; i += 1) v = approachVelocity(v, boosted, 16);
+    expect(v).toBe(boosted);
+    // 到速後不被常速帽鉗回。
+    expect(approachVelocity(boosted, boosted, 16)).toBe(boosted);
+    // 增益消失：超帽殘速夾回常速帶再逼近。
+    expect(approachVelocity(boosted, PLAYER.moveSpeed, 16)).toBe(PLAYER.moveSpeed);
+  });
+
+  it('rateMul（§69 疾風靴加減速 ×1.4）：加速與減速步長同倍縮放', () => {
+    const base = approachVelocity(0, PLAYER.moveSpeed, 16);
+    const swift = approachVelocity(0, PLAYER.moveSpeed, 16, 1.4);
+    expect(swift).toBeCloseTo(base * 1.4, 5);
+    const baseStop = approachVelocity(PLAYER.moveSpeed, 0, 16);
+    const swiftStop = approachVelocity(PLAYER.moveSpeed, 0, 16, 1.4);
+    expect(PLAYER.moveSpeed - swiftStop).toBeCloseTo((PLAYER.moveSpeed - baseStop) * 1.4, 5);
+  });
+
   it('超速殘速（擊退）夾回常速帶，不留殘速滑行', () => {
     expect(approachVelocity(1000, PLAYER.moveSpeed, 16)).toBe(PLAYER.moveSpeed);
     expect(approachVelocity(-1000, -PLAYER.moveSpeed, 16)).toBe(-PLAYER.moveSpeed);

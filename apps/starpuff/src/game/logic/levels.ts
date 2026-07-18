@@ -1,4 +1,5 @@
 import type { BossKind, EnemyKind, LevelId } from '../core/types';
+import type { BuffId } from './buffs';
 import { canInhale } from './combat';
 import type { EasterEggSpec } from './eggs';
 
@@ -20,6 +21,7 @@ export interface PlatformSpec {
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
 // v8 上升氣流柱（§51）：zone 型非碰撞，x 為柱心、topY 為升力終止高、w 為柱寬。
+// v10 星門折躍（§66）：同 pairId 成對傳送；純邏輯見 logic/warp.ts，資料不變式見 levels.test。
 export type StageElementSpec =
   | { kind: 'oneway'; x: number; y: number; w: number }
   | {
@@ -33,7 +35,8 @@ export type StageElementSpec =
     }
   | { kind: 'spring'; x: number; y: number }
   | { kind: 'breakable'; x: number; y: number; loot: 'ammo' | 'hp' }
-  | { kind: 'updraft'; x: number; topY: number; w: number };
+  | { kind: 'updraft'; x: number; topY: number; w: number }
+  | { kind: 'warp'; x: number; y: number; pairId: string };
 
 // 主題道具佈景（§31/§32）：純裝飾無碰撞，key 對應 assets.ts 的 prop-<theme>-<1..4>。
 export interface DecorSpec {
@@ -56,6 +59,7 @@ export interface EliteSpec {
 // v8 契約變更（§50）：elite 單值改 elites 陣列（L6 雙精英）；boss 改品種標記
 //（'jellord'／'noctra'／null，truthy 語意與舊 boolean 相容）。
 // v9（§60）：hint 為關卡開場提示浮字（資料驅動，L8 星化教學用），無則不顯示。
+// v10（§67）：checkpointX 為卡點關中點重生錨（死亡自此重生，killCount／彩蛋／計時不重置）。
 export interface LevelSpec {
   id: LevelId;
   nameZh: string;
@@ -74,6 +78,12 @@ export interface LevelSpec {
   boss: BossKind | null;
   tutorial: boolean;
   hint?: string;
+  checkpointX?: number;
+  // v10 魔王關體系（§69）：anteroomPx 為前室廊道寬（runtime 世界寬＝前室＋動態視寬）；
+  // anteroomBuffs 為前室二選一台座、arenaBuff 為 P2 高風險位投放（EX 不投放）。
+  anteroomPx?: number;
+  anteroomBuffs?: readonly BuffId[];
+  arenaBuff?: BuffId;
 }
 
 // v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
@@ -606,6 +616,192 @@ export const LEVELS: readonly LevelSpec[] = [
     boss: null,
     tutorial: false,
   },
+  // v10 三區完結（§66）——L10 幽光晶湖：星門折躍首發（三區新機制 2/2）×鏡蟲潛行混編；
+  // 折躍高台（y=208）僅星門可達；第二對星門通向西岸補給灣（ammo 破磚 ×2）。
+  {
+    id: 10,
+    nameZh: '幽光晶湖',
+    bgKey: 'bg-lumen',
+    worldWidth: 3400,
+    killQuota: 12,
+    spawnIntervalMs: 1150,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §66 入編：mirri/glowy 雙主場（幽光湖語彙）；可吸佔比 0.85（spiky 不可吸）。
+    enemyMix: [
+      { kind: 'mirri', weight: 0.2 },
+      { kind: 'glowy', weight: 0.2 },
+      { kind: 'floaty', weight: 0.15 },
+      { kind: 'zappy', weight: 0.15 },
+      { kind: 'jelly', weight: 0.15 },
+      { kind: 'spiky', weight: 0.15 },
+    ],
+    platforms: [
+      { x: 520, y: 336, w: 150 },
+      { x: 950, y: 272, w: 130 },
+      { x: 1400, y: 336, w: 140 },
+      // 折躍專屬高台（§66 彩蛋台）：僅星門可達，主線地面雙層不依賴。
+      { x: 2050, y: 208, w: 130 },
+      { x: 2500, y: 336, w: 140 },
+      { x: 2950, y: 272, w: 130 },
+    ],
+    // 星門跳入制（§66）：門心高於就地站立中心 80px——站立不觸發、單跳可入、
+    // 出門落地即脫離觸發半徑（500ms 冷卻內不回彈）。
+    elements: [
+      { kind: 'oneway', x: 350, y: 320, w: 140 },
+      { kind: 'oneway', x: 1620, y: 336, w: 140 },
+      { kind: 'oneway', x: 3050, y: 320, w: 130 },
+      { kind: 'moving', x: 2350, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'spring', x: 1250, y: 391 },
+      { kind: 'breakable', x: 550, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 700, y: 380, loot: 'ammo' },
+      { kind: 'warp', x: 1050, y: 300, pairId: 'lake-high' },
+      { kind: 'warp', x: 2050, y: 100, pairId: 'lake-high' },
+      { kind: 'warp', x: 2750, y: 300, pairId: 'lake-cove' },
+      { kind: 'warp', x: 600, y: 300, pairId: 'lake-cove' },
+    ],
+    // §55 重用評估：晶湖沿用 arena 主題道具（水晶/星柱——幽光晶簇質感）。
+    decor: [
+      { key: 'prop-arena-1', x: 320 },
+      { key: 'prop-arena-2', x: 870 },
+      { key: 'prop-arena-3', x: 1420 },
+      { key: 'prop-arena-4', x: 1970 },
+      { key: 'prop-arena-1', x: 2520 },
+      { key: 'prop-arena-2', x: 3070 },
+    ],
+    // §24 彩蛋十：折躍專屬高台連續站上 2 次（僅星門可達）。
+    easterEggs: [{ trigger: 'stand-count', reward: 'hp-up', platformY: 208, count: 2 }],
+    // §66：鏡光燈長老——脈衝週期縮時 1.4 倍，擊敗掉迴旋味（與在編 zappy 湊電鋸迴旋）。
+    elites: [
+      {
+        kind: 'glowy',
+        x: 1450,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xf0d888,
+        speedMul: 1.4,
+        rewardFlavor: 'boomy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    hint: '跳入發光星環可折躍傳送（捷徑，主線不依賴）',
+  },
+  // L11 磁晶險徑：磁力域（重用 v9 Magno）×星門折躍（重用 L10）複合考驗關（卡點一）；
+  // 雙精英＋中點 checkpoint 首發（§67）。
+  {
+    id: 11,
+    nameZh: '磁晶險徑',
+    bgKey: 'bg-magnetic',
+    worldWidth: 3700,
+    killQuota: 13,
+    spawnIntervalMs: 1100,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §67 入編：magno/mirri/drilly 三新舊怪複合；可吸佔比 0.73（drilly 破土窗保守不計）。
+    enemyMix: [
+      { kind: 'magno', weight: 0.15 },
+      { kind: 'mirri', weight: 0.15 },
+      { kind: 'chompy', weight: 0.15 },
+      { kind: 'boomy', weight: 0.15 },
+      { kind: 'floaty', weight: 0.15 },
+      { kind: 'spora', weight: 0.13 },
+      { kind: 'drilly', weight: 0.12 },
+    ],
+    platforms: [
+      { x: 450, y: 336, w: 140 },
+      { x: 850, y: 272, w: 130 },
+      { x: 1350, y: 336, w: 140 },
+      { x: 1800, y: 300, w: 130 },
+      { x: 2400, y: 336, w: 140 },
+      { x: 2900, y: 272, w: 120 },
+      { x: 3300, y: 336, w: 130 },
+    ],
+    elements: [
+      { kind: 'oneway', x: 580, y: 320, w: 130 },
+      { kind: 'oneway', x: 1500, y: 320, w: 130 },
+      { kind: 'oneway', x: 3080, y: 336, w: 130 },
+      { kind: 'moving', x: 2100, y: 336, w: 120, axis: 'y', range: -56, durationMs: 2200 },
+      { kind: 'spring', x: 350, y: 391 },
+      { kind: 'spring', x: 2950, y: 391 },
+      { kind: 'breakable', x: 950, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2050, y: 380, loot: 'hp' },
+      { kind: 'warp', x: 700, y: 300, pairId: 'ridge' },
+      { kind: 'warp', x: 1950, y: 300, pairId: 'ridge' },
+    ],
+    // §55 重用評估：險徑沿用 arena 主題道具（磁晶簇質感）。
+    decor: [
+      { key: 'prop-arena-3', x: 350 },
+      { key: 'prop-arena-4', x: 900 },
+      { key: 'prop-arena-1', x: 1450 },
+      { key: 'prop-arena-2', x: 2000 },
+      { key: 'prop-arena-3', x: 2550 },
+      { key: 'prop-arena-4', x: 3100 },
+    ],
+    // §24 彩蛋十一：依序連吞 spora→boomy（毒爆雲之後的配方預告）。
+    easterEggs: [{ trigger: 'eat-sequence', reward: 'gold-star', sequence: ['spora', 'boomy'] }],
+    // §67 雙精英：磁暴巨核（前段，磁場週期縮時 ×1.4）＋鑽岩老兵（後段，潛速 ×1.4），
+    // 房距 1200 ≥ 2×門距。
+    elites: [
+      {
+        kind: 'magno',
+        x: 1300,
+        hp: 22,
+        scale: 1.55,
+        tint: 0x7a88e0,
+        speedMul: 1.4,
+        rewardFlavor: 'glowy',
+      },
+      {
+        kind: 'drilly',
+        x: 2500,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xc89058,
+        speedMul: 1.4,
+        rewardFlavor: 'boomy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 卡點一（§67）：中點重生錨——死亡自此重生，落點位於雙精英房界外。
+    checkpointX: 1850,
+  },
+  // L12 稜晶王殿：第三魔王稜晶雙子 Prismix（§68 分裂型三階段）；魔王關特殊體系首發
+  //（§69 前室廊道／增益二選一／arena 高風險位投放）。
+  {
+    id: 12,
+    nameZh: '稜晶王殿',
+    bgKey: 'bg-prism',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 3000,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26 飢荒保證律）；mirri 佔比最高供迴旋味與鏡蟲主題呼應。
+    enemyMix: [
+      { kind: 'jelly', weight: 0.3 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'mirri', weight: 0.4 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-arena-1', x: 110 },
+      { key: 'prop-arena-2', x: 320 },
+      { key: 'prop-arena-3', x: 540 },
+      { key: 'prop-arena-4', x: 750 },
+    ],
+    // §24 彩蛋十二：雙子連破——P2 兩具均在場時 1s 窗內相繼擊破（§70 觸發器）。
+    easterEggs: [{ trigger: 'twin-finish', reward: 'gold-star' }],
+    elites: [],
+    boss: 'prismix',
+    tutorial: false,
+    // 魔王關體系（§69）：前室 400px＋護盾泡/星力果二選一；P2 高風險位刷疾風靴。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'power'],
+    arenaBuff: 'swift',
+  },
 ];
 
 export function getLevel(id: LevelId): LevelSpec {
@@ -691,4 +887,10 @@ export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolea
 // 尾端安全區：星星門前禁 spawn 的喘息帶。
 export function isInSafeTail(level: LevelSpec, x: number): boolean {
   return level.safeZoneTailPx > 0 && x >= level.worldWidth - level.safeZoneTailPx;
+}
+
+// 卡點關中點重生（§67）：已推進越過 checkpoint 才自 checkpoint 重生，否則整關重試。
+export function checkpointRespawnX(level: LevelSpec, farthestX: number): number | null {
+  if (level.checkpointX === undefined || farthestX < level.checkpointX) return null;
+  return level.checkpointX;
 }

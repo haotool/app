@@ -97,14 +97,19 @@ export function createWaveRunner(
     const kind = pickSpawnKind(level, Math.random(), starving);
     let x: number;
     if (level.boss) {
-      // boss 單屏世界寬 = 當前視寬（§28），右緣入場點隨之計算。
+      // boss arena 寬 = 當前視寬（§28）、自前室右緣起算（§69）；右緣入場點隨之計算。
       // 難度根修（§54）：補給自玩家遠側入場——供給定位是彈藥，走向玩家的路程即
       // 拾取節奏，不形成近身第二傷害源。
+      const arenaLeft = level.anteroomPx ?? 0;
+      const arenaRight = arenaLeft + scene.scale.width;
       const playerX = enemies.targetX();
       if (playerX !== null) {
-        x = playerX < scene.scale.width / 2 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+        x =
+          playerX < arenaLeft + scene.scale.width / 2
+            ? arenaRight - SPAWN_MARGIN_X
+            : arenaLeft + SPAWN_MARGIN_X;
       } else {
-        x = spawnCounter % 2 === 0 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+        x = spawnCounter % 2 === 0 ? arenaRight - SPAWN_MARGIN_X : arenaLeft + SPAWN_MARGIN_X;
       }
     } else {
       // 生成邊距讀動態視寬（§28）：玩家前方「視野外側」隨邏輯寬 854–1200 變化。

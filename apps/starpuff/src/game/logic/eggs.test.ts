@@ -12,8 +12,8 @@ function run(spec: EasterEggSpec, events: readonly EggEvent[]): boolean[] {
 }
 
 describe('LEVELS easterEggs 資料（§24）', () => {
-  it('九關各掛一顆彩蛋且觸發型別對表', () => {
-    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  it('十二關各掛一顆彩蛋且觸發型別對表', () => {
+    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.trigger)).toEqual([
       'reach-x',
       'stand-count',
@@ -24,6 +24,9 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'crown-early-hit',
       'eat-sequence',
       'eat-sequence',
+      'stand-count',
+      'eat-sequence',
+      'twin-finish',
     ]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.reward)).toEqual([
       'hp-up',
@@ -35,7 +38,17 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'heal',
       'gold-star',
       'full-magazine',
+      'hp-up',
+      'gold-star',
+      'gold-star',
     ]);
+  });
+
+  it('L10 彩蛋高台（§66）：目標層高存在於平台表且為星門折躍專屬高台', () => {
+    const egg = LEVELS[9]?.easterEggs[0];
+    if (egg?.trigger !== 'stand-count') throw new Error('L10 彩蛋型別不符');
+    expect(LEVELS[9]?.platforms.some((p) => p.y === egg.platformY)).toBe(true);
+    expect(egg.platformY).toBeLessThan(272);
   });
 
   it('L5 彩蛋高台（§51）：目標層高存在於平台表且為氣流柱可達高台', () => {
@@ -127,6 +140,19 @@ describe('advanceEgg：eat-sequence', () => {
       { kind: 'swallow', flavor: 'puffy' },
     ]);
     expect(results).toEqual([false, false, false, true]);
+  });
+});
+
+describe('advanceEgg：twin-finish（§70）', () => {
+  const spec: EasterEggSpec = { trigger: 'twin-finish', reward: 'gold-star' };
+
+  it('收到雙子連破事件觸發一次並鎖存；無關事件不推進', () => {
+    const results = run(spec, [
+      { kind: 'boss-hit', sinceActiveMs: 100 },
+      { kind: 'twin-finish' },
+      { kind: 'twin-finish' },
+    ]);
+    expect(results).toEqual([false, true, false]);
   });
 });
 
