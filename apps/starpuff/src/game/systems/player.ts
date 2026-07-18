@@ -87,6 +87,8 @@ export interface PlayerHandle {
   onSlamBounce(): void;
   // 短期增益（§68 疾風靴）：移速/加減速倍率單點注入；GameScene 依 buff 狀態逐幀同步。
   setBuffMoveMods(speedMul: number, rateMul: number): void;
+  // 卡點重生護體（§66）：顯式重授無敵窗（取現值較大者），不依賴致死當下殘餘 i-frame。
+  grantInvulnerability(durationMs: number): void;
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
   getStars(): Phaser.Physics.Arcade.Group;
@@ -960,6 +962,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     setBuffMoveMods(speedMul: number, rateMul: number) {
       buffSpeedMul = speedMul;
       buffRateMul = rateMul;
+    },
+    grantInvulnerability(durationMs: number) {
+      invulnerableMs = Math.max(invulnerableMs, durationMs);
     },
     getFacing() {
       return facing;

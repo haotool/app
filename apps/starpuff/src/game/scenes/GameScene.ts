@@ -882,6 +882,8 @@ export class GameScene extends Phaser.Scene {
       body.reset(respawnX, GROUND_TOP - 40);
       this.player.sprite.setVisible(true);
       this.player.heal(PLAYER.maxHp, PLAYER.maxHp);
+      // 落地護體顯式重授（審查修復）：不依賴致死當下殘餘 i-frame，重生窗恆為完整時長。
+      this.player.grantInvulnerability(PLAYER.invulnerableMs);
       this.mercy = createMercyState();
       this.prevPlayerX = respawnX;
       this.fx.burstSmall(respawnX, GROUND_TOP - 40, 0x9fe8ff);
@@ -1450,12 +1452,14 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // 雷化鏈電束（§57）：短程面向側取最近目標（小怪或魔王）主傷，再沿雷鏈跳電波及。
+  // 雷化鏈電束（§57/§67）：短程面向側取最近目標（小怪或魔王本體）主傷，再沿雷鏈跳電
+  // 波及——跳電候選含小怪、其餘存活魔王本體與碎晶盾（分裂型天然剋制，審查修復）。
   private resolveVoltBeam(x: number, y: number, facing: 1 | -1): void {
     interface BeamTarget {
       x: number;
       y: number;
       ref: Phaser.GameObjects.GameObject | null;
+      shield?: Phaser.Physics.Arcade.Sprite;
     }
     const candidates: BeamTarget[] = [];
     for (const child of this.enemies.getGroup().getChildren()) {
@@ -1469,19 +1473,34 @@ export class GameScene extends Phaser.Scene {
         if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
         candidates.push({ x: body.x, y: body.y, ref: null });
       }
+      for (const obj of this.boss.getShields?.()?.getMatching('active', true) ?? []) {
+        const shard = asSprite(obj);
+        candidates.push({ x: shard.x, y: shard.y, ref: null, shield: shard });
+      }
     }
     const inFront = candidates.filter((c) => Math.sign(c.x - x) === facing || c.x === x);
     const target = pickChainTargets(x, y, inFront, 1, VOLT_BEAM.rangePx)[0];
     if (!target) return;
+    // 跳電單一結算出口：主傷與波及共用（盾碎裂/小怪/魔王本體三路）。
+    const strike = (hit: BeamTarget, damage: number): void => {
+      this.fx.burstSmall(hit.x, hit.y, TRANSFORM_FORMS.volt.tint);
+      if (hit.shield) {
+        hit.shield.disableBody(true, true);
+        playSfx('break', 0.7);
+        return;
+      }
+      if (hit.ref) {
+        this.enemies.damage(hit.ref, damage);
+        return;
+      }
+      this.damageBossAt(damage, hit.x, hit.y, 'volt');
+    };
     playSfx('zap');
     this.drawBolt(x, y, target.x, target.y);
-    this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
     // 星力果（§68）：變身射擊同享傷害倍率。
-    const beamDamage = VOLT_BEAM.damage * buffDamageMul(this.buff);
-    if (target.ref) this.enemies.damage(target.ref, beamDamage);
-    else this.damageBossAt(beamDamage, target.x, target.y, 'volt');
-    // 跳電波及：以主目標為原點取最近小怪（排除主目標）。
-    const rest = candidates.filter((c) => c.ref && c.ref !== target.ref);
+    strike(target, VOLT_BEAM.damage * buffDamageMul(this.buff));
+    // 跳電波及：以主目標為原點取最近候選（排除主目標自身）。
+    const rest = candidates.filter((c) => c !== target);
     let fromX = target.x;
     let fromY = target.y;
     for (const hop of pickChainTargets(
@@ -1492,8 +1511,7 @@ export class GameScene extends Phaser.Scene {
       VOLT_BEAM.rangePx,
     )) {
       this.drawBolt(fromX, fromY, hop.x, hop.y);
-      this.fx.burstSmall(hop.x, hop.y, TRANSFORM_FORMS.volt.tint);
-      if (hop.ref) this.enemies.damage(hop.ref, VOLT_BEAM.chainDamage);
+      strike(hop, VOLT_BEAM.chainDamage);
       fromX = hop.x;
       fromY = hop.y;
     }

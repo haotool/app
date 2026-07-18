@@ -180,6 +180,10 @@ test('L11 中點重生（§66）：越過 checkpoint 後死亡自 1850 重生，
   expect(await page.evaluate(() => window.__sp.stage())).toBe(11);
   const afterQuota = await page.evaluate(() => window.__sp.quota());
   expect(afterQuota.killCount).toBe(beforeQuota.killCount);
+  // 重生護體（審查修復）：落地窗顯式無敵——重生瞬間受擊不掉血。
+  await page.evaluate(() => window.__sp.hurtPlayer(1));
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => window.__sp.playerHp())).toBe(5);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

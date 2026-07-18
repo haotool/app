@@ -46,6 +46,8 @@ const BARRAGE_SPEED = 165;
 // P3 碎晶盾軌道：半徑與角速度；各盾 1 發星彈可破。
 const SHARD_ORBIT_R = 95;
 const SHARD_SPIN_RAD_PER_MS = 0.0012;
+// P3 彈幕蓄能 telegraph（§67 蓄能轉白，審查修復）：轉白持續蓄能後才齊發。
+const BARRAGE_WINDUP_MS = 600;
 const CRYSTAL_TINT = 0xc5a8e8;
 const CORE_TINT = 0x9a7ad0;
 
@@ -306,16 +308,23 @@ export function createPrismix(
     });
   };
 
-  // 全域折射彈幕（§67 P3）：放射彈環自裂核射出。
+  // 全域折射彈幕（§67 P3）：蓄能轉白 0.6s telegraph 後放射彈環自裂核齊發（審查修復：
+  // 原 90ms 白閃過短，普通反應不可讀）。
   const doBarrage = (count: number) => {
-    flashWhite(core, CORE_TINT);
-    playSfx('starstorm', 1.2);
-    for (let i = 0; i < count; i += 1) {
-      const angle = (Math.PI * 2 * i) / count;
-      const shot = spawnShot(core.x, core.y);
-      if (!shot) continue;
-      shot.setVelocity(Math.cos(angle) * BARRAGE_SPEED, Math.sin(angle) * BARRAGE_SPEED);
-    }
+    core.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    playSfx('charge');
+    delay(BARRAGE_WINDUP_MS, () => {
+      if (dying) return;
+      core.setTintMode(Phaser.TintModes.MULTIPLY);
+      core.setTint(CORE_TINT);
+      playSfx('starstorm', 1.2);
+      for (let i = 0; i < count; i += 1) {
+        const angle = (Math.PI * 2 * i) / count;
+        const shot = spawnShot(core.x, core.y);
+        if (!shot) continue;
+        shot.setVelocity(Math.cos(angle) * BARRAGE_SPEED, Math.sin(angle) * BARRAGE_SPEED);
+      }
+    });
   };
 
   // 晶雨（§67 P3）：落點預警後晶塊直墜。
