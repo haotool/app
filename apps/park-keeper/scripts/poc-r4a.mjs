@@ -4,7 +4,7 @@
  * - wedgeInHubPct：楔形帶取樣點落入 Hub 圓比例（目標 0）
  * - cardinal[].inHubPct：方位字格點落入 Hub 圓比例（目標 0）
  * - cardinal[].clippedPx：方位字溢出 stage 邊界像素（目標 0）
- * - anchorPillOverlapPct / pillBelowDeckTop：平放 pill 與錨點/deck 的關係（目標 0 / true）
+ * - anchorPillOverlapPct / pillDoesNotOverlapDeck：平放 pill 與錨點/deck 的關係（目標 0 / true）
  * 用法：node scripts/poc-r4a.mjs <outDir>（需 preview server 於 :4176）
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -135,9 +135,9 @@ async function measure(page) {
       (el) => el.textContent === '請平放手機' && el.className.includes('rounded-full'),
     );
     out.pill = rect(pillEl ?? null);
-    out.pillBelowDeckTop = null;
+    out.pillDoesNotOverlapDeck = null;
     out.anchorPillOverlapPct = null;
-    if (out.pill && out.deck) out.pillBelowDeckTop = out.pill.bottom <= out.deck.top + 0.5;
+    if (out.pill && out.deck) out.pillDoesNotOverlapDeck = out.pill.bottom <= out.deck.top + 0.5;
     if (out.pill && out.anchor) {
       const ix = Math.max(
         0,

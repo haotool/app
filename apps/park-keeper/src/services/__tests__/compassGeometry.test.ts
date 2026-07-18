@@ -270,6 +270,10 @@ describe('computeDeckGeometry', () => {
     expect(CAPSULE_HEIGHT).toBe(56);
   });
 
+  it('TARGET_WEDGE_INNER_R 預設與 deck 契約同源（hub 半徑＋間隙）', () => {
+    expect(TARGET_WEDGE_INNER_R).toBe(HUB_DIAMETER / 2 + WEDGE_HUB_GAP);
+  });
+
   it('375×667 直向（stage 375×232）：arc 模式、半徑受高度約束', () => {
     const g = computeDeckGeometry(375, 232);
     expect(g.mode).toBe('arc');

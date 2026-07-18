@@ -20,8 +20,6 @@ import type { DirectionInfo, DirectionIconType } from '@app/park-keeper/hooks/us
 import {
   cardinalLabelPosition,
   cardinalLabelUprightTransform,
-  isCardinalIndex,
-  isMajorIndex,
   tickLength,
   tickStrokeWidth,
   tickOpacity,
@@ -177,7 +175,6 @@ export default function CompassArcStage({
           {/* 方位字沿弧 — 絕對座標渲染＋以自身錨點反向抵銷容器旋轉，
               轉身時 N/E/S/W 保持直立可辨（issue #733；旋轉中心即文字錨點）。 */}
           {[0, 9, 18, 27].map((i) => {
-            if (!isCardinalIndex(i) || isMajorIndex(i)) return null;
             const { x, y } = cardinalLabelPosition(i, geo.labelR, geo.half, geo.half);
             const isNorth = i === COMPASS_NORTH_INDEX;
             return (

@@ -224,8 +224,8 @@ export function cardinalLabelUprightTransform(
 /** 目標方位楔形半角（度）：車位方向 ±15° 高亮帶。 */
 export const TARGET_WEDGE_HALF_ANGLE_DEG = 15;
 
-/** 楔形內半徑（環帶內緣，避開中心 Hub）。 */
-export const TARGET_WEDGE_INNER_R = 78;
+/** 楔形內半徑預設值：與 deck 契約同源（hub 半徑＋間隙），杜絕舊 78px 腳槍。 */
+export const TARGET_WEDGE_INNER_R = HUB_DIAMETER / 2 + WEDGE_HUB_GAP;
 
 /** 楔形外半徑（環帶外緣，落在刻度內側）。 */
 export const TARGET_WEDGE_OUTER_R = 126;

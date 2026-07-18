@@ -402,7 +402,11 @@ export default function NavOverlay({
         </div>
 
         {/* 弧形盤面 stage：量測 → computeDeckGeometry → arc 或 capsule。 */}
-        <div ref={stageRef} className="relative flex-1 min-h-0 overflow-hidden">
+        <div
+          ref={stageRef}
+          data-testid="compass-stage"
+          className="relative flex-1 min-h-0 overflow-hidden"
+        >
           {geo?.mode === 'arc' && (
             <CompassArcStage
               geo={geo}

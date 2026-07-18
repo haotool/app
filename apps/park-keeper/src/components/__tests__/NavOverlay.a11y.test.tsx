@@ -22,16 +22,21 @@ vi.mock('../MiniMap', () => ({
   )),
 }));
 
-// jsdom 無實際佈局：以 clientWidth/Height stub 提供 deck stage 量測值。
+// jsdom 無實際佈局：以 getter 僅對 stage 元素（data-testid=compass-stage）
+// 提供量測值，其餘元素維持 jsdom 預設 0，避免全域 stub 汙染其他量測。
 // 375×300 → computeDeckGeometry 判定 arc 模式（對齊 390×844 直向實機）。
 function stubStageSize(width: number, height: number) {
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
     configurable: true,
-    value: width,
+    get(this: HTMLElement) {
+      return this.dataset['testid'] === 'compass-stage' ? width : 0;
+    },
   });
   Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
     configurable: true,
-    value: height,
+    get(this: HTMLElement) {
+      return this.dataset['testid'] === 'compass-stage' ? height : 0;
+    },
   });
 }
 
