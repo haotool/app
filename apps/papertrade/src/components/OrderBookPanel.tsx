@@ -210,7 +210,7 @@ export function CompactOrderBook({
     ));
   }
 
-  // 賣單在上、買單在下錨定中間價列；多餘高度由 justify 平均分配，不壓縮 44px 列高。
+  // 賣單在上、買單在下錨定中間價列；多餘高度由 justify 平均分配，密度列 32px 與中間價列 44px 不壓縮。
   // 骨架也掛在恆存的 section 內：ref 首次 commit 即掛載，ResizeObserver 才能量到高度裁檔。
   return (
     <section

@@ -38,12 +38,12 @@ export function ConnectionBanner() {
   if (banner === 'hidden') return null;
 
   return (
-    // 固定浮層 pill：不佔版面、不可點穿透；z-40 高於 sticky header（z-20）。
+    // 固定浮層 pill：不佔版面、不可點穿透；z-[60] 高於 BottomSheet（z-40）與 toast／對話框（z-50）。
     <div
       role="status"
       aria-live="polite"
       className={clsx(
-        'toast-in pointer-events-none fixed left-1/2 top-[calc(var(--sat)+8px)] z-40 -translate-x-1/2 whitespace-nowrap rounded-full border px-3 py-1.5 text-caption font-medium backdrop-blur',
+        'toast-in pointer-events-none fixed left-1/2 top-[calc(var(--sat)+8px)] z-[60] -translate-x-1/2 whitespace-nowrap rounded-full border px-3 py-1.5 text-caption font-medium backdrop-blur',
         banner === 'reconnecting'
           ? 'conn-pulse border-warning/30 bg-surface-2/90 text-warning'
           : 'border-long/30 bg-surface-2/90 text-long',

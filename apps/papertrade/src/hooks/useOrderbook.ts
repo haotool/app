@@ -18,7 +18,7 @@ export function useOrderbook(symbol: MarketSymbol): OrderBook {
       book = update.book;
       setState({ key, book });
       if (update.resync) {
-        // 序號缺口：清簿後換 epoch 重訂閱，強制 Bybit 重送 snapshot。
+        // 序號缺口：清簿後換 epoch 重訂閱，強制上游重送快照。
         setEpoch((value) => value + 1);
       }
     });

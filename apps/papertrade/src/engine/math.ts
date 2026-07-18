@@ -26,10 +26,13 @@ export function roePercent(pnl: number, margin: number): number {
   return (pnl / margin) * 100;
 }
 
+// 有效 MMR 上限係數（ADR-R5-03）：以「初始保證金率之半」為收斂上限。
+const MMR_INITIAL_MARGIN_FRACTION = 0.5;
+
 // 有效維持保證金率（ADR-R5-03）：高槓桿下固定 0.5% MMR 會高於初始保證金率導致開倉即強平，
 // 以「初始保證金率之半」為上限收斂，強平價與保證金檢查一律經此單點取得。
 export function effectiveMaintenanceMarginRate(leverage: number): number {
-  return Math.min(MAINTENANCE_MARGIN_RATE, 0.5 / leverage);
+  return Math.min(MAINTENANCE_MARGIN_RATE, MMR_INITIAL_MARGIN_FRACTION / leverage);
 }
 
 export function liquidationPrice(side: Side, entryPrice: number, leverage: number): number {
