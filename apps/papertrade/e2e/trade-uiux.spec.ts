@@ -57,6 +57,26 @@ test.describe('R4 交易頁 UIUX 375×812', () => {
     if (formBox === null || bookBox === null) throw new Error('boxes not visible');
     expect(Math.abs(formBox.height - bookBox.height)).toBeLessThanOrEqual(4);
 
+    // 檔數自適應：mock 各 6 檔，此視口高度必須裁切（單側 ≥3 且 <6）且無內部捲動。
+    const book = page.getByRole('region', { name: '訂單簿' });
+    await expect(book.getByRole('button', { name: /以最新價/ })).toBeVisible();
+    const readBookFit = () =>
+      book.evaluate((element) => {
+        const sides = Array.from(element.querySelectorAll('ol')).map(
+          (list) => list.querySelectorAll('button').length,
+        );
+        return {
+          asks: sides[0] ?? 0,
+          bids: sides[1] ?? 0,
+          overflow: element.scrollHeight - element.clientHeight,
+        };
+      });
+    await expect.poll(async () => (await readBookFit()).overflow).toBeLessThanOrEqual(1);
+    const bookFit = await readBookFit();
+    expect(bookFit.asks).toBeGreaterThanOrEqual(3);
+    expect(bookFit.asks).toBeLessThan(6);
+    expect(bookFit.bids).toBe(bookFit.asks);
+
     // 中間價列點擊帶入限價。
     await page.getByRole('button', { name: /以最新價 60,000\.0 帶入限價/ }).click();
     await expect(page.getByRole('tab', { name: '限價' })).toHaveAttribute('aria-selected', 'true');

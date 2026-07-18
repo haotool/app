@@ -174,16 +174,7 @@ export function CompactOrderBook({
 
   const bids = book.bids.slice(0, sideLevels);
   const asks = book.asks.slice(0, sideLevels).reverse();
-
-  if (bids.length === 0 && asks.length === 0) {
-    return (
-      <div className="flex h-full flex-col gap-1.5 overflow-hidden" aria-label="訂單簿載入中">
-        {Array.from({ length: levels * 2 }, (_, index) => (
-          <span key={index} className="skeleton-pulse h-10 w-full shrink-0 rounded" />
-        ))}
-      </div>
-    );
-  }
+  const loading = bids.length === 0 && asks.length === 0;
 
   const maxSize = Math.max(...bids.map(([, size]) => size), ...asks.map(([, size]) => size), 1);
 
@@ -218,19 +209,30 @@ export function CompactOrderBook({
   }
 
   // 賣單在上、買單在下錨定中間價列；多餘高度由 justify 平均分配，不壓縮 44px 列高。
+  // 骨架也掛在恆存的 section 內：ref 首次 commit 即掛載，ResizeObserver 才能量到高度裁檔。
   return (
     <section
       ref={rootRef}
       aria-label="訂單簿"
       className="flex h-full select-none flex-col overflow-y-auto"
     >
-      <div className="flex justify-between px-1 pb-1 text-caption text-text-3">
-        <span>價格</span>
-        <span>數量</span>
-      </div>
-      <ol className="flex flex-1 flex-col justify-evenly">{renderRows(asks, 'ask')}</ol>
-      <MidPriceRow symbol={symbol} onPriceSelect={onPriceSelect} />
-      <ol className="flex flex-1 flex-col justify-evenly">{renderRows(bids, 'bid')}</ol>
+      {loading ? (
+        <div className="flex h-full flex-col gap-1.5 overflow-hidden" aria-label="訂單簿載入中">
+          {Array.from({ length: levels * 2 }, (_, index) => (
+            <span key={index} className="skeleton-pulse h-10 w-full shrink-0 rounded" />
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between px-1 pb-1 text-caption text-text-3">
+            <span>價格</span>
+            <span>數量</span>
+          </div>
+          <ol className="flex flex-1 flex-col justify-evenly">{renderRows(asks, 'ask')}</ol>
+          <MidPriceRow symbol={symbol} onPriceSelect={onPriceSelect} />
+          <ol className="flex flex-1 flex-col justify-evenly">{renderRows(bids, 'bid')}</ol>
+        </>
+      )}
     </section>
   );
 }
