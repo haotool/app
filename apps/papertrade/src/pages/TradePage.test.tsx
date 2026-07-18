@@ -377,6 +377,28 @@ describe('TradePage', () => {
     expect(screen.getByRole('textbox', { name: /止損價/ })).toHaveValue('');
   });
 
+  it('resets the amount and tp/sl inputs with their expansion when switching pairs', async () => {
+    const user = userEvent.setup();
+    renderTrade('/trade?symbol=BTCUSDT');
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '65000');
+    await user.type(screen.getByRole('textbox', { name: /止損價/ }), '55000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+
+    await user.click(screen.getByRole('button', { name: /切換交易對，目前為 BTC\/USDT/ }));
+    await user.click(screen.getByRole('button', { name: /^ETH/ }));
+
+    const toggle = screen.getByRole('button', { name: '止盈/止損（選填）' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('textbox', { name: /止盈價/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '數量（USDT）' })).toHaveValue('');
+
+    await user.click(toggle);
+    expect(screen.getByRole('textbox', { name: /止盈價/ })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: /止損價/ })).toHaveValue('');
+  });
+
   it('opens a market order with tp/sl applied and shown on the position card', async () => {
     const user = userEvent.setup();
     renderTrade();

@@ -145,7 +145,9 @@ export function TradePage() {
 
       <div className="flex gap-3 px-4 lg:gap-6">
         <div className="min-w-0 flex-[0.58]">
+          {/* key=symbol：切換交易對重置表單內部狀態（數量、TP/SL 值與展開態），避免跨幣殘留。 */}
           <OrderForm
+            key={symbol}
             symbol={symbol}
             leverage={leverage}
             mode={mode}
