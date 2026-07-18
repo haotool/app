@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '../routes';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
-import { createInitialAccount } from '../engine/engine';
+import { createInitialAccount, openMarket } from '../engine/engine';
 import { type Ticker } from '../services/ticker';
 
 const wsHandlers = new Map<string, (message: unknown) => void>();
@@ -436,6 +436,75 @@ describe('TradePage', () => {
     const order = useTradeStore.getState().account.orders[0];
     expect(order?.takeProfit).toBe(59000);
     expect(order?.stopLoss).toBe(57000);
+  });
+
+  it('shows the scale-in hint and submits without form tp/sl for a same-side add', async () => {
+    const user = userEvent.setup();
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      tp: 61000,
+      sl: 59000,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    useTradeStore.setState({ account: opened.account });
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    expect(
+      screen.getByText('加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+    ).toBeInTheDocument();
+
+    // 相對現價非法的 TP（多單 TP 低於現價）也不得阻擋加倉。
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    const position = useTradeStore.getState().account.positions[0];
+    expect(position?.qty).toBeCloseTo(0.2, 10);
+    expect(position?.takeProfit).toBe(61000);
+    expect(position?.stopLoss).toBe(59000);
+  });
+
+  it('re-validates form tp/sl when submitting the opposite side of the held position', async () => {
+    const user = userEvent.setup();
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    useTradeStore.setState({ account: opened.account });
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '賣空' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('止盈價須優於開倉價（多單高於、空單低於）');
+  });
+
+  it('shows the limit-fill tp/sl caption only in limit mode without a hint on a fresh account', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    expect(
+      screen.queryByText('加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('限價更優成交後，請以實際開倉價檢視止盈止損'),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    expect(screen.getByText('限價更優成交後，請以實際開倉價檢視止盈止損')).toBeInTheDocument();
   });
 
   it('opens via the 100% slider combined with tp/sl without rejection', async () => {

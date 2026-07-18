@@ -64,6 +64,10 @@ export function OrderForm({
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const available = useTradeStore((state) => state.account.balance);
+  // 目前 symbol 持倉方向：同向下單＝加倉，沿用倉上 TP/SL，表單欄位不生效（B1/S1）。
+  const heldSide = useTradeStore(
+    (state) => state.account.positions.find((position) => position.symbol === symbol)?.side ?? null,
+  );
   const openMarketOrder = useTradeStore((state) => state.openMarketOrder);
   const placeLimitOrder = useTradeStore((state) => state.placeLimitOrder);
   const pushToast = useTradeStore((state) => state.pushToast);
@@ -161,12 +165,14 @@ export function OrderForm({
       return;
     }
 
-    const tpValue = tp.trim() === '' ? undefined : parsePositiveInput(tp);
+    // 加倉（同向持倉存在）不解析也不傳送 TP/SL：引擎沿用倉上既有值，避免假性拒單。
+    const scalingIn = side === heldSide;
+    const tpValue = scalingIn || tp.trim() === '' ? undefined : parsePositiveInput(tp);
     if (tpValue === null) {
       setError(TPSL_INPUT_MESSAGES.tp);
       return;
     }
-    const slValue = sl.trim() === '' ? undefined : parsePositiveInput(sl);
+    const slValue = scalingIn || sl.trim() === '' ? undefined : parsePositiveInput(sl);
     if (slValue === null) {
       setError(TPSL_INPUT_MESSAGES.sl);
       return;
@@ -402,6 +408,11 @@ export function OrderForm({
         </button>
         {tpslOpen && (
           <>
+            {heldSide !== null && (
+              <p className="text-caption text-text-3">
+                加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整
+              </p>
+            )}
             <label className="flex flex-col gap-1">
               <span className="text-caption text-text-3">止盈價（USDT）</span>
               <input
@@ -430,6 +441,9 @@ export function OrderForm({
                 className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-short"
               />
             </label>
+            {mode === 'limit' && (
+              <p className="text-caption text-text-3">限價更優成交後，請以實際開倉價檢視止盈止損</p>
+            )}
           </>
         )}
       </div>
