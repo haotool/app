@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+127
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-18
+- ID：reward-starpuff-starstorm-invuln-window
+- 原因：星暴清場後玩家立即暴露於彈幕缺乏攻防轉換價值，需 5s 無敵窗且不得與受擊 i-frame 疊加或散落新 tween
+- 解法：STARSTORM.invulnMs=5000 入 config SSOT、effectiveInvulnMs 取 max 單點結算沿用 resolveHit 與受擊閃爍，5 單測＋e2e（發動即無敵/期間零傷害/到期恢復）全綠並同步 GAME_DESIGN §64.2
+
+- 日期：2026-07-18
+- ID：penalty-starpuff-noctra-return-teleport
+- 原因：Noctra 盤旋駕駛以凍結相位的絕對座標逐幀直寫 sprite，俯衝/俯掠/長暈 tween 接管結束當幀跳回相位點（可達數百 px）——v8 出貨起返空瞬移（一般與 EX 皆中），§63 難度實測稽核亦未攔截呈現層連續性
+- 解法：航線與歸位收斂 logic/noctraFlight 純函式（hoverPatternPoint＋approachPoint 速度上限逼近，單 tick 位移 ≤ maxSpeed×dt），steering 改逼近制杜絕直寫；8 單測＋rAF 逐幀 e2e 速度守門＋真瀏覽器 playtest 驗證
 
 - 日期：2026-07-18
 - ID：reward-park-keeper-r4-compass-v2-home-modern

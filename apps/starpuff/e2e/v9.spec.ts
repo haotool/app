@@ -16,7 +16,9 @@ declare global {
       mercyWarp: (ms: number) => void;
       hurtPlayer: (damage: number) => void;
       mercyCount: () => number;
+      gameTime: () => number;
       ammo: () => { ammo: number; flavor: string; mix: string | null };
+      bossPos: () => { x: number; y: number };
       probe: () => { x: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
@@ -25,6 +27,8 @@ declare global {
         levels: Record<string, { cleared: boolean; exCleared?: boolean }>;
       };
     };
+    __spBossTrace?: { t: number; x: number; y: number }[];
+    __spBossTraceStop?: boolean;
   }
 }
 
@@ -281,6 +285,11 @@ test('慈悲補血（§62）：低血久戰觸發愛心生成，拾取後 HP +1'
     )
     .toBe(true);
   await page.keyboard.up('X');
+  // 星暴附 5s 無敵窗（§64）：以遊戲時鐘等窗期滿再壓血，避免無敵期輪詢空轉吃掉預算。
+  const stormAt = await page.evaluate(() => window.__sp.gameTime());
+  await expect
+    .poll(() => page.evaluate((t0) => window.__sp.gameTime() - t0, stormAt), { timeout: 30_000 })
+    .toBeGreaterThan(5200);
   // 正式受擊管線壓血至 1（i-frame 1.5s 間隔輪詢）。
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -303,6 +312,129 @@ test('慈悲補血（§62）：低血久戰觸發愛心生成，拾取後 HP +1'
   await page.keyboard.down('ArrowLeft');
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp()), { timeout: 15_000 }).toBe(2);
   await page.keyboard.up('ArrowLeft');
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
+test('Noctra 返空連續飛行（§64 P0 熱修）：俯衝→返空→歸位全程無單幀瞬移', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await gotoLevel(page, 7);
+  await expect.poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 20000 }).toBe(52);
+  // 誘導俯衝落點遠離盤旋相位點：玩家走到世界左緣（瞬移量與 |aimX−相位x| 成正比）。
+  await page.keyboard.down('ArrowLeft');
+  await page.waitForTimeout(2000);
+  await page.keyboard.up('ArrowLeft');
+  // rAF 逐幀取樣魔王座標＋遊戲時鐘：涵蓋 P1 首輪 hover→bomb→hover→dive→返空→歸位。
+  await page.evaluate(() => {
+    window.__spBossTrace = [];
+    window.__spBossTraceStop = false;
+    const step = () => {
+      const trace = window.__spBossTrace;
+      if (!trace || window.__spBossTraceStop || trace.length >= 2500) return;
+      trace.push({ t: window.__sp.gameTime(), ...window.__sp.bossPos() });
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+  // 等到取樣觀測到俯衝落地（y > 320），再多收 4s 涵蓋返空與歸位交接。
+  await expect
+    .poll(() => page.evaluate(() => (window.__spBossTrace ?? []).some((p) => p.y > 320)), {
+      timeout: 30_000,
+    })
+    .toBe(true);
+  await page.waitForTimeout(4000);
+  const trace = await page.evaluate(() => {
+    window.__spBossTraceStop = true;
+    return window.__spBossTrace ?? [];
+  });
+  // 全程速度守門（遊戲時鐘正規化對齊 tween 位移）：合法峰值為俯衝 easeIn 尾速——
+  // 邏輯寬 1039 下最壞全寬 plunge 約 5000px/s，預算 6000px/s；瞬移單幀數百 px
+  // （>20000px/s）仍遠超。細部連續性由下方返空段 400px/s 緊縮守門把關。
+  let checked = 0;
+  for (let i = 1; i < trace.length; i += 1) {
+    const prev = trace[i - 1];
+    const curr = trace[i];
+    if (!prev || !curr) continue;
+    const gameDtMs = curr.t - prev.t;
+    if (gameDtMs <= 0 || gameDtMs > 210) continue;
+    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    const budgetPx = (6000 * gameDtMs) / 1000 + 8;
+    expect(
+      dist,
+      `第 ${i} 幀位移 ${dist.toFixed(1)}px 超出 ${budgetPx.toFixed(1)}px（dt=${gameDtMs.toFixed(1)}ms）`,
+    ).toBeLessThanOrEqual(budgetPx);
+    checked += 1;
+  }
+  expect(checked).toBeGreaterThan(60);
+  // 返空歸位相位緊縮守門：落地後首次回到盤旋帶（y ≤ 260）起 2s 內，僅回升 tween
+  // 與盤旋駕駛移動（≤340px/s×sf；含取樣競態表觀倍增餘裕取 900px/s）。原 bug 的相位
+  // 座標直寫瞬移為單幀數百 px（任一 dt ≤210ms 下皆超出 900×dt+8），必然超標。
+  const landingIdx = trace.findIndex((p) => p.y > 320);
+  expect(landingIdx).toBeGreaterThan(-1);
+  const returnIdx = trace.findIndex((p, i) => i > landingIdx && p.y <= 260);
+  expect(returnIdx).toBeGreaterThan(-1);
+  const returnStart = trace[returnIdx];
+  if (!returnStart) throw new Error('返空樣本缺失');
+  let phaseChecked = 0;
+  for (let i = returnIdx + 1; i < trace.length; i += 1) {
+    const prev = trace[i - 1];
+    const curr = trace[i];
+    if (!prev || !curr) continue;
+    if (curr.t - returnStart.t > 2000) break;
+    const gameDtMs = curr.t - prev.t;
+    if (gameDtMs <= 0 || gameDtMs > 210) continue;
+    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    const budgetPx = (900 * gameDtMs) / 1000 + 8;
+    expect(
+      dist,
+      `返空第 ${i} 幀位移 ${dist.toFixed(1)}px 超出 ${budgetPx.toFixed(1)}px（dt=${gameDtMs.toFixed(1)}ms）`,
+    ).toBeLessThanOrEqual(budgetPx);
+    phaseChecked += 1;
+  }
+  expect(phaseChecked).toBeGreaterThan(5);
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
+test('星暴無敵（§64）：發動即 5s 無敵、期間零傷害、到期恢復受擊', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => window.__sp.fillQuota());
+  // 異系三槽（jelly/zappy/jelly 無混合配方、不同系不觸變身資格）→ 滿匣長按走星暴。
+  await page.evaluate(() => window.__sp.grantStar('jelly'));
+  await page.evaluate(() => window.__sp.grantStar('zappy'));
+  await page.evaluate(() => window.__sp.grantStar('jelly'));
+  expect((await page.evaluate(() => window.__sp.ammo())).ammo).toBe(3);
+  await page.keyboard.down('X');
+  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(0);
+  await page.keyboard.up('X');
+  const stormAt = await page.evaluate(() => window.__sp.gameTime());
+  const hpAtStorm = await page.evaluate(() => window.__sp.playerHp());
+  // 無敵期內連續以正式受擊管線打擊：HP 恆不變。
+  for (let i = 0; i < 3; i += 1) {
+    await page.evaluate(() => window.__sp.hurtPlayer(1));
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.__sp.playerHp())).toBe(hpAtStorm);
+  }
+  // 等遊戲時鐘走滿 5s 窗（headless 遊戲時間落後牆鐘，以 gameTime 為準）。
+  await expect
+    .poll(() => page.evaluate((t0) => window.__sp.gameTime() - t0, stormAt), {
+      timeout: 30_000,
+    })
+    .toBeGreaterThan(5200);
+  // 到期恢復：受擊管線恢復扣血（輪詢容忍殘餘 i-frame 邊界）。
+  await expect
+    .poll(
+      async () => {
+        await page.evaluate(() => window.__sp.hurtPlayer(1));
+        return page.evaluate(() => window.__sp.playerHp());
+      },
+      { timeout: 10_000 },
+    )
+    .toBeLessThan(hpAtStorm);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

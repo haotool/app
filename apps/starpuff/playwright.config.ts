@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// SP_DEV_PORT：並行 worktree 各自隔離 dev server 埠——固定埠＋reuseExistingServer
+// 會誤連鄰居 worktree 的 server（測到別人的程式碼），本地驗證必須可覆寫。
+const port = process.env['SP_DEV_PORT'] || '3007';
+
 export default defineConfig({
   testDir: './e2e',
   // 星星門走查全程約 12s，全套連跑＋retry tracing 下實測可逼近 30s 預設上限，放寬至 60s。
@@ -10,7 +14,7 @@ export default defineConfig({
   workers: 1,
   reporter: process.env['CI'] ? 'list' : 'html',
   use: {
-    baseURL: 'http://localhost:3007/',
+    baseURL: `http://localhost:${port}/`,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -35,7 +39,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm dev',
-    url: 'http://localhost:3007/',
+    url: `http://localhost:${port}/`,
     reuseExistingServer: !process.env['CI'],
     timeout: 120 * 1000,
   },

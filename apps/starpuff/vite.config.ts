@@ -32,7 +32,8 @@ export default defineConfig(async ({ mode }) => {
       __APP_VERSION__: JSON.stringify(resolveAppVersion()),
     },
     server: {
-      port: 3007,
+      // SP_DEV_PORT：並行 worktree 本地驗證用埠覆寫（預設 3007，CI 不受影響）。
+      port: Number(process.env['SP_DEV_PORT'] || 3007),
       strictPort: true,
       host: '0.0.0.0',
     },
