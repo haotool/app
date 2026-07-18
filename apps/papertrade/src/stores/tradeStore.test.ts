@@ -1,12 +1,22 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushTradePersist, parsePersistedTradeState, useTradeStore } from './tradeStore';
+import { useSoundPrefsStore } from './soundPrefsStore';
+import { playLiquidationSound } from '../lib/sound';
 import { createInitialAccount } from '../engine/engine';
 import { INITIAL_BALANCE_USDT, TRADE_STORAGE_KEY, TRADE_STORAGE_VERSION } from '../config/trading';
+
+vi.mock('../lib/sound', () => ({
+  playLiquidationSound: vi.fn(),
+}));
+
+const playLiquidationSoundMock = vi.mocked(playLiquidationSound);
 
 const NOW = 1_800_000_000_000;
 
 function resetStore() {
   useTradeStore.setState({ account: createInitialAccount(), toasts: [] });
+  useSoundPrefsStore.setState({ liquidationSound: true });
+  playLiquidationSoundMock.mockClear();
   flushTradePersist();
 }
 
@@ -106,6 +116,37 @@ describe('useTradeStore', () => {
     expect(account.positions).toHaveLength(0);
     expect(account.history[0]?.reason).toBe('liquidation');
     expect(toasts.some((toast) => toast.tone === 'warning')).toBe(true);
+    // 強平提示音與 toast 同路徑觸發（設定預設開啟）。
+    expect(playLiquidationSoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps silent on liquidation when the sound preference is off', () => {
+    useSoundPrefsStore.setState({ liquidationSound: false });
+    useTradeStore.getState().openMarketOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    useTradeStore.getState().applyTick('BTCUSDT', 50000, NOW);
+
+    expect(useTradeStore.getState().account.history[0]?.reason).toBe('liquidation');
+    expect(playLiquidationSoundMock).not.toHaveBeenCalled();
+  });
+
+  it('does not play the liquidation sound on ordinary fills', () => {
+    useTradeStore.getState().placeLimitOrder({
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      limitPrice: 58000,
+      leverage: 10,
+    });
+    useTradeStore.getState().applyTick('BTCUSDT', 57900, NOW);
+
+    expect(useTradeStore.getState().account.positions).toHaveLength(1);
+    expect(playLiquidationSoundMock).not.toHaveBeenCalled();
   });
 
   it('fills limit orders on tick and pushes a toast', () => {

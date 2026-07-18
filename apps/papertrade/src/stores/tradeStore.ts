@@ -31,6 +31,8 @@ import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types
 import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
+import { playLiquidationSound } from '../lib/sound';
+import { useSoundPrefsStore } from './soundPrefsStore';
 
 export type ToastTone = 'long' | 'short' | 'warning' | 'info';
 
@@ -258,6 +260,13 @@ export const useTradeStore = create<TradeState>()(
 
           const { account: next, events } = processTick(account, symbol, mark, now);
           if (next === account && events.length === 0) return;
+          // 強平提示音與強平 toast 同路徑觸發；受設定開關管控。
+          if (
+            events.some((event) => event.type === 'liquidation') &&
+            useSoundPrefsStore.getState().liquidationSound
+          ) {
+            playLiquidationSound();
+          }
           set((state) => ({
             account: next,
             toasts: appendToasts(state.toasts, events.map(eventToToast)),
