@@ -28,7 +28,9 @@ export default function About() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <article className="min-h-screen">
+    // 固定亮底（R6 review /about 處方）：比照 Guide，slate 靜態配色不隨主題，
+    // 阻絕深主題殘留 --color-bg 造成的對比崩潰。
+    <article className="min-h-screen bg-slate-50">
       {/* Hero */}
       <header className="py-16 px-6 text-center">
         <motion.div
@@ -103,8 +105,9 @@ export default function About() {
 
       {/* Author Byline - E-E-A-T */}
       <footer className="px-6 py-8 text-center border-t border-slate-200">
+        {/* slate-600（R6 review）：slate-500 on slate-50 僅 4.55:1，axe 取樣偏差下無安全餘裕。 */}
         <motion.p
-          className="text-sm text-slate-500"
+          className="text-sm text-slate-600"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -119,7 +122,7 @@ export default function About() {
           {' · '}
           <a
             href="https://app.haotool.org/park-keeper/"
-            className="inline-block px-3.5 py-3.5 -mx-3.5 -my-3.5 text-slate-500 hover:text-slate-700 transition-colors"
+            className="inline-block px-3.5 py-3.5 -mx-3.5 -my-3.5 text-slate-600 hover:text-slate-800 transition-colors"
           >
             haotool.org
           </a>

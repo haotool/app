@@ -327,9 +327,10 @@ export default function NavOverlay({
               className="text-2xl font-black tracking-tighter"
               style={{ color: theme.colors.text }}
             >
-              {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，與 RecordCard/hero 卡一致。 */}
+              {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，與 RecordCard/hero 卡一致。
+                  待填文案用 textMuted 實色（R6 掃蕩）：opacity-50 dimming 未達 AA。 */}
               {isPlateUnset(record.plateNumber) ? (
-                <span className="opacity-50 text-lg">
+                <span className="text-lg" style={{ color: theme.colors.textMuted }}>
                   {formatPlateLabel(record.plateNumber, t('record.plate_unset'))}
                 </span>
               ) : (

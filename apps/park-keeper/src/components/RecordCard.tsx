@@ -193,17 +193,22 @@ export default function RecordCard({
               // compact 精簡列：與 hero 卡同筆時只留操作，車牌／樓層／時間已由 hero 呈現，
               // 不重複資訊欄位（issue #753 單筆去重）。
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wide opacity-40">
+                {/* 管理標籤與編輯 icon 用 textMuted 實色（R6 掃蕩）：opacity-40/45 dimming
+                    於 cute 主題僅 1.3–1.8:1；icon 屬 UI 元件需 ≥3:1（WCAG 1.4.11）。 */}
+                <span
+                  className="text-xs font-black uppercase tracking-wide"
+                  style={{ color: theme.colors.textMuted }}
+                >
                   {t('record.manage_label')}
                 </span>
                 <button
                   type="button"
                   onClick={handleEditStart}
-                  className="p-4 -m-4 opacity-45 hover:opacity-100 transition-opacity"
+                  className="p-4 -m-4 hover:opacity-80 transition-opacity"
                   title={t('record.edit_plate_icon')}
                   aria-label={t('record.edit_plate_icon')}
                 >
-                  <Edit2 size={14} style={{ color: theme.colors.primary }} />
+                  <Edit2 size={14} style={{ color: theme.colors.textMuted }} />
                 </button>
               </div>
             ) : (
@@ -214,33 +219,36 @@ export default function RecordCard({
                   onClick={handleEditStart}
                   aria-label={t('record.edit_plate', { plate: plateLabel })}
                 >
-                  {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，避免裸露佔位值像資料錯誤。 */}
+                  {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，避免裸露佔位值像資料錯誤。
+                      待填文案用 textMuted 實色（R6 掃蕩）：opacity-45 dimming 僅 ~1.9:1。 */}
                   {isPlateUnset(displayPlate) ? (
-                    <span className="opacity-45">{plateLabel}</span>
+                    <span style={{ color: theme.colors.textMuted }}>{plateLabel}</span>
                   ) : (
                     displayPlate
                   )}
                 </button>
-                {/* 觸控無 hover：編輯入口常駐可見（issue #725 P2）。 */}
+                {/* 觸控無 hover：編輯入口常駐可見（issue #725 P2）；icon textMuted 實色達 ≥3:1。 */}
                 <button
                   type="button"
                   onClick={handleEditStart}
-                  className="p-4 -m-4 opacity-45 hover:opacity-100 transition-opacity"
+                  className="p-4 -m-4 hover:opacity-80 transition-opacity"
                   title={t('record.edit_plate_icon')}
                   aria-label={t('record.edit_plate_icon')}
                 >
-                  <Edit2 size={14} style={{ color: theme.colors.primary }} />
+                  <Edit2 size={14} style={{ color: theme.colors.textMuted }} />
                 </button>
               </div>
             )}
             {!compact && (
-              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
+              // 樓層/時間列用 textMuted 實色（R6 掃蕩）：整列 opacity-30 於 cute 僅 1.5:1，
+              // 且 chip 內 pastel primary 字色本身未達標，一併收斂 textMuted。
+              <div
+                className="flex items-center gap-3 text-[10px] font-black uppercase tracking-tight"
+                style={{ color: theme.colors.textMuted }}
+              >
                 <span
                   className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: `${theme.colors.primary}08`,
-                    color: theme.colors.primary,
-                  }}
+                  style={{ backgroundColor: `${theme.colors.primary}08` }}
                 >
                   <MapPin size={10} />
                   {record.floor}
@@ -253,10 +261,12 @@ export default function RecordCard({
             )}
           </div>
         </div>
+        {/* 刪除 icon 用 textMuted 實色（R6 掃蕩）：opacity-45 dimming 未達 UI 元件 3:1。 */}
         <button
           type="button"
           onClick={() => void onDelete(record.id)}
-          className="p-4 -m-4 opacity-45 hover:opacity-100 hover:text-red-500 transition-all"
+          className="p-4 -m-4 hover:opacity-80 transition-opacity"
+          style={{ color: theme.colors.textMuted }}
           aria-label={t('record.delete', { plate: plateLabel })}
         >
           <Trash2 size={16} />
@@ -282,8 +292,9 @@ export default function RecordCard({
                 />
               </button>
             ) : (
+              // 無照片裝飾佔位（R6 review 判定 B 類保留 opacity）：非資訊載體，顯式 aria-hidden。
               <div className="w-full h-full flex items-center justify-center opacity-20">
-                <Car size={20} />
+                <Car size={20} aria-hidden />
               </div>
             )}
           </div>
@@ -306,7 +317,11 @@ export default function RecordCard({
                 />
               </Suspense>
             ) : (
-              <div className="w-full h-full flex items-center justify-center opacity-20 text-[8px] font-black uppercase tracking-widest">
+              // 空地圖占位文字用 textMuted 實色（R6 掃蕩）：opacity-20 僅 ~1.3–1.9:1。
+              <div
+                className="w-full h-full flex items-center justify-center text-[8px] font-black uppercase tracking-widest"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('record.no_map')}
               </div>
             )}
@@ -328,7 +343,11 @@ export default function RecordCard({
       )}
 
       {record.notes && (
-        <p className="text-[11px] opacity-60 bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic">
+        // 備註文字用 textMuted 實色（R6 掃蕩）：opacity-60 於 cute 僅 2.55:1。
+        <p
+          className="text-[11px] bg-black/2 p-3 rounded-2xl font-medium leading-relaxed italic"
+          style={{ color: theme.colors.textMuted }}
+        >
           &ldquo;{record.notes}&rdquo;
         </p>
       )}

@@ -46,13 +46,14 @@ export default function QuickCaptureCta({
 
   // 第三級文字動作：獨立於 label（camera capture input）之外的 sibling 按鈕，
   // 避免巢狀在 <label> 內誤觸發檔案選擇器。
-  // 層級以 textMuted 實色呈現（四主題 vs background ≥4.55:1），不用 opacity dimming 壓對比。
+  // 層級以 textMuted 實色呈現（四主題 vs background ≥6.1:1），不用 opacity dimming 壓對比。
+  // min-h-12（48px）：min-h-11 於行動裝置實測 43.27px < 44px 觸控門檻（R6 Composer 席）。
   const manualEntryAction = onManualEntry && manualEntryLabel && (
     <div className="text-center">
       <button
         type="button"
         onClick={onManualEntry}
-        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
+        className="inline-flex items-center justify-center min-h-12 min-w-12 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
         style={{ color: theme.colors.textMuted }}
       >
         {manualEntryLabel}

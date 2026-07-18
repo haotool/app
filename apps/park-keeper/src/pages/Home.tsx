@@ -75,14 +75,15 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
-/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區 ≥44×44；
+/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區
+ *  min-h-12（48px，R6 review：44px 名目值在行動裝置實測可縮至 43.27px）；
  *  載入態與內容態共用，markup 須與 HomeShell 同構。 */
 function GuideEntryLink({ color, label }: { color: string; label: string }) {
   return (
     <div className="text-center">
       <Link
         to="/guide"
-        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
+        className="inline-flex items-center justify-center min-h-12 min-w-12 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
         style={{ color }}
       >
         {label}
@@ -407,8 +408,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 relative overflow-hidden">
+        {/* Main Content：Layout 已提供唯一 main landmark，此處用 div 修 axe
+            landmark-no-duplicate-main／landmark-main-is-top-level（R6 NEW-3）。 */}
+        <div className="flex-1 relative overflow-hidden">
           <AnimatePresence mode="wait">
             {currentTab === 'list' ? (
               <motion.div
@@ -527,7 +529,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               </motion.div>
             )}
           </AnimatePresence>
-        </main>
+        </div>
 
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
@@ -562,10 +564,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                     }
                   />
                 </div>
+                {/* active 標籤字色用 text（R6 axe 守門）：Kawaii pastel primary 當字色僅
+                    1.66:1；active 視覺由 icon primary 色＋indicator bar 承擔。 */}
                 <span
                   className={NAV_LABEL_BASE_CLS}
                   style={{
-                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                    color: currentTab === 'list' ? theme.colors.text : theme.colors.textMuted,
                   }}
                 >
                   {t('tab.list')}
@@ -607,8 +611,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 <span
                   className={NAV_LABEL_BASE_CLS}
                   style={{
-                    color:
-                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                    color: currentTab === 'settings' ? theme.colors.text : theme.colors.textMuted,
                   }}
                 >
                   {t('tab.settings')}

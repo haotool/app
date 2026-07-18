@@ -261,15 +261,28 @@ export default function MiniMap({
           <CarPositionReader position={centerPosition} onPositionUpdate={setCarPixelPos} />
         )}
         {interactive && onLocationSelect ? (
+          // 可拖曳 marker 屬鍵盤可聚焦元件（role=button），必須有 accessible name
+          //（R6 axe aria-command-name）。
           <DraggableMarker
             position={centerPosition}
             onDragEnd={(newPos) => onLocationSelect(newPos.lat, newPos.lng)}
             icon={carIcon}
+            title={mapText.markerCarLabel}
           />
         ) : (
-          <Marker position={centerPosition} icon={carIcon} />
+          // 純資訊 marker 不進 tab order（interactive=false 不輸出 role/tabindex），
+          // 語意由地圖容器 aria-label 承載。
+          <Marker position={centerPosition} icon={carIcon} interactive={false} keyboard={false} />
         )}
-        {userPosition && <Marker position={userPosition} icon={userIcon} zIndexOffset={900} />}
+        {userPosition && (
+          <Marker
+            position={userPosition}
+            icon={userIcon}
+            zIndexOffset={900}
+            interactive={false}
+            keyboard={false}
+          />
+        )}
       </MapContainer>
       {showPositionLegend && (
         <div className="absolute top-3 left-3 z-[430] pointer-events-none">

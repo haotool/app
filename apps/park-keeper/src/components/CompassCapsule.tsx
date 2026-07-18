@@ -120,9 +120,10 @@ export default function CompassCapsule({
             >
               {distanceUnit}
             </span>
+            {/* 方向提示用 textMuted 實色（R6 掃蕩）：text@50% 未達 AA。 */}
             <span
               className="text-[10px] font-bold uppercase tracking-[0.12em]"
-              style={{ color: theme.colors.text, opacity: 0.5 }}
+              style={{ color: theme.colors.textMuted }}
               aria-live="polite"
             >
               {isIndoor ? t('nav.indoor_mode') : aligned ? t('nav.aligned') : directionHint}
