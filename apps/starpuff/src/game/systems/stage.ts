@@ -33,13 +33,13 @@ export interface StageHooks {
   spawnAmmoMinion(x: number, y: number): void;
   // 折躍瞬移通知（§66）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
   onWarp?(x: number): void;
-  // 地形單向平台（§71）：GameScene addTerrain 的粉紅平台納入同一套下穿裁決。
+  // 地形單向平台（§77）：GameScene addTerrain 的粉紅平台納入同一套下穿裁決。
   terrainOneWay?(): Phaser.GameObjects.Rectangle[];
 }
 
 export interface StageHandle {
   update(input: StageInput, deltaMs: number): void;
-  // 下跳就緒（§71）：壓下且站在單向平台上（跳鍵此刻＝下跳），供 HUD 跳鍵指示。
+  // 下跳就緒（§77）：壓下且站在單向平台上（跳鍵此刻＝下跳），供 HUD 跳鍵指示。
   isDropReady(down: boolean): boolean;
   getOneWay(): Phaser.GameObjects.Rectangle[];
   getMoving(): Phaser.GameObjects.Rectangle[];
@@ -260,7 +260,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     }
   }
 
-  // 站台判定（§71 熱修）：落地擠壓迴圈使接觸旗標抖動，改用 restingOnOneWay
+  // 站台判定（§77 熱修）：落地擠壓迴圈使接觸旗標抖動，改用 restingOnOneWay
   //（接觸旗標或沉降幾何擇一）；地形粉紅平台（terrainOneWay hook）納入同一裁決。
   function standingOnOneWay(body: Phaser.Physics.Arcade.Body): boolean {
     const player = {
@@ -455,7 +455,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     getBreakables: () => breakables,
 
     // 單向著地（recon C.1）：僅下落且腳底不低於頂緣著地帶才碰撞；下穿窗內一律放行。
-    // §71 熱修：著地帶依單步位移動態放寬（oneWayLandBand），杜絕下砸/高處落下隧穿。
+    // §77 熱修：著地帶依單步位移動態放寬（oneWayLandBand），杜絕下砸/高處落下隧穿。
     canLandOneWay: (a, b) => {
       if (scene.time.now < dropUntilMs) return false;
       const aIsPlatform = hasFlag(a, 'oneway');

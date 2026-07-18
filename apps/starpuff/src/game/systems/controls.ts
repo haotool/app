@@ -15,7 +15,7 @@ export interface ControlsState {
 export interface ControlsSystem {
   state: ControlsState;
   update(): void;
-  // 下跳指示（§71）：可穿落狀態跳鍵變色＋箭頭翻轉朝下；僅狀態轉變時碰 DOM。
+  // 下跳指示（§77）：可穿落狀態跳鍵變色＋箭頭翻轉朝下；僅狀態轉變時碰 DOM。
   setDropReady(ready: boolean): void;
   destroy(): void;
 }
@@ -189,7 +189,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   let prevJumpHeld = false;
   let prevActionHeld = false;
 
-  // 下跳指示（§71）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
+  // 下跳指示（§77）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
   const jumpBtn = document.querySelector<HTMLElement>('[data-btn="a"]');
   let dropReady = false;
   cleanups.push(() => {

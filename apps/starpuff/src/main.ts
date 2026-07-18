@@ -192,7 +192,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
-    // §71 觀測點：蹲姿比例（0..1）。
+    // §77 觀測點：蹲姿比例（0..1）。
     crouch: () => internals().player.getCrouch(),
     elite: () => gameScene().eliteState(),
     slayElite: () => gameScene().slayElite(),

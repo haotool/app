@@ -196,7 +196,7 @@ export class GameScene extends Phaser.Scene {
   private buffPickups = 0;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
-  // 地形單向平台（§71）：交 stage 統一下穿裁決（與 elements oneway 同權）。
+  // 地形單向平台（§77）：交 stage 統一下穿裁決（與 elements oneway 同權）。
   private terrainPlatforms: Phaser.GameObjects.Rectangle[] = [];
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
@@ -254,7 +254,7 @@ export class GameScene extends Phaser.Scene {
       onWarp: (x) => {
         this.prevPlayerX = x;
       },
-      // §71：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
+      // §77：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
       terrainOneWay: () => this.terrainPlatforms,
     });
 
@@ -335,7 +335,7 @@ export class GameScene extends Phaser.Scene {
     this.boss.setTarget(this.player.sprite);
 
     this.physics.add.collider(this.player.sprite, ground);
-    // §71：粉紅平台改走 canLandOneWay 裁決——下穿窗放行、高速著地帶動態放寬。
+    // §77：粉紅平台改走 canLandOneWay 裁決——下穿窗放行、高速著地帶動態放寬。
     this.physics.add.collider(
       this.player.sprite,
       platforms,
@@ -392,7 +392,7 @@ export class GameScene extends Phaser.Scene {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
-      // 下跳指示（§71）：壓下＋站台（跳鍵此刻＝下跳）→ 跳鍵變色與箭頭翻轉。
+      // 下跳指示（§77）：壓下＋站台（跳鍵此刻＝下跳）→ 跳鍵變色與箭頭翻轉。
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.down));
       this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
@@ -611,7 +611,7 @@ export class GameScene extends Phaser.Scene {
       body.checkCollision.down = false;
       body.checkCollision.left = false;
       body.checkCollision.right = false;
-      // §71：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
+      // §77：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
       platform.setData('oneway', true);
       return platform;
     });
@@ -751,7 +751,7 @@ export class GameScene extends Phaser.Scene {
       ) {
         return;
       }
-      // 吸入接觸豁免（§71）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
+      // 吸入接觸豁免（§77）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
       // 鬆開瞬間與出錐殘餘飛行；窗過期即恢復傷害性，未被吸的其他怪照常結算。
       if (isContactHarmless(this.time.now, (target.getData('inhaleGraceUntil') as number) ?? 0)) {
         return;
@@ -1328,7 +1328,7 @@ export class GameScene extends Phaser.Scene {
         continue;
       }
       // 拉力漸增：越接近嘴邊吸力越強。
-      // 吸入接觸豁免（§71）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
+      // 吸入接觸豁免（§77）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
       enemy.setData('inhaleGraceUntil', inhaleGraceUntil(this.time.now));
       this.physics.moveTo(
         enemy,

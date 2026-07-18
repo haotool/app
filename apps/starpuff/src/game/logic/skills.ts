@@ -134,7 +134,7 @@ export function resolveActionPress(opts: {
 // CD 中回落一般跳躍鏈不吞輸入）；地面「下＋跳」交由跳躍鏈——站單向平台時
 // stage 層 shouldDropThrough（down+jump）裁決為下落穿透並覆蓋跳躍脈衝（§29 既有
 // 優先序），主地面無蹲下語義、照常起跳（無衝突）。
-// §71 熱修：落地擠壓迴圈使接觸旗標抖動，「假空中」幀曾誤觸下砸並貫穿平台；
+// §77 熱修：落地擠壓迴圈使接觸旗標抖動，「假空中」幀曾誤觸下砸並貫穿平台；
 // coyote 窗（recentlyGroundedMs > 0）內視同在地，下砸僅在真空中成立。
 export type JumpPressCommand = 'slam' | 'jump';
 

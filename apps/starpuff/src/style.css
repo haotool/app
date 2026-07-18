@@ -214,7 +214,7 @@ body {
   transform: translate(-50%, -50%) scale(0.9);
 }
 
-/* 下跳指示（§71）：可穿落狀態跳鍵轉琥珀、箭頭翻轉朝下（圖形鍵帽，無文字）；
+/* 下跳指示（§77）：可穿落狀態跳鍵轉琥珀、箭頭翻轉朝下（圖形鍵帽，無文字）；
    鬆開或離開可穿落狀態由 controls 系統移除 class 即還原。 */
 .ctl-btn-a.is-drop-ready {
   background: rgba(255, 190, 105, 0.72);

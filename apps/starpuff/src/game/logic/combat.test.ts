@@ -111,7 +111,7 @@ describe('pickInRadius（§46 半徑選敵）', () => {
   });
 });
 
-describe('吸入接觸豁免（§71：被吸入中的怪對玩家無接觸傷害）', () => {
+describe('吸入接觸豁免（§77：被吸入中的怪對玩家無接觸傷害）', () => {
   it('被吸入中（豁免窗內）與玩家重疊 → 零傷害', () => {
     const until = inhaleGraceUntil(1000);
     expect(isContactHarmless(1000, until)).toBe(true);

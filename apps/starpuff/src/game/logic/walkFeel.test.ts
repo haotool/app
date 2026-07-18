@@ -79,7 +79,7 @@ describe('idleBreath / airTilt（§45 姿態）', () => {
   });
 });
 
-describe('advanceCrouch 蹲姿狀態轉換（§71）', () => {
+describe('advanceCrouch 蹲姿狀態轉換（§77）', () => {
   it('持續壓下 120ms 內線性升至 1 並夾限', () => {
     let crouch = 0;
     crouch = advanceCrouch(crouch, true, 60);
