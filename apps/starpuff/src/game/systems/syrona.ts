@@ -590,5 +590,9 @@ export function createSyrona(
     getPlatforms() {
       return platforms;
     },
+    // e2e 觀測（§83）：自然循環招式（wave/overload）可斷言。
+    getDebugState() {
+      return { phase: fsm.phase, state: fsm.state };
+    },
   };
 }

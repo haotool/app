@@ -133,6 +133,9 @@ declare global {
       twinHud: () => { active: boolean; aRatio: number; bRatio: number };
       tide: () => { waterY: number; phase: string } | null;
       meteor: () => { falling: number; embers: number; telegraphs: number } | null;
+      damageBossAt: (amount: number, x: number, y: number) => void;
+      bossState: () => { phase: string; state: string } | null;
+      grantInvuln: (ms: number) => void;
     }>;
   }
 }
@@ -227,6 +230,11 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     tide: () => gameScene().tideState(),
     // v12 觀測點（§79 e2e）：流星雨墜落/餘燼/預警圈數量。
     meteor: () => gameScene().meteorState(),
+    // v12 鉤子（§83 v11 觀察項收尾）：帶座標精確傷害（皇冠 ×2 可驗）、
+    // 魔王 FSM 觀測與受控無敵窗（自然循環觀測案存活用）。
+    damageBossAt: (amount, x, y) => gameScene().damageBossAtPoint(amount, x, y),
+    bossState: () => gameScene().bossDebugState(),
+    grantInvuln: (ms) => gameScene().grantInvuln(ms),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。

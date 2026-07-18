@@ -496,6 +496,21 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.boss.applyDamage(amount);
   }
 
+  // e2e 鉤子（§83 v11 觀察項收尾）：帶命中座標的精確傷害——皇冠 ×2／雙子受擊側可驗。
+  damageBossAtPoint(amount: number, x: number, y: number): void {
+    if (this.scene.isActive()) this.damageBossAt(amount, x, y);
+  }
+
+  // e2e 觀測點（§83）：魔王 FSM 階段/招式（品種未實作回 null）。
+  bossDebugState(): { phase: string; state: string } | null {
+    return this.boss.getDebugState?.() ?? null;
+  }
+
+  // e2e 鉤子（§83）：受控無敵窗——自然循環觀測案存活用（僅測試環境掛載）。
+  grantInvuln(ms: number): void {
+    if (this.scene.isActive()) this.player.grantInvulnerability(ms);
+  }
+
   // e2e 鉤子：直達任一關（各關反卡關走查用）。
   gotoLevel(levelId: LevelId): void {
     if (this.scene.isActive()) this.restartWith({ levelId });

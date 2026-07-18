@@ -699,5 +699,9 @@ export function createVoidra(
       });
       return true;
     },
+    // e2e 觀測（§83）：三段/生存段狀態可斷言。
+    getDebugState() {
+      return { phase: fsm.phase, state: fsm.state };
+    },
   };
 }
