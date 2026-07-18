@@ -47,6 +47,7 @@ const mockTheme: ThemeConfig = {
     surface: '#f5f5f5',
     text: '#000000',
     textMuted: '#666666',
+    danger: '#b91c1c',
   },
   font: 'system-ui',
   borderRadius: '12px',

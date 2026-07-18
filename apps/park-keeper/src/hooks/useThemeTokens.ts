@@ -15,6 +15,7 @@ export function useThemeTokens(theme: ThemeConfig) {
     root.setProperty('--color-accent', theme.colors.accent);
     root.setProperty('--color-secondary', theme.colors.secondary);
     root.setProperty('--color-text-muted', theme.colors.textMuted);
+    root.setProperty('--color-danger', theme.colors.danger);
 
     const hex = theme.colors.primary.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);

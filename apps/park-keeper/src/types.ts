@@ -13,6 +13,8 @@ export interface ThemeColors {
   surface: string;
   text: string;
   textMuted: string;
+  /** 破壞性操作前景色；對 background 與 surface 均須 ≥4.5:1（R6 axe 掃蕩：red-500 淺主題僅 3.7:1）。 */
+  danger: string;
 }
 
 export interface ThemeConfig {
