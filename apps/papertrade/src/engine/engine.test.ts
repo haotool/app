@@ -303,6 +303,44 @@ describe('open with tp/sl (R4-6)', () => {
     expect(position.stopLoss).toBe(59000);
   });
 
+  it('scales in even when the form tp/sl is invalid against the new price (B1)', () => {
+    const first = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 61000,
+      sl: 59000,
+    });
+    if (!first.ok) throw new Error(first.error);
+
+    const scaled = openMarket(first.account, {
+      ...base,
+      side: 'long',
+      price: 60200,
+      tp: 59000,
+      sl: 62000,
+    });
+    if (!scaled.ok) throw new Error(scaled.error);
+
+    const position = onlyPosition(scaled.account);
+    expect(position.qty).toBeCloseTo(0.2, 10);
+    expect(position.takeProfit).toBe(61000);
+    expect(position.stopLoss).toBe(59000);
+  });
+
+  it('still validates tp/sl when the existing position is on the opposite side', () => {
+    const first = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'short',
+      price: 60000,
+    });
+    if (!first.ok) throw new Error(first.error);
+
+    expect(
+      openMarket(first.account, { ...base, qty: 0.2, side: 'long', price: 60000, tp: 59000 }),
+    ).toEqual({ ok: false, error: 'invalid-tp-direction' });
+  });
+
   it('triggers a market-open tp exactly like a sheet-set tp', () => {
     const opened = openMarket(createInitialAccount(), {
       ...base,
@@ -374,6 +412,33 @@ describe('open with tp/sl (R4-6)', () => {
       sl: 58000,
     });
     if (!placed.ok) throw new Error(placed.error);
+
+    const filled = processTick(placed.account, 'BTCUSDT', 58900, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+    expect(filled.account.positions).toHaveLength(1);
+    expect(filled.account.positions[0]?.takeProfit).toBe(62000);
+    expect(filled.account.positions[0]?.stopLoss).toBe(58500);
+  });
+
+  it('places a scale-in limit order even when the form tp/sl is invalid against the limit price (B1)', () => {
+    const opened = openMarket(createInitialAccount(), {
+      ...base,
+      side: 'long',
+      price: 60000,
+      tp: 62000,
+      sl: 58500,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+
+    const placed = placeLimitOrder(opened.account, {
+      ...base,
+      side: 'long',
+      limitPrice: 59000,
+      tp: 57000,
+      sl: 60000,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+    expect(placed.account.orders).toHaveLength(1);
 
     const filled = processTick(placed.account, 'BTCUSDT', 58900, NOW);
     expect(filled.account.orders).toHaveLength(0);

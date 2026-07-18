@@ -86,10 +86,17 @@ export function createInitialAccount(): Account {
   return { balance: INITIAL_BALANCE_USDT, positions: [], orders: [], history: [] };
 }
 
+// 同 symbol 同向持倉存在＝本次為加倉合併：executeOpen 沿用倉上 TP/SL，不驗證表單值以免假性拒單。
+function hasSameSidePosition(account: Account, symbol: MarketSymbol, side: Side): boolean {
+  return account.positions.some((position) => position.symbol === symbol && position.side === side);
+}
+
 export function openMarket(account: Account, params: OpenParams): TradeResult {
   const error =
     validateOpenInput(params.qty, params.price, params.leverage) ??
-    validateOpenTpSl(params.side, params.price, params.tp, params.sl);
+    (hasSameSidePosition(account, params.symbol, params.side)
+      ? null
+      : validateOpenTpSl(params.side, params.price, params.tp, params.sl));
   if (error !== null) return { ok: false, error };
   return executeOpen(account, {
     ...params,
@@ -128,7 +135,9 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
   const { symbol, side, qty, limitPrice, leverage } = params;
   const error =
     validateOpenInput(qty, limitPrice, leverage) ??
-    validateOpenTpSl(side, limitPrice, params.tp, params.sl);
+    (hasSameSidePosition(account, symbol, side)
+      ? null
+      : validateOpenTpSl(side, limitPrice, params.tp, params.sl));
   if (error !== null) return { ok: false, error };
 
   const notional = notionalValue(qty, limitPrice);
