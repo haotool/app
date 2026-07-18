@@ -130,8 +130,9 @@ export function MarketsPage() {
 
   return (
     <section className="lg:mx-auto lg:max-w-2xl">
-      <header className="sticky top-0 z-10 bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
-        <h1 className="mb-3 text-price-lg font-semibold">行情</h1>
+      <h1 className="px-4 pt-4 text-price-lg font-semibold">行情</h1>
+      {/* sticky 搜尋與清單切換：標題自然捲走，工具列捲動常駐（與交易頁同樣式族）。 */}
+      <header className="sticky top-0 z-20 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
         <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">
           <Search size={18} className="shrink-0 text-text-3" aria-hidden />
           <input
