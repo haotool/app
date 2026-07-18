@@ -1010,6 +1010,132 @@ describe('take profit and stop loss', () => {
   });
 });
 
+describe('tp/sl partial close ratio (R5-6)', () => {
+  function withTpSl(
+    account: Account,
+    takeProfit: number | null,
+    stopLoss: number | null,
+    closeRatio?: number,
+  ) {
+    const result = setTakeProfitStopLoss(
+      account,
+      onlyPosition(account).id,
+      takeProfit,
+      stopLoss,
+      closeRatio,
+    );
+    if (!result.ok) throw new Error(result.error);
+    return result.account;
+  }
+
+  it('defaults new positions and setTpSl to a full-close ratio of 1', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    expect(onlyPosition(account).tpSlCloseRatio).toBe(1);
+
+    const updated = withTpSl(account, 61000, 59000);
+    expect(onlyPosition(updated).tpSlCloseRatio).toBe(1);
+  });
+
+  it('closes only the configured ratio on tp and clears tp/sl on the remainder', () => {
+    const account = withTpSl(openLong(createInitialAccount(), 0.1, 60000, 10), 61000, 59000, 0.5);
+
+    const triggered = processTick(account, 'BTCUSDT', 61200, NOW);
+    const trade = triggered.account.history[0];
+    expect(trade?.reason).toBe('tp');
+    expect(trade?.qty).toBeCloseTo(0.05, 10);
+    // 盈虧按實際平倉量計：(61200-60000)×0.05。
+    expect(trade?.realizedPnl).toBeCloseTo(60, 8);
+
+    const remaining = onlyPosition(triggered.account);
+    expect(remaining.qty).toBeCloseTo(0.05, 10);
+    expect(remaining.margin).toBeCloseTo(300, 8);
+    expect(remaining.takeProfit).toBeNull();
+    expect(remaining.stopLoss).toBeNull();
+    expect(remaining.tpSlCloseRatio).toBe(1);
+    expect(triggered.events.some((event) => event.type === 'tp')).toBe(true);
+  });
+
+  it('does not re-trigger on the next tick after a partial tp settlement', () => {
+    const account = withTpSl(openLong(createInitialAccount(), 0.1, 60000, 10), 61000, null, 0.25);
+
+    const first = processTick(account, 'BTCUSDT', 61200, NOW);
+    expect(first.account.history).toHaveLength(1);
+
+    const second = processTick(first.account, 'BTCUSDT', 61500, NOW);
+    expect(second.account.history).toHaveLength(1);
+    expect(second.events).toHaveLength(0);
+    expect(onlyPosition(second.account).qty).toBeCloseTo(0.075, 10);
+  });
+
+  it('closes only the configured ratio on sl for shorts', () => {
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    const account = withTpSl(opened.account, null, 61000, 0.75);
+
+    const triggered = processTick(account, 'BTCUSDT', 61100, NOW);
+    const trade = triggered.account.history[0];
+    expect(trade?.reason).toBe('sl');
+    expect(trade?.qty).toBeCloseTo(0.075, 10);
+    expect(trade?.realizedPnl).toBeCloseTo(-82.5, 8);
+
+    const remaining = onlyPosition(triggered.account);
+    expect(remaining.qty).toBeCloseTo(0.025, 10);
+    expect(remaining.takeProfit).toBeNull();
+    expect(remaining.stopLoss).toBeNull();
+  });
+
+  it('keeps the r=1 full-close behavior identical to the legacy path', () => {
+    const account = withTpSl(openLong(createInitialAccount(), 0.1, 60000, 10), 61000, null, 1);
+
+    const triggered = processTick(account, 'BTCUSDT', 61200, NOW);
+    expect(triggered.account.positions).toHaveLength(0);
+    expect(triggered.account.history[0]?.reason).toBe('tp');
+    expect(triggered.account.history[0]?.realizedPnl).toBeCloseTo(120, 8);
+  });
+
+  it('rejects an out-of-range close ratio without mutating the account', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    const id = onlyPosition(account).id;
+    for (const ratio of [0, -0.5, 1.5, Number.NaN]) {
+      expect(setTakeProfitStopLoss(account, id, 61000, null, ratio)).toEqual({
+        ok: false,
+        error: 'invalid-qty',
+      });
+    }
+    expect(onlyPosition(account).takeProfit).toBeNull();
+  });
+
+  it('keeps the existing tp/sl and close ratio when scaling in', () => {
+    const account = withTpSl(openLong(createInitialAccount(), 0.1, 60000, 10), 61000, 59000, 0.5);
+
+    // 加倉合併沿用倉上 TP/SL 與 tpSlCloseRatio，不被本次開倉覆蓋（R4 契約延伸）。
+    const added = openMarket(account, {
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.05,
+      price: 60500,
+      leverage: 10,
+      now: NOW,
+      tp: 62000,
+      sl: 58000,
+    });
+    if (!added.ok) throw new Error(added.error);
+
+    const merged = onlyPosition(added.account);
+    expect(merged.qty).toBeCloseTo(0.15, 10);
+    expect(merged.takeProfit).toBe(61000);
+    expect(merged.stopLoss).toBe(59000);
+    expect(merged.tpSlCloseRatio).toBe(0.5);
+  });
+});
+
 describe('trailing stop', () => {
   function withTrailing(account: Account) {
     const result = setTrailingStop(account, onlyPosition(account).id, {

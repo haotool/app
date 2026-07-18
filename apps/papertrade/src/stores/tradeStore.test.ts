@@ -166,12 +166,12 @@ describe('useTradeStore', () => {
   });
 
   it('resets with the same one-time warning toast when the persisted version is stale', async () => {
-    // 版本不符的重置不得靜默：必須沿用存檔失效的一次性告知路徑。
+    // v2 以前的版本不可遷移；重置不得靜默，必須沿用存檔失效的一次性告知路徑。
     window.localStorage.setItem(
       TRADE_STORAGE_KEY,
       JSON.stringify({
         state: { account: { ...createInitialAccount(), balance: 7777 } },
-        version: TRADE_STORAGE_VERSION - 1,
+        version: TRADE_STORAGE_VERSION - 2,
       }),
     );
     await useTradeStore.persist.rehydrate();
@@ -182,6 +182,39 @@ describe('useTradeStore', () => {
     expect(
       toasts.filter((toast) => toast.tone === 'warning' && toast.title.includes('重置')),
     ).toHaveLength(1);
+  });
+
+  it('migrates a v2 account by filling tpSlCloseRatio without a reset', async () => {
+    const legacyPosition = {
+      id: 'p1',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      entryPrice: 60000,
+      margin: 600,
+      openFee: 3.3,
+      leverage: 10,
+      openedAt: NOW,
+      takeProfit: 61000,
+      stopLoss: null,
+      trailing: null,
+    };
+    window.localStorage.setItem(
+      TRADE_STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          account: { balance: 7777, positions: [legacyPosition], orders: [], history: [] },
+        },
+        version: 2,
+      }),
+    );
+    await useTradeStore.persist.rehydrate();
+
+    const { account, toasts } = useTradeStore.getState();
+    expect(account.balance).toBe(7777);
+    expect(account.positions[0]?.tpSlCloseRatio).toBe(1);
+    expect(account.positions[0]?.takeProfit).toBe(61000);
+    expect(toasts.some((toast) => toast.tone === 'warning')).toBe(false);
   });
 
   it('rehydrates a valid persisted account without a reset toast', async () => {
@@ -259,6 +292,7 @@ describe('parsePersistedTradeState', () => {
             openedAt: NOW,
             takeProfit: null,
             stopLoss: null,
+            tpSlCloseRatio: 1,
             trailing: null,
           },
         ],
@@ -286,6 +320,7 @@ describe('parsePersistedTradeState', () => {
             openedAt: NOW,
             takeProfit: null,
             stopLoss: 59000,
+            tpSlCloseRatio: 0.5,
             trailing: {
               activationPrice: 61000,
               distance: 500,

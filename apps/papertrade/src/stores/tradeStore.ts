@@ -71,6 +71,8 @@ const positionSchema = z.object({
   openedAt: finiteNumber,
   takeProfit: positiveNumber.nullable(),
   stopLoss: positiveNumber.nullable(),
+  // R5-6：TP/SL 觸發平倉比例（0<r≤1）；v2 存檔由 migrate 補預設 1。
+  tpSlCloseRatio: positiveNumber.max(1),
   trailing: trailingSchema.nullable(),
 });
 
@@ -208,6 +210,7 @@ interface TradeState {
     positionId: string,
     takeProfit: number | null,
     stopLoss: number | null,
+    closeRatio?: number,
   ) => TradeActionResult;
   setPositionTrailing: (positionId: string, params: TrailingParams | null) => TradeActionResult;
   applyTick: (symbol: MarketSymbol, mark: number, now: number) => void;
@@ -240,8 +243,10 @@ export const useTradeStore = create<TradeState>()(
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
         // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
-        setPositionTpSl: (positionId, takeProfit, stopLoss) =>
-          commit(setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss)),
+        setPositionTpSl: (positionId, takeProfit, stopLoss, closeRatio) =>
+          commit(
+            setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss, closeRatio),
+          ),
         setPositionTrailing: (positionId, params) =>
           commit(setTrailingStop(get().account, positionId, params)),
         applyTick: (symbol, mark, now) => {
@@ -269,8 +274,25 @@ export const useTradeStore = create<TradeState>()(
       version: TRADE_STORAGE_VERSION,
       storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
-      // 版本不符一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
-      migrate: () => ({}),
+      // v2 → v3：持倉補 tpSlCloseRatio 預設 1（全平），帳戶資料無損保留。
+      // 其餘舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
+      migrate: (persisted, version) => {
+        if (version !== 2 || typeof persisted !== 'object' || persisted === null) return {};
+        const legacy = persisted as { account?: { positions?: unknown[] } };
+        const positions = legacy.account?.positions;
+        if (!Array.isArray(positions)) return {};
+        return {
+          ...legacy,
+          account: {
+            ...legacy.account,
+            positions: positions.map((position) =>
+              typeof position === 'object' && position !== null
+                ? { tpSlCloseRatio: 1, ...position }
+                : position,
+            ),
+          },
+        };
+      },
       merge: (persisted, current) => {
         const parsed = parsePersistedTradeState(persisted);
         if (parsed === null) {

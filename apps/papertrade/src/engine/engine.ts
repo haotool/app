@@ -252,15 +252,25 @@ export function setStopLoss(
 }
 
 // 原子套用 TP/SL：任一驗證失敗即整筆拒絕，不留半套設定。
+// closeRatio（0<r≤1，預設 1＝全平）＝觸發時平倉的數量比例（R5-6）。
 export function setTakeProfitStopLoss(
   account: Account,
   positionId: string,
   takeProfit: number | null,
   stopLoss: number | null,
+  closeRatio = 1,
 ): TradeResult {
+  if (!Number.isFinite(closeRatio) || closeRatio <= 0 || closeRatio > 1) {
+    return { ok: false, error: 'invalid-qty' };
+  }
   const tpResult = setTakeProfit(account, positionId, takeProfit);
   if (!tpResult.ok) return tpResult;
-  return setStopLoss(tpResult.account, positionId, stopLoss);
+  const slResult = setStopLoss(tpResult.account, positionId, stopLoss);
+  if (!slResult.ok) return slResult;
+  return updatePosition(slResult.account, positionId, (position) => ({
+    ...position,
+    tpSlCloseRatio: closeRatio,
+  }));
 }
 
 export function setTrailingStop(
@@ -314,6 +324,44 @@ function isStopLossHit(position: Position, mark: number): boolean {
 function isTakeProfitHit(position: Position, mark: number): boolean {
   if (position.takeProfit === null) return false;
   return position.side === 'long' ? mark >= position.takeProfit : mark <= position.takeProfit;
+}
+
+// TP/SL 觸發結算（R5-6）：平掉 tpSlCloseRatio 比例；餘倉清除 TP/SL 防重複觸發，比例重設為全平。
+function settleTpSl(
+  account: Account,
+  position: Position,
+  mark: number,
+  now: number,
+  events: TradeEvent[],
+  reason: 'tp' | 'sl',
+): Account {
+  const qty = position.qty * position.tpSlCloseRatio;
+  const { account: next, trade } = closeSlice(
+    account,
+    position,
+    qty,
+    mark,
+    TAKER_FEE_RATE,
+    reason,
+    now,
+  );
+  events.push({
+    type: reason,
+    symbol: position.symbol,
+    side: position.side,
+    pnl: trade.realizedPnl,
+  });
+  const remaining = next.positions.find((candidate) => candidate.id === position.id);
+  if (remaining === undefined) return next;
+  return {
+    ...next,
+    positions: replacePosition(next.positions, {
+      ...remaining,
+      takeProfit: null,
+      stopLoss: null,
+      tpSlCloseRatio: 1,
+    }),
+  };
 }
 
 interface TrailingCheck {
@@ -376,41 +424,11 @@ function processPosition(
   }
 
   if (isStopLossHit(position, mark)) {
-    const { account: next, trade } = closeSlice(
-      account,
-      position,
-      position.qty,
-      mark,
-      TAKER_FEE_RATE,
-      'sl',
-      now,
-    );
-    events.push({
-      type: 'sl',
-      symbol: position.symbol,
-      side: position.side,
-      pnl: trade.realizedPnl,
-    });
-    return next;
+    return settleTpSl(account, position, mark, now, events, 'sl');
   }
 
   if (isTakeProfitHit(position, mark)) {
-    const { account: next, trade } = closeSlice(
-      account,
-      position,
-      position.qty,
-      mark,
-      TAKER_FEE_RATE,
-      'tp',
-      now,
-    );
-    events.push({
-      type: 'tp',
-      symbol: position.symbol,
-      side: position.side,
-      pnl: trade.realizedPnl,
-    });
-    return next;
+    return settleTpSl(account, position, mark, now, events, 'tp');
   }
 
   const check = advanceTrailing(position, mark);

@@ -195,6 +195,7 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
     openedAt: now,
     takeProfit: tp ?? null,
     stopLoss: sl ?? null,
+    tpSlCloseRatio: 1,
     trailing: null,
   };
   return {

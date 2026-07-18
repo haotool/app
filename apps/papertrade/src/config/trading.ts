@@ -21,5 +21,5 @@ export const TOAST_DURATION_MS = 4500;
 export const TOAST_MAX_VISIBLE = 3;
 
 export const TRADE_STORAGE_KEY = 'papertrade:account';
-export const TRADE_STORAGE_VERSION = 2;
+export const TRADE_STORAGE_VERSION = 3;
 export const DISCLAIMER_STORAGE_KEY = 'papertrade:disclaimer-ack';
