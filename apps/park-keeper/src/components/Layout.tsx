@@ -24,8 +24,9 @@ export default function Layout() {
   }, [i18n]);
   const normalizedPathname = normalizePathname(pathname);
   const showFooter = normalizedPathname === '/about';
+  // hover 加深而非變淡（R6 review 附帶）：slate-300 on 白 footer 僅 2.0:1，hover 態不可退化。
   const footerLinkCls =
-    'inline-block px-3.5 py-3.5 -mx-3.5 -my-3.5 hover:text-slate-300 transition-colors';
+    'inline-block px-3.5 py-3.5 -mx-3.5 -my-3.5 hover:text-slate-800 transition-colors';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,19 +37,20 @@ export default function Layout() {
       <UpdatePrompt />
       {showFooter && (
         <footer className="py-4 px-6 text-center border-t border-black/5">
-          <address className="not-italic text-sm text-slate-500">
+          {/* slate-600（R6 review /about 處方）：slate-500 on 白 4.76 壓線、slate-400 僅 2.45:1。 */}
+          <address className="not-italic text-sm text-slate-600">
             <span suppressHydrationWarning>© {CURRENT_YEAR}</span>{' '}
             <a
               href="https://app.haotool.org/about/"
               rel="author"
-              className="inline-block px-1 py-1.5 -mx-1 -my-1.5 hover:text-slate-400 transition-colors"
+              className="inline-block px-1 py-1.5 -mx-1 -my-1.5 hover:text-slate-800 transition-colors"
             >
               阿璋 (Ah Zhang)
             </a>{' '}
             · {APP_NAME}. {t('footer.rights_reserved')}
           </address>
           <nav
-            className="flex items-center justify-center gap-4 text-xs text-slate-400 mt-2"
+            className="flex items-center justify-center gap-4 text-xs text-slate-600 mt-2"
             aria-label="Footer"
           >
             <Link to="/about/" className={footerLinkCls}>

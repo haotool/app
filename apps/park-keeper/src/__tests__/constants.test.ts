@@ -135,6 +135,19 @@ describe('constants', () => {
         expect(contrastRatio(danger, surface)).toBeGreaterThanOrEqual(5.5);
       }
     });
+
+    // R6 review：主文字對比必須高於次要文字，防止層級倒置（Kawaii 曾 text 5.66 < textMuted 6.14）。
+    it('四主題 text 對 background 與 surface 對比須 ≥ textMuted（視覺層級守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        const { text, textMuted, background, surface } = theme.colors;
+        expect(contrastRatio(text, background)).toBeGreaterThanOrEqual(
+          contrastRatio(textMuted, background),
+        );
+        expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(
+          contrastRatio(textMuted, surface),
+        );
+      }
+    });
   });
 
   describe('CACHE_DAYS', () => {

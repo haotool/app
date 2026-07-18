@@ -82,7 +82,7 @@ export default function HomeShell() {
             <div className="text-center">
               <Link
                 to="/guide"
-                className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
+                className="inline-flex items-center justify-center min-h-12 min-w-12 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
                 style={{ color: theme.colors.text }}
               >
                 {t('guide.entry')}

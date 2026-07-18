@@ -75,14 +75,15 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
-/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區 ≥44×44；
+/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區
+ *  min-h-12（48px，R6 review：44px 名目值在行動裝置實測可縮至 43.27px）；
  *  載入態與內容態共用，markup 須與 HomeShell 同構。 */
 function GuideEntryLink({ color, label }: { color: string; label: string }) {
   return (
     <div className="text-center">
       <Link
         to="/guide"
-        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
+        className="inline-flex items-center justify-center min-h-12 min-w-12 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
         style={{ color }}
       >
         {label}

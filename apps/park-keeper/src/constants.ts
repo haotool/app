@@ -34,8 +34,9 @@ export const THEMES: Record<string, ThemeConfig> = {
       accent: '#FFFFBA', // Pastel Yellow (Cream)
       background: '#FFFAF4', // Very light warm white
       surface: '#FFFFFF',
-      // 暖粉灰調加深至 WCAG AA：text 5.66:1（on #FFFAF4），保留粉彩柔和感。
-      text: '#755F63',
+      // 暖粉棕調主文字（R6 review：修正 text < textMuted 層級倒置）：7.91:1（on #FFFAF4）、
+      // 8.21:1（on #FFFFFF），高於 textMuted 一階，保留粉彩柔和感。
+      text: '#5D4A4F',
       // textMuted 安全 margin 提升（R6 NEW-2）：6.14:1（on #FFFAF4）、6.37:1（on #FFFFFF）。
       // 原 #826D73 僅 4.61/4.79:1，axe 實測邊緣 case 已跌破 4.5（Kawaii 為 round-5 最嚴重主題）。
       textMuted: '#6E5A60',

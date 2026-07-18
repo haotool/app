@@ -361,9 +361,12 @@ export default function QuickEntry({
                     className="animate-spin text-[var(--color-primary)]"
                   />
                 ) : (
+                  // 拍照 icon 用 textMuted 實色（R6 review）：pastel primary@70% 於 Kawaii
+                  // 等效僅 1.44:1，未達 UI 元件 3:1。
                   <Camera
                     size={isFullscreen ? 48 : 28}
-                    className="text-[var(--color-primary)] mb-2 opacity-70"
+                    className="mb-2"
+                    style={{ color: theme.colors.textMuted }}
                   />
                 )}
                 {/* 拍照引導文字用 textMuted 實色（R6 掃蕩）：opacity-40/60 dimming 未達 AA。 */}

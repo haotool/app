@@ -292,8 +292,9 @@ export default function RecordCard({
                 />
               </button>
             ) : (
+              // 無照片裝飾佔位（R6 review 判定 B 類保留 opacity）：非資訊載體，顯式 aria-hidden。
               <div className="w-full h-full flex items-center justify-center opacity-20">
-                <Car size={20} />
+                <Car size={20} aria-hidden />
               </div>
             )}
           </div>
