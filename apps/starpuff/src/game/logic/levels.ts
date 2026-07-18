@@ -649,7 +649,7 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'spring', x: 1250, y: 391 },
       { kind: 'breakable', x: 550, y: 380, loot: 'ammo' },
       { kind: 'breakable', x: 700, y: 380, loot: 'ammo' },
-      { kind: 'warp', x: 900, y: 300, pairId: 'lake-high' },
+      { kind: 'warp', x: 1050, y: 300, pairId: 'lake-high' },
       { kind: 'warp', x: 2050, y: 100, pairId: 'lake-high' },
       { kind: 'warp', x: 2750, y: 300, pairId: 'lake-cove' },
       { kind: 'warp', x: 600, y: 300, pairId: 'lake-cove' },
