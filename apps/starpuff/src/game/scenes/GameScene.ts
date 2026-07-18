@@ -1160,7 +1160,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies.spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }
 
-  // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri）：依場上現量夾限至 cap，走正式 spawn 管線。
+  // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri／§74 P2 bubbla）：依場上現量夾限至 cap，
+  // 走正式 spawn 管線；召喚路徑同套潮汐生成調整（交叉不變式 13/17，審查修復）。
   private summonMinion(kind: EnemyKind, cap: number): void {
     let alive = 0;
     for (const child of this.enemies.getGroup().getChildren()) {
@@ -1168,7 +1169,11 @@ export class GameScene extends Phaser.Scene {
     }
     for (let i = 0; i < cap - alive; i += 1) {
       const x = i % 2 === 0 ? this.arenaLeft() + SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
-      this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+      const defaultY = kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y;
+      const adjusted = this.tide
+        ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(defaultY) }
+        : { kind, y: defaultY };
+      this.enemies.spawn(adjusted.kind, x, adjusted.y);
     }
   }
 

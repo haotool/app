@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
-import { SYRONA, createSyronaFsm, type SyronaCommand } from '../logic/syronaFsm';
+import {
+  EX_SYRONA,
+  SYRONA,
+  createSyronaFsm,
+  isCrownHit,
+  type SyronaCommand,
+} from '../logic/syronaFsm';
 import type { TideSpec } from '../logic/tide';
 import { UPDRAFT, isInUpdraft, ventPhase, type UpdraftZone } from '../logic/updraft';
 import { playSfx } from '../audio/sfx';
@@ -19,8 +25,6 @@ const BODY_H = 150;
 const THRONE_Y = GROUND_TOP - BODY_H / 2;
 // 王窯座位置：arena 右緣 20% 帶（半定點，僅輕微浮動不追打）。
 const THRONE_X_RATIO = 0.8;
-// 皇冠弱點帶（§74）：本體頂緣下 34px 內命中 ×2 傷（乘噴口升空可達）。
-const CROWN_BAND_PX = 34;
 const SYRUP_TINT = 0xe89040;
 const DEEP_TINT = 0xa85828;
 // arena 噴口 ×2（§74）：比例位、週期同 L13 噴口；超載期恆噴＋升托增強。
@@ -398,10 +402,11 @@ export function createSyrona(
               dutyPct: SYRONA.tideDutyPct,
             });
           } else if (event.phase === 'p3') {
+            // 大沸騰（§74）：EX 週期倍率讀 EX_SYRONA SSOT（審查修復，防單邊改值漂移）。
             hooks.boilTide({
               maxY: SYRONA.tideMaxY + SYRONA.boilMaxYDeltaPx,
               periodMs: Math.round(
-                SYRONA.tidePeriodMs * (ex ? SYRONA.boilPeriodMul * 0.75 : SYRONA.boilPeriodMul),
+                SYRONA.tidePeriodMs * (ex ? EX_SYRONA.boilPeriodMul : SYRONA.boilPeriodMul),
               ),
               dutyPct: SYRONA.tideDutyPct,
             });
@@ -496,7 +501,8 @@ export function createSyrona(
     },
     applyDamageAt(amount: number, x: number, y: number, source?: BossDamageSource) {
       void x;
-      applyDamageInternal(amount, y <= body.y - BODY_H / 2 + CROWN_BAND_PX, source);
+      // 皇冠弱點（§74）：判定收斂 logic/syronaFsm 純函式（頂帶命中 ×2）。
+      applyDamageInternal(amount, isCrownHit(y, body.y - BODY_H / 2), source);
     },
     update(deltaMs: number) {
       if (!active || dying) return;

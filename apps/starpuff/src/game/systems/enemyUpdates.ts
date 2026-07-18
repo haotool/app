@@ -585,10 +585,12 @@ function updateBubbla(
   sprite: Phaser.Physics.Arcade.Sprite,
   deltaMs: number,
 ): void {
+  // 精英倍率（§48）：潛伏縮時提高躍出頻率（焦糖泡霸 ×1.5）。
   const tick = tickBubbla(
     sprite.getData('state') as BubblaState,
     sprite.getData('stateMs') as number,
     deltaMs,
+    (sprite.getData('eliteMul') as number) ?? 1,
   );
   sprite.setData('state', tick.state);
   sprite.setData('stateMs', tick.stateMs);
@@ -645,15 +647,17 @@ function updateSplatta(
   sprite: Phaser.Physics.Arcade.Sprite,
   deltaMs: number,
 ): void {
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  // 精英倍率（§48）：巡邏/冷卻縮時提高拋射頻率（糖漿投擲隊長 ×1.5）。
   const tick = tickSplatta(
     sprite.getData('state') as SplattaState,
     sprite.getData('stateMs') as number,
     deltaMs,
+    mul,
   );
   sprite.setData('state', tick.state);
   sprite.setData('stateMs', tick.stateMs);
   const body = sprite.body as Phaser.Physics.Arcade.Body;
-  const mul = (sprite.getData('eliteMul') as number) ?? 1;
   if (tick.entered === 'aim') {
     body.setVelocityX(0);
     sprite.setTint(SPLATTA_AIM_TINT);

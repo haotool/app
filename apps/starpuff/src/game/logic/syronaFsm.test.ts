@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EX_MODS } from './bossFsm';
-import { EX_SYRONA, SYRONA, createSyronaFsm, syronaAttackCycle } from './syronaFsm';
+import { EX_SYRONA, SYRONA, createSyronaFsm, isCrownHit, syronaAttackCycle } from './syronaFsm';
 
 // 熔糖窯后 Syrona FSM（GAME_DESIGN §74）：場控型三階段——本體半定點，威脅來自
 // 地形改寫（潮汐/噴泉/滴落）；hit window = 招式後 idle 僵直（散熱/吟唱/波後）。
@@ -90,6 +90,45 @@ describe('Syrona 三階段循環（§74）', () => {
     expect(SYRONA.idleMs.p1).toBeGreaterThanOrEqual(2000);
     expect(SYRONA.idleMs.p2).toBeGreaterThanOrEqual(2000);
     expect(SYRONA.idleMs.p3).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('僵直窗＝固定輸出窗：P2 狂暴下 idle 實長仍為 2000ms 不縮短（審查修復）', () => {
+    const fsm = createSyronaFsm();
+    fsm.takeDamage(31);
+    expect(fsm.phase).toBe('p2');
+    // 進 P2 後首個指令出現時間＝idle 實長；狂暴若誤縮會落在 ≈1739ms。
+    let elapsed = 0;
+    let firstCommandAt = -1;
+    while (elapsed < 3000 && firstCommandAt < 0) {
+      const command = fsm.tick(50);
+      elapsed += 50;
+      if (command) firstCommandAt = elapsed;
+    }
+    expect(firstCommandAt).toBeGreaterThanOrEqual(SYRONA.idleMs.p2);
+    expect(firstCommandAt).toBeLessThanOrEqual(SYRONA.idleMs.p2 + 100);
+  });
+
+  it('P3 自然循環：糖漿波與噴口超載依序出現（審查修復）', () => {
+    const fsm = createSyronaFsm();
+    fsm.takeDamage(31);
+    fsm.takeDamage(30);
+    expect(fsm.phase).toBe('p3');
+    const commands = drain(fsm, 16000);
+    const kinds = commands.map((c) => c.kind);
+    expect(kinds).toContain('wave');
+    expect(kinds).toContain('overload');
+    const overload = commands.find((c) => c.kind === 'overload');
+    if (overload?.kind === 'overload') expect(overload.durationMs).toBeGreaterThan(0);
+  });
+});
+
+describe('皇冠弱點帶（§74 isCrownHit，審查修復）', () => {
+  it('頂帶內命中為皇冠（×2 傷由呈現層結算），帶下為常規', () => {
+    const bodyTop = 255;
+    expect(isCrownHit(bodyTop, bodyTop)).toBe(true);
+    expect(isCrownHit(bodyTop + 34, bodyTop)).toBe(true);
+    expect(isCrownHit(bodyTop + 35, bodyTop)).toBe(false);
+    expect(isCrownHit(bodyTop - 10, bodyTop)).toBe(true);
   });
 });
 

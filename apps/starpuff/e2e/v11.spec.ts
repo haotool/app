@@ -240,6 +240,42 @@ test('L16 Syrona（§74）：前室→入場→P2 潮汐入 arena→P3 大沸騰
   expect(errors).toEqual([]);
 });
 
+test('L14 暫停凍結（§71 審查補強）：漲坡段暫停水位凍結、續玩推進', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await gotoLevel(page, 14);
+  // 等漲坡段（水位逐幀變動帶）再暫停，凍結/恢復比對最精確。
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const tide = window.__sp.tide();
+          return tide !== null && tide.phase === 'flood' && tide.waterY < 500 && tide.waterY > 360;
+        }),
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.pause-overlay')).toBeVisible();
+  const atPause = await page.evaluate(() => window.__sp.tide());
+  await page.waitForTimeout(1100);
+  const whilePaused = await page.evaluate(() => window.__sp.tide());
+  expect(whilePaused?.waterY).toBe(atPause?.waterY);
+  await page.locator('[data-pause="resume"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  await expect(page.locator('.pause-overlay')).toHaveCount(0);
+  await page.waitForTimeout(1000);
+  const resumed = await page.evaluate(() => window.__sp.tide());
+  expect(resumed?.waterY === whilePaused?.waterY && resumed?.phase === whilePaused?.phase).toBe(
+    false,
+  );
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
 test('雙節血條觀測（§70 收尾）：L12 分裂期 HUD 雙節 active、擊破回落', async ({ page }) => {
   test.setTimeout(150_000);
   const errors = collectErrors(page);

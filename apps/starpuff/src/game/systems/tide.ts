@@ -4,6 +4,7 @@ import type { EnemyKind } from '../core/types';
 import {
   TIDE,
   isTideSubmerged,
+  tideFilterKind,
   tidePhase,
   tideSpawnY,
   tideWaterY,
@@ -97,8 +98,7 @@ export function createTide(scene: Phaser.Scene, initial: TideSpec, worldWidth: n
     phase: () => tidePhase(elapsedMs, spec),
     isSubmerged: (bottomY: number) => isTideSubmerged(bottomY, currentWaterY),
     adjustSpawnY: (defaultY: number) => tideSpawnY(defaultY, currentWaterY),
-    filterSpawnKind: (kind: EnemyKind) =>
-      kind === 'magno' && tidePhase(elapsedMs, spec) !== 'dry' ? 'jelly' : kind,
+    filterSpawnKind: (kind: EnemyKind) => tideFilterKind(kind, tidePhase(elapsedMs, spec)),
     setSpec(next: TideSpec) {
       // 相位比例映射至新週期，避免切換當幀水位跳變。
       const ratio = (elapsedMs % spec.periodMs) / spec.periodMs;

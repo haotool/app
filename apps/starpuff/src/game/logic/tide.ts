@@ -77,3 +77,9 @@ export function tideSoakVelocity(vx: number, vy: number): { vx: number; vy: numb
 export function tideSpawnY(defaultY: number, waterY: number): number {
   return Math.min(defaultY, waterY - TIDE.spawnClearancePx);
 }
+
+// 漲潮期 Magno 生成排除（交叉不變式 13）：磁場不得覆蓋漲潮期可站位——非乾潮期
+// 抽到 magno 一律替換為恆可吸 jelly；其餘品種直通。
+export function tideFilterKind<T extends string>(kind: T, phase: TidePhase): T | 'jelly' {
+  return kind === 'magno' && phase !== 'dry' ? 'jelly' : kind;
+}

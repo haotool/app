@@ -417,4 +417,17 @@ describe('Splatta 四態時序（§73 熔糖投手）', () => {
     expect(SPLATTA_FSM.spotMs).toBeGreaterThan(0);
     expect(SPLATTA_FSM.spotMs).toBeLessThanOrEqual(3000);
   });
+
+  it('精英倍率（§48 審查修復）：潛伏/巡邏/冷卻縮時、telegraph 與可吸窗不縮', () => {
+    // 焦糖泡霸 ×1.5：潛伏 2200/1.5≈1467 即轉漣漪；漣漪與躍出窗維持原長。
+    expect(tickBubbla('submerged', 1466, 16, 1.5).state).toBe('ripple');
+    expect(tickBubbla('submerged', 1400, 16, 1).state).toBe('submerged');
+    expect(tickBubbla('ripple', BUBBLA_FSM.rippleMs - 32, 16, 1.5).state).toBe('ripple');
+    expect(tickBubbla('leap', BUBBLA_FSM.leapMs - 32, 16, 1.5).state).toBe('leap');
+    // 糖漿投擲隊長 ×1.5：巡邏 2400/1.5=1600、冷卻 1600/1.5≈1067 即轉；舉勺前搖不縮。
+    expect(tickSplatta('patrol', 1600, 16, 1.5).state).toBe('aim');
+    expect(tickSplatta('patrol', 1600, 16, 1).state).toBe('patrol');
+    expect(tickSplatta('cool', 1067, 16, 1.5).state).toBe('patrol');
+    expect(tickSplatta('aim', SPLATTA_FSM.aimMs - 32, 16, 1.5).state).toBe('aim');
+  });
 });

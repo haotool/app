@@ -367,9 +367,16 @@ export interface BubblaTick {
   entered: BubblaState | null;
 }
 
-export function tickBubbla(state: BubblaState, stateMs: number, deltaMs: number): BubblaTick {
+// speedMul（§48 精英倍率）：僅縮短潛伏期提高躍出頻率；telegraph（漣漪）與
+// 躍出窗時長不縮，維持可讀性與可吸窗公平（審查修復）。
+export function tickBubbla(
+  state: BubblaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): BubblaTick {
   const next = stateMs + deltaMs;
-  if (state === 'submerged' && next >= BUBBLA_FSM.submergedMs)
+  if (state === 'submerged' && next >= BUBBLA_FSM.submergedMs / speedMul)
     return { state: 'ripple', stateMs: 0, entered: 'ripple' };
   if (state === 'ripple' && next >= BUBBLA_FSM.rippleMs)
     return { state: 'leap', stateMs: 0, entered: 'leap' };
@@ -427,15 +434,22 @@ export interface SplattaTick {
   entered: SplattaState | null;
 }
 
-export function tickSplatta(state: SplattaState, stateMs: number, deltaMs: number): SplattaTick {
+// speedMul（§48 精英倍率）：縮短巡邏與冷卻提高拋射頻率；舉勺前搖（telegraph）
+// 不縮，維持可讀性（審查修復）。
+export function tickSplatta(
+  state: SplattaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): SplattaTick {
   const next = stateMs + deltaMs;
-  if (state === 'patrol' && next >= SPLATTA_FSM.patrolMs)
+  if (state === 'patrol' && next >= SPLATTA_FSM.patrolMs / speedMul)
     return { state: 'aim', stateMs: 0, entered: 'aim' };
   if (state === 'aim' && next >= SPLATTA_FSM.aimMs)
     return { state: 'lob', stateMs: 0, entered: 'lob' };
   // lob 為單幀事件態：呈現層生成糖球後即入冷卻（沿 boomy throw 慣例）。
   if (state === 'lob') return { state: 'cool', stateMs: 0, entered: 'cool' };
-  if (state === 'cool' && next >= SPLATTA_FSM.coolMs)
+  if (state === 'cool' && next >= SPLATTA_FSM.coolMs / speedMul)
     return { state: 'patrol', stateMs: 0, entered: 'patrol' };
   return { state, stateMs: next, entered: null };
 }

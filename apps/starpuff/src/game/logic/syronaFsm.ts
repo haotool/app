@@ -84,6 +84,14 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p3: SYRONA.enrageSpeedMultiplier,
 };
 
+// 皇冠弱點帶判定（§74）：命中點高於本體頂緣下 34px 內＝皇冠 ×2 傷；純函式供 vitest
+// 與呈現層 applyDamageAt 共用（審查修復：幾何決策自呈現層收斂）。
+export const CROWN_BAND_PX = 34;
+
+export function isCrownHit(hitY: number, bodyTopY: number): boolean {
+  return hitY <= bodyTopY + CROWN_BAND_PX;
+}
+
 // 三階段招式循環（§74）：P1 噴泉/射彈；P2 滴落/召喚/加密噴泉；P3 糖漿波/噴口超載。
 export function syronaAttackCycle(phase: BossPhase): readonly SyronaAction[] {
   switch (phase) {
@@ -151,8 +159,9 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
 
   const durationMs = (action: SyronaAction): number => {
     switch (action) {
+      // 僵直窗＝固定輸出窗（§74 hit window ≥2s 不變式）：不隨狂暴縮短（審查修復）。
       case 'idle':
-        return SYRONA.idleMs[phase] / speedFactor();
+        return SYRONA.idleMs[phase];
       case 'fountain':
         return SYRONA.fountainDurationMs / speedFactor();
       case 'lob':
