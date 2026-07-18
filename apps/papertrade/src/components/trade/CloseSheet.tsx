@@ -56,7 +56,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       const realized = result.trade.realizedPnl;
       pushToast({
         tone: realized >= 0 ? 'long' : 'short',
-        title: `市價平倉成功（${percent}%）`,
+        title: `市價平倉完成（${percent}%）`,
         description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
       });
     } else {
@@ -75,7 +75,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       }
       pushToast({
         tone: position.side,
-        title: `限價平倉掛單成功（${percent}%）`,
+        title: `限價平倉委託已送出（${percent}%）`,
         description: `${formatAmount(closeQty, QTY_DISPLAY_DECIMALS)} @ ${formatPrice(limitPriceValue)}`,
       });
     }

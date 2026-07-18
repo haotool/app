@@ -8,7 +8,7 @@ export const TRADE_ERROR_MESSAGES: Record<TradeError, string> = {
   'invalid-price': '請輸入大於 0 的價格',
   'below-min-notional': '訂單價值不得低於 5 USDT',
   'insufficient-balance': '可用餘額不足',
-  'exceeds-position': '平倉數量加計掛單不得超過持倉數量',
+  'exceeds-position': '平倉數量加計未成交委託不得超過持倉數量',
   'invalid-tp-direction': '止盈價須優於開倉價（多單高於、空單低於）',
   'invalid-sl-direction': '止損價須劣於開倉價（多單低於、空單高於）',
   'not-found': '找不到對應的持倉',

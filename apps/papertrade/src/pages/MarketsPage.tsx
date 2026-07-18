@@ -184,7 +184,7 @@ export function MarketsPage() {
         <EmptyState
           icon={SearchX}
           title="找不到符合的交易對"
-          description="試試其他關鍵字或幣種代號。"
+          description="請改用其他關鍵字或幣種代號。"
           className="mx-4 mt-4"
           action={
             <button

@@ -110,7 +110,7 @@ export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSel
           size="sm"
           icon={SearchX}
           title="找不到符合的交易對"
-          description="試試其他關鍵字或幣種代號。"
+          description="請改用其他關鍵字或幣種代號。"
         />
       ) : (
         <ul className="flex flex-col">

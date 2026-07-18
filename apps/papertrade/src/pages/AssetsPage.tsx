@@ -67,7 +67,7 @@ function PracticeStatsSection({ history }: { history: ClosedTrade[] }) {
         <EmptyState
           icon={ChartColumn}
           title="尚無統計資料"
-          description="完成第一筆平倉後，這裡會統計你的練習成果。"
+          description="完成首筆平倉後，此處將顯示練習統計。"
           className="mt-2"
         />
       ) : (
@@ -171,7 +171,7 @@ export function AssetsPage() {
           <EmptyState
             icon={History}
             title="尚無平倉紀錄"
-            description="完成第一筆交易後，紀錄會顯示在這裡。"
+            description="完成首筆平倉後，紀錄將顯示於此。"
             className="mt-2"
           />
         ) : (

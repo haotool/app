@@ -211,7 +211,7 @@ export function OrderForm({
     const sideText = side === 'long' ? '買多' : '賣空';
     pushToast({
       tone: side,
-      title: mode === 'market' ? `市價${sideText}成功` : `限價${sideText}掛單成功`,
+      title: mode === 'market' ? `市價${sideText}已成交` : `限價${sideText}委託已送出`,
       description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price)}`,
     });
   }

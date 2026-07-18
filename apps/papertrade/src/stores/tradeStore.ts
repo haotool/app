@@ -152,7 +152,7 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
     case 'limit-filled':
       return {
         tone: event.side,
-        title: `限價單成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
+        title: `限價委託成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
         description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price)}`,
       };
     case 'close-filled':

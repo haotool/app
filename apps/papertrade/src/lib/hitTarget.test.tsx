@@ -172,7 +172,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
   it('trade page with an active toast passes', () => {
     renderRoute('/trade');
     act(() => {
-      useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多成功' });
+      useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多已成交' });
     });
     expect(screen.getByRole('button', { name: '關閉通知' })).toBeInTheDocument();
     expectNoViolations();
