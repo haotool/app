@@ -95,7 +95,7 @@ describe('openMarket', () => {
       ok: false,
       error: 'invalid-leverage',
     });
-    expect(openMarket(account, { ...base, leverage: 126 })).toEqual({
+    expect(openMarket(account, { ...base, leverage: 1001 })).toEqual({
       ok: false,
       error: 'invalid-leverage',
     });
@@ -121,15 +121,15 @@ describe('openMarket', () => {
     expect(account.positions).toHaveLength(1);
   });
 
-  it('clamps merged derived leverage into [1, 125] despite rounding drift', () => {
-    // 兩筆 125x 合併時 margin 各自 roundUsdt，衍生槓桿可能微幅越界（實證 125.0000002）。
-    let account = openLong(createInitialAccount(), 0.0011, 60000.13, 125);
-    account = openLong(account, 0.00307, 61234.57, 125);
+  it('clamps merged derived leverage into [1, 1000] despite rounding drift', () => {
+    // 兩筆同槓桿合併時 margin 各自 roundUsdt，衍生槓桿可能微幅越界（125x 時實證 125.0000002）。
+    let account = openLong(createInitialAccount(), 0.0011, 60000.13, 1000);
+    account = openLong(account, 0.00307, 61234.57, 1000);
 
     const position = onlyPosition(account);
-    expect(position.leverage).toBeLessThanOrEqual(125);
+    expect(position.leverage).toBeLessThanOrEqual(1000);
     expect(position.leverage).toBeGreaterThanOrEqual(1);
-    expect(position.leverage).toBeCloseTo(125, 6);
+    expect(position.leverage).toBeCloseTo(1000, 3);
   });
 
   it('reduces the opposite position first', () => {

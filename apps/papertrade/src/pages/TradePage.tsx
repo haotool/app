@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, Inbox } from 'lucide-react';
+import clsx from 'clsx';
 import {
   DEFAULT_SYMBOL,
   isMarketSymbol,
@@ -8,7 +9,7 @@ import {
   TRADE_ORDERBOOK_LEVELS,
   type MarketSymbol,
 } from '../config/market';
-import { DEFAULT_LEVERAGE } from '../config/trading';
+import { DEFAULT_LEVERAGE, HIGH_LEVERAGE_THRESHOLD } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
@@ -133,7 +134,12 @@ export function TradePage() {
               type="button"
               onClick={() => setSheet('leverage')}
               aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
-              className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
+              className={clsx(
+                'min-h-11 min-w-11 rounded-control px-3 text-label font-semibold tabular-nums',
+                leverage > HIGH_LEVERAGE_THRESHOLD
+                  ? 'bg-warning/15 text-warning active:bg-warning/25'
+                  : 'bg-primary/15 text-primary active:bg-primary/25',
+              )}
             >
               {formatAmount(leverage, 1)}x
             </button>

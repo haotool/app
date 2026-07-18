@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
-import { LEVERAGE_MAX, LEVERAGE_MIN, LEVERAGE_PRESETS } from '../../config/trading';
+import {
+  HIGH_LEVERAGE_THRESHOLD,
+  LEVERAGE_MAX,
+  LEVERAGE_MIN,
+  LEVERAGE_PRESETS,
+} from '../../config/trading';
+import { leverageToSlider, sliderToLeverage } from '../../lib/leverageScale';
 
 interface LeverageSheetProps {
   open: boolean;
@@ -12,10 +18,18 @@ interface LeverageSheetProps {
 
 export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSheetProps) {
   const [draft, setDraft] = useState(leverage);
+  const sliderValue = leverageToSlider(draft);
 
   return (
     <BottomSheet open={open} title="調整槓桿" onClose={onClose}>
-      <p className="text-center text-price-xl font-semibold tabular-nums text-primary">{draft}x</p>
+      <p
+        className={clsx(
+          'text-center text-price-xl font-semibold tabular-nums',
+          draft > HIGH_LEVERAGE_THRESHOLD ? 'text-warning' : 'text-primary',
+        )}
+      >
+        {draft}x
+      </p>
       <div className="relative mt-4">
         <span
           aria-hidden
@@ -25,17 +39,19 @@ export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSh
           aria-hidden
           className="pointer-events-none absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
           style={{
-            width: `calc(10px + (100% - 20px) * ${(draft - LEVERAGE_MIN) / (LEVERAGE_MAX - LEVERAGE_MIN)})`,
+            width: `calc(10px + (100% - 20px) * ${sliderValue / 100})`,
           }}
         />
+        {/* log-scale 映射（ADR-R5-03）：滑桿 0–100 線性 → 1–1000 指數，低倍段解析度高。 */}
         <input
           type="range"
           aria-label="槓桿倍數"
-          min={LEVERAGE_MIN}
-          max={LEVERAGE_MAX}
+          aria-valuetext={`${draft}x`}
+          min={0}
+          max={100}
           step={1}
-          value={draft}
-          onChange={(event) => setDraft(Number(event.target.value))}
+          value={sliderValue}
+          onChange={(event) => setDraft(sliderToLeverage(Number(event.target.value)))}
           className="range-input relative h-11 w-full"
         />
       </div>
@@ -60,9 +76,15 @@ export function LeverageSheet({ open, leverage, onClose, onConfirm }: LeverageSh
           </button>
         ))}
       </div>
-      <p className="mt-3 text-caption leading-relaxed text-text-3">
-        高槓桿會放大損益並使強平價貼近開倉價，請謹慎使用。
-      </p>
+      {draft > HIGH_LEVERAGE_THRESHOLD ? (
+        <p className="mt-3 text-caption leading-relaxed text-warning" role="alert">
+          極高槓桿：微小價格波動即可能觸發強平，請務必控制倉位。
+        </p>
+      ) : (
+        <p className="mt-3 text-caption leading-relaxed text-text-3">
+          高槓桿會放大損益並使強平價貼近開倉價，請謹慎使用。
+        </p>
+      )}
       <button
         type="button"
         onClick={() => {

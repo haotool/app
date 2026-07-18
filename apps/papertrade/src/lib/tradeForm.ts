@@ -3,7 +3,7 @@ import { type TradeError } from '../engine/engine';
 import { LEVERAGE_MAX, LEVERAGE_MIN, MIN_ORDER_NOTIONAL_USDT } from '../config/trading';
 
 export const TRADE_ERROR_MESSAGES: Record<TradeError, string> = {
-  'invalid-leverage': '槓桿須在 1–125 倍之間',
+  'invalid-leverage': '槓桿須在 1–1000 倍之間',
   'invalid-qty': '請輸入有效的數量',
   'invalid-price': '請輸入大於 0 的價格',
   'below-min-notional': '訂單價值不得低於 5 USDT',
