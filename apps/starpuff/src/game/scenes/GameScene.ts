@@ -92,6 +92,8 @@ import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createStage, type StageHandle } from '../systems/stage';
+import { createTide, type TideHandle } from '../systems/tide';
+import { TIDE, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
@@ -176,6 +178,8 @@ export class GameScene extends Phaser.Scene {
   private bossActiveAt = -1;
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
+
+  private tide: TideHandle | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
   private buff: BuffState = createBuffState();
@@ -251,7 +255,14 @@ export class GameScene extends Phaser.Scene {
       : 100;
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
-    this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
+    // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
+    this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
+    this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
+      adjustSpawn: (kind, y) =>
+        this.tide
+          ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(y) }
+          : { kind, y },
+    });
     // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
     const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
     this.boss = bossKit.handle;
@@ -332,6 +343,8 @@ export class GameScene extends Phaser.Scene {
       this.stage.destroy();
       this.bossRoom?.destroy();
       this.bossRoom = null;
+      this.tide?.destroy();
+      this.tide = null;
     });
 
     this.waves.start();
@@ -362,6 +375,7 @@ export class GameScene extends Phaser.Scene {
       this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
+      this.advanceTide(deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -461,6 +475,18 @@ export class GameScene extends Phaser.Scene {
   // arena 左緣（§69）：前室魔王關的 arena 自前室右緣起算；其餘關恆 0。
   private arenaLeft(): number {
     return this.level.boss ? (this.level.anteroomPx ?? 0) : 0;
+  }
+
+  // 糖漿潮汐逐幀結算（§71）：水位推進＋浸水傷害/強緩速/上推（anti-softlock 永不吸底）。
+  // 接觸傷害走 damagePlayer 單一入口（i-frame/護盾泡自然生效）。
+  private advanceTide(deltaMs: number): void {
+    if (!this.tide) return;
+    this.tide.update(deltaMs);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (!this.tide.isSubmerged(body.bottom)) return;
+    this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
+    const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
+    body.setVelocity(soaked.vx, soaked.vy);
   }
 
   // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
