@@ -12,9 +12,11 @@ export type EnemyKind =
   | 'gusty'
   | 'boomy'
   | 'magno'
-  | 'mirri';
+  | 'mirri'
+  | 'bubbla'
+  | 'splatta';
 
-export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
 
 // v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
 // v10（§68）：新增分裂型稜晶雙子 prismix。
