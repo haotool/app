@@ -963,10 +963,12 @@ export class GameScene extends Phaser.Scene {
       }
     });
     // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
-    // P2 高風險位增益投放（§69）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放。
+    // 高風險位增益投放（§69/§82）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放；
+    // 投放階段資料驅動（缺省 P2；Voidra P2 為生存段改 P3）。
     bind(GameEvents.BOSS_PHASE, ({ phase }) => {
       if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
-      if (phase === 'p2' && !this.exMode && this.level.arenaBuff && this.bossRoom) {
+      const buffPhase = this.level.arenaBuffPhase ?? 'p2';
+      if (phase === buffPhase && !this.exMode && this.level.arenaBuff && this.bossRoom) {
         this.bossRoom.dropArenaBuff(
           this.level.arenaBuff,
           this.arenaLeft() + this.scale.width / 2,

@@ -463,6 +463,12 @@ describe('Twinkla 三態時序（§80 星屑幽靈）', () => {
     expect(resolveTwinklaHit('shimmer')).toBe('immune');
   });
 
+  it('條件可吸（§80）：canInhale 未帶狀態取保守值 false、實體窗 true；cometa 恆可吸', () => {
+    expect(canInhale('twinkla')).toBe(false);
+    expect(canInhale('twinkla', true)).toBe(true);
+    expect(canInhale('cometa')).toBe(true);
+  });
+
   it('精英倍率（§48）：星屑幽長 ×1.4 僅縮虛化期，前搖與實體窗不縮', () => {
     // 虛化 2000/1.4≈1429 即轉前搖。
     expect(tickTwinkla('phased', 1429, 16, 1.4).state).toBe('shimmer');

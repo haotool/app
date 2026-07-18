@@ -14,7 +14,9 @@ export type EnemyKind =
   | 'magno'
   | 'mirri'
   | 'bubbla'
-  | 'splatta';
+  | 'splatta'
+  | 'twinkla'
+  | 'cometa';
 
 export type LevelId =
   | 1

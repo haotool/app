@@ -3,7 +3,7 @@ import { ASSETS } from './assets';
 import { CODEX_MONSTERS, CODEX_SKILLS, FLAVOR_HINTS, MIX_HINTS } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部十六種小怪與雙魔王（v11 bubbla/splatta 入鑑）', () => {
+  it('收錄全部十八種小怪與五魔王（v12 twinkla/cometa 與三新魔王徽記入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -21,8 +21,13 @@ describe('CODEX_MONSTERS', () => {
       'mirri',
       'bubbla',
       'splatta',
+      'twinkla',
+      'cometa',
       'boss',
       'noctra',
+      'prismix',
+      'syrona',
+      'voidra',
     ]);
   });
 
@@ -33,7 +38,7 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73），三種條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73/§80），四種條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
@@ -50,12 +55,14 @@ describe('CODEX_MONSTERS', () => {
         'magno',
         'mirri',
         'splatta',
+        'cometa',
       ]),
     );
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.find((m) => m.kind === 'drilly')?.conditional).toBe(true);
     expect(CODEX_MONSTERS.find((m) => m.kind === 'bubbla')?.conditional).toBe(true);
-    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(3);
+    expect(CODEX_MONSTERS.find((m) => m.kind === 'twinkla')?.conditional).toBe(true);
+    expect(CODEX_MONSTERS.filter((m) => m.conditional)).toHaveLength(4);
   });
 
   it('名稱與行為描述皆非空', () => {

@@ -5,6 +5,7 @@ import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
 import {
   BOOMY_FSM,
+  COMETA_FSM,
   GUSTY_FSM,
   MIRRI_FSM,
   SPLATTA_FSM,
@@ -15,12 +16,14 @@ import {
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
+  resolveTwinklaHit,
   tickBoomerangBody,
   type BubblaState,
   type DrillyState,
   type MagnoPhase,
   type MirriState,
   type ShellyState,
+  type TwinklaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import {
@@ -105,6 +108,8 @@ const TEXTURES: Record<EnemyKind, string> = {
   mirri: 'minion-mirri',
   bubbla: 'minion-bubbla',
   splatta: 'minion-splatta',
+  twinkla: 'minion-twinkla',
+  cometa: 'minion-cometa',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -124,6 +129,8 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   mirri: 0xd8dce8,
   bubbla: 0xf2b26b,
   splatta: 0xc88850,
+  twinkla: 0xf5e6b8,
+  cometa: 0x9fd8f0,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -146,6 +153,8 @@ const HP: Record<EnemyKind, number> = {
   mirri: 1,
   bubbla: 1,
   splatta: 1,
+  twinkla: 1,
+  cometa: 1,
 };
 
 const SIZE = 40;
@@ -403,6 +412,21 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(0, 0);
   }
 
+  // 彗尾段（§80 cometa）：俯衝沿路滯留短命傷害段（壽命有界逾時必回收 §56）。
+  function spawnCometTail(x: number, y: number): void {
+    const tail = spawnHazard(x, y);
+    if (!tail) return;
+    tail.setTexture('fx-star').setVisible(true);
+    tail.setDisplaySize(16, 16);
+    tail.setTint(0x9fd8f0);
+    tail.setAlpha(0.85);
+    tail.setData('hazardKind', 'comettail');
+    tail.setData('lifeMs', COMETA_FSM.tailLifeMs);
+    const body = tail.body as Phaser.Physics.Arcade.Body;
+    body.setSize(12, 12);
+    body.setVelocity(0, 0);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -490,6 +514,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     spawnSporeCloud,
     spawnBoomerang,
     spawnSugarBlob,
+    spawnCometTail,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
@@ -541,7 +566,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
                 ? 'submerged'
                 : kind === 'splatta'
                   ? 'patrol'
-                  : 'idle',
+                  : kind === 'twinkla'
+                    ? 'phased'
+                    : kind === 'cometa'
+                      ? 'glide'
+                      : 'idle',
     );
     // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
     sprite.setData('magnoPhase', kind === 'magno' ? 'idle' : undefined);
@@ -559,13 +588,16 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
     body.setCollideWorldBounds(true);
     // bubbla（§73）定點潛伏：重力關閉，leap 位移由狀態機速度逼近驅動。
+    // twinkla/cometa（§80）：星靈漂浮/高處巡游，重力一律關閉。
     body.setAllowGravity(
       kind !== 'floaty' &&
         kind !== 'puffy' &&
         kind !== 'zappy' &&
         kind !== 'glowy' &&
         kind !== 'gusty' &&
-        kind !== 'bubbla',
+        kind !== 'bubbla' &&
+        kind !== 'twinkla' &&
+        kind !== 'cometa',
     );
     // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
     body.setBounce(
@@ -630,6 +662,13 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     if (
       kind === 'bubbla' &&
       resolveBubblaHit(sprite.getData('state') as BubblaState) === 'immune'
+    ) {
+      return 'ignored';
+    }
+    // 星屑幽靈（§80）：僅實體窗可傷，虛化/前搖穿身免傷。
+    if (
+      kind === 'twinkla' &&
+      resolveTwinklaHit(sprite.getData('state') as TwinklaState) === 'immune'
     ) {
       return 'ignored';
     }
@@ -714,20 +753,24 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
     },
 
-    // 個體可吸判定（§30/§47/§73）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
+    // 個體可吸判定（§30/§47/§73/§80）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
     isInhalable(enemy: Phaser.GameObjects.GameObject): boolean {
       const kind = kindOf(enemy);
       if (!kind || enemy.getData('elite') === true) return false;
       const state = enemy.getData('state') as string;
-      return canInhale(kind, state === 'stun' || state === 'surfaced' || state === 'leap');
+      return canInhale(
+        kind,
+        state === 'stun' || state === 'surfaced' || state === 'leap' || state === 'solid',
+      );
     },
 
-    // 半入地無害態（§47/§73）：drilly 潛地/前搖、bubbla 潛伏/漣漪/回潛——
-    // 觸碰不結算傷害、吸力不彈開。
+    // 半入地/穿身無害態（§47/§73/§80）：drilly 潛地/前搖、bubbla 潛伏/漣漪/回潛、
+    // twinkla 虛化/前搖——觸碰不結算傷害、吸力不彈開。
     isPhasedOut(enemy: Phaser.GameObjects.GameObject): boolean {
       const kind = kindOf(enemy);
       if (kind === 'drilly') return enemy.getData('state') !== 'surfaced';
       if (kind === 'bubbla') return enemy.getData('state') !== 'leap';
+      if (kind === 'twinkla') return enemy.getData('state') !== 'solid';
       return false;
     },
 

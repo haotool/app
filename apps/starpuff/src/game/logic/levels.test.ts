@@ -18,30 +18,31 @@ import {
 import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', () => {
-  it('十六關依序為 1-16 且參數符合 §15/§21/§50/§60/§66-§68/§72/§74 表', () => {
+describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）', () => {
+  it('二十關依序為 1-20 且參數符合 §15/§21/§50/§60/§66-§68/§72/§74/§84 表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
       2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800, 854,
+      3400, 3700, 4000, 854,
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([
-      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0,
+      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0,
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
-      3000,
+      3000, 1350, 1200, 1000, 2800,
     ]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
-      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2,
+      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2,
     ]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
-      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0,
+      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0,
     ]);
   });
 
-  it('四魔王品種標記（§54/§68/§74）：L4/L7/L12/L16；教學與提示對表', () => {
+  it('五魔王品種標記（§54/§68/§74/§82）：L4/L7/L12/L16/L20；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -59,6 +60,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
       null,
       null,
       'syrona',
+      null,
+      null,
+      null,
+      'voidra',
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -68,6 +73,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     expect(getLevel(10).hint).toContain('折躍');
     expect(getLevel(13).hint).toContain('熱泉');
     expect(getLevel(14).hint).toContain('潮');
+    expect(getLevel(17).hint).toContain('低重力');
+    expect(getLevel(18).hint).toContain('流星');
+    expect(getLevel(19).hint).toContain('終試');
   });
 
   it('L16 魔王關體系（§69 沿用）：前室 400px、護盾/疾風二選一、P2 星力果、幾何留空', () => {
@@ -79,6 +87,53 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     expect(level.platforms).toEqual([]);
     expect(level.elements).toEqual([]);
     expect(level.elites).toEqual([]);
+  });
+
+  it('L20 魔王關體系（§82）：前室星力/疾風二選一、P3 護盾泡（生存段不投放）、幾何留空', () => {
+    const level = getLevel(20);
+    expect(level.anteroomPx).toBe(400);
+    expect(level.anteroomBuffs).toEqual(['power', 'swift']);
+    expect(level.arenaBuff).toBe('shield');
+    // Voidra P2 為生存段（§82 唯一輸出窗設計）：arena 增益延至 P3 投放。
+    expect(level.arenaBuffPhase).toBe('p3');
+    expect(level.platforms).toEqual([]);
+    expect(level.elements).toEqual([]);
+    expect(level.elites).toEqual([]);
+    // 其餘魔王關維持缺省 P2 投放。
+    for (const id of [12, 16] as const) {
+      expect(getLevel(id).arenaBuffPhase).toBeUndefined();
+    }
+  });
+
+  it('低重力係數（§81/§10.2-6）：僅 L17/L18/L19 配置且值域 [0.5, 1.0]', () => {
+    for (const level of LEVELS) {
+      if (level.id === 17 || level.id === 18) {
+        expect(level.gravityScale).toBe(0.55);
+      } else if (level.id === 19) {
+        expect(level.gravityScale).toBe(0.85);
+      } else {
+        expect(level.gravityScale).toBeUndefined();
+      }
+      if (level.gravityScale !== undefined) {
+        expect(level.gravityScale).toBeGreaterThanOrEqual(0.5);
+        expect(level.gravityScale).toBeLessThanOrEqual(1.0);
+      }
+    }
+  });
+
+  it('流星雨配置（§79/§10.2-7）：僅 L18/L19；波間隔 ≥3s、單波 ≤ 同屏上限 3', () => {
+    for (const level of LEVELS) {
+      if (level.id !== 18 && level.id !== 19) {
+        expect(level.meteor).toBeUndefined();
+        continue;
+      }
+      const meteor = level.meteor;
+      expect(meteor).toBeDefined();
+      if (!meteor) continue;
+      expect(meteor.intervalMs).toBeGreaterThanOrEqual(3000);
+      expect(meteor.waveSize).toBeGreaterThanOrEqual(1);
+      expect(meteor.waveSize).toBeLessThanOrEqual(3);
+    }
   });
 
   it('L12 魔王關體系（§69）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {
@@ -140,22 +195,61 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
         // 稀有味必為可吸屬性怪（glowy/spora/boomy/zappy 恆可吸、drilly 破土窗可吸）。
         expect(['drilly', 'glowy', 'spora', 'boomy', 'zappy']).toContain(elite.rewardFlavor);
       }
-      // 雙精英房（§52）不重疊：房心距 ≥ 2×門距（600px）。
+      // 雙精英房不重疊（§52）：房心距 ≥ 2×門距（600px）；
+      // L19 雙生鏡衛（§84）為 20 關唯一同房雙精英變式——同房近距（≤100px）豁免。
       for (let i = 1; i < level.elites.length; i += 1) {
         const prev = level.elites[i - 1];
         const curr = level.elites[i];
-        expect((curr?.x ?? 0) - (prev?.x ?? 0)).toBeGreaterThanOrEqual(600);
+        const gap = (curr?.x ?? 0) - (prev?.x ?? 0);
+        if (level.id === 19) {
+          expect(gap).toBeGreaterThan(0);
+          expect(gap).toBeLessThanOrEqual(100);
+        } else {
+          expect(gap).toBeGreaterThanOrEqual(600);
+        }
       }
     }
+    // 雙生鏡衛限定 L19 且恰為 mirri ×2（掉 glowy＋zappy 補配方）。
+    const twins = getLevel(19).elites;
+    expect(twins.map((e) => e.kind)).toEqual(['mirri', 'mirri']);
+    expect(twins.map((e) => e.rewardFlavor).sort()).toEqual(['glowy', 'zappy']);
   });
 
-  it('boss 關補生全為可吸或條件可吸（L4/L7/L12/L16）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
-    for (const id of [4, 7, 12, 16] as const) {
+  it('boss 關補生全為可吸或條件可吸（L4/L7/L12/L16/L20）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
+    for (const id of [4, 7, 12, 16, 20] as const) {
       const mix = getLevel(id).enemyMix;
       expect(mix.every((entry) => canInhale(entry.kind, true))).toBe(true);
       const always = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
       expect(always).toBeGreaterThanOrEqual(0.6);
     }
+  });
+
+  it('L17 星屑浮橋（§84）：twinkla 主場、恆可吸佔比 ≥50%（twinkla 保守不計）', () => {
+    const mix = getLevel(17).enemyMix;
+    expect(mix.find((e) => e.kind === 'twinkla')?.weight).toBeGreaterThanOrEqual(0.25);
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('L18 流星原野（§84）：cometa 主場、雙新怪同場、恆可吸佔比 ≥50%', () => {
+    const mix = getLevel(18).enemyMix;
+    expect(mix.find((e) => e.kind === 'cometa')?.weight).toBeGreaterThanOrEqual(0.2);
+    expect(mix.some((e) => e.kind === 'twinkla')).toBe(true);
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('L19 星核前庭（§84）：十種混編全機制回收、唯一六同屏、恆可吸佔比 ≥50%', () => {
+    const level = getLevel(19);
+    expect(level.enemyMix).toHaveLength(10);
+    expect(level.maxOnScreen).toBe(6);
+    for (const other of LEVELS) {
+      if (other.id !== 19) expect(other.maxOnScreen).toBeLessThanOrEqual(5);
+    }
+    const inhalable = level.enemyMix
+      .filter((e) => canInhale(e.kind))
+      .reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
   it('L8 磁極洞窟（§60）：magno 主場、drilly 地下突襲組合、可吸佔比 ≥50%', () => {
@@ -248,7 +342,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
         element.y < platform.y,
     );
 
-  it('平台位於世界內；雙層以內或氣流柱/星門可達（§21/§51/§66）；向上爬升可跳達（≤82px）', () => {
+  // v12 低重力高台（§81）：gravityScale ≤0.7 的浮月跳感可直達 208 高台（大跳＋拍翅）。
+  const lowGravityServed = (level: LevelSpec) => (level.gravityScale ?? 1) <= 0.7;
+
+  it('平台位於世界內；雙層以內或氣流柱/星門/低重力可達（§21/§51/§66/§81）；爬升 ≤82px', () => {
     const groundTop = 400; // 主地面頂（480 - 80）
     for (const level of LEVELS) {
       let prevY = groundTop;
@@ -256,9 +353,13 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
         expect(platform.x - platform.w / 2).toBeGreaterThanOrEqual(0);
         expect(platform.x + platform.w / 2).toBeLessThanOrEqual(level.worldWidth);
         if (platform.y < 272) {
-          // v8 高台（§51）／v10 折躍高台（§66）：超出雙層的平台必有升降服務，不逼近世界頂。
+          // 超出雙層的平台必有升降服務（氣流柱/星門/低重力），不逼近世界頂。
           expect(platform.y).toBeGreaterThanOrEqual(190);
-          expect(updraftServed(level, platform) || warpServed(level, platform)).toBe(true);
+          expect(
+            updraftServed(level, platform) ||
+              warpServed(level, platform) ||
+              lowGravityServed(level),
+          ).toBe(true);
         } else {
           // 向上爬升不得超過單跳最高 98px 的安全值；向下落無限制；氣流高台不入跳鏈。
           expect(prevY - platform.y).toBeLessThanOrEqual(82);
@@ -268,10 +369,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     }
   });
 
-  it('氣流柱與熱泉噴口（§51/§72）：L5 恆常、L13/L15 週期化；柱頂安全帶 ≥100px', () => {
+  it('氣流柱與熱泉噴口（§51/§72/§84）：L5 恆常、L13/L15/L19 週期化；柱頂安全帶 ≥100px', () => {
     for (const level of LEVELS) {
       const updrafts = level.elements.filter((element) => element.kind === 'updraft');
-      if (level.id !== 5 && level.id !== 13 && level.id !== 15) {
+      if (level.id !== 5 && level.id !== 13 && level.id !== 15 && level.id !== 19) {
         expect(updrafts).toEqual([]);
         continue;
       }
@@ -329,7 +430,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
   });
 
   it('getLevel 未知 id 擲錯', () => {
-    expect(() => getLevel(17 as never)).toThrow();
+    expect(() => getLevel(21 as never)).toThrow();
   });
 
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
@@ -351,10 +452,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     return surfaceTop - 20;
   };
 
-  it('星門折躍不變式（§66/§10.2-3/-15）：僅 L10/L11、必成對、跳入制高度、精英房互斥', () => {
+  it('星門折躍不變式（§66/§10.2-3/-15/§84）：僅 L10/L11/L19、必成對、跳入制、精英房互斥', () => {
     for (const level of LEVELS) {
       const warps = level.elements.filter((element) => element.kind === 'warp');
-      if (level.id !== 10 && level.id !== 11) {
+      if (level.id !== 10 && level.id !== 11 && level.id !== 19) {
         expect(warps).toEqual([]);
         continue;
       }
@@ -397,9 +498,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     }
   });
 
-  it('卡點關中點重生（§67）：僅 L11/L15 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+  it('卡點關中點重生（§67/§84）：僅 L11/L15/L19 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
     for (const level of LEVELS) {
-      if (level.id !== 11 && level.id !== 15) {
+      if (level.id !== 11 && level.id !== 15 && level.id !== 19) {
         expect(level.checkpointX).toBeUndefined();
         continue;
       }
@@ -509,6 +610,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
       'bg-valley': 'kiln',
       'bg-kilnway': 'kiln',
       'bg-kilnhall': 'kiln',
+      // v12 五區（§84 主計畫 §9）：星域重用 arena/throne 主題混排（星晶/星柱語彙）。
+      'bg-astral': '(arena|throne)',
+      'bg-meteorfield': '(arena|throne)',
+      'bg-starcourt': '(arena|throne)',
+      'bg-voidcore': 'throne',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
