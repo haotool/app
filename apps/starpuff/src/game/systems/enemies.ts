@@ -522,6 +522,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('slowMs', 0);
     sprite.setData('dotDamage', 0);
     sprite.setData('dotAccMs', 0);
+    // 池重用重設（§71）：吸入豁免窗不得跨個體殘留。
+    sprite.setData('inhaleGraceUntil', 0);
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);

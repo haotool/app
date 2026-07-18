@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  INHALE_GRACE_MS,
   applyDamage,
   canInhale,
   clampAmmo,
   inhaleFlavor,
+  inhaleGraceUntil,
+  isContactHarmless,
   isInInhaleRange,
   knockbackVelocity,
   pickInRadius,
@@ -105,5 +108,27 @@ describe('pickInRadius（§46 半徑選敵）', () => {
 
   it('空候選回空陣列', () => {
     expect(pickInRadius(0, 0, [], 100)).toEqual([]);
+  });
+});
+
+describe('吸入接觸豁免（§71：被吸入中的怪對玩家無接觸傷害）', () => {
+  it('被吸入中（豁免窗內）與玩家重疊 → 零傷害', () => {
+    const until = inhaleGraceUntil(1000);
+    expect(isContactHarmless(1000, until)).toBe(true);
+    expect(isContactHarmless(1000 + INHALE_GRACE_MS - 1, until)).toBe(true);
+  });
+
+  it('未被吸入的怪（無豁免窗）→ 正常傷害', () => {
+    expect(isContactHarmless(1000, 0)).toBe(false);
+  });
+
+  it('吸入中斷後豁免窗過期 → 恢復傷害性（風險回報保留）', () => {
+    const until = inhaleGraceUntil(1000);
+    expect(isContactHarmless(until, until)).toBe(false);
+    expect(isContactHarmless(until + 1, until)).toBe(false);
+  });
+
+  it('拉力逐幀刷新豁免窗：最後拉力幀後保留 INHALE_GRACE_MS', () => {
+    expect(inhaleGraceUntil(2000)).toBe(2000 + INHALE_GRACE_MS);
   });
 });

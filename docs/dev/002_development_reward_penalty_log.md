@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-inhale-contact-damage
+- 原因：吸入拉近中的怪仍帶接觸傷害——玩家轉向/鬆開瞬間或出錐殘餘飛行貼身即受擊（實測 12-25% 命中），拉力結算與接觸結算間缺「被吸入中」狀態橋接，v1 出貨以來未被揪出
+- 解法：combat 增 inhaleGraceUntil/isContactHarmless 純函式（拉力逐幀刷新 250ms 豁免窗、過期恢復傷害性、未被吸怪不受影響防吸入全程無敵）＋enemies 池重用重設；4 單測＋e2e（豁免窗零傷害/過期恢復）＋真瀏覽器 8 輪反轉面向零受擊、對照組正常扣血
 
 - 日期：2026-07-19
 - ID：reward-starpuff-crouch-dropready-ux

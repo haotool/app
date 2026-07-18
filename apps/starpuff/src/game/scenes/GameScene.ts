@@ -41,7 +41,14 @@ import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
-import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
+import {
+  inhaleFlavor,
+  inhaleGraceUntil,
+  isContactHarmless,
+  isInInhaleRange,
+  knockbackVelocity,
+  pickInRadius,
+} from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
   BOSS_AIM_ASSIST,
@@ -744,6 +751,11 @@ export class GameScene extends Phaser.Scene {
       ) {
         return;
       }
+      // 吸入接觸豁免（§71）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
+      // 鬆開瞬間與出錐殘餘飛行；窗過期即恢復傷害性，未被吸的其他怪照常結算。
+      if (isContactHarmless(this.time.now, (target.getData('inhaleGraceUntil') as number) ?? 0)) {
+        return;
+      }
       this.damagePlayer(ENEMY.touchDamage, target.x);
     });
 
@@ -1316,6 +1328,8 @@ export class GameScene extends Phaser.Scene {
         continue;
       }
       // 拉力漸增：越接近嘴邊吸力越強。
+      // 吸入接觸豁免（§71）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
+      enemy.setData('inhaleGraceUntil', inhaleGraceUntil(this.time.now));
       this.physics.moveTo(
         enemy,
         this.mouth.x,
