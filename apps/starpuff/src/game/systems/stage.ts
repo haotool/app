@@ -82,13 +82,15 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   let dropUntilMs = 0;
 
   // 佈景先建、元素後建：同深度下維持 平台 < 佈景 < 元素 < 玩家 的繪製序（§32）。
-  // boss 關 decor x 以資料 worldWidth 為基準等比換算至當前視寬（§28 禁硬編）。
+  // boss 關 decor x 以資料 worldWidth 為基準等比換算至當前視寬（§28 禁硬編）；
+  // 前室魔王關（§68）：arena 佈景整體平移前室寬。
   const xScale = level.boss ? scene.scale.width / level.worldWidth : 1;
+  const xOffset = level.boss ? (level.anteroomPx ?? 0) : 0;
   for (const spec of level.decor) {
     if (!scene.textures.exists(spec.key)) continue;
     const size = DECOR_BASE_PX * Phaser.Math.FloatBetween(0.9, 1.1);
     scene.add
-      .image(spec.x * xScale, DECOR_BASE_Y + Phaser.Math.Between(-6, 2), spec.key)
+      .image(xOffset + spec.x * xScale, DECOR_BASE_Y + Phaser.Math.Between(-6, 2), spec.key)
       .setOrigin(0.5, 1)
       .setDisplaySize(size, size)
       .setAlpha(0.95);

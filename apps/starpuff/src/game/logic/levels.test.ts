@@ -18,23 +18,23 @@ import {
 import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
-  it('十一關依序為 1-11 且參數符合 §15/§21/§50/§60/§65/§66 表', () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
+  it('十二關依序為 1-12 且參數符合 §15/§21/§50/§60/§65-§67 表', () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
-      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700,
+      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854,
     ]);
-    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13]);
+    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
-      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100,
+      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000,
     ]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
-      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480,
+      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0,
     ]);
   });
 
-  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學、L8/L10 帶提示', () => {
+  it('三魔王品種標記（§54/§67）：L4 果凍王、L7 暗月蝠王、L12 稜晶雙子；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -47,6 +47,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
       null,
       null,
       null,
+      'prismix',
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -60,9 +61,27 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
       false,
       false,
       false,
+      false,
     ]);
     expect(getLevel(8).hint).toContain('星化');
     expect(getLevel(10).hint).toContain('折躍');
+  });
+
+  it('L12 魔王關體系（§68）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {
+    const level = getLevel(12);
+    expect(level.anteroomPx).toBe(400);
+    expect(level.anteroomBuffs).toEqual(['shield', 'power']);
+    expect(level.arenaBuff).toBe('swift');
+    expect(level.elements).toEqual([]);
+    expect(level.elites).toEqual([]);
+    // 前室僅魔王關可設；走動關禁配置。
+    for (const other of LEVELS) {
+      if (!other.boss) {
+        expect(other.anteroomPx).toBeUndefined();
+        expect(other.anteroomBuffs).toBeUndefined();
+        expect(other.arenaBuff).toBeUndefined();
+      }
+    }
   });
 
   it('每關 enemyMix 權重總和為 1', () => {
@@ -116,8 +135,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
     }
   });
 
-  it('boss 關補生全為可吸或條件可吸（L4/L7）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
-    for (const id of [4, 7] as const) {
+  it('boss 關補生全為可吸或條件可吸（L4/L7/L12）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
+    for (const id of [4, 7, 12] as const) {
       const mix = getLevel(id).enemyMix;
       expect(mix.every((entry) => canInhale(entry.kind, true))).toBe(true);
       const always = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
@@ -353,11 +372,12 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
     const bricks = elementsOf(getLevel(3), 'breakable').length;
     expect(bricks).toBeGreaterThanOrEqual(2);
     expect(bricks).toBeLessThanOrEqual(3);
-    // L4 僅裝飾；L7 加雙彈簧板（§58 非風化到空路徑），不配其他元素。
+    // L4/L12 僅裝飾；L7 加雙彈簧板（§58 非風化到空路徑），不配其他元素。
     expect(getLevel(4).elements).toEqual([]);
+    expect(getLevel(12).elements).toEqual([]);
     expect(elementsOf(getLevel(7), 'spring')).toHaveLength(2);
     expect(getLevel(7).elements).toHaveLength(2);
-    for (const id of [4, 7] as const) {
+    for (const id of [4, 7, 12] as const) {
       expect(getLevel(id).decor.length).toBeGreaterThan(0);
     }
   });
@@ -416,6 +436,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
       'bg-mirror': 'arena',
       'bg-lumen': 'arena',
       'bg-magnetic': 'arena',
+      'bg-prism': 'arena',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -437,7 +458,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
     }
   });
 
-  it('nextLevelId 依 1→…→11→null 推進', () => {
+  it('nextLevelId 依 1→…→12→null 推進', () => {
     expect(nextLevelId(1)).toBe(2);
     expect(nextLevelId(2)).toBe(3);
     expect(nextLevelId(3)).toBe(4);
@@ -448,7 +469,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66）', () => {
     expect(nextLevelId(8)).toBe(9);
     expect(nextLevelId(9)).toBe(10);
     expect(nextLevelId(10)).toBe(11);
-    expect(nextLevelId(11)).toBeNull();
+    expect(nextLevelId(11)).toBe(12);
+    expect(nextLevelId(12)).toBeNull();
   });
 });
 

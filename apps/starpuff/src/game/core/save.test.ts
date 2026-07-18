@@ -138,10 +138,12 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(currentChallenge(save)).toBe(8);
     save = recordLevelClear(save, 8, 1000);
     save = recordLevelClear(save, 9, 1000);
-    // v10 三區完結（§66）：L9 之後接續 L10/L11。
+    // v10 三區完結（§66/§67）：L9 之後接續 L10-L12。
     expect(currentChallenge(save)).toBe(10);
     save = recordLevelClear(save, 10, 1000);
     save = recordLevelClear(save, 11, 1000);
+    expect(currentChallenge(save)).toBe(12);
+    save = recordLevelClear(save, 12, 1000);
     expect(currentChallenge(save)).toBeNull();
   });
 

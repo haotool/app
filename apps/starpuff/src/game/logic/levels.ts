@@ -1,4 +1,5 @@
 import type { BossKind, EnemyKind, LevelId } from '../core/types';
+import type { BuffId } from './buffs';
 import { canInhale } from './combat';
 import type { EasterEggSpec } from './eggs';
 
@@ -78,6 +79,11 @@ export interface LevelSpec {
   tutorial: boolean;
   hint?: string;
   checkpointX?: number;
+  // v10 魔王關體系（§68）：anteroomPx 為前室廊道寬（runtime 世界寬＝前室＋動態視寬）；
+  // anteroomBuffs 為前室二選一台座、arenaBuff 為 P2 高風險位投放（EX 不投放）。
+  anteroomPx?: number;
+  anteroomBuffs?: readonly BuffId[];
+  arenaBuff?: BuffId;
 }
 
 // v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
@@ -760,6 +766,41 @@ export const LEVELS: readonly LevelSpec[] = [
     tutorial: false,
     // 卡點一（§66）：中點重生錨——死亡自此重生，落點位於雙精英房界外。
     checkpointX: 1850,
+  },
+  // L12 稜晶王殿：第三魔王稜晶雙子 Prismix（§67 分裂型三階段）；魔王關特殊體系首發
+  //（§68 前室廊道／增益二選一／arena 高風險位投放）。
+  {
+    id: 12,
+    nameZh: '稜晶王殿',
+    bgKey: 'bg-prism',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 3000,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26 飢荒保證律）；mirri 佔比最高供迴旋味與鏡蟲主題呼應。
+    enemyMix: [
+      { kind: 'jelly', weight: 0.3 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'mirri', weight: 0.4 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-arena-1', x: 110 },
+      { key: 'prop-arena-2', x: 320 },
+      { key: 'prop-arena-3', x: 540 },
+      { key: 'prop-arena-4', x: 750 },
+    ],
+    // §24 彩蛋十二：雙子連破——P2 兩具均在場時 1s 窗內相繼擊破（§69 觸發器）。
+    easterEggs: [{ trigger: 'twin-finish', reward: 'gold-star' }],
+    elites: [],
+    boss: 'prismix',
+    tutorial: false,
+    // 魔王關體系（§68）：前室 400px＋護盾泡/星力果二選一；P2 高風險位刷疾風靴。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'power'],
+    arenaBuff: 'swift',
   },
 ];
 

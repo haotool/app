@@ -30,9 +30,16 @@ import {
   recordLevelClear,
   type SaveData,
 } from '../core/save';
-import { SceneKeys, type BossKind, type GameResultData, type LevelId } from '../core/types';
+import {
+  SceneKeys,
+  type BossKind,
+  type EnemyKind,
+  type GameResultData,
+  type LevelId,
+} from '../core/types';
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
+import { PRISMIX } from '../logic/prismixFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
@@ -51,6 +58,18 @@ import {
   type EggEvent,
   type EggProgress,
 } from '../logic/eggs';
+import {
+  buffAccelMul,
+  buffDamageMul,
+  buffSpeedMul,
+  consumeShieldBlock,
+  createBuffState,
+  pickupBuff,
+  tickBuff,
+  BUFF_SPECS,
+  type BuffId,
+  type BuffState,
+} from '../logic/buffs';
 import { checkpointRespawnX, getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
 import {
   MERCY_HEAL,
@@ -60,8 +79,10 @@ import {
 } from '../logic/mercyHeal';
 import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
-import { createBoss, type BossHandle } from '../systems/boss';
+import { createBoss, type BossDamageSource, type BossHandle } from '../systems/boss';
+import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createNoctra } from '../systems/noctra';
+import { createPrismix } from '../systems/prismix';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -155,6 +176,9 @@ export class GameScene extends Phaser.Scene {
   private bossActiveAt = -1;
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
+  // 魔王關體系（§68）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
+  private bossRoom: BossRoomHandle | null = null;
+  private buff: BuffState = createBuffState();
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   private background!: BackgroundHandle;
@@ -215,7 +239,13 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.controls = createControls(this);
-    const startX = this.level.boss ? this.worldWidth() / 2 : 100;
+    this.buff = createBuffState();
+    // 前室魔王關（§68）：自廊道起點入場；一般魔王關維持 arena 中央。
+    const startX = this.level.boss
+      ? this.level.anteroomPx !== undefined
+        ? 60
+        : this.worldWidth() / 2
+      : 100;
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
@@ -236,12 +266,29 @@ export class GameScene extends Phaser.Scene {
     this.eliteRooms = (this.level.boss ? [] : this.level.elites).map((spec) =>
       createEliteRoom(this, spec, GROUND_TOP, eliteHooks),
     );
+    // 魔王關前室（§68）：廊道 prefab＋單向門；入 arena 當幀停跟隨、對齊相機、啟動入場。
+    this.bossRoom =
+      this.level.boss && this.level.anteroomPx !== undefined
+        ? createBossRoom(this, this.level, {
+            player: () => this.player,
+            playerHp: () => this.playerHp,
+            spawnSupply: (kind, x, y) => this.enemies.spawn(kind, x, y),
+            onPickBuff: (id) => this.applyBuff(id),
+            onEnterArena: () => {
+              this.cameras.main.stopFollow();
+              this.cameras.main.setScroll(this.level.anteroomPx ?? 0, 0);
+              this.boss.spawn();
+            },
+          })
+        : null;
     const unbindSfx = bindSfxToEvents(this.events);
 
     this.cameras.main.setBounds(0, 0, this.worldWidth(), VIEW.height);
     // 剛性跟隨（US-022 / recon 硬規則 9）：lerp 1,1 消除 lerp×roundPixels 逐幀往返跳動；
-    // boss 關單屏不跟隨，避免剛性跟隨在 preRender 覆寫入場運鏡的 pan/zoom。
-    if (!this.level.boss) this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
+    // boss 關單屏不跟隨（入場運鏡不被覆寫）；前室魔王關廊道段跟隨、入 arena 停跟隨。
+    if (!this.level.boss || this.bossRoom) {
+      this.cameras.main.startFollow(this.player.sprite, false, 1, 1);
+    }
     this.scale.on('resize', this.onScaleResize);
     this.unbinders.push(() => this.scale.off('resize', this.onScaleResize));
 
@@ -280,10 +327,13 @@ export class GameScene extends Phaser.Scene {
       this.background.destroy();
       this.player.destroy();
       this.stage.destroy();
+      this.bossRoom?.destroy();
+      this.bossRoom = null;
     });
 
     this.waves.start();
-    if (this.level.boss) this.boss.spawn();
+    // 前室魔王關（§68）：入場運鏡延至玩家走入 arena 才啟動（onEnterArena）。
+    if (this.level.boss && !this.bossRoom) this.boss.spawn();
   }
 
   override update(_time: number, deltaMs: number): void {
@@ -300,6 +350,8 @@ export class GameScene extends Phaser.Scene {
       this.syncEggs();
       this.syncGateSweep();
       for (const room of this.eliteRooms) room.update();
+      this.bossRoom?.update();
+      this.advanceBuff(deltaMs);
       this.steerHomingStars(deltaMs);
       this.steerBossAimAssist(deltaMs);
       this.steerMagnetizedStars(deltaMs);
@@ -384,9 +436,45 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
-  // 世界有效寬（§28）：捲軸關讀關卡資料；boss 單屏關 = 當前視寬（854–1200 動態）。
+  // 世界有效寬（§28）：捲軸關讀關卡資料；boss 關 = 前室寬＋當前視寬（854–1200 動態）。
   private worldWidth(): number {
-    return this.level.boss ? this.scale.width : this.level.worldWidth;
+    if (!this.level.boss) return this.level.worldWidth;
+    return this.scale.width + (this.level.anteroomPx ?? 0);
+  }
+
+  // arena 左緣（§68）：前室魔王關的 arena 自前室右緣起算；其餘關恆 0。
+  private arenaLeft(): number {
+    return this.level.boss ? (this.level.anteroomPx ?? 0) : 0;
+  }
+
+  // 短期增益（§68）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
+  private applyBuff(id: BuffId): void {
+    this.buff = pickupBuff(this.buff, id);
+    this.player.setBuffMoveMods(buffSpeedMul(this.buff), buffAccelMul(this.buff));
+    this.flavorToast(`${BUFF_SPECS[id].nameZh}！短暫強化`);
+  }
+
+  private advanceBuff(deltaMs: number): void {
+    if (this.buff.id === null) {
+      this.bossRoom?.updateBuffHud(this.buff);
+      return;
+    }
+    const result = tickBuff(this.buff, deltaMs);
+    this.buff = result.state;
+    if (result.expired) this.player.setBuffMoveMods(1, 1);
+    this.bossRoom?.updateBuffHud(this.buff);
+  }
+
+  // 玩家受擊單一入口（§68 護盾泡）：持盾期吸收 1 次任意傷害（彈幕/接觸/hazard）後破盾。
+  private damagePlayer(damage: number, sourceX: number): void {
+    const block = consumeShieldBlock(this.buff);
+    if (block.blocked) {
+      this.buff = block.state;
+      this.fx.burstSmall(this.player.sprite.x, this.player.sprite.y, BUFF_SPECS.shield.tint);
+      playSfx('metal');
+      return;
+    }
+    this.player.takeDamage(damage, sourceX);
   }
 
   // 視寬變更回呼（recon-v4 B.3）：僅更新 bounds 與佈局，禁止 setGameSize（防循環）。
@@ -428,9 +516,36 @@ export class GameScene extends Phaser.Scene {
     return { ground, platforms };
   }
 
+  // 多本體魔王（§67）：未實作 getBodies 的品種回落單本體清單。
+  private bossBodies(): Phaser.Physics.Arcade.Sprite[] {
+    return this.boss.getBodies?.() ?? [asSprite(this.boss.getBody())];
+  }
+
+  // 存活本體（body.enable）中最近者：準星輔助/殼化反彈/鏈電束的目標歸屬。
+  private nearestBossBody(x: number, y: number): Phaser.Physics.Arcade.Sprite {
+    const bodies = this.bossBodies().filter(
+      (body) => (body.body as Phaser.Physics.Arcade.Body).enable,
+    );
+    let best = bodies[0] ?? asSprite(this.boss.getBody());
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const body of bodies) {
+      const dist = Phaser.Math.Distance.Between(x, y, body.x, body.y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = body;
+      }
+    }
+    return best;
+  }
+
+  // 魔王受擊單一出口（§67）：具位置歸屬時走 applyDamageAt（雙子受擊側判定）。
+  private damageBossAt(amount: number, x: number, y: number, source?: BossDamageSource): void {
+    if (this.boss.applyDamageAt) this.boss.applyDamageAt(amount, x, y, source);
+    else this.boss.applyDamage(amount, source);
+  }
+
   private addOverlaps(): void {
     const stars = this.player.getStars();
-    const bossBody = this.boss.getBody();
 
     this.physics.add.overlap(stars, this.enemies.getGroup(), (star, enemy) => {
       const target = enemy as Phaser.GameObjects.GameObject;
@@ -471,18 +586,37 @@ export class GameScene extends Phaser.Scene {
 
     // group vs sprite 的回調參數順序不保證，取非魔王側為星彈。
     // 入場動畫與死亡演出期間（非 active）星彈直接穿過，不消耗。
-    this.physics.add.overlap(stars, bossBody, (a, b) => {
-      const star = asSprite(a === bossBody ? b : a);
-      if (!star.active || !this.boss.isActive()) return;
-      const spec = this.starSpecOf(star);
-      if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
-      // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
-      if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
-      const mix = this.starMixOf(star);
-      if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix);
-      this.player.onStarHit(star, 'absorb');
-      this.boss.applyDamage(this.starDamageOf(star));
-    });
+    // 多本體（§67）：逐本體接線，受擊側由 damageBossAt 依命中位置歸屬。
+    for (const hitBody of this.bossBodies()) {
+      this.physics.add.overlap(stars, hitBody, (a, b) => {
+        const star = asSprite((a as unknown) === (hitBody as unknown) ? b : a);
+        if (!star.active || !this.boss.isActive()) return;
+        if (!(hitBody.body as Phaser.Physics.Arcade.Body).enable) return;
+        const spec = this.starSpecOf(star);
+        if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
+        // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
+        if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
+        const mix = this.starMixOf(star);
+        if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix);
+        this.player.onStarHit(star, 'absorb');
+        this.damageBossAt(this.starDamageOf(star), star.x, star.y);
+      });
+    }
+
+    // 碎晶盾（§67 P3）：可擊破的星彈屏障——星彈被吸收、盾即碎裂。
+    const shields = this.boss.getShields?.();
+    if (shields) {
+      this.physics.add.overlap(stars, shields, (a, b) => {
+        const isShield = (shields.getChildren() as unknown[]).includes(a);
+        const shard = asSprite(isShield ? a : b);
+        const star = asSprite(isShield ? b : a);
+        if (!star.active || !shard.active) return;
+        shard.disableBody(true, true);
+        this.fx.burstSmall(shard.x, shard.y, 0xe8dcff);
+        playSfx('break', 0.7);
+        this.player.onStarHit(star, 'absorb');
+      });
+    }
 
     // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
     // zappy 放電環（§30）同走此 hazards 管線結算，不另設 overlap。
@@ -490,7 +624,7 @@ export class GameScene extends Phaser.Scene {
       const hazard = asSprite(hz);
       if (!hazard.active || this.finished || this.transitioning) return;
       hazard.disableBody(true, true);
-      this.player.takeDamage(ENEMY.touchDamage, hazard.x);
+      this.damagePlayer(ENEMY.touchDamage, hazard.x);
     });
 
     this.physics.add.overlap(this.player.sprite, this.enemies.getGroup(), (_p, enemy) => {
@@ -515,60 +649,67 @@ export class GameScene extends Phaser.Scene {
       ) {
         return;
       }
-      this.player.takeDamage(ENEMY.touchDamage, target.x);
+      this.damagePlayer(ENEMY.touchDamage, target.x);
     });
 
     this.physics.add.overlap(this.player.getInhaleZone(), this.enemies.getGroup(), (_z, enemy) => {
       asSprite(enemy).setData('inhalePull', true);
     });
 
-    this.physics.add.overlap(this.player.sprite, bossBody, () => {
-      if (this.finished || this.transitioning || this.bossDown) return;
-      const boss = asSprite(bossBody);
-      const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-      // 魔王頭頂 hit window（§58）：下砸命中上半身＝頭頂——嘗試觸發暈眩並回彈，免體傷。
-      if (this.player.isSlamming() && playerBody.bottom <= boss.y) {
-        const stunned = this.boss.trySlamStun();
-        this.player.onSlamBounce();
-        this.fx.burstSmall(this.player.sprite.x, playerBody.bottom, 0xffd966);
-        if (stunned) this.fx.shake(8);
-        return;
-      }
-      this.player.takeDamage(this.bossTouchDamage, boss.x);
-    });
+    // 觸碰與頭頂 hit window（§58/§67）：多本體逐一接線，停用本體不結算。
+    for (const touchBody of this.bossBodies()) {
+      this.physics.add.overlap(this.player.sprite, touchBody, () => {
+        if (this.finished || this.transitioning || this.bossDown) return;
+        if (!(touchBody.body as Phaser.Physics.Arcade.Body).enable) return;
+        const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+        // 魔王頭頂 hit window（§58）：下砸命中上半身＝頭頂——嘗試觸發暈眩並回彈，免體傷。
+        if (this.player.isSlamming() && playerBody.bottom <= touchBody.y) {
+          const stunned = this.boss.trySlamStun();
+          this.player.onSlamBounce();
+          this.fx.burstSmall(this.player.sprite.x, playerBody.bottom, 0xffd966);
+          if (stunned) this.fx.shake(8);
+          return;
+        }
+        this.damagePlayer(this.bossTouchDamage, touchBody.x);
+      });
+    }
 
     this.physics.add.overlap(this.player.sprite, this.boss.getProjectiles(), (_p, ball) => {
       const projectile = asSprite(ball);
       if (!projectile.active || this.finished || this.transitioning) return;
       if (projectile.getData('reflected') === true) return;
-      // 殼化反彈（§57/§58）：彈幕不傷身，反向射回魔王（反傷走 reflect 管線結算）。
+      // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§67 多本體）。
       if (this.playerFormSpec()?.reflectProjectiles) {
         projectile.setData('reflected', true);
         projectile.setTint(TRANSFORM_FORMS.shell.tint);
         (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
-        const boss = asSprite(this.boss.getBody());
+        const boss = this.nearestBossBody(projectile.x, projectile.y);
         this.physics.moveTo(projectile, boss.x, boss.y, SHELL_REFLECT.speed);
         playSfx('metal');
         return;
       }
       projectile.disableBody(true, true);
-      this.player.takeDamage(this.bossTouchDamage, projectile.x);
+      this.damagePlayer(this.bossTouchDamage, projectile.x);
     });
 
-    // 反彈彈幕回傷（§57/§58）：僅帶反彈標記的彈體對魔王結算。
-    this.physics.add.overlap(bossBody, this.boss.getProjectiles(), (a, b) => {
-      const projectile = asSprite(a === bossBody ? b : a);
-      if (!projectile.active || projectile.getData('reflected') !== true) return;
-      if (!this.boss.isActive()) return;
-      projectile.disableBody(true, true);
-      this.fx.burstSmall(projectile.x, projectile.y, TRANSFORM_FORMS.shell.tint);
-      this.boss.applyDamage(SHELL_REFLECT.damage, 'reflect');
-    });
+    // 反彈彈幕回傷（§57/§58）：僅帶反彈標記的彈體對魔王結算（§67 多本體逐一接線）。
+    for (const reflectBody of this.bossBodies()) {
+      this.physics.add.overlap(reflectBody, this.boss.getProjectiles(), (a, b) => {
+        const projectile = asSprite((a as unknown) === (reflectBody as unknown) ? b : a);
+        if (!projectile.active || projectile.getData('reflected') !== true) return;
+        if (!this.boss.isActive() || !(reflectBody.body as Phaser.Physics.Arcade.Body).enable) {
+          return;
+        }
+        projectile.disableBody(true, true);
+        this.fx.burstSmall(projectile.x, projectile.y, TRANSFORM_FORMS.shell.tint);
+        this.damageBossAt(SHELL_REFLECT.damage, projectile.x, projectile.y, 'reflect');
+      });
+    }
 
     this.physics.add.overlap(this.player.sprite, this.boss.getShockwaves(), (_p, wave) => {
       const shockwave = asSprite(wave);
       if (!shockwave.active || this.finished || this.transitioning) return;
-      this.player.takeDamage(this.bossTouchDamage, shockwave.x);
+      this.damagePlayer(this.bossTouchDamage, shockwave.x);
     });
 
     // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
@@ -645,8 +786,16 @@ export class GameScene extends Phaser.Scene {
       }
     });
     // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
+    // P2 高風險位增益投放（§68）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放。
     bind(GameEvents.BOSS_PHASE, ({ phase }) => {
       if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
+      if (phase === 'p2' && !this.exMode && this.level.arenaBuff && this.bossRoom) {
+        this.bossRoom.dropArenaBuff(
+          this.level.arenaBuff,
+          this.arenaLeft() + this.scale.width / 2,
+          190,
+        );
+      }
     });
     bind(GameEvents.BOSS_QUAKE, () => this.resolveBossQuake());
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
@@ -838,7 +987,12 @@ export class GameScene extends Phaser.Scene {
     const side = this.mercyRng() < 0.5 ? -1 : 1;
     const offset = 120 + this.mercyRng() * 120;
     // 夾限下界 50：玩家貼世界左牆（hurtbox 右緣 ~31）時拾取帶仍可觸及（anti-softlock）。
-    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, 50, this.worldWidth() - 50);
+    // 前室魔王關（§68）：入 arena 後單向門鎖閉，錨點下界改 arena 左緣防落於門後。
+    const minX =
+      this.bossRoom?.entered() === true && this.player.sprite.x >= this.arenaLeft()
+        ? this.arenaLeft() + 50
+        : 50;
+    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, minX, this.worldWidth() - 50);
     const groundY = GROUND_TOP - 22;
     const airborne = this.mercyRng() >= 0.5;
     const y = airborne ? 150 : groundY;
@@ -900,24 +1054,27 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  // 魔王每損 10 HP 補生可吸小怪（供彈藥），左右邊緣交替入場；品種輪替讀關卡 enemyMix。
+  // 魔王每損 10 HP 補生可吸小怪（供彈藥），arena 左右邊緣交替入場；品種輪替讀關卡 enemyMix。
   private spawnBossMinion(): void {
     const kinds = this.level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
-    const x = this.minionDropCount % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
+    const x =
+      this.minionDropCount % 2 === 0
+        ? this.arenaLeft() + SPAWN_EDGE_X
+        : this.worldWidth() - SPAWN_EDGE_X;
     this.minionDropCount += 1;
     this.enemies.spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }
 
-  // Noctra 召喚（§54 P2）：依場上 floaty 現量夾限至 cap，走正式 spawn 管線。
-  private summonFloaty(cap: number): void {
+  // 魔王召喚小怪（§54 P2 floaty／§67 P2 mirri）：依場上現量夾限至 cap，走正式 spawn 管線。
+  private summonMinion(kind: EnemyKind, cap: number): void {
     let alive = 0;
     for (const child of this.enemies.getGroup().getChildren()) {
-      if (child.active && this.enemies.kindOf(child) === 'floaty') alive += 1;
+      if (child.active && this.enemies.kindOf(child) === kind) alive += 1;
     }
     for (let i = 0; i < cap - alive; i += 1) {
-      const x = i % 2 === 0 ? SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
-      this.enemies.spawn('floaty', x, SPAWN_AIR_Y);
+      const x = i % 2 === 0 ? this.arenaLeft() + SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
+      this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
     }
   }
 
@@ -942,10 +1099,27 @@ export class GameScene extends Phaser.Scene {
         return {
           handle: createNoctra(
             this,
-            { summonFloaty: (cap) => this.summonFloaty(cap) },
+            { summonFloaty: (cap) => this.summonMinion('floaty', cap) },
             { ex: this.exMode },
           ),
           bodyDamage: NOCTRA.bodyDamage,
+        };
+      case 'prismix':
+        return {
+          handle: createPrismix(
+            this,
+            {
+              summonMirri: (cap) => this.summonMinion('mirri', cap),
+              // 雙子連破（§67/§69）：FSM 單一真值，GameScene 餵彩蛋＋全屏稜光演出。
+              onTwinFinish: () => {
+                this.feedEggs({ kind: 'twin-finish' });
+                this.cameras.main.flash(360, 220, 200, 255);
+                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
+              },
+            },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
+          ),
+          bodyDamage: PRISMIX.bodyDamage,
         };
       default: {
         const unhandled: never = kind;
@@ -1164,9 +1338,10 @@ export class GameScene extends Phaser.Scene {
     return this.starMixOf(star) ?? STAR_FLAVORS[this.starFlavorOf(star)];
   }
 
-  // 星彈傷害（§23）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入。
+  // 星彈傷害（§23/§68）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入；星力果倍率結算端疊乘。
   private starDamageOf(star: Phaser.Physics.Arcade.Sprite): number {
-    return (star.getData('damage') as number | undefined) ?? this.starSpecOf(star).damage;
+    const base = (star.getData('damage') as number | undefined) ?? this.starSpecOf(star).damage;
+    return base * buffDamageMul(this.buff);
   }
 
   // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
@@ -1185,7 +1360,10 @@ export class GameScene extends Phaser.Scene {
     for (const child of this.enemies.getGroup().getChildren()) {
       if (child.active) this.enemies.kill(child);
     }
-    if (this.boss.isActive()) this.boss.applyDamage(STARSTORM.bossDamage);
+    if (this.boss.isActive()) {
+      // 多本體（§67）：星暴固定傷結算至玩家最近的存活本體。
+      this.damageBossAt(STARSTORM.bossDamage, this.player.sprite.x, this.player.sprite.y);
+    }
   }
 
   // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
@@ -1253,8 +1431,11 @@ export class GameScene extends Phaser.Scene {
       candidates.push({ x: enemy.x, y: enemy.y, ref: child });
     }
     if (this.boss.isActive()) {
-      const body = asSprite(this.boss.getBody());
-      candidates.push({ x: body.x, y: body.y, ref: null });
+      // 多本體（§67）：全部存活本體入候選，鏈電束就近取目標。
+      for (const body of this.bossBodies()) {
+        if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
+        candidates.push({ x: body.x, y: body.y, ref: null });
+      }
     }
     const inFront = candidates.filter((c) => Math.sign(c.x - x) === facing || c.x === x);
     const target = pickChainTargets(x, y, inFront, 1, VOLT_BEAM.rangePx)[0];
@@ -1262,8 +1443,10 @@ export class GameScene extends Phaser.Scene {
     playSfx('zap');
     this.drawBolt(x, y, target.x, target.y);
     this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
-    if (target.ref) this.enemies.damage(target.ref, VOLT_BEAM.damage);
-    else this.boss.applyDamage(VOLT_BEAM.damage, 'volt');
+    // 星力果（§68）：變身射擊同享傷害倍率。
+    const beamDamage = VOLT_BEAM.damage * buffDamageMul(this.buff);
+    if (target.ref) this.enemies.damage(target.ref, beamDamage);
+    else this.damageBossAt(beamDamage, target.x, target.y, 'volt');
     // 跳電波及：以主目標為原點取最近小怪（排除主目標）。
     const rest = candidates.filter((c) => c.ref && c.ref !== target.ref);
     let fromX = target.x;
@@ -1388,14 +1571,15 @@ export class GameScene extends Phaser.Scene {
 
   // 魔王房準星輔助（§54 難度根修）：一般星彈對活動中魔王微幅導向——地面水平彈
   // 自然上彎入盤旋帶，保底線不依賴拍翅精度；轉率遠低於追電星、大致對向才生效。
+  // 多本體（§67）：導向星彈最近的存活本體。
   private steerBossAimAssist(deltaMs: number): void {
     if (!this.level.boss || !this.boss.isActive() || this.bossDown) return;
-    const body = asSprite(this.boss.getBody());
     for (const child of this.player.getStars().getChildren()) {
       const star = asSprite(child);
       if (!star.active) continue;
       // 追電星有自己的導向；迴旋星彈道由回程驅動，皆不疊加輔助。
       if (this.starMixOf(star)?.homing || this.starSpecOf(star).boomerang) continue;
+      const body = this.nearestBossBody(star.x, star.y);
       const starBody = star.body as Phaser.Physics.Arcade.Body;
       const towardBoss = Math.sign(body.x - star.x);
       if (towardBoss !== 0 && Math.sign(starBody.velocity.x) !== towardBoss) continue;

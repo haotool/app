@@ -54,6 +54,7 @@ const TEXTURE_ALIAS: Record<string, string> = {
   'bg-mirror': 'bg-arena',
   'bg-lumen': 'bg-arena',
   'bg-magnetic': 'bg-eclipse',
+  'bg-prism': 'bg-arena',
 };
 
 function textureKeyOf(bgKey: string): string {
@@ -172,7 +173,19 @@ const THEMES: Record<string, ThemeSpec> = {
       tumble: true,
     },
   },
-  // v10 新 biome（§65/§66）：幽光晶湖冰青湖光塵／磁晶險徑磁紫晶塵。
+  // v10 新 biome（§65/§66/§67）：幽光晶湖冰青湖光塵／磁晶險徑磁紫晶塵／稜晶王殿虹彩稜塵。
+  'bg-prism': {
+    grade: 0xc5a8e8,
+    ambience: {
+      texture: AMB_TEXTURES.mote,
+      tint: [0xe8dcff, 0xffd8e8, 0xc8e8ff],
+      blend: 'ADD',
+      alpha: 0.9,
+      scale: { start: 0.9, end: 0.3 },
+      speedY: { min: 18, max: 32 },
+      tumble: true,
+    },
+  },
   'bg-lumen': {
     grade: 0x5fd0c8,
     ambience: {

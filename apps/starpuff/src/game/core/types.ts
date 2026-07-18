@@ -17,7 +17,8 @@ export type EnemyKind =
 export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 // v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
-export type BossKind = 'jellord' | 'noctra';
+// v10（§67）：新增分裂型稜晶雙子 prismix。
+export type BossKind = 'jellord' | 'noctra' | 'prismix';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
 export type TransformForm = 'volt' | 'gale' | 'shell';

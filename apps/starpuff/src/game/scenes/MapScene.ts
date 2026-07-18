@@ -34,6 +34,7 @@ const NODE_TINTS: Record<string, number> = {
   'bg-mirror': 0xd8dce8,
   'bg-lumen': 0x9fe8d8,
   'bg-magnetic': 0xa89ae0,
+  'bg-prism': 0xc5a8e8,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;

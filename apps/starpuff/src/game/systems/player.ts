@@ -85,6 +85,8 @@ export interface PlayerHandle {
   isSlamming(): boolean;
   // 魔王頭頂命中（§58）：GameScene 結算後回彈玩家並結束本次下砸（進 CD）。
   onSlamBounce(): void;
+  // 短期增益（§68 疾風靴）：移速/加減速倍率單點注入；GameScene 依 buff 狀態逐幀同步。
+  setBuffMoveMods(speedMul: number, rateMul: number): void;
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
   getStars(): Phaser.Physics.Arcade.Group;
@@ -173,6 +175,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let flapsUsed = 0;
   let invulnerableMs = 0;
   let hurtLockMs = 0;
+  // 短期增益（§68）：疾風靴移速/加減速倍率；GameScene 依 buff 狀態同步。
+  let buffSpeedMul = 1;
+  let buffRateMul = 1;
   let actionHoldMs = 0;
   let coyoteMs = 0;
   let jumpBufferMs = 0;
@@ -610,8 +615,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (hurtLockMs <= 0) {
         // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
         // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
-        // 星化移速（§57）：雷化 +15%、殼化 -20% 直接縮放目標速度。
-        const moveSpeed = PLAYER.moveSpeed * (formSpec?.moveSpeedMul ?? 1);
+        // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§68）疾風靴倍率疊乘。
+        const moveSpeed = PLAYER.moveSpeed * (formSpec?.moveSpeedMul ?? 1) * buffSpeedMul;
         const moveTarget = controls.left ? -moveSpeed : controls.right ? moveSpeed : 0;
         if (moveTarget !== 0) facing = moveTarget > 0 ? 1 : -1;
         const moveFx = detectMoveFx({
@@ -622,7 +627,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         });
         if (moveFx) spawnMoveDust(moveFx);
         prevMoveTarget = moveTarget;
-        sprite.setVelocityX(approachVelocity(body.velocity.x, moveTarget, deltaMs));
+        sprite.setVelocityX(approachVelocity(body.velocity.x, moveTarget, deltaMs, buffRateMul));
 
         // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
         // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
@@ -951,6 +956,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       slamCdMs = SLAM.cooldownMs;
       sprite.setVelocityY(SLAM_BOUNCE_VY);
       squashStretch(1.2, 0.8);
+    },
+    setBuffMoveMods(speedMul: number, rateMul: number) {
+      buffSpeedMul = speedMul;
+      buffRateMul = rateMul;
     },
     getFacing() {
       return facing;
