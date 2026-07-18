@@ -40,7 +40,8 @@ export default function HomeShell() {
         </div>
       </header>
 
-      <main className="flex-1 relative overflow-hidden">
+      {/* Layout 已提供唯一 main landmark，殼層用 div 與 Home 同構（R6 NEW-3）。 */}
+      <div className="flex-1 relative overflow-hidden">
         <div className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40">
           <div className="max-w-md mx-auto space-y-5">
             {/* 與 QuickCaptureCta hero 變體同構（soft depth＋onPrimary），消除 hydration 樣式跳動。 */}
@@ -89,7 +90,7 @@ export default function HomeShell() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

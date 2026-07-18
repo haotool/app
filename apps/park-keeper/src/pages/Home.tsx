@@ -407,8 +407,9 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 relative overflow-hidden">
+        {/* Main Content：Layout 已提供唯一 main landmark，此處用 div 修 axe
+            landmark-no-duplicate-main／landmark-main-is-top-level（R6 NEW-3）。 */}
+        <div className="flex-1 relative overflow-hidden">
           <AnimatePresence mode="wait">
             {currentTab === 'list' ? (
               <motion.div
@@ -527,7 +528,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               </motion.div>
             )}
           </AnimatePresence>
-        </main>
+        </div>
 
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
