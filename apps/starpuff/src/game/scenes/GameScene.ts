@@ -205,6 +205,10 @@ export class GameScene extends Phaser.Scene {
     this.stage = createStage(this, this.level, {
       player: () => this.player,
       spawnAmmoMinion: (x, y) => this.enemies.spawn('jelly', x, y),
+      // 折躍瞬移（§65）：重置門掃掠基準，防前後幀大位移被誤判為跨越星星門。
+      onWarp: (x) => {
+        this.prevPlayerX = x;
+      },
     });
 
     this.controls = createControls(this);

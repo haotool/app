@@ -11,6 +11,7 @@ import {
   springSweepHit,
 } from '../logic/stageModel';
 import { isInUpdraft, updraftLift, type UpdraftZone } from '../logic/updraft';
+import { tryWarp, type WarpGate } from '../logic/warp';
 import { playSfx } from '../audio/sfx';
 import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
 import type { PlayerHandle } from './player';
@@ -28,6 +29,8 @@ export interface StageHooks {
   player(): PlayerHandle;
   // 彈藥獎勵走正式管線：磚內藏可吸小怪，吞下即 +1 彈藥（配額與彩蛋語意不失真）。
   spawnAmmoMinion(x: number, y: number): void;
+  // 折躍瞬移通知（§65）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
+  onWarp?(x: number): void;
 }
 
 export interface StageHandle {
@@ -57,6 +60,9 @@ const DECOR_BASE_Y = 404;
 const DECOR_BASE_PX = 112;
 // 上升氣流柱（§51）：柱體淡色與上飄粒子（池化，單柱同活 ≤10）。
 const UPDRAFT_TINT = 0xdff2ff;
+// 星門折躍（§65）：星環視覺按 pairId 輪流取色，白閃 0.2s 相機硬切。
+const WARP_TINTS = [0x9fe8ff, 0xffb3e0, 0xc9f0a8] as const;
+const WARP_FLASH_MS = 200;
 
 const asRect = (obj: unknown): Phaser.GameObjects.Rectangle => obj as Phaser.GameObjects.Rectangle;
 
@@ -70,6 +76,9 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   const springs: Phaser.GameObjects.Rectangle[] = [];
   const breakables: Phaser.GameObjects.Rectangle[] = [];
   const updrafts: UpdraftZone[] = [];
+  const warpGates: WarpGate[] = [];
+  const warpPairTints = new Map<string, number>();
+  let warpLockedUntilMs = 0;
   let dropUntilMs = 0;
 
   // 佈景先建、元素後建：同深度下維持 平台 < 佈景 < 元素 < 玩家 的繪製序（§32）。
@@ -161,6 +170,52 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         updrafts.push({ x: spec.x, topY: spec.topY, w: spec.w });
         break;
       }
+      case 'warp': {
+        // 星環視覺（§65）：同 pairId 同色；脈動外環＋淡填內圈＋自旋星芯＋上飄星塵。
+        if (!warpPairTints.has(spec.pairId)) {
+          warpPairTints.set(
+            spec.pairId,
+            WARP_TINTS[warpPairTints.size % WARP_TINTS.length] ?? 0x9fe8ff,
+          );
+        }
+        const tint = warpPairTints.get(spec.pairId) ?? 0x9fe8ff;
+        const ring = scene.add
+          .circle(spec.x, spec.y, 26)
+          .setStrokeStyle(4, tint, 0.95)
+          .setDepth(-2);
+        scene.add.circle(spec.x, spec.y, 16, tint, 0.18).setDepth(-2);
+        const core = scene.add
+          .image(spec.x, spec.y, 'fx-star')
+          .setDisplaySize(22, 22)
+          .setTint(tint)
+          .setAlpha(0.85)
+          .setDepth(-2);
+        scene.tweens.add({
+          targets: ring,
+          scale: 1.18,
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+        scene.tweens.add({ targets: core, angle: 360, duration: 5200, repeat: -1 });
+        scene.add
+          .particles(0, 0, FX_TEXTURES.dot, {
+            x: { min: spec.x - 18, max: spec.x + 18 },
+            y: spec.y + 20,
+            speedY: { min: -46, max: -22 },
+            scale: { start: 0.5, end: 0.1 },
+            alpha: { start: 0.6, end: 0 },
+            lifespan: { min: 700, max: 1100 },
+            frequency: 260,
+            quantity: 1,
+            tint: [tint, 0xffffff],
+            maxAliveParticles: 4,
+          })
+          .setDepth(-3);
+        warpGates.push({ x: spec.x, y: spec.y, pairId: spec.pairId });
+        break;
+      }
       default: {
         const exhaustive: never = spec;
         void exhaustive;
@@ -235,12 +290,18 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     (
       window as unknown as {
-        __spStage?: { playerY(): number; bricksAlive(): number; movers(): number[][] };
+        __spStage?: {
+          playerY(): number;
+          bricksAlive(): number;
+          movers(): number[][];
+          warps(): number[][];
+        };
       }
     ).__spStage = {
       playerY: () => hooks.player().sprite.y,
       bricksAlive: () => breakables.filter((brick) => brick.active).length,
       movers: () => moving.map((plat) => [Math.round(plat.x), Math.round(plat.y)]),
+      warps: () => warpGates.map((gate) => [gate.x, gate.y]),
     };
   }
 
@@ -253,6 +314,25 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       body.setVelocityY(updraftLift(body.velocity.y, deltaMs, body.blocked.up));
       return;
     }
+  }
+
+  // 星門折躍結算（§65）：進門保留速度向量（body.reset 歸零後回寫）、相機硬切＋白閃；
+  // 傳送後重置本地掃掠基準並通知 GameScene，防前後幀大位移誤觸彈簧/星星門背擋。
+  function applyWarp(body: Phaser.Physics.Arcade.Body): void {
+    if (warpGates.length === 0) return;
+    const player = hooks.player().sprite;
+    const result = tryWarp(warpGates, player.x, player.y, scene.time.now, warpLockedUntilMs);
+    warpLockedUntilMs = result.lockedUntilMs;
+    if (!result.exit) return;
+    const { x: vx, y: vy } = body.velocity;
+    burstSmall(scene, player.x, player.y, 0x9fe8ff);
+    body.reset(result.exit.x, result.exit.y);
+    body.setVelocity(vx, vy);
+    prevSweepX = result.exit.x;
+    scene.cameras.main.flash(WARP_FLASH_MS, 255, 255, 255);
+    playSfx('reveal');
+    burstSmall(scene, result.exit.x, result.exit.y, 0xffffff);
+    hooks.onWarp?.(result.exit.x);
   }
 
   return {
@@ -282,6 +362,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
       applyUpdrafts(body, deltaMs);
       sweepSprings(body);
+      applyWarp(body);
     },
 
     getOneWay: () => oneWay,
@@ -323,6 +404,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       springs.length = 0;
       breakables.length = 0;
       updrafts.length = 0;
+      warpGates.length = 0;
       if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         (window as unknown as { __spStage?: unknown }).__spStage = undefined;
       }

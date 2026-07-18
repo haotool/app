@@ -20,6 +20,7 @@ export interface PlatformSpec {
 // v4 平台元素（§29）：data-driven 進關卡資料，由 systems/stage.ts 建立與更新。
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
 // v8 上升氣流柱（§51）：zone 型非碰撞，x 為柱心、topY 為升力終止高、w 為柱寬。
+// v10 星門折躍（§65）：同 pairId 成對傳送；純邏輯見 logic/warp.ts，資料不變式見 levels.test。
 export type StageElementSpec =
   | { kind: 'oneway'; x: number; y: number; w: number }
   | {
@@ -33,7 +34,8 @@ export type StageElementSpec =
     }
   | { kind: 'spring'; x: number; y: number }
   | { kind: 'breakable'; x: number; y: number; loot: 'ammo' | 'hp' }
-  | { kind: 'updraft'; x: number; topY: number; w: number };
+  | { kind: 'updraft'; x: number; topY: number; w: number }
+  | { kind: 'warp'; x: number; y: number; pairId: string };
 
 // 主題道具佈景（§31/§32）：純裝飾無碰撞，key 對應 assets.ts 的 prop-<theme>-<1..4>。
 export interface DecorSpec {

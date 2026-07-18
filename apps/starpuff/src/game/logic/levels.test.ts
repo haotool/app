@@ -254,7 +254,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
     for (const level of LEVELS) {
       for (const element of level.elements) {
         if (element.kind === 'spring' || element.kind === 'breakable') continue;
-        if (element.kind === 'updraft') continue;
+        if (element.kind === 'updraft' || element.kind === 'warp') continue;
         const half = element.w / 2;
         expect(element.x - half).toBeGreaterThanOrEqual(0);
         expect(element.x + half).toBeLessThanOrEqual(level.worldWidth);
