@@ -95,55 +95,58 @@ export function TradePage() {
   return (
     // pb-8：持倉卡操作鈕與固定 bottom nav 之間預留間距（375×812 免捲動可點）。
     <div className="flex flex-col pb-8 lg:mx-auto lg:max-w-3xl">
-      <header className="flex items-center justify-between px-4 pb-3 pt-4">
-        <button
-          type="button"
-          onClick={() => setSheet('pair')}
-          aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
-          className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
-        >
-          <CoinBadge symbol={symbol} />
-          <span>
-            <span className="flex items-center gap-1 text-body font-semibold">
-              {meta.base}
-              <span className="text-text-3">/USDT</span>
-              <ChevronDown size={16} className="text-text-3" aria-hidden />
+      {/* sticky 頂欄：pair 選擇與資金費率捲動常駐；自帶背景避免內容透出。 */}
+      <div className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
+        <header className="flex items-center justify-between px-4 pb-3 pt-4">
+          <button
+            type="button"
+            onClick={() => setSheet('pair')}
+            aria-label={`切換交易對，目前為 ${meta.base}/USDT`}
+            className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-control px-1 text-left active:bg-surface-2"
+          >
+            <CoinBadge symbol={symbol} />
+            <span>
+              <span className="flex items-center gap-1 text-body font-semibold">
+                {meta.base}
+                <span className="text-text-3">/USDT</span>
+                <ChevronDown size={16} className="text-text-3" aria-hidden />
+              </span>
+              <PriceFlash
+                direction={ticker.direction}
+                revision={ticker.revision}
+                className="block text-label"
+              >
+                {formatPrice(ticker.lastPrice)}
+              </PriceFlash>
             </span>
-            <PriceFlash
-              direction={ticker.direction}
-              revision={ticker.revision}
-              className="block text-label"
+          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSheet('margin')}
+              aria-label="保證金模式說明：逐倉"
+              className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
             >
-              {formatPrice(ticker.lastPrice)}
-            </PriceFlash>
-          </span>
-        </button>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setSheet('margin')}
-            aria-label="保證金模式說明：逐倉"
-            className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
-          >
-            逐倉
-          </button>
-          <button
-            type="button"
-            onClick={() => setSheet('leverage')}
-            aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
-            className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
-          >
-            {formatAmount(leverage, 1)}x
-          </button>
-        </div>
-      </header>
+              逐倉
+            </button>
+            <button
+              type="button"
+              onClick={() => setSheet('leverage')}
+              aria-label={`調整槓桿，目前 ${formatAmount(leverage, 1)} 倍`}
+              className="min-h-11 min-w-11 rounded-control bg-primary/15 px-3 text-label font-semibold text-primary tabular-nums active:bg-primary/25"
+            >
+              {formatAmount(leverage, 1)}x
+            </button>
+          </div>
+        </header>
 
-      <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
-        <span>資金費率</span>
-        <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+        <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
+          <span>資金費率</span>
+          <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+        </div>
       </div>
 
-      <div className="flex gap-3 px-4 lg:gap-6">
+      <div className="flex gap-3 px-4 pt-3 lg:gap-6">
         <div className="min-w-0 flex-[0.58]">
           {/* key=symbol：切換交易對重置表單內部狀態（數量、TP/SL 值與展開態），避免跨幣殘留。 */}
           <OrderForm
