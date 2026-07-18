@@ -70,9 +70,10 @@ export default function PickupHeroCard({ record, theme, onNavigate }: PickupHero
           >
             {record.floor}
           </p>
+          {/* 車號/時間列用 textMuted 實色（R6 掃蕩）：text@65% 於 cute 僅 2.8:1。 */}
           <p
             className="mt-2 flex items-center gap-2 text-xs font-bold truncate"
-            style={{ color: theme.colors.text, opacity: 0.65 }}
+            style={{ color: theme.colors.textMuted }}
           >
             <span className="truncate">{plateLabel}</span>
             <span aria-hidden>·</span>

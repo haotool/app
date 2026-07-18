@@ -310,7 +310,11 @@ export default function QuickEntry({
                 >
                   {photoIssue === 'process' ? t('error.image') : t('error.photo_cancelled')}
                 </span>
-                <span className="text-[9px] font-medium leading-snug opacity-60">
+                {/* 輔助說明用 textMuted 實色（R6 掃蕩）：opacity-60 於 cute 僅 2.55:1。 */}
+                <span
+                  className="text-[9px] font-medium leading-snug"
+                  style={{ color: theme.colors.textMuted }}
+                >
                   {t('error.photo_source_help')}
                 </span>
                 <div className="flex items-center gap-2 mt-1">
@@ -362,10 +366,12 @@ export default function QuickEntry({
                     className="text-[var(--color-primary)] mb-2 opacity-70"
                   />
                 )}
+                {/* 拍照引導文字用 textMuted 實色（R6 掃蕩）：opacity-40/60 dimming 未達 AA。 */}
                 <span
                   className={`font-black uppercase tracking-widest ${
-                    isFullscreen ? 'text-sm opacity-60' : 'text-[10px] opacity-40'
+                    isFullscreen ? 'text-sm' : 'text-[10px]'
                   }`}
+                  style={{ color: theme.colors.textMuted }}
                 >
                   {isProcessing ? t('record.processing') : t('record.photo_tap')}
                 </span>
@@ -404,7 +410,11 @@ export default function QuickEntry({
               <span className="text-[9px] font-bold leading-snug" style={{ color: WARNING_COLOR }}>
                 {t('error.location_denied')}
               </span>
-              <span className="text-[8px] font-black uppercase tracking-wide opacity-40">
+              {/* 無定位標籤用 textMuted 實色（R6 掃蕩）。 */}
+              <span
+                className="text-[8px] font-black uppercase tracking-wide"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('record.no_location')}
               </span>
               <button
@@ -455,7 +465,7 @@ export default function QuickEntry({
             value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             placeholder={t('record.plate')}
-            className="w-full h-16 px-6 pr-14 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:opacity-30"
+            className="w-full h-16 px-6 pr-14 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)]"
           />
           {plate && (
             <button
@@ -467,7 +477,8 @@ export default function QuickEntry({
               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
               aria-label={t('record.clear_plate')}
             >
-              <X size={20} className="opacity-40" />
+              {/* 清除 icon 用 textMuted 實色（R6 掃蕩）：UI 元件需 ≥3:1。 */}
+              <X size={20} style={{ color: theme.colors.textMuted }} />
             </button>
           )}
         </div>
@@ -501,13 +512,17 @@ export default function QuickEntry({
           }}
           placeholder={t('record.notes_placeholder')}
           rows={1}
-          className="w-full min-h-12 px-6 py-3.5 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:opacity-40 resize-none overflow-hidden leading-relaxed"
+          className="w-full min-h-12 px-6 py-3.5 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:text-[var(--color-text-muted)] resize-none overflow-hidden leading-relaxed"
         />
       </motion.div>
 
       <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">
+          {/* 樓層區標籤用 textMuted 實色（R6 掃蕩）：opacity-30 於 cute 僅 1.5:1。 */}
+          <span
+            className="text-[10px] font-black uppercase tracking-[0.3em]"
+            style={{ color: theme.colors.textMuted }}
+          >
             {t('record.floor')}
           </span>
           <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full animate-pulse">

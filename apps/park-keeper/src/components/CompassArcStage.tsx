@@ -365,9 +365,10 @@ export default function CompassArcStage({
               >
                 {t('nav.gps_label')}
               </p>
+              {/* GPS 等待副文字用 textMuted 實色（R6 掃蕩）：text@35% 未達 AA。 */}
               <p
                 className="text-[7px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: theme.colors.text, opacity: 0.35 }}
+                style={{ color: theme.colors.textMuted }}
               >
                 {t('nav.gps_waiting')}
               </p>
@@ -387,9 +388,10 @@ export default function CompassArcStage({
               >
                 {distanceValue}
               </p>
+              {/* 距離單位用 textMuted 實色（R6 掃蕩）：text@40% 未達 AA。 */}
               <p
                 className="text-[9px] font-bold uppercase tracking-widest mt-1"
-                style={{ color: theme.colors.text, opacity: 0.4 }}
+                style={{ color: theme.colors.textMuted }}
               >
                 {distanceUnit}
               </p>
@@ -429,9 +431,10 @@ export default function CompassArcStage({
                       size={16}
                       color={theme.colors.primary}
                     />
+                    {/* 方向提示用 textMuted 實色（R6 掃蕩）：text@50% 未達 AA。 */}
                     <p
                       className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.15em]"
-                      style={{ color: theme.colors.text, opacity: 0.5 }}
+                      style={{ color: theme.colors.textMuted }}
                     >
                       {isIndoor ? t('nav.indoor_mode') : directionHint}
                     </p>
