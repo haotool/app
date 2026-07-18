@@ -139,6 +139,19 @@ export const reactLeafletMock = {
       data-zindex={String(zIndexOffset)}
     />
   ),
+  Polyline: ({
+    positions,
+    pathOptions,
+  }: {
+    positions: [number, number][];
+    pathOptions?: Record<string, unknown>;
+  }) => (
+    <div
+      data-testid="polyline"
+      data-positions={JSON.stringify(positions)}
+      data-pathoptions={JSON.stringify(pathOptions ?? {})}
+    />
+  ),
   useMap: () => mockMapInstance,
 };
 

@@ -4,7 +4,7 @@
  *（issue #733 可維護性；純搬移，行為零變更）。
  */
 import { useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
 // Leaflet CSS 隨 lazy chunk 載入，移出 index.html render-blocking 路徑（unpkg 第三方請求一併移除）。
 import 'leaflet/dist/leaflet.css';
 import type { ThemeConfig } from '@app/park-keeper/types';
@@ -243,6 +243,20 @@ export default function MiniMap({
           cacheDurationDays={cacheDurationDays}
           trackedViewportInsets={effectiveTrackedViewportInsets}
         />
+        {/* 車位↔使用者位置連線（主題色虛線；dash 流動動畫由 CSS 控制並尊重 reduced-motion）。 */}
+        {userPosition && (
+          <Polyline
+            positions={[centerPosition, userPosition]}
+            pathOptions={{
+              color: theme.colors.primary,
+              weight: 3,
+              opacity: 0.55,
+              dashArray: '6 8',
+              lineCap: 'round',
+              className: 'nav-route-line',
+            }}
+          />
+        )}
         {photoData && (
           <CarPositionReader position={centerPosition} onPositionUpdate={setCarPixelPos} />
         )}
