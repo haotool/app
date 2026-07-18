@@ -94,7 +94,8 @@ function GuideEntryLink({ color, label }: { color: string; label: string }) {
 /**
  * 空狀態教學入口卡（issue #753）：0 筆時取代純文字連結＋獨立空狀態訊息的雙元件組合，
  * 收斂為單一 soft depth 卡片（rounded-3xl＋1dp border＋theme surface），同時承載訊息與捷徑教學入口。
- * accessible name 以 aria-label 固定為 label，不受卡內圖示／文案影響（維持既有 e2e/單元測試斷言）。
+ * 不設 aria-label：accessible name 由完整可見文字自然組成，滿足 WCAG 2.5.3 Label in Name
+ *（round-4 Sonnet F3，axe label-content-name-mismatch）。
  */
 function EmptyStateGuideCard({
   theme,
@@ -110,7 +111,6 @@ function EmptyStateGuideCard({
   return (
     <Link
       to="/guide"
-      aria-label={label}
       className="min-h-11 flex flex-col items-center gap-2 text-center px-6 py-10 rounded-3xl border border-black/1 shadow-elevation-1 active:scale-[0.99] transition-transform"
       style={{ backgroundColor: theme.colors.surface }}
     >
