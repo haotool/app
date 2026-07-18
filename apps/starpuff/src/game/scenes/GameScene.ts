@@ -51,7 +51,7 @@ import {
   type EggEvent,
   type EggProgress,
 } from '../logic/eggs';
-import { getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import { checkpointRespawnX, getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
 import {
   MERCY_HEAL,
   advanceMercyHeal,
@@ -148,6 +148,8 @@ export class GameScene extends Phaser.Scene {
   private gate: Phaser.GameObjects.Container | null = null;
   private gateRect: BoundsRect | null = null;
   private prevPlayerX = 0;
+  // 卡點關中點重生（§66）：本命最遠推進 x——越過 checkpoint 後死亡自 checkpoint 重生。
+  private farthestX = 0;
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
@@ -192,6 +194,7 @@ export class GameScene extends Phaser.Scene {
     this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
+    this.farthestX = 0;
     this.mercy = createMercyState();
     this.mercyRng = Math.random;
     this.mercyWarpMs = 0;
@@ -291,6 +294,7 @@ export class GameScene extends Phaser.Scene {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
+      this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
       this.syncInhale();
       this.syncEggs();
@@ -316,11 +320,17 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.finish('won');
   }
 
-  // e2e 鉤子：模擬死亡結果（魔王關敗北進結算、其餘重試當前關）。
+  // e2e 鉤子：模擬死亡結果（魔王關敗北進結算、卡點關越過中點自 checkpoint 重生、
+  // 其餘重試當前關）——與 PLAYER_DIED 真實路徑同分岔。
   forceLose(): void {
     if (!this.scene.isActive() || this.finished || this.transitioning) return;
     this.deaths += 1;
-    if (this.level.boss) this.finish('lost');
+    if (this.level.boss) {
+      this.finish('lost');
+      return;
+    }
+    const respawnX = checkpointRespawnX(this.level, this.farthestX);
+    if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
     else this.retryLevel();
   }
 
@@ -644,12 +654,18 @@ export class GameScene extends Phaser.Scene {
       const flavor = inhaleFlavor(kind);
       if (flavor) this.feedEggs({ kind: 'swallow', flavor });
     });
-    // 敗北語意：Stage 1-3 死亡重試當前關；魔王戰死亡進敗北結算（再玩一次直接重試第 4 關）。
+    // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§66）；
+    // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
       this.deaths += 1;
       this.player.sprite.setVisible(false);
       this.fx.puff(x, y);
-      if (this.level.boss) this.finish('lost');
+      if (this.level.boss) {
+        this.finish('lost');
+        return;
+      }
+      const respawnX = checkpointRespawnX(this.level, this.farthestX);
+      if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
       else this.retryLevel();
     });
     bind(GameEvents.BOSS_DEFEATED, () => {
@@ -680,6 +696,28 @@ export class GameScene extends Phaser.Scene {
         deaths: this.deaths,
       }),
     );
+  }
+
+  // 卡點關中點重生（§66）：不重啟場景——killCount／彩蛋進度／計時全數保留，
+  // 血量回滿基礎值、慈悲補血每命狀態重置，死亡 i-frame 覆蓋落地瞬間。
+  private respawnAtCheckpoint(respawnX: number): void {
+    if (this.finished || this.transitioning) return;
+    this.transitioning = true;
+    stopSfx('inhale');
+    this.fx.stopInhale();
+    playSfx('lose');
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    body.stop();
+    this.time.delayedCall(RETRY_DELAY_MS, () => {
+      body.reset(respawnX, GROUND_TOP - 40);
+      this.player.sprite.setVisible(true);
+      this.player.heal(PLAYER.maxHp, PLAYER.maxHp);
+      this.mercy = createMercyState();
+      this.prevPlayerX = respawnX;
+      this.fx.burstSmall(respawnX, GROUND_TOP - 40, 0x9fe8ff);
+      playSfx('reveal');
+      this.transitioning = false;
+    });
   }
 
   // 星星門：fx-star 放大 + 光暈脈動 + 浮動 tween（graphics 組合，不新增美術）。
