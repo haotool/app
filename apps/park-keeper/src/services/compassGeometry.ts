@@ -49,8 +49,8 @@ export const HUB_DIAMETER = 144;
 /** 降級方向膠囊高度（px；設計 SSOT 定稿 56）。 */
 export const CAPSULE_HEIGHT = 56;
 
-/** 弧面左右安全邊距（px）。 */
-export const DECK_SIDE_PAD = 10;
+/** 弧面左右安全邊距（px；≥ 錨點半徑 11＋3px 呼吸，楔形指向東西時錨點不被裁）。 */
+export const DECK_SIDE_PAD = 14;
 
 /** 弧頂至 stage 上緣邊距（px；容納車位錨點與對準光暈）。 */
 export const DECK_TOP_PAD = 20;

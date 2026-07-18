@@ -282,8 +282,22 @@ describe('computeDeckGeometry', () => {
   it('390×844 直向（stage 390×310）：arc 模式、半徑受寬度約束', () => {
     const g = computeDeckGeometry(390, 310);
     expect(g.mode).toBe('arc');
-    // byWidth = (390-20)/2 = 185 < byHeight 212
-    expect(g.outerR).toBe(185);
+    // byWidth = (390-28)/2 = 181 < byHeight 212
+    expect(g.outerR).toBe(181);
+  });
+
+  it('弧緣錨點（r=11）在楔形指向正東/正西時不觸 stage 左右緣', () => {
+    for (const [w, h] of [
+      [375, 232],
+      [390, 310],
+      [430, 340],
+      [800, 600],
+    ] as [number, number][]) {
+      const g = computeDeckGeometry(w, h);
+      expect(g.mode).toBe('arc');
+      expect(g.cx - g.outerR - 11).toBeGreaterThanOrEqual(3);
+      expect(g.cx + g.outerR + 11).toBeLessThanOrEqual(w - 3);
+    }
   });
 
   it('有效視高 553（stage ≈375×184）：降級 capsule', () => {
