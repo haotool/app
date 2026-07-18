@@ -1031,6 +1031,42 @@ export const LEVELS: readonly LevelSpec[] = [
     // 潮汐與 L14 同參數（複合關不加密，壓力來自噴口疊加）。
     tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
   },
+  // L16 熔糖王窯：第四魔王 Syrona（§74 場控型三階段）——魔王與 biome hazard 綁定
+  //（P2 潮汐入 arena、P3 大沸騰）；浮台/噴口由呈現層依動態視寬佈建（§28）。
+  {
+    id: 16,
+    nameZh: '熔糖王窯',
+    bgKey: 'bg-kilnhall',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 3000,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸或條件可吸（§26 飢荒保證律）：jelly/floaty 恆可吸佔 0.6、
+    // bubbla 主題供彈（躍出窗可吸，爆裂味）。
+    enemyMix: [
+      { kind: 'jelly', weight: 0.3 },
+      { kind: 'bubbla', weight: 0.4 },
+      { kind: 'floaty', weight: 0.3 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-kiln-1', x: 110 },
+      { key: 'prop-kiln-2', x: 320 },
+      { key: 'prop-kiln-3', x: 540 },
+      { key: 'prop-kiln-4', x: 750 },
+    ],
+    // §24 彩蛋十六：窯風三連——乘噴口升空期間命中 Syrona 累計 3 次（§75 觸發器）。
+    easterEggs: [{ trigger: 'vent-hit-count', reward: 'heal' }],
+    elites: [],
+    boss: 'syrona',
+    tutorial: false,
+    // 魔王關體系（§69 沿用）：前室 400px＋護盾泡/疾風靴二選一；P2 噴口上方刷星力果。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'swift'],
+    arenaBuff: 'power',
+  },
 ];
 
 export function getLevel(id: LevelId): LevelSpec {

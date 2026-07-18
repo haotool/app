@@ -444,15 +444,19 @@ export function createHud(scene: Phaser.Scene): Hud {
     if (phase === 'p2') barFill.setTint(0xd94b4b);
   });
   // 雙節切換（§68）：分裂期各半條依雙子血量獨立縮放；合體/擊破回落單節。
+  // 觀測點（v10 審查殘餘收尾）：最新雙節狀態寫入 registry 供 __sp.twinHud 直接觀測。
   bind(GameEvents.BOSS_TWIN_HP, ({ hpA, hpB, maxHp, active }) => {
     barFill.setVisible(!active);
     twinFillA.setVisible(active);
     twinFillB.setVisible(active);
     twinDivider.setVisible(active);
-    if (!active) return;
     const half = maxHp / 2;
-    twinFillA.scaleX = twinHalfScaleX * Math.max(0, Math.min(1, hpA / half));
-    twinFillB.scaleX = twinHalfScaleX * Math.max(0, Math.min(1, hpB / half));
+    const aRatio = Math.max(0, Math.min(1, hpA / half));
+    const bRatio = Math.max(0, Math.min(1, hpB / half));
+    scene.registry.set('twinHud', { active, aRatio, bRatio });
+    if (!active) return;
+    twinFillA.scaleX = twinHalfScaleX * aRatio;
+    twinFillB.scaleX = twinHalfScaleX * bRatio;
   });
   bind(GameEvents.BOSS_DEFEATED, () => {
     scene.tweens.add({ targets: bossBar, alpha: 0, duration: 400 });

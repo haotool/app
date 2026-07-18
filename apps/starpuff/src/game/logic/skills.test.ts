@@ -323,6 +323,20 @@ describe('雷鏈目標選擇（§40）', () => {
     expect(pickChainTargets(0, 0, [at(10, 0)], 0, 160)).toEqual([]);
     expect(pickChainTargets(0, 0, [at(10, 0)], -1, 160)).toEqual([]);
   });
+
+  // v10 觀察項收尾（§68 分裂型剋制）：resolveVoltBeam 的多本體/碎晶盾混合候選
+  // 走同一 pickChainTargets 決策——主傷取最近存活本體、跳電波及依距離涵蓋盾與另一本體。
+  it('多本體與碎晶盾混合候選：主傷取最近本體、跳電依距序涵蓋盾與另一本體', () => {
+    const twinA = { x: 60, y: 0, kind: 'body' };
+    const twinB = { x: 150, y: 0, kind: 'body' };
+    const shield = { x: 100, y: 20, kind: 'shield' };
+    const minion = { x: 210, y: 0, kind: 'minion' };
+    const primary = pickChainTargets(0, 0, [twinB, shield, twinA, minion], 1, 160)[0];
+    expect(primary).toEqual(twinA);
+    // 跳電自主目標起算：盾（距 45）先於另一本體（距 90）、半徑外小怪不入鏈。
+    const hops = pickChainTargets(twinA.x, twinA.y, [twinB, shield, minion], 2, 120);
+    expect(hops).toEqual([shield, twinB]);
+  });
 });
 
 describe('彩蛋獎勵入匣（§24）', () => {

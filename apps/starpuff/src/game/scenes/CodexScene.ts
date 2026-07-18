@@ -119,10 +119,11 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物 8×2 網格（v9 十六格：十四小怪＋雙魔王）：立繪 + 名稱 + 行為 + 可吸標記。
+  // 全怪物雙列網格（v11 十八格：十六小怪＋雙魔王）：欄數由條目數推導（§76 單頁評估
+  // 定案：9×2 於 854 寬 cellW≈89px 仍可讀，分頁延後與地圖分區分頁同批評估）。
   private renderMonsters(): void {
     const { width } = this.scale;
-    const cols = 8;
+    const cols = Math.ceil(CODEX_MONSTERS.length / 2);
     const cellW = Math.min(170, (width - 50) / cols);
     const gridLeft = width / 2 - (cellW * cols) / 2;
     const rowTops = [116, 282];

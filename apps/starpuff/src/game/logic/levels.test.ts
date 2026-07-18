@@ -19,24 +19,29 @@ import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', () => {
-  it('十五關依序為 1-15 且參數符合 §15/§21/§50/§60/§66-§68/§72 表', () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  it('十六關依序為 1-16 且參數符合 §15/§21/§50/§60/§66-§68/§72/§74 表', () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    ]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
-      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800,
+      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800, 854,
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([
-      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14,
+      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0,
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
+      3000,
     ]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
+      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2,
+    ]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
-      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480,
+      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0,
     ]);
   });
 
-  it('三魔王品種標記（§54/§68）：L4 果凍王、L7 暗月蝠王、L12 稜晶雙子；教學與提示對表', () => {
+  it('四魔王品種標記（§54/§68/§74）：L4/L7/L12/L16；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -53,6 +58,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
       null,
       null,
       null,
+      'syrona',
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -62,6 +68,17 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     expect(getLevel(10).hint).toContain('折躍');
     expect(getLevel(13).hint).toContain('熱泉');
     expect(getLevel(14).hint).toContain('潮');
+  });
+
+  it('L16 魔王關體系（§69 沿用）：前室 400px、護盾/疾風二選一、P2 星力果、幾何留空', () => {
+    const level = getLevel(16);
+    expect(level.anteroomPx).toBe(400);
+    expect(level.anteroomBuffs).toEqual(['shield', 'swift']);
+    expect(level.arenaBuff).toBe('power');
+    // 浮台/噴口由呈現層依動態視寬佈建（§28 禁硬編），資料表留空。
+    expect(level.platforms).toEqual([]);
+    expect(level.elements).toEqual([]);
+    expect(level.elites).toEqual([]);
   });
 
   it('L12 魔王關體系（§69）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {
@@ -132,8 +149,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
     }
   });
 
-  it('boss 關補生全為可吸或條件可吸（L4/L7/L12）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
-    for (const id of [4, 7, 12] as const) {
+  it('boss 關補生全為可吸或條件可吸（L4/L7/L12/L16）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
+    for (const id of [4, 7, 12, 16] as const) {
       const mix = getLevel(id).enemyMix;
       expect(mix.every((entry) => canInhale(entry.kind, true))).toBe(true);
       const always = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
@@ -312,7 +329,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
   });
 
   it('getLevel 未知 id 擲錯', () => {
-    expect(() => getLevel(16 as never)).toThrow();
+    expect(() => getLevel(17 as never)).toThrow();
   });
 
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
@@ -363,6 +380,18 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
         // 交叉不變式 15：門不落於精英房界（±300）內側，含觸發半徑緩衝。
         for (const elite of level.elites) {
           expect(Math.abs(gate.x - elite.x)).toBeGreaterThan(300 + WARP.triggerRadiusPx);
+        }
+        // 出口 AABB 淨空補強（v10 審查殘餘）：門點不得嵌入任何站立面實體
+        //（平台/單向/移動平台 AABB 外緣 ≥8px 緩衝；出門瞬移不得卡進幾何）。
+        const solids = [
+          ...level.platforms,
+          ...level.elements.filter((el) => el.kind === 'oneway' || el.kind === 'moving'),
+        ];
+        for (const solid of solids) {
+          if (!('y' in solid) || !('w' in solid)) continue;
+          const dx = Math.max(0, Math.abs(gate.x - solid.x) - solid.w / 2);
+          const dy = Math.max(0, Math.abs(gate.y - solid.y) - 8);
+          expect(Math.hypot(dx, dy)).toBeGreaterThanOrEqual(8);
         }
       }
     }
@@ -475,10 +504,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72）', ()
       'bg-lumen': 'arena',
       'bg-magnetic': 'arena',
       'bg-prism': 'arena',
-      // v11 四區（§72）：三關共用窯主題道具條（props-kiln W3 交付）。
+      // v11 四區（§72）：四關共用窯主題道具條（props-kiln W3 交付）。
       'bg-kiln': 'kiln',
       'bg-valley': 'kiln',
       'bg-kilnway': 'kiln',
+      'bg-kilnhall': 'kiln',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
