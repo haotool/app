@@ -131,6 +131,7 @@ declare global {
       codexTab: () => string;
       twinHud: () => { active: boolean; aRatio: number; bRatio: number };
       tide: () => { waterY: number; phase: string } | null;
+      meteor: () => { falling: number; embers: number; telegraphs: number } | null;
     }>;
   }
 }
@@ -223,6 +224,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         | { active: boolean; aRatio: number; bRatio: number }
         | undefined) ?? { active: false, aRatio: 0, bRatio: 0 },
     tide: () => gameScene().tideState(),
+    // v12 觀測點（§78 e2e）：流星雨墜落/餘燼/預警圈數量。
+    meteor: () => gameScene().meteorState(),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。

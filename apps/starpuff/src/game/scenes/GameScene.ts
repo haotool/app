@@ -100,6 +100,7 @@ import { createHud } from '../systems/hud';
 import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
+import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, tideSoakVelocity } from '../logic/tide';
@@ -189,6 +190,8 @@ export class GameScene extends Phaser.Scene {
   private eliteRooms: EliteRoomHandle[] = [];
 
   private tide: TideHandle | null = null;
+  // 流星雨（§78）：關卡級環境彈幕；無配置關為 null。
+  private meteor: MeteorSystem | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
   private buff: BuffState = createBuffState();
@@ -271,6 +274,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
+    // 流星雨（§78）：關卡級配置建立；落點排除與傷害結算見 advanceMeteors/addOverlaps。
+    this.meteor = this.level.meteor ? createMeteorSystem(this, this.level.meteor) : null;
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
       adjustSpawn: (kind, y) =>
         this.tide
@@ -377,6 +382,8 @@ export class GameScene extends Phaser.Scene {
       this.bossRoom = null;
       this.tide?.destroy();
       this.tide = null;
+      this.meteor?.destroy();
+      this.meteor = null;
     });
 
     this.waves.start();
@@ -410,6 +417,7 @@ export class GameScene extends Phaser.Scene {
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
       this.advanceTide(deltaMs);
+      this.advanceMeteors(deltaMs);
       this.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
@@ -528,6 +536,23 @@ export class GameScene extends Phaser.Scene {
     this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
     const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
     body.setVelocity(soaked.vx, soaked.vy);
+  }
+
+  // 流星雨逐幀結算（§78）：波次推進委派呈現層；排除帶＝玩家縱帶＋開門後門前帶。
+  private advanceMeteors(deltaMs: number): void {
+    if (!this.meteor) return;
+    const view = this.cameras.main.worldView;
+    this.meteor.update(deltaMs, {
+      viewLeft: view.x,
+      viewRight: view.right,
+      playerX: this.player.sprite.x,
+      gateX: this.gate?.x ?? null,
+    });
+  }
+
+  // e2e 觀測點（§78）：墜落中/餘燼/預警圈數量；無流星雨關回 null。
+  meteorState(): { falling: number; embers: number; telegraphs: number } | null {
+    return this.meteor?.state() ?? null;
   }
 
   // 場控魔王噴口供力（§74 Syrona）：呈現層持有幾何與相位，此處逐幀委派結算。
@@ -820,6 +845,32 @@ export class GameScene extends Phaser.Scene {
       if (!shockwave.active || this.finished || this.transitioning) return;
       this.damagePlayer(this.bossTouchDamage, shockwave.x);
     });
+
+    // 流星雨（§78）：隕星可被星彈擊碎（碎裂演出、星彈吸收）；隕星與餘燼命中玩家
+    // 走 damagePlayer 單一入口（i-frame/護盾泡自然生效），隕星命中即碎。
+    if (this.meteor) {
+      const meteorGroup = this.meteor.getMeteors();
+      this.physics.add.overlap(stars, meteorGroup, (a, b) => {
+        const isRock = (meteorGroup.getChildren() as unknown[]).includes(a);
+        const rock = asSprite(isRock ? a : b);
+        const star = asSprite(isRock ? b : a);
+        if (!star.active || !rock.active) return;
+        this.meteor?.shatter(rock);
+        this.player.onStarHit(star, 'absorb');
+      });
+      this.physics.add.overlap(this.player.sprite, meteorGroup, (_p, rock) => {
+        const sprite = asSprite(rock);
+        if (!sprite.active || this.finished || this.transitioning) return;
+        this.meteor?.shatter(sprite);
+        this.damagePlayer(ENEMY.touchDamage, sprite.x);
+      });
+      this.physics.add.overlap(this.player.sprite, this.meteor.getEmbers(), (_p, hz) => {
+        const ember = asSprite(hz);
+        if (!ember.active || this.finished || this.transitioning) return;
+        ember.disableBody(true, true);
+        this.damagePlayer(ENEMY.touchDamage, ember.x);
+      });
+    }
 
     // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
     this.physics.add.collider(
