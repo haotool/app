@@ -119,8 +119,8 @@ export default function Add() {
             </div>
             <Link
               to="/"
-              className="w-full h-14 rounded-2xl flex items-center justify-center text-white font-black tracking-wide shadow-lg active:scale-[0.98] transition-transform"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="w-full h-14 rounded-2xl flex items-center justify-center font-black tracking-wide shadow-lg active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: theme.colors.primary, color: theme.colors.onPrimary }}
             >
               {t('action.back_home')}
             </Link>

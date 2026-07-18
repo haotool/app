@@ -313,10 +313,13 @@ export default function RecordCard({
             {/* 觸控無 hover：導航 affordance 改常駐角標 pill（issue #725 P2）。 */}
             <div
               className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-1 px-2.5 py-1.5 rounded-full shadow-md pointer-events-none"
-              style={{ backgroundColor: `${theme.colors.primary}E6` }}
+              style={{
+                backgroundColor: `${theme.colors.primary}E6`,
+                color: theme.colors.onPrimary,
+              }}
             >
-              <Navigation size={11} className="text-white" />
-              <span className="text-[9px] font-black text-white uppercase tracking-widest">
+              <Navigation size={11} />
+              <span className="text-[9px] font-black uppercase tracking-widest">
                 {t('record.navigate')}
               </span>
             </div>

@@ -33,6 +33,7 @@ import type { DeckGeometry } from '@app/park-keeper/services/compassGeometry';
 import {
   NORTH_COLOR,
   ARRIVED_COLOR,
+  ARRIVED_ON_COLOR,
   ARRIVED_BORDER,
   ARRIVED_GLOW,
 } from '@app/park-keeper/config/colors';
@@ -335,8 +336,8 @@ export default function CompassArcStage({
                     // 與頂部 X 的「關閉導航」區分 accessible name，
                     // 消除 SR/語音控制歧義與 e2e strict-mode 衝突（issue #725 P2）。
                     aria-label={t('nav.arrived_close_cta')}
-                    className="mt-1 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest text-white shadow-md active:scale-95 pointer-events-auto"
-                    style={{ backgroundColor: ARRIVED_COLOR }}
+                    className="mt-1 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 pointer-events-auto"
+                    style={{ backgroundColor: ARRIVED_COLOR, color: ARRIVED_ON_COLOR }}
                   >
                     {t('nav.close_nav')}
                   </motion.button>

@@ -10,6 +10,7 @@ import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/ty
 import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { setAppLanguage } from '@app/park-keeper/services/i18n';
+import { ARRIVED_COLOR, ARRIVED_ON_COLOR } from '@app/park-keeper/config/colors';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 
 // 滑桿拖曳防抖：停止拖曳後才執行單次清理，避免每 tick 全掃 IndexedDB。
@@ -124,8 +125,9 @@ export default function SettingsTab({
                   <div className="flex justify-between items-center w-full relative z-10">
                     <span className={`font-bold ${th.font}`}>{th.name}</span>
                     {isActive && (
-                      <div className="bg-green-500 rounded-full p-1">
-                        <Check size={12} color="white" strokeWidth={2} />
+                      // 選中徽章收斂 colors.ts SSOT：白勾 on green-500 僅 2.28:1，未達非文字對比 3:1。
+                      <div className="rounded-full p-1" style={{ backgroundColor: ARRIVED_COLOR }}>
+                        <Check size={12} color={ARRIVED_ON_COLOR} strokeWidth={2} />
                       </div>
                     )}
                   </div>

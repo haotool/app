@@ -316,6 +316,18 @@ describe('RecordCard', () => {
     expect(screen.getByText(/靠近電梯口/)).toBeInTheDocument();
   });
 
+  // racing 主題 onPrimary 為近黑（非白），硬編白字在其 primary 底對比僅 1.37:1（round-4 Sonnet F1）。
+  it('地圖縮圖導航 pill 前景色跟隨主題 onPrimary token（非硬編白字）', () => {
+    const racingLikeTheme: ThemeConfig = {
+      ...theme,
+      colors: { ...theme.colors, primary: '#00f2ff', onPrimary: '#020617' },
+    };
+    renderRecordCard({ latitude: 25.033, longitude: 121.5654 }, { theme: racingLikeTheme });
+
+    const pill = screen.getByText('導航').closest('div');
+    expect(pill).toHaveStyle({ color: '#020617' });
+  });
+
   it('應該在列表照片面板被點擊後開啟並關閉照片 modal', async () => {
     vi.useRealTimers();
 

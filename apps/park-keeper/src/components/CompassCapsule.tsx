@@ -8,7 +8,7 @@ import { ArrowUp, Check, Compass, Footprints, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ThemeConfig } from '@app/park-keeper/types';
 import { CAPSULE_HEIGHT } from '@app/park-keeper/services/compassGeometry';
-import { ARRIVED_COLOR, ARRIVED_BORDER } from '@app/park-keeper/config/colors';
+import { ARRIVED_COLOR, ARRIVED_ON_COLOR, ARRIVED_BORDER } from '@app/park-keeper/config/colors';
 
 export interface CompassCapsuleProps {
   theme: ThemeConfig;
@@ -72,8 +72,8 @@ export default function CompassCapsule({
                 type="button"
                 onClick={onClose}
                 aria-label={t('nav.arrived_close_cta')}
-                className="px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest text-white shadow-md active:scale-95"
-                style={{ backgroundColor: ARRIVED_COLOR }}
+                className="px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95"
+                style={{ backgroundColor: ARRIVED_COLOR, color: ARRIVED_ON_COLOR }}
               >
                 {t('nav.close_nav')}
               </button>

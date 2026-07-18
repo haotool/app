@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next';
 import Add from '../Add';
 import i18n from '@app/park-keeper/services/i18n';
 import { dbService } from '@app/park-keeper/services/db';
+import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import type { ParkingRecord } from '@app/park-keeper/types';
 
 interface QuickEntryStubProps {
@@ -122,6 +123,33 @@ describe('Add - /add 快速記錄頁', () => {
     expect(backLinks.some((el) => el.textContent === i18n.t('action.back_home'))).toBe(true);
 
     saveSpy.mockRestore();
+  });
+
+  // racing 主題 onPrimary 為近黑（非白），硬編白字在其 primary 底對比僅 1.39:1（round-4 Sonnet F1）。
+  it('摘要「返回首頁」CTA 前景色跟隨主題 onPrimary token（非硬編白字）', async () => {
+    const saveSpy = vi.spyOn(dbService, 'saveRecord').mockResolvedValue(undefined);
+    const settingsSpy = vi
+      .spyOn(dbService, 'getSettings')
+      .mockResolvedValue({ ...DEFAULT_SETTINGS, theme: 'racing' });
+    const racingTheme = THEMES['racing']!;
+
+    renderAdd('/add');
+
+    fireEvent.click(await screen.findByText('stub-save'));
+    await waitFor(() => {
+      expect(screen.getByText(i18n.t('add.summary_hint'))).toBeInTheDocument();
+    });
+
+    const cta = screen
+      .getAllByRole('link', { name: i18n.t('action.back_home') })
+      .find((el) => el.textContent === i18n.t('action.back_home'));
+    expect(cta).toHaveStyle({
+      backgroundColor: racingTheme.colors.primary,
+      color: racingTheme.colors.onPrimary,
+    });
+
+    saveSpy.mockRestore();
+    settingsSpy.mockRestore();
   });
 
   it('未填車號儲存後摘要顯示待填文案而非裸露 N/A（formatPlate SSOT，round-2 R2-U2）', async () => {
