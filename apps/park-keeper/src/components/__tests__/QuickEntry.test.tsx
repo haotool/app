@@ -39,6 +39,7 @@ const mockTheme: ThemeConfig = {
   name: 'Minimalist',
   colors: {
     primary: '#000000',
+    onPrimary: '#ffffff',
     secondary: '#666666',
     accent: '#0066ff',
     background: '#ffffff',

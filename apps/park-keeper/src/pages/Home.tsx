@@ -35,7 +35,6 @@ import RecordCard from '@app/park-keeper/components/RecordCard';
 import PickupHeroCard from '@app/park-keeper/components/PickupHeroCard';
 import QuickCaptureCta from '@app/park-keeper/components/QuickCaptureCta';
 import ListSkeleton from '@app/park-keeper/components/ListSkeleton';
-import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 import {
   NAV_CONTENT_H,
   NAV_ICON_SIZE,
@@ -76,13 +75,14 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
-/** 教學入口：對比 ≥4.5:1（text @0.8）＋觸控熱區 ≥44×44；載入態與內容態共用。 */
+/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區 ≥44×44；
+ *  載入態與內容態共用，markup 須與 HomeShell 同構。 */
 function GuideEntryLink({ color, label }: { color: string; label: string }) {
   return (
     <div className="text-center">
       <Link
         to="/guide"
-        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
         style={{ color }}
       >
         {label}
@@ -120,11 +120,23 @@ function EmptyStateGuideCard({
         aria-hidden
         style={{ color: theme.colors.primary, opacity: 0.35 }}
       />
-      <p className="font-black text-xs uppercase tracking-[0.2em] opacity-70">{message}</p>
-      <p className="text-[11px] font-medium opacity-50 max-w-[220px] leading-relaxed">{hint}</p>
+      {/* 文字一律實色達 AA（issue #753 審查收斂）：message=text、hint=textMuted；
+          連結不得用 pastel primary 當字色（cute 對白 surface 僅 1.69:1），改 text＋underline。 */}
+      <p
+        className="font-black text-xs uppercase tracking-[0.2em]"
+        style={{ color: theme.colors.text }}
+      >
+        {message}
+      </p>
+      <p
+        className="text-[11px] font-medium max-w-[220px] leading-relaxed"
+        style={{ color: theme.colors.textMuted }}
+      >
+        {hint}
+      </p>
       <span
         className="mt-1 text-[11px] font-bold underline underline-offset-4"
-        style={{ color: theme.colors.primary }}
+        style={{ color: theme.colors.text }}
       >
         {label}
       </span>
@@ -658,11 +670,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
             className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
             style={{
-              // FAB 熱區頂緣約在底部 88px（56px 導覽列＋32px 突出）、進場位移 20px：
-              // 7.5rem 保證 toast 全程（含進場動畫）不遮 FAB（round-2 Composer U-R2-01）。
+              // 底部導覽列 56px＋進場位移 20px：7.5rem 保證 toast 全程（含進場動畫）
+              // 不遮 bottom nav（FAB 已於 issue #753 移除）。
               bottom: 'calc(7.5rem + env(safe-area-inset-bottom))',
               backgroundColor: theme.colors.primary,
-              color: ON_PRIMARY_COLOR,
+              color: theme.colors.onPrimary,
             }}
           >
             <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>

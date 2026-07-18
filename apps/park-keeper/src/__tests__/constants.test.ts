@@ -34,6 +34,7 @@ const REQUIRED_THEME_KEYS = [
 
 const REQUIRED_COLOR_KEYS = [
   'primary',
+  'onPrimary',
   'secondary',
   'accent',
   'background',
@@ -94,6 +95,24 @@ describe('constants', () => {
       const { background } = THEMES['cute']!.colors;
       for (const stop of CUTE_WORDMARK_GRADIENT) {
         expect(contrastRatio(stop, background)).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    it('四主題 onPrimary 對 primary 對比須 ≥4.5:1（CTA 文字／圖示，審查收斂守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        expect(contrastRatio(theme.colors.onPrimary, theme.colors.primary)).toBeGreaterThanOrEqual(
+          4.5,
+        );
+      }
+    });
+
+    it('四主題 text／textMuted 對 background 與 surface 對比須 ≥4.5:1（首屏文字全域守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        const { text, textMuted, background, surface } = theme.colors;
+        expect(contrastRatio(text, background)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(textMuted, background)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(textMuted, surface)).toBeGreaterThanOrEqual(4.5);
       }
     });
   });

@@ -5,7 +5,6 @@
 import { useTranslation } from 'react-i18next';
 import { Car, Clock, MapPin, Navigation } from 'lucide-react';
 import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
-import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 import { formatPlateLabel } from '@app/park-keeper/services/formatPlate';
 import { formatSmartTime } from '@app/park-keeper/services/formatSmartTime';
 
@@ -88,7 +87,7 @@ export default function PickupHeroCard({ record, theme, onNavigate }: PickupHero
           className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
           style={{ backgroundColor: theme.colors.primary }}
         >
-          <Navigation size={24} color={ON_PRIMARY_COLOR} strokeWidth={2.5} />
+          <Navigation size={24} color={theme.colors.onPrimary} strokeWidth={2.5} />
         </span>
       </div>
     </button>

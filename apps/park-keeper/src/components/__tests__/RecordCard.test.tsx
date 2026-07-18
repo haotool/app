@@ -34,7 +34,6 @@ vi.mock('react-i18next', () => ({
       const map: Record<string, string> = {
         'record.plate': '車牌號碼',
         'record.plate_unset': '未填車號',
-        'record.yesterday': '昨天',
         'home.just_now': '剛剛',
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
@@ -87,6 +86,7 @@ const theme: ThemeConfig = {
   name: 'Zen',
   colors: {
     primary: '#1e293b',
+    onPrimary: '#ffffff',
     secondary: '#f1f5f9',
     accent: '#3b82f6',
     background: '#f8fafc',

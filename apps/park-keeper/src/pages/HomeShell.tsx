@@ -43,17 +43,19 @@ export default function HomeShell() {
       <main className="flex-1 relative overflow-hidden">
         <div className="h-full overflow-y-auto no-scrollbar px-5 pt-5 pb-40">
           <div className="max-w-md mx-auto space-y-5">
+            {/* 與 QuickCaptureCta hero 變體同構（soft depth＋onPrimary），消除 hydration 樣式跳動。 */}
             <label
               data-testid="quick-record-cta"
-              className="flex flex-col items-center justify-center gap-3 w-full min-h-[32dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
+              className="flex flex-col items-center justify-center gap-3 w-full min-h-[32dvh] rounded-3xl cursor-pointer active:scale-[0.98] transition-transform border border-white/15"
               style={{
                 backgroundColor: theme.colors.primary,
-                boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
+                color: theme.colors.onPrimary,
+                boxShadow: `${theme.colors.primary}33 0px 8px 24px`,
               }}
             >
               <Camera size={44} strokeWidth={2.25} />
               <span className="text-lg font-black tracking-wide">{t('home.quick_record_cta')}</span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em]">
                 {t('record.photo_tap')}
               </span>
               <input
@@ -79,7 +81,7 @@ export default function HomeShell() {
             <div className="text-center">
               <Link
                 to="/guide"
-                className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+                className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
                 style={{ color: theme.colors.text }}
               >
                 {t('guide.entry')}

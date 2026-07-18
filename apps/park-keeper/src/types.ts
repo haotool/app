@@ -5,6 +5,8 @@ export type LanguageType = 'en' | 'zh-TW' | 'ja';
 
 export interface ThemeColors {
   primary: string;
+  /** primary 底上的前景色；CTA 文字／圖示必須用此值確保 WCAG AA（issue #753 審查）。 */
+  onPrimary: string;
   secondary: string;
   accent: string;
   background: string;
