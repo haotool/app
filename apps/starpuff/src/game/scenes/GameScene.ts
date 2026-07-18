@@ -1394,10 +1394,16 @@ export class GameScene extends Phaser.Scene {
                 this.cameras.main.flash(360, 255, 230, 160);
                 this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
               },
-              // P2 定點轟炸（§82）：沿 GameScene 單一 meteor 管線開關與調參。
+              // P2 定點轟炸（§82）：沿 GameScene 單一 meteor 管線開關與調參；
+              // 收轟炸（轉段/擊破/段重試）連飛行中隕星一併回收（審查收斂）。
               setBombardment: (spec) => {
-                if (spec) this.meteor?.setSpec(spec);
-                this.meteor?.setActive(spec !== null);
+                if (spec) {
+                  this.meteor?.setSpec(spec);
+                  this.meteor?.setActive(true);
+                } else {
+                  this.meteor?.setActive(false);
+                  this.meteor?.clearAirborne();
+                }
               },
               // P3 低重力（§81）：全域重力直寫；null 回關卡預設（create 亦會重設）。
               setGravityScale: (scale) => {
