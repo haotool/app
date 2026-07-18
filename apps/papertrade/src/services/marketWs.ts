@@ -159,11 +159,18 @@ export function createMarketWsClient(url: string): MarketWsClient {
     stopSilenceWatchdog();
     reconnectAttempt = 0;
     if (ws !== null) {
-      ws.onopen = null;
-      ws.onmessage = null;
-      ws.onclose = null;
-      ws.close();
+      const socket = ws;
       ws = null;
+      socket.onmessage = null;
+      socket.onclose = null;
+      if (socket.readyState === WebSocket.CONNECTING) {
+        // CONNECTING 中直接 close 會觸發瀏覽器「closed before established」warning：
+        // 已解除全部掛勾，改為握手完成後立即自關，導航/卸載不再產生 console 噪音。
+        socket.onopen = () => socket.close();
+      } else {
+        socket.onopen = null;
+        socket.close();
+      }
     }
     setStatus('idle');
   }
