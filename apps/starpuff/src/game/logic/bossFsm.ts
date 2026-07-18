@@ -18,6 +18,19 @@ export const BOSS = {
   rainDurationMs: 1200,
   slamDurationMs: 1300,
   dashDurationMs: 1400,
+  // 頭頂 hit window（§58）：下砸命中頭頂觸發短暈（攻擊循環停拍）。
+  slamStunMs: 900,
+} as const;
+
+// EX 變體共用倍率（§58）：血量 ×1.5、節奏 ×1.15；兩魔王共用。
+export const EX_MODS = {
+  hpMul: 1.5,
+  speedMul: 1.15,
+} as const;
+
+// 果凍王 EX 專屬（§58）：擊破時分裂小果凍（呈現層走正式 spawn 管線）。
+export const EX_JELLORD = {
+  splitCount: 3,
 } as const;
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
@@ -60,7 +73,9 @@ export type BossHitEvent =
   | { kind: 'damaged'; hp: number }
   | { kind: 'phase'; phase: BossPhase }
   | { kind: 'minionDrop' }
-  | { kind: 'defeated' };
+  | { kind: 'defeated' }
+  // EX 擊破分裂（§58）：呈現層據此生成小果凍。
+  | { kind: 'split'; count: number };
 
 export interface BossFsm {
   readonly hp: number;
@@ -71,10 +86,18 @@ export interface BossFsm {
   readonly defeated: boolean;
   tick(deltaMs: number): BossCommand | null;
   takeDamage(amount: number): BossHitEvent[];
+  // 頭頂命中短暈（§58）：回待機並停拍 durationMs，期滿接續攻擊循環。
+  stun(durationMs: number): void;
 }
 
-export function createBossFsm(): BossFsm {
-  let hp: number = BOSS.maxHp;
+export interface BossFsmOptions {
+  ex?: boolean;
+}
+
+export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
+  const ex = options.ex === true;
+  const maxHp = Math.round(BOSS.maxHp * (ex ? EX_MODS.hpMul : 1));
+  let hp: number = maxHp;
   let phase: BossPhase = 'p1';
   let state: BossAction = 'idle';
   let lastAttack: BossAction | null = null;
@@ -82,7 +105,7 @@ export function createBossFsm(): BossFsm {
   let damageSinceDrop = 0;
   let defeated = false;
 
-  const speedFactor = (): number => SPEED_FACTORS[phase];
+  const speedFactor = (): number => SPEED_FACTORS[phase] * (ex ? EX_MODS.speedMul : 1);
 
   // 時長於進入狀態當下依階段速度換算，P2 全節奏 ×1.3。
   const durationMs = (action: BossAction): number => {
@@ -124,7 +147,7 @@ export function createBossFsm(): BossFsm {
       return hp;
     },
     get maxHp() {
-      return BOSS.maxHp;
+      return maxHp;
     },
     get phase() {
       return phase;
@@ -156,7 +179,7 @@ export function createBossFsm(): BossFsm {
       if (defeated || amount <= 0) return [];
       hp = Math.max(0, hp - amount);
       const events: BossHitEvent[] = [{ kind: 'damaged', hp }];
-      const nextPhase = phaseForHp(hp, BOSS.maxHp);
+      const nextPhase = phaseForHp(hp, maxHp);
       if (nextPhase !== phase) {
         // 狂暴即時生效：剩餘計時依新舊速度係數換算（p2→p3 同速不重複縮短）。
         const previousFactor = SPEED_FACTORS[phase];
@@ -173,8 +196,15 @@ export function createBossFsm(): BossFsm {
       } else {
         defeated = true;
         events.push({ kind: 'defeated' });
+        // EX 擊破分裂（§58）：死亡事件後追加，呈現層於魔王位置生成小果凍。
+        if (ex) events.push({ kind: 'split', count: EX_JELLORD.splitCount });
       }
       return events;
+    },
+    stun(durationMs: number): void {
+      if (defeated) return;
+      state = 'idle';
+      timerMs = durationMs;
     },
   };
 }

@@ -4,6 +4,14 @@
 export const HOMING_RANGE_PX = 320;
 export const HOMING_TURN_RAD_PER_MS = 0.006;
 
+// 魔王房準星輔助（§54 難度根修，稽核 P0 替代案與降盤旋並用）：玩家星彈對魔王本體
+// 微幅導向——地面水平射擊自然上彎命中盤旋帶，保底標準星路線不依賴拍翅精度；
+// 轉率僅追蹤彈 1/5，仍需大致對向（非自動瞄準）。
+export const BOSS_AIM_ASSIST = {
+  rangePx: 560,
+  turnRadPerMs: 0.0012,
+} as const;
+
 export interface HomingCandidate {
   x: number;
   y: number;

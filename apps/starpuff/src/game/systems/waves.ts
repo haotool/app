@@ -38,6 +38,8 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   spora: 330,
   gusty: 220,
   boomy: 330,
+  magno: 330,
+  mirri: 330,
 };
 
 const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
@@ -96,7 +98,14 @@ export function createWaveRunner(
     let x: number;
     if (level.boss) {
       // boss 單屏世界寬 = 當前視寬（§28），右緣入場點隨之計算。
-      x = spawnCounter % 2 === 0 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+      // 難度根修（§54）：補給自玩家遠側入場——供給定位是彈藥，走向玩家的路程即
+      // 拾取節奏，不形成近身第二傷害源。
+      const playerX = enemies.targetX();
+      if (playerX !== null) {
+        x = playerX < scene.scale.width / 2 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+      } else {
+        x = spawnCounter % 2 === 0 ? scene.scale.width - SPAWN_MARGIN_X : SPAWN_MARGIN_X;
+      }
     } else {
       // 生成邊距讀動態視寬（§28）：玩家前方「視野外側」隨邏輯寬 854–1200 變化。
       const scrollX = scene.cameras.main.scrollX;
@@ -109,12 +118,12 @@ export function createWaveRunner(
     enemies.spawn(kind, x, SPAWN_Y[kind]);
   }
 
-  function showTutorial(): void {
+  function showTutorial(text: string, fontSize = '24px'): void {
     // 教學浮字 y=0.46：與 STAGE 公告（hud y=0.34）垂直錯開，進關 1.4s 內不再同屏重疊。
     tutorialText = scene.add
-      .text(scene.scale.width / 2, scene.scale.height * 0.46, TUTORIAL_TEXT, {
+      .text(scene.scale.width / 2, scene.scale.height * 0.46, text, {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '24px',
+        fontSize,
         color: '#3a3a4a',
         align: 'center',
       })
@@ -158,7 +167,9 @@ export function createWaveRunner(
         nameZh: level.nameZh,
         killQuota: level.killQuota,
       });
-      if (level.tutorial) showTutorial();
+      if (level.tutorial) showTutorial(TUTORIAL_TEXT);
+      // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
+      else if (level.hint) showTutorial(level.hint, '20px');
     },
 
     update(deltaMs: number) {

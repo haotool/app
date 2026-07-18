@@ -55,6 +55,7 @@ export interface EliteSpec {
 
 // v8 契約變更（§50）：elite 單值改 elites 陣列（L6 雙精英）；boss 改品種標記
 //（'jellord'／'noctra'／null，truthy 語意與舊 boolean 相容）。
+// v9（§60）：hint 為關卡開場提示浮字（資料驅動，L8 星化教學用），無則不顯示。
 export interface LevelSpec {
   id: LevelId;
   nameZh: string;
@@ -72,6 +73,7 @@ export interface LevelSpec {
   elites: readonly EliteSpec[];
   boss: BossKind | null;
   tutorial: boolean;
+  hint?: string;
 }
 
 // v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
@@ -260,9 +262,12 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 3500,
     maxOnScreen: 2,
     safeZoneTailPx: 0,
+    // v9 攻略多樣化（§58）：補生加入 shelly（暈眩窗可吸）供殼化反彈路徑；
+    // 飢荒保證律取保守值（shelly 不計入），jelly/floaty 仍佔 0.8。
     enemyMix: [
-      { kind: 'jelly', weight: 0.6 },
-      { kind: 'floaty', weight: 0.4 },
+      { kind: 'jelly', weight: 0.5 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'shelly', weight: 0.2 },
     ],
     platforms: [],
     // §29：boss 關僅裝飾；decor x 以資料 worldWidth 為基準，stage 依當前視寬等比換算。
@@ -428,17 +433,23 @@ export const LEVELS: readonly LevelSpec[] = [
     bgKey: 'bg-eclipse',
     worldWidth: 854,
     killQuota: 0,
-    spawnIntervalMs: 3200,
-    maxOnScreen: 2,
+    // 難度根修（§54）：供給怪定位是彈藥非第二傷害源——間隔 3200 → 4500、同屏 2 → 1、
+    // 移除俯衝型 gusty（疾風味由 floaty 供給）；彈藥保證由飢荒立即補生承擔（§26）。
+    spawnIntervalMs: 4500,
+    maxOnScreen: 1,
     safeZoneTailPx: 0,
-    // 補生全可吸（§26 飢荒保證律）：gusty 歸疾風味。
+    // 補生全可吸（§26 飢荒保證律）；v9（§58）加 zappy 供雷化斷召路徑。
     enemyMix: [
-      { kind: 'jelly', weight: 0.4 },
-      { kind: 'floaty', weight: 0.3 },
-      { kind: 'gusty', weight: 0.3 },
+      { kind: 'jelly', weight: 0.45 },
+      { kind: 'floaty', weight: 0.35 },
+      { kind: 'zappy', weight: 0.2 },
     ],
     platforms: [],
-    elements: [],
+    // v9 攻略多樣化（§58）：雙彈簧板提供非風化的到空路徑（過 stageModel 掃掠背擋）。
+    elements: [
+      { kind: 'spring', x: 190, y: 391 },
+      { kind: 'spring', x: 664, y: 391 },
+    ],
     decor: [
       { key: 'prop-throne-1', x: 110 },
       { key: 'prop-throne-2', x: 320 },
@@ -449,6 +460,150 @@ export const LEVELS: readonly LevelSpec[] = [
     easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
     elites: [],
     boss: 'noctra',
+    tutorial: false,
+  },
+  // v9 世界擴張（§60）——L8 磁極洞窟：Magno 主場磁場干擾＋drilly 地下突襲組合、
+  // 首次星化教學提示（hint 浮字）；精英磁暴磁極獸。
+  {
+    id: 8,
+    nameZh: '磁極洞窟',
+    bgKey: 'bg-cavern',
+    worldWidth: 3400,
+    killQuota: 11,
+    spawnIntervalMs: 1400,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §60 入編：magno 主場 26%＋zappy 16%（雷化素材充足）；可吸佔比 0.74
+    //（magno/zappy/jelly/glowy 恆可吸；drilly 破土窗保守不計）。
+    enemyMix: [
+      { kind: 'magno', weight: 0.26 },
+      { kind: 'zappy', weight: 0.16 },
+      { kind: 'jelly', weight: 0.16 },
+      { kind: 'glowy', weight: 0.16 },
+      { kind: 'drilly', weight: 0.13 },
+      { kind: 'spiky', weight: 0.13 },
+    ],
+    platforms: [
+      { x: 520, y: 336, w: 150 },
+      { x: 900, y: 272, w: 130 },
+      { x: 1350, y: 336, w: 150 },
+      { x: 1980, y: 300, w: 140 },
+      { x: 2450, y: 336, w: 140 },
+      { x: 2900, y: 272, w: 130 },
+    ],
+    // §29 推進：單向 ×3＋移動 ×1＋彈簧 ×1＋破磚 ×2（磁場中彈道不可靠，破磚補彈救急）。
+    elements: [
+      { kind: 'oneway', x: 700, y: 320, w: 140 },
+      { kind: 'oneway', x: 1650, y: 336, w: 140 },
+      { kind: 'oneway', x: 2680, y: 320, w: 130 },
+      { kind: 'moving', x: 2150, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'spring', x: 1150, y: 391 },
+      { kind: 'breakable', x: 800, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2300, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：洞窟沿用 arena 主題道具（水晶/星柱/光苔/浮石——晶洞質感）。
+    decor: [
+      { key: 'prop-arena-1', x: 300 },
+      { key: 'prop-arena-2', x: 850 },
+      { key: 'prop-arena-3', x: 1400 },
+      { key: 'prop-arena-4', x: 1950 },
+      { key: 'prop-arena-1', x: 2500 },
+      { key: 'prop-arena-2', x: 3050 },
+    ],
+    // §24 彩蛋八：連吞兩隻雷鏈味（magno/zappy 皆計，雷化素材湊法教學）。
+    easterEggs: [{ trigger: 'eat-sequence', reward: 'gold-star', sequence: ['zappy', 'zappy'] }],
+    // §60：磁暴磁極獸——磁場週期縮時 1.3 倍，擊敗掉重鑽味。
+    elites: [
+      {
+        kind: 'magno',
+        x: 1750,
+        hp: 18,
+        scale: 1.5,
+        tint: 0x6a80c8,
+        speedMul: 1.3,
+        rewardFlavor: 'drilly',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    hint: '同系星彈集滿 3 發，地面長按吸入鍵 0.6 秒星化變身',
+  },
+  // L9 鏡影迴廊：Mirri 主場反射主題＋移動平台複合陣＋雙精英；通關提示 EX 入口解鎖。
+  {
+    id: 9,
+    nameZh: '鏡影迴廊',
+    bgKey: 'bg-mirror',
+    worldWidth: 3700,
+    killQuota: 12,
+    spawnIntervalMs: 1150,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §60 入編：mirri 主場 24%＋magno 12%（雙新怪同場）；可吸佔比 0.9。
+    enemyMix: [
+      { kind: 'mirri', weight: 0.24 },
+      { kind: 'boomy', weight: 0.12 },
+      { kind: 'magno', weight: 0.12 },
+      { kind: 'floaty', weight: 0.14 },
+      { kind: 'spora', weight: 0.14 },
+      { kind: 'gusty', weight: 0.14 },
+      { kind: 'chompy', weight: 0.1 },
+    ],
+    platforms: [
+      { x: 430, y: 336, w: 140 },
+      { x: 800, y: 272, w: 130 },
+      { x: 1250, y: 336, w: 140 },
+      { x: 1850, y: 300, w: 130 },
+      { x: 2350, y: 336, w: 140 },
+      { x: 2800, y: 272, w: 120 },
+      { x: 3200, y: 336, w: 130 },
+    ],
+    // §29 複合陣：雙移動平台＋雙彈簧＋單向 ×3＋破磚 ×2（反射窗躲位靠垂直機動）。
+    elements: [
+      { kind: 'oneway', x: 1000, y: 320, w: 130 },
+      { kind: 'oneway', x: 2100, y: 320, w: 130 },
+      { kind: 'oneway', x: 3000, y: 336, w: 130 },
+      { kind: 'moving', x: 1500, y: 320, w: 120, axis: 'x', range: 160, durationMs: 2200 },
+      { kind: 'moving', x: 2600, y: 336, w: 120, axis: 'y', range: -56, durationMs: 2000 },
+      { kind: 'spring', x: 1700, y: 391 },
+      { kind: 'spring', x: 3300, y: 391 },
+      { kind: 'breakable', x: 650, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2250, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：迴廊沿用 arena 主題道具（水晶/星柱——鏡晶質感）。
+    decor: [
+      { key: 'prop-arena-3', x: 320 },
+      { key: 'prop-arena-4', x: 870 },
+      { key: 'prop-arena-1', x: 1420 },
+      { key: 'prop-arena-2', x: 1970 },
+      { key: 'prop-arena-3', x: 2520 },
+      { key: 'prop-arena-4', x: 3070 },
+    ],
+    // §24 彩蛋九：連吞兩隻迴旋味（mirri/boomy 皆計）。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'full-magazine', sequence: ['boomy', 'boomy'] },
+    ],
+    // §60 雙精英：銀鏡鏡面蟲（前段）＋暗磁磁極獸（後段），房距 1300 ≥ 2×門距。
+    elites: [
+      {
+        kind: 'mirri',
+        x: 1250,
+        hp: 17,
+        scale: 1.5,
+        tint: 0xb8c0d8,
+        speedMul: 1.4,
+        rewardFlavor: 'spora',
+      },
+      {
+        kind: 'magno',
+        x: 2550,
+        hp: 19,
+        scale: 1.5,
+        tint: 0x5a70b8,
+        speedMul: 1.3,
+        rewardFlavor: 'boomy',
+      },
+    ],
+    boss: null,
     tutorial: false,
   },
 ];

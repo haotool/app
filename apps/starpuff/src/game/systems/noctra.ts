@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
-import { createNoctraFsm, type NoctraCommand } from '../logic/noctraFsm';
+import { EX_NOCTRA, NOCTRA, createNoctraFsm, type NoctraCommand } from '../logic/noctraFsm';
 import { playSfx } from '../audio/sfx';
-import type { BossHandle } from './boss';
+import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
 
 // 暗月蝠王 Noctra 呈現層（GAME_DESIGN §54）：與 systems/boss.ts 同 BossHandle 介面，
@@ -14,13 +14,18 @@ const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 150;
 const BODY_H = 110;
 // 空中型（§54）：常態盤旋高度與側緣邊距。
-const HOVER_Y = 168;
-const SIDE_MARGIN_X = 130;
+// 難度根修（實測席稽核）：168 → 246——含 ±14 呼吸浮動下，單跳頂點星彈（y≈282）
+// 恆在命中帶（|Δy| < 星半徑＋碰撞半高 ≈59）內，地面保底線（單跳點射）穩定成立；
+// 拍翅為加成非必需。
+const HOVER_Y = 246;
+// 難度根修：130 → 190——收窄盤旋掃幅，牆側留出玩家可站的安全喘息帶（錨點打法成立）。
+const SIDE_MARGIN_X = 190;
 // 俯掠帶高度（§54 P3）：站立可躲（帶底 330 < 站立頂 ~360）、跳躍會撞。
 const SWEEP_Y = 280;
 // 招式預警時長：dive 落點標記、sweep 橫帶閃爍、bomb 落點標記提前量。
-const DIVE_TELEGRAPH_MS = 550;
-const SWEEP_TELEGRAPH_MS = 600;
+// 難度根修：dive 550 → 720、sweep 600 → 750（普通反應 250-400ms 可讀可躲）。
+const DIVE_TELEGRAPH_MS = 720;
+const SWEEP_TELEGRAPH_MS = 750;
 const BOMB_PREDROP_MS = 300;
 const BARRAGE_SPEED = 170;
 const BOMB_TINT = 0x9f8fe8;
@@ -64,10 +69,18 @@ export interface NoctraHooks {
   summonFloaty(cap: number): void;
 }
 
-export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandle {
+export interface NoctraOptions {
+  ex?: boolean;
+}
+
+export function createNoctra(
+  scene: Phaser.Scene,
+  hooks: NoctraHooks,
+  options: NoctraOptions = {},
+): BossHandle {
   ensureTextures(scene);
 
-  const fsm = createNoctraFsm();
+  const fsm = createNoctraFsm({ ex: options.ex === true });
   const minionHandlers: (() => void)[] = [];
   const timers: Phaser.Time.TimerEvent[] = [];
   let active = false;
@@ -76,6 +89,10 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
   let hoverMs = 0;
   // 盤旋/俯衝互斥：演出 tween 接管期間停用盤旋駕駛。
   let steering = true;
+  // 俯衝落地 hit window（§58）：窗內頭頂下砸觸發長暈；召喚待決計時供雷化中斷取消。
+  let slamWindowUntilMs = 0;
+  let stunnedUntilMs = 0;
+  let pendingSummon: Phaser.Time.TimerEvent | null = null;
 
   const viewW = () => scene.scale.width;
 
@@ -148,6 +165,8 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
     ball.setTint(tint);
+    // 池回收重用：殼化反彈標記須復位。
+    ball.setData('reflected', false);
     return ball;
   };
 
@@ -173,7 +192,8 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
     }
   };
 
-  // 俯衝（§54）：前搖鎖定玩家落點（telegraph＋shake＋變色）→ 俯衝至地面帶 → 回升。
+  // 俯衝（§54/§58）：前搖鎖定玩家落點（telegraph＋shake＋變色）→ 俯衝至地面帶 → 回升；
+  // 落地瞬間開啟頭頂下砸長暈 hit window。
   const doDive = () => {
     wingbeat.pause();
     steering = false;
@@ -196,12 +216,15 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
             onComplete: () => {
               playSfx('boss-slam');
               scene.cameras.main.shake(140, 0.007);
+              slamWindowUntilMs = scene.time.now + NOCTRA.diveStunWindowMs;
             },
           },
           {
             y: HOVER_Y,
             duration: 420 / fsm.speedFactor,
             ease: 'Quad.easeOut',
+            // 落地滯留（難度根修）：貼地 hold 給地面水平星彈明確輸出窗後才回升。
+            delay: NOCTRA.diveHoldMs / fsm.speedFactor,
           },
         ],
         onComplete: () => {
@@ -212,7 +235,7 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
     });
   };
 
-  // 召喚（§54 P2）：短促蓄勢後由 GameScene 依 cap 補場。
+  // 召喚（§54/§58 P2）：短促蓄勢後由 GameScene 依 cap 補場；蓄勢期可被雷化鏈電中斷。
   const doSummon = (cap: number) => {
     flashWhite();
     playSfx('charge');
@@ -224,9 +247,33 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
       yoyo: true,
       ease: 'Sine.easeInOut',
     });
-    delay(250, () => {
+    pendingSummon = scene.time.delayedCall(250, () => {
+      pendingSummon = null;
       if (!dying) hooks.summonFloaty(cap);
     });
+    timers.push(pendingSummon);
+  };
+
+  // 月蝕彈幕矩陣（§58 EX P3）：分列直落彈網逐波落下，每波隨機留缺口通道。
+  const doEclipse = (cols: number, rows: number, gapCols: number) => {
+    flashWhite();
+    playSfx('starstorm', 0.9);
+    for (let row = 0; row < rows; row += 1) {
+      delay((row * EX_NOCTRA.eclipseRowDelayMs) / fsm.speedFactor, () => {
+        if (dying) return;
+        const gaps = new Set<number>();
+        while (gaps.size < gapCols) gaps.add(Phaser.Math.Between(0, cols - 1));
+        for (let col = 0; col < cols; col += 1) {
+          if (gaps.has(col)) continue;
+          const x = ((col + 0.5) * viewW()) / cols;
+          spawnTelegraph(scene, x, GROUND_TOP - 6, 500);
+          const ball = spawnBall(x, -14, BARRAGE_TINT);
+          if (!ball) continue;
+          (ball.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+          ball.setVelocity(0, EX_NOCTRA.eclipseFallSpeed * fsm.speedFactor);
+        }
+      });
+    }
   };
 
   // 狂暴彈幕（§54 P3）：全向放射彈環。
@@ -308,6 +355,9 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
       case 'sweep':
         doSweep();
         return;
+      case 'eclipse':
+        doEclipse(command.cols, command.rows, command.gapCols);
+        return;
       default: {
         const unhandled: never = command;
         throw new Error(`未知指令：${String(unhandled)}`);
@@ -380,6 +430,8 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
     delay(INTRO_RESET_MS, () => {
       wingbeat.play();
       active = true;
+      // EX 入場變色（§58）：緋紅呼吸循環作為變體識別基調。
+      if (options.ex) startTintCycle({ r: 255, g: 255, b: 255 }, { r: 216, g: 75, b: 106 }, 900);
     });
   };
 
@@ -398,8 +450,17 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
         delay(INTRO_PUSH_MS * 0.5, introSwoop);
       });
     },
-    applyDamage(amount: number) {
+    applyDamage(amount: number, source?: BossDamageSource) {
       if (!active) return;
+      // 雷化鏈電中斷召喚（§58）：FSM 裁決成功時取消待決召喚並播中斷演出。
+      if (source === 'volt' && fsm.interruptSummon()) {
+        pendingSummon?.remove(false);
+        pendingSummon = null;
+        playSfx('break');
+        shake();
+        scene.tweens.killTweensOf(sprite);
+        sprite.setScale(baseScaleX, baseScaleY);
+      }
       for (const event of fsm.takeDamage(amount)) {
         switch (event.kind) {
           case 'damaged':
@@ -434,12 +495,14 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 盤旋駕駛：水平緩擺＋垂直呼吸浮動；演出 tween 接管期間讓位。
+      // 難度根修：掃速 0.0009 → 0.0007——峰值橫移降至玩家走速以下（P1 約 208px/s），
+      // 保持間距的走位真正可行（原值 267px/s 追過玩家 220px/s）。
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
         const span = viewW() / 2 - SIDE_MARGIN_X;
-        sprite.x = viewW() / 2 + Math.sin(hoverMs * 0.0009) * span;
+        sprite.x = viewW() / 2 + Math.sin(hoverMs * 0.0007) * span;
         sprite.y = HOVER_Y + Math.sin(hoverMs * 0.0021) * 14;
-        sprite.setFlipX(Math.cos(hoverMs * 0.0009) < 0);
+        sprite.setFlipX(Math.cos(hoverMs * 0.0007) < 0);
       }
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;
@@ -467,6 +530,43 @@ export function createNoctra(scene: Phaser.Scene, hooks: NoctraHooks): BossHandl
     },
     isActive() {
       return active;
+    },
+    // 俯衝落地窗長暈（§58）：僅窗內頭頂命中觸發；窗外命中僅回彈不暈。
+    trySlamStun() {
+      if (!active || dying) return false;
+      if (scene.time.now > slamWindowUntilMs || scene.time.now < stunnedUntilMs) return false;
+      stunnedUntilMs = scene.time.now + NOCTRA.diveStunMs;
+      fsm.stun(NOCTRA.diveStunMs);
+      playSfx('metal', 0.7);
+      // 長暈演出：凍結演出 tween、貼地昏沉搖擺，期滿回升盤旋。
+      scene.tweens.killTweensOf(sprite);
+      steering = false;
+      wingbeat.pause();
+      sprite.setTint(0xcfcfcf);
+      scene.tweens.add({
+        targets: sprite,
+        angle: { from: -8, to: 8 },
+        duration: 200,
+        yoyo: true,
+        repeat: Math.floor(NOCTRA.diveStunMs / 400),
+      });
+      delay(NOCTRA.diveStunMs, () => {
+        if (dying) return;
+        sprite.setAngle(0);
+        if (enrageTween) enrageTween.resume();
+        else sprite.clearTint();
+        scene.tweens.add({
+          targets: sprite,
+          y: HOVER_Y,
+          duration: 420,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            steering = true;
+            wingbeat.resume();
+          },
+        });
+      });
+      return true;
     },
     getBody() {
       return sprite;

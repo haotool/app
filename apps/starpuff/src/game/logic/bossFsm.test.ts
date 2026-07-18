@@ -197,3 +197,43 @@ describe('createBossFsm 死亡', () => {
     expect(events.map((e) => e.kind)).toEqual(['damaged', 'phase', 'defeated']);
   });
 });
+
+describe('EX 變體（§58）', () => {
+  it('HP ×1.5（90）、節奏 ×1.15；階段門檻依 EX maxHp 計', () => {
+    const fsm = createBossFsm({ ex: true });
+    expect(fsm.maxHp).toBe(90);
+    expect(fsm.speedFactor).toBeCloseTo(1.15, 5);
+    // P2 門檻 ≤50%（45）：EX 血量下 46 不轉、45 轉。
+    fsm.takeDamage(44);
+    expect(fsm.phase).toBe('p1');
+    fsm.takeDamage(1);
+    expect(fsm.phase).toBe('p2');
+    expect(fsm.speedFactor).toBeCloseTo(1.3 * 1.15, 5);
+  });
+
+  it('EX 擊破追加 split 事件（分裂 3 隻小果凍）；一般模式不分裂', () => {
+    const exFsm = createBossFsm({ ex: true });
+    const events = exFsm.takeDamage(90);
+    expect(events).toContainEqual({ kind: 'split', count: 3 });
+    const normal = createBossFsm();
+    expect(normal.takeDamage(60)).not.toContainEqual({ kind: 'split', count: 3 });
+  });
+});
+
+describe('頭頂命中短暈（§58 slamStun）', () => {
+  it('stun 後停拍 slamStunMs：期間 tick 無指令，期滿恢復攻擊循環', () => {
+    const fsm = createBossFsm();
+    fsm.stun(BOSS.slamStunMs);
+    expect(fsm.tick(BOSS.slamStunMs - 1)).toBeNull();
+    const command = fsm.tick(1);
+    expect(command).not.toBeNull();
+    expect(command?.kind).not.toBe('idle');
+  });
+
+  it('死亡後 stun 靜默', () => {
+    const fsm = createBossFsm();
+    fsm.takeDamage(60);
+    fsm.stun(900);
+    expect(fsm.tick(2000)).toBeNull();
+  });
+});

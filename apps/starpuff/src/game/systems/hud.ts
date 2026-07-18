@@ -10,6 +10,7 @@ import {
   type MagazineSlot,
 } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
 import { fillStarPath } from './fx';
 import { openPauseMenu } from './pause';
 
@@ -288,6 +289,30 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
+  // 星化就緒脈動（§57）：同系 ×3 滿匣時彈藥列縮放脈動＋外圈套形態色，長按提示可變身。
+  let readyTween: Phaser.Tweens.Tween | null = null;
+  function updateTransformReady(magazine: readonly MagazineSlot[]): boolean {
+    const form = eligibleForm(magazine);
+    if (form) {
+      slotRings.forEach((ring) => ring.setVisible(true).setTint(TRANSFORM_FORMS[form].tint));
+      readyTween ??= scene.tweens.add({
+        targets: [...ammoStars, ...slotRings],
+        scale: 1.22,
+        duration: 340,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      return true;
+    }
+    if (readyTween) {
+      readyTween.destroy();
+      readyTween = null;
+      [...ammoStars, ...slotRings].forEach((image) => image.setScale(1));
+    }
+    return false;
+  }
+
   // 槽位彈匣（§23/§46）：每槽依屬性上色、charged/gold 金邊；混合槽星芯配方色、
   // 外圈第二味色（雙色可讀）；標準星白 tint 保留原色。
   function updateAmmo(magazine: readonly MagazineSlot[]): void {
@@ -372,7 +397,10 @@ export function createHud(scene: Phaser.Scene): Hud {
 
   bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => updateHearts(hp));
   bind(GameEvents.PLAYER_HEALED, ({ hp }) => updateHearts(hp));
-  bind(GameEvents.AMMO_CHANGED, ({ magazine }) => updateAmmo(magazine));
+  bind(GameEvents.AMMO_CHANGED, ({ magazine }) => {
+    updateAmmo(magazine);
+    updateTransformReady(magazine);
+  });
   bind(GameEvents.BOSS_SPAWNED, () => {
     barFill.scaleX = fullScaleX;
     scene.tweens.add({

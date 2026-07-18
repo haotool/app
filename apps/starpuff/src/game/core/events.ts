@@ -1,5 +1,5 @@
 import type { MagazineSlot, StarFlavor } from './config';
-import type { BossPhase, EnemyKind, LevelId } from './types';
+import type { BossPhase, EnemyKind, LevelId, TransformForm } from './types';
 
 // 事件契約：跨系統唯一溝通管道（GAME_DESIGN §11，凍結）。
 // 匯流排使用 GameScene 的 scene.events，各系統不得直接互相呼叫。
@@ -17,6 +17,8 @@ export const GameEvents = {
   SKILL_SLAM_LANDED: 'skill:slam-landed',
   // v6 殼盾（§40）：成功格擋由 player 發出，GameScene 結算反擊星爆。
   SKILL_SHIELD_BLOCK: 'skill:shield-block',
+  // v9 星化形態技（§57）：player 發出，GameScene 結算世界效果（雷化鏈電束／風化落地衝擊）。
+  SKILL_TRANSFORM_STRIKE: 'skill:transform-strike',
   BOSS_SPAWNED: 'boss:spawned',
   BOSS_DAMAGED: 'boss:damaged',
   BOSS_PHASE: 'boss:phase',
@@ -54,6 +56,13 @@ export interface GameEventPayloads {
   [GameEvents.SKILL_STARSTORM]: { x: number; y: number };
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
   [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };
+  [GameEvents.SKILL_TRANSFORM_STRIKE]: {
+    kind: 'volt-beam' | 'gale-landing';
+    form: TransformForm;
+    x: number;
+    y: number;
+    facing: 1 | -1;
+  };
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
   [GameEvents.BOSS_PHASE]: { phase: BossPhase };

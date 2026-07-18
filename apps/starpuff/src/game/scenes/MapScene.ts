@@ -26,6 +26,8 @@ const NODE_TINTS: Record<string, number> = {
   'bg-canyon': 0xf5c9a8,
   'bg-gallery': 0xb8a8e8,
   'bg-eclipse': 0x8478c8,
+  'bg-cavern': 0x8a98c8,
+  'bg-mirror': 0xd8dce8,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;
@@ -101,6 +103,31 @@ export class MapScene extends Phaser.Scene {
     this.addResetButton(save);
     this.renderNodes(save);
 
+    // EX 解鎖提示（§60）：L9 通關且尚有 EX 未制霸時，提示魔王節點的第二入口。
+    const exPending =
+      save.levels[9]?.cleared === true &&
+      (save.levels[4]?.exCleared !== true || save.levels[7]?.exCleared !== true);
+    if (exPending) {
+      const hint = this.add
+        .text(width / 2, 96, 'EX 挑戰已解鎖：點魔王節點上方的 EX 入口', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          stroke: '#d84b6a',
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5);
+      this.tweens.add({
+        targets: hint,
+        alpha: 0.55,
+        duration: 800,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
+
     // 鍵盤備援：ENTER 直接進當前可挑戰關。
     const challenge = currentChallenge(save);
     if (challenge !== null) {
@@ -109,11 +136,11 @@ export class MapScene extends Phaser.Scene {
     this.input.keyboard?.once('keydown-ESC', () => this.scene.start(SceneKeys.Title));
   }
 
-  // v8 七節點（§50）：鋸齒路徑橫排；節點半徑收斂 30 保留名牌間距。
+  // v9 九節點（§60）：鋸齒路徑橫排；節點半徑收斂 30 保留名牌間距。
   private nodePosition(index: number): { x: number; y: number } {
     const { width } = this.scale;
-    const xs = [0.08, 0.21, 0.34, 0.47, 0.6, 0.73, 0.88];
-    const ys = [292, 232, 292, 240, 296, 234, 288];
+    const xs = [0.06, 0.165, 0.27, 0.375, 0.48, 0.585, 0.69, 0.795, 0.9];
+    const ys = [292, 232, 292, 240, 296, 234, 288, 238, 292];
     return { x: width * (xs[index] ?? 0.5), y: ys[index] ?? 270 };
   }
 
@@ -192,6 +219,8 @@ export class MapScene extends Phaser.Scene {
             strokeThickness: 3,
           })
           .setOrigin(0.5);
+        // EX 挑戰（§58）：已通關魔王節點的第二入口；EX 通關掛紀念星章（紫星）。
+        if (level.boss) this.addExEntrance(level.id, level.nameZh, x, y, save);
       }
 
       if (status === 'open' && !revealing) this.pulseNode(node);
@@ -262,6 +291,59 @@ export class MapScene extends Phaser.Scene {
     );
   }
 
+  // EX 挑戰第二入口（§58）：節點上方小徽鈕；EX 已通關改掛紫星紀念章＋可重玩。
+  private addExEntrance(
+    levelId: LevelId,
+    nameZh: string,
+    x: number,
+    y: number,
+    save: SaveData,
+  ): void {
+    const exY = y - NODE_RADIUS - 26;
+    const exCleared = save.levels[levelId]?.exCleared === true;
+    const badge = this.add
+      .text(x, exY, 'EX 挑戰', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '13px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        backgroundColor: exCleared ? '#7a5fb8' : '#d84b6a',
+        padding: { x: 8, y: 4 },
+      })
+      .setOrigin(0.5)
+      .setDepth(8);
+    this.tweens.add({
+      targets: badge,
+      scale: 1.08,
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    if (exCleared) {
+      const star = this.add
+        .image(x - NODE_RADIUS + 4, y - NODE_RADIUS + 6, 'fx-star')
+        .setDisplaySize(26, 26)
+        .setTint(0x9b7bd8)
+        .setDepth(6);
+      this.tweens.add({
+        targets: star,
+        angle: -8,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
+    addDomButton(
+      this,
+      `EX 挑戰 ${nameZh}`,
+      { x, y: exY, w: 108, h: 44 },
+      () => this.enterLevel(levelId, true),
+      `node-${levelId}-ex`,
+    );
+  }
+
   // 當前可挑戰節點脈動（§39）。
   private pulseNode(node: Phaser.GameObjects.Container): void {
     this.tweens.add({
@@ -274,12 +356,12 @@ export class MapScene extends Phaser.Scene {
     });
   }
 
-  private enterLevel(levelId: LevelId): void {
+  private enterLevel(levelId: LevelId, ex = false): void {
     unlockAudio();
     // 地圖進關同步啟動 BGM（審查修復 #724）：startBgm 冪等，重複呼叫不疊音軌。
     startBgm();
     playSfx('pop');
-    this.scene.start(SceneKeys.Game, { levelId, deaths: 0 });
+    this.scene.start(SceneKeys.Game, { levelId, deaths: 0, ex });
   }
 
   private addBackButton(): void {

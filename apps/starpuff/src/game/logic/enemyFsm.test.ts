@@ -5,17 +5,24 @@ import {
   DRILLY_FSM,
   GLOWY_FSM,
   GUSTY_FSM,
+  MAGNO_FSM,
+  MIRRI_FSM,
   SHELLY_FSM,
   SPORA_FSM,
   ZAPPY_FSM,
   boomerangVelocity,
   gustWindPush,
+  magnetPull,
   resolveDrillyHit,
+  resolveMagnoStarHit,
+  resolveMirriStarHit,
   resolveShellyHit,
   tickBoomy,
   tickDrilly,
   tickGlowy,
   tickGusty,
+  tickMagno,
+  tickMirri,
   tickShelly,
   tickSpora,
   tickZappy,
@@ -247,5 +254,74 @@ describe('Boomy 四態時序與迴旋彈道（§52）', () => {
 
   it('迴力殼恆可吸（吞下得迴旋星）', () => {
     expect(canInhale('boomy')).toBe(true);
+  });
+});
+
+describe('磁極獸 Magno（§59）', () => {
+  it('週期三相位：idle → windup（進度 0..1）→ field → 回 idle', () => {
+    expect(tickMagno(0, 16).phase).toBe('idle');
+    const windup = tickMagno(MAGNO_FSM.idleMs, 350);
+    expect(windup.phase).toBe('windup');
+    expect(windup.progress).toBeCloseTo(350 / MAGNO_FSM.windupMs, 5);
+    const field = tickMagno(MAGNO_FSM.idleMs + MAGNO_FSM.windupMs, 16);
+    expect(field.phase).toBe('field');
+    const wrap = tickMagno(MAGNO_FSM.idleMs + MAGNO_FSM.windupMs + MAGNO_FSM.fieldMs - 1, 1);
+    expect(wrap).toEqual({ magnoMs: 0, phase: 'idle', progress: 0 });
+  });
+
+  it('星彈受擊決策：field 免傷、其餘照常', () => {
+    expect(resolveMagnoStarHit('field')).toBe('immune');
+    expect(resolveMagnoStarHit('idle')).toBe('vulnerable');
+    expect(resolveMagnoStarHit('windup')).toBe('vulnerable');
+  });
+
+  it('magnetPull：域內星彈速度向磁極獸彎折、域外不動、重合不動', () => {
+    const pulled = magnetPull(100, 100, 500, 0, 200, 100, 100);
+    expect(pulled.vx).toBeGreaterThan(500);
+    expect(pulled.vy).toBe(0);
+    const above = magnetPull(100, 100, 500, 0, 100, 200, 100);
+    expect(above.vy).toBeGreaterThan(0);
+    expect(magnetPull(0, 0, 500, 0, 500, 0, 100)).toEqual({ vx: 500, vy: 0 });
+    expect(magnetPull(100, 100, 500, 0, 100, 100, 100)).toEqual({ vx: 500, vy: 0 });
+  });
+
+  it('磁極獸恆可吸（吞下得雷鏈味）', () => {
+    expect(canInhale('magno')).toBe(true);
+  });
+});
+
+describe('鏡面蟲 Mirri（§59）', () => {
+  it('三態時序：roam 期滿入 mirror、mirror 期滿入 cool、cool 期滿回 roam', () => {
+    expect(tickMirri('roam', MIRRI_FSM.roamMs - 16, 16).entered).toBe('mirror');
+    expect(tickMirri('mirror', MIRRI_FSM.mirrorMs - 16, 16).entered).toBe('cool');
+    expect(tickMirri('cool', MIRRI_FSM.coolMs - 16, 16).entered).toBe('roam');
+    expect(tickMirri('roam', 0, 16).entered).toBeNull();
+  });
+
+  it('鏡面預告：roam 末段 preflicker 閃爍，前段恆暗', () => {
+    const early = tickMirri('roam', 100, 16);
+    expect(early.flickerBright).toBe(false);
+    const late = tickMirri('roam', MIRRI_FSM.roamMs - MIRRI_FSM.preflickerMs, 10);
+    // 末段進入明暗交替節奏（依 flickerMs 週期，至少存在亮幀）。
+    let bright = late.flickerBright;
+    let stateMs = late.stateMs;
+    for (let i = 0; i < 6 && !bright; i += 1) {
+      const next = tickMirri('roam', stateMs, MIRRI_FSM.flickerMs);
+      bright = next.flickerBright;
+      stateMs = next.stateMs;
+    }
+    expect(bright).toBe(true);
+  });
+
+  it('星彈受擊決策：mirror 反射、roam/cool 照常', () => {
+    expect(resolveMirriStarHit('mirror')).toBe('reflect');
+    expect(resolveMirriStarHit('roam')).toBe('vulnerable');
+    expect(resolveMirriStarHit('cool')).toBe('vulnerable');
+  });
+
+  it('反射彈壽命有限（anti-softlock）：reflectLifeMs 有界且鏡面蟲恆可吸', () => {
+    expect(MIRRI_FSM.reflectLifeMs).toBeGreaterThan(0);
+    expect(MIRRI_FSM.reflectLifeMs).toBeLessThanOrEqual(3000);
+    expect(canInhale('mirri')).toBe(true);
   });
 });

@@ -238,6 +238,114 @@ export function tickBoomy(state: BoomyState, stateMs: number, deltaMs: number): 
   return { state, stateMs: next, entered: null };
 }
 
+// 磁極獸 Magno 週期（§59）：緩行 idle → 末段前搖 windup 0.7s（預警圈擴張）→ 磁場 field
+// 1.9s（吸偏玩家飛行中星彈＋星彈免傷殼面，鼓勵近戰/下砸/變身應對）→ 回 idle。
+export const MAGNO_FSM = {
+  idleMs: 2400,
+  windupMs: 700,
+  fieldMs: 1900,
+  fieldRadiusPx: 150,
+  pullAccelPxPerSec2: 1500,
+} as const;
+
+export type MagnoPhase = 'idle' | 'windup' | 'field';
+
+export interface MagnoTick {
+  magnoMs: number;
+  phase: MagnoPhase;
+  // windup 期預警擴張進度 0..1；其餘相位恆 0。
+  progress: number;
+}
+
+export function tickMagno(magnoMs: number, deltaMs: number): MagnoTick {
+  const total = MAGNO_FSM.idleMs + MAGNO_FSM.windupMs + MAGNO_FSM.fieldMs;
+  const next = magnoMs + deltaMs;
+  if (next >= total) return { magnoMs: 0, phase: 'idle', progress: 0 };
+  if (next >= MAGNO_FSM.idleMs + MAGNO_FSM.windupMs) {
+    return { magnoMs: next, phase: 'field', progress: 0 };
+  }
+  if (next >= MAGNO_FSM.idleMs) {
+    return {
+      magnoMs: next,
+      phase: 'windup',
+      progress: (next - MAGNO_FSM.idleMs) / MAGNO_FSM.windupMs,
+    };
+  }
+  return { magnoMs: next, phase: 'idle', progress: 0 };
+}
+
+// 星彈受擊決策（§59）：磁場期星彈被磁殼吸附失效（僅星彈；下砸/波及照常結算）。
+export type MagnoStarHitOutcome = 'immune' | 'vulnerable';
+
+export function resolveMagnoStarHit(phase: MagnoPhase): MagnoStarHitOutcome {
+  return phase === 'field' ? 'immune' : 'vulnerable';
+}
+
+// 磁場吸偏（§59）：域內星彈速度向磁極獸逐幀彎折；域外或重合不動。純函式供 vitest。
+export function magnetPull(
+  starX: number,
+  starY: number,
+  vx: number,
+  vy: number,
+  magnoX: number,
+  magnoY: number,
+  deltaMs: number,
+): { vx: number; vy: number } {
+  const dx = magnoX - starX;
+  const dy = magnoY - starY;
+  const dist = Math.hypot(dx, dy);
+  if (dist === 0 || dist > MAGNO_FSM.fieldRadiusPx) return { vx, vy };
+  const accel = (MAGNO_FSM.pullAccelPxPerSec2 * deltaMs) / 1000;
+  return { vx: vx + (dx / dist) * accel, vy: vy + (dy / dist) * accel };
+}
+
+// 鏡面蟲 Mirri 三態（§59）：巡邏 roam 2.4s（末段 0.4s 鏡面預告閃爍）→ 鏡面 mirror 1.5s
+//（反射玩家星彈為傷害彈）→ 冷卻 cool 1.1s（黯淡明確可打）→ roam。
+export const MIRRI_FSM = {
+  roamMs: 2400,
+  preflickerMs: 400,
+  mirrorMs: 1500,
+  coolMs: 1100,
+  flickerMs: 90,
+  reflectSpeed: 300,
+  reflectLifeMs: 1400,
+} as const;
+
+export type MirriState = 'roam' | 'mirror' | 'cool';
+
+export interface MirriTick {
+  state: MirriState;
+  stateMs: number;
+  entered: MirriState | null;
+  // roam 末段鏡面預告：true 亮銀、false 原色；其餘相位恆 false。
+  flickerBright: boolean;
+}
+
+export function tickMirri(state: MirriState, stateMs: number, deltaMs: number): MirriTick {
+  const next = stateMs + deltaMs;
+  if (state === 'roam' && next >= MIRRI_FSM.roamMs) {
+    return { state: 'mirror', stateMs: 0, entered: 'mirror', flickerBright: false };
+  }
+  if (state === 'mirror' && next >= MIRRI_FSM.mirrorMs) {
+    return { state: 'cool', stateMs: 0, entered: 'cool', flickerBright: false };
+  }
+  if (state === 'cool' && next >= MIRRI_FSM.coolMs) {
+    return { state: 'roam', stateMs: 0, entered: 'roam', flickerBright: false };
+  }
+  const flickerBright =
+    state === 'roam' &&
+    next >= MIRRI_FSM.roamMs - MIRRI_FSM.preflickerMs &&
+    Math.floor(next / MIRRI_FSM.flickerMs) % 2 === 0;
+  return { state, stateMs: next, entered: null, flickerBright };
+}
+
+// 星彈受擊決策（§59）：鏡面態反射（反射彈有傷害）；其餘照常結算。
+export type MirriStarHitOutcome = 'reflect' | 'vulnerable';
+
+export function resolveMirriStarHit(state: MirriState): MirriStarHitOutcome {
+  return state === 'mirror' ? 'reflect' : 'vulnerable';
+}
+
 // 迴旋彈道（§52/§53 共用）：去程勻減速、turnMs 折返點反向，2×turnMs 回到原點等速；
 // 敵方殼刃與玩家迴旋星同走此純函式，回程亦有判定。
 export function boomerangVelocity(

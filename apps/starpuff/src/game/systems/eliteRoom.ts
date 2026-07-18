@@ -1,10 +1,10 @@
 import type Phaser from 'phaser';
-import { EGG_HP_CAP, PLAYER } from '../core/config';
 import type { EliteSpec } from '../logic/levels';
 import { clampEliteX } from '../logic/stageModel';
 import { playSfx } from '../audio/sfx';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
+import { spawnHealPickup } from './pickups';
 import type { PlayerHandle } from './player';
 
 // 中魔王精英房（GAME_DESIGN §48）：武裝/軟鎖門/血條/箝制/掉落/逾時全流程；
@@ -135,38 +135,14 @@ export function createEliteRoom(
     hooks.fx().starBurst(spec.x, groundTop - 80);
     // 稀有味掉落：正式 spawn 管線，吞下即得稀有星味。
     hooks.enemies().spawn(spec.rewardFlavor, spec.x - 60, groundTop - 120);
-    dropHealFood(spec.x + 60, groundTop - 100);
-  }
-
-  // 回復食物：心形拾取物，觸碰回復 2 HP；15s 未拾取自動淡逝。
-  function dropHealFood(x: number, y: number): void {
-    const food = scene.add.image(x, y, 'hud-heart').setDisplaySize(30, 30).setDepth(72);
-    scene.tweens.add({
-      targets: food,
-      y: y - 10,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    const zone = scene.add.zone(x, y, 44, 60);
-    scene.physics.add.existing(zone, true);
-    const cleanup = (): void => {
-      scene.tweens.killTweensOf(food);
-      food.destroy();
-      zone.destroy();
-    };
-    scene.physics.add.overlap(hooks.player().sprite, zone, () => {
-      if (!food.active) return;
-      hooks
-        .player()
-        .heal(HEAL_FOOD_HP, hooks.playerHp() > PLAYER.maxHp ? EGG_HP_CAP : PLAYER.maxHp);
-      playSfx('swallow');
-      cleanup();
-    });
-    scene.time.delayedCall(15_000, () => {
-      if (food.active) cleanup();
-    });
+    // 回復食物：共用愛心拾取管線（§48/§62 單一實作），觸碰回復 2 HP。
+    spawnHealPickup(
+      scene,
+      spec.x + 60,
+      groundTop - 100,
+      { player: () => hooks.player(), playerHp: () => hooks.playerHp() },
+      { healHp: HEAL_FOOD_HP },
+    );
   }
 
   return {

@@ -7,6 +7,8 @@ export interface LevelSaveEntry {
   cleared: boolean;
   bestTimeMs: number;
   eggsFound: string[];
+  // v9 EX 變體通關（§58）：additive 欄位——舊存檔缺省視為 false，schema v1 不升版。
+  exCleared?: boolean;
 }
 
 export interface SaveData {
@@ -28,9 +30,9 @@ export function createDefaultSave(): SaveData {
   };
 }
 
-// v8 世界擴張（§50）：7 節點；schema v1 不變——舊存檔（≤4 關條目）原樣載入，
+// v9 世界擴張（§60）：9 節點；schema v1 不變——舊存檔（≤7 關條目）原樣載入，
 // 新節點依解鎖規則自然呈鎖定態。
-const LEVEL_IDS: readonly LevelId[] = [1, 2, 3, 4, 5, 6, 7];
+const LEVEL_IDS: readonly LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 function isLevelEntry(value: unknown): value is LevelSaveEntry {
   if (typeof value !== 'object' || value === null) return false;
@@ -62,6 +64,8 @@ export function parseSave(raw: string | null): SaveData {
         cleared: entry.cleared,
         bestTimeMs: Math.max(0, entry.bestTimeMs),
         eggsFound: [...new Set(entry.eggsFound)],
+        // v9 additive 欄位（§58）：僅信任明確 true，舊存檔缺省回落 false。
+        exCleared: (entry as { exCleared?: unknown }).exCleared === true,
       };
     }
     save.highestClearedLevel = deriveHighestCleared(save);
@@ -114,6 +118,14 @@ export function recordLevelClear(save: SaveData, levelId: LevelId, timeMs: numbe
   entry.cleared = true;
   entry.bestTimeMs = entry.bestTimeMs > 0 ? Math.min(entry.bestTimeMs, timeMs) : timeMs;
   save.highestClearedLevel = deriveHighestCleared(save);
+  save.lastPlayedAt = Date.now();
+  return save;
+}
+
+// EX 通關記錄（§58）：僅標記 exCleared；一般通關資料（cleared/bestTime）不動。
+export function recordExClear(save: SaveData, levelId: LevelId): SaveData {
+  const entry = levelEntry(save, levelId);
+  entry.exCleared = true;
   save.lastPlayedAt = Date.now();
   return save;
 }

@@ -16,21 +16,44 @@ import {
 } from './levels';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
-  it('七關依序為 1-7 且參數符合 §15/§21/§50 表', () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(LEVELS.map((l) => l.worldWidth)).toEqual([2700, 3100, 3500, 854, 3300, 3600, 854]);
-    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0]);
-    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
-      2600, 1800, 1300, 3500, 1500, 1200, 3200,
+describe('LEVELS 資料（GAME_DESIGN §15/§50/§60）', () => {
+  it('九關依序為 1-9 且參數符合 §15/§21/§50/§60 表', () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(LEVELS.map((l) => l.worldWidth)).toEqual([
+      2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700,
     ]);
-    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 2]);
-    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0, 480, 480, 0]);
+    expect(LEVELS.map((l) => l.killQuota)).toEqual([6, 9, 10, 0, 10, 12, 0, 11, 12]);
+    expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
+      2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150,
+    ]);
+    expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([3, 4, 5, 2, 5, 5, 1, 5, 5]);
+    expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([480, 480, 480, 0, 480, 480, 0, 480, 480]);
   });
 
-  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學', () => {
-    expect(LEVELS.map((l) => l.boss)).toEqual([null, null, null, 'jellord', null, null, 'noctra']);
-    expect(LEVELS.map((l) => l.tutorial)).toEqual([true, false, false, false, false, false, false]);
+  it('雙魔王品種標記（§54）：L4 果凍王、L7 暗月蝠王；僅第 1 關帶教學、L8 帶星化提示', () => {
+    expect(LEVELS.map((l) => l.boss)).toEqual([
+      null,
+      null,
+      null,
+      'jellord',
+      null,
+      null,
+      'noctra',
+      null,
+      null,
+    ]);
+    expect(LEVELS.map((l) => l.tutorial)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(getLevel(8).hint).toContain('星化');
   });
 
   it('每關 enemyMix 權重總和為 1', () => {
@@ -84,10 +107,33 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
     }
   });
 
-  it('boss 關僅補生可吸怪（L4/L7）', () => {
+  it('boss 關補生全為可吸或條件可吸（L4/L7）；恆可吸佔比 ≥0.6 保飢荒保證律', () => {
     for (const id of [4, 7] as const) {
-      expect(getLevel(id).enemyMix.every((entry) => canInhale(entry.kind))).toBe(true);
+      const mix = getLevel(id).enemyMix;
+      expect(mix.every((entry) => canInhale(entry.kind, true))).toBe(true);
+      const always = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+      expect(always).toBeGreaterThanOrEqual(0.6);
     }
+  });
+
+  it('L8 磁極洞窟（§60）：magno 主場、drilly 地下突襲組合、可吸佔比 ≥50%', () => {
+    const mix = getLevel(8).enemyMix;
+    expect(mix.find((e) => e.kind === 'magno')?.weight).toBeGreaterThanOrEqual(0.2);
+    expect(mix.some((e) => e.kind === 'drilly')).toBe(true);
+    const inhalable = mix.filter((e) => canInhale(e.kind)).reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('L9 鏡影迴廊（§60）：mirri 主場、雙新怪同場、雙精英房距 ≥600、可吸佔比 ≥50%', () => {
+    const level = getLevel(9);
+    expect(level.enemyMix.find((e) => e.kind === 'mirri')?.weight).toBeGreaterThanOrEqual(0.2);
+    expect(level.enemyMix.some((e) => e.kind === 'magno')).toBe(true);
+    expect(level.elites).toHaveLength(2);
+    expect(level.elites.map((e) => e.kind)).toEqual(['mirri', 'magno']);
+    const inhalable = level.enemyMix
+      .filter((e) => canInhale(e.kind))
+      .reduce((sum, e) => sum + e.weight, 0);
+    expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
   it('L5 氣流關（§51/§52）：gusty 主場、含 spora、可吸佔比 ≥50%', () => {
@@ -169,19 +215,19 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
   });
 
   it('getLevel 未知 id 擲錯', () => {
-    expect(() => getLevel(9 as never)).toThrow();
+    expect(() => getLevel(10 as never)).toThrow();
   });
 
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
     level.elements.filter((element) => element.kind === kind);
 
-  it('v4 元素依 §29 推進：S1 單向、S2 +移動+彈簧、S3 +可破壞磚、boss 關僅裝飾', () => {
-    for (const id of [1, 2, 3, 5, 6] as const) {
+  it('v4 元素依 §29 推進：S1 單向、S2 +移動+彈簧、S3 +可破壞磚、boss 關佈局特化', () => {
+    for (const id of [1, 2, 3, 5, 6, 8, 9] as const) {
       const count = elementsOf(getLevel(id), 'oneway').length;
       expect(count).toBeGreaterThanOrEqual(2);
       expect(count).toBeLessThanOrEqual(4);
     }
-    for (const id of [2, 3, 6] as const) {
+    for (const id of [2, 3, 6, 8, 9] as const) {
       for (const kind of ['moving', 'spring'] as const) {
         const count = elementsOf(getLevel(id), kind).length;
         expect(count).toBeGreaterThanOrEqual(1);
@@ -194,9 +240,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
     const bricks = elementsOf(getLevel(3), 'breakable').length;
     expect(bricks).toBeGreaterThanOrEqual(2);
     expect(bricks).toBeLessThanOrEqual(3);
-    // boss 關（L4/L7）僅裝飾。
+    // L4 僅裝飾；L7 加雙彈簧板（§58 非風化到空路徑），不配其他元素。
+    expect(getLevel(4).elements).toEqual([]);
+    expect(elementsOf(getLevel(7), 'spring')).toHaveLength(2);
+    expect(getLevel(7).elements).toHaveLength(2);
     for (const id of [4, 7] as const) {
-      expect(getLevel(id).elements).toEqual([]);
       expect(getLevel(id).decor.length).toBeGreaterThan(0);
     }
   });
@@ -251,6 +299,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
       'bg-canyon': 'heights',
       'bg-gallery': 'arena',
       'bg-eclipse': 'throne',
+      'bg-cavern': 'arena',
+      'bg-mirror': 'arena',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -272,14 +322,16 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50）', () => {
     }
   });
 
-  it('nextLevelId 依 1→…→7→null 推進', () => {
+  it('nextLevelId 依 1→…→9→null 推進', () => {
     expect(nextLevelId(1)).toBe(2);
     expect(nextLevelId(2)).toBe(3);
     expect(nextLevelId(3)).toBe(4);
     expect(nextLevelId(4)).toBe(5);
     expect(nextLevelId(5)).toBe(6);
     expect(nextLevelId(6)).toBe(7);
-    expect(nextLevelId(7)).toBeNull();
+    expect(nextLevelId(7)).toBe(8);
+    expect(nextLevelId(8)).toBe(9);
+    expect(nextLevelId(9)).toBeNull();
   });
 });
 

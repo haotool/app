@@ -103,6 +103,12 @@ declare global {
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
+      transform: () => { form: string | null; remainingMs: number };
+      mercyWarp: (ms: number) => void;
+      hurtPlayer: (damage: number) => void;
+      mercyCount: () => number;
+      bossPos: () => { x: number; y: number };
+      bossShots: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
@@ -151,6 +157,26 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       internals().player.grantStar(flavor);
     },
     shieldRaised: () => internals().player.isShieldRaised(),
+    // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
+    transform: () => internals().player.getTransformState(),
+    // v9 慈悲補血鉤子（§62 e2e）：時間快轉＋RNG 必中、正式受擊管線壓血、生成計數觀測。
+    mercyWarp: (ms) => gameScene().mercyWarp(ms),
+    hurtPlayer: (damage) => gameScene().hurtPlayer(damage),
+    mercyCount: () => gameScene().mercySpawnedCount(),
+    // 難度實測觀測點（§54 bot 驗收）：魔王本體與彈幕座標供 bot 瞄準/走位/迴避取樣。
+    bossPos: () => {
+      const body = gameScene().bossBody() as unknown as { x: number; y: number };
+      return { x: Math.round(body.x), y: Math.round(body.y) };
+    },
+    bossShots: () => {
+      const shots: { x: number; y: number }[] = [];
+      for (const child of gameScene().bossProjectiles().getChildren()) {
+        if (!child.active) continue;
+        const ball = child as unknown as { x: number; y: number };
+        shots.push({ x: Math.round(ball.x), y: Math.round(ball.y) });
+      }
+      return shots;
+    },
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
