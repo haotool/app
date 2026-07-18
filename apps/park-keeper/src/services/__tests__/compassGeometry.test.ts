@@ -9,6 +9,7 @@ import {
   cardinalLabelUprightTransform,
   targetWedgePath,
   isAligned,
+  computeDeckGeometry,
   COMPASS_CX,
   COMPASS_CY,
   COMPASS_OUTER_R,
@@ -20,6 +21,14 @@ import {
   TARGET_WEDGE_INNER_R,
   TARGET_WEDGE_OUTER_R,
   ALIGNED_THRESHOLD_DEG,
+  HUB_DIAMETER,
+  CAPSULE_HEIGHT,
+  DECK_MIN_ARC_R,
+  DECK_MAX_R,
+  DECK_TOP_PAD,
+  DECK_BOTTOM_PAD,
+  DECK_RING_OVERHANG,
+  WEDGE_HUB_GAP,
 } from '../compassGeometry';
 
 // ---------------------------------------------------------------------------
@@ -249,6 +258,87 @@ describe('isAligned', () => {
   it('自訂閾值生效', () => {
     expect(isAligned(20, 25)).toBe(true);
     expect(isAligned(20, 15)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeDeckGeometry（issue #752 單一尺寸源契約）
+// ---------------------------------------------------------------------------
+describe('computeDeckGeometry', () => {
+  it('SSOT 常數符合設計定稿：hub 144、膠囊 56', () => {
+    expect(HUB_DIAMETER).toBe(144);
+    expect(CAPSULE_HEIGHT).toBe(56);
+  });
+
+  it('375×667 直向（stage 375×232）：arc 模式、半徑受高度約束', () => {
+    const g = computeDeckGeometry(375, 232);
+    expect(g.mode).toBe('arc');
+    // byHeight = 232 - 72 - 20 - 6 = 134 < byWidth 177.5
+    expect(g.outerR).toBe(134);
+    expect(g.cx).toBe(187.5);
+    expect(g.cy).toBe(DECK_TOP_PAD + 134);
+  });
+
+  it('390×844 直向（stage 390×310）：arc 模式、半徑受寬度約束', () => {
+    const g = computeDeckGeometry(390, 310);
+    expect(g.mode).toBe('arc');
+    // byWidth = (390-20)/2 = 185 < byHeight 212
+    expect(g.outerR).toBe(185);
+  });
+
+  it('有效視高 553（stage ≈375×184）：降級 capsule', () => {
+    const g = computeDeckGeometry(375, 184);
+    expect(g.mode).toBe('capsule');
+    expect(g.outerR).toBe(0);
+    expect(g.hubD).toBe(HUB_DIAMETER);
+  });
+
+  it('橫向 844×390（stage ≈844×120）：降級 capsule（根治 100% 吞沒）', () => {
+    expect(computeDeckGeometry(844, 120).mode).toBe('capsule');
+  });
+
+  it('大平板 stage：半徑封頂 DECK_MAX_R', () => {
+    const g = computeDeckGeometry(800, 600);
+    expect(g.mode).toBe('arc');
+    expect(g.outerR).toBe(DECK_MAX_R);
+  });
+
+  it('量測未就緒（0×0 / NaN）：安全回退 capsule', () => {
+    expect(computeDeckGeometry(0, 0).mode).toBe('capsule');
+    expect(computeDeckGeometry(Number.NaN, Number.NaN).mode).toBe('capsule');
+  });
+
+  it('arc 邊界恰在 DECK_MIN_ARC_R：126 → arc、125.9 → capsule', () => {
+    const h = (r: number) => r + HUB_DIAMETER / 2 + DECK_TOP_PAD + DECK_BOTTOM_PAD;
+    expect(computeDeckGeometry(600, h(DECK_MIN_ARC_R)).mode).toBe('arc');
+    expect(computeDeckGeometry(600, h(DECK_MIN_ARC_R - 0.1)).mode).toBe('capsule');
+  });
+
+  it('零遮蔽不變式：任何 arc 幾何下楔形內緣 ≥ hub 外緣＋間隙、方位字不沉入 hub、弧不溢出 stage', () => {
+    const cases: [number, number][] = [
+      [375, 232],
+      [390, 310],
+      [430, 340],
+      [600, 224],
+      [800, 600],
+    ];
+    for (const [w, h] of cases) {
+      const g = computeDeckGeometry(w, h);
+      expect(g.mode).toBe('arc');
+      const hubR = g.hubD / 2;
+      // 楔形帶完全在 hub 外（forensics 根因 1 的結構性否定）
+      expect(g.wedgeInnerR).toBe(hubR + WEDGE_HUB_GAP);
+      expect(g.wedgeOuterR).toBeGreaterThan(g.wedgeInnerR);
+      // 方位字（fontSize 20，半高 ~10px）內緣不觸 hub、外緣不出弧
+      expect(g.labelR - 10).toBeGreaterThanOrEqual(hubR);
+      expect(g.labelR + 10).toBeLessThanOrEqual(g.outerR);
+      // 弧幾何不溢出 stage：頂部留錨點空間、底部 hub 收在 stage 內
+      expect(g.cy - g.outerR).toBeGreaterThanOrEqual(0);
+      expect(g.cy + hubR).toBeLessThanOrEqual(h);
+      expect(g.cx + g.outerR).toBeLessThanOrEqual(w);
+      // 旋轉包裝盒半尺寸涵蓋錨點外擴
+      expect(g.half).toBe(g.outerR + DECK_RING_OVERHANG);
+    }
   });
 });
 
