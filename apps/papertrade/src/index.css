@@ -67,6 +67,7 @@
 
 :root {
   --sab: env(safe-area-inset-bottom, 0px);
+  --sat: env(safe-area-inset-top, 0px);
 }
 
 @layer base {
@@ -248,6 +249,16 @@
   }
 }
 
+@keyframes conn-pulse-kf {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
 .flash-long {
   display: inline-block;
   animation: flash-long-kf 300ms ease-out;
@@ -291,6 +302,13 @@
   animation: card-in-kf 240ms ease-out;
 }
 
+/* 連線中斷浮層 pill 的低調呼吸提示。 */
+.conn-pulse {
+  animation:
+    toast-in-kf 240ms cubic-bezier(0.32, 0.72, 0.24, 1),
+    conn-pulse-kf 1.8s ease-in-out 240ms infinite;
+}
+
 .warning-pulse::after {
   content: '';
   position: absolute;
@@ -309,7 +327,8 @@
   .dialog-in,
   .backdrop-in,
   .toast-in,
-  .card-in {
+  .card-in,
+  .conn-pulse {
     animation: none;
   }
 
