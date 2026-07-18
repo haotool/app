@@ -477,7 +477,7 @@ describe('TradePage', () => {
 
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     expect(
-      screen.getByText('加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+      screen.getByText('同向加倉（買多）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
     ).toBeInTheDocument();
 
     // 相對現價非法的 TP（多單 TP 低於現價）也不得阻擋加倉。
@@ -490,6 +490,25 @@ describe('TradePage', () => {
     expect(position?.qty).toBeCloseTo(0.2, 10);
     expect(position?.takeProfit).toBe(61000);
     expect(position?.stopLoss).toBe(59000);
+  });
+
+  it('binds the scale-in hint wording to the held short side', async () => {
+    const user = userEvent.setup();
+    const opened = openMarket(createInitialAccount(), {
+      symbol: 'BTCUSDT',
+      side: 'short',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    useTradeStore.setState({ account: opened.account });
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
+    expect(
+      screen.getByText('同向加倉（賣空）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+    ).toBeInTheDocument();
   });
 
   it('re-validates form tp/sl when submitting the opposite side of the held position', async () => {
@@ -518,9 +537,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
-    expect(
-      screen.queryByText('加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/沿用持倉現有止盈止損/)).not.toBeInTheDocument();
     expect(
       screen.queryByText('限價更優成交後，請以實際開倉價檢視止盈止損'),
     ).not.toBeInTheDocument();

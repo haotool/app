@@ -409,8 +409,9 @@ export function OrderForm({
         {tpslOpen && (
           <>
             {heldSide !== null && (
+              // 沿用語義僅限同向加倉：反向下單仍套用並驗證本欄，文案綁定持倉方向避免誤示。
               <p className="text-caption text-text-3">
-                加倉沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整
+                {`同向加倉（${heldSide === 'long' ? '買多' : '賣空'}）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整`}
               </p>
             )}
             <label className="flex flex-col gap-1">
