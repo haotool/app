@@ -16,6 +16,6 @@ describe('ToastHost', () => {
     const infoContainer = screen.getByText('離線就緒').closest('div[class*="bottom-"]');
     expect(infoContainer).not.toBeNull();
     const topContainer = screen.getByText('市價買多成功').closest('div[class*="top-"]');
-    expect(topContainer).toHaveClass('top-20');
+    expect(topContainer).toHaveClass('top-24');
   });
 });

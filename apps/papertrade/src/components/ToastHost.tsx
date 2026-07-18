@@ -61,15 +61,15 @@ export function ToastHost() {
   if (toasts.length === 0) return null;
 
   // info（離線就緒／已更新）停靠底部 nav 上緣，不遮擋頂部搜尋框與 tabs；
-  // 交易與風險 toast 維持頂部滑入（設計 SSOT），top-20 停靠 page header 安全區之下
-  // （交易頁 header 約 74px、圖表頁切換交易對列約 60px），不遮擋 header 互動列。
+  // 交易與風險 toast 維持頂部滑入（設計 SSOT），top-24 停靠 page header 安全區之下
+  // （交易頁 header 74px＋資金費率資訊列至約 100px），不遮擋 header 互動列與資訊列。
   const topToasts = toasts.filter((toast) => toast.tone !== 'info');
   const infoToasts = toasts.filter((toast) => toast.tone === 'info');
 
   return (
     <>
       {topToasts.length > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 top-20 z-50 mx-auto flex max-w-lg flex-col gap-2 px-4">
+        <div className="pointer-events-none fixed inset-x-0 top-24 z-50 mx-auto flex max-w-lg flex-col gap-2 px-4">
           {topToasts.map((toast) => (
             <ToastCard key={toast.id} toast={toast} onDismiss={dismissToast} />
           ))}
