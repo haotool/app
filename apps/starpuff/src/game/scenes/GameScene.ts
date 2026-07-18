@@ -453,6 +453,7 @@ export class GameScene extends Phaser.Scene {
       // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場，玩家重生於 arena 左帶。
       if (this.boss.trySegmentRespawn?.() === true) {
         this.player.sprite.setVisible(false);
+        this.clearFieldForSegmentRetry();
         this.respawnAtCheckpoint(this.arenaLeft() + 90);
         return;
       }
@@ -462,6 +463,15 @@ export class GameScene extends Phaser.Scene {
     const respawnX = checkpointRespawnX(this.level, this.farthestX);
     if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
     else this.retryLevel();
+  }
+
+  // 段重試清場（§82 審查根修）：段起點重試保留同一場景，補給小怪與飛行中隕星/餘燼
+  // 會跨重試累積——重生前全數清除（比照整場重啟語義），彈藥由飢荒保證律立即補生。
+  private clearFieldForSegmentRetry(): void {
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child.active) this.enemies.kill(child);
+    }
+    this.meteor?.clearAirborne();
   }
 
   // e2e 鉤子：直接補滿配額觸發星星門。
@@ -1008,6 +1018,7 @@ export class GameScene extends Phaser.Scene {
       if (this.level.boss) {
         // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場（呈現層已自清＋FSM 重置）。
         if (this.boss.trySegmentRespawn?.() === true) {
+          this.clearFieldForSegmentRetry();
           this.respawnAtCheckpoint(this.arenaLeft() + 90);
           return;
         }
@@ -1275,7 +1286,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   // 魔王每損 10 HP 補生可吸小怪（供彈藥），arena 左右邊緣交替入場；品種輪替讀關卡 enemyMix。
+  // 場上上限（§82 審查根修）：爆發傷害連觸多次掉落時夾限累積（waves 上限 +2 供給裕度），
+  // 防補給怪堆積形成接觸傷害牆；彈藥保證由飢荒立即補生承擔（§26）。
   private spawnBossMinion(): void {
+    if (this.enemies.aliveCount() >= this.level.maxOnScreen + 2) return;
     const kinds = this.level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
     const x =

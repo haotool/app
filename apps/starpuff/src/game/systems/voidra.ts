@@ -121,8 +121,6 @@ export function createVoidra(
   // 牽引狀態（P1 pull／P3 crush 共用）：迄點與強度。
   let pullUntilMs = 0;
   let pullStrength = 0;
-  // 過熱窗迄點（呈現層鏡像 FSM 真值供錨點切換）。
-  let overheatVisualUntilMs = 0;
   let heartDropped = false;
   const shards = new Set<Phaser.GameObjects.Image>();
   const shardUpdaters = new Map<Phaser.GameObjects.Image, () => void>();
@@ -328,9 +326,9 @@ export function createVoidra(
     for (const shard of [...shards]) removeShard(shard);
   };
 
-  // 炮擊過熱窗（P2 唯一輸出窗）：核心下沉、金光呼吸、可傷（錨點切換於 update 收斂）。
+  // 炮擊過熱窗（P2 唯一輸出窗）：核心下沉、金光呼吸、可傷——窗迄點單一真值由
+  // FSM overheatActive 持有（審查修復：移除呈現層鏡像時鐘防雙 SSOT 漂移）。
   const doOverheat = (windowMs: number) => {
-    overheatVisualUntilMs = elapsedMs + windowMs;
     playSfx('boss-roar', 0.5);
     body.setTint(0xffd8a0);
     delay(windowMs, () => {
@@ -509,9 +507,7 @@ export function createVoidra(
     const sway = Math.sin(elapsedMs * SWAY_FREQ) * viewW() * SWAY_AMP_RATIO;
     const bob = Math.sin(elapsedMs * BOB_FREQ) * BOB_AMP_PX;
     if (fsm.phase === 'p2') {
-      if (fsm.overheatActive || elapsedMs < overheatVisualUntilMs) {
-        return { x: arenaCx(), y: ANCHOR_OVERHEAT_Y + bob };
-      }
+      if (fsm.overheatActive) return { x: arenaCx(), y: ANCHOR_OVERHEAT_Y + bob };
       return { x: arenaCx() + sway, y: ANCHOR_TOP_Y + bob };
     }
     if (fsm.phase === 'p3') return { x: arenaCx() + sway, y: ANCHOR_P3_Y + bob };
@@ -680,8 +676,10 @@ export function createVoidra(
       const segment = fsm.phase;
       clearOrdnance();
       clearShards();
+      // 殘留 delayedCall 全清（審查修復）：死亡前排程的爪擊/晶柱/彈幕不得於新段憑空觸發。
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
       pullUntilMs = 0;
-      overheatVisualUntilMs = 0;
       body.clearTint();
       fsm.resetToPhase(segment);
       if (segment === 'p2') {

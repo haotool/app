@@ -45,6 +45,8 @@ export interface MeteorSystem {
   // 仍自然結算，僅停止新波投放。
   setActive(next: boolean): void;
   setSpec(next: MeteorSpec): void;
+  // 段重試/轉段清場：飛行中隕星、餘燼與預警圈即時回收。
+  clearAirborne(): void;
   // e2e 觀測點：墜落中/餘燼/預警圈數量。
   state(): { falling: number; embers: number; telegraphs: number };
   destroy(): void;
@@ -209,6 +211,24 @@ export function createMeteorSystem(
     },
     setSpec(next: MeteorSpec) {
       spec = next;
+    },
+    // 段重試/轉段清場（§82 審查根修）：飛行中隕星、餘燼與預警圈全數即時回收，
+    // 防跨重試殘彈誤傷。
+    clearAirborne() {
+      for (const child of meteors.getChildren()) {
+        if (child.active) (child as Phaser.Physics.Arcade.Sprite).disableBody(true, true);
+      }
+      for (const child of embers.getChildren()) {
+        if (child.active) {
+          scene.tweens.killTweensOf(child);
+          (child as Phaser.Physics.Arcade.Sprite).disableBody(true, true);
+        }
+      }
+      for (const ring of telegraphs) {
+        scene.tweens.killTweensOf(ring);
+        ring.destroy();
+      }
+      telegraphs.clear();
     },
     shatter(meteor: Phaser.GameObjects.GameObject): void {
       const rock = meteor as Phaser.Physics.Arcade.Sprite;

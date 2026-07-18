@@ -173,7 +173,9 @@ const SHELL_SPIN_RAD = 0.02;
 // v11 hazards（§73）：splatta 拋物糖球與落地灼燙糖斑。
 const BLOB_TEX = 'hazard-blob';
 const BLOB_SIZE = 18;
-const HAZARD_POOL_SIZE = 24;
+// v12（§80）：comettail 高頻短命段加入共用池，上限 24→32 供 L19 六同屏尖峰裕度
+//（耗盡時 spawnHazard 回 null 靜默略過，不致崩潰）。
+const HAZARD_POOL_SIZE = 32;
 // 糖球落地判定線：主地面頂 y=400 上緣（§21 世界幾何常數）。
 const BLOB_GROUND_Y = 392;
 const BITE_OFFSET_X = 22;
@@ -904,6 +906,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           }
         } else if (hazard.getData('hazardKind') === 'sugarspot') {
           hazard.setAlpha(Math.min(0.9, (lifeMs / SPLATTA_FSM.spotMs) * 1.4));
+        } else if (hazard.getData('hazardKind') === 'comettail') {
+          // 彗尾段（§80）：沿壽命漸隱（與孢子雲/糖斑淡出語彙一致）。
+          hazard.setAlpha(Math.min(0.85, (lifeMs / COMETA_FSM.tailLifeMs) * 1.3));
         }
       }
     },

@@ -1263,8 +1263,12 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
     arena 無坑洞＋實牆邊界）；裂核大窗 3.5s（金紋呼吸提示）。
 - anti-softlock（主計畫 §10.2-8）：P2 零擊殺可過（純走位 40s）、無位置懲罰即死、
   不設計時失敗；**段起點重試**——P2/P3 死亡不回滾整場（trySegmentRespawn：彈幕/
-  星屑/轟炸清場＋FSM resetToPhase＋玩家沿 checkpoint 管線重生於 arena 左帶）；
-  P1 死亡走一般敗北流程。defeated 單向鎖存冪等。
+  星屑/轟炸/殘留 delayedCall 清場＋FSM resetToPhase＋玩家沿 checkpoint 管線重生於
+  arena 左帶）；P1 死亡走一般敗北流程。defeated 單向鎖存冪等。
+- 段重試清場（審查根修）：段起點重試保留同一場景——補給小怪與飛行中隕星/餘燼
+  必須隨重生全數清除（GameScene.clearFieldForSegmentRetry，比照整場重啟語義），
+  且 spawnBossMinion 夾限場上 maxOnScreen+2（爆發傷害連觸掉落不得堆出接觸傷害牆；
+  彈藥保證由 §26 飢荒立即補生承擔）。
 - 勝利結算窗防護（QA 根修）：BOSS_DEFEATED 即授 i-frame（WIN_DELAY+2s）＋
   PLAYER_DIED 於 bossDown 後直接忽略——殘餘 hazard（墜落中隕星/餘燼/潮汐）不得
   奪走勝利（真實 e2e 抓出的競態）。
