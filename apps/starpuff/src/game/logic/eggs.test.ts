@@ -164,6 +164,19 @@ describe('advanceEgg：twin-finish（§70）', () => {
   });
 });
 
+describe('advanceEgg：survive-collect（§82）', () => {
+  const spec: EasterEggSpec = { trigger: 'survive-collect', reward: 'full-magazine' };
+
+  it('收到星核共鳴事件觸發一次並鎖存；無關事件不推進', () => {
+    const results = run(spec, [
+      { kind: 'vent-hit-count' },
+      { kind: 'survive-collect' },
+      { kind: 'survive-collect' },
+    ]);
+    expect(results).toEqual([false, true, false]);
+  });
+});
+
 describe('advanceEgg：crown-early-hit', () => {
   const spec: EasterEggSpec = { trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 };
 

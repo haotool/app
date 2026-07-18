@@ -3,6 +3,7 @@ import { canInhale } from './combat';
 import {
   BOOMY_FSM,
   BUBBLA_FSM,
+  COMETA_FSM,
   DRILLY_FSM,
   GLOWY_FSM,
   GUSTY_FSM,
@@ -11,6 +12,7 @@ import {
   SHELLY_FSM,
   SPLATTA_FSM,
   SPORA_FSM,
+  TWINKLA_FSM,
   ZAPPY_FSM,
   boomerangVelocity,
   bubblaLeapOffsetY,
@@ -21,8 +23,10 @@ import {
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
+  resolveTwinklaHit,
   tickBoomy,
   tickBubbla,
+  tickCometa,
   tickDrilly,
   tickGlowy,
   tickGusty,
@@ -31,6 +35,7 @@ import {
   tickShelly,
   tickSplatta,
   tickSpora,
+  tickTwinkla,
   tickZappy,
   type ShellyState,
   type ZappyPhase,
@@ -429,5 +434,74 @@ describe('Splatta 四態時序（§73 熔糖投手）', () => {
     expect(tickSplatta('patrol', 1600, 16, 1).state).toBe('patrol');
     expect(tickSplatta('cool', 1067, 16, 1.5).state).toBe('patrol');
     expect(tickSplatta('aim', SPLATTA_FSM.aimMs - 32, 16, 1.5).state).toBe('aim');
+  });
+});
+
+describe('Twinkla 三態時序（§79 星屑幽靈）', () => {
+  it('虛化期滿轉星光前搖，前搖期滿實體化，實體期滿回虛化', () => {
+    expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 17, 16).state).toBe('phased');
+    expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 16, 16)).toEqual({
+      state: 'shimmer',
+      stateMs: 0,
+      entered: 'shimmer',
+    });
+    expect(tickTwinkla('shimmer', TWINKLA_FSM.shimmerMs - 16, 16)).toEqual({
+      state: 'solid',
+      stateMs: 0,
+      entered: 'solid',
+    });
+    expect(tickTwinkla('solid', TWINKLA_FSM.solidMs - 16, 16)).toEqual({
+      state: 'phased',
+      stateMs: 0,
+      entered: 'phased',
+    });
+  });
+
+  it('受擊決策：僅實體窗可吸可傷，虛化/前搖穿身免傷', () => {
+    expect(resolveTwinklaHit('solid')).toBe('vulnerable');
+    expect(resolveTwinklaHit('phased')).toBe('immune');
+    expect(resolveTwinklaHit('shimmer')).toBe('immune');
+  });
+
+  it('精英倍率（§48）：星屑幽長 ×1.4 僅縮虛化期，前搖與實體窗不縮', () => {
+    // 虛化 2000/1.4≈1429 即轉前搖。
+    expect(tickTwinkla('phased', 1429, 16, 1.4).state).toBe('shimmer');
+    expect(tickTwinkla('phased', 1429, 16, 1).state).toBe('phased');
+    expect(tickTwinkla('shimmer', TWINKLA_FSM.shimmerMs - 32, 16, 1.4).state).toBe('shimmer');
+    expect(tickTwinkla('solid', TWINKLA_FSM.solidMs - 32, 16, 1.4).state).toBe('solid');
+  });
+});
+
+describe('Cometa 四態時序（§79 彗尾飛魚）', () => {
+  it('巡游遇觸發轉鎖定，鎖定期滿俯衝，俯衝期滿回升再巡游', () => {
+    expect(tickCometa('glide', 500, 16, false).state).toBe('glide');
+    expect(tickCometa('glide', 500, 16, true)).toEqual({
+      state: 'lock',
+      stateMs: 0,
+      entered: 'lock',
+    });
+    expect(tickCometa('lock', COMETA_FSM.lockMs - 16, 16, false)).toEqual({
+      state: 'dash',
+      stateMs: 0,
+      entered: 'dash',
+    });
+    expect(tickCometa('dash', COMETA_FSM.dashMs - 16, 16, false)).toEqual({
+      state: 'recover',
+      stateMs: 0,
+      entered: 'recover',
+    });
+    expect(tickCometa('recover', COMETA_FSM.recoverMs - 16, 16, false)).toEqual({
+      state: 'glide',
+      stateMs: 0,
+      entered: 'glide',
+    });
+  });
+
+  it('鎖定後不受觸發旗標干擾（鎖定即不修正）；彗尾參數逾時必回收帶', () => {
+    expect(tickCometa('lock', 100, 16, true).state).toBe('lock');
+    expect(tickCometa('dash', 100, 16, true).state).toBe('dash');
+    expect(COMETA_FSM.lockMs).toBeGreaterThanOrEqual(500);
+    expect(COMETA_FSM.tailLifeMs).toBeGreaterThan(0);
+    expect(COMETA_FSM.tailLifeMs).toBeLessThanOrEqual(1000);
   });
 });

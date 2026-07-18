@@ -454,6 +454,88 @@ export function tickSplatta(
   return { state, stateMs: next, entered: null };
 }
 
+// 星屑幽靈 Twinkla 三態（§79）：虛化 phased 2.0s（半透明、不可吸不可傷、穿身無害）→
+// 星光聚攏前搖 shimmer 0.5s（telegraph）→ 實體 solid 1.8s（緩慢追飄，可吸可傷窗）→ 回虛化。
+export const TWINKLA_FSM = {
+  phasedMs: 2000,
+  shimmerMs: 500,
+  solidMs: 1800,
+  driftSpeed: 30,
+  chaseSpeed: 60,
+} as const;
+
+export type TwinklaState = 'phased' | 'shimmer' | 'solid';
+
+export interface TwinklaTick {
+  state: TwinklaState;
+  stateMs: number;
+  entered: TwinklaState | null;
+}
+
+// speedMul（§48 精英倍率）：僅縮短虛化期提高現身頻率（星屑幽長 ×1.4）；
+// telegraph（shimmer）與實體窗時長不縮，維持可讀性與可吸窗公平（沿 bubbla 慣例）。
+export function tickTwinkla(
+  state: TwinklaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): TwinklaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'phased' && next >= TWINKLA_FSM.phasedMs / speedMul)
+    return { state: 'shimmer', stateMs: 0, entered: 'shimmer' };
+  if (state === 'shimmer' && next >= TWINKLA_FSM.shimmerMs)
+    return { state: 'solid', stateMs: 0, entered: 'solid' };
+  if (state === 'solid' && next >= TWINKLA_FSM.solidMs)
+    return { state: 'phased', stateMs: 0, entered: 'phased' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 受擊決策（§79）：僅實體窗正常結算，虛化/前搖穿身免傷（沿 drilly 慣例）。
+export type TwinklaHitOutcome = 'immune' | 'vulnerable';
+
+export function resolveTwinklaHit(state: TwinklaState): TwinklaHitOutcome {
+  return state === 'solid' ? 'vulnerable' : 'immune';
+}
+
+// 彗尾飛魚 Cometa 四態（§79）：高處巡游 glide →（玩家進觸發域）→ 鎖定前搖 lock 0.55s
+//（閃爍，鎖定後不修正）→ 斜向俯衝 dash 0.6s（420px/s，沿路拖 damaging 彗尾）→
+// 回升 recover → glide。恆可吸（疾風味）。
+export const COMETA_FSM = {
+  lockMs: 550,
+  dashMs: 600,
+  recoverMs: 900,
+  triggerRangePx: 230,
+  dashSpeed: 420,
+  // 彗尾段生成節拍與壽命（走 hazards 管線，逾時必回收 §56）。
+  tailIntervalMs: 90,
+  tailLifeMs: 500,
+} as const;
+
+export type CometaState = 'glide' | 'lock' | 'dash' | 'recover';
+
+export interface CometaTick {
+  state: CometaState;
+  stateMs: number;
+  entered: CometaState | null;
+}
+
+export function tickCometa(
+  state: CometaState,
+  stateMs: number,
+  deltaMs: number,
+  shouldDash: boolean,
+): CometaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'glide' && shouldDash) return { state: 'lock', stateMs: 0, entered: 'lock' };
+  if (state === 'lock' && next >= COMETA_FSM.lockMs)
+    return { state: 'dash', stateMs: 0, entered: 'dash' };
+  if (state === 'dash' && next >= COMETA_FSM.dashMs)
+    return { state: 'recover', stateMs: 0, entered: 'recover' };
+  if (state === 'recover' && next >= COMETA_FSM.recoverMs)
+    return { state: 'glide', stateMs: 0, entered: 'glide' };
+  return { state, stateMs: next, entered: null };
+}
+
 // 迴旋彈道（§52/§53 共用）：去程勻減速、turnMs 折返點反向，2×turnMs 回到原點等速；
 // 敵方殼刃與玩家迴旋星同走此純函式，回程亦有判定。
 export function boomerangVelocity(
