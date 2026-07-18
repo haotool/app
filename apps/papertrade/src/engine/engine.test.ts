@@ -13,7 +13,7 @@ import {
   setTakeProfitStopLoss,
   setTrailingStop,
 } from './engine';
-import { roundUsdt } from './math';
+import { liquidationPrice, roundUsdt } from './math';
 import { type Account, type Position } from './types';
 import { HISTORY_MAX_ENTRIES, INITIAL_BALANCE_USDT } from '../config/trading';
 import { type MarketSymbol } from '../config/market';
@@ -1242,6 +1242,21 @@ describe('liquidation', () => {
     if (!opened.ok) throw new Error(opened.error);
 
     const liquidated = processTick(opened.account, 'BTCUSDT', 65700, NOW);
+    expect(liquidated.account.positions).toHaveLength(0);
+    expect(liquidated.account.history[0]?.reason).toBe('liquidation');
+  });
+
+  it('keeps a 1000x long alive at the entry price with the effective-MMR liquidation line', () => {
+    // ADR-R5-03：1000x 有效 MMR = 0.5/1000，強平價 60000×(1−0.001+0.0005) ≈ 59970，開倉即強平不可能發生。
+    const account = openLong(createInitialAccount(), 0.1, 60000, 1000);
+    const liq = liquidationPrice('long', 60000, 1000);
+    expect(liq).toBeCloseTo(59970, 8);
+
+    const ticked = processTick(account, 'BTCUSDT', 60000, NOW);
+    expect(ticked.account.positions).toHaveLength(1);
+    expect(ticked.events).toEqual([]);
+
+    const liquidated = processTick(account, 'BTCUSDT', liq, NOW);
     expect(liquidated.account.positions).toHaveLength(0);
     expect(liquidated.account.history[0]?.reason).toBe('liquidation');
   });
