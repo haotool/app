@@ -141,6 +141,19 @@ describe('advanceEgg：eat-sequence', () => {
   });
 });
 
+describe('advanceEgg：twin-finish（§69）', () => {
+  const spec: EasterEggSpec = { trigger: 'twin-finish', reward: 'gold-star' };
+
+  it('收到雙子連破事件觸發一次並鎖存；無關事件不推進', () => {
+    const results = run(spec, [
+      { kind: 'boss-hit', sinceActiveMs: 100 },
+      { kind: 'twin-finish' },
+      { kind: 'twin-finish' },
+    ]);
+    expect(results).toEqual([false, true, false]);
+  });
+});
+
 describe('advanceEgg：crown-early-hit', () => {
   const spec: EasterEggSpec = { trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 };
 
