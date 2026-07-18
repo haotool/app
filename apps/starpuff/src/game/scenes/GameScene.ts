@@ -1245,8 +1245,11 @@ export class GameScene extends Phaser.Scene {
       deaths: this.deaths,
       levelId: this.currentLevelId,
     };
+    // 謝幕（§84）：全破最終魔王關（鏈末魔王關，資料驅動非硬編關號）先播星光復甦再結算。
+    const finale =
+      result === 'won' && this.level.boss !== null && nextLevelId(this.currentLevelId) === null;
     this.time.delayedCall(result === 'won' ? 1300 : 900, () =>
-      this.scene.start(SceneKeys.Result, data),
+      this.scene.start(finale ? SceneKeys.Credits : SceneKeys.Result, data),
     );
   }
 

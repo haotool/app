@@ -151,6 +151,13 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 15, 1000);
     expect(currentChallenge(save)).toBe(16);
     save = recordLevelClear(save, 16, 1000);
+    // v12 五區終章（§84）：L16 之後接續 L17-L20，全通關為 null。
+    expect(currentChallenge(save)).toBe(17);
+    save = recordLevelClear(save, 17, 1000);
+    save = recordLevelClear(save, 18, 1000);
+    save = recordLevelClear(save, 19, 1000);
+    expect(currentChallenge(save)).toBe(20);
+    save = recordLevelClear(save, 20, 1000);
     expect(currentChallenge(save)).toBeNull();
   });
 

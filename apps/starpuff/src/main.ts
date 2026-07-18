@@ -15,6 +15,7 @@ import { MapScene } from './game/scenes/MapScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
 import { CodexScene } from './game/scenes/CodexScene';
+import { CreditsScene } from './game/scenes/CreditsScene';
 import { restoreMutePreference } from './game/systems/hud';
 import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
@@ -68,7 +69,7 @@ const game = new Phaser.Game({
   // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
   roundPixels: false,
-  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene],
+  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene, CreditsScene],
 });
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
