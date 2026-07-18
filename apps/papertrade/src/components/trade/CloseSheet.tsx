@@ -5,7 +5,7 @@ import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { unrealizedPnl } from '../../engine/math';
-import { formatAmount, formatPrice } from '../../lib/format';
+import { formatAmount, formatPrice, formatSignedPnl } from '../../lib/format';
 import { parsePositiveInput, TRADE_ERROR_MESSAGES, trimNumberInput } from '../../lib/tradeForm';
 import { CLOSE_PERCENT_PRESETS, QTY_DISPLAY_DECIMALS } from '../../config/trading';
 
@@ -57,7 +57,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       pushToast({
         tone: realized >= 0 ? 'long' : 'short',
         title: `市價平倉完成（${percent}%）`,
-        description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
+        description: `${formatSignedPnl(realized)} USDT`,
       });
     } else {
       if (limitPriceValue === null) {

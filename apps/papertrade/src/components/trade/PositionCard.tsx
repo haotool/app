@@ -5,7 +5,7 @@ import { liquidationPrice, roePercent, unrealizedPnl } from '../../engine/math';
 import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
-import { formatAmount, formatPrice } from '../../lib/format';
+import { formatAmount, formatPrice, formatSignedPnl } from '../../lib/format';
 import { TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { TpSlSheet } from './TpSlSheet';
@@ -55,7 +55,7 @@ export function PositionCard({ position }: { position: Position }) {
     pushToast({
       tone: realized >= 0 ? 'long' : 'short',
       title: `市價平倉完成：${base}/USDT`,
-      description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
+      description: `${formatSignedPnl(realized)} USDT`,
     });
   }
 

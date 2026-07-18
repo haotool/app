@@ -38,6 +38,13 @@ export function formatAmount(value: number, maxDecimals = 3): string {
   });
 }
 
+// 已實現損益 toast 文案：|value| 低於 2 位顯示精度半格（0.005）時視為 0，避免出現「−0 USDT」。
+export function formatSignedPnl(value: number): string {
+  if (!Number.isFinite(value)) return '--';
+  if (Math.abs(value) < 0.005) return '0.00';
+  return `${value >= 0 ? '+' : '−'}${formatAmount(Math.abs(value), 2)}`;
+}
+
 export function formatFundingRate(rate: number): string {
   if (!Number.isFinite(rate)) return '--';
   const percent = rate * 100;

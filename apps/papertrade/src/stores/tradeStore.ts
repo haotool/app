@@ -29,7 +29,7 @@ import {
 } from '../engine/engine';
 import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
-import { formatAmount, formatPrice } from '../lib/format';
+import { formatAmount, formatPrice, formatSignedPnl } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 import { playLiquidationSound } from '../lib/sound';
 import { useSoundPrefsStore } from './soundPrefsStore';
@@ -145,8 +145,7 @@ function pairLabel(symbol: MarketSymbol): string {
 }
 
 function pnlText(pnl: number): string {
-  const sign = pnl >= 0 ? '+' : '−';
-  return `${sign}${formatAmount(Math.abs(pnl), 2)} USDT`;
+  return `${formatSignedPnl(pnl)} USDT`;
 }
 
 function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
