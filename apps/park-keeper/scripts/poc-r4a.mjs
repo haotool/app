@@ -20,6 +20,10 @@ const AWAY_POS = { latitude: 25.0335, longitude: 121.5644 };
 
 const THEME_BUTTONS = { racing: 'Nitro', cute: 'Kawaii', minimalist: 'Zen', literary: 'Classic' };
 
+// 1x1 透明 PNG（與 e2e/helpers.ts 同源）：photo 情境注入 quick-entry file input。
+const TEST_PHOTO_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
 /** heading = (360 - alpha) % 360；beta 為俯仰（≥75° 觸發非平放）。 */
 async function dispatchOrientation(page, { alpha, beta = 10 }) {
   await page.evaluate(
@@ -153,6 +157,27 @@ async function measure(page) {
 
     // 膠囊高度（降級 SSOT=56）。
     out.capsuleH = capsule ? (rect(capsule.querySelector(':scope > div'))?.h ?? null) : null;
+
+    // 照片錨（photo-overlay）：需完整在地圖區（deck 上緣以上）且不與 pill 相交。
+    const photoEl = q('[data-testid="photo-overlay"]');
+    out.photo = rect(photoEl);
+    out.photoDoesNotOverlapDeck = null;
+    out.photoPillOverlapPct = null;
+    if (out.photo && out.deck) {
+      out.photoDoesNotOverlapDeck = out.photo.bottom <= out.deck.top + 0.5;
+    }
+    if (out.photo && out.pill) {
+      const ix = Math.max(
+        0,
+        Math.min(out.photo.right, out.pill.right) - Math.max(out.photo.left, out.pill.left),
+      );
+      const iy = Math.max(
+        0,
+        Math.min(out.photo.bottom, out.pill.bottom) - Math.max(out.photo.top, out.pill.top),
+      );
+      const photoArea = out.photo.w * out.photo.h;
+      out.photoPillOverlapPct = photoArea > 0 ? ((ix * iy) / photoArea) * 100 : 0;
+    }
     return out;
   });
 }
@@ -174,8 +199,16 @@ async function runScenario(browser, scenario) {
   });
 
   await page.goto(BASE);
-  // 建立記錄（FAB → B3 auto-save）。
+  // 建立記錄（FAB →（可選）注入照片 → B3 auto-save）。
   await page.getByRole('button', { name: '新增停車紀錄' }).click();
+  if (scenario.photo) {
+    await page.getByTestId('quick-entry-photo-input').setInputFiles({
+      name: 'poc-photo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(TEST_PHOTO_BASE64, 'base64'),
+    });
+    await page.getByAltText('停車照片').waitFor();
+  }
   await page.getByRole('button', { name: 'B3', exact: true }).click();
   await page.getByTestId('pickup-hero-card').waitFor();
 
@@ -307,6 +340,21 @@ const SCENARIOS = [
     theme: 'literary',
     state: 'normal',
   },
+  // 照片錨情境：photo-overlay 在地圖區、不被 deck/pill 遮蓋
+  {
+    id: '390x844-minimalist-photo-notflat',
+    viewport: { width: 390, height: 844 },
+    theme: 'minimalist',
+    state: 'notflat',
+    photo: true,
+  },
+  {
+    id: '375x667-racing-photo-aligned',
+    viewport: { width: 375, height: 667 },
+    theme: 'racing',
+    state: 'aligned',
+    photo: true,
+  },
 ];
 
 const browser = await chromium.launch();
@@ -320,6 +368,8 @@ for (const s of SCENARIOS) {
       cardinalMaxInHub: Math.max(0, ...(r.cardinal ?? []).map((c) => c.inHubPct)),
       cardinalMaxVisibleClip: Math.max(0, ...(r.cardinal ?? []).map((c) => c.visibleClippedPx)),
       capsuleH: r.capsuleH,
+      photoOk: r.photo ? r.photoDoesNotOverlapDeck : undefined,
+      photoPillOverlap: r.photoPillOverlapPct,
       errors: r.consoleErrors.length,
     };
     console.log(`OK ${s.id} mode=${r.mode}`, JSON.stringify(worst));

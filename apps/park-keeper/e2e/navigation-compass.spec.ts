@@ -1,5 +1,34 @@
 import { test, expect } from '@playwright/test';
-import { getFab, TEXT } from './helpers';
+import type { Page } from '@playwright/test';
+import { getFab, TEXT, TEST_PHOTO_BASE64 } from './helpers';
+
+/**
+ * 零遮蔽量化守門（issue #752）：楔形 path 取樣 200 點經 screen CTM 轉螢幕座標，
+ * 回傳落入 Hub 圓內的比例（%）。與 scripts/poc-r4a.mjs 同口徑，常駐 e2e 防回歸。
+ */
+async function measureWedgeInHubPct(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const hub = document.querySelector('[data-testid="compass-hub"]');
+    const arc = document.querySelector('[data-testid="compass-arc"]');
+    if (!hub || !arc) return null;
+    const hr = hub.getBoundingClientRect();
+    const c = { x: hr.left + hr.width / 2, y: hr.top + hr.height / 2, r: hr.width / 2 };
+    const wedgeSvg = arc.querySelectorAll('svg')[1];
+    const path = wedgeSvg?.querySelector('path');
+    const ctm = path?.getScreenCTM();
+    if (!path || !ctm) return null;
+    const len = path.getTotalLength();
+    const N = 200;
+    let inside = 0;
+    for (let i = 0; i < N; i++) {
+      const pt = path.getPointAtLength((len * i) / N);
+      const sx = ctm.a * pt.x + ctm.c * pt.y + ctm.e;
+      const sy = ctm.b * pt.x + ctm.d * pt.y + ctm.f;
+      if (Math.hypot(sx - c.x, sy - c.y) < c.r - 0.5) inside++;
+    }
+    return (inside / N) * 100;
+  });
+}
 
 /**
  * 羅盤導航旅程（issue #716；#752 佈局 v2）：
@@ -74,10 +103,80 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     // 注入後 UI 保持健康：盤面仍在、無錯誤覆蓋
     await expect(page.getByTestId('compass-arc')).toBeVisible();
 
+    // 零遮蔽常駐守門：楔形帶取樣點落入 Hub 圓比例必須為 0（幾何契約防回歸）。
+    expect(await measureWedgeInHubPct(page)).toBe(0);
+
     // 4. 關閉導航回列表
     await closeButton.click();
     await expect(closeButton).not.toBeVisible();
     await expect(getFab(page)).toBeVisible();
+  });
+
+  test('照片錨：photo-overlay 在地圖區內，不被 deck 與平放 pill 遮蓋', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/');
+
+    // 含照片記錄：FAB → 注入測試圖片 → 樓層 chip auto-save。
+    await getFab(page).click();
+    await page.getByTestId('quick-entry-photo-input').setInputFiles({
+      name: 'test-photo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(TEST_PHOTO_BASE64, 'base64'),
+    });
+    await expect(page.getByAltText('停車照片')).toBeVisible();
+    await page.getByRole('button', { name: 'B3', exact: true }).click();
+
+    // 使用者移離車位（~55m 南）：脫離抵達態，平放 pill 才會出現（條件含 !arrived）。
+    await context.setGeolocation({ latitude: 25.0335, longitude: 121.5644 });
+    await page.getByTestId('pickup-hero-card').click();
+    await expect(page.getByTestId('compass-deck')).toBeVisible();
+
+    // 傾斜手機讓平放 pill 出現（驗證 pill 與照片錨共存不相交）。
+    await page.evaluate(() => {
+      for (let i = 0; i < 12; i++) {
+        window.dispatchEvent(
+          new DeviceOrientationEvent('deviceorientationabsolute', {
+            alpha: 270,
+            beta: 80,
+            gamma: 0,
+            absolute: true,
+          }),
+        );
+      }
+    });
+
+    const overlay = page.getByTestId('photo-overlay');
+    await expect(overlay).toBeVisible();
+    const pill = page.getByText('請平放手機');
+    await expect(pill).toBeVisible();
+
+    // 等進場動畫收斂後量測（poll 至 deck 高度穩定為 42%）。
+    const deck = page.getByTestId('compass-deck');
+    const viewport = page.viewportSize();
+    await expect
+      .poll(async () => (await deck.boundingBox())?.height)
+      .toBeCloseTo((viewport?.height ?? 0) * 0.42, 0);
+
+    const overlayBox = await overlay.boundingBox();
+    const deckBox = await deck.boundingBox();
+    const pillBox = await pill.boundingBox();
+    expect(overlayBox).not.toBeNull();
+    expect(deckBox).not.toBeNull();
+    expect(pillBox).not.toBeNull();
+    if (overlayBox && deckBox && pillBox) {
+      // 照片錨完整在地圖區（deck 上緣以上）。
+      expect(overlayBox.y + overlayBox.height).toBeLessThanOrEqual(deckBox.y + 0.5);
+      // 照片錨與平放 pill 矩形零相交。
+      const ix =
+        Math.min(overlayBox.x + overlayBox.width, pillBox.x + pillBox.width) -
+        Math.max(overlayBox.x, pillBox.x);
+      const iy =
+        Math.min(overlayBox.y + overlayBox.height, pillBox.y + pillBox.height) -
+        Math.max(overlayBox.y, pillBox.y);
+      expect(Math.max(0, ix) * Math.max(0, iy)).toBe(0);
+    }
   });
 
   test('iOS 權限手勢流：requestPermission 存在時顯示啟用卡，手勢授權後羅盤生效', async ({
