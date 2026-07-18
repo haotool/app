@@ -94,6 +94,19 @@ export function pickInRadius<T extends RadiusCandidate>(
   );
 }
 
+// 吸入接觸豁免（§77）：被吸入中的怪對玩家無接觸傷害——拉力逐幀刷新豁免窗，
+// 吸入中斷（鬆開/轉向/離錐）後窗過期即恢復傷害性；未被吸的其他怪不受影響，
+// 風險回報保留（非吸入全程無敵）。窗長 250ms：涵蓋拉力幀間隔與貼身吞下前緣。
+export const INHALE_GRACE_MS = 250;
+
+export function inhaleGraceUntil(nowMs: number): number {
+  return nowMs + INHALE_GRACE_MS;
+}
+
+export function isContactHarmless(nowMs: number, graceUntilMs: number): boolean {
+  return nowMs < graceUntilMs;
+}
+
 // 錐形判定：面向側、距離內、且垂直偏移不超過水平距離（半角 45°）。
 export function isInInhaleRange(
   playerX: number,

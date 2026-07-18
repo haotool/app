@@ -41,7 +41,14 @@ import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
-import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
+import {
+  inhaleFlavor,
+  inhaleGraceUntil,
+  isContactHarmless,
+  isInInhaleRange,
+  knockbackVelocity,
+  pickInRadius,
+} from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
   BOSS_AIM_ASSIST,
@@ -189,6 +196,8 @@ export class GameScene extends Phaser.Scene {
   private buffPickups = 0;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
+  // 地形單向平台（§77）：交 stage 統一下穿裁決（與 elements oneway 同權）。
+  private terrainPlatforms: Phaser.GameObjects.Rectangle[] = [];
   private background!: BackgroundHandle;
   private controls!: ControlsSystem;
   private player!: PlayerHandle;
@@ -235,6 +244,7 @@ export class GameScene extends Phaser.Scene {
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
     this.terrainGround = ground;
+    this.terrainPlatforms = platforms;
     // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；
     // hooks 以閉包延遲解析（player/enemies 於後續建立，呼叫時已就緒）。
     this.stage = createStage(this, this.level, {
@@ -244,6 +254,8 @@ export class GameScene extends Phaser.Scene {
       onWarp: (x) => {
         this.prevPlayerX = x;
       },
+      // §77：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
+      terrainOneWay: () => this.terrainPlatforms,
     });
 
     this.controls = createControls(this);
@@ -322,7 +334,15 @@ export class GameScene extends Phaser.Scene {
     this.enemies.setTarget(this.player.sprite);
     this.boss.setTarget(this.player.sprite);
 
-    this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
+    this.physics.add.collider(this.player.sprite, ground);
+    // §77：粉紅平台改走 canLandOneWay 裁決——下穿窗放行、高速著地帶動態放寬。
+    this.physics.add.collider(
+      this.player.sprite,
+      platforms,
+      undefined,
+      this.stage.canLandOneWay,
+      this,
+    );
     // 場控魔王 arena 浮台（§74 Syrona）：呈現層動態佈建，此處接玩家 collider。
     const bossPlatforms = this.boss.getPlatforms?.() ?? [];
     if (bossPlatforms.length > 0) {
@@ -372,6 +392,8 @@ export class GameScene extends Phaser.Scene {
       this.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
+      // 下跳指示（§77）：壓下＋站台（跳鍵此刻＝下跳）→ 跳鍵變色與箭頭翻轉。
+      this.controls.setDropReady(this.stage.isDropReady(this.controls.state.down));
       this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
@@ -589,6 +611,8 @@ export class GameScene extends Phaser.Scene {
       body.checkCollision.down = false;
       body.checkCollision.left = false;
       body.checkCollision.right = false;
+      // §77：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
+      platform.setData('oneway', true);
       return platform;
     });
     return { ground, platforms };
@@ -725,6 +749,11 @@ export class GameScene extends Phaser.Scene {
         this.enemies.isInhalable(enemy as Phaser.GameObjects.GameObject) &&
         isInInhaleRange(x, y, this.player.getFacing(), target.x, target.y, INHALE.rangePx)
       ) {
+        return;
+      }
+      // 吸入接觸豁免（§77）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
+      // 鬆開瞬間與出錐殘餘飛行；窗過期即恢復傷害性，未被吸的其他怪照常結算。
+      if (isContactHarmless(this.time.now, (target.getData('inhaleGraceUntil') as number) ?? 0)) {
         return;
       }
       this.damagePlayer(ENEMY.touchDamage, target.x);
@@ -1299,6 +1328,8 @@ export class GameScene extends Phaser.Scene {
         continue;
       }
       // 拉力漸增：越接近嘴邊吸力越強。
+      // 吸入接觸豁免（§77）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
+      enemy.setData('inhaleGraceUntil', inhaleGraceUntil(this.time.now));
       this.physics.moveTo(
         enemy,
         this.mouth.x,

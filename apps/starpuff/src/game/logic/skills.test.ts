@@ -227,20 +227,52 @@ describe('resolveActionPress（§23 B 鍵決策，v7 起與下衝擊解耦）', 
 
 describe('resolveJumpPress（§44 跳躍鍵輸入矩陣）', () => {
   it('空中「下＋跳」且 CD 完 → 下衝擊；吞含狀態無關（矩陣不讀彈匣）', () => {
-    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0 })).toBe('slam');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('slam');
   });
 
   it('下衝擊 CD 中回落一般跳躍鏈（拍翅/buffer），不吞輸入', () => {
-    expect(resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 500 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 500, recentlyGroundedMs: 0 }),
+    ).toBe('jump');
   });
 
   it('空中未壓下 → 一般跳躍鏈（拍翅）', () => {
-    expect(resolveJumpPress({ airborne: true, down: false, slamCooldownMs: 0 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: false, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('jump');
   });
 
   it('地面「下＋跳」→ 一般跳躍（單向平台下穿由 stage 層 shouldDropThrough 覆蓋裁決）', () => {
-    expect(resolveJumpPress({ airborne: false, down: true, slamCooldownMs: 0 })).toBe('jump');
-    expect(resolveJumpPress({ airborne: false, down: false, slamCooldownMs: 0 })).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: false, down: true, slamCooldownMs: 0, recentlyGroundedMs: 150 }),
+    ).toBe('jump');
+    expect(
+      resolveJumpPress({
+        airborne: false,
+        down: false,
+        slamCooldownMs: 0,
+        recentlyGroundedMs: 150,
+      }),
+    ).toBe('jump');
+  });
+
+  // 熱修回歸（§77）：落地擠壓迴圈使站立時接觸旗標以 ~20Hz 抖動，「假空中」幀
+  // 曾把站台下＋跳誤判成下砸並貫穿平台。coyote 窗內視同在地，不得下砸。
+  it('假空中（coyote 窗內）「下＋跳」→ 一般跳躍鏈，不觸發下砸', () => {
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 120 }),
+    ).toBe('jump');
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 1 }),
+    ).toBe('jump');
+  });
+
+  it('真空中（coyote 歸零）「下＋跳」→ 下砸維持 v7 語義', () => {
+    expect(
+      resolveJumpPress({ airborne: true, down: true, slamCooldownMs: 0, recentlyGroundedMs: 0 }),
+    ).toBe('slam');
   });
 });
 

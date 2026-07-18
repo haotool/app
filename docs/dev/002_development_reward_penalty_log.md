@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：0（reward 2、penalty 2、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-inhale-bigmouth-frames
+- 原因：吸入狀態沿用嘴型偏小的單張 hero-inhale，吸力讀感弱、與 fx 粒子強度不匹配
+- 解法：codex imagegen 依 asset ticket（雙參考圖鎖角色特徵、尺寸/錨點/透明底規格化）生成大嘴兩影格（512 webp 各 ~22KB），吸入中 160ms 交替、素材未載回退 hero-inhale；GAME_DESIGN §71 同步、真瀏覽器截圖驗證入遊戲清晰度
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-inhale-contact-damage
+- 原因：吸入拉近中的怪仍帶接觸傷害——玩家轉向/鬆開瞬間或出錐殘餘飛行貼身即受擊（實測 12-25% 命中），拉力結算與接觸結算間缺「被吸入中」狀態橋接，v1 出貨以來未被揪出
+- 解法：combat 增 inhaleGraceUntil/isContactHarmless 純函式（拉力逐幀刷新 250ms 豁免窗、過期恢復傷害性、未被吸怪不受影響防吸入全程無敵）＋enemies 池重用重設；4 單測＋e2e（豁免窗零傷害/過期恢復）＋真瀏覽器 8 輪反轉面向零受擊、對照組正常扣血
+
+- 日期：2026-07-19
+- ID：reward-starpuff-crouch-dropready-ux
+- 原因：下跳穿落缺乏可供發現的視覺回饋——蹲下無姿態變化、玩家無從得知「跳鍵此刻＝下跳」，操作可信度低
+- 解法：蹲姿走 POST_UPDATE 視覺通道（乘算壓扁＋下沉、PRE_UPDATE 還原，物理不見蹲縮防擠壓迴圈同型）＋跳鍵 is-drop-ready 變琥珀與箭頭翻轉朝下（純 CSS 圖形鍵帽零文字）；advanceCrouch 純函式 3 單測＋指示決策 2 單測，真瀏覽器驗證蹲→變色→穿落→還原全鏈
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-downjump-squash-loop
+- 原因：落地擠壓 squash 每次重新接觸即觸發，縮小 body 使腳底離台形成 ~20Hz 自持迴圈，接觸旗標抖動讓站台「下＋跳」2/3 機率被 v7 下砸誤判接管並以單步 22px 位移貫穿單向平台（worldstep 逐步 trace 實證），地形粉紅平台又從未接入下穿系統——生產站台下跳穿落回歸
+- 解法：落地擠壓加最低著地速度閘（120）切斷迴圈、resolveJumpPress 增 recentlyGroundedMs（coyote 窗內視同在地禁下砸）、站台判定抽 restingOnOneWay 純函式（接觸旗標或沉降幾何擇一）、著地帶 oneWayLandBand 依單步位移動態放寬防隧穿、粉紅平台掛 canLandOneWay 與 terrainOneWay 統一下穿；10 新單測（367 全綠）＋真瀏覽器接觸穩定度 120/120 步實證
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v11-kiln-finale

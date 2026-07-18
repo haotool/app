@@ -113,6 +113,7 @@ declare global {
       bossShots: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
+      crouch: () => number;
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
       slayElite: () => void;
       damageBoss: (amount: number) => void;
@@ -191,6 +192,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
+    // §77 觀測點：蹲姿比例（0..1）。
+    crouch: () => internals().player.getCrouch(),
     elite: () => gameScene().eliteState(),
     slayElite: () => gameScene().slayElite(),
     // v8 鉤子（§54 e2e）：以正式傷害管線打魔王，階段/死亡走完整 FSM 事件流。

@@ -15,6 +15,8 @@ export interface ControlsState {
 export interface ControlsSystem {
   state: ControlsState;
   update(): void;
+  // 下跳指示（§77）：可穿落狀態跳鍵變色＋箭頭翻轉朝下；僅狀態轉變時碰 DOM。
+  setDropReady(ready: boolean): void;
   destroy(): void;
 }
 
@@ -25,6 +27,7 @@ type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X', Phaser.Input.Keyboar
 // 按壓視覺回饋 class；樣式規則由整合層在 style.css 補上。
 const PRESSED_CLASS = 'is-pressed';
 const ENGAGED_CLASS = 'is-engaged';
+const DROP_READY_CLASS = 'is-drop-ready';
 // 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
 const JOY_RADIUS = 60;
 const JOY_DEADZONE = 12;
@@ -186,6 +189,14 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   let prevJumpHeld = false;
   let prevActionHeld = false;
 
+  // 下跳指示（§77）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
+  const jumpBtn = document.querySelector<HTMLElement>('[data-btn="a"]');
+  let dropReady = false;
+  cleanups.push(() => {
+    dropReady = false;
+    jumpBtn?.classList.remove(DROP_READY_CLASS);
+  });
+
   return {
     state,
     update() {
@@ -202,6 +213,11 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       state.actionPressed = actionHeld && !prevActionHeld;
       state.actionHeld = actionHeld;
       prevActionHeld = actionHeld;
+    },
+    setDropReady(ready: boolean) {
+      if (ready === dropReady) return;
+      dropReady = ready;
+      jumpBtn?.classList.toggle(DROP_READY_CLASS, ready);
     },
     destroy() {
       cleanups.forEach((fn) => fn());
