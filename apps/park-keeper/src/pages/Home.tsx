@@ -13,7 +13,6 @@ import {
   type Variants,
 } from 'motion/react';
 import {
-  Plus,
   Settings as SettingsIcon,
   Car,
   Search,
@@ -282,6 +281,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     setShowQuickEntry(true);
   }, []);
 
+  // 主動作唯一化（issue #753）：底部 + FAB 移除，「不拍照手動記錄」第三級文字動作
+  // 承接其職能——開啟 QuickEntry 空照片模式（不預帶 ctaPhotoFile）。
+  const handleManualEntry = useCallback(() => {
+    setShowQuickEntry(true);
+  }, []);
+
   // 接手 SSG 殼（HomeShell）hydration 前開啟相機的照片，不落失使用者輸入。
   useEffect(() => pendingCtaPhoto.subscribe(handleCtaPhoto), [handleCtaPhoto]);
 
@@ -366,6 +371,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         label={t('home.quick_record_cta')}
                         hint={t('record.photo_tap')}
                         onPhotoSelected={handleCtaPhoto}
+                        onManualEntry={handleManualEntry}
+                        manualEntryLabel={t('home.manual_entry')}
                       />
                       <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
                     </div>
@@ -402,6 +409,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                           label={t('home.quick_record_cta')}
                           hint={t('record.photo_tap')}
                           onPhotoSelected={handleCtaPhoto}
+                          onManualEntry={handleManualEntry}
+                          manualEntryLabel={t('home.manual_entry')}
                         />
                       </>
                     ) : (
@@ -411,6 +420,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         label={t('home.quick_record_cta')}
                         hint={t('record.photo_tap')}
                         onPhotoSelected={handleCtaPhoto}
+                        onManualEntry={handleManualEntry}
+                        manualEntryLabel={t('home.manual_entry')}
                       />
                     )}
                     <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
@@ -466,7 +477,7 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
           style={{ backgroundColor: theme.colors.background + 'CC' }}
         >
           {/* 可見內容區：固定 56px，與 safe area 無關 */}
-          <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto relative px-6`}>
+          <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto px-6`}>
             {/* List Tab */}
             <div className="flex-1 h-full">
               <button
@@ -502,28 +513,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   />
                 )}
               </button>
-            </div>
-
-            {/* FAB spacer */}
-            <div className="w-20" />
-
-            {/* Centered FAB */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-              <motion.button
-                type="button"
-                onClick={() => setShowQuickEntry(true)}
-                aria-label={t('action.add_record')}
-                whileTap={{ scale: 0.9, rotate: 90 }}
-                whileHover={{ scale: 1.05 }}
-                className="w-16 h-16 rounded-full flex items-center justify-center shadow-elevation-3 border-4 transition-colors"
-                style={{
-                  backgroundColor: theme.colors.primary,
-                  borderColor: theme.colors.background,
-                  boxShadow: `${theme.colors.primary}66 0px 8px 25px`,
-                }}
-              >
-                <Plus size={32} stroke={ON_PRIMARY_COLOR} strokeWidth={3} />
-              </motion.button>
             </div>
 
             {/* Settings Tab */}

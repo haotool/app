@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getFab, TEXT } from './helpers';
+import { getManualEntryTrigger, TEXT } from './helpers';
 
 /**
  * 羅盤導航旅程（issue #716）：記錄 → 開導航 → 羅盤渲染 → heading 注入 → 關閉。
@@ -16,8 +16,8 @@ test.describe('記錄 → 羅盤導航旅程', () => {
   test('儲存記錄後開啟導航：羅盤渲染、heading 注入、資訊卡與關閉', async ({ page }) => {
     await page.goto('/');
 
-    // 1. 快速記錄：FAB → 樓層 chip 觸發 auto-save
-    await getFab(page).click();
+    // 1. 快速記錄：手動記錄（不拍照） → 樓層 chip 觸發 auto-save
+    await getManualEntryTrigger(page).click();
     await expect(page.getByPlaceholder(TEXT.platePlaceholder)).toBeVisible();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
 
@@ -56,7 +56,7 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     // 4. 關閉導航回列表
     await closeButton.click();
     await expect(closeButton).not.toBeVisible();
-    await expect(getFab(page)).toBeVisible();
+    await expect(getManualEntryTrigger(page)).toBeVisible();
   });
 
   test('iOS 權限手勢流：requestPermission 存在時顯示啟用卡，手勢授權後羅盤生效', async ({
@@ -73,7 +73,7 @@ test.describe('記錄 → 羅盤導航旅程', () => {
     });
 
     await page.goto('/');
-    await getFab(page).click();
+    await getManualEntryTrigger(page).click();
     await page.getByRole('button', { name: 'B3', exact: true }).click();
 
     await page.getByTestId('pickup-hero-card').click();

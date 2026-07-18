@@ -8,15 +8,16 @@ import type { Page } from '@playwright/test';
 export const TEXT = {
   platePlaceholder: '車牌號碼',
   tabSettings: '設定',
-  addRecord: '新增停車紀錄',
+  manualEntry: '手動記錄（不拍照）',
 } as const;
 
 /**
- * FAB（快速記錄按鈕）aria-label 已於 issue #714 補上（action.add_record key），
- * 改以 getByRole 定位，避免依賴會隨版本改動的 class 名稱。
+ * 底部 + FAB 已於 issue #753 移除（首屏現代化：主動作唯一化）；
+ * 其「開啟 QuickEntry 空照片模式」職能遷移至第三級文字動作「手動記錄（不拍照）」，
+ * 以 getByRole 定位可翻譯 button，避免依賴會隨版本改動的 class 名稱。
  */
-export function getFab(page: Page) {
-  return page.getByRole('button', { name: TEXT.addRecord });
+export function getManualEntryTrigger(page: Page) {
+  return page.getByRole('button', { name: TEXT.manualEntry });
 }
 
 /**

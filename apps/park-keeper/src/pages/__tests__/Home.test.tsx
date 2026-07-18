@@ -126,14 +126,15 @@ describe('Home', () => {
     expect(alert).toHaveTextContent('無法讀取本機資料庫');
   });
 
-  it('FAB 應具備可翻譯的 aria-label', async () => {
+  it('主動作唯一化：底部 + FAB 已移除，手動記錄第三級文字動作可翻譯（issue #753）', async () => {
     mockGetRecords.mockResolvedValue([]);
 
     renderHome();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '新增停車紀錄' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '手動記錄（不拍照）' })).toBeInTheDocument();
     });
+    expect(screen.queryByRole('button', { name: '新增停車紀錄' })).toBeNull();
   });
 
   it('空狀態：拍照 CTA hero 置頂，教學入口具 44px 熱區 class', async () => {
