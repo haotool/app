@@ -11,6 +11,7 @@ import type { PlayerHandle } from './game/systems/player';
 import type { WaveRunner } from './game/systems/waves';
 import { BootScene } from './game/scenes/BootScene';
 import { TitleScene } from './game/scenes/TitleScene';
+import { SpikeChaseScene } from './game/scenes/SpikeChaseScene';
 import { MapScene } from './game/scenes/MapScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
@@ -68,7 +69,10 @@ const game = new Phaser.Game({
   // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
   roundPixels: false,
-  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene],
+  scene:
+    new URLSearchParams(location.search).get('spike') === 'chase'
+      ? [SpikeChaseScene]
+      : [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene],
 });
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
