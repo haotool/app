@@ -4,6 +4,15 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'hero-inhale',
     url: new URL('../../assets/sprites/hero-inhale.webp', import.meta.url).href,
   },
+  // 大嘴吸入影格（§71.4）：吸入進行中兩影格交替。
+  {
+    key: 'hero-inhale-big-1',
+    url: new URL('../../assets/sprites/hero-inhale-big-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-inhale-big-2',
+    url: new URL('../../assets/sprites/hero-inhale-big-2.webp', import.meta.url).href,
+  },
   {
     key: 'hero-puffed',
     url: new URL('../../assets/sprites/hero-puffed.webp', import.meta.url).href,

@@ -105,7 +105,13 @@ export interface PlayerHandle {
   destroy(): void;
 }
 
-type Pose = 'hero-idle' | 'hero-inhale' | 'hero-puffed' | 'hero-hurt';
+type Pose =
+  | 'hero-idle'
+  | 'hero-inhale'
+  | 'hero-inhale-big-1'
+  | 'hero-inhale-big-2'
+  | 'hero-puffed'
+  | 'hero-hurt';
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
@@ -132,6 +138,8 @@ const LANDING_SQUASH_MIN_VY = 120;
 const CROUCH_SQUASH_X = 0.14;
 const CROUCH_SQUASH_Y = 0.22;
 const CROUCH_SINK_PX = 3;
+// 大嘴吸入影格（§71.4）：吸入中兩影格交替營造吸力節奏；素材未載回退 hero-inhale。
+const INHALE_FRAME_MS = 160;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -201,6 +209,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let coyoteMs = 0;
   let jumpBufferMs = 0;
   let inhaling = false;
+  let inhaleAnimMs = 0;
   let wasOnGround = false;
   // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
   let stridePhase = 0;
@@ -852,13 +861,21 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       lastVy = body.velocity.y;
 
+      // 大嘴吸入影格（§71.4）：吸入進行中兩影格交替；素材未載回退 hero-inhale。
+      inhaleAnimMs = inhaling ? inhaleAnimMs + deltaMs : 0;
+      const bigMouth: Pose =
+        Math.floor(inhaleAnimMs / INHALE_FRAME_MS) % 2 === 0
+          ? 'hero-inhale-big-1'
+          : 'hero-inhale-big-2';
+      const inhalePose: Pose =
+        inhaling && scene.textures.exists(bigMouth) ? bigMouth : 'hero-inhale';
+
       // 形態貼圖（§57）：變身期間固定形態立繪；素材未載時退回一般姿勢（aura 保識別）。
       const formTexKey = transform.form ? `hero-${transform.form}` : null;
       if (formTexKey && scene.textures.exists(formTexKey)) {
         if (sprite.texture.key !== formTexKey) sprite.setTexture(formTexKey);
       } else if (invulnerableMs > 0) setPose('hero-hurt');
-      else if (controls.actionHeld && magazine.length === 0 && !transform.form)
-        setPose('hero-inhale');
+      else if (controls.actionHeld && magazine.length === 0 && !transform.form) setPose(inhalePose);
       else if (magazine.length > 0) setPose('hero-puffed');
       else setPose('hero-idle');
 

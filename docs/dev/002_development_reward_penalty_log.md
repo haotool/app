@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-inhale-bigmouth-frames
+- 原因：吸入狀態沿用嘴型偏小的單張 hero-inhale，吸力讀感弱、與 fx 粒子強度不匹配
+- 解法：codex imagegen 依 asset ticket（雙參考圖鎖角色特徵、尺寸/錨點/透明底規格化）生成大嘴兩影格（512 webp 各 ~22KB），吸入中 160ms 交替、素材未載回退 hero-inhale；GAME_DESIGN §71 同步、真瀏覽器截圖驗證入遊戲清晰度
 
 - 日期：2026-07-19
 - ID：penalty-starpuff-inhale-contact-damage
