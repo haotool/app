@@ -39,6 +39,7 @@ vi.mock('react-i18next', () => ({
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
         'record.delete': '刪除停車記錄 {{plate}}',
+        'record.manage_label': '紀錄管理',
         'record.view_photo': '查看停車照片',
         'record.photo_alt': '停車照片',
         'record.no_map': 'No Map',
@@ -263,6 +264,21 @@ describe('RecordCard', () => {
     expect(screen.getByLabelText('編輯車牌')).toBeInTheDocument();
     expect(screen.getByLabelText('刪除停車記錄 ABC-1234')).toBeInTheDocument();
     expect(screen.getByText(/柱子旁/)).toBeInTheDocument();
+  });
+
+  it('非 compact 時車牌與樓層資訊照常顯示', () => {
+    renderRecordCard();
+
+    expect(screen.getByText(record.plateNumber)).toBeInTheDocument();
+    expect(screen.getByText(record.floor)).toBeInTheDocument();
+  });
+
+  it('compact 精簡列只留操作，不重複顯示車牌／樓層／時間（issue #753 單筆去重）', () => {
+    renderRecordCard({}, { compact: true });
+
+    expect(screen.getByText('紀錄管理')).toBeInTheDocument();
+    expect(screen.queryByText(record.plateNumber)).toBeNull();
+    expect(screen.queryByText(record.floor)).toBeNull();
   });
 
   it('預設（非 compact）照片＋地圖列照常渲染', () => {

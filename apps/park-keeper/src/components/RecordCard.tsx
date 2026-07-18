@@ -189,6 +189,23 @@ export default function RecordCard({
                   </div>
                 )}
               </div>
+            ) : compact ? (
+              // compact 精簡列：與 hero 卡同筆時只留操作，車牌／樓層／時間已由 hero 呈現，
+              // 不重複資訊欄位（issue #753 單筆去重）。
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wide opacity-40">
+                  {t('record.manage_label')}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleEditStart}
+                  className="p-4 -m-4 opacity-45 hover:opacity-100 transition-opacity"
+                  title={t('record.edit_plate_icon')}
+                  aria-label={t('record.edit_plate_icon')}
+                >
+                  <Edit2 size={14} style={{ color: theme.colors.primary }} />
+                </button>
+              </div>
             ) : (
               <div className="group flex items-center gap-2">
                 <button
@@ -216,22 +233,24 @@ export default function RecordCard({
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
-              <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: `${theme.colors.primary}08`,
-                  color: theme.colors.primary,
-                }}
-              >
-                <MapPin size={10} />
-                {record.floor}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock size={10} />
-                {formatSmartTime(record.timestamp, i18n.language, t('home.just_now'))}
-              </span>
-            </div>
+            {!compact && (
+              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
+                <span
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}08`,
+                    color: theme.colors.primary,
+                  }}
+                >
+                  <MapPin size={10} />
+                  {record.floor}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock size={10} />
+                  {formatSmartTime(record.timestamp, i18n.language, t('home.just_now'))}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <button
