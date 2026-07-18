@@ -130,6 +130,29 @@ describe('MiniMap - Existing Functionality Preservation', () => {
     expect(userMarker).toBeTruthy();
   });
 
+  it('有使用者位置時渲染車位↔使用者主題色虛線連線（issue #752 兩點連線）', () => {
+    const { container } = render(
+      <MiniMap lat={25.033} lng={121.5654} userLat={25.043} userLng={121.5754} theme={mockTheme} />,
+    );
+
+    const polyline = container.querySelector('[data-testid="polyline"]');
+    expect(polyline).toBeTruthy();
+    expect(JSON.parse(polyline?.getAttribute('data-positions') ?? '[]')).toEqual([
+      [25.033, 121.5654],
+      [25.043, 121.5754],
+    ]);
+    const pathOptions = JSON.parse(polyline?.getAttribute('data-pathoptions') ?? '{}');
+    // 主題 token 色＋虛線＋動畫控制 class（reduced-motion 由 CSS media query 停用）。
+    expect(pathOptions.color).toBe(mockTheme.colors.primary);
+    expect(pathOptions.dashArray).toBe('6 8');
+    expect(pathOptions.className).toBe('nav-route-line');
+  });
+
+  it('無使用者位置時不渲染連線', () => {
+    const { container } = render(<MiniMap lat={25.033} lng={121.5654} theme={mockTheme} />);
+    expect(container.querySelector('[data-testid="polyline"]')).toBeNull();
+  });
+
   it('should render a clear legend for current location and car on interactive navigation map', () => {
     const { getByText } = render(
       <MiniMap

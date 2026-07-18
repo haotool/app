@@ -38,6 +38,104 @@ export const TICK_STEP_DEG = 10;
 export const CARDINAL_LABEL_RADIUS = 97;
 
 // ---------------------------------------------------------------------------
+// Deck 幾何（issue #752）：單一尺寸源契約。
+// 所有半徑/圓心由量測到的 stage px 推導，SVG viewBox 與 CSS px 1:1，
+// 根治「固定 px Hub × vh 縮放刻度環」的遮蔽根因。
+// ---------------------------------------------------------------------------
+
+/** 中心 Hub 直徑（px；設計 SSOT 定稿 144）。 */
+export const HUB_DIAMETER = 144;
+
+/** 降級方向膠囊高度（px；設計 SSOT 定稿 56）。 */
+export const CAPSULE_HEIGHT = 56;
+
+/** 弧面左右安全邊距（px；≥ 錨點半徑 11＋3px 呼吸，楔形指向東西時錨點不被裁）。 */
+export const DECK_SIDE_PAD = 14;
+
+/** 弧頂至 stage 上緣邊距（px；容納車位錨點與對準光暈）。 */
+export const DECK_TOP_PAD = 20;
+
+/** Hub 下緣至 stage 下緣邊距（px）。 */
+export const DECK_BOTTOM_PAD = 6;
+
+/** 弧半徑上限（px；避免平板上盤面過大）。 */
+export const DECK_MAX_R = 220;
+
+/**
+ * 弧模式最小半徑（px）。低於此值方位字帶無法同時避開 Hub 與刻度，
+ * 一律降級為方向膠囊（矮視高 / 橫向吞沒情境的幾何判定式）。
+ */
+export const DECK_MIN_ARC_R = 126;
+
+/** 旋轉方形包裝盒外擴量（px；容納錨點凸出與光暈）。 */
+export const DECK_RING_OVERHANG = 16;
+
+/** Hub 外緣至楔形內緣間隙（px；楔形恆不被 Hub 吞沒的結構保證）。 */
+export const WEDGE_HUB_GAP = 8;
+
+/** 楔形外緣自弧內縮量（px）。 */
+export const WEDGE_OUTER_INSET = 12;
+
+/** 方位字半徑自弧內縮量（px）。 */
+export const CARDINAL_LABEL_INSET = 40;
+
+/** 方位字最小半徑（px）：hubR 72 ＋ 字高半幅 10 ＋ 間隙 4。 */
+export const CARDINAL_LABEL_MIN_R = 86;
+
+export type DeckMode = 'arc' | 'capsule';
+
+export interface DeckGeometry {
+  mode: DeckMode;
+  /** 弧半徑（px；capsule 模式為 0）。 */
+  outerR: number;
+  /** 圓心在 stage 座標系的位置（px）。 */
+  cx: number;
+  cy: number;
+  /** 旋轉方形包裝盒半尺寸（= outerR + DECK_RING_OVERHANG）。 */
+  half: number;
+  hubD: number;
+  wedgeInnerR: number;
+  wedgeOuterR: number;
+  labelR: number;
+}
+
+/**
+ * 由量測到的 deck stage 尺寸推導全部盤面幾何（單一尺寸源 SSOT）。
+ * 半徑同時受寬、高與上限約束；不足以承載弧模式時回傳 capsule。
+ */
+export function computeDeckGeometry(width: number, height: number): DeckGeometry {
+  const hubR = HUB_DIAMETER / 2;
+  const byWidth = (width - DECK_SIDE_PAD * 2) / 2;
+  const byHeight = height - hubR - DECK_TOP_PAD - DECK_BOTTOM_PAD;
+  const outerR = Math.min(byWidth, byHeight, DECK_MAX_R);
+  // NaN／非正值一律走 capsule（量測未就緒或極端視口）。
+  if (!(outerR >= DECK_MIN_ARC_R)) {
+    return {
+      mode: 'capsule',
+      outerR: 0,
+      cx: width / 2,
+      cy: height / 2,
+      half: 0,
+      hubD: HUB_DIAMETER,
+      wedgeInnerR: 0,
+      wedgeOuterR: 0,
+      labelR: 0,
+    };
+  }
+  return {
+    mode: 'arc',
+    outerR,
+    cx: width / 2,
+    cy: DECK_TOP_PAD + outerR,
+    half: outerR + DECK_RING_OVERHANG,
+    hubD: HUB_DIAMETER,
+    wedgeInnerR: hubR + WEDGE_HUB_GAP,
+    wedgeOuterR: outerR - WEDGE_OUTER_INSET,
+    labelR: Math.max(outerR - CARDINAL_LABEL_INSET, CARDINAL_LABEL_MIN_R),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // 分類判斷
 // ---------------------------------------------------------------------------
 
@@ -92,11 +190,13 @@ export function tickOpacity(i: number): number {
 export function cardinalLabelPosition(
   i: number,
   radius: number = CARDINAL_LABEL_RADIUS,
+  cx: number = COMPASS_CX,
+  cy: number = COMPASS_CY,
 ): { x: number; y: number } {
   const θ = (i * TICK_STEP_DEG * Math.PI) / 180;
   return {
-    x: COMPASS_CX + radius * Math.sin(θ),
-    y: COMPASS_CY - radius * Math.cos(θ),
+    x: cx + radius * Math.sin(θ),
+    y: cy - radius * Math.cos(θ),
   };
 }
 
@@ -110,8 +210,10 @@ export function cardinalLabelUprightTransform(
   i: number,
   headingDeg: number,
   radius: number = CARDINAL_LABEL_RADIUS,
+  cx: number = COMPASS_CX,
+  cy: number = COMPASS_CY,
 ): string {
-  const { x, y } = cardinalLabelPosition(i, radius);
+  const { x, y } = cardinalLabelPosition(i, radius, cx, cy);
   return `rotate(${headingDeg} ${x} ${y})`;
 }
 
@@ -122,8 +224,8 @@ export function cardinalLabelUprightTransform(
 /** 目標方位楔形半角（度）：車位方向 ±15° 高亮帶。 */
 export const TARGET_WEDGE_HALF_ANGLE_DEG = 15;
 
-/** 楔形內半徑（環帶內緣，避開中心 Hub）。 */
-export const TARGET_WEDGE_INNER_R = 78;
+/** 楔形內半徑預設值：與 deck 契約同源（hub 半徑＋間隙），杜絕舊 78px 腳槍。 */
+export const TARGET_WEDGE_INNER_R = HUB_DIAMETER / 2 + WEDGE_HUB_GAP;
 
 /** 楔形外半徑（環帶外緣，落在刻度內側）。 */
 export const TARGET_WEDGE_OUTER_R = 126;
@@ -149,9 +251,9 @@ export function targetWedgePath(
   halfAngleDeg: number = TARGET_WEDGE_HALF_ANGLE_DEG,
   innerR: number = TARGET_WEDGE_INNER_R,
   outerR: number = TARGET_WEDGE_OUTER_R,
+  cx: number = COMPASS_CX,
+  cy: number = COMPASS_CY,
 ): string {
-  const cx = COMPASS_CX;
-  const cy = COMPASS_CY;
   const startOuter = polarPoint(cx, cy, outerR, -halfAngleDeg);
   const endOuter = polarPoint(cx, cy, outerR, halfAngleDeg);
   const startInner = polarPoint(cx, cy, innerR, halfAngleDeg);
