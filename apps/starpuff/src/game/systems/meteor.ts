@@ -41,6 +41,10 @@ export interface MeteorSystem {
   getEmbers(): Phaser.Physics.Arcade.Group;
   // 星彈擊碎／命中玩家共用的消滅出口（碎裂粒子演出）。
   shatter(meteor: Phaser.GameObjects.GameObject): void;
+  // 波次開關與調參（§82 Voidra P2 轟炸沿單一 meteor 管線）：停用時既有隕星/餘燼
+  // 仍自然結算，僅停止新波投放。
+  setActive(next: boolean): void;
+  setSpec(next: MeteorSpec): void;
   // e2e 觀測點：墜落中/餘燼/預警圈數量。
   state(): { falling: number; embers: number; telegraphs: number };
   destroy(): void;
@@ -70,11 +74,17 @@ function ensureMeteorTextures(scene: Phaser.Scene): void {
   }
 }
 
-export function createMeteorSystem(scene: Phaser.Scene, spec: MeteorSpec): MeteorSystem {
+export function createMeteorSystem(
+  scene: Phaser.Scene,
+  initial: MeteorSpec,
+  startActive = true,
+): MeteorSystem {
   ensureMeteorTextures(scene);
   const meteors = scene.physics.add.group({ defaultKey: ROCK_TEX, maxSize: POOL_SIZE });
   const embers = scene.physics.add.group({ defaultKey: EMBER_TEX, maxSize: POOL_SIZE });
   const telegraphs = new Set<Phaser.GameObjects.Arc>();
+  let spec = initial;
+  let waveActive = startActive;
   let timerMs = 0;
 
   const activeFalling = (): number => meteors.getChildren().filter((child) => child.active).length;
@@ -169,6 +179,7 @@ export function createMeteorSystem(scene: Phaser.Scene, spec: MeteorSpec): Meteo
           rock.disableBody(true, true);
         }
       }
+      if (!waveActive) return;
       const tick = advanceMeteorTimer(timerMs, deltaMs, spec.intervalMs);
       timerMs = tick.timerMs;
       if (!tick.wave) return;
@@ -192,6 +203,13 @@ export function createMeteorSystem(scene: Phaser.Scene, spec: MeteorSpec): Meteo
     },
     getMeteors: () => meteors,
     getEmbers: () => embers,
+    setActive(next: boolean) {
+      waveActive = next;
+      if (next) timerMs = 0;
+    },
+    setSpec(next: MeteorSpec) {
+      spec = next;
+    },
     shatter(meteor: Phaser.GameObjects.GameObject): void {
       const rock = meteor as Phaser.Physics.Arcade.Sprite;
       if (!rock.active) return;

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   EGG_HP_CAP,
   ENEMY,
+  GRAVITY_Y,
   INHALE,
   PLAYER,
   SLAM,
@@ -41,6 +42,7 @@ import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
+import { VOIDRA } from '../logic/voidraFsm';
 import {
   inhaleFlavor,
   inhaleGraceUntil,
@@ -92,6 +94,7 @@ import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createNoctra } from '../systems/noctra';
 import { createPrismix } from '../systems/prismix';
 import { createSyrona } from '../systems/syrona';
+import { createVoidra } from '../systems/voidra';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -244,6 +247,9 @@ export class GameScene extends Phaser.Scene {
     this.mercyWarpMs = 0;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
+    // 低重力（§81）：關卡級重力係數單點注入（缺省 1.0 零回歸）；世界重力為全域值，
+    // 每次 create 必須顯式重設（防前關/Voidra P3 注入殘留）。
+    this.physics.world.gravity.y = GRAVITY_Y * (this.level.gravityScale ?? 1);
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
     this.terrainGround = ground;
@@ -275,7 +281,12 @@ export class GameScene extends Phaser.Scene {
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
     // 流星雨（§79）：關卡級配置建立；落點排除與傷害結算見 advanceMeteors/addOverlaps。
-    this.meteor = this.level.meteor ? createMeteorSystem(this, this.level.meteor) : null;
+    // Voidra 關（§82）：預建停用態系統供 P2 轟炸沿單一管線開關（overlap 於 create 接線）。
+    this.meteor = this.level.meteor
+      ? createMeteorSystem(this, this.level.meteor)
+      : this.level.boss === 'voidra'
+        ? createMeteorSystem(this, { intervalMs: 3400, waveSize: 2 }, false)
+        : null;
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
       adjustSpawn: (kind, y) =>
         this.tide
@@ -439,6 +450,12 @@ export class GameScene extends Phaser.Scene {
     if (!this.scene.isActive() || this.finished || this.transitioning) return;
     this.deaths += 1;
     if (this.level.boss) {
+      // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場，玩家重生於 arena 左帶。
+      if (this.boss.trySegmentRespawn?.() === true) {
+        this.player.sprite.setVisible(false);
+        this.respawnAtCheckpoint(this.arenaLeft() + 90);
+        return;
+      }
       this.finish('lost');
       return;
     }
@@ -970,6 +987,11 @@ export class GameScene extends Phaser.Scene {
       this.player.sprite.setVisible(false);
       this.fx.puff(x, y);
       if (this.level.boss) {
+        // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場（呈現層已自清＋FSM 重置）。
+        if (this.boss.trySegmentRespawn?.() === true) {
+          this.respawnAtCheckpoint(this.arenaLeft() + 90);
+          return;
+        }
         this.finish('lost');
         return;
       }
@@ -1322,6 +1344,44 @@ export class GameScene extends Phaser.Scene {
             { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: SYRONA.bodyDamage,
+        };
+      case 'voidra':
+        return {
+          handle: createVoidra(
+            this,
+            {
+              // 星核共鳴（§83）：FSM 單一真值，GameScene 餵彩蛋＋星雨謝幕演出。
+              onShardEgg: () => {
+                this.feedEggs({ kind: 'survive-collect' });
+                this.cameras.main.flash(360, 255, 230, 160);
+                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
+              },
+              // P2 定點轟炸（§82）：沿 GameScene 單一 meteor 管線開關與調參。
+              setBombardment: (spec) => {
+                if (spec) this.meteor?.setSpec(spec);
+                this.meteor?.setActive(spec !== null);
+              },
+              // P3 低重力（§81）：全域重力直寫；null 回關卡預設（create 亦會重設）。
+              setGravityScale: (scale) => {
+                this.physics.world.gravity.y = GRAVITY_Y * (scale ?? this.level.gravityScale ?? 1);
+              },
+              // P2 段內固定愛心（§6.3 保底）：走既有 heal pickup 管線、緩降至地面帶。
+              dropSurvivalHeart: () => {
+                const x = this.arenaLeft() + this.scale.width * 0.3;
+                playSfx('reveal');
+                this.fx.burstSmall(x, 150, 0xff9ec4);
+                spawnHealPickup(
+                  this,
+                  x,
+                  150,
+                  { player: () => this.player, playerHp: () => this.playerHp },
+                  { healHp: MERCY_HEAL.healHp, driftToY: GROUND_TOP - 22 },
+                );
+              },
+            },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
+          ),
+          bodyDamage: VOIDRA.bodyDamage,
         };
       default: {
         const unhandled: never = kind;
