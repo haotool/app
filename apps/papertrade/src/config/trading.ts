@@ -6,6 +6,8 @@ export const LEVERAGE_MIN = 1;
 export const LEVERAGE_MAX = 1000;
 export const DEFAULT_LEVERAGE = 10;
 export const MIN_ORDER_NOTIONAL_USDT = 5;
+// 限價相對標記價的允許帶寬（±50%，對標 Bybit 價格保護簡化版）：超帶寬拒單，防天價/地板價造成荒謬數量。
+export const LIMIT_PRICE_BAND = 0.5;
 
 export const SIZE_SLIDER_TICKS = [0, 25, 50, 75, 100] as const;
 export const CLOSE_PERCENT_PRESETS = [25, 50, 75, 100] as const;

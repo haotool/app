@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { type TradeError } from '../engine/engine';
-import { LEVERAGE_MAX, LEVERAGE_MIN, MIN_ORDER_NOTIONAL_USDT } from '../config/trading';
+import {
+  LEVERAGE_MAX,
+  LEVERAGE_MIN,
+  LIMIT_PRICE_BAND,
+  MIN_ORDER_NOTIONAL_USDT,
+} from '../config/trading';
 
 export const TRADE_ERROR_MESSAGES: Record<TradeError, string> = {
   'invalid-leverage': '槓桿須在 1–1000 倍之間',
@@ -18,6 +23,16 @@ export const TPSL_INPUT_MESSAGES = {
   tp: '止盈價須為大於 0 的數字',
   sl: '止損價須為大於 0 的數字',
 } as const;
+
+export const LIMIT_PRICE_BAND_MESSAGE = `限價需在標記價 ±${LIMIT_PRICE_BAND * 100}% 範圍內`;
+
+// 帶寬邊界含端點：mark×(1−band) 與 mark×(1+band) 均可下單。
+export function isLimitPriceWithinBand(limitPrice: number, markPrice: number): boolean {
+  return (
+    limitPrice >= markPrice * (1 - LIMIT_PRICE_BAND) &&
+    limitPrice <= markPrice * (1 + LIMIT_PRICE_BAND)
+  );
+}
 
 const positiveInputSchema = z.coerce.number().finite().positive();
 

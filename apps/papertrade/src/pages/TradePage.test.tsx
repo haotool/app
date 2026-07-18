@@ -177,6 +177,39 @@ describe('TradePage', () => {
     expect(useTradeStore.getState().account.balance).toBeCloseTo(10000, 8);
   });
 
+  it('rejects a limit order priced outside the mark price band', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '0.0001');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('限價需在標記價 ±50% 範圍內');
+    expect(useTradeStore.getState().account.orders).toHaveLength(0);
+    expect(useTradeStore.getState().account.positions).toHaveLength(0);
+  });
+
+  it('accepts limit orders exactly at the mark price band boundaries', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    // mark 60000：下界 30000（買多掛低）與上界 90000（賣空掛高）均應放行。
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '30000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+    expect(useTradeStore.getState().account.orders).toHaveLength(1);
+
+    await user.clear(screen.getByRole('textbox', { name: '限價（USDT）' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '90000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '賣空' }));
+    expect(useTradeStore.getState().account.orders).toHaveLength(2);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('fills the limit price from the order book', async () => {
     const user = userEvent.setup();
     renderTrade();
