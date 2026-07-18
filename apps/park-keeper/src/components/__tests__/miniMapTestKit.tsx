@@ -139,6 +139,19 @@ export const reactLeafletMock = {
       data-zindex={String(zIndexOffset)}
     />
   ),
+  Polyline: ({
+    positions,
+    pathOptions,
+  }: {
+    positions: [number, number][];
+    pathOptions?: Record<string, unknown>;
+  }) => (
+    <div
+      data-testid="polyline"
+      data-positions={JSON.stringify(positions)}
+      data-pathoptions={JSON.stringify(pathOptions ?? {})}
+    />
+  ),
   useMap: () => mockMapInstance,
 };
 
@@ -168,6 +181,7 @@ export const mockTheme: ThemeConfig = {
   name: 'Minimalist',
   colors: {
     primary: '#8b5cf6',
+    onPrimary: '#ffffff',
     secondary: '#3b82f6',
     accent: '#10b981',
     background: '#ffffff',

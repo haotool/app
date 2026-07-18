@@ -23,6 +23,7 @@ export default function DraggablePhotoOverlay({
   carPixelPos,
   initialOffset,
   onOffsetCommit,
+  draggable = true,
 }: {
   src: string;
   onPhotoClick?: () => void;
@@ -30,6 +31,8 @@ export default function DraggablePhotoOverlay({
   carPixelPos: { x: number; y: number } | null;
   initialOffset?: { x: number; y: number };
   onOffsetCommit?: (offset: { x: number; y: number }) => void;
+  /** 錨點模式（false）：照片僅可 tap 開檢視器，不可拖曳（issue #752 導航頁預設）。 */
+  draggable?: boolean;
 }) {
   // 初始偏移只在掛載時取一次（record.photoOffset 或預設車輛右側）。
   const [initial] = useState(() => {
@@ -63,7 +66,7 @@ export default function DraggablePhotoOverlay({
   return (
     <motion.div
       data-testid="photo-overlay"
-      drag
+      drag={draggable}
       dragConstraints={containerRef}
       dragMomentum={false}
       dragElastic={0}
@@ -85,7 +88,9 @@ export default function DraggablePhotoOverlay({
         if (!dragOccurred.current) onPhotoClick?.();
       }}
       style={{ x, y, position: 'absolute', top: 0, left: 0, touchAction: 'none' }}
-      className="z-[500] cursor-grab active:cursor-grabbing touch-none select-none"
+      className={`z-[500] touch-none select-none ${
+        draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+      }`}
     >
       <img
         src={src}

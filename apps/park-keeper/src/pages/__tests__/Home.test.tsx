@@ -126,14 +126,15 @@ describe('Home', () => {
     expect(alert).toHaveTextContent('無法讀取本機資料庫');
   });
 
-  it('FAB 應具備可翻譯的 aria-label', async () => {
+  it('主動作唯一化：底部 + FAB 已移除，手動記錄第三級文字動作可翻譯（issue #753）', async () => {
     mockGetRecords.mockResolvedValue([]);
 
     renderHome();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '新增停車紀錄' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '手動記錄（不拍照）' })).toBeInTheDocument();
     });
+    expect(screen.queryByRole('button', { name: '新增停車紀錄' })).toBeNull();
   });
 
   it('空狀態：拍照 CTA hero 置頂，教學入口具 44px 熱區 class', async () => {
@@ -150,6 +151,34 @@ describe('Home', () => {
 
     const guideLink = screen.getByRole('link', { name: '捷徑教學' });
     expect(guideLink.className).toContain('min-h-11');
+  });
+
+  it('空狀態：隱藏搜尋框，避免對空列表呈現死 UI（issue #753）', async () => {
+    mockGetRecords.mockResolvedValue([]);
+
+    renderHome();
+
+    await waitFor(() => {
+      expect(screen.getByText('尚無停車紀錄')).toBeInTheDocument();
+    });
+    expect(screen.queryByPlaceholderText('搜尋...')).toBeNull();
+  });
+
+  it('有現役記錄：搜尋框照常顯示（issue #753 僅 0 筆時隱藏）', async () => {
+    const record: ParkingRecord = {
+      id: 'r1',
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      timestamp: Date.now() - 60_000,
+      hasPhoto: false,
+    };
+    mockGetRecords.mockResolvedValue([record]);
+
+    renderHome();
+
+    await screen.findByTestId('pickup-hero-card');
+    expect(screen.getByPlaceholderText('搜尋...')).toBeInTheDocument();
   });
 
   it('有現役記錄：取車 hero 卡置頂、拍照 CTA 降為 compact 且列於 hero 之後', async () => {

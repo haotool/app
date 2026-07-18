@@ -34,10 +34,11 @@ vi.mock('react-i18next', () => ({
       const map: Record<string, string> = {
         'record.plate': '車牌號碼',
         'record.plate_unset': '未填車號',
-        'record.yesterday': '昨天',
+        'home.just_now': '剛剛',
         'record.edit_plate': '編輯車牌 {{plate}}',
         'record.edit_plate_icon': '編輯車牌',
         'record.delete': '刪除停車記錄 {{plate}}',
+        'record.manage_label': '紀錄管理',
         'record.view_photo': '查看停車照片',
         'record.photo_alt': '停車照片',
         'record.no_map': 'No Map',
@@ -85,6 +86,7 @@ const theme: ThemeConfig = {
   name: 'Zen',
   colors: {
     primary: '#1e293b',
+    onPrimary: '#ffffff',
     secondary: '#f1f5f9',
     accent: '#3b82f6',
     background: '#f8fafc',
@@ -264,10 +266,32 @@ describe('RecordCard', () => {
     expect(screen.getByText(/柱子旁/)).toBeInTheDocument();
   });
 
+  it('非 compact 時車牌與樓層資訊照常顯示', () => {
+    renderRecordCard();
+
+    expect(screen.getByText(record.plateNumber)).toBeInTheDocument();
+    expect(screen.getByText(record.floor)).toBeInTheDocument();
+  });
+
+  it('compact 精簡列只留操作，不重複顯示車牌／樓層／時間（issue #753 單筆去重）', () => {
+    renderRecordCard({}, { compact: true });
+
+    expect(screen.getByText('紀錄管理')).toBeInTheDocument();
+    expect(screen.queryByText(record.plateNumber)).toBeNull();
+    expect(screen.queryByText(record.floor)).toBeNull();
+  });
+
   it('預設（非 compact）照片＋地圖列照常渲染', () => {
     renderRecordCard();
 
     expect(screen.getByTestId('record-card-media')).toBeInTheDocument();
+  });
+
+  it('時間顯示統一走 formatSmartTime 相對時間 SSOT，不再使用日曆格式（issue #753）', () => {
+    renderRecordCard({ timestamp: Date.now() - 3 * 3_600_000 });
+
+    expect(screen.getByText('3 小時前')).toBeInTheDocument();
+    expect(screen.queryByText('昨天')).toBeNull();
   });
 
   it('應該支援刪除與導航操作，並顯示備註', () => {

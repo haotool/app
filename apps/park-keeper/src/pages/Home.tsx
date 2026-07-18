@@ -13,7 +13,6 @@ import {
   type Variants,
 } from 'motion/react';
 import {
-  Plus,
   Settings as SettingsIcon,
   Car,
   Search,
@@ -21,8 +20,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
-import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
+import type { ParkingRecord, AppSettings, ThemeConfig } from '@app/park-keeper/types';
+import { THEMES, DEFAULT_SETTINGS, CUTE_WORDMARK_GRADIENT } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
 import { syncMapTileCacheConfig } from '@app/park-keeper/services/mapTileCache';
@@ -36,7 +35,6 @@ import RecordCard from '@app/park-keeper/components/RecordCard';
 import PickupHeroCard from '@app/park-keeper/components/PickupHeroCard';
 import QuickCaptureCta from '@app/park-keeper/components/QuickCaptureCta';
 import ListSkeleton from '@app/park-keeper/components/ListSkeleton';
-import { ON_PRIMARY_COLOR } from '@app/park-keeper/config/colors';
 import {
   NAV_CONTENT_H,
   NAV_ICON_SIZE,
@@ -46,7 +44,6 @@ import {
   NAV_INDICATOR_LAYOUT_ID,
   NAV_INDICATOR_TRANSITION,
   NAV_LABEL_BASE_CLS,
-  NAV_LABEL_INACTIVE_CLS,
   NAV_TAB_GAP_CLS,
 } from '@app/park-keeper/config/navBar';
 
@@ -78,18 +75,72 @@ const reducedPageVariants: Variants = {
   exit: { opacity: 0, transition: { duration: 0.1 } },
 };
 
-/** 教學入口：對比 ≥4.5:1（text @0.8）＋觸控熱區 ≥44×44；載入態與內容態共用。 */
+/** 教學入口：text 實色（cute @0.8 混色僅 3.68:1，故不做 opacity dimming）＋觸控熱區 ≥44×44；
+ *  載入態與內容態共用，markup 須與 HomeShell 同構。 */
 function GuideEntryLink({ color, label }: { color: string; label: string }) {
   return (
     <div className="text-center">
       <Link
         to="/guide"
-        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity"
+        className="inline-flex items-center justify-center min-h-11 min-w-11 px-4 text-xs font-bold underline underline-offset-4 hover:opacity-80 transition-opacity"
         style={{ color }}
       >
         {label}
       </Link>
     </div>
+  );
+}
+
+/**
+ * 空狀態教學入口卡（issue #753）：0 筆時取代純文字連結＋獨立空狀態訊息的雙元件組合，
+ * 收斂為單一 soft depth 卡片（rounded-3xl＋1dp border＋theme surface），同時承載訊息與捷徑教學入口。
+ * accessible name 以 aria-label 固定為 label，不受卡內圖示／文案影響（維持既有 e2e/單元測試斷言）。
+ */
+function EmptyStateGuideCard({
+  theme,
+  message,
+  hint,
+  label,
+}: {
+  theme: ThemeConfig;
+  message: string;
+  hint: string;
+  label: string;
+}) {
+  return (
+    <Link
+      to="/guide"
+      aria-label={label}
+      className="min-h-11 flex flex-col items-center gap-2 text-center px-6 py-10 rounded-3xl border border-black/1 shadow-elevation-1 active:scale-[0.99] transition-transform"
+      style={{ backgroundColor: theme.colors.surface }}
+    >
+      <Car
+        size={40}
+        strokeWidth={1.5}
+        aria-hidden
+        style={{ color: theme.colors.primary, opacity: 0.35 }}
+      />
+      {/* 文字一律實色達 AA（issue #753 審查收斂）：message=text、hint=textMuted；
+          連結不得用 pastel primary 當字色（cute 對白 surface 僅 1.69:1），改 text＋underline。 */}
+      <p
+        className="font-black text-xs uppercase tracking-[0.2em]"
+        style={{ color: theme.colors.text }}
+      >
+        {message}
+      </p>
+      <p
+        className="text-[11px] font-medium max-w-[220px] leading-relaxed"
+        style={{ color: theme.colors.textMuted }}
+      >
+        {hint}
+      </p>
+      <span
+        className="mt-1 text-[11px] font-bold underline underline-offset-4"
+        style={{ color: theme.colors.text }}
+      >
+        {label}
+      </span>
+    </Link>
   );
 }
 
@@ -282,6 +333,12 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
     setShowQuickEntry(true);
   }, []);
 
+  // 主動作唯一化（issue #753）：底部 + FAB 移除，「不拍照手動記錄」第三級文字動作
+  // 承接其職能——開啟 QuickEntry 空照片模式（不預帶 ctaPhotoFile）。
+  const handleManualEntry = useCallback(() => {
+    setShowQuickEntry(true);
+  }, []);
+
   // 接手 SSG 殼（HomeShell）hydration 前開啟相機的照片，不落失使用者輸入。
   useEffect(() => pendingCtaPhoto.subscribe(handleCtaPhoto), [handleCtaPhoto]);
 
@@ -299,16 +356,22 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
         {/* Premium Header */}
+        {/* glass 不進首屏（issue #753 視覺語言）：移除 backdrop-blur，
+            以較高不透明度純色維持捲動內容遮蔽力。 */}
         <header
-          className="px-6 pb-4 pt-safe-top z-30 backdrop-blur-xl border-b border-black/3"
-          style={{ backgroundColor: theme.colors.background + 'CC' }}
+          className="px-6 pb-4 pt-safe-top z-30 border-b border-black/3"
+          style={{ backgroundColor: theme.colors.background + 'F0' }}
         >
           <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
             <div className="flex items-center gap-3">
               <BrandLogo theme={theme} />
               {theme.id === 'cute' ? (
                 <h1
-                  className={`text-3xl font-black tracking-normal ${theme.font} bg-clip-text text-transparent bg-linear-to-r from-[#FF9A9E] via-[#FFB7B2] to-[#FF9A9E] drop-shadow-[0_2px_2px_rgba(0,0,0,0.05)]`}
+                  className={`text-3xl font-black tracking-normal ${theme.font} bg-clip-text text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.05)]`}
+                  style={{
+                    // 對比修至 AA（issue #753）：CUTE_WORDMARK_GRADIENT 三色 4.80–5.45:1（on #FFFAF4）。
+                    backgroundImage: `linear-gradient(to right, ${CUTE_WORDMARK_GRADIENT.join(', ')})`,
+                  }}
                 >
                   ParkKeeper
                 </h1>
@@ -324,7 +387,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               )}
             </div>
 
-            {currentTab === 'list' && (
+            {/* 0 筆時隱藏搜尋框：避免對空列表呈現死 UI（issue #753 空狀態）。 */}
+            {currentTab === 'list' && records.length > 0 && (
               <div className="relative w-32 transition-all focus-within:w-40">
                 <Search
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-30"
@@ -366,6 +430,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         label={t('home.quick_record_cta')}
                         hint={t('record.photo_tap')}
                         onPhotoSelected={handleCtaPhoto}
+                        onManualEntry={handleManualEntry}
+                        manualEntryLabel={t('home.manual_entry')}
                       />
                       <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
                     </div>
@@ -402,6 +468,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                           label={t('home.quick_record_cta')}
                           hint={t('record.photo_tap')}
                           onPhotoSelected={handleCtaPhoto}
+                          onManualEntry={handleManualEntry}
+                          manualEntryLabel={t('home.manual_entry')}
                         />
                       </>
                     ) : (
@@ -411,19 +479,22 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         label={t('home.quick_record_cta')}
                         hint={t('record.photo_tap')}
                         onPhotoSelected={handleCtaPhoto}
+                        onManualEntry={handleManualEntry}
+                        manualEntryLabel={t('home.manual_entry')}
                       />
                     )}
-                    <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
-                    {records.length === 0 && (
-                      <div className="flex flex-col items-center justify-center pt-12 pb-6 text-center">
-                        <Car size={56} strokeWidth={1.5} className="opacity-20" aria-hidden />
-                        {/* text-xs（非 text-sm）：此段為 hydration 後才出現的文字，繪製面積
-                            必須小於 SSG 殼首屏最大文字（header wordmark），否則會觸發更晚的
-                            LCP entry，把 LCP 綁到 JS 載入鏈上（issue #738）。 */}
-                        <p className="font-black text-xs uppercase mt-4 tracking-[0.2em] opacity-70">
-                          {t('record.empty')}
-                        </p>
-                      </div>
+                    {/* 空狀態（issue #753）：單一教學入口卡取代純文字連結＋獨立空狀態訊息組合；
+                        text-xs（非 text-sm）維持 hydration 後文字繪製面積小於 SSG 殼首屏最大文字，
+                        避免觸發更晚的 LCP entry（issue #738）。 */}
+                    {records.length === 0 ? (
+                      <EmptyStateGuideCard
+                        theme={theme}
+                        message={t('record.empty')}
+                        hint={t('home.empty_guide_hint')}
+                        label={t('guide.entry')}
+                      />
+                    ) : (
+                      <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
                     )}
                     {filteredRecords.map((r) => (
                       <RecordCard
@@ -460,13 +531,14 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
 
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
-            避免 pb-safe-bottom 吃掉可見內容高度。 */}
+            避免 pb-safe-bottom 吃掉可見內容高度。
+            glass 不進首屏（issue #753 視覺語言）：移除 backdrop-blur，改高不透明度純色。 */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-black/5"
-          style={{ backgroundColor: theme.colors.background + 'CC' }}
+          className="fixed bottom-0 inset-x-0 z-30 border-t border-black/5"
+          style={{ backgroundColor: theme.colors.background + 'F0' }}
         >
           {/* 可見內容區：固定 56px，與 safe area 無關 */}
-          <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto relative px-6`}>
+          <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto px-6`}>
             {/* List Tab */}
             <div className="flex-1 h-full">
               <button
@@ -475,9 +547,13 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 onClick={() => setCurrentTab('list')}
                 className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
+                {/* inactive 對比修至 AA（issue #753）：改用 theme.colors.textMuted 全不透明度，
+                    取代 opacity-30 dimming（原做法在部分主題背景下對比 <3:1）。 */}
                 <div
-                  className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
-                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                  className={`transition-all duration-300 ${currentTab === 'list' ? 'scale-105' : ''}`}
+                  style={{
+                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   <ListIcon
                     size={NAV_ICON_SIZE}
@@ -487,8 +563,10 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   />
                 </div>
                 <span
-                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'list' ? NAV_LABEL_INACTIVE_CLS : ''}`}
-                  style={{ color: currentTab === 'list' ? theme.colors.primary : undefined }}
+                  className={NAV_LABEL_BASE_CLS}
+                  style={{
+                    color: currentTab === 'list' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   {t('tab.list')}
                 </span>
@@ -504,28 +582,6 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               </button>
             </div>
 
-            {/* FAB spacer */}
-            <div className="w-20" />
-
-            {/* Centered FAB */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-              <motion.button
-                type="button"
-                onClick={() => setShowQuickEntry(true)}
-                aria-label={t('action.add_record')}
-                whileTap={{ scale: 0.9, rotate: 90 }}
-                whileHover={{ scale: 1.05 }}
-                className="w-16 h-16 rounded-full flex items-center justify-center shadow-elevation-3 border-4 transition-colors"
-                style={{
-                  backgroundColor: theme.colors.primary,
-                  borderColor: theme.colors.background,
-                  boxShadow: `${theme.colors.primary}66 0px 8px 25px`,
-                }}
-              >
-                <Plus size={32} stroke={ON_PRIMARY_COLOR} strokeWidth={3} />
-              </motion.button>
-            </div>
-
             {/* Settings Tab */}
             <div className="flex-1 h-full">
               <button
@@ -535,8 +591,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                 className={`w-full h-full flex flex-col items-center justify-center ${NAV_TAB_GAP_CLS} relative group`}
               >
                 <div
-                  className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : 'opacity-30 group-hover:opacity-50'}`}
-                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                  className={`transition-all duration-300 ${currentTab === 'settings' ? 'scale-105' : ''}`}
+                  style={{
+                    color:
+                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   <SettingsIcon
                     size={NAV_ICON_SIZE}
@@ -546,8 +605,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                   />
                 </div>
                 <span
-                  className={`${NAV_LABEL_BASE_CLS} ${currentTab !== 'settings' ? NAV_LABEL_INACTIVE_CLS : ''}`}
-                  style={{ color: currentTab === 'settings' ? theme.colors.primary : undefined }}
+                  className={NAV_LABEL_BASE_CLS}
+                  style={{
+                    color:
+                      currentTab === 'settings' ? theme.colors.primary : theme.colors.textMuted,
+                  }}
                 >
                   {t('tab.settings')}
                 </span>
@@ -608,11 +670,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 20, opacity: 0 }}
             className="fixed left-1/2 -translate-x-1/2 px-8 py-3.5 rounded-full shadow-elevation-4 z-100 border border-white/10"
             style={{
-              // FAB 熱區頂緣約在底部 88px（56px 導覽列＋32px 突出）、進場位移 20px：
-              // 7.5rem 保證 toast 全程（含進場動畫）不遮 FAB（round-2 Composer U-R2-01）。
+              // 底部導覽列 56px＋進場位移 20px：7.5rem 保證 toast 全程（含進場動畫）
+              // 不遮 bottom nav（FAB 已於 issue #753 移除）。
               bottom: 'calc(7.5rem + env(safe-area-inset-bottom))',
               backgroundColor: theme.colors.primary,
-              color: ON_PRIMARY_COLOR,
+              color: theme.colors.onPrimary,
             }}
           >
             <span className="text-[11px] font-black uppercase tracking-widest">{toast}</span>

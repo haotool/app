@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+127
+> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+127
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-18
+- ID：reward-park-keeper-r4-compass-v2-home-modern
+- 原因：使用者回報羅盤遮蔽與首屏設計不良，需佈局改版（上地圖下羅盤）＋現代化收斂且不回歸既有 2-taps 捷徑體驗
+- 解法：取證量化定位幾何根因（Hub 固定 px×vh 縮放環）→ computeDeckGeometry 單一尺寸源＋58/42 弧形 deck＋降級膠囊（15 情境零遮蔽歸零）；首屏主動作唯一化＋onPrimary token 四主題 AA 守門；NavOverlay 1060→473 拆檔；整合 650 unit＋50 e2e 綠
+
+- 日期：2026-07-18
+- ID：penalty-park-keeper-compass-viewport-blindspot
+- 原因：前輪羅盤 overhaul 的 PoC 與四席評分皆只測標準直向 viewport，矮視高（瀏覽器工具列/in-app）與橫向的幾何崩壞由使用者親自抓到
+- 解法：取證矩陣納入 375×667/有效視高 553/橫向/notflat 全情境並量化 boundingBox；零遮蔽斷言常駐 e2e 守門，評分席走查矩陣同步擴充
 
 - 日期：2026-07-18
 - ID：penalty-starpuff-v8-noctra-unwinnable

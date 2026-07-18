@@ -16,6 +16,7 @@ import type { ThemeConfig, ParkingRecord } from '@app/park-keeper/types';
 import { CACHE_DAYS } from '@app/park-keeper/constants';
 import { useDebounce } from '@app/park-keeper/hooks/useDebounce';
 import { formatPlateLabel, isPlateUnset } from '@app/park-keeper/services/formatPlate';
+import { formatSmartTime } from '@app/park-keeper/services/formatSmartTime';
 import PhotoViewerModal from './PhotoViewerModal';
 
 const MiniMap = lazy(() => import('./MiniMap'));
@@ -39,30 +40,6 @@ interface RecordCardProps {
     ariaInteractiveTrackingLabel: string;
     ariaStaticLabel: string;
   };
-}
-
-/** 智慧時間顯示：今天→時間、昨天→「昨天 HH:mm」、本週→「星期X HH:mm」、更早→完整日期。
- *  locale 採 i18n.language，避免與使用者選定的應用程式語言不一致。 */
-function formatSmartTime(timestamp: number, locale: string, yesterdayLabel: string): string {
-  const now = new Date();
-  const d = new Date(timestamp);
-
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 86400000;
-  const weekStart = todayStart - 6 * 86400000;
-
-  const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-
-  if (timestamp >= todayStart) {
-    return timeStr;
-  } else if (timestamp >= yesterdayStart) {
-    return `${yesterdayLabel} ${timeStr}`;
-  } else if (timestamp >= weekStart) {
-    const weekday = d.toLocaleDateString(locale, { weekday: 'short' });
-    return `${weekday} ${timeStr}`;
-  } else {
-    return d.toLocaleDateString(locale, { month: 'numeric', day: 'numeric' }) + ' ' + timeStr;
-  }
 }
 
 export default function RecordCard({
@@ -212,6 +189,23 @@ export default function RecordCard({
                   </div>
                 )}
               </div>
+            ) : compact ? (
+              // compact 精簡列：與 hero 卡同筆時只留操作，車牌／樓層／時間已由 hero 呈現，
+              // 不重複資訊欄位（issue #753 單筆去重）。
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wide opacity-40">
+                  {t('record.manage_label')}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleEditStart}
+                  className="p-4 -m-4 opacity-45 hover:opacity-100 transition-opacity"
+                  title={t('record.edit_plate_icon')}
+                  aria-label={t('record.edit_plate_icon')}
+                >
+                  <Edit2 size={14} style={{ color: theme.colors.primary }} />
+                </button>
+              </div>
             ) : (
               <div className="group flex items-center gap-2">
                 <button
@@ -239,22 +233,24 @@ export default function RecordCard({
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
-              <span
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: `${theme.colors.primary}08`,
-                  color: theme.colors.primary,
-                }}
-              >
-                <MapPin size={10} />
-                {record.floor}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock size={10} />
-                {formatSmartTime(record.timestamp, i18n.language, t('record.yesterday'))}
-              </span>
-            </div>
+            {!compact && (
+              <div className="flex items-center gap-3 text-[10px] font-black opacity-30 uppercase tracking-tight">
+                <span
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: `${theme.colors.primary}08`,
+                    color: theme.colors.primary,
+                  }}
+                >
+                  <MapPin size={10} />
+                  {record.floor}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock size={10} />
+                  {formatSmartTime(record.timestamp, i18n.language, t('home.just_now'))}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <button

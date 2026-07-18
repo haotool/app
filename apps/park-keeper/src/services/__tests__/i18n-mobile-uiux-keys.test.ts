@@ -8,7 +8,6 @@ import i18n from '@app/park-keeper/services/i18n';
 const LANGUAGES = ['en', 'zh-TW', 'ja'] as const;
 
 const NEW_KEYS = [
-  'record.yesterday',
   'record.edit_plate',
   'record.edit_plate_icon',
   'record.delete',

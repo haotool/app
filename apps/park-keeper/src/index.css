@@ -95,3 +95,20 @@ body {
 @utility shadow-elevation-4 {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
+
+/* 車位↔使用者連線：虛線緩慢流動示意行進方向；reduced-motion 停用。 */
+.nav-route-line {
+  animation: nav-route-dash 1.6s linear infinite;
+}
+
+@keyframes nav-route-dash {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-route-line {
+    animation: none;
+  }
+}
