@@ -2,6 +2,7 @@ import type { BossKind, EnemyKind, LevelId } from '../core/types';
 import type { BuffId } from './buffs';
 import { canInhale } from './combat';
 import type { EasterEggSpec } from './eggs';
+import type { TideSpec } from './tide';
 
 // 關卡資料 SSOT（GAME_DESIGN §15，pure TS 不 import phaser），vitest 對象。
 // GameScene 與 waves runner 一律讀表驅動，禁止每關硬編碼分支。
@@ -22,6 +23,8 @@ export interface PlatformSpec {
 // oneway/moving 座標同 PlatformSpec 中心點制；moving 的 range 為 tween 目標軸向位移（可負）。
 // v8 上升氣流柱（§51）：zone 型非碰撞，x 為柱心、topY 為升力終止高、w 為柱寬。
 // v10 星門折躍（§66）：同 pairId 成對傳送；純邏輯見 logic/warp.ts，資料不變式見 levels.test。
+// v11 熱泉噴口（§72）：updraft 增 periodMs/dutyPct 選配——缺省恆常供力（L5 零回歸）、
+// 有值＝間歇噴發；純邏輯見 logic/updraft.ts ventPhase。
 export type StageElementSpec =
   | { kind: 'oneway'; x: number; y: number; w: number }
   | {
@@ -35,7 +38,7 @@ export type StageElementSpec =
     }
   | { kind: 'spring'; x: number; y: number }
   | { kind: 'breakable'; x: number; y: number; loot: 'ammo' | 'hp' }
-  | { kind: 'updraft'; x: number; topY: number; w: number }
+  | { kind: 'updraft'; x: number; topY: number; w: number; periodMs?: number; dutyPct?: number }
   | { kind: 'warp'; x: number; y: number; pairId: string };
 
 // 主題道具佈景（§31/§32）：純裝飾無碰撞，key 對應 assets.ts 的 prop-<theme>-<1..4>。
@@ -84,6 +87,8 @@ export interface LevelSpec {
   anteroomPx?: number;
   anteroomBuffs?: readonly BuffId[];
   arenaBuff?: BuffId;
+  // v11 糖漿潮汐（§71）：關卡級週期漲落；dry-window 不變式見 levels.test。
+  tide?: TideSpec;
 }
 
 // v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
@@ -801,6 +806,230 @@ export const LEVELS: readonly LevelSpec[] = [
     anteroomPx: 400,
     anteroomBuffs: ['shield', 'power'],
     arenaBuff: 'swift',
+  },
+  // v11 四區焙糖火山（§72）——L13 焙糖丘陵：熱泉噴口首發（週期 updraft，本區新機制 1/2）
+  // ×Bubbla/Splatta 亮相；噴口托跳為捷徑非必需（緩衝關，CV-3 區入口降壓）。
+  {
+    id: 13,
+    nameZh: '焙糖丘陵',
+    bgKey: 'bg-kiln',
+    worldWidth: 3300,
+    killQuota: 11,
+    spawnIntervalMs: 1400,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §73 入編：bubbla 主場 25%＋splatta 15%；可吸佔比 0.55（jelly/floaty/splatta 恆可吸，
+    // bubbla 躍出窗保守不計、spiky 不可吸）。
+    enemyMix: [
+      { kind: 'bubbla', weight: 0.25 },
+      { kind: 'jelly', weight: 0.2 },
+      { kind: 'floaty', weight: 0.2 },
+      { kind: 'splatta', weight: 0.15 },
+      { kind: 'spiky', weight: 0.2 },
+    ],
+    // §72 垂直分層：208 高台僅噴發窗可達（主線地面雙層即可，沿 §51 慣例）。
+    platforms: [
+      { x: 480, y: 336, w: 150 },
+      { x: 900, y: 208, w: 130 },
+      { x: 1350, y: 336, w: 140 },
+      { x: 1900, y: 208, w: 130 },
+      { x: 2350, y: 300, w: 140 },
+      { x: 2850, y: 336, w: 140 },
+    ],
+    // 熱泉噴口（§72）：週期 2600ms、噴發佔比 0.31（≈0.8s）；上方 160px 內無天花板、
+    // 柱頂 ≥100 沿 §51 不變式。
+    elements: [
+      { kind: 'updraft', x: 900, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 1900, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 2600, topY: 170, w: 96, periodMs: 3200, dutyPct: 0.31 },
+      { kind: 'oneway', x: 680, y: 320, w: 140 },
+      { kind: 'oneway', x: 2150, y: 336, w: 140 },
+      { kind: 'spring', x: 1550, y: 391 },
+      { kind: 'breakable', x: 1100, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2450, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：窯道具（props-kiln）W3 交付前沿用 meadow 主題（丘陵語彙相容）。
+    decor: [
+      { key: 'prop-kiln-1', x: 300 },
+      { key: 'prop-kiln-2', x: 850 },
+      { key: 'prop-kiln-3', x: 1400 },
+      { key: 'prop-kiln-4', x: 1950 },
+      { key: 'prop-kiln-1', x: 2500 },
+      { key: 'prop-kiln-2', x: 3000 },
+    ],
+    // §24 彩蛋十三：開局反向走到最左緣（與 L1 同型「回聲彩蛋」，老玩家會心一擊）。
+    easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
+    // §73：焦糖泡霸——躍出節奏縮時 1.5 倍，擊敗掉雷鏈味。
+    elites: [
+      {
+        kind: 'bubbla',
+        x: 1700,
+        hp: 18,
+        scale: 1.5,
+        tint: 0xe89040,
+        speedMul: 1.5,
+        rewardFlavor: 'zappy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    hint: '熱泉噴發時乘蒸汽升空（捷徑，主線不依賴）',
+  },
+  // L14 熔糖河谷：糖漿潮汐首發（關卡級機制，本區新機制 2/2）——漲潮強制走平台層、
+  // 退潮窗主地面恆可通行（dry-window 55%，等窗推進為合法保底 §0.1-6）。
+  {
+    id: 14,
+    nameZh: '熔糖河谷',
+    bgKey: 'bg-valley',
+    worldWidth: 3600,
+    killQuota: 12,
+    spawnIntervalMs: 1250,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §73 入編：可吸佔比 0.50（splatta/gusty/spora 恆可吸；bubbla/shelly 條件可吸保守不計）。
+    enemyMix: [
+      { kind: 'bubbla', weight: 0.2 },
+      { kind: 'splatta', weight: 0.2 },
+      { kind: 'gusty', weight: 0.15 },
+      { kind: 'spora', weight: 0.15 },
+      { kind: 'chompy', weight: 0.15 },
+      { kind: 'shelly', weight: 0.15 },
+    ],
+    // 平台層頂恆高於漲頂 24px（§71 不變式）：漲頂 y=352 → 平台中心 y ≤ 336（頂 ≤328）。
+    platforms: [
+      { x: 420, y: 336, w: 150 },
+      { x: 820, y: 272, w: 140 },
+      { x: 1250, y: 336, w: 150 },
+      { x: 1700, y: 300, w: 140 },
+      { x: 2150, y: 336, w: 150 },
+      { x: 2600, y: 272, w: 140 },
+      { x: 3050, y: 336, w: 150 },
+    ],
+    elements: [
+      { kind: 'oneway', x: 620, y: 320, w: 140 },
+      { kind: 'oneway', x: 1480, y: 320, w: 140 },
+      { kind: 'oneway', x: 2380, y: 320, w: 140 },
+      { kind: 'oneway', x: 2850, y: 336, w: 140 },
+      { kind: 'spring', x: 1050, y: 391 },
+      { kind: 'spring', x: 3250, y: 391 },
+      // 退潮期河床露出破磚（§72 秘密）。
+      { kind: 'breakable', x: 1900, y: 380, loot: 'hp' },
+      { kind: 'breakable', x: 900, y: 380, loot: 'ammo' },
+    ],
+    decor: [
+      { key: 'prop-kiln-3', x: 320 },
+      { key: 'prop-kiln-4', x: 870 },
+      { key: 'prop-kiln-1', x: 1420 },
+      { key: 'prop-kiln-2', x: 1970 },
+      { key: 'prop-kiln-3', x: 2520 },
+      { key: 'prop-kiln-4', x: 3070 },
+    ],
+    // §24 彩蛋十四：浪頂浮台（y=272）連站 3 次。
+    easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
+    // §73：糖漿投擲隊長——拋射節奏縮時 1.5 倍，擊敗掉重鑽味。
+    elites: [
+      {
+        kind: 'splatta',
+        x: 1800,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xa86838,
+        speedMul: 1.5,
+        rewardFlavor: 'drilly',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 糖漿潮汐（§71）：週期 9s、漲潮佔比 45%、漲頂 y=352；漲潮前 1s 冒泡 telegraph。
+    tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
+    hint: '漲潮前河面冒泡，退潮窗地面可通行',
+  },
+  // L15 沸糖窯道：潮汐×噴口複合 gauntlet（純組合零新造，▲卡點二）——漲潮期最快線為
+  // 噴口浮跳鏈（非必需），主地面每週期退潮窗恆可通行；雙精英＋中點 checkpoint（§67 沿用）。
+  {
+    id: 15,
+    nameZh: '沸糖窯道',
+    bgKey: 'bg-kilnway',
+    worldWidth: 3800,
+    killQuota: 14,
+    spawnIntervalMs: 1100,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §73 入編：可吸佔比 0.62（splatta/boomy/zappy/puffy/magno 恆可吸；
+    // bubbla/drilly 條件可吸保守不計、chompy 不可吸；magno 依 v9 定稿恆可吸計入）。
+    enemyMix: [
+      { kind: 'bubbla', weight: 0.15 },
+      { kind: 'splatta', weight: 0.15 },
+      { kind: 'boomy', weight: 0.15 },
+      { kind: 'chompy', weight: 0.13 },
+      { kind: 'zappy', weight: 0.12 },
+      { kind: 'puffy', weight: 0.1 },
+      { kind: 'drilly', weight: 0.1 },
+      { kind: 'magno', weight: 0.1 },
+    ],
+    platforms: [
+      { x: 430, y: 336, w: 150 },
+      { x: 850, y: 272, w: 140 },
+      { x: 1300, y: 336, w: 150 },
+      { x: 1750, y: 300, w: 140 },
+      { x: 2250, y: 336, w: 150 },
+      { x: 2700, y: 272, w: 140 },
+      { x: 3150, y: 336, w: 150 },
+      { x: 3450, y: 300, w: 130 },
+    ],
+    // 複合 gauntlet：週期噴口 ×3（浮跳鏈為最佳線捷徑）＋單向/彈簧/破磚支線。
+    elements: [
+      { kind: 'updraft', x: 1000, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 2000, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 2950, topY: 170, w: 96, periodMs: 3200, dutyPct: 0.31 },
+      { kind: 'oneway', x: 620, y: 320, w: 140 },
+      { kind: 'oneway', x: 1520, y: 320, w: 140 },
+      { kind: 'oneway', x: 2480, y: 320, w: 140 },
+      { kind: 'spring', x: 350, y: 391 },
+      { kind: 'spring', x: 3300, y: 391 },
+      { kind: 'breakable', x: 1150, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2150, y: 380, loot: 'hp' },
+    ],
+    decor: [
+      { key: 'prop-kiln-1', x: 350 },
+      { key: 'prop-kiln-2', x: 900 },
+      { key: 'prop-kiln-3', x: 1450 },
+      { key: 'prop-kiln-4', x: 2000 },
+      { key: 'prop-kiln-1', x: 2550 },
+      { key: 'prop-kiln-2', x: 3100 },
+    ],
+    // §24 彩蛋十五：甜點三重奏——依序連吞爆裂味→孢子味→爆裂味（bubbla→splatta→puffy）。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['puffy', 'spora', 'puffy'] },
+    ],
+    // §73 雙精英：窯火重殼（前段，衝刺 ×1.5）＋沸糖狂花（後段，攻速 ×1.7），
+    // 房距 1400 ≥ 2×門距。
+    elites: [
+      {
+        kind: 'shelly',
+        x: 1250,
+        hp: 24,
+        scale: 1.55,
+        tint: 0xd87848,
+        speedMul: 1.5,
+        rewardFlavor: 'glowy',
+      },
+      {
+        kind: 'chompy',
+        x: 2650,
+        hp: 26,
+        scale: 1.5,
+        tint: 0xc85838,
+        speedMul: 1.7,
+        rewardFlavor: 'boomy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 卡點二（§67 沿用）：中點重生錨——落點位於雙精英房界外。
+    checkpointX: 1900,
+    // 潮汐與 L14 同參數（複合關不加密，壓力來自噴口疊加）。
+    tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
   },
 ];
 
