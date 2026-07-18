@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import {
   CHARGED_STAR,
   GOLD_STAR,
+  PLAYER,
   STARSTORM,
   STAR_MIXES,
   findMix,
   getMix,
   type MagazineSlot,
 } from '../core/config';
+import { resolveHit, tickTimer } from './combat';
 import {
   SHELL_SHIELD,
   advanceShield,
   advanceStarstormHold,
   createShieldState,
+  effectiveInvulnMs,
   fillMagazine,
   isFrontalHit,
   isTopShelly,
@@ -334,5 +337,42 @@ describe('彩蛋獎勵入匣（§24）', () => {
     const filled = fillMagazine([slot('puffy', true)]);
     expect(filled).toEqual([slot('puffy', true), slot('jelly'), slot('jelly')]);
     expect(fillMagazine(filled)).toHaveLength(3);
+  });
+});
+
+describe('星暴無敵窗（§64）', () => {
+  it('發動即無敵：5000ms 窗生效，期間受擊零傷害且不重啟計時', () => {
+    expect(STARSTORM.invulnMs).toBe(5000);
+    const invuln = effectiveInvulnMs(0, STARSTORM.invulnMs);
+    expect(invuln).toBe(5000);
+    const hit = resolveHit(5, invuln, 1, PLAYER.invulnerableMs);
+    expect(hit).toEqual({ hp: 5, invulnerableMs: invuln, damaged: false });
+  });
+
+  it('與受擊 i-frame 取較大值不疊加', () => {
+    expect(effectiveInvulnMs(1400, STARSTORM.invulnMs)).toBe(STARSTORM.invulnMs);
+    expect(effectiveInvulnMs(1400, 800)).toBe(1400);
+    expect(effectiveInvulnMs(0, 0)).toBe(0);
+    expect(effectiveInvulnMs(PLAYER.invulnerableMs, STARSTORM.invulnMs)).toBe(STARSTORM.invulnMs);
+  });
+
+  it('5 秒整到期恢復：期滿首擊受傷並進受擊 i-frame', () => {
+    let stormMs: number = STARSTORM.invulnMs;
+    for (let i = 0; i < 100; i += 1) stormMs = tickTimer(stormMs, 50);
+    expect(stormMs).toBe(0);
+    const hit = resolveHit(5, effectiveInvulnMs(0, stormMs), 1, PLAYER.invulnerableMs);
+    expect(hit).toEqual({ hp: 4, invulnerableMs: PLAYER.invulnerableMs, damaged: true });
+  });
+
+  it('到期前最後一刻仍無敵（邊界 1ms）', () => {
+    const remaining = tickTimer(STARSTORM.invulnMs, STARSTORM.invulnMs - 1);
+    expect(remaining).toBe(1);
+    expect(resolveHit(5, effectiveInvulnMs(0, remaining), 1, PLAYER.invulnerableMs).damaged).toBe(
+      false,
+    );
+  });
+
+  it('pause 期間計時一致：deltaMs 0 不消耗無敵窗', () => {
+    expect(tickTimer(STARSTORM.invulnMs, 0)).toBe(STARSTORM.invulnMs);
   });
 });

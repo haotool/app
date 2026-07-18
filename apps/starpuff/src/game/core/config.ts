@@ -388,10 +388,12 @@ export const CHARGED_STAR = {
   tint: 0xffc93c,
 } as const;
 
-// 星暴（§23）：彈匣全滿長按 B 0.8s，清場全小怪 + 魔王 12 傷，清空彈匣。
+// 星暴（§23/§64）：彈匣全滿長按 B 0.8s，清場全小怪 + 魔王 12 傷，清空彈匣；
+// 發動附 5s 無敵窗（與受擊 i-frame 取較大值生效，不疊加）。
 export const STARSTORM = {
   holdMs: 800,
   bossDamage: 12,
+  invulnMs: 5000,
 } as const;
 
 // 下衝擊（§44）：空中「下＋跳躍鍵」快速下墜（吞含狀態不影響觸發），

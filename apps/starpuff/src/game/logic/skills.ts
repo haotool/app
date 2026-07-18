@@ -104,6 +104,12 @@ export function starstormReady(holdMs: number): boolean {
   return holdMs >= STARSTORM.holdMs;
 }
 
+// 星暴無敵窗（§64）：與受擊 i-frame 為獨立計時、結算時取較大值生效——
+// 不疊加、期間受擊不重啟；受擊判定沿用 combat.resolveHit 單一出口。
+export function effectiveInvulnMs(hitInvulnMs: number, stormInvulnMs: number): number {
+  return Math.max(hitInvulnMs, stormInvulnMs);
+}
+
 export function starstormProgress(holdMs: number): number {
   return Math.min(1, holdMs / STARSTORM.holdMs);
 }

@@ -8,6 +8,7 @@ import {
   SCATTER_FAN_VY,
   SLAM,
   STAR,
+  STARSTORM,
   getMix,
   type MagazineSlot,
   type StarFlavor,
@@ -22,6 +23,7 @@ import {
   advanceShield,
   advanceStarstormHold,
   createShieldState,
+  effectiveInvulnMs,
   fillMagazine,
   isFrontalHit,
   isTopShelly,
@@ -183,6 +185,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   // 技能狀態（§23）：滿匣延遲發射旗標、星暴充能、下衝擊 CD。
   let deferredFire = false;
   let stormHoldMs = 0;
+  // 星暴無敵窗（§64）：與受擊 i-frame 獨立計時，結算取較大值（effectiveInvulnMs）。
+  let stormInvulnMs = 0;
   let slamming = false;
   let slamCdMs = 0;
   // 手感（§41）：上一幀水平目標速度供邊緣偵測（起跑/急停/轉身塵埃一次性觸發）。
@@ -551,6 +555,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     sprite,
     update(controls: ControlsState, deltaMs: number) {
       invulnerableMs = tickTimer(invulnerableMs, deltaMs);
+      stormInvulnMs = tickTimer(stormInvulnMs, deltaMs);
       hurtLockMs = tickTimer(hurtLockMs, deltaMs);
       slamCdMs = tickTimer(slamCdMs, deltaMs);
       blockInvulnMs = tickTimer(blockInvulnMs, deltaMs);
@@ -725,6 +730,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         stormHoldMs = 0;
         deferredFire = false;
         magazine = [];
+        // 星暴無敵（§64）：發動即開 5s 窗；與受擊 i-frame 取 max，重複發動刷新不疊加。
+        stormInvulnMs = STARSTORM.invulnMs;
         emitAmmo();
         playSfx('starstorm');
         emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, { x: sprite.x, y: sprite.y });
@@ -759,9 +766,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       zone.setPosition(sprite.x + facing * (INHALE.rangePx / 2), sprite.y);
 
       sprite.setFlipX(facing === -1);
-      sprite.setAlpha(
-        invulnerableMs > 0 && Math.floor(invulnerableMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1,
-      );
+      // 無敵閃爍沿用受擊回饋（§64）：受擊 i-frame 與星暴無敵窗共用同一節流視覺。
+      const blinkMs = effectiveInvulnMs(invulnerableMs, stormInvulnMs);
+      sprite.setAlpha(blinkMs > 0 && Math.floor(blinkMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1);
 
       // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
       // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
@@ -852,7 +859,13 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           return;
         }
       }
-      const result = resolveHit(hp, invulnerableMs, incoming, PLAYER.invulnerableMs);
+      // 星暴無敵（§64）：與受擊 i-frame 取較大值判定，期間零傷害且不重啟計時。
+      const result = resolveHit(
+        hp,
+        effectiveInvulnMs(invulnerableMs, stormInvulnMs),
+        incoming,
+        PLAYER.invulnerableMs,
+      );
       if (!result.damaged) return;
       hp = result.hp;
       invulnerableMs = result.invulnerableMs;
