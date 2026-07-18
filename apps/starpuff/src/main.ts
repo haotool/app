@@ -128,6 +128,8 @@ declare global {
       scenePaused: () => boolean;
       gameTime: () => number;
       codexTab: () => string;
+      twinHud: () => { active: boolean; aRatio: number; bRatio: number };
+      tide: () => { waterY: number; phase: string } | null;
     }>;
   }
 }
@@ -212,13 +214,24 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     scenePaused: () => game.scene.isPaused(SceneKeys.Game),
     gameTime: () => gameScene()?.time.now ?? -1,
     codexTab: () => game.scene.getScene<CodexScene>(SceneKeys.Codex)?.tab ?? '',
+    // v11 觀測點（§70 收尾/§71 e2e）：HUD 雙節狀態、潮汐水位/相位（噴口相位走 __spStage）。
+    twinHud: () =>
+      (gameScene().registry.get('twinHud') as
+        | { active: boolean; aRatio: number; bRatio: number }
+        | undefined) ?? { active: false, aRatio: 0, bRatio: 0 },
+    tide: () => gameScene().tideState(),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
-      for (const child of internals().enemies.getGroup().getChildren()) {
-        const kind = internals().enemies.kindOf(child);
-        if (!kind) continue;
-        const sprite = child as unknown as { x: number; y: number };
-        list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+      // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
+      try {
+        for (const child of internals().enemies.getGroup().getChildren()) {
+          const kind = internals().enemies.kindOf(child);
+          if (!kind) continue;
+          const sprite = child as unknown as { x: number; y: number };
+          list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+        }
+      } catch {
+        return list;
       }
       return list;
     },

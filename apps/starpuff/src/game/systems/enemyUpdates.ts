@@ -1,24 +1,31 @@
 import Phaser from 'phaser';
 import type { EnemyKind } from '../core/types';
 import {
+  BUBBLA_FSM,
   GLOWY_FSM,
   GUSTY_FSM,
   MAGNO_FSM,
+  SPLATTA_FSM,
   SPORA_FSM,
+  bubblaLeapOffsetY,
   tickBoomy,
+  tickBubbla,
   tickDrilly,
   tickGlowy,
   tickGusty,
   tickMagno,
   tickMirri,
   tickShelly,
+  tickSplatta,
   tickSpora,
   tickZappy,
   type BoomyState,
+  type BubblaState,
   type DrillyState,
   type GustyState,
   type MirriState,
   type ShellyState,
+  type SplattaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import { spawnTelegraph } from './fx';
@@ -83,6 +90,11 @@ const MAGNO_FIELD_TINT = 0x8ab0e8;
 const MIRRI_WALK_SPEED = 62;
 const MIRRI_MIRROR_TINT = 0xf0f4ff;
 const MIRRI_COOL_TINT = 0x9a9aa8;
+// bubbla（§73）：潛伏露頂壓扁比例（沿 drilly 半入地慣例）與漣漪前搖抖動。
+const BUBBLA_SUNK_SCALE_X = 0.7;
+const BUBBLA_SUNK_SCALE_Y = 0.35;
+// splatta（§73）：舉勺瞄準著色。
+const SPLATTA_AIM_TINT = 0xf0c890;
 
 type ChompyState = 'idle' | 'windup' | 'bite' | 'cool';
 
@@ -157,6 +169,8 @@ export interface EnemyUpdateContext {
   // v8（§52）：孢子雲區域拒止與迴旋殼刃，皆走 hazards 管線。
   spawnSporeCloud(x: number, y: number): void;
   spawnBoomerang(x: number, y: number, directionX: 1 | -1): void;
+  // v11（§73）：splatta 拋物糖球（落地留灼燙糖斑），走 hazards 管線。
+  spawnSugarBlob(x: number, y: number, directionX: 1 | -1): void;
 }
 
 // 三態時序由 enemyFsm 決策；本函式只負責呈現層（速度、旋轉、著色、縮放復原）。
@@ -563,6 +577,125 @@ function updateMirri(
   }
 }
 
+// 焦糖泡（§73）：四態時序由 enemyFsm 決策——submerged 壓扁露頂潛伏（免傷不可吸）、
+// ripple 漣漪抖動 telegraph、leap 拋物躍出（可吸可傷窗，位移由 bubblaLeapOffsetY 導出
+// 逐幀速度逼近，禁絕對座標直寫）、dive 壓回。定點怪：x 不動、重力關閉。
+function updateBubbla(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  // 精英倍率（§48）：潛伏縮時提高躍出頻率（焦糖泡霸 ×1.5）。
+  const tick = tickBubbla(
+    sprite.getData('state') as BubblaState,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    (sprite.getData('eliteMul') as number) ?? 1,
+  );
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  const bsx = sprite.getData('baseSX') as number;
+  const bsy = sprite.getData('baseSY') as number;
+  const baseY = sprite.getData('baseY') as number;
+  if (tick.entered === 'leap') {
+    playSfx('pop', 0.85);
+    sprite.setScale(bsx, bsy);
+    sprite.setAlpha(1);
+  } else if (tick.entered === 'submerged') {
+    body.setVelocity(0, 0);
+  }
+  switch (tick.state) {
+    case 'submerged': {
+      sprite.setScale(bsx * BUBBLA_SUNK_SCALE_X, bsy * BUBBLA_SUNK_SCALE_Y);
+      sprite.setAlpha(0.85);
+      body.setVelocity(0, 0);
+      break;
+    }
+    case 'ripple': {
+      // 漣漪 telegraph：抖動＋週期泡泡圈。
+      sprite.setRotation(Math.sin(tick.stateMs * 0.06) * 0.1);
+      if (tick.entered === 'ripple') {
+        spawnTelegraph(ctx.scene, sprite.x, baseY + 10, BUBBLA_FSM.rippleMs);
+      }
+      break;
+    }
+    case 'leap': {
+      // 拋物躍出：目標高度由純函式導出，速度逼近（單幀貼合，物理掃掠正常）。
+      sprite.setRotation(0);
+      const targetY = baseY + bubblaLeapOffsetY(tick.stateMs);
+      body.setVelocity(0, ((targetY - sprite.y) * 1000) / Math.max(1, deltaMs));
+      break;
+    }
+    case 'dive': {
+      const targetY = baseY;
+      body.setVelocity(0, ((targetY - sprite.y) * 1000) / Math.max(1, deltaMs));
+      sprite.setAlpha(0.92);
+      break;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
+  }
+}
+
+// 熔糖投手（§73）：四態時序由 enemyFsm 決策——patrol 緩走、aim 舉勺定身瞄準（著色
+// telegraph）、lob 投擲拋物糖球（單幀事件態）、cool 冷卻。
+function updateSplatta(
+  ctx: EnemyUpdateContext,
+  sprite: Phaser.Physics.Arcade.Sprite,
+  deltaMs: number,
+): void {
+  const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  // 精英倍率（§48）：巡邏/冷卻縮時提高拋射頻率（糖漿投擲隊長 ×1.5）。
+  const tick = tickSplatta(
+    sprite.getData('state') as SplattaState,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    mul,
+  );
+  sprite.setData('state', tick.state);
+  sprite.setData('stateMs', tick.stateMs);
+  const body = sprite.body as Phaser.Physics.Arcade.Body;
+  if (tick.entered === 'aim') {
+    body.setVelocityX(0);
+    sprite.setTint(SPLATTA_AIM_TINT);
+  } else if (tick.entered === 'cool') {
+    sprite.clearTint();
+    const eliteTint = sprite.getData('eliteTint') as number | undefined;
+    if (eliteTint !== undefined && sprite.getData('elite') === true) sprite.setTint(eliteTint);
+    sprite.setRotation(0);
+  }
+  if (tick.state === 'lob') {
+    const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+    ctx.spawnSugarBlob(sprite.x + direction * 18, sprite.y - 14, direction);
+    return;
+  }
+  switch (tick.state) {
+    case 'patrol': {
+      if (body.velocity.x === 0 && body.blocked.down) {
+        const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+        body.setVelocityX(SPLATTA_FSM.walkSpeed * mul * direction);
+      }
+      sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.06);
+      break;
+    }
+    case 'aim': {
+      // 舉勺瞄準：定身後仰抖動。
+      sprite.setRotation(Math.sin(tick.stateMs * 0.05) * 0.14 - 0.1);
+      break;
+    }
+    case 'cool': {
+      break;
+    }
+    default: {
+      const exhaustive: never = tick.state;
+      void exhaustive;
+    }
+  }
+}
+
 function updateChompy(
   ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,
@@ -719,6 +852,14 @@ export function updateEnemyKind(
     }
     case 'mirri': {
       updateMirri(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'bubbla': {
+      updateBubbla(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'splatta': {
+      updateSplatta(ctx, sprite, deltaMs);
       break;
     }
     case 'zappy': {

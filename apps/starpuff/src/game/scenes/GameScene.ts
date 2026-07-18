@@ -40,6 +40,7 @@ import {
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
+import { SYRONA } from '../logic/syronaFsm';
 import { inhaleFlavor, isInInhaleRange, knockbackVelocity, pickInRadius } from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
@@ -83,6 +84,7 @@ import { createBoss, type BossDamageSource, type BossHandle } from '../systems/b
 import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createNoctra } from '../systems/noctra';
 import { createPrismix } from '../systems/prismix';
+import { createSyrona } from '../systems/syrona';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -92,6 +94,8 @@ import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createStage, type StageHandle } from '../systems/stage';
+import { createTide, type TideHandle } from '../systems/tide';
+import { TIDE, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
@@ -176,6 +180,8 @@ export class GameScene extends Phaser.Scene {
   private bossActiveAt = -1;
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
+
+  private tide: TideHandle | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
   private buff: BuffState = createBuffState();
@@ -251,7 +257,14 @@ export class GameScene extends Phaser.Scene {
       : 100;
     this.player = createPlayer(this, startX, GROUND_TOP - 40);
     this.enemies = createEnemySystem(this);
-    this.waves = createWaveRunner(this, this.enemies, this.currentLevelId);
+    // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
+    this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
+    this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
+      adjustSpawn: (kind, y) =>
+        this.tide
+          ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(y) }
+          : { kind, y },
+    });
     // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
     const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
     this.boss = bossKit.handle;
@@ -310,6 +323,16 @@ export class GameScene extends Phaser.Scene {
     this.boss.setTarget(this.player.sprite);
 
     this.physics.add.collider(this.player.sprite, [ground, ...platforms]);
+    // 場控魔王 arena 浮台（§74 Syrona）：呈現層動態佈建，此處接玩家 collider。
+    const bossPlatforms = this.boss.getPlatforms?.() ?? [];
+    if (bossPlatforms.length > 0) {
+      this.physics.add.collider(this.player.sprite, bossPlatforms, undefined, (_p, platform) => {
+        const rect = platform as Phaser.GameObjects.Rectangle;
+        const rectBody = rect.body as Phaser.Physics.Arcade.StaticBody;
+        const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+        return playerBody.velocity.y >= 0 && playerBody.bottom <= rectBody.top + 6;
+      });
+    }
     this.physics.add.collider(this.enemies.getGroup(), ground);
     this.addOverlaps();
     this.bindEvents();
@@ -332,6 +355,8 @@ export class GameScene extends Phaser.Scene {
       this.stage.destroy();
       this.bossRoom?.destroy();
       this.bossRoom = null;
+      this.tide?.destroy();
+      this.tide = null;
     });
 
     this.waves.start();
@@ -362,6 +387,8 @@ export class GameScene extends Phaser.Scene {
       this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
+      this.advanceTide(deltaMs);
+      this.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -427,6 +454,12 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.restartWith({ levelId });
   }
 
+  // e2e 觀測點（§71）：潮汐水位與相位；無潮汐關回 null。
+  tideState(): { waterY: number; phase: string } | null {
+    if (!this.tide) return null;
+    return { waterY: Math.round(this.tide.waterY()), phase: this.tide.phase() };
+  }
+
   // 暫停選單「重新開始」（§35）：重置當前關卡全狀態（血量/彈藥/擊殺/計時/實體由
   // create 重建），保留本輪死亡數。
   restartCurrentLevel(): void {
@@ -461,6 +494,32 @@ export class GameScene extends Phaser.Scene {
   // arena 左緣（§69）：前室魔王關的 arena 自前室右緣起算；其餘關恆 0。
   private arenaLeft(): number {
     return this.level.boss ? (this.level.anteroomPx ?? 0) : 0;
+  }
+
+  // 糖漿潮汐逐幀結算（§71）：水位推進＋浸水傷害/強緩速/上推（anti-softlock 永不吸底）。
+  // 接觸傷害走 damagePlayer 單一入口（i-frame/護盾泡自然生效）。
+  private advanceTide(deltaMs: number): void {
+    if (!this.tide) return;
+    this.tide.update(deltaMs);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    if (!this.tide.isSubmerged(body.bottom)) return;
+    this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
+    const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
+    body.setVelocity(soaked.vx, soaked.vy);
+  }
+
+  // 場控魔王噴口供力（§74 Syrona）：呈現層持有幾何與相位，此處逐幀委派結算。
+  private applyBossVents(deltaMs: number): void {
+    if (!this.boss.getVentLift) return;
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
+    const lifted = this.boss.getVentLift(
+      this.player.sprite.x,
+      this.player.sprite.y,
+      body.velocity.y,
+      deltaMs,
+      body.blocked.up,
+    );
+    if (lifted !== null) body.setVelocityY(lifted);
   }
 
   // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
@@ -1101,7 +1160,8 @@ export class GameScene extends Phaser.Scene {
     this.enemies.spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
   }
 
-  // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri）：依場上現量夾限至 cap，走正式 spawn 管線。
+  // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri／§74 P2 bubbla）：依場上現量夾限至 cap，
+  // 走正式 spawn 管線；召喚路徑同套潮汐生成調整（交叉不變式 13/17，審查修復）。
   private summonMinion(kind: EnemyKind, cap: number): void {
     let alive = 0;
     for (const child of this.enemies.getGroup().getChildren()) {
@@ -1109,7 +1169,11 @@ export class GameScene extends Phaser.Scene {
     }
     for (let i = 0; i < cap - alive; i += 1) {
       const x = i % 2 === 0 ? this.arenaLeft() + SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
-      this.enemies.spawn(kind, x, kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
+      const defaultY = kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y;
+      const adjusted = this.tide
+        ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(defaultY) }
+        : { kind, y: defaultY };
+      this.enemies.spawn(adjusted.kind, x, adjusted.y);
     }
   }
 
@@ -1155,6 +1219,29 @@ export class GameScene extends Phaser.Scene {
             { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: PRISMIX.bodyDamage,
+        };
+      case 'syrona':
+        return {
+          handle: createSyrona(
+            this,
+            {
+              summonBubbla: (cap) => this.summonMinion('bubbla', cap),
+              // 窯風三連（§75）：呈現層單一真值，GameScene 餵彩蛋＋窯火謝幕演出。
+              onVentEgg: () => {
+                this.feedEggs({ kind: 'vent-hit-count' });
+                this.cameras.main.flash(320, 255, 214, 140);
+                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
+              },
+              // 場控潮汐（§74）：沿 GameScene 單一潮汐管線（浸水/生成過濾自然生效）。
+              startTide: (spec) => {
+                this.tide?.destroy();
+                this.tide = createTide(this, spec, this.worldWidth());
+              },
+              boilTide: (spec) => this.tide?.setSpec(spec),
+            },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
+          ),
+          bodyDamage: SYRONA.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

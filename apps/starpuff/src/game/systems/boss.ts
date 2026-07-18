@@ -34,6 +34,16 @@ export interface BossHandle {
   applyDamageAt?(amount: number, x: number, y: number, source?: BossDamageSource): void;
   // 環繞護盾（§68 P3 碎晶盾）：可擊破的星彈屏障群；未實作視為無護盾。
   getShields?(): Phaser.Physics.Arcade.Group;
+  // arena 噴口供力（§74 Syrona）：域內回傳結算後 vy、域外回 null；未實作視為無噴口。
+  getVentLift?(
+    x: number,
+    y: number,
+    vy: number,
+    deltaMs: number,
+    blockedUp: boolean,
+  ): number | null;
+  // arena 場控浮台（§74 Syrona）：GameScene 接玩家 collider；未實作視為無浮台。
+  getPlatforms?(): Phaser.GameObjects.Rectangle[];
 }
 
 const GROUND_TOP = VIEW.height - 80;

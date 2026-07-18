@@ -22,6 +22,12 @@ export interface WaveRunner {
   destroy(): void;
 }
 
+// 生成調整 hook（§71 潮汐關）：交叉不變式 13（漲潮排除 magno）與 17（落點上收至
+// 乾位可及範圍）由 GameScene 注入；缺省直通零回歸。
+export interface WaveSpawnHooks {
+  adjustSpawn?(kind: EnemyKind, y: number): { kind: EnemyKind; y: number };
+}
+
 const SPAWN_MARGIN_X = 48;
 // 生成高度按品種（橫式地面頂 y=400）：floaty 定高飄移（240 在跳躍＋拍翅可達範圍內）；
 // puffy 高空下飄（§16）；其餘自地面上方落入。
@@ -40,6 +46,9 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   boomy: 330,
   magno: 330,
   mirri: 330,
+  // v11（§73）：bubbla 貼地潛伏、splatta 地面緩走。
+  bubbla: 330,
+  splatta: 330,
 };
 
 const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
@@ -52,6 +61,7 @@ export function createWaveRunner(
   scene: Phaser.Scene,
   enemies: EnemySystem,
   levelId: LevelId,
+  hooks: WaveSpawnHooks = {},
 ): WaveRunner {
   const level = getLevel(levelId);
   let run: LevelRunState = createLevelRun(levelId);
@@ -120,7 +130,9 @@ export function createWaveRunner(
         if (x < SPAWN_MARGIN_X) return;
       }
     }
-    enemies.spawn(kind, x, SPAWN_Y[kind]);
+    // 潮汐關生成調整（§71 交叉不變式 13/17）：漲潮期品種替換與落點上收。
+    const adjusted = hooks.adjustSpawn?.(kind, SPAWN_Y[kind]) ?? { kind, y: SPAWN_Y[kind] };
+    enemies.spawn(adjusted.kind, x, adjusted.y);
   }
 
   function showTutorial(text: string, fontSize = '24px'): void {

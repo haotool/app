@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 1、penalty 1、neutral 0）｜累計總分：+128
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v11-kiln-finale
+- 原因：StarPuff 四區未完結，v11 需糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16/場控魔王 Syrona 與 v12 追逐捲軸技術 spike，並在潮汐×噴口×飢荒交叉不變式下維持 anti-softlock 與 L5 零回歸
+- 解法：tide/vent/兩新怪/syronaFsm 純邏輯先行（404 單測、噴泉洗牌 seed 注入、僵直窗固定不隨狂暴縮）＋場控幾何全動態視寬佈建與 BossHandle 選配委派，1200 寬純標準星真彈實證打穿三階段留 trace，spike 三項全過回寫主計畫，兩席獨立審查雙 APPROVE 後 should-fix 七項全收斂（61 E2E 全綠）
 
 - 日期：2026-07-18
 - ID：reward-park-keeper-r5-onprimary-sweep
