@@ -266,13 +266,13 @@ export function OrderForm({
                 markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
               }
               aria-label="限價（USDT）"
-              className="h-11 min-w-0 flex-1 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
+              className="h-11 min-w-11 flex-1 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
             />
             <button
               type="button"
               onClick={() => applyBestQuote('bid')}
               aria-label="帶入買1價"
-              className="min-h-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-long active:bg-border"
+              className="min-h-11 min-w-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-long active:bg-border"
             >
               買1
             </button>
@@ -280,7 +280,7 @@ export function OrderForm({
               type="button"
               onClick={() => applyBestQuote('ask')}
               aria-label="帶入賣1價"
-              className="min-h-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-short active:bg-border"
+              className="min-h-11 min-w-11 shrink-0 rounded-control bg-surface-2 px-2 text-caption font-medium text-short active:bg-border"
             >
               賣1
             </button>
