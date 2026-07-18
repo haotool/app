@@ -344,9 +344,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
         style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
       >
         {/* Premium Header */}
+        {/* glass 不進首屏（issue #753 視覺語言）：移除 backdrop-blur，
+            以較高不透明度純色維持捲動內容遮蔽力。 */}
         <header
-          className="px-6 pb-4 pt-safe-top z-30 backdrop-blur-xl border-b border-black/3"
-          style={{ backgroundColor: theme.colors.background + 'CC' }}
+          className="px-6 pb-4 pt-safe-top z-30 border-b border-black/3"
+          style={{ backgroundColor: theme.colors.background + 'F0' }}
         >
           <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
             <div className="flex items-center gap-3">
@@ -517,10 +519,11 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
 
         {/* Bottom Navigation
             高度架構：content div（56px 固定）+ safe-area spacer（分離），
-            避免 pb-safe-bottom 吃掉可見內容高度。 */}
+            避免 pb-safe-bottom 吃掉可見內容高度。
+            glass 不進首屏（issue #753 視覺語言）：移除 backdrop-blur，改高不透明度純色。 */}
         <nav
-          className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-black/5"
-          style={{ backgroundColor: theme.colors.background + 'CC' }}
+          className="fixed bottom-0 inset-x-0 z-30 border-t border-black/5"
+          style={{ backgroundColor: theme.colors.background + 'F0' }}
         >
           {/* 可見內容區：固定 56px，與 safe area 無關 */}
           <div className={`flex ${NAV_CONTENT_H} max-w-md mx-auto px-6`}>

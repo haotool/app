@@ -20,9 +20,10 @@ export default function HomeShell() {
       className="h-screen w-full flex flex-col overflow-hidden font-sans"
       style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
     >
+      {/* glass 不進首屏（issue #753 視覺語言）：與 Home.tsx 首屏 header 同構，避免 hydration 樣式跳動。 */}
       <header
-        className="px-6 pb-4 pt-safe-top z-30 backdrop-blur-xl border-b border-black/3"
-        style={{ backgroundColor: theme.colors.background + 'CC' }}
+        className="px-6 pb-4 pt-safe-top z-30 border-b border-black/3"
+        style={{ backgroundColor: theme.colors.background + 'F0' }}
       >
         <div className="flex justify-between items-center max-w-md mx-auto w-full pt-4">
           <div className="flex items-center gap-3">

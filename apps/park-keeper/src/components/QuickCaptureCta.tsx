@@ -8,6 +8,9 @@ import type { ThemeConfig } from '@app/park-keeper/types';
 //
 // 主動作唯一化（issue #753）：底部 + FAB 移除，其「開啟 QuickEntry 空照片模式」
 // 職能遷移至本元件內的第三級文字動作 onManualEntry（功能不刪，僅降視覺層級）。
+//
+// soft depth（issue #753 視覺語言）：陰影節制（降低 alpha／擴散）＋淺色 1dp 邊框，
+// 避免深色主題（literary 深栗紅等）在飽和主題色上呈現無層次的重色塊。
 // ---------------------------------------------------------------------------
 export default function QuickCaptureCta({
   theme,
@@ -61,10 +64,10 @@ export default function QuickCaptureCta({
       <div className="w-full space-y-2">
         <label
           data-testid="quick-record-cta"
-          className="flex items-center justify-center gap-2.5 w-full min-h-14 rounded-2xl text-white cursor-pointer active:scale-[0.98] transition-transform"
+          className="flex items-center justify-center gap-2.5 w-full min-h-14 rounded-2xl text-white cursor-pointer active:scale-[0.98] transition-transform border border-white/15"
           style={{
             backgroundColor: theme.colors.primary,
-            boxShadow: `${theme.colors.primary}40 0px 6px 18px`,
+            boxShadow: `${theme.colors.primary}26 0px 4px 14px`,
           }}
         >
           <Camera size={20} strokeWidth={2.25} />
@@ -80,10 +83,10 @@ export default function QuickCaptureCta({
     <div className="w-full space-y-3">
       <label
         data-testid="quick-record-cta"
-        className="flex flex-col items-center justify-center gap-3 w-full min-h-[32dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform"
+        className="flex flex-col items-center justify-center gap-3 w-full min-h-[32dvh] rounded-3xl text-white cursor-pointer active:scale-[0.98] transition-transform border border-white/15"
         style={{
           backgroundColor: theme.colors.primary,
-          boxShadow: `${theme.colors.primary}55 0px 10px 30px`,
+          boxShadow: `${theme.colors.primary}33 0px 8px 24px`,
         }}
       >
         <Camera size={44} strokeWidth={2.25} />
