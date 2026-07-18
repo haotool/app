@@ -985,6 +985,8 @@ export class GameScene extends Phaser.Scene {
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
+      // 勝利結算窗防護（§82 QA 根修）：魔王已倒後殘餘 hazard（隕星/潮汐）不得奪走勝利。
+      if (this.bossDown) return;
       this.deaths += 1;
       this.player.sprite.setVisible(false);
       this.fx.puff(x, y);
@@ -1004,6 +1006,8 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.BOSS_DEFEATED, () => {
       this.bossDown = true;
       this.bossHp = 0;
+      // 勝利結算窗防護（§82）：殘餘環境傷害（墜落中隕星/餘燼/潮汐）不再扣血。
+      this.player.grantInvulnerability(WIN_DELAY_MS + 2000);
       // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
       // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
       this.clearTimeMs = this.levelTimeMs();
