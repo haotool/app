@@ -592,20 +592,35 @@ describe('TradePage', () => {
     expect(screen.getByText(/止盈 61,000/)).toBeInTheDocument();
   });
 
-  it('closes the position via the close sheet', async () => {
+  it('closes the full position with the one-tap close button, no confirmation sheet', async () => {
     const user = userEvent.setup();
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
     await user.click(screen.getByRole('button', { name: '買多' }));
     await user.click(screen.getByRole('button', { name: '平倉' }));
+
+    const { account } = useTradeStore.getState();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(account.positions).toHaveLength(0);
+    expect(account.history).toHaveLength(1);
+    expect(account.history[0]?.reason).toBe('manual');
+    expect(screen.getByText('尚無持倉')).toBeInTheDocument();
+  });
+
+  it('closes via the partial close sheet from the partial button', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '部分平倉' }));
     await user.click(screen.getByRole('button', { name: '確認平倉' }));
 
     const { account } = useTradeStore.getState();
     expect(account.positions).toHaveLength(0);
     expect(account.history).toHaveLength(1);
     expect(account.history[0]?.reason).toBe('manual');
-    expect(screen.getByText('尚無持倉')).toBeInTheDocument();
   });
 
   it('reports the engine-realized pnl in the close toast, not the preview value', async () => {
@@ -620,11 +635,10 @@ describe('TradePage', () => {
     });
 
     await user.click(screen.getByRole('button', { name: '平倉' }));
-    await user.click(screen.getByRole('button', { name: '確認平倉' }));
 
     const closeToast = useTradeStore
       .getState()
-      .toasts.find((toast) => toast.title.includes('市價平倉成功'));
+      .toasts.find((toast) => toast.title.includes('市價平倉完成'));
     expect(closeToast?.description).toBe('+100 USDT');
 
     const trade = useTradeStore.getState().account.history[0];

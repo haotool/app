@@ -236,11 +236,11 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expectNoViolations();
     await user.keyboard('{Escape}');
 
-    await user.click(screen.getByRole('button', { name: '追蹤止損' }));
+    await user.click(screen.getByRole('button', { name: '追蹤' }));
     expectNoViolations();
     await user.keyboard('{Escape}');
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '部分平倉' }));
     await user.click(screen.getByRole('tab', { name: '限價平倉' }));
     expectNoViolations();
   });

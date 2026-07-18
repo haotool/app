@@ -4,7 +4,9 @@ import { SYMBOL_META } from '../../config/market';
 import { liquidationPrice, roePercent, unrealizedPnl } from '../../engine/math';
 import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
+import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
+import { TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { TpSlSheet } from './TpSlSheet';
 import { TrailingSheet } from './TrailingSheet';
@@ -20,6 +22,8 @@ function signedUsdt(value: number): string {
 export function PositionCard({ position }: { position: Position }) {
   const [sheet, setSheet] = useState<SheetKind>(null);
   const ticker = useMarketStore((state) => state.tickers[position.symbol]);
+  const closeMarketOrder = useTradeStore((state) => state.closeMarketOrder);
+  const pushToast = useTradeStore((state) => state.pushToast);
 
   const mark = ticker?.markPrice;
   const pnl =
@@ -31,6 +35,29 @@ export function PositionCard({ position }: { position: Position }) {
   const isLong = position.side === 'long';
   const pnlPositive = (pnl ?? 0) >= 0;
   const base = SYMBOL_META[position.symbol].base;
+
+  // R5-5 一鍵平倉：單擊即以標記價市價全平，不彈確認框，成敗一律 toast 回報。
+  function closeAtMarket() {
+    if (mark === undefined) {
+      pushToast({ tone: 'warning', title: '平倉失敗', description: '行情尚未就緒，請稍候再試。' });
+      return;
+    }
+    const result = closeMarketOrder({ positionId: position.id, fraction: 1, price: mark });
+    if (!result.ok) {
+      pushToast({
+        tone: 'warning',
+        title: '平倉失敗',
+        description: TRADE_ERROR_MESSAGES[result.error],
+      });
+      return;
+    }
+    const realized = result.trade.realizedPnl;
+    pushToast({
+      tone: realized >= 0 ? 'long' : 'short',
+      title: `市價平倉完成：${base}/USDT`,
+      description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
+    });
+  }
 
   return (
     <article className="card-in rounded-card border border-border bg-surface p-3.5">
@@ -120,12 +147,20 @@ export function PositionCard({ position }: { position: Position }) {
           onClick={() => setSheet('trailing')}
           className="min-h-11 min-w-11 flex-1 rounded-control bg-surface-2 text-label text-text-2 active:bg-border"
         >
-          追蹤止損
+          追蹤
         </button>
         <button
           type="button"
+          aria-label="部分平倉"
           onClick={() => setSheet('close')}
           className="min-h-11 min-w-11 flex-1 rounded-control bg-primary/15 text-label font-medium text-primary active:bg-primary/25"
+        >
+          部分
+        </button>
+        <button
+          type="button"
+          onClick={closeAtMarket}
+          className="min-h-11 min-w-11 flex-1 rounded-control bg-primary text-label font-semibold text-text active:bg-primary-pressed"
         >
           平倉
         </button>
