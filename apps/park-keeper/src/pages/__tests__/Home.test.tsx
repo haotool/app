@@ -153,6 +153,34 @@ describe('Home', () => {
     expect(guideLink.className).toContain('min-h-11');
   });
 
+  it('空狀態：隱藏搜尋框，避免對空列表呈現死 UI（issue #753）', async () => {
+    mockGetRecords.mockResolvedValue([]);
+
+    renderHome();
+
+    await waitFor(() => {
+      expect(screen.getByText('尚無停車紀錄')).toBeInTheDocument();
+    });
+    expect(screen.queryByPlaceholderText('搜尋...')).toBeNull();
+  });
+
+  it('有現役記錄：搜尋框照常顯示（issue #753 僅 0 筆時隱藏）', async () => {
+    const record: ParkingRecord = {
+      id: 'r1',
+      plateNumber: 'ABC-1234',
+      floor: 'B2',
+      notes: '',
+      timestamp: Date.now() - 60_000,
+      hasPhoto: false,
+    };
+    mockGetRecords.mockResolvedValue([record]);
+
+    renderHome();
+
+    await screen.findByTestId('pickup-hero-card');
+    expect(screen.getByPlaceholderText('搜尋...')).toBeInTheDocument();
+  });
+
   it('有現役記錄：取車 hero 卡置頂、拍照 CTA 降為 compact 且列於 hero 之後', async () => {
     const record: ParkingRecord = {
       id: 'r1',

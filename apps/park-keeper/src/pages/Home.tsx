@@ -20,7 +20,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ParkingRecord, AppSettings } from '@app/park-keeper/types';
+import type { ParkingRecord, AppSettings, ThemeConfig } from '@app/park-keeper/types';
 import { THEMES, DEFAULT_SETTINGS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { PLATE_UNSET_SENTINEL } from '@app/park-keeper/services/formatPlate';
@@ -89,6 +89,47 @@ function GuideEntryLink({ color, label }: { color: string; label: string }) {
         {label}
       </Link>
     </div>
+  );
+}
+
+/**
+ * 空狀態教學入口卡（issue #753）：0 筆時取代純文字連結＋獨立空狀態訊息的雙元件組合，
+ * 收斂為單一 soft depth 卡片（rounded-3xl＋1dp border＋theme surface），同時承載訊息與捷徑教學入口。
+ * accessible name 以 aria-label 固定為 label，不受卡內圖示／文案影響（維持既有 e2e/單元測試斷言）。
+ */
+function EmptyStateGuideCard({
+  theme,
+  message,
+  hint,
+  label,
+}: {
+  theme: ThemeConfig;
+  message: string;
+  hint: string;
+  label: string;
+}) {
+  return (
+    <Link
+      to="/guide"
+      aria-label={label}
+      className="min-h-11 flex flex-col items-center gap-2 text-center px-6 py-10 rounded-3xl border border-black/1 shadow-elevation-1 active:scale-[0.99] transition-transform"
+      style={{ backgroundColor: theme.colors.surface }}
+    >
+      <Car
+        size={40}
+        strokeWidth={1.5}
+        aria-hidden
+        style={{ color: theme.colors.primary, opacity: 0.35 }}
+      />
+      <p className="font-black text-xs uppercase tracking-[0.2em] opacity-70">{message}</p>
+      <p className="text-[11px] font-medium opacity-50 max-w-[220px] leading-relaxed">{hint}</p>
+      <span
+        className="mt-1 text-[11px] font-bold underline underline-offset-4"
+        style={{ color: theme.colors.primary }}
+      >
+        {label}
+      </span>
+    </Link>
   );
 }
 
@@ -329,7 +370,8 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
               )}
             </div>
 
-            {currentTab === 'list' && (
+            {/* 0 筆時隱藏搜尋框：避免對空列表呈現死 UI（issue #753 空狀態）。 */}
+            {currentTab === 'list' && records.length > 0 && (
               <div className="relative w-32 transition-all focus-within:w-40">
                 <Search
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-30"
@@ -424,17 +466,18 @@ export default function Home({ initialTab = 'list' }: HomeProps) {
                         manualEntryLabel={t('home.manual_entry')}
                       />
                     )}
-                    <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
-                    {records.length === 0 && (
-                      <div className="flex flex-col items-center justify-center pt-12 pb-6 text-center">
-                        <Car size={56} strokeWidth={1.5} className="opacity-20" aria-hidden />
-                        {/* text-xs（非 text-sm）：此段為 hydration 後才出現的文字，繪製面積
-                            必須小於 SSG 殼首屏最大文字（header wordmark），否則會觸發更晚的
-                            LCP entry，把 LCP 綁到 JS 載入鏈上（issue #738）。 */}
-                        <p className="font-black text-xs uppercase mt-4 tracking-[0.2em] opacity-70">
-                          {t('record.empty')}
-                        </p>
-                      </div>
+                    {/* 空狀態（issue #753）：單一教學入口卡取代純文字連結＋獨立空狀態訊息組合；
+                        text-xs（非 text-sm）維持 hydration 後文字繪製面積小於 SSG 殼首屏最大文字，
+                        避免觸發更晚的 LCP entry（issue #738）。 */}
+                    {records.length === 0 ? (
+                      <EmptyStateGuideCard
+                        theme={theme}
+                        message={t('record.empty')}
+                        hint={t('home.empty_guide_hint')}
+                        label={t('guide.entry')}
+                      />
+                    ) : (
+                      <GuideEntryLink color={theme.colors.text} label={t('guide.entry')} />
                     )}
                     {filteredRecords.map((r) => (
                       <RecordCard
