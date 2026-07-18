@@ -1,4 +1,4 @@
-// 短期增益純邏輯（GAME_DESIGN §68，不 import phaser），vitest 對象。
+// 短期增益純邏輯（GAME_DESIGN §69，不 import phaser），vitest 對象。
 // 魔王關限定拾取（前室二選一＋arena 高風險位）；同時僅存一個、後拾覆蓋；
 // anti-softlock 硬規則：增益永不為破關必需（純加成，時效 10–15s）。
 
@@ -60,7 +60,7 @@ export function createBuffState(): BuffState {
   return { id: null, remainingMs: 0 };
 }
 
-// 拾取（§68 規則 1）：同時僅存一個，後拾覆蓋重計時效。
+// 拾取（§69 規則 1）：同時僅存一個，後拾覆蓋重計時效。
 export function pickupBuff(_state: BuffState, id: BuffId): BuffState {
   return { id, remainingMs: BUFF_SPECS[id].durationMs };
 }
@@ -82,7 +82,7 @@ export interface ShieldBlockResult {
   blocked: boolean;
 }
 
-// 護盾格擋（§68）：吸收 1 次任意傷害（彈幕/接觸/hazard），破盾即失效。
+// 護盾格擋（§69）：吸收 1 次任意傷害（彈幕/接觸/hazard），破盾即失效。
 export function consumeShieldBlock(state: BuffState): ShieldBlockResult {
   if (state.id === null || !BUFF_SPECS[state.id].blocksOneHit) return { state, blocked: false };
   return { state: createBuffState(), blocked: true };

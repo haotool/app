@@ -1,7 +1,7 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
 
-// 稜晶雙子 Prismix FSM 純邏輯（GAME_DESIGN §67，不 import phaser），vitest 對象。
+// 稜晶雙子 Prismix FSM 純邏輯（GAME_DESIGN §68，不 import phaser），vitest 對象。
 // 分裂型三段：P1 單體 → P2 鏡像雙子（獨立血條各半，單份指令左右鏡像執行）→
 // P3 裂核合體；掙扎窗內相繼擊破兩具＝雙子連破（跳過 P3，觸發 twin-finish 彩蛋）。
 // phase truth 全數收斂於此，禁止散落 scene（沿 bossFsm/noctraFsm 表驅動慣例）。
@@ -40,7 +40,7 @@ export const PRISMIX = {
   rainTelegraphMs: 600,
 } as const;
 
-// Prismix EX 專屬差分（§67）：分裂提前、掙扎窗收短、碎晶盾加密；
+// Prismix EX 專屬差分（§68）：分裂提前、掙扎窗收短、碎晶盾加密；
 // 雙子動作去同步（相位錯半拍）為呈現層差分，HP/節奏沿 EX_MODS 共用係數。
 export const EX_PRISMIX = {
   splitHpRatio: 0.75,
@@ -92,7 +92,7 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p3: PRISMIX.enrageSpeedMultiplier,
 };
 
-// 三階段招式循環（§67）：P1 晶柱／折射光束；P2 雙生夾擊／交錯光束／召喚；
+// 三階段招式循環（§68）：P1 晶柱／折射光束；P2 雙生夾擊／交錯光束／召喚；
 // P3 全域折射彈幕／晶雨。
 export function prismixAttackCycle(phase: BossPhase): readonly PrismixAction[] {
   switch (phase) {
@@ -116,7 +116,7 @@ export interface PrismixFsm {
   readonly state: PrismixAction;
   readonly speedFactor: number;
   readonly defeated: boolean;
-  // P2 雙子獨立血條（§67）：非 P2 回 null；呈現層據此發 BOSS_TWIN_HP。
+  // P2 雙子獨立血條（§68）：非 P2 回 null；呈現層據此發 BOSS_TWIN_HP。
   readonly twins: { a: number; b: number } | null;
   tick(deltaMs: number): PrismixCommand | null;
   // P2 必須指定受擊側；P1/P3 忽略 side。
@@ -279,7 +279,7 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         events.push({ kind: 'damaged', hp: totalHp() });
         accrueDrops(amount, events);
         if (state === 'struggle' && (survivor === 'a' ? hpA : hpB) <= 0) {
-          // 雙子連破（§67 彩蛋）：掙扎窗內相繼擊破兩具，總血歸零直接擊破跳過 P3。
+          // 雙子連破（§68 彩蛋）：掙扎窗內相繼擊破兩具，總血歸零直接擊破跳過 P3。
           defeated = true;
           events.push({ kind: 'twinFinish' }, { kind: 'defeated' });
           return events;
@@ -300,7 +300,7 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         return events;
       }
       accrueDrops(amount, events);
-      // P1→P2 分裂（§67）：總血跌破閾值即均分為雙獨立血條（餘數歸 A）。
+      // P1→P2 分裂（§68）：總血跌破閾值即均分為雙獨立血條（餘數歸 A）。
       if (phase === 'p1' && hp <= maxHp * splitRatio) {
         phase = 'p2';
         hpA = Math.ceil(hp / 2);

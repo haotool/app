@@ -29,7 +29,7 @@ export interface StageHooks {
   player(): PlayerHandle;
   // 彈藥獎勵走正式管線：磚內藏可吸小怪，吞下即 +1 彈藥（配額與彩蛋語意不失真）。
   spawnAmmoMinion(x: number, y: number): void;
-  // 折躍瞬移通知（§65）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
+  // 折躍瞬移通知（§66）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
   onWarp?(x: number): void;
 }
 
@@ -60,7 +60,7 @@ const DECOR_BASE_Y = 404;
 const DECOR_BASE_PX = 112;
 // 上升氣流柱（§51）：柱體淡色與上飄粒子（池化，單柱同活 ≤10）。
 const UPDRAFT_TINT = 0xdff2ff;
-// 星門折躍（§65）：星環視覺按 pairId 輪流取色，白閃 0.2s 相機硬切。
+// 星門折躍（§66）：星環視覺按 pairId 輪流取色，白閃 0.2s 相機硬切。
 const WARP_TINTS = [0x9fe8ff, 0xffb3e0, 0xc9f0a8] as const;
 const WARP_FLASH_MS = 200;
 
@@ -83,7 +83,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
 
   // 佈景先建、元素後建：同深度下維持 平台 < 佈景 < 元素 < 玩家 的繪製序（§32）。
   // boss 關 decor x 以資料 worldWidth 為基準等比換算至當前視寬（§28 禁硬編）；
-  // 前室魔王關（§68）：arena 佈景整體平移前室寬。
+  // 前室魔王關（§69）：arena 佈景整體平移前室寬。
   const xScale = level.boss ? scene.scale.width / level.worldWidth : 1;
   const xOffset = level.boss ? (level.anteroomPx ?? 0) : 0;
   for (const spec of level.decor) {
@@ -173,7 +173,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
         break;
       }
       case 'warp': {
-        // 星環視覺（§65）：同 pairId 同色；脈動外環＋淡填內圈＋自旋星芯＋上飄星塵。
+        // 星環視覺（§66）：同 pairId 同色；脈動外環＋淡填內圈＋自旋星芯＋上飄星塵。
         if (!warpPairTints.has(spec.pairId)) {
           warpPairTints.set(
             spec.pairId,
@@ -318,7 +318,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     }
   }
 
-  // 星門折躍結算（§65）：進門保留速度向量（body.reset 歸零後回寫）、相機硬切＋白閃；
+  // 星門折躍結算（§66）：進門保留速度向量（body.reset 歸零後回寫）、相機硬切＋白閃；
   // 傳送後重置本地掃掠基準並通知 GameScene，防前後幀大位移誤觸彈簧/星星門背擋。
   function applyWarp(body: Phaser.Physics.Arcade.Body): void {
     if (warpGates.length === 0) return;

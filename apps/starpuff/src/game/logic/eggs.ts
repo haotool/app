@@ -2,7 +2,7 @@ import type { StarFlavor } from '../core/config';
 
 // 關卡彩蛋純邏輯（GAME_DESIGN §24，不 import phaser），vitest 對象。
 // 觸發器表驅動；每關至多觸發一次（done 鎖存），獎勵落地由 GameScene 結算。
-// v10（§69）：twin-finish 魔王彩蛋觸發器——時窗判定由 prismixFsm 持有（單一真值），
+// v10（§70）：twin-finish 魔王彩蛋觸發器——時窗判定由 prismixFsm 持有（單一真值），
 // GameScene 收到 twinFinish 事件即餵入，本模組只負責鎖存與獎勵對表。
 
 export type EggReward = 'hp-up' | 'full-magazine' | 'gold-star' | 'heal';

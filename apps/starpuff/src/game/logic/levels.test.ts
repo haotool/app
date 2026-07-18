@@ -18,8 +18,8 @@ import {
 import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
-describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
-  it('十二關依序為 1-12 且參數符合 §15/§21/§50/§60/§65-§67 表', () => {
+describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68）', () => {
+  it('十二關依序為 1-12 且參數符合 §15/§21/§50/§60/§66-§68 表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
       2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854,
@@ -34,7 +34,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     ]);
   });
 
-  it('三魔王品種標記（§54/§67）：L4 果凍王、L7 暗月蝠王、L12 稜晶雙子；教學與提示對表', () => {
+  it('三魔王品種標記（§54/§68）：L4 果凍王、L7 暗月蝠王、L12 稜晶雙子；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -67,7 +67,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     expect(getLevel(10).hint).toContain('折躍');
   });
 
-  it('L12 魔王關體系（§68）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {
+  it('L12 魔王關體系（§69）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {
     const level = getLevel(12);
     expect(level.anteroomPx).toBe(400);
     expect(level.anteroomBuffs).toEqual(['shield', 'power']);
@@ -194,7 +194,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L10 幽光晶湖（§65）：mirri/glowy 雙主場、含 zappy 湊電鋸配方、可吸佔比 ≥50%', () => {
+  it('L10 幽光晶湖（§66）：mirri/glowy 雙主場、含 zappy 湊電鋸配方、可吸佔比 ≥50%', () => {
     const mix = getLevel(10).enemyMix;
     expect(mix.find((e) => e.kind === 'mirri')?.weight).toBeGreaterThanOrEqual(0.2);
     expect(mix.find((e) => e.kind === 'glowy')?.weight).toBeGreaterThanOrEqual(0.2);
@@ -203,7 +203,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L11 磁晶險徑（§66）：磁×躍複合混編、雙精英房距 ≥600、可吸佔比 ≥50%', () => {
+  it('L11 磁晶險徑（§67）：磁×躍複合混編、雙精英房距 ≥600、可吸佔比 ≥50%', () => {
     const level = getLevel(11);
     for (const kind of ['magno', 'mirri', 'drilly', 'boomy', 'spora'] as const) {
       expect(level.enemyMix.some((e) => e.kind === kind)).toBe(true);
@@ -225,7 +225,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
         element.topY < platform.y,
     );
 
-  // v10 折躍高台（§65）：星門出口位於平台水平投影內且高於平台頂，落下即著台。
+  // v10 折躍高台（§66）：星門出口位於平台水平投影內且高於平台頂，落下即著台。
   const warpServed = (level: LevelSpec, platform: { x: number; y: number; w: number }) =>
     level.elements.some(
       (element) =>
@@ -234,7 +234,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
         element.y < platform.y,
     );
 
-  it('平台位於世界內；雙層以內或氣流柱/星門可達（§21/§51/§65）；向上爬升可跳達（≤82px）', () => {
+  it('平台位於世界內；雙層以內或氣流柱/星門可達（§21/§51/§66）；向上爬升可跳達（≤82px）', () => {
     const groundTop = 400; // 主地面頂（480 - 80）
     for (const level of LEVELS) {
       let prevY = groundTop;
@@ -242,7 +242,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
         expect(platform.x - platform.w / 2).toBeGreaterThanOrEqual(0);
         expect(platform.x + platform.w / 2).toBeLessThanOrEqual(level.worldWidth);
         if (platform.y < 272) {
-          // v8 高台（§51）／v10 折躍高台（§65）：超出雙層的平台必有升降服務，不逼近世界頂。
+          // v8 高台（§51）／v10 折躍高台（§66）：超出雙層的平台必有升降服務，不逼近世界頂。
           expect(platform.y).toBeGreaterThanOrEqual(190);
           expect(updraftServed(level, platform) || warpServed(level, platform)).toBe(true);
         } else {
@@ -280,7 +280,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
     level.elements.filter((element) => element.kind === kind);
 
-  // 就地站立中心（§65 星門跳入制驗算）：門正下方最高可站面頂 - 玩家半身 20。
+  // 就地站立中心（§66 星門跳入制驗算）：門正下方最高可站面頂 - 玩家半身 20。
   const standCenterAt = (level: LevelSpec, x: number, belowY: number): number => {
     let surfaceTop = 400;
     const consider = (px: number, py: number, pw: number) => {
@@ -296,7 +296,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     return surfaceTop - 20;
   };
 
-  it('星門折躍不變式（§65/§10.2-3/-15）：僅 L10/L11、必成對、跳入制高度、精英房互斥', () => {
+  it('星門折躍不變式（§66/§10.2-3/-15）：僅 L10/L11、必成對、跳入制高度、精英房互斥', () => {
     for (const level of LEVELS) {
       const warps = level.elements.filter((element) => element.kind === 'warp');
       if (level.id !== 10 && level.id !== 11) {
@@ -330,7 +330,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§65/§66/§67）', () => {
     }
   });
 
-  it('卡點關中點重生（§66）：僅 L11 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+  it('卡點關中點重生（§67）：僅 L11 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
     for (const level of LEVELS) {
       if (level.id !== 11) {
         expect(level.checkpointX).toBeUndefined();

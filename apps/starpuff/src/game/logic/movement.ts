@@ -6,7 +6,7 @@ import { PLAYER } from '../core/config';
 // 停定吸附閾值：殘速低於此值直接歸零，避免微速漂移拖動走路 bob。
 const SNAP_EPSILON = 8;
 
-// rateMul（§68 疾風靴）：加減速率倍率，缺省 1 維持既有手感；速度帽同時尊重
+// rateMul（§69 疾風靴）：加減速率倍率，缺省 1 維持既有手感；速度帽同時尊重
 // 提速後的目標值（修正：雷化 +15%／疾風 ×1.3 的目標速不再被常速帽逐幀鉗回）。
 export function approachVelocity(
   current: number,

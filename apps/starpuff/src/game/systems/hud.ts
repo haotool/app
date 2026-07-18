@@ -257,7 +257,7 @@ export function createHud(scene: Phaser.Scene): Hud {
     .setDisplaySize(barWidth, barHeight)
     .setTint(0x9b7bd8);
   const fullScaleX = barFill.scaleX;
-  // 雙節顯示（§67 雙子獨立血條）：同一 bossBar 內雙填充＋中央分隔 tick，零新面板；
+  // 雙節顯示（§68 雙子獨立血條）：同一 bossBar 內雙填充＋中央分隔 tick，零新面板；
   // BOSS_TWIN_HP active=false 回落單節。
   const twinFillA = scene.add
     .image(-barWidth / 2, 0, '__WHITE')
@@ -443,7 +443,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   bind(GameEvents.BOSS_PHASE, ({ phase }) => {
     if (phase === 'p2') barFill.setTint(0xd94b4b);
   });
-  // 雙節切換（§67）：分裂期各半條依雙子血量獨立縮放；合體/擊破回落單節。
+  // 雙節切換（§68）：分裂期各半條依雙子血量獨立縮放；合體/擊破回落單節。
   bind(GameEvents.BOSS_TWIN_HP, ({ hpA, hpB, maxHp, active }) => {
     barFill.setVisible(!active);
     twinFillA.setVisible(active);

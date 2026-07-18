@@ -8,7 +8,7 @@ import { burstSmall } from './fx';
 import { spawnHealPickup } from './pickups';
 import type { PlayerHandle } from './player';
 
-// 魔王關前室體系（GAME_DESIGN §68）：400px 補給廊道 prefab——tier-2 愛心＋可吸補給怪 ×3
+// 魔王關前室體系（GAME_DESIGN §69）：400px 補給廊道 prefab——tier-2 愛心＋可吸補給怪 ×3
 // ＋增益二選一台座＋入 arena 單向門；arena 高風險位增益投放與 buff HUD 倒數環亦收斂於此。
 // 禁止門口全滿血（P-65）：前室恢復上限 tier-2（+2 HP）。
 
@@ -25,7 +25,7 @@ const PEDESTAL_XS = [250, 330] as const;
 // 杜絕低幀率下 bob 相位造成的間歇漏拾。
 const PICKUP_HALF_W = 26;
 const PICKUP_HALF_H = 36;
-// arena 高風險位投放（§68）：10s 未拾自動淡逝；EX 刷新減半（v10＝EX 不投放）。
+// arena 高風險位投放（§69）：10s 未拾自動淡逝；EX 刷新減半（v10＝EX 不投放）。
 const ARENA_BUFF_EXPIRE_MS = 10_000;
 const BUFF_TEXTURES: Record<BuffId, string> = {
   shield: 'buff-shield',
@@ -88,9 +88,9 @@ export interface BossRoomHooks {
 export interface BossRoomHandle {
   update(): void;
   entered(): boolean;
-  // arena 高風險位增益投放（§68 P2/P3）：世界座標；10s 未拾自動淡逝。
+  // arena 高風險位增益投放（§69 P2/P3）：世界座標；10s 未拾自動淡逝。
   dropArenaBuff(id: BuffId, x: number, y: number): void;
-  // buff HUD 倒數環（§68 規則 1：單一 icon＋倒數環，不加新面板）；GameScene 逐幀委派。
+  // buff HUD 倒數環（§69 規則 1：單一 icon＋倒數環，不加新面板）；GameScene 逐幀委派。
   updateBuffHud(state: BuffState): void;
   destroy(): void;
 }
@@ -123,7 +123,7 @@ export function createBossRoom(
     .setDepth(-6);
   objects.push(corridorTint);
 
-  // tier-2 愛心（§68 固定配置）：+2 HP，走共用愛心拾取管線。
+  // tier-2 愛心（§69 固定配置）：+2 HP，走共用愛心拾取管線。
   spawnHealPickup(
     scene,
     HEART_X,
@@ -166,7 +166,7 @@ export function createBossRoom(
     floats.push(entry);
   }
 
-  // 增益二選一台座（§68）：取一消一的風險回報抉擇；icon 貼台頂（站立頭頂帶內）。
+  // 增益二選一台座（§69）：取一消一的風險回報抉擇；icon 貼台頂（站立頭頂帶內）。
   const pedestalPair: FloatingBuff[] = [];
   (level.anteroomBuffs ?? []).forEach((id, index) => {
     const x = PEDESTAL_XS[index] ?? 250 + index * 80;
@@ -209,7 +209,7 @@ export function createBossRoom(
     return aabb || swept;
   }
 
-  // 單向門（§68）：入 arena 後鎖閉，重試自前室起；擊破制無門鎖（§10.2-10 僅指 arena 出口）。
+  // 單向門（§69）：入 arena 後鎖閉，重試自前室起；擊破制無門鎖（§10.2-10 僅指 arena 出口）。
   function lockDoor(): void {
     entered = true;
     const door = scene.add
@@ -232,7 +232,7 @@ export function createBossRoom(
     hooks.onEnterArena();
   }
 
-  // buff HUD（§68）：左上彈藥列下方單一 icon＋倒數環。
+  // buff HUD（§69）：左上彈藥列下方單一 icon＋倒數環。
   const hudIcon = scene.add
     .image(24, 94, BUFF_TEXTURES.shield)
     .setScrollFactor(0)

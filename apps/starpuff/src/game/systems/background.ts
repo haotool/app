@@ -47,7 +47,7 @@ interface ThemeSpec {
 
 // v8 貼圖重用別名（§55）：L6 迴聲石廊重用星空回廊橫景，以 grade/ambience 變化辨識。
 // v9（§60）：L8 磁極洞窟重用蝕月夜景、L9 鏡影迴廊重用星空回廊，均不生成新背景。
-// v10（§65/§66）：L10 幽光晶湖重用星空回廊、L11 磁晶險徑重用蝕月夜景，均以 grade 區分。
+// v10（§66/§67）：L10 幽光晶湖重用星空回廊、L11 磁晶險徑重用蝕月夜景，均以 grade 區分。
 const TEXTURE_ALIAS: Record<string, string> = {
   'bg-gallery': 'bg-arena',
   'bg-cavern': 'bg-eclipse',
@@ -173,7 +173,7 @@ const THEMES: Record<string, ThemeSpec> = {
       tumble: true,
     },
   },
-  // v10 新 biome（§65/§66/§67）：幽光晶湖冰青湖光塵／磁晶險徑磁紫晶塵／稜晶王殿虹彩稜塵。
+  // v10 新 biome（§66/§67/§68）：幽光晶湖冰青湖光塵／磁晶險徑磁紫晶塵／稜晶王殿虹彩稜塵。
   'bg-prism': {
     grade: 0xc5a8e8,
     ambience: {

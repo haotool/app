@@ -165,14 +165,14 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     mercyWarp: (ms) => gameScene().mercyWarp(ms),
     hurtPlayer: (damage) => gameScene().hurtPlayer(damage),
     mercyCount: () => gameScene().mercySpawnedCount(),
-    // v10 觀測點（§68 e2e）：短期增益狀態。
+    // v10 觀測點（§69 e2e）：短期增益狀態。
     buff: () => gameScene().buffState(),
     // 難度實測觀測點（§54 bot 驗收）：魔王本體與彈幕座標供 bot 瞄準/走位/迴避取樣。
     bossPos: () => {
       const body = gameScene().bossBody() as unknown as { x: number; y: number };
       return { x: Math.round(body.x), y: Math.round(body.y) };
     },
-    // v10 觀測點（§67 e2e）：多本體座標（雙子迴避取樣）。
+    // v10 觀測點（§68 e2e）：多本體座標（雙子迴避取樣）。
     bossBodies: () =>
       gameScene()
         .bossBodyPositions()

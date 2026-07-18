@@ -138,7 +138,7 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(currentChallenge(save)).toBe(8);
     save = recordLevelClear(save, 8, 1000);
     save = recordLevelClear(save, 9, 1000);
-    // v10 三區完結（§66/§67）：L9 之後接續 L10-L12。
+    // v10 三區完結（§67/§68）：L9 之後接續 L10-L12。
     expect(currentChallenge(save)).toBe(10);
     save = recordLevelClear(save, 10, 1000);
     save = recordLevelClear(save, 11, 1000);
@@ -147,7 +147,7 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(currentChallenge(save)).toBeNull();
   });
 
-  it('v10 存檔相容（§66）：v9 存檔（1-9 通關）載入後 L10 開放、L11 鎖定', () => {
+  it('v10 存檔相容（§67）：v9 存檔（1-9 通關）載入後 L10 開放、L11 鎖定', () => {
     const entry = { cleared: true, bestTimeMs: 45000, eggsFound: [] };
     const save = parseSave(
       JSON.stringify({

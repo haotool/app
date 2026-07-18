@@ -44,7 +44,7 @@ describe('LEVELS easterEggs 資料（§24）', () => {
     ]);
   });
 
-  it('L10 彩蛋高台（§65）：目標層高存在於平台表且為星門折躍專屬高台', () => {
+  it('L10 彩蛋高台（§66）：目標層高存在於平台表且為星門折躍專屬高台', () => {
     const egg = LEVELS[9]?.easterEggs[0];
     if (egg?.trigger !== 'stand-count') throw new Error('L10 彩蛋型別不符');
     expect(LEVELS[9]?.platforms.some((p) => p.y === egg.platformY)).toBe(true);
@@ -143,7 +143,7 @@ describe('advanceEgg：eat-sequence', () => {
   });
 });
 
-describe('advanceEgg：twin-finish（§69）', () => {
+describe('advanceEgg：twin-finish（§70）', () => {
   const spec: EasterEggSpec = { trigger: 'twin-finish', reward: 'gold-star' };
 
   it('收到雙子連破事件觸發一次並鎖存；無關事件不推進', () => {

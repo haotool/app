@@ -24,7 +24,7 @@ export const GameEvents = {
   BOSS_PHASE: 'boss:phase',
   // P3 狂暴皇冠（§30）：slam 附加全場震落，站立玩家強制彈起由 GameScene 結算。
   BOSS_QUAKE: 'boss:quake',
-  // v10 雙子獨立血條（§67）：producer systems/prismix（split/受擊/掙扎/合體），
+  // v10 雙子獨立血條（§68）：producer systems/prismix（split/受擊/掙扎/合體），
   // consumer systems/hud（魔王條雙節顯示；active false 回落單節）。
   BOSS_TWIN_HP: 'boss:twin-hp',
   BOSS_DEFEATED: 'boss:defeated',

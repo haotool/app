@@ -8,7 +8,7 @@ const gates: WarpGate[] = [
   { x: 3050, y: 176, pairId: 'b' },
 ];
 
-describe('warpExitOf 配對（§65）', () => {
+describe('warpExitOf 配對（§66）', () => {
   it('同 pairId 兩門互為出口', () => {
     expect(warpExitOf(gates, gates[0]!)).toBe(gates[1]);
     expect(warpExitOf(gates, gates[1]!)).toBe(gates[0]);
@@ -21,7 +21,7 @@ describe('warpExitOf 配對（§65）', () => {
   });
 });
 
-describe('tryWarp 進門判定與冷卻（§65）', () => {
+describe('tryWarp 進門判定與冷卻（§66）', () => {
   it('觸發半徑內命中回出口並啟動冷卻', () => {
     const result = tryWarp(gates, 905, 355, 1000, 0);
     expect(result.exit).toBe(gates[1]);

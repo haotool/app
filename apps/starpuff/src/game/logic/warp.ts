@@ -1,4 +1,4 @@
-// 星門折躍純邏輯（GAME_DESIGN §65，不 import phaser），vitest 對象。
+// 星門折躍純邏輯（GAME_DESIGN §66，不 import phaser），vitest 對象。
 // 成對傳送：同 pairId 兩門互為出口；進門保留速度向量、出門冷卻防彈跳循環。
 // anti-softlock：warp 僅為捷徑與秘密，主線地面路徑恆可達星星門（levels.test 守門）。
 

@@ -30,7 +30,7 @@ function splitFsm(): ReturnType<typeof createPrismixFsm> {
   return fsm;
 }
 
-describe('PRISMIX 常數與循環表（§67）', () => {
+describe('PRISMIX 常數與循環表（§68）', () => {
   it('HP 階梯 80、telegraph 全數 ≥500ms、三階段循環表對表', () => {
     expect(PRISMIX.maxHp).toBe(80);
     expect(PRISMIX.pillarTelegraphMs).toBeGreaterThanOrEqual(500);
@@ -43,7 +43,7 @@ describe('PRISMIX 常數與循環表（§67）', () => {
   });
 });
 
-describe('P1 單體（§67）', () => {
+describe('P1 單體（§68）', () => {
   it('招式沿 pillar → idle → beam → idle 輪替且帶正確參數', () => {
     const fsm = createPrismixFsm();
     const commands = drain(fsm, 8);
@@ -82,7 +82,7 @@ describe('P1 單體（§67）', () => {
   });
 });
 
-describe('P2 鏡像雙子（§67 獨立血條）', () => {
+describe('P2 鏡像雙子（§68 獨立血條）', () => {
   it('受擊側各自扣血，另一側不動', () => {
     const fsm = splitFsm();
     fsm.takeDamage(5, 'b');
@@ -152,7 +152,7 @@ describe('P2 鏡像雙子（§67 獨立血條）', () => {
   });
 });
 
-describe('P3 裂核與擊破（§67）', () => {
+describe('P3 裂核與擊破（§68）', () => {
   it('裂核血量歸零擊破；每 10 傷補給沿跨階段累計', () => {
     const fsm = splitFsm();
     fsm.takeDamage(26, 'a');
@@ -164,7 +164,7 @@ describe('P3 裂核與擊破（§67）', () => {
   });
 });
 
-describe('EX 差分（§67）', () => {
+describe('EX 差分（§68）', () => {
   it('HP 120、分裂閾值 75%、掙扎窗 700ms、碎晶盾 6', () => {
     const fsm = createPrismixFsm({ ex: true });
     expect(fsm.maxHp).toBe(120);

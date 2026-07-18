@@ -10,7 +10,7 @@ import {
   tickBuff,
 } from './buffs';
 
-describe('BUFF_SPECS 表（§68）', () => {
+describe('BUFF_SPECS 表（§69）', () => {
   it('時效落於 10–15s 帶且效果為有界加成（非無敵）', () => {
     for (const spec of Object.values(BUFF_SPECS)) {
       expect(spec.durationMs).toBeGreaterThanOrEqual(10_000);
@@ -25,7 +25,7 @@ describe('BUFF_SPECS 表（§68）', () => {
   });
 });
 
-describe('增益狀態機（§68）', () => {
+describe('增益狀態機（§69）', () => {
   it('拾取啟動時效；同時僅存一個、後拾覆蓋重計', () => {
     let state = pickupBuff(createBuffState(), 'shield');
     expect(state).toEqual({ id: 'shield', remainingMs: 15_000 });

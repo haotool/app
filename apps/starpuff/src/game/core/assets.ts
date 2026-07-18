@@ -108,7 +108,7 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'bg-eclipse-l',
     url: new URL('../../assets/sprites/bg-eclipse-l.webp', import.meta.url).href,
   },
-  // v10 三區完結（§67）：第三魔王稜晶雙子；L10-L12 背景重用既有貼圖（§65/§66）。
+  // v10 三區完結（§68）：第三魔王稜晶雙子；L10-L12 背景重用既有貼圖（§66/§67）。
   {
     key: 'boss-prismix',
     url: new URL('../../assets/sprites/boss-prismix.webp', import.meta.url).href,

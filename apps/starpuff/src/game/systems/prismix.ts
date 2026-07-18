@@ -12,7 +12,7 @@ import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
 
-// 稜晶雙子 Prismix 呈現層（GAME_DESIGN §67）：與 boss/noctra 共用 BossHandle 介面。
+// 稜晶雙子 Prismix 呈現層（GAME_DESIGN §68）：與 boss/noctra 共用 BossHandle 介面。
 // 分裂型三段：P1 合體單體 → P2 鏡像雙子（雙本體、獨立血條）→ P3 裂核＋碎晶盾。
 // phase truth 一律由 logic/prismixFsm.ts 持有，本模組僅結算演出與物理。
 
@@ -20,7 +20,7 @@ const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 170;
 const BODY_H = 150;
 const STAND_Y = GROUND_TOP - BODY_H / 2;
-// 雙子縮比（§67）：同貼圖 0.72x 鏡像＋冷暖 tint 區分，零第二張素材。
+// 雙子縮比（§68）：同貼圖 0.72x 鏡像＋冷暖 tint 區分，零第二張素材。
 const TWIN_SCALE = 0.72;
 const TWIN_W = BODY_W * TWIN_SCALE;
 const TWIN_H = BODY_H * TWIN_SCALE;
@@ -46,7 +46,7 @@ const BARRAGE_SPEED = 165;
 // P3 碎晶盾軌道：半徑與角速度；各盾 1 發星彈可破。
 const SHARD_ORBIT_R = 95;
 const SHARD_SPIN_RAD_PER_MS = 0.0012;
-// P3 彈幕蓄能 telegraph（§67 蓄能轉白，審查修復）：轉白持續蓄能後才齊發。
+// P3 彈幕蓄能 telegraph（§68 蓄能轉白，審查修復）：轉白持續蓄能後才齊發。
 const BARRAGE_WINDUP_MS = 600;
 const CRYSTAL_TINT = 0xc5a8e8;
 const CORE_TINT = 0x9a7ad0;
@@ -85,15 +85,15 @@ function ensureTextures(scene: Phaser.Scene): void {
 }
 
 export interface PrismixHooks {
-  // 召喚 mirri（§67 P2）：由 GameScene 依場上現量夾限至 cap，走正式 spawn 管線。
+  // 召喚 mirri（§68 P2）：由 GameScene 依場上現量夾限至 cap，走正式 spawn 管線。
   summonMirri(cap: number): void;
-  // 雙子連破（§67/§69）：GameScene 餵彩蛋觸發器＋全屏稜光演出。
+  // 雙子連破（§68/§70）：GameScene 餵彩蛋觸發器＋全屏稜光演出。
   onTwinFinish(): void;
 }
 
 export interface PrismixOptions {
   ex?: boolean;
-  // 前室魔王關（§68）：arena 左緣由 GameScene 注入（前室寬），佈局禁硬編視寬。
+  // 前室魔王關（§69）：arena 左緣由 GameScene 注入（前室寬），佈局禁硬編視寬。
   arenaLeft(): number;
 }
 
@@ -182,7 +182,7 @@ export function createPrismix(
   const sideSprite = (side: PrismixSide) => (side === 'a' ? twinA : twinB);
   const sideTint = (side: PrismixSide) => (side === 'a' ? TWIN_TINT_A : TWIN_TINT_B);
 
-  // 受擊側歸屬（§67）：以最近存活本體結算；非 P2 一律主本體。
+  // 受擊側歸屬（§68）：以最近存活本體結算；非 P2 一律主本體。
   const nearestSide = (x: number, y: number): PrismixSide => {
     if (!twinsAlive) return 'a';
     const twins = fsm.twins;
@@ -204,7 +204,7 @@ export function createPrismix(
     return shot;
   };
 
-  // 晶柱衝擊（§67 P1）：地面尖晶隆起 x3——落點預警後自地升起，走 shockwaves 管線。
+  // 晶柱衝擊（§68 P1）：地面尖晶隆起 x3——落點預警後自地升起，走 shockwaves 管線。
   const doPillar = (count: number) => {
     const centerX = clampArenaX(target?.x ?? arenaCx(), 80);
     for (let i = 0; i < count; i += 1) {
@@ -234,7 +234,7 @@ export function createPrismix(
     }
   };
 
-  // 折射光束（§67）：預示線閃爍後橫掃帶狀判定；low/high 供 P2 交錯光束複用。
+  // 折射光束（§68）：預示線閃爍後橫掃帶狀判定；low/high 供 P2 交錯光束複用。
   const fireBeam = (from: Phaser.Physics.Arcade.Sprite, beamY: number) => {
     const lineX = arenaCx();
     const line = scene.add.rectangle(lineX, beamY, viewW(), 4, 0xffffff, 0.55).setDepth(58);
@@ -258,7 +258,7 @@ export function createPrismix(
     });
   };
 
-  // 雙生夾擊（§67 P2）：同步閃爍前搖後左右對衝互換位，跳越可躲；交會後雙側僵直。
+  // 雙生夾擊（§68 P2）：同步閃爍前搖後左右對衝互換位，跳越可躲；交會後雙側僵直。
   const doPincer = () => {
     steering = false;
     const fromAx = twinA.x;
@@ -280,7 +280,7 @@ export function createPrismix(
         });
       });
     };
-    // EX 去同步（§67）：雙子相位錯半拍，讀招難度升級。
+    // EX 去同步（§68）：雙子相位錯半拍，讀招難度升級。
     dash(twinA, fromBx, 0);
     dash(twinB, fromAx, ex ? EX_PRISMIX.desyncMs : 0);
     delay(PRISMIX.pincerTelegraphMs + PINCER_DASH_MS + (ex ? EX_PRISMIX.desyncMs : 0) + 60, () => {
@@ -288,7 +288,7 @@ export function createPrismix(
     });
   };
 
-  // 交錯光束（§67 P2）：一具掃地面帶、一具掃空中帶，站位讀招。
+  // 交錯光束（§68 P2）：一具掃地面帶、一具掃空中帶，站位讀招。
   const doCrossbeam = () => {
     fireBeam(twinA, BEAM_LOW_Y);
     delay(ex ? EX_PRISMIX.desyncMs : 140, () => {
@@ -296,7 +296,7 @@ export function createPrismix(
     });
   };
 
-  // 召喚鏡蟲（§67 P2）：短促蓄勢後由 GameScene 依 cap 補場。
+  // 召喚鏡蟲（§68 P2）：短促蓄勢後由 GameScene 依 cap 補場。
   const doSummon = (cap: number) => {
     [twinA, twinB].forEach((twin) => {
       if (!twin.visible) return;
@@ -308,7 +308,7 @@ export function createPrismix(
     });
   };
 
-  // 全域折射彈幕（§67 P3）：蓄能轉白 0.6s telegraph 後放射彈環自裂核齊發（審查修復：
+  // 全域折射彈幕（§68 P3）：蓄能轉白 0.6s telegraph 後放射彈環自裂核齊發（審查修復：
   // 原 90ms 白閃過短，普通反應不可讀）。
   const doBarrage = (count: number) => {
     core.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
@@ -327,7 +327,7 @@ export function createPrismix(
     });
   };
 
-  // 晶雨（§67 P3）：落點預警後晶塊直墜。
+  // 晶雨（§68 P3）：落點預警後晶塊直墜。
   const doRain = (count: number) => {
     const centerX = clampArenaX(target?.x ?? arenaCx(), 80);
     for (let i = 0; i < count; i += 1) {
@@ -344,7 +344,7 @@ export function createPrismix(
     }
   };
 
-  // P2 分裂演出（§67）：主本體隱沒，雙子自中心彈出左右鏡像位。
+  // P2 分裂演出（§68）：主本體隱沒，雙子自中心彈出左右鏡像位。
   const doSplit = () => {
     twinsAlive = true;
     playSfx('break');
@@ -368,7 +368,7 @@ export function createPrismix(
     emitTwinHp();
   };
 
-  // 殘核掙扎（§67）：擊破側碎裂消散；存活側體色轉暗＋搖擺（telegraph）。
+  // 殘核掙扎（§68）：擊破側碎裂消散；存活側體色轉暗＋搖擺（telegraph）。
   const doStruggle = (survivor: PrismixSide) => {
     struggleSide = survivor;
     const dead = sideSprite(survivor === 'a' ? 'b' : 'a');
@@ -398,7 +398,7 @@ export function createPrismix(
     emitTwinHp();
   };
 
-  // P3 合體（§67）：存活具吸收殘核化為裂核；環繞碎晶盾登場。
+  // P3 合體（§68）：存活具吸收殘核化為裂核；環繞碎晶盾登場。
   const doMerge = (coreHp: number, shardCount: number) => {
     void coreHp;
     twinsAlive = false;
@@ -473,7 +473,7 @@ export function createPrismix(
     (obj as Phaser.Physics.Arcade.Sprite).disableBody(true, true);
   };
 
-  // 死亡冪等（§67）：defeated 由 FSM 單向鎖存，本序列僅執行一次。
+  // 死亡冪等（§68）：defeated 由 FSM 單向鎖存，本序列僅執行一次。
   const dieSequence = () => {
     dying = true;
     active = false;
@@ -653,7 +653,7 @@ export function createPrismix(
           twinB.y = TWIN_STAND_Y - bob;
         }
       }
-      // 碎晶盾軌道（§67 P3）：繞核公轉；被擊破的盾自然缺位。
+      // 碎晶盾軌道（§68 P3）：繞核公轉；被擊破的盾自然缺位。
       const orbitBase = scene.time.now * SHARD_SPIN_RAD_PER_MS;
       const shardCount = ex ? EX_PRISMIX.shardOrbitCount : PRISMIX.shardOrbitCount;
       shields.getMatching('active', true).forEach((obj) => {
@@ -692,7 +692,7 @@ export function createPrismix(
     isActive() {
       return active;
     },
-    // 分裂型無下砸暈窗（§67）：命中頭頂僅回彈免體傷，不觸發僵直。
+    // 分裂型無下砸暈窗（§68）：命中頭頂僅回彈免體傷，不觸發僵直。
     trySlamStun() {
       return false;
     },

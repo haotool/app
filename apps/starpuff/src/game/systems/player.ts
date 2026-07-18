@@ -85,9 +85,9 @@ export interface PlayerHandle {
   isSlamming(): boolean;
   // 魔王頭頂命中（§58）：GameScene 結算後回彈玩家並結束本次下砸（進 CD）。
   onSlamBounce(): void;
-  // 短期增益（§68 疾風靴）：移速/加減速倍率單點注入；GameScene 依 buff 狀態逐幀同步。
+  // 短期增益（§69 疾風靴）：移速/加減速倍率單點注入；GameScene 依 buff 狀態逐幀同步。
   setBuffMoveMods(speedMul: number, rateMul: number): void;
-  // 卡點重生護體（§66）：顯式重授無敵窗（取現值較大者），不依賴致死當下殘餘 i-frame。
+  // 卡點重生護體（§67）：顯式重授無敵窗（取現值較大者），不依賴致死當下殘餘 i-frame。
   grantInvulnerability(durationMs: number): void;
   getFacing(): 1 | -1;
   getInhaleZone(): Phaser.GameObjects.Zone;
@@ -177,7 +177,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let flapsUsed = 0;
   let invulnerableMs = 0;
   let hurtLockMs = 0;
-  // 短期增益（§68）：疾風靴移速/加減速倍率；GameScene 依 buff 狀態同步。
+  // 短期增益（§69）：疾風靴移速/加減速倍率；GameScene 依 buff 狀態同步。
   let buffSpeedMul = 1;
   let buffRateMul = 1;
   let actionHoldMs = 0;
@@ -617,7 +617,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (hurtLockMs <= 0) {
         // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
         // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
-        // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§68）疾風靴倍率疊乘。
+        // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§69）疾風靴倍率疊乘。
         const moveSpeed = PLAYER.moveSpeed * (formSpec?.moveSpeedMul ?? 1) * buffSpeedMul;
         const moveTarget = controls.left ? -moveSpeed : controls.right ? moveSpeed : 0;
         if (moveTarget !== 0) facing = moveTarget > 0 ? 1 : -1;
