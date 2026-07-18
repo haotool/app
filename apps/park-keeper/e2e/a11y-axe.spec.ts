@@ -9,7 +9,8 @@ import { TEXT, TEST_PHOTO_BASE64 } from './helpers';
  * 背景：Settings 頁 opacity dimming 對比崩潰（NEW-1）存活 4 輪 16 份人工審查未被捕捉，
  * 根因是 a11y 驗證仰賴審查席抽測而非 CI 常駐迴歸。本 spec 以 axe-core 全規則集
  * （含 wcag2a/aa 的 color-contrast、label 類與 best-practice 的 landmark、heading-order）
- * 掃描四路由 × racing/kawaii 兩主題，0 violations 斷言，阻止同型反模式第 4 次復發。
+ * 掃描五路由（/、/settings、/add、/guide、/about）× racing/kawaii 兩主題，
+ * 0 violations 斷言，阻止同型反模式第 4 次復發。
  *
  * 主題選擇：racing（深底極端）與 kawaii（pastel 低對比極端，round-5 最嚴重 1.64:1）
  * 為對比破壞的兩個方向邊界；zen/classic 介於其間，token 層已由 constants.test.ts 守門。
@@ -81,8 +82,8 @@ for (const theme of THEME_MATRIX) {
       await page.getByRole('button', { name: 'B2', exact: true }).click();
       await expect(page.getByTestId('quick-entry-handle')).toHaveCount(0);
       await expect(page.getByTestId('pickup-hero-card')).toBeVisible();
-      // 等 toast（2.5s）退場，避免掃描到過場中間態。
-      await page.waitForTimeout(3000);
+      // 等 toast 退場（狀態驅動而非固定 sleep）：2.5s 後 setToast(null) → DOM 移除。
+      await expect(page.getByText('儲存成功！')).toHaveCount(0, { timeout: 5000 });
       await expectNoAxeViolations(page, `home-with-record-${theme.id}`);
     });
 
@@ -106,6 +107,18 @@ for (const theme of THEME_MATRIX) {
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await page.waitForTimeout(SETTLE_MS);
       await expectNoAxeViolations(page, `guide-${theme.id}`);
+    });
+
+    test(`/about 關於頁 0 violations（${theme.id}）`, async ({ page }) => {
+      // /about 含 Layout footer（R6 review 處方納入 matrix）；同 /guide 為固定亮底靜態頁。
+      await page.goto('/');
+      await switchTheme(page, theme.name);
+
+      await page.goto('about');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.getByRole('contentinfo')).toBeVisible();
+      await page.waitForTimeout(SETTLE_MS);
+      await expectNoAxeViolations(page, `about-${theme.id}`);
     });
   });
 }
