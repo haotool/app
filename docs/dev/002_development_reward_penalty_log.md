@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+131
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-dropthrough-touch-gesture
+- 原因：#769 下跳穿落修復以理想化合成輸入（鍵盤／dispatchEvent 垂直長滑持住）驗證造成假綠燈——真實拇指手勢（CDP 真觸控探針五情境實證）四路全掛：底緣定錨下滑行程 15-25px 達不到 30px 舊閾值（蹲姿與琥珀鍵不出現）、flick 抬指後 down 歸零按跳變上跳、斜下滑 dx 分量把玩家帶出平台，生產使用者「下滑＋跳」仍不能下穿
+- 解法：isJoyDown 改扇區＋幅度判定（dy≥18 且 ±60 度扇區）、advanceDownBuffer 300ms drop-intent 緩衝窗（stage 下穿與琥珀指示吃 downBuffered、空中下砸維持即時 down 防誤觸）、地面蹲下鉗水平（moveTarget=0 防斜下滑帶出平台）；12 單測＋CDP 真觸控 e2e 三變體（held／flick 停頓 150ms／斜下 45 度）進常備套件，rebase v12 後 468 vitest＋75 Playwright 全綠
 
 - 日期：2026-07-19
 - ID：reward-papertrade-r5-app-feel

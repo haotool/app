@@ -24,6 +24,7 @@ import type { PlayerHandle } from './player';
 // stage 只讀最小輸入子集：控制系統由 GameScene 傳入狀態，避免直接耦合 DOM controls。
 export interface StageInput {
   down: boolean;
+  downBuffered: boolean;
   jumpPressed: boolean;
 }
 
@@ -434,7 +435,8 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       }
 
       // 下落穿透（§29）：player.update 已先行，同幀起跳脈衝以下墜覆蓋，成為乾淨下穿。
-      if (shouldDropThrough(input.down, input.jumpPressed, standingOnOneWay(body))) {
+      // §78：改吃 downBuffered——flick（滑完抬指）後 150ms 內按跳仍屬下跳意圖。
+      if (shouldDropThrough(input.downBuffered, input.jumpPressed, standingOnOneWay(body))) {
         dropUntilMs = scene.time.now + DROP_THROUGH_MS;
         if (body.velocity.y < 0) body.setVelocityY(30);
       }
