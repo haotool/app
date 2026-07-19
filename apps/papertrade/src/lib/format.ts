@@ -1,3 +1,6 @@
+import { type MarketSymbol } from '../config/market';
+import { pricePrecisionFor } from './priceScale';
+
 function decimalsForPrice(value: number): number {
   const abs = Math.abs(value);
   if (abs >= 1000) return 1;
@@ -7,9 +10,10 @@ function decimalsForPrice(value: number): number {
   return 6;
 }
 
-export function formatPrice(value: number): string {
+// 遷移過渡簽名（ADR-R6-01）：symbol 缺省暫走量級推斷；全呼叫點遷移完成後改必填並刪舊路徑。
+export function formatPrice(value: number, symbol?: MarketSymbol): string {
   if (!Number.isFinite(value)) return '--';
-  const decimals = decimalsForPrice(value);
+  const decimals = symbol === undefined ? decimalsForPrice(value) : pricePrecisionFor(symbol);
   return value.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

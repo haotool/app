@@ -13,6 +13,7 @@ import {
   type TpSlBasis,
 } from '../../lib/tpslMath';
 import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
+import { pricePrecisionFor } from '../../lib/priceScale';
 import { TPSL_INPUT_MESSAGES, TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { SYMBOL_META } from '../../config/market';
@@ -57,8 +58,13 @@ function fmtInput(value: number, decimals: number): string {
   return Number(value.toFixed(decimals)).toString();
 }
 
-function valueAtMode(price: number, mode: ValueMode, basis: TpSlBasis): string {
-  if (mode === 'price') return fmtInput(price, 6);
+function valueAtMode(
+  price: number,
+  mode: ValueMode,
+  basis: TpSlBasis,
+  priceDecimals: number,
+): string {
+  if (mode === 'price') return fmtInput(price, priceDecimals);
   if (mode === 'roe') return fmtInput(roeAtPrice(basis, price), 2);
   return fmtInput(pnlAtPrice(basis, price), 2);
 }
@@ -92,7 +98,7 @@ function validateTrigger(
   // 高槓桿死區（issue 781）：停損劣於強平價時強平必先觸發，標示無效並擋下送出。
   if (isSlBeyondLiquidation(position.side, position.entryPrice, position.leverage, price)) {
     const liq = liquidationPrice(position.side, position.entryPrice, position.leverage);
-    return `此停損價已越過強平價 ${formatPrice(liq)}，實際會先觸發強平`;
+    return `此停損價已越過強平價 ${formatPrice(liq, position.symbol)}，實際會先觸發強平`;
   }
   return null;
 }
@@ -139,7 +145,10 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
       if (price === null || Number.isNaN(price) || price <= 0) {
         return { mode: nextMode, input: '' };
       }
-      return { mode: nextMode, input: valueAtMode(price, nextMode, basis) };
+      return {
+        mode: nextMode,
+        input: valueAtMode(price, nextMode, basis, pricePrecisionFor(position.symbol)),
+      };
     });
     setError(null);
   }
@@ -147,7 +156,12 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   function writeFromRoe(kind: TriggerKind, roe: number) {
     setters[kind]((prev) => ({
       mode: prev.mode,
-      input: valueAtMode(priceFromRoe(basis, roe), prev.mode, basis),
+      input: valueAtMode(
+        priceFromRoe(basis, roe),
+        prev.mode,
+        basis,
+        pricePrecisionFor(position.symbol),
+      ),
     }));
     setError(null);
   }
@@ -242,7 +256,7 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
               pnl >= 0 ? 'text-long' : 'text-short',
             )}
           >
-            觸發價 {formatPrice(price)}｜預估損益 {formatSignedPnl(pnl)} USDT（ROE{' '}
+            觸發價 {formatPrice(price, position.symbol)}｜預估損益 {formatSignedPnl(pnl)} USDT（ROE{' '}
             {formatSignedPercent(roe)}）
           </p>
         )}
@@ -261,8 +275,9 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   return (
     <BottomSheet open={open} title="止盈止損" onClose={onClose}>
       <p className="text-caption text-text-3 tabular-nums">
-        開倉價 {formatPrice(position.entryPrice)}｜標記價{' '}
-        {mark !== undefined ? formatPrice(mark) : '--'}；觸發後以市價結算，留空代表不設定。
+        開倉價 {formatPrice(position.entryPrice, position.symbol)}｜標記價{' '}
+        {mark !== undefined ? formatPrice(mark, position.symbol) : '--'}
+        ；觸發後以市價結算，留空代表不設定。
       </p>
 
       <div

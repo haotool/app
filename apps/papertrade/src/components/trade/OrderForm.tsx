@@ -13,6 +13,7 @@ import { crossAvailableBalance, liquidationPrice, type MarkMap } from '../../eng
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
+import { pricePrecisionFor } from '../../lib/priceScale';
 import {
   amountToPercent,
   isLimitPriceWithinBand,
@@ -133,7 +134,7 @@ export function OrderForm({
     const price = bestQuoteRef?.current[side] ?? null;
     if (price === null) return;
     setError(null);
-    onLimitPriceChange(trimNumberInput(price, 6));
+    onLimitPriceChange(trimNumberInput(price, pricePrecisionFor(symbol)));
   }
 
   function toggleUnit() {
@@ -234,7 +235,7 @@ export function OrderForm({
     pushToast({
       tone: side,
       title: mode === 'market' ? `市價${sideText}已成交` : `限價${sideText}委託已送出`,
-      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price)}`,
+      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price, symbol)}`,
     });
   }
 
@@ -285,7 +286,7 @@ export function OrderForm({
               value={limitPrice}
               onChange={(event) => onLimitPriceChange(event.target.value)}
               placeholder={
-                markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
+                markPrice !== undefined ? formatPrice(markPrice, symbol).replaceAll(',', '') : '0.0'
               }
               aria-label="限價（USDT）"
               className="h-11 min-w-11 flex-1 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
@@ -409,13 +410,13 @@ export function OrderForm({
         <div className="flex justify-between">
           <dt className="text-text-3">多單預估強平</dt>
           <dd className="text-text-2 tabular-nums">
-            {liqPreviewLong !== null ? formatPrice(liqPreviewLong) : '--'}
+            {liqPreviewLong !== null ? formatPrice(liqPreviewLong, symbol) : '--'}
           </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-text-3">空單預估強平</dt>
           <dd className="text-text-2 tabular-nums">
-            {liqPreviewShort !== null ? formatPrice(liqPreviewShort) : '--'}
+            {liqPreviewShort !== null ? formatPrice(liqPreviewShort, symbol) : '--'}
           </dd>
         </div>
       </dl>

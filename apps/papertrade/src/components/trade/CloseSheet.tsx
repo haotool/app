@@ -6,6 +6,7 @@ import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { unrealizedPnl } from '../../engine/math';
 import { formatAmount, formatPrice, formatSignedPnl } from '../../lib/format';
+import { pricePrecisionFor } from '../../lib/priceScale';
 import { parsePositiveInput, TRADE_ERROR_MESSAGES, trimNumberInput } from '../../lib/tradeForm';
 import { CLOSE_PERCENT_PRESETS, QTY_DISPLAY_DECIMALS } from '../../config/trading';
 
@@ -76,7 +77,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       pushToast({
         tone: position.side,
         title: `限價平倉委託已送出（${percent}%）`,
-        description: `${formatAmount(closeQty, QTY_DISPLAY_DECIMALS)} @ ${formatPrice(limitPriceValue)}`,
+        description: `${formatAmount(closeQty, QTY_DISPLAY_DECIMALS)} @ ${formatPrice(limitPriceValue, position.symbol)}`,
       });
     }
     setError(null);
@@ -122,7 +123,9 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
               setLimitPrice(event.target.value);
               setError(null);
             }}
-            placeholder={mark !== undefined ? trimNumberInput(mark, 6) : '0.0'}
+            placeholder={
+              mark !== undefined ? trimNumberInput(mark, pricePrecisionFor(position.symbol)) : '0.0'
+            }
             className="h-11 w-full rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
           />
         </label>
@@ -157,12 +160,14 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       <dl className="mt-3 flex flex-col gap-1 text-caption">
         <div className="flex justify-between">
           <dt className="text-text-3">開倉價</dt>
-          <dd className="text-text-2 tabular-nums">{formatPrice(position.entryPrice)}</dd>
+          <dd className="text-text-2 tabular-nums">
+            {formatPrice(position.entryPrice, position.symbol)}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-text-3">{mode === 'market' ? '標記價' : '限價'}</dt>
           <dd className="text-text-2 tabular-nums">
-            {previewPrice !== null ? formatPrice(previewPrice) : '--'}
+            {previewPrice !== null ? formatPrice(previewPrice, position.symbol) : '--'}
           </dd>
         </div>
         <div className="flex justify-between">

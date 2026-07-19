@@ -115,7 +115,7 @@ export function PositionCard({ position }: { position: Position }) {
             {roe !== null ? formatSignedPercent(roe) : '--'}
           </PriceFlash>
           <p className="mt-0.5 text-caption text-text-3 tabular-nums">
-            {`標記價 ${mark !== undefined ? formatPrice(mark) : '--'}`}
+            {`標記價 ${mark !== undefined ? formatPrice(mark, position.symbol) : '--'}`}
           </p>
         </div>
       </header>
@@ -129,18 +129,20 @@ export function PositionCard({ position }: { position: Position }) {
         </div>
         <div>
           <dt className="text-text-3">開倉價</dt>
-          <dd className="mt-0.5 text-text-2 tabular-nums">{formatPrice(position.entryPrice)}</dd>
+          <dd className="mt-0.5 text-text-2 tabular-nums">
+            {formatPrice(position.entryPrice, position.symbol)}
+          </dd>
         </div>
         <div>
           <dt className="text-text-3">標記價</dt>
           <dd className="mt-0.5 text-text-2 tabular-nums">
-            {mark !== undefined ? formatPrice(mark) : '--'}
+            {mark !== undefined ? formatPrice(mark, position.symbol) : '--'}
           </dd>
         </div>
         <div>
           <dt className="text-text-3">強平價{isCross ? '（估算）' : ''}</dt>
           <dd className="mt-0.5 text-warning tabular-nums">
-            {liq !== null ? formatPrice(liq) : '--'}
+            {liq !== null ? formatPrice(liq, position.symbol) : '--'}
           </dd>
         </div>
       </dl>
@@ -149,15 +151,19 @@ export function PositionCard({ position }: { position: Position }) {
         position.stopLoss !== null ||
         position.trailing !== null) && (
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-caption text-text-3 tabular-nums">
-          {position.takeProfit !== null && <span>止盈 {formatPrice(position.takeProfit)}</span>}
-          {position.stopLoss !== null && <span>止損 {formatPrice(position.stopLoss)}</span>}
+          {position.takeProfit !== null && (
+            <span>止盈 {formatPrice(position.takeProfit, position.symbol)}</span>
+          )}
+          {position.stopLoss !== null && (
+            <span>止損 {formatPrice(position.stopLoss, position.symbol)}</span>
+          )}
           {position.trailing !== null && (
             <span>
               追蹤{' '}
               {position.trailing.active
                 ? '已啟動'
-                : `${formatPrice(position.trailing.activationPrice)} 啟動`}
-              ｜回撤 {formatPrice(position.trailing.distance)}
+                : `${formatPrice(position.trailing.activationPrice, position.symbol)} 啟動`}
+              ｜回撤 {formatPrice(position.trailing.distance, position.symbol)}
             </span>
           )}
         </p>

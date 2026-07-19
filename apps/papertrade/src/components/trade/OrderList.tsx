@@ -41,7 +41,7 @@ export function OrderList() {
                   </p>
                   <p className="mt-0.5 text-caption text-text-3 tabular-nums">
                     {formatAmount(order.qty, QTY_DISPLAY_DECIMALS)} @{' '}
-                    {formatPrice(order.limitPrice)}
+                    {formatPrice(order.limitPrice, order.symbol)}
                     {order.kind === 'open' &&
                       `｜佔用 ${formatAmount(order.margin + order.fee, 2)} USDT`}
                   </p>
