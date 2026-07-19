@@ -77,18 +77,25 @@ body {
   overflow: hidden;
 }
 
-/* portrait：殼旋轉 90°、寬高互換（旋轉後殼寬=裝置高、殼高=裝置寬），不鎖裝置方向。
-   rotate(90deg) 搭配 left:100%（origin 錨在裝置右上角）：殼左緣=裝置頂緣、殼下緣=裝置左緣，
-   與 safe-area 換軸表一致。 */
+/* portrait：殼旋轉 ±90°、寬高互換（旋轉後殼寬=裝置高、殼高=裝置寬），不鎖裝置方向。
+   預設 ccw（§90 v14 翻轉）：rotate(-90deg) 搭配 top:100%（origin 錨在裝置左下角）——
+   殼上緣=裝置左緣、殼右緣=裝置頂緣（瀏海側），手機順時針轉即正立。
+   舊方向以 html.sp-rot-cw 切換（rotate(90deg)＋left:100%，殼左緣=裝置頂緣）。 */
 @media (orientation: portrait) {
   #game-shell {
     position: absolute;
-    top: 0;
-    left: 100%;
+    top: 100%;
+    left: 0;
     width: 100vh;
     height: 100vw;
-    transform: rotate(90deg);
+    transform: rotate(-90deg);
     transform-origin: left top;
+  }
+
+  html.sp-rot-cw #game-shell {
+    top: 0;
+    left: 100%;
+    transform: rotate(90deg);
   }
 }
 
@@ -248,14 +255,27 @@ body {
   transform: rotate(180deg);
 }
 
-/* safe-area 換軸（recon-v4 A.1）：portrait 殼轉 90° 後（裝置 top→殼左、right→殼上、
-   bottom→殼右、left→殼下）；landscape 維持 v3 直讀。 */
+/* safe-area 換軸（recon-v4 A.1 / §90 v14 雙向）：
+   ccw 預設（殼轉 -90°）：裝置 left→殼上、top→殼右、right→殼下、bottom→殼左；
+   cw 舊方向（殼轉 90°）：裝置 top→殼左、right→殼上、bottom→殼右、left→殼下；
+   landscape 維持 v3 直讀。 */
 @media (orientation: portrait) {
   #joy-zone {
-    left: env(safe-area-inset-top, 0px);
+    left: env(safe-area-inset-bottom, 0px);
   }
 
   #keys-layer {
+    top: max(20px, env(safe-area-inset-left, 0px));
+    right: max(12px, env(safe-area-inset-top, 0px));
+    bottom: max(12px, env(safe-area-inset-right, 0px));
+    left: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  html.sp-rot-cw #joy-zone {
+    left: env(safe-area-inset-top, 0px);
+  }
+
+  html.sp-rot-cw #keys-layer {
     top: max(20px, env(safe-area-inset-right, 0px));
     right: max(12px, env(safe-area-inset-bottom, 0px));
     bottom: max(12px, env(safe-area-inset-left, 0px));

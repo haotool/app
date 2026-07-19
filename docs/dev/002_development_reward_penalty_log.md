@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+134
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+135
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-rotation-flip-ssot
+- 原因：直持旋轉殼舊方向（cw）使按鍵貼難按邊緣且瀏海側遮擋，座標換算公式散落 controls/keyConfig/shellLayout 有漂移風險
+- 解法：新增 core/rotation.ts 單點 SSOT（cw/ccw/none 三態換算＋localStorage 偏好），CSS 預設翻至 ccw 並保留 sp-rot-cw 舊方向切換，座標矩陣單測＋portrait e2e 雙向全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v13-ex-conquest
