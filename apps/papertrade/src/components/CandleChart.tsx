@@ -307,12 +307,17 @@ export function CandleChart({
       let macdSeries = macdSeriesRef.current;
       let created = false;
       if (macdSeries === null) {
+        // MACD 全系列為價差空間，沿用同 symbol 軸精度；hist 為 pane 首個 series，
+        // 其 priceFormat 決定 pane 右軸標籤（低價幣預設 precision 2 會全擠成 0.00）。
         const hist = handles.chart.addSeries(
           HistogramSeries,
-          { priceLineVisible: false, lastValueVisible: false },
+          {
+            priceLineVisible: false,
+            lastValueVisible: false,
+            priceFormat: priceFormatFor(symbol),
+          },
           MACD_PANE_INDEX,
         );
-        // DIF/DEA 為價差空間，沿用同 symbol 軸精度；HIST 維持 volume 型格式。
         const dif = handles.chart.addSeries(
           LineSeries,
           {
