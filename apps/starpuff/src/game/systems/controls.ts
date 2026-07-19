@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 
 // 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）；
-// downBuffered（§78）＝即時 down 或釋放後 150ms 緩衝窗內，供「先滑後按跳」下穿語意。
+// downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意。
 export interface ControlsState {
   left: boolean;
   right: boolean;
@@ -33,7 +33,7 @@ const DROP_READY_CLASS = 'is-drop-ready';
 // 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
 const JOY_RADIUS = 60;
 const JOY_DEADZONE = 12;
-// 下向判定（§78 熱修）：真實拇指定錨常貼屏幕底緣，下滑行程僅剩 15-25px，舊閾值
+// 下向判定（§85 熱修）：真實拇指定錨常貼屏幕底緣，下滑行程僅剩 15-25px，舊閾值
 // 30px（半徑一半）物理上達不到——降至 18px 並以 ±60 度扇區容納自然斜下滑。
 export const JOY_DOWN_THRESHOLD = 18;
 const JOY_DOWN_SECTOR_TAN = Math.tan(Math.PI / 3);
@@ -42,7 +42,7 @@ export function isJoyDown(dx: number, dy: number): boolean {
   return dy >= JOY_DOWN_THRESHOLD && Math.abs(dx) <= dy * JOY_DOWN_SECTOR_TAN;
 }
 
-// drop-intent 緩衝窗（§78）：flick 手勢（滑完即抬指）與跳鍵按下相隔數十至數百 ms，
+// drop-intent 緩衝窗（§85）：flick 手勢（滑完即抬指）與跳鍵按下相隔數十至數百 ms，
 // down 釋放後保留 300ms 意圖窗——實測人為停頓 150ms 經觸控事件與幀對齊後間隔達
 // ~270ms，250ms 窗臨界抖動；窗內按跳仍判下跳，下砸（空中）不吃此窗防誤觸。
 export const DOWN_BUFFER_MS = 300;

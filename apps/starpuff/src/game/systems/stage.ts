@@ -435,7 +435,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       }
 
       // 下落穿透（§29）：player.update 已先行，同幀起跳脈衝以下墜覆蓋，成為乾淨下穿。
-      // §78：改吃 downBuffered——flick（滑完抬指）後 150ms 內按跳仍屬下跳意圖。
+      // §85：改吃 downBuffered——flick（滑完抬指）後緩衝窗內按跳仍屬下跳意圖。
       if (shouldDropThrough(input.downBuffered, input.jumpPressed, standingOnOneWay(body))) {
         dropUntilMs = scene.time.now + DROP_THROUGH_MS;
         if (body.velocity.y < 0) body.setVelocityY(30);

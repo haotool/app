@@ -7,7 +7,7 @@ import {
   pointerToLocal,
 } from './controls';
 
-describe('isJoyDown（§78 真實拇指下滑判定：扇區＋幅度）', () => {
+describe('isJoyDown（§85 真實拇指下滑判定：扇區＋幅度）', () => {
   it('幅度閾值 18px：高於死區（12），低於舊值（30）接住底緣短行程', () => {
     expect(JOY_DOWN_THRESHOLD).toBe(18);
   });
@@ -41,7 +41,7 @@ describe('isJoyDown（§78 真實拇指下滑判定：扇區＋幅度）', () =>
   });
 });
 
-describe('advanceDownBuffer（§78 drop-intent 緩衝窗）', () => {
+describe('advanceDownBuffer（§85 drop-intent 緩衝窗）', () => {
   it('down 持續時窗保持滿值', () => {
     expect(advanceDownBuffer(0, true, 16)).toBe(DOWN_BUFFER_MS);
     expect(advanceDownBuffer(80, true, 16)).toBe(DOWN_BUFFER_MS);
