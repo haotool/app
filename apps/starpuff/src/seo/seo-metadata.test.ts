@@ -5,6 +5,8 @@ import {
   SITE_URL,
   SITE_NAME,
   OG_IMAGE_URL,
+  OG_IMAGE_WIDTH,
+  OG_IMAGE_HEIGHT,
   WORLD_ZONES,
   buildJsonLd,
   buildSeoHead,
@@ -106,10 +108,10 @@ describe('buildSeoHead / buildSeoBody', () => {
     expect(head).toContain(OG_IMAGE_URL);
   });
 
-  it('og:image 為絕對網址 jpg 並帶 1200x630 尺寸', () => {
+  it('og:image 為絕對網址 jpg，head 尺寸與 SSOT 常數閉環', () => {
     expect(OG_IMAGE_URL).toBe('https://app.haotool.org/starpuff/icons/og-image.jpg');
-    expect(head).toContain('content="1200"');
-    expect(head).toContain('content="630"');
+    expect(head).toContain(`<meta property="og:image:width" content="${OG_IMAGE_WIDTH}" />`);
+    expect(head).toContain(`<meta property="og:image:height" content="${OG_IMAGE_HEIGHT}" />`);
   });
 
   it('body 語意內容常駐 DOM（非 noscript 內）且含特色/魔王/操作/PWA 與 E-E-A-T 連結', () => {

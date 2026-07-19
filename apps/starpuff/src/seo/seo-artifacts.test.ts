@@ -58,6 +58,7 @@ describe('public SEO 檔案與 SSOT 同步', () => {
     for (const zone of WORLD_ZONES) {
       expect(llms).toContain(zone.zone);
       expect(llms).toContain(zone.boss);
+      expect(llms).toContain(zone.trait);
     }
     expect(/\p{Extended_Pictographic}/u.test(llms)).toBe(false);
   });
