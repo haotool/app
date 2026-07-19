@@ -19,7 +19,7 @@ export const IMAGE_RESOURCES = [
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',
   '/icons/icon-512.svg',
-  '/icons/og-image.png',
+  '/icons/og-image.jpg',
 ];
 
 export const SITE_CONFIG = {
