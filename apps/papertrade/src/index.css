@@ -35,15 +35,16 @@
   --color-indicator-4: #3ac9e8;
   --color-indicator-5: #f2814d;
 
+  /* 幣別 accent 對齊官方品牌色（R6-9，來源見 assets/coins/NOTICE.md）；SOL 取官方漸層起點紫。 */
   --color-accent-btc: #f7931a;
   --color-accent-eth: #627eea;
   --color-accent-sol: #9945ff;
-  --color-accent-xrp: #0a93dc;
-  --color-accent-doge: #c2a633;
-  --color-accent-bnb: #f3ba2f;
+  --color-accent-xrp: #23292f;
+  --color-accent-doge: #c3a634;
+  --color-accent-bnb: #f0b90b;
   --color-accent-ada: #0033ad;
-  --color-accent-ltc: #8e9aaf;
-  --color-accent-link: #2a5ada;
+  --color-accent-ltc: #345d9d;
+  --color-accent-link: #375bd2;
   --color-accent-avax: #e84142;
   --color-accent-ppr: #f472b6;
 
