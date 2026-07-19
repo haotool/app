@@ -100,7 +100,7 @@ test.describe('R4 交易頁 UIUX 375×812', () => {
     await page.keyboard.press('End');
     await expect(slider).toHaveValue('100');
     await page.getByRole('button', { name: '買多' }).click();
-    await expect(page.getByText('目前持倉 (1)')).toBeVisible();
+    await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByRole('alert')).toBeHidden();
 
     // 逐倉說明 sheet。

@@ -13,7 +13,7 @@ async function enterTradePage(page: Page): Promise<MockMarket> {
 async function openMarketLong(page: Page, usdt: string): Promise<void> {
   await page.getByRole('textbox', { name: '數量（USDT）' }).fill(usdt);
   await page.getByRole('button', { name: '買多' }).click();
-  await expect(page.getByText('目前持倉 (1)')).toBeVisible();
+  await expect(page.getByText('持倉 (1)')).toBeVisible();
 }
 
 test.describe('圖表 symbol 快切', () => {
@@ -50,16 +50,18 @@ test.describe('PaperTrade trading journeys', () => {
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('5900');
     await page.getByRole('button', { name: '買多' }).click();
 
-    const orderList = page.getByRole('region', { name: '目前掛單' });
+    const orderList = page.getByRole('region', { name: '當前委託' });
     await expect(orderList).toBeVisible();
-    await expect(page.getByText('目前掛單 (1)')).toBeVisible();
+    await expect(page.getByText('當前委託 (1)')).toBeVisible();
 
     // mark 跌破限價：掛單以 mark 成交、轉為持倉並跳成交 toast。
     market.pushTicker('BTCUSDT', 58900);
 
-    await expect(page.getByText(/限價單成交/)).toBeVisible();
-    await expect(page.getByText('目前持倉 (1)')).toBeVisible();
-    await expect(orderList).toBeHidden();
+    await expect(page.getByText(/限價委託成交/)).toBeVisible();
+    await expect(page.getByText('持倉 (1)')).toBeVisible();
+    // R5-5：委託區塊常駐同顯，成交後回到空狀態而非隱藏。
+    await expect(page.getByText('當前委託 (0)')).toBeVisible();
+    await expect(orderList.getByText('尚無委託')).toBeVisible();
   });
 
   test('take-profit closes the position when the mark reaches the target', async ({ page }) => {
@@ -74,7 +76,7 @@ test.describe('PaperTrade trading journeys', () => {
     market.pushTicker('BTCUSDT', 61500);
 
     await expect(page.getByText(/止盈觸發/)).toBeVisible();
-    await expect(page.getByText('目前持倉 (0)')).toBeVisible();
+    await expect(page.getByText('持倉 (0)')).toBeVisible();
     await expect(page.getByText('尚無持倉')).toBeVisible();
   });
 
@@ -87,6 +89,6 @@ test.describe('PaperTrade trading journeys', () => {
 
     await expect(page.getByText(/強制平倉/)).toBeVisible();
     await expect(page.getByText(/已全數損失/)).toBeVisible();
-    await expect(page.getByText('目前持倉 (0)')).toBeVisible();
+    await expect(page.getByText('持倉 (0)')).toBeVisible();
   });
 });
