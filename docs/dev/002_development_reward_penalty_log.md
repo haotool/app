@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+137
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+137
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-v14-install-guide-blocking-overlay
+- 原因：安裝指引首版為全屏模態遮罩且無場景守門，戰鬥中彈出攔截全部操控並使 smoke e2e 迴歸失敗（兩席審查 B1/Blocking，含腳本絕對路徑違規）
+- 解法：改殼層卡片基建（僅 Title 安靜時刻顯示、開玩自動收卡、非模態左卡不遮罩）＋回訪玩家方向告知卡、持向納取消回滾、rotation 偏好快取、腳本改 env 埠與相對路徑、KEY_BASE_PX 跨檔守門
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-shell-cards-idle-gating
+- 原因：兩席審查另列 a11y（aria-modal/Escape）、wakeLock 生命週期過寬、切持向未重夾限等 Minor
+- 解法：shellCards 統一 aria-modal 對話框＋Escape；wakeLock 跟隨 controls is-active（進場取得離場釋放）；切持向即重套 applyLayoutToDom；三輪 smoke 連跑全綠證實 flaky 根除
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-haptics-wakelock

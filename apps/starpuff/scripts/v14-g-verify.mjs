@@ -1,7 +1,8 @@
 // G 驗證：觸覺回饋掛點（vibrate 呼叫記錄）與 wake lock 取得（支援環境）。
 import { chromium } from '@playwright/test';
 
-const BASE = 'http://localhost:3014/';
+const PORT = process.env.SP_DEV_PORT || '3014';
+const BASE = `http://localhost:${PORT}/`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 844, height: 390 }, hasTouch: true });

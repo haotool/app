@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LAYOUT,
@@ -144,6 +145,13 @@ describe('parseLayout', () => {
     ).toBeGreaterThanOrEqual(44);
     expect(KEY_SCALE.min).toBeLessThan(1);
     expect(KEY_SCALE.max).toBeGreaterThan(1);
+  });
+
+  it('KEY_BASE_PX 與 style.css 基準鍵寬一致（雙寫守門，審查 Mi1）', () => {
+    const css = readFileSync(new URL('../../style.css', import.meta.url), 'utf8');
+    for (const key of ['a', 'b'] as const) {
+      expect(css).toContain(`calc(${KEY_BASE_PX[key]}px * var(--sp-key-scale, 1))`);
+    }
   });
 
   it('預設布局本身在夾限範圍內且 A 低 B 高（食指/拇指分工）', () => {

@@ -1,8 +1,9 @@
 // F 驗證：keyConfig 標籤單行（854/1200 寬、直橫持、新舊方向）。
 import { chromium } from '@playwright/test';
 
-const BASE = 'http://localhost:3014/';
-const OUT = '/Users/azlife.eth/Tools/starpuff-v14/apps/starpuff/screenshots/starpuff-v14';
+const PORT = process.env.SP_DEV_PORT || '3014';
+const BASE = `http://localhost:${PORT}/`;
+const OUT = new URL('../screenshots/starpuff-v14/', import.meta.url).pathname;
 
 // 單行判定：AABB 短邊即視覺高（旋轉殼下寬高互換），單行鈕視覺高 = min-height 44 + border 4 = 48。
 async function checkConfig(viewport, name, initCw = false) {

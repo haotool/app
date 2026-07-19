@@ -18,16 +18,23 @@ export function parseRotationPref(raw: string | null): PortraitRotationPref {
   return raw === 'cw' ? 'cw' : DEFAULT_PORTRAIT_ROTATION;
 }
 
+// 偏好記憶體快取（審查修復）：getShellRotation 位於 pointer 熱路徑，
+// 避免每次事件都同步讀 localStorage；寫入時同步更新。
+let cachedPref: PortraitRotationPref | null = null;
+
 // 隱私模式下 localStorage 可能拋錯：讀退預設、寫靜默略過。
 export function loadRotationPref(): PortraitRotationPref {
+  if (cachedPref !== null) return cachedPref;
   try {
-    return parseRotationPref(localStorage.getItem(ROTATION_STORAGE_KEY));
+    cachedPref = parseRotationPref(localStorage.getItem(ROTATION_STORAGE_KEY));
   } catch {
-    return DEFAULT_PORTRAIT_ROTATION;
+    cachedPref = DEFAULT_PORTRAIT_ROTATION;
   }
+  return cachedPref;
 }
 
 export function saveRotationPref(pref: PortraitRotationPref): void {
+  cachedPref = pref;
   try {
     localStorage.setItem(ROTATION_STORAGE_KEY, pref);
   } catch {

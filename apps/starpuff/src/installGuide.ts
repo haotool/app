@@ -2,6 +2,8 @@
 // （platform／in-app browser／standalone），以純 TS＋DOM overlay 落地於 PWA 外殼層
 // （與 pwa.ts 同層，不進 Phaser Scene）。純偵測函式供 vitest node 環境驗證。
 
+import { showShellCard, whenShellIdle, type ShellCardButton } from './shellCards';
+
 export type PwaInstallPlatform = 'ios' | 'android' | 'desktop' | 'unknown';
 
 export type InAppBrowserKind =
@@ -156,79 +158,14 @@ interface BeforeInstallPromptEvent extends Event {
 
 const SHOW_DELAY_MS = 2500;
 
-function buildCard(
-  environment: PwaInstallEnvironment,
-  deferredPrompt: BeforeInstallPromptEvent | null,
-  onClose: () => void,
-): HTMLElement {
-  const copy = getInstallGuideCopy(environment);
-  const card = document.createElement('div');
-  card.className = 'install-card';
-  card.setAttribute('role', 'dialog');
-  card.setAttribute('aria-label', copy.title);
-
-  const title = document.createElement('div');
-  title.className = 'install-title';
-  title.textContent = copy.title;
-  card.appendChild(title);
-
-  const description = document.createElement('div');
-  description.className = 'install-desc';
-  description.textContent = copy.description;
-  card.appendChild(description);
-
-  const list = document.createElement('ol');
-  list.className = 'install-steps';
-  for (const step of copy.steps) {
-    const item = document.createElement('li');
-    item.textContent = step;
-    list.appendChild(item);
-  }
-  card.appendChild(list);
-
-  // Android 原生安裝：beforeinstallprompt 可用時給一鍵安裝，成功即收卡。
-  if (deferredPrompt && environment.platform === 'android' && !environment.inAppBrowser) {
-    const installButton = document.createElement('button');
-    installButton.type = 'button';
-    installButton.className = 'install-btn install-btn-primary';
-    installButton.textContent = '立即安裝';
-    installButton.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      void (async () => {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        if (choice.outcome === 'accepted') onClose();
-      })();
-    });
-    card.appendChild(installButton);
-  }
-
-  const closeButton = document.createElement('button');
-  closeButton.type = 'button';
-  closeButton.className = 'install-btn';
-  closeButton.textContent = '知道了';
-  closeButton.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
-    onClose();
-  });
-  card.appendChild(closeButton);
-
-  return card;
-}
-
-// 掛載安裝指引（殼內 overlay，隨旋轉殼轉向）：已安裝／已忽略／不支援平台不打擾；
-// 首次到站延遲 2.5 秒顯示一次，關閉即記憶永不再主動出現。
+// 掛載安裝指引（殼內卡片，隨旋轉殼轉向）：已安裝／已忽略／不支援平台不打擾；
+// 首次到站延遲 2.5 秒且僅在殼層安靜時刻顯示（遊戲進行中／配置中／暫停選單開啟時
+// 延後，杜絕戰鬥彈窗——審查 B1），關閉即記憶永不再主動出現。
 export function initInstallGuide(): void {
   const environment = readPwaInstallEnvironmentFromBrowser();
   if (!environment.shouldShowGuide || hasDismissedInstallGuide()) return;
-  const shell = document.getElementById('game-shell');
-  if (!shell) return;
 
-  let overlay: HTMLElement | null = null;
-  const dismiss = (): void => {
-    overlay?.remove();
-    overlay = null;
-  };
+  let closeCard: (() => void) | null = null;
 
   // beforeinstallprompt 於 load 早期發射：先攔截保存，卡片建立時再取用。
   let deferredPrompt: BeforeInstallPromptEvent | null = null;
@@ -238,19 +175,43 @@ export function initInstallGuide(): void {
   });
   window.addEventListener('appinstalled', () => {
     rememberDismissedInstallGuide();
-    dismiss();
+    closeCard?.();
+    closeCard = null;
   });
 
-  setTimeout(() => {
-    if (overlay) return;
-    overlay = document.createElement('div');
-    overlay.className = 'install-overlay';
-    overlay.appendChild(
-      buildCard(environment, deferredPrompt, () => {
+  whenShellIdle(() => {
+    const copy = getInstallGuideCopy(environment);
+    const buttons: ShellCardButton[] = [];
+    // Android 原生安裝：beforeinstallprompt 可用時給一鍵安裝，成功即收卡。
+    if (deferredPrompt && environment.platform === 'android' && !environment.inAppBrowser) {
+      const prompt = deferredPrompt;
+      buttons.push({
+        label: '立即安裝',
+        primary: true,
+        onPress: (close) => {
+          void (async () => {
+            await prompt.prompt();
+            const choice = await prompt.userChoice;
+            if (choice.outcome === 'accepted') {
+              rememberDismissedInstallGuide();
+              close();
+            }
+          })();
+        },
+      });
+    }
+    buttons.push({
+      label: '知道了',
+      onPress: (close) => {
         rememberDismissedInstallGuide();
-        dismiss();
-      }),
-    );
-    shell.appendChild(overlay);
+        close();
+      },
+    });
+    closeCard = showShellCard({
+      title: copy.title,
+      description: copy.description,
+      steps: copy.steps,
+      buttons,
+    });
   }, SHOW_DELAY_MS);
 }

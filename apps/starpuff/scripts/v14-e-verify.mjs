@@ -1,8 +1,9 @@
 // E 驗證：縮放調整、持久化、v1 遷移、取消回滾、44px 守門。
 import { chromium } from '@playwright/test';
 
-const BASE = 'http://localhost:3014/';
-const OUT = '/Users/azlife.eth/Tools/starpuff-v14/apps/starpuff/screenshots/starpuff-v14';
+const PORT = process.env.SP_DEV_PORT || '3014';
+const BASE = `http://localhost:${PORT}/`;
+const OUT = new URL('../screenshots/starpuff-v14/', import.meta.url).pathname;
 
 const browser = await chromium.launch();
 const errors = [];

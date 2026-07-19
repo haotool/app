@@ -1,8 +1,9 @@
 // A 驗證：安裝指引出現邏輯（iOS UA 顯示、關閉記憶、standalone 不顯示、桌面不顯示）。
 import { chromium, devices } from '@playwright/test';
 
-const BASE = 'http://localhost:3014/';
-const OUT = '/Users/azlife.eth/Tools/starpuff-v14/apps/starpuff/screenshots/starpuff-v14';
+const PORT = process.env.SP_DEV_PORT || '3014';
+const BASE = `http://localhost:${PORT}/`;
+const OUT = new URL('../screenshots/starpuff-v14/', import.meta.url).pathname;
 const IOS_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
 
