@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+149
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-v5-layout-assertion-drift
+- 原因：v14 將 sp-key-layout 升 schema v2 但 v5.spec 仍斷言 version===1，starpuff e2e 不在 main CI 跑批致 main 帶著確定性紅燈（86 案全套重現）
+- 解法：斷言改 version===2 對齊 §89 儲存恆當前版語意；v5 全 spec 14 案重跑全綠並記入全套回歸
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-ex-quit-e2e-flake-rootfix
+- 原因：v13 EX 退出案暫停重開後 scene.restart 為 queued op，scenePaused 恢復 false 早於場景重建，keydown 落入 teardown/create 窗被吃掉（Playwright 無 OS auto-repeat）致 bossHp 恆 -1 逾時（10 連跑重現 2 failed）
+- 解法：重開後補場景就緒門——poll 玩家重生座標 x<200（重啟前在 arena x>400）確認 create 完成才送鍵，禁加大 timeout；修後 15 連跑全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-achievements-presentation

@@ -1,7 +1,7 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v14（PM 派工；v14 UX/PWA 列車 §87-§93——直持預設方向翻轉 ccw（含回訪告知與偏好切換）/按鈕配置直欄化與標籤單行/虛擬鍵縮放（sp-key-layout v2）/PWA 安裝偵測與分平台指引/觸覺回饋與螢幕常亮/殼層卡片基建/殼局部 safe-area 量測、v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v15（PM 派工；v15 成就系統列車 §94——21 條成就 SSOT 純呈現層聚合（進度/魔王/EX/收集/速通/隱藏）/save schema v2 versioned migration 與舊玩家開機補發/圖鑑成就分頁與解鎖 toast 佇列/Result 解鎖名單、v14 UX/PWA 列車 §87-§93——直持預設方向翻轉 ccw（含回訪告知與偏好切換）/按鈕配置直欄化與標籤單行/虛擬鍵縮放（sp-key-layout v2）/PWA 安裝偵測與分平台指引/觸覺回饋與螢幕常亮/殼層卡片基建/殼局部 safe-area 量測、v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
@@ -1527,3 +1527,53 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 - `core/safeArea.ts`：讀 `#keys-layer` computed inset（CSS 已依 cw/ccw 換軸、
   含地板值）→ 扣除地板取净 inset → 依邏輯寬／canvas CSS 寬換算邏輯 px；
   供 canvas 內 HUD（暫停／靜音鍵）避讓瀏海與 home indicator 接線。
+
+## 94. v15 成就系統（logic/achievements.ts，純呈現層聚合）
+
+### 94.1 設計原則
+
+- 成就 SSOT＝`logic/achievements.ts` 單一資料表（id／名稱／描述／分類／隱藏與否／
+  判定函式），共 21 條；全部由既有 save 資料派生判定（`cleared`／`bestTimeMs`／
+  `eggsFound`／`exCleared`），**禁止侵入式遊戲邏輯鉤子**——evaluator 讀 save 即得
+  已解鎖集合，遊戲熱路徑零新增寫入點。
+- 魔王條目（五王首勝＋五王 EX）由 `LEVELS` 派生（沿 §86 `BOSS_LEVEL_IDS` 慣例，
+  禁第二份硬編清單）；命名表以 `Record<BossKind, …>` 鍵定，加王時型別強制補名。
+  隱藏成就對應關卡由彩蛋觸發器反查 LEVELS，彩蛋總數同樣派生。
+- 分類五種：進度（首關／全 20 關）、魔王（各王首勝／EX 各王／星核制霸——與 §86
+  `exConquestDone` 同源判定）、收集（彩蛋 1／10／全收）、技巧（任一魔王關
+  120s／60s 內通關，門檻依 v13 bot trace 證據校準）、隱藏（三個魔王專屬彩蛋：
+  雙子連破／窯風三連／星核共鳴，未解鎖顯示「？？？」）。
+- 玩法類（九系星彈全用過／星化三形態）裁決不做：save 無 flavor/form 使用紀錄，
+  為此擴 save 需熱路徑攔截非極低成本，違反本章零侵入原則。
+
+### 94.2 存檔 schema v2 與補發（versioned migration）
+
+- `SaveData.achievements: string[]`＝已頒發成就 id——**toast 去重基準**，頒發紀錄
+  不可逆（資料回退不移除）；解鎖「顯示」恆由 save 即時派生，stored 只管去重。
+- `SAVE_SCHEMA_VERSION` 升 2：`parseSave` 接受 v1（v9–v14 世代）與 v2——v1 缺
+  achievements 補空集後照常收斂條目，**禁 discard**；寫出恆為 v2。
+- 補發單點＝main.ts 開機：`awardAchievements(loadSave())` 依既有資料靜默補發
+  歷史成就（無 toast 轟炸），有增量才落盤（全新玩家不預建存檔）；版本更新新增
+  成就同走此路自動補發。
+
+### 94.3 呈現三層（解鎖不漏看）
+
+- 遊戲內 toast：GameScene `persistAndAward` 單點（彩蛋／通關／EX 三個存檔寫入點
+  寫後評估增量）→ 序列佇列一次一張（同幀多解鎖不重疊、約 2.1s/張、金色橫幅沿
+  flavorToast 語彙，禁全屏遮罩）；轉場即隨場景銷毀，由下兩層兜底。
+- 結算名單：`GameResultData.unlocked`（additive optional）帶本局勝利瞬間新頒發
+  id 進 Result 金底列示（Credits 轉接保留）——魔王擊破多重解鎖不因 WIN_DELAY
+  轉場漏看；敗北局內解鎖的彩蛋成就同樣如實列出。
+- 成就頁：CodexScene 第三分頁（`CodexTab` 加 'achievements'，分頁鈕等距展開）；
+  6 欄徽章網格（fx-star tint＋圓底程序繪製，零新圖）、已解鎖亮金微轉動／未解鎖
+  灰、隱藏未解鎖名稱「？？？」描述「隱藏成就」、右上「解鎖 n/21」計數；
+  網格與計數依 §93 净 inset 收縮（854／1200／直持 390×844 三視口驗證）。
+
+### 94.4 驗證
+
+- 單測 achievements.test.ts：資料表不變式（id 唯一／21 條／boss 覆蓋派生守門）、
+  全類別邊界（19/20、4/5 EX、彩蛋 9/10、速通 120000/120001 與 0 不計）、
+  awardAchievements 冪等與增量、v9–v14 各世代舊存檔載入補發精確集合。
+- 實測 scripts/v15-verify.mjs 五幕：v1 滿進度開機補發 21 條＋schema 升 v2、
+  真實擊破管線多重解鎖（toast＋Result 名單）、854／1200／直持成就頁、
+  console error 全程 0。
