@@ -42,6 +42,7 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
         type="button"
         aria-label="關閉視窗"
         onClick={onClose}
+        data-no-press
         className="backdrop-in absolute inset-0 cursor-default bg-bg/60 backdrop-blur-sm"
       />
       <div

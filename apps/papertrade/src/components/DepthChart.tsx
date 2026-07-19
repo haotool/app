@@ -127,7 +127,7 @@ export function DepthChart({ symbol }: DepthChartProps) {
         ) : (
           <>
             <span className={hit.side === 'bid' ? 'text-long' : 'text-short'}>
-              {hit.side === 'bid' ? '買' : '賣'} {formatPrice(hit.price)}
+              {hit.side === 'bid' ? '買' : '賣'} {formatPrice(hit.price, symbol)}
             </span>
             <span className="text-text-2">｜累計 {formatAmount(hit.cumulative)}</span>
           </>
@@ -198,12 +198,12 @@ export function DepthChart({ symbol }: DepthChartProps) {
           )}
         </svg>
         <span className="absolute left-1/2 top-0 -translate-x-1/2 rounded bg-surface-2/80 px-1.5 text-caption text-text-2 tabular-nums">
-          {formatPrice(profile.midPrice)}
+          {formatPrice(profile.midPrice, symbol)}
         </span>
       </div>
       <div className="mt-1 flex justify-between px-1 text-caption text-text-3 tabular-nums">
-        <span>{formatPrice(profile.domainMin)}</span>
-        <span>{formatPrice(profile.domainMax)}</span>
+        <span>{formatPrice(profile.domainMin, symbol)}</span>
+        <span>{formatPrice(profile.domainMax, symbol)}</span>
       </div>
     </section>
   );

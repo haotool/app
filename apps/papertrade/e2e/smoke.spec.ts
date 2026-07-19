@@ -17,11 +17,11 @@ test.describe('PaperTrade smoke journey', () => {
     await expect(page.getByTestId('candle-chart')).toBeVisible();
     await expect(page.getByRole('tab', { name: '訂單簿' })).toBeVisible();
 
-    await page.getByRole('link', { name: '買多' }).click();
+    await page.getByRole('link', { name: '做多' }).click();
     await expect(page).toHaveURL(/\/papertrade\/trade\?symbol=BTCUSDT&side=long$/);
 
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('6000');
-    await page.getByRole('button', { name: '買多' }).click();
+    await page.getByRole('button', { name: '做多' }).click();
 
     await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByText('強平價')).toBeVisible();
@@ -83,5 +83,41 @@ test.describe('PWA install identity', () => {
       const iconResponse = await request.get(iconUrl);
       expect(iconResponse.status(), `icon ${icon.src} 應可存取`).toBe(200);
     }
+  });
+
+  test('share meta declares the og image with correct dimensions and alt (R6-11)', async ({
+    page,
+    request,
+  }) => {
+    await mockBybit(page);
+    await page.goto('/papertrade/');
+
+    // 靜態 head 的 og/twitter meta 與 favicon 是分享卡與安裝識別的 SSOT。
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      /og-image\.png$/,
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      'content',
+      '1200',
+    );
+    await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      'content',
+      '630',
+    );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image',
+    );
+
+    const faviconHref = await page.locator('link[rel="icon"]').getAttribute('href');
+    expect(faviconHref).toBeTruthy();
+    const faviconResponse = await request.get(new URL(faviconHref!, page.url()).href);
+    expect(faviconResponse.status()).toBe(200);
+    expect((await faviconResponse.text()).includes('mark-wing-top')).toBe(true);
+
+    const ogResponse = await request.get(new URL('og-image.png', page.url()).href);
+    expect(ogResponse.status()).toBe(200);
   });
 });

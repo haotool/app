@@ -99,14 +99,16 @@ test.describe('R4 交易頁 UIUX 375×812', () => {
     await slider.focus();
     await page.keyboard.press('End');
     await expect(slider).toHaveValue('100');
-    await page.getByRole('button', { name: '買多' }).click();
+    await page.getByRole('button', { name: '做多' }).click();
     await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByRole('alert')).toBeHidden();
 
-    // 逐倉說明 sheet。
-    await page.getByRole('button', { name: '保證金模式說明：逐倉' }).click();
+    // 保證金模式切換 sheet（R6-2）：切到全倉後 pill 文案跟隨。
+    await page.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }).click();
     await expect(page.getByRole('dialog', { name: '保證金模式' })).toBeVisible();
+    await page.getByRole('radio', { name: '全倉' }).click();
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: '保證金模式：全倉，點擊選擇' })).toBeVisible();
 
     expect(errors).toEqual([]);
   });
@@ -132,7 +134,7 @@ test.describe('R4 交易頁 UIUX 1280×800', () => {
     await expect(page.getByRole('heading', { name: /BTC/ })).toBeVisible();
 
     const chartBox = await page.getByTestId('candle-chart').boundingBox();
-    const ctaBox = await page.getByRole('link', { name: '買多' }).boundingBox();
+    const ctaBox = await page.getByRole('link', { name: '做多' }).boundingBox();
     if (chartBox === null || ctaBox === null) throw new Error('boxes not visible');
     // CTA 停靠右欄：與左欄圖表水平不重疊。
     expect(ctaBox.x).toBeGreaterThanOrEqual(chartBox.x + chartBox.width);

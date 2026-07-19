@@ -35,17 +35,19 @@
   --color-indicator-4: #3ac9e8;
   --color-indicator-5: #f2814d;
 
+  /* 幣別 accent 對齊官方品牌色（R6-9，來源見 assets/coins/NOTICE.md）；SOL 取官方漸層起點紫。
+     PPR 為自製迷因幣，取紙奶油色（R6-10 紙視覺）。 */
   --color-accent-btc: #f7931a;
   --color-accent-eth: #627eea;
   --color-accent-sol: #9945ff;
-  --color-accent-xrp: #0a93dc;
-  --color-accent-doge: #c2a633;
-  --color-accent-bnb: #f3ba2f;
+  --color-accent-xrp: #23292f;
+  --color-accent-doge: #c3a634;
+  --color-accent-bnb: #f0b90b;
   --color-accent-ada: #0033ad;
-  --color-accent-ltc: #8e9aaf;
-  --color-accent-link: #2a5ada;
+  --color-accent-ltc: #345d9d;
+  --color-accent-link: #375bd2;
   --color-accent-avax: #e84142;
-  --color-accent-ppr: #f472b6;
+  --color-accent-ppr: #ede6d6;
 
   --text-price-xl: 28px;
   --text-price-xl--line-height: 34px;
@@ -72,6 +74,17 @@
 }
 
 @layer base {
+  /* 按壓回饋（R6-8）：全站按鈕統一按壓縮放；data-no-press 豁免全幅疊層（如 sheet 背板）。
+     transition 僅宣告 transform，帶 transition-colors utility 的按鈕維持其色彩過渡。 */
+  button {
+    transition-property: transform;
+    transition-duration: 100ms;
+  }
+
+  button:active:not([data-no-press]) {
+    transform: scale(0.98);
+  }
+
   /* App 級體感（ADR-R5-02）：鎖字級自動放大、全向禁 overscroll 鏈、去 tap 高亮與文字選取。 */
   html {
     background-color: var(--color-bg);
@@ -110,6 +123,16 @@
     -webkit-appearance: none;
     appearance: none;
   }
+}
+
+/* 按鈕型 Link（如圖表頁做多/做空 CTA）的按壓回饋：與 button 全域規則同款。 */
+.active-press {
+  transition-property: transform;
+  transition-duration: 100ms;
+}
+
+.active-press:active {
+  transform: scale(0.98);
 }
 
 /* 交易滑桿共用造型（OrderForm 數量比例、LeverageSheet 槓桿同視覺族）：
@@ -335,5 +358,10 @@
 
   .warning-pulse::after {
     animation: none;
+  }
+
+  button:active:not([data-no-press]),
+  .active-press:active {
+    transform: none;
   }
 }

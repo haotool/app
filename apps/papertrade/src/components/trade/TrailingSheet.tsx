@@ -51,8 +51,8 @@ export function TrailingSheet({ open, position, onClose }: TrailingSheetProps) {
 
   return (
     <BottomSheet open={open} title="追蹤止損" onClose={onClose}>
-      <p className="text-caption leading-relaxed text-text-3">
-        開倉價 {formatPrice(position.entryPrice)}。{hint}
+      <p className="text-caption leading-relaxed text-text-3 tabular-nums">
+        開倉價 {formatPrice(position.entryPrice, position.symbol)}。{hint}
       </p>
       <label className="mt-3 flex flex-col gap-1">
         <span className="text-caption text-text-3">啟動價（USDT）</span>

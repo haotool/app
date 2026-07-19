@@ -2,6 +2,9 @@ import { type MarketSymbol } from '../config/market';
 
 export type Side = 'long' | 'short';
 
+// 保證金模式（R6-2，per-position 快照制）：isolated＝逐倉獨立強平；cross＝全倉聚合強平。
+export type MarginMode = 'isolated' | 'cross';
+
 export type CloseReason = 'manual' | 'tp' | 'sl' | 'trailing' | 'liquidation';
 
 export interface TrailingConfig {
@@ -20,6 +23,7 @@ export interface Position {
   margin: number;
   openFee: number;
   leverage: number;
+  marginMode: MarginMode;
   openedAt: number;
   takeProfit: number | null;
   stopLoss: number | null;
@@ -38,6 +42,7 @@ export interface LimitOrder {
   qty: number;
   limitPrice: number;
   leverage: number;
+  marginMode: MarginMode;
   margin: number;
   fee: number;
   positionId: string | null;
@@ -80,4 +85,4 @@ export type TradeEvent =
   | { type: 'tp'; symbol: MarketSymbol; side: Side; pnl: number }
   | { type: 'sl'; symbol: MarketSymbol; side: Side; pnl: number }
   | { type: 'trailing'; symbol: MarketSymbol; side: Side; pnl: number }
-  | { type: 'liquidation'; symbol: MarketSymbol; side: Side; loss: number };
+  | { type: 'liquidation'; symbol: MarketSymbol; side: Side; pnl: number };

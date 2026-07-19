@@ -84,23 +84,29 @@ describe('TradePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the funding rate with direction color and a countdown', () => {
+  it('shows the funding rate/countdown right-aligned below the pills', () => {
     renderTrade('/trade?symbol=BTCUSDT');
-    expect(screen.getByText('資金費率')).toBeInTheDocument();
+    const label = screen.getByText('資金費率/倒數');
+    expect(label.parentElement).toHaveClass('ml-auto');
     expect(screen.getByText('-0.0200%')).toHaveClass('text-short');
-    expect(screen.getByText(/^\d+:\d{2}:\d{2}$|^\d{2}:\d{2}$/)).toBeInTheDocument();
+    expect(screen.getByText(/^\d{2}:\d{2}:\d{2}$/)).toBeInTheDocument();
+  });
+
+  it('extends the sticky header into the top safe-area (R6-1)', () => {
+    const { container } = renderTrade('/trade?symbol=BTCUSDT');
+    expect(container.querySelector('div.sticky')).toHaveClass('top-0', 'pt-[var(--sat)]');
   });
 
   it('emphasizes the CTA-preselected side and dims the other', () => {
     renderTrade('/trade?symbol=BTCUSDT&side=short');
-    expect(screen.getByRole('button', { name: '買多' })).toHaveClass('opacity-55');
-    expect(screen.getByRole('button', { name: '賣空' })).not.toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '做多' })).toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '做空' })).not.toHaveClass('opacity-55');
   });
 
   it('keeps both side buttons at full emphasis without a side param', () => {
     renderTrade('/trade?symbol=BTCUSDT');
-    expect(screen.getByRole('button', { name: '買多' })).not.toHaveClass('opacity-55');
-    expect(screen.getByRole('button', { name: '賣空' })).not.toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '做多' })).not.toHaveClass('opacity-55');
+    expect(screen.getByRole('button', { name: '做空' })).not.toHaveClass('opacity-55');
   });
 
   it('places a market long order and shows the position card', async () => {
@@ -108,7 +114,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     const { account } = useTradeStore.getState();
     expect(account.positions).toHaveLength(1);
@@ -134,7 +140,7 @@ describe('TradePage', () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
     expect(screen.getByRole('alert')).toHaveTextContent('請輸入有效的數量');
     expect(useTradeStore.getState().account.positions).toHaveLength(0);
   });
@@ -144,7 +150,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '200000');
-    await user.click(screen.getByRole('button', { name: '賣空' }));
+    await user.click(screen.getByRole('button', { name: '做空' }));
     expect(screen.getByRole('alert')).toHaveTextContent('可用餘額不足');
   });
 
@@ -166,7 +172,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('tab', { name: '限價' }));
     await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '58000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '5800');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     expect(useTradeStore.getState().account.orders).toHaveLength(1);
     const orderList = screen.getByRole('region', { name: '當前委託' });
@@ -184,7 +190,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('tab', { name: '限價' }));
     await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '0.0001');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('限價需在標記價 ±50% 範圍內');
     expect(useTradeStore.getState().account.orders).toHaveLength(0);
@@ -195,17 +201,17 @@ describe('TradePage', () => {
     const user = userEvent.setup();
     renderTrade();
 
-    // mark 60000：下界 30000（買多掛低）與上界 90000（賣空掛高）均應放行。
+    // mark 60000：下界 30000（做多掛低）與上界 90000（做空掛高）均應放行。
     await user.click(screen.getByRole('tab', { name: '限價' }));
     await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '30000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
     expect(useTradeStore.getState().account.orders).toHaveLength(1);
 
     await user.clear(screen.getByRole('textbox', { name: '限價（USDT）' }));
     await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '90000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '賣空' }));
+    await user.click(screen.getByRole('button', { name: '做空' }));
     expect(useTradeStore.getState().account.orders).toHaveLength(2);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -323,7 +329,7 @@ describe('TradePage', () => {
     fireEvent.change(screen.getByRole('slider', { name: '數量比例' }), {
       target: { value: '100' },
     });
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     const { account } = useTradeStore.getState();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -380,13 +386,40 @@ describe('TradePage', () => {
     expect(screen.getByText('預估手續費（Maker）')).toBeInTheDocument();
   });
 
-  it('explains the isolated margin mode from the header pill', async () => {
+  it('switches the margin mode from the header pill sheet (R6-2)', async () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式說明：逐倉' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
     const sheet = screen.getByRole('dialog', { name: '保證金模式' });
-    expect(within(sheet).getByText(/逐倉/)).toBeInTheDocument();
+    expect(within(sheet).getByRole('radio', { name: '逐倉' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+
+    await user.click(within(sheet).getByRole('radio', { name: '全倉' }));
+    expect(within(sheet).getByText(/全部全倉持倉共享帳戶可用資金/)).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: '關閉' }));
+
+    // pill 文案跟隨選定值；只影響之後新開倉。
+    expect(screen.getByRole('button', { name: '保證金模式：全倉，點擊選擇' })).toBeInTheDocument();
+  });
+
+  it('opens a cross position after selecting the cross margin mode', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
+    await user.click(screen.getByRole('radio', { name: '全倉' }));
+    await user.click(screen.getByRole('button', { name: '關閉' }));
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '做多' }));
+
+    const position = useTradeStore.getState().account.positions[0];
+    expect(position?.marginMode).toBe('cross');
+    // 持倉卡 chip 顯示模式×槓桿。
+    expect(screen.getByText(/全倉 10x/)).toBeInTheDocument();
   });
 
   it('renders the tp/sl section collapsed by default and expands on toggle', async () => {
@@ -414,7 +447,7 @@ describe('TradePage', () => {
     await user.click(toggle);
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
     expect(useTradeStore.getState().account.positions[0]?.takeProfit).toBeNull();
     expect(useTradeStore.getState().account.positions[0]?.stopLoss).toBeNull();
 
@@ -453,7 +486,7 @@ describe('TradePage', () => {
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
     await user.type(screen.getByRole('textbox', { name: /止損價/ }), '59000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     const position = useTradeStore.getState().account.positions[0];
     expect(position?.takeProfit).toBe(61000);
@@ -470,7 +503,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('止盈價須優於開倉價（多單高於、空單低於）');
     expect(useTradeStore.getState().account.positions).toHaveLength(0);
@@ -484,7 +517,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), 'abc');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('止盈價須為大於 0 的數字');
   });
@@ -499,7 +532,7 @@ describe('TradePage', () => {
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
     await user.type(screen.getByRole('textbox', { name: /止損價/ }), '57000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '5800');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     const order = useTradeStore.getState().account.orders[0];
     expect(order?.takeProfit).toBe(59000);
@@ -509,6 +542,7 @@ describe('TradePage', () => {
   it('shows the scale-in hint and submits without form tp/sl for a same-side add', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -523,13 +557,13 @@ describe('TradePage', () => {
 
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     expect(
-      screen.getByText('同向加倉（買多）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+      screen.getByText('同向加倉（做多）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
     ).toBeInTheDocument();
 
     // 相對現價非法的 TP（多單 TP 低於現價）也不得阻擋加倉。
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '59000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     const position = useTradeStore.getState().account.positions[0];
@@ -541,6 +575,7 @@ describe('TradePage', () => {
   it('binds the scale-in hint wording to the held short side', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -553,13 +588,14 @@ describe('TradePage', () => {
 
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     expect(
-      screen.getByText('同向加倉（賣空）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
+      screen.getByText('同向加倉（做空）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整'),
     ).toBeInTheDocument();
   });
 
   it('re-validates form tp/sl when submitting the opposite side of the held position', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -573,7 +609,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '賣空' }));
+    await user.click(screen.getByRole('button', { name: '做空' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('止盈價須優於開倉價（多單高於、空單低於）');
   });
@@ -602,7 +638,7 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '止盈/止損（選填）' }));
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
     await user.type(screen.getByRole('textbox', { name: /止損價/ }), '59000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     const position = useTradeStore.getState().account.positions[0];
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -615,7 +651,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     await user.click(screen.getByRole('button', { name: '止盈止損' }));
     await user.type(screen.getByRole('textbox', { name: /止盈價/ }), '61000');
@@ -630,7 +666,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
     await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const { account } = useTradeStore.getState();
@@ -646,7 +682,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
     await user.click(screen.getByRole('button', { name: '部分平倉' }));
     await user.click(screen.getByRole('button', { name: '確認平倉' }));
 
@@ -661,7 +697,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
-    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '做多' }));
 
     act(() => {
       useMarketStore.getState().setTicker({ ...btcTicker, lastPrice: 61000, markPrice: 61000 });

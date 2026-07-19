@@ -9,10 +9,11 @@ import {
   SIZE_SLIDER_TICKS,
   TAKER_FEE_RATE,
 } from '../../config/trading';
-import { liquidationPrice } from '../../engine/math';
-import { useMarketStore } from '../../stores/marketStore';
+import { crossAvailableBalance, liquidationPrice } from '../../engine/math';
+import { collectPositionMarks, useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
+import { pricePrecisionFor } from '../../lib/priceScale';
 import {
   amountToPercent,
   isLimitPriceWithinBand,
@@ -24,7 +25,7 @@ import {
   TRADE_ERROR_MESSAGES,
   trimNumberInput,
 } from '../../lib/tradeForm';
-import { type Side } from '../../engine/types';
+import { type MarginMode, type Side } from '../../engine/types';
 
 export type OrderMode = 'market' | 'limit';
 type AmountUnit = 'usdt' | 'base';
@@ -32,6 +33,8 @@ type AmountUnit = 'usdt' | 'base';
 interface OrderFormProps {
   symbol: MarketSymbol;
   leverage: number;
+  // 新開倉採用的保證金模式（R6-2）；同向加倉時引擎沿用既有持倉模式。
+  marginMode: MarginMode;
   mode: OrderMode;
   onModeChange: (mode: OrderMode) => void;
   limitPrice: string;
@@ -50,6 +53,7 @@ const MODE_TABS: { id: OrderMode; label: string }[] = [
 export function OrderForm({
   symbol,
   leverage,
+  marginMode,
   mode,
   onModeChange,
   limitPrice,
@@ -65,11 +69,15 @@ export function OrderForm({
   const [sl, setSl] = useState('');
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
-  const available = useTradeStore((state) => state.account.balance);
-  // 目前 symbol 持倉方向：同向下單＝加倉，沿用倉上 TP/SL，表單欄位不生效（B1/S1）。
-  const heldSide = useTradeStore(
-    (state) => state.account.positions.find((position) => position.symbol === symbol)?.side ?? null,
+  const account = useTradeStore((state) => state.account);
+  // 可用資金與引擎開倉檢查同口徑（帳戶級 crossAvailableBalance）：cross 浮虧即時扣減、
+  // 浮盈可作開倉依據，與本單 marginMode 無關；無 cross 持倉時恆等於裸 balance。
+  const available = useMarketStore((state) =>
+    crossAvailableBalance(account, collectPositionMarks(state.tickers, account.positions)),
   );
+  // 目前 symbol 持倉：同向下單＝加倉，沿用倉上 TP/SL 與保證金模式，表單對應欄位不生效（B1/S1）。
+  const heldPosition = account.positions.find((position) => position.symbol === symbol) ?? null;
+  const heldSide = heldPosition?.side ?? null;
   const openMarketOrder = useTradeStore((state) => state.openMarketOrder);
   const placeLimitOrder = useTradeStore((state) => state.placeLimitOrder);
   const pushToast = useTradeStore((state) => state.pushToast);
@@ -120,7 +128,7 @@ export function OrderForm({
     const price = bestQuoteRef?.current[side] ?? null;
     if (price === null) return;
     setError(null);
-    onLimitPriceChange(trimNumberInput(price, 6));
+    onLimitPriceChange(trimNumberInput(price, pricePrecisionFor(symbol)));
   }
 
   function toggleUnit() {
@@ -193,6 +201,7 @@ export function OrderForm({
             qty: parsed.qty,
             price: parsed.price,
             leverage,
+            marginMode,
             tp: tpValue,
             sl: slValue,
           })
@@ -202,6 +211,7 @@ export function OrderForm({
             qty: parsed.qty,
             limitPrice: parsed.price,
             leverage,
+            marginMode,
             tp: tpValue,
             sl: slValue,
           });
@@ -215,11 +225,11 @@ export function OrderForm({
     setAmount('');
     setTp('');
     setSl('');
-    const sideText = side === 'long' ? '買多' : '賣空';
+    const sideText = side === 'long' ? '做多' : '做空';
     pushToast({
       tone: side,
       title: mode === 'market' ? `市價${sideText}已成交` : `限價${sideText}委託已送出`,
-      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price)}`,
+      description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price, symbol)}`,
     });
   }
 
@@ -270,7 +280,7 @@ export function OrderForm({
               value={limitPrice}
               onChange={(event) => onLimitPriceChange(event.target.value)}
               placeholder={
-                markPrice !== undefined ? formatPrice(markPrice).replaceAll(',', '') : '0.0'
+                markPrice !== undefined ? formatPrice(markPrice, symbol).replaceAll(',', '') : '0.0'
               }
               aria-label="限價（USDT）"
               className="h-11 min-w-11 flex-1 rounded-control border border-border bg-surface-2 px-3 text-body tabular-nums outline-none focus:border-primary"
@@ -370,6 +380,14 @@ export function OrderForm({
           <dt className="text-text-3">可用資金</dt>
           <dd className="text-text-2 tabular-nums">{formatAmount(available, 2)} USDT</dd>
         </div>
+        {heldPosition !== null && heldPosition.marginMode !== marginMode && (
+          <div>
+            <dt className="sr-only">保證金模式提示</dt>
+            <dd className="text-caption text-text-3">
+              {`同向加倉沿用持倉現有${heldPosition.marginMode === 'isolated' ? '逐倉' : '全倉'}模式；反向翻倉的新倉採本次選擇`}
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-text-3">保證金</dt>
           <dd className="text-text-2 tabular-nums">
@@ -385,16 +403,21 @@ export function OrderForm({
               : '--'}
           </dd>
         </div>
+        {/* 全倉真實強平為聚合檢查（隨帳戶盈虧浮動），下單前僅能以逐倉口徑給保守參考。 */}
         <div className="flex justify-between">
-          <dt className="text-text-3">多單預估強平</dt>
+          <dt className="text-text-3">
+            多單預估強平{marginMode === 'cross' ? '（逐倉口徑）' : ''}
+          </dt>
           <dd className="text-text-2 tabular-nums">
-            {liqPreviewLong !== null ? formatPrice(liqPreviewLong) : '--'}
+            {liqPreviewLong !== null ? formatPrice(liqPreviewLong, symbol) : '--'}
           </dd>
         </div>
         <div className="flex justify-between">
-          <dt className="text-text-3">空單預估強平</dt>
+          <dt className="text-text-3">
+            空單預估強平{marginMode === 'cross' ? '（逐倉口徑）' : ''}
+          </dt>
           <dd className="text-text-2 tabular-nums">
-            {liqPreviewShort !== null ? formatPrice(liqPreviewShort) : '--'}
+            {liqPreviewShort !== null ? formatPrice(liqPreviewShort, symbol) : '--'}
           </dd>
         </div>
       </dl>
@@ -418,7 +441,7 @@ export function OrderForm({
             {heldSide !== null && (
               // 沿用語義僅限同向加倉：反向下單仍套用並驗證本欄，文案綁定持倉方向避免誤示。
               <p className="text-caption text-text-3">
-                {`同向加倉（${heldSide === 'long' ? '買多' : '賣空'}）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整`}
+                {`同向加倉（${heldSide === 'long' ? '做多' : '做空'}）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整`}
               </p>
             )}
             <label className="flex flex-col gap-1">
@@ -471,7 +494,7 @@ export function OrderForm({
             emphasisSide === 'short' && 'opacity-55',
           )}
         >
-          買多
+          做多
         </button>
         <button
           type="button"
@@ -481,7 +504,7 @@ export function OrderForm({
             emphasisSide === 'long' && 'opacity-55',
           )}
         >
-          賣空
+          做空
         </button>
       </div>
     </form>

@@ -13,6 +13,7 @@ import {
   cancelOrder,
   closePositionMarket,
   createInitialAccount,
+  evaluateCrossMargin,
   openMarket,
   placeCloseLimit,
   placeLimitOrder,
@@ -27,11 +28,13 @@ import {
   type TradeResult,
   type TrailingParams,
 } from '../engine/engine';
+import { crossAvailableBalance, type MarkMap } from '../engine/math';
 import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice, formatSignedPnl } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 import { playLiquidationSound } from '../lib/sound';
+import { collectPositionMarks, useMarketStore } from './marketStore';
 import { useSoundPrefsStore } from './soundPrefsStore';
 
 export type ToastTone = 'long' | 'short' | 'warning' | 'info';
@@ -70,6 +73,8 @@ const positionSchema = z.object({
   margin: nonNegativeNumber,
   openFee: nonNegativeNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
+  // R6-2：保證金模式（per-position 快照）；v3 存檔由 migrate 補預設 isolated。
+  marginMode: z.enum(['isolated', 'cross']),
   openedAt: finiteNumber,
   takeProfit: positiveNumber.nullable(),
   stopLoss: positiveNumber.nullable(),
@@ -86,6 +91,7 @@ const orderSchema = z.object({
   qty: positiveNumber,
   limitPrice: positiveNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
+  marginMode: z.enum(['isolated', 'cross']),
   margin: nonNegativeNumber,
   fee: nonNegativeNumber,
   positionId: z.string().min(1).nullable(),
@@ -111,7 +117,8 @@ const closedTradeSchema = z.object({
 
 const persistedTradeSchema = z.object({
   account: z.object({
-    balance: nonNegativeNumber,
+    // R6-2：cross 盈利可作開倉依據，現金（balance）可暫為負值；域須與引擎輸出一致。
+    balance: finiteNumber,
     positions: z.array(positionSchema),
     orders: z.array(orderSchema),
     history: z.array(closedTradeSchema),
@@ -154,7 +161,7 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
       return {
         tone: event.side,
         title: `限價委託成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
-        description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price)}`,
+        description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price, event.symbol)}`,
       };
     case 'close-filled':
       return {
@@ -182,9 +189,12 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
       };
     case 'liquidation':
       return {
-        tone: 'warning',
+        tone: event.pnl >= 0 ? 'long' : 'warning',
         title: `強制平倉：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
-        description: `保證金 ${formatAmount(event.loss, 2)} USDT 已全數損失`,
+        description:
+          event.pnl >= 0
+            ? `已實現獲利 ${formatAmount(event.pnl, 2)} USDT`
+            : `已實現虧損 ${formatAmount(Math.abs(event.pnl), 2)} USDT`,
       };
     default: {
       const exhaustive: never = event;
@@ -197,6 +207,16 @@ function appendToasts(current: ToastItem[], incoming: Omit<ToastItem, 'id'>[]): 
   if (incoming.length === 0) return current;
   const next = [...current, ...incoming.map((toast) => ({ ...toast, id: crypto.randomUUID() }))];
   return next.slice(-TOAST_MAX_VISIBLE);
+}
+
+// 持倉標記價快照（R6-2）：非 hook 上下文由 getState 讀行情，收集邏輯走 SSOT helper。
+function collectMarks(account: Account): MarkMap {
+  return collectPositionMarks(useMarketStore.getState().tickers, account.positions);
+}
+
+// 開倉資金檢查基準：cross 未實現損益計入可用餘額（無 cross 持倉時恆等於裸 balance）。
+function openAvailableBalance(account: Account): number {
+  return crossAvailableBalance(account, collectMarks(account));
 }
 
 interface TradeState {
@@ -232,7 +252,13 @@ export const useTradeStore = create<TradeState>()(
       return {
         account: createInitialAccount(),
         toasts: [],
-        openMarketOrder: (params) => commit(openMarket(get().account, params)),
+        openMarketOrder: (params) =>
+          commit(
+            openMarket(get().account, {
+              ...params,
+              availableBalance: openAvailableBalance(get().account),
+            }),
+          ),
         closeMarketOrder: (params) => {
           // 回傳引擎實際成交結果，供 UI 以真實值（非預覽值）呈現。
           const result = closePositionMarket(get().account, params);
@@ -240,7 +266,13 @@ export const useTradeStore = create<TradeState>()(
           set({ account: result.account });
           return { ok: true, trade: result.trade };
         },
-        placeLimitOrder: (params) => commit(placeLimitOrder(get().account, params)),
+        placeLimitOrder: (params) =>
+          commit(
+            placeLimitOrder(get().account, {
+              ...params,
+              availableBalance: openAvailableBalance(get().account),
+            }),
+          ),
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
         // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
@@ -257,7 +289,18 @@ export const useTradeStore = create<TradeState>()(
             account.orders.some((order) => order.symbol === symbol);
           if (!exposed) return;
 
-          const { account: next, events } = processTick(account, symbol, mark, now);
+          const ticked = processTick(account, symbol, mark, now);
+          let next = ticked.account;
+          let events = ticked.events;
+          // cross 聚合強平：以帳上全部持倉的最新 mark 評估，與本次 tick 結果合併後單次 set。
+          if (next.positions.some((position) => position.marginMode === 'cross')) {
+            const marks = { ...collectMarks(next), [symbol]: mark };
+            const evaluated = evaluateCrossMargin(next, marks, now);
+            if (evaluated.account !== next || evaluated.events.length > 0) {
+              next = evaluated.account;
+              events = [...events, ...evaluated.events];
+            }
+          }
           if (next === account && events.length === 0) return;
           // 強平提示音與強平 toast 同路徑觸發；受設定開關管控。
           if (
@@ -282,22 +325,29 @@ export const useTradeStore = create<TradeState>()(
       version: TRADE_STORAGE_VERSION,
       storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
-      // v2 → v3：持倉補 tpSlCloseRatio 預設 1（全平），帳戶資料無損保留。
-      // 其餘舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
+      // 逐段補欄的無損遷移：v2 → v3 持倉補 tpSlCloseRatio；v3 → v4 持倉與掛單補 marginMode。
+      // 更舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
       migrate: (persisted, version) => {
-        if (version !== 2 || typeof persisted !== 'object' || persisted === null) return {};
-        const legacy = persisted as { account?: { positions?: unknown[] } };
+        if (typeof persisted !== 'object' || persisted === null) return {};
+        if (version !== 2 && version !== 3) return {};
+        const legacy = persisted as { account?: { positions?: unknown[]; orders?: unknown[] } };
         const positions = legacy.account?.positions;
-        if (!Array.isArray(positions)) return {};
+        const orders = legacy.account?.orders;
+        if (!Array.isArray(positions) || !Array.isArray(orders)) return {};
+        const fill = (items: unknown[], defaults: Record<string, unknown>): unknown[] =>
+          items.map((item) =>
+            typeof item === 'object' && item !== null ? { ...defaults, ...item } : item,
+          );
+        const positionDefaults =
+          version === 2
+            ? { tpSlCloseRatio: 1, marginMode: 'isolated' }
+            : { marginMode: 'isolated' };
         return {
           ...legacy,
           account: {
             ...legacy.account,
-            positions: positions.map((position) =>
-              typeof position === 'object' && position !== null
-                ? { tpSlCloseRatio: 1, ...position }
-                : position,
-            ),
+            positions: fill(positions, positionDefaults),
+            orders: fill(orders, { marginMode: 'isolated' }),
           },
         };
       },

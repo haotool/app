@@ -13,13 +13,14 @@ import { DEFAULT_LEVERAGE, HIGH_LEVERAGE_THRESHOLD } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { pricePrecisionFor } from '../lib/priceScale';
 import { BottomSheet } from '../components/BottomSheet';
 import { CoinBadge } from '../components/CoinBadge';
 import { FundingRateBadge } from '../components/FundingRateBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook, type BestQuote } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
-import { type Side } from '../engine/types';
+import { type MarginMode, type Side } from '../engine/types';
 import { LeverageSheet } from '../components/trade/LeverageSheet';
 import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
 import { PositionCard } from '../components/trade/PositionCard';
@@ -28,6 +29,15 @@ import { trimNumberInput } from '../lib/tradeForm';
 import { PprDisclaimerChip } from '../features/ppr/PprBadge';
 
 type SheetKind = 'pair' | 'leverage' | 'margin' | null;
+
+const MARGIN_MODE_LABELS: Record<MarginMode, string> = { isolated: '逐倉', cross: '全倉' };
+
+const MARGIN_MODE_DESCRIPTIONS: Record<MarginMode, string> = {
+  isolated:
+    '逐倉：每筆持倉的保證金與損益各自獨立，強平僅損失該筆持倉的保證金，不動用帳戶其餘可用資金。',
+  cross:
+    '全倉：全部全倉持倉共享帳戶可用資金，未實現盈虧即時計入；帳戶保證金率不足時，將由最虧損的持倉開始強平。',
+};
 
 function resolveInitialSymbol(raw: string | null): MarketSymbol {
   if (raw !== null && isMarketSymbol(raw)) return raw;
@@ -41,7 +51,7 @@ function resolveInitialSide(raw: string | null): Side | null {
 function TradePageSkeleton() {
   return (
     <div
-      className="flex flex-col gap-4 px-4 pb-4 pt-4 lg:mx-auto lg:max-w-3xl"
+      className="flex flex-col gap-4 px-4 pb-4 pt-[calc(1rem+var(--sat))] lg:mx-auto lg:max-w-3xl"
       aria-label="交易頁載入中"
     >
       <div className="flex items-center justify-between">
@@ -74,6 +84,8 @@ export function TradePage() {
   // 圖表頁 CTA 帶入的方向：僅作視覺預選強調，不代下單。
   const [emphasisSide] = useState<Side | null>(() => resolveInitialSide(searchParams.get('side')));
   const [leverage, setLeverage] = useState(DEFAULT_LEVERAGE);
+  // 保證金模式（R6-2）：只影響之後新開倉；既有持倉保留各自模式。
+  const [marginMode, setMarginMode] = useState<MarginMode>('isolated');
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [mode, setMode] = useState<OrderMode>('market');
   const [limitPrice, setLimitPrice] = useState('');
@@ -86,7 +98,7 @@ export function TradePage() {
 
   function handlePriceSelect(price: number) {
     setMode('limit');
-    setLimitPrice(trimNumberInput(price, 6));
+    setLimitPrice(trimNumberInput(price, pricePrecisionFor(symbol)));
   }
 
   if (ticker === undefined) {
@@ -96,8 +108,9 @@ export function TradePage() {
   return (
     // pb-8：持倉卡操作鈕與固定 bottom nav 之間預留間距（375×812 免捲動可點）。
     <div className="flex flex-col pb-8 lg:mx-auto lg:max-w-3xl">
-      {/* sticky 頂欄：pair 選擇與資金費率捲動常駐；自帶背景避免內容透出。 */}
-      <div className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
+      {/* sticky 頂欄：pair 選擇與資金費率捲動常駐；自帶背景避免內容透出。
+          pt-[var(--sat)]：standalone 下背景延伸覆蓋狀態列區、內容自 safe-area 下方起（R6-1）。 */}
+      <div className="sticky top-0 z-20 border-b border-border bg-bg/95 pt-[var(--sat)] backdrop-blur">
         <header className="flex items-center justify-between px-4 pb-3 pt-4">
           <button
             type="button"
@@ -117,7 +130,7 @@ export function TradePage() {
                 revision={ticker.revision}
                 className="block text-label"
               >
-                {formatPrice(ticker.lastPrice)}
+                {formatPrice(ticker.lastPrice, symbol)}
               </PriceFlash>
             </span>
           </button>
@@ -125,10 +138,10 @@ export function TradePage() {
             <button
               type="button"
               onClick={() => setSheet('margin')}
-              aria-label="保證金模式說明：逐倉"
+              aria-label={`保證金模式：${MARGIN_MODE_LABELS[marginMode]}，點擊選擇`}
               className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
             >
-              逐倉
+              {MARGIN_MODE_LABELS[marginMode]}
             </button>
             <button
               type="button"
@@ -146,10 +159,13 @@ export function TradePage() {
           </div>
         </header>
 
+        {/* 第二列兩端對齊：左 PPR 揭露 chip（如有）、右資金費率/倒數對齊 pills 正下方（R6-3）。 */}
         <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
-          <span>資金費率</span>
-          <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
           <PprDisclaimerChip symbol={symbol} />
+          <span className="ml-auto flex items-center gap-1.5">
+            <span>資金費率/倒數</span>
+            <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+          </span>
         </div>
       </div>
 
@@ -160,6 +176,7 @@ export function TradePage() {
             key={symbol}
             symbol={symbol}
             leverage={leverage}
+            marginMode={marginMode}
             mode={mode}
             onModeChange={setMode}
             limitPrice={limitPrice}
@@ -231,8 +248,48 @@ export function TradePage() {
       )}
       {sheet === 'margin' && (
         <BottomSheet open title="保證金模式" onClose={() => setSheet(null)}>
-          <p className="pb-2 text-label leading-relaxed text-text-2">
-            本模擬固定採「逐倉」隔離保證金：每筆持倉的保證金與損益各自獨立，觸發強平時僅損失該筆持倉的保證金，不會動用帳戶其餘可用資金。
+          {/* APG radiogroup 慣例：方向鍵切換選取、roving tabindex、DOM focus 同步搬移。 */}
+          <div
+            role="radiogroup"
+            aria-label="保證金模式選擇"
+            className="flex rounded-control bg-surface-2 p-0.5"
+            onKeyDown={(event) => {
+              // APG radio 慣例四向鍵皆切換；兩選項情境任一方向即互換。
+              if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+                return;
+              }
+              event.preventDefault();
+              const next = marginMode === 'isolated' ? 'cross' : 'isolated';
+              setMarginMode(next);
+              // roving tabindex 只改未來 Tab 序，須顯式搬移 focus 使 focus ring 跟隨選取。
+              event.currentTarget
+                .querySelector<HTMLButtonElement>(`[data-mode="${next}"]`)
+                ?.focus();
+            }}
+          >
+            {(['isolated', 'cross'] as const).map((candidate) => (
+              <button
+                key={candidate}
+                type="button"
+                role="radio"
+                data-mode={candidate}
+                aria-checked={marginMode === candidate}
+                tabIndex={marginMode === candidate ? 0 : -1}
+                onClick={() => setMarginMode(candidate)}
+                className={clsx(
+                  'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
+                  marginMode === candidate ? 'bg-surface font-semibold text-text' : 'text-text-3',
+                )}
+              >
+                {MARGIN_MODE_LABELS[candidate]}
+              </button>
+            ))}
+          </div>
+          <p className="pb-1 pt-3 text-label leading-relaxed text-text-2">
+            {MARGIN_MODE_DESCRIPTIONS[marginMode]}
+          </p>
+          <p className="pb-2 text-caption text-text-3">
+            選定模式只套用於之後的新開倉；既有持倉維持各自的模式不變。
           </p>
         </BottomSheet>
       )}

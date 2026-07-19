@@ -12,7 +12,7 @@ async function enterTradePage(page: Page): Promise<MockMarket> {
 
 async function openMarketLong(page: Page, usdt: string): Promise<void> {
   await page.getByRole('textbox', { name: '數量（USDT）' }).fill(usdt);
-  await page.getByRole('button', { name: '買多' }).click();
+  await page.getByRole('button', { name: '做多' }).click();
   await expect(page.getByText('持倉 (1)')).toBeVisible();
 }
 
@@ -48,7 +48,7 @@ test.describe('PaperTrade trading journeys', () => {
     await page.getByRole('tab', { name: '限價' }).click();
     await page.getByRole('textbox', { name: '限價（USDT）' }).fill('59000');
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('5900');
-    await page.getByRole('button', { name: '買多' }).click();
+    await page.getByRole('button', { name: '做多' }).click();
 
     const orderList = page.getByRole('region', { name: '當前委託' });
     await expect(orderList).toBeVisible();
@@ -88,7 +88,7 @@ test.describe('PaperTrade trading journeys', () => {
     market.pushTicker('BTCUSDT', 50000);
 
     await expect(page.getByText(/強制平倉/)).toBeVisible();
-    await expect(page.getByText(/已全數損失/)).toBeVisible();
+    await expect(page.getByText(/已實現虧損/)).toBeVisible();
     await expect(page.getByText('持倉 (0)')).toBeVisible();
   });
 });

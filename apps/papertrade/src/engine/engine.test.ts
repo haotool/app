@@ -3,6 +3,7 @@ import {
   cancelOrder,
   closePositionMarket,
   createInitialAccount,
+  evaluateCrossMargin,
   getAccountMetrics,
   openMarket,
   placeCloseLimit,
@@ -23,6 +24,7 @@ const NOW = 1_800_000_000_000;
 
 function openLong(account: Account, qty = 0.1, price = 60000, leverage = 10) {
   const result = openMarket(account, {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty,
@@ -68,6 +70,7 @@ describe('openMarket', () => {
 
   it('rejects when balance cannot cover margin plus fee', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 1,
@@ -79,6 +82,7 @@ describe('openMarket', () => {
 
   it('rejects below minimum notional', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.00001,
@@ -91,19 +95,21 @@ describe('openMarket', () => {
   it('rejects invalid leverage and qty and price', () => {
     const account = createInitialAccount();
     const base = { symbol: 'BTCUSDT', side: 'long', qty: 0.1, price: 60000 } as const;
-    expect(openMarket(account, { ...base, leverage: 0 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, leverage: 0 })).toEqual({
       ok: false,
       error: 'invalid-leverage',
     });
-    expect(openMarket(account, { ...base, leverage: 1001 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, leverage: 1001 })).toEqual({
       ok: false,
       error: 'invalid-leverage',
     });
-    expect(openMarket(account, { ...base, qty: 0, leverage: 10 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, qty: 0, leverage: 10 })).toEqual({
       ok: false,
       error: 'invalid-qty',
     });
-    expect(openMarket(account, { ...base, qty: 0.1, price: 0, leverage: 10 })).toEqual({
+    expect(
+      openMarket(account, { marginMode: 'isolated', ...base, qty: 0.1, price: 0, leverage: 10 }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
@@ -137,6 +143,7 @@ describe('openMarket', () => {
     const balanceBefore = account.balance;
 
     const result = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -165,6 +172,7 @@ describe('openMarket', () => {
     let account = openLong(createInitialAccount(), 0.1, 61000, 10);
 
     const result = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.15,
@@ -188,6 +196,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('applies tp and sl atomically on a market open', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -201,7 +210,12 @@ describe('open with tp/sl (R4-6)', () => {
   });
 
   it('leaves tp/sl unset when omitted', () => {
-    const result = openMarket(createInitialAccount(), { ...base, side: 'long', price: 60000 });
+    const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
+      ...base,
+      side: 'long',
+      price: 60000,
+    });
     if (!result.ok) throw new Error(result.error);
     expect(onlyPosition(result.account).takeProfit).toBeNull();
     expect(onlyPosition(result.account).stopLoss).toBeNull();
@@ -209,6 +223,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('accepts tp-only and sl-only opens', () => {
     const tpOnly = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -219,6 +234,7 @@ describe('open with tp/sl (R4-6)', () => {
     expect(onlyPosition(tpOnly.account).stopLoss).toBeNull();
 
     const slOnly = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -231,19 +247,51 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects wrong-direction tp/sl for both sides without mutating the account', () => {
     const account = createInitialAccount();
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 59000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: 59000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 61000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        sl: 61000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-sl-direction',
     });
-    expect(openMarket(account, { ...base, side: 'short', price: 60000, tp: 61000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'short',
+        price: 60000,
+        tp: 61000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'short', price: 60000, sl: 59000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'short',
+        price: 60000,
+        sl: 59000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-sl-direction',
     });
@@ -253,15 +301,33 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects tp/sl equal to entry and non-positive values', () => {
     const account = createInitialAccount();
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 60000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: 60000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 0 })).toEqual({
+    expect(
+      openMarket(account, { marginMode: 'isolated', ...base, side: 'long', price: 60000, sl: 0 }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: Number.NaN })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: Number.NaN,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
@@ -269,6 +335,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects a valid tp combined with an invalid sl as one atomic order', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -280,6 +347,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('keeps the existing tp/sl when scaling in, ignoring form values', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -289,6 +357,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     const scaled = openMarket(first.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60200,
@@ -305,6 +374,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('scales in even when the form tp/sl is invalid against the new price (B1)', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -314,6 +384,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     const scaled = openMarket(first.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60200,
@@ -330,6 +401,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('still validates tp/sl when the existing position is on the opposite side', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -337,12 +409,20 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     expect(
-      openMarket(first.account, { ...base, qty: 0.2, side: 'long', price: 60000, tp: 59000 }),
+      openMarket(first.account, {
+        marginMode: 'isolated',
+        ...base,
+        qty: 0.2,
+        side: 'long',
+        price: 60000,
+        tp: 59000,
+      }),
     ).toEqual({ ok: false, error: 'invalid-tp-direction' });
   });
 
   it('triggers a market-open tp exactly like a sheet-set tp', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -358,6 +438,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('validates limit tp/sl against the limit price and records them on the order', () => {
     const rejected = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -366,6 +447,7 @@ describe('open with tp/sl (R4-6)', () => {
     expect(rejected).toEqual({ ok: false, error: 'invalid-tp-direction' });
 
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -379,6 +461,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('transfers tp/sl from a filled limit order onto the new position', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -396,6 +479,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('keeps the existing position tp/sl when a limit fill merges into it', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -405,6 +489,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!opened.ok) throw new Error(opened.error);
 
     const placed = placeLimitOrder(opened.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 59000,
@@ -422,6 +507,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('places a scale-in limit order even when the form tp/sl is invalid against the limit price (B1)', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -431,6 +517,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!opened.ok) throw new Error(opened.error);
 
     const placed = placeLimitOrder(opened.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 59000,
@@ -545,6 +632,7 @@ describe('limit orders', () => {
   it('reserves margin plus maker fee on placement and refunds on cancel', () => {
     const initial = createInitialAccount();
     const result = placeLimitOrder(initial, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -572,6 +660,7 @@ describe('limit orders', () => {
 
   it('rejects insufficient balance for limit reservation', () => {
     const result = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 2,
@@ -583,6 +672,7 @@ describe('limit orders', () => {
 
   it('fills a long limit when mark drops to the limit price', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -615,6 +705,7 @@ describe('limit orders', () => {
 
   it('fills a short limit when mark rises to the limit price', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -633,6 +724,7 @@ describe('limit orders', () => {
 
   it('ignores ticks of other symbols', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -647,6 +739,7 @@ describe('limit orders', () => {
   it('fills a marketable open limit at the mark, not at the worse limit price', () => {
     // 買單限價 60000 高於 mark 59000：依「限價或更優」語意應以 mark 成交。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -675,6 +768,7 @@ describe('limit orders', () => {
     // 滿倉 short：預扣以 limit 計，mark 高於 limit 使名目變大而超出預扣，
     // 必須回退以使用者保證的限價成交，不得靜默失敗讓掛單滯留。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.66,
@@ -709,6 +803,7 @@ describe('limit orders', () => {
     // 滿倉 short limit 遇暴漲 mark：回退以 60000 成交後，70000 已越過 10x 強平價，
     // 必須在同一 tick 立即強平，不得把負權益倉位留到下一筆 ticker。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.66,
@@ -739,6 +834,7 @@ describe('limit orders', () => {
     // 既有 2x short 掛 59000 平倉單，再滿倉 10x short fallback @60000 合併後越過強平價：
     // 同 tick 強平必須同步清除指向該倉位的 close 掛單，不留孤兒單到下一筆 ticker。
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.05,
@@ -758,6 +854,7 @@ describe('limit orders', () => {
     if (!withClose.ok) throw new Error(withClose.error);
 
     const placed = placeLimitOrder(withClose.account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.4,
@@ -920,6 +1017,7 @@ describe('take profit and stop loss', () => {
 
   it('handles short TP below entry and SL above entry', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -990,6 +1088,7 @@ describe('take profit and stop loss', () => {
 
   it('rejects wrong-direction TP/SL for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1069,6 +1168,7 @@ describe('tp/sl partial close ratio (R5-6)', () => {
 
   it('closes only the configured ratio on sl for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1117,6 +1217,7 @@ describe('tp/sl partial close ratio (R5-6)', () => {
 
     // 加倉合併沿用倉上 TP/SL 與 tpSlCloseRatio，不被本次開倉覆蓋（R4 契約延伸）。
     const added = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.05,
@@ -1182,6 +1283,7 @@ describe('trailing stop', () => {
 
   it('tracks minima for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1226,12 +1328,13 @@ describe('liquidation', () => {
       type: 'liquidation',
       symbol: 'BTCUSDT',
       side: 'long',
-      loss: 600,
+      pnl: -600,
     });
   });
 
   it('liquidates a short when mark rises to the liquidation price', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1269,6 +1372,214 @@ describe('liquidation', () => {
     const ticked = processTick(withSl.account, 'BTCUSDT', 54000, NOW);
     expect(ticked.account.history[0]?.reason).toBe('liquidation');
   });
+
+  it('liquidates a 1000x position on the first tick crossing the line (delay <= 1 tick, R6-4)', () => {
+    // 固定 tick 序列驅動：強平線 59970，越線前的每一筆 tick 都不得觸發、
+    // 首個越線 tick 必須同幀強平，不得延遲到下一筆 ticker。
+    const account = openLong(createInitialAccount(), 0.1, 60000, 1000);
+    const liq = liquidationPrice('long', 60000, 1000);
+    expect(liq).toBeCloseTo(59970, 8);
+
+    const sequence = [59995, 59985, 59975, 59971];
+    let current = account;
+    for (const mark of sequence) {
+      const ticked = processTick(current, 'BTCUSDT', mark, NOW);
+      expect(ticked.account.positions).toHaveLength(1);
+      expect(ticked.events).toEqual([]);
+      current = ticked.account;
+    }
+
+    const crossing = processTick(current, 'BTCUSDT', 59969, NOW);
+    expect(crossing.account.positions).toHaveLength(0);
+    expect(crossing.events.map((event) => event.type)).toContain('liquidation');
+    expect(crossing.account.history[0]?.reason).toBe('liquidation');
+  });
+});
+
+describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
+  function openCross(
+    account: Account,
+    symbol: MarketSymbol,
+    qty: number,
+    price: number,
+    leverage: number,
+  ): Account {
+    const result = openMarket(account, {
+      symbol,
+      side: 'long',
+      qty,
+      price,
+      leverage,
+      marginMode: 'cross',
+      now: NOW,
+    });
+    if (!result.ok) throw new Error(`open failed: ${result.error}`);
+    return result.account;
+  }
+
+  it('lets openMarket draw on a provided cross available balance', () => {
+    // 現金 100 不足以付 603.3；cross 可用餘額（含未實現盈利）覆蓋時放行，現金轉負。
+    const poor: Account = { ...createInitialAccount(), balance: 100 };
+    const rejected = openMarket(poor, {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    expect(rejected).toEqual({ ok: false, error: 'insufficient-balance' });
+
+    const accepted = openMarket(poor, {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+      availableBalance: 700,
+    });
+    if (!accepted.ok) throw new Error(accepted.error);
+    expect(accepted.account.balance).toBeCloseTo(100 - 603.3, 8);
+  });
+
+  it('keeps a cross position alive past its isolated liquidation price', () => {
+    const account = openCross(createInitialAccount(), 'BTCUSDT', 0.1, 60000, 10);
+
+    // 逐倉強平價 54300：cross 倉不走單倉強平，帳戶其餘資金背書。
+    const ticked = processTick(account, 'BTCUSDT', 54300, NOW);
+    expect(ticked.account.positions).toHaveLength(1);
+    expect(ticked.events).toEqual([]);
+
+    // 聚合檢查：marginBalance = 9396.7 + 600 − 570 = 9426.7 > MM 27.15 → 不觸發。
+    const evaluated = evaluateCrossMargin(ticked.account, { BTCUSDT: 54300 }, NOW);
+    expect(evaluated.account).toBe(ticked.account);
+    expect(evaluated.events).toEqual([]);
+  });
+
+  it('liquidates when the aggregate margin balance falls to the maintenance margin', () => {
+    // 現金僅 610：開倉後 6.7。marginBalance = 606.7 + 0.1×(m−60000)×… ≤ MM 於 m ≈ 54204 成立。
+    const account = openCross(
+      { ...createInitialAccount(), balance: 610 },
+      'BTCUSDT',
+      0.1,
+      60000,
+      10,
+    );
+
+    const survived = evaluateCrossMargin(account, { BTCUSDT: 54300 }, NOW);
+    expect(survived.account.positions).toHaveLength(1);
+
+    const liquidated = evaluateCrossMargin(account, { BTCUSDT: 54204 }, NOW);
+    expect(liquidated.account.positions).toHaveLength(0);
+    expect(liquidated.account.history[0]?.reason).toBe('liquidation');
+    // cross 於 mark 全額實現：pnl = 0.1 × (54204 − 60000) = −579.6（非以保證金 −600 結算）。
+    expect(liquidated.events).toContainEqual({
+      type: 'liquidation',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      pnl: -579.6,
+    });
+    // 帳本同步全額實現：balance = 6.7 + 600（釋放 IM）− 579.6 = 27.1。
+    expect(liquidated.account.balance).toBeCloseTo(27.1, 8);
+  });
+
+  it('liquidates the worst-upnl cross position first and stops once recovered', () => {
+    // 全額實現下平倉前後 marginBalance 守恆，恢復來自 MM 端下降：
+    // 開倉後現金 1100；BTC uPnL −500、ETH uPnL −1000；MM = 147.5 + 145 = 292.5。
+    // marginBalance = 1100 + 600 − 1500 = 200 ≤ 292.5 → 觸發；ETH 最虧先強平（實現 1000）。
+    // 平後 marginBalance 仍 200 > MM_BTC 147.5 → 恢復即停，BTC 存活。
+    let account = openCross(
+      { ...createInitialAccount(), balance: 1733 },
+      'BTCUSDT',
+      0.5,
+      60000,
+      100,
+    );
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+    expect(account.balance).toBeCloseTo(1100, 8);
+
+    const marks = { BTCUSDT: 59000, ETHUSDT: 2900 } as const;
+    const result = evaluateCrossMargin(account, marks, NOW);
+    expect(result.events).toEqual([
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', pnl: -1000 },
+    ]);
+    expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
+    // 帳本全額實現：balance = 1100 + 300（釋放 ETH IM）− 1000 = 400。
+    expect(result.account.balance).toBeCloseTo(400, 8);
+  });
+
+  it('cascades liquidation until the aggregate recovers or nothing remains', () => {
+    let account = openCross(createInitialAccount(), 'BTCUSDT', 0.5, 60000, 100);
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+
+    // BTC −10000、ETH −11000：ETH 先強平後 marginBalance 仍 ≤ MM，BTC 接續強平。
+    const marks = { BTCUSDT: 40000, ETHUSDT: 1900 } as const;
+    const result = evaluateCrossMargin(account, marks, NOW);
+    expect(result.events.map((event) => event.type === 'liquidation' && event.symbol)).toEqual([
+      'ETHUSDT',
+      'BTCUSDT',
+    ]);
+    expect(result.account.positions).toHaveLength(0);
+  });
+
+  it('fills a reserved open limit even when cash is negative from cross profit backing', () => {
+    // cross 浮盈作開倉依據：現金可為負；限價單資金已於掛單時預扣，
+    // 成交檢查下限為凍結額，不得因成交當下現金為負誤拒。
+    const account = openCross(createInitialAccount(), 'BTCUSDT', 0.1, 60000, 10);
+    const placed = placeLimitOrder(account, {
+      marginMode: 'cross',
+      symbol: 'ETHUSDT',
+      side: 'long',
+      qty: 40,
+      limitPrice: 3000,
+      leverage: 10,
+      now: NOW,
+      // 掛單靠 BTC 浮盈背書（帳戶級可用），預扣後現金轉負。
+      availableBalance: 20000,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+    expect(placed.account.balance).toBeLessThan(0);
+
+    const filled = processTick(placed.account, 'ETHUSDT', 2990, NOW);
+    expect(filled.account.orders).toHaveLength(0);
+    expect(filled.account.positions.map((position) => position.symbol)).toContain('ETHUSDT');
+  });
+
+  it('skips the whole round when any cross symbol lacks a mark', () => {
+    let account = openCross(createInitialAccount(), 'BTCUSDT', 0.5, 60000, 100);
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+
+    const result = evaluateCrossMargin(account, { BTCUSDT: 40000 }, NOW);
+    expect(result.account).toBe(account);
+    expect(result.events).toEqual([]);
+  });
+
+  it('ignores isolated positions and clears close orders of liquidated cross positions', () => {
+    let account = openLong({ ...createInitialAccount(), balance: 2000 }, 0.1, 60000, 10);
+    account = openCross(account, 'ETHUSDT', 4, 3000, 100);
+    const ethPosition = account.positions.find((position) => position.symbol === 'ETHUSDT');
+    if (ethPosition === undefined) throw new Error('no eth position');
+    const placed = placeCloseLimit(account, {
+      positionId: ethPosition.id,
+      qty: 1,
+      limitPrice: 3500,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    // balance = 2000 − 603.3 − 126.6 = 1270.1；ETH −8000 → marginBalance ≤ MM 觸發。
+    // BTC 為 isolated：即使跌破自身強平價也不參與聚合、不被 cross 強平。
+    const marks = { BTCUSDT: 50000, ETHUSDT: 1000 } as const;
+    const result = evaluateCrossMargin(placed.account, marks, NOW);
+    expect(result.events).toEqual([
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', pnl: -8000 },
+    ]);
+    expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
+    expect(result.account.orders).toHaveLength(0);
+  });
 });
 
 describe('ledger invariant', () => {
@@ -1300,6 +1611,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const reversed = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.08,
@@ -1312,6 +1624,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const limit = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'ETHUSDT',
       side: 'long',
       qty: 0.5,
@@ -1375,6 +1688,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const cancelable = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.05,
@@ -1439,6 +1753,7 @@ describe('ledger invariant', () => {
 
         if (roll < 0.22) {
           const result = openMarket(account, {
+            marginMode: 'isolated',
             symbol,
             side: randomSide(),
             qty: randomQty(mark),
@@ -1449,6 +1764,7 @@ describe('ledger invariant', () => {
           if (result.ok) account = result.account;
         } else if (roll < 0.34) {
           const result = placeLimitOrder(account, {
+            marginMode: 'isolated',
             symbol,
             side: randomSide(),
             qty: randomQty(mark),
@@ -1526,6 +1842,7 @@ describe('getAccountMetrics', () => {
   it('computes equity = available + used margin + unrealized pnl', () => {
     let account = openLong(createInitialAccount(), 0.1, 60000, 10);
     const placed = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'ETHUSDT',
       side: 'long',
       qty: 1,
@@ -1544,6 +1861,13 @@ describe('getAccountMetrics', () => {
       metrics.available + metrics.usedMargin + metrics.totalUpnl,
       8,
     );
+  });
+
+  it('uses cross available balance when cross positions exist', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    account.positions[0] = { ...account.positions[0]!, marginMode: 'cross' };
+    const metrics = getAccountMetrics(account, { BTCUSDT: 61000 });
+    expect(metrics.available).toBeCloseTo(account.balance + 100, 8);
   });
 
   it('treats positions without a mark as zero upnl', () => {

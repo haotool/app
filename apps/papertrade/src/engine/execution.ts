@@ -14,6 +14,7 @@ import {
   type Account,
   type ClosedTrade,
   type CloseReason,
+  type MarginMode,
   type Position,
   type Side,
 } from './types';
@@ -91,8 +92,12 @@ export function closeSlice(
   const releasedMargin = roundUsdt(position.margin * fraction);
   const releasedOpenFee = roundUsdt(position.openFee * fraction);
   const isLiquidation = reason === 'liquidation';
+  // 強平損益分流：isolated 損失上限＝該倉保證金（合約定義）；cross 於 exitPrice 全額實現
+  // uPnL（聚合觸發時單倉虧損可深於自身保證金，鉗 −margin 會使權益憑空回升）。
   const pnl = isLiquidation
-    ? -releasedMargin
+    ? position.marginMode === 'cross'
+      ? roundUsdt(unrealizedPnl(position.side, position.entryPrice, exitPrice, qty))
+      : -releasedMargin
     : roundUsdt(unrealizedPnl(position.side, position.entryPrice, exitPrice, qty));
   const fee = isLiquidation ? 0 : roundUsdt(orderFee(notionalValue(qty, exitPrice), feeRate));
 
@@ -136,10 +141,13 @@ export interface ExecuteOpenParams {
   qty: number;
   price: number;
   leverage: number;
+  marginMode: MarginMode;
   feeRate: number;
   now: number;
   tp?: number;
   sl?: number;
+  // 開倉資金檢查基準（R6-2）：cross 傳入 crossAvailableBalance；預設裸 balance（純逐倉相容）。
+  availableBalance?: number;
 }
 
 export function executeOpen(account: Account, params: ExecuteOpenParams): TradeResult {
@@ -148,17 +156,39 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
 
   if (existing !== undefined && existing.side !== side) {
     const reduceQty = Math.min(qty, existing.qty);
-    const reduced = closeSlice(account, existing, reduceQty, price, feeRate, 'manual', now).account;
+    const { account: reduced, trade } = closeSlice(
+      account,
+      existing,
+      reduceQty,
+      price,
+      feeRate,
+      'manual',
+      now,
+    );
     const remainderQty = qty - reduceQty;
     if (remainderQty <= QTY_EPSILON) return { ok: true, account: reduced };
-    return executeOpen(reduced, { ...params, qty: remainderQty });
+    // 翻倉餘量的可用餘額精確推移：現金變化全數帶入；被平的 cross 部位其已實現
+    // 損益本已含在傳入的 cross 可用內（未實現→已實現），需回沖避免雙計。
+    const carriedAvailable =
+      params.availableBalance === undefined
+        ? undefined
+        : params.availableBalance +
+          (reduced.balance - account.balance) -
+          (existing.marginMode === 'cross' ? trade.realizedPnl : 0);
+    return executeOpen(reduced, {
+      ...params,
+      qty: remainderQty,
+      availableBalance: carriedAvailable,
+    });
   }
 
   const notional = notionalValue(qty, price);
   const margin = roundUsdt(requiredMargin(notional, leverage));
   const fee = roundUsdt(orderFee(notional, feeRate));
   const cost = margin + fee;
-  if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
+  if (cost > (params.availableBalance ?? account.balance)) {
+    return { ok: false, error: 'insufficient-balance' };
+  }
 
   if (existing !== undefined) {
     // 加倉合併沿用原持倉既有 TP/SL，不以本次表單值覆蓋（R3 終審裁決）。
@@ -192,6 +222,7 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
     margin,
     openFee: fee,
     leverage,
+    marginMode: params.marginMode,
     openedAt: now,
     takeProfit: tp ?? null,
     stopLoss: sl ?? null,

@@ -39,23 +39,61 @@ export function computeSma(bars: Kline[], period: number): IndicatorPoint[] {
   return points;
 }
 
-// 以首個完整視窗的 SMA 為種子，之後遞迴平滑（k = 2 / (period + 1)）。
-export function computeEma(bars: Kline[], period: number): IndicatorPoint[] {
-  if (period <= 0 || bars.length < period) return [];
+// EMA 底層 SSOT：以首個完整視窗的 SMA 為種子，之後遞迴平滑（k = 2 / (period + 1)）。
+// 回傳序列第 offset 項對齊輸入 index = offset + period - 1。
+export function emaFromValues(values: number[], period: number): number[] {
+  if (period <= 0 || values.length < period) return [];
   const smoothing = 2 / (period + 1);
   let seed = 0;
   for (let index = 0; index < period; index += 1) {
-    seed += bars[index]?.close ?? 0;
+    seed += values[index] ?? 0;
   }
   let previous = seed / period;
-  const points: IndicatorPoint[] = [{ time: bars[period - 1]?.time ?? 0, value: previous }];
-  for (let index = period; index < bars.length; index += 1) {
-    const bar = bars[index];
-    if (bar === undefined) break;
-    previous = bar.close * smoothing + previous * (1 - smoothing);
-    points.push({ time: bar.time, value: previous });
+  const result: number[] = [previous];
+  for (let index = period; index < values.length; index += 1) {
+    previous = (values[index] ?? 0) * smoothing + previous * (1 - smoothing);
+    result.push(previous);
   }
-  return points;
+  return result;
+}
+
+export function computeEma(bars: Kline[], period: number): IndicatorPoint[] {
+  const values = emaFromValues(
+    bars.map((bar) => bar.close),
+    period,
+  );
+  return values.map((value, offset) => ({
+    time: bars[offset + period - 1]?.time ?? 0,
+    value,
+  }));
+}
+
+export interface MacdPoint {
+  time: number;
+  dif: number;
+  dea: number;
+  hist: number;
+}
+
+// MACD(12,26,9)：DIF = EMA(fast) − EMA(slow)、DEA = EMA(DIF, signal)、HIST = DIF − DEA。
+// TA-Lib 慣例：fast EMA 種子視窗對齊 slow EMA 首個輸出（index = slow - 1），
+// 首個有效輸出對齊 bars index = (slow - 1) + (signal - 1)；不足期數不輸出。
+export function computeMacd(bars: Kline[], fast = 12, slow = 26, signal = 9): MacdPoint[] {
+  const closes = bars.map((bar) => bar.close);
+  const fastEma = emaFromValues(closes.slice(slow - fast), fast);
+  const slowEma = emaFromValues(closes, slow);
+  const dif = slowEma.map((slowValue, offset) => (fastEma[offset] ?? 0) - slowValue);
+  const dea = emaFromValues(dif, signal);
+  const start = slow - 1 + signal - 1;
+  return dea.map((deaValue, offset) => {
+    const difValue = dif[offset + signal - 1] ?? 0;
+    return {
+      time: bars[start + offset]?.time ?? 0,
+      dif: difValue,
+      dea: deaValue,
+      hist: difValue - deaValue,
+    };
+  });
 }
 
 export function computeIndicatorLine(

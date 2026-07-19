@@ -45,8 +45,15 @@ describe('AssetsPage', () => {
     useMarketStore.getState().setTicker(btcTicker);
   });
 
+  it('pads the page root with the top safe-area (R6-1)', () => {
+    renderAssets();
+    const root = screen.getByText('總權益（USDT）').closest('div');
+    expect(root).toHaveClass('pt-[var(--sat)]');
+  });
+
   it('shows live equity composed of available, margin and upnl', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -67,6 +74,7 @@ describe('AssetsPage', () => {
       JSON.stringify({ date: localDateKey(new Date()), equity: 10000 }),
     );
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -90,6 +98,7 @@ describe('AssetsPage', () => {
 
   it('lists closed trades with fee and reason', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -109,6 +118,7 @@ describe('AssetsPage', () => {
 
   it('shows practice stats derived from closed trades', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -136,6 +146,7 @@ describe('AssetsPage', () => {
   it('resets the account after confirmation', async () => {
     const user = userEvent.setup();
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,

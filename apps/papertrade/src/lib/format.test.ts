@@ -11,28 +11,20 @@ import {
 } from './format';
 
 describe('formatPrice', () => {
-  it('uses one decimal for large prices', () => {
-    expect(formatPrice(64486.1)).toBe('64,486.1');
+  it('derives decimals from the symbol tick size (ADR-R6-01)', () => {
+    expect(formatPrice(64486.1, 'BTCUSDT')).toBe('64,486.1');
+    expect(formatPrice(3000, 'ETHUSDT')).toBe('3,000.00');
+    expect(formatPrice(2.4153, 'XRPUSDT')).toBe('2.4153');
+    expect(formatPrice(0.12345, 'DOGEUSDT')).toBe('0.12345');
   });
 
-  it('uses two decimals for hundreds', () => {
-    expect(formatPrice(148.35)).toBe('148.35');
-  });
-
-  it('uses three decimals for single digits', () => {
-    expect(formatPrice(2.4153)).toBe('2.415');
-  });
-
-  it('uses five decimals for sub-dollar prices', () => {
-    expect(formatPrice(0.12345)).toBe('0.12345');
-  });
-
-  it('uses six decimals for tiny prices', () => {
-    expect(formatPrice(0.001234)).toBe('0.001234');
+  it('keeps 5 decimals for ppr prices without rounding away tiny values', () => {
+    expect(formatPrice(0.0085, 'PPRUSDT')).toBe('0.00850');
+    expect(formatPrice(0.00851, 'PPRUSDT')).toBe('0.00851');
   });
 
   it('returns placeholder for non-finite values', () => {
-    expect(formatPrice(Number.NaN)).toBe('--');
+    expect(formatPrice(Number.NaN, 'BTCUSDT')).toBe('--');
   });
 });
 
@@ -123,26 +115,20 @@ describe('formatFundingRate', () => {
 });
 
 describe('formatCountdown', () => {
-  it('formats under an hour as mm:ss', () => {
-    expect(formatCountdown(65_000)).toBe('01:05');
+  it('formats every remaining duration as hh:mm:ss', () => {
+    expect(formatCountdown(65_000)).toBe('00:01:05');
+    expect(formatCountdown(3_600_000)).toBe('01:00:00');
+    expect(formatCountdown(7 * 3_600_000 + 59 * 60_000 + 59_000)).toBe('07:59:59');
+    expect(formatCountdown(3_599_000)).toBe('00:59:59');
   });
 
-  it('formats an hour and above as h:mm:ss', () => {
-    expect(formatCountdown(3_600_000)).toBe('1:00:00');
-    expect(formatCountdown(7 * 3_600_000 + 59 * 60_000 + 59_000)).toBe('7:59:59');
-  });
-
-  it('rolls from h:mm:ss down to mm:ss at the hour boundary', () => {
-    expect(formatCountdown(3_599_000)).toBe('59:59');
-  });
-
-  it('clamps to 00:00 after crossing the settlement moment', () => {
-    expect(formatCountdown(0)).toBe('00:00');
-    expect(formatCountdown(-15_000)).toBe('00:00');
+  it('clamps to 00:00:00 after crossing the settlement moment', () => {
+    expect(formatCountdown(0)).toBe('00:00:00');
+    expect(formatCountdown(-15_000)).toBe('00:00:00');
   });
 
   it('returns placeholder for non-finite values', () => {
-    expect(formatCountdown(Number.NaN)).toBe('--:--');
+    expect(formatCountdown(Number.NaN)).toBe('--:--:--');
   });
 });
 

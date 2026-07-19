@@ -50,10 +50,14 @@ function bgCandle(cx, bodyTop, bodyHeight, wickTop, wickBottom, color) {
   ].join('\n  ');
 }
 
+// 尾跡：沿紙飛機飛行軸（約 19° 上升）自 logo 右緣延伸，貫穿至 long 陽燭上影線。
+const TRAIL = `<path d="M430 222 L985 31" fill="none" stroke="${COLORS.long}" stroke-width="6" stroke-linecap="round" stroke-dasharray="26 20" opacity="0.5"/>`;
+
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}">
   <rect width="${WIDTH}" height="${HEIGHT}" fill="${COLORS.bg}"/>
   ${bgCandle(985, 90, 330, -60, 640, COLORS.long)}
   ${bgCandle(1150, 280, 320, 120, 720, COLORS.short)}
+  ${TRAIL}
   ${logoMark(84, 150, 330)}
   <text x="500" y="322" font-family="${FONT_STACK}" font-size="104" font-weight="700" fill="${COLORS.text}">PaperTrade</text>
   <text x="506" y="412" font-family="${FONT_STACK}" font-size="46" font-weight="500" fill="${COLORS.text2}">零風險模擬合約交易所</text>

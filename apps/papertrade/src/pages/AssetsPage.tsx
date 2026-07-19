@@ -112,7 +112,8 @@ export function AssetsPage() {
   const dailyPositive = dailyChange >= 0;
 
   return (
-    <div className="flex flex-col px-4 pb-6 lg:mx-auto lg:max-w-2xl">
+    // pt-[var(--sat)]：非 sticky 頁由頁根消費 safe-area（R6-1）。
+    <div className="flex flex-col px-4 pb-6 pt-[var(--sat)] lg:mx-auto lg:max-w-2xl">
       <header className="pb-4 pt-5">
         <p className="text-caption text-text-3">總權益（USDT）</p>
         <p className="mt-1 text-price-xl font-semibold tabular-nums">
@@ -215,7 +216,8 @@ export function AssetsPage() {
                   </div>
                   <p className="mt-1 text-caption text-text-3 tabular-nums">
                     {formatAmount(trade.qty, QTY_DISPLAY_DECIMALS)}｜開{' '}
-                    {formatPrice(trade.entryPrice)} → 平 {formatPrice(trade.exitPrice)}
+                    {formatPrice(trade.entryPrice, trade.symbol)} → 平{' '}
+                    {formatPrice(trade.exitPrice, trade.symbol)}
                   </p>
                   <p className="mt-0.5 flex justify-between text-caption text-text-3 tabular-nums">
                     <span>手續費 {formatAmount(trade.openFee + trade.fee, 4)} USDT</span>

@@ -32,7 +32,8 @@ export const SYMBOL_META: Record<MarketSymbol, SymbolMeta> = {
   LTCUSDT: { base: 'LTC', name: 'Litecoin', accent: 'var(--color-accent-ltc)' },
   LINKUSDT: { base: 'LINK', name: 'Chainlink', accent: 'var(--color-accent-link)' },
   AVAXUSDT: { base: 'AVAX', name: 'Avalanche', accent: 'var(--color-accent-avax)' },
-  PPRUSDT: { base: 'PPR', name: 'PPR 泡泡幣', accent: 'var(--color-accent-ppr)' },
+  // name 鏡像 features/ppr/config.ts 的 PPR_DISPLAY_NAME（型別依賴反向，不可 runtime 匯入）。
+  PPRUSDT: { base: 'PPR', name: 'PPR 紙紙幣', accent: 'var(--color-accent-ppr)' },
 };
 
 export function isMarketSymbol(value: string): value is MarketSymbol {

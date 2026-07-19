@@ -51,7 +51,7 @@ function PairRow({
         {ticker !== undefined && (
           <span className="flex flex-col items-end gap-0.5 text-right">
             <span className="text-label font-medium tabular-nums">
-              {formatPrice(ticker.lastPrice)}
+              {formatPrice(ticker.lastPrice, symbol)}
             </span>
             <span
               className={clsx(

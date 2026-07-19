@@ -40,8 +40,9 @@ describe('PairSelectorSheet', () => {
   it('lists pairs with live price and change badge', () => {
     render(<PairSelectorSheet open selected="BTCUSDT" onClose={vi.fn()} onSelect={vi.fn()} />);
 
+    // 精度由 tick size 反推（ADR-R6-01）：BTC tick 0.1→1 位、ETH tick 0.01→2 位。
     expect(screen.getByText('64,000.0')).toBeInTheDocument();
-    expect(screen.getByText('3,000.0')).toBeInTheDocument();
+    expect(screen.getByText('3,000.00')).toBeInTheDocument();
   });
 
   it('selects a pair and closes the sheet', async () => {

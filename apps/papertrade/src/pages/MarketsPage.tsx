@@ -83,7 +83,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
             </span>
             <PprTag symbol={symbol} />
           </span>
-          <span className="truncate text-caption text-text-3">
+          <span className="truncate text-caption text-text-3 tabular-nums">
             量 {ticker ? formatCompact(ticker.turnover24h) : '--'}
           </span>
         </span>
@@ -96,7 +96,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
                 revision={ticker.revision}
                 className="text-body font-semibold"
               >
-                {formatPrice(ticker.lastPrice)}
+                {formatPrice(ticker.lastPrice, symbol)}
               </PriceFlash>
               <span
                 className={clsx(
@@ -134,9 +134,12 @@ export function MarketsPage() {
 
   return (
     <section className="lg:mx-auto lg:max-w-2xl">
+      {/* R6-1 safe-area：sticky 底條流內佔位推開標題，捲動時常駐覆蓋狀態列區；
+          標題在工具列上方（h1 自然捲走），故工具列 sticky 錨點取 top-[var(--sat)] 銜接底條。 */}
+      <div aria-hidden className="sticky top-0 z-20 h-[var(--sat)] bg-bg/95 backdrop-blur" />
       <h1 className="px-4 pt-4 text-price-lg font-semibold">行情</h1>
       {/* sticky 搜尋與清單切換：標題自然捲走，工具列捲動常駐（與交易頁同樣式族）。 */}
-      <header className="sticky top-0 z-20 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
+      <header className="sticky top-[var(--sat)] z-20 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
         <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">
           <Search size={18} className="shrink-0 text-text-3" aria-hidden />
           <input

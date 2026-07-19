@@ -22,6 +22,7 @@ const btcTicker: Ticker = {
 // 10x 多單 0.1 BTC @ 60000：保證金 600，+50% ROE 對應觸發價 63000。
 function seedLongPosition(): Position {
   const opened = openMarket(createInitialAccount(), {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.1,
@@ -120,6 +121,59 @@ describe('TpSlSheet', () => {
 
     const untouched = useTradeStore.getState().account.positions[0];
     expect(untouched?.takeProfit).toBeNull();
+  });
+
+  it('blocks a dead-zone sl beyond the liquidation price (issue 781)', async () => {
+    const user = userEvent.setup();
+    const position = seedLongPosition();
+    renderSheet(position);
+
+    // 10x 多單 @60000 強平 54300：SL 54000 落在死區，強平必先觸發。
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '54000');
+    expect(screen.getByRole('alert')).toHaveTextContent(/已越過強平價 54,300/);
+    expect(screen.getByRole('button', { name: '確認' })).toBeDisabled();
+
+    const untouched = useTradeStore.getState().account.positions[0];
+    expect(untouched?.stopLoss).toBeNull();
+  });
+
+  it('accepts an sl between the liquidation price and the entry', async () => {
+    const user = userEvent.setup();
+    const position = seedLongPosition();
+    renderSheet(position);
+
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '55000');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '確認' }));
+
+    const updated = useTradeStore.getState().account.positions[0];
+    expect(updated?.stopLoss).toBe(55000);
+  });
+
+  it('judges the cross dead-zone by the aggregate estimate, not the isolated formula', async () => {
+    // cross 10x 多單 @60000：逐倉封閉公式強平 54300，但帳戶緩衝使聚合估算遠低於
+    // 54300（估不出→null 不判死區）；SL 54000 對 cross 倉為合法停損，不得誤擋。
+    const user = userEvent.setup();
+    const opened = openMarket(createInitialAccount(), {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    useTradeStore.setState({ account: opened.account, toasts: [] });
+    const position = opened.account.positions[0];
+    if (position === undefined) throw new Error('no position');
+    renderSheet(position);
+
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '54000');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '確認' }));
+
+    const updated = useTradeStore.getState().account.positions[0];
+    expect(updated?.stopLoss).toBe(54000);
   });
 
   it('clears an existing tp/sl by submitting empty inputs', async () => {

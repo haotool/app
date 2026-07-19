@@ -1,6 +1,7 @@
 import { SYMBOLS } from '../config/market';
 import { marketWs } from './marketWs';
 import { parseTickerMessage } from './ticker';
+import { refreshLiveTickSizes } from './instruments';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { isPprSymbol, PPR_ENABLED } from '../features/ppr/config';
@@ -8,6 +9,9 @@ import { startPprFeed } from '../features/ppr/feed';
 
 export function startMarketFeed(): () => void {
   const { setTicker, patchTicker, setWsStatus } = useMarketStore.getState();
+
+  // fire-and-forget：即時 tick size 覆蓋精度 SSOT（ADR-R6-01），不阻塞 WS 訂閱。
+  refreshLiveTickSizes();
 
   const stopStatus = marketWs.onStatus(setWsStatus);
 

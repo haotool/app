@@ -18,7 +18,7 @@ export function FundingCountdown({ nextFundingTime, className }: FundingCountdow
 
   return (
     <span className={className}>
-      {nextFundingTime === undefined ? '--:--' : formatCountdown(nextFundingTime - now)}
+      {nextFundingTime === undefined ? '--:--:--' : formatCountdown(nextFundingTime - now)}
     </span>
   );
 }

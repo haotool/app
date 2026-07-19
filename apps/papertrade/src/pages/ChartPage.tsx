@@ -56,7 +56,7 @@ function SymbolHeader({
               revision={ticker.revision}
               className="text-price-xl font-semibold"
             >
-              {formatPrice(ticker.lastPrice)}
+              {formatPrice(ticker.lastPrice, symbol)}
             </PriceFlash>
           ) : (
             <span className="skeleton-pulse mt-1 inline-block h-8 w-36 rounded" />
@@ -99,13 +99,13 @@ function SymbolHeader({
         <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h高</dt>
           <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.highPrice24h) : '--'}
+            {ticker ? formatPrice(ticker.highPrice24h, symbol) : '--'}
           </dd>
         </div>
         <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h低</dt>
           <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.lowPrice24h) : '--'}
+            {ticker ? formatPrice(ticker.lowPrice24h, symbol) : '--'}
           </dd>
         </div>
         <div className="flex min-w-20 shrink-0 gap-1">
@@ -123,6 +123,9 @@ function SymbolHeader({
 function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: TimeframeId }) {
   const { bars, status, seriesKey, retry } = useKlines(symbol, timeframe);
   const indicators = useMarketPrefsStore((state) => state.indicators);
+  const showMacd = useMarketPrefsStore((state) => state.macd);
+  const showTrendLines = useMarketPrefsStore((state) => state.trendLines);
+  const showSupportResistance = useMarketPrefsStore((state) => state.supportResistance);
 
   if (status === 'error') {
     return (
@@ -141,7 +144,15 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
 
   return (
     <>
-      <CandleChart bars={bars} seriesKey={seriesKey} indicators={indicators} />
+      <CandleChart
+        symbol={symbol}
+        bars={bars}
+        seriesKey={seriesKey}
+        indicators={indicators}
+        showMacd={showMacd}
+        showTrendLines={showTrendLines}
+        showSupportResistance={showSupportResistance}
+      />
       {status === 'loading' && (
         <div className="absolute inset-0 skeleton-pulse rounded-card" aria-label="圖表載入中" />
       )}
@@ -152,27 +163,67 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
 function IndicatorChips() {
   const indicators = useMarketPrefsStore((state) => state.indicators);
   const toggleIndicator = useMarketPrefsStore((state) => state.toggleIndicator);
+  const macd = useMarketPrefsStore((state) => state.macd);
+  const toggleMacd = useMarketPrefsStore((state) => state.toggleMacd);
+  const trendLines = useMarketPrefsStore((state) => state.trendLines);
+  const toggleTrendLines = useMarketPrefsStore((state) => state.toggleTrendLines);
+  const supportResistance = useMarketPrefsStore((state) => state.supportResistance);
+  const toggleSupportResistance = useMarketPrefsStore((state) => state.toggleSupportResistance);
+
+  const analysisToggles = [
+    { key: 'macd', label: 'MACD', active: macd, onToggle: toggleMacd },
+    { key: 'trendLines', label: '趨勢線', active: trendLines, onToggle: toggleTrendLines },
+    {
+      key: 'supportResistance',
+      label: '支撐阻力',
+      active: supportResistance,
+      onToggle: toggleSupportResistance,
+    },
+  ];
 
   return (
-    <div role="group" aria-label="技術指標" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
-      {INDICATORS.map((definition) => {
-        const active = indicators.includes(definition.id);
-        return (
+    // 均線疊加與自動分析為不同性質功能，分兩個語意群組供輔助技術區辨。
+    <div className="flex gap-1.5 overflow-x-auto px-4 pb-3">
+      <div role="group" aria-label="均線指標" className="flex gap-1.5">
+        {INDICATORS.map((definition) => {
+          const active = indicators.includes(definition.id);
+          return (
+            <button
+              key={definition.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggleIndicator(definition.id)}
+              className={clsx(
+                'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+                active ? 'bg-surface-2 font-semibold' : 'text-text-3 active:bg-surface-2',
+              )}
+              style={active ? { color: `var(${definition.colorToken})` } : undefined}
+            >
+              {definition.label}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        role="group"
+        aria-label="圖表分析"
+        className="flex gap-1.5 border-l border-border pl-1.5"
+      >
+        {analysisToggles.map(({ key, label, active, onToggle }) => (
           <button
-            key={definition.id}
+            key={key}
             type="button"
             aria-pressed={active}
-            onClick={() => toggleIndicator(definition.id)}
+            onClick={onToggle}
             className={clsx(
               'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
-              active ? 'bg-surface-2 font-semibold' : 'text-text-3 active:bg-surface-2',
+              active ? 'bg-surface-2 font-semibold text-text' : 'text-text-3 active:bg-surface-2',
             )}
-            style={active ? { color: `var(${definition.colorToken})` } : undefined}
           >
-            {definition.label}
+            {label}
           </button>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
@@ -255,14 +306,15 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
 
   return (
     // 桌機（lg）雙欄：左欄圖表、右欄常駐市場面板；行動版維持原有直向堆疊。
-    <section className="flex flex-col pb-[4.5rem] lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-4 lg:px-4">
+    // pt-[var(--sat)]：非 sticky 頁由頁根消費 safe-area，首屏內容不被狀態列遮蔽（R6-1）。
+    <section className="flex flex-col pb-[4.5rem] pt-[var(--sat)] lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-4 lg:px-4">
       <div className="flex flex-col lg:min-w-0">
         <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
 
         <div
           role="tablist"
           aria-label="時間框架"
-          className="flex gap-1.5 overflow-x-auto px-4 pb-1.5"
+          className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 pb-1.5"
         >
           {TIMEFRAMES.map(({ id, label }) => (
             <button
@@ -272,7 +324,7 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
               aria-selected={timeframe === id}
               onClick={() => onTimeframeChange(id)}
               className={clsx(
-                'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+                'min-h-11 min-w-11 shrink-0 snap-start rounded-control px-3 text-label transition-colors',
                 timeframe === id
                   ? 'bg-primary/15 font-semibold text-primary'
                   : 'text-text-3 active:bg-surface-2',
@@ -297,15 +349,15 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur lg:static lg:z-auto lg:mx-0 lg:max-w-none lg:bg-transparent lg:px-4 lg:pb-0 lg:backdrop-blur-none">
           <Link
             to={`/trade?symbol=${symbol}&side=long`}
-            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
+            className="active-press flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
           >
-            買多
+            做多
           </Link>
           <Link
             to={`/trade?symbol=${symbol}&side=short`}
-            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
+            className="active-press flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
           >
-            賣空
+            做空
           </Link>
         </div>
       </div>

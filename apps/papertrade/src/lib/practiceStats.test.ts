@@ -80,6 +80,7 @@ describe('computePracticeStats', () => {
       margin: 1200,
       openFee: 12,
       leverage: 10,
+      marginMode: 'isolated',
       openedAt: 0,
       takeProfit: null,
       stopLoss: null,

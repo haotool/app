@@ -2,8 +2,9 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
 import { type Position } from '../../engine/types';
+import { estimatedCrossLiquidationPrice, liquidationPrice } from '../../engine/math';
 import { useTradeStore } from '../../stores/tradeStore';
-import { useMarketStore } from '../../stores/marketStore';
+import { collectPositionMarks, useMarketStore } from '../../stores/marketStore';
 import {
   pnlAtPrice,
   priceFromPnl,
@@ -12,6 +13,7 @@ import {
   type TpSlBasis,
 } from '../../lib/tpslMath';
 import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
+import { pricePrecisionFor } from '../../lib/priceScale';
 import { TPSL_INPUT_MESSAGES, TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { SYMBOL_META } from '../../config/market';
@@ -56,8 +58,13 @@ function fmtInput(value: number, decimals: number): string {
   return Number(value.toFixed(decimals)).toString();
 }
 
-function valueAtMode(price: number, mode: ValueMode, basis: TpSlBasis): string {
-  if (mode === 'price') return fmtInput(price, 6);
+function valueAtMode(
+  price: number,
+  mode: ValueMode,
+  basis: TpSlBasis,
+  priceDecimals: number,
+): string {
+  if (mode === 'price') return fmtInput(price, priceDecimals);
   if (mode === 'roe') return fmtInput(roeAtPrice(basis, price), 2);
   return fmtInput(pnlAtPrice(basis, price), 2);
 }
@@ -74,10 +81,12 @@ function deriveTriggerPrice(draft: Draft, basis: TpSlBasis): number | null {
 }
 
 // 方向驗證沿用引擎 R4 規則（多單 tp>開倉價、sl<開倉價；空單反向），避免 UI 與引擎判定漂移。
+// referenceLiq：死區判定的強平價口徑——isolated 用封閉公式、cross 用聚合估算（null＝不判死區）。
 function validateTrigger(
   kind: TriggerKind,
   price: number | null,
   position: Position,
+  referenceLiq: number | null,
 ): string | null {
   if (price === null) return null;
   if (Number.isNaN(price) || price <= 0) return TPSL_INPUT_MESSAGES[kind];
@@ -87,7 +96,12 @@ function validateTrigger(
     return valid ? null : TRADE_ERROR_MESSAGES['invalid-tp-direction'];
   }
   const valid = isLong ? price < position.entryPrice : price > position.entryPrice;
-  return valid ? null : TRADE_ERROR_MESSAGES['invalid-sl-direction'];
+  if (!valid) return TRADE_ERROR_MESSAGES['invalid-sl-direction'];
+  // 高槓桿死區（issue 781）：停損劣於強平價時強平必先觸發，標示無效並擋下送出。
+  if (referenceLiq !== null && (isLong ? price < referenceLiq : price > referenceLiq)) {
+    return `此停損價已越過強平價 ${formatPrice(referenceLiq, position.symbol)}，實際會先觸發強平`;
+  }
+  return null;
 }
 
 export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
@@ -103,7 +117,22 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   });
   const [error, setError] = useState<string | null>(null);
   const setPositionTpSl = useTradeStore((state) => state.setPositionTpSl);
+  const account = useTradeStore((state) => state.account);
   const mark = useMarketStore((state) => state.tickers[position.symbol]?.markPrice);
+  // cross 死區判定用聚合估算價（與持倉卡同口徑）；估不出（buffer 過大）時不判死區。
+  const crossLiq = useMarketStore((state) =>
+    position.marginMode === 'cross'
+      ? estimatedCrossLiquidationPrice(
+          position,
+          account,
+          collectPositionMarks(state.tickers, account.positions),
+        )
+      : null,
+  );
+  const referenceLiq =
+    position.marginMode === 'cross'
+      ? crossLiq
+      : liquidationPrice(position.side, position.entryPrice, position.leverage);
 
   const ratio = scope === 'full' ? 1 : percent / 100;
   const basis: TpSlBasis = {
@@ -119,8 +148,8 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   const tpPrice = deriveTriggerPrice(tpDraft, basis);
   const slPrice = deriveTriggerPrice(slDraft, basis);
   const prices = { tp: tpPrice, sl: slPrice } as const;
-  const tpError = validateTrigger('tp', tpPrice, position);
-  const slError = validateTrigger('sl', slPrice, position);
+  const tpError = validateTrigger('tp', tpPrice, position, referenceLiq);
+  const slError = validateTrigger('sl', slPrice, position, referenceLiq);
   const errors = { tp: tpError, sl: slError } as const;
   const submitDisabled = tpError !== null || slError !== null;
 
@@ -132,7 +161,10 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
       if (price === null || Number.isNaN(price) || price <= 0) {
         return { mode: nextMode, input: '' };
       }
-      return { mode: nextMode, input: valueAtMode(price, nextMode, basis) };
+      return {
+        mode: nextMode,
+        input: valueAtMode(price, nextMode, basis, pricePrecisionFor(position.symbol)),
+      };
     });
     setError(null);
   }
@@ -140,7 +172,12 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   function writeFromRoe(kind: TriggerKind, roe: number) {
     setters[kind]((prev) => ({
       mode: prev.mode,
-      input: valueAtMode(priceFromRoe(basis, roe), prev.mode, basis),
+      input: valueAtMode(
+        priceFromRoe(basis, roe),
+        prev.mode,
+        basis,
+        pricePrecisionFor(position.symbol),
+      ),
     }));
     setError(null);
   }
@@ -235,7 +272,7 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
               pnl >= 0 ? 'text-long' : 'text-short',
             )}
           >
-            觸發價 {formatPrice(price)}｜預估損益 {formatSignedPnl(pnl)} USDT（ROE{' '}
+            觸發價 {formatPrice(price, position.symbol)}｜預估損益 {formatSignedPnl(pnl)} USDT（ROE{' '}
             {formatSignedPercent(roe)}）
           </p>
         )}
@@ -254,8 +291,9 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   return (
     <BottomSheet open={open} title="止盈止損" onClose={onClose}>
       <p className="text-caption text-text-3 tabular-nums">
-        開倉價 {formatPrice(position.entryPrice)}｜標記價{' '}
-        {mark !== undefined ? formatPrice(mark) : '--'}；觸發後以市價結算，留空代表不設定。
+        開倉價 {formatPrice(position.entryPrice, position.symbol)}｜標記價{' '}
+        {mark !== undefined ? formatPrice(mark, position.symbol) : '--'}
+        ；觸發後以市價結算，留空代表不設定。
       </p>
 
       <div

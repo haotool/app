@@ -13,11 +13,12 @@ interface OrderBookPanelProps {
 }
 
 interface SideColumnProps {
+  symbol: MarketSymbol;
   levels: OrderBookLevel[];
   side: 'bid' | 'ask';
 }
 
-function SideColumn({ levels, side }: SideColumnProps) {
+function SideColumn({ symbol, levels, side }: SideColumnProps) {
   const maxSize = Math.max(...levels.map(([, size]) => size), 1);
   const isBid = side === 'bid';
 
@@ -40,13 +41,13 @@ function SideColumn({ levels, side }: SideColumnProps) {
                 {formatAmount(size)}
               </span>
               <span className="relative z-10 text-caption font-medium text-long tabular-nums">
-                {formatPrice(price)}
+                {formatPrice(price, symbol)}
               </span>
             </>
           ) : (
             <>
               <span className="relative z-10 text-caption font-medium text-short tabular-nums">
-                {formatPrice(price)}
+                {formatPrice(price, symbol)}
               </span>
               <span className="relative z-10 text-caption text-text-2 tabular-nums">
                 {formatAmount(size)}
@@ -85,8 +86,8 @@ export function OrderBookPanel({ symbol }: OrderBookPanelProps) {
         <span>賣價｜賣量</span>
       </div>
       <div className="flex gap-2">
-        <SideColumn levels={bids} side="bid" />
-        <SideColumn levels={asks} side="ask" />
+        <SideColumn symbol={symbol} levels={bids} side="bid" />
+        <SideColumn symbol={symbol} levels={asks} side="ask" />
       </div>
     </section>
   );
@@ -124,7 +125,7 @@ function MidPriceRow({
     <button
       type="button"
       onClick={() => onPriceSelect?.(ticker.lastPrice)}
-      aria-label={`以最新價 ${formatPrice(ticker.lastPrice)} 帶入限價`}
+      aria-label={`以最新價 ${formatPrice(ticker.lastPrice, symbol)} 帶入限價`}
       className="my-0.5 flex min-h-11 w-full flex-wrap items-center justify-between gap-x-1 border-y border-border px-1 text-left"
     >
       <PriceFlash
@@ -135,10 +136,10 @@ function MidPriceRow({
           ticker.direction === 'down' ? 'text-short' : 'text-long',
         )}
       >
-        {formatPrice(ticker.lastPrice)}
+        {formatPrice(ticker.lastPrice, symbol)}
       </PriceFlash>
       <span className="text-caption text-text-3 tabular-nums">
-        標記 {formatPrice(ticker.markPrice)}
+        標記 {formatPrice(ticker.markPrice, symbol)}
       </span>
     </button>
   );
@@ -200,7 +201,7 @@ export function CompactOrderBook({
           <span
             className={`relative z-10 text-caption font-medium tabular-nums ${isBid ? 'text-long' : 'text-short'}`}
           >
-            {formatPrice(price)}
+            {formatPrice(price, symbol)}
           </span>
           <span className="relative z-10 text-caption text-text-2 tabular-nums">
             {formatAmount(size)}

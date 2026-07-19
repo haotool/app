@@ -32,7 +32,8 @@ function LiquidationSoundToggle() {
 
 export function SettingsPage() {
   return (
-    <div className="flex flex-col gap-4 px-4 pb-6 pt-5 lg:mx-auto lg:max-w-2xl">
+    // pt 疊加 safe-area：非 sticky 頁由頁根消費 --sat（R6-1）。
+    <div className="flex flex-col gap-4 px-4 pb-6 pt-[calc(1.25rem+var(--sat))] lg:mx-auto lg:max-w-2xl">
       <h1 className="text-price-lg font-semibold">設定</h1>
 
       <section

@@ -1,10 +1,11 @@
 import { type MarketSymbol } from '../../config/market';
 
-// PPR 泡泡幣模組總開關（單點 flag）：關閉即不啟動合成 feed、不出現在行情清單。
+// PPR 紙紙幣模組總開關（單點 flag）：關閉即不啟動合成 feed、不出現在行情清單。
 export const PPR_ENABLED = true;
 
 export const PPR_SYMBOL: MarketSymbol = 'PPRUSDT';
-export const PPR_DISPLAY_NAME = 'PPR 泡泡幣';
+// 顯示名 SSOT（R6-10）；config/market.ts 的 SYMBOL_META 鏡像此值（避免 runtime 循環依賴）。
+export const PPR_DISPLAY_NAME = 'PPR 紙紙幣';
 // UI 常駐標示文案：防止使用者誤認為真實行情（security SSOT 第 10 條）。
 export const PPR_DISCLAIMER = '虛構迷因幣，僅供娛樂';
 export const PPR_BADGE_LABEL = '娛樂';
@@ -15,6 +16,8 @@ export function isPprSymbol(symbol: string): boolean {
 }
 
 // —— 合成行情引擎參數（集中常數）——
+// PPR 價格最小跳動單位（ADR-R6-01 定案值）：全站精度由 lib/priceScale.ts 反推。
+export const PPR_TICK_SIZE = 0.00001;
 export const PPR_TICK_INTERVAL_MS = 250;
 export const PPR_SEED_PRICE = 0.042;
 // 基準隨機游走：每 tick ±0.1–0.5%。
@@ -27,6 +30,53 @@ export const PPR_JUMP_PROBABILITY = 0.004;
 export const PPR_JUMP_CHAIN_PROBABILITY = 0.3;
 export const PPR_JUMP_MIN = 0.3;
 export const PPR_JUMP_MAX = 0.8;
+// 肥尾跳躍（R6-10）：冪次變換讓多數跳躍貼近下限、少數極端值逼近上限。
+export const PPR_JUMP_TAIL_POWER = 3;
+
+// —— 行情 regime 狀態機（R6-10；疊加層，不取代跳躍與均值回歸）——
+export type PprRegime = 'range' | 'pump' | 'dump' | 'bleed';
+// 停留機率：pump/dump 停留短（急拉崩跌來去快）、range/bleed 較長。
+export const PPR_REGIME_STAY: Record<PprRegime, number> = {
+  range: 0.995,
+  pump: 0.97,
+  dump: 0.97,
+  bleed: 0.99,
+};
+// 轉移權重（每列總和 1）：離開當前態時依權重抽下一態。
+export const PPR_REGIME_NEXT: Record<PprRegime, readonly (readonly [PprRegime, number])[]> = {
+  range: [
+    ['pump', 0.3],
+    ['dump', 0.3],
+    ['bleed', 0.4],
+  ],
+  pump: [
+    ['range', 0.7],
+    ['dump', 0.2],
+    ['bleed', 0.1],
+  ],
+  dump: [
+    ['range', 0.7],
+    ['pump', 0.2],
+    ['bleed', 0.1],
+  ],
+  bleed: [
+    ['range', 0.8],
+    ['pump', 0.1],
+    ['dump', 0.1],
+  ],
+};
+// 各 regime 每 tick 乘性漂移：pump/dump 持續大步、bleed 微幅陰跌、range 零漂移。
+export const PPR_REGIME_DRIFT: Record<PprRegime, number> = {
+  range: 0,
+  pump: 0.006,
+  dump: -0.006,
+  bleed: -0.0008,
+};
+
+// 偶發插針（R6-10）：稀有單 tick 尖刺（±50–150%）後下一 tick 幾乎完全回彈，明確不連鎖。
+export const PPR_WICK_PROBABILITY = 0.0008;
+export const PPR_WICK_MIN = 0.5;
+export const PPR_WICK_MAX = 1.5;
 // 均值回歸錨（log 空間）：常態微弱拉回；跑出軟回歸帶則強力拉回；硬護欄兜底。
 export const PPR_ANCHOR_PRICE = PPR_SEED_PRICE;
 export const PPR_REVERSION_BASE = 0.002;

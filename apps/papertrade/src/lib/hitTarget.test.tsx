@@ -56,6 +56,7 @@ const btcTicker: Ticker = {
 
 function seededAccount(): Account {
   const opened = openMarket(createInitialAccount(), {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.1,
@@ -64,6 +65,7 @@ function seededAccount(): Account {
   });
   if (!opened.ok) throw new Error(opened.error);
   const placed = placeLimitOrder(opened.account, {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.05,
@@ -172,7 +174,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
   it('trade page with an active toast passes', () => {
     renderRoute('/trade');
     act(() => {
-      useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多已成交' });
+      useTradeStore.getState().pushToast({ tone: 'long', title: '市價做多已成交' });
     });
     expect(screen.getByRole('button', { name: '關閉通知' })).toBeInTheDocument();
     expectNoViolations();
@@ -192,7 +194,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expect(screen.getByRole('textbox', { name: /止盈價/ })).toBeInTheDocument();
     expectNoViolations();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式說明：逐倉' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
     expect(screen.getByRole('dialog', { name: '保證金模式' })).toBeInTheDocument();
     expectNoViolations();
   });

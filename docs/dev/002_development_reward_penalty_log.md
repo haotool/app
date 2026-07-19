@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+142
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+145
 
 ## 新增模板（4 行）
 
@@ -64,6 +64,16 @@
 - 解法：新增 core/rotation.ts 單點 SSOT（cw/ccw/none 三態換算＋localStorage 偏好），CSS 預設翻至 ccw 並保留 sp-rot-cw 舊方向切換，座標矩陣單測＋portrait e2e 雙向全綠
 
 - 日期：2026-07-19
+- ID：reward-pt-r6-r2-review-fixes
+- 原因：PaperTrade R6 PR #791 R2 雙席未達標（Sonnet 93/88、Fable 96/92）——tick mantissa 精度、cross 缺 mark 可用虛高、S-R 聚類漂移、forming bar 重繪、強平 toast／metrics 口徑與 a11y 殘項
+- 解法：r2 修復 commit 收斂 pricePrecisionFor 逐位試乘、crossAvailableBalance 缺 mark 保守、chartAnalysis 錨點聚類與 confirmedBars、liquidation 符號化 pnl＋getAccountMetrics cross 口徑、radiogroup 鍵盤／OrderForm dl 結構；628 測全綠
+
+- 日期：2026-07-19
+- ID：reward-papertrade-r6-cross-liq-fix
+- 原因：R6 雙席終審 Sonnet 標 BLOCKING：estimatedCrossLiquidationPrice 的 buffer 只扣本倉 MM 漏算其他 cross 倉聚合 MM，且 entry 錨在 uPnL≥0 時雙計利潤使估算強平價系統性偏遠誤導
+- 解法：buffer 改 crossMarginBalance 減 crossMaintenanceMargin（聚合 MM）、一律 mark 錨；TpSlSheet cross 停損死區改 estimatedCrossLiquidationPrice、OrderForm 同向加倉提示與 available 口徑、execution 翻倉/限價注入 crossAvailableBalance，623 測全綠
+
+- 日期：2026-07-19
 - ID：reward-starpuff-v13-ex-conquest
 - 原因：20 關主線完結後 EX 變體體系僅 L4/L7 出貨完整——三新王 FSM 差分 v10-v12 已埋但出貨面殘缺（exPending 提示與圖鑑紫星 hardcode 雙王、EX 敗北再戰丟失變體旗標、主計畫 §7.4 EX 慈悲上限未實作、L4/L7 無前室致五魔王關體驗不一致），且五王全制霸無任何獎勵回饋
 - 解法：v13 收尾——exConquestDone 由 BOSS_LEVEL_IDS（LEVELS 派生）判定星核制霸 cosmetic（標題金裝＋章、圖鑑金徽記），GameResultData.ex 貫通再戰/重開，MERCY_HEAL.exMaxPerLife=1，L4/L7 前室 retrofit（stage elements 統一平移＋既有 e2e 前室走行調整），v13.spec 五案＋vitest 三案守門；EX 保底實證二段論（L16 純標準星 won 73.6s、L20 won 129.8s 段重試零卡關；L12 assist 輸出鏈 won 30.8s＋十輪純模式 trace 佐證輸出/迴避各自成立）
@@ -82,6 +92,11 @@
 - ID：reward-release-automation-approve-native-run
 - 原因：dispatch 補償被 branch protection 拒絕後，無 PAT 前提下仍需可用的必要檢查來源——原生 pull_request run 卡在 approval-required，Approve API（POST /actions/runs/{id}/approve）成為唯一免憑證解鎖路徑，但其對同 repo bot PR 的適用性無文檔保證
 - 解法：以 user token 對 #784 的 pending run 29672941337 實測 Approve API 成功（run 由 action_required 轉 queued 並全綠），release.yml v2 改為「核准原生 run→讀 head SHA check-runs 等待 QC→受保護合併→補派 main」，RELEASE_PAT 存在時 changesets 直接以 PAT 開 PR 走全原生路徑（issue #771）
+
+- 日期：2026-07-19
+- ID：reward-papertrade-r6-wave5-logo-qa
+- 原因：R6-11 紙飛機 LOGO 原計畫由 Codex imagegen 產概念稿，但該進程卡死 57 分鐘以上零產出（`public/reference/` 空），阻塞視覺資產交付
+- 解法：依 backlog 預案改手寫 SVG 紙飛機 mark（512 網格、雙摺面漸層＋虛線尾跡）沿用既有 generate-icons/generate-og-image 導出鏈重生成全部 PNG，並以獨立 Playwright 腳本完成 R6 驗收清單真瀏覽器深度 QA 17/17 PASS（safe-area/全倉手算/混倉/精度/MACD/趨勢線/文案/console=0）
 
 - 日期：2026-07-19
 - ID：neutral-release-automation-e2e-verify

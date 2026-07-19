@@ -1,15 +1,10 @@
-function decimalsForPrice(value: number): number {
-  const abs = Math.abs(value);
-  if (abs >= 1000) return 1;
-  if (abs >= 100) return 2;
-  if (abs >= 1) return 3;
-  if (abs >= 0.01) return 5;
-  return 6;
-}
+import { type MarketSymbol } from '../config/market';
+import { pricePrecisionFor } from './priceScale';
 
-export function formatPrice(value: number): string {
+// 價格顯示 SSOT（ADR-R6-01）：精度由 symbol 的 tick size 反推，全站一致。
+export function formatPrice(value: number, symbol: MarketSymbol): string {
   if (!Number.isFinite(value)) return '--';
-  const decimals = decimalsForPrice(value);
+  const decimals = pricePrecisionFor(symbol);
   return value.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -54,15 +49,14 @@ export function formatFundingRate(rate: number): string {
   return `${sign}${percent.toFixed(4)}%`;
 }
 
+// 恆定 hh:mm:ss（R6-3 對標 Bybit「資金費率/倒數」格式）；佔位同版型寬度防欄位跳動。
 export function formatCountdown(msRemaining: number): string {
-  if (!Number.isFinite(msRemaining)) return '--:--';
+  if (!Number.isFinite(msRemaining)) return '--:--:--';
   const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const mm = String(minutes).padStart(2, '0');
-  const ss = String(seconds).padStart(2, '0');
-  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+  const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  const ss = String(totalSeconds % 60).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
 }
 
 export function formatClockTime(epochMs: number): string {
