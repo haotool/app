@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { createDefaultSave, recordExClear } from '../core/save';
 import { canInhale } from './combat';
 import {
+  BOSS_LEVEL_IDS,
   LEVELS,
   advanceLevelSpawn,
   checkpointRespawnX,
   createLevelRun,
+  exConquestDone,
   getLevel,
   isInSafeTail,
   nextLevelId,
@@ -40,6 +43,17 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
       480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0,
     ]);
+  });
+
+  it('星核制霸判定（§86）：BOSS_LEVEL_IDS 由 LEVELS 派生；5 王 exCleared 全 true 才成立', () => {
+    expect(BOSS_LEVEL_IDS).toEqual([4, 7, 12, 16, 20]);
+    let save = createDefaultSave();
+    expect(exConquestDone(save)).toBe(false);
+    for (const id of [4, 7, 12, 16] as const) save = recordExClear(save, id);
+    // 差一王不成立。
+    expect(exConquestDone(save)).toBe(false);
+    save = recordExClear(save, 20);
+    expect(exConquestDone(save)).toBe(true);
   });
 
   it('五魔王品種標記（§54/§68/§74/§82）：L4/L7/L12/L16/L20；教學與提示對表', () => {
@@ -134,6 +148,19 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       expect(meteor.waveSize).toBeGreaterThanOrEqual(1);
       expect(meteor.waveSize).toBeLessThanOrEqual(3);
     }
+  });
+
+  it('L4/L7 前室 retrofit（§86／主計畫 §7.1）：全五魔王關前室體系一致', () => {
+    for (const id of BOSS_LEVEL_IDS) {
+      const level = getLevel(id);
+      expect(level.anteroomPx, `L${id} 前室寬`).toBe(400);
+      expect(level.anteroomBuffs?.length, `L${id} 二選一台座`).toBe(2);
+      expect(level.arenaBuff, `L${id} arena 投放`).toBeDefined();
+    }
+    expect(getLevel(4).anteroomBuffs).toEqual(['shield', 'power']);
+    expect(getLevel(4).arenaBuff).toBe('swift');
+    expect(getLevel(7).anteroomBuffs).toEqual(['shield', 'swift']);
+    expect(getLevel(7).arenaBuff).toBe('power');
   });
 
   it('L12 魔王關體系（§69）：前室 400px、護盾/星力二選一、P2 疾風靴、補生全可吸', () => {

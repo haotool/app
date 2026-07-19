@@ -177,4 +177,19 @@ describe('EX 差分（§68）', () => {
     const command = fsm.tick(EX_PRISMIX.struggleMs);
     expect(command).toEqual({ kind: 'merge', coreHp: 45, shards: EX_PRISMIX.shardOrbitCount });
   });
+
+  it('EX 公平性下限（§86）：掙扎窗 ≥600ms、去同步錯拍 ≥200ms 且 < 最短 telegraph', () => {
+    // 掙扎窗：EX 收短後仍高於普通反應下限（250-400ms）＋輸出裕度。
+    expect(EX_PRISMIX.struggleMs).toBeGreaterThanOrEqual(600);
+    // 去同步（呈現層相位差）：錯拍幅度有感（≥200ms）但不得吞掉整段 telegraph——
+    // 第二拍攻擊的預警起點仍完整可讀。
+    expect(EX_PRISMIX.desyncMs).toBeGreaterThanOrEqual(200);
+    const minTelegraphMs = Math.min(
+      PRISMIX.pillarTelegraphMs,
+      PRISMIX.beamTelegraphMs,
+      PRISMIX.pincerTelegraphMs,
+      PRISMIX.rainTelegraphMs,
+    );
+    expect(EX_PRISMIX.desyncMs).toBeLessThan(minTelegraphMs);
+  });
 });

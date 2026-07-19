@@ -521,9 +521,9 @@ export class GameScene extends Phaser.Scene {
     if (this.scene.isActive()) this.player.grantInvulnerability(ms);
   }
 
-  // e2e 鉤子：直達任一關（各關反卡關走查用）。
-  gotoLevel(levelId: LevelId): void {
-    if (this.scene.isActive()) this.restartWith({ levelId });
+  // e2e 鉤子：直達任一關（各關反卡關走查用）；ex 供 EX 變體直達（§86）。
+  gotoLevel(levelId: LevelId, ex = false): void {
+    if (this.scene.isActive()) this.restartWith({ levelId, ex });
   }
 
   // e2e 觀測點（§71）：潮汐水位與相位；無潮汐關回 null。
@@ -538,6 +538,7 @@ export class GameScene extends Phaser.Scene {
     this.restartWith({
       levelId: this.currentLevelId,
       deaths: this.deaths,
+      ex: this.exMode,
     });
   }
 
@@ -1193,6 +1194,7 @@ export class GameScene extends Phaser.Scene {
       maxHp: PLAYER.maxHp,
       rng: this.mercyRng,
       bossRoom: this.level.boss !== null,
+      exMode: this.exMode,
     });
     this.mercy = result.state;
     if (result.spawn) this.spawnMercyHeart();
@@ -1261,6 +1263,11 @@ export class GameScene extends Phaser.Scene {
     return this.boss.getProjectiles();
   }
 
+  // v13 觀測點（§86 bot 迴避取樣）：shockwave 型危害群組。
+  bossHazardBodies(): Phaser.Physics.Arcade.Group {
+    return this.boss.getShockwaves();
+  }
+
   private finish(result: 'won' | 'lost'): void {
     if (this.finished) return;
     this.finished = true;
@@ -1276,6 +1283,7 @@ export class GameScene extends Phaser.Scene {
       timeMs,
       deaths: this.deaths,
       levelId: this.currentLevelId,
+      ex: this.exMode,
     };
     // 謝幕（§84）：全破最終魔王關（鏈末魔王關，資料驅動非硬編關號）先播星光復甦再結算。
     const finale =
@@ -1325,6 +1333,7 @@ export class GameScene extends Phaser.Scene {
         return {
           handle: createBoss(this, {
             ex: this.exMode,
+            arenaLeft: () => this.arenaLeft(),
             // EX 擊破分裂（§58）：於魔王位置生成小果凍，走正式 spawn 管線。
             onSplit: (x, y, count) => {
               for (let i = 0; i < count; i += 1) {
@@ -1339,7 +1348,7 @@ export class GameScene extends Phaser.Scene {
           handle: createNoctra(
             this,
             { summonFloaty: (cap) => this.summonMinion('floaty', cap) },
-            { ex: this.exMode },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: NOCTRA.bodyDamage,
         };

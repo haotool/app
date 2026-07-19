@@ -9,6 +9,8 @@ import { burstSmall, landingDust, spawnTelegraph } from './fx';
 export interface BossOptions {
   ex?: boolean;
   onSplit?: (x: number, y: number, count: number) => void;
+  // 前室魔王關（§86 L4 retrofit）：arena 左緣（世界座標）；缺省 0（無前室）。
+  arenaLeft?: () => number;
 }
 
 // 傷害來源（§57/§58）：volt＝雷化鏈電束（可中斷 Noctra 召喚）、reflect＝殼化反彈回傷。
@@ -115,8 +117,10 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   let stunUntilMs = 0;
 
   const viewW = () => scene.scale.width;
+  // 前室魔王關（§86）：全部世界座標計算平移 arena 左緣（無前室＝0，行為零變）。
+  const arenaLeft = () => options.arenaLeft?.() ?? 0;
   const sideX = (which: 'left' | 'right') =>
-    which === 'left' ? SIDE_MARGIN_X : viewW() - SIDE_MARGIN_X;
+    arenaLeft() + (which === 'left' ? SIDE_MARGIN_X : viewW() - SIDE_MARGIN_X);
 
   const sprite = scene.physics.add.sprite(sideX('right'), -BOSS_H, 'boss-idle');
   sprite.setDisplaySize(BOSS_W, BOSS_H);
@@ -242,7 +246,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
         const vx = Phaser.Math.Between(60, 230) * (Math.random() < 0.5 ? -1 : 1);
         const vy = Phaser.Math.Between(-520, -340);
         const land = rainLanding(startX, startY, vx, vy);
-        if (land.x >= 0 && land.x <= viewW()) {
+        if (land.x >= arenaLeft() && land.x <= arenaLeft() + viewW()) {
           spawnTelegraph(scene, land.x, GROUND_TOP - 6, RAIN_TELEGRAPH_MS + land.flightMs);
         }
         delay(RAIN_TELEGRAPH_MS, () => {
@@ -468,7 +472,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
 
   const introReset = () => {
     const cam = scene.cameras.main;
-    cam.pan(viewW() / 2, VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
+    cam.pan(arenaLeft() + viewW() / 2, VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
     cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
     delay(INTRO_RESET_MS, () => {
       wobble.play();
@@ -482,8 +486,8 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     spawn() {
       const cam = scene.cameras.main;
       const [red, green, blue] = INTRO_FADE_RGB;
-      // 推近焦點貼齊畫布右下（王座落點側）依當前視寬計算，確保取景不超出畫布邊界。
-      const focusX = viewW() - viewW() / INTRO_ZOOM / 2;
+      // 推近焦點貼齊 arena 右下（王座落點側）依當前視寬計算，確保取景不超出 arena 邊界。
+      const focusX = arenaLeft() + viewW() - viewW() / INTRO_ZOOM / 2;
       const focusY = VIEW.height - VIEW.height / INTRO_ZOOM / 2;
       cam.fadeOut(INTRO_FADE_MS, red, green, blue);
       cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
@@ -551,13 +555,17 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
           }
         }
         const falling = body.velocity.y > 0;
-        if ((falling && ball.y > GROUND_TOP - 10) || ball.x < -40 || ball.x > viewW() + 40) {
+        if (
+          (falling && ball.y > GROUND_TOP - 10) ||
+          ball.x < arenaLeft() - 40 ||
+          ball.x > arenaLeft() + viewW() + 40
+        ) {
           killProjectile(ball);
         }
       });
       shockwaves.getMatching('active', true).forEach((obj) => {
         const wave = obj as Phaser.Physics.Arcade.Sprite;
-        if (wave.x < -60 || wave.x > viewW() + 60) killProjectile(wave);
+        if (wave.x < arenaLeft() - 60 || wave.x > arenaLeft() + viewW() + 60) killProjectile(wave);
       });
     },
     destroy() {

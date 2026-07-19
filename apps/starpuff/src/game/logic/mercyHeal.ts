@@ -23,6 +23,8 @@ export const MERCY_HEAL = {
   bossMinElapsedMs: 12_000,
   bossCooldownMs: 18_000,
   bossChance: 0.6,
+  // EX 變體上限（主計畫 §7.4）：EX 保持硬核，每命僅 1 顆；生存段固定愛心走獨立管線不計。
+  exMaxPerLife: 1,
 } as const;
 
 export interface MercyState {
@@ -45,6 +47,8 @@ export interface MercyTick {
   rng: () => number;
   // 魔王房（含 EX）走 override 門檻（§54）。
   bossRoom?: boolean;
+  // EX 變體（§7.4）：每命上限收緊為 1。
+  exMode?: boolean;
 }
 
 export interface MercyResult {
@@ -66,11 +70,12 @@ export function advanceMercyHeal(state: MercyState, tick: MercyTick): MercyResul
   const minElapsedMs = boss ? MERCY_HEAL.bossMinElapsedMs : MERCY_HEAL.minElapsedMs;
   const cooldownMs = boss ? MERCY_HEAL.bossCooldownMs : MERCY_HEAL.cooldownMs;
   const chance = boss ? MERCY_HEAL.bossChance : MERCY_HEAL.chance;
+  const maxPerLife = tick.exMode === true ? MERCY_HEAL.exMaxPerLife : MERCY_HEAL.maxPerLife;
   const eligible =
     tick.hp > 0 &&
     hpOk &&
     tick.elapsedMs >= minElapsedMs &&
-    state.spawned < MERCY_HEAL.maxPerLife &&
+    state.spawned < maxPerLife &&
     tick.elapsedMs - state.lastSpawnElapsedMs >= cooldownMs;
   if (!eligible || tick.rng() >= chance) return { state: rearmed, spawn: false };
   return {

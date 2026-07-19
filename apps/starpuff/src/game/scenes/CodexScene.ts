@@ -2,9 +2,15 @@ import Phaser from 'phaser';
 import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
+import { LEVELS, exConquestDone } from '../logic/levels';
 import { playSfx } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
+
+// 魔王品種 → 魔王關對照（LEVELS 派生，加王自動跟進）。
+const BOSS_LEVEL_BY_KIND = new Map<string, LevelId>(
+  LEVELS.filter((level) => level.boss !== null).map((level) => [level.boss as string, level.id]),
+);
 
 const TEXT_DARK = '#3a3a4a';
 const TEXT_SOFT = '#5a5a6e';
@@ -123,6 +129,31 @@ export class CodexScene extends Phaser.Scene {
   // 定案：9×2 於 854 寬 cellW≈89px 仍可讀，分頁延後與地圖分區分頁同批評估）。
   private renderMonsters(): void {
     const { width } = this.scale;
+    // 星核制霸格（§86）：五王 EX 全制霸的圖鑑常設榮譽章。
+    if (exConquestDone(loadSave())) {
+      const star = this.add
+        .image(width - 150, 34, 'fx-star')
+        .setDisplaySize(24, 24)
+        .setTint(0xffd870);
+      this.tweens.add({
+        targets: star,
+        angle: 8,
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.add
+        .text(width - 92, 34, '星核制霸', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '15px',
+          fontStyle: 'bold',
+          color: '#8a6a1f',
+          backgroundColor: '#ffe9a8',
+          padding: { x: 10, y: 4 },
+        })
+        .setOrigin(0.5);
+    }
     const cols = Math.ceil(CODEX_MONSTERS.length / 2);
     const cellW = Math.min(170, (width - 50) / cols);
     const gridLeft = width / 2 - (cellW * cols) / 2;
@@ -150,9 +181,9 @@ export class CodexScene extends Phaser.Scene {
           color: TEXT_DARK,
         })
         .setOrigin(0.5);
-      // EX 紀念星章（§58）：EX 擊破過的魔王條目掛紫星。
-      const exLevel: Partial<Record<string, LevelId>> = { boss: 4, noctra: 7 };
-      const exLevelId = exLevel[monster.kind];
+      // EX 紀念星章（§58/§86）：EX 擊破過的魔王條目掛紫星——魔王關對照由 LEVELS
+      // 派生（禁第二份硬編清單）；codex kind 'boss'＝jellord 的歷史別名。
+      const exLevelId = BOSS_LEVEL_BY_KIND.get(monster.kind === 'boss' ? 'jellord' : monster.kind);
       if (exLevelId !== undefined && loadSave().levels[exLevelId]?.exCleared === true) {
         this.add
           .image(cx + 26, top + 12, 'fx-star')

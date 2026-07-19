@@ -1,3 +1,4 @@
+import type { SaveData } from '../core/save';
 import type { BossKind, EnemyKind, LevelId } from '../core/types';
 import type { BuffId } from './buffs';
 import { canInhale } from './combat';
@@ -307,6 +308,11 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'jellord',
     tutorial: false,
+    // 魔王關體系 retrofit（§86／主計畫 §7.1 v11+ 擇機項）：前室 400px＋護盾泡/星力果
+    // 二選一；P2 高風險位刷疾風靴（沿 L12 攻壓型魔王組合）。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'power'],
+    arenaBuff: 'swift',
   },
   // v8 世界擴張（§50）——L5 翔風峽谷：上升氣流柱垂直分層探索、Gusty 主場。
   {
@@ -484,6 +490,11 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'noctra',
     tutorial: false,
+    // 魔王關體系 retrofit（§86／主計畫 §7.1 v11+ 擇機項）：前室 400px＋護盾泡/疾風靴
+    // 二選一；P2 高風險位刷星力果（空戰輸出窗短，沿 L16 組合語彙）。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'swift'],
+    arenaBuff: 'power',
   },
   // v9 世界擴張（§60）——L8 磁極洞窟：Magno 主場磁場干擾＋drilly 地下突襲組合、
   // 首次星化教學提示（hint 浮字）；精英磁暴磁極獸。
@@ -1432,4 +1443,14 @@ export function isInSafeTail(level: LevelSpec, x: number): boolean {
 export function checkpointRespawnX(level: LevelSpec, farthestX: number): number | null {
   if (level.checkpointX === undefined || farthestX < level.checkpointX) return null;
   return level.checkpointX;
+}
+
+// 魔王關清單由 LEVELS 派生（§86 星核制霸判定基底，禁止第二份硬編清單）。
+export const BOSS_LEVEL_IDS: readonly LevelId[] = LEVELS.filter((level) => level.boss !== null).map(
+  (level) => level.id,
+);
+
+// 星核制霸（§86）：全魔王 EX 變體制霸才成立；獎勵為純呈現層 cosmetic（零平衡影響）。
+export function exConquestDone(save: SaveData): boolean {
+  return BOSS_LEVEL_IDS.every((id) => save.levels[id]?.exCleared === true);
 }

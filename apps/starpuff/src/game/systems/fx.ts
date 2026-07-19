@@ -539,11 +539,12 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     destroyed = true;
     unbinders.forEach((off) => off());
     unbinders.length = 0;
-    // hit-stop 進行中被銷毀（如 scene restart）：先恢復物理，避免殘留暫停。
+    // hit-stop 進行中被銷毀（如 scene restart）：先恢復物理，避免殘留暫停；
+    // shutdown 晚期 world 可能已拆除（resume 內部讀 world 屬性），需先驗存在。
     if (hitStopTimer) {
       hitStopTimer.remove();
       hitStopTimer = null;
-      scene.physics.resume();
+      if (scene.physics.world) scene.physics.resume();
     }
     [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
     phaseVignette?.destroy();

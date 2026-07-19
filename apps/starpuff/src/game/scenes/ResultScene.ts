@@ -18,6 +18,7 @@ export class ResultScene extends Phaser.Scene {
       timeMs: data.timeMs ?? 0,
       deaths: data.deaths ?? 0,
       levelId: data.levelId ?? 1,
+      ex: data.ex === true,
     };
   }
 
@@ -82,7 +83,7 @@ export class ResultScene extends Phaser.Scene {
 
     // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const retryButton = this.add
-      .text(centerX, height * 0.68, won ? '世界地圖' : '再戰魔王', {
+      .text(centerX, height * 0.68, won ? '世界地圖' : this.result.ex ? '再戰 EX' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '28px',
         fontStyle: 'bold',
@@ -92,7 +93,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 敗北重試直接回到戰敗關卡（魔王關），延續本輪用時與死亡計數；
+    // 敗北重試直接回到戰敗關卡（魔王關），延續本輪用時與死亡計數；EX 變體保留（§86）；
     // 勝利回世界地圖（§39 hub 模型：重玩自地圖選關）。
     const retry = () =>
       won
@@ -100,6 +101,7 @@ export class ResultScene extends Phaser.Scene {
         : this.scene.start(SceneKeys.Game, {
             levelId: this.result.levelId,
             deaths: this.result.deaths,
+            ex: this.result.ex,
           });
     this.input.keyboard?.once('keydown-ENTER', retry);
     // 重試鈕唯一指標命中路徑（recon-v4 A.3）：覆蓋 canvas 視覺鈕的透明 DOM 鈕，

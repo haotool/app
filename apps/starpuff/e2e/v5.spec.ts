@@ -117,9 +117,12 @@ test('Boss 戰中暫停再繼續（§35）：戰鬥凍結後可無縫接續', as
   await startGame(page);
   await page.evaluate(() => window.__sp.skipToBoss());
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  // 前室 retrofit（§86）：走過廊道入 arena 觸發魔王入場。
+  await page.keyboard.down('ArrowRight');
   await expect
-    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 15000 })
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 30000 })
     .toBeGreaterThan(0);
+  await page.keyboard.up('ArrowRight');
   await page.keyboard.press('Escape');
   await expect(page.locator('.pause-overlay')).toBeVisible();
   expect(await page.evaluate(() => window.__sp.scenePaused())).toBe(true);

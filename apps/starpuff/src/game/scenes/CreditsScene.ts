@@ -35,6 +35,8 @@ export class CreditsScene extends Phaser.Scene {
       timeMs: data.timeMs ?? 0,
       deaths: data.deaths ?? 0,
       levelId: data.levelId ?? 20,
+      // EX 變體（§86）：Credits 轉接 Result 時保留旗標，契約不折損。
+      ex: data.ex === true,
     };
     this.finished = false;
   }

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { currentChallenge, loadSave } from '../core/save';
 import { SceneKeys, type CodexTab } from '../core/types';
+import { exConquestDone } from '../logic/levels';
 import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
@@ -44,12 +45,56 @@ export class TitleScene extends Phaser.Scene {
     addMuteButton(this);
     bindMenuRelayout(this);
 
+    // 星核制霸（§86）：五王 EX 全制霸的全制霸獎勵——金色星噗噗換裝＋金暈＋制霸章，
+    // 純呈現層 cosmetic 零平衡影響。
+    const conquest = exConquestDone(loadSave());
     if (this.textures.exists('hero-idle')) {
       ensureGlowTexture(this);
       const heroY = height * 0.44;
       const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
+      if (conquest) glow.setTint(0xffd870);
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
+      if (conquest) {
+        // 金色換裝：乘算 tint（保留輪廓）＋ADD 疊層金光（提升金屬感——乘算對
+        // 綠底貼圖只能到橄欖金，疊加層補足亮金意象，審查 S3 校正）。
+        hero.setTint(0xffc94d);
+        // Phaser 4 無 setTintFill(color)：改 setTint + FILL tint mode（repo 慣例）。
+        const goldOverlay = this.add
+          .image(centerX, heroY, 'hero-idle')
+          .setDisplaySize(150, 150)
+          .setAlpha(0)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        goldOverlay.setTint(0xffd870);
+        goldOverlay.setTintMode(Phaser.TintModes.FILL);
+        this.tweens.add({ targets: goldOverlay, alpha: 0.5, duration: 500, delay: 650 });
+        this.tweens.add({
+          targets: goldOverlay,
+          y: '-=14',
+          duration: 1400,
+          delay: 700,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+        const badge = this.add
+          .text(70, 34, '星核制霸', {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '15px',
+            fontStyle: 'bold',
+            color: '#8a6a1f',
+            backgroundColor: '#ffe9a8',
+            padding: { x: 12, y: 6 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        const star = this.add
+          .image(70 - badge.width / 2 - 16, 34, 'fx-star')
+          .setDisplaySize(22, 22)
+          .setTint(0xffd870)
+          .setAlpha(0);
+        this.tweens.add({ targets: [badge, star], alpha: 1, duration: 500, delay: 650 });
+      }
       // 開場入場（§36）：主角自天而降 Bounce 落定，光暈淡入。
       hero.setY(heroY - 90).setAlpha(0);
       glow.setAlpha(0);

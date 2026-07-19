@@ -711,6 +711,10 @@ export function createPrismix(
     getShields() {
       return shields;
     },
+    // e2e／bot 觀測（§86）：FSM 階段/招式即時值（telegraph 期預躲取樣）。
+    getDebugState() {
+      return { phase: fsm.phase, state: fsm.state };
+    },
     setTarget(next: { x: number; y: number } | null) {
       target = next;
     },
