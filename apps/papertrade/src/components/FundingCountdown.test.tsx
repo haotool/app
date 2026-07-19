@@ -16,7 +16,7 @@ describe('FundingCountdown', () => {
 
   it('shows a placeholder when nextFundingTime is missing', () => {
     render(<FundingCountdown nextFundingTime={undefined} />);
-    expect(screen.getByText('--:--')).toBeInTheDocument();
+    expect(screen.getByText('--:--:--')).toBeInTheDocument();
   });
 
   it('renders the remaining time and ticks down every second', () => {

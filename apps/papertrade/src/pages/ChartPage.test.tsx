@@ -155,7 +155,7 @@ describe('ChartPage', () => {
     renderChart('/chart/BTCUSDT');
 
     await screen.findByRole('heading', { name: /BTC/ });
-    expect(screen.getByText('--:--')).toBeInTheDocument();
+    expect(screen.getByText('--:--:--')).toBeInTheDocument();
   });
 
   it('requests klines with default timeframe', async () => {

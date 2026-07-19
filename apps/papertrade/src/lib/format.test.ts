@@ -128,7 +128,7 @@ describe('formatCountdown', () => {
   });
 
   it('returns placeholder for non-finite values', () => {
-    expect(formatCountdown(Number.NaN)).toBe('--:--');
+    expect(formatCountdown(Number.NaN)).toBe('--:--:--');
   });
 });
 
