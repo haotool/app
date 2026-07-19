@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   averageEntryPrice,
   effectiveMaintenanceMarginRate,
+  isSlBeyondLiquidation,
   isValidLeverage,
   liquidationPrice,
   notionalValue,
@@ -124,6 +125,37 @@ describe('liquidationPrice (isolated, effective MMR)', () => {
     // 有效 MMR 0.05%：強平價 = entry × (1 − 0.001 + 0.0005) = entry × 0.9995 < entry。
     expect(liq).toBeCloseTo(entry * 0.9995, 6);
     expect(liq).toBeLessThan(entry);
+  });
+});
+
+describe('isSlBeyondLiquidation (issue 781)', () => {
+  it('long: sl below the liquidation price is dead-zone', () => {
+    // 10x long @60000 → 強平 54300。
+    expect(isSlBeyondLiquidation('long', 60000, 10, 54000)).toBe(true);
+    expect(isSlBeyondLiquidation('long', 60000, 10, 55000)).toBe(false);
+    // 恰等於強平價：強平與 SL 同點觸發，不視為死區。
+    expect(isSlBeyondLiquidation('long', 60000, 10, 54300)).toBe(false);
+  });
+
+  it('short: sl above the liquidation price is dead-zone', () => {
+    // 10x short @60000 → 強平 65700。
+    expect(isSlBeyondLiquidation('short', 60000, 10, 66000)).toBe(true);
+    expect(isSlBeyondLiquidation('short', 60000, 10, 65000)).toBe(false);
+  });
+
+  it('flags the narrow dead-zone at 100x', () => {
+    // 100x long @60000 → 強平 59700：SL 低於 59700 皆為死區。
+    expect(isSlBeyondLiquidation('long', 60000, 100, 59600)).toBe(true);
+    expect(isSlBeyondLiquidation('long', 60000, 100, 59800)).toBe(false);
+  });
+
+  it('flags the razor-thin dead-zone at 1000x', () => {
+    // 1000x long @60000 → 強平 59970（有效 MMR 0.05%）。
+    expect(isSlBeyondLiquidation('long', 60000, 1000, 59950)).toBe(true);
+    expect(isSlBeyondLiquidation('long', 60000, 1000, 59980)).toBe(false);
+    // 1000x short @60000 → 強平 60030。
+    expect(isSlBeyondLiquidation('short', 60000, 1000, 60050)).toBe(true);
+    expect(isSlBeyondLiquidation('short', 60000, 1000, 60020)).toBe(false);
   });
 });
 

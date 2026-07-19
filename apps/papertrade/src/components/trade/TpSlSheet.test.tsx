@@ -122,6 +122,33 @@ describe('TpSlSheet', () => {
     expect(untouched?.takeProfit).toBeNull();
   });
 
+  it('blocks a dead-zone sl beyond the liquidation price (issue 781)', async () => {
+    const user = userEvent.setup();
+    const position = seedLongPosition();
+    renderSheet(position);
+
+    // 10x 多單 @60000 強平 54300：SL 54000 落在死區，強平必先觸發。
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '54000');
+    expect(screen.getByRole('alert')).toHaveTextContent(/已越過強平價 54,300/);
+    expect(screen.getByRole('button', { name: '確認' })).toBeDisabled();
+
+    const untouched = useTradeStore.getState().account.positions[0];
+    expect(untouched?.stopLoss).toBeNull();
+  });
+
+  it('accepts an sl between the liquidation price and the entry', async () => {
+    const user = userEvent.setup();
+    const position = seedLongPosition();
+    renderSheet(position);
+
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '55000');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '確認' }));
+
+    const updated = useTradeStore.getState().account.positions[0];
+    expect(updated?.stopLoss).toBe(55000);
+  });
+
   it('clears an existing tp/sl by submitting empty inputs', async () => {
     const user = userEvent.setup();
     seedLongPosition();

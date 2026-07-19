@@ -2,6 +2,7 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
 import { type Position } from '../../engine/types';
+import { isSlBeyondLiquidation, liquidationPrice } from '../../engine/math';
 import { useTradeStore } from '../../stores/tradeStore';
 import { useMarketStore } from '../../stores/marketStore';
 import {
@@ -87,7 +88,13 @@ function validateTrigger(
     return valid ? null : TRADE_ERROR_MESSAGES['invalid-tp-direction'];
   }
   const valid = isLong ? price < position.entryPrice : price > position.entryPrice;
-  return valid ? null : TRADE_ERROR_MESSAGES['invalid-sl-direction'];
+  if (!valid) return TRADE_ERROR_MESSAGES['invalid-sl-direction'];
+  // 高槓桿死區（issue 781）：停損劣於強平價時強平必先觸發，標示無效並擋下送出。
+  if (isSlBeyondLiquidation(position.side, position.entryPrice, position.leverage, price)) {
+    const liq = liquidationPrice(position.side, position.entryPrice, position.leverage);
+    return `此停損價已越過強平價 ${formatPrice(liq)}，實際會先觸發強平`;
+  }
+  return null;
 }
 
 export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {

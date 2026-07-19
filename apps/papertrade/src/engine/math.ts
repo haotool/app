@@ -42,6 +42,17 @@ export function liquidationPrice(side: Side, entryPrice: number, leverage: numbe
     : entryPrice * (1 + 1 / leverage - mmr);
 }
 
+// SL 死區判定（issue 781）：停損價劣於強平價時，強平必先觸發，該停損形同虛設。
+export function isSlBeyondLiquidation(
+  side: Side,
+  entryPrice: number,
+  leverage: number,
+  slPrice: number,
+): boolean {
+  const liq = liquidationPrice(side, entryPrice, leverage);
+  return side === 'long' ? slPrice < liq : slPrice > liq;
+}
+
 export function averageEntryPrice(
   qtyA: number,
   priceA: number,
