@@ -1,11 +1,13 @@
 import type Phaser from 'phaser';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 
-// 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）。
+// 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）；
+// downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意。
 export interface ControlsState {
   left: boolean;
   right: boolean;
   down: boolean;
+  downBuffered: boolean;
   jumpPressed: boolean;
   jumpHeld: boolean;
   actionPressed: boolean;
@@ -14,7 +16,7 @@ export interface ControlsState {
 
 export interface ControlsSystem {
   state: ControlsState;
-  update(): void;
+  update(deltaMs: number): void;
   // 下跳指示（§77）：可穿落狀態跳鍵變色＋箭頭翻轉朝下；僅狀態轉變時碰 DOM。
   setDropReady(ready: boolean): void;
   destroy(): void;
@@ -31,11 +33,22 @@ const DROP_READY_CLASS = 'is-drop-ready';
 // 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
 const JOY_RADIUS = 60;
 const JOY_DEADZONE = 12;
-// 下向判定閾值：需明確下壓過半徑一半，避免斜向移動誤觸下衝擊（§23）。
-export const JOY_DOWN_THRESHOLD = JOY_RADIUS * 0.5;
+// 下向判定（§85 熱修）：真實拇指定錨常貼屏幕底緣，下滑行程僅剩 15-25px，舊閾值
+// 30px（半徑一半）物理上達不到——降至 18px 並以 ±60 度扇區容納自然斜下滑。
+export const JOY_DOWN_THRESHOLD = 18;
+const JOY_DOWN_SECTOR_TAN = Math.tan(Math.PI / 3);
 
-export function isJoyDown(dy: number): boolean {
-  return dy > JOY_DOWN_THRESHOLD;
+export function isJoyDown(dx: number, dy: number): boolean {
+  return dy >= JOY_DOWN_THRESHOLD && Math.abs(dx) <= dy * JOY_DOWN_SECTOR_TAN;
+}
+
+// drop-intent 緩衝窗（§85）：flick 手勢（滑完即抬指）與跳鍵按下相隔數十至數百 ms，
+// down 釋放後保留 300ms 意圖窗——實測人為停頓 150ms 經觸控事件與幀對齊後間隔達
+// ~270ms，250ms 窗臨界抖動；窗內按跳仍判下跳，下砸（空中）不吃此窗防誤觸。
+export const DOWN_BUFFER_MS = 300;
+
+export function advanceDownBuffer(bufferMs: number, down: boolean, deltaMs: number): number {
+  return down ? DOWN_BUFFER_MS : Math.max(0, bufferMs - deltaMs);
 }
 
 // 螢幕座標 → 元素局部座標（recon-v4 A.3）：clientX/Y 不反映祖先 CSS rotate，portrait 殼內
@@ -74,6 +87,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     left: false,
     right: false,
     down: false,
+    downBuffered: false,
     jumpPressed: false,
     jumpHeld: false,
     actionPressed: false,
@@ -188,6 +202,7 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
 
   let prevJumpHeld = false;
   let prevActionHeld = false;
+  let downBufferMs = 0;
 
   // 下跳指示（§77）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
   const jumpBtn = document.querySelector<HTMLElement>('[data-btn="a"]');
@@ -199,10 +214,12 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
 
   return {
     state,
-    update() {
+    update(deltaMs: number) {
       state.left = joy.dx < -JOY_DEADZONE || keys?.LEFT.isDown === true;
       state.right = joy.dx > JOY_DEADZONE || keys?.RIGHT.isDown === true;
-      state.down = isJoyDown(joy.dy) || keys?.DOWN.isDown === true;
+      state.down = isJoyDown(joy.dx, joy.dy) || keys?.DOWN.isDown === true;
+      downBufferMs = advanceDownBuffer(downBufferMs, state.down, deltaMs);
+      state.downBuffered = downBufferMs > 0;
 
       const jumpHeld = held.a || keys?.Z.isDown === true;
       state.jumpPressed = jumpHeld && !prevJumpHeld;

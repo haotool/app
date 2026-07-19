@@ -661,7 +661,16 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
         // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§69）疾風靴倍率疊乘。
         const moveSpeed = PLAYER.moveSpeed * (formSpec?.moveSpeedMul ?? 1) * buffSpeedMul;
-        const moveTarget = controls.left ? -moveSpeed : controls.right ? moveSpeed : 0;
+        // 蹲下靜止（§85）：地面下向意圖成立即鉗水平——斜下滑的 dx 分量不再把玩家
+        // 帶出平台邊緣；空中不鉗，保留下砸前的橫向微調。
+        const crouching = onGround && controls.down;
+        const moveTarget = crouching
+          ? 0
+          : controls.left
+            ? -moveSpeed
+            : controls.right
+              ? moveSpeed
+              : 0;
         if (moveTarget !== 0) facing = moveTarget > 0 ? 1 : -1;
         const moveFx = detectMoveFx({
           onGround,
