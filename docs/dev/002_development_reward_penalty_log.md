@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+140
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+141
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-hud-safe-area
+- 原因：standalone 直持下瀏海/動態島換軸到殼右緣，貼緣的暫停/靜音鍵與配額列被遮蔽難按
+- 解法：hud 右緣元素統一依 core/safeArea 净 inset 邏輯偏移左移避讓，四組 insets（直持雙向/橫持瀏海/無瀏海）真點 mute 鈕全命中
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-shell-card-top-anchor
