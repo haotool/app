@@ -68,12 +68,16 @@ export function openKeyConfig(onClose?: () => void): void {
 
   const backdrop = document.createElement('div');
   backdrop.className = 'cfg-overlay';
+  // cfg-bar 直欄結構（§91）：hint 與操作列分列，鈕群空間不足時整鈕換列（禁字內斷行）。
   const bar = document.createElement('div');
   bar.className = 'cfg-bar';
   const hint = document.createElement('div');
   hint.className = 'cfg-hint';
   hint.textContent = '拖曳虛擬鍵調整位置';
   bar.appendChild(hint);
+  const actions = document.createElement('div');
+  actions.className = 'cfg-actions';
+  bar.appendChild(actions);
 
   const cleanups: (() => void)[] = [];
 
@@ -95,23 +99,23 @@ export function openKeyConfig(onClose?: () => void): void {
   };
   dismissWithoutSave = cancelWithoutSave;
 
-  addAction(bar, 'reset', '恢復預設', () => {
+  addAction(actions, 'reset', '恢復預設', () => {
     Object.assign(working, getDefaultLayout());
     applyLayoutToDom(layer, working);
   });
-  addAction(bar, 'save', '儲存並返回', () => {
+  addAction(actions, 'save', '儲存', () => {
     saveLayout(working);
     teardown();
   });
   // 取消：還原進入時 snapshot、不寫入 localStorage。
-  addAction(bar, 'cancel', '取消', cancelWithoutSave);
+  addAction(actions, 'cancel', '取消', cancelWithoutSave);
 
   // 直持持向切換（§90）：即點即存即生效（顯示偏好非布局草稿，不隨「取消」回滾）；
   // 橫持下無視覺變化，下次直持依偏好呈現。
   const rotationLabel = (pref: PortraitRotationPref): string =>
     pref === 'ccw' ? '直持鏡頭朝右' : '直持鏡頭朝左';
   let rotationPref = loadRotationPref();
-  const rotationButton = addAction(bar, 'rotation', rotationLabel(rotationPref), () => {
+  const rotationButton = addAction(actions, 'rotation', rotationLabel(rotationPref), () => {
     rotationPref = rotationPref === 'ccw' ? 'cw' : 'ccw';
     saveRotationPref(rotationPref);
     applyRotationClass(rotationPref);

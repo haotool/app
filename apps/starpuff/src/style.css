@@ -359,6 +359,8 @@ body {
   pointer-events: none;
 }
 
+/* 直欄結構（§91）：hint 與操作列分列；操作列空間不足時整鈕換列，
+   nowrap＋flex-shrink:0 保證鈕內文字恆單行（禁字內斷行與截斷）。 */
 .cfg-bar {
   position: absolute;
   z-index: 40;
@@ -366,9 +368,20 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 24px);
   pointer-events: auto;
+}
+
+.cfg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .cfg-hint {
@@ -377,6 +390,7 @@ body {
     sans-serif;
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
 }
 
 .cfg-btn {
@@ -390,6 +404,8 @@ body {
     sans-serif;
   color: #3a3a4a;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cfg-btn[data-cfg='save'] {

@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-19
+- ID：reward-starpuff-v14-keyconfig-single-line
+- 原因：cfg-bar 橫排 flex 無寬度約束且鈕可壓縮，375/667 級殼寬下「儲存並返回」被壓成兩行文字
+- 解法：cfg-bar 改直欄（hint＋actions 分列）、鈕 nowrap＋flex-shrink:0、空間不足整鈕換列，五視口×雙持向實測全單行
+
+- 日期：2026-07-19
 - ID：reward-starpuff-v14-rotation-flip-ssot
 - 原因：直持旋轉殼舊方向（cw）使按鍵貼難按邊緣且瀏海側遮擋，座標換算公式散落 controls/keyConfig/shellLayout 有漂移風險
 - 解法：新增 core/rotation.ts 單點 SSOT（cw/ccw/none 三態換算＋localStorage 偏好），CSS 預設翻至 ccw 並保留 sp-rot-cw 舊方向切換，座標矩陣單測＋portrait e2e 雙向全綠
