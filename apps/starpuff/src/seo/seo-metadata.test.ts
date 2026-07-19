@@ -28,10 +28,14 @@ describe('seo-metadata SSOT', () => {
     expect(SEO_TITLE.length).toBeLessThanOrEqual(40);
   });
 
-  it('description 長度在 70-100 全形字區間且含核心賣點', () => {
-    expect(SEO_DESCRIPTION.length).toBeGreaterThanOrEqual(70);
-    expect(SEO_DESCRIPTION.length).toBeLessThanOrEqual(100);
-    for (const keyword of ['免費', '橫向捲軸', '離線', 'PWA', '魔王']) {
+  it('description 長度在 110-160 字區間（掃描器門檻）且前 90 字承載核心賣點（SERP 顯示帶）', () => {
+    expect(SEO_DESCRIPTION.length).toBeGreaterThanOrEqual(110);
+    expect(SEO_DESCRIPTION.length).toBeLessThanOrEqual(160);
+    const serpWindow = SEO_DESCRIPTION.slice(0, 90);
+    for (const keyword of ['免費', '網頁遊戲', '橫向捲軸', '動作']) {
+      expect(serpWindow).toContain(keyword);
+    }
+    for (const keyword of ['離線', 'PWA', '魔王', '免下載']) {
       expect(SEO_DESCRIPTION).toContain(keyword);
     }
   });

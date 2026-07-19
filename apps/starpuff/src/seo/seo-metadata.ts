@@ -196,7 +196,9 @@ export function buildSeoBody(): string {
       <p>
         由
         <a href="https://haotool.org/" tabindex="-1">HaoTool 好工具</a>
-        出品，完全免費且無廣告；開發團隊介紹見
+        出品，完全免費且無廣告；更多免費網頁工具見
+        <a href="https://app.haotool.org/" tabindex="-1">HaoTool 工具站入口</a>。
+        開發團隊介紹見
         <a href="https://haotool.org/about/" tabindex="-1">關於我們</a>，回饋與問題回報見
         <a href="https://haotool.org/contact/" tabindex="-1">聯絡我們</a>。
       </p>
