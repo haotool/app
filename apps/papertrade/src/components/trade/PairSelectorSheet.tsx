@@ -59,7 +59,7 @@ function PairRow({
                 ticker.price24hPcnt >= 0 ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
               )}
             >
-              {formatSignedPercent(ticker.price24hPcnt)}
+              {formatSignedPercent(ticker.price24hPcnt * 100)}
             </span>
           </span>
         )}

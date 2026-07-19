@@ -81,7 +81,8 @@ describe('AssetsPage', () => {
 
   it('starts the day at zero change when no baseline exists yet', () => {
     renderAssets();
-    expect(screen.getByText(/今日變化 \+0（\+0\.00%）/)).toBeInTheDocument();
+    // 近零 guard：零變化不帶符號，不得顯示「+0」／「−0.00%」。
+    expect(screen.getByText(/今日變化 0\.00（0\.00%）/)).toBeInTheDocument();
     expect(window.localStorage.getItem(DAILY_EQUITY_STORAGE_KEY)).toContain(
       localDateKey(new Date()),
     );

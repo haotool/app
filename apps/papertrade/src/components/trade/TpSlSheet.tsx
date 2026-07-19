@@ -11,7 +11,7 @@ import {
   roeAtPrice,
   type TpSlBasis,
 } from '../../lib/tpslMath';
-import { formatAmount, formatPrice } from '../../lib/format';
+import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
 import { TPSL_INPUT_MESSAGES, TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { SYMBOL_META } from '../../config/market';
@@ -88,14 +88,6 @@ function validateTrigger(
   }
   const valid = isLong ? price < position.entryPrice : price > position.entryPrice;
   return valid ? null : TRADE_ERROR_MESSAGES['invalid-sl-direction'];
-}
-
-function signedUsdt(value: number): string {
-  return `${value >= 0 ? '+' : '−'}${formatAmount(Math.abs(value), 2)}`;
-}
-
-function signedPercent(value: number): string {
-  return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(2)}%`;
 }
 
 export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
@@ -243,7 +235,8 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
               pnl >= 0 ? 'text-long' : 'text-short',
             )}
           >
-            觸發價 {formatPrice(price)}｜預估損益 {signedUsdt(pnl)} USDT（ROE {signedPercent(roe)}）
+            觸發價 {formatPrice(price)}｜預估損益 {formatSignedPnl(pnl)} USDT（ROE{' '}
+            {formatSignedPercent(roe)}）
           </p>
         )}
         {inlineError !== null && (

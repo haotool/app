@@ -16,11 +16,12 @@ export function formatPrice(value: number): string {
   });
 }
 
-export function formatSignedPercent(ratio: number): string {
-  if (!Number.isFinite(ratio)) return '--';
-  const percent = ratio * 100;
-  const sign = percent > 0 ? '+' : '';
-  return `${sign}${percent.toFixed(2)}%`;
+// 簽名百分比（損益率顯示 SSOT，輸入為百分比值，50 = 50%）：
+// |value| 低於 2 位顯示精度半格（0.005）時視為 0，不帶符號，避免微幅值顯示「−0.00%」。
+export function formatSignedPercent(percent: number): string {
+  if (!Number.isFinite(percent)) return '--';
+  if (Math.abs(percent) < 0.005) return '0.00%';
+  return `${percent >= 0 ? '+' : '−'}${Math.abs(percent).toFixed(2)}%`;
 }
 
 export function formatCompact(value: number): string {
@@ -38,7 +39,8 @@ export function formatAmount(value: number, maxDecimals = 3): string {
   });
 }
 
-// 已實現損益 toast 文案：|value| 低於 2 位顯示精度半格（0.005）時視為 0，避免出現「−0 USDT」。
+// 簽名 USDT 金額（損益顯示 SSOT）：|value| 低於 2 位顯示精度半格（0.005）時視為 0，
+// 不帶符號，避免微幅值顯示「−0 USDT」／「+0 USDT」。
 export function formatSignedPnl(value: number): string {
   if (!Number.isFinite(value)) return '--';
   if (Math.abs(value) < 0.005) return '0.00';

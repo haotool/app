@@ -168,9 +168,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
         <div className="flex justify-between">
           <dt className="text-text-3">預估損益</dt>
           <dd className={clsx('tabular-nums', (previewPnl ?? 0) >= 0 ? 'text-long' : 'text-short')}>
-            {previewPnl !== null
-              ? `${previewPnl >= 0 ? '+' : '−'}${formatAmount(Math.abs(previewPnl), 2)} USDT`
-              : '--'}
+            {previewPnl !== null ? `${formatSignedPnl(previewPnl)} USDT` : '--'}
           </dd>
         </div>
       </dl>

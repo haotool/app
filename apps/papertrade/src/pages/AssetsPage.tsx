@@ -7,7 +7,7 @@ import { getAccountMetrics } from '../engine/engine';
 import { type ClosedTrade, type CloseReason } from '../engine/types';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
-import { formatAmount, formatPrice } from '../lib/format';
+import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../lib/format';
 import { resolveDailyEquityBaseline } from '../lib/dailyEquity';
 import { computePracticeStats } from '../lib/practiceStats';
 import { EmptyState } from '../components/EmptyState';
@@ -20,11 +20,6 @@ const REASON_LABELS: Record<CloseReason, string> = {
   trailing: '追蹤',
   liquidation: '強平',
 };
-
-function signedUsdt(value: number): string {
-  const sign = value >= 0 ? '+' : '−';
-  return `${sign}${formatAmount(Math.abs(value), 2)}`;
-}
 
 function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleString('zh-TW', {
@@ -76,17 +71,17 @@ function PracticeStatsSection({ history }: { history: ClosedTrade[] }) {
           <StatCard label="勝率">{(stats.winRate * 100).toFixed(1)}%</StatCard>
           <StatCard label="總實現損益">
             <span className={stats.totalPnl >= 0 ? 'text-long' : 'text-short'}>
-              {signedUsdt(stats.totalPnl)}
+              {formatSignedPnl(stats.totalPnl)}
             </span>
           </StatCard>
           <StatCard label="總手續費">{formatAmount(stats.totalFees, 2)}</StatCard>
           <StatCard label="最大單筆盈/虧">
             <span className={stats.maxWin === null ? 'text-text-3' : 'text-long'}>
-              {stats.maxWin === null ? '--' : signedUsdt(stats.maxWin)}
+              {stats.maxWin === null ? '--' : formatSignedPnl(stats.maxWin)}
             </span>
             <span className="text-text-3"> / </span>
             <span className={stats.maxLoss === null ? 'text-text-3' : 'text-short'}>
-              {stats.maxLoss === null ? '--' : signedUsdt(stats.maxLoss)}
+              {stats.maxLoss === null ? '--' : formatSignedPnl(stats.maxLoss)}
             </span>
           </StatCard>
           <StatCard label="獲利因子">{formatProfitFactor(stats.profitFactor)}</StatCard>
@@ -129,9 +124,8 @@ export function AssetsPage() {
             dailyPositive ? 'text-long' : 'text-short',
           )}
         >
-          今日變化 {signedUsdt(dailyChange)}
-          {dailyChangePercent !== null &&
-            `（${dailyChangePercent >= 0 ? '+' : '−'}${Math.abs(dailyChangePercent).toFixed(2)}%）`}
+          今日變化 {formatSignedPnl(dailyChange)}
+          {dailyChangePercent !== null && `（${formatSignedPercent(dailyChangePercent)}）`}
         </p>
       </header>
 
@@ -156,7 +150,7 @@ export function AssetsPage() {
               upnlPositive ? 'text-long' : 'text-short',
             )}
           >
-            {signedUsdt(metrics.totalUpnl)}
+            {formatSignedPnl(metrics.totalUpnl)}
           </dd>
         </div>
       </dl>
@@ -216,7 +210,7 @@ export function AssetsPage() {
                         pnlPositive ? 'text-long' : 'text-short',
                       )}
                     >
-                      {signedUsdt(trade.realizedPnl)}
+                      {formatSignedPnl(trade.realizedPnl)}
                     </p>
                   </div>
                   <p className="mt-1 text-caption text-text-3 tabular-nums">

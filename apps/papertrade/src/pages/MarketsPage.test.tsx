@@ -67,7 +67,7 @@ describe('MarketsPage', () => {
     renderPage();
 
     const row = screen.getByRole('link', { name: /ETH/ });
-    expect(within(row).getByText('-2.12%')).toBeInTheDocument();
+    expect(within(row).getByText('−2.12%')).toBeInTheDocument();
   });
 
   it('links each row to its chart page', () => {

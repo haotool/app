@@ -5,7 +5,7 @@ import { liquidationPrice, roePercent, unrealizedPnl } from '../../engine/math';
 import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
-import { formatAmount, formatPrice, formatSignedPnl } from '../../lib/format';
+import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
 import { TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
 import { TpSlSheet } from './TpSlSheet';
@@ -13,11 +13,6 @@ import { TrailingSheet } from './TrailingSheet';
 import { CloseSheet } from './CloseSheet';
 
 type SheetKind = 'tpsl' | 'trailing' | 'close' | null;
-
-function signedUsdt(value: number): string {
-  const sign = value >= 0 ? '+' : '−';
-  return `${sign}${formatAmount(Math.abs(value), 2)}`;
-}
 
 export function PositionCard({ position }: { position: Position }) {
   const [sheet, setSheet] = useState<SheetKind>(null);
@@ -83,12 +78,12 @@ export function PositionCard({ position }: { position: Position }) {
               pnlPositive ? 'text-long' : 'text-short',
             )}
           >
-            {pnl !== null ? signedUsdt(pnl) : '--'}
+            {pnl !== null ? formatSignedPnl(pnl) : '--'}
           </p>
           <p
             className={clsx('text-caption tabular-nums', pnlPositive ? 'text-long' : 'text-short')}
           >
-            {roe !== null ? `${roe >= 0 ? '+' : '−'}${Math.abs(roe).toFixed(2)}%` : '--'}
+            {roe !== null ? formatSignedPercent(roe) : '--'}
           </p>
         </div>
       </header>
