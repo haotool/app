@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+135
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+136
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-pwa-install-guide
+- 原因：starpuff 無 PWA 安裝入口與平台指引，行動用戶不知可安裝離線全螢幕遊玩，in-app browser 用戶無外開引導
+- 解法：移植 RateWise 偵測矩陣為純 TS installGuide（platform/in-app/standalone 18 測試案）＋殼內 DOM overlay 分平台指引（iOS 加入主畫面/Android beforeinstallprompt/in-app 外開），localStorage 忽略記憶不進 save schema
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-key-scale-migration
