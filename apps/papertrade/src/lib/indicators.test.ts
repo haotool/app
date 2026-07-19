@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { computeIndicatorLine, computeSma, computeEma, INDICATORS } from './indicators';
+import {
+  computeIndicatorLine,
+  computeMacd,
+  computeSma,
+  computeEma,
+  emaFromValues,
+  INDICATORS,
+} from './indicators';
 import { type Kline } from '../services/kline';
 
 function bar(time: number, close: number): Kline {
@@ -60,6 +67,72 @@ describe('computeEma', () => {
   it('returns an empty window when bars are insufficient', () => {
     expect(computeEma(bars.slice(0, 2), 3)).toEqual([]);
     expect(computeEma([], 3)).toEqual([]);
+  });
+});
+
+describe('emaFromValues', () => {
+  it('matches computeEma output on the same closes', () => {
+    const sample = [bar(1, 10), bar(2, 11), bar(3, 12), bar(4, 13), bar(5, 14), bar(6, 15)];
+    const values = emaFromValues(
+      sample.map((item) => item.close),
+      4,
+    );
+    expect(values).toEqual(computeEma(sample, 4).map((point) => point.value));
+  });
+
+  it('returns an empty window when values are insufficient', () => {
+    expect(emaFromValues([1, 2], 3)).toEqual([]);
+    expect(emaFromValues([], 3)).toEqual([]);
+    expect(emaFromValues([1, 2, 3], 0)).toEqual([]);
+  });
+});
+
+describe('computeMacd', () => {
+  // RS-B 官方查證測試向量（對照 TA-Lib / pandas-ta，容差 ±1e-4）。
+  const closes = [
+    22.27, 22.19, 22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24, 22.29, 22.15, 22.39, 22.38,
+    22.61, 22.36, 22.56, 22.36, 22.03, 22.09, 22.09, 22.46, 22.59, 22.24, 22.03, 21.89, 22.09,
+    22.08, 22.17, 22.18, 22.13, 22.23, 22.43, 22.24, 22.29, 22.15, 22.39, 22.38, 22.61, 22.36,
+    22.56, 22.8, 22.97, 23.13, 23.19, 23.08, 23.01, 23.09, 23.0, 23.09, 23.06,
+  ];
+  const vectorBars = closes.map((close, index) => bar((index + 1) * 60, close));
+
+  const expected: [number, number, number, number][] = [
+    [33, -0.000569, -0.020235, 0.019666],
+    [34, -0.007822, -0.017753, 0.009931],
+    [37, 0.0413, 0.002382, 0.038918],
+    [40, 0.086967, 0.032907, 0.05406],
+    [43, 0.197602, 0.098312, 0.09929],
+    [46, 0.225036, 0.157492, 0.067544],
+    [49, 0.218784, 0.188288, 0.030496],
+  ];
+
+  it('matches the TA-Lib reference vector within 1e-4', () => {
+    const macd = computeMacd(vectorBars);
+    for (const [index, dif, dea, hist] of expected) {
+      const point = macd.find((item) => item.time === (index + 1) * 60);
+      expect(point, `index ${index}`).toBeDefined();
+      expect(point?.dif).toBeCloseTo(dif, 4);
+      expect(point?.dea).toBeCloseTo(dea, 4);
+      expect(point?.hist).toBeCloseTo(hist, 4);
+    }
+  });
+
+  it('starts at bars index (slow - 1) + (signal - 1) without padding', () => {
+    const macd = computeMacd(vectorBars);
+    expect(macd).toHaveLength(closes.length - 33);
+    expect(macd[0]?.time).toBe(34 * 60);
+  });
+
+  it('returns an empty window when bars are insufficient', () => {
+    expect(computeMacd(vectorBars.slice(0, 33))).toEqual([]);
+    expect(computeMacd([])).toEqual([]);
+  });
+
+  it('keeps hist equal to dif minus dea on every point', () => {
+    for (const point of computeMacd(vectorBars)) {
+      expect(point.hist).toBeCloseTo(point.dif - point.dea, 12);
+    }
   });
 });
 
