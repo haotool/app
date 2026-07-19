@@ -8,6 +8,7 @@ import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
 import { TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
 import { QTY_DISPLAY_DECIMALS } from '../../config/trading';
+import { PriceFlash } from '../PriceFlash';
 import { TpSlSheet } from './TpSlSheet';
 import { TrailingSheet } from './TrailingSheet';
 import { CloseSheet } from './CloseSheet';
@@ -71,19 +72,28 @@ export function PositionCard({ position }: { position: Position }) {
             {isLong ? '多' : '空'} {formatAmount(position.leverage, 1)}x
           </span>
         </div>
+        {/* R6-4 觀察面：uPnL/ROE 以 markRevision 驅動 flash，僅標記價真變動時刷新，
+            flash 色相隨當前損益方向；標記價 caption 讓使用者對照強平依據的數值。 */}
         <div className="text-right">
-          <p
+          <PriceFlash
+            direction={pnl === null ? null : pnlPositive ? 'up' : 'down'}
+            revision={ticker?.markRevision ?? 0}
             className={clsx(
-              'text-price-lg font-semibold tabular-nums',
+              'block text-price-lg font-semibold',
               pnlPositive ? 'text-long' : 'text-short',
             )}
           >
             {pnl !== null ? formatSignedPnl(pnl) : '--'}
-          </p>
-          <p
-            className={clsx('text-caption tabular-nums', pnlPositive ? 'text-long' : 'text-short')}
+          </PriceFlash>
+          <PriceFlash
+            direction={pnl === null ? null : pnlPositive ? 'up' : 'down'}
+            revision={ticker?.markRevision ?? 0}
+            className={clsx('block text-caption', pnlPositive ? 'text-long' : 'text-short')}
           >
             {roe !== null ? formatSignedPercent(roe) : '--'}
+          </PriceFlash>
+          <p className="mt-0.5 text-caption text-text-3 tabular-nums">
+            {`標記價 ${mark !== undefined ? formatPrice(mark) : '--'}`}
           </p>
         </div>
       </header>

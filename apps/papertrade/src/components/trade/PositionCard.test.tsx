@@ -70,6 +70,16 @@ describe('PositionCard', () => {
     expect(toasts.some((item) => item.tone === 'warning' && item.title === '平倉失敗')).toBe(true);
   });
 
+  it('shows the mark-price caption next to the pnl block (R6-4)', () => {
+    useMarketStore.getState().setTicker(btcTicker);
+    const position = seedLongPosition();
+    render(<PositionCard position={position} />);
+
+    // uPnL 區塊旁的標記價 caption：對照強平依據的數值（dl 內另有既有標記價欄）。
+    expect(screen.getByText('標記價 61,000.0')).toBeInTheDocument();
+    expect(screen.getByText('+100')).toBeInTheDocument();
+  });
+
   it('renders the action row in the R5-5 order: close, partial, tp/sl, trailing', () => {
     useMarketStore.getState().setTicker(btcTicker);
     const position = seedLongPosition();
