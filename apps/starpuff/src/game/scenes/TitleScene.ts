@@ -56,19 +56,25 @@ export class TitleScene extends Phaser.Scene {
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
       if (conquest) {
-        hero.setTint(0xffe9a8);
+        // 金色換裝：乘算 tint 需足夠深才有感（0xffe9a8 近白無感，實測校正）。
+        hero.setTint(0xffc94d);
         const badge = this.add
-          .text(centerX, heroY + 96, '星核制霸', {
+          .text(70, 34, '星核制霸', {
             fontFamily: 'system-ui, sans-serif',
-            fontSize: '16px',
+            fontSize: '15px',
             fontStyle: 'bold',
             color: '#8a6a1f',
             backgroundColor: '#ffe9a8',
-            padding: { x: 12, y: 5 },
+            padding: { x: 12, y: 6 },
           })
           .setOrigin(0.5)
           .setAlpha(0);
-        this.tweens.add({ targets: badge, alpha: 1, duration: 500, delay: 650 });
+        const star = this.add
+          .image(70 - badge.width / 2 - 16, 34, 'fx-star')
+          .setDisplaySize(22, 22)
+          .setTint(0xffd870)
+          .setAlpha(0);
+        this.tweens.add({ targets: [badge, star], alpha: 1, duration: 500, delay: 650 });
       }
       // 開場入場（§36）：主角自天而降 Bounce 落定，光暈淡入。
       hero.setY(heroY - 90).setAlpha(0);

@@ -1263,6 +1263,11 @@ export class GameScene extends Phaser.Scene {
     return this.boss.getProjectiles();
   }
 
+  // v13 觀測點（§86 bot 迴避取樣）：shockwave 型危害群組。
+  bossHazardBodies(): Phaser.Physics.Arcade.Group {
+    return this.boss.getShockwaves();
+  }
+
   private finish(result: 'won' | 'lost'): void {
     if (this.finished) return;
     this.finished = true;

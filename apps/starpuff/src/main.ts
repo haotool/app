@@ -112,6 +112,8 @@ declare global {
       bossPos: () => { x: number; y: number };
       bossBodies: () => { x: number; y: number }[];
       bossShots: () => { x: number; y: number }[];
+      bossHazards: () => { x: number; y: number; w: number; h: number }[];
+      enemyPositions: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
       walk: () => { rotation: number; bob: number; vy: number };
       crouch: () => number;
@@ -193,6 +195,36 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         shots.push({ x: Math.round(ball.x), y: Math.round(ball.y) });
       }
       return shots;
+    },
+    // v13 觀測點（§86 bot 迴避取樣）：場上敵人座標（小怪接觸傷/反射彈迴避）。
+    enemyPositions: () => {
+      const positions: { x: number; y: number }[] = [];
+      for (const child of internals().enemies.getGroup().getChildren()) {
+        if (!child.active) continue;
+        const foe = child as unknown as { x: number; y: number };
+        positions.push({ x: Math.round(foe.x), y: Math.round(foe.y) });
+      }
+      return positions;
+    },
+    // v13 觀測點（§86 bot 迴避取樣）：shockwave 型危害（晶柱/光束/糖漿波等）。
+    bossHazards: () => {
+      const hazards: { x: number; y: number; w: number; h: number }[] = [];
+      for (const child of gameScene().bossHazardBodies().getChildren()) {
+        if (!child.active) continue;
+        const wave = child as unknown as {
+          x: number;
+          y: number;
+          displayWidth: number;
+          displayHeight: number;
+        };
+        hazards.push({
+          x: Math.round(wave.x),
+          y: Math.round(wave.y),
+          w: Math.round(wave.displayWidth),
+          h: Math.round(wave.displayHeight),
+        });
+      }
+      return hazards;
     },
     ammo: () => internals().player.getAmmoState(),
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
