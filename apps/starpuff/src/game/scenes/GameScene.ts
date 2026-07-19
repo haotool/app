@@ -252,6 +252,7 @@ export class GameScene extends Phaser.Scene {
     this.achievementToasts = [];
     this.achievementToastActive = false;
     this.pendingUnlocked = [];
+    this.lastAchievementToast = '';
     this.farthestX = 0;
     this.mercy = createMercyState();
     this.mercyRng = Math.random;

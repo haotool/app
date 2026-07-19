@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+150
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+151
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-walkintoarena-keydown-immunity
+- 原因：退出案就緒門修復後全套 16 分鐘高負載下仍偶發同型失敗（bossHp 恆 -1）——keydown 單發 DOM 事件在任一場景 restart 入口的 teardown/create 窗都可能丟失且無 auto-repeat 補發
+- 解法：walkIntoArena 改每 5s 未見血條即冪等重按（新 DOM 事件必被新場景 Key 接收），30s 上限不變不掩蓋真缺陷；帶 trace 12 連跑＋v13 全 spec 全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-review-toast-batch-merge

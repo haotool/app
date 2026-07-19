@@ -74,12 +74,24 @@ async function seedSave(
 }
 
 // 前室右行入 arena：入場運鏡完成後 BOSS_SPAWNED 設定血條。
+// 就緒競態免疫（v15 flake 根修）：keydown 為單發 DOM 事件，場景 restart 的
+// teardown/create 窗會吃掉它且 Playwright 不做 OS auto-repeat——負載下窗口變寬
+// 即偶發玩家原地不走。改為每 5s 未見血條就重按（冪等重試，非加大 timeout）；
+// 血條邏輯真損壞時 30s 上限照樣失敗，不掩蓋缺陷。
 async function walkIntoArena(page: Page, expectedHp: number): Promise<void> {
-  await page.keyboard.down('ArrowRight');
-  await expect
-    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 30000 })
-    .toBe(expectedHp);
-  await page.keyboard.up('ArrowRight');
+  const deadline = Date.now() + 30000;
+  let hp = -1;
+  while (Date.now() < deadline && hp !== expectedHp) {
+    await page.keyboard.down('ArrowRight');
+    const slice = Math.min(Date.now() + 5000, deadline);
+    while (Date.now() < slice) {
+      hp = await page.evaluate(() => window.__sp.bossHp());
+      if (hp === expectedHp) break;
+      await page.waitForTimeout(250);
+    }
+    await page.keyboard.up('ArrowRight');
+  }
+  expect(hp).toBe(expectedHp);
 }
 
 // 可傷窗輪詢：入場演出完（active）後傷害才結算。
