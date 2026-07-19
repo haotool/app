@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarketsPage } from './MarketsPage';
+import { SYMBOLS } from '../config/market';
 import { useMarketStore } from '../stores/marketStore';
 import { useMarketPrefsStore } from '../stores/marketPrefsStore';
 import { type Ticker } from '../services/ticker';
@@ -47,9 +48,9 @@ describe('MarketsPage', () => {
     useMarketPrefsStore.setState({ favorites: [] });
   });
 
-  it('lists all ten symbols', () => {
+  it('lists every visible symbol', () => {
     renderPage();
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getAllByRole('listitem')).toHaveLength(SYMBOLS.length);
   });
 
   it('shows live price and positive badge for a ticker', () => {
@@ -66,7 +67,7 @@ describe('MarketsPage', () => {
     renderPage();
 
     const row = screen.getByRole('link', { name: /ETH/ });
-    expect(within(row).getByText('-2.12%')).toBeInTheDocument();
+    expect(within(row).getByText('−2.12%')).toBeInTheDocument();
   });
 
   it('links each row to its chart page', () => {
@@ -102,7 +103,7 @@ describe('MarketsPage', () => {
     expect(clearCta).toBeDefined();
     if (clearCta === undefined) throw new Error('missing clear cta');
     await user.click(clearCta);
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getAllByRole('listitem')).toHaveLength(SYMBOLS.length);
   });
 
   it('toggles a favorite from the row star button', async () => {
@@ -151,6 +152,6 @@ describe('MarketsPage', () => {
     expect(screen.getByText('輕點星號加入自選')).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: '全部' }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getAllByRole('listitem')).toHaveLength(SYMBOLS.length);
   });
 });

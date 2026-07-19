@@ -67,7 +67,7 @@ describe('CompactOrderBook 檔數自適應', () => {
   });
 
   it('observes the container during the loading skeleton so the measured height applies to late data', () => {
-    render(<CompactOrderBook symbol="BTCUSDT" levels={6} />);
+    render(<CompactOrderBook symbol="BTCUSDT" levels={10} />);
     expect(screen.getByLabelText('訂單簿載入中')).toBeInTheDocument();
 
     const observer = ResizeObserverMock.instances.at(-1);
@@ -75,22 +75,22 @@ describe('CompactOrderBook 檔數自適應', () => {
     expect(observer?.observed).toHaveLength(1);
 
     act(() => observer?.resize(412));
-    pushSnapshot(6);
+    pushSnapshot(10);
 
-    // fitSideLevels(412, 6) = 3 → 單側 3 檔。
-    expect(countLevelRows()).toBe(6);
+    // fitSideLevels(412, 10) = 5 → 單側 5 檔。
+    expect(countLevelRows()).toBe(10);
   });
 
   it('re-fits the visible levels when the container height changes', () => {
-    render(<CompactOrderBook symbol="BTCUSDT" levels={6} />);
-    pushSnapshot(6);
-    expect(countLevelRows()).toBe(12);
+    render(<CompactOrderBook symbol="BTCUSDT" levels={10} />);
+    pushSnapshot(10);
+    expect(countLevelRows()).toBe(20);
 
     const observer = ResizeObserverMock.instances.at(-1);
     act(() => observer?.resize(412));
-    expect(countLevelRows()).toBe(6);
+    expect(countLevelRows()).toBe(10);
 
     act(() => observer?.resize(2000));
-    expect(countLevelRows()).toBe(12);
+    expect(countLevelRows()).toBe(20);
   });
 });

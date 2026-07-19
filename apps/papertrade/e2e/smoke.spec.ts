@@ -23,14 +23,14 @@ test.describe('PaperTrade smoke journey', () => {
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('6000');
     await page.getByRole('button', { name: '買多' }).click();
 
-    await expect(page.getByText('目前持倉 (1)')).toBeVisible();
+    await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByText('強平價')).toBeVisible();
 
-    await page.getByRole('button', { name: '平倉' }).click();
-    await page.getByRole('button', { name: '確認平倉' }).click();
+    // R5-5 一鍵平倉：單擊市價全平，無確認框。
+    await page.getByRole('button', { name: '市價全平' }).click();
 
     await expect(page.getByText('尚無持倉')).toBeVisible();
-    await expect(page.getByText('目前持倉 (0)')).toBeVisible();
+    await expect(page.getByText('持倉 (0)')).toBeVisible();
   });
 
   test('bottom navigation switches between core tabs', async ({ page }) => {

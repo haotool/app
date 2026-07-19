@@ -61,7 +61,7 @@ describe('PairSelectorSheet', () => {
 
     await user.type(screen.getByRole('searchbox', { name: '搜尋交易對' }), 'zzz');
     expect(screen.getByText('找不到符合的交易對')).toBeInTheDocument();
-    expect(screen.getByText('試試其他關鍵字或幣種代號。')).toBeInTheDocument();
+    expect(screen.getByText('請改用其他關鍵字或幣種代號。')).toBeInTheDocument();
   });
 
   it('shows a clear button only while a query exists and clears back to the full list', async () => {

@@ -9,6 +9,8 @@ export const SYMBOLS = [
   'LTCUSDT',
   'LINKUSDT',
   'AVAXUSDT',
+  // 本地合成迷因幣（features/ppr）：是否為 ppr 來源由 isPprSymbol() 判斷，此處僅註冊。
+  'PPRUSDT',
 ] as const;
 
 export type MarketSymbol = (typeof SYMBOLS)[number];
@@ -30,6 +32,7 @@ export const SYMBOL_META: Record<MarketSymbol, SymbolMeta> = {
   LTCUSDT: { base: 'LTC', name: 'Litecoin', accent: 'var(--color-accent-ltc)' },
   LINKUSDT: { base: 'LINK', name: 'Chainlink', accent: 'var(--color-accent-link)' },
   AVAXUSDT: { base: 'AVAX', name: 'Avalanche', accent: 'var(--color-accent-avax)' },
+  PPRUSDT: { base: 'PPR', name: 'PPR 泡泡幣', accent: 'var(--color-accent-ppr)' },
 };
 
 export function isMarketSymbol(value: string): value is MarketSymbol {
@@ -69,9 +72,9 @@ export const SPARKLINE_POINTS = 24;
 export const SPARKLINE_INTERVAL: TimeframeId = '60';
 export const SPARKLINE_CACHE_TTL_MS = 5 * 60 * 1000;
 export const SPARKLINE_MAX_CONCURRENCY = 3;
-export const ORDERBOOK_DISPLAY_LEVELS = 8;
+export const ORDERBOOK_DISPLAY_LEVELS = 10;
 // 交易頁緊湊訂單簿單側檔數上限；實際檔數依左欄表單高度動態裁切（最少各 3 檔）。
-export const TRADE_ORDERBOOK_LEVELS = 6;
+export const TRADE_ORDERBOOK_LEVELS = 10;
 export const TRADES_DISPLAY_LIMIT = 30;
 // 深度圖重繪節流：訂單簿 tick 遠高於視覺需求，取樣間隔內只重繪一次。
 export const DEPTH_REDRAW_INTERVAL_MS = 300;

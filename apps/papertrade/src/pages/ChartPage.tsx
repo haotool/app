@@ -22,6 +22,7 @@ import { OrderBookPanel } from '../components/OrderBookPanel';
 import { RecentTrades } from '../components/RecentTrades';
 import { PriceFlash } from '../components/PriceFlash';
 import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
+import { PprDisclaimerChip } from '../features/ppr/PprBadge';
 
 function SymbolHeader({
   symbol,
@@ -60,6 +61,9 @@ function SymbolHeader({
           ) : (
             <span className="skeleton-pulse mt-1 inline-block h-8 w-36 rounded" />
           )}
+          <div className="mt-1 empty:hidden">
+            <PprDisclaimerChip symbol={symbol} />
+          </div>
         </div>
         {ticker && (
           <span
@@ -68,7 +72,7 @@ function SymbolHeader({
               ticker.price24hPcnt >= 0 ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
             )}
           >
-            {formatSignedPercent(ticker.price24hPcnt)}
+            {formatSignedPercent(ticker.price24hPcnt * 100)}
           </span>
         )}
       </div>

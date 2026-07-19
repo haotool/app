@@ -83,6 +83,7 @@ describe('computePracticeStats', () => {
       openedAt: 0,
       takeProfit: null,
       stopLoss: null,
+      tpSlCloseRatio: 1,
       trailing: null,
     };
     const account: Account = { balance: 10000, positions: [position], orders: [], history: [] };

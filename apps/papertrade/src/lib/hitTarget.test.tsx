@@ -102,6 +102,48 @@ function feedOrderbook() {
   });
 }
 
+describe('data-dense-row 顯式豁免', () => {
+  it('skips undersized buttons inside a dense-row scope', () => {
+    render(
+      <ol>
+        <li>
+          <button type="button" data-dense-row className="h-8 w-full">
+            59,900
+          </button>
+        </li>
+        <li>
+          <button type="button" className="relative h-8 w-full" data-dense-row>
+            60,100
+          </button>
+        </li>
+      </ol>,
+    );
+    expect(findHitTargetViolations(document.body)).toEqual([]);
+  });
+
+  it('skips undersized buttons whose ancestor carries the dense-row scope', () => {
+    render(
+      <ol data-dense-row>
+        <li>
+          <button type="button" className="h-8 w-full">
+            59,900
+          </button>
+        </li>
+      </ol>,
+    );
+    expect(findHitTargetViolations(document.body)).toEqual([]);
+  });
+
+  it('still reports undersized buttons without the exemption attribute', () => {
+    render(
+      <button type="button" className="h-8 w-full">
+        59,900
+      </button>,
+    );
+    expect(findHitTargetViolations(document.body)).toHaveLength(1);
+  });
+});
+
 describe('44px 觸控目標防回歸掃蕩', () => {
   beforeEach(() => {
     wsHandlers.clear();
@@ -130,7 +172,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
   it('trade page with an active toast passes', () => {
     renderRoute('/trade');
     act(() => {
-      useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多成功' });
+      useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多已成交' });
     });
     expect(screen.getByRole('button', { name: '關閉通知' })).toBeInTheDocument();
     expectNoViolations();
@@ -194,11 +236,11 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expectNoViolations();
     await user.keyboard('{Escape}');
 
-    await user.click(screen.getByRole('button', { name: '追蹤止損' }));
+    await user.click(screen.getByRole('button', { name: '追蹤' }));
     expectNoViolations();
     await user.keyboard('{Escape}');
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '部分平倉' }));
     await user.click(screen.getByRole('tab', { name: '限價平倉' }));
     expectNoViolations();
   });

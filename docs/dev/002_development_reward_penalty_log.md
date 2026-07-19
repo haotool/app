@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-papertrade-r5-app-feel
+- 原因：PaperTrade 缺 App 級觸控體感與交易深度——可縮放、訂單簿僅 6 檔、TF 切換有 skeleton、TP/SL 僅單一價格輸入、槓桿上限 125x（固定 MMR 在高槓桿會開倉即強平）、連線提示突兀、無幣種圖示與強平音效
+- 解法：R5 四波交付（sticky 頂欄、十檔 32px 密度簿＋dense-row 豁免 ADR、禁縮放＋PWA 體感 ADR、SWR 快取零延遲切 TF、雙區同顯＋一鍵平倉、TP/SL 三向換算部分平倉、有效 MMR=min(0.005, 0.5/lev) ADR、PPR 獨立模組零污染、WebAudio 合成音、vendor CC0 圖示、LOGO/OG 更新），Grok 審查＋真瀏覽器 QA 收斂 P0 限價護欄後全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v12-astral-finale

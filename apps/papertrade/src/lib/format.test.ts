@@ -7,6 +7,7 @@ import {
   formatFundingRate,
   formatPrice,
   formatSignedPercent,
+  formatSignedPnl,
 } from './format';
 
 describe('formatPrice', () => {
@@ -36,20 +37,46 @@ describe('formatPrice', () => {
 });
 
 describe('formatSignedPercent', () => {
-  it('adds plus sign for positive ratios', () => {
-    expect(formatSignedPercent(0.038264)).toBe('+3.83%');
+  it('adds plus sign for positive percents', () => {
+    expect(formatSignedPercent(3.8264)).toBe('+3.83%');
   });
 
-  it('keeps minus sign for negative ratios', () => {
-    expect(formatSignedPercent(-0.0212)).toBe('-2.12%');
+  it('keeps minus sign for negative percents', () => {
+    expect(formatSignedPercent(-2.12)).toBe('−2.12%');
   });
 
-  it('formats zero without sign', () => {
+  it('treats magnitudes below the display half-step as unsigned zero', () => {
+    // 與 formatSignedPnl 同款近零 guard：微幅 ROE 不得顯示「−0.00%」。
+    expect(formatSignedPercent(-0.0049)).toBe('0.00%');
+    expect(formatSignedPercent(0.0049)).toBe('0.00%');
     expect(formatSignedPercent(0)).toBe('0.00%');
+  });
+
+  it('keeps the sign at and above the display half-step', () => {
+    expect(formatSignedPercent(-0.005)).toBe('−0.01%');
   });
 
   it('returns placeholder for non-finite values', () => {
     expect(formatSignedPercent(Number.POSITIVE_INFINITY)).toBe('--');
+  });
+});
+
+describe('formatSignedPnl', () => {
+  it('treats magnitudes below the display half-step as unsigned zero', () => {
+    // QA 重現：微幅虧損平倉 toast 顯示「−0 USDT」，半格以下一律顯示 0.00 不帶負號。
+    expect(formatSignedPnl(-0.0049)).toBe('0.00');
+    expect(formatSignedPnl(0.0049)).toBe('0.00');
+    expect(formatSignedPnl(0)).toBe('0.00');
+  });
+
+  it('keeps the sign at and above the display half-step', () => {
+    expect(formatSignedPnl(-0.005)).toBe('−0.01');
+    expect(formatSignedPnl(-12.34)).toBe('−12.34');
+    expect(formatSignedPnl(100)).toBe('+100');
+  });
+
+  it('returns placeholder for non-finite values', () => {
+    expect(formatSignedPnl(Number.NaN)).toBe('--');
   });
 });
 

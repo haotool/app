@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import { TRADES_DISPLAY_LIMIT, type MarketSymbol } from '../config/market';
 import {
   backfillTrades,
-  fetchRecentTrades,
   mergeTrades,
   parseTradeMessage,
   type PublicTrade,
 } from '../services/trades';
-import { marketWs } from '../services/marketWs';
+import { fetchRecentTradesBySymbol, marketWsFor } from '../lib/marketSource';
 
 const EMPTY_TRADES: PublicTrade[] = [];
 
@@ -20,14 +19,14 @@ export function useRecentTrades(symbol: MarketSymbol): PublicTrade[] {
   useEffect(() => {
     let cancelled = false;
     let trades = EMPTY_TRADES;
-    const stop = marketWs.subscribe(`publicTrade.${symbol}`, (message) => {
+    const stop = marketWsFor(symbol).subscribe(`publicTrade.${symbol}`, (message) => {
       const incoming = parseTradeMessage(message);
       if (incoming.length === 0) return;
       trades = mergeTrades(trades, incoming, TRADES_DISPLAY_LIMIT);
       setState({ symbol, trades });
     });
     // WS 只推新成交：以 REST 回填最近成交，首開列表即完整。
-    fetchRecentTrades(symbol, TRADES_DISPLAY_LIMIT)
+    fetchRecentTradesBySymbol(symbol, TRADES_DISPLAY_LIMIT)
       .then((history) => {
         if (cancelled || history.length === 0) return;
         trades = backfillTrades(trades, history, TRADES_DISPLAY_LIMIT);

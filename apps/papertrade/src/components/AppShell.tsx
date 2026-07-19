@@ -6,9 +6,12 @@ import { ToastHost } from './ToastHost';
 import { DisclaimerDialog } from './DisclaimerDialog';
 import { useAutoUpdate } from '../hooks/useAutoUpdate';
 import { startMarketFeed } from '../services/marketFeed';
+import { unlockAudio } from '../lib/sound';
 
 export function AppShell() {
   useEffect(() => startMarketFeed(), []);
+  // 首次使用者手勢解鎖 AudioContext（iOS 必要），強平提示音才能即時播放。
+  useEffect(() => unlockAudio(), []);
   useAutoUpdate();
 
   return (

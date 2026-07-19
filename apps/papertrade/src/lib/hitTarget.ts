@@ -10,6 +10,8 @@ const INTERACTIVE_SELECTOR = 'button, a[href], input, select, textarea';
 export function findHitTargetViolations(root: ParentNode): string[] {
   const violations: string[] = [];
   for (const element of root.querySelectorAll<HTMLElement>(INTERACTIVE_SELECTOR)) {
+    // 顯式豁免（ADR-R5-01）：帶 data-dense-row 的高密度資料列跳過 44px 掃蕩，僅限訂單簿檔位列。
+    if (element.closest('[data-dense-row]') !== null) continue;
     const ownClass = element.className;
     const labelClass = element.closest('label')?.className ?? '';
     const heightOk =

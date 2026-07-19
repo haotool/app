@@ -5,13 +5,14 @@ import clsx from 'clsx';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
 import { useMarketStore } from '../stores/marketStore';
 import { useMarketPrefsStore } from '../stores/marketPrefsStore';
-import { fetchSparkline } from '../services/sparkline';
+import { fetchSparklineBySymbol } from '../lib/marketSource';
 import { formatCompact, formatPrice, formatSignedPercent } from '../lib/format';
 import { filterSymbolsByQuery } from '../lib/symbolSearch';
 import { CoinBadge } from '../components/CoinBadge';
 import { EmptyState } from '../components/EmptyState';
 import { PriceFlash } from '../components/PriceFlash';
 import { Sparkline } from '../components/Sparkline';
+import { PprTag } from '../features/ppr/PprBadge';
 
 type MarketListTab = 'all' | 'favorites';
 
@@ -25,7 +26,7 @@ function useSparklineData(symbol: MarketSymbol): number[] {
 
   useEffect(() => {
     let cancelled = false;
-    fetchSparkline(symbol)
+    fetchSparklineBySymbol(symbol)
       .then((closes) => {
         if (!cancelled) setData(closes);
       })
@@ -75,9 +76,12 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
       >
         <CoinBadge symbol={symbol} size="md" variant="soft" />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-body font-medium">
-            {meta.base}
-            <span className="text-text-3">/USDT</span>
+          <span className="flex items-center gap-1.5 text-body font-medium">
+            <span>
+              {meta.base}
+              <span className="text-text-3">/USDT</span>
+            </span>
+            <PprTag symbol={symbol} />
           </span>
           <span className="truncate text-caption text-text-3">
             量 {ticker ? formatCompact(ticker.turnover24h) : '--'}
@@ -100,7 +104,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
                   ticker.price24hPcnt >= 0 ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
                 )}
               >
-                {formatSignedPercent(ticker.price24hPcnt)}
+                {formatSignedPercent(ticker.price24hPcnt * 100)}
               </span>
             </>
           ) : (
@@ -130,8 +134,9 @@ export function MarketsPage() {
 
   return (
     <section className="lg:mx-auto lg:max-w-2xl">
-      <header className="sticky top-0 z-10 bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
-        <h1 className="mb-3 text-price-lg font-semibold">行情</h1>
+      <h1 className="px-4 pt-4 text-price-lg font-semibold">行情</h1>
+      {/* sticky 搜尋與清單切換：標題自然捲走，工具列捲動常駐（與交易頁同樣式族）。 */}
+      <header className="sticky top-0 z-20 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
         <label className="flex h-11 items-center gap-2 rounded-control border border-border bg-surface pl-3">
           <Search size={18} className="shrink-0 text-text-3" aria-hidden />
           <input
@@ -183,7 +188,7 @@ export function MarketsPage() {
         <EmptyState
           icon={SearchX}
           title="找不到符合的交易對"
-          description="試試其他關鍵字或幣種代號。"
+          description="請改用其他關鍵字或幣種代號。"
           className="mx-4 mt-4"
           action={
             <button

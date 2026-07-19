@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { useKlines } from './useKlines';
+import { useKlines, type KlineStatus } from './useKlines';
+import { clearKlineCache } from '../lib/klineCache';
+import { type MarketSymbol, type TimeframeId } from '../config/market';
 import { type Kline } from '../services/kline';
 import type * as KlineModule from '../services/kline';
 
@@ -47,15 +49,42 @@ describe('useKlines', () => {
   let topicHandlers: Map<string, (message: unknown) => void>;
   let stopSpies: Mock[];
   let statusHandlers: Set<StatusHandler>;
+  let idleCallbacks: Map<number, () => void>;
+  let idleSeq: number;
 
   function emitStatus(status: Parameters<StatusHandler>[0]) {
     statusHandlers.forEach((handler) => handler(status));
   }
 
+  async function flushIdleQueue(): Promise<void> {
+    while (idleCallbacks.size > 0) {
+      const next = idleCallbacks.entries().next().value;
+      if (next === undefined) return;
+      idleCallbacks.delete(next[0]);
+      await act(async () => {
+        next[1]();
+        // 以 macrotask 讓 fetch promise 鏈完整結清，才輪到下一個排程。
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+  }
+
   beforeEach(() => {
+    clearKlineCache();
     topicHandlers = new Map();
     stopSpies = [];
     statusHandlers = new Set();
+    // 攔截 idle 排程：prefetch 只在測試顯式 flush 時執行，避免背景請求污染計數。
+    idleCallbacks = new Map();
+    idleSeq = 0;
+    vi.stubGlobal('requestIdleCallback', (callback: IdleRequestCallback) => {
+      idleSeq += 1;
+      idleCallbacks.set(idleSeq, () => callback({} as IdleDeadline));
+      return idleSeq;
+    });
+    vi.stubGlobal('cancelIdleCallback', (id: number) => {
+      idleCallbacks.delete(id);
+    });
     subscribeMock.mockReset();
     subscribeMock.mockImplementation((topic: string, handler: (message: unknown) => void) => {
       topicHandlers.set(topic, handler);
@@ -178,6 +207,47 @@ describe('useKlines', () => {
     expect(result.current.bars[1]?.close).toBe(101);
   });
 
+  it('applies only the latest refresh when two refreshes resolve out of order', async () => {
+    const resolvers: ((bars: Kline[]) => void)[] = [];
+    fetchKlinesMock.mockImplementation(
+      () =>
+        new Promise<Kline[]>((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await act(async () => {
+      resolvers[0]?.([bar(60), bar(120, 100)]);
+      await Promise.resolve();
+    });
+    expect(result.current.status).toBe('ready');
+
+    // 兩次重連 refresh 交錯在途：後發（第 3 次請求）先完成。
+    await act(async () => {
+      emitStatus('reconnecting');
+      emitStatus('connected');
+      emitStatus('reconnecting');
+      emitStatus('connected');
+      await Promise.resolve();
+    });
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      resolvers[2]?.([bar(120, 108), bar(180, 110)]);
+      await Promise.resolve();
+    });
+    expect(result.current.bars.map((candle) => candle.time)).toEqual([60, 120, 180]);
+    expect(result.current.bars[1]?.close).toBe(108);
+
+    // 舊請求（第 2 次）後完成：必須被序號守門丟棄，不得覆寫較新序列。
+    await act(async () => {
+      resolvers[1]?.([bar(120, 101)]);
+      await Promise.resolve();
+    });
+    expect(result.current.bars.map((candle) => candle.time)).toEqual([60, 120, 180]);
+    expect(result.current.bars[1]?.close).toBe(108);
+  });
+
   it('does not refetch while the connection stays healthy', async () => {
     fetchKlinesMock.mockResolvedValue([bar(60)]);
     const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
@@ -201,5 +271,121 @@ describe('useKlines', () => {
     });
     await waitFor(() => expect(result.current.status).toBe('ready'));
     expect(result.current.bars).toHaveLength(1);
+  });
+
+  it('serves cached bars with no loading state when returning to a visited timeframe', async () => {
+    fetchKlinesMock.mockResolvedValue([bar(60), bar(120)]);
+    const statusLog: KlineStatus[] = [];
+    const { result, rerender } = renderHook(
+      ({ interval }: { interval: TimeframeId }) => {
+        const feed = useKlines('BTCUSDT', interval);
+        statusLog.push(feed.status);
+        return feed;
+      },
+      { initialProps: { interval: '60' as TimeframeId } },
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    rerender({ interval: '5' });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    fetchKlinesMock.mockClear();
+    statusLog.length = 0;
+    rerender({ interval: '60' });
+
+    // 快取命中：切回瞬間即為 ready 且帶完整序列，全程無任何 loading 渲染。
+    expect(result.current.status).toBe('ready');
+    expect(result.current.bars).toHaveLength(2);
+    expect(statusLog).not.toContain('loading');
+
+    // 背景 revalidate 恰好一次。
+    await waitFor(() => expect(fetchKlinesMock).toHaveBeenCalledTimes(1));
+    expect(fetchKlinesMock).toHaveBeenCalledWith('BTCUSDT', '60', 1000);
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(statusLog).not.toContain('loading');
+  });
+
+  it('silently refreshes cached bars from the background revalidate', async () => {
+    fetchKlinesMock.mockResolvedValueOnce([bar(60), bar(120, 100)]);
+    const { result, rerender } = renderHook(
+      ({ interval }: { interval: TimeframeId }) => useKlines('BTCUSDT', interval),
+      { initialProps: { interval: '60' as TimeframeId } },
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    fetchKlinesMock.mockResolvedValueOnce([bar(60)]);
+    rerender({ interval: '5' });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    // 切回 60：revalidate 取得更新後的序列，靜默套用並回寫快取。
+    fetchKlinesMock.mockResolvedValueOnce([bar(60), bar(120, 101), bar(180, 105)]);
+    rerender({ interval: '60' });
+    expect(result.current.bars.at(-1)?.time).toBe(120);
+    await waitFor(() => expect(result.current.bars.at(-1)?.time).toBe(180));
+    expect(result.current.bars[1]?.close).toBe(101);
+  });
+
+  it('keeps the kline cache fresh from realtime updates', async () => {
+    fetchKlinesMock.mockResolvedValue([bar(60), bar(120, 100)]);
+    const { result, rerender } = renderHook(
+      ({ interval }: { interval: TimeframeId }) => useKlines('BTCUSDT', interval),
+      { initialProps: { interval: '60' as TimeframeId } },
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    act(() => {
+      topicHandlers.get('kline.60.BTCUSDT')?.(wsKlinePayload(180, 110));
+    });
+    expect(result.current.bars).toHaveLength(3);
+
+    // 切走再切回：快取序列須含 WS 寫入的最新 bar，非陳舊的 REST 快照。
+    fetchKlinesMock.mockClear();
+    fetchKlinesMock.mockImplementation(() => new Promise<Kline[]>(() => undefined));
+    rerender({ interval: '5' });
+    rerender({ interval: '60' });
+    expect(result.current.status).toBe('ready');
+    expect(result.current.bars).toHaveLength(3);
+    expect(result.current.bars.at(-1)?.time).toBe(180);
+  });
+
+  it('prefetches the remaining timeframes once after the current one loads', async () => {
+    fetchKlinesMock.mockResolvedValue([bar(60)]);
+    const { result } = renderHook(() => useKlines('BTCUSDT', '60'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(1);
+
+    await flushIdleQueue();
+
+    // 其餘 6 個 TF 各被預抓一次（含當前共 7 次），且不重抓當前 TF。
+    expect(fetchKlinesMock).toHaveBeenCalledTimes(7);
+    const prefetchedIntervals = fetchKlinesMock.mock.calls.slice(1).map((call) => call[1]);
+    expect([...prefetchedIntervals].sort()).toEqual(['1', '15', '240', '5', 'D', 'W']);
+
+    // 預抓結果已入快取：切換任一 TF 立即 ready。
+    fetchKlinesMock.mockClear();
+    const { result: nextResult } = renderHook(() => useKlines('BTCUSDT', '15'));
+    expect(nextResult.current.status).toBe('ready');
+  });
+
+  it('cancels pending prefetch when the symbol changes', async () => {
+    fetchKlinesMock.mockResolvedValue([bar(60)]);
+    const { result, rerender } = renderHook(
+      ({ symbol }: { symbol: MarketSymbol }) => useKlines(symbol, '60'),
+      { initialProps: { symbol: 'BTCUSDT' as MarketSymbol } },
+    );
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    // BTC 預抓尚未執行即切換 symbol：佇列必須整批取消。
+    rerender({ symbol: 'ETHUSDT' });
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    await flushIdleQueue();
+
+    const btcPrefetches = fetchKlinesMock.mock.calls.filter(
+      (call) => call[0] === 'BTCUSDT' && call[1] !== '60',
+    );
+    expect(btcPrefetches).toHaveLength(0);
+    const ethPrefetches = fetchKlinesMock.mock.calls.filter(
+      (call) => call[0] === 'ETHUSDT' && call[1] !== '60',
+    );
+    expect(ethPrefetches).toHaveLength(6);
   });
 });

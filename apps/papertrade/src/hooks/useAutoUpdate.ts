@@ -27,7 +27,7 @@ export function useAutoUpdate(): void {
       registrationRef.current = registration ?? null;
     },
     onOfflineReady() {
-      pushToast({ tone: 'info', title: '離線就緒', description: '已快取應用外殼，離線也能開啟。' });
+      pushToast({ tone: 'info', title: '離線就緒', description: '已快取應用資源，離線亦可開啟。' });
     },
   });
 

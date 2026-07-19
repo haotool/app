@@ -15,6 +15,8 @@ import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
 import {
   amountToPercent,
+  isLimitPriceWithinBand,
+  LIMIT_PRICE_BAND_MESSAGE,
   maxOpenNotional,
   parseOrderForm,
   parsePositiveInput,
@@ -156,6 +158,11 @@ export function OrderForm({
         setError('請輸入大於 0 的限價');
         return;
       }
+      // 限價護欄：偏離標記價超過帶寬即拒單；行情未就緒時無基準可比，放行交由 zod 驗證。
+      if (markPrice !== undefined && !isLimitPriceWithinBand(limitPriceValue, markPrice)) {
+        setError(LIMIT_PRICE_BAND_MESSAGE);
+        return;
+      }
       price = limitPriceValue;
     }
 
@@ -211,7 +218,7 @@ export function OrderForm({
     const sideText = side === 'long' ? '買多' : '賣空';
     pushToast({
       tone: side,
-      title: mode === 'market' ? `市價${sideText}成功` : `限價${sideText}掛單成功`,
+      title: mode === 'market' ? `市價${sideText}已成交` : `限價${sideText}委託已送出`,
       description: `${base}/USDT ${formatAmount(parsed.qty, QTY_DISPLAY_DECIMALS)} ${base} @ ${formatPrice(parsed.price)}`,
     });
   }

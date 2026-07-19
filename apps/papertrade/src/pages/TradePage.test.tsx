@@ -113,8 +113,21 @@ describe('TradePage', () => {
     const { account } = useTradeStore.getState();
     expect(account.positions).toHaveLength(1);
     expect(account.positions[0]?.qty).toBeCloseTo(0.1, 10);
-    expect(screen.getByText('目前持倉', { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '持倉' })).toBeInTheDocument();
     expect(screen.getByText('強平價')).toBeInTheDocument();
+  });
+
+  it('stacks the positions and open orders blocks with slim empty captions', () => {
+    renderTrade();
+
+    const positionSection = screen.getByRole('region', { name: '持倉' });
+    const orderSection = screen.getByRole('region', { name: '當前委託' });
+    expect(within(positionSection).getByText('尚無持倉')).toBeInTheDocument();
+    expect(within(orderSection).getByText('尚無委託')).toBeInTheDocument();
+    // 堆疊順序：持倉區在委託區之前。
+    expect(
+      positionSection.compareDocumentPosition(orderSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('shows an inline error when amount is missing', async () => {
@@ -156,12 +169,45 @@ describe('TradePage', () => {
     await user.click(screen.getByRole('button', { name: '買多' }));
 
     expect(useTradeStore.getState().account.orders).toHaveLength(1);
-    const orderList = screen.getByRole('region', { name: '目前掛單' });
+    const orderList = screen.getByRole('region', { name: '當前委託' });
     expect(within(orderList).getByText(/58,000/)).toBeInTheDocument();
 
     await user.click(within(orderList).getByRole('button', { name: '撤單' }));
     expect(useTradeStore.getState().account.orders).toHaveLength(0);
     expect(useTradeStore.getState().account.balance).toBeCloseTo(10000, 8);
+  });
+
+  it('rejects a limit order priced outside the mark price band', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '0.0001');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('限價需在標記價 ±50% 範圍內');
+    expect(useTradeStore.getState().account.orders).toHaveLength(0);
+    expect(useTradeStore.getState().account.positions).toHaveLength(0);
+  });
+
+  it('accepts limit orders exactly at the mark price band boundaries', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    // mark 60000：下界 30000（買多掛低）與上界 90000（賣空掛高）均應放行。
+    await user.click(screen.getByRole('tab', { name: '限價' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '30000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+    expect(useTradeStore.getState().account.orders).toHaveLength(1);
+
+    await user.clear(screen.getByRole('textbox', { name: '限價（USDT）' }));
+    await user.type(screen.getByRole('textbox', { name: '限價（USDT）' }), '90000');
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '賣空' }));
+    expect(useTradeStore.getState().account.orders).toHaveLength(2);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('fills the limit price from the order book', async () => {
@@ -579,20 +625,35 @@ describe('TradePage', () => {
     expect(screen.getByText(/止盈 61,000/)).toBeInTheDocument();
   });
 
-  it('closes the position via the close sheet', async () => {
+  it('closes the full position with the one-tap close button, no confirmation sheet', async () => {
     const user = userEvent.setup();
     renderTrade();
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
     await user.click(screen.getByRole('button', { name: '買多' }));
-    await user.click(screen.getByRole('button', { name: '平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
+
+    const { account } = useTradeStore.getState();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(account.positions).toHaveLength(0);
+    expect(account.history).toHaveLength(1);
+    expect(account.history[0]?.reason).toBe('manual');
+    expect(screen.getByText('尚無持倉')).toBeInTheDocument();
+  });
+
+  it('closes via the partial close sheet from the partial button', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '買多' }));
+    await user.click(screen.getByRole('button', { name: '部分平倉' }));
     await user.click(screen.getByRole('button', { name: '確認平倉' }));
 
     const { account } = useTradeStore.getState();
     expect(account.positions).toHaveLength(0);
     expect(account.history).toHaveLength(1);
     expect(account.history[0]?.reason).toBe('manual');
-    expect(screen.getByText('尚無持倉')).toBeInTheDocument();
   });
 
   it('reports the engine-realized pnl in the close toast, not the preview value', async () => {
@@ -606,12 +667,11 @@ describe('TradePage', () => {
       useMarketStore.getState().setTicker({ ...btcTicker, lastPrice: 61000, markPrice: 61000 });
     });
 
-    await user.click(screen.getByRole('button', { name: '平倉' }));
-    await user.click(screen.getByRole('button', { name: '確認平倉' }));
+    await user.click(screen.getByRole('button', { name: '市價全平' }));
 
     const closeToast = useTradeStore
       .getState()
-      .toasts.find((toast) => toast.title.includes('市價平倉成功'));
+      .toasts.find((toast) => toast.title.includes('市價平倉完成'));
     expect(closeToast?.description).toBe('+100 USDT');
 
     const trade = useTradeStore.getState().account.history[0];

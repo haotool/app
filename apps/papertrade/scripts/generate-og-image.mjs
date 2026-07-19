@@ -1,9 +1,9 @@
 /**
  * OG 分享圖生成腳本（快照制：手動執行、產物 commit，模式同 generate-icons.mjs）。
- * 設計 SSOT 內嵌於本檔：深色底＋三根上升蠟燭＋品牌標題，色值對齊 src/index.css tokens。
+ * Logo mark 源＝public/favicon.svg（單點 SSOT）；版面：左置 logo、主副標、右側淡蠟燭裝飾。
  * 執行：node apps/papertrade/scripts/generate-og-image.mjs（依賴 app 內 @playwright/test）
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -16,32 +16,47 @@ const HEIGHT = 630;
 
 const COLORS = {
   bg: '#0B0E14',
-  surface: '#141A26',
   short: '#EA3943',
   long: '#16C784',
-  primary: '#4F7CFF',
-  text: '#EDF0F7',
-  text3: '#8A93A6',
+  text: '#FFFFFF',
+  text2: '#9AA4B2',
 };
 
-function candle(cx, bodyTop, wickTop, wickBottom, color) {
-  const bodyHeight = 150;
-  const bodyWidth = 80;
+const FONT_STACK = "system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+
+// 將 favicon.svg 以巢狀 <svg> 內嵌為左置 logo mark（保留其 viewBox 幾何）。
+function logoMark(x, y, size) {
+  const source = readFileSync(resolve(PUBLIC_DIR, 'favicon.svg'), 'utf8');
+  const openTag = /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 512 512">/;
+  if (!openTag.test(source)) {
+    throw new Error('favicon.svg 根標籤結構異動，請同步更新 generate-og-image.mjs');
+  }
+  return source
+    .replace(
+      openTag,
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" x="${x}" y="${y}" width="${size}" height="${size}">`,
+    )
+    .trim();
+}
+
+// 右側大尺度淡蠟燭裝飾（約 20% 透明、裁邊）。
+function bgCandle(cx, bodyTop, bodyHeight, wickTop, wickBottom, color) {
+  const bodyWidth = 132;
   return [
-    `<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBottom}" stroke="${color}" stroke-width="20" stroke-linecap="round"/>`,
-    `<rect x="${cx - bodyWidth / 2}" y="${bodyTop}" width="${bodyWidth}" height="${bodyHeight}" rx="15" fill="${color}"/>`,
+    `<g opacity="0.18">`,
+    `<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBottom}" stroke="${color}" stroke-width="26" stroke-linecap="round"/>`,
+    `<rect x="${cx - bodyWidth / 2}" y="${bodyTop}" width="${bodyWidth}" height="${bodyHeight}" rx="26" fill="${color}"/>`,
+    `</g>`,
   ].join('\n  ');
 }
 
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}">
   <rect width="${WIDTH}" height="${HEIGHT}" fill="${COLORS.bg}"/>
-  <rect x="70" y="115" width="400" height="400" rx="90" fill="${COLORS.surface}"/>
-  ${candle(176, 300, 260, 470, COLORS.short)}
-  ${candle(270, 240, 200, 410, COLORS.long)}
-  ${candle(364, 175, 135, 345, COLORS.primary)}
-  <text x="540" y="290" font-family="'PingFang TC', 'Noto Sans TC', sans-serif" font-size="92" font-weight="700" fill="${COLORS.text}">PaperTrade</text>
-  <text x="543" y="380" font-family="'PingFang TC', 'Noto Sans TC', sans-serif" font-size="46" font-weight="500" fill="${COLORS.text3}">零風險模擬合約交易所</text>
-  <text x="543" y="452" font-family="'PingFang TC', 'Noto Sans TC', sans-serif" font-size="30" fill="${COLORS.text3}">真實行情 × 模擬資金 × 永續合約練習</text>
+  ${bgCandle(985, 90, 330, -60, 640, COLORS.long)}
+  ${bgCandle(1150, 280, 320, 120, 720, COLORS.short)}
+  ${logoMark(84, 150, 330)}
+  <text x="500" y="322" font-family="${FONT_STACK}" font-size="104" font-weight="700" fill="${COLORS.text}">PaperTrade</text>
+  <text x="506" y="412" font-family="${FONT_STACK}" font-size="46" font-weight="500" fill="${COLORS.text2}">零風險模擬合約交易所</text>
 </svg>
 `;
 

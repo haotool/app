@@ -8,6 +8,7 @@ import { SYMBOL_META, type MarketSymbol } from '../../config/market';
 import { useMarketStore } from '../../stores/marketStore';
 import { formatPrice, formatSignedPercent } from '../../lib/format';
 import { filterSymbolsByQuery } from '../../lib/symbolSearch';
+import { PprTag } from '../../features/ppr/PprBadge';
 
 interface PairSelectorSheetProps {
   open: boolean;
@@ -40,9 +41,12 @@ function PairRow({
         )}
       >
         <CoinBadge symbol={symbol} />
-        <span className="flex-1 text-body font-medium">
-          {meta.base}
-          <span className="text-text-3">/USDT</span>
+        <span className="flex flex-1 items-center gap-1.5 text-body font-medium">
+          <span>
+            {meta.base}
+            <span className="text-text-3">/USDT</span>
+          </span>
+          <PprTag symbol={symbol} />
         </span>
         {ticker !== undefined && (
           <span className="flex flex-col items-end gap-0.5 text-right">
@@ -55,7 +59,7 @@ function PairRow({
                 ticker.price24hPcnt >= 0 ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
               )}
             >
-              {formatSignedPercent(ticker.price24hPcnt)}
+              {formatSignedPercent(ticker.price24hPcnt * 100)}
             </span>
           </span>
         )}
@@ -110,7 +114,7 @@ export function PairSelectorSheet({ open, selected, onClose, onSelect }: PairSel
           size="sm"
           icon={SearchX}
           title="找不到符合的交易對"
-          description="試試其他關鍵字或幣種代號。"
+          description="請改用其他關鍵字或幣種代號。"
         />
       ) : (
         <ul className="flex flex-col">

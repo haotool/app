@@ -20,7 +20,7 @@ export function ResetAccountButton() {
       </button>
       <BottomSheet open={confirming} title="重置模擬資金" onClose={() => setConfirming(false)}>
         <p className="text-label leading-relaxed text-text-2">
-          將清除所有持倉、掛單與歷史紀錄，並將餘額重置為{' '}
+          將清除所有持倉、委託與歷史紀錄，並將餘額重置為{' '}
           <span className="font-semibold tabular-nums">
             {formatAmount(INITIAL_BALANCE_USDT, 0)} USDT
           </span>

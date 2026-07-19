@@ -163,6 +163,46 @@ describe('createMarketWsClient', () => {
     expect(pingsAfter).toBe(pingsBefore);
   });
 
+  it('defers closing a CONNECTING socket until the handshake completes', () => {
+    const client = createMarketWsClient('wss://test');
+    const stop = client.subscribe('tickers.BTCUSDT', vi.fn());
+    const socket = latestSocket();
+    expect(socket.readyState).toBe(MockWebSocket.CONNECTING);
+
+    // CONNECTING 期直接 close 會觸發瀏覽器「closed before established」warning：退訂僅解掛勾。
+    stop();
+    expect(socket.readyState).toBe(MockWebSocket.CONNECTING);
+    expect(client.getStatus()).toBe('idle');
+
+    // 握手完成後自關，且不得觸發重連。
+    socket.simulateOpen();
+    expect(socket.readyState).toBe(MockWebSocket.CLOSED);
+    vi.advanceTimersByTime(WS_RECONNECT_BASE_MS * 4);
+    expect(MockWebSocket.instances).toHaveLength(1);
+    expect(client.getStatus()).toBe('idle');
+  });
+
+  it('opens a fresh socket for new subscriptions while the old one is still draining', () => {
+    const client = createMarketWsClient('wss://test');
+    const stop = client.subscribe('tickers.BTCUSDT', vi.fn());
+    const first = latestSocket();
+    stop();
+
+    const handler = vi.fn();
+    client.subscribe('tickers.BTCUSDT', handler);
+    expect(MockWebSocket.instances).toHaveLength(2);
+    const second = latestSocket();
+
+    // 舊 socket 完成握手即自關，不影響新連線的訂閱與派發。
+    first.simulateOpen();
+    expect(first.readyState).toBe(MockWebSocket.CLOSED);
+
+    second.simulateOpen();
+    expect(client.getStatus()).toBe('connected');
+    second.simulateMessage({ topic: 'tickers.BTCUSDT', data: {} });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it('unsubscribes topic and closes connection when no topics remain', () => {
     const client = createMarketWsClient('wss://test');
     const stopBtc = client.subscribe('tickers.BTCUSDT', vi.fn());

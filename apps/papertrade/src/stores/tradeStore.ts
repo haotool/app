@@ -29,8 +29,10 @@ import {
 } from '../engine/engine';
 import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
-import { formatAmount, formatPrice } from '../lib/format';
+import { formatAmount, formatPrice, formatSignedPnl } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
+import { playLiquidationSound } from '../lib/sound';
+import { useSoundPrefsStore } from './soundPrefsStore';
 
 export type ToastTone = 'long' | 'short' | 'warning' | 'info';
 
@@ -71,6 +73,8 @@ const positionSchema = z.object({
   openedAt: finiteNumber,
   takeProfit: positiveNumber.nullable(),
   stopLoss: positiveNumber.nullable(),
+  // R5-6：TP/SL 觸發平倉比例（0<r≤1）；v2 存檔由 migrate 補預設 1。
+  tpSlCloseRatio: positiveNumber.max(1),
   trailing: trailingSchema.nullable(),
 });
 
@@ -141,8 +145,7 @@ function pairLabel(symbol: MarketSymbol): string {
 }
 
 function pnlText(pnl: number): string {
-  const sign = pnl >= 0 ? '+' : '−';
-  return `${sign}${formatAmount(Math.abs(pnl), 2)} USDT`;
+  return `${formatSignedPnl(pnl)} USDT`;
 }
 
 function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
@@ -150,7 +153,7 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
     case 'limit-filled':
       return {
         tone: event.side,
-        title: `限價單成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
+        title: `限價委託成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
         description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price)}`,
       };
     case 'close-filled':
@@ -208,6 +211,7 @@ interface TradeState {
     positionId: string,
     takeProfit: number | null,
     stopLoss: number | null,
+    closeRatio?: number,
   ) => TradeActionResult;
   setPositionTrailing: (positionId: string, params: TrailingParams | null) => TradeActionResult;
   applyTick: (symbol: MarketSymbol, mark: number, now: number) => void;
@@ -240,8 +244,10 @@ export const useTradeStore = create<TradeState>()(
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
         // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
-        setPositionTpSl: (positionId, takeProfit, stopLoss) =>
-          commit(setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss)),
+        setPositionTpSl: (positionId, takeProfit, stopLoss, closeRatio) =>
+          commit(
+            setTakeProfitStopLoss(get().account, positionId, takeProfit, stopLoss, closeRatio),
+          ),
         setPositionTrailing: (positionId, params) =>
           commit(setTrailingStop(get().account, positionId, params)),
         applyTick: (symbol, mark, now) => {
@@ -253,6 +259,13 @@ export const useTradeStore = create<TradeState>()(
 
           const { account: next, events } = processTick(account, symbol, mark, now);
           if (next === account && events.length === 0) return;
+          // 強平提示音與強平 toast 同路徑觸發；受設定開關管控。
+          if (
+            events.some((event) => event.type === 'liquidation') &&
+            useSoundPrefsStore.getState().liquidationSound
+          ) {
+            playLiquidationSound();
+          }
           set((state) => ({
             account: next,
             toasts: appendToasts(state.toasts, events.map(eventToToast)),
@@ -269,8 +282,25 @@ export const useTradeStore = create<TradeState>()(
       version: TRADE_STORAGE_VERSION,
       storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
-      // 版本不符一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
-      migrate: () => ({}),
+      // v2 → v3：持倉補 tpSlCloseRatio 預設 1（全平），帳戶資料無損保留。
+      // 其餘舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
+      migrate: (persisted, version) => {
+        if (version !== 2 || typeof persisted !== 'object' || persisted === null) return {};
+        const legacy = persisted as { account?: { positions?: unknown[] } };
+        const positions = legacy.account?.positions;
+        if (!Array.isArray(positions)) return {};
+        return {
+          ...legacy,
+          account: {
+            ...legacy.account,
+            positions: positions.map((position) =>
+              typeof position === 'object' && position !== null
+                ? { tpSlCloseRatio: 1, ...position }
+                : position,
+            ),
+          },
+        };
+      },
       merge: (persisted, current) => {
         const parsed = parsePersistedTradeState(persisted);
         if (parsed === null) {

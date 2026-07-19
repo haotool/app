@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   averageEntryPrice,
+  effectiveMaintenanceMarginRate,
   isValidLeverage,
   liquidationPrice,
   notionalValue,
@@ -67,16 +68,62 @@ describe('roePercent', () => {
   });
 });
 
-describe('liquidationPrice (isolated, MMR 0.5%)', () => {
-  it('long: entry × (1 − 1/lev + 0.005)', () => {
+describe('effectiveMaintenanceMarginRate', () => {
+  it('keeps the flat 0.5% MMR up to 100x', () => {
+    expect(effectiveMaintenanceMarginRate(1)).toBe(0.005);
+    expect(effectiveMaintenanceMarginRate(10)).toBe(0.005);
+    expect(effectiveMaintenanceMarginRate(100)).toBe(0.005);
+  });
+
+  it('caps at half the initial margin rate beyond 100x', () => {
+    expect(effectiveMaintenanceMarginRate(125)).toBeCloseTo(0.004, 12);
+    expect(effectiveMaintenanceMarginRate(500)).toBeCloseTo(0.001, 12);
+    expect(effectiveMaintenanceMarginRate(1000)).toBeCloseTo(0.0005, 12);
+  });
+});
+
+describe('liquidationPrice (isolated, effective MMR)', () => {
+  it('long: entry × (1 − 1/lev + mmr)', () => {
     expect(liquidationPrice('long', 60000, 10)).toBeCloseTo(54300, 8);
-    expect(liquidationPrice('long', 60000, 125)).toBeCloseTo(59820, 8);
+    // 125x 起 effective MMR = 0.5/lev：60000 × (1 − 0.008 + 0.004) = 59760。
+    expect(liquidationPrice('long', 60000, 125)).toBeCloseTo(59760, 8);
     expect(liquidationPrice('long', 60000, 1)).toBeCloseTo(300, 8);
   });
 
-  it('short: entry × (1 + 1/lev − 0.005)', () => {
+  it('short: entry × (1 + 1/lev − mmr)', () => {
     expect(liquidationPrice('short', 60000, 10)).toBeCloseTo(65700, 8);
-    expect(liquidationPrice('short', 60000, 125)).toBeCloseTo(60180, 8);
+    expect(liquidationPrice('short', 60000, 125)).toBeCloseTo(60240, 8);
+  });
+
+  it('high leverage still leaves room between entry and liquidation', () => {
+    for (const leverage of [125, 500, 1000]) {
+      const longLiq = liquidationPrice('long', 60000, leverage);
+      const shortLiq = liquidationPrice('short', 60000, leverage);
+      expect(longLiq).toBeGreaterThan(0);
+      expect(longLiq).toBeLessThan(60000);
+      expect(shortLiq).toBeGreaterThan(60000);
+    }
+  });
+
+  it('long liquidation distance shrinks monotonically as leverage grows', () => {
+    const leverages = [10, 50, 100, 125, 200, 500, 1000];
+    const distances = leverages.map(
+      (leverage) => 60000 - liquidationPrice('long', 60000, leverage),
+    );
+    for (let index = 1; index < distances.length; index += 1) {
+      const current = distances[index] ?? 0;
+      const previous = distances[index - 1] ?? 0;
+      expect(current).toBeLessThan(previous);
+      expect(current).toBeGreaterThan(0);
+    }
+  });
+
+  it('1000x long does not liquidate at the entry price', () => {
+    const entry = 60000;
+    const liq = liquidationPrice('long', entry, 1000);
+    // 有效 MMR 0.05%：強平價 = entry × (1 − 0.001 + 0.0005) = entry × 0.9995 < entry。
+    expect(liq).toBeCloseTo(entry * 0.9995, 6);
+    expect(liq).toBeLessThan(entry);
   });
 });
 
@@ -88,15 +135,16 @@ describe('averageEntryPrice', () => {
 });
 
 describe('isValidLeverage', () => {
-  it('accepts 1–125 inclusive', () => {
+  it('accepts 1–1000 inclusive', () => {
     expect(isValidLeverage(1)).toBe(true);
     expect(isValidLeverage(125)).toBe(true);
+    expect(isValidLeverage(1000)).toBe(true);
     expect(isValidLeverage(12.5)).toBe(true);
   });
 
   it('rejects out-of-range or non-finite values', () => {
     expect(isValidLeverage(0.5)).toBe(false);
-    expect(isValidLeverage(126)).toBe(false);
+    expect(isValidLeverage(1001)).toBe(false);
     expect(isValidLeverage(0)).toBe(false);
     expect(isValidLeverage(Number.NaN)).toBe(false);
     expect(isValidLeverage(Number.POSITIVE_INFINITY)).toBe(false);

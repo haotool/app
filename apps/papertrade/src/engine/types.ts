@@ -23,6 +23,8 @@ export interface Position {
   openedAt: number;
   takeProfit: number | null;
   stopLoss: number | null;
+  // TP/SL 觸發時平倉的數量比例（0<r≤1）；1＝全平（R5-6 部分止盈止損）。
+  tpSlCloseRatio: number;
   trailing: TrailingConfig | null;
 }
 

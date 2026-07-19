@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { SYMBOL_META, type MarketSymbol } from '../config/market';
+import { getCoinIcon } from '../lib/coinIcon';
 
 interface CoinBadgeProps {
   symbol: MarketSymbol;
@@ -9,6 +10,20 @@ interface CoinBadgeProps {
 
 export function CoinBadge({ symbol, size = 'sm', variant = 'solid' }: CoinBadgeProps) {
   const meta = SYMBOL_META[symbol];
+  const icon = getCoinIcon(meta.base);
+
+  if (icon !== null) {
+    return (
+      <img
+        src={icon}
+        alt={meta.base}
+        loading="lazy"
+        draggable={false}
+        className={clsx('shrink-0 rounded-full', size === 'md' ? 'size-9' : 'size-8')}
+      />
+    );
+  }
+
   return (
     <span
       aria-hidden

@@ -5,7 +5,7 @@ import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { unrealizedPnl } from '../../engine/math';
-import { formatAmount, formatPrice } from '../../lib/format';
+import { formatAmount, formatPrice, formatSignedPnl } from '../../lib/format';
 import { parsePositiveInput, TRADE_ERROR_MESSAGES, trimNumberInput } from '../../lib/tradeForm';
 import { CLOSE_PERCENT_PRESETS, QTY_DISPLAY_DECIMALS } from '../../config/trading';
 
@@ -56,8 +56,8 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       const realized = result.trade.realizedPnl;
       pushToast({
         tone: realized >= 0 ? 'long' : 'short',
-        title: `市價平倉成功（${percent}%）`,
-        description: `${realized >= 0 ? '+' : '−'}${formatAmount(Math.abs(realized), 2)} USDT`,
+        title: `市價平倉完成（${percent}%）`,
+        description: `${formatSignedPnl(realized)} USDT`,
       });
     } else {
       if (limitPriceValue === null) {
@@ -75,7 +75,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
       }
       pushToast({
         tone: position.side,
-        title: `限價平倉掛單成功（${percent}%）`,
+        title: `限價平倉委託已送出（${percent}%）`,
         description: `${formatAmount(closeQty, QTY_DISPLAY_DECIMALS)} @ ${formatPrice(limitPriceValue)}`,
       });
     }
@@ -168,9 +168,7 @@ export function CloseSheet({ open, position, onClose }: CloseSheetProps) {
         <div className="flex justify-between">
           <dt className="text-text-3">預估損益</dt>
           <dd className={clsx('tabular-nums', (previewPnl ?? 0) >= 0 ? 'text-long' : 'text-short')}>
-            {previewPnl !== null
-              ? `${previewPnl >= 0 ? '+' : '−'}${formatAmount(Math.abs(previewPnl), 2)} USDT`
-              : '--'}
+            {previewPnl !== null ? `${formatSignedPnl(previewPnl)} USDT` : '--'}
           </dd>
         </div>
       </dl>

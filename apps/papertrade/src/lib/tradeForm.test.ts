@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { amountToPercent, maxOpenNotional, parseOrderForm, trimNumberInput } from './tradeForm';
+import {
+  amountToPercent,
+  isLimitPriceWithinBand,
+  maxOpenNotional,
+  parseOrderForm,
+  trimNumberInput,
+} from './tradeForm';
 import { TAKER_FEE_RATE } from '../config/trading';
 
 describe('trimNumberInput', () => {
@@ -67,6 +73,21 @@ describe('amountToPercent', () => {
     const maxNotional = maxOpenNotional(10000, 10, TAKER_FEE_RATE);
     const filled = Number(trimNumberInput(maxNotional, 2));
     expect(amountToPercent(filled, 'usdt', 60000, maxNotional)).toBe(100);
+  });
+});
+
+describe('isLimitPriceWithinBand', () => {
+  it('accepts prices at the ±50% band boundaries inclusively', () => {
+    expect(isLimitPriceWithinBand(30000, 60000)).toBe(true);
+    expect(isLimitPriceWithinBand(90000, 60000)).toBe(true);
+    expect(isLimitPriceWithinBand(60000, 60000)).toBe(true);
+  });
+
+  it('rejects prices outside the band on both sides', () => {
+    expect(isLimitPriceWithinBand(29999.99, 60000)).toBe(false);
+    expect(isLimitPriceWithinBand(90000.01, 60000)).toBe(false);
+    // QA 重現：限價 0.0001 可下出數億顆的荒謬委託，必須被帶寬擋下。
+    expect(isLimitPriceWithinBand(0.0001, 60000)).toBe(false);
   });
 });
 

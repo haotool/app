@@ -45,6 +45,7 @@
   --color-accent-ltc: #8e9aaf;
   --color-accent-link: #2a5ada;
   --color-accent-avax: #e84142;
+  --color-accent-ppr: #f472b6;
 
   --text-price-xl: 28px;
   --text-price-xl--line-height: 34px;
@@ -67,19 +68,35 @@
 
 :root {
   --sab: env(safe-area-inset-bottom, 0px);
+  --sat: env(safe-area-inset-top, 0px);
 }
 
 @layer base {
+  /* App 級體感（ADR-R5-02）：鎖字級自動放大、全向禁 overscroll 鏈、去 tap 高亮與文字選取。 */
   html {
     background-color: var(--color-bg);
     color: var(--color-text);
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
   }
 
+  /* manipulation＝pan-x pan-y pinch-zoom 別名：去 double-tap zoom 與點擊延遲，不擋捲動；
+     body 級覆蓋全子樹（含非互動區），全站圖表無自訂 pinch 手勢故安全。 */
   body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   :focus-visible {
@@ -233,6 +250,16 @@
   }
 }
 
+@keyframes conn-pulse-kf {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
 .flash-long {
   display: inline-block;
   animation: flash-long-kf 300ms ease-out;
@@ -276,6 +303,13 @@
   animation: card-in-kf 240ms ease-out;
 }
 
+/* 連線中斷浮層 pill 的低調呼吸提示。 */
+.conn-pulse {
+  animation:
+    toast-in-kf 240ms cubic-bezier(0.32, 0.72, 0.24, 1),
+    conn-pulse-kf 1.8s ease-in-out 240ms infinite;
+}
+
 .warning-pulse::after {
   content: '';
   position: absolute;
@@ -294,7 +328,8 @@
   .dialog-in,
   .backdrop-in,
   .toast-in,
-  .card-in {
+  .card-in,
+  .conn-pulse {
     animation: none;
   }
 
