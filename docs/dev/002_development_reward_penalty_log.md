@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+133
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+134
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v13-ex-conquest
+- 原因：20 關主線完結後 EX 變體體系僅 L4/L7 出貨完整——三新王 FSM 差分 v10-v12 已埋但出貨面殘缺（exPending 提示與圖鑑紫星 hardcode 雙王、EX 敗北再戰丟失變體旗標、主計畫 §7.4 EX 慈悲上限未實作、L4/L7 無前室致五魔王關體驗不一致），且五王全制霸無任何獎勵回饋
+- 解法：v13 收尾——exConquestDone 由 BOSS_LEVEL_IDS（LEVELS 派生）判定星核制霸 cosmetic（標題金裝＋章、圖鑑金徽記），GameResultData.ex 貫通再戰/重開，MERCY_HEAL.exMaxPerLife=1，L4/L7 前室 retrofit（stage elements 統一平移＋既有 e2e 前室走行調整），v13.spec 五案＋vitest 三案守門；EX 保底實證二段論（L16 純標準星 won 73.6s、L20 won 129.8s 段重試零卡關；L12 assist 輸出鏈 won 30.8s＋十輪純模式 trace 佐證輸出/迴避各自成立）
 
 - 日期：2026-07-19
 - ID：reward-starpuff-seo-ssot-og-aeo
