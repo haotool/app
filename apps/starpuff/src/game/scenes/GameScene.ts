@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   EGG_HP_CAP,
   ENEMY,
+  GRAVITY_Y,
   INHALE,
   PLAYER,
   SLAM,
@@ -41,6 +42,7 @@ import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
+import { VOIDRA } from '../logic/voidraFsm';
 import {
   inhaleFlavor,
   inhaleGraceUntil,
@@ -92,6 +94,7 @@ import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createNoctra } from '../systems/noctra';
 import { createPrismix } from '../systems/prismix';
 import { createSyrona } from '../systems/syrona';
+import { createVoidra } from '../systems/voidra';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -100,6 +103,7 @@ import { createHud } from '../systems/hud';
 import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
+import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, tideSoakVelocity } from '../logic/tide';
@@ -189,6 +193,8 @@ export class GameScene extends Phaser.Scene {
   private eliteRooms: EliteRoomHandle[] = [];
 
   private tide: TideHandle | null = null;
+  // 流星雨（§79）：關卡級環境彈幕；無配置關為 null。
+  private meteor: MeteorSystem | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
   private buff: BuffState = createBuffState();
@@ -241,6 +247,9 @@ export class GameScene extends Phaser.Scene {
     this.mercyWarpMs = 0;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
+    // 低重力（§81）：關卡級重力係數單點注入（缺省 1.0 零回歸）；世界重力為全域值，
+    // 每次 create 必須顯式重設（防前關/Voidra P3 注入殘留）。
+    this.physics.world.gravity.y = GRAVITY_Y * (this.level.gravityScale ?? 1);
     this.background = createParallaxBackground(this, this.level);
     const { ground, platforms } = this.addTerrain();
     this.terrainGround = ground;
@@ -271,6 +280,13 @@ export class GameScene extends Phaser.Scene {
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
+    // 流星雨（§79）：關卡級配置建立；落點排除與傷害結算見 advanceMeteors/addOverlaps。
+    // Voidra 關（§82）：預建停用態系統供 P2 轟炸沿單一管線開關（overlap 於 create 接線）。
+    this.meteor = this.level.meteor
+      ? createMeteorSystem(this, this.level.meteor)
+      : this.level.boss === 'voidra'
+        ? createMeteorSystem(this, { intervalMs: 3400, waveSize: 2 }, false)
+        : null;
     this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
       adjustSpawn: (kind, y) =>
         this.tide
@@ -377,6 +393,8 @@ export class GameScene extends Phaser.Scene {
       this.bossRoom = null;
       this.tide?.destroy();
       this.tide = null;
+      this.meteor?.destroy();
+      this.meteor = null;
     });
 
     this.waves.start();
@@ -410,6 +428,7 @@ export class GameScene extends Phaser.Scene {
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
       this.advanceTide(deltaMs);
+      this.advanceMeteors(deltaMs);
       this.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
@@ -431,12 +450,28 @@ export class GameScene extends Phaser.Scene {
     if (!this.scene.isActive() || this.finished || this.transitioning) return;
     this.deaths += 1;
     if (this.level.boss) {
+      // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場，玩家重生於 arena 左帶。
+      if (this.boss.trySegmentRespawn?.() === true) {
+        this.player.sprite.setVisible(false);
+        this.clearFieldForSegmentRetry();
+        this.respawnAtCheckpoint(this.arenaLeft() + 90);
+        return;
+      }
       this.finish('lost');
       return;
     }
     const respawnX = checkpointRespawnX(this.level, this.farthestX);
     if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
     else this.retryLevel();
+  }
+
+  // 段重試清場（§82 審查根修）：段起點重試保留同一場景，補給小怪與飛行中隕星/餘燼
+  // 會跨重試累積——重生前全數清除（比照整場重啟語義），彈藥由飢荒保證律立即補生。
+  private clearFieldForSegmentRetry(): void {
+    for (const child of this.enemies.getGroup().getChildren()) {
+      if (child.active) this.enemies.kill(child);
+    }
+    this.meteor?.clearAirborne();
   }
 
   // e2e 鉤子：直接補滿配額觸發星星門。
@@ -469,6 +504,21 @@ export class GameScene extends Phaser.Scene {
   // e2e 鉤子（§54）：以正式傷害管線對魔王結算傷害（階段轉換/死亡走完整 FSM 事件流）。
   damageBoss(amount: number): void {
     if (this.scene.isActive()) this.boss.applyDamage(amount);
+  }
+
+  // e2e 鉤子（§83 v11 觀察項收尾）：帶命中座標的精確傷害——皇冠 ×2／雙子受擊側可驗。
+  damageBossAtPoint(amount: number, x: number, y: number): void {
+    if (this.scene.isActive()) this.damageBossAt(amount, x, y);
+  }
+
+  // e2e 觀測點（§83）：魔王 FSM 階段/招式（品種未實作回 null）。
+  bossDebugState(): { phase: string; state: string } | null {
+    return this.boss.getDebugState?.() ?? null;
+  }
+
+  // e2e 鉤子（§83）：受控無敵窗——自然循環觀測案存活用（僅測試環境掛載）。
+  grantInvuln(ms: number): void {
+    if (this.scene.isActive()) this.player.grantInvulnerability(ms);
   }
 
   // e2e 鉤子：直達任一關（各關反卡關走查用）。
@@ -528,6 +578,23 @@ export class GameScene extends Phaser.Scene {
     this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
     const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
     body.setVelocity(soaked.vx, soaked.vy);
+  }
+
+  // 流星雨逐幀結算（§79）：波次推進委派呈現層；排除帶＝玩家縱帶＋開門後門前帶。
+  private advanceMeteors(deltaMs: number): void {
+    if (!this.meteor) return;
+    const view = this.cameras.main.worldView;
+    this.meteor.update(deltaMs, {
+      viewLeft: view.x,
+      viewRight: view.right,
+      playerX: this.player.sprite.x,
+      gateX: this.gate?.x ?? null,
+    });
+  }
+
+  // e2e 觀測點（§79）：墜落中/餘燼/預警圈數量；無流星雨關回 null。
+  meteorState(): { falling: number; embers: number; telegraphs: number } | null {
+    return this.meteor?.state() ?? null;
   }
 
   // 場控魔王噴口供力（§74 Syrona）：呈現層持有幾何與相位，此處逐幀委派結算。
@@ -821,6 +888,32 @@ export class GameScene extends Phaser.Scene {
       this.damagePlayer(this.bossTouchDamage, shockwave.x);
     });
 
+    // 流星雨（§79）：隕星可被星彈擊碎（碎裂演出、星彈吸收）；隕星與餘燼命中玩家
+    // 走 damagePlayer 單一入口（i-frame/護盾泡自然生效），隕星命中即碎。
+    if (this.meteor) {
+      const meteorGroup = this.meteor.getMeteors();
+      this.physics.add.overlap(stars, meteorGroup, (a, b) => {
+        const isRock = (meteorGroup.getChildren() as unknown[]).includes(a);
+        const rock = asSprite(isRock ? a : b);
+        const star = asSprite(isRock ? b : a);
+        if (!star.active || !rock.active) return;
+        this.meteor?.shatter(rock);
+        this.player.onStarHit(star, 'absorb');
+      });
+      this.physics.add.overlap(this.player.sprite, meteorGroup, (_p, rock) => {
+        const sprite = asSprite(rock);
+        if (!sprite.active || this.finished || this.transitioning) return;
+        this.meteor?.shatter(sprite);
+        this.damagePlayer(ENEMY.touchDamage, sprite.x);
+      });
+      this.physics.add.overlap(this.player.sprite, this.meteor.getEmbers(), (_p, hz) => {
+        const ember = asSprite(hz);
+        if (!ember.active || this.finished || this.transitioning) return;
+        ember.disableBody(true, true);
+        this.damagePlayer(ENEMY.touchDamage, ember.x);
+      });
+    }
+
     // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
     this.physics.add.collider(
       this.player.sprite,
@@ -895,10 +988,12 @@ export class GameScene extends Phaser.Scene {
       }
     });
     // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
-    // P2 高風險位增益投放（§69）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放。
+    // 高風險位增益投放（§69/§82）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放；
+    // 投放階段資料驅動（缺省 P2；Voidra P2 為生存段改 P3）。
     bind(GameEvents.BOSS_PHASE, ({ phase }) => {
       if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
-      if (phase === 'p2' && !this.exMode && this.level.arenaBuff && this.bossRoom) {
+      const buffPhase = this.level.arenaBuffPhase ?? 'p2';
+      if (phase === buffPhase && !this.exMode && this.level.arenaBuff && this.bossRoom) {
         this.bossRoom.dropArenaBuff(
           this.level.arenaBuff,
           this.arenaLeft() + this.scale.width / 2,
@@ -915,10 +1010,18 @@ export class GameScene extends Phaser.Scene {
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
+      // 勝利結算窗防護（§82 QA 根修）：魔王已倒後殘餘 hazard（隕星/潮汐）不得奪走勝利。
+      if (this.bossDown) return;
       this.deaths += 1;
       this.player.sprite.setVisible(false);
       this.fx.puff(x, y);
       if (this.level.boss) {
+        // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場（呈現層已自清＋FSM 重置）。
+        if (this.boss.trySegmentRespawn?.() === true) {
+          this.clearFieldForSegmentRetry();
+          this.respawnAtCheckpoint(this.arenaLeft() + 90);
+          return;
+        }
         this.finish('lost');
         return;
       }
@@ -929,6 +1032,8 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.BOSS_DEFEATED, () => {
       this.bossDown = true;
       this.bossHp = 0;
+      // 勝利結算窗防護（§82）：殘餘環境傷害（墜落中隕星/餘燼/潮汐）不再扣血。
+      this.player.grantInvulnerability(WIN_DELAY_MS + 2000);
       // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
       // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
       this.clearTimeMs = this.levelTimeMs();
@@ -1172,13 +1277,19 @@ export class GameScene extends Phaser.Scene {
       deaths: this.deaths,
       levelId: this.currentLevelId,
     };
+    // 謝幕（§84）：全破最終魔王關（鏈末魔王關，資料驅動非硬編關號）先播星光復甦再結算。
+    const finale =
+      result === 'won' && this.level.boss !== null && nextLevelId(this.currentLevelId) === null;
     this.time.delayedCall(result === 'won' ? 1300 : 900, () =>
-      this.scene.start(SceneKeys.Result, data),
+      this.scene.start(finale ? SceneKeys.Credits : SceneKeys.Result, data),
     );
   }
 
   // 魔王每損 10 HP 補生可吸小怪（供彈藥），arena 左右邊緣交替入場；品種輪替讀關卡 enemyMix。
+  // 場上上限（§82 審查根修）：爆發傷害連觸多次掉落時夾限累積（waves 上限 +2 供給裕度），
+  // 防補給怪堆積形成接觸傷害牆；彈藥保證由飢荒立即補生承擔（§26）。
   private spawnBossMinion(): void {
+    if (this.enemies.aliveCount() >= this.level.maxOnScreen + 2) return;
     const kinds = this.level.enemyMix.map((entry) => entry.kind);
     const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
     const x =
@@ -1271,6 +1382,50 @@ export class GameScene extends Phaser.Scene {
             { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: SYRONA.bodyDamage,
+        };
+      case 'voidra':
+        return {
+          handle: createVoidra(
+            this,
+            {
+              // 星核共鳴（§83）：FSM 單一真值，GameScene 餵彩蛋＋星雨謝幕演出。
+              onShardEgg: () => {
+                this.feedEggs({ kind: 'survive-collect' });
+                this.cameras.main.flash(360, 255, 230, 160);
+                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
+              },
+              // P2 定點轟炸（§82）：沿 GameScene 單一 meteor 管線開關與調參；
+              // 收轟炸（轉段/擊破/段重試）連飛行中隕星一併回收（審查收斂）。
+              setBombardment: (spec) => {
+                if (spec) {
+                  this.meteor?.setSpec(spec);
+                  this.meteor?.setActive(true);
+                } else {
+                  this.meteor?.setActive(false);
+                  this.meteor?.clearAirborne();
+                }
+              },
+              // P3 低重力（§81）：全域重力直寫；null 回關卡預設（create 亦會重設）。
+              setGravityScale: (scale) => {
+                this.physics.world.gravity.y = GRAVITY_Y * (scale ?? this.level.gravityScale ?? 1);
+              },
+              // P2 段內固定愛心（§6.3 保底）：走既有 heal pickup 管線、緩降至地面帶。
+              dropSurvivalHeart: () => {
+                const x = this.arenaLeft() + this.scale.width * 0.3;
+                playSfx('reveal');
+                this.fx.burstSmall(x, 150, 0xff9ec4);
+                spawnHealPickup(
+                  this,
+                  x,
+                  150,
+                  { player: () => this.player, playerHp: () => this.playerHp },
+                  { healHp: MERCY_HEAL.healHp, driftToY: GROUND_TOP - 22 },
+                );
+              },
+            },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
+          ),
+          bodyDamage: VOIDRA.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

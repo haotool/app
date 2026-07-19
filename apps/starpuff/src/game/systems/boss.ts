@@ -44,6 +44,11 @@ export interface BossHandle {
   ): number | null;
   // arena 場控浮台（§74 Syrona）：GameScene 接玩家 collider；未實作視為無浮台。
   getPlatforms?(): Phaser.GameObjects.Rectangle[];
+  // 段起點重試（§82 Voidra）：玩家死亡時嘗試段內重試（P2/P3 不回滾整場），
+  // 成功回 true（呈現層已自清並重置 FSM）；未實作或 P1 期走一般敗北流程。
+  trySegmentRespawn?(): boolean;
+  // e2e 觀測（§83 v11 觀察項收尾）：FSM 階段/招式即時值；未實作回 null。
+  getDebugState?(): { phase: string; state: string } | null;
 }
 
 const GROUND_TOP = VIEW.height - 80;

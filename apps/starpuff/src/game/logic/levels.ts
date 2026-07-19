@@ -2,6 +2,7 @@ import type { BossKind, EnemyKind, LevelId } from '../core/types';
 import type { BuffId } from './buffs';
 import { canInhale } from './combat';
 import type { EasterEggSpec } from './eggs';
+import type { MeteorSpec } from './meteor';
 import type { TideSpec } from './tide';
 
 // 關卡資料 SSOT（GAME_DESIGN §15，pure TS 不 import phaser），vitest 對象。
@@ -83,12 +84,19 @@ export interface LevelSpec {
   hint?: string;
   checkpointX?: number;
   // v10 魔王關體系（§69）：anteroomPx 為前室廊道寬（runtime 世界寬＝前室＋動態視寬）；
-  // anteroomBuffs 為前室二選一台座、arenaBuff 為 P2 高風險位投放（EX 不投放）。
+  // anteroomBuffs 為前室二選一台座、arenaBuff 為高風險位投放（EX 不投放）。
   anteroomPx?: number;
   anteroomBuffs?: readonly BuffId[];
   arenaBuff?: BuffId;
+  // v12（§82）：arena 增益投放階段（缺省 P2；Voidra P2 為生存段改 P3 投放）。
+  arenaBuffPhase?: 'p2' | 'p3';
   // v11 糖漿潮汐（§71）：關卡級週期漲落；dry-window 不變式見 levels.test。
   tide?: TideSpec;
+  // v12 低重力（§81）：關卡級重力係數（缺省 1.0＝既有零回歸），GameScene 進關單點注入；
+  // 值域 [0.5, 1.0] 由 levels.test 守門（主計畫 §10.2-6）。
+  gravityScale?: number;
+  // v12 流星雨（§79）：關卡級環境彈幕；預警/排除帶不變式見 logic/meteor.ts 與 levels.test。
+  meteor?: MeteorSpec;
 }
 
 // v3 橫式世界（§21）：高 480、主地面頂 y=400（480-80）；平台雙層以內，
@@ -1066,6 +1074,272 @@ export const LEVELS: readonly LevelSpec[] = [
     anteroomPx: 400,
     anteroomBuffs: ['shield', 'swift'],
     arenaBuff: 'power',
+  },
+  // v12 五區星核聖域（§84）——L17 星屑浮橋：低重力首發（gravityScale 0.55，本區
+  // 新機制 1/2）×Twinkla 亮相；月步跳感、最高星橋低重力大跳可達（緩衝關 CV-3 降壓）。
+  {
+    id: 17,
+    nameZh: '星屑浮橋',
+    bgKey: 'bg-astral',
+    worldWidth: 3400,
+    killQuota: 11,
+    spawnIntervalMs: 1350,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §80 入編：twinkla 主場 25%；可吸佔比 0.75（jelly/floaty/puffy/glowy 恆可吸，
+    // twinkla 實體窗保守不計）。
+    enemyMix: [
+      { kind: 'twinkla', weight: 0.25 },
+      { kind: 'jelly', weight: 0.2 },
+      { kind: 'floaty', weight: 0.2 },
+      { kind: 'puffy', weight: 0.2 },
+      { kind: 'glowy', weight: 0.15 },
+    ],
+    // 低重力垂直分層（§81）：y=208 最高星橋由低重力大跳＋拍翅可達（gravityScale ≤0.7
+    // 視為升降服務，levels.test 守門），主線地面雙層恆可通行。
+    platforms: [
+      { x: 520, y: 336, w: 150 },
+      { x: 950, y: 272, w: 140 },
+      { x: 1400, y: 336, w: 150 },
+      { x: 2000, y: 208, w: 130 },
+      { x: 2500, y: 336, w: 140 },
+      { x: 2950, y: 272, w: 130 },
+    ],
+    elements: [
+      { kind: 'oneway', x: 700, y: 320, w: 140 },
+      { kind: 'oneway', x: 1700, y: 336, w: 140 },
+      { kind: 'oneway', x: 2750, y: 320, w: 130 },
+      { kind: 'moving', x: 2250, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'spring', x: 1150, y: 391 },
+      { kind: 'breakable', x: 850, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2350, y: 380, loot: 'hp' },
+    ],
+    // §84 重用評估：聖域沿用 arena/throne 主題道具混排（星晶/星柱語彙相容）。
+    decor: [
+      { key: 'prop-arena-1', x: 320 },
+      { key: 'prop-throne-2', x: 870 },
+      { key: 'prop-arena-3', x: 1420 },
+      { key: 'prop-throne-4', x: 1970 },
+      { key: 'prop-arena-1', x: 2520 },
+      { key: 'prop-throne-2', x: 3070 },
+    ],
+    // §24 彩蛋十七：最高星橋（y=208，低重力大跳可達）連站 2 次。
+    easterEggs: [{ trigger: 'stand-count', reward: 'hp-up', platformY: 208, count: 2 }],
+    // §80：星屑幽長——隱現週期縮時 1.4 倍，擊敗掉孢子味。
+    elites: [
+      {
+        kind: 'twinkla',
+        x: 1800,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xf0d890,
+        speedMul: 1.4,
+        rewardFlavor: 'spora',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    gravityScale: 0.55,
+    hint: '低重力星域：跳得更高、飄得更遠',
+  },
+  // L18 流星原野：流星雨首發（關卡級環境彈幕，本區新機制 2/2）×低重力閃避——
+  // 預警落點→隕星墜落（可擊碎）；地面路徑恆可達（主線不依賴 §0.1-6）。
+  {
+    id: 18,
+    nameZh: '流星原野',
+    bgKey: 'bg-meteorfield',
+    worldWidth: 3700,
+    killQuota: 13,
+    spawnIntervalMs: 1200,
+    maxOnScreen: 5,
+    safeZoneTailPx: 480,
+    // §80 入編：cometa 主場 22%；可吸佔比 0.67（cometa/gusty/zappy/mirri 恆可吸，
+    // twinkla 實體窗保守不計、spiky 不可吸）。
+    enemyMix: [
+      { kind: 'cometa', weight: 0.22 },
+      { kind: 'spiky', weight: 0.18 },
+      { kind: 'gusty', weight: 0.15 },
+      { kind: 'zappy', weight: 0.15 },
+      { kind: 'mirri', weight: 0.15 },
+      { kind: 'twinkla', weight: 0.15 },
+    ],
+    // 流星雨關平台層 ≥272（無高台）：低重力大跳即可全層通行。
+    platforms: [
+      { x: 450, y: 336, w: 150 },
+      { x: 850, y: 300, w: 140 },
+      { x: 1300, y: 336, w: 150 },
+      { x: 1750, y: 272, w: 140 },
+      { x: 2250, y: 336, w: 150 },
+      { x: 2700, y: 300, w: 140 },
+      { x: 3150, y: 336, w: 150 },
+    ],
+    elements: [
+      { kind: 'oneway', x: 650, y: 320, w: 140 },
+      { kind: 'oneway', x: 1520, y: 320, w: 140 },
+      { kind: 'oneway', x: 2900, y: 336, w: 140 },
+      { kind: 'spring', x: 1050, y: 391 },
+      { kind: 'spring', x: 3300, y: 391 },
+      { kind: 'breakable', x: 1150, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2450, y: 380, loot: 'hp' },
+    ],
+    decor: [
+      { key: 'prop-throne-1', x: 350 },
+      { key: 'prop-arena-2', x: 900 },
+      { key: 'prop-throne-3', x: 1450 },
+      { key: 'prop-arena-4', x: 2000 },
+      { key: 'prop-throne-1', x: 2550 },
+      { key: 'prop-arena-2', x: 3100 },
+    ],
+    // §24 彩蛋十八：雙風合鳴——連吞兩隻疾風味（cometa/gusty/floaty 皆計）。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'full-magazine', sequence: ['floaty', 'floaty'] },
+    ],
+    // §80：彗核疾魚——俯衝 1.4 倍，擊敗掉重鑽味。
+    elites: [
+      {
+        kind: 'cometa',
+        x: 1850,
+        hp: 22,
+        scale: 1.5,
+        tint: 0x78c8f0,
+        speedMul: 1.4,
+        rewardFlavor: 'drilly',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    gravityScale: 0.55,
+    meteor: { intervalMs: 4500, waveSize: 2 },
+    hint: '流星落點有預警圈，離開圈內就安全',
+  },
+  // L19 星核前庭：全區機制回收終試（純組合零新造，▲卡點三）——星門折躍＋熱泉噴口＋
+  // 輕低重力＋流星雨四機制分段客串；唯一六同屏關；同房雙精英「雙生鏡衛」變式。
+  {
+    id: 19,
+    nameZh: '星核前庭',
+    bgKey: 'bg-starcourt',
+    worldWidth: 4000,
+    killQuota: 15,
+    spawnIntervalMs: 1000,
+    maxOnScreen: 6,
+    safeZoneTailPx: 480,
+    // §84 入編：十種混編全機制回收；恆可吸佔比 0.62（cometa/spora/boomy/mirri/magno/
+    // splatta；bubbla/twinkla/drilly 條件可吸保守不計、chompy 不可吸）。
+    enemyMix: [
+      { kind: 'cometa', weight: 0.12 },
+      { kind: 'spora', weight: 0.12 },
+      { kind: 'bubbla', weight: 0.1 },
+      { kind: 'boomy', weight: 0.1 },
+      { kind: 'mirri', weight: 0.1 },
+      { kind: 'twinkla', weight: 0.1 },
+      { kind: 'magno', weight: 0.1 },
+      { kind: 'chompy', weight: 0.1 },
+      { kind: 'drilly', weight: 0.08 },
+      { kind: 'splatta', weight: 0.08 },
+    ],
+    // 輕低重力（0.85 不視為升降服務）：y=208 折躍高台由星門服務（沿 L10 慣例）。
+    platforms: [
+      { x: 480, y: 336, w: 150 },
+      { x: 900, y: 272, w: 140 },
+      { x: 1350, y: 336, w: 150 },
+      { x: 1900, y: 208, w: 130 },
+      { x: 2400, y: 336, w: 150 },
+      { x: 2900, y: 272, w: 140 },
+      { x: 3400, y: 336, w: 150 },
+    ],
+    // 四機制客串：星門捷徑跳過流星走廊＋週期噴口鏈＋單向/彈簧/破磚支線。
+    elements: [
+      { kind: 'updraft', x: 1150, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 3050, topY: 170, w: 96, periodMs: 3200, dutyPct: 0.31 },
+      { kind: 'oneway', x: 680, y: 320, w: 140 },
+      { kind: 'oneway', x: 2150, y: 320, w: 140 },
+      { kind: 'oneway', x: 3650, y: 336, w: 130 },
+      { kind: 'spring', x: 350, y: 391 },
+      { kind: 'spring', x: 3800, y: 391 },
+      { kind: 'breakable', x: 780, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2050, y: 380, loot: 'hp' },
+      { kind: 'warp', x: 850, y: 300, pairId: 'court' },
+      { kind: 'warp', x: 1900, y: 100, pairId: 'court' },
+    ],
+    decor: [
+      { key: 'prop-arena-3', x: 380 },
+      { key: 'prop-throne-4', x: 930 },
+      { key: 'prop-arena-1', x: 1480 },
+      { key: 'prop-throne-2', x: 2030 },
+      { key: 'prop-arena-3', x: 2580 },
+      { key: 'prop-throne-4', x: 3130 },
+      { key: 'prop-arena-1', x: 3680 },
+    ],
+    // §24 彩蛋十九：星光三重奏——依序連吞迴旋味→流光味→流光味（mirri→twinkla→glowy）。
+    easterEggs: [
+      { trigger: 'eat-sequence', reward: 'gold-star', sequence: ['boomy', 'glowy', 'glowy'] },
+    ],
+    // §84 同房雙精英（20 關唯一變式）：雙生鏡衛・左／右——同房 x 對稱行動、
+    // HP 各 24；掉 glowy＋zappy 味（湊凝光/追電配方）。
+    elites: [
+      {
+        kind: 'mirri',
+        x: 2620,
+        hp: 24,
+        scale: 1.5,
+        tint: 0xcfd8f0,
+        speedMul: 1.4,
+        rewardFlavor: 'glowy',
+      },
+      {
+        kind: 'mirri',
+        x: 2680,
+        hp: 24,
+        scale: 1.5,
+        tint: 0xb8c8e8,
+        speedMul: 1.4,
+        rewardFlavor: 'zappy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 卡點三（§67 沿用）：中點重生錨——落點位於雙生鏡衛房界外。
+    checkpointX: 2000,
+    gravityScale: 0.85,
+    meteor: { intervalMs: 5200, waveSize: 2 },
+    hint: '全機制終試：折躍、噴口、低重力與流星雨',
+  },
+  // L20 蝕星之心：最終魔王蝕星魔核 Voidra（§82 場控收束型三段）——arena →
+  // P2 定點轟炸生存段 → P3 低重力終局；魔王關體系沿用（§69 前室/增益/彩蛋）。
+  {
+    id: 20,
+    nameZh: '蝕星之心',
+    bgKey: 'bg-voidcore',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 2800,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26 飢荒保證律）：glowy 供流光味與星域主題呼應。
+    enemyMix: [
+      { kind: 'jelly', weight: 0.4 },
+      { kind: 'floaty', weight: 0.3 },
+      { kind: 'glowy', weight: 0.3 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-throne-1', x: 110 },
+      { key: 'prop-throne-2', x: 320 },
+      { key: 'prop-throne-3', x: 540 },
+      { key: 'prop-throne-4', x: 750 },
+    ],
+    // §24 彩蛋二十：星核共鳴——P2 生存段 5 枚星屑全收（§83 觸發器）。
+    easterEggs: [{ trigger: 'survive-collect', reward: 'full-magazine' }],
+    elites: [],
+    boss: 'voidra',
+    tutorial: false,
+    // 魔王關體系（§69 沿用）：前室 400px＋星力果/疾風靴二選一；P3 高風險位刷護盾泡
+    //（P2 為生存段不投放，arenaBuffPhase 改 P3）。
+    anteroomPx: 400,
+    anteroomBuffs: ['power', 'swift'],
+    arenaBuff: 'shield',
+    arenaBuffPhase: 'p3',
   },
 ];
 

@@ -221,4 +221,21 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'prop-kiln-4',
     url: new URL('../../assets/sprites/prop-kiln-4.webp', import.meta.url).href,
   },
+  // v12 五區終章（§80/§82/§84）：新怪兩種＋最終魔王＋星核聖域橫景（四關共用 grade 區分）。
+  {
+    key: 'minion-twinkla',
+    url: new URL('../../assets/sprites/minion-twinkla.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-cometa',
+    url: new URL('../../assets/sprites/minion-cometa.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-voidra',
+    url: new URL('../../assets/sprites/boss-voidra.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-astral-l',
+    url: new URL('../../assets/sprites/bg-astral-l.webp', import.meta.url).href,
+  },
 ];

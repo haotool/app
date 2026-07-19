@@ -112,11 +112,30 @@ test('舊存檔相容（§76）：v10 存檔載入十六節點，L13 開放、L1
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Map');
-  for (const id of [1, 4, 7, 10, 12, 13]) {
-    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
-  }
+  // 分區分頁（§77）：挑戰 L13 落四區頁——13 開放、14/16 迷霧鎖定（無入口鈕）。
+  await expect(page.locator('[data-menu="node-13"]')).toBeAttached();
   await expect(page.locator('[data-menu="node-14"]')).toHaveCount(0);
   await expect(page.locator('[data-menu="node-16"]')).toHaveCount(0);
+  // 頁籤直達舊三區：代表節點仍可入。
+  await page.locator('[data-menu="zone-1"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [1, 4]) {
+    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
+  }
+  await page.locator('[data-menu="zone-2"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  await expect(page.locator('[data-menu="node-7"]')).toBeAttached();
+  await page.locator('[data-menu="zone-3"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [10, 12]) {
+    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
+  }
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

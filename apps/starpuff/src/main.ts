@@ -15,6 +15,7 @@ import { MapScene } from './game/scenes/MapScene';
 import { GameScene } from './game/scenes/GameScene';
 import { ResultScene } from './game/scenes/ResultScene';
 import { CodexScene } from './game/scenes/CodexScene';
+import { CreditsScene } from './game/scenes/CreditsScene';
 import { restoreMutePreference } from './game/systems/hud';
 import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
@@ -68,7 +69,7 @@ const game = new Phaser.Game({
   // 捲動值互斥，開啟會把小數落差量化成 ±1–2px 逐幀跳動。
   pixelArt: false,
   roundPixels: false,
-  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene],
+  scene: [BootScene, TitleScene, MapScene, GameScene, ResultScene, CodexScene, CreditsScene],
 });
 
 // 旋轉殼佈局與 Phaser 私有 API 補償（recon-v4 A/B）集中於 core/shellLayout.ts。
@@ -131,6 +132,10 @@ declare global {
       codexTab: () => string;
       twinHud: () => { active: boolean; aRatio: number; bRatio: number };
       tide: () => { waterY: number; phase: string } | null;
+      meteor: () => { falling: number; embers: number; telegraphs: number } | null;
+      damageBossAt: (amount: number, x: number, y: number) => void;
+      bossState: () => { phase: string; state: string } | null;
+      grantInvuln: (ms: number) => void;
     }>;
   }
 }
@@ -223,6 +228,13 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
         | { active: boolean; aRatio: number; bRatio: number }
         | undefined) ?? { active: false, aRatio: 0, bRatio: 0 },
     tide: () => gameScene().tideState(),
+    // v12 觀測點（§79 e2e）：流星雨墜落/餘燼/預警圈數量。
+    meteor: () => gameScene().meteorState(),
+    // v12 鉤子（§83 v11 觀察項收尾）：帶座標精確傷害（皇冠 ×2 可驗）、
+    // 魔王 FSM 觀測與受控無敵窗（自然循環觀測案存活用）。
+    damageBossAt: (amount, x, y) => gameScene().damageBossAtPoint(amount, x, y),
+    bossState: () => gameScene().bossDebugState(),
+    grantInvuln: (ms) => gameScene().grantInvuln(ms),
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。

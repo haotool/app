@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+130
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+131
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v12-astral-finale
+- 原因：StarPuff 20 關世界主計畫餘 v12 終章未落地——五區 L17-L20、最終魔王 Voidra（P2 生存段 KISS 定案）、低重力/流星雨雙新機制、分區分頁地圖硬項、雙新怪與圖鑑謝幕收尾，且勝利結算窗存在殘餘 hazard 奪走勝利的競態
+- 解法：meteor/twinkla·cometa/voidraFsm（survivalPhase 波次表＋過熱窗免傷單一真值＋段起點重試）純邏輯先行 463 單測，zones 分頁資料驅動＋MapScene 頁籤（三代舊存檔 e2e 相容），gravityScale 世界重力單點注入，BOSS_DEFEATED 即授 i-frame＋bossDown 死亡忽略根修競態，codex imagegen 4 素材，1200 寬純標準星 bot won 282.8s 段重試 14 零卡關實證，72 E2E＋v11 觀察項雙收
 
 - 日期：2026-07-19
 - ID：reward-park-keeper-r6-axe-guard
