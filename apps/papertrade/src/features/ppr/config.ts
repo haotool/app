@@ -1,10 +1,11 @@
 import { type MarketSymbol } from '../../config/market';
 
-// PPR 泡泡幣模組總開關（單點 flag）：關閉即不啟動合成 feed、不出現在行情清單。
+// PPR 紙紙幣模組總開關（單點 flag）：關閉即不啟動合成 feed、不出現在行情清單。
 export const PPR_ENABLED = true;
 
 export const PPR_SYMBOL: MarketSymbol = 'PPRUSDT';
-export const PPR_DISPLAY_NAME = 'PPR 泡泡幣';
+// 顯示名 SSOT（R6-10）；config/market.ts 的 SYMBOL_META 鏡像此值（避免 runtime 循環依賴）。
+export const PPR_DISPLAY_NAME = 'PPR 紙紙幣';
 // UI 常駐標示文案：防止使用者誤認為真實行情（security SSOT 第 10 條）。
 export const PPR_DISCLAIMER = '虛構迷因幣，僅供娛樂';
 export const PPR_BADGE_LABEL = '娛樂';

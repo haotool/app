@@ -35,7 +35,8 @@
   --color-indicator-4: #3ac9e8;
   --color-indicator-5: #f2814d;
 
-  /* 幣別 accent 對齊官方品牌色（R6-9，來源見 assets/coins/NOTICE.md）；SOL 取官方漸層起點紫。 */
+  /* 幣別 accent 對齊官方品牌色（R6-9，來源見 assets/coins/NOTICE.md）；SOL 取官方漸層起點紫。
+     PPR 為自製迷因幣，取紙奶油色（R6-10 紙視覺）。 */
   --color-accent-btc: #f7931a;
   --color-accent-eth: #627eea;
   --color-accent-sol: #9945ff;
@@ -46,7 +47,7 @@
   --color-accent-ltc: #345d9d;
   --color-accent-link: #375bd2;
   --color-accent-avax: #e84142;
-  --color-accent-ppr: #f472b6;
+  --color-accent-ppr: #ede6d6;
 
   --text-price-xl: 28px;
   --text-price-xl--line-height: 34px;

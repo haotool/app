@@ -1,6 +1,6 @@
 # 幣別 icon 來源聲明（NOTICE）
 
-例外：`ppr.svg` 為本專案自製（虛構迷因幣 PPR 泡泡幣，見 `src/features/ppr/`），非上游 vendor。
+例外：`ppr.svg` 為本專案自製（虛構迷因幣 PPR 紙紙幣，見 `src/features/ppr/`），非上游 vendor。
 
 本目錄內其餘 `*.svg` 幣別圖示 vendor 自下列上游專案：
 
@@ -29,6 +29,14 @@
 未修改（複核與官方一致）：`btc.svg` `#F7931A`（[bitcoin.design](https://bitcoin.design/guide/getting-started/visual-language/)）、
 `eth.svg` `#627EEA`、`doge.svg` `#C3A634`、`avax.svg` `#E84142`
 （[support.avax.network Brand Assets](https://support.avax.network/en/articles/4132288-avalanche-brand-assets)）。
+
+## 本地修改（R6-10，2026-07-19）：PPR 改為摺角便箋設計
+
+`ppr.svg` 為本地二次修改（自製 icon，非上游）：原粉色泡泡設計改為紙視覺——
+奶油紙色圓底 `#EDE6D6`＋中央摺角便箋（`#FFFBF5` 主體、右上摺角以深一階 `#DCD2BC` 作摺影）
+＋紙面一條上升迷因走勢墨線（`#4A4237`）。與主 LOGO 同「紙」語彙但不混淆
+（主 LOGO=紙飛機、PPR=摺角便箋，見 design SSOT R6-10/R6-11）。
+三項安全檢查（無 script／foreignObject／外部 href）複檢通過。
 
 ## 入庫安全檢查（papertrade-security §R5 第 8 條）
 
