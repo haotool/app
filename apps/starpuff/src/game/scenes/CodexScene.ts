@@ -136,7 +136,7 @@ export class CodexScene extends Phaser.Scene {
     // 星核制霸格（§86）：五王 EX 全制霸的圖鑑常設榮譽章。
     if (exConquestDone(loadSave())) {
       const star = this.add
-        .image(width - 150 - insets.right, 34, 'fx-star')
+        .image(width - 158 - insets.right, 34, 'fx-star')
         .setDisplaySize(24, 24)
         .setTint(0xffd870);
       this.tweens.add({
@@ -148,7 +148,7 @@ export class CodexScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
       });
       this.add
-        .text(width - 92 - insets.right, 34, '星核制霸', {
+        .text(width - 100 - insets.right, 34, '星核制霸', {
           fontFamily: 'system-ui, sans-serif',
           fontSize: '15px',
           fontStyle: 'bold',

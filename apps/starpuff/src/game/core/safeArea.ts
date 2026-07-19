@@ -1,5 +1,5 @@
-// 殼局部 safe-area 量測（GAME_DESIGN §93 預備）：canvas 內 HUD（暫停／靜音鍵）
-// 需避開瀏海與 home indicator，但 Phaser 邏輯座標無法直讀 env()——
+// 殼局部 safe-area 量測（GAME_DESIGN §93）：HUD 與選單場景（暫停／靜音鍵、圖鑑）
+// 避開瀏海與 home indicator 的換算 SSOT——Phaser 邏輯座標無法直讀 env()，
 // 以 #keys-layer 的 computed inset（CSS 已依 cw/ccw 換軸並含地板值）換算成邏輯座標偏移。
 // 純換算函式供 vitest 驗證；DOM 讀取集中於 readShellSafeArea。
 
