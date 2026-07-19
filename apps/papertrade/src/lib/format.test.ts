@@ -123,22 +123,16 @@ describe('formatFundingRate', () => {
 });
 
 describe('formatCountdown', () => {
-  it('formats under an hour as mm:ss', () => {
-    expect(formatCountdown(65_000)).toBe('01:05');
+  it('formats every remaining duration as hh:mm:ss', () => {
+    expect(formatCountdown(65_000)).toBe('00:01:05');
+    expect(formatCountdown(3_600_000)).toBe('01:00:00');
+    expect(formatCountdown(7 * 3_600_000 + 59 * 60_000 + 59_000)).toBe('07:59:59');
+    expect(formatCountdown(3_599_000)).toBe('00:59:59');
   });
 
-  it('formats an hour and above as h:mm:ss', () => {
-    expect(formatCountdown(3_600_000)).toBe('1:00:00');
-    expect(formatCountdown(7 * 3_600_000 + 59 * 60_000 + 59_000)).toBe('7:59:59');
-  });
-
-  it('rolls from h:mm:ss down to mm:ss at the hour boundary', () => {
-    expect(formatCountdown(3_599_000)).toBe('59:59');
-  });
-
-  it('clamps to 00:00 after crossing the settlement moment', () => {
-    expect(formatCountdown(0)).toBe('00:00');
-    expect(formatCountdown(-15_000)).toBe('00:00');
+  it('clamps to 00:00:00 after crossing the settlement moment', () => {
+    expect(formatCountdown(0)).toBe('00:00:00');
+    expect(formatCountdown(-15_000)).toBe('00:00:00');
   });
 
   it('returns placeholder for non-finite values', () => {

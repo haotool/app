@@ -84,11 +84,12 @@ describe('TradePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the funding rate with direction color and a countdown', () => {
+  it('shows the funding rate/countdown right-aligned below the pills', () => {
     renderTrade('/trade?symbol=BTCUSDT');
-    expect(screen.getByText('資金費率')).toBeInTheDocument();
+    const label = screen.getByText('資金費率/倒數');
+    expect(label.parentElement).toHaveClass('ml-auto');
     expect(screen.getByText('-0.0200%')).toHaveClass('text-short');
-    expect(screen.getByText(/^\d+:\d{2}:\d{2}$|^\d{2}:\d{2}$/)).toBeInTheDocument();
+    expect(screen.getByText(/^\d{2}:\d{2}:\d{2}$/)).toBeInTheDocument();
   });
 
   it('extends the sticky header into the top safe-area (R6-1)', () => {

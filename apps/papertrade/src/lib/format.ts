@@ -54,15 +54,14 @@ export function formatFundingRate(rate: number): string {
   return `${sign}${percent.toFixed(4)}%`;
 }
 
+// 恆定 hh:mm:ss（R6-3 對標 Bybit「資金費率/倒數」格式）。
 export function formatCountdown(msRemaining: number): string {
   if (!Number.isFinite(msRemaining)) return '--:--';
   const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const mm = String(minutes).padStart(2, '0');
-  const ss = String(seconds).padStart(2, '0');
-  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+  const hh = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  const ss = String(totalSeconds % 60).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
 }
 
 export function formatClockTime(epochMs: number): string {

@@ -147,10 +147,13 @@ export function TradePage() {
           </div>
         </header>
 
+        {/* 第二列兩端對齊：左 PPR 揭露 chip（如有）、右資金費率/倒數對齊 pills 正下方（R6-3）。 */}
         <div className="flex items-center gap-1.5 px-4 pb-3 text-caption text-text-3">
-          <span>資金費率</span>
-          <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
           <PprDisclaimerChip symbol={symbol} />
+          <span className="ml-auto flex items-center gap-1.5">
+            <span>資金費率/倒數</span>
+            <FundingRateBadge rate={ticker.fundingRate} nextFundingTime={ticker.nextFundingTime} />
+          </span>
         </div>
       </div>
 
