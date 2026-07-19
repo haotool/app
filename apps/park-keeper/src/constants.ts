@@ -13,9 +13,11 @@ export const THEMES: Record<string, ThemeConfig> = {
       background: '#020617', // 改為極深 Slate，強化對比
       surface: '#0f172a',
       text: '#ffffff',
-      // textMuted 加亮至 WCAG AA：5.50:1（on #020617）、4.87:1（on #0f172a surface），
-      // 同時滿足底部導覽 inactive tab 與 surface 卡片次要文字（issue #753 主題對比修復）。
-      textMuted: '#7387a3',
+      // textMuted 安全 margin 提升（R6 NEW-2）：6.43:1（on #020617）、5.69:1（on #0f172a surface）。
+      // 原 #7387a3 on surface 僅 4.87:1，axe 字型渲染取樣偏差（實測可低 ~0.5）下無安全餘裕。
+      textMuted: '#7f93af',
+      // 深底主題用亮紅：7.29:1（on #020617）、6.45:1（on #0f172a）。
+      danger: '#f87171',
     },
     font: 'font-racing',
     borderRadius: '0px',
@@ -32,9 +34,14 @@ export const THEMES: Record<string, ThemeConfig> = {
       accent: '#FFFFBA', // Pastel Yellow (Cream)
       background: '#FFFAF4', // Very light warm white
       surface: '#FFFFFF',
-      // 暖粉灰調加深至 WCAG AA：text 5.66:1、textMuted 4.61:1（on #FFFAF4），保留粉彩柔和感。
-      text: '#755F63',
-      textMuted: '#826D73',
+      // 暖粉棕調主文字（R6 review：修正 text < textMuted 層級倒置）：7.91:1（on #FFFAF4）、
+      // 8.21:1（on #FFFFFF），高於 textMuted 一階，保留粉彩柔和感。
+      text: '#5D4A4F',
+      // textMuted 安全 margin 提升（R6 NEW-2）：6.14:1（on #FFFAF4）、6.37:1（on #FFFFFF）。
+      // 原 #826D73 僅 4.61/4.79:1，axe 實測邊緣 case 已跌破 4.5（Kawaii 為 round-5 最嚴重主題）。
+      textMuted: '#6E5A60',
+      // 淺底主題用深紅（red-700）：6.23:1（on #FFFAF4）、6.47:1（on #FFFFFF）。
+      danger: '#b91c1c',
     },
     font: 'font-cute',
     borderRadius: '28px', // Rounder
@@ -51,7 +58,11 @@ export const THEMES: Record<string, ThemeConfig> = {
       background: '#f8fafc',
       surface: '#ffffff',
       text: '#0f172a',
-      textMuted: '#64748b',
+      // textMuted 安全 margin 提升（R6 NEW-2）：7.24:1（on #f8fafc）、7.58:1（on #ffffff）。
+      // 原 #64748b 僅 4.55/4.76:1，round-5 axe 實測「手動記錄」4.07、空態 hint（LCP 元素）4.26。
+      textMuted: '#475569',
+      // 淺底主題用深紅（red-700）：6.18:1（on #f8fafc）、6.47:1（on #ffffff）。
+      danger: '#b91c1c',
     },
     font: 'font-minimalist',
     borderRadius: '12px',
@@ -68,7 +79,10 @@ export const THEMES: Record<string, ThemeConfig> = {
       background: '#fffafb',
       surface: '#fffcf9',
       text: '#431407',
+      // 7.07:1（on #fffafb）、7.15:1（on #fffcf9），margin 充足，R6 不調。
       textMuted: '#9a3412',
+      // 淺底主題用深紅（red-700）：6.26:1（on #fffafb）、6.33:1（on #fffcf9）。
+      danger: '#b91c1c',
     },
     font: 'font-literary',
     borderRadius: '2px',

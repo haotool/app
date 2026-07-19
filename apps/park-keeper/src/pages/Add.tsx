@@ -98,20 +98,24 @@ export default function Add() {
             className="max-w-md mx-auto px-6 pt-10 flex flex-col items-center text-center gap-4"
           >
             <CheckCircle2 size={64} className="text-[var(--color-primary)]" strokeWidth={1.5} />
-            <p className="text-sm font-bold opacity-60">{t('add.summary_hint')}</p>
+            {/* 摘要提示用 textMuted 實色（R6 掃蕩）：opacity-60 dimming 未達 AA。 */}
+            <p className="text-sm font-bold" style={{ color: theme.colors.textMuted }}>
+              {t('add.summary_hint')}
+            </p>
             <div
               className="w-full rounded-3xl px-6 py-5 shadow-inner"
               style={{ backgroundColor: theme.colors.surface }}
             >
               <div className="text-4xl font-black tracking-tight">{savedRecord.floor}</div>
-              <div className="text-sm font-bold opacity-60 mt-1">
+              <div className="text-sm font-bold mt-1" style={{ color: theme.colors.textMuted }}>
                 {/* 未填車號 sentinel 經 formatPlate SSOT 轉換（round-2 Sonnet R2-U2 第 4 渲染點）。 */}
                 {formatPlateLabel(savedRecord.plateNumber, t('record.plate_unset'))}・{savedTime}
               </div>
               {savedRecord.latitude === undefined && (
                 <div
                   data-testid="add-summary-no-location"
-                  className="text-[10px] font-black uppercase tracking-wide opacity-40 mt-2"
+                  className="text-[10px] font-black uppercase tracking-wide mt-2"
+                  style={{ color: theme.colors.textMuted }}
                 >
                   {t('record.no_location')}
                 </div>
@@ -119,8 +123,8 @@ export default function Add() {
             </div>
             <Link
               to="/"
-              className="w-full h-14 rounded-2xl flex items-center justify-center text-white font-black tracking-wide shadow-lg active:scale-[0.98] transition-transform"
-              style={{ backgroundColor: theme.colors.primary }}
+              className="w-full h-14 rounded-2xl flex items-center justify-center font-black tracking-wide shadow-lg active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: theme.colors.primary, color: theme.colors.onPrimary }}
             >
               {t('action.back_home')}
             </Link>

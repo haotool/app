@@ -12,13 +12,38 @@ export type EnemyKind =
   | 'gusty'
   | 'boomy'
   | 'magno'
-  | 'mirri';
+  | 'mirri'
+  | 'bubbla'
+  | 'splatta'
+  | 'twinkla'
+  | 'cometa';
 
-export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type LevelId =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
+  | 16
+  | 17
+  | 18
+  | 19
+  | 20;
 
 // v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
-// v10（§68）：新增分裂型稜晶雙子 prismix。
-export type BossKind = 'jellord' | 'noctra' | 'prismix';
+// v10（§68）：新增分裂型稜晶雙子 prismix。v11（§74）：場控型 Syrona。
+// v12（§82）：場控收束型最終魔王 Voidra。
+export type BossKind = 'jellord' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
 export type TransformForm = 'volt' | 'gale' | 'shell';
@@ -45,6 +70,8 @@ export const SceneKeys = {
   Game: 'Game',
   Result: 'Result',
   Codex: 'Codex',
+  // v12 謝幕（§84）：全破 L20 後的星光復甦演出，播畢接 Result。
+  Credits: 'Credits',
 } as const;
 
 // 圖鑑/技能介紹分頁（§36）。

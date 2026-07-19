@@ -6,6 +6,8 @@ import {
   clampEliteX,
   crossedGate,
   maxDecorInWindow,
+  oneWayLandBand,
+  restingOnOneWay,
   shouldDropThrough,
   springSweepHit,
   type BoundsRect,
@@ -38,6 +40,87 @@ describe('shouldDropThrough 下落穿透（§29）', () => {
     expect(shouldDropThrough(true, true, false)).toBe(false);
     expect(shouldDropThrough(true, false, true)).toBe(false);
     expect(shouldDropThrough(false, true, true)).toBe(false);
+  });
+});
+
+describe('restingOnOneWay 站台判定（§77 熱修：接觸旗標抖動免疫）', () => {
+  const rect = { left: 925, right: 1075, top: 328, bottom: 344 };
+  const base = { left: 982, right: 1018 };
+
+  it('接觸幀（旗標為真、腳底貼台頂）成立', () => {
+    expect(restingOnOneWay({ ...base, contactDown: true, velocityY: 0, bottom: 328 }, rect)).toBe(
+      true,
+    );
+  });
+
+  it('落地擠壓迴圈假空中幀（旗標為假、腳底微懸浮、微沉降速度）仍成立', () => {
+    expect(
+      restingOnOneWay({ ...base, contactDown: false, velocityY: 15, bottom: 323.3 }, rect),
+    ).toBe(true);
+    expect(
+      restingOnOneWay({ ...base, contactDown: false, velocityY: 30, bottom: 326.8 }, rect),
+    ).toBe(true);
+  });
+
+  it('接觸幀腳底震盪至舊 ±4 容差外（台頂上方 4.7px）仍成立', () => {
+    expect(restingOnOneWay({ ...base, contactDown: true, velocityY: 0, bottom: 323.3 }, rect)).toBe(
+      true,
+    );
+  });
+
+  it('起跳上升（vy<0）不成立——向上穿台不得觸發下穿窗', () => {
+    expect(
+      restingOnOneWay({ ...base, contactDown: false, velocityY: -420, bottom: 328 }, rect),
+    ).toBe(false);
+  });
+
+  it('高速下墜路過（vy 超過沉降帶）不成立', () => {
+    expect(
+      restingOnOneWay({ ...base, contactDown: false, velocityY: 400, bottom: 327 }, rect),
+    ).toBe(false);
+  });
+
+  it('水平投影不重疊或腳底遠離台頂不成立', () => {
+    expect(
+      restingOnOneWay(
+        { left: 700, right: 736, contactDown: true, velocityY: 0, bottom: 328 },
+        rect,
+      ),
+    ).toBe(false);
+    expect(restingOnOneWay({ ...base, contactDown: true, velocityY: 0, bottom: 300 }, rect)).toBe(
+      false,
+    );
+    expect(restingOnOneWay({ ...base, contactDown: false, velocityY: 30, bottom: 344 }, rect)).toBe(
+      false,
+    );
+  });
+});
+
+describe('下跳指示決策（§77：isDropReady 同構組合——跳鍵此刻＝下跳 → 變色）', () => {
+  // 與 stage.isDropReady 同構：shouldDropThrough(down, /*假設跳*/ true, restingOnOneWay(...))。
+  const rect = { left: 925, right: 1075, top: 328, bottom: 344 };
+  const standing = { left: 982, right: 1018, contactDown: false, velocityY: 15, bottom: 326 };
+  const airborne = { left: 982, right: 1018, contactDown: false, velocityY: 400, bottom: 280 };
+
+  it('壓下＋站台（含旗標抖動幀）→ 指示開', () => {
+    expect(shouldDropThrough(true, true, restingOnOneWay(standing, rect))).toBe(true);
+  });
+
+  it('未壓下或不在站台（空中路過）→ 指示關（還原原色）', () => {
+    expect(shouldDropThrough(false, true, restingOnOneWay(standing, rect))).toBe(false);
+    expect(shouldDropThrough(true, true, restingOnOneWay(airborne, rect))).toBe(false);
+  });
+});
+
+describe('oneWayLandBand 單向著地帶（§77 熱修：高速著地防隧穿）', () => {
+  it('低速著地維持既有 +6 緊帶', () => {
+    expect(oneWayLandBand(0)).toBe(6);
+    expect(oneWayLandBand(4)).toBe(6);
+  });
+
+  it('高速著地（單步位移 > 4px）依位移放寬，接住下砸與高處落下', () => {
+    expect(oneWayLandBand(11.7)).toBeCloseTo(13.7);
+    expect(oneWayLandBand(8)).toBeCloseTo(10);
   });
 });
 

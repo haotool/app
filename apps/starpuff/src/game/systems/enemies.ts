@@ -5,19 +5,25 @@ import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
 import {
   BOOMY_FSM,
+  COMETA_FSM,
   GUSTY_FSM,
   MIRRI_FSM,
+  SPLATTA_FSM,
   SPORA_FSM,
   gustWindPush,
+  resolveBubblaHit,
   resolveDrillyHit,
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
+  resolveTwinklaHit,
   tickBoomerangBody,
+  type BubblaState,
   type DrillyState,
   type MagnoPhase,
   type MirriState,
   type ShellyState,
+  type TwinklaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import {
@@ -100,6 +106,10 @@ const TEXTURES: Record<EnemyKind, string> = {
   boomy: 'minion-boomy',
   magno: 'minion-magno',
   mirri: 'minion-mirri',
+  bubbla: 'minion-bubbla',
+  splatta: 'minion-splatta',
+  twinkla: 'minion-twinkla',
+  cometa: 'minion-cometa',
 };
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -117,6 +127,10 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   boomy: 0xe8a878,
   magno: 0x8a98c8,
   mirri: 0xd8dce8,
+  bubbla: 0xf2b26b,
+  splatta: 0xc88850,
+  twinkla: 0xf5e6b8,
+  cometa: 0x9fd8f0,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -137,6 +151,10 @@ const HP: Record<EnemyKind, number> = {
   boomy: 1,
   magno: 1,
   mirri: 1,
+  bubbla: 1,
+  splatta: 1,
+  twinkla: 1,
+  cometa: 1,
 };
 
 const SIZE = 40;
@@ -152,7 +170,14 @@ const SPORE_SIZE = 28;
 const SHELL_TEX = 'hazard-shell';
 const SHELL_SIZE = 22;
 const SHELL_SPIN_RAD = 0.02;
-const HAZARD_POOL_SIZE = 24;
+// v11 hazards（§73）：splatta 拋物糖球與落地灼燙糖斑。
+const BLOB_TEX = 'hazard-blob';
+const BLOB_SIZE = 18;
+// v12（§80）：comettail 高頻短命段加入共用池，上限 24→32 供 L19 六同屏尖峰裕度
+//（耗盡時 spawnHazard 回 null 靜默略過，不致崩潰）。
+const HAZARD_POOL_SIZE = 32;
+// 糖球落地判定線：主地面頂 y=400 上緣（§21 世界幾何常數）。
+const BLOB_GROUND_Y = 392;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
 // 脈衝環 hitbox 啟用時長（zappy 放電/glowy 光脈衝共用）。
@@ -206,6 +231,17 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       .fillStyle(0xf5d8b8, 1)
       .fillCircle(SHELL_SIZE / 2 + 5, SHELL_SIZE / 2 - 3, SHELL_SIZE / 2 - 7)
       .generateTexture(SHELL_TEX, SHELL_SIZE, SHELL_SIZE)
+      .destroy();
+  }
+  // 糖球（§73）：焦糖雙圓滴珠；落地轉灼燙糖斑（同貼圖壓扁著色）。
+  if (!scene.textures.exists(BLOB_TEX)) {
+    scene.add
+      .graphics()
+      .fillStyle(0xc88850, 1)
+      .fillCircle(BLOB_SIZE / 2, BLOB_SIZE / 2, BLOB_SIZE / 2 - 1)
+      .fillStyle(0xe8b070, 0.95)
+      .fillCircle(BLOB_SIZE / 2 - 3, BLOB_SIZE / 2 - 3, BLOB_SIZE / 2 - 6)
+      .generateTexture(BLOB_TEX, BLOB_SIZE, BLOB_SIZE)
       .destroy();
   }
 
@@ -349,6 +385,50 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity((dx / dist) * MIRRI_FSM.reflectSpeed, (dy / dist) * MIRRI_FSM.reflectSpeed);
   }
 
+  // 拋物糖球（§73 splatta）：重力拋物、落地轉灼燙糖斑；壽命有界逾時必回收（§56）。
+  function spawnSugarBlob(x: number, y: number, directionX: 1 | -1): void {
+    playSfx('pop', 0.6);
+    const blob = spawnHazard(x, y);
+    if (!blob) return;
+    blob.setTexture(BLOB_TEX).setVisible(true);
+    blob.setDisplaySize(BLOB_SIZE, BLOB_SIZE);
+    blob.setData('hazardKind', 'sugarblob');
+    blob.setData('lifeMs', SPLATTA_FSM.blobLifeMs);
+    const body = blob.body as Phaser.Physics.Arcade.Body;
+    body.setSize(BLOB_SIZE, BLOB_SIZE);
+    body.setAllowGravity(true);
+    body.setVelocity(SPLATTA_FSM.blobSpeedX * directionX, SPLATTA_FSM.blobSpeedY);
+  }
+
+  // 灼燙糖斑（§73）：糖球落地滯留區域拒止（沿孢子雲管線），spotMs 期滿消散。
+  function spawnSugarSpot(x: number): void {
+    const spot = spawnHazard(x, BLOB_GROUND_Y);
+    if (!spot) return;
+    spot.setTexture(BLOB_TEX).setVisible(true);
+    spot.setDisplaySize(SPLATTA_FSM.spotRadiusPx * 2, 12);
+    spot.setAlpha(0.9);
+    spot.setData('hazardKind', 'sugarspot');
+    spot.setData('lifeMs', SPLATTA_FSM.spotMs);
+    const body = spot.body as Phaser.Physics.Arcade.Body;
+    body.setSize(SPLATTA_FSM.spotRadiusPx * 2 * (spot.width / spot.displayWidth), spot.height);
+    body.setVelocity(0, 0);
+  }
+
+  // 彗尾段（§80 cometa）：俯衝沿路滯留短命傷害段（壽命有界逾時必回收 §56）。
+  function spawnCometTail(x: number, y: number): void {
+    const tail = spawnHazard(x, y);
+    if (!tail) return;
+    tail.setTexture('fx-star').setVisible(true);
+    tail.setDisplaySize(16, 16);
+    tail.setTint(0x9fd8f0);
+    tail.setAlpha(0.85);
+    tail.setData('hazardKind', 'comettail');
+    tail.setData('lifeMs', COMETA_FSM.tailLifeMs);
+    const body = tail.body as Phaser.Physics.Arcade.Body;
+    body.setSize(12, 12);
+    body.setVelocity(0, 0);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -435,6 +515,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     spawnBite,
     spawnSporeCloud,
     spawnBoomerang,
+    spawnSugarBlob,
+    spawnCometTail,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
@@ -467,6 +549,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('slowMs', 0);
     sprite.setData('dotDamage', 0);
     sprite.setData('dotAccMs', 0);
+    // 池重用重設（§77）：吸入豁免窗不得跨個體殘留。
+    sprite.setData('inhaleGraceUntil', 0);
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);
@@ -480,7 +564,15 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
             ? 'drift'
             : kind === 'mirri'
               ? 'roam'
-              : 'idle',
+              : kind === 'bubbla'
+                ? 'submerged'
+                : kind === 'splatta'
+                  ? 'patrol'
+                  : kind === 'twinkla'
+                    ? 'phased'
+                    : kind === 'cometa'
+                      ? 'glide'
+                      : 'idle',
     );
     // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
     sprite.setData('magnoPhase', kind === 'magno' ? 'idle' : undefined);
@@ -497,12 +589,17 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     const hitboxScale = kind === 'spiky' ? 0.85 : 0.9;
     body.setSize(sprite.width * hitboxScale, sprite.height * hitboxScale);
     body.setCollideWorldBounds(true);
+    // bubbla（§73）定點潛伏：重力關閉，leap 位移由狀態機速度逼近驅動。
+    // twinkla/cometa（§80）：星靈漂浮/高處巡游，重力一律關閉。
     body.setAllowGravity(
       kind !== 'floaty' &&
         kind !== 'puffy' &&
         kind !== 'zappy' &&
         kind !== 'glowy' &&
-        kind !== 'gusty',
+        kind !== 'gusty' &&
+        kind !== 'bubbla' &&
+        kind !== 'twinkla' &&
+        kind !== 'cometa',
     );
     // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
     body.setBounce(
@@ -560,6 +657,20 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     if (
       kind === 'drilly' &&
       resolveDrillyHit(sprite.getData('state') as DrillyState) === 'immune'
+    ) {
+      return 'ignored';
+    }
+    // 焦糖泡（§73）：僅躍出窗可傷，半潛免傷。
+    if (
+      kind === 'bubbla' &&
+      resolveBubblaHit(sprite.getData('state') as BubblaState) === 'immune'
+    ) {
+      return 'ignored';
+    }
+    // 星屑幽靈（§80）：僅實體窗可傷，虛化/前搖穿身免傷。
+    if (
+      kind === 'twinkla' &&
+      resolveTwinklaHit(sprite.getData('state') as TwinklaState) === 'immune'
     ) {
       return 'ignored';
     }
@@ -644,17 +755,25 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
     },
 
-    // 個體可吸判定（§30/§47）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
+    // 個體可吸判定（§30/§47/§73/§80）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
     isInhalable(enemy: Phaser.GameObjects.GameObject): boolean {
       const kind = kindOf(enemy);
       if (!kind || enemy.getData('elite') === true) return false;
       const state = enemy.getData('state') as string;
-      return canInhale(kind, state === 'stun' || state === 'surfaced');
+      return canInhale(
+        kind,
+        state === 'stun' || state === 'surfaced' || state === 'leap' || state === 'solid',
+      );
     },
 
-    // 半入地無害態（§47）：drilly 潛地/前搖觸碰不結算傷害、吸力不彈開。
+    // 半入地/穿身無害態（§47/§73/§80）：drilly 潛地/前搖、bubbla 潛伏/漣漪/回潛、
+    // twinkla 虛化/前搖——觸碰不結算傷害、吸力不彈開。
     isPhasedOut(enemy: Phaser.GameObjects.GameObject): boolean {
-      return kindOf(enemy) === 'drilly' && enemy.getData('state') !== 'surfaced';
+      const kind = kindOf(enemy);
+      if (kind === 'drilly') return enemy.getData('state') !== 'surfaced';
+      if (kind === 'bubbla') return enemy.getData('state') !== 'leap';
+      if (kind === 'twinkla') return enemy.getData('state') !== 'solid';
+      return false;
     },
 
     // 磁場星彈免傷（§59）：僅 magno field 相位；近戰/下砸/波及/吸入不受影響。
@@ -699,7 +818,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         const kind = kindOf(child);
         if (!kind || child.getData('elite') === true) continue;
         const state = child.getData('state') as string;
-        if (canInhale(kind, state === 'stun' || state === 'surfaced')) count += 1;
+        if (canInhale(kind, state === 'stun' || state === 'surfaced' || state === 'leap'))
+          count += 1;
       }
       return count;
     },
@@ -773,6 +893,22 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
           hazard.rotation += direction * SHELL_SPIN_RAD * deltaMs;
         } else if (hazard.getData('hazardKind') === 'spore') {
           hazard.setAlpha(Math.min(0.8, (lifeMs / SPORA_FSM.cloudMs) * 1.2));
+        } else if (hazard.getData('hazardKind') === 'sugarblob') {
+          // 糖球落地轉灼燙糖斑（§73）：越過地面線即回收本體、原地生成滯留糖斑。
+          if (hazard.y >= BLOB_GROUND_Y) {
+            const spotX = hazard.x;
+            const body = hazard.body as Phaser.Physics.Arcade.Body;
+            body.stop();
+            body.enable = false;
+            hazard.setActive(false).setVisible(false);
+            spawnSugarSpot(spotX);
+            continue;
+          }
+        } else if (hazard.getData('hazardKind') === 'sugarspot') {
+          hazard.setAlpha(Math.min(0.9, (lifeMs / SPLATTA_FSM.spotMs) * 1.4));
+        } else if (hazard.getData('hazardKind') === 'comettail') {
+          // 彗尾段（§80）：沿壽命漸隱（與孢子雲/糖斑淡出語彙一致）。
+          hazard.setAlpha(Math.min(0.85, (lifeMs / COMETA_FSM.tailLifeMs) * 1.3));
         }
       }
     },

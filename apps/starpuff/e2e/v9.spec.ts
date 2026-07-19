@@ -163,9 +163,17 @@ test('EX 挑戰（§58）：通關魔王節點見 EX 入口，EX 果凍王 HP 90
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Map');
-  // 已通關魔王節點（L4/L7）各見 EX 第二入口。
-  await expect(page.locator('[data-menu="node-4-ex"]')).toBeAttached();
+  // 分區分頁（§77）：已通關魔王節點的 EX 第二入口分屬一/二區頁，頁籤直達各自可見。
+  await page.locator('[data-menu="zone-2"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
   await expect(page.locator('[data-menu="node-7-ex"]')).toBeAttached();
+  await page.locator('[data-menu="zone-1"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  await expect(page.locator('[data-menu="node-4-ex"]')).toBeAttached();
   await page.locator('[data-menu="node-4-ex"]').dispatchEvent('pointerdown', {
     pointerId: 9,
     isPrimary: true,
@@ -246,14 +254,27 @@ test('舊存檔相容（§58/§60）：v8 存檔載入九節點，L8 開放、L9
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Map');
-  // 九節點：1-7 已通關可入、8 開放、9 迷霧鎖定（無入口鈕）。
-  for (const id of [1, 2, 3, 4, 5, 6, 7, 8]) {
+  // 分區分頁（§77）：挑戰 L8 落三區頁——8 開放、9 迷霧鎖定（無入口鈕）。
+  await expect(page.locator('[data-menu="node-8"]')).toBeAttached();
+  await expect(page.locator('[data-menu="node-9"]')).toHaveCount(0);
+  // 頁籤直達一/二區：1-7 已通關可入；已通關魔王節點見 EX 入口，
+  // 舊檔 exCleared 缺省 false 不 crash。
+  await page.locator('[data-menu="zone-2"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [5, 6, 7]) {
     await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
   }
-  await expect(page.locator('[data-menu="node-9"]')).toHaveCount(0);
-  // 已通關魔王節點見 EX 入口；舊檔 exCleared 缺省 false 不 crash。
-  await expect(page.locator('[data-menu="node-4-ex"]')).toBeAttached();
   await expect(page.locator('[data-menu="node-7-ex"]')).toBeAttached();
+  await page.locator('[data-menu="zone-1"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [1, 2, 3, 4]) {
+    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
+  }
+  await expect(page.locator('[data-menu="node-4-ex"]')).toBeAttached();
   expect(await page.evaluate(() => window.__sp.save().levels['7']?.exCleared)).toBe(false);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);

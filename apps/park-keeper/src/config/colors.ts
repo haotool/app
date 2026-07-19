@@ -14,8 +14,11 @@
 /** 北方向指針色（紅）。用於羅盤 N 標籤、刻度。 */
 export const NORTH_COLOR = '#ef4444';
 
-/** 抵達狀態色（綠）。用於 Check icon、CTA 按鈕、外圈高亮。 */
+/** 抵達狀態色（綠）。用於 Check icon、CTA 按鈕、外圈高亮、設定頁主題選中徽章。 */
 export const ARRIVED_COLOR = '#22c55e';
+
+/** ARRIVED_COLOR 底上的前景色（深綠 6.54:1）：白字僅 2.28:1 未達 AA（round-4 Sonnet F2）。 */
+export const ARRIVED_ON_COLOR = '#052e16';
 
 /** 警告狀態色（紅橙）。用於手機平放提示、GPS 等待提示。等同 NORTH_COLOR，語意獨立以利未來分拆。 */
 export const WARNING_COLOR = '#ef4444';

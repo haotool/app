@@ -301,9 +301,10 @@ export default function NavOverlay({
       </div>
 
       {/* 1. Top Header：車牌＋關閉。
-          車牌毛玻璃 pill 自帶底色（不依賴漸層供對比），漸層收短且提前透明。 */}
+          車牌毛玻璃 pill 自帶底色（不依賴漸層供對比），漸層收短且提前透明。
+          z-50 高於權限／校準卡（z-40）：卡態下關閉導航仍可點，保留逃生路徑（issue #759）。 */}
       <div
-        className="absolute top-0 inset-x-0 z-30 px-5 pt-safe-top flex justify-between items-start pointer-events-none"
+        className="absolute top-0 inset-x-0 z-50 px-5 pt-safe-top flex justify-between items-start pointer-events-none"
         style={{
           background: `linear-gradient(to bottom, ${theme.colors.background}F2 0%, ${theme.colors.background}A6 45%, transparent 78%)`,
         }}
@@ -326,9 +327,10 @@ export default function NavOverlay({
               className="text-2xl font-black tracking-tighter"
               style={{ color: theme.colors.text }}
             >
-              {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，與 RecordCard/hero 卡一致。 */}
+              {/* 未填車號 sentinel 經 formatPlate SSOT 轉換，與 RecordCard/hero 卡一致。
+                  待填文案用 textMuted 實色（R6 掃蕩）：opacity-50 dimming 未達 AA。 */}
               {isPlateUnset(record.plateNumber) ? (
-                <span className="opacity-50 text-lg">
+                <span className="text-lg" style={{ color: theme.colors.textMuted }}>
                   {formatPlateLabel(record.plateNumber, t('record.plate_unset'))}
                 </span>
               ) : (
@@ -449,7 +451,8 @@ export default function NavOverlay({
         </div>
       </div>
 
-      {/* 3. 權限卡／校準卡（全覆蓋維持——設計意圖；可互動） */}
+      {/* 3. 權限卡／校準卡（全覆蓋維持——設計意圖；可互動）。
+          header 關閉鈕以 z-50 保持可點，卡態不得形成無出口陷阱（issue #759）。 */}
       <NavPermissionSheet
         theme={theme}
         compassBlocked={compassBlocked}

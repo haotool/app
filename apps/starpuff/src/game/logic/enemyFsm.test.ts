@@ -2,29 +2,40 @@ import { describe, expect, it } from 'vitest';
 import { canInhale } from './combat';
 import {
   BOOMY_FSM,
+  BUBBLA_FSM,
+  COMETA_FSM,
   DRILLY_FSM,
   GLOWY_FSM,
   GUSTY_FSM,
   MAGNO_FSM,
   MIRRI_FSM,
   SHELLY_FSM,
+  SPLATTA_FSM,
   SPORA_FSM,
+  TWINKLA_FSM,
   ZAPPY_FSM,
   boomerangVelocity,
+  bubblaLeapOffsetY,
   gustWindPush,
   magnetPull,
+  resolveBubblaHit,
   resolveDrillyHit,
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
+  resolveTwinklaHit,
   tickBoomy,
+  tickBubbla,
+  tickCometa,
   tickDrilly,
   tickGlowy,
   tickGusty,
   tickMagno,
   tickMirri,
   tickShelly,
+  tickSplatta,
   tickSpora,
+  tickTwinkla,
   tickZappy,
   type ShellyState,
   type ZappyPhase,
@@ -323,5 +334,180 @@ describe('鏡面蟲 Mirri（§59）', () => {
     expect(MIRRI_FSM.reflectLifeMs).toBeGreaterThan(0);
     expect(MIRRI_FSM.reflectLifeMs).toBeLessThanOrEqual(3000);
     expect(canInhale('mirri')).toBe(true);
+  });
+});
+
+describe('Bubbla 四態時序（§73 焦糖泡）', () => {
+  it('潛伏期滿轉漣漪前搖，前搖期滿躍出', () => {
+    expect(tickBubbla('submerged', BUBBLA_FSM.submergedMs - 17, 16).state).toBe('submerged');
+    expect(tickBubbla('submerged', BUBBLA_FSM.submergedMs - 16, 16)).toEqual({
+      state: 'ripple',
+      stateMs: 0,
+      entered: 'ripple',
+    });
+    expect(tickBubbla('ripple', BUBBLA_FSM.rippleMs - 16, 16)).toEqual({
+      state: 'leap',
+      stateMs: 0,
+      entered: 'leap',
+    });
+  });
+
+  it('躍出期滿回潛，回潛期滿再潛伏', () => {
+    expect(tickBubbla('leap', BUBBLA_FSM.leapMs - 16, 16)).toEqual({
+      state: 'dive',
+      stateMs: 0,
+      entered: 'dive',
+    });
+    expect(tickBubbla('dive', BUBBLA_FSM.diveMs - 16, 16)).toEqual({
+      state: 'submerged',
+      stateMs: 0,
+      entered: 'submerged',
+    });
+  });
+
+  it('受擊決策：僅躍出窗可吸可傷，潛伏/前搖/回潛免傷', () => {
+    expect(resolveBubblaHit('leap')).toBe('vulnerable');
+    expect(resolveBubblaHit('submerged')).toBe('immune');
+    expect(resolveBubblaHit('ripple')).toBe('immune');
+    expect(resolveBubblaHit('dive')).toBe('immune');
+  });
+
+  it('條件可吸（§73）：canInhale 未帶狀態取保守值 false、躍出窗 true', () => {
+    expect(canInhale('bubbla')).toBe(false);
+    expect(canInhale('bubbla', true)).toBe(true);
+  });
+
+  it('躍出拋物高度：起跳與落回為 0、頂點滯空段維持峰值', () => {
+    expect(bubblaLeapOffsetY(0)).toBe(0);
+    expect(bubblaLeapOffsetY(BUBBLA_FSM.leapMs)).toBe(0);
+    const risenMs = BUBBLA_FSM.leapRiseMs;
+    expect(bubblaLeapOffsetY(risenMs)).toBe(-BUBBLA_FSM.leapHeightPx);
+    // 頂點滯空 0.4s（§73）：滯空段全程維持峰值高度。
+    expect(bubblaLeapOffsetY(risenMs + BUBBLA_FSM.leapHangMs / 2)).toBe(-BUBBLA_FSM.leapHeightPx);
+    expect(bubblaLeapOffsetY(risenMs + BUBBLA_FSM.leapHangMs)).toBe(-BUBBLA_FSM.leapHeightPx);
+    // 中途上升為單調遞升（負向）。
+    expect(bubblaLeapOffsetY(risenMs / 2)).toBeLessThan(0);
+    expect(bubblaLeapOffsetY(risenMs / 2)).toBeGreaterThan(-BUBBLA_FSM.leapHeightPx);
+  });
+});
+
+describe('Splatta 四態時序（§73 熔糖投手）', () => {
+  it('緩走期滿轉舉勺瞄準，瞄準期滿投擲', () => {
+    expect(tickSplatta('patrol', SPLATTA_FSM.patrolMs - 17, 16).state).toBe('patrol');
+    expect(tickSplatta('patrol', SPLATTA_FSM.patrolMs - 16, 16)).toEqual({
+      state: 'aim',
+      stateMs: 0,
+      entered: 'aim',
+    });
+    expect(tickSplatta('aim', SPLATTA_FSM.aimMs - 16, 16)).toEqual({
+      state: 'lob',
+      stateMs: 0,
+      entered: 'lob',
+    });
+  });
+
+  it('lob 為單幀事件態：下一 tick 即入冷卻，冷卻期滿回巡邏', () => {
+    expect(tickSplatta('lob', 0, 16)).toEqual({ state: 'cool', stateMs: 0, entered: 'cool' });
+    expect(tickSplatta('cool', SPLATTA_FSM.coolMs - 16, 16)).toEqual({
+      state: 'patrol',
+      stateMs: 0,
+      entered: 'patrol',
+    });
+  });
+
+  it('恆可吸歸孢子味（§73 黏緩語意一致）；糖斑壽命有界（anti-softlock §56）', () => {
+    expect(canInhale('splatta')).toBe(true);
+    expect(SPLATTA_FSM.blobLifeMs).toBeGreaterThan(0);
+    expect(SPLATTA_FSM.blobLifeMs).toBeLessThanOrEqual(3000);
+    expect(SPLATTA_FSM.spotMs).toBeGreaterThan(0);
+    expect(SPLATTA_FSM.spotMs).toBeLessThanOrEqual(3000);
+  });
+
+  it('精英倍率（§48 審查修復）：潛伏/巡邏/冷卻縮時、telegraph 與可吸窗不縮', () => {
+    // 焦糖泡霸 ×1.5：潛伏 2200/1.5≈1467 即轉漣漪；漣漪與躍出窗維持原長。
+    expect(tickBubbla('submerged', 1466, 16, 1.5).state).toBe('ripple');
+    expect(tickBubbla('submerged', 1400, 16, 1).state).toBe('submerged');
+    expect(tickBubbla('ripple', BUBBLA_FSM.rippleMs - 32, 16, 1.5).state).toBe('ripple');
+    expect(tickBubbla('leap', BUBBLA_FSM.leapMs - 32, 16, 1.5).state).toBe('leap');
+    // 糖漿投擲隊長 ×1.5：巡邏 2400/1.5=1600、冷卻 1600/1.5≈1067 即轉；舉勺前搖不縮。
+    expect(tickSplatta('patrol', 1600, 16, 1.5).state).toBe('aim');
+    expect(tickSplatta('patrol', 1600, 16, 1).state).toBe('patrol');
+    expect(tickSplatta('cool', 1067, 16, 1.5).state).toBe('patrol');
+    expect(tickSplatta('aim', SPLATTA_FSM.aimMs - 32, 16, 1.5).state).toBe('aim');
+  });
+});
+
+describe('Twinkla 三態時序（§80 星屑幽靈）', () => {
+  it('虛化期滿轉星光前搖，前搖期滿實體化，實體期滿回虛化', () => {
+    expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 17, 16).state).toBe('phased');
+    expect(tickTwinkla('phased', TWINKLA_FSM.phasedMs - 16, 16)).toEqual({
+      state: 'shimmer',
+      stateMs: 0,
+      entered: 'shimmer',
+    });
+    expect(tickTwinkla('shimmer', TWINKLA_FSM.shimmerMs - 16, 16)).toEqual({
+      state: 'solid',
+      stateMs: 0,
+      entered: 'solid',
+    });
+    expect(tickTwinkla('solid', TWINKLA_FSM.solidMs - 16, 16)).toEqual({
+      state: 'phased',
+      stateMs: 0,
+      entered: 'phased',
+    });
+  });
+
+  it('受擊決策：僅實體窗可吸可傷，虛化/前搖穿身免傷', () => {
+    expect(resolveTwinklaHit('solid')).toBe('vulnerable');
+    expect(resolveTwinklaHit('phased')).toBe('immune');
+    expect(resolveTwinklaHit('shimmer')).toBe('immune');
+  });
+
+  it('條件可吸（§80）：canInhale 未帶狀態取保守值 false、實體窗 true；cometa 恆可吸', () => {
+    expect(canInhale('twinkla')).toBe(false);
+    expect(canInhale('twinkla', true)).toBe(true);
+    expect(canInhale('cometa')).toBe(true);
+  });
+
+  it('精英倍率（§48）：星屑幽長 ×1.4 僅縮虛化期，前搖與實體窗不縮', () => {
+    // 虛化 2000/1.4≈1429 即轉前搖。
+    expect(tickTwinkla('phased', 1429, 16, 1.4).state).toBe('shimmer');
+    expect(tickTwinkla('phased', 1429, 16, 1).state).toBe('phased');
+    expect(tickTwinkla('shimmer', TWINKLA_FSM.shimmerMs - 32, 16, 1.4).state).toBe('shimmer');
+    expect(tickTwinkla('solid', TWINKLA_FSM.solidMs - 32, 16, 1.4).state).toBe('solid');
+  });
+});
+
+describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
+  it('巡游遇觸發轉鎖定，鎖定期滿俯衝，俯衝期滿回升再巡游', () => {
+    expect(tickCometa('glide', 500, 16, false).state).toBe('glide');
+    expect(tickCometa('glide', 500, 16, true)).toEqual({
+      state: 'lock',
+      stateMs: 0,
+      entered: 'lock',
+    });
+    expect(tickCometa('lock', COMETA_FSM.lockMs - 16, 16, false)).toEqual({
+      state: 'dash',
+      stateMs: 0,
+      entered: 'dash',
+    });
+    expect(tickCometa('dash', COMETA_FSM.dashMs - 16, 16, false)).toEqual({
+      state: 'recover',
+      stateMs: 0,
+      entered: 'recover',
+    });
+    expect(tickCometa('recover', COMETA_FSM.recoverMs - 16, 16, false)).toEqual({
+      state: 'glide',
+      stateMs: 0,
+      entered: 'glide',
+    });
+  });
+
+  it('鎖定後不受觸發旗標干擾（鎖定即不修正）；彗尾參數逾時必回收帶', () => {
+    expect(tickCometa('lock', 100, 16, true).state).toBe('lock');
+    expect(tickCometa('dash', 100, 16, true).state).toBe('dash');
+    expect(COMETA_FSM.lockMs).toBeGreaterThanOrEqual(500);
+    expect(COMETA_FSM.tailLifeMs).toBeGreaterThan(0);
+    expect(COMETA_FSM.tailLifeMs).toBeLessThanOrEqual(1000);
   });
 });

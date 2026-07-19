@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+129
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -17,6 +17,51 @@
 - ID：reward-papertrade-r5-app-feel
 - 原因：PaperTrade 缺 App 級觸控體感與交易深度——可縮放、訂單簿僅 6 檔、TF 切換有 skeleton、TP/SL 僅單一價格輸入、槓桿上限 125x（固定 MMR 在高槓桿會開倉即強平）、連線提示突兀、無幣種圖示與強平音效
 - 解法：R5 四波交付（sticky 頂欄、十檔 32px 密度簿＋dense-row 豁免 ADR、禁縮放＋PWA 體感 ADR、SWR 快取零延遲切 TF、雙區同顯＋一鍵平倉、TP/SL 三向換算部分平倉、有效 MMR=min(0.005, 0.5/lev) ADR、PPR 獨立模組零污染、WebAudio 合成音、vendor CC0 圖示、LOGO/OG 更新），Grok 審查＋真瀏覽器 QA 收斂 P0 限價護欄後全綠
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v12-astral-finale
+- 原因：StarPuff 20 關世界主計畫餘 v12 終章未落地——五區 L17-L20、最終魔王 Voidra（P2 生存段 KISS 定案）、低重力/流星雨雙新機制、分區分頁地圖硬項、雙新怪與圖鑑謝幕收尾，且勝利結算窗存在殘餘 hazard 奪走勝利的競態
+- 解法：meteor/twinkla·cometa/voidraFsm（survivalPhase 波次表＋過熱窗免傷單一真值＋段起點重試）純邏輯先行 463 單測，zones 分頁資料驅動＋MapScene 頁籤（三代舊存檔 e2e 相容），gravityScale 世界重力單點注入，BOSS_DEFEATED 即授 i-frame＋bossDown 死亡忽略根修競態，codex imagegen 4 素材，1200 寬純標準星 bot won 282.8s 段重試 14 零卡關實證，72 E2E＋v11 觀察項雙收
+
+- 日期：2026-07-19
+- ID：reward-park-keeper-r6-axe-guard
+- 原因：round-5 廣域掃描揭示「每輪稽核都有新死角」meta 問題（Settings 頁 opacity dimming 存活四輪未被抓）＋無任何 a11y 自動化守門
+- 解法：opacity dimming 全庫歸零（判定表 39 改/16 留）＋axe e2e 常駐守門（五路由×雙主題全規則集 0 violations，首跑即抓 2 條未知缺陷）＋Kawaii 文字階層守門＋/about 對比處方；662 unit＋72 e2e 綠
+
+- 日期：2026-07-19
+- ID：reward-starpuff-inhale-bigmouth-frames
+- 原因：吸入狀態沿用嘴型偏小的單張 hero-inhale，吸力讀感弱、與 fx 粒子強度不匹配
+- 解法：codex imagegen 依 asset ticket（雙參考圖鎖角色特徵、尺寸/錨點/透明底規格化）生成大嘴兩影格（512 webp 各 ~22KB），吸入中 160ms 交替、素材未載回退 hero-inhale；GAME_DESIGN §71 同步、真瀏覽器截圖驗證入遊戲清晰度
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-inhale-contact-damage
+- 原因：吸入拉近中的怪仍帶接觸傷害——玩家轉向/鬆開瞬間或出錐殘餘飛行貼身即受擊（實測 12-25% 命中），拉力結算與接觸結算間缺「被吸入中」狀態橋接，v1 出貨以來未被揪出
+- 解法：combat 增 inhaleGraceUntil/isContactHarmless 純函式（拉力逐幀刷新 250ms 豁免窗、過期恢復傷害性、未被吸怪不受影響防吸入全程無敵）＋enemies 池重用重設；4 單測＋e2e（豁免窗零傷害/過期恢復）＋真瀏覽器 8 輪反轉面向零受擊、對照組正常扣血
+
+- 日期：2026-07-19
+- ID：reward-starpuff-crouch-dropready-ux
+- 原因：下跳穿落缺乏可供發現的視覺回饋——蹲下無姿態變化、玩家無從得知「跳鍵此刻＝下跳」，操作可信度低
+- 解法：蹲姿走 POST_UPDATE 視覺通道（乘算壓扁＋下沉、PRE_UPDATE 還原，物理不見蹲縮防擠壓迴圈同型）＋跳鍵 is-drop-ready 變琥珀與箭頭翻轉朝下（純 CSS 圖形鍵帽零文字）；advanceCrouch 純函式 3 單測＋指示決策 2 單測，真瀏覽器驗證蹲→變色→穿落→還原全鏈
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-downjump-squash-loop
+- 原因：落地擠壓 squash 每次重新接觸即觸發，縮小 body 使腳底離台形成 ~20Hz 自持迴圈，接觸旗標抖動讓站台「下＋跳」2/3 機率被 v7 下砸誤判接管並以單步 22px 位移貫穿單向平台（worldstep 逐步 trace 實證），地形粉紅平台又從未接入下穿系統——生產站台下跳穿落回歸
+- 解法：落地擠壓加最低著地速度閘（120）切斷迴圈、resolveJumpPress 增 recentlyGroundedMs（coyote 窗內視同在地禁下砸）、站台判定抽 restingOnOneWay 純函式（接觸旗標或沉降幾何擇一）、著地帶 oneWayLandBand 依單步位移動態放寬防隧穿、粉紅平台掛 canLandOneWay 與 terrainOneWay 統一下穿；10 新單測（367 全綠）＋真瀏覽器接觸穩定度 120/120 步實證
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v11-kiln-finale
+- 原因：StarPuff 四區未完結，v11 需糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16/場控魔王 Syrona 與 v12 追逐捲軸技術 spike，並在潮汐×噴口×飢荒交叉不變式下維持 anti-softlock 與 L5 零回歸
+- 解法：tide/vent/兩新怪/syronaFsm 純邏輯先行（404 單測、噴泉洗牌 seed 注入、僵直窗固定不隨狂暴縮）＋場控幾何全動態視寬佈建與 BossHandle 選配委派，1200 寬純標準星真彈實證打穿三階段留 trace，spike 三項全過回寫主計畫，兩席獨立審查雙 APPROVE 後 should-fix 七項全收斂（61 E2E 全綠）
+
+- 日期：2026-07-18
+- ID：reward-park-keeper-r5-onprimary-sweep
+- 原因：round-4 四席揪出 onPrimary 殘債散佈 9 處（Racing/Kawaii 核心流程對比 1.37-2.49）＋權限卡遮關閉鈕可見不可點＋空態卡 label-in-name
+- 解法：text-white 全庫終掃判定表歸零（含 ARRIVED_ON_COLOR 新 token 與 UpdatePrompt 漸層深化）＋z-50 逃生附 RED 驗證 e2e＋accessible name 全文化；659 unit＋52 e2e 綠、+9 守門測試
+
+- 日期：2026-07-18
+- ID：penalty-park-keeper-onprimary-third-recurrence
+- 原因：onPrimary 同型債第三次復發（formatPlate→SW 路由→token 前景），前兩輪修復均只掃指名點未做全庫終掃
+- 解法：sentinel/token 類修復一律附全庫 grep 判定表（改/留每項附理由）＋token 迴歸斷言鎖熱點，審查必抽查判定表
 
 - 日期：2026-07-18
 - ID：reward-starpuff-v10-prism-finale

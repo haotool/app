@@ -149,7 +149,10 @@ describe('Home', () => {
     expect(screen.getByTestId('quick-record-cta').className).toContain('min-h-[32dvh]');
     expect(screen.queryByTestId('pickup-hero-card')).toBeNull();
 
-    const guideLink = screen.getByRole('link', { name: '捷徑教學' });
+    // 空狀態教學卡 accessible name 由完整可見文字組成（WCAG 2.5.3 Label in Name，
+    // round-4 Sonnet F3：過窄 aria-label 使 SR 只聽到「捷徑教學」，遺失空狀態說明）。
+    const guideLink = screen.getByRole('link', { name: /捷徑教學/ });
+    expect(guideLink).toHaveAccessibleName(/尚無停車紀錄[\s\S]*設定捷徑[\s\S]*捷徑教學/);
     expect(guideLink.className).toContain('min-h-11');
   });
 

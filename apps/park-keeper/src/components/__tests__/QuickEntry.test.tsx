@@ -5,6 +5,7 @@ import QuickEntry from '../QuickEntry';
 import i18n from '@app/park-keeper/services/i18n';
 import { plateMemory } from '@app/park-keeper/services/plateMemory';
 import { compressImage } from '@app/park-keeper/services/imageUtils';
+import { THEMES } from '@app/park-keeper/constants';
 import type { ThemeConfig } from '@app/park-keeper/types';
 
 // Mock MiniMap component
@@ -46,6 +47,7 @@ const mockTheme: ThemeConfig = {
     surface: '#f5f5f5',
     text: '#000000',
     textMuted: '#666666',
+    danger: '#b91c1c',
   },
   font: 'system-ui',
   borderRadius: '12px',
@@ -704,5 +706,90 @@ describe('QuickEntry - fullscreen 模式', () => {
 
     await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
     expect(screen.queryByAltText(i18n.t('record.photo_alt'))).not.toBeInTheDocument();
+  });
+});
+
+// primary 底前景色跨流收斂（issue #753 onPrimary token；round-4 Sonnet F1 全域終掃）：
+// racing 主題 onPrimary 為近黑（非白），元件硬編白字會在此主題下對比崩潰至 1.37–1.39:1。
+describe('QuickEntry - primary 底前景色跟隨 onPrimary token（round-4 F1）', () => {
+  const racingTheme = THEMES['racing']!;
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-TW');
+    global.localStorage.clear();
+
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: mockGeolocation,
+      vibrate: vi.fn(),
+    });
+
+    mockGeolocation.watchPosition.mockImplementation((success) => {
+      success({
+        coords: { latitude: 25.033, longitude: 121.5654, accuracy: 10, heading: null },
+      } as GeolocationPosition);
+      return 1;
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('樓層 chip 選中態前景色跟隨主題 onPrimary token（非硬編白字）', async () => {
+    // 以樓層記憶預填選中態，避免依賴 auto-save 進行中的 spinner 狀態。
+    localStorage.setItem('park-keeper:last-floor', 'B2');
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={racingTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'B2' })).toHaveStyle({
+      color: racingTheme.colors.onPrimary,
+    });
+    // 未選中 chip 不受影響（維持主題 text token class）。
+    expect(screen.getByRole('button', { name: 'B1' })).not.toHaveStyle({
+      color: racingTheme.colors.onPrimary,
+    });
+  });
+
+  it('照片引導卡「重新拍照」label 前景色跟隨主題 onPrimary token（非硬編白字）', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={racingTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+    fireEvent(screen.getByTestId('quick-entry-photo-input'), new Event('cancel'));
+
+    await screen.findByTestId('photo-issue-card');
+    const retakeLabel = screen.getByTestId('photo-issue-retake-input').closest('label');
+    expect(retakeLabel).toHaveStyle({ color: racingTheme.colors.onPrimary });
+  });
+
+  it('自訂樓層確認鈕前景色跟隨主題 onPrimary token（非硬編白字）', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <QuickEntry theme={racingTheme} onSave={vi.fn()} isVisible={true} onClose={vi.fn()} />
+      </I18nextProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mini-map')).toBeInTheDocument());
+
+    // Custom chip 為樓層格最後一格（Grid 圖示、無文字），點擊開啟自訂樓層輸入列。
+    const floorGrid = document.querySelector('.grid.grid-cols-4');
+    expect(floorGrid).not.toBeNull();
+    fireEvent.click(floorGrid!.lastElementChild as HTMLElement);
+
+    // 確認鈕與自訂輸入框同列（Check 圖示、primary 底）。
+    const zoneInput = await screen.findByPlaceholderText(i18n.t('record.zone_placeholder'));
+    const confirmButton = zoneInput.parentElement?.querySelector('button');
+    expect(confirmButton).not.toBeNull();
+    expect(confirmButton).toHaveStyle({ color: racingTheme.colors.onPrimary });
   });
 });

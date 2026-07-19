@@ -20,12 +20,17 @@
      動態覆寫，此處預設值對齊 Zen（minimalist）主題色，與既有 5 個 token 一致。 */
   --color-accent: #3b82f6;
   --color-secondary: #f1f5f9;
-  --color-text-muted: #64748b;
-  /* PWA 更新提示語意色（成功/失敗），與主題無關，供 UpdatePrompt 收斂硬編 Tailwind 色票使用。 */
-  --color-success-from: #10b981;
-  --color-success-to: #14b8a6;
-  --color-danger-from: #f43f5e;
-  --color-danger-to: #ef4444;
+  /* R6 NEW-2：textMuted 加深提升安全 margin（axe 取樣偏差下原 #64748b 邊緣 case 跌破 4.5:1）。 */
+  --color-text-muted: #475569;
+  /* 破壞性操作前景（R6）：red-500 於淺主題 surface 僅 3.7:1，收斂 red-700 達 6.4:1。 */
+  --color-danger: #b91c1c;
+  /* PWA 更新提示語意色（成功/失敗），與主題無關，供 UpdatePrompt 收斂硬編 Tailwind 色票使用。
+     深化至白字 AA（round-4 全域對比終掃）：原 emerald/teal-500 白字僅 2.5:1、rose/red-500 僅 3.7:1；
+     現值白字 6.29–7.68:1，white/20 按鈕混色底亦 ≥4.68:1。 */
+  --color-success-from: #065f46;
+  --color-success-to: #115e59;
+  --color-danger-from: #be123c;
+  --color-danger-to: #b91c1c;
 }
 
 body {

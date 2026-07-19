@@ -68,8 +68,5 @@ export const NAV_INDICATOR_TRANSITION = {
 export const NAV_LABEL_BASE_CLS =
   'text-[8px] font-black uppercase tracking-[0.2em] transition-all duration-300' as const;
 
-/** Tab 文字標籤 inactive 附加 class。 */
-export const NAV_LABEL_INACTIVE_CLS = 'opacity-30' as const;
-
 /** Icon 與文字標籤之間的垂直間距 class。 */
 export const NAV_TAB_GAP_CLS = 'gap-0.5' as const;

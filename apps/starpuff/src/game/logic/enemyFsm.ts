@@ -346,6 +346,196 @@ export function resolveMirriStarHit(state: MirriState): MirriStarHitOutcome {
   return state === 'mirror' ? 'reflect' : 'vulnerable';
 }
 
+// 焦糖泡 Bubbla 四態（§73）：糖漿中潛伏 submerged（僅露頂，不可吸不可傷）→ 漣漪前搖
+// ripple 0.6s（telegraph）→ 拋物躍出 leap（頂點滯空 0.4s，可吸可傷窗）→ 回潛 dive。
+export const BUBBLA_FSM = {
+  submergedMs: 2200,
+  rippleMs: 600,
+  // leap = 上升 0.5s ＋ 頂點滯空 0.4s ＋ 下落 0.5s。
+  leapMs: 1400,
+  leapRiseMs: 500,
+  leapHangMs: 400,
+  leapHeightPx: 96,
+  diveMs: 500,
+} as const;
+
+export type BubblaState = 'submerged' | 'ripple' | 'leap' | 'dive';
+
+export interface BubblaTick {
+  state: BubblaState;
+  stateMs: number;
+  entered: BubblaState | null;
+}
+
+// speedMul（§48 精英倍率）：僅縮短潛伏期提高躍出頻率；telegraph（漣漪）與
+// 躍出窗時長不縮，維持可讀性與可吸窗公平（審查修復）。
+export function tickBubbla(
+  state: BubblaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): BubblaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'submerged' && next >= BUBBLA_FSM.submergedMs / speedMul)
+    return { state: 'ripple', stateMs: 0, entered: 'ripple' };
+  if (state === 'ripple' && next >= BUBBLA_FSM.rippleMs)
+    return { state: 'leap', stateMs: 0, entered: 'leap' };
+  if (state === 'leap' && next >= BUBBLA_FSM.leapMs)
+    return { state: 'dive', stateMs: 0, entered: 'dive' };
+  if (state === 'dive' && next >= BUBBLA_FSM.diveMs)
+    return { state: 'submerged', stateMs: 0, entered: 'submerged' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 受擊決策（§73）：僅躍出窗正常結算，其餘半潛免傷（沿 drilly 慣例）。
+export type BubblaHitOutcome = 'immune' | 'vulnerable';
+
+export function resolveBubblaHit(state: BubblaState): BubblaHitOutcome {
+  return state === 'leap' ? 'vulnerable' : 'immune';
+}
+
+// 躍出拋物高度（相對潛伏基準的位移，負值向上）：升坡→頂點滯空→落坡，純函式供呈現層。
+export function bubblaLeapOffsetY(leapMs: number): number {
+  const { leapRiseMs, leapHangMs, leapMs: totalMs, leapHeightPx } = BUBBLA_FSM;
+  const clamped = Math.max(0, Math.min(leapMs, totalMs));
+  if (clamped <= leapRiseMs) {
+    const progress = clamped / leapRiseMs;
+    // easeOut 升坡：起跳快、近頂緩；+0 防 -0 汙染呼叫端比較。
+    return -leapHeightPx * (1 - (1 - progress) * (1 - progress)) + 0;
+  }
+  if (clamped <= leapRiseMs + leapHangMs) return -leapHeightPx;
+  const fallMs = totalMs - leapRiseMs - leapHangMs;
+  const progress = (clamped - leapRiseMs - leapHangMs) / fallMs;
+  // easeIn 落坡：離頂緩、落地快；+0 防 -0 汙染呼叫端比較。
+  return -leapHeightPx * (1 - progress * progress) + 0;
+}
+
+// 熔糖投手 Splatta 四態（§73）：緩走 patrol → 舉勺瞄準 aim 0.5s → 投擲 lob（單幀事件態，
+// 呈現層生成拋物糖球；落地留 1.2s 灼燙糖斑走 hazards 管線）→ 冷卻 cool 1.6s → patrol。
+export const SPLATTA_FSM = {
+  patrolMs: 2400,
+  aimMs: 500,
+  coolMs: 1600,
+  walkSpeed: 55,
+  // 拋物糖球初速與壽命（逾時必回收，anti-softlock §56）。
+  blobSpeedX: 180,
+  blobSpeedY: -320,
+  blobLifeMs: 2400,
+  // 灼燙糖斑滯留時長與尺寸。
+  spotMs: 1200,
+  spotRadiusPx: 26,
+} as const;
+
+export type SplattaState = 'patrol' | 'aim' | 'lob' | 'cool';
+
+export interface SplattaTick {
+  state: SplattaState;
+  stateMs: number;
+  entered: SplattaState | null;
+}
+
+// speedMul（§48 精英倍率）：縮短巡邏與冷卻提高拋射頻率；舉勺前搖（telegraph）
+// 不縮，維持可讀性（審查修復）。
+export function tickSplatta(
+  state: SplattaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): SplattaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'patrol' && next >= SPLATTA_FSM.patrolMs / speedMul)
+    return { state: 'aim', stateMs: 0, entered: 'aim' };
+  if (state === 'aim' && next >= SPLATTA_FSM.aimMs)
+    return { state: 'lob', stateMs: 0, entered: 'lob' };
+  // lob 為單幀事件態：呈現層生成糖球後即入冷卻（沿 boomy throw 慣例）。
+  if (state === 'lob') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= SPLATTA_FSM.coolMs / speedMul)
+    return { state: 'patrol', stateMs: 0, entered: 'patrol' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 星屑幽靈 Twinkla 三態（§80）：虛化 phased 2.0s（半透明、不可吸不可傷、穿身無害）→
+// 星光聚攏前搖 shimmer 0.5s（telegraph）→ 實體 solid 1.8s（緩慢追飄，可吸可傷窗）→ 回虛化。
+export const TWINKLA_FSM = {
+  phasedMs: 2000,
+  shimmerMs: 500,
+  solidMs: 1800,
+  driftSpeed: 30,
+  chaseSpeed: 60,
+} as const;
+
+export type TwinklaState = 'phased' | 'shimmer' | 'solid';
+
+export interface TwinklaTick {
+  state: TwinklaState;
+  stateMs: number;
+  entered: TwinklaState | null;
+}
+
+// speedMul（§48 精英倍率）：僅縮短虛化期提高現身頻率（星屑幽長 ×1.4）；
+// telegraph（shimmer）與實體窗時長不縮，維持可讀性與可吸窗公平（沿 bubbla 慣例）。
+export function tickTwinkla(
+  state: TwinklaState,
+  stateMs: number,
+  deltaMs: number,
+  speedMul = 1,
+): TwinklaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'phased' && next >= TWINKLA_FSM.phasedMs / speedMul)
+    return { state: 'shimmer', stateMs: 0, entered: 'shimmer' };
+  if (state === 'shimmer' && next >= TWINKLA_FSM.shimmerMs)
+    return { state: 'solid', stateMs: 0, entered: 'solid' };
+  if (state === 'solid' && next >= TWINKLA_FSM.solidMs)
+    return { state: 'phased', stateMs: 0, entered: 'phased' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 受擊決策（§80）：僅實體窗正常結算，虛化/前搖穿身免傷（沿 drilly 慣例）。
+export type TwinklaHitOutcome = 'immune' | 'vulnerable';
+
+export function resolveTwinklaHit(state: TwinklaState): TwinklaHitOutcome {
+  return state === 'solid' ? 'vulnerable' : 'immune';
+}
+
+// 彗尾飛魚 Cometa 四態（§80）：高處巡游 glide →（玩家進觸發域）→ 鎖定前搖 lock 0.55s
+//（閃爍，鎖定後不修正）→ 斜向俯衝 dash 0.6s（420px/s，沿路拖 damaging 彗尾）→
+// 回升 recover → glide。恆可吸（疾風味）。
+export const COMETA_FSM = {
+  lockMs: 550,
+  dashMs: 600,
+  recoverMs: 900,
+  triggerRangePx: 230,
+  dashSpeed: 420,
+  // 彗尾段生成節拍與壽命（走 hazards 管線，逾時必回收 §56）。
+  tailIntervalMs: 90,
+  tailLifeMs: 500,
+} as const;
+
+export type CometaState = 'glide' | 'lock' | 'dash' | 'recover';
+
+export interface CometaTick {
+  state: CometaState;
+  stateMs: number;
+  entered: CometaState | null;
+}
+
+export function tickCometa(
+  state: CometaState,
+  stateMs: number,
+  deltaMs: number,
+  shouldDash: boolean,
+): CometaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'glide' && shouldDash) return { state: 'lock', stateMs: 0, entered: 'lock' };
+  if (state === 'lock' && next >= COMETA_FSM.lockMs)
+    return { state: 'dash', stateMs: 0, entered: 'dash' };
+  if (state === 'dash' && next >= COMETA_FSM.dashMs)
+    return { state: 'recover', stateMs: 0, entered: 'recover' };
+  if (state === 'recover' && next >= COMETA_FSM.recoverMs)
+    return { state: 'glide', stateMs: 0, entered: 'glide' };
+  return { state, stateMs: next, entered: null };
+}
+
 // 迴旋彈道（§52/§53 共用）：去程勻減速、turnMs 折返點反向，2×turnMs 回到原點等速；
 // 敵方殼刃與玩家迴旋星同走此純函式，回程亦有判定。
 export function boomerangVelocity(

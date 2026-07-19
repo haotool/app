@@ -41,6 +41,7 @@ const REQUIRED_COLOR_KEYS = [
   'surface',
   'text',
   'textMuted',
+  'danger',
 ] as const;
 
 describe('constants', () => {
@@ -113,6 +114,38 @@ describe('constants', () => {
         expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(textMuted, background)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(textMuted, surface)).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    // R6 NEW-2：axe 字型渲染取樣可較 token 理論值低 ~0.5，壓線 4.5x 的 token 實測會跌破門檻，
+    // 故 textMuted 另設安全 margin 守門，防止回退到零餘裕值（round-5 實測 4.07/4.26 教訓）。
+    it('四主題 textMuted 對 background 與 surface 對比須 ≥5.5:1（安全 margin 守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        const { textMuted, background, surface } = theme.colors;
+        expect(contrastRatio(textMuted, background)).toBeGreaterThanOrEqual(5.5);
+        expect(contrastRatio(textMuted, surface)).toBeGreaterThanOrEqual(5.5);
+      }
+    });
+
+    // R6：danger 為破壞性操作文字前景（設定頁清除資料／警語），須達 AA 且留 margin。
+    it('四主題 danger 對 background 與 surface 對比須 ≥5.5:1（破壞性操作文字守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        const { danger, background, surface } = theme.colors;
+        expect(contrastRatio(danger, background)).toBeGreaterThanOrEqual(5.5);
+        expect(contrastRatio(danger, surface)).toBeGreaterThanOrEqual(5.5);
+      }
+    });
+
+    // R6 review：主文字對比必須高於次要文字，防止層級倒置（Kawaii 曾 text 5.66 < textMuted 6.14）。
+    it('四主題 text 對 background 與 surface 對比須 ≥ textMuted（視覺層級守門）', () => {
+      for (const theme of Object.values(THEMES)) {
+        const { text, textMuted, background, surface } = theme.colors;
+        expect(contrastRatio(text, background)).toBeGreaterThanOrEqual(
+          contrastRatio(textMuted, background),
+        );
+        expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(
+          contrastRatio(textMuted, surface),
+        );
       }
     });
   });

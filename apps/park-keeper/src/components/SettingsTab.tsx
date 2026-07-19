@@ -10,6 +10,7 @@ import type { ThemeConfig, AppSettings, LanguageType } from '@app/park-keeper/ty
 import { THEMES, CACHE_DAYS } from '@app/park-keeper/constants';
 import { dbService } from '@app/park-keeper/services/db';
 import { setAppLanguage } from '@app/park-keeper/services/i18n';
+import { ARRIVED_COLOR, ARRIVED_ON_COLOR } from '@app/park-keeper/config/colors';
 import { getVersionInfo } from '@app/park-keeper/config/version';
 
 // 滑桿拖曳防抖：停止拖曳後才執行單次清理，避免每 tick 全掃 IndexedDB。
@@ -31,11 +32,13 @@ function SettingGroup({
 }) {
   return (
     <div className="space-y-3 mb-6">
-      <div className="flex items-center gap-2 px-2 opacity-40">
+      {/* 區塊標題用 textMuted 實色（R6 NEW-1）：opacity-40 dimming 四主題僅 2.1–2.8:1；
+          h2 承接頁面 h1，修 axe heading-order（原 h3 跳級）。 */}
+      <div className="flex items-center gap-2 px-2" style={{ color: theme.colors.textMuted }}>
         <Icon size={14} />
-        <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
+        <h2 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
           {title}
-        </h3>
+        </h2>
       </div>
       {children}
     </div>
@@ -92,11 +95,15 @@ export default function SettingsTab({
       <div className="px-5 py-6 max-w-md mx-auto">
         {/* Theme Selection */}
         <section className="mb-8">
-          <div className="flex items-center gap-2 px-2 opacity-40 mb-3">
+          {/* 同 SettingGroup（R6 NEW-1）：textMuted 實色＋h2 修 heading-order。 */}
+          <div
+            className="flex items-center gap-2 px-2 mb-3"
+            style={{ color: theme.colors.textMuted }}
+          >
             <Palette size={14} />
-            <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
+            <h2 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.font}`}>
               {t('settings.visual')}
-            </h3>
+            </h2>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {Object.values(THEMES).map((th) => {
@@ -124,8 +131,9 @@ export default function SettingsTab({
                   <div className="flex justify-between items-center w-full relative z-10">
                     <span className={`font-bold ${th.font}`}>{th.name}</span>
                     {isActive && (
-                      <div className="bg-green-500 rounded-full p-1">
-                        <Check size={12} color="white" strokeWidth={2} />
+                      // 選中徽章收斂 colors.ts SSOT：白勾 on green-500 僅 2.28:1，未達非文字對比 3:1。
+                      <div className="rounded-full p-1" style={{ backgroundColor: ARRIVED_COLOR }}>
+                        <Check size={12} color={ARRIVED_ON_COLOR} strokeWidth={2} />
                       </div>
                     )}
                   </div>
@@ -151,7 +159,9 @@ export default function SettingsTab({
                     type="button"
                     key={lang.id}
                     onClick={() => handleLanguageChange(lang.id as LanguageType)}
-                    className={`flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors ${isActive ? '' : 'opacity-60 hover:opacity-100'}`}
+                    className="flex-1 py-3 rounded-2xl flex flex-col items-center justify-center gap-1 relative z-10 transition-colors"
+                    // 未選中態用 textMuted 實色（R6 NEW-1）：opacity-60 dimming 實測僅 3.23:1。
+                    style={{ color: isActive ? theme.colors.text : theme.colors.textMuted }}
                   >
                     {isActive && (
                       <motion.div
@@ -176,10 +186,15 @@ export default function SettingsTab({
             style={{ backgroundColor: theme.colors.surface }}
           >
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+              <span
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('settings.days')}
               </span>
-              <span className="text-2xl font-black" style={{ color: theme.colors.primary }}>
+              {/* 數值不用 primary 當字色（R6 NEW-1）：Kawaii pastel primary on 白 surface 僅 1.69:1，
+                  比照 issue #753 空態卡裁決改 text，層級由字級/字重承擔。 */}
+              <span className="text-2xl font-black" style={{ color: theme.colors.text }}>
                 {settings.cacheDurationDays}
               </span>
             </div>
@@ -193,10 +208,17 @@ export default function SettingsTab({
               className="w-full h-1.5 bg-black/5 rounded-lg appearance-none cursor-pointer accent-current"
               style={{ accentColor: theme.colors.primary }}
             />
-            <p className="text-[10px] mt-4 opacity-40 font-medium text-center">
+            <p
+              className="text-[10px] mt-4 font-medium text-center"
+              style={{ color: theme.colors.textMuted }}
+            >
               {t('settings.cache_desc')}
             </p>
-            <p className="text-[10px] mt-1.5 font-medium text-center text-red-500/70">
+            {/* 破壞警語用 danger 實色（R6 NEW-1）：red-500/70 混色僅 2.42:1。 */}
+            <p
+              className="text-[10px] mt-1.5 font-medium text-center"
+              style={{ color: theme.colors.danger }}
+            >
               {t('settings.cache_shrink_warning', '調小天數將立即清除較舊照片，且無法復原。')}
             </p>
           </div>
@@ -208,18 +230,17 @@ export default function SettingsTab({
             className="rounded-3xl overflow-hidden shadow-elevation-1 border border-black/5"
             style={{ backgroundColor: theme.colors.surface }}
           >
+            {/* 清除文字與 icon 用 danger 實色（R6 NEW-1）：red-500 淺主題 3.29:1、icon @40% 更低。 */}
             <button
               type="button"
               onClick={() => void clearAll()}
-              className="w-full px-5 py-4 flex items-center justify-between active:bg-red-50 group transition-colors"
+              className="w-full px-5 py-4 flex items-center justify-between active:bg-red-50 transition-colors"
+              style={{ color: theme.colors.danger }}
             >
-              <span className="text-xs font-black text-red-500 uppercase tracking-widest">
+              <span className="text-xs font-black uppercase tracking-widest">
                 {t('settings.erase')}
               </span>
-              <Trash2
-                size={16}
-                className="text-red-500 opacity-40 group-active:opacity-100 transition-opacity"
-              />
+              <Trash2 size={16} />
             </button>
           </div>
         </SettingGroup>
@@ -231,35 +252,49 @@ export default function SettingsTab({
             style={{ backgroundColor: theme.colors.surface }}
           >
             <div className="flex items-center justify-between gap-3 mb-3">
-              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+              <span
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('settings.current_version')}
               </span>
+              {/* 同上：版本號改 text 實色，避免 Kawaii primary 字色對比崩潰。 */}
               <span
                 className="text-lg font-black font-mono tracking-tight"
-                style={{ color: theme.colors.primary }}
+                style={{ color: theme.colors.text }}
               >
                 {versionInfo.displayVersion}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+              <span
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('settings.build_time')}
               </span>
-              <span className="text-xs font-medium opacity-80">
+              <span className="text-xs font-medium" style={{ color: theme.colors.text }}>
                 {versionInfo.formattedBuildTime}
               </span>
             </div>
-            <p className="text-[10px] mt-4 opacity-40 font-medium text-center break-all">
+            <p
+              className="text-[10px] mt-4 font-medium text-center break-all"
+              style={{ color: theme.colors.textMuted }}
+            >
               {versionInfo.fullVersion}
             </p>
           </div>
         </SettingGroup>
 
         <footer className="text-center mt-8 pb-4" aria-label={t('settings.current_version')}>
-          <p className={`text-[10px] opacity-35 uppercase tracking-[0.18em] ${theme.font}`}>
+          {/* footer 版本標籤同步實色化（R6 NEW-1）：opacity-35/70 dimming 同源反模式。 */}
+          <p
+            className={`text-[10px] uppercase tracking-[0.18em] ${theme.font}`}
+            style={{ color: theme.colors.textMuted }}
+          >
             {t('settings.current_version')}
           </p>
-          <p className="text-xs font-mono font-bold opacity-70 mt-1">
+          <p className="text-xs font-mono font-bold mt-1" style={{ color: theme.colors.textMuted }}>
             {versionInfo.displayVersion}
           </p>
         </footer>

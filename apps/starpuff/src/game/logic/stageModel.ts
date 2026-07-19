@@ -20,6 +20,37 @@ export function shouldDropThrough(
   return down && jumpPressed && onOneWayPlatform;
 }
 
+// 站台判定沉降帶（§77）：腳底允許在台頂上方 6px（擠壓迴圈懸浮）至下方 8px（分離殘量）。
+const REST_ABOVE_PX = 6;
+const REST_BELOW_PX = 8;
+// 沉降速度上限：擠壓迴圈回落速度實測 15-30，高速下墜路過（>90）不得誤判為站台。
+const REST_MAX_VY = 90;
+
+// 站台判定（§77 熱修）：落地擠壓迴圈使接觸旗標以 ~20Hz 抖動，純旗標判定讓下穿
+// 變成機率行為。接觸旗標或「沉降幾何」（腳底貼近台頂且微速下沉）擇一成立。
+export function restingOnOneWay(
+  player: {
+    contactDown: boolean;
+    velocityY: number;
+    bottom: number;
+    left: number;
+    right: number;
+  },
+  rect: BoundsRect,
+): boolean {
+  if (player.right <= rect.left || player.left >= rect.right) return false;
+  if (player.bottom < rect.top - REST_ABOVE_PX || player.bottom > rect.top + REST_BELOW_PX) {
+    return false;
+  }
+  return player.contactDown || (player.velocityY >= 0 && player.velocityY <= REST_MAX_VY);
+}
+
+// 單向著地帶（§77 熱修）：低速維持 +6 緊帶防側切；單步位移大於帶寬時依位移放寬，
+// 接住下砸（~11.7px/步）與高處落下，杜絕高速隧穿單向平台。
+export function oneWayLandBand(stepDeltaY: number): number {
+  return Math.max(REST_ABOVE_PX, stepDeltaY + 2);
+}
+
 // AABB 邊界（§43 掃掠背擋共用形狀）。
 export interface BoundsRect {
   left: number;

@@ -12,8 +12,8 @@ function run(spec: EasterEggSpec, events: readonly EggEvent[]): boolean[] {
 }
 
 describe('LEVELS easterEggs 資料（§24）', () => {
-  it('十二關各掛一顆彩蛋且觸發型別對表', () => {
-    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  it('每關各掛一顆彩蛋且觸發型別對表', () => {
+    expect(LEVELS.map((l) => l.easterEggs.length)).toEqual(LEVELS.map(() => 1));
     expect(LEVELS.map((l) => l.easterEggs[0]?.trigger)).toEqual([
       'reach-x',
       'stand-count',
@@ -27,6 +27,14 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'stand-count',
       'eat-sequence',
       'twin-finish',
+      'reach-x',
+      'stand-count',
+      'eat-sequence',
+      'vent-hit-count',
+      'stand-count',
+      'eat-sequence',
+      'eat-sequence',
+      'survive-collect',
     ]);
     expect(LEVELS.map((l) => l.easterEggs[0]?.reward)).toEqual([
       'hp-up',
@@ -41,6 +49,14 @@ describe('LEVELS easterEggs 資料（§24）', () => {
       'hp-up',
       'gold-star',
       'gold-star',
+      'hp-up',
+      'full-magazine',
+      'gold-star',
+      'heal',
+      'hp-up',
+      'full-magazine',
+      'gold-star',
+      'full-magazine',
     ]);
   });
 
@@ -151,6 +167,19 @@ describe('advanceEgg：twin-finish（§70）', () => {
       { kind: 'boss-hit', sinceActiveMs: 100 },
       { kind: 'twin-finish' },
       { kind: 'twin-finish' },
+    ]);
+    expect(results).toEqual([false, true, false]);
+  });
+});
+
+describe('advanceEgg：survive-collect（§83）', () => {
+  const spec: EasterEggSpec = { trigger: 'survive-collect', reward: 'full-magazine' };
+
+  it('收到星核共鳴事件觸發一次並鎖存；無關事件不推進', () => {
+    const results = run(spec, [
+      { kind: 'vent-hit-count' },
+      { kind: 'survive-collect' },
+      { kind: 'survive-collect' },
     ]);
     expect(results).toEqual([false, true, false]);
   });

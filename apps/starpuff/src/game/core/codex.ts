@@ -4,7 +4,7 @@ import type { MixId, StarFlavor } from './config';
 import type { EnemyKind } from './types';
 
 export interface CodexMonster {
-  kind: EnemyKind | 'boss' | 'noctra';
+  kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
   textureKey: string;
   nameZh: string;
   behavior: string;
@@ -115,6 +115,36 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     inhalable: true,
   },
   {
+    kind: 'bubbla',
+    textureKey: 'minion-bubbla',
+    nameZh: '焦糖泡',
+    behavior: '糖漿潛伏週期躍出，躍出時吞下得爆裂星',
+    inhalable: false,
+    conditional: true,
+  },
+  {
+    kind: 'splatta',
+    textureKey: 'minion-splatta',
+    nameZh: '熔糖投手',
+    behavior: '舉勺拋糖球留灼斑，吞下得孢子星',
+    inhalable: true,
+  },
+  {
+    kind: 'twinkla',
+    textureKey: 'minion-twinkla',
+    nameZh: '星屑幽靈',
+    behavior: '虛化穿身週期現形，實體時吞下得流光星',
+    inhalable: false,
+    conditional: true,
+  },
+  {
+    kind: 'cometa',
+    textureKey: 'minion-cometa',
+    nameZh: '彗尾飛魚',
+    behavior: '高空鎖定俯衝拖彗尾，吞下得疾風星',
+    inhalable: true,
+  },
+  {
     kind: 'boss',
     textureKey: 'boss-idle',
     nameZh: '果凍王',
@@ -126,6 +156,28 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     textureKey: 'boss-noctra',
     nameZh: '暗月蝠王',
     behavior: '投彈、俯衝、彈幕俯掠空中魔王',
+    inhalable: false,
+  },
+  // v12 圖鑑補完（§84）：三新魔王徽記入鑑。
+  {
+    kind: 'prismix',
+    textureKey: 'boss-prismix',
+    nameZh: '稜晶雙子',
+    behavior: '晶柱、分裂雙子、裂核彈幕分裂型魔王',
+    inhalable: false,
+  },
+  {
+    kind: 'syrona',
+    textureKey: 'boss-syrona',
+    nameZh: '熔糖窯后',
+    behavior: '噴泉、潮汐、糖漿波場控型魔王',
+    inhalable: false,
+  },
+  {
+    kind: 'voidra',
+    textureKey: 'boss-voidra',
+    nameZh: '蝕星魔核',
+    behavior: '牽引、轟炸生存段、低重力終局最終魔王',
     inhalable: false,
   },
 ] as const;

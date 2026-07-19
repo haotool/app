@@ -110,11 +110,27 @@ test('舊存檔相容（§65）：v9 存檔載入十二節點，L10 開放、L11
     isPrimary: true,
   });
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Map');
-  for (const id of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+  // 分區分頁（§77）：挑戰 L10 落三區頁——8-10 可入、11/12 迷霧鎖定（無入口鈕）。
+  for (const id of [8, 9, 10]) {
     await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
   }
   await expect(page.locator('[data-menu="node-11"]')).toHaveCount(0);
   await expect(page.locator('[data-menu="node-12"]')).toHaveCount(0);
+  // 頁籤直達一/二區驗證舊節點仍可入。
+  await page.locator('[data-menu="zone-1"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [1, 2, 3, 4]) {
+    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
+  }
+  await page.locator('[data-menu="zone-2"]').dispatchEvent('pointerdown', {
+    pointerId: 9,
+    isPrimary: true,
+  });
+  for (const id of [5, 6, 7]) {
+    await expect(page.locator(`[data-menu="node-${id}"]`)).toBeAttached();
+  }
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

@@ -4,6 +4,15 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'hero-inhale',
     url: new URL('../../assets/sprites/hero-inhale.webp', import.meta.url).href,
   },
+  // 大嘴吸入影格（§77.4）：吸入進行中兩影格交替。
+  {
+    key: 'hero-inhale-big-1',
+    url: new URL('../../assets/sprites/hero-inhale-big-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-inhale-big-2',
+    url: new URL('../../assets/sprites/hero-inhale-big-2.webp', import.meta.url).href,
+  },
   {
     key: 'hero-puffed',
     url: new URL('../../assets/sprites/hero-puffed.webp', import.meta.url).href,
@@ -113,6 +122,23 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'boss-prismix',
     url: new URL('../../assets/sprites/boss-prismix.webp', import.meta.url).href,
   },
+  // v11 四區完結（§73/§74/§76）：新怪兩種＋第四魔王＋焙糖火山橫景。
+  {
+    key: 'minion-bubbla',
+    url: new URL('../../assets/sprites/minion-bubbla.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-splatta',
+    url: new URL('../../assets/sprites/minion-splatta.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-syrona',
+    url: new URL('../../assets/sprites/boss-syrona.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-kiln-l',
+    url: new URL('../../assets/sprites/bg-kiln-l.webp', import.meta.url).href,
+  },
   // v4 主題道具（§31/§32）：道具條 4 等分切割後逐件註冊，佈景資料驅動於 levels.ts decor。
   {
     key: 'prop-meadow-1',
@@ -177,5 +203,39 @@ export const ASSETS: { key: string; url: string }[] = [
   {
     key: 'prop-throne-4',
     url: new URL('../../assets/sprites/prop-throne-4.webp', import.meta.url).href,
+  },
+  // v11 窯主題道具條（§76）：窯磚/糖罐/風箱/焦糖柱。
+  {
+    key: 'prop-kiln-1',
+    url: new URL('../../assets/sprites/prop-kiln-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-kiln-2',
+    url: new URL('../../assets/sprites/prop-kiln-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-kiln-3',
+    url: new URL('../../assets/sprites/prop-kiln-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-kiln-4',
+    url: new URL('../../assets/sprites/prop-kiln-4.webp', import.meta.url).href,
+  },
+  // v12 五區終章（§80/§82/§84）：新怪兩種＋最終魔王＋星核聖域橫景（四關共用 grade 區分）。
+  {
+    key: 'minion-twinkla',
+    url: new URL('../../assets/sprites/minion-twinkla.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-cometa',
+    url: new URL('../../assets/sprites/minion-cometa.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-voidra',
+    url: new URL('../../assets/sprites/boss-voidra.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-astral-l',
+    url: new URL('../../assets/sprites/bg-astral-l.webp', import.meta.url).href,
   },
 ];

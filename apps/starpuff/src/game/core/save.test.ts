@@ -144,7 +144,41 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 11, 1000);
     expect(currentChallenge(save)).toBe(12);
     save = recordLevelClear(save, 12, 1000);
+    // v11 四區完結（§76）：L12 之後接續 L13-L16。
+    expect(currentChallenge(save)).toBe(13);
+    save = recordLevelClear(save, 13, 1000);
+    save = recordLevelClear(save, 14, 1000);
+    save = recordLevelClear(save, 15, 1000);
+    expect(currentChallenge(save)).toBe(16);
+    save = recordLevelClear(save, 16, 1000);
+    // v12 五區終章（§84）：L16 之後接續 L17-L20，全通關為 null。
+    expect(currentChallenge(save)).toBe(17);
+    save = recordLevelClear(save, 17, 1000);
+    save = recordLevelClear(save, 18, 1000);
+    save = recordLevelClear(save, 19, 1000);
+    expect(currentChallenge(save)).toBe(20);
+    save = recordLevelClear(save, 20, 1000);
     expect(currentChallenge(save)).toBeNull();
+  });
+
+  it('v11 存檔相容（§76）：v10 存檔（1-12 通關）載入後 L13 開放、L14 鎖定', () => {
+    const raw = JSON.stringify({
+      schemaVersion: 1,
+      highestClearedLevel: 12,
+      levels: Object.fromEntries(
+        Array.from({ length: 12 }, (_, i) => [
+          String(i + 1),
+          { cleared: true, bestTimeMs: 60000, eggsFound: [] },
+        ]),
+      ),
+      lastPlayedAt: 1,
+    });
+    const save = parseSave(raw);
+    expect(save.highestClearedLevel).toBe(12);
+    expect(nodeStatus(save, 13)).toBe('open');
+    expect(nodeStatus(save, 14)).toBe('locked');
+    expect(nodeStatus(save, 16)).toBe('locked');
+    expect(currentChallenge(save)).toBe(13);
   });
 
   it('v10 存檔相容（§67）：v9 存檔（1-9 通關）載入後 L10 開放、L11 鎖定', () => {

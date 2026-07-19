@@ -310,12 +310,17 @@ export default function QuickEntry({
                 >
                   {photoIssue === 'process' ? t('error.image') : t('error.photo_cancelled')}
                 </span>
-                <span className="text-[9px] font-medium leading-snug opacity-60">
+                {/* 輔助說明用 textMuted 實色（R6 掃蕩）：opacity-60 於 cute 僅 2.55:1。 */}
+                <span
+                  className="text-[9px] font-medium leading-snug"
+                  style={{ color: theme.colors.textMuted }}
+                >
                   {t('error.photo_source_help')}
                 </span>
                 <div className="flex items-center gap-2 mt-1">
                   <label
-                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide text-white cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    className="px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide cursor-pointer active:scale-95 transition-transform bg-[var(--color-primary)]"
+                    style={{ color: theme.colors.onPrimary }}
                     onClick={() => vibrate(10)}
                   >
                     {t('action.retake_photo')}
@@ -356,15 +361,20 @@ export default function QuickEntry({
                     className="animate-spin text-[var(--color-primary)]"
                   />
                 ) : (
+                  // 拍照 icon 用 textMuted 實色（R6 review）：pastel primary@70% 於 Kawaii
+                  // 等效僅 1.44:1，未達 UI 元件 3:1。
                   <Camera
                     size={isFullscreen ? 48 : 28}
-                    className="text-[var(--color-primary)] mb-2 opacity-70"
+                    className="mb-2"
+                    style={{ color: theme.colors.textMuted }}
                   />
                 )}
+                {/* 拍照引導文字用 textMuted 實色（R6 掃蕩）：opacity-40/60 dimming 未達 AA。 */}
                 <span
                   className={`font-black uppercase tracking-widest ${
-                    isFullscreen ? 'text-sm opacity-60' : 'text-[10px] opacity-40'
+                    isFullscreen ? 'text-sm' : 'text-[10px]'
                   }`}
+                  style={{ color: theme.colors.textMuted }}
                 >
                   {isProcessing ? t('record.processing') : t('record.photo_tap')}
                 </span>
@@ -403,7 +413,11 @@ export default function QuickEntry({
               <span className="text-[9px] font-bold leading-snug" style={{ color: WARNING_COLOR }}>
                 {t('error.location_denied')}
               </span>
-              <span className="text-[8px] font-black uppercase tracking-wide opacity-40">
+              {/* 無定位標籤用 textMuted 實色（R6 掃蕩）。 */}
+              <span
+                className="text-[8px] font-black uppercase tracking-wide"
+                style={{ color: theme.colors.textMuted }}
+              >
                 {t('record.no_location')}
               </span>
               <button
@@ -438,7 +452,8 @@ export default function QuickEntry({
               </Suspense>
               <div className="absolute top-3 left-3 z-10 flex items-center gap-2 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-xl shadow-sm">
                 <div className={`w-2 h-2 rounded-full ${gpsIndicatorClass}`} />
-                <span className="text-[8px] font-black uppercase text-gray-500 tracking-tighter">
+                {/* gray-700（R6）：gray-500 on 白 chip 僅 4.83:1，axe 取樣偏差下無安全餘裕。 */}
+                <span className="text-[8px] font-black uppercase text-gray-700 tracking-tighter">
                   {isLocating ? t('nav.gps_waiting') : `${locationAccuracy?.toFixed(0) ?? '?'}m`}
                 </span>
               </div>
@@ -454,7 +469,7 @@ export default function QuickEntry({
             value={plate}
             onChange={(e) => setPlate(e.target.value.toUpperCase())}
             placeholder={t('record.plate')}
-            className="w-full h-16 px-6 pr-14 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:opacity-30"
+            className="w-full h-16 px-6 pr-14 rounded-2xl bg-[var(--color-surface)] border-2 border-[color:var(--color-primary)]/5 outline-none font-black text-2xl tracking-tighter shadow-sm focus:border-[color:var(--color-primary)]/20 transition-all placeholder:text-[var(--color-text-muted)]"
           />
           {plate && (
             <button
@@ -466,7 +481,8 @@ export default function QuickEntry({
               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
               aria-label={t('record.clear_plate')}
             >
-              <X size={20} className="opacity-40" />
+              {/* 清除 icon 用 textMuted 實色（R6 掃蕩）：UI 元件需 ≥3:1。 */}
+              <X size={20} style={{ color: theme.colors.textMuted }} />
             </button>
           )}
         </div>
@@ -500,16 +516,22 @@ export default function QuickEntry({
           }}
           placeholder={t('record.notes_placeholder')}
           rows={1}
-          className="w-full min-h-12 px-6 py-3.5 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:opacity-40 resize-none overflow-hidden leading-relaxed"
+          className="w-full min-h-12 px-6 py-3.5 rounded-2xl bg-[var(--color-surface)] border border-[color:var(--color-primary)]/5 outline-none text-[11px] font-bold placeholder:text-[var(--color-text-muted)] resize-none overflow-hidden leading-relaxed"
         />
       </motion.div>
 
       <motion.div variants={activeItemVariants} className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">
+          {/* 樓層區標籤用 textMuted 實色（R6 掃蕩）：opacity-30 於 cute 僅 1.5:1。 */}
+          <span
+            className="text-[10px] font-black uppercase tracking-[0.3em]"
+            style={{ color: theme.colors.textMuted }}
+          >
             {t('record.floor')}
           </span>
-          <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full animate-pulse">
+          {/* 提示 pill 用 text 實色（R6 掃蕩）：Kawaii pastel primary 當字色僅 1.66:1；
+              移除 animate-pulse——文字 opacity 脈動同屬 dimming 反模式且不尊重 reduced-motion。 */}
+          <span className="text-[9px] font-bold text-[var(--color-text)] bg-[color:var(--color-primary)]/10 px-3 py-1 rounded-full">
             {t('record.save_hint')}
           </span>
         </div>
@@ -519,6 +541,8 @@ export default function QuickEntry({
               key={f}
               layout
               disabled={saveStatus !== 'idle'}
+              // Custom chip 僅 icon，須有 accessible name（R6 axe button-name）。
+              aria-label={f === 'Custom' ? t('record.custom_floor') : undefined}
               onClick={() => {
                 if (f === 'Custom') {
                   vibrate(10);
@@ -529,8 +553,9 @@ export default function QuickEntry({
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               className={`h-14 rounded-2xl text-[13px] font-black border-2 flex items-center justify-center relative overflow-hidden
-                ${selectedFloor === f ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg' : 'bg-[var(--color-surface)] border-black/5 text-[var(--color-text)]'}
+                ${selectedFloor === f ? 'bg-[var(--color-primary)] border-[var(--color-primary)] shadow-lg' : 'bg-[var(--color-surface)] border-black/5 text-[var(--color-text)]'}
                 ${saveStatus !== 'idle' && selectedFloor !== f ? 'opacity-20' : ''}`}
+              style={selectedFloor === f ? { color: theme.colors.onPrimary } : undefined}
             >
               {saveStatus === 'saving' && selectedFloor === f ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -565,7 +590,8 @@ export default function QuickEntry({
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => void triggerAutoSave(selectedFloor)}
-                  className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg"
+                  className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg"
+                  style={{ color: theme.colors.onPrimary }}
                 >
                   <Check size={24} />
                 </motion.button>

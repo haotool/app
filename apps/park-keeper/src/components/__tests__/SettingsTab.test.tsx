@@ -62,6 +62,7 @@ const theme: ThemeConfig = {
     surface: '#ffffff',
     text: '#0f172a',
     textMuted: '#64748b',
+    danger: '#b91c1c',
   },
   font: 'font-minimalist',
   borderRadius: '12px',

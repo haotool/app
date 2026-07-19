@@ -57,7 +57,14 @@ import {
   transformProgress,
   type TransformState,
 } from '../logic/transform';
-import { advanceStride, airTilt, idleBreath, strideBob, strideTilt } from '../logic/walkFeel';
+import {
+  advanceCrouch,
+  advanceStride,
+  airTilt,
+  idleBreath,
+  strideBob,
+  strideTilt,
+} from '../logic/walkFeel';
 import { playSfx } from '../audio/sfx';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
@@ -75,6 +82,8 @@ export interface PlayerHandle {
   getAmmoState(): { ammo: number; flavor: StarFlavor; mix: string | null };
   // 走動手感觀測點（§45 e2e）：當幀傾角與 bob 偏移。
   getWalkVisual(): { rotation: number; bob: number; vy: number };
+  // 蹲姿觀測點（§77 e2e）：0..1 蹲姿比例。
+  getCrouch(): number;
   getMagazine(): readonly MagazineSlot[];
   grantFullMagazine(): void;
   grantGoldStar(): void;
@@ -96,7 +105,13 @@ export interface PlayerHandle {
   destroy(): void;
 }
 
-type Pose = 'hero-idle' | 'hero-inhale' | 'hero-puffed' | 'hero-hurt';
+type Pose =
+  | 'hero-idle'
+  | 'hero-inhale'
+  | 'hero-inhale-big-1'
+  | 'hero-inhale-big-2'
+  | 'hero-puffed'
+  | 'hero-hurt';
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
@@ -115,6 +130,16 @@ const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 const BOOM_SPIN_RAD = 0.02;
 // 殼化護體窗（§57）：減傷池實扣 0 時的短無敵，防同一接觸逐幀重複結算。
 const SHELL_GUARD_MS = 400;
+// 落地擠壓最低著地速度（§77）：微速重新接觸（擠壓迴圈回落 15-30）不再觸發擠壓，
+// 切斷「落地擠壓 → 身體縮小 → 離台 → 再落地」的自持迴圈。
+const LANDING_SQUASH_MIN_VY = 120;
+// 蹲姿視覺（§77）：橫向外擴＋縱向壓扁＋輕微下沉；走 POST_UPDATE 視覺通道，
+// PRE_UPDATE 還原——物理永不見蹲縮，杜絕擠壓迴圈同型問題。
+const CROUCH_SQUASH_X = 0.14;
+const CROUCH_SQUASH_Y = 0.22;
+const CROUCH_SINK_PX = 3;
+// 大嘴吸入影格（§77.4）：吸入中兩影格交替營造吸力節奏；素材未載回退 hero-inhale。
+const INHALE_FRAME_MS = 160;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -184,6 +209,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let coyoteMs = 0;
   let jumpBufferMs = 0;
   let inhaling = false;
+  let inhaleAnimMs = 0;
   let wasOnGround = false;
   // 走動手感（§45）：速度驅動步頻相位；bob/傾斜/落腳拍點皆由 walkFeel 純函式導出。
   let stridePhase = 0;
@@ -211,12 +237,27 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
+  // 蹲姿（§77）同走此通道：乘算擠壓疊加當幀既有 scale（落地擠壓/呼吸不衝突），
+  // 還原以套用當下的比例快照為準，物理 updateBounds 永遠讀到未蹲縮的 scale。
   let bobOffset = 0;
+  let crouch = 0;
+  const crouchApplied = { sx: 1, sy: 1, sink: 0 };
   const applyBob = () => {
     sprite.y -= bobOffset;
+    crouchApplied.sx = 1 + CROUCH_SQUASH_X * crouch;
+    crouchApplied.sy = 1 - CROUCH_SQUASH_Y * crouch;
+    crouchApplied.sink = CROUCH_SINK_PX * crouch;
+    if (crouch > 0) {
+      sprite.setScale(sprite.scaleX * crouchApplied.sx, sprite.scaleY * crouchApplied.sy);
+      sprite.y += crouchApplied.sink;
+    }
   };
   const revertBob = () => {
     sprite.y += bobOffset;
+    if (crouchApplied.sink > 0 || crouchApplied.sx !== 1) {
+      sprite.setScale(sprite.scaleX / crouchApplied.sx, sprite.scaleY / crouchApplied.sy);
+      sprite.y -= crouchApplied.sink;
+    }
   };
   scene.events.on(Phaser.Scenes.Events.POST_UPDATE, applyBob);
   scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
@@ -587,7 +628,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       jumpBufferMs = tickTimer(jumpBufferMs, deltaMs);
       if (onGround && !wasOnGround) {
-        squashStretch(1.25, 0.75);
+        // §77：僅真實落地（下砸或帶速著地）擠壓；微速重新接觸不觸發，防自持迴圈。
+        if (slamming || lastVy > LANDING_SQUASH_MIN_VY) squashStretch(1.25, 0.75);
         // 下衝擊著地（§23）：加強塵埃 + 專屬音 + 事件交 GameScene 結算衝擊波。
         if (slamming) {
           slamming = false;
@@ -634,12 +676,14 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
         // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
         // 層 shouldDropThrough 裁決並覆蓋跳躍脈衝（§29 既有優先序）。
+        // §77：coyote 窗內視同在地（接觸旗標抖動免疫），下砸僅真空中觸發。
         const jumpCommand =
           controls.jumpPressed && !slamming
             ? resolveJumpPress({
                 airborne: !onGround,
                 down: controls.down,
                 slamCooldownMs: slamCdMs,
+                recentlyGroundedMs: coyoteMs,
               })
             : 'jump';
         if (jumpCommand === 'slam') {
@@ -777,6 +821,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const blinkMs = effectiveInvulnMs(invulnerableMs, stormInvulnMs);
       sprite.setAlpha(blinkMs > 0 && Math.floor(blinkMs / BLINK_INTERVAL_MS) % 2 === 0 ? 0.35 : 1);
 
+      // 蹲姿（§77）：地面壓下即蹲——120ms 內壓扁＋下沉；離地或鬆開同速率還原。
+      crouch = advanceCrouch(crouch, controls.down && onGround && !slamming, deltaMs);
+
       // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
       // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
       // 地面靜止走 idle 呼吸（scale 通道，squash tween 進行中讓位）。
@@ -814,13 +861,21 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       lastVy = body.velocity.y;
 
+      // 大嘴吸入影格（§77.4）：吸入進行中兩影格交替；素材未載回退 hero-inhale。
+      inhaleAnimMs = inhaling ? inhaleAnimMs + deltaMs : 0;
+      const bigMouth: Pose =
+        Math.floor(inhaleAnimMs / INHALE_FRAME_MS) % 2 === 0
+          ? 'hero-inhale-big-1'
+          : 'hero-inhale-big-2';
+      const inhalePose: Pose =
+        inhaling && scene.textures.exists(bigMouth) ? bigMouth : 'hero-inhale';
+
       // 形態貼圖（§57）：變身期間固定形態立繪；素材未載時退回一般姿勢（aura 保識別）。
       const formTexKey = transform.form ? `hero-${transform.form}` : null;
       if (formTexKey && scene.textures.exists(formTexKey)) {
         if (sprite.texture.key !== formTexKey) sprite.setTexture(formTexKey);
       } else if (invulnerableMs > 0) setPose('hero-hurt');
-      else if (controls.actionHeld && magazine.length === 0 && !transform.form)
-        setPose('hero-inhale');
+      else if (controls.actionHeld && magazine.length === 0 && !transform.form) setPose(inhalePose);
       else if (magazine.length > 0) setPose('hero-puffed');
       else setPose('hero-idle');
 
@@ -925,6 +980,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         bob: bobOffset,
         vy: (sprite.body as Phaser.Physics.Arcade.Body).velocity.y,
       };
+    },
+    getCrouch() {
+      return crouch;
     },
     getMagazine() {
       return magazine;

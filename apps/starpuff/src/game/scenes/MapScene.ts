@@ -3,6 +3,7 @@ import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import {
   currentChallenge,
+  isLevelUnlocked,
   loadSave,
   nodeStatus,
   resetSave,
@@ -10,17 +11,19 @@ import {
   type SaveData,
 } from '../core/save';
 import { SceneKeys, type LevelId } from '../core/types';
-import { LEVELS } from '../logic/levels';
+import { LEVELS, type LevelSpec } from '../logic/levels';
+import { ZONES, levelsInZone, zoneOf, type ZoneSpec } from '../logic/zones';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const ACCENT = '#7a5fb8';
-// v10 十二節點過渡（§67）：節點半徑收斂 24 容納單頁；分區分頁最遲 v12 落地（主計畫 §2.2）。
+// v12 分區分頁（§78）：每頁 ≤5 節點，半徑回復 24（v11 單頁 20 節點極限已解除）。
 const NODE_RADIUS = 24;
-// 三階鋸齒高度（§67）：相鄰節點名牌垂直錯層；魔王節點（L4/L7/L12）固定落最高階，
-// EX 徽鈕上方淨空恆成立。
-const NODE_YS = [300, 262, 300, 224, 300, 262, 224, 300, 262, 300, 262, 224] as const;
+// 頁內鋸齒高度：走動關 300/262 交錯、魔王節點固定最高階 224（EX 徽鈕淨空恆成立）。
+const NODE_Y_LOW = 300;
+const NODE_Y_MID = 262;
+const NODE_Y_BOSS = 224;
 // 節點主題色鏡像關卡 bg 主色調（data-driven 自 LEVELS bgKey）。
 const NODE_TINTS: Record<string, number> = {
   'bg-meadow': 0xbff3e0,
@@ -35,6 +38,16 @@ const NODE_TINTS: Record<string, number> = {
   'bg-lumen': 0x9fe8d8,
   'bg-magnetic': 0xa89ae0,
   'bg-prism': 0xc5a8e8,
+  // v11 四區焙糖火山（§72/§74）。
+  'bg-kiln': 0xf2b26b,
+  'bg-valley': 0xe89040,
+  'bg-kilnway': 0xd07830,
+  'bg-kilnhall': 0xc86828,
+  // v12 五區星核聖域（§81）。
+  'bg-astral': 0xc8b8f0,
+  'bg-meteorfield': 0xa898e8,
+  'bg-starcourt': 0x8878d0,
+  'bg-voidcore': 0x685aa8,
 };
 // 揭霧動畫（§39）：短暫停拍後霧散 + 節點彈出 + zzfx sting。
 const REVEAL_DELAY_MS = 450;
@@ -44,14 +57,17 @@ const RESET_ARM_MS = 3000;
 
 interface MapSceneData {
   reveal?: LevelId | null;
+  // 分頁狀態（§78）：頁籤切換以 restart 帶入；缺省由進度推導。
+  page?: number;
 }
 
-// 迷霧世界地圖（GAME_DESIGN §39）：橫向節點路徑 data-driven 自 LEVELS；
-// 未解鎖蓋迷霧＋問號、已通關顯示星星與最佳用時、當前可挑戰節點脈動；
-// 點擊已解鎖節點直接進入該關（關卡選擇＝重玩入口）。禁自由漫遊大地圖（KISS）。
+// 迷霧世界地圖（GAME_DESIGN §39/§78）：分區分頁——每區一頁、頁籤直達已解鎖區；
+// 節點 data-driven 自 LEVELS 區間過濾；未解鎖蓋迷霧＋問號、已通關顯示星星與最佳
+// 用時、當前可挑戰節點脈動；點擊已解鎖節點直接進入該關。禁自由漫遊大地圖（KISS）。
 export class MapScene extends Phaser.Scene {
   private backdrop: BackgroundHandle | null = null;
   private reveal: LevelId | null = null;
+  private pageOverride: number | null = null;
   private resetArmed = false;
   // 武裝時刻採牆鐘（Date.now）：高負載下場景時鐘落後牆鐘，確認窗以真實時間計才安全。
   private resetArmedAt = 0;
@@ -63,6 +79,7 @@ export class MapScene extends Phaser.Scene {
 
   init(data: MapSceneData): void {
     this.reveal = data.reveal ?? null;
+    this.pageOverride = data.page ?? null;
     this.resetArmed = false;
     this.resetArmedAt = 0;
     this.resetTimer = null;
@@ -71,6 +88,8 @@ export class MapScene extends Phaser.Scene {
   create(): void {
     const { width } = this.scale;
     const save = loadSave();
+    const pages = ZONES.filter((zone) => levelsInZone(zone, LEVELS).length > 0);
+    const activeZone = this.resolveZone(save, pages);
     this.backdrop = createMenuBackdrop(this, {
       bgKey: 'bg-heights',
       autoScrollPxPerSec: 10,
@@ -78,8 +97,8 @@ export class MapScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
-    // 視寬變更重排：重啟時不重播揭霧動畫。
-    bindMenuRelayout(this, {});
+    // 視寬變更重排：保留當前分頁，不重播揭霧動畫。
+    bindMenuRelayout(this, { page: activeZone.id });
 
     this.add
       .text(width / 2, 34, '世界地圖', {
@@ -92,23 +111,11 @@ export class MapScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // 彩蛋計數（§39）：found/total，total 由關卡資料推導。
-    const secretTotal = LEVELS.reduce((sum, level) => sum + level.easterEggs.length, 0);
-    const secretFound = LEVELS.reduce((sum, level) => sum + eggsFoundCount(save, level.id), 0);
-    this.add
-      .text(width / 2, 70, `彩蛋 ${secretFound}/${secretTotal}`, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '16px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: TEXT_DARK,
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5);
-
+    this.renderZoneTabs(save, pages, activeZone);
+    this.renderZoneHeader(save, activeZone);
     this.addBackButton();
     this.addResetButton(save);
-    this.renderNodes(save);
+    this.renderNodes(save, activeZone);
 
     // EX 解鎖提示（§60）：L9 通關且尚有 EX 未制霸時，提示魔王節點的第二入口。
     const exPending =
@@ -116,9 +123,9 @@ export class MapScene extends Phaser.Scene {
       (save.levels[4]?.exCleared !== true || save.levels[7]?.exCleared !== true);
     if (exPending) {
       const hint = this.add
-        .text(width / 2, 96, 'EX 挑戰已解鎖：點魔王節點上方的 EX 入口', {
+        .text(width / 2, 136, 'EX 挑戰已解鎖：點魔王節點上方的 EX 入口', {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '14px',
+          fontSize: '13px',
           fontStyle: 'bold',
           color: '#ffffff',
           stroke: '#d84b6a',
@@ -135,30 +142,101 @@ export class MapScene extends Phaser.Scene {
       });
     }
 
-    // 鍵盤備援：ENTER 直接進當前可挑戰關。
+    // 鍵盤備援：ENTER 直接進當前可挑戰關（列車過渡期關卡未在編則略過）。
     const challenge = currentChallenge(save);
-    if (challenge !== null) {
+    if (challenge !== null && LEVELS.some((level) => level.id === challenge)) {
       this.input.keyboard?.once('keydown-ENTER', () => this.enterLevel(challenge));
     }
     this.input.keyboard?.once('keydown-ESC', () => this.scene.start(SceneKeys.Title));
   }
 
-  // v10 十二節點（§67）：橫向等距由節點數推導（禁硬編視寬），三階鋸齒高度表定。
-  private nodePosition(index: number): { x: number; y: number } {
+  // 當前分頁（§78）：優先 restart 帶入的頁籤選擇；其次揭霧節點所屬區；
+  // 缺省為當前可挑戰關所屬區（全通關回末頁）。
+  private resolveZone(save: SaveData, pages: readonly ZoneSpec[]): ZoneSpec {
+    const targetId =
+      this.pageOverride ??
+      (this.reveal !== null
+        ? zoneOf(this.reveal).id
+        : zoneOf(currentChallenge(save) ?? Math.max(save.highestClearedLevel, 1)).id);
+    const matched = pages.find((zone) => zone.id === targetId) ?? pages[pages.length - 1];
+    if (!matched) throw new Error('分區分頁資料為空');
+    return matched;
+  }
+
+  // 區解鎖（§78 分頁即區域錨點）：區首關解鎖＝前區魔王已擊破。
+  private isZoneUnlocked(save: SaveData, zone: ZoneSpec): boolean {
+    return isLevelUnlocked(save, zone.firstLevelId as LevelId);
+  }
+
+  // 頁籤列（§78）：已解鎖區可直達（等效快速旅行）；未解鎖區灰顯無入口。
+  private renderZoneTabs(save: SaveData, pages: readonly ZoneSpec[], activeZone: ZoneSpec): void {
     const { width } = this.scale;
-    const count = Math.max(LEVELS.length, 2);
-    const ratio = 0.052 + (0.896 * index) / (count - 1);
-    return { x: width * ratio, y: NODE_YS[index % NODE_YS.length] ?? 270 };
+    const tabW = Math.min(150, (width - 60) / pages.length);
+    const left = width / 2 - (tabW * pages.length) / 2;
+    pages.forEach((zone, index) => {
+      const x = left + tabW * (index + 0.5);
+      const unlocked = this.isZoneUnlocked(save, zone);
+      const active = zone.id === activeZone.id;
+      const label = this.add
+        .text(x, 78, zone.nameZh, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '15px',
+          fontStyle: 'bold',
+          color: active ? TEXT_DARK : '#ffffff',
+          backgroundColor: active ? '#ffffff' : unlocked ? ACCENT : '#9a9aa8',
+          padding: { x: 10, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setAlpha(unlocked ? 1 : 0.55);
+      if (!unlocked || active) return;
+      addDomButton(
+        this,
+        `前往${zone.nameZh}`,
+        { x, y: label.y, w: tabW - 6, h: 46 },
+        () => {
+          playSfx('pop');
+          this.scene.restart({ page: zone.id });
+        },
+        `zone-${zone.id}`,
+      );
+    });
+  }
+
+  // 頁標頭（§78 引用 P-11 分項透明化）：該區彩蛋 found/total。
+  private renderZoneHeader(save: SaveData, zone: ZoneSpec): void {
+    const inZone = levelsInZone(zone, LEVELS);
+    const total = inZone.reduce((sum, level) => sum + level.easterEggs.length, 0);
+    const found = inZone.reduce((sum, level) => sum + eggsFoundCount(save, level.id), 0);
+    this.add
+      .text(this.scale.width / 2, 112, `${zone.nameZh}・彩蛋 ${found}/${total}`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: TEXT_DARK,
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5);
+  }
+
+  // 頁內節點座標：橫向等距由頁內節點數推導（禁硬編視寬）；魔王節點固定最高階。
+  private nodePosition(index: number, count: number, isBoss: boolean): { x: number; y: number } {
+    const { width } = this.scale;
+    const ratio = count <= 1 ? 0.5 : 0.14 + (0.72 * index) / (count - 1);
+    const y = isBoss ? NODE_Y_BOSS : index % 2 === 0 ? NODE_Y_LOW : NODE_Y_MID;
+    return { x: width * ratio, y };
   }
 
   // 節點間虛線路徑：等距圓點沿線段鋪設；未解鎖段降透明度。
-  private drawPath(save: SaveData): void {
+  private drawPath(save: SaveData, inZone: readonly LevelSpec[]): void {
     const dots = this.add.graphics().setDepth(1);
-    for (let i = 0; i < LEVELS.length - 1; i += 1) {
-      const from = this.nodePosition(i);
-      const to = this.nodePosition(i + 1);
-      const nextLevel = LEVELS[i + 1];
-      const lit = nextLevel !== undefined && nodeStatus(save, nextLevel.id) !== 'locked';
+    for (let i = 0; i < inZone.length - 1; i += 1) {
+      const prev = inZone[i];
+      const next = inZone[i + 1];
+      if (!prev || !next) continue;
+      const from = this.nodePosition(i, inZone.length, prev.boss !== null);
+      const to = this.nodePosition(i + 1, inZone.length, next.boss !== null);
+      const lit = nodeStatus(save, next.id) !== 'locked';
       dots.fillStyle(0xffffff, lit ? 0.75 : 0.28);
       const dist = Phaser.Math.Distance.Between(from.x, from.y, to.x, to.y);
       const steps = Math.floor(dist / 20);
@@ -169,10 +247,11 @@ export class MapScene extends Phaser.Scene {
     }
   }
 
-  private renderNodes(save: SaveData): void {
-    this.drawPath(save);
-    LEVELS.forEach((level, index) => {
-      const { x, y } = this.nodePosition(index);
+  private renderNodes(save: SaveData, zone: ZoneSpec): void {
+    const inZone = levelsInZone(zone, LEVELS);
+    this.drawPath(save, inZone);
+    inZone.forEach((level, index) => {
+      const { x, y } = this.nodePosition(index, inZone.length, level.boss !== null);
       const status = nodeStatus(save, level.id);
       const revealing = this.reveal === level.id && status !== 'locked';
       const tint = NODE_TINTS[level.bgKey] ?? 0xffffff;
@@ -181,11 +260,10 @@ export class MapScene extends Phaser.Scene {
       const circle = this.add
         .circle(0, 0, level.boss ? NODE_RADIUS + 4 : NODE_RADIUS, tint, 1)
         .setStrokeStyle(4, status === 'locked' ? 0x9a9aa8 : 0xffffff, 0.95);
-      // 雙位數關號縮字級（§67 十二節點）：半徑 24 圓內維持可讀。
       const numeral = this.add
         .text(0, 0, `${level.id}`, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: level.id >= 10 ? '20px' : '24px',
+          fontSize: level.id >= 10 ? '19px' : '22px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
@@ -195,7 +273,7 @@ export class MapScene extends Phaser.Scene {
       const name = this.add
         .text(x, y + NODE_RADIUS + 20, level.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '15px',
+          fontSize: '14px',
           fontStyle: 'bold',
           color: '#ffffff',
           stroke: TEXT_DARK,
@@ -219,9 +297,9 @@ export class MapScene extends Phaser.Scene {
         });
         const best = save.levels[level.id]?.bestTimeMs ?? 0;
         this.add
-          .text(x, y + NODE_RADIUS + 44, `最佳 ${(best / 1000).toFixed(1)}s`, {
+          .text(x, y + NODE_RADIUS + 42, `最佳 ${(best / 1000).toFixed(1)}s`, {
             fontFamily: 'system-ui, sans-serif',
-            fontSize: '13px',
+            fontSize: '12px',
             color: '#ffffff',
             stroke: TEXT_DARK,
             strokeThickness: 3,
