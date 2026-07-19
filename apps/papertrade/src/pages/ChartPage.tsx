@@ -123,6 +123,9 @@ function SymbolHeader({
 function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: TimeframeId }) {
   const { bars, status, seriesKey, retry } = useKlines(symbol, timeframe);
   const indicators = useMarketPrefsStore((state) => state.indicators);
+  const showMacd = useMarketPrefsStore((state) => state.macd);
+  const showTrendLines = useMarketPrefsStore((state) => state.trendLines);
+  const showSupportResistance = useMarketPrefsStore((state) => state.supportResistance);
 
   if (status === 'error') {
     return (
@@ -141,7 +144,14 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
 
   return (
     <>
-      <CandleChart bars={bars} seriesKey={seriesKey} indicators={indicators} />
+      <CandleChart
+        bars={bars}
+        seriesKey={seriesKey}
+        indicators={indicators}
+        showMacd={showMacd}
+        showTrendLines={showTrendLines}
+        showSupportResistance={showSupportResistance}
+      />
       {status === 'loading' && (
         <div className="absolute inset-0 skeleton-pulse rounded-card" aria-label="圖表載入中" />
       )}
