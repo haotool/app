@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+131
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-release-pr-automerge-chain
+- 原因：GITHUB_TOKEN 開/更新的 release PR 其 pull_request run 停在 approval-required（官方防遞迴），required check Quality Checks 永不執行；#742 的 workflow_dispatch 補償只補 check run，auto-merge 不被非 PR 事件喚醒（#755 掛 auto-merge 後 dispatch QC 綠仍卡 6.5 小時），且 bot 合併的 main push 不觸發 workflow，每次發版需人工 close/reopen（#755/#762/#770/#773，issue #771）
+- 解法：release.yml 補全自動合併鏈——dispatch CI 後等待 Quality Checks 成功、gh pr merge --squash 受 branch protection 伺服器端把關直接合併、再補派 main 的 release.yml/ci.yml 補償被抑制的 push 事件；同步 AGENTS/CLAUDE/README 治理節並保留 close/reopen 為 fallback
 
 - 日期：2026-07-19
 - ID：penalty-starpuff-dropthrough-touch-gesture
