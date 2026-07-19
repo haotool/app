@@ -3,6 +3,7 @@ import {
   cancelOrder,
   closePositionMarket,
   createInitialAccount,
+  evaluateCrossMargin,
   getAccountMetrics,
   openMarket,
   placeCloseLimit,
@@ -1370,6 +1371,155 @@ describe('liquidation', () => {
 
     const ticked = processTick(withSl.account, 'BTCUSDT', 54000, NOW);
     expect(ticked.account.history[0]?.reason).toBe('liquidation');
+  });
+});
+
+describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
+  function openCross(
+    account: Account,
+    symbol: MarketSymbol,
+    qty: number,
+    price: number,
+    leverage: number,
+  ): Account {
+    const result = openMarket(account, {
+      symbol,
+      side: 'long',
+      qty,
+      price,
+      leverage,
+      marginMode: 'cross',
+      now: NOW,
+    });
+    if (!result.ok) throw new Error(`open failed: ${result.error}`);
+    return result.account;
+  }
+
+  it('lets openMarket draw on a provided cross available balance', () => {
+    // 現金 100 不足以付 603.3；cross 可用餘額（含未實現盈利）覆蓋時放行，現金轉負。
+    const poor: Account = { ...createInitialAccount(), balance: 100 };
+    const rejected = openMarket(poor, {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+    });
+    expect(rejected).toEqual({ ok: false, error: 'insufficient-balance' });
+
+    const accepted = openMarket(poor, {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+      now: NOW,
+      availableBalance: 700,
+    });
+    if (!accepted.ok) throw new Error(accepted.error);
+    expect(accepted.account.balance).toBeCloseTo(100 - 603.3, 8);
+  });
+
+  it('keeps a cross position alive past its isolated liquidation price', () => {
+    const account = openCross(createInitialAccount(), 'BTCUSDT', 0.1, 60000, 10);
+
+    // 逐倉強平價 54300：cross 倉不走單倉強平，帳戶其餘資金背書。
+    const ticked = processTick(account, 'BTCUSDT', 54300, NOW);
+    expect(ticked.account.positions).toHaveLength(1);
+    expect(ticked.events).toEqual([]);
+
+    // 聚合檢查：marginBalance = 9396.7 + 600 − 570 = 9426.7 > MM 27.15 → 不觸發。
+    const evaluated = evaluateCrossMargin(ticked.account, { BTCUSDT: 54300 }, NOW);
+    expect(evaluated.account).toBe(ticked.account);
+    expect(evaluated.events).toEqual([]);
+  });
+
+  it('liquidates when the aggregate margin balance falls to the maintenance margin', () => {
+    // 現金僅 610：開倉後 6.7。marginBalance = 606.7 + 0.1×(m−60000)×… ≤ MM 於 m ≈ 54204 成立。
+    const account = openCross(
+      { ...createInitialAccount(), balance: 610 },
+      'BTCUSDT',
+      0.1,
+      60000,
+      10,
+    );
+
+    const survived = evaluateCrossMargin(account, { BTCUSDT: 54300 }, NOW);
+    expect(survived.account.positions).toHaveLength(1);
+
+    const liquidated = evaluateCrossMargin(account, { BTCUSDT: 54204 }, NOW);
+    expect(liquidated.account.positions).toHaveLength(0);
+    expect(liquidated.account.history[0]?.reason).toBe('liquidation');
+    expect(liquidated.events).toContainEqual({
+      type: 'liquidation',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      loss: 600,
+    });
+  });
+
+  it('liquidates the worst-upnl cross position first and stops once recovered', () => {
+    let account = openCross(createInitialAccount(), 'BTCUSDT', 0.5, 60000, 100);
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+    expect(account.balance).toBeCloseTo(9367, 8);
+
+    // BTC uPnL −500、ETH uPnL −11000：ETH 最虧先強平；重算後恢復，BTC 存活。
+    const marks = { BTCUSDT: 59000, ETHUSDT: 1900 } as const;
+    const result = evaluateCrossMargin(account, marks, NOW);
+    expect(result.events).toEqual([
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: 300 },
+    ]);
+    expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
+  });
+
+  it('cascades liquidation until the aggregate recovers or nothing remains', () => {
+    let account = openCross(createInitialAccount(), 'BTCUSDT', 0.5, 60000, 100);
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+
+    // BTC −10000、ETH −11000：ETH 先強平後 marginBalance 仍 ≤ MM，BTC 接續強平。
+    const marks = { BTCUSDT: 40000, ETHUSDT: 1900 } as const;
+    const result = evaluateCrossMargin(account, marks, NOW);
+    expect(result.events.map((event) => event.type === 'liquidation' && event.symbol)).toEqual([
+      'ETHUSDT',
+      'BTCUSDT',
+    ]);
+    expect(result.account.positions).toHaveLength(0);
+  });
+
+  it('skips the whole round when any cross symbol lacks a mark', () => {
+    let account = openCross(createInitialAccount(), 'BTCUSDT', 0.5, 60000, 100);
+    account = openCross(account, 'ETHUSDT', 10, 3000, 100);
+
+    const result = evaluateCrossMargin(account, { BTCUSDT: 40000 }, NOW);
+    expect(result.account).toBe(account);
+    expect(result.events).toEqual([]);
+  });
+
+  it('ignores isolated positions and clears close orders of liquidated cross positions', () => {
+    let account = openLong({ ...createInitialAccount(), balance: 2000 }, 0.1, 60000, 10);
+    account = openCross(account, 'ETHUSDT', 4, 3000, 100);
+    const ethPosition = account.positions.find((position) => position.symbol === 'ETHUSDT');
+    if (ethPosition === undefined) throw new Error('no eth position');
+    const placed = placeCloseLimit(account, {
+      positionId: ethPosition.id,
+      qty: 1,
+      limitPrice: 3500,
+      now: NOW,
+    });
+    if (!placed.ok) throw new Error(placed.error);
+
+    // balance = 2000 − 603.3 − 126.6 = 1270.1；ETH −8000 → marginBalance ≤ MM 觸發。
+    // BTC 為 isolated：即使跌破自身強平價也不參與聚合、不被 cross 強平。
+    const marks = { BTCUSDT: 50000, ETHUSDT: 1000 } as const;
+    const result = evaluateCrossMargin(placed.account, marks, NOW);
+    expect(result.events).toEqual([
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: 120 },
+    ]);
+    expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
+    expect(result.account.orders).toHaveLength(0);
   });
 });
 

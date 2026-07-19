@@ -114,7 +114,8 @@ const closedTradeSchema = z.object({
 
 const persistedTradeSchema = z.object({
   account: z.object({
-    balance: nonNegativeNumber,
+    // R6-2：cross 盈利可作開倉依據，現金（balance）可暫為負值；域須與引擎輸出一致。
+    balance: finiteNumber,
     positions: z.array(positionSchema),
     orders: z.array(orderSchema),
     history: z.array(closedTradeSchema),

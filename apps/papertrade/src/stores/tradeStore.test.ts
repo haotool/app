@@ -201,7 +201,7 @@ describe('useTradeStore', () => {
     window.localStorage.setItem(
       TRADE_STORAGE_KEY,
       JSON.stringify({
-        state: { account: { balance: -5, positions: [], orders: [], history: [] } },
+        state: { account: { balance: 'nope', positions: [], orders: [], history: [] } },
         version: TRADE_STORAGE_VERSION,
       }),
     );
@@ -363,11 +363,6 @@ describe('parsePersistedTradeState', () => {
     expect(parsePersistedTradeState({ account: { balance: 'nope' } })).toBeNull();
     expect(
       parsePersistedTradeState({
-        account: { balance: -5, positions: [], orders: [], history: [] },
-      }),
-    ).toBeNull();
-    expect(
-      parsePersistedTradeState({
         account: {
           balance: 100,
           positions: [{ id: 'x', symbol: 'FAKEUSDT' }],
@@ -376,6 +371,14 @@ describe('parsePersistedTradeState', () => {
         },
       }),
     ).toBeNull();
+  });
+
+  it('accepts a negative cash balance (cross opening against unrealized profit)', () => {
+    // R6-2：cross 可用餘額含未實現盈利，開倉後現金可暫為負；schema 不得比引擎輸出域更嚴。
+    const state = {
+      account: { balance: -503.3, positions: [], orders: [], history: [] },
+    };
+    expect(parsePersistedTradeState(state)).toEqual(state);
   });
 
   it('accepts a kept position whose margin rounded down to zero (engine edge output)', () => {

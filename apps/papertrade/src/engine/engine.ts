@@ -1,12 +1,15 @@
 import { type MarketSymbol } from '../config/market';
 import { INITIAL_BALANCE_USDT, MAKER_FEE_RATE, TAKER_FEE_RATE } from '../config/trading';
 import {
+  crossMaintenanceMargin,
+  crossMarginBalance,
   liquidationPrice,
   notionalValue,
   orderFee,
   requiredMargin,
   roundUsdt,
   unrealizedPnl,
+  type MarkMap,
 } from './math';
 import {
   closeSlice,
@@ -42,6 +45,8 @@ export interface OpenParams {
   now?: number;
   tp?: number;
   sl?: number;
+  // 開倉資金檢查基準（R6-2）：cross 傳入 crossAvailableBalance；預設裸 balance（純逐倉相容）。
+  availableBalance?: number;
 }
 
 export interface CloseParams {
@@ -61,6 +66,7 @@ export interface LimitParams {
   now?: number;
   tp?: number;
   sl?: number;
+  availableBalance?: number;
 }
 
 export interface CloseLimitParams {
@@ -147,7 +153,9 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
   const margin = roundUsdt(requiredMargin(notional, leverage));
   const fee = roundUsdt(orderFee(notional, MAKER_FEE_RATE));
   const cost = margin + fee;
-  if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
+  if (cost > (params.availableBalance ?? account.balance)) {
+    return { ok: false, error: 'insufficient-balance' };
+  }
 
   const order: LimitOrder = {
     id: createId(),
@@ -409,7 +417,8 @@ function processPosition(
   now: number,
   events: TradeEvent[],
 ): Account {
-  if (isLiquidated(position, mark)) {
+  // 逐倉才做單倉強平；cross 由 evaluateCrossMargin 聚合判定。TP/SL/trailing 兩模式一視同仁。
+  if (position.marginMode === 'isolated' && isLiquidated(position, mark)) {
     const { account: next } = closeSlice(
       account,
       position,
@@ -531,7 +540,7 @@ export function processTick(
         // 在處理後續訂單前以同一 mark 立即強平，並同步清除指向該倉位的 close 掛單，
         // 避免事件順序失真與孤兒掛單殘留到下一筆 ticker（review #719）。
         const settled = current.positions.find((candidate) => candidate.symbol === symbol);
-        if (settled !== undefined && isLiquidated(settled, mark)) {
+        if (settled?.marginMode === 'isolated' && isLiquidated(settled, mark)) {
           current = processPosition(current, settled, mark, now, events);
           current = {
             ...current,
@@ -574,6 +583,59 @@ export function processTick(
       price: mark,
       pnl: trade.realizedPnl,
     });
+  }
+
+  return { account: current, events };
+}
+
+// R6-2 全倉聚合強平（ADR-R6-02）：crossMarginBalance ≤ crossMM 時，
+// 逐一強平最虧（uPnL 最小）的 cross 持倉並重算，直到恢復或 cross 持倉全平。
+// 任一 cross 持倉缺 mark 時本輪整批略過，避免以殘缺行情誤判。
+export function evaluateCrossMargin(account: Account, marks: MarkMap, now: number): TickResult {
+  const events: TradeEvent[] = [];
+  let current = account;
+
+  for (;;) {
+    const crossPositions = current.positions.filter((position) => position.marginMode === 'cross');
+    if (crossPositions.length === 0) break;
+    if (crossPositions.some((position) => marks[position.symbol] === undefined)) break;
+    if (crossMarginBalance(current, marks) > crossMaintenanceMargin(current.positions, marks)) {
+      break;
+    }
+
+    const worst = crossPositions.reduce((left, right) => {
+      const leftPnl = unrealizedPnl(left.side, left.entryPrice, marks[left.symbol] ?? 0, left.qty);
+      const rightPnl = unrealizedPnl(
+        right.side,
+        right.entryPrice,
+        marks[right.symbol] ?? 0,
+        right.qty,
+      );
+      return leftPnl <= rightPnl ? left : right;
+    });
+    const mark = marks[worst.symbol];
+    if (mark === undefined) break;
+
+    const { account: next } = closeSlice(
+      current,
+      worst,
+      worst.qty,
+      mark,
+      TAKER_FEE_RATE,
+      'liquidation',
+      now,
+    );
+    events.push({
+      type: 'liquidation',
+      symbol: worst.symbol,
+      side: worst.side,
+      loss: worst.margin,
+    });
+    // 同步清除指向該倉位的 close 掛單，避免孤兒掛單殘留（同 processTick 既有清理）。
+    current = {
+      ...next,
+      orders: next.orders.filter((order) => order.positionId !== worst.id),
+    };
   }
 
   return { account: current, events };

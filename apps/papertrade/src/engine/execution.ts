@@ -142,6 +142,8 @@ export interface ExecuteOpenParams {
   now: number;
   tp?: number;
   sl?: number;
+  // 開倉資金檢查基準（R6-2）：cross 傳入 crossAvailableBalance；預設裸 balance（純逐倉相容）。
+  availableBalance?: number;
 }
 
 export function executeOpen(account: Account, params: ExecuteOpenParams): TradeResult {
@@ -153,14 +155,17 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
     const reduced = closeSlice(account, existing, reduceQty, price, feeRate, 'manual', now).account;
     const remainderQty = qty - reduceQty;
     if (remainderQty <= QTY_EPSILON) return { ok: true, account: reduced };
-    return executeOpen(reduced, { ...params, qty: remainderQty });
+    // 翻倉餘量以平倉後的現金重新檢查：呼叫端傳入的可用餘額已因實現損益過期。
+    return executeOpen(reduced, { ...params, qty: remainderQty, availableBalance: undefined });
   }
 
   const notional = notionalValue(qty, price);
   const margin = roundUsdt(requiredMargin(notional, leverage));
   const fee = roundUsdt(orderFee(notional, feeRate));
   const cost = margin + fee;
-  if (cost > account.balance) return { ok: false, error: 'insufficient-balance' };
+  if (cost > (params.availableBalance ?? account.balance)) {
+    return { ok: false, error: 'insufficient-balance' };
+  }
 
   if (existing !== undefined) {
     // 加倉合併沿用原持倉既有 TP/SL，不以本次表單值覆蓋（R3 終審裁決）。

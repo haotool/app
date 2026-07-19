@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   averageEntryPrice,
+  crossAvailableBalance,
+  crossMaintenanceMargin,
+  crossMarginBalance,
+  crossUnrealizedPnl,
   effectiveMaintenanceMarginRate,
+  estimatedCrossLiquidationPrice,
   isSlBeyondLiquidation,
   isValidLeverage,
   liquidationPrice,
@@ -11,6 +16,7 @@ import {
   roePercent,
   unrealizedPnl,
 } from './math';
+import { type Account, type Position } from './types';
 import { MAKER_FEE_RATE, TAKER_FEE_RATE } from '../config/trading';
 
 describe('notionalValue / requiredMargin', () => {
@@ -163,6 +169,96 @@ describe('averageEntryPrice', () => {
   it('merges two fills into a weighted average', () => {
     expect(averageEntryPrice(0.5, 60000, 0.5, 62000)).toBe(61000);
     expect(averageEntryPrice(1, 100, 3, 200)).toBe(175);
+  });
+});
+
+function crossPosition(overrides: Partial<Position> = {}): Position {
+  return {
+    id: 'p1',
+    symbol: 'BTCUSDT',
+    side: 'long',
+    qty: 0.1,
+    entryPrice: 60000,
+    margin: 600,
+    openFee: 3.3,
+    leverage: 10,
+    marginMode: 'cross',
+    openedAt: 0,
+    takeProfit: null,
+    stopLoss: null,
+    tpSlCloseRatio: 1,
+    trailing: null,
+    ...overrides,
+  };
+}
+
+function accountWith(balance: number, positions: Position[]): Account {
+  return { balance, positions, orders: [], history: [] };
+}
+
+describe('cross margin aggregates (R6-2, ADR-R6-02)', () => {
+  // PM 手算範例：balance 10000 開 BTC long cross 0.1@60000 10x（IM 600、fee 3.3）→ balance 9396.7。
+  const account = accountWith(9396.7, [crossPosition()]);
+  const marks = { BTCUSDT: 61000 } as const;
+
+  it('matches the hand-calculated example at mark 61000', () => {
+    expect(crossUnrealizedPnl(account.positions, marks)).toBeCloseTo(100, 8);
+    expect(crossAvailableBalance(account, marks)).toBeCloseTo(9496.7, 8);
+    expect(crossMarginBalance(account, marks)).toBeCloseTo(10096.7, 8);
+    // MM = 0.1 × 61000 × 0.005 = 30.5。
+    expect(crossMaintenanceMargin(account.positions, marks)).toBeCloseTo(30.5, 8);
+    // buffer = 10096.7 − 30.5 = 10066.2；uPnL ≥ 0 用 entry：60000 − 10066.2/0.1 < 0 → null。
+    expect(estimatedCrossLiquidationPrice(account.positions[0]!, account, marks)).toBeNull();
+  });
+
+  it('excludes isolated positions and missing marks from the aggregates', () => {
+    const mixed = accountWith(9396.7, [
+      crossPosition(),
+      crossPosition({ id: 'p2', symbol: 'ETHUSDT', marginMode: 'isolated', qty: 1 }),
+      crossPosition({ id: 'p3', symbol: 'SOLUSDT', qty: 10, entryPrice: 100, margin: 100 }),
+    ]);
+    // SOL 缺 mark：不計 uPnL 與 MM；ETH 為 isolated：全部聚合不計。
+    expect(crossUnrealizedPnl(mixed.positions, marks)).toBeCloseTo(100, 8);
+    expect(crossMaintenanceMargin(mixed.positions, marks)).toBeCloseTo(30.5, 8);
+    // crossMarginBalance 仍加總全部 cross 持倉 IM（600 + 100）。
+    expect(crossMarginBalance(mixed, marks)).toBeCloseTo(9396.7 + 700 + 100, 8);
+  });
+
+  it('estimates a positive liquidation price for a deep losing long', () => {
+    // balance 10000 開 1@60000 10x（IM 6000、fee 33）→ 3967；mark 58000：uPnL −2000。
+    const heavy = accountWith(3967, [crossPosition({ qty: 1, margin: 6000, openFee: 33 })]);
+    const heavyMarks = { BTCUSDT: 58000 } as const;
+    // marginBalance = 3967 + 6000 − 2000 = 7967；MM = 1×58000×0.005 = 290；buffer = 7677。
+    // 虧損倉 refPrice 用 mark：58000 − 7677/1 = 50323。
+    const estimate = estimatedCrossLiquidationPrice(heavy.positions[0]!, heavy, heavyMarks);
+    expect(estimate).toBeCloseTo(50323, 8);
+  });
+
+  it('uses the entry price as reference for a profitable position', () => {
+    const heavy = accountWith(3967, [crossPosition({ qty: 1, margin: 6000, openFee: 33 })]);
+    const heavyMarks = { BTCUSDT: 61000 } as const;
+    // marginBalance = 3967 + 6000 + 1000 = 10967；MM = 305；buffer = 10662；60000 − 10662 = 49338。
+    const estimate = estimatedCrossLiquidationPrice(heavy.positions[0]!, heavy, heavyMarks);
+    expect(estimate).toBeCloseTo(49338, 8);
+  });
+
+  it('estimates the short side by adding the buffer above the reference', () => {
+    // short 1@60000 10x，mark 62000：uPnL −2000；marginBalance = 3967+6000−2000 = 7967；
+    // MM = 310；buffer = 7657；62000 + 7657 = 69657。
+    const heavy = accountWith(3967, [
+      crossPosition({ side: 'short', qty: 1, margin: 6000, openFee: 33 }),
+    ]);
+    const heavyMarks = { BTCUSDT: 62000 } as const;
+    const estimate = estimatedCrossLiquidationPrice(heavy.positions[0]!, heavy, heavyMarks);
+    expect(estimate).toBeCloseTo(69657, 8);
+  });
+
+  it('returns null for isolated positions or missing marks', () => {
+    const isolated = crossPosition({ marginMode: 'isolated' });
+    expect(
+      estimatedCrossLiquidationPrice(isolated, accountWith(9396.7, [isolated]), marks),
+    ).toBeNull();
+    expect(estimatedCrossLiquidationPrice(account.positions[0]!, account, {})).toBeNull();
   });
 });
 

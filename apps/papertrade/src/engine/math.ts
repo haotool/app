@@ -1,5 +1,8 @@
+import { type MarketSymbol } from '../config/market';
 import { LEVERAGE_MAX, LEVERAGE_MIN, MAINTENANCE_MARGIN_RATE } from '../config/trading';
-import { type Side } from './types';
+import { type Account, type Position, type Side } from './types';
+
+export type MarkMap = Partial<Record<MarketSymbol, number>>;
 
 export function roundUsdt(value: number): number {
   return Math.round(value * 1e8) / 1e8;
@@ -40,6 +43,62 @@ export function liquidationPrice(side: Side, entryPrice: number, leverage: numbe
   return side === 'long'
     ? entryPrice * (1 - 1 / leverage + mmr)
     : entryPrice * (1 + 1 / leverage - mmr);
+}
+
+// —— R6-2 全倉（cross）聚合帳務（ADR-R6-02，公式對齊 Bybit UTA 簡化版）——
+// 缺 mark 的持倉一律不計入，與 getAccountMetrics 既有口徑一致。
+
+// 全部 cross 持倉的未實現損益總和（全額計入，不夾 min(0,·)）。
+export function crossUnrealizedPnl(positions: Position[], marks: MarkMap): number {
+  return positions.reduce((sum, position) => {
+    if (position.marginMode !== 'cross') return sum;
+    const mark = marks[position.symbol];
+    if (mark === undefined) return sum;
+    return sum + unrealizedPnl(position.side, position.entryPrice, mark, position.qty);
+  }, 0);
+}
+
+// 顯示用可用資金：錢包現金（已扣 IM 與凍結）加計 cross 未實現損益。
+export function crossAvailableBalance(account: Account, marks: MarkMap): number {
+  return account.balance + crossUnrealizedPnl(account.positions, marks);
+}
+
+// 聚合強平判定用保證金餘額：現金 + cross 持倉 IM + cross 未實現損益。
+export function crossMarginBalance(account: Account, marks: MarkMap): number {
+  const crossMargin = account.positions.reduce(
+    (sum, position) => (position.marginMode === 'cross' ? sum + position.margin : sum),
+    0,
+  );
+  return account.balance + crossMargin + crossUnrealizedPnl(account.positions, marks);
+}
+
+// 全部 cross 持倉的維持保證金總和（qty × mark × 有效 MMR）。
+export function crossMaintenanceMargin(positions: Position[], marks: MarkMap): number {
+  return positions.reduce((sum, position) => {
+    if (position.marginMode !== 'cross') return sum;
+    const mark = marks[position.symbol];
+    if (mark === undefined) return sum;
+    return sum + position.qty * mark * effectiveMaintenanceMarginRate(position.leverage);
+  }, 0);
+}
+
+// cross 單倉估算強平價（僅 UI 顯示；真實觸發為聚合 MM 檢查）。
+// buffer 覆蓋全倉損失（結果非正）時回 null，UI 顯示 --。
+export function estimatedCrossLiquidationPrice(
+  position: Position,
+  account: Account,
+  marks: MarkMap,
+): number | null {
+  if (position.marginMode !== 'cross') return null;
+  const mark = marks[position.symbol];
+  if (mark === undefined || position.qty <= 0) return null;
+  const mmThis = position.qty * mark * effectiveMaintenanceMarginRate(position.leverage);
+  const buffer = crossMarginBalance(account, marks) - mmThis;
+  const upnl = unrealizedPnl(position.side, position.entryPrice, mark, position.qty);
+  const refPrice = upnl >= 0 ? position.entryPrice : mark;
+  const estimate =
+    position.side === 'long' ? refPrice - buffer / position.qty : refPrice + buffer / position.qty;
+  return estimate > 0 ? estimate : null;
 }
 
 // SL 死區判定（issue 781）：停損價劣於強平價時，強平必先觸發，該停損形同虛設。
