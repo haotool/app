@@ -52,7 +52,7 @@ export function advanceDownBuffer(bufferMs: number, down: boolean, deltaMs: numb
   return down ? DOWN_BUFFER_MS : Math.max(0, bufferMs - deltaMs);
 }
 
-// 螢幕→局部座標換算與直持判定 SSOT 移至 core/rotation.ts（§90）：支援 cw/ccw 雙向殼。
+// 螢幕→局部座標換算與直持判定 SSOT 移至 core/rotation.ts（§87）：支援 cw/ccw 雙向殼。
 function toLocal(el: HTMLElement, event: PointerEvent): { x: number; y: number } {
   return pointerToLocal(
     el.getBoundingClientRect(),

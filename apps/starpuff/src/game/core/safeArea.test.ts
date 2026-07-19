@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { KEYS_LAYER_FLOOR, extraInset, parsePx, toLogicalPx } from './safeArea';
 
-describe('safeArea（§96 殼局部 safe-area 換算）', () => {
+describe('safeArea（§93 殼局部 safe-area 換算）', () => {
   it('parsePx：合法值解析、非法值歸零', () => {
     expect(parsePx('47px')).toBe(47);
     expect(parsePx('12.5px')).toBe(12.5);

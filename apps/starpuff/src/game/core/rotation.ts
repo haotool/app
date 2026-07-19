@@ -1,4 +1,4 @@
-// 旋轉殼方向 SSOT（GAME_DESIGN §90）：直持殼的旋轉方向與螢幕→局部座標換算集中於此，
+// 旋轉殼方向 SSOT（GAME_DESIGN §87）：直持殼的旋轉方向與螢幕→局部座標換算集中於此，
 // controls／keyConfig／shellLayout 一律經本模組取向與換算，禁止各自複製公式。
 // 純函式＋localStorage 容錯模組（同 core/layout.ts 模式），vitest node 環境可直測。
 
@@ -55,7 +55,7 @@ export function getShellRotation(): ShellRotation {
   return isPortrait() ? loadRotationPref() : 'none';
 }
 
-// 螢幕座標 → 元素局部座標（recon-v4 A.3 / §90）：clientX/Y 不反映祖先 CSS rotate，
+// 螢幕座標 → 元素局部座標（recon-v4 A.3 / §87）：clientX/Y 不反映祖先 CSS rotate，
 // 旋轉殼內需做逆變換；以 AABB 中心為樞軸，局部尺寸取 layout 值（clientWidth/Height）。
 // cw 殼（rotate 90deg）：localDx = screenDy、localDy = -screenDx；
 // ccw 殼（rotate -90deg）：localDx = -screenDy、localDy = screenDx。

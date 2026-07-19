@@ -24,14 +24,14 @@ import { restoreMutePreference } from './game/systems/hud';
 import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
 restoreMutePreference();
-// 方向變更一次性告知（§90）：回訪玩家優先於安裝指引（同為殼層卡片，先到先顯示，
+// 方向變更一次性告知（§87）：回訪玩家優先於安裝指引（同為殼層卡片，先到先顯示，
 // 另一張等殼層再次安靜）。
 initRotationNotice();
-// PWA 安裝指引（§93）：已安裝／已忽略／不支援平台不打擾；殼內 overlay 不進 Phaser Scene。
+// PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；殼內 overlay 不進 Phaser Scene。
 initInstallGuide();
-// 螢幕常亮（§94）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
+// 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
-// 開機套用直持旋轉偏好（§90）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
+// 開機套用直持旋轉偏好（§87）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
 applyRotationClass(loadRotationPref());
 // 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。
 applyLayoutToDom(document, loadLayout());

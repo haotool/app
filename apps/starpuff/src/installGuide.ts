@@ -1,4 +1,4 @@
-// PWA 安裝偵測與指引（GAME_DESIGN §93）：偵測矩陣移植 RateWise pwaInstallGuide
+// PWA 安裝偵測與指引（GAME_DESIGN §90）：偵測矩陣移植 RateWise pwaInstallGuide
 // （platform／in-app browser／standalone），以純 TS＋DOM overlay 落地於 PWA 外殼層
 // （與 pwa.ts 同層，不進 Phaser Scene）。純偵測函式供 vitest node 環境驗證。
 

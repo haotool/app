@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HAPTIC_PATTERNS } from './haptics';
 
-describe('HAPTIC_PATTERNS（§94 觸覺回饋查表）', () => {
+describe('HAPTIC_PATTERNS（§91 觸覺回饋查表）', () => {
   it('重擊與里程碑事件配震動', () => {
     for (const name of ['hurt', 'slam-down', 'boss-slam', 'boss-roar', 'win', 'lose'] as const) {
       expect(HAPTIC_PATTERNS[name]).toBeDefined();

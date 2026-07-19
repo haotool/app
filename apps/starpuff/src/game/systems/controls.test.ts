@@ -57,4 +57,4 @@ describe('advanceDownBuffer（§85 drop-intent 緩衝窗）', () => {
   });
 });
 
-// pointerToLocal 座標矩陣測試移至 core/rotation.test.ts（§90 SSOT 收斂）。
+// pointerToLocal 座標矩陣測試移至 core/rotation.test.ts（§87 SSOT 收斂）。

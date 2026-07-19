@@ -1,4 +1,4 @@
-// 觸覺回饋（GAME_DESIGN §94）：重擊類音效同步短震強化打擊感。
+// 觸覺回饋（GAME_DESIGN §91）：重擊類音效同步短震強化打擊感。
 // Android Chrome 支援 navigator.vibrate；iOS Safari 無此 API，靜默降級。
 // 觸覺跟隨音效觸發點（playSfx 內查表），靜音時 playSfx 早退故觸覺同步靜音。
 

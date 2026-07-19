@@ -1,7 +1,7 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v13（PM 親撰；v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v14（PM 派工；v14 UX/PWA 列車 §87-§93——直持預設方向翻轉 ccw（含回訪告知與偏好切換）/按鈕配置直欄化與標籤單行/虛擬鍵縮放（sp-key-layout v2）/PWA 安裝偵測與分平台指引/觸覺回饋與螢幕常亮/殼層卡片基建/殼局部 safe-area 量測、v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
@@ -245,7 +245,7 @@ src/game/logic/    combat.ts bossFsm.ts levels.ts    ← pure TS，vitest 對象
 
 ## 28. v4 免轉向橫式與響應寬幅（PM 親撰）
 
-- 免轉向：偵測 portrait viewport 時，以 CSS 旋轉容器方案將整個遊戲容器（canvas + DOM 控制層）旋轉 90 度呈現橫式——使用者直持手機即玩，不再顯示轉橫遮罩（遮罩廢除）。技術定案依調研回寫（Phaser 4 相容性、pointer 座標映射、safe-area 換軸）。
+- 免轉向：偵測 portrait viewport 時，以 CSS 旋轉容器方案將整個遊戲容器（canvas + DOM 控制層）旋轉 90 度呈現橫式——使用者直持手機即玩，不再顯示轉橫遮罩（遮罩廢除）。技術定案依調研回寫（Phaser 4 相容性、pointer 座標映射、safe-area 換軸）。（v14 已由 §87 取代預設旋轉方向：預設 ccw（rotate -90deg、鏡頭朝右），cw 舊方向降為可切換偏好。）
 - 響應寬幅：邏輯高固定 480，寬依裝置比例擴展（下限 854、上限 1200）；Scale 模式依調研定案（EXPAND/RESIZE 擇一）。HUD 錨定鏡頭邊緣自適應；世界生成邊距、星星門偵測、boss 單屏佈局以動態視寬計算，禁止硬編 854。
 - 驗收基準機型：390×844（iPhone 13 直持）、430×932（Pro Max 直持）、844×390（橫持）三態皆可玩。
 
@@ -312,7 +312,7 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 人體工學定案（§33 條目 7）：雙手橫持時拇指錨於下側角、食指自然落在裝置上緣——A 跳躍維持右下（拇指連打），B 吸/射移至右側偏上（食指按壓；與 A 垂直遠離杜絕誤觸）；方向搖桿維持左半屏。
 - 布局 SSOT：`core/layout.ts`——按鍵中心以 keys-layer 安全區內比例（cx/cy 0-1）表示，直橫持共用；`DEFAULT_LAYOUT`：A (0.92, 0.78)、B (0.92, 0.34)。
 - `#keys-layer`：安全區內鋪滿的定位容器（四向 `max()` 地板＋portrait 換軸表），按鍵以 `left/top %` + `translate(-50%,-50%)` 定位。
-- 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。
+- 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。（v14 已由 §88/§89 取代操作列結構與 schema：schema 升 v2 增全域縮放、操作列直欄化並增持向切換與縮放列。）
 
 ## 35. v5 暫停系統與離頁自動暫停
 
@@ -1433,3 +1433,97 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   世界座標平移（相機 pan／攻擊落點／投射物回收界皆以 0 為基準），入場運鏡把
   相機拉回世界原點致玩家離屏——補 `arenaLeft` hook 注入（沿 prismix/syrona
   既有 pattern），全座標計算平移 arena 左緣；缺省 0 行為零變。
+
+# v14 UX/PWA 列車：直持方向翻轉、控制自訂強化與安裝體驗（PM 派工）
+
+## 87. v14 直持預設旋轉方向翻轉（取代 §28 預設方向）
+
+### 87.1 背景與決策
+
+- 使用者反映 v4–v13 的直持旋轉方向（cw：rotate 90deg、手機逆時針轉、鏡頭朝左）
+  「沒有滿版的感覺、按鈕變成靠邊邊」；v14 翻轉預設為 ccw（rotate -90deg、
+  手機順時針轉、鏡頭朝右），瀏海側換至遊戲畫面右緣。
+- 方向與座標換算 SSOT 收斂至 `core/rotation.ts`：`ShellRotation`（none/cw/ccw）
+  三態、`pointerToLocal` 統一逆變換（cw：localDx=screenDy、localDy=-screenDx；
+  ccw：localDx=-screenDy、localDy=screenDx）；controls／keyConfig／shellLayout
+  一律經本模組取向換算，禁止各自複製公式。
+- CSS：預設殼 `top:100%; left:0; rotate(-90deg)`（ccw）；`html.sp-rot-cw` 切回
+  舊方向。safe-area 換軸表雙套：ccw＝裝置 left→殼上、top→殼右、right→殼下、
+  bottom→殼左；cw 維持 v4 原表。
+- 偏好持久化：localStorage `sp-rotation`（'cw'｜'ccw'，缺省＝ccw 新預設；
+  不進 save schema）；讀取走記憶體快取（pointer 熱路徑不重複讀 storage）。
+
+### 87.2 回訪玩家保護（肌肉記憶）
+
+- 既有玩家（sp-save 有進度且未曾設定 sp-rotation）首次進站於 Title 顯示一次性
+  方向告知卡（§92 殼層卡片）：說明新方向並提供「切回舊方向」一鍵；
+  已示記憶 localStorage `sp-rotation-notice`。全新玩家無感知不打擾。
+- 持向切換入口常駐「按鈕配置」操作列（§88），納入草稿語意：切換即時預覽、
+  儲存才落地、取消回滾。
+
+### 87.3 驗證
+
+- 座標矩陣單測（rotation.test.ts 九案）：三態四角／中心／滑動向量映射斷言。
+- portrait e2e 雙案：ccw 新預設（上滑=往右）＋ sp-rotation=cw 舊方向回歸
+  （下滑=往右、殼 matrix 斷言）。畫布覆蓋率 99.98% 不變。
+
+## 88. v14 按鈕配置頁操作列直欄化與標籤單行（取代 §34 操作列）
+
+- 根因：cfg-bar 橫排 flex 無寬度約束且鈕可壓縮，375/667 級殼寬下
+  「儲存並返回」被壓成兩行。
+- 修法：cfg-bar 直欄（提示列＋操作列＋縮放列分列）、`.cfg-btn`
+  `white-space:nowrap`＋`flex-shrink:0`（禁字內斷行）、空間不足整鈕換列；
+  「儲存並返回」精簡為「儲存」。
+- 驗收：854／1200 邏輯寬 × 直橫持 × 新舊持向矩陣全標籤單行（visualH=44）。
+
+## 89. v14 虛擬鍵大小自訂（sp-key-layout schema v2）
+
+- schema v1→v2 versioned migration：v1 舊存檔鍵位保留、`scale` 補預設 1；
+  未知版本回退預設。v2：`{version:2, a, b, scale}`，scale 夾限 0.8–1.3。
+- 縮放經 CSS 變數 `--sp-key-scale` 單點驅動鍵體與鍵帽（clip-path 圖形同步），
+  觸控熱區隨元素幾何自然同步；`KEY_BASE_PX`（A76/B72）與 style.css 以單測
+  跨檔守門防雙寫漂移。
+- 操作列縮放列：縮小／放大步進 5%＋百分比顯示；即時預覽、儲存持久化、
+  取消回滾；與拖曳位置共存（夾限以縮放後 offsetWidth 計算）。
+- 觸控下限守門：最小縮放 80% 時最小鍵 57.6px ≥ 44px（單測）。
+
+## 90. v14 PWA 安裝偵測與分平台指引
+
+- 偵測矩陣（installGuide.ts，移植 RateWise 模式）：platform
+  （ios／android／desktop／unknown，含 iPadOS 桌面模式 maxTouchPoints 辨識）、
+  in-app browser（Threads/Barcelona、Messenger 先於 Facebook、Instagram、
+  LINE、TikTok/musical_ly/trill、X）、已安裝雙訊號
+  （display-mode standalone＋navigator.standalone）。
+- 指引卡（§92 殼層卡片）：iOS 分享→加入主畫面步驟；Android
+  beforeinstallprompt 一鍵安裝＋選單步驟 fallback；in-app 引導外部瀏覽器開啟。
+- 出現邏輯：已安裝／已忽略（localStorage `sp-install-dismissed`，不進 save
+  schema）／桌面不打擾；首次到站延遲 2.5s 且僅 Title 安靜時刻顯示；
+  appinstalled 自動收卡並記憶。
+
+## 91. v14 觸覺回饋與螢幕常亮（調研加碼，ROI 閘通過二項）
+
+- 觸覺（haptics.ts）：查表跟隨 playSfx 觸發點——僅重擊／里程碑
+  （hurt/slam-down/boss-slam/boss-roar/starstorm/win/lose）配短震（單段
+  ≤100ms、總長 ≤200ms 守門單測）；高頻一般音效不震防疲勞；靜音早退即同步
+  不震；iOS 無 Vibration API 靜默降級。
+- 螢幕常亮（wakeLock.ts）：Screen Wake Lock 生命週期跟隨 `#controls.is-active`
+  （遊戲進行中取得、離場釋放、回前景重取）；不支援或被拒（省電模式）靜默降級。
+- 落選（backlog）：安裝後首啟引導（感知低）、豎屏提示動畫（與免轉向定位矛盾）、
+  fullscreen API（iOS 不支援且與 standalone 重疊）。
+
+## 92. v14 殼層卡片基建（shellCards.ts）
+
+- 安裝指引與方向告知共用：`whenShellIdle`（1s 輪詢）僅在 Title
+  （data-menu="start" 存在）且殼層安靜（無 controls is-active／is-configuring／
+  pause-overlay／既有卡）時顯示——杜絕戰鬥中彈窗攔截操作。
+- 非模態頂緣左卡：overlay `pointer-events:none`、卡本體 `min(300px, 34%)` 寬、
+  `max-height 72%`——不遮罩、不擋開始鈕與底部選單（320–844 五視口 AABB 零重疊
+  矩陣驗證）；`aria-modal` 對話框語意＋Escape 關閉。
+- 開玩自動收卡：MutationObserver 監聽 `#controls.is-active`，進遊戲即收
+  （不記憶忽略，下次回 Title 再顯示）。
+
+## 93. v14 殼局部 safe-area 量測（canvas 內 HUD 避讓預備）
+
+- `core/safeArea.ts`：讀 `#keys-layer` computed inset（CSS 已依 cw/ccw 換軸、
+  含地板值）→ 扣除地板取净 inset → 依邏輯寬／canvas CSS 寬換算邏輯 px；
+  供 canvas 內 HUD（暫停／靜音鍵）避讓瀏海與 home indicator 接線。

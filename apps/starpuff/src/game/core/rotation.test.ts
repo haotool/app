@@ -6,7 +6,7 @@ const SHELL_RECT = { left: 0, top: 0, width: 390, height: 844 };
 const LOCAL_W = 844;
 const LOCAL_H = 390;
 
-describe('parseRotationPref（§90 直持旋轉偏好）', () => {
+describe('parseRotationPref（§87 直持旋轉偏好）', () => {
   it('預設為 ccw（新方向：手機順時針轉、瀏海在右）', () => {
     expect(DEFAULT_PORTRAIT_ROTATION).toBe('ccw');
     expect(parseRotationPref(null)).toBe('ccw');
@@ -20,7 +20,7 @@ describe('parseRotationPref（§90 直持旋轉偏好）', () => {
   });
 });
 
-describe('pointerToLocal 座標矩陣（§90 四角／中心在三種旋轉態的映射）', () => {
+describe('pointerToLocal 座標矩陣（§87 四角／中心在三種旋轉態的映射）', () => {
   it('none：螢幕座標即局部座標（AABB 與 layout 同框）', () => {
     const rect = { left: 10, top: 20, width: 400, height: 300 };
     expect(pointerToLocal(rect, 400, 300, 'none', 10, 20)).toEqual({ x: 0, y: 0 });

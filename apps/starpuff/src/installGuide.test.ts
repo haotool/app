@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { getInstallGuideCopy, getPwaInstallEnvironment } from './installGuide';
 
-// 偵測矩陣仿 RateWise pwaInstallGuide 測試（§93）：平台分支、in-app browser、standalone。
-describe('getPwaInstallEnvironment（§93 PWA 安裝偵測矩陣）', () => {
+// 偵測矩陣仿 RateWise pwaInstallGuide 測試（§90）：平台分支、in-app browser、standalone。
+describe('getPwaInstallEnvironment（§90 PWA 安裝偵測矩陣）', () => {
   it('iOS Safari：需手動加入主畫面，顯示指引', () => {
     const environment = getPwaInstallEnvironment({
       userAgent:
@@ -165,7 +165,7 @@ describe('getPwaInstallEnvironment（§93 PWA 安裝偵測矩陣）', () => {
   });
 });
 
-describe('getInstallGuideCopy（§93 分平台文案）', () => {
+describe('getInstallGuideCopy（§90 分平台文案）', () => {
   const base = { maxTouchPoints: 5 };
 
   it('in-app browser 優先引導外開', () => {

@@ -71,7 +71,7 @@ export function openKeyConfig(onClose?: () => void): void {
 
   const backdrop = document.createElement('div');
   backdrop.className = 'cfg-overlay';
-  // cfg-bar 直欄結構（§91）：hint 與操作列分列，鈕群空間不足時整鈕換列（禁字內斷行）。
+  // cfg-bar 直欄結構（§88）：hint 與操作列分列，鈕群空間不足時整鈕換列（禁字內斷行）。
   const bar = document.createElement('div');
   bar.className = 'cfg-bar';
   const hint = document.createElement('div');
@@ -123,7 +123,7 @@ export function openKeyConfig(onClose?: () => void): void {
   // 取消：還原進入時 snapshot（布局與持向）、不寫入 localStorage。
   addAction(actions, 'cancel', '取消', cancelWithoutSave);
 
-  // 直持持向切換（§90）：即時預覽；橫持下無視覺變化，下次直持依偏好呈現。
+  // 直持持向切換（§87）：即時預覽；橫持下無視覺變化，下次直持依偏好呈現。
   // 切換後重套布局（審查修復）：safe-area 換軸使 keys-layer 尺寸改變，需重新夾限。
   const rotationLabel = (pref: PortraitRotationPref): string =>
     pref === 'ccw' ? '直持鏡頭朝右' : '直持鏡頭朝左';
@@ -137,7 +137,7 @@ export function openKeyConfig(onClose?: () => void): void {
     rotationButton.textContent = rotationLabel(rotationPref);
   };
 
-  // 按鈕縮放列（§92）：縮小／放大步進 5%、範圍 80%–130%，即時預覽入 working（隨儲存
+  // 按鈕縮放列（§89）：縮小／放大步進 5%、範圍 80%–130%，即時預覽入 working（隨儲存
   // 持久化、取消回滾）；點按鈕避開旋轉殼內原生 range 拖曳的跨瀏覽器不確定性。
   const scaleRow = document.createElement('div');
   scaleRow.className = 'cfg-actions';

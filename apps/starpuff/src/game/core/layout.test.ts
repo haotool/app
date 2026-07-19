@@ -86,7 +86,7 @@ describe('parseLayout', () => {
     expect(parseLayout(future)).toEqual(DEFAULT_LAYOUT);
   });
 
-  it('v1 舊存檔（無 scale）migration：鍵位保留、scale 補預設、版本升 2（§92）', () => {
+  it('v1 舊存檔（無 scale）migration：鍵位保留、scale 補預設、版本升 2（§89）', () => {
     // v9–v13 舊版寫入的 sp-key-layout 皆為 version 1 形狀。
     const legacy = JSON.stringify({
       version: 1,
@@ -139,7 +139,7 @@ describe('parseLayout', () => {
     });
   });
 
-  it('觸控 hit-target 守門（§92）：最小縮放下最小鍵仍 ≥44px', () => {
+  it('觸控 hit-target 守門（§89）：最小縮放下最小鍵仍 ≥44px', () => {
     expect(
       clampKeyScale(KEY_SCALE.min) * Math.min(KEY_BASE_PX.a, KEY_BASE_PX.b),
     ).toBeGreaterThanOrEqual(44);
