@@ -83,7 +83,7 @@ export class ResultScene extends Phaser.Scene {
 
     // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const retryButton = this.add
-      .text(centerX, height * 0.68, won ? '世界地圖' : '再戰魔王', {
+      .text(centerX, height * 0.68, won ? '世界地圖' : this.result.ex ? '再戰 EX' : '再戰魔王', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '28px',
         fontStyle: 'bold',

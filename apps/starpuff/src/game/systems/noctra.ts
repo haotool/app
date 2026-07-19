@@ -68,6 +68,8 @@ export interface NoctraHooks {
 
 export interface NoctraOptions {
   ex?: boolean;
+  // 前室魔王關（§86 L7 retrofit）：arena 左緣（世界座標）；缺省 0（無前室）。
+  arenaLeft?: () => number;
 }
 
 export function createNoctra(
@@ -92,8 +94,11 @@ export function createNoctra(
   let pendingSummon: Phaser.Time.TimerEvent | null = null;
 
   const viewW = () => scene.scale.width;
+  // 前室魔王關（§86）：全部世界座標計算平移 arena 左緣（無前室＝0，行為零變）。
+  const arenaLeft = () => options.arenaLeft?.() ?? 0;
+  const arenaCx = () => arenaLeft() + viewW() / 2;
 
-  const sprite = scene.physics.add.sprite(viewW() / 2, -BODY_H, 'boss-noctra');
+  const sprite = scene.physics.add.sprite(arenaCx(), -BODY_H, 'boss-noctra');
   sprite.setDisplaySize(BODY_W, BODY_H);
   const baseScaleX = sprite.scaleX;
   const baseScaleY = sprite.scaleY;
@@ -194,7 +199,11 @@ export function createNoctra(
   const doDive = () => {
     wingbeat.pause();
     steering = false;
-    const aimX = Phaser.Math.Clamp(target?.x ?? viewW() / 2, 60, viewW() - 60);
+    const aimX = Phaser.Math.Clamp(
+      target?.x ?? arenaCx(),
+      arenaLeft() + 60,
+      arenaLeft() + viewW() - 60,
+    );
     spawnTelegraph(scene, aimX, GROUND_TOP - 6, DIVE_TELEGRAPH_MS + 300);
     flashWhite();
     shake();
@@ -262,7 +271,7 @@ export function createNoctra(
         while (gaps.size < gapCols) gaps.add(Phaser.Math.Between(0, cols - 1));
         for (let col = 0; col < cols; col += 1) {
           if (gaps.has(col)) continue;
-          const x = ((col + 0.5) * viewW()) / cols;
+          const x = arenaLeft() + ((col + 0.5) * viewW()) / cols;
           spawnTelegraph(scene, x, GROUND_TOP - 6, 500);
           const ball = spawnBall(x, -14, BARRAGE_TINT);
           if (!ball) continue;
@@ -290,11 +299,11 @@ export function createNoctra(
   const doSweep = () => {
     wingbeat.pause();
     steering = false;
-    const fromLeft = sprite.x < viewW() / 2;
-    const startX = fromLeft ? -BODY_W / 2 : viewW() + BODY_W / 2;
-    const endX = fromLeft ? viewW() + BODY_W / 2 : -BODY_W / 2;
+    const fromLeft = sprite.x < arenaCx();
+    const startX = fromLeft ? arenaLeft() - BODY_W / 2 : arenaLeft() + viewW() + BODY_W / 2;
+    const endX = fromLeft ? arenaLeft() + viewW() + BODY_W / 2 : arenaLeft() - BODY_W / 2;
     const band = scene.add
-      .rectangle(viewW() / 2, SWEEP_Y, viewW(), BODY_H * 0.7, 0x9f8fe8, 0.16)
+      .rectangle(arenaCx(), SWEEP_Y, viewW(), BODY_H * 0.7, 0x9f8fe8, 0.16)
       .setDepth(58);
     scene.tweens.add({
       targets: band,
@@ -319,7 +328,7 @@ export function createNoctra(
             onStart: () => playSfx('flap', 0.7),
           },
           {
-            x: viewW() / 2,
+            x: arenaCx(),
             y: HOVER_Y,
             duration: 420 / fsm.speedFactor,
             ease: 'Quad.easeOut',
@@ -390,9 +399,9 @@ export function createNoctra(
     scene.tweens.chain({
       targets: sprite,
       tweens: [
-        { x: viewW() * 0.22, y: HOVER_Y + 90, duration: 420, ease: 'Sine.easeInOut' },
-        { x: viewW() * 0.75, y: HOVER_Y + 30, duration: 420, ease: 'Sine.easeInOut' },
-        { x: viewW() / 2, y: HOVER_Y, duration: 360, ease: 'Quad.easeOut' },
+        { x: arenaLeft() + viewW() * 0.22, y: HOVER_Y + 90, duration: 420, ease: 'Sine.easeInOut' },
+        { x: arenaLeft() + viewW() * 0.75, y: HOVER_Y + 30, duration: 420, ease: 'Sine.easeInOut' },
+        { x: arenaCx(), y: HOVER_Y, duration: 360, ease: 'Quad.easeOut' },
       ],
       onComplete: introRoar,
     });
@@ -422,7 +431,7 @@ export function createNoctra(
 
   const introReset = () => {
     const cam = scene.cameras.main;
-    cam.pan(viewW() / 2, VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
+    cam.pan(arenaCx(), VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
     cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
     delay(INTRO_RESET_MS, () => {
       wingbeat.play();
@@ -436,8 +445,8 @@ export function createNoctra(
     spawn() {
       const cam = scene.cameras.main;
       const [red, green, blue] = INTRO_FADE_RGB;
-      // 推近焦點貼齊畫布上緣（月空盤旋側）依當前視寬計算。
-      const focusX = viewW() / 2;
+      // 推近焦點貼齊 arena 上緣（月空盤旋側）依當前視寬計算。
+      const focusX = arenaCx();
       const focusY = VIEW.height / INTRO_ZOOM / 2;
       cam.fadeOut(INTRO_FADE_MS, red, green, blue);
       cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
@@ -496,10 +505,12 @@ export function createNoctra(
       // 座標直寫——俯衝/俯掠/長暈返空一律連續飛行，杜絕瞬移；貼軌後逐幀貼合目標。
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
-        const target = hoverPatternPoint(hoverMs, viewW());
+        // 盤旋軌跡為 arena 相對座標（noctraFlight 純函式語義），呈現層平移前室寬。
+        const relative = hoverPatternPoint(hoverMs, viewW());
+        const hoverTarget = { x: arenaLeft() + relative.x, y: relative.y };
         const next = approachPoint(
           { x: sprite.x, y: sprite.y },
-          target,
+          hoverTarget,
           NOCTRA_FLIGHT.maxSpeedPxPerSec * fsm.speedFactor,
           deltaMs,
         );
@@ -512,8 +523,8 @@ export function createNoctra(
         const falling = ballBody.allowGravity && ballBody.velocity.y > 0;
         if (
           (falling && ball.y > GROUND_TOP - 10) ||
-          ball.x < -40 ||
-          ball.x > viewW() + 40 ||
+          ball.x < arenaLeft() - 40 ||
+          ball.x > arenaLeft() + viewW() + 40 ||
           ball.y < -40 ||
           ball.y > VIEW.height + 40
         ) {

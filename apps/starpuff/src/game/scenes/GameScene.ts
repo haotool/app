@@ -1333,6 +1333,7 @@ export class GameScene extends Phaser.Scene {
         return {
           handle: createBoss(this, {
             ex: this.exMode,
+            arenaLeft: () => this.arenaLeft(),
             // EX 擊破分裂（§58）：於魔王位置生成小果凍，走正式 spawn 管線。
             onSplit: (x, y, count) => {
               for (let i = 0; i < count; i += 1) {
@@ -1347,7 +1348,7 @@ export class GameScene extends Phaser.Scene {
           handle: createNoctra(
             this,
             { summonFloaty: (cap) => this.summonMinion('floaty', cap) },
-            { ex: this.exMode },
+            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
           ),
           bodyDamage: NOCTRA.bodyDamage,
         };

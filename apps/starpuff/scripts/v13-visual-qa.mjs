@@ -32,7 +32,7 @@ async function shoot(browser, viewport, suffix) {
   }, CONQUEST_SAVE);
   await page.goto(`http://localhost:${port}/`);
   await page.waitForFunction(() => window.__sp?.scene?.() === 'Title', null, { timeout: 20000 });
-  await sleep(1400);
+  await sleep(2200);
   await page.screenshot({ path: `${OUT_DIR}conquest-title-${suffix}.png` });
   // 圖鑑：金徽記＋五王紫星。
   await page

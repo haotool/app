@@ -1408,19 +1408,28 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 
 ### 86.5 測試與保底實證
 
-- vitest：exConquestDone／mercy EX 上限／L4·L7 前室一致性三案新增（471 全綠）。
-- e2e（v13.spec 四案）：L12 EX 徽鈕全流程（HP 120 磨破寫 exCleared 不動
+- vitest：exConquestDone／mercy EX 上限／L4·L7 前室一致性／EX 公平性下限
+  （掙扎窗 ≥600ms、desync ≥200ms 且 < 最短 telegraph）四案新增。
+- e2e（v13.spec 七案）：L12 EX 徽鈕全流程（HP 120 磨破寫 exCleared 不動
   bestTime）、L16/L20 EX smoke（HP 135/165）、星核制霸存檔三場景零錯誤、
-  v9 世代舊存檔相容（EX 紀錄保留）。
+  L4/L7 前室相機回歸網（入場運鏡後 scrollX 貼齊 anteroomPx、玩家恆在視窗內）、
+  EX 中途退出防鎖、EX 敗北再戰（Result 保留變體重入 HP 120）、v9 世代舊存檔
+  相容（EX 紀錄保留）。
 - 保底實證（1200 寬 trace，`scripts/ex-bot-driver.mjs` 瀏覽器內 80ms tick
   driver；EX 屬再戰內容、入場自願、可退出、不鎖主線進度）：
   - L16 EX 純標準星 **won 73.6s**（整場重試 1）；L20 EX 純標準星 **won 129.8s**
     （段重試 3 零卡關）——trace 存 `screenshots/starpuff-v13/`。
   - L12 EX 採**二段論**：輸出鏈 assist（受控 i-frame 隔離迴避軸）**won 30.8s**
-    三階段擊破鏈完整無 DPS 死鎖；迴避軸由 FSM telegraph 時窗單測（EX 掙扎窗
-    0.7s／desync 260ms 皆有可反應下限）＋純模式十輪 trace（最佳壓血 25/120、
-    單輪最長 36.5s——輸出與存活各自成立）背書。規則 bot 的一維決策（同 tick
-    僅一行為）在鏡像雙子去同步下組合不出全程，屬 bot 決策上限而非設計軟鎖；
-    人類具備並行操作與變身/增益資源（bot 自我設限純標準星）。
-- 觀測點：`__sp.bossHazards()`（shockwave 型危害）＋ Prismix `getDebugState`
-  補齊（bot 讀招取樣）；`__sp.gotoLevel(id, ex)` 支援 EX 直達。
+    三階段擊破鏈完整無 DPS 死鎖；迴避軸由公平性下限單測（各招 telegraph
+    ≥500ms 不受 desync 侵蝕、掙扎窗 700ms）＋純模式十輪 trace（最佳壓血
+    25/120、單輪最長 36.5s——輸出與存活各自成立）分別背書。規則 bot 的一維
+    決策（同 tick 僅一行為）在鏡像雙子去同步下組合不出全程，屬 bot 決策上限
+    而非已證實的設計軟鎖；人類具備並行操作與前室增益/變身資源（bot 自我設限
+    純標準星且不拾前室台座）。
+- 觀測點：`__sp.bossHazards()`（shockwave 型危害）＋`__sp.enemyPositions()`＋
+  Prismix `getDebugState` 補齊（bot 讀招取樣）；`__sp.gotoLevel(id, ex)` 支援
+  EX 直達。
+- B1 修復（審查收斂）：L4/L7 retrofit 初版漏掉 boss.ts／noctra.ts 呈現層的
+  世界座標平移（相機 pan／攻擊落點／投射物回收界皆以 0 為基準），入場運鏡把
+  相機拉回世界原點致玩家離屏——補 `arenaLeft` hook 注入（沿 prismix/syrona
+  既有 pattern），全座標計算平移 arena 左緣；缺省 0 行為零變。

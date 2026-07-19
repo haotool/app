@@ -2,7 +2,12 @@ import Phaser from 'phaser';
 import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
-import { exConquestDone } from '../logic/levels';
+import { LEVELS, exConquestDone } from '../logic/levels';
+
+// 魔王品種 → 魔王關對照（LEVELS 派生，加王自動跟進）。
+const BOSS_LEVEL_BY_KIND = new Map<string, LevelId>(
+  LEVELS.filter((level) => level.boss !== null).map((level) => [level.boss as string, level.id]),
+);
 import { playSfx } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
@@ -176,16 +181,9 @@ export class CodexScene extends Phaser.Scene {
           color: TEXT_DARK,
         })
         .setOrigin(0.5);
-      // EX 紀念星章（§58/§86）：EX 擊破過的魔王條目掛紫星（五王全表；codex kind
-      // 'boss'＝jellord 的歷史別名）。
-      const exLevel: Partial<Record<string, LevelId>> = {
-        boss: 4,
-        noctra: 7,
-        prismix: 12,
-        syrona: 16,
-        voidra: 20,
-      };
-      const exLevelId = exLevel[monster.kind];
+      // EX 紀念星章（§58/§86）：EX 擊破過的魔王條目掛紫星——魔王關對照由 LEVELS
+      // 派生（禁第二份硬編清單）；codex kind 'boss'＝jellord 的歷史別名。
+      const exLevelId = BOSS_LEVEL_BY_KIND.get(monster.kind === 'boss' ? 'jellord' : monster.kind);
       if (exLevelId !== undefined && loadSave().levels[exLevelId]?.exCleared === true) {
         this.add
           .image(cx + 26, top + 12, 'fx-star')

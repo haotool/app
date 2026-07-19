@@ -56,8 +56,27 @@ export class TitleScene extends Phaser.Scene {
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
       if (conquest) {
-        // 金色換裝：乘算 tint 需足夠深才有感（0xffe9a8 近白無感，實測校正）。
+        // 金色換裝：乘算 tint（保留輪廓）＋ADD 疊層金光（提升金屬感——乘算對
+        // 綠底貼圖只能到橄欖金，疊加層補足亮金意象，審查 S3 校正）。
         hero.setTint(0xffc94d);
+        // Phaser 4 無 setTintFill(color)：改 setTint + FILL tint mode（repo 慣例）。
+        const goldOverlay = this.add
+          .image(centerX, heroY, 'hero-idle')
+          .setDisplaySize(150, 150)
+          .setAlpha(0)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        goldOverlay.setTint(0xffd870);
+        goldOverlay.setTintMode(Phaser.TintModes.FILL);
+        this.tweens.add({ targets: goldOverlay, alpha: 0.5, duration: 500, delay: 650 });
+        this.tweens.add({
+          targets: goldOverlay,
+          y: '-=14',
+          duration: 1400,
+          delay: 700,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
         const badge = this.add
           .text(70, 34, '星核制霸', {
             fontFamily: 'system-ui, sans-serif',
