@@ -19,7 +19,7 @@ import { FundingRateBadge } from '../components/FundingRateBadge';
 import { PriceFlash } from '../components/PriceFlash';
 import { CompactOrderBook, type BestQuote } from '../components/OrderBookPanel';
 import { OrderForm, type OrderMode } from '../components/trade/OrderForm';
-import { type Side } from '../engine/types';
+import { type MarginMode, type Side } from '../engine/types';
 import { LeverageSheet } from '../components/trade/LeverageSheet';
 import { PairSelectorSheet } from '../components/trade/PairSelectorSheet';
 import { PositionCard } from '../components/trade/PositionCard';
@@ -28,6 +28,15 @@ import { trimNumberInput } from '../lib/tradeForm';
 import { PprDisclaimerChip } from '../features/ppr/PprBadge';
 
 type SheetKind = 'pair' | 'leverage' | 'margin' | null;
+
+const MARGIN_MODE_LABELS: Record<MarginMode, string> = { isolated: '逐倉', cross: '全倉' };
+
+const MARGIN_MODE_DESCRIPTIONS: Record<MarginMode, string> = {
+  isolated:
+    '逐倉：每筆持倉的保證金與損益各自獨立，強平僅損失該筆持倉的保證金，不動用帳戶其餘可用資金。',
+  cross:
+    '全倉：全部全倉持倉共享帳戶可用資金，未實現盈虧即時計入；帳戶保證金率不足時，將由最虧損的持倉開始強平。',
+};
 
 function resolveInitialSymbol(raw: string | null): MarketSymbol {
   if (raw !== null && isMarketSymbol(raw)) return raw;
@@ -74,6 +83,8 @@ export function TradePage() {
   // 圖表頁 CTA 帶入的方向：僅作視覺預選強調，不代下單。
   const [emphasisSide] = useState<Side | null>(() => resolveInitialSide(searchParams.get('side')));
   const [leverage, setLeverage] = useState(DEFAULT_LEVERAGE);
+  // 保證金模式（R6-2）：只影響之後新開倉；既有持倉保留各自模式。
+  const [marginMode, setMarginMode] = useState<MarginMode>('isolated');
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [mode, setMode] = useState<OrderMode>('market');
   const [limitPrice, setLimitPrice] = useState('');
@@ -126,10 +137,10 @@ export function TradePage() {
             <button
               type="button"
               onClick={() => setSheet('margin')}
-              aria-label="保證金模式說明：逐倉"
+              aria-label={`保證金模式：${MARGIN_MODE_LABELS[marginMode]}，點擊切換`}
               className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
             >
-              逐倉
+              {MARGIN_MODE_LABELS[marginMode]}
             </button>
             <button
               type="button"
@@ -164,6 +175,7 @@ export function TradePage() {
             key={symbol}
             symbol={symbol}
             leverage={leverage}
+            marginMode={marginMode}
             mode={mode}
             onModeChange={setMode}
             limitPrice={limitPrice}
@@ -235,8 +247,32 @@ export function TradePage() {
       )}
       {sheet === 'margin' && (
         <BottomSheet open title="保證金模式" onClose={() => setSheet(null)}>
-          <p className="pb-2 text-label leading-relaxed text-text-2">
-            本模擬固定採「逐倉」隔離保證金：每筆持倉的保證金與損益各自獨立，觸發強平時僅損失該筆持倉的保證金，不會動用帳戶其餘可用資金。
+          <div
+            role="tablist"
+            aria-label="保證金模式選擇"
+            className="flex rounded-control bg-surface-2 p-0.5"
+          >
+            {(['isolated', 'cross'] as const).map((candidate) => (
+              <button
+                key={candidate}
+                type="button"
+                role="tab"
+                aria-selected={marginMode === candidate}
+                onClick={() => setMarginMode(candidate)}
+                className={clsx(
+                  'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
+                  marginMode === candidate ? 'bg-surface font-semibold text-text' : 'text-text-3',
+                )}
+              >
+                {MARGIN_MODE_LABELS[candidate]}
+              </button>
+            ))}
+          </div>
+          <p className="pb-1 pt-3 text-label leading-relaxed text-text-2">
+            {MARGIN_MODE_DESCRIPTIONS[marginMode]}
+          </p>
+          <p className="pb-2 text-caption text-text-3">
+            選定模式只套用於之後的新開倉；既有持倉維持各自的模式不變。
           </p>
         </BottomSheet>
       )}

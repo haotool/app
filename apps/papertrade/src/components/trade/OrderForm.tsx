@@ -9,7 +9,7 @@ import {
   SIZE_SLIDER_TICKS,
   TAKER_FEE_RATE,
 } from '../../config/trading';
-import { liquidationPrice } from '../../engine/math';
+import { crossAvailableBalance, liquidationPrice, type MarkMap } from '../../engine/math';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
@@ -24,7 +24,7 @@ import {
   TRADE_ERROR_MESSAGES,
   trimNumberInput,
 } from '../../lib/tradeForm';
-import { type Side } from '../../engine/types';
+import { type MarginMode, type Side } from '../../engine/types';
 
 export type OrderMode = 'market' | 'limit';
 type AmountUnit = 'usdt' | 'base';
@@ -32,6 +32,8 @@ type AmountUnit = 'usdt' | 'base';
 interface OrderFormProps {
   symbol: MarketSymbol;
   leverage: number;
+  // 新開倉採用的保證金模式（R6-2）；同向加倉時引擎沿用既有持倉模式。
+  marginMode: MarginMode;
   mode: OrderMode;
   onModeChange: (mode: OrderMode) => void;
   limitPrice: string;
@@ -50,6 +52,7 @@ const MODE_TABS: { id: OrderMode; label: string }[] = [
 export function OrderForm({
   symbol,
   leverage,
+  marginMode,
   mode,
   onModeChange,
   limitPrice,
@@ -65,11 +68,21 @@ export function OrderForm({
   const [sl, setSl] = useState('');
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
-  const available = useTradeStore((state) => state.account.balance);
-  // 目前 symbol 持倉方向：同向下單＝加倉，沿用倉上 TP/SL，表單欄位不生效（B1/S1）。
-  const heldSide = useTradeStore(
-    (state) => state.account.positions.find((position) => position.symbol === symbol)?.side ?? null,
-  );
+  const account = useTradeStore((state) => state.account);
+  // 可用資金：全倉含 cross 未實現盈虧（與開倉檢查同口徑）；逐倉維持裸現金。
+  const crossAvailable = useMarketStore((state) => {
+    if (marginMode !== 'cross') return null;
+    const marks: MarkMap = {};
+    for (const position of account.positions) {
+      const positionTicker = state.tickers[position.symbol];
+      if (positionTicker !== undefined) marks[position.symbol] = positionTicker.markPrice;
+    }
+    return crossAvailableBalance(account, marks);
+  });
+  const available = crossAvailable ?? account.balance;
+  // 目前 symbol 持倉：同向下單＝加倉，沿用倉上 TP/SL 與保證金模式，表單對應欄位不生效（B1/S1）。
+  const heldPosition = account.positions.find((position) => position.symbol === symbol) ?? null;
+  const heldSide = heldPosition?.side ?? null;
   const openMarketOrder = useTradeStore((state) => state.openMarketOrder);
   const placeLimitOrder = useTradeStore((state) => state.placeLimitOrder);
   const pushToast = useTradeStore((state) => state.pushToast);
@@ -193,7 +206,7 @@ export function OrderForm({
             qty: parsed.qty,
             price: parsed.price,
             leverage,
-            marginMode: 'isolated',
+            marginMode,
             tp: tpValue,
             sl: slValue,
           })
@@ -203,7 +216,7 @@ export function OrderForm({
             qty: parsed.qty,
             limitPrice: parsed.price,
             leverage,
-            marginMode: 'isolated',
+            marginMode,
             tp: tpValue,
             sl: slValue,
           });
@@ -369,9 +382,15 @@ export function OrderForm({
 
       <dl className="flex flex-col gap-1 text-caption">
         <div className="flex justify-between">
-          <dt className="text-text-3">可用資金</dt>
+          <dt className="text-text-3">可用資金{marginMode === 'cross' ? '（全倉）' : ''}</dt>
           <dd className="text-text-2 tabular-nums">{formatAmount(available, 2)} USDT</dd>
         </div>
+        {heldPosition !== null && heldPosition.marginMode !== marginMode && (
+          // div 為 dl 合法子元素；p 不是。
+          <div className="text-caption text-text-3">
+            {`同向加倉將沿用持倉現有${heldPosition.marginMode === 'isolated' ? '逐倉' : '全倉'}模式，不隨本次選擇切換`}
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-text-3">保證金</dt>
           <dd className="text-text-2 tabular-nums">

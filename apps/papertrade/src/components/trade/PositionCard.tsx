@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { SYMBOL_META } from '../../config/market';
-import { liquidationPrice, roePercent, unrealizedPnl } from '../../engine/math';
+import {
+  estimatedCrossLiquidationPrice,
+  liquidationPrice,
+  roePercent,
+  unrealizedPnl,
+  type MarkMap,
+} from '../../engine/math';
 import { type Position } from '../../engine/types';
 import { useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
@@ -18,8 +24,20 @@ type SheetKind = 'tpsl' | 'trailing' | 'close' | null;
 export function PositionCard({ position }: { position: Position }) {
   const [sheet, setSheet] = useState<SheetKind>(null);
   const ticker = useMarketStore((state) => state.tickers[position.symbol]);
+  const account = useTradeStore((state) => state.account);
   const closeMarketOrder = useTradeStore((state) => state.closeMarketOrder);
   const pushToast = useTradeStore((state) => state.pushToast);
+  const isCross = position.marginMode === 'cross';
+  // cross 估算強平價（ADR-R6-02，僅顯示參考；真實觸發為聚合 MM 檢查）：null 顯示 --。
+  const crossLiq = useMarketStore((state) => {
+    if (!isCross) return null;
+    const marks: MarkMap = {};
+    for (const held of account.positions) {
+      const heldTicker = state.tickers[held.symbol];
+      if (heldTicker !== undefined) marks[held.symbol] = heldTicker.markPrice;
+    }
+    return estimatedCrossLiquidationPrice(position, account, marks);
+  });
 
   const mark = ticker?.markPrice;
   const pnl =
@@ -27,7 +45,9 @@ export function PositionCard({ position }: { position: Position }) {
       ? unrealizedPnl(position.side, position.entryPrice, mark, position.qty)
       : null;
   const roe = pnl !== null ? roePercent(pnl, position.margin) : null;
-  const liq = liquidationPrice(position.side, position.entryPrice, position.leverage);
+  const liq = isCross
+    ? crossLiq
+    : liquidationPrice(position.side, position.entryPrice, position.leverage);
   const isLong = position.side === 'long';
   const pnlPositive = (pnl ?? 0) >= 0;
   const base = SYMBOL_META[position.symbol].base;
@@ -63,13 +83,15 @@ export function PositionCard({ position }: { position: Position }) {
             {base}
             <span className="text-text-3">/USDT</span>
           </h3>
+          {/* 模式×槓桿合併 chip（R6-2/R6-8）：多空色相不變，補保證金模式語意。 */}
           <span
             className={clsx(
               'rounded px-1.5 py-0.5 text-caption font-medium',
               isLong ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
             )}
           >
-            {isLong ? '多' : '空'} {formatAmount(position.leverage, 1)}x
+            {isLong ? '多' : '空'}｜{isCross ? '全倉' : '逐倉'} {formatAmount(position.leverage, 1)}
+            x
           </span>
         </div>
         {/* R6-4 觀察面：uPnL/ROE 以 markRevision 驅動 flash，僅標記價真變動時刷新，
@@ -116,8 +138,10 @@ export function PositionCard({ position }: { position: Position }) {
           </dd>
         </div>
         <div>
-          <dt className="text-text-3">強平價</dt>
-          <dd className="mt-0.5 text-warning tabular-nums">{formatPrice(liq)}</dd>
+          <dt className="text-text-3">強平價{isCross ? '（估算）' : ''}</dt>
+          <dd className="mt-0.5 text-warning tabular-nums">
+            {liq !== null ? formatPrice(liq) : '--'}
+          </dd>
         </div>
       </dl>
 

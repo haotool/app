@@ -103,10 +103,12 @@ test.describe('R4 交易頁 UIUX 375×812', () => {
     await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByRole('alert')).toBeHidden();
 
-    // 逐倉說明 sheet。
-    await page.getByRole('button', { name: '保證金模式說明：逐倉' }).click();
+    // 保證金模式切換 sheet（R6-2）：切到全倉後 pill 文案跟隨。
+    await page.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }).click();
     await expect(page.getByRole('dialog', { name: '保證金模式' })).toBeVisible();
+    await page.getByRole('tab', { name: '全倉' }).click();
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: '保證金模式：全倉，點擊切換' })).toBeVisible();
 
     expect(errors).toEqual([]);
   });

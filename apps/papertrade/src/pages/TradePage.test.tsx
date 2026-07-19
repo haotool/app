@@ -386,13 +386,40 @@ describe('TradePage', () => {
     expect(screen.getByText('預估手續費（Maker）')).toBeInTheDocument();
   });
 
-  it('explains the isolated margin mode from the header pill', async () => {
+  it('switches the margin mode from the header pill sheet (R6-2)', async () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式說明：逐倉' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
     const sheet = screen.getByRole('dialog', { name: '保證金模式' });
-    expect(within(sheet).getByText(/逐倉/)).toBeInTheDocument();
+    expect(within(sheet).getByRole('tab', { name: '逐倉' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    await user.click(within(sheet).getByRole('tab', { name: '全倉' }));
+    expect(within(sheet).getByText(/全部全倉持倉共享帳戶可用資金/)).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: '關閉' }));
+
+    // pill 文案跟隨選定值；只影響之後新開倉。
+    expect(screen.getByRole('button', { name: '保證金模式：全倉，點擊切換' })).toBeInTheDocument();
+  });
+
+  it('opens a cross position after selecting the cross margin mode', async () => {
+    const user = userEvent.setup();
+    renderTrade();
+
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
+    await user.click(screen.getByRole('tab', { name: '全倉' }));
+    await user.click(screen.getByRole('button', { name: '關閉' }));
+
+    await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');
+    await user.click(screen.getByRole('button', { name: '做多' }));
+
+    const position = useTradeStore.getState().account.positions[0];
+    expect(position?.marginMode).toBe('cross');
+    // 持倉卡 chip 顯示模式×槓桿。
+    expect(screen.getByText(/全倉 10x/)).toBeInTheDocument();
   });
 
   it('renders the tp/sl section collapsed by default and expands on toggle', async () => {
