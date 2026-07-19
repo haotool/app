@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+132
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：penalty-release-merge-dispatch-check-rejected
+- 原因：#779 假設 branch protection 會接受 workflow_dispatch 補跑的同名 Quality Checks check run，未先以最小實驗驗證；#784 首輪實測 `gh pr merge` 遭 `base branch policy prohibits the merge` 拒絕，證明 required check 只認 PR 關聯 run，dispatch 補償列車白跑一輪
+- 解法：改以 Approve API 核准 pending 的原生 pull_request run（手動以 user token 對 run 29672941337 實測可行，QC 12 分鐘全綠）作為必要檢查來源，等待邏輯改讀 head SHA check-runs；GITHUB_TOKEN 若無法核准則 loud fail 指路 RELEASE_PAT
+
+- 日期：2026-07-19
+- ID：reward-release-automation-approve-native-run
+- 原因：dispatch 補償被 branch protection 拒絕後，無 PAT 前提下仍需可用的必要檢查來源——原生 pull_request run 卡在 approval-required，Approve API（POST /actions/runs/{id}/approve）成為唯一免憑證解鎖路徑，但其對同 repo bot PR 的適用性無文檔保證
+- 解法：以 user token 對 #784 的 pending run 29672941337 實測 Approve API 成功（run 由 action_required 轉 queued 並全綠），release.yml v2 改為「核准原生 run→讀 head SHA check-runs 等待 QC→受保護合併→補派 main」，RELEASE_PAT 存在時 changesets 直接以 PAT 開 PR 走全原生路徑（issue #771）
 
 - 日期：2026-07-19
 - ID：neutral-release-automation-e2e-verify
