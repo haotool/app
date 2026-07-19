@@ -34,7 +34,7 @@ export function RecentTrades({ symbol }: RecentTradesProps) {
                 trade.side === 'buy' ? 'text-long' : 'text-short'
               }`}
             >
-              {formatPrice(trade.price)}
+              {formatPrice(trade.price, symbol)}
             </span>
             <span className="text-caption text-text-2 tabular-nums">
               {formatAmount(trade.size)}

@@ -121,14 +121,39 @@ describe('CandleChart', () => {
   });
 
   it('creates chart with candlestick and volume series on mount', () => {
-    render(<CandleChart bars={[]} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />);
+    render(
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={[]}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
+    );
     expect(createChartMock).toHaveBeenCalledTimes(1);
     expect(chartStub.addSeries).toHaveBeenCalledTimes(2);
+  });
+
+  it('applies the symbol tick-size price format to the candlestick axis', () => {
+    render(
+      <CandleChart
+        symbol="PPRUSDT"
+        bars={[]}
+        seriesKey="PPRUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
+    );
+    const candleCall = chartStub.addSeries.mock.calls.find((call) => call[0] === CandlestickSeries);
+    expect(candleCall?.[1]).toMatchObject({
+      priceFormat: { type: 'price', precision: 5, minMove: 0.00001 },
+    });
   });
 
   it('sets full data on first render', () => {
     render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[bar(60), bar(120)]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -143,6 +168,7 @@ describe('CandleChart', () => {
   it('updates only the last bar for incremental ticks', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[bar(60), bar(120)]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -154,6 +180,7 @@ describe('CandleChart', () => {
 
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[bar(60), bar(120, 108)]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -168,6 +195,7 @@ describe('CandleChart', () => {
 
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[bar(60), bar(120, 108), bar(180)]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -181,6 +209,7 @@ describe('CandleChart', () => {
   it('resets data when the series key changes', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[bar(60), bar(120)]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -190,7 +219,13 @@ describe('CandleChart', () => {
     candleSeries.setData.mockClear();
 
     rerender(
-      <CandleChart bars={[bar(300)]} seriesKey="BTCUSDT:5" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={[bar(300)]}
+        seriesKey="BTCUSDT:5"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     expect(candleSeries.setData).toHaveBeenCalledTimes(1);
     expect(candleSeries.setData.mock.calls[0]?.[0]).toHaveLength(1);
@@ -198,7 +233,13 @@ describe('CandleChart', () => {
 
   it('removes the chart on unmount', () => {
     const { unmount } = render(
-      <CandleChart bars={[]} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={[]}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     unmount();
     expect(chartStub.remove).toHaveBeenCalledTimes(1);
@@ -206,12 +247,24 @@ describe('CandleChart', () => {
 
   it('adds a line series with computed data when an indicator is enabled', () => {
     const { rerender } = render(
-      <CandleChart bars={eightBars} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={eightBars}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     expect(lineSeries).toHaveLength(0);
 
     rerender(
-      <CandleChart bars={eightBars} seriesKey="BTCUSDT:60" indicators={['ma7']} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={eightBars}
+        seriesKey="BTCUSDT:60"
+        indicators={['ma7']}
+        {...analysisOff}
+      />,
     );
     expect(lineSeries).toHaveLength(1);
     const expected = computeSma(eightBars, 7).map((point) => ({
@@ -223,13 +276,25 @@ describe('CandleChart', () => {
 
   it('updates only the last indicator point for incremental ticks', () => {
     const { rerender } = render(
-      <CandleChart bars={eightBars} seriesKey="BTCUSDT:60" indicators={['ma7']} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={eightBars}
+        seriesKey="BTCUSDT:60"
+        indicators={['ma7']}
+        {...analysisOff}
+      />,
     );
     lineSeries[0]?.setData.mockClear();
 
     const next = [...eightBars, bar(540, 120)];
     rerender(
-      <CandleChart bars={next} seriesKey="BTCUSDT:60" indicators={['ma7']} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={next}
+        seriesKey="BTCUSDT:60"
+        indicators={['ma7']}
+        {...analysisOff}
+      />,
     );
 
     expect(lineSeries[0]?.setData).not.toHaveBeenCalled();
@@ -243,6 +308,7 @@ describe('CandleChart', () => {
   it('removes the line series when an indicator is disabled', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={eightBars}
         seriesKey="BTCUSDT:60"
         indicators={['ma7', 'ema12']}
@@ -253,6 +319,7 @@ describe('CandleChart', () => {
 
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={eightBars}
         seriesKey="BTCUSDT:60"
         indicators={['ema12']}
@@ -265,12 +332,19 @@ describe('CandleChart', () => {
 
   it('resets indicator data when the series key changes', () => {
     const { rerender } = render(
-      <CandleChart bars={eightBars} seriesKey="BTCUSDT:60" indicators={['ma7']} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={eightBars}
+        seriesKey="BTCUSDT:60"
+        indicators={['ma7']}
+        {...analysisOff}
+      />,
     );
     lineSeries[0]?.setData.mockClear();
 
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={eightBars.slice(0, 7)}
         seriesKey="BTCUSDT:5"
         indicators={['ma7']}
@@ -283,6 +357,7 @@ describe('CandleChart', () => {
   it('shows the current indicator values in the caption', () => {
     render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={eightBars}
         seriesKey="BTCUSDT:60"
         indicators={['ma7', 'ma99']}
@@ -292,13 +367,16 @@ describe('CandleChart', () => {
 
     const ma7Last = computeSma(eightBars, 7).at(-1);
     expect(ma7Last).toBeDefined();
-    expect(screen.getByText(`MA7 ${formatPrice(ma7Last?.value ?? 0)}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`MA7 ${formatPrice(ma7Last?.value ?? 0, 'BTCUSDT')}`),
+    ).toBeInTheDocument();
     expect(screen.getByText('MA99 --')).toBeInTheDocument();
   });
 
   it('creates the MACD pane series with full data and a 120px pane height', () => {
     render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={divergenceBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -324,6 +402,7 @@ describe('CandleChart', () => {
   it('updates only the last MACD point for incremental ticks', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={divergenceBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -336,7 +415,14 @@ describe('CandleChart', () => {
     const last = divergenceBars.at(-1)!;
     const next = [...divergenceBars.slice(0, -1), { ...last, close: last.close + 0.4 }];
     rerender(
-      <CandleChart bars={next} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} showMacd />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={next}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+        showMacd
+      />,
     );
 
     const expected = computeMacd(next).at(-1);
@@ -351,6 +437,7 @@ describe('CandleChart', () => {
   it('removes the MACD pane series when the toggle turns off', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={divergenceBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -361,7 +448,13 @@ describe('CandleChart', () => {
     expect(macdSeries).toHaveLength(3);
 
     rerender(
-      <CandleChart bars={divergenceBars} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={divergenceBars}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     expect(chartStub.removeSeries).toHaveBeenCalledTimes(3);
   });
@@ -369,6 +462,7 @@ describe('CandleChart', () => {
   it('marks a constructed bullish divergence with an arrowUp below the bar', () => {
     render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={divergenceBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -385,6 +479,7 @@ describe('CandleChart', () => {
   it('clears divergence markers when MACD turns off', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={divergenceBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -394,7 +489,13 @@ describe('CandleChart', () => {
     );
 
     rerender(
-      <CandleChart bars={divergenceBars} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={divergenceBars}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     expect(markersStub.setMarkers).toHaveBeenLastCalledWith([]);
   });
@@ -402,6 +503,7 @@ describe('CandleChart', () => {
   it('draws the trend lines through the two most recent pivots extended to the last bar', () => {
     render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={swingBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -421,6 +523,7 @@ describe('CandleChart', () => {
   it('creates price lines for clustered support/resistance levels and removes them on toggle off', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={swingBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -436,7 +539,13 @@ describe('CandleChart', () => {
     );
 
     rerender(
-      <CandleChart bars={swingBars} seriesKey="BTCUSDT:60" indicators={[]} {...analysisOff} />,
+      <CandleChart
+        symbol="BTCUSDT"
+        bars={swingBars}
+        seriesKey="BTCUSDT:60"
+        indicators={[]}
+        {...analysisOff}
+      />,
     );
     expect(candleSeries.removePriceLine).toHaveBeenCalledTimes(1);
   });
@@ -444,6 +553,7 @@ describe('CandleChart', () => {
   it('skips re-analysis when the bars reference changes without a new bar', () => {
     const { rerender } = render(
       <CandleChart
+        symbol="BTCUSDT"
         bars={swingBars}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -459,6 +569,7 @@ describe('CandleChart', () => {
     // 參照變、長度不變（最新一根 tick 跳動）：analysis memo 不重算，extras effect 不重跑。
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[...swingBars]}
         seriesKey="BTCUSDT:60"
         indicators={[]}
@@ -475,6 +586,7 @@ describe('CandleChart', () => {
     const last = swingBars.at(-1)!;
     rerender(
       <CandleChart
+        symbol="BTCUSDT"
         bars={[...swingBars, { ...last, time: last.time + 60 }]}
         seriesKey="BTCUSDT:60"
         indicators={[]}

@@ -79,21 +79,21 @@ describe('DepthChart', () => {
 
     expect(screen.getByTestId('depth-bid-area')).toBeInTheDocument();
     expect(screen.getByTestId('depth-ask-area')).toBeInTheDocument();
-    expect(screen.getByText('100.00')).toBeInTheDocument();
+    expect(screen.getByText('100.0')).toBeInTheDocument();
   });
 
   it('throttles redraws to the sampling interval', () => {
     render(<DepthChart symbol="BTCUSDT" />);
     act(() => handlers[0]?.(snapshot(100, 100)));
     flushSample();
-    expect(screen.getByText('100.00')).toBeInTheDocument();
+    expect(screen.getByText('100.0')).toBeInTheDocument();
 
     act(() => handlers[0]?.(snapshot(101, 200)));
-    expect(screen.getByText('100.00')).toBeInTheDocument();
-    expect(screen.queryByText('200.00')).not.toBeInTheDocument();
+    expect(screen.getByText('100.0')).toBeInTheDocument();
+    expect(screen.queryByText('200.0')).not.toBeInTheDocument();
 
     flushSample();
-    expect(screen.getByText('200.00')).toBeInTheDocument();
+    expect(screen.getByText('200.0')).toBeInTheDocument();
   });
 
   it('shows the tapped level price and cumulative size', () => {
@@ -105,11 +105,11 @@ describe('DepthChart', () => {
     mockRect(surface);
     fireEvent.click(surface, { clientX: 0 });
 
-    expect(screen.getByText(/買 98\.000/)).toBeInTheDocument();
+    expect(screen.getByText(/買 98.0/)).toBeInTheDocument();
     expect(screen.getByText(/累計 3/)).toBeInTheDocument();
 
     fireEvent.click(surface, { clientX: 200 });
-    expect(screen.getByText(/賣 102\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/賣 102.0/)).toBeInTheDocument();
     expect(screen.getByText(/累計 6/)).toBeInTheDocument();
   });
 
@@ -136,7 +136,7 @@ describe('DepthChart', () => {
     for (let index = 0; index < 13; index += 1) {
       fireEvent.keyDown(surface, { key: 'ArrowRight' });
     }
-    expect(screen.getByText(/賣 101\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/賣 101.0/)).toBeInTheDocument();
 
     fireEvent.keyDown(surface, { key: 'Escape' });
     expect(screen.getByText('點按或以方向鍵探索檔位累計量')).toBeInTheDocument();

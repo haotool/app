@@ -14,6 +14,7 @@ import {
   type UTCTimestamp,
 } from 'lightweight-charts';
 import { type Kline } from '../services/kline';
+import { type MarketSymbol } from '../config/market';
 import {
   computeIndicatorLine,
   computeMacd,
@@ -24,8 +25,10 @@ import {
 } from '../lib/indicators';
 import { analyzeChart, type TrendLine } from '../lib/chartAnalysis';
 import { formatPrice } from '../lib/format';
+import { priceFormatFor } from '../lib/priceScale';
 
 interface CandleChartProps {
+  symbol: MarketSymbol;
   bars: Kline[];
   seriesKey: string;
   indicators: IndicatorId[];
@@ -113,6 +116,7 @@ function toTrendData(line: TrendLine | null) {
 }
 
 export function CandleChart({
+  symbol,
   bars,
   seriesKey,
   indicators,
@@ -190,6 +194,8 @@ export function CandleChart({
       borderVisible: false,
       wickUpColor: longColor,
       wickDownColor: shortColor,
+      // 軸精度同源 tick size（ADR-R6-01）；symbol 切換走 ChartPage key 全量重掛載。
+      priceFormat: priceFormatFor(symbol),
     });
     candles.priceScale().applyOptions({
       scaleMargins: { top: 0.05, bottom: 0.22 },
@@ -227,7 +233,7 @@ export function CandleChart({
       trendSeriesRef.current = null;
       priceLines.clear();
     };
-  }, []);
+  }, [symbol]);
 
   useEffect(() => {
     const handles = handlesRef.current;
@@ -306,6 +312,7 @@ export function CandleChart({
           { priceLineVisible: false, lastValueVisible: false },
           MACD_PANE_INDEX,
         );
+        // DIF/DEA 為價差空間，沿用同 symbol 軸精度；HIST 維持 volume 型格式。
         const dif = handles.chart.addSeries(
           LineSeries,
           {
@@ -314,6 +321,7 @@ export function CandleChart({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            priceFormat: priceFormatFor(symbol),
           },
           MACD_PANE_INDEX,
         );
@@ -325,6 +333,7 @@ export function CandleChart({
             priceLineVisible: false,
             lastValueVisible: false,
             crosshairMarkerVisible: false,
+            priceFormat: priceFormatFor(symbol),
           },
           MACD_PANE_INDEX,
         );
@@ -351,7 +360,7 @@ export function CandleChart({
       lastTime: last?.time ?? 0,
       length: bars.length,
     };
-  }, [bars, seriesKey, indicatorLines, macd, showMacd]);
+  }, [bars, seriesKey, indicatorLines, macd, showMacd, symbol]);
 
   // 背離標記／趨勢線／支撐阻力：analysis 以 bar 數為鍵，tick 不觸發本 effect。
   useEffect(() => {
@@ -441,7 +450,7 @@ export function CandleChart({
       return {
         id: definition.id,
         colorToken: definition.colorToken,
-        text: `${definition.label} ${lastPoint === undefined ? '--' : formatPrice(lastPoint.value)}`,
+        text: `${definition.label} ${lastPoint === undefined ? '--' : formatPrice(lastPoint.value, symbol)}`,
       };
     },
   );

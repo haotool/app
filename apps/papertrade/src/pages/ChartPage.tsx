@@ -145,6 +145,7 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
   return (
     <>
       <CandleChart
+        symbol={symbol}
         bars={bars}
         seriesKey={seriesKey}
         indicators={indicators}
