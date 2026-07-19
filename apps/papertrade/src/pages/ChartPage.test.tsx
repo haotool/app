@@ -181,11 +181,11 @@ describe('ChartPage', () => {
       'aria-selected',
       'true',
     );
-    expect(screen.getByRole('link', { name: '買多' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '做多' })).toHaveAttribute(
       'href',
       '/trade?symbol=BTCUSDT&side=long',
     );
-    expect(screen.getByRole('link', { name: '賣空' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '做空' })).toHaveAttribute(
       'href',
       '/trade?symbol=BTCUSDT&side=short',
     );

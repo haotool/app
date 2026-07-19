@@ -48,8 +48,8 @@ describe('App shell', () => {
     });
     renderAt('/trade');
     expect(screen.getByRole('form', { name: '下單表單' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '買多' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '賣空' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '做多' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '做空' })).toBeInTheDocument();
   });
 
   it('renders the assets page with equity summary', () => {

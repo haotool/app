@@ -300,13 +300,13 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
             to={`/trade?symbol=${symbol}&side=long`}
             className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
           >
-            買多
+            做多
           </Link>
           <Link
             to={`/trade?symbol=${symbol}&side=short`}
             className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
           >
-            賣空
+            做空
           </Link>
         </div>
       </div>

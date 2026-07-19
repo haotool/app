@@ -17,11 +17,11 @@ test.describe('PaperTrade smoke journey', () => {
     await expect(page.getByTestId('candle-chart')).toBeVisible();
     await expect(page.getByRole('tab', { name: '訂單簿' })).toBeVisible();
 
-    await page.getByRole('link', { name: '買多' }).click();
+    await page.getByRole('link', { name: '做多' }).click();
     await expect(page).toHaveURL(/\/papertrade\/trade\?symbol=BTCUSDT&side=long$/);
 
     await page.getByRole('textbox', { name: '數量（USDT）' }).fill('6000');
-    await page.getByRole('button', { name: '買多' }).click();
+    await page.getByRole('button', { name: '做多' }).click();
 
     await expect(page.getByText('持倉 (1)')).toBeVisible();
     await expect(page.getByText('強平價')).toBeVisible();

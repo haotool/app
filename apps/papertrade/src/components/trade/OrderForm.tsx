@@ -215,7 +215,7 @@ export function OrderForm({
     setAmount('');
     setTp('');
     setSl('');
-    const sideText = side === 'long' ? '買多' : '賣空';
+    const sideText = side === 'long' ? '做多' : '做空';
     pushToast({
       tone: side,
       title: mode === 'market' ? `市價${sideText}已成交` : `限價${sideText}委託已送出`,
@@ -418,7 +418,7 @@ export function OrderForm({
             {heldSide !== null && (
               // 沿用語義僅限同向加倉：反向下單仍套用並驗證本欄，文案綁定持倉方向避免誤示。
               <p className="text-caption text-text-3">
-                {`同向加倉（${heldSide === 'long' ? '買多' : '賣空'}）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整`}
+                {`同向加倉（${heldSide === 'long' ? '做多' : '做空'}）沿用持倉現有止盈止損，本欄不生效；請由持倉卡調整`}
               </p>
             )}
             <label className="flex flex-col gap-1">
@@ -471,7 +471,7 @@ export function OrderForm({
             emphasisSide === 'short' && 'opacity-55',
           )}
         >
-          買多
+          做多
         </button>
         <button
           type="button"
@@ -481,7 +481,7 @@ export function OrderForm({
             emphasisSide === 'long' && 'opacity-55',
           )}
         >
-          賣空
+          做空
         </button>
       </div>
     </form>

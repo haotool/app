@@ -10,12 +10,12 @@ describe('ToastHost', () => {
 
   it('docks info toasts at the bottom and trading toasts below the page header zone', () => {
     useTradeStore.getState().pushToast({ tone: 'info', title: '離線就緒' });
-    useTradeStore.getState().pushToast({ tone: 'long', title: '市價買多已成交' });
+    useTradeStore.getState().pushToast({ tone: 'long', title: '市價做多已成交' });
     render(<ToastHost />);
 
     const infoContainer = screen.getByText('離線就緒').closest('div[class*="bottom-"]');
     expect(infoContainer).not.toBeNull();
-    const topContainer = screen.getByText('市價買多已成交').closest('div[class*="top-"]');
+    const topContainer = screen.getByText('市價做多已成交').closest('div[class*="top-"]');
     expect(topContainer).toHaveClass('top-24');
   });
 });
