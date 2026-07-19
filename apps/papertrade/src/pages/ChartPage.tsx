@@ -56,7 +56,7 @@ function SymbolHeader({
               revision={ticker.revision}
               className="text-price-xl font-semibold"
             >
-              {formatPrice(ticker.lastPrice)}
+              {formatPrice(ticker.lastPrice, symbol)}
             </PriceFlash>
           ) : (
             <span className="skeleton-pulse mt-1 inline-block h-8 w-36 rounded" />
@@ -99,13 +99,13 @@ function SymbolHeader({
         <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h高</dt>
           <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.highPrice24h) : '--'}
+            {ticker ? formatPrice(ticker.highPrice24h, symbol) : '--'}
           </dd>
         </div>
         <div className="flex min-w-24 shrink-0 gap-1">
           <dt>24h低</dt>
           <dd className="text-text-2 tabular-nums">
-            {ticker ? formatPrice(ticker.lowPrice24h) : '--'}
+            {ticker ? formatPrice(ticker.lowPrice24h, symbol) : '--'}
           </dd>
         </div>
         <div className="flex min-w-20 shrink-0 gap-1">

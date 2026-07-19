@@ -216,7 +216,8 @@ export function AssetsPage() {
                   </div>
                   <p className="mt-1 text-caption text-text-3 tabular-nums">
                     {formatAmount(trade.qty, QTY_DISPLAY_DECIMALS)}｜開{' '}
-                    {formatPrice(trade.entryPrice)} → 平 {formatPrice(trade.exitPrice)}
+                    {formatPrice(trade.entryPrice, trade.symbol)} → 平{' '}
+                    {formatPrice(trade.exitPrice, trade.symbol)}
                   </p>
                   <p className="mt-0.5 flex justify-between text-caption text-text-3 tabular-nums">
                     <span>手續費 {formatAmount(trade.openFee + trade.fee, 4)} USDT</span>

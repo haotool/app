@@ -13,6 +13,7 @@ import { DEFAULT_LEVERAGE, HIGH_LEVERAGE_THRESHOLD } from '../config/trading';
 import { useMarketStore } from '../stores/marketStore';
 import { useTradeStore } from '../stores/tradeStore';
 import { formatAmount, formatPrice } from '../lib/format';
+import { pricePrecisionFor } from '../lib/priceScale';
 import { BottomSheet } from '../components/BottomSheet';
 import { CoinBadge } from '../components/CoinBadge';
 import { FundingRateBadge } from '../components/FundingRateBadge';
@@ -97,7 +98,7 @@ export function TradePage() {
 
   function handlePriceSelect(price: number) {
     setMode('limit');
-    setLimitPrice(trimNumberInput(price, 6));
+    setLimitPrice(trimNumberInput(price, pricePrecisionFor(symbol)));
   }
 
   if (ticker === undefined) {
@@ -129,7 +130,7 @@ export function TradePage() {
                 revision={ticker.revision}
                 className="block text-label"
               >
-                {formatPrice(ticker.lastPrice)}
+                {formatPrice(ticker.lastPrice, symbol)}
               </PriceFlash>
             </span>
           </button>

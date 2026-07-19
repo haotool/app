@@ -96,7 +96,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
                 revision={ticker.revision}
                 className="text-body font-semibold"
               >
-                {formatPrice(ticker.lastPrice)}
+                {formatPrice(ticker.lastPrice, symbol)}
               </PriceFlash>
               <span
                 className={clsx(

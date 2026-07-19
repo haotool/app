@@ -161,7 +161,7 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
       return {
         tone: event.side,
         title: `限價委託成交：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
-        description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price)}`,
+        description: `${formatAmount(event.qty, 6)} @ ${formatPrice(event.price, event.symbol)}`,
       };
     case 'close-filled':
       return {

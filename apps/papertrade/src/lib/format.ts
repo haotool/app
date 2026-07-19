@@ -1,19 +1,10 @@
 import { type MarketSymbol } from '../config/market';
 import { pricePrecisionFor } from './priceScale';
 
-function decimalsForPrice(value: number): number {
-  const abs = Math.abs(value);
-  if (abs >= 1000) return 1;
-  if (abs >= 100) return 2;
-  if (abs >= 1) return 3;
-  if (abs >= 0.01) return 5;
-  return 6;
-}
-
-// 遷移過渡簽名（ADR-R6-01）：symbol 缺省暫走量級推斷；全呼叫點遷移完成後改必填並刪舊路徑。
-export function formatPrice(value: number, symbol?: MarketSymbol): string {
+// 價格顯示 SSOT（ADR-R6-01）：精度由 symbol 的 tick size 反推，全站一致。
+export function formatPrice(value: number, symbol: MarketSymbol): string {
   if (!Number.isFinite(value)) return '--';
-  const decimals = symbol === undefined ? decimalsForPrice(value) : pricePrecisionFor(symbol);
+  const decimals = pricePrecisionFor(symbol);
   return value.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

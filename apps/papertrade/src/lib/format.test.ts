@@ -11,28 +11,20 @@ import {
 } from './format';
 
 describe('formatPrice', () => {
-  it('uses one decimal for large prices', () => {
-    expect(formatPrice(64486.1)).toBe('64,486.1');
+  it('derives decimals from the symbol tick size (ADR-R6-01)', () => {
+    expect(formatPrice(64486.1, 'BTCUSDT')).toBe('64,486.1');
+    expect(formatPrice(3000, 'ETHUSDT')).toBe('3,000.00');
+    expect(formatPrice(2.4153, 'XRPUSDT')).toBe('2.4153');
+    expect(formatPrice(0.12345, 'DOGEUSDT')).toBe('0.12345');
   });
 
-  it('uses two decimals for hundreds', () => {
-    expect(formatPrice(148.35)).toBe('148.35');
-  });
-
-  it('uses three decimals for single digits', () => {
-    expect(formatPrice(2.4153)).toBe('2.415');
-  });
-
-  it('uses five decimals for sub-dollar prices', () => {
-    expect(formatPrice(0.12345)).toBe('0.12345');
-  });
-
-  it('uses six decimals for tiny prices', () => {
-    expect(formatPrice(0.001234)).toBe('0.001234');
+  it('keeps 5 decimals for ppr prices without rounding away tiny values', () => {
+    expect(formatPrice(0.0085, 'PPRUSDT')).toBe('0.00850');
+    expect(formatPrice(0.00851, 'PPRUSDT')).toBe('0.00851');
   });
 
   it('returns placeholder for non-finite values', () => {
-    expect(formatPrice(Number.NaN)).toBe('--');
+    expect(formatPrice(Number.NaN, 'BTCUSDT')).toBe('--');
   });
 });
 
