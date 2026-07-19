@@ -248,15 +248,23 @@ export function TradePage() {
       )}
       {sheet === 'margin' && (
         <BottomSheet open title="保證金模式" onClose={() => setSheet(null)}>
-          {/* 語意採 radiogroup（單選、無面板切換），原生按鈕 Tab 序即鍵盤路徑，免 roving tabindex。 */}
+          {/* APG radiogroup 慣例：方向鍵切換選取、roving tabindex、DOM focus 同步搬移。 */}
           <div
             role="radiogroup"
             aria-label="保證金模式選擇"
             className="flex rounded-control bg-surface-2 p-0.5"
             onKeyDown={(event) => {
-              if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+              // APG radio 慣例四向鍵皆切換；兩選項情境任一方向即互換。
+              if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+                return;
+              }
               event.preventDefault();
-              setMarginMode((current) => (current === 'isolated' ? 'cross' : 'isolated'));
+              const next = marginMode === 'isolated' ? 'cross' : 'isolated';
+              setMarginMode(next);
+              // roving tabindex 只改未來 Tab 序，須顯式搬移 focus 使 focus ring 跟隨選取。
+              event.currentTarget
+                .querySelector<HTMLButtonElement>(`[data-mode="${next}"]`)
+                ?.focus();
             }}
           >
             {(['isolated', 'cross'] as const).map((candidate) => (
@@ -264,6 +272,7 @@ export function TradePage() {
                 key={candidate}
                 type="button"
                 role="radio"
+                data-mode={candidate}
                 aria-checked={marginMode === candidate}
                 tabIndex={marginMode === candidate ? 0 : -1}
                 onClick={() => setMarginMode(candidate)}

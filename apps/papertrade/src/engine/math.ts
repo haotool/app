@@ -59,14 +59,15 @@ export function crossUnrealizedPnl(positions: Position[], marks: MarkMap): numbe
 }
 
 // 顯示用可用資金：錢包現金（已扣 IM 與凍結）加計 cross 未實現損益。
-// 任一 cross 持倉缺 mark 時退回裸現金：與 evaluateCrossMargin 整輪略過的保守方向
-// 對齊——行情殘缺時不得虛高可用（該倉實際浮虧且聚合保護恰暫停，風險窗口疊加）。
+// 任一 cross 持倉缺 mark 時取最保守值：已知虧損照扣、盈利與未知一律不計
+// （min 併入裸現金下界）——行情殘缺瞬態不得虛高可用，且不得反而抹掉已知浮虧。
 export function crossAvailableBalance(account: Account, marks: MarkMap): number {
   const hasUnmarkedCross = account.positions.some(
     (position) => position.marginMode === 'cross' && marks[position.symbol] === undefined,
   );
-  if (hasUnmarkedCross) return account.balance;
-  return account.balance + crossUnrealizedPnl(account.positions, marks);
+  const upnl = crossUnrealizedPnl(account.positions, marks);
+  if (hasUnmarkedCross) return account.balance + Math.min(0, upnl);
+  return account.balance + upnl;
 }
 
 // 聚合強平判定用保證金餘額：現金 + cross 持倉 IM + cross 未實現損益。

@@ -189,12 +189,12 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
       };
     case 'liquidation':
       return {
-        tone: event.loss >= 0 ? 'long' : 'warning',
+        tone: event.pnl >= 0 ? 'long' : 'warning',
         title: `強制平倉：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
         description:
-          event.loss >= 0
-            ? `已實現獲利 ${formatAmount(event.loss, 2)} USDT`
-            : `已實現虧損 ${formatAmount(Math.abs(event.loss), 2)} USDT`,
+          event.pnl >= 0
+            ? `已實現獲利 ${formatAmount(event.pnl, 2)} USDT`
+            : `已實現虧損 ${formatAmount(Math.abs(event.pnl), 2)} USDT`,
       };
     default: {
       const exhaustive: never = event;

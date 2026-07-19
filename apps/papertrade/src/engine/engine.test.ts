@@ -1328,7 +1328,7 @@ describe('liquidation', () => {
       type: 'liquidation',
       symbol: 'BTCUSDT',
       side: 'long',
-      loss: -600,
+      pnl: -600,
     });
   });
 
@@ -1475,12 +1475,12 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
     const liquidated = evaluateCrossMargin(account, { BTCUSDT: 54204 }, NOW);
     expect(liquidated.account.positions).toHaveLength(0);
     expect(liquidated.account.history[0]?.reason).toBe('liquidation');
-    // cross 於 mark 全額實現：loss = |0.1 × (54204 − 60000)| = 579.6（非該倉保證金 600）。
+    // cross 於 mark 全額實現：pnl = 0.1 × (54204 − 60000) = −579.6（非以保證金 −600 結算）。
     expect(liquidated.events).toContainEqual({
       type: 'liquidation',
       symbol: 'BTCUSDT',
       side: 'long',
-      loss: -579.6,
+      pnl: -579.6,
     });
     // 帳本同步全額實現：balance = 6.7 + 600（釋放 IM）− 579.6 = 27.1。
     expect(liquidated.account.balance).toBeCloseTo(27.1, 8);
@@ -1504,7 +1504,7 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
     const marks = { BTCUSDT: 59000, ETHUSDT: 2900 } as const;
     const result = evaluateCrossMargin(account, marks, NOW);
     expect(result.events).toEqual([
-      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: -1000 },
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', pnl: -1000 },
     ]);
     expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
     // 帳本全額實現：balance = 1100 + 300（釋放 ETH IM）− 1000 = 400。
@@ -1575,7 +1575,7 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
     const marks = { BTCUSDT: 50000, ETHUSDT: 1000 } as const;
     const result = evaluateCrossMargin(placed.account, marks, NOW);
     expect(result.events).toEqual([
-      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: -8000 },
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', pnl: -8000 },
     ]);
     expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
     expect(result.account.orders).toHaveLength(0);

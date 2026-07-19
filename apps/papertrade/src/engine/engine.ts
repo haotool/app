@@ -433,7 +433,7 @@ function processPosition(
       type: 'liquidation',
       symbol: position.symbol,
       side: position.side,
-      loss: trade.realizedPnl,
+      pnl: trade.realizedPnl,
     });
     return next;
   }
@@ -634,7 +634,7 @@ export function evaluateCrossMargin(account: Account, marks: MarkMap, now: numbe
       symbol: worst.symbol,
       side: worst.side,
       // cross 於 mark 全額實現：以符號化已實現損益回報，供 toast 依正負分流文案。
-      loss: trade.realizedPnl,
+      pnl: trade.realizedPnl,
     });
     // 同步清除指向該倉位的 close 掛單，避免孤兒掛單殘留（同 processTick 既有清理）。
     current = {

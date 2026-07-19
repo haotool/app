@@ -169,6 +169,20 @@ describe('computeSupportResistance', () => {
     expect(computeSupportResistance({ lows: [pivot(5, 100)], highs: [] }, 1)).toEqual([]);
     expect(computeSupportResistance({ lows: [], highs: [] }, 1)).toEqual([]);
   });
+
+  it('anchors the tolerance to the cluster head so drifting pivots cannot chain past it', () => {
+    // 同向漂移序列（單步 ≤ 容差 1、總跨距 1.7）：累計平均比較會全數吸收成一群，
+    // 首點錨比較下 101.3/101.7 距首點 100 超容差，正確分裂為兩群。
+    const pivots: Pivots = {
+      lows: [pivot(5, 100), pivot(10, 100.9), pivot(15, 101.3), pivot(20, 101.7)],
+      highs: [],
+    };
+    const levels = computeSupportResistance(pivots, 1 / 0.3);
+    expect(levels).toHaveLength(2);
+    // 同觸碰數 tie 以新近度排序：後群（latestIndex 20）在前。
+    expect(levels[0]?.price).toBeCloseTo((101.3 + 101.7) / 2, 10);
+    expect(levels[1]?.price).toBeCloseTo((100 + 100.9) / 2, 10);
+  });
 });
 
 describe('detectDivergences', () => {
@@ -260,5 +274,18 @@ describe('analyzeChart', () => {
     expect(trendOnly.divergences).toEqual([]);
     expect(trendOnly.support?.p2.price).toBe(5.5);
     expect(trendOnly.resistance?.p2.price).toBe(17.5);
+  });
+
+  it('ignores the forming last bar so its intraday extremes cannot confirm a pivot', () => {
+    const options = { divergences: false, trendLines: true, supportResistance: false } as const;
+    const base = analyzeChart(bars, macd, options);
+
+    // 末根（forming bar）走出全序列新低：不得成為 pivot 錨點、既有錨點不得改變。
+    const last = bars.at(-1)!;
+    const spiked = [...bars.slice(0, -1), { ...last, low: 0.5, close: 1 }];
+    const withSpike = analyzeChart(spiked, macd, options);
+    expect(withSpike.support?.p1).toEqual(base.support?.p1);
+    expect(withSpike.support?.p2).toEqual(base.support?.p2);
+    expect(withSpike.resistance?.p2).toEqual(base.resistance?.p2);
   });
 });

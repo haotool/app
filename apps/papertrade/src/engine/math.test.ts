@@ -211,12 +211,15 @@ describe('cross margin aggregates (R6-2, ADR-R6-02)', () => {
     expect(estimatedCrossLiquidationPrice(account.positions[0]!, account, marks)).toBeNull();
   });
 
-  it('returns bare balance when any cross position lacks a mark', () => {
+  it('takes the most conservative available when any cross position lacks a mark', () => {
     const mixed = accountWith(9396.7, [
       crossPosition(),
       crossPosition({ id: 'p2', symbol: 'ETHUSDT', qty: 1, entryPrice: 3000, margin: 300 }),
     ]);
+    // 有 mark 部分為浮盈（+100）：未知情境不計盈利 → 裸 balance。
     expect(crossAvailableBalance(mixed, { BTCUSDT: 61000 })).toBeCloseTo(9396.7, 8);
+    // 有 mark 部分為浮虧（−100）：已知虧損仍須照扣，不得因缺 mark 抹掉。
+    expect(crossAvailableBalance(mixed, { BTCUSDT: 59000 })).toBeCloseTo(9296.7, 8);
   });
 
   it('excludes isolated positions and missing marks from the aggregates', () => {

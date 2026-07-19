@@ -85,4 +85,4 @@ export type TradeEvent =
   | { type: 'tp'; symbol: MarketSymbol; side: Side; pnl: number }
   | { type: 'sl'; symbol: MarketSymbol; side: Side; pnl: number }
   | { type: 'trailing'; symbol: MarketSymbol; side: Side; pnl: number }
-  | { type: 'liquidation'; symbol: MarketSymbol; side: Side; loss: number };
+  | { type: 'liquidation'; symbol: MarketSymbol; side: Side; pnl: number };
