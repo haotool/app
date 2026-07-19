@@ -8,6 +8,8 @@ export type TickDirection = 'up' | 'down' | null;
 export interface MarketTicker extends Ticker {
   direction: TickDirection;
   revision: number;
+  // 標記價變動計數（R6-4 觀察面）：僅 markPrice 變化時遞增，供持倉卡 uPnL flash 對齊強平依據價。
+  markRevision: number;
 }
 
 interface MarketState {
@@ -32,10 +34,14 @@ export const useMarketStore = create<MarketState>()((set) => ({
     set((state) => {
       const previous = state.tickers[ticker.symbol];
       const changed = ticker.lastPrice !== previous?.lastPrice;
+      const markChanged = ticker.markPrice !== previous?.markPrice;
       const next: MarketTicker = {
         ...ticker,
         direction: resolveDirection(previous, ticker.lastPrice),
         revision: changed ? (previous?.revision ?? 0) + 1 : (previous?.revision ?? 0),
+        markRevision: markChanged
+          ? (previous?.markRevision ?? 0) + 1
+          : (previous?.markRevision ?? 0),
       };
       return { tickers: { ...state.tickers, [ticker.symbol]: next } };
     }),
@@ -45,11 +51,14 @@ export const useMarketStore = create<MarketState>()((set) => ({
       if (previous === undefined) return state;
       const nextPrice = patch.lastPrice ?? previous.lastPrice;
       const changed = nextPrice !== previous.lastPrice;
+      const nextMark = patch.markPrice ?? previous.markPrice;
+      const markChanged = nextMark !== previous.markPrice;
       const next: MarketTicker = {
         ...previous,
         ...patch,
         direction: resolveDirection(previous, nextPrice),
         revision: changed ? previous.revision + 1 : previous.revision,
+        markRevision: markChanged ? previous.markRevision + 1 : previous.markRevision,
       };
       return { tickers: { ...state.tickers, [symbol]: next } };
     }),

@@ -24,6 +24,7 @@ describe('useMarketStore', () => {
       ...btcTicker,
       direction: null,
       revision: 1,
+      markRevision: 1,
     });
   });
 
@@ -51,6 +52,40 @@ describe('useMarketStore', () => {
     patchTicker('BTCUSDT', { volume24h: 90000 });
     expect(useMarketStore.getState().tickers.BTCUSDT?.direction).toBe('down');
     expect(useMarketStore.getState().tickers.BTCUSDT?.revision).toBe(3);
+  });
+
+  it('bumps markRevision only when markPrice changes (R6-4)', () => {
+    const { setTicker, patchTicker } = useMarketStore.getState();
+    setTicker(btcTicker);
+    expect(useMarketStore.getState().tickers.BTCUSDT?.markRevision).toBe(1);
+
+    // 僅 lastPrice 變化：markRevision 與 markPrice 不動、revision 照常遞增。
+    patchTicker('BTCUSDT', { lastPrice: 64500 });
+    const afterLast = useMarketStore.getState().tickers.BTCUSDT;
+    expect(afterLast?.markRevision).toBe(1);
+    expect(afterLast?.markPrice).toBe(btcTicker.markPrice);
+    expect(afterLast?.revision).toBe(2);
+
+    // markPrice 真變化：markRevision 遞增、revision 不動。
+    patchTicker('BTCUSDT', { markPrice: 64510 });
+    const afterMark = useMarketStore.getState().tickers.BTCUSDT;
+    expect(afterMark?.markRevision).toBe(2);
+    expect(afterMark?.revision).toBe(2);
+
+    // markPrice 未變的 patch：markRevision 不遞增。
+    patchTicker('BTCUSDT', { volume24h: 90000 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.markRevision).toBe(2);
+  });
+
+  it('bumps markRevision when a snapshot carries a new markPrice', () => {
+    const { setTicker } = useMarketStore.getState();
+    setTicker(btcTicker);
+    setTicker({ ...btcTicker, markPrice: 64490 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.markRevision).toBe(2);
+
+    // 同值快照：不遞增。
+    setTicker({ ...btcTicker, markPrice: 64490 });
+    expect(useMarketStore.getState().tickers.BTCUSDT?.markRevision).toBe(2);
   });
 
   it('ignores patches for symbols without a snapshot', () => {
