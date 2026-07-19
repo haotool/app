@@ -20,13 +20,15 @@ export const IMAGE_RESOURCES = [
   '/icons/icon-512-maskable.png',
   '/icons/icon-512.svg',
   '/icons/og-image.jpg',
+  '/icons/screenshot-gameplay.jpg',
 ];
 
 export const SITE_CONFIG = {
   url: 'https://app.haotool.org/starpuff/',
   name: '星噗噗 StarPuff',
-  title: '星噗噗 StarPuff｜吸入果凍怪的 Q 彈動作小遊戲',
-  description: '直向 Boss Rush 動作小遊戲：吸入果凍怪、化為星彈、擊敗果凍王。免安裝、離線可玩。',
+  title: '星噗噗 StarPuff｜免費橫向捲軸動作網頁遊戲・免下載離線可玩',
+  description:
+    '星噗噗是免費橫向捲軸動作網頁遊戲：吸入果凍怪、化為九系星彈，闖越五大區域二十道關卡、挑戰五大魔王與 EX 變體。免下載、免註冊、無廣告，支援 PWA 安裝與離線遊玩，手機、平板、電腦開瀏覽器即玩。',
 };
 
 export const APP_CONFIG = {

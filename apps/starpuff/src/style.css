@@ -11,6 +11,19 @@
   box-sizing: border-box;
 }
 
+/* 視覺隱藏但供螢幕閱讀器與爬蟲讀取（SEO/a11y 主標題用）。 */
+.sp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* iOS 直通全鏈（§22 / recon A.1）：user-select 鏈抑制長按 loupe，touch-callout 關長按選單；
    須設在實際被 hit-test 的元素及其祖先，缺一層即漏。 */
 html,
