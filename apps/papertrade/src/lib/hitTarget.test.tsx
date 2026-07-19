@@ -194,7 +194,7 @@ describe('44px 觸控目標防回歸掃蕩', () => {
     expect(screen.getByRole('textbox', { name: /止盈價/ })).toBeInTheDocument();
     expectNoViolations();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
     expect(screen.getByRole('dialog', { name: '保證金模式' })).toBeInTheDocument();
     expectNoViolations();
   });

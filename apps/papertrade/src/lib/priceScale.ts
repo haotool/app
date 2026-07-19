@@ -41,12 +41,16 @@ export function tickSizeFor(symbol: MarketSymbol): number {
   return liveTickSize[symbol] ?? STATIC_TICK_SIZE[symbol] ?? 0.01;
 }
 
-// 由 tick size 反推小數位數：冪次 tick 容忍浮點誤差取最近整數；非冪次（如 0.5）取下一位。
+// 由 tick size 反推小數位數：逐位試乘至整數（容忍浮點誤差），不依賴 log10 取整——
+// 多位 mantissa tick（如 0.25 需 2 位）在 log10 法會被誤判為 1 位造成全站顯示失真。
 export function pricePrecisionFor(symbol: MarketSymbol): number {
-  const exponent = Math.log10(tickSizeFor(symbol));
-  const nearest = Math.round(exponent);
-  const digits = Math.abs(exponent - nearest) < 1e-9 ? -nearest : -Math.floor(exponent);
-  return Math.max(0, digits);
+  let value = tickSizeFor(symbol);
+  let digits = 0;
+  while (Math.abs(value - Math.round(value)) > 1e-9 && digits < 8) {
+    value *= 10;
+    digits += 1;
+  }
+  return digits;
 }
 
 // lightweight-charts series priceFormat（軸與 crosshair 精度同源）。

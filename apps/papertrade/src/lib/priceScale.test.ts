@@ -59,6 +59,11 @@ describe('pricePrecisionFor', () => {
     expect(pricePrecisionFor('BTCUSDT')).toBe(2);
   });
 
+  it('handles multi-digit mantissa tick sizes', () => {
+    setLiveTickSize('BTCUSDT', 0.25);
+    expect(pricePrecisionFor('BTCUSDT')).toBe(2);
+  });
+
   it('clamps integer tick sizes to zero decimals', () => {
     setLiveTickSize('BTCUSDT', 1);
     expect(pricePrecisionFor('BTCUSDT')).toBe(0);

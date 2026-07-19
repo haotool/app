@@ -390,7 +390,7 @@ describe('TradePage', () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
     const sheet = screen.getByRole('dialog', { name: '保證金模式' });
     expect(within(sheet).getByRole('radio', { name: '逐倉' })).toHaveAttribute(
       'aria-checked',
@@ -402,14 +402,14 @@ describe('TradePage', () => {
     await user.click(within(sheet).getByRole('button', { name: '關閉' }));
 
     // pill 文案跟隨選定值；只影響之後新開倉。
-    expect(screen.getByRole('button', { name: '保證金模式：全倉，點擊切換' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '保證金模式：全倉，點擊選擇' })).toBeInTheDocument();
   });
 
   it('opens a cross position after selecting the cross margin mode', async () => {
     const user = userEvent.setup();
     renderTrade();
 
-    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
+    await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }));
     await user.click(screen.getByRole('radio', { name: '全倉' }));
     await user.click(screen.getByRole('button', { name: '關閉' }));
 

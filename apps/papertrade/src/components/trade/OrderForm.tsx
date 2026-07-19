@@ -386,9 +386,11 @@ export function OrderForm({
           <dd className="text-text-2 tabular-nums">{formatAmount(available, 2)} USDT</dd>
         </div>
         {heldPosition !== null && heldPosition.marginMode !== marginMode && (
-          // div 為 dl 合法子元素；p 不是。下單方向未定，文案同時涵蓋加倉與翻倉兩種結果。
-          <div className="text-caption text-text-3">
-            {`同向加倉沿用持倉現有${heldPosition.marginMode === 'isolated' ? '逐倉' : '全倉'}模式；反向翻倉的新倉採本次選擇`}
+          <div>
+            <dt className="sr-only">保證金模式提示</dt>
+            <dd className="text-caption text-text-3">
+              {`同向加倉沿用持倉現有${heldPosition.marginMode === 'isolated' ? '逐倉' : '全倉'}模式；反向翻倉的新倉採本次選擇`}
+            </dd>
           </div>
         )}
         <div className="flex justify-between">

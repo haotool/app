@@ -138,7 +138,7 @@ export function TradePage() {
             <button
               type="button"
               onClick={() => setSheet('margin')}
-              aria-label={`保證金模式：${MARGIN_MODE_LABELS[marginMode]}，點擊切換`}
+              aria-label={`保證金模式：${MARGIN_MODE_LABELS[marginMode]}，點擊選擇`}
               className="min-h-11 min-w-11 rounded-control bg-surface-2 px-3 text-label font-semibold text-text-2 active:bg-border"
             >
               {MARGIN_MODE_LABELS[marginMode]}
@@ -253,6 +253,11 @@ export function TradePage() {
             role="radiogroup"
             aria-label="保證金模式選擇"
             className="flex rounded-control bg-surface-2 p-0.5"
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+              event.preventDefault();
+              setMarginMode((current) => (current === 'isolated' ? 'cross' : 'isolated'));
+            }}
           >
             {(['isolated', 'cross'] as const).map((candidate) => (
               <button
@@ -260,6 +265,7 @@ export function TradePage() {
                 type="button"
                 role="radio"
                 aria-checked={marginMode === candidate}
+                tabIndex={marginMode === candidate ? 0 : -1}
                 onClick={() => setMarginMode(candidate)}
                 className={clsx(
                   'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',

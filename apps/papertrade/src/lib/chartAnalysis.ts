@@ -104,6 +104,7 @@ export function computeSupportResistance(pivots: Pivots, atr: number): SupportRe
   if (sorted.length === 0) return [];
   const tolerance = atr * SR_TOLERANCE_ATR;
   interface Cluster {
+    anchor: number;
     sum: number;
     count: number;
     latestIndex: number;
@@ -111,12 +112,17 @@ export function computeSupportResistance(pivots: Pivots, atr: number): SupportRe
   const clusters: Cluster[] = [];
   for (const pivot of sorted) {
     const current = clusters.at(-1);
-    if (current !== undefined && pivot.price - current.sum / current.count <= tolerance) {
+    if (current !== undefined && pivot.price - current.anchor <= tolerance) {
       current.sum += pivot.price;
       current.count += 1;
       current.latestIndex = Math.max(current.latestIndex, pivot.index);
     } else {
-      clusters.push({ sum: pivot.price, count: 1, latestIndex: pivot.index });
+      clusters.push({
+        anchor: pivot.price,
+        sum: pivot.price,
+        count: 1,
+        latestIndex: pivot.index,
+      });
     }
   }
   return clusters
@@ -198,8 +204,9 @@ export function analyzeChart(
   const lastBar = bars.at(-1);
   const enabled = options.divergences || options.trendLines || options.supportResistance;
   if (lastBar === undefined || !enabled) return EMPTY_CHART_ANALYSIS;
-  const pivots = detectPivots(bars);
-  const atr = computeAtr(bars);
+  const confirmedBars = bars.length > 1 ? bars.slice(0, -1) : bars;
+  const pivots = detectPivots(confirmedBars);
+  const atr = computeAtr(confirmedBars);
   return {
     divergences: options.divergences ? detectDivergences(bars, macd, pivots, atr) : [],
     support: options.trendLines ? computeTrendLine(pivots.lows, lastBar) : null,

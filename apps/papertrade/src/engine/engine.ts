@@ -1,6 +1,7 @@
 import { type MarketSymbol } from '../config/market';
 import { INITIAL_BALANCE_USDT, MAKER_FEE_RATE, TAKER_FEE_RATE } from '../config/trading';
 import {
+  crossAvailableBalance,
   crossMaintenanceMargin,
   crossMarginBalance,
   liquidationPrice,
@@ -419,7 +420,7 @@ function processPosition(
 ): Account {
   // 逐倉才做單倉強平；cross 由 evaluateCrossMargin 聚合判定。TP/SL/trailing 兩模式一視同仁。
   if (position.marginMode === 'isolated' && isLiquidated(position, mark)) {
-    const { account: next } = closeSlice(
+    const { account: next, trade } = closeSlice(
       account,
       position,
       position.qty,
@@ -432,7 +433,7 @@ function processPosition(
       type: 'liquidation',
       symbol: position.symbol,
       side: position.side,
-      loss: position.margin,
+      loss: trade.realizedPnl,
     });
     return next;
   }
@@ -632,8 +633,8 @@ export function evaluateCrossMargin(account: Account, marks: MarkMap, now: numbe
       type: 'liquidation',
       symbol: worst.symbol,
       side: worst.side,
-      // cross 於 mark 全額實現：以實際已實現虧損回報，不得以保證金低報損失。
-      loss: Math.abs(trade.realizedPnl),
+      // cross 於 mark 全額實現：以符號化已實現損益回報，供 toast 依正負分流文案。
+      loss: trade.realizedPnl,
     });
     // 同步清除指向該倉位的 close 掛單，避免孤兒掛單殘留（同 processTick 既有清理）。
     current = {
@@ -658,8 +659,10 @@ export function getAccountMetrics(
   }, 0);
 
   const usedMargin = positionMargin + orderReserved;
+  const hasCross = account.positions.some((position) => position.marginMode === 'cross');
+  const available = hasCross ? crossAvailableBalance(account, marks) : account.balance;
   return {
-    available: account.balance,
+    available,
     usedMargin,
     totalUpnl,
     equity: account.balance + usedMargin + totalUpnl,

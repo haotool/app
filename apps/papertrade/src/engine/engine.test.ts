@@ -1328,7 +1328,7 @@ describe('liquidation', () => {
       type: 'liquidation',
       symbol: 'BTCUSDT',
       side: 'long',
-      loss: 600,
+      loss: -600,
     });
   });
 
@@ -1480,7 +1480,7 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
       type: 'liquidation',
       symbol: 'BTCUSDT',
       side: 'long',
-      loss: 579.6,
+      loss: -579.6,
     });
     // 帳本同步全額實現：balance = 6.7 + 600（釋放 IM）− 579.6 = 27.1。
     expect(liquidated.account.balance).toBeCloseTo(27.1, 8);
@@ -1504,7 +1504,7 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
     const marks = { BTCUSDT: 59000, ETHUSDT: 2900 } as const;
     const result = evaluateCrossMargin(account, marks, NOW);
     expect(result.events).toEqual([
-      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: 1000 },
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: -1000 },
     ]);
     expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
     // 帳本全額實現：balance = 1100 + 300（釋放 ETH IM）− 1000 = 400。
@@ -1575,7 +1575,7 @@ describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {
     const marks = { BTCUSDT: 50000, ETHUSDT: 1000 } as const;
     const result = evaluateCrossMargin(placed.account, marks, NOW);
     expect(result.events).toEqual([
-      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: 8000 },
+      { type: 'liquidation', symbol: 'ETHUSDT', side: 'long', loss: -8000 },
     ]);
     expect(result.account.positions.map((position) => position.symbol)).toEqual(['BTCUSDT']);
     expect(result.account.orders).toHaveLength(0);
@@ -1861,6 +1861,13 @@ describe('getAccountMetrics', () => {
       metrics.available + metrics.usedMargin + metrics.totalUpnl,
       8,
     );
+  });
+
+  it('uses cross available balance when cross positions exist', () => {
+    const account = openLong(createInitialAccount(), 0.1, 60000, 10);
+    account.positions[0] = { ...account.positions[0]!, marginMode: 'cross' };
+    const metrics = getAccountMetrics(account, { BTCUSDT: 61000 });
+    expect(metrics.available).toBeCloseTo(account.balance + 100, 8);
   });
 
   it('treats positions without a mark as zero upnl', () => {

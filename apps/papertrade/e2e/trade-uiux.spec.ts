@@ -104,11 +104,11 @@ test.describe('R4 交易頁 UIUX 375×812', () => {
     await expect(page.getByRole('alert')).toBeHidden();
 
     // 保證金模式切換 sheet（R6-2）：切到全倉後 pill 文案跟隨。
-    await page.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }).click();
+    await page.getByRole('button', { name: '保證金模式：逐倉，點擊選擇' }).click();
     await expect(page.getByRole('dialog', { name: '保證金模式' })).toBeVisible();
     await page.getByRole('radio', { name: '全倉' }).click();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('button', { name: '保證金模式：全倉，點擊切換' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '保證金模式：全倉，點擊選擇' })).toBeVisible();
 
     expect(errors).toEqual([]);
   });
