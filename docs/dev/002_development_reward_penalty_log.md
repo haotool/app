@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+132
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+132
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：neutral-release-automation-e2e-verify
+- 原因：release PR 自動合併鏈（#779）首輪實測遭人工 close/reopen 舊 SOP 並行干擾（#778 先合入觸發遞延護欄），自動合併與 main 補派段尚無端到端證據，且 main 已零待發 changeset、空 changeset 經 action 原始碼證實不開 PR
+- 解法：以 park-keeper no-op patch changeset 作為任務授權的最小驗證載具，觸發一次真實 release PR 取得「QC 自動觸發→自動合併→tags/releases/部署」全鏈零人工證據（issue #771）
 
 - 日期：2026-07-19
 - ID：reward-release-pr-automerge-chain
