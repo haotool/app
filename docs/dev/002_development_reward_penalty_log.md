@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+142
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+143
 
 ## 新增模板（4 行）
 
@@ -82,6 +82,11 @@
 - ID：reward-release-automation-approve-native-run
 - 原因：dispatch 補償被 branch protection 拒絕後，無 PAT 前提下仍需可用的必要檢查來源——原生 pull_request run 卡在 approval-required，Approve API（POST /actions/runs/{id}/approve）成為唯一免憑證解鎖路徑，但其對同 repo bot PR 的適用性無文檔保證
 - 解法：以 user token 對 #784 的 pending run 29672941337 實測 Approve API 成功（run 由 action_required 轉 queued 並全綠），release.yml v2 改為「核准原生 run→讀 head SHA check-runs 等待 QC→受保護合併→補派 main」，RELEASE_PAT 存在時 changesets 直接以 PAT 開 PR 走全原生路徑（issue #771）
+
+- 日期：2026-07-19
+- ID：reward-papertrade-r6-wave5-logo-qa
+- 原因：R6-11 紙飛機 LOGO 原計畫由 Codex imagegen 產概念稿，但該進程卡死 57 分鐘以上零產出（`public/reference/` 空），阻塞視覺資產交付
+- 解法：依 backlog 預案改手寫 SVG 紙飛機 mark（512 網格、雙摺面漸層＋虛線尾跡）沿用既有 generate-icons/generate-og-image 導出鏈重生成全部 PNG，並以獨立 Playwright 腳本完成 R6 驗收清單真瀏覽器深度 QA 17/17 PASS（safe-area/全倉手算/混倉/精度/MACD/趨勢線/文案/console=0）
 
 - 日期：2026-07-19
 - ID：neutral-release-automation-e2e-verify
