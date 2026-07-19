@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+136
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+137
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-haptics-wakelock
+- 原因：行動 PWA 缺少打擊觸覺與螢幕常亮，重擊回饋單靠音效且觀戰段落可能熄屏中斷
+- 解法：haptics 查表跟隨 playSfx（僅重擊/里程碑、靜音同步不震、iOS 靜默降級）＋頁面級 Screen Wake Lock（visibilitychange 重取、被拒降級），兩項均通過 KISS/ROI 閘
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-pwa-install-guide

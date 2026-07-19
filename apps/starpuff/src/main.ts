@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './pwa';
 import './style.css';
 import { initInstallGuide } from './installGuide';
+import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyRotationClass, loadRotationPref } from './game/core/rotation';
@@ -24,6 +25,8 @@ import { isGamePaused, openPauseMenu } from './game/systems/pause';
 restoreMutePreference();
 // PWA 安裝指引（§93）：已安裝／已忽略／不支援平台不打擾；殼內 overlay 不進 Phaser Scene。
 initInstallGuide();
+// 螢幕常亮（§94）：不支援或被拒靜默降級。
+initWakeLock();
 // 開機套用直持旋轉偏好（§90）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
 applyRotationClass(loadRotationPref());
 // 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。

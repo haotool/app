@@ -1,5 +1,6 @@
 import { zzfx, ZZFX } from 'zzfx';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import { vibrateForSfx } from './haptics';
 
 export type SfxName =
   | 'jump'
@@ -76,6 +77,8 @@ let muted = false;
 // pitchScale 以頻率倍率微調音高（§20：發射音依星彈屬性分色）。
 export function playSfx(name: SfxName, pitchScale = 1): void {
   if (muted) return;
+  // 觸覺與音效同源觸發（§94）：靜音早退即同步關閉震動。
+  vibrateForSfx(name);
   if (name === 'inhale') {
     if (inhaleSource) return;
     inhaleSamples ??= ZZFX.buildSamples(...INHALE_PARAMS);
