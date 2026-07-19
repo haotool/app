@@ -14,6 +14,7 @@ import {
   type Account,
   type ClosedTrade,
   type CloseReason,
+  type MarginMode,
   type Position,
   type Side,
 } from './types';
@@ -136,6 +137,7 @@ export interface ExecuteOpenParams {
   qty: number;
   price: number;
   leverage: number;
+  marginMode: MarginMode;
   feeRate: number;
   now: number;
   tp?: number;
@@ -192,6 +194,7 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
     margin,
     openFee: fee,
     leverage,
+    marginMode: params.marginMode,
     openedAt: now,
     takeProfit: tp ?? null,
     stopLoss: sl ?? null,

@@ -515,6 +515,7 @@ describe('TradePage', () => {
   it('shows the scale-in hint and submits without form tp/sl for a same-side add', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -547,6 +548,7 @@ describe('TradePage', () => {
   it('binds the scale-in hint wording to the held short side', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -566,6 +568,7 @@ describe('TradePage', () => {
   it('re-validates form tp/sl when submitting the opposite side of the held position', async () => {
     const user = userEvent.setup();
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,

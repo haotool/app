@@ -22,6 +22,7 @@ const btcTicker: Ticker = {
 // 10x 多單 0.1 BTC @ 60000：保證金 600，+50% ROE 對應觸發價 63000。
 function seedLongPosition(): Position {
   const opened = openMarket(createInitialAccount(), {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.1,

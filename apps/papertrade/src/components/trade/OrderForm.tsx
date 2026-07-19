@@ -193,6 +193,7 @@ export function OrderForm({
             qty: parsed.qty,
             price: parsed.price,
             leverage,
+            marginMode: 'isolated',
             tp: tpValue,
             sl: slValue,
           })
@@ -202,6 +203,7 @@ export function OrderForm({
             qty: parsed.qty,
             limitPrice: parsed.price,
             leverage,
+            marginMode: 'isolated',
             tp: tpValue,
             sl: slValue,
           });

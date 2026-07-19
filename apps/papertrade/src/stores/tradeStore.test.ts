@@ -29,6 +29,7 @@ describe('useTradeStore', () => {
 
   it('opens a market position and deducts funds', () => {
     const result = useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -45,6 +46,7 @@ describe('useTradeStore', () => {
   it('returns engine errors without mutating state', () => {
     const before = useTradeStore.getState().account;
     const result = useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 100,
@@ -57,6 +59,7 @@ describe('useTradeStore', () => {
 
   it('applies TP/SL atomically: a rejected SL leaves the position untouched', () => {
     const opened = useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -79,6 +82,7 @@ describe('useTradeStore', () => {
 
   it('applies TP/SL atomically when both prices are valid', () => {
     const opened = useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -104,6 +108,7 @@ describe('useTradeStore', () => {
 
   it('liquidates on tick and pushes a warning toast', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -123,6 +128,7 @@ describe('useTradeStore', () => {
   it('keeps silent on liquidation when the sound preference is off', () => {
     useSoundPrefsStore.setState({ liquidationSound: false });
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -137,6 +143,7 @@ describe('useTradeStore', () => {
 
   it('does not play the liquidation sound on ordinary fills', () => {
     useTradeStore.getState().placeLimitOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -151,6 +158,7 @@ describe('useTradeStore', () => {
 
   it('fills limit orders on tick and pushes a toast', () => {
     useTradeStore.getState().placeLimitOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -174,6 +182,7 @@ describe('useTradeStore', () => {
 
   it('resets the account back to the initial state', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -212,7 +221,7 @@ describe('useTradeStore', () => {
       TRADE_STORAGE_KEY,
       JSON.stringify({
         state: { account: { ...createInitialAccount(), balance: 7777 } },
-        version: TRADE_STORAGE_VERSION - 2,
+        version: 1,
       }),
     );
     await useTradeStore.persist.rehydrate();
@@ -254,7 +263,60 @@ describe('useTradeStore', () => {
     const { account, toasts } = useTradeStore.getState();
     expect(account.balance).toBe(7777);
     expect(account.positions[0]?.tpSlCloseRatio).toBe(1);
+    // v2 → v4 鏈式遷移：tpSlCloseRatio 與 marginMode 一次補齊。
+    expect(account.positions[0]?.marginMode).toBe('isolated');
     expect(account.positions[0]?.takeProfit).toBe(61000);
+    expect(toasts.some((toast) => toast.tone === 'warning')).toBe(false);
+  });
+
+  it('migrates a v3 account by filling marginMode on positions and orders (R6-2)', async () => {
+    const v3Position = {
+      id: 'p1',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      entryPrice: 60000,
+      margin: 600,
+      openFee: 3.3,
+      leverage: 10,
+      openedAt: NOW,
+      takeProfit: 61000,
+      stopLoss: null,
+      tpSlCloseRatio: 0.5,
+      trailing: null,
+    };
+    const v3Order = {
+      id: 'o1',
+      kind: 'open',
+      symbol: 'ETHUSDT',
+      side: 'short',
+      qty: 1,
+      limitPrice: 3200,
+      leverage: 5,
+      margin: 640,
+      fee: 0.64,
+      positionId: null,
+      createdAt: NOW,
+      takeProfit: null,
+      stopLoss: null,
+    };
+    window.localStorage.setItem(
+      TRADE_STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          account: { balance: 7777, positions: [v3Position], orders: [v3Order], history: [] },
+        },
+        version: 3,
+      }),
+    );
+    await useTradeStore.persist.rehydrate();
+
+    const { account, toasts } = useTradeStore.getState();
+    expect(account.balance).toBe(7777);
+    expect(account.positions[0]?.marginMode).toBe('isolated');
+    // 既有欄位無損保留（含部分平倉比例）。
+    expect(account.positions[0]?.tpSlCloseRatio).toBe(0.5);
+    expect(account.orders[0]?.marginMode).toBe('isolated');
     expect(toasts.some((toast) => toast.tone === 'warning')).toBe(false);
   });
 
@@ -273,6 +335,7 @@ describe('useTradeStore', () => {
 
   it('debounces persist writes and lands the latest state after flush', () => {
     useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -330,6 +393,7 @@ describe('parsePersistedTradeState', () => {
             margin: 0,
             openFee: 0,
             leverage: 125,
+            marginMode: 'isolated',
             openedAt: NOW,
             takeProfit: null,
             stopLoss: null,
@@ -358,6 +422,7 @@ describe('parsePersistedTradeState', () => {
             margin: 600,
             openFee: 3.3,
             leverage: 10,
+            marginMode: 'isolated',
             openedAt: NOW,
             takeProfit: null,
             stopLoss: 59000,
@@ -379,6 +444,7 @@ describe('parsePersistedTradeState', () => {
             qty: 1,
             limitPrice: 3200,
             leverage: 5,
+            marginMode: 'isolated',
             margin: 640,
             fee: 0.64,
             positionId: null,
@@ -416,6 +482,7 @@ describe('parsePersistedTradeState', () => {
       qty: 1,
       limitPrice: 3200,
       leverage: 5,
+      marginMode: 'isolated',
       margin: 640,
       fee: 0.64,
       positionId: null,

@@ -21,6 +21,7 @@ const btcTicker: Ticker = {
 
 function seedLongPosition(): Position {
   const opened = openMarket(createInitialAccount(), {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.1,

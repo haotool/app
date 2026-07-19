@@ -23,6 +23,7 @@ const NOW = 1_800_000_000_000;
 
 function openLong(account: Account, qty = 0.1, price = 60000, leverage = 10) {
   const result = openMarket(account, {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty,
@@ -68,6 +69,7 @@ describe('openMarket', () => {
 
   it('rejects when balance cannot cover margin plus fee', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 1,
@@ -79,6 +81,7 @@ describe('openMarket', () => {
 
   it('rejects below minimum notional', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.00001,
@@ -91,19 +94,21 @@ describe('openMarket', () => {
   it('rejects invalid leverage and qty and price', () => {
     const account = createInitialAccount();
     const base = { symbol: 'BTCUSDT', side: 'long', qty: 0.1, price: 60000 } as const;
-    expect(openMarket(account, { ...base, leverage: 0 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, leverage: 0 })).toEqual({
       ok: false,
       error: 'invalid-leverage',
     });
-    expect(openMarket(account, { ...base, leverage: 1001 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, leverage: 1001 })).toEqual({
       ok: false,
       error: 'invalid-leverage',
     });
-    expect(openMarket(account, { ...base, qty: 0, leverage: 10 })).toEqual({
+    expect(openMarket(account, { marginMode: 'isolated', ...base, qty: 0, leverage: 10 })).toEqual({
       ok: false,
       error: 'invalid-qty',
     });
-    expect(openMarket(account, { ...base, qty: 0.1, price: 0, leverage: 10 })).toEqual({
+    expect(
+      openMarket(account, { marginMode: 'isolated', ...base, qty: 0.1, price: 0, leverage: 10 }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
@@ -137,6 +142,7 @@ describe('openMarket', () => {
     const balanceBefore = account.balance;
 
     const result = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -165,6 +171,7 @@ describe('openMarket', () => {
     let account = openLong(createInitialAccount(), 0.1, 61000, 10);
 
     const result = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.15,
@@ -188,6 +195,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('applies tp and sl atomically on a market open', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -201,7 +209,12 @@ describe('open with tp/sl (R4-6)', () => {
   });
 
   it('leaves tp/sl unset when omitted', () => {
-    const result = openMarket(createInitialAccount(), { ...base, side: 'long', price: 60000 });
+    const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
+      ...base,
+      side: 'long',
+      price: 60000,
+    });
     if (!result.ok) throw new Error(result.error);
     expect(onlyPosition(result.account).takeProfit).toBeNull();
     expect(onlyPosition(result.account).stopLoss).toBeNull();
@@ -209,6 +222,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('accepts tp-only and sl-only opens', () => {
     const tpOnly = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -219,6 +233,7 @@ describe('open with tp/sl (R4-6)', () => {
     expect(onlyPosition(tpOnly.account).stopLoss).toBeNull();
 
     const slOnly = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -231,19 +246,51 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects wrong-direction tp/sl for both sides without mutating the account', () => {
     const account = createInitialAccount();
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 59000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: 59000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 61000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        sl: 61000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-sl-direction',
     });
-    expect(openMarket(account, { ...base, side: 'short', price: 60000, tp: 61000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'short',
+        price: 60000,
+        tp: 61000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'short', price: 60000, sl: 59000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'short',
+        price: 60000,
+        sl: 59000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-sl-direction',
     });
@@ -253,15 +300,33 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects tp/sl equal to entry and non-positive values', () => {
     const account = createInitialAccount();
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: 60000 })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: 60000,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-tp-direction',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, sl: 0 })).toEqual({
+    expect(
+      openMarket(account, { marginMode: 'isolated', ...base, side: 'long', price: 60000, sl: 0 }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
-    expect(openMarket(account, { ...base, side: 'long', price: 60000, tp: Number.NaN })).toEqual({
+    expect(
+      openMarket(account, {
+        marginMode: 'isolated',
+        ...base,
+        side: 'long',
+        price: 60000,
+        tp: Number.NaN,
+      }),
+    ).toEqual({
       ok: false,
       error: 'invalid-price',
     });
@@ -269,6 +334,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('rejects a valid tp combined with an invalid sl as one atomic order', () => {
     const result = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -280,6 +346,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('keeps the existing tp/sl when scaling in, ignoring form values', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -289,6 +356,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     const scaled = openMarket(first.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60200,
@@ -305,6 +373,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('scales in even when the form tp/sl is invalid against the new price (B1)', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -314,6 +383,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     const scaled = openMarket(first.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60200,
@@ -330,6 +400,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('still validates tp/sl when the existing position is on the opposite side', () => {
     const first = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'short',
       price: 60000,
@@ -337,12 +408,20 @@ describe('open with tp/sl (R4-6)', () => {
     if (!first.ok) throw new Error(first.error);
 
     expect(
-      openMarket(first.account, { ...base, qty: 0.2, side: 'long', price: 60000, tp: 59000 }),
+      openMarket(first.account, {
+        marginMode: 'isolated',
+        ...base,
+        qty: 0.2,
+        side: 'long',
+        price: 60000,
+        tp: 59000,
+      }),
     ).toEqual({ ok: false, error: 'invalid-tp-direction' });
   });
 
   it('triggers a market-open tp exactly like a sheet-set tp', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -358,6 +437,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('validates limit tp/sl against the limit price and records them on the order', () => {
     const rejected = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -366,6 +446,7 @@ describe('open with tp/sl (R4-6)', () => {
     expect(rejected).toEqual({ ok: false, error: 'invalid-tp-direction' });
 
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -379,6 +460,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('transfers tp/sl from a filled limit order onto the new position', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 58000,
@@ -396,6 +478,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('keeps the existing position tp/sl when a limit fill merges into it', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -405,6 +488,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!opened.ok) throw new Error(opened.error);
 
     const placed = placeLimitOrder(opened.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 59000,
@@ -422,6 +506,7 @@ describe('open with tp/sl (R4-6)', () => {
 
   it('places a scale-in limit order even when the form tp/sl is invalid against the limit price (B1)', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       price: 60000,
@@ -431,6 +516,7 @@ describe('open with tp/sl (R4-6)', () => {
     if (!opened.ok) throw new Error(opened.error);
 
     const placed = placeLimitOrder(opened.account, {
+      marginMode: 'isolated',
       ...base,
       side: 'long',
       limitPrice: 59000,
@@ -545,6 +631,7 @@ describe('limit orders', () => {
   it('reserves margin plus maker fee on placement and refunds on cancel', () => {
     const initial = createInitialAccount();
     const result = placeLimitOrder(initial, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -572,6 +659,7 @@ describe('limit orders', () => {
 
   it('rejects insufficient balance for limit reservation', () => {
     const result = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 2,
@@ -583,6 +671,7 @@ describe('limit orders', () => {
 
   it('fills a long limit when mark drops to the limit price', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -615,6 +704,7 @@ describe('limit orders', () => {
 
   it('fills a short limit when mark rises to the limit price', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -633,6 +723,7 @@ describe('limit orders', () => {
 
   it('ignores ticks of other symbols', () => {
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -647,6 +738,7 @@ describe('limit orders', () => {
   it('fills a marketable open limit at the mark, not at the worse limit price', () => {
     // 買單限價 60000 高於 mark 59000：依「限價或更優」語意應以 mark 成交。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.1,
@@ -675,6 +767,7 @@ describe('limit orders', () => {
     // 滿倉 short：預扣以 limit 計，mark 高於 limit 使名目變大而超出預扣，
     // 必須回退以使用者保證的限價成交，不得靜默失敗讓掛單滯留。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.66,
@@ -709,6 +802,7 @@ describe('limit orders', () => {
     // 滿倉 short limit 遇暴漲 mark：回退以 60000 成交後，70000 已越過 10x 強平價，
     // 必須在同一 tick 立即強平，不得把負權益倉位留到下一筆 ticker。
     const placed = placeLimitOrder(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.66,
@@ -739,6 +833,7 @@ describe('limit orders', () => {
     // 既有 2x short 掛 59000 平倉單，再滿倉 10x short fallback @60000 合併後越過強平價：
     // 同 tick 強平必須同步清除指向該倉位的 close 掛單，不留孤兒單到下一筆 ticker。
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.05,
@@ -758,6 +853,7 @@ describe('limit orders', () => {
     if (!withClose.ok) throw new Error(withClose.error);
 
     const placed = placeLimitOrder(withClose.account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 1.4,
@@ -920,6 +1016,7 @@ describe('take profit and stop loss', () => {
 
   it('handles short TP below entry and SL above entry', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -990,6 +1087,7 @@ describe('take profit and stop loss', () => {
 
   it('rejects wrong-direction TP/SL for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1069,6 +1167,7 @@ describe('tp/sl partial close ratio (R5-6)', () => {
 
   it('closes only the configured ratio on sl for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1117,6 +1216,7 @@ describe('tp/sl partial close ratio (R5-6)', () => {
 
     // 加倉合併沿用倉上 TP/SL 與 tpSlCloseRatio，不被本次開倉覆蓋（R4 契約延伸）。
     const added = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.05,
@@ -1182,6 +1282,7 @@ describe('trailing stop', () => {
 
   it('tracks minima for shorts', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1232,6 +1333,7 @@ describe('liquidation', () => {
 
   it('liquidates a short when mark rises to the liquidation price', () => {
     const opened = openMarket(createInitialAccount(), {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.1,
@@ -1300,6 +1402,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const reversed = openMarket(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'short',
       qty: 0.08,
@@ -1312,6 +1415,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const limit = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'ETHUSDT',
       side: 'long',
       qty: 0.5,
@@ -1375,6 +1479,7 @@ describe('ledger invariant', () => {
     expectInvariant(account);
 
     const cancelable = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'BTCUSDT',
       side: 'long',
       qty: 0.05,
@@ -1439,6 +1544,7 @@ describe('ledger invariant', () => {
 
         if (roll < 0.22) {
           const result = openMarket(account, {
+            marginMode: 'isolated',
             symbol,
             side: randomSide(),
             qty: randomQty(mark),
@@ -1449,6 +1555,7 @@ describe('ledger invariant', () => {
           if (result.ok) account = result.account;
         } else if (roll < 0.34) {
           const result = placeLimitOrder(account, {
+            marginMode: 'isolated',
             symbol,
             side: randomSide(),
             qty: randomQty(mark),
@@ -1526,6 +1633,7 @@ describe('getAccountMetrics', () => {
   it('computes equity = available + used margin + unrealized pnl', () => {
     let account = openLong(createInitialAccount(), 0.1, 60000, 10);
     const placed = placeLimitOrder(account, {
+      marginMode: 'isolated',
       symbol: 'ETHUSDT',
       side: 'long',
       qty: 1,

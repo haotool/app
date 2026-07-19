@@ -56,6 +56,7 @@ const btcTicker: Ticker = {
 
 function seededAccount(): Account {
   const opened = openMarket(createInitialAccount(), {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.1,
@@ -64,6 +65,7 @@ function seededAccount(): Account {
   });
   if (!opened.ok) throw new Error(opened.error);
   const placed = placeLimitOrder(opened.account, {
+    marginMode: 'isolated',
     symbol: 'BTCUSDT',
     side: 'long',
     qty: 0.05,

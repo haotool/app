@@ -23,6 +23,7 @@ import {
   type Account,
   type ClosedTrade,
   type LimitOrder,
+  type MarginMode,
   type Position,
   type Side,
   type TradeEvent,
@@ -37,6 +38,7 @@ export interface OpenParams {
   qty: number;
   price: number;
   leverage: number;
+  marginMode: MarginMode;
   now?: number;
   tp?: number;
   sl?: number;
@@ -55,6 +57,7 @@ export interface LimitParams {
   qty: number;
   limitPrice: number;
   leverage: number;
+  marginMode: MarginMode;
   now?: number;
   tp?: number;
   sl?: number;
@@ -154,6 +157,7 @@ export function placeLimitOrder(account: Account, params: LimitParams): TradeRes
     qty,
     limitPrice,
     leverage,
+    marginMode: params.marginMode,
     margin,
     fee,
     positionId: null,
@@ -197,6 +201,7 @@ export function placeCloseLimit(account: Account, params: CloseLimitParams): Tra
     qty,
     limitPrice,
     leverage: position.leverage,
+    marginMode: position.marginMode,
     margin: 0,
     fee: 0,
     positionId,
@@ -501,6 +506,7 @@ export function processTick(
         side: order.side,
         qty: order.qty,
         leverage: order.leverage,
+        marginMode: order.marginMode,
         feeRate: MAKER_FEE_RATE,
         now,
         tp: order.takeProfit ?? undefined,

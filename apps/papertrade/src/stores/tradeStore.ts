@@ -70,6 +70,8 @@ const positionSchema = z.object({
   margin: nonNegativeNumber,
   openFee: nonNegativeNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
+  // R6-2：保證金模式（per-position 快照）；v3 存檔由 migrate 補預設 isolated。
+  marginMode: z.enum(['isolated', 'cross']),
   openedAt: finiteNumber,
   takeProfit: positiveNumber.nullable(),
   stopLoss: positiveNumber.nullable(),
@@ -86,6 +88,7 @@ const orderSchema = z.object({
   qty: positiveNumber,
   limitPrice: positiveNumber,
   leverage: finiteNumber.min(LEVERAGE_MIN).max(LEVERAGE_MAX),
+  marginMode: z.enum(['isolated', 'cross']),
   margin: nonNegativeNumber,
   fee: nonNegativeNumber,
   positionId: z.string().min(1).nullable(),
@@ -282,22 +285,29 @@ export const useTradeStore = create<TradeState>()(
       version: TRADE_STORAGE_VERSION,
       storage: createJSONStorage(() => tradeStorage),
       partialize: (state) => ({ account: state.account }),
-      // v2 → v3：持倉補 tpSlCloseRatio 預設 1（全平），帳戶資料無損保留。
-      // 其餘舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
+      // 逐段補欄的無損遷移：v2 → v3 持倉補 tpSlCloseRatio；v3 → v4 持倉與掛單補 marginMode。
+      // 更舊版本一律重置：回傳空物件哨兵使 parse 失敗，沿用 merge 的存檔失效一次性告知路徑。
       migrate: (persisted, version) => {
-        if (version !== 2 || typeof persisted !== 'object' || persisted === null) return {};
-        const legacy = persisted as { account?: { positions?: unknown[] } };
+        if (typeof persisted !== 'object' || persisted === null) return {};
+        if (version !== 2 && version !== 3) return {};
+        const legacy = persisted as { account?: { positions?: unknown[]; orders?: unknown[] } };
         const positions = legacy.account?.positions;
-        if (!Array.isArray(positions)) return {};
+        const orders = legacy.account?.orders;
+        if (!Array.isArray(positions) || !Array.isArray(orders)) return {};
+        const fill = (items: unknown[], defaults: Record<string, unknown>): unknown[] =>
+          items.map((item) =>
+            typeof item === 'object' && item !== null ? { ...defaults, ...item } : item,
+          );
+        const positionDefaults =
+          version === 2
+            ? { tpSlCloseRatio: 1, marginMode: 'isolated' }
+            : { marginMode: 'isolated' };
         return {
           ...legacy,
           account: {
             ...legacy.account,
-            positions: positions.map((position) =>
-              typeof position === 'object' && position !== null
-                ? { tpSlCloseRatio: 1, ...position }
-                : position,
-            ),
+            positions: fill(positions, positionDefaults),
+            orders: fill(orders, { marginMode: 'isolated' }),
           },
         };
       },
