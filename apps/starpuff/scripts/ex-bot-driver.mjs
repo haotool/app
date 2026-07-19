@@ -139,7 +139,29 @@ function installDriver({ targetLevelId, assistMode }) {
       }
       return;
     }
-    // 1) 貼身接觸傷迴避（最高優先）：最近本體 120px 內反向撤離＋跳；
+    // 1) L12 P2 雙子期「退射集火」：純迴避在鏡像雙子下無安定帶（九輪實測
+    //    p2 idle 接觸傷為首要死因）——改面向最近具邊退邊射速破單具，
+    //    儘早觸發掙扎窗→合體入 P3 單體期。
+    if (targetLevelId === 12 && fsm?.phase === 'p2' && bodies.length > 1) {
+      const near = bodies.reduce(
+        (best, b) => (Math.abs(b.x - px) < Math.abs(best.x - px) ? b : best),
+        bodies[0],
+      );
+      const gap = Math.abs(near.x - px);
+      if (gap < 110) {
+        face(px >= near.x ? 1 : -1);
+        jump();
+        return;
+      }
+      face(px >= near.x ? 1 : -1); // 後退保距
+      if (ammo > 0 && gap < 420 && Math.floor(now / 240) % 2 === 0) {
+        // 短暫轉身射擊後立即回到後退向（tick 粒度轉身射）。
+        face(Math.sign(near.x - px || 1));
+        shoot();
+      }
+      return;
+    }
+    // 1c) 貼身接觸傷迴避（最高優先）：最近本體 120px 內反向撤離＋跳；
     //    被逼到邊緣死角時改朝魔王方向跳越（穿頭頂換邊）。
     const nearest = bodies.reduce(
       (best, b) => (Math.abs(b.x - px) < Math.abs(best.x - px) ? b : best),
