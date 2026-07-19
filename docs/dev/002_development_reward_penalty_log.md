@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+141
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+142
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-codex-inset-avoidance
+- 原因：Codex 星核制霸徽記/網格/技能欄貼殼緣排版，直持瀏海 inset 下被遮且 C 修正後靜音鈕左移與徽記重疊
+- 解法：hudSafeInsets 導出共用，Codex 徽記/返回鈕/雙列網格/技能欄以左右净 inset 收縮有效區排版，854 瀏海與 1200 無 inset 截圖對照零遮蔽零回歸
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-hud-safe-area

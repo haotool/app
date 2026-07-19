@@ -15,10 +15,19 @@ import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
 import { fillStarPath } from './fx';
 import { openPauseMenu } from './pause';
 
-// 右上角 HUD 鍵的殼右緣净 inset 邏輯偏移（§93）：standalone 直持下瀏海/動態島
-// 換軸到殼右緣會遮蔽貼緣按鈕（C 修正），錨定時整列左移避讓；無瀏海裝置為 0。
+// 殼左右緣净 inset 邏輯偏移（§93）：standalone 直持下瀏海/動態島換軸到殼緣會
+// 遮蔽貼緣元素（C/D 修正），HUD 與選單場景錨定時避讓；無瀏海裝置為 0。
+export function hudSafeInsets(scene: Phaser.Scene): { left: number; right: number } {
+  const inset = readShellSafeArea();
+  const canvasCssWidth = scene.game.canvas.clientWidth;
+  return {
+    left: toLogicalPx(inset.left, scene.scale.width, canvasCssWidth),
+    right: toLogicalPx(inset.right, scene.scale.width, canvasCssWidth),
+  };
+}
+
 function hudInsetRight(scene: Phaser.Scene): number {
-  return toLogicalPx(readShellSafeArea().right, scene.scale.width, scene.game.canvas.clientWidth);
+  return hudSafeInsets(scene).right;
 }
 
 const HEART_TEX = 'hud-heart';

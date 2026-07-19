@@ -5,7 +5,7 @@ import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
 import { LEVELS, exConquestDone } from '../logic/levels';
 import { playSfx } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
-import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
+import { addDomButton, addMuteButton, bindMenuRelayout, hudSafeInsets } from '../systems/hud';
 
 // 魔王品種 → 魔王關對照（LEVELS 派生，加王自動跟進）。
 const BOSS_LEVEL_BY_KIND = new Map<string, LevelId>(
@@ -66,8 +66,9 @@ export class CodexScene extends Phaser.Scene {
   }
 
   private addBackButton(): void {
+    // 殼左緣避讓（§93 D）：直持下 home indicator／瀏海換軸到殼左會壓住返回鈕。
     const visual = this.add
-      .text(56, 34, '返回', {
+      .text(56 + hudSafeInsets(this).left, 34, '返回', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '18px',
         fontStyle: 'bold',
@@ -129,10 +130,13 @@ export class CodexScene extends Phaser.Scene {
   // 定案：9×2 於 854 寬 cellW≈89px 仍可讀，分頁延後與地圖分區分頁同批評估）。
   private renderMonsters(): void {
     const { width } = this.scale;
+    // 殼緣避讓（§93 D）：徽記與網格以左右净 inset 收縮，瀏海/home indicator 不遮條目；
+    // 靜音鈕已依 inset 左移（§93 C），徽記同步左移防重疊。
+    const insets = hudSafeInsets(this);
     // 星核制霸格（§86）：五王 EX 全制霸的圖鑑常設榮譽章。
     if (exConquestDone(loadSave())) {
       const star = this.add
-        .image(width - 150, 34, 'fx-star')
+        .image(width - 150 - insets.right, 34, 'fx-star')
         .setDisplaySize(24, 24)
         .setTint(0xffd870);
       this.tweens.add({
@@ -144,7 +148,7 @@ export class CodexScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
       });
       this.add
-        .text(width - 92, 34, '星核制霸', {
+        .text(width - 92 - insets.right, 34, '星核制霸', {
           fontFamily: 'system-ui, sans-serif',
           fontSize: '15px',
           fontStyle: 'bold',
@@ -154,9 +158,10 @@ export class CodexScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
     }
+    const usableW = width - insets.left - insets.right;
     const cols = Math.ceil(CODEX_MONSTERS.length / 2);
-    const cellW = Math.min(170, (width - 50) / cols);
-    const gridLeft = width / 2 - (cellW * cols) / 2;
+    const cellW = Math.min(170, (usableW - 50) / cols);
+    const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
     const rowTops = [116, 282];
     CODEX_MONSTERS.forEach((monster, index) => {
       const col = index % cols;
@@ -220,8 +225,11 @@ export class CodexScene extends Phaser.Scene {
   // 技能雙欄列表：名稱 + 操作方式 + 效果說明（含來源怪物對應）。
   private renderSkills(): void {
     const { width } = this.scale;
-    const colX = [width * 0.28, width * 0.72];
-    const colW = Math.min(400, width * 0.42);
+    // 殼緣避讓（§93 D）：雙欄以左右净 inset 收縮的有效區排版。
+    const insets = hudSafeInsets(this);
+    const usableW = width - insets.left - insets.right;
+    const colX = [insets.left + usableW * 0.28, insets.left + usableW * 0.72];
+    const colW = Math.min(400, usableW * 0.42);
     CODEX_SKILLS.forEach((skill, index) => {
       const x = colX[index % 2] ?? width / 2;
       const y = 122 + Math.floor(index / 2) * 84;
