@@ -15,6 +15,8 @@ export function isPprSymbol(symbol: string): boolean {
 }
 
 // —— 合成行情引擎參數（集中常數）——
+// PPR 價格最小跳動單位（ADR-R6-01 定案值）：全站精度由 lib/priceScale.ts 反推。
+export const PPR_TICK_SIZE = 0.00001;
 export const PPR_TICK_INTERVAL_MS = 250;
 export const PPR_SEED_PRICE = 0.042;
 // 基準隨機游走：每 tick ±0.1–0.5%。

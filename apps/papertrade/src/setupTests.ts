@@ -17,6 +17,9 @@ vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
 );
 vi.stubGlobal('cancelAnimationFrame', (handle: number) => globalThis.clearTimeout(handle));
 
+// 測試禁真實網路（與下方 NoopWebSocket 同理）：fetch 預設拒絕，個別測試自行 stub 覆蓋。
+vi.stubGlobal('fetch', () => Promise.reject(new Error('fetch disabled in tests')));
+
 if (hasWindow) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
