@@ -100,7 +100,7 @@ declare global {
       lose: () => void;
       fillQuota: () => void;
       skipToBoss: () => void;
-      gotoLevel: (levelId: LevelId) => void;
+      gotoLevel: (levelId: LevelId, ex?: boolean) => void;
       spawn: (kind: EnemyKind, x?: number, y?: number) => void;
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
@@ -155,7 +155,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     fillQuota: () => gameScene().forceGate(),
     skipToBoss: () => gameScene().skipToBoss(),
     // 各關反卡關走查鉤子（§43）。
-    gotoLevel: (levelId) => gameScene().gotoLevel(levelId),
+    gotoLevel: (levelId, ex) => gameScene().gotoLevel(levelId, ex),
     spawn: (kind, x = 240, y = 300) => internals().enemies.spawn(kind, x, y),
     // v6 受控賦星與盾態觀測（§40 e2e）：走正式 swallow 管線；
     // 鉤子入口校驗星味（e2e 傳任意字串），非法值拒絕並警示。
