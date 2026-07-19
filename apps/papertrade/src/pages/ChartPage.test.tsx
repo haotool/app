@@ -88,6 +88,14 @@ describe('ChartPage', () => {
     expect(screen.getByText('65,000.0')).toBeInTheDocument();
   });
 
+  it('pads the page root with the top safe-area (R6-1)', async () => {
+    useMarketStore.getState().setTicker(btcTicker);
+    const { container } = renderChart('/chart/BTCUSDT');
+
+    await screen.findByRole('heading', { name: /BTC/ });
+    expect(container.querySelector('section')).toHaveClass('pt-[var(--sat)]');
+  });
+
   it('shows funding rate with direction color, countdown and open interest', async () => {
     useMarketStore.getState().setTicker(btcTicker);
     renderChart('/chart/BTCUSDT');

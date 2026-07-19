@@ -91,6 +91,11 @@ describe('TradePage', () => {
     expect(screen.getByText(/^\d+:\d{2}:\d{2}$|^\d{2}:\d{2}$/)).toBeInTheDocument();
   });
 
+  it('extends the sticky header into the top safe-area (R6-1)', () => {
+    const { container } = renderTrade('/trade?symbol=BTCUSDT');
+    expect(container.querySelector('div.sticky')).toHaveClass('top-0', 'pt-[var(--sat)]');
+  });
+
   it('emphasizes the CTA-preselected side and dims the other', () => {
     renderTrade('/trade?symbol=BTCUSDT&side=short');
     expect(screen.getByRole('button', { name: '買多' })).toHaveClass('opacity-55');

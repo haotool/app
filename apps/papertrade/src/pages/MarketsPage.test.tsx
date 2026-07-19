@@ -53,6 +53,13 @@ describe('MarketsPage', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(SYMBOLS.length);
   });
 
+  it('consumes the top safe-area with a sticky underlay and offset toolbar (R6-1)', () => {
+    const { container } = renderPage();
+    const underlay = container.querySelector('div[aria-hidden]');
+    expect(underlay).toHaveClass('sticky', 'top-0', 'h-[var(--sat)]');
+    expect(container.querySelector('header')).toHaveClass('sticky', 'top-[var(--sat)]');
+  });
+
   it('shows live price and positive badge for a ticker', () => {
     useMarketStore.getState().setTicker(btcTicker);
     renderPage();

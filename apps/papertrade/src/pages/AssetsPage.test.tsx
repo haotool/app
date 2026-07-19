@@ -45,6 +45,12 @@ describe('AssetsPage', () => {
     useMarketStore.getState().setTicker(btcTicker);
   });
 
+  it('pads the page root with the top safe-area (R6-1)', () => {
+    renderAssets();
+    const root = screen.getByText('總權益（USDT）').closest('div');
+    expect(root).toHaveClass('pt-[var(--sat)]');
+  });
+
   it('shows live equity composed of available, margin and upnl', () => {
     useTradeStore.getState().openMarketOrder({
       symbol: 'BTCUSDT',

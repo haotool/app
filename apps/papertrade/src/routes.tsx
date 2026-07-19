@@ -13,7 +13,7 @@ const ChartPage = lazy(() =>
 
 function ChartFallback() {
   return (
-    <div className="flex flex-col gap-3 p-4" aria-label="圖表載入中">
+    <div className="flex flex-col gap-3 p-4 pt-[calc(1rem+var(--sat))]" aria-label="圖表載入中">
       <span className="skeleton-pulse h-16 w-full rounded-card" />
       <span className="skeleton-pulse h-[45dvh] w-full rounded-card" />
     </div>

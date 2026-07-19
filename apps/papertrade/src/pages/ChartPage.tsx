@@ -255,7 +255,8 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
 
   return (
     // 桌機（lg）雙欄：左欄圖表、右欄常駐市場面板；行動版維持原有直向堆疊。
-    <section className="flex flex-col pb-[4.5rem] lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-4 lg:px-4">
+    // pt-[var(--sat)]：非 sticky 頁由頁根消費 safe-area，首屏內容不被狀態列遮蔽（R6-1）。
+    <section className="flex flex-col pb-[4.5rem] pt-[var(--sat)] lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-4 lg:px-4">
       <div className="flex flex-col lg:min-w-0">
         <SymbolHeader symbol={symbol} onOpenPicker={() => setPickerOpen(true)} />
 

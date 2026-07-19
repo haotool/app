@@ -15,6 +15,12 @@ describe('SettingsPage', () => {
     expect(screen.getByText(`版本 v${APP_VERSION}`)).toBeInTheDocument();
   });
 
+  it('頁根 padding 疊加頂部 safe-area（R6-1）', () => {
+    render(<SettingsPage />);
+    const root = screen.getByRole('heading', { name: '設定' }).parentElement;
+    expect(root).toHaveClass('pt-[calc(1.25rem+var(--sat))]');
+  });
+
   it('強平提示音 toggle 預設開啟且可切換 persist 狀態', async () => {
     const user = userEvent.setup();
     render(<SettingsPage />);

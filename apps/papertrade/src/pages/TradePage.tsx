@@ -41,7 +41,7 @@ function resolveInitialSide(raw: string | null): Side | null {
 function TradePageSkeleton() {
   return (
     <div
-      className="flex flex-col gap-4 px-4 pb-4 pt-4 lg:mx-auto lg:max-w-3xl"
+      className="flex flex-col gap-4 px-4 pb-4 pt-[calc(1rem+var(--sat))] lg:mx-auto lg:max-w-3xl"
       aria-label="交易頁載入中"
     >
       <div className="flex items-center justify-between">
@@ -96,8 +96,9 @@ export function TradePage() {
   return (
     // pb-8：持倉卡操作鈕與固定 bottom nav 之間預留間距（375×812 免捲動可點）。
     <div className="flex flex-col pb-8 lg:mx-auto lg:max-w-3xl">
-      {/* sticky 頂欄：pair 選擇與資金費率捲動常駐；自帶背景避免內容透出。 */}
-      <div className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
+      {/* sticky 頂欄：pair 選擇與資金費率捲動常駐；自帶背景避免內容透出。
+          pt-[var(--sat)]：standalone 下背景延伸覆蓋狀態列區、內容自 safe-area 下方起（R6-1）。 */}
+      <div className="sticky top-0 z-20 border-b border-border bg-bg/95 pt-[var(--sat)] backdrop-blur">
         <header className="flex items-center justify-between px-4 pb-3 pt-4">
           <button
             type="button"
