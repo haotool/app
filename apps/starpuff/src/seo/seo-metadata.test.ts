@@ -3,6 +3,7 @@ import {
   SEO_TITLE,
   SEO_DESCRIPTION,
   SITE_URL,
+  SITE_NAME,
   OG_IMAGE_URL,
   WORLD_ZONES,
   buildJsonLd,
@@ -111,9 +112,12 @@ describe('buildSeoHead / buildSeoBody', () => {
     expect(head).toContain('content="630"');
   });
 
-  it('body 含 sr-only H1 與 noscript 語意內容（特色/魔王/操作/PWA）', () => {
-    expect(body).toContain('<h1 class="sp-sr-only">');
-    expect(body).toContain('<noscript>');
+  it('body 語意內容常駐 DOM（非 noscript 內）且含特色/魔王/操作/PWA 與 E-E-A-T 連結', () => {
+    const noscriptIndex = body.indexOf('<noscript>');
+    const sectionIndex = body.indexOf('<section class="sp-seo-content sp-sr-only"');
+    expect(sectionIndex).toBeGreaterThanOrEqual(0);
+    expect(sectionIndex).toBeLessThan(noscriptIndex);
+    expect(body).toContain('<h1>');
     for (const heading of ['遊戲特色', '五大區域與魔王', '操作方式', '安裝與離線遊玩']) {
       expect(body).toContain(heading);
     }
@@ -121,7 +125,18 @@ describe('buildSeoHead / buildSeoBody', () => {
       expect(body).toContain(zone.zone);
       expect(body).toContain(zone.boss);
     }
-    expect(body).toContain('https://haotool.org/');
+    for (const link of [
+      'https://haotool.org/"',
+      'https://haotool.org/about/"',
+      'https://haotool.org/contact/"',
+    ]) {
+      expect(body).toContain(link);
+    }
+  });
+
+  it('OG 標題由站名派生且與 SEO title 前綴一致', () => {
+    expect(SEO_TITLE.startsWith(`${SITE_NAME}｜`)).toBe(true);
+    expect(head).toContain(`<meta property="og:title" content="${SITE_NAME}｜`);
   });
 
   it('JSON-LD 可被解析且 @context 正確', () => {

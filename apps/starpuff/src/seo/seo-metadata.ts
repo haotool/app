@@ -14,15 +14,23 @@ export interface BossEntry {
 
 export const SITE_URL = SITE_CONFIG.url;
 export const SITE_NAME = SITE_CONFIG.name;
+export const SITE_SHORT_NAME = SITE_CONFIG.shortName;
 export const SEO_TITLE = SITE_CONFIG.title;
 export const SEO_DESCRIPTION = SITE_CONFIG.description;
 
-export const OG_TITLE = '星噗噗 StarPuff｜免費橫向捲軸動作網頁遊戲';
+// 分享卡標題由站名派生（SEO_TITLE 亦以此為前綴，見測試守門），避免第二份標題文案。
+export const TITLE_TAGLINE = '免費橫向捲軸動作網頁遊戲';
+export const OG_TITLE = `${SITE_NAME}｜${TITLE_TAGLINE}`;
 export const OG_IMAGE_URL = `${SITE_URL}icons/og-image.jpg`;
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
 export const OG_IMAGE_ALT =
   '星噗噗張大嘴吸入果凍怪，果凍王、暗月蝠王與蝕星魔核在背後壓陣的大戰場景';
 export const SCREENSHOT_URL = `${SITE_URL}icons/screenshot-gameplay.jpg`;
 export const DATE_PUBLISHED = '2026-07-14';
+// sitemap lastmod 政策（Google 官方）：反映內容的重大更新日，禁止隨每次 build 自動跳動。
+// SEO 內容（文案/結構化資料/llms）有實質變更時，隨該 PR 手動更新此常數。
+export const SEO_CONTENT_LASTMOD = '2026-07-19';
 
 // 各區魔王行銷文案（區名與關卡區間由 zones.ts 推導，僅魔王描述在此維護）。
 const ZONE_BOSSES: Record<number, Pick<BossEntry, 'boss' | 'bossEn' | 'trait'>> = {
@@ -150,48 +158,50 @@ export function buildSeoHead(buildTimeIso: string): string {
   return lines.join('\n    ');
 }
 
-// body 注入區塊：sr-only H1（a11y 與爬蟲主標題）＋ noscript 靜態語意內容。
-// noscript 供無 JS 爬蟲（GPTBot、ClaudeBot 等）與關閉 JS 的使用者閱讀，不影響遊戲載入與 CLS。
+// body 注入區塊：sr-only H1＋常駐視覺隱藏語意內容（JS 渲染爬蟲與螢幕閱讀器皆可讀）。
+// 內容如實描述本頁遊戲（非隱藏堆砌）；連結 tabindex=-1 避免鍵盤焦點落在不可見元素。
+// 另留 noscript 提示：關閉 JS 的使用者知道如何啟用。
 export function buildSeoBody(): string {
   const zoneItems = WORLD_ZONES.map(
     (z) =>
       `<li><strong>${escapeHtml(z.zone)}（${z.levels}）</strong>：魔王「${escapeHtml(z.boss)}」——${escapeHtml(z.trait)}。</li>`,
   ).join('\n          ');
   const featureItems = GAME_FEATURES.map((f) => `<li>${escapeHtml(f)}</li>`).join('\n          ');
-  return `<h1 class="sp-sr-only">${escapeHtml(SEO_TITLE)}</h1>
+  return `<section class="sp-seo-content sp-sr-only" lang="zh-TW" aria-label="遊戲介紹">
+      <h1>${escapeHtml(SEO_TITLE)}</h1>
+      <p>
+        星噗噗（StarPuff）是一款繁體中文原創 IP 的免費橫向捲軸動作網頁遊戲：操控 Q
+        彈果凍球「噗噗」張大嘴吸入果凍怪、把牠們化為星彈反擊，一路闖越果凍星球的五大區域、二十道關卡，
+        挑戰五位風格迥異的魔王。免下載、免安裝、免註冊，手機、平板與電腦開啟瀏覽器即可遊玩；
+        支援 PWA 安裝到主畫面，離線也能完整進行遊戲。
+      </p>
+      <h2>遊戲特色</h2>
+      <ul>
+        ${featureItems}
+      </ul>
+      <h2>五大區域與魔王</h2>
+      <ul>
+        ${zoneItems}
+      </ul>
+      <h2>操作方式</h2>
+      <p>
+        手機以左半屏虛擬搖桿移動、右側 A 鍵跳躍（空中連按可漂浮）、B
+        鍵吸入與發射星彈；桌機可用方向鍵搭配 Z / X 鍵。按鍵位置支援自訂，直握手機免轉向即可遊玩。
+      </p>
+      <h2>安裝與離線遊玩</h2>
+      <p>
+        星噗噗是 PWA（漸進式網頁應用程式）：在瀏覽器選單點選「加入主畫面」或「安裝」，
+        即可像原生 App 一樣從桌面開啟；安裝後不需網路連線也能完整遊玩全部關卡。
+      </p>
+      <p>
+        由
+        <a href="https://haotool.org/" tabindex="-1">HaoTool 好工具</a>
+        出品，完全免費且無廣告；開發團隊介紹見
+        <a href="https://haotool.org/about/" tabindex="-1">關於我們</a>，回饋與問題回報見
+        <a href="https://haotool.org/contact/" tabindex="-1">聯絡我們</a>。
+      </p>
+    </section>
     <noscript>
-      <section class="sp-seo-content" lang="zh-TW">
-        <p>
-          星噗噗（StarPuff）是一款繁體中文原創 IP 的免費橫向捲軸動作網頁遊戲：操控 Q
-          彈果凍球「噗噗」張大嘴吸入果凍怪、把牠們化為星彈反擊，一路闖越果凍星球的五大區域、二十道關卡，
-          挑戰五位風格迥異的魔王。免下載、免安裝、免註冊，手機、平板與電腦開啟瀏覽器即可遊玩；
-          支援 PWA 安裝到主畫面，離線也能完整進行遊戲。
-        </p>
-        <h2>遊戲特色</h2>
-        <ul>
-          ${featureItems}
-        </ul>
-        <h2>五大區域與魔王</h2>
-        <ul>
-          ${zoneItems}
-        </ul>
-        <h2>操作方式</h2>
-        <p>
-          手機以左半屏虛擬搖桿移動、右側 A 鍵跳躍（空中連按可漂浮）、B
-          鍵吸入與發射星彈；桌機可用方向鍵搭配 Z / X 鍵。按鍵位置支援自訂，直握手機免轉向即可遊玩。
-        </p>
-        <h2>安裝與離線遊玩</h2>
-        <p>
-          星噗噗是 PWA（漸進式網頁應用程式）：在瀏覽器選單點選「加入主畫面」或「安裝」，
-          即可像原生 App 一樣從桌面開啟；安裝後不需網路連線也能完整遊玩全部關卡。
-        </p>
-        <p>
-          本遊戲需要啟用 JavaScript 才能執行。由
-          <a href="https://haotool.org/">HaoTool 好工具</a>
-          出品，完全免費且無廣告；開發團隊介紹見
-          <a href="https://haotool.org/about/">關於我們</a>，回饋與問題回報見
-          <a href="https://haotool.org/contact/">聯絡我們</a>。
-        </p>
-      </section>
+      <p class="sp-noscript-note">星噗噗需要啟用 JavaScript 才能遊玩，請在瀏覽器設定開啟後重新整理。</p>
     </noscript>`;
 }

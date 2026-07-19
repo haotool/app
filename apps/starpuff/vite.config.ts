@@ -58,7 +58,7 @@ export default defineConfig(async ({ mode }) => {
           id: manifestScope,
           // 品牌與文案 SSOT：app.config.mjs SITE_CONFIG，禁止在此硬編。
           name: SITE_CONFIG.name,
-          short_name: 'StarPuff',
+          short_name: SITE_CONFIG.shortName,
           description: SITE_CONFIG.description,
           theme_color: '#BFF3E0',
           background_color: '#FDEFF6',

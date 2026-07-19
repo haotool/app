@@ -6,6 +6,7 @@ export declare const IMAGE_RESOURCES: string[];
 export declare const SITE_CONFIG: {
   url: string;
   name: string;
+  shortName: string;
   title: string;
   description: string;
 };
