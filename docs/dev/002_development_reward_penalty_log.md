@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+145
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+146
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-achievements-evaluator
+- 原因：成就需求若走侵入式遊戲邏輯鉤子會擴散熱路徑寫入點且 v1 存檔 parse 版本不符即整檔丟棄，升版會清空舊玩家進度
+- 解法：logic/achievements.ts 純評估器由既有 save 欄位派生 21 成就（魔王/彩蛋條目 LEVELS 派生禁二份清單），save schema v2 versioned migration 接受 v1 補 achievements 空集不 discard，v9–v14 各代舊存檔補發測試 22 案全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-codex-inset-avoidance
