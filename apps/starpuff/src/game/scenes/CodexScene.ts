@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
+import { ACHIEVEMENTS, unlockedAchievements } from '../logic/achievements';
 import { LEVELS, exConquestDone } from '../logic/levels';
 import { playSfx } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
@@ -48,8 +49,13 @@ export class CodexScene extends Phaser.Scene {
     // 可讀性底襯：內容區半透明白卡。
     this.add.rectangle(width / 2, 282, Math.min(width - 40, 1100), 350, 0xffffff, 0.35);
 
+    const titles: Record<CodexTab, string> = {
+      monsters: '圖鑑',
+      skills: '技能介紹',
+      achievements: '成就',
+    };
     this.add
-      .text(width / 2, 34, this.tab === 'monsters' ? '圖鑑' : '技能介紹', {
+      .text(width / 2, 34, titles[this.tab], {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '30px',
         fontStyle: 'bold',
@@ -62,7 +68,8 @@ export class CodexScene extends Phaser.Scene {
     this.addBackButton();
     this.addTabButtons();
     if (this.tab === 'monsters') this.renderMonsters();
-    else this.renderSkills();
+    else if (this.tab === 'skills') this.renderSkills();
+    else this.renderAchievements();
   }
 
   private addBackButton(): void {
@@ -93,12 +100,14 @@ export class CodexScene extends Phaser.Scene {
 
   private addTabButtons(): void {
     const { width } = this.scale;
+    // v15 三分頁（§94）：等距展開，854 寬下三鈕含間距 468px 仍居中無溢出。
     const tabs: { tab: CodexTab; label: string }[] = [
       { tab: 'monsters', label: '圖鑑' },
       { tab: 'skills', label: '技能' },
+      { tab: 'achievements', label: '成就' },
     ];
     tabs.forEach((entry, i) => {
-      const x = width / 2 + (i === 0 ? -78 : 78);
+      const x = width / 2 + (i - (tabs.length - 1) / 2) * 156;
       const active = entry.tab === this.tab;
       this.add
         .text(x, 84, entry.label, {
@@ -219,6 +228,76 @@ export class CodexScene extends Phaser.Scene {
           wordWrap: { width: cellW - 10, useAdvancedWrap: true },
         })
         .setOrigin(0.5, 0);
+    });
+  }
+
+  // 成就網格（§94）：6 欄 4 列徽章格——已解鎖亮金、未解鎖灰、隱藏未解鎖遮蔽為
+  // 「？？？」；解鎖態恆由 save 資料即時派生（stored 只管頒發去重）。零新圖：
+  // 徽章以 fx-star tint＋圓底程序繪製。
+  private renderAchievements(): void {
+    const { width } = this.scale;
+    // 殼緣避讓（§93 D 慣例）：計數徽記與網格以左右净 inset 收縮。
+    const insets = hudSafeInsets(this);
+    const unlocked = unlockedAchievements(loadSave());
+    this.add
+      .text(width - 100 - insets.right, 34, `解鎖 ${unlocked.size}/${ACHIEVEMENTS.length}`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#8a6a1f',
+        backgroundColor: '#ffe9a8',
+        padding: { x: 10, y: 4 },
+      })
+      .setOrigin(0.5);
+    const usableW = width - insets.left - insets.right;
+    const cols = 6;
+    const cellW = Math.min(170, (usableW - 50) / cols);
+    const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
+    ACHIEVEMENTS.forEach((spec, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const cx = gridLeft + cellW * (col + 0.5);
+      const top = 112 + row * 90;
+      const done = unlocked.has(spec.id);
+      const masked = spec.hidden && !done;
+      // 徽章：圓底＋星形；未解鎖降飽和低透明。
+      this.add.circle(cx, top + 16, 16, done ? 0xffffff : 0x9a9aa8, done ? 0.9 : 0.28);
+      const star = this.add
+        .image(cx, top + 16, 'fx-star')
+        .setDisplaySize(22, 22)
+        .setTint(done ? 0xffc93c : 0x9a9aa8)
+        .setAlpha(done ? 1 : 0.55);
+      if (done) {
+        this.tweens.add({
+          targets: star,
+          angle: 8,
+          duration: 1400,
+          delay: index * 60,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
+      this.add
+        .text(cx, top + 42, masked ? '？？？' : spec.nameZh, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '13px',
+          fontStyle: 'bold',
+          color: done ? TEXT_DARK : TEXT_SOFT,
+        })
+        .setOrigin(0.5)
+        .setAlpha(done ? 1 : 0.8);
+      this.add
+        .text(cx, top + 56, masked ? '隱藏成就' : spec.descZh, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '10px',
+          color: TEXT_SOFT,
+          align: 'center',
+          // CJK 無空白斷詞：逐字換行防窄格橫向溢出（沿 §76 慣例）。
+          wordWrap: { width: cellW - 10, useAdvancedWrap: true },
+        })
+        .setOrigin(0.5, 0)
+        .setAlpha(done ? 0.9 : 0.65);
     });
   }
 

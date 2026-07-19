@@ -38,6 +38,7 @@ import {
   type GameResultData,
   type LevelId,
 } from '../core/types';
+import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
@@ -189,6 +190,11 @@ export class GameScene extends Phaser.Scene {
   // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
   private eggProgress: EggProgress[] = [];
   private bossActiveAt = -1;
+  // 成就（§94）：toast 待播佇列與播放中旗標（一次一張序列播放）；pendingUnlocked 為
+  // 本局勝利瞬間新頒發清單，經 GameResultData 帶入結算頁防演出期漏看。
+  private achievementToasts: string[] = [];
+  private achievementToastActive = false;
+  private pendingUnlocked: string[] = [];
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
 
@@ -241,6 +247,9 @@ export class GameScene extends Phaser.Scene {
     this.gateRect = null;
     this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
     this.bossActiveAt = -1;
+    this.achievementToasts = [];
+    this.achievementToastActive = false;
+    this.pendingUnlocked = [];
     this.farthestX = 0;
     this.mercy = createMercyState();
     this.mercyRng = Math.random;
@@ -1039,8 +1048,8 @@ export class GameScene extends Phaser.Scene {
       // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
       this.clearTimeMs = this.levelTimeMs();
       // EX 擊破（§58）：僅記 exCleared 紀念星章，不動一般通關與最佳時間。
-      if (this.exMode) persistSave(recordExClear(this.save, this.currentLevelId));
-      else persistSave(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
+      if (this.exMode) this.persistAndAward(recordExClear(this.save, this.currentLevelId));
+      else this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
     bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
@@ -1161,7 +1170,7 @@ export class GameScene extends Phaser.Scene {
     body.stop();
     body.enable = false;
     // 存檔寫入時機（§38）：通關即記錄，演出中斷（切頁/重載）不掉進度。
-    persistSave(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
+    this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
     this.tweens.add({
       targets: this.player.sprite,
       x: this.gate.x,
@@ -1284,6 +1293,8 @@ export class GameScene extends Phaser.Scene {
       deaths: this.deaths,
       levelId: this.currentLevelId,
       ex: this.exMode,
+      // 成就名單（§94）：勝利瞬間新頒發 id 帶入結算，多重解鎖不因演出期轉場漏看。
+      unlocked: [...this.pendingUnlocked],
     };
     // 謝幕（§84）：全破最終魔王關（鏈末魔王關，資料驅動非硬編關號）先播星光復甦再結算。
     const finale =
@@ -1541,7 +1552,7 @@ export class GameScene extends Phaser.Scene {
   // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
   private grantEggReward(spec: EasterEggSpec): void {
     // 存檔寫入時機（§38）：彩蛋觸發即記錄（trigger 型別為關內唯一 id）。
-    persistSave(recordEgg(this.save, this.currentLevelId, spec.trigger));
+    this.persistAndAward(recordEgg(this.save, this.currentLevelId, spec.trigger));
     switch (spec.reward) {
       case 'hp-up':
         this.player.heal(1, EGG_HP_CAP);
@@ -1570,6 +1581,57 @@ export class GameScene extends Phaser.Scene {
         void exhaustive;
       }
     }
+  }
+
+  // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列。
+  // 成就判定恆由 save 資料派生（awardAchievements 內部 diff），此處不做侵入式鉤子。
+  private persistAndAward(save: SaveData): void {
+    const newly = awardAchievements(save);
+    persistSave(save);
+    if (newly.length === 0) return;
+    this.pendingUnlocked.push(...newly);
+    this.achievementToasts.push(...newly);
+    this.drainAchievementToasts();
+  }
+
+  // 成就 toast 佇列（§94）：一次一張序列播放（同幀多解鎖不重疊）；轉場即隨場景銷毀，
+  // 漏播由 Result 名單與圖鑑成就頁兜底。沿 flavorToast 語彙金色變體，禁全屏遮罩。
+  private drainAchievementToasts(): void {
+    if (this.achievementToastActive) return;
+    const id = this.achievementToasts.shift();
+    if (id === undefined) return;
+    this.achievementToastActive = true;
+    playSfx('pop');
+    const toast = this.add
+      .text(
+        this.scale.width / 2,
+        this.scale.height * 0.3,
+        `成就解鎖：${getAchievement(id)?.nameZh ?? id}`,
+        {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '19px',
+          fontStyle: 'bold',
+          color: '#ffe9a8',
+          stroke: '#8a6a1f',
+          strokeThickness: 4,
+        },
+      )
+      .setOrigin(0.5)
+      .setDepth(110)
+      .setScrollFactor(0)
+      .setAlpha(0);
+    this.tweens.chain({
+      targets: toast,
+      tweens: [
+        { alpha: 1, duration: 220, ease: 'Quad.easeOut' },
+        { alpha: 0, y: '-=16', duration: 360, delay: 1500, ease: 'Quad.easeIn' },
+      ],
+      onComplete: () => {
+        toast.destroy();
+        this.achievementToastActive = false;
+        this.drainAchievementToasts();
+      },
+    });
   }
 
   // 星味首遇 toast（§46/§47）：頂部橫幅下方一行小字，淡入停留後上飄淡出。

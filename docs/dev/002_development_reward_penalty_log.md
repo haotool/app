@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+146
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+147
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-achievements-presentation
+- 原因：成就解鎖若只做遊戲內 toast，魔王擊破瞬間多重解鎖會因 WIN_DELAY 轉場漏播；歷史成就若開機大量 toast 又會轟炸回訪玩家
+- 解法：三層呈現分工——GameScene 序列 toast 佇列（一次一張）、GameResultData.unlocked 帶入 Result 列名單兜底、開機補發靜默只在圖鑑成就頁呈現；五幕真瀏覽器實測（補發/擊破/雙寬/直持）console error 0
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-achievements-evaluator

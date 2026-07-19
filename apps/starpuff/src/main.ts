@@ -7,7 +7,8 @@ import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyRotationClass, loadRotationPref } from './game/core/rotation';
-import { loadSave, type SaveData } from './game/core/save';
+import { loadSave, persistSave, type SaveData } from './game/core/save';
+import { awardAchievements } from './game/logic/achievements';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { SceneKeys, type EnemyKind, type LevelId } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
@@ -31,6 +32,10 @@ initRotationNotice();
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
+// 開機成就補發單點（§94）：舊存檔（v1 遷移或版本更新新增成就）依既有資料靜默補發
+// 歷史成就（無 toast，圖鑑成就頁可見）；有增量才落盤，順帶完成 schema v2 遷移。
+const bootSave = loadSave();
+if (awardAchievements(bootSave).length > 0) persistSave(bootSave);
 // 開機套用直持旋轉偏好（§87）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
 applyRotationClass(loadRotationPref());
 // 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。
