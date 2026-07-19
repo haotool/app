@@ -440,14 +440,14 @@ body {
 
 .install-card {
   position: absolute;
-  top: 50%;
+  top: max(14px, env(safe-area-inset-top, 0px));
   left: max(16px, env(safe-area-inset-left, 0px));
-  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(300px, 38%);
-  max-height: calc(100% - 32px);
+  width: min(300px, 34%);
+  /* 高度避開殼底部選單帶（Title 選單列於底緣 ~15%）：極矮殼卡片內捲不壓鈕。 */
+  max-height: calc(72% - 14px);
   overflow-y: auto;
   padding: 14px 18px;
   border-radius: 20px;

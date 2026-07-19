@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+137
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+139
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-shell-card-top-anchor
+- 原因：復審席 B 新開 M2——非模態卡垂直置中錨點在 ≤360px 窄機與開始鈕邊緣重疊並攔截點擊帶
+- 解法：卡片改頂緣錨定＋max-height 72% 避開底部選單帶，五視口 AABB 矩陣（320/360/390/844/667）零重疊且底緣真點全進 Game
 
 - 日期：2026-07-19
 - ID：penalty-starpuff-v14-install-guide-blocking-overlay
