@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { type MarketSymbol } from '../config/market';
+import { type MarkMap } from '../engine/math';
+import { type Position } from '../engine/types';
 import { type Ticker } from '../services/ticker';
 import { type WsStatus } from '../services/marketWs';
 
@@ -25,6 +27,20 @@ function resolveDirection(previous: MarketTicker | undefined, nextPrice: number)
     return previous?.direction ?? null;
   }
   return nextPrice > previous.lastPrice ? 'up' : 'down';
+}
+
+// 持倉標記價快照 SSOT：cross 帳務（可用資金／估算強平／聚合評估）皆由此單點收集，
+// 缺行情 symbol 一律不寫入（下游以 undefined 判定保守路徑）。
+export function collectPositionMarks(
+  tickers: Partial<Record<MarketSymbol, MarketTicker>>,
+  positions: Position[],
+): MarkMap {
+  const marks: MarkMap = {};
+  for (const position of positions) {
+    const ticker = tickers[position.symbol];
+    if (ticker !== undefined) marks[position.symbol] = ticker.markPrice;
+  }
+  return marks;
 }
 
 export const useMarketStore = create<MarketState>()((set) => ({

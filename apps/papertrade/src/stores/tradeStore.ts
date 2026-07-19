@@ -34,7 +34,7 @@ import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice, formatSignedPnl } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 import { playLiquidationSound } from '../lib/sound';
-import { useMarketStore } from './marketStore';
+import { collectPositionMarks, useMarketStore } from './marketStore';
 import { useSoundPrefsStore } from './soundPrefsStore';
 
 export type ToastTone = 'long' | 'short' | 'warning' | 'info';
@@ -209,15 +209,9 @@ function appendToasts(current: ToastItem[], incoming: Omit<ToastItem, 'id'>[]): 
   return next.slice(-TOAST_MAX_VISIBLE);
 }
 
-// 持倉標記價快照（R6-2）：由行情 store 收集帳上各 symbol 的最新 mark。
+// 持倉標記價快照（R6-2）：非 hook 上下文由 getState 讀行情，收集邏輯走 SSOT helper。
 function collectMarks(account: Account): MarkMap {
-  const tickers = useMarketStore.getState().tickers;
-  const marks: MarkMap = {};
-  for (const position of account.positions) {
-    const ticker = tickers[position.symbol];
-    if (ticker !== undefined) marks[position.symbol] = ticker.markPrice;
-  }
-  return marks;
+  return collectPositionMarks(useMarketStore.getState().tickers, account.positions);
 }
 
 // 開倉資金檢查基準：cross 未實現損益計入可用餘額（無 cross 持倉時恆等於裸 balance）。

@@ -6,10 +6,9 @@ import {
   liquidationPrice,
   roePercent,
   unrealizedPnl,
-  type MarkMap,
 } from '../../engine/math';
 import { type Position } from '../../engine/types';
-import { useMarketStore } from '../../stores/marketStore';
+import { collectPositionMarks, useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice, formatSignedPercent, formatSignedPnl } from '../../lib/format';
 import { TRADE_ERROR_MESSAGES } from '../../lib/tradeForm';
@@ -29,15 +28,15 @@ export function PositionCard({ position }: { position: Position }) {
   const pushToast = useTradeStore((state) => state.pushToast);
   const isCross = position.marginMode === 'cross';
   // cross 估算強平價（ADR-R6-02，僅顯示參考；真實觸發為聚合 MM 檢查）：null 顯示 --。
-  const crossLiq = useMarketStore((state) => {
-    if (!isCross) return null;
-    const marks: MarkMap = {};
-    for (const held of account.positions) {
-      const heldTicker = state.tickers[held.symbol];
-      if (heldTicker !== undefined) marks[held.symbol] = heldTicker.markPrice;
-    }
-    return estimatedCrossLiquidationPrice(position, account, marks);
-  });
+  const crossLiq = useMarketStore((state) =>
+    isCross
+      ? estimatedCrossLiquidationPrice(
+          position,
+          account,
+          collectPositionMarks(state.tickers, account.positions),
+        )
+      : null,
+  );
 
   const mark = ticker?.markPrice;
   const pnl =

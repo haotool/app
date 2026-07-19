@@ -2,9 +2,9 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
 import { type Position } from '../../engine/types';
-import { estimatedCrossLiquidationPrice, liquidationPrice, type MarkMap } from '../../engine/math';
+import { estimatedCrossLiquidationPrice, liquidationPrice } from '../../engine/math';
 import { useTradeStore } from '../../stores/tradeStore';
-import { useMarketStore } from '../../stores/marketStore';
+import { collectPositionMarks, useMarketStore } from '../../stores/marketStore';
 import {
   pnlAtPrice,
   priceFromPnl,
@@ -120,15 +120,15 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   const account = useTradeStore((state) => state.account);
   const mark = useMarketStore((state) => state.tickers[position.symbol]?.markPrice);
   // cross 死區判定用聚合估算價（與持倉卡同口徑）；估不出（buffer 過大）時不判死區。
-  const crossLiq = useMarketStore((state) => {
-    if (position.marginMode !== 'cross') return null;
-    const marks: MarkMap = {};
-    for (const held of account.positions) {
-      const heldTicker = state.tickers[held.symbol];
-      if (heldTicker !== undefined) marks[held.symbol] = heldTicker.markPrice;
-    }
-    return estimatedCrossLiquidationPrice(position, account, marks);
-  });
+  const crossLiq = useMarketStore((state) =>
+    position.marginMode === 'cross'
+      ? estimatedCrossLiquidationPrice(
+          position,
+          account,
+          collectPositionMarks(state.tickers, account.positions),
+        )
+      : null,
+  );
   const referenceLiq =
     position.marginMode === 'cross'
       ? crossLiq

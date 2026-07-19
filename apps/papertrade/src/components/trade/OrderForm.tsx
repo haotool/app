@@ -9,8 +9,8 @@ import {
   SIZE_SLIDER_TICKS,
   TAKER_FEE_RATE,
 } from '../../config/trading';
-import { crossAvailableBalance, liquidationPrice, type MarkMap } from '../../engine/math';
-import { useMarketStore } from '../../stores/marketStore';
+import { crossAvailableBalance, liquidationPrice } from '../../engine/math';
+import { collectPositionMarks, useMarketStore } from '../../stores/marketStore';
 import { useTradeStore } from '../../stores/tradeStore';
 import { formatAmount, formatPrice } from '../../lib/format';
 import { pricePrecisionFor } from '../../lib/priceScale';
@@ -72,14 +72,9 @@ export function OrderForm({
   const account = useTradeStore((state) => state.account);
   // 可用資金與引擎開倉檢查同口徑（帳戶級 crossAvailableBalance）：cross 浮虧即時扣減、
   // 浮盈可作開倉依據，與本單 marginMode 無關；無 cross 持倉時恆等於裸 balance。
-  const available = useMarketStore((state) => {
-    const marks: MarkMap = {};
-    for (const position of account.positions) {
-      const positionTicker = state.tickers[position.symbol];
-      if (positionTicker !== undefined) marks[position.symbol] = positionTicker.markPrice;
-    }
-    return crossAvailableBalance(account, marks);
-  });
+  const available = useMarketStore((state) =>
+    crossAvailableBalance(account, collectPositionMarks(state.tickers, account.positions)),
+  );
   // 目前 symbol 持倉：同向下單＝加倉，沿用倉上 TP/SL 與保證金模式，表單對應欄位不生效（B1/S1）。
   const heldPosition = account.positions.find((position) => position.symbol === symbol) ?? null;
   const heldSide = heldPosition?.side ?? null;
