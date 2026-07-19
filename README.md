@@ -186,6 +186,11 @@ release 清單。禁止手動修改版本號、手動編輯 CHANGELOG，或在 C
 `pnpm changeset tag` 建 tag；CI 內部 tag push 會以 `HUSKY=0` 單次推送，避免重複觸發
 pre-push hook。
 
+release PR 由 `release.yml` 全自動合併：因 `GITHUB_TOKEN` 建立的 PR 其
+`pull_request` CI 停在 approval-required 狀態（GitHub 防遞迴），workflow 會自行補跑
+CI、等待 `Quality Checks` 通過後直接合併（仍受 branch protection 把關），並補派
+main 上的 `release.yml` / `ci.yml` 完成 tags 與部署，全程無需人工介入。
+
 正式站部署由 Zeabur production deployment 接 GitHub main。合併一般 PR 後若會再合併
 changesets release PR，需先確認較早的 production deployment 已完成，避免舊 SHA 在 release
 SHA 之後才變成 active，造成正式站版本回退。Release 後以

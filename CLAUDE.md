@@ -155,7 +155,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
   （sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON、OpenAPI）。
 - `pnpm --filter @app/ratewise verify:artifacts`：SSOT sync 與 image resource 檢查。
 - `prebuild` 只執行 deterministic generation、artifact verification 與 rating placeholder refresh；不得刷新 tracked live rate data。`lighthouse-report.json`、`*.tsbuildinfo` 屬本機工具輸出，必須保持 untracked。
-- `update-seo-rate-examples.yml` 建立資料更新 PR 後必須以 `gh pr merge --auto` 掛上 GitHub auto-merge；合併仍由 branch protection 與 required checks 把關，禁止繞過 checks 的直接合併（不得使用非 `--auto` 的 `gh pr merge`）。
+- `update-seo-rate-examples.yml` 建立資料更新 PR 後必須以 `gh pr merge --auto` 掛上 GitHub auto-merge；合併仍由 branch protection 與 required checks 把關，禁止繞過 checks 的直接合併（不得使用非 `--auto` 的 `gh pr merge`）。唯一例外：`release.yml` 的 release PR 合併鏈於 `Quality Checks` 成功後以 `gh pr merge --squash` 直接合併（auto-merge 不會被非 PR 事件喚醒；合併仍受 branch protection 伺服器端把關，非繞過）。
 
 **Release PR 自動化控制**：
 
@@ -171,6 +171,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 - 連續合併一般 PR 與 release PR 時，release PR 前先確認較早 main SHA 的 Zeabur production deployment 已完成；若舊 SHA 在 release SHA 之後 active，會讓正式站版本回退
 - `Wait for RateWise production deployment` 失敗時，先查 GitHub deployments 的 active SHA；若 release SHA 被較舊 SHA 覆蓋，以最小 PR 重新觸發最新 main 部署，再重跑 `app-version` 與 live precache 驗證
+- release PR 全自動合併鏈（issue #771）：`GITHUB_TOKEN` 開的 PR 其 `pull_request` run 停在 approval-required、auto-merge 不會被非 PR 事件喚醒、bot 合併的 main push 不觸發 push workflow；`release.yml` 必須自行「補跑 CI → 等 `Quality Checks` → `gh pr merge --squash`（受 branch protection 把關）→ 補派 `release.yml`/`ci.yml` 於 main」；等待期間 main 若新增 changeset 則本輪遞延合併交下一個 release run 整併；人工 close/reopen 僅作 fallback
 
 **依賴安全管理**（Dependabot 警告處理）：
 

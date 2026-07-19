@@ -473,7 +473,7 @@ git push origin main     # pre-push 自動驗證
 - `pnpm --filter @app/ratewise generate:deterministic`：由 repo SSOT 重建 sitemap、manifest、offline shell、LLMs text、Markdown mirrors、API JSON 與 OpenAPI。
 - `pnpm --filter @app/ratewise verify:artifacts`：執行 SSOT sync 與 image resource 檢查。
 - `pnpm --filter @app/ratewise prebuild`：只執行 deterministic generation、artifact verification 與 rating placeholder refresh；禁止把 tracked live rate refresh 塞回單一長命令。
-- `update-seo-rate-examples.yml`：建立資料更新 PR 後必須以 `gh pr merge --auto` 掛上 GitHub auto-merge；合併仍由 branch protection 與 required checks 把關，禁止繞過 checks 的直接合併（不得使用非 `--auto` 的 `gh pr merge`）。
+- `update-seo-rate-examples.yml`：建立資料更新 PR 後必須以 `gh pr merge --auto` 掛上 GitHub auto-merge；合併仍由 branch protection 與 required checks 把關，禁止繞過 checks 的直接合併（不得使用非 `--auto` 的 `gh pr merge`）。唯一例外：`release.yml` 的 release PR 合併鏈——因 auto-merge 不會被非 PR 事件喚醒，必須在 `Quality Checks` 成功後以 `gh pr merge --squash` 直接合併；該合併仍受 branch protection 伺服器端把關，required check 未過會被 GitHub 拒絕，不構成繞過。
 
 ### Release PR 自動化失敗治理
 
@@ -497,7 +497,7 @@ git push origin main     # pre-push 自動驗證
 8. 發版前以 `pnpm changeset:status` 確認待發 changeset，並以 release PR 的 package / CHANGELOG diff 作為 AGT-VER-02 證據。
 9. 若一般 PR 與 release PR 連續合併，合併 release PR 前必須確認前一個 main SHA 的 Zeabur production deployment 已完成；避免較舊 SHA 在 release SHA 後才 active，造成正式站版本回退。
 10. Release workflow 若在 `Wait for RateWise production deployment` 失敗，必須查 GitHub deployments；若最新 release SHA 已成功部署但較舊 SHA 隨後 active，需以最小 PR 重新觸發最新 main 部署，並重新跑正式站 `app-version` 與 live precache 驗證。
-11. changesets/action 以 `GITHUB_TOKEN` 開/更新 release PR 時，`pull_request` 事件不觸發 CI（防遞迴規則）；`release.yml` 在 changesets 成功後必須 `gh workflow run ci.yml --ref changeset-release/main` 補觸發 `Quality Checks`。手動排障：`gh workflow run ci.yml --ref changeset-release/main`。
+11. changesets/action 以 `GITHUB_TOKEN` 開/更新 release PR 時，`pull_request` run 停在 approval-required 狀態（GITHUB_TOKEN 防遞迴），必要檢查 `Quality Checks` 永不自動執行；且非 PR 事件的 check 完成不會喚醒 GitHub auto-merge，bot 合併產生的 main push 也不會觸發 push workflow。無 PAT / GitHub App 憑證下，`release.yml` 必須在 changesets 成功後完成全自動合併鏈：`gh workflow run ci.yml --ref changeset-release/main` 補跑 CI → 等待 `Quality Checks` 成功 → `gh pr merge --squash` 直接合併（仍受 branch protection 伺服器端把關，required check 未過會被拒絕，非繞過檢查）→ `gh workflow run release.yml --ref main` 與 `gh workflow run ci.yml --ref main` 補派被抑制的 main push workflows（tags / GitHub releases / 部署）。等待 QC 期間若 main 又新增 changeset，本輪跳過合併並遞延給排隊中的下一個 release run 整併，避免 `--changed`（HEAD^ 比對）漏建 tag。手動排障 fallback：close/reopen release PR 觸發原生 `pull_request` run（issue #771）。
 
 **GitHub Actions Node 24 控制**：
 
