@@ -150,6 +150,32 @@ describe('TpSlSheet', () => {
     expect(updated?.stopLoss).toBe(55000);
   });
 
+  it('judges the cross dead-zone by the aggregate estimate, not the isolated formula', async () => {
+    // cross 10x 多單 @60000：逐倉封閉公式強平 54300，但帳戶緩衝使聚合估算遠低於
+    // 54300（估不出→null 不判死區）；SL 54000 對 cross 倉為合法停損，不得誤擋。
+    const user = userEvent.setup();
+    const opened = openMarket(createInitialAccount(), {
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    if (!opened.ok) throw new Error(opened.error);
+    useTradeStore.setState({ account: opened.account, toasts: [] });
+    const position = opened.account.positions[0];
+    if (position === undefined) throw new Error('no position');
+    renderSheet(position);
+
+    await user.type(screen.getByRole('textbox', { name: '止損價格（USDT）' }), '54000');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '確認' }));
+
+    const updated = useTradeStore.getState().account.positions[0];
+    expect(updated?.stopLoss).toBe(54000);
+  });
+
   it('clears an existing tp/sl by submitting empty inputs', async () => {
     const user = userEvent.setup();
     seedLongPosition();

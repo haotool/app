@@ -2,7 +2,7 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { BottomSheet } from '../BottomSheet';
 import { type Position } from '../../engine/types';
-import { isSlBeyondLiquidation, liquidationPrice } from '../../engine/math';
+import { estimatedCrossLiquidationPrice, liquidationPrice, type MarkMap } from '../../engine/math';
 import { useTradeStore } from '../../stores/tradeStore';
 import { useMarketStore } from '../../stores/marketStore';
 import {
@@ -81,10 +81,12 @@ function deriveTriggerPrice(draft: Draft, basis: TpSlBasis): number | null {
 }
 
 // 方向驗證沿用引擎 R4 規則（多單 tp>開倉價、sl<開倉價；空單反向），避免 UI 與引擎判定漂移。
+// referenceLiq：死區判定的強平價口徑——isolated 用封閉公式、cross 用聚合估算（null＝不判死區）。
 function validateTrigger(
   kind: TriggerKind,
   price: number | null,
   position: Position,
+  referenceLiq: number | null,
 ): string | null {
   if (price === null) return null;
   if (Number.isNaN(price) || price <= 0) return TPSL_INPUT_MESSAGES[kind];
@@ -96,9 +98,8 @@ function validateTrigger(
   const valid = isLong ? price < position.entryPrice : price > position.entryPrice;
   if (!valid) return TRADE_ERROR_MESSAGES['invalid-sl-direction'];
   // 高槓桿死區（issue 781）：停損劣於強平價時強平必先觸發，標示無效並擋下送出。
-  if (isSlBeyondLiquidation(position.side, position.entryPrice, position.leverage, price)) {
-    const liq = liquidationPrice(position.side, position.entryPrice, position.leverage);
-    return `此停損價已越過強平價 ${formatPrice(liq, position.symbol)}，實際會先觸發強平`;
+  if (referenceLiq !== null && (isLong ? price < referenceLiq : price > referenceLiq)) {
+    return `此停損價已越過強平價 ${formatPrice(referenceLiq, position.symbol)}，實際會先觸發強平`;
   }
   return null;
 }
@@ -116,7 +117,22 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   });
   const [error, setError] = useState<string | null>(null);
   const setPositionTpSl = useTradeStore((state) => state.setPositionTpSl);
+  const account = useTradeStore((state) => state.account);
   const mark = useMarketStore((state) => state.tickers[position.symbol]?.markPrice);
+  // cross 死區判定用聚合估算價（與持倉卡同口徑）；估不出（buffer 過大）時不判死區。
+  const crossLiq = useMarketStore((state) => {
+    if (position.marginMode !== 'cross') return null;
+    const marks: MarkMap = {};
+    for (const held of account.positions) {
+      const heldTicker = state.tickers[held.symbol];
+      if (heldTicker !== undefined) marks[held.symbol] = heldTicker.markPrice;
+    }
+    return estimatedCrossLiquidationPrice(position, account, marks);
+  });
+  const referenceLiq =
+    position.marginMode === 'cross'
+      ? crossLiq
+      : liquidationPrice(position.side, position.entryPrice, position.leverage);
 
   const ratio = scope === 'full' ? 1 : percent / 100;
   const basis: TpSlBasis = {
@@ -132,8 +148,8 @@ export function TpSlSheet({ open, position, onClose }: TpSlSheetProps) {
   const tpPrice = deriveTriggerPrice(tpDraft, basis);
   const slPrice = deriveTriggerPrice(slDraft, basis);
   const prices = { tp: tpPrice, sl: slPrice } as const;
-  const tpError = validateTrigger('tp', tpPrice, position);
-  const slError = validateTrigger('sl', slPrice, position);
+  const tpError = validateTrigger('tp', tpPrice, position, referenceLiq);
+  const slError = validateTrigger('sl', slPrice, position, referenceLiq);
   const errors = { tp: tpError, sl: slError } as const;
   const submitDisabled = tpError !== null || slError !== null;
 

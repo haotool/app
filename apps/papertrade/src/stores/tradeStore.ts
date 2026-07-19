@@ -191,7 +191,7 @@ function eventToToast(event: TradeEvent): Omit<ToastItem, 'id'> {
       return {
         tone: 'warning',
         title: `強制平倉：${pairLabel(event.symbol)} ${sideLabel(event.side)}單`,
-        description: `保證金 ${formatAmount(event.loss, 2)} USDT 已全數損失`,
+        description: `已實現虧損 ${formatAmount(event.loss, 2)} USDT`,
       };
     default: {
       const exhaustive: never = event;

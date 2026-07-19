@@ -392,12 +392,12 @@ describe('TradePage', () => {
 
     await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
     const sheet = screen.getByRole('dialog', { name: '保證金模式' });
-    expect(within(sheet).getByRole('tab', { name: '逐倉' })).toHaveAttribute(
-      'aria-selected',
+    expect(within(sheet).getByRole('radio', { name: '逐倉' })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
 
-    await user.click(within(sheet).getByRole('tab', { name: '全倉' }));
+    await user.click(within(sheet).getByRole('radio', { name: '全倉' }));
     expect(within(sheet).getByText(/全部全倉持倉共享帳戶可用資金/)).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: '關閉' }));
 
@@ -410,7 +410,7 @@ describe('TradePage', () => {
     renderTrade();
 
     await user.click(screen.getByRole('button', { name: '保證金模式：逐倉，點擊切換' }));
-    await user.click(screen.getByRole('tab', { name: '全倉' }));
+    await user.click(screen.getByRole('radio', { name: '全倉' }));
     await user.click(screen.getByRole('button', { name: '關閉' }));
 
     await user.type(screen.getByRole('textbox', { name: '數量（USDT）' }), '6000');

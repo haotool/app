@@ -32,16 +32,20 @@ crossMM        = Σ(cross 持倉：qty × mark × effectiveMaintenanceMarginRate
 - `effectiveMaintenanceMarginRate(leverage) = min(0.005, 0.5/leverage)`（ADR-R5-03，
   全模式共用不變）。
 - 觸發後逐一強平 **uPnL 最小（最虧）** 的 cross 持倉一筆（`closeSlice(..., 'liquidation')`，
-  損失＝該倉保證金），重算 `crossMarginBalance`／`crossMM`，重複直到恢復（>）或 cross 持倉全平。
+  於 mark **全額實現 uPnL**——聚合觸發時單倉虧損可深於自身保證金，若鉗在 −margin 會使
+  帳戶權益憑空回升；現金可因此為負，聚合迴圈續平下一最虧倉），重算
+  `crossMarginBalance`／`crossMM`，重複直到恢復（>）或 cross 持倉全平。
 - 任一 cross 持倉的 symbol 缺 mark 時整輪略過，不以殘缺行情誤判。
-- 單倉估算強平價（僅 UI 顯示，非真實觸發）：
+- 單倉估算強平價（僅 UI 顯示，非真實觸發）；與聚合觸發條件同構的線性解——
+  buffer 扣減**聚合** MM（漏扣其他 cross 倉 MM 會使估算系統性偏遠）；一律以 mark
+  為錨（buffer 已含本倉未實現損益，entry 錨會把利潤雙重計入）；假設其他倉靜態、
+  MM 凍結於現時 mark（terminal review 修正，取代初版 refPrice/MM_this 版本）：
 
 ```
-MM_this  = 該倉 qty × mark × effectiveMMR(leverage)
-buffer   = crossMarginBalance − MM_this
-refPrice = 該倉現時 uPnL ≥ 0 ? entryPrice : mark
-long ：liqPriceEst = refPrice − buffer/qty （結果 ≤ 0 → 無意義，顯示 --）
-short：liqPriceEst = refPrice + buffer/qty
+crossMM = Σ(cross 持倉 qty × mark × effectiveMMR(leverage))
+buffer  = crossMarginBalance − crossMM
+long ：liqPriceEst = mark − buffer/qty （結果 ≤ 0 → 無意義，顯示 --）
+short：liqPriceEst = mark + buffer/qty
 ```
 
 - 開倉資金檢查（`openMarket`／`placeLimitOrder`）改以 `crossAvailableBalance` 為上限：
@@ -55,7 +59,7 @@ balance=10000，開 BTC long cross qty=0.1 entry=60000 leverage=10x
 
 - uPnL=100；crossIM=600；crossUpnl=100；crossAvailable=9496.7
 - MM_this=0.1×61000×0.005=30.5；crossMarginBalance=9396.7+600+100=10096.7（遠高於 MM，不觸發）
-- buffer=10096.7−30.5=10066.2；uPnL≥0 用 entry：60000−10066.2/0.1=負值 → 顯示 `--`
+- buffer=10096.7−30.5=10066.2；mark 錨：61000−10066.2/0.1=負值 → 顯示 `--`
   （帳戶餘額遠大於這筆小倉位，合理結果）
 
 ## 依據（RS-A 查證出處）
@@ -67,8 +71,8 @@ balance=10000，開 BTC long cross qty=0.1 entry=60000 leverage=10x
 ## 簡化聲明
 
 - 單倉估算強平價僅供參考（假設其他倉靜態、以 buffer 線性外推）；真實觸發一律為聚合 MM 檢查。
-- 強平以「損失該倉保證金」結算（沿用引擎既有 liquidation 語意），未模擬穿倉扣減現金與
-  保險基金；教育模擬用途下以逐倉一致的帳本規則換取可驗證性。
+- isolated 強平維持「損失該倉保證金」結算（合約定義的損失上限）；cross 強平於 mark
+  全額實現 uPnL（含穿倉扣減現金），未模擬保險基金與 ADL。
 - 未模擬真所的風險限額梯度（MMR 檔位）與 per-symbol 模式轉換。
 
 ## 後果

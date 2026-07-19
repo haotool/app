@@ -70,9 +70,9 @@ export function OrderForm({
 
   const ticker = useMarketStore((state) => state.tickers[symbol]);
   const account = useTradeStore((state) => state.account);
-  // 可用資金：全倉含 cross 未實現盈虧（與開倉檢查同口徑）；逐倉維持裸現金。
-  const crossAvailable = useMarketStore((state) => {
-    if (marginMode !== 'cross') return null;
+  // 可用資金與引擎開倉檢查同口徑（帳戶級 crossAvailableBalance）：cross 浮虧即時扣減、
+  // 浮盈可作開倉依據，與本單 marginMode 無關；無 cross 持倉時恆等於裸 balance。
+  const available = useMarketStore((state) => {
     const marks: MarkMap = {};
     for (const position of account.positions) {
       const positionTicker = state.tickers[position.symbol];
@@ -80,7 +80,6 @@ export function OrderForm({
     }
     return crossAvailableBalance(account, marks);
   });
-  const available = crossAvailable ?? account.balance;
   // 目前 symbol 持倉：同向下單＝加倉，沿用倉上 TP/SL 與保證金模式，表單對應欄位不生效（B1/S1）。
   const heldPosition = account.positions.find((position) => position.symbol === symbol) ?? null;
   const heldSide = heldPosition?.side ?? null;
@@ -383,7 +382,7 @@ export function OrderForm({
 
       <dl className="flex flex-col gap-1 text-caption">
         <div className="flex justify-between">
-          <dt className="text-text-3">可用資金{marginMode === 'cross' ? '（全倉）' : ''}</dt>
+          <dt className="text-text-3">可用資金</dt>
           <dd className="text-text-2 tabular-nums">{formatAmount(available, 2)} USDT</dd>
         </div>
         {heldPosition !== null && heldPosition.marginMode !== marginMode && (
@@ -407,14 +406,19 @@ export function OrderForm({
               : '--'}
           </dd>
         </div>
+        {/* 全倉真實強平為聚合檢查（隨帳戶盈虧浮動），下單前僅能以逐倉口徑給保守參考。 */}
         <div className="flex justify-between">
-          <dt className="text-text-3">多單預估強平</dt>
+          <dt className="text-text-3">
+            多單預估強平{marginMode === 'cross' ? '（逐倉口徑）' : ''}
+          </dt>
           <dd className="text-text-2 tabular-nums">
             {liqPreviewLong !== null ? formatPrice(liqPreviewLong, symbol) : '--'}
           </dd>
         </div>
         <div className="flex justify-between">
-          <dt className="text-text-3">空單預估強平</dt>
+          <dt className="text-text-3">
+            空單預估強平{marginMode === 'cross' ? '（逐倉口徑）' : ''}
+          </dt>
           <dd className="text-text-2 tabular-nums">
             {liqPreviewShort !== null ? formatPrice(liqPreviewShort, symbol) : '--'}
           </dd>

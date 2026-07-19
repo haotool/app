@@ -83,6 +83,9 @@ export function crossMaintenanceMargin(positions: Position[], marks: MarkMap): n
 }
 
 // cross 單倉估算強平價（僅 UI 顯示；真實觸發為聚合 MM 檢查）。
+// 與觸發條件同構的線性解：crossMarginBalance + qty×(liq−mark)×dir = crossMM（聚合，
+// 非僅本倉——漏扣其他 cross 倉 MM 會使估算系統性偏遠）。mark 為錨：buffer 已含
+// 本倉未實現損益，entry 錨會把利潤雙重計入。假設其他倉靜態、MM 凍結於現時 mark。
 // buffer 覆蓋全倉損失（結果非正）時回 null，UI 顯示 --。
 export function estimatedCrossLiquidationPrice(
   position: Position,
@@ -92,12 +95,10 @@ export function estimatedCrossLiquidationPrice(
   if (position.marginMode !== 'cross') return null;
   const mark = marks[position.symbol];
   if (mark === undefined || position.qty <= 0) return null;
-  const mmThis = position.qty * mark * effectiveMaintenanceMarginRate(position.leverage);
-  const buffer = crossMarginBalance(account, marks) - mmThis;
-  const upnl = unrealizedPnl(position.side, position.entryPrice, mark, position.qty);
-  const refPrice = upnl >= 0 ? position.entryPrice : mark;
+  const buffer =
+    crossMarginBalance(account, marks) - crossMaintenanceMargin(account.positions, marks);
   const estimate =
-    position.side === 'long' ? refPrice - buffer / position.qty : refPrice + buffer / position.qty;
+    position.side === 'long' ? mark - buffer / position.qty : mark + buffer / position.qty;
   return estimate > 0 ? estimate : null;
 }
 

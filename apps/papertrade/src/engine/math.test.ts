@@ -207,7 +207,7 @@ describe('cross margin aggregates (R6-2, ADR-R6-02)', () => {
     expect(crossMarginBalance(account, marks)).toBeCloseTo(10096.7, 8);
     // MM = 0.1 × 61000 × 0.005 = 30.5。
     expect(crossMaintenanceMargin(account.positions, marks)).toBeCloseTo(30.5, 8);
-    // buffer = 10096.7 − 30.5 = 10066.2；uPnL ≥ 0 用 entry：60000 − 10066.2/0.1 < 0 → null。
+    // buffer = 10096.7 − 30.5 = 10066.2；mark 錨：61000 − 10066.2/0.1 < 0 → null。
     expect(estimatedCrossLiquidationPrice(account.positions[0]!, account, marks)).toBeNull();
   });
 
@@ -234,12 +234,13 @@ describe('cross margin aggregates (R6-2, ADR-R6-02)', () => {
     expect(estimate).toBeCloseTo(50323, 8);
   });
 
-  it('uses the entry price as reference for a profitable position', () => {
+  it('anchors a profitable position at the mark so unrealized profit is not double counted', () => {
     const heavy = accountWith(3967, [crossPosition({ qty: 1, margin: 6000, openFee: 33 })]);
     const heavyMarks = { BTCUSDT: 61000 } as const;
-    // marginBalance = 3967 + 6000 + 1000 = 10967；MM = 305；buffer = 10662；60000 − 10662 = 49338。
+    // marginBalance = 3967 + 6000 + 1000 = 10967；MM = 305；buffer = 10662；61000 − 10662 = 50338。
+    // mark 錨即靜態精確解：61000 − 50338 = 10662 恰好耗盡 buffer（entry 錨會多算 1000 利潤）。
     const estimate = estimatedCrossLiquidationPrice(heavy.positions[0]!, heavy, heavyMarks);
-    expect(estimate).toBeCloseTo(49338, 8);
+    expect(estimate).toBeCloseTo(50338, 8);
   });
 
   it('estimates the short side by adding the buffer above the reference', () => {

@@ -92,8 +92,12 @@ export function closeSlice(
   const releasedMargin = roundUsdt(position.margin * fraction);
   const releasedOpenFee = roundUsdt(position.openFee * fraction);
   const isLiquidation = reason === 'liquidation';
+  // 強平損益分流：isolated 損失上限＝該倉保證金（合約定義）；cross 於 exitPrice 全額實現
+  // uPnL（聚合觸發時單倉虧損可深於自身保證金，鉗 −margin 會使權益憑空回升）。
   const pnl = isLiquidation
-    ? -releasedMargin
+    ? position.marginMode === 'cross'
+      ? roundUsdt(unrealizedPnl(position.side, position.entryPrice, exitPrice, qty))
+      : -releasedMargin
     : roundUsdt(unrealizedPnl(position.side, position.entryPrice, exitPrice, qty));
   const fee = isLiquidation ? 0 : roundUsdt(orderFee(notionalValue(qty, exitPrice), feeRate));
 

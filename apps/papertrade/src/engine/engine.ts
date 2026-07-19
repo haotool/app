@@ -520,6 +520,9 @@ export function processTick(
         now,
         tp: order.takeProfit ?? undefined,
         sl: order.stopLoss ?? undefined,
+        // 成交資金檢查下限為掛單凍結額：資金已預扣，不得因成交當下現金為負
+        // （cross 浮盈開倉）誤拒已保證的委託；現金充足時仍允許以更優 mark 價成交。
+        availableBalance: Math.max(refunded.balance, order.margin + order.fee),
       };
       // 先以 mark（更優價）成交；滿倉時 short 的 mark 名目可超出按 limit 預扣的額度，
       // 回退以使用者保證的限價成交（成本恰等於預扣，帳本恆安全），避免掛單靜默滯留。
@@ -616,7 +619,7 @@ export function evaluateCrossMargin(account: Account, marks: MarkMap, now: numbe
     const mark = marks[worst.symbol];
     if (mark === undefined) break;
 
-    const { account: next } = closeSlice(
+    const { account: next, trade } = closeSlice(
       current,
       worst,
       worst.qty,
@@ -629,7 +632,8 @@ export function evaluateCrossMargin(account: Account, marks: MarkMap, now: numbe
       type: 'liquidation',
       symbol: worst.symbol,
       side: worst.side,
-      loss: worst.margin,
+      // cross 於 mark 全額實現：以實際已實現虧損回報，不得以保證金低報損失。
+      loss: Math.abs(trade.realizedPnl),
     });
     // 同步清除指向該倉位的 close 掛單，避免孤兒掛單殘留（同 processTick 既有清理）。
     current = {

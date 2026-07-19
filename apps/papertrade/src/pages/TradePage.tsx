@@ -248,8 +248,9 @@ export function TradePage() {
       )}
       {sheet === 'margin' && (
         <BottomSheet open title="保證金模式" onClose={() => setSheet(null)}>
+          {/* 語意採 radiogroup（單選、無面板切換），原生按鈕 Tab 序即鍵盤路徑，免 roving tabindex。 */}
           <div
-            role="tablist"
+            role="radiogroup"
             aria-label="保證金模式選擇"
             className="flex rounded-control bg-surface-2 p-0.5"
           >
@@ -257,8 +258,8 @@ export function TradePage() {
               <button
                 key={candidate}
                 type="button"
-                role="tab"
-                aria-selected={marginMode === candidate}
+                role="radio"
+                aria-checked={marginMode === candidate}
                 onClick={() => setMarginMode(candidate)}
                 className={clsx(
                   'min-h-11 min-w-11 flex-1 rounded-[10px] text-label transition-colors',
