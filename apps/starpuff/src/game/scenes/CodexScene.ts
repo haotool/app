@@ -3,14 +3,14 @@ import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
 import { LEVELS, exConquestDone } from '../logic/levels';
+import { playSfx } from '../audio/sfx';
+import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
+import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 // 魔王品種 → 魔王關對照（LEVELS 派生，加王自動跟進）。
 const BOSS_LEVEL_BY_KIND = new Map<string, LevelId>(
   LEVELS.filter((level) => level.boss !== null).map((level) => [level.boss as string, level.id]),
 );
-import { playSfx } from '../audio/sfx';
-import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
-import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
 
 const TEXT_DARK = '#3a3a4a';
 const TEXT_SOFT = '#5a5a6e';
