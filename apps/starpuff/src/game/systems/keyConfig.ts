@@ -1,6 +1,8 @@
 import {
+  KEY_SCALE,
   applyLayoutToDom,
   clampKeyPositionForLayer,
+  clampKeyScale,
   getDefaultLayout,
   loadLayout,
   saveLayout,
@@ -102,6 +104,7 @@ export function openKeyConfig(onClose?: () => void): void {
   addAction(actions, 'reset', '恢復預設', () => {
     Object.assign(working, getDefaultLayout());
     applyLayoutToDom(layer, working);
+    renderScale();
   });
   addAction(actions, 'save', '儲存', () => {
     saveLayout(working);
@@ -121,6 +124,31 @@ export function openKeyConfig(onClose?: () => void): void {
     applyRotationClass(rotationPref);
     rotationButton.textContent = rotationLabel(rotationPref);
   });
+
+  // 按鈕縮放列（§92）：縮小／放大步進 5%、範圍 80%–130%，即時預覽入 working（隨儲存
+  // 持久化、取消回滾）；點按鈕避開旋轉殼內原生 range 拖曳的跨瀏覽器不確定性。
+  const scaleRow = document.createElement('div');
+  scaleRow.className = 'cfg-actions';
+  const scaleLabel = document.createElement('div');
+  scaleLabel.className = 'cfg-hint';
+  scaleLabel.textContent = '按鈕大小';
+  scaleRow.appendChild(scaleLabel);
+  const scaleValue = document.createElement('div');
+  scaleValue.className = 'cfg-hint';
+  scaleValue.dataset['cfg'] = 'scale-value';
+  const renderScale = (): void => {
+    scaleValue.textContent = `${Math.round(working.scale * 100)}%`;
+  };
+  const nudgeScale = (delta: number): void => {
+    working.scale = clampKeyScale(Math.round((working.scale + delta) * 100) / 100);
+    renderScale();
+    applyLayoutToDom(layer, working);
+  };
+  addAction(scaleRow, 'scale-down', '縮小', () => nudgeScale(-KEY_SCALE.step));
+  scaleRow.appendChild(scaleValue);
+  addAction(scaleRow, 'scale-up', '放大', () => nudgeScale(KEY_SCALE.step));
+  renderScale();
+  bar.appendChild(scaleRow);
 
   // 拖曳：座標經 pointerToLocal 轉 keys-layer 局部空間（portrait 旋轉殼換軸），
   // 中心點比例即時寫回 working 並套用（即時預覽）。

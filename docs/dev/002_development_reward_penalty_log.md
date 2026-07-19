@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-19
+- ID：reward-starpuff-v14-key-scale-migration
+- 原因：虛擬鍵尺寸固定（A76/B72），大屏或粗指使用者無法調整，且 sp-key-layout schema v1 無縮放欄位
+- 解法：layout schema 升 v2（versioned migration：v1 鍵位保留、scale 補 1）、CSS 變數 --sp-key-scale 單點驅動鍵與鍵帽縮放（80%–130%、44px 守門單測）、keyConfig 加縮放列即時預覽
+
+- 日期：2026-07-19
 - ID：reward-starpuff-v14-keyconfig-single-line
 - 原因：cfg-bar 橫排 flex 無寬度約束且鈕可壓縮，375/667 級殼寬下「儲存並返回」被壓成兩行文字
 - 解法：cfg-bar 改直欄（hint＋actions 分列）、鈕 nowrap＋flex-shrink:0、空間不足整鈕換列，五視口×雙持向實測全單行

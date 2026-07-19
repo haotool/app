@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_LAYOUT,
+  KEY_BASE_PX,
   KEY_CLAMP,
   KEY_EDGE_PAD_PX,
+  KEY_SCALE,
   LAYOUT_SCHEMA_VERSION,
   clampKeyPosition,
   clampKeyPositionForLayer,
+  clampKeyScale,
   getDefaultLayout,
   parseLayout,
 } from './layout';
@@ -71,9 +74,44 @@ describe('parseLayout', () => {
     expect(parseLayout('42')).toEqual(DEFAULT_LAYOUT);
   });
 
-  it('schema 版本不符回退預設', () => {
+  it('未知 schema 版本回退預設', () => {
     const raw = JSON.stringify({ version: 0, a: { cx: 0.5, cy: 0.5 }, b: { cx: 0.5, cy: 0.5 } });
     expect(parseLayout(raw)).toEqual(DEFAULT_LAYOUT);
+    const future = JSON.stringify({
+      version: 99,
+      a: { cx: 0.5, cy: 0.5 },
+      b: { cx: 0.5, cy: 0.5 },
+    });
+    expect(parseLayout(future)).toEqual(DEFAULT_LAYOUT);
+  });
+
+  it('v1 舊存檔（無 scale）migration：鍵位保留、scale 補預設、版本升 2（§92）', () => {
+    // v9–v13 舊版寫入的 sp-key-layout 皆為 version 1 形狀。
+    const legacy = JSON.stringify({
+      version: 1,
+      a: { cx: 0.4, cy: 0.6 },
+      b: { cx: 0.88, cy: 0.3 },
+    });
+    expect(parseLayout(legacy)).toEqual({
+      version: 2,
+      a: { cx: 0.4, cy: 0.6 },
+      b: { cx: 0.88, cy: 0.3 },
+      scale: KEY_SCALE.default,
+    });
+  });
+
+  it('v2 scale 損毀或超界重新夾限', () => {
+    const build = (scale: unknown) =>
+      JSON.stringify({
+        version: 2,
+        a: { cx: 0.5, cy: 0.5 },
+        b: { cx: 0.5, cy: 0.5 },
+        scale,
+      });
+    expect(parseLayout(build(2.5)).scale).toBe(KEY_SCALE.max);
+    expect(parseLayout(build(0.1)).scale).toBe(KEY_SCALE.min);
+    expect(parseLayout(build('x')).scale).toBe(KEY_SCALE.default);
+    expect(parseLayout(build(1.15)).scale).toBe(1.15);
   });
 
   it('座標形狀損毀回退預設', () => {
@@ -90,12 +128,22 @@ describe('parseLayout', () => {
       version: LAYOUT_SCHEMA_VERSION,
       a: { cx: 0.4, cy: 0.6 },
       b: { cx: 2, cy: 0.2 },
+      scale: 1.2,
     });
     expect(parseLayout(raw)).toEqual({
       version: LAYOUT_SCHEMA_VERSION,
       a: { cx: 0.4, cy: 0.6 },
       b: { cx: KEY_CLAMP.maxX, cy: 0.2 },
+      scale: 1.2,
     });
+  });
+
+  it('觸控 hit-target 守門（§92）：最小縮放下最小鍵仍 ≥44px', () => {
+    expect(
+      clampKeyScale(KEY_SCALE.min) * Math.min(KEY_BASE_PX.a, KEY_BASE_PX.b),
+    ).toBeGreaterThanOrEqual(44);
+    expect(KEY_SCALE.min).toBeLessThan(1);
+    expect(KEY_SCALE.max).toBeGreaterThan(1);
   });
 
   it('預設布局本身在夾限範圍內且 A 低 B 高（食指/拇指分工）', () => {
