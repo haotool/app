@@ -171,7 +171,7 @@ git push origin main            # pre-push 自動跑 typecheck + test + build
 - README 同步規則：公開指令、workflow、部署、版本流程或使用者可見行為變更時，必須更新 root `README.md` 與受影響 app README
 - 連續合併一般 PR 與 release PR 時，release PR 前先確認較早 main SHA 的 Zeabur production deployment 已完成；若舊 SHA 在 release SHA 之後 active，會讓正式站版本回退
 - `Wait for RateWise production deployment` 失敗時，先查 GitHub deployments 的 active SHA；若 release SHA 被較舊 SHA 覆蓋，以最小 PR 重新觸發最新 main 部署，再重跑 `app-version` 與 live precache 驗證
-- release PR 全自動合併鏈（issue #771）：`GITHUB_TOKEN` 開的 PR 其 `pull_request` run 停在 approval-required、auto-merge 不會被非 PR 事件喚醒、bot 合併的 main push 不觸發 push workflow；`release.yml` 必須自行「補跑 CI → 等 `Quality Checks` → `gh pr merge --squash`（受 branch protection 把關）→ 補派 `release.yml`/`ci.yml` 於 main」；等待期間 main 若新增 changeset 則本輪遞延合併交下一個 release run 整併；人工 close/reopen 僅作 fallback
+- release PR 全自動合併鏈（issue #771）：`GITHUB_TOKEN` 開的 PR 其 `pull_request` run 停在 approval-required、auto-merge 不會被非 PR 事件喚醒、bot 合併的 main push 不觸發 push workflow、branch protection 只認 PR 關聯 run 的 required check（dispatch 補跑的同名 check 會被拒合併，#784 實證）；`release.yml` 必須自行「Approve API 核准原生 `pull_request` run → 等 head SHA 的 `Quality Checks` → `gh pr merge --squash --match-head-commit`（受 branch protection 把關）→ 補派 `release.yml`/`ci.yml` 於 main」；等待期間 main 若新增 changeset 則本輪遞延合併交下一個 release run 整併；`GITHUB_TOKEN` 無法核准時 loud fail 並要求 `RELEASE_PAT`（設定後 changesets 以 PAT 開 PR 全原生觸發）；人工 close/reopen 僅作 fallback
 
 **依賴安全管理**（Dependabot 警告處理）：
 

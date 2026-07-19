@@ -23,6 +23,9 @@ jobs:
       actions: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      # RELEASE_PAT（選配）：fine-grained PAT（Actions/Contents/Pull requests 均 Read&Write）。
+      # 設定後 release PR 走全原生觸發與合併；未設定時以 GITHUB_TOKEN 補償鏈運作。
+      HAS_RELEASE_PAT: ${{ secrets.RELEASE_PAT != '' }}
 
     steps:
       - name: Checkout Repo
@@ -105,14 +108,15 @@ jobs:
           # NOTE: Requires org + repo Settings → Actions → General → Workflow permissions
           #       → "Allow GitHub Actions to create and approve pull requests" enabled
           # If this fails with HTTP 403, ask an org admin to enable the setting.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # RELEASE_PAT 存在時改用 PAT 開/更新 PR：pull_request run 原生觸發，無需核准補償。
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
       # GITHUB_TOKEN 建立/更新 PR 時，pull_request run 停在 approval-required 狀態（防遞迴），
       # 必要檢查 Quality Checks 永不自動執行、auto-merge 也不會被喚醒（issue #771）。
-      # 無 PAT / GitHub App 憑證下的全自動補償：workflow_dispatch 補跑 CI（官方例外）→
-      # 等待 Quality Checks → 受 branch protection 把關的直接合併 → 補派 main workflows。
-      - name: Trigger CI for release PR
-        id: release_pr_ci
+      # branch protection 只認 PR 關聯 run 的 Quality Checks（#784 實證 dispatch run 不被接受），
+      # 全自動鏈：核准原生 pull_request run → 等待 Quality Checks → 受保護直接合併 → 補派 main workflows。
+      - name: Locate release PR
+        id: release_pr
         if: steps.changesets.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -131,57 +135,81 @@ jobs:
             exit 1
           fi
 
-          # 釘住本次 QC 驗證的 head SHA，合併時以 --match-head-commit 防止合到未驗證的新 head。
+          # 釘住本次驗證的 head SHA，合併時以 --match-head-commit 防止合到未驗證的新 head。
           HEAD_SHA=$(git ls-remote origin refs/heads/changeset-release/main | cut -f1)
 
-          # 以 run id 基準點定位本次 dispatch 產生的 run，避免時鐘偏移誤配舊 run。
-          BASELINE_ID=$(gh run list --workflow ci.yml --branch changeset-release/main --event workflow_dispatch \
-            --limit 1 --json databaseId --jq '.[0].databaseId // 0')
-          gh workflow run ci.yml --ref changeset-release/main
-          echo "Dispatched CI workflow on changeset-release/main for release PR #${PR_NUMBER}"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Release PR #${PR_NUMBER} at ${HEAD_SHA}"
 
-          RUN_ID=""
+      # 使用 RELEASE_PAT 開 PR 時 pull_request run 原生觸發，無需核准；
+      # 使用 GITHUB_TOKEN 時嘗試以 Approve API 啟動 pending run，失敗即 loud fail 並指明需要 PAT。
+      - name: Approve release PR workflow runs
+        if: steps.release_pr.outputs.found == 'true' && env.HAS_RELEASE_PAT != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA="${{ steps.release_pr.outputs.head_sha }}"
+
+          PENDING_IDS=""
           for i in {1..12}; do
             sleep 5
-            RUN_ID=$(gh run list --workflow ci.yml --branch changeset-release/main --event workflow_dispatch \
-              --limit 5 --json databaseId --jq "map(select(.databaseId > ${BASELINE_ID})) | .[0].databaseId // empty")
-            if [ -n "$RUN_ID" ]; then
+            PENDING_IDS=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\" and (.status == \"action_required\" or .conclusion == \"action_required\"))] | map(.id) | join(\" \")")
+            if [ -n "$PENDING_IDS" ]; then
               break
             fi
           done
 
-          if [ -z "$RUN_ID" ]; then
-            echo "::error::Dispatched CI run not found on changeset-release/main"
+          if [ -z "$PENDING_IDS" ]; then
+            # 沒有 pending run 時必須確認已有任一 pull_request run 存在，否則 QC 永遠不會出現。
+            ANY_RUN=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=changeset-release%2Fmain&event=pull_request&per_page=30" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"${HEAD_SHA}\")] | length")
+            if [ "$ANY_RUN" -gt 0 ]; then
+              echo "No approval-required pull_request runs for ${HEAD_SHA}; CI already runs natively."
+              exit 0
+            fi
+            echo "::error::No pull_request runs exist for ${HEAD_SHA}; Quality Checks will never start."
+            echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771. Interim SOP: close/reopen the release PR."
             exit 1
           fi
 
-          echo "dispatched=true" >> "$GITHUB_OUTPUT"
-          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
-          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
-          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          for RUN in $PENDING_IDS; do
+            if gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN}/approve" >/dev/null; then
+              echo "Approved pull_request run ${RUN}"
+            else
+              echo "::error::Failed to approve pull_request run ${RUN}. GITHUB_TOKEN cannot approve approval-required runs."
+              echo "::error::Fix: add repo secret RELEASE_PAT (fine-grained PAT, this repo, permissions: Actions/Contents/Pull requests Read&Write) — see issue #771. Interim SOP: close/reopen the release PR to trigger native CI."
+              exit 1
+            fi
+          done
 
       # 只等必要檢查 Quality Checks；e2e / lighthouse 等非必要 job 不阻擋合併（與人工流程一致）。
+      # 以 head SHA 的 check-runs 為準，同名取最新（與 GitHub merge box 相同語意）。
       - name: Wait for release PR Quality Checks
-        if: steps.release_pr_ci.outputs.dispatched == 'true'
+        if: steps.release_pr.outputs.found == 'true'
         timeout-minutes: 25
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          RUN_ID="${{ steps.release_pr_ci.outputs.run_id }}"
+          HEAD_SHA="${{ steps.release_pr.outputs.head_sha }}"
 
           while true; do
             # gh 暫時性失敗視同 pending，交由下一輪重查；不因 API 抖動失敗整個 release。
-            STATUS=$(gh run view "$RUN_ID" --json jobs \
-              --jq '.jobs[] | select(.name == "Quality Checks") | .status + ":" + (.conclusion // "")' || true)
+            # 同名 check run 以最新為準（與 GitHub merge box 相同語意）。
+            STATUS=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs?check_name=Quality%20Checks&filter=latest" \
+              --jq '.check_runs | sort_by(.started_at) | last | if . == null then "" else .status + ":" + (.conclusion // "") end' || true)
 
             case "$STATUS" in
               completed:success)
-                echo "Quality Checks passed on run ${RUN_ID}"
+                echo "Quality Checks passed on ${HEAD_SHA}"
                 break
                 ;;
               completed:*)
-                echo "::error::Quality Checks concluded '${STATUS#completed:}' on run ${RUN_ID}; release PR will not be merged."
+                echo "::error::Quality Checks concluded '${STATUS#completed:}' on ${HEAD_SHA}; release PR will not be merged."
                 exit 1
                 ;;
               *)
@@ -195,13 +223,13 @@ jobs:
       # 不能依賴 GitHub auto-merge：非 PR 事件的 check 完成不會喚醒 auto-merge（issue #771 實證）。
       - name: Merge release PR
         id: release_pr_merge
-        if: steps.release_pr_ci.outputs.dispatched == 'true'
+        if: steps.release_pr.outputs.found == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          PR_NUMBER="${{ steps.release_pr_ci.outputs.pr_number }}"
-          HEAD_SHA="${{ steps.release_pr_ci.outputs.head_sha }}"
+          PR_NUMBER="${{ steps.release_pr.outputs.pr_number }}"
+          HEAD_SHA="${{ steps.release_pr.outputs.head_sha }}"
 
           STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
           if [ "$STATE" != "OPEN" ]; then
@@ -230,7 +258,7 @@ jobs:
           done
 
           echo "::error::Failed to merge release PR #${PR_NUMBER} after Quality Checks passed."
-          echo "::error::If the merge was rejected for missing required checks, branch protection did not accept the dispatched run — see issue #771; a PAT or GitHub App token would then be required."
+          echo "::error::If the base branch policy still prohibits the merge, the required check likely came from a non-PR run; ensure the pull_request run was approved or add RELEASE_PAT — see issue #771."
           exit 1
 
       # bot（GITHUB_TOKEN）合併產生的 main push 不觸發 push workflow（防遞迴），
