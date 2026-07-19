@@ -18,6 +18,8 @@ export function isPprSymbol(symbol: string): boolean {
 export const PPR_TICK_INTERVAL_MS = 250;
 export const PPR_SEED_PRICE = 0.042;
 // 基準隨機游走：每 tick ±0.1–0.5%。
+// 單 tick 基礎波動即大於 1000x 強平緩衝 0.05%：極高槓桿開 PPR 幾乎必然快速強平，
+// 屬模擬環境的教育示範設計，不另加攔截（ADR-R5-03）。
 export const PPR_BASE_STEP_MIN = 0.001;
 export const PPR_BASE_STEP_MAX = 0.005;
 // 跳躍事件：機率制觸發 ±30–80% 劇烈波動，觸發後下一 tick 可連鎖。
