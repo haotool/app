@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+132
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+133
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-seo-ssot-og-aeo
+- 原因：starpuff 正式站 SEO 基本盤缺失（squirrelscan /starpuff/ 限定 47/F——無 H1/canonical、description 38 字、thin content 0 字、零結構化資料，OG 為 1024×538 單角色 png 1.2MB 且進 sw precache），文案散落 index.html/vite.config/app.config 三處硬編有 drift 風險
+- 解法：建 src/seo SSOT（文案收斂 SITE_CONFIG＋分區直取 zones.ts＋vite plugin 建置期注入、缺標記 fail-closed）、VideoGame＋BreadcrumbList JSON-LD（無造假評分）、常駐視覺隱藏語意內容與 E-E-A-T 外連、llms.txt AEO 完整版、Codex 二輪迭代五魔王大戰 OG 圖（1200×630 jpg 213KB 退出 precache glob）；23 條契約測試鎖 SSOT 同步／資產真實尺寸（JPEG SOF 解析）／fail-closed，三席獨立評分 R2 99/97/99 收斂且殘項全補
 
 - 日期：2026-07-19
 - ID：penalty-release-merge-dispatch-check-rejected

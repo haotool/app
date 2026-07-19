@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { seoHtmlPlugin } from './src/seo/vite-seo-plugin';
 
 // 版本 SSOT（§42）：package.json version + short git SHA，經 define 嵌入 bundle。
 function resolveAppVersion(): string {
@@ -19,7 +20,7 @@ function resolveAppVersion(): string {
 
 export default defineConfig(async ({ mode }) => {
   // basePath SSOT：app.config.mjs（動態 import，鏡像 quake-school includedRoutes 模式）。
-  const { APP_CONFIG } = await import('./app.config.mjs');
+  const { APP_CONFIG, SITE_CONFIG } = await import('./app.config.mjs');
   const base =
     mode === 'production' || process.env['CI']
       ? APP_CONFIG.basePath.production
@@ -42,6 +43,7 @@ export default defineConfig(async ({ mode }) => {
       strictPort: true,
     },
     plugins: [
+      seoHtmlPlugin(),
       VitePWA({
         base,
         registerType: 'autoUpdate',
@@ -54,9 +56,10 @@ export default defineConfig(async ({ mode }) => {
         },
         manifest: {
           id: manifestScope,
-          name: '星噗噗 StarPuff',
-          short_name: 'StarPuff',
-          description: '吸入果凍怪、化為星彈、擊敗果凍王的 Q 彈動作小遊戲。',
+          // 品牌與文案 SSOT：app.config.mjs SITE_CONFIG，禁止在此硬編。
+          name: SITE_CONFIG.name,
+          short_name: SITE_CONFIG.shortName,
+          description: SITE_CONFIG.description,
           theme_color: '#BFF3E0',
           background_color: '#FDEFF6',
           display: 'standalone',
