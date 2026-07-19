@@ -126,9 +126,12 @@ test('魔王戰敗北進 Result 敗北畫面，再戰直接回魔王關', async 
   await startGame(page);
   await page.evaluate(() => window.__sp.skipToBoss());
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  // 前室 retrofit（§86）：走過廊道入 arena 才觸發魔王入場。
+  await page.keyboard.down('ArrowRight');
   await expect
-    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 15000 })
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 30000 })
     .toBeGreaterThan(0);
+  await page.keyboard.up('ArrowRight');
   // 魔王關死亡＝敗北進結算（Stage 1-3 死亡仍為重試當前關）。
   await page.evaluate(() => window.__sp.lose());
   await expect
@@ -172,10 +175,12 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
   await startGame(page);
   await page.evaluate(() => window.__sp.skipToBoss());
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
-  // 魔王入場演出完成後 bossHp 就緒。
+  // 前室 retrofit（§86）：入 arena 後魔王入場演出完成 bossHp 就緒。
+  await page.keyboard.down('ArrowRight');
   await expect
-    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 15000 })
+    .poll(() => page.evaluate(() => window.__sp.bossHp()), { timeout: 30000 })
     .toBeGreaterThan(0);
+  await page.keyboard.up('ArrowRight');
   await page.evaluate(() => window.__sp.win());
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })

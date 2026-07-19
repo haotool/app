@@ -30,8 +30,10 @@ async function runFight(browser, index) {
     await page.waitForFunction(() => window.__sp.scene() === 'Game', null, { timeout: 15000 });
     await page.evaluate(() => window.__sp.gotoLevel(7));
     await page.waitForFunction(() => window.__sp.stage() === 7, null, { timeout: 15000 });
-    // 入場運鏡完成（血條就緒）。
-    await page.waitForFunction(() => window.__sp.bossHp() > 0, null, { timeout: 25000 });
+    // 前室直走（§86 retrofit；不拾增益＝純標準星紀律）→ 入場運鏡完成（血條就緒）。
+    await page.keyboard.down('ArrowRight');
+    await page.waitForFunction(() => window.__sp.bossHp() > 0, null, { timeout: 30000 });
+    await page.keyboard.up('ArrowRight');
     const maxHp = await page.evaluate(() => window.__sp.bossHp());
 
     const held = new Set();

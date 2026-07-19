@@ -61,6 +61,8 @@ export interface GameResultData {
   timeMs: number;
   deaths: number;
   levelId: LevelId;
+  // EX 變體（§86）：敗北再戰須保留變體模式，缺省 false。
+  ex?: boolean;
 }
 
 export const SceneKeys = {

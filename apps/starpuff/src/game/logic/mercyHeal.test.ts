@@ -114,4 +114,25 @@ describe('魔王房 override（§54 難度稽核）', () => {
       advanceMercyHeal(state, { ...baseTick, hp: 1, elapsedMs: 43_000, bossRoom: true }).spawn,
     ).toBe(true);
   });
+
+  it('EX 上限 1（§7.4 主計畫）：EX 魔王房首顆後不再生成；一般房上限 2 不變', () => {
+    let ex = createMercyState();
+    ex = advanceMercyHeal(ex, {
+      ...baseTick,
+      elapsedMs: 25_000,
+      bossRoom: true,
+      exMode: true,
+    }).state;
+    expect(ex.spawned).toBe(1);
+    // 冷卻期滿仍不生成（EX 每命僅 1 顆）。
+    expect(
+      advanceMercyHeal(ex, { ...baseTick, elapsedMs: 90_000, bossRoom: true, exMode: true }).spawn,
+    ).toBe(false);
+    // 非 EX 魔王房沿用上限 2：第二顆照發。
+    let normal = createMercyState();
+    normal = advanceMercyHeal(normal, { ...baseTick, elapsedMs: 25_000, bossRoom: true }).state;
+    expect(advanceMercyHeal(normal, { ...baseTick, elapsedMs: 90_000, bossRoom: true }).spawn).toBe(
+      true,
+    );
+  });
 });

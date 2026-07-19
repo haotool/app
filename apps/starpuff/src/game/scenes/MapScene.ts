@@ -11,7 +11,7 @@ import {
   type SaveData,
 } from '../core/save';
 import { SceneKeys, type LevelId } from '../core/types';
-import { LEVELS, type LevelSpec } from '../logic/levels';
+import { LEVELS, exConquestDone, type LevelSpec } from '../logic/levels';
 import { ZONES, levelsInZone, zoneOf, type ZoneSpec } from '../logic/zones';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
@@ -117,10 +117,8 @@ export class MapScene extends Phaser.Scene {
     this.addResetButton(save);
     this.renderNodes(save, activeZone);
 
-    // EX 解鎖提示（§60）：L9 通關且尚有 EX 未制霸時，提示魔王節點的第二入口。
-    const exPending =
-      save.levels[9]?.cleared === true &&
-      (save.levels[4]?.exCleared !== true || save.levels[7]?.exCleared !== true);
+    // EX 解鎖提示（§60/§86）：L9 通關後提示魔王節點第二入口，直至五王星核制霸達成。
+    const exPending = save.levels[9]?.cleared === true && !exConquestDone(save);
     if (exPending) {
       const hint = this.add
         .text(width / 2, 136, 'EX 挑戰已解鎖：點魔王節點上方的 EX 入口', {

@@ -115,7 +115,10 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       .setAlpha(0.95);
   }
 
-  for (const spec of level.elements) {
+  // 前室魔王關（§69/§86 L4/L7 retrofit）：elements 與 decor 同語義（arena 相對座標），
+  // 呈現層統一平移前室寬；走動關 xOffset=0 零影響。
+  for (const rawSpec of level.elements) {
+    const spec = xOffset === 0 ? rawSpec : { ...rawSpec, x: rawSpec.x + xOffset };
     switch (spec.kind) {
       case 'oneway': {
         const rect = scene.add.rectangle(spec.x, spec.y, spec.w, PLATFORM_H, ONEWAY_TINT, 0.9);

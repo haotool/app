@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { currentChallenge, loadSave } from '../core/save';
 import { SceneKeys, type CodexTab } from '../core/types';
+import { exConquestDone } from '../logic/levels';
 import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
@@ -44,12 +45,31 @@ export class TitleScene extends Phaser.Scene {
     addMuteButton(this);
     bindMenuRelayout(this);
 
+    // 星核制霸（§86）：五王 EX 全制霸的全制霸獎勵——金色星噗噗換裝＋金暈＋制霸章，
+    // 純呈現層 cosmetic 零平衡影響。
+    const conquest = exConquestDone(loadSave());
     if (this.textures.exists('hero-idle')) {
       ensureGlowTexture(this);
       const heroY = height * 0.44;
       const glow = this.add.image(centerX, heroY, TITLE_GLOW_TEX).setDisplaySize(220, 220);
+      if (conquest) glow.setTint(0xffd870);
       const hero = this.add.image(centerX, heroY, 'hero-idle');
       hero.setDisplaySize(150, 150);
+      if (conquest) {
+        hero.setTint(0xffe9a8);
+        const badge = this.add
+          .text(centerX, heroY + 96, '星核制霸', {
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '16px',
+            fontStyle: 'bold',
+            color: '#8a6a1f',
+            backgroundColor: '#ffe9a8',
+            padding: { x: 12, y: 5 },
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.tweens.add({ targets: badge, alpha: 1, duration: 500, delay: 650 });
+      }
       // 開場入場（§36）：主角自天而降 Bounce 落定，光暈淡入。
       hero.setY(heroY - 90).setAlpha(0);
       glow.setAlpha(0);
