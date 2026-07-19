@@ -13,6 +13,7 @@ import {
   cancelOrder,
   closePositionMarket,
   createInitialAccount,
+  evaluateCrossMargin,
   openMarket,
   placeCloseLimit,
   placeLimitOrder,
@@ -27,11 +28,13 @@ import {
   type TradeResult,
   type TrailingParams,
 } from '../engine/engine';
+import { crossAvailableBalance, type MarkMap } from '../engine/math';
 import { type Account, type ClosedTrade, type TradeEvent } from '../engine/types';
 import { SYMBOL_META } from '../config/market';
 import { formatAmount, formatPrice, formatSignedPnl } from '../lib/format';
 import { createDebouncedStorage, PERSIST_DEBOUNCE_MS } from '../lib/debouncedStorage';
 import { playLiquidationSound } from '../lib/sound';
+import { useMarketStore } from './marketStore';
 import { useSoundPrefsStore } from './soundPrefsStore';
 
 export type ToastTone = 'long' | 'short' | 'warning' | 'info';
@@ -203,6 +206,22 @@ function appendToasts(current: ToastItem[], incoming: Omit<ToastItem, 'id'>[]): 
   return next.slice(-TOAST_MAX_VISIBLE);
 }
 
+// 持倉標記價快照（R6-2）：由行情 store 收集帳上各 symbol 的最新 mark。
+function collectMarks(account: Account): MarkMap {
+  const tickers = useMarketStore.getState().tickers;
+  const marks: MarkMap = {};
+  for (const position of account.positions) {
+    const ticker = tickers[position.symbol];
+    if (ticker !== undefined) marks[position.symbol] = ticker.markPrice;
+  }
+  return marks;
+}
+
+// 開倉資金檢查基準：cross 未實現損益計入可用餘額（無 cross 持倉時恆等於裸 balance）。
+function openAvailableBalance(account: Account): number {
+  return crossAvailableBalance(account, collectMarks(account));
+}
+
 interface TradeState {
   account: Account;
   toasts: ToastItem[];
@@ -236,7 +255,13 @@ export const useTradeStore = create<TradeState>()(
       return {
         account: createInitialAccount(),
         toasts: [],
-        openMarketOrder: (params) => commit(openMarket(get().account, params)),
+        openMarketOrder: (params) =>
+          commit(
+            openMarket(get().account, {
+              ...params,
+              availableBalance: openAvailableBalance(get().account),
+            }),
+          ),
         closeMarketOrder: (params) => {
           // 回傳引擎實際成交結果，供 UI 以真實值（非預覽值）呈現。
           const result = closePositionMarket(get().account, params);
@@ -244,7 +269,13 @@ export const useTradeStore = create<TradeState>()(
           set({ account: result.account });
           return { ok: true, trade: result.trade };
         },
-        placeLimitOrder: (params) => commit(placeLimitOrder(get().account, params)),
+        placeLimitOrder: (params) =>
+          commit(
+            placeLimitOrder(get().account, {
+              ...params,
+              availableBalance: openAvailableBalance(get().account),
+            }),
+          ),
         placeCloseLimitOrder: (params) => commit(placeCloseLimit(get().account, params)),
         cancelPendingOrder: (orderId) => commit(cancelOrder(get().account, orderId)),
         // 原子套用：TP、SL 皆通過引擎驗證才 commit，任一失敗不留半套設定。
@@ -261,7 +292,18 @@ export const useTradeStore = create<TradeState>()(
             account.orders.some((order) => order.symbol === symbol);
           if (!exposed) return;
 
-          const { account: next, events } = processTick(account, symbol, mark, now);
+          const ticked = processTick(account, symbol, mark, now);
+          let next = ticked.account;
+          let events = ticked.events;
+          // cross 聚合強平：以帳上全部持倉的最新 mark 評估，與本次 tick 結果合併後單次 set。
+          if (next.positions.some((position) => position.marginMode === 'cross')) {
+            const marks = { ...collectMarks(next), [symbol]: mark };
+            const evaluated = evaluateCrossMargin(next, marks, now);
+            if (evaluated.account !== next || evaluated.events.length > 0) {
+              next = evaluated.account;
+              events = [...events, ...evaluated.events];
+            }
+          }
           if (next === account && events.length === 0) return;
           // 強平提示音與強平 toast 同路徑觸發；受設定開關管控。
           if (

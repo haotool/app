@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushTradePersist, parsePersistedTradeState, useTradeStore } from './tradeStore';
+import { useMarketStore } from './marketStore';
 import { useSoundPrefsStore } from './soundPrefsStore';
 import { playLiquidationSound } from '../lib/sound';
 import { createInitialAccount } from '../engine/engine';
 import { INITIAL_BALANCE_USDT, TRADE_STORAGE_KEY, TRADE_STORAGE_VERSION } from '../config/trading';
+import { type Ticker } from '../services/ticker';
 
 vi.mock('../lib/sound', () => ({
   playLiquidationSound: vi.fn(),
@@ -15,9 +17,23 @@ const NOW = 1_800_000_000_000;
 
 function resetStore() {
   useTradeStore.setState({ account: createInitialAccount(), toasts: [] });
+  useMarketStore.setState({ tickers: {} });
   useSoundPrefsStore.setState({ liquidationSound: true });
   playLiquidationSoundMock.mockClear();
   flushTradePersist();
+}
+
+function seedTicker(symbol: Ticker['symbol'], price: number) {
+  useMarketStore.getState().setTicker({
+    symbol,
+    lastPrice: price,
+    markPrice: price,
+    price24hPcnt: 0,
+    highPrice24h: price,
+    lowPrice24h: price,
+    turnover24h: 0,
+    volume24h: 0,
+  });
 }
 
 describe('useTradeStore', () => {
@@ -171,6 +187,107 @@ describe('useTradeStore', () => {
     expect(account.orders).toHaveLength(0);
     expect(account.positions).toHaveLength(1);
     expect(toasts.length).toBeGreaterThan(0);
+  });
+
+  it('lets a cross opening draw on unrealized profit and allows negative cash (R6-2)', () => {
+    seedTicker('BTCUSDT', 60000);
+    const first = useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.1,
+      price: 60000,
+      leverage: 10,
+    });
+    expect(first.ok).toBe(true);
+
+    // BTC 標記價漲至 70000：cross uPnL +1000 計入可用餘額。
+    seedTicker('BTCUSDT', 70000);
+    // 成本 9605.28 > 現金 9396.7，但 ≤ 可用 10396.7 → 放行，現金轉負。
+    const second = useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'ETHUSDT',
+      side: 'long',
+      qty: 3.2,
+      price: 3000,
+      leverage: 1,
+    });
+    expect(second.ok).toBe(true);
+    expect(useTradeStore.getState().account.balance).toBeCloseTo(9396.7 - 9605.28, 8);
+  });
+
+  it('keeps the isolated opening bound to bare cash without cross positions', () => {
+    seedTicker('BTCUSDT', 60000);
+    const result = useTradeStore.getState().openMarketOrder({
+      marginMode: 'isolated',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 100,
+      price: 60000,
+      leverage: 10,
+    });
+    expect(result).toEqual({ ok: false, error: 'insufficient-balance' });
+  });
+
+  it('aggregates cross liquidation across symbols on tick (R6-2)', () => {
+    seedTicker('BTCUSDT', 60000);
+    seedTicker('ETHUSDT', 3000);
+    useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.5,
+      price: 60000,
+      leverage: 100,
+    });
+    useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'ETHUSDT',
+      side: 'long',
+      qty: 10,
+      price: 3000,
+      leverage: 100,
+    });
+    expect(useTradeStore.getState().account.balance).toBeCloseTo(9367, 8);
+
+    // ETH 標記價崩至 1900（uPnL −11000 最虧）；BTC tick 40000（−10000）觸發聚合級聯強平。
+    seedTicker('ETHUSDT', 1900);
+    useTradeStore.getState().applyTick('BTCUSDT', 40000, NOW);
+
+    const { account, toasts } = useTradeStore.getState();
+    expect(account.positions).toHaveLength(0);
+    expect(account.history.map((trade) => trade.symbol)).toEqual(['BTCUSDT', 'ETHUSDT']);
+    expect(account.history.every((trade) => trade.reason === 'liquidation')).toBe(true);
+    expect(toasts.some((toast) => toast.tone === 'warning')).toBe(true);
+    expect(playLiquidationSoundMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the cross aggregation when another cross symbol lacks a mark', () => {
+    seedTicker('BTCUSDT', 60000);
+    seedTicker('ETHUSDT', 3000);
+    useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'BTCUSDT',
+      side: 'long',
+      qty: 0.5,
+      price: 60000,
+      leverage: 100,
+    });
+    useTradeStore.getState().openMarketOrder({
+      marginMode: 'cross',
+      symbol: 'ETHUSDT',
+      side: 'long',
+      qty: 10,
+      price: 3000,
+      leverage: 100,
+    });
+
+    // ETH 行情缺席（重置 tickers 僅留 BTC）：整輪略過，不以殘缺行情誤判強平。
+    useMarketStore.setState({ tickers: {} });
+    seedTicker('BTCUSDT', 40000);
+    useTradeStore.getState().applyTick('BTCUSDT', 40000, NOW);
+
+    expect(useTradeStore.getState().account.positions).toHaveLength(2);
   });
 
   it('caps visible toasts at the configured maximum', () => {
