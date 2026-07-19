@@ -56,7 +56,7 @@ describe('public SEO 檔案與 SSOT 同步', () => {
     const llms = readPublic('llms.txt');
     expect(llms).toContain(SITE_URL);
     for (const zone of WORLD_ZONES) {
-      expect(llms).toContain(zone.zone);
+      expect(llms).toContain(`${zone.zone}（${zone.levels}）`);
       expect(llms).toContain(zone.boss);
       expect(llms).toContain(zone.trait);
     }
