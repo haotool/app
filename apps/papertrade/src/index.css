@@ -74,6 +74,17 @@
 }
 
 @layer base {
+  /* 按壓回饋（R6-8）：全站按鈕統一按壓縮放；data-no-press 豁免全幅疊層（如 sheet 背板）。
+     transition 僅宣告 transform，帶 transition-colors utility 的按鈕維持其色彩過渡。 */
+  button {
+    transition-property: transform;
+    transition-duration: 100ms;
+  }
+
+  button:active:not([data-no-press]) {
+    transform: scale(0.98);
+  }
+
   /* App 級體感（ADR-R5-02）：鎖字級自動放大、全向禁 overscroll 鏈、去 tap 高亮與文字選取。 */
   html {
     background-color: var(--color-bg);
@@ -112,6 +123,16 @@
     -webkit-appearance: none;
     appearance: none;
   }
+}
+
+/* 按鈕型 Link（如圖表頁做多/做空 CTA）的按壓回饋：與 button 全域規則同款。 */
+.active-press {
+  transition-property: transform;
+  transition-duration: 100ms;
+}
+
+.active-press:active {
+  transform: scale(0.98);
 }
 
 /* 交易滑桿共用造型（OrderForm 數量比例、LeverageSheet 槓桿同視覺族）：
@@ -337,5 +358,10 @@
 
   .warning-pulse::after {
     animation: none;
+  }
+
+  button:active:not([data-no-press]),
+  .active-press:active {
+    transform: none;
   }
 }

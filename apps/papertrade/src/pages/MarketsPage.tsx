@@ -83,7 +83,7 @@ function MarketRow({ symbol }: { symbol: MarketSymbol }) {
             </span>
             <PprTag symbol={symbol} />
           </span>
-          <span className="truncate text-caption text-text-3">
+          <span className="truncate text-caption text-text-3 tabular-nums">
             量 {ticker ? formatCompact(ticker.turnover24h) : '--'}
           </span>
         </span>

@@ -86,7 +86,7 @@ export function PositionCard({ position }: { position: Position }) {
           {/* 模式×槓桿合併 chip（R6-2/R6-8）：多空色相不變，補保證金模式語意。 */}
           <span
             className={clsx(
-              'rounded px-1.5 py-0.5 text-caption font-medium',
+              'rounded px-1.5 py-0.5 text-caption font-medium tabular-nums',
               isLong ? 'bg-long-bg text-long' : 'bg-short-bg text-short',
             )}
           >

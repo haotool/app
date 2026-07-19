@@ -305,7 +305,7 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
         <div
           role="tablist"
           aria-label="時間框架"
-          className="flex gap-1.5 overflow-x-auto px-4 pb-1.5"
+          className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 pb-1.5"
         >
           {TIMEFRAMES.map(({ id, label }) => (
             <button
@@ -315,7 +315,7 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
               aria-selected={timeframe === id}
               onClick={() => onTimeframeChange(id)}
               className={clsx(
-                'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+                'min-h-11 min-w-11 shrink-0 snap-start rounded-control px-3 text-label transition-colors',
                 timeframe === id
                   ? 'bg-primary/15 font-semibold text-primary'
                   : 'text-text-3 active:bg-surface-2',
@@ -340,13 +340,13 @@ function ChartView({ symbol, timeframe, onTimeframeChange }: ChartViewProps) {
         <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--sab))] z-10 mx-auto flex max-w-lg gap-3 bg-bg/95 px-4 py-3 backdrop-blur lg:static lg:z-auto lg:mx-0 lg:max-w-none lg:bg-transparent lg:px-4 lg:pb-0 lg:backdrop-blur-none">
           <Link
             to={`/trade?symbol=${symbol}&side=long`}
-            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
+            className="active-press flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-long text-body font-semibold text-bg"
           >
             做多
           </Link>
           <Link
             to={`/trade?symbol=${symbol}&side=short`}
-            className="flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
+            className="active-press flex h-12 min-w-11 flex-1 items-center justify-center rounded-control bg-short text-body font-semibold text-text"
           >
             做空
           </Link>
