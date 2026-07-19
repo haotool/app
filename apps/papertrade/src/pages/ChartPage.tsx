@@ -162,6 +162,23 @@ function ChartArea({ symbol, timeframe }: { symbol: MarketSymbol; timeframe: Tim
 function IndicatorChips() {
   const indicators = useMarketPrefsStore((state) => state.indicators);
   const toggleIndicator = useMarketPrefsStore((state) => state.toggleIndicator);
+  const macd = useMarketPrefsStore((state) => state.macd);
+  const toggleMacd = useMarketPrefsStore((state) => state.toggleMacd);
+  const trendLines = useMarketPrefsStore((state) => state.trendLines);
+  const toggleTrendLines = useMarketPrefsStore((state) => state.toggleTrendLines);
+  const supportResistance = useMarketPrefsStore((state) => state.supportResistance);
+  const toggleSupportResistance = useMarketPrefsStore((state) => state.toggleSupportResistance);
+
+  const analysisToggles = [
+    { key: 'macd', label: 'MACD', active: macd, onToggle: toggleMacd },
+    { key: 'trendLines', label: '趨勢線', active: trendLines, onToggle: toggleTrendLines },
+    {
+      key: 'supportResistance',
+      label: '支撐阻力',
+      active: supportResistance,
+      onToggle: toggleSupportResistance,
+    },
+  ];
 
   return (
     <div role="group" aria-label="技術指標" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
@@ -183,6 +200,20 @@ function IndicatorChips() {
           </button>
         );
       })}
+      {analysisToggles.map(({ key, label, active, onToggle }) => (
+        <button
+          key={key}
+          type="button"
+          aria-pressed={active}
+          onClick={onToggle}
+          className={clsx(
+            'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+            active ? 'bg-surface-2 font-semibold text-text' : 'text-text-3 active:bg-surface-2',
+          )}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

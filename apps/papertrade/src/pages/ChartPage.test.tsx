@@ -22,8 +22,22 @@ vi.mock('../hooks/useKlines', () => ({
 }));
 
 vi.mock('../components/CandleChart', () => ({
-  CandleChart: ({ seriesKey, indicators }: { seriesKey: string; indicators: string[] }) => (
-    <div data-testid="candle-chart">{`${seriesKey}|${indicators.join(',')}`}</div>
+  CandleChart: ({
+    seriesKey,
+    indicators,
+    showMacd,
+    showTrendLines,
+    showSupportResistance,
+  }: {
+    seriesKey: string;
+    indicators: string[];
+    showMacd: boolean;
+    showTrendLines: boolean;
+    showSupportResistance: boolean;
+  }) => (
+    <div data-testid="candle-chart">
+      {`${seriesKey}|${indicators.join(',')}|macd:${showMacd}|trend:${showTrendLines}|sr:${showSupportResistance}`}
+    </div>
   ),
 }));
 
@@ -65,7 +79,13 @@ function renderChart(path: string) {
 describe('ChartPage', () => {
   beforeEach(() => {
     useMarketStore.setState({ tickers: {}, wsStatus: 'connected' });
-    useMarketPrefsStore.setState({ favorites: [], indicators: [] });
+    useMarketPrefsStore.setState({
+      favorites: [],
+      indicators: [],
+      macd: true,
+      trendLines: false,
+      supportResistance: false,
+    });
     useKlinesMock.mockClear();
     useKlinesMock.mockReturnValue({
       bars: [],
@@ -300,6 +320,51 @@ describe('ChartPage', () => {
     await user.click(ma7);
     expect(screen.getByTestId('candle-chart')).toHaveTextContent('BTCUSDT:60|ema12');
     expect(useMarketPrefsStore.getState().indicators).toEqual(['ema12']);
+  });
+
+  it('enables MACD by default and passes the analysis switches to the chart', async () => {
+    renderChart('/chart/BTCUSDT');
+
+    const group = await screen.findByRole('group', { name: '技術指標' });
+    expect(within(group).getByRole('button', { name: 'MACD' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(within(group).getByRole('button', { name: '趨勢線' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(within(group).getByRole('button', { name: '支撐阻力' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('macd:true|trend:false|sr:false');
+  });
+
+  it('toggles the analysis switches via chips and persists them to the store', async () => {
+    const user = userEvent.setup();
+    renderChart('/chart/BTCUSDT');
+
+    const group = await screen.findByRole('group', { name: '技術指標' });
+    await user.click(within(group).getByRole('button', { name: 'MACD' }));
+    await user.click(within(group).getByRole('button', { name: '趨勢線' }));
+    await user.click(within(group).getByRole('button', { name: '支撐阻力' }));
+
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('macd:false|trend:true|sr:true');
+    expect(useMarketPrefsStore.getState().macd).toBe(false);
+    expect(useMarketPrefsStore.getState().trendLines).toBe(true);
+    expect(useMarketPrefsStore.getState().supportResistance).toBe(true);
+
+    await user.click(within(group).getByRole('button', { name: 'MACD' }));
+    expect(screen.getByTestId('candle-chart')).toHaveTextContent('macd:true|trend:true|sr:true');
+  });
+
+  it('keeps the analysis chips at the 44px touch target minimum', async () => {
+    renderChart('/chart/BTCUSDT');
+    const group = await screen.findByRole('group', { name: '技術指標' });
+    for (const name of ['MACD', '趨勢線', '支撐阻力']) {
+      expect(within(group).getByRole('button', { name })).toHaveClass('min-h-11', 'min-w-11');
+    }
   });
 
   it('keeps the persisted indicators applied after a symbol switch', async () => {
