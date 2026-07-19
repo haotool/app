@@ -150,8 +150,15 @@ const browser = await chromium.launch();
     await page.waitForTimeout(250);
   }
   check('B2 果凍王擊破', (await page.evaluate(() => window.__sp.bossHp())) <= 0);
-  // WIN_DELAY 演出期擷取 toast（第一張成就解鎖橫幅）。
-  await page.waitForTimeout(600);
+  // 擊破批合併 toast 觀測點（戰中彩蛋批先播，擊破批跨批序列輪替）：輪詢至輪到擊破批。
+  let toastText = '';
+  const toastDeadline = Date.now() + 8000;
+  while (Date.now() < toastDeadline) {
+    toastText = await page.evaluate(() => window.__sp.achievementToast());
+    if (toastText.includes('搖晃的王座')) break;
+    await page.waitForTimeout(200);
+  }
+  check('B6 擊破批 toast 含首勝名稱', toastText.includes('搖晃的王座'), toastText);
   await page.screenshot({ path: join(OUT_DIR, 'b-toast-during-win-delay.png') });
   await waitScene(page, 'Result');
   await page.waitForTimeout(700);

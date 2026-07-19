@@ -156,6 +156,7 @@ declare global {
       damageBossAt: (amount: number, x: number, y: number) => void;
       bossState: () => { phase: string; state: string } | null;
       grantInvuln: (ms: number) => void;
+      achievementToast: () => string;
     }>;
   }
 }
@@ -285,6 +286,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     damageBossAt: (amount, x, y) => gameScene().damageBossAtPoint(amount, x, y),
     bossState: () => gameScene().bossDebugState(),
     grantInvuln: (ms) => gameScene().grantInvuln(ms),
+    // v15 觀測點（§94 e2e）：最近成就 toast 文案（canvas 文字不可由 DOM 查詢）。
+    achievementToast: () => gameScene().lastAchievementToast,
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+149
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+150
 
 ## 新增模板（4 行）
 
@@ -14,9 +14,14 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-19
+- ID：reward-starpuff-v15-review-toast-batch-merge
+- 原因：兩席審查實測抓到魔王擊破多重解鎖逐張 toast 在 2.8s 勝利轉場窗僅能播完約 1.3 張且被全屏白閃洗白，e2e 亦缺 EX 擊破管線與 toast 文案斷言
+- 解法：同批解鎖合併單張橫幅（頓號串接＋深色底襯＋CJK 換行）、新增 \_\_sp.achievementToast 觀測點，補 EX 擊破 e2e 案（僅頒 EX 不誤發首勝/速通）與 verify B6 toast 斷言
+
+- 日期：2026-07-19
 - ID：reward-starpuff-v15-v5-layout-assertion-drift
 - 原因：v14 將 sp-key-layout 升 schema v2 但 v5.spec 仍斷言 version===1，starpuff e2e 不在 main CI 跑批致 main 帶著確定性紅燈（86 案全套重現）
-- 解法：斷言改 version===2 對齊 §89 儲存恆當前版語意；v5 全 spec 14 案重跑全綠並記入全套回歸
+- 解法：斷言改 version===2 對齊 §89 儲存恆當前版語意；v5＋v12 全 spec 14 案重跑全綠並記入全套回歸
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-ex-quit-e2e-flake-rootfix

@@ -1,7 +1,8 @@
 import type { LevelId } from './types';
 
-// 存檔 SSOT（GAME_DESIGN §38）：localStorage sp-save schema v1，純資料模組供 vitest 驗證。
-// parse/fallback 模式沿用 core/layout.ts：版本不符、形狀損毀、隱私模式一律回退預設。
+// 存檔 SSOT（GAME_DESIGN §38/§94）：localStorage sp-save schema v2（v1 由 parseSave 遷移），
+// 純資料模組供 vitest 驗證。parse/fallback 模式沿用 core/layout.ts：未知版本、形狀損毀、
+// 隱私模式一律回退預設。
 
 export interface LevelSaveEntry {
   cleared: boolean;

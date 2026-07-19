@@ -1559,8 +1559,10 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 ### 94.3 呈現三層（解鎖不漏看）
 
 - 遊戲內 toast：GameScene `persistAndAward` 單點（彩蛋／通關／EX 三個存檔寫入點
-  寫後評估增量）→ 序列佇列一次一張（同幀多解鎖不重疊、約 2.1s/張、金色橫幅沿
-  flavorToast 語彙，禁全屏遮罩）；轉場即隨場景銷毀，由下兩層兜底。
+  寫後評估增量）→ **同批多解鎖合併單張橫幅**（頓號串接，勝利轉場 2.8s 窗口內必可
+  播完整批）、跨批序列佇列不重疊（約 2.1s/張）；金色橫幅帶深色底襯（勝利白閃下
+  仍可讀），禁全屏遮罩；e2e 觀測點 `__sp.achievementToast()`（canvas 文字不可由
+  DOM 查詢）。轉場即隨場景銷毀，由下兩層兜底。
 - 結算名單：`GameResultData.unlocked`（additive optional）帶本局勝利瞬間新頒發
   id 進 Result 金底列示（Credits 轉接保留）——魔王擊破多重解鎖不因 WIN_DELAY
   轉場漏看；敗北局內解鎖的彩蛋成就同樣如實列出。
