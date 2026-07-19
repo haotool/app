@@ -2,18 +2,22 @@
 // v1（ex-bot-audit）的 Node 側輪詢決策延遲 ~500ms，EX 節奏 ×1.15 下反應不足；
 // v2 把決策迴圈搬進瀏覽器（setInterval 80ms tick 同步讀 __sp、合成 KeyboardEvent），
 // 貼近人類反應粒度。純標準星紀律不變：只用移動/跳躍/基礎吸射，週期 grantStar('jelly')。
-// 用法：node scripts/ex-bot-driver.mjs <levelId: 12|16|20> [port]
+// 用法：node scripts/ex-bot-driver.mjs <levelId: 12|16|20> [port] [--assist]
+// --assist：受控 i-frame（grantInvuln 週期護盾）隔離「迴避」軸，單獨驗證
+// 「純標準星輸出鏈可完成」（擊破鏈無 DPS 死鎖）；迴避軸由純模式 trace 與
+// FSM telegraph 時窗單測分別背書。
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const levelId = Number(process.argv[2] ?? '12');
 const port = process.argv[3] ?? '3113';
+const assist = process.argv.includes('--assist');
 const RUN_TIMEOUT_MS = 900_000;
 const OUT_DIR = new URL('../../../screenshots/starpuff-v13/', import.meta.url).pathname;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 瀏覽器內 driver：合成鍵事件驅動 Phaser KeyboardPlugin（keyCode 以 defineProperty 注入）。
-function installDriver(targetLevelId) {
+function installDriver({ targetLevelId, assistMode }) {
   const KEY = { left: 37, right: 39, jump: 90, shoot: 88 }; // Arrow/Z/X
   const held = new Set();
   const dispatch = (type, keyCode) => {
@@ -46,7 +50,9 @@ function installDriver(targetLevelId) {
     lastGrantAt: 0,
     lastTraceAt: 0,
     lastJumpAt: 0,
+    lastInvulnAt: 0,
     strafeFlip: 1,
+    assist: assistMode === true,
     stop: false,
   };
   window.__exDriver = driver;
@@ -91,6 +97,11 @@ function installDriver(targetLevelId) {
       driver.lastGrantAt = now;
       sp.grantStar('jelly');
     }
+    // assist 模式：受控 i-frame 週期續盾（輸出鏈驗證，迴避軸另證）。
+    if (driver.assist && now - (driver.lastInvulnAt ?? 0) >= 2500) {
+      driver.lastInvulnAt = now;
+      sp.grantInvuln(3000);
+    }
 
     const jumpReady = now - driver.lastJumpAt > 620;
     const jump = () => {
@@ -116,6 +127,18 @@ function installDriver(targetLevelId) {
       release(39);
     };
 
+    // assist 模式（輸出鏈隔離驗證）：i-frame 常駐下跳過全部迴避分支——
+    // 純模式的雙子貼臉會讓迴避分支永久搶佔射擊窗（L12 實測），失去驗證目的。
+    if (driver.assist) {
+      if (ammo > 0) {
+        face(Math.sign(boss.x - px || 1));
+        if (targetLevelId === 20 && fsm?.phase !== 'p2') jump();
+        shoot();
+      } else {
+        face(px > center ? -1 : 1);
+      }
+      return;
+    }
     // 1) 貼身接觸傷迴避（最高優先）：最近本體 120px 內反向撤離＋跳；
     //    被逼到邊緣死角時改朝魔王方向跳越（穿頭頂換邊）。
     const nearest = bodies.reduce(
@@ -187,18 +210,22 @@ function installDriver(targetLevelId) {
       face(-1);
       return;
     }
-    // 7) 對打：遠側安定輸出——離最近本體 ≥380px 的遠帶站位（接觸傷實測為 bot
-    //    首要死因），idle 窗全數轉化為射擊；L20 核心懸浮帶起跳高點射。
+    // 7) 對打：遠側安定輸出——離最近本體 ≥400px 的遠帶站位（接觸傷實測為 bot
+    //    首要死因）；900ms 時間片小步折返（80ms tick 下逐 tick 翻轉會原地抖動）；
+    //    射擊窗與走位分離：站位帶內先面向魔王再射，L20 核心懸浮帶起跳高點射。
     const side = px <= boss.x ? -1 : 1;
+    const flip = Math.floor(now / 900) % 2 === 0 ? 1 : -1;
     const anchor = Math.min(Math.max(boss.x + side * 400, arenaLeft + 80), arenaLeft + view - 80);
-    const drift = Math.abs(anchor - px) > 50 ? Math.sign(anchor - px) : 0;
-    if (drift !== 0) face(drift);
-    else stopMove();
-    if (ammo > 0) {
+    const target = anchor + flip * 40;
+    const drift = Math.abs(target - px) > 60 ? Math.sign(target - px) : 0;
+    if (ammo > 0 && Math.floor(now / 400) % 2 === 0) {
       face(Math.sign(boss.x - px || 1));
       if (targetLevelId === 20) jump();
       shoot();
+      return;
     }
+    if (drift !== 0) face(drift);
+    else stopMove();
   };
   driver.interval = setInterval(tick, 80);
 }
@@ -229,9 +256,10 @@ async function main() {
   const maxHp = await page.evaluate(() => window.__sp.bossHp());
   console.log(`EX 魔王 HP ${maxHp}，開戰（瀏覽器內 driver 80ms tick）`);
 
-  await page.evaluate(installDriver, levelId);
+  await page.evaluate(installDriver, { targetLevelId: levelId, assistMode: assist });
 
   const startedAt = Date.now();
+  const nodeTrace = [];
   let fullRetries = 0;
   let segmentRetries = 0;
   let lastBossHp = maxHp;
@@ -264,10 +292,23 @@ async function main() {
     const snap = await sp(() => ({
       bossHp: window.__sp.bossHp(),
       fsm: window.__sp.bossState(),
+      hp: window.__sp.playerHp(),
+      px: Math.round(window.__sp.probe().x),
+      shots: window.__exDriver?.shots ?? -1,
     }));
     if (snap) {
       if (snap.bossHp > lastBossHp) segmentRetries += 1;
       if (snap.bossHp > 0) lastBossHp = snap.bossHp;
+      // trace 收斂到 Node 側（瀏覽器側狀態跨 evaluate 失敗時全損的教訓）。
+      nodeTrace.push({
+        t: Date.now() - startedAt,
+        phase: snap.fsm?.phase ?? '-',
+        state: snap.fsm?.state ?? '-',
+        bossHp: snap.bossHp,
+        hp: snap.hp,
+        px: snap.px,
+        shots: snap.shots,
+      });
       const midNow = snap.fsm ? snap.fsm.phase === 'p2' : snap.bossHp <= maxHp * 0.66;
       const lateNow = snap.fsm ? snap.fsm.phase === 'p3' : snap.bossHp <= maxHp * 0.33;
       if (!phaseShots.p2 && midNow && snap.bossHp > 0) {
@@ -286,29 +327,31 @@ async function main() {
     const driver = window.__exDriver;
     driver.stop = true;
     clearInterval(driver.interval);
-    return { trace: driver.trace, shots: driver.shots };
+    return { shots: driver.shots };
   });
   const elapsed = Math.round((Date.now() - startedAt) / 100) / 10;
+  const shotsFired = stats?.shots ?? nodeTrace.at(-1)?.shots ?? -1;
   await page.screenshot({ path: `${OUT_DIR}l${levelId}-ex-final.png` });
   writeFileSync(
-    `${OUT_DIR}l${levelId}-ex-trace.json`,
+    `${OUT_DIR}l${levelId}-ex${assist ? '-assist' : ''}-trace.json`,
     JSON.stringify(
       {
         levelId,
+        assist,
         result,
         elapsedSec: elapsed,
         view,
         segmentRetries,
         fullRetries,
-        shotsFired: stats?.shots ?? -1,
-        trace: stats?.trace ?? [],
+        shotsFired,
+        trace: nodeTrace,
       },
       null,
       2,
     ),
   );
   console.log(
-    `L${levelId} EX 結果：${result}｜用時 ${elapsed}s｜視寬 ${view}｜段重試 ${segmentRetries}｜整場重試 ${fullRetries}｜發射 ${stats?.shots ?? '?'}`,
+    `L${levelId} EX 結果：${result}｜用時 ${elapsed}s｜視寬 ${view}｜段重試 ${segmentRetries}｜整場重試 ${fullRetries}｜發射 ${shotsFired}`,
   );
   await browser.close();
   if (result !== 'won') process.exitCode = 1;

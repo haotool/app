@@ -10,6 +10,7 @@ declare global {
       gotoLevel: (levelId: number, ex?: boolean) => void;
       damageBoss: (amount: number) => void;
       bossState: () => { phase: string; state: string } | null;
+      scenePaused: () => boolean;
       save: () => {
         levels: Record<string, { cleared: boolean; exCleared?: boolean; bestTimeMs?: number }>;
       };
@@ -188,6 +189,41 @@ test('星核制霸（§86）：五王 EX 全制霸存檔載入標題/圖鑑/地�
   // 全通關存檔預設落五區頁（highestClearedLevel=20）：EX 徽鈕存在＝全制霸態不移除
   // 入口、可重玩。
   await expect(page.locator('[data-menu="node-20-ex"]')).toBeAttached();
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
+test('EX 中途退出防鎖（§86）：EX 戰中暫停重開保留變體、退出主選單不寫 exCleared', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => window.__sp.gotoLevel(12, true));
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 15000 }).toBe(12);
+  await walkIntoArena(page, 120);
+  // 磨掉部分血量後暫停重開：EX 模式保留（血條回滿 120 而非一般 80）。
+  await pollDamage(page, 10, 20000);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.pause-overlay')).toBeVisible();
+  await page.locator('[data-pause="restart"]').dispatchEvent('pointerdown', {
+    pointerId: 5,
+    isPrimary: true,
+  });
+  await expect.poll(() => page.evaluate(() => window.__sp.scenePaused())).toBe(false);
+  await walkIntoArena(page, 120);
+  // 戰中退出主選單：不鎖存檔——exCleared 未寫、一般紀錄不動、可再次入場。
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.pause-overlay')).toBeVisible();
+  await page.locator('[data-pause="quit"]').dispatchEvent('pointerdown', {
+    pointerId: 5,
+    isPrimary: true,
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 10000 })
+    .toBe('Title');
+  const entry = await page.evaluate(() => window.__sp.save().levels['12']);
+  expect(entry?.exCleared ?? false).toBe(false);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });
