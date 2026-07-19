@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+134
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+142
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,56 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-codex-inset-avoidance
+- 原因：Codex 星核制霸徽記/網格/技能欄貼殼緣排版，直持瀏海 inset 下被遮且 C 修正後靜音鈕左移與徽記重疊
+- 解法：hudSafeInsets 導出共用，Codex 徽記/返回鈕/雙列網格/技能欄以左右净 inset 收縮有效區排版，854 瀏海與 1200 無 inset 截圖對照零遮蔽零回歸
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-hud-safe-area
+- 原因：standalone 直持下瀏海/動態島換軸到殼右緣，貼緣的暫停/靜音鍵與配額列被遮蔽難按
+- 解法：hud 右緣元素統一依 core/safeArea 净 inset 邏輯偏移左移避讓，四組 insets（直持雙向/橫持瀏海/無瀏海）真點 mute 鈕全命中
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-shell-card-top-anchor
+- 原因：復審席 B 新開 M2——非模態卡垂直置中錨點在 ≤360px 窄機與開始鈕邊緣重疊並攔截點擊帶
+- 解法：卡片改頂緣錨定＋max-height 72% 避開底部選單帶，五視口 AABB 矩陣（320/360/390/844/667）零重疊且底緣真點全進 Game
+
+- 日期：2026-07-19
+- ID：penalty-starpuff-v14-install-guide-blocking-overlay
+- 原因：安裝指引首版為全屏模態遮罩且無場景守門，戰鬥中彈出攔截全部操控並使 smoke e2e 迴歸失敗（兩席審查 B1/Blocking，含腳本絕對路徑違規）
+- 解法：改殼層卡片基建（僅 Title 安靜時刻顯示、開玩自動收卡、非模態左卡不遮罩）＋回訪玩家方向告知卡、持向納取消回滾、rotation 偏好快取、腳本改 env 埠與相對路徑、KEY_BASE_PX 跨檔守門
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-shell-cards-idle-gating
+- 原因：兩席審查另列 a11y（aria-modal/Escape）、wakeLock 生命週期過寬、切持向未重夾限等 Minor
+- 解法：shellCards 統一 aria-modal 對話框＋Escape；wakeLock 跟隨 controls is-active（進場取得離場釋放）；切持向即重套 applyLayoutToDom；三輪 smoke 連跑全綠證實 flaky 根除
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-haptics-wakelock
+- 原因：行動 PWA 缺少打擊觸覺與螢幕常亮，重擊回饋單靠音效且觀戰段落可能熄屏中斷
+- 解法：haptics 查表跟隨 playSfx（僅重擊/里程碑、靜音同步不震、iOS 靜默降級）＋頁面級 Screen Wake Lock（visibilitychange 重取、被拒降級），兩項均通過 KISS/ROI 閘
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-pwa-install-guide
+- 原因：starpuff 無 PWA 安裝入口與平台指引，行動用戶不知可安裝離線全螢幕遊玩，in-app browser 用戶無外開引導
+- 解法：移植 RateWise 偵測矩陣為純 TS installGuide（platform/in-app/standalone 18 測試案）＋殼內 DOM overlay 分平台指引（iOS 加入主畫面/Android beforeinstallprompt/in-app 外開），localStorage 忽略記憶不進 save schema
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-key-scale-migration
+- 原因：虛擬鍵尺寸固定（A76/B72），大屏或粗指使用者無法調整，且 sp-key-layout schema v1 無縮放欄位
+- 解法：layout schema 升 v2（versioned migration：v1 鍵位保留、scale 補 1）、CSS 變數 --sp-key-scale 單點驅動鍵與鍵帽縮放（80%–130%、44px 守門單測）、keyConfig 加縮放列即時預覽
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-keyconfig-single-line
+- 原因：cfg-bar 橫排 flex 無寬度約束且鈕可壓縮，375/667 級殼寬下「儲存並返回」被壓成兩行文字
+- 解法：cfg-bar 改直欄（hint＋actions 分列）、鈕 nowrap＋flex-shrink:0、空間不足整鈕換列，五視口×雙持向實測全單行
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v14-rotation-flip-ssot
+- 原因：直持旋轉殼舊方向（cw）使按鍵貼難按邊緣且瀏海側遮擋，座標換算公式散落 controls/keyConfig/shellLayout 有漂移風險
+- 解法：新增 core/rotation.ts 單點 SSOT（cw/ccw/none 三態換算＋localStorage 偏好），CSS 預設翻至 ccw 並保留 sp-rot-cw 舊方向切換，座標矩陣單測＋portrait e2e 雙向全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v13-ex-conquest

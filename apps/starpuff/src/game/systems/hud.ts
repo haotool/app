@@ -10,9 +10,25 @@ import {
   type MagazineSlot,
 } from '../core/config';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
+import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
 import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
 import { fillStarPath } from './fx';
 import { openPauseMenu } from './pause';
+
+// 殼左右緣净 inset 邏輯偏移（§93）：standalone 直持下瀏海/動態島換軸到殼緣會
+// 遮蔽貼緣元素（C/D 修正），HUD 與選單場景錨定時避讓；無瀏海裝置為 0。
+export function hudSafeInsets(scene: Phaser.Scene): { left: number; right: number } {
+  const inset = readShellSafeArea();
+  const canvasCssWidth = scene.game.canvas.clientWidth;
+  return {
+    left: toLogicalPx(inset.left, scene.scale.width, canvasCssWidth),
+    right: toLogicalPx(inset.right, scene.scale.width, canvasCssWidth),
+  };
+}
+
+function hudInsetRight(scene: Phaser.Scene): number {
+  return hudSafeInsets(scene).right;
+}
 
 const HEART_TEX = 'hud-heart';
 const STAR_TEX = 'hud-star';
@@ -63,12 +79,12 @@ export function addMuteButton(scene: Phaser.Scene): void {
   ensureSpeakerTextures(scene);
   const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
   const button = scene.add
-    .image(scene.scale.width - 26, 26, texture())
+    .image(scene.scale.width - 26 - hudInsetRight(scene), 26, texture())
     .setDepth(HUD_DEPTH + 20)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
   const anchor = (): void => {
-    button.setX(scene.scale.width - 26);
+    button.setX(scene.scale.width - 26 - hudInsetRight(scene));
   };
   scene.scale.on('resize', anchor);
   scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
@@ -99,12 +115,12 @@ export function addPauseButton(scene: Phaser.Scene): void {
     g.destroy();
   }
   const button = scene.add
-    .image(scene.scale.width - 74, 26, PAUSE_TEX)
+    .image(scene.scale.width - 74 - hudInsetRight(scene), 26, PAUSE_TEX)
     .setDepth(HUD_DEPTH + 20)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
   const anchor = (): void => {
-    button.setX(scene.scale.width - 74);
+    button.setX(scene.scale.width - 74 - hudInsetRight(scene));
   };
   scene.scale.on('resize', anchor);
   scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
@@ -282,13 +298,15 @@ export function createHud(scene: Phaser.Scene): Hud {
   root.add(bossBar);
 
   // 頂列錨定重排（§28）：中上/右上元素依當前視寬定位；resize 事件觸發重錨。
-  // 右上鍵位序（§35）：靜音 width-26、暫停 width-74，配額左移讓位（48px 間距不疊熱區）。
+  // 右上鍵位序（§35）：靜音 width-26、暫停 width-74，配額左移讓位（48px 間距不疊熱區）；
+  // 右緣整列依殼右 inset 左移（§93 C 修正），與暫停/靜音鍵同步避讓瀏海。
   function relayout(): void {
     const width = scene.scale.width;
+    const insetRight = hudInsetRight(scene);
     stageText.setX(width / 2);
     bossBar.setX(width / 2);
-    quotaIcon.setX(width - 112);
-    quotaText.setX(width - 126);
+    quotaIcon.setX(width - 112 - insetRight);
+    quotaText.setX(width - 126 - insetRight);
     waveText?.setX(width / 2);
   }
   relayout();

@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
+import { getShellRotation, pointerToLocal } from '../core/rotation';
 
 // 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）；
 // downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意。
@@ -51,32 +52,13 @@ export function advanceDownBuffer(bufferMs: number, down: boolean, deltaMs: numb
   return down ? DOWN_BUFFER_MS : Math.max(0, bufferMs - deltaMs);
 }
 
-// 螢幕座標 → 元素局部座標（recon-v4 A.3）：clientX/Y 不反映祖先 CSS rotate，portrait 殼內
-// 需做 90 度 CW 逆變換（localDx = screenDy、localDy = -screenDx）；以 AABB 中心為樞軸，
-// 局部尺寸取 layout 值（clientWidth/Height）。純函式供 vitest 驗證。
-export function pointerToLocal(
-  rect: { left: number; top: number; width: number; height: number },
-  localW: number,
-  localH: number,
-  rotated: boolean,
-  screenX: number,
-  screenY: number,
-): { x: number; y: number } {
-  const dx = screenX - (rect.left + rect.width / 2);
-  const dy = screenY - (rect.top + rect.height / 2);
-  if (!rotated) return { x: localW / 2 + dx, y: localH / 2 + dy };
-  return { x: localW / 2 + dy, y: localH / 2 - dx };
-}
-
-// 直持判定單一出口：controls／keyConfig／shellLayout 共用，避免定義漂移。
-export const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
-
+// 螢幕→局部座標換算與直持判定 SSOT 移至 core/rotation.ts（§87）：支援 cw/ccw 雙向殼。
 function toLocal(el: HTMLElement, event: PointerEvent): { x: number; y: number } {
   return pointerToLocal(
     el.getBoundingClientRect(),
     el.clientWidth,
     el.clientHeight,
-    isPortrait(),
+    getShellRotation(),
     event.clientX,
     event.clientY,
   );
