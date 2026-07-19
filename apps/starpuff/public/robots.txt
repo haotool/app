@@ -1,9 +1,7 @@
 # 星噗噗 StarPuff — Robots Exclusion Protocol
 # https://app.haotool.org/starpuff/
-# 最後更新：2026-07-14
-
-# Content Signals Policy (ContentSignals.org / CC0)
-Content-Signal: search=yes, ai-train=no, ai-input=yes
+# 最後更新：2026-07-19
+# 非標準 Content-Signal 指令已移除（對齊 ratewise 治理：Lighthouse robots 驗證與全站 AI 曝光政策）。
 
 # ── 預設規則 ──────────────────────────────────────────
 User-agent: *
