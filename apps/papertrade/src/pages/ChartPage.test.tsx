@@ -303,7 +303,7 @@ describe('ChartPage', () => {
     const user = userEvent.setup();
     renderChart('/chart/BTCUSDT');
 
-    const group = await screen.findByRole('group', { name: '技術指標' });
+    const group = await screen.findByRole('group', { name: '均線指標' });
     const ma7 = within(group).getByRole('button', { name: 'MA7' });
     expect(ma7).toHaveAttribute('aria-pressed', 'false');
     expect(ma7).toHaveClass('min-h-11');
@@ -325,7 +325,7 @@ describe('ChartPage', () => {
   it('enables MACD by default and passes the analysis switches to the chart', async () => {
     renderChart('/chart/BTCUSDT');
 
-    const group = await screen.findByRole('group', { name: '技術指標' });
+    const group = await screen.findByRole('group', { name: '圖表分析' });
     expect(within(group).getByRole('button', { name: 'MACD' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -345,7 +345,7 @@ describe('ChartPage', () => {
     const user = userEvent.setup();
     renderChart('/chart/BTCUSDT');
 
-    const group = await screen.findByRole('group', { name: '技術指標' });
+    const group = await screen.findByRole('group', { name: '圖表分析' });
     await user.click(within(group).getByRole('button', { name: 'MACD' }));
     await user.click(within(group).getByRole('button', { name: '趨勢線' }));
     await user.click(within(group).getByRole('button', { name: '支撐阻力' }));
@@ -361,7 +361,7 @@ describe('ChartPage', () => {
 
   it('keeps the analysis chips at the 44px touch target minimum', async () => {
     renderChart('/chart/BTCUSDT');
-    const group = await screen.findByRole('group', { name: '技術指標' });
+    const group = await screen.findByRole('group', { name: '圖表分析' });
     for (const name of ['MACD', '趨勢線', '支撐阻力']) {
       expect(within(group).getByRole('button', { name })).toHaveClass('min-h-11', 'min-w-11');
     }
@@ -380,7 +380,7 @@ describe('ChartPage', () => {
     await user.click(within(sheet).getByRole('button', { name: /ETH\/USDT/ }));
 
     await screen.findByRole('heading', { name: /ETH/ });
-    const group = screen.getByRole('group', { name: '技術指標' });
+    const group = screen.getByRole('group', { name: '均線指標' });
     expect(within(group).getByRole('button', { name: 'MA25' })).toHaveAttribute(
       'aria-pressed',
       'true',

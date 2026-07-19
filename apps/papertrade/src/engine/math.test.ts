@@ -243,6 +243,20 @@ describe('cross margin aggregates (R6-2, ADR-R6-02)', () => {
     expect(estimate).toBeCloseTo(50338, 8);
   });
 
+  it('deducts the aggregate maintenance margin across all cross positions', () => {
+    // 雙 cross 倉：估算 BTC 倉時 buffer 須扣減聚合 MM（含 ETH 倉），
+    // 只扣本倉 MM 會漏算 10×3000×0.005 = 150，估算價偏遠 150/1 = 150。
+    const dual = accountWith(3967, [
+      crossPosition({ qty: 1, margin: 6000, openFee: 33 }),
+      crossPosition({ id: 'p2', symbol: 'ETHUSDT', qty: 10, entryPrice: 3000, margin: 3000 }),
+    ]);
+    const dualMarks = { BTCUSDT: 58000, ETHUSDT: 3000 } as const;
+    // marginBalance = 3967 + 9000 − 2000 = 10967；crossMM = 290 + 150 = 440；
+    // buffer = 10527；58000 − 10527/1 = 47473（漏扣 ETH MM 會得 47623）。
+    const estimate = estimatedCrossLiquidationPrice(dual.positions[0]!, dual, dualMarks);
+    expect(estimate).toBeCloseTo(47473, 8);
+  });
+
   it('estimates the short side by adding the buffer above the reference', () => {
     // short 1@60000 10x，mark 62000：uPnL −2000；marginBalance = 3967+6000−2000 = 7967；
     // MM = 310；buffer = 7657；62000 + 7657 = 69657。

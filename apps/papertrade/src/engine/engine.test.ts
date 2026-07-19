@@ -1372,6 +1372,28 @@ describe('liquidation', () => {
     const ticked = processTick(withSl.account, 'BTCUSDT', 54000, NOW);
     expect(ticked.account.history[0]?.reason).toBe('liquidation');
   });
+
+  it('liquidates a 1000x position on the first tick crossing the line (delay <= 1 tick, R6-4)', () => {
+    // 固定 tick 序列驅動：強平線 59970，越線前的每一筆 tick 都不得觸發、
+    // 首個越線 tick 必須同幀強平，不得延遲到下一筆 ticker。
+    const account = openLong(createInitialAccount(), 0.1, 60000, 1000);
+    const liq = liquidationPrice('long', 60000, 1000);
+    expect(liq).toBeCloseTo(59970, 8);
+
+    const sequence = [59995, 59985, 59975, 59971];
+    let current = account;
+    for (const mark of sequence) {
+      const ticked = processTick(current, 'BTCUSDT', mark, NOW);
+      expect(ticked.account.positions).toHaveLength(1);
+      expect(ticked.events).toEqual([]);
+      current = ticked.account;
+    }
+
+    const crossing = processTick(current, 'BTCUSDT', 59969, NOW);
+    expect(crossing.account.positions).toHaveLength(0);
+    expect(crossing.events.map((event) => event.type)).toContain('liquidation');
+    expect(crossing.account.history[0]?.reason).toBe('liquidation');
+  });
 });
 
 describe('cross margin evaluation (R6-2, ADR-R6-02)', () => {

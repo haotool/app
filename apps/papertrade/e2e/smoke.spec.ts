@@ -84,4 +84,40 @@ test.describe('PWA install identity', () => {
       expect(iconResponse.status(), `icon ${icon.src} 應可存取`).toBe(200);
     }
   });
+
+  test('share meta declares the og image with correct dimensions and alt (R6-11)', async ({
+    page,
+    request,
+  }) => {
+    await mockBybit(page);
+    await page.goto('/papertrade/');
+
+    // 靜態 head 的 og/twitter meta 與 favicon 是分享卡與安裝識別的 SSOT。
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      /og-image\.png$/,
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      'content',
+      '1200',
+    );
+    await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      'content',
+      '630',
+    );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image',
+    );
+
+    const faviconHref = await page.locator('link[rel="icon"]').getAttribute('href');
+    expect(faviconHref).toBeTruthy();
+    const faviconResponse = await request.get(new URL(faviconHref!, page.url()).href);
+    expect(faviconResponse.status()).toBe(200);
+    expect((await faviconResponse.text()).includes('mark-wing-top')).toBe(true);
+
+    const ogResponse = await request.get(new URL('og-image.png', page.url()).href);
+    expect(ogResponse.status()).toBe(200);
+  });
 });

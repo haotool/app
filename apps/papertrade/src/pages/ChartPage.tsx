@@ -182,39 +182,48 @@ function IndicatorChips() {
   ];
 
   return (
-    <div role="group" aria-label="技術指標" className="flex gap-1.5 overflow-x-auto px-4 pb-3">
-      {INDICATORS.map((definition) => {
-        const active = indicators.includes(definition.id);
-        return (
+    // 均線疊加與自動分析為不同性質功能，分兩個語意群組供輔助技術區辨。
+    <div className="flex gap-1.5 overflow-x-auto px-4 pb-3">
+      <div role="group" aria-label="均線指標" className="flex gap-1.5">
+        {INDICATORS.map((definition) => {
+          const active = indicators.includes(definition.id);
+          return (
+            <button
+              key={definition.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggleIndicator(definition.id)}
+              className={clsx(
+                'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
+                active ? 'bg-surface-2 font-semibold' : 'text-text-3 active:bg-surface-2',
+              )}
+              style={active ? { color: `var(${definition.colorToken})` } : undefined}
+            >
+              {definition.label}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        role="group"
+        aria-label="圖表分析"
+        className="flex gap-1.5 border-l border-border pl-1.5"
+      >
+        {analysisToggles.map(({ key, label, active, onToggle }) => (
           <button
-            key={definition.id}
+            key={key}
             type="button"
             aria-pressed={active}
-            onClick={() => toggleIndicator(definition.id)}
+            onClick={onToggle}
             className={clsx(
               'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
-              active ? 'bg-surface-2 font-semibold' : 'text-text-3 active:bg-surface-2',
+              active ? 'bg-surface-2 font-semibold text-text' : 'text-text-3 active:bg-surface-2',
             )}
-            style={active ? { color: `var(${definition.colorToken})` } : undefined}
           >
-            {definition.label}
+            {label}
           </button>
-        );
-      })}
-      {analysisToggles.map(({ key, label, active, onToggle }) => (
-        <button
-          key={key}
-          type="button"
-          aria-pressed={active}
-          onClick={onToggle}
-          className={clsx(
-            'min-h-11 min-w-11 shrink-0 rounded-control px-3 text-label transition-colors',
-            active ? 'bg-surface-2 font-semibold text-text' : 'text-text-3 active:bg-surface-2',
-          )}
-        >
-          {label}
-        </button>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

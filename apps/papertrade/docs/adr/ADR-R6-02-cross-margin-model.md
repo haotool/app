@@ -58,7 +58,7 @@ balance=10000，開 BTC long cross qty=0.1 entry=60000 leverage=10x
 （IM=600、fee=3.3，開倉後 balance=9396.7）。mark 漲到 61000：
 
 - uPnL=100；crossIM=600；crossUpnl=100；crossAvailable=9496.7
-- MM_this=0.1×61000×0.005=30.5；crossMarginBalance=9396.7+600+100=10096.7（遠高於 MM，不觸發）
+- crossMM=0.1×61000×0.005=30.5（單倉）；crossMarginBalance=9396.7+600+100=10096.7（遠高於 MM，不觸發）
 - buffer=10096.7−30.5=10066.2；mark 錨：61000−10066.2/0.1=負值 → 顯示 `--`
   （帳戶餘額遠大於這筆小倉位，合理結果）
 

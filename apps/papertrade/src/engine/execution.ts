@@ -156,11 +156,30 @@ export function executeOpen(account: Account, params: ExecuteOpenParams): TradeR
 
   if (existing !== undefined && existing.side !== side) {
     const reduceQty = Math.min(qty, existing.qty);
-    const reduced = closeSlice(account, existing, reduceQty, price, feeRate, 'manual', now).account;
+    const { account: reduced, trade } = closeSlice(
+      account,
+      existing,
+      reduceQty,
+      price,
+      feeRate,
+      'manual',
+      now,
+    );
     const remainderQty = qty - reduceQty;
     if (remainderQty <= QTY_EPSILON) return { ok: true, account: reduced };
-    // 翻倉餘量以平倉後的現金重新檢查：呼叫端傳入的可用餘額已因實現損益過期。
-    return executeOpen(reduced, { ...params, qty: remainderQty, availableBalance: undefined });
+    // 翻倉餘量的可用餘額精確推移：現金變化全數帶入；被平的 cross 部位其已實現
+    // 損益本已含在傳入的 cross 可用內（未實現→已實現），需回沖避免雙計。
+    const carriedAvailable =
+      params.availableBalance === undefined
+        ? undefined
+        : params.availableBalance +
+          (reduced.balance - account.balance) -
+          (existing.marginMode === 'cross' ? trade.realizedPnl : 0);
+    return executeOpen(reduced, {
+      ...params,
+      qty: remainderQty,
+      availableBalance: carriedAvailable,
+    });
   }
 
   const notional = notionalValue(qty, price);

@@ -88,7 +88,7 @@ test.describe('PaperTrade trading journeys', () => {
     market.pushTicker('BTCUSDT', 50000);
 
     await expect(page.getByText(/強制平倉/)).toBeVisible();
-    await expect(page.getByText(/已全數損失/)).toBeVisible();
+    await expect(page.getByText(/已實現虧損/)).toBeVisible();
     await expect(page.getByText('持倉 (0)')).toBeVisible();
   });
 });
