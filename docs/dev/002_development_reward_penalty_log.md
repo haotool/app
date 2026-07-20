@@ -57,11 +57,6 @@
 - ID：reward-starpuff-v15-achievements-evaluator
 - 原因：成就需求若走侵入式遊戲邏輯鉤子會擴散熱路徑寫入點且 v1 存檔 parse 版本不符即整檔丟棄，升版會清空舊玩家進度
 - 解法：logic/achievements.ts 純評估器由既有 save 欄位派生 21 成就（魔王/彩蛋條目 LEVELS 派生禁二份清單），save schema v2 versioned migration 接受 v1 補 achievements 空集不 discard，v9–v14 各代舊存檔補發測試 22 案全綠
-=======
-- ID：reward-starpuff-walkthrough-l1-l20-live-audit
-- 原因：Starpuff 缺全關卡攻略文檔，且保底可通關性只有 bot 數據背書、無人讀路線指南
-- 解法：Playwright 真瀏覽器逐關實測 L1-L20（含五魔王）產出 WALKTHROUGH.md，附實測總表與生成飢荒/L14 陡坡等三項回報
->>>>>>> 07e5ddabc (docs(starpuff): 補 002 紀錄與 walkthrough changeset)
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-codex-inset-avoidance
