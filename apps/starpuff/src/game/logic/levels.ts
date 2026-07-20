@@ -324,13 +324,15 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1500,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
-    // §52 入編：gusty 主場 30%＋spora 20%；可吸佔比 0.8（gusty/floaty/spora/jelly）。
+    // §52 入編＋§107 供給節奏調參（issue #805）：gusty 主場收斂 30→25%、spora 20→15%
+    //（高空盤旋/遠端紮根名義可吸但不可及）；讓渡給地面帶 jelly/floaty 各 +5%。
+    // 可吸佔比 0.8 不變（gusty/floaty/spora/jelly）。
     enemyMix: [
-      { kind: 'gusty', weight: 0.3 },
-      { kind: 'spora', weight: 0.2 },
+      { kind: 'gusty', weight: 0.25 },
+      { kind: 'spora', weight: 0.15 },
       { kind: 'spiky', weight: 0.2 },
-      { kind: 'floaty', weight: 0.15 },
-      { kind: 'jelly', weight: 0.15 },
+      { kind: 'floaty', weight: 0.2 },
+      { kind: 'jelly', weight: 0.2 },
     ],
     // §51 垂直分層：208 高台僅氣流柱可達（anti-softlock：主線走地面雙層即可）。
     platforms: [
