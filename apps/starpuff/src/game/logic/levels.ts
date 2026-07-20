@@ -1409,6 +1409,9 @@ export interface LevelSpawnTick {
   aliveEnemies: number;
   // 反卡死（§26）：玩家彈藥 0 且場上無可吸怪的飢荒狀態。
   starving?: boolean;
+  // 滿潮生成降載（§107，issue #806）：滿潮期暫停走動關一般補生（計時照走、凍在
+  // 滿格，退潮首 tick 即補）；飢荒救援與魔王關供給不受閘。
+  floodHold?: boolean;
 }
 
 export interface LevelSpawnResult {
@@ -1438,7 +1441,7 @@ export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): L
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
     return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
-  if (tick.aliveEnemies >= level.maxOnScreen) {
+  if (tick.aliveEnemies >= level.maxOnScreen || (tick.floodHold && !level.boss)) {
     return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
   return { state: { ...state, spawnTimerMs: 0, starvingMs }, spawn: true };

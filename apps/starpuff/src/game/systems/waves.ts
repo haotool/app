@@ -26,6 +26,8 @@ export interface WaveRunner {
 // 乾位可及範圍）由 GameScene 注入；缺省直通零回歸。
 export interface WaveSpawnHooks {
   adjustSpawn?(kind: EnemyKind, y: number): { kind: EnemyKind; y: number };
+  // 滿潮生成降載（§107，issue #806）：滿潮期暫停一般補生；飢荒救援不受閘。
+  holdSpawn?(): boolean;
 }
 
 const SPAWN_MARGIN_X = 48;
@@ -212,6 +214,7 @@ export function createWaveRunner(
         deltaMs,
         aliveEnemies: enemies.aliveCount(),
         starving,
+        floodHold: hooks.holdSpawn?.() === true,
       });
       run = result.state;
       if (result.spawn) spawnAhead(starving);
