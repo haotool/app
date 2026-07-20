@@ -286,12 +286,13 @@ export class GameScene extends Phaser.Scene {
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
     createHud(this);
-    // 場內浮字與慶祝演出（§24/§46/§94）：委派 systems/toasts。
+    // 場內浮字與慶祝演出（§24/§46/§94）：委派 systems/toasts（fx 閉包延遲解析）。
     this.toasts = createToasts(this, {
       fx: () => this.fx,
       playerPos: () => ({ x: this.player.sprite.x, y: this.player.sprite.y }),
     });
-    // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流。
+    // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
+    // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
     this.eggTracker = createEggTracker(this.level, {
       player: () => this.player,
       playerHp: () => this.playerHp,
