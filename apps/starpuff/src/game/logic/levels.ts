@@ -1370,13 +1370,21 @@ export interface LevelRunState {
   levelId: LevelId;
   killCount: number;
   spawnTimerMs: number;
+  // 走動關飢荒救援計時（§107）：飢荒持續累計、中斷歸零。
+  starvingMs: number;
   gateOpen: boolean;
 }
 
 // initialKills（§105 D5）：教學關死亡重試的配額結轉種子；開門判定仍由 recordKill
 // 推進（結轉值經 carryKillsOnDeath 夾限恆低於配額，不可能帶開門態重生）。
 export function createLevelRun(id: LevelId, initialKills = 0): LevelRunState {
-  return { levelId: id, killCount: Math.max(0, initialKills), spawnTimerMs: 0, gateOpen: false };
+  return {
+    levelId: id,
+    killCount: Math.max(0, initialKills),
+    spawnTimerMs: 0,
+    starvingMs: 0,
+    gateOpen: false,
+  };
 }
 
 // 教學關死亡懲罰軟化（§105 D5 保守調參）：只在 tutorial 關生效——死亡重試保留
@@ -1406,22 +1414,32 @@ export interface LevelSpawnResult {
   spawn: boolean;
 }
 
+// 走動關飢荒救援閾值（§107，issue #804）：零彈且同屏無可吸怪持續達此值 → 強制補生
+// 可吸怪（無視同屏上限——上限被紮根/不可吸個體佔滿正是飢荒根因）。閾值長於全部走動關
+// spawnIntervalMs（1000–2600），一般節流仍是主要供給路徑，救援僅在停轉時兜底。
+export const STARVATION_RESCUE_MS = 4000;
+
 // spawn 節流：間隔到期且未達同屏上限才生成；開門後停止（尾端 release）。
 // 達上限時 timer 停在間隔值，空位一出現即刻補生。
 // 反卡死保證律（§26）：boss 期彈藥飢荒立即補生，不等生成間隔。
+// 走動關救援律（§107）：飢荒持續達 STARVATION_RESCUE_MS 強制補生，中斷歸零重計。
 export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): LevelSpawnResult {
   const level = getLevel(state.levelId);
   if (tick.starving && level.boss) {
     return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
   }
+  const starvingMs = tick.starving && !state.gateOpen ? state.starvingMs + tick.deltaMs : 0;
+  if (!level.boss && !state.gateOpen && starvingMs >= STARVATION_RESCUE_MS) {
+    return { state: { ...state, spawnTimerMs: 0, starvingMs: 0 }, spawn: true };
+  }
   const spawnTimerMs = Math.min(state.spawnTimerMs + tick.deltaMs, level.spawnIntervalMs);
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
-    return { state: { ...state, spawnTimerMs }, spawn: false };
+    return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
   if (tick.aliveEnemies >= level.maxOnScreen) {
-    return { state: { ...state, spawnTimerMs }, spawn: false };
+    return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
-  return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
+  return { state: { ...state, spawnTimerMs: 0, starvingMs }, spawn: true };
 }
 
 // 加權抽選：rand01 由呼叫端注入（Math.random 或測試定值）。
