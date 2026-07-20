@@ -1646,3 +1646,15 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   區頁籤 aria「前往第 N 區 ○○」、節點 aria「進入第 N 關 ○○」——視覺與讀屏
   同義：頁籤/標頭＝區域、節點＝關卡。
 - 資料面守門（zones.test.ts）：區名不得與任何在編關名撞名。
+
+## 98. v16 選單 DOM 鈕命中短邊保底（D2，補充 §33 條目 7）
+
+- 根因（Grok 席）：DOM 鈕以邏輯尺寸 × canvas 縮放直出 CSS 尺寸；直持 390×844
+  殼縮放 ×0.812 把次選單 56 邏輯高壓到 45.5 CSS px（低於 HIG 44pt 帶餘裕的
+  48px 基準），主 CTA 72→58.5 尚可但無守門。
+- 修法：`core/domButton.ts` `menuHitCssRect` 純函式——命中短邊 48px 保底、
+  對稱擴張（中心不漂移、視覺不變）；`hud.ts addDomButton` relayout 一律經此
+  換算（Title/Map/Codex/Result 全場景 DOM 鈕自動受益）。
+- 驗證：domButton.test.ts 量測單測（直持縮放矩陣全鈕 ≥48、已達標邊不放大、
+  中心對稱、未縮放殼同樣吃下限）；portrait e2e 於 Title 實測五顆選單鈕
+  AABB 短邊 ≥48。

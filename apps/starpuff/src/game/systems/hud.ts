@@ -9,6 +9,7 @@ import {
   getMix,
   type MagazineSlot,
 } from '../core/config';
+import { menuHitCssRect } from '../core/domButton';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
 import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
@@ -152,6 +153,7 @@ export function bindMenuRelayout(scene: Phaser.Scene, restartData?: object): voi
 // 場景 DOM 鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
 // 透明 DOM 鈕作為唯一指標命中路徑（hit-test 隨殼旋轉自然正確；canvas 同熱區不掛
 // interactive，杜絕雙命中）。幾何以遊戲邏輯座標換算 canvas CSS px，隨 scale resize 重算；
+// 命中短邊 48px 保底（§98 D2：直持縮放會把 44–56 邏輯高壓到 36–45 CSS px）；
 // 監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
 export function addDomButton(
   scene: Phaser.Scene,
@@ -171,10 +173,11 @@ export function addDomButton(
   const relayout = (): void => {
     const sx = canvas.clientWidth / scene.scale.width;
     const sy = canvas.clientHeight / scene.scale.height;
-    button.style.left = `${canvas.offsetLeft + (rect.x - rect.w / 2) * sx}px`;
-    button.style.top = `${canvas.offsetTop + (rect.y - rect.h / 2) * sy}px`;
-    button.style.width = `${rect.w * sx}px`;
-    button.style.height = `${rect.h * sy}px`;
+    const css = menuHitCssRect(rect, sx, sy);
+    button.style.left = `${canvas.offsetLeft + css.left}px`;
+    button.style.top = `${canvas.offsetTop + css.top}px`;
+    button.style.width = `${css.w}px`;
+    button.style.height = `${css.h}px`;
   };
   relayout();
   shell.appendChild(button);
