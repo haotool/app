@@ -373,13 +373,16 @@ body {
   transform: scale(0.96);
 }
 
-/* 按鈕配置模式（§34）：半透明底襯低於 #controls（z 10），虛擬鍵浮於其上可拖曳；
-   操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。 */
+/* 按鈕配置模式（§34/§102 F-04）：半透明底襯低於 #controls（z 10），虛擬鍵浮於其上
+   可拖曳；操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。
+   遮罩加深＋輕模糊：主選單文字退為背景，消除「哪層可互動」的視覺競爭。 */
 .cfg-overlay {
   position: absolute;
   inset: 0;
   z-index: 5;
-  background: rgba(58, 58, 74, 0.4);
+  background: rgba(58, 58, 74, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   pointer-events: none;
 }
 
