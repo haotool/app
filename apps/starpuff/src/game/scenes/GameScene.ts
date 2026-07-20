@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { EGG_HP_CAP, ENEMY, GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
+import { EGG_HP_CAP, GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -19,13 +19,7 @@ import {
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
-import {
-  inhaleFlavor,
-  inhaleGraceUntil,
-  isContactHarmless,
-  isInInhaleRange,
-} from '../logic/combat';
-import { SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
+import { inhaleFlavor, inhaleGraceUntil, isInInhaleRange } from '../logic/combat';
 import {
   advanceEgg,
   createEggProgress,
@@ -71,6 +65,7 @@ import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
+import { wireCombatOverlaps } from '../systems/overlaps';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
@@ -393,7 +388,24 @@ export class GameScene extends Phaser.Scene {
       });
     }
     this.physics.add.collider(this.enemies.getGroup(), ground);
-    this.addOverlaps();
+    // 戰鬥碰撞接線（§29/§58/§68/§79）：委派 systems/overlaps，接線順序凍結。
+    wireCombatOverlaps(this, {
+      player: () => this.player,
+      enemies: () => this.enemies,
+      boss: () => this.boss,
+      fx: () => this.fx,
+      meteor: () => this.meteor,
+      stage: () => this.stage,
+      combat: () => this.starCombat,
+      bossBodies: () => this.bossBodies(),
+      nearestBossBody: (x, y) => this.nearestBossBody(x, y),
+      bossTouchDamage: () => this.bossTouchDamage,
+      damagePlayer: (damage, sourceX) => this.damagePlayer(damage, sourceX),
+      damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
+      isSettled: () => this.finished || this.transitioning,
+      isBossDown: () => this.bossDown,
+      now: () => this.time.now,
+    });
     this.bindEvents();
 
     this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
@@ -733,231 +745,6 @@ export class GameScene extends Phaser.Scene {
   private damageBossAt(amount: number, x: number, y: number, source?: BossDamageSource): void {
     if (this.boss.applyDamageAt) this.boss.applyDamageAt(amount, x, y, source);
     else this.boss.applyDamage(amount, source);
-  }
-
-  private addOverlaps(): void {
-    const stars = this.player.getStars();
-
-    this.physics.add.overlap(stars, this.enemies.getGroup(), (star, enemy) => {
-      const target = enemy as Phaser.GameObjects.GameObject;
-      const s = asSprite(star);
-      if (!s.active || !this.enemies.kindOf(target)) return;
-      // 磁場星彈免傷（§59 magno field）：星彈吸附於磁殼失效，近戰/下砸路徑不受影響。
-      if (this.enemies.isStarImmune(target)) {
-        this.fx.burstSmall(s.x, s.y, 0x8ab0e8);
-        playSfx('metal', 0.7);
-        this.player.onStarHit(s, 'absorb');
-        return;
-      }
-      // 鏡面反射（§59 mirri mirror）：星彈改生成朝玩家的反射彈（反射彈有傷害）。
-      if (this.enemies.isReflective(target)) {
-        const mirri = asSprite(enemy);
-        this.enemies.reflectStar(mirri.x, mirri.y, this.player.sprite.x, this.player.sprite.y);
-        this.fx.burstSmall(s.x, s.y, 0xf0f4ff);
-        this.player.onStarHit(s, 'absorb');
-        return;
-      }
-      const spec = this.starCombat.specOf(s);
-      const outcome = this.enemies.damage(target, this.starCombat.damageOf(s));
-      if (outcome === 'ignored') return;
-      if (spec.aoeRadiusPx > 0) this.starCombat.explodeStar(s.x, s.y, spec, target);
-      // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
-      if (spec.chainCount > 0) this.starCombat.chainLightning(s.x, s.y, spec, target);
-      // 孢子星（§53）：命中未死目標套緩速＋輕持續傷。
-      if (spec.slowMs > 0 && outcome === 'hurt') {
-        this.enemies.applySlow(target, spec.slowMs, spec.dotDamage);
-      }
-      // 凝光星（§46）：命中處生成凍結光域。
-      const mix = this.starCombat.mixOf(s);
-      if (mix && mix.freezeRadiusPx > 0) this.starCombat.freezeField(s.x, s.y, mix);
-      // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
-      // 迴旋星（§53）：命中不吸收——依穿透結算，保留回程判定。
-      this.player.onStarHit(s, outcome === 'killed' || spec.boomerang ? 'pierce' : 'absorb');
-    });
-
-    // group vs sprite 的回調參數順序不保證，取非魔王側為星彈。
-    // 入場動畫與死亡演出期間（非 active）星彈直接穿過，不消耗。
-    // 多本體（§68）：逐本體接線，受擊側由 damageBossAt 依命中位置歸屬。
-    for (const hitBody of this.bossBodies()) {
-      this.physics.add.overlap(stars, hitBody, (a, b) => {
-        const star = asSprite((a as unknown) === (hitBody as unknown) ? b : a);
-        if (!star.active || !this.boss.isActive()) return;
-        if (!(hitBody.body as Phaser.Physics.Arcade.Body).enable) return;
-        const spec = this.starCombat.specOf(star);
-        if (spec.aoeRadiusPx > 0) this.starCombat.explodeStar(star.x, star.y, spec, null);
-        // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
-        if (spec.chainCount > 0) this.starCombat.chainLightning(star.x, star.y, spec, null);
-        const mix = this.starCombat.mixOf(star);
-        if (mix && mix.freezeRadiusPx > 0) this.starCombat.freezeField(star.x, star.y, mix);
-        this.player.onStarHit(star, 'absorb');
-        this.damageBossAt(this.starCombat.damageOf(star), star.x, star.y);
-      });
-    }
-
-    // 碎晶盾（§68 P3）：可擊破的星彈屏障——星彈被吸收、盾即碎裂。
-    const shields = this.boss.getShields?.();
-    if (shields) {
-      this.physics.add.overlap(stars, shields, (a, b) => {
-        const isShield = (shields.getChildren() as unknown[]).includes(a);
-        const shard = asSprite(isShield ? a : b);
-        const star = asSprite(isShield ? b : a);
-        if (!star.active || !shard.active) return;
-        shard.disableBody(true, true);
-        this.fx.burstSmall(shard.x, shard.y, 0xe8dcff);
-        playSfx('break', 0.7);
-        this.player.onStarHit(star, 'absorb');
-      });
-    }
-
-    // 新怪危險物：puffy 爆刺彈與 chompy 咬合 hitbox（傷害 1，命中即失效）。
-    // zappy 放電環（§30）同走此 hazards 管線結算，不另設 overlap。
-    this.physics.add.overlap(this.player.sprite, this.enemies.getHazards(), (_p, hz) => {
-      const hazard = asSprite(hz);
-      if (!hazard.active || this.finished || this.transitioning) return;
-      hazard.disableBody(true, true);
-      this.damagePlayer(ENEMY.touchDamage, hazard.x);
-    });
-
-    this.physics.add.overlap(this.player.sprite, this.enemies.getGroup(), (_p, enemy) => {
-      const kind = this.enemies.kindOf(enemy as Phaser.GameObjects.GameObject);
-      if (!kind || this.finished || this.transitioning) return;
-      // 半入地無害態（§47 drilly 潛地/前搖）：不結算觸碰傷害。
-      if (this.enemies.isPhasedOut(enemy as Phaser.GameObjects.GameObject)) return;
-      const target = asSprite(enemy);
-      // 雷化帶電體（§57）：接觸對小怪放電（damage CD 節流），玩家觸碰傷害照常結算。
-      const contactDamage = this.starCombat.playerFormSpec()?.contactDamage ?? 0;
-      if (contactDamage > 0) {
-        const zapped = this.enemies.damage(enemy as Phaser.GameObjects.GameObject, contactDamage);
-        if (zapped !== 'ignored') this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
-        if (zapped === 'killed') return;
-      }
-      // 吸入錐形內的可吸怪（§30：shelly 僅暈眩窗）交由吞下流程，不結算觸碰傷害。
-      const { x, y } = this.player.sprite;
-      if (
-        this.player.isInhaling() &&
-        this.enemies.isInhalable(enemy as Phaser.GameObjects.GameObject) &&
-        isInInhaleRange(x, y, this.player.getFacing(), target.x, target.y, INHALE.rangePx)
-      ) {
-        return;
-      }
-      // 吸入接觸豁免（§77）：被吸入中（拉力豁免窗內）的怪貼身不傷——涵蓋轉向/
-      // 鬆開瞬間與出錐殘餘飛行；窗過期即恢復傷害性，未被吸的其他怪照常結算。
-      if (isContactHarmless(this.time.now, (target.getData('inhaleGraceUntil') as number) ?? 0)) {
-        return;
-      }
-      this.damagePlayer(ENEMY.touchDamage, target.x);
-    });
-
-    this.physics.add.overlap(this.player.getInhaleZone(), this.enemies.getGroup(), (_z, enemy) => {
-      asSprite(enemy).setData('inhalePull', true);
-    });
-
-    // 觸碰與頭頂 hit window（§58/§68）：多本體逐一接線，停用本體不結算；
-    // 入場運鏡期（非 active）傷害雙向靜默——降落中的魔王不得對走位玩家先手。
-    for (const touchBody of this.bossBodies()) {
-      this.physics.add.overlap(this.player.sprite, touchBody, () => {
-        if (this.finished || this.transitioning || this.bossDown) return;
-        if (!this.boss.isActive()) return;
-        if (!(touchBody.body as Phaser.Physics.Arcade.Body).enable) return;
-        const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-        // 魔王頭頂 hit window（§58）：下砸命中上半身＝頭頂——嘗試觸發暈眩並回彈，免體傷。
-        if (this.player.isSlamming() && playerBody.bottom <= touchBody.y) {
-          const stunned = this.boss.trySlamStun();
-          this.player.onSlamBounce();
-          this.fx.burstSmall(this.player.sprite.x, playerBody.bottom, 0xffd966);
-          if (stunned) this.fx.shake(8);
-          return;
-        }
-        this.damagePlayer(this.bossTouchDamage, touchBody.x);
-      });
-    }
-
-    this.physics.add.overlap(this.player.sprite, this.boss.getProjectiles(), (_p, ball) => {
-      const projectile = asSprite(ball);
-      if (!projectile.active || this.finished || this.transitioning) return;
-      if (projectile.getData('reflected') === true) return;
-      // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。
-      if (this.starCombat.playerFormSpec()?.reflectProjectiles) {
-        projectile.setData('reflected', true);
-        projectile.setTint(TRANSFORM_FORMS.shell.tint);
-        (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
-        const boss = this.nearestBossBody(projectile.x, projectile.y);
-        this.physics.moveTo(projectile, boss.x, boss.y, SHELL_REFLECT.speed);
-        playSfx('metal');
-        return;
-      }
-      projectile.disableBody(true, true);
-      this.damagePlayer(this.bossTouchDamage, projectile.x);
-    });
-
-    // 反彈彈幕回傷（§57/§58）：僅帶反彈標記的彈體對魔王結算（§68 多本體逐一接線）。
-    for (const reflectBody of this.bossBodies()) {
-      this.physics.add.overlap(reflectBody, this.boss.getProjectiles(), (a, b) => {
-        const projectile = asSprite((a as unknown) === (reflectBody as unknown) ? b : a);
-        if (!projectile.active || projectile.getData('reflected') !== true) return;
-        if (!this.boss.isActive() || !(reflectBody.body as Phaser.Physics.Arcade.Body).enable) {
-          return;
-        }
-        projectile.disableBody(true, true);
-        this.fx.burstSmall(projectile.x, projectile.y, TRANSFORM_FORMS.shell.tint);
-        this.damageBossAt(SHELL_REFLECT.damage, projectile.x, projectile.y, 'reflect');
-      });
-    }
-
-    this.physics.add.overlap(this.player.sprite, this.boss.getShockwaves(), (_p, wave) => {
-      const shockwave = asSprite(wave);
-      if (!shockwave.active || this.finished || this.transitioning) return;
-      this.damagePlayer(this.bossTouchDamage, shockwave.x);
-    });
-
-    // 流星雨（§79）：隕星可被星彈擊碎（碎裂演出、星彈吸收）；隕星與餘燼命中玩家
-    // 走 damagePlayer 單一入口（i-frame/護盾泡自然生效），隕星命中即碎。
-    if (this.meteor) {
-      const meteorGroup = this.meteor.getMeteors();
-      this.physics.add.overlap(stars, meteorGroup, (a, b) => {
-        const isRock = (meteorGroup.getChildren() as unknown[]).includes(a);
-        const rock = asSprite(isRock ? a : b);
-        const star = asSprite(isRock ? b : a);
-        if (!star.active || !rock.active) return;
-        this.meteor?.shatter(rock);
-        this.player.onStarHit(star, 'absorb');
-      });
-      this.physics.add.overlap(this.player.sprite, meteorGroup, (_p, rock) => {
-        const sprite = asSprite(rock);
-        if (!sprite.active || this.finished || this.transitioning) return;
-        this.meteor?.shatter(sprite);
-        this.damagePlayer(ENEMY.touchDamage, sprite.x);
-      });
-      this.physics.add.overlap(this.player.sprite, this.meteor.getEmbers(), (_p, hz) => {
-        const ember = asSprite(hz);
-        if (!ember.active || this.finished || this.transitioning) return;
-        ember.disableBody(true, true);
-        this.damagePlayer(ENEMY.touchDamage, ember.x);
-      });
-    }
-
-    // v4 平台元素（§29）：單向自上著地、移動平台載運、磚體實心；彈簧與破磚交由 stage 結算。
-    this.physics.add.collider(
-      this.player.sprite,
-      this.stage.getOneWay(),
-      undefined,
-      this.stage.canLandOneWay,
-    );
-    this.physics.add.collider(this.player.sprite, this.stage.getMoving());
-    this.physics.add.collider(this.player.sprite, this.stage.getBreakables());
-    this.physics.add.overlap(
-      this.player.sprite,
-      this.stage.getSprings(),
-      this.stage.onSpringOverlap,
-    );
-    this.physics.add.overlap(stars, this.stage.getBreakables(), (a, b) => {
-      const brick = (this.stage.getBreakables() as unknown[]).includes(a) ? a : b;
-      const star = asSprite(brick === a ? b : a);
-      if (!star.active) return;
-      if (this.stage.breakBrick(brick as Phaser.GameObjects.GameObject)) {
-        this.player.onStarHit(star, 'absorb');
-      }
-    });
   }
 
   private bindEvents(): void {
