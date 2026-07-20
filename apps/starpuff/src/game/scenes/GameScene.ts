@@ -31,19 +31,9 @@ import {
   recordLevelClear,
   type SaveData,
 } from '../core/save';
-import {
-  SceneKeys,
-  type BossKind,
-  type EnemyKind,
-  type GameResultData,
-  type LevelId,
-} from '../core/types';
+import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
-import { NOCTRA } from '../logic/noctraFsm';
-import { PRISMIX } from '../logic/prismixFsm';
-import { SYRONA } from '../logic/syronaFsm';
-import { VOIDRA } from '../logic/voidraFsm';
 import {
   inhaleFlavor,
   inhaleGraceUntil,
@@ -96,12 +86,9 @@ import {
 } from '../logic/mercyHeal';
 import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
-import { createBoss, type BossDamageSource, type BossHandle } from '../systems/boss';
+import type { BossDamageSource, BossHandle } from '../systems/boss';
+import { createBossKit } from '../systems/bossFactory';
 import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
-import { createNoctra } from '../systems/noctra';
-import { createPrismix } from '../systems/prismix';
-import { createSyrona } from '../systems/syrona';
-import { createVoidra } from '../systems/voidra';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -119,10 +106,6 @@ import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
 const GROUND_HEIGHT = 80;
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
-const SPAWN_EDGE_X = 48;
-// 與 waves.ts 生成高度一致：飄飄鳥須在跳躍＋拍翅可達高度（橫式地面頂 y=400）。
-const SPAWN_AIR_Y = 240;
-const SPAWN_DROP_Y = 330;
 const MOUTH_OFFSET_X = 26;
 const SWALLOW_RANGE_PX = 46;
 const PULL_BASE_SPEED = 160;
@@ -190,7 +173,6 @@ export class GameScene extends Phaser.Scene {
   private bossDown = false;
   private prevVy = 0;
   private wasInhaling = false;
-  private minionDropCount = 0;
   private mouth = { x: 0, y: 0 };
   private gate: Phaser.GameObjects.Container | null = null;
   private gateRect: BoundsRect | null = null;
@@ -253,7 +235,6 @@ export class GameScene extends Phaser.Scene {
     this.transitioning = false;
     this.bossDown = false;
     this.wasInhaling = false;
-    this.minionDropCount = 0;
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
     this.gate = null;
@@ -322,8 +303,24 @@ export class GameScene extends Phaser.Scene {
       },
       this.carryKills,
     );
-    // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
-    const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
+    // 雙魔王（§54）：品種唯一分派點 systems/bossFactory；非 boss 關建 jellord 待命殼
+    //（永不 spawn）。hooks 閉包延遲解析（fx 於後續建立，回呼觸發時已就緒）。
+    const bossKit = createBossKit(this, this.level, GROUND_TOP, {
+      exMode: this.exMode,
+      arenaLeft: () => this.arenaLeft(),
+      worldWidth: () => this.worldWidth(),
+      enemies: () => this.enemies,
+      fx: () => this.fx,
+      player: () => this.player,
+      playerHp: () => this.playerHp,
+      tide: () => this.tide,
+      replaceTide: (spec) => {
+        this.tide?.destroy();
+        this.tide = createTide(this, spec, this.worldWidth());
+      },
+      meteor: () => this.meteor,
+      feedEggs: (event) => this.feedEggs(event),
+    });
     this.boss = bossKit.handle;
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
@@ -402,7 +399,7 @@ export class GameScene extends Phaser.Scene {
     this.addOverlaps();
     this.bindEvents();
 
-    this.boss.onMinionDrop(() => this.spawnBossMinion());
+    this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
 
     // shutdown 清理 Phaser 不接管的資源：scene.events 監聽（restart 不重建 emitter，
     // 未解除即跨局累積）、DOM 監聽、音訊迴圈。player 的 PRE/POST_UPDATE bob 掛鉤必須
@@ -1324,156 +1321,6 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(result === 'won' ? 1300 : 900, () =>
       this.scene.start(finale ? SceneKeys.Credits : SceneKeys.Result, data),
     );
-  }
-
-  // 魔王每損 10 HP 補生可吸小怪（供彈藥），arena 左右邊緣交替入場；品種輪替讀關卡 enemyMix。
-  // 場上上限（§82 審查根修）：爆發傷害連觸多次掉落時夾限累積（waves 上限 +2 供給裕度），
-  // 防補給怪堆積形成接觸傷害牆；彈藥保證由飢荒立即補生承擔（§26）。
-  private spawnBossMinion(): void {
-    if (this.enemies.aliveCount() >= this.level.maxOnScreen + 2) return;
-    const kinds = this.level.enemyMix.map((entry) => entry.kind);
-    const kind = kinds[this.minionDropCount % kinds.length] ?? 'jelly';
-    const x =
-      this.minionDropCount % 2 === 0
-        ? this.arenaLeft() + SPAWN_EDGE_X
-        : this.worldWidth() - SPAWN_EDGE_X;
-    this.minionDropCount += 1;
-    this.enemies.spawn(kind, x, kind === 'floaty' || kind === 'gusty' ? SPAWN_AIR_Y : SPAWN_DROP_Y);
-  }
-
-  // 魔王召喚小怪（§54 P2 floaty／§68 P2 mirri／§74 P2 bubbla）：依場上現量夾限至 cap，
-  // 走正式 spawn 管線；召喚路徑同套潮汐生成調整（交叉不變式 13/17，審查修復）。
-  private summonMinion(kind: EnemyKind, cap: number): void {
-    let alive = 0;
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (child.active && this.enemies.kindOf(child) === kind) alive += 1;
-    }
-    for (let i = 0; i < cap - alive; i += 1) {
-      const x = i % 2 === 0 ? this.arenaLeft() + SPAWN_EDGE_X : this.worldWidth() - SPAWN_EDGE_X;
-      const defaultY = kind === 'floaty' ? SPAWN_AIR_Y : SPAWN_DROP_Y;
-      const adjusted = this.tide
-        ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(defaultY) }
-        : { kind, y: defaultY };
-      this.enemies.spawn(adjusted.kind, x, adjusted.y);
-    }
-  }
-
-  // 魔王品種工廠（§54）：BossKind 唯一分派點（呈現層 handle＋體傷常數一次取齊）；
-  // 新增品種未接線將於編譯期 never 守衛失敗。
-  private buildBoss(kind: BossKind): { handle: BossHandle; bodyDamage: number } {
-    switch (kind) {
-      case 'jellord':
-        return {
-          handle: createBoss(this, {
-            ex: this.exMode,
-            arenaLeft: () => this.arenaLeft(),
-            // EX 擊破分裂（§58）：於魔王位置生成小果凍，走正式 spawn 管線。
-            onSplit: (x, y, count) => {
-              for (let i = 0; i < count; i += 1) {
-                this.enemies.spawn('jelly', x + (i - (count - 1) / 2) * 46, y - 20);
-              }
-            },
-          }),
-          bodyDamage: BOSS.bodyDamage,
-        };
-      case 'noctra':
-        return {
-          handle: createNoctra(
-            this,
-            { summonFloaty: (cap) => this.summonMinion('floaty', cap) },
-            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
-          ),
-          bodyDamage: NOCTRA.bodyDamage,
-        };
-      case 'prismix':
-        return {
-          handle: createPrismix(
-            this,
-            {
-              summonMirri: (cap) => this.summonMinion('mirri', cap),
-              // 雙子連破（§68/§70）：FSM 單一真值，GameScene 餵彩蛋＋全屏稜光演出。
-              onTwinFinish: () => {
-                this.feedEggs({ kind: 'twin-finish' });
-                this.cameras.main.flash(360, 220, 200, 255);
-                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
-              },
-            },
-            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
-          ),
-          bodyDamage: PRISMIX.bodyDamage,
-        };
-      case 'syrona':
-        return {
-          handle: createSyrona(
-            this,
-            {
-              summonBubbla: (cap) => this.summonMinion('bubbla', cap),
-              // 窯風三連（§75）：呈現層單一真值，GameScene 餵彩蛋＋窯火謝幕演出。
-              onVentEgg: () => {
-                this.feedEggs({ kind: 'vent-hit-count' });
-                this.cameras.main.flash(320, 255, 214, 140);
-                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
-              },
-              // 場控潮汐（§74）：沿 GameScene 單一潮汐管線（浸水/生成過濾自然生效）。
-              startTide: (spec) => {
-                this.tide?.destroy();
-                this.tide = createTide(this, spec, this.worldWidth());
-              },
-              boilTide: (spec) => this.tide?.setSpec(spec),
-            },
-            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
-          ),
-          bodyDamage: SYRONA.bodyDamage,
-        };
-      case 'voidra':
-        return {
-          handle: createVoidra(
-            this,
-            {
-              // 星核共鳴（§83）：FSM 單一真值，GameScene 餵彩蛋＋星雨謝幕演出。
-              onShardEgg: () => {
-                this.feedEggs({ kind: 'survive-collect' });
-                this.cameras.main.flash(360, 255, 230, 160);
-                this.fx.starBurst(this.arenaLeft() + this.scale.width / 2, VIEW.height / 2 - 40);
-              },
-              // P2 定點轟炸（§82）：沿 GameScene 單一 meteor 管線開關與調參；
-              // 收轟炸（轉段/擊破/段重試）連飛行中隕星一併回收（審查收斂）。
-              setBombardment: (spec) => {
-                if (spec) {
-                  this.meteor?.setSpec(spec);
-                  this.meteor?.setActive(true);
-                } else {
-                  this.meteor?.setActive(false);
-                  this.meteor?.clearAirborne();
-                }
-              },
-              // P3 低重力（§81）：全域重力直寫；null 回關卡預設（create 亦會重設）。
-              setGravityScale: (scale) => {
-                this.physics.world.gravity.y = GRAVITY_Y * (scale ?? this.level.gravityScale ?? 1);
-              },
-              // P2 段內固定愛心（§6.3 保底）：走既有 heal pickup 管線、緩降至地面帶。
-              dropSurvivalHeart: () => {
-                const x = this.arenaLeft() + this.scale.width * 0.3;
-                playSfx('reveal');
-                this.fx.burstSmall(x, 150, 0xff9ec4);
-                spawnHealPickup(
-                  this,
-                  x,
-                  150,
-                  { player: () => this.player, playerHp: () => this.playerHp },
-                  { healHp: MERCY_HEAL.healHp, driftToY: GROUND_TOP - 22 },
-                );
-              },
-            },
-            { ex: this.exMode, arenaLeft: () => this.arenaLeft() },
-          ),
-          bodyDamage: VOIDRA.bodyDamage,
-        };
-      default: {
-        const unhandled: never = kind;
-        throw new Error(`未知魔王品種：${String(unhandled)}`);
-      }
-    }
   }
 
   // 跳躍/拍翅無契約事件，以速度轉變判定配音（buffer 觸發的跳躍無當幀按壓）。
