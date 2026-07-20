@@ -1373,8 +1373,18 @@ export interface LevelRunState {
   gateOpen: boolean;
 }
 
-export function createLevelRun(id: LevelId): LevelRunState {
-  return { levelId: id, killCount: 0, spawnTimerMs: 0, gateOpen: false };
+// initialKills（§105 D5）：教學關死亡重試的配額結轉種子；開門判定仍由 recordKill
+// 推進（結轉值經 carryKillsOnDeath 夾限恆低於配額，不可能帶開門態重生）。
+export function createLevelRun(id: LevelId, initialKills = 0): LevelRunState {
+  return { levelId: id, killCount: Math.max(0, initialKills), spawnTimerMs: 0, gateOpen: false };
+}
+
+// 教學關死亡懲罰軟化（§105 D5 保守調參）：只在 tutorial 關生效——死亡重試保留
+// 一半擊殺配額（向下取整、夾限至配額-1）；其餘關卡維持全重置（含卡點關的
+// checkpoint 路徑本就不重啟）。
+export function carryKillsOnDeath(level: LevelSpec, killCount: number): number {
+  if (!level.tutorial) return 0;
+  return Math.min(level.killQuota - 1, Math.max(0, Math.floor(killCount / 2)));
 }
 
 export function recordKill(state: LevelRunState): LevelRunState {

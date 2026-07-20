@@ -5,6 +5,7 @@ import {
   BOSS_LEVEL_IDS,
   LEVELS,
   advanceLevelSpawn,
+  carryKillsOnDeath,
   checkpointRespawnX,
   createLevelRun,
   exConquestDone,
@@ -687,6 +688,34 @@ describe('recordKill 配額推進', () => {
     let state = createLevelRun(4);
     for (let i = 0; i < 10; i++) state = recordKill(state);
     expect(state.gateOpen).toBe(false);
+  });
+});
+
+describe('教學關死亡配額結轉（§105 D5）', () => {
+  const tutorial = getLevel(1);
+  const normal = getLevel(2);
+
+  it('教學關保留一半（向下取整），非教學關恆歸零', () => {
+    expect(tutorial.tutorial).toBe(true);
+    expect(carryKillsOnDeath(tutorial, 5)).toBe(2);
+    expect(carryKillsOnDeath(tutorial, 4)).toBe(2);
+    expect(carryKillsOnDeath(tutorial, 1)).toBe(0);
+    expect(carryKillsOnDeath(tutorial, 0)).toBe(0);
+    expect(carryKillsOnDeath(normal, 8)).toBe(0);
+  });
+
+  it('結轉夾限至配額-1：不可能帶開門態重生', () => {
+    expect(carryKillsOnDeath(tutorial, 99)).toBe(tutorial.killQuota - 1);
+    const seeded = createLevelRun(1, carryKillsOnDeath(tutorial, 99));
+    expect(seeded.gateOpen).toBe(false);
+    // 結轉後補殺一隻即達配額開門（推進邏輯不受種子影響）。
+    expect(recordKill(seeded).gateOpen).toBe(true);
+  });
+
+  it('createLevelRun 種子夾非負；缺省維持 0', () => {
+    expect(createLevelRun(1).killCount).toBe(0);
+    expect(createLevelRun(1, -3).killCount).toBe(0);
+    expect(createLevelRun(1, 2).killCount).toBe(2);
   });
 });
 

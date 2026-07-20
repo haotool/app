@@ -49,6 +49,7 @@ export function createEliteRoom(
   let doorCollider: Phaser.Physics.Arcade.Collider | null = null;
   let timer: Phaser.Time.TimerEvent | null = null;
   let bar: Phaser.GameObjects.Graphics | null = null;
+  let hint: Phaser.GameObjects.Text | null = null;
 
   function arm(): void {
     if (!spec) return;
@@ -82,6 +83,22 @@ export function createEliteRoom(
       ease: 'Sine.easeInOut',
     });
     bar = scene.add.graphics().setDepth(71);
+    // 卡住感消解（§105 F-05）：門柱旁明示破關條件與 60s 保險——等待也是合法出路，
+    // 新手不再誤判軟鎖為卡關；世界座標隨房間入鏡即見。
+    hint = scene.add
+      .text(doorX - ELITE_DOOR_W - 6, 118, '擊敗精英開門\n60 秒後自動開啟', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#3a3a4a',
+        strokeThickness: 4,
+        align: 'right',
+      })
+      .setOrigin(1, 0.5)
+      .setDepth(71)
+      .setAlpha(0);
+    scene.tweens.add({ targets: hint, alpha: 0.95, duration: 450, delay: 250 });
     // 逾時保險（§48 反卡關）：60s 未擊敗自動開門，精英留場可略過。
     timer = scene.time.delayedCall(ELITE_DOOR_TIMEOUT_MS, () => openDoor());
   }
@@ -100,12 +117,23 @@ export function createEliteRoom(
     bar.fillRect(x, y, w * ratio, 5);
   }
 
-  // 開門：淡出門柱並解除碰撞；擊敗與逾時共用單一出口。
+  // 開門：淡出門柱與提示並解除碰撞；擊敗與逾時共用單一出口。
   function openDoor(): void {
     timer?.remove();
     timer = null;
     doorCollider?.destroy();
     doorCollider = null;
+    const closingHint = hint;
+    hint = null;
+    if (closingHint) {
+      scene.tweens.killTweensOf(closingHint);
+      scene.tweens.add({
+        targets: closingHint,
+        alpha: 0,
+        duration: 350,
+        onComplete: () => closingHint.destroy(),
+      });
+    }
     const closing = door;
     door = null;
     if (closing) {

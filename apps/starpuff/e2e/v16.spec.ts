@@ -9,6 +9,12 @@ declare global {
       gotoLevel: (levelId: number, ex?: boolean) => void;
       paused: () => boolean;
       scenePaused: () => boolean;
+      quota: () => { killCount: number; killQuota: number };
+      probe: () => { x: number; scrollX: number };
+      spawn: (kind: string, x?: number, y?: number) => void;
+      grantStar: (flavor: string) => void;
+      hurtPlayer: (damage: number) => void;
+      playerHp: () => number;
     };
   }
 }
@@ -80,6 +86,50 @@ test('HUD 暫停/靜音 DOM 鈕（F-06）：局內可點暫停並繼續、靜音
   await muteButton.dispatchEvent('pointerdown', { pointerId: 7, isPrimary: true });
   await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
   await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});
+
+// v16 D5：教學關（L1）死亡重試保留一半擊殺配額——真實戰鬥管線擊殺 4 隻後死亡，
+// 重生配額應顯示 2/6（非教學關與卡點關不受影響）。
+test('教學關配額結轉（D5）：L1 擊殺 4 隻後死亡，重試保留 2/6', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+
+  // 受控擊殺 ×4：玩家前方生成果凍丁、賦標準星、點按發射（正式擊殺管線計配額）。
+  for (let target = 1; target <= 4; target += 1) {
+    let attempts = 0;
+    while (attempts < 6) {
+      attempts += 1;
+      await page.evaluate(() => {
+        const x = window.__sp.probe().x;
+        window.__sp.spawn('jelly', x + 130, 330);
+        window.__sp.grantStar('jelly');
+      });
+      await page.waitForTimeout(250);
+      await page.keyboard.down('X');
+      await page.waitForTimeout(80);
+      await page.keyboard.up('X');
+      try {
+        await expect
+          .poll(() => page.evaluate(() => window.__sp.quota().killCount), { timeout: 2500 })
+          .toBeGreaterThanOrEqual(target);
+        break;
+      } catch {
+        /* 星彈落空（果凍彈跳）：重生一隻再試。 */
+      }
+    }
+    expect(await page.evaluate(() => window.__sp.quota().killCount)).toBeGreaterThanOrEqual(target);
+  }
+  const kills = await page.evaluate(() => window.__sp.quota().killCount);
+
+  // 死亡 → 重試：配額保留 floor(kills/2)。
+  await page.evaluate(() => window.__sp.hurtPlayer(99));
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.quota().killCount), { timeout: 10000 })
+    .toBe(Math.floor(kills / 2));
+  await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
+  await page.waitForTimeout(500);
   expect(errors).toEqual([]);
 });
 

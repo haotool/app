@@ -81,7 +81,13 @@ import {
   type BuffId,
   type BuffState,
 } from '../logic/buffs';
-import { checkpointRespawnX, getLevel, nextLevelId, type LevelSpec } from '../logic/levels';
+import {
+  carryKillsOnDeath,
+  checkpointRespawnX,
+  getLevel,
+  nextLevelId,
+  type LevelSpec,
+} from '../logic/levels';
 import {
   MERCY_HEAL,
   advanceMercyHeal,
@@ -146,6 +152,8 @@ interface GameSceneData {
   deaths?: number;
   // EX 變體挑戰（§58）：已通關魔王節點的第二入口。
   ex?: boolean;
+  // 教學關死亡配額結轉（§105 D5）：僅 retryLevel 傳入，值由 carryKillsOnDeath 夾限。
+  carryKills?: number;
 }
 
 const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
@@ -168,6 +176,8 @@ export class GameScene extends Phaser.Scene {
   private deaths = 0;
   // EX 變體模式（§58）：魔王工廠與通關記錄依此分流。
   private exMode = false;
+  // 教學關死亡配額結轉（§105 D5）：retryLevel 帶入、waves runner 以此為種子。
+  private carryKills = 0;
   // 慈悲補血（§62）：每關每命狀態（create 重建即歸零）；rng/時間快轉供 e2e 注入。
   private mercy: MercyState = createMercyState();
   private mercyRng: () => number = Math.random;
@@ -231,6 +241,7 @@ export class GameScene extends Phaser.Scene {
     this.currentLevelId = data.levelId ?? 1;
     this.deaths = data.deaths ?? 0;
     this.exMode = data.ex === true;
+    this.carryKills = data.carryKills ?? 0;
   }
 
   create(): void {
@@ -299,12 +310,18 @@ export class GameScene extends Phaser.Scene {
       : this.level.boss === 'voidra'
         ? createMeteorSystem(this, { intervalMs: 3400, waveSize: 2 }, false)
         : null;
-    this.waves = createWaveRunner(this, this.enemies, this.currentLevelId, {
-      adjustSpawn: (kind, y) =>
-        this.tide
-          ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(y) }
-          : { kind, y },
-    });
+    this.waves = createWaveRunner(
+      this,
+      this.enemies,
+      this.currentLevelId,
+      {
+        adjustSpawn: (kind, y) =>
+          this.tide
+            ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(y) }
+            : { kind, y },
+      },
+      this.carryKills,
+    );
     // 雙魔王（§54）：品種唯一分派點 buildBoss；非 boss 關建 jellord 待命殼（永不 spawn）。
     const bossKit = this.buildBoss(this.level.boss ?? 'jellord');
     this.boss = bossKit.handle;
@@ -1059,6 +1076,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // 死亡重試當前關：已完成關卡的累計用時保留，當前關計時重來。
+  // 教學關配額結轉（§105 D5）：保留一半擊殺數軟化新手死亡懲罰；非教學關全重置。
   private retryLevel(): void {
     if (this.finished || this.transitioning) return;
     this.transitioning = true;
@@ -1070,6 +1088,7 @@ export class GameScene extends Phaser.Scene {
       this.restartWith({
         levelId: this.currentLevelId,
         deaths: this.deaths,
+        carryKills: carryKillsOnDeath(this.level, this.waves.getQuota().killCount),
       }),
     );
   }
