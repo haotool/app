@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.15.2
+
+### Patch Changes
+
+- 0b390ef: 內部維護性重構：GameScene 拆解為六個獨立系統模組並補齊事件契約測試與檔案行數守門，玩法、數值、視覺與存檔行為完全不變。
+
 ## 0.15.1
 
 ### Patch Changes
