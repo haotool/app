@@ -25,14 +25,6 @@ import {
   isContactHarmless,
   isInInhaleRange,
 } from '../logic/combat';
-import { magnetPull } from '../logic/enemyFsm';
-import {
-  BOSS_AIM_ASSIST,
-  HOMING_RANGE_PX,
-  HOMING_TURN_RAD_PER_MS,
-  nearestInRange,
-  steerTowardTarget,
-} from '../logic/homing';
 import { SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import {
   advanceEgg,
@@ -73,7 +65,7 @@ import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createControls, type ControlsSystem } from '../systems/controls';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
-import { createFx, type FxSystem, type TrailHandle } from '../systems/fx';
+import { createFx, type FxSystem } from '../systems/fx';
 import { createHud } from '../systems/hud';
 import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
@@ -81,6 +73,7 @@ import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
+import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
@@ -195,6 +188,7 @@ export class GameScene extends Phaser.Scene {
   private fx!: FxSystem;
   private stage!: StageHandle;
   private starCombat!: StarCombat;
+  private starSteering!: StarSteering;
 
   constructor() {
     super(SceneKeys.Game);
@@ -316,6 +310,17 @@ export class GameScene extends Phaser.Scene {
       buff: () => this.buff,
       bossBodies: () => this.bossBodies(),
       damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
+    });
+    // 星彈飛行導向與拖尾（§46/§54/§59）：候選過濾與 velocity 套用委派 starSteering。
+    this.starSteering = createStarSteering({
+      player: () => this.player,
+      enemies: () => this.enemies,
+      boss: () => this.boss,
+      combat: () => this.starCombat,
+      fx: () => this.fx,
+      isBossLevel: () => this.level.boss !== null,
+      isBossDown: () => this.bossDown,
+      nearestBossBody: (x, y) => this.nearestBossBody(x, y),
     });
     // 精英房（§48/§52）：boss 關無精英；一關可多房，hooks 閉包延遲解析既有系統。
     const eliteHooks = {
@@ -439,9 +444,7 @@ export class GameScene extends Phaser.Scene {
       for (const room of this.eliteRooms) room.update();
       this.bossRoom?.update();
       this.advanceBuff(deltaMs);
-      this.steerHomingStars(deltaMs);
-      this.steerBossAimAssist(deltaMs);
-      this.steerMagnetizedStars(deltaMs);
+      this.starSteering.update(deltaMs);
       this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
@@ -455,7 +458,7 @@ export class GameScene extends Phaser.Scene {
     // 魔王關補生等入場運鏡完成（boss active）才推進，避免入場中生怪干擾玩家（review #698）。
     if (!this.level.boss || this.boss.isActive()) this.waves.update(deltaMs);
     this.boss.update(deltaMs);
-    this.syncStarTrails();
+    this.starSteering.syncTrails();
   }
 
   forceWin(): void {
@@ -1572,109 +1575,6 @@ export class GameScene extends Phaser.Scene {
     this.fx.shake(10);
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
-  }
-
-  // 魔王房準星輔助（§54 難度根修）：一般星彈對活動中魔王微幅導向——地面水平彈
-  // 自然上彎入盤旋帶，保底線不依賴拍翅精度；轉率遠低於追電星、大致對向才生效。
-  // 多本體（§68）：導向星彈最近的存活本體。
-  private steerBossAimAssist(deltaMs: number): void {
-    if (!this.level.boss || !this.boss.isActive() || this.bossDown) return;
-    for (const child of this.player.getStars().getChildren()) {
-      const star = asSprite(child);
-      if (!star.active) continue;
-      // 追電星有自己的導向；迴旋星彈道由回程驅動，皆不疊加輔助。
-      if (this.starCombat.mixOf(star)?.homing || this.starCombat.specOf(star).boomerang) continue;
-      const body = this.nearestBossBody(star.x, star.y);
-      const starBody = star.body as Phaser.Physics.Arcade.Body;
-      const towardBoss = Math.sign(body.x - star.x);
-      if (towardBoss !== 0 && Math.sign(starBody.velocity.x) !== towardBoss) continue;
-      if (Phaser.Math.Distance.Between(star.x, star.y, body.x, body.y) > BOSS_AIM_ASSIST.rangePx) {
-        continue;
-      }
-      const steered = steerTowardTarget(
-        starBody.velocity.x,
-        starBody.velocity.y,
-        star.x,
-        star.y,
-        body.x,
-        body.y,
-        this.starCombat.specOf(star).speed,
-        BOSS_AIM_ASSIST.turnRadPerMs * deltaMs,
-      );
-      starBody.setVelocity(steered.vx, steered.vy);
-    }
-  }
-
-  // 追電星導引（§46）：飛行中朝最近小怪限速轉向；鎖敵與轉向數學下沉 logic/homing.ts，
-  // Scene 只管 body velocity 套用。
-  private steerHomingStars(deltaMs: number): void {
-    for (const child of this.player.getStars().getChildren()) {
-      const star = asSprite(child);
-      if (!star.active) continue;
-      const mix = this.starCombat.mixOf(star);
-      if (!mix?.homing) continue;
-      const candidates: { x: number; y: number }[] = [];
-      for (const candidate of this.enemies.getGroup().getChildren()) {
-        if (!candidate.active) continue;
-        const enemy = asSprite(candidate);
-        candidates.push({ x: enemy.x, y: enemy.y });
-      }
-      const nearest = nearestInRange(star.x, star.y, candidates, HOMING_RANGE_PX);
-      if (!nearest) continue;
-      const body = star.body as Phaser.Physics.Arcade.Body;
-      const steered = steerTowardTarget(
-        body.velocity.x,
-        body.velocity.y,
-        star.x,
-        star.y,
-        nearest.x,
-        nearest.y,
-        mix.speed,
-        HOMING_TURN_RAD_PER_MS * deltaMs,
-      );
-      body.setVelocity(steered.vx, steered.vy);
-    }
-  }
-
-  // 磁場吸偏（§59 magno field）：域內玩家星彈逐幀被拉向磁極獸；數學下沉 logic/enemyFsm。
-  private steerMagnetizedStars(deltaMs: number): void {
-    const magnos: { x: number; y: number }[] = [];
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active || this.enemies.kindOf(child) !== 'magno') continue;
-      if (child.getData('magnoPhase') !== 'field') continue;
-      const magno = asSprite(child);
-      magnos.push({ x: magno.x, y: magno.y });
-    }
-    if (magnos.length === 0) return;
-    for (const child of this.player.getStars().getChildren()) {
-      const star = asSprite(child);
-      if (!star.active) continue;
-      const body = star.body as Phaser.Physics.Arcade.Body;
-      for (const magno of magnos) {
-        const pulled = magnetPull(
-          star.x,
-          star.y,
-          body.velocity.x,
-          body.velocity.y,
-          magno.x,
-          magno.y,
-          deltaMs,
-        );
-        body.setVelocity(pulled.vx, pulled.vy);
-      }
-    }
-  }
-
-  private syncStarTrails(): void {
-    for (const child of this.player.getStars().getChildren()) {
-      const star = asSprite(child);
-      const trail = star.getData('fxTrail') as TrailHandle | undefined;
-      if (star.active && !trail) star.setData('fxTrail', this.fx.attachTrail(star));
-      else if (!star.active && trail) {
-        trail.stop();
-        star.setData('fxTrail', undefined);
-      }
-    }
   }
 
   // 教學浮字：偵測首次任一操作輸入，交由 waves 排程淡出。
