@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -1993,3 +1993,7 @@
 - ID：ratewise-lhci-homepage-runtime-refresh-guard
 - 原因：PR #350 的 Lighthouse CI 在首頁 `/` 掉到 `0.87~0.88`，根因為 LHCI 離線模式下首頁仍執行 runtime 匯率 refresh，失敗後插入 stale warning 與額外背景工作，拉低首屏效能。
 - 解法：在 `exchangeRateService` 與 `useExchangeRates` 增加 `VITE_LHCI_OFFLINE` 穩定分支，LHCI 直接使用 build-time 匯率並跳過 runtime refresh / polling，另補 service 與 hook 回歸測試鎖住行為。
+- 日期：2026-07-20
+- ID：reward-starpuff-v17-gamescene-strangler-debt-train
+- 原因：GameScene 2121 行單檔承載魔王工廠/星彈結算/碰撞接線/彩蛋/toast 等八類職責，三席維護性評分 5/7/8 觸發 Blocking；events 契約與 waves 序列零測試。
+- 解法：六單元 strangler 拆解（bossFactory/starCombat/starSteering/overlaps/eggTracker/toasts，每步 characterization 先行、獨立 commit 可 revert）收斂至 1196 行，補 GameEvents 契約測試與 apps/starpuff max-lines error 1200 守門，vitest 580→650、Playwright 92 全綠零行為變更。

@@ -178,6 +178,8 @@ export function getDefaultLayout(): ControlLayout {
   return structuredClone(DEFAULT_LAYOUT);
 }
 
+// 回傳值為橫持基準預設；直持配置頁實際走 defaultLayoutFor(rotation) 旋轉分流，
+// 此處僅負責清除自訂落盤（§95）。
 export function resetLayout(): ControlLayout {
   try {
     localStorage.removeItem(LAYOUT_STORAGE_KEY);

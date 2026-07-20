@@ -127,7 +127,7 @@ export class TitleScene extends Phaser.Scene {
       });
     }
 
-    // logo 動畫入場（§36/§103 D6 品牌化）：雙層字形——底層深紫厚描邊下沉 3px 造
+    // logo 動畫入場（§36/§103 D6 品牌化）：雙層字形——底層深紫厚描邊下沉 5px 造
     // 糖果立體感，頂層白字帶垂直粉漸層 tint＋柔影；零新字型檔，僅字重/層次/陰影。
     const logoY = height * 0.15;
     const logoDepth = this.add

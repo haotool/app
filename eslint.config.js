@@ -209,6 +209,16 @@ export default tseslint.config(
     },
   },
 
+  // starpuff 檔案行數守門（v17 債務列車）：GameScene 拆解後鎖 1200 行硬閘防再膨脹。
+  // levels.ts 為資料驅動關卡表（純資料隨內容成長），不受行數閘限制。
+  {
+    files: ['apps/starpuff/src/**/*.ts'],
+    ignores: ['apps/starpuff/src/game/logic/levels.ts'],
+    rules: {
+      'max-lines': ['error', { max: 1200, skipBlankLines: false, skipComments: false }],
+    },
+  },
+
   // Cloudflare Workers 全域變數（security-headers worker）
   {
     files: ['security-headers/src/**/*.js'],
