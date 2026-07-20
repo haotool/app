@@ -1666,3 +1666,14 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   production 頁腳（v0.14.0+nogit）。
 - 修法：SHA 來源優先序 GIT_COMMIT_HASH env（repo Docker 慣例，同 ratewise）
   → 本地 git → 皆缺省略後綴（乾淨 vX.Y.Z，不再露佔位字樣）。
+
+## 100. v16 勝利結算「下一關」主 CTA（D3，取代 §39 勝利回地圖單一動線）
+
+- 根因（Grok 席）：魔王關擊破後結算僅「世界地圖」，接續遊玩需地圖折返一次，
+  斷了闖關節奏。
+- 修法：一般勝利雙鈕——主 CTA「下一關」（nextLevelId 資料驅動，直入下一區
+  首關）＋「世界地圖」降次選；ENTER 對應主 CTA。Result 勝利僅魔王關觸發
+  （走動關經星星門直進地圖揭霧），L20 全破走謝幕不經 Result，故一般勝利必有
+  下一關（資料防禦仍回退地圖）。EX 勝利與敗北動線不變（再戰 EX／再戰魔王）。
+- 驗證：v16 e2e——L4 擊破後 next-level 直入 L5、map 次選並存；smoke 勝利案
+  改走 map 次選鈕。

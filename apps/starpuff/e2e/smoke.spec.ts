@@ -84,8 +84,11 @@ test('強制勝利進 Result，勝利後回世界地圖可重入關卡', async (
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 })
     .toBe('Result');
-  // 世界地圖按鈕位於畫布 68% 高度（ResultScene 佈局）；勝利回 hub（§39）。
-  await clickCanvas(page, 0.5, 0.68);
+  // 勝利結算雙鈕（§100 D3）：主 CTA 下一關、世界地圖降次選——本案走地圖 hub（§39）。
+  await page.locator('[data-menu="map"]').dispatchEvent('pointerdown', {
+    pointerId: 4,
+    isPrimary: true,
+  });
   await expect.poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 8000 }).toBe('Map');
   // forceWin 不寫存檔：地圖僅第 1 關開放，自節點重入。
   await page.locator('[data-menu="node-1"]').dispatchEvent('pointerdown', {
