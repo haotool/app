@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS } from '../core/codex';
+import { fitBoundedGrid, gridRowTop } from '../core/gridLayout';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
 import { ACHIEVEMENTS, unlockedAchievements } from '../logic/achievements';
@@ -250,14 +251,16 @@ export class CodexScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const usableW = width - insets.left - insets.right;
-    const cols = 6;
+    // 有界網格（§96）：欄數隨成就總量增長，任何內容不超出 y=470（守門單測）。
+    const gridSpec = CODEX_TAB_GRIDS.achievements;
+    const { cols } = fitBoundedGrid(ACHIEVEMENTS.length, gridSpec);
     const cellW = Math.min(170, (usableW - 50) / cols);
     const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
     ACHIEVEMENTS.forEach((spec, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
-      const top = 112 + row * 90;
+      const top = gridRowTop(row, gridSpec);
       const done = unlocked.has(spec.id);
       const masked = spec.hidden && !done;
       // 徽章：圓底＋星形；未解鎖降飽和低透明。
@@ -301,39 +304,45 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 技能雙欄列表：名稱 + 操作方式 + 效果說明（含來源怪物對應）。
+  // 技能網格列表：名稱＋操作方式（同列）＋效果說明（含來源怪物對應）。
+  // 有界網格（§96 P1-01 修復）：v15 前雙欄 5 列第 9 項說明 y=486 溢出邏輯畫布
+  // （480）；改固定 3 列、欄隨量增，任何內容不超出 y=470（守門單測）。
   private renderSkills(): void {
     const { width } = this.scale;
-    // 殼緣避讓（§93 D）：雙欄以左右净 inset 收縮的有效區排版。
+    // 殼緣避讓（§93 D）：網格以左右净 inset 收縮的有效區排版。
     const insets = hudSafeInsets(this);
     const usableW = width - insets.left - insets.right;
-    const colX = [insets.left + usableW * 0.28, insets.left + usableW * 0.72];
-    const colW = Math.min(400, usableW * 0.42);
+    const gridSpec = CODEX_TAB_GRIDS.skills;
+    const { cols } = fitBoundedGrid(CODEX_SKILLS.length, gridSpec);
+    const cellW = (usableW - 24) / cols;
+    const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
     CODEX_SKILLS.forEach((skill, index) => {
-      const x = colX[index % 2] ?? width / 2;
-      const y = 122 + Math.floor(index / 2) * 84;
-      this.add
-        .text(x - colW / 2, y, skill.nameZh, {
+      const left = gridLeft + cellW * (index % cols) + 8;
+      const y = gridRowTop(Math.floor(index / cols), gridSpec);
+      const name = this.add
+        .text(left, y, skill.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '18px',
+          fontSize: '17px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
         .setOrigin(0, 0);
+      // 操作方式緊隨名稱動態排列（§96）：854 寬含瀏海 inset 的最窄格也不越格。
       this.add
-        .text(x - colW / 2 + 96, y + 3, skill.howTo, {
+        .text(left + name.width + 8, y + 3, skill.howTo, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           fontStyle: 'bold',
           color: ACCENT,
         })
         .setOrigin(0, 0);
       this.add
-        .text(x - colW / 2, y + 28, skill.detail, {
+        .text(left, y + 26, skill.detail, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           color: TEXT_SOFT,
-          wordWrap: { width: colW },
+          // CJK 無空白斷詞：逐字換行防窄格橫向溢出（沿 §76 慣例）。
+          wordWrap: { width: cellW - 16, useAdvancedWrap: true },
         })
         .setOrigin(0, 0);
     });

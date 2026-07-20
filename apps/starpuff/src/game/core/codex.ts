@@ -1,7 +1,16 @@
 // 圖鑑與技能介紹資料 SSOT（GAME_DESIGN §36）：內容鏡像 §5/§16/§20/§23/§30 設定表，
 // 純資料模組供 CodexScene 呈現與 vitest 驗證；立繪一律取既有 sprite 資產鍵。
 import type { MixId, StarFlavor } from './config';
+import type { BoundedGridSpec } from './gridLayout';
 import type { EnemyKind } from './types';
+
+// 圖鑑分頁有界網格參數 SSOT（§96 P1-01）：itemH 取各分頁單項最壞內容高
+// （技能＝標題列 26＋詳述 4 行×16；成就＝徽章 58＋描述 2 行），maxY=470 為
+// 邏輯畫布守門線；CodexScene 一律引用本表，禁止散落第二份常數。
+export const CODEX_TAB_GRIDS = {
+  skills: { startY: 122, rowH: 100, itemH: 90, maxY: 470 },
+  achievements: { startY: 112, rowH: 90, itemH: 84, maxY: 470 },
+} as const satisfies Record<string, BoundedGridSpec>;
 
 export interface CodexMonster {
   kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
