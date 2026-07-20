@@ -14,7 +14,7 @@ function resolveAppVersion(): string {
   let sha = (process.env['GIT_COMMIT_HASH'] ?? '').trim().slice(0, 7);
   if (!sha) {
     try {
-      sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+      sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim().slice(0, 7);
     } catch {
       sha = '';
     }

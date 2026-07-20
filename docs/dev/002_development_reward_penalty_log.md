@@ -21,7 +21,7 @@
 - 日期：2026-07-20
 - ID：reward-starpuff-v16-critique-train-11-defects-converged
 - 原因：三席獨立批評（Grok 79/87、Sonnet 95/97、Composer 93/96）合議出 11 項產品面扣分：圖鑑溢位/命中盒/版號佔位/結算動線/HUD 可及性/命名分裂/密度/遮罩/字形/前期節奏
-- 解法：一缺陷一 commit 全數收斂——有界網格 y≤470 守門、DOM 鈕短邊 48 保底、下一關主 CTA、暫停靜音 DOM 化＋aria、怪物圖鑑分頁化、教學關配額結轉（保守調參並記錄不做項）；vitest 583＋e2e 92 全綠
+- 解法：一缺陷一 commit 全數收斂——有界網格 y≤470 守門、DOM 鈕短邊 48 保底、下一關主 CTA、暫停靜音 DOM 化＋aria、怪物圖鑑分頁化、教學關配額結轉（保守調參並記錄不做項）；vitest 580＋e2e 92 全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-walkintoarena-keydown-immunity
