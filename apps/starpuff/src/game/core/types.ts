@@ -63,6 +63,8 @@ export interface GameResultData {
   levelId: LevelId;
   // EX 變體（§86）：敗北再戰須保留變體模式，缺省 false。
   ex?: boolean;
+  // v15 成就（§94）：勝利瞬間新頒發的成就 id——Result 結算列示防多重解鎖演出期漏看，缺省空。
+  unlocked?: readonly string[];
 }
 
 export const SceneKeys = {
@@ -76,7 +78,7 @@ export const SceneKeys = {
   Credits: 'Credits',
 } as const;
 
-// 圖鑑/技能介紹分頁（§36）。
-export type CodexTab = 'monsters' | 'skills';
+// 圖鑑/技能介紹/成就分頁（§36/§94）。
+export type CodexTab = 'monsters' | 'skills' | 'achievements';
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];

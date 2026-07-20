@@ -1,7 +1,8 @@
 import type { LevelId } from './types';
 
-// 存檔 SSOT（GAME_DESIGN §38）：localStorage sp-save schema v1，純資料模組供 vitest 驗證。
-// parse/fallback 模式沿用 core/layout.ts：版本不符、形狀損毀、隱私模式一律回退預設。
+// 存檔 SSOT（GAME_DESIGN §38/§94）：localStorage sp-save schema v2（v1 由 parseSave 遷移），
+// 純資料模組供 vitest 驗證。parse/fallback 模式沿用 core/layout.ts：未知版本、形狀損毀、
+// 隱私模式一律回退預設。
 
 export interface LevelSaveEntry {
   cleared: boolean;
@@ -16,10 +17,13 @@ export interface SaveData {
   highestClearedLevel: number;
   levels: Partial<Record<LevelId, LevelSaveEntry>>;
   lastPlayedAt: number;
+  // v15 成就（§94）：已頒發成就 id——toast 去重與補發基準；頒發紀錄不可逆（不隨資料回退移除）。
+  achievements: string[];
 }
 
 export const SAVE_STORAGE_KEY = 'sp-save';
-export const SAVE_SCHEMA_VERSION = 1;
+// v15 升 v2（§94）：新增 achievements 欄位；v1 舊存檔由 parseSave 遷移，禁 discard。
+export const SAVE_SCHEMA_VERSION = 2;
 
 export function createDefaultSave(): SaveData {
   return {
@@ -27,6 +31,7 @@ export function createDefaultSave(): SaveData {
     highestClearedLevel: 0,
     levels: {},
     lastPlayedAt: 0,
+    achievements: [],
   };
 }
 
@@ -49,11 +54,14 @@ function isLevelEntry(value: unknown): value is LevelSaveEntry {
 }
 
 // 解析持久化 JSON：僅收斂合法關卡條目，highestClearedLevel 一律由條目重新推導。
+// versioned migration（§94）：v1（v9–v14 世代）缺 achievements 欄位，載入補空集後由
+// 開機補發回填；回傳物件恆為當前 schema 版，persistSave 寫出即完成升版。
 export function parseSave(raw: string | null): SaveData {
   if (!raw) return createDefaultSave();
   try {
     const data = JSON.parse(raw) as Record<string, unknown>;
-    if (data['schemaVersion'] !== SAVE_SCHEMA_VERSION) return createDefaultSave();
+    const version = data['schemaVersion'];
+    if (version !== 1 && version !== SAVE_SCHEMA_VERSION) return createDefaultSave();
     const rawLevels =
       typeof data['levels'] === 'object' && data['levels'] !== null
         ? (data['levels'] as Record<string, unknown>)
@@ -75,6 +83,14 @@ export function parseSave(raw: string | null): SaveData {
       typeof data['lastPlayedAt'] === 'number' && Number.isFinite(data['lastPlayedAt'])
         ? data['lastPlayedAt']
         : 0;
+    // 成就欄位收斂（§94）：只收字串條目並去重；v1 缺欄位回空集（migration 缺省）。
+    save.achievements = Array.isArray(data['achievements'])
+      ? [
+          ...new Set(
+            data['achievements'].filter((item): item is string => typeof item === 'string'),
+          ),
+        ]
+      : [];
     return save;
   } catch {
     return createDefaultSave();

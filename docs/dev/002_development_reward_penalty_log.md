@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+145
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+151
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-walkintoarena-keydown-immunity
+- 原因：退出案就緒門修復後全套 16 分鐘高負載下仍偶發同型失敗（bossHp 恆 -1）——keydown 單發 DOM 事件在任一場景 restart 入口的 teardown/create 窗都可能丟失且無 auto-repeat 補發
+- 解法：walkIntoArena 改每 5s 未見血條即冪等重按（新 DOM 事件必被新場景 Key 接收），30s 上限不變不掩蓋真缺陷；帶 trace 12 連跑＋v13 全 spec 全綠
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-review-toast-batch-merge
+- 原因：兩席審查實測抓到魔王擊破多重解鎖逐張 toast 在 2.8s 勝利轉場窗僅能播完約 1.3 張且被全屏白閃洗白，e2e 亦缺 EX 擊破管線與 toast 文案斷言
+- 解法：同批解鎖合併單張橫幅（頓號串接＋深色底襯＋CJK 換行）、新增 \_\_sp.achievementToast 觀測點，補 EX 擊破 e2e 案（僅頒 EX 不誤發首勝/速通）與 verify B6 toast 斷言
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-v5-layout-assertion-drift
+- 原因：v14 將 sp-key-layout 升 schema v2 但 v5.spec 仍斷言 version===1，starpuff e2e 不在 main CI 跑批致 main 帶著確定性紅燈（86 案全套重現）
+- 解法：斷言改 version===2 對齊 §89 儲存恆當前版語意；v5＋v12 全 spec 14 案重跑全綠並記入全套回歸
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-ex-quit-e2e-flake-rootfix
+- 原因：v13 EX 退出案暫停重開後 scene.restart 為 queued op，scenePaused 恢復 false 早於場景重建，keydown 落入 teardown/create 窗被吃掉（Playwright 無 OS auto-repeat）致 bossHp 恆 -1 逾時（10 連跑重現 2 failed）
+- 解法：重開後補場景就緒門——poll 玩家重生座標 x<200（重啟前在 arena x>400）確認 create 完成才送鍵，禁加大 timeout；修後 15 連跑全綠
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-achievements-presentation
+- 原因：成就解鎖若只做遊戲內 toast，魔王擊破瞬間多重解鎖會因 WIN_DELAY 轉場漏播；歷史成就若開機大量 toast 又會轟炸回訪玩家
+- 解法：三層呈現分工——GameScene 序列 toast 佇列（一次一張）、GameResultData.unlocked 帶入 Result 列名單兜底、開機補發靜默只在圖鑑成就頁呈現；五幕真瀏覽器實測（補發/擊破/雙寬/直持）console error 0
+
+- 日期：2026-07-19
+- ID：reward-starpuff-v15-achievements-evaluator
+- 原因：成就需求若走侵入式遊戲邏輯鉤子會擴散熱路徑寫入點且 v1 存檔 parse 版本不符即整檔丟棄，升版會清空舊玩家進度
+- 解法：logic/achievements.ts 純評估器由既有 save 欄位派生 21 成就（魔王/彩蛋條目 LEVELS 派生禁二份清單），save schema v2 versioned migration 接受 v1 補 achievements 空集不 discard，v9–v14 各代舊存檔補發測試 22 案全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v14-codex-inset-avoidance

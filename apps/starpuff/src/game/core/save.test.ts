@@ -28,6 +28,30 @@ describe('parseSave（§38 容錯）', () => {
     );
   });
 
+  it('v1 舊存檔遷移載入（§94）：關卡條目保留、achievements 補空集、版次升 2', () => {
+    const save = parseSave(
+      JSON.stringify({
+        schemaVersion: 1,
+        levels: { 1: { cleared: true, bestTimeMs: 42000, eggsFound: ['reach-x'] } },
+        lastPlayedAt: 5,
+      }),
+    );
+    expect(save.schemaVersion).toBe(SAVE_SCHEMA_VERSION);
+    expect(save.levels[1]?.cleared).toBe(true);
+    expect(save.achievements).toEqual([]);
+  });
+
+  it('v2 achievements 欄位收斂：非字串剔除、去重、非陣列回空集', () => {
+    const save = parseSave(
+      clearedSave({
+        levels: {},
+        achievements: ['first-clear', 'first-clear', 7, null, 'egg-first'],
+      }),
+    );
+    expect(save.achievements).toEqual(['first-clear', 'egg-first']);
+    expect(parseSave(clearedSave({ levels: {}, achievements: 'oops' })).achievements).toEqual([]);
+  });
+
   it('合法存檔逐關收斂，非法條目剔除', () => {
     const save = parseSave(
       clearedSave({

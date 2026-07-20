@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SceneKeys, type GameResultData } from '../core/types';
+import { getAchievement } from '../logic/achievements';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { createFx } from '../systems/fx';
 import { addDomButton, bindMenuRelayout } from '../systems/hud';
@@ -19,6 +20,7 @@ export class ResultScene extends Phaser.Scene {
       deaths: data.deaths ?? 0,
       levelId: data.levelId ?? 1,
       ex: data.ex === true,
+      unlocked: data.unlocked ?? [],
     };
   }
 
@@ -80,6 +82,26 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     if (won) createFx(this).confetti();
+
+    // 成就解鎖名單（§94）：勝利演出期 toast 可能因轉場漏播，結算頁列示兜底；
+    // 敗北局內解鎖的彩蛋成就同樣如實列出。
+    const unlocked = this.result.unlocked ?? [];
+    if (unlocked.length > 0) {
+      const names = unlocked.map((id) => getAchievement(id)?.nameZh ?? id).join('、');
+      this.add
+        .text(centerX, height * 0.84, `成就解鎖：${names}`, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '16px',
+          fontStyle: 'bold',
+          color: '#8a6a1f',
+          backgroundColor: '#ffe9a8',
+          padding: { x: 14, y: 6 },
+          align: 'center',
+          wordWrap: { width: width - 120, useAdvancedWrap: true },
+        })
+        .setOrigin(0.5)
+        .setAlpha(0.95);
+    }
 
     // 純視覺鈕：命中一律由同熱區 DOM 鈕承接（單一命中，見下方 addDomButton）。
     const retryButton = this.add

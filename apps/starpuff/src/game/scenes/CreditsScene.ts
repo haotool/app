@@ -37,6 +37,8 @@ export class CreditsScene extends Phaser.Scene {
       levelId: data.levelId ?? 20,
       // EX 變體（§86）：Credits 轉接 Result 時保留旗標，契約不折損。
       ex: data.ex === true,
+      // 成就名單（§94）：謝幕轉接結算時保留，終局多重解鎖不漏看。
+      unlocked: data.unlocked ?? [],
     };
     this.finished = false;
   }

@@ -275,7 +275,8 @@ test('按鈕配置（§34）：拖曳 B 鍵、儲存 localStorage、重載後套
   const stored = await page.evaluate(() => localStorage.getItem('sp-key-layout'));
   expect(stored).not.toBeNull();
   const layout = JSON.parse(stored ?? '{}') as { version: number; b: { cx: number } };
-  expect(layout.version).toBe(1);
+  // sp-key-layout 已升 schema v2（§89 v14 縮放欄位）：儲存恆為當前版。
+  expect(layout.version).toBe(2);
   expect(layout.b.cx).toBeLessThan(0.9);
   // 重載後布局持久化套用至按鍵 style（瀏覽器會去掉百分比尾零，取數值比較）。
   await page.reload();
