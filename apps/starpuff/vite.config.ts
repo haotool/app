@@ -4,18 +4,22 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { seoHtmlPlugin } from './src/seo/vite-seo-plugin';
 
-// 版本 SSOT（§42）：package.json version + short git SHA，經 define 嵌入 bundle。
+// 版本 SSOT（§42/§99 F-02）：package.json version + short git SHA，經 define 嵌入。
+// SHA 來源優先序：GIT_COMMIT_HASH env（Docker/Zeabur build arg，repo 慣例同
+// ratewise）→ 本地 git；皆不可得時省略後綴——production 不再露出 +nogit 佔位。
 function resolveAppVersion(): string {
   const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
     version: string;
   };
-  let sha = 'nogit';
-  try {
-    sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    /* 無 git 環境（如 CI 淺層打包）時保留 nogit 標記。 */
+  let sha = (process.env['GIT_COMMIT_HASH'] ?? '').trim().slice(0, 7);
+  if (!sha) {
+    try {
+      sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+    } catch {
+      sha = '';
+    }
   }
-  return `v${pkg.version}+${sha}`;
+  return sha ? `v${pkg.version}+${sha}` : `v${pkg.version}`;
 }
 
 export default defineConfig(async ({ mode }) => {

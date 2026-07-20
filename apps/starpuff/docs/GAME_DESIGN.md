@@ -1658,3 +1658,11 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 - 驗證：domButton.test.ts 量測單測（直持縮放矩陣全鈕 ≥48、已達標邊不放大、
   中心對稱、未縮放殼同樣吃下限）；portrait e2e 於 Title 實測五顆選單鈕
   AABB 短邊 ≥48。
+
+## 99. v16 版本頁腳 SHA 來源修正（F-02，補充 §42）
+
+- 根因（Composer 席）：Zeabur Docker build 提供 GIT_COMMIT_HASH build arg 但
+  context 無 .git，starpuff 版本解析僅呼叫 git 指令，落 nogit 佔位並露出於
+  production 頁腳（v0.14.0+nogit）。
+- 修法：SHA 來源優先序 GIT_COMMIT_HASH env（repo Docker 慣例，同 ratewise）
+  → 本地 git → 皆缺省略後綴（乾淨 vX.Y.Z，不再露佔位字樣）。
