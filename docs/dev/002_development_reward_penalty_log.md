@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+153
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+154
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-20
+- ID：reward-starpuff-walkthrough-l1-l20-live-audit
+- 原因：Starpuff 缺全關卡攻略文檔，且保底可通關性只有 bot 數據背書、無人讀路線指南
+- 解法：Playwright 真瀏覽器逐關實測 L1-L20（含五魔王）產出 WALKTHROUGH.md，附實測總表與生成飢荒/L14 陡坡等三項回報
 
 - 日期：2026-07-20
 - ID：reward-starpuff-v16-portrait-default-keys-device-anchor
