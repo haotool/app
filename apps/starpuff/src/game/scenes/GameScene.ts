@@ -1,20 +1,5 @@
 import Phaser from 'phaser';
-import {
-  EGG_HP_CAP,
-  ENEMY,
-  GRAVITY_Y,
-  INHALE,
-  PLAYER,
-  SLAM,
-  STARSTORM,
-  STAR_FLAVORS,
-  VIEW,
-  getMix,
-  type MixId,
-  type StarFlavor,
-  type StarFlavorSpec,
-  type StarMixSpec,
-} from '../core/config';
+import { EGG_HP_CAP, ENEMY, GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -39,8 +24,6 @@ import {
   inhaleGraceUntil,
   isContactHarmless,
   isInInhaleRange,
-  knockbackVelocity,
-  pickInRadius,
 } from '../logic/combat';
 import { magnetPull } from '../logic/enemyFsm';
 import {
@@ -50,8 +33,7 @@ import {
   nearestInRange,
   steerTowardTarget,
 } from '../logic/homing';
-import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
-import { GALE_FLIGHT, SHELL_REFLECT, TRANSFORM_FORMS, VOLT_BEAM } from '../logic/transform';
+import { SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import {
   advanceEgg,
   createEggProgress,
@@ -61,7 +43,6 @@ import {
 } from '../logic/eggs';
 import {
   buffAccelMul,
-  buffDamageMul,
   buffSpeedMul,
   consumeShieldBlock,
   createBuffState,
@@ -99,6 +80,7 @@ import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { createStage, type StageHandle } from '../systems/stage';
+import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
@@ -127,8 +109,6 @@ const GATE_ZONE_H = 150;
 const GATE_ABSORB_MS = 700;
 // 過關星爆停留短拍後進世界地圖（§39：通關後自動進入）。
 const MAP_ENTER_DELAY_MS = 500;
-// 雷鏈跳電演出（§40）：折線閃電段淡出時長。
-const BOLT_FADE_MS = 200;
 
 interface GameSceneData {
   levelId?: LevelId;
@@ -214,6 +194,7 @@ export class GameScene extends Phaser.Scene {
   private bossTouchDamage: number = BOSS.bodyDamage;
   private fx!: FxSystem;
   private stage!: StageHandle;
+  private starCombat!: StarCombat;
 
   constructor() {
     super(SceneKeys.Game);
@@ -325,6 +306,17 @@ export class GameScene extends Phaser.Scene {
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
     createHud(this);
+    // 星彈規格與技能世界結算（§23/§46/§57）：委派 systems/starCombat；
+    // GameScene 只留事件路由與 overlap 接線。
+    this.starCombat = createStarCombat(this, {
+      enemies: () => this.enemies,
+      fx: () => this.fx,
+      boss: () => this.boss,
+      player: () => this.player,
+      buff: () => this.buff,
+      bossBodies: () => this.bossBodies(),
+      damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
+    });
     // 精英房（§48/§52）：boss 關無精英；一關可多房，hooks 閉包延遲解析既有系統。
     const eliteHooks = {
       player: () => this.player,
@@ -762,19 +754,19 @@ export class GameScene extends Phaser.Scene {
         this.player.onStarHit(s, 'absorb');
         return;
       }
-      const spec = this.starSpecOf(s);
-      const outcome = this.enemies.damage(target, this.starDamageOf(s));
+      const spec = this.starCombat.specOf(s);
+      const outcome = this.enemies.damage(target, this.starCombat.damageOf(s));
       if (outcome === 'ignored') return;
-      if (spec.aoeRadiusPx > 0) this.explodeStar(s.x, s.y, spec, target);
+      if (spec.aoeRadiusPx > 0) this.starCombat.explodeStar(s.x, s.y, spec, target);
       // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
-      if (spec.chainCount > 0) this.chainLightning(s.x, s.y, spec, target);
+      if (spec.chainCount > 0) this.starCombat.chainLightning(s.x, s.y, spec, target);
       // 孢子星（§53）：命中未死目標套緩速＋輕持續傷。
       if (spec.slowMs > 0 && outcome === 'hurt') {
         this.enemies.applySlow(target, spec.slowMs, spec.dotDamage);
       }
       // 凝光星（§46）：命中處生成凍結光域。
-      const mix = this.starMixOf(s);
-      if (mix && mix.freezeRadiusPx > 0) this.freezeField(s.x, s.y, mix);
+      const mix = this.starCombat.mixOf(s);
+      if (mix && mix.freezeRadiusPx > 0) this.starCombat.freezeField(s.x, s.y, mix);
       // 未死目標（chompy 扣血）吃掉星彈；擊殺則依穿透續飛。
       // 迴旋星（§53）：命中不吸收——依穿透結算，保留回程判定。
       this.player.onStarHit(s, outcome === 'killed' || spec.boomerang ? 'pierce' : 'absorb');
@@ -788,14 +780,14 @@ export class GameScene extends Phaser.Scene {
         const star = asSprite((a as unknown) === (hitBody as unknown) ? b : a);
         if (!star.active || !this.boss.isActive()) return;
         if (!(hitBody.body as Phaser.Physics.Arcade.Body).enable) return;
-        const spec = this.starSpecOf(star);
-        if (spec.aoeRadiusPx > 0) this.explodeStar(star.x, star.y, spec, null);
+        const spec = this.starCombat.specOf(star);
+        if (spec.aoeRadiusPx > 0) this.starCombat.explodeStar(star.x, star.y, spec, null);
         // 雷鏈星命中魔王同樣跳電波及補給小怪（§40 群戰原型）。
-        if (spec.chainCount > 0) this.chainLightning(star.x, star.y, spec, null);
-        const mix = this.starMixOf(star);
-        if (mix && mix.freezeRadiusPx > 0) this.freezeField(star.x, star.y, mix);
+        if (spec.chainCount > 0) this.starCombat.chainLightning(star.x, star.y, spec, null);
+        const mix = this.starCombat.mixOf(star);
+        if (mix && mix.freezeRadiusPx > 0) this.starCombat.freezeField(star.x, star.y, mix);
         this.player.onStarHit(star, 'absorb');
-        this.damageBossAt(this.starDamageOf(star), star.x, star.y);
+        this.damageBossAt(this.starCombat.damageOf(star), star.x, star.y);
       });
     }
 
@@ -830,7 +822,7 @@ export class GameScene extends Phaser.Scene {
       if (this.enemies.isPhasedOut(enemy as Phaser.GameObjects.GameObject)) return;
       const target = asSprite(enemy);
       // 雷化帶電體（§57）：接觸對小怪放電（damage CD 節流），玩家觸碰傷害照常結算。
-      const contactDamage = this.playerFormSpec()?.contactDamage ?? 0;
+      const contactDamage = this.starCombat.playerFormSpec()?.contactDamage ?? 0;
       if (contactDamage > 0) {
         const zapped = this.enemies.damage(enemy as Phaser.GameObjects.GameObject, contactDamage);
         if (zapped !== 'ignored') this.fx.burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
@@ -882,7 +874,7 @@ export class GameScene extends Phaser.Scene {
       if (!projectile.active || this.finished || this.transitioning) return;
       if (projectile.getData('reflected') === true) return;
       // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。
-      if (this.playerFormSpec()?.reflectProjectiles) {
+      if (this.starCombat.playerFormSpec()?.reflectProjectiles) {
         projectile.setData('reflected', true);
         projectile.setTint(TRANSFORM_FORMS.shell.tint);
         (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
@@ -989,21 +981,21 @@ export class GameScene extends Phaser.Scene {
       seenFlavorHints.add(key);
       this.flavorToast(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
     });
-    // 技能世界結算（§23）：player 只發事件，場上效果集中於 GameScene。
-    bind(GameEvents.SKILL_STARSTORM, () => this.resolveStarstorm());
+    // 技能世界結算（§23）：player 只發事件，場上效果委派 starCombat。
+    bind(GameEvents.SKILL_STARSTORM, () => this.starCombat.resolveStarstorm());
     // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
     bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
-      this.resolveSlamImpact(x, y);
-      this.stage.damageBricksInRadius(x, y, this.slamRadiusPx());
+      this.starCombat.resolveSlamImpact(x, y);
+      this.stage.damageBricksInRadius(x, y, this.starCombat.slamRadiusPx());
     });
     // 殼盾格擋成功（§40）：正面反擊星爆，波及面前小怪。
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
-      this.resolveShieldCounter(x, y, facing),
+      this.starCombat.resolveShieldCounter(x, y, facing),
     );
-    // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、此處結算世界效果。
+    // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、starCombat 結算。
     bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) => {
-      if (kind === 'volt-beam') this.resolveVoltBeam(x, y, facing);
-      else this.resolveGaleLanding(x, y);
+      if (kind === 'volt-beam') this.starCombat.resolveVoltBeam(x, y, facing);
+      else this.starCombat.resolveGaleLanding(x, y);
     });
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
@@ -1574,266 +1566,12 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private starFlavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {
-    return (star.getData('flavor') as StarFlavor | undefined) ?? 'jelly';
-  }
-
-  // 混合星規格（§46）：發射端寫入 mix id；非混合彈回 null。
-  private starMixOf(star: Phaser.Physics.Arcade.Sprite): StarMixSpec | null {
-    const id = star.getData('mix') as MixId | null | undefined;
-    return id ? getMix(id) : null;
-  }
-
-  // 彈道有效規格單一出口（§46）：混合彈讀配方表，其餘讀屬性表。
-  private starSpecOf(star: Phaser.Physics.Arcade.Sprite): StarFlavorSpec {
-    return this.starMixOf(star) ?? STAR_FLAVORS[this.starFlavorOf(star)];
-  }
-
-  // 星彈傷害（§23/§69）：發射端已依槽位（強化 ×1.6 / 金星 20）寫入；星力果倍率結算端疊乘。
-  private starDamageOf(star: Phaser.Physics.Arcade.Sprite): number {
-    const base = (star.getData('damage') as number | undefined) ?? this.starSpecOf(star).damage;
-    return base * buffDamageMul(this.buff);
-  }
-
-  // 星暴（§23）：白閃 + 震屏 + 視野內星雨連爆；清場全小怪、魔王固定 12 傷。
-  private resolveStarstorm(): void {
-    this.cameras.main.flash(280, 255, 255, 255);
-    this.fx.shake(12);
-    const view = this.cameras.main.worldView;
-    for (let i = 0; i < 6; i += 1) {
-      this.time.delayedCall(i * 90, () =>
-        this.fx.starBurst(
-          view.x + Math.random() * view.width,
-          view.y + Math.random() * view.height * 0.6,
-        ),
-      );
-    }
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (child.active) this.enemies.kill(child);
-    }
-    if (this.boss.isActive()) {
-      // 多本體（§68）：星暴固定傷結算至玩家最近的存活本體。
-      this.damageBossAt(STARSTORM.bossDamage, this.player.sprite.x, this.player.sprite.y);
-    }
-  }
-
   // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
   private resolveBossQuake(): void {
     if (this.finished || this.transitioning) return;
     this.fx.shake(10);
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
-  }
-
-  // 玩家當前形態規格（§57）：未變身為 null。
-  private playerFormSpec(): (typeof TRANSFORM_FORMS)['volt'] | null {
-    const form = this.player.getTransformState().form;
-    return form ? TRANSFORM_FORMS[form] : null;
-  }
-
-  // 下衝擊有效半徑（§57）：殼化下砸範圍加倍。
-  private slamRadiusPx(): number {
-    return SLAM.radiusPx * (this.playerFormSpec()?.slamRadiusMul ?? 1);
-  }
-
-  // 下衝擊落地（§23）：60px 圓域傷害 2 + 擊退；未死者被震開。
-  private resolveSlamImpact(x: number, y: number): void {
-    this.fx.shake(6);
-    const radius = this.slamRadiusPx();
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = asSprite(child);
-      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > radius) continue;
-      const outcome = this.enemies.damage(child, SLAM.damage);
-      if (outcome === 'hurt') {
-        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed, SLAM.knockbackLift);
-        enemy.setVelocity(kb.x, kb.y);
-      }
-    }
-  }
-
-  // 殼盾反擊星爆（§40）：盾面前定點星爆，波及面前 90px 小怪。
-  private resolveShieldCounter(x: number, y: number, facing: 1 | -1): void {
-    const originX = x + facing * 30;
-    this.fx.starBurst(originX, y);
-    this.fx.shake(5);
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = asSprite(child);
-      if (
-        Phaser.Math.Distance.Between(originX, y, enemy.x, enemy.y) <= SHELL_SHIELD.counterRadiusPx
-      ) {
-        this.enemies.damage(child, SHELL_SHIELD.counterDamage);
-      }
-    }
-  }
-
-  // 雷化鏈電束（§57/§68）：短程面向側取最近目標（小怪或魔王本體）主傷，再沿雷鏈跳電
-  // 波及——跳電候選含小怪、其餘存活魔王本體與碎晶盾（分裂型天然剋制，審查修復）。
-  private resolveVoltBeam(x: number, y: number, facing: 1 | -1): void {
-    interface BeamTarget {
-      x: number;
-      y: number;
-      ref: Phaser.GameObjects.GameObject | null;
-      shield?: Phaser.Physics.Arcade.Sprite;
-    }
-    const candidates: BeamTarget[] = [];
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = asSprite(child);
-      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
-    }
-    if (this.boss.isActive()) {
-      // 多本體（§68）：全部存活本體入候選，鏈電束就近取目標。
-      for (const body of this.bossBodies()) {
-        if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
-        candidates.push({ x: body.x, y: body.y, ref: null });
-      }
-      for (const obj of this.boss.getShields?.()?.getMatching('active', true) ?? []) {
-        const shard = asSprite(obj);
-        candidates.push({ x: shard.x, y: shard.y, ref: null, shield: shard });
-      }
-    }
-    const inFront = candidates.filter((c) => Math.sign(c.x - x) === facing || c.x === x);
-    const target = pickChainTargets(x, y, inFront, 1, VOLT_BEAM.rangePx)[0];
-    if (!target) return;
-    // 跳電單一結算出口：主傷與波及共用（盾碎裂/小怪/魔王本體三路）。
-    const strike = (hit: BeamTarget, damage: number): void => {
-      this.fx.burstSmall(hit.x, hit.y, TRANSFORM_FORMS.volt.tint);
-      if (hit.shield) {
-        hit.shield.disableBody(true, true);
-        playSfx('break', 0.7);
-        return;
-      }
-      if (hit.ref) {
-        this.enemies.damage(hit.ref, damage);
-        return;
-      }
-      this.damageBossAt(damage, hit.x, hit.y, 'volt');
-    };
-    playSfx('zap');
-    this.drawBolt(x, y, target.x, target.y);
-    // 星力果（§69）：變身射擊同享傷害倍率。
-    strike(target, VOLT_BEAM.damage * buffDamageMul(this.buff));
-    // 跳電波及：以主目標為原點取最近候選（排除主目標自身）。
-    const rest = candidates.filter((c) => c !== target);
-    let fromX = target.x;
-    let fromY = target.y;
-    for (const hop of pickChainTargets(
-      target.x,
-      target.y,
-      rest,
-      VOLT_BEAM.chainCount,
-      VOLT_BEAM.rangePx,
-    )) {
-      this.drawBolt(fromX, fromY, hop.x, hop.y);
-      strike(hop, VOLT_BEAM.chainDamage);
-      fromX = hop.x;
-      fromY = hop.y;
-    }
-  }
-
-  // 風化落地衝擊（§57）：小範圍傷害＋輕擊退（半徑/傷害低於下衝擊，零彈藥消耗）。
-  private resolveGaleLanding(x: number, y: number): void {
-    this.fx.shake(3);
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = asSprite(child);
-      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) > GALE_FLIGHT.landingRadiusPx) {
-        continue;
-      }
-      const outcome = this.enemies.damage(child, GALE_FLIGHT.landingDamage);
-      if (outcome === 'hurt') {
-        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed * 0.7, SLAM.knockbackLift);
-        enemy.setVelocity(kb.x, kb.y);
-      }
-    }
-  }
-
-  // 雷鏈跳電（§40）：命中點半徑內取最近 chainCount 隻依序跳電，折線閃電演出。
-  private chainLightning(
-    x: number,
-    y: number,
-    spec: StarFlavorSpec,
-    exclude: Phaser.GameObjects.GameObject | null,
-  ): void {
-    const candidates: { x: number; y: number; ref: Phaser.GameObjects.GameObject }[] = [];
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active || child === exclude) continue;
-      const enemy = asSprite(child);
-      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
-    }
-    const targets = pickChainTargets(x, y, candidates, spec.chainCount, spec.chainRadiusPx);
-    if (targets.length === 0) return;
-    playSfx('zap');
-    let fromX = x;
-    let fromY = y;
-    for (const target of targets) {
-      this.drawBolt(fromX, fromY, target.x, target.y);
-      this.fx.burstSmall(target.x, target.y, spec.tint);
-      this.enemies.damage(target.ref, spec.chainDamage);
-      fromX = target.x;
-      fromY = target.y;
-    }
-  }
-
-  // 折線閃電：兩點間三段隨機垂直抖動折線，快速淡出自毀。
-  private drawBolt(x1: number, y1: number, x2: number, y2: number): void {
-    const bolt = this.add.graphics().setDepth(93);
-    bolt.lineStyle(3, 0xffe28a, 1);
-    bolt.beginPath();
-    bolt.moveTo(x1, y1);
-    const nx = -(y2 - y1);
-    const ny = x2 - x1;
-    const len = Math.hypot(nx, ny) || 1;
-    for (const t of [0.25, 0.5, 0.75]) {
-      const jitter = (Math.random() - 0.5) * 22;
-      bolt.lineTo(
-        x1 + (x2 - x1) * t + (nx / len) * jitter,
-        y1 + (y2 - y1) * t + (ny / len) * jitter,
-      );
-    }
-    bolt.lineTo(x2, y2);
-    bolt.strokePath();
-    this.tweens.add({
-      targets: bolt,
-      alpha: 0,
-      duration: BOLT_FADE_MS,
-      ease: 'Quad.easeIn',
-      onComplete: () => bolt.destroy(),
-    });
-  }
-
-  // 凝光星凍結場（§46）：命中處光域擴散，域內小怪凍結停擺（主目標一併凍結）；
-  // 選敵下沉 combat.pickInRadius，Scene 只管視覺 tween 與凍結套用。
-  private freezeField(x: number, y: number, mix: StarMixSpec): void {
-    const field = this.add
-      .circle(x, y, mix.freezeRadiusPx, 0xdff2ff, 0.22)
-      .setStrokeStyle(3, 0xbfe8ff, 0.9)
-      .setDepth(59)
-      .setScale(0.3);
-    this.tweens.add({
-      targets: field,
-      scale: 1,
-      duration: 220,
-      ease: 'Quad.easeOut',
-    });
-    this.tweens.add({
-      targets: field,
-      alpha: 0,
-      delay: mix.freezeMs - 300,
-      duration: 300,
-      onComplete: () => field.destroy(),
-    });
-    const candidates: { x: number; y: number; ref: Phaser.GameObjects.GameObject }[] = [];
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (!child.active) continue;
-      const enemy = asSprite(child);
-      candidates.push({ x: enemy.x, y: enemy.y, ref: child });
-    }
-    for (const target of pickInRadius(x, y, candidates, mix.freezeRadiusPx + 20)) {
-      this.enemies.freeze(target.ref, mix.freezeMs);
-    }
   }
 
   // 魔王房準星輔助（§54 難度根修）：一般星彈對活動中魔王微幅導向——地面水平彈
@@ -1845,7 +1583,7 @@ export class GameScene extends Phaser.Scene {
       const star = asSprite(child);
       if (!star.active) continue;
       // 追電星有自己的導向；迴旋星彈道由回程驅動，皆不疊加輔助。
-      if (this.starMixOf(star)?.homing || this.starSpecOf(star).boomerang) continue;
+      if (this.starCombat.mixOf(star)?.homing || this.starCombat.specOf(star).boomerang) continue;
       const body = this.nearestBossBody(star.x, star.y);
       const starBody = star.body as Phaser.Physics.Arcade.Body;
       const towardBoss = Math.sign(body.x - star.x);
@@ -1860,7 +1598,7 @@ export class GameScene extends Phaser.Scene {
         star.y,
         body.x,
         body.y,
-        this.starSpecOf(star).speed,
+        this.starCombat.specOf(star).speed,
         BOSS_AIM_ASSIST.turnRadPerMs * deltaMs,
       );
       starBody.setVelocity(steered.vx, steered.vy);
@@ -1873,7 +1611,7 @@ export class GameScene extends Phaser.Scene {
     for (const child of this.player.getStars().getChildren()) {
       const star = asSprite(child);
       if (!star.active) continue;
-      const mix = this.starMixOf(star);
+      const mix = this.starCombat.mixOf(star);
       if (!mix?.homing) continue;
       const candidates: { x: number; y: number }[] = [];
       for (const candidate of this.enemies.getGroup().getChildren()) {
@@ -1923,27 +1661,6 @@ export class GameScene extends Phaser.Scene {
           deltaMs,
         );
         body.setVelocity(pulled.vx, pulled.vy);
-      }
-    }
-  }
-
-  // 爆裂星 AoE（§20/§53）：命中處圓形距離判定波及其他小怪，主目標排除避免重複結算；
-  // 毒爆雲（slowMs > 0）對波及未死者加套緩速持續傷。
-  private explodeStar(
-    x: number,
-    y: number,
-    spec: StarFlavorSpec,
-    exclude: Phaser.GameObjects.GameObject | null,
-  ): void {
-    this.fx.burstSmall(x, y, spec.tint);
-    for (const child of this.enemies.getGroup().getChildren()) {
-      if (child === exclude || !child.active) continue;
-      const enemy = asSprite(child);
-      if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= spec.aoeRadiusPx) {
-        const outcome = this.enemies.damage(child, spec.aoeDamage);
-        if (spec.slowMs > 0 && outcome === 'hurt') {
-          this.enemies.applySlow(child, spec.slowMs, spec.dotDamage);
-        }
       }
     }
   }
