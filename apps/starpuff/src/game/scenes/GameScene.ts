@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { EGG_HP_CAP, GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
+import { GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -20,13 +20,6 @@ import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor, inhaleGraceUntil, isInInhaleRange } from '../logic/combat';
-import {
-  advanceEgg,
-  createEggProgress,
-  type EasterEggSpec,
-  type EggEvent,
-  type EggProgress,
-} from '../logic/eggs';
 import {
   buffAccelMul,
   buffSpeedMul,
@@ -57,6 +50,7 @@ import type { BossDamageSource, BossHandle } from '../systems/boss';
 import { createBossKit } from '../systems/bossFactory';
 import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createControls, type ControlsSystem } from '../systems/controls';
+import { createEggTracker, type EggTracker } from '../systems/eggTracker';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem } from '../systems/fx';
@@ -69,6 +63,7 @@ import { wireCombatOverlaps } from '../systems/overlaps';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
+import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
@@ -147,16 +142,9 @@ export class GameScene extends Phaser.Scene {
   private prevPlayerX = 0;
   // 卡點關中點重生（§67）：本命最遠推進 x——越過 checkpoint 後死亡自 checkpoint 重生。
   private farthestX = 0;
-  // 彩蛋（§24）：每關進度鎖存；bossActiveAt 供 crown-early-hit 時間窗。
-  private eggProgress: EggProgress[] = [];
-  private bossActiveAt = -1;
-  // 成就（§94）：toast 待播佇列與播放中旗標（同批合併單張、跨批序列）；pendingUnlocked
-  // 為本局勝利瞬間新頒發清單，經 GameResultData 帶入結算頁防演出期漏看。
-  private achievementToasts: string[] = [];
-  private achievementToastActive = false;
+  // 成就（§94）：pendingUnlocked 為本局勝利瞬間新頒發清單，經 GameResultData
+  // 帶入結算頁防演出期漏看；toast 佇列委派 systems/toasts。
   private pendingUnlocked: string[] = [];
-  // e2e 觀測點（§94）：最近一張成就 toast 文案（canvas 文字無法由 DOM 斷言）。
-  lastAchievementToast = '';
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
 
@@ -184,6 +172,14 @@ export class GameScene extends Phaser.Scene {
   private stage!: StageHandle;
   private starCombat!: StarCombat;
   private starSteering!: StarSteering;
+  private toasts!: ToastSystem;
+  // 彩蛋（§24）：每關進度與 crown-early-hit 時間窗委派 systems/eggTracker。
+  private eggTracker!: EggTracker;
+
+  // e2e 觀測點（§94）：最近一張成就 toast 文案（canvas 文字無法由 DOM 斷言）。
+  get lastAchievementToast(): string {
+    return this.toasts ? this.toasts.lastAchievementToast() : '';
+  }
 
   constructor() {
     super(SceneKeys.Game);
@@ -209,12 +205,7 @@ export class GameScene extends Phaser.Scene {
     this.bossHp = -1;
     this.gate = null;
     this.gateRect = null;
-    this.eggProgress = this.level.easterEggs.map(() => createEggProgress());
-    this.bossActiveAt = -1;
-    this.achievementToasts = [];
-    this.achievementToastActive = false;
     this.pendingUnlocked = [];
-    this.lastAchievementToast = '';
     this.farthestX = 0;
     this.mercy = createMercyState();
     this.mercyRng = Math.random;
@@ -289,12 +280,27 @@ export class GameScene extends Phaser.Scene {
         this.tide = createTide(this, spec, this.worldWidth());
       },
       meteor: () => this.meteor,
-      feedEggs: (event) => this.feedEggs(event),
+      feedEggs: (event) => this.eggTracker.feed(event),
     });
     this.boss = bossKit.handle;
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
     createHud(this);
+    // 場內浮字與慶祝演出（§24/§46/§94）：委派 systems/toasts。
+    this.toasts = createToasts(this, {
+      fx: () => this.fx,
+      playerPos: () => ({ x: this.player.sprite.x, y: this.player.sprite.y }),
+    });
+    // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流。
+    this.eggTracker = createEggTracker(this.level, {
+      player: () => this.player,
+      playerHp: () => this.playerHp,
+      bossActive: () => this.boss.isActive(),
+      now: () => this.time.now,
+      recordEggAndAward: (trigger) =>
+        this.persistAndAward(recordEgg(this.save, this.currentLevelId, trigger)),
+      celebrate: (message) => this.toasts.celebrate(message),
+    });
     // 星彈規格與技能世界結算（§23/§46/§57）：委派 systems/starCombat；
     // GameScene 只留事件路由與 overlap 接線。
     this.starCombat = createStarCombat(this, {
@@ -451,7 +457,7 @@ export class GameScene extends Phaser.Scene {
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
       this.syncInhale();
-      this.syncEggs();
+      this.eggTracker.sync();
       this.syncGateSweep();
       for (const room of this.eliteRooms) room.update();
       this.bossRoom?.update();
@@ -650,7 +656,7 @@ export class GameScene extends Phaser.Scene {
     this.buff = pickupBuff(this.buff, id);
     this.buffPickups += 1;
     this.player.setBuffMoveMods(buffSpeedMul(this.buff), buffAccelMul(this.buff));
-    this.flavorToast(`${BUFF_SPECS[id].nameZh}！短暫強化`);
+    this.toasts.flavor(`${BUFF_SPECS[id].nameZh}！短暫強化`);
   }
 
   private advanceBuff(deltaMs: number): void {
@@ -769,7 +775,7 @@ export class GameScene extends Phaser.Scene {
       const key = top.mix ?? top.flavor;
       if (seenFlavorHints.has(key)) return;
       seenFlavorHints.add(key);
-      this.flavorToast(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
+      this.toasts.flavor(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
     });
     // 技能世界結算（§23）：player 只發事件，場上效果委派 starCombat。
     bind(GameEvents.SKILL_STARSTORM, () => this.starCombat.resolveStarstorm());
@@ -792,9 +798,7 @@ export class GameScene extends Phaser.Scene {
     });
     bind(GameEvents.BOSS_DAMAGED, ({ hp }) => {
       this.bossHp = hp;
-      if (this.bossActiveAt >= 0) {
-        this.feedEggs({ kind: 'boss-hit', sinceActiveMs: this.time.now - this.bossActiveAt });
-      }
+      this.eggTracker.noteBossHit();
     });
     // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
     // 高風險位增益投放（§69/§82）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放；
@@ -814,7 +818,7 @@ export class GameScene extends Phaser.Scene {
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
       const flavor = inhaleFlavor(kind);
-      if (flavor) this.feedEggs({ kind: 'swallow', flavor });
+      if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
     });
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
@@ -1165,75 +1169,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // 彩蛋逐幀事件（§24）：世界座標與平台站立；魔王可擊打起點供時間窗計算。
-  private syncEggs(): void {
-    if (this.level.boss && this.bossActiveAt < 0 && this.boss.isActive()) {
-      this.bossActiveAt = this.time.now;
-    }
-    if (this.eggProgress.every((progress) => progress.done)) return;
-    this.feedEggs({ kind: 'position', x: this.player.sprite.x });
-    this.feedEggs({ kind: 'stand', platformY: this.standingPlatformY() });
-  }
-
-  // 站立平台判定：腳底貼齊平台頂（rect 高 16 → 頂 = y - 8）且 x 落於平台範圍。
-  private standingPlatformY(): number | null {
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    if (!body.blocked.down && !body.touching.down) return null;
-    for (const spec of this.level.platforms) {
-      if (
-        Math.abs(body.bottom - (spec.y - 8)) <= 4 &&
-        Math.abs(this.player.sprite.x - spec.x) <= spec.w / 2 + 12
-      ) {
-        return spec.y;
-      }
-    }
-    return null;
-  }
-
-  private feedEggs(event: EggEvent): void {
-    this.level.easterEggs.forEach((spec, i) => {
-      const progress = this.eggProgress[i];
-      if (!progress || progress.done) return;
-      const result = advanceEgg(spec, progress, event);
-      this.eggProgress[i] = result.progress;
-      if (result.triggered) this.grantEggReward(spec);
-    });
-  }
-
-  // 獎勵落地（§24）：+1 HP（上限 6）／滿彈匣／金星彈／+1 HP。
-  private grantEggReward(spec: EasterEggSpec): void {
-    // 存檔寫入時機（§38）：彩蛋觸發即記錄（trigger 型別為關內唯一 id）。
-    this.persistAndAward(recordEgg(this.save, this.currentLevelId, spec.trigger));
-    switch (spec.reward) {
-      case 'hp-up':
-        this.player.heal(1, EGG_HP_CAP);
-        this.eggCelebration('彩虹果凍 +1 HP');
-        break;
-      case 'full-magazine':
-        this.player.grantFullMagazine();
-        this.eggCelebration('星星雨！彈匣全滿');
-        break;
-      case 'gold-star':
-        this.player.grantGoldStar();
-        this.eggCelebration('金星彈入匣！');
-        break;
-      case 'heal':
-        // 滿血時 heal 無感（player.heal 靜默略過）：fallback 改給滿彈匣，獎勵必有回饋。
-        if (this.playerHp >= PLAYER.maxHp) {
-          this.player.grantFullMagazine();
-          this.eggCelebration('皇冠火花！彈匣全滿');
-        } else {
-          this.player.heal(1, PLAYER.maxHp);
-          this.eggCelebration('皇冠火花 +1 HP');
-        }
-        break;
-      default: {
-        const exhaustive: never = spec.reward;
-        void exhaustive;
-      }
-    }
-  }
-
   // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列。
   // 成就判定恆由 save 資料派生（awardAchievements 內部 diff），此處不做侵入式鉤子。
   // 同批多解鎖合併為單張橫幅（審查 U1）：勝利轉場 2.8s 窗口內必可播完整批。
@@ -1242,118 +1177,7 @@ export class GameScene extends Phaser.Scene {
     persistSave(save);
     if (newly.length === 0) return;
     this.pendingUnlocked.push(...newly);
-    this.achievementToasts.push(newly.map((id) => getAchievement(id)?.nameZh ?? id).join('、'));
-    this.drainAchievementToasts();
-  }
-
-  // 成就 toast 佇列（§94）：一次一張序列播放（跨批不重疊）；轉場即隨場景銷毀，
-  // 漏播由 Result 名單與圖鑑成就頁兜底。金色橫幅帶深色底襯（勝利白閃下仍可讀），
-  // 禁全屏遮罩。
-  private drainAchievementToasts(): void {
-    if (this.achievementToastActive) return;
-    const names = this.achievementToasts.shift();
-    if (names === undefined) return;
-    this.achievementToastActive = true;
-    this.lastAchievementToast = names;
-    playSfx('pop');
-    const toast = this.add
-      .text(this.scale.width / 2, this.scale.height * 0.3, `成就解鎖：${names}`, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '19px',
-        fontStyle: 'bold',
-        color: '#ffe9a8',
-        stroke: '#8a6a1f',
-        strokeThickness: 4,
-        backgroundColor: 'rgba(58, 42, 20, 0.82)',
-        padding: { x: 14, y: 7 },
-        align: 'center',
-        // CJK 逐字換行：多重解鎖合併名單在 854 寬不溢出。
-        wordWrap: { width: Math.min(this.scale.width - 160, 700), useAdvancedWrap: true },
-      })
-      .setOrigin(0.5)
-      .setDepth(110)
-      .setScrollFactor(0)
-      .setAlpha(0);
-    this.tweens.chain({
-      targets: toast,
-      tweens: [
-        { alpha: 1, duration: 220, ease: 'Quad.easeOut' },
-        { alpha: 0, y: '-=16', duration: 360, delay: 1500, ease: 'Quad.easeIn' },
-      ],
-      onComplete: () => {
-        toast.destroy();
-        this.achievementToastActive = false;
-        this.drainAchievementToasts();
-      },
-    });
-  }
-
-  // 星味首遇 toast（§46/§47）：頂部橫幅下方一行小字，淡入停留後上飄淡出。
-  private flavorToast(message: string): void {
-    const toast = this.add
-      .text(this.scale.width / 2, this.scale.height * 0.22, message, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '19px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: '#7a5fb8',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setDepth(110)
-      .setScrollFactor(0)
-      .setAlpha(0);
-    this.tweens.chain({
-      targets: toast,
-      tweens: [
-        { alpha: 1, duration: 220, ease: 'Quad.easeOut' },
-        { alpha: 0, y: '-=16', duration: 360, delay: 1600, ease: 'Quad.easeIn' },
-      ],
-      onComplete: () => toast.destroy(),
-    });
-  }
-
-  // 彩蛋演出（§24）：金光 popIn + 專屬 jingle + 浮字（既有 fx 組合）。
-  private eggCelebration(message: string): void {
-    playSfx('jingle');
-    const { y } = this.player.sprite;
-    // 浮字夾限於鏡頭視野內，避免世界邊緣觸發時被裁切。
-    const view = this.cameras.main.worldView;
-    const x = Phaser.Math.Clamp(this.player.sprite.x, view.x + 110, view.right - 110);
-    const glow = this.add
-      .image(x, y, 'fx-star')
-      .setDisplaySize(130, 130)
-      .setTint(0xffc93c)
-      .setAlpha(0)
-      .setDepth(94);
-    this.tweens.add({
-      targets: glow,
-      alpha: { from: 0.9, to: 0 },
-      scale: { from: glow.scale * 0.3, to: glow.scale * 1.7 },
-      duration: 750,
-      ease: 'Quad.easeOut',
-      onComplete: () => glow.destroy(),
-    });
-    this.fx.starBurst(x, y - 20);
-    const label = this.add
-      .text(x, y - 64, message, {
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: '24px',
-        fontStyle: 'bold',
-        color: '#ffc93c',
-        stroke: '#3a3a4a',
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5)
-      .setDepth(96);
-    this.tweens.add({
-      targets: label,
-      y: y - 118,
-      alpha: { from: 1, to: 0 },
-      duration: 1200,
-      ease: 'Cubic.easeOut',
-      onComplete: () => label.destroy(),
-    });
+    this.toasts.queueAchievements(newly.map((id) => getAchievement(id)?.nameZh ?? id).join('、'));
   }
 
   // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
