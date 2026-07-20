@@ -85,8 +85,9 @@ test('版本號（§42）：__sp.version 回報 semver+SHA（無 git 環境為 n
   const errors = collectErrors(page);
   await gotoTitle(page);
   const version = await page.evaluate(() => window.__sp.version());
-  // 與 vite.config.ts resolveAppVersion 的 fallback 契約對齊：短 SHA 或 nogit。
-  expect(version).toMatch(/^v\d+\.\d+\.\d+\+([0-9a-f]{4,}|nogit)$/);
+  // 與 vite.config.ts resolveAppVersion 契約對齊（§99 F-02）：SHA 後綴可省略、
+  // 不再有 nogit 佔位；dev/e2e 環境有 git 恆帶短 SHA。
+  expect(version).toMatch(/^v\d+\.\d+\.\d+(\+[0-9a-f]{4,})?$/);
   expect(errors).toEqual([]);
 });
 

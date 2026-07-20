@@ -9,6 +9,7 @@ import {
   getMix,
   type MagazineSlot,
 } from '../core/config';
+import { menuHitCssRect } from '../core/domButton';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
 import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
@@ -73,38 +74,44 @@ function ensureSpeakerTextures(scene: Phaser.Scene): void {
   }
 }
 
-// 右上角靜音鈕（修復包 B）：Title 與 Game 場景共用；狀態經 localStorage 跨次保存；
-// 右緣錨定隨視寬變更重排（§28）。
+// 右上角靜音鈕（修復包 B／§101 F-06）：Title 與 Game 場景共用；狀態經 localStorage
+// 跨次保存；右緣錨定隨視寬變更重排（§28）。命中改由同位 DOM 鈕承接（旋轉殼
+// hit-test 天然正確、讀屏可及），canvas 僅保留圖示視覺。
 export function addMuteButton(scene: Phaser.Scene): void {
   ensureSpeakerTextures(scene);
   const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
   const button = scene.add
     .image(scene.scale.width - 26 - hudInsetRight(scene), 26, texture())
     .setDepth(HUD_DEPTH + 20)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true });
+    .setScrollFactor(0);
   const anchor = (): void => {
     button.setX(scene.scale.width - 26 - hudInsetRight(scene));
   };
   scene.scale.on('resize', anchor);
   scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
-  // 觸控熱區擴至 48px（HIG 44pt+）：以紋理中心向外擴張，不放大視覺。
-  (button.input?.hitArea as Phaser.Geom.Rectangle | undefined)?.setTo(-9, -9, 48, 48);
-  button.on('pointerdown', () => {
-    const next = !isMuted();
-    setMuted(next);
-    // 隱私模式下 localStorage 可能拋錯：靜音仍生效，僅不跨次保存。
-    try {
-      localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
-    } catch {
-      /* noop */
-    }
-    button.setTexture(texture());
-  });
+  const domButton = addDomButton(
+    scene,
+    '靜音切換',
+    () => ({ x: scene.scale.width - 26 - hudInsetRight(scene), y: 26, w: 44, h: 44 }),
+    () => {
+      const next = !isMuted();
+      setMuted(next);
+      // 隱私模式下 localStorage 可能拋錯：靜音仍生效，僅不跨次保存。
+      try {
+        localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
+      } catch {
+        /* noop */
+      }
+      button.setTexture(texture());
+      domButton?.setAttribute('aria-pressed', next ? 'true' : 'false');
+    },
+    'mute',
+  );
+  domButton?.setAttribute('aria-pressed', isMuted() ? 'true' : 'false');
 }
 
-// 遊戲場景暫停鍵（§35）：與靜音鈕同列（top-right 硬熱區，避開戰鬥區），48px 觸控目標；
-// 圖形雙豎條（禁 emoji/文字鍵帽），pointerdown 開啟暫停選單。
+// 遊戲場景暫停鍵（§35／§101 F-06）：與靜音鈕同列（top-right 硬熱區，避開戰鬥區）；
+// 圖形雙豎條（禁 emoji/文字鍵帽），命中由同位 DOM 鈕承接，pointerdown 開暫停選單。
 export function addPauseButton(scene: Phaser.Scene): void {
   if (!scene.textures.exists(PAUSE_TEX)) {
     const g = scene.add.graphics();
@@ -117,15 +124,19 @@ export function addPauseButton(scene: Phaser.Scene): void {
   const button = scene.add
     .image(scene.scale.width - 74 - hudInsetRight(scene), 26, PAUSE_TEX)
     .setDepth(HUD_DEPTH + 20)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true });
+    .setScrollFactor(0);
   const anchor = (): void => {
     button.setX(scene.scale.width - 74 - hudInsetRight(scene));
   };
   scene.scale.on('resize', anchor);
   scene.events.once('shutdown', () => scene.scale.off('resize', anchor));
-  (button.input?.hitArea as Phaser.Geom.Rectangle | undefined)?.setTo(-9, -9, 48, 48);
-  button.on('pointerdown', () => openPauseMenu(scene.game));
+  addDomButton(
+    scene,
+    '暫停',
+    () => ({ x: scene.scale.width - 74 - hudInsetRight(scene), y: 26, w: 44, h: 44 }),
+    () => openPauseMenu(scene.game),
+    'pause',
+  );
 }
 
 // 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
@@ -152,16 +163,26 @@ export function bindMenuRelayout(scene: Phaser.Scene, restartData?: object): voi
 // 場景 DOM 鈕（recon-v4 A.3）：旋轉殼下 canvas 指標會錯位，Title/Result 主按鈕以殼內
 // 透明 DOM 鈕作為唯一指標命中路徑（hit-test 隨殼旋轉自然正確；canvas 同熱區不掛
 // interactive，杜絕雙命中）。幾何以遊戲邏輯座標換算 canvas CSS px，隨 scale resize 重算；
+// 命中短邊 48px 保底（§98 D2：直持縮放會把 44–56 邏輯高壓到 36–45 CSS px）；
+// rect 可傳 getter（§101：HUD 鈕邏輯座標依視寬/inset 動態錨定）；
 // 監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
+interface LogicalRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export function addDomButton(
   scene: Phaser.Scene,
   label: string,
-  rect: { x: number; y: number; w: number; h: number },
+  rect: LogicalRect | (() => LogicalRect),
   onPress: () => void,
   menuId?: string,
-): void {
+): HTMLButtonElement | null {
   const shell = document.getElementById('game-shell');
-  if (!shell) return;
+  if (!shell) return null;
+  const rectOf = typeof rect === 'function' ? rect : () => rect;
   const canvas = scene.game.canvas;
   const button = document.createElement('button');
   button.type = 'button';
@@ -171,10 +192,11 @@ export function addDomButton(
   const relayout = (): void => {
     const sx = canvas.clientWidth / scene.scale.width;
     const sy = canvas.clientHeight / scene.scale.height;
-    button.style.left = `${canvas.offsetLeft + (rect.x - rect.w / 2) * sx}px`;
-    button.style.top = `${canvas.offsetTop + (rect.y - rect.h / 2) * sy}px`;
-    button.style.width = `${rect.w * sx}px`;
-    button.style.height = `${rect.h * sy}px`;
+    const css = menuHitCssRect(rectOf(), sx, sy);
+    button.style.left = `${canvas.offsetLeft + css.left}px`;
+    button.style.top = `${canvas.offsetTop + css.top}px`;
+    button.style.width = `${css.w}px`;
+    button.style.height = `${css.h}px`;
   };
   relayout();
   shell.appendChild(button);
@@ -187,6 +209,7 @@ export function addDomButton(
     scene.scale.off('resize', relayout);
     button.remove();
   });
+  return button;
 }
 
 function ensureHudTextures(scene: Phaser.Scene): void {

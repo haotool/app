@@ -60,14 +60,16 @@ const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;
 
 // 關卡 runner：讀 levels.ts 資料驅動生成與配額推進，禁止每關硬編碼分支。
+// initialKills（§105 D5）：教學關死亡重試的配額結轉。
 export function createWaveRunner(
   scene: Phaser.Scene,
   enemies: EnemySystem,
   levelId: LevelId,
   hooks: WaveSpawnHooks = {},
+  initialKills = 0,
 ): WaveRunner {
   const level = getLevel(levelId);
-  let run: LevelRunState = createLevelRun(levelId);
+  let run: LevelRunState = createLevelRun(levelId, initialKills);
   let stopped = false;
   let spawnCounter = 0;
   // 反卡死（§26）：以 AMMO_CHANGED 事件追蹤彈藥量，判定飢荒強制補可吸怪。
@@ -174,7 +176,7 @@ export function createWaveRunner(
 
   return {
     start() {
-      run = createLevelRun(levelId);
+      run = createLevelRun(levelId, initialKills);
       stopped = false;
       tutorialAgeMs = 0;
       tutorialDismissAtMs = TUTORIAL_MAX_MS;
@@ -187,6 +189,13 @@ export function createWaveRunner(
         nameZh: level.nameZh,
         killQuota: level.killQuota,
       });
+      // 配額結轉即時顯示（§105 D5）：HUD 於 LEVEL_CHANGED 預設 0/N，結轉時補發現值。
+      if (run.killCount > 0) {
+        emitGameEvent(scene.events, GameEvents.LEVEL_QUOTA, {
+          killCount: run.killCount,
+          killQuota: level.killQuota,
+        });
+      }
       if (level.tutorial) showTutorial(TUTORIAL_TEXT);
       // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
       else if (level.hint) showTutorial(level.hint, '20px');

@@ -3,19 +3,22 @@ import {
   applyLayoutToDom,
   clampKeyPositionForLayer,
   clampKeyScale,
-  getDefaultLayout,
+  defaultLayoutFor,
+  hasStoredLayout,
   loadLayout,
+  resetLayout,
   saveLayout,
   type ControlLayout,
 } from '../core/layout';
 import {
   DEFAULT_PORTRAIT_ROTATION,
   applyRotationClass,
-  getShellRotation,
+  isPortrait,
   loadRotationPref,
   pointerToLocal,
   saveRotationPref,
   type PortraitRotationPref,
+  type ShellRotation,
 } from '../core/rotation';
 
 // 按鈕配置模式（GAME_DESIGN §34）：純 DOM 實作——直接拖曳真實虛擬鍵即時預覽，
@@ -99,6 +102,14 @@ export function openKeyConfig(onClose?: () => void): void {
   // 持向為草稿之一（審查修復）：切換即時預覽（掛 class），儲存才落地、取消回滾。
   const originalRotation: PortraitRotationPref = loadRotationPref();
   let rotationPref: PortraitRotationPref = originalRotation;
+  // 草稿持向對應的殼旋轉態（§95 D1）：getShellRotation 讀已存偏好，草稿期須以
+  // rotationPref 就地推導，預設鍵位才跟得上預覽方向。
+  const draftRotation = (): ShellRotation => (isPortrait() ? rotationPref : 'none');
+
+  // 儲存語意（§95 D1）：預設態（從未自訂或按過恢復預設）不落盤——清除儲存值，
+  // 讓直橫持各自動態解析預設；使用者拖曳/縮放過才持久化具體布局。
+  let usingDefaults = !hasStoredLayout();
+  let dirty = false;
 
   const cancelWithoutSave = (): void => {
     applyLayoutToDom(layer, original);
@@ -108,15 +119,21 @@ export function openKeyConfig(onClose?: () => void): void {
   dismissWithoutSave = cancelWithoutSave;
 
   addAction(actions, 'reset', '恢復預設', () => {
-    Object.assign(working, getDefaultLayout());
     rotationPref = DEFAULT_PORTRAIT_ROTATION;
     applyRotationClass(rotationPref);
     renderRotation();
+    // 依當前持向給對的預設（§95 D1）：直持回拇指帶錨點、橫持回 v14 定案。
+    Object.assign(working, defaultLayoutFor(draftRotation()));
+    usingDefaults = true;
+    dirty = true;
     applyLayoutToDom(layer, working);
     renderScale();
   });
   addAction(actions, 'save', '儲存', () => {
-    saveLayout(working);
+    if (dirty) {
+      if (usingDefaults) resetLayout();
+      else saveLayout(working);
+    }
     saveRotationPref(rotationPref);
     teardown();
   });
@@ -131,6 +148,8 @@ export function openKeyConfig(onClose?: () => void): void {
     rotationPref = rotationPref === 'ccw' ? 'cw' : 'ccw';
     applyRotationClass(rotationPref);
     renderRotation();
+    // 預設態跟隨新方向重映射（§95 D1）：cw/ccw 拇指帶錨點不同；自訂布局不動。
+    if (usingDefaults) Object.assign(working, defaultLayoutFor(draftRotation()));
     applyLayoutToDom(layer, working);
   });
   const renderRotation = (): void => {
@@ -153,6 +172,9 @@ export function openKeyConfig(onClose?: () => void): void {
   };
   const nudgeScale = (delta: number): void => {
     working.scale = clampKeyScale(Math.round((working.scale + delta) * 100) / 100);
+    // 縮放屬自訂（§95 D1）：儲存改走具體布局路徑，預設態語意解除。
+    usingDefaults = false;
+    dirty = true;
     renderScale();
     applyLayoutToDom(layer, working);
   };
@@ -182,11 +204,16 @@ export function openKeyConfig(onClose?: () => void): void {
     const onMove = (event: PointerEvent): void => {
       if (event.pointerId !== activeId) return;
       event.preventDefault();
+      // 拖曳屬自訂（§95 D1）：儲存改走具體布局路徑。
+      usingDefaults = false;
+      dirty = true;
+      // 逆變換取草稿持向（§95 D1 順手修正）：切換持向未儲存期間，殼 class 已跟隨
+      // 草稿，getShellRotation 仍讀舊偏好會使拖曳軸向錯置。
       const local = pointerToLocal(
         layer.getBoundingClientRect(),
         layer.clientWidth,
         layer.clientHeight,
-        getShellRotation(),
+        draftRotation(),
         event.clientX,
         event.clientY,
       );

@@ -127,25 +127,44 @@ export class TitleScene extends Phaser.Scene {
       });
     }
 
-    // logo 動畫入場（§36）：主標縮放彈出 + 副標延遲淡入。
-    const logo = this.add
-      .text(centerX, height * 0.15, '星噗噗', {
+    // logo 動畫入場（§36/§103 D6 品牌化）：雙層字形——底層深紫厚描邊下沉 3px 造
+    // 糖果立體感，頂層白字帶垂直粉漸層 tint＋柔影；零新字型檔，僅字重/層次/陰影。
+    const logoY = height * 0.15;
+    const logoDepth = this.add
+      .text(centerX, logoY + 5, '星噗噗', {
         fontFamily: 'system-ui, sans-serif',
-        fontSize: '58px',
+        fontSize: '60px',
         fontStyle: 'bold',
-        color: '#ffffff',
-        stroke: '#7a5fb8',
-        strokeThickness: 9,
+        color: '#5a4390',
+        stroke: '#5a4390',
+        strokeThickness: 12,
       })
       .setOrigin(0.5)
       .setScale(0);
-    this.tweens.add({ targets: logo, scale: 1, duration: 520, ease: 'Back.easeOut' });
+    const logo = this.add
+      .text(centerX, logoY, '星噗噗', {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '60px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        stroke: '#9b7bd8',
+        strokeThickness: 4,
+        shadow: { offsetX: 0, offsetY: 3, color: 'rgba(90, 67, 144, 0.3)', blur: 6, fill: true },
+      })
+      .setOrigin(0.5)
+      .setScale(0);
+    // 垂直漸層 tint（上白下粉）：canvas 字形直接染色，免外部資產。
+    logo.setTint(0xffffff, 0xffffff, 0xffe0ef, 0xffd0e8);
+    this.tweens.add({ targets: [logoDepth, logo], scale: 1, duration: 520, ease: 'Back.easeOut' });
 
     const subtitle = this.add
       .text(centerX, height * 0.27, 'StarPuff', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '22px',
+        fontStyle: 'bold',
         color: '#7a5fb8',
+        stroke: '#ffffff',
+        strokeThickness: 4,
       })
       .setOrigin(0.5)
       .setAlpha(0);

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+151
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+153
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-20
+- ID：reward-starpuff-v16-portrait-default-keys-device-anchor
+- 原因：v14 虛擬鍵預設以 keys-layer 層比例定義且直橫持共用，旋轉殼下層軸與裝置軸互換，A/B 預設映射到直持螢幕頂端（fy≈0.09 雙拇指不可及）——v4 起四個版本僅搖桿半邊被修正
+- 解法：預設分流不動自訂——裝置比例拇指帶錨點 SSOT 依殼向反算層比例（ccw cx=1−fy/cy=fx、cw cx=fy/cy=1−fx），配置頁「預設態不落盤」讓直橫持各自動態解析；CDP 真觸控 e2e＋前後截圖（fy 0.092→0.850）結案
+
+- 日期：2026-07-20
+- ID：reward-starpuff-v16-critique-train-11-defects-converged
+- 原因：三席獨立批評（Grok 79/87、Sonnet 95/97、Composer 93/96）合議出 11 項產品面扣分：圖鑑溢位/命中盒/版號佔位/結算動線/HUD 可及性/命名分裂/密度/遮罩/字形/前期節奏
+- 解法：一缺陷一 commit 全數收斂——有界網格 y≤470 守門、DOM 鈕短邊 48 保底、下一關主 CTA、暫停靜音 DOM 化＋aria、怪物圖鑑分頁化、教學關配額結轉（保守調參並記錄不做項）；vitest 580＋e2e 92 全綠
 
 - 日期：2026-07-19
 - ID：reward-starpuff-v15-walkintoarena-keydown-immunity

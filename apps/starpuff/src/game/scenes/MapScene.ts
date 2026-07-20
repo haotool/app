@@ -189,7 +189,7 @@ export class MapScene extends Phaser.Scene {
       if (!unlocked || active) return;
       addDomButton(
         this,
-        `前往${zone.nameZh}`,
+        `前往第 ${zone.id} 區 ${zone.nameZh}`,
         { x, y: label.y, w: tabW - 6, h: 46 },
         () => {
           playSfx('pop');
@@ -201,12 +201,14 @@ export class MapScene extends Phaser.Scene {
   }
 
   // 頁標頭（§78 引用 P-11 分項透明化）：該區彩蛋 found/total。
+  // 區序前綴（§97 F-01）：區名與關名近義並列（果凍平原 vs 果凍草原）易讀成漂移，
+  // 標頭明示「第 N 區」建立區≠關的層級語意。
   private renderZoneHeader(save: SaveData, zone: ZoneSpec): void {
     const inZone = levelsInZone(zone, LEVELS);
     const total = inZone.reduce((sum, level) => sum + level.easterEggs.length, 0);
     const found = inZone.reduce((sum, level) => sum + eggsFoundCount(save, level.id), 0);
     this.add
-      .text(this.scale.width / 2, 112, `${zone.nameZh}・彩蛋 ${found}/${total}`, {
+      .text(this.scale.width / 2, 112, `第 ${zone.id} 區 ${zone.nameZh}・彩蛋 ${found}/${total}`, {
         fontFamily: 'system-ui, sans-serif',
         fontSize: '16px',
         fontStyle: 'bold',
@@ -366,9 +368,10 @@ export class MapScene extends Phaser.Scene {
   }
 
   private addNodeButton(levelId: LevelId, nameZh: string, x: number, y: number): void {
+    // 關序從屬標示（§97 F-01）：aria 與視覺同義——節點＝關卡、頁籤/標頭＝區域。
     addDomButton(
       this,
-      `進入 ${nameZh}`,
+      `進入第 ${levelId} 關 ${nameZh}`,
       { x, y, w: NODE_RADIUS * 2 + 20, h: NODE_RADIUS * 2 + 20 },
       () => this.enterLevel(levelId),
       `node-${levelId}`,

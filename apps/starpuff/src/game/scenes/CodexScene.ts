@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { CODEX_MONSTERS, CODEX_SKILLS } from '../core/codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS, MONSTER_PAGE_SIZE } from '../core/codex';
+import { fitBoundedGrid, gridRowTop } from '../core/gridLayout';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
 import { ACHIEVEMENTS, unlockedAchievements } from '../logic/achievements';
@@ -19,6 +20,7 @@ const ACCENT = '#7a5fb8';
 
 interface CodexSceneData {
   tab?: CodexTab;
+  monsterPage?: number;
 }
 
 // 圖鑑與技能介紹（GAME_DESIGN §36）：單場景雙分頁，內容由 core/codex.ts 資料驅動；
@@ -26,6 +28,7 @@ interface CodexSceneData {
 export class CodexScene extends Phaser.Scene {
   tab: CodexTab = 'monsters';
   private backdrop: BackgroundHandle | null = null;
+  private monsterPage = 0;
 
   constructor() {
     super(SceneKeys.Codex);
@@ -33,6 +36,7 @@ export class CodexScene extends Phaser.Scene {
 
   init(data: CodexSceneData): void {
     this.tab = data.tab ?? 'monsters';
+    this.monsterPage = data.monsterPage ?? 0;
   }
 
   create(): void {
@@ -44,7 +48,7 @@ export class CodexScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
-    bindMenuRelayout(this, { tab: this.tab });
+    bindMenuRelayout(this, { tab: this.tab, monsterPage: this.monsterPage });
 
     // 可讀性底襯：內容區半透明白卡。
     this.add.rectangle(width / 2, 282, Math.min(width - 40, 1100), 350, 0xffffff, 0.35);
@@ -135,8 +139,8 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物雙列網格（v11 十八格：十六小怪＋雙魔王）：欄數由條目數推導（§76 單頁評估
-  // 定案：9×2 於 854 寬 cellW≈89px 仍可讀，分頁延後與地圖分區分頁同批評估）。
+  // 怪物分頁網格（§104 F-03 取代 §76 單頁定案）：每頁 12 格 6×2——854 寬 cellW 由
+  // 67 放大至 134、行為敘述 12+ 字/行，直持不再過密；頁序沿 CODEX_MONSTERS。
   private renderMonsters(): void {
     const { width } = this.scale;
     // 殼緣避讓（§93 D）：徽記與網格以左右净 inset 收縮，瀏海/home indicator 不遮條目；
@@ -167,16 +171,23 @@ export class CodexScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
     }
+    const pages = Math.max(1, Math.ceil(CODEX_MONSTERS.length / MONSTER_PAGE_SIZE));
+    const page = Math.min(this.monsterPage, pages - 1);
+    const pageMonsters = CODEX_MONSTERS.slice(
+      page * MONSTER_PAGE_SIZE,
+      (page + 1) * MONSTER_PAGE_SIZE,
+    );
+    this.addMonsterPager(page, pages);
     const usableW = width - insets.left - insets.right;
-    const cols = Math.ceil(CODEX_MONSTERS.length / 2);
+    const grid = fitBoundedGrid(pageMonsters.length, CODEX_TAB_GRIDS.monsters);
+    const cols = grid.cols;
     const cellW = Math.min(170, (usableW - 50) / cols);
     const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
-    const rowTops = [116, 282];
-    CODEX_MONSTERS.forEach((monster, index) => {
+    pageMonsters.forEach((monster, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
-      const top = rowTops[row] ?? 116;
+      const top = gridRowTop(row, CODEX_TAB_GRIDS.monsters);
       const sprite = this.add.image(cx, top + 30, monster.textureKey);
       const scale = 50 / Math.max(sprite.width, sprite.height);
       sprite.setScale(scale);
@@ -224,11 +235,58 @@ export class CodexScene extends Phaser.Scene {
           fontSize: '11px',
           color: TEXT_SOFT,
           align: 'center',
-          // CJK 無空白斷詞：必須逐字換行，否則 7 欄窄格橫向溢出相鄰格。
+          // CJK 無空白斷詞：必須逐字換行，否則窄格橫向溢出相鄰格。
           wordWrap: { width: cellW - 10, useAdvancedWrap: true },
         })
         .setOrigin(0.5, 0);
     });
+  }
+
+  // 怪物頁切換列（§104 F-03）：底緣置中「上一頁／第 n/N 頁／下一頁」，
+  // restart 帶頁參（沿分頁切換慣例）；單頁時不顯示。
+  private addMonsterPager(page: number, pages: number): void {
+    if (pages <= 1) return;
+    const { width } = this.scale;
+    const centerX = width / 2;
+    const pagerY = 448;
+    this.add
+      .text(centerX, pagerY, `第 ${page + 1}/${pages} 頁`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: TEXT_DARK,
+      })
+      .setOrigin(0.5);
+    const entries: { label: string; delta: number; menuId: string }[] = [
+      { label: '上一頁', delta: -1, menuId: 'monsters-prev' },
+      { label: '下一頁', delta: 1, menuId: 'monsters-next' },
+    ];
+    for (const entry of entries) {
+      const target = page + entry.delta;
+      if (target < 0 || target >= pages) continue;
+      const x = centerX + entry.delta * 128;
+      this.add
+        .text(x, pagerY, entry.label, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: TEXT_DARK,
+          backgroundColor: '#ffffff',
+          padding: { x: 14, y: 7 },
+        })
+        .setOrigin(0.5)
+        .setAlpha(0.92);
+      addDomButton(
+        this,
+        `圖鑑${entry.label}`,
+        { x, y: pagerY, w: 128, h: 44 },
+        () => {
+          playSfx('pop');
+          this.scene.restart({ tab: 'monsters', monsterPage: target });
+        },
+        entry.menuId,
+      );
+    }
   }
 
   // 成就網格（§94）：6 欄 4 列徽章格——已解鎖亮金、未解鎖灰、隱藏未解鎖遮蔽為
@@ -250,14 +308,16 @@ export class CodexScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const usableW = width - insets.left - insets.right;
-    const cols = 6;
+    // 有界網格（§96）：欄數隨成就總量增長，任何內容不超出 y=470（守門單測）。
+    const gridSpec = CODEX_TAB_GRIDS.achievements;
+    const { cols } = fitBoundedGrid(ACHIEVEMENTS.length, gridSpec);
     const cellW = Math.min(170, (usableW - 50) / cols);
     const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
     ACHIEVEMENTS.forEach((spec, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
-      const top = 112 + row * 90;
+      const top = gridRowTop(row, gridSpec);
       const done = unlocked.has(spec.id);
       const masked = spec.hidden && !done;
       // 徽章：圓底＋星形；未解鎖降飽和低透明。
@@ -301,39 +361,45 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 技能雙欄列表：名稱 + 操作方式 + 效果說明（含來源怪物對應）。
+  // 技能網格列表：名稱＋操作方式（同列）＋效果說明（含來源怪物對應）。
+  // 有界網格（§96 P1-01 修復）：v15 前雙欄 5 列第 9 項說明 y=486 溢出邏輯畫布
+  // （480）；改固定 3 列、欄隨量增，任何內容不超出 y=470（守門單測）。
   private renderSkills(): void {
     const { width } = this.scale;
-    // 殼緣避讓（§93 D）：雙欄以左右净 inset 收縮的有效區排版。
+    // 殼緣避讓（§93 D）：網格以左右净 inset 收縮的有效區排版。
     const insets = hudSafeInsets(this);
     const usableW = width - insets.left - insets.right;
-    const colX = [insets.left + usableW * 0.28, insets.left + usableW * 0.72];
-    const colW = Math.min(400, usableW * 0.42);
+    const gridSpec = CODEX_TAB_GRIDS.skills;
+    const { cols } = fitBoundedGrid(CODEX_SKILLS.length, gridSpec);
+    const cellW = (usableW - 24) / cols;
+    const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
     CODEX_SKILLS.forEach((skill, index) => {
-      const x = colX[index % 2] ?? width / 2;
-      const y = 122 + Math.floor(index / 2) * 84;
-      this.add
-        .text(x - colW / 2, y, skill.nameZh, {
+      const left = gridLeft + cellW * (index % cols) + 8;
+      const y = gridRowTop(Math.floor(index / cols), gridSpec);
+      const name = this.add
+        .text(left, y, skill.nameZh, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '18px',
+          fontSize: '17px',
           fontStyle: 'bold',
           color: TEXT_DARK,
         })
         .setOrigin(0, 0);
+      // 操作方式緊隨名稱動態排列（§96）：854 寬含瀏海 inset 的最窄格也不越格。
       this.add
-        .text(x - colW / 2 + 96, y + 3, skill.howTo, {
+        .text(left + name.width + 8, y + 3, skill.howTo, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           fontStyle: 'bold',
           color: ACCENT,
         })
         .setOrigin(0, 0);
       this.add
-        .text(x - colW / 2, y + 28, skill.detail, {
+        .text(left, y + 26, skill.detail, {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           color: TEXT_SOFT,
-          wordWrap: { width: colW },
+          // CJK 無空白斷詞：逐字換行防窄格橫向溢出（沿 §76 慣例）。
+          wordWrap: { width: cellW - 16, useAdvancedWrap: true },
         })
         .setOrigin(0, 0);
     });

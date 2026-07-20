@@ -283,6 +283,28 @@ body {
     bottom: max(12px, env(safe-area-inset-left, 0px));
     left: max(12px, env(safe-area-inset-top, 0px));
   }
+
+  /* 直持預設鍵位 fallback（§95 D1）：鏡像 core/layout.ts PORTRAIT_THUMB_ANCHORS 反算值
+     （ccw：cx=1−fy／cy=fx；cw：cx=fy／cy=1−fx），JS 載入前即落在裝置右下拇指帶。 */
+  .ctl-btn-a {
+    left: 14%;
+    top: 82%;
+  }
+
+  .ctl-btn-b {
+    left: 32%;
+    top: 80%;
+  }
+
+  html.sp-rot-cw .ctl-btn-a {
+    left: 86%;
+    top: 18%;
+  }
+
+  html.sp-rot-cw .ctl-btn-b {
+    left: 68%;
+    top: 20%;
+  }
 }
 
 /* 場景 DOM 備援鈕（recon-v4 A.3）：CSS 旋轉下 Phaser canvas 指標錯位，Title/Result
@@ -351,13 +373,16 @@ body {
   transform: scale(0.96);
 }
 
-/* 按鈕配置模式（§34）：半透明底襯低於 #controls（z 10），虛擬鍵浮於其上可拖曳；
-   操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。 */
+/* 按鈕配置模式（§34/§102 F-04）：半透明底襯低於 #controls（z 10），虛擬鍵浮於其上
+   可拖曳；操作列固定殼頂中央（殼頂在直橫持皆遠離瀏海與 home indicator）。
+   遮罩加深＋輕模糊：主選單文字退為背景，消除「哪層可互動」的視覺競爭。 */
 .cfg-overlay {
   position: absolute;
   inset: 0;
   z-index: 5;
-  background: rgba(58, 58, 74, 0.4);
+  background: rgba(58, 58, 74, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   pointer-events: none;
 }
 
