@@ -48,7 +48,7 @@ describe('圖鑑分頁縱向守門（§96 P1-01：任何分頁內容不得超出
     expect(gridBottom(future, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
   });
 
-  it('怪物分頁（§104 F-03）：每頁 12 格 6×2 不溢出，24 隻恰為兩頁', () => {
+  it('怪物分頁（§104 F-03）：每頁 12 格 6×2 不溢出，23 隻恰為兩頁', () => {
     const grid = fitBoundedGrid(MONSTER_PAGE_SIZE, CODEX_TAB_GRIDS.monsters);
     expect(grid).toEqual({ cols: 6, rows: 2 });
     expect(gridBottom(grid, CODEX_TAB_GRIDS.monsters)).toBeLessThanOrEqual(470);

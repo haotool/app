@@ -81,7 +81,7 @@ async function tapFire(page: Page): Promise<void> {
   await page.keyboard.up('X');
 }
 
-test('版本號（§42）：__sp.version 回報 semver+SHA（無 git 環境為 nogit）格式', async ({ page }) => {
+test('版本號（§42/§99）：__sp.version 回報 semver（短 SHA 後綴可省略）格式', async ({ page }) => {
   const errors = collectErrors(page);
   await gotoTitle(page);
   const version = await page.evaluate(() => window.__sp.version());
