@@ -45,4 +45,13 @@ describe('五區分頁資料（§78，主計畫 §2.2）', () => {
       }
     }
   });
+
+  it('區名≠關名層級契約（§97 F-01 裁決）：區名不得與任何在編關名撞名', () => {
+    // 區＝地域（果凍平原）、關＝景點（果凍草原）為刻意層級差；撞名會使
+    // 地圖頁籤/標頭與節點語意崩塌，資料面守門防未來新關誤用區名。
+    const levelNames = new Set(LEVELS.map((level) => level.nameZh));
+    for (const zone of ZONES) {
+      expect(levelNames.has(zone.nameZh)).toBe(false);
+    }
+  });
 });
