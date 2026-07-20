@@ -28,6 +28,8 @@ function addButton(
   button.className = 'pause-btn';
   button.dataset['pause'] = action;
   button.textContent = label;
+  // 讀屏語意明確化（§101 F-06）：與可視文字同值，防未來改圖形鍵帽時遺漏。
+  button.setAttribute('aria-label', label);
   // pointerdown 而非 click：殼層 touchstart preventDefault 會吞 click；
   // 且 resume 於使用者手勢堆疊內呼叫，滿足 iOS interrupted 態解鎖（§33）。
   button.addEventListener('pointerdown', (event) => {

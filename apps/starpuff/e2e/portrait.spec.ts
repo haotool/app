@@ -10,6 +10,7 @@ declare global {
       probe: () => { x: number; scrollX: number };
       view: () => { width: number; height: number };
       walk: () => { rotation: number; bob: number; vy: number };
+      paused: () => boolean;
     };
   }
 }
@@ -195,6 +196,25 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
   await expect(page.locator('[data-btn="b"]')).toHaveClass(/is-pressed/);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect(page.locator('[data-btn="b"]')).not.toHaveClass(/is-pressed/);
+
+  // F-06：直持下 HUD 暫停/靜音 DOM 鈕可及且命中短邊 ≥48，真觸控點暫停即凍結。
+  for (const menuId of ['pause', 'mute']) {
+    const box = await page.locator(`[data-menu="${menuId}"]`).boundingBox();
+    if (!box) throw new Error(`HUD 鈕 ${menuId} 不存在`);
+    expect(Math.min(box.width, box.height), menuId).toBeGreaterThanOrEqual(48);
+  }
+  const pauseBox = await page.locator('[data-menu="pause"]').boundingBox();
+  if (!pauseBox) throw new Error('暫停鈕不存在');
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: pauseBox.x + pauseBox.width / 2, y: pauseBox.y + pauseBox.height / 2 }],
+  });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect.poll(() => page.evaluate(() => window.__sp.paused())).toBe(true);
+  await page
+    .locator('[data-pause="resume"]')
+    .dispatchEvent('pointerdown', { pointerId: 8, isPrimary: true });
+  await expect.poll(() => page.evaluate(() => window.__sp.paused())).toBe(false);
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

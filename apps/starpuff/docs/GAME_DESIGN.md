@@ -1677,3 +1677,15 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   下一關（資料防禦仍回退地圖）。EX 勝利與敗北動線不變（再戰 EX／再戰魔王）。
 - 驗證：v16 e2e——L4 擊破後 next-level 直入 L5、map 次選並存；smoke 勝利案
   改走 map 次選鈕。
+
+## 101. v16 HUD 暫停/靜音 DOM 化（F-06＋D4，取代 §35 暫停鍵與修復包 B 靜音鈕的命中層）
+
+- 根因（Composer/Grok/Sonnet 三席交集）：局內暫停/靜音為 canvas 熱區——
+  自動化不可達、讀屏不可見，旋轉殼下依賴 transformPointer 補償。
+- 修法：命中改由同位 DOM 鈕承接（`addDomButton` 支援 rect getter 隨視寬/inset
+  動態錨定，data-menu=pause/mute＋aria-label；靜音帶 aria-pressed 狀態），
+  canvas 圖示保留純視覺、移除 interactive（沿 recon-v4 A.3 單一命中路徑）；
+  `pause.ts addButton` 補 aria-label。
+- 命中尺寸：邏輯 44×44 經 §98 短邊 48px 保底，直橫持皆達標。
+- 驗證：v16 e2e（暫停開選單真凍結→繼續、靜音 aria-pressed 與 sp-muted 同步
+  翻轉）；portrait e2e 真觸控點暫停即凍結、pause/mute AABB 短邊 ≥48。
