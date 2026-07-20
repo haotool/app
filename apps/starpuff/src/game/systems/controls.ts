@@ -85,7 +85,26 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   controlsRoot?.classList.add('is-active');
   cleanups.push(() => controlsRoot?.classList.remove('is-active'));
   // 進場套用使用者自訂布局（§34）：配置模式儲存後下一局即生效。
-  if (controlsRoot) applyLayoutToDom(controlsRoot, loadLayout());
+  if (controlsRoot) {
+    const applyStoredLayout = (): void => applyLayoutToDom(controlsRoot, loadLayout());
+    applyStoredLayout();
+    // 局中轉向重套（§95 D1）：預設鍵位依殼旋轉態而異，orientation 變更後重新解析；
+    // 節流時序沿 shellLayout（resize 150ms／orientationchange 350ms 後殼才穩定）。
+    let relayoutTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleApply = (delayMs: number): void => {
+      clearTimeout(relayoutTimer);
+      relayoutTimer = setTimeout(applyStoredLayout, delayMs);
+    };
+    const onResize = (): void => scheduleApply(200);
+    const onOrientation = (): void => scheduleApply(400);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onOrientation);
+    cleanups.push(() => {
+      clearTimeout(relayoutTimer);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onOrientation);
+    });
+  }
 
   const on = <K extends keyof HTMLElementEventMap>(
     el: HTMLElement,

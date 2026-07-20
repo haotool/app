@@ -310,7 +310,7 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 ## 34. v5 控制布局重設計與按鈕自訂
 
 - 人體工學定案（§33 條目 7）：雙手橫持時拇指錨於下側角、食指自然落在裝置上緣——A 跳躍維持右下（拇指連打），B 吸/射移至右側偏上（食指按壓；與 A 垂直遠離杜絕誤觸）；方向搖桿維持左半屏。
-- 布局 SSOT：`core/layout.ts`——按鍵中心以 keys-layer 安全區內比例（cx/cy 0-1）表示，直橫持共用；`DEFAULT_LAYOUT`：A (0.92, 0.78)、B (0.92, 0.34)。
+- 布局 SSOT：`core/layout.ts`——按鍵中心以 keys-layer 安全區內比例（cx/cy 0-1）表示，直橫持共用；`DEFAULT_LAYOUT`：A (0.92, 0.78)、B (0.92, 0.34)。（v16 已由 §95 取代「預設」的直持適用性：預設依殼旋轉態分流 `defaultLayoutFor`，直持採右下拇指帶錨點；自訂布局仍直橫持共用。）
 - `#keys-layer`：安全區內鋪滿的定位容器（四向 `max()` 地板＋portrait 換軸表），按鍵以 `left/top %` + `translate(-50%,-50%)` 定位。
 - 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。（v14 已由 §88/§89 取代操作列結構與 schema：schema 升 v2 增全域縮放、操作列直欄化並增持向切換與縮放列。）
 
@@ -1579,3 +1579,44 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 - 實測 scripts/v15-verify.mjs 五幕：v1 滿進度開機補發 21 條＋schema 升 v2、
   真實擊破管線多重解鎖（toast＋Result 名單）、854／1200／直持成就頁、
   console error 全程 0。
+
+# v16 產品缺陷修復列車：三席批評收斂（PM 派工）
+
+## 95. v16 直持預設鍵位重錨（D1，取代 §34 預設在直持殼的適用性）
+
+### 95.1 根因與決策
+
+- 三席批評（Grok 席，PM 數學覆核成立）：§34 預設鍵位以 keys-layer 層比例定義
+  （A 0.92/0.78、B 0.92/0.34），直橫持共用；直持旋轉殼下層座標軸與裝置軸互換，
+  同組比例把 A/B 映射到裝置螢幕頂端（實測 A 裝置 y≈78px、fy≈0.09），雙拇指
+  直握不可及——v14 只修了搖桿半邊（左半屏映射到裝置下半），按鍵半邊漏修。
+- 修法：預設分流、自訂不動。新增裝置比例錨點 SSOT `PORTRAIT_THUMB_ANCHORS`
+  （A fx 0.82/fy 0.86、B fx 0.80/fy 0.68——右下拇指帶、B 沿拇指弧在 A 上方），
+  `defaultLayoutFor(rotation)` 依殼向反算層比例：ccw cx=1−fy、cy=fx；
+  cw cx=fy、cy=1−fx（§87 軸向映射逆向）；橫持沿用 v14 定案。
+- schema 不動（sp-key-layout v2 零遷移）：合法自訂資料在任何持向原樣適用；
+  只有「無自訂／損毀回退」與「恢復預設」走旋轉感知預設。
+- 直持下 A/B 幾何上與 joy-zone 重疊（裝置下半即遊戲左半）：keys-layer 為後繪
+  兄弟層，按鍵天然承接命中；誤觸空白處僅錨定浮動搖桿（點按零位移，無害）。
+
+### 95.2 儲存語意（配置頁）
+
+- 預設態不落盤：從未自訂或按過「恢復預設」後儲存＝清除 sp-key-layout，
+  直橫持各自動態解析預設；拖曳／縮放屬自訂，儲存持久化具體布局（維持 v14
+  單一共用布局語意）。
+- 「恢復預設」依當前草稿持向給對的錨點；持向切換（cw/ccw）時預設態即時重映射，
+  自訂布局不動；拖曳逆變換取草稿持向（修正切換未儲存期間軸向錯置）。
+- 局中轉向重套：controls 進場後監聽 resize（200ms）／orientationchange（400ms）
+  重新解析布局，orientation 切換不殘留舊向預設。
+- CSS fallback 鏡像：style.css portrait 區塊鏡像反算值（14/82、32/80；cw
+  86/18、68/20），JS 載入前鍵位即在拇指帶；單測跨檔守門防雙寫漂移。
+
+### 95.3 驗證
+
+- 單測 layout.test.ts：前向模擬（層比例→殼→裝置座標，390×844 含 inset）斷言
+  cw/ccw 雙向 A/B 落帶、AB 裝置距離 ≥90px、夾限相容、錨點反算一致性、
+  深拷貝、CSS 鏡像；parseLayout 旋轉感知回退與 v1/v2 自訂資料不受旋轉影響。
+- e2e portrait.spec.ts：D1 案——幾何斷言（A fx≥0.72/fy 0.78–0.95、B 上方帶）＋
+  真手勢（CDP dispatchTouchEvent 走瀏覽器 hit-test）點 A 起跳（walk().vy<0）、
+  點 B 進入按壓態；cw 舊方向案補同帶幾何斷言。
+- 前後對照截圖 screenshots/starpuff-v16/d1-\*.png（before A fy 0.092 → after 0.850）。

@@ -9,6 +9,7 @@ declare global {
       fillQuota: () => void;
       probe: () => { x: number; scrollX: number };
       view: () => { width: number; height: number };
+      walk: () => { rotation: number; bob: number; vy: number };
     };
   }
 }
@@ -124,6 +125,66 @@ test('直持 390×844（sp-rotation=cw 舊方向）：殼與搖桿語意跟隨�
     })
     .toBeGreaterThan(50);
   await joyZone.dispatchEvent('pointerup', { pointerId: 3, isPrimary: true });
+
+  // D1 cw 向預設鍵位：A/B 中心同樣落於裝置右下拇指帶（雙向皆人體工學正確）。
+  const cwBoxA = await page.locator('[data-btn="a"]').boundingBox();
+  const cwBoxB = await page.locator('[data-btn="b"]').boundingBox();
+  if (!cwBoxA || !cwBoxB) throw new Error('虛擬鍵不存在');
+  expect((cwBoxA.x + cwBoxA.width / 2) / 390).toBeGreaterThanOrEqual(0.72);
+  expect((cwBoxA.y + cwBoxA.height / 2) / 844).toBeGreaterThanOrEqual(0.78);
+  expect((cwBoxB.x + cwBoxB.width / 2) / 390).toBeGreaterThanOrEqual(0.65);
+  expect((cwBoxB.y + cwBoxB.height / 2) / 844).toBeLessThan((cwBoxA.y + cwBoxA.height / 2) / 844);
   await page.waitForTimeout(500);
+  expect(errors).toEqual([]);
+});
+
+// v16 D1：直持（ccw 新預設）預設鍵位必須落在裝置螢幕右下拇指帶，且「真手勢」
+// （CDP 觸控經瀏覽器 hit-test，非元素直派）在右下區點按 A 能觸發跳躍。
+test('直持 390×844（D1）：預設 A/B 在右下拇指帶、真觸控點 A 能跳', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/');
+  await expect(page.locator('#app canvas')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+  await page
+    .locator('[data-menu="start"]')
+    .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+
+  // 幾何斷言：A 中心於裝置比例（fx ≥ 0.72、fy 0.78–0.95）、B 於其上方拇指弧帶。
+  const boxA = await page.locator('[data-btn="a"]').boundingBox();
+  const boxB = await page.locator('[data-btn="b"]').boundingBox();
+  if (!boxA || !boxB) throw new Error('虛擬鍵不存在');
+  const centerA = { x: boxA.x + boxA.width / 2, y: boxA.y + boxA.height / 2 };
+  const centerB = { x: boxB.x + boxB.width / 2, y: boxB.y + boxB.height / 2 };
+  expect(centerA.x / 390).toBeGreaterThanOrEqual(0.72);
+  expect(centerA.y / 844).toBeGreaterThanOrEqual(0.78);
+  expect(centerA.y / 844).toBeLessThanOrEqual(0.95);
+  expect(centerB.x / 390).toBeGreaterThanOrEqual(0.65);
+  expect(centerB.y / 844).toBeGreaterThanOrEqual(0.6);
+  expect(centerB.y / 844).toBeLessThanOrEqual(0.78);
+
+  // 真手勢：CDP dispatchTouchEvent 走瀏覽器輸入管線（含 hit-test 與 pointer 轉換），
+  // 於 A 中心按住——按鍵進入按壓態且角色起跳（vy < 0）。
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: centerA.x, y: centerA.y }],
+  });
+  await expect(page.locator('[data-btn="a"]')).toHaveClass(/is-pressed/);
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.walk().vy), { timeout: 3000 })
+    .toBeLessThan(-50);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('[data-btn="a"]')).not.toHaveClass(/is-pressed/);
+
+  // 真手勢：B 中心按住觸發吸入姿態（is-pressed），釋放還原。
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: centerB.x, y: centerB.y }],
+  });
+  await expect(page.locator('[data-btn="b"]')).toHaveClass(/is-pressed/);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('[data-btn="b"]')).not.toHaveClass(/is-pressed/);
+  await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });

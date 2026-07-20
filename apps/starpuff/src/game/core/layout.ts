@@ -1,5 +1,8 @@
-// 虛擬鍵布局 SSOT（GAME_DESIGN §34/§89）：座標為 keys-layer 安全區內的中心點比例（0–1），
-// 與殼尺寸無關，直橫持共用；v2 增全域縮放 scale。純資料模組供 vitest node 環境驗證。
+// 虛擬鍵布局 SSOT（GAME_DESIGN §34/§89/§95）：座標為 keys-layer 安全區內的中心點比例
+// （0–1）；v2 增全域縮放 scale。純資料模組供 vitest node 環境驗證。
+// v16 D1：自訂布局直橫持共用不變，「預設」改依殼旋轉態分流（見 defaultLayoutFor）。
+import { getShellRotation, type ShellRotation } from './rotation';
+
 export interface KeyPosition {
   cx: number;
   cy: number;
@@ -42,14 +45,42 @@ export const KEY_CLAMP = {
 // 動態夾限邊距：按鍵中心離安全區邊緣至少 半徑 + pad，短 keys-layer 也不溢出。
 export const KEY_EDGE_PAD_PX = 4;
 
-// 人體工學預設（§34 調研定案）：A 跳躍居右下拇指熱區；B 吸/射移右側偏上供食指按壓，
-// 兩鍵垂直遠離杜絕誤觸。
+// 人體工學預設（§34 調研定案，橫持）：A 跳躍居右下拇指熱區；B 吸/射移右側偏上供
+// 食指按壓，兩鍵垂直遠離杜絕誤觸。
 export const DEFAULT_LAYOUT: ControlLayout = {
   version: LAYOUT_SCHEMA_VERSION,
   a: { cx: 0.92, cy: 0.78 },
   b: { cx: 0.92, cy: 0.34 },
   scale: KEY_SCALE.default,
 };
+
+// 直持預設鍵位錨點 SSOT（§95 D1）：以「裝置螢幕比例」定義右下拇指帶目標——
+// 直持雙手握持時右拇指熱區在螢幕右下（fy 0.68–0.86），B 沿拇指弧在 A 上方。
+// v14 沿用橫持層比例的預設在旋轉殼下會映射到螢幕頂端（a 裝置 y≈78px，不可及）。
+export const PORTRAIT_THUMB_ANCHORS = {
+  a: { fx: 0.82, fy: 0.86 },
+  b: { fx: 0.8, fy: 0.68 },
+} as const;
+
+// 裝置比例 → 層比例反算（§87 軸向映射的逆向）：ccw 殼局部 (x,y)→裝置 (y, H−x)，
+// 故 cx=1−fy、cy=fx；cw 殼局部 (x,y)→裝置 (W−y, x)，故 cx=fy、cy=1−fx。
+// 忽略 keys-layer 邊緣 inset（12–20px 級）：錨點為帶狀目標，偏差 ≤2% 可接受。
+function portraitDefaultLayout(rotation: 'cw' | 'ccw'): ControlLayout {
+  const map = ({ fx, fy }: { fx: number; fy: number }): KeyPosition =>
+    rotation === 'ccw' ? { cx: 1 - fy, cy: fx } : { cx: fy, cy: 1 - fx };
+  return {
+    version: LAYOUT_SCHEMA_VERSION,
+    a: map(PORTRAIT_THUMB_ANCHORS.a),
+    b: map(PORTRAIT_THUMB_ANCHORS.b),
+    scale: KEY_SCALE.default,
+  };
+}
+
+// 預設布局單一出口（§95 D1）：橫持沿用 v14 定案、直持依旋轉方向給右下拇指帶錨點；
+// 一律回傳新物件，呼叫端可安全變更。
+export function defaultLayoutFor(rotation: ShellRotation): ControlLayout {
+  return rotation === 'none' ? structuredClone(DEFAULT_LAYOUT) : portraitDefaultLayout(rotation);
+}
 
 export function clampKeyPosition(cx: number, cy: number): KeyPosition {
   return {
@@ -87,14 +118,17 @@ function isValidPosition(value: unknown): value is KeyPosition {
 }
 
 // 解析持久化 JSON（§89 versioned migration）：v1（無 scale）就地升級為 v2 保留既有
-// 鍵位、scale 補預設；未知版本或形狀損毀一律回退預設，座標與縮放重新夾限。
-export function parseLayout(raw: string | null): ControlLayout {
-  if (!raw) return DEFAULT_LAYOUT;
+// 鍵位、scale 補預設；未知版本或形狀損毀一律回退預設（依旋轉態分流），座標與縮放
+// 重新夾限。合法自訂資料不受旋轉影響（§95 D1：自訂布局不得被覆蓋）。
+export function parseLayout(raw: string | null, rotation: ShellRotation = 'none'): ControlLayout {
+  if (!raw) return defaultLayoutFor(rotation);
   try {
     const data = JSON.parse(raw) as Record<string, unknown>;
     const version = data['version'];
-    if (version !== 1 && version !== LAYOUT_SCHEMA_VERSION) return DEFAULT_LAYOUT;
-    if (!isValidPosition(data['a']) || !isValidPosition(data['b'])) return DEFAULT_LAYOUT;
+    if (version !== 1 && version !== LAYOUT_SCHEMA_VERSION) return defaultLayoutFor(rotation);
+    if (!isValidPosition(data['a']) || !isValidPosition(data['b'])) {
+      return defaultLayoutFor(rotation);
+    }
     return {
       version: LAYOUT_SCHEMA_VERSION,
       a: clampKeyPosition(data['a'].cx, data['a'].cy),
@@ -102,16 +136,33 @@ export function parseLayout(raw: string | null): ControlLayout {
       scale: version === 1 ? KEY_SCALE.default : clampKeyScale(Number(data['scale'])),
     };
   } catch {
-    return DEFAULT_LAYOUT;
+    return defaultLayoutFor(rotation);
   }
 }
 
 // 隱私模式下 localStorage 可能拋錯：讀寫皆容錯，布局退預設、儲存靜默略過。
+// 旋轉態於呼叫當下解析（§95 D1）：無自訂資料時直/橫持各得人體工學正確的預設。
 export function loadLayout(): ControlLayout {
+  let rotation: ShellRotation = 'none';
   try {
-    return parseLayout(localStorage.getItem(LAYOUT_STORAGE_KEY));
+    rotation = getShellRotation();
   } catch {
-    return DEFAULT_LAYOUT;
+    /* 非瀏覽器環境（單測）退橫持預設。 */
+  }
+  try {
+    return parseLayout(localStorage.getItem(LAYOUT_STORAGE_KEY), rotation);
+  } catch {
+    return defaultLayoutFor(rotation);
+  }
+}
+
+// 是否存在使用者自訂布局（§95 D1）：配置頁據此決定儲存語意（預設態不落盤，
+// 讓直橫持各自動態解析預設）。
+export function hasStoredLayout(): boolean {
+  try {
+    return localStorage.getItem(LAYOUT_STORAGE_KEY) !== null;
+  } catch {
+    return false;
   }
 }
 
