@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS } from '../core/codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS, MONSTER_PAGE_SIZE } from '../core/codex';
 import { fitBoundedGrid, gridRowTop } from '../core/gridLayout';
 import { loadSave } from '../core/save';
 import { SceneKeys, type CodexTab, type LevelId } from '../core/types';
@@ -20,6 +20,7 @@ const ACCENT = '#7a5fb8';
 
 interface CodexSceneData {
   tab?: CodexTab;
+  monsterPage?: number;
 }
 
 // 圖鑑與技能介紹（GAME_DESIGN §36）：單場景雙分頁，內容由 core/codex.ts 資料驅動；
@@ -27,6 +28,7 @@ interface CodexSceneData {
 export class CodexScene extends Phaser.Scene {
   tab: CodexTab = 'monsters';
   private backdrop: BackgroundHandle | null = null;
+  private monsterPage = 0;
 
   constructor() {
     super(SceneKeys.Codex);
@@ -34,6 +36,7 @@ export class CodexScene extends Phaser.Scene {
 
   init(data: CodexSceneData): void {
     this.tab = data.tab ?? 'monsters';
+    this.monsterPage = data.monsterPage ?? 0;
   }
 
   create(): void {
@@ -45,7 +48,7 @@ export class CodexScene extends Phaser.Scene {
     });
     this.events.once('shutdown', () => this.backdrop?.destroy());
     addMuteButton(this);
-    bindMenuRelayout(this, { tab: this.tab });
+    bindMenuRelayout(this, { tab: this.tab, monsterPage: this.monsterPage });
 
     // 可讀性底襯：內容區半透明白卡。
     this.add.rectangle(width / 2, 282, Math.min(width - 40, 1100), 350, 0xffffff, 0.35);
@@ -136,8 +139,8 @@ export class CodexScene extends Phaser.Scene {
     });
   }
 
-  // 全怪物雙列網格（v11 十八格：十六小怪＋雙魔王）：欄數由條目數推導（§76 單頁評估
-  // 定案：9×2 於 854 寬 cellW≈89px 仍可讀，分頁延後與地圖分區分頁同批評估）。
+  // 怪物分頁網格（§104 F-03 取代 §76 單頁定案）：每頁 12 格 6×2——854 寬 cellW 由
+  // 67 放大至 134、行為敘述 12+ 字/行，直持不再過密；頁序沿 CODEX_MONSTERS。
   private renderMonsters(): void {
     const { width } = this.scale;
     // 殼緣避讓（§93 D）：徽記與網格以左右净 inset 收縮，瀏海/home indicator 不遮條目；
@@ -168,16 +171,23 @@ export class CodexScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
     }
+    const pages = Math.max(1, Math.ceil(CODEX_MONSTERS.length / MONSTER_PAGE_SIZE));
+    const page = Math.min(this.monsterPage, pages - 1);
+    const pageMonsters = CODEX_MONSTERS.slice(
+      page * MONSTER_PAGE_SIZE,
+      (page + 1) * MONSTER_PAGE_SIZE,
+    );
+    this.addMonsterPager(page, pages);
     const usableW = width - insets.left - insets.right;
-    const cols = Math.ceil(CODEX_MONSTERS.length / 2);
+    const grid = fitBoundedGrid(pageMonsters.length, CODEX_TAB_GRIDS.monsters);
+    const cols = grid.cols;
     const cellW = Math.min(170, (usableW - 50) / cols);
     const gridLeft = insets.left + usableW / 2 - (cellW * cols) / 2;
-    const rowTops = [116, 282];
-    CODEX_MONSTERS.forEach((monster, index) => {
+    pageMonsters.forEach((monster, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
-      const top = rowTops[row] ?? 116;
+      const top = gridRowTop(row, CODEX_TAB_GRIDS.monsters);
       const sprite = this.add.image(cx, top + 30, monster.textureKey);
       const scale = 50 / Math.max(sprite.width, sprite.height);
       sprite.setScale(scale);
@@ -225,11 +235,58 @@ export class CodexScene extends Phaser.Scene {
           fontSize: '11px',
           color: TEXT_SOFT,
           align: 'center',
-          // CJK 無空白斷詞：必須逐字換行，否則 7 欄窄格橫向溢出相鄰格。
+          // CJK 無空白斷詞：必須逐字換行，否則窄格橫向溢出相鄰格。
           wordWrap: { width: cellW - 10, useAdvancedWrap: true },
         })
         .setOrigin(0.5, 0);
     });
+  }
+
+  // 怪物頁切換列（§104 F-03）：底緣置中「上一頁／第 n/N 頁／下一頁」，
+  // restart 帶頁參（沿分頁切換慣例）；單頁時不顯示。
+  private addMonsterPager(page: number, pages: number): void {
+    if (pages <= 1) return;
+    const { width } = this.scale;
+    const centerX = width / 2;
+    const pagerY = 448;
+    this.add
+      .text(centerX, pagerY, `第 ${page + 1}/${pages} 頁`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: TEXT_DARK,
+      })
+      .setOrigin(0.5);
+    const entries: { label: string; delta: number; menuId: string }[] = [
+      { label: '上一頁', delta: -1, menuId: 'monsters-prev' },
+      { label: '下一頁', delta: 1, menuId: 'monsters-next' },
+    ];
+    for (const entry of entries) {
+      const target = page + entry.delta;
+      if (target < 0 || target >= pages) continue;
+      const x = centerX + entry.delta * 128;
+      this.add
+        .text(x, pagerY, entry.label, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: TEXT_DARK,
+          backgroundColor: '#ffffff',
+          padding: { x: 14, y: 7 },
+        })
+        .setOrigin(0.5)
+        .setAlpha(0.92);
+      addDomButton(
+        this,
+        `圖鑑${entry.label}`,
+        { x, y: pagerY, w: 128, h: 44 },
+        () => {
+          playSfx('pop');
+          this.scene.restart({ tab: 'monsters', monsterPage: target });
+        },
+        entry.menuId,
+      );
+    }
   }
 
   // 成就網格（§94）：6 欄 4 列徽章格——已解鎖亮金、未解鎖灰、隱藏未解鎖遮蔽為

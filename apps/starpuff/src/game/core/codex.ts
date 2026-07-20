@@ -4,13 +4,18 @@ import type { MixId, StarFlavor } from './config';
 import type { BoundedGridSpec } from './gridLayout';
 import type { EnemyKind } from './types';
 
-// 圖鑑分頁有界網格參數 SSOT（§96 P1-01）：itemH 取各分頁單項最壞內容高
-// （技能＝標題列 26＋詳述 4 行×16；成就＝徽章 58＋描述 2 行），maxY=470 為
-// 邏輯畫布守門線；CodexScene 一律引用本表，禁止散落第二份常數。
+// 圖鑑分頁有界網格參數 SSOT（§96 P1-01／§104 F-03）：itemH 取各分頁單項最壞
+// 內容高（技能＝標題列 26＋詳述 4 行×16；成就＝徽章 58＋描述 2 行；怪物＝
+// 立繪 60＋名稱＋標記＋行為 3 行），maxY=470 為邏輯畫布守門線；
+// CodexScene 一律引用本表，禁止散落第二份常數。
 export const CODEX_TAB_GRIDS = {
+  monsters: { startY: 116, rowH: 166, itemH: 150, maxY: 470 },
   skills: { startY: 122, rowH: 100, itemH: 90, maxY: 470 },
   achievements: { startY: 112, rowH: 90, itemH: 84, maxY: 470 },
 } as const satisfies Record<string, BoundedGridSpec>;
+
+// 怪物分頁容量（§104 F-03）：每頁 12 格（6×2）——854 最窄殼 cellW 134 仍可讀。
+export const MONSTER_PAGE_SIZE = 12;
 
 export interface CodexMonster {
   kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra';

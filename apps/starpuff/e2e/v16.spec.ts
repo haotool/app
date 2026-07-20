@@ -82,3 +82,31 @@ test('HUD 暫停/靜音 DOM 鈕（F-06）：局內可點暫停並繼續、靜音
   await page.waitForTimeout(400);
   expect(errors).toEqual([]);
 });
+
+// v16 F-03：怪物圖鑑分頁——每頁 12 格 6×2，翻頁鈕雙向可達。
+test('圖鑑怪物分頁（F-03）：預設第 1 頁僅下一頁，翻至第 2 頁可返回', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/');
+  await expect(page.locator('#app canvas')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+  await page
+    .locator('[data-menu="codex"]')
+    .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Codex');
+
+  // 第 1 頁：無上一頁、有下一頁。
+  await expect(page.locator('[data-menu="monsters-prev"]')).toHaveCount(0);
+  await expect(page.locator('[data-menu="monsters-next"]')).toHaveCount(1);
+  await page
+    .locator('[data-menu="monsters-next"]')
+    .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
+  // 第 2 頁（末頁）：有上一頁、無下一頁；返回第 1 頁。
+  await expect(page.locator('[data-menu="monsters-prev"]')).toHaveCount(1);
+  await expect(page.locator('[data-menu="monsters-next"]')).toHaveCount(0);
+  await page
+    .locator('[data-menu="monsters-prev"]')
+    .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
+  await expect(page.locator('[data-menu="monsters-next"]')).toHaveCount(1);
+  await page.waitForTimeout(400);
+  expect(errors).toEqual([]);
+});

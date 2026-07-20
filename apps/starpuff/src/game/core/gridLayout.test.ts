@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CODEX_SKILLS, CODEX_TAB_GRIDS } from './codex';
+import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS, MONSTER_PAGE_SIZE } from './codex';
 import { ACHIEVEMENTS } from '../logic/achievements';
 import { fitBoundedGrid, gridBottom, gridRowTop } from './gridLayout';
 
@@ -46,6 +46,13 @@ describe('圖鑑分頁縱向守門（§96 P1-01：任何分頁內容不得超出
     expect(gridBottom(grid, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
     const future = fitBoundedGrid(30, CODEX_TAB_GRIDS.achievements);
     expect(gridBottom(future, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
+  });
+
+  it('怪物分頁（§104 F-03）：每頁 12 格 6×2 不溢出，24 隻恰為兩頁', () => {
+    const grid = fitBoundedGrid(MONSTER_PAGE_SIZE, CODEX_TAB_GRIDS.monsters);
+    expect(grid).toEqual({ cols: 6, rows: 2 });
+    expect(gridBottom(grid, CODEX_TAB_GRIDS.monsters)).toBeLessThanOrEqual(470);
+    expect(Math.ceil(CODEX_MONSTERS.length / MONSTER_PAGE_SIZE)).toBe(2);
   });
 
   it('技能文案長度守門：詳述 ≤72 字（超長需同步重估 itemH 假設）', () => {
