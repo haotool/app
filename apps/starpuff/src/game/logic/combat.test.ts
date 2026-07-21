@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   INHALE_GRACE_MS,
@@ -13,6 +14,7 @@ import {
   resolveHit,
   tickTimer,
 } from './combat';
+import type { EnemyKind } from '../core/types';
 
 describe('combat', () => {
   it('applyDamage 扣血且不低於 0', () => {
@@ -108,6 +110,42 @@ describe('pickInRadius（§46 半徑選敵）', () => {
 
   it('空候選回空陣列', () => {
     expect(pickInRadius(0, 0, [], 100)).toEqual([]);
+  });
+});
+
+describe('v18-level-bot INHALABLE 漂移守門（§107.4：量測近似集對齊 canInhale 真值）', () => {
+  // 全品種窮舉表：新增 EnemyKind 而未更新此表時型別報錯，強制同步審視 bot 量測口徑。
+  const ALL_KINDS: Record<EnemyKind, true> = {
+    jelly: true,
+    floaty: true,
+    spiky: true,
+    puffy: true,
+    chompy: true,
+    shelly: true,
+    zappy: true,
+    drilly: true,
+    glowy: true,
+    spora: true,
+    gusty: true,
+    boomy: true,
+    magno: true,
+    mirri: true,
+    bubbla: true,
+    splatta: true,
+    twinkla: true,
+    cometa: true,
+  };
+
+  it('腳本內嵌集合等於恆可吸真值（條件可吸 exposed 品種保守不計）', () => {
+    const source = readFileSync(
+      new URL('../../../scripts/v18-level-bot.mjs', import.meta.url),
+      'utf8',
+    );
+    const block = /const INHALABLE = new Set\(\[([\s\S]*?)\]\);/.exec(source)?.[1];
+    expect(block).toBeDefined();
+    const botSet = Array.from((block ?? '').matchAll(/'(\w+)'/g), (m) => m[1] ?? '');
+    const truth = (Object.keys(ALL_KINDS) as EnemyKind[]).filter((kind) => canInhale(kind));
+    expect([...botSet].sort()).toEqual([...truth].sort());
   });
 });
 

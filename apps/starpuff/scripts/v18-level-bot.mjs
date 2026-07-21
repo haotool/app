@@ -69,6 +69,7 @@ function installDriver({ playMode, forageMode, anchorX, floodPlatformXs, maxOnSc
   };
 
   // 恆可吸品種（條件可吸 shelly/drilly/bubbla/twinkla 保守不計，對齊飢荒保證律口徑）。
+  // 量測用近似集，真值=logic/combat.ts canInhale；一致性由 combat.test.ts 漂移守門。
   const INHALABLE = new Set([
     'jelly',
     'floaty',
@@ -106,6 +107,8 @@ function installDriver({ playMode, forageMode, anchorX, floodPlatformXs, maxOnSc
       // 此指標量測「伸手可得的彈藥供給」。
       reachVacuumMs: 0,
       longestReachVacuumMs: 0,
+      // 滿潮生成計數（§107.3 佐證欄）：flood 相位內 alive 總數上升即計為生成。
+      floodSpawns: 0,
       preGateMs: 0,
       gateOpenAtMs: -1,
       kills: 0,
@@ -114,6 +117,7 @@ function installDriver({ playMode, forageMode, anchorX, floodPlatformXs, maxOnSc
     cur: { ammoZero: 0, starving: 0, fullStall: 0, quotaStall: 0, reachVacuum: 0 },
     prevHp: -1,
     prevKill: -1,
+    prevAlive: -1,
     lastSampleAt: 0,
     lastJumpAt: 0,
     lastShotAt: 0,
@@ -179,6 +183,11 @@ function installDriver({ playMode, forageMode, anchorX, floodPlatformXs, maxOnSc
     }
     if (d.prevHp > 0 && snap.hp <= 0) d.m.deaths += 1;
     d.prevHp = snap.hp;
+    // 滿潮生成計數：flood 相位內 alive 總數逐 tick 上升量（idle 乾淨儀器＝滿潮內生成數）。
+    if (snap.tide?.phase === 'flood' && d.prevAlive >= 0 && snap.alive.total > d.prevAlive) {
+      d.m.floodSpawns += snap.alive.total - d.prevAlive;
+    }
+    d.prevAlive = snap.alive.total;
     if (now - d.lastSampleAt >= 1000) {
       d.lastSampleAt = now;
       d.m.samples.push({
@@ -483,6 +492,7 @@ async function main() {
     longestQuotaStallSec: Math.round((m.longestQuotaStallMs ?? 0) / 100) / 10,
     reachVacuumSec: Math.round((m.reachVacuumMs ?? 0) / 100) / 10,
     longestReachVacuumSec: Math.round((m.longestReachVacuumMs ?? 0) / 100) / 10,
+    floodSpawns: m.floodSpawns ?? 0,
     consoleErrors: errors.length,
     samples: m.samples ?? [],
   };
