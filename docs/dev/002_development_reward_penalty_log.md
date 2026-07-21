@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+155
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-820-star-pool-derived-cap
+- 原因：星彈池 maxSize 硬編 8 低於滿匣散射理論同時需求 9（maxAmmo 3 × scatter 3），扣彈先於生成致第 9 發被靜默吞掉
+- 解法：池上限改由 config 派生（maxAmmo × 最大散射數）並新增滿匣碎鑽星連射回歸測試鎖全數生成與彈藥計數一致
 
 - 日期：2026-07-21
 - ID：penalty-starpuff-v18-posttest-newmix-batch-omitted
