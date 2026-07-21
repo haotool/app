@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+157
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-821-bubbla-ground-derived-anchor
+- 原因：bubbla 重力關閉、生成 y 即永久潛伏錨點，waves 生成表沿用重力怪高空落入值 330 致補生個體懸空漂浮約 70px（地面頂 400）
+- 解法：錨點改由地面派生（GROUND_TOP − ENEMY_SIZE/2，ENEMY_SIZE 上收 config SSOT），waves.test.ts 鎖身底貼地與其他品種零行為改變
 
 - 日期：2026-07-22
 - ID：reward-starpuff-820-star-pool-derived-cap
