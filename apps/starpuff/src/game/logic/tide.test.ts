@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { PLAYER } from '../core/config';
 import {
   TIDE,
   isTideSubmerged,
+  soakWakeInvuln,
   tideFilterKind,
   tidePhase,
   tideSoakVelocity,
@@ -99,5 +101,21 @@ describe('tideFilterKind 漲潮 Magno 排除（交叉不變式 13，審查修復
     expect(tideFilterKind('magno', 'dry')).toBe('magno');
     expect(tideFilterKind('boomy', 'flood')).toBe('boomy');
     expect(tideFilterKind('jelly', 'flood')).toBe('jelly');
+  });
+});
+
+describe('soakWakeInvuln 浸水甦醒無敵（§107，issue #806）', () => {
+  it('浸水受擊實際掉血 → 授予基礎受擊 i-frame＋甦醒追加窗', () => {
+    expect(soakWakeInvuln(3, 2)).toBe(PLAYER.invulnerableMs + TIDE.soakWakeInvulnMs);
+  });
+
+  it('未掉血（i-frame 期/護盾格擋）回 0＝無操作，杜絕無成本刷無敵', () => {
+    expect(soakWakeInvuln(3, 3)).toBe(0);
+    expect(soakWakeInvuln(2, 3)).toBe(0);
+  });
+
+  it('甦醒追加窗落於保守帶 800–1200ms（issue #806 驗收基準）', () => {
+    expect(TIDE.soakWakeInvulnMs).toBeGreaterThanOrEqual(800);
+    expect(TIDE.soakWakeInvulnMs).toBeLessThanOrEqual(1200);
   });
 });

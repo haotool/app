@@ -324,13 +324,15 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 1500,
     maxOnScreen: 5,
     safeZoneTailPx: 480,
-    // §52 入編：gusty 主場 30%＋spora 20%；可吸佔比 0.8（gusty/floaty/spora/jelly）。
+    // §52 入編＋§107 供給節奏調參（issue #805）：gusty 主場收斂 30→25%、spora 20→15%
+    //（高空盤旋/遠端紮根名義可吸但不可及）；讓渡給地面帶 jelly/floaty 各 +5%。
+    // 可吸佔比 0.8 不變（gusty/floaty/spora/jelly）。
     enemyMix: [
-      { kind: 'gusty', weight: 0.3 },
-      { kind: 'spora', weight: 0.2 },
+      { kind: 'gusty', weight: 0.25 },
+      { kind: 'spora', weight: 0.15 },
       { kind: 'spiky', weight: 0.2 },
-      { kind: 'floaty', weight: 0.15 },
-      { kind: 'jelly', weight: 0.15 },
+      { kind: 'floaty', weight: 0.2 },
+      { kind: 'jelly', weight: 0.2 },
     ],
     // §51 垂直分層：208 高台僅氣流柱可達（anti-softlock：主線走地面雙層即可）。
     platforms: [
@@ -1370,13 +1372,21 @@ export interface LevelRunState {
   levelId: LevelId;
   killCount: number;
   spawnTimerMs: number;
+  // 走動關飢荒救援計時（§107）：飢荒持續累計、中斷歸零。
+  starvingMs: number;
   gateOpen: boolean;
 }
 
 // initialKills（§105 D5）：教學關死亡重試的配額結轉種子；開門判定仍由 recordKill
 // 推進（結轉值經 carryKillsOnDeath 夾限恆低於配額，不可能帶開門態重生）。
 export function createLevelRun(id: LevelId, initialKills = 0): LevelRunState {
-  return { levelId: id, killCount: Math.max(0, initialKills), spawnTimerMs: 0, gateOpen: false };
+  return {
+    levelId: id,
+    killCount: Math.max(0, initialKills),
+    spawnTimerMs: 0,
+    starvingMs: 0,
+    gateOpen: false,
+  };
 }
 
 // 教學關死亡懲罰軟化（§105 D5 保守調參）：只在 tutorial 關生效——死亡重試保留
@@ -1399,6 +1409,9 @@ export interface LevelSpawnTick {
   aliveEnemies: number;
   // 反卡死（§26）：玩家彈藥 0 且場上無可吸怪的飢荒狀態。
   starving?: boolean;
+  // 滿潮生成降載（§107，issue #806）：滿潮期暫停走動關一般補生（計時照走、凍在
+  // 滿格，退潮首 tick 即補）；飢荒救援與魔王關供給不受閘。
+  floodHold?: boolean;
 }
 
 export interface LevelSpawnResult {
@@ -1406,22 +1419,32 @@ export interface LevelSpawnResult {
   spawn: boolean;
 }
 
+// 走動關飢荒救援閾值（§107，issue #804）：零彈且同屏無可吸怪持續達此值 → 強制補生
+// 可吸怪（無視同屏上限——上限被紮根/不可吸個體佔滿正是飢荒根因）。閾值長於全部走動關
+// spawnIntervalMs（1000–2600），一般節流仍是主要供給路徑，救援僅在停轉時兜底。
+export const STARVATION_RESCUE_MS = 4000;
+
 // spawn 節流：間隔到期且未達同屏上限才生成；開門後停止（尾端 release）。
 // 達上限時 timer 停在間隔值，空位一出現即刻補生。
 // 反卡死保證律（§26）：boss 期彈藥飢荒立即補生，不等生成間隔。
+// 走動關救援律（§107）：飢荒持續達 STARVATION_RESCUE_MS 強制補生，中斷歸零重計。
 export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): LevelSpawnResult {
   const level = getLevel(state.levelId);
   if (tick.starving && level.boss) {
     return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
   }
+  const starvingMs = tick.starving && !state.gateOpen ? state.starvingMs + tick.deltaMs : 0;
+  if (!level.boss && !state.gateOpen && starvingMs >= STARVATION_RESCUE_MS) {
+    return { state: { ...state, spawnTimerMs: 0, starvingMs: 0 }, spawn: true };
+  }
   const spawnTimerMs = Math.min(state.spawnTimerMs + tick.deltaMs, level.spawnIntervalMs);
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
-    return { state: { ...state, spawnTimerMs }, spawn: false };
+    return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
-  if (tick.aliveEnemies >= level.maxOnScreen) {
-    return { state: { ...state, spawnTimerMs }, spawn: false };
+  if (tick.aliveEnemies >= level.maxOnScreen || (tick.floodHold && !level.boss)) {
+    return { state: { ...state, spawnTimerMs, starvingMs }, spawn: false };
   }
-  return { state: { ...state, spawnTimerMs: 0 }, spawn: true };
+  return { state: { ...state, spawnTimerMs: 0, starvingMs }, spawn: true };
 }
 
 // 加權抽選：rand01 由呼叫端注入（Math.random 或測試定值）。

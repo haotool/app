@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+155
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-21
+- ID：penalty-starpuff-v18-posttest-newmix-batch-omitted
+- 原因：v18 後測回填漏報 newmix 批次 4 輪（含 236.7s 爆炸輪）造成選擇性取樣觀感，且 §107.2 誤稱救援律兜底爆炸輪（gusty/spora 佔滿時 aliveInhalableCount>0 不觸發）
+- 解法：§107.2 改為三批次全樣本 provenance 表（含統計與爆炸輪率）＋兜底表述更正為已知缺口歸 #812，bot 可吸集加漂移守門測試
+
+- 日期：2026-07-21
+- ID：reward-starpuff-v18-balance-train-804-805-806
+- 原因：全 20 關實測回報三缺陷——走動關生成飢荒軟僵局（#804）、L5 供給長時間真空（#805）、L14 滿潮浸水死亡螺旋（#806）
+- 解法：飢荒救援律 4s 強制補生＋L5 mix 讓渡地面帶＋L14 浸水甦醒無敵與滿潮生成降載，bot 前後量測驗證（停轉 87.8s→3.9s、L14 死亡 -21%、對照組零惡化）
 
 - 日期：2026-07-20
 - ID：reward-starpuff-walkthrough-l1-l20-live-audit

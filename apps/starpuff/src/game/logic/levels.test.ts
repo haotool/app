@@ -4,6 +4,7 @@ import { canInhale } from './combat';
 import {
   BOSS_LEVEL_IDS,
   LEVELS,
+  STARVATION_RESCUE_MS,
   advanceLevelSpawn,
   carryKillsOnDeath,
   checkpointRespawnX,
@@ -792,6 +793,136 @@ describe('反卡死保證律（§26）', () => {
     const state = createLevelRun(1);
     const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, starving: true });
     expect(result.spawn).toBe(false);
+  });
+});
+
+describe('走動關飢荒救援（§107，issue #804）', () => {
+  // 重現軟僵局：同屏上限被紮根/不可吸個體佔滿（5/5）＋玩家零彈——一般節流
+  // 因 aliveEnemies >= maxOnScreen 永不生成，救援律必須在閾值內強制補生可吸怪。
+  it('同屏佔滿且持續飢荒 → 救援閾值內強制補生（無視同屏上限）', () => {
+    const level = getLevel(3);
+    let state = createLevelRun(3);
+    let spawnedAtMs: number | null = null;
+    for (let elapsed = 0; elapsed <= STARVATION_RESCUE_MS + 1000; elapsed += 100) {
+      const result = advanceLevelSpawn(state, {
+        deltaMs: 100,
+        aliveEnemies: level.maxOnScreen,
+        starving: true,
+      });
+      state = result.state;
+      if (result.spawn) {
+        spawnedAtMs = elapsed + 100;
+        break;
+      }
+    }
+    expect(spawnedAtMs).not.toBeNull();
+    expect(spawnedAtMs ?? Infinity).toBeLessThanOrEqual(STARVATION_RESCUE_MS + 100);
+  });
+
+  it('飢荒中斷即歸零重計：間歇飢荒不觸發救援', () => {
+    const level = getLevel(3);
+    let state = createLevelRun(3);
+    for (let i = 0; i < 40; i++) {
+      // 每 3 tick 出現一次非飢荒 tick（場上短暫有可吸怪），累計永不達閾值。
+      const result = advanceLevelSpawn(state, {
+        deltaMs: STARVATION_RESCUE_MS / 3,
+        aliveEnemies: level.maxOnScreen,
+        starving: i % 3 !== 2,
+      });
+      state = result.state;
+      expect(result.spawn).toBe(false);
+    }
+  });
+
+  it('開門後不救援（尾端 release 不受影響）', () => {
+    let state = createLevelRun(3);
+    for (let i = 0; i < 10; i++) state = recordKill(state);
+    expect(state.gateOpen).toBe(true);
+    for (let i = 0; i < 30; i++) {
+      const result = advanceLevelSpawn(state, {
+        deltaMs: 1000,
+        aliveEnemies: 5,
+        starving: true,
+      });
+      state = result.state;
+      expect(result.spawn).toBe(false);
+    }
+  });
+
+  it('同屏未滿的飢荒仍走一般節流（救援閾值前不提早生成）', () => {
+    let state = createLevelRun(3);
+    // spawnIntervalMs 1300 < 救援閾值：間隔到期即一般生成，救援不搶跑。
+    let result = advanceLevelSpawn(state, { deltaMs: 1299, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(false);
+    state = result.state;
+    result = advanceLevelSpawn(state, { deltaMs: 1, aliveEnemies: 0, starving: true });
+    expect(result.spawn).toBe(true);
+  });
+
+  it('魔王關維持立即補生，不落入走動關救援計時（bossFactory 契約不漂移）', () => {
+    const state = createLevelRun(4);
+    const result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 2, starving: true });
+    expect(result.spawn).toBe(true);
+    expect(result.state.spawnTimerMs).toBe(0);
+  });
+
+  it('全部走動關 enemyMix 至少含一種恆可吸品種（救援律供給面保證）', () => {
+    for (const level of LEVELS) {
+      if (level.boss) continue;
+      const inhalable = level.enemyMix.filter((entry) => canInhale(entry.kind));
+      expect(inhalable.length, `L${level.id} 缺恆可吸品種`).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('滿潮生成降載（§107，issue #806）', () => {
+  it('floodHold 暫停一般補生：計時凍在滿格、退潮首 tick 即補', () => {
+    let state = createLevelRun(14); // spawnIntervalMs 1250
+    let result = advanceLevelSpawn(state, { deltaMs: 5000, aliveEnemies: 0, floodHold: true });
+    expect(result.spawn).toBe(false);
+    state = result.state;
+    // 滿潮持續：仍不生成。
+    result = advanceLevelSpawn(state, { deltaMs: 1000, aliveEnemies: 0, floodHold: true });
+    expect(result.spawn).toBe(false);
+    state = result.state;
+    // 退潮：計時已滿，首 tick 立即補生。
+    result = advanceLevelSpawn(state, { deltaMs: 16, aliveEnemies: 0, floodHold: false });
+    expect(result.spawn).toBe(true);
+  });
+
+  it('飢荒救援不受滿潮閘（anti-softlock 優先）', () => {
+    const level = getLevel(14);
+    let state = createLevelRun(14);
+    let spawned = false;
+    for (let elapsed = 0; elapsed <= STARVATION_RESCUE_MS + 1000; elapsed += 100) {
+      const result = advanceLevelSpawn(state, {
+        deltaMs: 100,
+        aliveEnemies: level.maxOnScreen,
+        starving: true,
+        floodHold: true,
+      });
+      state = result.state;
+      if (result.spawn) {
+        spawned = true;
+        break;
+      }
+    }
+    expect(spawned).toBe(true);
+  });
+
+  it('魔王關補給不受 floodHold（Syrona 潮汐關供彈節奏零漂移）', () => {
+    let state = createLevelRun(16); // spawnIntervalMs 3000
+    let result = advanceLevelSpawn(state, { deltaMs: 3000, aliveEnemies: 0, floodHold: true });
+    expect(result.spawn).toBe(true);
+    // boss 飢荒立即補生亦不受閘。
+    state = createLevelRun(16);
+    result = advanceLevelSpawn(state, {
+      deltaMs: 16,
+      aliveEnemies: 0,
+      starving: true,
+      floodHold: true,
+    });
+    expect(result.spawn).toBe(true);
   });
 });
 

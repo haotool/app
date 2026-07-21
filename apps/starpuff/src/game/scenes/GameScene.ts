@@ -65,7 +65,7 @@ import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
-import { TIDE, tideSoakVelocity } from '../logic/tide';
+import { TIDE, soakWakeInvuln, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 
@@ -261,6 +261,7 @@ export class GameScene extends Phaser.Scene {
           this.tide
             ? { kind: this.tide.filterSpawnKind(kind), y: this.tide.adjustSpawnY(y) }
             : { kind, y },
+        holdSpawn: () => this.tide?.phase() === 'flood',
       },
       this.carryKills,
     );
@@ -609,14 +610,16 @@ export class GameScene extends Phaser.Scene {
     return this.level.boss ? (this.level.anteroomPx ?? 0) : 0;
   }
 
-  // 糖漿潮汐逐幀結算（§71）：水位推進＋浸水傷害/強緩速/上推（anti-softlock 永不吸底）。
-  // 接觸傷害走 damagePlayer 單一入口（i-frame/護盾泡自然生效）。
+  // 糖漿潮汐逐幀結算（§71/§107）：水位推進＋浸水傷害/強緩速/上推；接觸傷害走
+  // damagePlayer 單一入口，實際掉血再追加甦醒無敵窗（取 max）打斷滿潮死亡螺旋。
   private advanceTide(deltaMs: number): void {
     if (!this.tide) return;
     this.tide.update(deltaMs);
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     if (!this.tide.isSubmerged(body.bottom)) return;
+    const hpBefore = this.playerHp;
     this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
+    this.player.grantInvulnerability(soakWakeInvuln(hpBefore, this.playerHp));
     const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
     body.setVelocity(soaked.vx, soaked.vy);
   }

@@ -139,7 +139,7 @@ declare global {
       slayElite: () => void;
       damageBoss: (amount: number) => void;
       save: () => SaveData;
-      probe: () => { x: number; scrollX: number };
+      probe: () => { x: number; y: number; scrollX: number };
       alive: () => { total: number; inhalable: number };
       gateOpen: () => boolean;
       quota: () => { killCount: number; killQuota: number };
@@ -257,7 +257,11 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // 存檔觀測點（§38）：回傳解析後 sp-save（含容錯回退）。
     save: () => loadSave(),
     // 抖動診斷探針（US-022）：逐幀取玩家世界座標與相機捲動，量測 screen-space 穩定度。
-    probe: () => ({ x: internals().player.sprite.x, scrollX: gameScene().cameras.main.scrollX }),
+    probe: () => ({
+      x: internals().player.sprite.x,
+      y: internals().player.sprite.y,
+      scrollX: gameScene().cameras.main.scrollX,
+    }),
     // 反卡死深度 QA 觀測點（US-025）：場上敵數、開門狀態與事件監聽數。
     alive: () => ({
       total: internals().enemies.aliveCount(),
