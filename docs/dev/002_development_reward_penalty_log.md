@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+159
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+160
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-824-walkthrough-l20-drift-fix
+- 原因：WALKTHROUGH L20 兩處與 voidraFsm 現行值漂移——段重試誤稱「血量保留」（實為 resetToPhase 重設至段門檻 70%/40%）、P2 誤稱約 90 秒（實為 durationMs 40s 時間驅動入 P3）
+- 解法：以實作為真相修正兩處文案（門檻重設語意＋表定 40 秒、90 秒改註記為含段重試的經歷時長）
 
 - 日期：2026-07-22
 - ID：reward-starpuff-823-hud-dom-button-click-activation
