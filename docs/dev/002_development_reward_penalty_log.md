@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+155
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+155
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t1-difficulty-axes-ssot
+- 原因：#818 三軸難度分與驗收門檻散落人工評分與 PM 文檔，量化工具缺單點可算來源
+- 解法：新增 logic/difficulty.ts 純函式 SSOT（錨定校準三軸、跳越運動學、分級 bot 參數、驗收門檻表）＋19 項 vitest 錨定行重現測試
 
 - 日期：2026-07-21
 - ID：penalty-starpuff-v18-posttest-newmix-batch-omitted
