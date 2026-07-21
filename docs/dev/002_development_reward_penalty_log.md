@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+158
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+159
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-823-hud-dom-button-click-activation
+- 原因：addDomButton 僅綁 pointerdown（殼層 touchstart preventDefault 吞合成 click），鍵盤/螢幕閱讀器的 click activation 無法觸發暫停/靜音（WCAG 2.1.1 不符）
+- 解法：補 click 監聽走鍵盤/AT 路徑，pointerup 350ms 短窗抑制指標合成 click 防雙觸發；e2e 補鍵盤 Enter/Space、真 click 鏈與 tap 觸控單次觸發案
 
 - 日期：2026-07-22
 - ID：reward-starpuff-822-cometa-recover-baseY-gate
