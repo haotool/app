@@ -9,6 +9,7 @@ import {
   SLAM,
   STAR,
   STARSTORM,
+  STAR_MIXES,
   getMix,
   type MagazineSlot,
   type StarFlavor,
@@ -115,6 +116,10 @@ type Pose =
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
+// 星彈池上限（#820）：滿匣連續散射理論同時需求 = maxAmmo × 最大散射數，由 config 派生
+// 免第二份硬編；扣彈先於生成（fireStar→launchStar），池不足會靜默吞星。
+export const STAR_POOL_MAX =
+  STAR.maxAmmo * Math.max(1, ...STAR_MIXES.map((mix) => mix.scatterCount));
 // 主角描邊（§45）：深紫近黑剪影色與放大比（48px 本體外露約 2.4px 輪廓環）。
 const HERO_OUTLINE_COLOR = 0x2f2a3d;
 const HERO_OUTLINE_SCALE = 1.1;
@@ -190,7 +195,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   const stars = scene.physics.add.group({
     defaultKey: tex('fx-star'),
-    maxSize: 8,
+    maxSize: STAR_POOL_MAX,
     allowGravity: false,
   });
 

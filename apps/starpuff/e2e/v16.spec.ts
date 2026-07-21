@@ -89,6 +89,44 @@ test('HUD 暫停/靜音 DOM 鈕（F-06）：局內可點暫停並繼續、靜音
   expect(errors).toEqual([]);
 });
 
+// #823：HUD DOM 鈕鍵盤/輔助技術可及——click activation（無指標前程）可觸發；
+// 指標完整事件鏈（pointerdown→pointerup→click）僅單次觸發不重複。
+test('HUD DOM 鈕可及性（#823）：鍵盤 Enter/Space 可觸發、指標路徑不雙觸發', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+
+  // 鍵盤路徑（暫停鈕）：聚焦後 Enter 觸發 click activation → 暫停選單開啟。
+  const pauseButton = page.locator('[data-menu="pause"]');
+  await pauseButton.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.evaluate(() => window.__sp.paused())).toBe(true);
+  await page
+    .locator('[data-pause="resume"]')
+    .dispatchEvent('pointerdown', { pointerId: 6, isPrimary: true });
+  await expect.poll(() => page.evaluate(() => window.__sp.paused())).toBe(false);
+
+  // 鍵盤路徑（靜音鈕）：Space 觸發切換一次。
+  const muteButton = page.locator('#game-shell [data-menu="mute"]');
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+  await muteButton.focus();
+  await page.keyboard.press('Space');
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+
+  // 指標路徑防雙觸發：真實 click（pointerdown→pointerup→click 完整鏈）僅切換一次。
+  await muteButton.click();
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+  await page.waitForTimeout(400);
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+
+  // 真觸控路徑：tap 的 touchstart 被殼層 preventDefault 吞合成 click，
+  // pointerdown 即發維持觸控體感且僅單次觸發。
+  await muteButton.tap();
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(400);
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+  expect(errors).toEqual([]);
+});
+
 // v16 D5：教學關（L1）死亡重試保留一半擊殺配額——真實戰鬥管線擊殺 4 隻後死亡，
 // 重生配額應顯示 2/6（非教學關與卡點關不受影響）。
 test('教學關配額結轉（D5）：L1 擊殺 4 隻後死亡，重試保留 2/6', async ({ page }) => {

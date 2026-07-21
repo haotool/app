@@ -480,23 +480,37 @@ describe('Twinkla 三態時序（§80 星屑幽靈）', () => {
 
 describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
   it('巡游遇觸發轉鎖定，鎖定期滿俯衝，俯衝期滿回升再巡游', () => {
-    expect(tickCometa('glide', 500, 16, false).state).toBe('glide');
-    expect(tickCometa('glide', 500, 16, true)).toEqual({
+    expect(tickCometa('glide', 500, 16, false, true).state).toBe('glide');
+    expect(tickCometa('glide', 500, 16, true, true)).toEqual({
       state: 'lock',
       stateMs: 0,
       entered: 'lock',
     });
-    expect(tickCometa('lock', COMETA_FSM.lockMs - 16, 16, false)).toEqual({
+    expect(tickCometa('lock', COMETA_FSM.lockMs - 16, 16, false, false)).toEqual({
       state: 'dash',
       stateMs: 0,
       entered: 'dash',
     });
-    expect(tickCometa('dash', COMETA_FSM.dashMs - 16, 16, false)).toEqual({
+    expect(tickCometa('dash', COMETA_FSM.dashMs - 16, 16, false, false)).toEqual({
       state: 'recover',
       stateMs: 0,
       entered: 'recover',
     });
-    expect(tickCometa('recover', COMETA_FSM.recoverMs - 16, 16, false)).toEqual({
+    expect(tickCometa('recover', COMETA_FSM.recoverMs - 16, 16, false, true)).toEqual({
+      state: 'glide',
+      stateMs: 0,
+      entered: 'glide',
+    });
+  });
+
+  it('低空重俯衝抑制（#822）：回升時滿但未回抵 baseY 不得切 glide', () => {
+    // 時滿未回航高：停留 recover 持續爬升，杜絕自低空直接再鎖定俯衝。
+    const held = tickCometa('recover', COMETA_FSM.recoverMs - 16, 16, false, false);
+    expect(held).toEqual({ state: 'recover', stateMs: COMETA_FSM.recoverMs, entered: null });
+    // 深俯衝長時間爬升（時長遠超 recoverMs）仍未達航高：維持 recover。
+    expect(tickCometa('recover', COMETA_FSM.recoverMs * 3, 16, false, false).state).toBe('recover');
+    // 回抵航高瞬間（時已滿）：切回 glide。
+    expect(tickCometa('recover', COMETA_FSM.recoverMs * 3, 16, false, true)).toEqual({
       state: 'glide',
       stateMs: 0,
       entered: 'glide',
@@ -504,8 +518,8 @@ describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
   });
 
   it('鎖定後不受觸發旗標干擾（鎖定即不修正）；彗尾參數逾時必回收帶', () => {
-    expect(tickCometa('lock', 100, 16, true).state).toBe('lock');
-    expect(tickCometa('dash', 100, 16, true).state).toBe('dash');
+    expect(tickCometa('lock', 100, 16, true, true).state).toBe('lock');
+    expect(tickCometa('dash', 100, 16, true, true).state).toBe('dash');
     expect(COMETA_FSM.lockMs).toBeGreaterThanOrEqual(500);
     expect(COMETA_FSM.tailLifeMs).toBeGreaterThan(0);
     expect(COMETA_FSM.tailLifeMs).toBeLessThanOrEqual(1000);

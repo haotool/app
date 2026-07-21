@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SPORA_SLOW } from '../core/config';
+import { ENEMY_SIZE, SPORA_SLOW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
@@ -157,7 +157,6 @@ const HP: Record<EnemyKind, number> = {
   cometa: 1,
 };
 
-const SIZE = 40;
 const POOL_SIZE = 16;
 // puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）。
 const SPIKE_TEX = 'hazard-spike';
@@ -196,8 +195,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       scene.add
         .graphics()
         .fillStyle(FALLBACK_COLORS[kind])
-        .fillRoundedRect(0, 0, SIZE, SIZE, 12)
-        .generateTexture(TEXTURES[kind], SIZE, SIZE)
+        .fillRoundedRect(0, 0, ENEMY_SIZE, ENEMY_SIZE, 12)
+        .generateTexture(TEXTURES[kind], ENEMY_SIZE, ENEMY_SIZE)
         .destroy();
     }
   }
@@ -533,7 +532,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     (sprite.getData('warnRing') as Phaser.GameObjects.Arc | undefined)?.destroy();
     sprite.setActive(true).setVisible(true);
     sprite.setTexture(TEXTURES[kind]);
-    sprite.setDisplaySize(SIZE, SIZE);
+    sprite.setDisplaySize(ENEMY_SIZE, ENEMY_SIZE);
     sprite.setRotation(0);
     sprite.setAlpha(1);
     sprite.clearTint();
@@ -694,7 +693,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       const sprite = spawn(kind, x, y);
       if (!sprite) return null;
       scene.tweens.killTweensOf(sprite);
-      sprite.setDisplaySize(SIZE * opts.scale, SIZE * opts.scale);
+      sprite.setDisplaySize(ENEMY_SIZE * opts.scale, ENEMY_SIZE * opts.scale);
       sprite.setTint(opts.tint);
       sprite.setData('hp', opts.hp);
       sprite.setData('elite', true);

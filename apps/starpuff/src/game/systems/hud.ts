@@ -39,6 +39,9 @@ const SPEAKER_OFF_TEX = 'hud-spk-off';
 const PAUSE_TEX = 'hud-pause';
 const HUD_DEPTH = 100;
 const MUTE_STORAGE_KEY = 'sp-muted';
+// 指標完程（pointerup）後抑制合成 click 的短窗（#823）：click 緊隨 pointerup 同拍
+// 派發，350ms 足以涵蓋；鍵盤/AT 的 click 無指標前程不受抑制。
+const POINTER_CLICK_SUPPRESS_MS = 350;
 
 export interface Hud {
   destroy(): void;
@@ -164,8 +167,11 @@ export function bindMenuRelayout(scene: Phaser.Scene, restartData?: object): voi
 // 透明 DOM 鈕作為唯一指標命中路徑（hit-test 隨殼旋轉自然正確；canvas 同熱區不掛
 // interactive，杜絕雙命中）。幾何以遊戲邏輯座標換算 canvas CSS px，隨 scale resize 重算；
 // 命中短邊 48px 保底（§98 D2：直持縮放會把 44–56 邏輯高壓到 36–45 CSS px）；
-// rect 可傳 getter（§101：HUD 鈕邏輯座標依視寬/inset 動態錨定）；
-// 監聽 pointerdown（殼層 touchstart preventDefault 會吞 click）。
+// rect 可傳 getter（§101：HUD 鈕邏輯座標依視寬/inset 動態錨定）。
+// 觸發路徑（#823）：指標走 pointerdown 即發維持觸控體感（殼層 touchstart
+// preventDefault 會吞觸控合成 click，不能只綁 click）；鍵盤/輔助技術 activation
+// 無指標前程、只發 click——補 click 監聽並以 pointerup 短窗抑制指標合成 click，
+// 兩路徑互斥不雙觸發（WCAG 2.1.1 鍵盤可操作）。
 interface LogicalRect {
   x: number;
   y: number;
@@ -200,8 +206,16 @@ export function addDomButton(
   };
   relayout();
   shell.appendChild(button);
+  let suppressClickUntil = 0;
   button.addEventListener('pointerdown', (event) => {
     event.preventDefault();
+    onPress();
+  });
+  button.addEventListener('pointerup', () => {
+    suppressClickUntil = performance.now() + POINTER_CLICK_SUPPRESS_MS;
+  });
+  button.addEventListener('click', () => {
+    if (performance.now() < suppressClickUntil) return;
     onPress();
   });
   scene.scale.on('resize', relayout);

@@ -420,4 +420,7 @@ export const ENEMY = {
   touchDamage: 1,
 } as const;
 
+// 小怪標準視覺尺寸（px）：enemies 呈現與 waves 落地錨點共用，禁止第二份硬編。
+export const ENEMY_SIZE = 40;
+
 // 魔王戰數值（§6）由 pure logic 的 bossFsm.ts 持有；Phaser GameConfig 由 main.ts 組裝。

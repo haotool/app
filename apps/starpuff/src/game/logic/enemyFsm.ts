@@ -499,7 +499,9 @@ export function resolveTwinklaHit(state: TwinklaState): TwinklaHitOutcome {
 
 // 彗尾飛魚 Cometa 四態（§80）：高處巡游 glide →（玩家進觸發域）→ 鎖定前搖 lock 0.55s
 //（閃爍，鎖定後不修正）→ 斜向俯衝 dash 0.6s（420px/s，沿路拖 damaging 彗尾）→
-// 回升 recover → glide。恆可吸（疾風味）。
+// 回升 recover →（時滿且回抵航高 baseY）→ glide。恆可吸（疾風味）。
+// #822：切回 glide 需 atBaseY 成立——純時間切換會讓深俯衝後自低空直接再俯衝，
+// 壓縮 telegraph 迴避窗。
 export const COMETA_FSM = {
   lockMs: 550,
   dashMs: 600,
@@ -524,6 +526,7 @@ export function tickCometa(
   stateMs: number,
   deltaMs: number,
   shouldDash: boolean,
+  atBaseY: boolean,
 ): CometaTick {
   const next = stateMs + deltaMs;
   if (state === 'glide' && shouldDash) return { state: 'lock', stateMs: 0, entered: 'lock' };
@@ -531,7 +534,7 @@ export function tickCometa(
     return { state: 'dash', stateMs: 0, entered: 'dash' };
   if (state === 'dash' && next >= COMETA_FSM.dashMs)
     return { state: 'recover', stateMs: 0, entered: 'recover' };
-  if (state === 'recover' && next >= COMETA_FSM.recoverMs)
+  if (state === 'recover' && next >= COMETA_FSM.recoverMs && atBaseY)
     return { state: 'glide', stateMs: 0, entered: 'glide' };
   return { state, stateMs: next, entered: null };
 }
