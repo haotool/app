@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+160
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+160
 
 ## 新增模板（4 行）
 
@@ -2032,3 +2032,7 @@
 - ID：reward-starpuff-v17-gamescene-strangler-debt-train
 - 原因：GameScene 2121 行單檔承載魔王工廠/星彈結算/碰撞接線/彩蛋/toast 等八類職責，三席維護性評分 5/7/8 觸發 Blocking；events 契約與 waves 序列零測試。
 - 解法：六單元 strangler 拆解（bossFactory/starCombat/starSteering/overlaps/eggTracker/toasts，每步 characterization 先行、獨立 commit 可 revert）收斂至 1196 行，補 GameEvents 契約測試與 apps/starpuff max-lines error 1200 守門，vitest 580→650、Playwright 92 全綠零行為變更。
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2a-changeset-release-intent
+- 原因：T2a 五項修復缺 changeset，發版 intent 未落盤即開 PR 會漏升版。
+- 解法：補 @app/starpuff patch changeset（使用者可感知修復描述），隨列車入 PR。
