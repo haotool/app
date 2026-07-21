@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+155
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t1-level-audit-cli
+- 原因：#818 難度量化散落多份單用腳本（v18/ex/noctra/voidra bot），無單指令常備工具與分級 bot、四探針（#809-812）量測能力
+- 解法：新增 scripts/level-audit.mjs 統一 CLI＋感知延遲分級 driver＋四專項探針，L1/L4/L4-EX/L12 四型態實測可用，勝利動線 Result→Map 偵測與探針無敵隔離修正
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t1-difficulty-axes-ssot
