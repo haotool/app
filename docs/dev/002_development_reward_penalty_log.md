@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+157
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+158
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-822-cometa-recover-baseY-gate
+- 原因：cometa recover→glide 純時間切換（900ms 爬升 117px 補不回 dash 最深 252px），深俯衝後自低空直接再鎖定俯衝，壓縮 telegraph 迴避窗
+- 解法：tickCometa 增 atBaseY 閘——時滿且回抵航高才切 glide，recover 分支持續爬升至夾回 baseY；enemyFsm.test.ts 鎖低空重俯衝抑制
 
 - 日期：2026-07-22
 - ID：reward-starpuff-821-bubbla-ground-derived-anchor

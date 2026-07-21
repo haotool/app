@@ -795,6 +795,7 @@ function updateCometa(
 ): void {
   const target = ctx.target;
   const state = sprite.getData('state') as CometaState;
+  const baseY = sprite.getData('baseY') as number;
   // 觸發俯衝：glide 期玩家位於下方觸發域內。
   const shouldDash =
     state === 'glide' &&
@@ -802,7 +803,14 @@ function updateCometa(
     target.y > sprite.y + 40 &&
     Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y) <=
       COMETA_FSM.triggerRangePx;
-  const tick = tickCometa(state, sprite.getData('stateMs') as number, deltaMs, shouldDash);
+  // #822：回升需回抵航高才可切 glide，recover 分支持續 -130 爬升直到夾回 baseY。
+  const tick = tickCometa(
+    state,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    shouldDash,
+    sprite.y <= baseY,
+  );
   sprite.setData('state', tick.state);
   sprite.setData('stateMs', tick.stateMs);
   const body = sprite.body as Phaser.Physics.Arcade.Body;
@@ -865,7 +873,7 @@ function updateCometa(
     case 'recover': {
       sprite.setRotation(0);
       // 回升至航高後懸停等待轉 glide（沿 gusty 慣例）。
-      if (sprite.y <= (sprite.getData('baseY') as number)) body.setVelocityY(0);
+      if (sprite.y <= baseY) body.setVelocityY(0);
       break;
     }
     default: {
