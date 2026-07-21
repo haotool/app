@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+156
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+156
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t1-audit-cli-docs-sync
+- 原因：#818 CLI 已落地但缺常備入口 script 與設計文檔章節，工具可發現性不足
+- 解法：package.json 新增 audit:level script，GAME_DESIGN.md 新增 §108 記錄 CLI 用法、SSOT 分層與四探針口徑
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t1-level-audit-cli

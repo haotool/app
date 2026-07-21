@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit:level": "node scripts/level-audit.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1",
