@@ -1478,6 +1478,20 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 - portrait e2e 雙案：ccw 新預設（上滑=往右）＋ sp-rotation=cw 舊方向回歸
   （下滑=往右、殼 matrix 斷言）。畫布覆蓋率 99.98% 不變。
 
+### 87.4 方向解鎖引導＋桌機正置（#817，T2）
+
+- 桌機判定（`detectDesktopEnvironment`，rotation.ts SSOT）：`pointer:fine` 且
+  `maxTouchPoints===0` 且視口寬 ≥1024——boot 一次判定掛 `html.sp-desktop` class
+  （session 內 SSOT，JS 與 CSS 恆一致）。
+- 桌機模式：方向恆正（`getShellRotation()` 恆 none＋CSS 旋轉殼旁路）、虛擬鍵隱藏
+  （鍵盤唯一操作面）、首次鍵位卡（← → 移動／Z 跳／X 吸射，記憶 `sp-desktop-keys`）、
+  Title 常駐「操作說明」入口（`data-menu="keys"`）隨時重看。
+- 直持引導：卡片顯示當下仍為 portrait（延遲期間未轉橫＝方向鎖定啟發式）→ 一次性
+  shellCard「橫持遊玩體驗更佳（鏡頭朝右）」，記憶 `sp-orientation-hint` 不重複打擾；
+  觸控裝置（含觸控筆電）恆不進桌機模式，旋轉殼語意保留。
+- e2e（t2.spec.ts 三情境 × 三 project）：桌機（殼 transform none、#controls 隱藏、
+  鍵位卡一次性、鍵盤可操作）／直持未解鎖（提示卡一次性）／橫持（雙卡皆不誤觸）。
+
 ## 88. v14 按鈕配置頁操作列直欄化與標籤單行（取代 §34 操作列）
 
 - 根因：cfg-bar 橫排 flex 無寬度約束且鈕可壓縮，375/667 級殼寬下

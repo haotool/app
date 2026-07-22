@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PORTRAIT_ROTATION, parseRotationPref, pointerToLocal } from './rotation';
+import {
+  DEFAULT_PORTRAIT_ROTATION,
+  DESKTOP_MIN_VIEWPORT_W,
+  detectDesktopEnvironment,
+  parseRotationPref,
+  pointerToLocal,
+} from './rotation';
 
 // 390x844 直持殼：殼 layout 844x390，旋轉後 AABB 390x844（寬高互換）。
 const SHELL_RECT = { left: 0, top: 0, width: 390, height: 844 };
@@ -17,6 +23,21 @@ describe('parseRotationPref（§87 直持旋轉偏好）', () => {
   it('明確儲存 cw 才回舊方向', () => {
     expect(parseRotationPref('cw')).toBe('cw');
     expect(parseRotationPref('ccw')).toBe('ccw');
+  });
+});
+
+describe('detectDesktopEnvironment（#817 桌機判定）', () => {
+  it('細指標＋零觸點＋視口 ≥1024 三條件全立才是桌機', () => {
+    expect(DESKTOP_MIN_VIEWPORT_W).toBe(1024);
+    const desktop = { finePointer: true, maxTouchPoints: 0, viewportWidth: 1440 };
+    expect(detectDesktopEnvironment(desktop)).toBe(true);
+    // 觸控筆電（有觸點）不進桌機模式：旋轉殼語意保留。
+    expect(detectDesktopEnvironment({ ...desktop, maxTouchPoints: 5 })).toBe(false);
+    // 粗指標（觸控主導）不進桌機模式。
+    expect(detectDesktopEnvironment({ ...desktop, finePointer: false })).toBe(false);
+    // 窄視口（分割視窗/小視窗）不進桌機模式。
+    expect(detectDesktopEnvironment({ ...desktop, viewportWidth: 1023 })).toBe(false);
+    expect(detectDesktopEnvironment({ ...desktop, viewportWidth: 1024 })).toBe(true);
   });
 });
 

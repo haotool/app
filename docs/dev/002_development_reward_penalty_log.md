@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+165
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+166
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-817-orientation-desktop
+- 原因：#817 直持方向鎖定用戶無引導、桌機直窗誤套旋轉殼語意（畫面轉 90°）且無鍵盤操作提示
+- 解法：桌機判定（fine+零觸點+視口 ≥1024）掛 sp-desktop 旋轉殼旁路＋虛擬鍵隱藏＋一次性鍵位卡＋Title 操作說明常駐；直持一次性方向解鎖 shellCard；e2e 桌機/直持/橫持三情境互不誤觸全綠
 
 - 日期：2026-07-22
 - ID：reward-starpuff-809-boss-jump-feel

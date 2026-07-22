@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import { isDesktopMode } from '../core/rotation';
 import { currentChallenge, loadSave } from '../core/save';
 import { SceneKeys, type CodexTab } from '../core/types';
 import { exConquestDone } from '../logic/levels';
+import { showDesktopKeysCard } from '../../orientationGuide';
 import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
@@ -211,7 +213,6 @@ export class TitleScene extends Phaser.Scene {
 
     // 次選單列（§36/§39）：世界地圖／圖鑑／技能介紹／按鈕配置，觸控目標 56px 高。
     const secondaryY = height * 0.85;
-    const secondarySpacing = 180;
     const entries: { label: string; menuId: string; onPress: () => void }[] = [
       {
         label: '世界地圖',
@@ -234,6 +235,20 @@ export class TitleScene extends Phaser.Scene {
         },
       },
     ];
+    // 桌機常駐「操作說明」入口（#817）：鍵位卡隨時重看；行動裝置維持四鈕不增噪。
+    if (isDesktopMode()) {
+      entries.push({
+        label: '操作說明',
+        menuId: 'keys',
+        onPress: () => {
+          unlockAudio();
+          playSfx('pop');
+          showDesktopKeysCard();
+        },
+      });
+    }
+    // 五鈕（桌機含操作說明）收斂間距至命中框寬 168：最小邏輯寬 854 下不溢出、不重疊。
+    const secondarySpacing = entries.length > 4 ? 168 : 180;
     entries.forEach((entry, i) => {
       const x = centerX + (i - (entries.length - 1) / 2) * secondarySpacing;
       const visual = this.add
