@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+170
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+171
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-docs-ssot
+- 原因：輸入層重寫後 GAME_DESIGN/WALKTHROUGH 仍以舊長按語意為 SSOT，會誤導後續列車
+- 解法：新增 §109 輸入 SSOT 章節＋舊節（§4/§7/§23/§40/§57/§108）取代標註、WALKTHROUGH 總則與 L4/L8 攻略同步、minor changeset
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-probe-migration
