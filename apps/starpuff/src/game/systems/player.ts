@@ -28,7 +28,6 @@ import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movem
 import {
   SHELL_SHIELD,
   advanceShield,
-  advanceStarstormHold,
   createShieldState,
   effectiveInvulnMs,
   fillMagazine,
@@ -44,21 +43,28 @@ import {
   slotSpec,
   starDamage,
   starPitch,
-  starstormProgress,
-  starstormReady,
   swallowIntoMagazine,
 } from '../logic/skills';
 import {
+  beginDetonation,
+  chargeStarburst,
+  createStarburstState,
+  resolveSpMode,
+  resolveSpPress,
+  shouldCrystallize,
+  tickDetonation,
+  type SpMode,
+  type StarburstState,
+} from '../logic/starburst';
+import {
   GALE_BLADE,
   GALE_FLIGHT,
-  TRANSFORM,
   TRANSFORM_FORMS,
   VOLT_BEAM,
   absorbHalvedDamage,
   createTransformState,
   eligibleForm,
   endTransform,
-  resolveTransformHold,
   startTransform,
   tickTransform,
   transformProgress,
@@ -73,6 +79,7 @@ import {
   strideTilt,
 } from '../logic/walkFeel';
 import { playSfx } from '../audio/sfx';
+import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
 
@@ -98,6 +105,11 @@ export interface PlayerHandle {
   isShieldRaised(): boolean;
   // v9 星化（§57）：形態觀測（e2e/世界結算）與下砸態（魔王頭頂 hit window 判定）。
   getTransformState(): TransformState;
+  // 星暴 2.0（§109）：蓄能相位觀測、跨關授星、死亡/EX 清除與 SP 鍵呈現模式。
+  getStarburst(): StarburstState;
+  grantStarburstCharge(): void;
+  clearStarburst(): void;
+  getSpMode(): SpMode;
   isSlamming(): boolean;
   // 魔王頭頂命中（§58）：GameScene 結算後回彈玩家並結束本次下砸（進 CD）。
   onSlamBounce(): void;
@@ -228,9 +240,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let stridePhase = 0;
   let lastVy = 0;
   let pose: Pose = 'hero-idle';
-  // 技能狀態（§23）：滿匣延遲發射旗標、星暴充能、下衝擊 CD。
+  // 技能狀態（§23/§109）：殼盾延遲發射旗標、蓄能結晶狀態機、下衝擊 CD。
   let deferredFire = false;
-  let stormHoldMs = 0;
+  let starburst = createStarburstState();
   // 星暴無敵窗（§64）：與受擊 i-frame 獨立計時，結算取較大值（effectiveInvulnMs）。
   let stormInvulnMs = 0;
   let slamming = false;
@@ -241,9 +253,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let shield = createShieldState();
   let blockInvulnMs = 0;
   let wasShieldRaised = false;
-  // 星化（§57）：形態狀態、長按一次性旗標、形態技 CD 與殼化減傷池。
+  // 星化（§57）：形態狀態、形態技 CD 與殼化減傷池；觸發改 SP 鍵（§109）。
   let transform = createTransformState();
-  let transformHoldDone = false;
   let voltCdMs = 0;
   let bladeCdMs = 0;
   let halfDamagePool = 0;
@@ -373,16 +384,30 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     shieldGfx.strokePath();
   };
 
-  // 星暴進度環（§23）：玩家頭頂充能弧線，逐幀重繪。
-  const stormRing = scene.add.graphics().setDepth(95);
-  const drawStormRing = () => {
-    stormRing.clear();
-    const progress = starstormProgress(stormHoldMs);
-    if (progress <= 0) return;
-    stormRing.lineStyle(4, 0xffd966, 0.9);
-    stormRing.beginPath();
-    stormRing.arc(sprite.x, sprite.y - 44, 16, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
-    stormRing.strokePath();
+  // 蓄能大星（§109）：結晶後頭頂軌道漂浮，蓄爆期斂縮增亮；呈現委派 chargedStar。
+  const chargedStar = createChargedStar(scene);
+
+  // 蓄能相位變更事件（§109）：HUD/教學/e2e 觀測共用契約。
+  const emitStarburst = () => {
+    emitGameEvent(scene.events, GameEvents.STARBURST_CHANGED, { phase: starburst.phase });
+  };
+
+  // 滿匣自動結晶（§109）：彈匣滿 5 槽瞬間清空並生成蓄能星；蓄能星存在時不疊加。
+  // 結晶後立即可繼續吸怪（anti-softlock：吸怪循環即時可用）。
+  const maybeCrystallize = () => {
+    if (!shouldCrystallize(magazine.length, starburst.phase)) return;
+    magazine = [];
+    starburst = chargeStarburst();
+    playSfx('charge');
+    burstSmall(scene, sprite.x, sprite.y - 46, CHARGED_STAR.tint);
+    emitStarburst();
+  };
+
+  // SP 引爆（§109）：0.3s 蓄爆不可取消，期滿於 update 內結算星暴。
+  const startDetonation = () => {
+    starburst = beginDetonation(starburst);
+    playSfx('charge', 1.3);
+    emitStarburst();
   };
 
   // 形態 aura（§57，池化）：三形態各一常駐 emitter（emitting=false），變身時僅啟用當前形態。
@@ -408,33 +433,20 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       .setDepth(11);
   }
 
-  // 變身環（§57）：充能進度（長按 0.6s）與形態倒數（10s）共用一支 graphics，逐幀重繪。
+  // 變身環（§57/§109）：形態倒數（10s）逐幀重繪；長按充能進度隨 SP 即時變身退場。
   const transformRing = scene.add.graphics().setDepth(95);
-  const drawTransformRing = (chargeProgress: number) => {
+  const drawTransformRing = () => {
     transformRing.clear();
-    if (transform.form) {
-      const spec = TRANSFORM_FORMS[transform.form];
-      transformRing.lineStyle(4, spec.tint, 0.9);
-      transformRing.beginPath();
-      transformRing.arc(
-        sprite.x,
-        sprite.y - 44,
-        20,
-        -Math.PI / 2,
-        -Math.PI / 2 + transformProgress(transform) * Math.PI * 2,
-      );
-      transformRing.strokePath();
-      return;
-    }
-    if (chargeProgress <= 0) return;
-    transformRing.lineStyle(4, 0xffffff, 0.85);
+    if (!transform.form) return;
+    const spec = TRANSFORM_FORMS[transform.form];
+    transformRing.lineStyle(4, spec.tint, 0.9);
     transformRing.beginPath();
     transformRing.arc(
       sprite.x,
       sprite.y - 44,
       20,
       -Math.PI / 2,
-      -Math.PI / 2 + Math.min(1, chargeProgress) * Math.PI * 2,
+      -Math.PI / 2 + transformProgress(transform) * Math.PI * 2,
     );
     transformRing.strokePath();
   };
@@ -444,7 +456,6 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     transform = startTransform(form);
     magazine = [];
     deferredFire = false;
-    stormHoldMs = 0;
     halfDamagePool = 0;
     voltCdMs = 0;
     bladeCdMs = 0;
@@ -733,8 +744,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           }
         }
 
-        // B 鍵決策（§23/§40/§57）：變身期間 B 改役形態技（吸入/發射/星暴全停用）；
-        // 其餘沿用滿匣與頂槽殼盾星延遲至放開結算（點按發射 vs 長按星暴/舉盾）。
+        // B 鍵決策（§109 三語意收斂）：變身期間 B 改役形態技（吸入/發射停用）；
+        // 其餘僅頂槽殼盾星走延遲（點按發射 vs 長按舉盾），有彈藥即按即射。
         if (controls.actionPressed) {
           if (transform.form === 'volt') {
             if (voltCdMs <= 0) {
@@ -753,69 +764,53 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
               launchWindBlade();
             }
           } else if (!transform.form) {
-            // 變身資格成立時同走延遲（§57）：點按放開仍發射、長按 0.6s 交星化。
             const command = resolveActionPress({
               ammo: magazine.length,
               topIsShelly: isTopShelly(magazine),
-              transformEligible: eligibleForm(magazine) !== null,
             });
             if (command === 'fire') fireStar();
             else if (command === 'defer') deferredFire = true;
           }
         }
-      }
 
-      // 滿匣點按（<150ms）於放開時發射；長按則交給吸入或星暴。
-      if (!controls.actionHeld) {
-        if (deferredFire && hurtLockMs <= 0 && shouldFireOnRelease(actionHoldMs)) fireStar();
-        deferredFire = false;
-        transformHoldDone = false;
-      }
-
-      // 星化長按裁決（§57）：同系滿匣長按 0.6s 變身（此情境優先於星暴）；變身中再長按
-      // 提前解除；一次長按僅裁決一次（transformHoldDone），放開重置。
-      const eligible = eligibleForm(magazine);
-      const transformCharging = !transform.form && eligible !== null && controls.actionHeld;
-      if (controls.actionHeld && !transformHoldDone && hurtLockMs <= 0) {
-        const command = resolveTransformHold({
-          holdMs: actionHoldMs + deltaMs,
-          active: transform.form !== null,
-          eligible: eligible !== null,
-          airborne: !onGround,
-        });
-        if (command === 'start' && eligible) {
-          transformHoldDone = true;
-          beginTransform(eligible);
-        } else if (command === 'dismiss') {
-          transformHoldDone = true;
-          finishTransform();
+        // SP 情境鍵（§109）：點按依天然互斥語意分派——變身中解除／蓄能星引爆／
+        // 資格成立（同系 ≥3、地面）立即變身；無技能可用時為 none。
+        if (controls.spPressed) {
+          const spEligible = eligibleForm(magazine);
+          const command = resolveSpPress({
+            phase: starburst.phase,
+            transformActive: transform.form !== null,
+            eligible: spEligible !== null,
+            airborne: !onGround,
+          });
+          if (command === 'detonate') startDetonation();
+          else if (command === 'transform' && spEligible) beginTransform(spEligible);
+          else if (command === 'dismiss') finishTransform();
         }
       }
 
-      // 星暴充能（§23/§57）：滿匣長按 0.8s 觸發；同系滿匣（變身情境）與變身中不充能。
-      stormHoldMs = advanceStarstormHold(
-        stormHoldMs,
-        deltaMs,
-        controls.actionHeld && !transformCharging && !transform.form,
-        magazine.length >= STAR.maxAmmo,
-      );
-      if (starstormReady(stormHoldMs)) {
-        stormHoldMs = 0;
+      // 殼盾情境點按（<150ms）於放開時發射；長按則交給舉盾或吸入。
+      if (!controls.actionHeld) {
+        if (deferredFire && hurtLockMs <= 0 && shouldFireOnRelease(actionHoldMs)) fireStar();
         deferredFire = false;
-        magazine = [];
-        // 星暴無敵（§64）：發動即開 5s 窗；與受擊 i-frame 取 max，重複發動刷新不疊加。
+      }
+
+      // 蓄爆推進（§109）：0.3s 不可取消，期滿結算星暴——清場委派 GameScene/starCombat，
+      // 無敵窗沿 §64 取 max 不疊加。
+      const detonation = tickDetonation(starburst, deltaMs);
+      starburst = detonation.state;
+      if (detonation.detonated) {
         stormInvulnMs = STARSTORM.invulnMs;
-        emitAmmo();
         playSfx('starstorm');
         emitGameEvent(scene.events, GameEvents.SKILL_STARSTORM, { x: sprite.x, y: sprite.y });
+        emitStarburst();
       }
-      drawStormRing();
+      chargedStar.update(sprite.x, sprite.y, deltaMs, starburst.phase);
 
       actionHoldMs = controls.actionHeld ? actionHoldMs + deltaMs : 0;
-      // 殼盾（§40/§57 輸入矩陣）：殼盾情境（頂槽殼盾星且未滿匣）長按語意固定為舉盾——
-      // 舉盾中與盾 CD 中皆抑制吸入，不回落；滿匣長按維持星暴優先；殼盾星 ×3（變身
-      // 充能情境）長按讓位星化。
-      const inShieldContext = shieldEligible(magazine) && !transformCharging && !transform.form;
+      // 殼盾（§109 收斂 §40 輸入矩陣）：頂槽殼盾星即為殼盾情境——長按語意固定為
+      // 舉盾，舉盾中與盾 CD 中皆抑制吸入，不回落；變身中 B 已改役不進殼盾。
+      const inShieldContext = shieldEligible(magazine) && !transform.form;
       shield = advanceShield(shield, {
         deltaMs,
         held: controls.actionHeld && actionHoldMs >= INHALE.holdThresholdMs && hurtLockMs <= 0,
@@ -824,18 +819,15 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (shield.raised && !wasShieldRaised) playSfx('shell-spin');
       wasShieldRaised = shield.raised;
       drawShield();
-      // 吸入停用情境（§57）：變身中 B 已改役；同系滿匣長按為變身起手勢，皆不進吸入。
+      // 吸入停用情境（§109）：變身中 B 已改役、殼盾情境長按舉盾，皆不進吸入。
       inhaling =
         actionHoldMs >= INHALE.holdThresholdMs &&
         !shield.raised &&
         !inShieldContext &&
-        !transform.form &&
-        !transformCharging;
+        !transform.form;
       zoneBody.enable = inhaling;
-      // 變身環（§57）：起手/解除長按充能進度；變身中改畫形態倒數。
-      const holdCharging =
-        controls.actionHeld && !transformHoldDone && (transformCharging || transform.form !== null);
-      drawTransformRing(holdCharging ? actionHoldMs / TRANSFORM.holdMs : 0);
+      // 變身環（§57/§109）：變身中畫形態倒數；長按充能進度已隨 SP 即時變身退場。
+      drawTransformRing();
       zone.setPosition(sprite.x + facing * (zoneSpan / 2), sprite.y);
 
       sprite.setFlipX(facing === -1);
@@ -982,6 +974,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (result.charged) playSfx('charge');
       else if (result.mixed) playSfx('jingle');
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
+      maybeCrystallize();
       emitAmmo();
       return true;
     },
@@ -1011,16 +1004,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     grantFullMagazine() {
       magazine = fillMagazine(magazine);
+      maybeCrystallize();
       emitAmmo();
     },
     grantGoldStar() {
       magazine = pushGoldStar(magazine);
+      maybeCrystallize();
       emitAmmo();
     },
     // e2e/QA 受控賦星：直接吞入指定屬性，走正式 swallow 管線維持連吞語意。
     grantStar(flavor: StarFlavor) {
       magazine = swallowIntoMagazine(magazine, flavor).magazine;
       lastFlavor = flavor;
+      maybeCrystallize();
       emitAmmo();
     },
     isShieldRaised() {
@@ -1028,6 +1024,31 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     getTransformState() {
       return transform;
+    },
+    getStarburst() {
+      return starburst;
+    },
+    // 跨關授星（§109）：director 於 create 依 session 持有旗標呼叫；蓄爆中不覆蓋。
+    grantStarburstCharge() {
+      if (starburst.phase !== 'none') return;
+      starburst = chargeStarburst();
+      emitStarburst();
+    },
+    // 死亡/EX 進場清除（§109）：蓄能星與蓄爆一併取消，視覺隨相位隱藏。
+    clearStarburst() {
+      if (starburst.phase === 'none') return;
+      starburst = createStarburstState();
+      emitStarburst();
+    },
+    // SP 鍵呈現模式（§109）：GameScene 逐幀同步至 controls；地面判定就地取樣。
+    getSpMode() {
+      const body = sprite.body as Phaser.Physics.Arcade.Body;
+      return resolveSpMode({
+        phase: starburst.phase,
+        transformForm: transform.form,
+        eligibleForm: eligibleForm(magazine),
+        airborne: !(body.blocked.down || body.touching.down),
+      });
     },
     isSlamming() {
       return slamming;
@@ -1071,7 +1092,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, syncSilhouette);
       scene.tweens.killTweensOf(sprite);
       footDust.destroy();
-      stormRing.destroy();
+      chargedStar.destroy();
       shieldGfx.destroy();
       transformRing.destroy();
       for (const emitter of Object.values(auraEmitters)) emitter.destroy();

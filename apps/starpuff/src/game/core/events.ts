@@ -1,5 +1,5 @@
 import type { MagazineSlot, StarFlavor } from './config';
-import type { BossPhase, EnemyKind, LevelId, TransformForm } from './types';
+import type { BossPhase, EnemyKind, LevelId, StarburstPhase, TransformForm } from './types';
 
 // 事件契約：跨系統唯一溝通管道（GAME_DESIGN §11，凍結）。
 // 匯流排使用 GameScene 的 scene.events，各系統不得直接互相呼叫。
@@ -14,6 +14,9 @@ export const GameEvents = {
   ENEMY_KILLED: 'enemy:killed',
   STAR_FIRED: 'star:fired',
   SKILL_STARSTORM: 'skill:starstorm',
+  // v19 星暴 2.0（§109）：蓄能相位變更由 player 發出，consumer 為 starburstDirector
+  //（教學浮字/跨關持有）與 HUD/e2e 觀測。
+  STARBURST_CHANGED: 'starburst:changed',
   SKILL_SLAM_LANDED: 'skill:slam-landed',
   // v6 殼盾（§40）：成功格擋由 player 發出，GameScene 結算反擊星爆。
   SKILL_SHIELD_BLOCK: 'skill:shield-block',
@@ -57,6 +60,7 @@ export interface GameEventPayloads {
     pitch: number;
   };
   [GameEvents.SKILL_STARSTORM]: { x: number; y: number };
+  [GameEvents.STARBURST_CHANGED]: { phase: StarburstPhase };
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
   [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };
   [GameEvents.SKILL_TRANSFORM_STRIKE]: {

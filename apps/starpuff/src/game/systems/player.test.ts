@@ -248,6 +248,7 @@ const IDLE: ControlsState = {
   jumpHeld: false,
   actionPressed: false,
   actionHeld: false,
+  spPressed: false,
 };
 const PRESS: ControlsState = { ...IDLE, actionPressed: true, actionHeld: true };
 
@@ -261,16 +262,24 @@ describe('星彈池上限（#820）', () => {
     expect(STAR_POOL_MAX).toBeGreaterThanOrEqual(STAR.maxAmmo * maxScatter);
   });
 
-  it('滿匣碎鑽星連續散射：全數生成且彈藥計數一致', () => {
+  it('滿匣碎鑽星連續散射：全數生成且彈藥計數一致（§109 蓄能星存在時滿匣不再結晶）', () => {
     const { player, groups } = makeHarness();
     // 星彈池以派生上限建池（非硬編 8）。
     expect(groups[0]?.maxSize).toBe(STAR_POOL_MAX);
-    // 吞入 殼盾星+鑽頭星 ×3 → 三槽碎鑽星（scatterCount 3）滿匣。
+    // 先以 jelly 填滿觸發自動結晶（§109）：彈匣清空、蓄能星生成——之後滿匣狀態
+    // 才可持續（不疊加），供本測試建立滿匣散射情境。
+    for (let i = 0; i < 12 && player.getStarburst().phase === 'none'; i += 1) {
+      player.grantStar('jelly');
+    }
+    expect(player.getStarburst().phase).toBe('charged');
+    expect(player.getAmmoState().ammo).toBe(0);
+    // 吞入 殼盾星+鑽頭星 ×5 → 五槽碎鑽星（scatterCount 3）滿匣。
     for (let i = 0; i < STAR.maxAmmo; i += 1) {
       player.grantStar('shelly');
       player.grantStar('drilly');
     }
     expect(player.getMagazine().every((slot) => slot.mix === 'shardrill')).toBe(true);
+    expect(player.getMagazine()).toHaveLength(STAR.maxAmmo);
     // 頂槽殼盾星走延遲發射：點按（<150ms）放開結算，共 maxAmmo 個發射循環。
     for (let i = 0; i < STAR.maxAmmo; i += 1) {
       player.update(PRESS, 16);
@@ -280,7 +289,7 @@ describe('星彈池上限（#820）', () => {
     const activeStars = (player.getStars().getChildren() as unknown as FakeStar[]).filter(
       (star) => star.active,
     );
-    // 滿匣 × 散射全數生成：第 9 發不得因池滿被靜默吞掉。
+    // 滿匣 × 散射全數生成：第 15 發不得因池滿被靜默吞掉。
     expect(activeStars.length).toBe(STAR.maxAmmo * scatter);
     expect(player.getAmmoState().ammo).toBe(0);
   });

@@ -1,15 +1,15 @@
 import type { MagazineSlot, StarFlavor } from '../core/config';
 import type { TransformForm } from '../core/types';
 
-// 星化變身純狀態機（GAME_DESIGN §57，不 import phaser），vitest 對象。
-// 觸發語意：彈匣同系星彈 ×3（滿匣）長按吸入鍵 0.6s＝變身，優先於星暴（§23 滿匣長按
-// 僅在非同系滿匣時維持星暴語意）；變身期間吸入停用、B 鍵改役形態技，再長按 0.6s 提前
-// 解除（不返彈）。anti-softlock：變身永不為破關必需，全關卡純標準星保底線不變。
+// 星化變身純狀態機（GAME_DESIGN §57 觸發面由 §109 取代，不 import phaser），vitest 對象。
+// 觸發語意（§109）：彈匣同系可變身星 ≥3 且在地面，SP 鍵點按＝立即變身（0.6s 長按門檻
+// 廢除——情境鍵本身已表達意圖）；變身期間吸入停用、B 鍵改役形態技，再按 SP 提前解除
+//（不返彈）。SP 點按裁決見 logic/starburst.ts resolveSpPress。
+// anti-softlock：變身永不為破關必需，全關卡純標準星保底線不變。
 
 export type { TransformForm } from '../core/types';
 
 export const TRANSFORM = {
-  holdMs: 600,
   durationMs: 10_000,
   requiredStars: 3,
 } as const;
@@ -159,20 +159,6 @@ export function tickTransform(state: TransformState, deltaMs: number): Transform
 export function transformProgress(state: TransformState): number {
   if (!state.form) return 0;
   return Math.max(0, Math.min(1, state.remainingMs / TRANSFORM.durationMs));
-}
-
-// 長按裁決（觸發與提前解除共用單一出口）：起手限地面且非變身中；變身中長按＝解除。
-export type TransformHoldCommand = 'none' | 'start' | 'dismiss';
-
-export function resolveTransformHold(opts: {
-  holdMs: number;
-  active: boolean;
-  eligible: boolean;
-  airborne: boolean;
-}): TransformHoldCommand {
-  if (opts.holdMs < TRANSFORM.holdMs) return 'none';
-  if (opts.active) return 'dismiss';
-  return opts.eligible && !opts.airborne ? 'start' : 'none';
 }
 
 // 殼化受傷減半（§57）：整數 HP 下以 0.5 傷害池累積，滿 1 才實扣——兩次 1 傷合計扣 1。

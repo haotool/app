@@ -3,7 +3,6 @@ import {
   GOLD_STAR,
   INHALE,
   STAR,
-  STARSTORM,
   STAR_FLAVORS,
   findMix,
   getMix,
@@ -90,44 +89,21 @@ export function starPitch(slot: MagazineSlot): number {
   return slot.charged ? base * CHARGED_STAR.pitchMultiplier : base;
 }
 
-// 星暴充能（§23）：滿匣且持續按住才累積；任一條件中斷即歸零。
-export function advanceStarstormHold(
-  holdMs: number,
-  deltaMs: number,
-  held: boolean,
-  full: boolean,
-): number {
-  return held && full ? holdMs + deltaMs : 0;
-}
-
-export function starstormReady(holdMs: number): boolean {
-  return holdMs >= STARSTORM.holdMs;
-}
-
 // 星暴無敵窗（§64）：與受擊 i-frame 為獨立計時、結算時取較大值生效——
 // 不疊加、期間受擊不重啟；受擊判定沿用 combat.resolveHit 單一出口。
 export function effectiveInvulnMs(hitInvulnMs: number, stormInvulnMs: number): number {
   return Math.max(hitInvulnMs, stormInvulnMs);
 }
 
-export function starstormProgress(holdMs: number): number {
-  return Math.min(1, holdMs / STARSTORM.holdMs);
-}
-
-// B 鍵按下當幀的動作決策（§23/§40/§57）：滿匣延遲至放開結算，區分點按發射與長按星暴；
-// 頂槽殼盾星同走延遲，長按改舉盾；變身資格成立（同系 ≥3 星）同走延遲，長按改星化。
+// B 鍵按下當幀的動作決策（§109 收斂為三語意）：點按發射、按住吸入、頂槽殼盾星
+// 按住舉盾——僅殼盾情境走延遲（放開 <150ms 結算為點按發射）。星暴長按 0.8s 與
+// 地面長按 0.6s 變身全數退場（改由 SP 情境鍵承擔，logic/starburst.ts）。
 // v7 起下衝擊改由跳躍鍵矩陣觸發（resolveJumpPress）。
 export type ActionCommand = 'fire' | 'defer' | 'none';
 
-export function resolveActionPress(opts: {
-  ammo: number;
-  topIsShelly?: boolean;
-  transformEligible?: boolean;
-}): ActionCommand {
+export function resolveActionPress(opts: { ammo: number; topIsShelly?: boolean }): ActionCommand {
   if (opts.ammo <= 0) return 'none';
-  return opts.ammo >= STAR.maxAmmo || opts.topIsShelly === true || opts.transformEligible === true
-    ? 'defer'
-    : 'fire';
+  return opts.topIsShelly === true ? 'defer' : 'fire';
 }
 
 // 跳躍鍵輸入矩陣（§44，v7）：空中「下＋跳」＝下衝擊（吞含/puffed 狀態不影響；
@@ -155,7 +131,6 @@ export function shouldFireOnRelease(holdMs: number): boolean {
 }
 
 // 殼盾（§40）：頂槽殼盾星長按舉正面護盾——格擋一次即消耗頂槽並反擊星爆，CD 4s。
-// 滿彈匣長按維持星暴優先（§23 肌肉記憶不變），故 eligible 僅在未滿匣成立。
 export const SHELL_SHIELD = {
   cooldownMs: 4000,
   blockInvulnMs: 800,
@@ -177,10 +152,11 @@ export function isTopShelly(magazine: readonly MagazineSlot[]): boolean {
   return top?.flavor === 'shelly' && !top.gold;
 }
 
-// 殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣——此情境下長按語意固定為舉盾，
-// 盾 CD 中或舉盾中皆不得回落為吸入（點按發射不受影響）；滿匣長按維持星暴優先。
+// 殼盾情境（§109 收斂 §40 輸入矩陣）：頂槽殼盾星即成立——此情境下長按語意固定為
+// 舉盾，盾 CD 中或舉盾中皆不得回落為吸入（點按發射不受影響）。星暴長按已退場，
+// 滿匣不再讓位（滿匣僅在蓄能星存在時可達，§109 不疊加）。
 export function shieldEligible(magazine: readonly MagazineSlot[]): boolean {
-  return isTopShelly(magazine) && magazine.length < STAR.maxAmmo;
+  return isTopShelly(magazine);
 }
 
 // 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星且未滿匣；

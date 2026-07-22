@@ -365,12 +365,15 @@ export function createHud(scene: Phaser.Scene): Hud {
     });
   }
 
-  // 星化就緒脈動（§57）：同系 ×3 滿匣時彈藥列縮放脈動＋外圈套形態色，長按提示可變身。
+  // 就緒脈動（§57/§109）：同系 ≥3 可變身時彈藥列脈動＋外圈套形態色（SP 鍵可變身）；
+  // 蓄能星存在時再滿匣（不疊加）改套金色脈動提示。
   let readyTween: Phaser.Tweens.Tween | null = null;
-  function updateTransformReady(magazine: readonly MagazineSlot[]): boolean {
+  function updateReadyPulse(magazine: readonly MagazineSlot[]): boolean {
     const form = eligibleForm(magazine);
-    if (form) {
-      slotRings.forEach((ring) => ring.setVisible(true).setTint(TRANSFORM_FORMS[form].tint));
+    const fullWithCharge = magazine.length >= STAR.maxAmmo;
+    if (form || fullWithCharge) {
+      const tint = form ? TRANSFORM_FORMS[form].tint : CHARGED_STAR.tint;
+      slotRings.forEach((ring) => ring.setVisible(true).setTint(tint));
       readyTween ??= scene.tweens.add({
         targets: [...ammoStars, ...slotRings],
         scale: 1.22,
@@ -475,7 +478,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   bind(GameEvents.PLAYER_HEALED, ({ hp }) => updateHearts(hp));
   bind(GameEvents.AMMO_CHANGED, ({ magazine }) => {
     updateAmmo(magazine);
-    updateTransformReady(magazine);
+    updateReadyPulse(magazine);
   });
   bind(GameEvents.BOSS_SPAWNED, () => {
     barFill.scaleX = fullScaleX;

@@ -3,6 +3,7 @@ import {
   CHARGED_STAR,
   GOLD_STAR,
   PLAYER,
+  STAR,
   STARSTORM,
   STAR_MIXES,
   findMix,
@@ -13,7 +14,6 @@ import { resolveHit, tickTimer } from './combat';
 import {
   SHELL_SHIELD,
   advanceShield,
-  advanceStarstormHold,
   createShieldState,
   effectiveInvulnMs,
   fillMagazine,
@@ -30,8 +30,6 @@ import {
   slotSpec,
   starDamage,
   starPitch,
-  starstormProgress,
-  starstormReady,
   swallowIntoMagazine,
 } from './skills';
 
@@ -66,10 +64,16 @@ describe('swallowIntoMagazine（§23 槽位模型）', () => {
     expect(result.mixed).toBeNull();
   });
 
-  it('滿匣改吞（無配方）覆蓋頂槽（§20 最後吞下者覆蓋）', () => {
-    const full = [slot('jelly'), slot('floaty'), slot('puffy')];
+  it('滿匣改吞（無配方）覆蓋頂槽（§20 最後吞下者覆蓋；§109 滿匣僅蓄能星存在時可達）', () => {
+    const full = [slot('jelly'), slot('floaty'), slot('puffy'), slot('drilly'), slot('zappy')];
     const result = swallowIntoMagazine(full, 'shelly');
-    expect(result.magazine).toEqual([slot('jelly'), slot('floaty'), slot('shelly')]);
+    expect(result.magazine).toEqual([
+      slot('jelly'),
+      slot('floaty'),
+      slot('puffy'),
+      slot('drilly'),
+      slot('shelly'),
+    ]);
   });
 
   it('金星槽不參與連吞升級', () => {
@@ -91,11 +95,11 @@ describe('雙味混合（§46）', () => {
   });
 
   it('滿匣頂槽配方成立時優先合成（不覆蓋）', () => {
-    const full = [slot('shelly'), slot('floaty'), slot('puffy')];
+    const full = [slot('shelly'), slot('floaty'), slot('drilly'), slot('shelly'), slot('puffy')];
     const result = swallowIntoMagazine(full, 'zappy');
     expect(result.mixed).toBe('thunderburst');
-    expect(result.magazine).toHaveLength(3);
-    expect(result.magazine[2]?.mix).toBe('thunderburst');
+    expect(result.magazine).toHaveLength(5);
+    expect(result.magazine[4]?.mix).toBe('thunderburst');
   });
 
   it('混合槽為終態：再吞任何怪推新槽，不再混不再強化', () => {
@@ -188,26 +192,10 @@ describe('starDamage / starPitch（§23 強化規則）', () => {
   });
 });
 
-describe('星暴充能（§23 滿匣長按 0.8s）', () => {
-  it('滿匣且按住才累積，中斷即歸零', () => {
-    expect(advanceStarstormHold(0, 100, true, true)).toBe(100);
-    expect(advanceStarstormHold(500, 100, true, true)).toBe(600);
-    expect(advanceStarstormHold(500, 100, false, true)).toBe(0);
-    expect(advanceStarstormHold(500, 100, true, false)).toBe(0);
-  });
-
-  it('達 0.8s 就緒；進度 0..1 封頂', () => {
-    expect(starstormReady(STARSTORM.holdMs - 1)).toBe(false);
-    expect(starstormReady(STARSTORM.holdMs)).toBe(true);
-    expect(starstormProgress(400)).toBeCloseTo(0.5, 5);
-    expect(starstormProgress(2000)).toBe(1);
-  });
-});
-
-describe('resolveActionPress（§23 B 鍵決策，v7 起與下衝擊解耦）', () => {
-  it('有彈藥點按發射；滿匣延遲至放開結算（星暴或點按）', () => {
+describe('resolveActionPress（§109 B 鍵三語意收斂，星暴長按退場）', () => {
+  it('有彈藥即按即射；滿匣不再延遲（星暴改 SP 引爆，滿匣僅蓄能星存在時可達）', () => {
     expect(resolveActionPress({ ammo: 2 })).toBe('fire');
-    expect(resolveActionPress({ ammo: 3 })).toBe('defer');
+    expect(resolveActionPress({ ammo: STAR.maxAmmo })).toBe('fire');
   });
 
   it('空彈匣按下無動作（保留吸入語意）', () => {
@@ -303,13 +291,15 @@ describe('殼盾 FSM（§40）', () => {
     expect(state.raised).toBe(true);
   });
 
-  it('殼盾情境（§40 輸入矩陣）：頂槽殼盾星且未滿匣成立；滿匣或頂槽非殼盾不成立', () => {
+  it('殼盾情境（§109 收斂）：頂槽殼盾星即成立；滿匣不再讓位星暴（長按星暴已退場）', () => {
     expect(shieldEligible([slot('shelly')])).toBe(true);
     expect(shieldEligible([slot('jelly'), slot('shelly')])).toBe(true);
     expect(shieldEligible([slot('jelly')])).toBe(false);
     expect(shieldEligible([])).toBe(false);
-    // 滿匣頂槽殼盾星：長按讓位星暴，不屬殼盾情境。
-    expect(shieldEligible([slot('jelly'), slot('floaty'), slot('shelly')])).toBe(false);
+    // 滿匣頂槽殼盾星（蓄能星存在時可達）：長按語意固定為舉盾。
+    expect(
+      shieldEligible([slot('jelly'), slot('floaty'), slot('puffy'), slot('jelly'), slot('shelly')]),
+    ).toBe(true);
   });
 
   it('殼盾情境長按不回落吸入：盾 CD 中 raised 恆 false，但情境仍成立（吸入抑制依情境判定）', () => {
@@ -371,18 +361,24 @@ describe('雷鏈目標選擇（§40）', () => {
   });
 });
 
-describe('彩蛋獎勵入匣（§24）', () => {
+describe('彩蛋獎勵入匣（§24；§109 滿匣為 5 槽）', () => {
   it('金星彈置入頂槽；滿匣覆蓋頂槽', () => {
     expect(pushGoldStar([slot('jelly')])).toEqual([slot('jelly'), slot('jelly', false, true)]);
-    const full = [slot('jelly'), slot('floaty'), slot('puffy')];
-    expect(pushGoldStar(full)[2]).toEqual(slot('jelly', false, true));
-    expect(pushGoldStar(full)).toHaveLength(3);
+    const full = [slot('jelly'), slot('floaty'), slot('puffy'), slot('jelly'), slot('drilly')];
+    expect(pushGoldStar(full)[4]).toEqual(slot('jelly', false, true));
+    expect(pushGoldStar(full)).toHaveLength(5);
   });
 
-  it('星星雨補滿空槽且不動既有槽', () => {
+  it('星星雨補滿空槽且不動既有槽（滿匣 5 槽，後續結晶由 player 層裁決）', () => {
     const filled = fillMagazine([slot('puffy', true)]);
-    expect(filled).toEqual([slot('puffy', true), slot('jelly'), slot('jelly')]);
-    expect(fillMagazine(filled)).toHaveLength(3);
+    expect(filled).toEqual([
+      slot('puffy', true),
+      slot('jelly'),
+      slot('jelly'),
+      slot('jelly'),
+      slot('jelly'),
+    ]);
+    expect(fillMagazine(filled)).toHaveLength(5);
   });
 });
 

@@ -255,6 +255,36 @@ html.sp-desktop #controls.is-active {
   );
 }
 
+/* SP 情境鍵（§109）：48–56px 食指區、僅技能可用時淡入 150ms；位置由 layout.ts
+   依 B 鍵裝置空間上方動態派生（spKeyPosition），無 CSS 靜態 fallback（浮現前恆隱藏）。
+   圖形由子 canvas 承擔，停用 .ctl-btn::after 白色鍵帽。 */
+.ctl-btn-sp {
+  width: calc(52px * var(--sp-key-scale, 1));
+  height: calc(52px * var(--sp-key-scale, 1));
+  background: rgba(255, 214, 120, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease-out,
+    transform 0.08s ease-out;
+}
+
+.ctl-btn-sp::after {
+  content: none;
+}
+
+.ctl-btn-sp.is-sp-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ctl-btn-sp .sp-glyph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */
 .ctl-btn.is-pressed {
   background: var(--sp-btn-active);

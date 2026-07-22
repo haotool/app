@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// controls 匯入 audio/mute（SP 浮現觸覺尊重靜音偏好）；node 環境無 AudioContext，mock 隔離。
+vi.mock('../audio/mute', () => ({ isMuted: () => false }));
+
 import { DOWN_BUFFER_MS, JOY_DOWN_THRESHOLD, advanceDownBuffer, isJoyDown } from './controls';
 
 describe('isJoyDown（§85 真實拇指下滑判定：扇區＋幅度）', () => {

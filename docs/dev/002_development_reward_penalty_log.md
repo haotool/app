@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 6、penalty 2、neutral 3）｜累計總分：+166
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+167
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-input-ssot-core
+- 原因：B 鍵五語意超載（#815 P0-3）與星暴長按誤放卡關（#812）——輸入層需 SSOT 重寫
+- 解法：彈匣 5 槽滿匣自動結晶＋SP 情境鍵（引爆/變身/解除天然互斥）＋B 收斂三語意，純邏輯入 logic/starburst.ts 全單測
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t2-final-nit-reach-test

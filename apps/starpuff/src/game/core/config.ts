@@ -43,8 +43,10 @@ export const INHALE = {
   rangePx: 140,
 } as const;
 
+// v19 星暴 2.0（§109）：彈匣擴為 5 槽——滿匣瞬間自動結晶為蓄能星（logic/starburst.ts），
+// 變身資格（同系 ≥3）在 3–4 發窗口以 SP 鍵觸發，滿匣即選擇星暴線。
 export const STAR = {
-  maxAmmo: 3,
+  maxAmmo: 5,
 } as const;
 
 // 吞噬賦星（§20/§40/§47/§53）：吞下的怪決定星彈屬性，最後吞下者覆蓋既有彈藥屬性。
@@ -388,10 +390,10 @@ export const CHARGED_STAR = {
   tint: 0xffc93c,
 } as const;
 
-// 星暴（§23/§64）：彈匣全滿長按 B 0.8s，清場全小怪 + 魔王 12 傷，清空彈匣；
-// 發動附 5s 無敵窗（與受擊 i-frame 取較大值生效，不疊加）。
+// 星暴（§109 取代 §23 長按觸發）：SP 點按引爆蓄能星——0.3s 蓄爆（不可取消）後
+// 清場全小怪 + 魔王 12 傷；發動附 5s 無敵窗（與受擊 i-frame 取較大值生效，不疊加）。
 export const STARSTORM = {
-  holdMs: 800,
+  chargeMs: 300,
   bossDamage: 12,
   invulnMs: 5000,
 } as const;
