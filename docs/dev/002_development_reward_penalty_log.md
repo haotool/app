@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+6（reward 6、penalty 0、neutral 1）｜累計總分：+172
+> 本次分數變化：+7（reward 7、penalty 0、neutral 1）｜累計總分：+173
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-review-e2e-deflake
+- 原因：t3 誤放案第二點按頂槽為殼盾星走 defer——慢幀下 press delay ≥150ms 使放開結算不發射（flake）
+- 解法：灌注序列改頂兩槽皆非殼盾星（s,j,s,z,j），兩次點按全走即按即射路徑，根因消除
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-review-desktop-tutorial

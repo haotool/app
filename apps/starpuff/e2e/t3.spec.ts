@@ -138,8 +138,10 @@ test.describe('行動觸控情境', () => {
     await page.evaluate(() => window.__sp.fillQuota());
     // 蓄能星＋滿匣（不疊加狀態）：長按 B 1.5s——不得引爆、彈匣不得清空
     //（舊 0.8s 星暴長按路徑已移除）。
+    // 灌注序列讓「頂兩槽皆非殼盾星」（j 頂、z 次頂）：兩次點按皆走即按即射路徑，
+    // 避開殼盾 defer 的放開 <150ms 競態（慢幀下 press delay 可超閾值致 flake）。
     await grantChargedStar(page);
-    for (const flavor of ['jelly', 'shelly', 'jelly', 'shelly', 'jelly']) {
+    for (const flavor of ['shelly', 'jelly', 'shelly', 'zappy', 'jelly']) {
       await page.evaluate((kind) => window.__sp.grantStar(kind), flavor);
     }
     // 不疊加：蓄能星存在時再滿匣不再結晶，彈匣維持 5。
