@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+171
+> 本次分數變化：+6（reward 5、penalty 0、neutral 1）｜累計總分：+171
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t3-probe-official-truth
+- 原因：並行雙 server 量測互擾使 pooled p95 失真（10.2s），不可作官方裁定值
+- 解法：序列化單跑全 15 關 90 樣本取官方真值 p95 8.85s ≤10s（基線 9.5s 無回退）、45s 未恢復 0，§109 驗收行更新為單跑口徑
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-docs-ssot
