@@ -4,6 +4,7 @@ import {
   AUDIT_THRESHOLDS,
   BOSS_AUDIT_FACTS,
   BOT_TIERS,
+  TRANSFORM_ADVANTAGE,
   calibrate,
   computeLevelAxes,
   firstSeenKinds,
@@ -16,7 +17,9 @@ import {
   sequenceEntropyBits,
   weightedTotal,
 } from './difficulty';
+import { inhaleFlavor } from './combat';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
+import { eligibleForm } from './transform';
 
 const levelOf = (id: number) => {
   const level = LEVELS.find((l) => l.id === id);
@@ -166,6 +169,38 @@ describe('魔王稽核事實表', () => {
   it('telegraph 最小窗 ≥ 驗收門檻 600ms 的可核對來源', () => {
     const prismix = BOSS_AUDIT_FACTS.find((f) => f.boss === 'prismix');
     expect(prismix?.minTelegraphMs).toBe(500);
+  });
+});
+
+describe('TRANSFORM_ADVANTAGE 變身優勢情境模板（#816 W2）', () => {
+  it('T4 先落 Jellord/Noctra 兩王；王/關對映與稽核事實表一致', () => {
+    expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual(['jellord', 'noctra']);
+    for (const spec of TRANSFORM_ADVANTAGE) {
+      const facts = BOSS_AUDIT_FACTS.find((f) => f.boss === spec.boss);
+      expect(facts?.levelId).toBe(spec.levelId);
+    }
+  });
+
+  it('supplyFlavor 映射 form 零漂移（eligibleForm ×3 守門）', () => {
+    for (const spec of TRANSFORM_ADVANTAGE) {
+      const slot = { flavor: spec.supplyFlavor, charged: false, gold: false } as const;
+      expect(eligibleForm([slot, slot, slot])).toBe(spec.form);
+    }
+  });
+
+  it('優勢非必需（anti-softlock）：供給味存在於該關補生、且該關驗收含 transform', () => {
+    for (const spec of TRANSFORM_ADVANTAGE) {
+      const level = levelOf(spec.levelId);
+      const supplied = level.enemyMix.some(
+        (entry) => inhaleFlavor(entry.kind) === spec.supplyFlavor,
+      );
+      expect(supplied, `L${spec.levelId} 補生缺 ${spec.supplyFlavor} 供給`).toBe(true);
+      expect(level.bossApplies).toContain('transform');
+    }
+  });
+
+  it('TTK 改善門檻引 SSOT（≥15%）', () => {
+    expect(AUDIT_THRESHOLDS.transformTtkGainMinPct).toBeCloseTo(0.15, 5);
   });
 });
 

@@ -4,6 +4,7 @@
 //
 // 用法：node scripts/level-audit.mjs <levelId> [--ex] [--bot low|mid|high] [--runs N]
 //       [--cap 秒] [--probe jump|telegraph|swallow|starburst] [--all] [--port P] [--label 名]
+//       [--transform]（#816：魔王關依 TRANSFORM_ADVANTAGE 集星變身，TTK 用/不用對照）
 // 前置：dev server（pnpm dev，埠 SP_DEV_PORT）；輸出至 .claude/product-intel/level-audits/。
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -47,6 +48,7 @@ const {
   BOSS_AUDIT_FACTS,
   BOT_TIERS,
   ENEMY_THREAT,
+  TRANSFORM_ADVANTAGE,
   computeLevelAxes,
   jumpFeasibilityMatrix,
   percentile,
@@ -80,7 +82,12 @@ const floodPlatformXs = (level) => level.platforms.map((p) => p.x);
 const fmtSec = (ms) => (ms >= 0 && ms !== null ? Math.round(ms / 100) / 10 : null);
 
 // ===== 標準量測（單關 × N 次）=====
-async function runStandardAudit(page, level, { tier, ex, capSec, runCount, errors }) {
+// transformSpec（#816 W2）：非 null 時 bot 依優勢情境集星變身，供 TTK 用/不用對照。
+async function runStandardAudit(
+  page,
+  level,
+  { tier, ex, capSec, runCount, errors, transformSpec = null },
+) {
   const isBoss = level.boss !== null;
   const tierSpec = BOT_TIERS[tier];
   const runsOut = [];
@@ -101,6 +108,7 @@ async function runStandardAudit(page, level, { tier, ex, capSec, runCount, error
       inhalableKinds: INHALABLE_KINDS,
       contactKinds: CONTACT_KINDS,
       grantSupply: isBoss,
+      transformFlavor: transformSpec?.supplyFlavor ?? null,
     });
     const startedAt = Date.now();
     let result = 'timeout';
@@ -153,6 +161,7 @@ async function runStandardAudit(page, level, { tier, ex, capSec, runCount, error
       fullRetries: isBoss ? fullRetries : null,
       moveEntropyBits: isBoss ? sequenceEntropyBits(stateSeq) : null,
       shots: m.shots ?? 0,
+      transforms: m.transforms ?? 0,
       samples: m.samples ?? [],
     });
   }
@@ -184,6 +193,22 @@ async function runStandardAudit(page, level, { tier, ex, capSec, runCount, error
     reactionMs: tierSpec.reactionMs,
     runs: runCount,
     capSec,
+    // 變身優勢對照（#816 W2）：門檻 TTK 改善 ≥ transformTtkGainMinPct 由 PM 以
+    // 兩份報告（有/無 --transform）對照裁定；此處輸出情境與實際變身次數。
+    transform: transformSpec
+      ? {
+          form: transformSpec.form,
+          supplyFlavor: transformSpec.supplyFlavor,
+          scenarioZh: transformSpec.scenarioZh,
+          ttkGainMinPct: AUDIT_THRESHOLDS.transformTtkGainMinPct,
+          transformsPerRun:
+            runCount > 0
+              ? Math.round(
+                  (runsOut.reduce((sum, r) => sum + (r.transforms ?? 0), 0) / runCount) * 100,
+                ) / 100
+              : null,
+        }
+      : null,
     clearRate: runCount > 0 ? Math.round((cleared.length / runCount) * 100) / 100 : null,
     ttkSecAvg:
       ttks.length > 0
@@ -228,6 +253,11 @@ function standardMd(r) {
     `- 死亡率：${r.deathsPerRun ?? '—'} 死/次｜死亡熱點：${hotspots}`,
     `- 卡關風險：${r.stallRisk}`,
     `- 三軸分：${axisLine}`,
+    ...(r.transform
+      ? [
+          `- 變身優勢：${r.transform.form}（${r.transform.supplyFlavor}）｜每次變身 ${r.transform.transformsPerRun ?? '—'} 回｜${r.transform.scenarioZh}｜門檻 TTK 改善 ≥${Math.round(r.transform.ttkGainMinPct * 100)}%（與無 --transform 報告對照）`,
+        ]
+      : []),
     '',
     '## 每次執行',
     '',
@@ -505,6 +535,13 @@ async function main() {
     }
     const isBoss = level.boss !== null;
     if (exMode && !isBoss) throw new Error(`L${level.id} 非魔王關，無 EX 變體`);
+    // 變身優勢對照（#816 W2）：--transform 依 TRANSFORM_ADVANTAGE 查該王情境。
+    let transformSpec = null;
+    if (flag('transform')) {
+      if (!isBoss) throw new Error(`L${level.id} 非魔王關，無變身優勢情境`);
+      transformSpec = TRANSFORM_ADVANTAGE.find((s) => s.levelId === level.id) ?? null;
+      if (!transformSpec) throw new Error(`L${level.id} 尚未定義 TRANSFORM_ADVANTAGE（T5 補齊）`);
+    }
     const tier = opt('bot', isBoss ? 'high' : 'mid');
     const capSec = Number(opt('cap', exMode ? '900' : isBoss ? '600' : '300'));
     const report = await runStandardAudit(page, level, {
@@ -513,10 +550,11 @@ async function main() {
       capSec,
       runCount: runs,
       errors,
+      transformSpec,
     });
     const label = opt(
       'label',
-      `l${String(level.id).padStart(2, '0')}${exMode ? '-ex' : ''}-${tier}`,
+      `l${String(level.id).padStart(2, '0')}${exMode ? '-ex' : ''}${transformSpec ? '-tf' : ''}-${tier}`,
     );
     writeReport(label, { baseSha, ...report }, standardMd(report));
     const { runsDetail, ...summary } = report;

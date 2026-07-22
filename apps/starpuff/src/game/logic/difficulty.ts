@@ -27,6 +27,8 @@ export const AUDIT_THRESHOLDS = {
   // #814 EX 分級 bot：低階通過率 <20%、高階 ≥60%。
   exLowPassMaxRate: 0.2,
   exHighPassMinRate: 0.6,
+  // #816 變身優勢：用/不用變身 TTK 改善 ≥15% 且非必需（§57 anti-softlock 不變式）。
+  transformTtkGainMinPct: 0.15,
 } as const;
 
 // ===== 分級 bot（機制 brief §10：低階反應 500ms＋基礎策略、高階 250ms＋完整策略）=====
@@ -170,6 +172,36 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     multiBody: false,
     // 低重力＋P2 生存段。
     arenaMechanics: 2,
+  },
+] as const;
+
+// ===== 變身優勢情境模板（#816 W2，機制 brief §4/§10）=====
+// 每王一個「優勢解但永不必需」情境；bot hook（level-audit --transform）據此以正式
+// swallow 管線集齊同系星並按 SP 變身，量測用/不用變身 TTK 差（門檻引 AUDIT_THRESHOLDS）。
+// T4 先落 Jellord/Noctra 兩王（§58 既有攻略線資料化）；其餘三王隨 T5 魔王主題化補齊。
+export interface TransformAdvantageSpec {
+  boss: BossId;
+  levelId: number;
+  form: 'volt' | 'gale' | 'shell';
+  // bot 供給味（必須映射到 form，difficulty.test 以 eligibleForm 守門零漂移）。
+  supplyFlavor: 'zappy' | 'floaty' | 'shelly';
+  scenarioZh: string;
+}
+
+export const TRANSFORM_ADVANTAGE: readonly TransformAdvantageSpec[] = [
+  {
+    boss: 'jellord',
+    levelId: 4,
+    form: 'shell',
+    supplyFlavor: 'shelly',
+    scenarioZh: '殼化反彈線：站定反彈果凍雨回傷（§58 reflect 3 傷/顆）＋受身入殼硬接踩踏',
+  },
+  {
+    boss: 'noctra',
+    levelId: 7,
+    form: 'volt',
+    supplyFlavor: 'zappy',
+    scenarioZh: '雷化斷召線：鏈電命中蓄勢中的 Noctra 立即中斷召喚（§58 interruptSummon）',
   },
 ] as const;
 
