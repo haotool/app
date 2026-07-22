@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+166
+> 本次分數變化：+4（reward 6、penalty 2、neutral 3）｜累計總分：+166
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-final-nit-reach-test
+- 原因：複審 nit——enemies.ts RESCUE_REACH_Y_TOP 頂線分支無直接單元測試，回歸僅靠探針長跑
+- 解法：新增 enemies.test.ts 以 phaser mock＋fake group 直測 aliveInhalableCount 近域口徑（頂線/邊界/ranged/半徑外/全域五斷言），突變自檢確認測試可抓分支破壞
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t2-final-nit-comments
