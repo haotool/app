@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 1）｜累計總分：+175
+> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+175
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：neutral-starpuff-t3-detonating-clear-note
+- 原因：Sonnet 席殘留 nit——蓄爆中過關（0.3s 窄窗）靜默丟棄引爆效果屬設計取捨但無記載
+- 解法：starburstDirector.noteClear 註解＋GAME_DESIGN §109 補一句已知行為記載（窄窗＋與 charged 持有語意天然互斥，不改行為）
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t3-l6-ab-adjudication

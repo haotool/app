@@ -46,6 +46,8 @@ export function createStarburstDirector(
   const onBossDown = (): void => noteClear();
 
   function noteClear(): void {
+    // 已知行為（設計取捨）：detonating 相位過關（0.3s 蓄爆窄窗撞入門）不持有也不結算
+    // ——引爆承諾隨場景凍結靜默丟棄；窄窗機率極低且與 charged 持有語意天然互斥。
     carryCharged = hooks.player().getStarburst().phase === 'charged';
     if (!carryCharged || taughtCarry) return;
     taughtCarry = true;
