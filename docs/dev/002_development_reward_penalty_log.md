@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+8（reward 8、penalty 0、neutral 1）｜累計總分：+174
+> 本次分數變化：+9（reward 9、penalty 0、neutral 1）｜累計總分：+175
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t3-l6-ab-adjudication
+- 原因：Grok 席短 cap（120-300s）×runs2 量測 L6 clearRate=0，懷疑 5 槽彈匣使走動關火力節奏回歸
+- 解法：main vs HEAD 序列化 A/B（L2/L6/L12×mid/high、cap 420s、L6 mid 各 6 樣本）裁定口徑假陽性——L6 mid 雙 67%、ammoZero 峰持平、L6 high 基線 0% HEAD 33%，僅通關均時偏移列 T4 觀察項不調參
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-review-nits
