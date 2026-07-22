@@ -71,8 +71,9 @@ const RESCUE_HOVER_Y = 300;
 const RESCUE_HOVER_KINDS: readonly EnemyKind[] = ['floaty', 'zappy', 'glowy', 'twinkla', 'gusty'];
 
 const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
-// 桌機教學浮字（#817）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致）。
-const TUTORIAL_TEXT_DESKTOP = '← → 移動　Z 跳躍\nX 點按發射・長按吸入';
+// 桌機教學浮字（#817/§109）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致，
+// 含 C 特殊技——觸控版由 SP 鍵浮現視覺承擔同一教學）。
+const TUTORIAL_TEXT_DESKTOP = '← → 移動　Z 跳躍\nX 點按發射・長按吸入　C 特殊技';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
 const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;

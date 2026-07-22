@@ -84,6 +84,8 @@ describe('#817 教學浮字依環境切換鍵位字樣', () => {
     desktop.runner.start();
     expect(desktop.texts[0]).toContain('← → 移動');
     expect(desktop.texts[0]).toContain('Z 跳躍');
+    // §109：桌機浮字與 Title 鍵位卡同步標示 C 特殊技。
+    expect(desktop.texts[0]).toContain('C 特殊技');
     desktop.runner.destroy();
     vi.unstubAllGlobals();
   });
