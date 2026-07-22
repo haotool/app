@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+166
+> 本次分數變化：+4（reward 6、penalty 2、neutral 1）｜累計總分：+166
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-review-nits
+- 原因：審查兩處 nit——waves.ts 近域註解殘留舊值 600px、桌機模式 L1 教學浮字仍示觸控鍵（虛擬鍵已隱藏）
+- 解法：註解改引 RESCUE_REACH_PX 常數名（隨機制 commit）；教學浮字依 isDesktopMode 切鍵盤字樣與 Title 鍵位卡一致，isDesktopMode 補無 DOM 容錯供 node 單測
 
 - 日期：2026-07-22
 - ID：penalty-starpuff-812-narrative-drift

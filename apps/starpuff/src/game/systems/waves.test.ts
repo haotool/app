@@ -46,6 +46,49 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('#817 教學浮字依環境切換鍵位字樣', () => {
+  function tutorialHarness(): { runner: ReturnType<typeof createWaveRunner>; texts: string[] } {
+    const texts: string[] = [];
+    const scene = {
+      events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+      cameras: { main: { scrollX: 0 } },
+      scale: { width: 854, height: 480 },
+      add: {
+        text: (_x: number, _y: number, content: string) => {
+          texts.push(content);
+          return chainable();
+        },
+      },
+      tweens: { add: vi.fn(), killTweensOf: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const enemies = {
+      spawn: () => null,
+      aliveCount: () => 0,
+      aliveInhalableCount: () => 1,
+      targetX: () => null,
+    } as unknown as EnemySystem;
+    // L1 教學關：start 即顯示教學浮字。
+    return { runner: createWaveRunner(scene, enemies, 1), texts };
+  }
+
+  it('node（無 DOM）環境回退觸控字樣；sp-desktop 掛載時改鍵盤字樣', () => {
+    const touch = tutorialHarness();
+    touch.runner.start();
+    expect(touch.texts[0]).toContain('左搖桿');
+    touch.runner.destroy();
+
+    vi.stubGlobal('document', {
+      documentElement: { classList: { contains: (name: string) => name === 'sp-desktop' } },
+    });
+    const desktop = tutorialHarness();
+    desktop.runner.start();
+    expect(desktop.texts[0]).toContain('← → 移動');
+    expect(desktop.texts[0]).toContain('Z 跳躍');
+    desktop.runner.destroy();
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('#812 救援個體近域豁免（審查收斂）', () => {
   // 無 safe 候選關（L14 全 ranged mix）：救援怪被近域飢荒口徑的 ranged 排除，
   // 生成後不解除飢荒 → 4s 再觸發單席重定位循環。豁免律：救援個體存活且近域

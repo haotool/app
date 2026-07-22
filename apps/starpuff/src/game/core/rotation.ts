@@ -88,8 +88,14 @@ export function applyDesktopModeClass(): boolean {
   return on;
 }
 
+// 無 DOM 環境（vitest node）容錯回 false：桌機模式判定＝class 存在（沿本模組
+// localStorage 容錯慣例）。
 export function isDesktopMode(): boolean {
-  return document.documentElement.classList.contains(DESKTOP_CLASS);
+  try {
+    return document.documentElement.classList.contains(DESKTOP_CLASS);
+  } catch {
+    return false;
+  }
 }
 
 // 當前殼旋轉態：桌機恆正（旋轉殼旁路）；橫持恆 none；直持依使用者偏好取向。

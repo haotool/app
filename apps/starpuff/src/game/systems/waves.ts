@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { ENEMY_SIZE, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
+import { isDesktopMode } from '../core/rotation';
 import type { EnemyKind, LevelId } from '../core/types';
 import {
   RESCUE_REACH_PX,
@@ -69,7 +70,9 @@ const SPAWN_Y: Record<EnemyKind, number> = {
 const RESCUE_HOVER_Y = 300;
 const RESCUE_HOVER_KINDS: readonly EnemyKind[] = ['floaty', 'zappy', 'glowy', 'twinkla', 'gusty'];
 
-const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
+const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
+// 桌機教學浮字（#817）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致）。
+const TUTORIAL_TEXT_DESKTOP = '← → 移動　Z 跳躍\nX 點按發射・長按吸入';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
 const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;
@@ -243,7 +246,9 @@ export function createWaveRunner(
           killQuota: level.killQuota,
         });
       }
-      if (level.tutorial) showTutorial(TUTORIAL_TEXT);
+      if (level.tutorial) {
+        showTutorial(isDesktopMode() ? TUTORIAL_TEXT_DESKTOP : TUTORIAL_TEXT_TOUCH);
+      }
       // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
       else if (level.hint) showTutorial(level.hint, '20px');
     },
