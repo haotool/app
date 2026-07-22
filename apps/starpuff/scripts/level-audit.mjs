@@ -276,6 +276,9 @@ async function runProbe(page, name, level, overrides = {}) {
       levelId: level?.id ?? 12,
       cyclesPerTier: Number(opt('cycles', '8')),
     });
+    // #810 分級迴避率裁定（門檻引 difficulty.ts SSOT）：500ms ≥80%、350ms ≥85%。
+    const dodgeOf = (ms) => (result.byTier ?? []).find((b) => b.reactionMs === ms)?.dodgeRate;
+    const meetsDodge = (rate, min) => (typeof rate === 'number' ? rate >= min : null);
     return {
       probe: 'telegraph',
       ...result,
@@ -285,6 +288,13 @@ async function runProbe(page, name, level, overrides = {}) {
         result.telegraphMsAvg !== null
           ? result.telegraphMsAvg >= AUDIT_THRESHOLDS.telegraphMinMs
           : null,
+      spikeThresholdMs: AUDIT_THRESHOLDS.spikeTelegraphMinMs,
+      meetsSpikeTelegraph:
+        result.telegraphMsAvg !== null
+          ? result.telegraphMsAvg >= AUDIT_THRESHOLDS.spikeTelegraphMinMs
+          : null,
+      dodge500Meets: meetsDodge(dodgeOf(500), AUDIT_THRESHOLDS.spikeDodgeMinRate500),
+      dodge350Meets: meetsDodge(dodgeOf(350), AUDIT_THRESHOLDS.spikeDodgeMinRate350),
     };
   }
   if (name === 'swallow') {

@@ -211,7 +211,26 @@ export function createPrismix(
       const offset = (i - (count - 1) / 2) * PILLAR_GAP_PX;
       const x = clampArenaX(centerX + offset, 40);
       spawnTelegraph(scene, x, GROUND_TOP - 6, PRISMIX.pillarTelegraphMs);
+      // #810 視覺強化：尖刺實際隆起範圍以白框＋裂紋豎線閃爍預示，
+      // 以形狀與明滅傳達（色弱不依賴 tint）。
+      const outline = scene.add
+        .rectangle(x, GROUND_TOP - PILLAR_H / 2, PILLAR_W, PILLAR_H, 0xffffff, 0.1)
+        .setStrokeStyle(2, 0xffffff, 0.95)
+        .setDepth(58);
+      const crack = scene.add
+        .rectangle(x, GROUND_TOP - PILLAR_H / 2, 3, PILLAR_H, 0xffffff, 0.9)
+        .setDepth(58);
+      scene.tweens.add({
+        targets: [outline, crack],
+        alpha: { from: 1, to: 0.25 },
+        duration: 150,
+        yoyo: true,
+        repeat: -1,
+      });
       delay(PRISMIX.pillarTelegraphMs, () => {
+        scene.tweens.killTweensOf([outline, crack]);
+        outline.destroy();
+        crack.destroy();
         if (dying) return;
         const spike = shockwaves.get(
           x,

@@ -28,6 +28,10 @@ describe('驗收門檻 SSOT（機制 brief §10）', () => {
   it('門檻值與 PM 親撰總表一致', () => {
     expect(AUDIT_THRESHOLDS.starburstRecoveryP95Ms).toBe(10_000);
     expect(AUDIT_THRESHOLDS.telegraphMinMs).toBe(600);
+    // #810：地面尖刺前搖下限與分級迴避率門檻。
+    expect(AUDIT_THRESHOLDS.spikeTelegraphMinMs).toBe(900);
+    expect(AUDIT_THRESHOLDS.spikeDodgeMinRate500).toBe(0.8);
+    expect(AUDIT_THRESHOLDS.spikeDodgeMinRate350).toBe(0.85);
     expect(AUDIT_THRESHOLDS.swallowStunMinRate).toBe(0.6);
     expect(AUDIT_THRESHOLDS.swallowSpinMaxRate).toBe(0);
     expect(AUDIT_THRESHOLDS.exLowPassMaxRate).toBe(0.2);

@@ -34,7 +34,9 @@ export const PRISMIX = {
   barrageDurationMs: 1500,
   rainDurationMs: 1500,
   // telegraph 時長（呈現層讀取；不隨速率縮放，沿 Noctra 慣例）。
-  pillarTelegraphMs: 600,
+  // #810：地面尖刺前搖 600→950ms——500ms 反應玩家迴避率 0%→達標（掃參定值，
+  // 下限 SSOT＝difficulty.AUDIT_THRESHOLDS.spikeTelegraphMinMs）。
+  pillarTelegraphMs: 950,
   beamTelegraphMs: 500,
   pincerTelegraphMs: 550,
   rainTelegraphMs: 600,

@@ -955,8 +955,11 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 每損 10 HP 掉補給（§26）。
 
 - 三階段（phase truth 全收斂 FSM；呈現層 systems/prismix.ts 接 BossHandle）：
-  - P1 單體（總血 >66%）：`idle(1.5s) → 晶柱衝擊（地面尖晶 ×3，落點預警 0.6s）→ idle →
+  - P1 單體（總血 >66%）：`idle(1.5s) → 晶柱衝擊（地面尖晶 ×3，落點預警 0.95s）→ idle →
 折射光束（橫掃一次，預示線 0.5s）→ …`
+  - 晶柱預警（#810 修復）：0.6s→0.95s——500ms 反應玩家迴避率 0%→88%（工具實測）；
+    預警視覺為落點橢圓＋尖刺實際範圍白框＋裂紋豎線閃爍（形狀與明滅雙訊號，色弱不依賴
+    tint）；下限 SSOT＝`difficulty.AUDIT_THRESHOLDS.spikeTelegraphMinMs`（900ms）。
   - P2 分裂（≤66%）：剩餘 HP 均分為**雙獨立血條**（HUD 魔王條雙節顯示，BOSS_TWIN_HP
     事件）；鏡像雙子同一指令左右對稱執行——`雙生夾擊（同步閃爍 0.55s → 左右對衝互換位，
 跳越可躲）→ 交錯光束（一具地面帶、一具空中帶）→ 召喚 mirri（場上限 2，雷化鏈電可

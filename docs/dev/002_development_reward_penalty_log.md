@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+162
+> 本次分數變化：+0（reward 1、penalty 1、neutral 0）｜累計總分：+162
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-810-spike-telegraph
+- 原因：#810 L12 地面尖刺 telegraph 639ms 對 500ms 反應玩家迴避率 0%——前搖未含反應＋位移裕度
+- 解法：pillarTelegraphMs 600→950＋尖刺範圍白框/裂紋閃爍視覺，difficulty.ts 增 spike 門檻 SSOT，工具實測 500ms bot 迴避 88%（≥80%）、350ms 88%（≥85%）
+
+- 日期：2026-07-22
+- ID：penalty-pm-829-squash-header-aggregation
+- 原因：PM 於 PR #829 尾 commit 002 檔頭寫 +0 neutral 與 squash 聚合口徑 +5 不一致（Codex P2 抓到）
+- 解法：squash PR 的 head commit 檔頭一律用 PR 聚合口徑
 
 - 日期：2026-07-22
 - ID：reward-starpuff-835-audit-hotfix-review-blocking
