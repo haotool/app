@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+162
+> 本次分數變化：+4（reward 6、penalty 2、neutral 3）｜累計總分：+166
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,61 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-final-nit-reach-test
+- 原因：複審 nit——enemies.ts RESCUE_REACH_Y_TOP 頂線分支無直接單元測試，回歸僅靠探針長跑
+- 解法：新增 enemies.test.ts 以 phaser mock＋fake group 直測 aliveInhalableCount 近域口徑（頂線/邊界/ranged/半徑外/全域五斷言），突變自檢確認測試可抓分支破壞
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-final-nit-comments
+- 原因：複審 nit——waves.ts placeRescue 註解殘留舊值 160-240px/8s（常數已改 100-150/5s），levels.ts「站定面向即可吸」對懸浮帶尾（即吸上限 ≈126.5px）過度宣稱
+- 解法：註解改引 RESCUE*AHEAD*\*/RESCUE_REPOSITION_MS 常數名防再漂移；生成帶註解改精確幾何表述（帶尾至多 ~0.1s 走位即入錐）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-review-nits
+- 原因：審查兩處 nit——waves.ts 近域註解殘留舊值 600px、桌機模式 L1 教學浮字仍示觸控鍵（虛擬鍵已隱藏）
+- 解法：註解改引 RESCUE_REACH_PX 常數名（隨機制 commit）；教學浮字依 isDesktopMode 切鍵盤字樣與 Title 鍵位卡一致，isDesktopMode 補無 DOM 容錯供 node 單測
+
+- 日期：2026-07-22
+- ID：penalty-starpuff-812-narrative-drift
+- 原因：§107.1.1 與 002 曾記「p95 殘差為每關 ≤1 樣本離群」，與留檔 JSON 不符（L11/L14 各 3/6 樣本 >10s）——以偏概全的敘事失準，Codex/Sonnet 雙席抓到
+- 解法：機制收斂後以最終實測重寫 §107.1.1（殘餘 >10s 4/90 逐關列值）、812 舊條目補正為過渡態註記；規訓——分佈敘述必須逐關對 JSON 核值，不得以聚合印象概括
+
+- 日期：2026-07-22
+- ID：reward-starpuff-812-review-rescue-exemption
+- 原因：審查定位真缺口——無 safe 候選關（L14 全 ranged mix）救援怪被近域飢荒口徑的 ranged 過濾排除，生成後不解除飢荒 → 4s 重觸發單席重定位循環；另高空定飄（floaty y=240 錐外）阻斷救援計時為 L11 尾部主因
+- 解法：救援個體近域豁免律（存活且近域即解除飢荒）＋可及頂線 y<280 過濾＋重定位窗 8s→5s＋生成帶收斂吸入錐內 100–150px；全 15 走動關 90 樣本 p95 19.9→9.5s 達門檻、45s 未恢復 0 維持
+
+- 日期：2026-07-22
+- ID：reward-starpuff-817-orientation-desktop
+- 原因：#817 直持方向鎖定用戶無引導、桌機直窗誤套旋轉殼語意（畫面轉 90°）且無鍵盤操作提示
+- 解法：桌機判定（fine+零觸點+視口 ≥1024）掛 sp-desktop 旋轉殼旁路＋虛擬鍵隱藏＋一次性鍵位卡＋Title 操作說明常駐；直持一次性方向解鎖 shellCard；e2e 桌機/直持/橫持三情境互不誤觸全綠
+
+- 日期：2026-07-22
+- ID：reward-starpuff-809-boss-jump-feel
+- 原因：#809 T1 證明五王皆運動學可越（拍翅 211px、機械逃脫 100%）且 low bot（500ms 注入）逃脫率亦 100%——「必中」體感為知識缺口（不知拍翅可越王）＋衝撞前搖 300/550ms 低於 600ms 反應紅線
+- 解法：前室一次性反制提示浮字（入 arena 記憶不重複）＋jellord dash 前搖 300→600ms（白閃三拍）＋prismix pincer 550→600ms；提示卡 e2e 綠、L12 貼身壓迫 ticks 2.8→3.4 持平、逃脫率 100% 維持；禁改體型/場地紅線遵守
+
+- 日期：2026-07-22
+- ID：reward-starpuff-812-starburst-rescue-reach
+- 原因：#812 §107.1 救援只保證生成不保證可及——視野外入場＋名義可吸不可及個體阻斷飢荒計時，星暴誤放 45s 未恢復 16 次、p95 19.9s
+- 解法：救援改玩家前方近距低威脅品種＋單席逾時重定位＋懸浮品種降可及帶＋飢荒判定改近域非威脅型口徑；45s 未恢復 16→0、p95 19.9→13.4s（過渡態：殘差含 L11/L14 各 3/6 樣本 >10s 的機制缺口，經審查後由 812-review-rescue-exemption 收斂至 9.5s 達標）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-811-shelly-swallow
+- 原因：#811 殼殼正確時機吞食 37%（校正儀器口徑）遠低於門檻 60%——暈眩窗 1.0s 追不到衝刺遠停位、貼腳停位落在 45° 錐形死角、原探針固定向右吸系統性低估
+- 解法：暈眩窗 1.6s＋暈眩引力 ×1.5＋判定半徑 +20%＋貼身 60px 錐形豁免＋眩星/閃白視覺與 L2 教學；探針三修（向殼殼方位追擊、鎖最近隻、衝刺跟隨）後 37%→73% 達標、衝刺期 0% 不變
+
+- 日期：2026-07-22
+- ID：reward-starpuff-810-spike-telegraph
+- 原因：#810 L12 地面尖刺 telegraph 639ms 對 500ms 反應玩家迴避率 0%——前搖未含反應＋位移裕度
+- 解法：pillarTelegraphMs 600→950＋尖刺範圍白框/裂紋閃爍視覺，difficulty.ts 增 spike 門檻 SSOT，工具實測 500ms bot 迴避 88%（≥80%）、350ms 88%（≥85%）
+
+- 日期：2026-07-22
+- ID：penalty-pm-829-squash-header-aggregation
+- 原因：PM 於 PR #829 尾 commit 002 檔頭寫 +0 neutral 與 squash 聚合口徑 +5 不一致（Codex P2 抓到）
+- 解法：squash PR 的 head commit 檔頭一律用 PR 聚合口徑
 
 - 日期：2026-07-22
 - ID：reward-starpuff-835-audit-hotfix-review-blocking

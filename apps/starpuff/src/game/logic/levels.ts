@@ -2,6 +2,8 @@ import type { SaveData } from '../core/save';
 import type { BossKind, EnemyKind, LevelId } from '../core/types';
 import type { BuffId } from './buffs';
 import { canInhale } from './combat';
+// 威脅分類 SSOT（#812 救援低威脅偏好）；difficulty→levels 僅 type import，無執行期環。
+import { ENEMY_THREAT } from './difficulty';
 import type { EasterEggSpec } from './eggs';
 import type { MeteorSpec } from './meteor';
 import type { TideSpec } from './tide';
@@ -208,6 +210,8 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    // #811 殼殼首遇教學（機制 brief §6.1：L2 首教殼盾＋暈窗吞）。
+    hint: '殼殼衝刺後會暈眩——趁暈眩吸入！',
   },
   {
     id: 3,
@@ -1417,6 +1421,8 @@ export interface LevelSpawnTick {
 export interface LevelSpawnResult {
   state: LevelRunState;
   spawn: boolean;
+  // #812：本次 spawn 是否為走動關飢荒救援（呼叫端據此走可及性保證生成路徑）。
+  rescue?: boolean;
 }
 
 // 走動關飢荒救援閾值（§107，issue #804）：零彈且同屏無可吸怪持續達此值 → 強制補生
@@ -1435,7 +1441,7 @@ export function advanceLevelSpawn(state: LevelRunState, tick: LevelSpawnTick): L
   }
   const starvingMs = tick.starving && !state.gateOpen ? state.starvingMs + tick.deltaMs : 0;
   if (!level.boss && !state.gateOpen && starvingMs >= STARVATION_RESCUE_MS) {
-    return { state: { ...state, spawnTimerMs: 0, starvingMs: 0 }, spawn: true };
+    return { state: { ...state, spawnTimerMs: 0, starvingMs: 0 }, spawn: true, rescue: true };
   }
   const spawnTimerMs = Math.min(state.spawnTimerMs + tick.deltaMs, level.spawnIntervalMs);
   if (state.gateOpen || spawnTimerMs < level.spawnIntervalMs) {
@@ -1465,6 +1471,50 @@ export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolea
   if (inhalable.length === 0) return 'jelly';
   const forced: LevelSpec = { ...level, enemyMix: inhalable };
   return pickEnemyKind(forced, rand01);
+}
+
+// ===== #812 救援可及性保證（擴充 §107.1）=====
+// 救援不只保證「生成」還保證「可及」：玩家前方近距、低威脅品種優先、單席、逾時重定位。
+// 生成帶 100–150px（審查收斂）：吸入錐 140px——原 160–240 帶全在錐外需位移追擊，
+// 漂移型品種（floaty）逃錐比走近快。生成帶貼近吸入錐：地面品種帶內即可吸；懸浮救援
+//（y=300、dy≈60）即吸水平上限 ≈126.5px，帶尾至多 ~0.1s 走位即入錐；100 下限留接觸緩衝。
+export const RESCUE_AHEAD_MIN_PX = 100;
+export const RESCUE_AHEAD_MAX_PX = 150;
+// 重定位窗 8s→5s（審查收斂）：恢復機構上限＝觸發 4s＋重定位窗＋取得 ~1s——8s 窗
+// 上限 13s 超 p95 門檻；5s 窗約 10s 對齊，且封殺漂移型救援（floaty）飄離窗。
+export const RESCUE_REPOSITION_MS = 5000;
+// 飢荒判定的可及半徑（#812）：名義可吸但距玩家超此值的個體不阻斷救援計時
+//（可吸≠可及；400px≈1.8s 步行——移動型可吸個體在此圈內的追擊可於 2s 級完成，
+// 600px 實測會讓玩家追移動目標 5s+ 而救援不觸發，尾部延遲主因）。
+export const RESCUE_REACH_PX = 400;
+// 近域供給的可及頂線（#812 審查收斂）：高空定飄個體（floaty/zappy/glowy 生成帶
+// y=240）在站立吸入錐外、需跳拍追擊——y 高於此線不得阻斷救援計時；救援懸浮品種
+// 定高 300 恆在帶內（驗屍：L11 自然 floaty@240 擋救援 26s 為 >10s 尾部主因）。
+export const RESCUE_REACH_Y_TOP = 280;
+
+// 滿潮救援排除位移壓迫型個體（#812/§107.3）：gusty 側風推移會把避難玩家推落水。
+const FLOOD_RESCUE_EXCLUDED: readonly EnemyKind[] = ['gusty'];
+
+// 救援品種抽選：恆可吸 ∩ 低威脅（ENEMY_THREAT safe——無放電/俯衝/拋射側傷）優先；
+// 無 safe 候選時回落恆可吸全集（anti-softlock 優先於威脅偏好）。
+export function pickRescueKind(level: LevelSpec, rand01: number, floodHold: boolean): EnemyKind {
+  const inhalable = level.enemyMix.filter((entry) => canInhale(entry.kind));
+  const pool = floodHold
+    ? inhalable.filter((entry) => !FLOOD_RESCUE_EXCLUDED.includes(entry.kind))
+    : inhalable;
+  if (pool.length === 0) return 'jelly';
+  const safe = pool.filter((entry) => ENEMY_THREAT[entry.kind] === 'safe');
+  const picked = safe.length > 0 ? safe : pool;
+  return pickEnemyKind({ ...level, enemyMix: picked }, rand01);
+}
+
+// 救援生成位：玩家前方（推進向）160–240px；越界或落尾端安全區改由後方等距補位。
+export function rescueSpawnX(playerX: number, rand01: number, level: LevelSpec): number {
+  const offset = RESCUE_AHEAD_MIN_PX + rand01 * (RESCUE_AHEAD_MAX_PX - RESCUE_AHEAD_MIN_PX);
+  const margin = 60;
+  const ahead = playerX + offset;
+  if (ahead <= level.worldWidth - margin && !isInSafeTail(level, ahead)) return ahead;
+  return Math.max(margin, playerX - offset);
 }
 
 // 尾端安全區：星星門前禁 spawn 的喘息帶。

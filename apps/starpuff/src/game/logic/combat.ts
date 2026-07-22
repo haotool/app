@@ -99,6 +99,50 @@ export function pickInRadius<T extends RadiusCandidate>(
   );
 }
 
+// 殼殼暈眩吞食強化（#811）：暈眩窗判定半徑 +20%、吸入引力 ×1.5——下修正確時機的
+// 執行門檻；「找時機」技巧性由 canInhale 的暴露窗把關（衝刺期恆不可吸）。
+const SHELLY_INHALE_RANGE_MUL = 1.2;
+const SHELLY_INHALE_PULL_MUL = 1.5;
+
+export function inhaleRangePx(kind: EnemyKind, basePx: number): number {
+  return kind === 'shelly' ? basePx * SHELLY_INHALE_RANGE_MUL : basePx;
+}
+
+// 拉力漸增公式（自 GameScene 收斂單點）：越接近嘴邊吸力越強；殼殼疊引力係數。
+export function inhalePullSpeed(
+  kind: EnemyKind,
+  basePx: number,
+  dist: number,
+  baseSpeed: number,
+  gain: number,
+): number {
+  const pullMul = kind === 'shelly' ? SHELLY_INHALE_PULL_MUL : 1;
+  return (baseSpeed + (inhaleRangePx(kind, basePx) - dist) * gain) * pullMul;
+}
+
+// 吸入廣域候選區邊長（#811）：取最大判定半徑；精確錐形仍由 isInInhaleRange 逐幀收斂。
+export function inhaleZoneSpanPx(basePx: number): number {
+  return basePx * SHELLY_INHALE_RANGE_MUL;
+}
+
+// 殼殼暈眩近身豁免（#811）：暈眩殼殼常停在玩家腳邊（衝刺穿身後停位），45° 錐形
+// |dy|≤|dx| 於貼身時幾乎必不成立——貼身 ≤60px 放寬錐形與面向限制，消除吸不到死角。
+export const SHELLY_NEAR_PX = 60;
+
+export function isInInhalePullRange(
+  kind: EnemyKind,
+  playerX: number,
+  playerY: number,
+  facingX: 1 | -1,
+  targetX: number,
+  targetY: number,
+  rangePx: number,
+): boolean {
+  if (isInInhaleRange(playerX, playerY, facingX, targetX, targetY, rangePx)) return true;
+  if (kind !== 'shelly') return false;
+  return (targetX - playerX) ** 2 + (targetY - playerY) ** 2 <= SHELLY_NEAR_PX * SHELLY_NEAR_PX;
+}
+
 // 吸入接觸豁免（§77）：被吸入中的怪對玩家無接觸傷害——拉力逐幀刷新豁免窗，
 // 吸入中斷（鬆開/轉向/離錐）後窗過期即恢復傷害性；未被吸的其他怪不受影響，
 // 風險回報保留（非吸入全程無敵）。窗長 250ms：涵蓋拉力幀間隔與貼身吞下前緣。

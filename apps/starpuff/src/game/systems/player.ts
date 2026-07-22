@@ -16,7 +16,13 @@ import {
 } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
-import { inhaleFlavor, knockbackVelocity, resolveHit, tickTimer } from '../logic/combat';
+import {
+  inhaleFlavor,
+  inhaleZoneSpanPx,
+  knockbackVelocity,
+  resolveHit,
+  tickTimer,
+} from '../logic/combat';
 import { tickBoomerangBody } from '../logic/enemyFsm';
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
@@ -186,8 +192,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     body.setOffset((frameW - hurtW) / 2, frameH - hurtH);
   }
 
-  // 吸入判定區：面向錐形的廣域矩形，精確錐形由 combat.isInInhaleRange 收斂。
-  const zone = scene.add.zone(x, y, INHALE.rangePx, INHALE.rangePx);
+  // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊），精確錐形由
+  // combat.isInInhaleRange 逐幀收斂——非殼殼的有效半徑不因候選區放大而改變。
+  const zoneSpan = inhaleZoneSpanPx(INHALE.rangePx);
+  const zone = scene.add.zone(x, y, zoneSpan, zoneSpan);
   scene.physics.add.existing(zone);
   const zoneBody = zone.body as Phaser.Physics.Arcade.Body;
   zoneBody.setAllowGravity(false);
@@ -828,7 +836,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const holdCharging =
         controls.actionHeld && !transformHoldDone && (transformCharging || transform.form !== null);
       drawTransformRing(holdCharging ? actionHoldMs / TRANSFORM.holdMs : 0);
-      zone.setPosition(sprite.x + facing * (INHALE.rangePx / 2), sprite.y);
+      zone.setPosition(sprite.x + facing * (zoneSpan / 2), sprite.y);
 
       sprite.setFlipX(facing === -1);
       // 無敵閃爍沿用受擊回饋（§64）：受擊 i-frame 與星暴無敵窗共用同一節流視覺。

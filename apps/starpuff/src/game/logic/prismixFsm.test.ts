@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AUDIT_THRESHOLDS } from './difficulty';
 import {
   EX_PRISMIX,
   PRISMIX,
@@ -33,7 +34,8 @@ function splitFsm(): ReturnType<typeof createPrismixFsm> {
 describe('PRISMIX 常數與循環表（§68）', () => {
   it('HP 階梯 80、telegraph 全數 ≥500ms、三階段循環表對表', () => {
     expect(PRISMIX.maxHp).toBe(80);
-    expect(PRISMIX.pillarTelegraphMs).toBeGreaterThanOrEqual(500);
+    // #810：地面尖刺前搖須容納 500ms 反應玩家（下限對齊 AUDIT_THRESHOLDS.spikeTelegraphMinMs）。
+    expect(PRISMIX.pillarTelegraphMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.spikeTelegraphMinMs);
     expect(PRISMIX.beamTelegraphMs).toBeGreaterThanOrEqual(500);
     expect(PRISMIX.pincerTelegraphMs).toBeGreaterThanOrEqual(500);
     expect(PRISMIX.rainTelegraphMs).toBeGreaterThanOrEqual(500);

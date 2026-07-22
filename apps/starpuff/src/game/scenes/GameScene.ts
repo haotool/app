@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GRAVITY_Y, INHALE, PLAYER, VIEW } from '../core/config';
+import { GRAVITY_Y, PLAYER, VIEW } from '../core/config';
 import {
   GameEvents,
   emitGameEvent,
@@ -19,7 +19,7 @@ import {
 import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
-import { inhaleFlavor, inhaleGraceUntil, isInInhaleRange } from '../logic/combat';
+import { inhaleFlavor } from '../logic/combat';
 import {
   buffAccelMul,
   buffSpeedMul,
@@ -59,7 +59,7 @@ import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
-import { wireCombatOverlaps } from '../systems/overlaps';
+import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
@@ -72,11 +72,6 @@ import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 const GROUND_HEIGHT = 80;
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 const MOUTH_OFFSET_X = 26;
-const SWALLOW_RANGE_PX = 46;
-const PULL_BASE_SPEED = 160;
-const PULL_GAIN = 2.2;
-const REPEL_SPEED = 260;
-const REPEL_LIFT = -180;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
 // P3（§30）：進場時停 0.3s；全場震落強制彈起初速。
@@ -474,7 +469,10 @@ export class GameScene extends Phaser.Scene {
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
-    if (!this.finished && !this.transitioning) this.applyInhalePull();
+    // 吸入拉近（§30/#811 移至 overlaps.ts）：錐形收斂、吞下與殼殼暈眩窗強化拉力。
+    if (!this.finished && !this.transitioning) {
+      applyInhalePull(this, this.player, this.enemies, this.mouth);
+    }
     // 魔王關補生等入場運鏡完成（boss active）才推進，避免入場中生怪干擾玩家（review #698）。
     if (!this.level.boss || this.boss.isActive()) this.waves.update(deltaMs);
     this.boss.update(deltaMs);
@@ -555,6 +553,11 @@ export class GameScene extends Phaser.Scene {
   // e2e 觀測點（§83）：魔王 FSM 階段/招式（品種未實作回 null）。
   bossDebugState(): { phase: string; state: string } | null {
     return this.boss.getDebugState?.() ?? null;
+  }
+
+  // e2e 觀測點（#809）：前室反制提示浮字現值（非魔王關/已讀回空字串）。
+  bossHintText(): string {
+    return this.bossRoom?.hintText() ?? '';
   }
 
   // e2e 鉤子（§83）：受控無敵窗——自然循環觀測案存活用（僅測試環境掛載）。
@@ -1135,42 +1138,6 @@ export class GameScene extends Phaser.Scene {
       stopSfx('inhale');
     }
     this.wasInhaling = inhaling;
-  }
-
-  // zone overlap 僅標記候選，錐形收斂與拉近集中於此處理。
-  private applyInhalePull(): void {
-    for (const child of this.enemies.getGroup().getChildren()) {
-      const enemy = asSprite(child);
-      if (!enemy.getData('inhalePull')) continue;
-      enemy.setData('inhalePull', false);
-      const kind = this.enemies.kindOf(enemy);
-      if (!kind || !this.player.isInhaling()) continue;
-      const { x, y } = this.player.sprite;
-      const facing = this.player.getFacing();
-      if (!isInInhaleRange(x, y, facing, enemy.x, enemy.y, INHALE.rangePx)) continue;
-      if (!this.enemies.isInhalable(enemy)) {
-        // 旋轉衝刺中的殼殼為無敵段、半入地 drilly（§47）不受吸力彈開；其餘照舊彈開。
-        if (enemy.getData('state') !== 'spin' && !this.enemies.isPhasedOut(enemy)) {
-          enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
-        }
-        continue;
-      }
-      const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.mouth.x, this.mouth.y);
-      if (dist <= SWALLOW_RANGE_PX) {
-        this.enemies.removeInhaled(enemy);
-        this.player.swallow(kind);
-        continue;
-      }
-      // 拉力漸增：越接近嘴邊吸力越強。
-      // 吸入接觸豁免（§77）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
-      enemy.setData('inhaleGraceUntil', inhaleGraceUntil(this.time.now));
-      this.physics.moveTo(
-        enemy,
-        this.mouth.x,
-        this.mouth.y,
-        PULL_BASE_SPEED + (INHALE.rangePx - dist) * PULL_GAIN,
-      );
-    }
   }
 
   // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列。

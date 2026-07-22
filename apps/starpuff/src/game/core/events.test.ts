@@ -146,9 +146,10 @@ describe('魔王階段事件契約（FSM 事件源 → BOSS_PHASE）', () => {
 });
 
 describe('waves 關卡事件序列契約（最小 scene harness）', () => {
-  // L2（非教學、無 hint、非 boss）之 start/forceQuota/destroy 僅觸 scene.events，
+  // L5（非教學、無 hint、非 boss）之 start/forceQuota/destroy 僅觸 scene.events，
   // 其餘 Phaser 面不進入；enemies 於此路徑零呼叫。
-  const LEVEL_ID = 2;
+  // #811：L2 新增殼殼首遇 hint 浮字（start 會觸 scene.add），故 harness 改錨 L5。
+  const LEVEL_ID = 5;
   const harness = (): { scene: Phaser.Scene; emitter: TestBus } => {
     const emitter = bus();
     return { scene: { events: emitter } as unknown as Phaser.Scene, emitter };

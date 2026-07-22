@@ -27,6 +27,27 @@ const PICKUP_HALF_W = 26;
 const PICKUP_HALF_H = 36;
 // arena 高風險位投放（§69）：10s 未拾自動淡逝；EX 刷新減半（v10＝EX 不投放）。
 const ARENA_BUFF_EXPIRE_MS = 10_000;
+// #809 前室反制提示（一次性記憶，沿 shellCards 記憶語彙）：貼牆角「必中」體感的
+// 破法教學——拍翅淨高 211px > 全王本體需求，玩家不知可越是主因（診斷：運動學
+// 100% 可逃，知識缺口非物理問題）。
+const JUMP_HINT_KEY = 'sp-boss-jump-hint';
+const JUMP_HINT_TEXT = '被逼到角落？連按跳鍵拍翅可飛越魔王';
+
+function hasSeenJumpHint(): boolean {
+  try {
+    return localStorage.getItem(JUMP_HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function rememberJumpHint(): void {
+  try {
+    localStorage.setItem(JUMP_HINT_KEY, '1');
+  } catch {
+    /* noop */
+  }
+}
 const BUFF_TEXTURES: Record<BuffId, string> = {
   shield: 'buff-shield',
   power: 'buff-power',
@@ -92,6 +113,8 @@ export interface BossRoomHandle {
   dropArenaBuff(id: BuffId, x: number, y: number): void;
   // buff HUD 倒數環（§69 規則 1：單一 icon＋倒數環，不加新面板）；GameScene 逐幀委派。
   updateBuffHud(state: BuffState): void;
+  // #809 前室反制提示觀測點（e2e）：目前顯示中的提示文案（無則空字串）。
+  hintText(): string;
   destroy(): void;
 }
 
@@ -166,6 +189,44 @@ export function createBossRoom(
     floats.push(entry);
   }
 
+  // #809 前室反制提示：一次性世界空間浮字（廊道上方），入 arena 或 8s 淡出即記憶。
+  let jumpHint: Phaser.GameObjects.Text | null = null;
+  if (!hasSeenJumpHint()) {
+    jumpHint = scene.add
+      .text(anteroomPx / 2, 170, JUMP_HINT_TEXT, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '17px',
+        fontStyle: 'bold',
+        color: '#4a3a78',
+        backgroundColor: '#fff3d6',
+        padding: { x: 14, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setDepth(75)
+      .setAlpha(0);
+    objects.push(jumpHint);
+    scene.tweens.add({ targets: jumpHint, alpha: 0.95, duration: 400, delay: 600 });
+    scene.tweens.add({
+      targets: jumpHint,
+      y: 162,
+      duration: 1100,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
+  function dismissJumpHint(): void {
+    if (!jumpHint) return;
+    const text = jumpHint;
+    jumpHint = null;
+    rememberJumpHint();
+    scene.tweens.killTweensOf(text);
+    scene.tweens.add({ targets: text, alpha: 0, duration: 350, onComplete: () => text.destroy() });
+  }
+
+  const jumpHintTimer = jumpHint ? scene.time.delayedCall(8000, dismissJumpHint) : null;
+
   // 增益二選一台座（§69）：取一消一的風險回報抉擇；icon 貼台頂（站立頭頂帶內）。
   const pedestalPair: FloatingBuff[] = [];
   (level.anteroomBuffs ?? []).forEach((id, index) => {
@@ -212,6 +273,8 @@ export function createBossRoom(
   // 單向門（§69）：入 arena 後鎖閉，重試自前室起；擊破制無門鎖（§10.2-10 僅指 arena 出口）。
   function lockDoor(): void {
     entered = true;
+    // 入 arena＝提示已讀（#809）：收字並記憶不再打擾。
+    dismissJumpHint();
     const door = scene.add
       .rectangle(anteroomPx - DOOR_W / 2, GROUND_TOP / 2, DOOR_W, GROUND_TOP, 0xc5a8e8, 0.5)
       .setStrokeStyle(3, 0xffffff, 0.85)
@@ -284,6 +347,9 @@ export function createBossRoom(
       burstSmall(scene, x, y, BUFF_SPECS[id].tint);
       spawnFloatingBuff(id, x, y, [], scene.time.now + ARENA_BUFF_EXPIRE_MS);
     },
+    hintText() {
+      return jumpHint?.text ?? '';
+    },
     updateBuffHud(state: BuffState) {
       if (destroyed) return;
       hudRing.clear();
@@ -302,6 +368,8 @@ export function createBossRoom(
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      jumpHintTimer?.remove(false);
+      jumpHint = null;
       objects.forEach((obj) => obj.destroy());
       objects.length = 0;
       floats.length = 0;

@@ -1,14 +1,19 @@
 import type Phaser from 'phaser';
 import { ENEMY_SIZE, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
+import { isDesktopMode } from '../core/rotation';
 import type { EnemyKind, LevelId } from '../core/types';
 import {
+  RESCUE_REACH_PX,
+  RESCUE_REPOSITION_MS,
   advanceLevelSpawn,
   createLevelRun,
   getLevel,
   isInSafeTail,
+  pickRescueKind,
   pickSpawnKind,
   recordKill,
+  rescueSpawnX,
   type LevelRunState,
 } from '../logic/levels';
 import type { EnemySystem } from './enemies';
@@ -61,7 +66,13 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   cometa: 150,
 };
 
-const TUTORIAL_TEXT = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
+// #812 救援懸浮品種的可及帶定高（站立吸入錐直達，免跳拍追擊）。
+const RESCUE_HOVER_Y = 300;
+const RESCUE_HOVER_KINDS: readonly EnemyKind[] = ['floaty', 'zappy', 'glowy', 'twinkla', 'gusty'];
+
+const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
+// 桌機教學浮字（#817）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致）。
+const TUTORIAL_TEXT_DESKTOP = '← → 移動　Z 跳躍\nX 點按發射・長按吸入';
 // 教學浮字：首次操作輸入後 1s 淡出；無輸入最多停留 6s。
 const TUTORIAL_INPUT_LINGER_MS = 1000;
 const TUTORIAL_MAX_MS = 6000;
@@ -88,6 +99,38 @@ export function createWaveRunner(
   const onAmmoChanged = ({ ammo }: { ammo: number }): void => {
     playerAmmo = ammo;
   };
+
+  // #812 救援可及性保證：場上救援個體上限 1、逾時未取得重定位到玩家身旁。
+  let rescueSprite: Phaser.Physics.Arcade.Sprite | null = null;
+  let rescueAgeMs = 0;
+
+  // 救援生成/重定位單點：玩家前方 RESCUE_AHEAD_MIN_PX–RESCUE_AHEAD_MAX_PX、低威脅品種
+  // 優先、走 adjustSpawn 潮汐落點上收（同一可達地形層）；玩家座標不可得時回退視野外側路徑。
+  function placeRescue(): void {
+    const playerX = enemies.targetX();
+    if (playerX === null) {
+      spawnAhead(true);
+      return;
+    }
+    if (rescueSprite?.active === true) {
+      // 上限 1：已有存活救援個體——重定位它（含 RESCUE_REPOSITION_MS 逾時與再觸發兩路徑）。
+      const kind = enemies.kindOf(rescueSprite) ?? 'jelly';
+      enemies.removeInhaled(rescueSprite);
+      respawnRescue(kind, playerX);
+      return;
+    }
+    respawnRescue(pickRescueKind(level, Math.random(), hooks.holdSpawn?.() === true), playerX);
+  }
+
+  function respawnRescue(kind: EnemyKind, playerX: number): void {
+    const x = rescueSpawnX(playerX, Math.random(), level);
+    // 同層可及保證（#812）：懸浮定高品種降至站立錐可及帶（高空定飄要跳拍追擊，
+    // 是救援尾部延遲主因）；地面/墜落/俯衝品種沿 SPAWN_Y 不動（行為錨不漂移）。
+    const baseY = RESCUE_HOVER_KINDS.includes(kind) ? RESCUE_HOVER_Y : SPAWN_Y[kind];
+    const adjusted = hooks.adjustSpawn?.(kind, baseY) ?? { kind, y: baseY };
+    rescueSprite = enemies.spawn(adjusted.kind, x, adjusted.y);
+    rescueAgeMs = 0;
+  }
 
   // 魔王擊破後停止補生，避免勝利演出期間持續生怪。
   const onBossDefeated = (): void => {
@@ -203,7 +246,9 @@ export function createWaveRunner(
           killQuota: level.killQuota,
         });
       }
-      if (level.tutorial) showTutorial(TUTORIAL_TEXT);
+      if (level.tutorial) {
+        showTutorial(isDesktopMode() ? TUTORIAL_TEXT_DESKTOP : TUTORIAL_TEXT_TOUCH);
+      }
       // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
       else if (level.hint) showTutorial(level.hint, '20px');
     },
@@ -214,7 +259,31 @@ export function createWaveRunner(
         tutorialAgeMs += deltaMs;
         if (tutorialAgeMs >= tutorialDismissAtMs) dismissTutorial();
       }
-      const starving = playerAmmo <= 0 && enemies.aliveInhalableCount() === 0;
+      // #812 救援個體追蹤：被消化（吞/殺）即釋放追蹤；逾時未取得重定位到玩家身旁。
+      if (rescueSprite) {
+        if (!rescueSprite.active) {
+          rescueSprite = null;
+        } else {
+          rescueAgeMs += deltaMs;
+          if (rescueAgeMs >= RESCUE_REPOSITION_MS) placeRescue();
+        }
+      }
+      // 飢荒判定走可及性口徑（#812）：走動關僅計玩家近域（RESCUE_REACH_PX）可吸個體——
+      // 名義可吸但在視野外的個體不得阻斷救援；魔王關 arena 單屏維持全域計數。
+      // 救援個體近域豁免（審查收斂）：無 safe 候選關（如 L14 全 ranged mix）的救援怪
+      // 會被 ranged 排除——救援存活且近域即視為供給恢復候補，否則生成→不計→4s 再觸發
+      // 的重定位循環自我否定；被消化後追蹤釋放、飢荒計時恢復（anti-softlock 不回退）。
+      const playerX = enemies.targetX();
+      const rescueNear =
+        rescueSprite?.active === true &&
+        playerX !== null &&
+        Math.abs(rescueSprite.x - playerX) <= RESCUE_REACH_PX;
+      const starving =
+        playerAmmo <= 0 &&
+        !rescueNear &&
+        (level.boss || playerX === null
+          ? enemies.aliveInhalableCount()
+          : enemies.aliveInhalableCount(playerX, RESCUE_REACH_PX)) === 0;
       const result = advanceLevelSpawn(run, {
         deltaMs,
         aliveEnemies: enemies.aliveCount(),
@@ -222,7 +291,10 @@ export function createWaveRunner(
         floodHold: hooks.holdSpawn?.() === true,
       });
       run = result.state;
-      if (result.spawn) spawnAhead(starving);
+      if (!result.spawn) return;
+      // 救援走可及性保證路徑（#812）；一般節流與魔王補生沿視野外側/遠側入場。
+      if (result.rescue === true) placeRescue();
+      else spawnAhead(starving);
     },
 
     noteInput() {

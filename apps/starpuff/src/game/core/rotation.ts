@@ -50,8 +50,57 @@ export function applyRotationClass(pref: PortraitRotationPref): void {
 // 直持判定單一出口：controls／keyConfig／shellLayout 共用，避免定義漂移。
 export const isPortrait = (): boolean => window.matchMedia('(orientation: portrait)').matches;
 
-// 當前殼旋轉態：橫持恆 none；直持依使用者偏好取向。
+// 桌機環境判定（#817）：細指標＋零觸點＋寬視口——旋轉殼語意僅屬行動裝置。
+// 純判定函式（vitest node 可直測）；瀏覽器讀值由 isDesktopEnvironment 收斂。
+export interface DesktopEnvironmentInput {
+  finePointer: boolean;
+  maxTouchPoints: number;
+  viewportWidth: number;
+}
+
+export const DESKTOP_MIN_VIEWPORT_W = 1024;
+
+export function detectDesktopEnvironment(input: DesktopEnvironmentInput): boolean {
+  return (
+    input.finePointer && input.maxTouchPoints === 0 && input.viewportWidth >= DESKTOP_MIN_VIEWPORT_W
+  );
+}
+
+export function isDesktopEnvironment(): boolean {
+  try {
+    return detectDesktopEnvironment({
+      finePointer: window.matchMedia('(pointer: fine)').matches,
+      maxTouchPoints: navigator.maxTouchPoints,
+      viewportWidth: window.innerWidth,
+    });
+  } catch {
+    return false;
+  }
+}
+
+// 桌機模式以 html class 為 session 內 SSOT（#817）：boot 一次判定，JS 與 CSS 恆一致
+//（live media 於視窗縮放時飄移會造成 transform 與座標換算不同步）。
+const DESKTOP_CLASS = 'sp-desktop';
+
+export function applyDesktopModeClass(): boolean {
+  const on = isDesktopEnvironment();
+  document.documentElement.classList.toggle(DESKTOP_CLASS, on);
+  return on;
+}
+
+// 無 DOM 環境（vitest node）容錯回 false：桌機模式判定＝class 存在（沿本模組
+// localStorage 容錯慣例）。
+export function isDesktopMode(): boolean {
+  try {
+    return document.documentElement.classList.contains(DESKTOP_CLASS);
+  } catch {
+    return false;
+  }
+}
+
+// 當前殼旋轉態：桌機恆正（旋轉殼旁路）；橫持恆 none；直持依使用者偏好取向。
 export function getShellRotation(): ShellRotation {
+  if (isDesktopMode()) return 'none';
   return isPortrait() ? loadRotationPref() : 'none';
 }
 

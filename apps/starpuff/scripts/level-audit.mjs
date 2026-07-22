@@ -53,6 +53,7 @@ const {
   sequenceEntropyBits,
 } = difficulty;
 const { canInhale } = await import('../src/game/logic/combat.ts');
+const { SHELLY_FSM } = await import('../src/game/logic/enemyFsm.ts');
 
 const baseSha = (() => {
   try {
@@ -276,6 +277,9 @@ async function runProbe(page, name, level, overrides = {}) {
       levelId: level?.id ?? 12,
       cyclesPerTier: Number(opt('cycles', '8')),
     });
+    // #810 分級迴避率裁定（門檻引 difficulty.ts SSOT）：500ms ≥80%、350ms ≥85%。
+    const dodgeOf = (ms) => (result.byTier ?? []).find((b) => b.reactionMs === ms)?.dodgeRate;
+    const meetsDodge = (rate, min) => (typeof rate === 'number' ? rate >= min : null);
     return {
       probe: 'telegraph',
       ...result,
@@ -285,12 +289,21 @@ async function runProbe(page, name, level, overrides = {}) {
         result.telegraphMsAvg !== null
           ? result.telegraphMsAvg >= AUDIT_THRESHOLDS.telegraphMinMs
           : null,
+      spikeThresholdMs: AUDIT_THRESHOLDS.spikeTelegraphMinMs,
+      meetsSpikeTelegraph:
+        result.telegraphMsAvg !== null
+          ? result.telegraphMsAvg >= AUDIT_THRESHOLDS.spikeTelegraphMinMs
+          : null,
+      dodge500Meets: meetsDodge(dodgeOf(500), AUDIT_THRESHOLDS.spikeDodgeMinRate500),
+      dodge350Meets: meetsDodge(dodgeOf(350), AUDIT_THRESHOLDS.spikeDodgeMinRate350),
     };
   }
   if (name === 'swallow') {
     const result = await runSwallowProbe(page, {
       runs: overrides.runs ?? Number(opt('runs', '100')),
       spinRuns: overrides.spinRuns ?? Number(opt('spin-runs', '30')),
+      // 吸入窗上限跟隨 FSM SSOT：暈眩窗調參不得被儀器舊硬編上限截斷。
+      stunWindowMs: SHELLY_FSM.stunMs,
     });
     return {
       probe: 'swallow',

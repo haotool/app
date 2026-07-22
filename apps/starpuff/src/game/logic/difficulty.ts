@@ -17,6 +17,10 @@ export const AUDIT_THRESHOLDS = {
   starburstRecoveryP95Ms: 10_000,
   // #810/#813 telegraph 反應窗 ≥600ms（視覺反應 ~250ms＋位移時間）。
   telegraphMinMs: 600,
+  // #810 地面尖刺專項：前搖 ≥900ms（500ms 反應＋位移裕度），500ms bot 迴避 ≥80%、350ms ≥85%。
+  spikeTelegraphMinMs: 900,
+  spikeDodgeMinRate500: 0.8,
+  spikeDodgeMinRate350: 0.85,
   // #811 殼殼：正確時機吞食成功率 ≥60%；縮殼旋轉（衝刺）期必須 0%。
   swallowStunMinRate: 0.6,
   swallowSpinMaxRate: 0,

@@ -46,6 +46,94 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('#817 教學浮字依環境切換鍵位字樣', () => {
+  function tutorialHarness(): { runner: ReturnType<typeof createWaveRunner>; texts: string[] } {
+    const texts: string[] = [];
+    const scene = {
+      events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+      cameras: { main: { scrollX: 0 } },
+      scale: { width: 854, height: 480 },
+      add: {
+        text: (_x: number, _y: number, content: string) => {
+          texts.push(content);
+          return chainable();
+        },
+      },
+      tweens: { add: vi.fn(), killTweensOf: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const enemies = {
+      spawn: () => null,
+      aliveCount: () => 0,
+      aliveInhalableCount: () => 1,
+      targetX: () => null,
+    } as unknown as EnemySystem;
+    // L1 教學關：start 即顯示教學浮字。
+    return { runner: createWaveRunner(scene, enemies, 1), texts };
+  }
+
+  it('node（無 DOM）環境回退觸控字樣；sp-desktop 掛載時改鍵盤字樣', () => {
+    const touch = tutorialHarness();
+    touch.runner.start();
+    expect(touch.texts[0]).toContain('左搖桿');
+    touch.runner.destroy();
+
+    vi.stubGlobal('document', {
+      documentElement: { classList: { contains: (name: string) => name === 'sp-desktop' } },
+    });
+    const desktop = tutorialHarness();
+    desktop.runner.start();
+    expect(desktop.texts[0]).toContain('← → 移動');
+    expect(desktop.texts[0]).toContain('Z 跳躍');
+    desktop.runner.destroy();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('#812 救援個體近域豁免（審查收斂）', () => {
+  // 無 safe 候選關（L14 全 ranged mix）：救援怪被近域飢荒口徑的 ranged 排除，
+  // 生成後不解除飢荒 → 4s 再觸發單席重定位循環。豁免律：救援個體存活且近域
+  // 即視為供給恢復候補；被消化後追蹤釋放、飢荒計時恢復（anti-softlock 不回退）。
+  it('救援生成後不再重複觸發；救援被消化後飢荒計時恢復', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const spawns: { kind: EnemyKind; x: number; y: number }[] = [];
+    const rescueStub = { active: true, x: 0 };
+    const scene = {
+      events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+      cameras: { main: { scrollX: 600 } },
+      scale: { width: 854, height: 480 },
+      add: { text: () => chainable() },
+      tweens: { add: vi.fn(), killTweensOf: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const enemies = {
+      spawn: (kind: EnemyKind, x: number, y: number) => {
+        spawns.push({ kind, x, y });
+        rescueStub.active = true;
+        rescueStub.x = x;
+        return rescueStub;
+      },
+      aliveCount: () => 99,
+      // 近域可吸恆 0（ranged 被口徑排除的重現條件）。
+      aliveInhalableCount: () => 0,
+      targetX: () => 1000,
+    } as unknown as EnemySystem;
+    const runner = createWaveRunner(scene, enemies, 14);
+    runner.start();
+    // 飢荒 4s：觸發第一次救援（玩家前方 100–150px 吸入錐內）。
+    runner.update(4000);
+    expect(spawns).toHaveLength(1);
+    expect(spawns[0]?.x ?? 0).toBeGreaterThanOrEqual(1100);
+    expect(spawns[0]?.x ?? 0).toBeLessThanOrEqual(1150);
+    // 救援存活且近域：飢荒被豁免，再過 4s 不得重複觸發（重定位循環根因）。
+    runner.update(4000);
+    expect(spawns).toHaveLength(1);
+    // 救援被消化（吞/殺）：追蹤釋放、飢荒計時恢復，4s 後再救援。
+    rescueStub.active = false;
+    runner.update(4000);
+    expect(spawns).toHaveLength(2);
+    runner.destroy();
+  });
+});
+
 describe('bubbla 自然補生錨點（#821）', () => {
   it('補生 y 為地面派生錨點：身底貼齊主地面頂（非懸空 330）', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);

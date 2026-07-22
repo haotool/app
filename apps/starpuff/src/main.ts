@@ -2,11 +2,12 @@ import Phaser from 'phaser';
 import './pwa';
 import './style.css';
 import { initInstallGuide } from './installGuide';
+import { initOrientationGuide } from './orientationGuide';
 import { initRotationNotice } from './rotationNotice';
 import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
-import { applyRotationClass, loadRotationPref } from './game/core/rotation';
+import { applyDesktopModeClass, applyRotationClass, loadRotationPref } from './game/core/rotation';
 import { loadSave, persistSave, type SaveData } from './game/core/save';
 import { awardAchievements } from './game/logic/achievements';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
@@ -25,9 +26,14 @@ import { restoreMutePreference } from './game/systems/hud';
 import { isGamePaused, openPauseMenu } from './game/systems/pause';
 
 restoreMutePreference();
+// 桌機正置（#817）：boot 一次判定掛 sp-desktop class——旋轉殼旁路（CSS transform 免除
+// ＋getShellRotation 恆 none）、虛擬鍵隱藏；Phaser boot 前套用使殼量測即為正置尺寸。
+applyDesktopModeClass();
 // 方向變更一次性告知（§87）：回訪玩家優先於安裝指引（同為殼層卡片，先到先顯示，
 // 另一張等殼層再次安靜）。
 initRotationNotice();
+// 方向解鎖引導＋桌機鍵位卡（#817）：與其他殼層卡片同走安靜時刻管線依序顯示。
+initOrientationGuide();
 // PWA 安裝指引（§90）：已安裝／已忽略／不支援平台不打擾；殼內 overlay 不進 Phaser Scene。
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
@@ -155,6 +161,7 @@ declare global {
       meteor: () => { falling: number; embers: number; telegraphs: number } | null;
       damageBossAt: (amount: number, x: number, y: number) => void;
       bossState: () => { phase: string; state: string } | null;
+      bossHint: () => string;
       grantInvuln: (ms: number) => void;
       achievementToast: () => string;
     }>;
@@ -289,6 +296,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // 魔王 FSM 觀測與受控無敵窗（自然循環觀測案存活用）。
     damageBossAt: (amount, x, y) => gameScene().damageBossAtPoint(amount, x, y),
     bossState: () => gameScene().bossDebugState(),
+    // #809 觀測點：前室反制提示浮字（canvas 文字不可由 DOM 查詢）。
+    bossHint: () => gameScene().bossHintText(),
     grantInvuln: (ms) => gameScene().grantInvuln(ms),
     // v15 觀測點（§94 e2e）：最近成就 toast 文案（canvas 文字不可由 DOM 查詢）。
     achievementToast: () => gameScene().lastAchievementToast,

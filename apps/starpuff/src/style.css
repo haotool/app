@@ -97,6 +97,21 @@ body {
     left: 100%;
     transform: rotate(90deg);
   }
+
+  /* 桌機正置（#817）：桌機直窗不套旋轉殼語意——殼恆填滿視口、方向恆正。 */
+  html.sp-desktop #game-shell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    transform: none;
+  }
+}
+
+/* 桌機虛擬鍵隱藏（#817）：鍵盤為唯一操作面；置於 is-active 之後確保覆蓋。 */
+html.sp-desktop #controls.is-active {
+  display: none;
 }
 
 /* 置中改由 CSS grid 單一負責（v4）：autoCenter margin 在旋轉殼下混用視口 AABB 與殼局部

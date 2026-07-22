@@ -2,12 +2,16 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   INHALE_GRACE_MS,
+  SHELLY_NEAR_PX,
   applyDamage,
   canInhale,
   clampAmmo,
   inhaleFlavor,
   inhaleGraceUntil,
+  inhalePullSpeed,
+  inhaleRangePx,
   isContactHarmless,
+  isInInhalePullRange,
   isInInhaleRange,
   knockbackVelocity,
   pickInRadius,
@@ -69,6 +73,26 @@ describe('combat', () => {
     expect(isInInhaleRange(0, 0, 1, 80, 81, 140)).toBe(false);
     expect(isInInhaleRange(0, 0, -1, -80, -80, 140)).toBe(true);
     expect(isInInhaleRange(0, 0, 1, 0, 50, 140)).toBe(false);
+  });
+
+  it('#811 殼殼判定半徑 +20%、暈眩引力 ×1.5；非殼殼維持原值', () => {
+    expect(inhaleRangePx('shelly', 140)).toBeCloseTo(168, 5);
+    expect(inhaleRangePx('jelly', 140)).toBe(140);
+    expect(inhalePullSpeed('jelly', 140, 40, 160, 2.2)).toBeCloseTo(160 + 100 * 2.2, 5);
+    expect(inhalePullSpeed('shelly', 140, 40, 160, 2.2)).toBeCloseTo((160 + 128 * 2.2) * 1.5, 5);
+  });
+
+  it('#811 殼殼近身豁免：貼身 ≤60px 錐外仍可拉（停位貼腳死角），非殼殼與遠位不豁免', () => {
+    // 殼殼在腳邊（dx 3 / dy 9，|dy|>|dx| 錐外）——豁免生效。
+    expect(isInInhaleRange(0, 0, 1, 3, 9, 140)).toBe(false);
+    expect(isInInhalePullRange('shelly', 0, 0, 1, 3, 9, 140)).toBe(true);
+    // 面向反側貼身亦可拉（真人可即時回頭，機械面向不設死角）。
+    expect(isInInhalePullRange('shelly', 0, 0, 1, -20, 9, 140)).toBe(true);
+    // 非殼殼同位置：錐外即不可拉。
+    expect(isInInhalePullRange('jelly', 0, 0, 1, 3, 9, 140)).toBe(false);
+    // 殼殼超出近身圈且錐外：不可拉。
+    expect(isInInhalePullRange('shelly', 0, 0, 1, 30, 70, 140)).toBe(false);
+    expect(SHELLY_NEAR_PX).toBe(60);
   });
 
   it('resolveHit 正常受擊：扣血並啟動 i-frame', () => {
