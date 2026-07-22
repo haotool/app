@@ -104,8 +104,8 @@ export function createWaveRunner(
   let rescueSprite: Phaser.Physics.Arcade.Sprite | null = null;
   let rescueAgeMs = 0;
 
-  // 救援生成/重定位單點：玩家前方 160–240px、低威脅品種優先、走 adjustSpawn
-  // 潮汐落點上收（同一可達地形層）；玩家座標不可得時回退視野外側路徑。
+  // 救援生成/重定位單點：玩家前方 RESCUE_AHEAD_MIN_PX–RESCUE_AHEAD_MAX_PX、低威脅品種
+  // 優先、走 adjustSpawn 潮汐落點上收（同一可達地形層）；玩家座標不可得時回退視野外側路徑。
   function placeRescue(): void {
     const playerX = enemies.targetX();
     if (playerX === null) {
@@ -113,7 +113,7 @@ export function createWaveRunner(
       return;
     }
     if (rescueSprite?.active === true) {
-      // 上限 1：已有存活救援個體——重定位它（含 8s 逾時與再觸發兩路徑）。
+      // 上限 1：已有存活救援個體——重定位它（含 RESCUE_REPOSITION_MS 逾時與再觸發兩路徑）。
       const kind = enemies.kindOf(rescueSprite) ?? 'jelly';
       enemies.removeInhaled(rescueSprite);
       respawnRescue(kind, playerX);

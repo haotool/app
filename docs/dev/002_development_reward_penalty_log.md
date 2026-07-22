@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 6、penalty 2、neutral 1）｜累計總分：+166
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+166
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2-final-nit-comments
+- 原因：複審 nit——waves.ts placeRescue 註解殘留舊值 160-240px/8s（常數已改 100-150/5s），levels.ts「站定面向即可吸」對懸浮帶尾（即吸上限 ≈126.5px）過度宣稱
+- 解法：註解改引 RESCUE*AHEAD*\*/RESCUE_REPOSITION_MS 常數名防再漂移；生成帶註解改精確幾何表述（帶尾至多 ~0.1s 走位即入錐）
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t2-review-nits

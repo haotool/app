@@ -1476,7 +1476,8 @@ export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolea
 // ===== #812 救援可及性保證（擴充 §107.1）=====
 // 救援不只保證「生成」還保證「可及」：玩家前方近距、低威脅品種優先、單席、逾時重定位。
 // 生成帶 100–150px（審查收斂）：吸入錐 140px——原 160–240 帶全在錐外需位移追擊，
-// 漂移型品種（floaty）逃錐比走近快；錐內生成＝站定面向即可吸，100 下限留接觸緩衝。
+// 漂移型品種（floaty）逃錐比走近快。生成帶貼近吸入錐：地面品種帶內即可吸；懸浮救援
+//（y=300、dy≈60）即吸水平上限 ≈126.5px，帶尾至多 ~0.1s 走位即入錐；100 下限留接觸緩衝。
 export const RESCUE_AHEAD_MIN_PX = 100;
 export const RESCUE_AHEAD_MAX_PX = 150;
 // 重定位窗 8s→5s（審查收斂）：恢復機構上限＝觸發 4s＋重定位窗＋取得 ~1s——8s 窗
