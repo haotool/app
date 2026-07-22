@@ -1881,3 +1881,32 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   「可及／推進」層（含 bot 策略盲區與地形卡位）——兩層各自成立、不可互相
   換算，同輪 fullStall 3.5s 與 quotaStall 326.8s 並存（post-l03-play）即
   正常樣貌，非數據矛盾。
+
+## 108. 難度量化工具（#818，T1 量測基礎設施）
+
+常備 CLI 單指令輸出任一關（走動／魔王／EX）難度報告；所有列車（#809–#814）
+的驗收探針收斂於此，遊戲行為零改變。
+
+- 入口：`node scripts/level-audit.mjs <levelId> [--ex] [--bot low|mid|high]
+[--runs N] [--cap 秒] [--probe jump|telegraph|swallow|starburst] [--all]`；
+  報告（JSON＋Markdown）寫入 `.claude/product-intel/level-audits/`（gitignored）。
+- SSOT 分層：三軸公式、驗收門檻（機制 brief §10）、分級 bot 參數、跳越運動學
+  全數住 `src/game/logic/difficulty.ts`（vitest 錨定行守門）；CLI 經 Node 24
+  type stripping 直接 import（`scripts/lib/ts-bridge.mjs` 補副檔名解析），
+  禁止在腳本內維護第二份公式或門檻。
+- 三軸自動計算：主計畫 §3.1 錨定關卡（走動 D 取 L1/L3/L6/L19、M 取 L1/L5/L19、
+  P 取 L1/L2/L18；魔王取 L4/L20 全軸）經 raw 公式反推錨點後分段線性校準——
+  錨行精確重現、其餘關卡由靜態資料插值，實測修正（死亡/重試）折入 P 軸封頂
+  +1.5。人工評分自此退役，主計畫 §4 折線由 `--all` 重生成。
+- 分級 bot：單一策略引擎＋感知延遲快照環（決策一律讀 reactionMs 前的世界），
+  低 500ms 基礎策略／中 350ms＋dodge／高 250ms 完整策略（讀招/風箏），
+  對齊機制 brief §10 EX 驗收口徑（#814）。
+- 四專項探針：jump（#809 解析矩陣＋強制 P2 貼牆逃脫實證）、telegraph（#810
+  30ms 細粒度入態→實體化量測＋250/350/500ms 反應注入迴避率，幾何重疊判定＋
+  無敵隔離存活軸）、swallow（#811 chompy 滿席凍結生成後以可吸計數轉移標定
+  暈眩窗，正確時機/衝刺期雙臂）、starburst（#812 jelly 連授滿匣＋長按 0.9s
+  重現誤放，量測恢復時間分佈 p50/p95）。
+- 量測方法沿 §107.4 口徑：bot 為固定策略非人類水準，跨版本同構可比；
+  走動關指標僅取開門前窗；魔王招式序列以條件熵（bits）量化可背板度（#813
+  去固定基線）。`v18-level-bot.mjs` 保留為 #804–#806 修復證據的凍結重現腳本，
+  新量測一律走 `level-audit.mjs`。

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+160
+> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+161
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t1-audit-cli-docs-sync
+- 原因：#818 CLI 已落地但缺常備入口 script 與設計文檔章節，工具可發現性不足
+- 解法：package.json 新增 audit:level script，GAME_DESIGN.md 新增 §108 記錄 CLI 用法、SSOT 分層與四探針口徑
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t1-level-audit-cli
+- 原因：#818 難度量化散落多份單用腳本（v18/ex/noctra/voidra bot），無單指令常備工具與分級 bot、四探針（#809-812）量測能力
+- 解法：新增 scripts/level-audit.mjs 統一 CLI＋感知延遲分級 driver＋四專項探針，L1/L4/L4-EX/L12 四型態實測可用，勝利動線 Result→Map 偵測與探針無敵隔離修正
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t1-difficulty-axes-ssot
+- 原因：#818 三軸難度分與驗收門檻散落人工評分與 PM 文檔，量化工具缺單點可算來源
+- 解法：新增 logic/difficulty.ts 純函式 SSOT（錨定校準三軸、跳越運動學、分級 bot 參數、驗收門檻表）＋19 項 vitest 錨定行重現測試
 
 - 日期：2026-07-22
 - ID：reward-starpuff-824-walkthrough-l20-drift-fix
