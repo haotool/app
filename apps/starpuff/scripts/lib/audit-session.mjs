@@ -77,6 +77,7 @@ export async function stopDriver(page) {
       if (window.__audit) {
         window.__audit.stop = true;
         clearInterval(window.__audit.interval);
+        window.__audit.releaseAll?.();
       }
     })
     .catch(() => {});

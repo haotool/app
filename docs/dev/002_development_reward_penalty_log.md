@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+161
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+162
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-835-audit-hotfix-review-blocking
+- 原因：#835 review 三項 Blocking——console error 於 --all/--probe 提前 return 跳過退出檢查、EX 勝負誤讀持久 save exCleared 污染多輪通關率、--all swallow 門檻硬編 0.6/0 漂移 SSOT
+- 解法：錯誤檢查移入 finally 必經、EX 勝負改回合指標 bossKilled＋Result、--all 改走 runProbe 引 AUDIT_THRESHOLDS，另補 stopDriver releaseAll 放鍵與 baselineMd 門檻文字插值
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t1-audit-cli-docs-sync
