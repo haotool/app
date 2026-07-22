@@ -1475,13 +1475,21 @@ export function pickSpawnKind(level: LevelSpec, rand01: number, starving: boolea
 
 // ===== #812 救援可及性保證（擴充 §107.1）=====
 // 救援不只保證「生成」還保證「可及」：玩家前方近距、低威脅品種優先、單席、逾時重定位。
-export const RESCUE_AHEAD_MIN_PX = 160;
-export const RESCUE_AHEAD_MAX_PX = 240;
-export const RESCUE_REPOSITION_MS = 8000;
+// 生成帶 100–150px（審查收斂）：吸入錐 140px——原 160–240 帶全在錐外需位移追擊，
+// 漂移型品種（floaty）逃錐比走近快；錐內生成＝站定面向即可吸，100 下限留接觸緩衝。
+export const RESCUE_AHEAD_MIN_PX = 100;
+export const RESCUE_AHEAD_MAX_PX = 150;
+// 重定位窗 8s→5s（審查收斂）：恢復機構上限＝觸發 4s＋重定位窗＋取得 ~1s——8s 窗
+// 上限 13s 超 p95 門檻；5s 窗約 10s 對齊，且封殺漂移型救援（floaty）飄離窗。
+export const RESCUE_REPOSITION_MS = 5000;
 // 飢荒判定的可及半徑（#812）：名義可吸但距玩家超此值的個體不阻斷救援計時
 //（可吸≠可及；400px≈1.8s 步行——移動型可吸個體在此圈內的追擊可於 2s 級完成，
 // 600px 實測會讓玩家追移動目標 5s+ 而救援不觸發，尾部延遲主因）。
 export const RESCUE_REACH_PX = 400;
+// 近域供給的可及頂線（#812 審查收斂）：高空定飄個體（floaty/zappy/glowy 生成帶
+// y=240）在站立吸入錐外、需跳拍追擊——y 高於此線不得阻斷救援計時；救援懸浮品種
+// 定高 300 恆在帶內（驗屍：L11 自然 floaty@240 擋救援 26s 為 >10s 尾部主因）。
+export const RESCUE_REACH_Y_TOP = 280;
 
 // 滿潮救援排除位移壓迫型個體（#812/§107.3）：gusty 側風推移會把避難玩家推落水。
 const FLOOD_RESCUE_EXCLUDED: readonly EnemyKind[] = ['gusty'];

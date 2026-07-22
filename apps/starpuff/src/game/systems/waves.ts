@@ -263,11 +263,19 @@ export function createWaveRunner(
           if (rescueAgeMs >= RESCUE_REPOSITION_MS) placeRescue();
         }
       }
-      // 飢荒判定走可及性口徑（#812）：走動關僅計玩家近域（600px）可吸個體——
+      // 飢荒判定走可及性口徑（#812）：走動關僅計玩家近域（RESCUE_REACH_PX）可吸個體——
       // 名義可吸但在視野外的個體不得阻斷救援；魔王關 arena 單屏維持全域計數。
+      // 救援個體近域豁免（審查收斂）：無 safe 候選關（如 L14 全 ranged mix）的救援怪
+      // 會被 ranged 排除——救援存活且近域即視為供給恢復候補，否則生成→不計→4s 再觸發
+      // 的重定位循環自我否定；被消化後追蹤釋放、飢荒計時恢復（anti-softlock 不回退）。
       const playerX = enemies.targetX();
+      const rescueNear =
+        rescueSprite?.active === true &&
+        playerX !== null &&
+        Math.abs(rescueSprite.x - playerX) <= RESCUE_REACH_PX;
       const starving =
         playerAmmo <= 0 &&
+        !rescueNear &&
         (level.boss || playerX === null
           ? enemies.aliveInhalableCount()
           : enemies.aliveInhalableCount(playerX, RESCUE_REACH_PX)) === 0;

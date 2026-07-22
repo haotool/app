@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 5、penalty 1、neutral 0）｜累計總分：+166
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+167
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-812-review-rescue-exemption
+- 原因：審查定位真缺口——無 safe 候選關（L14 全 ranged mix）救援怪被近域飢荒口徑的 ranged 過濾排除，生成後不解除飢荒 → 4s 重觸發單席重定位循環；另高空定飄（floaty y=240 錐外）阻斷救援計時為 L11 尾部主因
+- 解法：救援個體近域豁免律（存活且近域即解除飢荒）＋可及頂線 y<280 過濾＋重定位窗 8s→5s＋生成帶收斂吸入錐內 100–150px；全 15 走動關 90 樣本 p95 19.9→9.5s 達門檻、45s 未恢復 0 維持
 
 - 日期：2026-07-22
 - ID：reward-starpuff-817-orientation-desktop

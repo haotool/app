@@ -923,17 +923,19 @@ describe('#812 救援可及性保證（擴充 §107.1）', () => {
     expect(pickRescueKind(level, 0.5, false)).toBe('gusty');
   });
 
-  it('rescueSpawnX 前方 160–240px；越界或尾端安全區改後方等距', () => {
+  it('rescueSpawnX 前方 100–150px（吸入錐內站定可及）；越界或尾端安全區改後方等距', () => {
     const level = getLevel(2);
+    expect(RESCUE_AHEAD_MIN_PX).toBe(100);
+    expect(RESCUE_AHEAD_MAX_PX).toBe(150);
     expect(rescueSpawnX(500, 0, level)).toBe(500 + RESCUE_AHEAD_MIN_PX);
     expect(rescueSpawnX(500, 1, level)).toBe(500 + RESCUE_AHEAD_MAX_PX);
     // 前方落入尾端安全區（worldWidth 3100 − safeZoneTailPx 480 = 2620 起）→ 改後方。
-    expect(rescueSpawnX(2500, 0, level)).toBe(2500 - RESCUE_AHEAD_MIN_PX);
+    expect(rescueSpawnX(2550, 0, level)).toBe(2550 - RESCUE_AHEAD_MIN_PX);
     // 前方越過世界右緣 → 改後方。
     expect(rescueSpawnX(level.worldWidth - 100, 0, level)).toBe(
       level.worldWidth - 100 - RESCUE_AHEAD_MIN_PX,
     );
-    expect(RESCUE_REPOSITION_MS).toBe(8000);
+    expect(RESCUE_REPOSITION_MS).toBe(5000);
   });
 });
 
