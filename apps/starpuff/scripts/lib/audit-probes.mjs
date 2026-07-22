@@ -560,9 +560,11 @@ export async function runSwallowProbe(
   };
 }
 
-// ===== #812 星暴誤放恢復 =====
-// 注入：滿彈匣（jelly 連授至 3 槽）→ 長按 0.9s 觸發星暴（誤放重現）→ 量測
-// 恢復（ammo>0）時間分佈；恢復由 bot 覓食策略自然達成（不授星）。
+// ===== #812 星暴後零彈恢復 =====
+// 注入（§109 語意）：混味連授至 5 槽 → 滿匣自動結晶（彈匣清空）→ SP（C 鍵）點按
+// → 0.3s 蓄爆引爆（清場＋零彈，與舊長按星暴同終態）→ 量測恢復（ammo>0）時間分佈；
+// 恢復由 bot 覓食策略自然達成（不授星）。B 長按誤放路徑已移除，本探針改守
+// 「引爆後零彈」的恢復保證不回退（§107.1 救援律承擔供給面）。
 // ensureDriver：重進關卡（含 reload 復原）後重掛覓食 driver 的回呼。
 export async function runStarburstProbe(
   page,
@@ -615,20 +617,27 @@ export async function runStarburstProbe(
       try {
         if (driver) driver.pause = true;
         await wait(200);
-        // jelly 連授至 3 槽（連吞同味強化不佔新槽：×5 保證 [強化,強化,單發] 滿匣；
-        // jelly 無變身形態、頂槽非殼盾 → 長按語意唯一收斂到星暴）。
+        // 混味連授至 5 槽（jelly/shelly 交錯：無配方合成、無同系連吞升級、無變身
+        // 資格）→ 第 5 槽入匣瞬間自動結晶（§109：彈匣清空＋蓄能星）。
         let guard = 0;
-        while (sp.ammo().ammo < 3 && guard < 8) {
-          sp.grantStar('jelly');
+        while (sp.starburst().phase !== 'charged' && guard < 10) {
+          sp.grantStar(guard % 2 === 0 ? 'jelly' : 'shelly');
           guard += 1;
           await wait(60);
         }
-        if (sp.ammo().ammo < 3) return { ok: false, reason: 'fill-failed' };
-        dispatch('keydown', 88);
-        await wait(950);
-        dispatch('keyup', 88);
-        const fired = sp.ammo().ammo === 0 && sp.transform().form === null;
-        return { ok: fired, at: performance.now() };
+        if (sp.starburst().phase !== 'charged') return { ok: false, reason: 'fill-failed' };
+        if (sp.ammo().ammo !== 0) return { ok: false, reason: 'crystal-desync' };
+        // SP（C 鍵）點按 → 0.3s 蓄爆 → 引爆；headless 幀取樣錯拍下週期重按至相位歸零。
+        let spGuard = 0;
+        while (sp.starburst().phase !== 'none' && spGuard < 12) {
+          dispatch('keydown', 67);
+          await wait(120);
+          dispatch('keyup', 67);
+          await wait(400);
+          spGuard += 1;
+        }
+        const fired = sp.starburst().phase === 'none' && sp.ammo().ammo === 0;
+        return fired ? { ok: true, at: performance.now() } : { ok: false, reason: 'sp-failed' };
       } catch {
         return { ok: false, reason: 'inject-error' };
       } finally {

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+169
+> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+170
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-probe-migration
+- 原因：B 長按星暴退場後 #812 探針舊注入（長按 0.9s）失效，bot 也不會運用蓄能星
+- 解法：探針改混味 5 槽結晶＋SP（C）引爆注入；driver 加持星擇機引爆（走動同屏 ≥2 或飢荒、魔王戰即用，3s 節流）
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-teaching-migration
