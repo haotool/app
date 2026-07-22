@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+167
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+168
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-e2e-matrix
+- 原因：輸入層 SSOT 重寫需 e2e 行為守門——SP 三態/誤放歸零/跨關持有/EX 清除/C 鍵映射全無覆蓋
+- 解法：新增 t3.spec 五案（觸控＋桌機分 project）並遷移 smoke/v9 星暴變身案至 §109 語意，全數綠
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-input-ssot-core

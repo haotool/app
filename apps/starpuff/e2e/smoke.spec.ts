@@ -13,6 +13,7 @@ declare global {
       skipToBoss: () => void;
       spawn: (kind: string, x?: number, y?: number) => void;
       ammo: () => { ammo: number; flavor: string };
+      starburst: () => { phase: string };
       probe: () => { x: number; scrollX: number };
       quota: () => { killCount: number; killQuota: number };
       gotoLevel?: (levelId: number) => void;
@@ -68,11 +69,12 @@ test('點開始進入 GameScene：遊戲運行且 HUD 狀態就緒', async ({ pa
   await startGame(page);
   // HUD 由 PLAYER_DAMAGED/AMMO_CHANGED 事件驅動；初始狀態以 debug hook 驗證。
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
-  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵（無文字節點）。
+  // 橫式手柄：左搖桿區 + 右側 A/B 兩圓鍵 + SP 情境鍵（§109，預設隱藏；全數無文字節點）。
   await expect(page.locator('#joy-zone')).toBeVisible();
   const buttons = page.locator('[data-btn]');
-  await expect(buttons).toHaveCount(2);
-  await expect(buttons.first()).toHaveText('');
+  await expect(buttons).toHaveCount(3);
+  for (let i = 0; i < 3; i += 1) await expect(buttons.nth(i)).toHaveText('');
+  await expect(page.locator('[data-btn="sp"]')).not.toHaveClass(/is-sp-on/);
   await page.waitForTimeout(1500);
   expect(errors).toEqual([]);
 });
@@ -192,21 +194,33 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
   expect(errors).toEqual([]);
 });
 
-test('星暴：受控吞滿三槽後長按 B，清場清彈匣（§23）', async ({ page }) => {
+// 舊語意（§23）：滿三槽長按 B 0.8s 觸發星暴 → 新語意（§109）：滿五槽自動結晶成
+// 蓄能星（彈匣清空），按 SP（鍵盤 C）點按引爆——B 長按不再觸發星暴（#812 誤放歸零）。
+test('星暴 2.0：吞滿五槽自動結晶，SP 點按引爆清場（§109）', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);
-  // 長按吸入期間依序餵怪吞滿三槽；序列避開 §46 配方對（jelly+zappy、zappy+jelly 無配方）。
+  // 長按吸入期間依序餵怪吞滿五槽；jelly/zappy 交錯避開 §46 配方與同系連吞升級。
   await page.keyboard.down('X');
   await page.waitForTimeout(250);
-  await page.evaluate(() => window.__sp.spawn('jelly', 185, 340));
-  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(1);
-  await page.evaluate(() => window.__sp.spawn('zappy', 190, 345));
-  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(2);
-  await page.evaluate(() => window.__sp.spawn('jelly', 190, 340));
-  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 }).toBe(3);
-  // 滿彈匣持續長按 0.8s → 星暴：清空彈匣（清場斷言以彈匣歸零 + 零錯誤為準）。
-  await expect.poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 4000 }).toBe(0);
+  const feed = ['jelly', 'zappy', 'jelly', 'zappy'] as const;
+  for (let i = 0; i < feed.length; i += 1) {
+    await page.evaluate((kind) => window.__sp.spawn(kind, 188, 340), feed[i] as string);
+    await expect
+      .poll(() => page.evaluate(() => window.__sp.ammo().ammo), { timeout: 8000 })
+      .toBe(i + 1);
+  }
+  // 第五槽入匣瞬間自動結晶：彈匣清空、蓄能星生成（不觸發星暴、場上不清場）。
+  await page.evaluate(() => window.__sp.spawn('jelly', 188, 340));
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
+    .toBe('charged');
+  expect(await page.evaluate(() => window.__sp.ammo().ammo)).toBe(0);
   await page.keyboard.up('X');
+  // SP（鍵盤 C）點按 → 0.3s 蓄爆 → 引爆清場；蓄能星消失。
+  await page.keyboard.press('C', { delay: 120 });
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.starburst().phase), { timeout: 8000 })
+    .toBe('none');
   await page.waitForTimeout(800);
   expect(errors).toEqual([]);
 });
