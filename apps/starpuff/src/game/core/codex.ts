@@ -67,7 +67,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     kind: 'shelly',
     textureKey: 'minion-shelly',
     nameZh: '殼殼',
-    behavior: '受擊縮殼旋轉衝刺，暈眩時吞下得殼盾星',
+    behavior: '受擊縮殼旋轉衝刺，衝刺結束會暈眩——趁暈眩吸入得殼盾星',
     inhalable: false,
     conditional: true,
   },

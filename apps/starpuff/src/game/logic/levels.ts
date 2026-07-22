@@ -208,6 +208,8 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    // #811 殼殼首遇教學（機制 brief §6.1：L2 首教殼盾＋暈窗吞）。
+    hint: '殼殼衝刺後會暈眩——趁暈眩吸入！',
   },
   {
     id: 3,

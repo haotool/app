@@ -354,11 +354,17 @@ export async function runTelegraphProbe(
 // ===== #811 殼殼吞食成功率 =====
 // 場面控制：chompy 填滿同屏上限凍結自然生成（v18 stall 手法）→ 可吸計數轉移
 // 即為殼殼暈眩窗精確邊界；全程保 ammo≥1 抑制飢荒救援補生污染。
-export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs = 900_000 }) {
+// 儀器校正（T2）：stun 停位受牆反彈影響左右側皆可能——吸入朝殼殼實際方位推進
+// （原固定向右致左側案例必失敗，量測值系統性低估）；吸入窗上限由 stunWindowMs
+// 注入（SHELLY_FSM.stunMs SSOT），避免窗長調參後被舊硬編上限截斷。
+export async function runSwallowProbe(
+  page,
+  { runs = 100, spinRuns = 30, capMs = 900_000, stunWindowMs = 1000 },
+) {
   const levelId = 1;
   const attemptOnce = async (arm) =>
     page.evaluate(
-      async ({ mode }) => {
+      async ({ mode, windowCapMs }) => {
         const sp = window.__sp;
         const dispatch = (type, keyCode) => {
           const ev = new KeyboardEvent(type, { bubbles: true, cancelable: true });
@@ -387,9 +393,20 @@ export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs =
             guard += 1;
           }
           const px = sp.probe().x;
+          // 目標鎖最近隻（殘留舊殼殼防污染）；追擊/跟隨共用。
+          const nearestShelly = () => {
+            const now = sp.probe().x;
+            return (sp.enemies?.() ?? [])
+              .filter((e) => e.kind === 'shelly')
+              .reduce(
+                (best, e) =>
+                  best === null || Math.abs(e.x - now) < Math.abs(best.x - now) ? e : best,
+                null,
+              );
+          };
           sp.spawn('shelly', px + 150, 330);
           await wait(320);
-          // 面向右、單發命中 → walk 首發轉縮殼（spin 無敵 1.5s → stun 可吸 1s）。
+          // 面向右、單發命中 → walk 首發轉縮殼（spin 無敵 1.5s → stun 可吸 1.6s）。
           await tap(39, 70);
           const fireAt = performance.now();
           await tap(88, 55);
@@ -407,25 +424,52 @@ export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs =
             return { arm: 'spin', swallowed, windowSeen: true };
           }
           // 正確時機：等可吸轉移 0→1（凍結場上唯一可吸＝殼殼 stun 邊界）。
+          // 衝刺期跟隨（保距 110px）：真人「趁暈眩吸入」的前提是追著看它暈——
+          // 站樁等暈才起步是最劣策略，會把遠停位案例誤計為時機失敗。
           let stunEnterAt = null;
+          let chaseKey = null;
+          const chase = () => {
+            const s = nearestShelly();
+            const now = sp.probe().x;
+            const want = s === null || Math.abs(s.x - now) < 110 ? null : s.x < now ? 37 : 39;
+            if (want === chaseKey) return;
+            if (chaseKey !== null) dispatch('keyup', chaseKey);
+            if (want !== null) dispatch('keydown', want);
+            chaseKey = want;
+          };
           while (performance.now() - fireAt < 2600) {
+            chase();
             if (sp.alive().inhalable > 0) {
               stunEnterAt = performance.now();
               break;
             }
             await wait(30);
           }
+          if (chaseKey !== null) dispatch('keyup', chaseKey);
           if (stunEnterAt === null) {
             if (sp.ammo().ammo === 0) sp.grantStar('jelly');
             return { arm: 'stun', swallowed: false, windowSeen: false };
           }
-          // 立即長按吸入（ammo 0 → press='none' 純吸入）＋朝目標推進。
+          // 立即長按吸入（ammo 0 → press='none' 純吸入）＋朝殼殼實際方位推進
+          //（正確時機操作＝面向目標吸；停位左右側皆可能，儀器不得假設恆右）。
+          // 目標鎖最近隻（殘留舊殼殼防污染）；追到近距即鬆方向鍵（真人走近後停住吸，
+          // 機械持鍵過衝會反向遠離）。
           const ammoBefore = sp.ammo().ammo;
+          let moveKey = null;
+          const steer = () => {
+            const s = nearestShelly();
+            const px = sp.probe().x;
+            const want = s === null || Math.abs(s.x - px) < 70 ? null : s.x < px ? 37 : 39;
+            if (want === moveKey) return;
+            if (moveKey !== null) dispatch('keyup', moveKey);
+            if (want !== null) dispatch('keydown', want);
+            moveKey = want;
+          };
           dispatch('keydown', 88);
-          dispatch('keydown', 39);
           let swallowed = false;
           let windowClosedAt = null;
-          while (performance.now() - stunEnterAt < 1400) {
+          while (performance.now() - stunEnterAt < windowCapMs + 400) {
+            steer();
             if (sp.ammo().ammo > ammoBefore) {
               swallowed = true;
               break;
@@ -436,7 +480,7 @@ export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs =
             }
             await wait(30);
           }
-          dispatch('keyup', 39);
+          if (moveKey !== null) dispatch('keyup', moveKey);
           dispatch('keyup', 88);
           if (sp.ammo().ammo === 0) sp.grantStar('jelly');
           return {
@@ -450,7 +494,7 @@ export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs =
           return { arm: mode, swallowed: false, windowSeen: false, error: true };
         }
       },
-      { mode: arm },
+      { mode: arm, windowCapMs: stunWindowMs },
     );
 
   const resetField = async () => {
@@ -458,9 +502,10 @@ export async function runSwallowProbe(page, { runs = 100, spinRuns = 30, capMs =
     await page.evaluate(() => {
       const sp = window.__sp;
       sp.grantInvuln(30_000);
-      // 凍結生成：同屏上限填滿不可吸紮根怪（L1 cap=3）；擺遠避免堵住吞食走位。
+      // 凍結生成：同屏上限填滿不可吸紮根怪（L1 cap=3）；擺遠避免堵住吞食走位
+      //（殼殼衝刺可達 ~480px，520 仍在追擊帶會成 immovable 牆——上修至 900+）。
       const px = sp.probe().x;
-      for (let i = 0; i < 3; i += 1) sp.spawn('chompy', px + 520 + i * 110, 330);
+      for (let i = 0; i < 3; i += 1) sp.spawn('chompy', px + 900 + i * 110, 330);
       sp.grantStar('jelly');
     });
     await sleep(400);

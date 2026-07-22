@@ -53,6 +53,7 @@ const {
   sequenceEntropyBits,
 } = difficulty;
 const { canInhale } = await import('../src/game/logic/combat.ts');
+const { SHELLY_FSM } = await import('../src/game/logic/enemyFsm.ts');
 
 const baseSha = (() => {
   try {
@@ -301,6 +302,8 @@ async function runProbe(page, name, level, overrides = {}) {
     const result = await runSwallowProbe(page, {
       runs: overrides.runs ?? Number(opt('runs', '100')),
       spinRuns: overrides.spinRuns ?? Number(opt('spin-runs', '30')),
+      // 吸入窗上限跟隨 FSM SSOT：暈眩窗調參不得被儀器舊硬編上限截斷。
+      stunWindowMs: SHELLY_FSM.stunMs,
     });
     return {
       probe: 'swallow',

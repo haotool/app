@@ -57,7 +57,7 @@ const CHOMPY_TRIGGER_PX = 120;
 const CHOMPY_WINDUP_MS = 400;
 export const CHOMPY_BITE_MS = 300;
 const CHOMPY_COOL_MS = 1200;
-// shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 1.5s（無敵、碰牆反彈）→ 暈眩 1s 可吸可殺（§30）。
+// shelly：巡邏走動；首發受擊 → 縮殼旋轉衝刺 1.5s（無敵、碰牆反彈）→ 暈眩 1.6s 可吸可殺（§30/#811）。
 // 三態時序由 logic/enemyFsm.ts 決策；此處僅保留呈現層速度/縮放/擺動參數。
 export const SHELLY_WALK_SPEED = 60;
 export const SHELLY_SPIN_SPEED = 320;
@@ -65,6 +65,12 @@ const SHELLY_SPIN_OMEGA = 0.02;
 export const SHELLY_SHELL_SCALE = 0.82;
 const SHELLY_WADDLE_OMEGA = 0.008;
 const SHELLY_WADDLE_RAD = 0.08;
+// #811 暈眩視覺：頭頂眩星公轉軌道與殼體閃白節拍（形狀＋明滅雙訊號，色弱不依賴 tint）。
+const SHELLY_STUN_STAR_OFFSET_Y = 34;
+const SHELLY_STUN_STAR_ORBIT_X = 14;
+const SHELLY_STUN_STAR_ORBIT_Y = 5;
+const SHELLY_STUN_STAR_OMEGA = 0.008;
+const SHELLY_STUN_FLASH_MS = 130;
 // zappy：緩慢懸浮追蹤；每 3s 放電環（半徑 70、前搖 0.5s 閃爍預警）（§30）。
 const ZAPPY_SPEED = 40;
 const ZAPPY_BOB_SPEED = 14;
@@ -211,10 +217,18 @@ function updateShelly(
     // 旋轉期滿：停速著灰進暈眩（可吸/可擊殺窗）。
     body.setVelocityX(0);
     sprite.setTint(0xcfcfcf);
+    // #811 暈眩視覺：頭頂眩星（掛 warnRing 槽——池回收/擊殺/吞下路徑既有清理）。
+    const star = ctx.scene.add
+      .image(sprite.x, sprite.y - SHELLY_STUN_STAR_OFFSET_Y, 'fx-star')
+      .setDisplaySize(16, 16)
+      .setDepth(59);
+    sprite.setData('warnRing', star);
     return;
   }
   if (tick.entered === 'walk') {
-    // 暈眩期滿：復原外觀回巡邏。
+    // 暈眩期滿：復原外觀回巡邏（眩星回收、tint 模式復位）。
+    clearWindupRing(sprite);
+    sprite.setTintMode(Phaser.TintModes.MULTIPLY);
     sprite.clearTint();
     sprite.setRotation(0);
     const bsx = sprite.getData('baseSX') as number;
@@ -239,8 +253,18 @@ function updateShelly(
       break;
     }
     case 'stun': {
-      // 暈眩 1s（可吸/可擊殺）：昏沉搖擺。
+      // 暈眩 1.6s（可吸/可擊殺）：昏沉搖擺＋閃白脈動＋眩星繞頭公轉（#811）。
       sprite.setRotation(Math.sin(tick.stateMs * 0.02) * 0.25);
+      const bright = Math.floor(tick.stateMs / SHELLY_STUN_FLASH_MS) % 2 === 0;
+      sprite.setTintMode(bright ? Phaser.TintModes.FILL : Phaser.TintModes.MULTIPLY);
+      sprite.setTint(bright ? 0xffffff : 0xcfcfcf);
+      const star = sprite.getData('warnRing') as Phaser.GameObjects.Image | undefined;
+      star?.setPosition(
+        sprite.x + Math.cos(tick.stateMs * SHELLY_STUN_STAR_OMEGA) * SHELLY_STUN_STAR_ORBIT_X,
+        sprite.y -
+          SHELLY_STUN_STAR_OFFSET_Y +
+          Math.sin(tick.stateMs * SHELLY_STUN_STAR_OMEGA) * SHELLY_STUN_STAR_ORBIT_Y,
+      );
       break;
     }
     default: {

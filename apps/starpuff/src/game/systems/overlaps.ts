@@ -1,6 +1,13 @@
 import type Phaser from 'phaser';
 import { ENEMY, INHALE } from '../core/config';
-import { isContactHarmless, isInInhaleRange } from '../logic/combat';
+import {
+  inhaleGraceUntil,
+  inhalePullSpeed,
+  inhaleRangePx,
+  isContactHarmless,
+  isInInhalePullRange,
+  isInInhaleRange,
+} from '../logic/combat';
 import { SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -36,6 +43,67 @@ export interface CombatOverlapHooks {
   isSettled(): boolean;
   isBossDown(): boolean;
   now(): number;
+}
+
+// 吸入拉近結算（§30/§77/#811）：zone overlap 僅標記候選，錐形收斂、吞下與拉力集中於此。
+// 自 GameScene 抽出（1200 行閘）；殼殼暈眩窗半徑/引力強化由 logic/combat.ts 單點供給。
+const SWALLOW_RANGE_PX = 46;
+const PULL_BASE_SPEED = 160;
+const PULL_GAIN = 2.2;
+const REPEL_SPEED = 260;
+const REPEL_LIFT = -180;
+
+export function applyInhalePull(
+  scene: Phaser.Scene,
+  player: PlayerHandle,
+  enemies: EnemySystem,
+  mouth: { x: number; y: number },
+): void {
+  for (const child of enemies.getGroup().getChildren()) {
+    const enemy = asSprite(child);
+    if (!enemy.getData('inhalePull')) continue;
+    enemy.setData('inhalePull', false);
+    const kind = enemies.kindOf(enemy);
+    if (!kind || !player.isInhaling()) continue;
+    const { x, y } = player.sprite;
+    const facing = player.getFacing();
+    // 錐形收斂＋殼殼近身豁免（#811）：貼腳停位不再是吸不到死角。
+    if (
+      !isInInhalePullRange(
+        kind,
+        x,
+        y,
+        facing,
+        enemy.x,
+        enemy.y,
+        inhaleRangePx(kind, INHALE.rangePx),
+      )
+    ) {
+      continue;
+    }
+    if (!enemies.isInhalable(enemy)) {
+      // 旋轉衝刺中的殼殼為無敵段、半入地 drilly（§47）不受吸力彈開；其餘照舊彈開。
+      if (enemy.getData('state') !== 'spin' && !enemies.isPhasedOut(enemy)) {
+        enemy.setVelocity(REPEL_SPEED * facing, REPEL_LIFT);
+      }
+      continue;
+    }
+    const dist = Math.hypot(enemy.x - mouth.x, enemy.y - mouth.y);
+    if (dist <= SWALLOW_RANGE_PX) {
+      enemies.removeInhaled(enemy);
+      player.swallow(kind);
+      continue;
+    }
+    // 拉力漸增：越接近嘴邊吸力越強（#811 殼殼暈眩窗引力 ×1.5）。
+    // 吸入接觸豁免（§77）：拉力逐幀刷新豁免窗，被吸入中的怪貼身零傷害。
+    enemy.setData('inhaleGraceUntil', inhaleGraceUntil(scene.time.now));
+    scene.physics.moveTo(
+      enemy,
+      mouth.x,
+      mouth.y,
+      inhalePullSpeed(kind, INHALE.rangePx, dist, PULL_BASE_SPEED, PULL_GAIN),
+    );
+  }
 }
 
 export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHooks): void {
