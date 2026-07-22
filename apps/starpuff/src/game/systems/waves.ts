@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { ENEMY_SIZE, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent, offGameEvent, onGameEvent } from '../core/events';
 import type { EnemyKind, LevelId } from '../core/types';
 import {
@@ -31,6 +32,10 @@ export interface WaveSpawnHooks {
 }
 
 const SPAWN_MARGIN_X = 48;
+// 主地面頂（沿 stage.ts 派生式）。bubbla 重力關閉、生成 y 即潛伏錨點（baseY）——
+// 必須落於地面線（#821）；沿用重力怪的高空落入值會令個體懸空漂浮約 70px。
+const GROUND_TOP = VIEW.height - 80;
+export const BUBBLA_SPAWN_Y = GROUND_TOP - ENEMY_SIZE / 2;
 // 生成高度按品種（橫式地面頂 y=400）：floaty 定高飄移（240 在跳躍＋拍翅可達範圍內）；
 // puffy 高空下飄（§16）；其餘自地面上方落入。
 const SPAWN_Y: Record<EnemyKind, number> = {
@@ -48,8 +53,8 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   boomy: 330,
   magno: 330,
   mirri: 330,
-  // v11（§73）：bubbla 貼地潛伏、splatta 地面緩走。
-  bubbla: 330,
+  // v11（§73）：bubbla 貼地潛伏（地面派生錨點）、splatta 地面緩走。
+  bubbla: BUBBLA_SPAWN_Y,
   splatta: 330,
   // v12（§80）：twinkla 空中星靈、cometa 高處巡游（俯衝起點高於玩家帶）。
   twinkla: 240,

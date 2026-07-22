@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+156
+> 本次分數變化：+5（reward 5、penalty 0、neutral 1）｜累計總分：+161
 
 ## 新增模板（4 行）
 
@@ -27,6 +27,31 @@
 - ID：neutral-starpuff-t1-difficulty-axes-ssot
 - 原因：#818 三軸難度分與驗收門檻散落人工評分與 PM 文檔，量化工具缺單點可算來源
 - 解法：新增 logic/difficulty.ts 純函式 SSOT（錨定校準三軸、跳越運動學、分級 bot 參數、驗收門檻表）＋19 項 vitest 錨定行重現測試
+
+- 日期：2026-07-22
+- ID：reward-starpuff-824-walkthrough-l20-drift-fix
+- 原因：WALKTHROUGH L20 兩處與 voidraFsm 現行值漂移——段重試誤稱「血量保留」（實為 resetToPhase 重設至段門檻 70%/40%）、P2 誤稱約 90 秒（實為 durationMs 40s 時間驅動入 P3）
+- 解法：以實作為真相修正兩處文案（門檻重設語意＋表定 40 秒、90 秒改註記為含段重試的經歷時長）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-823-hud-dom-button-click-activation
+- 原因：addDomButton 僅綁 pointerdown（殼層 touchstart preventDefault 吞合成 click），鍵盤/螢幕閱讀器的 click activation 無法觸發暫停/靜音（WCAG 2.1.1 不符）
+- 解法：補 click 監聽走鍵盤/AT 路徑，pointerup 350ms 短窗抑制指標合成 click 防雙觸發；e2e 補鍵盤 Enter/Space、真 click 鏈與 tap 觸控單次觸發案
+
+- 日期：2026-07-22
+- ID：reward-starpuff-822-cometa-recover-baseY-gate
+- 原因：cometa recover→glide 純時間切換（900ms 爬升 117px 補不回 dash 最深 252px），深俯衝後自低空直接再鎖定俯衝，壓縮 telegraph 迴避窗
+- 解法：tickCometa 增 atBaseY 閘——時滿且回抵航高才切 glide，recover 分支持續爬升至夾回 baseY；enemyFsm.test.ts 鎖低空重俯衝抑制
+
+- 日期：2026-07-22
+- ID：reward-starpuff-821-bubbla-ground-derived-anchor
+- 原因：bubbla 重力關閉、生成 y 即永久潛伏錨點，waves 生成表沿用重力怪高空落入值 330 致補生個體懸空漂浮約 70px（地面頂 400）
+- 解法：錨點改由地面派生（GROUND_TOP − ENEMY_SIZE/2，ENEMY_SIZE 上收 config SSOT），waves.test.ts 鎖身底貼地與其他品種零行為改變
+
+- 日期：2026-07-22
+- ID：reward-starpuff-820-star-pool-derived-cap
+- 原因：星彈池 maxSize 硬編 8 低於滿匣散射理論同時需求 9（maxAmmo 3 × scatter 3），扣彈先於生成致第 9 發被靜默吞掉
+- 解法：池上限改由 config 派生（maxAmmo × 最大散射數）並新增滿匣碎鑽星連射回歸測試鎖全數生成與彈藥計數一致
 
 - 日期：2026-07-21
 - ID：penalty-starpuff-v18-posttest-newmix-batch-omitted
@@ -2022,3 +2047,7 @@
 - ID：reward-starpuff-v17-gamescene-strangler-debt-train
 - 原因：GameScene 2121 行單檔承載魔王工廠/星彈結算/碰撞接線/彩蛋/toast 等八類職責，三席維護性評分 5/7/8 觸發 Blocking；events 契約與 waves 序列零測試。
 - 解法：六單元 strangler 拆解（bossFactory/starCombat/starSteering/overlaps/eggTracker/toasts，每步 characterization 先行、獨立 commit 可 revert）收斂至 1196 行，補 GameEvents 契約測試與 apps/starpuff max-lines error 1200 守門，vitest 580→650、Playwright 92 全綠零行為變更。
+- 日期：2026-07-22
+- ID：neutral-starpuff-t2a-changeset-release-intent
+- 原因：T2a 五項修復缺 changeset，發版 intent 未落盤即開 PR 會漏升版。
+- 解法：補 @app/starpuff patch changeset（使用者可感知修復描述），隨列車入 PR。
