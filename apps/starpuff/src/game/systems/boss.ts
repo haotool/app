@@ -68,9 +68,11 @@ const HOMING_TRACK_SPEED = 120;
 const HOMING_STRAIGHT_SPEED = 300;
 const HOMING_TINT = 0xffd966;
 // 招式預警時長：rain 落點標記、slam 蓄力前搖、dash 閃白抖動。
+// #809：dash 前搖 300→600ms——500ms 反應玩家對貼身衝撞不可讀（<600ms 可讀性紅線），
+// 貼牆角情境的「必中」體感主因之一；閃白由兩拍改三拍填滿加長窗。
 const RAIN_TELEGRAPH_MS = 500;
 const SLAM_WINDUP_MS = 350;
-const DASH_WINDUP_MS = 300;
+const DASH_WINDUP_MS = 600;
 const SLAM_WINDUP_TINT = 0xff9d9d;
 
 // 入場運鏡（§17）：黑幕淡入 → 推近王座 1.2s → 三段彈跳落座 → 吼叫 → 相機復位後開戰。
@@ -337,9 +339,12 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     side = side === 'right' ? 'left' : 'right';
     const targetX = sideX(side);
     sprite.setFlipX(side === 'left');
-    // 前搖 0.3s：面向衝刺側白閃兩次 + 原地抖動，之後才衝刺。
+    // 前搖 0.6s（#809）：面向衝刺側白閃三拍 + 原地抖動填滿窗，之後才衝刺。
     flashWhite();
-    delay(150, () => {
+    delay(200, () => {
+      if (!dying) flashWhite();
+    });
+    delay(400, () => {
       if (!dying) flashWhite();
     });
     scene.tweens.add({
@@ -347,7 +352,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       x: sprite.x + (targetX > sprite.x ? 6 : -6),
       duration: 25,
       yoyo: true,
-      repeat: 5,
+      repeat: 11,
     });
     delay(DASH_WINDUP_MS, () => {
       if (dying) return;

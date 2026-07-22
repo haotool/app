@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+164
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+165
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-809-boss-jump-feel
+- 原因：#809 T1 證明五王皆運動學可越（拍翅 211px、機械逃脫 100%）且 low bot（500ms 注入）逃脫率亦 100%——「必中」體感為知識缺口（不知拍翅可越王）＋衝撞前搖 300/550ms 低於 600ms 反應紅線
+- 解法：前室一次性反制提示浮字（入 arena 記憶不重複）＋jellord dash 前搖 300→600ms（白閃三拍）＋prismix pincer 550→600ms；提示卡 e2e 綠、L12 貼身壓迫 ticks 2.8→3.4 持平、逃脫率 100% 維持；禁改體型/場地紅線遵守
 
 - 日期：2026-07-22
 - ID：reward-starpuff-812-starburst-rescue-reach

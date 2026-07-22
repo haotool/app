@@ -155,6 +155,7 @@ declare global {
       meteor: () => { falling: number; embers: number; telegraphs: number } | null;
       damageBossAt: (amount: number, x: number, y: number) => void;
       bossState: () => { phase: string; state: string } | null;
+      bossHint: () => string;
       grantInvuln: (ms: number) => void;
       achievementToast: () => string;
     }>;
@@ -289,6 +290,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // 魔王 FSM 觀測與受控無敵窗（自然循環觀測案存活用）。
     damageBossAt: (amount, x, y) => gameScene().damageBossAtPoint(amount, x, y),
     bossState: () => gameScene().bossDebugState(),
+    // #809 觀測點：前室反制提示浮字（canvas 文字不可由 DOM 查詢）。
+    bossHint: () => gameScene().bossHintText(),
     grantInvuln: (ms) => gameScene().grantInvuln(ms),
     // v15 觀測點（§94 e2e）：最近成就 toast 文案（canvas 文字不可由 DOM 查詢）。
     achievementToast: () => gameScene().lastAchievementToast,

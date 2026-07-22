@@ -38,7 +38,8 @@ export const PRISMIX = {
   // 下限 SSOT＝difficulty.AUDIT_THRESHOLDS.spikeTelegraphMinMs）。
   pillarTelegraphMs: 950,
   beamTelegraphMs: 500,
-  pincerTelegraphMs: 550,
+  // #809：雙生夾擊為衝撞型前搖，對齊 ≥600ms 可讀性紅線（550→600）。
+  pincerTelegraphMs: 600,
   rainTelegraphMs: 600,
 } as const;
 

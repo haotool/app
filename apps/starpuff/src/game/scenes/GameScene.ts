@@ -555,6 +555,11 @@ export class GameScene extends Phaser.Scene {
     return this.boss.getDebugState?.() ?? null;
   }
 
+  // e2e 觀測點（#809）：前室反制提示浮字現值（非魔王關/已讀回空字串）。
+  bossHintText(): string {
+    return this.bossRoom?.hintText() ?? '';
+  }
+
   // e2e 鉤子（§83）：受控無敵窗——自然循環觀測案存活用（僅測試環境掛載）。
   grantInvuln(ms: number): void {
     if (this.scene.isActive()) this.player.grantInvulnerability(ms);
