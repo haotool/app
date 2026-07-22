@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { magnetPull } from '../logic/enemyFsm';
+import { TRANSFORM_FORMS } from '../logic/transform';
 import {
   BOSS_AIM_ASSIST,
   HOMING_RANGE_PX,
@@ -105,7 +106,10 @@ export function createStarSteering(hooks: StarSteeringHooks): StarSteering {
   }
 
   // 磁場吸偏（§59 magno field）：域內玩家星彈逐幀被拉向磁極獸；數學下沉 logic/enemyFsm。
+  // 雷化磁力域免疫（§110）：磁彎折不作用（L8/L11 優勢解）。
   function steerMagnetizedStars(deltaMs: number): void {
+    const form = hooks.player().getTransformState().form;
+    if (form && TRANSFORM_FORMS[form].magnetImmune) return;
     const magnos: { x: number; y: number }[] = [];
     for (const child of hooks.enemies().getGroup().getChildren()) {
       if (!child.active || hooks.enemies().kindOf(child) !== 'magno') continue;

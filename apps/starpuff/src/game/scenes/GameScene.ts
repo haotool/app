@@ -104,6 +104,8 @@ const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
 // 星味首遇提示（§46/§47）：seen 僅存 session 記憶體（跨關卡重試保留、重載重置），
 // 不動 save schema。
 const seenFlavorHints = new Set<string>();
+// SP 變身教學浮字（§110）：變身徽章首次浮現時一次性教學，同 session 慣例。
+let taughtTransformSp = false;
 
 export class GameScene extends Phaser.Scene {
   playerHp: number = PLAYER.maxHp;
@@ -458,7 +460,13 @@ export class GameScene extends Phaser.Scene {
       this.stage.update(this.controls.state, deltaMs);
       // 下跳指示（§77/§85）：下向意圖（含釋放緩衝窗）＋站台 → 跳鍵變色與箭頭翻轉。
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
-      this.controls.setSpMode(this.player.getSpMode());
+      const spMode = this.player.getSpMode();
+      this.controls.setSpMode(spMode);
+      // SP 變身教學（§110）：資格徽章首次浮現即教一次（L3 供給保證位點自然觸發）。
+      if (!taughtTransformSp && (spMode === 'volt' || spMode === 'gale' || spMode === 'shell')) {
+        taughtTransformSp = true;
+        this.toasts.flavor('同系星彈 ×3！按 SP 鍵立即變身');
+      }
       this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
@@ -807,6 +815,7 @@ export class GameScene extends Phaser.Scene {
     // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、starCombat 結算。
     bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) => {
       if (kind === 'volt-beam') this.starCombat.resolveVoltBeam(x, y, facing);
+      else if (kind === 'volt-discharge') this.starCombat.resolveVoltDischarge(x, y);
       else this.starCombat.resolveGaleLanding(x, y);
     });
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {

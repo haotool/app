@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+175
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+176
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t4-w1-transform-depth
+- 原因：#816 變身存在感低——三形態只是換皮加傷，缺獨特防禦/機動語彙與教學位點（機制 brief §4/§6）
+- 解法：表驅動補齊攻/防/機動三語彙（雷放電反擊+磁免疫／風落地滾翻+滑翔／殼滾殼衝撞+受身入殼），MechanicProgressionMatrix 落 levels.ts（teaches/bossApplies+圖遍歷守門），L3 教學供給+SP 首現浮字
 
 - 日期：2026-07-23
 - ID：neutral-starpuff-t3-detonating-clear-note

@@ -51,6 +51,30 @@ export interface DecorSpec {
   x: number;
 }
 
+// v20 MechanicProgressionMatrix（§110/機制 brief §6.1）：機制×教學鏈 SSOT。
+// teaches＝本關首次教學的機制；bossApplies＝魔王關驗收運用的機制；
+// 教學前置完整性（任一關驗收機制必已在較早關教過）由 levels.test 圖遍歷守門。
+export type MechanicId =
+  | 'inhale-shoot'
+  | 'shell-shield'
+  | 'slam'
+  | 'transform'
+  | 'starburst'
+  | 'updraft'
+  | 'magnet'
+  | 'mirror'
+  | 'warp'
+  | 'tide'
+  | 'vent'
+  | 'lowgrav'
+  | 'meteor';
+
+// v20 教學供給（§110 L3 變身首教）：進關即於固定位點生成的保證同系供給個體。
+export interface DrillSpawnSpec {
+  kind: EnemyKind;
+  x: number;
+}
+
 // 中魔王精英（§48）：關卡中段一隻既有怪變體（tint+scale+血量+FSM 倍率，零新美術）。
 // 擊敗掉落稀有味小怪與回復食物；精英房軟鎖門擊敗開門、60s 逾時自動開門防卡關。
 export interface EliteSpec {
@@ -85,6 +109,10 @@ export interface LevelSpec {
   boss: BossKind | null;
   tutorial: boolean;
   hint?: string;
+  // v20 教學矩陣（§110）：teaches 首教機制／bossApplies 魔王驗收機制／drillSpawns 教學供給。
+  teaches?: readonly MechanicId[];
+  bossApplies?: readonly MechanicId[];
+  drillSpawns?: readonly DrillSpawnSpec[];
   checkpointX?: number;
   // v10 魔王關體系（§69）：anteroomPx 為前室廊道寬（runtime 世界寬＝前室＋動態視寬）；
   // anteroomBuffs 為前室二選一台座、arenaBuff 為高風險位投放（EX 不投放）。
@@ -153,6 +181,7 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: true,
+    teaches: ['inhale-shoot'],
   },
   {
     id: 2,
@@ -210,8 +239,9 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
-    // #811 殼殼首遇教學（機制 brief §6.1：L2 首教殼盾＋暈窗吞）。
+    // #811 殼殼首遇教學（機制 brief §6.1：L2 首教殼盾＋暈窗吞＋下砸）。
     hint: '殼殼衝刺後會暈眩——趁暈眩吸入！',
+    teaches: ['shell-shield', 'slam'],
   },
   {
     id: 3,
@@ -282,6 +312,13 @@ export const LEVELS: readonly LevelSpec[] = [
     tutorial: false,
     // §109 取捨教學（L3 明示一次）：滿匣自動結晶＝選擇星暴線；想變身在 3–4 發按 SP。
     hint: '彈匣集滿 5 發自動結晶成蓄能星；想變身就在同系 3 發時按 SP',
+    // §110 變身首教（機制 brief §6.1）：進關前段保證 3 隻同系（floaty→風化）供給。
+    teaches: ['transform', 'starburst'],
+    drillSpawns: [
+      { kind: 'floaty', x: 460 },
+      { kind: 'floaty', x: 530 },
+      { kind: 'floaty', x: 600 },
+    ],
   },
   {
     id: 4,
@@ -314,6 +351,8 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'jellord',
     tutorial: false,
+    // §110 魔王驗收（機制 brief §6.1）：一區基礎技全驗收＋變身優勢情境（殼化反彈線）。
+    bossApplies: ['inhale-shoot', 'shell-shield', 'slam', 'starburst', 'transform'],
     // 魔王關體系 retrofit（§86／主計畫 §7.1 v11+ 擇機項）：前室 400px＋護盾泡/星力果
     // 二選一；P2 高風險位刷疾風靴（沿 L12 攻壓型魔王組合）。
     anteroomPx: 400,
@@ -382,6 +421,7 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    teaches: ['updraft'],
   },
   // L6 迴聲石廊：Boomy 迴旋彈道主場＋移動平台/彈簧複合陣＋雙精英、全怪種高密度混編。
   {
@@ -498,6 +538,8 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'noctra',
     tutorial: false,
+    // §110 魔王驗收：氣流空戰＋變身優勢情境（風化貼打／雷化斷召，§58 攻略線）。
+    bossApplies: ['updraft', 'transform'],
     // 魔王關體系 retrofit（§86／主計畫 §7.1 v11+ 擇機項）：前室 400px＋護盾泡/疾風靴
     // 二選一；P2 高風險位刷星力果（空戰輸出窗短，沿 L16 組合語彙）。
     anteroomPx: 400,
@@ -569,6 +611,7 @@ export const LEVELS: readonly LevelSpec[] = [
     boss: null,
     tutorial: false,
     hint: '同系星彈集滿 3 發，站在地面按 SP 鍵星化變身',
+    teaches: ['magnet'],
   },
   // L9 鏡影迴廊：Mirri 主場反射主題＋移動平台複合陣＋雙精英；通關提示 EX 入口解鎖。
   {
@@ -647,6 +690,7 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    teaches: ['mirror'],
   },
   // v10 三區完結（§66）——L10 幽光晶湖：星門折躍首發（三區新機制 2/2）×鏡蟲潛行混編；
   // 折躍高台（y=208）僅星門可達；第二對星門通向西岸補給灣（ammo 破磚 ×2）。
@@ -718,6 +762,7 @@ export const LEVELS: readonly LevelSpec[] = [
     boss: null,
     tutorial: false,
     hint: '跳入發光星環可折躍傳送（捷徑，主線不依賴）',
+    teaches: ['warp'],
   },
   // L11 磁晶險徑：磁力域（重用 v9 Magno）×星門折躍（重用 L10）複合考驗關（卡點一）；
   // 雙精英＋中點 checkpoint 首發（§67）。
@@ -829,6 +874,8 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'prismix',
     tutorial: false,
+    // §110 魔王驗收：磁力域（雷化免疫優勢）＋鏡性反制＋變身優勢情境。
+    bossApplies: ['magnet', 'mirror', 'transform'],
     // 魔王關體系（§69）：前室 400px＋護盾泡/星力果二選一；P2 高風險位刷疾風靴。
     anteroomPx: 400,
     anteroomBuffs: ['shield', 'power'],
@@ -901,6 +948,7 @@ export const LEVELS: readonly LevelSpec[] = [
     boss: null,
     tutorial: false,
     hint: '熱泉噴發時乘蒸汽升空（捷徑，主線不依賴）',
+    teaches: ['vent'],
   },
   // L14 熔糖河谷：糖漿潮汐首發（關卡級機制，本區新機制 2/2）——漲潮強制走平台層、
   // 退潮窗主地面恆可通行（dry-window 55%，等窗推進為合法保底 §0.1-6）。
@@ -970,6 +1018,7 @@ export const LEVELS: readonly LevelSpec[] = [
     // 糖漿潮汐（§71）：週期 9s、漲潮佔比 45%、漲頂 y=352；漲潮前 1s 冒泡 telegraph。
     tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
     hint: '漲潮前河面冒泡，退潮窗地面可通行',
+    teaches: ['tide'],
   },
   // L15 沸糖窯道：潮汐×噴口複合 gauntlet（純組合零新造，▲卡點二）——漲潮期最快線為
   // 噴口浮跳鏈（非必需），主地面每週期退潮窗恆可通行；雙精英＋中點 checkpoint（§67 沿用）。
@@ -1089,6 +1138,8 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'syrona',
     tutorial: false,
+    // §110 魔王驗收：潮汐讀拍＋噴口乘流（登頂皇冠）＋變身優勢情境。
+    bossApplies: ['tide', 'vent', 'transform'],
     // 魔王關體系（§69 沿用）：前室 400px＋護盾泡/疾風靴二選一；P2 噴口上方刷星力果。
     anteroomPx: 400,
     anteroomBuffs: ['shield', 'swift'],
@@ -1160,6 +1211,7 @@ export const LEVELS: readonly LevelSpec[] = [
     tutorial: false,
     gravityScale: 0.55,
     hint: '低重力星域：跳得更高、飄得更遠',
+    teaches: ['lowgrav'],
   },
   // L18 流星原野：流星雨首發（關卡級環境彈幕，本區新機制 2/2）×低重力閃避——
   // 預警落點→隕星墜落（可擊碎）；地面路徑恆可達（主線不依賴 §0.1-6）。
@@ -1230,6 +1282,7 @@ export const LEVELS: readonly LevelSpec[] = [
     gravityScale: 0.55,
     meteor: { intervalMs: 4500, waveSize: 2 },
     hint: '流星落點有預警圈，離開圈內就安全',
+    teaches: ['meteor'],
   },
   // L19 星核前庭：全區機制回收終試（純組合零新造，▲卡點三）——星門折躍＋熱泉噴口＋
   // 輕低重力＋流星雨四機制分段客串；唯一六同屏關；同房雙精英「雙生鏡衛」變式。
@@ -1353,6 +1406,8 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'voidra',
     tutorial: false,
+    // §110 魔王驗收：低重力＋流星讀影（P2 生存段）＋變身優勢情境。
+    bossApplies: ['lowgrav', 'meteor', 'transform'],
     // 魔王關體系（§69 沿用）：前室 400px＋星力果/疾風靴二選一；P3 高風險位刷護盾泡
     //（P2 為生存段不投放，arenaBuffPhase 改 P3）。
     anteroomPx: 400,

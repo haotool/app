@@ -14,22 +14,28 @@ export const TRANSFORM = {
   requiredStars: 3,
 } as const;
 
-// 形態規格表（表驅動，禁止散落 scene）：每形態至少改變 移動/攻擊/防禦 兩項。
+// 形態規格表（表驅動，禁止散落 scene）：每形態 攻/防/機動 三語彙（§110 加深，≤3 守門）。
 export interface TransformFormSpec {
   nameZh: string;
   tint: number;
   moveSpeedMul: number;
-  // 攻擊：volt 帶電接觸傷害＋鏈電束；gale 穿透風刃＋落地衝擊；shell 下砸範圍倍率。
+  // 攻擊：volt 帶電接觸傷害＋鏈電束；gale 穿透風刃＋落地衝擊；shell 下砸範圍倍率＋滾殼衝撞。
   contactDamage: number;
   beam: boolean;
   windBlade: boolean;
   landingImpact: boolean;
   slamRadiusMul: number;
-  // 防禦：shell 受傷減半＋反彈彈幕。
+  chargeDash: boolean;
+  // 防禦：volt 受擊放電反擊次數；gale 落地滾翻免傷窗；shell 受身入殼次數＋受傷減半＋反彈。
+  dischargeCharges: number;
+  landingRollMs: number;
+  tuckCharges: number;
   halveDamage: boolean;
   reflectProjectiles: boolean;
-  // 移動：gale 近自由飛行（拍翅無上限＋升力增強）。
+  // 機動：volt 磁力域免疫（磁彎折不作用，L8/L11 優勢解）；gale 近自由飛行＋滑翔。
+  magnetImmune: boolean;
   freeFlight: boolean;
+  glide: boolean;
 }
 
 export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
@@ -42,9 +48,15 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     windBlade: false,
     landingImpact: false,
     slamRadiusMul: 1,
+    chargeDash: false,
+    dischargeCharges: 2,
+    landingRollMs: 0,
+    tuckCharges: 0,
     halveDamage: false,
     reflectProjectiles: false,
+    magnetImmune: true,
     freeFlight: false,
+    glide: false,
   },
   gale: {
     nameZh: '風化',
@@ -55,9 +67,15 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     windBlade: true,
     landingImpact: true,
     slamRadiusMul: 1,
+    chargeDash: false,
+    dischargeCharges: 0,
+    landingRollMs: 300,
+    tuckCharges: 0,
     halveDamage: false,
     reflectProjectiles: false,
+    magnetImmune: false,
     freeFlight: true,
+    glide: true,
   },
   shell: {
     nameZh: '殼化',
@@ -68,9 +86,15 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     windBlade: false,
     landingImpact: false,
     slamRadiusMul: 2,
+    chargeDash: true,
+    dischargeCharges: 0,
+    landingRollMs: 0,
+    tuckCharges: 1,
     halveDamage: true,
     reflectProjectiles: true,
+    magnetImmune: false,
     freeFlight: false,
+    glide: false,
   },
 } as const;
 
@@ -104,6 +128,39 @@ export const SHELL_REFLECT = {
   speed: 340,
 } as const;
 
+// 雷化受擊放電反擊（§110）：實扣傷害瞬間對半徑內小怪放電，每形態期 2 次。
+export const VOLT_DISCHARGE = {
+  radiusPx: 120,
+  damage: 1,
+} as const;
+
+// 風化滑翔（§110）：空中按住跳鍵＝緩降（下落速度帽）＋水平漂移 ×1.6。
+export const GALE_GLIDE = {
+  fallCapVy: 90,
+  driftMul: 1.6,
+} as const;
+
+// 風化落地滾翻（§110）：落地瞬間自動免傷窗（值入 spec.landingRollMs=300）。
+
+// 殼化受身入殼（§110）：受擊自動入殼全免＋短免傷，每形態期 1 次。
+export const SHELL_TUCK = {
+  invulnMs: 500,
+} as const;
+
+// 殼化滾殼衝撞（§110）：B 點按前滾衝撞；衝撞中按跳＝低弧跳保持衝撞態。
+export const SHELL_CHARGE = {
+  speed: 400,
+  durationMs: 700,
+  damage: 2,
+  cooldownMs: 900,
+  hopVy: -260,
+} as const;
+
+// 滑翔緩降帽（§110 純函式）：僅下落段收斂至帽值，上升段不干預。
+export function glideFallVy(vy: number): number {
+  return vy > GALE_GLIDE.fallCapVy ? GALE_GLIDE.fallCapVy : vy;
+}
+
 // 觸發味 → 形態對應：gusty 吞入歸 floaty 味（§52），自然併入風化來源。
 const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
   zappy: 'volt',
@@ -129,14 +186,23 @@ export function eligibleForm(magazine: readonly MagazineSlot[]): TransformForm |
 export interface TransformState {
   form: TransformForm | null;
   remainingMs: number;
+  // 每形態期防禦計數（§110）：雷化放電反擊剩餘次數／殼化受身入殼剩餘次數。
+  dischargeLeft: number;
+  tuckLeft: number;
 }
 
 export function createTransformState(): TransformState {
-  return { form: null, remainingMs: 0 };
+  return { form: null, remainingMs: 0, dischargeLeft: 0, tuckLeft: 0 };
 }
 
 export function startTransform(form: TransformForm): TransformState {
-  return { form, remainingMs: TRANSFORM.durationMs };
+  const spec = TRANSFORM_FORMS[form];
+  return {
+    form,
+    remainingMs: TRANSFORM.durationMs,
+    dischargeLeft: spec.dischargeCharges,
+    tuckLeft: spec.tuckCharges,
+  };
 }
 
 export function endTransform(): TransformState {
@@ -153,7 +219,25 @@ export function tickTransform(state: TransformState, deltaMs: number): Transform
   if (!state.form) return { state, expired: false };
   const remainingMs = state.remainingMs - deltaMs;
   if (remainingMs <= 0) return { state: endTransform(), expired: true };
-  return { state: { form: state.form, remainingMs }, expired: false };
+  return { state: { ...state, remainingMs }, expired: false };
+}
+
+// 雷化放電反擊裁決（§110）：僅雷化且有剩餘次數時觸發；觸發即扣次。
+export function consumeDischarge(state: TransformState): {
+  state: TransformState;
+  triggered: boolean;
+} {
+  if (state.form !== 'volt' || state.dischargeLeft <= 0) return { state, triggered: false };
+  return { state: { ...state, dischargeLeft: state.dischargeLeft - 1 }, triggered: true };
+}
+
+// 殼化受身入殼裁決（§110）：僅殼化且有剩餘次數時觸發；觸發即扣次、本次傷害全免。
+export function consumeTuck(state: TransformState): {
+  state: TransformState;
+  triggered: boolean;
+} {
+  if (state.form !== 'shell' || state.tuckLeft <= 0) return { state, triggered: false };
+  return { state: { ...state, tuckLeft: state.tuckLeft - 1 }, triggered: true };
 }
 
 export function transformProgress(state: TransformState): number {

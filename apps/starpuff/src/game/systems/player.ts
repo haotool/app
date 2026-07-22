@@ -59,12 +59,18 @@ import {
 import {
   GALE_BLADE,
   GALE_FLIGHT,
+  GALE_GLIDE,
+  SHELL_CHARGE,
+  SHELL_TUCK,
   TRANSFORM_FORMS,
   VOLT_BEAM,
   absorbHalvedDamage,
+  consumeDischarge,
+  consumeTuck,
   createTransformState,
   eligibleForm,
   endTransform,
+  glideFallVy,
   startTransform,
   tickTransform,
   transformProgress,
@@ -105,6 +111,8 @@ export interface PlayerHandle {
   isShieldRaised(): boolean;
   // v9 星化（§57）：形態觀測（e2e/世界結算）與下砸態（魔王頭頂 hit window 判定）。
   getTransformState(): TransformState;
+  // 滾殼衝撞（§110）：衝撞期觀測——overlaps 據此改判接觸傷向小怪結算。
+  isShellCharging(): boolean;
   // 星暴 2.0（§109）：蓄能相位觀測、跨關授星、死亡/EX 清除與 SP 鍵呈現模式。
   getStarburst(): StarburstState;
   grantStarburstCharge(): void;
@@ -258,6 +266,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let voltCdMs = 0;
   let bladeCdMs = 0;
   let halfDamagePool = 0;
+  // 滾殼衝撞（§110）：衝撞剩餘時長與 CD。
+  let chargeMs = 0;
+  let chargeCdMs = 0;
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
@@ -459,6 +470,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     halfDamagePool = 0;
     voltCdMs = 0;
     bladeCdMs = 0;
+    chargeMs = 0;
+    chargeCdMs = 0;
     emitAmmo();
     playSfx('starstorm');
     burstSmall(scene, sprite.x, sprite.y, TRANSFORM_FORMS[form].tint);
@@ -466,10 +479,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     auraEmitters[form].start();
   };
 
-  // 解除（到期或再長按提前）：不返彈；aura 停用、外觀復原。
+  // 解除（到期或再長按提前）：不返彈；aura 停用、外觀復原、衝撞態一併結束。
   const finishTransform = () => {
     const form = transform.form;
     transform = endTransform();
+    chargeMs = 0;
     if (!form) return;
     auraEmitters[form].stop();
     playSfx('pop');
@@ -633,6 +647,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       blockInvulnMs = tickTimer(blockInvulnMs, deltaMs);
       voltCdMs = tickTimer(voltCdMs, deltaMs);
       bladeCdMs = tickTimer(bladeCdMs, deltaMs);
+      chargeMs = tickTimer(chargeMs, deltaMs);
+      chargeCdMs = tickTimer(chargeCdMs, deltaMs);
 
       // 星化計時（§57）：到期自動解除（演出與 aura 停用集中 finishTransform）。
       if (transform.form) {
@@ -654,6 +670,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (onGround && !wasOnGround) {
         // §77：僅真實落地（下砸或帶速著地）擠壓；微速重新接觸不觸發，防自持迴圈。
         if (slamming || lastVy > LANDING_SQUASH_MIN_VY) squashStretch(1.25, 0.75);
+        // 風化落地滾翻（§110）：落地瞬間自動免傷窗，與受擊 i-frame 取較大值。
+        if (formSpec && formSpec.landingRollMs > 0) {
+          invulnerableMs = Math.max(invulnerableMs, formSpec.landingRollMs);
+        }
         // 下衝擊著地（§23）：加強塵埃 + 專屬音 + 事件交 GameScene 結算衝擊波。
         if (slamming) {
           slamming = false;
@@ -684,7 +704,14 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
         // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
         // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§69）疾風靴倍率疊乘。
-        const moveSpeed = PLAYER.moveSpeed * (formSpec?.moveSpeedMul ?? 1) * buffSpeedMul;
+        // 風化滑翔（§110）：空中按住跳鍵且下落中＝緩降＋水平漂移 ×1.6。
+        const gliding =
+          formSpec?.glide === true && !onGround && controls.jumpHeld && body.velocity.y > 0;
+        const moveSpeed =
+          PLAYER.moveSpeed *
+          (formSpec?.moveSpeedMul ?? 1) *
+          buffSpeedMul *
+          (gliding ? GALE_GLIDE.driftMul : 1);
         // 蹲下靜止（§85）：地面下向意圖成立即鉗水平——斜下滑的 dx 分量不再把玩家
         // 帶出平台邊緣；空中不鉗，保留下砸前的橫向微調。
         const crouching = onGround && controls.down;
@@ -705,13 +732,18 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         if (moveFx) spawnMoveDust(moveFx);
         prevMoveTarget = moveTarget;
         sprite.setVelocityX(approachVelocity(body.velocity.x, moveTarget, deltaMs, buffRateMul));
+        // 滾殼衝撞（§110）：衝撞期水平速度鎖定面向向前，覆蓋一般移動曲線。
+        if (chargeMs > 0) sprite.setVelocityX(facing * SHELL_CHARGE.speed);
+        if (gliding) sprite.setVelocityY(glideFallVy(body.velocity.y));
 
         // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
         // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
         // 層 shouldDropThrough 裁決並覆蓋跳躍脈衝（§29 既有優先序）。
         // §77：coyote 窗內視同在地（接觸旗標抖動免疫），下砸僅真空中觸發。
+        // 衝撞躍（§110）：衝撞中按跳＝低弧跳、保持衝撞態，不進一般跳躍鏈。
+        const chargeHop = chargeMs > 0 && controls.jumpPressed && (onGround || coyoteMs > 0);
         const jumpCommand =
-          controls.jumpPressed && !slamming
+          controls.jumpPressed && !slamming && !chargeHop
             ? resolveJumpPress({
                 airborne: !onGround,
                 down: controls.down,
@@ -719,7 +751,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
                 recentlyGroundedMs: coyoteMs,
               })
             : 'jump';
-        if (jumpCommand === 'slam') {
+        if (chargeHop) {
+          coyoteMs = 0;
+          sprite.setVelocityY(SHELL_CHARGE.hopVy);
+        } else if (jumpCommand === 'slam') {
           startSlam();
         } else {
           // 寬容度（§15.1）：coyote 期內離台仍可起跳；提前按跳以 buffer 落地即跳。
@@ -762,6 +797,14 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
             if (bladeCdMs <= 0) {
               bladeCdMs = GALE_BLADE.cooldownMs;
               launchWindBlade();
+            }
+          } else if (transform.form === 'shell') {
+            // 滾殼衝撞（§110）：B 點按起手；接觸傷由 overlaps 依衝撞態改判向小怪。
+            if (chargeCdMs <= 0 && chargeMs <= 0) {
+              chargeMs = SHELL_CHARGE.durationMs;
+              chargeCdMs = SHELL_CHARGE.cooldownMs;
+              playSfx('shell-spin');
+              squashStretch(1.2, 0.85);
             }
           } else if (!transform.form) {
             const command = resolveActionPress({
@@ -873,6 +916,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           sprite.setScale(baseScaleX, baseScaleY * (1 + idleBreath(scene.time.now)));
         }
       }
+      // 滾殼衝撞旋轉呈現（§110）：覆蓋走動傾角，沿殼刃自旋角速度。
+      if (chargeMs > 0) sprite.rotation += facing * BOOM_SPIN_RAD * deltaMs;
       lastVy = body.velocity.y;
 
       // 大嘴吸入影格（§77.4）：吸入進行中兩影格交替；素材未載回退 hero-inhale。
@@ -922,6 +967,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         });
         return;
       }
+      // 受身入殼（§110）：殼化受擊自動入殼——本次傷害全免＋0.5s 免傷，每形態期 1 次；
+      // 既有 i-frame 生效期間不消耗次數。
+      if (
+        transform.form === 'shell' &&
+        effectiveInvulnMs(invulnerableMs, stormInvulnMs) <= 0 &&
+        transform.tuckLeft > 0
+      ) {
+        transform = consumeTuck(transform).state;
+        blockInvulnMs = Math.max(blockInvulnMs, SHELL_TUCK.invulnMs);
+        squashStretch(0.8, 0.72);
+        playSfx('metal');
+        return;
+      }
       // 殼化受傷減半（§57）：0.5 傷害池累積，實扣 0 時給短護體窗防逐幀重複結算。
       let incoming = damage;
       if (transform.form === 'shell') {
@@ -948,6 +1006,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       hurtLockMs = FORGIVENESS.hurtLockMs;
       const kb = knockbackVelocity(sprite.x, sourceX, KNOCKBACK_SPEED, KNOCKBACK_LIFT);
       sprite.setVelocity(kb.x, kb.y);
+      // 雷化受擊放電反擊（§110）：實扣傷害瞬間放電，世界結算交 GameScene（每形態期 2 次）。
+      const discharge = consumeDischarge(transform);
+      if (discharge.triggered) {
+        transform = discharge.state;
+        playSfx('zap');
+        emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
+          kind: 'volt-discharge',
+          form: 'volt',
+          x: sprite.x,
+          y: sprite.y,
+          facing,
+        });
+      }
       emitGameEvent(scene.events, GameEvents.PLAYER_DAMAGED, {
         hp,
         maxHp: PLAYER.maxHp,
@@ -1024,6 +1095,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     },
     getTransformState() {
       return transform;
+    },
+    isShellCharging() {
+      return chargeMs > 0;
     },
     getStarburst() {
       return starburst;
