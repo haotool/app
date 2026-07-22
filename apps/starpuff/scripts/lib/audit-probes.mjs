@@ -641,11 +641,27 @@ export async function runStarburstProbe(
       continue;
     }
     // 恢復量測：bot 覓食（play 策略 ammo==0 分支）至 ammo>0。
+    // 開門守衛：星暴清屏擊殺可補滿配額直接開門——開門後不生成（§107.1 尾端
+    // release），「恢復」在已過關狀態下無意義，棄樣重進（非卡關，不得計逾時）。
     const recovery = await page
-      .waitForFunction(() => window.__sp.ammo().ammo > 0, null, { timeout: 45_000 })
-      .then(() => page.evaluate((t0) => Math.round(performance.now() - t0), injected.at))
+      .waitForFunction(() => window.__sp.ammo().ammo > 0 || window.__sp.gateOpen(), null, {
+        timeout: 45_000,
+      })
+      .then(() =>
+        page.evaluate(
+          (t0) => ({
+            ms: Math.round(performance.now() - t0),
+            recovered: window.__sp.ammo().ammo > 0,
+          }),
+          injected.at,
+        ),
+      )
       .catch(() => null);
-    samples.push({ recoveryMs: recovery, timedOut: recovery === null });
+    if (recovery !== null && !recovery.recovered) {
+      await reenter();
+      continue;
+    }
+    samples.push({ recoveryMs: recovery?.ms ?? null, timedOut: recovery === null });
     await sleep(2500);
   }
   const recovered = samples.map((s) => s.recoveryMs).filter((v) => typeof v === 'number');

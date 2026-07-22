@@ -3,6 +3,7 @@ import { ENEMY_SIZE, SPORA_SLOW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import { canInhale } from '../logic/combat';
+import { ENEMY_THREAT } from '../logic/difficulty';
 import {
   BOOMY_FSM,
   COMETA_FSM,
@@ -85,7 +86,8 @@ export interface EnemySystem {
   setTarget(target: EnemyTarget | null): void;
   targetX(): number | null;
   aliveCount(): number;
-  aliveInhalableCount(): number;
+  // 近域可吸數（#812 可及性口徑）：nearX/rangePx 給定時僅計水平距離內個體。
+  aliveInhalableCount(nearX?: number, rangePx?: number): number;
   update(deltaMs: number): void;
   destroy(): void;
 }
@@ -811,11 +813,19 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     },
 
     // 反卡死（§26）：場上可吸怪數，供 spawner 保證律判定彈藥飢荒；精英不計入。
-    aliveInhalableCount() {
+    // #812 可及性口徑：nearX/rangePx 給定時僅計「水平距離內的非威脅型」可吸個體——
+    // 名義可吸但遠在視野外（可吸≠可及，外部評審 P0-4），或雖近但屬 ranged 威脅型
+    //（放電/反射/拋射、多為移動目標，零彈追擊高成本）者，均不得阻斷救援計時。
+    aliveInhalableCount(nearX?: number, rangePx?: number) {
+      const near = nearX !== undefined && rangePx !== undefined;
       let count = 0;
       for (const child of group.getChildren()) {
         const kind = kindOf(child);
         if (!kind || child.getData('elite') === true) continue;
+        if (near && Math.abs((child as Phaser.Physics.Arcade.Sprite).x - nearX) > rangePx) {
+          continue;
+        }
+        if (near && ENEMY_THREAT[kind] === 'ranged') continue;
         const state = child.getData('state') as string;
         if (canInhale(kind, state === 'stun' || state === 'surfaced' || state === 'leap'))
           count += 1;

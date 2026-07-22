@@ -4,6 +4,9 @@ import { canInhale } from './combat';
 import {
   BOSS_LEVEL_IDS,
   LEVELS,
+  RESCUE_AHEAD_MAX_PX,
+  RESCUE_AHEAD_MIN_PX,
+  RESCUE_REPOSITION_MS,
   STARVATION_RESCUE_MS,
   advanceLevelSpawn,
   carryKillsOnDeath,
@@ -14,7 +17,9 @@ import {
   isInSafeTail,
   nextLevelId,
   pickEnemyKind,
+  pickRescueKind,
   pickSpawnKind,
+  rescueSpawnX,
   type LevelRunState,
   type LevelSpec,
   type StageElementSpec,
@@ -872,6 +877,63 @@ describe('走動關飢荒救援（§107，issue #804）', () => {
       const inhalable = level.enemyMix.filter((entry) => canInhale(entry.kind));
       expect(inhalable.length, `L${level.id} 缺恆可吸品種`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('#812 救援可及性保證（擴充 §107.1）', () => {
+  it('救援觸發帶 rescue 旗標；一般節流與魔王補生不帶', () => {
+    let state = createLevelRun(3);
+    const rescueResult = advanceLevelSpawn(state, {
+      deltaMs: STARVATION_RESCUE_MS,
+      aliveEnemies: getLevel(3).maxOnScreen,
+      starving: true,
+    });
+    expect(rescueResult.spawn).toBe(true);
+    expect(rescueResult.rescue).toBe(true);
+    // 一般節流：非飢荒間隔到期生成不帶旗標。
+    state = createLevelRun(3);
+    const normal = advanceLevelSpawn(state, { deltaMs: 1300, aliveEnemies: 0 });
+    expect(normal.spawn).toBe(true);
+    expect(normal.rescue).toBeUndefined();
+    // 魔王關飢荒立即補生：沿既有遠側入場路徑，不帶旗標。
+    const boss = advanceLevelSpawn(createLevelRun(4), {
+      deltaMs: 16,
+      aliveEnemies: 2,
+      starving: true,
+    });
+    expect(boss.spawn).toBe(true);
+    expect(boss.rescue).toBeUndefined();
+  });
+
+  it('pickRescueKind 低威脅優先：L2 恆抽 safe 子集（floaty/puffy）', () => {
+    const level = getLevel(2);
+    for (const rand of [0, 0.25, 0.5, 0.75, 0.99]) {
+      const kind = pickRescueKind(level, rand, false);
+      expect(['floaty', 'puffy']).toContain(kind);
+    }
+  });
+
+  it('pickRescueKind 滿潮排除位移壓迫型：L14 收斂 splatta/spora；非滿潮回落含 gusty', () => {
+    const level = getLevel(14);
+    for (const rand of [0, 0.3, 0.6, 0.99]) {
+      const kind = pickRescueKind(level, rand, true);
+      expect(['splatta', 'spora']).toContain(kind);
+    }
+    // 非滿潮無 safe 候選：回落恆可吸全集（anti-softlock 優先），gusty 可入選。
+    expect(pickRescueKind(level, 0.5, false)).toBe('gusty');
+  });
+
+  it('rescueSpawnX 前方 160–240px；越界或尾端安全區改後方等距', () => {
+    const level = getLevel(2);
+    expect(rescueSpawnX(500, 0, level)).toBe(500 + RESCUE_AHEAD_MIN_PX);
+    expect(rescueSpawnX(500, 1, level)).toBe(500 + RESCUE_AHEAD_MAX_PX);
+    // 前方落入尾端安全區（worldWidth 3100 − safeZoneTailPx 480 = 2620 起）→ 改後方。
+    expect(rescueSpawnX(2500, 0, level)).toBe(2500 - RESCUE_AHEAD_MIN_PX);
+    // 前方越過世界右緣 → 改後方。
+    expect(rescueSpawnX(level.worldWidth - 100, 0, level)).toBe(
+      level.worldWidth - 100 - RESCUE_AHEAD_MIN_PX,
+    );
+    expect(RESCUE_REPOSITION_MS).toBe(8000);
   });
 });
 
