@@ -62,6 +62,7 @@ import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
 import { createStage, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
+import { createStarburstDirector, type StarburstDirector } from '../systems/starburstDirector';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
@@ -166,6 +167,7 @@ export class GameScene extends Phaser.Scene {
   private fx!: FxSystem;
   private stage!: StageHandle;
   private starCombat!: StarCombat;
+  private starburstDirector!: StarburstDirector;
   private starSteering!: StarSteering;
   private toasts!: ToastSystem;
   // 彩蛋（§24）：每關進度與 crown-early-hit 時間窗委派 systems/eggTracker。
@@ -286,6 +288,12 @@ export class GameScene extends Phaser.Scene {
     this.toasts = createToasts(this, {
       fx: () => this.fx,
       playerPos: () => ({ x: this.player.sprite.x, y: this.player.sprite.y }),
+    });
+    // 蓄能星生命週期（§109）：跨關持有/死亡清除/EX 清除/教學浮字委派 director（自清）。
+    this.starburstDirector = createStarburstDirector(this, {
+      player: () => this.player,
+      toasts: () => this.toasts,
+      exMode: this.exMode,
     });
     // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
     // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
@@ -450,6 +458,7 @@ export class GameScene extends Phaser.Scene {
       this.stage.update(this.controls.state, deltaMs);
       // 下跳指示（§77/§85）：下向意圖（含釋放緩衝窗）＋站台 → 跳鍵變色與箭頭翻轉。
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
+      this.controls.setSpMode(this.player.getSpMode());
       this.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
       this.syncJumpSfx();
@@ -981,6 +990,7 @@ export class GameScene extends Phaser.Scene {
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     body.stop();
     body.enable = false;
+    this.starburstDirector.noteClear();
     // 存檔寫入時機（§38）：通關即記錄，演出中斷（切頁/重載）不掉進度。
     this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
     this.tweens.add({

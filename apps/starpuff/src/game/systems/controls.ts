@@ -1,9 +1,13 @@
 import type Phaser from 'phaser';
+import { isMuted } from '../audio/mute';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 import { getShellRotation, pointerToLocal } from '../core/rotation';
+import type { SpMode } from '../logic/starburst';
+import { TRANSFORM_FORMS } from '../logic/transform';
 
 // 每幀輸入狀態：pressed 為當幀觸發、held 為持續按住；down 為搖桿下向（§23 下衝擊預留）；
-// downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意。
+// downBuffered（§85）＝即時 down 或釋放後緩衝窗內，供「先滑後按跳」下穿語意；
+// spPressed（§109）＝SP 情境鍵當幀點按（觸控 SP 鍵或鍵盤 C）。
 export interface ControlsState {
   left: boolean;
   right: boolean;
@@ -13,6 +17,7 @@ export interface ControlsState {
   jumpHeld: boolean;
   actionPressed: boolean;
   actionHeld: boolean;
+  spPressed: boolean;
 }
 
 export interface ControlsSystem {
@@ -20,17 +25,90 @@ export interface ControlsSystem {
   update(deltaMs: number): void;
   // 下跳指示（§77）：可穿落狀態跳鍵變色＋箭頭翻轉朝下；僅狀態轉變時碰 DOM。
   setDropReady(ready: boolean): void;
+  // SP 情境鍵（§109）：呈現模式由 player 派生、GameScene 逐幀同步；僅變更時碰 DOM。
+  setSpMode(mode: SpMode): void;
   destroy(): void;
 }
 
-type ButtonName = 'a' | 'b';
+type ButtonName = 'a' | 'b' | 'sp';
 
-type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X', Phaser.Input.Keyboard.Key>;
+type KeyMap = Record<'LEFT' | 'RIGHT' | 'DOWN' | 'Z' | 'X' | 'C', Phaser.Input.Keyboard.Key>;
 
 // 按壓視覺回饋 class；樣式規則由整合層在 style.css 補上。
 const PRESSED_CLASS = 'is-pressed';
 const ENGAGED_CLASS = 'is-engaged';
 const DROP_READY_CLASS = 'is-drop-ready';
+// SP 情境鍵可用態（§109）：opacity 淡入 150ms 由 CSS transition 承擔。
+const SP_ON_CLASS = 'is-sp-on';
+// SP 浮現輕震（§91 觸覺管線）：尊重靜音偏好，一次 15ms。
+const SP_APPEAR_VIBRATE_MS = 15;
+
+// 數值 tint → CSS 色（SSOT 換算，禁止第二份硬編色票）。
+const cssColor = (tint: number): string => `#${tint.toString(16).padStart(6, '0')}`;
+
+// SP 鍵圖形（§109，canvas 繪製、禁 emoji/文字鍵帽）：
+// detonate 金色大星；volt/gale/shell 形態色圓徽；dismiss 解除迴旋箭。
+export function drawSpGlyph(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  mode: Exclude<SpMode, 'hidden'>,
+): void {
+  ctx.clearRect(0, 0, size, size);
+  const cx = size / 2;
+  const cy = size / 2;
+  if (mode === 'detonate') {
+    // 金色大星＋淡光暈。
+    ctx.fillStyle = 'rgba(255, 201, 60, 0.25)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffc93c';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = size * 0.03;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i += 1) {
+      const radius = i % 2 === 0 ? size * 0.36 : size * 0.15;
+      const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    return;
+  }
+  if (mode === 'dismiss') {
+    // 解除迴旋箭：270 度弧＋箭頭。
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = size * 0.08;
+    ctx.lineCap = 'round';
+    const radius = size * 0.26;
+    const endAngle = Math.PI * 1.25;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, -Math.PI * 0.25, endAngle);
+    ctx.stroke();
+    const tipX = cx + Math.cos(endAngle) * radius;
+    const tipY = cy + Math.sin(endAngle) * radius;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.moveTo(tipX - size * 0.11, tipY - size * 0.11);
+    ctx.lineTo(tipX + size * 0.09, tipY - size * 0.02);
+    ctx.lineTo(tipX - size * 0.05, tipY + size * 0.12);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+  // 形態色圓徽：形態 tint 圓盤＋白描邊（色即語意，SSOT 取 TRANSFORM_FORMS）。
+  ctx.fillStyle = cssColor(TRANSFORM_FORMS[mode].tint);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = size * 0.05;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+}
 // 浮動搖桿（§21）：pointerdown 落點即中心、半徑 60、死區 12。
 const JOY_RADIUS = 60;
 const JOY_DEADZONE = 12;
@@ -74,9 +152,10 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     jumpHeld: false,
     actionPressed: false,
     actionHeld: false,
+    spPressed: false,
   };
 
-  const held: Record<ButtonName, boolean> = { a: false, b: false };
+  const held: Record<ButtonName, boolean> = { a: false, b: false, sp: false };
   const joy = { id: null as number | null, dx: 0, dy: 0 };
   const cleanups: (() => void)[] = [];
 
@@ -199,10 +278,11 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
     });
   });
 
-  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,DOWN,Z,X') as KeyMap | undefined;
+  const keys = scene.input.keyboard?.addKeys('LEFT,RIGHT,DOWN,Z,X,C') as KeyMap | undefined;
 
   let prevJumpHeld = false;
   let prevActionHeld = false;
+  let prevSpHeld = false;
   let downBufferMs = 0;
 
   // 下跳指示（§77）：跳鍵（A）變色＋箭頭翻轉；邊緣偵測防逐幀 class 抖動。
@@ -211,6 +291,16 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
   cleanups.push(() => {
     dropReady = false;
     jumpBtn?.classList.remove(DROP_READY_CLASS);
+  });
+
+  // SP 情境鍵（§109）：僅「有技能可用」時淡入浮現；圖形依模式重繪、浮現輕震一次。
+  const spBtn = document.querySelector<HTMLElement>('[data-btn="sp"]');
+  const spCanvas = spBtn?.querySelector<HTMLCanvasElement>('canvas') ?? null;
+  let spMode: SpMode = 'hidden';
+  cleanups.push(() => {
+    spMode = 'hidden';
+    spBtn?.classList.remove(SP_ON_CLASS);
+    spBtn?.setAttribute('aria-hidden', 'true');
   });
 
   return {
@@ -231,11 +321,41 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       state.actionPressed = actionHeld && !prevActionHeld;
       state.actionHeld = actionHeld;
       prevActionHeld = actionHeld;
+
+      // SP 情境鍵（§109）：點按語意（僅取按下緣）；鍵盤 C 與觸控 SP 鍵同權。
+      const spHeld = held.sp || keys?.C.isDown === true;
+      state.spPressed = spHeld && !prevSpHeld;
+      prevSpHeld = spHeld;
     },
     setDropReady(ready: boolean) {
       if (ready === dropReady) return;
       dropReady = ready;
       jumpBtn?.classList.toggle(DROP_READY_CLASS, ready);
+    },
+    setSpMode(mode: SpMode) {
+      if (mode === spMode) return;
+      const wasHidden = spMode === 'hidden';
+      spMode = mode;
+      if (!spBtn) return;
+      const visible = mode !== 'hidden';
+      spBtn.classList.toggle(SP_ON_CLASS, visible);
+      spBtn.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      if (!visible) return;
+      // aria-label 隨模式同步（圖示即行為，讀屏同權）。
+      spBtn.setAttribute(
+        'aria-label',
+        mode === 'dismiss' ? '解除變身' : mode === 'detonate' ? '引爆星暴' : '星化變身',
+      );
+      const ctx = spCanvas?.getContext('2d');
+      if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
+      // 浮現輕震一次（§91）：模式切換不震，僅隱藏→浮現邊緣；靜音偏好同步關閉。
+      if (wasHidden && !isMuted()) {
+        try {
+          navigator.vibrate?.(SP_APPEAR_VIBRATE_MS);
+        } catch {
+          /* noop */
+        }
+      }
     },
     destroy() {
       cleanups.forEach((fn) => fn());

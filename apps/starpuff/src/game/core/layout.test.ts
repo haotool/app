@@ -8,12 +8,14 @@ import {
   KEY_SCALE,
   LAYOUT_SCHEMA_VERSION,
   PORTRAIT_THUMB_ANCHORS,
+  SP_GAP_PX,
   clampKeyPosition,
   clampKeyPositionForLayer,
   clampKeyScale,
   defaultLayoutFor,
   getDefaultLayout,
   parseLayout,
+  spKeyPosition,
   type KeyPosition,
 } from './layout';
 import type { ShellRotation } from './rotation';
@@ -55,6 +57,40 @@ describe('clampKeyPositionForLayer', () => {
       const short = clampKeyPositionForLayer(pos.cx, pos.cy, 820, 300, btnPx);
       expect(short.cy * 300 + btnPx / 2).toBeLessThanOrEqual(300);
     }
+  });
+});
+
+// SP 情境鍵定位（§109）：恆由 B 鍵派生「裝置空間上方」，不入自訂布局 schema。
+describe('spKeyPosition（§109 SP 鍵派生定位）', () => {
+  const LAYER_W = 820;
+  const LAYER_H = 358;
+  const DIST = KEY_BASE_PX.b / 2 + KEY_BASE_PX.sp / 2 + SP_GAP_PX;
+
+  it('橫持（none）：SP 位於 B 鍵層空間正上方（鍵半徑＋間隙）', () => {
+    const sp = spKeyPosition(DEFAULT_LAYOUT.b, 'none', LAYER_W, LAYER_H, 1);
+    expect(sp.cx).toBeCloseTo(DEFAULT_LAYOUT.b.cx, 5);
+    expect(sp.cy).toBeCloseTo(DEFAULT_LAYOUT.b.cy - DIST / LAYER_H, 5);
+  });
+
+  it('直持 ccw：裝置上方＝層 +x；cw：層 −x（沿 §87 軸向映射）', () => {
+    const b: KeyPosition = { cx: 0.4, cy: 0.6 };
+    const ccw = spKeyPosition(b, 'ccw', LAYER_W, LAYER_H, 1);
+    expect(ccw.cx).toBeCloseTo(b.cx + DIST / LAYER_W, 5);
+    expect(ccw.cy).toBeCloseTo(b.cy, 5);
+    const cw = spKeyPosition(b, 'cw', LAYER_W, LAYER_H, 1);
+    expect(cw.cx).toBeCloseTo(b.cx - DIST / LAYER_W, 5);
+    expect(cw.cy).toBeCloseTo(b.cy, 5);
+  });
+
+  it('B 鍵貼層頂時 SP 夾限於層內（52px 鍵完整不溢出）', () => {
+    const sp = spKeyPosition({ cx: 0.92, cy: 0.08 }, 'none', LAYER_W, LAYER_H, 1);
+    expect(sp.cy * LAYER_H - KEY_BASE_PX.sp / 2 - KEY_EDGE_PAD_PX).toBeGreaterThanOrEqual(-1e-6);
+  });
+
+  it('縮放（§89）隨 --sp-key-scale 拉開距離：scale 1.3 距離放大', () => {
+    const base = spKeyPosition(DEFAULT_LAYOUT.b, 'none', LAYER_W, LAYER_H, 1);
+    const scaled = spKeyPosition(DEFAULT_LAYOUT.b, 'none', LAYER_W, LAYER_H, 1.3);
+    expect(scaled.cy).toBeLessThan(base.cy);
   });
 });
 

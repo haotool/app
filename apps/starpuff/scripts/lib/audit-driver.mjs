@@ -22,7 +22,7 @@ export function installAuditDriver(opts) {
     window.__audit.stop = true;
     clearInterval(window.__audit.interval);
   }
-  const KEY = { left: 37, right: 39, jump: 90, shoot: 88 };
+  const KEY = { left: 37, right: 39, jump: 90, shoot: 88, sp: 67 };
   const INHALABLE = new Set(inhalableKinds);
   const HARMFUL = new Set(contactKinds);
   const held = new Set();
@@ -99,6 +99,7 @@ export function installAuditDriver(opts) {
     lastJumpAt: 0,
     lastShotAt: 0,
     lastGrantAt: 0,
+    lastSpAt: 0,
     lastX: 0,
     lastMoveAt: 0,
     stop: false,
@@ -272,12 +273,21 @@ export function installAuditDriver(opts) {
       tap(KEY.shoot, 55);
     };
 
+    // 星暴 2.0（§109）：持蓄能星時擇機引爆（SP=C 鍵）——模擬玩家主動運用；
+    // 走動關同屏敵 ≥2 或飢荒即用，魔王關戰鬥中即用；3s 節流防連點。
+    const starburstPhase = window.__sp.starburst ? window.__sp.starburst().phase : 'none';
+    const spReady = starburstPhase === 'charged' && now - d.lastSpAt >= 3000;
+
     if (kind === 'boss') {
       const sp = window.__sp;
       if (s.bossHp <= 0) {
         face(0);
         release(KEY.shoot);
         return;
+      }
+      if (spReady) {
+        d.lastSpAt = now;
+        tap(KEY.sp, 90);
       }
       // 純標準星紀律：空匣補一發 jelly（模擬吸食補給怪；走正式 swallow 管線）。
       if (grantSupply && s.ammo === 0 && now - d.lastGrantAt >= 1200) {
@@ -419,6 +429,10 @@ export function installAuditDriver(opts) {
       face(1);
       if (now - d.lastJumpAt >= 800) jump();
       return;
+    }
+    if (spReady && (s.alive.total >= 2 || (s.ammo === 0 && s.alive.inhalable === 0))) {
+      d.lastSpAt = now;
+      tap(KEY.sp, 90);
     }
     // 滿潮避難（dodge 分級）：地面帶導航至最近平台＋節奏跳。
     if (dodge && s.tide && s.tide.phase === 'flood' && s.py > 330) {

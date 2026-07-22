@@ -7,7 +7,6 @@ import {
   createTransformState,
   eligibleForm,
   endTransform,
-  resolveTransformHold,
   startTransform,
   tickTransform,
   transformProgress,
@@ -27,7 +26,7 @@ describe('eligibleForm 變身資格（§57）', () => {
     expect(eligibleForm([slot('shelly'), slot('shelly'), slot('shelly')])).toBe('shell');
   });
 
-  it('非變身味同系滿匣（jelly ×3）不觸發——保留星暴語意', () => {
+  it('非變身味同系 ×3（jelly）不觸發——jelly 線收斂至滿匣結晶（§109）', () => {
     expect(eligibleForm([slot('jelly'), slot('jelly'), slot('jelly')])).toBeNull();
   });
 
@@ -52,31 +51,8 @@ describe('eligibleForm 變身資格（§57）', () => {
   });
 });
 
-describe('resolveTransformHold 長按裁決（§57）', () => {
-  it('地面長按 0.6s 且資格成立 → start；未達閾值 → none', () => {
-    expect(
-      resolveTransformHold({ holdMs: 600, active: false, eligible: true, airborne: false }),
-    ).toBe('start');
-    expect(
-      resolveTransformHold({ holdMs: 599, active: false, eligible: true, airborne: false }),
-    ).toBe('none');
-  });
-
-  it('空中不可觸發起手；變身中長按 → 提前解除', () => {
-    expect(
-      resolveTransformHold({ holdMs: 600, active: false, eligible: true, airborne: true }),
-    ).toBe('none');
-    expect(
-      resolveTransformHold({ holdMs: 600, active: true, eligible: false, airborne: true }),
-    ).toBe('dismiss');
-  });
-
-  it('無資格長按不觸發', () => {
-    expect(
-      resolveTransformHold({ holdMs: 800, active: false, eligible: false, airborne: false }),
-    ).toBe('none');
-  });
-});
+// 長按裁決（resolveTransformHold）已退場（§109）：變身觸發改 SP 鍵即時裁決，
+// 對應測試移至 logic/starburst.test.ts 的 resolveSpPress（地面/資格/變身中解除語意不變）。
 
 describe('tickTransform 持續與到期（§57）', () => {
   it('start 後計時 10s；tick 遞減、到期自動解除並回報 expired', () => {

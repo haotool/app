@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 6、penalty 2、neutral 3）｜累計總分：+166
+> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+175
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,61 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：neutral-starpuff-t3-detonating-clear-note
+- 原因：Sonnet 席殘留 nit——蓄爆中過關（0.3s 窄窗）靜默丟棄引爆效果屬設計取捨但無記載
+- 解法：starburstDirector.noteClear 註解＋GAME_DESIGN §109 補一句已知行為記載（窄窗＋與 charged 持有語意天然互斥，不改行為）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t3-l6-ab-adjudication
+- 原因：Grok 席短 cap（120-300s）×runs2 量測 L6 clearRate=0，懷疑 5 槽彈匣使走動關火力節奏回歸
+- 解法：main vs HEAD 序列化 A/B（L2/L6/L12×mid/high、cap 420s、L6 mid 各 6 樣本）裁定口徑假陽性——L6 mid 雙 67%、ammoZero 峰持平、L6 high 基線 0% HEAD 33%，僅通關均時偏移列 T4 觀察項不調參
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-review-nits
+- 原因：審查 nits——skills 註解殘留「且未滿匣」舊語意、SP aria-label 不隨模式更新、蓄爆生命週期無回歸鎖
+- 解法：註解改引 §109、aria-label 依 detonate/變身/dismiss 動態、player.test 補蓄爆中死亡清除與停幀凍結兩案
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-review-e2e-deflake
+- 原因：t3 誤放案第二點按頂槽為殼盾星走 defer——慢幀下 press delay ≥150ms 使放開結算不發射（flake）
+- 解法：灌注序列改頂兩槽皆非殼盾星（s,j,s,z,j），兩次點按全走即按即射路徑，根因消除
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-review-desktop-tutorial
+- 原因：審查指出桌機教學浮字漏 C 特殊技，與「Title 鍵位卡文案一致」的註解承諾矛盾
+- 解法：TUTORIAL_TEXT_DESKTOP 補「C 特殊技」＋waves.test 斷言鎖住；觸控版由 SP 鍵浮現視覺承擔不動
+
+- 日期：2026-07-22
+- ID：neutral-starpuff-t3-probe-official-truth
+- 原因：並行雙 server 量測互擾使 pooled p95 失真（10.2s），不可作官方裁定值
+- 解法：序列化單跑全 15 關 90 樣本取官方真值 p95 8.85s ≤10s（基線 9.5s 無回退）、45s 未恢復 0，§109 驗收行更新為單跑口徑
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-docs-ssot
+- 原因：輸入層重寫後 GAME_DESIGN/WALKTHROUGH 仍以舊長按語意為 SSOT，會誤導後續列車
+- 解法：新增 §109 輸入 SSOT 章節＋舊節（§4/§7/§23/§40/§57/§108）取代標註、WALKTHROUGH 總則與 L4/L8 攻略同步、minor changeset
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-probe-migration
+- 原因：B 長按星暴退場後 #812 探針舊注入（長按 0.9s）失效，bot 也不會運用蓄能星
+- 解法：探針改混味 5 槽結晶＋SP（C）引爆注入；driver 加持星擇機引爆（走動同屏 ≥2 或飢荒、魔王戰即用，3s 節流）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-teaching-migration
+- 原因：星暴/變身觸發語意重寫後，圖鑑技能頁、關卡 hint、桌機鍵位卡與 SEO 文案仍示舊長按操作
+- 解法：codex 技能頁改 SP 語意＋補星化變身條目（守門字數內）、L3 取捨教學 hint、L8 hint 改 SP、鍵位卡加 C 鍵、SEO 操作段同步
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-e2e-matrix
+- 原因：輸入層 SSOT 重寫需 e2e 行為守門——SP 三態/誤放歸零/跨關持有/EX 清除/C 鍵映射全無覆蓋
+- 解法：新增 t3.spec 五案（觸控＋桌機分 project）並遷移 smoke/v9 星暴變身案至 §109 語意，全數綠
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-input-ssot-core
+- 原因：B 鍵五語意超載（#815 P0-3）與星暴長按誤放卡關（#812）——輸入層需 SSOT 重寫
+- 解法：彈匣 5 槽滿匣自動結晶＋SP 情境鍵（引爆/變身/解除天然互斥）＋B 收斂三語意，純邏輯入 logic/starburst.ts 全單測
 
 - 日期：2026-07-22
 - ID：neutral-starpuff-t2-final-nit-reach-test

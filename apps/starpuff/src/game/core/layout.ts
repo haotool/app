@@ -26,8 +26,11 @@ export const KEY_SCALE = {
   default: 1,
 } as const;
 
-// 基準鍵尺寸（CSS SSOT 鏡像）：A 76、B 72；縮放經 keys-layer CSS 變數套用。
-export const KEY_BASE_PX = { a: 76, b: 72 } as const;
+// 基準鍵尺寸（CSS SSOT 鏡像）：A 76、B 72、SP 52；縮放經 keys-layer CSS 變數套用。
+export const KEY_BASE_PX = { a: 76, b: 72, sp: 52 } as const;
+
+// SP 情境鍵與 B 鍵間隙（§109）：SP 錨定 B 鍵「裝置空間上方」食指區。
+export const SP_GAP_PX = 10;
 
 export function clampKeyScale(scale: number): number {
   if (!Number.isFinite(scale)) return KEY_SCALE.default;
@@ -189,6 +192,26 @@ export function resetLayout(): ControlLayout {
   return getDefaultLayout();
 }
 
+// SP 情境鍵定位（§109）：不入自訂布局 schema——恆由 B 鍵位置派生「裝置空間上方」
+// （食指區），自訂拖曳 B 鍵時 SP 跟隨。裝置上方在旋轉殼下換軸：none → 層 −y；
+// ccw 殼局部 (x,y)→裝置 (y, H−x)，裝置上方＝層 +x；cw (x,y)→(W−y, x)，＝層 −x。
+export function spKeyPosition(
+  b: KeyPosition,
+  rotation: ShellRotation,
+  layerW: number,
+  layerH: number,
+  scale: number,
+): KeyPosition {
+  const distancePx = (KEY_BASE_PX.b * scale) / 2 + (KEY_BASE_PX.sp * scale) / 2 + SP_GAP_PX;
+  const raw =
+    rotation === 'none'
+      ? { cx: b.cx, cy: b.cy - distancePx / layerH }
+      : rotation === 'ccw'
+        ? { cx: b.cx + distancePx / layerW, cy: b.cy }
+        : { cx: b.cx - distancePx / layerW, cy: b.cy };
+  return clampKeyPositionForLayer(raw.cx, raw.cy, layerW, layerH, KEY_BASE_PX.sp * scale);
+}
+
 // 座標序列化為百分比字串：toFixed(2) 避免浮點尾數（0.92*100 = 92.00000000000001）。
 export function toPercent(fraction: number): string {
   return `${(fraction * 100).toFixed(2)}%`;
@@ -198,7 +221,9 @@ export function toPercent(fraction: number): string {
 // 縮放經 CSS 變數 --sp-key-scale 驅動鍵尺寸（§89），先設變數再量測使夾限吃到新尺寸。
 // 層可量測（顯示中）時以實際尺寸＋鍵尺寸動態夾限，避免舊儲存值在短層溢出；
 // 隱藏狀態（Title 啟動套用）量測為 0 則原樣寫入，待 controls 進場重套時矯正。
+// SP 情境鍵（§109）：位置恆由 B 鍵派生（spKeyPosition），不讀自訂 schema。
 export function applyLayoutToDom(root: ParentNode, layout: ControlLayout): void {
+  let resolvedB: KeyPosition = layout.b;
   for (const name of ['a', 'b'] as const) {
     const el = root.querySelector<HTMLElement>(`[data-btn="${name}"]`);
     if (!el) continue;
@@ -215,7 +240,28 @@ export function applyLayoutToDom(root: ParentNode, layout: ControlLayout): void 
           el.offsetWidth,
         )
       : layout[name];
+    if (name === 'b') resolvedB = pos;
     el.style.left = toPercent(pos.cx);
     el.style.top = toPercent(pos.cy);
   }
+  const sp = root.querySelector<HTMLElement>('[data-btn="sp"]');
+  if (!sp) return;
+  sp.style.setProperty('--sp-key-scale', String(layout.scale));
+  const layer = sp.parentElement;
+  if (layer === null || layer.clientWidth <= 0 || layer.clientHeight <= 0) return;
+  let rotation: ShellRotation = 'none';
+  try {
+    rotation = getShellRotation();
+  } catch {
+    /* 非瀏覽器環境退橫持。 */
+  }
+  const pos = spKeyPosition(
+    resolvedB,
+    rotation,
+    layer.clientWidth,
+    layer.clientHeight,
+    layout.scale,
+  );
+  sp.style.left = toPercent(pos.cx);
+  sp.style.top = toPercent(pos.cy);
 }

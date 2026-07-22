@@ -129,6 +129,7 @@ declare global {
       grantStar: (flavor: StarFlavor) => void;
       shieldRaised: () => boolean;
       transform: () => { form: string | null; remainingMs: number };
+      starburst: () => { phase: string };
       mercyWarp: (ms: number) => void;
       hurtPlayer: (damage: number) => void;
       mercyCount: () => number;
@@ -197,6 +198,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     shieldRaised: () => internals().player.isShieldRaised(),
     // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
     transform: () => internals().player.getTransformState(),
+    // v19 觀測點（§109 e2e/探針）：蓄能結晶相位。
+    starburst: () => internals().player.getStarburst(),
     // v9 慈悲補血鉤子（§62 e2e）：時間快轉＋RNG 必中、正式受擊管線壓血、生成計數觀測。
     mercyWarp: (ms) => gameScene().mercyWarp(ms),
     hurtPlayer: (damage) => gameScene().hurtPlayer(damage),

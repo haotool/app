@@ -34,8 +34,8 @@ describe('STAR_FLAVORS（§20）', () => {
     });
   });
 
-  it('彈匣上限 3 不受屬性影響', () => {
-    expect(STAR.maxAmmo).toBe(3);
+  it('彈匣上限 5 不受屬性影響（§109 星暴 2.0：3 → 5 槽，滿匣自動結晶）', () => {
+    expect(STAR.maxAmmo).toBe(5);
   });
 });
 

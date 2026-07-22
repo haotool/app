@@ -26,6 +26,17 @@
           <div class="joy-thumb" aria-hidden="true"></div>
         </div>
         <div id="keys-layer">
+          <!-- SP 情境鍵（§109）：僅技能可用時淡入；圖形由 canvas 繪製（禁 emoji/文字鍵帽）。 -->
+          <div
+            class="ctl-btn ctl-btn-sp"
+            role="button"
+            tabindex="0"
+            data-btn="sp"
+            aria-label="特殊技能：引爆星暴或變身"
+            aria-hidden="true"
+          >
+            <canvas class="sp-glyph" width="128" height="128" aria-hidden="true"></canvas>
+          </div>
           <div
             class="ctl-btn ctl-btn-b"
             role="button"
