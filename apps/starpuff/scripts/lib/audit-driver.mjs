@@ -16,6 +16,8 @@ export function installAuditDriver(opts) {
     inhalableKinds,
     contactKinds,
     grantSupply, // 魔王關純標準星紀律：空匣補 jelly
+    // 變身優勢 hook（#816 W2）：非 null 時以該味集齊 ×3 並按 SP 變身（TTK 對照量測）。
+    transformFlavor = null,
   } = opts;
   // 重掛保護：先停舊 driver（同頁重進關卡時避免雙 interval 疊鍵）。
   if (window.__audit) {
@@ -87,10 +89,14 @@ export function installAuditDriver(opts) {
       stateLog: [],
       shots: 0,
       samples: [],
+      // 變身優勢 hook（#816 W2）：成功變身次數。
+      transforms: 0,
     },
     cur: { ammoZero: 0, starving: 0, fullStall: 0, quotaStall: 0, reachVacuum: 0 },
     ring: [],
     prevHp: -1,
+    prevForm: null,
+    holdFire: false,
     prevKill: -1,
     prevBossHp: -1,
     fightStartMs: -1,
@@ -268,6 +274,8 @@ export function installAuditDriver(opts) {
       tap(KEY.jump, ms);
     };
     const shoot = () => {
+      // 變身優勢 hook（#816 W2）：集星待變身期間停火，防同系彈匣被射空破壞資格。
+      if (d.holdFire) return;
       d.lastShotAt = now;
       d.m.shots += 1;
       tap(KEY.shoot, 55);
@@ -289,8 +297,34 @@ export function installAuditDriver(opts) {
         d.lastSpAt = now;
         tap(KEY.sp, 90);
       }
-      // 純標準星紀律：空匣補一發 jelly（模擬吸食補給怪；走正式 swallow 管線）。
-      if (grantSupply && s.ammo === 0 && now - d.lastGrantAt >= 1200) {
+      // 變身優勢 hook（#816 W2）：無形態時集齊優勢味 ×3（正式 swallow 管線）→ 按 SP
+      // 立即變身（空中裁決為 none，逐 tick 重試至落地）；變身中 B 即形態技，照常 tap。
+      const tf = sp.transform ? sp.transform() : { form: null };
+      if (tf.form && d.prevForm === null) d.m.transforms += 1;
+      d.prevForm = tf.form;
+      d.holdFire = false;
+      if (transformFlavor && tf.form === null) {
+        if (s.ammo === 0 && now - d.lastGrantAt >= 1200) {
+          d.lastGrantAt = now;
+          try {
+            sp.grantStar(transformFlavor);
+            sp.grantStar(transformFlavor);
+            sp.grantStar(transformFlavor);
+          } catch {
+            /* 轉場窗忽略 */
+          }
+        }
+        if (s.ammo >= 3) {
+          d.holdFire = true;
+          if (now - d.lastSpAt >= 600) {
+            d.lastSpAt = now;
+            tap(KEY.sp, 90);
+          }
+        }
+      }
+      // 純標準星紀律：空匣補一發 jelly（模擬吸食補給怪；走正式 swallow 管線）；
+      // 變身優勢量測時由 transformFlavor 供給線全權接管。
+      if (grantSupply && !transformFlavor && s.ammo === 0 && now - d.lastGrantAt >= 1200) {
         d.lastGrantAt = now;
         try {
           sp.grantStar('jelly');

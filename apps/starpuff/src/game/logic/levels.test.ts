@@ -990,6 +990,49 @@ describe('滿潮生成降載（§107，issue #806）', () => {
   });
 });
 
+describe('MechanicProgressionMatrix 教學矩陣（§110/機制 brief §6.1）', () => {
+  it('教學前置完整性：任一關 bossApplies 機制必已在較早關 teaches（圖遍歷守門）', () => {
+    const taught = new Set<string>();
+    for (const level of LEVELS) {
+      for (const mechanic of level.bossApplies ?? []) {
+        expect(taught.has(mechanic), `L${level.id} 驗收機制 ${mechanic} 未在較早關教過`).toBe(true);
+      }
+      for (const mechanic of level.teaches ?? []) taught.add(mechanic);
+    }
+  });
+
+  it('機制唯一首教：同一機制不得在多關重複 teaches', () => {
+    const seen = new Set<string>();
+    for (const level of LEVELS) {
+      for (const mechanic of level.teaches ?? []) {
+        expect(seen.has(mechanic), `機制 ${mechanic} 於 L${level.id} 重複首教`).toBe(false);
+        seen.add(mechanic);
+      }
+    }
+    // 13 機制全數落表（§6.1 矩陣覆蓋）。
+    expect(seen.size).toBe(13);
+  });
+
+  it('關鍵教學位點錨定：L1 吸射、L3 變身＋星暴、各區魔王驗收含 transform', () => {
+    expect(getLevel(1).teaches).toContain('inhale-shoot');
+    expect(getLevel(3).teaches).toEqual(['transform', 'starburst']);
+    for (const id of BOSS_LEVEL_IDS) {
+      expect(getLevel(id).bossApplies, `L${id} 魔王驗收缺 transform`).toContain('transform');
+    }
+  });
+
+  it('L3 變身教學供給：保證 3 隻同系可變身味（floaty→風化）且落於前段位點', () => {
+    const drills = getLevel(3).drillSpawns ?? [];
+    expect(drills.length).toBe(3);
+    for (const drill of drills) {
+      expect(drill.kind).toBe('floaty');
+      expect(canInhale(drill.kind)).toBe(true);
+      expect(drill.x).toBeGreaterThan(100);
+      expect(drill.x).toBeLessThan(getLevel(3).worldWidth / 2);
+    }
+  });
+});
+
 describe('isInSafeTail 尾端安全區', () => {
   it('世界末端 safeZoneTailPx 內為安全區', () => {
     const level = getLevel(1); // worldWidth 2700, tail 480

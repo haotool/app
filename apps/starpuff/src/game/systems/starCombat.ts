@@ -12,7 +12,7 @@ import {
 import { knockbackVelocity, pickInRadius } from '../logic/combat';
 import { buffDamageMul, type BuffState } from '../logic/buffs';
 import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
-import { GALE_FLIGHT, TRANSFORM_FORMS, VOLT_BEAM } from '../logic/transform';
+import { GALE_FLIGHT, TRANSFORM_FORMS, VOLT_BEAM, VOLT_DISCHARGE } from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
@@ -69,6 +69,7 @@ export interface StarCombat {
   resolveSlamImpact(x: number, y: number): void;
   resolveShieldCounter(x: number, y: number, facing: 1 | -1): void;
   resolveVoltBeam(x: number, y: number, facing: 1 | -1): void;
+  resolveVoltDischarge(x: number, y: number): void;
   resolveGaleLanding(x: number, y: number): void;
 }
 
@@ -330,6 +331,18 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
+  // 雷化受擊放電反擊（§110）：以玩家為圓心放電波及小怪（次數裁決在 player 端）。
+  function resolveVoltDischarge(x: number, y: number): void {
+    hooks.fx().shake(4);
+    hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.volt.tint);
+    for (const child of hooks.enemies().getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = child as Phaser.Physics.Arcade.Sprite;
+      if (distanceBetween(x, y, enemy.x, enemy.y) > VOLT_DISCHARGE.radiusPx) continue;
+      hooks.enemies().damage(child, VOLT_DISCHARGE.damage);
+    }
+  }
+
   // 風化落地衝擊（§57）：小範圍傷害＋輕擊退（半徑/傷害低於下衝擊，零彈藥消耗）。
   function resolveGaleLanding(x: number, y: number): void {
     hooks.fx().shake(3);
@@ -360,6 +373,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     resolveSlamImpact,
     resolveShieldCounter,
     resolveVoltBeam,
+    resolveVoltDischarge,
     resolveGaleLanding,
   };
 }

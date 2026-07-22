@@ -252,6 +252,10 @@ export function createWaveRunner(
       }
       // v9 關卡開場提示（§60）：資料驅動一行浮字（L8 星化教學），沿教學淡出機制。
       else if (level.hint) showTutorial(level.hint, '20px');
+      // 教學供給（§110 L3 變身首教）：進關即於固定位點生成保證同系個體，不佔補生節奏。
+      for (const drill of level.drillSpawns ?? []) {
+        enemies.spawn(drill.kind, drill.x, SPAWN_Y[drill.kind]);
+      }
     },
 
     update(deltaMs: number) {

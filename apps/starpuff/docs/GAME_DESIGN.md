@@ -1,7 +1,7 @@
 # 星噗噗 StarPuff — 遊戲設計 SPEC（SSOT）
 
 > 手機優先 PWA 動作小遊戲。穿越層層果凍關卡、吸入果凍怪、化為星彈、擊敗果凍魔王。
-> 版本：v19（PM 派工；T3 星暴 2.0 輸入層 SSOT §109——彈匣 5 槽滿匣自動結晶／SP 情境鍵（引爆·變身·解除天然互斥，鍵盤 C）／B 鍵收斂三語意（點按發射·按住吸入·殼盾星舉盾），B 長按 0.8s 星暴與地面長按 0.6s 變身全數退場（#815，修 #812 輸入面）、v18 修復列車 §107——全 20 關實測回饋三修：走動關飢荒救援律（#804，STARVATION_RESCUE_MS 4s 強制補生可吸怪）/L5 供給節奏調參（#805，gusty·spora -5pt 讓渡 jelly·floaty）/L14 滿潮死亡螺旋雙修（#806，浸水甦醒無敵 +1000ms＋滿潮生成降載 floodHold）、v17 債務列車 §106——行為零改變維護性收斂：GameScene strangler 拆解（2121→1196 行，bossFactory/starCombat/starSteering/overlaps/eggTracker/toasts 六模組）/GameEvents 契約測試/ESLint max-lines 守門、v16 產品缺陷修復列車 §95-§105——三席批評收斂：直持預設鍵位重錨右下拇指帶（cw/ccw 雙向＋預設態不落盤儲存語意）/圖鑑分頁有界網格（y≤470 守門）/區關命名層級標示/選單 DOM 鈕命中短邊 48 保底/版本頁腳 SHA 來源修正/勝利結算「下一關」主 CTA/HUD 暫停靜音 DOM 化＋aria/配置遮罩加深/標題字形品牌化/怪物圖鑑分頁化（每頁 12 格）/教學關死亡配額結轉與精英門明示提示、v15 成就系統列車 §94——21 條成就 SSOT 純呈現層聚合（進度/魔王/EX/收集/速通/隱藏）/save schema v2 versioned migration 與舊玩家開機補發/圖鑑成就分頁與解鎖 toast 佇列/Result 解鎖名單、v14 UX/PWA 列車 §87-§93——直持預設方向翻轉 ccw（含回訪告知與偏好切換）/按鈕配置直欄化與標籤單行/虛擬鍵縮放（sp-key-layout v2）/PWA 安裝偵測與分平台指引/觸覺回饋與螢幕常亮/殼層卡片基建/殼局部 safe-area 量測、v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
+> 版本：v20（PM 派工；T4 變身 2.0 §110——三形態攻/防/機動三語彙加深（雷放電反擊·磁免疫／風落地滾翻·滑翔／殼滾殼衝撞·受身入殼）＋MechanicProgressionMatrix 落 levels.ts（teaches/bossApplies 圖遍歷守門）＋L3 變身教學位點（drillSpawns 同系供給＋SP 首現浮字）＋變身優勢情境模板（TRANSFORM_ADVANTAGE，Jellord/Noctra 先行）與 level-audit --transform TTK 對照 hook（#816）、T3 星暴 2.0 輸入層 SSOT §109——彈匣 5 槽滿匣自動結晶／SP 情境鍵（引爆·變身·解除天然互斥，鍵盤 C）／B 鍵收斂三語意（點按發射·按住吸入·殼盾星舉盾），B 長按 0.8s 星暴與地面長按 0.6s 變身全數退場（#815，修 #812 輸入面）、v18 修復列車 §107——全 20 關實測回饋三修：走動關飢荒救援律（#804，STARVATION_RESCUE_MS 4s 強制補生可吸怪）/L5 供給節奏調參（#805，gusty·spora -5pt 讓渡 jelly·floaty）/L14 滿潮死亡螺旋雙修（#806，浸水甦醒無敵 +1000ms＋滿潮生成降載 floodHold）、v17 債務列車 §106——行為零改變維護性收斂：GameScene strangler 拆解（2121→1196 行，bossFactory/starCombat/starSteering/overlaps/eggTracker/toasts 六模組）/GameEvents 契約測試/ESLint max-lines 守門、v16 產品缺陷修復列車 §95-§105——三席批評收斂：直持預設鍵位重錨右下拇指帶（cw/ccw 雙向＋預設態不落盤儲存語意）/圖鑑分頁有界網格（y≤470 守門）/區關命名層級標示/選單 DOM 鈕命中短邊 48 保底/版本頁腳 SHA 來源修正/勝利結算「下一關」主 CTA/HUD 暫停靜音 DOM 化＋aria/配置遮罩加深/標題字形品牌化/怪物圖鑑分頁化（每頁 12 格）/教學關死亡配額結轉與精英門明示提示、v15 成就系統列車 §94——21 條成就 SSOT 純呈現層聚合（進度/魔王/EX/收集/速通/隱藏）/save schema v2 versioned migration 與舊玩家開機補發/圖鑑成就分頁與解鎖 toast 佇列/Result 解鎖名單、v14 UX/PWA 列車 §87-§93——直持預設方向翻轉 ccw（含回訪告知與偏好切換）/按鈕配置直欄化與標籤單行/虛擬鍵縮放（sp-key-layout v2）/PWA 安裝偵測與分平台指引/觸覺回饋與螢幕常亮/殼層卡片基建/殼局部 safe-area 量測、v13 EX 全魔王與星核制霸 §86——五王 EX 徽鈕開放收尾/EX 慈悲上限/EX 再戰保留/L4·L7 前室 retrofit/星核制霸全制霸獎勵、v12.1 P0 熱修 §85——真實觸控下滑判定重修（扇區＋幅度＋drop-intent 緩衝窗＋蹲下鉗水平）、v12 五區終章 §78-§84——分區分頁世界地圖/流星雨/Twinkla·Cometa/低重力/L17-L20 二十關完結/最終魔王蝕星魔核 Voidra（生存段·星核共鳴·段起點重試）/星光復甦謝幕與圖鑑補完、v11.1 P0 熱修 §77——站台下跳穿落根修/蹲姿與跳鍵下跳指示/吸入接觸豁免/大嘴吸入影格、v11 四區完結 §71-§76——糖漿潮汐/熱泉噴口/Bubbla·Splatta/L13-L16 十六關/第四魔王 Syrona 場控型（噴泉洗牌·皇冠弱點·窯風三連）、v10 三區完結 §65-§70——星門折躍/L10-L12 十二關/卡點 checkpoint/第三魔王稜晶雙子 Prismix/魔王關特殊體系（前室·增益·專屬彩蛋）、v9.1 P0 熱修 §64——Noctra 返空連續飛行/星暴 5s 無敵窗、v9 星化與挑戰 §57-§63、v8 世界擴張 §50-§56、v7 手感與深度 §44-§49、v6 存檔/世界地圖/新技能/手感 §38-§43、v5 控制自訂/暫停/圖鑑/開場 §33-§37、v4 免轉向與元素包 §28-§32、v3 橫式轉向 §21-§27）｜路由：`https://app.haotool.org/starpuff/`｜24h 衝刺交付
 
 ## 1. 產品定位
 
@@ -715,7 +715,7 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   點按放開（<150ms）仍發射。變身期間吸入停用（B 鍵改役），星暴/殼盾不充能。
   （v19 已由 §109 取代：長按讓位矩陣退場，SP 天然互斥裁決見 `resolveSpPress`。）
 - 三形態（各改變 移動＋攻擊＋防禦 至少兩項；zappy→雷化、floaty/gusty 味→風化、
-  shelly→殼化）：
+  shelly→殼化）（v20 已由 §110 加深：每形態補齊 攻/防/機動 三語彙，下表為 v9 基線）：
 
 | 形態           | 移動                                | 攻擊                                                                              | 防禦                                            |
 | -------------- | ----------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
@@ -2026,3 +2026,45 @@ t2b-812-sb-l*.json`。
   16.8s）與飢荒峰皆同水準，「5 槽惡化火力節奏」不成立，無回歸。
   觀察項（非門檻）：L6 mid 通關均時 +123s 偏移——bot 滿匣結晶後引爆時機非最優
   所致，人類玩家可自主擇時；列 T4 教學矩陣觀察清單，門檻指標全數持平不調參。
+
+## 110. v20 變身系統 2.0——三形態加深＋教學矩陣（#816；T4 列車）
+
+### 110.1 三語彙表（機制 brief §4；表驅動 `logic/transform.ts`，每形態 ≤3 守門）
+
+| 形態           | 攻（保留＋補齊）                                                 | 防（新增）                                         | 機動（新增）                                |
+| -------------- | ---------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------- |
+| 雷化 Voltpuff  | 鏈電束＋帶電接觸（§57 既有）                                     | 受擊放電反擊（120px、傷 1、每形態期 2 次）         | 磁力域免疫（磁彎折不作用；L8/L11 優勢解）   |
+| 風化 Galepuff  | 穿透風刃＋落地衝擊（§57 既有）                                   | 落地滾翻（落地瞬間 0.3s 免傷，自動）               | 滑翔（空中按住跳鍵＝緩降帽＋水平漂移 ×1.6） |
+| 殼化 Shellpuff | 滾殼衝撞（B 點按，0.7s/CD 0.9s，接觸傷 2）＋下砸加倍（§57 既有） | 受身入殼（受擊自動全免＋0.5s 免傷，每形態期 1 次） | 衝撞躍（衝撞中按跳＝低弧跳、保持衝撞態）    |
+
+- 工程接點：`TransformFormSpec` 擴欄（`dischargeCharges`/`landingRollMs`/`tuckCharges`/
+  `magnetImmune`/`glide`/`chargeDash`）；`TransformState` 增 `dischargeLeft`/`tuckLeft`
+  每形態期計數（`consumeDischarge`/`consumeTuck` 純函式裁決，vitest 對象）。
+- 世界結算：放電反擊走 `SKILL_TRANSFORM_STRIKE`（kind 增 `volt-discharge`，additive）
+  → `starCombat.resolveVoltDischarge`；滾殼衝撞接觸傷沿 overlaps 既有 contactDamage
+  通道（`player.isShellCharging()` 改判）；磁免疫於 `starSteering.steerMagnetizedStars`
+  依 spec 短路。
+- anti-softlock 不變式（§57 硬規則）：全部語彙為威力/防禦加成路徑，基礎星彈保底線
+  零改動；受身入殼/放電反擊次數隨形態期歸零，無跨期累積。
+
+### 110.2 MechanicProgressionMatrix（機制 brief §6.1；`levels.ts` 資料驅動）
+
+- `LevelSpec` 增 `teaches[]`（本關首教機制）＋`bossApplies[]`（魔王驗收機制）＋
+  `drillSpawns[]`（教學供給固定生成）；`MechanicId` 13 機制 union。
+- 教學前置完整性由 `levels.test` 圖遍歷守門：任一關 `bossApplies` 機制必已在較早關
+  `teaches`；機制唯一首教；各魔王關驗收含 `transform`。
+- L3 變身首教位點：進關前段（x 460–600）drillSpawns 保證 3 隻 floaty（同系→風化）；
+  SP 資格徽章首次浮現時一次性教學浮字「同系星彈 ×3！按 SP 鍵立即變身」（session 慣例）。
+- 首教關對映（依 repo 資料實況錨定）：L1 吸射、L2 殼盾＋下砸、L3 變身＋星暴、L5 氣流、
+  L8 磁力域、L9 鏡性、L10 折躍、L13 噴口、L14 潮汐、L17 低重力、L18 流星讀影。
+
+### 110.3 變身優勢情境模板＋TTK 對照 hook（機制 brief §4/§10）
+
+- `TRANSFORM_ADVANTAGE`（`logic/difficulty.ts`）：每王一個「優勢解但永不必需」情境；
+  T4 先落 Jellord（殼化反彈線，shelly）與 Noctra（雷化斷召線，zappy），其餘三王隨
+  T5 魔王主題化補齊。
+- bot hook：`node scripts/level-audit.mjs <bossLevel> --transform`——driver 以正式
+  swallow 管線集齊優勢味 ×3（集星期間停火防射空資格）→ 按 SP 變身（空中裁決 none
+  逐 tick 重試）；報告輸出 `transformsPerRun` 與情境描述。
+- 驗收口徑：同 bot 分級、同 runs 的有/無 `--transform` 兩份報告對照，TTK 改善
+  ≥15%（`AUDIT_THRESHOLDS.transformTtkGainMinPct`）且無變身仍可通關（非必需）。

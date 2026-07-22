@@ -8,7 +8,7 @@ import {
   isInInhalePullRange,
   isInInhaleRange,
 } from '../logic/combat';
-import { SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
+import { SHELL_CHARGE, SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
@@ -197,11 +197,16 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
     if (hooks.enemies().isPhasedOut(enemy as Phaser.GameObjects.GameObject)) return;
     const target = asSprite(enemy);
     // 雷化帶電體（§57）：接觸對小怪放電（damage CD 節流），玩家觸碰傷害照常結算。
-    const contactDamage = hooks.combat().playerFormSpec()?.contactDamage ?? 0;
+    // 滾殼衝撞（§110）：衝撞期接觸改判向小怪結算衝撞傷，同走本通道。
+    const charging = hooks.player().isShellCharging();
+    const contactDamage = charging
+      ? SHELL_CHARGE.damage
+      : (hooks.combat().playerFormSpec()?.contactDamage ?? 0);
     if (contactDamage > 0) {
       const zapped = hooks.enemies().damage(enemy as Phaser.GameObjects.GameObject, contactDamage);
       if (zapped !== 'ignored') {
-        hooks.fx().burstSmall(target.x, target.y, TRANSFORM_FORMS.volt.tint);
+        const tint = charging ? TRANSFORM_FORMS.shell.tint : TRANSFORM_FORMS.volt.tint;
+        hooks.fx().burstSmall(target.x, target.y, tint);
       }
       if (zapped === 'killed') return;
     }

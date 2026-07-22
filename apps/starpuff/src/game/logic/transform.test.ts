@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { MagazineSlot } from '../core/config';
 import {
+  GALE_GLIDE,
+  SHELL_CHARGE,
+  SHELL_TUCK,
   TRANSFORM,
   TRANSFORM_FORMS,
+  VOLT_DISCHARGE,
   absorbHalvedDamage,
+  consumeDischarge,
+  consumeTuck,
   createTransformState,
   eligibleForm,
   endTransform,
+  glideFallVy,
   startTransform,
   tickTransform,
   transformProgress,
@@ -81,27 +88,101 @@ describe('tickTransform 持續與到期（§57）', () => {
   });
 });
 
-describe('形態規格表（§57）：每形態至少改變兩項', () => {
-  it('雷化：移速 +15%、帶電接觸、鏈電束', () => {
+describe('形態規格表（§57/§110）：每形態 攻/防/機動 三語彙', () => {
+  it('雷化：移速 +15%、帶電接觸、鏈電束、放電反擊 ×2、磁力域免疫', () => {
     const spec = TRANSFORM_FORMS.volt;
     expect(spec.moveSpeedMul).toBeCloseTo(1.15, 5);
     expect(spec.contactDamage).toBeGreaterThan(0);
     expect(spec.beam).toBe(true);
+    expect(spec.dischargeCharges).toBe(2);
+    expect(spec.magnetImmune).toBe(true);
   });
 
-  it('風化：近自由飛行、穿透風刃、落地衝擊', () => {
+  it('風化：近自由飛行、穿透風刃、落地衝擊、落地滾翻 0.3s、滑翔', () => {
     const spec = TRANSFORM_FORMS.gale;
     expect(spec.freeFlight).toBe(true);
     expect(spec.windBlade).toBe(true);
     expect(spec.landingImpact).toBe(true);
+    expect(spec.landingRollMs).toBe(300);
+    expect(spec.glide).toBe(true);
   });
 
-  it('殼化：受傷減半、反彈彈幕、下砸範圍加倍、移速 -20%', () => {
+  it('殼化：受傷減半、反彈彈幕、下砸範圍加倍、移速 -20%、滾殼衝撞、受身入殼 ×1', () => {
     const spec = TRANSFORM_FORMS.shell;
     expect(spec.halveDamage).toBe(true);
     expect(spec.reflectProjectiles).toBe(true);
     expect(spec.slamRadiusMul).toBe(2);
     expect(spec.moveSpeedMul).toBeCloseTo(0.8, 5);
+    expect(spec.chargeDash).toBe(true);
+    expect(spec.tuckCharges).toBe(1);
+  });
+
+  it('語彙膨脹守門（§110）：防禦/機動新語彙不跨形態外溢', () => {
+    expect(TRANSFORM_FORMS.gale.dischargeCharges).toBe(0);
+    expect(TRANSFORM_FORMS.shell.dischargeCharges).toBe(0);
+    expect(TRANSFORM_FORMS.volt.landingRollMs).toBe(0);
+    expect(TRANSFORM_FORMS.shell.glide).toBe(false);
+    expect(TRANSFORM_FORMS.volt.tuckCharges).toBe(0);
+    expect(TRANSFORM_FORMS.gale.chargeDash).toBe(false);
+  });
+});
+
+describe('consumeDischarge 雷化放電反擊（§110）', () => {
+  it('雷化期內可觸發 2 次，耗盡後不再觸發；到期解除歸零', () => {
+    let state = startTransform('volt');
+    expect(state.dischargeLeft).toBe(2);
+    const first = consumeDischarge(state);
+    expect(first.triggered).toBe(true);
+    const second = consumeDischarge(first.state);
+    expect(second.triggered).toBe(true);
+    const third = consumeDischarge(second.state);
+    expect(third.triggered).toBe(false);
+    expect(third.state.dischargeLeft).toBe(0);
+    state = tickTransform(second.state, TRANSFORM.durationMs).state;
+    expect(state.dischargeLeft).toBe(0);
+  });
+
+  it('非雷化形態不觸發；tick 途中計數保留', () => {
+    expect(consumeDischarge(startTransform('shell')).triggered).toBe(false);
+    const mid = tickTransform(startTransform('volt'), 4000).state;
+    expect(mid.dischargeLeft).toBe(2);
+    expect(VOLT_DISCHARGE.radiusPx).toBe(120);
+    expect(VOLT_DISCHARGE.damage).toBe(1);
+  });
+});
+
+describe('consumeTuck 殼化受身入殼（§110）', () => {
+  it('殼化期內全免 1 次即耗盡；免傷窗 0.5s', () => {
+    const state = startTransform('shell');
+    expect(state.tuckLeft).toBe(1);
+    const first = consumeTuck(state);
+    expect(first.triggered).toBe(true);
+    expect(consumeTuck(first.state).triggered).toBe(false);
+    expect(SHELL_TUCK.invulnMs).toBe(500);
+  });
+
+  it('非殼化形態不觸發', () => {
+    expect(consumeTuck(startTransform('volt')).triggered).toBe(false);
+    expect(consumeTuck(createTransformState()).triggered).toBe(false);
+  });
+});
+
+describe('glideFallVy 風化滑翔緩降（§110）', () => {
+  it('下落超過帽值收斂至帽值；上升與緩降中不干預', () => {
+    expect(glideFallVy(400)).toBe(GALE_GLIDE.fallCapVy);
+    expect(glideFallVy(GALE_GLIDE.fallCapVy)).toBe(GALE_GLIDE.fallCapVy);
+    expect(glideFallVy(-200)).toBe(-200);
+    expect(GALE_GLIDE.driftMul).toBeCloseTo(1.6, 5);
+  });
+});
+
+describe('SHELL_CHARGE 滾殼衝撞常數（§110）', () => {
+  it('衝撞速度/時長/CD/低弧跳（衝撞躍）值域鎖定', () => {
+    expect(SHELL_CHARGE.speed).toBeGreaterThan(0);
+    expect(SHELL_CHARGE.durationMs).toBe(700);
+    expect(SHELL_CHARGE.cooldownMs).toBeGreaterThanOrEqual(SHELL_CHARGE.durationMs);
+    expect(SHELL_CHARGE.hopVy).toBeLessThan(0);
+    expect(SHELL_CHARGE.damage).toBeGreaterThan(0);
   });
 });
 

@@ -64,7 +64,7 @@ export interface GameEventPayloads {
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
   [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };
   [GameEvents.SKILL_TRANSFORM_STRIKE]: {
-    kind: 'volt-beam' | 'gale-landing';
+    kind: 'volt-beam' | 'volt-discharge' | 'gale-landing';
     form: TransformForm;
     x: number;
     y: number;
