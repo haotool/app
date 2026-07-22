@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+168
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+169
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-teaching-migration
+- 原因：星暴/變身觸發語意重寫後，圖鑑技能頁、關卡 hint、桌機鍵位卡與 SEO 文案仍示舊長按操作
+- 解法：codex 技能頁改 SP 語意＋補星化變身條目（守門字數內）、L3 取捨教學 hint、L8 hint 改 SP、鍵位卡加 C 鍵、SEO 操作段同步
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-e2e-matrix

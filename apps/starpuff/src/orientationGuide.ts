@@ -32,7 +32,12 @@ export function showDesktopKeysCard(onClose?: () => void): void {
     {
       title: '鍵盤操作',
       description: '星噗噗支援鍵盤遊玩，隨時可在標題畫面的「操作說明」重看。',
-      steps: ['← → 移動', 'Z 跳躍（連按拍翅）', 'X 點按發射・長按吸入'],
+      steps: [
+        '← → 移動',
+        'Z 跳躍（連按拍翅）',
+        'X 點按發射・長按吸入',
+        'C 特殊技（引爆星暴／星化變身）',
+      ],
       buttons: [{ label: '知道了', primary: true, onPress: (close) => close() }],
     },
     onClose,

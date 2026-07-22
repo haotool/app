@@ -206,7 +206,7 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   {
     nameZh: '吸入',
     howTo: '長按吸入鍵',
-    detail: '把可吸怪拉進嘴裡吞下，+1 彈藥（上限 3）',
+    detail: '把可吸怪拉進嘴裡吞下，+1 彈藥（上限 5）',
   },
   {
     nameZh: '星彈九系',
@@ -227,8 +227,13 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
   {
     nameZh: '星暴',
-    howTo: '彈匣全滿長按吸入鍵',
-    detail: '清場全部小怪並重創魔王，清空彈匣',
+    howTo: '滿匣結晶後按 SP 引爆',
+    detail: '彈匣集滿 5 槽自動結晶成頭頂蓄能星（可繼續吸怪、跨關持有），引爆清場全小怪並重創魔王',
+  },
+  {
+    nameZh: '星化變身',
+    howTo: '同系 3 發地面按 SP',
+    detail: '雷化／風化／殼化 10 秒，消耗全部彈匣；變身中再按 SP 提前解除',
   },
   {
     nameZh: '下衝擊',
