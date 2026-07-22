@@ -103,6 +103,10 @@ export function installAuditDriver(opts) {
     lastMoveAt: 0,
     stop: false,
   };
+  // 暴露給 stopDriver：停 driver 時放開全部持鍵，避免殘留輸入影響後續量測。
+  d.releaseAll = () => {
+    for (const k of [...held]) release(k);
+  };
   window.__audit = d;
 
   const readSnap = () => {

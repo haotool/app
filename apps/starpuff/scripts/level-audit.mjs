@@ -113,17 +113,9 @@ async function runStandardAudit(page, level, { tier, ex, capSec, runCount, error
       // 勝利動線：Game → Result →（自動）Map；L20 全破走 Credits。
       if (scene === 'Result' || scene === 'Map' || scene === 'Credits') {
         if (isBoss) {
-          const won =
-            scene !== 'Result'
-              ? true
-              : ex
-                ? await page
-                    .evaluate(
-                      (id) => window.__sp.save().levels[String(id)]?.exCleared === true,
-                      level.id,
-                    )
-                    .catch(() => false)
-                : (metrics?.bossKilled ?? false);
+          // 勝負以回合指標判定（bossKilled＋Result 場景）：持久 save 的 exCleared
+          // 首勝後恆為 true，多次執行會污染後續回合的通關率。
+          const won = scene !== 'Result' ? true : (metrics?.bossKilled ?? false);
           if (won) {
             result = 'cleared';
             break;
@@ -249,7 +241,7 @@ function standardMd(r) {
 }
 
 // ===== 探針包裝（門檻裁定引 SSOT）=====
-async function runProbe(page, name, level) {
+async function runProbe(page, name, level, overrides = {}) {
   if (name === 'jump') {
     const matrix = jumpFeasibilityMatrix(
       Object.fromEntries(
@@ -297,8 +289,8 @@ async function runProbe(page, name, level) {
   }
   if (name === 'swallow') {
     const result = await runSwallowProbe(page, {
-      runs: Number(opt('runs', '100')),
-      spinRuns: Number(opt('spin-runs', '30')),
+      runs: overrides.runs ?? Number(opt('runs', '100')),
+      spinRuns: overrides.spinRuns ?? Number(opt('spin-runs', '30')),
     });
     return {
       probe: 'swallow',
@@ -433,8 +425,8 @@ function baselineMd(rows, probes) {
     lines.push(
       '## #811 殼殼吞食成功率',
       '',
-      `- 正確時機（暈眩窗）：${Math.round((s.stunSuccessRate ?? 0) * 100)}%（${s.stunAttempts} 次）｜門檻 ≥60% → ${s.stunMeets ? '達標' : '未達標'}`,
-      `- 衝刺（縮殼旋轉）期：${Math.round((s.spinSuccessRate ?? 0) * 100)}%（${s.spinAttempts} 次）｜門檻 0% → ${s.spinMeets ? '達標' : '未達標'}`,
+      `- 正確時機（暈眩窗）：${Math.round((s.stunSuccessRate ?? 0) * 100)}%（${s.stunAttempts} 次）｜門檻 ≥${Math.round(AUDIT_THRESHOLDS.swallowStunMinRate * 100)}% → ${s.stunMeets ? '達標' : '未達標'}`,
+      `- 衝刺（縮殼旋轉）期：${Math.round((s.spinSuccessRate ?? 0) * 100)}%（${s.spinAttempts} 次）｜門檻 ≤${Math.round(AUDIT_THRESHOLDS.swallowSpinMaxRate * 100)}% → ${s.spinMeets ? '達標' : '未達標'}`,
       `- 暈眩窗實測：平均 ${s.avgWindowMs ?? '—'}ms｜成功吸入耗時：平均 ${s.avgReactToSwallowMs ?? '—'}ms`,
       '',
     );
@@ -444,7 +436,7 @@ function baselineMd(rows, probes) {
     lines.push(
       '## #812 星暴誤放恢復',
       '',
-      `- 全走動關恢復：p50 ${fmtSec(sb.globalP50Ms)}s｜p95 ${fmtSec(sb.globalP95Ms)}s｜45s 未恢復 ${sb.timeouts} 次｜門檻 p95 ≤10s → ${sb.meetsThreshold === null ? '—' : sb.meetsThreshold ? '達標' : '未達標'}`,
+      `- 全走動關恢復：p50 ${fmtSec(sb.globalP50Ms)}s｜p95 ${fmtSec(sb.globalP95Ms)}s｜45s 未恢復 ${sb.timeouts} 次｜門檻 p95 ≤${fmtSec(AUDIT_THRESHOLDS.starburstRecoveryP95Ms)}s → ${sb.meetsThreshold === null ? '—' : sb.meetsThreshold ? '達標' : '未達標'}`,
       '',
       '| 關 | 樣本 | p50 s | p95 s | 未恢復 |',
       '| -- | ---- | ----- | ----- | ------ |',
@@ -483,12 +475,7 @@ async function main() {
       const probes = {};
       probes.jump = await runProbe(page, 'jump', null);
       probes.telegraph = await runProbe(page, 'telegraph', null);
-      probes.swallow = await runSwallowProbe(page, { runs: 40, spinRuns: 15 }).then((r) => ({
-        probe: 'swallow',
-        ...r,
-        stunMeets: r.stunSuccessRate !== null ? r.stunSuccessRate >= 0.6 : null,
-        spinMeets: r.spinSuccessRate !== null ? r.spinSuccessRate <= 0 : null,
-      }));
+      probes.swallow = await runProbe(page, 'swallow', null, { runs: 40, spinRuns: 15 });
       probes.starburst = await runProbe(page, 'starburst', null);
       const name = `baseline-${baseSha}`;
       writeReport(name, { baseSha, rows, probes }, baselineMd(rows, probes));
@@ -524,10 +511,11 @@ async function main() {
     console.log(JSON.stringify(summary, null, 2));
   } finally {
     await browser.close();
-  }
-  if (errors.length > 0) {
-    console.error(`console errors ×${errors.length}：\n${errors.slice(0, 5).join('\n')}`);
-    process.exitCode = 1;
+    // console error 檢查置於 finally：--all/--probe 提前 return 也必經，確保非零退出。
+    if (errors.length > 0) {
+      console.error(`console errors ×${errors.length}：\n${errors.slice(0, 5).join('\n')}`);
+      process.exitCode = 1;
+    }
   }
 }
 
