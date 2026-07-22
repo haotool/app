@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+7（reward 7、penalty 0、neutral 1）｜累計總分：+173
+> 本次分數變化：+8（reward 8、penalty 0、neutral 1）｜累計總分：+174
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-22
+- ID：reward-starpuff-t3-review-nits
+- 原因：審查 nits——skills 註解殘留「且未滿匣」舊語意、SP aria-label 不隨模式更新、蓄爆生命週期無回歸鎖
+- 解法：註解改引 §109、aria-label 依 detonate/變身/dismiss 動態、player.test 補蓄爆中死亡清除與停幀凍結兩案
 
 - 日期：2026-07-22
 - ID：reward-starpuff-t3-review-e2e-deflake

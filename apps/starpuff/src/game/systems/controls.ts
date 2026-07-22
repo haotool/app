@@ -341,6 +341,11 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       spBtn.classList.toggle(SP_ON_CLASS, visible);
       spBtn.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (!visible) return;
+      // aria-label 隨模式同步（圖示即行為，讀屏同權）。
+      spBtn.setAttribute(
+        'aria-label',
+        mode === 'dismiss' ? '解除變身' : mode === 'detonate' ? '引爆星暴' : '星化變身',
+      );
       const ctx = spCanvas?.getContext('2d');
       if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
       // 浮現輕震一次（§91）：模式切換不震，僅隱藏→浮現邊緣；靜音偏好同步關閉。

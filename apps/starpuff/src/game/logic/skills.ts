@@ -159,7 +159,7 @@ export function shieldEligible(magazine: readonly MagazineSlot[]): boolean {
   return isTopShelly(magazine);
 }
 
-// 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星且未滿匣；
+// 逐幀推進：held 為長按達閾值（同吸入 150ms），eligible 為頂槽殼盾星（§109）；
 // CD 中不可舉盾，放開或條件消失即放下。
 export function advanceShield(
   state: ShieldState,
