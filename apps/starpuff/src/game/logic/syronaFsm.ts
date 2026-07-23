@@ -1,5 +1,6 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
+import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 
 // 熔糖窯后 Syrona FSM 純邏輯（GAME_DESIGN §74，不 import phaser），vitest 對象。
 // 場控型三段：本體半定點（中後方王窯座），威脅來自地形改寫（潮汐/噴泉/滴落）——
@@ -92,15 +93,27 @@ export function isCrownHit(hitY: number, bodyTopY: number): boolean {
   return hitY <= bodyTopY + CROWN_BAND_PX;
 }
 
-// 三階段招式循環（§74）：P1 噴泉/射彈；P2 滴落/召喚/加密噴泉；P3 糖漿波/噴口超載。
-export function syronaAttackCycle(phase: BossPhase): readonly SyronaAction[] {
+// 加權選招表（§5 #813 W2）：固定循環改權重＋條件驅動（沿 JELLORD_MOVES 慣例）。
+// P1 噴泉/射彈（射彈限遠距帶——貼身拋物不可讀，沿 Jellord dash 遠距帶理據）；
+// P2 滴落/召喚/加密噴泉；P3 糖漿波（焦糖化載體）/噴口超載。
+export function syronaMoveTable(phase: BossPhase): readonly WeightedMove<SyronaAction>[] {
   switch (phase) {
     case 'p1':
-      return ['fountain', 'lob'];
+      return [
+        { action: 'fountain', weight: 3 },
+        { action: 'lob', weight: 3, condition: { band: 'far' } },
+      ];
     case 'p2':
-      return ['drip', 'summon', 'fountain'];
+      return [
+        { action: 'drip', weight: 3 },
+        { action: 'fountain', weight: 3 },
+        { action: 'summon', weight: 2 },
+      ];
     case 'p3':
-      return ['wave', 'overload'];
+      return [
+        { action: 'wave', weight: 3 },
+        { action: 'overload', weight: 3 },
+      ];
     default: {
       const unhandled: never = phase;
       throw new Error(`未知階段：${String(unhandled)}`);
@@ -119,11 +132,13 @@ export interface SyronaFsm {
   takeDamage(amount: number): SyronaHitEvent[];
   // 雷化鏈電中斷召喚（§58 慣例）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
+  // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
+  setTargetDistance(distancePx: number | null): void;
 }
 
 export interface SyronaFsmOptions {
   ex?: boolean;
-  // 噴泉洗牌亂數注入（EX 質性差分可測；缺省 Math.random）。
+  // 亂數注入（噴泉洗牌與加權選招共用；同 seed 可重放；缺省 Math.random）。
   rng?: () => number;
 }
 
@@ -149,8 +164,9 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
   let hp = maxHp;
   let phase: BossPhase = 'p1';
   let state: SyronaAction = 'idle';
-  let lastAttack: SyronaAction | null = null;
-  let cycleIndex = 0;
+  // 近兩次出招（§5 連續同招上限 2）。
+  let recentAttacks: SyronaAction[] = [];
+  let distancePx: number | null = null;
   let timerMs: number = SYRONA.idleMs.p1;
   let damageSinceDrop = 0;
   let defeated = false;
@@ -218,8 +234,7 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
   const enterPhase = (next: BossPhase, events: SyronaHitEvent[]): void => {
     phase = next;
     state = 'idle';
-    lastAttack = null;
-    cycleIndex = 0;
+    recentAttacks = [];
     timerMs = durationMs('idle');
     events.push({ kind: 'phase', phase: next });
   };
@@ -248,11 +263,14 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'idle') {
-        const cycle = syronaAttackCycle(phase);
-        const index = lastAttack === null ? 0 : (cycleIndex + 1) % cycle.length;
-        state = cycle[index] ?? 'idle';
-        cycleIndex = index;
-        lastAttack = state;
+        // 加權選招（§5）：權重＋條件（HP 帶/距離帶）＋連續同招上限 2。
+        state = pickMove(
+          syronaMoveTable(phase),
+          { hpRatio: hp / maxHp, distanceBand: distanceBandOf(distancePx) },
+          recentAttacks,
+          rng,
+        );
+        recentAttacks = [...recentAttacks.slice(-1), state];
       } else {
         state = 'idle';
       }
@@ -285,6 +303,9 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       state = 'idle';
       timerMs = durationMs('idle');
       return true;
+    },
+    setTargetDistance(next: number | null): void {
+      distancePx = next;
     },
   };
 }

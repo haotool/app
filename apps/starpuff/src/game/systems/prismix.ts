@@ -8,6 +8,7 @@ import {
   type PrismixCommand,
   type PrismixSide,
 } from '../logic/prismixFsm';
+import { shadowActive, shadowSpawnX, stepShadowX, stepShadowY } from '../logic/mirrorShadow';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
@@ -50,6 +51,12 @@ const SHARD_SPIN_RAD_PER_MS = 0.0012;
 const BARRAGE_WINDUP_MS = 600;
 const CRYSTAL_TINT = 0xc5a8e8;
 const CORE_TINT = 0x9a7ad0;
+// 鏡界反射（§5 W2）：銀白鏡光與折返彈速度；折返彈可再吸入（免費彈藥獎勵理解）。
+const MIRROR_TINT = 0xf0f4ff;
+const REFLECT_SHOT_SPEED = 200;
+// 鏡像殘影（§5 W2）：玩家鏡影視覺——暗銀紫剪影。
+const SHADOW_TINT = 0x6a5a8e;
+const SHADOW_SIZE = 48;
 
 // 入場運鏡（§17 慣例）：黑幕淡入 → 推近王殿 → 稜晶自天緩降落定 → 稜光共鳴 → 復位開戰。
 const INTRO_FADE_MS = 280;
@@ -114,6 +121,13 @@ export function createPrismix(
   // 雙子期間主本體隱藏停用；damage number 錨點跟隨最後受擊側。
   let twinsAlive = false;
   let struggleSide: PrismixSide | null = null;
+  // 鏡界反射（§5 W2）：開鏡側鏡光面板隨本體逐幀貼合。
+  let mirrorPane: Phaser.GameObjects.Rectangle | null = null;
+  let mirrorTwin: Phaser.Physics.Arcade.Sprite | null = null;
+  // 鏡像殘影（§5 W2）：單具重生刷新；水平反向步進依玩家逐幀位移。
+  let shadow: Phaser.Physics.Arcade.Sprite | null = null;
+  let shadowSpawnAtMs = -1;
+  let prevTargetX: number | null = null;
 
   const viewW = () => scene.scale.width;
   const arenaLeft = () => options.arenaLeft();
@@ -363,6 +377,67 @@ export function createPrismix(
     }
   };
 
+  // 鏡界反射（§5 W2）：單具開鏡 0.8s——銀白鏡光面板即 telegraph；窗內射它的
+  // 星彈折返（FSM reflect 事件），反制＝打另一具。
+  const doMirror = (side: PrismixSide, durationMs: number) => {
+    const twin = sideSprite(side);
+    mirrorTwin = twin;
+    mirrorPane?.destroy();
+    mirrorPane = scene.add
+      .rectangle(twin.x, twin.y, TWIN_W * 0.94, TWIN_H * 1.06, MIRROR_TINT, 0.28)
+      .setStrokeStyle(3, MIRROR_TINT, 0.95)
+      .setDepth(59);
+    scene.tweens.add({
+      targets: mirrorPane,
+      alpha: { from: 1, to: 0.45 },
+      duration: 160,
+      yoyo: true,
+      repeat: -1,
+    });
+    playSfx('reveal', 1.1);
+    delay(durationMs, () => {
+      mirrorPane?.destroy();
+      mirrorPane = null;
+      mirrorTwin = null;
+    });
+  };
+
+  // 折返彈（§5 W2）：自開鏡具射回玩家；帶 inhalable 標記——吸入中接觸即回收為彈藥。
+  const spawnReflectShot = (side: PrismixSide) => {
+    const twin = sideSprite(side);
+    const shot = spawnShot(twin.x, twin.y);
+    if (!shot) return;
+    shot.setTint(MIRROR_TINT);
+    shot.setData('inhalable', true);
+    const to = target ?? { x: arenaCx(), y: GROUND_TOP - 40 };
+    scene.physics.moveTo(shot, to.x, to.y, REFLECT_SHOT_SPEED);
+    playSfx('metal', 1.15);
+  };
+
+  // 鏡像殘影（§5 W2）：玩家鏡影自 arena 中線鏡射位現身——水平反向移動、觸傷 1、
+  // 6s 壽命、1 發即破；群組雙掛沿既有管線（shockwaves 觸傷／shields 星彈可破）。
+  const doShadow = () => {
+    if (!shadow) {
+      const texture = scene.textures.exists('hero-idle') ? 'hero-idle' : '__WHITE';
+      shadow = scene.physics.add.sprite(arenaCx(), TWIN_STAND_Y, texture);
+      shadow.setDisplaySize(SHADOW_SIZE, SHADOW_SIZE);
+      shadow.setTint(SHADOW_TINT).setAlpha(0.78).setDepth(56);
+      shadow.setData('shadow', true);
+      const body = shadow.body as Phaser.Physics.Arcade.Body;
+      body.setAllowGravity(false);
+      body.setSize(shadow.width * 0.8, shadow.height * 0.8);
+      shockwaves.add(shadow);
+      shields.add(shadow);
+    }
+    const spawnX = clampArenaX(shadowSpawnX(arenaCx(), target?.x ?? arenaCx()), 40);
+    shadow.enableBody(true, spawnX, target?.y ?? TWIN_STAND_Y, true, true);
+    shadow.setDisplaySize(SHADOW_SIZE, SHADOW_SIZE).setTint(SHADOW_TINT).setAlpha(0.78);
+    (shadow.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+    shadowSpawnAtMs = scene.time.now;
+    prevTargetX = target?.x ?? null;
+    playSfx('reveal', 0.8);
+  };
+
   // P2 分裂演出（§68）：主本體隱沒，雙子自中心彈出左右鏡像位。
   const doSplit = () => {
     twinsAlive = true;
@@ -481,6 +556,12 @@ export function createPrismix(
       case 'merge':
         doMerge(command.coreHp, command.shards);
         return;
+      case 'mirror':
+        doMirror(command.side, command.durationMs);
+        return;
+      case 'shadow':
+        doShadow();
+        return;
       default: {
         const unhandled: never = command;
         throw new Error(`未知指令：${String(unhandled)}`);
@@ -496,6 +577,10 @@ export function createPrismix(
   const dieSequence = () => {
     dying = true;
     active = false;
+    mirrorPane?.destroy();
+    mirrorPane = null;
+    mirrorTwin = null;
+    shadowSpawnAtMs = -1;
     [core, twinA, twinB].forEach((sprite) => scene.tweens.killTweensOf(sprite));
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
@@ -559,6 +644,10 @@ export function createPrismix(
           break;
         case 'twinFinish':
           hooks.onTwinFinish();
+          break;
+        case 'reflect':
+          // 鏡界反射（§5 W2）：開鏡側受擊零傷、生成折返彈（可再吸入）。
+          spawnReflectShot(event.side);
           break;
         case 'minionDrop':
           minionHandlers.forEach((handler) => handler());
@@ -652,8 +741,40 @@ export function createPrismix(
     },
     update(deltaMs: number) {
       if (!active || dying) return;
+      // 距離帶餵送（§5 條件欄）：取最近存活本體與玩家距離。
+      const focus = target;
+      if (focus) {
+        const alive = twinsAlive ? [twinA, twinB].filter((twin) => twin.visible) : [core];
+        const dist = Math.min(
+          ...alive.map((body) => Phaser.Math.Distance.Between(body.x, body.y, focus.x, focus.y)),
+        );
+        fsm.setTargetDistance(Number.isFinite(dist) ? dist : null);
+      } else {
+        fsm.setTargetDistance(null);
+      }
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
+      // 鏡光面板逐幀貼合開鏡具（雙子浮動不脫錨）。
+      if (mirrorPane && mirrorTwin) mirrorPane.setPosition(mirrorTwin.x, mirrorTwin.y);
+      // 鏡像殘影（§5 W2）：水平反向步進＋垂直速度上限跟隨；壽命期滿消散。
+      if (shadow && shadowSpawnAtMs >= 0 && shadow.active) {
+        if (!shadowActive(shadowSpawnAtMs, scene.time.now)) {
+          shadowSpawnAtMs = -1;
+          const expiring = shadow;
+          scene.tweens.add({
+            targets: expiring,
+            alpha: 0,
+            duration: 240,
+            onComplete: () => expiring.disableBody(true, true),
+          });
+        } else if (target) {
+          const playerDx = prevTargetX === null ? 0 : target.x - prevTargetX;
+          shadow.x = clampArenaX(stepShadowX(shadow.x, playerDx), 24);
+          shadow.y = stepShadowY(shadow.y, target.y, deltaMs);
+          shadow.setFlipX((target.x ?? 0) < shadow.x);
+        }
+      }
+      prevTargetX = target?.x ?? null;
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
         const bob = Math.sin(hoverMs * 0.003) * 6;
@@ -677,6 +798,8 @@ export function createPrismix(
       const shardCount = ex ? EX_PRISMIX.shardOrbitCount : PRISMIX.shardOrbitCount;
       shields.getMatching('active', true).forEach((obj) => {
         const shard = obj as Phaser.Physics.Arcade.Sprite;
+        // 鏡像殘影雙掛 shields（星彈可破）：不參與碎晶盾軌道。
+        if (shard.getData('shadow') === true) return;
         const index = (shard.getData('orbitIndex') as number) ?? 0;
         const angle = orbitBase + (Math.PI * 2 * index) / shardCount;
         shard.setPosition(
@@ -700,6 +823,8 @@ export function createPrismix(
     },
     destroy() {
       timers.forEach((timer) => timer.remove(false));
+      mirrorPane?.destroy();
+      mirrorPane = null;
       [core, twinA, twinB].forEach((sprite) => {
         scene.tweens.killTweensOf(sprite);
         sprite.destroy();

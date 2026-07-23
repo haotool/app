@@ -1,7 +1,8 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
+import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 
-// 稜晶雙子 Prismix FSM 純邏輯（GAME_DESIGN §68，不 import phaser），vitest 對象。
+// 稜晶雙子 Prismix FSM 純邏輯（GAME_DESIGN §68/§112，不 import phaser），vitest 對象。
 // 分裂型三段：P1 單體 → P2 鏡像雙子（獨立血條各半，單份指令左右鏡像執行）→
 // P3 裂核合體；掙扎窗內相繼擊破兩具＝雙子連破（跳過 P3，觸發 twin-finish 彩蛋）。
 // phase truth 全數收斂於此，禁止散落 scene（沿 bossFsm/noctraFsm 表驅動慣例）。
@@ -41,6 +42,11 @@ export const PRISMIX = {
   // #809：雙生夾擊為衝撞型前搖，對齊 ≥600ms 可讀性紅線（550→600）。
   pincerTelegraphMs: 600,
   rainTelegraphMs: 600,
+  // 鏡界反射（§5 #813 W2）：單具開鏡 0.8s（銀白鏡光 telegraph），射它的星彈折返；
+  // 開鏡窗固定不隨狂暴速率縮放（可讀性紅線），反制＝窗內打另一具。
+  mirrorDurationMs: 800,
+  // 鏡像殘影施放拍（§5 W2）：殘影本體規格見 logic/mirrorShadow.ts SSOT。
+  shadowCastMs: 900,
 } as const;
 
 // Prismix EX 專屬差分（§68）：分裂提前、掙扎窗收短、碎晶盾加密；
@@ -61,7 +67,9 @@ export type PrismixAction =
   | 'summon'
   | 'struggle'
   | 'barrage'
-  | 'rain';
+  | 'rain'
+  | 'mirror'
+  | 'shadow';
 
 export type PrismixSide = 'a' | 'b';
 
@@ -76,10 +84,12 @@ export type PrismixCommand =
   | { kind: 'summon'; cap: number }
   | { kind: 'barrage'; count: number }
   | { kind: 'rain'; count: number }
-  | { kind: 'merge'; coreHp: number; shards: number };
+  | { kind: 'merge'; coreHp: number; shards: number }
+  | { kind: 'mirror'; side: PrismixSide; durationMs: number }
+  | { kind: 'shadow' };
 
 // takeDamage 輸出的傷害驅動事件：split（P1→P2 分裂）、struggle（單具擊破入掙扎窗）、
-// twinFinish（窗內補殺雙子連破，跳過 P3）。
+// twinFinish（窗內補殺雙子連破，跳過 P3）、reflect（鏡界反射：開鏡側受擊零傷折返）。
 export type PrismixHitEvent =
   | { kind: 'damaged'; hp: number }
   | { kind: 'phase'; phase: BossPhase }
@@ -87,7 +97,8 @@ export type PrismixHitEvent =
   | { kind: 'struggle'; survivor: PrismixSide; windowMs: number }
   | { kind: 'twinFinish' }
   | { kind: 'minionDrop' }
-  | { kind: 'defeated' };
+  | { kind: 'defeated' }
+  | { kind: 'reflect'; side: PrismixSide };
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
@@ -95,16 +106,29 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p3: PRISMIX.enrageSpeedMultiplier,
 };
 
-// 三階段招式循環（§68）：P1 晶柱／折射光束；P2 雙生夾擊／交錯光束／召喚；
-// P3 全域折射彈幕／晶雨。
-export function prismixAttackCycle(phase: BossPhase): readonly PrismixAction[] {
+// 加權選招表（§5 #813 W2）：固定循環改權重＋條件驅動（沿 JELLORD_MOVES 慣例）。
+// P1 晶柱／折射光束；P2 雙生夾擊／交錯光束／召喚＋鏡界反射（開鏡）＋鏡像殘影
+//（低頻，總血 ≤50% 深段才入池——HP 帶條件欄）；P3 全域折射彈幕／晶雨。
+export function prismixMoveTable(phase: BossPhase): readonly WeightedMove<PrismixAction>[] {
   switch (phase) {
     case 'p1':
-      return ['pillar', 'beam'];
+      return [
+        { action: 'pillar', weight: 3 },
+        { action: 'beam', weight: 3 },
+      ];
     case 'p2':
-      return ['pincer', 'crossbeam', 'summon'];
+      return [
+        { action: 'pincer', weight: 3 },
+        { action: 'crossbeam', weight: 3 },
+        { action: 'summon', weight: 2 },
+        { action: 'mirror', weight: 2 },
+        { action: 'shadow', weight: 1, condition: { maxHpRatio: 0.5 } },
+      ];
     case 'p3':
-      return ['barrage', 'rain'];
+      return [
+        { action: 'barrage', weight: 3 },
+        { action: 'rain', weight: 3 },
+      ];
     default: {
       const unhandled: never = phase;
       throw new Error(`未知階段：${String(unhandled)}`);
@@ -126,14 +150,19 @@ export interface PrismixFsm {
   takeDamage(amount: number, side?: PrismixSide): PrismixHitEvent[];
   // 雷化鏈電中斷召喚（§58 慣例）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
+  // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
+  setTargetDistance(distancePx: number | null): void;
 }
 
 export interface PrismixFsmOptions {
   ex?: boolean;
+  // 加權選招亂數注入（§5：同 seed 可重放；缺省 Math.random）。
+  rng?: () => number;
 }
 
 export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
   const ex = options.ex === true;
+  const rng = options.rng ?? Math.random;
   const maxHp = Math.round(PRISMIX.maxHp * (ex ? EX_MODS.hpMul : 1));
   const splitRatio = ex ? EX_PRISMIX.splitHpRatio : PRISMIX.splitHpRatio;
   const struggleMs = ex ? EX_PRISMIX.struggleMs : PRISMIX.struggleMs;
@@ -141,8 +170,11 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
 
   let phase: BossPhase = 'p1';
   let state: PrismixAction = 'idle';
-  let lastAttack: PrismixAction | null = null;
-  let cycleIndex = 0;
+  // 近兩次出招（§5 連續同招上限 2）。
+  let recentAttacks: PrismixAction[] = [];
+  let distancePx: number | null = null;
+  // 鏡界反射開鏡側：僅 state === 'mirror' 期間有效。
+  let mirrorSide: PrismixSide = 'a';
   let timerMs: number = PRISMIX.idleMs;
   let damageSinceDrop = 0;
   let defeated = false;
@@ -176,6 +208,11 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       // 掙扎窗為固定時長（不隨速率縮放：窗長即彩蛋判定窗）。
       case 'struggle':
         return struggleMs;
+      // 開鏡窗固定 0.8s（可讀性紅線）：不隨狂暴速率縮放。
+      case 'mirror':
+        return PRISMIX.mirrorDurationMs;
+      case 'shadow':
+        return PRISMIX.shadowCastMs / speedFactor();
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -202,6 +239,10 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         return { kind: 'barrage', count: PRISMIX.radialCount };
       case 'rain':
         return { kind: 'rain', count: PRISMIX.rainCount };
+      case 'mirror':
+        return { kind: 'mirror', side: mirrorSide, durationMs: PRISMIX.mirrorDurationMs };
+      case 'shadow':
+        return { kind: 'shadow' };
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -251,17 +292,25 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         hpA = 0;
         hpB = 0;
         state = 'idle';
-        lastAttack = null;
-        cycleIndex = 0;
+        recentAttacks = [];
         timerMs = durationMs('idle');
         return { kind: 'merge', coreHp: hp, shards };
       }
       if (state === 'idle') {
-        const cycle = prismixAttackCycle(phase);
-        const index = lastAttack === null ? 0 : (cycleIndex + 1) % cycle.length;
-        state = cycle[index] ?? 'idle';
-        cycleIndex = index;
-        lastAttack = state;
+        // 加權選招（§5）：權重＋條件（HP 帶/距離帶）＋連續同招上限 2。
+        state = pickMove(
+          prismixMoveTable(phase),
+          { hpRatio: totalHp() / maxHp, distanceBand: distanceBandOf(distancePx) },
+          recentAttacks,
+          rng,
+        );
+        recentAttacks = [...recentAttacks.slice(-1), state];
+        // 鏡界反射開鏡側：雙具存活時 rng 抽側（同 seed 可重放），單側殘存防呆歸存活具。
+        if (state === 'mirror') {
+          if (hpA <= 0) mirrorSide = 'b';
+          else if (hpB <= 0) mirrorSide = 'a';
+          else mirrorSide = rng() < 0.5 ? 'a' : 'b';
+        }
       } else {
         state = 'idle';
       }
@@ -273,6 +322,11 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       if (defeated || amount <= 0) return [];
       const events: PrismixHitEvent[] = [];
       if (phase === 'p2') {
+        // 鏡界反射（§5 W2）：開鏡側受擊零傷、折返事件由呈現層生成折返彈；
+        // 反制＝窗內打另一具（另一側照常結算）。
+        if (state === 'mirror' && side === mirrorSide) {
+          return [{ kind: 'reflect', side }];
+        }
         // 掙扎窗內僅存活具可傷；平時對已死側傷害忽略（呈現層防呆）。
         const target: PrismixSide = state === 'struggle' ? survivor : side;
         if (target === 'a' && hpA <= 0) return [];
@@ -310,8 +364,7 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         hpB = hp - hpA;
         hp = 0;
         state = 'idle';
-        lastAttack = null;
-        cycleIndex = 0;
+        recentAttacks = [];
         timerMs = durationMs('idle');
         events.push({ kind: 'phase', phase: 'p2' }, { kind: 'split', hpA, hpB });
       }
@@ -322,6 +375,9 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       state = 'idle';
       timerMs = durationMs('idle');
       return true;
+    },
+    setTargetDistance(next: number | null): void {
+      distancePx = next;
     },
   };
 }

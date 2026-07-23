@@ -39,6 +39,8 @@ export interface CombatOverlapHooks {
   bossTouchDamage(): number;
   damagePlayer(damage: number, sourceX: number): void;
   damageBossAt(amount: number, x: number, y: number, source?: BossDamageSource): void;
+  // 焦糖化（§5 Syrona W2）：帶 caramel 旗標的糖漿波沾身時套用減速（GameScene 單一真值）。
+  applyCaramel(): void;
   // 勝敗轉場窗（finished || transitioning）：期間傷害結算靜默。
   isSettled(): boolean;
   isBossDown(): boolean;
@@ -259,6 +261,13 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
     const projectile = asSprite(ball);
     if (!projectile.active || hooks.isSettled()) return;
     if (projectile.getData('reflected') === true) return;
+    // 鏡界反射折返彈（§5 Prismix W2）：吸入中接觸即回收為彈藥（免費彈藥獎勵理解）。
+    if (projectile.getData('inhalable') === true && hooks.player().isInhaling()) {
+      projectile.disableBody(true, true);
+      hooks.player().grantStar('jelly');
+      playSfx('swallow');
+      return;
+    }
     // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。
     if (hooks.combat().playerFormSpec()?.reflectProjectiles) {
       projectile.setData('reflected', true);
@@ -290,6 +299,8 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.boss().getShockwaves(), (_p, wave) => {
     const shockwave = asSprite(wave);
     if (!shockwave.active || hooks.isSettled()) return;
+    // 焦糖化（§5 Syrona W2）：糖漿波沾身先套減速，傷害照常結算。
+    if (shockwave.getData('caramel') === true) hooks.applyCaramel();
     hooks.damagePlayer(hooks.bossTouchDamage(), shockwave.x);
   });
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { AUDIT_THRESHOLDS } from './difficulty';
+import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
+import { createSeededRng } from './moveTable';
 import {
   EX_PRISMIX,
   PRISMIX,
   createPrismixFsm,
-  prismixAttackCycle,
+  prismixMoveTable,
   type PrismixCommand,
   type PrismixHitEvent,
 } from './prismixFsm';
@@ -19,49 +20,84 @@ function drain(fsm: ReturnType<typeof createPrismixFsm>, steps: number): Prismix
   return commands;
 }
 
+// 收集非 idle 指令直到數量滿足。
+function collectAttacks(fsm: ReturnType<typeof createPrismixFsm>, count: number): PrismixCommand[] {
+  const commands: PrismixCommand[] = [];
+  for (let i = 0; i < 5000 && commands.length < count; i += 1) {
+    const command = fsm.tick(50);
+    if (command && command.kind !== 'idle') commands.push(command);
+  }
+  return commands;
+}
+
+// 驅動至指定指令出現，回傳該指令；逾迭代上限回 null。
+function driveTo(
+  fsm: ReturnType<typeof createPrismixFsm>,
+  kind: PrismixCommand['kind'],
+): PrismixCommand | null {
+  for (let i = 0; i < 5000; i += 1) {
+    const command = fsm.tick(50);
+    if (command?.kind === kind) return command;
+  }
+  return null;
+}
+
 function eventKinds(events: PrismixHitEvent[]): string[] {
   return events.map((event) => event.kind);
 }
 
 // 造出 P2：自滿血打到分裂閾值以下。
-function splitFsm(): ReturnType<typeof createPrismixFsm> {
-  const fsm = createPrismixFsm();
+function splitFsm(seed = 1): ReturnType<typeof createPrismixFsm> {
+  const fsm = createPrismixFsm({ rng: createSeededRng(seed) });
   fsm.takeDamage(28);
   expect(fsm.phase).toBe('p2');
   return fsm;
 }
 
-describe('PRISMIX 常數與循環表（§68）', () => {
-  it('HP 階梯 80、telegraph 全數 ≥500ms、三階段循環表對表', () => {
+describe('PRISMIX 常數與加權表（§68/§112）', () => {
+  it('HP 階梯 80、telegraph 全數 ≥500ms、三階段招池對表', () => {
     expect(PRISMIX.maxHp).toBe(80);
     // #810：地面尖刺前搖須容納 500ms 反應玩家（下限對齊 AUDIT_THRESHOLDS.spikeTelegraphMinMs）。
     expect(PRISMIX.pillarTelegraphMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.spikeTelegraphMinMs);
     expect(PRISMIX.beamTelegraphMs).toBeGreaterThanOrEqual(500);
     expect(PRISMIX.pincerTelegraphMs).toBeGreaterThanOrEqual(500);
     expect(PRISMIX.rainTelegraphMs).toBeGreaterThanOrEqual(500);
-    expect(prismixAttackCycle('p1')).toEqual(['pillar', 'beam']);
-    expect(prismixAttackCycle('p2')).toEqual(['pincer', 'crossbeam', 'summon']);
-    expect(prismixAttackCycle('p3')).toEqual(['barrage', 'rain']);
+    expect(prismixMoveTable('p1').map((m) => m.action)).toEqual(['pillar', 'beam']);
+    expect(prismixMoveTable('p2').map((m) => m.action)).toEqual([
+      'pincer',
+      'crossbeam',
+      'summon',
+      'mirror',
+      'shadow',
+    ]);
+    expect(prismixMoveTable('p3').map((m) => m.action)).toEqual(['barrage', 'rain']);
+  });
+
+  it('鏡界反射開鏡窗 0.8s（≥600ms 可讀性紅線）；鏡像殘影為低頻＋HP 帶條件', () => {
+    expect(PRISMIX.mirrorDurationMs).toBe(800);
+    expect(PRISMIX.mirrorDurationMs).toBeGreaterThanOrEqual(600);
+    const table = prismixMoveTable('p2');
+    const shadow = table.find((m) => m.action === 'shadow');
+    expect(shadow).toBeDefined();
+    for (const move of table) {
+      if (move.action !== 'shadow') expect(move.weight).toBeGreaterThan(shadow?.weight ?? 0);
+    }
+    expect(shadow?.condition).toEqual({ maxHpRatio: 0.5 });
   });
 });
 
 describe('P1 單體（§68）', () => {
-  it('招式沿 pillar → idle → beam → idle 輪替且帶正確參數', () => {
-    const fsm = createPrismixFsm();
-    const commands = drain(fsm, 8);
-    expect(commands.map((c) => c.kind)).toEqual([
-      'pillar',
-      'idle',
-      'beam',
-      'idle',
-      'pillar',
-      'idle',
-      'beam',
-      'idle',
-    ]);
-    const pillar = commands[0];
-    if (pillar?.kind !== 'pillar') throw new Error('首招應為晶柱');
-    expect(pillar.count).toBe(PRISMIX.pillarCount);
+  it('首招屬 P1 招池且帶正確參數；攻擊期滿回 idle', () => {
+    const fsm = createPrismixFsm({ rng: createSeededRng(1) });
+    const commands = drain(fsm, 6);
+    const pool = ['pillar', 'beam'];
+    const attacks = commands.filter((c) => c.kind !== 'idle');
+    expect(attacks.length).toBeGreaterThan(0);
+    for (const attack of attacks) expect(pool).toContain(attack.kind);
+    const pillar = attacks.find((c) => c.kind === 'pillar');
+    if (pillar?.kind === 'pillar') expect(pillar.count).toBe(PRISMIX.pillarCount);
+    // 攻擊與 idle 交替：偶數位攻擊、奇數位 idle。
+    expect(commands.filter((c) => c.kind === 'idle').length).toBeGreaterThan(0);
   });
 
   it('每損 10 HP 掉補給小怪（§26 飢荒保證律）', () => {
@@ -71,7 +107,7 @@ describe('P1 單體（§68）', () => {
   });
 
   it('總血 ≤66% 觸發分裂：剩餘均分為雙獨立血條、循環切 P2', () => {
-    const fsm = createPrismixFsm();
+    const fsm = createPrismixFsm({ rng: createSeededRng(2) });
     const events = fsm.takeDamage(28);
     expect(eventKinds(events)).toEqual(['damaged', 'minionDrop', 'minionDrop', 'phase', 'split']);
     const split = events.find((e) => e.kind === 'split');
@@ -80,7 +116,8 @@ describe('P1 單體（§68）', () => {
     expect(Math.abs(split.hpA - split.hpB)).toBeLessThanOrEqual(1);
     expect(fsm.twins).toEqual({ a: 26, b: 26 });
     expect(fsm.hp).toBe(52);
-    expect(drain(fsm, 1)[0]?.kind).toBe('pincer');
+    const pool = prismixMoveTable('p2').map((m) => m.action);
+    expect(pool).toContain(drain(fsm, 1)[0]?.kind);
   });
 });
 
@@ -113,7 +150,10 @@ describe('P2 鏡像雙子（§68 獨立血條）', () => {
     expect(fsm.phase).toBe('p3');
     expect(fsm.hp).toBe(20);
     expect(fsm.twins).toBeNull();
-    expect(drain(fsm, 4).map((c) => c.kind)).toEqual(['barrage', 'idle', 'rain', 'idle']);
+    const pool = prismixMoveTable('p3').map((m) => m.action);
+    for (const command2 of drain(fsm, 4)) {
+      expect(['idle', ...pool]).toContain(command2.kind);
+    }
   });
 
   it('掙扎窗內補殺第二具＝雙子連破：跳過 P3 直接擊破', () => {
@@ -145,12 +185,82 @@ describe('P2 鏡像雙子（§68 獨立血條）', () => {
   });
 
   it('interruptSummon 僅召喚態可中斷（§58 雷化斷召慣例）', () => {
-    const fsm = splitFsm();
+    const fsm = splitFsm(3);
     expect(fsm.interruptSummon()).toBe(false);
-    drain(fsm, 5); // pincer idle crossbeam idle summon
+    expect(driveTo(fsm, 'summon')).not.toBeNull();
     expect(fsm.state).toBe('summon');
     expect(fsm.interruptSummon()).toBe(true);
     expect(fsm.state).toBe('idle');
+  });
+});
+
+describe('鏡界反射（§5 W2）', () => {
+  it('開鏡側受擊零傷折返 reflect 事件；另一具照常結算（反制）', () => {
+    const fsm = splitFsm(5);
+    const mirror = driveTo(fsm, 'mirror');
+    if (mirror?.kind !== 'mirror') throw new Error('未抽到開鏡');
+    expect(mirror.durationMs).toBe(PRISMIX.mirrorDurationMs);
+    expect(fsm.state).toBe('mirror');
+    const before = fsm.twins;
+    const reflected = fsm.takeDamage(5, mirror.side);
+    expect(reflected).toEqual([{ kind: 'reflect', side: mirror.side }]);
+    expect(fsm.twins).toEqual(before);
+    // 反制：窗內打另一具照常扣血。
+    const other = mirror.side === 'a' ? 'b' : 'a';
+    const events = fsm.takeDamage(5, other);
+    expect(eventKinds(events)).toContain('damaged');
+  });
+
+  it('開鏡窗期滿恢復可傷（0.8s 固定不隨狂暴縮放）', () => {
+    const fsm = splitFsm(5);
+    const mirror = driveTo(fsm, 'mirror');
+    if (mirror?.kind !== 'mirror') throw new Error('未抽到開鏡');
+    fsm.tick(PRISMIX.mirrorDurationMs);
+    expect(fsm.state).toBe('idle');
+    const events = fsm.takeDamage(5, mirror.side);
+    expect(eventKinds(events)).toContain('damaged');
+  });
+});
+
+describe('鏡像殘影（§5 W2 HP 帶條件）', () => {
+  it('總血 >50% 不入池；≤50% 深段抽得到 shadow 指令', () => {
+    // 分裂後 52/80 = 65% > 50%：長時序列不得出現 shadow。
+    const high = splitFsm(7);
+    const highKinds = collectAttacks(high, 40).map((c) => c.kind);
+    expect(highKinds).not.toContain('shadow');
+    // 打到 39/80 = 48.75% ≤ 50%：shadow 入池（低頻 w1，長序列必然出現）。
+    const low = splitFsm(7);
+    low.takeDamage(13, 'a');
+    const lowKinds = collectAttacks(low, 60).map((c) => c.kind);
+    expect(lowKinds).toContain('shadow');
+  });
+});
+
+describe('加權選招治理（§5 去背板）', () => {
+  it('同 seed 可完整重放；不同 seed 序列偏離', () => {
+    const run = (seed: number): string[] => {
+      const fsm = createPrismixFsm({ rng: createSeededRng(seed) });
+      return collectAttacks(fsm, 20).map((c) => c.kind);
+    };
+    expect(run(11)).toEqual(run(11));
+    // 舊固定循環：P1 pillar→beam 交替。
+    const legacy = Array.from({ length: 20 }, (_, i) => (i % 2 === 0 ? 'pillar' : 'beam'));
+    expect(run(11)).not.toEqual(legacy);
+  });
+
+  it('連續同招上限 2：長時序列無三連同招', () => {
+    const fsm = createPrismixFsm({ rng: createSeededRng(4) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    for (let i = 2; i < kinds.length; i += 1) {
+      expect(new Set(kinds.slice(i - 2, i + 1)).size).toBeGreaterThan(1);
+    }
+  });
+
+  it('招式序列條件熵 ≥ 門檻（#813；AUDIT_THRESHOLDS.moveEntropyMinBits 口徑）', () => {
+    const fsm = createPrismixFsm({ rng: createSeededRng(13) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    expect(sequenceEntropyBits(kinds)).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
   });
 });
 

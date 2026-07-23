@@ -31,6 +31,7 @@ import {
   type BuffId,
   type BuffState,
 } from '../logic/buffs';
+import { createCaramelStatus, type CaramelStatus } from '../systems/caramelStatus';
 import {
   carryKillsOnDeath,
   checkpointRespawnX,
@@ -154,6 +155,7 @@ export class GameScene extends Phaser.Scene {
   private buff: BuffState = createBuffState();
   // e2e 觀測（§69）：本局累計增益拾取數——護盾可能拾取後旋即格擋消耗，快照式觀測會漏。
   private buffPickups = 0;
+  private caramel!: CaramelStatus;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
   // 地形單向平台（§77）：交 stage 統一下穿裁決（與 elements oneway 同權）。
@@ -234,6 +236,12 @@ export class GameScene extends Phaser.Scene {
     this.controls = createControls(this);
     this.buff = createBuffState();
     this.buffPickups = 0;
+    this.caramel = createCaramelStatus({
+      player: () => this.player,
+      fx: () => this.fx,
+      toast: (message) => this.toasts.flavor(message),
+      buffMods: () => [buffSpeedMul(this.buff), buffAccelMul(this.buff)] as const,
+    });
     // 前室魔王關（§69）：自廊道起點入場；一般魔王關維持 arena 中央。
     const startX = this.level.boss
       ? this.level.anteroomPx !== undefined
@@ -415,6 +423,7 @@ export class GameScene extends Phaser.Scene {
       bossTouchDamage: () => this.bossTouchDamage,
       damagePlayer: (damage, sourceX) => this.damagePlayer(damage, sourceX),
       damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
+      applyCaramel: () => this.caramel.apply(),
       isSettled: () => this.finished || this.transitioning,
       isBossDown: () => this.bossDown,
       now: () => this.time.now,
@@ -476,6 +485,7 @@ export class GameScene extends Phaser.Scene {
       for (const room of this.eliteRooms) room.update();
       this.bossRoom?.update();
       this.advanceBuff(deltaMs);
+      this.caramel.update(deltaMs);
       this.starSteering.update(deltaMs);
       this.advanceMercy(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
@@ -672,14 +682,18 @@ export class GameScene extends Phaser.Scene {
       deltaMs,
       body.blocked.up,
     );
-    if (lifted !== null) body.setVelocityY(lifted);
+    if (lifted !== null) {
+      body.setVelocityY(lifted);
+      // 焦糖化反制（§5 W2）：乘噴口氣流吹乾即解除減速。
+      this.caramel.clear();
+    }
   }
 
   // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
   private applyBuff(id: BuffId): void {
     this.buff = pickupBuff(this.buff, id);
     this.buffPickups += 1;
-    this.player.setBuffMoveMods(buffSpeedMul(this.buff), buffAccelMul(this.buff));
+    this.caramel.sync();
     this.toasts.flavor(`${BUFF_SPECS[id].nameZh}！短暫強化`);
   }
 
@@ -690,7 +704,7 @@ export class GameScene extends Phaser.Scene {
     }
     const result = tickBuff(this.buff, deltaMs);
     this.buff = result.state;
-    if (result.expired) this.player.setBuffMoveMods(1, 1);
+    if (result.expired) this.caramel.sync();
     this.bossRoom?.updateBuffHud(this.buff);
   }
 

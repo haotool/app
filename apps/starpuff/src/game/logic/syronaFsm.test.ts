@@ -1,42 +1,73 @@
 import { describe, expect, it } from 'vitest';
 import { EX_MODS } from './bossFsm';
-import { EX_SYRONA, SYRONA, createSyronaFsm, isCrownHit, syronaAttackCycle } from './syronaFsm';
+import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
+import { createSeededRng } from './moveTable';
+import {
+  EX_SYRONA,
+  SYRONA,
+  createSyronaFsm,
+  isCrownHit,
+  syronaMoveTable,
+  type SyronaCommand,
+} from './syronaFsm';
 
-// 熔糖窯后 Syrona FSM（GAME_DESIGN §74）：場控型三階段——本體半定點，威脅來自
+// 熔糖窯后 Syrona FSM（GAME_DESIGN §74/§112）：場控型三階段——本體半定點，威脅來自
 // 地形改寫（潮汐/噴泉/滴落）；hit window = 招式後 idle 僵直（散熱/吟唱/波後）。
 
-const drain = (fsm: ReturnType<typeof createSyronaFsm>, ms: number) => {
-  const commands = [];
-  let left = ms;
-  while (left > 0) {
-    const step = Math.min(50, left);
-    const command = fsm.tick(step);
-    if (command) commands.push(command);
-    left -= step;
+// 驅動至指定指令出現，回傳該指令；逾迭代上限回 null。
+const driveTo = (
+  fsm: ReturnType<typeof createSyronaFsm>,
+  kind: SyronaCommand['kind'],
+): SyronaCommand | null => {
+  for (let i = 0; i < 5000; i += 1) {
+    const command = fsm.tick(50);
+    if (command?.kind === kind) return command;
+  }
+  return null;
+};
+
+// 收集非 idle 指令直到數量滿足。
+const collectAttacks = (fsm: ReturnType<typeof createSyronaFsm>, count: number) => {
+  const commands: SyronaCommand[] = [];
+  for (let i = 0; i < 8000 && commands.length < count; i += 1) {
+    const command = fsm.tick(50);
+    if (command && command.kind !== 'idle') commands.push(command);
   }
   return commands;
 };
 
-describe('Syrona 三階段循環（§74）', () => {
-  it('HP 90 階梯（60→52→80→90）；P1 循環為噴泉→射彈', () => {
+describe('Syrona 三階段加權表（§74/§112）', () => {
+  it('HP 90 階梯（60→52→80→90）；三階段招池對表', () => {
     const fsm = createSyronaFsm();
     expect(fsm.maxHp).toBe(90);
     expect(SYRONA.maxHp).toBeGreaterThan(80);
-    expect(syronaAttackCycle('p1')).toEqual(['fountain', 'lob']);
-    expect(syronaAttackCycle('p2')).toEqual(['drip', 'summon', 'fountain']);
-    expect(syronaAttackCycle('p3')).toEqual(['wave', 'overload']);
+    expect(syronaMoveTable('p1').map((m) => m.action)).toEqual(['fountain', 'lob']);
+    expect(syronaMoveTable('p2').map((m) => m.action)).toEqual(['drip', 'fountain', 'summon']);
+    expect(syronaMoveTable('p3').map((m) => m.action)).toEqual(['wave', 'overload']);
   });
 
-  it('P1 首循環：idle 期滿出噴泉指令（固定升序），再 idle 後出射彈', () => {
-    const fsm = createSyronaFsm();
-    const commands = drain(fsm, 10000);
-    const kinds = commands.map((c) => c.kind);
-    expect(kinds[0]).toBe('fountain');
-    const fountain = commands[0];
-    if (fountain?.kind === 'fountain') {
-      expect(fountain.order).toEqual([0, 1, 2]);
-    }
-    expect(kinds).toContain('lob');
+  it('射彈限遠距帶（§5 條件欄：貼身拋物不可讀）；近距帶只出噴泉', () => {
+    const lob = syronaMoveTable('p1').find((m) => m.action === 'lob');
+    expect(lob?.condition).toEqual({ band: 'far' });
+    // 近距帶：lob 被條件剔除，序列僅剩噴泉。
+    const fsm = createSyronaFsm({ rng: createSeededRng(1) });
+    fsm.setTargetDistance(120);
+    const kinds = collectAttacks(fsm, 8).map((c) => c.kind);
+    expect(kinds).not.toContain('lob');
+    // 未餵送距離視為 far：lob 可入池。
+    const farFsm = createSyronaFsm({ rng: createSeededRng(1) });
+    const farKinds = collectAttacks(farFsm, 12).map((c) => c.kind);
+    expect(farKinds).toContain('lob');
+  });
+
+  it('P1 招池指令：噴泉固定升序（可背板）、射彈帶 count', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(2) });
+    const fountain = driveTo(fsm, 'fountain');
+    if (fountain?.kind === 'fountain') expect(fountain.order).toEqual([0, 1, 2]);
+    const lob = driveTo(fsm, 'lob');
+    if (lob?.kind === 'lob') expect(lob.count).toBe(SYRONA.lobCount);
+    expect(fountain).not.toBeNull();
+    expect(lob).not.toBeNull();
   });
 
   it('傷害驅動 P1→P2（≤66%）與 P2→P3（≤33%）；phase 事件依序帶出', () => {
@@ -49,16 +80,20 @@ describe('Syrona 三階段循環（§74）', () => {
     expect(events.some((e) => e.kind === 'phase' && e.phase === 'p3')).toBe(true);
   });
 
-  it('P2 循環出滴落→召喚→加密噴泉；召喚上限 2', () => {
-    const fsm = createSyronaFsm();
+  it('P2 招池出滴落/召喚/加密噴泉；召喚上限 2', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(3) });
     fsm.takeDamage(31);
-    const commands = drain(fsm, 14000);
-    const kinds = commands.map((c) => c.kind);
+    const kinds = collectAttacks(fsm, 30).map((c) => c.kind);
     expect(kinds).toContain('drip');
     expect(kinds).toContain('summon');
-    const summon = commands.find((c) => c.kind === 'summon');
+    expect(kinds).toContain('fountain');
+    const fsm2 = createSyronaFsm({ rng: createSeededRng(3) });
+    fsm2.takeDamage(31);
+    const summon = driveTo(fsm2, 'summon');
     if (summon?.kind === 'summon') expect(summon.cap).toBe(SYRONA.summonCap);
-    const fountain = commands.find((c) => c.kind === 'fountain');
+    const fsm3 = createSyronaFsm({ rng: createSeededRng(3) });
+    fsm3.takeDamage(31);
+    const fountain = driveTo(fsm3, 'fountain');
     if (fountain?.kind === 'fountain') {
       expect(fountain.order.length).toBe(SYRONA.fountainDenseCount);
     }
@@ -108,17 +143,43 @@ describe('Syrona 三階段循環（§74）', () => {
     expect(firstCommandAt).toBeLessThanOrEqual(SYRONA.idleMs.p2 + 100);
   });
 
-  it('P3 自然循環：糖漿波與噴口超載依序出現（審查修復）', () => {
-    const fsm = createSyronaFsm();
+  it('P3 招池：糖漿波（焦糖化載體）與噴口超載均可抽出（審查修復）', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(4) });
     fsm.takeDamage(31);
     fsm.takeDamage(30);
     expect(fsm.phase).toBe('p3');
-    const commands = drain(fsm, 16000);
-    const kinds = commands.map((c) => c.kind);
-    expect(kinds).toContain('wave');
-    expect(kinds).toContain('overload');
-    const overload = commands.find((c) => c.kind === 'overload');
+    expect(driveTo(fsm, 'wave')).not.toBeNull();
+    const overload = driveTo(fsm, 'overload');
+    expect(overload).not.toBeNull();
     if (overload?.kind === 'overload') expect(overload.durationMs).toBeGreaterThan(0);
+  });
+});
+
+describe('加權選招治理（§5 去背板）', () => {
+  it('同 seed 可完整重放；不同於舊固定循環', () => {
+    const run = (seed: number): string[] => {
+      const fsm = createSyronaFsm({ rng: createSeededRng(seed) });
+      return collectAttacks(fsm, 16).map((c) => c.kind);
+    };
+    expect(run(9)).toEqual(run(9));
+    // 舊固定循環：P1 fountain→lob 交替。
+    const legacy = Array.from({ length: 16 }, (_, i) => (i % 2 === 0 ? 'fountain' : 'lob'));
+    expect(run(9)).not.toEqual(legacy);
+  });
+
+  it('連續同招上限 2：長時序列無三連同招', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(6) });
+    const kinds = collectAttacks(fsm, 40).map((c) => c.kind);
+    for (let i = 2; i < kinds.length; i += 1) {
+      expect(new Set(kinds.slice(i - 2, i + 1)).size).toBeGreaterThan(1);
+    }
+  });
+
+  it('招式序列條件熵 ≥ 門檻（#813；AUDIT_THRESHOLDS.moveEntropyMinBits 口徑）', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(13) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    expect(sequenceEntropyBits(kinds)).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
   });
 });
 
@@ -134,21 +195,15 @@ describe('皇冠弱點帶（§74 isCrownHit，審查修復）', () => {
 
 describe('噴泉洗牌 seed 注入（§74 EX 質性差分）', () => {
   it('一般模式噴泉恆為固定升序（讀招可背板）', () => {
-    const fsm = createSyronaFsm({ rng: () => 0.99 });
-    const commands = drain(fsm, 10000);
-    const fountain = commands.find((c) => c.kind === 'fountain');
+    const fsm = createSyronaFsm({ rng: createSeededRng(2) });
+    const fountain = driveTo(fsm, 'fountain');
+    expect(fountain?.kind).toBe('fountain');
     if (fountain?.kind === 'fountain') expect(fountain.order).toEqual([0, 1, 2]);
   });
 
   it('EX 模式每循環洗牌出序（同 seed 可重現、非恆升序）', () => {
-    let calls = 0;
-    const rng = () => {
-      calls += 1;
-      return (calls * 0.37) % 1;
-    };
-    const fsm = createSyronaFsm({ ex: true, rng });
-    const commands = drain(fsm, 12000);
-    const fountain = commands.find((c) => c.kind === 'fountain');
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(8) });
+    const fountain = driveTo(fsm, 'fountain');
     expect(fountain?.kind).toBe('fountain');
     if (fountain?.kind === 'fountain') {
       // EX 噴泉 ×5；洗牌序為 0..4 的全排列。

@@ -71,6 +71,7 @@ function makeHarness(config: HarnessConfig = {}): {
     moveTo: ReturnType<typeof vi.fn>;
     trySlamStun: ReturnType<typeof vi.fn>;
     onSlamBounce: ReturnType<typeof vi.fn>;
+    applyCaramel: ReturnType<typeof vi.fn>;
   };
   groups: {
     stars: object;
@@ -92,6 +93,7 @@ function makeHarness(config: HarnessConfig = {}): {
   const shockwaves = { name: 'shockwaves' };
   const shields = config.shields ? { name: 'shields', getChildren: () => config.shields! } : null;
   const damagePlayer = vi.fn();
+  const applyCaramel = vi.fn();
   const damageBossAt = vi.fn();
   const onStarHit = vi.fn();
   const enemyDamage = vi.fn(() => 'hurt');
@@ -171,6 +173,7 @@ function makeHarness(config: HarnessConfig = {}): {
     isSettled: () => config.settled ?? false,
     isBossDown: () => false,
     now: () => 10_000,
+    applyCaramel,
   };
   return {
     scene,
@@ -185,6 +188,7 @@ function makeHarness(config: HarnessConfig = {}): {
       moveTo,
       trySlamStun,
       onSlamBounce,
+      applyCaramel,
     },
     groups: { stars, enemyGroup, hazards, inhaleZone, playerSprite, projectiles, shockwaves },
   };
