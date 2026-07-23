@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 9、penalty 4、neutral 2）｜累計總分：+265
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+266
 
 ## 新增模板（4 行）
 
@@ -542,6 +542,11 @@
 - ID：reward-starpuff-t5hf-full-shield-siphon-no-drain
 - 原因：PR#855 review——Voidra 滿盾（2 層）時虹吸窗滿仍先 drainTopStar 扣玩家頂槽，absorbSiphonStar 回 absorbed:false 被忽略，玩家白丟彈藥
 - 解法：resolveSiphonDrain 以 shieldAfterAbsorb 守門（不可吸收即跳過抽彈）並移除被忽略的 result；新增 voidra.test.ts 最小 scene stub 驅動 3 窗循環，紅燈重現第 3 窗抽彈後修復鎖定 drainTopStar 恰 2 次
+
+- 日期：2026-07-24
+- ID：reward-starpuff-v21-v30-first-assets-shelly-facing
+- 原因：21-30 關首批生成素材尚未進入既有資產管線，且殼化小怪受物理反彈後視覺朝向不會同步
+- 解法：加入 Ember／劉董／市場下跌箭頭 WebP 與資產清單，並依殼化速度每幀同步左右翻面
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-siphon-burst-star-only
