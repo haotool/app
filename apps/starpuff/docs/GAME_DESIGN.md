@@ -1282,6 +1282,8 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   - **P3 核心決戰（≤40%）**：全場低重力 0.55 注入 → barrage 蝕星彈幕（放射 ×8＋
     螺旋雙層）→ crush 黑洞潮汐（水平牽引 150px/s < 玩家全速 220，交叉不變式 16；
     arena 無坑洞＋實牆邊界）；裂核大窗 3.5s（金紋呼吸提示）。
+    （v23 已由 §113 取代：P1/P3 固定循環改 `voidraMoveTable` 加權表選招並追加
+    星光虹吸；招池與 telegraph 數值不變、P2 波次表驅動不變。）
 - anti-softlock（主計畫 §10.2-8）：P2 零擊殺可過（純走位 40s）、無位置懲罰即死、
   不設計時失敗；**段起點重試**——P2/P3 死亡不回滾整場（trySegmentRespawn：彈幕/
   星屑/轟炸/殘留 delayedCall 清場＋FSM resetToPhase＋玩家沿 checkpoint 管線重生於
@@ -2147,3 +2149,32 @@ telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §1
   （volt 形態既免疫沾身也瞬除既有沾身——變身優勢解）；首次沾身浮字教學（session 一次）。
 - overlaps 接點：shockwave 命中玩家時讀 `caramel` data 旗標經 `applyCaramel` hook 結算，
   傷害照常走 `damagePlayer` 單一入口。
+
+## 113. v23 魔王主題化 W3——Voidra 加權選招與星光虹吸（#813；T5 列車）
+
+取代標註：§82 P1/P3 固定循環由 `voidraMoveTable` 加權表取代（既有招池數值不變，
+僅選招機制升級＋主題招式擴池）；P2 生存段仍為波次表驅動（§82 不變）；
+telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §111.1 moveTable SSOT。
+
+### 113.1 加權選招接入（沿 §111.1，FSM 增 rng/setTargetDistance）
+
+- P1 牽引 3／彈環 3／爪擊 3／虹吸 2；P3 彈幕 3／潮汐 3／虹吸 2（虹吸為低頻主題招，
+  權重全表最低）；P2 波次表驅動不變（`voidraMoveTable('p2')` 僅供對表）。
+- 換階段清空同招記錄；rng 注入同 seed 可重放；連續同招上限 2；死碼
+  `voidraAttackCycle` 移除。
+- 條件熵驗收（#818 口徑，seed 13 × 60 招）：P1 1.76、P3 1.38 bits，均 ≥
+  `AUDIT_THRESHOLDS.moveEntropyMinBits`（0.5）。
+
+### 113.2 Voidra 主題招式「星光虹吸」（logic/starSiphon.ts）
+
+- P1/P3 新招 `siphon`：紫色吸流 0.8s 窗（固定不隨狂暴速率縮放，≥600ms 可讀性紅線）
+  ——吸流粒子沿玩家→核心路徑收斂＋核心紫染 telegraph；窗滿抽走彈匣頂槽 1 發化為
+  自身護盾 1 層（環繞核心紫星軌道，上限 2 層，每層抵銷 1 次受擊零傷、不掉補給）。
+- 反制（高技巧獎勵）：窗內朝吸流發射＝星彈逆流爆盾——護盾全清＋回傷 4（與來彈
+  傷害取較大值，不懲罰重彈）＋取消本次抽取；把損失變輸出窗。
+- 空匣防呆（anti-softlock）：窗滿無彈可抽＝僅演出不獲盾；護盾僅來自實際抽取，
+  基礎星彈恆可於窗內爆盾（§10.2 不變式維持）。
+- 工程接點：窗長/上限/回傷 SSOT `logic/starSiphon.ts`；FSM 窗滿發 `siphonDrain`
+  指令，呈現層經 hooks `drainTopStar()`（bossFactory 接 `player.stealTopStar()`，
+  彈匣單一真值、HUD ammo 事件自動同步）回餵 `absorbSiphonStar()` 夾限化盾；
+  段起點重試清空護盾層（§82 清場語義）；save 零改動、BossHandle 零新選配。

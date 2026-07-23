@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+180
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+181
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t5-w3-voidra-star-siphon
+- 原因：#813 W3——Voidra P1/P3 仍為固定循環可背板，且缺 PRD §5 主題招式「星光虹吸」與可學習反制
+- 解法：voidraFsm 接入 moveTable 加權表（seed 重放＋同招上限 2＋距離帶餵送）並新增 siphon 招式與 logic/starSiphon.ts 純模組（0.8s 吸流窗抽頂槽化盾上限 2 層、窗內回擊爆盾回傷 4、空匣防呆），vitest 59 檔 807 全綠、P1/P3 條件熵 1.76/1.38 bits ≥ 門檻
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t5-w2-review-shouldfix-convergence
