@@ -3,7 +3,7 @@ import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { approachPoint, type FlightPoint } from '../logic/noctraFlight';
 import type { MeteorSpec } from '../logic/meteor';
-import { STAR_SIPHON, siphonStreamStrength } from '../logic/starSiphon';
+import { STAR_SIPHON, shieldAfterAbsorb, siphonStreamStrength } from '../logic/starSiphon';
 import { EX_VOIDRA, VOIDRA, createVoidraFsm, type VoidraCommand } from '../logic/voidraFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
@@ -362,8 +362,10 @@ export function createVoidra(
   const resolveSiphonDrain = () => {
     siphonUntilMs = 0;
     if (!dying) body.clearTint();
+    // 滿盾守門（審查修復）：層數無增長＝不可吸收，跳過抽彈杜絕玩家頂槽白扣。
+    if (shieldAfterAbsorb(fsm.shieldLayers) === fsm.shieldLayers) return;
     if (!hooks.drainTopStar()) return;
-    const result = fsm.absorbSiphonStar();
+    fsm.absorbSiphonStar();
     playSfx('swallow', 0.9);
     if (target) {
       const stolen = scene.add
@@ -385,7 +387,6 @@ export function createVoidra(
     } else {
       syncShieldOrbs();
     }
-    void result;
   };
 
   // 炮擊過熱窗（P2 唯一輸出窗）：核心下沉、金光呼吸、可傷——窗迄點單一真值由
@@ -535,10 +536,10 @@ export function createVoidra(
 
   const applyDamageInternal = (amount: number, source?: BossDamageSource) => {
     if (!active) return;
-    void source;
-    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑。
+    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑；
+    // 爆盾限星彈命中（審查修復）——source 解讀收斂呈現層，FSM 收語義布林。
     let dealtDamage = amount;
-    for (const event of fsm.takeDamage(amount)) {
+    for (const event of fsm.takeDamage(amount, source === 'star')) {
       switch (event.kind) {
         case 'damaged':
           flashWhite();

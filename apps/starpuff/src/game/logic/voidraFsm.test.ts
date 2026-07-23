@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STARSTORM } from '../core/config';
 import { EX_MODS } from './bossFsm';
 import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
@@ -277,14 +278,14 @@ describe('Voidra 星光虹吸（§113 #813 W3）', () => {
     expect(fsm.hp).toBe(hpBefore - 1);
   });
 
-  it('窗內受擊＝逆流爆盾：護盾全清＋回傷 4＋取消本次抽取', () => {
+  it('窗內星彈命中＝逆流爆盾：護盾全清＋回傷 4＋取消本次抽取', () => {
     const fsm = toSiphon(4);
     // 先造 1 層護盾，再進下一次虹吸窗。
     tickUntil(fsm, 'siphonDrain', 100, 20);
     fsm.absorbSiphonStar();
     expect(tickUntil(fsm, 'siphon', 100, 4000)).not.toBeNull();
     const hpBefore = fsm.hp;
-    const events = fsm.takeDamage(1);
+    const events = fsm.takeDamage(1, true);
     expect(events[0]).toEqual({ kind: 'siphonBurst' });
     expect(events.some((e) => e.kind === 'damaged')).toBe(true);
     expect(fsm.hp).toBe(hpBefore - STAR_SIPHON.backfireDamage);
@@ -294,10 +295,46 @@ describe('Voidra 星光虹吸（§113 #813 W3）', () => {
     for (let i = 0; i < 8; i += 1) expect(fsm.tick(100)?.kind).not.toBe('siphonDrain');
   });
 
+  it('窗內非星彈來源不爆盾（審查修復）：護盾照常抵銷、窗不取消、星彈仍可反制', () => {
+    const fsm = toSiphon(4);
+    // 先造 1 層護盾，再進下一次虹吸窗。
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    expect(tickUntil(fsm, 'siphon', 100, 4000)).not.toBeNull();
+    // 非星彈來源（雷化鏈電/反射彈）：走護盾抵銷，不得觸發 siphonBurst。
+    expect(fsm.takeDamage(1)).toEqual([{ kind: 'shieldBlock', remaining: 0 }]);
+    expect(fsm.state).toBe('siphon');
+    // 護盾耗盡後非星彈來源：正常實扣，仍不爆盾、窗持續。
+    const hpBefore = fsm.hp;
+    const events = fsm.takeDamage(2);
+    expect(events.some((e) => e.kind === 'siphonBurst')).toBe(false);
+    expect(fsm.hp).toBe(hpBefore - 2);
+    expect(fsm.state).toBe('siphon');
+    // 窗內星彈命中仍可爆盾（反制通道未被非星彈關閉）。
+    expect(fsm.takeDamage(1, true)[0]).toEqual({ kind: 'siphonBurst' });
+  });
+
+  it('滿盾＋窗內星彈命中（星暴 12 傷）：走爆盾實扣，不得被護盾吸收為 0 傷', () => {
+    const fsm = toSiphon(4);
+    // 兩窗抽彈化盾至上限 2 層（滿盾）。
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    fsm.absorbSiphonStar();
+    expect(fsm.shieldLayers).toBe(2);
+    // 再進虹吸窗：星暴屬星彈來源——必須爆盾實扣 max(12, 4)=12，禁走護盾吸收。
+    expect(tickUntil(fsm, 'siphon', 100, 4000)).not.toBeNull();
+    const hpBefore = fsm.hp;
+    const events = fsm.takeDamage(STARSTORM.bossDamage, true);
+    expect(events[0]).toEqual({ kind: 'siphonBurst' });
+    expect(events.some((e) => e.kind === 'shieldBlock')).toBe(false);
+    expect(fsm.hp).toBe(hpBefore - STARSTORM.bossDamage);
+    expect(fsm.shieldLayers).toBe(0);
+  });
+
   it('爆盾回傷與來彈傷害取較大值（不懲罰重彈）', () => {
     const fsm = toSiphon(5);
     const hpBefore = fsm.hp;
-    fsm.takeDamage(9);
+    fsm.takeDamage(9, true);
     expect(fsm.hp).toBe(hpBefore - 9);
   });
 

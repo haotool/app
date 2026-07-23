@@ -250,10 +250,11 @@ describe('resolveStarstorm 星暴（§23）', () => {
     expect(damageBossAt).not.toHaveBeenCalled();
   });
 
-  it('魔王活動中：固定傷結算至玩家位置歸屬的存活本體', () => {
+  it('魔王活動中：固定傷結算至玩家位置歸屬的存活本體（star 歸因）', () => {
     const { combat, damageBossAt } = makeHarness({ bossActive: true, playerAt: { x: 77, y: 88 } });
     combat.resolveStarstorm();
-    expect(damageBossAt).toHaveBeenCalledWith(STARSTORM.bossDamage, 77, 88);
+    // 星暴屬星彈來源（審查修復）：缺 source 會在滿盾＋虹吸窗下被護盾吸收為 0 傷。
+    expect(damageBossAt).toHaveBeenCalledWith(STARSTORM.bossDamage, 77, 88, 'star');
   });
 });
 

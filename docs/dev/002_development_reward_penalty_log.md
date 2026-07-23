@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+181
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-starstorm-star-source
+- 原因：雙席審查 Should-fix——星暴 damageBossAt 缺 source，本列車引入 starHit 語義後滿盾＋虹吸窗下星暴落入護盾吸收分支，12 傷變 0 傷（diff 退步）
+- 解法：starCombat 星暴呼叫補 'star' 歸因（爆盾路徑 max(12,4)=12 無多給加成），接線斷言紅燈先行＋FSM 滿盾回歸測試鎖定；同批補 @app/starpuff patch changeset（0.20.0 已帶 bug 上線）與 nits（002 表述、守門條件改 ===）
+
+- 日期：2026-07-24
+- ID：penalty-t5-squash-header-recurrence
+- 原因：T4/T5 接力代兩次 squash 檔頭口徑錯（PR#850 新增 3 筆＝2 neutral＋1 reward 卻寫 +0/reward 0/neutral 1；PR#852 新增 2 筆 reward 卻寫 +1/reward 1），累計鏈 177→178→180 反而正確——同型錯誤重犯
+- 解法：歷史條目不改僅以本條記載補正；檔頭聚合口徑固定「a+b+c＝本次新增條目數、N＝a-b、T＝前版累計+N」，squash 前必以合併後條目重算並交 verify-002-log.mjs 守門
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-audit-transform-eligibility
+- 原因：PR#848 review——audit-driver --transform 用 s.ammo >= 3 槽數門檻判資格，但連吞合成使 3 發同系塌縮為 2 槽，SP 永不觸發、transformsPerRun 恆 0、變身 TTK 報告淪為無變身基線
+- 解法：main.ts 增 dev/test 觀測點 transformEligible（走 eligibleForm SSOT 零第二份資格邏輯），driver snapshot 帶 tfReady 經感知延遲環後取代槽數門檻；node --check＋tsc 驗證
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-prismix-inhalable-reset
+- 原因：PR#852 review——鏡界折返彈標 inhalable 後 sprite 回收進池，spawnShot 只重設 reflected 未清 inhalable，P3 晶雨/彈幕復用同 sprite 被 overlaps 誤判可吸入（吸入給 jelly 免傷削弱彈幕）
+- 解法：spawnShot 補 setData('inhalable', false)；新增 prismix.test.ts 以池復用語意驅動完整鏈路（split→mirror 折返→回收→P3 復用），紅燈重現旗標殘留後修復鎖定
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-full-shield-siphon-no-drain
+- 原因：PR#855 review——Voidra 滿盾（2 層）時虹吸窗滿仍先 drainTopStar 扣玩家頂槽，absorbSiphonStar 回 absorbed:false 被忽略，玩家白丟彈藥
+- 解法：resolveSiphonDrain 以 shieldAfterAbsorb 守門（不可吸收即跳過抽彈）並移除被忽略的 result；新增 voidra.test.ts 最小 scene stub 驅動 3 窗循環，紅燈重現第 3 窗抽彈後修復鎖定 drainTopStar 恰 2 次
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-siphon-burst-star-only
+- 原因：PR#855 review——Voidra 虹吸窗內任何傷害來源（雷化鏈電束/反射彈）都觸發爆盾回傷，繞過「朝吸流發射星彈」的彈藥成本設計
+- 解法：takeDamage 增 starHit 語義參數（呈現層解讀 BossDamageSource、overlaps 星彈命中點補 'star' 標記），非星彈窗內照常結算；紅燈先重現非星彈觸發後修復，vitest 35 綠鎖定
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t5-w3-voidra-star-siphon
