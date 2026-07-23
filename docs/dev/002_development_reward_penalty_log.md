@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+182
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-v21-v30-first-assets-shelly-facing
+- 原因：21-30 關首批生成素材尚未進入既有資產管線，且殼化小怪受物理反彈後視覺朝向不會同步
+- 解法：加入 Ember／劉董／市場下跌箭頭 WebP 與資產清單，並依殼化速度每幀同步左右翻面
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-siphon-burst-star-only
