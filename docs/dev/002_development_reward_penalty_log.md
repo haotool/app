@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+178
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+179
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t5-w2-prismix-syrona-theme-moves
+- 原因：#813 W2——Prismix/Syrona 仍為固定循環可背板，且缺 PRD §5 主題招式（鏡界反射/鏡像殘影/焦糖化）與可學習反制
+- 解法：兩 FSM 接入 moveTable 加權表（條件欄＋seed 重放＋同招上限 2）並新增 mirror/shadow/caramel 招式與純邏輯模組，殘影雙掛 shields/shockwaves 零 BossHandle 新選配，vitest 784 全綠、L12/L16 各階段條件熵 0.90–1.93 bits ≥ 門檻
 
 - 日期：2026-07-23
 - ID：neutral-starpuff-t5-w1-review-shouldfix

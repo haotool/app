@@ -968,7 +968,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 變化」迫使玩家切換單體集火與多目標處理。HP 80（階梯 60→52→80）、體傷 1、狂暴 ×1.15、
 每損 10 HP 掉補給（§26）。
 
-- 三階段（phase truth 全收斂 FSM；呈現層 systems/prismix.ts 接 BossHandle）：
+- 三階段（phase truth 全收斂 FSM；呈現層 systems/prismix.ts 接 BossHandle）
+  （v22 已由 §112 取代：固定循環改 `prismixMoveTable` 加權表選招，P2 追加鏡界反射與
+  鏡像殘影；招池數值與 telegraph 不變）：
   - P1 單體（總血 >66%）：`idle(1.5s) → 晶柱衝擊（地面尖晶 ×3，落點預警 0.95s）→ idle →
 折射光束（橫掃一次，預示線 0.5s）→ …`
   - 晶柱預警（#810 修復）：0.6s→0.95s——500ms 反應玩家迴避率 0%→88%（工具實測）；
@@ -1084,7 +1086,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 王窯座（不追打），威脅來自「地形被改寫」：潮汐、噴泉、滴落把可站空間動態壓縮，
 考驗空間規劃。HP **90**（階梯 60→52→80→90）、體傷 1、狂暴 ×1.15、每損 10 HP 掉補給。
 
-- 三階段（phase truth 全收斂 FSM；呈現層 systems/syrona.ts 接 BossHandle）：
+- 三階段（phase truth 全收斂 FSM；呈現層 systems/syrona.ts 接 BossHandle）
+  （v22 已由 §112 取代：固定循環改 `syronaMoveTable` 加權表選招，糖漿波追加焦糖化；
+  招池數值與 telegraph 不變）：
   - P1（>66%）：`糖漿噴泉（地面點 ×3 順序噴發，冒泡 telegraph 0.8s）→ 散熱僵直 2.5s →
 焦糖射彈（拋物 ×3，舉臂 0.5s）→ 僵直 → …`
   - P2（66-33%）：**潮汐入場**（phase 事件觸發 startTide，沿 §71 管線）；循環
@@ -2099,3 +2103,47 @@ t2b-812-sb-l*.json`。
   僅月牙軌跡粒子可見；進出各 180ms fade 無跳變。
 - 反制（吸入第二用途）：按住吸入產生氣流擾動使輪廓顯形（alpha 0.06 → 0.5）；
   hooks `isPlayerInhaling` 由 bossFactory 接線 player.isInhaling()。
+
+## 112. v22 魔王主題化 W2——Prismix/Syrona 加權選招與主題招式（#813；T5 列車）
+
+取代標註：§68 P1-P3 固定循環由 `prismixMoveTable` 加權表取代、§74 三階段循環由
+`syronaMoveTable` 加權表取代（既有招池數值不變，僅選招機制升級＋主題招式擴池）；
+telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §111.1 moveTable SSOT。
+
+### 112.1 加權選招接入（沿 §111.1，兩王 FSM 增 rng/setTargetDistance）
+
+- Prismix：P1 晶柱 3／光束 3；P2 夾擊 3／交錯光束 3／召喚 2／鏡界反射 2／鏡像殘影 1
+  （條件欄 `maxHpRatio: 0.5`——總血 ≤50% 深段才入池，HP 帶條件示例）；P3 彈幕 3／晶雨 3。
+- Syrona：P1 噴泉 3／射彈 3（條件欄 `band: 'far'`——貼身拋物不可讀，沿 Jellord dash
+  遠距帶理據）；P2 滴落 3／噴泉 3／召喚 2；P3 糖漿波 3／超載 3。
+- 換階段清空同招記錄；rng 注入同 seed 可重放（Syrona 與噴泉洗牌共用同一 rng）。
+- 條件熵驗收（#818 口徑，seed 13 × 60 招）：Prismix P1 0.90／P2 1.47（≤50% 深段 1.93）、
+  Syrona P1 0.90／P2 1.38／P3 0.90 bits，全數 ≥ `AUDIT_THRESHOLDS.moveEntropyMinBits`（0.5）。
+
+### 112.2 Prismix 主題招式「鏡界反射」（FSM 態內建）
+
+- P2 新招 `mirror`：單具開鏡 0.8s（銀白鏡光面板 telegraph，固定不隨狂暴縮放）；
+  開鏡側受擊零傷、FSM 回 `reflect` 事件，呈現層自該具生成折返彈射向玩家。
+- 反制（可學習）：開鏡窗內打另一具照常結算；折返彈帶 `inhalable` 標記——吸入中接觸
+  即回收為彈藥（免費彈藥＝獎勵理解，L9 mirri 已預教鏡性）；不吸則照常 1 傷。
+- 開鏡側由 rng 抽選（同 seed 可重放）；單側殘存防呆歸存活具。
+
+### 112.3 Prismix 主題招式「鏡像殘影」（logic/mirrorShadow.ts）
+
+- P2 深段（總血 ≤50%）低頻新招 `shadow`：玩家鏡影自 arena 中線鏡射位現身——
+  水平反向移動（玩家逐幀位移取負向套用）、垂直速度上限跟隨、觸傷 1、6s 壽命、
+  1 發星彈即破；單具重生刷新（不疊加）。
+- 反制（mirri 鏡性課）：反向移動特性＝向遠離殘影方向移動即以雙倍速率分離；
+  一發基礎星彈即可拆除（anti-softlock：基礎星彈恆可清）。
+- 工程接點：殘影 sprite 雙掛既有 `shields`（星彈可破）＋`shockwaves`（觸傷）群組，
+  BossHandle 零新選配；碎晶盾軌道迴圈以 `shadow` data 旗標跳過。
+
+### 112.4 Syrona 主題招式「焦糖化」（logic/caramel.ts + systems/caramelStatus.ts）
+
+- P3 糖漿波帶 `caramel` 旗標：沾身減速 30%/3s（琥珀色腳部沾糖粒子），重複沾波刷新
+  不疊加；狀態真值收斂 logic/caramel.ts，呈現編排收斂 systems/caramelStatus.ts
+  （守 GameScene 1200 行閘），移速與 buff 倍率單點合成注入 player（防互相覆寫）。
+- 反制（可學習）：乘噴口氣流吹乾即解除（`getVentLift` 供力當幀清除）；雷化放電瞬除
+  （volt 形態既免疫沾身也瞬除既有沾身——變身優勢解）；首次沾身浮字教學（session 一次）。
+- overlaps 接點：shockwave 命中玩家時讀 `caramel` data 旗標經 `applyCaramel` hook 結算，
+  傷害照常走 `damagePlayer` 單一入口。
