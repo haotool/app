@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.19.0
+
+### Minor Changes
+
+- 874ff0e: Prismix 鏡界反射與鏡像殘影、Syrona 焦糖化場控——兩大魔王 W2 主題招式與互動體系上線
+
 ## 0.18.0
 
 ### Minor Changes
