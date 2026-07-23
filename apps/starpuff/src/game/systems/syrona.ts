@@ -292,6 +292,8 @@ export function createSyrona(
       if (!wave) return;
       wave.enableBody(true, startX, GROUND_TOP - WAVE_H / 2, true, true);
       wave.setDisplaySize(WAVE_W, WAVE_H).setTint(DEEP_TINT).setAlpha(0.92);
+      // 焦糖化（§5 W2）：糖漿波沾身減速 30%/3s——旗標由 overlaps 層讀取結算。
+      wave.setData('caramel', true);
       (wave.body as Phaser.Physics.Arcade.Body).setVelocityX(dir * WAVE_SPEED);
       // 壽命 = 橫越全場時間＋緩衝（逾時必回收 §56）。
       delay((viewW() / WAVE_SPEED) * 1000 + 400, () => wave.disableBody(true, true));
@@ -507,6 +509,10 @@ export function createSyrona(
     update(deltaMs: number) {
       if (!active || dying) return;
       elapsedMs += deltaMs;
+      // 距離帶餵送（§5 條件欄）。
+      fsm.setTargetDistance(
+        target ? Phaser.Math.Distance.Between(body.x, body.y, target.x, target.y) : null,
+      );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 半定點浮動（場控型不追打）；散熱僵直期輕微前傾露芯。
