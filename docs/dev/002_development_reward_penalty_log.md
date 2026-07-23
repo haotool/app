@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+184
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：penalty-t5-squash-header-recurrence
+- 原因：T4/T5 接力代兩次 squash 檔頭口徑錯（PR#850 新增 3 筆＝2 neutral＋1 reward 卻寫 +0/reward 0/neutral 1；PR#852 新增 2 筆 reward 卻寫 +1/reward 1），累計鏈 177→178→180 反而正確——同型錯誤重犯
+- 解法：歷史條目不改僅以本條記載補正；檔頭聚合口徑固定「a+b+c＝本次新增條目數、N＝a-b、T＝前版累計+N」，squash 前必以合併後條目重算並交 verify-002-log.mjs 守門
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-audit-transform-eligibility
