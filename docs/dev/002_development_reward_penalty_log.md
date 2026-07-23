@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+184
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-starstorm-star-source
+- 原因：雙席審查 Should-fix——星暴 damageBossAt 缺 source，本列車引入 starHit 語義後滿盾＋虹吸窗下星暴落入護盾吸收分支，12 傷變 0 傷（diff 退步）
+- 解法：starCombat 星暴呼叫補 'star' 歸因（爆盾路徑 max(12,4)=12 無多給加成），接線斷言紅燈先行＋FSM 滿盾回歸測試鎖定；同批補 @app/starpuff patch changeset（0.20.0 已帶 bug 上線）與 nits（002 表述、守門條件改 ===）
 
 - 日期：2026-07-24
 - ID：penalty-t5-squash-header-recurrence
@@ -36,7 +41,7 @@
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-siphon-burst-star-only
 - 原因：PR#855 review——Voidra 虹吸窗內任何傷害來源（雷化鏈電束/反射彈）都觸發爆盾回傷，繞過「朝吸流發射星彈」的彈藥成本設計
-- 解法：takeDamage 增 starHit 語義參數（呈現層沿 syrona 前例解讀 BossDamageSource、overlaps 星彈命中點補 'star' 標記），非星彈窗內照常結算；紅燈先重現非星彈觸發後修復，vitest 35 綠鎖定
+- 解法：takeDamage 增 starHit 語義參數（呈現層解讀 BossDamageSource、overlaps 星彈命中點補 'star' 標記），非星彈窗內照常結算；紅燈先重現非星彈觸發後修復，vitest 35 綠鎖定
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t5-w3-voidra-star-siphon

@@ -362,8 +362,8 @@ export function createVoidra(
   const resolveSiphonDrain = () => {
     siphonUntilMs = 0;
     if (!dying) body.clearTint();
-    // 滿盾守門（審查修復）：不可再吸收時跳過抽彈，杜絕玩家頂槽白扣。
-    if (shieldAfterAbsorb(fsm.shieldLayers) <= fsm.shieldLayers) return;
+    // 滿盾守門（審查修復）：層數無增長＝不可吸收，跳過抽彈杜絕玩家頂槽白扣。
+    if (shieldAfterAbsorb(fsm.shieldLayers) === fsm.shieldLayers) return;
     if (!hooks.drainTopStar()) return;
     fsm.absorbSiphonStar();
     playSfx('swallow', 0.9);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STARSTORM } from '../core/config';
 import { EX_MODS } from './bossFsm';
 import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
@@ -311,6 +312,23 @@ describe('Voidra 星光虹吸（§113 #813 W3）', () => {
     expect(fsm.state).toBe('siphon');
     // 窗內星彈命中仍可爆盾（反制通道未被非星彈關閉）。
     expect(fsm.takeDamage(1, true)[0]).toEqual({ kind: 'siphonBurst' });
+  });
+
+  it('滿盾＋窗內星彈命中（星暴 12 傷）：走爆盾實扣，不得被護盾吸收為 0 傷', () => {
+    const fsm = toSiphon(4);
+    // 兩窗抽彈化盾至上限 2 層（滿盾）。
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    fsm.absorbSiphonStar();
+    expect(fsm.shieldLayers).toBe(2);
+    // 再進虹吸窗：星暴屬星彈來源——必須爆盾實扣 max(12, 4)=12，禁走護盾吸收。
+    expect(tickUntil(fsm, 'siphon', 100, 4000)).not.toBeNull();
+    const hpBefore = fsm.hp;
+    const events = fsm.takeDamage(STARSTORM.bossDamage, true);
+    expect(events[0]).toEqual({ kind: 'siphonBurst' });
+    expect(events.some((e) => e.kind === 'shieldBlock')).toBe(false);
+    expect(fsm.hp).toBe(hpBefore - STARSTORM.bossDamage);
+    expect(fsm.shieldLayers).toBe(0);
   });
 
   it('爆盾回傷與來彈傷害取較大值（不懲罰重彈）', () => {

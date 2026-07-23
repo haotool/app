@@ -230,9 +230,10 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       if (child.active) hooks.enemies().kill(child);
     }
     if (hooks.boss().isActive()) {
-      // 多本體（§68）：星暴固定傷結算至玩家最近的存活本體。
+      // 多本體（§68）：星暴固定傷結算至玩家最近的存活本體；星彈歸因（§113），
+      // 缺 source 會在滿盾＋虹吸窗下被護盾層吸收為 0 傷。
       const sprite = hooks.player().sprite;
-      hooks.damageBossAt(STARSTORM.bossDamage, sprite.x, sprite.y);
+      hooks.damageBossAt(STARSTORM.bossDamage, sprite.x, sprite.y, 'star');
     }
   }
 
