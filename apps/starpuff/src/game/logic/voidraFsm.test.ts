@@ -116,6 +116,20 @@ describe('Voidra FSM：P1 王座戰', () => {
     expect(sequenceEntropyBits(kinds)).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
   });
 
+  it('P3 招式序列條件熵 ≥ 門檻（§113.1 記載口徑：seed 13 × 60 招 ≈ 1.38 bits）', () => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(13) });
+    fsm.takeDamage(33);
+    tickUntil(fsm, 'overheat', 100);
+    fsm.takeDamage(40);
+    expect(fsm.phase).toBe('p3');
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    const bits = sequenceEntropyBits(kinds);
+    expect(bits).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
+    // 鎖 §113.1 記載數字（同 seed 完整重放，漂移即文檔失真）。
+    expect(bits).toBeCloseTo(1.38, 2);
+  });
+
   it('每損 10 HP 掉補給小怪；P1→P2 於 ≤70% 觸發並進入生存段', () => {
     const fsm = createVoidraFsm();
     const events = fsm.takeDamage(10);

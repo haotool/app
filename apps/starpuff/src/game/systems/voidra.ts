@@ -536,6 +536,8 @@ export function createVoidra(
   const applyDamageInternal = (amount: number, source?: BossDamageSource) => {
     if (!active) return;
     void source;
+    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑。
+    let dealtDamage = amount;
     for (const event of fsm.takeDamage(amount)) {
       switch (event.kind) {
         case 'damaged':
@@ -544,7 +546,7 @@ export function createVoidra(
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
             hp: event.hp,
             maxHp: fsm.maxHp,
-            damage: amount,
+            damage: dealtDamage,
           });
           break;
         case 'phase':
@@ -561,8 +563,10 @@ export function createVoidra(
         case 'minionDrop':
           minionHandlers.forEach((handler) => handler());
           break;
-        // 逆流爆盾（§113 反制）：紫爆演出＋護盾環全清；傷害由後續 damaged 事件結算。
+        // 逆流爆盾（§113 反制）：紫爆演出＋護盾環全清；傷害由後續 damaged 事件結算
+        //（FSM 事件序保證 siphonBurst 先於 damaged，實扣口徑先行同步）。
         case 'siphonBurst':
+          dealtDamage = Math.max(amount, STAR_SIPHON.backfireDamage);
           siphonUntilMs = 0;
           body.clearTint();
           playSfx('break', 0.8);
