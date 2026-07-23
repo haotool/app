@@ -3,7 +3,7 @@ import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { approachPoint, type FlightPoint } from '../logic/noctraFlight';
 import type { MeteorSpec } from '../logic/meteor';
-import { STAR_SIPHON, siphonStreamStrength } from '../logic/starSiphon';
+import { STAR_SIPHON, shieldAfterAbsorb, siphonStreamStrength } from '../logic/starSiphon';
 import { EX_VOIDRA, VOIDRA, createVoidraFsm, type VoidraCommand } from '../logic/voidraFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
@@ -362,8 +362,10 @@ export function createVoidra(
   const resolveSiphonDrain = () => {
     siphonUntilMs = 0;
     if (!dying) body.clearTint();
+    // 滿盾守門（審查修復）：不可再吸收時跳過抽彈，杜絕玩家頂槽白扣。
+    if (shieldAfterAbsorb(fsm.shieldLayers) <= fsm.shieldLayers) return;
     if (!hooks.drainTopStar()) return;
-    const result = fsm.absorbSiphonStar();
+    fsm.absorbSiphonStar();
     playSfx('swallow', 0.9);
     if (target) {
       const stolen = scene.add
@@ -385,7 +387,6 @@ export function createVoidra(
     } else {
       syncShieldOrbs();
     }
-    void result;
   };
 
   // 炮擊過熱窗（P2 唯一輸出窗）：核心下沉、金光呼吸、可傷——窗迄點單一真值由

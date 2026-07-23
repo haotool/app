@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+182
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-full-shield-siphon-no-drain
+- 原因：PR#855 review——Voidra 滿盾（2 層）時虹吸窗滿仍先 drainTopStar 扣玩家頂槽，absorbSiphonStar 回 absorbed:false 被忽略，玩家白丟彈藥
+- 解法：resolveSiphonDrain 以 shieldAfterAbsorb 守門（不可吸收即跳過抽彈）並移除被忽略的 result；新增 voidra.test.ts 最小 scene stub 驅動 3 窗循環，紅燈重現第 3 窗抽彈後修復鎖定 drainTopStar 恰 2 次
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-siphon-burst-star-only
