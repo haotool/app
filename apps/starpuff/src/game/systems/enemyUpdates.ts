@@ -244,11 +244,14 @@ function updateShelly(
         const mul = (sprite.getData('eliteMul') as number) ?? 1;
         body.setVelocityX(SHELLY_WALK_SPEED * mul * direction);
       }
+      // 殼化小怪的物理反彈會改變 velocity；每幀同步視覺朝向，避免只在停住時才轉向。
+      sprite.setFlipX(body.velocity.x < 0);
       sprite.setRotation(Math.sin(tick.stateMs * SHELLY_WADDLE_OMEGA) * SHELLY_WADDLE_RAD);
       break;
     }
     case 'spin': {
       if (body.velocity.x === 0) body.setVelocityX(SHELLY_SPIN_SPEED);
+      sprite.setFlipX(body.velocity.x < 0);
       sprite.rotation += Math.sign(body.velocity.x) * SHELLY_SPIN_OMEGA * deltaMs;
       break;
     }

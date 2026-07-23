@@ -101,6 +101,11 @@ export const ASSETS: { key: string; url: string }[] = [
     key: 'hero-shell',
     url: new URL('../../assets/sprites/hero-shell.webp', import.meta.url).href,
   },
+  // v21-v30 素材先行：未接入玩法的 Ember 形態與終章金融魔王資產。
+  {
+    key: 'hero-ember',
+    url: new URL('../../assets/sprites/hero-ember.webp', import.meta.url).href,
+  },
   {
     key: 'minion-magno',
     url: new URL('../../assets/sprites/minion-magno.webp', import.meta.url).href,
@@ -233,6 +238,18 @@ export const ASSETS: { key: string; url: string }[] = [
   {
     key: 'boss-voidra',
     url: new URL('../../assets/sprites/boss-voidra.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong',
+    url: new URL('../../assets/sprites/boss-liudong.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-thinking',
+    url: new URL('../../assets/sprites/boss-liudong-thinking.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-down-arrow',
+    url: new URL('../../assets/sprites/fx-market-down-arrow.webp', import.meta.url).href,
   },
   {
     key: 'bg-astral-l',
