@@ -265,7 +265,7 @@ describe('關鍵回調結算路徑', () => {
     expect(settled.spies.damagePlayer).not.toHaveBeenCalled();
   });
 
-  it('星彈命中魔王本體：吸收＋damageBossAt 帶命中座標；非 active 穿過', () => {
+  it('星彈命中魔王本體：吸收＋damageBossAt 帶命中座標與 star 來源；非 active 穿過', () => {
     const body = { name: 'boss-body', body: { enable: true } };
     const { scene, wirings, hooks, spies } = makeHarness({ bossBodies: [body] });
     wireCombatOverlaps(scene, hooks);
@@ -273,7 +273,8 @@ describe('關鍵回調結算路徑', () => {
     const star = { active: true, x: 300, y: 200, getData: () => undefined };
     wiring?.callback?.(star, body);
     expect(spies.onStarHit).toHaveBeenCalledWith(star, 'absorb');
-    expect(spies.damageBossAt).toHaveBeenCalledWith(5, 300, 200);
+    // 星彈來源標記（§113 審查修復）：虹吸窗反制資格僅授予星彈命中。
+    expect(spies.damageBossAt).toHaveBeenCalledWith(5, 300, 200, 'star');
 
     spies.damageBossAt.mockClear();
     const spent = { active: false, x: 300, y: 200, getData: () => undefined };

@@ -535,10 +535,10 @@ export function createVoidra(
 
   const applyDamageInternal = (amount: number, source?: BossDamageSource) => {
     if (!active) return;
-    void source;
-    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑。
+    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑；
+    // 爆盾限星彈命中（審查修復）——source 解讀收斂呈現層，FSM 收語義布林。
     let dealtDamage = amount;
-    for (const event of fsm.takeDamage(amount)) {
+    for (const event of fsm.takeDamage(amount, source === 'star')) {
       switch (event.kind) {
         case 'damaged':
           flashWhite();

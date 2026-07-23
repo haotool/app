@@ -164,7 +164,8 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       const mix = hooks.combat().mixOf(star);
       if (mix && mix.freezeRadiusPx > 0) hooks.combat().freezeField(star.x, star.y, mix);
       hooks.player().onStarHit(star, 'absorb');
-      hooks.damageBossAt(hooks.combat().damageOf(star), star.x, star.y);
+      // 星彈來源標記（§113 審查修復）：Voidra 虹吸窗反制僅認星彈命中。
+      hooks.damageBossAt(hooks.combat().damageOf(star), star.x, star.y, 'star');
     });
   }
 

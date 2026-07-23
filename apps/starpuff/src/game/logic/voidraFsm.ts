@@ -95,7 +95,7 @@ export type VoidraCommand =
   | { kind: 'pull'; durationMs: number }
   | { kind: 'ring'; count: number }
   | { kind: 'claw' }
-  // 星光虹吸（§113）：紫色吸流窗開啟——窗內受擊＝逆流爆盾（takeDamage 路徑結算）。
+  // 星光虹吸（§113）：紫色吸流窗開啟——窗內星彈命中＝逆流爆盾（takeDamage 路徑結算）。
   | { kind: 'siphon'; windowMs: number }
   // 吸流窗滿未被反制：呈現層嘗試抽彈匣頂槽並回餵 absorbSiphonStar。
   | { kind: 'siphonDrain' }
@@ -111,7 +111,7 @@ export type VoidraHitEvent =
   | { kind: 'phase'; phase: BossPhase }
   | { kind: 'minionDrop' }
   | { kind: 'defeated' }
-  // 星光虹吸反制（§113）：窗內受擊——護盾全清＋回傷取較大值＋取消本次抽取。
+  // 星光虹吸反制（§113）：窗內星彈命中——護盾全清＋回傷取較大值＋取消本次抽取。
   | { kind: 'siphonBurst' }
   // 護盾層抵銷（§113）：非虹吸窗受擊被護盾吃掉，零傷、層數遞減。
   | { kind: 'shieldBlock'; remaining: number };
@@ -162,7 +162,9 @@ export interface VoidraFsm {
   // 星光虹吸護盾層（§113 單一真值）：呈現層據此畫護盾環。
   readonly shieldLayers: number;
   tick(deltaMs: number): VoidraCommand | null;
-  takeDamage(amount: number): VoidraHitEvent[];
+  // 逆流爆盾限星彈（§113 審查修復）：starHit＝星彈命中才觸發反制，雷化鏈電/反射彈
+  // 等非星彈來源窗內照常結算，杜絕零彈藥成本繞過「朝吸流發射星彈」設計。
+  takeDamage(amount: number, starHit?: boolean): VoidraHitEvent[];
   // 星屑收集（§83 星核共鳴單一真值）：滿 5 枚回 complete（僅回報一次）。
   collectShard(): { collected: number; complete: boolean };
   // 星光虹吸抽取回餵（§113）：呈現層 siphonDrain 抽彈匣頂槽成功後呼叫；夾限至上限。
@@ -351,12 +353,12 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       if (finished === 'siphon') return { kind: 'siphonDrain' };
       return commandOf('idle');
     },
-    takeDamage(amount: number): VoidraHitEvent[] {
+    takeDamage(amount: number, starHit = false): VoidraHitEvent[] {
       if (defeated || amount <= 0) return [];
       if (survivalImmune()) return [];
       const events: VoidraHitEvent[] = [];
       let incoming = amount;
-      if (state === 'siphon') {
+      if (state === 'siphon' && starHit) {
         // 逆流爆盾（§113 反制）：護盾全清＋取消本次抽取＋回傷取較大值（不懲罰重彈）。
         shieldLayers = 0;
         state = 'idle';
