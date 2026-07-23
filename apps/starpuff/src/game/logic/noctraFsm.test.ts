@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   NOCTRA,
   createNoctraFsm,
-  noctraAttackCycle,
   noctraBombCount,
-  noctraNextAction,
+  noctraMoveTable,
   noctraPhaseForHp,
   type NoctraCommand,
 } from './noctraFsm';
+import { createSeededRng } from './moveTable';
 
 describe('noctraPhaseForHp（§54 三階段門檻）', () => {
   it('HP 比例對應 p1/p2/p3', () => {
@@ -20,22 +20,28 @@ describe('noctraPhaseForHp（§54 三階段門檻）', () => {
   });
 });
 
-describe('noctraAttackCycle（表驅動招式循環）', () => {
-  it('P1 盤旋投彈＋俯衝；P2 俯衝＋召喚（難度根修單 dive）；P3 彈幕＋俯掠＋投彈', () => {
-    expect(noctraAttackCycle('p1')).toEqual(['bomb', 'dive']);
-    expect(noctraAttackCycle('p2')).toEqual(['bomb', 'dive', 'summon']);
-    expect(noctraAttackCycle('p3')).toEqual(['barrage', 'sweep', 'bomb']);
+describe('noctraMoveTable（§5 加權表）', () => {
+  it('P1 投彈＋俯衝；P2 追加召喚與低頻斗篷；P3 彈幕＋俯掠＋投彈＋斗篷', () => {
+    expect(noctraMoveTable('p1').map((m) => m.action)).toEqual(['bomb', 'dive']);
+    expect(noctraMoveTable('p2').map((m) => m.action)).toEqual(['bomb', 'dive', 'summon', 'cloak']);
+    expect(noctraMoveTable('p3').map((m) => m.action)).toEqual([
+      'barrage',
+      'sweep',
+      'bomb',
+      'cloak',
+    ]);
   });
 
-  it('nextAction 依循環游標推進且環回', () => {
-    let cursor = noctraNextAction('p2', null, 0);
-    expect(cursor.action).toBe('bomb');
-    cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
-    expect(cursor.action).toBe('dive');
-    cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
-    expect(cursor.action).toBe('summon');
-    cursor = noctraNextAction('p2', cursor.action, cursor.cycleIndex);
-    expect(cursor.action).toBe('bomb');
+  it('蝕月斗篷為低頻：P2/P3 表內 cloak 權重最低且 P1 無', () => {
+    for (const phase of ['p2', 'p3'] as const) {
+      const table = noctraMoveTable(phase);
+      const cloak = table.find((m) => m.action === 'cloak');
+      expect(cloak).toBeDefined();
+      for (const move of table) {
+        if (move.action !== 'cloak') expect(move.weight).toBeGreaterThan(cloak?.weight ?? 0);
+      }
+    }
+    expect(noctraMoveTable('p1').map((m) => m.action)).not.toContain('cloak');
   });
 
   it('投彈數依階段增量', () => {
@@ -45,33 +51,69 @@ describe('noctraAttackCycle（表驅動招式循環）', () => {
   });
 });
 
+// 收集非 hover 指令直到數量滿足。
+function collectAttacks(fsm: ReturnType<typeof createNoctraFsm>, count: number): NoctraCommand[] {
+  const commands: NoctraCommand[] = [];
+  for (let i = 0; i < 5000 && commands.length < count; i += 1) {
+    const command = fsm.tick(50);
+    if (command && command.kind !== 'hover') commands.push(command);
+  }
+  return commands;
+}
+
 describe('createNoctraFsm tick（節奏與指令）', () => {
-  it('idle 期滿發首招 bomb，再回 hover 交替', () => {
-    const fsm = createNoctraFsm();
+  it('idle 期滿發首招（P1 招池 bomb/dive），攻擊期滿回 hover', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(1) });
     expect(fsm.tick(NOCTRA.idleMs - 1)).toBeNull();
     const first = fsm.tick(1);
-    expect(first).toEqual({ kind: 'bomb', count: NOCTRA.bombCountP1 });
-    expect(fsm.state).toBe('bomb');
-    // 攻擊時長期滿回 hover。
-    const back = fsm.tick(NOCTRA.bombDurationMs);
-    expect(back).toEqual({ kind: 'hover' });
+    expect(first).not.toBeNull();
+    if (first?.kind === 'bomb') expect(first.count).toBe(NOCTRA.bombCountP1);
+    else expect(first?.kind).toBe('dive');
+    const duration = first?.kind === 'bomb' ? NOCTRA.bombDurationMs : NOCTRA.diveDurationMs;
+    expect(fsm.tick(duration)).toEqual({ kind: 'hover' });
   });
 
-  it('P2 循環含召喚令且帶上限 cap', () => {
-    const fsm = createNoctraFsm();
+  it('P2 招池含召喚令（帶上限 cap）與低頻蝕月斗篷（帶 1.2s 時長）', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(2) });
     fsm.takeDamage(30);
     expect(fsm.phase).toBe('p2');
-    const commands: NoctraCommand[] = [];
-    // 推進足量時間收集一輪循環指令。
-    for (let i = 0; i < 400; i += 1) {
+    const commands = collectAttacks(fsm, 40);
+    const summon = commands.find((c) => c.kind === 'summon');
+    expect(summon).toEqual({ kind: 'summon', cap: NOCTRA.summonCap });
+    const cloak = commands.find((c) => c.kind === 'cloak');
+    expect(cloak).toEqual({ kind: 'cloak', durationMs: NOCTRA.cloakDurationMs });
+  });
+
+  it('蝕月斗篷時長固定 1.2s 不隨狂暴速率縮放（可讀性紅線）', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(2) });
+    fsm.takeDamage(30);
+    // 抽到 cloak 後：cloakDurationMs - 1 內不回 hover，期滿回 hover。
+    for (let i = 0; i < 5000; i += 1) {
       const command = fsm.tick(50);
-      if (command && command.kind !== 'hover') commands.push(command);
-      if (commands.length >= 3) break;
+      if (command?.kind === 'cloak') break;
     }
-    expect(commands.map((c) => c.kind)).toEqual(['bomb', 'dive', 'summon']);
-    const summon = commands[2];
-    if (summon?.kind !== 'summon') throw new Error('第三招應為召喚');
-    expect(summon.cap).toBe(NOCTRA.summonCap);
+    expect(fsm.state).toBe('cloak');
+    expect(fsm.tick(NOCTRA.cloakDurationMs - 51)).toBeNull();
+    expect(fsm.tick(60)).toEqual({ kind: 'hover' });
+  });
+
+  it('加權選招同 seed 可完整重放；不同 seed 20 招內偏離（§5 去背板）', () => {
+    const run = (seed: number): string[] => {
+      const fsm = createNoctraFsm({ rng: createSeededRng(seed) });
+      return collectAttacks(fsm, 20).map((c) => c.kind);
+    };
+    expect(run(9)).toEqual(run(9));
+    // 舊固定循環：P1 bomb→dive 交替。
+    const legacy = Array.from({ length: 20 }, (_, i) => (i % 2 === 0 ? 'bomb' : 'dive'));
+    expect(run(9)).not.toEqual(legacy);
+  });
+
+  it('連續同招上限 2：長時序列無三連同招', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(4) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    for (let i = 2; i < kinds.length; i += 1) {
+      expect(new Set(kinds.slice(i - 2, i + 1)).size).toBeGreaterThan(1);
+    }
   });
 });
 
@@ -103,37 +145,33 @@ describe('createNoctraFsm takeDamage（事件流）', () => {
     expect(fsm.speedFactor).toBe(NOCTRA.enrageSpeedMultiplier);
   });
 
-  it('換階段重置循環游標：P3 首招必為 barrage', () => {
-    const fsm = createNoctraFsm();
-    // P1 先走完一招（游標非 0）。
+  it('換階段後出招屬於新階段招池（P3）', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(6) });
+    // P1 先走完一招。
     fsm.tick(NOCTRA.idleMs);
     fsm.takeDamage(50);
     expect(fsm.phase).toBe('p3');
-    // 回 hover 後下一招應為 P3 循環首位 barrage。
-    let command: NoctraCommand | null = null;
-    for (let i = 0; i < 400; i += 1) {
-      command = fsm.tick(50);
-      if (command && command.kind !== 'hover') break;
-    }
-    expect(command?.kind).toBe('barrage');
+    const pool = noctraMoveTable('p3').map((m) => m.action);
+    const kinds = collectAttacks(fsm, 10).map((c) => c.kind);
+    for (const kind of kinds) expect(pool).toContain(kind);
   });
 });
 
 describe('EX 變體（§58）', () => {
-  it('HP ×1.5（78）、節奏 ×1.15；P3 循環追加 eclipse', () => {
+  it('HP ×1.5（78）、節奏 ×1.15；P3 招池追加 eclipse', () => {
     const fsm = createNoctraFsm({ ex: true });
     expect(fsm.maxHp).toBe(78);
     expect(fsm.speedFactor).toBeCloseTo(1.15, 5);
-    expect(noctraAttackCycle('p3', true)).toEqual(['barrage', 'sweep', 'bomb', 'eclipse']);
-    expect(noctraAttackCycle('p3')).toEqual(['barrage', 'sweep', 'bomb']);
+    expect(noctraMoveTable('p3', true).map((m) => m.action)).toContain('eclipse');
+    expect(noctraMoveTable('p3').map((m) => m.action)).not.toContain('eclipse');
   });
 
-  it('EX P3 走完循環會發出 eclipse 指令（含矩陣參數）', () => {
-    const fsm = createNoctraFsm({ ex: true });
+  it('EX P3 會發出 eclipse 指令（含矩陣參數）', () => {
+    const fsm = createNoctraFsm({ ex: true, rng: createSeededRng(8) });
     fsm.takeDamage(56);
     expect(fsm.phase).toBe('p3');
     const kinds: string[] = [];
-    for (let i = 0; i < 2000 && !kinds.includes('eclipse'); i += 1) {
+    for (let i = 0; i < 5000 && !kinds.includes('eclipse'); i += 1) {
       const command = fsm.tick(50);
       if (command && command.kind !== 'hover') kinds.push(command.kind);
     }

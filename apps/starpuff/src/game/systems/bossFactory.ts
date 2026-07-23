@@ -118,7 +118,11 @@ export function createBossKit(
         return {
           handle: createNoctra(
             scene,
-            { summonFloaty: (cap) => summonMinion('floaty', cap) },
+            {
+              summonFloaty: (cap) => summonMinion('floaty', cap),
+              // 蝕月斗篷顯形（§5）：吸入第二用途，氣流擾動使輪廓顯形。
+              isPlayerInhaling: () => hooks.player().isInhaling(),
+            },
             { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
           ),
           bodyDamage: NOCTRA.bodyDamage,

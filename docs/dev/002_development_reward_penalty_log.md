@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+177
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+178
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t5-w1-boss-weighted-moves
+- 原因：#813 魔王招式序固定循環可 100% 背板，且 Jellord/Noctra 缺主題招式與可學習反制（§5 契約未落地）
+- 解法：moveTable.ts 加權選招 SSOT（weight＋宣告式 HP/距離帶條件＋seeded rng 重放＋連續同招上限 2）改造兩王 FSM，Jellord P2 果凍回彈（jellyPatch 純模組經 getVentLift 零接線彈起）＋Noctra P2 蝕月斗篷（eclipseCloak 純模組，吸入顯形第二用途），telegraph 全維持現值，761 vitest 全綠
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t4-w2-advantage-template

@@ -1,5 +1,6 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
+import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 
 // 暗月蝠王 Noctra FSM 純邏輯（GAME_DESIGN §54，不 import phaser），vitest 對象。
 // 平行於 bossFsm.ts 的表驅動模式：phase truth 全數收斂於此，禁止散落 scene。
@@ -42,6 +43,9 @@ export const NOCTRA = {
   // 俯衝落地 hit window（§58）：窗內頭頂下砸觸發長暈（涵蓋滯留＋回升起始）。
   diveStunWindowMs: 900,
   diveStunMs: 1800,
+  // 蝕月斗篷（§5 #813）：P2 起低頻隱形，僅月牙軌跡粒子可見；固定 1.2s
+  // 不隨速率縮放（可讀性紅線），按住吸入氣流擾動可顯形（吸入第二用途）。
+  cloakDurationMs: 1200,
 } as const;
 
 // Noctra EX 專屬（§58）：月蝕彈幕矩陣——分列直落彈網、每波留缺口通道。
@@ -53,7 +57,15 @@ export const EX_NOCTRA = {
   eclipseRowDelayMs: 520,
 } as const;
 
-export type NoctraAction = 'hover' | 'bomb' | 'dive' | 'summon' | 'barrage' | 'sweep' | 'eclipse';
+export type NoctraAction =
+  | 'hover'
+  | 'bomb'
+  | 'dive'
+  | 'summon'
+  | 'barrage'
+  | 'sweep'
+  | 'eclipse'
+  | 'cloak';
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
@@ -66,33 +78,38 @@ export function noctraPhaseForHp(hp: number, maxHp: number): BossPhase {
   return hp <= maxHp * NOCTRA.phase2HpRatio ? 'p2' : 'p1';
 }
 
-// 三階段招式循環（§54/§58）：P1 盤旋投彈＋俯衝；P2 俯衝＋召喚（難度根修：
-// 雙 dive 連擊改單次）；P3 狂暴彈幕＋全場俯掠；EX P3 追加月蝕彈幕矩陣（表驅動）。
-export function noctraAttackCycle(phase: BossPhase, ex = false): readonly NoctraAction[] {
+// 加權選招表（§5 #813）：P1 盤旋投彈＋俯衝；P2 追加召喚與低頻蝕月斗篷；
+// P3 狂暴彈幕＋俯掠＋投彈＋低頻斗篷；EX P3 追加月蝕彈幕矩陣。
+export function noctraMoveTable(
+  phase: BossPhase,
+  ex = false,
+): readonly WeightedMove<NoctraAction>[] {
   switch (phase) {
     case 'p1':
-      return ['bomb', 'dive'];
+      return [
+        { action: 'bomb', weight: 3 },
+        { action: 'dive', weight: 3 },
+      ];
     case 'p2':
-      return ['bomb', 'dive', 'summon'];
+      return [
+        { action: 'bomb', weight: 3 },
+        { action: 'dive', weight: 3 },
+        { action: 'summon', weight: 2 },
+        { action: 'cloak', weight: 1 },
+      ];
     case 'p3':
-      return ex ? ['barrage', 'sweep', 'bomb', 'eclipse'] : ['barrage', 'sweep', 'bomb'];
+      return [
+        { action: 'barrage', weight: 3 },
+        { action: 'sweep', weight: 3 },
+        { action: 'bomb', weight: 2 },
+        { action: 'cloak', weight: 1 },
+        ...(ex ? [{ action: 'eclipse', weight: 2 } as const] : []),
+      ];
     default: {
       const unhandled: never = phase;
       throw new Error(`未知階段：${String(unhandled)}`);
     }
   }
-}
-
-export function noctraNextAction(
-  phase: BossPhase,
-  previous: NoctraAction | null,
-  cycleIndex: number,
-  ex = false,
-): { action: NoctraAction; cycleIndex: number } {
-  const cycle = noctraAttackCycle(phase, ex);
-  if (previous === null) return { action: cycle[0] ?? 'hover', cycleIndex: 0 };
-  const index = (cycleIndex + 1) % cycle.length;
-  return { action: cycle[index] ?? 'hover', cycleIndex: index };
 }
 
 export function noctraBombCount(phase: BossPhase): number {
@@ -107,7 +124,8 @@ export type NoctraCommand =
   | { kind: 'summon'; cap: number }
   | { kind: 'barrage'; count: number }
   | { kind: 'sweep' }
-  | { kind: 'eclipse'; cols: number; rows: number; gapCols: number };
+  | { kind: 'eclipse'; cols: number; rows: number; gapCols: number }
+  | { kind: 'cloak'; durationMs: number };
 
 export type NoctraHitEvent =
   | { kind: 'damaged'; hp: number }
@@ -128,20 +146,26 @@ export interface NoctraFsm {
   stun(durationMs: number): void;
   // 雷化鏈電中斷召喚（§58）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
+  // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
+  setTargetDistance(distancePx: number | null): void;
 }
 
 export interface NoctraFsmOptions {
   ex?: boolean;
+  // 加權選招亂數注入（§5：同 seed 可重放；缺省 Math.random）。
+  rng?: () => number;
 }
 
 export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
   const ex = options.ex === true;
+  const rng = options.rng ?? Math.random;
   const maxHp = Math.round(NOCTRA.maxHp * (ex ? EX_MODS.hpMul : 1));
   let hp: number = maxHp;
   let phase: BossPhase = 'p1';
   let state: NoctraAction = 'hover';
-  let lastAttack: NoctraAction | null = null;
-  let cycleIndex = 0;
+  // 近兩次出招（§5 連續同招上限 2）。
+  let recentAttacks: NoctraAction[] = [];
+  let distancePx: number | null = null;
   let timerMs: number = NOCTRA.idleMs;
   let damageSinceDrop = 0;
   let defeated = false;
@@ -164,6 +188,9 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
         return NOCTRA.sweepDurationMs / speedFactor();
       case 'eclipse':
         return NOCTRA.eclipseDurationMs / speedFactor();
+      case 'cloak':
+        // 隱形窗固定 1.2s（可讀性紅線）：不隨狂暴速率縮放。
+        return NOCTRA.cloakDurationMs;
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -192,6 +219,8 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
           rows: EX_NOCTRA.eclipseRows,
           gapCols: EX_NOCTRA.eclipseGapCols,
         };
+      case 'cloak':
+        return { kind: 'cloak', durationMs: NOCTRA.cloakDurationMs };
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -223,10 +252,14 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'hover') {
-        const next = noctraNextAction(phase, lastAttack, cycleIndex, ex);
-        state = next.action;
-        cycleIndex = next.cycleIndex;
-        lastAttack = state;
+        // 加權選招（§5）：權重＋條件（HP 帶/距離帶）＋連續同招上限 2。
+        state = pickMove(
+          noctraMoveTable(phase, ex),
+          { hpRatio: hp / maxHp, distanceBand: distanceBandOf(distancePx) },
+          recentAttacks,
+          rng,
+        );
+        recentAttacks = [...recentAttacks.slice(-1), state];
       } else {
         state = 'hover';
       }
@@ -242,9 +275,8 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
       if (nextPhase !== phase) {
         const previousFactor = SPEED_FACTORS[phase];
         phase = nextPhase;
-        // 換階段重置循環游標，避免沿用他階段索引越界跳招。
-        cycleIndex = 0;
-        lastAttack = null;
+        // 換階段清空同招記錄，新招池從乾淨狀態抽選。
+        recentAttacks = [];
         timerMs *= previousFactor / SPEED_FACTORS[phase];
         events.push({ kind: 'phase', phase });
       }
@@ -270,6 +302,9 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
       state = 'hover';
       timerMs = NOCTRA.idleMs / speedFactor();
       return true;
+    },
+    setTargetDistance(next: number | null): void {
+      distancePx = next;
     },
   };
 }

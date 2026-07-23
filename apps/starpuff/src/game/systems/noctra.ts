@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
+import { ECLIPSE_CLOAK, cloakActive, cloakAlpha } from '../logic/eclipseCloak';
 import { EX_NOCTRA, NOCTRA, createNoctraFsm, type NoctraCommand } from '../logic/noctraFsm';
 import { NOCTRA_FLIGHT, approachPoint, hoverPatternPoint } from '../logic/noctraFlight';
 import { playSfx } from '../audio/sfx';
@@ -64,6 +65,8 @@ function ensureTextures(scene: Phaser.Scene): void {
 export interface NoctraHooks {
   // 召喚 floaty（§54 P2）：由 GameScene 依場上現量夾限至 cap，走正式 spawn 管線。
   summonFloaty(cap: number): void;
+  // 蝕月斗篷顯形（§5）：按住吸入氣流擾動使輪廓顯形（吸入第二用途）；未接視為未吸入。
+  isPlayerInhaling?(): boolean;
 }
 
 export interface NoctraOptions {
@@ -92,6 +95,10 @@ export function createNoctra(
   let slamWindowUntilMs = 0;
   let stunnedUntilMs = 0;
   let pendingSummon: Phaser.Time.TimerEvent | null = null;
+  // 蝕月斗篷（§5）：隱形窗起訖與月牙軌跡粒子節拍。
+  let cloakStartMs = -1;
+  let cloakDurationMs = 0;
+  let cloakTrailAccMs = 0;
 
   const viewW = () => scene.scale.width;
   // 前室魔王關（§86）：全部世界座標計算平移 arena 左緣（無前室＝0，行為零變）。
@@ -342,6 +349,36 @@ export function createNoctra(
     });
   };
 
+  // 月牙軌跡粒子（§5）：隱形期唯一可見線索，沿翼位漂散淡出。
+  const spawnCrescentTrail = () => {
+    const crescent = scene.add
+      .circle(
+        sprite.x + Phaser.Math.Between(-30, 30),
+        sprite.y + Phaser.Math.Between(-16, 16),
+        5,
+        0xcfd8ff,
+        0.75,
+      )
+      .setDepth(60);
+    scene.tweens.add({
+      targets: crescent,
+      alpha: 0,
+      scale: 0.4,
+      y: crescent.y + 18,
+      duration: 420,
+      ease: 'Quad.easeOut',
+      onComplete: () => crescent.destroy(),
+    });
+  };
+
+  // 蝕月斗篷（§5）：隱形 1.2s 僅月牙軌跡可見；alpha 於 update 逐幀依吸入顯形裁決。
+  const doCloak = (durationMs: number) => {
+    cloakStartMs = scene.time.now;
+    cloakDurationMs = durationMs;
+    cloakTrailAccMs = 0;
+    playSfx('flap', 0.5);
+  };
+
   const runCommand = (command: NoctraCommand) => {
     switch (command.kind) {
       case 'hover':
@@ -364,6 +401,9 @@ export function createNoctra(
       case 'eclipse':
         doEclipse(command.cols, command.rows, command.gapCols);
         return;
+      case 'cloak':
+        doCloak(command.durationMs);
+        return;
       default: {
         const unhandled: never = command;
         throw new Error(`未知指令：${String(unhandled)}`);
@@ -379,6 +419,9 @@ export function createNoctra(
   const dieSequence = () => {
     dying = true;
     active = false;
+    // 斗篷中被擊破：立即顯形進入死亡演出。
+    cloakStartMs = -1;
+    sprite.setAlpha(1);
     scene.tweens.killTweensOf(sprite);
     projectiles.getMatching('active', true).forEach(killProjectile);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: sprite.x, y: sprite.y });
@@ -498,8 +541,28 @@ export function createNoctra(
     },
     update(deltaMs: number) {
       if (!active || dying) return;
+      // 距離帶餵送（§5 條件欄）。
+      fsm.setTargetDistance(
+        target ? Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y) : null,
+      );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
+      // 蝕月斗篷（§5）：隱形期 alpha 依吸入顯形裁決；月牙軌跡定拍生成；期滿復原。
+      if (cloakStartMs >= 0) {
+        const elapsed = scene.time.now - cloakStartMs;
+        if (cloakActive(elapsed, cloakDurationMs)) {
+          const revealed = hooks.isPlayerInhaling?.() === true;
+          sprite.setAlpha(cloakAlpha(elapsed, cloakDurationMs, revealed));
+          cloakTrailAccMs += deltaMs;
+          while (cloakTrailAccMs >= ECLIPSE_CLOAK.trailIntervalMs) {
+            cloakTrailAccMs -= ECLIPSE_CLOAK.trailIntervalMs;
+            spawnCrescentTrail();
+          }
+        } else {
+          cloakStartMs = -1;
+          sprite.setAlpha(1);
+        }
+      }
       // 盤旋駕駛：水平緩擺＋垂直呼吸浮動；演出 tween 接管期間讓位。
       // §64 P0 熱修：接管結束改速度上限逼近歸位（logic/noctraFlight），禁止相位
       // 座標直寫——俯衝/俯掠/長暈返空一律連續飛行，杜絕瞬移；貼軌後逐幀貼合目標。
