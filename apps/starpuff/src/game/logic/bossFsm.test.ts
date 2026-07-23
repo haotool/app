@@ -8,6 +8,7 @@ import {
   type BossCommand,
   type BossFsm,
 } from './bossFsm';
+import { sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
 
 function collectCommands(fsm: BossFsm, totalMs: number, stepMs = 16): BossCommand[] {
@@ -97,6 +98,14 @@ describe('createBossFsm P1 循環', () => {
       i % 2 === 0 ? 'rain' : 'slam',
     );
     expect(attacks).not.toEqual(legacy);
+  });
+
+  it('招式序列條件熵 > 0（#813 去背板；T1 sequenceEntropyBits 口徑）', () => {
+    const attacks = collectCommands(createBossFsm({ rng: createSeededRng(13) }), 240000)
+      .filter((c) => c.kind !== 'idle')
+      .map((c) => c.kind);
+    expect(attacks.length).toBeGreaterThanOrEqual(40);
+    expect(sequenceEntropyBits(attacks)).toBeGreaterThan(0);
   });
 
   it('連續同招上限 2：長時序列無三連同招', () => {

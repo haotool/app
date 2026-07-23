@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+178
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+178
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：neutral-starpuff-t5-w1-entropy-probe-wiring
+- 原因：L4/L7 level-audit 招式熵探針回 0——jellord/noctra 呈現層未實作 getDebugState，driver stateLog 取不到 FSM 即時值
+- 解法：兩系統補 getDebugState（phase/state 觀測點）＋FSM 熵下界 vitest，實測 L4 moveEntropyBits 0.93-1.06、L7 1.17-1.33（>0 去背板成立，clearRate 1 不變）
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t5-w1-boss-weighted-moves

@@ -7,6 +7,7 @@ import {
   noctraPhaseForHp,
   type NoctraCommand,
 } from './noctraFsm';
+import { sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
 
 describe('noctraPhaseForHp（§54 三階段門檻）', () => {
@@ -114,6 +115,13 @@ describe('createNoctraFsm tick（節奏與指令）', () => {
     for (let i = 2; i < kinds.length; i += 1) {
       expect(new Set(kinds.slice(i - 2, i + 1)).size).toBeGreaterThan(1);
     }
+  });
+
+  it('招式序列條件熵 > 0（#813 去背板；T1 sequenceEntropyBits 口徑）', () => {
+    const fsm = createNoctraFsm({ rng: createSeededRng(13) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    expect(sequenceEntropyBits(kinds)).toBeGreaterThan(0);
   });
 });
 

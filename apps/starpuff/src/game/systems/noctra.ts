@@ -660,5 +660,9 @@ export function createNoctra(
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
+    // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
+    getDebugState() {
+      return { phase: fsm.phase, state: fsm.state };
+    },
   };
 }
