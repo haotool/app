@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+183
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+184
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-prismix-inhalable-reset
+- 原因：PR#852 review——鏡界折返彈標 inhalable 後 sprite 回收進池，spawnShot 只重設 reflected 未清 inhalable，P3 晶雨/彈幕復用同 sprite 被 overlaps 誤判可吸入（吸入給 jelly 免傷削弱彈幕）
+- 解法：spawnShot 補 setData('inhalable', false)；新增 prismix.test.ts 以池復用語意驅動完整鏈路（split→mirror 折返→回收→P3 復用），紅燈重現旗標殘留後修復鎖定
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-full-shield-siphon-no-drain

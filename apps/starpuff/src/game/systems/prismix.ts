@@ -214,6 +214,8 @@ export function createPrismix(
     shot.enableBody(true, x, y, true, true);
     shot.setTint(0xd8c8f5);
     shot.setData('reflected', false);
+    // 池復用重設（審查修復）：折返彈標記不得殘留給晶雨/彈幕，防誤判可吸入。
+    shot.setData('inhalable', false);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     return shot;
   };
