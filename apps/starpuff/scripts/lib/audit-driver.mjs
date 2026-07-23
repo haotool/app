@@ -140,6 +140,9 @@ export function installAuditDriver(opts) {
         snap.shots = sp.bossShots();
         snap.hazards = sp.bossHazards();
         snap.view = sp.view().width;
+        // 變身資格真值（#848 審查修復）：連吞合成使槽數塌縮（3 發同系＝2 槽），
+        // slot count 門檻永不成立——改讀 eligibleForm SSOT 觀測點。
+        snap.tfReady = sp.transformEligible ? sp.transformEligible() : false;
       }
       return snap;
     } catch {
@@ -314,7 +317,9 @@ export function installAuditDriver(opts) {
             /* 轉場窗忽略 */
           }
         }
-        if (s.ammo >= 3) {
+        // 資格門用 transform eligibility 而非槽數（#848 審查修復）：空中裁決 none
+        // 由 SP tap 逐 tick 重試至落地，holdFire 持續護匣防射空。
+        if (s.tfReady) {
           d.holdFire = true;
           if (now - d.lastSpAt >= 600) {
             d.lastSpAt = now;

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+184
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t5hf-audit-transform-eligibility
+- 原因：PR#848 review——audit-driver --transform 用 s.ammo >= 3 槽數門檻判資格，但連吞合成使 3 發同系塌縮為 2 槽，SP 永不觸發、transformsPerRun 恆 0、變身 TTK 報告淪為無變身基線
+- 解法：main.ts 增 dev/test 觀測點 transformEligible（走 eligibleForm SSOT 零第二份資格邏輯），driver snapshot 帶 tfReady 經感知延遲環後取代槽數門檻；node --check＋tsc 驗證
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-prismix-inhalable-reset
