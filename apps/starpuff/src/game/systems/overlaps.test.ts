@@ -56,6 +56,7 @@ interface HarnessConfig {
   bossActive?: boolean;
   settled?: boolean;
   reflectForm?: boolean;
+  inhaling?: boolean;
 }
 
 function makeHarness(config: HarnessConfig = {}): {
@@ -72,6 +73,7 @@ function makeHarness(config: HarnessConfig = {}): {
     trySlamStun: ReturnType<typeof vi.fn>;
     onSlamBounce: ReturnType<typeof vi.fn>;
     applyCaramel: ReturnType<typeof vi.fn>;
+    grantStar: ReturnType<typeof vi.fn>;
   };
   groups: {
     stars: object;
@@ -100,12 +102,14 @@ function makeHarness(config: HarnessConfig = {}): {
   const shatter = vi.fn();
   const trySlamStun = vi.fn(() => false);
   const onSlamBounce = vi.fn();
+  const grantStar = vi.fn();
   const player = {
     sprite: playerSprite,
     getStars: () => stars,
     getInhaleZone: () => inhaleZone,
     onStarHit,
-    isInhaling: () => false,
+    grantStar,
+    isInhaling: () => config.inhaling ?? false,
     getFacing: () => 1,
     isSlamming: () => false,
     onSlamBounce,
@@ -189,6 +193,7 @@ function makeHarness(config: HarnessConfig = {}): {
       trySlamStun,
       onSlamBounce,
       applyCaramel,
+      grantStar,
     },
     groups: { stars, enemyGroup, hazards, inhaleZone, playerSprite, projectiles, shockwaves },
   };
@@ -337,6 +342,57 @@ describe('關鍵回調結算路徑', () => {
     expect(harness.spies.trySlamStun).toHaveBeenCalledTimes(1);
     expect(harness.spies.onSlamBounce).toHaveBeenCalledTimes(1);
     expect(harness.spies.damagePlayer).not.toHaveBeenCalled();
+  });
+
+  it('折返彈吸入回收（§5 W2）：inhalable＋吸入中 → grantStar 免傷；未吸入照常結算', () => {
+    const inhaling = makeHarness({ inhaling: true });
+    wireCombatOverlaps(inhaling.scene, inhaling.hooks);
+    const wiring = inhaling.wirings.find(
+      (w) => w.a === inhaling.groups.playerSprite && w.b === inhaling.groups.projectiles,
+    );
+    const makeProjectile = () => ({
+      active: true,
+      x: 150,
+      getData: (key: string) => (key === 'inhalable' ? true : undefined),
+      disableBody: vi.fn(),
+    });
+    const recycled = makeProjectile();
+    wiring?.callback?.({}, recycled);
+    expect(inhaling.spies.grantStar).toHaveBeenCalledWith('jelly');
+    expect(inhaling.spies.damagePlayer).not.toHaveBeenCalled();
+    expect(recycled.disableBody).toHaveBeenCalledWith(true, true);
+
+    // 負例：未吸入 → inhalable 彈照常 1 傷路徑（bossTouchDamage）。
+    const idle = makeHarness({});
+    wireCombatOverlaps(idle.scene, idle.hooks);
+    const idleWiring = idle.wirings.find(
+      (w) => w.a === idle.groups.playerSprite && w.b === idle.groups.projectiles,
+    );
+    idleWiring?.callback?.({}, makeProjectile());
+    expect(idle.spies.grantStar).not.toHaveBeenCalled();
+    expect(idle.spies.damagePlayer).toHaveBeenCalledWith(2, 150);
+  });
+
+  it('糖漿波焦糖化（§5 W2）：caramel 旗標 → applyCaramel＋傷害照常；無旗標不沾糖', () => {
+    const { scene, wirings, hooks, spies, groups } = makeHarness({});
+    wireCombatOverlaps(scene, hooks);
+    const wiring = wirings.find((w) => w.a === groups.playerSprite && w.b === groups.shockwaves);
+    const caramelWave = {
+      active: true,
+      x: 220,
+      getData: (key: string) => (key === 'caramel' ? true : undefined),
+    };
+    wiring?.callback?.({}, caramelWave);
+    expect(spies.applyCaramel).toHaveBeenCalledTimes(1);
+    expect(spies.damagePlayer).toHaveBeenCalledWith(2, 220);
+
+    // 負例：一般衝擊波僅結算傷害，不套焦糖。
+    spies.applyCaramel.mockClear();
+    spies.damagePlayer.mockClear();
+    const plainWave = { active: true, x: 220, getData: () => undefined };
+    wiring?.callback?.({}, plainWave);
+    expect(spies.applyCaramel).not.toHaveBeenCalled();
+    expect(spies.damagePlayer).toHaveBeenCalledWith(2, 220);
   });
 
   it('隕星命中玩家：先碎裂再走 damagePlayer 單一入口', () => {

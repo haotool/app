@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+179
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+180
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-23
+- ID：reward-starpuff-t5-w2-review-shouldfix-convergence
+- 原因：#813 W2 雙席審查 should-fix——掙扎中斷後鏡光面板殘留、caramel 再沾波 FX/浮字轟炸、overlaps/caramelStatus 新行為缺測試覆蓋
+- 解法：doStruggle 即時銷毀 mirrorPane、apply() 以 caramelActive guard 收斂為僅刷新計時＋taughtCaramelClear 入 closure，補 caramelStatus 10 測與 overlaps 吸入回收/焦糖旗標行為測試（含負例），vitest 796 全綠
 
 - 日期：2026-07-23
 - ID：reward-starpuff-t5-w2-prismix-syrona-theme-moves

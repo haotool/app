@@ -14,9 +14,6 @@ import type { PlayerHandle } from './player';
 // 反制解除（乘噴口氣流吹乾／雷化放電瞬除）；狀態真值收斂 logic/caramel.ts，
 // 移速倍率於 sync 與 buff 倍率單點合成後注入 player（防互相覆寫）。
 
-// 首次沾身反制教學浮字（每 session 一次）：沿 noctra taughtCloakReveal 慣例。
-let taughtCaramelClear = false;
-
 // 腳部沾糖粒子節拍。
 const DRIP_FX_INTERVAL_MS = 400;
 
@@ -39,6 +36,8 @@ export interface CaramelStatus {
 export function createCaramelStatus(deps: CaramelStatusDeps): CaramelStatus {
   let state: CaramelState = CARAMEL_CLEAR;
   let fxAccMs = 0;
+  // 首次沾身反制教學浮字（每戰一次）：收斂 closure，避免模組級狀態跨測試/場景殘留。
+  let taughtCaramelClear = false;
 
   const sync = (): void => {
     const [speedMul, rateMul] = deps.buffMods();
@@ -55,9 +54,12 @@ export function createCaramelStatus(deps: CaramelStatusDeps): CaramelStatus {
     apply() {
       // 雷化免疫（§5 反制：放電瞬除語義——帶電體不沾糖）。
       if (deps.player().getTransformState().form === 'volt') return;
+      // 沾身中再沾波：僅刷新計時（重疊 shockwave 逐幀觸發，防 FX/浮字轟炸）。
+      const refreshOnly = caramelActive(state);
       state = applyCaramel();
-      fxAccMs = 0;
       sync();
+      if (refreshOnly) return;
+      fxAccMs = 0;
       const sprite = deps.player().sprite;
       deps.fx().burstSmall(sprite.x, sprite.y + 18, CARAMEL.tint);
       if (!taughtCaramelClear) {

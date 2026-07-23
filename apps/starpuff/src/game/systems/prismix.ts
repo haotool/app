@@ -465,6 +465,10 @@ export function createPrismix(
   // 殘核掙扎（§68）：擊破側碎裂消散；存活側體色轉暗＋搖擺（telegraph）。
   const doStruggle = (survivor: PrismixSide) => {
     struggleSide = survivor;
+    // 掙扎中斷鏡界（FSM 已離開 mirror）：殘留鏡光面板即時銷毀，防視覺誤導。
+    mirrorPane?.destroy();
+    mirrorPane = null;
+    mirrorTwin = null;
     const dead = sideSprite(survivor === 'a' ? 'b' : 'a');
     playSfx('break');
     scene.tweens.add({
