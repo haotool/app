@@ -38,6 +38,8 @@
 
 ## 6. 魔王 AI（有限狀態機，pure TS 可測）
 
+（v21 已由 §111 取代：P1/P2 固定循環改 `JELLORD_MOVES` 加權表選招，招池與 telegraph 數值不變。）
+
 - P1（HP > 50%）循環：`idle(1.2s) → jellyRain(5 顆拋物線彈) → idle → slam(跳起落地雙向地面震波) → idle → …`
 - P2（HP ≤ 50%）：變紅憤怒、速度 ×1.3，新增 `dash`（白閃三拍前搖 0.6s → 水平衝刺，牆邊回彈；
   #809 前搖 0.3s→0.6s 對齊 ≥600ms 衝撞可讀性紅線）；jellyRain 升為 7 顆。
@@ -637,7 +639,8 @@ scene。呈現層 `systems/noctra.ts` 與 boss.ts 共用 `BossHandle` 介面與 
 - 數值：HP 70、身體傷害 1、P2 ≤60%、P3 ≤30%、狂暴節奏 ×1.25、每損 10 HP 掉補給小怪
   （§26 飢荒保證律不變——基礎星彈恆可通關）。（v9 已由 §63 難度根修取代：HP 52、
   狂暴 ×1.15、每損 8 HP 補給；實測 0% 勝率歸因與全參數表見 §63。）
-- 招式循環（表驅動 `noctraAttackCycle`；換階段循環游標重置）：
+- 招式循環（表驅動 `noctraAttackCycle`；換階段循環游標重置）（v21 已由 §111 取代：
+  `noctraMoveTable` 加權表選招，循環游標敘述作廢；招池與 telegraph 數值不變）：
   - P1 `bomb（盤旋投彈 ×4，落點預警先行）→ dive（俯衝：telegraph＋shake＋變色前搖
 0.55s → 鎖定點撲擊 → 回升）`
   - P2 `bomb ×5 → dive → dive（俯衝連擊）→ summon（召喚 floaty，場上上限 2——cap 由
@@ -2068,3 +2071,31 @@ t2b-812-sb-l*.json`。
   逐 tick 重試）；報告輸出 `transformsPerRun` 與情境描述。
 - 驗收口徑：同 bot 分級、同 runs 的有/無 `--transform` 兩份報告對照，TTK 改善
   ≥15%（`AUDIT_THRESHOLDS.transformTtkGainMinPct`）且無變身仍可通關（非必需）。
+
+## 111. v21 魔王主題化 W1——加權選招＋Jellord/Noctra 主題招式（#813；T5 列車）
+
+取代標註：§6 P1/P2 固定循環與 §54 `noctraAttackCycle` 循環游標敘述由本節加權表驅動取代
+（招池與數值不變，僅選招機制升級）；telegraph 窗全部維持現值不降（可讀性紅線）。
+
+### 111.1 FSM 加權選招基礎設施（logic/moveTable.ts，SSOT）
+
+- 招式序由固定循環改**加權表驅動**：`weight`（權重欄）＋`condition`（條件欄，宣告式
+  HP 帶 `minHpRatio`/`maxHpRatio` 與玩家距離帶 `band: near|far`，門檻 300px、未知視 far）。
+- rng 注入可測（`createSeededRng` mulberry32，同 seed 完整重放）；缺省 `Math.random`。
+- 連續同招上限 2（防隨機劣化體感）；條件全剔除時回退整表（anti-softlock 永不空手）。
+- 兩王 FSM 增 `setTargetDistance`（呈現層逐幀餵送）；`JELLORD_MOVES` 與 `noctraMoveTable`
+  為招池 SSOT——Jellord dash 限遠距帶（貼身衝撞不可讀），其餘權重對齊原循環頻率。
+
+### 111.2 Jellord 主題招式「果凍回彈」（logic/jellyPatch.ts）
+
+- P2 起 slam 指令帶 `jelly` 旗標：踩踏落點地面果凍化 3s（粉色地塊，壽命內淡出）。
+- 玩家踩上被彈起（非傷害）：初速 -560（高於跳躍 -420、低於彈簧 -640），可接漂浮控高
+  ——果凍地形＝免費跳台；經既有 `getVentLift` 管線結算（GameScene 零接線變更），
+  彈起 200ms 冷卻防連觸。既有下砸暈窗反制（§58 slamStun）不變。
+
+### 111.3 Noctra 主題招式「蝕月斗篷」（logic/eclipseCloak.ts）
+
+- P2 起低頻（權重 1，全表最低）新招 `cloak`：隱形 1.2s 固定不隨狂暴速率縮放，
+  僅月牙軌跡粒子可見；進出各 180ms fade 無跳變。
+- 反制（吸入第二用途）：按住吸入產生氣流擾動使輪廓顯形（alpha 0.06 → 0.5）；
+  hooks `isPlayerInhaling` 由 bossFactory 接線 player.isInhaling()。

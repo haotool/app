@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
+import { JELLY_PATCH, jellyBounceVy, prunePatches, type JellyPatch } from '../logic/jellyPatch';
 import { playSfx } from '../audio/sfx';
 import { burstSmall, landingDust, spawnTelegraph } from './fx';
 
@@ -103,6 +104,8 @@ function ensureTextures(scene: Phaser.Scene): void {
   bake('boss-enraged', 0xd86b7b, BOSS_W, BOSS_H);
   bake('boss-jelly-ball', 0xffb3c7, 20, 20);
   bake('boss-shockwave', 0xb69df0, 60, 16);
+  // 果凍地塊（§5 果凍回彈）：粉色半透明橢圓，正式 sprite 缺件時保底。
+  bake('boss-jelly-patch', 0xffb3c7, JELLY_PATCH.halfWidthPx * 2, 26);
 }
 
 export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): BossHandle {
@@ -117,6 +120,10 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   let target: { x: number; y: number } | null = null;
   // 頭頂命中短暈（§58）：暈眩窗內不重複觸發。
   let stunUntilMs = 0;
+  // 果凍回彈（§5）：P2 起踩踏落點果凍化 3s，玩家踩上經 getVentLift 結算彈起。
+  let jellyPatches: JellyPatch[] = [];
+  const patchSprites = new Map<JellyPatch, Phaser.GameObjects.Image>();
+  let jellyBounceCooldownMs = 0;
 
   const viewW = () => scene.scale.width;
   // 前室魔王關（§86）：全部世界座標計算平移 arena 左緣（無前室＝0，行為零變）。
@@ -288,7 +295,29 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     wave.setVelocity(directionX * 320 * fsm.speedFactor, 0);
   };
 
-  const doSlam = (quake: boolean) => {
+  // 果凍地塊生成（§5 果凍回彈）：踩踏落點地面果凍化 3s，壽命內緩慢淡出。
+  const spawnJellyPatch = (x: number) => {
+    const patch: JellyPatch = { x, createdAtMs: scene.time.now };
+    jellyPatches.push(patch);
+    const visual = scene.add
+      .image(x, GROUND_TOP - 8, 'boss-jelly-patch')
+      .setAlpha(0.65)
+      .setDepth(40);
+    patchSprites.set(patch, visual);
+    scene.tweens.add({
+      targets: visual,
+      alpha: 0.2,
+      scaleY: 0.55,
+      duration: JELLY_PATCH.lifetimeMs,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        visual.destroy();
+        patchSprites.delete(patch);
+      },
+    });
+  };
+
+  const doSlam = (quake: boolean, jelly: boolean) => {
     wobble.pause();
     const sf = fsm.speedFactor;
     // 前搖 0.35s：squash 蓄力 + 微紅 tint + 音效預告，之後才起跳。
@@ -329,6 +358,8 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       scene.cameras.main.shake(180, 0.008);
       spawnShockwave(1);
       spawnShockwave(-1);
+      // 果凍回彈（§5）：P2 起踩踏落點果凍化。
+      if (jelly) spawnJellyPatch(sprite.x);
       // P3 全場震落（§30）：站立玩家強制彈起由 GameScene 接線結算。
       if (quake) emitGameEvent(scene.events, GameEvents.BOSS_QUAKE, { x: sprite.x, y: sprite.y });
     });
@@ -378,7 +409,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
         else launchRain(command.count);
         return;
       case 'slam':
-        doSlam(command.quake);
+        doSlam(command.quake, command.jelly);
         return;
       case 'dash':
         doDash();
@@ -539,8 +570,15 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     },
     update(deltaMs: number) {
       if (!active || dying) return;
+      // 距離帶餵送（§5 條件欄）：dash 僅遠距帶啟用。
+      fsm.setTargetDistance(
+        target ? Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y) : null,
+      );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
+      // 果凍地塊壽命清理與彈起冷卻。
+      jellyBounceCooldownMs = Math.max(0, jellyBounceCooldownMs - deltaMs);
+      jellyPatches = prunePatches(jellyPatches, scene.time.now);
       projectiles.getMatching('active', true).forEach((obj) => {
         const ball = obj as Phaser.Physics.Arcade.Sprite;
         const body = ball.body as Phaser.Physics.Arcade.Body;
@@ -578,6 +616,9 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       enrageTween?.destroy();
       wobble.destroy();
       scene.tweens.killTweensOf(sprite);
+      patchSprites.forEach((visual) => visual.destroy());
+      patchSprites.clear();
+      jellyPatches = [];
       projectiles.destroy(true);
       shockwaves.destroy(true);
       sprite.destroy();
@@ -621,8 +662,22 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     setTarget(next: { x: number; y: number } | null) {
       target = next;
     },
+    // 果凍回彈（§5）：玩家踩上活性果凍地塊經既有 getVentLift 管線彈起（非傷害），
+    // GameScene 逐幀委派結算零接線變更；彈起後短冷卻防連續重觸。
+    getVentLift(x: number, y: number, vy: number) {
+      if (!active || dying || jellyBounceCooldownMs > 0) return null;
+      const bounce = jellyBounceVy(jellyPatches, scene.time.now, x, y, GROUND_TOP, vy);
+      if (bounce === null) return null;
+      jellyBounceCooldownMs = JELLY_PATCH.cooldownMs;
+      playSfx('spring');
+      return bounce;
+    },
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
+    },
+    // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
+    getDebugState() {
+      return { phase: fsm.phase, state: fsm.state };
     },
   };
 }

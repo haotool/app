@@ -1,4 +1,5 @@
 import type { BossAction, BossPhase } from '../core/types';
+import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 
 // 魔王 FSM 純邏輯（GAME_DESIGN §6，不 import phaser），vitest 對象。
 
@@ -49,24 +50,32 @@ export function jellyRainCount(phase: BossPhase): number {
   return phase === 'p2' ? BOSS.jellyRainCountP2 : BOSS.jellyRainCountP1;
 }
 
-// P1：idle → jellyRain → idle → slam → …；P2/P3 追加 dash。
-export function attackCycle(phase: BossPhase): readonly BossAction[] {
-  return phase === 'p1' ? ['jellyRain', 'slam'] : ['jellyRain', 'slam', 'dash'];
-}
-
-export function nextAction(phase: BossPhase, previous: BossAction | null): BossAction {
-  const cycle = attackCycle(phase);
-  if (previous === null) return cycle[0] ?? 'idle';
-  const index = cycle.indexOf(previous);
-  return cycle[(index + 1) % cycle.length] ?? 'idle';
-}
+// 加權選招表（§5 #813）：固定循環改權重＋條件（HP 帶/距離帶）驅動；
+// dash 僅遠距帶啟用（貼身衝撞不可讀），P1 無 dash 維持既有招池。
+export const JELLORD_MOVES: Record<BossPhase, readonly WeightedMove<BossAction>[]> = {
+  p1: [
+    { action: 'jellyRain', weight: 3 },
+    { action: 'slam', weight: 3 },
+  ],
+  p2: [
+    { action: 'jellyRain', weight: 3 },
+    { action: 'slam', weight: 3 },
+    { action: 'dash', weight: 2, condition: { band: 'far' } },
+  ],
+  p3: [
+    { action: 'jellyRain', weight: 3 },
+    { action: 'slam', weight: 3 },
+    { action: 'dash', weight: 2, condition: { band: 'far' } },
+  ],
+};
 
 // tick 輸出給呈現層的指令：進入攻擊發攻擊指令，返回待機發 idle。
 // P3（§30）：rain 帶 homing 旗標（追蹤彈）、slam 帶 quake 旗標（全場震落）。
+// P2 起 slam 帶 jelly 旗標（§5 果凍回彈：踩踏落點地面果凍化）。
 export type BossCommand =
   | { kind: 'idle' }
   | { kind: 'rain'; count: number; homing: boolean }
-  | { kind: 'slam'; quake: boolean }
+  | { kind: 'slam'; quake: boolean; jelly: boolean }
   | { kind: 'dash' };
 
 export type BossHitEvent =
@@ -88,19 +97,26 @@ export interface BossFsm {
   takeDamage(amount: number): BossHitEvent[];
   // 頭頂命中短暈（§58）：回待機並停拍 durationMs，期滿接續攻擊循環。
   stun(durationMs: number): void;
+  // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
+  setTargetDistance(distancePx: number | null): void;
 }
 
 export interface BossFsmOptions {
   ex?: boolean;
+  // 加權選招亂數注入（§5：同 seed 可重放；缺省 Math.random）。
+  rng?: () => number;
 }
 
 export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
   const ex = options.ex === true;
+  const rng = options.rng ?? Math.random;
   const maxHp = Math.round(BOSS.maxHp * (ex ? EX_MODS.hpMul : 1));
   let hp: number = maxHp;
   let phase: BossPhase = 'p1';
   let state: BossAction = 'idle';
-  let lastAttack: BossAction | null = null;
+  // 近兩次出招（§5 連續同招上限 2）。
+  let recentAttacks: BossAction[] = [];
+  let distancePx: number | null = null;
   let timerMs: number = BOSS.idleMs;
   let damageSinceDrop = 0;
   let defeated = false;
@@ -132,7 +148,8 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
       case 'jellyRain':
         return { kind: 'rain', count: jellyRainCount(phase), homing: phase === 'p3' };
       case 'slam':
-        return { kind: 'slam', quake: phase === 'p3' };
+        // 果凍回彈（§5）：P2 起踩踏落點地面果凍化，玩家踩上被彈起（非傷害）。
+        return { kind: 'slam', quake: phase === 'p3', jelly: phase !== 'p1' };
       case 'dash':
         return { kind: 'dash' };
       default: {
@@ -166,8 +183,14 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'idle') {
-        state = nextAction(phase, lastAttack);
-        lastAttack = state;
+        // 加權選招（§5）：權重＋條件（HP 帶/距離帶）＋連續同招上限 2。
+        state = pickMove(
+          JELLORD_MOVES[phase],
+          { hpRatio: hp / maxHp, distanceBand: distanceBandOf(distancePx) },
+          recentAttacks,
+          rng,
+        );
+        recentAttacks = [...recentAttacks.slice(-1), state];
       } else {
         state = 'idle';
       }
@@ -205,6 +228,9 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
       if (defeated) return;
       state = 'idle';
       timerMs = durationMs;
+    },
+    setTargetDistance(next: number | null): void {
+      distancePx = next;
     },
   };
 }

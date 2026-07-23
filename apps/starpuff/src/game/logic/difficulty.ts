@@ -29,6 +29,8 @@ export const AUDIT_THRESHOLDS = {
   exHighPassMinRate: 0.6,
   // #816 變身優勢：用/不用變身 TTK 改善 ≥15% 且非必需（§57 anti-softlock 不變式）。
   transformTtkGainMinPct: 0.15,
+  // #813 去背板：魔王招式序列條件熵下限（bits），固定循環＝0 不可過門。
+  moveEntropyMinBits: 0.5,
 } as const;
 
 // ===== 分級 bot（機制 brief §10：低階反應 500ms＋基礎策略、高階 250ms＋完整策略）=====
@@ -113,8 +115,8 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     bodyH: 110,
     grounded: false,
     hoverY: 246,
-    // bomb／dive／summon／barrage／sweep／eclipse。
-    attackKinds: 6,
+    // bomb／dive／summon／barrage／sweep／eclipse／cloak。
+    attackKinds: 7,
     minTelegraphMs: NOCTRA.idleMs,
     multiBody: false,
     arenaMechanics: 0,
