@@ -1399,6 +1399,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 | Syrona L16  | 135   | 噴泉順序隨機化（每循環洗牌、seed 注入可測；潮汐再 -25%）        | 讀 telegraph 取代背板    |
 | Voidra L20  | 165   | P2 轟炸密度 ×1.25＋P3 螺旋三層（愛心上限 1）                    | 走位風箏＋過熱窗集中輸出 |
 
+（v24 取代標註：T6 EX 重設計於本表之上追加 EX 專屬 P4 第二血條——Prismix 已落地
+§114，Syrona/Voidra 於 W2/W3 落地。）
+
 ### 86.2 出貨面收斂（本車實作）
 
 - **EX 徽鈕**：MapScene `addExEntrance` 自 §58 起即以 `level.boss` 通用掛載——
@@ -2178,3 +2181,39 @@ telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §1
   指令，呈現層經 hooks `drainTopStar()`（bossFactory 接 `player.stealTopStar()`，
   彈匣單一真值、HUD ammo 事件自動同步）回餵 `absorbSiphonStar()` 夾限化盾；
   段起點重試清空護盾層（§82 清場語義）；save 零改動、BossHandle 零新選配。
+
+## 114. v24 EX 全面重設計 W1——Prismix P4 裂核殘響（#814；T6 列車）
+
+> EX 挑戰全面升級：每王 EX 追加專屬第四型態（P4）＝第二血條，總有效 HP 相對一般
+> 約 ×2.25（難度翻倍）；技巧破關、非 RNG 死牆。W1 落地 Prismix；Syrona/Voidra
+> P4 於 W2/W3 落地（差分定稿見 `.claude/epics/starpuff-t6/updates/stream-main.md`）。
+> 取代標註：§86.1 Prismix EX 差分列由本章擴充（原差分保留，追加 P4）。
+
+### 114.1 型別基建：BossPhase 擴為四段
+
+- `BossPhase` 聯集加 `'p4'`（EX 專屬型態）；五 FSM 的 `Record<BossPhase, number>`
+  補 p4 鍵、moveTable switch 補 p4 分支——Jellord/Noctra 執行期不可達（沿 p3 值），
+  Syrona/Voidra 暫沿 p3 待 W2/W3 落真 P4；Voidra 段起點重試明確限 p2/p3。
+- HUD `BOSS_PHASE` p4 → 血條金緋換色（0xe8b45a）＋滿灌重灌＝第二血條視覺。
+
+### 114.2 Prismix EX P4「裂核殘響」（prismixFsm SSOT）
+
+- 觸發：EX 限定，P3 裂核歸零不死——`enterRebirth`：phase p4、第二血池
+  `rebirthHpRatio 0.5`（EX 120 → 60）、`maxHp` getter 換刻度供 HUD 重灌；
+  僅可重生一次（p4 歸零才 `defeated`）。
+- EX 雙子連破：掙扎窗補殺彩蛋保留（twinFinish 照發），改跳過 P3 直入 P4
+  （跳段不跳王——技巧獎勵仍成立且 EX 專屬型態不可跳過）。
+- P4 招池：稜光行牆 3／彈幕 3／晶雨 2；P4 speedFactor 1.25（疊 EX 1.15 ≈ 1.44）。
+- 新招「稜光行牆」（sweep）：起掃側 rng 抽側（同 seed 可重放）、側緣豎線閃爍
+  telegraph 700ms（固定不縮放）後，全高 120px 光牆以 180px/s 橫掃全場，出界回收。
+  跳越窗＝跳＋拍翅時機（`maxJumpClearancePx≈210` vs 牆高 120，vitest 錨定
+  `sweepWallHeightPx ≤ maxJumpClearancePx()-60` 裕度）。
+- anti-softlock：供彈保證律（每 10 傷 minionDrop）跨 P4 延續；telegraph 紅線
+  ≥600ms 全數維持；碎晶盾於重生時全數碎裂（P4 無盾環，輸出路徑純淨）。
+- 呈現層：重生演出（閃屏＋震動＋核體金緋重構 Back.easeOut）；EX 緋紅呼吸循環
+  於 P4 讓位金緋定色；受擊白閃 restore 對 p4 回金緋。
+
+### 114.3 驗收探針（#818 level-audit）
+
+- `node scripts/level-audit.mjs 12 --ex --bot low|high --runs N`：低階 clearRate
+  <20%、高階 ≥60%（門檻 SSOT `AUDIT_THRESHOLDS.exLowPassMaxRate/exHighPassMinRate`）。

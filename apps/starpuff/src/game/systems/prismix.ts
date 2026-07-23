@@ -51,6 +51,9 @@ const SHARD_SPIN_RAD_PER_MS = 0.0012;
 const BARRAGE_WINDUP_MS = 600;
 const CRYSTAL_TINT = 0xc5a8e8;
 const CORE_TINT = 0x9a7ad0;
+// P4 裂核殘響（§114 EX 限定）：重生核金緋位相；行牆寬度沿晶柱語彙。
+const REBIRTH_TINT = 0xe8b45a;
+const SWEEP_WALL_W = 26;
 // 鏡界反射（§5 W2）：銀白鏡光與折返彈速度；折返彈可再吸入（免費彈藥獎勵理解）。
 const MIRROR_TINT = 0xf0f4ff;
 const REFLECT_SHOT_SPEED = 200;
@@ -379,6 +382,86 @@ export function createPrismix(
     }
   };
 
+  // 稜光行牆（§114 P4）：起掃側緣豎線預警＋蓄能音後，全高光牆以固定速度橫掃全場；
+  // 跳＋拍翅時機跳越（牆高可跳性由 vitest 錨定），走 shockwaves 觸傷管線。
+  const doSweep = (dir: 1 | -1) => {
+    const wallH = EX_PRISMIX.sweepWallHeightPx;
+    const startX =
+      dir > 0 ? arenaLeft() + SWEEP_WALL_W / 2 : arenaLeft() + viewW() - SWEEP_WALL_W / 2;
+    const wallY = GROUND_TOP - wallH / 2;
+    const line = scene.add
+      .rectangle(startX, wallY, SWEEP_WALL_W, wallH, MIRROR_TINT, 0.16)
+      .setStrokeStyle(2, MIRROR_TINT, 0.95)
+      .setDepth(58);
+    scene.tweens.add({
+      targets: line,
+      alpha: { from: 1, to: 0.3 },
+      duration: 150,
+      yoyo: true,
+      repeat: -1,
+    });
+    playSfx('charge');
+    delay(EX_PRISMIX.sweepTelegraphMs, () => {
+      scene.tweens.killTweensOf(line);
+      line.destroy();
+      if (dying) return;
+      const wall = shockwaves.get(startX, wallY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      if (!wall) return;
+      wall.enableBody(true, startX, wallY, true, true);
+      wall.setDisplaySize(SWEEP_WALL_W, wallH).setTint(REBIRTH_TINT).setAlpha(0.9);
+      (wall.body as Phaser.Physics.Arcade.Body).setVelocity(dir * EX_PRISMIX.sweepWallSpeedPx, 0);
+      playSfx('zap', 1.1);
+      // 行進至對側出界即回收（anti-softlock 投射物壽命慣例）。
+      const travelMs = ((viewW() + SWEEP_WALL_W * 2) / EX_PRISMIX.sweepWallSpeedPx) * 1000;
+      delay(travelMs, () => wall.disableBody(true, true));
+    });
+  };
+
+  // 裂核殘響重生（§114 P4）：碎晶盾全數碎裂、核體金緋重構，第二血條滿灌重灌 HUD。
+  const doRebirth = (rebirthHp: number) => {
+    twinsAlive = false;
+    struggleSide = null;
+    mirrorPane?.destroy();
+    mirrorPane = null;
+    mirrorTwin = null;
+    playSfx('break');
+    playSfx('boss-roar', 1.2);
+    scene.cameras.main.flash(320, 245, 205, 130);
+    scene.cameras.main.shake(180, 0.008);
+    // 殘存碎晶盾碎裂（鏡像殘影雙掛 shields 不受累）。
+    shields.getMatching('active', true).forEach((obj) => {
+      const shard = obj as Phaser.Physics.Arcade.Sprite;
+      if (shard.getData('shadow') === true) return;
+      shard.disableBody(true, true);
+    });
+    // 雙子連破入 P4 時雙子尚在場：隱沒後核體自中心重構。
+    const anchor = twinA.visible ? twinA : twinB.visible ? twinB : core;
+    [twinA, twinB].forEach((twin) => {
+      if (!twin.visible) return;
+      twin.setVisible(false);
+      (twin.body as Phaser.Physics.Arcade.Body).enable = false;
+    });
+    core.setPosition(anchor.x, STAND_Y);
+    core.setVisible(true).setAlpha(1);
+    coreBody.enable = true;
+    core.setTintMode(Phaser.TintModes.MULTIPLY);
+    core.setTint(REBIRTH_TINT);
+    scene.tweens.add({
+      targets: core,
+      scaleX: { from: core.scaleX * 0.3, to: core.scaleX },
+      scaleY: { from: core.scaleY * 0.3, to: core.scaleY },
+      duration: 420,
+      ease: 'Back.easeOut',
+    });
+    emitTwinHp();
+    // 第二血條重灌：以 rebirth 池為新刻度（HUD 沿 BOSS_DAMAGED 比例縮放）。
+    emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+      hp: rebirthHp,
+      maxHp: fsm.maxHp,
+      damage: 0,
+    });
+  };
+
   // 鏡界反射（§5 W2）：單具開鏡 0.8s——銀白鏡光面板即 telegraph；窗內射它的
   // 星彈折返（FSM reflect 事件），反制＝打另一具。
   const doMirror = (side: PrismixSide, durationMs: number) => {
@@ -568,6 +651,9 @@ export function createPrismix(
       case 'shadow':
         doShadow();
         return;
+      case 'sweep':
+        doSweep(command.dir);
+        return;
       default: {
         const unhandled: never = command;
         throw new Error(`未知指令：${String(unhandled)}`);
@@ -626,9 +712,11 @@ export function createPrismix(
               ? struggleSide !== null
                 ? 0x8a7aa8
                 : sideTint(struggleSide ?? side)
-              : fsm.phase === 'p3'
-                ? CORE_TINT
-                : null,
+              : fsm.phase === 'p4'
+                ? REBIRTH_TINT
+                : fsm.phase === 'p3'
+                  ? CORE_TINT
+                  : null,
           );
           shake(hitSprite);
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
@@ -654,6 +742,9 @@ export function createPrismix(
         case 'reflect':
           // 鏡界反射（§5 W2）：開鏡側受擊零傷、生成折返彈（可再吸入）。
           spawnReflectShot(event.side);
+          break;
+        case 'rebirth':
+          doRebirth(event.hp);
           break;
         case 'minionDrop':
           minionHandlers.forEach((handler) => handler());
@@ -715,7 +806,8 @@ export function createPrismix(
           yoyo: true,
           repeat: -1,
           onUpdate: (tween) => {
-            if (twinsAlive || dying) return;
+            // P4 裂核殘響（§114）：重生核固定金緋位相，呼吸循環讓位。
+            if (twinsAlive || dying || fsm.phase === 'p4') return;
             const v = tween.getValue() ?? 0;
             const mix = (a: number, b: number) => Math.round(a + (b - a) * v);
             core.setTint((mix(255, 216) << 16) | (mix(255, 75) << 8) | mix(255, 106));

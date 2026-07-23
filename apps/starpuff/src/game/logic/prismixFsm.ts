@@ -49,13 +49,23 @@ export const PRISMIX = {
   shadowCastMs: 900,
 } as const;
 
-// Prismix EX 專屬差分（§68）：分裂提前、掙扎窗收短、碎晶盾加密；
+// Prismix EX 專屬差分（§68/§114）：分裂提前、掙扎窗收短、碎晶盾加密；
 // 雙子動作去同步（相位錯半拍）為呈現層差分，HP/節奏沿 EX_MODS 共用係數。
+// P4 裂核殘響（#814 T6）：P3 歸零不死，稜晶重構入第二血條（rebirthHpRatio）；
+// 新招稜光行牆（sweep）——全高光牆橫掃，跳＋拍翅時機跳越（技巧破關非 RNG）。
 export const EX_PRISMIX = {
   splitHpRatio: 0.75,
   struggleMs: 700,
   shardOrbitCount: 6,
   desyncMs: 260,
+  // 第二血條：round(maxHp × ratio)＝EX 120 → 60（總有效 HP 180 ≈ 一般 80 ×2.25）。
+  rebirthHpRatio: 0.5,
+  // 行牆規格（logic SSOT 供 vitest 錨定可跳性：牆高 < maxJumpClearancePx 留裕度）。
+  sweepWallHeightPx: 120,
+  sweepWallSpeedPx: 180,
+  // 行牆蓄能 telegraph：固定不隨狂暴縮放（可讀性紅線 ≥600ms）。
+  sweepTelegraphMs: 700,
+  sweepDurationMs: 2400,
 } as const;
 
 export type PrismixAction =
@@ -69,7 +79,8 @@ export type PrismixAction =
   | 'barrage'
   | 'rain'
   | 'mirror'
-  | 'shadow';
+  | 'shadow'
+  | 'sweep';
 
 export type PrismixSide = 'a' | 'b';
 
@@ -86,10 +97,12 @@ export type PrismixCommand =
   | { kind: 'rain'; count: number }
   | { kind: 'merge'; coreHp: number; shards: number }
   | { kind: 'mirror'; side: PrismixSide; durationMs: number }
-  | { kind: 'shadow' };
+  | { kind: 'shadow' }
+  | { kind: 'sweep'; dir: 1 | -1 };
 
 // takeDamage 輸出的傷害驅動事件：split（P1→P2 分裂）、struggle（單具擊破入掙扎窗）、
-// twinFinish（窗內補殺雙子連破，跳過 P3）、reflect（鏡界反射：開鏡側受擊零傷折返）。
+// twinFinish（窗內補殺雙子連破，跳過 P3）、reflect（鏡界反射：開鏡側受擊零傷折返）、
+// rebirth（§114 EX 限定：裂核歸零稜晶重構入 P4，第二血條）。
 export type PrismixHitEvent =
   | { kind: 'damaged'; hp: number }
   | { kind: 'phase'; phase: BossPhase }
@@ -98,17 +111,21 @@ export type PrismixHitEvent =
   | { kind: 'twinFinish' }
   | { kind: 'minionDrop' }
   | { kind: 'defeated' }
-  | { kind: 'reflect'; side: PrismixSide };
+  | { kind: 'reflect'; side: PrismixSide }
+  | { kind: 'rebirth'; hp: number };
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: PRISMIX.enrageSpeedMultiplier,
   p3: PRISMIX.enrageSpeedMultiplier,
+  // P4 裂核殘響（§114 EX 限定）：終段加壓（疊 EX_MODS 後有效 ≈1.44）。
+  p4: 1.25,
 };
 
 // 加權選招表（§5 #813 W2）：固定循環改權重＋條件驅動（沿 JELLORD_MOVES 慣例）。
 // P1 晶柱／折射光束；P2 雙生夾擊／交錯光束／召喚＋鏡界反射（開鏡）＋鏡像殘影
-//（低頻，總血 ≤50% 深段才入池——HP 帶條件欄）；P3 全域折射彈幕／晶雨。
+//（低頻，總血 ≤50% 深段才入池——HP 帶條件欄）；P3 全域折射彈幕／晶雨；
+// P4 裂核殘響（§114 EX 限定）：稜光行牆＋高壓彈幕／晶雨。
 export function prismixMoveTable(phase: BossPhase): readonly WeightedMove<PrismixAction>[] {
   switch (phase) {
     case 'p1':
@@ -128,6 +145,12 @@ export function prismixMoveTable(phase: BossPhase): readonly WeightedMove<Prismi
       return [
         { action: 'barrage', weight: 3 },
         { action: 'rain', weight: 3 },
+      ];
+    case 'p4':
+      return [
+        { action: 'sweep', weight: 3 },
+        { action: 'barrage', weight: 3 },
+        { action: 'rain', weight: 2 },
       ];
     default: {
       const unhandled: never = phase;
@@ -167,6 +190,8 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
   const splitRatio = ex ? EX_PRISMIX.splitHpRatio : PRISMIX.splitHpRatio;
   const struggleMs = ex ? EX_PRISMIX.struggleMs : PRISMIX.struggleMs;
   const shards = ex ? EX_PRISMIX.shardOrbitCount : PRISMIX.shardOrbitCount;
+  // P4 第二血條（§114 EX 限定）：裂核歸零重構的獨立血池。
+  const rebirthMax = ex ? Math.round(maxHp * EX_PRISMIX.rebirthHpRatio) : 0;
 
   let phase: BossPhase = 'p1';
   let state: PrismixAction = 'idle';
@@ -183,6 +208,8 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
   let hpA = 0;
   let hpB = 0;
   let survivor: PrismixSide = 'a';
+  // 稜光行牆方向：僅 state === 'sweep' 指令當拍有效（rng 抽側，同 seed 可重放）。
+  let sweepDir: 1 | -1 = 1;
 
   const totalHp = (): number => (phase === 'p2' ? hpA + hpB : hp);
   const speedFactor = (): number => SPEED_FACTORS[phase] * (ex ? EX_MODS.speedMul : 1);
@@ -213,6 +240,9 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         return PRISMIX.mirrorDurationMs;
       case 'shadow':
         return PRISMIX.shadowCastMs / speedFactor();
+      // 行牆施放拍固定（牆體行進由呈現層以固定速度承擔，可讀性紅線）。
+      case 'sweep':
+        return EX_PRISMIX.sweepDurationMs;
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -243,6 +273,8 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         return { kind: 'mirror', side: mirrorSide, durationMs: PRISMIX.mirrorDurationMs };
       case 'shadow':
         return { kind: 'shadow' };
+      case 'sweep':
+        return { kind: 'sweep', dir: sweepDir };
       default: {
         const unhandled: never = action;
         throw new Error(`未知招式：${String(unhandled)}`);
@@ -259,12 +291,26 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
     }
   };
 
+  // 裂核殘響（§114 EX 限定）：歸零不死，稜晶重構入 P4 第二血條；僅可重生一次
+  //（phase 已為 p4 即不再觸發）。
+  const enterRebirth = (events: PrismixHitEvent[]): void => {
+    phase = 'p4';
+    hp = rebirthMax;
+    hpA = 0;
+    hpB = 0;
+    state = 'idle';
+    recentAttacks = [];
+    timerMs = durationMs('idle');
+    events.push({ kind: 'phase', phase: 'p4' }, { kind: 'rebirth', hp });
+  };
+
   return {
     get hp() {
       return totalHp();
     },
     get maxHp() {
-      return maxHp;
+      // P4 第二血條（§114）：重生後以 rebirth 池為滿刻度（HUD 血條重灌換色）。
+      return phase === 'p4' ? rebirthMax : maxHp;
     },
     get phase() {
       return phase;
@@ -311,6 +357,8 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
           else if (hpB <= 0) mirrorSide = 'a';
           else mirrorSide = rng() < 0.5 ? 'a' : 'b';
         }
+        // 稜光行牆起掃側（§114）：rng 抽側，同 seed 可重放。
+        if (state === 'sweep') sweepDir = rng() < 0.5 ? 1 : -1;
       } else {
         state = 'idle';
       }
@@ -337,6 +385,12 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
         accrueDrops(amount, events);
         if (state === 'struggle' && (survivor === 'a' ? hpA : hpB) <= 0) {
           // 雙子連破（§68 彩蛋）：掙扎窗內相繼擊破兩具，總血歸零直接擊破跳過 P3。
+          // EX（§114）：彩蛋保留但改跳過 P3 直入 P4 裂核殘響（跳段不跳王）。
+          if (ex) {
+            events.push({ kind: 'twinFinish' });
+            enterRebirth(events);
+            return events;
+          }
           defeated = true;
           events.push({ kind: 'twinFinish' }, { kind: 'defeated' });
           return events;
@@ -352,6 +406,11 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       hp = Math.max(0, hp - amount);
       events.push({ kind: 'damaged', hp });
       if (hp <= 0) {
+        // EX P3 歸零（§114）：裂核殘響重生一次；P4 再歸零才真擊破。
+        if (ex && phase === 'p3') {
+          enterRebirth(events);
+          return events;
+        }
         defeated = true;
         events.push({ kind: 'defeated' });
         return events;

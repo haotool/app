@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w1-prismix-p4-rebirth
+- 原因：#814 EX 重設計 W1——EX 僅數值差分（HP×1.5/速×1.15）無專屬型態，難度與技巧深度不足且雙血條結構缺位
+- 解法：BossPhase 擴 p4（四 FSM 全鍵/窮舉補齊）＋Prismix EX P4 裂核殘響（rebirthHpRatio 0.5 第二血條、稜光行牆 sweep 跳越技巧招、供彈保證律跨 P4 延續），vitest 錨定可跳性與公平性下限，全套 819 測綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-starstorm-star-source

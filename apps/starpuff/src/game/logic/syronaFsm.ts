@@ -31,7 +31,8 @@ export const SYRONA = {
   waveDurationMs: 2000,
   overloadDurationMs: 2600,
   // 階段僵直窗（§74 hit window）：P1 散熱 2.5s、P2 吟唱 2.0s、P3 波後 2.0s。
-  idleMs: { p1: 2500, p2: 2000, p3: 2000 },
+  // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 值。
+  idleMs: { p1: 2500, p2: 2000, p3: 2000, p4: 2000 },
   // telegraph 時長（呈現層讀取；不隨速率縮放，沿 Noctra 慣例）。
   fountainTelegraphMs: 800,
   lobTelegraphMs: 500,
@@ -83,6 +84,8 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: SYRONA.enrageSpeedMultiplier,
   p3: SYRONA.enrageSpeedMultiplier,
+  // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 節奏。
+  p4: SYRONA.enrageSpeedMultiplier,
 };
 
 // 皇冠弱點帶判定（§74）：命中點高於本體頂緣下 34px 內＝皇冠 ×2 傷；純函式供 vitest
@@ -109,7 +112,9 @@ export function syronaMoveTable(phase: BossPhase): readonly WeightedMove<SyronaA
         { action: 'fountain', weight: 3 },
         { action: 'summon', weight: 2 },
       ];
+    // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 招池。
     case 'p3':
+    case 'p4':
       return [
         { action: 'wave', weight: 3 },
         { action: 'overload', weight: 3 },

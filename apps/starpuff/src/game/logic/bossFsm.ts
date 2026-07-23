@@ -38,6 +38,8 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: BOSS.enrageSpeedMultiplier,
   p3: BOSS.enrageSpeedMultiplier,
+  // p4 為 EX 專屬型態（#814）：Jellord 不可達，鍵值僅滿足 BossPhase 全鍵。
+  p4: BOSS.enrageSpeedMultiplier,
 };
 
 export function phaseForHp(hp: number, maxHp: number): BossPhase {
@@ -63,6 +65,12 @@ export const JELLORD_MOVES: Record<BossPhase, readonly WeightedMove<BossAction>[
     { action: 'dash', weight: 2, condition: { band: 'far' } },
   ],
   p3: [
+    { action: 'jellyRain', weight: 3 },
+    { action: 'slam', weight: 3 },
+    { action: 'dash', weight: 2, condition: { band: 'far' } },
+  ],
+  // p4 為 EX 專屬型態（#814）：Jellord 不可達，沿 p3 招池滿足全鍵。
+  p4: [
     { action: 'jellyRain', weight: 3 },
     { action: 'slam', weight: 3 },
     { action: 'dash', weight: 2, condition: { band: 'far' } },

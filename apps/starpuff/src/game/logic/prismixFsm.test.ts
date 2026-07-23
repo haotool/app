@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
+import { AUDIT_THRESHOLDS, maxJumpClearancePx, sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
 import {
   EX_PRISMIX,
@@ -290,6 +290,16 @@ describe('EX 差分（§68）', () => {
     expect(command).toEqual({ kind: 'merge', coreHp: 45, shards: EX_PRISMIX.shardOrbitCount });
   });
 
+  it('非 EX 迴歸：P3 歸零直接擊破、雙子連破直接擊破（無 P4）', () => {
+    const fsm = splitFsm();
+    fsm.takeDamage(26, 'a');
+    fsm.tick(PRISMIX.struggleMs);
+    expect(fsm.phase).toBe('p3');
+    const events = fsm.takeDamage(999);
+    expect(eventKinds(events)).toContain('defeated');
+    expect(eventKinds(events)).not.toContain('rebirth');
+  });
+
   it('EX 公平性下限（§86）：掙扎窗 ≥600ms、去同步錯拍 ≥200ms 且 < 最短 telegraph', () => {
     // 掙扎窗：EX 收短後仍高於普通反應下限（250-400ms）＋輸出裕度。
     expect(EX_PRISMIX.struggleMs).toBeGreaterThanOrEqual(600);
@@ -303,5 +313,82 @@ describe('EX 差分（§68）', () => {
       PRISMIX.rainTelegraphMs,
     );
     expect(EX_PRISMIX.desyncMs).toBeLessThan(minTelegraphMs);
+  });
+});
+
+// 造出 EX P3：分裂 → 單具擊破 → 掙扎窗期滿合體。
+function exP3Fsm(seed = 1): ReturnType<typeof createPrismixFsm> {
+  const fsm = createPrismixFsm({ ex: true, rng: createSeededRng(seed) });
+  fsm.takeDamage(30);
+  expect(fsm.phase).toBe('p2');
+  fsm.takeDamage(45, 'a');
+  fsm.tick(EX_PRISMIX.struggleMs);
+  expect(fsm.phase).toBe('p3');
+  return fsm;
+}
+
+describe('EX P4 裂核殘響（§114 #814）', () => {
+  it('EX P3 歸零不死：rebirth 事件、入 P4、第二血條滿灌（maxHp 換刻度）', () => {
+    const fsm = exP3Fsm();
+    const events = fsm.takeDamage(999);
+    expect(eventKinds(events)).toContain('rebirth');
+    expect(eventKinds(events)).not.toContain('defeated');
+    expect(fsm.defeated).toBe(false);
+    expect(fsm.phase).toBe('p4');
+    const rebirthHp = Math.round(120 * EX_PRISMIX.rebirthHpRatio);
+    expect(fsm.hp).toBe(rebirthHp);
+    expect(fsm.maxHp).toBe(rebirthHp);
+    expect(fsm.twins).toBeNull();
+  });
+
+  it('P4 歸零才真擊破（僅可重生一次）', () => {
+    const fsm = exP3Fsm();
+    fsm.takeDamage(999);
+    expect(fsm.phase).toBe('p4');
+    const events = fsm.takeDamage(999);
+    expect(eventKinds(events)).toContain('defeated');
+    expect(eventKinds(events)).not.toContain('rebirth');
+    expect(fsm.defeated).toBe(true);
+  });
+
+  it('EX 雙子連破：彩蛋保留、跳過 P3 直入 P4（跳段不跳王）', () => {
+    const fsm = createPrismixFsm({ ex: true, rng: createSeededRng(2) });
+    fsm.takeDamage(30);
+    fsm.takeDamage(45, 'a');
+    fsm.tick(EX_PRISMIX.struggleMs - 50);
+    const events = fsm.takeDamage(45, 'b');
+    expect(eventKinds(events)).toContain('twinFinish');
+    expect(eventKinds(events)).toContain('rebirth');
+    expect(eventKinds(events)).not.toContain('defeated');
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.defeated).toBe(false);
+  });
+
+  it('P4 招池對表：sweep/barrage/rain；sweep 指令帶起掃側且同 seed 可重放', () => {
+    expect(prismixMoveTable('p4').map((m) => m.action)).toEqual(['sweep', 'barrage', 'rain']);
+    const run = (seed: number): string[] => {
+      const fsm = exP3Fsm(seed);
+      fsm.takeDamage(999);
+      return collectAttacks(fsm, 20).map((c) => c.kind);
+    };
+    expect(run(7)).toEqual(run(7));
+    const fsm = exP3Fsm(3);
+    fsm.takeDamage(999);
+    const sweep = driveTo(fsm, 'sweep');
+    if (sweep?.kind !== 'sweep') throw new Error('未抽到行牆');
+    expect([1, -1]).toContain(sweep.dir);
+  });
+
+  it('anti-softlock：P4 供彈保證律延續（每 10 傷 minionDrop）', () => {
+    const fsm = exP3Fsm();
+    fsm.takeDamage(999);
+    const events = [...fsm.takeDamage(5), ...fsm.takeDamage(5)];
+    expect(eventKinds(events)).toContain('minionDrop');
+  });
+
+  it('公平性下限：行牆 telegraph ≥600ms、牆高留跳越裕度（jump+拍翅可越）', () => {
+    expect(EX_PRISMIX.sweepTelegraphMs).toBeGreaterThanOrEqual(600);
+    // 牆高必須低於滿拍翅淨高並留 ≥60px 裕度（技巧required 但非死牆）。
+    expect(EX_PRISMIX.sweepWallHeightPx).toBeLessThanOrEqual(maxJumpClearancePx() - 60);
   });
 });

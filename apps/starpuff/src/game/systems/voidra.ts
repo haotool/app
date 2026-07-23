@@ -818,8 +818,9 @@ export function createVoidra(
     // FSM 重置至該段起點；P1 死亡回 false 走一般敗北流程。
     trySegmentRespawn() {
       if (!active || dying) return false;
-      if (fsm.phase === 'p1') return false;
+      // 段起點重試僅支援 p2/p3（p4 為 EX 專屬型態，Voidra 真 P4 於 W3 落地）。
       const segment = fsm.phase;
+      if (segment !== 'p2' && segment !== 'p3') return false;
       clearOrdnance();
       clearShards();
       // 殘留 delayedCall 全清（審查修復）：死亡前排程的爪擊/晶柱/彈幕不得於新段憑空觸發。

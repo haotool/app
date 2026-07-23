@@ -27,7 +27,8 @@ export const VOIDRA = {
   clawDurationMs: 1600,
   clawTelegraphMs: 600,
   // 階段僵直窗（hit window）：P1 收爪僵直 2.5s、P3 裂核大窗 3.5s（固定不隨狂暴縮）。
-  idleMs: { p1: 2500, p2: 0, p3: 3500 },
+  // p4 為 EX 專屬型態（#814）：Voidra 真 P4 於 W3 落地，暫沿 p3 值。
+  idleMs: { p1: 2500, p2: 0, p3: 3500, p4: 3500 },
   // P3 蝕星彈幕：放射 ×8＋螺旋雙層（EX 三層）；黑洞潮汐強牽引。
   barrageRadialCount: 8,
   barrageSpiralLayers: 2,
@@ -120,6 +121,8 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: 1,
   p3: VOIDRA.enrageSpeedMultiplier,
+  // p4 為 EX 專屬型態（#814）：Voidra 真 P4 於 W3 落地，暫沿 p3 節奏。
+  p4: VOIDRA.enrageSpeedMultiplier,
 };
 
 // 加權選招表（§5 #813 W3）：P1/P3 固定循環改權重驅動（沿 §111.1 moveTable SSOT）；
@@ -135,7 +138,9 @@ export function voidraMoveTable(phase: BossPhase): readonly WeightedMove<VoidraA
       ];
     case 'p2':
       return [{ action: 'survival', weight: 1 }];
+    // p4 為 EX 專屬型態（#814）：Voidra 真 P4 於 W3 落地，暫沿 p3 招池。
     case 'p3':
+    case 'p4':
       return [
         { action: 'barrage', weight: 3 },
         { action: 'crush', weight: 3 },

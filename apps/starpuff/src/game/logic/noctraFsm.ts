@@ -71,6 +71,8 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: NOCTRA.enrageSpeedMultiplier,
   p3: NOCTRA.enrageSpeedMultiplier,
+  // p4 為 EX 專屬型態（#814）：Noctra 不可達，鍵值僅滿足 BossPhase 全鍵。
+  p4: NOCTRA.enrageSpeedMultiplier,
 };
 
 export function noctraPhaseForHp(hp: number, maxHp: number): BossPhase {
@@ -97,7 +99,9 @@ export function noctraMoveTable(
         { action: 'summon', weight: 2 },
         { action: 'cloak', weight: 1 },
       ];
+    // p4 為 EX 專屬型態（#814）：Noctra 不可達，沿 p3 招池滿足窮舉。
     case 'p3':
+    case 'p4':
       return [
         { action: 'barrage', weight: 3 },
         { action: 'sweep', weight: 3 },
