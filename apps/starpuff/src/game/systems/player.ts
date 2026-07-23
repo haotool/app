@@ -108,6 +108,8 @@ export interface PlayerHandle {
   grantFullMagazine(): void;
   grantGoldStar(): void;
   grantStar(flavor: StarFlavor): void;
+  // 星光虹吸被抽（§113 Voidra）：彈匣頂槽被抽走 1 發；空匣回 false。
+  stealTopStar(): boolean;
   isShieldRaised(): boolean;
   // v9 星化（§57）：形態觀測（e2e/世界結算）與下砸態（魔王頭頂 hit window 判定）。
   getTransformState(): TransformState;
@@ -1082,6 +1084,15 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       magazine = pushGoldStar(magazine);
       maybeCrystallize();
       emitAmmo();
+    },
+    // 星光虹吸被抽（§113）：頂槽出匣不發射；HUD ammo 事件同步。
+    stealTopStar() {
+      const popped = popTopSlot(magazine);
+      if (!popped.slot) return false;
+      magazine = popped.magazine;
+      lastFlavor = popped.slot.flavor;
+      emitAmmo();
+      return true;
     },
     // e2e/QA 受控賦星：直接吞入指定屬性，走正式 swallow 管線維持連吞語意。
     grantStar(flavor: StarFlavor) {

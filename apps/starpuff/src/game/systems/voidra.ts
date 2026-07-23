@@ -3,6 +3,7 @@ import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { approachPoint, type FlightPoint } from '../logic/noctraFlight';
 import type { MeteorSpec } from '../logic/meteor';
+import { STAR_SIPHON, siphonStreamStrength } from '../logic/starSiphon';
 import { EX_VOIDRA, VOIDRA, createVoidraFsm, type VoidraCommand } from '../logic/voidraFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
@@ -88,6 +89,8 @@ function ensureTextures(scene: Phaser.Scene): void {
 export interface VoidraHooks {
   // 星核共鳴（§83）：P2 星屑 5 枚全收——GameScene 餵彩蛋觸發器＋星雨謝幕變體。
   onShardEgg(): void;
+  // 星光虹吸（§113）：抽走玩家彈匣頂槽 1 發；空匣回 false（僅演出不獲盾）。
+  drainTopStar(): boolean;
   // P2 定點轟炸（§82 重用 meteor 管線）：GameScene 單一 meteor 系統開關與調參。
   setBombardment(spec: MeteorSpec | null): void;
   // P3 全場低重力（§81 gravityScale 0.55 注入；null＝回關卡預設）。
@@ -124,6 +127,10 @@ export function createVoidra(
   let heartDropped = false;
   const shards = new Set<Phaser.GameObjects.Image>();
   const shardUpdaters = new Map<Phaser.GameObjects.Image, () => void>();
+  // 星光虹吸（§113）：吸流窗迄點（視覺用；窗真值＝FSM state）與護盾環。
+  let siphonUntilMs = 0;
+  let lastStreamAt = 0;
+  const shieldOrbs: Phaser.GameObjects.Image[] = [];
 
   const viewW = () => scene.scale.width;
   const arenaLeft = () => options.arenaLeft();
@@ -326,6 +333,61 @@ export function createVoidra(
     for (const shard of [...shards]) removeShard(shard);
   };
 
+  // 護盾環（§113）：層數對齊 FSM shieldLayers 單一真值；環繞星體軌道由 update 驅動。
+  const syncShieldOrbs = () => {
+    while (shieldOrbs.length > fsm.shieldLayers) shieldOrbs.pop()?.destroy();
+    while (shieldOrbs.length < fsm.shieldLayers) {
+      shieldOrbs.push(
+        scene.add
+          .image(body.x, body.y, 'fx-star')
+          .setDisplaySize(24, 24)
+          .setTint(STAR_SIPHON.tint)
+          .setDepth(58),
+      );
+    }
+  };
+
+  // 星光虹吸（§113）：紫色吸流窗——粒子沿玩家→核心路徑收斂，窗滿抽頂槽化盾。
+  const doSiphon = (windowMs: number) => {
+    siphonUntilMs = elapsedMs + windowMs;
+    lastStreamAt = 0;
+    playSfx('reveal', 0.6);
+    body.setTint(STAR_SIPHON.tint);
+    delay(windowMs, () => {
+      if (!dying) body.clearTint();
+    });
+  };
+
+  // 吸流窗滿未被反制：嘗試抽彈匣頂槽並回餵 FSM；被抽星體飛向核心演出。
+  const resolveSiphonDrain = () => {
+    siphonUntilMs = 0;
+    if (!dying) body.clearTint();
+    if (!hooks.drainTopStar()) return;
+    const result = fsm.absorbSiphonStar();
+    playSfx('swallow', 0.9);
+    if (target) {
+      const stolen = scene.add
+        .image(target.x, target.y - 20, 'fx-star')
+        .setDisplaySize(26, 26)
+        .setTint(STAR_SIPHON.tint)
+        .setDepth(73);
+      scene.tweens.add({
+        targets: stolen,
+        x: body.x,
+        y: body.y,
+        duration: 360,
+        ease: 'Quad.easeIn',
+        onComplete: () => {
+          stolen.destroy();
+          syncShieldOrbs();
+        },
+      });
+    } else {
+      syncShieldOrbs();
+    }
+    void result;
+  };
+
   // 炮擊過熱窗（P2 唯一輸出窗）：核心下沉、金光呼吸、可傷——窗迄點單一真值由
   // FSM overheatActive 持有（審查修復：移除呈現層鏡像時鐘防雙 SSOT 漂移）。
   const doOverheat = (windowMs: number) => {
@@ -383,6 +445,12 @@ export function createVoidra(
         return;
       case 'claw':
         doClaw();
+        return;
+      case 'siphon':
+        doSiphon(command.windowMs);
+        return;
+      case 'siphonDrain':
+        resolveSiphonDrain();
         return;
       case 'wave':
         if (command.wave === 'pillar') doPillar();
@@ -448,6 +516,8 @@ export function createVoidra(
     scene.tweens.killTweensOf(body);
     clearOrdnance();
     clearShards();
+    siphonUntilMs = 0;
+    while (shieldOrbs.length > 0) shieldOrbs.pop()?.destroy();
     hooks.setBombardment(null);
     hooks.setGravityScale(null);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: body.x, y: body.y });
@@ -466,6 +536,8 @@ export function createVoidra(
   const applyDamageInternal = (amount: number, source?: BossDamageSource) => {
     if (!active) return;
     void source;
+    // 實扣傷害（§113）：逆流爆盾時 FSM 以 max(來彈, 回傷) 結算，HUD 事件同口徑。
+    let dealtDamage = amount;
     for (const event of fsm.takeDamage(amount)) {
       switch (event.kind) {
         case 'damaged':
@@ -474,7 +546,7 @@ export function createVoidra(
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
             hp: event.hp,
             maxHp: fsm.maxHp,
-            damage: amount,
+            damage: dealtDamage,
           });
           break;
         case 'phase':
@@ -490,6 +562,34 @@ export function createVoidra(
           break;
         case 'minionDrop':
           minionHandlers.forEach((handler) => handler());
+          break;
+        // 逆流爆盾（§113 反制）：紫爆演出＋護盾環全清；傷害由後續 damaged 事件結算
+        //（FSM 事件序保證 siphonBurst 先於 damaged，實扣口徑先行同步）。
+        case 'siphonBurst':
+          dealtDamage = Math.max(amount, STAR_SIPHON.backfireDamage);
+          siphonUntilMs = 0;
+          body.clearTint();
+          playSfx('break', 0.8);
+          scene.cameras.main.shake(90, 0.004);
+          scene.tweens.add({
+            targets: scene.add
+              .image(body.x, body.y, 'fx-star')
+              .setDisplaySize(60, 60)
+              .setTint(STAR_SIPHON.tint)
+              .setAlpha(0.9)
+              .setDepth(73),
+            alpha: 0,
+            scale: 2.2,
+            duration: 420,
+            onComplete: (tween) => (tween.targets[0] as Phaser.GameObjects.Image).destroy(),
+          });
+          syncShieldOrbs();
+          break;
+        // 護盾層抵銷（§113）：零傷回饋——盾環閃爍收層，不發 BOSS_DAMAGED（HP 未變）。
+        case 'shieldBlock':
+          playSfx('metal', 0.7);
+          scene.tweens.add({ targets: body, angle: 2, duration: 40, yoyo: true });
+          syncShieldOrbs();
           break;
         case 'defeated':
           dieSequence();
@@ -588,6 +688,10 @@ export function createVoidra(
     update(deltaMs: number) {
       if (!active || dying) return;
       elapsedMs += deltaMs;
+      // 距離帶餵送（§5 條件欄）。
+      fsm.setTargetDistance(
+        target ? Phaser.Math.Distance.Between(body.x, body.y, target.x, target.y) : null,
+      );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 核心逼近錨點（§64 慣例）：單 tick 位移受限，階段切換平滑滑移。
@@ -602,6 +706,46 @@ export function createVoidra(
         const direction = Math.sign(body.x - target.x);
         target.x += direction * pullStrength * (deltaMs / 1000);
       }
+      // 星光虹吸吸流粒子（§113）：沿玩家→核心路徑生成、循流收斂；強度包絡淡入淡出。
+      if (elapsedMs < siphonUntilMs && target) {
+        if (elapsedMs - lastStreamAt >= STAR_SIPHON.streamParticleIntervalMs) {
+          lastStreamAt = elapsedMs;
+          const windowLeft = siphonUntilMs - elapsedMs;
+          const strength = siphonStreamStrength(
+            STAR_SIPHON.windowMs - windowLeft,
+            STAR_SIPHON.windowMs,
+          );
+          const t = Math.random() * 0.55;
+          const particle = scene.add
+            .image(
+              target.x + (body.x - target.x) * t,
+              target.y - 16 + (body.y - (target.y - 16)) * t,
+              'fx-star',
+            )
+            .setDisplaySize(14, 14)
+            .setTint(STAR_SIPHON.tint)
+            .setAlpha(0.35 + strength * 0.5)
+            .setDepth(72);
+          scene.tweens.add({
+            targets: particle,
+            x: body.x,
+            y: body.y,
+            alpha: 0,
+            scale: 0.4,
+            duration: 300,
+            ease: 'Quad.easeIn',
+            onComplete: () => particle.destroy(),
+          });
+        }
+      }
+      // 護盾環軌道（§113）：層數真值在 FSM；環繞核心緩轉。
+      shieldOrbs.forEach((orb, index) => {
+        const angle = elapsedMs * 0.0028 + (Math.PI * 2 * index) / Math.max(1, shieldOrbs.length);
+        orb.setPosition(
+          body.x + Math.cos(angle) * (BODY_SIZE / 2 + 20),
+          body.y + Math.sin(angle) * (BODY_SIZE / 2 + 20),
+        );
+      });
       // P2 段內固定愛心（§6.3）：16s 投放一次。
       if (fsm.phase === 'p2' && !heartDropped && fsm.survivalMs >= SURVIVAL_HEART_AT_MS) {
         heartDropped = true;
@@ -640,6 +784,7 @@ export function createVoidra(
       timers.forEach((timer) => timer.remove(false));
       scene.tweens.killTweensOf(body);
       clearShards();
+      while (shieldOrbs.length > 0) shieldOrbs.pop()?.destroy();
       hooks.setBombardment(null);
       hooks.setGravityScale(null);
       body.destroy();
@@ -680,8 +825,11 @@ export function createVoidra(
       timers.forEach((timer) => timer.remove(false));
       timers.length = 0;
       pullUntilMs = 0;
+      siphonUntilMs = 0;
       body.clearTint();
       fsm.resetToPhase(segment);
+      // 護盾層隨段重試清空（§113），盾環同步收掉。
+      syncShieldOrbs();
       if (segment === 'p2') {
         hooks.setGravityScale(null);
         enterSurvival();

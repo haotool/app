@@ -342,3 +342,23 @@ describe('星暴 2.0 蓄爆生命週期（§109 回歸鎖）', () => {
     expect(player.getStarburst().phase).toBe('none');
   });
 });
+
+describe('星光虹吸被抽（§113 stealTopStar）', () => {
+  it('頂槽出匣不發射、HUD ammo 事件同步；空匣回 false 不發事件', () => {
+    const { player, emit } = makeHarness();
+    player.grantStar('shelly');
+    player.grantStar('glowy');
+    emit.mockClear();
+    expect(player.stealTopStar()).toBe(true);
+    expect(player.getMagazine()).toHaveLength(1);
+    expect(player.getMagazine()[0]?.flavor).toBe('shelly');
+    expect(emit).toHaveBeenCalledWith(
+      GameEvents.AMMO_CHANGED,
+      expect.objectContaining({ ammo: 1 }),
+    );
+    expect(player.stealTopStar()).toBe(true);
+    emit.mockClear();
+    expect(player.stealTopStar()).toBe(false);
+    expect(emit).not.toHaveBeenCalledWith(GameEvents.AMMO_CHANGED, expect.anything());
+  });
+});

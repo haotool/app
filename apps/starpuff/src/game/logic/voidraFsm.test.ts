@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { EX_MODS } from './bossFsm';
+import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
+import { createSeededRng } from './moveTable';
+import { STAR_SIPHON } from './starSiphon';
 import {
   EX_VOIDRA,
   VOIDRA,
   VOIDRA_SURVIVAL,
   createVoidraFsm,
-  voidraAttackCycle,
+  voidraMoveTable,
   type VoidraCommand,
 } from './voidraFsm';
 
@@ -21,6 +24,18 @@ function tickUntil(
     if (command?.kind === kind) return command;
   }
   return null;
+}
+
+// 收集非 idle 攻擊指令直到數量滿足（含 siphonDrain 以外的實招）。
+function collectAttacks(fsm: ReturnType<typeof createVoidraFsm>, count: number): VoidraCommand[] {
+  const commands: VoidraCommand[] = [];
+  for (let i = 0; i < 8000 && commands.length < count; i += 1) {
+    const command = fsm.tick(50);
+    if (command && command.kind !== 'idle' && command.kind !== 'siphonDrain') {
+      commands.push(command);
+    }
+  }
+  return commands;
 }
 
 describe('Voidra 常數與波次表（§82，主計畫 §6.3/§10.2-8）', () => {
@@ -59,22 +74,60 @@ describe('Voidra 常數與波次表（§82，主計畫 §6.3/§10.2-8）', () =>
     );
   });
 
-  it('三階段招式循環：P1 牽引/彈環/爪擊、P2 波次表、P3 彈幕/潮汐', () => {
-    expect(voidraAttackCycle('p1')).toEqual(['pull', 'ring', 'claw']);
-    expect(voidraAttackCycle('p2')).toEqual(['survival']);
-    expect(voidraAttackCycle('p3')).toEqual(['barrage', 'crush']);
+  it('加權表招池：P1 牽引/彈環/爪擊/虹吸、P2 波次表、P3 彈幕/潮汐/虹吸（§113）', () => {
+    expect(voidraMoveTable('p1').map((m) => m.action)).toEqual(['pull', 'ring', 'claw', 'siphon']);
+    expect(voidraMoveTable('p2').map((m) => m.action)).toEqual(['survival']);
+    expect(voidraMoveTable('p3').map((m) => m.action)).toEqual(['barrage', 'crush', 'siphon']);
+    // 虹吸為低頻主題招：權重低於各階段常規招。
+    for (const phase of ['p1', 'p3'] as const) {
+      const table = voidraMoveTable(phase);
+      const siphon = table.find((m) => m.action === 'siphon');
+      expect(siphon).toBeDefined();
+      for (const move of table) {
+        if (move.action !== 'siphon') expect(move.weight).toBeGreaterThan(siphon?.weight ?? 0);
+      }
+    }
   });
 });
 
 describe('Voidra FSM：P1 王座戰', () => {
-  it('循環依序 pull → ring → claw，每招間插 idle 僵直窗', () => {
-    const fsm = createVoidraFsm();
-    const seen: string[] = [];
-    for (let i = 0; i < 200 && seen.length < 6; i += 1) {
-      const command = fsm.tick(100);
-      if (command && command.kind !== 'idle') seen.push(command.kind);
+  it('攻擊全數屬 P1 招池、與 idle 僵直窗交替（加權選招 §113）', () => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(1) });
+    const pool = ['pull', 'ring', 'claw', 'siphon'];
+    const attacks = collectAttacks(fsm, 8).map((c) => c.kind);
+    expect(attacks).toHaveLength(8);
+    for (const kind of attacks) expect(pool).toContain(kind);
+  });
+
+  it('同 seed 完整重放；連續同招上限 2（無三連同招）', () => {
+    const sequence = (seed: number): string[] =>
+      collectAttacks(createVoidraFsm({ rng: createSeededRng(seed) }), 30).map((c) => c.kind);
+    expect(sequence(7)).toEqual(sequence(7));
+    const kinds = sequence(3);
+    for (let i = 2; i < kinds.length; i += 1) {
+      expect(new Set(kinds.slice(i - 2, i + 1)).size).toBeGreaterThan(1);
     }
-    expect(seen.slice(0, 3)).toEqual(['pull', 'ring', 'claw']);
+  });
+
+  it('招式序列條件熵 ≥ 門檻（#813 去背板；AUDIT_THRESHOLDS.moveEntropyMinBits 口徑）', () => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(13) });
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    expect(sequenceEntropyBits(kinds)).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
+  });
+
+  it('P3 招式序列條件熵 ≥ 門檻（§113.1 記載口徑：seed 13 × 60 招 ≈ 1.38 bits）', () => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(13) });
+    fsm.takeDamage(33);
+    tickUntil(fsm, 'overheat', 100);
+    fsm.takeDamage(40);
+    expect(fsm.phase).toBe('p3');
+    const kinds = collectAttacks(fsm, 60).map((c) => c.kind);
+    expect(kinds.length).toBeGreaterThanOrEqual(40);
+    const bits = sequenceEntropyBits(kinds);
+    expect(bits).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.moveEntropyMinBits);
+    // 鎖 §113.1 記載數字（同 seed 完整重放，漂移即文檔失真）。
+    expect(bits).toBeCloseTo(1.38, 2);
   });
 
   it('每損 10 HP 掉補給小怪；P1→P2 於 ≤70% 觸發並進入生存段', () => {
@@ -161,16 +214,20 @@ describe('Voidra FSM：P2 生存段（anti-softlock §10.2-8）', () => {
 });
 
 describe('Voidra FSM：P3 核心決戰與擊破', () => {
-  const toP3 = (): ReturnType<typeof createVoidraFsm> => {
-    const fsm = createVoidraFsm();
+  const toP3 = (seed = 1): ReturnType<typeof createVoidraFsm> => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(seed) });
     fsm.takeDamage(33);
     tickUntil(fsm, 'overheat', 100);
     fsm.takeDamage(40);
     return fsm;
   };
 
-  it('P3 循環 barrage → crush；barrage 帶放射 8＋螺旋雙層', () => {
+  it('P3 攻擊屬招池 barrage/crush/siphon；barrage 帶放射 8＋螺旋雙層', () => {
     const fsm = toP3();
+    const pool = ['barrage', 'crush', 'siphon'];
+    for (const kind of collectAttacks(fsm, 8).map((c) => c.kind)) {
+      expect(pool).toContain(kind);
+    }
     const barrage = tickUntil(fsm, 'barrage', 100);
     expect(barrage).toEqual({ kind: 'barrage', radial: 8, spiralLayers: 2 });
     const crush = tickUntil(fsm, 'crush', 100);
@@ -184,6 +241,74 @@ describe('Voidra FSM：P3 核心決戰與擊破', () => {
     expect(fsm.defeated).toBe(true);
     expect(fsm.tick(100)).toBeNull();
     expect(fsm.takeDamage(5)).toEqual([]);
+  });
+});
+
+describe('Voidra 星光虹吸（§113 #813 W3）', () => {
+  // 驅動至虹吸窗開啟（P1 招池內加權抽中）。
+  const toSiphon = (seed = 2): ReturnType<typeof createVoidraFsm> => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(seed) });
+    const command = tickUntil(fsm, 'siphon', 100, 4000);
+    expect(command).toEqual({ kind: 'siphon', windowMs: STAR_SIPHON.windowMs });
+    return fsm;
+  };
+
+  it('窗滿未反制發 siphonDrain；抽取回餵化盾、夾限上限 2 層', () => {
+    const fsm = toSiphon();
+    const drain = tickUntil(fsm, 'siphonDrain', 100, 20);
+    expect(drain).toEqual({ kind: 'siphonDrain' });
+    expect(fsm.absorbSiphonStar()).toEqual({ shields: 1, absorbed: true });
+    expect(fsm.absorbSiphonStar()).toEqual({ shields: 2, absorbed: true });
+    expect(fsm.absorbSiphonStar()).toEqual({ shields: 2, absorbed: false });
+    expect(fsm.shieldLayers).toBe(2);
+  });
+
+  it('護盾層抵銷：非虹吸窗受擊零傷、層數遞減、不掉補給；耗盡後恢復正常結算', () => {
+    const fsm = toSiphon();
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    fsm.absorbSiphonStar();
+    const hpBefore = fsm.hp;
+    expect(fsm.takeDamage(10)).toEqual([{ kind: 'shieldBlock', remaining: 1 }]);
+    expect(fsm.takeDamage(10)).toEqual([{ kind: 'shieldBlock', remaining: 0 }]);
+    expect(fsm.hp).toBe(hpBefore);
+    const events = fsm.takeDamage(1);
+    expect(events.some((e) => e.kind === 'damaged')).toBe(true);
+    expect(fsm.hp).toBe(hpBefore - 1);
+  });
+
+  it('窗內受擊＝逆流爆盾：護盾全清＋回傷 4＋取消本次抽取', () => {
+    const fsm = toSiphon(4);
+    // 先造 1 層護盾，再進下一次虹吸窗。
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    expect(tickUntil(fsm, 'siphon', 100, 4000)).not.toBeNull();
+    const hpBefore = fsm.hp;
+    const events = fsm.takeDamage(1);
+    expect(events[0]).toEqual({ kind: 'siphonBurst' });
+    expect(events.some((e) => e.kind === 'damaged')).toBe(true);
+    expect(fsm.hp).toBe(hpBefore - STAR_SIPHON.backfireDamage);
+    expect(fsm.shieldLayers).toBe(0);
+    expect(fsm.state).toBe('idle');
+    // 窗已取消：原窗剩餘時間內不再發 siphonDrain。
+    for (let i = 0; i < 8; i += 1) expect(fsm.tick(100)?.kind).not.toBe('siphonDrain');
+  });
+
+  it('爆盾回傷與來彈傷害取較大值（不懲罰重彈）', () => {
+    const fsm = toSiphon(5);
+    const hpBefore = fsm.hp;
+    fsm.takeDamage(9);
+    expect(fsm.hp).toBe(hpBefore - 9);
+  });
+
+  it('段起點重試清空護盾層（比照整場重啟語義）', () => {
+    const fsm = toSiphon(6);
+    tickUntil(fsm, 'siphonDrain', 100, 20);
+    fsm.absorbSiphonStar();
+    expect(fsm.shieldLayers).toBe(1);
+    fsm.resetToPhase('p2');
+    expect(fsm.shieldLayers).toBe(0);
+    expect(fsm.phase).toBe('p2');
   });
 });
 
