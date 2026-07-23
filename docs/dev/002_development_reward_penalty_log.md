@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-23
+- ID：neutral-starpuff-t5-w1-review-shouldfix
+- 原因：T5 W1 雙席審查 Should-fix——noctra attackKinds 漏計 cloak、patchRemainingRatio 死碼、§6/§54 缺取代標註、熵門檻未入 AUDIT_THRESHOLDS、首次 cloak 缺反制教學
+- 解法：attackKinds 6→7、移除死碼、§6/§54 補 v21 §111 取代標註、AUDIT_THRESHOLDS.moveEntropyMinBits=0.5 且兩王熵 vitest 對齊、Noctra 首次 cloak 一次性浮字（session 記憶）
+
+- 日期：2026-07-23
 - ID：neutral-starpuff-t5-w1-entropy-probe-wiring
 - 原因：L4/L7 level-audit 招式熵探針回 0——jellord/noctra 呈現層未實作 getDebugState，driver stateLog 取不到 FSM 即時值
 - 解法：兩系統補 getDebugState（phase/state 觀測點）＋FSM 熵下界 vitest，實測 L4 moveEntropyBits 0.93-1.06、L7 1.17-1.33（>0 去背板成立，clearRate 1 不變）

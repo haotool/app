@@ -3,7 +3,6 @@ import {
   JELLY_PATCH,
   isPatchActive,
   jellyBounceVy,
-  patchRemainingRatio,
   prunePatches,
   type JellyPatch,
 } from './jellyPatch';
@@ -20,13 +19,6 @@ describe('果凍地塊壽命（§5：果凍化 3s）', () => {
     expect(prunePatches([patch, patchAt(200, 3000)], 1000 + JELLY_PATCH.lifetimeMs)).toEqual([
       patchAt(200, 3000),
     ]);
-  });
-
-  it('剩餘壽命比例由 1 遞減至 0（供呈現層淡出）', () => {
-    const patch = patchAt(0, 0);
-    expect(patchRemainingRatio(patch, 0)).toBe(1);
-    expect(patchRemainingRatio(patch, JELLY_PATCH.lifetimeMs / 2)).toBeCloseTo(0.5, 5);
-    expect(patchRemainingRatio(patch, JELLY_PATCH.lifetimeMs * 2)).toBe(0);
   });
 });
 

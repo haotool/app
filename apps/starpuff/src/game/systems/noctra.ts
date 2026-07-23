@@ -37,6 +37,9 @@ const INTRO_ROAR_MS = 800;
 const INTRO_RESET_MS = 550;
 const INTRO_FADE_RGB = [20, 16, 40] as const;
 
+// 首次 cloak 反制教學浮字（每 session 一次）：沿 starburstDirector session 記憶慣例。
+let taughtCloakReveal = false;
+
 interface Rgb {
   r: number;
   g: number;
@@ -377,6 +380,28 @@ export function createNoctra(
     cloakDurationMs = durationMs;
     cloakTrailAccMs = 0;
     playSfx('flap', 0.5);
+    if (!taughtCloakReveal) {
+      taughtCloakReveal = true;
+      const hint = scene.add
+        .text(sprite.x, sprite.y - 64, '按住吸入可看清輪廓', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '16px',
+          fontStyle: 'bold',
+          color: '#4a3a78',
+          backgroundColor: '#fff3d6',
+          padding: { x: 12, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setDepth(75);
+      scene.tweens.add({
+        targets: hint,
+        alpha: 0,
+        y: hint.y - 14,
+        delay: 1600,
+        duration: 500,
+        onComplete: () => hint.destroy(),
+      });
+    }
   };
 
   const runCommand = (command: NoctraCommand) => {

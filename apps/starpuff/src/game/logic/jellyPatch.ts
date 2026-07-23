@@ -28,11 +28,6 @@ export function prunePatches(patches: readonly JellyPatch[], nowMs: number): Jel
   return patches.filter((patch) => isPatchActive(patch, nowMs));
 }
 
-// 剩餘壽命比例（1 → 0）：供呈現層淡出。
-export function patchRemainingRatio(patch: JellyPatch, nowMs: number): number {
-  return Math.max(0, 1 - (nowMs - patch.createdAtMs) / JELLY_PATCH.lifetimeMs);
-}
-
 // 踩上果凍彈起結算：站上/落向地面帶且水平位於果凍範圍內回傳彈起初速，否則 null。
 // vy < 0（上升中）不觸發——彈起後自然單發，cooldown 由呈現層守門。
 export function jellyBounceVy(

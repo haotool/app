@@ -38,6 +38,8 @@
 
 ## 6. 魔王 AI（有限狀態機，pure TS 可測）
 
+（v21 已由 §111 取代：P1/P2 固定循環改 `JELLORD_MOVES` 加權表選招，招池與 telegraph 數值不變。）
+
 - P1（HP > 50%）循環：`idle(1.2s) → jellyRain(5 顆拋物線彈) → idle → slam(跳起落地雙向地面震波) → idle → …`
 - P2（HP ≤ 50%）：變紅憤怒、速度 ×1.3，新增 `dash`（白閃三拍前搖 0.6s → 水平衝刺，牆邊回彈；
   #809 前搖 0.3s→0.6s 對齊 ≥600ms 衝撞可讀性紅線）；jellyRain 升為 7 顆。
@@ -637,7 +639,8 @@ scene。呈現層 `systems/noctra.ts` 與 boss.ts 共用 `BossHandle` 介面與 
 - 數值：HP 70、身體傷害 1、P2 ≤60%、P3 ≤30%、狂暴節奏 ×1.25、每損 10 HP 掉補給小怪
   （§26 飢荒保證律不變——基礎星彈恆可通關）。（v9 已由 §63 難度根修取代：HP 52、
   狂暴 ×1.15、每損 8 HP 補給；實測 0% 勝率歸因與全參數表見 §63。）
-- 招式循環（表驅動 `noctraAttackCycle`；換階段循環游標重置）：
+- 招式循環（表驅動 `noctraAttackCycle`；換階段循環游標重置）（v21 已由 §111 取代：
+  `noctraMoveTable` 加權表選招，循環游標敘述作廢；招池與 telegraph 數值不變）：
   - P1 `bomb（盤旋投彈 ×4，落點預警先行）→ dive（俯衝：telegraph＋shake＋變色前搖
 0.55s → 鎖定點撲擊 → 回升）`
   - P2 `bomb ×5 → dive → dive（俯衝連擊）→ summon（召喚 floaty，場上上限 2——cap 由
