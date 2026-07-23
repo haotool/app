@@ -1,11 +1,14 @@
 import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
+import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
+import { STAR_SIPHON, shieldAfterAbsorb } from './starSiphon';
 
-// 蝕星魔核 Voidra FSM 純邏輯（GAME_DESIGN §82，不 import phaser），vitest 對象。
+// 蝕星魔核 Voidra FSM 純邏輯（GAME_DESIGN §82/§113，不 import phaser），vitest 對象。
 // 場控收束型三段（主計畫 §6.3 v12 定案：P2＝定點轟炸生存段）：
-// P1 王座戰（重力牽引/星屑彈環/虛空爪擊）→ P2 生存段（核心升頂不可及、40s 波次表
-// 定點轟炸、3 次過熱窗＝唯一輸出窗、沿途空投 5 枚星屑）→ P3 核心決戰（全場低重力
-// 0.55、蝕星彈幕/黑洞潮汐、裂核大窗）。phase truth 全數收斂於此，禁止散落 scene。
+// P1 王座戰（重力牽引/星屑彈環/虛空爪擊/星光虹吸）→ P2 生存段（核心升頂不可及、
+// 40s 波次表定點轟炸、3 次過熱窗＝唯一輸出窗、沿途空投 5 枚星屑）→ P3 核心決戰
+//（全場低重力 0.55、蝕星彈幕/黑洞潮汐/星光虹吸、裂核大窗）。
+// phase truth 全數收斂於此，禁止散落 scene。
 
 export const VOIDRA = {
   // 魔王 HP 階梯（主計畫 §3.2）：… Prismix 80 → Syrona 90 → Voidra 110。
@@ -76,7 +79,15 @@ export const EX_VOIDRA = {
   barrageSpiralLayers: 3,
 } as const;
 
-export type VoidraAction = 'idle' | 'pull' | 'ring' | 'claw' | 'survival' | 'barrage' | 'crush';
+export type VoidraAction =
+  | 'idle'
+  | 'pull'
+  | 'ring'
+  | 'claw'
+  | 'siphon'
+  | 'survival'
+  | 'barrage'
+  | 'crush';
 
 // tick 輸出給呈現層的指令：telegraph 與演出由 systems/voidra.ts 承擔。
 export type VoidraCommand =
@@ -84,6 +95,10 @@ export type VoidraCommand =
   | { kind: 'pull'; durationMs: number }
   | { kind: 'ring'; count: number }
   | { kind: 'claw' }
+  // 星光虹吸（§113）：紫色吸流窗開啟——窗內受擊＝逆流爆盾（takeDamage 路徑結算）。
+  | { kind: 'siphon'; windowMs: number }
+  // 吸流窗滿未被反制：呈現層嘗試抽彈匣頂槽並回餵 absorbSiphonStar。
+  | { kind: 'siphonDrain' }
   | { kind: 'wave'; wave: 'pillar' | 'shard' }
   | { kind: 'overheat'; windowMs: number }
   // 40s 波次表播完的時間驅動轉換（隨令入 P3）：呈現層據此收核心/注低重力/發 phase。
@@ -95,7 +110,11 @@ export type VoidraHitEvent =
   | { kind: 'damaged'; hp: number }
   | { kind: 'phase'; phase: BossPhase }
   | { kind: 'minionDrop' }
-  | { kind: 'defeated' };
+  | { kind: 'defeated' }
+  // 星光虹吸反制（§113）：窗內受擊——護盾全清＋回傷取較大值＋取消本次抽取。
+  | { kind: 'siphonBurst' }
+  // 護盾層抵銷（§113）：非虹吸窗受擊被護盾吃掉，零傷、層數遞減。
+  | { kind: 'shieldBlock'; remaining: number };
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
@@ -103,15 +122,25 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p3: VOIDRA.enrageSpeedMultiplier,
 };
 
-// 三階段招式循環（§82）：P1 牽引/彈環/爪擊；P2 波次表驅動（無循環）；P3 彈幕/潮汐。
-export function voidraAttackCycle(phase: BossPhase): readonly VoidraAction[] {
+// 加權選招表（§5 #813 W3）：P1/P3 固定循環改權重驅動（沿 §111.1 moveTable SSOT）；
+// P2 生存段仍為波次表驅動（§82 不變，survival 單一入口僅供對表）。
+export function voidraMoveTable(phase: BossPhase): readonly WeightedMove<VoidraAction>[] {
   switch (phase) {
     case 'p1':
-      return ['pull', 'ring', 'claw'];
+      return [
+        { action: 'pull', weight: 3 },
+        { action: 'ring', weight: 3 },
+        { action: 'claw', weight: 3 },
+        { action: 'siphon', weight: 2 },
+      ];
     case 'p2':
-      return ['survival'];
+      return [{ action: 'survival', weight: 1 }];
     case 'p3':
-      return ['barrage', 'crush'];
+      return [
+        { action: 'barrage', weight: 3 },
+        { action: 'crush', weight: 3 },
+        { action: 'siphon', weight: 2 },
+      ];
     default: {
       const unhandled: never = phase;
       throw new Error(`未知階段：${String(unhandled)}`);
@@ -130,28 +159,40 @@ export interface VoidraFsm {
   readonly survivalMs: number;
   readonly overheatActive: boolean;
   readonly shardsCollected: number;
+  // 星光虹吸護盾層（§113 單一真值）：呈現層據此畫護盾環。
+  readonly shieldLayers: number;
   tick(deltaMs: number): VoidraCommand | null;
   takeDamage(amount: number): VoidraHitEvent[];
   // 星屑收集（§83 星核共鳴單一真值）：滿 5 枚回 complete（僅回報一次）。
   collectShard(): { collected: number; complete: boolean };
+  // 星光虹吸抽取回餵（§113）：呈現層 siphonDrain 抽彈匣頂槽成功後呼叫；夾限至上限。
+  absorbSiphonStar(): { shields: number; absorbed: boolean };
   // 段起點重試（§82 anti-softlock）：P2/P3 死亡不回滾整場，重置至該段起點。
   resetToPhase(phase: 'p2' | 'p3'): void;
+  // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
+  setTargetDistance(distancePx: number | null): void;
 }
 
 export interface VoidraFsmOptions {
   ex?: boolean;
+  // 加權選招亂數注入（§5：同 seed 可重放；缺省 Math.random）。
+  rng?: () => number;
 }
 
 export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
   const ex = options.ex === true;
+  const rng = options.rng ?? Math.random;
   const maxHp = Math.round(VOIDRA.maxHp * (ex ? EX_MODS.hpMul : 1));
   const spiralLayers = ex ? EX_VOIDRA.barrageSpiralLayers : VOIDRA.barrageSpiralLayers;
 
   let hp = maxHp;
   let phase: BossPhase = 'p1';
   let state: VoidraAction = 'idle';
-  let lastAttack: VoidraAction | null = null;
-  let cycleIndex = 0;
+  // 近兩次出招（§5 連續同招上限 2）。
+  let recentAttacks: VoidraAction[] = [];
+  let distancePx: number | null = null;
+  // 星光虹吸護盾層（§113）：僅由 absorbSiphonStar 增、受擊抵銷/爆盾遞減。
+  let shieldLayers = 0;
   let timerMs: number = VOIDRA.idleMs.p1;
   let damageSinceDrop = 0;
   let defeated = false;
@@ -175,6 +216,9 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
         return VOIDRA.ringDurationMs / speedFactor();
       case 'claw':
         return VOIDRA.clawDurationMs / speedFactor();
+      // 吸流窗＝telegraph（§113 可讀性紅線）：固定不隨狂暴速率縮放。
+      case 'siphon':
+        return STAR_SIPHON.windowMs;
       case 'survival':
         return VOIDRA_SURVIVAL.durationMs;
       case 'barrage':
@@ -199,6 +243,8 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
         return { kind: 'ring', count: VOIDRA.ringCount };
       case 'claw':
         return { kind: 'claw' };
+      case 'siphon':
+        return { kind: 'siphon', windowMs: STAR_SIPHON.windowMs };
       case 'barrage':
         return { kind: 'barrage', radial: VOIDRA.barrageRadialCount, spiralLayers };
       case 'crush':
@@ -212,8 +258,8 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
 
   const enterPhase = (next: BossPhase, events: VoidraHitEvent[]): void => {
     phase = next;
-    lastAttack = null;
-    cycleIndex = 0;
+    // 換階段清空同招記錄（§5 W2 慣例）。
+    recentAttacks = [];
     if (next === 'p2') {
       state = 'survival';
       survivalMs = 0;
@@ -259,6 +305,9 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
     get shardsCollected() {
       return shards;
     },
+    get shieldLayers() {
+      return shieldLayers;
+    },
     tick(deltaMs: number): VoidraCommand | null {
       if (defeated) return null;
       // P2 生存段：波次表驅動——依時序逐一發波；40s 播完時間驅動入 P3。
@@ -283,30 +332,50 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'idle') {
-        const cycle = voidraAttackCycle(phase);
-        const index = lastAttack === null ? 0 : (cycleIndex + 1) % cycle.length;
-        state = cycle[index] ?? 'idle';
-        cycleIndex = index;
-        lastAttack = state;
-      } else {
-        state = 'idle';
+        // 加權選招（§5 W3）：權重＋條件（HP 帶/距離帶）＋連續同招上限 2。
+        state = pickMove(
+          voidraMoveTable(phase),
+          { hpRatio: hp / maxHp, distanceBand: distanceBandOf(distancePx) },
+          recentAttacks,
+          rng,
+        );
+        recentAttacks = [...recentAttacks.slice(-1), state];
+        // 保留溢出時間，維持節奏不漂移（同 bossFsm）。
+        timerMs += durationMs(state);
+        return commandOf(state);
       }
-      // 保留溢出時間，維持節奏不漂移（同 bossFsm）。
-      timerMs += durationMs(state);
-      return commandOf(state);
+      const finished = state;
+      state = 'idle';
+      timerMs += durationMs('idle');
+      // 吸流窗滿未被反制（§113）：發 siphonDrain——呈現層抽頂槽並回餵 absorbSiphonStar。
+      if (finished === 'siphon') return { kind: 'siphonDrain' };
+      return commandOf('idle');
     },
     takeDamage(amount: number): VoidraHitEvent[] {
       if (defeated || amount <= 0) return [];
       if (survivalImmune()) return [];
       const events: VoidraHitEvent[] = [];
-      hp = Math.max(0, hp - amount);
+      let incoming = amount;
+      if (state === 'siphon') {
+        // 逆流爆盾（§113 反制）：護盾全清＋取消本次抽取＋回傷取較大值（不懲罰重彈）。
+        shieldLayers = 0;
+        state = 'idle';
+        timerMs = durationMs('idle');
+        incoming = Math.max(amount, STAR_SIPHON.backfireDamage);
+        events.push({ kind: 'siphonBurst' });
+      } else if (shieldLayers > 0) {
+        // 護盾層抵銷（§113）：零傷、層數遞減；不掉補給（無實傷）。
+        shieldLayers -= 1;
+        return [{ kind: 'shieldBlock', remaining: shieldLayers }];
+      }
+      hp = Math.max(0, hp - incoming);
       events.push({ kind: 'damaged', hp });
       if (hp <= 0) {
         defeated = true;
         events.push({ kind: 'defeated' });
         return events;
       }
-      damageSinceDrop += amount;
+      damageSinceDrop += incoming;
       while (damageSinceDrop >= VOIDRA.minionSpawnHpStep) {
         damageSinceDrop -= VOIDRA.minionSpawnHpStep;
         events.push({ kind: 'minionDrop' });
@@ -325,6 +394,13 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       if (complete) shardsCompleteEmitted = true;
       return { collected: shards, complete };
     },
+    absorbSiphonStar(): { shields: number; absorbed: boolean } {
+      if (defeated) return { shields: shieldLayers, absorbed: false };
+      const next = shieldAfterAbsorb(shieldLayers);
+      const absorbed = next > shieldLayers;
+      shieldLayers = next;
+      return { shields: shieldLayers, absorbed };
+    },
     resetToPhase(target: 'p2' | 'p3'): void {
       if (defeated) return;
       const ratio = target === 'p2' ? VOIDRA.p2HpRatio : VOIDRA.p3HpRatio;
@@ -332,8 +408,13 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       damageSinceDrop = 0;
       shards = 0;
       shardsCompleteEmitted = false;
+      // 段起點重試清空護盾層（§113，比照整場重啟語義）。
+      shieldLayers = 0;
       const events: VoidraHitEvent[] = [];
       enterPhase(target, events);
+    },
+    setTargetDistance(next: number | null): void {
+      distancePx = next;
     },
   };
 }

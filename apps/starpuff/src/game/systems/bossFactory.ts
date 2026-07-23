@@ -173,6 +173,8 @@ export function createBossKit(
           handle: createVoidra(
             scene,
             {
+              // 星光虹吸（§113）：抽彈匣頂槽走 player 單一彈匣真值（HUD ammo 自動同步）。
+              drainTopStar: () => hooks.player().stealTopStar(),
               // 星核共鳴（§83）：FSM 單一真值，此處餵彩蛋＋星雨謝幕演出。
               onShardEgg: () => {
                 hooks.feedEggs({ kind: 'survive-collect' });
