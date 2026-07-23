@@ -217,16 +217,22 @@ export function installAuditDriver(opts) {
       }
     } else {
       // 魔王段量測：max HP、攻擊段（HP 回滿＝新嘗試）、TTK、招式轉移序列。
-      if (snap.bossHp > d.m.bossMaxHp) d.m.bossMaxHp = snap.bossHp;
-      if (snap.bossHp > 0 && d.prevBossHp <= 0) {
-        d.fightStartMs = d.m.elapsedMs;
-        d.m.attempts += 1;
+      // bossHp<0＝場景重建尚未入場（GameScene create 初值 -1）：僅重置基準，
+      // 不得進擊殺判定——死亡重試窗曾把 -1 誤判為擊破（#814 修復假陽性通關）。
+      if (snap.bossHp < 0) {
+        d.prevBossHp = 0;
+      } else {
+        if (snap.bossHp > d.m.bossMaxHp) d.m.bossMaxHp = snap.bossHp;
+        if (snap.bossHp > 0 && d.prevBossHp <= 0) {
+          d.fightStartMs = d.m.elapsedMs;
+          d.m.attempts += 1;
+        }
+        if (snap.bossHp <= 0 && d.prevBossHp > 0 && !d.m.bossKilled) {
+          d.m.bossKilled = true;
+          d.m.ttkMs = d.m.elapsedMs - (d.fightStartMs > 0 ? d.fightStartMs : 0);
+        }
+        d.prevBossHp = snap.bossHp;
       }
-      if (snap.bossHp <= 0 && d.prevBossHp > 0 && !d.m.bossKilled) {
-        d.m.bossKilled = true;
-        d.m.ttkMs = d.m.elapsedMs - (d.fightStartMs > 0 ? d.fightStartMs : 0);
-      }
-      d.prevBossHp = snap.bossHp;
       const stateKey = snap.fsm ? `${snap.fsm.phase}:${snap.fsm.state}` : '';
       if (stateKey && stateKey !== d.lastState && d.m.stateLog.length < 600) {
         d.m.stateLog.push({ t: Math.round(d.m.elapsedMs), s: stateKey });

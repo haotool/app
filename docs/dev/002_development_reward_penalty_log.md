@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-audit-driver-false-kill
+- 原因：level-audit 魔王擊殺判定 `bossHp<=0 && prev>0` 把死亡重試後 GameScene 重建初值 -1 誤判為擊破，EX baseline 出現 TTK 12s 假通關（180 HP 物理不可能、樣本無 p3/p4）
+- 解法：audit-driver 對 bossHp<0 僅重置基準不進擊殺判定，重測取得可信 clearRate
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w1-prismix-p4-rebirth
