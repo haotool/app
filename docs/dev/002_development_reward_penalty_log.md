@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-844-inhale-reverse-zone-align
+- 原因：#844——#811 邏輯層殼殼貼身豁免已 face-agnostic，但物理候選 zone 只鋪面向側，反向側暈眩殼殼 overlap 永不標記 inhalePull，玩家須轉身才吸得到
+- 解法：候選 zone 鋪到背後 SHELLY_NEAR_PX（寬 zoneSpan+60、中心偏移 (zoneSpan-60)/2），精確收斂仍由 isInInhalePullRange 單點；不轉向 e2e 紅燈驗證（無修復必敗）＋主動煞車定位消除 27-60px 滑行 flake，×6 連跑綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-831-star-pool-blade-headroom

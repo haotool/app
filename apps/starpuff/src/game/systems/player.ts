@@ -16,6 +16,7 @@ import {
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import {
+  SHELLY_NEAR_PX,
   inhaleFlavor,
   inhaleZoneSpanPx,
   knockbackVelocity,
@@ -212,10 +213,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     body.setOffset((frameW - hurtW) / 2, frameH - hurtH);
   }
 
-  // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊），精確錐形由
-  // combat.isInInhaleRange 逐幀收斂——非殼殼的有效半徑不因候選區放大而改變。
+  // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊）＋反向側貼身帶（#844
+  // 候選區鋪到背後 SHELLY_NEAR_PX，對齊邏輯層殼殼貼身豁免——否則反向豁免永不可達）；
+  // 精確錐形與豁免仍由 combat.isInInhalePullRange 逐幀收斂，非殼殼有效半徑不變。
   const zoneSpan = inhaleZoneSpanPx(INHALE.rangePx);
-  const zone = scene.add.zone(x, y, zoneSpan, zoneSpan);
+  const zone = scene.add.zone(x, y, zoneSpan + SHELLY_NEAR_PX, zoneSpan);
   scene.physics.add.existing(zone);
   const zoneBody = zone.body as Phaser.Physics.Arcade.Body;
   zoneBody.setAllowGravity(false);
@@ -871,7 +873,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       zoneBody.enable = inhaling;
       // 變身環（§57/§109）：變身中畫形態倒數；長按充能進度已隨 SP 即時變身退場。
       drawTransformRing();
-      zone.setPosition(sprite.x + facing * (zoneSpan / 2), sprite.y);
+      // 候選區前緣 zoneSpan、後緣 SHELLY_NEAR_PX（#844）：中心相應向面向側偏移。
+      zone.setPosition(sprite.x + facing * ((zoneSpan - SHELLY_NEAR_PX) / 2), sprite.y);
 
       sprite.setFlipX(facing === -1);
       // 無敵閃爍沿用受擊回饋（§64）：受擊 i-frame 與星暴無敵窗共用同一節流視覺。
