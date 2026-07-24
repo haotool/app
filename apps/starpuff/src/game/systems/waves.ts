@@ -127,12 +127,9 @@ export function createWaveRunner(
     // 滿潮救援上台錨定（#841）：滿潮期重力型救援必沉水下（不變式 17 上收僅保護
     // 無重力品種），避難於平台層的玩家構不到、等退潮即成恢復重尾——改錨定最近
     // 平台頂。敵人不與平台碰撞，故關重力比照 bubbla「生成 y 即錨點」慣例；品種
-    // 固定紮根 spora（walker 關重力會懸空走離）。退潮／無平台／表無 spora 走既有路徑。
-    if (
-      hooks.holdSpawn?.() === true &&
-      level.platforms.length > 0 &&
-      level.enemyMix.some((entry) => entry.kind === 'spora')
-    ) {
+    // 固定紮根 spora（walker 關重力會懸空走離），救援路徑本就覆寫品種（審查泛化：
+    // guard 綁 mix 含 spora 會讓 L15 同型缺陷暴露）。退潮／無平台關走既有路徑。
+    if (hooks.holdSpawn?.() === true && level.tide !== undefined && level.platforms.length > 0) {
       const platform = level.platforms.reduce((best, spec) =>
         Math.abs(spec.x - playerX) < Math.abs(best.x - playerX) ? spec : best,
       );

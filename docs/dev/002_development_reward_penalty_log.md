@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+193
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-flood-rescue-guard-generalize
+- 原因：審查 Should-fix——滿潮救援上台 guard 綁「mix 含 spora」，L15（同潮汐參數＋有平台、表無 spora）同型缺陷仍暴露，機制未真正根除
+- 解法：guard 泛化為 tide＋有平台（救援路徑本就覆寫品種）；L15 情境測試紅燈對照（舊 guard 必敗）＋§107.1.2 措辭對齊機制級範疇
 
 - 日期：2026-07-24
 - ID：neutral-starpuff-backlog-train-changeset

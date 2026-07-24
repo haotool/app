@@ -174,6 +174,44 @@ describe('滿潮救援上台錨定（#841）', () => {
     expect(setAllowGravity).toHaveBeenCalledWith(false);
     runner.destroy();
   });
+
+  // 審查泛化（guard 綁 mix 含 spora 的同型缺陷）：L15 沸糖窯道同潮汐參數＋有平台
+  // 但表無 spora——滿潮救援必須同樣上台錨定（救援路徑本就覆寫品種），
+  // 不得回落沉水的既有地面路徑。
+  it('L15（表無 spora 的潮汐關）滿潮救援同樣上台錨定 spora', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const spawns: { kind: EnemyKind; x: number; y: number }[] = [];
+    const setAllowGravity = vi.fn();
+    const rescueStub = { active: true, x: 0, body: { setAllowGravity } };
+    const scene = {
+      events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+      cameras: { main: { scrollX: 600 } },
+      scale: { width: 854, height: 480 },
+      add: { text: () => chainable() },
+      tweens: { add: vi.fn(), killTweensOf: vi.fn() },
+    } as unknown as Phaser.Scene;
+    const enemies = {
+      spawn: (kind: EnemyKind, x: number, y: number) => {
+        spawns.push({ kind, x, y });
+        rescueStub.active = true;
+        rescueStub.x = x;
+        return rescueStub;
+      },
+      aliveCount: () => 99,
+      aliveInhalableCount: () => 0,
+      targetX: () => 1000,
+    } as unknown as EnemySystem;
+    const runner = createWaveRunner(scene, enemies, 15, { holdSpawn: () => true });
+    runner.start();
+    runner.update(4000);
+    expect(spawns).toHaveLength(1);
+    expect(spawns[0]?.kind).toBe('spora');
+    // L15 平台 x∈{430,850,1300,...}：距玩家 1000 最近＝850（y=272）。
+    expect(spawns[0]?.x).toBe(850);
+    expect(spawns[0]?.y).toBe(272 - 8 - ENEMY_SIZE / 2);
+    expect(setAllowGravity).toHaveBeenCalledWith(false);
+    runner.destroy();
+  });
 });
 
 describe('bubbla 自然補生錨點（#821）', () => {
