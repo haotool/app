@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-bot-economy-forensics
+- 原因：W1.5 冒煙迭代揭露 bot 三層結構缺陷——輸出經濟卡死於 grantSupply 節流（0.83 發/s＝DPS 上限 4.2）、跨越本體恆課接觸稅（定值起跳節拍對深釘位必削側緣）、逐秒抽樣歸因失真無法定位死因
+- 解法：boss 模式 forage 就地吸食補彈（供彈保證律真實管線，造傷 300→537 HP/run）＋crossHop 距離自適應垂直延遲＋受擊當拍距離取證儀器（nb/ne/ns/nh/hopMs 落 damageLog），L12 EX high 首度常態觸 p3、曾入 p4
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w15-high-bot-full-strategy

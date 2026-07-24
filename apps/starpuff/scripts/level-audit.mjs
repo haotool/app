@@ -165,6 +165,10 @@ async function runStandardAudit(
       shots: m.shots ?? 0,
       transforms: m.transforms ?? 0,
       samples: m.samples ?? [],
+      // 死因取證（W1.5）：受擊事件（精確 t/x/y/hp）×招式轉移序列——供逐 phase
+      // 死亡分佈與死因歸類（迴避失敗/輸出不足/機制未解）裁決分析。
+      stateLog: isBoss ? (m.stateLog ?? []) : [],
+      damageLog: m.damageEvents ?? [],
     });
   }
   const cleared = runsOut.filter((r) => r.result === 'cleared');
