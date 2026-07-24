@@ -661,6 +661,22 @@ export function installAuditDriver(opts) {
           face(Math.abs(snap.px - d.evadeAnchor) >= 90 ? 0 : d.evadeDir);
           return;
         }
+        // 地面行波（W1.5，Jellord slam wave 60×16 @368-423px/s）：反應距離內
+        // 不可躲（感知 250ms ≈100px 讓帶）——320px 預警帶提前跳越；
+        // 幾何過濾：h≤40 且 w≤120 且貼地（排除光束/晶柱/行牆）；方向過濾：
+        // 波自本體向外行進，僅「在我與本體之間」的波會抵達（遠側波不跳）。
+        const fastWave = s.hazards.some(
+          (h) =>
+            h.h <= 40 &&
+            h.w <= 120 &&
+            h.y > 370 &&
+            Math.abs(h.x - s.px) < 320 &&
+            Math.sign(h.x - nearest.x) === Math.sign(s.px - nearest.x || 1),
+        );
+        if (fastWave) {
+          jump();
+          return;
+        }
         // 全高行牆（W1.5，P4 稜光行牆 h≥100）：單跳 98px 不足——朝牆滿拍翅對穿
         //（相對速度縮短交會時間，牆過即安全；遠離側逃相對速度歸零永被追上）。
         if (flap) {

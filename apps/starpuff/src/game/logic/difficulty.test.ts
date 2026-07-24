@@ -50,10 +50,12 @@ describe('驗收門檻 SSOT（機制 brief §10）', () => {
     expect(BOT_TIERS.mid.reactionMs).toBe(350);
   });
 
-  it('W1.5 完整策略開關：僅高階啟用拍翅/鏡界窗紀律/變身優勢（低/中不升級）', () => {
+  it('W1.5 完整策略開關：僅高階啟用拍翅/鏡界窗紀律（低/中不升級）', () => {
     expect(BOT_TIERS.high.flap).toBe(true);
     expect(BOT_TIERS.high.mirrorGuard).toBe(true);
-    expect(BOT_TIERS.high.transformUse).toBe(true);
+    // 變身優勢門檻跑預設關（W1.5 實測：形態技需 stance 邏輯，變身迴圈反噬輸出）；
+    // --transform 顯式 A/B 管線不受影響。
+    expect(BOT_TIERS.high.transformUse).toBe(false);
     for (const tier of ['low', 'mid'] as const) {
       expect(BOT_TIERS[tier].flap).toBe(false);
       expect(BOT_TIERS[tier].mirrorGuard).toBe(false);

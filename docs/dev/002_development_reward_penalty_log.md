@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-transform-churn-rootfix
+- 原因：transformUse tier 預設化在 L4 實測反噬——殼形態為站樁反彈玩法，規則 bot 陷變身迴圈（132 次/6 輪）吞噬全部星彈輸出（最深僅 77/90、clearRate 0%），且 Jellord slam 地面行波 60×16@~400px/s 在感知延遲下反應距離不可躲
+- 解法：transformUse 門檻跑預設關（--transform 顯式 A/B 管線保留、stance 邏輯列 W2 backlog）＋行波 320px 預警帶方向過濾提前跳越——L4 EX high 冒煙 0%→100%（TTK 30s、1.5 死/run）
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w15-bot-economy-forensics

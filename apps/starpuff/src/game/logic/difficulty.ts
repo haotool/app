@@ -77,7 +77,10 @@ export const BOT_TIERS: Record<BotTier, BotTierSpec> = {
     kite: true,
     flap: true,
     mirrorGuard: true,
-    transformUse: true,
+    // W1.5 實測回關：L4 殼形態為站樁反彈玩法，規則 bot 變身迴圈（132 次/6 輪）
+    // 吞噬全部星彈輸出（最深僅 77/90）——變身優勢維持 --transform 顯式 A/B
+    // 量測管線，門檻跑預設純標準星紀律；駕馭形態技的 stance 邏輯列 W2 backlog。
+    transformUse: false,
   },
 } as const;
 
