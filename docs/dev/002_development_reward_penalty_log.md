@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w2-driver-crown-cadence
+- 原因：Syrona EX P4 皇冠唯一可傷使 bot 既有體傷輸出歸零（高階門檻量測必掛）、且 P4 全場沸騰使「漲潮退乾帶」策略失效
+- 解法：driver L16 P4 登頂節拍——單跳頂帶窗（280-650ms）點射（apex 中心 -122 落皇冠帶）、933ms 滯空天然防潮，tide 退避分支讓位 p4；量測儀器與遊戲 source 隔離（vite 不 watch scripts，防 HMR 污染重演）
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w2-syrona-voidra-ex-p4

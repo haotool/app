@@ -704,11 +704,37 @@ export function installAuditDriver(opts) {
           jump();
           return;
         }
-        // L16 漲潮退對側乾帶。
-        if (levelId === 16 && s.tide && s.tide.phase === 'high' && s.px > center) {
+        // L16 漲潮退對側乾帶（P4 全場沸騰無乾帶——讓位給登頂節拍的滯空防潮）。
+        if (
+          levelId === 16 &&
+          s.tide &&
+          s.tide.phase === 'high' &&
+          s.px > center &&
+          !(s.fsm && s.fsm.phase === 'p4')
+        ) {
           face(-1);
           return;
         }
+      }
+      // 窯心暴走登頂輸出（W2 §8.2）：L16 P4 皇冠唯一可傷——體傷歸零，改單跳
+      // 頂帶窗點射（apex 玩家中心 ≈-122 落於皇冠帶 [-150,-116]，窗 ≈280-650ms）；
+      // 單跳滯空 933ms ≈ 全程離地，天然迴避全場沸騰漲頂。
+      if (levelId === 16 && s.fsm && s.fsm.phase === 'p4') {
+        const airMs = now - d.lastJumpAt;
+        face(Math.sign(s.boss.x - s.px || 1));
+        if (airMs >= 950) {
+          d.lastJumpAt = now;
+          tap(KEY.jump, 200);
+        } else if (
+          airMs >= 280 &&
+          airMs <= 650 &&
+          s.ammo > 0 &&
+          !d.holdFire &&
+          now - d.lastShotAt >= 180
+        ) {
+          shoot();
+        }
+        return;
       }
       // L20 P2 生存段（完整策略＝風箏；其餘分級靠通用迴避硬撐）。
       if (kite && levelId === 20 && s.fsm && s.fsm.phase === 'p2') {
