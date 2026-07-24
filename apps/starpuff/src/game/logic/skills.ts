@@ -4,11 +4,14 @@ import {
   INHALE,
   STAR,
   STAR_FLAVORS,
+  STAR_MIXES,
+  VIEW,
   findMix,
   getMix,
   type MagazineSlot,
   type StarFlavor,
 } from '../core/config';
+import { GALE_BLADE } from './transform';
 
 // 吞噬連鎖技能純邏輯（GAME_DESIGN §23，不 import phaser），vitest 對象。
 // 彈匣為槽位堆疊：後進先出發射；同種連吞 ×2 頂槽升級強化星。
@@ -202,3 +205,18 @@ export function pickChainTargets<T extends ChainCandidate>(
     .slice(0, Math.max(0, count))
     .map((entry) => entry.candidate);
 }
+
+// 星彈視野裁切邊界（#820/#831）：player 的出視野回收判定與池上限推導共用同一 SSOT。
+export const STAR_CULL_MARGIN_PX = 40;
+
+// 風刃最大併發（#831）：風刃走 stars 共用池、僅靠視野裁切回收（穿透 99 幾乎不被吸收），
+// 上界 = (最大視寬＋兩側裁切邊界) ÷ 刃速 ÷ 發射 CD，上取整。
+export const MAX_CONCURRENT_WIND_BLADES = Math.ceil(
+  ((VIEW.maxWidth + STAR_CULL_MARGIN_PX * 2) * 1000) / (GALE_BLADE.speed * GALE_BLADE.cooldownMs),
+);
+
+// 星彈池上限（#820/#831）：滿匣連續散射（maxAmmo × 最大散射數）疊加風刃最大併發，
+// 由 config 派生免第二份硬編；扣彈先於生成（fireStar→launchStar），池不足會靜默吞星。
+export const STAR_POOL_MAX =
+  STAR.maxAmmo * Math.max(1, ...STAR_MIXES.map((mix) => mix.scatterCount)) +
+  MAX_CONCURRENT_WIND_BLADES;

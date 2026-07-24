@@ -124,6 +124,16 @@ test('HUD DOM 鈕可及性（#823）：鍵盤 Enter/Space 可觸發、指標路�
   await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
   await page.waitForTimeout(400);
   await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+
+  // 混合路徑（#830）：指標 click 後 100ms 內鍵盤 Enter——手勢級一次性吞 click
+  // 廢除壁鐘窗後，緊接的合法鍵盤 activation 必須觸發且不雙發。
+  await muteButton.click();
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
+  await page.waitForTimeout(100);
+  await page.keyboard.press('Enter');
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(400);
+  await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
   expect(errors).toEqual([]);
 });
 

@@ -279,10 +279,17 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       scrollX: gameScene().cameras.main.scrollX,
     }),
     // 反卡死深度 QA 觀測點（US-025）：場上敵數、開門狀態與事件監聽數。
-    alive: () => ({
-      total: internals().enemies.aliveCount(),
-      inhalable: internals().enemies.aliveInhalableCount(),
-    }),
+    // 場景切換瞬間 group 已銷毀，countActive 會拋錯（#833）：防禦回安全值（沿 enemies 慣例）。
+    alive: () => {
+      try {
+        return {
+          total: internals().enemies.aliveCount(),
+          inhalable: internals().enemies.aliveInhalableCount(),
+        };
+      } catch {
+        return { total: 0, inhalable: 0 };
+      }
+    },
     gateOpen: () => internals().waves.isGateOpen(),
     quota: () => internals().waves.getQuota(),
     listeners: (event: string) => gameScene().events.listenerCount(event),

@@ -34,9 +34,14 @@ function isAtTitle(): boolean {
 
 // 等待 Title 安靜時刻（1s 輪詢）：卡片僅在標題畫面顯示——遊戲／地圖／結算／配置中
 // 一律延後，杜絕彈窗攔截操作（審查 B1 根修）。
+// one-shot 守衛（#839 e2e 曝露）：interval 與 delay timeout 共用 attempt——先顯卡
+// 又在 timeout 前被關閉時，overlay 忙碌訊號消失會讓 timeout 再執行一次 callback
+// 出現第二張卡；callback 至多執行一次。
 export function whenShellIdle(callback: () => void, delayMs: number): void {
+  let fired = false;
   const attempt = (): void => {
-    if (!isAtTitle() || isShellBusy()) return;
+    if (fired || !isAtTitle() || isShellBusy()) return;
+    fired = true;
     clearInterval(timer);
     callback();
   };

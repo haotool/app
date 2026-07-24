@@ -3,6 +3,7 @@ import {
   DEFAULT_PORTRAIT_ROTATION,
   DESKTOP_MIN_VIEWPORT_W,
   detectDesktopEnvironment,
+  detectHybridKeyboardEnvironment,
   parseRotationPref,
   pointerToLocal,
 } from './rotation';
@@ -38,6 +39,20 @@ describe('detectDesktopEnvironment（#817 桌機判定）', () => {
     // 窄視口（分割視窗/小視窗）不進桌機模式。
     expect(detectDesktopEnvironment({ ...desktop, viewportWidth: 1023 })).toBe(false);
     expect(detectDesktopEnvironment({ ...desktop, viewportWidth: 1024 })).toBe(true);
+  });
+});
+
+describe('detectHybridKeyboardEnvironment（#839 觸控筆電雙模並存）', () => {
+  it('細指標＋寬視口＋觸點>0 為混合裝置：補鍵盤引導、不進桌機模式', () => {
+    const touchLaptop = { finePointer: true, maxTouchPoints: 5, viewportWidth: 1440 };
+    expect(detectHybridKeyboardEnvironment(touchLaptop)).toBe(true);
+    // 與桌機判定互斥：混合裝置桌機恆 false（旋轉殼語意與虛擬鍵照舊）。
+    expect(detectDesktopEnvironment(touchLaptop)).toBe(false);
+    // 純桌機（零觸點）不屬混合：引導由桌機路徑承擔。
+    expect(detectHybridKeyboardEnvironment({ ...touchLaptop, maxTouchPoints: 0 })).toBe(false);
+    // 手機/平板（粗指標）與窄視口不觸發。
+    expect(detectHybridKeyboardEnvironment({ ...touchLaptop, finePointer: false })).toBe(false);
+    expect(detectHybridKeyboardEnvironment({ ...touchLaptop, viewportWidth: 1023 })).toBe(false);
   });
 });
 

@@ -9,7 +9,6 @@ import {
   SLAM,
   STAR,
   STARSTORM,
-  STAR_MIXES,
   getMix,
   type MagazineSlot,
   type StarFlavor,
@@ -17,6 +16,7 @@ import {
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import {
+  INHALE_NEAR_PX,
   inhaleFlavor,
   inhaleZoneSpanPx,
   knockbackVelocity,
@@ -27,6 +27,8 @@ import { tickBoomerangBody } from '../logic/enemyFsm';
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
   SHELL_SHIELD,
+  STAR_CULL_MARGIN_PX,
+  STAR_POOL_MAX,
   advanceShield,
   createShieldState,
   effectiveInvulnMs,
@@ -144,10 +146,7 @@ type Pose =
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
-// 星彈池上限（#820）：滿匣連續散射理論同時需求 = maxAmmo × 最大散射數，由 config 派生
-// 免第二份硬編；扣彈先於生成（fireStar→launchStar），池不足會靜默吞星。
-export const STAR_POOL_MAX =
-  STAR.maxAmmo * Math.max(1, ...STAR_MIXES.map((mix) => mix.scatterCount));
+// 星彈池上限與視野裁切邊界（#820/#831）SSOT 收斂於 logic/skills.ts（滿匣散射＋風刃併發）。
 // 主角描邊（§45）：深紫近黑剪影色與放大比（48px 本體外露約 2.4px 輪廓環）。
 const HERO_OUTLINE_COLOR = 0x2f2a3d;
 const HERO_OUTLINE_SCALE = 1.1;
@@ -214,10 +213,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     body.setOffset((frameW - hurtW) / 2, frameH - hurtH);
   }
 
-  // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊），精確錐形由
-  // combat.isInInhaleRange 逐幀收斂——非殼殼的有效半徑不因候選區放大而改變。
+  // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊）＋反向側貼身帶（#844
+  // 候選區鋪到背後 INHALE_NEAR_PX，對齊邏輯層貼身豁免——否則反向豁免永不可達）；
+  // 精確錐形與豁免仍由 combat.isInInhalePullRange 逐幀收斂（#841 豁免泛化全可吸品種）。
   const zoneSpan = inhaleZoneSpanPx(INHALE.rangePx);
-  const zone = scene.add.zone(x, y, zoneSpan, zoneSpan);
+  const zone = scene.add.zone(x, y, zoneSpan + INHALE_NEAR_PX, zoneSpan);
   scene.physics.add.existing(zone);
   const zoneBody = zone.body as Phaser.Physics.Arcade.Body;
   zoneBody.setAllowGravity(false);
@@ -873,7 +873,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       zoneBody.enable = inhaling;
       // 變身環（§57/§109）：變身中畫形態倒數；長按充能進度已隨 SP 即時變身退場。
       drawTransformRing();
-      zone.setPosition(sprite.x + facing * (zoneSpan / 2), sprite.y);
+      // 候選區前緣 zoneSpan、後緣 INHALE_NEAR_PX（#844）：中心相應向面向側偏移。
+      zone.setPosition(sprite.x + facing * ((zoneSpan - INHALE_NEAR_PX) / 2), sprite.y);
 
       sprite.setFlipX(facing === -1);
       // 無敵閃爍沿用受擊回饋（§64）：受擊 i-frame 與星暴無敵窗共用同一節流視覺。
@@ -944,7 +945,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const view = scene.cameras.main.worldView;
       for (const child of stars.getChildren()) {
         const star = child as Phaser.Physics.Arcade.Sprite;
-        if (star.active && (star.x < view.x - 40 || star.x > view.right + 40)) recycleStar(star);
+        const margin = STAR_CULL_MARGIN_PX;
+        if (star.active && (star.x < view.x - margin || star.x > view.right + margin)) {
+          recycleStar(star);
+        }
       }
       steerBoomerangStars(deltaMs);
     },

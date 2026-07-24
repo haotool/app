@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+197
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,71 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-backlog-changeset-minor-regrade
+- 原因：審查 Should-fix——#839 觸控筆電鍵盤引導是使用者可感知新功能（AGT-VER-01：新互動能力＝minor），列車 changeset 誤定 patch
+- 解法：changeset 升 minor 並補「觸控筆電裝置新增鍵盤操作引導」描述，八項修復描述保留
+
+- 日期：2026-07-24
+- ID：reward-starpuff-839-shellidle-race-regression-lock
+- 原因：審查 Should-fix——whenShellIdle fired 守衛僅由 e2e 時序間接覆蓋，競態窗（interval 顯卡後、leftover timeout 前關卡）無直接單元回歸鎖
+- 解法：新增 shellCards.test.ts 以 fake timers＋document stub 直接命中競態窗（紅燈對照：無守衛時 callback ×2 必敗），另補忙碌期不觸發案
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-rooted-contract-alignment
+- 原因：審查 Should-fix——§52 spora 文案仍寫 immovable 與 #841 修後實作矛盾；updateSpora 未每幀清速，外力（下砸 AoE/吸力彈開）殘速會滑行違反「更新迴圈不賦速」的定點契約
+- 解法：updateSpora 頂部全相位清速（拉力在 enemies.update 之後套用不受影響）；§52 spora 文案改「每幀清速＋地面分離、非 immovable」＋gusty recover 補 atBaseY 閘描述
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-flood-rescue-guard-generalize
+- 原因：審查 Should-fix——滿潮救援上台 guard 綁「mix 含 spora」，L15（同潮汐參數＋有平台、表無 spora）同型缺陷仍暴露，機制未真正根除
+- 解法：guard 泛化為 tide＋有平台（救援路徑本就覆寫品種）；L15 情境測試紅燈對照（舊 guard 必敗）＋§107.1.2 措辭對齊機制級範疇
+
+- 日期：2026-07-24
+- ID：neutral-starpuff-backlog-train-changeset
+- 原因：backlog 八項修復列車（#831/#844/#832/#833/#830/#841/#840/#839）收尾——依 AGT-VER-01 補 release intent
+- 解法：新增 @app/starpuff patch changeset（使用者可感知修復描述）；全量 vitest 817/817 綠、lint 淨
+
+- 日期：2026-07-24
+- ID：reward-starpuff-839-touch-laptop-dual-mode-guidance
+- 原因：#839——#817 桌機判定（fine＋零觸點＋寬視口）刻意排除觸控筆電，混合裝置不知可用鍵盤且虛擬鍵佔屏；放寬判定會讓觸控遊玩者失去虛擬鍵並被 boot 判定鎖死整 session
+- 解法：雙模並存（純加法）——detectHybridKeyboardEnvironment（fine＋觸點>0＋w≥1024）僅補鍵盤引導（鍵位卡＋Title 操作說明入口），桌機判定/旋轉殼/虛擬鍵零改動；順修 whenShellIdle interval/timeout 雙發第二張卡（e2e 曝露的既有缺陷）；三情境＋觸控筆電模擬 e2e ×2 綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-840-jump-probe-evidence-backfill
+- 原因：#840——#809 宣稱五王 low bot 逃脫率 100% 但 level-audits 僅 L4 曾留原始 JSON 且已隨 worktree 回收遺失，量化結論不可稽核
+- 解法：以既有 CLI（level-audit --probe jump，不改 driver）補跑五王 L4/L7/L12/L16/L20 各 6 試次，逃脫率全數 100%，JSON 歸檔主 repo .claude/product-intel/level-audits/809-jump-l\*.json（jump 面不受本列車修改影響）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-l14-starburst-tail-triple-fix
+- 原因：#841——逐幀驗屍鎖定三機制：immovable×靜態地面不分離使 spora/chompy 全關穿地沉底（救援殭屍化＋rescueNear 抑制新救援）、滿潮期重力型救援必沉水下平台層構不到、貼身錐形死角使 bot 站上目標繞軌 3-8s
+- 解法：解除紮根怪 setImmovable（唯一 collider 即地面、旗標無保護對象）＋滿潮救援錨定最近平台頂（spora 關重力比照 bubbla）＋#811 貼身豁免泛化全可吸品種（INHALE_NEAR_PX）；L14 p95 18.9s→5.0s（官方 ×10）、全域 90 樣本 p95 9.3s 不回退、45s 未恢復 0
+
+- 日期：2026-07-24
+- ID：reward-starpuff-830-dom-btn-gesture-click-swallow
+- 原因：#830——#823 用 pointerup 後 350ms 壁鐘窗抑制合成 click，混合路徑（指標互動後 350ms 內按 Enter/Space）的合法鍵盤 activation 被誤吞
+- 解法：改手勢級一次性旗標（pointerdown 設、同手勢 click 消費、pointercancel 清）＋detail=0 鍵盤路徑恆放行，廢除壁鐘窗；混合路徑 e2e 紅燈對照（舊碼 Enter 被吞必敗）＋四路徑 ×3 綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-833-alive-hook-scene-transition-guard
+- 原因：#833——debug hook \_\_sp.alive() 在場景切換瞬間對已銷毀 group 呼叫 countActive 拋錯，量化 bot 長跑誤報（production 不掛載，玩家零影響）
+- 解法：alive() 加 try-catch 回安全值 {total:0,inhalable:0}（沿同檔 enemies() 防禦慣例）；瀏覽器實測 3 輪 forceWin 轉場 10ms 連打 305 次零拋錯
+
+- 日期：2026-07-24
+- ID：reward-starpuff-832-gusty-recover-atbasey-gate
+- 原因：#832——gusty recover→drift 純時間轉場無 atBaseY 閘（與 cometa #822 同型缺口），深俯衝後可自低空直接進入 drift 貼地壓迫玩家
+- 解法：tickGusty 增 atBaseY 參數比照 cometa 閘住轉場（時滿且回抵航高才切 drift），呼叫點以 sprite.y<=baseY 供值；紅燈對照（舊碼必敗）＋比照 #822 鎖定測試三案
+
+- 日期：2026-07-24
+- ID：reward-starpuff-844-inhale-reverse-zone-align
+- 原因：#844——#811 邏輯層殼殼貼身豁免已 face-agnostic，但物理候選 zone 只鋪面向側，反向側暈眩殼殼 overlap 永不標記 inhalePull，玩家須轉身才吸得到
+- 解法：候選 zone 鋪到背後 SHELLY_NEAR_PX（寬 zoneSpan+60、中心偏移 (zoneSpan-60)/2），精確收斂仍由 isInInhalePullRange 單點；不轉向 e2e 紅燈驗證（無修復必敗）＋主動煞車定位消除 27-60px 滑行 flake，×6 連跑綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-831-star-pool-blade-headroom
+- 原因：#831——風刃與星彈共用 stars 池但 STAR_POOL_MAX 只涵蓋滿匣散射，變身前在飛星彈疊加風化連發可池滿致風刃靜默生成失敗（不扣資源但輸出消失）
+- 解法：池公式納入風刃最大併發（(最大視寬＋裁切邊界)÷刃速÷CD 上取整的物理上界）；否決獨立池（4+ 處 overlap 重複接線）與失敗回饋（回饋≠修復）；滿匣散射在飛＋連發風刃全數生成回歸測試鎖定
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-starstorm-star-source

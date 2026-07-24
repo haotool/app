@@ -69,18 +69,8 @@ export function applyInhalePull(
     if (!kind || !player.isInhaling()) continue;
     const { x, y } = player.sprite;
     const facing = player.getFacing();
-    // 錐形收斂＋殼殼近身豁免（#811）：貼腳停位不再是吸不到死角。
-    if (
-      !isInInhalePullRange(
-        kind,
-        x,
-        y,
-        facing,
-        enemy.x,
-        enemy.y,
-        inhaleRangePx(kind, INHALE.rangePx),
-      )
-    ) {
+    // 錐形收斂＋貼身近域豁免（#811 → #841 泛化全可吸品種）：貼腳停位不再是死角。
+    if (!isInInhalePullRange(x, y, facing, enemy.x, enemy.y, inhaleRangePx(kind, INHALE.rangePx))) {
       continue;
     }
     if (!enemies.isInhalable(enemy)) {

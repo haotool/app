@@ -78,6 +78,29 @@ export function isDesktopEnvironment(): boolean {
   }
 }
 
+// 觸控筆電（#839 雙模並存）：細指標＋寬視口＋觸點>0——#817 桌機判定刻意排除的
+// 混合裝置。取捨：放寬桌機判定會讓觸控遊玩者失去虛擬鍵（sp-desktop 隱藏 #controls）
+// 且 posture 切換被 boot 判定鎖死整個 session；雙模並存為純加法——虛擬鍵與旋轉殼
+// 語意照舊，僅補鍵盤引導（鍵位卡＋Title 操作說明入口）。
+export function detectHybridKeyboardEnvironment(input: DesktopEnvironmentInput): boolean {
+  return (
+    input.finePointer && input.maxTouchPoints > 0 && input.viewportWidth >= DESKTOP_MIN_VIEWPORT_W
+  );
+}
+
+// 消費點僅鍵盤引導顯示決策（無 CSS/座標耦合），即時讀取即可，不需 boot class。
+export function isHybridKeyboardEnvironment(): boolean {
+  try {
+    return detectHybridKeyboardEnvironment({
+      finePointer: window.matchMedia('(pointer: fine)').matches,
+      maxTouchPoints: navigator.maxTouchPoints,
+      viewportWidth: window.innerWidth,
+    });
+  } catch {
+    return false;
+  }
+}
+
 // 桌機模式以 html class 為 session 內 SSOT（#817）：boot 一次判定，JS 與 CSS 恆一致
 //（live media 於視窗縮放時飄移會造成 transform 與座標換算不同步）。
 const DESKTOP_CLASS = 'sp-desktop';

@@ -213,12 +213,12 @@ describe('Spora 週期（§52）', () => {
 
 describe('Gusty 四態時序（§52）', () => {
   it('drift 觸發俯衝條件成立當 tick 轉 windup', () => {
-    expect(tickGusty('drift', 500, 16, false)).toEqual({
+    expect(tickGusty('drift', 500, 16, false, true)).toEqual({
       state: 'drift',
       stateMs: 516,
       entered: null,
     });
-    expect(tickGusty('drift', 500, 16, true)).toEqual({
+    expect(tickGusty('drift', 500, 16, true, true)).toEqual({
       state: 'windup',
       stateMs: 0,
       entered: 'windup',
@@ -226,9 +226,23 @@ describe('Gusty 四態時序（§52）', () => {
   });
 
   it('windup 0.5s → dive 0.6s → recover 0.9s → drift 完整循環', () => {
-    expect(tickGusty('windup', GUSTY_FSM.windupMs - 16, 16, false).entered).toBe('dive');
-    expect(tickGusty('dive', GUSTY_FSM.diveMs - 16, 16, false).entered).toBe('recover');
-    expect(tickGusty('recover', GUSTY_FSM.recoverMs - 16, 16, false).entered).toBe('drift');
+    expect(tickGusty('windup', GUSTY_FSM.windupMs - 16, 16, false, false).entered).toBe('dive');
+    expect(tickGusty('dive', GUSTY_FSM.diveMs - 16, 16, false, false).entered).toBe('recover');
+    expect(tickGusty('recover', GUSTY_FSM.recoverMs - 16, 16, false, true).entered).toBe('drift');
+  });
+
+  it('低空再漂移抑制（#832）：回升時滿但未回抵 baseY 不得切 drift', () => {
+    // 時滿未回航高：停留 recover 持續爬升（比照 cometa #822），杜絕低空直接再漂移。
+    const held = tickGusty('recover', GUSTY_FSM.recoverMs - 16, 16, false, false);
+    expect(held).toEqual({ state: 'recover', stateMs: GUSTY_FSM.recoverMs, entered: null });
+    // 深俯衝長時間爬升（時長遠超 recoverMs）仍未達航高：維持 recover。
+    expect(tickGusty('recover', GUSTY_FSM.recoverMs * 3, 16, false, false).state).toBe('recover');
+    // 回抵航高瞬間（時已滿）：切回 drift。
+    expect(tickGusty('recover', GUSTY_FSM.recoverMs * 3, 16, false, true)).toEqual({
+      state: 'drift',
+      stateMs: 0,
+      entered: 'drift',
+    });
   });
 
   it('側風方向（§52）：域內推離 gusty、域外為 0', () => {
