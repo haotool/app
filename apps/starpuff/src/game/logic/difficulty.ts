@@ -41,14 +41,44 @@ export interface BotTierSpec {
   dodge: boolean;
   forage: boolean;
   kite: boolean;
+  // 完整策略開關（#814 W1.5，中高手等價能力）：滿拍翅空中機動（受困換邊/
+  // 高牆跳越，T2 實證淨高 211px）、鏡界窗紀律（開鏡停火＋折返彈再吸）、
+  // 變身優勢解（TRANSFORM_ADVANTAGE 供彈自動變身）。
+  flap: boolean;
+  mirrorGuard: boolean;
+  transformUse: boolean;
 }
 
 export type BotTier = 'low' | 'mid' | 'high';
 
 export const BOT_TIERS: Record<BotTier, BotTierSpec> = {
-  low: { reactionMs: 500, dodge: false, forage: true, kite: false },
-  mid: { reactionMs: 350, dodge: true, forage: true, kite: false },
-  high: { reactionMs: 250, dodge: true, forage: true, kite: true },
+  low: {
+    reactionMs: 500,
+    dodge: false,
+    forage: true,
+    kite: false,
+    flap: false,
+    mirrorGuard: false,
+    transformUse: false,
+  },
+  mid: {
+    reactionMs: 350,
+    dodge: true,
+    forage: true,
+    kite: false,
+    flap: false,
+    mirrorGuard: false,
+    transformUse: false,
+  },
+  high: {
+    reactionMs: 250,
+    dodge: true,
+    forage: true,
+    kite: true,
+    flap: true,
+    mirrorGuard: true,
+    transformUse: true,
+  },
 } as const;
 
 // ===== 跳躍運動學（#809 跳越可行性解析基礎）=====

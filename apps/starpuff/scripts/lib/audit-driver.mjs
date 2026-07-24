@@ -1,5 +1,6 @@
 // 統一量測 driver（#818）：走動關＋魔王關單一策略引擎，分級 bot 以感知延遲
-// （快照環回看 reactionMs）與策略開關（dodge/kite）分級——低/中/高不是三份腳本。
+// （快照環回看 reactionMs）與策略開關（dodge/kite/flap/mirrorGuard）分級——
+// 低/中/高不是三份腳本（開關 SSOT＝difficulty.BOT_TIERS，#814 W1.5 擴完整策略）。
 // 本函式經 page.evaluate 序列化進瀏覽器：必須自包含，禁止引用模組作用域。
 // 走動關指標語意沿 v18-level-bot（#804/#805/#806 量測 SSOT 同口徑）。
 // 可吸/威脅集由 Node 端自 logic SSOT（canInhale/ENEMY_THREAT）計算後注入，零漂移。
@@ -18,6 +19,9 @@ export function installAuditDriver(opts) {
     grantSupply, // 魔王關純標準星紀律：空匣補 jelly
     // 變身優勢 hook（#816 W2）：非 null 時以該味集齊 ×3 並按 SP 變身（TTK 對照量測）。
     transformFlavor = null,
+    // 完整策略開關（#814 W1.5，BOT_TIERS SSOT 注入）：滿拍翅空中機動、鏡界窗紀律。
+    flap = false,
+    mirrorGuard = false,
   } = opts;
   // 重掛保護：先停舊 driver（同頁重進關卡時避免雙 interval 疊鍵）。
   if (window.__audit) {
@@ -108,6 +112,10 @@ export function installAuditDriver(opts) {
     lastSpAt: 0,
     lastX: 0,
     lastMoveAt: 0,
+    // 滿拍翅跳序列（W1.5）：hopUntil 內鎖定航向 hopDir；inhaleHold＝鏡界窗持吸中。
+    hopUntil: 0,
+    hopDir: 0,
+    inhaleHold: false,
     stop: false,
   };
   // 暴露給 stopDriver：停 driver 時放開全部持鍵，避免殘留輸入影響後續量測。
@@ -155,6 +163,8 @@ export function installAuditDriver(opts) {
     // 探針注入窗（星暴長按等）：暫停決策並放開全部按鍵，量測照常由注入端負責。
     if (d.pause) {
       for (const k of [...held]) release(k);
+      d.inhaleHold = false;
+      d.hopUntil = 0;
       return;
     }
     const now = performance.now();
@@ -282,6 +292,22 @@ export function installAuditDriver(opts) {
       d.lastJumpAt = now;
       tap(KEY.jump, ms);
     };
+    // 滿拍翅跳（W1.5，沿 T2 §86 實證節拍）：地跳後近頂點補拍翅，淨高至 ~211px；
+    // 拍翅由 setTimeout 排程，序列期間 hopUntil 鎖定航向（跨越本體不得中途轉向）。
+    const hop = (dir, flaps = 3) => {
+      if (now < d.hopUntil) return;
+      d.lastJumpAt = now;
+      d.hopDir = dir;
+      tap(KEY.jump, 70);
+      let at = 380;
+      for (let i = 0; i < flaps; i += 1) {
+        setTimeout(() => {
+          if (!d.stop && !d.pause) tap(KEY.jump, 70);
+        }, at);
+        at += 300;
+      }
+      d.hopUntil = now + at + 240;
+    };
     const shoot = () => {
       // 變身優勢 hook（#816 W2）：集星待變身期間停火，防同系彈匣被射空破壞資格。
       if (d.holdFire) return;
@@ -300,6 +326,11 @@ export function installAuditDriver(opts) {
       if (s.bossHp <= 0) {
         face(0);
         release(KEY.shoot);
+        return;
+      }
+      // 拍翅序列航線鎖定（W1.5）：跨越本體/行牆期間維持航向，防左右震盪跌回。
+      if (now < d.hopUntil) {
+        face(d.hopDir);
         return;
       }
       if (spReady) {
@@ -333,6 +364,13 @@ export function installAuditDriver(opts) {
           }
         }
       }
+      // 鏡界窗紀律（W1.5）：開鏡窗停火防星彈折返自傷（開鏡側不可觀測，整窗停火）。
+      const mirrorOpen = mirrorGuard && s.fsm && s.fsm.state === 'mirror';
+      if (mirrorOpen) d.holdFire = true;
+      if (d.inhaleHold && (!mirrorOpen || s.ammo > 0)) {
+        d.inhaleHold = false;
+        release(KEY.shoot);
+      }
       // 純標準星紀律：空匣補一發 jelly（模擬吸食補給怪；走正式 swallow 管線）；
       // 變身優勢量測時由 transformFlavor 供給線全權接管。
       if (grantSupply && !transformFlavor && s.ammo === 0 && now - d.lastGrantAt >= 1200) {
@@ -351,11 +389,62 @@ export function installAuditDriver(opts) {
         (best, b) => (Math.abs(b.x - s.px) < Math.abs(best.x - s.px) ? b : best),
         bodies[0],
       );
+      // 鏡界窗再吸（W1.5）：折返彈帶 inhalable——空匣且本體不貼身時面向來彈持吸，
+      // 接觸即回收為彈藥（免費彈藥獎勵理解）；彈藥入手或窗閉由上方釋放持鍵。
+      if (mirrorOpen && s.ammo === 0 && Math.abs(nearest.x - s.px) > 140) {
+        let inShot = null;
+        for (const sh of s.shots) {
+          if (inShot === null || Math.abs(sh.x - s.px) < Math.abs(inShot.x - s.px)) inShot = sh;
+        }
+        if (inShot && Math.abs(inShot.x - s.px) < 220) {
+          face(Math.abs(inShot.x - s.px) < 30 ? 0 : Math.sign(inShot.x - s.px));
+          if (!d.inhaleHold) {
+            d.inhaleHold = true;
+            press(KEY.shoot);
+          }
+          return;
+        }
+      }
+      // 雙生夾擊跳越（W1.5 讀招先於接觸迴避：對衝橫貫全場不可退避，必須跳越；
+      // twin 高 108px——單跳 98px 會被削，滿拍翅足高且覆蓋 EX 去同步第二拍）。
+      if (dodge && levelId === 12 && s.fsm && s.fsm.state === 'pincer') {
+        if (flap) hop(0, 3);
+        else jump();
+        return;
+      }
+      // 光束貼地紀律（W1.5）：折射光束為反空招——低束帶底緣高於站立頭頂，
+      // 貼地即免傷、跳躍反而自投（W1 高 bot p1:beam 傷害主因）；貼身仍地面退避。
+      if (dodge && levelId === 12 && s.fsm) {
+        const beamState = s.fsm.state === 'beam' || s.fsm.state === 'crossbeam';
+        if (beamState) {
+          const gap = Math.abs(nearest.x - s.px);
+          if (gap < 150) {
+            face(s.px >= nearest.x ? 1 : -1);
+            return;
+          }
+          if (s.ammo > 0 && now - d.lastShotAt >= 420) {
+            face(Math.sign(nearest.x - s.px || 1));
+            shoot();
+            return;
+          }
+          face(0);
+          return;
+        }
+      }
       // kite（完整策略）：L12 P2 雙子退射集火。
       if (kite && levelId === 12 && s.fsm && s.fsm.phase === 'p2' && bodies.length > 1) {
         const gap = Math.abs(nearest.x - s.px);
         if (gap < 110) {
-          face(s.px >= nearest.x ? 1 : -1);
+          const backDir = s.px >= nearest.x ? 1 : -1;
+          const backCornered =
+            (backDir < 0 && s.px < arenaLeft + 160) ||
+            (backDir > 0 && s.px > arenaLeft + view - 160);
+          // 角落黏死修補（W1.5）：退無可退時滿拍翅跨越換邊（同接觸迴避語彙）。
+          if (backCornered && flap) {
+            hop(-backDir, 3);
+            return;
+          }
+          face(backDir);
           jump();
           return;
         }
@@ -367,12 +456,17 @@ export function installAuditDriver(opts) {
         return;
       }
       // 貼身接觸傷迴避（全分級保命反射，但吃感知延遲）：120px 內反向撤離＋跳，
-      // 逼到牆角改朝魔王方向跳越換邊。
+      // 逼到牆角改朝魔王方向跳越換邊（W1.5：高階滿拍翅跨越——T2 §86 實證
+      // 淨高 211px > 本體高；單跳 98px 跨不過本體是 W1 高 bot 角落黏死主因）。
       if (Math.abs(nearest.x - s.px) < 120) {
         const escapeDir = s.px >= nearest.x ? 1 : -1;
         const cornered =
           (escapeDir < 0 && s.px < arenaLeft + 160) ||
           (escapeDir > 0 && s.px > arenaLeft + view - 160);
+        if (cornered && flap) {
+          hop(-escapeDir, 3);
+          return;
+        }
         face(cornered ? -escapeDir : escapeDir);
         jump();
         return;
@@ -388,24 +482,32 @@ export function installAuditDriver(opts) {
         return;
       }
       if (dodge) {
-        // 讀招迴避（中/高階）：L12 招式表。
-        if (levelId === 12 && s.fsm) {
-          if (s.fsm.state === 'beam' || s.fsm.state === 'pincer') {
-            jump();
-          } else if (s.fsm.state === 'crossbeam') {
-            if (jumpReady) jump();
-            else {
-              face(0);
+        // 讀招迴避（中/高階）：L12 招式表（beam/crossbeam/pincer 已於前段處理）。
+        if (levelId === 12 && s.fsm && (s.fsm.state === 'pillar' || s.fsm.state === 'rain')) {
+          face(s.px > center ? -1 : 1);
+          return;
+        }
+        // 全高行牆（W1.5，P4 稜光行牆 h≥100）：單跳 98px 不足——朝牆滿拍翅對穿
+        //（相對速度縮短交會時間，牆過即安全；遠離側逃相對速度歸零永被追上）。
+        if (flap) {
+          let wall = null;
+          for (const h of s.hazards) {
+            if (h.h >= 100 && h.y > 300 && Math.abs(h.x - s.px) < 280) {
+              if (wall === null || Math.abs(h.x - s.px) < Math.abs(wall.x - s.px)) wall = h;
             }
-            return;
-          } else if (s.fsm.state === 'pillar' || s.fsm.state === 'rain') {
-            face(s.px > center ? -1 : 1);
+          }
+          if (wall) {
+            hop(Math.sign(wall.x - s.px) || 1, 3);
             return;
           }
         }
-        // 低帶 hazard（晶柱/光束/糖漿波）帶內即跳。
+        // 低帶 hazard（晶柱/糖漿波）帶內即跳——排除全寬水平光束（h≤40 且 w≥400：
+        // 束帶僅擊中空中，跳＝自投，貼地由讀招/站樁分支承擔）。
         const lowHazard = s.hazards.some(
-          (h) => h.y > 320 && Math.abs(h.x - s.px) < Math.max(110, h.w / 2 + 36),
+          (h) =>
+            h.y > 320 &&
+            !(h.h <= 40 && h.w >= 400) &&
+            Math.abs(h.x - s.px) < Math.max(110, h.w / 2 + 36),
         );
         if (lowHazard) {
           jump();

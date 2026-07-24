@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-high-bot-full-strategy
+- 原因：#814 W1 分級 bot 量測揭示 high bot 全死 P1/P2（單跳 98px 跨不過本體角落黏死、光束反空招誤跳自投、鏡界窗持續射擊折返自傷），決策上限不足以量測 EX 門檻——boss 調參缺有效數據
+- 解法：BOT_TIERS 擴完整策略資料開關（flap/mirrorGuard/transformUse 僅 high 啟用）＋audit-driver 滿拍翅跨越（T2 211px 節拍）、光束貼地紀律、鏡界窗停火＋折返彈再吸、行牆對穿跳越、變身優勢解 tier 預設化，vitest anti-drift 鎖定（820 綠）
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-audit-driver-false-kill
