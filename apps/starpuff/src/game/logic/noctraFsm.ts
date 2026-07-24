@@ -48,13 +48,17 @@ export const NOCTRA = {
   cloakDurationMs: 1200,
 } as const;
 
-// Noctra EX 專屬（§58）：月蝕彈幕矩陣——分列直落彈網、每波留缺口通道。
+// Noctra EX 專屬（§58／§8.2 W3）：月蝕彈幕矩陣——分列直落彈網、每波留缺口
+// 通道；P4 月相雙血條＝亮月條（主池）破而不死→暗月型態（第二血條＝主池
+// 50%、隱形頻率 ×2、月牙軌跡變細），HUD 重灌換色沿 Prismix P4 慣例。
 export const EX_NOCTRA = {
   eclipseCols: 9,
   eclipseRows: 2,
   eclipseGapCols: 2,
   eclipseFallSpeed: 150,
   eclipseRowDelayMs: 520,
+  darkMoonHpRatio: 0.5,
+  darkSweepScaleMul: 0.65,
 } as const;
 
 export type NoctraAction =
@@ -71,7 +75,7 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: NOCTRA.enrageSpeedMultiplier,
   p3: NOCTRA.enrageSpeedMultiplier,
-  // p4 為 EX 專屬型態（#814）：Noctra 不可達，鍵值僅滿足 BossPhase 全鍵。
+  // P4 暗月型態（§8.2 W3）：節奏沿狂暴帶——壓力來自隱形頻率與月牙視認，非手速面板。
   p4: NOCTRA.enrageSpeedMultiplier,
 };
 
@@ -99,14 +103,21 @@ export function noctraMoveTable(
         { action: 'summon', weight: 2 },
         { action: 'cloak', weight: 1 },
       ];
-    // p4 為 EX 專屬型態（#814）：Noctra 不可達，沿 p3 招池滿足窮舉。
     case 'p3':
-    case 'p4':
       return [
         { action: 'barrage', weight: 3 },
         { action: 'sweep', weight: 3 },
         { action: 'bomb', weight: 2 },
         { action: 'cloak', weight: 1 },
+        ...(ex ? [{ action: 'eclipse', weight: 2 } as const] : []),
+      ];
+    // P4 暗月型態（§8.2 W3）：沿 p3 招池、隱形權重 ×2（蝕月斗篷高頻）。
+    case 'p4':
+      return [
+        { action: 'barrage', weight: 3 },
+        { action: 'sweep', weight: 3 },
+        { action: 'bomb', weight: 2 },
+        { action: 'cloak', weight: 2 },
         ...(ex ? [{ action: 'eclipse', weight: 2 } as const] : []),
       ];
     default: {
@@ -237,7 +248,8 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
       return hp;
     },
     get maxHp() {
-      return maxHp;
+      // P4 暗月（§8.2）：以暗月條為滿刻度（HUD 重灌換色，沿 Prismix P4 慣例）。
+      return phase === 'p4' ? Math.round(maxHp * EX_NOCTRA.darkMoonHpRatio) : maxHp;
     },
     get phase() {
       return phase;
@@ -275,7 +287,8 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
       if (defeated || amount <= 0) return [];
       hp = Math.max(0, hp - amount);
       const events: NoctraHitEvent[] = [{ kind: 'damaged', hp }];
-      const nextPhase = noctraPhaseForHp(hp, maxHp);
+      // P4 鎖存：暗月期不回落（noctraPhaseForHp 由 hp 推導會誤判 p3）。
+      const nextPhase = phase === 'p4' ? phase : noctraPhaseForHp(hp, maxHp);
       if (nextPhase !== phase) {
         const previousFactor = SPEED_FACTORS[phase];
         phase = nextPhase;
@@ -290,6 +303,14 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
           damageSinceDrop -= NOCTRA.minionSpawnHpStep;
           events.push({ kind: 'minionDrop' });
         }
+      } else if (ex && phase !== 'p4') {
+        // 月相雙血條（§8.2 W3）：亮月條破而不死——暗月條滿灌入 P4（僅一次）。
+        phase = 'p4';
+        hp = Math.round(maxHp * EX_NOCTRA.darkMoonHpRatio);
+        state = 'hover';
+        recentAttacks = [];
+        timerMs = NOCTRA.idleMs;
+        events.push({ kind: 'phase', phase });
       } else {
         defeated = true;
         events.push({ kind: 'defeated' });

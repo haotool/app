@@ -190,6 +190,30 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     startTintCycle({ r: 255, g: 255, b: 255 }, ENRAGE_TINT, 700);
   };
 
+  // 果凍狂潮（§8.2 W3）：全地板果凍化——週期全場重鋪（patch 壽命 3s、
+  // 重鋪 2.2s 覆蓋連續），玩家強制彈跳作戰沿 §5 果凍回彈既有機制。
+  let frenzyRepaveAccMs = 0;
+  const paveFrenzyFloor = () => {
+    const step = 90;
+    for (let x = arenaLeft() + step / 2; x < arenaLeft() + viewW(); x += step) {
+      spawnJellyPatch(x);
+    }
+  };
+  const startFrenzy = () => {
+    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    startTintCycle({ r: 255, g: 176, b: 208 }, { r: 255, g: 120, b: 168 }, 360);
+    playSfx('boss-roar', 1.3);
+    scene.cameras.main.flash(320, 255, 176, 208);
+    scene.cameras.main.shake(200, 0.007);
+    paveFrenzyFloor();
+    // 狂潮小條重灌（HUD 換刻度，沿 Prismix P4 慣例）。
+    emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+      hp: fsm.hp,
+      maxHp: fsm.maxHp,
+      damage: 0,
+    });
+  };
+
   // P3 進場演出（§30）：皇冠射出星環衝擊波（金色擴散環 + 星火），時停 0.3s 由 GameScene 接線。
   const startP3 = () => {
     sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
@@ -547,9 +571,14 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
             });
             break;
           case 'phase':
-            if (event.phase === 'p3') startP3();
+            if (event.phase === 'p4') startFrenzy();
+            else if (event.phase === 'p3') startP3();
             else startEnrage();
-            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
+            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+              phase: event.phase,
+              // 狂潮段果凍粉條色（§8.2 血條結構：終段獨立小條）。
+              ...(event.phase === 'p4' ? { barTint: 0xff8ab0 } : {}),
+            });
             break;
           case 'minionDrop':
             minionHandlers.forEach((handler) => handler());
@@ -576,6 +605,14 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
+      // 果凍狂潮（§8.2 W3）：全地板果凍化週期重鋪（壽命 3s、間隔 2.2s 覆蓋連續）。
+      if (fsm.phase === 'p4') {
+        frenzyRepaveAccMs += deltaMs;
+        if (frenzyRepaveAccMs >= 2200) {
+          frenzyRepaveAccMs = 0;
+          paveFrenzyFloor();
+        }
+      }
       // 果凍地塊壽命清理與彈起冷卻。
       jellyBounceCooldownMs = Math.max(0, jellyBounceCooldownMs - deltaMs);
       jellyPatches = prunePatches(jellyPatches, scene.time.now);

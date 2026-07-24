@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  EX_NOCTRA,
   NOCTRA,
   createNoctraFsm,
   noctraBombCount,
@@ -231,5 +232,42 @@ describe('難度根修基準值（§54 實測席稽核）', () => {
     const maxSpeed = NOCTRA.enrageSpeedMultiplier * 1.15;
     const presentation = 720 + (320 + NOCTRA.diveHoldMs + 420) / maxSpeed;
     expect(NOCTRA.diveDurationMs / maxSpeed).toBeGreaterThanOrEqual(presentation);
+  });
+});
+
+describe('EX P4 月相雙血條（§8.2 #814 W3）', () => {
+  it('亮月條破：EX 歸零不死——入暗月 P4、暗月條滿灌（maxHp 換刻度）', () => {
+    const fsm = createNoctraFsm({ ex: true, rng: createSeededRng(7) });
+    expect(fsm.maxHp).toBe(78);
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(true);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(false);
+    expect(fsm.phase).toBe('p4');
+    const darkHp = Math.round(78 * EX_NOCTRA.darkMoonHpRatio);
+    expect(fsm.hp).toBe(darkHp);
+    expect(fsm.maxHp).toBe(darkHp);
+  });
+
+  it('暗月鎖存不回落＋歸零真擊破；非 EX 歸零直接擊破', () => {
+    const fsm = createNoctraFsm({ ex: true, rng: createSeededRng(8) });
+    fsm.takeDamage(999);
+    fsm.takeDamage(5);
+    expect(fsm.phase).toBe('p4');
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+    const normal = createNoctraFsm({ rng: createSeededRng(9) });
+    const end = normal.takeDamage(999);
+    expect(end.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(end.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(false);
+  });
+
+  it('暗月差分紅線：隱形權重 ×2（p4 招池）、月牙縮比 <1、比例 0.5（各 50% 語意）', () => {
+    expect(EX_NOCTRA.darkMoonHpRatio).toBe(0.5);
+    expect(EX_NOCTRA.darkSweepScaleMul).toBeLessThan(1);
+    const p3Cloak = noctraMoveTable('p3', true).find((m) => m.action === 'cloak');
+    const p4Cloak = noctraMoveTable('p4', true).find((m) => m.action === 'cloak');
+    expect(p4Cloak?.weight).toBe((p3Cloak?.weight ?? 0) * 2);
+    // 暗月仍守可讀性：月蝕矩陣（EX 質性差分）續存於 p4 池。
+    expect(noctraMoveTable('p4', true).some((m) => m.action === 'eclipse')).toBe(true);
   });
 });

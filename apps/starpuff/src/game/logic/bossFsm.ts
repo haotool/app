@@ -29,16 +29,19 @@ export const EX_MODS = {
   speedMul: 1.15,
 } as const;
 
-// 果凍王 EX 專屬（§58）：擊破時分裂小果凍（呈現層走正式 spawn 管線）。
+// 果凍王 EX 專屬（§58／§8.2 W3）：狂潮入場分裂小果凍（呈現層走正式 spawn
+// 管線）；P4 果凍狂潮＝主條歸零不死——全地板果凍化強制彈跳作戰＋終段獨立
+// 小條（表定 HP 15），招池沿 p3、節奏沿狂暴帶（§8.1 面板紅線）。
 export const EX_JELLORD = {
   splitCount: 3,
+  frenzyHp: 15,
 } as const;
 
 const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: BOSS.enrageSpeedMultiplier,
   p3: BOSS.enrageSpeedMultiplier,
-  // p4 為 EX 專屬型態（#814）：Jellord 不可達，鍵值僅滿足 BossPhase 全鍵。
+  // P4 果凍狂潮（§8.2 W3）：節奏沿狂暴帶——壓力來自全地板果凍彈跳，非手速面板。
   p4: BOSS.enrageSpeedMultiplier,
 };
 
@@ -69,7 +72,7 @@ export const JELLORD_MOVES: Record<BossPhase, readonly WeightedMove<BossAction>[
     { action: 'slam', weight: 3 },
     { action: 'dash', weight: 2, condition: { band: 'far' } },
   ],
-  // p4 為 EX 專屬型態（#814）：Jellord 不可達，沿 p3 招池滿足全鍵。
+  // P4 果凍狂潮（§8.2 W3）：沿 p3 招池——型態差分＝全地板果凍化＋獨立小條。
   p4: [
     { action: 'jellyRain', weight: 3 },
     { action: 'slam', weight: 3 },
@@ -172,7 +175,8 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
       return hp;
     },
     get maxHp() {
-      return maxHp;
+      // P4 果凍狂潮（§8.2）：以狂潮小條為滿刻度（HUD 重灌換色，沿 Prismix P4 慣例）。
+      return phase === 'p4' ? EX_JELLORD.frenzyHp : maxHp;
     },
     get phase() {
       return phase;
@@ -210,7 +214,8 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
       if (defeated || amount <= 0) return [];
       hp = Math.max(0, hp - amount);
       const events: BossHitEvent[] = [{ kind: 'damaged', hp }];
-      const nextPhase = phaseForHp(hp, maxHp);
+      // P4 鎖存：狂潮期不回落（phaseForHp 由 hp 推導會把小條血量誤判 p3）。
+      const nextPhase = phase === 'p4' ? phase : phaseForHp(hp, maxHp);
       if (nextPhase !== phase) {
         // 狂暴即時生效：剩餘計時依新舊速度係數換算（p2→p3 同速不重複縮短）。
         const previousFactor = SPEED_FACTORS[phase];
@@ -224,11 +229,18 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
           damageSinceDrop -= BOSS.minionSpawnHpStep;
           events.push({ kind: 'minionDrop' });
         }
+      } else if (ex && phase !== 'p4') {
+        // 果凍狂潮（§8.2 W3）：EX 主條歸零不死——小條滿灌入 P4（僅一次）；
+        // 分裂小果凍隨狂潮入場（演出＋場上補給），真擊破不再重發。
+        phase = 'p4';
+        hp = EX_JELLORD.frenzyHp;
+        state = 'idle';
+        recentAttacks = [];
+        timerMs = BOSS.idleMs;
+        events.push({ kind: 'phase', phase }, { kind: 'split', count: EX_JELLORD.splitCount });
       } else {
         defeated = true;
         events.push({ kind: 'defeated' });
-        // EX 擊破分裂（§58）：死亡事件後追加，呈現層於魔王位置生成小果凍。
-        if (ex) events.push({ kind: 'split', count: EX_JELLORD.splitCount });
       }
       return events;
     },
