@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-833-alive-hook-scene-transition-guard
+- 原因：#833——debug hook \_\_sp.alive() 在場景切換瞬間對已銷毀 group 呼叫 countActive 拋錯，量化 bot 長跑誤報（production 不掛載，玩家零影響）
+- 解法：alive() 加 try-catch 回安全值 {total:0,inhalable:0}（沿同檔 enemies() 防禦慣例）；瀏覽器實測 3 輪 forceWin 轉場 10ms 連打 305 次零拋錯
 
 - 日期：2026-07-24
 - ID：reward-starpuff-832-gusty-recover-atbasey-gate
