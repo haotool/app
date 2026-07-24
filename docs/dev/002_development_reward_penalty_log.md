@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
+> 本次分數變化：0（reward 0、penalty 0、neutral 1）｜累計總分：+193
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：neutral-starpuff-backlog-train-changeset
+- 原因：backlog 八項修復列車（#831/#844/#832/#833/#830/#841/#840/#839）收尾——依 AGT-VER-01 補 release intent
+- 解法：新增 @app/starpuff patch changeset（使用者可感知修復描述）；全量 vitest 817/817 綠、lint 淨
 
 - 日期：2026-07-24
 - ID：reward-starpuff-839-touch-laptop-dual-mode-guidance
