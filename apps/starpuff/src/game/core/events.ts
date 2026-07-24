@@ -72,7 +72,8 @@ export interface GameEventPayloads {
   };
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
-  [GameEvents.BOSS_PHASE]: { phase: BossPhase };
+  // barTint（§8.2 W2）：階段換色覆寫（如 Syrona 暴走深紅）；未帶沿 HUD 預設。
+  [GameEvents.BOSS_PHASE]: { phase: BossPhase; barTint?: number };
   [GameEvents.BOSS_QUAKE]: { x: number; y: number };
   [GameEvents.BOSS_TWIN_HP]: { hpA: number; hpB: number; maxHp: number; active: boolean };
   [GameEvents.BOSS_DEFEATED]: { x: number; y: number };

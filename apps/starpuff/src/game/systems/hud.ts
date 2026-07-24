@@ -498,10 +498,11 @@ export function createHud(scene: Phaser.Scene): Hud {
       ease: 'Cubic.easeOut',
     });
   });
-  bind(GameEvents.BOSS_PHASE, ({ phase }) => {
+  bind(GameEvents.BOSS_PHASE, ({ phase, barTint }) => {
     if (phase === 'p2') barFill.setTint(0xd94b4b);
-    // P4 裂核殘響（§114 EX 限定）：第二血條金緋換色，與前段紅條區隔。
-    if (phase === 'p4') barFill.setTint(0xe8b45a);
+    // P4 專屬型態換色（§114/§8.2 EX 限定）：預設金緋（Prismix 裂核殘響）；
+    // barTint 覆寫供各王差分（Syrona 暴走深紅、Voidra 內核裸奔亮紫）。
+    if (phase === 'p4') barFill.setTint(barTint ?? 0xe8b45a);
   });
   // 雙節切換（§68）：分裂期各半條依雙子血量獨立縮放；合體/擊破回落單節。
   // 觀測點（v10 審查殘餘收尾）：最新雙節狀態寫入 registry 供 __sp.twinHud 直接觀測。

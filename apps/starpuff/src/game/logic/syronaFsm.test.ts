@@ -243,3 +243,62 @@ describe('場控保底位不變式（§74：每循環必留 ≥1 保底位）', 
     expect(SYRONA.crownDamageMul).toBe(2);
   });
 });
+
+describe('EX P4 窯心暴走（§8.2 #814 W2）', () => {
+  // EX 135：打至 hp 21（>135×0.15=20.25）停在 P3 暴走前緣。
+  const toRampageEdge = (): ReturnType<typeof createSyronaFsm> => {
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(5) });
+    fsm.takeDamage(114);
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.hp).toBe(21);
+    return fsm;
+  };
+
+  it('EX：P3 血量跌破 15% 入 P4 暴走（phase 事件帶出）', () => {
+    const fsm = toRampageEdge();
+    const events = fsm.takeDamage(1);
+    expect(events.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(true);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.defeated).toBe(false);
+  });
+
+  it('P4 皇冠唯一可傷點：體傷歸零無事件、皇冠傷照常結算', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    const before = fsm.hp;
+    expect(fsm.takeDamage(5, false)).toEqual([]);
+    expect(fsm.hp).toBe(before);
+    const events = fsm.takeDamage(5, true);
+    expect(events.some((e) => e.kind === 'damaged')).toBe(true);
+    expect(fsm.hp).toBe(before - 5);
+  });
+
+  it('P4 皇冠傷歸零真擊破；供彈保證律於暴走段延續', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    const drops = fsm.takeDamage(10, true);
+    expect(drops.some((e) => e.kind === 'minionDrop')).toBe(true);
+    const events = fsm.takeDamage(999, true);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(fsm.defeated).toBe(true);
+  });
+
+  it('非 EX 迴歸：跌破 15% 不入 P4、體傷可正常擊破', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(6) });
+    fsm.takeDamage(80);
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.hp).toBeLessThanOrEqual(Math.round(90 * 0.15));
+    expect(fsm.phase).toBe('p3');
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+  });
+
+  it('暴走沸騰紅線：閾值 15%、沸騰漲頂不淹沒高台保底位（anti-softlock）', () => {
+    expect(EX_SYRONA.rampageHpRatio).toBe(0.15);
+    // 漲頂（y 越小越高）必須低於最高浮台（304）——恆留一格立足保底。
+    const rampageTopY = SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx;
+    expect(rampageTopY).toBeGreaterThan(Math.min(...SYRONA.arenaPlatformYs));
+    // 暴走週期較 P3 大沸騰更急（EX boil 之下再收短）。
+    expect(EX_SYRONA.rampageBoilPeriodMul).toBeLessThan(EX_SYRONA.boilPeriodMul);
+  });
+});

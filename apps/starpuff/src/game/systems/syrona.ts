@@ -22,6 +22,9 @@ import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
 const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 170;
 const BODY_H = 150;
+// 窯心暴走（§8.2 W2）：本體紅化與血條深紅（與 p2 常規紅 0xd94b4b 區隔）。
+const RAMPAGE_BODY_TINT = 0xff8a6a;
+const RAMPAGE_BAR_TINT = 0xb8302e;
 const THRONE_Y = GROUND_TOP - BODY_H / 2;
 // 王窯座位置：arena 右緣 20% 帶（半定點，僅輕微浮動不追打）。
 const THRONE_X_RATIO = 0.8;
@@ -373,6 +376,12 @@ export function createSyrona(
       playSfx('break');
       scene.tweens.add({ targets: body, angle: 4, duration: 45, yoyo: true, repeat: 3 });
     }
+    // 窯心暴走（§8.2 W2）：P4 皇冠唯一可傷——體傷歸零回饋（金屬聲，不閃白）；
+    // 可傷性真值在 FSM takeDamage 皇冠閘（此處僅提前回饋省空轉）。
+    if (fsm.phase === 'p4' && !crown) {
+      playSfx('metal', 0.6);
+      return;
+    }
     // 皇冠弱點（§74）：頂帶命中 ×2 傷。
     const finalAmount = crown ? amount * SYRONA.crownDamageMul : amount;
     // 窯風三連（§75）：乘噴口升空期間命中累計；滿 3 觸發彩蛋（單場一次）。
@@ -383,7 +392,7 @@ export function createSyrona(
         hooks.onVentEgg();
       }
     }
-    for (const event of fsm.takeDamage(finalAmount)) {
+    for (const event of fsm.takeDamage(finalAmount, crown)) {
       switch (event.kind) {
         case 'damaged':
           flashWhite();
@@ -395,9 +404,24 @@ export function createSyrona(
           });
           break;
         case 'phase':
-          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
-          // 場控地形改寫（§74）：P2 潮汐入場、P3 大沸騰（週期縮短＋漲頂升高）。
-          if (event.phase === 'p2') {
+          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+            phase: event.phase,
+            // 暴走段紅化（§8.2）：血條深紅覆寫（僅 p4 生效，HUD 泛化管線）。
+            ...(event.phase === 'p4' ? { barTint: RAMPAGE_BAR_TINT } : {}),
+          });
+          // 場控地形改寫（§74）：P2 潮汐入場、P3 大沸騰（週期縮短＋漲頂升高）、
+          // P4 全場沸騰（§8.2 W2：週期再收短＋漲頂逼至高台下緣，保底位不淹）。
+          if (event.phase === 'p4') {
+            hooks.boilTide({
+              maxY: SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx,
+              periodMs: Math.round(SYRONA.tidePeriodMs * EX_SYRONA.rampageBoilPeriodMul),
+              dutyPct: SYRONA.tideDutyPct,
+            });
+            body.setTint(RAMPAGE_BODY_TINT);
+            playSfx('boss-roar', 1.3);
+            scene.cameras.main.flash(320, 255, 120, 90);
+            scene.cameras.main.shake(200, 0.007);
+          } else if (event.phase === 'p2') {
             hooks.startTide({
               maxY: SYRONA.tideMaxY,
               periodMs: SYRONA.tidePeriodMs,

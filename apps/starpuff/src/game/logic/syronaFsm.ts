@@ -53,12 +53,20 @@ export const SYRONA = {
 
 // Syrona EX 專屬差分（§74）：潮汐週期再 -25%、噴泉 ×5、Bubbla 上限 3、滴落點 6；
 // 質性差分＝噴泉順序隨機化（每循環洗牌出序，逼讀 telegraph 取代背板）。
+// P4 窯心暴走（§8.2 #814 W2）：HP<15% 全場沸騰、皇冠弱點成唯一可傷點——
+// 登頂技巧強制驗收；單條血量、暴走段紅化（呈現層/HUD）。
 export const EX_SYRONA = {
   fountainCount: 5,
   summonCap: 3,
   dripCount: 6,
   boilPeriodMul: SYRONA.boilPeriodMul * 0.75,
   shuffleFountain: true,
+  // 暴走閾值：總血 15%（EX 135 → hp ≤20 入暴走）。
+  rampageHpRatio: 0.15,
+  // 全場沸騰：週期較 EX 大沸騰再收短、漲頂再升——但恆低於最高浮台（304），
+  // 保底立足位不變式（anti-softlock：無計時失敗、退潮窗照常）。
+  rampageBoilPeriodMul: 0.45,
+  rampageBoilMaxYDeltaPx: -40,
 } as const;
 
 export type SyronaAction = 'idle' | 'fountain' | 'lob' | 'drip' | 'summon' | 'wave' | 'overload';
@@ -84,7 +92,8 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: SYRONA.enrageSpeedMultiplier,
   p3: SYRONA.enrageSpeedMultiplier,
-  // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 節奏。
+  // P4 窯心暴走（§8.2 W2）：節奏沿 p3——壓力來自全場沸騰＋皇冠唯一可傷，
+  // 非手速面板（單條血量語意）。
   p4: SYRONA.enrageSpeedMultiplier,
 };
 
@@ -112,7 +121,8 @@ export function syronaMoveTable(phase: BossPhase): readonly WeightedMove<SyronaA
         { action: 'fountain', weight: 3 },
         { action: 'summon', weight: 2 },
       ];
-    // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 招池。
+    // P4 窯心暴走（§8.2 W2）：沿 p3 招池——overload 升托即登頂皇冠輸出窗，
+    // 招池不變、可傷性裁決收斂於 takeDamage（皇冠唯一可傷）。
     case 'p3':
     case 'p4':
       return [
@@ -134,7 +144,9 @@ export interface SyronaFsm {
   readonly speedFactor: number;
   readonly defeated: boolean;
   tick(deltaMs: number): SyronaCommand | null;
-  takeDamage(amount: number): SyronaHitEvent[];
+  // 皇冠歸屬（§8.2 W2）：P4 窯心暴走期皇冠為唯一可傷點——體傷歸零；
+  // 倍傷結算仍在呈現層（crownDamageMul），此處僅收斂可傷性裁決。
+  takeDamage(amount: number, crown?: boolean): SyronaHitEvent[];
   // 雷化鏈電中斷召喚（§58 慣例）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
@@ -283,8 +295,10 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       timerMs += durationMs(state);
       return commandOf(state);
     },
-    takeDamage(amount: number): SyronaHitEvent[] {
+    takeDamage(amount: number, crown = false): SyronaHitEvent[] {
       if (defeated || amount <= 0) return [];
+      // 窯心暴走（§8.2 W2）：P4 皇冠成唯一可傷點——體傷歸零（登頂強制驗收）。
+      if (phase === 'p4' && !crown) return [];
       const events: SyronaHitEvent[] = [];
       hp = Math.max(0, hp - amount);
       events.push({ kind: 'damaged', hp });
@@ -298,9 +312,13 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
         damageSinceDrop -= SYRONA.minionSpawnHpStep;
         events.push({ kind: 'minionDrop' });
       }
-      // 階段轉換：跨雙閾值單次受擊依序帶出 phase 事件（p1→p2→p3 不跳段）。
+      // 階段轉換：跨多閾值單次受擊依序帶出 phase 事件（p1→p2→p3→p4 不跳段）；
+      // 暴走段（p4）EX 限定，非 EX 停在 p3 沿一般擊破路徑。
       if (phase === 'p1' && hp <= maxHp * SYRONA.p2HpRatio) enterPhase('p2', events);
       if (phase === 'p2' && hp <= maxHp * SYRONA.p3HpRatio) enterPhase('p3', events);
+      if (ex && phase === 'p3' && hp <= maxHp * EX_SYRONA.rampageHpRatio) {
+        enterPhase('p4', events);
+      }
       return events;
     },
     interruptSummon(): boolean {

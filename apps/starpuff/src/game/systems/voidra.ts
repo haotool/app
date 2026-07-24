@@ -16,6 +16,9 @@ import { ensureFxTextures, spawnTelegraph } from './fx';
 
 const GROUND_TOP = VIEW.height - 80;
 const BODY_SIZE = 140;
+// 內核裸奔（§8.2 W2）：裸核亮紫（外殼深紫破裂後的能量核視覺）與血條換色。
+const INNER_CORE_TINT = 0xc09aff;
+const INNER_BAR_TINT = 0x9a6aff;
 // 核心錨點：P1 中高懸浮、P2 升頂不可及、過熱窗/P3 下沉可打帶。
 const ANCHOR_P1_Y = 175;
 const ANCHOR_TOP_Y = 26;
@@ -551,7 +554,28 @@ export function createVoidra(
           });
           break;
         case 'phase':
-          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
+          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+            phase: event.phase,
+            ...(event.phase === 'p4' ? { barTint: INNER_BAR_TINT } : {}),
+          });
+          // 外核破裂（§8.2 W2）：內核裸奔——體積 ×0.6、亮紫裸核、第二血條滿灌
+          //（HUD damage 0 重灌換刻度，沿 Prismix P4 慣例）。
+          if (event.phase === 'p4') {
+            body.setDisplaySize(
+              BODY_SIZE * EX_VOIDRA.innerScaleMul,
+              BODY_SIZE * EX_VOIDRA.innerScaleMul,
+            );
+            body.setTint(INNER_CORE_TINT);
+            playSfx('break', 1.2);
+            playSfx('boss-roar', 1.1);
+            scene.cameras.main.flash(320, 190, 150, 255);
+            scene.cameras.main.shake(200, 0.008);
+            emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+              hp: fsm.hp,
+              maxHp: fsm.maxHp,
+              damage: 0,
+            });
+          }
           if (event.phase === 'p2') enterSurvival();
           // 傷害驅動提前入 P3（過熱窗打穿 40%）：survivalEnd 不會再發，直接收斂。
           if (event.phase === 'p3') {
@@ -611,7 +635,9 @@ export function createVoidra(
       if (fsm.overheatActive) return { x: arenaCx(), y: ANCHOR_OVERHEAT_Y + bob };
       return { x: arenaCx() + sway, y: ANCHOR_TOP_Y + bob };
     }
-    if (fsm.phase === 'p3') return { x: arenaCx() + sway, y: ANCHOR_P3_Y + bob };
+    if (fsm.phase === 'p3' || fsm.phase === 'p4') {
+      return { x: arenaCx() + sway, y: ANCHOR_P3_Y + bob };
+    }
     return { x: arenaCx() + sway, y: ANCHOR_P1_Y + bob };
   };
 
@@ -696,7 +722,9 @@ export function createVoidra(
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 核心逼近錨點（§64 慣例）：單 tick 位移受限，階段切換平滑滑移。
-      const next = approachPoint({ x: body.x, y: body.y }, anchorPoint(), APPROACH_SPEED, deltaMs);
+      // 內核裸奔（§8.2 W2）：移速 ×1.4（EX_VOIDRA SSOT）。
+      const approachSpeed = APPROACH_SPEED * (fsm.phase === 'p4' ? EX_VOIDRA.innerSpeedMul : 1);
+      const next = approachPoint({ x: body.x, y: body.y }, anchorPoint(), approachSpeed, deltaMs);
       body.setPosition(next.x, next.y);
       // P2 不可及帶（§82）：核心高於可打帶時停用受擊體（星彈穿過不消耗判定）。
       const reachable = fsm.phase !== 'p2' || body.y > ANCHOR_TOP_Y + 60;
@@ -818,9 +846,9 @@ export function createVoidra(
     // FSM 重置至該段起點；P1 死亡回 false 走一般敗北流程。
     trySegmentRespawn() {
       if (!active || dying) return false;
-      // 段起點重試僅支援 p2/p3（p4 為 EX 專屬型態，Voidra 真 P4 於 W3 落地）。
+      // 段起點重試支援 p2/p3/p4（§8.2 W2：p4 內核池滿灌，沿 Prismix W1.6 慣例）。
       const segment = fsm.phase;
-      if (segment !== 'p2' && segment !== 'p3') return false;
+      if (segment !== 'p2' && segment !== 'p3' && segment !== 'p4') return false;
       clearOrdnance();
       clearShards();
       // 殘留 delayedCall 全清（審查修復）：死亡前排程的爪擊/晶柱/彈幕不得於新段憑空觸發。
@@ -836,6 +864,7 @@ export function createVoidra(
         hooks.setGravityScale(null);
         enterSurvival();
       } else {
+        // p3/p4 同場地物理（低重力沿用）；p4 縮體視覺已於入段套用、重試不重播演出。
         hooks.setBombardment(null);
         hooks.setGravityScale(VOIDRA.p3GravityScale);
       }

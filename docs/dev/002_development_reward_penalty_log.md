@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w2-syrona-voidra-ex-p4
+- 原因：#814 W2——後二王 EX 僅數值差分無專屬型態：Syrona 缺登頂技巧驗收終局、Voidra 缺雙血條結構（§8.2 表未落地）
+- 解法：Syrona EX P4 窯心暴走（15% 閾值、皇冠唯一可傷收斂 FSM takeDamage、全場沸騰不淹高台保底）＋Voidra EX P4 內核裸奔（外核 60/內核 40 雙血條 innerHpRatio 2/3、×0.6/×1.4/×0.8、段重試擴 p4）＋HUD barTint 泛化（零新系統），FSM 紅燈先行 12 案、全套 841 綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w16-checkpoint-glide-cycle

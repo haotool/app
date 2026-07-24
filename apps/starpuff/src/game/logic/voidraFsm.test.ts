@@ -397,3 +397,76 @@ describe('Voidra EX 差分（§82）', () => {
     expect(EX_VOIDRA.bombardmentDensityMul).toBe(1.25);
   });
 });
+
+describe('EX P4 內核裸奔（§8.2 #814 W2）', () => {
+  const toExP3 = (seed = 3): ReturnType<typeof createVoidraFsm> => {
+    const fsm = createVoidraFsm({ ex: true, rng: createSeededRng(seed) });
+    fsm.takeDamage(Math.ceil(165 * 0.31));
+    expect(fsm.phase).toBe('p2');
+    tickUntil(fsm, 'overheat', 100);
+    fsm.takeDamage(60);
+    expect(fsm.phase).toBe('p3');
+    return fsm;
+  };
+  const innerMax = Math.round(165 * EX_VOIDRA.innerHpRatio);
+
+  it('外核破裂：EX P3 歸零不死——入 P4、內核血池滿灌（maxHp 換刻度）', () => {
+    const fsm = toExP3();
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(true);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(false);
+    expect(fsm.defeated).toBe(false);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(innerMax);
+    expect(fsm.maxHp).toBe(innerMax);
+  });
+
+  it('雙血條配比：外核 60%／內核 40%（innerHpRatio 2/3 推導）', () => {
+    const outer = Math.round(110 * EX_MODS.hpMul);
+    expect(Math.abs(outer / (outer + innerMax) - 0.6)).toBeLessThan(0.005);
+    expect(Math.abs(innerMax / (outer + innerMax) - 0.4)).toBeLessThan(0.005);
+  });
+
+  it('P4 歸零真擊破（內核僅此一池，不再重生）', () => {
+    const fsm = toExP3();
+    fsm.takeDamage(999);
+    expect(fsm.phase).toBe('p4');
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(events.some((e) => e.kind === 'phase')).toBe(false);
+    expect(fsm.defeated).toBe(true);
+  });
+
+  it('裸奔節奏：招式間隔 ×0.8（p4 speedFactor＝p3 ÷ innerIntervalMul）', () => {
+    const fsm = toExP3();
+    const p3Speed = fsm.speedFactor;
+    fsm.takeDamage(999);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.speedFactor).toBeCloseTo(p3Speed / EX_VOIDRA.innerIntervalMul, 5);
+  });
+
+  it('段起點重試擴 P4：resetToPhase 回內核滿灌', () => {
+    const fsm = toExP3();
+    fsm.takeDamage(999);
+    fsm.takeDamage(30);
+    expect(fsm.hp).toBe(innerMax - 30);
+    fsm.resetToPhase('p4');
+    expect(fsm.hp).toBe(innerMax);
+    expect(fsm.phase).toBe('p4');
+  });
+
+  it('非 EX 迴歸：P3 歸零直接擊破（無內核）', () => {
+    const fsm = createVoidraFsm({ rng: createSeededRng(4) });
+    fsm.takeDamage(33);
+    tickUntil(fsm, 'overheat', 100);
+    fsm.takeDamage(40);
+    expect(fsm.phase).toBe('p3');
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+  });
+
+  it('裸奔體積/速度常數紅線：×0.6／×1.4（呈現層 SSOT）', () => {
+    expect(EX_VOIDRA.innerScaleMul).toBe(0.6);
+    expect(EX_VOIDRA.innerSpeedMul).toBe(1.4);
+  });
+});

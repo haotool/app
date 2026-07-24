@@ -75,9 +75,16 @@ export const VOIDRA_SURVIVAL = {
 
 // Voidra EX 專屬差分（§82）：P2 轟炸密度 +25%（呈現層 meteor 間隔 ÷1.25）、
 // P3 螺旋三層；HP 沿 EX_MODS 共用 ×1.5（兩魔王既成慣例，主計畫 §12-v1.2）。
+// P4 內核裸奔（§8.2 #814 W2）：外核（既有三段全池）破裂不死——內核獨立血池
+// 滿灌（雙血條 外核 60%／內核 40%＝innerHpRatio 2/3 推導：165:110），
+// 體積 ×0.6、移速 ×1.4、招式間隔 ×0.8（僵直窗/telegraph 固定不縮，可讀性紅線）。
 export const EX_VOIDRA = {
   bombardmentDensityMul: 1.25,
   barrageSpiralLayers: 3,
+  innerHpRatio: 2 / 3,
+  innerScaleMul: 0.6,
+  innerSpeedMul: 1.4,
+  innerIntervalMul: 0.8,
 } as const;
 
 export type VoidraAction =
@@ -121,8 +128,9 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: 1,
   p3: VOIDRA.enrageSpeedMultiplier,
-  // p4 為 EX 專屬型態（#814）：Voidra 真 P4 於 W3 落地，暫沿 p3 節奏。
-  p4: VOIDRA.enrageSpeedMultiplier,
+  // P4 內核裸奔（§8.2 W2）：招式間隔 ×0.8＝執行時長分母 ÷0.8（僵直窗 idleMs
+  // 與吸流窗固定值不經此縮放，hit window 不變式保留）。
+  p4: VOIDRA.enrageSpeedMultiplier / EX_VOIDRA.innerIntervalMul,
 };
 
 // 加權選招表（§5 #813 W3）：P1/P3 固定循環改權重驅動（沿 §111.1 moveTable SSOT）；
@@ -138,7 +146,8 @@ export function voidraMoveTable(phase: BossPhase): readonly WeightedMove<VoidraA
       ];
     case 'p2':
       return [{ action: 'survival', weight: 1 }];
-    // p4 為 EX 專屬型態（#814）：Voidra 真 P4 於 W3 落地，暫沿 p3 招池。
+    // P4 內核裸奔（§8.2 W2）：沿 p3 招池（barrage/crush/siphon）——差分在
+    // 節奏（÷0.8）與體積/移速（呈現層 EX_VOIDRA SSOT），招式語彙不變。
     case 'p3':
     case 'p4':
       return [
@@ -174,8 +183,9 @@ export interface VoidraFsm {
   collectShard(): { collected: number; complete: boolean };
   // 星光虹吸抽取回餵（§113）：呈現層 siphonDrain 抽彈匣頂槽成功後呼叫；夾限至上限。
   absorbSiphonStar(): { shields: number; absorbed: boolean };
-  // 段起點重試（§82 anti-softlock）：P2/P3 死亡不回滾整場，重置至該段起點。
-  resetToPhase(phase: 'p2' | 'p3'): void;
+  // 段起點重試（§82 anti-softlock）：P2/P3/P4 死亡不回滾整場，重置至該段起點
+  //（P4 為 EX 內核池滿灌，沿 Prismix W1.6 段檢查點慣例）。
+  resetToPhase(phase: 'p2' | 'p3' | 'p4'): void;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
 }
@@ -191,6 +201,8 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
   const rng = options.rng ?? Math.random;
   const maxHp = Math.round(VOIDRA.maxHp * (ex ? EX_MODS.hpMul : 1));
   const spiralLayers = ex ? EX_VOIDRA.barrageSpiralLayers : VOIDRA.barrageSpiralLayers;
+  // P4 內核血池（§8.2 W2 EX 限定）：外核破裂後的獨立第二血條。
+  const innerMax = ex ? Math.round(maxHp * EX_VOIDRA.innerHpRatio) : 0;
 
   let hp = maxHp;
   let phase: BossPhase = 'p1';
@@ -289,7 +301,8 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       return hp;
     },
     get maxHp() {
-      return maxHp;
+      // P4 內核裸奔（§8.2）：以內核池為滿刻度（HUD 血條重灌換色，沿 Prismix P4 慣例）。
+      return phase === 'p4' ? innerMax : maxHp;
     },
     get phase() {
       return phase;
@@ -378,6 +391,14 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       hp = Math.max(0, hp - incoming);
       events.push({ kind: 'damaged', hp });
       if (hp <= 0) {
+        // 外核破裂（§8.2 W2）：EX 未入內核前歸零不死——內核裸奔滿灌（僅一次）；
+        // 護盾層防禦性清空（比照段重試語義）。
+        if (ex && phase !== 'p4') {
+          hp = innerMax;
+          shieldLayers = 0;
+          enterPhase('p4', events);
+          return events;
+        }
         defeated = true;
         events.push({ kind: 'defeated' });
         return events;
@@ -408,10 +429,11 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
       shieldLayers = next;
       return { shields: shieldLayers, absorbed };
     },
-    resetToPhase(target: 'p2' | 'p3'): void {
+    resetToPhase(target: 'p2' | 'p3' | 'p4'): void {
       if (defeated) return;
+      // P4 段起點＝內核滿灌；P2/P3 沿階段閾值比例。
       const ratio = target === 'p2' ? VOIDRA.p2HpRatio : VOIDRA.p3HpRatio;
-      hp = Math.round(maxHp * ratio);
+      hp = target === 'p4' ? innerMax : Math.round(maxHp * ratio);
       damageSinceDrop = 0;
       shards = 0;
       shardsCompleteEmitted = false;
