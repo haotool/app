@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+185
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+186
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-831-star-pool-blade-headroom
+- 原因：#831——風刃與星彈共用 stars 池但 STAR_POOL_MAX 只涵蓋滿匣散射，變身前在飛星彈疊加風化連發可池滿致風刃靜默生成失敗（不扣資源但輸出消失）
+- 解法：池公式納入風刃最大併發（(最大視寬＋裁切邊界)÷刃速÷CD 上取整的物理上界）；否決獨立池（4+ 處 overlap 重複接線）與失敗回饋（回饋≠修復）；滿匣散射在飛＋連發風刃全數生成回歸測試鎖定
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-starstorm-star-source

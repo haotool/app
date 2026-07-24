@@ -9,7 +9,6 @@ import {
   SLAM,
   STAR,
   STARSTORM,
-  STAR_MIXES,
   getMix,
   type MagazineSlot,
   type StarFlavor,
@@ -27,6 +26,8 @@ import { tickBoomerangBody } from '../logic/enemyFsm';
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
   SHELL_SHIELD,
+  STAR_CULL_MARGIN_PX,
+  STAR_POOL_MAX,
   advanceShield,
   createShieldState,
   effectiveInvulnMs,
@@ -144,10 +145,7 @@ type Pose =
 
 const PLAYER_SIZE = 48;
 const STAR_SIZE = 24;
-// 星彈池上限（#820）：滿匣連續散射理論同時需求 = maxAmmo × 最大散射數，由 config 派生
-// 免第二份硬編；扣彈先於生成（fireStar→launchStar），池不足會靜默吞星。
-export const STAR_POOL_MAX =
-  STAR.maxAmmo * Math.max(1, ...STAR_MIXES.map((mix) => mix.scatterCount));
+// 星彈池上限與視野裁切邊界（#820/#831）SSOT 收斂於 logic/skills.ts（滿匣散射＋風刃併發）。
 // 主角描邊（§45）：深紫近黑剪影色與放大比（48px 本體外露約 2.4px 輪廓環）。
 const HERO_OUTLINE_COLOR = 0x2f2a3d;
 const HERO_OUTLINE_SCALE = 1.1;
@@ -944,7 +942,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       const view = scene.cameras.main.worldView;
       for (const child of stars.getChildren()) {
         const star = child as Phaser.Physics.Arcade.Sprite;
-        if (star.active && (star.x < view.x - 40 || star.x > view.right + 40)) recycleStar(star);
+        const margin = STAR_CULL_MARGIN_PX;
+        if (star.active && (star.x < view.x - margin || star.x > view.right + margin)) {
+          recycleStar(star);
+        }
       }
       steerBoomerangStars(deltaMs);
     },
