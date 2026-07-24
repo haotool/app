@@ -262,22 +262,29 @@ describe('EX P4 窯心暴走（§8.2 #814 W2）', () => {
     expect(fsm.defeated).toBe(false);
   });
 
-  it('P4 皇冠唯一可傷點：體傷歸零無事件、皇冠傷照常結算', () => {
+  it('P4 皇冠唯一可傷點：體傷歸零無事件、皇冠傷經共鳴節拍結算', () => {
     const fsm = toRampageEdge();
     fsm.takeDamage(1);
     const before = fsm.hp;
     expect(fsm.takeDamage(5, false)).toEqual([]);
     expect(fsm.hp).toBe(before);
-    const events = fsm.takeDamage(5, true);
-    expect(events.some((e) => e.kind === 'damaged')).toBe(true);
-    expect(fsm.hp).toBe(before - 5);
+    // 共鳴語意（W3）：首發孤發減額 1、節拍內第二發全額。
+    const first = fsm.takeDamage(5, true);
+    expect(first.some((e) => e.kind === 'damaged')).toBe(true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    expect(fsm.hp).toBe(before - EX_SYRONA.crownGlanceDamage - 5);
   });
 
-  it('P4 皇冠傷歸零真擊破；供彈保證律於暴走段延續', () => {
+  it('P4 皇冠傷歸零真擊破；供彈保證律於暴走段延續（節拍傷累計）', () => {
     const fsm = toRampageEdge();
     fsm.takeDamage(1);
+    fsm.takeDamage(10, true);
+    fsm.tick(300);
+    // 節拍第二發全額 10：孤發 1＋全額 10 ≥ 10 → 補給掉落。
     const drops = fsm.takeDamage(10, true);
     expect(drops.some((e) => e.kind === 'minionDrop')).toBe(true);
+    fsm.tick(300);
     const events = fsm.takeDamage(999, true);
     expect(events.some((e) => e.kind === 'defeated')).toBe(true);
     expect(fsm.defeated).toBe(true);
@@ -291,6 +298,36 @@ describe('EX P4 窯心暴走（§8.2 #814 W2）', () => {
     expect(fsm.phase).toBe('p3');
     const events = fsm.takeDamage(999);
     expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+  });
+
+  it('P4 皇冠共鳴連擊（W3 Blocking）：孤發減額 1、節拍內連發全額', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    expect(fsm.phase).toBe('p4');
+    const start = fsm.hp;
+    // 孤發（偶中）：僅 1 點——overload 升托/高台誤射不再能偶中秒池。
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(start - EX_SYRONA.crownGlanceDamage);
+    // 節拍內（≤crownComboWindowMs）第二發起全額。
+    fsm.tick(400);
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(start - EX_SYRONA.crownGlanceDamage - 10);
+    // 斷拍（推過窗）後再中：回孤發減額。
+    fsm.tick(EX_SYRONA.crownComboWindowMs + 200);
+    const before = fsm.hp;
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(before - EX_SYRONA.crownGlanceDamage);
+  });
+
+  it('皇冠共鳴紅線：窗 ≥ 高階節拍間隔 2 倍（不罰主動節拍）、孤發 >0（anti-softlock）', () => {
+    // 高階登頂節拍命中間隔 ~200-500ms：窗必須寬鬆容錯。
+    expect(EX_SYRONA.crownComboWindowMs).toBeGreaterThanOrEqual(800);
+    // 孤發保底 >0：理論恆可磨（基礎星彈恆可通關紅線）。
+    expect(EX_SYRONA.crownGlanceDamage).toBeGreaterThan(0);
+    // 非 P4 皇冠傷不受連擊窗影響（機制僅暴走段生效）。
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(9) });
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(125);
   });
 
   it('暴走沸騰紅線：閾值 15%、沸騰漲頂不淹沒高台保底位（anti-softlock）', () => {

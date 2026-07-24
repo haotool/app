@@ -184,11 +184,14 @@ export function createSyrona(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
+  // 受擊白閃（W3 Should-fix 同構修復）：P4 窯心暴走紅化為段位相色，
+  // 白閃回落復原而非 clearTint 洗掉。
   const flashWhite = () => {
     body.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     delay(90, () => {
       body.setTintMode(Phaser.TintModes.MULTIPLY);
-      body.clearTint();
+      if (fsm.phase === 'p4') body.setTint(RAMPAGE_BODY_TINT);
+      else body.clearTint();
     });
   };
 

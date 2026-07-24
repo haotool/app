@@ -154,11 +154,14 @@ export function createVoidra(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
+  // 受擊白閃（W3 Should-fix：restore-tint 沿 prismix 模式）：P4 內核裸奔
+  // 亮紫為段位相色，白閃回落必須復原而非 clearTint 洗掉。
   const flashWhite = () => {
     body.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     delay(90, () => {
       body.setTintMode(Phaser.TintModes.MULTIPLY);
-      body.clearTint();
+      if (fsm.phase === 'p4') body.setTint(INNER_CORE_TINT);
+      else body.clearTint();
     });
   };
 
@@ -842,11 +845,12 @@ export function createVoidra(
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
-    // 段起點重試（§82 anti-softlock）：P2/P3 死亡不回滾整場——彈幕/星屑/轟炸清場，
-    // FSM 重置至該段起點；P1 死亡回 false 走一般敗北流程。
+    // 段起點重試（§82 anti-softlock）：P2/P3/P4 死亡不回滾整場——彈幕/星屑/
+    // 轟炸清場後 FSM 段內復位；P1 死亡回 false 走一般敗北流程。
     trySegmentRespawn() {
       if (!active || dying) return false;
-      // 段起點重試支援 p2/p3/p4（§8.2 W2：p4 內核池滿灌，沿 Prismix W1.6 慣例）。
+      // 段重試語意分流（W3）：p2/p3 沿段門檻回灌（波次表重播 anti-softlock）、
+      // p4 進度保留（PM 裁決 A：內核血不回灌）。
       const segment = fsm.phase;
       if (segment !== 'p2' && segment !== 'p3' && segment !== 'p4') return false;
       clearOrdnance();
@@ -873,6 +877,10 @@ export function createVoidra(
         hp: fsm.hp,
         maxHp: fsm.maxHp,
         damage: 0,
+      });
+      // 段重試語意提示（W3）：同王雙語意局內區分（toasts 一次性顯示）。
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, {
+        semantics: segment === 'p4' ? 'kept' : 'refill',
       });
       return true;
     },

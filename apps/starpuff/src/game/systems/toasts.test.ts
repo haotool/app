@@ -40,6 +40,7 @@ function makeHarness(): {
     add: { text: chainable, image: chainable },
     scale: { width: 854, height: 480 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
+    events: { on: vi.fn(), off: vi.fn(), once: vi.fn() },
     tweens: {
       chain: vi.fn((config: TweenCapture) => chains.push(config)),
       add: vi.fn(),
@@ -102,6 +103,7 @@ describe('彩蛋慶祝與星味提示（§24/§46）', () => {
       },
       scale: { width: 854, height: 480 },
       cameras: { main: { worldView: { x: 0, right: 854 } } },
+      events: { on: vi.fn(), off: vi.fn(), once: vi.fn() },
       tweens: { chain: vi.fn(), add: vi.fn() },
     } as unknown as Phaser.Scene;
     const clamped = createToasts(scene, hooks);

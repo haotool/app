@@ -1023,6 +1023,8 @@ export function createPrismix(
         maxHp: fsm.maxHp,
         damage: 0,
       });
+      // 段重試語意提示（W3）：Prismix P3/P4 為進度保留（PM 裁決 A）。
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
       return true;
     },
   };

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+197
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+199
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-crown-resonance-lock
+- 原因：W3 合議 Blocking——crown tier gate 後 L16 EX low 仍 33%（Grok 席與交叉量測 n 較大口徑）：overload 升托/高台誤射的 incidental 皇冠 ×2 傷可 2 發偶中秒掉暴走池；另同王雙語意（回灌/保留）無局內提示、P4 段位相色被受擊白閃 clearTint 洗掉
+- 解法：皇冠共鳴連擊（900ms 節拍窗內全額、孤發減額 1 保底 anti-softlock）收斂 incidental 可傷面不罰主動節拍＋BOSS_SEGMENT_RETRY 事件→toasts 雙語意浮字（每語意每局一次、GameScene 零改動避 1200 閘）＋voidra/syrona flashWhite restore-tint 同構修復＋兩系統層 tint/HUD 斷言 harness（syrona 首建）＋GAME_DESIGN 漂移修正（speedFactor 實值/cap 口徑）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-jellord-noctra-true-p4
+- 原因：W3 合議 HIGH——Grok 查證屬實：Jellord/Noctra p4 為不可達 stub（§8.2 果凍狂潮/月相雙血條未落地），與「每王型態+1」使用者需求宣稱不符
+- 解法：Jellord EX P4 果凍狂潮（主條破小條 15 滿灌＋全地板果凍週期重鋪強制彈跳＋split 移狂潮入場＋phaseForHp 鎖存防回落）＋Noctra EX P4 月相雙血條（亮月破暗月 0.5 滿灌＋隱形權重 ×2＋月牙縮體 0.65 不縮窗）——紅燈先行 7 案、招池/節奏沿 p3 守 §8.1 面板紅線
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-crown-cadence-tier-gate

@@ -2203,7 +2203,8 @@ telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §1
   僅可重生一次（p4 歸零才 `defeated`）。
 - EX 雙子連破：掙扎窗補殺彩蛋保留（twinFinish 照發），改跳過 P3 直入 P4
   （跳段不跳王——技巧獎勵仍成立且 EX 專屬型態不可跳過）。
-- P4 招池：稜光行牆 3／彈幕 3／晶雨 2；P4 speedFactor 1.25（疊 EX 1.15 ≈ 1.44）。
+- P4 招池：稜光行牆 3／彈幕 3／晶雨 2；P4 speedFactor 沿狂暴帶 1.15（疊 EX
+  1.15 ≈ 1.32——W1.6 合規修正：初版 1.25 終段加壓違反 §8.1 面板紅線已收回）。
 - 新招「稜光行牆」（sweep）：起掃側 rng 抽側（同 seed 可重放）、側緣豎線閃爍
   telegraph 700ms（固定不縮放）後，全高 120px 光牆以 180px/s 橫掃全場，出界回收。
   跳越窗＝跳＋拍翅時機（`maxJumpClearancePx≈210` vs 牆高 120，vitest 錨定
@@ -2276,8 +2277,50 @@ BOSS_DAMAGED 既有管線泛化（barTint 覆寫欄，零新 HUD 系統）。
 | L16 Syrona  | 67% ✓（TTK 32s）        | 17% ✓          | 100%（0 死）             |
 | L20 Voidra  | 67% ✓（TTK 236s）       | 0% ✓           | 100%（2.17 死）          |
 
-- 十門檻全 PASS（#814 驗收標準達成）。量測口徑：cap 540s（L12/L20 依
-  checkpoint 架構通關期望調升）、bot 分級 SSOT `difficulty.BOT_TIERS`
-  （low 恆基礎策略——bossForage/crown 節拍等完整策略均 tier gate）。
+- 十門檻全 PASS（#814 驗收標準達成）。量測口徑：EX high 一律 cap 540s
+  （checkpoint 架構通關期望 200-400s；歷史 artifact 中 L20 曾以 360s 量得
+  67%——W3 已按 540 口徑重跑回填，見 §115.4）、bot 分級 SSOT
+  `difficulty.BOT_TIERS`（low 恆基礎策略——bossForage/crown 節拍等完整
+  策略均 tier gate）。
 - L12 決定性因素＝段重試進度保留（回灌語意 0-17% → 保留語意 100%）；
   L16 low 首測 33% 為 crown 節拍漏 tier gate 的量測污染，gate 後 17%。
+
+## 116. v24 EX 全面重設計 W3——Jellord 果凍狂潮＋Noctra 月相雙血條＋皇冠共鳴（#814；T6 收斂）
+
+W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴走段 incidental
+可傷面收斂＋段重試雙語意局內提示。
+
+### 116.1 Jellord EX P4「果凍狂潮」（bossFsm SSOT）
+
+- 觸發：EX 限定，主條（90）歸零不死——狂潮小條滿灌（`EX_JELLORD.frenzyHp`
+  15，§8.2 表定值），phase 單向鎖存（`phaseForHp` 由 hp 推導不回落）。
+- 全地板果凍化：週期全場重鋪果凍地塊（壽命 3s／重鋪 2.2s 覆蓋連續）——
+  強制彈跳中作戰沿 §5 果凍回彈既有機制（零新系統）。
+- 分裂小果凍（§58 EX 彩蛋）改隨狂潮入場（演出＋場上補給），真擊破不重發。
+- 血條：單條＋狂潮段果凍粉（barTint 泛化）；招池/節奏沿 p3（§8.1 面板紅線）。
+
+### 116.2 Noctra EX P4「月相雙血條」（noctraFsm SSOT）
+
+- 觸發：EX 限定，亮月條（主池 78）破而不死——暗月條滿灌
+  （`EX_NOCTRA.darkMoonHpRatio` 0.5 → 39；「各 50%」＝暗月為亮月半值，
+  沿 Prismix rebirthHpRatio 同構），HUD 重灌換色（銀紫）。
+- 暗月差分：隱形頻率 ×2（p4 招池 cloak 權重 1→2）＋月牙軌跡變細
+  （`darkSweepScaleMul` 0.65：掠行判定帶與本體縱向縮細；telegraph 時長
+  不縮——可讀性紅線只縮體不縮窗）；月蝕矩陣（EX 質性差分）續存。
+
+### 116.3 Syrona 皇冠共鳴連擊（W3 Blocking 收斂）
+
+- 問題：crown tier gate 後 low 仍 33%（>20%）——overload 升托/高台誤射的
+  incidental 皇冠命中 ×2 倍傷可 2 發偶中秒掉暴走池（20 血）。
+- 修法：暴走段皇冠命中需維持節拍——距上次皇冠命中 ≤`crownComboWindowMs`
+  （900ms，≥2 倍高階登頂節拍間隔、不罰主動技巧）才全額；孤發僅
+  `crownGlanceDamage`（1 點，anti-softlock 恆可磨保底）。
+- 技巧語意：「登頂後維持輸出節拍」＝主動技巧驗收升級，偶中不再成立。
+
+### 116.4 段重試雙語意局內提示（W3）
+
+- 同王雙語意（Voidra p2/p3 回灌 vs p4 進度保留）以 `BOSS_SEGMENT_RETRY`
+  事件（producer：boss systems trySegmentRespawn）→ systems/toasts 浮字
+  區分「段首重試——魔王傷勢保留／魔王氣力回復」；每語意每局一次。
+- 受擊白閃 restore-tint（voidra/syrona 同構修復）：P4 段位相色（裸奔亮紫
+  ／暴走紅化）白閃回落復原而非 clearTint 洗掉。

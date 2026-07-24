@@ -46,7 +46,7 @@ interface TweenConfig {
   onComplete?: (tween: { targets: unknown[] }) => void;
 }
 
-function makeScene(): Phaser.Scene {
+function makeScene(emit: ReturnType<typeof vi.fn> = vi.fn()): Phaser.Scene {
   const bodySprite = {
     x: 0,
     y: 0,
@@ -75,7 +75,7 @@ function makeScene(): Phaser.Scene {
   return {
     textures: { exists: () => true },
     scale: { width: 854 },
-    events: { emit: vi.fn() },
+    events: { emit },
     physics: { add: { sprite: () => bodySprite, group } },
     // 計時器即時執行：入場運鏡與吸流窗排程同步完成，測試免推進虛擬時鐘。
     time: { delayedCall: (_ms: number, fn: () => void) => (fn(), { remove: vi.fn() }) },
@@ -145,5 +145,21 @@ describe('Voidra 呈現層：星光虹吸抽彈守門（§113）', () => {
 
     // 前兩窗抽彈化盾（0→1→2 層）；滿盾後窗滿必須跳過抽彈，玩家彈藥不得再減。
     expect(hooks.drainTopStar).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Voidra 呈現層：段重試語意提示（W3 HUD/toast 管線）', () => {
+  it('P2 段重試發 BOSS_SEGMENT_RETRY refill（回灌語意，同王雙語意區分）', async () => {
+    const { GameEvents } = await import('../core/events');
+    const emit = vi.fn();
+    const handle = createVoidra(makeScene(emit), makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 110×0.7=77：傷 34 入 P2 生存段。
+    handle.applyDamage(34);
+    expect(handle.getDebugState?.()?.phase).toBe('p2');
+    emit.mockClear();
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    const call = emit.mock.calls.find((entry) => entry[0] === GameEvents.BOSS_SEGMENT_RETRY);
+    expect(call?.[1]).toEqual({ semantics: 'refill' });
   });
 });

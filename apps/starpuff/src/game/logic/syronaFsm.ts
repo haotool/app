@@ -67,6 +67,11 @@ export const EX_SYRONA = {
   // 保底立足位不變式（anti-softlock：無計時失敗、退潮窗照常）。
   rampageBoilPeriodMul: 0.45,
   rampageBoilMaxYDeltaPx: -40,
+  // 皇冠共鳴連擊（W3 Blocking 收斂）：暴走段皇冠命中需維持節拍——距上次皇冠
+  // 命中 ≤窗才全額，孤發（偶中：overload 升托/高台誤射）僅減額 1 點保進度
+  //（anti-softlock 恆可磨）；窗寬 ≥2 倍高階登頂節拍間隔（不罰主動技巧）。
+  crownComboWindowMs: 900,
+  crownGlanceDamage: 1,
 } as const;
 
 export type SyronaAction = 'idle' | 'fountain' | 'lob' | 'drip' | 'summon' | 'wave' | 'overload';
@@ -180,6 +185,9 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
 
   let hp = maxHp;
   let phase: BossPhase = 'p1';
+  // 皇冠共鳴連擊（W3）：FSM 內部時鐘（tick 累加）與上次皇冠命中時刻。
+  let clockMs = 0;
+  let lastCrownHitAtMs = Number.NEGATIVE_INFINITY;
   let state: SyronaAction = 'idle';
   // 近兩次出招（§5 連續同招上限 2）。
   let recentAttacks: SyronaAction[] = [];
@@ -277,6 +285,7 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
     },
     tick(deltaMs: number): SyronaCommand | null {
       if (defeated) return null;
+      clockMs += deltaMs;
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'idle') {
@@ -299,15 +308,23 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       if (defeated || amount <= 0) return [];
       // 窯心暴走（§8.2 W2）：P4 皇冠成唯一可傷點——體傷歸零（登頂強制驗收）。
       if (phase === 'p4' && !crown) return [];
+      let incoming = amount;
+      // 皇冠共鳴連擊（W3 Blocking）：暴走段孤發減額、節拍內全額——收斂
+      // incidental 可傷面（偶中不再能秒池），主動登頂節拍不受影響。
+      if (phase === 'p4' && crown) {
+        const inCombo = clockMs - lastCrownHitAtMs <= EX_SYRONA.crownComboWindowMs;
+        lastCrownHitAtMs = clockMs;
+        if (!inCombo) incoming = EX_SYRONA.crownGlanceDamage;
+      }
       const events: SyronaHitEvent[] = [];
-      hp = Math.max(0, hp - amount);
+      hp = Math.max(0, hp - incoming);
       events.push({ kind: 'damaged', hp });
       if (hp <= 0) {
         defeated = true;
         events.push({ kind: 'defeated' });
         return events;
       }
-      damageSinceDrop += amount;
+      damageSinceDrop += incoming;
       while (damageSinceDrop >= SYRONA.minionSpawnHpStep) {
         damageSinceDrop -= SYRONA.minionSpawnHpStep;
         events.push({ kind: 'minionDrop' });
