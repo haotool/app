@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-l14-starburst-tail-triple-fix
+- 原因：#841——逐幀驗屍鎖定三機制：immovable×靜態地面不分離使 spora/chompy 全關穿地沉底（救援殭屍化＋rescueNear 抑制新救援）、滿潮期重力型救援必沉水下平台層構不到、貼身錐形死角使 bot 站上目標繞軌 3-8s
+- 解法：解除紮根怪 setImmovable（唯一 collider 即地面、旗標無保護對象）＋滿潮救援錨定最近平台頂（spora 關重力比照 bubbla）＋#811 貼身豁免泛化全可吸品種（INHALE_NEAR_PX）；L14 p95 18.9s→5.0s（官方 ×10）、全域 90 樣本 p95 9.3s 不回退、45s 未恢復 0
 
 - 日期：2026-07-24
 - ID：reward-starpuff-830-dom-btn-gesture-click-swallow

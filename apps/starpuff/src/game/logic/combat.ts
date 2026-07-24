@@ -125,12 +125,13 @@ export function inhaleZoneSpanPx(basePx: number): number {
   return basePx * SHELLY_INHALE_RANGE_MUL;
 }
 
-// 殼殼暈眩近身豁免（#811）：暈眩殼殼常停在玩家腳邊（衝刺穿身後停位），45° 錐形
-// |dy|≤|dx| 於貼身時幾乎必不成立——貼身 ≤60px 放寬錐形與面向限制，消除吸不到死角。
-export const SHELLY_NEAR_PX = 60;
+// 貼身近域豁免（#811 殼殼 → #841 泛化全可吸品種）：目標停在玩家腳邊時 45° 錐形
+// |dy|≤|dx| 幾乎必不成立——貼身 ≤60px 放寬錐形與面向限制，消除吸不到死角。
+// #841 驗屍：追擊過衝落在 splatta/spora 正上方（dx≈0）時錐形必敗、不拉不吞，
+// 反覆繞軌 3-8s 是 L14 星暴恢復殘尾主因；豁免幾何與品種無關，收斂為單一近域圈。
+export const INHALE_NEAR_PX = 60;
 
 export function isInInhalePullRange(
-  kind: EnemyKind,
   playerX: number,
   playerY: number,
   facingX: 1 | -1,
@@ -139,8 +140,7 @@ export function isInInhalePullRange(
   rangePx: number,
 ): boolean {
   if (isInInhaleRange(playerX, playerY, facingX, targetX, targetY, rangePx)) return true;
-  if (kind !== 'shelly') return false;
-  return (targetX - playerX) ** 2 + (targetY - playerY) ** 2 <= SHELLY_NEAR_PX * SHELLY_NEAR_PX;
+  return (targetX - playerX) ** 2 + (targetY - playerY) ** 2 <= INHALE_NEAR_PX * INHALE_NEAR_PX;
 }
 
 // 吸入接觸豁免（§77）：被吸入中的怪對玩家無接觸傷害——拉力逐幀刷新豁免窗，

@@ -603,12 +603,15 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         kind !== 'twinkla' &&
         kind !== 'cometa',
     );
-    // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返；chompy/spora 定點紮根。
+    // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返。
     body.setBounce(
       kind === 'spiky' || kind === 'shelly' || kind === 'boomy' || kind === 'mirri' ? 1 : 0,
       0,
     );
-    body.setImmovable(kind === 'chompy' || kind === 'spora');
+    // 定點紮根（chompy/spora）由行為維持（更新迴圈不賦速），禁用 immovable——
+    // immovable 動態體與靜態地面不做分離會穿地沉至世界底（#841 驗屍根因：
+    // L14 救援 spora 埋於 y≈462 不可及，rescueNear 又抑制新救援成重尾）。
+    body.setImmovable(false);
     // 朝向以玩家位置判向（卷軸世界中不可用單屏中心）；無 target 時退回當前鏡頭中心啟發。
     const inward = target ? (target.x >= x ? 1 : -1) : x < viewCenterX() ? 1 : -1;
     if (kind === 'spiky') body.setVelocity(SPIKY_SPEED * inward, 0);

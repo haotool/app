@@ -387,6 +387,33 @@ test('反向側貼身暈眩殼殼：不轉向按住吸入可吞下（#844）', a
   expect(errors).toEqual([]);
 });
 
+// #841 驗屍根因鎖：immovable 動態體與靜態地面不分離——spora/chompy 生成後穿地
+// 沉至世界底（y≈462），L14 救援 spora 因此埋地不可及形成恢復重尾。修復後紮根怪
+// 必須落地站穩於可行走線（地面頂 400 上方）。
+test('紮根怪（spora/chompy）落地站穩不穿地（#841）', async ({ page }) => {
+  const errors = collectErrors(page);
+  await startGame(page);
+  await walkTo(page, 500);
+  await page.evaluate(() => {
+    const p = window.__sp.probe();
+    window.__sp.spawn('spora', p.x + 120, 330);
+    window.__sp.spawn('chompy', p.x + 180, 330);
+  });
+  await page.waitForTimeout(1500);
+  const rooted = await page.evaluate(() =>
+    window.__sp
+      .enemies()
+      .filter((e) => e.kind === 'spora' || e.kind === 'chompy')
+      .map((e) => ({ kind: e.kind, y: e.y })),
+  );
+  expect(rooted).toHaveLength(2);
+  for (const foe of rooted) {
+    expect(foe.y).toBeGreaterThan(350);
+    expect(foe.y).toBeLessThan(400);
+  }
+  expect(errors).toEqual([]);
+});
+
 test('吸入中怪物貼身零傷害；吸入中斷豁免過期後恢復傷害性', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);
