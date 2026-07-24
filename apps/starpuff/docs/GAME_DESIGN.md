@@ -588,13 +588,16 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 全部 FSM-first 進 `logic/enemyFsm.ts`（時序純函式），呈現接 `systems/enemyUpdates.ts`
 per-kind：
 
-- 孢子菇 Spora（鼠尾草綠 `minion-spora`）：定點紮根（immovable），週期 3.6s——末段 0.7s
+- 孢子菇 Spora（鼠尾草綠 `minion-spora`）：定點紮根（更新迴圈每幀清速＋一般地面
+  分離；非 Arcade immovable——該旗標會使動態體與靜態地面不分離而穿地，#841），
+  週期 3.6s——末段 0.7s
   預警圈擴張 → 向上噴孢子雲（頭頂 -64、半徑 66、滯留 1.6s 區域拒止，走 hazards 管線，
   觸擊即散）。恆可吸 → **孢子星**（傷害 4、命中緩速 2.2s＋每 0.7s 輕持續傷 1；緩速期
   水平速度封頂 60px/s、孢綠著色，enemies.update 中央結算）。
 - 風飄鳥 Gusty（淡天藍 `minion-gusty`）：四態 drift（水平漂移＋正弦浮動）→（玩家於斜下
   觸發域 200px）→ windup 0.5s（懸停抖動預警）→ dive 0.6s（鎖定前搖結束當下玩家位置
-  340px/s 撲擊，之後不修正可預判閃避）→ recover 0.9s 回升航高。drift 期近域
+  340px/s 撲擊，之後不修正可預判閃避）→ recover 回升（時滿 0.9s 且回抵航高 atBaseY
+  才切 drift，#832 比照 cometa——深俯衝後不得自低空直接再漂移）。drift 期近域
   （130×90px）產生側風——推離方向 60px/s positional drift（不與速度控制器對抗），
   與 L5 氣流主題呼應。恆可吸 → 歸入既有**疾風味**（避免味數爆炸）。
 - 迴力殼 Boomy（暖陶土橘 `minion-boomy`）：四態 walk 2.2s（緩速巡邏 55px/s、bounce 折返）

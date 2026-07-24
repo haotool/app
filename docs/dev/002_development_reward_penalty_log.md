@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-841-rooted-contract-alignment
+- 原因：審查 Should-fix——§52 spora 文案仍寫 immovable 與 #841 修後實作矛盾；updateSpora 未每幀清速，外力（下砸 AoE/吸力彈開）殘速會滑行違反「更新迴圈不賦速」的定點契約
+- 解法：updateSpora 頂部全相位清速（拉力在 enemies.update 之後套用不受影響）；§52 spora 文案改「每幀清速＋地面分離、非 immovable」＋gusty recover 補 atBaseY 閘描述
 
 - 日期：2026-07-24
 - ID：reward-starpuff-841-flood-rescue-guard-generalize

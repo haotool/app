@@ -370,6 +370,9 @@ function updateSpora(
   sprite: Phaser.Physics.Arcade.Sprite,
   deltaMs: number,
 ): void {
+  // 紮根＝每幀清速（#841 審查收斂）：非 immovable 後外力（下砸 AoE 推移、
+  // 吸力彈開殘速）會殘餘滑行——定點語意由此單點維持，全相位一致。
+  (sprite.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0);
   const tick = tickSpora(sprite.getData('cycleMs') as number, deltaMs);
   sprite.setData('cycleMs', tick.sporaMs);
   if (tick.phase === 'burst') {
