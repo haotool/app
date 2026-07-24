@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+196
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+197
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-backlog-changeset-minor-regrade
+- 原因：審查 Should-fix——#839 觸控筆電鍵盤引導是使用者可感知新功能（AGT-VER-01：新互動能力＝minor），列車 changeset 誤定 patch
+- 解法：changeset 升 minor 並補「觸控筆電裝置新增鍵盤操作引導」描述，八項修復描述保留
 
 - 日期：2026-07-24
 - ID：reward-starpuff-839-shellidle-race-regression-lock
