@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-840-jump-probe-evidence-backfill
+- 原因：#840——#809 宣稱五王 low bot 逃脫率 100% 但 level-audits 僅 L4 曾留原始 JSON 且已隨 worktree 回收遺失，量化結論不可稽核
+- 解法：以既有 CLI（level-audit --probe jump，不改 driver）補跑五王 L4/L7/L12/L16/L20 各 6 試次，逃脫率全數 100%，JSON 歸檔主 repo .claude/product-intel/level-audits/809-jump-l\*.json（jump 面不受本列車修改影響）
 
 - 日期：2026-07-24
 - ID：reward-starpuff-841-l14-starburst-tail-triple-fix
