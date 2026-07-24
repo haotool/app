@@ -444,7 +444,10 @@ export function installAuditDriver(opts) {
       const crossHop = (dir) => {
         const gapPx = Math.abs(nearest.x - s.px);
         const approachMs = Math.max(0, ((gapPx - 90) / 220) * 1000);
-        hop(dir, 3, Math.max(0, 730 - approachMs));
+        // 可跨高度窗（W2 修正）：P3 碎晶盾繞核公轉（軌道 95）把跨越淨高需求
+        // 自本體頂 139 拉至 ~183——垂直延遲加深（滿拍翅 >183 窗約 1000ms 起）。
+        const clearMs = levelId === 12 && s.fsm && s.fsm.phase === 'p3' ? 1000 : 730;
+        hop(dir, 3, Math.max(0, clearMs - approachMs));
       };
       // 拍翅序列航線鎖定（W1.5）：跨越本體/行牆期間維持航向，防左右震盪跌回；
       // hopRunAt 前垂直優先（原地直升）；已越過本體後若著陸帶有地面小怪，

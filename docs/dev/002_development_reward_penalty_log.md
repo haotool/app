@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+193
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：penalty-starpuff-t6-w16-shard-respawn-mistake
+- 原因：段重試碎晶盾滿環重生為自創語意（voidra 慣例明文「段起點重試清空護盾層」卻反做）——每段 6 彈破盾稅使「單命輸出 < 段回灌」成段內死牆，W1.6 首測 0%（死亡右移 p3×42 但最深 bossHp 2 磨不穿）
+- 解法：對齊 voidra 慣例段重試不重生盾（首入 P3 滿環照舊）＋glide 週期化擴 EX 全程（P3 復刻恆時追擊跨越稅 ×107，同機制同解）＋crossHop P3 幾何修正（盾軌道拉高淨空需求 139→183、垂直延遲 730→1000ms）
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w2-driver-crown-cadence

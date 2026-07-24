@@ -892,9 +892,10 @@ export function createPrismix(
         const bob = Math.sin(hoverMs * 0.003) * 6;
         if (!twinsAlive) {
           // P1/P3 緩滑追近：朝玩家 x 慢速滑移，保持稜晶壓迫感。
-          // W1.6 PM 裁決③：EX P1 追擊週期化（追擊-停歇循環給明確輸出窗），
-          // 非 EX 與 P3/P4 恆時追擊不動（主線難度曲線不動）。
-          const pursuing = !ex || fsm.phase !== 'p1' || glidePursuing(glideClockMs);
+          // W1.6 PM 裁決③：EX 追擊週期化（追擊-停歇循環給明確輸出窗）——
+          // 初落 P1 限定；W1.6 量測戰線右移後 P3/P4 復刻同一恆時追擊跨越稅
+          //（本體接觸 ×107），同機制同解擴至 EX 全程；非 EX 恆時追擊不動。
+          const pursuing = !ex || glidePursuing(glideClockMs);
           const desired = clampArenaX(target?.x ?? core.x, SIDE_MARGIN_X);
           const step = (GLIDE_SPEED * deltaMs) / 1000;
           if (pursuing && Math.abs(desired - core.x) > step) {
@@ -1007,8 +1008,14 @@ export function createPrismix(
       core.setTint(segment === 'p4' ? REBIRTH_TINT : CORE_TINT);
       coreBody.enable = true;
       fsm.resetToPhase(segment);
-      // 段起點視覺重建：P3 碎晶盾滿環（段起點＝合體瞬間語意，EX 守衛已確立）；P4 無盾。
-      if (segment === 'p3') spawnShardOrbit(EX_PRISMIX.shardOrbitCount);
+      // 段起點護盾語意（沿 voidra「段起點重試清空護盾層」慣例）：碎晶盾不隨
+      // 段重試重生——重複破盾稅會讓「單命輸出 < 段回灌」成段內死牆（W1.6
+      // 量測實證：滿環重生下 p3 反覆段重試磨不動 45 血）；首入 P3 盾滿環照舊。
+      shields.getMatching('active', true).forEach((obj) => {
+        const shard = obj as Phaser.Physics.Arcade.Sprite;
+        if (shard.getData('shadow') === true) return;
+        shard.disableBody(true, true);
+      });
       emitTwinHp();
       // HUD 血條同步段起點血量（damage 0 事件僅刷新讀值，沿 voidra 慣例）。
       emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
