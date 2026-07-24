@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
+import { GameEvents } from '../core/events';
+import { EX_PRISMIX } from '../logic/prismixFsm';
 import { createPrismix, type PrismixHooks } from './prismix';
 
 // 折返彈旗標殘留（PR#852 審查修復）：鏡界折返彈標 inhalable 後 sprite 回收進池，
@@ -182,11 +184,16 @@ function applyTween(config: TweenConfig): object {
   return {};
 }
 
-function makeScene(groups: ReturnType<typeof makeGroup>[]): Phaser.Scene {
+// emit 可注入（W1.6）：段檢查點測試需斷言 HUD 事件載荷——以外部 spy 注入
+// 免方法提取（@typescript-eslint/unbound-method）。
+function makeScene(
+  groups: ReturnType<typeof makeGroup>[],
+  emit: ReturnType<typeof vi.fn> = vi.fn(),
+): Phaser.Scene {
   return {
     textures: { exists: () => true },
     scale: { width: 854 },
-    events: { emit: vi.fn() },
+    events: { emit },
     time: {
       now: 0,
       delayedCall: (_ms: number, fn: () => void) => (fn(), { remove: vi.fn() }),
@@ -292,5 +299,84 @@ describe('Prismix 呈現層：折返彈池回收旗標（§5 W2）', () => {
     expect(step(() => reflectShot.active)).toBe(true);
     expect(reflectShot.getData('reflected')).toBe(false);
     expect(reflectShot.getData('inhalable')).not.toBe(true);
+  });
+});
+
+describe('Prismix 呈現層：EX 段檢查點（§114 W1.6）', () => {
+  beforeEach(() => {
+    let seed = 11;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const stepper =
+    (handle: ReturnType<typeof createPrismix>) =>
+    (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+  it('EX：P1/P2 回 false、P3 段重試回 true 且 HUD 同步段門檻血量', () => {
+    const emit = vi.fn();
+    const scene = makeScene([], emit);
+    const handle = createPrismix(scene, makeHooks(), { ex: true, arenaLeft: () => 0 });
+    handle.spawn();
+    const step = stepper(handle);
+    // P1：不具段檢查點。
+    expect(handle.trySegmentRespawn?.()).toBe(false);
+    // 120×0.75=90：傷 30 即分裂入 P2——仍回 false。
+    handle.applyDamage(30);
+    expect(handle.getDebugState?.()?.phase).toBe('p2');
+    expect(handle.trySegmentRespawn?.()).toBe(false);
+    // 窗外擊破單側 → 掙扎窗滿合體入 P3。
+    expect(step(() => handle.getDebugState?.()?.state !== 'mirror')).toBe(true);
+    handle.applyDamageAt?.(999, 0, 352);
+    expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
+    emit.mockClear();
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    // 段門檻血量＝分裂閾值半值（120×0.75/2=45），HUD damage 0 刷新讀值。
+    const damaged = emit.mock.calls.find((call) => call[0] === GameEvents.BOSS_DAMAGED);
+    expect(damaged?.[1]).toEqual({ hp: 45, maxHp: 120, damage: 0 });
+    expect(handle.getDebugState?.()?.phase).toBe('p3');
+  });
+
+  it('EX：P4 段重試回 true、第二血條滿灌（maxHp 換刻度）', () => {
+    const emit = vi.fn();
+    const scene = makeScene([], emit);
+    const handle = createPrismix(scene, makeHooks(), { ex: true, arenaLeft: () => 0 });
+    handle.spawn();
+    const step = stepper(handle);
+    handle.applyDamage(30);
+    expect(step(() => handle.getDebugState?.()?.state !== 'mirror')).toBe(true);
+    handle.applyDamageAt?.(999, 0, 352);
+    expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
+    handle.applyDamage(999);
+    expect(handle.getDebugState?.()?.phase).toBe('p4');
+    emit.mockClear();
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    const rebirthHp = Math.round(120 * EX_PRISMIX.rebirthHpRatio);
+    const damaged = emit.mock.calls.find((call) => call[0] === GameEvents.BOSS_DAMAGED);
+    expect(damaged?.[1]).toEqual({ hp: rebirthHp, maxHp: rebirthHp, damage: 0 });
+  });
+
+  it('非 EX：P3 亦回 false（段檢查點 EX 限定，非 EX 行為零改變）', () => {
+    const scene = makeScene([]);
+    const handle = createPrismix(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    const step = stepper(handle);
+    handle.applyDamage(28);
+    expect(step(() => handle.getDebugState?.()?.state !== 'mirror')).toBe(true);
+    handle.applyDamageAt?.(999, 0, 352);
+    expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
+    expect(handle.trySegmentRespawn?.()).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import {
   EX_PRISMIX,
   PRISMIX,
   createPrismixFsm,
+  glidePursuing,
   prismixMoveTable,
   type PrismixCommand,
   type PrismixHitEvent,
@@ -390,5 +391,65 @@ describe('EX P4 裂核殘響（§114 #814）', () => {
     expect(EX_PRISMIX.sweepTelegraphMs).toBeGreaterThanOrEqual(600);
     // 牆高必須低於滿拍翅淨高並留 ≥60px 裕度（技巧required 但非死牆）。
     expect(EX_PRISMIX.sweepWallHeightPx).toBeLessThanOrEqual(maxJumpClearancePx() - 60);
+  });
+});
+
+describe('EX 段檢查點（§114 W1.6 PM 裁決①）', () => {
+  it('P3 段起點重試：血量回段門檻（splitRatio 半值）、狀態歸 idle', () => {
+    const fsm = exP3Fsm();
+    fsm.takeDamage(30);
+    fsm.resetToPhase('p3');
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.hp).toBe(Math.round((120 * EX_PRISMIX.splitHpRatio) / 2));
+    expect(fsm.state).toBe('idle');
+    expect(fsm.defeated).toBe(false);
+  });
+
+  it('P4 段起點重試：第二血條滿灌重來（maxHp 刻度不變）', () => {
+    const fsm = exP3Fsm();
+    fsm.takeDamage(999);
+    expect(fsm.phase).toBe('p4');
+    fsm.takeDamage(30);
+    fsm.resetToPhase('p4');
+    const rebirthHp = Math.round(120 * EX_PRISMIX.rebirthHpRatio);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(rebirthHp);
+    expect(fsm.maxHp).toBe(rebirthHp);
+  });
+
+  it('非 EX 無段檢查點：resetToPhase 為 no-op（血量不回灌）', () => {
+    const fsm = splitFsm();
+    fsm.takeDamage(26, 'a');
+    fsm.tick(PRISMIX.struggleMs);
+    expect(fsm.phase).toBe('p3');
+    const before = fsm.hp;
+    fsm.takeDamage(5);
+    fsm.resetToPhase('p3');
+    expect(fsm.hp).toBe(before - 5);
+  });
+
+  it('擊破後 resetToPhase no-op（defeated 單向鎖存）', () => {
+    const fsm = exP3Fsm();
+    fsm.takeDamage(999);
+    fsm.takeDamage(999);
+    expect(fsm.defeated).toBe(true);
+    fsm.resetToPhase('p4');
+    expect(fsm.defeated).toBe(true);
+    expect(fsm.hp).toBe(0);
+  });
+});
+
+describe('P1 滑近週期化（W1.6 PM 裁決③，EX 限定呈現層取用）', () => {
+  it('週期函數：追擊窗起始/停歇窗/迴繞', () => {
+    const cycle = EX_PRISMIX.glidePursueMs + EX_PRISMIX.glideRestMs;
+    expect(glidePursuing(0)).toBe(true);
+    expect(glidePursuing(EX_PRISMIX.glidePursueMs - 1)).toBe(true);
+    expect(glidePursuing(EX_PRISMIX.glidePursueMs)).toBe(false);
+    expect(glidePursuing(cycle - 1)).toBe(false);
+    expect(glidePursuing(cycle)).toBe(true);
+  });
+
+  it('追擊窗佔主導（PM 紅線：週期化不得讓 P1 變站樁）', () => {
+    expect(EX_PRISMIX.glidePursueMs).toBeGreaterThan(EX_PRISMIX.glideRestMs * 2);
   });
 });

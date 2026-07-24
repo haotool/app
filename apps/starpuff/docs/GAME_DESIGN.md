@@ -2217,3 +2217,18 @@ telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §1
 
 - `node scripts/level-audit.mjs 12 --ex --bot low|high --runs N`：低階 clearRate
   <20%、高階 ≥60%（門檻 SSOT `AUDIT_THRESHOLDS.exLowPassMaxRate/exHighPassMinRate`）。
+
+### 114.4 W1.6 調參（PM 裁決落地：段檢查點＋滑近週期化）
+
+W1.5 分級 bot 死因取證（高階 0%：p2 死 41/51、機制全解、輸出可用但 180 有效血
+無檢查點＝90s 單命耐力牆）後 PM 裁決：
+
+- **EX 段檢查點 P3/P4**（裁決①）：`prismixFsm.resetToPhase('p3'|'p4')`——EX 限定，
+  P3/P4 死亡不回滾整場，血量重設至段門檻（P3＝分裂閾值半值 45、P4＝第二血條
+  滿灌 60），沿 voidra `trySegmentRespawn` 慣例（清場＋FSM 重置＋HUD 同步）；
+  P1/P2 與非 EX 走一般敗北流程。難度語意自「單命耐力」轉「分段技巧驗收」。
+- **P1 滑近週期化**（裁決③輕量版）：EX 限定 `glidePursuing`（追 3.2s／歇 1.4s，
+  追擊窗佔主導守「不站樁」紅線）——消恆時追擊的強制跨越稅、給明確輸出窗；
+  非 EX 與 P3/P4 恆時滑近不動。
+- **觀察項（PM 裁決④記錄）**：非 EX L12 高階 bot 通過率 50%（其他王 100%）——
+  Prismix 主線難度曲線相對同儕右移，主線調參另議、本輪不動。

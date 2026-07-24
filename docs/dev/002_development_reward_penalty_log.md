@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-checkpoint-glide-cycle
+- 原因：W1.5 取證定讞 L12 EX 高階 0% 根因為 180 有效血無檢查點（90s 單命耐力牆）＋P1 恆時滑近強制跨越稅（66 hits），PM 裁決①段檢查點＋③glide 週期化
+- 解法：prismixFsm.resetToPhase('p3'|'p4')（EX 限定、段門檻血量沿 voidra 慣例）＋trySegmentRespawn 呈現層清場重建（timers/投射物/鏡界/tween 全清＋碎晶盾滿環＋HUD 同步）＋EX P1 glidePursuing 追 3.2s/歇 1.4s（追擊主導紅線 vitest 錨定），FSM＋呈現層紅燈先行 10 案、全套 829 綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w15-bossforage-tier-gate

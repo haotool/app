@@ -66,7 +66,17 @@ export const EX_PRISMIX = {
   // 行牆蓄能 telegraph：固定不隨狂暴縮放（可讀性紅線 ≥600ms）。
   sweepTelegraphMs: 700,
   sweepDurationMs: 2400,
+  // P1 滑近週期化（#814 W1.6 PM 裁決③，EX 限定）：追擊-停歇循環給明確輸出窗，
+  // 消恆時追擊的強制跨越稅；追擊窗佔主導（守「不得變站樁」紅線），非 EX 不動。
+  glidePursueMs: 3200,
+  glideRestMs: 1400,
 } as const;
+
+// 滑近週期判定（W1.6）：呈現層以累積時鐘取用——追擊窗在前、停歇窗在後循環。
+export function glidePursuing(clockMs: number): boolean {
+  const cycleMs = EX_PRISMIX.glidePursueMs + EX_PRISMIX.glideRestMs;
+  return clockMs % cycleMs < EX_PRISMIX.glidePursueMs;
+}
 
 export type PrismixAction =
   | 'idle'
@@ -173,6 +183,9 @@ export interface PrismixFsm {
   takeDamage(amount: number, side?: PrismixSide): PrismixHitEvent[];
   // 雷化鏈電中斷召喚（§58 慣例）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
+  // 段起點重試（§82 慣例，W1.6 PM 裁決①）：EX 限定 P3/P4 死亡不回滾整場，
+  // 血量重設至該段門檻（P3＝分裂閾值半值、P4＝第二血條滿灌）；非 EX no-op。
+  resetToPhase(phase: 'p3' | 'p4'): void;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
 }
@@ -434,6 +447,20 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       state = 'idle';
       timerMs = durationMs('idle');
       return true;
+    },
+    resetToPhase(target: 'p3' | 'p4'): void {
+      // EX 限定（W1.6）：非 EX 沿一般敗北流程；defeated 單向鎖存不可復活。
+      if (!ex || defeated) return;
+      phase = target;
+      // 段門檻血量：P3＝分裂閾值半值（合體瞬間理論上限，比照 voidra 段門檻
+      // 比例慣例）；P4＝第二血條滿灌。
+      hp = target === 'p3' ? Math.round((maxHp * splitRatio) / 2) : rebirthMax;
+      hpA = 0;
+      hpB = 0;
+      damageSinceDrop = 0;
+      state = 'idle';
+      recentAttacks = [];
+      timerMs = durationMs('idle');
     },
     setTargetDistance(next: number | null): void {
       distancePx = next;
