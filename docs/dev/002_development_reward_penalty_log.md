@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+189
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-830-dom-btn-gesture-click-swallow
+- 原因：#830——#823 用 pointerup 後 350ms 壁鐘窗抑制合成 click，混合路徑（指標互動後 350ms 內按 Enter/Space）的合法鍵盤 activation 被誤吞
+- 解法：改手勢級一次性旗標（pointerdown 設、同手勢 click 消費、pointercancel 清）＋detail=0 鍵盤路徑恆放行，廢除壁鐘窗；混合路徑 e2e 紅燈對照（舊碼 Enter 被吞必敗）＋四路徑 ×3 綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-833-alive-hook-scene-transition-guard
