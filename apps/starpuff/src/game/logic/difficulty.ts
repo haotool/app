@@ -43,10 +43,13 @@ export interface BotTierSpec {
   kite: boolean;
   // 完整策略開關（#814 W1.5，中高手等價能力）：滿拍翅空中機動（受困換邊/
   // 高牆跳越，T2 實證淨高 211px）、鏡界窗紀律（開鏡停火＋折返彈再吸）、
-  // 變身優勢解（TRANSFORM_ADVANTAGE 供彈自動變身）。
+  // 變身優勢解（TRANSFORM_ADVANTAGE 供彈自動變身）、魔王戰就地吸食補彈
+  //（forage 為走動關覓食，bossForage 為魔王戰供彈解鎖——低/中沿 grantSupply
+  // 節流口徑，避免低階被動升級污染門檻量測）。
   flap: boolean;
   mirrorGuard: boolean;
   transformUse: boolean;
+  bossForage: boolean;
 }
 
 export type BotTier = 'low' | 'mid' | 'high';
@@ -60,6 +63,7 @@ export const BOT_TIERS: Record<BotTier, BotTierSpec> = {
     flap: false,
     mirrorGuard: false,
     transformUse: false,
+    bossForage: false,
   },
   mid: {
     reactionMs: 350,
@@ -69,6 +73,7 @@ export const BOT_TIERS: Record<BotTier, BotTierSpec> = {
     flap: false,
     mirrorGuard: false,
     transformUse: false,
+    bossForage: false,
   },
   high: {
     reactionMs: 250,
@@ -81,6 +86,7 @@ export const BOT_TIERS: Record<BotTier, BotTierSpec> = {
     // 吞噬全部星彈輸出（最深僅 77/90）——變身優勢維持 --transform 顯式 A/B
     // 量測管線，門檻跑預設純標準星紀律；駕馭形態技的 stance 邏輯列 W2 backlog。
     transformUse: false,
+    bossForage: true,
   },
 } as const;
 

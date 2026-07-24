@@ -19,10 +19,11 @@ export function installAuditDriver(opts) {
     grantSupply, // 魔王關純標準星紀律：空匣補 jelly
     // 變身優勢 hook（#816 W2）：非 null 時以該味集齊 ×3 並按 SP 變身（TTK 對照量測）。
     transformFlavor = null,
-    // 完整策略開關（#814 W1.5，BOT_TIERS SSOT 注入）：滿拍翅空中機動、鏡界窗紀律。
+    // 完整策略開關（#814 W1.5，BOT_TIERS SSOT 注入）：滿拍翅空中機動、鏡界窗紀律、
+    // 魔王戰就地吸食補彈（低/中沿 grantSupply 節流口徑）。
     flap = false,
     mirrorGuard = false,
-    forage = true,
+    bossForage = false,
   } = opts;
   // 重掛保護：先停舊 driver（同頁重進關卡時避免雙 interval 疊鍵）。
   if (window.__audit) {
@@ -547,7 +548,7 @@ export function installAuditDriver(opts) {
         // 設計意圖：每 10 傷掉補給怪），同時移除接觸源；DPS 上限從 grantSupply
         // 節流（0.83 發/s）解鎖，grant 保底節奏不變。目標偏好非 mirri（鏡面態
         // 吸不進反貼臉）；保持 75px 以上吸程距離，貼身讓位給跳離反射。
-        if (forage !== false && s.ammo === 0 && !d.holdFire) {
+        if (bossForage && s.ammo === 0 && !d.holdFire) {
           let prey = null;
           let preyScore = Infinity;
           for (const e of s.enemies) {

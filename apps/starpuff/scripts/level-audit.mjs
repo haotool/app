@@ -105,6 +105,7 @@ async function runStandardAudit(
       kite: tierSpec.kite,
       flap: tierSpec.flap === true,
       mirrorGuard: tierSpec.mirrorGuard === true,
+      bossForage: tierSpec.bossForage === true,
       maxOnScreen: level.maxOnScreen,
       floodPlatformXs: level.tide ? floodPlatformXs(level) : [],
       inhalableKinds: INHALABLE_KINDS,

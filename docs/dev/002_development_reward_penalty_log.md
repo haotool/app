@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+190
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+191
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-bossforage-tier-gate
+- 原因：boss 模式 forage 以 driver 預設對全 tier 生效，低階 bot 被動獲得供彈解鎖（違反「low 不升級」量測紀律），L7 EX low 通過率 50% 假性超標（門檻 <20%）
+- 解法：BotTierSpec 擴 `bossForage` 資料欄（僅 high true）、driver 改顯式注入預設 false，L7 EX low 反事實重測 50%→17% 過門——W1.5 終局矩陣 L4/L7 雙門檻全 PASS、L12 EX high 0% 出裁決報告停等 PM
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w15-transform-churn-rootfix
