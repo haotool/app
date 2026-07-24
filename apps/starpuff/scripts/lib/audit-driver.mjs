@@ -726,7 +726,10 @@ export function installAuditDriver(opts) {
       // 窯心暴走登頂輸出（W2 §8.2）：L16 P4 皇冠唯一可傷——體傷歸零，改單跳
       // 頂帶窗點射（apex 玩家中心 ≈-122 落於皇冠帶 [-150,-116]，窗 ≈280-650ms）；
       // 單跳滯空 933ms ≈ 全程離地，天然迴避全場沸騰漲頂。
-      if (levelId === 16 && s.fsm && s.fsm.phase === 'p4') {
+      // tier gate＝dodge（讀招開關）：登頂解法屬「讀 P4 相位＋技巧輸出」，
+      // 基礎策略（low）不解——首測漏 gate 使 low 假性 33%（>20% 門檻），
+      // 沿 bossForage tier gate 前例修正（「low 不升級」量測紀律）。
+      if (dodge && levelId === 16 && s.fsm && s.fsm.phase === 'p4') {
         const airMs = now - d.lastJumpAt;
         face(Math.sign(s.boss.x - s.px || 1));
         if (airMs >= 950) {

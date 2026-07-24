@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+197
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-crown-cadence-tier-gate
+- 原因：L16 EX low 首測 33% 假性超標（門檻 <20%）——W2 登頂節拍未掛 tier gate，把「讀 P4 相位＋頂帶窗點射」的完整策略無門檻給了基礎 bot（重蹈 bossForage 前例）
+- 解法：crown 節拍 gate `dodge`（讀招開關語意），L16 EX low 反事實重測 33%→17% 過門；補 starburstDirector EX 進場清除回歸測試 2 案（§8.4 EX 純度收尾清單項）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-closeout-ten-gates-pass
+- 原因：#814 驗收需五王 EX 十門檻（high ≥60%/low <20%）全數達標與收尾產物（changeset/設計文檔/攻略）
+- 解法：PM 裁決 A（進度保留）後 L12 EX high 0-17%→100% 決定性收斂，終局矩陣 L4 83/0、L7 67/17、L12 100/0、L16 67/17、L20 67/0 全 PASS；minor changeset＋GAME_DESIGN §115.3 驗收回填＋WALKTHROUGH EX 挑戰章更新
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w16-progress-keep-checkpoint
