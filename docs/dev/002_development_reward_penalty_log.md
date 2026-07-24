@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+192
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+193
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-839-touch-laptop-dual-mode-guidance
+- 原因：#839——#817 桌機判定（fine＋零觸點＋寬視口）刻意排除觸控筆電，混合裝置不知可用鍵盤且虛擬鍵佔屏；放寬判定會讓觸控遊玩者失去虛擬鍵並被 boot 判定鎖死整 session
+- 解法：雙模並存（純加法）——detectHybridKeyboardEnvironment（fine＋觸點>0＋w≥1024）僅補鍵盤引導（鍵位卡＋Title 操作說明入口），桌機判定/旋轉殼/虛擬鍵零改動；順修 whenShellIdle interval/timeout 雙發第二張卡（e2e 曝露的既有缺陷）；三情境＋觸控筆電模擬 e2e ×2 綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-840-jump-probe-evidence-backfill

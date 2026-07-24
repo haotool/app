@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { isDesktopMode } from '../core/rotation';
+import { isDesktopMode, isHybridKeyboardEnvironment } from '../core/rotation';
 import { currentChallenge, loadSave } from '../core/save';
 import { SceneKeys, type CodexTab } from '../core/types';
 import { exConquestDone } from '../logic/levels';
@@ -236,7 +236,8 @@ export class TitleScene extends Phaser.Scene {
       },
     ];
     // 桌機常駐「操作說明」入口（#817）：鍵位卡隨時重看；行動裝置維持四鈕不增噪。
-    if (isDesktopMode()) {
+    // 觸控筆電（#839 雙模並存）：同樣提供入口——虛擬鍵照舊、鍵盤引導補齊。
+    if (isDesktopMode() || isHybridKeyboardEnvironment()) {
       entries.push({
         label: '操作說明',
         menuId: 'keys',
