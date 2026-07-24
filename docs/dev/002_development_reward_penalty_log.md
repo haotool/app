@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-progress-keep-checkpoint
+- 原因：PM 裁決 A——段重試回灌語意在 P3/P4 形成「段命磨量 vs 段血回灌」臨界輪迴（段內死牆，五測 p4 死 110/通關 1），回灌慣例的存在理由（voidra P2 波次表重播）於 P3/P4 不適用；另六測「降落避核」regression（無條件反打中斷跨越、p1 本體 air ×206）須 revert
+- 解法：Prismix P3/P4 與 Voidra P4 段重試改進度保留（死亡僅重置玩家、boss 血不回灌；voidra p2/p3 回灌慣例不動）＋revert coreAhead 反打恢復五測基線＋呈現層 HUD 斷言鎖保留血量（磨 10 斷言 35 非 45），紅燈先行 3 案、全套 841 綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t6-w16-p4-panel-compliance

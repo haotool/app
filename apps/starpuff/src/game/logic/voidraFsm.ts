@@ -431,9 +431,17 @@ export function createVoidraFsm(options: VoidraFsmOptions = {}): VoidraFsm {
     },
     resetToPhase(target: 'p2' | 'p3' | 'p4'): void {
       if (defeated) return;
-      // P4 段起點＝內核滿灌；P2/P3 沿階段閾值比例。
+      // P4 進度保留（沿 Prismix PM 裁決 A）：無波次表重播需求——死亡僅重置
+      // 玩家、內核血與供彈累計不回灌；護盾清空沿 §113 慣例（玩家餵入物）。
+      if (target === 'p4') {
+        shieldLayers = 0;
+        const events: VoidraHitEvent[] = [];
+        enterPhase(target, events);
+        return;
+      }
+      // P2/P3 沿段門檻回灌（P2 波次表重播 anti-softlock 慣例）。
       const ratio = target === 'p2' ? VOIDRA.p2HpRatio : VOIDRA.p3HpRatio;
-      hp = target === 'p4' ? innerMax : Math.round(maxHp * ratio);
+      hp = Math.round(maxHp * ratio);
       damageSinceDrop = 0;
       shards = 0;
       shardsCompleteEmitted = false;

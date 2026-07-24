@@ -394,30 +394,35 @@ describe('EX P4 裂核殘響（§114 #814）', () => {
   });
 });
 
-describe('EX 段檢查點（§114 W1.6 PM 裁決①）', () => {
-  it('P3 段起點重試：血量回段門檻（splitRatio 半值）、狀態歸 idle', () => {
+describe('EX 段檢查點（§114 W1.6 PM 裁決①＋進度保留語意修訂）', () => {
+  it('P3 段重試進度保留：血量不回灌、狀態歸 idle（招式中斷）', () => {
     const fsm = exP3Fsm();
     fsm.takeDamage(30);
+    const kept = fsm.hp;
     fsm.resetToPhase('p3');
     expect(fsm.phase).toBe('p3');
-    expect(fsm.hp).toBe(Math.round((120 * EX_PRISMIX.splitHpRatio) / 2));
+    // 進度保留（PM 裁決 A）：死亡重置玩家、boss 血不回灌——消滅
+    // 「段命磨量 vs 段血回灌」臨界輪迴。
+    expect(fsm.hp).toBe(kept);
     expect(fsm.state).toBe('idle');
     expect(fsm.defeated).toBe(false);
   });
 
-  it('P4 段起點重試：第二血條滿灌重來（maxHp 刻度不變）', () => {
+  it('P4 段重試進度保留：內核血量不回灌、maxHp 刻度不變', () => {
     const fsm = exP3Fsm();
     fsm.takeDamage(999);
     expect(fsm.phase).toBe('p4');
     fsm.takeDamage(30);
+    const kept = fsm.hp;
     fsm.resetToPhase('p4');
     const rebirthHp = Math.round(120 * EX_PRISMIX.rebirthHpRatio);
     expect(fsm.phase).toBe('p4');
-    expect(fsm.hp).toBe(rebirthHp);
+    expect(fsm.hp).toBe(kept);
+    expect(fsm.hp).toBe(rebirthHp - 30);
     expect(fsm.maxHp).toBe(rebirthHp);
   });
 
-  it('非 EX 無段檢查點：resetToPhase 為 no-op（血量不回灌）', () => {
+  it('非 EX 無段檢查點：resetToPhase 為 no-op', () => {
     const fsm = splitFsm();
     fsm.takeDamage(26, 'a');
     fsm.tick(PRISMIX.struggleMs);

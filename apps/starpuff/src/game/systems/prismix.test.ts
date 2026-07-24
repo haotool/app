@@ -325,7 +325,7 @@ describe('Prismix 呈現層：EX 段檢查點（§114 W1.6）', () => {
       return false;
     };
 
-  it('EX：P1/P2 回 false、P3 段重試回 true 且 HUD 同步段門檻血量', () => {
+  it('EX：P1/P2 回 false、P3 段重試回 true 且 HUD 同步保留血量（進度保留）', () => {
     const emit = vi.fn();
     const scene = makeScene([], emit);
     const handle = createPrismix(scene, makeHooks(), { ex: true, arenaLeft: () => 0 });
@@ -337,15 +337,18 @@ describe('Prismix 呈現層：EX 段檢查點（§114 W1.6）', () => {
     handle.applyDamage(30);
     expect(handle.getDebugState?.()?.phase).toBe('p2');
     expect(handle.trySegmentRespawn?.()).toBe(false);
-    // 窗外擊破單側 → 掙扎窗滿合體入 P3。
+    // 窗外擊破單側 → 掙扎窗滿合體入 P3（裂核 45）。
     expect(step(() => handle.getDebugState?.()?.state !== 'mirror')).toBe(true);
     handle.applyDamageAt?.(999, 0, 352);
     expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
+    // 段內磨 10 後段重試：進度保留（PM 裁決 A）——HUD 讀值＝保留血量 35，
+    // 非段門檻回灌值 45。
+    expect(step(() => handle.getDebugState?.()?.state !== 'mirror')).toBe(true);
+    handle.applyDamageAt?.(10, 427, 352);
     emit.mockClear();
     expect(handle.trySegmentRespawn?.()).toBe(true);
-    // 段門檻血量＝分裂閾值半值（120×0.75/2=45），HUD damage 0 刷新讀值。
     const damaged = emit.mock.calls.find((call) => call[0] === GameEvents.BOSS_DAMAGED);
-    expect(damaged?.[1]).toEqual({ hp: 45, maxHp: 120, damage: 0 });
+    expect(damaged?.[1]).toEqual({ hp: 35, maxHp: 120, damage: 0 });
     expect(handle.getDebugState?.()?.phase).toBe('p3');
   });
 

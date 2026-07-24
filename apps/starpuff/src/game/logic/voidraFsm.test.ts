@@ -445,13 +445,15 @@ describe('EX P4 內核裸奔（§8.2 #814 W2）', () => {
     expect(fsm.speedFactor).toBeCloseTo(p3Speed / EX_VOIDRA.innerIntervalMul, 5);
   });
 
-  it('段起點重試擴 P4：resetToPhase 回內核滿灌', () => {
+  it('段重試擴 P4（進度保留語意，沿 Prismix PM 裁決 A）：血量不回灌', () => {
     const fsm = toExP3();
     fsm.takeDamage(999);
     fsm.takeDamage(30);
     expect(fsm.hp).toBe(innerMax - 30);
     fsm.resetToPhase('p4');
-    expect(fsm.hp).toBe(innerMax);
+    // P4 無波次表重播需求（voidra p2/p3 回灌慣例的存在理由不適用）——
+    // 死亡僅重置玩家，內核血保留。
+    expect(fsm.hp).toBe(innerMax - 30);
     expect(fsm.phase).toBe('p4');
   });
 

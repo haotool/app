@@ -454,12 +454,12 @@ export function createPrismixFsm(options: PrismixFsmOptions = {}): PrismixFsm {
       // EX 限定（W1.6）：非 EX 沿一般敗北流程；defeated 單向鎖存不可復活。
       if (!ex || defeated) return;
       phase = target;
-      // 段門檻血量：P3＝分裂閾值半值（合體瞬間理論上限，比照 voidra 段門檻
-      // 比例慣例）；P4＝第二血條滿灌。
-      hp = target === 'p3' ? Math.round((maxHp * splitRatio) / 2) : rebirthMax;
+      // 進度保留（W1.6 修訂，PM 裁決 A）：死亡僅重置玩家、boss 血不回灌——
+      // 回灌語意在 P3/P4 造成「段命磨量 vs 段血回灌」臨界輪迴（段內死牆，
+      // 量測實證磨不穿）；voidra 回灌慣例的存在理由（P2 波次表重播
+      // anti-softlock）於此不適用。招式中斷回 idle、供彈累計照常延續。
       hpA = 0;
       hpB = 0;
-      damageSinceDrop = 0;
       state = 'idle';
       recentAttacks = [];
       timerMs = durationMs('idle');
