@@ -417,7 +417,15 @@ function updateGusty(
     target.y > sprite.y + 30 &&
     Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y) <=
       GUSTY_FSM.triggerRangePx;
-  const tick = tickGusty(state, sprite.getData('stateMs') as number, deltaMs, shouldDive);
+  // #832：回升需回抵航高才可切 drift（比照 cometa #822），recover 分支持續 -120
+  // 爬升直到夾回 baseY。
+  const tick = tickGusty(
+    state,
+    sprite.getData('stateMs') as number,
+    deltaMs,
+    shouldDive,
+    sprite.y <= (sprite.getData('baseY') as number),
+  );
   sprite.setData('state', tick.state);
   sprite.setData('stateMs', tick.stateMs);
   const body = sprite.body as Phaser.Physics.Arcade.Body;

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+187
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+188
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-832-gusty-recover-atbasey-gate
+- 原因：#832——gusty recover→drift 純時間轉場無 atBaseY 閘（與 cometa #822 同型缺口），深俯衝後可自低空直接進入 drift 貼地壓迫玩家
+- 解法：tickGusty 增 atBaseY 參數比照 cometa 閘住轉場（時滿且回抵航高才切 drift），呼叫點以 sprite.y<=baseY 供值；紅燈對照（舊碼必敗）＋比照 #822 鎖定測試三案
 
 - 日期：2026-07-24
 - ID：reward-starpuff-844-inhale-reverse-zone-align

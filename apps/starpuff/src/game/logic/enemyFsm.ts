@@ -156,7 +156,9 @@ export function tickSpora(sporaMs: number, deltaMs: number): SporaTick {
 }
 
 // 風飄鳥 Gusty 四態（§52）：水平漂移 drift →（玩家進觸發域）→ 前搖 windup 0.5s（懸停
-// 抖動）→ 俯衝 dive 0.6s（朝鎖定點高速撲擊）→ 回升 recover 0.9s → drift。
+// 抖動）→ 俯衝 dive 0.6s（朝鎖定點高速撲擊）→ 回升 recover →（時滿且回抵航高）→ drift。
+// #832：recover→drift 需 atBaseY 成立（比照 cometa #822）——純時間切換會讓深俯衝後
+// 自低空直接再漂移，貼地壓迫玩家。
 export const GUSTY_FSM = {
   windupMs: 500,
   diveMs: 600,
@@ -182,6 +184,7 @@ export function tickGusty(
   stateMs: number,
   deltaMs: number,
   shouldDive: boolean,
+  atBaseY: boolean,
 ): GustyTick {
   const next = stateMs + deltaMs;
   if (state === 'drift' && shouldDive) return { state: 'windup', stateMs: 0, entered: 'windup' };
@@ -189,7 +192,7 @@ export function tickGusty(
     return { state: 'dive', stateMs: 0, entered: 'dive' };
   if (state === 'dive' && next >= GUSTY_FSM.diveMs)
     return { state: 'recover', stateMs: 0, entered: 'recover' };
-  if (state === 'recover' && next >= GUSTY_FSM.recoverMs)
+  if (state === 'recover' && next >= GUSTY_FSM.recoverMs && atBaseY)
     return { state: 'drift', stateMs: 0, entered: 'drift' };
   return { state, stateMs: next, entered: null };
 }
