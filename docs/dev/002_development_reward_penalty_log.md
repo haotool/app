@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+195
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+196
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-839-shellidle-race-regression-lock
+- 原因：審查 Should-fix——whenShellIdle fired 守衛僅由 e2e 時序間接覆蓋，競態窗（interval 顯卡後、leftover timeout 前關卡）無直接單元回歸鎖
+- 解法：新增 shellCards.test.ts 以 fake timers＋document stub 直接命中競態窗（紅燈對照：無守衛時 callback ×2 必敗），另補忙碌期不觸發案
 
 - 日期：2026-07-24
 - ID：reward-starpuff-841-rooted-contract-alignment
