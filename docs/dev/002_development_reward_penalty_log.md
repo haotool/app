@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+193
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+194
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-p4-panel-compliance
+- 原因：W1 自定 P4 speedFactor 1.25 疊 EX_MODS 後有效 1.44 節奏——違反 §8.1 明文「數值面板沿 EX_MODS 不再上調、難度增量全部來自型態與機制」；且五測取證 hop+1500ms 降落撞核峰值 ×75
+- 解法：P4 節奏合規收回沿狂暴帶（1.15，難度由第二血條＋行牆承擔）＋driver 降落避核反打一拍＋cap 300→540 口徑修正（checkpoint 架構通關期望 200-400s，實證首勝 TTK 316s）；L12 EX high 0%→8-17% 徘徊、60% 需 boss 側結構再裁決
 
 - 日期：2026-07-24
 - ID：penalty-starpuff-t6-w16-shard-respawn-mistake

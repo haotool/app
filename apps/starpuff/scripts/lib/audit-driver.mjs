@@ -457,12 +457,16 @@ export function installAuditDriver(opts) {
           face(0);
           return;
         }
+        // 降落避核（W1.6 五測 hop+1500ms 峰值 ×75 實證）：下降段航向前方為
+        // 本體時反打一拍錯開落點——避免降落在滑近追至的核心上。
+        const ahead = s.px + d.hopDir * 70;
+        const coreAhead = now - d.hopStartAt > 1050 && Math.abs(nearest.x - ahead) < 130;
         const clearedBoss = Math.abs(s.px - nearest.x) > 150;
         const under = s.enemies.find(
           (e) =>
             e.y > 280 && Math.abs(e.x - (s.px + d.hopDir * 70)) < 80 && Math.abs(e.y - s.py) < 170,
         );
-        face(clearedBoss && under ? -d.hopDir : d.hopDir);
+        face(coreAhead || (clearedBoss && under) ? -d.hopDir : d.hopDir);
         return;
       }
       // 鏡界窗再吸（W1.5）：折返彈帶 inhalable——空匣且本體不貼身時面向來彈持吸，
@@ -691,7 +695,9 @@ export function installAuditDriver(opts) {
             }
           }
           if (wall) {
-            hop(Math.sign(wall.x - s.px) || 1, 3, 500);
+            // 對穿路徑常含核心本體（牆自場緣掃入、核居中）——垂直延遲沿跨核
+            // 幾何 730ms，防低空平移削核（W1.6 四測 p4 本體接觸 ×82 主因）。
+            hop(Math.sign(wall.x - s.px) || 1, 3, 730);
             return;
           }
         }

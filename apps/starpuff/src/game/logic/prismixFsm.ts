@@ -128,8 +128,10 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: PRISMIX.enrageSpeedMultiplier,
   p3: PRISMIX.enrageSpeedMultiplier,
-  // P4 裂核殘響（§114 EX 限定）：終段加壓（疊 EX_MODS 後有效 ≈1.44）。
-  p4: 1.25,
+  // P4 裂核殘響（§114 EX 限定）：節奏沿狂暴帶（W1.6 合規修正——§8.1 明文
+  // 「數值面板沿 EX_MODS 不再上調、難度增量全部來自型態與機制」，原 1.25
+  // 終段加壓屬面板追加上調違反紅線；P4 難度由第二血條＋行牆新招承擔）。
+  p4: PRISMIX.enrageSpeedMultiplier,
 };
 
 // 加權選招表（§5 #813 W2）：固定循環改權重＋條件驅動（沿 JELLORD_MOVES 慣例）。
