@@ -574,3 +574,62 @@ html.sp-desktop #controls.is-active {
 .install-btn:active {
   transform: scale(0.96);
 }
+
+/* 設定頁（v19 #819 卡 4）：置中模態偏好面板，沿殼卡視覺語彙；覆蓋殼卡的
+   左上非模態定位並加遮罩擋底層誤觸（殼卡本體維持非模態不受影響）。 */
+.settings-overlay {
+  pointer-events: auto;
+  background: rgba(58, 58, 74, 0.45);
+}
+
+.settings-card {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 88%);
+  max-height: 86%;
+  gap: 10px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-label {
+  font:
+    600 15px system-ui,
+    sans-serif;
+  color: #3a3a4a;
+  white-space: nowrap;
+}
+
+.settings-seg {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-btn {
+  min-height: 44px;
+  min-width: 56px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(122, 95, 184, 0.4);
+  background: #ffffff;
+  font:
+    700 14px system-ui,
+    sans-serif;
+  color: #3a3a4a;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.settings-btn.is-on {
+  background: #bff3e0;
+}
+
+.settings-btn:active {
+  transform: scale(0.96);
+}

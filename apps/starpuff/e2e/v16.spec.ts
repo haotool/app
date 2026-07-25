@@ -77,12 +77,18 @@ test('HUD 暫停/靜音 DOM 鈕（F-06）：局內可點暫停並繼續、靜音
     .dispatchEvent('pointerdown', { pointerId: 6, isPrimary: true });
   await expect.poll(() => page.evaluate(() => window.__sp.paused())).toBe(false);
 
-  // 靜音 DOM 鈕：aria-pressed 與 sp-muted 同步翻轉，再點還原。
+  // 靜音 DOM 鈕：aria-pressed 與 sp-settings.audioMuted（v19 卡 4 SSOT）同步翻轉，再點還原。
   const muteButton = page.locator('#game-shell [data-menu="mute"]');
   await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
   await muteButton.dispatchEvent('pointerdown', { pointerId: 7, isPrimary: true });
   await expect(muteButton).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.evaluate(() => localStorage.getItem('sp-muted'))).toBe('1');
+  expect(
+    await page.evaluate(
+      () =>
+        (JSON.parse(localStorage.getItem('sp-settings') ?? '{}') as { audioMuted?: boolean })
+          .audioMuted,
+    ),
+  ).toBe(true);
   await muteButton.dispatchEvent('pointerdown', { pointerId: 7, isPrimary: true });
   await expect(muteButton).toHaveAttribute('aria-pressed', 'false');
   await page.waitForTimeout(400);

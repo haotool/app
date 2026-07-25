@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { isMuted, setMuted } from '../audio/mute';
-import { loadSettings, updateSettings } from '../core/settings';
+import { loadSettings, onSettingsChanged, updateSettings } from '../core/settings';
 import {
   CHARGED_STAR,
   EGG_HP_CAP,
@@ -104,6 +104,14 @@ export function addMuteButton(scene: Phaser.Scene): void {
     'mute',
   );
   domButton?.setAttribute('aria-pressed', isMuted() ? 'true' : 'false');
+  // 設定頁切換音效時同步（v19 卡 4）：以 settings 新值驅動 mute 系統與圖示，
+  // 場景關閉即退訂。
+  const offSettings = onSettingsChanged((settings) => {
+    setMuted(settings.audioMuted);
+    button.setTexture(texture());
+    domButton?.setAttribute('aria-pressed', settings.audioMuted ? 'true' : 'false');
+  });
+  scene.events.once('shutdown', offSettings);
 }
 
 // 遊戲場景暫停鍵（§35／§101 F-06）：與靜音鈕同列（top-right 硬熱區，避開戰鬥區）；

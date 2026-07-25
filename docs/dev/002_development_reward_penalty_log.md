@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+231
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+232
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-settings-page-fx-gate
+- 原因：偏好無 UI 入口（僅靜音鈕與按鈕配置），reducedMotion/screenShake 無處設定且 boss/fx 全域 40+ 處直呼 cameras.main.shake/flash 無單點強度閘（#819 卡 4/12）
+- 解法：DOM 設定頁（Title「設定」入口，按鈕配置移為頁內轉入口防六鈕溢出）＋cameraFxGate 包裝 main camera 單點縮放（off/low/full、reducedMotion 強制關震並縮閃光 0.3），呼叫端零改動；e2e 以 cameraFx 觀測點實證 reducedMotion 下受擊完全不震
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-user-settings-ssot

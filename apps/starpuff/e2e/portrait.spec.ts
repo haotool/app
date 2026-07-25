@@ -150,7 +150,7 @@ test('直持 390×844（D1/D2）：預設 A/B 在右下拇指帶、真觸控點 
   await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
 
   // D2：直持縮放下主/次選單 DOM 鈕命中短邊 ≥48（§98 保底；AABB 短邊即觸控短邊）。
-  for (const menuId of ['start', 'map', 'codex', 'skills', 'config']) {
+  for (const menuId of ['start', 'map', 'codex', 'skills', 'settings']) {
     const box = await page.locator(`[data-menu="${menuId}"]`).boundingBox();
     if (!box) throw new Error(`選單鈕 ${menuId} 不存在`);
     expect(Math.min(box.width, box.height), menuId).toBeGreaterThanOrEqual(48);

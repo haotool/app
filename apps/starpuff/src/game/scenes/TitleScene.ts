@@ -8,7 +8,8 @@ import { startBgm } from '../audio/bgm';
 import { playSfx, unlockAudio } from '../audio/sfx';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton, addMuteButton, bindMenuRelayout } from '../systems/hud';
-import { closeKeyConfig, isKeyConfigOpen, openKeyConfig } from '../systems/keyConfig';
+import { closeKeyConfig, isKeyConfigOpen } from '../systems/keyConfig';
+import { closeSettingsPage, isSettingsPageOpen, openSettingsPage } from '../systems/settingsPage';
 
 const TITLE_GLOW_TEX = 'title-glow';
 
@@ -43,6 +44,7 @@ export class TitleScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       this.backdrop?.destroy();
       closeKeyConfig();
+      closeSettingsPage();
     });
     addMuteButton(this);
     bindMenuRelayout(this);
@@ -196,7 +198,7 @@ export class TitleScene extends Phaser.Scene {
     // 首次手勢：解鎖 iOS AudioContext 後啟動 BGM；接續當前可挑戰關（§39），
     // 全通關後改開世界地圖供重玩選關。
     const start = () => {
-      if (isKeyConfigOpen()) return;
+      if (isKeyConfigOpen() || isSettingsPageOpen()) return;
       unlockAudio();
       startBgm();
       const challenge = currentChallenge(loadSave());
@@ -225,13 +227,15 @@ export class TitleScene extends Phaser.Scene {
       },
       { label: '圖鑑', menuId: 'codex', onPress: () => this.openCodex('monsters') },
       { label: '技能介紹', menuId: 'skills', onPress: () => this.openCodex('skills') },
+      // 統一設定頁入口（v19 #819 卡 4）：按鈕配置移入設定頁轉入口，
+      // Title 維持四鈕不增噪（桌機五鈕）且涵蓋全偏好。
       {
-        label: '按鈕配置',
-        menuId: 'config',
+        label: '設定',
+        menuId: 'settings',
         onPress: () => {
           unlockAudio();
           playSfx('pop');
-          openKeyConfig();
+          openSettingsPage();
         },
       },
     ];

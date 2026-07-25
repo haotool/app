@@ -185,6 +185,7 @@ declare global {
       bossHint: () => string;
       grantInvuln: (ms: number) => void;
       achievementToast: () => string;
+      cameraFx: () => { shakeRunning: boolean; flashRunning: boolean; flashDuration: number };
     }>;
   }
 }
@@ -352,6 +353,18 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     grantInvuln: (ms) => gameScene().grantInvuln(ms),
     // v15 觀測點（§94 e2e）：最近成就 toast 文案（canvas 文字不可由 DOM 查詢）。
     achievementToast: () => gameScene().lastAchievementToast,
+    // v19 觀測點（#819 卡 12 e2e/抽驗）：主相機震屏/閃光即時狀態，驗證強度閘生效。
+    cameraFx: () => {
+      const cam = gameScene().cameras.main as unknown as {
+        shakeEffect: { isRunning: boolean };
+        flashEffect: { isRunning: boolean; duration: number };
+      };
+      return {
+        shakeRunning: cam.shakeEffect.isRunning,
+        flashRunning: cam.flashEffect.isRunning,
+        flashDuration: cam.flashEffect.duration,
+      };
+    },
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。

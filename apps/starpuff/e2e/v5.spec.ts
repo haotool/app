@@ -45,6 +45,27 @@ async function startGame(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp())).toBe(5);
 }
 
+// 按鈕配置入口（v19 #819 卡 4 後）：Title「設定」頁內轉入 keyConfig 專頁。
+async function openKeyConfig(page: Page): Promise<void> {
+  await page.locator('[data-menu="settings"]').dispatchEvent('pointerdown', {
+    pointerId: 5,
+    isPrimary: true,
+  });
+  await page.locator('[data-setting="key-config"]').dispatchEvent('pointerdown', {
+    pointerId: 5,
+    isPrimary: true,
+  });
+}
+
+// 自訂布局儲存位置（v19 卡 4）：sp-settings.keyLayout 子樹（null＝預設態不落盤）。
+async function storedKeyLayout(page: Page): Promise<unknown> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('sp-settings');
+    if (raw === null) return null;
+    return (JSON.parse(raw) as { keyLayout: unknown }).keyLayout;
+  });
+}
+
 test('暫停/接續（§35）：ESC 立即真暫停（時鐘與實體凍結），繼續後恢復運行', async ({ page }) => {
   const errors = collectErrors(page);
   await startGame(page);
@@ -197,10 +218,7 @@ test('圖鑑/技能介紹（§36）：主選單進入、分頁切換、返回', 
 test('按鈕配置取消（§34）：拖曳後取消還原布局且不寫入 localStorage', async ({ page }) => {
   const errors = collectErrors(page);
   await gotoTitle(page);
-  await page.locator('[data-menu="config"]').dispatchEvent('pointerdown', {
-    pointerId: 5,
-    isPrimary: true,
-  });
+  await openKeyConfig(page);
   await expect(page.locator('.cfg-bar')).toBeVisible();
   const keyB = page.locator('[data-btn="b"]');
   const beforeLeft = await keyB.evaluate((el) => parseFloat((el as HTMLElement).style.left));
@@ -234,7 +252,7 @@ test('按鈕配置取消（§34）：拖曳後取消還原布局且不寫入 loc
     beforeLeft,
     1,
   );
-  expect(await page.evaluate(() => localStorage.getItem('sp-key-layout'))).toBeNull();
+  expect(await storedKeyLayout(page)).toBeNull();
   await page.waitForTimeout(300);
   expect(errors).toEqual([]);
 });
@@ -242,10 +260,7 @@ test('按鈕配置取消（§34）：拖曳後取消還原布局且不寫入 loc
 test('按鈕配置（§34）：拖曳 B 鍵、儲存 localStorage、重載後套用、恢復預設', async ({ page }) => {
   const errors = collectErrors(page);
   await gotoTitle(page);
-  await page.locator('[data-menu="config"]').dispatchEvent('pointerdown', {
-    pointerId: 5,
-    isPrimary: true,
-  });
+  await openKeyConfig(page);
   await expect(page.locator('.cfg-bar')).toBeVisible();
   const keyB = page.locator('[data-btn="b"]');
   await expect(keyB).toBeVisible();
@@ -272,10 +287,10 @@ test('按鈕配置（§34）：拖曳 B 鍵、儲存 localStorage、重載後套
     isPrimary: true,
   });
   await expect(page.locator('.cfg-bar')).toHaveCount(0);
-  const stored = await page.evaluate(() => localStorage.getItem('sp-key-layout'));
+  const stored = await storedKeyLayout(page);
   expect(stored).not.toBeNull();
-  const layout = JSON.parse(stored ?? '{}') as { version: number; b: { cx: number } };
-  // sp-key-layout 已升 schema v2（§89 v14 縮放欄位）：儲存恆為當前版。
+  const layout = stored as { version: number; b: { cx: number } };
+  // keyLayout 已升 schema v2（§89 v14 縮放欄位）：儲存恆為當前版。
   expect(layout.version).toBe(2);
   expect(layout.b.cx).toBeLessThan(0.9);
   // 重載後布局持久化套用至按鍵 style（瀏覽器會去掉百分比尾零，取數值比較）。
@@ -283,11 +298,8 @@ test('按鈕配置（§34）：拖曳 B 鍵、儲存 localStorage、重載後套
   await expect(page.locator('#app canvas')).toBeVisible();
   const leftPct = await keyB.evaluate((el) => parseFloat((el as HTMLElement).style.left));
   expect(leftPct).toBeCloseTo(layout.b.cx * 100, 1);
-  // 恢復預設：再入配置模式按重置，儲存後 localStorage 回預設值。
-  await page.locator('[data-menu="config"]').dispatchEvent('pointerdown', {
-    pointerId: 5,
-    isPrimary: true,
-  });
+  // 恢復預設：再入配置模式按重置，儲存後 keyLayout 回預設態（null）。
+  await openKeyConfig(page);
   await page.locator('[data-cfg="reset"]').dispatchEvent('pointerdown', {
     pointerId: 5,
     isPrimary: true,

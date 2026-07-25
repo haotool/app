@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { playSfx } from '../audio/sfx';
 import { getVisualScale, type ScalableSprite } from './visualScale';
+import { installCameraFxGate } from './cameraFxGate';
 
 export const FX_TEXTURES = {
   dot: 'fx-dot',
@@ -232,6 +233,8 @@ export function spawnTelegraph(
 
 export function createFx(scene: Phaser.Scene): FxSystem {
   ensureFxTextures(scene);
+  // 震屏/閃光強度閘（v19 卡 12）：包裝 main camera 單點安裝，boss/fx 呼叫端零改動。
+  installCameraFxGate(scene.cameras.main);
 
   const bus = scene.events;
   const unbinders: (() => void)[] = [];
