@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   INHALE_GRACE_MS,
-  SHELLY_NEAR_PX,
+  INHALE_NEAR_PX,
   applyDamage,
   canInhale,
   clampAmmo,
@@ -83,16 +83,16 @@ describe('combat', () => {
   });
 
   it('#811 殼殼近身豁免：貼身 ≤60px 錐外仍可拉（停位貼腳死角），非殼殼與遠位不豁免', () => {
-    // 殼殼在腳邊（dx 3 / dy 9，|dy|>|dx| 錐外）——豁免生效。
+    // 目標在腳邊（dx 3 / dy 9，|dy|>|dx| 錐外）——貼身豁免生效。
     expect(isInInhaleRange(0, 0, 1, 3, 9, 140)).toBe(false);
-    expect(isInInhalePullRange('shelly', 0, 0, 1, 3, 9, 140)).toBe(true);
+    expect(isInInhalePullRange(0, 0, 1, 3, 9, 140)).toBe(true);
     // 面向反側貼身亦可拉（真人可即時回頭，機械面向不設死角）。
-    expect(isInInhalePullRange('shelly', 0, 0, 1, -20, 9, 140)).toBe(true);
-    // 非殼殼同位置：錐外即不可拉。
-    expect(isInInhalePullRange('jelly', 0, 0, 1, 3, 9, 140)).toBe(false);
-    // 殼殼超出近身圈且錐外：不可拉。
-    expect(isInInhalePullRange('shelly', 0, 0, 1, 30, 70, 140)).toBe(false);
-    expect(SHELLY_NEAR_PX).toBe(60);
+    expect(isInInhalePullRange(0, 0, 1, -20, 9, 140)).toBe(true);
+    // #841 泛化：豁免與品種無關——追擊過衝站上 splatta/spora（dx≈0）不再是死角軌道。
+    expect(isInInhalePullRange(0, 0, 1, 0, 30, 140)).toBe(true);
+    // 超出近身圈且錐外：不可拉。
+    expect(isInInhalePullRange(0, 0, 1, 30, 70, 140)).toBe(false);
+    expect(INHALE_NEAR_PX).toBe(60);
   });
 
   it('resolveHit 正常受擊：扣血並啟動 i-frame', () => {

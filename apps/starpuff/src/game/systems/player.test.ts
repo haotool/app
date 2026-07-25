@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
 import { STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
+import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
 import type { ControlsState } from './controls';
-import { STAR_POOL_MAX, createPlayer } from './player';
+import { createPlayer } from './player';
 
 // 星彈池回歸（#820）：滿匣（maxAmmo）連續散射（碎鑽星 ×3）理論同時需求 9 發，
 // 池上限低於此值時第 9 發被靜默吞掉、彈藥照扣。fake group 忠實模擬 Arcade Group
@@ -217,12 +218,14 @@ function makeHarness(): {
       graphics: () => chainable(),
       ellipse: () => chainable(),
       circle: () => chainable(),
-      particles: () => ({
-        ...chainable(),
-        start: vi.fn(),
-        stop: vi.fn(),
-        explode: vi.fn(),
-      }),
+      // 鏈式方法回傳同一 target：start/stop/explode 直接掛上，避免 setDepth 鏈斷丟失。
+      particles: () => {
+        const emitter = chainable();
+        emitter['start'] = vi.fn();
+        emitter['stop'] = vi.fn();
+        emitter['explode'] = vi.fn();
+        return emitter;
+      },
     },
     physics: {
       add: {
@@ -268,6 +271,16 @@ describe('星彈池上限（#820）', () => {
     expect(STAR_POOL_MAX).toBeGreaterThanOrEqual(STAR.maxAmmo * maxScatter);
   });
 
+  // #831：風刃走 stars 共用池——池上限必須同時涵蓋滿匣散射與風刃最大併發，
+  // 兩者疊加（變身前在飛星彈＋變身後連發風刃）不得互擠致靜默生成失敗。
+  it('池上限 ≥ 滿匣散射 ＋ 風刃最大併發（#831 共用池疊加需求）', () => {
+    const maxScatter = Math.max(1, ...STAR_MIXES.map((mix) => mix.scatterCount));
+    expect(MAX_CONCURRENT_WIND_BLADES).toBeGreaterThanOrEqual(1);
+    expect(STAR_POOL_MAX).toBeGreaterThanOrEqual(
+      STAR.maxAmmo * maxScatter + MAX_CONCURRENT_WIND_BLADES,
+    );
+  });
+
   it('滿匣碎鑽星連續散射：全數生成且彈藥計數一致（§109 蓄能星存在時滿匣不再結晶）', () => {
     const { player, groups } = makeHarness();
     // 星彈池以派生上限建池（非硬編 8）。
@@ -298,6 +311,42 @@ describe('星彈池上限（#820）', () => {
     // 滿匣 × 散射全數生成：第 15 發不得因池滿被靜默吞掉。
     expect(activeStars.length).toBe(STAR.maxAmmo * scatter);
     expect(player.getAmmoState().ammo).toBe(0);
+  });
+
+  // #831 極端併發：滿匣散射全數在飛（fake 星彈不移動、永不出視野）疊加風化連發，
+  // 每發風刃都必須成功生成——共用池不得讓風刃因池滿靜默消失（輸出必有回饋）。
+  it('滿匣散射在飛＋風化連發：風刃全數生成不因池滿靜默失敗', () => {
+    const { player } = makeHarness();
+    // 先結晶消耗（§109）再滿匣碎鑽星，發射 5 輪 → 15 發在飛。
+    for (let i = 0; i < 12 && player.getStarburst().phase === 'none'; i += 1) {
+      player.grantStar('jelly');
+    }
+    for (let i = 0; i < STAR.maxAmmo; i += 1) {
+      player.grantStar('shelly');
+      player.grantStar('drilly');
+    }
+    for (let i = 0; i < STAR.maxAmmo; i += 1) {
+      player.update(PRESS, 16);
+      player.update(IDLE, 16);
+    }
+    const scatter = getMix('shardrill').scatterCount;
+    const activeCount = () =>
+      (player.getStars().getChildren() as unknown as FakeStar[]).filter((star) => star.active)
+        .length;
+    expect(activeCount()).toBe(STAR.maxAmmo * scatter);
+    // 清蓄能星使 SP 語意回到變身（detonate 優先序高於 transform）。
+    player.clearStarburst();
+    // 疾風星 ×3（連吞升級佔 2 發）→ 風化資格成立，SP 點按地面即變身。
+    for (let i = 0; i < 3; i += 1) player.grantStar('floaty');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('gale');
+    // 以發射 CD 節拍連發至理論同屏上界：每發都成功生成。
+    for (let i = 0; i < MAX_CONCURRENT_WIND_BLADES; i += 1) {
+      player.update({ ...IDLE, actionPressed: true, actionHeld: true }, 16);
+      expect(activeCount()).toBe(STAR.maxAmmo * scatter + i + 1);
+      player.update(IDLE, 400);
+    }
+    expect(activeCount()).toBe(STAR.maxAmmo * scatter + MAX_CONCURRENT_WIND_BLADES);
   });
 });
 

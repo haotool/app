@@ -132,6 +132,56 @@ test.describe('#817 桌機正置', () => {
   });
 });
 
+// #839 觸控筆電（細指標＋觸點>0＋寬視口）雙模並存：不進桌機模式（旋轉殼語意
+// 與虛擬鍵照舊，觸控遊玩不回退），補鍵盤引導——首次鍵位卡＋Title 操作說明入口。
+// 模擬方式：Playwright hasTouch 會把主指標翻成 coarse（真實觸控筆電主指標恆 fine），
+// 故以 maxTouchPoints stub 做契約級模擬——判定器讀的正是 pointer media＋觸點數。
+test.describe('#839 觸控筆電雙模並存', () => {
+  test.skip(
+    ({ viewport }) => (viewport?.width ?? 0) < 1024,
+    '觸控筆電情境需寬視口 project（Desktop Chrome）',
+  );
+
+  test('觸控筆電：不掛 sp-desktop、虛擬鍵保留、鍵位卡與操作說明入口補齊', async ({ page }) => {
+    const errors = collectErrors(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('sp-rotation-notice', '1');
+      localStorage.setItem('sp-install-dismissed', '1');
+      Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 });
+    });
+    await page.goto('/');
+    await expect(page.locator('#app canvas')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+
+    // 混合裝置條件成立（fine pointer＋觸點>0）；桌機 class 不得掛載（觸控能力保留）。
+    expect(await page.evaluate(() => navigator.maxTouchPoints)).toBeGreaterThan(0);
+    expect(
+      await page.evaluate(() => document.documentElement.classList.contains('sp-desktop')),
+    ).toBe(false);
+
+    // 首次鍵位卡顯示並記憶（與桌機共用 sp-desktop-keys 記憶）。
+    const card = page.locator('.install-card', { hasText: '鍵盤操作' });
+    await expect(card).toBeVisible({ timeout: 10000 });
+    await card
+      .locator('button', { hasText: '知道了' })
+      .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
+    await expect(card).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('sp-desktop-keys'))).toBe('1');
+
+    // Title 常駐操作說明入口。
+    await expect(page.locator('[data-menu="keys"]')).toHaveCount(1);
+
+    // 進遊戲：虛擬鍵保留（雙模不回退觸控操作面）。
+    await page
+      .locator('[data-menu="start"]')
+      .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
+    await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Game');
+    await expect(page.locator('#controls')).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(errors).toEqual([]);
+  });
+});
+
 // #817（直持情境於 Portrait project 執行）：未解鎖方向提示一次性；橫持不誤觸。
 test.describe('#817 直持方向解鎖引導', () => {
   test.skip(
