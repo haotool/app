@@ -1183,7 +1183,8 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 **修法**（四點聯動，均有單測）：
 
 - 落地擠壓加最低著地速度閘 `LANDING_SQUASH_MIN_VY=120`：微速重新接觸不再擠壓，
-  迴圈斷根（實測站立接觸穩定度 120/120 步）。
+  迴圈斷根（實測站立接觸穩定度 120/120 步）。**已退場（§117 根治）**：解耦後擠壓
+  不再縮物理箱，門檻無存在必要。
 - `resolveJumpPress` 增 `recentlyGroundedMs`（傳 coyote 殘量）：coyote 窗內視同在地，
   下砸僅「真空中」（離地 >150ms）觸發——§44 矩陣「空中」行語意收斂為真空中。
 - 站台判定抽 `stageModel.restingOnOneWay` 純函式：接觸旗標**或**沉降幾何
@@ -2416,7 +2417,7 @@ W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴�
 且 TweenManager 與物理 world 同掛 `SceneEvents.UPDATE`——任何直接 tween sprite scale
 的視覺效果都會在同幀被物理讀到，衍生落地擠壓迴圈、腳底離台、穿台與 overlap 漏檢。
 
-### 117.1 通道架構（systems/visualScale.ts，場景鍵入單例）
+### 117.1 通道架構（game/systems/visualScale.ts，場景鍵入單例）
 
 - 沿 §77.2 蹲姿／§45 走 bob 已驗證的 PRE/POST_UPDATE 視覺通道模式全遊戲統一：
   `PRE_UPDATE` 還原物理基準（物理步只見基準）、`POST_UPDATE` 套用

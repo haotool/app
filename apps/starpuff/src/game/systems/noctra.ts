@@ -650,6 +650,7 @@ export function createNoctra(
       enrageTween?.destroy();
       wingbeat.destroy();
       scene.tweens.killTweensOf(sprite);
+      vscale.unregister(sprite);
       projectiles.destroy(true);
       shockwaves.destroy(true);
       sprite.destroy();

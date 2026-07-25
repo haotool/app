@@ -195,7 +195,11 @@ test('EX 挑戰（§58）：通關魔王節點見 EX 入口，EX 果凍王 HP 90
       { timeout: 20000 },
     )
     .toBeLessThan(90);
+  // EX 果凍狂潮（§116 T6 重設計）：主條歸零不死——入 P4 狂潮小條（HP 15），
+  // 清空小條才真擊破（本測試自 T6 起與 FSM 脫節，於 T7-B 對齊現行 SSOT）。
   await page.evaluate(() => window.__sp.damageBoss(89));
+  await expect.poll(() => page.evaluate(() => window.__sp.bossHp())).toBe(15);
+  await page.evaluate(() => window.__sp.damageBoss(15));
   await expect.poll(() => page.evaluate(() => window.__sp.bossHp())).toBe(0);
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 15000 })

@@ -828,6 +828,7 @@ export function createVoidra(
       while (shieldOrbs.length > 0) shieldOrbs.pop()?.destroy();
       hooks.setBombardment(null);
       hooks.setGravityScale(null);
+      vscale.unregister(body);
       body.destroy();
       projectiles.destroy(true);
       shockwaves.destroy(true);
