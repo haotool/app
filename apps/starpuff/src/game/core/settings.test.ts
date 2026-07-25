@@ -46,7 +46,7 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(store.has(SETTINGS_STORAGE_KEY)).toBe(true);
   });
 
-  it('migration 吸收 legacy 散鍵：sp-muted/sp-rotation/sp-key-layout 併入且不刪除', async () => {
+  it('migration 吸收 legacy 散鍵並於落盤成功後刪除（單真相，審查 Should-fix）', async () => {
     store.set('sp-muted', '1');
     store.set('sp-rotation', 'cw');
     store.set('sp-key-layout', JSON.stringify({ version: 2, a: { cx: 0.5, cy: 0.5 } }));
@@ -55,9 +55,24 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(settings.audioMuted).toBe(true);
     expect(settings.shellRotation).toBe('cw');
     expect(settings.keyLayout).toMatchObject({ version: 2 });
-    // 向後相容：legacy 鍵保留供舊版回退讀取。
-    expect(store.get('sp-muted')).toBe('1');
-    expect(store.get('sp-rotation')).toBe('cw');
+    // 單真相：升版落盤成功即刪 legacy，避免主鍵遺失時吸回過期偏好。
+    expect(store.has('sp-muted')).toBe(false);
+    expect(store.has('sp-rotation')).toBe(false);
+    expect(store.has('sp-key-layout')).toBe(false);
+  });
+
+  it('migration 落盤失敗（寫入拋錯）：legacy 散鍵保留不刪', async () => {
+    const map = new Map<string, string>([['sp-muted', '1']]);
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: () => {
+        throw new Error('quota');
+      },
+      removeItem: (key: string) => void map.delete(key),
+    });
+    const { loadSettings } = await loadSettingsModule();
+    expect(loadSettings().audioMuted).toBe(true);
+    expect(map.has('sp-muted')).toBe(true);
   });
 
   it('legacy 值損毀：sp-rotation 非法值回 null、sp-key-layout 壞 JSON 回 null', async () => {

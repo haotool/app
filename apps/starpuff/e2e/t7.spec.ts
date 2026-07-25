@@ -259,7 +259,9 @@ test('設定頁指標路徑（審查 Blocking）：完整指標事件鏈不雙�
   expect(errors).toEqual([]);
 });
 
-test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 且不刪除', async ({ page }) => {
+test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 並刪除（單真相）', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     localStorage.setItem('sp-muted', '1');
     localStorage.setItem('sp-rotation', 'cw');
@@ -269,7 +271,9 @@ test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 
     await page.evaluate(() => localStorage.getItem('sp-settings') ?? '{}'),
   ) as Record<string, unknown>;
   expect(stored).toMatchObject({ schemaVersion: 1, audioMuted: true, shellRotation: 'cw' });
-  expect(await page.evaluate(() => localStorage.getItem('sp-muted'))).toBe('1');
+  // 單真相（審查 Should-fix）：升版落盤成功即刪 legacy，避免主鍵遺失時吸回過期偏好。
+  expect(await page.evaluate(() => localStorage.getItem('sp-muted'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('sp-rotation'))).toBeNull();
   expect(await page.locator('[data-menu="mute"]').getAttribute('aria-pressed')).toBe('true');
 });
 

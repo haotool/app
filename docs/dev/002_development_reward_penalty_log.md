@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+235
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+236
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-legacy-keys-single-truth
+- 原因：migration 後 legacy 散鍵殘留舊值形成雙真相——主鍵若再遺失會被 fallback 吸回過期偏好（審查 Should-fix；PM 裁決刪 legacy）
+- 解法：升版/修復落盤成功即 removeLegacyKeys（舊版回滾非支援發佈路徑，PWA 部署單向前進）；persist 失敗（隱私模式/配額滿）保留 legacy 作下次開機來源，單測與 e2e 釘住兩側行為
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-pwa-apply-grace

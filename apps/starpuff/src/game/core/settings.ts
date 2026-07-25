@@ -1,6 +1,8 @@
 // 使用者偏好 SSOT（v19 #819 卡 4）：散落 localStorage 鍵收斂為 sp-settings 單鍵
 // versioned schema；migration 一次性吸收 legacy 散鍵（sp-muted/sp-rotation/sp-key-layout），
-// legacy 鍵不刪除（舊版回退向後相容）。純資料模組（不 import phaser），vitest 對象。
+// 落盤成功即刪 legacy（單真相，見 removeLegacyKeys）。純資料模組（不 import phaser），
+// vitest 對象。已知限制：偏好經記憶體快取、無 storage event 跨分頁同步——多分頁併發
+// 寫入為 last-writer-wins（遊戲為單分頁互動情境，接受此限制）。
 // one-shot 記憶鍵（sp-rotation-notice/sp-install-dismissed/sp-jump-hint 等）非偏好，不入本 schema。
 
 export type ScreenShakePref = 'off' | 'low' | 'full';
@@ -114,9 +116,23 @@ function migrateFromLegacy(): UserSettings {
 let cached: UserSettings | null = null;
 const listeners = new Set<(settings: UserSettings) => void>();
 
-function persist(settings: UserSettings): void {
+function persist(settings: UserSettings): boolean {
   try {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 單真相收斂（審查 Should-fix）：升版落盤成功即刪 legacy 散鍵——舊版回滾非支援
+// 發佈路徑（PWA 部署單向前進），殘留舊值反而會在主鍵遺失時被 migration 吸回過期偏好。
+// 僅在 persist 成功後呼叫：寫入失敗（隱私模式/配額滿）保留 legacy 作下次開機來源。
+function removeLegacyKeys(): void {
+  try {
+    localStorage.removeItem(LEGACY_MUTE_KEY);
+    localStorage.removeItem(LEGACY_ROTATION_KEY);
+    localStorage.removeItem(LEGACY_LAYOUT_KEY);
   } catch {
     /* noop */
   }
@@ -140,12 +156,12 @@ export function loadSettings(): UserSettings {
     // 主鍵損毀（審查 Blocking）：回退 legacy 散鍵吸收（存在即恢復偏好，缺席等同預設），
     // 並回寫修復主鍵——不再默默以預設覆蓋使用者偏好。
     cached = migrateFromLegacy();
-    persist(cached);
+    if (persist(cached)) removeLegacyKeys();
     return cached;
   }
   cached = migrateFromLegacy();
-  // 落盤即完成升版；此後 legacy 鍵僅為舊版回退備援，不再讀取。
-  persist(cached);
+  // 落盤即完成升版；成功後刪除 legacy 散鍵（單真相）。
+  if (persist(cached)) removeLegacyKeys();
   return cached;
 }
 
