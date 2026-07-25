@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+224
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+225
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-bosses-scale-migration
+- 原因：五王常駐 wobble/翼拍與擠壓/怒吼/死亡收縮 tween 直接寫 sprite scale——魔王碰撞箱持續脈動（jellord ±5%/620ms、noctra ±7%/480ms），頭頂 hit window 與觸碰判定隨美術漂移（§77 家族）
+- 解法：五王瞬態演出全遷 fx 代理（wobble/翼拍/slam/dash/蓄勢/怒吼/碎裂/死亡），狀態性造型（noctra 月牙縮體、voidra 裸核、texture 切換）走 rebase 重錨；vitest 886 綠＋e2e v13 EX 7/7 綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-enemies-scale-migration

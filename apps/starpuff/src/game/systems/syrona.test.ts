@@ -23,6 +23,20 @@ vi.mock('./fx', () => ({
   spawnTelegraph: vi.fn(),
   FX_TEXTURES: { dot: 'fx-dot', star: 'fx-star' },
 }));
+// visualScale 通道替身：本檔驗 FSM 接線與皇冠帶邏輯，不需要真實 scene 事件。
+vi.mock('./visualScale', () => ({
+  getVisualScale: () => ({
+    register: vi.fn(),
+    rebase: vi.fn(),
+    setBase: vi.fn(),
+    fx: () => ({ sx: 1, sy: 1 }),
+    mod: () => ({ sx: 1, sy: 1 }),
+    killFxTweens: vi.fn(),
+    resetFx: vi.fn(),
+    isFxTweening: () => false,
+    unregister: vi.fn(),
+  }),
+}));
 
 type Chainable = Record<string, (...args: unknown[]) => unknown>;
 

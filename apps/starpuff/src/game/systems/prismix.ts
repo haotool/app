@@ -13,6 +13,7 @@ import { shadowActive, shadowSpawnX, stepShadowX, stepShadowY } from '../logic/m
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
+import { getVisualScale } from './visualScale';
 
 // 稜晶雙子 Prismix 呈現層（GAME_DESIGN §68）：與 boss/noctra 共用 BossHandle 介面。
 // 分裂型三段：P1 合體單體 → P2 鏡像雙子（雙本體、獨立血條）→ P3 裂核＋碎晶盾。
@@ -141,6 +142,11 @@ export function createPrismix(
 
   const core = scene.physics.add.sprite(arenaCx(), -BODY_H, 'boss-prismix');
   core.setDisplaySize(BODY_W, BODY_H);
+  // 物理/視覺縮放解耦（§77 根治）：重構彈入/怒吼脈動/雙子碎裂/死亡收縮走 fx 代理，
+  // 核體與雙子物理箱恆為基準。
+  const vscale = getVisualScale(scene);
+  vscale.register(core);
+  const coreFx = vscale.fx(core);
   const coreBody = core.body as Phaser.Physics.Arcade.Body;
   coreBody.setAllowGravity(false);
   coreBody.setImmovable(true);
@@ -149,6 +155,7 @@ export function createPrismix(
   const makeTwin = (tint: number): Phaser.Physics.Arcade.Sprite => {
     const twin = scene.physics.add.sprite(arenaCx(), TWIN_STAND_Y, 'boss-prismix');
     twin.setDisplaySize(TWIN_W, TWIN_H);
+    vscale.register(twin);
     twin.setTint(tint);
     const body = twin.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false);
@@ -449,10 +456,12 @@ export function createPrismix(
     coreBody.enable = true;
     core.setTintMode(Phaser.TintModes.MULTIPLY);
     core.setTint(REBIRTH_TINT);
+    // 重構彈入走 fx 代理（§77 解耦）：物理箱不隨演出縮放。
+    vscale.resetFx(core);
     scene.tweens.add({
-      targets: core,
-      scaleX: { from: core.scaleX * 0.3, to: core.scaleX },
-      scaleY: { from: core.scaleY * 0.3, to: core.scaleY },
+      targets: coreFx,
+      sx: { from: 0.3, to: 1 },
+      sy: { from: 0.3, to: 1 },
       duration: 420,
       ease: 'Back.easeOut',
     });
@@ -539,6 +548,9 @@ export function createPrismix(
       twin.setPosition(cx + dir * 30, TWIN_STAND_Y);
       twin.setVisible(true).setAlpha(1).setAngle(0);
       twin.setDisplaySize(TWIN_W, TWIN_H);
+      // 前次碎裂殘留 fx 復位並重錨基準（§77 解耦）。
+      vscale.resetFx(twin);
+      vscale.rebase(twin);
       (twin.body as Phaser.Physics.Arcade.Body).enable = true;
       scene.tweens.add({
         targets: twin,
@@ -559,11 +571,11 @@ export function createPrismix(
     mirrorTwin = null;
     const dead = sideSprite(survivor === 'a' ? 'b' : 'a');
     playSfx('break');
+    // 碎裂縮小走 fx 代理（§77 解耦）；淡出與傾角照走 sprite。
+    scene.tweens.add({ targets: vscale.fx(dead), sx: 0.2, sy: 0.2, duration: 260 });
     scene.tweens.add({
       targets: dead,
       alpha: 0,
-      scaleX: dead.scaleX * 0.2,
-      scaleY: dead.scaleY * 0.2,
       angle: 40,
       duration: 260,
       ease: 'Quad.easeIn',
@@ -686,7 +698,10 @@ export function createPrismix(
     mirrorPane = null;
     mirrorTwin = null;
     shadowSpawnAtMs = -1;
-    [core, twinA, twinB].forEach((sprite) => scene.tweens.killTweensOf(sprite));
+    [core, twinA, twinB].forEach((sprite) => {
+      scene.tweens.killTweensOf(sprite);
+      vscale.killFxTweens(sprite);
+    });
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     shields.getMatching('active', true).forEach(killProjectile);
@@ -696,13 +711,13 @@ export function createPrismix(
       [core, twinA, twinB].forEach((sprite) => {
         if (!sprite.visible) return;
         scene.tweens.add({
-          targets: sprite,
-          scaleX: 0,
-          scaleY: 0,
-          alpha: 0,
+          targets: vscale.fx(sprite),
+          sx: 0,
+          sy: 0,
           duration: 420,
           ease: 'Back.easeIn',
         });
+        scene.tweens.add({ targets: sprite, alpha: 0, duration: 420, ease: 'Back.easeIn' });
       });
     });
   };
@@ -793,9 +808,9 @@ export function createPrismix(
     emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
     playSfx('boss-roar');
     scene.tweens.add({
-      targets: core,
-      scaleX: core.scaleX * 1.12,
-      scaleY: core.scaleY * 1.1,
+      targets: coreFx,
+      sx: 1.12,
+      sy: 1.1,
       duration: 170,
       yoyo: true,
       repeat: 1,
@@ -1002,7 +1017,9 @@ export function createPrismix(
       steering = true;
       // 中斷演出殘留復位：barrage 蓄能白閃/rebirth 縮放 tween 若中斷須回段位相。
       scene.tweens.killTweensOf(core);
+      vscale.resetFx(core);
       core.setDisplaySize(BODY_W, BODY_H);
+      vscale.rebase(core);
       core.setVisible(true).setAlpha(1);
       core.setTintMode(Phaser.TintModes.MULTIPLY);
       core.setTint(segment === 'p4' ? REBIRTH_TINT : CORE_TINT);

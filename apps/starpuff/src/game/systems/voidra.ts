@@ -8,6 +8,7 @@ import { EX_VOIDRA, VOIDRA, createVoidraFsm, type VoidraCommand } from '../logic
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { ensureFxTextures, spawnTelegraph } from './fx';
+import { getVisualScale } from './visualScale';
 
 // 蝕星魔核 Voidra 呈現層（GAME_DESIGN §82）：與 boss/noctra/prismix/syrona 共用
 // BossHandle。場控收束型：核心懸浮不落地，位置一律以 approachPoint 逼近錨點
@@ -142,6 +143,11 @@ export function createVoidra(
 
   const body = scene.physics.add.sprite(arenaCx(), -BODY_SIZE, 'boss-voidra');
   body.setDisplaySize(BODY_SIZE, BODY_SIZE);
+  // 物理/視覺縮放解耦（§77 根治）：怒吼脈動/死亡收縮走 fx 代理；
+  // P4 裸核縮體屬狀態性造型，setDisplaySize 後 rebase 重錨物理基準。
+  const vscale = getVisualScale(scene);
+  vscale.register(body);
+  const fxScale = vscale.fx(body);
   const physBody = body.body as Phaser.Physics.Arcade.Body;
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
@@ -521,6 +527,7 @@ export function createVoidra(
     dying = true;
     active = false;
     scene.tweens.killTweensOf(body);
+    vscale.killFxTweens(body);
     clearOrdnance();
     clearShards();
     siphonUntilMs = 0;
@@ -529,10 +536,9 @@ export function createVoidra(
     hooks.setGravityScale(null);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: body.x, y: body.y });
     delay(600, () => {
+      scene.tweens.add({ targets: fxScale, sx: 0, sy: 0, duration: 420, ease: 'Back.easeIn' });
       scene.tweens.add({
         targets: body,
-        scaleX: 0,
-        scaleY: 0,
         alpha: 0,
         duration: 420,
         ease: 'Back.easeIn',
@@ -568,6 +574,8 @@ export function createVoidra(
               BODY_SIZE * EX_VOIDRA.innerScaleMul,
               BODY_SIZE * EX_VOIDRA.innerScaleMul,
             );
+            // 裸核縮體為狀態性造型：rebase 讓碰撞體同步縮小（§77 解耦）。
+            vscale.rebase(body);
             body.setTint(INNER_CORE_TINT);
             playSfx('break', 1.2);
             playSfx('boss-roar', 1.1);
@@ -664,9 +672,9 @@ export function createVoidra(
     emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
     playSfx('boss-roar');
     scene.tweens.add({
-      targets: body,
-      scaleX: body.scaleX * 1.12,
-      scaleY: body.scaleY * 1.1,
+      targets: fxScale,
+      sx: 1.12,
+      sy: 1.1,
       duration: 170,
       yoyo: true,
       repeat: 1,

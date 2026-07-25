@@ -20,6 +20,7 @@ import {
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
+import { getVisualScale } from './visualScale';
 
 // 熔糖窯后 Syrona 呈現層（GAME_DESIGN §74）：與 boss/noctra/prismix 共用 BossHandle。
 // 場控型：本體半定點於右側王窯座，威脅來自地形改寫（潮汐/噴泉/滴落/糖漿波）；
@@ -135,6 +136,10 @@ export function createSyrona(
 
   const body = scene.physics.add.sprite(arenaX(THRONE_X_RATIO), -BODY_H, 'boss-syrona');
   body.setDisplaySize(BODY_W, BODY_H);
+  // 物理/視覺縮放解耦（§77 根治）：怒吼脈動/死亡收縮走 fx 代理，物理箱恆為基準。
+  const vscale = getVisualScale(scene);
+  vscale.register(body);
+  const fxScale = vscale.fx(body);
   const physBody = body.body as Phaser.Physics.Arcade.Body;
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
@@ -368,15 +373,15 @@ export function createSyrona(
     dying = true;
     active = false;
     scene.tweens.killTweensOf(body);
+    vscale.killFxTweens(body);
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     ventParticles.forEach((emitter) => emitter.stop());
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: body.x, y: body.y });
     delay(600, () => {
+      scene.tweens.add({ targets: fxScale, sx: 0, sy: 0, duration: 420, ease: 'Back.easeIn' });
       scene.tweens.add({
         targets: body,
-        scaleX: 0,
-        scaleY: 0,
         alpha: 0,
         duration: 420,
         ease: 'Back.easeIn',
@@ -499,9 +504,9 @@ export function createSyrona(
     emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
     playSfx('boss-roar');
     scene.tweens.add({
-      targets: body,
-      scaleX: body.scaleX * 1.12,
-      scaleY: body.scaleY * 1.1,
+      targets: fxScale,
+      sx: 1.12,
+      sy: 1.1,
       duration: 170,
       yoyo: true,
       repeat: 1,
