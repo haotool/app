@@ -1164,6 +1164,11 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 
 ### 77.1 站台「下＋跳」穿落回歸根修（補訂 §29/§44）
 
+> 2026-07-26 取代注記（§117）：本節根因鏈第 1 點「擠壓縮小 body」的耦合已由
+> visualScale 物理/視覺解耦通道根治——物理箱永不隨美術縮放，`LANDING_SQUASH_MIN_VY`
+> 門檻補丁退場；`recentlyGroundedMs`／`restingOnOneWay`／`oneWayLandBand` 屬獨立
+> 語意修正（coyote 收斂、旗標抖動免疫、下砸防隧穿），維持有效。
+
 **根因鏈**（worldstep 逐步 trace 實證）：
 
 1. 落地擠壓 `squashStretch(1.25, 0.75)` 於每次「重新接觸」觸發——擠壓縮小 body
@@ -2403,3 +2408,28 @@ W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴�
   機械化）；乘流中節拍仍由 §116.3 共鳴解鎖制收斂。
 - anti-softlock 複核：噴口恆噴保證可乘、持鍵＝基礎輸入、彈盡可落地吃補給怪
   再返場——基礎星彈恆可通關不變式成立；無計時失敗、沸騰不淹保底高台照舊。
+
+## 117. 物理/視覺縮放解耦 visualScale（#819 子項 3；T7-B 列車）
+
+§77 型缺陷家族的架構級根治：Phaser 4 Arcade `Body.updateBounds` 每物理步以
+`sourceWidth × |scale|` 重算碰撞箱（官方 API 文檔＋Body.js 原始碼實證，無凍結旗標），
+且 TweenManager 與物理 world 同掛 `SceneEvents.UPDATE`——任何直接 tween sprite scale
+的視覺效果都會在同幀被物理讀到，衍生落地擠壓迴圈、腳底離台、穿台與 overlap 漏檢。
+
+### 117.1 通道架構（systems/visualScale.ts，場景鍵入單例）
+
+- 沿 §77.2 蹲姿／§45 走 bob 已驗證的 PRE/POST_UPDATE 視覺通道模式全遊戲統一：
+  `PRE_UPDATE` 還原物理基準（物理步只見基準）、`POST_UPDATE` 套用
+  `base × fx × mod`（渲染見形變）；tween 一律以 fx 代理為標的，物理永不見瞬態縮放。
+- 三層語意：`base`＝物理基準（精英體型、鑽地鰭、半潛、縮殼、月牙縮體、裸核、
+  texture 切換後 rebase）；`fx`＝tween 代理（squash/stretch、popIn、wobble、翼拍、
+  怒吼脈動、死亡收縮）；`mod`＝逐幀直寫（idle 呼吸、蹲縮），擁有者每幀維護。
+- 覆蓋面：玩家（擠壓/呼吸/蹲縮/受擊）、18 怪（popIn/wobble/呼吸/死亡/狀態造型）、
+  五王（wobble/翼拍/攻擊擠壓/怒吼/碎裂/死亡/相位縮體）。柱/爪/糖泉等升起中的
+  危害判定屬蓄意成長 hitbox，維持直接縮放不遷移。
+- 補丁退場：`LANDING_SQUASH_MIN_VY`（§77.1 單案例門檻）刪除——擠壓不再縮物理箱，
+  任意著地皆可安全觸發；碰撞箱不再隨 wobble 每拍脈動（怪 ±8%、魔王 ±5-7%）、
+  popIn 生成期物理箱不再僅 30%。
+- 行為錨：visualScale.test 鎖住「動畫期間物理讀取窗 scale 恆為基準」契約與
+  池重用重錨、shutdown 清理語意；行為零改變由全量 vitest＋e2e 全套＋
+  level-audit L1/L14/L16 EX 對比 base 佐證。
