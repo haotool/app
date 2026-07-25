@@ -1,4 +1,5 @@
 import { registerSW } from 'virtual:pwa-register';
+import { initPwaUpdateGate, queuePwaUpdate } from './pwaUpdateGate';
 
 // 根因：瀏覽器僅在 navigation 時自動檢查 SW 更新；已安裝 PWA（iOS standalone
 // 自 app switcher 喚回、bfcache 復原）長期不觸發 navigation，舊版用戶因此滯留。
@@ -6,8 +7,13 @@ import { registerSW } from 'virtual:pwa-register';
 const PERIODIC_INTERVAL_MS = 60 * 60 * 1000;
 const VISIBILITY_THROTTLE_MS = 5 * 60 * 1000;
 
-registerSW({
+// prompt 型 SW（v19 #819 卡 8，repo 標準模式）：新版 ready 走 onNeedRefresh 標記
+// pending，套用時機由 pwaUpdateGate 把關——遊戲中絕不 reload。
+const updateSW = registerSW({
   immediate: true,
+  onNeedRefresh() {
+    queuePwaUpdate(() => void updateSW(true));
+  },
   onRegisteredSW(swUrl, registration) {
     if (!registration) return;
 
@@ -38,3 +44,11 @@ registerSW({
     });
   },
 });
+
+initPwaUpdateGate();
+
+// e2e 觀測鉤子（卡 8 守門案）：注入假 apply 驗證「遊戲中不套用、回安全場景才套用」。
+if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+  (window as unknown as { __spQueuePwaUpdate?: typeof queuePwaUpdate }).__spQueuePwaUpdate =
+    queuePwaUpdate;
+}

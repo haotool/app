@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+229
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+230
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-pwa-update-scene-gate
+- 原因：starpuff SW 為 autoUpdate（skipWaiting 立即接管），週期/回前景檢查命中新版時可能在遊戲中 reload 吃掉進行中關卡並有版本撕裂風險（#819 卡 8）
+- 解法：改 prompt 型＋pwaUpdateGate——onNeedRefresh 只標記 pending，殼層安靜（isShellBusy SSOT，Title/Map/Result）才 updateSW(true) 套用，controls 邊界觀察者＋5s 低頻重試兜底、pending 先清後套防重入；官方 prompt 流程經 context7 查證
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-save-backup-checksum
