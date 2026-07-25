@@ -46,7 +46,8 @@ interface TweenConfig {
   onComplete?: (tween: { targets: unknown[] }) => void;
 }
 
-function makeScene(): Phaser.Scene {
+// 本體替身記錄 tint 呼叫史（restore-tint 斷言用，沿 syrona harness 慣例）。
+function makeBodySprite() {
   const bodySprite = {
     x: 0,
     y: 0,
@@ -54,6 +55,7 @@ function makeScene(): Phaser.Scene {
     height: 140,
     scaleX: 1,
     scaleY: 1,
+    tintHistory: [] as (number | null)[],
     body: {
       enable: true,
       setAllowGravity: vi.fn(),
@@ -66,16 +68,34 @@ function makeScene(): Phaser.Scene {
       bodySprite.y = y;
       return bodySprite;
     },
-    setTint: () => bodySprite,
-    clearTint: () => bodySprite,
+    setTint(tint: number) {
+      bodySprite.tintHistory.push(tint);
+      return bodySprite;
+    },
+    clearTint() {
+      bodySprite.tintHistory.push(null);
+      return bodySprite;
+    },
     setTintMode: () => bodySprite,
     destroy: vi.fn(),
   };
+  return bodySprite;
+}
+
+interface CounterConfig {
+  onUpdate?: (tween: { getValue: () => number }) => void;
+}
+
+function makeScene(
+  emit: ReturnType<typeof vi.fn> = vi.fn(),
+  bodySprite: ReturnType<typeof makeBodySprite> = makeBodySprite(),
+  counters: CounterConfig[] = [],
+): Phaser.Scene {
   const group = () => ({ get: () => null, getMatching: () => [], destroy: vi.fn() });
   return {
     textures: { exists: () => true },
     scale: { width: 854 },
-    events: { emit: vi.fn() },
+    events: { emit },
     physics: { add: { sprite: () => bodySprite, group } },
     // 計時器即時執行：入場運鏡與吸流窗排程同步完成，測試免推進虛擬時鐘。
     time: { delayedCall: (_ms: number, fn: () => void) => (fn(), { remove: vi.fn() }) },
@@ -86,6 +106,11 @@ function makeScene(): Phaser.Scene {
         });
         return {};
       },
+      // EX 呼吸循環為時間驅動：僅捕捉 onUpdate 供測試顯式觸發，不同步執行。
+      addCounter: (config: CounterConfig) => (
+        counters.push(config),
+        { remove: vi.fn(), stop: vi.fn() }
+      ),
       killTweensOf: vi.fn(),
     },
     add: { image: () => chainable(), circle: () => chainable() },
@@ -145,5 +170,66 @@ describe('Voidra 呈現層：星光虹吸抽彈守門（§113）', () => {
 
     // 前兩窗抽彈化盾（0→1→2 層）；滿盾後窗滿必須跳過抽彈，玩家彈藥不得再減。
     expect(hooks.drainTopStar).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Voidra 呈現層：段重試語意提示（W3 HUD/toast 管線）', () => {
+  it('P2 段重試發 BOSS_SEGMENT_RETRY refill（回灌語意，同王雙語意區分）', async () => {
+    const { GameEvents } = await import('../core/events');
+    const emit = vi.fn();
+    const handle = createVoidra(makeScene(emit), makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 110×0.7=77：傷 34 入 P2 生存段。
+    handle.applyDamage(34);
+    expect(handle.getDebugState?.()?.phase).toBe('p2');
+    emit.mockClear();
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    const call = emit.mock.calls.find((entry) => entry[0] === GameEvents.BOSS_SEGMENT_RETRY);
+    expect(call?.[1]).toEqual({ semantics: 'refill' });
+  });
+});
+
+describe('Voidra 呈現層：P4 段位相色持續（W3 Should-fix，鏡像 syrona/prismix）', () => {
+  const toInnerCore = () => {
+    const body = makeBodySprite();
+    const counters: CounterConfig[] = [];
+    const handle = createVoidra(makeScene(vi.fn(), body, counters), makeHooks(), {
+      ex: true,
+      arenaLeft: () => 0,
+    });
+    handle.spawn();
+    // EX 外核（165）單發打穿：hp 歸零不死→內核裸奔 P4（voidraFsm §8.2）。
+    handle.applyDamage(400);
+    expect(handle.getDebugState?.()?.phase).toBe('p4');
+    return { body, counters, handle };
+  };
+
+  it('P4 受擊白閃回落復原裸奔亮紫而非 clearTint', () => {
+    const { body, handle } = toInnerCore();
+    body.tintHistory.length = 0;
+    handle.applyDamage(2);
+    // delayedCall 即時執行：序列尾必為亮紫復原值（非 null=clearTint、非白閃殘留）。
+    expect(body.tintHistory.length).toBeGreaterThan(0);
+    const lastTint = body.tintHistory[body.tintHistory.length - 1];
+    expect(lastTint).not.toBeNull();
+    expect(lastTint).not.toBe(0xffffff);
+  });
+
+  it('P4 EX 緋紅呼吸循環讓位段位相色（不再每幀覆寫，鏡 prismix guard）', () => {
+    const { body, counters } = toInnerCore();
+    expect(counters.length).toBeGreaterThan(0);
+    body.tintHistory.length = 0;
+    counters.forEach((counter) => counter.onUpdate?.({ getValue: () => 0.5 }));
+    expect(body.tintHistory).toHaveLength(0);
+  });
+
+  it('P4 段重試後段位相色重申（clearTint 不得洗掉裸奔亮紫）', () => {
+    const { body, handle } = toInnerCore();
+    body.tintHistory.length = 0;
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    // 白閃延時已清、呼吸循環讓位——重試路徑必須就地重申亮紫（非 null=clearTint）。
+    const lastTint = body.tintHistory[body.tintHistory.length - 1];
+    expect(lastTint).not.toBeNull();
+    expect(lastTint).not.toBe(0xffffff);
   });
 });

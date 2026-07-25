@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
+  CROWN_BAND_PX,
   EX_SYRONA,
   SYRONA,
   createSyronaFsm,
@@ -9,7 +10,13 @@ import {
   type SyronaCommand,
 } from '../logic/syronaFsm';
 import type { TideSpec } from '../logic/tide';
-import { UPDRAFT, isInUpdraft, ventPhase, type UpdraftZone } from '../logic/updraft';
+import {
+  UPDRAFT,
+  crownHoverLift,
+  isInUpdraft,
+  ventPhase,
+  type UpdraftZone,
+} from '../logic/updraft';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
@@ -22,6 +29,9 @@ import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
 const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 170;
 const BODY_H = 150;
+// 窯心暴走（§8.2 W2）：本體紅化與血條深紅（與 p2 常規紅 0xd94b4b 區隔）。
+const RAMPAGE_BODY_TINT = 0xff8a6a;
+const RAMPAGE_BAR_TINT = 0xb8302e;
 const THRONE_Y = GROUND_TOP - BODY_H / 2;
 // 王窯座位置：arena 右緣 20% 帶（半定點，僅輕微浮動不追打）。
 const THRONE_X_RATIO = 0.8;
@@ -35,6 +45,8 @@ const VENT_PERIOD_MS = 2600;
 const VENT_DUTY = 0.31;
 // 超載升托（§74 P3）：更強升速上限，開放直達皇冠的垂直路線。
 const OVERLOAD_MAX_RISE = -640;
+// 暴走恆噴柱色（與 P3 超載金光區隔：窯壓紅金）。
+const RAMPAGE_VENT_COLOR = 0xff9a5c;
 // 浮台 ×3（§74 保底位）：比例位；y 依 SYRONA.arenaPlatformYs。
 const PLATFORM_X_RATIOS = [0.22, 0.47, 0.7] as const;
 const PLATFORM_W = 140;
@@ -128,6 +140,14 @@ export function createSyrona(
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
 
+  // 皇冠帶錨定物理箱頂緣（W3 真值探針修正）：sprite 視覺框頂與可命中物理箱頂
+  // 存在數十 px 偏差——舊錨（視覺頂＋34）以上幾乎無可重疊面，星彈僅能擦帶 3px。
+  // 帶寬 34px 不變（精準度保留），錨點收斂至「可命中面」單一真值。
+  const crownAnchorTopY = () => physBody.top;
+  // P4 乘流懸停線：皇冠帶內縮 12px——涵蓋本體浮動 ±5 與星彈半高後恆在帶內
+  //（出彈點＝玩家中心水平直飛）。
+  const crownHoverY = () => crownAnchorTopY() + CROWN_BAND_PX - 12;
+
   const projectiles = scene.physics.add.group({ maxSize: 20 });
   const shockwaves = scene.physics.add.group({ maxSize: 10, allowGravity: false });
 
@@ -181,11 +201,14 @@ export function createSyrona(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
+  // 受擊白閃（W3 Should-fix 同構修復）：P4 窯心暴走紅化為段位相色，
+  // 白閃回落復原而非 clearTint 洗掉。
   const flashWhite = () => {
     body.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
     delay(90, () => {
       body.setTintMode(Phaser.TintModes.MULTIPLY);
-      body.clearTint();
+      if (fsm.phase === 'p4') body.setTint(RAMPAGE_BODY_TINT);
+      else body.clearTint();
     });
   };
 
@@ -367,11 +390,28 @@ export function createSyrona(
     return vents.some((zone) => isInUpdraft(target?.x ?? 0, target?.y ?? 0, zone, GROUND_TOP));
   };
 
-  const applyDamageInternal = (amount: number, crown: boolean, source?: BossDamageSource) => {
+  // 全場沸騰參數（§8.2 W2）：P4 入段與段重試共用同一 spec（防單邊改值漂移）。
+  const rampageBoilSpec = () => ({
+    maxY: SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx,
+    periodMs: Math.round(SYRONA.tidePeriodMs * EX_SYRONA.rampageBoilPeriodMul),
+    dutyPct: SYRONA.tideDutyPct,
+  });
+
+  const applyDamageInternal = (amount: number, rawCrown: boolean, source?: BossDamageSource) => {
     if (!active) return;
     if (source === 'volt' && fsm.interruptSummon()) {
       playSfx('break');
       scene.tweens.add({ targets: body, angle: 4, duration: 45, yoyo: true, repeat: 3 });
+    }
+    // 窯風共振（W3 低門檻洩漏修正）：P4 皇冠命中必須乘流中才有效——平台站射
+    // 的免技巧 chip 通道關閉；技巧門檻＝「會用噴口」（PM 裁決語意機械化）。
+    // P1-P3 皇冠 ×2 維持純幾何判定。
+    const crown = rawCrown && (fsm.phase !== 'p4' || targetRidingVent());
+    // 窯心暴走（§8.2 W2）：P4 皇冠唯一可傷——體傷歸零回饋（金屬聲，不閃白）；
+    // 可傷性真值在 FSM takeDamage 皇冠閘（此處僅提前回饋省空轉）。
+    if (fsm.phase === 'p4' && !crown) {
+      playSfx('metal', 0.6);
+      return;
     }
     // 皇冠弱點（§74）：頂帶命中 ×2 傷。
     const finalAmount = crown ? amount * SYRONA.crownDamageMul : amount;
@@ -383,7 +423,7 @@ export function createSyrona(
         hooks.onVentEgg();
       }
     }
-    for (const event of fsm.takeDamage(finalAmount)) {
+    for (const event of fsm.takeDamage(finalAmount, crown)) {
       switch (event.kind) {
         case 'damaged':
           flashWhite();
@@ -395,9 +435,20 @@ export function createSyrona(
           });
           break;
         case 'phase':
-          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
-          // 場控地形改寫（§74）：P2 潮汐入場、P3 大沸騰（週期縮短＋漲頂升高）。
-          if (event.phase === 'p2') {
+          emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+            phase: event.phase,
+            // 暴走段紅化（§8.2）：血條深紅覆寫（僅 p4 生效，HUD 泛化管線）。
+            ...(event.phase === 'p4' ? { barTint: RAMPAGE_BAR_TINT } : {}),
+          });
+          // 場控地形改寫（§74）：P2 潮汐入場、P3 大沸騰（週期縮短＋漲頂升高）、
+          // P4 全場沸騰（§8.2 W2：週期再收短＋漲頂逼至高台下緣，保底位不淹）。
+          if (event.phase === 'p4') {
+            hooks.boilTide(rampageBoilSpec());
+            body.setTint(RAMPAGE_BODY_TINT);
+            playSfx('boss-roar', 1.3);
+            scene.cameras.main.flash(320, 255, 120, 90);
+            scene.cameras.main.shake(200, 0.007);
+          } else if (event.phase === 'p2') {
             hooks.startTide({
               maxY: SYRONA.tideMaxY,
               periodMs: SYRONA.tidePeriodMs,
@@ -474,7 +525,8 @@ export function createSyrona(
           yoyo: true,
           repeat: -1,
           onUpdate: (tween) => {
-            if (dying) return;
+            // P4 讓位（W3 Should-fix 鏡 prismix）：暴走紅化為段位相色，不得被每幀覆寫。
+            if (dying || fsm.phase === 'p4') return;
             const v = tween.getValue() ?? 0;
             const mix = (a: number, b: number) => Math.round(a + (b - a) * v);
             body.setTint((mix(255, 216) << 16) | (mix(255, 75) << 8) | mix(255, 106));
@@ -503,8 +555,9 @@ export function createSyrona(
     },
     applyDamageAt(amount: number, x: number, y: number, source?: BossDamageSource) {
       void x;
-      // 皇冠弱點（§74）：判定收斂 logic/syronaFsm 純函式（頂帶命中 ×2）。
-      applyDamageInternal(amount, isCrownHit(y, body.y - BODY_H / 2), source);
+      // 皇冠弱點（§74）：判定收斂 logic/syronaFsm 純函式（頂帶命中 ×2）；
+      // 錨點＝物理箱頂緣（W3 修正：視覺頂以上無可重疊面）。
+      applyDamageInternal(amount, isCrownHit(y, crownAnchorTopY()), source);
     },
     update(deltaMs: number) {
       if (!active || dying) return;
@@ -520,15 +573,17 @@ export function createSyrona(
       body.y = THRONE_Y + bob;
       body.setFlipX((target?.x ?? body.x) < body.x);
       body.setRotation(fsm.state === 'idle' ? 0.06 : 0);
-      // 噴口視覺同步（§74）：超載期恆噴金光；平時沿週期相位。
+      // 噴口視覺同步（§74）：暴走恆噴紅金（乘流登頂可規劃訊號）＞超載金光＞週期相位。
       const overloading = elapsedMs < overloadUntilMs;
+      const rampaging = fsm.phase === 'p4';
       for (const [i, zone] of vents.entries()) {
         const phase = ventPhase(elapsedMs, zone);
-        const erupting = overloading || phase === 'erupt';
+        const erupting = rampaging || overloading || phase === 'erupt';
         const column = ventColumns[i];
         const particles = ventParticles[i];
         if (!column || !particles) continue;
-        if (overloading) column.setFillStyle(0xffd966, 0.28);
+        if (rampaging) column.setFillStyle(RAMPAGE_VENT_COLOR, 0.3);
+        else if (overloading) column.setFillStyle(0xffd966, 0.28);
         else {
           column.setFillStyle(0xffe0c0, erupting ? 0.2 : phase === 'telegraph' ? 0.1 : 0.05);
         }
@@ -565,6 +620,27 @@ export function createSyrona(
     trySlamStun() {
       return false;
     },
+    // 段起點重試（W3 v2 收斂）：P4 死亡不整場重打——進度保留（沿 Prismix/Voidra
+    // PM 裁決 A：單命皇冠輸出上限 ~9 < 暴走池 20，整場重打使 P4 結構性不可完成，
+    // L16 EX high 兩測 0% 取證）；P1-P3 回 false 走一般敗北流程（抵達暴走的耐力
+    // 驗收保留）。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈藥/衝擊波/延時全清（沿 voidra 慣例：死亡前排程不得於新命憑空觸發）。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      // 白閃延時可能被清：復原暴走紅化（段位相色重申）。
+      body.setTintMode(Phaser.TintModes.MULTIPLY);
+      body.setTint(RAMPAGE_BODY_TINT);
+      fsm.resetToPhase('p4');
+      // 全場沸騰週期重置：新命自新週期起漲（重生喘息窗，保底高台恆可立足）。
+      hooks.boilTide(rampageBoilSpec());
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
+    },
     getBody() {
       return body;
     },
@@ -581,12 +657,27 @@ export function createSyrona(
       minionHandlers.push(handler);
     },
     // arena 噴口供力查詢（§74）：GameScene 逐幀委派（沿 stage updraft 結算慣例）。
-    getVentLift(x: number, y: number, vy: number, deltaMs: number, blockedUp: boolean) {
+    // P4 窯心暴走＝窯壓恆噴（W3 PM 裁決）：暴走段噴口不看週期恆供力，持鍵乘流
+    // 升托至皇冠帶轉氣墊懸停——「像素級擦帶跳」升級為可學習的乘流登頂技巧
+    //（≥600ms 級滯空輸出窗；水平離柱即交還重力，無滯留軟鎖）。
+    // 持鍵乘流（低門檻洩漏修正）：氣墊僅跳躍鍵持按時供力——誤入噴口不再被動
+    // 抬升（低階 bot 點跳不持鍵，58% 假性通關取證關閉）。
+    getVentLift(
+      x: number,
+      y: number,
+      vy: number,
+      deltaMs: number,
+      blockedUp: boolean,
+      rideHeld = false,
+    ) {
+      const rampage = fsm.phase === 'p4';
       const overloading = elapsedMs < overloadUntilMs;
       for (const zone of vents) {
-        if (!overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
+        if (!rampage && !overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
         if (!isInUpdraft(x, y, zone, GROUND_TOP)) continue;
+        if (rampage && !rideHeld) continue;
         if (blockedUp) return vy;
+        if (rampage) return crownHoverLift(y, crownHoverY());
         const next = vy - UPDRAFT.liftPxPerSec2 * (overloading ? 1.4 : 1) * (deltaMs / 1000);
         return Math.max(next, overloading ? OVERLOAD_MAX_RISE : UPDRAFT.maxRiseSpeed);
       }
@@ -595,6 +686,11 @@ export function createSyrona(
     // arena 浮台（§74）：GameScene 接玩家 collider。
     getPlatforms() {
       return platforms;
+    },
+    // 準星輔助（§54/W3）：P4 皇冠唯一可傷——中心導向讓位（星彈平飛，
+    // 乘流懸停高度＝皇冠命中，「會用噴口」即對準）。
+    aimAssistMode() {
+      return fsm.phase === 'p4' ? ('off' as const) : ('center' as const);
     },
     // e2e 觀測（§83）：自然循環招式（wave/overload）可斷言。
     getDebugState() {

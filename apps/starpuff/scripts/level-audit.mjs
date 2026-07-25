@@ -103,6 +103,9 @@ async function runStandardAudit(
       reactionMs: tierSpec.reactionMs,
       dodge: tierSpec.dodge,
       kite: tierSpec.kite,
+      flap: tierSpec.flap === true,
+      mirrorGuard: tierSpec.mirrorGuard === true,
+      bossForage: tierSpec.bossForage === true,
       maxOnScreen: level.maxOnScreen,
       floodPlatformXs: level.tide ? floodPlatformXs(level) : [],
       inhalableKinds: INHALABLE_KINDS,
@@ -163,6 +166,10 @@ async function runStandardAudit(
       shots: m.shots ?? 0,
       transforms: m.transforms ?? 0,
       samples: m.samples ?? [],
+      // 死因取證（W1.5）：受擊事件（精確 t/x/y/hp）×招式轉移序列——供逐 phase
+      // 死亡分佈與死因歸類（迴避失敗/輸出不足/機制未解）裁決分析。
+      stateLog: isBoss ? (m.stateLog ?? []) : [],
+      damageLog: m.damageEvents ?? [],
     });
   }
   const cleared = runsOut.filter((r) => r.result === 'cleared');
@@ -535,14 +542,17 @@ async function main() {
     }
     const isBoss = level.boss !== null;
     if (exMode && !isBoss) throw new Error(`L${level.id} 非魔王關，無 EX 變體`);
+    const tier = opt('bot', isBoss ? 'high' : 'mid');
     // 變身優勢對照（#816 W2）：--transform 依 TRANSFORM_ADVANTAGE 查該王情境。
+    // W1.5 完整策略：transformUse tier（高階）預設啟用該王變身優勢（未定義王靜默略過）。
     let transformSpec = null;
     if (flag('transform')) {
       if (!isBoss) throw new Error(`L${level.id} 非魔王關，無變身優勢情境`);
       transformSpec = TRANSFORM_ADVANTAGE.find((s) => s.levelId === level.id) ?? null;
       if (!transformSpec) throw new Error(`L${level.id} 尚未定義 TRANSFORM_ADVANTAGE（T5 補齊）`);
+    } else if (isBoss && BOT_TIERS[tier]?.transformUse === true) {
+      transformSpec = TRANSFORM_ADVANTAGE.find((s) => s.levelId === level.id) ?? null;
     }
-    const tier = opt('bot', isBoss ? 'high' : 'mid');
     const capSec = Number(opt('cap', exMode ? '900' : isBoss ? '600' : '300'));
     const report = await runStandardAudit(page, level, {
       tier,

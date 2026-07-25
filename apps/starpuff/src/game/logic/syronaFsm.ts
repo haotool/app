@@ -31,7 +31,8 @@ export const SYRONA = {
   waveDurationMs: 2000,
   overloadDurationMs: 2600,
   // 階段僵直窗（§74 hit window）：P1 散熱 2.5s、P2 吟唱 2.0s、P3 波後 2.0s。
-  idleMs: { p1: 2500, p2: 2000, p3: 2000 },
+  // p4 為 EX 專屬型態（#814）：Syrona 真 P4 於 W2 落地，暫沿 p3 值。
+  idleMs: { p1: 2500, p2: 2000, p3: 2000, p4: 2000 },
   // telegraph 時長（呈現層讀取；不隨速率縮放，沿 Noctra 慣例）。
   fountainTelegraphMs: 800,
   lobTelegraphMs: 500,
@@ -52,12 +53,28 @@ export const SYRONA = {
 
 // Syrona EX 專屬差分（§74）：潮汐週期再 -25%、噴泉 ×5、Bubbla 上限 3、滴落點 6；
 // 質性差分＝噴泉順序隨機化（每循環洗牌出序，逼讀 telegraph 取代背板）。
+// P4 窯心暴走（§8.2 #814 W2）：HP<15% 全場沸騰、皇冠弱點成唯一可傷點——
+// 登頂技巧強制驗收；單條血量、暴走段紅化（呈現層/HUD）。
 export const EX_SYRONA = {
   fountainCount: 5,
   summonCap: 3,
   dripCount: 6,
   boilPeriodMul: SYRONA.boilPeriodMul * 0.75,
   shuffleFountain: true,
+  // 暴走閾值：總血 15%（EX 135 → hp ≤20 入暴走）。
+  rampageHpRatio: 0.15,
+  // 全場沸騰：週期較 EX 大沸騰再收短、漲頂再升——但恆低於最高浮台（304），
+  // 保底立足位不變式（anti-softlock：無計時失敗、退潮窗照常）。
+  rampageBoilPeriodMul: 0.45,
+  rampageBoilMaxYDeltaPx: -40,
+  // 皇冠共鳴解鎖制（W3 Blocking v2）：暴走段皇冠命中需「維持命中流」——
+  // 窗內累積 crownResonanceHits 中解鎖全額、斷窗重計；解鎖前皆 glance 1 點
+  //（anti-softlock 恆可磨）。校準依據：高階跨跳輪 crown 命中間隔 ~950-1600ms
+  //（體傷命中不入節拍、miss 拉長），窗 1600 覆蓋；低階 overload 單簇（2-4 發）
+  // 解鎖後至多 1 發全額（≤13 < 暴走池 20）不秒池、簇間 8-12s 必斷窗。
+  crownComboWindowMs: 1600,
+  crownResonanceHits: 3,
+  crownGlanceDamage: 1,
 } as const;
 
 export type SyronaAction = 'idle' | 'fountain' | 'lob' | 'drip' | 'summon' | 'wave' | 'overload';
@@ -83,6 +100,9 @@ const SPEED_FACTORS: Record<BossPhase, number> = {
   p1: 1,
   p2: SYRONA.enrageSpeedMultiplier,
   p3: SYRONA.enrageSpeedMultiplier,
+  // P4 窯心暴走（§8.2 W2）：節奏沿 p3——壓力來自全場沸騰＋皇冠唯一可傷，
+  // 非手速面板（單條血量語意）。
+  p4: SYRONA.enrageSpeedMultiplier,
 };
 
 // 皇冠弱點帶判定（§74）：命中點高於本體頂緣下 34px 內＝皇冠 ×2 傷；純函式供 vitest
@@ -109,7 +129,10 @@ export function syronaMoveTable(phase: BossPhase): readonly WeightedMove<SyronaA
         { action: 'fountain', weight: 3 },
         { action: 'summon', weight: 2 },
       ];
+    // P4 窯心暴走（§8.2 W2）：沿 p3 招池——overload 升托即登頂皇冠輸出窗，
+    // 招池不變、可傷性裁決收斂於 takeDamage（皇冠唯一可傷）。
     case 'p3':
+    case 'p4':
       return [
         { action: 'wave', weight: 3 },
         { action: 'overload', weight: 3 },
@@ -129,11 +152,16 @@ export interface SyronaFsm {
   readonly speedFactor: number;
   readonly defeated: boolean;
   tick(deltaMs: number): SyronaCommand | null;
-  takeDamage(amount: number): SyronaHitEvent[];
+  // 皇冠歸屬（§8.2 W2）：P4 窯心暴走期皇冠為唯一可傷點——體傷歸零；
+  // 倍傷結算仍在呈現層（crownDamageMul），此處僅收斂可傷性裁決。
+  takeDamage(amount: number, crown?: boolean): SyronaHitEvent[];
   // 雷化鏈電中斷召喚（§58 慣例）：僅召喚態可中斷，成功回 true。
   interruptSummon(): boolean;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
+  // 段起點重試（W3 v2 收斂）：P4 進度保留——hp 與供彈累計不回灌、共鳴窗歸零、
+  // 節奏回僵直窗起點；非 P4 期呼叫為 no-op（P1-P3 保留整場重打的耐力語意）。
+  resetToPhase(target: 'p4'): void;
 }
 
 export interface SyronaFsmOptions {
@@ -163,6 +191,11 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
 
   let hp = maxHp;
   let phase: BossPhase = 'p1';
+  // 皇冠共鳴解鎖制（W3）：FSM 內部時鐘（tick 累加）＋上次皇冠命中時刻＋
+  // 窗內累積命中數（達 crownResonanceHits 解鎖全額）。
+  let clockMs = 0;
+  let lastCrownHitAtMs = Number.NEGATIVE_INFINITY;
+  let crownComboCount = 0;
   let state: SyronaAction = 'idle';
   // 近兩次出招（§5 連續同招上限 2）。
   let recentAttacks: SyronaAction[] = [];
@@ -260,6 +293,7 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
     },
     tick(deltaMs: number): SyronaCommand | null {
       if (defeated) return null;
+      clockMs += deltaMs;
       timerMs -= deltaMs;
       if (timerMs > 0) return null;
       if (state === 'idle') {
@@ -278,24 +312,41 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       timerMs += durationMs(state);
       return commandOf(state);
     },
-    takeDamage(amount: number): SyronaHitEvent[] {
+    takeDamage(amount: number, crown = false): SyronaHitEvent[] {
       if (defeated || amount <= 0) return [];
+      // 窯心暴走（§8.2 W2）：P4 皇冠成唯一可傷點——體傷歸零（登頂強制驗收）。
+      if (phase === 'p4' && !crown) return [];
+      let incoming = amount;
+      // 皇冠共鳴解鎖制（W3 Blocking v2）：窗內累積命中解鎖全額、斷窗重計——
+      // 收斂 incidental 可傷面（偶中簇不秒池），主動命中流解鎖後暢通。
+      if (phase === 'p4' && crown) {
+        const inWindow = clockMs - lastCrownHitAtMs <= EX_SYRONA.crownComboWindowMs;
+        lastCrownHitAtMs = clockMs;
+        crownComboCount = inWindow ? crownComboCount + 1 : 1;
+        if (crownComboCount <= EX_SYRONA.crownResonanceHits) {
+          incoming = EX_SYRONA.crownGlanceDamage;
+        }
+      }
       const events: SyronaHitEvent[] = [];
-      hp = Math.max(0, hp - amount);
+      hp = Math.max(0, hp - incoming);
       events.push({ kind: 'damaged', hp });
       if (hp <= 0) {
         defeated = true;
         events.push({ kind: 'defeated' });
         return events;
       }
-      damageSinceDrop += amount;
+      damageSinceDrop += incoming;
       while (damageSinceDrop >= SYRONA.minionSpawnHpStep) {
         damageSinceDrop -= SYRONA.minionSpawnHpStep;
         events.push({ kind: 'minionDrop' });
       }
-      // 階段轉換：跨雙閾值單次受擊依序帶出 phase 事件（p1→p2→p3 不跳段）。
+      // 階段轉換：跨多閾值單次受擊依序帶出 phase 事件（p1→p2→p3→p4 不跳段）；
+      // 暴走段（p4）EX 限定，非 EX 停在 p3 沿一般擊破路徑。
       if (phase === 'p1' && hp <= maxHp * SYRONA.p2HpRatio) enterPhase('p2', events);
       if (phase === 'p2' && hp <= maxHp * SYRONA.p3HpRatio) enterPhase('p3', events);
+      if (ex && phase === 'p3' && hp <= maxHp * EX_SYRONA.rampageHpRatio) {
+        enterPhase('p4', events);
+      }
       return events;
     },
     interruptSummon(): boolean {
@@ -306,6 +357,17 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
     },
     setTargetDistance(next: number | null): void {
       distancePx = next;
+    },
+    resetToPhase(target: 'p4'): void {
+      if (defeated || phase !== target) return;
+      // P4 進度保留（沿 Prismix/Voidra PM 裁決 A）：hp 不回灌；共鳴窗歸零
+      //（新命重啟命中流，不繼承舊窗）、招式節奏復位。
+      lastCrownHitAtMs = Number.NEGATIVE_INFINITY;
+      crownComboCount = 0;
+      state = 'idle';
+      recentAttacks = [];
+      timerMs = durationMs('idle');
+      distancePx = null;
     },
   };
 }

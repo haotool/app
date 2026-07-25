@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import type { FxSystem } from './fx';
+import { GameEvents, offGameEvent, onGameEvent } from '../core/events';
 import { playSfx } from '../audio/sfx';
 
 // 場內浮字與慶祝演出（GAME_DESIGN §24/§46/§94）：成就 toast 佇列、星味首遇
@@ -28,6 +29,18 @@ export function createToasts(scene: Phaser.Scene, hooks: ToastHooks): ToastSyste
   const achievementQueue: string[] = [];
   let achievementActive = false;
   let lastAchievement = '';
+
+  // 段重試語意提示（W3）：同王雙語意局內區分——每語意每局一次不重複打擾。
+  const seenSegmentSemantics = new Set<string>();
+  const onSegmentRetry = ({ semantics }: { semantics: 'kept' | 'refill' }): void => {
+    if (seenSegmentSemantics.has(semantics)) return;
+    seenSegmentSemantics.add(semantics);
+    showFlavor(semantics === 'kept' ? '段首重試——魔王傷勢保留' : '段首重試——魔王氣力回復');
+  };
+  onGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, onSegmentRetry);
+  scene.events.once('shutdown', () => {
+    offGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, onSegmentRetry);
+  });
 
   // 成就 toast 佇列（§94）：一次一張序列播放（跨批不重疊）；轉場即隨場景銷毀，
   // 漏播由 Result 名單與圖鑑成就頁兜底。金色橫幅帶深色底襯（勝利白閃下仍可讀），
@@ -71,8 +84,8 @@ export function createToasts(scene: Phaser.Scene, hooks: ToastHooks): ToastSyste
     });
   }
 
-  return {
-    flavor(message: string) {
+  function showFlavor(message: string): void {
+    {
       const toast = scene.add
         .text(scene.scale.width / 2, scene.scale.height * 0.22, message, {
           fontFamily: 'system-ui, sans-serif',
@@ -94,6 +107,12 @@ export function createToasts(scene: Phaser.Scene, hooks: ToastHooks): ToastSyste
         ],
         onComplete: () => toast.destroy(),
       });
+    }
+  }
+
+  return {
+    flavor(message: string) {
+      showFlavor(message);
     },
 
     queueAchievements(names: string) {

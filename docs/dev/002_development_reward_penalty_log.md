@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+197
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+221
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,141 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-jellord-noctra-p4-checkpoint
+- 原因：兩王新 P4 高階門檻全滅（L4 EX high 17%、L7 EX high 0%）共同簽名＝每命抵達 P4 殘血 0-2 且 Jellord/Noctra 為五王中僅有的無 P4 段重試者——與 L12/L16 checkpoint 前 0-17% 死牆同構
+- 解法：沿 PM 裁決 A 同構補齊兩王 P4 進度保留段重試（FSM resetToPhase＋呈現層清場/tint 復位/BOSS_SEGMENT_RETRY kept）；driver 增 L4 P4 果凍雨相對高度迴避（固定 y>200 過濾在彈跳空中失效取證）
+
+- 日期：2026-07-25
+- ID：reward-root-package-json-test-workspace-concurrency
+- 原因：pnpm -r test 在 9 個 monorepo apps 無限制並行測試時造成 CPU/DOM 競爭與隨機 vitest timeout 導致 pre-push 失敗
+- 解法：package.json test 指令加上 --workspace-concurrency 2，限制並行度以確保 pre-push 穩定通過
+
+- 日期：2026-07-25
+- ID：reward-ratewise-build-scripts-test-timeout
+- 原因：pnpm -r test 全庫並行跑測時，build-scripts 檔案系統全目錄掃描測試於 CPU 繁忙時容易觸發預設 5s timeout
+- 解法：顯式指定該單測 timeout 為 15s，確保全庫測試穩定通過
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-hold-to-ride-resonance-gate
+- 原因：乘流 v1 被動抬升＋皇冠帶可達化把低階 bot 一併放行（L16 EX low 12-run 58% 假性通關取證：誤入噴口自動懸停＋grantSupply drip 1.2-1.4s ≤ 共鳴窗 1.6s 撐起連擊）
+- 解法：持鍵乘流（氣墊僅 jumpHeld 供力，低階點跳不持鍵天然被擋）＋窯風共振（P4 皇冠命中必須 targetRidingVent 乘流中才有效，中台站射 chip 通道關閉；P1-P3 皇冠純幾何不動）——「會用噴口」技巧門檻機械化
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-aim-assist-crown-rootcause
+- 原因：乘流懸停帶內 800 發零傷的真根因＝§54 魔王準星輔助把長程星彈導向本體中心（拉出皇冠帶），且皇冠帶錨定視覺框頂而非可命中物理箱頂——兩層幾何互鎖使皇冠命中僅剩近距 3px 擦帶
+- 解法：皇冠帶錨點收斂至物理箱頂緣單一真值（帶寬 34px 不變）＋新增 BossHandle.aimAssistMode——Syrona P4 期回 'off' 讓星彈平飛保留高度精準語意；真引擎取證懸停連射 20→0 全鏈路通、一次性探針用畢即刪
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-vent-ride-crown-stream
+- 原因：前手真值探針（damageBossAt y 掃帶＋單跳弧採樣）證實跳打 apex 僅入皇冠帶 3px——窄窗幾何仍是擦帶而非穩定命中流，L16 EX high 0% 的結構性根因
+- 解法：PM 裁決「噴口氣流登頂」落地——P4 暴走段噴口窯壓恆噴（不看週期）＋皇冠帶氣墊（crownHoverLift 位置伺服懸停於皇冠線內縮 12px，≥600ms 級滯空輸出窗）；driver 收編為乘最近噴口帶內節流連射、彈盡放行 bossForage，像素級擦帶跳升級為可學習乘流技巧
+
+- 日期：2026-07-25
+- ID：neutral-starpuff-t6-w3-docs-scope-alignment
+- 原因：WALKTHROUGH EX 表與 changeset 停在「三王 P4＋二王強化」舊口徑，W3 落地 Jellord 果凍狂潮／Noctra 月相雙血條後五王真 P4 已成立，且 L16 反制要點缺共鳴節拍語意
+- 解法：EX 表補 L4/L7 真 P4 列（雙血條結構＋反制要點）、L16 補共鳴節拍（1.6s 內 3 中解鎖全額）、changeset 重寫為五王專屬第四型態口徑；epic 進度檔同步 W3 接棒紀錄
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-syrona-p4-segment-retry
+- 原因：共鳴 v2＋窄窗後 L16 EX high 仍 0%（兩測 6-run 全 timeout）——取證翻案：高階每命例行入 P4 磨池至 11-12，但 Syrona 無段重試、死亡＝135 整場重打暴走池重灌，單命輸出上限 ~9 < 池 20，P4 結構性不可完成（L12 W1.6 死牆同簽名），參數迭代數學上跨不過
+- 解法：沿 Prismix/Voidra PM 裁決 A 同構補 Syrona P4 段重試進度保留（FSM resetToPhase p4：hp 不回灌＋共鳴窗歸零；系統層彈藥/延時清場＋沸騰同 spec 週期重置＋kept toast），P1-P3 整場重打耐力語意保留，紅燈先行 3 案
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-p4-breath-tint-yield
+- 原因：Sonnet Should-fix「P4 段位相色持續」只修半——flashWhite restore-tint 已落但 EX 緋紅呼吸循環 onUpdate 每幀 setTint 仍覆寫段位相色（prismix W1 有 p4 讓位 guard、voidra/syrona 漏）
+- 解法：voidra/syrona 呼吸循環補 `fsm.phase === 'p4'` 早退 guard 鏡 prismix，測試 harness 捕捉 addCounter onUpdate 顯式觸發斷言零覆寫，voidra 並補 P4 restore-tint 鏡像案
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-apex-window-geometry
+- 原因：v2 driver 登頂射窗 260-680 幾何錯誤——皇冠帶 [-150,-116] 僅 apex 附近（airMs 380-560）玩家中心才入帶，寬窗大量帶外射擊打體零傷不入共鳴節拍（取證命中間隔 5.3s、解鎖永不達成、L16 EX high 寬窗 6-run 0%）
+- 解法：接棒收斂前手未 commit 取證修正——射窗窄化 380-560 帶內雙發＋節流 150→90ms（命中流 ~2 中/跳輪、共鳴 1.5 輪可解鎖），寬窗 0% 留檔 review-l16-ex-high-w3-widewindow、驗收以窄窗重測為準
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-resonance-unlock-v2
+- 原因：共鳴 v1 單發節拍窗 900ms 實測封死 high（L16 EX high 0%、p4 內 25/26 全 glance）——體傷命中不入節拍、跨跳輪 crown 命中間隔 ~950-1600ms 必斷拍；單純放寬窗會讓 low 的 overload 簇（簇內間隔 <1600）復活秒池
+- 解法：共鳴解鎖制 v2——窗 1600 內累積 3 中解鎖全額、斷窗重計（low 單簇 ≤13 < 池 20 不秒池、簇間 8-12s 必斷；high 命中流解鎖後暢通）＋driver 登頂射窗 260-680/節流 150 加密命中流，紅燈校準 28 案綠
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-crown-resonance-lock
+- 原因：W3 合議 Blocking——crown tier gate 後 L16 EX low 仍 33%（Grok 席與交叉量測 n 較大口徑）：overload 升托/高台誤射的 incidental 皇冠 ×2 傷可 2 發偶中秒掉暴走池；另同王雙語意（回灌/保留）無局內提示、P4 段位相色被受擊白閃 clearTint 洗掉
+- 解法：皇冠共鳴連擊（900ms 節拍窗內全額、孤發減額 1 保底 anti-softlock）收斂 incidental 可傷面不罰主動節拍＋BOSS_SEGMENT_RETRY 事件→toasts 雙語意浮字（每語意每局一次、GameScene 零改動避 1200 閘）＋voidra/syrona flashWhite restore-tint 同構修復＋兩系統層 tint/HUD 斷言 harness（syrona 首建）＋GAME_DESIGN 漂移修正（speedFactor 實值/cap 口徑）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-jellord-noctra-true-p4
+- 原因：W3 合議 HIGH——Grok 查證屬實：Jellord/Noctra p4 為不可達 stub（§8.2 果凍狂潮/月相雙血條未落地），與「每王型態+1」使用者需求宣稱不符
+- 解法：Jellord EX P4 果凍狂潮（主條破小條 15 滿灌＋全地板果凍週期重鋪強制彈跳＋split 移狂潮入場＋phaseForHp 鎖存防回落）＋Noctra EX P4 月相雙血條（亮月破暗月 0.5 滿灌＋隱形權重 ×2＋月牙縮體 0.65 不縮窗）——紅燈先行 7 案、招池/節奏沿 p3 守 §8.1 面板紅線
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-crown-cadence-tier-gate
+- 原因：L16 EX low 首測 33% 假性超標（門檻 <20%）——W2 登頂節拍未掛 tier gate，把「讀 P4 相位＋頂帶窗點射」的完整策略無門檻給了基礎 bot（重蹈 bossForage 前例）
+- 解法：crown 節拍 gate `dodge`（讀招開關語意），L16 EX low 反事實重測 33%→17% 過門；補 starburstDirector EX 進場清除回歸測試 2 案（§8.4 EX 純度收尾清單項）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-closeout-ten-gates-pass
+- 原因：#814 驗收需五王 EX 十門檻（high ≥60%/low <20%）全數達標與收尾產物（changeset/設計文檔/攻略）
+- 解法：PM 裁決 A（進度保留）後 L12 EX high 0-17%→100% 決定性收斂，終局矩陣 L4 83/0、L7 67/17、L12 100/0、L16 67/17、L20 67/0 全 PASS；minor changeset＋GAME_DESIGN §115.3 驗收回填＋WALKTHROUGH EX 挑戰章更新
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-progress-keep-checkpoint
+- 原因：PM 裁決 A——段重試回灌語意在 P3/P4 形成「段命磨量 vs 段血回灌」臨界輪迴（段內死牆，五測 p4 死 110/通關 1），回灌慣例的存在理由（voidra P2 波次表重播）於 P3/P4 不適用；另六測「降落避核」regression（無條件反打中斷跨越、p1 本體 air ×206）須 revert
+- 解法：Prismix P3/P4 與 Voidra P4 段重試改進度保留（死亡僅重置玩家、boss 血不回灌；voidra p2/p3 回灌慣例不動）＋revert coreAhead 反打恢復五測基線＋呈現層 HUD 斷言鎖保留血量（磨 10 斷言 35 非 45），紅燈先行 3 案、全套 841 綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-p4-panel-compliance
+- 原因：W1 自定 P4 speedFactor 1.25 疊 EX_MODS 後有效 1.44 節奏——違反 §8.1 明文「數值面板沿 EX_MODS 不再上調、難度增量全部來自型態與機制」；且五測取證 hop+1500ms 降落撞核峰值 ×75
+- 解法：P4 節奏合規收回沿狂暴帶（1.15，難度由第二血條＋行牆承擔）＋driver 降落避核反打一拍＋cap 300→540 口徑修正（checkpoint 架構通關期望 200-400s，實證首勝 TTK 316s）；L12 EX high 0%→8-17% 徘徊、60% 需 boss 側結構再裁決
+
+- 日期：2026-07-24
+- ID：penalty-starpuff-t6-w16-shard-respawn-mistake
+- 原因：段重試碎晶盾滿環重生為自創語意（voidra 慣例明文「段起點重試清空護盾層」卻反做）——每段 6 彈破盾稅使「單命輸出 < 段回灌」成段內死牆，W1.6 首測 0%（死亡右移 p3×42 但最深 bossHp 2 磨不穿）
+- 解法：對齊 voidra 慣例段重試不重生盾（首入 P3 滿環照舊）＋glide 週期化擴 EX 全程（P3 復刻恆時追擊跨越稅 ×107，同機制同解）＋crossHop P3 幾何修正（盾軌道拉高淨空需求 139→183、垂直延遲 730→1000ms）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w2-driver-crown-cadence
+- 原因：Syrona EX P4 皇冠唯一可傷使 bot 既有體傷輸出歸零（高階門檻量測必掛）、且 P4 全場沸騰使「漲潮退乾帶」策略失效
+- 解法：driver L16 P4 登頂節拍——單跳頂帶窗（280-650ms）點射（apex 中心 -122 落皇冠帶）、933ms 滯空天然防潮，tide 退避分支讓位 p4；量測儀器與遊戲 source 隔離（vite 不 watch scripts，防 HMR 污染重演）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w2-syrona-voidra-ex-p4
+- 原因：#814 W2——後二王 EX 僅數值差分無專屬型態：Syrona 缺登頂技巧驗收終局、Voidra 缺雙血條結構（§8.2 表未落地）
+- 解法：Syrona EX P4 窯心暴走（15% 閾值、皇冠唯一可傷收斂 FSM takeDamage、全場沸騰不淹高台保底）＋Voidra EX P4 內核裸奔（外核 60/內核 40 雙血條 innerHpRatio 2/3、×0.6/×1.4/×0.8、段重試擴 p4）＋HUD barTint 泛化（零新系統），FSM 紅燈先行 12 案、全套 841 綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w16-checkpoint-glide-cycle
+- 原因：W1.5 取證定讞 L12 EX 高階 0% 根因為 180 有效血無檢查點（90s 單命耐力牆）＋P1 恆時滑近強制跨越稅（66 hits），PM 裁決①段檢查點＋③glide 週期化
+- 解法：prismixFsm.resetToPhase('p3'|'p4')（EX 限定、段門檻血量沿 voidra 慣例）＋trySegmentRespawn 呈現層清場重建（timers/投射物/鏡界/tween 全清＋碎晶盾滿環＋HUD 同步）＋EX P1 glidePursuing 追 3.2s/歇 1.4s（追擊主導紅線 vitest 錨定），FSM＋呈現層紅燈先行 10 案、全套 829 綠
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-bossforage-tier-gate
+- 原因：boss 模式 forage 以 driver 預設對全 tier 生效，低階 bot 被動獲得供彈解鎖（違反「low 不升級」量測紀律），L7 EX low 通過率 50% 假性超標（門檻 <20%）
+- 解法：BotTierSpec 擴 `bossForage` 資料欄（僅 high true）、driver 改顯式注入預設 false，L7 EX low 反事實重測 50%→17% 過門——W1.5 終局矩陣 L4/L7 雙門檻全 PASS、L12 EX high 0% 出裁決報告停等 PM
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-transform-churn-rootfix
+- 原因：transformUse tier 預設化在 L4 實測反噬——殼形態為站樁反彈玩法，規則 bot 陷變身迴圈（132 次/6 輪）吞噬全部星彈輸出（最深僅 77/90、clearRate 0%），且 Jellord slam 地面行波 60×16@~400px/s 在感知延遲下反應距離不可躲
+- 解法：transformUse 門檻跑預設關（--transform 顯式 A/B 管線保留、stance 邏輯列 W2 backlog）＋行波 320px 預警帶方向過濾提前跳越——L4 EX high 冒煙 0%→100%（TTK 30s、1.5 死/run）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-bot-economy-forensics
+- 原因：W1.5 冒煙迭代揭露 bot 三層結構缺陷——輸出經濟卡死於 grantSupply 節流（0.83 發/s＝DPS 上限 4.2）、跨越本體恆課接觸稅（定值起跳節拍對深釘位必削側緣）、逐秒抽樣歸因失真無法定位死因
+- 解法：boss 模式 forage 就地吸食補彈（供彈保證律真實管線，造傷 300→537 HP/run）＋crossHop 距離自適應垂直延遲＋受擊當拍距離取證儀器（nb/ne/ns/nh/hopMs 落 damageLog），L12 EX high 首度常態觸 p3、曾入 p4
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w15-high-bot-full-strategy
+- 原因：#814 W1 分級 bot 量測揭示 high bot 全死 P1/P2（單跳 98px 跨不過本體角落黏死、光束反空招誤跳自投、鏡界窗持續射擊折返自傷），決策上限不足以量測 EX 門檻——boss 調參缺有效數據
+- 解法：BOT_TIERS 擴完整策略資料開關（flap/mirrorGuard/transformUse 僅 high 啟用）＋audit-driver 滿拍翅跨越（T2 211px 節拍）、光束貼地紀律、鏡界窗停火＋折返彈再吸、行牆對穿跳越、變身優勢解 tier 預設化，vitest anti-drift 鎖定（820 綠）
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-audit-driver-false-kill
+- 原因：level-audit 魔王擊殺判定 `bossHp<=0 && prev>0` 把死亡重試後 GameScene 重建初值 -1 誤判為擊破，EX baseline 出現 TTK 12s 假通關（180 HP 物理不可能、樣本無 p3/p4）
+- 解法：audit-driver 對 bossHp<0 僅重置基準不進擊殺判定，重測取得可信 clearRate
+
+- 日期：2026-07-24
+- ID：reward-starpuff-t6-w1-prismix-p4-rebirth
+- 原因：#814 EX 重設計 W1——EX 僅數值差分（HP×1.5/速×1.15）無專屬型態，難度與技巧深度不足且雙血條結構缺位
+- 解法：BossPhase 擴 p4（四 FSM 全鍵/窮舉補齊）＋Prismix EX P4 裂核殘響（rebirthHpRatio 0.5 第二血條、稜光行牆 sweep 跳越技巧招、供彈保證律跨 P4 延續），vitest 錨定可跳性與公平性下限，全套 819 測綠
 
 - 日期：2026-07-24
 - ID：reward-starpuff-backlog-changeset-minor-regrade

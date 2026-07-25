@@ -243,3 +243,150 @@ describe('場控保底位不變式（§74：每循環必留 ≥1 保底位）', 
     expect(SYRONA.crownDamageMul).toBe(2);
   });
 });
+
+describe('EX P4 窯心暴走（§8.2 #814 W2）', () => {
+  // EX 135：打至 hp 21（>135×0.15=20.25）停在 P3 暴走前緣。
+  const toRampageEdge = (): ReturnType<typeof createSyronaFsm> => {
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(5) });
+    fsm.takeDamage(114);
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.hp).toBe(21);
+    return fsm;
+  };
+
+  it('EX：P3 血量跌破 15% 入 P4 暴走（phase 事件帶出）', () => {
+    const fsm = toRampageEdge();
+    const events = fsm.takeDamage(1);
+    expect(events.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(true);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.defeated).toBe(false);
+  });
+
+  it('P4 皇冠唯一可傷點：體傷歸零無事件、皇冠傷經共鳴節拍結算', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    const before = fsm.hp;
+    expect(fsm.takeDamage(5, false)).toEqual([]);
+    expect(fsm.hp).toBe(before);
+    // 共鳴解鎖語意（W3 v2）：前 3 中 glance、第 4 中起全額。
+    const first = fsm.takeDamage(5, true);
+    expect(first.some((e) => e.kind === 'damaged')).toBe(true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    expect(fsm.hp).toBe(before - EX_SYRONA.crownGlanceDamage * 3 - 5);
+  });
+
+  it('P4 皇冠傷歸零真擊破；供彈保證律於暴走段延續（節拍傷累計）', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    fsm.takeDamage(10, true);
+    fsm.tick(300);
+    fsm.takeDamage(10, true);
+    fsm.tick(300);
+    fsm.takeDamage(10, true);
+    fsm.tick(300);
+    // 解鎖後第 4 中全額 10：3 glance＋10 ≥ 10 → 補給掉落。
+    const drops = fsm.takeDamage(10, true);
+    expect(drops.some((e) => e.kind === 'minionDrop')).toBe(true);
+    fsm.tick(300);
+    const events = fsm.takeDamage(999, true);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(fsm.defeated).toBe(true);
+  });
+
+  it('P4 段重試 resetToPhase（W3 v2 收斂）：hp 進度保留、共鳴窗歸零、節奏復位', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    expect(fsm.phase).toBe('p4');
+    // 段內進度：解鎖共鳴（3 glance）後第 4 中全額 5 → hp 20-3-5=12。
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    const kept = fsm.hp;
+    expect(kept).toBeLessThan(20);
+    fsm.resetToPhase('p4');
+    // 進度保留：hp 不回灌、phase 不動。
+    expect(fsm.hp).toBe(kept);
+    expect(fsm.phase).toBe('p4');
+    // 共鳴窗歸零：重試後首中回 glance（不繼承解鎖態）。
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    expect(fsm.hp).toBe(kept - EX_SYRONA.crownGlanceDamage);
+  });
+
+  it('非 P4 期 resetToPhase 為 no-op（P1-P3 整場重打的耐力語意保留）', () => {
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(7) });
+    fsm.takeDamage(30);
+    const hp = fsm.hp;
+    const phase = fsm.phase;
+    fsm.resetToPhase('p4');
+    expect(fsm.hp).toBe(hp);
+    expect(fsm.phase).toBe(phase);
+  });
+
+  it('非 EX 迴歸：跌破 15% 不入 P4、體傷可正常擊破', () => {
+    const fsm = createSyronaFsm({ rng: createSeededRng(6) });
+    fsm.takeDamage(80);
+    expect(fsm.phase).toBe('p3');
+    expect(fsm.hp).toBeLessThanOrEqual(Math.round(90 * 0.15));
+    expect(fsm.phase).toBe('p3');
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+  });
+
+  it('P4 皇冠共鳴解鎖制（W3 Blocking v2）：窗內累積 3 中解鎖全額、斷窗重計', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    expect(fsm.phase).toBe('p4');
+    const start = fsm.hp;
+    // 第 1-3 中（窗內）：皆 glance——低階 overload 單簇（2-4 發）合計 ≤13 不秒池。
+    fsm.takeDamage(10, true);
+    fsm.tick(400);
+    fsm.takeDamage(10, true);
+    fsm.tick(400);
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(start - EX_SYRONA.crownGlanceDamage * 3);
+    // 第 4 中起（共鳴成立）：全額——主動維持命中流的技巧回報。
+    fsm.tick(400);
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(start - EX_SYRONA.crownGlanceDamage * 3 - 10);
+    // 斷窗（推過 crownComboWindowMs）：共鳴斷、重新累積。
+    fsm.tick(EX_SYRONA.crownComboWindowMs + 200);
+    const before = fsm.hp;
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(before - EX_SYRONA.crownGlanceDamage);
+  });
+
+  it('皇冠共鳴紅線：窗覆蓋高階跳輪最壞間隔、解鎖數 ≤ 單簇上限、孤發 >0', () => {
+    // 高階登頂節拍跨跳輪 crown 命中間隔 ~950-1600ms（含 miss）：窗必須覆蓋。
+    expect(EX_SYRONA.crownComboWindowMs).toBeGreaterThanOrEqual(1500);
+    // 解鎖數 3：低階 overload 單簇（≤4 發）解鎖後至多 1 發全額（13 < 池 20）。
+    expect(EX_SYRONA.crownResonanceHits).toBe(3);
+    expect(EX_SYRONA.crownGlanceDamage * EX_SYRONA.crownResonanceHits + 10).toBeLessThan(
+      Math.round(135 * EX_SYRONA.rampageHpRatio),
+    );
+    // 孤發保底 >0：理論恆可磨（基礎星彈恆可通關紅線）。
+    expect(EX_SYRONA.crownGlanceDamage).toBeGreaterThan(0);
+    // 非 P4 皇冠傷不受連擊窗影響（機制僅暴走段生效）。
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(9) });
+    fsm.takeDamage(10, true);
+    expect(fsm.hp).toBe(125);
+  });
+
+  it('暴走沸騰紅線：閾值 15%、沸騰漲頂不淹沒高台保底位（anti-softlock）', () => {
+    expect(EX_SYRONA.rampageHpRatio).toBe(0.15);
+    // 漲頂（y 越小越高）必須低於最高浮台（304）——恆留一格立足保底。
+    const rampageTopY = SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx;
+    expect(rampageTopY).toBeGreaterThan(Math.min(...SYRONA.arenaPlatformYs));
+    // 暴走週期較 P3 大沸騰更急（EX boil 之下再收短）。
+    expect(EX_SYRONA.rampageBoilPeriodMul).toBeLessThan(EX_SYRONA.boilPeriodMul);
+  });
+});

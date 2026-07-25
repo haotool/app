@@ -38,13 +38,18 @@ export interface BossHandle {
   // 環繞護盾（§68 P3 碎晶盾）：可擊破的星彈屏障群；未實作視為無護盾。
   getShields?(): Phaser.Physics.Arcade.Group;
   // arena 噴口供力（§74 Syrona）：域內回傳結算後 vy、域外回 null；未實作視為無噴口。
+  // rideHeld（W3 持鍵乘流）：跳躍鍵持按＝乘流意圖——P4 氣墊懸停僅持鍵時供力。
   getVentLift?(
     x: number,
     y: number,
     vy: number,
     deltaMs: number,
     blockedUp: boolean,
+    rideHeld?: boolean,
   ): number | null;
+  // 準星輔助模式（§54/W3）：皇冠唯一可傷期回 'off'——中心導向會把長程星彈
+  // 拉出皇冠帶（W3 真值取證）；未實作＝'center' 既有行為。
+  aimAssistMode?(): 'center' | 'off';
   // arena 場控浮台（§74 Syrona）：GameScene 接玩家 collider；未實作視為無浮台。
   getPlatforms?(): Phaser.GameObjects.Rectangle[];
   // 段起點重試（§82 Voidra）：玩家死亡時嘗試段內重試（P2/P3 不回滾整場），
@@ -188,6 +193,30 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   const startEnrage = () => {
     sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
     startTintCycle({ r: 255, g: 255, b: 255 }, ENRAGE_TINT, 700);
+  };
+
+  // 果凍狂潮（§8.2 W3）：全地板果凍化——週期全場重鋪（patch 壽命 3s、
+  // 重鋪 2.2s 覆蓋連續），玩家強制彈跳作戰沿 §5 果凍回彈既有機制。
+  let frenzyRepaveAccMs = 0;
+  const paveFrenzyFloor = () => {
+    const step = 90;
+    for (let x = arenaLeft() + step / 2; x < arenaLeft() + viewW(); x += step) {
+      spawnJellyPatch(x);
+    }
+  };
+  const startFrenzy = () => {
+    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    startTintCycle({ r: 255, g: 176, b: 208 }, { r: 255, g: 120, b: 168 }, 360);
+    playSfx('boss-roar', 1.3);
+    scene.cameras.main.flash(320, 255, 176, 208);
+    scene.cameras.main.shake(200, 0.007);
+    paveFrenzyFloor();
+    // 狂潮小條重灌（HUD 換刻度，沿 Prismix P4 慣例）。
+    emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+      hp: fsm.hp,
+      maxHp: fsm.maxHp,
+      damage: 0,
+    });
   };
 
   // P3 進場演出（§30）：皇冠射出星環衝擊波（金色擴散環 + 星火），時停 0.3s 由 GameScene 接線。
@@ -547,9 +576,14 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
             });
             break;
           case 'phase':
-            if (event.phase === 'p3') startP3();
+            if (event.phase === 'p4') startFrenzy();
+            else if (event.phase === 'p3') startP3();
             else startEnrage();
-            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
+            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+              phase: event.phase,
+              // 狂潮段果凍粉條色（§8.2 血條結構：終段獨立小條）。
+              ...(event.phase === 'p4' ? { barTint: 0xff8ab0 } : {}),
+            });
             break;
           case 'minionDrop':
             minionHandlers.forEach((handler) => handler());
@@ -576,6 +610,14 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       );
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
+      // 果凍狂潮（§8.2 W3）：全地板果凍化週期重鋪（壽命 3s、間隔 2.2s 覆蓋連續）。
+      if (fsm.phase === 'p4') {
+        frenzyRepaveAccMs += deltaMs;
+        if (frenzyRepaveAccMs >= 2200) {
+          frenzyRepaveAccMs = 0;
+          paveFrenzyFloor();
+        }
+      }
       // 果凍地塊壽命清理與彈起冷卻。
       jellyBounceCooldownMs = Math.max(0, jellyBounceCooldownMs - deltaMs);
       jellyPatches = prunePatches(jellyPatches, scene.time.now);
@@ -674,6 +716,36 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     },
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
+    },
+    // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 果凍狂潮死亡不整場重打——
+    // 進度保留（狂潮小條不回灌）；P1-P3 回 false 走一般敗北流程（抵達狂潮的
+    // 耐力驗收保留）。取證：high bot 每命抵達 P4 時殘血 1-2、無檢查點下 17%。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈幕/衝擊波/果凍地塊/延時全清（死亡前排程不得於新命憑空觸發）。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      patchSprites.forEach((visual) => visual.destroy());
+      patchSprites.clear();
+      jellyPatches = [];
+      // 白閃/暈眩延時可能被清：復原 tint 模式並重啟狂潮呼吸循環。
+      sprite.setTintMode(Phaser.TintModes.MULTIPLY);
+      sprite.setAngle(0);
+      enrageTween?.resume();
+      fsm.resetToPhase('p4');
+      // 全地板果凍化即刻重鋪（新命自新一輪鋪面起跳，重生喘息窗一致）。
+      frenzyRepaveAccMs = 0;
+      paveFrenzyFloor();
+      emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+        hp: fsm.hp,
+        maxHp: fsm.maxHp,
+        damage: 0,
+      });
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
     },
     // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
     getDebugState() {

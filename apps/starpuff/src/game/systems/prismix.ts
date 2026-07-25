@@ -5,6 +5,7 @@ import {
   EX_PRISMIX,
   PRISMIX,
   createPrismixFsm,
+  glidePursuing,
   type PrismixCommand,
   type PrismixSide,
 } from '../logic/prismixFsm';
@@ -51,6 +52,9 @@ const SHARD_SPIN_RAD_PER_MS = 0.0012;
 const BARRAGE_WINDUP_MS = 600;
 const CRYSTAL_TINT = 0xc5a8e8;
 const CORE_TINT = 0x9a7ad0;
+// P4 裂核殘響（§114 EX 限定）：重生核金緋位相；行牆寬度沿晶柱語彙。
+const REBIRTH_TINT = 0xe8b45a;
+const SWEEP_WALL_W = 26;
 // 鏡界反射（§5 W2）：銀白鏡光與折返彈速度；折返彈可再吸入（免費彈藥獎勵理解）。
 const MIRROR_TINT = 0xf0f4ff;
 const REFLECT_SHOT_SPEED = 200;
@@ -169,6 +173,8 @@ export function createPrismix(
   // 常駐晶體浮動；夾擊/演出 tween 接管期間讓位。
   let steering = true;
   let hoverMs = 0;
+  // 滑近週期時鐘（W1.6 EX 限定）：追擊-停歇循環判定用，不隨狂暴速率縮放。
+  let glideClockMs = 0;
 
   const flashWhite = (sprite: Phaser.Physics.Arcade.Sprite, restore: number | null) => {
     sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
@@ -379,6 +385,86 @@ export function createPrismix(
     }
   };
 
+  // 稜光行牆（§114 P4）：起掃側緣豎線預警＋蓄能音後，全高光牆以固定速度橫掃全場；
+  // 跳＋拍翅時機跳越（牆高可跳性由 vitest 錨定），走 shockwaves 觸傷管線。
+  const doSweep = (dir: 1 | -1) => {
+    const wallH = EX_PRISMIX.sweepWallHeightPx;
+    const startX =
+      dir > 0 ? arenaLeft() + SWEEP_WALL_W / 2 : arenaLeft() + viewW() - SWEEP_WALL_W / 2;
+    const wallY = GROUND_TOP - wallH / 2;
+    const line = scene.add
+      .rectangle(startX, wallY, SWEEP_WALL_W, wallH, MIRROR_TINT, 0.16)
+      .setStrokeStyle(2, MIRROR_TINT, 0.95)
+      .setDepth(58);
+    scene.tweens.add({
+      targets: line,
+      alpha: { from: 1, to: 0.3 },
+      duration: 150,
+      yoyo: true,
+      repeat: -1,
+    });
+    playSfx('charge');
+    delay(EX_PRISMIX.sweepTelegraphMs, () => {
+      scene.tweens.killTweensOf(line);
+      line.destroy();
+      if (dying) return;
+      const wall = shockwaves.get(startX, wallY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      if (!wall) return;
+      wall.enableBody(true, startX, wallY, true, true);
+      wall.setDisplaySize(SWEEP_WALL_W, wallH).setTint(REBIRTH_TINT).setAlpha(0.9);
+      (wall.body as Phaser.Physics.Arcade.Body).setVelocity(dir * EX_PRISMIX.sweepWallSpeedPx, 0);
+      playSfx('zap', 1.1);
+      // 行進至對側出界即回收（anti-softlock 投射物壽命慣例）。
+      const travelMs = ((viewW() + SWEEP_WALL_W * 2) / EX_PRISMIX.sweepWallSpeedPx) * 1000;
+      delay(travelMs, () => wall.disableBody(true, true));
+    });
+  };
+
+  // 裂核殘響重生（§114 P4）：碎晶盾全數碎裂、核體金緋重構，第二血條滿灌重灌 HUD。
+  const doRebirth = (rebirthHp: number) => {
+    twinsAlive = false;
+    struggleSide = null;
+    mirrorPane?.destroy();
+    mirrorPane = null;
+    mirrorTwin = null;
+    playSfx('break');
+    playSfx('boss-roar', 1.2);
+    scene.cameras.main.flash(320, 245, 205, 130);
+    scene.cameras.main.shake(180, 0.008);
+    // 殘存碎晶盾碎裂（鏡像殘影雙掛 shields 不受累）。
+    shields.getMatching('active', true).forEach((obj) => {
+      const shard = obj as Phaser.Physics.Arcade.Sprite;
+      if (shard.getData('shadow') === true) return;
+      shard.disableBody(true, true);
+    });
+    // 雙子連破入 P4 時雙子尚在場：隱沒後核體自中心重構。
+    const anchor = twinA.visible ? twinA : twinB.visible ? twinB : core;
+    [twinA, twinB].forEach((twin) => {
+      if (!twin.visible) return;
+      twin.setVisible(false);
+      (twin.body as Phaser.Physics.Arcade.Body).enable = false;
+    });
+    core.setPosition(anchor.x, STAND_Y);
+    core.setVisible(true).setAlpha(1);
+    coreBody.enable = true;
+    core.setTintMode(Phaser.TintModes.MULTIPLY);
+    core.setTint(REBIRTH_TINT);
+    scene.tweens.add({
+      targets: core,
+      scaleX: { from: core.scaleX * 0.3, to: core.scaleX },
+      scaleY: { from: core.scaleY * 0.3, to: core.scaleY },
+      duration: 420,
+      ease: 'Back.easeOut',
+    });
+    emitTwinHp();
+    // 第二血條重灌：以 rebirth 池為新刻度（HUD 沿 BOSS_DAMAGED 比例縮放）。
+    emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+      hp: rebirthHp,
+      maxHp: fsm.maxHp,
+      damage: 0,
+    });
+  };
+
   // 鏡界反射（§5 W2）：單具開鏡 0.8s——銀白鏡光面板即 telegraph；窗內射它的
   // 星彈折返（FSM reflect 事件），反制＝打另一具。
   const doMirror = (side: PrismixSide, durationMs: number) => {
@@ -498,6 +584,27 @@ export function createPrismix(
     emitTwinHp();
   };
 
+  // 碎晶盾滿環生成（§68 P3／W1.6 段起點重試共用）：既有盾先清（鏡像殘影雙掛不受累）。
+  const spawnShardOrbit = (shardCount: number) => {
+    shields.getMatching('active', true).forEach((obj) => {
+      const shard = obj as Phaser.Physics.Arcade.Sprite;
+      if (shard.getData('shadow') === true) return;
+      shard.disableBody(true, true);
+    });
+    for (let i = 0; i < shardCount; i += 1) {
+      const shard = shields.get(
+        core.x,
+        core.y,
+        'prismix-shard',
+      ) as Phaser.Physics.Arcade.Sprite | null;
+      if (!shard) continue;
+      shard.enableBody(true, core.x, core.y, true, true);
+      shard.setTint(0xe8dcff);
+      shard.setData('orbitIndex', i);
+      (shard.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+    }
+  };
+
   // P3 合體（§68）：存活具吸收殘核化為裂核；環繞碎晶盾登場。
   const doMerge = (coreHp: number, shardCount: number) => {
     void coreHp;
@@ -518,18 +625,7 @@ export function createPrismix(
       duration: 420,
       ease: 'Sine.easeInOut',
     });
-    for (let i = 0; i < shardCount; i += 1) {
-      const shard = shields.get(
-        core.x,
-        core.y,
-        'prismix-shard',
-      ) as Phaser.Physics.Arcade.Sprite | null;
-      if (!shard) continue;
-      shard.enableBody(true, core.x, core.y, true, true);
-      shard.setTint(0xe8dcff);
-      shard.setData('orbitIndex', i);
-      (shard.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
-    }
+    spawnShardOrbit(shardCount);
     emitTwinHp();
     emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: 'p3' });
   };
@@ -567,6 +663,9 @@ export function createPrismix(
         return;
       case 'shadow':
         doShadow();
+        return;
+      case 'sweep':
+        doSweep(command.dir);
         return;
       default: {
         const unhandled: never = command;
@@ -626,9 +725,11 @@ export function createPrismix(
               ? struggleSide !== null
                 ? 0x8a7aa8
                 : sideTint(struggleSide ?? side)
-              : fsm.phase === 'p3'
-                ? CORE_TINT
-                : null,
+              : fsm.phase === 'p4'
+                ? REBIRTH_TINT
+                : fsm.phase === 'p3'
+                  ? CORE_TINT
+                  : null,
           );
           shake(hitSprite);
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
@@ -654,6 +755,9 @@ export function createPrismix(
         case 'reflect':
           // 鏡界反射（§5 W2）：開鏡側受擊零傷、生成折返彈（可再吸入）。
           spawnReflectShot(event.side);
+          break;
+        case 'rebirth':
+          doRebirth(event.hp);
           break;
         case 'minionDrop':
           minionHandlers.forEach((handler) => handler());
@@ -715,7 +819,8 @@ export function createPrismix(
           yoyo: true,
           repeat: -1,
           onUpdate: (tween) => {
-            if (twinsAlive || dying) return;
+            // P4 裂核殘響（§114）：重生核固定金緋位相，呼吸循環讓位。
+            if (twinsAlive || dying || fsm.phase === 'p4') return;
             const v = tween.getValue() ?? 0;
             const mix = (a: number, b: number) => Math.round(a + (b - a) * v);
             core.setTint((mix(255, 216) << 16) | (mix(255, 75) << 8) | mix(255, 106));
@@ -783,12 +888,17 @@ export function createPrismix(
       prevTargetX = target?.x ?? null;
       if (steering) {
         hoverMs += deltaMs * fsm.speedFactor;
+        glideClockMs += deltaMs;
         const bob = Math.sin(hoverMs * 0.003) * 6;
         if (!twinsAlive) {
           // P1/P3 緩滑追近：朝玩家 x 慢速滑移，保持稜晶壓迫感。
+          // W1.6 PM 裁決③：EX 追擊週期化（追擊-停歇循環給明確輸出窗）——
+          // 初落 P1 限定；W1.6 量測戰線右移後 P3/P4 復刻同一恆時追擊跨越稅
+          //（本體接觸 ×107），同機制同解擴至 EX 全程；非 EX 恆時追擊不動。
+          const pursuing = !ex || glidePursuing(glideClockMs);
           const desired = clampArenaX(target?.x ?? core.x, SIDE_MARGIN_X);
           const step = (GLIDE_SPEED * deltaMs) / 1000;
-          if (Math.abs(desired - core.x) > step) {
+          if (pursuing && Math.abs(desired - core.x) > step) {
             core.x += Math.sign(desired - core.x) * step;
           }
           core.y = STAND_Y + bob;
@@ -870,6 +980,52 @@ export function createPrismix(
     },
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
+    },
+    // 段起點重試（§82 慣例，W1.6 PM 裁決①）：EX 限定 P3/P4 死亡不回滾整場——
+    // 投射物/危害/殘留排程清場，FSM 重置至該段門檻（90s 單命耐力牆改分段技巧
+    // 驗收）；P1/P2 與非 EX 回 false 走一般敗北流程。
+    trySegmentRespawn() {
+      if (!active || dying || !ex) return false;
+      const segment = fsm.phase;
+      if (segment !== 'p3' && segment !== 'p4') return false;
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      // 殘留 delayedCall 全清（沿 voidra 審查修復）：死亡前排程的晶柱/光束/行牆
+      // 不得於新段憑空觸發。
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      mirrorPane?.destroy();
+      mirrorPane = null;
+      mirrorTwin = null;
+      shadow?.disableBody(true, true);
+      shadowSpawnAtMs = -1;
+      steering = true;
+      // 中斷演出殘留復位：barrage 蓄能白閃/rebirth 縮放 tween 若中斷須回段位相。
+      scene.tweens.killTweensOf(core);
+      core.setDisplaySize(BODY_W, BODY_H);
+      core.setVisible(true).setAlpha(1);
+      core.setTintMode(Phaser.TintModes.MULTIPLY);
+      core.setTint(segment === 'p4' ? REBIRTH_TINT : CORE_TINT);
+      coreBody.enable = true;
+      fsm.resetToPhase(segment);
+      // 段起點護盾語意（沿 voidra「段起點重試清空護盾層」慣例）：碎晶盾不隨
+      // 段重試重生——重複破盾稅會讓「單命輸出 < 段回灌」成段內死牆（W1.6
+      // 量測實證：滿環重生下 p3 反覆段重試磨不動 45 血）；首入 P3 盾滿環照舊。
+      shields.getMatching('active', true).forEach((obj) => {
+        const shard = obj as Phaser.Physics.Arcade.Sprite;
+        if (shard.getData('shadow') === true) return;
+        shard.disableBody(true, true);
+      });
+      emitTwinHp();
+      // HUD 血條同步段起點血量（damage 0 事件僅刷新讀值，沿 voidra 慣例）。
+      emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+        hp: fsm.hp,
+        maxHp: fsm.maxHp,
+        damage: 0,
+      });
+      // 段重試語意提示（W3）：Prismix P3/P4 為進度保留（PM 裁決 A）。
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
     },
   };
 }

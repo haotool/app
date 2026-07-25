@@ -32,7 +32,7 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test && pnpm test:root",
+    "test": "pnpm -r --workspace-concurrency 2 test && pnpm test:root",
     "test:root": "vitest run scripts/__tests__/lighthouse-production.test.ts scripts/__tests__/fetch-moneybox-rates.test.ts scripts/__tests__/fetch-taiwan-bank-rates.test.ts",
     "test:unit": "pnpm -r test && pnpm test:root",
     "test:integration": "pnpm --filter @app/ratewise exec vitest run integration",

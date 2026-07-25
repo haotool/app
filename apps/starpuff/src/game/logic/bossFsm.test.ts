@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOSS,
+  EX_JELLORD,
   JELLORD_MOVES,
   createBossFsm,
   jellyRainCount,
@@ -299,5 +300,71 @@ describe('頭頂命中短暈（§58 slamStun）', () => {
     fsm.takeDamage(60);
     fsm.stun(900);
     expect(fsm.tick(2000)).toBeNull();
+  });
+});
+
+describe('EX P4 果凍狂潮（§8.2 #814 W3）', () => {
+  const toExZero = (): ReturnType<typeof createBossFsm> => {
+    const fsm = createBossFsm({ ex: true, rng: createSeededRng(7) });
+    expect(fsm.maxHp).toBe(90);
+    return fsm;
+  };
+
+  it('EX 主條歸零不死：入 P4 狂潮、小條滿灌（maxHp 換刻度）＋split 分裂演出', () => {
+    const fsm = toExZero();
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(true);
+    expect(events.some((e) => e.kind === 'split')).toBe(true);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(false);
+    expect(fsm.defeated).toBe(false);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(EX_JELLORD.frenzyHp);
+    expect(fsm.maxHp).toBe(EX_JELLORD.frenzyHp);
+  });
+
+  it('P4 鎖存不回落：狂潮期受擊不因 phaseForHp 降回 p3', () => {
+    const fsm = toExZero();
+    fsm.takeDamage(999);
+    fsm.takeDamage(5);
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(EX_JELLORD.frenzyHp - 5);
+  });
+
+  it('P4 歸零真擊破（不再 split）；非 EX 歸零直接擊破帶 split 迴歸', () => {
+    const fsm = toExZero();
+    fsm.takeDamage(999);
+    const events = fsm.takeDamage(999);
+    expect(events.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(events.some((e) => e.kind === 'split')).toBe(false);
+    // 非 EX：無狂潮、無 split（split 為 EX 專屬）。
+    const normal = createBossFsm({ rng: createSeededRng(8) });
+    const end = normal.takeDamage(999);
+    expect(end.some((e) => e.kind === 'defeated')).toBe(true);
+    expect(end.some((e) => e.kind === 'split')).toBe(false);
+    expect(end.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(false);
+  });
+
+  it('P4 段重試進度保留（W3 沿裁決 A）：hp 不回灌、節奏復位；非 P4 為 no-op', () => {
+    const fsm = toExZero();
+    fsm.takeDamage(999);
+    fsm.takeDamage(5);
+    fsm.resetToPhase('p4');
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(EX_JELLORD.frenzyHp - 5);
+    expect(fsm.state).toBe('idle');
+    // 非 P4 no-op：P1-P3 保留整場重打語意。
+    const fresh = createBossFsm({ ex: true, rng: createSeededRng(11) });
+    fresh.takeDamage(10);
+    fresh.resetToPhase('p4');
+    expect(fresh.phase).toBe('p1');
+    expect(fresh.hp).toBe(80);
+  });
+
+  it('狂潮小條紅線：HP 15（§8.2 表定值）、供彈保證律延續', () => {
+    expect(EX_JELLORD.frenzyHp).toBe(15);
+    const fsm = toExZero();
+    fsm.takeDamage(999);
+    const events = [...fsm.takeDamage(5), ...fsm.takeDamage(5)];
+    expect(events.some((e) => e.kind === 'minionDrop')).toBe(true);
   });
 });

@@ -1402,6 +1402,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 | Syrona L16  | 135   | 噴泉順序隨機化（每循環洗牌、seed 注入可測；潮汐再 -25%）        | 讀 telegraph 取代背板    |
 | Voidra L20  | 165   | P2 轟炸密度 ×1.25＋P3 螺旋三層（愛心上限 1）                    | 走位風箏＋過熱窗集中輸出 |
 
+（v24 取代標註：T6 EX 重設計於本表之上追加 EX 專屬 P4 第二血條——Prismix 已落地
+§114，Syrona/Voidra 於 W2/W3 落地。）
+
 ### 86.2 出貨面收斂（本車實作）
 
 - **EX 徽鈕**：MapScene `addExEntrance` 自 §58 起即以 `level.boss` 通用掛載——
@@ -2202,3 +2205,201 @@ telegraph 窗全部維持現值不降（可讀性紅線）。基礎設施沿 §1
   指令，呈現層經 hooks `drainTopStar()`（bossFactory 接 `player.stealTopStar()`，
   彈匣單一真值、HUD ammo 事件自動同步）回餵 `absorbSiphonStar()` 夾限化盾；
   段起點重試清空護盾層（§82 清場語義）；save 零改動、BossHandle 零新選配。
+
+## 114. v24 EX 全面重設計 W1——Prismix P4 裂核殘響（#814；T6 列車）
+
+> EX 挑戰全面升級：每王 EX 追加專屬第四型態（P4）＝第二血條，總有效 HP 相對一般
+> 約 ×2.25（難度翻倍）；技巧破關、非 RNG 死牆。W1 落地 Prismix；Syrona/Voidra
+> P4 於 W2/W3 落地（差分定稿見 `.claude/epics/starpuff-t6/updates/stream-main.md`）。
+> 取代標註：§86.1 Prismix EX 差分列由本章擴充（原差分保留，追加 P4）。
+
+### 114.1 型別基建：BossPhase 擴為四段
+
+- `BossPhase` 聯集加 `'p4'`（EX 專屬型態）；五 FSM 的 `Record<BossPhase, number>`
+  補 p4 鍵、moveTable switch 補 p4 分支——Jellord/Noctra 執行期不可達（沿 p3 值），
+  Syrona/Voidra 暫沿 p3 待 W2/W3 落真 P4；Voidra 段起點重試明確限 p2/p3。
+- HUD `BOSS_PHASE` p4 → 血條金緋換色（0xe8b45a）＋滿灌重灌＝第二血條視覺。
+
+### 114.2 Prismix EX P4「裂核殘響」（prismixFsm SSOT）
+
+- 觸發：EX 限定，P3 裂核歸零不死——`enterRebirth`：phase p4、第二血池
+  `rebirthHpRatio 0.5`（EX 120 → 60）、`maxHp` getter 換刻度供 HUD 重灌；
+  僅可重生一次（p4 歸零才 `defeated`）。
+- EX 雙子連破：掙扎窗補殺彩蛋保留（twinFinish 照發），改跳過 P3 直入 P4
+  （跳段不跳王——技巧獎勵仍成立且 EX 專屬型態不可跳過）。
+- P4 招池：稜光行牆 3／彈幕 3／晶雨 2；P4 speedFactor 沿狂暴帶 1.15（疊 EX
+  1.15 ≈ 1.32——W1.6 合規修正：初版 1.25 終段加壓違反 §8.1 面板紅線已收回）。
+- 新招「稜光行牆」（sweep）：起掃側 rng 抽側（同 seed 可重放）、側緣豎線閃爍
+  telegraph 700ms（固定不縮放）後，全高 120px 光牆以 180px/s 橫掃全場，出界回收。
+  跳越窗＝跳＋拍翅時機（`maxJumpClearancePx≈210` vs 牆高 120，vitest 錨定
+  `sweepWallHeightPx ≤ maxJumpClearancePx()-60` 裕度）。
+- anti-softlock：供彈保證律（每 10 傷 minionDrop）跨 P4 延續；telegraph 紅線
+  ≥600ms 全數維持；碎晶盾於重生時全數碎裂（P4 無盾環，輸出路徑純淨）。
+- 呈現層：重生演出（閃屏＋震動＋核體金緋重構 Back.easeOut）；EX 緋紅呼吸循環
+  於 P4 讓位金緋定色；受擊白閃 restore 對 p4 回金緋。
+
+### 114.3 驗收探針（#818 level-audit）
+
+- `node scripts/level-audit.mjs 12 --ex --bot low|high --runs N`：低階 clearRate
+  <20%、高階 ≥60%（門檻 SSOT `AUDIT_THRESHOLDS.exLowPassMaxRate/exHighPassMinRate`）。
+
+### 114.4 W1.6 調參（PM 裁決落地：段檢查點＋滑近週期化）
+
+W1.5 分級 bot 死因取證（高階 0%：p2 死 41/51、機制全解、輸出可用但 180 有效血
+無檢查點＝90s 單命耐力牆）後 PM 裁決：
+
+- **EX 段檢查點 P3/P4**（裁決①，後經裁決 A 修訂為進度保留）：
+  `prismixFsm.resetToPhase('p3'|'p4')`——EX 限定，P3/P4 死亡不回滾整場，
+  沿 voidra `trySegmentRespawn` 清場管線（投射物/排程/鏡界全清＋HUD 同步）；
+  P1/P2 與非 EX 走一般敗北流程。難度語意自「單命耐力」轉「分段技巧驗收」。
+- **進度保留語意（PM 裁決 A，取代初版段門檻回灌）**：死亡僅重置玩家、
+  boss 血不回灌——量測實證回灌語意在 P3/P4 形成「段命磨量 vs 段血回灌」
+  臨界輪迴（段內死牆：五測 p4 死 110/162、通關 1）；voidra 回灌慣例的
+  存在理由（P2 波次表重播 anti-softlock）於 P3/P4 不適用。技巧性不降
+  （每招仍需應對）、面板紅線不動；碎晶盾亦不隨段重試重生（同語意）。
+- **P1 滑近週期化**（裁決③輕量版）：EX 限定 `glidePursuing`（追 3.2s／歇 1.4s，
+  追擊窗佔主導守「不站樁」紅線）——消恆時追擊的強制跨越稅、給明確輸出窗；
+  非 EX 與 P3/P4 恆時滑近不動。
+- **觀察項（PM 裁決④記錄）**：非 EX L12 高階 bot 通過率 50%（其他王 100%）——
+  Prismix 主線難度曲線相對同儕右移，主線調參另議、本輪不動。
+
+## 115. v24 EX 全面重設計 W2——Syrona 窯心暴走＋Voidra 內核裸奔（#814；T6 列車）
+
+依 §8.2 表落地後二王 EX 專屬型態（phase+1），HUD 雙血條沿 BOSS_PHASE/
+BOSS_DAMAGED 既有管線泛化（barTint 覆寫欄，零新 HUD 系統）。
+
+### 115.1 Syrona EX P4「窯心暴走」（syronaFsm SSOT）
+
+- 觸發：EX 限定，P3 血量跌破 `EX_SYRONA.rampageHpRatio`（15%）入 P4。
+- 皇冠唯一可傷點：`takeDamage(amount, crown)` P4 期體傷歸零（可傷性裁決收斂
+  FSM）；皇冠 ×2 倍傷沿 §74 呈現層結算——登頂技巧強制驗收（單跳頂帶窗/
+  噴口升托皆可達，anti-softlock 基礎星彈恆可通關）。
+- 全場沸騰：週期 ×`rampageBoilPeriodMul`（0.45）、漲頂 `rampageBoilMaxYDeltaPx`
+  （-40 → 312）——恆低於最高浮台（304），保底立足位不變式；退潮窗照常
+  （無計時失敗紅線）。
+- 血條結構：單條＋暴走段深紅（`barTint` 覆寫；與 p2 常規紅區隔）；本體紅化。
+- 招池沿 p3（wave/overload）——overload 升托即登頂輸出窗。
+
+### 115.2 Voidra EX P4「內核裸奔」（voidraFsm SSOT）
+
+- 觸發：EX 限定，外核（既有三段全池 165）歸零不死——內核獨立血池滿灌。
+- 雙血條：外核 60%／內核 40%（`innerHpRatio` 2/3 推導：165:110）；HUD 血條
+  重灌換刻度＋亮紫換色（沿 Prismix P4 慣例）。
+- 裸奔差分：體積 ×0.6、移速 ×1.4（呈現層 EX_VOIDRA SSOT）、招式間隔 ×0.8
+  （SPEED_FACTORS.p4 分母化；僵直窗/吸流窗固定值不縮，hit window 紅線保留）。
+- 段重試擴 P4（進度保留語意，沿 Prismix PM 裁決 A：無波次表重播需求，
+  死亡僅重置玩家、內核血不回灌；p2/p3 沿既有回灌慣例不動）。
+- 招池沿 p3（barrage/crush/siphon）——語彙不變、節奏與幾何差分。
+
+### 115.3 T6 終局驗收（#818 分級 bot，各 6 runs，2026-07-24）
+
+| 王          | EX high（≥60%）         | EX low（<20%） | 非 EX high 對照          |
+| ----------- | ----------------------- | -------------- | ------------------------ |
+| L4 Jellord  | 83% ✓（TTK 27s）        | 0% ✓           | 100%（0 死）             |
+| L7 Noctra   | 67% ✓（TTK 29s）        | 17% ✓          | 100%（0.17 死）          |
+| L12 Prismix | **100%** ✓（TTK 74.5s） | 0% ✓           | 50%（右移觀察項 §114.4） |
+| L16 Syrona  | 67% ✓（TTK 32s）        | 17% ✓          | 100%（0 死）             |
+| L20 Voidra  | 67% ✓（TTK 236s）       | 0% ✓           | 100%（2.17 死）          |
+
+- 十門檻全 PASS（#814 驗收標準達成）。量測口徑：EX high 一律 cap 540s
+  （checkpoint 架構通關期望 200-400s；歷史 artifact 中 L20 曾以 360s 量得
+  67%——W3 已按 540 口徑重跑回填，見 §115.4）、bot 分級 SSOT
+  `difficulty.BOT_TIERS`（low 恆基礎策略——bossForage/crown 節拍等完整
+  策略均 tier gate）。
+- L12 決定性因素＝段重試進度保留（回灌語意 0-17% → 保留語意 100%）；
+  L16 low 首測 33% 為 crown 節拍漏 tier gate 的量測污染，gate 後 17%。
+
+## 116. v24 EX 全面重設計 W3——Jellord 果凍狂潮＋Noctra 月相雙血條＋皇冠共鳴（#814；T6 收斂）
+
+W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴走段 incidental
+可傷面收斂＋段重試雙語意局內提示。
+
+### 116.1 Jellord EX P4「果凍狂潮」（bossFsm SSOT）
+
+- 觸發：EX 限定，主條（90）歸零不死——狂潮小條滿灌（`EX_JELLORD.frenzyHp`
+  15，§8.2 表定值），phase 單向鎖存（`phaseForHp` 由 hp 推導不回落）。
+- 全地板果凍化：週期全場重鋪果凍地塊（壽命 3s／重鋪 2.2s 覆蓋連續）——
+  強制彈跳中作戰沿 §5 果凍回彈既有機制（零新系統）。
+- 分裂小果凍（§58 EX 彩蛋）改隨狂潮入場（演出＋場上補給），真擊破不重發。
+- 血條：單條＋狂潮段果凍粉（barTint 泛化）；招池/節奏沿 p3（§8.1 面板紅線）。
+- P4 段重試（W3 終局，沿裁決 A 同構）：狂潮死亡進度保留（小條不回灌、
+  地塊/彈幕清場重鋪）——取證：high bot 每命抵達 P4 殘血 1-2、無檢查點 17%
+  結構死牆（與 L12/L16 同簽名）；P1-P3 維持整場重打。
+
+### 116.2 Noctra EX P4「月相雙血條」（noctraFsm SSOT）
+
+- 觸發：EX 限定，亮月條（主池 78）破而不死——暗月條滿灌
+  （`EX_NOCTRA.darkMoonHpRatio` 0.5 → 39；「各 50%」＝暗月為亮月半值，
+  沿 Prismix rebirthHpRatio 同構），HUD 重灌換色（銀紫）。
+- 暗月差分：隱形頻率 ×2（p4 招池 cloak 權重 1→2）＋月牙軌跡變細
+  （`darkSweepScaleMul` 0.65：掠行判定帶與本體縱向縮細；telegraph 時長
+  不縮——可讀性紅線只縮體不縮窗）；月蝕矩陣（EX 質性差分）續存。
+- P4 段重試（W3 終局，沿裁決 A 同構）：暗月死亡進度保留（暗月條不回灌、
+  彈幕清場＋隱形/俯衝態復位回盤旋）——取證：high bot 每命抵達 P4 殘血 0-2、
+  無檢查點 0% 結構死牆；P1-P3 維持整場重打。
+
+### 116.3 Syrona 皇冠共鳴連擊（W3 Blocking 收斂）
+
+- 問題：crown tier gate 後 low 仍 33%（>20%）——overload 升托/高台誤射的
+  incidental 皇冠命中 ×2 倍傷可 2 發偶中秒掉暴走池（20 血）。
+- 修法（v2 共鳴解鎖制；v1 單發節拍窗 900ms 實測誤傷 high——體傷命中不入
+  節拍、跨跳輪 crown 命中間隔 ~950-1600ms 致 25/26 全 glance）：窗內
+  （`crownComboWindowMs` 1600）累積 `crownResonanceHits`（3）中解鎖全額、
+  斷窗重計；解鎖前皆 `crownGlanceDamage`（1 點，anti-softlock 恆可磨）。
+  低階 overload 單簇（2-4 發）解鎖後至多 1 發全額（≤13 < 暴走池 20）
+  不秒池、簇間 8-12s 必斷窗。
+- 技巧語意：「登頂後維持命中流」＝主動技巧驗收升級，偶中簇不再成立。
+
+### 116.4 段重試雙語意局內提示（W3）
+
+- 同王雙語意（Voidra p2/p3 回灌 vs p4 進度保留；Syrona p4 進度保留見
+  §116.5）以 `BOSS_SEGMENT_RETRY` 事件（producer：boss systems
+  trySegmentRespawn）→ systems/toasts 浮字區分「段首重試——魔王傷勢保留
+  ／魔王氣力回復」；每語意每局一次。
+- 受擊白閃 restore-tint（voidra/syrona 同構修復）：P4 段位相色（裸奔亮紫
+  ／暴走紅化）白閃回落復原而非 clearTint 洗掉。
+- EX 緋紅呼吸循環 P4 讓位（W3 收斂）：呼吸 onUpdate 每幀 setTint 會覆寫
+  段位相色——voidra/syrona 補 `fsm.phase === 'p4'` 早退 guard（鏡 prismix
+  W1 既有慣例），P4 定色不再被洗掉。
+
+### 116.5 Syrona EX P4 段重試（W3 v2 收斂）
+
+- 取證：共鳴 v2＋登頂窄窗（airMs 380-560、節流 90ms）後 L16 EX high 仍
+  0%（寬窄窗兩測 6-run 全 timeout、15.17 死/次）——高階 bot 每命例行抵達
+  P4 並磨池至 11-12，但 Syrona 無段重試：死亡＝135 整場重打、暴走池
+  （135×0.15≈20）隨之重灌，單命皇冠輸出上限 ~9 < 20 ⇒ P4 結構性不可完成
+  （與 L12 W1.6 六輪 0-17% 死牆同簽名）。
+- 修法（沿 Prismix/Voidra PM 裁決 A 同構）：P4 死亡段內重試「進度保留」——
+  hp/供彈累計不回灌、共鳴窗歸零（新命重啟命中流，不繼承解鎖態）、殘留
+  彈藥/衝擊波/延時全清（死亡前排程不得於新命憑空觸發）、全場沸騰以同
+  spec 自新週期起漲（重生喘息窗）；P1-P3 維持整場重打（抵達暴走的耐力
+  驗收保留）。`BOSS_SEGMENT_RETRY` kept 語意浮字沿 §116.4 管線。
+- anti-softlock：進度單調不退＋供彈保證律延續——基礎星彈恆可磨死暴走池；
+  面板紅線不動（EX_MODS/暴走池比率均未調）。
+
+### 116.6 Syrona P4 噴口氣流登頂（W3 終局，PM 裁決）
+
+- 取證（真值探針，兩層幾何互鎖）：跳打 apex 僅入皇冠帶 3px 的根因——
+  （a）皇冠帶錨定 sprite 視覺框頂，但可命中物理箱頂緣低數十 px，帶內幾乎
+  無可重疊面；（b）§54 魔王準星輔助把長程星彈導向本體中心，主動拉出皇冠帶
+  （懸停帶內 800 發零傷實測）。近距跳射僅因飛行短、彎不下去而偶中。
+- 皇冠帶錨點修正：`isCrownHit` 錨點自視覺頂收斂至「物理箱頂緣」單一真值
+  （帶寬 `CROWN_BAND_PX` 34 不變，精準度保留；`__sp.bossPos().top` 供 bot
+  取樣）。
+- 乘流登頂：P4 暴走段噴口窯壓恆噴（不看週期，柱色紅金訊號）＋皇冠帶氣墊
+  `crownHoverLift`（位置伺服懸停於物理箱頂＋22，≥600ms 級穩定滯空輸出窗）
+  ——「像素級擦帶跳」升級為可學習的乘流登頂技巧；水平離柱即交還重力，
+  無滯留軟鎖。
+- 準星輔助讓位：`BossHandle.aimAssistMode`——Syrona P4 回 `'off'`，星彈平飛
+  保留「乘流懸停高度＝皇冠命中」的精準語意；其餘魔王/相位維持 center 既有
+  行為（低階保底線不動）。
+- 持鍵乘流（低門檻洩漏修正 v2）：氣墊懸停僅跳躍鍵持按時供力
+  （`getVentLift` rideHeld 參數，GameScene 餵 `controls.state.jumpHeld`）——
+  首版被動抬升使誤入噴口的低階 bot 假性通關（12-run 58% 取證）；低階只點跳
+  不持鍵，天然被擋。
+- 窯風共振（低門檻洩漏修正 v2）：P4 皇冠命中必須乘流中（`targetRidingVent`）
+  才有效——未乘流命中一律體傷語意（0 傷金屬聲），關閉中台站射免技巧 chip
+  通道；P1-P3 皇冠 ×2 維持純幾何。技巧門檻＝「會用噴口」（PM 裁決語意
+  機械化）；乘流中節拍仍由 §116.3 共鳴解鎖制收斂。
+- anti-softlock 複核：噴口恆噴保證可乘、持鍵＝基礎輸入、彈盡可落地吃補給怪
+  再返場——基礎星彈恆可通關不變式成立；無計時失敗、沸騰不淹保底高台照舊。

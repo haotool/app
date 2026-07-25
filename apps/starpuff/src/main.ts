@@ -138,12 +138,13 @@ declare global {
       hurtPlayer: (damage: number) => void;
       mercyCount: () => number;
       buff: () => { id: string | null; remainingMs: number };
-      bossPos: () => { x: number; y: number };
+      bossPos: () => { x: number; y: number; top: number };
       bossBodies: () => { x: number; y: number }[];
       bossShots: () => { x: number; y: number }[];
       bossHazards: () => { x: number; y: number; w: number; h: number }[];
       enemyPositions: () => { x: number; y: number }[];
       ammo: () => { ammo: number; flavor: string; mix: string | null };
+      playerStars: () => { x: number; y: number }[];
       walk: () => { rotation: number; bob: number; vy: number };
       crouch: () => number;
       elite: () => { armed: boolean; done: boolean; doorX: number | null };
@@ -214,8 +215,17 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     buff: () => gameScene().buffState(),
     // 難度實測觀測點（§54 bot 驗收）：魔王本體與彈幕座標供 bot 瞄準/走位/迴避取樣。
     bossPos: () => {
-      const body = gameScene().bossBody() as unknown as { x: number; y: number };
-      return { x: Math.round(body.x), y: Math.round(body.y) };
+      // top＝可命中物理箱頂緣（§54 bot 取樣：皇冠帶/懸停線幾何真值，非視覺框頂）。
+      const body = gameScene().bossBody() as unknown as {
+        x: number;
+        y: number;
+        body?: { top: number };
+      };
+      return {
+        x: Math.round(body.x),
+        y: Math.round(body.y),
+        top: Math.round(body.body?.top ?? body.y),
+      };
     },
     // v10 觀測點（§68 e2e）：多本體座標（雙子迴避取樣）。
     bossBodies: () =>
@@ -262,6 +272,16 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       return hazards;
     },
     ammo: () => internals().player.getAmmoState(),
+    // W3 觀測點（§54 bot 取樣）：場上飛行星彈座標——登頂命中流幾何驗證。
+    playerStars: () => {
+      const flying: { x: number; y: number }[] = [];
+      for (const child of internals().player.getStars().getChildren()) {
+        if (!child.active) continue;
+        const star = child as unknown as { x: number; y: number };
+        flying.push({ x: Math.round(star.x), y: Math.round(star.y) });
+      }
+      return flying;
+    },
     // v7 觀測點（§45/§48 e2e）：走動姿態、精英房狀態與受控秒殺。
     walk: () => internals().player.getWalkVisual(),
     // §77 觀測點：蹲姿比例（0..1）。

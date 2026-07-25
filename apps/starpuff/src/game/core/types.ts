@@ -51,7 +51,9 @@ export type TransformForm = 'volt' | 'gale' | 'shell';
 // 星暴 2.0 蓄能相位（§109）：none 無蓄能星；charged 頭頂蓄能星待引爆；detonating 蓄爆中。
 export type StarburstPhase = 'none' | 'charged' | 'detonating';
 
-export type BossPhase = 'p1' | 'p2' | 'p3';
+// p4：EX 專屬第四型態（#814 T6）——目前僅 Prismix 裂核殘響可達；
+// Syrona/Voidra 於後續波次落地，Jellord/Noctra 執行期不可達。
+export type BossPhase = 'p1' | 'p2' | 'p3' | 'p4';
 
 export type BossAction = 'idle' | 'jellyRain' | 'slam' | 'dash';
 

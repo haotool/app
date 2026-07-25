@@ -23,6 +23,9 @@ export const GameEvents = {
   // v9 星化形態技（§57）：player 發出，GameScene 結算世界效果（雷化鏈電束／風化落地衝擊）。
   SKILL_TRANSFORM_STRIKE: 'skill:transform-strike',
   BOSS_SPAWNED: 'boss:spawned',
+  // 段起點重試語意提示（W3）：producer boss systems（trySegmentRespawn），
+  // consumer systems/toasts——同王雙語意（回灌 vs 進度保留）局內區分。
+  BOSS_SEGMENT_RETRY: 'boss:segment-retry',
   BOSS_DAMAGED: 'boss:damaged',
   BOSS_PHASE: 'boss:phase',
   // P3 狂暴皇冠（§30）：slam 附加全場震落，站立玩家強制彈起由 GameScene 結算。
@@ -71,8 +74,10 @@ export interface GameEventPayloads {
     facing: 1 | -1;
   };
   [GameEvents.BOSS_SPAWNED]: { maxHp: number };
+  [GameEvents.BOSS_SEGMENT_RETRY]: { semantics: 'kept' | 'refill' };
   [GameEvents.BOSS_DAMAGED]: { hp: number; maxHp: number; damage: number };
-  [GameEvents.BOSS_PHASE]: { phase: BossPhase };
+  // barTint（§8.2 W2）：階段換色覆寫（如 Syrona 暴走深紅）；未帶沿 HUD 預設。
+  [GameEvents.BOSS_PHASE]: { phase: BossPhase; barTint?: number };
   [GameEvents.BOSS_QUAKE]: { x: number; y: number };
   [GameEvents.BOSS_TWIN_HP]: { hpA: number; hpB: number; maxHp: number; active: boolean };
   [GameEvents.BOSS_DEFEATED]: { x: number; y: number };

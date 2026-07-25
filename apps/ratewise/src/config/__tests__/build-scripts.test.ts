@@ -815,69 +815,73 @@ describe('ratewise build scripts', () => {
    * - src/llms-txt.spec.ts — 已收斂（白名單只是防守備）
    * - src/utils/versionManager.ts — 註解引用 RateWise.tsx 為呼叫者
    */
-  it('should not hardcode HaoRate / 匯率好工具 outside SSOT and technical-identifier files', async () => {
-    const srcRoot = path.resolve(__dirname, '../..');
-    const allowList = new Set(
-      [
-        'config/app-info.ts',
-        'features/ratewise/RateWise.tsx',
-        'features/ratewise/RateWise.test.tsx',
-        'features/ratewise/storage-keys.ts',
-        'routes.tsx',
-        'services/exchangeRateService.ts',
-        'jsonld.test.ts',
-        'middleware/urlNormalization.test.ts',
-        'llms-txt.spec.ts',
-        'utils/versionManager.ts',
-      ].map((p) => path.normalize(p)),
-    );
-    const allowedDirs = [
-      path.normalize('config/__tests__'),
-      // bootstrap tests reference STORAGE_KEYS which lives under features/ratewise
-      path.normalize('bootstrap'),
-      // versionManager tests reference STORAGE_KEYS
-      path.normalize('utils/__tests__'),
-    ];
-    const skipExt = new Set(['.png', '.jpg', '.svg', '.webp', '.snap']);
-
-    function* walk(dir: string): Generator<string> {
-      for (const entry of readdirSync(dir)) {
-        const full = path.join(dir, entry);
-        const st = statSync(full);
-        if (st.isDirectory()) {
-          yield* walk(full);
-          continue;
-        }
-        if (skipExt.has(path.extname(entry))) continue;
-        yield full;
-      }
-    }
-
-    const offenders: { file: string; reason: string }[] = [];
-    const brandTokens = ['HaoRate', '匯率好工具'];
-
-    for (const file of walk(srcRoot)) {
-      const rel = path.relative(srcRoot, file);
-      if (allowList.has(rel)) continue;
-      if (allowedDirs.some((d) => rel.startsWith(d + path.sep) || rel === d)) continue;
-
-      const content = await readFile(file, 'utf-8');
-      for (const token of brandTokens) {
-        if (content.includes(token)) {
-          offenders.push({ file: rel, reason: `contains literal "${token}"` });
-          break;
-        }
-      }
-    }
-
-    if (offenders.length > 0) {
-      const msg = offenders.map((o) => `  - ${o.file}: ${o.reason}`).join('\n');
-      throw new Error(
-        `發現新增的品牌字面值（請改用 APP_INFO.shortName / APP_INFO.name）：\n${msg}`,
+  it(
+    'should not hardcode HaoRate / 匯率好工具 outside SSOT and technical-identifier files',
+    { timeout: 15000 },
+    async () => {
+      const srcRoot = path.resolve(__dirname, '../..');
+      const allowList = new Set(
+        [
+          'config/app-info.ts',
+          'features/ratewise/RateWise.tsx',
+          'features/ratewise/RateWise.test.tsx',
+          'features/ratewise/storage-keys.ts',
+          'routes.tsx',
+          'services/exchangeRateService.ts',
+          'jsonld.test.ts',
+          'middleware/urlNormalization.test.ts',
+          'llms-txt.spec.ts',
+          'utils/versionManager.ts',
+        ].map((p) => path.normalize(p)),
       );
-    }
-    expect(offenders).toEqual([]);
-  });
+      const allowedDirs = [
+        path.normalize('config/__tests__'),
+        // bootstrap tests reference STORAGE_KEYS which lives under features/ratewise
+        path.normalize('bootstrap'),
+        // versionManager tests reference STORAGE_KEYS
+        path.normalize('utils/__tests__'),
+      ];
+      const skipExt = new Set(['.png', '.jpg', '.svg', '.webp', '.snap']);
+
+      function* walk(dir: string): Generator<string> {
+        for (const entry of readdirSync(dir)) {
+          const full = path.join(dir, entry);
+          const st = statSync(full);
+          if (st.isDirectory()) {
+            yield* walk(full);
+            continue;
+          }
+          if (skipExt.has(path.extname(entry))) continue;
+          yield full;
+        }
+      }
+
+      const offenders: { file: string; reason: string }[] = [];
+      const brandTokens = ['HaoRate', '匯率好工具'];
+
+      for (const file of walk(srcRoot)) {
+        const rel = path.relative(srcRoot, file);
+        if (allowList.has(rel)) continue;
+        if (allowedDirs.some((d) => rel.startsWith(d + path.sep) || rel === d)) continue;
+
+        const content = await readFile(file, 'utf-8');
+        for (const token of brandTokens) {
+          if (content.includes(token)) {
+            offenders.push({ file: rel, reason: `contains literal "${token}"` });
+            break;
+          }
+        }
+      }
+
+      if (offenders.length > 0) {
+        const msg = offenders.map((o) => `  - ${o.file}: ${o.reason}`).join('\n');
+        throw new Error(
+          `發現新增的品牌字面值（請改用 APP_INFO.shortName / APP_INFO.name）：\n${msg}`,
+        );
+      }
+      expect(offenders).toEqual([]);
+    },
+  );
 
   it('should keep API rate mode strategies in a single JSON SSOT', async () => {
     const ssotPath = path.resolve(__dirname, '../rate-mode-strategies.json');

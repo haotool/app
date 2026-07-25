@@ -312,8 +312,12 @@ export function createNoctra(
     const fromLeft = sprite.x < arenaCx();
     const startX = fromLeft ? arenaLeft() - BODY_W / 2 : arenaLeft() + viewW() + BODY_W / 2;
     const endX = fromLeft ? arenaLeft() + viewW() + BODY_W / 2 : arenaLeft() - BODY_W / 2;
+    // 暗月月牙變細（§8.2 W3 EX P4）：掠行判定帶與本體縱向縮細（telegraph
+    // 時長不縮——可讀性紅線只縮體不縮窗）。
+    const crescentMul = fsm.phase === 'p4' ? EX_NOCTRA.darkSweepScaleMul : 1;
+    if (crescentMul !== 1) sprite.setDisplaySize(BODY_W, BODY_H * crescentMul);
     const band = scene.add
-      .rectangle(arenaCx(), SWEEP_Y, viewW(), BODY_H * 0.7, 0x9f8fe8, 0.16)
+      .rectangle(arenaCx(), SWEEP_Y, viewW(), BODY_H * 0.7 * crescentMul, 0x9f8fe8, 0.16)
       .setDepth(58);
     scene.tweens.add({
       targets: band,
@@ -345,6 +349,8 @@ export function createNoctra(
           },
         ],
         onComplete: () => {
+          // 掠行結束復原本體尺寸（暗月縮體僅限月牙航跡期間）。
+          sprite.setDisplaySize(BODY_W, BODY_H);
           steering = true;
           wingbeat.resume();
         },
@@ -547,9 +553,23 @@ export function createNoctra(
             });
             break;
           case 'phase':
-            if (event.phase === 'p3') startTintCycle(P3_FROM, P3_TO, 420);
+            if (event.phase === 'p4') {
+              // 暗月型態（§8.2 W3）：亮月條破——暗月深紫換相＋暗月條重灌。
+              startTintCycle({ r: 96, g: 82, b: 168 }, { r: 58, g: 48, b: 108 }, 420);
+              playSfx('boss-roar', 1.2);
+              scene.cameras.main.flash(300, 120, 100, 200);
+              emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+                hp: fsm.hp,
+                maxHp: fsm.maxHp,
+                damage: 0,
+              });
+            } else if (event.phase === 'p3') startTintCycle(P3_FROM, P3_TO, 420);
             else startTintCycle(P2_FROM, P2_TO, 700);
-            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
+            emitGameEvent(scene.events, GameEvents.BOSS_PHASE, {
+              phase: event.phase,
+              // 暗月銀紫條色（§8.2 月相雙血條）。
+              ...(event.phase === 'p4' ? { barTint: 0x8a78d8 } : {}),
+            });
             break;
           case 'minionDrop':
             minionHandlers.forEach((handler) => handler());
@@ -684,6 +704,35 @@ export function createNoctra(
     },
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
+    },
+    // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 暗月死亡不整場重打——
+    // 進度保留（暗月條不回灌）；P1-P3 回 false 走一般敗北流程（抵達暗月的
+    // 耐力驗收保留）。取證：high bot 每命抵達 P4 時殘血 0-2、無檢查點下 0%。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈幕/延時全清（死亡前排程不得於新命憑空觸發）；隱形/俯衝態復位。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      scene.tweens.killTweensOf(sprite);
+      cloakStartMs = -1;
+      sprite.setAlpha(1);
+      sprite.setAngle(0);
+      sprite.setTintMode(Phaser.TintModes.MULTIPLY);
+      enrageTween?.resume();
+      sprite.setPosition(sprite.x, HOVER_Y);
+      steering = true;
+      wingbeat.resume();
+      fsm.resetToPhase('p4');
+      emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+        hp: fsm.hp,
+        maxHp: fsm.maxHp,
+        damage: 0,
+      });
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
     },
     // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
     getDebugState() {
