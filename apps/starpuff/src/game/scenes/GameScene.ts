@@ -671,17 +671,13 @@ export class GameScene extends Phaser.Scene {
     return this.meteor?.state() ?? null;
   }
 
-  // 場控魔王噴口供力（§74 Syrona）：呈現層持有幾何與相位，此處逐幀委派結算。
+  // 場控魔王噴口供力（§74 Syrona）：逐幀委派結算；尾參 jumpHeld＝持鍵乘流意圖（W3）。
   private applyBossVents(deltaMs: number): void {
     if (!this.boss.getVentLift) return;
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    const lifted = this.boss.getVentLift(
-      this.player.sprite.x,
-      this.player.sprite.y,
-      body.velocity.y,
-      deltaMs,
-      body.blocked.up,
-    );
+    const { x, y } = this.player.sprite;
+    const held = this.controls.state.jumpHeld;
+    const lifted = this.boss.getVentLift(x, y, body.velocity.y, deltaMs, body.blocked.up, held);
     if (lifted !== null) {
       body.setVelocityY(lifted);
       // 焦糖化反制（§5 W2）：乘噴口氣流吹乾即解除減速。

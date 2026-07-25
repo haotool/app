@@ -196,6 +196,8 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
     handle.spawn();
     // EX 135：體傷至 hp 20（≤135×0.15）入暴走。
     handle.applyDamage(115);
+    // 窯風共振前置（W3）：P4 皇冠有效命中要求玩家乘流中——預設置於噴口柱域內。
+    handle.setTarget({ x: 854 * 0.3, y: 300 });
     return { body, emit, counters, hooks, handle };
   };
 
@@ -237,19 +239,31 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
       arenaLeft: () => 0,
     });
     idleHandle.spawn();
-    expect(idleHandle.getVentLift?.(VENT_X, 380, 0, 16, false)).toBeNull();
+    expect(idleHandle.getVentLift?.(VENT_X, 380, 0, 16, false, true)).toBeNull();
     // P4：同一時刻恆噴——懸停線＝物理箱頂＋CROWN_BAND_PX−12（替身 top＝y−64）。
     const { body, handle } = toRampage();
     body.setPosition(body.x, 325);
     const hoverY = 325 - 64 + 34 - 12;
-    expect(handle.getVentLift?.(VENT_X, 380, 0, 16, false) ?? 0).toBeLessThan(0);
-    expect(handle.getVentLift?.(VENT_X, hoverY, -100, 16, false)).toBe(0);
-    expect(handle.getVentLift?.(VENT_X, hoverY - 40, 0, 16, false) ?? 0).toBeGreaterThan(0);
+    expect(handle.getVentLift?.(VENT_X, 380, 0, 16, false, true) ?? 0).toBeLessThan(0);
+    expect(handle.getVentLift?.(VENT_X, hoverY, -100, 16, false, true)).toBe(0);
+    expect(handle.getVentLift?.(VENT_X, hoverY - 40, 0, 16, false, true) ?? 0).toBeGreaterThan(0);
+    // 持鍵乘流（W3 洩漏修正）：未持跳躍鍵不供力——誤入噴口不被動抬升。
+    expect(handle.getVentLift?.(VENT_X, 380, 0, 16, false, false)).toBeNull();
     // 柱域外不供力：水平離柱交還重力（無滯留軟鎖）。
-    expect(handle.getVentLift?.(VENT_X + 60, 380, 0, 16, false)).toBeNull();
+    expect(handle.getVentLift?.(VENT_X + 60, 380, 0, 16, false, true)).toBeNull();
     // 準星輔助讓位：P4 中心導向會把長程星彈拉出皇冠帶——off；非 P4 維持 center。
     expect(handle.aimAssistMode?.()).toBe('off');
     expect(idleHandle.aimAssistMode?.()).toBe('center');
+  });
+
+  it('P4 窯風共振（W3 洩漏修正）：未乘流的皇冠命中無效（平台站射 chip 關閉）', () => {
+    const { body, emit, handle } = toRampage();
+    // 站上浮台（柱域外）：皇冠幾何命中但未乘流——體傷語意 0 傷。
+    handle.setTarget({ x: 854 * 0.47, y: 272 });
+    emit.mockClear();
+    handle.applyDamageAt?.(5, body.x, body.y - 80);
+    const damaged = emit.mock.calls.find((call) => call[0] === GameEvents.BOSS_DAMAGED);
+    expect(damaged).toBeUndefined();
   });
 
   it('P4 段重試（W3 v2 收斂）：進度保留 kept＋沸騰週期重置＋共鳴窗歸零', () => {

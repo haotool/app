@@ -749,9 +749,13 @@ export function installAuditDriver(opts) {
         const ventB = arenaLeft + view * 0.58;
         const vent = Math.abs(ventA - snap.px) <= Math.abs(ventB - snap.px) ? ventA : ventB;
         if (Math.abs(vent - snap.px) > 12) {
+          // 移動段不持鍵（持跳浮飄拖慢地面速度）；到柱再持鍵乘流。
+          if (held.has(KEY.jump)) release(KEY.jump);
           face(Math.sign(vent - snap.px));
           return;
         }
+        // 持鍵乘流（W3 洩漏修正）：氣墊懸停與皇冠有效命中都要求跳躍鍵持按。
+        if (!held.has(KEY.jump)) press(KEY.jump);
         // 懸停線＝物理箱頂＋22（帶內縮 12）；±14 容差內開火（帶外打體不入共鳴節拍）。
         if (
           s.ammo > 0 &&

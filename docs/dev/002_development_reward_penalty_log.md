@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+205
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+206
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-hold-to-ride-resonance-gate
+- 原因：乘流 v1 被動抬升＋皇冠帶可達化把低階 bot 一併放行（L16 EX low 12-run 58% 假性通關取證：誤入噴口自動懸停＋grantSupply drip 1.2-1.4s ≤ 共鳴窗 1.6s 撐起連擊）
+- 解法：持鍵乘流（氣墊僅 jumpHeld 供力，低階點跳不持鍵天然被擋）＋窯風共振（P4 皇冠命中必須 targetRidingVent 乘流中才有效，中台站射 chip 通道關閉；P1-P3 皇冠純幾何不動）——「會用噴口」技巧門檻機械化
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-aim-assist-crown-rootcause

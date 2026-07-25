@@ -38,12 +38,14 @@ export interface BossHandle {
   // 環繞護盾（§68 P3 碎晶盾）：可擊破的星彈屏障群；未實作視為無護盾。
   getShields?(): Phaser.Physics.Arcade.Group;
   // arena 噴口供力（§74 Syrona）：域內回傳結算後 vy、域外回 null；未實作視為無噴口。
+  // rideHeld（W3 持鍵乘流）：跳躍鍵持按＝乘流意圖——P4 氣墊懸停僅持鍵時供力。
   getVentLift?(
     x: number,
     y: number,
     vy: number,
     deltaMs: number,
     blockedUp: boolean,
+    rideHeld?: boolean,
   ): number | null;
   // 準星輔助模式（§54/W3）：皇冠唯一可傷期回 'off'——中心導向會把長程星彈
   // 拉出皇冠帶（W3 真值取證）；未實作＝'center' 既有行為。

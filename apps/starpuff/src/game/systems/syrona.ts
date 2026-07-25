@@ -397,12 +397,16 @@ export function createSyrona(
     dutyPct: SYRONA.tideDutyPct,
   });
 
-  const applyDamageInternal = (amount: number, crown: boolean, source?: BossDamageSource) => {
+  const applyDamageInternal = (amount: number, rawCrown: boolean, source?: BossDamageSource) => {
     if (!active) return;
     if (source === 'volt' && fsm.interruptSummon()) {
       playSfx('break');
       scene.tweens.add({ targets: body, angle: 4, duration: 45, yoyo: true, repeat: 3 });
     }
+    // 窯風共振（W3 低門檻洩漏修正）：P4 皇冠命中必須乘流中才有效——平台站射
+    // 的免技巧 chip 通道關閉；技巧門檻＝「會用噴口」（PM 裁決語意機械化）。
+    // P1-P3 皇冠 ×2 維持純幾何判定。
+    const crown = rawCrown && (fsm.phase !== 'p4' || targetRidingVent());
     // 窯心暴走（§8.2 W2）：P4 皇冠唯一可傷——體傷歸零回饋（金屬聲，不閃白）；
     // 可傷性真值在 FSM takeDamage 皇冠閘（此處僅提前回饋省空轉）。
     if (fsm.phase === 'p4' && !crown) {
@@ -653,15 +657,25 @@ export function createSyrona(
       minionHandlers.push(handler);
     },
     // arena 噴口供力查詢（§74）：GameScene 逐幀委派（沿 stage updraft 結算慣例）。
-    // P4 窯心暴走＝窯壓恆噴（W3 PM 裁決）：暴走段噴口不看週期恆供力，乘流升托
-    // 至皇冠帶轉氣墊懸停——「像素級擦帶跳」升級為可學習的乘流登頂技巧
+    // P4 窯心暴走＝窯壓恆噴（W3 PM 裁決）：暴走段噴口不看週期恆供力，持鍵乘流
+    // 升托至皇冠帶轉氣墊懸停——「像素級擦帶跳」升級為可學習的乘流登頂技巧
     //（≥600ms 級滯空輸出窗；水平離柱即交還重力，無滯留軟鎖）。
-    getVentLift(x: number, y: number, vy: number, deltaMs: number, blockedUp: boolean) {
+    // 持鍵乘流（低門檻洩漏修正）：氣墊僅跳躍鍵持按時供力——誤入噴口不再被動
+    // 抬升（低階 bot 點跳不持鍵，58% 假性通關取證關閉）。
+    getVentLift(
+      x: number,
+      y: number,
+      vy: number,
+      deltaMs: number,
+      blockedUp: boolean,
+      rideHeld = false,
+    ) {
       const rampage = fsm.phase === 'p4';
       const overloading = elapsedMs < overloadUntilMs;
       for (const zone of vents) {
         if (!rampage && !overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
         if (!isInUpdraft(x, y, zone, GROUND_TOP)) continue;
+        if (rampage && !rideHeld) continue;
         if (blockedUp) return vy;
         if (rampage) return crownHoverLift(y, crownHoverY());
         const next = vy - UPDRAFT.liftPxPerSec2 * (overloading ? 1.4 : 1) * (deltaMs / 1000);
