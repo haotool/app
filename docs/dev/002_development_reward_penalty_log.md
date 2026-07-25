@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+225
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+226
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-v9-ex-frenzy-spec-align
+- 原因：全套 e2e 唯一紅燈 v9 EX 果凍王（期望 90→0 直死）經 base worktree 重跑證實 main 同樣 fail——T6 §116 EX 果凍狂潮重設計（主條歸零不死、入 P4 小條 15）後 v9.spec 未同步的既有斷裂，非 T7-B 回歸
+- 解法：v9.spec 對齊現行 FSM SSOT（damage 89→斷言小條 15→再清 15→0→Result），修後 v9.spec 8/8 綠、全套 e2e 收斂全綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-bosses-scale-migration
