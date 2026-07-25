@@ -39,6 +39,7 @@ import {
   type EnemyUpdateContext,
 } from './enemyUpdates';
 import { popIn } from './fx';
+import { getVisualScale } from './visualScale';
 
 export interface EnemyTarget {
   x: number;
@@ -257,6 +258,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   });
   let target: EnemyTarget | null = null;
   let elapsedMs = 0;
+  // 物理/視覺縮放解耦（§77 根治）：popIn/wobble/死亡壓縮走 fx 代理、呼吸走 mod、
+  // 狀態性造型（縮殼/鑽地鰭/半潛/精英體型）走 setBase——物理箱恆為狀態基準。
+  const vscale = getVisualScale(scene);
 
   // 無 target 時的朝向啟發改讀當前鏡頭中心（§28 動態視寬，禁硬編 854）。
   const viewCenterX = () => scene.cameras.main.scrollX + scene.scale.width / 2;
@@ -479,10 +483,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.stop();
     body.enable = false;
     sprite.setActive(false);
+    // 死亡壓縮走 fx 代理（§77 解耦）：自當前形變接續壓至零高。
+    vscale.killFxTweens(sprite);
     scene.tweens.add({
-      targets: sprite,
-      scaleX: sprite.scaleX * 1.5,
-      scaleY: 0,
+      targets: vscale.fx(sprite),
+      sx: 1.5,
+      sy: 0,
       duration: 150,
       ease: 'Quad.easeIn',
       onComplete: () => sprite.setVisible(false),
@@ -497,7 +503,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('stateMs', 0);
     const bsx = sprite.getData('baseSX') as number;
     const bsy = sprite.getData('baseSY') as number;
-    sprite.setScale(bsx * SHELLY_SHELL_SCALE, bsy * SHELLY_SHELL_SCALE);
+    // 縮殼為狀態性造型：走物理基準（§77 解耦），旋轉期碰撞體同步縮小。
+    vscale.setBase(sprite, bsx * SHELLY_SHELL_SCALE, bsy * SHELLY_SHELL_SCALE);
     const direction = target && target.x < sprite.x ? -1 : 1;
     (sprite.body as Phaser.Physics.Arcade.Body).setVelocityX(SHELLY_SPIN_SPEED * direction);
   }
@@ -506,6 +513,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // hazards/回收管線以回呼銜接。
   const updateCtx: EnemyUpdateContext = {
     scene,
+    vscale,
     get target() {
       return target;
     },
@@ -530,12 +538,14 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     const sprite = group.get(x, y, TEXTURES[kind]) as Phaser.Physics.Arcade.Sprite | null;
     if (!sprite) return null;
 
-    // 池重用防護：死亡 squash tween 可能仍在播放，先清除再重設外觀。
+    // 池重用防護：死亡壓縮/popIn tween 可能仍在播放，先清除再重設外觀。
     scene.tweens.killTweensOf(sprite);
     (sprite.getData('warnRing') as Phaser.GameObjects.Arc | undefined)?.destroy();
     sprite.setActive(true).setVisible(true);
     sprite.setTexture(TEXTURES[kind]);
     sprite.setDisplaySize(ENEMY_SIZE, ENEMY_SIZE);
+    // 冪等註冊（§77 解耦）：重錨物理基準並復位 fx/mod 與殘留 fx tween。
+    vscale.register(sprite);
     sprite.setRotation(0);
     sprite.setAlpha(1);
     sprite.clearTint();
@@ -619,16 +629,16 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     else if (kind === 'shelly') body.setVelocity(SHELLY_WALK_SPEED * inward, 0);
     else body.setVelocity(0, 0);
 
-    // 生成彈入；wobble 延後啟動避免同時操作 scale。
+    // 生成彈入；wobble 延後啟動避免同時操作 fx。
     popIn(scene, sprite);
 
-    // wobble idle：果凍感擠壓拉伸；chompy/shelly/drilly/spora 的 scale 由各自狀態機控制，
-    // 不掛 wobble。
+    // wobble idle：果凍感擠壓拉伸（fx 代理，物理箱不動）；chompy/shelly/drilly/spora
+    // 的造型由各自狀態機控制，不掛 wobble。
     if (kind !== 'chompy' && kind !== 'shelly' && kind !== 'drilly' && kind !== 'spora') {
       scene.tweens.add({
-        targets: sprite,
-        scaleX: sprite.scaleX * 1.08,
-        scaleY: sprite.scaleY * 0.92,
+        targets: vscale.fx(sprite),
+        sx: 1.08,
+        sy: 0.92,
         duration: 360,
         yoyo: true,
         repeat: -1,
@@ -700,6 +710,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       if (!sprite) return null;
       scene.tweens.killTweensOf(sprite);
       sprite.setDisplaySize(ENEMY_SIZE * opts.scale, ENEMY_SIZE * opts.scale);
+      // 精英體型為狀態性造型：重新註冊重錨物理基準（§77 解耦），並清掉 spawn 的 fx tween。
+      vscale.register(sprite);
       sprite.setTint(opts.tint);
       sprite.setData('hp', opts.hp);
       sprite.setData('elite', true);

@@ -5,6 +5,7 @@ import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { JELLY_PATCH, jellyBounceVy, prunePatches, type JellyPatch } from '../logic/jellyPatch';
 import { playSfx } from '../audio/sfx';
 import { burstSmall, landingDust, spawnTelegraph } from './fx';
+import { getVisualScale } from './visualScale';
 
 // EX 變體選項與擊破分裂 hook（§58）：分裂生成走 GameScene 正式 spawn 管線。
 export interface BossOptions {
@@ -138,8 +139,11 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
 
   const sprite = scene.physics.add.sprite(sideX('right'), -BOSS_H, 'boss-idle');
   sprite.setDisplaySize(BOSS_W, BOSS_H);
-  const baseScaleX = sprite.scaleX;
-  const baseScaleY = sprite.scaleY;
+  // 物理/視覺縮放解耦（§77 根治）：wobble/擠壓/怒吼脈動/死亡收縮全走 fx 代理，
+  // 物理箱恆為基準；texture 切換後 rebase 重錨。
+  const vscale = getVisualScale(scene);
+  vscale.register(sprite);
+  const fxScale = vscale.fx(sprite);
   const body = sprite.body as Phaser.Physics.Arcade.Body;
   body.setAllowGravity(false);
   body.setImmovable(true);
@@ -151,11 +155,11 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
-  // 常駐果凍 wobble；slam / dash 期間暫停避免 scale 衝突。
+  // 常駐果凍 wobble（fx 代理，物理箱不動）；slam / dash 期間暫停避免 fx 衝突。
   const wobble = scene.tweens.add({
-    targets: sprite,
-    scaleX: sprite.scaleX * 1.05,
-    scaleY: sprite.scaleY * 0.94,
+    targets: fxScale,
+    sx: 1.05,
+    sy: 0.94,
     duration: 620,
     yoyo: true,
     repeat: -1,
@@ -192,6 +196,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
 
   const startEnrage = () => {
     sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    vscale.rebase(sprite);
     startTintCycle({ r: 255, g: 255, b: 255 }, ENRAGE_TINT, 700);
   };
 
@@ -206,6 +211,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   };
   const startFrenzy = () => {
     sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    vscale.rebase(sprite);
     startTintCycle({ r: 255, g: 176, b: 208 }, { r: 255, g: 120, b: 168 }, 360);
     playSfx('boss-roar', 1.3);
     scene.cameras.main.flash(320, 255, 176, 208);
@@ -222,6 +228,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   // P3 進場演出（§30）：皇冠射出星環衝擊波（金色擴散環 + 星火），時停 0.3s 由 GameScene 接線。
   const startP3 = () => {
     sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    vscale.rebase(sprite);
     startTintCycle(P3_GOLD, P3_PURPLE, P3_FLICKER_MS);
     const crownX = sprite.x;
     const crownY = sprite.y - BOSS_H * 0.55;
@@ -354,9 +361,9 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     sprite.setTint(SLAM_WINDUP_TINT);
     playSfx('boss-slam');
     scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX * 1.18,
-      scaleY: baseScaleY * 0.8,
+      targets: fxScale,
+      sx: 1.18,
+      sy: 0.8,
       duration: SLAM_WINDUP_MS,
       ease: 'Quad.easeOut',
     });
@@ -364,21 +371,31 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       if (dying) return;
       if (enrageTween) enrageTween.resume();
       else sprite.clearTint();
+      // 位移走 sprite、擠壓走 fx 代理（§77 解耦）：起跳期回復基準、著地擠壓回彈。
+      scene.tweens.add({
+        targets: fxScale,
+        sx: 1,
+        sy: 1,
+        duration: 300 / sf,
+        ease: 'Quad.easeOut',
+      });
       scene.tweens.chain({
         targets: sprite,
         tweens: [
-          {
-            y: STAND_Y - 170,
-            scaleX: baseScaleX,
-            scaleY: baseScaleY,
-            duration: 300 / sf,
-            ease: 'Quad.easeOut',
-          },
+          { y: STAND_Y - 170, duration: 300 / sf, ease: 'Quad.easeOut' },
           { y: STAND_Y, duration: 180 / sf, ease: 'Quad.easeIn' },
-          { scaleX: baseScaleX * 1.22, scaleY: baseScaleY * 0.78, duration: 90, yoyo: true },
         ],
         onComplete: () => {
-          wobble.resume();
+          scene.tweens.add({
+            targets: fxScale,
+            sx: 1.22,
+            sy: 0.78,
+            duration: 90,
+            yoyo: true,
+            onComplete: () => {
+              wobble.resume();
+            },
+          });
         },
       });
     });
@@ -416,14 +433,23 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     });
     delay(DASH_WINDUP_MS, () => {
       if (dying) return;
-      scene.tweens.chain({
+      scene.tweens.add({
         targets: sprite,
-        tweens: [
-          { x: targetX, duration: 550 / fsm.speedFactor, ease: 'Sine.easeIn' },
-          { scaleX: baseScaleX * 1.28, scaleY: baseScaleY * 0.76, duration: 110, yoyo: true },
-        ],
+        x: targetX,
+        duration: 550 / fsm.speedFactor,
+        ease: 'Sine.easeIn',
         onComplete: () => {
-          wobble.resume();
+          // 到位擠壓走 fx 代理（§77 解耦）。
+          scene.tweens.add({
+            targets: fxScale,
+            sx: 1.28,
+            sy: 0.76,
+            duration: 110,
+            yoyo: true,
+            onComplete: () => {
+              wobble.resume();
+            },
+          });
         },
       });
     });
@@ -458,19 +484,14 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     dying = true;
     active = false;
     scene.tweens.killTweensOf(sprite);
+    vscale.killFxTweens(sprite);
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: sprite.x, y: sprite.y });
     // 慢動作與星爆統一由 fx 系統的 BOSS_DEFEATED 監聽處理（單一權責）；600ms 對齊 fx slowMo 結束後淡出。
     delay(600, () => {
-      scene.tweens.add({
-        targets: sprite,
-        scaleX: 0,
-        scaleY: 0,
-        alpha: 0,
-        duration: 420,
-        ease: 'Back.easeIn',
-      });
+      scene.tweens.add({ targets: fxScale, sx: 0, sy: 0, duration: 420, ease: 'Back.easeIn' });
+      scene.tweens.add({ targets: sprite, alpha: 0, duration: 420, ease: 'Back.easeIn' });
     });
   };
 
@@ -480,9 +501,9 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     scene.cameras.main.shake(150, shakeIntensity);
     if (!withSquash) return;
     scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX * 1.2,
-      scaleY: baseScaleY * 0.78,
+      targets: fxScale,
+      sx: 1.2,
+      sy: 0.78,
       duration: 90,
       yoyo: true,
       ease: 'Quad.easeOut',
@@ -524,9 +545,9 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       ease: 'Sine.easeInOut',
     });
     scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX * 1.14,
-      scaleY: baseScaleY * 1.1,
+      targets: fxScale,
+      sx: 1.14,
+      sy: 1.1,
       duration: 170,
       yoyo: true,
       repeat: 1,

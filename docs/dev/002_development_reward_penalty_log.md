@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+221
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+225
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-bosses-scale-migration
+- 原因：五王常駐 wobble/翼拍與擠壓/怒吼/死亡收縮 tween 直接寫 sprite scale——魔王碰撞箱持續脈動（jellord ±5%/620ms、noctra ±7%/480ms），頭頂 hit window 與觸碰判定隨美術漂移（§77 家族）
+- 解法：五王瞬態演出全遷 fx 代理（wobble/翼拍/slam/dash/蓄勢/怒吼/碎裂/死亡），狀態性造型（noctra 月牙縮體、voidra 裸核、texture 切換）走 rebase 重錨；vitest 886 綠＋e2e v13 EX 7/7 綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-enemies-scale-migration
+- 原因：18 怪的 popIn/wobble/呼吸/死亡壓縮直接寫 sprite scale——wobble 使地面怪碰撞箱每 360ms 脈動 ±8%、popIn 生成期物理箱僅 30%，皆屬 §77 家族耦合
+- 解法：瞬態演出遷入 visualScale（popIn/wobble/死亡→fx tween、spora 呼吸→mod），狀態性造型（縮殼/鑽地鰭/半潛/精英體型）改 setBase 顯式承載物理語意；vitest 886 綠＋e2e hotfix/smoke 19/19 綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-player-scale-migration
+- 原因：玩家擠壓/呼吸/落地 squash 直接寫 sprite scale 連動物理箱，須靠 LANDING_SQUASH_MIN_VY 門檻補丁壓制擠壓迴圈（§77.1 單案例修法，家族未根治）
+- 解法：player 全數 scale 效果遷入 visualScale 通道（squash→fx tween、呼吸/蹲縮→mod 乘子、受擊擠壓自 fx 系統遷入 takeDamage 單點），刪除落地速度門檻補丁；vitest 886 綠＋hotfix.spec 9/9 綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-visual-scale-channel
+- 原因：Phaser 4 Arcade Body 每物理步以 sourceWidth×|scale| 重算碰撞箱且 TweenManager 與物理同掛 UPDATE 事件（官方文檔＋Body.js 實證），sprite scale 瞬態視覺效果（squash/wobble/popIn/呼吸）直接縮放物理箱形成 §77 型缺陷家族（腳底離台、重複落地、穿台、overlap 漏檢），現行僅有落地速度門檻單案例補丁
+- 解法：新增 systems/visualScale.ts 解耦通道（PRE_UPDATE 還原物理基準、POST_UPDATE 套用 base×fx×mod，tween 一律以 fx 代理為標的），沿蹲姿/走 bob 已驗證模式全遊戲統一，附 9 條行為錨測試鎖住「動畫期間物理所見 scale 恆為基準」契約
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-jellord-noctra-p4-checkpoint

@@ -18,6 +18,20 @@ vi.mock('phaser', () => ({
 }));
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 vi.mock('./fx', () => ({ ensureFxTextures: vi.fn(), spawnTelegraph: vi.fn() }));
+// visualScale 通道替身：本檔驗 FSM 接線與彈幕邏輯，不需要真實 scene 事件。
+vi.mock('./visualScale', () => ({
+  getVisualScale: () => ({
+    register: vi.fn(),
+    rebase: vi.fn(),
+    setBase: vi.fn(),
+    fx: () => ({ sx: 1, sy: 1 }),
+    mod: () => ({ sx: 1, sy: 1 }),
+    killFxTweens: vi.fn(),
+    resetFx: vi.fn(),
+    isFxTweening: () => false,
+    unregister: vi.fn(),
+  }),
+}));
 
 type Chainable = Record<string, (...args: unknown[]) => unknown>;
 

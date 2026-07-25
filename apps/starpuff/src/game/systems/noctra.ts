@@ -7,6 +7,7 @@ import { NOCTRA_FLIGHT, approachPoint, hoverPatternPoint } from '../logic/noctra
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { spawnTelegraph } from './fx';
+import { getVisualScale } from './visualScale';
 
 // 暗月蝠王 Noctra 呈現層（GAME_DESIGN §54）：與 systems/boss.ts 同 BossHandle 介面，
 // GameScene 依 level.boss 品種擇一建立，事件契約（BOSS_*）完全共用。
@@ -110,8 +111,11 @@ export function createNoctra(
 
   const sprite = scene.physics.add.sprite(arenaCx(), -BODY_H, 'boss-noctra');
   sprite.setDisplaySize(BODY_W, BODY_H);
-  const baseScaleX = sprite.scaleX;
-  const baseScaleY = sprite.scaleY;
+  // 物理/視覺縮放解耦（§77 根治）：翼拍/蓄勢/怒吼/死亡收縮走 fx 代理；
+  // 暗月月牙縮體屬狀態性造型，setDisplaySize 後 rebase 重錨物理基準。
+  const vscale = getVisualScale(scene);
+  vscale.register(sprite);
+  const fxScale = vscale.fx(sprite);
   const body = sprite.body as Phaser.Physics.Arcade.Body;
   body.setAllowGravity(false);
   body.setImmovable(true);
@@ -125,11 +129,11 @@ export function createNoctra(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
-  // 常駐翼拍律動；dive/sweep 期間暫停避免 scale 衝突。
+  // 常駐翼拍律動（fx 代理，物理箱不動）；dive/sweep 期間暫停避免 fx 衝突。
   const wingbeat = scene.tweens.add({
-    targets: sprite,
-    scaleX: sprite.scaleX * 1.07,
-    scaleY: sprite.scaleY * 0.92,
+    targets: fxScale,
+    sx: 1.07,
+    sy: 0.92,
     duration: 480,
     yoyo: true,
     repeat: -1,
@@ -256,9 +260,9 @@ export function createNoctra(
     flashWhite();
     playSfx('charge');
     scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX * 1.15,
-      scaleY: baseScaleY * 1.1,
+      targets: fxScale,
+      sx: 1.15,
+      sy: 1.1,
       duration: 200,
       yoyo: true,
       ease: 'Sine.easeInOut',
@@ -315,7 +319,11 @@ export function createNoctra(
     // 暗月月牙變細（§8.2 W3 EX P4）：掠行判定帶與本體縱向縮細（telegraph
     // 時長不縮——可讀性紅線只縮體不縮窗）。
     const crescentMul = fsm.phase === 'p4' ? EX_NOCTRA.darkSweepScaleMul : 1;
-    if (crescentMul !== 1) sprite.setDisplaySize(BODY_W, BODY_H * crescentMul);
+    if (crescentMul !== 1) {
+      // 月牙縮體為狀態性造型：rebase 讓判定帶同步縮細（只縮體不縮窗）。
+      sprite.setDisplaySize(BODY_W, BODY_H * crescentMul);
+      vscale.rebase(sprite);
+    }
     const band = scene.add
       .rectangle(arenaCx(), SWEEP_Y, viewW(), BODY_H * 0.7 * crescentMul, 0x9f8fe8, 0.16)
       .setDepth(58);
@@ -351,6 +359,7 @@ export function createNoctra(
         onComplete: () => {
           // 掠行結束復原本體尺寸（暗月縮體僅限月牙航跡期間）。
           sprite.setDisplaySize(BODY_W, BODY_H);
+          vscale.rebase(sprite);
           steering = true;
           wingbeat.resume();
         },
@@ -454,17 +463,12 @@ export function createNoctra(
     cloakStartMs = -1;
     sprite.setAlpha(1);
     scene.tweens.killTweensOf(sprite);
+    vscale.killFxTweens(sprite);
     projectiles.getMatching('active', true).forEach(killProjectile);
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: sprite.x, y: sprite.y });
     delay(600, () => {
-      scene.tweens.add({
-        targets: sprite,
-        scaleX: 0,
-        scaleY: 0,
-        alpha: 0,
-        duration: 420,
-        ease: 'Back.easeIn',
-      });
+      scene.tweens.add({ targets: fxScale, sx: 0, sy: 0, duration: 420, ease: 'Back.easeIn' });
+      scene.tweens.add({ targets: sprite, alpha: 0, duration: 420, ease: 'Back.easeIn' });
     });
   };
 
@@ -492,9 +496,9 @@ export function createNoctra(
       ease: 'Sine.easeInOut',
     });
     scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX * 1.16,
-      scaleY: baseScaleY * 1.12,
+      targets: fxScale,
+      sx: 1.16,
+      sy: 1.12,
       duration: 170,
       yoyo: true,
       repeat: 1,
@@ -539,7 +543,8 @@ export function createNoctra(
         playSfx('break');
         shake();
         scene.tweens.killTweensOf(sprite);
-        sprite.setScale(baseScaleX, baseScaleY);
+        // 蓄勢脈動中斷復位（§77 解耦）：fx 回 1，物理基準不動。
+        vscale.resetFx(sprite);
       }
       for (const event of fsm.takeDamage(amount)) {
         switch (event.kind) {
