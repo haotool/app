@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+219
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+220
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-root-package-json-test-workspace-concurrency
+- 原因：pnpm -r test 在 9 個 monorepo apps 無限制並行測試時造成 CPU/DOM 競爭與隨機 vitest timeout 導致 pre-push 失敗
+- 解法：package.json test 指令加上 --workspace-concurrency 2，限制並行度以確保 pre-push 穩定通過
 
 - 日期：2026-07-25
 - ID：reward-ratewise-build-scripts-test-timeout
