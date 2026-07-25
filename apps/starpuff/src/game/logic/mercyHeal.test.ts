@@ -129,7 +129,7 @@ describe('魔王房 override（§54 難度稽核／v19 pity）', () => {
     ).toBe(false);
   });
 
-  it('boss 房 pity：受傷 1 次即保底；冷卻 18s 期滿才生成', () => {
+  it('boss 房 pity：受傷 2 次才保底（審查收緊，1 次不足）；冷卻 18s 期滿才生成', () => {
     let state = createMercyState();
     state = advanceMercyHeal(state, {
       ...baseTick,
@@ -138,14 +138,31 @@ describe('魔王房 override（§54 難度稽核／v19 pity）', () => {
       bossRoom: true,
     }).state;
     expect(state.spawned).toBe(1);
-    // 受傷 1 次（HP 2→1）即達 boss 房保底門檻。
+    // 拾取回血（HP 2→3，不計傷）後受傷 1 次（3→2）：冷卻期滿仍不生成（1 次不足）。
     state = advanceMercyHeal(state, {
       ...baseTick,
-      hp: 1,
+      hp: 3,
       elapsedMs: 30_000,
       bossRoom: true,
     }).state;
+    state = advanceMercyHeal(state, {
+      ...baseTick,
+      hp: 2,
+      elapsedMs: 35_000,
+      bossRoom: true,
+    }).state;
     expect(state.hurtsSinceSpawn).toBe(1);
+    expect(
+      advanceMercyHeal(state, { ...baseTick, hp: 2, elapsedMs: 50_000, bossRoom: true }).spawn,
+    ).toBe(false);
+    // 受傷第 2 次（2→1）達標；冷卻邊界仍硬性（首顆 25s＋18s＝43s）。
+    state = advanceMercyHeal(state, {
+      ...baseTick,
+      hp: 1,
+      elapsedMs: 40_000,
+      bossRoom: true,
+    }).state;
+    expect(state.hurtsSinceSpawn).toBe(2);
     expect(
       advanceMercyHeal(state, { ...baseTick, hp: 1, elapsedMs: 42_999, bossRoom: true }).spawn,
     ).toBe(false);
@@ -198,7 +215,7 @@ describe('魔王房 override（§54 難度稽核／v19 pity）', () => {
     expect(
       advanceMercyHeal(ex, { ...baseTick, elapsedMs: 90_000, bossRoom: true, exMode: true }).spawn,
     ).toBe(false);
-    // 非 EX 魔王房沿用上限 2：受傷保底後第二顆照發。
+    // 非 EX 魔王房沿用上限 2：受傷 2 次保底後第二顆照發（回血 2→3 不計傷）。
     let normal = createMercyState();
     normal = advanceMercyHeal(normal, {
       ...baseTick,
@@ -208,10 +225,23 @@ describe('魔王房 override（§54 難度稽核／v19 pity）', () => {
     }).state;
     normal = advanceMercyHeal(normal, {
       ...baseTick,
-      hp: 1,
+      hp: 3,
       elapsedMs: 30_000,
       bossRoom: true,
     }).state;
+    normal = advanceMercyHeal(normal, {
+      ...baseTick,
+      hp: 2,
+      elapsedMs: 35_000,
+      bossRoom: true,
+    }).state;
+    normal = advanceMercyHeal(normal, {
+      ...baseTick,
+      hp: 1,
+      elapsedMs: 40_000,
+      bossRoom: true,
+    }).state;
+    expect(normal.hurtsSinceSpawn).toBe(2);
     expect(advanceMercyHeal(normal, { ...baseTick, elapsedMs: 90_000, bossRoom: true }).spawn).toBe(
       true,
     );

@@ -20,12 +20,13 @@ export const MERCY_HEAL = {
   pityHurts: 2,
   pityLowHpMs: 30_000,
   // 魔王房 override（§54/§62 難度稽核）：boss 戰典型長度 20-60s，一般門檻（60s）
-  // 形同虛設——放寬為絕對血量 ≤2、12s 起評、18s 冷卻；保底門檻同步收緊
-  // （受傷 1 次或低血累計 15s，對應原 60% 高機率的確定性語意）；上限沿用。
+  // 形同虛設——放寬為絕對血量 ≤2、12s 起評、18s 冷卻；保底門檻受傷 2 次或
+  // 低血累計 15s（審查收緊：受傷 1 次＋18s CD 比原 60% RNG 更慷慨，回歸原期望值帶）；
+  // 上限沿用。
   bossHpMax: 2,
   bossMinElapsedMs: 12_000,
   bossCooldownMs: 18_000,
-  bossPityHurts: 1,
+  bossPityHurts: 2,
   bossPityLowHpMs: 15_000,
   // EX 變體上限（主計畫 §7.4）：EX 保持硬核，每命僅 1 顆；生存段固定愛心走獨立管線不計。
   exMaxPerLife: 1,

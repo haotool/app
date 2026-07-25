@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+237
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+238
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-boss-pity-tighten
+- 原因：boss 房第二顆「受傷 1 次＋18s CD」保底比原 60% RNG 期望更慷慨，慈悲語意漂移偏鬆（審查 Should-fix）
+- 解法：bossPityHurts 1→2（時間保底 15s 與 CD 不動）；改後 level-audit 序列量測 L4/L12 EX high n=4 cap540——L4 75%、L12 75% 均過 ≥60% 門檻且相對 T6 基準（83%/100%，n=6）無統計顯著漂移；EX 每命愛心上限 1、首顆邏輯未動，機制上無影響路徑
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-backup-no-overwrite-test
