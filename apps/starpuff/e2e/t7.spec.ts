@@ -259,6 +259,26 @@ test('設定頁指標路徑（審查 Blocking）：完整指標事件鏈不雙�
   expect(errors).toEqual([]);
 });
 
+test('按鈕配置鍵盤可操作（審查補筆）：設定頁轉入後純鍵盤觸發縮放與取消', async ({ page }) => {
+  const errors = collectErrors(page);
+  await gotoTitle(page);
+  await page.locator('[data-menu="settings"]').click();
+  await expect(page.locator('.settings-card')).toBeVisible();
+  await page.locator('[data-setting="key-config"]').click();
+  await expect(page.locator('.cfg-bar')).toBeVisible();
+  // 純鍵盤路徑（原生 button 可 Tab 聚焦）：聚焦後 Enter 觸發 click activation。
+  const scaleValue = page.locator('[data-cfg="scale-value"]');
+  await expect(scaleValue).toHaveText('100%');
+  await page.locator('[data-cfg="scale-up"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(scaleValue).toHaveText('105%');
+  // 取消鈕鍵盤觸發收頁（不落盤）。
+  await page.locator('[data-cfg="cancel"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.cfg-bar')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 並刪除（單真相）', async ({
   page,
 }) => {

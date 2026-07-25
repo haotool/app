@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 2）｜累計總分：+239
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+240
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-keyconfig-keyboard-a11y
+- 原因：keyConfig.addAction 六顆鈕（reset/save/cancel/rotation/scale-up/scale-down）仍僅綁 pointerdown，與設定頁同型鍵盤不可及遺漏（Sonnet 複核席補抓）
+- 解法：套用 core/domButton.bindButtonActivation（同設定頁模式），保留 stopPropagation 殼層手勢守衛；e2e 補純鍵盤案（設定頁→按鈕配置→Enter 觸發縮放與取消）紅→綠，v5 配置指標案回歸全過
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-002-e2e-count-correction
+- 原因：52c386511 尾聚合條目記載「t7 e2e 11 案」有誤，當時實為 9 案（歷史條目不可刪改，需補筆更正）
+- 解法：以本條目更正記載——該輪 t7 e2e 為 9 案全綠；本補筆後 t7 e2e 為 10 案
 
 - 日期：2026-07-26
 - ID：neutral-starpuff-t7a-review-round-wrapup
