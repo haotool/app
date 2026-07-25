@@ -958,6 +958,7 @@ export function createPrismix(
       mirrorPane = null;
       [core, twinA, twinB].forEach((sprite) => {
         scene.tweens.killTweensOf(sprite);
+        vscale.unregister(sprite);
         sprite.destroy();
       });
       projectiles.destroy(true);

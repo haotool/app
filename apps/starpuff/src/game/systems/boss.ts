@@ -679,6 +679,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       enrageTween?.destroy();
       wobble.destroy();
       scene.tweens.killTweensOf(sprite);
+      vscale.unregister(sprite);
       patchSprites.forEach((visual) => visual.destroy());
       patchSprites.clear();
       jellyPatches = [];

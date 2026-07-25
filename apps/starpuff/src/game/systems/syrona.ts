@@ -611,6 +611,7 @@ export function createSyrona(
     destroy() {
       timers.forEach((timer) => timer.remove(false));
       scene.tweens.killTweensOf(body);
+      vscale.unregister(body);
       body.destroy();
       projectiles.destroy(true);
       shockwaves.destroy(true);
