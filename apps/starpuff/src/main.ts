@@ -9,6 +9,7 @@ import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/conf
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyDesktopModeClass, applyRotationClass, loadRotationPref } from './game/core/rotation';
 import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './game/core/save';
+import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
 import { showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
 import { eligibleForm } from './game/logic/transform';
@@ -40,6 +41,20 @@ initOrientationGuide();
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
+// 設定損毀恢復提示（審查 nit）：偏好已盡力自 legacy/預設恢復並回寫修復，
+// 於 Title 安靜時刻明確告知，不靜默；restoreMutePreference 已先觸發 loadSettings。
+if (wasSettingsRecoveredFromCorruption()) {
+  whenShellIdle(
+    () =>
+      showShellCard({
+        title: '偏好設定已重置',
+        description:
+          '偵測到偏好設定資料損毀，已盡可能恢復並修復。若音效、震動或按鍵配置與預期不符，可至「設定」重新調整。',
+        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
+      }),
+    3000,
+  );
+}
 // 儲存不可用明確提示（v19 #819 卡 7）：隱私模式/空間耗盡時於 Title 安靜時刻告知，
 // 遊戲照常可玩但進度與設定不落盤，不再靜默吞掉。
 if (!isSaveStorageAvailable()) {

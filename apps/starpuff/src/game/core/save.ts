@@ -147,6 +147,11 @@ function deriveHighestCleared(save: SaveData): number {
   return highest;
 }
 
+// 雙壞警示節流（審查 nit）：主檔＋備援皆損毀時無自癒（不落盤預設），loadSave 為
+// 多處熱呼叫（boot/Title/Map/e2e 觀測點）會重複警示——每工作階段至多一次；
+// 備援恢復路徑會回寫自癒，天然只警一次，不需節流。
+let warnedDoubleCorrupt = false;
+
 // 隱私模式下 localStorage 可能拋錯：讀寫皆容錯，讀退預設、寫靜默略過。
 // 主檔損毀（v19 卡 7）：先從備援恢復並回寫主檔；備援亦不可用才回退預設，均警示留痕。
 export function loadSave(): SaveData {
@@ -170,7 +175,8 @@ export function loadSave(): SaveData {
   } catch {
     /* noop */
   }
-  console.warn('sp-save 損毀且備援不可用，回退預設存檔');
+  if (!warnedDoubleCorrupt) console.warn('sp-save 損毀且備援不可用，回退預設存檔');
+  warnedDoubleCorrupt = true;
   return createDefaultSave();
 }
 

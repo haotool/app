@@ -395,13 +395,16 @@ describe('存檔備援（v19 #819 卡 7：backup 輪替＋checksum＋恢復）',
     expect(save.schemaVersion).toBe(SAVE_SCHEMA_VERSION);
   });
 
-  it('主檔與備援皆損毀：回退預設（警示不拋錯）', () => {
+  it('主檔與備援皆損毀：回退預設（警示不拋錯）且重複載入節流不洗版', () => {
     const map = stubStorage();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     map.set(SAVE_STORAGE_KEY, '{oops');
     map.set(SAVE_BACKUP_KEY, '{also-broken');
     expect(loadSave()).toEqual(createDefaultSave());
-    expect(warn).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
+    // 雙壞無自癒（不落盤預設）：後續 loadSave 熱呼叫不重複警示（審查 nit 節流）。
+    expect(loadSave()).toEqual(createDefaultSave());
+    expect(warn).toHaveBeenCalledTimes(1);
     warn.mockRestore();
   });
 

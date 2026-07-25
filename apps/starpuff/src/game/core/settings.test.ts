@@ -125,6 +125,16 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(loadSettings().audioMuted).toBe(true);
   });
 
+  it('損毀恢復旗標（審查 nit）：正常載入為假、主鍵損毀恢復後置真', async () => {
+    const clean = await loadSettingsModule();
+    clean.loadSettings();
+    expect(clean.wasSettingsRecoveredFromCorruption()).toBe(false);
+    store.set('sp-settings', '{broken');
+    const corrupt = await loadSettingsModule();
+    corrupt.loadSettings();
+    expect(corrupt.wasSettingsRecoveredFromCorruption()).toBe(true);
+  });
+
   it('欄位收斂：非法 screenShake 回 full、非布林欄位回預設', async () => {
     store.set(
       'sp-settings',

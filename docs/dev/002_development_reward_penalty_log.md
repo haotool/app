@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+238
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+239
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-nits-batch
+- 原因：審查 nits 三項——loadSave 雙壞每次熱呼叫重複 warn 洗版、settings 無跨分頁併發已知限制註解（S4 已補）、設定損毀恢復對使用者靜默
+- 解法：雙壞 warn 每工作階段節流一次（恢復路徑自癒天然單次不動）；settings 損毀恢復旗標＋main.ts 沿存檔不可用殼卡慣例於 Title 安靜時刻明確提示；均附單測
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-boss-pity-tighten

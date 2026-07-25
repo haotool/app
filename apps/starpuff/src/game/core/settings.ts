@@ -115,6 +115,13 @@ function migrateFromLegacy(): UserSettings {
 // 記憶體快取：getShellRotation 等熱路徑經由本模組取值，避免每次同步讀 localStorage。
 let cached: UserSettings | null = null;
 const listeners = new Set<(settings: UserSettings) => void>();
+// 損毀恢復旗標（審查 nit）：主鍵損毀經 legacy/預設恢復時置真，main.ts 於 Title
+// 安靜時刻明確提示（沿存檔不可用殼卡慣例），不靜默。
+let recoveredFromCorruption = false;
+
+export function wasSettingsRecoveredFromCorruption(): boolean {
+  return recoveredFromCorruption;
+}
 
 function persist(settings: UserSettings): boolean {
   try {
@@ -154,7 +161,8 @@ export function loadSettings(): UserSettings {
       return cached;
     }
     // 主鍵損毀（審查 Blocking）：回退 legacy 散鍵吸收（存在即恢復偏好，缺席等同預設），
-    // 並回寫修復主鍵——不再默默以預設覆蓋使用者偏好。
+    // 並回寫修復主鍵——不再默默以預設覆蓋使用者偏好；旗標供 main.ts 明確提示。
+    recoveredFromCorruption = true;
     cached = migrateFromLegacy();
     if (persist(cached)) removeLegacyKeys();
     return cached;
