@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+227
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+228
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-mercy-pity-deterministic
+- 原因：慈悲補血以 35%/60% RNG 決定有無，低血久戰玩家可能連續空骰得不到保底（#819 卡 9 外部評審指認體感不可靠）
+- 解法：mercyHeal 改確定性 pity meter——首次符合門檻固定生成、之後依受傷次數（一般 2／boss 1）或低血累計時間（30s／15s）保底，RNG 僅決定生成位置；EX 生存段固定愛心管線本已確定性不動
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-review-shouldfix-closeout
