@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+12（reward 12、penalty 0、neutral 1）｜累計總分：+218
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+219
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-ratewise-build-scripts-test-timeout
+- 原因：pnpm -r test 全庫並行跑測時，build-scripts 檔案系統全目錄掃描測試於 CPU 繁忙時容易觸發預設 5s timeout
+- 解法：顯式指定該單測 timeout 為 15s，確保全庫測試穩定通過
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-hold-to-ride-resonance-gate
