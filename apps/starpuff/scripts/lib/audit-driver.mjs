@@ -736,25 +736,35 @@ export function installAuditDriver(opts) {
         // crownHoverLift 懸停於皇冠線內縮 12px）——乘最近噴口（VENT_X_RATIOS
         // 0.3/0.58 鏡像注入）升托、帶內節流連射＝共鳴解鎖與維持的穩定命中流。
         // 前手真值探針取證：跳打 apex 僅入帶 3px（擦帶非命中流），乘托才是解。
-        // 彈盡不佔位：放行至前段 bossForage/迴避分支落地補彈再返場。
-        if (s.ammo > 0) {
-          const crownY = s.boss.y - 41;
-          const ventA = arenaLeft + view * 0.3;
-          const ventB = arenaLeft + view * 0.58;
-          const vent = Math.abs(ventA - s.px) <= Math.abs(ventB - s.px) ? ventA : ventB;
-          if (Math.abs(vent - s.px) > 12) {
-            face(Math.sign(vent - s.px));
-            return;
-          }
-          // 懸停線＝crownY-12；±14 容差內開火（帶外射擊打體零傷不入共鳴節拍）。
-          if (Math.abs(s.py - (crownY - 12)) <= 14 && !d.holdFire && now - d.lastShotAt >= 140) {
-            face(Math.sign(s.boss.x - s.px || 1));
-            shoot();
-            return;
-          }
-          face(0);
+        // 空匣滯空待補（首版冒煙取證）：離柱折返覓食使皇冠命中間隔遠超共鳴窗
+        // 1600ms——全程 glance、430s 僅磨 17 血；grantSupply 空匣 1.2s 節流
+        // 就地滯空吃補（間隔 ~1.4s ≤ 窗），且滯空位高於沸潮/糖漿波受擊面。
+        // 參照系紀律（沿晶柱迴避前例）：停點/射窗幾何用即時真位 snap——
+        // 延遲座標判 ±12 停點會以感知窗幅度繞噴口永久震盪（v2 冒煙取證：
+        // x 每秒擺 150-380px 掃過沸潮帶、柱域佔比僅 15%）。
+        // 皇冠/懸停幾何錨 boss.top（物理箱頂緣真值）：視覺頂錨（y-41）以上
+        // 無可重疊面——星彈永遠打不進皇冠帶（v3 冒煙 800 發零傷取證）。
+        const hoverY = (s.boss.top ?? s.boss.y - 41) + 22;
+        const ventA = arenaLeft + view * 0.3;
+        const ventB = arenaLeft + view * 0.58;
+        const vent = Math.abs(ventA - snap.px) <= Math.abs(ventB - snap.px) ? ventA : ventB;
+        if (Math.abs(vent - snap.px) > 12) {
+          face(Math.sign(vent - snap.px));
           return;
         }
+        // 懸停線＝物理箱頂＋22（帶內縮 12）；±14 容差內開火（帶外打體不入共鳴節拍）。
+        if (
+          s.ammo > 0 &&
+          Math.abs(snap.py - hoverY) <= 14 &&
+          !d.holdFire &&
+          now - d.lastShotAt >= 140
+        ) {
+          face(Math.sign(s.boss.x - snap.px || 1));
+          shoot();
+          return;
+        }
+        face(0);
+        return;
       }
       // L20 P2 生存段（完整策略＝風箏；其餘分級靠通用迴避硬撐）。
       if (kite && levelId === 20 && s.fsm && s.fsm.phase === 'p2') {

@@ -45,6 +45,9 @@ export interface BossHandle {
     deltaMs: number,
     blockedUp: boolean,
   ): number | null;
+  // 準星輔助模式（§54/W3）：皇冠唯一可傷期回 'off'——中心導向會把長程星彈
+  // 拉出皇冠帶（W3 真值取證）；未實作＝'center' 既有行為。
+  aimAssistMode?(): 'center' | 'off';
   // arena 場控浮台（§74 Syrona）：GameScene 接玩家 collider；未實作視為無浮台。
   getPlatforms?(): Phaser.GameObjects.Rectangle[];
   // 段起點重試（§82 Voidra）：玩家死亡時嘗試段內重試（P2/P3 不回滾整場），

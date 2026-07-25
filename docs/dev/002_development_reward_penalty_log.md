@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+204
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+205
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-aim-assist-crown-rootcause
+- 原因：乘流懸停帶內 800 發零傷的真根因＝§54 魔王準星輔助把長程星彈導向本體中心（拉出皇冠帶），且皇冠帶錨定視覺框頂而非可命中物理箱頂——兩層幾何互鎖使皇冠命中僅剩近距 3px 擦帶
+- 解法：皇冠帶錨點收斂至物理箱頂緣單一真值（帶寬 34px 不變）＋新增 BossHandle.aimAssistMode——Syrona P4 期回 'off' 讓星彈平飛保留高度精準語意；真引擎取證懸停連射 20→0 全鏈路通、一次性探針用畢即刪
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-vent-ride-crown-stream

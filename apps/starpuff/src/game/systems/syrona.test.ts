@@ -70,6 +70,10 @@ function makeBodySprite() {
       setAllowGravity: vi.fn(),
       setImmovable: vi.fn(),
       setSize: vi.fn(),
+      // 物理箱頂緣替身：沿 85% 物理箱幾何（中心 -150×0.85/2 ≈ -64）。
+      get top() {
+        return sprite.y - 64;
+      },
     },
     setDisplaySize: () => sprite,
     setPosition(x: number, y: number) {
@@ -226,8 +230,6 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
 
   it('P4 乘流登頂（W3 PM 裁決）：噴口窯壓恆噴＋皇冠帶氣墊懸停', () => {
     const VENT_X = 854 * 0.3;
-    // 懸停線＝THRONE_Y(325) - BODY_H/2 + CROWN_BAND_PX - 12 = 272。
-    const HOVER_Y = 272;
     // 非 P4 對照：elapsed 0 為噴口週期 idle 相位——不供力（週期閘既有行為）。
     const idleBody = makeBodySprite();
     const idleHandle = createSyrona(makeScene(idleBody), makeHooks(), {
@@ -236,13 +238,18 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
     });
     idleHandle.spawn();
     expect(idleHandle.getVentLift?.(VENT_X, 380, 0, 16, false)).toBeNull();
-    // P4：同一時刻恆噴——帶下方升托（負值）、懸停線速度歸零、線上方回落（正值）。
-    const { handle } = toRampage();
+    // P4：同一時刻恆噴——懸停線＝物理箱頂＋CROWN_BAND_PX−12（替身 top＝y−64）。
+    const { body, handle } = toRampage();
+    body.setPosition(body.x, 325);
+    const hoverY = 325 - 64 + 34 - 12;
     expect(handle.getVentLift?.(VENT_X, 380, 0, 16, false) ?? 0).toBeLessThan(0);
-    expect(handle.getVentLift?.(VENT_X, HOVER_Y, -100, 16, false)).toBe(0);
-    expect(handle.getVentLift?.(VENT_X, HOVER_Y - 40, 0, 16, false) ?? 0).toBeGreaterThan(0);
+    expect(handle.getVentLift?.(VENT_X, hoverY, -100, 16, false)).toBe(0);
+    expect(handle.getVentLift?.(VENT_X, hoverY - 40, 0, 16, false) ?? 0).toBeGreaterThan(0);
     // 柱域外不供力：水平離柱交還重力（無滯留軟鎖）。
     expect(handle.getVentLift?.(VENT_X + 60, 380, 0, 16, false)).toBeNull();
+    // 準星輔助讓位：P4 中心導向會把長程星彈拉出皇冠帶——off；非 P4 維持 center。
+    expect(handle.aimAssistMode?.()).toBe('off');
+    expect(idleHandle.aimAssistMode?.()).toBe('center');
   });
 
   it('P4 段重試（W3 v2 收斂）：進度保留 kept＋沸騰週期重置＋共鳴窗歸零', () => {

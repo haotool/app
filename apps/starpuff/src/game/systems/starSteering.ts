@@ -49,6 +49,9 @@ export function createStarSteering(hooks: StarSteeringHooks): StarSteering {
   // 多本體（§68）：導向星彈最近的存活本體。
   function steerBossAimAssist(deltaMs: number): void {
     if (!hooks.isBossLevel() || !hooks.boss().isActive() || hooks.isBossDown()) return;
+    // P4 皇冠期讓位（W3）：中心導向會把長程星彈拉出皇冠帶——皇冠唯一可傷期
+    // 停用輔助，星彈平飛保留「乘流對準皇冠帶」的高度精準語意。
+    if (hooks.boss().aimAssistMode?.() === 'off') return;
     for (const child of hooks.player().getStars().getChildren()) {
       const star = asSprite(child);
       if (!star.active) continue;

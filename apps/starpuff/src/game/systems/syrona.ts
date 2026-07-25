@@ -45,9 +45,6 @@ const VENT_PERIOD_MS = 2600;
 const VENT_DUTY = 0.31;
 // 超載升托（§74 P3）：更強升速上限，開放直達皇冠的垂直路線。
 const OVERLOAD_MAX_RISE = -640;
-// P4 乘流登頂懸停線（W3 PM 裁決）：皇冠線（頂緣＋34）內縮 12px——涵蓋本體
-// 浮動 ±5 與物理箱頂緣（85%）後恆在可傷皇冠帶內（出彈點＝玩家中心水平直飛）。
-const CROWN_HOVER_Y = THRONE_Y - BODY_H / 2 + CROWN_BAND_PX - 12;
 // 暴走恆噴柱色（與 P3 超載金光區隔：窯壓紅金）。
 const RAMPAGE_VENT_COLOR = 0xff9a5c;
 // 浮台 ×3（§74 保底位）：比例位；y 依 SYRONA.arenaPlatformYs。
@@ -142,6 +139,14 @@ export function createSyrona(
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
+
+  // 皇冠帶錨定物理箱頂緣（W3 真值探針修正）：sprite 視覺框頂與可命中物理箱頂
+  // 存在數十 px 偏差——舊錨（視覺頂＋34）以上幾乎無可重疊面，星彈僅能擦帶 3px。
+  // 帶寬 34px 不變（精準度保留），錨點收斂至「可命中面」單一真值。
+  const crownAnchorTopY = () => physBody.top;
+  // P4 乘流懸停線：皇冠帶內縮 12px——涵蓋本體浮動 ±5 與星彈半高後恆在帶內
+  //（出彈點＝玩家中心水平直飛）。
+  const crownHoverY = () => crownAnchorTopY() + CROWN_BAND_PX - 12;
 
   const projectiles = scene.physics.add.group({ maxSize: 20 });
   const shockwaves = scene.physics.add.group({ maxSize: 10, allowGravity: false });
@@ -546,8 +551,9 @@ export function createSyrona(
     },
     applyDamageAt(amount: number, x: number, y: number, source?: BossDamageSource) {
       void x;
-      // 皇冠弱點（§74）：判定收斂 logic/syronaFsm 純函式（頂帶命中 ×2）。
-      applyDamageInternal(amount, isCrownHit(y, body.y - BODY_H / 2), source);
+      // 皇冠弱點（§74）：判定收斂 logic/syronaFsm 純函式（頂帶命中 ×2）；
+      // 錨點＝物理箱頂緣（W3 修正：視覺頂以上無可重疊面）。
+      applyDamageInternal(amount, isCrownHit(y, crownAnchorTopY()), source);
     },
     update(deltaMs: number) {
       if (!active || dying) return;
@@ -657,7 +663,7 @@ export function createSyrona(
         if (!rampage && !overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
         if (!isInUpdraft(x, y, zone, GROUND_TOP)) continue;
         if (blockedUp) return vy;
-        if (rampage) return crownHoverLift(y, CROWN_HOVER_Y);
+        if (rampage) return crownHoverLift(y, crownHoverY());
         const next = vy - UPDRAFT.liftPxPerSec2 * (overloading ? 1.4 : 1) * (deltaMs / 1000);
         return Math.max(next, overloading ? OVERLOAD_MAX_RISE : UPDRAFT.maxRiseSpeed);
       }
@@ -666,6 +672,11 @@ export function createSyrona(
     // arena 浮台（§74）：GameScene 接玩家 collider。
     getPlatforms() {
       return platforms;
+    },
+    // 準星輔助（§54/W3）：P4 皇冠唯一可傷——中心導向讓位（星彈平飛，
+    // 乘流懸停高度＝皇冠命中，「會用噴口」即對準）。
+    aimAssistMode() {
+      return fsm.phase === 'p4' ? ('off' as const) : ('center' as const);
     },
     // e2e 觀測（§83）：自然循環招式（wave/overload）可斷言。
     getDebugState() {
