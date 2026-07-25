@@ -132,8 +132,15 @@ export function loadSettings(): UserSettings {
     return cached;
   }
   if (raw !== null) {
-    // 已升版：損毀或未知版本回預設（不重跑 migration，legacy 可能已過時）。
-    cached = parseSettings(raw) ?? createDefaultSettings();
+    const parsed = parseSettings(raw);
+    if (parsed !== null) {
+      cached = parsed;
+      return cached;
+    }
+    // 主鍵損毀（審查 Blocking）：回退 legacy 散鍵吸收（存在即恢復偏好，缺席等同預設），
+    // 並回寫修復主鍵——不再默默以預設覆蓋使用者偏好。
+    cached = migrateFromLegacy();
+    persist(cached);
     return cached;
   }
   cached = migrateFromLegacy();

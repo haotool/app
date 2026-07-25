@@ -79,13 +79,35 @@ describe('loadSettings（v19 卡 4：預設與 migration）', () => {
     expect(settings.screenShake).toBe('low');
   });
 
-  it('未知 schema 版本或形狀損毀：回退預設（不 crash）', async () => {
+  it('未知 schema 版本或形狀損毀（無 legacy）：回退預設（不 crash）', async () => {
     store.set('sp-settings', JSON.stringify({ schemaVersion: 99, audioMuted: true }));
     const first = await loadSettingsModule();
     expect(first.loadSettings().audioMuted).toBe(false);
     store.set('sp-settings', '{broken');
     const second = await loadSettingsModule();
     expect(second.loadSettings().schemaVersion).toBe(second.SETTINGS_SCHEMA_VERSION);
+  });
+
+  it('主鍵壞 JSON＋legacy 散鍵（審查 Blocking）：回退 migration 吸收且回寫修復主鍵', async () => {
+    store.set('sp-settings', '{broken');
+    store.set('sp-muted', '1');
+    store.set('sp-rotation', 'cw');
+    const { SETTINGS_STORAGE_KEY, loadSettings } = await loadSettingsModule();
+    const settings = loadSettings();
+    expect(settings.audioMuted).toBe(true);
+    expect(settings.shellRotation).toBe('cw');
+    // 主鍵已被修復回寫：重載模組後直接讀主鍵仍得恢復值。
+    expect(JSON.parse(store.get(SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({
+      audioMuted: true,
+      shellRotation: 'cw',
+    });
+  });
+
+  it('主鍵未知 schemaVersion＋legacy 散鍵：同樣回退 migration 吸收', async () => {
+    store.set('sp-settings', JSON.stringify({ schemaVersion: 99 }));
+    store.set('sp-muted', '1');
+    const { loadSettings } = await loadSettingsModule();
+    expect(loadSettings().audioMuted).toBe(true);
   });
 
   it('欄位收斂：非法 screenShake 回 full、非布林欄位回預設', async () => {

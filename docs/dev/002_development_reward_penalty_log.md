@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+233
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+234
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-settings-corrupt-fallback
+- 原因：sp-settings 損毀時 loadSettings 直接回預設，不回退 legacy 散鍵也不回寫壞主鍵——壞主鍵＋sp-muted=1 時靜音偏好被丟（審查 Blocking 實測）
+- 解法：parse 失敗 fallback migrateFromLegacy()（legacy 存在即恢復、缺席等同預設）並 persist 修復主鍵；補壞 JSON／未知 schemaVersion＋legacy 兩單測
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-settings-keyboard-a11y
