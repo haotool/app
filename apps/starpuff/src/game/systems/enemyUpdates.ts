@@ -36,6 +36,7 @@ import {
 import { playSfx } from '../audio/sfx';
 import { spawnTelegraph } from './fx';
 import type { EnemyTarget } from './enemies';
+import type { VisualScaleChannel } from './visualScale';
 
 // 小怪 per-kind 逐幀 AI（GAME_DESIGN §16/§30/§47/§48）：自 enemies.ts 機械式搬移，
 // 行為零改變；生成/傷害/回收與 hazards 池仍由 enemies.ts 持有，經 ctx 回呼銜接。
@@ -184,6 +185,8 @@ function clearWindupRing(sprite: Phaser.Physics.Arcade.Sprite): void {
 // AI 對外依賴最小面：target/elapsedMs 為即時值（getter），其餘為 enemies.ts 內部管線回呼。
 export interface EnemyUpdateContext {
   scene: Phaser.Scene;
+  // 物理/視覺縮放解耦通道（§77）：狀態性造型走 setBase、瞬態演出走 fx/mod。
+  vscale: VisualScaleChannel;
   readonly target: EnemyTarget | null;
   readonly elapsedMs: number;
   viewCenterX(): number;
@@ -233,7 +236,8 @@ function updateShelly(
     sprite.setRotation(0);
     const bsx = sprite.getData('baseSX') as number;
     const bsy = sprite.getData('baseSY') as number;
-    sprite.setScale(bsx, bsy);
+    // 縮殼復原（§77 解耦）：造型回種基準走物理基準。
+    ctx.vscale.setBase(sprite, bsx, bsy);
     return;
   }
   switch (tick.state) {
@@ -296,7 +300,7 @@ function updateDrilly(
     spawnTelegraph(ctx.scene, sprite.x, sprite.y + DRILLY_TELEGRAPH_OFFSET_Y, 500);
   } else if (tick.entered === 'surfaced') {
     playSfx('pop');
-    sprite.setScale(bsx, bsy);
+    ctx.vscale.setBase(sprite, bsx, bsy);
     sprite.setAlpha(1);
     body.setVelocity(0, DRILLY_EMERGE_VY);
   } else if (tick.entered === 'burrow') {
@@ -304,8 +308,9 @@ function updateDrilly(
   }
   switch (tick.state) {
     case 'burrow': {
-      // 僅露鰭：壓扁貼地半透明，朝玩家 x 潛行。
-      sprite.setScale(bsx * DRILLY_FIN_SCALE_X, bsy * DRILLY_FIN_SCALE_Y);
+      // 僅露鰭：壓扁貼地半透明（狀態性造型走物理基準——碰撞體同步壓扁貼地），
+      // 朝玩家 x 潛行。
+      ctx.vscale.setBase(sprite, bsx * DRILLY_FIN_SCALE_X, bsy * DRILLY_FIN_SCALE_Y);
       sprite.setAlpha(0.85);
       if (body.blocked.down) {
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
@@ -396,11 +401,11 @@ function updateSpora(
   }
   clearWindupRing(sprite);
   sprite.clearTint();
-  // idle 呼吸：定點輕微擠壓律動（scale 由本狀態機持有，不掛 wobble tween）。
-  const bsx = sprite.getData('baseSX') as number;
-  const bsy = sprite.getData('baseSY') as number;
+  // idle 呼吸：定點輕微擠壓律動（mod 逐幀直寫，物理箱不動；不掛 wobble tween）。
   const breath = Math.sin(ctx.elapsedMs * 0.003);
-  sprite.setScale(bsx * (1 + breath * 0.04), bsy * (1 - breath * 0.03));
+  const breathMod = ctx.vscale.mod(sprite);
+  breathMod.sx = 1 + breath * 0.04;
+  breathMod.sy = 1 - breath * 0.03;
 }
 
 // 風飄鳥（§52）：四態時序由 enemyFsm 決策；drift 水平漂移＋正弦浮動、windup 懸停
@@ -655,14 +660,15 @@ function updateBubbla(
   const baseY = sprite.getData('baseY') as number;
   if (tick.entered === 'leap') {
     playSfx('pop', 0.85);
-    sprite.setScale(bsx, bsy);
+    ctx.vscale.setBase(sprite, bsx, bsy);
     sprite.setAlpha(1);
   } else if (tick.entered === 'submerged') {
     body.setVelocity(0, 0);
   }
   switch (tick.state) {
     case 'submerged': {
-      sprite.setScale(bsx * BUBBLA_SUNK_SCALE_X, bsy * BUBBLA_SUNK_SCALE_Y);
+      // 半潛壓扁為狀態性造型：走物理基準（§77 解耦）。
+      ctx.vscale.setBase(sprite, bsx * BUBBLA_SUNK_SCALE_X, bsy * BUBBLA_SUNK_SCALE_Y);
       sprite.setAlpha(0.85);
       body.setVelocity(0, 0);
       break;
@@ -926,8 +932,6 @@ function updateChompy(
   const state = sprite.getData('state') as ChompyState;
   const stateMs = (sprite.getData('stateMs') as number) + deltaMs;
   sprite.setData('stateMs', stateMs);
-  const bsx = sprite.getData('baseSX') as number;
-  const bsy = sprite.getData('baseSY') as number;
   // 精英倍率（§48）：前搖/冷卻縮時提升攻速。
   const mul = (sprite.getData('eliteMul') as number) ?? 1;
   switch (state) {
@@ -939,12 +943,12 @@ function updateChompy(
       ) {
         sprite.setData('state', 'windup');
         sprite.setData('stateMs', 0);
-        ctx.scene.tweens.killTweensOf(sprite);
-        // 張嘴 squash 蓄力。
+        // 張嘴 squash 蓄力（fx 代理，物理箱不動）。
+        ctx.vscale.resetFx(sprite);
         ctx.scene.tweens.add({
-          targets: sprite,
-          scaleX: bsx * 1.2,
-          scaleY: bsy * 0.78,
+          targets: ctx.vscale.fx(sprite),
+          sx: 1.2,
+          sy: 0.78,
           duration: CHOMPY_WINDUP_MS / mul,
           ease: 'Quad.easeIn',
         });
@@ -956,12 +960,12 @@ function updateChompy(
       sprite.setData('state', 'bite');
       sprite.setData('stateMs', 0);
       playSfx('chomp');
-      ctx.scene.tweens.killTweensOf(sprite);
-      sprite.setScale(bsx, bsy);
+      // 咬合回彈（fx 代理）：先復位再彈（物理箱不動）。
+      ctx.vscale.resetFx(sprite);
       ctx.scene.tweens.add({
-        targets: sprite,
-        scaleX: bsx * 0.9,
-        scaleY: bsy * 1.22,
+        targets: ctx.vscale.fx(sprite),
+        sx: 0.9,
+        sy: 1.22,
         duration: 100,
         yoyo: true,
         ease: 'Back.easeOut',

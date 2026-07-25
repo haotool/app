@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+223
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+224
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-enemies-scale-migration
+- 原因：18 怪的 popIn/wobble/呼吸/死亡壓縮直接寫 sprite scale——wobble 使地面怪碰撞箱每 360ms 脈動 ±8%、popIn 生成期物理箱僅 30%，皆屬 §77 家族耦合
+- 解法：瞬態演出遷入 visualScale（popIn/wobble/死亡→fx tween、spora 呼吸→mod），狀態性造型（縮殼/鑽地鰭/半潛/精英體型）改 setBase 顯式承載物理語意；vitest 886 綠＋e2e hotfix/smoke 19/19 綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-player-scale-migration
