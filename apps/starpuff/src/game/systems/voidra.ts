@@ -690,7 +690,8 @@ export function createVoidra(
           yoyo: true,
           repeat: -1,
           onUpdate: (tween) => {
-            if (dying) return;
+            // P4 讓位（W3 Should-fix 鏡 prismix）：裸奔亮紫為段位相色，不得被每幀覆寫。
+            if (dying || fsm.phase === 'p4') return;
             const v = tween.getValue() ?? 0;
             const mix = (a: number, b: number) => Math.round(a + (b - a) * v);
             body.setTint((mix(255, 216) << 16) | (mix(255, 75) << 8) | mix(255, 106));

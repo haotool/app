@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+201
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+203
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-syrona-p4-segment-retry
+- 原因：共鳴 v2＋窄窗後 L16 EX high 仍 0%（兩測 6-run 全 timeout）——取證翻案：高階每命例行入 P4 磨池至 11-12，但 Syrona 無段重試、死亡＝135 整場重打暴走池重灌，單命輸出上限 ~9 < 池 20，P4 結構性不可完成（L12 W1.6 死牆同簽名），參數迭代數學上跨不過
+- 解法：沿 Prismix/Voidra PM 裁決 A 同構補 Syrona P4 段重試進度保留（FSM resetToPhase p4：hp 不回灌＋共鳴窗歸零；系統層彈藥/延時清場＋沸騰同 spec 週期重置＋kept toast），P1-P3 整場重打耐力語意保留，紅燈先行 3 案
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-p4-breath-tint-yield
+- 原因：Sonnet Should-fix「P4 段位相色持續」只修半——flashWhite restore-tint 已落但 EX 緋紅呼吸循環 onUpdate 每幀 setTint 仍覆寫段位相色（prismix W1 有 p4 讓位 guard、voidra/syrona 漏）
+- 解法：voidra/syrona 呼吸循環補 `fsm.phase === 'p4'` 早退 guard 鏡 prismix，測試 harness 捕捉 addCounter onUpdate 顯式觸發斷言零覆寫，voidra 並補 P4 restore-tint 鏡像案
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-apex-window-geometry

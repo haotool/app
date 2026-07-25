@@ -92,7 +92,15 @@ function makeBodySprite() {
   return sprite;
 }
 
-function makeScene(body: ReturnType<typeof makeBodySprite>, emit = vi.fn()): Phaser.Scene {
+interface CounterConfig {
+  onUpdate?: (tween: { getValue: () => number }) => void;
+}
+
+function makeScene(
+  body: ReturnType<typeof makeBodySprite>,
+  emit = vi.fn(),
+  counters: CounterConfig[] = [],
+): Phaser.Scene {
   const group = () => ({
     get: () => null,
     getMatching: () => [],
@@ -125,7 +133,11 @@ function makeScene(body: ReturnType<typeof makeBodySprite>, emit = vi.fn()): Pha
         config.onComplete?.({ targets: [] });
         return {};
       },
-      addCounter: () => ({ remove: vi.fn(), stop: vi.fn() }),
+      // EX 呼吸循環為時間驅動：僅捕捉 onUpdate 供測試顯式觸發，不同步執行。
+      addCounter: (config: CounterConfig) => (
+        counters.push(config),
+        { remove: vi.fn(), stop: vi.fn() }
+      ),
       killTweensOf: vi.fn(),
     },
     add: {
@@ -159,12 +171,13 @@ function makeScene(body: ReturnType<typeof makeBodySprite>, emit = vi.fn()): Pha
   } as unknown as Phaser.Scene;
 }
 
-function makeHooks(): SyronaHooks {
+// 逐鍵帶簽名泛型：保留 Mock 斷言 API 且結構相容 SyronaHooks（免 unbound-method cast）。
+function makeHooks() {
   return {
-    summonBubbla: vi.fn(),
-    onVentEgg: vi.fn(),
-    startTide: vi.fn(),
-    boilTide: vi.fn(),
+    summonBubbla: vi.fn<SyronaHooks['summonBubbla']>(),
+    onVentEgg: vi.fn<SyronaHooks['onVentEgg']>(),
+    startTide: vi.fn<SyronaHooks['startTide']>(),
+    boilTide: vi.fn<SyronaHooks['boilTide']>(),
   };
 }
 
@@ -172,12 +185,14 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
   const toRampage = () => {
     const body = makeBodySprite();
     const emit = vi.fn();
-    const scene = makeScene(body, emit);
-    const handle = createSyrona(scene, makeHooks(), { ex: true, arenaLeft: () => 0 });
+    const counters: CounterConfig[] = [];
+    const scene = makeScene(body, emit, counters);
+    const hooks = makeHooks();
+    const handle = createSyrona(scene, hooks, { ex: true, arenaLeft: () => 0 });
     handle.spawn();
     // EX 135：體傷至 hp 20（≤135×0.15）入暴走。
     handle.applyDamage(115);
-    return { body, emit, handle };
+    return { body, emit, counters, hooks, handle };
   };
 
   it('P4 暴走：BOSS_PHASE 帶深紅 barTint（HUD 泛化管線）', () => {
@@ -199,5 +214,33 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
     const lastTint = body.tintHistory[body.tintHistory.length - 1];
     expect(lastTint).not.toBeNull();
     expect(lastTint).not.toBe(0xffffff);
+  });
+
+  it('P4 EX 緋紅呼吸循環讓位暴走紅化（不再每幀覆寫，鏡 prismix guard）', () => {
+    const { body, counters } = toRampage();
+    expect(counters.length).toBeGreaterThan(0);
+    body.tintHistory.length = 0;
+    counters.forEach((counter) => counter.onUpdate?.({ getValue: () => 0.5 }));
+    expect(body.tintHistory).toHaveLength(0);
+  });
+
+  it('P4 段重試（W3 v2 收斂）：進度保留 kept＋沸騰週期重置＋共鳴窗歸零', () => {
+    const { body, emit, hooks, handle } = toRampage();
+    // 段內進度：皇冠 glance ×2 → hp 20-2=18。
+    handle.applyDamageAt?.(5, body.x, body.y - 80);
+    handle.applyDamageAt?.(5, body.x, body.y - 80);
+    emit.mockClear();
+    hooks.boilTide.mockClear();
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    // kept 語意事件（toasts 雙語意管線）。
+    const retry = emit.mock.calls.find((call) => call[0] === GameEvents.BOSS_SEGMENT_RETRY);
+    expect(retry?.[1]).toEqual({ semantics: 'kept' });
+    // 全場沸騰以同 spec 重置（重生喘息窗）。
+    expect(hooks.boilTide).toHaveBeenCalledTimes(1);
+    // 進度保留：重試後首中回 glance → damaged hp = 18-1=17（不回灌 20）。
+    handle.applyDamageAt?.(5, body.x, body.y - 80);
+    const damagedCalls = emit.mock.calls.filter((call) => call[0] === GameEvents.BOSS_DAMAGED);
+    const damaged = damagedCalls[damagedCalls.length - 1];
+    expect((damaged?.[1] as { hp: number }).hp).toBe(17);
   });
 });

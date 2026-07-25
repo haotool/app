@@ -373,6 +373,13 @@ export function createSyrona(
     return vents.some((zone) => isInUpdraft(target?.x ?? 0, target?.y ?? 0, zone, GROUND_TOP));
   };
 
+  // 全場沸騰參數（§8.2 W2）：P4 入段與段重試共用同一 spec（防單邊改值漂移）。
+  const rampageBoilSpec = () => ({
+    maxY: SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx,
+    periodMs: Math.round(SYRONA.tidePeriodMs * EX_SYRONA.rampageBoilPeriodMul),
+    dutyPct: SYRONA.tideDutyPct,
+  });
+
   const applyDamageInternal = (amount: number, crown: boolean, source?: BossDamageSource) => {
     if (!active) return;
     if (source === 'volt' && fsm.interruptSummon()) {
@@ -415,11 +422,7 @@ export function createSyrona(
           // 場控地形改寫（§74）：P2 潮汐入場、P3 大沸騰（週期縮短＋漲頂升高）、
           // P4 全場沸騰（§8.2 W2：週期再收短＋漲頂逼至高台下緣，保底位不淹）。
           if (event.phase === 'p4') {
-            hooks.boilTide({
-              maxY: SYRONA.tideMaxY + EX_SYRONA.rampageBoilMaxYDeltaPx,
-              periodMs: Math.round(SYRONA.tidePeriodMs * EX_SYRONA.rampageBoilPeriodMul),
-              dutyPct: SYRONA.tideDutyPct,
-            });
+            hooks.boilTide(rampageBoilSpec());
             body.setTint(RAMPAGE_BODY_TINT);
             playSfx('boss-roar', 1.3);
             scene.cameras.main.flash(320, 255, 120, 90);
@@ -501,7 +504,8 @@ export function createSyrona(
           yoyo: true,
           repeat: -1,
           onUpdate: (tween) => {
-            if (dying) return;
+            // P4 讓位（W3 Should-fix 鏡 prismix）：暴走紅化為段位相色，不得被每幀覆寫。
+            if (dying || fsm.phase === 'p4') return;
             const v = tween.getValue() ?? 0;
             const mix = (a: number, b: number) => Math.round(a + (b - a) * v);
             body.setTint((mix(255, 216) << 16) | (mix(255, 75) << 8) | mix(255, 106));
@@ -591,6 +595,27 @@ export function createSyrona(
     // 場控型免暈（§74）：輸出窗來自僵直（散熱/吟唱/波後），下砸命中僅回彈免體傷。
     trySlamStun() {
       return false;
+    },
+    // 段起點重試（W3 v2 收斂）：P4 死亡不整場重打——進度保留（沿 Prismix/Voidra
+    // PM 裁決 A：單命皇冠輸出上限 ~9 < 暴走池 20，整場重打使 P4 結構性不可完成，
+    // L16 EX high 兩測 0% 取證）；P1-P3 回 false 走一般敗北流程（抵達暴走的耐力
+    // 驗收保留）。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈藥/衝擊波/延時全清（沿 voidra 慣例：死亡前排程不得於新命憑空觸發）。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      // 白閃延時可能被清：復原暴走紅化（段位相色重申）。
+      body.setTintMode(Phaser.TintModes.MULTIPLY);
+      body.setTint(RAMPAGE_BODY_TINT);
+      fsm.resetToPhase('p4');
+      // 全場沸騰週期重置：新命自新週期起漲（重生喘息窗，保底高台恆可立足）。
+      hooks.boilTide(rampageBoilSpec());
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
     },
     getBody() {
       return body;

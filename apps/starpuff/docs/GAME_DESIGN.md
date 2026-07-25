@@ -2322,8 +2322,27 @@ W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴�
 
 ### 116.4 段重試雙語意局內提示（W3）
 
-- 同王雙語意（Voidra p2/p3 回灌 vs p4 進度保留）以 `BOSS_SEGMENT_RETRY`
-  事件（producer：boss systems trySegmentRespawn）→ systems/toasts 浮字
-  區分「段首重試——魔王傷勢保留／魔王氣力回復」；每語意每局一次。
+- 同王雙語意（Voidra p2/p3 回灌 vs p4 進度保留；Syrona p4 進度保留見
+  §116.5）以 `BOSS_SEGMENT_RETRY` 事件（producer：boss systems
+  trySegmentRespawn）→ systems/toasts 浮字區分「段首重試——魔王傷勢保留
+  ／魔王氣力回復」；每語意每局一次。
 - 受擊白閃 restore-tint（voidra/syrona 同構修復）：P4 段位相色（裸奔亮紫
   ／暴走紅化）白閃回落復原而非 clearTint 洗掉。
+- EX 緋紅呼吸循環 P4 讓位（W3 收斂）：呼吸 onUpdate 每幀 setTint 會覆寫
+  段位相色——voidra/syrona 補 `fsm.phase === 'p4'` 早退 guard（鏡 prismix
+  W1 既有慣例），P4 定色不再被洗掉。
+
+### 116.5 Syrona EX P4 段重試（W3 v2 收斂）
+
+- 取證：共鳴 v2＋登頂窄窗（airMs 380-560、節流 90ms）後 L16 EX high 仍
+  0%（寬窄窗兩測 6-run 全 timeout、15.17 死/次）——高階 bot 每命例行抵達
+  P4 並磨池至 11-12，但 Syrona 無段重試：死亡＝135 整場重打、暴走池
+  （135×0.15≈20）隨之重灌，單命皇冠輸出上限 ~9 < 20 ⇒ P4 結構性不可完成
+  （與 L12 W1.6 六輪 0-17% 死牆同簽名）。
+- 修法（沿 Prismix/Voidra PM 裁決 A 同構）：P4 死亡段內重試「進度保留」——
+  hp/供彈累計不回灌、共鳴窗歸零（新命重啟命中流，不繼承解鎖態）、殘留
+  彈藥/衝擊波/延時全清（死亡前排程不得於新命憑空觸發）、全場沸騰以同
+  spec 自新週期起漲（重生喘息窗）；P1-P3 維持整場重打（抵達暴走的耐力
+  驗收保留）。`BOSS_SEGMENT_RETRY` kept 語意浮字沿 §116.4 管線。
+- anti-softlock：進度單調不退＋供彈保證律延續——基礎星彈恆可磨死暴走池；
+  面板紅線不動（EX_MODS/暴走池比率均未調）。

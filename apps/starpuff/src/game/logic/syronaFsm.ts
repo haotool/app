@@ -159,6 +159,9 @@ export interface SyronaFsm {
   interruptSummon(): boolean;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
+  // 段起點重試（W3 v2 收斂）：P4 進度保留——hp 與供彈累計不回灌、共鳴窗歸零、
+  // 節奏回僵直窗起點；非 P4 期呼叫為 no-op（P1-P3 保留整場重打的耐力語意）。
+  resetToPhase(target: 'p4'): void;
 }
 
 export interface SyronaFsmOptions {
@@ -354,6 +357,17 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
     },
     setTargetDistance(next: number | null): void {
       distancePx = next;
+    },
+    resetToPhase(target: 'p4'): void {
+      if (defeated || phase !== target) return;
+      // P4 進度保留（沿 Prismix/Voidra PM 裁決 A）：hp 不回灌；共鳴窗歸零
+      //（新命重啟命中流，不繼承舊窗）、招式節奏復位。
+      lastCrownHitAtMs = Number.NEGATIVE_INFINITY;
+      crownComboCount = 0;
+      state = 'idle';
+      recentAttacks = [];
+      timerMs = durationMs('idle');
+      distancePx = null;
     },
   };
 }

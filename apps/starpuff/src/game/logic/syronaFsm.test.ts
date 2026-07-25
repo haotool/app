@@ -298,6 +298,40 @@ describe('EX P4 窯心暴走（§8.2 #814 W2）', () => {
     expect(fsm.defeated).toBe(true);
   });
 
+  it('P4 段重試 resetToPhase（W3 v2 收斂）：hp 進度保留、共鳴窗歸零、節奏復位', () => {
+    const fsm = toRampageEdge();
+    fsm.takeDamage(1);
+    expect(fsm.phase).toBe('p4');
+    // 段內進度：解鎖共鳴（3 glance）後第 4 中全額 5 → hp 20-3-5=12。
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    const kept = fsm.hp;
+    expect(kept).toBeLessThan(20);
+    fsm.resetToPhase('p4');
+    // 進度保留：hp 不回灌、phase 不動。
+    expect(fsm.hp).toBe(kept);
+    expect(fsm.phase).toBe('p4');
+    // 共鳴窗歸零：重試後首中回 glance（不繼承解鎖態）。
+    fsm.tick(300);
+    fsm.takeDamage(5, true);
+    expect(fsm.hp).toBe(kept - EX_SYRONA.crownGlanceDamage);
+  });
+
+  it('非 P4 期 resetToPhase 為 no-op（P1-P3 整場重打的耐力語意保留）', () => {
+    const fsm = createSyronaFsm({ ex: true, rng: createSeededRng(7) });
+    fsm.takeDamage(30);
+    const hp = fsm.hp;
+    const phase = fsm.phase;
+    fsm.resetToPhase('p4');
+    expect(fsm.hp).toBe(hp);
+    expect(fsm.phase).toBe(phase);
+  });
+
   it('非 EX 迴歸：跌破 15% 不入 P4、體傷可正常擊破', () => {
     const fsm = createSyronaFsm({ rng: createSeededRng(6) });
     fsm.takeDamage(80);
