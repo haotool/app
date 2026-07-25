@@ -736,11 +736,11 @@ export function installAuditDriver(opts) {
           d.lastJumpAt = now;
           tap(KEY.jump, 200);
         } else if (
-          airMs >= 280 &&
-          airMs <= 650 &&
+          airMs >= 260 &&
+          airMs <= 680 &&
           s.ammo > 0 &&
           !d.holdFire &&
-          now - d.lastShotAt >= 180
+          now - d.lastShotAt >= 150
         ) {
           shoot();
         }

@@ -67,10 +67,13 @@ export const EX_SYRONA = {
   // 保底立足位不變式（anti-softlock：無計時失敗、退潮窗照常）。
   rampageBoilPeriodMul: 0.45,
   rampageBoilMaxYDeltaPx: -40,
-  // 皇冠共鳴連擊（W3 Blocking 收斂）：暴走段皇冠命中需維持節拍——距上次皇冠
-  // 命中 ≤窗才全額，孤發（偶中：overload 升托/高台誤射）僅減額 1 點保進度
-  //（anti-softlock 恆可磨）；窗寬 ≥2 倍高階登頂節拍間隔（不罰主動技巧）。
-  crownComboWindowMs: 900,
+  // 皇冠共鳴解鎖制（W3 Blocking v2）：暴走段皇冠命中需「維持命中流」——
+  // 窗內累積 crownResonanceHits 中解鎖全額、斷窗重計；解鎖前皆 glance 1 點
+  //（anti-softlock 恆可磨）。校準依據：高階跨跳輪 crown 命中間隔 ~950-1600ms
+  //（體傷命中不入節拍、miss 拉長），窗 1600 覆蓋；低階 overload 單簇（2-4 發）
+  // 解鎖後至多 1 發全額（≤13 < 暴走池 20）不秒池、簇間 8-12s 必斷窗。
+  crownComboWindowMs: 1600,
+  crownResonanceHits: 3,
   crownGlanceDamage: 1,
 } as const;
 
@@ -185,9 +188,11 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
 
   let hp = maxHp;
   let phase: BossPhase = 'p1';
-  // 皇冠共鳴連擊（W3）：FSM 內部時鐘（tick 累加）與上次皇冠命中時刻。
+  // 皇冠共鳴解鎖制（W3）：FSM 內部時鐘（tick 累加）＋上次皇冠命中時刻＋
+  // 窗內累積命中數（達 crownResonanceHits 解鎖全額）。
   let clockMs = 0;
   let lastCrownHitAtMs = Number.NEGATIVE_INFINITY;
+  let crownComboCount = 0;
   let state: SyronaAction = 'idle';
   // 近兩次出招（§5 連續同招上限 2）。
   let recentAttacks: SyronaAction[] = [];
@@ -309,12 +314,15 @@ export function createSyronaFsm(options: SyronaFsmOptions = {}): SyronaFsm {
       // 窯心暴走（§8.2 W2）：P4 皇冠成唯一可傷點——體傷歸零（登頂強制驗收）。
       if (phase === 'p4' && !crown) return [];
       let incoming = amount;
-      // 皇冠共鳴連擊（W3 Blocking）：暴走段孤發減額、節拍內全額——收斂
-      // incidental 可傷面（偶中不再能秒池），主動登頂節拍不受影響。
+      // 皇冠共鳴解鎖制（W3 Blocking v2）：窗內累積命中解鎖全額、斷窗重計——
+      // 收斂 incidental 可傷面（偶中簇不秒池），主動命中流解鎖後暢通。
       if (phase === 'p4' && crown) {
-        const inCombo = clockMs - lastCrownHitAtMs <= EX_SYRONA.crownComboWindowMs;
+        const inWindow = clockMs - lastCrownHitAtMs <= EX_SYRONA.crownComboWindowMs;
         lastCrownHitAtMs = clockMs;
-        if (!inCombo) incoming = EX_SYRONA.crownGlanceDamage;
+        crownComboCount = inWindow ? crownComboCount + 1 : 1;
+        if (crownComboCount <= EX_SYRONA.crownResonanceHits) {
+          incoming = EX_SYRONA.crownGlanceDamage;
+        }
       }
       const events: SyronaHitEvent[] = [];
       hp = Math.max(0, hp - incoming);

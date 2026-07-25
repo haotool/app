@@ -2312,10 +2312,13 @@ W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴�
 
 - 問題：crown tier gate 後 low 仍 33%（>20%）——overload 升托/高台誤射的
   incidental 皇冠命中 ×2 倍傷可 2 發偶中秒掉暴走池（20 血）。
-- 修法：暴走段皇冠命中需維持節拍——距上次皇冠命中 ≤`crownComboWindowMs`
-  （900ms，≥2 倍高階登頂節拍間隔、不罰主動技巧）才全額；孤發僅
-  `crownGlanceDamage`（1 點，anti-softlock 恆可磨保底）。
-- 技巧語意：「登頂後維持輸出節拍」＝主動技巧驗收升級，偶中不再成立。
+- 修法（v2 共鳴解鎖制；v1 單發節拍窗 900ms 實測誤傷 high——體傷命中不入
+  節拍、跨跳輪 crown 命中間隔 ~950-1600ms 致 25/26 全 glance）：窗內
+  （`crownComboWindowMs` 1600）累積 `crownResonanceHits`（3）中解鎖全額、
+  斷窗重計；解鎖前皆 `crownGlanceDamage`（1 點，anti-softlock 恆可磨）。
+  低階 overload 單簇（2-4 發）解鎖後至多 1 發全額（≤13 < 暴走池 20）
+  不秒池、簇間 8-12s 必斷窗。
+- 技巧語意：「登頂後維持命中流」＝主動技巧驗收升級，偶中簇不再成立。
 
 ### 116.4 段重試雙語意局內提示（W3）
 

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+199
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+200
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-resonance-unlock-v2
+- 原因：共鳴 v1 單發節拍窗 900ms 實測封死 high（L16 EX high 0%、p4 內 25/26 全 glance）——體傷命中不入節拍、跨跳輪 crown 命中間隔 ~950-1600ms 必斷拍；單純放寬窗會讓 low 的 overload 簇（簇內間隔 <1600）復活秒池
+- 解法：共鳴解鎖制 v2——窗 1600 內累積 3 中解鎖全額、斷窗重計（low 單簇 ≤13 < 池 20 不秒池、簇間 8-12s 必斷；high 命中流解鎖後暢通）＋driver 登頂射窗 260-680/節流 150 加密命中流，紅燈校準 28 案綠
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-crown-resonance-lock
