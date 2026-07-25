@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+200
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+201
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-apex-window-geometry
+- 原因：v2 driver 登頂射窗 260-680 幾何錯誤——皇冠帶 [-150,-116] 僅 apex 附近（airMs 380-560）玩家中心才入帶，寬窗大量帶外射擊打體零傷不入共鳴節拍（取證命中間隔 5.3s、解鎖永不達成、L16 EX high 寬窗 6-run 0%）
+- 解法：接棒收斂前手未 commit 取證修正——射窗窄化 380-560 帶內雙發＋節流 150→90ms（命中流 ~2 中/跳輪、共鳴 1.5 輪可解鎖），寬窗 0% 留檔 review-l16-ex-high-w3-widewindow、驗收以窄窗重測為準
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-resonance-unlock-v2

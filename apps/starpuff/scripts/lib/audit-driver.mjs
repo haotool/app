@@ -723,9 +723,11 @@ export function installAuditDriver(opts) {
           return;
         }
       }
-      // 窯心暴走登頂輸出（W2 §8.2）：L16 P4 皇冠唯一可傷——體傷歸零，改單跳
-      // 頂帶窗點射（apex 玩家中心 ≈-122 落於皇冠帶 [-150,-116]，窗 ≈280-650ms）；
-      // 單跳滯空 933ms ≈ 全程離地，天然迴避全場沸騰漲頂。
+      // 窯心暴走登頂輸出（W2 §8.2／W3 幾何收斂）：L16 P4 皇冠唯一可傷——
+      // 皇冠帶 [-150,-116]、玩家中心最高僅 -122（apex）——有效射擊窗僅
+      // airMs 380-560（h≥92 中心才入帶下緣），帶外射擊打體零傷不入共鳴節拍
+      //（W3 取證：寬窗 260-680 使命中間隔 5.3s、解鎖永不達成）。收斂至
+      // apex 帶內雙發（節流 90ms）＝命中流 ~2 中/跳輪，共鳴解鎖 1.5 輪可達。
       // tier gate＝dodge（讀招開關）：登頂解法屬「讀 P4 相位＋技巧輸出」，
       // 基礎策略（low）不解——首測漏 gate 使 low 假性 33%（>20% 門檻），
       // 沿 bossForage tier gate 前例修正（「low 不升級」量測紀律）。
@@ -736,11 +738,11 @@ export function installAuditDriver(opts) {
           d.lastJumpAt = now;
           tap(KEY.jump, 200);
         } else if (
-          airMs >= 260 &&
-          airMs <= 680 &&
+          airMs >= 380 &&
+          airMs <= 560 &&
           s.ammo > 0 &&
           !d.holdFire &&
-          now - d.lastShotAt >= 150
+          now - d.lastShotAt >= 90
         ) {
           shoot();
         }
