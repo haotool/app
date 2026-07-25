@@ -240,7 +240,7 @@ function makeHarness(): {
         },
       },
     },
-    events: { on: vi.fn(), off: vi.fn(), emit },
+    events: { on: vi.fn(), once: vi.fn(), off: vi.fn(), emit },
     tweens: { add: vi.fn(), killTweensOf: vi.fn(), isTweening: () => false },
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },

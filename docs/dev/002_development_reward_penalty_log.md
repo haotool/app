@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+222
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+223
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7b-player-scale-migration
+- 原因：玩家擠壓/呼吸/落地 squash 直接寫 sprite scale 連動物理箱，須靠 LANDING_SQUASH_MIN_VY 門檻補丁壓制擠壓迴圈（§77.1 單案例修法，家族未根治）
+- 解法：player 全數 scale 效果遷入 visualScale 通道（squash→fx tween、呼吸/蹲縮→mod 乘子、受擊擠壓自 fx 系統遷入 takeDamage 單點），刪除落地速度門檻補丁；vitest 886 綠＋hotfix.spec 9/9 綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-visual-scale-channel

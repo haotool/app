@@ -34,7 +34,6 @@ export interface FxSystem {
   hitStop(durationMs: number): void;
   shake(intensityPx: number): void;
   flashWhite(target: Phaser.GameObjects.GameObject): void;
-  squashStretch(target: Scalable, intensity?: number): void;
   startInhale(mouth: Phaser.Types.Math.Vector2Like): void;
   stopInhale(): void;
   attachTrail(target: Phaser.Types.Math.Vector2Like, opts?: TrailOptions): TrailHandle;
@@ -348,24 +347,6 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     scene.tweens.add({ targets: target, alpha: 0.25, duration: 60, yoyo: true, repeat: 1 });
   }
 
-  // 進行中不重複觸發：避免以壓扁中的 scale 為基準疊乘造成漂移。
-  const squashTweens = new WeakMap<Scalable, Phaser.Tweens.Tween>();
-
-  function squashStretch(target: Scalable, intensity = 0.22): void {
-    if (squashTweens.get(target)?.isPlaying()) return;
-    squashTweens.set(
-      target,
-      scene.tweens.add({
-        targets: target,
-        scaleX: target.scaleX * (1 + intensity),
-        scaleY: target.scaleY * (1 - intensity),
-        duration: 90,
-        yoyo: true,
-        ease: 'Quad.easeOut',
-      }),
-    );
-  }
-
   function damageNumber(x: number, y: number, amount: number): void {
     if (damageNumberCount >= 12) return;
     damageNumberCount++;
@@ -512,12 +493,10 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     unbinders.push(() => offGameEvent(bus, event, handler));
   }
 
+  // 受擊擠壓已遷入 player.takeDamage（§77 解耦，走 visualScale fx 代理）。
   bind(GameEvents.PLAYER_DAMAGED, () => {
     shake(4);
-    if (playerRef?.scene) {
-      flashWhite(playerRef);
-      squashStretch(playerRef as unknown as Scalable, 0.28);
-    }
+    if (playerRef?.scene) flashWhite(playerRef);
   });
   bind(GameEvents.ENEMY_KILLED, ({ x, y }) => puff(x, y));
   bind(GameEvents.BOSS_SPAWNED, () => shake(6));
@@ -557,7 +536,6 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     hitStop,
     shake,
     flashWhite,
-    squashStretch,
     startInhale(mouth) {
       mouthRef = mouth;
       inhaleEmitter.start();

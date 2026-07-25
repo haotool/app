@@ -90,6 +90,7 @@ import { playSfx } from '../audio/sfx';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
+import { getVisualScale } from './visualScale';
 
 // 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
 export type StarHitMode = 'pierce' | 'absorb';
@@ -162,11 +163,8 @@ const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 const BOOM_SPIN_RAD = 0.02;
 // 殼化護體窗（§57）：減傷池實扣 0 時的短無敵，防同一接觸逐幀重複結算。
 const SHELL_GUARD_MS = 400;
-// 落地擠壓最低著地速度（§77）：微速重新接觸（擠壓迴圈回落 15-30）不再觸發擠壓，
-// 切斷「落地擠壓 → 身體縮小 → 離台 → 再落地」的自持迴圈。
-const LANDING_SQUASH_MIN_VY = 120;
-// 蹲姿視覺（§77）：橫向外擴＋縱向壓扁＋輕微下沉；走 POST_UPDATE 視覺通道，
-// PRE_UPDATE 還原——物理永不見蹲縮，杜絕擠壓迴圈同型問題。
+// 蹲姿視覺（§77）：橫向外擴＋縱向壓扁＋輕微下沉；scale 走 visualScale 視覺通道，
+// 物理永不見蹲縮。
 const CROUCH_SQUASH_X = 0.14;
 const CROUCH_SQUASH_Y = 0.22;
 const CROUCH_SINK_PX = 3;
@@ -188,8 +186,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   const sprite = scene.physics.add.sprite(x, y, tex('hero-idle'));
   sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
   sprite.setCollideWorldBounds(true);
-  const baseScaleX = sprite.scaleX;
-  const baseScaleY = sprite.scaleY;
+  // 物理/視覺縮放解耦（§77 根治）：物理基準錨定於此；擠壓/呼吸/蹲縮全走視覺通道，
+  // 物理箱恆為基準尺寸，不再有擠壓迴圈與腳底離台。
+  const vscale = getVisualScale(scene);
+  vscale.register(sprite);
+  const fxScale = vscale.fx(sprite);
+  const modScale = vscale.mod(sprite);
 
   // 剪影逐幀鏡像本體（POST_UPDATE，含 bob 偏移後座標）：貼圖/位置/翻面/縮放/透明全同步。
   const syncSilhouette = () => {
@@ -274,27 +276,18 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
-  // 蹲姿（§77）同走此通道：乘算擠壓疊加當幀既有 scale（落地擠壓/呼吸不衝突），
-  // 還原以套用當下的比例快照為準，物理 updateBounds 永遠讀到未蹲縮的 scale。
+  // 蹲姿 scale 已遷入 visualScale mod 乘子（§77 解耦）；此處僅餘 y 偏移（bob＋下沉）。
   let bobOffset = 0;
   let crouch = 0;
-  const crouchApplied = { sx: 1, sy: 1, sink: 0 };
+  let appliedSink = 0;
   const applyBob = () => {
     sprite.y -= bobOffset;
-    crouchApplied.sx = 1 + CROUCH_SQUASH_X * crouch;
-    crouchApplied.sy = 1 - CROUCH_SQUASH_Y * crouch;
-    crouchApplied.sink = CROUCH_SINK_PX * crouch;
-    if (crouch > 0) {
-      sprite.setScale(sprite.scaleX * crouchApplied.sx, sprite.scaleY * crouchApplied.sy);
-      sprite.y += crouchApplied.sink;
-    }
+    appliedSink = CROUCH_SINK_PX * crouch;
+    sprite.y += appliedSink;
   };
   const revertBob = () => {
     sprite.y += bobOffset;
-    if (crouchApplied.sink > 0 || crouchApplied.sx !== 1) {
-      sprite.setScale(sprite.scaleX / crouchApplied.sx, sprite.scaleY / crouchApplied.sy);
-      sprite.y -= crouchApplied.sink;
-    }
+    sprite.y -= appliedSink;
   };
   scene.events.on(Phaser.Scenes.Events.POST_UPDATE, applyBob);
   scene.events.on(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
@@ -307,17 +300,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     sprite.setTexture(tex(next));
   };
 
-  // squash/stretch：先瞬間變形，再 tween 回基準比例。
+  // squash/stretch（§77 解耦）：fx 代理瞬間變形再 tween 回 1；物理箱恆為基準不動。
   const squashStretch = (sx: number, sy: number) => {
-    scene.tweens.killTweensOf(sprite);
-    sprite.setScale(baseScaleX * sx, baseScaleY * sy);
-    scene.tweens.add({
-      targets: sprite,
-      scaleX: baseScaleX,
-      scaleY: baseScaleY,
-      duration: 160,
-      ease: 'Back.easeOut',
-    });
+    vscale.resetFx(sprite);
+    fxScale.sx = sx;
+    fxScale.sy = sy;
+    scene.tweens.add({ targets: fxScale, sx: 1, sy: 1, duration: 160, ease: 'Back.easeOut' });
   };
 
   // 落地塵埃圈：腳邊白描邊橢圓擴散淡出（graphics 組合，不依賴 fx.ts）。
@@ -670,8 +658,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       }
       jumpBufferMs = tickTimer(jumpBufferMs, deltaMs);
       if (onGround && !wasOnGround) {
-        // §77：僅真實落地（下砸或帶速著地）擠壓；微速重新接觸不觸發，防自持迴圈。
-        if (slamming || lastVy > LANDING_SQUASH_MIN_VY) squashStretch(1.25, 0.75);
+        // 落地擠壓（§77 已由 visualScale 解耦根治）：擠壓不再縮物理箱，任何著地
+        // 皆可安全觸發；最低著地速度門檻補丁退場。
+        squashStretch(1.25, 0.75);
         // 風化落地滾翻（§110）：落地瞬間自動免傷窗，與受擊 i-frame 取較大值。
         if (formSpec && formSpec.landingRollMs > 0) {
           invulnerableMs = Math.max(invulnerableMs, formSpec.landingRollMs);
@@ -886,15 +875,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
 
       // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
       // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
-      // 地面靜止走 idle 呼吸（scale 通道，squash tween 進行中讓位）。
-      // 呼吸殘留復位：離開 idle 後 scale 回基準（squash tween 進行中讓 tween 主導）。
-      const normalizeBreath = (): void => {
-        if (!scene.tweens.isTweening(sprite) && sprite.scaleY !== baseScaleY) {
-          sprite.setScale(baseScaleX, baseScaleY);
-        }
-      };
+      // 地面靜止走 idle 呼吸（visualScale mod 乘子，squash tween 進行中讓位）。
+      let breathY = 0;
       if (onGround && body.velocity.x !== 0) {
-        normalizeBreath();
         const speedRatio = Math.abs(body.velocity.x) / PLAYER.moveSpeed;
         const tick = advanceStride(stridePhase, speedRatio, deltaMs);
         stridePhase = tick.phase;
@@ -905,7 +888,6 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         sprite.setRotation(facing * strideTilt(stridePhase, speedRatio));
         bobOffset = strideBob(stridePhase, speedRatio);
       } else if (!onGround) {
-        normalizeBreath();
         stridePhase = 0;
         bobOffset = 0;
         sprite.setRotation(facing * airTilt(body.velocity.y));
@@ -915,10 +897,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           sprite.setRotation(0);
           bobOffset = 0;
         }
-        if (!scene.tweens.isTweening(sprite)) {
-          sprite.setScale(baseScaleX, baseScaleY * (1 + idleBreath(scene.time.now)));
-        }
+        if (!vscale.isFxTweening(sprite)) breathY = idleBreath(scene.time.now);
       }
+      // 蹲縮＋呼吸逐幀寫入 mod 視覺乘子（§77 解耦）：物理箱不受影響。
+      modScale.sx = 1 + CROUCH_SQUASH_X * crouch;
+      modScale.sy = (1 - CROUCH_SQUASH_Y * crouch) * (1 + breathY);
       // 滾殼衝撞旋轉呈現（§110）：覆蓋走動傾角，沿殼刃自旋角速度。
       if (chargeMs > 0) sprite.rotation += facing * BOOM_SPIN_RAD * deltaMs;
       lastVy = body.velocity.y;
@@ -1010,6 +993,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       hp = result.hp;
       invulnerableMs = result.invulnerableMs;
       hurtLockMs = FORGIVENESS.hurtLockMs;
+      // 受擊擠壓（§18 回饋）：自 fx 系統遷入受擊結算單點（§77 解耦，走 fx 代理）。
+      squashStretch(1.28, 0.72);
       const kb = knockbackVelocity(sprite.x, sourceX, KNOCKBACK_SPEED, KNOCKBACK_LIFT);
       sprite.setVelocity(kb.x, kb.y);
       // 雷化受擊放電反擊（§110）：實扣傷害瞬間放電，世界結算交 GameScene（每形態期 2 次）。
@@ -1180,6 +1165,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       scene.events.off(Phaser.Scenes.Events.PRE_UPDATE, revertBob);
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, syncSilhouette);
       scene.tweens.killTweensOf(sprite);
+      vscale.unregister(sprite);
       footDust.destroy();
       chargedStar.destroy();
       shieldGfx.destroy();
