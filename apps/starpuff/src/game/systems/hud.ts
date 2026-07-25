@@ -10,7 +10,7 @@ import {
   getMix,
   type MagazineSlot,
 } from '../core/config';
-import { menuHitCssRect } from '../core/domButton';
+import { bindButtonActivation, menuHitCssRect } from '../core/domButton';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
 import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
@@ -208,26 +208,8 @@ export function addDomButton(
   };
   relayout();
   shell.appendChild(button);
-  // 手勢級一次性吞 click（#830）：pointerdown 設旗標、同手勢合成 click 消費後清除。
-  let swallowPointerClick = false;
-  button.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
-    swallowPointerClick = true;
-    onPress();
-  });
-  // 手勢中斷（捲動/系統手勢接管）不派發 click：清旗標防吞掉下一次合法 activation。
-  button.addEventListener('pointercancel', () => {
-    swallowPointerClick = false;
-  });
-  button.addEventListener('click', (event) => {
-    // 鍵盤/AT activation（detail=0）無指標前程：恆放行，不受手勢旗標影響。
-    if (swallowPointerClick && event.detail !== 0) {
-      swallowPointerClick = false;
-      return;
-    }
-    swallowPointerClick = false;
-    onPress();
-  });
+  // 觸發雙路徑收斂至 core/domButton（#823/#830 SSOT，v19 審查消重複）。
+  bindButtonActivation(button, onPress);
   scene.scale.on('resize', relayout);
   scene.events.once('shutdown', () => {
     scene.scale.off('resize', relayout);

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+232
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+233
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-settings-keyboard-a11y
+- 原因：設定頁全按鈕僅綁 pointerdown，Tab 可聚焦但 Enter/Space 無反應（審查 Blocking，Playwright 實測復現）——重寫觸發邏輯而未沿 #823 雙路徑先例
+- 解法：把 hud.addDomButton 的 pointerdown+click 雙路徑（swallowPointerClick 手勢級防雙觸發、detail=0 放行鍵盤/AT）抽為 core/domButton.bindButtonActivation SSOT，hud 與設定頁全鈕共用；補純鍵盤與指標不雙觸發單測 4 案＋e2e 2 案
 
 - 日期：2026-07-26
 - ID：neutral-starpuff-t7a-train-wrapup

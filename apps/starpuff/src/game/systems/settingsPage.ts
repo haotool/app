@@ -5,6 +5,7 @@
 
 import { setMuted } from '../audio/mute';
 import { vibratePattern } from '../audio/haptics';
+import { bindButtonActivation } from '../core/domButton';
 import {
   loadSettings,
   updateSettings,
@@ -76,8 +77,8 @@ function addToggleRow(card: HTMLElement, spec: ToggleSpec): void {
     button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
     button.setAttribute('aria-label', `${spec.label}：${enabled ? '開' : '關'}`);
   };
-  button.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
+  // 觸發雙路徑（#823 SSOT）：指標即發＋鍵盤/AT click 放行，防雙觸發。
+  bindButtonActivation(button, () => {
     const enabled = !enabledOf(loadSettings());
     updateSettings({ [spec.key]: spec.inverted === true ? !enabled : enabled });
     spec.onChange?.(enabled);
@@ -106,8 +107,7 @@ function addShakeRow(card: HTMLElement): void {
     button.dataset['shake'] = option.value;
     button.textContent = option.label;
     button.setAttribute('aria-label', `畫面震動：${option.label}`);
-    button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
+    bindButtonActivation(button, () => {
       updateSettings({ screenShake: option.value });
       render();
     });
@@ -160,8 +160,7 @@ export function openSettingsPage(onClose?: () => void): void {
   configButton.className = 'install-btn';
   configButton.dataset['setting'] = 'key-config';
   configButton.textContent = '按鈕配置（鍵位與持向）';
-  configButton.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
+  bindButtonActivation(configButton, () => {
     close();
     openKeyConfig();
   });
@@ -172,10 +171,7 @@ export function openSettingsPage(onClose?: () => void): void {
   closeButton.className = 'install-btn install-btn-primary';
   closeButton.dataset['setting'] = 'close';
   closeButton.textContent = '完成';
-  closeButton.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
-    close();
-  });
+  bindButtonActivation(closeButton, close);
   card.appendChild(closeButton);
 
   overlay.appendChild(card);

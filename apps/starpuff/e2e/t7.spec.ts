@@ -162,6 +162,53 @@ test('統一設定頁（卡 4）：Title 入口開啟、全偏好切換即存並
   expect(errors).toEqual([]);
 });
 
+test('設定頁鍵盤可操作（審查 Blocking）：Enter/Space 純鍵盤切換各類偏好', async ({ page }) => {
+  const errors = collectErrors(page);
+  await gotoTitle(page);
+  await page.locator('[data-menu="settings"]').click();
+  await expect(page.locator('.settings-card')).toBeVisible();
+  const readSettings = async (): Promise<Record<string, unknown>> =>
+    JSON.parse(await page.evaluate(() => localStorage.getItem('sp-settings') ?? '{}')) as Record<
+      string,
+      unknown
+    >;
+  // Enter 切換布林偏好（音效 → 靜音 true）。
+  await page.locator('[data-setting="audioMuted"]').focus();
+  await page.keyboard.press('Enter');
+  expect((await readSettings())['audioMuted']).toBe(true);
+  // Space 切換另一布林偏好（震動回饋 → false）。
+  await page.locator('[data-setting="hapticsEnabled"]').focus();
+  await page.keyboard.press('Space');
+  expect((await readSettings())['hapticsEnabled']).toBe(false);
+  // Enter 選震屏分段（弱）。
+  await page.locator('[data-shake="low"]').focus();
+  await page.keyboard.press('Enter');
+  expect((await readSettings())['screenShake']).toBe('low');
+  // Enter 觸發完成鈕收頁。
+  await page.locator('[data-setting="close"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.settings-card')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('設定頁指標路徑（審查 Blocking）：完整指標事件鏈不雙觸發', async ({ page }) => {
+  const errors = collectErrors(page);
+  await gotoTitle(page);
+  await page.locator('[data-menu="settings"]').click();
+  await expect(page.locator('.settings-card')).toBeVisible();
+  // 真實 click（pointerdown→pointerup→click 全鏈）：布林偏好恰翻轉一次。
+  await page.locator('[data-setting="audioMuted"]').click();
+  const stored = JSON.parse(
+    await page.evaluate(() => localStorage.getItem('sp-settings') ?? '{}'),
+  ) as Record<string, unknown>;
+  expect(stored['audioMuted']).toBe(true);
+  await expect(page.locator('[data-setting="audioMuted"]')).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  expect(errors).toEqual([]);
+});
+
 test('設定 migration（卡 4）：legacy 散鍵一次性吸收入 sp-settings 且不刪除', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('sp-muted', '1');
