@@ -405,6 +405,21 @@ describe('存檔備援（v19 #819 卡 7：backup 輪替＋checksum＋恢復）',
     warn.mockRestore();
   });
 
+  it('主檔損毀時 persistSave 不輪替：合法備援不被壞資料覆蓋（審查回歸鎖）', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const backupRaw = map.get(SAVE_BACKUP_KEY);
+    expect(backupRaw).toBeDefined();
+    // 主檔被外力寫壞後再落盤：損毀內容不得進備援，備援維持上一份合法存檔。
+    map.set(SAVE_STORAGE_KEY, '{corrupted');
+    persistSave(recordLevelClear(first, 3, 50000));
+    expect(map.get(SAVE_BACKUP_KEY)).toBe(backupRaw);
+    // 新主檔本身正常落盤。
+    expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null).levels[3]?.cleared).toBe(true);
+  });
+
   it('resetSave 同時清除主檔與備援（避免恢復出已重置的舊進度）', () => {
     const map = stubStorage();
     const first = recordLevelClear(createDefaultSave(), 1, 30000);

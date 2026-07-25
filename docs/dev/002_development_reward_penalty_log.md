@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+236
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+237
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-backup-no-overwrite-test
+- 原因：persistSave「損毀主檔不輪替入備援」守衛僅為實作細節、無專測釘住，未來重構可能默默失守（審查 Should-fix 覆蓋缺口）
+- 解法：save.test 補回歸鎖——主檔被寫壞後再落盤，備援必須維持上一份合法存檔且新主檔正常寫入
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-legacy-keys-single-truth
