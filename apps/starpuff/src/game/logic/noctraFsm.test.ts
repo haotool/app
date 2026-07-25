@@ -261,6 +261,22 @@ describe('EX P4 月相雙血條（§8.2 #814 W3）', () => {
     expect(end.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(false);
   });
 
+  it('P4 段重試進度保留（W3 沿裁決 A）：hp 不回灌、節奏復位；非 P4 為 no-op', () => {
+    const fsm = createNoctraFsm({ ex: true, rng: createSeededRng(12) });
+    fsm.takeDamage(999);
+    fsm.takeDamage(5);
+    fsm.resetToPhase('p4');
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(Math.round(78 * EX_NOCTRA.darkMoonHpRatio) - 5);
+    expect(fsm.state).toBe('hover');
+    // 非 P4 no-op：P1-P3 保留整場重打語意。
+    const fresh = createNoctraFsm({ ex: true, rng: createSeededRng(13) });
+    fresh.takeDamage(10);
+    fresh.resetToPhase('p4');
+    expect(fresh.phase).toBe('p1');
+    expect(fresh.hp).toBe(68);
+  });
+
   it('暗月差分紅線：隱形權重 ×2（p4 招池）、月牙縮比 <1、比例 0.5（各 50% 語意）', () => {
     expect(EX_NOCTRA.darkMoonHpRatio).toBe(0.5);
     expect(EX_NOCTRA.darkSweepScaleMul).toBeLessThan(1);

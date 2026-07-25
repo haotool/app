@@ -731,6 +731,28 @@ export function installAuditDriver(opts) {
       // tier gate＝dodge（讀招開關）：登頂解法屬「讀 P4 相位＋技巧輸出」，
       // 基礎策略（low）不解——首測漏 gate 使 low 假性 33%（>20% 門檻），
       // 沿 bossForage tier gate 前例修正（「low 不升級」量測紀律）。
+      // L4 P4 果凍狂潮（W3 終局）：全地板果凍強制彈跳——既有彈幕過濾（sh.y>200）
+      // 在彈跳空中失效（果凍雨自上而下、受擊取證 ns 39-45 全在 y~200 apex）。
+      // 相對高度雨滴迴避＋遠錨＋有彈快射清 15 池（aim assist 中心導向照常有效）。
+      if (dodge && levelId === 4 && s.fsm && s.fsm.phase === 'p4') {
+        const backDir = snap.px >= s.boss.x ? 1 : -1;
+        const rain = s.shots.find((sh) => Math.abs(sh.x - snap.px) < 120 && sh.y < snap.py + 40);
+        if (rain) {
+          face(Math.sign(snap.px - rain.x) || backDir);
+          return;
+        }
+        if (Math.abs(s.boss.x - snap.px) < 260) {
+          face(backDir);
+          return;
+        }
+        if (s.ammo > 0 && !d.holdFire && now - d.lastShotAt >= 150) {
+          face(Math.sign(s.boss.x - snap.px || 1));
+          shoot();
+          return;
+        }
+        face(0);
+        return;
+      }
       if (dodge && levelId === 16 && s.fsm && s.fsm.phase === 'p4') {
         // 乘流登頂（W3 PM 裁決）：暴走段噴口窯壓恆噴＋皇冠帶氣墊（boss 側
         // crownHoverLift 懸停於皇冠線內縮 12px）——乘最近噴口（VENT_X_RATIOS

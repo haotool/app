@@ -110,6 +110,9 @@ export interface BossFsm {
   stun(durationMs: number): void;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
+  // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 進度保留——狂潮小條血量
+  // 不回灌、節奏回僵直窗起點；非 P4 期呼叫為 no-op（P1-P3 整場重打語意保留）。
+  resetToPhase(target: 'p4'): void;
 }
 
 export interface BossFsmOptions {
@@ -251,6 +254,14 @@ export function createBossFsm(options: BossFsmOptions = {}): BossFsm {
     },
     setTargetDistance(next: number | null): void {
       distancePx = next;
+    },
+    resetToPhase(target: 'p4'): void {
+      if (defeated || phase !== target) return;
+      // P4 進度保留（沿 Prismix/Syrona/Voidra 裁決 A）：hp 不回灌、招式節奏復位。
+      state = 'idle';
+      recentAttacks = [];
+      timerMs = BOSS.idleMs;
+      distancePx = null;
     },
   };
 }

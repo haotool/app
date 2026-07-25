@@ -705,6 +705,35 @@ export function createNoctra(
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
+    // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 暗月死亡不整場重打——
+    // 進度保留（暗月條不回灌）；P1-P3 回 false 走一般敗北流程（抵達暗月的
+    // 耐力驗收保留）。取證：high bot 每命抵達 P4 時殘血 0-2、無檢查點下 0%。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈幕/延時全清（死亡前排程不得於新命憑空觸發）；隱形/俯衝態復位。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      scene.tweens.killTweensOf(sprite);
+      cloakStartMs = -1;
+      sprite.setAlpha(1);
+      sprite.setAngle(0);
+      sprite.setTintMode(Phaser.TintModes.MULTIPLY);
+      enrageTween?.resume();
+      sprite.setPosition(sprite.x, HOVER_Y);
+      steering = true;
+      wingbeat.resume();
+      fsm.resetToPhase('p4');
+      emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+        hp: fsm.hp,
+        maxHp: fsm.maxHp,
+        damage: 0,
+      });
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
+    },
     // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
     getDebugState() {
       return { phase: fsm.phase, state: fsm.state };

@@ -344,6 +344,22 @@ describe('EX P4 果凍狂潮（§8.2 #814 W3）', () => {
     expect(end.some((e) => e.kind === 'phase' && e.phase === 'p4')).toBe(false);
   });
 
+  it('P4 段重試進度保留（W3 沿裁決 A）：hp 不回灌、節奏復位；非 P4 為 no-op', () => {
+    const fsm = toExZero();
+    fsm.takeDamage(999);
+    fsm.takeDamage(5);
+    fsm.resetToPhase('p4');
+    expect(fsm.phase).toBe('p4');
+    expect(fsm.hp).toBe(EX_JELLORD.frenzyHp - 5);
+    expect(fsm.state).toBe('idle');
+    // 非 P4 no-op：P1-P3 保留整場重打語意。
+    const fresh = createBossFsm({ ex: true, rng: createSeededRng(11) });
+    fresh.takeDamage(10);
+    fresh.resetToPhase('p4');
+    expect(fresh.phase).toBe('p1');
+    expect(fresh.hp).toBe(80);
+  });
+
   it('狂潮小條紅線：HP 15（§8.2 表定值）、供彈保證律延續', () => {
     expect(EX_JELLORD.frenzyHp).toBe(15);
     const fsm = toExZero();

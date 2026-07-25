@@ -717,6 +717,36 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
+    // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 果凍狂潮死亡不整場重打——
+    // 進度保留（狂潮小條不回灌）；P1-P3 回 false 走一般敗北流程（抵達狂潮的
+    // 耐力驗收保留）。取證：high bot 每命抵達 P4 時殘血 1-2、無檢查點下 17%。
+    trySegmentRespawn() {
+      if (!active || dying) return false;
+      if (fsm.phase !== 'p4') return false;
+      // 殘留彈幕/衝擊波/果凍地塊/延時全清（死亡前排程不得於新命憑空觸發）。
+      projectiles.getMatching('active', true).forEach(killProjectile);
+      shockwaves.getMatching('active', true).forEach(killProjectile);
+      timers.forEach((timer) => timer.remove(false));
+      timers.length = 0;
+      patchSprites.forEach((visual) => visual.destroy());
+      patchSprites.clear();
+      jellyPatches = [];
+      // 白閃/暈眩延時可能被清：復原 tint 模式並重啟狂潮呼吸循環。
+      sprite.setTintMode(Phaser.TintModes.MULTIPLY);
+      sprite.setAngle(0);
+      enrageTween?.resume();
+      fsm.resetToPhase('p4');
+      // 全地板果凍化即刻重鋪（新命自新一輪鋪面起跳，重生喘息窗一致）。
+      frenzyRepaveAccMs = 0;
+      paveFrenzyFloor();
+      emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
+        hp: fsm.hp,
+        maxHp: fsm.maxHp,
+        damage: 0,
+      });
+      emitGameEvent(scene.events, GameEvents.BOSS_SEGMENT_RETRY, { semantics: 'kept' });
+      return true;
+    },
     // e2e/audit 觀測（§83）：招式序列熵探針依此取樣（#813 去背板驗收）。
     getDebugState() {
       return { phase: fsm.phase, state: fsm.state };

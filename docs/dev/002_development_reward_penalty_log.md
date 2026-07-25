@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+220
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+221
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-jellord-noctra-p4-checkpoint
+- 原因：兩王新 P4 高階門檻全滅（L4 EX high 17%、L7 EX high 0%）共同簽名＝每命抵達 P4 殘血 0-2 且 Jellord/Noctra 為五王中僅有的無 P4 段重試者——與 L12/L16 checkpoint 前 0-17% 死牆同構
+- 解法：沿 PM 裁決 A 同構補齊兩王 P4 進度保留段重試（FSM resetToPhase＋呈現層清場/tint 復位/BOSS_SEGMENT_RETRY kept）；driver 增 L4 P4 果凍雨相對高度迴避（固定 y>200 過濾在彈跳空中失效取證）
 
 - 日期：2026-07-25
 - ID：reward-root-package-json-test-workspace-concurrency

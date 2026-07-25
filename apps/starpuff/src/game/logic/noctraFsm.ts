@@ -163,6 +163,9 @@ export interface NoctraFsm {
   interruptSummon(): boolean;
   // 距離帶餵送（§5 條件欄）：呈現層逐幀回報與玩家距離；未餵送視為 far。
   setTargetDistance(distancePx: number | null): void;
+  // 段起點重試（W3 終局，沿 PM 裁決 A 同構）：P4 進度保留——暗月條血量
+  // 不回灌、節奏回盤旋起點；非 P4 期呼叫為 no-op（P1-P3 整場重打語意保留）。
+  resetToPhase(target: 'p4'): void;
 }
 
 export interface NoctraFsmOptions {
@@ -330,6 +333,14 @@ export function createNoctraFsm(options: NoctraFsmOptions = {}): NoctraFsm {
     },
     setTargetDistance(next: number | null): void {
       distancePx = next;
+    },
+    resetToPhase(target: 'p4'): void {
+      if (defeated || phase !== target) return;
+      // P4 進度保留（沿 Prismix/Syrona/Voidra 裁決 A）：hp 不回灌、節奏復位。
+      state = 'hover';
+      recentAttacks = [];
+      timerMs = NOCTRA.idleMs;
+      distancePx = null;
     },
   };
 }
