@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+228
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+229
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-save-backup-checksum
+- 原因：sp-save 為單份存檔且 parseSave 對損毀一律默默歸零，位元翻轉/截斷/手改即全進度蒸發（#819 卡 7）
+- 解法：persistSave 寫入前輪替上一份合法主檔至 sp-save-backup 並附 canonical djb2 checksum；loadSave 以 parseSaveStrict 區分損毀與缺席、損毀先從備援恢復回寫、備援亦壞才回預設並警示，localStorage 不可用由 Title 殼卡明確提示
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-save-export-import-deferred
+- 原因：#819 卡 7 原列匯出/匯入，行動 PWA 情境檔案來回收益低且增攻擊面（工人裁量）
+- 解法：本車僅交付備援輪替＋checksum＋恢復＋不可用提示，匯出/匯入延後不做，留待 PM 裁決是否另開卡
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-mercy-pity-deterministic

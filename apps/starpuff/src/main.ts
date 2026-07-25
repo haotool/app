@@ -8,7 +8,8 @@ import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyDesktopModeClass, applyRotationClass, loadRotationPref } from './game/core/rotation';
-import { loadSave, persistSave, type SaveData } from './game/core/save';
+import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './game/core/save';
+import { showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
 import { eligibleForm } from './game/logic/transform';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
@@ -39,6 +40,20 @@ initOrientationGuide();
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
+// 儲存不可用明確提示（v19 #819 卡 7）：隱私模式/空間耗盡時於 Title 安靜時刻告知，
+// 遊戲照常可玩但進度與設定不落盤，不再靜默吞掉。
+if (!isSaveStorageAvailable()) {
+  whenShellIdle(
+    () =>
+      showShellCard({
+        title: '進度無法保存',
+        description:
+          '偵測不到可用的瀏覽器儲存空間（可能為私密瀏覽模式或空間不足）。遊戲仍可正常遊玩，但通關進度與偏好設定將不會保存。',
+        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
+      }),
+    2500,
+  );
+}
 // 開機成就補發單點（§94）：舊存檔（v1 遷移或版本更新新增成就）依既有資料靜默補發
 // 歷史成就（無 toast，圖鑑成就頁可見）；有增量才落盤，順帶完成 schema v2 遷移。
 const bootSave = loadSave();
