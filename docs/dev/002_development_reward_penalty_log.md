@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+239
+> 本次分數變化：+0（reward 0、penalty 0、neutral 2）｜累計總分：+239
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-review-round-wrapup
+- 原因：T7-A 雙席審查收斂輪（2 Blocking＋5 Should-fix/nits）七 commit 出貨完畢，需尾聚合留痕
+- 解法：鍵盤可及性/損毀 fallback/PWA 寬限/單真相/備援回歸鎖/boss pity 收緊/nits 全數收斂；全量 921 案綠、t7 e2e 11 案綠、L4/L12 EX high bot 抽驗 75%/75% 過門檻
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-v9-ex-jellord-preexisting
+- 原因：終跑 e2e 發現 v9 EX 果凍王案紅（damageBoss(89) 一次灌傷被 P4 相位門檻夾在 HP 15）——base main@e611e29b0 臨時 worktree 復現同敗，屬 T6 段檢查點既有缺陷非本車引入
+- 解法：bossFsm 屬 T7-A 白名單禁區（T7-B 轄），不越權修；留證據（兩側同敗＋門檻夾點）供 PM 派卡收斂
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-nits-batch
