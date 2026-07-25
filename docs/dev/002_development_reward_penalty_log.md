@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+232
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+232
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-train-wrapup
+- 原因：T7-A 運行時收斂車（#819 卡 4/7/8/9＋卡 11/12）四子項出貨完畢，需 release intent 與尾聚合留痕
+- 解法：建立 @app/starpuff minor changeset（設定頁為使用者可感知新功能）；本車五 commit（pity 去 RNG→存檔備援→PWA 時機閘→settings SSOT→設定頁＋fx gate）皆紅燈先行、全量 911 案綠、t7 e2e 6 案＋受影響 v5/v16/portrait/t2 全過、真瀏覽器抽驗 console 0 錯
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-settings-page-fx-gate
