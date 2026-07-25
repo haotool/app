@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+203
+> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+203
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：neutral-starpuff-t6-w3-docs-scope-alignment
+- 原因：WALKTHROUGH EX 表與 changeset 停在「三王 P4＋二王強化」舊口徑，W3 落地 Jellord 果凍狂潮／Noctra 月相雙血條後五王真 P4 已成立，且 L16 反制要點缺共鳴節拍語意
+- 解法：EX 表補 L4/L7 真 P4 列（雙血條結構＋反制要點）、L16 補共鳴節拍（1.6s 內 3 中解鎖全額）、changeset 重寫為五王專屬第四型態口徑；epic 進度檔同步 W3 接棒紀錄
 
 - 日期：2026-07-25
 - ID：reward-starpuff-t6-w3-syrona-p4-segment-retry
