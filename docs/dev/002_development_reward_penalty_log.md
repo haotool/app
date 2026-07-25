@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+0（reward 0、penalty 0、neutral 1）｜累計總分：+203
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+204
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-25
+- ID：reward-starpuff-t6-w3-vent-ride-crown-stream
+- 原因：前手真值探針（damageBossAt y 掃帶＋單跳弧採樣）證實跳打 apex 僅入皇冠帶 3px——窄窗幾何仍是擦帶而非穩定命中流，L16 EX high 0% 的結構性根因
+- 解法：PM 裁決「噴口氣流登頂」落地——P4 暴走段噴口窯壓恆噴（不看週期）＋皇冠帶氣墊（crownHoverLift 位置伺服懸停於皇冠線內縮 12px，≥600ms 級滯空輸出窗）；driver 收編為乘最近噴口帶內節流連射、彈盡放行 bossForage，像素級擦帶跳升級為可學習乘流技巧
 
 - 日期：2026-07-25
 - ID：neutral-starpuff-t6-w3-docs-scope-alignment

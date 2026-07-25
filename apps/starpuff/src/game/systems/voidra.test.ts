@@ -222,4 +222,14 @@ describe('Voidra 呈現層：P4 段位相色持續（W3 Should-fix，鏡像 syro
     counters.forEach((counter) => counter.onUpdate?.({ getValue: () => 0.5 }));
     expect(body.tintHistory).toHaveLength(0);
   });
+
+  it('P4 段重試後段位相色重申（clearTint 不得洗掉裸奔亮紫）', () => {
+    const { body, handle } = toInnerCore();
+    body.tintHistory.length = 0;
+    expect(handle.trySegmentRespawn?.()).toBe(true);
+    // 白閃延時已清、呼吸循環讓位——重試路徑必須就地重申亮紫（非 null=clearTint）。
+    const lastTint = body.tintHistory[body.tintHistory.length - 1];
+    expect(lastTint).not.toBeNull();
+    expect(lastTint).not.toBe(0xffffff);
+  });
 });

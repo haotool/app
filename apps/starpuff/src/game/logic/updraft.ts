@@ -55,3 +55,15 @@ export function updraftLift(vy: number, deltaMs: number, blockedUp: boolean): nu
   const next = vy - UPDRAFT.liftPxPerSec2 * (deltaMs / 1000);
   return Math.max(next, UPDRAFT.maxRiseSpeed);
 }
+
+// 皇冠帶氣墊（§74 P4 乘流登頂，W3 PM 裁決）：帶內位置伺服——速度與懸停線
+// 距離成比例、夾限上限，形成穩定滯空輸出窗（重力逐幀殘差 ~1px 由伺服吸收）。
+export const CROWN_HOVER = {
+  gainPerSec: 6,
+  maxSpeedPxPerSec: 260,
+} as const;
+
+export function crownHoverLift(y: number, hoverY: number): number {
+  const desired = (hoverY - y) * CROWN_HOVER.gainPerSec;
+  return Math.max(-CROWN_HOVER.maxSpeedPxPerSec, Math.min(CROWN_HOVER.maxSpeedPxPerSec, desired));
+}

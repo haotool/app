@@ -732,21 +732,29 @@ export function installAuditDriver(opts) {
       // 基礎策略（low）不解——首測漏 gate 使 low 假性 33%（>20% 門檻），
       // 沿 bossForage tier gate 前例修正（「low 不升級」量測紀律）。
       if (dodge && levelId === 16 && s.fsm && s.fsm.phase === 'p4') {
-        const airMs = now - d.lastJumpAt;
-        face(Math.sign(s.boss.x - s.px || 1));
-        if (airMs >= 950) {
-          d.lastJumpAt = now;
-          tap(KEY.jump, 200);
-        } else if (
-          airMs >= 380 &&
-          airMs <= 560 &&
-          s.ammo > 0 &&
-          !d.holdFire &&
-          now - d.lastShotAt >= 90
-        ) {
-          shoot();
+        // 乘流登頂（W3 PM 裁決）：暴走段噴口窯壓恆噴＋皇冠帶氣墊（boss 側
+        // crownHoverLift 懸停於皇冠線內縮 12px）——乘最近噴口（VENT_X_RATIOS
+        // 0.3/0.58 鏡像注入）升托、帶內節流連射＝共鳴解鎖與維持的穩定命中流。
+        // 前手真值探針取證：跳打 apex 僅入帶 3px（擦帶非命中流），乘托才是解。
+        // 彈盡不佔位：放行至前段 bossForage/迴避分支落地補彈再返場。
+        if (s.ammo > 0) {
+          const crownY = s.boss.y - 41;
+          const ventA = arenaLeft + view * 0.3;
+          const ventB = arenaLeft + view * 0.58;
+          const vent = Math.abs(ventA - s.px) <= Math.abs(ventB - s.px) ? ventA : ventB;
+          if (Math.abs(vent - s.px) > 12) {
+            face(Math.sign(vent - s.px));
+            return;
+          }
+          // 懸停線＝crownY-12；±14 容差內開火（帶外射擊打體零傷不入共鳴節拍）。
+          if (Math.abs(s.py - (crownY - 12)) <= 14 && !d.holdFire && now - d.lastShotAt >= 140) {
+            face(Math.sign(s.boss.x - s.px || 1));
+            shoot();
+            return;
+          }
+          face(0);
+          return;
         }
-        return;
       }
       // L20 P2 生存段（完整策略＝風箏；其餘分級靠通用迴避硬撐）。
       if (kite && levelId === 20 && s.fsm && s.fsm.phase === 'p2') {

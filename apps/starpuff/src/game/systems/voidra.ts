@@ -861,7 +861,14 @@ export function createVoidra(
       timers.length = 0;
       pullUntilMs = 0;
       siphonUntilMs = 0;
-      body.clearTint();
+      // P4 段位相色重申（W3 Should-fix 鏡 syrona）：白閃延時已清、呼吸循環 p4
+      // 讓位——無其他路徑復原，裸奔亮紫必須就地重申（含 tint 模式復位）。
+      if (segment === 'p4') {
+        body.setTintMode(Phaser.TintModes.MULTIPLY);
+        body.setTint(INNER_CORE_TINT);
+      } else {
+        body.clearTint();
+      }
       fsm.resetToPhase(segment);
       // 護盾層隨段重試清空（§113），盾環同步收掉。
       syncShieldOrbs();

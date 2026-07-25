@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
+  CROWN_BAND_PX,
   EX_SYRONA,
   SYRONA,
   createSyronaFsm,
@@ -9,7 +10,13 @@ import {
   type SyronaCommand,
 } from '../logic/syronaFsm';
 import type { TideSpec } from '../logic/tide';
-import { UPDRAFT, isInUpdraft, ventPhase, type UpdraftZone } from '../logic/updraft';
+import {
+  UPDRAFT,
+  crownHoverLift,
+  isInUpdraft,
+  ventPhase,
+  type UpdraftZone,
+} from '../logic/updraft';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
 import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
@@ -38,6 +45,11 @@ const VENT_PERIOD_MS = 2600;
 const VENT_DUTY = 0.31;
 // 超載升托（§74 P3）：更強升速上限，開放直達皇冠的垂直路線。
 const OVERLOAD_MAX_RISE = -640;
+// P4 乘流登頂懸停線（W3 PM 裁決）：皇冠線（頂緣＋34）內縮 12px——涵蓋本體
+// 浮動 ±5 與物理箱頂緣（85%）後恆在可傷皇冠帶內（出彈點＝玩家中心水平直飛）。
+const CROWN_HOVER_Y = THRONE_Y - BODY_H / 2 + CROWN_BAND_PX - 12;
+// 暴走恆噴柱色（與 P3 超載金光區隔：窯壓紅金）。
+const RAMPAGE_VENT_COLOR = 0xff9a5c;
 // 浮台 ×3（§74 保底位）：比例位；y 依 SYRONA.arenaPlatformYs。
 const PLATFORM_X_RATIOS = [0.22, 0.47, 0.7] as const;
 const PLATFORM_W = 140;
@@ -551,15 +563,17 @@ export function createSyrona(
       body.y = THRONE_Y + bob;
       body.setFlipX((target?.x ?? body.x) < body.x);
       body.setRotation(fsm.state === 'idle' ? 0.06 : 0);
-      // 噴口視覺同步（§74）：超載期恆噴金光；平時沿週期相位。
+      // 噴口視覺同步（§74）：暴走恆噴紅金（乘流登頂可規劃訊號）＞超載金光＞週期相位。
       const overloading = elapsedMs < overloadUntilMs;
+      const rampaging = fsm.phase === 'p4';
       for (const [i, zone] of vents.entries()) {
         const phase = ventPhase(elapsedMs, zone);
-        const erupting = overloading || phase === 'erupt';
+        const erupting = rampaging || overloading || phase === 'erupt';
         const column = ventColumns[i];
         const particles = ventParticles[i];
         if (!column || !particles) continue;
-        if (overloading) column.setFillStyle(0xffd966, 0.28);
+        if (rampaging) column.setFillStyle(RAMPAGE_VENT_COLOR, 0.3);
+        else if (overloading) column.setFillStyle(0xffd966, 0.28);
         else {
           column.setFillStyle(0xffe0c0, erupting ? 0.2 : phase === 'telegraph' ? 0.1 : 0.05);
         }
@@ -633,12 +647,17 @@ export function createSyrona(
       minionHandlers.push(handler);
     },
     // arena 噴口供力查詢（§74）：GameScene 逐幀委派（沿 stage updraft 結算慣例）。
+    // P4 窯心暴走＝窯壓恆噴（W3 PM 裁決）：暴走段噴口不看週期恆供力，乘流升托
+    // 至皇冠帶轉氣墊懸停——「像素級擦帶跳」升級為可學習的乘流登頂技巧
+    //（≥600ms 級滯空輸出窗；水平離柱即交還重力，無滯留軟鎖）。
     getVentLift(x: number, y: number, vy: number, deltaMs: number, blockedUp: boolean) {
+      const rampage = fsm.phase === 'p4';
       const overloading = elapsedMs < overloadUntilMs;
       for (const zone of vents) {
-        if (!overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
+        if (!rampage && !overloading && ventPhase(elapsedMs, zone) !== 'erupt') continue;
         if (!isInUpdraft(x, y, zone, GROUND_TOP)) continue;
         if (blockedUp) return vy;
+        if (rampage) return crownHoverLift(y, CROWN_HOVER_Y);
         const next = vy - UPDRAFT.liftPxPerSec2 * (overloading ? 1.4 : 1) * (deltaMs / 1000);
         return Math.max(next, overloading ? OVERLOAD_MAX_RISE : UPDRAFT.maxRiseSpeed);
       }

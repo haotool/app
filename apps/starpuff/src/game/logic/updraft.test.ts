@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CROWN_HOVER,
   UPDRAFT,
+  crownHoverLift,
   isInUpdraft,
   isVentSupplying,
   updraftLift,
@@ -79,5 +81,23 @@ describe('isVentSupplying 供力判定（telegraph/idle 不供力）', () => {
     expect(isVentSupplying(0, vent)).toBe(false);
     expect(isVentSupplying(VENT_IDLE_MS - 100, vent)).toBe(false);
     expect(isVentSupplying(VENT_IDLE_MS, vent)).toBe(true);
+  });
+});
+
+describe('crownHoverLift 皇冠帶氣墊（§74 P4 乘流登頂）', () => {
+  const HOVER_Y = 272;
+
+  it('懸停線下方回上升（負值）：與距離成比例、夾限上限', () => {
+    expect(crownHoverLift(372, HOVER_Y)).toBe(-CROWN_HOVER.maxSpeedPxPerSec);
+    expect(crownHoverLift(292, HOVER_Y)).toBeCloseTo(-20 * CROWN_HOVER.gainPerSec, 5);
+  });
+
+  it('懸停線上方回下降（正值）：超衝自然回帶', () => {
+    expect(crownHoverLift(172, HOVER_Y)).toBe(CROWN_HOVER.maxSpeedPxPerSec);
+    expect(crownHoverLift(262, HOVER_Y)).toBeCloseTo(10 * CROWN_HOVER.gainPerSec, 5);
+  });
+
+  it('懸停線上速度歸零（穩定滯空輸出窗）', () => {
+    expect(crownHoverLift(HOVER_Y, HOVER_Y)).toBe(0);
   });
 });
