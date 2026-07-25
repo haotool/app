@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+234
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+235
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-pwa-apply-grace
+- 原因：pwaUpdateGate 在 controls 邊界事件當下立即 reload，可能吃掉 Result 進場瞬間玩家正要按的下一關 CTA 點擊（審查 Should-fix 競態）
+- 解法：套用前加 1.5s 寬限期，期滿重驗殼層仍安靜才 updateSW；寬限內轉忙（點 CTA 再入遊戲）放棄本次套用交還重試管線；e2e 實測寬限內點下一關照常進 Game 不被 reload
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-settings-corrupt-fallback

@@ -66,7 +66,46 @@ test('PWA 更新時機閘（卡 8）：遊戲中只標記 pending 絕不套用�
   await page.waitForTimeout(6500);
   expect(await page.evaluate(() => window.__spPwaApplied)).toBe(false);
   expect(await page.evaluate(() => window.__sp.scene())).toBe('Game');
-  // 過關進 Result：controls 邊界觀察者應在安全場景自動套用。
+  // 過關進 Result：controls 邊界觀察者在安全場景啟動寬限；進場瞬間不得立即 reload
+  //（審查 Should-fix：防吃掉下一關 CTA 點擊），寬限期滿才套用。
+  await page.evaluate(() => window.__sp.win());
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 20_000 })
+    .toBe('Result');
+  expect(await page.evaluate(() => window.__spPwaApplied)).toBe(false);
+  await expect
+    .poll(() => page.evaluate(() => window.__spPwaApplied), { timeout: 10_000 })
+    .toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Result CTA 競態（審查 Should-fix）：寬限期內點下一關進遊戲不被 reload 吃掉', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => {
+    window.__spPwaApplied = false;
+    window.__spQueuePwaUpdate?.(() => {
+      window.__spPwaApplied = true;
+    });
+  });
+  await page.evaluate(() => window.__sp.win());
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 20_000 })
+    .toBe('Result');
+  // 寬限期內立即點下一關 CTA：點擊必須生效（進入 Game），本次套用被放棄。
+  await page.locator('[data-menu="next-level"]').dispatchEvent('pointerdown', {
+    pointerId: 3,
+    isPrimary: true,
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 15_000 })
+    .toBe('Game');
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => window.__spPwaApplied)).toBe(false);
+  // 再次過關回安全場景：寬限期滿照常套用。
   await page.evaluate(() => window.__sp.win());
   await expect
     .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 20_000 })
@@ -77,7 +116,7 @@ test('PWA 更新時機閘（卡 8）：遊戲中只標記 pending 絕不套用�
   expect(errors).toEqual([]);
 });
 
-test('PWA 更新時機閘（卡 8）：Title 殼層安靜時 queue 即套用', async ({ page }) => {
+test('PWA 更新時機閘（卡 8）：Title 殼層安靜時 queue 經寬限期自動套用', async ({ page }) => {
   const errors = collectErrors(page);
   await gotoTitle(page);
   // 殼卡（安裝指引/方向告知）開啟即殼層忙碌（正確延後）；先收卡驗證安靜路徑。
@@ -88,8 +127,19 @@ test('PWA 更新時機閘（卡 8）：Title 殼層安靜時 queue 即套用', a
       window.__spPwaApplied = true;
     });
   });
+  // 寬限期（1.5s）內不套用（防吃掉點擊），期滿自動套用。
+  expect(await page.evaluate(() => window.__spPwaApplied)).toBe(false);
+  // 殼卡佇列（安裝指引→方向告知）1s 輪詢會再顯卡佔用殼層（開卡期間正確延後）：
+  // 輪詢中持續收卡，驗證安靜窗一到即套用。
   await expect
-    .poll(() => page.evaluate(() => window.__spPwaApplied), { timeout: 10_000 })
+    .poll(
+      () =>
+        page.evaluate(() => {
+          document.querySelectorAll('.install-overlay').forEach((el) => el.remove());
+          return window.__spPwaApplied;
+        }),
+      { timeout: 15_000 },
+    )
     .toBe(true);
   expect(errors).toEqual([]);
 });
