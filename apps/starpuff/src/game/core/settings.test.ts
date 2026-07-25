@@ -1,0 +1,159 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// UserSettings SSOT（v19 #819 卡 4）：sp-settings 單鍵 versioned schema，
+// migration 吸收 legacy 散鍵（sp-muted/sp-rotation/sp-key-layout）且向後相容不刪除。
+
+let store: Map<string, string>;
+
+function stubStorage(): void {
+  store = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+  });
+}
+
+// 模組級快取隔離：每案重載模組（沿 mute.test.ts resetModules 慣例）。
+async function loadSettingsModule() {
+  vi.resetModules();
+  return import('./settings');
+}
+
+beforeEach(() => {
+  stubStorage();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('loadSettings（v19 卡 4：預設與 migration）', () => {
+  it('無任何既有資料：回預設並落盤 sp-settings v1', async () => {
+    const { SETTINGS_SCHEMA_VERSION, SETTINGS_STORAGE_KEY, loadSettings } =
+      await loadSettingsModule();
+    const settings = loadSettings();
+    expect(settings).toMatchObject({
+      schemaVersion: SETTINGS_SCHEMA_VERSION,
+      audioMuted: false,
+      hapticsEnabled: true,
+      wakeLockEnabled: true,
+      reducedMotion: false,
+      screenShake: 'full',
+      shellRotation: null,
+      keyLayout: null,
+    });
+    expect(store.has(SETTINGS_STORAGE_KEY)).toBe(true);
+  });
+
+  it('migration 吸收 legacy 散鍵：sp-muted/sp-rotation/sp-key-layout 併入且不刪除', async () => {
+    store.set('sp-muted', '1');
+    store.set('sp-rotation', 'cw');
+    store.set('sp-key-layout', JSON.stringify({ version: 2, a: { cx: 0.5, cy: 0.5 } }));
+    const { loadSettings } = await loadSettingsModule();
+    const settings = loadSettings();
+    expect(settings.audioMuted).toBe(true);
+    expect(settings.shellRotation).toBe('cw');
+    expect(settings.keyLayout).toMatchObject({ version: 2 });
+    // 向後相容：legacy 鍵保留供舊版回退讀取。
+    expect(store.get('sp-muted')).toBe('1');
+    expect(store.get('sp-rotation')).toBe('cw');
+  });
+
+  it('legacy 值損毀：sp-rotation 非法值回 null、sp-key-layout 壞 JSON 回 null', async () => {
+    store.set('sp-rotation', 'sideways');
+    store.set('sp-key-layout', '{oops');
+    const { loadSettings } = await loadSettingsModule();
+    const settings = loadSettings();
+    expect(settings.shellRotation).toBeNull();
+    expect(settings.keyLayout).toBeNull();
+  });
+
+  it('sp-settings 已存在：直接採用且不再讀 legacy 鍵', async () => {
+    const first = await loadSettingsModule();
+    first.updateSettings({ audioMuted: true, screenShake: 'low' });
+    store.set('sp-muted', '0');
+    const second = await loadSettingsModule();
+    const settings = second.loadSettings();
+    expect(settings.audioMuted).toBe(true);
+    expect(settings.screenShake).toBe('low');
+  });
+
+  it('未知 schema 版本或形狀損毀：回退預設（不 crash）', async () => {
+    store.set('sp-settings', JSON.stringify({ schemaVersion: 99, audioMuted: true }));
+    const first = await loadSettingsModule();
+    expect(first.loadSettings().audioMuted).toBe(false);
+    store.set('sp-settings', '{broken');
+    const second = await loadSettingsModule();
+    expect(second.loadSettings().schemaVersion).toBe(second.SETTINGS_SCHEMA_VERSION);
+  });
+
+  it('欄位收斂：非法 screenShake 回 full、非布林欄位回預設', async () => {
+    store.set(
+      'sp-settings',
+      JSON.stringify({
+        schemaVersion: 1,
+        audioMuted: 'yes',
+        hapticsEnabled: false,
+        wakeLockEnabled: true,
+        reducedMotion: true,
+        screenShake: 'extreme',
+        shellRotation: 'ccw',
+        keyLayout: null,
+      }),
+    );
+    const { loadSettings } = await loadSettingsModule();
+    const settings = loadSettings();
+    expect(settings.audioMuted).toBe(false);
+    expect(settings.hapticsEnabled).toBe(false);
+    expect(settings.reducedMotion).toBe(true);
+    expect(settings.screenShake).toBe('full');
+    expect(settings.shellRotation).toBe('ccw');
+  });
+
+  it('localStorage 不可用：回預設不拋錯，updateSettings 仍更新記憶體快取', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('denied');
+      },
+      setItem: () => {
+        throw new Error('denied');
+      },
+      removeItem: () => {
+        throw new Error('denied');
+      },
+    });
+    const { loadSettings, updateSettings } = await loadSettingsModule();
+    expect(loadSettings().audioMuted).toBe(false);
+    updateSettings({ audioMuted: true });
+    expect(loadSettings().audioMuted).toBe(true);
+  });
+});
+
+describe('updateSettings 與變更通知', () => {
+  it('部分更新：合併現值、落盤、並通知訂閱者', async () => {
+    const { SETTINGS_STORAGE_KEY, loadSettings, onSettingsChanged, updateSettings } =
+      await loadSettingsModule();
+    loadSettings();
+    const seen: boolean[] = [];
+    const off = onSettingsChanged((settings) => seen.push(settings.reducedMotion));
+    updateSettings({ reducedMotion: true });
+    expect(seen).toEqual([true]);
+    expect(JSON.parse(store.get(SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({
+      reducedMotion: true,
+    });
+    // 退訂後不再通知。
+    off();
+    updateSettings({ reducedMotion: false });
+    expect(seen).toEqual([true]);
+  });
+
+  it('keyLayout 子樹原樣存取（由 core/layout 負責解析）', async () => {
+    const { loadSettings, updateSettings } = await loadSettingsModule();
+    const layout = { version: 2, a: { cx: 0.9, cy: 0.7 }, b: { cx: 0.9, cy: 0.3 }, scale: 1 };
+    updateSettings({ keyLayout: layout });
+    expect(loadSettings().keyLayout).toEqual(layout);
+    updateSettings({ keyLayout: null });
+    expect(loadSettings().keyLayout).toBeNull();
+  });
+});

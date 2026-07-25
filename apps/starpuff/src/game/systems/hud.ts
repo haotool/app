@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { isMuted, setMuted } from '../audio/mute';
+import { loadSettings, updateSettings } from '../core/settings';
 import {
   CHARGED_STAR,
   EGG_HP_CAP,
@@ -38,7 +39,6 @@ const SPEAKER_ON_TEX = 'hud-spk-on';
 const SPEAKER_OFF_TEX = 'hud-spk-off';
 const PAUSE_TEX = 'hud-pause';
 const HUD_DEPTH = 100;
-const MUTE_STORAGE_KEY = 'sp-muted';
 
 export interface Hud {
   destroy(): void;
@@ -74,9 +74,9 @@ function ensureSpeakerTextures(scene: Phaser.Scene): void {
   }
 }
 
-// 右上角靜音鈕（修復包 B／§101 F-06）：Title 與 Game 場景共用；狀態經 localStorage
-// 跨次保存；右緣錨定隨視寬變更重排（§28）。命中改由同位 DOM 鈕承接（旋轉殼
-// hit-test 天然正確、讀屏可及），canvas 僅保留圖示視覺。
+// 右上角靜音鈕（修復包 B／§101 F-06）：Title 與 Game 場景共用；狀態經 UserSettings
+// SSOT 跨次保存（v19 卡 4）；右緣錨定隨視寬變更重排（§28）。命中改由同位 DOM 鈕承接
+//（旋轉殼 hit-test 天然正確、讀屏可及），canvas 僅保留圖示視覺。
 export function addMuteButton(scene: Phaser.Scene): void {
   ensureSpeakerTextures(scene);
   const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
@@ -96,12 +96,8 @@ export function addMuteButton(scene: Phaser.Scene): void {
     () => {
       const next = !isMuted();
       setMuted(next);
-      // 隱私模式下 localStorage 可能拋錯：靜音仍生效，僅不跨次保存。
-      try {
-        localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
-      } catch {
-        /* noop */
-      }
+      // 隱私模式下寫入可能失敗（settings 內部容錯）：靜音仍生效，僅不跨次保存。
+      updateSettings({ audioMuted: next });
       button.setTexture(texture());
       domButton?.setAttribute('aria-pressed', next ? 'true' : 'false');
     },
@@ -141,9 +137,9 @@ export function addPauseButton(scene: Phaser.Scene): void {
 
 // 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
 export function restoreMutePreference(): void {
-  // 隱私模式下 localStorage 可能拋錯：維持預設不靜音。
+  // 隱私模式下讀取可能失敗：維持預設不靜音。
   try {
-    setMuted(localStorage.getItem(MUTE_STORAGE_KEY) === '1');
+    setMuted(loadSettings().audioMuted);
   } catch {
     /* noop */
   }

@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { isMuted } from '../audio/mute';
+import { vibratePattern } from '../audio/haptics';
 import { applyLayoutToDom, loadLayout } from '../core/layout';
 import { getShellRotation, pointerToLocal } from '../core/rotation';
 import type { SpMode } from '../logic/starburst';
@@ -348,14 +348,9 @@ export function createControls(scene: Phaser.Scene): ControlsSystem {
       );
       const ctx = spCanvas?.getContext('2d');
       if (ctx && spCanvas) drawSpGlyph(ctx, spCanvas.width, mode);
-      // 浮現輕震一次（§91）：模式切換不震，僅隱藏→浮現邊緣；靜音偏好同步關閉。
-      if (wasHidden && !isMuted()) {
-        try {
-          navigator.vibrate?.(SP_APPEAR_VIBRATE_MS);
-        } catch {
-          /* noop */
-        }
-      }
+      // 浮現輕震一次（§91／v19 卡 11）：模式切換不震，僅隱藏→浮現邊緣；
+      // 觸覺與靜音解耦——閘門收斂至 haptics.vibratePattern（hapticsEnabled）。
+      if (wasHidden) vibratePattern(SP_APPEAR_VIBRATE_MS);
     },
     destroy() {
       cleanups.forEach((fn) => fn());

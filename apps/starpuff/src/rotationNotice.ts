@@ -2,7 +2,7 @@
 // 回訪玩家（有存檔進度且未曾設定持向偏好）首次進站告知並提供一鍵切回，
 // 保護肌肉記憶；全新玩家無感知不打擾。
 
-import { ROTATION_STORAGE_KEY, applyRotationClass, saveRotationPref } from './game/core/rotation';
+import { applyRotationClass, hasStoredRotationPref, saveRotationPref } from './game/core/rotation';
 import { loadSave } from './game/core/save';
 import { showShellCard, whenShellIdle } from './shellCards';
 
@@ -22,14 +22,6 @@ function rememberShownNotice(): void {
     localStorage.setItem(ROTATION_NOTICE_KEY, '1');
   } catch {
     /* noop */
-  }
-}
-
-function hasStoredRotationPref(): boolean {
-  try {
-    return localStorage.getItem(ROTATION_STORAGE_KEY) !== null;
-  } catch {
-    return false;
   }
 }
 

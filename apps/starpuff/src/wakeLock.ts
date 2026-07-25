@@ -2,6 +2,9 @@
 // Screen Wake Lock API（Chrome 84+／Safari 16.4+）；不支援或被拒（省電模式）靜默降級。
 // 生命週期跟隨 #controls.is-active（＝GameScene 進行中，controls 系統生命週期即遊戲場景）：
 // 進場取得、離場釋放；頁面隱藏時系統自動釋放，回前景若仍在遊戲中重新取得。
+// v19 卡 4：wakeLockEnabled 偏好閘門——關閉即不取得；設定切換經訂閱即時重同步。
+
+import { loadSettings, onSettingsChanged } from './game/core/settings';
 
 let sentinel: WakeLockSentinel | null = null;
 
@@ -29,7 +32,7 @@ export function initWakeLock(): void {
 
   const isPlaying = (): boolean => controls.classList.contains('is-active');
   const sync = (): void => {
-    if (isPlaying()) void acquire();
+    if (isPlaying() && loadSettings().wakeLockEnabled) void acquire();
     else release();
   };
 
@@ -37,5 +40,6 @@ export function initWakeLock(): void {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') sync();
   });
+  onSettingsChanged(sync);
   sync();
 }

@@ -1,7 +1,9 @@
-// 觸覺回饋（GAME_DESIGN §91）：重擊類音效同步短震強化打擊感。
+// 觸覺回饋（GAME_DESIGN §91／v19 #819 卡 11）：重擊類音效同步短震強化打擊感。
 // Android Chrome 支援 navigator.vibrate；iOS Safari 無此 API，靜默降級。
-// 觸覺跟隨音效觸發點（playSfx 內查表），靜音時 playSfx 早退故觸覺同步靜音。
+// v19 與靜音解耦：震動由 UserSettings.hapticsEnabled 獨立閘門（本模組單點），
+// 靜音玩家仍可保留觸覺、開聲玩家亦可單獨關震動。
 
+import { loadSettings } from '../core/settings';
 import type { SfxName } from './sfx';
 
 // 僅重擊／里程碑事件配震動；一般音效（跳躍、發射、腳步）不震避免疲勞。
@@ -16,12 +18,18 @@ export const HAPTIC_PATTERNS: Partial<Record<SfxName, number | number[]>> = {
   lose: 80,
 };
 
-export function vibrateForSfx(name: SfxName): void {
-  const pattern = HAPTIC_PATTERNS[name];
-  if (pattern === undefined) return;
+// 震動單一出口：hapticsEnabled 閘門集中於此，呼叫端不得直呼 navigator.vibrate。
+export function vibratePattern(pattern: number | number[]): void {
   try {
+    if (!loadSettings().hapticsEnabled) return;
     navigator.vibrate?.(pattern);
   } catch {
     /* noop */
   }
+}
+
+export function vibrateForSfx(name: SfxName): void {
+  const pattern = HAPTIC_PATTERNS[name];
+  if (pattern === undefined) return;
+  vibratePattern(pattern);
 }

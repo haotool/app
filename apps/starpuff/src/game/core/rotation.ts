@@ -2,13 +2,14 @@
 // controls／keyConfig／shellLayout 一律經本模組取向與換算，禁止各自複製公式。
 // 純函式＋localStorage 容錯模組（同 core/layout.ts 模式），vitest node 環境可直測。
 
+import { loadSettings, updateSettings } from './settings';
+
 // 殼旋轉態：none＝橫持不旋轉；cw＝CSS rotate(90deg)；ccw＝CSS rotate(-90deg)。
 export type ShellRotation = 'none' | 'cw' | 'ccw';
 
 // 直持旋轉偏好：ccw（新預設，手機順時針轉、瀏海在右）／cw（v4–v13 舊方向，手機逆時針轉）。
 export type PortraitRotationPref = 'cw' | 'ccw';
 
-export const ROTATION_STORAGE_KEY = 'sp-rotation';
 export const DEFAULT_PORTRAIT_ROTATION: PortraitRotationPref = 'ccw';
 
 // 舊方向以 html class 啟用（CSS 預設即新方向，JS 載入前的 fallback 天然是新預設）。
@@ -19,14 +20,14 @@ export function parseRotationPref(raw: string | null): PortraitRotationPref {
 }
 
 // 偏好記憶體快取（審查修復）：getShellRotation 位於 pointer 熱路徑，
-// 避免每次事件都同步讀 localStorage；寫入時同步更新。
+// 避免每次事件都同步讀儲存；寫入時同步更新。
 let cachedPref: PortraitRotationPref | null = null;
 
-// 隱私模式下 localStorage 可能拋錯：讀退預設、寫靜默略過。
+// 儲存收斂至 UserSettings SSOT（v19 #819 卡 4）：讀退預設、寫靜默略過。
 export function loadRotationPref(): PortraitRotationPref {
   if (cachedPref !== null) return cachedPref;
   try {
-    cachedPref = parseRotationPref(localStorage.getItem(ROTATION_STORAGE_KEY));
+    cachedPref = loadSettings().shellRotation ?? DEFAULT_PORTRAIT_ROTATION;
   } catch {
     cachedPref = DEFAULT_PORTRAIT_ROTATION;
   }
@@ -36,9 +37,18 @@ export function loadRotationPref(): PortraitRotationPref {
 export function saveRotationPref(pref: PortraitRotationPref): void {
   cachedPref = pref;
   try {
-    localStorage.setItem(ROTATION_STORAGE_KEY, pref);
+    updateSettings({ shellRotation: pref });
   } catch {
     /* noop */
+  }
+}
+
+// 是否曾明確選擇持向（rotationNotice 一次性告知判定）：null＝從未選擇。
+export function hasStoredRotationPref(): boolean {
+  try {
+    return loadSettings().shellRotation !== null;
+  } catch {
+    return false;
   }
 }
 

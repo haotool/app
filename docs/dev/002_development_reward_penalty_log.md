@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+230
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+231
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-user-settings-ssot
+- 原因：偏好散落多個 localStorage 鍵（sp-muted/sp-rotation/sp-key-layout）且觸覺跟隨靜音早退耦合、wakeLock 無偏好閘，無單一 schema 可擴充（#819 卡 4/11）
+- 解法：新增 core/settings.ts UserSettings SSOT（sp-settings v1）＋單一 versioned migration 吸收 legacy 散鍵（不刪除向後相容）；rotation/layout/hud 儲存委派 settings，haptics 以 hapticsEnabled 獨立閘門與靜音解耦（vibratePattern 單點），wakeLock 接 wakeLockEnabled＋變更訂閱即時重同步
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-pwa-update-scene-gate
