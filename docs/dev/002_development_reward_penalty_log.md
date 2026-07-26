@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+279
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+280
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-gravion-anim-frames
+- 原因：Gravion 首批 23/39 幀（入場/轉階段/死亡）漂移成水晶天使形——引力題材描述（光盤/視界）誘發模型脫離 canon
+- 解法：招式/受擊/待機 16 張造型統一保留，23 張以強否定錨定（絕無水晶翼/天使形、halo＝扁平深紫圓盤）重生收斂，QA 36/39＋3 張死亡幀角落淡值清零
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-reflector-anim-frames
