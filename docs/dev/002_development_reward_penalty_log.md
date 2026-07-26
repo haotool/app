@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+19（reward 20、penalty 1、neutral 0）｜累計總分：+284
+> 本次分數變化：-1（reward 1、penalty 2、neutral 1）｜累計總分：+283
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,26 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-lazy-phase-precache-dual-guard
+- 原因：#857 審查揭露未接關資產被 entriesForLevel fallback 每關全載（L1 15→457 檔）且 PWA precache 無差別膨脹（79→519 項、+22MiB）。
+- 解法：442 條未認領條目改標 lazy（行內保留原 phase）＋vite globIgnores 由 manifest phase 派生排除，L1 回到 15 檔 539KiB、precache 回到 79 項 4.2MiB，並以 assetsV21.test.ts 三守門鎖住接關時自動翻紅。
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-b03-boss-canon-cross-mismatch
+- 原因：B03 首批把 boss-reflector 本體與 boss-gravion-enraged 造型交叉錯置，拼貼判讀時把位置對應搞錯而漏檢，錯圖成為 B06 動畫幀 canon 引發後續兩次漂移。
+- 解法：以 B06 正確幀為造型唯一真值重生兩張入庫，並確立「基礎立繪與序列幀必須同批交叉比對」的驗收規則。
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-legacy-assets-qa-blindspot
+- 原因：批次 QA 只掃當批生成物，首批四張假透明資產（畫入棋盤紋／星空底／殘角白塊）從未進任何 QA 涵蓋。
+- 解法：全 manifest 505 張四角補掃找齊病灶，四張以正確幀為 ref 重生（含 thinking 泡泡金融圖示抽象化），六張終驗全 PASS。
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-shelly-flip-carryover-test-backfill
+- 原因：首批 commit 夾帶 shelly walk/spin 每幀朝向同步 3 行改動，無測試且 PR 描述未提及。
+- 解法：補 enemyUpdates.test.ts 鎖住速度符號驅動 setFlipX 行為並於 PR 回報說明來源。
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-phase-annotation-rebase
