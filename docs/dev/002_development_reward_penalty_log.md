@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-t7c-r3-l8-hint-drift
+- 原因：§60 的 L8 開場 hint 主句仍寫「地面長按吸入鍵 0.6 秒星化變身」，與 levels.ts:613 實值、WALKTHROUGH 與我自己改好的 §57 三處衝突；因該句「沒有帶取代標註」，必修 1 的 sweep 與守門的行內標註規則都掃不到（複審 Grok REQUEST_CHANGES 唯一理由）
+- 解法：主句改為與 levels.ts:613 逐字一致的 SP 文案並加 `levels.ts` L8 hint 綁定標記，舊文案降級為已廢止附註；此漏網暴露「無標註過期內容」的守門盲區，後續以 doc↔code 引述綁定檢查根治
+
+- 日期：2026-07-26
 - ID：neutral-starpuff-t7c-r2-gate-self-exclusion
 - 原因：verify-design-docs.mjs 自身含 GAME_DESIGN 錨點偵測字面值，未入版控時 git ls-files 掃不到故 CLI 綠燈，commit 後轉為 tracked 即自我檢舉三筆偽陽性，pre-push 擋下
 - 解法：以 import.meta.url 推導自身相對路徑後排除（非硬編，搬移改名仍成立）；另注入他檔錨點複驗自我排除未削弱偵測能力
