@@ -932,16 +932,23 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
 
   // 訊息比對曾連續三次失敗（漏訊息、依賴英文、又漏一種）；改用 ls-files／ls-tree 後
   // 「不存在」是 exit 0 的空輸出而非例外，不得再退回比對 git 的 fatal 訊息。
+  // 禁的是「cat-file -e ＋ fatal 訊息比對」這條路徑；`cat-file --batch-check` 的
+  // 結構化輸出（object store 探測）是合法用途，不在禁止之列。
   it('存在性判定不得依賴 git 的 fatal 訊息比對', () => {
     const source = readFileSync(SCRIPT_PATH, 'utf-8');
     expect(source).toContain("git(['ls-files'");
     expect(source).toContain("git(['ls-tree'");
-    // 只看可執行行：註解會提到 cat-file 等字樣作為「不採用」的反面說明。
+    // 只看可執行行：註解會提到 cat-file -e 等字樣作為「不採用」的反面說明。
     const code = source
       .split('\n')
       .filter((line) => !line.trimStart().startsWith('//') && !line.trimStart().startsWith('*'))
       .join('\n');
-    for (const forbidden of ['cat-file', 'does not exist', 'invalid object name']) {
+    for (const forbidden of [
+      "'cat-file', '-e'",
+      'cat-file -e',
+      'does not exist',
+      'invalid object name',
+    ]) {
       expect(code).not.toContain(forbidden);
     }
   });
@@ -1051,6 +1058,50 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     );
     git(repo, 'add', '--all');
 
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(1);
+    expect(output).toContain('不可視為無基準版');
+  });
+
+  // 更深的繞法：orphan 之後把 named refs 全刪（branch -D＋清 packed-refs），
+  // `rev-list --all` 為空但歷史 commit 物件仍在。判準必須逐層兜底：
+  // reflog（--reflog）接第一層，reflog 也被 expire 時 object store 接第二層。
+  function setupRefsWipedOrphan() {
+    const repo = setupRepo();
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+        entries: [{ id: 'penalty-must-survive' }, { id: 'reward-existing-entry' }],
+      }),
+      'baseline',
+    );
+    git(repo, 'checkout', '--orphan', 'evil');
+    git(repo, 'branch', '-D', 'main');
+    git(repo, 'branch', '-D', 'pr');
+    rmSync(join(repo, '.git', 'packed-refs'), { force: true });
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+        entries: [{ id: 'reward-clean-slate' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+    return repo;
+  }
+
+  it('orphan＋刪光 named refs 後掏空 002 仍必紅（reflog 探測）', () => {
+    const repo = setupRefsWipedOrphan();
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(1);
+    expect(output).toContain('不可視為無基準版');
+  });
+
+  it('orphan＋刪光 named refs＋expire reflog 後掏空 002 仍必紅（object store 探測）', () => {
+    const repo = setupRefsWipedOrphan();
+    git(repo, 'reflog', 'expire', '--expire=now', '--all');
+    rmSync(join(repo, '.git', 'logs'), { recursive: true, force: true });
     const { status, output } = runGuard(repo);
     expect(status).toBe(1);
     expect(output).toContain('不可視為無基準版');

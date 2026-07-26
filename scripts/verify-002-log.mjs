@@ -366,8 +366,21 @@ function assertRepoUsable() {
 // 不可用 `rev-parse --verify HEAD` 代替：`git checkout --orphan` 之後 HEAD 指向尚未存在
 // 的分支，verify 一樣失敗，但 repo 裡的歷史 commit 都還在，此時視為無基準版會讓
 // 刪除防護與總分鏈整個跳過（標準 Git 指令即可觸發，不需劫持環境）。
+// 判準必須結構性且逐層兜底，不可只看 named refs：
+// 1. refs＋reflog（--all --reflog）：orphan 之後把 named refs 全刪（branch -D＋清
+//    packed-refs）會讓 --all 為空，但 reflog 仍留有紀錄。
+// 2. object store：reflog 也被 expire＋刪 .git/logs 時，只要任何 commit 物件仍在就
+//    不是無基準版。只在第 1 層為空時執行（正常 repo 永不觸發）；真空 repo 至多數個
+//    staged blob，輸出極小。被構造的大 repo 若超出 maxBuffer 會上拋 fail-closed，
+//    方向仍正確（誤擋不誤放）。
+// 連 commit 物件都被 prune（reflog expire＋gc --prune=now）的 repo 與真空 repo 在
+// 結構上無法區分，本機守門到此為止，由 CI 以 GitHub 事件的基準 SHA 兜底
+//（見 AGENTS.md「已知殘餘風險」）。
 function hasAnyCommit() {
-  return git(['rev-list', '-n', '1', '--all']).trim() !== '';
+  if (git(['rev-list', '-n', '1', '--all', '--reflog']).trim() !== '') return true;
+  return git(['cat-file', '--batch-all-objects', '--batch-check=%(objecttype)'])
+    .split('\n')
+    .some((line) => line === 'commit');
 }
 
 function refResolves(ref) {
