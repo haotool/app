@@ -287,11 +287,13 @@ Agent **必須**先完成：
 
 僅三種情境放行：002 相對基準未變更、002 在 index 與 HEAD 皆不存在、`before` 為全零（分支初建）。
 
-**`catch` 區塊的判準**：每一個吞掉錯誤的 `catch` 都必須說得出「為什麼這個錯誤可以安全忽略」，說不出來就 rethrow。本守門各 `catch` 的理由記於程式碼註解；`refResolves` 是唯一會吞的一處，理由是 `assertRepoUsable()` 已先確認 repo 可用，故 `rev-parse` 失敗只可能是「該 ref 不存在」。
+**`catch` 區塊的判準**：每一個吞掉錯誤的 `catch` 都必須說得出「為什麼這個錯誤可以安全忽略」，說不出來就 rethrow。本守門各 `catch` 的理由記於程式碼註解；`refResolves` 是唯一會吞的一處，但它只回報「ref 是否解析得到」，不代表「無基準版」——**「無基準版」必須由 `git rev-list -n 1 --all` 為空來證明**（見下）。
 
 **存在性判定不得依賴 git 的 fatal 訊息**：`cat-file -e` 把「物件不存在」表達成 status 128 ＋ 人類可讀訊息，與「repo 不可用」共用同一個離開碼，只能靠比對英文訊息區分。這條路徑連續破了三次（漏訊息種類、依賴英文輸出、又漏第五種），根因是把人類可讀輸出當成 API 契約。
 
-現行做法把「不存在」變成正常回傳值：先 `git rev-parse --git-dir` 確認 repo 可用（僅一次），之後 index 用 `git ls-files -- <path>`、tree 用 `git ls-tree --name-only <ref> -- <path>`——路徑不存在時輸出空字串且 exit 0，非零離開一律是環境問題並上拋 fail-closed。「尚無任何 commit」由 `rev-parse --verify` 的離開碼結構判定，同樣不比對訊息。**新增存在性判定時不得退回訊息比對，測試有結構鎖把關。**
+現行做法把「不存在」變成正常回傳值：先 `git rev-parse --git-dir` 確認 repo 可用（僅一次），之後 index 用 `git ls-files -- <path>`、tree 用 `git ls-tree --name-only <ref> -- <path>`——路徑不存在時輸出空字串且 exit 0，非零離開一律是環境問題並上拋 fail-closed。**新增存在性判定時不得退回訊息比對，測試有結構鎖把關。**
+
+**「無基準版」只能由 `git rev-list -n 1 --all` 為空證明**，不可用 `rev-parse --verify HEAD` 失敗代替：`git checkout --orphan <branch>` 之後 HEAD 指向尚未存在的分支，verify 一樣失敗，但 repo 的歷史 commit 都還在——把它當成無基準版會讓刪除防護與總分鏈整個跳過，而這是標準 Git 指令即可觸發、不需劫持環境。ref 不解析但 repo 已有 commit（orphan、損毀 symref、基準 ref 失效）一律 fail-closed。
 
 所有 git 子行程收斂在唯一的 `git()` wrapper（帶 `LC_ALL=C`／`LANGUAGE=C` 使輸出決定性），測試斷言全檔只有一個子行程呼叫點——讓「忘記帶 env」在結構上不可能，而非事後字串偵測。
 

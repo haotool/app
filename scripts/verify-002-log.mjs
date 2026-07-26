@@ -339,16 +339,8 @@ export function validate002({ stagedContent, headContent }) {
   return { errors };
 }
 
-// git 對「物件不存在」與「repo 不可用」都回 status 128，必須靠 stderr 區分。
-// 以下為窮舉守門實際會遇到的四種「合法不存在」訊息（逐一實測取得）；
-// 其餘（not a git repository、壞 git、權限問題、非預期 status）一律上拋 fail-closed，
-// 否則環境失敗會被誤讀成「檔案不存在」而讓整道守門靜默跳過。
-// 所有 git 呼叫一律鎖英文輸出：下方判別依賴 stderr 文字，而 git 內建 gettext 翻譯，
-// 繼承呼叫端的 LANG／LC_ALL／LANGUAGE 會讓訊息變成當地語系而比對不到
-// （實測 macOS Homebrew git 2.55 + LC_ALL=zh_CN.UTF-8 即觸發）。
-// 鎖定 C locale 同時也鎖住訊息穩定性，降低跨 git 版本翻譯字串變動的風險。
-// LC_ALL／LANGUAGE 鎖英文輸出。移除訊息比對後這不再是正確性的依據，
-// 但保留可讓 git 輸出恆為決定性，避免日後有人新增解析時踩到 locale。
+// LC_ALL／LANGUAGE 鎖英文輸出。存在性判定改用離開碼與空輸出後，這不再是正確性的
+// 依據，僅讓 git 輸出恆為決定性，避免日後有人新增解析時踩到 locale。
 const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' };
 
 // 全檔唯一的 git 呼叫點：集中帶入 GIT_ENV 與 stdio，讓「忘記帶 env」在結構上不可能。
@@ -361,8 +353,8 @@ function git(args) {
   });
 }
 
-// repo 可用性只確認一次。確認之後，`ls-files`／`ls-tree` 的空輸出即代表「不存在」，
-// 是正常回傳值而非例外——因此不需要、也不再比對 git 的人類可讀 fatal 訊息。
+// repo 可用性在首次使用時確認一次；之後 `ls-files`／`ls-tree` 若因 repo 中途不可用而
+// 非零離開，仍會上拋 fail-closed，故不需重複確認。
 let repoUsable = false;
 function assertRepoUsable() {
   if (repoUsable) return;
@@ -370,7 +362,14 @@ function assertRepoUsable() {
   repoUsable = true;
 }
 
-// repo 已確認可用，故 rev-parse 失敗只可能是「該 ref 不存在」（例如尚無任何 commit）。
+// 「這個 repo 一個 commit 都還沒有」——唯一能把 HEAD 不解析當成「無基準版」的前提。
+// 不可用 `rev-parse --verify HEAD` 代替：`git checkout --orphan` 之後 HEAD 指向尚未存在
+// 的分支，verify 一樣失敗，但 repo 裡的歷史 commit 都還在，此時視為無基準版會讓
+// 刪除防護與總分鏈整個跳過（標準 Git 指令即可觸發，不需劫持環境）。
+function hasAnyCommit() {
+  return git(['rev-list', '-n', '1', '--all']).trim() !== '';
+}
+
 function refResolves(ref) {
   try {
     git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
@@ -398,6 +397,13 @@ function gitShow(spec) {
     listed = git(['ls-files', '--', path]);
   } else if (refResolves(ref)) {
     listed = git(['ls-tree', '--name-only', ref, '--', path]);
+  } else if (ref === 'HEAD' && !hasAnyCommit()) {
+    // 真初始 commit：repo 一個 commit 都沒有，確實無基準版可比。
+    return null;
+  } else {
+    // ref 不解析但 repo 已有 commit（orphan HEAD、損毀 symref）或指定的基準 ref 失效：
+    // 這不是「無基準版」，靜默當成 null 會讓刪除防護與總分鏈整個跳過。
+    throw new Error(`ref「${ref}」無法解析，但 repo 已有 commit——不可視為無基準版`);
   }
   if (listed.trim() === '') return null;
 

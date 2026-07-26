@@ -12,6 +12,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   LOG_PATH as LOG_PATH_UNTYPED,
@@ -873,21 +874,60 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
   // 舊版逐一檢查每個呼叫點是否帶 env，是字串偵測、可用雙引號／spawnSync／間接呼叫繞過。
   // 改為結構收斂：全檔只允許一個子行程呼叫點，且必須在帶 GIT_ENV 的 git() wrapper 內，
   // 讓「忘記帶 env」不可能發生而非事後偵測。
-  it('git 子行程呼叫必須收斂在唯一帶 GIT_ENV 的 wrapper', () => {
+  // 字串偵測可被 `import { execFileSync as run }`、`cp['execFileSync'](` 繞過，
+  // 故改走 AST：先限制 child_process 的匯入形式，再確認所有呼叫都落在 git() wrapper 內。
+  it('git 子行程呼叫必須收斂在唯一帶 GIT_ENV 的 wrapper（AST 級）', () => {
     const source = readFileSync(SCRIPT_PATH, 'utf-8');
     expect(source).toContain("const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }");
 
-    // 任何形式的子行程 API 都只能出現在 wrapper 裡：全檔僅此一處。
-    const spawnCalls = source.match(
-      /\b(execFileSync|execSync|spawnSync|execFile|spawn|exec)\s*\(/g,
+    const sourceFile = ts.createSourceFile(
+      'verify-002-log.mjs',
+      source,
+      ts.ScriptTarget.ESNext,
+      true,
+      ts.ScriptKind.JS,
     );
-    expect(spawnCalls).toHaveLength(1);
 
-    const wrapperStart = source.indexOf('function git(args) {');
-    expect(wrapperStart).toBeGreaterThan(-1);
-    const wrapper = source.slice(wrapperStart, source.indexOf('\n}', wrapperStart));
-    expect(wrapper).toContain('execFileSync');
-    expect(wrapper).toContain('env: GIT_ENV');
+    // 1) child_process 只能具名且未改名匯入；namespace／default 匯入一律禁止——
+    //    `cp['execFileSync'](…)` 這類存取無法靠名稱追蹤。
+    const boundNames = new Set<string>();
+    for (const statement of sourceFile.statements) {
+      if (!ts.isImportDeclaration(statement)) continue;
+      if (!ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      if (!/^(node:)?child_process$/.test(statement.moduleSpecifier.text)) continue;
+
+      expect(statement.importClause?.name).toBeUndefined();
+      const bindings = statement.importClause?.namedBindings;
+      expect(bindings !== undefined && ts.isNamedImports(bindings)).toBe(true);
+      for (const element of (bindings as ts.NamedImports).elements) {
+        expect(element.propertyName).toBeUndefined();
+        boundNames.add(element.name.text);
+      }
+    }
+    expect([...boundNames]).toEqual(['execFileSync']);
+
+    // 2) git() wrapper 的範圍。
+    const wrapper = sourceFile.statements.find(
+      (statement): statement is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(statement) && statement.name?.text === 'git',
+    );
+    expect(wrapper).toBeDefined();
+
+    // 3) 所有對該綁定的呼叫都必須落在 wrapper 內。
+    const outside: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        if (boundNames.has(node.expression.text)) {
+          const inWrapper = node.pos >= wrapper!.pos && node.end <= wrapper!.end;
+          if (!inWrapper) outside.push(source.slice(node.pos, node.end).trim().slice(0, 60));
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+    expect(outside).toEqual([]);
+
+    expect(source.slice(wrapper!.pos, wrapper!.end)).toContain('env: GIT_ENV');
   });
 
   // 訊息比對曾連續三次失敗（漏訊息、依賴英文、又漏一種）；改用 ls-files／ls-tree 後
@@ -984,6 +1024,53 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     );
 
     const { status, output } = runGuard(repo, '--base-ref', 'main');
+    expect(status).toBe(0);
+    expect(output).toContain('通過');
+  });
+
+  // `git checkout --orphan` 之後 HEAD 指向尚未存在的分支，`rev-parse --verify` 失敗，
+  // 但 repo 的歷史 commit 都還在。若把它當成「無基準版」，刪除防護與總分鏈整個跳過——
+  // 標準 Git 指令即可觸發，不需劫持環境。
+  it('orphan HEAD 下掏空 002 必紅（不得誤判為無基準版）', () => {
+    const repo = setupRepo();
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+        entries: [{ id: 'penalty-must-survive' }, { id: 'reward-existing-entry' }],
+      }),
+      'baseline',
+    );
+    git(repo, 'checkout', '--orphan', 'evil');
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+        entries: [{ id: 'reward-clean-slate' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(1);
+    expect(output).toContain('不可視為無基準版');
+  });
+
+  it('真正尚無任何 commit 的 repo 仍放行（初始 commit）', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'verify-002-empty-'));
+    repos.push(repo);
+    git(repo, 'init', '-b', 'main');
+    mkdirSync(join(repo, dirname(LOG_PATH)), { recursive: true });
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+1',
+        entries: [{ id: 'reward-first-entry' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+
+    const { status, output } = runGuard(repo);
     expect(status).toBe(0);
     expect(output).toContain('通過');
   });
@@ -1113,28 +1200,36 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     'AGENTS.md',
     'CLAUDE.md',
   ];
-  const SUPERSEDED_PHRASES = [
-    '約 50ms', // 開銷已改為相對比較，不記具體數字
-    'p50 約 120', // 同上
-    '毫秒級', // 同上
-    '基準版無法解析時跳過', // 已改 fail-closed
-    '不依賴解析是否成功', // 基準版可解析時只採解析結果
-    '僅 002 檔變更時', // hook 已改無條件執行
-    'AGT-LOG-04', // 殘餘風險已移出控制矩陣、取消編號
-    '窮舉實測過的四種', // 存在性判定已改結構化探測，不再比對 git 訊息
-    '判別 git 錯誤靠 stderr', // 同上
+  // 改用 regex 而非字面字串：實測發現同一個主張只要在兩個關鍵詞之間插入不同修飾語，
+  // 字面比對就會漏接。改以主張的關鍵骨架比對，可涵蓋自然改寫。
+  //
+  // 但要誠實看待這個鎖的能力邊界：它只擋得住「已知的舊主張」，擋不住全新的錯誤敘述，
+  // 而放寬到能涵蓋所有改寫就會誤傷「刻意描述被否決做法」的正確文字（本守門的註解就
+  // 大量這樣寫）。真正的防線是鎖住行為的結構測試（例如下方「不得依賴 fatal 訊息比對」
+  // 與 AST 級 wrapper 鎖）；這份清單是補漏用的衛生檢查，不是漂移偵測器。
+  const SUPERSEDED_PATTERNS = [
+    /約 50ms/, // 開銷已改為相對比較，不記具體數字
+    /p50 約 120/, // 同上
+    /毫秒級/, // 同上
+    /基準版無法解析時跳過/, // 已改 fail-closed
+    /不依賴解析是否成功/, // 基準版可解析時只採解析結果
+    /僅 002 檔變更時/, // hook 已改無條件執行
+    /AGT-LOG-04/, // 殘餘風險已移出控制矩陣、取消編號
+    /窮舉[^，。\n]{0,12}(四種|訊息)/, // 存在性判定已改結構化探測
+    /(必須|判別[^，。\n]{0,8})靠\s*stderr/, // 同上：不再以 stderr 文字判別
+    /rev-parse 失敗只可能是/, // orphan HEAD 下此宣稱為假
   ];
 
   // 本檔自身也在掃描範圍內，故需剔除上面那份清單的字面值，否則必然自我命中。
   const stripChecklist = (source: string) => {
-    const start = source.indexOf('const SUPERSEDED_PHRASES');
+    const start = source.indexOf('const SUPERSEDED_PATTERNS');
     if (start === -1) return source;
     return source.slice(0, start) + source.slice(source.indexOf('];', start));
   };
 
   it.each(GATE_FILES)('%s 不得殘留已被取代的措辭', (file) => {
     const source = stripChecklist(read(file));
-    const hits = SUPERSEDED_PHRASES.filter((phrase) => source.includes(phrase));
+    const hits = SUPERSEDED_PATTERNS.filter((pattern) => pattern.test(source)).map(String);
     expect(hits).toEqual([]);
   });
 
