@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+273
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+274
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-v21-v30-alpha-opacity-regression
+- 原因：image_gen 多數 raw 其實原生透明底，`--auto-key border` 取樣到透明黑當 key 使深黑主體被 soft-matte 打成半透明（gravion mean alpha 94），且 QA 只驗四角/殘暈/覆蓋率漏驗主體不透明度，24 張受損資產推上遠端
+- 解法：管線改為 raw 角落 alpha=0 即跳過去背直接取用、QA 增主體 mean alpha 門檻；20 張自 raw 重轉、4 張水藍主體改 hard 模式（--tolerance 72 無 soft-matte）重切，全部復原至 mean ≥250
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b03-skills-fx-hud
