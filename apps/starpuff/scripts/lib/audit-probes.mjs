@@ -683,3 +683,184 @@ export async function runStarburstProbe(
     aborted,
   };
 }
+
+// ===== #899 票券蝠換軌 telegraph 反應窗 =====
+// 座標時序量測（20ms 取樣）：受控 spawn 一隻票券蝠，重建「懸停預警窗 → 俯掠穿越」
+// 事件序。修復語意＝fly 尾段懸停（水平歸 0）＋閃爍後才位移，故懸停窗可由座標直接
+// 觀測（tint 不在 __sp.enemies() 觀測面）；主線版懸停窗 ≈0（telegraph 與位移同幀）。
+// 迴避裁定為解析模型：實測俯掠動力學 ＋ 分級反應延遲 ＋ PLAYER.moveSpeed 走位，
+// 對比兩種預警訊號起點（baseline＝位移開始；warn＝懸停開始）在最壞站位（玩家位於
+// 俯掠路徑上）的可迴避性。
+export async function runTicketaTelegraphProbe(
+  page,
+  {
+    levelId = 21,
+    crossings = 10,
+    reactionTiers = [250, 350, 500],
+    capMs = 120_000,
+    playerMoveSpeed,
+    playerHurtHalfW,
+    enemyHalfW,
+  },
+) {
+  await gotoLevel(page, levelId, false);
+  await page.evaluate(() => {
+    const sp = window.__sp;
+    sp.grantInvuln(600_000);
+    sp.spawn('ticketa', 480, 240);
+    const probe = { samples: [], interval: null, stop: false };
+    window.__tk = probe;
+    let last = null;
+    probe.interval = setInterval(() => {
+      if (probe.stop) return;
+      const list = sp.enemies().filter((enemy) => enemy.kind === 'ticketa');
+      if (list.length === 0) return;
+      // 最近鄰連續性追蹤：自然生成多隻同種時鎖定與上一樣本最近者。
+      const pick = list.reduce((best, enemy) => {
+        const anchorX = last ? last.x : 480;
+        const anchorY = last ? last.y : 240;
+        return Math.hypot(enemy.x - anchorX, enemy.y - anchorY) <
+          Math.hypot(best.x - anchorX, best.y - anchorY)
+          ? enemy
+          : best;
+      });
+      last = pick;
+      probe.samples.push({ t: performance.now(), x: pick.x, y: pick.y });
+    }, 20);
+  });
+
+  // 收樣直到取得足量帶穿越事件（y 穿越兩軌帶中線）或 capMs 截止。
+  const midY = 245;
+  const startedAt = Date.now();
+  let samples = [];
+  while (Date.now() - startedAt < capMs) {
+    await sleep(3000);
+    // 存活軸續租＋樣本快照。
+    samples = await page.evaluate(() => {
+      window.__sp.grantInvuln(600_000);
+      return window.__tk.samples;
+    });
+    let count = 0;
+    for (let i = 1; i < samples.length; i += 1) {
+      if ((samples[i - 1].y - midY) * (samples[i].y - midY) < 0) count += 1;
+    }
+    if (count >= crossings) break;
+  }
+  await page
+    .evaluate(() => {
+      window.__tk.stop = true;
+      clearInterval(window.__tk.interval);
+    })
+    .catch(() => {});
+
+  // ===== 離線時序分析 =====
+  const HOVER_X_EPS = 3; // 懸停判定：x 相對位移 ≤3px（座標整數化噪聲帶）。
+  const BAND_EPS = 12; // 貼軌判定帶寬。
+  const PLAYER_BAND_Y = 270; // 進入玩家可被碰空域（低軌 300 側）的邊界。
+  const events = [];
+  for (let i = 1; i < samples.length; i += 1) {
+    const prev = samples[i - 1];
+    const curr = samples[i];
+    if ((prev.y - midY) * (curr.y - midY) >= 0) continue;
+    const downward = curr.y > prev.y;
+    const sourceBandY = downward ? 190 : 300;
+    const targetBandY = downward ? 300 : 190;
+    // departIdx：自 crossing 向前回掃至最後一個貼源軌帶樣本＝位移開始參考點；
+    // 生成即穿越等雜訊段（回掃 400 樣本內無貼軌點）棄樣。
+    let departIdx = i - 1;
+    while (
+      departIdx > 0 &&
+      i - departIdx <= 400 &&
+      Math.abs(samples[departIdx].y - sourceBandY) > BAND_EPS
+    ) {
+      departIdx -= 1;
+    }
+    if (Math.abs(samples[departIdx].y - sourceBandY) > BAND_EPS) continue;
+    // arrive：向後掃至首個貼目標軌帶樣本。
+    let arriveIdx = i;
+    while (
+      arriveIdx < samples.length - 1 &&
+      Math.abs(samples[arriveIdx].y - targetBandY) > BAND_EPS
+    ) {
+      arriveIdx += 1;
+      if (arriveIdx - i > 400) break;
+    }
+    if (Math.abs(samples[arriveIdx].y - targetBandY) > BAND_EPS) continue;
+    // 懸停窗：自 departIdx 向前回掃 x 位移 ≤ HOVER_X_EPS 且仍貼源軌帶的連續時段。
+    const anchorX = samples[departIdx].x;
+    let hoverIdx = departIdx;
+    while (
+      hoverIdx > 0 &&
+      departIdx - hoverIdx <= 400 &&
+      Math.abs(samples[hoverIdx - 1].x - anchorX) <= HOVER_X_EPS &&
+      Math.abs(samples[hoverIdx - 1].y - sourceBandY) <= BAND_EPS
+    ) {
+      hoverIdx -= 1;
+    }
+    const moveStartT = samples[departIdx].t;
+    // 進入玩家帶時刻（僅 high→low 俯掠對地面玩家構成威脅）。
+    let enterPlayerBandT = null;
+    if (downward) {
+      for (let j = departIdx; j <= arriveIdx; j += 1) {
+        if (samples[j].y >= PLAYER_BAND_Y) {
+          enterPlayerBandT = samples[j].t;
+          break;
+        }
+      }
+    }
+    events.push({
+      downward,
+      hoverMs: Math.round(moveStartT - samples[hoverIdx].t),
+      travelMs: Math.round(samples[arriveIdx].t - moveStartT),
+      toPlayerBandMs: enterPlayerBandT === null ? null : Math.round(enterPlayerBandT - moveStartT),
+      periodAnchorT: moveStartT,
+    });
+  }
+
+  // 週期（相鄰位移開始間隔）＝換軌頻率不變性證據。
+  const periods = events
+    .slice(1)
+    .map((event, index) => Math.round(event.periodAnchorT - events[index].periodAnchorT));
+
+  // 迴避解析模型：最壞站位（玩家在俯掠 x 正下方）需走離 escapePx 才脫離重疊。
+  const escapePx = playerHurtHalfW + enemyHalfW + 10;
+  const escapeMoveMs = (escapePx / playerMoveSpeed) * 1000;
+  const threatEvents = events.filter((event) => event.downward && event.toPlayerBandMs !== null);
+  const byTier = reactionTiers.map((reactionMs) => {
+    const judge = (leadMs) =>
+      threatEvents.length > 0
+        ? Math.round(
+            (threatEvents.filter(
+              (event) => leadMs(event) + event.toPlayerBandMs >= reactionMs + escapeMoveMs,
+            ).length /
+              threatEvents.length) *
+              100,
+          ) / 100
+        : null;
+    return {
+      reactionMs,
+      // baseline 訊號＝位移開始（修復前唯一可觀測訊號，lead 0）。
+      dodgeRateSignalAtMove: judge(() => 0),
+      // warn 訊號＝懸停預警開始（修復後 telegraph 亮起時刻，lead＝實測懸停窗）。
+      dodgeRateSignalAtWarn: judge((event) => event.hoverMs),
+    };
+  });
+
+  const hoverSamples = events.map((event) => event.hoverMs);
+  const travelSamples = events.map((event) => event.travelMs);
+  const avg = (list) =>
+    list.length > 0 ? Math.round(list.reduce((sum, value) => sum + value, 0) / list.length) : null;
+  return {
+    levelId,
+    events: events.length,
+    threatEvents: threatEvents.length,
+    hoverMsAvg: avg(hoverSamples),
+    hoverMsMin: hoverSamples.length > 0 ? Math.min(...hoverSamples) : null,
+    travelMsAvg: avg(travelSamples),
+    toPlayerBandMsAvg: avg(threatEvents.map((event) => event.toPlayerBandMs)),
+    cyclePeriodMsAvg: avg(periods),
+    escapeModel: { escapePx, escapeMoveMs: Math.round(escapeMoveMs), playerMoveSpeed },
+    byTier,
+    detail: events,
+  };
+}
