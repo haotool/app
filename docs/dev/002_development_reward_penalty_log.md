@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：neutral-starpuff-t7c-r2-gate-self-exclusion
+- 原因：verify-design-docs.mjs 自身含 GAME_DESIGN 錨點偵測字面值，未入版控時 git ls-files 掃不到故 CLI 綠燈，commit 後轉為 tracked 即自我檢舉三筆偽陽性，pre-push 擋下
+- 解法：以 import.meta.url 推導自身相對路徑後排除（非硬編，搬移改名仍成立）；另注入他檔錨點複驗自我排除未削弱偵測能力
+
+- 日期：2026-07-26
 - ID：reward-starpuff-t7c-r2-design-docs-gate
 - 原因：拆檔後 GAME_DESIGN 索引是唯一的「章號 → 檔案」解析器（src 有 77 處 §N 引用），卻零 CI 守門——本輪正確性全靠一次性腳本與兩席人工重算，未來新增 §119 漏登索引或誤重複編號不會被攔截，索引會悄悄失真
 - 解法：新增 `apps/starpuff/scripts/verify-design-docs.mjs`（索引存在性/檔名/零重複/零缺號/標題同步、每檔職責聲明、主句紀律附註格式、全 repo 零錨點引用六項）＋同名 .test.mjs 掛進 vitest（include 增 scripts/\*_/_.test.mjs）與 `pnpm verify:docs`；上線即抓到我自己漏更的 §60/§65 索引標題，另以四種故障注入實證守門非空轉
