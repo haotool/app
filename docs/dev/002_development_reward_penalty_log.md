@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+284
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+285
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-qa-scan-adversarial-hardening
+- 原因：終審對抗樣本揭露 QA 掃描兩漏洞——bg- 豁免包住 central-residue 令背景類零防護、nw_bbox 以畫布為分母令主體佔 90-95% 的整身假透明雙訊號皆不觸發。
+- 解法：central-residue 移出豁免（僅 edge-band 保留）、bbox 分母改 opaque 自身範圍（閾值 0.998＝假透明恆 1.0000 與正當白光 ≤0.9940 的物理間隙）＋lowchroma 無彩軸＋新增 4×4 塊級無彩雙檔 checker-blocks 抓局部棋盤；歷史病例 4/4、對抗樣本 3/3、現行 505 張與 14 張 bg 零誤殺。
 
 - 日期：2026-07-26
 - ID：penalty-starpuff-002-unverified-causal-claim
