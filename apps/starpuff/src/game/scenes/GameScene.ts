@@ -1,13 +1,6 @@
 import Phaser from 'phaser';
 import { GRAVITY_Y, PLAYER, VIEW } from '../core/config';
-import {
-  GameEvents,
-  emitGameEvent,
-  offGameEvent,
-  onGameEvent,
-  type GameEventName,
-} from '../core/events';
-import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
+import { GameEvents, emitGameEvent } from '../core/events';
 import { loadAssets } from '../core/assetLoader';
 import { entriesForLevel } from '../core/assetPlan';
 import {
@@ -22,7 +15,6 @@ import { SceneKeys, type GameResultData, type LevelId, type TransformForm } from
 import { unlockedTransformForms } from '../logic/transform';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
-import { inhaleFlavor } from '../logic/combat';
 import { buffAccelMul, buffSpeedMul } from '../logic/buffs';
 import { createCaramelStatus, type CaramelStatus } from '../systems/caramelStatus';
 import {
@@ -49,6 +41,7 @@ import { createMercyDirector, type MercyDirector } from '../systems/mercyDirecto
 import { openPauseMenu } from '../systems/pause';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createPlayerFeel, type PlayerFeel } from '../systems/playerFeel';
+import { wireSceneEvents } from '../systems/sceneEvents';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
 import { GROUND_HEIGHT, createStage, createTerrain, type StageHandle } from '../systems/stage';
@@ -64,8 +57,6 @@ import { notifySaveUnavailable } from '../../shellCards';
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
-// P3（§30）：進場時停 0.3s。
-const P3_HITSTOP_MS = 300;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
 
@@ -80,10 +71,6 @@ interface GameSceneData {
 
 const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
   obj as Phaser.Physics.Arcade.Sprite;
-
-// 星味首遇提示（§46/§47）：seen 僅存 session 記憶體（跨關卡重試保留、重載重置），
-// 不動 save schema。
-const seenFlavorHints = new Set<string>();
 
 export class GameScene extends Phaser.Scene {
   playerHp: number = PLAYER.maxHp;
@@ -691,112 +678,70 @@ export class GameScene extends Phaser.Scene {
     else this.boss.applyDamage(amount, source);
   }
 
+  // 契約事件路由（§11）：分派表委派 systems/sceneEvents；深耦合 run 狀態的
+  // 死亡/擊破流程留在本類（onPlayerDied/onBossDefeated hook 回流）。
   private bindEvents(): void {
-    const bind = <K extends GameEventName>(
-      event: K,
-      handler: Parameters<typeof onGameEvent<K>>[2],
-    ): void => {
-      onGameEvent(this.events, event, handler);
-      this.unbinders.push(() => offGameEvent(this.events, event, handler));
-    };
+    this.unbinders.push(
+      wireSceneEvents(this.events, {
+        setPlayerHp: (hp) => {
+          this.playerHp = hp;
+        },
+        setBossHp: (hp) => {
+          this.bossHp = hp;
+        },
+        toasts: () => this.toasts,
+        starCombat: () => this.starCombat,
+        stage: () => this.stage,
+        eggTracker: () => this.eggTracker,
+        fx: () => this.fx,
+        damage: () => this.damage,
+        levelGate: () => this.levelGate,
+        levelSpec: () => this.level,
+        exMode: this.exMode,
+        bossRoom: () => this.bossRoom,
+        arenaLeft: () => this.arenaLeft(),
+        viewWidth: () => this.scale.width,
+        onPlayerDied: (x, y) => this.handlePlayerDied(x, y),
+        onBossDefeated: () => this.handleBossDefeated(),
+      }),
+    );
+  }
 
-    bind(GameEvents.PLAYER_DAMAGED, ({ hp }) => {
-      this.playerHp = hp;
-    });
-    bind(GameEvents.PLAYER_HEALED, ({ hp }) => {
-      this.playerHp = hp;
-    });
-    // 星味首遇提示（§46/§47）：新取得的味/配方必經頂槽，首見即 toast 一次。
-    bind(GameEvents.AMMO_CHANGED, ({ magazine }) => {
-      const top = magazine[magazine.length - 1];
-      if (!top || top.gold) return;
-      const key = top.mix ?? top.flavor;
-      if (seenFlavorHints.has(key)) return;
-      seenFlavorHints.add(key);
-      this.toasts.flavor(top.mix !== undefined ? MIX_HINTS[top.mix] : FLAVOR_HINTS[top.flavor]);
-    });
-    // 技能世界結算（§23）：player 只發事件，場上效果委派 starCombat。
-    bind(GameEvents.SKILL_STARSTORM, () => this.starCombat.resolveStarstorm());
-    // 下衝擊落點同步破磚（§29）：磚的 damage 接口由 stage 提供，沿用既有 SKILL 事件契約。
-    bind(GameEvents.SKILL_SLAM_LANDED, ({ x, y }) => {
-      this.starCombat.resolveSlamImpact(x, y);
-      this.stage.damageBricksInRadius(x, y, this.starCombat.slamRadiusPx());
-    });
-    // 殼盾格擋成功（§40）：正面反擊星爆，波及面前小怪。
-    bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
-      this.starCombat.resolveShieldCounter(x, y, facing),
-    );
-    // 星化形態技（§57/§119）：player 發事件、starCombat 單點路由結算（七形態同制）。
-    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
-      this.starCombat.resolveTransformStrike(kind, x, y, facing),
-    );
-    bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
-      this.bossHp = maxHp;
-    });
-    bind(GameEvents.BOSS_DAMAGED, ({ hp }) => {
-      this.bossHp = hp;
-      this.eggTracker.noteBossHit();
-    });
-    // P3 進場演出（§30）：星環衝擊波由 boss 系統呈現，時停以既有 fx API 組合。
-    // 高風險位增益投放（§69/§82）：arena 中央高位刷 1 顆；EX 刷新減半＝不投放；
-    // 投放階段資料驅動（缺省 P2；Voidra P2 為生存段改 P3）。
-    bind(GameEvents.BOSS_PHASE, ({ phase }) => {
-      if (phase === 'p3') this.fx.hitStop(P3_HITSTOP_MS);
-      const buffPhase = this.level.arenaBuffPhase ?? 'p2';
-      if (phase === buffPhase && !this.exMode && this.level.arenaBuff && this.bossRoom) {
-        this.bossRoom.dropArenaBuff(
-          this.level.arenaBuff,
-          this.arenaLeft() + this.scale.width / 2,
-          190,
-        );
-      }
-    });
-    bind(GameEvents.BOSS_QUAKE, () => this.damage.resolveBossQuake());
-    // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
-    bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
-      const flavor = inhaleFlavor(kind);
-      if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
-    });
-    // 加速票（§120 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
-    bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
-      if (kind === 'ticketa') this.damage.applyBuff('swift');
-    });
-    // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
-    // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
-    bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
-      // 勝利結算窗防護（§82 QA 根修）：魔王已倒後殘餘 hazard（隕星/潮汐）不得奪走勝利。
-      if (this.bossDown) return;
-      this.deaths += 1;
-      this.player.sprite.setVisible(false);
-      this.fx.puff(x, y);
-      if (this.level.boss) {
-        // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場（呈現層已自清＋FSM 重置）。
-        if (this.boss.trySegmentRespawn?.() === true) {
-          this.clearFieldForSegmentRetry();
-          this.respawnAtCheckpoint(this.arenaLeft() + 90);
-          return;
-        }
-        this.finish('lost');
+  // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
+  // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
+  private handlePlayerDied(x: number, y: number): void {
+    // 勝利結算窗防護（§82 QA 根修）：魔王已倒後殘餘 hazard（隕星/潮汐）不得奪走勝利。
+    if (this.bossDown) return;
+    this.deaths += 1;
+    this.player.sprite.setVisible(false);
+    this.fx.puff(x, y);
+    if (this.level.boss) {
+      // 段起點重試（§82 Voidra）：P2/P3 死亡不回滾整場（呈現層已自清＋FSM 重置）。
+      if (this.boss.trySegmentRespawn?.() === true) {
+        this.clearFieldForSegmentRetry();
+        this.respawnAtCheckpoint(this.arenaLeft() + 90);
         return;
       }
-      const respawnX = checkpointRespawnX(this.level, this.farthestX);
-      if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
-      else this.retryLevel();
-    });
-    bind(GameEvents.BOSS_DEFEATED, () => {
-      this.bossDown = true;
-      this.bossHp = 0;
-      // 勝利結算窗防護（§82）：殘餘環境傷害（墜落中隕星/餘燼/潮汐）不再扣血。
-      this.player.grantInvulnerability(WIN_DELAY_MS + 2000);
-      // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
-      // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
-      this.clearTimeMs = this.levelTimeMs();
-      // EX 擊破（§58）：僅記 exCleared 紀念星章，不動一般通關與最佳時間。
-      if (this.exMode) this.persistAndAward(recordExClear(this.save, this.currentLevelId));
-      else this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
-      this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
-    });
-    bind(GameEvents.LEVEL_GATE_OPENED, () => this.levelGate.spawn());
+      this.finish('lost');
+      return;
+    }
+    const respawnX = checkpointRespawnX(this.level, this.farthestX);
+    if (respawnX !== null) this.respawnAtCheckpoint(respawnX);
+    else this.retryLevel();
+  }
+
+  private handleBossDefeated(): void {
+    this.bossDown = true;
+    this.bossHp = 0;
+    // 勝利結算窗防護（§82）：殘餘環境傷害（墜落中隕星/餘燼/潮汐）不再扣血。
+    this.player.grantInvulnerability(WIN_DELAY_MS + 2000);
+    // 通關計時單一來源（審查修復 #724）：擊破瞬間擷取用時，存檔與結算共用，
+    // 避免 WIN_DELAY_MS 演出期使結算成績比地圖最佳時間多 1.5s。
+    this.clearTimeMs = this.levelTimeMs();
+    // EX 擊破（§58）：僅記 exCleared 紀念星章，不動一般通關與最佳時間。
+    if (this.exMode) this.persistAndAward(recordExClear(this.save, this.currentLevelId));
+    else this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
+    this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
   }
 
   // 死亡重試當前關：已完成關卡的累計用時保留，當前關計時重來。
