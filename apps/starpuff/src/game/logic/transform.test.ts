@@ -261,7 +261,9 @@ describe('§119 四新形態規格：語彙 ≤4 與 anti-softlock 紅線', () =
   it('稜化：攻三向碎片/防反射抵銷/機動鏡步/特彩虹光束共 4 語彙', () => {
     const spec = TRANSFORM_FORMS.prism;
     expect(spec.shot?.count).toBe(3);
-    expect(spec.reflectProjectiles).toBe(true);
+    // 反射抵銷＝折射銷毀不回傷（PR #886 SSOT 收斂）：與殼化反彈（回傷）語彙區辨。
+    expect(spec.negateProjectiles).toBe(true);
+    expect(spec.reflectProjectiles).toBe(false);
     expect(spec.blinkPx).toBeGreaterThan(0);
     expect(spec.tapStrike).toBeNull();
   });

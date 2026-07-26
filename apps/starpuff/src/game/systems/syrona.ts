@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { resetTransientFlags } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
@@ -225,6 +226,8 @@ export function createSyrona(
     const shot = projectiles.get(x, y, 'syrona-shot') as Phaser.Physics.Arcade.Sprite | null;
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
+    // 池回收重用：互動旗標（reflected/tideDeflected 等）走 poolFlags 單點復位。
+    resetTransientFlags(shot);
     shot.setTint(0xf0a860);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(gravity);
     return shot;

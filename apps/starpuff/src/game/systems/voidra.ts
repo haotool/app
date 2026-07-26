@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { resetTransientFlags } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { approachPoint, type FlightPoint } from '../logic/noctraFlight';
@@ -180,6 +181,8 @@ export function createVoidra(
     const shot = projectiles.get(x, y, 'voidra-shot') as Phaser.Physics.Arcade.Sprite | null;
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
+    // 池回收重用：互動旗標（reflected/tideDeflected 等）走 poolFlags 單點復位。
+    resetTransientFlags(shot);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     (shot.body as Phaser.Physics.Arcade.Body).setVelocity(vx, vy);
     return shot;

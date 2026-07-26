@@ -247,3 +247,142 @@ describe('Voidra 呈現層：P4 段位相色持續（W3 Should-fix，鏡像 syro
     expect(lastTint).not.toBe(0xffffff);
   });
 });
+
+// 彈幕池瞬時旗標循環（§119 潮環，PR #886 Blocking）：潮環對魔王彈幕全量撥開並寫入
+// tideDeflected；彈體出界回池後復用，殘留旗標會讓潮化對回收彈幕靜默免疫。
+// spawnShot 必經 poolFlags 單點復位（voidra 原本連 reflected 都未清），本測鎖完整循環。
+describe('Voidra 彈幕池瞬時旗標循環（§119 潮環，PR #886）', () => {
+  beforeEach(() => {
+    let seed = 7;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  interface FakeShot {
+    active: boolean;
+    x: number;
+    y: number;
+    getData(key: string): unknown;
+    setData(key: string, value: unknown): FakeShot;
+    [key: string]: unknown;
+  }
+
+  function makeFakeShot(): FakeShot {
+    const data = new Map<string, unknown>();
+    const shot: FakeShot = {
+      active: false,
+      x: 0,
+      y: 0,
+      getData: (key: string) => data.get(key),
+      setData(key: string, value: unknown) {
+        data.set(key, value);
+        return shot;
+      },
+      enableBody(_reset: boolean, x: number, y: number) {
+        shot.active = true;
+        shot.x = x;
+        shot.y = y;
+        return shot;
+      },
+      disableBody() {
+        shot.active = false;
+        return shot;
+      },
+      setActive(value: boolean) {
+        shot.active = value;
+        return shot;
+      },
+      body: { setAllowGravity: vi.fn(), setVelocity: vi.fn(), setSize: vi.fn() },
+    };
+    for (const key of [
+      'setVisible',
+      'setDisplaySize',
+      'setTint',
+      'clearTint',
+      'setTintMode',
+      'setAlpha',
+      'setDepth',
+      'setRotation',
+      'setScale',
+      'setOrigin',
+    ]) {
+      shot[key] = () => shot;
+    }
+    return shot;
+  }
+
+  function makePooledGroup(): {
+    children: FakeShot[];
+    get(): FakeShot;
+    getMatching(key: string, value: unknown): FakeShot[];
+    destroy: ReturnType<typeof vi.fn>;
+  } {
+    const children: FakeShot[] = [];
+    return {
+      children,
+      get() {
+        const idle = children.find((child) => !child.active);
+        if (idle) return idle;
+        const shot = makeFakeShot();
+        children.push(shot);
+        return shot;
+      },
+      getMatching: (_key: string, value: unknown) =>
+        children.filter((child) => child.active === value),
+      destroy: vi.fn(),
+    };
+  }
+
+  it('撥開/反彈旗標殘留的彈體回池復用後必為 false', () => {
+    const bodySprite = makeBodySprite();
+    const pooledGroups: ReturnType<typeof makePooledGroup>[] = [];
+    const base = makeScene(vi.fn(), bodySprite) as unknown as Record<string, unknown>;
+    const scene = {
+      ...base,
+      physics: {
+        add: {
+          sprite: () => bodySprite,
+          group: () => {
+            const group = makePooledGroup();
+            pooledGroups.push(group);
+            return group;
+          },
+        },
+      },
+    } as unknown as Phaser.Scene;
+    const handle = createVoidra(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 建立順序：projectiles → shockwaves（createVoidra 一致）。
+    const projectiles = pooledGroups[0];
+    if (!projectiles) throw new Error('projectiles group 未建立');
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // P1 星屑彈環（weight 3）：步進至首發彈幕生成。
+    expect(step(() => projectiles.children.length > 0)).toBe(true);
+    const shot = projectiles.children[0];
+    if (!shot) throw new Error('彈體未生成');
+
+    // 潮環撥開＋殼化反彈殘留現場 → 彈體出界回池。
+    shot.setData('tideDeflected', true);
+    shot.setData('reflected', true);
+    shot.active = false;
+
+    // 下一輪彈環復用同一物件：旗標必須歸位，否則潮化對回收彈幕靜默免疫。
+    expect(step(() => shot.active)).toBe(true);
+    expect(shot.getData('tideDeflected')).toBe(false);
+    expect(shot.getData('reflected')).toBe(false);
+  });
+});

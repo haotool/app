@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { resetTransientFlags } from '../core/poolFlags';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { ECLIPSE_CLOAK, cloakActive, cloakAlpha } from '../logic/eclipseCloak';
@@ -181,8 +182,8 @@ export function createNoctra(
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
     ball.setTint(tint);
-    // 池回收重用：殼化反彈標記須復位。
-    ball.setData('reflected', false);
+    // 池回收重用：互動旗標（reflected/tideDeflected 等）走 poolFlags 單點復位。
+    resetTransientFlags(ball);
     return ball;
   };
 

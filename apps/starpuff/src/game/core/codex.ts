@@ -291,7 +291,7 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   {
     nameZh: '稜化',
     howTo: '流光味 ×3 按 SP',
-    detail: 'L25 解鎖：三向稜光碎片、長按放彩虹光束；反射彈幕＋空中跳鏡步瞬移',
+    detail: 'L25 解鎖：三向稜光碎片、長按放彩虹光束；折射抵銷彈幕＋空中跳鏡步瞬移',
   },
   {
     nameZh: '引力化',

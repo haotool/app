@@ -400,18 +400,23 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
   }
 
   // 潮化水引（§119）：面向側域內小怪拉向玩家——貼近吸入循環（吞取節奏加速）。
-  // 可吸目標只拉不傷（PR #886 收斂）：HP1 供給怪先傷即殺、拉近永不執行，潮引對
-  // 它最該作用的補彈目標失效；殺死供給亦與「拉近吸入」的控制定位相斥。
-  // 不可吸威脅維持輕傷＋未死拉近（攻語彙保留）。
+  // 供給味清單只拉不傷（PR #886 收斂）：HP1 供給怪先傷即殺、拉近永不執行；判準
+  // 用 TIDE_PULL.pullOnlyKinds 專屬清單而非 isInhalable（後者對絕大多數敵人恆真，
+  // 會使潮引近乎全面零傷）。其餘目標維持輕傷＋未死拉近（攻語彙保留）。
   function resolveTidePull(x: number, y: number, facing: 1 | -1): void {
     hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.tide.tint);
     const player = hooks.player().sprite;
+    const pullOnlyKinds: readonly string[] = TIDE_PULL.pullOnlyKinds;
     for (const child of hooks.enemies().getGroup().getChildren()) {
       if (!child.active) continue;
       const enemy = child as Phaser.Physics.Arcade.Sprite;
       if (Math.sign(enemy.x - x) !== facing && enemy.x !== x) continue;
       if (distanceBetween(x, y, enemy.x, enemy.y) > TIDE_PULL.rangePx) continue;
-      if (!hooks.enemies().isInhalable(child)) {
+      const kind = hooks.enemies().kindOf(child);
+      if (kind !== null && pullOnlyKinds.includes(kind)) {
+        // 零傷命中確認（PR #886 UIUX）：只拉不傷仍需碎光回饋，防玩家誤判技能未生效。
+        hooks.fx().burstSmall(enemy.x, enemy.y, TRANSFORM_FORMS.tide.tint);
+      } else {
         const outcome = hooks.enemies().damage(child, TIDE_PULL.damage);
         if (outcome === 'ignored' || outcome === 'killed') continue;
       }

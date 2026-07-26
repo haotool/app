@@ -198,7 +198,9 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       hazard.disableBody(true, true);
       hooks.fx().burstSmall(hazard.x, hazard.y, 0xbfe8f0);
       playSfx('pop', 1.3);
-      if (!hooks.combat().playerFormSpec()?.deflectProjectiles) {
+      // 泡泡免疫走顯式 bubbleImmune 欄位（PR #886 收斂）：不與撥開旗標隱性耦合，
+      // 未來 deflect 型形態不會順便免疫上浮。
+      if (!hooks.combat().playerFormSpec()?.bubbleImmune) {
         hooks.player().sprite.setVelocityY(FOAMY_FSM.bubbleLiftVy);
       }
       return;
@@ -311,10 +313,22 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       }
       return;
     }
-    // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。
+    // 稜化反射抵銷（§119）：折射銷毀彈幕——無效化而非回傷（與殼化反彈語彙區辨）。
+    if (hooks.combat().playerFormSpec()?.negateProjectiles) {
+      const form = hooks.player().getTransformState().form;
+      projectile.disableBody(true, true);
+      hooks
+        .fx()
+        .burstSmall(projectile.x, projectile.y, form ? TRANSFORM_FORMS[form].tint : 0xffffff);
+      playSfx('pop', 1.4);
+      return;
+    }
+    // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）；
+    // tint 走現行形態 SSOT，不硬編殼化色。
     if (hooks.combat().playerFormSpec()?.reflectProjectiles) {
+      const form = hooks.player().getTransformState().form;
       projectile.setData('reflected', true);
-      projectile.setTint(TRANSFORM_FORMS.shell.tint);
+      projectile.setTint(form ? TRANSFORM_FORMS[form].tint : TRANSFORM_FORMS.shell.tint);
       (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
       const boss = hooks.nearestBossBody(projectile.x, projectile.y);
       scene.physics.moveTo(projectile, boss.x, boss.y, SHELL_REFLECT.speed);

@@ -60,6 +60,10 @@ export interface TransformFormSpec {
   airDash: boolean;
   blinkPx: number;
   deflectProjectiles: boolean;
+  // negateProjectiles＝稜化反射抵銷（折射銷毀魔王彈幕，不回傷——與殼化反彈區辨）；
+  // bubbleImmune＝泡泡上浮免疫（顯式欄位，不與 deflectProjectiles 隱性耦合）。
+  negateProjectiles: boolean;
+  bubbleImmune: boolean;
   gravityFlipImmune: boolean;
 }
 
@@ -70,6 +74,8 @@ const FORM_EXT_BASE = {
   airDash: false,
   blinkPx: 0,
   deflectProjectiles: false,
+  negateProjectiles: false,
+  bubbleImmune: false,
   gravityFlipImmune: false,
 } as const;
 
@@ -189,6 +195,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     glide: true,
     tapStrike: 'tide-pull',
     deflectProjectiles: true,
+    bubbleImmune: true,
   },
   // 稜化 Prism（§119，L25 解鎖）：三向稜光碎片＋反射抵銷＋鏡步瞬移＋彩虹光束
   //（B 長按釋放，可貫穿）。
@@ -207,7 +214,8 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     landingRollMs: 0,
     tuckCharges: 0,
     halveDamage: false,
-    reflectProjectiles: true,
+    reflectProjectiles: false,
+    negateProjectiles: true,
     magnetImmune: false,
     freeFlight: false,
     glide: false,
@@ -336,12 +344,15 @@ export const MAGMA_POP = {
   damage: 2,
 } as const;
 
-// 水引（§119）：面向側域內小怪拉向玩家＋輕傷（B 點按，世界結算走 starCombat）。
+// 水引（§119）：面向側域內小怪拉向玩家（B 點按，世界結算走 starCombat）。
+// pullOnlyKinds＝供給味清單（PR #886 收斂）：僅補給型小怪只拉不傷（碎光命中確認），
+// 其餘輕傷＋未死拉近——isInhalable 對 24 種中 17 種恆真，當判準會使潮引近乎全面零傷。
 export const TIDE_PULL = {
   rangePx: 200,
   damage: 2,
   pullSpeed: 300,
   cooldownMs: 700,
+  pullOnlyKinds: ['cargo', 'ticketa', 'foamy', 'frosty', 'manta'],
 } as const;
 
 // 鏡步（§119）：空中跳槽位＝面向側短距瞬移（殘影演出，消耗拍翅次數）。

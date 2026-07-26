@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ENEMY_TEXTURE_KEYS } from '../core/assetPlan';
+import { resetTransientFlags } from '../core/poolFlags';
 import { ENEMY_SIZE, SPORA_SLOW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
@@ -333,10 +334,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     const hazard = hazards.get(x, y, SPIKE_TEX) as Phaser.Physics.Arcade.Sprite | null;
     if (!hazard) return null;
     hazard.setActive(true);
-    // 池回收重用：外觀屬性統一復位，避免沿用前種 hazard 的殘留樣式。
+    // 池回收重用：外觀屬性統一復位，避免沿用前種 hazard 的殘留樣式；
+    // 互動旗標（tideDeflected 等）走 poolFlags 單點復位。
     hazard.setAlpha(1);
     hazard.setRotation(0);
     hazard.setData('boomMs', undefined);
+    resetTransientFlags(hazard);
     const body = hazard.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(x, y);

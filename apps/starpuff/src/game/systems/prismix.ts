@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { resetTransientFlags } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
@@ -226,9 +227,8 @@ export function createPrismix(
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
     shot.setTint(0xd8c8f5);
-    shot.setData('reflected', false);
-    // 池復用重設（審查修復）：折返彈標記不得殘留給晶雨/彈幕，防誤判可吸入。
-    shot.setData('inhalable', false);
+    // 池復用重設：互動旗標（reflected/inhalable/tideDeflected 等）走 poolFlags 單點復位。
+    resetTransientFlags(shot);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     return shot;
   };

@@ -13,6 +13,7 @@ import {
   type MagazineSlot,
   type StarFlavor,
 } from '../core/config';
+import { resetTransientFlags } from '../core/poolFlags';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import {
@@ -526,12 +527,12 @@ export function createPlayer(
     const body = star.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(fx, sprite.y);
+    // 池重用重設（PR #886 收斂）：焰彈殘留的 burn 等互動旗標走 poolFlags 單點復位。
+    resetTransientFlags(star);
     star.setData('damage', starDamage(slot));
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
     star.setData('mix', slot.mix ?? null);
-    // 池重用重設（PR #886 收斂）：焰彈殘留的 burn 標記不得跨個體洩漏到一般星彈。
-    star.setData('burn', false);
     // 迴旋星（§53）：標記迴旋彈道由本系統 steerBoomerangStars 逐幀驅動；非迴旋彈清殘留。
     star.setData('boomMs', spec.boomerang ? 0 : null);
     star.setData('boomDir', facing);

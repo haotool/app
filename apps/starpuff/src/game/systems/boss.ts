@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { resetTransientFlags } from '../core/poolFlags';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
@@ -272,10 +273,11 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     const ball = projectiles.get(x, y, 'boss-jelly-ball') as Phaser.Physics.Arcade.Sprite | null;
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
-    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時 / 反彈標記須復位。
+    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時須復位；
+    // 互動旗標（reflected/tideDeflected 等）走 poolFlags 單點復位。
     ball.clearTint();
     ball.setData('homingMs', 0);
-    ball.setData('reflected', false);
+    resetTransientFlags(ball);
     (ball.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
     return ball;
   };

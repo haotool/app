@@ -32,13 +32,13 @@ interface FakeEnemy {
   x: number;
   y: number;
   active: boolean;
-  // §119 水引守門：可吸供給只拉不傷（缺省不可吸，沿既有測試語意）。
-  inhalable?: boolean;
+  // §119 水引守門：供給味清單只拉不傷（判準走 kindOf，缺省 jelly＝非供給）。
+  kind?: string;
   setVelocity: ReturnType<typeof vi.fn>;
 }
 
-function makeEnemy(x: number, y: number, active = true): FakeEnemy {
-  return { x, y, active, setVelocity: vi.fn() };
+function makeEnemy(x: number, y: number, active = true, kind = 'jelly'): FakeEnemy {
+  return { x, y, active, kind, setVelocity: vi.fn() };
 }
 
 function chainable(): Record<string, ReturnType<typeof vi.fn>> {
@@ -105,7 +105,7 @@ function makeHarness(overrides: {
         applySlow,
         kill,
         freeze,
-        isInhalable: (enemy: unknown) => (enemy as FakeEnemy).inhalable === true,
+        kindOf: (enemy: unknown) => (enemy as FakeEnemy).kind ?? null,
       }) as unknown as EnemySystem,
     fx: () => fx as unknown as FxSystem,
     boss: () =>
@@ -346,23 +346,26 @@ describe('resolveGaleLanding 風化落地衝擊（§57）', () => {
 });
 
 describe('resolveTransformStrike tide-pull（§119 水引，PR #886 收斂）', () => {
-  it('可吸供給怪只拉不傷：HP1 供給不再被先傷即殺而拉近失效', () => {
-    const supply = makeEnemy(220, 300);
-    supply.inhalable = true;
-    const { combat, damage } = makeHarness({ enemies: [supply] });
-    combat.resolveTransformStrike('tide-pull', 120, 300, 1);
-    expect(damage).not.toHaveBeenCalled();
-    expect(supply.setVelocity).toHaveBeenCalled();
+  it('供給味清單全員只拉不傷＋碎光命中確認：HP1 供給不再被先傷即殺而拉近失效', () => {
+    for (const kind of TIDE_PULL.pullOnlyKinds) {
+      const supply = makeEnemy(220, 300, true, kind);
+      const { combat, damage, fx } = makeHarness({ enemies: [supply] });
+      combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+      expect(damage, kind).not.toHaveBeenCalled();
+      expect(supply.setVelocity, kind).toHaveBeenCalled();
+      // 零傷命中回饋（UIUX）：目標位置碎光確認命中，非僅施放點演出。
+      expect(fx.burstSmall, kind).toHaveBeenCalledWith(220, 300, TRANSFORM_FORMS.tide.tint);
+    }
   });
 
-  it('不可吸目標照常傷＋未死拉近；被擊殺不拉', () => {
-    const foe = makeEnemy(220, 300);
+  it('非供給目標（可吸 jelly 亦然）照常傷＋未死拉近；被擊殺不拉', () => {
+    const foe = makeEnemy(220, 300, true, 'jelly');
     const { combat, damage } = makeHarness({ enemies: [foe] });
     combat.resolveTransformStrike('tide-pull', 120, 300, 1);
     expect(damage).toHaveBeenCalledWith(foe, TIDE_PULL.damage);
     expect(foe.setVelocity).toHaveBeenCalled();
 
-    const dead = makeEnemy(220, 300);
+    const dead = makeEnemy(220, 300, true, 'zappy');
     const killedHarness = makeHarness({ enemies: [dead] });
     killedHarness.damage.mockReturnValue('killed');
     killedHarness.combat.resolveTransformStrike('tide-pull', 120, 300, 1);
