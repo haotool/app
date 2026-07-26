@@ -192,11 +192,11 @@ describe('失敗與逾時降級（anti-softlock）', () => {
     expect(fake.labelText()).toBe('部分素材載入失敗，將以簡易圖示續玩');
   });
 
-  it('請求永久 pending 時逾時強制收尾，玩家不會卡在載入畫面', async () => {
+  it('請求永久 pending 時停滯逾時強制收尾，玩家不會卡在載入畫面', async () => {
     const { loadAssets } = await freshLoader();
     const fake = createFakeScene();
     loadAssets(fake.scene, [entry('bg-astral-l')]);
-    // 永不觸發 complete：模擬請求掛起。
+    // 永不觸發任何事件：模擬請求掛起。
     vi.advanceTimersByTime(19_000);
     expect(fake.loadCompleteCalls()).toBe(0);
     vi.advanceTimersByTime(1_500);
@@ -204,6 +204,45 @@ describe('失敗與逾時降級（anti-softlock）', () => {
     expect(fake.labelText()).toBe('載入逾時，將以簡易圖示續玩');
     // 收尾一併拆掉載入 UI（外框／進度條／文字三件）。
     expect(fake.destroyed()).toBe(3);
+  });
+
+  it('慢網持續有進度時不誤判掛死——單關 600KB 在 Slow 3G 可能遠超停滯門檻', async () => {
+    const { loadAssets } = await freshLoader();
+    const fake = createFakeScene();
+    loadAssets(fake.scene, [entry('bg-astral-l')]);
+    // 每 15 秒推進一點進度，總時長 90 秒（遠超 20 秒停滯門檻）仍不得被降級。
+    for (let elapsed = 0; elapsed < 90_000; elapsed += 15_000) {
+      vi.advanceTimersByTime(15_000);
+      fake.emit('progress', elapsed / 90_000);
+      expect(fake.loadCompleteCalls()).toBe(0);
+    }
+    expect(fake.labelText()).toBe('載入中…');
+  });
+
+  it('進度極慢仍會被硬上限接住（anti-softlock 兜底）', async () => {
+    const { loadAssets } = await freshLoader();
+    const fake = createFakeScene();
+    loadAssets(fake.scene, [entry('bg-astral-l')]);
+    for (let elapsed = 0; elapsed < 130_000; elapsed += 10_000) {
+      vi.advanceTimersByTime(10_000);
+      fake.emit('progress', 0.01);
+    }
+    expect(fake.loadCompleteCalls()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('逾時收尾後才抵達的檔案不記為 manifest 來源（該幀已用佔位色塊）', async () => {
+    const { loadAssets } = await freshLoader();
+    const first = createFakeScene();
+    loadAssets(first.scene, [entry('boss-prismix')]);
+    vi.advanceTimersByTime(21_000);
+    expect(first.loadCompleteCalls()).toBe(1);
+    // in-flight 檔案晚到：監聽已於 complete 清理時解除，不得誤記。
+    first.emit('filecomplete', 'boss-prismix');
+
+    const second = createFakeScene(['boss-prismix']);
+    loadAssets(second.scene, [entry('boss-prismix')]);
+    expect(second.removed).toEqual(['boss-prismix']);
+    expect(second.loaded.map((f) => f.key)).toEqual(['boss-prismix']);
   });
 
   it('正常完成後解除逾時，不會事後誤觸強制收尾', async () => {

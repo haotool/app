@@ -4,6 +4,7 @@ import {
   BOSS_SUMMON_KINDS,
   BOSS_TEXTURE_KEYS,
   ENEMY_TEXTURE_KEYS,
+  SHARED_LEVEL_KEYS,
   bgTextureKey,
   entriesForKeys,
   entriesForLevel,
@@ -13,6 +14,7 @@ import {
 } from './assetPlan';
 import { CODEX_MONSTERS } from './codex';
 import { LEVELS, getLevel } from '../logic/levels';
+import { TRANSFORM_FORMS } from '../logic/transform';
 import type { LevelId } from './types';
 
 const keysOf = (entries: readonly AssetEntry[]): string[] => entries.map((entry) => entry.key);
@@ -80,14 +82,31 @@ describe('manifest 驅動的分階段載入', () => {
   });
 
   it('全關共用核心（主角姿勢／形態立繪）每關都在場', () => {
-    for (const id of [1, 7, 13, 20] as LevelId[]) {
-      const keys = planKeys(id);
-      for (const shared of ['hero-inhale', 'hero-puffed', 'hero-hurt']) {
-        expect(keys).toContain(shared);
+    const bootKeys = new Set(keysOf(entriesForPhase('boot')));
+    for (const level of LEVELS) {
+      const keys = new Set(planKeys(level.id));
+      // 清單取 SHARED_LEVEL_KEYS 單一真值，測試不另維護第二份。
+      for (const shared of SHARED_LEVEL_KEYS) {
+        expect(keys.has(shared) || bootKeys.has(shared)).toBe(true);
       }
-      // 變身可於關內任意時點觸發，形態立繪必須隨關備妥。
-      for (const form of ['hero-volt', 'hero-gale', 'hero-shell']) expect(keys).toContain(form);
     }
+  });
+
+  it('形態立繪鍵由 TRANSFORM_FORMS 派生，新增形態自動納管', () => {
+    for (const form of Object.keys(TRANSFORM_FORMS)) {
+      expect(SHARED_LEVEL_KEYS).toContain(`hero-${form}`);
+    }
+  });
+
+  // form 階段一律每關載入（變身無法預測時點）。關卡限定資產誤標成 form 不會缺圖，
+  // 但會讓該關資產在每一關都下載，正是本 PR 要消除的成本。
+  it('關卡限定資產不得標為 form（會退回每關全載）', () => {
+    const shared = new Set(SHARED_LEVEL_KEYS);
+    const levelScoped = new Set(LEVELS.flatMap((level) => levelAssetKeys(level)));
+    const misfiled = keysOf(entriesForPhase('form')).filter(
+      (key) => levelScoped.has(key) && !shared.has(key),
+    );
+    expect(misfiled).toEqual([]);
   });
 
   it('魔王立繪只在魔王關載入', () => {
@@ -145,9 +164,12 @@ describe('anti-softlock：登場貼圖派生完整', () => {
   });
 });
 
-// phase 標錯的總守門：`lazy`／`form` 等非戰鬥階段沒有 scene 呼叫點，把戰鬥資產標進去
-// 會讓該關無聲缺圖走佔位色塊。此不變式與階段名稱無關——不論標成哪一階段，只要該關
-// 用得到就必須在 boot 或該關計畫內，涵蓋背景／道具／小怪／魔王全類別。
+// phase 標錯的總守門：`lazy` 沒有 scene 呼叫點，把戰鬥資產標進去會讓該關無聲缺圖走
+// 佔位色塊。此不變式與階段名稱無關——不論標成哪一階段，只要 levelAssetKeys 派生得到
+// 就必須落在 boot 或該關計畫內。
+// 涵蓋範圍即 levelAssetKeys 的派生鍵：關卡限定的背景／道具／小怪／魔王，加上共用的
+// 主角姿勢與形態立繪。派生不到的資產（form 階段的變身動畫分鏡、特效分層等）不在此
+// 守門範圍內。
 describe('anti-softlock：登場貼圖必定載得到', () => {
   it('每關派生出的每一個鍵都落在 boot 或該關計畫內', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));

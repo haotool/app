@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 7、penalty 3、neutral 2）｜累計總分：+264
+> 本次分數變化：+5（reward 9、penalty 4、neutral 2）｜累計總分：+265
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-invariant-hero-form-blind-spot
+- 原因：我立的覆蓋不變式註解宣稱「涵蓋全類別」，但 levelAssetKeys 只派生背景／道具／小怪／魔王，不含 hero 共用姿勢與 form 立繪——實測 hero-inhale-big-1／-2 標成 lazy 時 19 案全綠，其餘 hero 鍵只是恰好被測試端另一份手動清單接住，實為「不變式＋手動清單」的拼接
+- 解法：共用核心改在 assetPlan 宣告為 SHARED_LEVEL_KEYS 併入 levelAssetKeys（form 鍵由 TRANSFORM_FORMS 派生，W1 加 ember／tide 自動跟進），測試端手動清單刪除改讀同一真值；13 鍵 × lazy 誤標矩陣全數轉紅，註解同步改述為「levelAssetKeys 派生鍵」並點名派生外資產不在守門範圍
+
+- 日期：2026-07-26
+- ID：reward-starpuff-stall-based-load-timeout
+- 原因：固定 20 秒逾時對慢網過緊——單關實測約 600KB，Slow 3G 或擁塞下資產還在飛就被強制降級成佔位色塊，傷害的正是最需要分階段載入的族群
+- 解法：改為停滯型判定（20 秒內無 progress／filecomplete／loaderror 才算掛死）＋120 秒硬上限兜底；補三案鎖住「90 秒持續進度不誤判」「極慢仍被硬上限接住」「逾時後晚到檔案不記為 manifest 來源」（晚到誤記會讓佔位色塊永不被替換）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-form-phase-misfile-guard
+- 原因：誤標矩陣顯示另一方向的破口——關卡限定資產標成 form 不會缺圖，但 form 一律每關載入，等於退回本 PR 要消除的「每關全載」成本，且無任何守門
+- 解法：補「關卡限定資產不得標為 form」不變式（levelScoped 減 SHARED_LEVEL_KEYS 派生，零硬編），minion／prop／bg 三向誤標實測全數轉紅
 
 - 日期：2026-07-26
 - ID：reward-starpuff-lazy-phase-coverage-invariant

@@ -6,7 +6,10 @@
 //   form  形態解鎖後才需要的變身立繪
 //   lazy  非戰鬥的按需資產（HUD 徽章等），由使用端自行補載
 // lazy 目前無 scene 呼叫點：任何關卡會用到的資產都不得標為 lazy，否則該關會無聲缺圖
-// 走佔位色塊。assetPlan.test 的「登場貼圖必定載得到」不變式對全類別守門。
+// 走佔位色塊。assetPlan.test 的「登場貼圖必定載得到」不變式守門，涵蓋範圍為
+// levelAssetKeys 派生鍵——關卡限定的背景／道具／小怪／魔王，加上共用的主角姿勢與
+// 形態立繪（SHARED_LEVEL_KEYS）。不在該派生內的資產（例如 form 階段的變身動畫分鏡、
+// 特效分層）標錯不會被擋下，新增這類條目時請自行確認載入時機。
 export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'lazy';
 
 export interface AssetEntry {
