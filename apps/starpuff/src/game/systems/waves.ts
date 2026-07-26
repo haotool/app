@@ -64,11 +64,25 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   // v12（§80）：twinkla 空中星靈、cometa 高處巡游（俯衝起點高於玩家帶）。
   twinkla: 240,
   cometa: 150,
+  // §120：cargo/foamy/frosty 地面帶；ticketa 高軌入場、scanna 定點懸浮、manta 低空巡游。
+  cargo: 330,
+  ticketa: 190,
+  scanna: 250,
+  foamy: 330,
+  frosty: 330,
+  manta: 280,
 };
 
 // #812 救援懸浮品種的可及帶定高（站立吸入錐直達，免跳拍追擊）。
 const RESCUE_HOVER_Y = 300;
-const RESCUE_HOVER_KINDS: readonly EnemyKind[] = ['floaty', 'zappy', 'glowy', 'twinkla', 'gusty'];
+const RESCUE_HOVER_KINDS: readonly EnemyKind[] = [
+  'floaty',
+  'zappy',
+  'glowy',
+  'twinkla',
+  'gusty',
+  'ticketa',
+];
 
 const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';
 // 桌機教學浮字（#817/§109）：虛擬鍵已隱藏，改示鍵盤鍵位（與 Title 鍵位卡文案一致，

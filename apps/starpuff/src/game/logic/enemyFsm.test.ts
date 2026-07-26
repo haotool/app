@@ -39,6 +39,17 @@ import {
   tickZappy,
   type ShellyState,
   type ZappyPhase,
+  CARGO_FSM,
+  FOAMY_FSM,
+  MANTA_FSM,
+  SCANNA_FSM,
+  TICKETA_FSM,
+  cargoPatrolDirection,
+  resolveFrostySplit,
+  tickFoamy,
+  tickManta,
+  tickScanna,
+  tickTicketa,
 } from './enemyFsm';
 
 describe('Shelly 三態時序（§30）', () => {
@@ -538,5 +549,67 @@ describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
     expect(COMETA_FSM.lockMs).toBeGreaterThanOrEqual(500);
     expect(COMETA_FSM.tailLifeMs).toBeGreaterThan(0);
     expect(COMETA_FSM.tailLifeMs).toBeLessThanOrEqual(1000);
+  });
+});
+
+describe('§120 星海終局篇新怪 FSM', () => {
+  it('telegraph 紅線：ticketa/scanna/foamy/manta 前搖窗一律 ≥600ms', () => {
+    expect(TICKETA_FSM.shiftMs).toBeGreaterThanOrEqual(600);
+    expect(SCANNA_FSM.aimMs).toBeGreaterThanOrEqual(600);
+    expect(FOAMY_FSM.windupMs).toBeGreaterThanOrEqual(600);
+    expect(MANTA_FSM.aimMs).toBeGreaterThanOrEqual(600);
+  });
+
+  it('cargoPatrolDirection：週期折返（flipMs 交替 ±1）', () => {
+    expect(cargoPatrolDirection(0)).toBe(1);
+    expect(cargoPatrolDirection(CARGO_FSM.flipMs - 1)).toBe(1);
+    expect(cargoPatrolDirection(CARGO_FSM.flipMs)).toBe(-1);
+    expect(cargoPatrolDirection(CARGO_FSM.flipMs * 2)).toBe(1);
+  });
+
+  it('tickTicketa：fly 期滿入 shift（telegraph），shift 期滿回 fly（換軌由呈現層翻轉）', () => {
+    const toShift = tickTicketa('fly', TICKETA_FSM.flyMs - 1, 1);
+    expect(toShift.state).toBe('shift');
+    expect(toShift.entered).toBe('shift');
+    const backToFly = tickTicketa('shift', TICKETA_FSM.shiftMs - 1, 1);
+    expect(backToFly.state).toBe('fly');
+    expect(backToFly.entered).toBe('fly');
+    expect(tickTicketa('fly', 0, 100).entered).toBeNull();
+  });
+
+  it('tickScanna：scan→aim→fire（單幀事件態）→cool→scan 完整循環', () => {
+    expect(tickScanna('scan', SCANNA_FSM.scanMs - 1, 1).state).toBe('aim');
+    expect(tickScanna('aim', SCANNA_FSM.aimMs - 1, 1).state).toBe('fire');
+    const afterFire = tickScanna('fire', 0, 16);
+    expect(afterFire.state).toBe('cool');
+    expect(afterFire.entered).toBe('cool');
+    expect(tickScanna('cool', SCANNA_FSM.coolMs - 1, 1).state).toBe('scan');
+  });
+
+  it('tickFoamy：idle→windup→spit（單幀事件態）→cool→idle 完整循環', () => {
+    expect(tickFoamy('idle', FOAMY_FSM.idleMs - 1, 1).state).toBe('windup');
+    expect(tickFoamy('windup', FOAMY_FSM.windupMs - 1, 1).state).toBe('spit');
+    expect(tickFoamy('spit', 0, 16).state).toBe('cool');
+    expect(tickFoamy('cool', FOAMY_FSM.coolMs - 1, 1).state).toBe('idle');
+  });
+
+  it('tickManta：cruise→aim→volley（單幀事件態）→cool→cruise 完整循環', () => {
+    expect(tickManta('cruise', MANTA_FSM.cruiseMs - 1, 1).state).toBe('aim');
+    expect(tickManta('aim', MANTA_FSM.aimMs - 1, 1).state).toBe('volley');
+    expect(tickManta('volley', 0, 16).state).toBe('cool');
+    expect(tickManta('cool', MANTA_FSM.coolMs - 1, 1).state).toBe('cruise');
+  });
+
+  it('resolveFrostySplit：本體一般擊殺分裂；burn 熔解與迷你體不分裂', () => {
+    expect(resolveFrostySplit(false, false)).toBe(true);
+    expect(resolveFrostySplit(true, false)).toBe(false);
+    expect(resolveFrostySplit(false, true)).toBe(false);
+    expect(resolveFrostySplit(true, true)).toBe(false);
+  });
+
+  it('foamy 泡泡為不傷人拒止：上浮參數為負（向上），壽命有界', () => {
+    expect(FOAMY_FSM.bubbleLiftVy).toBeLessThan(0);
+    expect(FOAMY_FSM.bubbleRiseVy).toBeLessThan(0);
+    expect(FOAMY_FSM.bubbleLifeMs).toBeGreaterThan(0);
   });
 });

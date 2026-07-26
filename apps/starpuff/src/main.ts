@@ -12,7 +12,6 @@ import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './
 import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
 import { notifySaveUnavailable, showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
-import { eligibleForm } from './game/logic/transform';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
 import { SceneKeys, type EnemyKind, type LevelId } from './game/core/types';
 import type { EnemySystem } from './game/systems/enemies';
@@ -178,7 +177,7 @@ declare global {
       gateOpen: () => boolean;
       quota: () => { killCount: number; killQuota: number };
       listeners: (event: string) => number;
-      enemies: () => { kind: string; x: number; y: number }[];
+      enemies: () => { kind: string; x: number; y: number; elite: boolean }[];
       view: () => { width: number; height: number };
       paused: () => boolean;
       scenePaused: () => boolean;
@@ -231,8 +230,8 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     shieldRaised: () => internals().player.isShieldRaised(),
     // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
     transform: () => internals().player.getTransformState(),
-    // 變身資格觀測（#848 審查修復）：走 eligibleForm SSOT，零第二份資格邏輯。
-    transformEligible: () => eligibleForm(internals().player.getMagazine()) !== null,
+    // 變身資格觀測（#848 審查修復）：走 player 資格單點（§119 含形態解鎖閘）。
+    transformEligible: () => internals().player.getEligibleForm() !== null,
     // v19 觀測點（§109 e2e/探針）：蓄能結晶相位。
     starburst: () => internals().player.getStarburst(),
     // v9 慈悲補血鉤子（§62 e2e）：時間快轉＋RNG 必中、正式受擊管線壓血、生成計數觀測。
@@ -378,14 +377,20 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       };
     },
     enemies: () => {
-      const list: { kind: string; x: number; y: number }[] = [];
+      const list: { kind: string; x: number; y: number; elite: boolean }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
       try {
         for (const child of internals().enemies.getGroup().getChildren()) {
           const kind = internals().enemies.kindOf(child);
           if (!kind) continue;
           const sprite = child as unknown as { x: number; y: number };
-          list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+          // elite 旗標（§119 probe）：精英不可吸——獵集 bot 據此跳過（同 kind 同形）。
+          list.push({
+            kind,
+            x: Math.round(sprite.x),
+            y: Math.round(sprite.y),
+            elite: child.getData('elite') === true,
+          });
         }
       } catch {
         return list;

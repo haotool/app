@@ -16,7 +16,10 @@ import {
 } from './achievements';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
 
-const ALL_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
+// §121 星海終局篇：在編關卡含過渡跳號 21/23（all-clear 由 LEVELS 派生）。
+const ALL_IDS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23,
+] as const;
 
 function saveWithClears(ids: readonly number[], timeMs = 45000): SaveData {
   const save = createDefaultSave();
@@ -68,8 +71,10 @@ describe('進度類判定', () => {
     expect(unlockedAchievements(saveWithClears([1])).has('first-clear')).toBe(true);
   });
 
-  it('all-clear：19/20 不成立、20/20 成立', () => {
-    expect(unlockedAchievements(saveWithClears(ALL_IDS.slice(0, 19))).has('all-clear')).toBe(false);
+  it('all-clear：差一關不成立、在編全通關成立', () => {
+    expect(
+      unlockedAchievements(saveWithClears(ALL_IDS.slice(0, ALL_IDS.length - 1))).has('all-clear'),
+    ).toBe(false);
     expect(unlockedAchievements(saveWithClears(ALL_IDS)).has('all-clear')).toBe(true);
   });
 });
@@ -261,7 +266,8 @@ describe('v9–v14 舊存檔載入補發', () => {
       ]),
     );
     const newly = awardAchievements(save);
-    expect(newly).toContain('all-clear');
+    // §121 新關入編後 20/20 不再是全通關：舊玩家補發不含 all-clear（通關新章後補發）。
+    expect(newly).not.toContain('all-clear');
     expect(newly).toContain('boss-voidra');
     expect(newly).toContain('speed-boss-120');
     expect(newly).toContain('speed-boss-60');

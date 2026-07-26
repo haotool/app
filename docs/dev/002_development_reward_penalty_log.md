@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+286
+> 本次分數變化：+13（reward 13、penalty 0、neutral 0）｜累計總分：+299
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,71 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-v21w1-framehook-mutation-lock
+- 原因：Grok MEDIUM——尺寸回歸鎖的替身 scene.events 為 vi.fn()，PRE/POST_UPDATE 幀鉤從未觸發，移除 wearTexture 的 vscale.rebase 單測仍全綠（產線下一幀被舊基準沖掉）＝對 rebase 假信心
+- 解法：替身改真實 on/off 記錄＋frame.preUpdate/postUpdate 依註冊序驅動幀鉤，跨幀斷言落在 PRE 後物理讀取點；雙 mutation 實證——移除 rebase 紅（顯示 72／117.56 vs 48）、移除 fitHurtbox 紅（判定箱 24／14.7 vs 36），還原全綠
+
+- 日期：2026-07-27
+- ID：reward-starpuff-v21w1-hurtbox-decouple
+- 原因：終審深挖揭露破圖修法只修一半——Body.updateBounds 每物理步以凍結的 sourceWidth×新 scale 重算世界尺寸，變身後 hurtbox 隨源解析度縮水 33%~59%（視覺正常的隱性玩法優勢），且 1038 案零 body.width/height 斷言；player.ts 1200 行零餘裕擋修法落地
+- 解法：fitHurtbox 併入 wearTexture 以當下 frame 尺寸現算（世界判定箱恆常數）＋body 維度回歸鎖（突變紅）；星彈發射/回收管線抽離 systems/starLauncher.ts（player 1200→1133）；四鍵斷言升級毒值＋具體期望值；尺寸債務表補追蹤 issue #894
+
+- 日期：2026-07-27
+- ID：reward-starpuff-v21w1-form-art-decouple
+- 原因：素材接關揭露四新形態立繪源尺寸不一（768/1254 對 512 基準）——換圖不重算 displaySize 使變身視覺暴增 2.5 倍且與物理箱脫鉤（vscale 每幀以註冊基準覆寫，單改 displaySize 會被沖掉）；form 階段無條件全載使 L1 進場多揹 292.6KiB；素材產線缺尺寸機械鎖
+- 解法：wearTexture 統一換裝入口（displaySize＋vscale rebase 成對，含 finishTransform 直寫點）＋破圖回歸鎖與前後截圖對照、WebP 標頭解析 512 守門（債務例外精確釘住）、形態立繪依 FORM_INTRO_LEVEL 逐關載入（稜/引退回 lazy 待 W3 認領）、§119.3 密度數字改多輪分佈如實記載
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-fourkey-sentinel-closeout
+- 原因：終審三輪揭露四鍵必寫測試假信心（形態彈復用池物件的殘值頂替斷言——防池殘留的測試被池殘留騙過，session 第三例「看似覆蓋實未鎖住」）＋A 閘謂詞依賴單池 contains 過窄＋#857 素材已併入 main 需整合
+- 解法：四鍵測試改 sentinel 修法拆雙案（雙側突變重跑各自紅）、A 閘謂詞放寬、§119 補同幀競態決策脈絡；rebase 整合 #857——PENDING 十鍵素材交付自表清空納回載入計畫、starport/tidebay 專屬橫景取代 astral 別名
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-race-window-hardening
+- 原因：終審二輪揭露同幀 merge→shields 競態（殘影同幀被 overlap 擊破後被 spawnShardOrbit 同步取走並 enableBody，使離池對帳的 !active 條件永久失效）＋inhalePull 修而無測＋排除清單機制/慣例混標＋AST 守門三種自然重構缺口未記錄
+- 解法：離池對帳前移 fsm.tick 之前＋spawnShardOrbit 取出第二閘（雙閘各自可獨撐）、兩輪可重放腳本決定性命中競態窗（雙拆紅）、inhalePull 補池復用回歸鎖、排除清單機制/慣例分級標示（四鍵必寫升級測試機制）、AST probe 補記斷言脫鉤/容器中轉/wrapper 收窄三邊界並鎖守門存續假設
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-final-review-hardening
+- 原因：終審揭露第六例池破口（殘影雙掛池群組、「非池物件」排除前提事實錯誤）＋靜態守門可被解構/中括號/換行/改名繞過且宣稱超售＋syrona doWave 取出點測試被共池噴泉柱掩護＋PENDING 豁免缺機械鎖
+- 解法：殘影失效即離池逐幀對帳、守門升級 TS 型別層 AST 檢查（七繞過寫法自證全抓）並誠實化宣稱、排除清單逐條事實重查（spawnHazard 參數化強制/inhalePull 補歸位）、doWave P3 專屬池循環測試、PENDING 三條機械鎖；突變三組實證全紅
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-pool-hygiene-structural
+- 原因：三輪複審揭露池洩漏同族缺陷第五例（syrona 糖漿波 caramel 未清）且池衛生機制僅防「新增旗標」不防「新增取出點」——mutation 實證刪除單點 reset 後測試全綠
+- 解法：acquirePooled 取出即復位 wrapper 收斂全部池取出點＋靜態守門測試禁 raw pool .get、caramel 入 POOL_TRANSIENT_FLAGS、一次性旗標全量盤點留檔、六取出點池循環整合測試補齊
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-review-convergence
+- 原因：PR #886 bot review 揪出三件 gameplay 缺陷（潮引先傷後拉使 HP1 供給怪被殺拉近失效、潮化對所有非投射物 hazard 全免傷破壞難度曲線、焰彈 burn 標記池重用洩漏）＋002 檔頭未反映 squash 聚合淨變化——三缺陷皆溜過兩席模型審查，測試網有洞
+- 解法：潮引改供給味清單只拉不傷（isInhalable 判準過寬經複審再收窄）、潮環撥開收窄為投射物白名單、池取出重設 burn，各補紅→綠回歸測試；rebase 後 002 改單一 commit 聚合落盤、設計章節照 T7-C 拆檔重落 §119/§120/§121
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-closeout-docs
+- 原因：W1 收尾——程式註解章號與 GAME_DESIGN 既有編號撞號會造成文檔引用漂移，且四新變身/新怪/新關屬使用者可感知新功能需 minor changeset 與設計文檔回寫（PR 聚合口徑：四新變身＋六新小怪＋L21/L23＋probe 全交付，量測達標見 §119.3/§121）
+- 解法：全波觸及檔案改號至終局編號 §119（四新變身）/§120（六新小怪）/§121（L21/L23 與進程），設計章節照 T7-C 拆檔落 02/03/04 主題檔＋索引對照表；minor changeset＋進度檔 stream-w1.md 同步
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-transform-probe
+- 原因：變身觸發密度契約缺 walk 關量測 probe；首測 8/8 逾時經逐秒取證揪出四層根因（帶彈再按 B 射掉集星、獵集死守潛地 drilly/不可吸精英、cargo 不朝玩家走、精英房前置＋無 checkpoint 死亡全重置）
+- 解法：level-audit 增 --probe transform（門檻 SSOT 入 AUDIT_THRESHOLDS、供給味反查 FORM_BY_FLAVOR）＋driver 獵集策略（持鍵紀律/前方優先/elite 旗標跳過）；設計面 cargo 近域 aggro、練習區前移＋精英房後置、L21/L23 補 §67 checkpoint、L23 練習區改泡泡機——終測 L21 p50 8s/p95 30s、L23 p50 11s/p95 26.6s 零逾時，mid 通關率雙 100%
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-levels-2123
+- 原因：W1 L21/L23 走動關入編需在過渡跳號（L22 未編）下維持解鎖鏈/地圖/成就一致，且靜態三軸首算 L21 僅 5.9 對 L19 9.0 倒掛
+- 解法：save LEVEL_IDS 改由 LEVELS 派生＋解鎖規則改「在編序前一關」、zones 擴十區、all-clear 語意隨 LEVELS 收斂；L21/L23 以十/九種混編＋三精英＋週期浮力柱加壓至靜態 9.2/9.3 接續 L20 不倒掛；vitest 908 綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-finale-minions
+- 原因：W1 六新小怪（貨櫃丁/票券蝠/掃描眼/泡泡機/冰史萊姆/潮汐魟）需沿 enemyFsm＋enemies 慣例且 enemyUpdates 已 1132 行貼閘
+- 解法：FSM 純邏輯續寫 enemyFsm.ts（telegraph ≥600ms 測試守門）、AI 呈現分檔 systems/finaleEnemies.ts、hazards（掃描光/泡泡/水刃）走既有池、frosty 分裂與 burn 熔解入 damage 單一管線；圖鑑佔位鍵 PENDING_TEXTURE_KEYS 凍結留給素材車；vitest 905 綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21w1-four-forms
+- 原因：星海終局篇 W1 四新變身（焰/潮/稜/引力）需沿 transform.ts 資料驅動擴充且 player/GameScene 已貼 1200 行閘
+- 解法：TRANSFORM_FORMS 擴七形態（語彙 ≤4、映射既有味系零新味、FORM_INTRO_LEVEL 解鎖閘不動 save schema），aura/變身環/偽星彈/空中機動抽 systems/formSkills.ts，世界結算集中 starCombat.resolveTransformStrike 單點路由；vitest 897 綠＋typecheck/lint 綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-qa-tinted-checker-hardening

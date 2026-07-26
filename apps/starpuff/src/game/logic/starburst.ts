@@ -1,5 +1,5 @@
 import { STAR, STARSTORM } from '../core/config';
-import type { StarburstPhase } from '../core/types';
+import type { StarburstPhase, TransformForm } from '../core/types';
 
 // 星暴 2.0 蓄能結晶純狀態機（GAME_DESIGN §109，不 import phaser），vitest 對象。
 // 結晶：彈匣滿 5 槽瞬間自動結晶——清空彈匣、頭頂生成蓄能星；蓄能星存在時再滿匣
@@ -64,13 +64,13 @@ export function resolveSpPress(opts: {
 }
 
 // SP 鍵可用模式（§109 呈現契約）：hidden 完全隱藏；detonate 金色大星；
-// volt/gale/shell 形態色圓徽；dismiss 解除迴旋箭。蓄爆中不可再操作 → hidden。
-export type SpMode = 'hidden' | 'detonate' | 'volt' | 'gale' | 'shell' | 'dismiss';
+// 形態名＝形態色圓徽（§119 七形態同制）；dismiss 解除迴旋箭。蓄爆中不可再操作 → hidden。
+export type SpMode = 'hidden' | 'detonate' | TransformForm | 'dismiss';
 
 export function resolveSpMode(opts: {
   phase: StarburstPhase;
-  transformForm: 'volt' | 'gale' | 'shell' | null;
-  eligibleForm: 'volt' | 'gale' | 'shell' | null;
+  transformForm: TransformForm | null;
+  eligibleForm: TransformForm | null;
   airborne: boolean;
 }): SpMode {
   if (opts.transformForm) return 'dismiss';

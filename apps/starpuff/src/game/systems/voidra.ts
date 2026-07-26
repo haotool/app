@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { acquirePooled } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { approachPoint, type FlightPoint } from '../logic/noctraFlight';
@@ -177,7 +178,7 @@ export function createVoidra(
     vx: number,
     vy: number,
   ): Phaser.Physics.Arcade.Sprite | null => {
-    const shot = projectiles.get(x, y, 'voidra-shot') as Phaser.Physics.Arcade.Sprite | null;
+    const shot = acquirePooled(projectiles, x, y, 'voidra-shot');
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
@@ -231,11 +232,7 @@ export function createVoidra(
     delay(VOIDRA.clawTelegraphMs, () => {
       if (dying) return;
       playSfx('boss-slam', 0.7);
-      const claw = shockwaves.get(
-        lockX,
-        GROUND_TOP - CLAW_H / 2,
-        '__WHITE',
-      ) as Phaser.Physics.Arcade.Sprite | null;
+      const claw = acquirePooled(shockwaves, lockX, GROUND_TOP - CLAW_H / 2, '__WHITE');
       if (!claw) return;
       claw.enableBody(true, lockX, GROUND_TOP - CLAW_H / 2, true, true);
       claw.setDisplaySize(CLAW_W, CLAW_H).setTint(0x4a3a78).setAlpha(0.85);
@@ -253,11 +250,7 @@ export function createVoidra(
       spawnTelegraph(scene, x, GROUND_TOP - 8, PILLAR_TELEGRAPH_MS);
       delay(PILLAR_TELEGRAPH_MS, () => {
         if (dying) return;
-        const pillar = shockwaves.get(
-          x,
-          -PILLAR_H / 2,
-          '__WHITE',
-        ) as Phaser.Physics.Arcade.Sprite | null;
+        const pillar = acquirePooled(shockwaves, x, -PILLAR_H / 2, '__WHITE');
         if (!pillar) return;
         pillar.enableBody(true, x, -PILLAR_H / 2, true, true);
         pillar.setDisplaySize(PILLAR_W, PILLAR_H).setTint(0x9080d8).setAlpha(0.92);

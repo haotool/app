@@ -1,9 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ASSETS, type AssetEntry } from './assets';
+import { ASSETS_V21_PART1 } from './assetsV21Part1';
+import { ASSETS_V21_PART2 } from './assetsV21Part2';
+import { ASSETS_V21_PART3 } from './assetsV21Part3';
 import {
   BOSS_SUMMON_KINDS,
   BOSS_TEXTURE_KEYS,
   ENEMY_TEXTURE_KEYS,
+  PENDING_TEXTURE_KEYS,
   SHARED_LEVEL_KEYS,
   bgTextureKey,
   entriesForKeys,
@@ -81,15 +87,32 @@ describe('manifest 驅動的分階段載入', () => {
     expect(planKeys(1)).not.toContain('prop-kiln-1');
   });
 
-  it('全關共用核心（主角姿勢／形態立繪）每關都在場', () => {
+  it('全關共用核心（主角姿勢／解鎖形態立繪）每關都在場（R7 依 FORM_INTRO_LEVEL 收斂）', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));
+    const pending = new Set(PENDING_TEXTURE_KEYS);
     for (const level of LEVELS) {
       const keys = new Set(planKeys(level.id));
-      // 清單取 SHARED_LEVEL_KEYS 單一真值，測試不另維護第二份。
-      for (const shared of SHARED_LEVEL_KEYS) {
-        expect(keys.has(shared) || bootKeys.has(shared)).toBe(true);
+      // 姿勢恆在場；形態立繪僅解鎖關起在場（未解鎖不載＝L1 進場不揹 292.6KiB）。
+      const required = SHARED_LEVEL_KEYS.filter(
+        (key) => !key.startsWith('hero-') || levelAssetKeys(level).includes(key),
+      );
+      for (const shared of required) {
+        if (pending.has(shared)) continue;
+        expect(keys.has(shared) || bootKeys.has(shared), `${level.id}:${shared}`).toBe(true);
       }
     }
+  });
+
+  it('形態立繪逐關納入（R7）：L1 不載新形態、L21 起載焰化、L23 起載潮化', () => {
+    expect(planKeys(1)).not.toContain('hero-ember');
+    expect(planKeys(1)).not.toContain('hero-tide');
+    expect(planKeys(20)).not.toContain('hero-ember');
+    expect(planKeys(21)).toContain('hero-ember');
+    expect(planKeys(23)).toContain('hero-ember');
+    expect(planKeys(21)).not.toContain('hero-tide');
+    expect(planKeys(23)).toContain('hero-tide');
+    // 既有三形態不受 FORM_INTRO_LEVEL 過濾（未列表＝恆載）。
+    expect(planKeys(1)).toContain('hero-volt');
   });
 
   it('形態立繪鍵由 TRANSFORM_FORMS 派生，新增形態自動納管', () => {
@@ -173,17 +196,22 @@ describe('anti-softlock：登場貼圖派生完整', () => {
 describe('anti-softlock：登場貼圖必定載得到', () => {
   it('每關派生出的每一個鍵都落在 boot 或該關計畫內', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));
+    // §119/§120 佔位鍵豁免：無資產檔可載，運行期以生成貼圖／著色回退保證不缺圖；
+    // 素材車交付自 PENDING_TEXTURE_KEYS 移除後自動回到本守門範圍。
+    const pending = new Set(PENDING_TEXTURE_KEYS);
     for (const level of LEVELS) {
       const planned = new Set(planKeys(level.id));
       const missing = levelAssetKeys(level).filter(
-        (key) => !planned.has(key) && !bootKeys.has(key),
+        (key) => !planned.has(key) && !bootKeys.has(key) && !pending.has(key),
       );
       expect({ level: level.id, missing }).toEqual({ level: level.id, missing: [] });
     }
   });
 
-  it('圖鑑立繪全數可由 manifest 補載', () => {
-    const codexKeys = CODEX_MONSTERS.map((monster) => monster.textureKey);
+  it('圖鑑立繪全數可由 manifest 補載（§120 佔位鍵走 CodexScene 剪影回退，豁免）', () => {
+    const codexKeys = CODEX_MONSTERS.map((monster) => monster.textureKey).filter(
+      (key) => !PENDING_TEXTURE_KEYS.includes(key),
+    );
     expect(keysOf(entriesForKeys(codexKeys)).sort()).toEqual([...codexKeys].sort());
   });
 });
@@ -198,6 +226,89 @@ describe('levelAssetKeys 派生', () => {
     for (const level of LEVELS) {
       const keys = levelAssetKeys(level);
       expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+});
+
+// PENDING 佔位鍵豁免的機械鎖（PR #886 R4）：豁免不受 anti-softlock 不變式管轄，
+// 若被濫用（把真資產鍵塞進 PENDING）會靜默放行缺圖——以下三條把範圍鎖死。
+describe('PENDING 佔位鍵守門（R4）', () => {
+  it('PENDING ∩ ASSETS = ∅：已存在 manifest 的鍵禁止列入豁免', () => {
+    const assetKeys = new Set(ASSETS.map((entry) => entry.key));
+    for (const key of PENDING_TEXTURE_KEYS) {
+      expect(assetKeys.has(key), key).toBe(false);
+    }
+  });
+
+  it('每個 PENDING key 必落在已知運行期回退集合（minion→色塊生成、hero→素身著色）', () => {
+    const minionFallback = new Set(Object.values(ENEMY_TEXTURE_KEYS));
+    const heroFallback = new Set(Object.keys(TRANSFORM_FORMS).map((form) => `hero-${form}`));
+    for (const key of PENDING_TEXTURE_KEYS) {
+      expect(minionFallback.has(key) || heroFallback.has(key), key).toBe(true);
+    }
+  });
+
+  it('PENDING 內容凍結：#857 素材交付後清空，新佔位鍵入列必須顯式過審', () => {
+    expect([...PENDING_TEXTURE_KEYS]).toEqual([]);
+  });
+});
+
+// hero 立繪來源尺寸守門（PR #886 R7）：#857 交付的 4/4 新形態立繪同時偏離 512
+// 基準（ember 768、tide/prism/gravity 1254）——素材產線缺機械鎖，W2/W3 延續同
+// 產線大概率再犯。運行期已由 player.wearTexture 解耦，本守門鎖「來源慣例」：
+// 新增 hero 立繪必須 512×512；已知債務例外精確釘住尺寸（再漂移也會紅），
+// 素材重新輸出對齊後自例外表移除。
+describe('hero 立繪來源尺寸守門（R7）', () => {
+  // 追蹤 issue：#894（素材重新輸出 512 後自本表移除；雙向鎖——尺寸再漂移或
+  // 修對忘移除皆紅）。
+  const OVERSIZED_DEBT: Record<string, number> = {
+    'hero-ember': 768,
+    'hero-tide': 1254,
+    'hero-prism': 1254,
+    'hero-gravity': 1254,
+  };
+
+  // WebP 尺寸解析（VP8X/VP8/VP8L 三型），零依賴。
+  function webpSize(buffer: Buffer): { width: number; height: number } {
+    expect(buffer.toString('ascii', 0, 4)).toBe('RIFF');
+    expect(buffer.toString('ascii', 8, 12)).toBe('WEBP');
+    const fourCC = buffer.toString('ascii', 12, 16);
+    if (fourCC === 'VP8X') {
+      return {
+        width: 1 + buffer.readUIntLE(24, 3),
+        height: 1 + buffer.readUIntLE(27, 3),
+      };
+    }
+    if (fourCC === 'VP8 ') {
+      return {
+        width: buffer.readUInt16LE(26) & 0x3fff,
+        height: buffer.readUInt16LE(28) & 0x3fff,
+      };
+    }
+    if (fourCC === 'VP8L') {
+      const bits = buffer.readUInt32LE(21);
+      return { width: 1 + (bits & 0x3fff), height: 1 + ((bits >> 14) & 0x3fff) };
+    }
+    throw new Error(`未知 WebP 形式：${fourCC}`);
+  }
+
+  it('主 manifest 與 v21 分檔的 hero 主立繪一律 512×512（債務例外精確釘住）', () => {
+    const heroBase = /^hero-(?!.*(?:morph|skill))[a-z0-9-]+$/;
+    const entries = [
+      ...ASSETS,
+      ...ASSETS_V21_PART1,
+      ...ASSETS_V21_PART2,
+      ...ASSETS_V21_PART3,
+    ].filter((entry) => heroBase.test(entry.key));
+    expect(entries.length).toBeGreaterThan(8);
+    for (const entry of entries) {
+      const { width, height } = webpSize(readFileSync(fileURLToPath(entry.url)));
+      const expected = OVERSIZED_DEBT[entry.key] ?? 512;
+      expect({ key: entry.key, width, height }).toEqual({
+        key: entry.key,
+        width: expected,
+        height: expected,
+      });
     }
   });
 });

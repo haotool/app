@@ -3,7 +3,7 @@ import type Phaser from 'phaser';
 import { SLAM, STARSTORM, STAR_FLAVORS, getMix } from '../core/config';
 import { createBuffState, pickupBuff, BUFF_SPECS } from '../logic/buffs';
 import { SHELL_SHIELD } from '../logic/skills';
-import { GALE_FLIGHT, VOLT_BEAM, TRANSFORM_FORMS } from '../logic/transform';
+import { GALE_FLIGHT, TIDE_PULL, VOLT_BEAM, TRANSFORM_FORMS } from '../logic/transform';
 import { createStarCombat, type StarCombatHooks } from './starCombat';
 import type { BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -32,11 +32,13 @@ interface FakeEnemy {
   x: number;
   y: number;
   active: boolean;
+  // §119 水引守門：供給味清單只拉不傷（判準走 kindOf，缺省 jelly＝非供給）。
+  kind?: string;
   setVelocity: ReturnType<typeof vi.fn>;
 }
 
-function makeEnemy(x: number, y: number, active = true): FakeEnemy {
-  return { x, y, active, setVelocity: vi.fn() };
+function makeEnemy(x: number, y: number, active = true, kind = 'jelly'): FakeEnemy {
+  return { x, y, active, kind, setVelocity: vi.fn() };
 }
 
 function chainable(): Record<string, ReturnType<typeof vi.fn>> {
@@ -103,6 +105,7 @@ function makeHarness(overrides: {
         applySlow,
         kill,
         freeze,
+        kindOf: (enemy: unknown) => (enemy as FakeEnemy).kind ?? null,
       }) as unknown as EnemySystem,
     fx: () => fx as unknown as FxSystem,
     boss: () =>
@@ -188,7 +191,7 @@ describe('explodeStar 爆裂波及（§20/§53）', () => {
     const spec = STAR_FLAVORS.puffy;
     combat.explodeStar(100, 300, spec, excluded as unknown as Phaser.GameObjects.GameObject);
     expect(damage).toHaveBeenCalledTimes(1);
-    expect(damage).toHaveBeenCalledWith(inner, spec.aoeDamage);
+    expect(damage).toHaveBeenCalledWith(inner, spec.aoeDamage, false);
   });
 
   it('毒爆雲（slowMs>0）對 hurt 未死者加套緩速持續傷', () => {
@@ -339,5 +342,33 @@ describe('resolveGaleLanding 風化落地衝擊（§57）', () => {
     expect(damage).toHaveBeenCalledTimes(1);
     expect(damage).toHaveBeenCalledWith(near, GALE_FLIGHT.landingDamage);
     expect(near.setVelocity).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('resolveTransformStrike tide-pull（§119 水引，PR #886 收斂）', () => {
+  it('供給味清單全員只拉不傷＋碎光命中確認：HP1 供給不再被先傷即殺而拉近失效', () => {
+    for (const kind of TIDE_PULL.pullOnlyKinds) {
+      const supply = makeEnemy(220, 300, true, kind);
+      const { combat, damage, fx } = makeHarness({ enemies: [supply] });
+      combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+      expect(damage, kind).not.toHaveBeenCalled();
+      expect(supply.setVelocity, kind).toHaveBeenCalled();
+      // 零傷命中回饋（UIUX）：目標位置碎光確認命中，非僅施放點演出。
+      expect(fx.burstSmall, kind).toHaveBeenCalledWith(220, 300, TRANSFORM_FORMS.tide.tint);
+    }
+  });
+
+  it('非供給目標（可吸 jelly 亦然）照常傷＋未死拉近；被擊殺不拉', () => {
+    const foe = makeEnemy(220, 300, true, 'jelly');
+    const { combat, damage } = makeHarness({ enemies: [foe] });
+    combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+    expect(damage).toHaveBeenCalledWith(foe, TIDE_PULL.damage);
+    expect(foe.setVelocity).toHaveBeenCalled();
+
+    const dead = makeEnemy(220, 300, true, 'zappy');
+    const killedHarness = makeHarness({ enemies: [dead] });
+    killedHarness.damage.mockReturnValue('killed');
+    killedHarness.combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+    expect(dead.setVelocity).not.toHaveBeenCalled();
   });
 });

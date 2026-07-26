@@ -343,6 +343,59 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/bg-astral-l.webp', import.meta.url).href,
     phase: 'level',
   },
+  // §119/§120/§121 W1 接關（PR #886）：焰化/潮化立繪、六新怪立繪、兩張專屬橫景
+  // 自 assetsV21Part1 逐筆搬回（#857 接關契約）；稜化/引力化立繪待 L25/L27 入編
+  //（FORM_INTRO_LEVEL 過濾下 W1 無關卡認領），留在 lazy 分檔。
+  {
+    key: 'hero-ember',
+    url: new URL('../../assets/sprites/hero-ember.webp', import.meta.url).href,
+    phase: 'form',
+  },
+  {
+    key: 'hero-tide',
+    url: new URL('../../assets/sprites/hero-tide.webp', import.meta.url).href,
+    phase: 'form',
+  },
+  {
+    key: 'bg-starport-l',
+    url: new URL('../../assets/sprites/bg-starport-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'bg-tidebay-l',
+    url: new URL('../../assets/sprites/bg-tidebay-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-cargojelly',
+    url: new URL('../../assets/sprites/minion-cargojelly.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-ticketbat',
+    url: new URL('../../assets/sprites/minion-ticketbat.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-scannereye',
+    url: new URL('../../assets/sprites/minion-scannereye.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-bubbler',
+    url: new URL('../../assets/sprites/minion-bubbler.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-iceslime',
+    url: new URL('../../assets/sprites/minion-iceslime.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-tideray',
+    url: new URL('../../assets/sprites/minion-tideray.webp', import.meta.url).href,
+    phase: 'level',
+  },
 ];
 
 // v21-v30 未接關素材（442 條）獨立存放於 assetsV21Part1/2/3，刻意不併入本陣列：

@@ -19,6 +19,8 @@ export function installAuditDriver(opts) {
     grantSupply, // 魔王關純標準星紀律：空匣補 jelly
     // 變身優勢 hook（#816 W2）：非 null 時以該味集齊 ×3 並按 SP 變身（TTK 對照量測）。
     transformFlavor = null,
+    // §119 walk transform probe：同系供給怪集合——獵集吸食路徑（非 grantStar 注入）。
+    huntKinds = [],
     // 完整策略開關（#814 W1.5，BOT_TIERS SSOT 注入）：滿拍翅空中機動、鏡界窗紀律、
     // 魔王戰就地吸食補彈（低/中沿 grantSupply 節流口徑）。
     flap = false,
@@ -33,6 +35,7 @@ export function installAuditDriver(opts) {
   const KEY = { left: 37, right: 39, jump: 90, shoot: 88, sp: 67 };
   const INHALABLE = new Set(inhalableKinds);
   const HARMFUL = new Set(contactKinds);
+  const HUNT = new Set(huntKinds);
   const held = new Set();
   const dispatch = (type, keyCode) => {
     const ev = new KeyboardEvent(type, { bubbles: true, cancelable: true });
@@ -95,8 +98,9 @@ export function installAuditDriver(opts) {
       stateLog: [],
       shots: 0,
       samples: [],
-      // 變身優勢 hook（#816 W2）：成功變身次數。
+      // 變身優勢 hook（#816 W2）：成功變身次數；§119 首次變身時刻（probe 量測）。
       transforms: 0,
+      firstTransformMs: -1,
     },
     cur: { ammoZero: 0, starving: 0, fullStall: 0, quotaStall: 0, reachVacuum: 0 },
     ring: [],
@@ -379,7 +383,10 @@ export function installAuditDriver(opts) {
       // 變身優勢 hook（#816 W2）：無形態時集齊優勢味 ×3（正式 swallow 管線）→ 按 SP
       // 立即變身（空中裁決為 none，逐 tick 重試至落地）；變身中 B 即形態技，照常 tap。
       const tf = sp.transform ? sp.transform() : { form: null };
-      if (tf.form && d.prevForm === null) d.m.transforms += 1;
+      if (tf.form && d.prevForm === null) {
+        d.m.transforms += 1;
+        if (d.m.firstTransformMs < 0) d.m.firstTransformMs = Math.round(d.m.elapsedMs);
+      }
       d.prevForm = tf.form;
       d.holdFire = false;
       if (transformFlavor && tf.form === null) {
@@ -896,6 +903,86 @@ export function installAuditDriver(opts) {
     } else if (now - d.lastMoveAt >= 4000 && now - d.lastJumpAt >= 700) {
       d.lastJumpAt = now;
       tap(KEY.jump, 200);
+    }
+    // §119 walk transform probe：獵集同系味→SP 變身（模擬「想變身的玩家」策略）。
+    // 形態量測（firstTransformMs）由本段真值觀測承擔；未設 transformFlavor 零影響。
+    if (transformFlavor) {
+      const tfWalk = window.__sp.transform ? window.__sp.transform() : { form: null };
+      d.branch = tfWalk.form ? 'formed' : d.branch;
+      if (tfWalk.form && d.prevForm === null) {
+        d.m.transforms += 1;
+        if (d.m.firstTransformMs < 0) d.m.firstTransformMs = Math.round(d.m.elapsedMs);
+      }
+      d.prevForm = tfWalk.form;
+      if (!tfWalk.form) {
+        // 資格成立：停吸定身按 SP（空中裁決 none 由 300ms 節流重試至落地）。
+        if (window.__sp.transformEligible && window.__sp.transformEligible()) {
+          d.branch = 'eligible';
+          release(KEY.shoot);
+          face(0);
+          if (now - d.lastSpAt >= 300) {
+            d.lastSpAt = now;
+            tap(KEY.sp, 90);
+          }
+          return;
+        }
+        const ammoState = window.__sp.ammo();
+        // 頂槽非同系或混合槽：射空淨匣（同系純度是資格前提）。
+        if (ammoState.ammo > 0 && (ammoState.flavor !== transformFlavor || ammoState.mix)) {
+          d.branch = 'purge';
+          if (now - d.lastShotAt >= 250) {
+            d.lastShotAt = now;
+            d.m.shots += 1;
+            tap(KEY.shoot, 55);
+          }
+          return;
+        }
+        // 獵最近同系供給怪吸食；無獵物時前進推圖等補生。
+        // 持鍵紀律：帶同系彈時放開再按會觸發 B 點按＝發射（§109 語意）把已集星射掉——
+        // 收集期一律維持持鍵；僅空匣時允許釋放（re-press 無彈不發射）。
+        let prey = null;
+        let preyScore = Infinity;
+        for (const e of s.enemies) {
+          // 精英同 kind 但不可吸（§48）：吸力只會彈開——死守即 90s 逾時根因。
+          if (!HUNT.has(e.kind) || e.elite === true) continue;
+          // 前方優先：回頭撈生成湯會在高壓帶震盪掛掉（練習區保證供給在前方）。
+          const score = Math.abs(e.x - s.px) + Math.abs(e.y - s.py) * 1.5 + (e.x < s.px ? 300 : 0);
+          if (score < preyScore) {
+            preyScore = score;
+            prey = e;
+          }
+        }
+        // 收集期保命反射：不可吸接觸威脅貼臉即跳離（死亡清匣是量測最大噪音源）。
+        const huntThreat = s.enemies.find(
+          (e) => HARMFUL.has(e.kind) && Math.abs(e.x - s.px) < 90 && Math.abs(e.y - s.py) < 70,
+        );
+        if (huntThreat && now - d.lastJumpAt >= 500) {
+          d.lastJumpAt = now;
+          tap(KEY.jump, 200);
+        }
+        // 近域獵物才進獵集態；否則回落一般策略（清怪/覓食/推圖）——精英房軟鎖門等
+        // 障礙由一般戰鬥解鎖（純獵集會被門釘 60s，是逾時主因）。
+        if (prey && Math.abs(prey.x - s.px) <= 520) {
+          d.branch = 'hunt:' + Math.round(prey.x - s.px);
+          const dx = prey.x - s.px;
+          const dy = prey.y - s.py;
+          if (Math.abs(dx) < 150 && dy > -140 && dy < 80) {
+            // 面向錨死獵物側（吸入錐為面向側，背身即停滯）；貼身 28px 內才停步。
+            face(Math.abs(dx) < 28 ? 0 : Math.sign(dx));
+            press(KEY.shoot);
+            if (dy < -70 && now - d.lastJumpAt >= 600) {
+              d.lastJumpAt = now;
+              tap(KEY.jump, 260);
+            }
+          } else {
+            if (ammoState.ammo === 0) release(KEY.shoot);
+            face(Math.sign(dx) || 1);
+          }
+          return;
+        }
+        d.branch = 'fallthrough';
+        if (ammoState.ammo === 0) release(KEY.shoot);
+      }
     }
     if (s.ammo === 0) {
       // 覓食：最近恆可吸目標。

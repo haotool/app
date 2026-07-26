@@ -16,7 +16,14 @@ export type EnemyKind =
   | 'bubbla'
   | 'splatta'
   | 'twinkla'
-  | 'cometa';
+  | 'cometa'
+  // §120 星海終局篇新怪：貨櫃丁/票券蝠/掃描眼（L21）與泡泡機/冰史萊姆/潮汐魟（L23）。
+  | 'cargo'
+  | 'ticketa'
+  | 'scanna'
+  | 'foamy'
+  | 'frosty'
+  | 'manta';
 
 export type LevelId =
   | 1
@@ -38,7 +45,18 @@ export type LevelId =
   | 17
   | 18
   | 19
-  | 20;
+  | 20
+  // §121 星海終局篇（21-30）：W1 交付 L21/L23，其餘由 W2-W4 波次逐關入編。
+  | 21
+  | 22
+  | 23
+  | 24
+  | 25
+  | 26
+  | 27
+  | 28
+  | 29
+  | 30;
 
 // v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
 // v10（§68）：新增分裂型稜晶雙子 prismix。v11（§74）：場控型 Syrona。
@@ -46,7 +64,8 @@ export type LevelId =
 export type BossKind = 'jellord' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
-export type TransformForm = 'volt' | 'gale' | 'shell';
+// §119 星海終局篇：新增焰化／潮化／稜化／引力化（引入關見 FORM_INTRO_LEVEL）。
+export type TransformForm = 'volt' | 'gale' | 'shell' | 'ember' | 'tide' | 'prism' | 'gravity';
 
 // 星暴 2.0 蓄能相位（§109）：none 無蓄能星；charged 頭頂蓄能星待引爆；detonating 蓄爆中。
 export type StarburstPhase = 'none' | 'charged' | 'detonating';

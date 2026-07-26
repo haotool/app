@@ -70,3 +70,252 @@ describe('enemies.aliveInhalableCount 近域可及口徑（#812）', () => {
     expect(system.aliveInhalableCount()).toBe(5);
   });
 });
+
+// 潮環撥開→回收→再命中完整循環（PR #886 Blocking）：hazard 被撥開後寫入
+// tideDeflected=true 且不回收 body；物件出界回池後被 spawnHazard 復用，殘留
+// 旗標會讓潮化對「新」hazard 靜默免疫（不推離也不結算）。池取出必經
+// poolFlags 單點復位，本測鎖完整循環。
+describe('hazards 池瞬時旗標循環（§119 潮環，PR #886）', () => {
+  interface FakeHazard {
+    active: boolean;
+    x: number;
+    y: number;
+    width: number;
+    displayWidth: number;
+    height: number;
+    body: Record<string, unknown>;
+    setActive(value: boolean): FakeHazard;
+    setData(key: string, value: unknown): FakeHazard;
+    getData(key: string): unknown;
+    [key: string]: unknown;
+  }
+
+  function makeFakeHazard(): FakeHazard {
+    const data = new Map<string, unknown>();
+    const hazard: FakeHazard = {
+      active: false,
+      x: 0,
+      y: 0,
+      width: 20,
+      displayWidth: 20,
+      height: 20,
+      body: {
+        enable: false,
+        reset: vi.fn(),
+        setAllowGravity: vi.fn(),
+        setSize: vi.fn(),
+        setCircle: vi.fn(),
+        setVelocity: vi.fn(),
+      },
+      setActive(value: boolean) {
+        hazard.active = value;
+        return hazard;
+      },
+      setVisible: () => hazard,
+      setAlpha: () => hazard,
+      setRotation: () => hazard,
+      setTexture: () => hazard,
+      setDisplaySize: () => hazard,
+      setTint: () => hazard,
+      setData(key: string, value: unknown) {
+        data.set(key, value);
+        return hazard;
+      },
+      getData: (key: string) => data.get(key),
+    };
+    return hazard;
+  }
+
+  // 擊殺 puffy 走 burstSpikes → spawnHazard ×4：以公開 damage API 驅動 hazards 池。
+  function makePuffy(x: number, y: number): FakeFoe & Record<string, unknown> {
+    const data: Record<string, unknown> = {
+      kind: 'puffy',
+      state: 'idle',
+      hp: 1,
+      dmgCdMs: 0,
+      elite: false,
+    };
+    const puffy = {
+      active: true,
+      x,
+      y,
+      getData: (key: string) => data[key],
+      setData(key: string, value: unknown) {
+        data[key] = value;
+        return puffy;
+      },
+      setActive(value: boolean) {
+        puffy.active = value;
+        return puffy;
+      },
+      setVisible: () => puffy,
+      body: { stop: vi.fn(), enable: true },
+    };
+    return puffy;
+  }
+
+  function makePooledSystem(): {
+    system: ReturnType<typeof createEnemySystem>;
+    hazardChildren: FakeHazard[];
+  } {
+    const hazardChildren: FakeHazard[] = [];
+    const hazardGroup = {
+      getChildren: () => hazardChildren,
+      get(x: number, y: number) {
+        const idle = hazardChildren.find((child) => !child.active);
+        if (idle) {
+          idle.x = x;
+          idle.y = y;
+          return idle;
+        }
+        const hazard = makeFakeHazard();
+        hazard.x = x;
+        hazard.y = y;
+        hazardChildren.push(hazard);
+        return hazard;
+      },
+    };
+    const groups = [{ getChildren: () => [] }, hazardGroup];
+    const scene = {
+      textures: { exists: () => true },
+      physics: { add: { group: () => groups.shift() ?? { getChildren: () => [] } } },
+      tweens: { killTweensOf: vi.fn(), add: vi.fn() },
+      events: { emit: vi.fn() },
+    } as unknown as Phaser.Scene;
+    return { system: createEnemySystem(scene), hazardChildren };
+  }
+
+  it('撥開旗標殘留的 hazard 回池復用後 tideDeflected 必為 false（reflected/burn 同步歸位）', () => {
+    const { system, hazardChildren } = makePooledSystem();
+    const first = makePuffy(100, 300) as unknown as Phaser.GameObjects.GameObject;
+    expect(system.damage(first, 1)).toBe('killed');
+    expect(hazardChildren).toHaveLength(4);
+    // 潮環撥開現場（overlaps 語意）：寫入 tideDeflected 且不回收 body；
+    // 之後 hazard 壽命到期回池。
+    for (const hazard of hazardChildren) {
+      hazard.setData('tideDeflected', true);
+      hazard.setActive(false);
+    }
+    // 復用同一批物件：旗標必須歸位，否則潮化對「新」hazard 靜默免疫。
+    const second = makePuffy(400, 320) as unknown as Phaser.GameObjects.GameObject;
+    expect(system.damage(second, 1)).toBe('killed');
+    expect(hazardChildren).toHaveLength(4);
+    for (const hazard of hazardChildren) {
+      expect(hazard.getData('tideDeflected')).toBe(false);
+      expect(hazard.getData('reflected')).toBe(false);
+      expect(hazard.getData('burn')).toBe(false);
+    }
+  });
+});
+
+// 敵人本體池 spawn 全量重建的回歸鎖（PR #886 R5）：inhalePull 由 overlaps 寫入
+// （吸入域 overlap 設 true），回池復用個體若不歸位，在「玩家正吸入」的生成瞬間
+// 會殘留一幀錯誤拉力——Grok mutation 證實 R4 的 spawn 重置無測試釘住，此案補鎖。
+describe('enemies.spawn 池復用重建（§77/PR #886 R5）', () => {
+  function makeFakeEnemySprite(): Record<string, unknown> {
+    const data = new Map<string, unknown>();
+    const sprite: Record<string, unknown> = {
+      active: false,
+      visible: false,
+      x: 0,
+      y: 0,
+      width: 44,
+      height: 44,
+      scaleX: 1,
+      scaleY: 1,
+      getData: (key: string) => data.get(key),
+      setData(key: string, value: unknown) {
+        data.set(key, value);
+        return sprite;
+      },
+      setActive(value: boolean) {
+        sprite['active'] = value;
+        return sprite;
+      },
+      setVisible(value: boolean) {
+        sprite['visible'] = value;
+        return sprite;
+      },
+      body: {
+        enable: false,
+        reset: vi.fn(),
+        setSize: vi.fn(),
+        setCollideWorldBounds: vi.fn(),
+        setAllowGravity: vi.fn(),
+        setBounce: vi.fn(),
+        setImmovable: vi.fn(),
+        setVelocity: vi.fn(),
+        stop: vi.fn(),
+      },
+    };
+    for (const key of [
+      'setTexture',
+      'setDisplaySize',
+      'setRotation',
+      'setAlpha',
+      'clearTint',
+      'setTint',
+      'setTintMode',
+      'setFlipX',
+      'setDepth',
+      'setOrigin',
+    ]) {
+      sprite[key] = () => sprite;
+    }
+    return sprite;
+  }
+
+  it('回池個體帶殘留 inhalePull/beamDir/aimX/aimY/tailMs：spawn 復用必全歸位', () => {
+    const enemyChildren: Record<string, unknown>[] = [];
+    const enemyGroup = {
+      getChildren: () => enemyChildren,
+      get(x: number, y: number) {
+        const idle = enemyChildren.find((child) => !child['active']);
+        if (idle) {
+          idle['x'] = x;
+          idle['y'] = y;
+          return idle;
+        }
+        const sprite = makeFakeEnemySprite();
+        sprite['x'] = x;
+        sprite['y'] = y;
+        enemyChildren.push(sprite);
+        return sprite;
+      },
+    };
+    const groups = [enemyGroup, { getChildren: () => [] }];
+    const scene = {
+      textures: { exists: () => true },
+      physics: { add: { group: () => groups.shift() ?? { getChildren: () => [] } } },
+      tweens: { killTweensOf: vi.fn(), add: vi.fn() },
+      events: { emit: vi.fn() },
+      cameras: { main: { scrollX: 0 } },
+      scale: { width: 854 },
+    } as unknown as Phaser.Scene;
+    const system = createEnemySystem(scene);
+
+    const first = system.spawn('jelly', 100, 300) as unknown as Record<string, unknown>;
+    expect(first).not.toBeNull();
+    const sprite = first as unknown as {
+      active: boolean;
+      getData(key: string): unknown;
+      setData(key: string, value: unknown): unknown;
+      setActive(value: boolean): unknown;
+    };
+    // 殘留現場：吸入域 overlap 寫 inhalePull、品種欄位殘值 → 回池。
+    sprite.setData('inhalePull', true);
+    sprite.setData('beamDir', -1);
+    sprite.setData('aimX', 777);
+    sprite.setData('aimY', 888);
+    sprite.setData('tailMs', 999);
+    sprite.setActive(false);
+    // 池復用：全量重建必歸位。
+    const second = system.spawn('jelly', 200, 300) as unknown as Record<string, unknown>;
+    expect(second).toBe(first);
+    expect(sprite.getData('inhalePull')).toBe(false);
+    expect(sprite.getData('beamDir')).toBeUndefined();
+    expect(sprite.getData('aimX')).toBeUndefined();
+    expect(sprite.getData('aimY')).toBeUndefined();
+    expect(sprite.getData('tailMs')).toBeUndefined();
+  });
+});

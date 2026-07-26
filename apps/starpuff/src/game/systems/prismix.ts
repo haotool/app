@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { acquirePooled } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
@@ -222,13 +223,10 @@ export function createPrismix(
   };
 
   const spawnShot = (x: number, y: number): Phaser.Physics.Arcade.Sprite | null => {
-    const shot = projectiles.get(x, y, 'prismix-shot') as Phaser.Physics.Arcade.Sprite | null;
+    const shot = acquirePooled(projectiles, x, y, 'prismix-shot');
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
     shot.setTint(0xd8c8f5);
-    shot.setData('reflected', false);
-    // 池復用重設（審查修復）：折返彈標記不得殘留給晶雨/彈幕，防誤判可吸入。
-    shot.setData('inhalable', false);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     return shot;
   };
@@ -261,11 +259,7 @@ export function createPrismix(
         outline.destroy();
         crack.destroy();
         if (dying) return;
-        const spike = shockwaves.get(
-          x,
-          GROUND_TOP - PILLAR_H / 2,
-          'prismix-shard',
-        ) as Phaser.Physics.Arcade.Sprite | null;
+        const spike = acquirePooled(shockwaves, x, GROUND_TOP - PILLAR_H / 2, 'prismix-shard');
         if (!spike) return;
         spike.enableBody(true, x, GROUND_TOP - PILLAR_H / 2, true, true);
         spike.setDisplaySize(PILLAR_W, PILLAR_H).setTint(CRYSTAL_TINT);
@@ -298,7 +292,7 @@ export function createPrismix(
     delay(PRISMIX.beamTelegraphMs, () => {
       if (dying) return;
       playSfx('zap', 0.8);
-      const beam = shockwaves.get(lineX, beamY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      const beam = acquirePooled(shockwaves, lineX, beamY, '__WHITE');
       if (!beam) return;
       beam.enableBody(true, lineX, beamY, true, true);
       beam.setDisplaySize(viewW(), BEAM_H).setTint(0xe8d8ff).setAlpha(0.85);
@@ -415,7 +409,7 @@ export function createPrismix(
       scene.tweens.killTweensOf(line);
       line.destroy();
       if (dying) return;
-      const wall = shockwaves.get(startX, wallY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      const wall = acquirePooled(shockwaves, startX, wallY, '__WHITE');
       if (!wall) return;
       wall.enableBody(true, startX, wallY, true, true);
       wall.setDisplaySize(SWEEP_WALL_W, wallH).setTint(REBIRTH_TINT).setAlpha(0.9);
@@ -523,6 +517,10 @@ export function createPrismix(
       const body = shadow.body as Phaser.Physics.Arcade.Body;
       body.setAllowGravity(false);
       body.setSize(shadow.width * 0.8, shadow.height * 0.8);
+    }
+    // 入池只在存活期（PR #886 R4）：殘影失效即離池（見 update 逐幀對帳），
+    // 否則 Group.get 復用 inactive 會把專屬 sprite 當池物件發給晶柱/波/盾。
+    if (!shockwaves.contains(shadow)) {
       shockwaves.add(shadow);
       shields.add(shadow);
     }
@@ -604,11 +602,14 @@ export function createPrismix(
       shard.disableBody(true, true);
     });
     for (let i = 0; i < shardCount; i += 1) {
-      const shard = shields.get(
-        core.x,
-        core.y,
-        'prismix-shard',
-      ) as Phaser.Physics.Arcade.Sprite | null;
+      // 第二閘（PR #886 R5）：本迴圈在 runCommand 同步棧內取池，殘影同幀被擊破
+      // 時對帳前移仍可能有未涵蓋路徑——取到殘影本體即強制離池並重取一次。
+      let shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
+      if (shard?.getData('shadow') === true) {
+        shockwaves.remove(shard);
+        shields.remove(shard);
+        shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
+      }
       if (!shard) continue;
       shard.enableBody(true, core.x, core.y, true, true);
       shard.setTint(0xe8dcff);
@@ -705,6 +706,12 @@ export function createPrismix(
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     shields.getMatching('active', true).forEach(killProjectile);
+    // 殘影顯式離池（R5 應修）：inactive 殘影不會被上面 active 掃清，死亡/段清
+    // 讓它留在池內直到 destroy——顯式移除兩池更乾淨。
+    if (shadow) {
+      shockwaves.remove(shadow);
+      shields.remove(shadow);
+    }
     const anchor = twinsAlive ? sideSprite(struggleSide ?? 'a') : core;
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: anchor.x, y: anchor.y });
     delay(600, () => {
@@ -878,6 +885,16 @@ export function createPrismix(
       } else {
         fsm.setTargetDistance(null);
       }
+      // 殘影離池對帳（PR #886 R4/R5）：擊破可發生在 overlaps（星彈 1 發即破），
+      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體。
+      // R5 前移至 fsm.tick/runCommand 之前：merge 的 spawnShardOrbit 在 runCommand
+      // 同步棧內 acquirePooled(shields)，同幀稍早 overlap 已 disable 殘影時，對帳
+      // 若在其後，殘影會被取走 enableBody 而使 !active 條件永遠認不出它。
+      // R6 謂詞放寬：不依賴單池 contains（殘影只掛單池的非對稱情境也離池）。
+      if (shadow && !shadow.active) {
+        shockwaves.remove(shadow);
+        shields.remove(shadow);
+      }
       const command = fsm.tick(deltaMs);
       if (command) runCommand(command);
       // 鏡光面板逐幀貼合開鏡具（雙子浮動不脫錨）。
@@ -1014,6 +1031,11 @@ export function createPrismix(
       mirrorPane = null;
       mirrorTwin = null;
       shadow?.disableBody(true, true);
+      // 段清顯式離池（R5 應修）：不等下一幀對帳，清段當下即移出兩池。
+      if (shadow) {
+        shockwaves.remove(shadow);
+        shields.remove(shadow);
+      }
       shadowSpawnAtMs = -1;
       steering = true;
       // 中斷演出殘留復位：barrage 蓄能白閃/rebirth 縮放 tween 若中斷須回段位相。

@@ -58,6 +58,7 @@ interface FakeSprite {
   setPosition(x: number, y: number): FakeSprite;
   setVisible(value: boolean): FakeSprite;
   setAlpha(value: number): FakeSprite;
+  setDepth(value: number): FakeSprite;
   setAngle(value: number): FakeSprite;
   setDisplaySize(): FakeSprite;
   setScale(): FakeSprite;
@@ -113,6 +114,7 @@ function makeSprite(x: number, y: number): FakeSprite {
       return sprite;
     },
     setDisplaySize: () => sprite,
+    setDepth: () => sprite,
     setScale: () => sprite,
     setTint: () => sprite,
     clearTint: () => sprite,
@@ -148,6 +150,8 @@ function makeGroup(maxSize: number): {
   get(x: number, y: number): FakeSprite | null;
   getMatching(key: string, value: boolean): FakeSprite[];
   add: (sprite: FakeSprite) => void;
+  contains: (sprite: FakeSprite) => boolean;
+  remove: (sprite: FakeSprite) => void;
   children: FakeSprite[];
   destroy: ReturnType<typeof vi.fn>;
 } {
@@ -169,7 +173,12 @@ function makeGroup(maxSize: number): {
     getMatching: (_key: string, value: boolean) =>
       children.filter((child) => child.active === value),
     add: (sprite: FakeSprite) => {
-      children.push(sprite);
+      if (!children.includes(sprite)) children.push(sprite);
+    },
+    contains: (sprite: FakeSprite) => children.includes(sprite),
+    remove: (sprite: FakeSprite) => {
+      const index = children.indexOf(sprite);
+      if (index >= 0) children.splice(index, 1);
     },
     destroy: vi.fn(),
   };
@@ -301,7 +310,9 @@ describe('Prismix 呈現層：折返彈池回收旗標（§5 W2）', () => {
     if (!reflectShot) throw new Error('折返彈未生成');
     expect(reflectShot.getData('inhalable')).toBe(true);
 
-    // 模擬吸入/出界回收：sprite 停用進池等待復用（旗標殘留現場）。
+    // 模擬吸入/出界回收：sprite 停用進池等待復用（旗標殘留現場）；
+    // 潮環撥開標記同場疊加（PR #886 R3：acquirePooled 取出必全歸位）。
+    reflectShot.setData('tideDeflected', true);
     reflectShot.disableBody();
 
     // 窗外擊破單側→掙扎窗滿合體入 P3。
@@ -313,6 +324,7 @@ describe('Prismix 呈現層：折返彈池回收旗標（§5 W2）', () => {
     expect(step(() => reflectShot.active)).toBe(true);
     expect(reflectShot.getData('reflected')).toBe(false);
     expect(reflectShot.getData('inhalable')).not.toBe(true);
+    expect(reflectShot.getData('tideDeflected')).toBe(false);
   });
 });
 
@@ -395,5 +407,166 @@ describe('Prismix 呈現層：EX 段檢查點（§114 W1.6）', () => {
     handle.applyDamageAt?.(999, 0, 352);
     expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
     expect(handle.trySegmentRespawn?.()).toBe(false);
+  });
+});
+
+// 殘影離池對帳（PR #886 R4 第六例池破口）：殘影雙掛 shockwaves/shields 池群組，
+// Phaser Group.get 優先復用 inactive 且忽略 key——殘影被擊破（overlaps 星彈 1 發
+// 即破）後若留在池內，晶柱/波/盾取出就會拿到 shadow===true 的本體 sprite。
+describe('鏡像殘影失效即離池（PR #886 R4）', () => {
+  beforeEach(() => {
+    let seed = 11;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('殘影擊破後自兩池移除，後續池取出不得撿到殘影本體；再召喚重新入池', () => {
+    const groups: ReturnType<typeof makeGroup>[] = [];
+    const scene = makeScene(groups);
+    const handle = createPrismix(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 建立順序：projectiles → shockwaves → shields。
+    const shockwaves = groups[1];
+    const shields = groups[2];
+    if (!shockwaves || !shields) throw new Error('pooled groups 未建立');
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // 壓 HP 至 ≤50% 使 shadow 招可選（P2 池，condition maxHpRatio 0.5）。
+    handle.applyDamage(28);
+    handle.applyDamageAt?.(14, 0, 352);
+    const hasShadow = () => shockwaves.children.some((child) => child.getData('shadow') === true);
+    expect(step(hasShadow)).toBe(true);
+    const shadowSprite = shockwaves.children.find((child) => child.getData('shadow') === true);
+    if (!shadowSprite) throw new Error('殘影未生成');
+    expect(shields.contains(shadowSprite)).toBe(true);
+
+    // 星彈 1 發即破（overlaps 語意）：外部 disableBody，殘影進 inactive。
+    shadowSprite.disableBody();
+    handle.update(100);
+    // 逐幀對帳：失效即離池。
+    expect(shockwaves.contains(shadowSprite)).toBe(false);
+    expect(shields.contains(shadowSprite)).toBe(false);
+
+    // 後續任何池取出都不可能是殘影本體（殘影已不在池內）。
+    for (const child of shockwaves.children) expect(child.getData('shadow')).not.toBe(true);
+    for (const child of shields.children) expect(child.getData('shadow')).not.toBe(true);
+
+    // 再召喚：殘影重新入池且存活（召喚流程不因離池而壞）。
+    expect(step(() => shockwaves.contains(shadowSprite) && shadowSprite.active)).toBe(true);
+    expect(shields.contains(shadowSprite)).toBe(true);
+  });
+});
+
+// 同幀 merge→shields 競態（PR #886 R5 Blocking）：Phaser 幀序為 UPDATE（overlap
+// disable）→ scene update（fsm.tick→runCommand→spawnShardOrbit 同步取池）。殘影
+// 同幀稍早被擊破時，若離池對帳晚於 runCommand，殘影會被當碎晶盾取走並
+// enableBody——此後 !active 對帳條件永遠認不出它。本測用兩輪可重放腳本決定性
+// 命中窗口：第一輪（同種子）錄下 merge 發生的精確 tick，第二輪重放至前一 tick
+// 擊破殘影（模擬 UPDATE 段 overlap 先行），再走 merge 那一 tick 驗軌道零殘影。
+describe('同幀 merge 競態：殘影不得混入碎晶盾軌道（PR #886 R5）', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function mockRandom(): void {
+    let seed = 11;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  }
+
+  interface Run {
+    handle: ReturnType<typeof createPrismix>;
+    shockwaves: ReturnType<typeof makeGroup>;
+    shields: ReturnType<typeof makeGroup>;
+    tick(): void;
+    ticks(): number;
+  }
+
+  function makeRun(): Run {
+    mockRandom();
+    const groups: ReturnType<typeof makeGroup>[] = [];
+    const scene = makeScene(groups);
+    const handle = createPrismix(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    const shockwaves = groups[1];
+    const shields = groups[2];
+    if (!shockwaves || !shields) throw new Error('pooled groups 未建立');
+    let count = 0;
+    // 兩輪腳本必須完全同拍：進場先壓 HP（P2＋≤50% 使 shadow 招可選）。
+    handle.applyDamage(28);
+    handle.applyDamageAt?.(14, 0, 352);
+    return {
+      handle,
+      shockwaves,
+      shields,
+      tick() {
+        count += 1;
+        handle.update(100);
+      },
+      ticks: () => count,
+    };
+  }
+
+  // 同種子同拍推進到謂詞成立，回傳成立時的絕對 tick 數。
+  function runUntil(run: Run, predicate: () => boolean, maxTicks = 8000): number {
+    for (let i = 0; i < maxTicks; i += 1) {
+      run.tick();
+      if (predicate()) return run.ticks();
+    }
+    throw new Error('runUntil 未達成謂詞');
+  }
+
+  it('殘影於 merge 同幀稍早被擊破：acquire 不得拿到殘影、shadow 不進軌道', () => {
+    // 第一輪：錄音——記下殘影入池後 merge（入 P3）發生的絕對 tick。
+    const recording = makeRun();
+    const state = () => recording.handle.getDebugState?.()?.state ?? '';
+    runUntil(recording, () =>
+      recording.shockwaves.children.some((c) => c.getData('shadow') === true),
+    );
+    runUntil(recording, () => state() === 'mirror');
+    runUntil(recording, () => state() !== 'mirror');
+    recording.handle.applyDamageAt?.(999, 0, 352);
+    const damageAtTick = recording.ticks();
+    const mergeTick = runUntil(recording, () => recording.handle.getDebugState?.()?.phase === 'p3');
+    expect(mergeTick).toBeGreaterThan(damageAtTick);
+    vi.restoreAllMocks();
+
+    // 第二輪：重放——同種子同拍走到 merge 前一 tick，擊破殘影後走 merge tick。
+    const replay = makeRun();
+    while (replay.ticks() < damageAtTick) replay.tick();
+    replay.handle.applyDamageAt?.(999, 0, 352);
+    while (replay.ticks() < mergeTick - 1) replay.tick();
+    const shadowSprite = replay.shockwaves.children.find((c) => c.getData('shadow') === true);
+    if (!shadowSprite) throw new Error('重放輪殘影未生成');
+    expect(shadowSprite.active).toBe(true);
+    // UPDATE 段 overlap 先行擊破（星彈 1 發即破語意）。
+    shadowSprite.disableBody();
+    // merge tick：spawnShardOrbit 於 runCommand 同步棧內取池。
+    replay.tick();
+    expect(replay.handle.getDebugState?.()?.phase).toBe('p3');
+    // 殘影不得在任何池、不得混入軌道、不得被 enableBody 復活。
+    expect(replay.shields.contains(shadowSprite)).toBe(false);
+    expect(replay.shockwaves.contains(shadowSprite)).toBe(false);
+    for (const child of replay.shields.children) {
+      expect(child.getData('shadow')).not.toBe(true);
+    }
+    const orbit = replay.shields.children.filter((child) => child.active);
+    expect(orbit.length).toBeGreaterThan(0);
+    expect(orbit).not.toContain(shadowSprite);
   });
 });

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { acquirePooled } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
@@ -222,7 +223,7 @@ export function createSyrona(
     y: number,
     gravity: boolean,
   ): Phaser.Physics.Arcade.Sprite | null => {
-    const shot = projectiles.get(x, y, 'syrona-shot') as Phaser.Physics.Arcade.Sprite | null;
+    const shot = acquirePooled(projectiles, x, y, 'syrona-shot');
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
     shot.setTint(0xf0a860);
@@ -240,11 +241,7 @@ export function createSyrona(
         spawnTelegraph(scene, x, GROUND_TOP - 6, SYRONA.fountainTelegraphMs);
         delay(SYRONA.fountainTelegraphMs, () => {
           if (dying) return;
-          const column = shockwaves.get(
-            x,
-            GROUND_TOP - FOUNTAIN_H / 2,
-            '__WHITE',
-          ) as Phaser.Physics.Arcade.Sprite | null;
+          const column = acquirePooled(shockwaves, x, GROUND_TOP - FOUNTAIN_H / 2, '__WHITE');
           if (!column) return;
           column.enableBody(true, x, GROUND_TOP - FOUNTAIN_H / 2, true, true);
           column.setDisplaySize(FOUNTAIN_W, FOUNTAIN_H).setTint(SYRUP_TINT).setAlpha(0.9);
@@ -312,11 +309,7 @@ export function createSyrona(
     delay(SYRONA.waveTelegraphMs, () => {
       if (dying) return;
       playSfx('boss-slam', 0.7);
-      const wave = shockwaves.get(
-        startX,
-        GROUND_TOP - WAVE_H / 2,
-        '__WHITE',
-      ) as Phaser.Physics.Arcade.Sprite | null;
+      const wave = acquirePooled(shockwaves, startX, GROUND_TOP - WAVE_H / 2, '__WHITE');
       if (!wave) return;
       wave.enableBody(true, startX, GROUND_TOP - WAVE_H / 2, true, true);
       wave.setDisplaySize(WAVE_W, WAVE_H).setTint(DEEP_TINT).setAlpha(0.92);

@@ -56,6 +56,10 @@ interface HarnessConfig {
   bossActive?: boolean;
   settled?: boolean;
   reflectForm?: boolean;
+  // §119 潮化（PR #886 收斂）：deflectProjectiles 形態——潮環撥開白名單守門用。
+  tideForm?: boolean;
+  // §119 形態替身（PR #886 收斂）：自訂形態名與 spec，優先於快捷旗標。
+  form?: { name: 'shell' | 'tide' | 'prism' | null; spec: Record<string, unknown> | null };
   inhaling?: boolean;
 }
 
@@ -80,7 +84,7 @@ function makeHarness(config: HarnessConfig = {}): {
     enemyGroup: object;
     hazards: object;
     inhaleZone: object;
-    playerSprite: { x: number; y: number; body: object };
+    playerSprite: { x: number; y: number; body: object; setVelocityY: ReturnType<typeof vi.fn> };
     projectiles: object;
     shockwaves: object;
   };
@@ -90,7 +94,7 @@ function makeHarness(config: HarnessConfig = {}): {
   const enemyGroup = { name: 'enemies', getChildren: () => [] as unknown[] };
   const hazards = { name: 'hazards' };
   const inhaleZone = { name: 'inhale-zone' };
-  const playerSprite = { x: 100, y: 300, body: { bottom: 300 } };
+  const playerSprite = { x: 100, y: 300, body: { bottom: 300 }, setVelocityY: vi.fn() };
   const projectiles = { name: 'projectiles' };
   const shockwaves = { name: 'shockwaves' };
   const shields = config.shields ? { name: 'shields', getChildren: () => config.shields! } : null;
@@ -113,7 +117,16 @@ function makeHarness(config: HarnessConfig = {}): {
     getFacing: () => 1,
     isSlamming: () => false,
     onSlamBounce,
-    getTransformState: () => ({ form: config.reflectForm ? 'shell' : null, remainingMs: 0 }),
+    getTransformState: () => ({
+      form: config.form
+        ? config.form.name
+        : config.reflectForm
+          ? 'shell'
+          : config.tideForm
+            ? 'tide'
+            : null,
+      remainingMs: 0,
+    }),
   } as unknown as PlayerHandle;
   const enemies = {
     getGroup: () => enemyGroup,
@@ -156,7 +169,13 @@ function makeHarness(config: HarnessConfig = {}): {
     mixOf: () => null,
     damageOf: () => 5,
     playerFormSpec: () =>
-      config.reflectForm ? { reflectProjectiles: true, contactDamage: 0 } : null,
+      config.form
+        ? config.form.spec
+        : config.reflectForm
+          ? { reflectProjectiles: true, contactDamage: 0 }
+          : config.tideForm
+            ? { deflectProjectiles: true, bubbleImmune: true, contactDamage: 0 }
+            : null,
     explodeStar: vi.fn(),
     chainLightning: vi.fn(),
     freezeField: vi.fn(),
@@ -252,7 +271,7 @@ describe('關鍵回調結算路徑', () => {
     const { scene, wirings, hooks, spies, groups } = makeHarness({});
     wireCombatOverlaps(scene, hooks);
     const hazardWiring = wirings.find((w) => w.b === groups.hazards);
-    const hazard = { active: true, x: 240, disableBody: vi.fn() };
+    const hazard = { active: true, x: 240, disableBody: vi.fn(), getData: vi.fn() };
     hazardWiring?.callback?.({}, hazard);
     expect(hazard.disableBody).toHaveBeenCalledWith(true, true);
     expect(spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 240);
@@ -260,7 +279,7 @@ describe('關鍵回調結算路徑', () => {
     const settled = makeHarness({ settled: true });
     wireCombatOverlaps(settled.scene, settled.hooks);
     const settledWiring = settled.wirings.find((w) => w.b === settled.groups.hazards);
-    const hazard2 = { active: true, x: 240, disableBody: vi.fn() };
+    const hazard2 = { active: true, x: 240, disableBody: vi.fn(), getData: vi.fn() };
     settledWiring?.callback?.({}, hazard2);
     expect(settled.spies.damagePlayer).not.toHaveBeenCalled();
   });
@@ -406,5 +425,116 @@ describe('關鍵回調結算路徑', () => {
     meteorWiring?.callback?.({}, rock);
     expect(harness.spies.shatter).toHaveBeenCalledWith(rock);
     expect(harness.spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 500);
+  });
+});
+
+describe('§119 潮環撥開白名單（PR #886 收斂：僅投射物，非投射物 hazard 照常結算）', () => {
+  const makeHazard = (hazardKind: string) => {
+    const data = new Map<string, unknown>([['hazardKind', hazardKind]]);
+    return {
+      active: true,
+      x: 240,
+      y: 300,
+      disableBody: vi.fn(),
+      getData: (key: string) => data.get(key),
+      setData: (key: string, value: unknown) => data.set(key, value),
+      body: { setVelocity: vi.fn() },
+    };
+  };
+
+  it('投射物（spike/waterblade）被撥開：不結算傷害、不回收、反向推離', () => {
+    for (const kind of ['spike', 'waterblade']) {
+      const { scene, wirings, hooks, spies, groups } = makeHarness({ tideForm: true });
+      wireCombatOverlaps(scene, hooks);
+      const hazardWiring = wirings.find((w) => w.b === groups.hazards);
+      const hazard = makeHazard(kind);
+      hazardWiring?.callback?.({}, hazard);
+      expect(spies.damagePlayer, kind).not.toHaveBeenCalled();
+      expect(hazard.disableBody, kind).not.toHaveBeenCalled();
+      expect(hazard.body.setVelocity, kind).toHaveBeenCalled();
+      void scene;
+    }
+  });
+
+  it('非投射物（spore/zap/scanbeam/bite/sugarspot/comettail 全數）不受撥開：照常傷害結算', () => {
+    for (const kind of ['spore', 'zap', 'scanbeam', 'bite', 'sugarspot', 'comettail']) {
+      const { scene, wirings, hooks, spies, groups } = makeHarness({ tideForm: true });
+      wireCombatOverlaps(scene, hooks);
+      const hazardWiring = wirings.find((w) => w.b === groups.hazards);
+      const hazard = makeHazard(kind);
+      hazardWiring?.callback?.({}, hazard);
+      expect(spies.damagePlayer, kind).toHaveBeenCalledWith(ENEMY.touchDamage, 240);
+      expect(hazard.disableBody, kind).toHaveBeenCalledWith(true, true);
+      void scene;
+    }
+  });
+});
+
+describe('§119 稜化反射抵銷（PR #886 收斂：折射銷毀不回傷，與殼化反彈區辨）', () => {
+  const makeProjectile = () => {
+    const data: Record<string, unknown> = {};
+    return {
+      active: true,
+      x: 150,
+      y: 250,
+      getData: (key: string) => data[key],
+      setData: (key: string, value: unknown) => {
+        data[key] = value;
+      },
+      setTint: vi.fn(),
+      disableBody: vi.fn(),
+      body: { setAllowGravity: vi.fn(), setVelocity: vi.fn() },
+      data,
+    };
+  };
+
+  it('稜化接觸魔王彈幕：銷毀彈體、不傷玩家、不標 reflected、不回傷魔王', () => {
+    const { scene, wirings, hooks, spies, groups } = makeHarness({
+      form: { name: 'prism', spec: { negateProjectiles: true, contactDamage: 0 } },
+    });
+    wireCombatOverlaps(scene, hooks);
+    const wiring = wirings.find((w) => w.a === groups.playerSprite && w.b === groups.projectiles);
+    const projectile = makeProjectile();
+    wiring?.callback?.({}, projectile);
+    expect(projectile.disableBody).toHaveBeenCalledWith(true, true);
+    expect(spies.damagePlayer).not.toHaveBeenCalled();
+    expect(spies.damageBossAt).not.toHaveBeenCalled();
+    expect(spies.moveTo).not.toHaveBeenCalled();
+    expect(projectile.data['reflected']).toBeUndefined();
+  });
+});
+
+describe('§119 泡泡免疫顯式欄位（PR #886 收斂：不與 deflectProjectiles 隱性耦合）', () => {
+  const makeBubble = () => {
+    const data = new Map<string, unknown>([['hazardKind', 'bubble']]);
+    return {
+      active: true,
+      x: 240,
+      y: 300,
+      disableBody: vi.fn(),
+      getData: (key: string) => data.get(key),
+      setData: (key: string, value: unknown) => data.set(key, value),
+      body: { setVelocity: vi.fn() },
+    };
+  };
+
+  it('潮化（bubbleImmune）碰泡泡：破裂但不上浮', () => {
+    const { scene, wirings, hooks, groups } = makeHarness({ tideForm: true });
+    wireCombatOverlaps(scene, hooks);
+    const wiring = wirings.find((w) => w.b === groups.hazards);
+    const bubble = makeBubble();
+    wiring?.callback?.({}, bubble);
+    expect(bubble.disableBody).toHaveBeenCalledWith(true, true);
+    expect(groups.playerSprite.setVelocityY).not.toHaveBeenCalled();
+  });
+
+  it('僅開 deflectProjectiles 的假想形態碰泡泡：照常上浮（免疫不隨撥開旗標贈送）', () => {
+    const { scene, wirings, hooks, groups } = makeHarness({
+      form: { name: 'tide', spec: { deflectProjectiles: true, contactDamage: 0 } },
+    });
+    wireCombatOverlaps(scene, hooks);
+    const wiring = wirings.find((w) => w.b === groups.hazards);
+    wiring?.callback?.({}, makeBubble());
+    expect(groups.playerSprite.setVelocityY).toHaveBeenCalled();
   });
 });

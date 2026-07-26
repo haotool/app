@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDefaultSave, recordExClear } from '../core/save';
-import { canInhale } from './combat';
+import { canInhale, inhaleFlavor } from './combat';
 import {
   BOSS_LEVEL_IDS,
   LEVELS,
@@ -29,26 +29,27 @@ import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）', () => {
-  it('二十關依序為 1-20 且參數符合 §15/§21/§50/§60/§66-§68/§72/§74/§84 表', () => {
+  it('在編關卡依序為 1-20＋§121 星海終局篇 21/23（W1 過渡跳號）且參數對表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23,
     ]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
       2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800, 854,
-      3400, 3700, 4000, 854,
+      3400, 3700, 4000, 854, 3800, 3900,
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([
-      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0,
+      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0, 14, 14,
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
-      3000, 1350, 1200, 1000, 2800,
+      3000, 1350, 1200, 1000, 2800, 900, 850,
     ]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
-      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2,
+      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 6,
     ]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
-      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0,
+      480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0, 480,
+      480,
     ]);
   });
 
@@ -85,6 +86,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       null,
       null,
       'voidra',
+      null,
+      null,
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -97,6 +100,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(getLevel(17).hint).toContain('低重力');
     expect(getLevel(18).hint).toContain('流星');
     expect(getLevel(19).hint).toContain('終試');
+    expect(getLevel(21).hint).toContain('焰化');
+    expect(getLevel(23).hint).toContain('潮化');
   });
 
   it('L16 魔王關體系（§69 沿用）：前室 400px、護盾/疾風二選一、P2 星力果、幾何留空', () => {
@@ -273,12 +278,13 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L19 星核前庭（§84）：十種混編全機制回收、唯一六同屏、恆可吸佔比 ≥50%', () => {
+  it('L19 星核前庭（§84）：十種混編全機制回收、六同屏（§121 起終局關同階）、恆可吸佔比 ≥50%', () => {
     const level = getLevel(19);
     expect(level.enemyMix).toHaveLength(10);
     expect(level.maxOnScreen).toBe(6);
+    // 六同屏僅限終試與 §121 星海終局篇走動關（L21+）；L1-L18 維持 ≤5。
     for (const other of LEVELS) {
-      if (other.id !== 19) expect(other.maxOnScreen).toBeLessThanOrEqual(5);
+      if (other.id !== 19 && other.id < 21) expect(other.maxOnScreen).toBeLessThanOrEqual(5);
     }
     const inhalable = level.enemyMix
       .filter((e) => canInhale(e.kind))
@@ -403,10 +409,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('氣流柱與熱泉噴口（§51/§72/§84）：L5 恆常、L13/L15/L19 週期化；柱頂安全帶 ≥100px', () => {
+  it('氣流柱與熱泉噴口（§51/§72/§84/§121）：L5 恆常、L13/L15/L19/L21/L23 週期化；柱頂安全帶 ≥100px', () => {
+    const updraftLevels = [5, 13, 15, 19, 21, 23];
     for (const level of LEVELS) {
       const updrafts = level.elements.filter((element) => element.kind === 'updraft');
-      if (level.id !== 5 && level.id !== 13 && level.id !== 15 && level.id !== 19) {
+      if (!updraftLevels.includes(level.id)) {
         expect(updrafts).toEqual([]);
         continue;
       }
@@ -440,9 +447,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('糖漿潮汐不變式（§71）：僅 L14/L15 配置；dry-window ≥40%、平台層頂高於漲頂 24px', () => {
+  it('潮汐不變式（§71/§121）：僅 L14/L15/L23 配置；dry-window ≥40%、平台層頂高於漲頂 24px', () => {
     for (const level of LEVELS) {
-      if (level.id !== 14 && level.id !== 15) {
+      if (level.id !== 14 && level.id !== 15 && level.id !== 23) {
         expect(level.tide).toBeUndefined();
         continue;
       }
@@ -463,8 +470,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('getLevel 未知 id 擲錯', () => {
-    expect(() => getLevel(21 as never)).toThrow();
+  it('getLevel 未知 id 擲錯（W1 過渡期 L22 尚未入編）', () => {
+    expect(() => getLevel(22)).toThrow();
+    expect(() => getLevel(99 as never)).toThrow();
   });
 
   const elementsOf = (level: LevelSpec, kind: StageElementSpec['kind']) =>
@@ -532,9 +540,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('卡點關中點重生（§67/§84）：僅 L11/L15/L19 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+  it('卡點關中點重生（§67/§84/§121）：僅 L11/L15/L19/L21/L23 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+    const checkpointLevels = [11, 15, 19, 21, 23];
     for (const level of LEVELS) {
-      if (level.id !== 11 && level.id !== 15 && level.id !== 19) {
+      if (!checkpointLevels.includes(level.id)) {
         expect(level.checkpointX).toBeUndefined();
         continue;
       }
@@ -649,6 +658,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       'bg-meteorfield': '(arena|throne)',
       'bg-starcourt': '(arena|throne)',
       'bg-voidcore': 'throne',
+      // §121 星海終局篇：星港混排 throne/arena（港區機械）、潮灣沿用 arena（冰晶）。
+      'bg-starport': '(arena|throne)',
+      'bg-tidebay': 'arena',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -670,11 +682,45 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('nextLevelId 依 1→…→15→null 推進', () => {
-    for (let id = 1; id < LEVELS.length; id += 1) {
-      expect(nextLevelId(id as never)).toBe(id + 1);
+  it('nextLevelId 依 LEVELS 在編序推進（含 §121 過渡跳號 21→23），末關回 null', () => {
+    for (let i = 0; i + 1 < LEVELS.length; i += 1) {
+      expect(nextLevelId(LEVELS[i]?.id as never)).toBe(LEVELS[i + 1]?.id);
     }
-    expect(nextLevelId(LEVELS.length as never)).toBeNull();
+    expect(nextLevelId(21)).toBe(23);
+    expect(nextLevelId(23)).toBeNull();
+  });
+
+  // §119 觸發密度契約：形態引入關的主形態星味須有 ≥2 種供給怪，且形態練習區
+  // 保證生成 3 隻同系怪（沿 L3 安全房模式、位於關卡中段）。
+  it('L21 焰化供給：重鑽味 ≥2 種入編、練習區 3 隻貨櫃丁居中段', () => {
+    const level = getLevel(21);
+    const emberKinds = level.enemyMix.filter((e) => inhaleFlavor(e.kind) === 'drilly');
+    expect(emberKinds.length).toBeGreaterThanOrEqual(2);
+    expect(level.teaches).toEqual(['ember-form']);
+    const drills = level.drillSpawns ?? [];
+    expect(drills).toHaveLength(3);
+    for (const drill of drills) {
+      expect(inhaleFlavor(drill.kind)).toBe('drilly');
+      expect(drill.x).toBeGreaterThan(level.worldWidth * 0.4);
+      expect(drill.x).toBeLessThan(level.worldWidth * 0.65);
+    }
+  });
+
+  it('L23 潮化供給：孢子味 ≥2 種入編（新怪三種）、練習區 3 隻孢子菇居中段', () => {
+    const level = getLevel(23);
+    const tideKinds = level.enemyMix.filter((e) => inhaleFlavor(e.kind) === 'spora');
+    expect(tideKinds.length).toBeGreaterThanOrEqual(2);
+    expect(tideKinds.map((e) => e.kind)).toEqual(
+      expect.arrayContaining(['foamy', 'frosty', 'manta']),
+    );
+    expect(level.teaches).toEqual(['tide-form']);
+    const drills = level.drillSpawns ?? [];
+    expect(drills).toHaveLength(3);
+    for (const drill of drills) {
+      expect(inhaleFlavor(drill.kind)).toBe('spora');
+      expect(drill.x).toBeGreaterThan(level.worldWidth * 0.4);
+      expect(drill.x).toBeLessThan(level.worldWidth * 0.65);
+    }
   });
 });
 
@@ -1009,8 +1055,8 @@ describe('MechanicProgressionMatrix 教學矩陣（§110/機制 brief §6.1）',
         seen.add(mechanic);
       }
     }
-    // 13 機制全數落表（§6.1 矩陣覆蓋）。
-    expect(seen.size).toBe(13);
+    // 13 機制＋§119 焰化/潮化教學位點全數落表（§6.1 矩陣覆蓋）。
+    expect(seen.size).toBe(15);
   });
 
   it('關鍵教學位點錨定：L1 吸射、L3 變身＋星暴、各區魔王驗收含 transform', () => {

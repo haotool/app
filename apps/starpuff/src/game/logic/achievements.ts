@@ -101,7 +101,7 @@ export const ACHIEVEMENTS: readonly AchievementSpec[] = [
   {
     id: 'all-clear',
     nameZh: '星圖全開',
-    descZh: '二十關全數通關',
+    descZh: '全部在編關卡通關',
     category: 'progress',
     hidden: false,
     unlocked: (save) => LEVELS.every((level) => save.levels[level.id]?.cleared === true),

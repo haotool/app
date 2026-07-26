@@ -51,6 +51,7 @@ function chainable(): Chainable {
     'setDepth',
     'setPosition',
     'setStrokeStyle',
+    'setFillStyle',
     'setScale',
     'setOrigin',
     'setScrollFactor',
@@ -105,6 +106,7 @@ function makeBodySprite() {
     },
     setTintMode: () => sprite,
     setFlipX: () => sprite,
+    setRotation: () => sprite,
     destroy: vi.fn(),
   };
   return sprite;
@@ -298,5 +300,226 @@ describe('Syrona 呈現層：窯心暴走 tint／HUD（W3）', () => {
     const damagedCalls = emit.mock.calls.filter((call) => call[0] === GameEvents.BOSS_DAMAGED);
     const damaged = damagedCalls[damagedCalls.length - 1];
     expect((damaged?.[1] as { hp: number }).hp).toBe(17);
+  });
+});
+
+// 彈幕/糖漿波池瞬時旗標循環（§119/PR #886 R3）：糖漿波寫入 caramel=true 後回池，
+// 噴泉柱復用同一 sprite 若未復位會誤觸 applyCaramel（Grok 發現的第五個同族洩漏）；
+// 彈幕的 tideDeflected/reflected 同理。池取出必經 acquirePooled 單點復位。
+describe('Syrona 池瞬時旗標循環（§119 潮環＋caramel，PR #886 R3）', () => {
+  beforeEach(() => {
+    let seed = 7;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  interface FakePooled {
+    active: boolean;
+    x: number;
+    y: number;
+    getData(key: string): unknown;
+    setData(key: string, value: unknown): FakePooled;
+    [key: string]: unknown;
+  }
+
+  function makeFakePooled(): FakePooled {
+    const data = new Map<string, unknown>();
+    const obj: FakePooled = {
+      active: false,
+      x: 0,
+      y: 0,
+      getData: (key: string) => data.get(key),
+      setData(key: string, value: unknown) {
+        data.set(key, value);
+        return obj;
+      },
+      enableBody(_reset: boolean, x: number, y: number) {
+        obj.active = true;
+        obj.x = x;
+        obj.y = y;
+        return obj;
+      },
+      disableBody() {
+        obj.active = false;
+        return obj;
+      },
+      setActive(value: boolean) {
+        obj.active = value;
+        return obj;
+      },
+      body: {
+        enable: true,
+        velocity: { x: 0, y: 0 },
+        setAllowGravity: vi.fn(),
+        setVelocity: vi.fn(),
+        setVelocityX: vi.fn(),
+        setVelocityY: vi.fn(),
+        setSize: vi.fn(),
+      },
+    };
+    for (const key of [
+      'setVisible',
+      'setDisplaySize',
+      'setTint',
+      'clearTint',
+      'setTintMode',
+      'setAlpha',
+      'setDepth',
+      'setRotation',
+      'setScale',
+      'setOrigin',
+      'setFlipX',
+      'setFillStyle',
+      'setStrokeStyle',
+    ]) {
+      obj[key] = () => obj;
+    }
+    return obj;
+  }
+
+  function makePooledGroup(): {
+    children: FakePooled[];
+    get(): FakePooled;
+    getMatching(key: string, value: unknown): FakePooled[];
+    getChildren(): FakePooled[];
+    destroy: ReturnType<typeof vi.fn>;
+  } {
+    const children: FakePooled[] = [];
+    return {
+      children,
+      get() {
+        const idle = children.find((child) => !child.active);
+        if (idle) return idle;
+        const obj = makeFakePooled();
+        children.push(obj);
+        return obj;
+      },
+      getMatching: (_key: string, value: unknown) =>
+        children.filter((child) => child.active === value),
+      getChildren: () => children,
+      destroy: vi.fn(),
+    };
+  }
+
+  it('caramel/撥開/反彈旗標殘留的池物件復用後必為 false', () => {
+    const body = makeBodySprite();
+    const pooledGroups: ReturnType<typeof makePooledGroup>[] = [];
+    const base = makeScene(body) as unknown as Record<string, unknown>;
+    const basePhysics = (base as { physics: { add: Record<string, unknown> } }).physics;
+    const scene = {
+      ...base,
+      physics: {
+        ...basePhysics,
+        add: {
+          ...basePhysics.add,
+          group: () => {
+            const group = makePooledGroup();
+            pooledGroups.push(group);
+            return group;
+          },
+        },
+      },
+    } as unknown as Phaser.Scene;
+    const handle = createSyrona(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 不餵 target：距離帶視為 far → lob（彈幕）與 fountain（噴泉柱）在 P1 交替
+    // 施放（連續同招上限 2 需第二招可選，near 帶會使 P1 招池飢餓）。
+    // 建立順序：projectiles → shockwaves（createSyrona 一致）。
+    const projectiles = pooledGroups[0];
+    const shockwaves = pooledGroups[1];
+    if (!projectiles || !shockwaves) throw new Error('pooled groups 未建立');
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // 彈幕池（lob 拋物彈）：撥開/反彈殘留 → 回池 → 復用歸位。
+    expect(step(() => projectiles.children.length > 0)).toBe(true);
+    const shot = projectiles.children[0];
+    if (!shot) throw new Error('彈體未生成');
+    shot.setData('tideDeflected', true);
+    shot.setData('reflected', true);
+    shot.active = false;
+    expect(step(() => shot.active)).toBe(true);
+    expect(shot.getData('tideDeflected')).toBe(false);
+    expect(shot.getData('reflected')).toBe(false);
+
+    // 糖漿波/噴泉柱共用 shockwaves 池：caramel 殘留 → 回池 → 復用歸位（必修 2）。
+    expect(step(() => shockwaves.children.length > 0)).toBe(true);
+    const wave = shockwaves.children[0];
+    if (!wave) throw new Error('shockwave 未生成');
+    wave.setData('caramel', true);
+    wave.active = false;
+    // 同步 delayedCall 使噴泉柱同 tick 生滅（active 觀測不到），以旗標歸位為
+    // 復用證據：下一次自池取出必經 acquirePooled 將 caramel 復位。
+    expect(step(() => wave.getData('caramel') === false)).toBe(true);
+  });
+
+  // R4（Sonnet mutation 缺口）：R3 案全程停在 P1，line 312 doWave 取出點被共池
+  // 的噴泉柱（line 246）意外掩護——破壞 312 不會紅。本案直入 P3（招池僅
+  // wave/overload，其中只有 wave 取 shockwaves），污染回收物件後由 doWave 復用，
+  // 歸位斷言即鎖死 312 的 acquirePooled 路徑。
+  it('P3 糖漿波（doWave）復用回收物件：tideDeflected 歸位且 caramel 為本發所設', () => {
+    const body = makeBodySprite();
+    const pooledGroups: ReturnType<typeof makePooledGroup>[] = [];
+    const base = makeScene(body) as unknown as Record<string, unknown>;
+    const basePhysics = (base as { physics: { add: Record<string, unknown> } }).physics;
+    const scene = {
+      ...base,
+      physics: {
+        ...basePhysics,
+        add: {
+          ...basePhysics.add,
+          group: () => {
+            const group = makePooledGroup();
+            pooledGroups.push(group);
+            return group;
+          },
+        },
+      },
+    } as unknown as Phaser.Scene;
+    const handle = createSyrona(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    const shockwaves = pooledGroups[1];
+    if (!shockwaves) throw new Error('shockwaves group 未建立');
+
+    // 不經 update 直接壓進 P3：期間零攻擊，池保持空——首發 shockwave 必為 wave。
+    for (let i = 0; i < 200 && handle.getDebugState?.()?.phase !== 'p3'; i += 1) {
+      handle.applyDamage(4);
+      handle.trySegmentRespawn?.();
+    }
+    expect(handle.getDebugState?.()?.phase).toBe('p3');
+    expect(shockwaves.children).toHaveLength(0);
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // 首發 wave：同步 delayedCall 使其同 tick 生滅，以 caramel 資料為存在證據。
+    expect(step(() => shockwaves.children.length > 0)).toBe(true);
+    const wave = shockwaves.children[0];
+    if (!wave) throw new Error('wave 未生成');
+    expect(wave.getData('caramel')).toBe(true);
+
+    // 潮環撥開殘留現場 → 回池（已 inactive）→ 下一發 wave 復用（P3 僅 doWave
+    // 取 shockwaves）：tideDeflected 必歸位、caramel 為本發 doWave 重新寫入。
+    wave.setData('tideDeflected', true);
+    wave.active = false;
+    expect(step(() => wave.getData('tideDeflected') === false)).toBe(true);
+    expect(wave.getData('caramel')).toBe(true);
   });
 });

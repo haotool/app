@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type Phaser from 'phaser';
-import { STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
+import Phaser from 'phaser';
+import { STAR_FLAVORS, FORGIVENESS, STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
 import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
+import { TRANSFORM_FORMS, unlockedTransformForms } from '../logic/transform';
 import type { ControlsState } from './controls';
 import { createPlayer } from './player';
 
@@ -93,10 +94,13 @@ function makeFakeGroup(config: { maxSize: number }): {
   };
 }
 
-function chainable(): Record<string, ReturnType<typeof vi.fn>> {
+// texture/setTexture（R9）：幀鉤真正觸發後，POST_UPDATE 的剪影鏡像會讀
+// silhouette.texture.key——chainable 替身必須可駛完整幀序。
+function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { key: string } } {
   const target: Record<string, ReturnType<typeof vi.fn>> = {};
   for (const key of [
     'setDisplaySize',
+    'setTexture',
     'setTint',
     'setTintMode',
     'setPosition',
@@ -109,6 +113,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> {
     'setStrokeStyle',
     'clear',
     'lineStyle',
+    'strokeCircle',
     'beginPath',
     'arc',
     'strokePath',
@@ -119,7 +124,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> {
   ]) {
     target[key] = vi.fn(() => target);
   }
-  return target;
+  return Object.assign(target, { texture: { key: '' } });
 }
 
 interface FakePlayerSprite {
@@ -132,16 +137,20 @@ interface FakePlayerSprite {
   visible: boolean;
   flipX: boolean;
   depth: number;
+  // visualScale 幀鉤以 sprite.scene 判活體（銷毀即跳過）；替身恆掛場景（R9）。
+  scene: unknown;
   texture: { key: string };
   frame: { realWidth: number; realHeight: number };
   body: {
     velocity: { x: number; y: number };
     blocked: { down: boolean };
     touching: { down: boolean };
-    setSize: ReturnType<typeof vi.fn>;
+    sourceWidth: number;
+    sourceHeight: number;
+    setSize(w: number, h: number, center?: boolean): void;
     setOffset: ReturnType<typeof vi.fn>;
   };
-  setDisplaySize(): FakePlayerSprite;
+  setDisplaySize(w: number, h: number): FakePlayerSprite;
   setCollideWorldBounds(): FakePlayerSprite;
   setVelocity(vx: number, vy: number): FakePlayerSprite;
   setVelocityX(vx: number): FakePlayerSprite;
@@ -150,9 +159,18 @@ interface FakePlayerSprite {
   setAlpha(): FakePlayerSprite;
   setRotation(): FakePlayerSprite;
   setScale(sx: number, sy?: number): FakePlayerSprite;
-  setTexture(): FakePlayerSprite;
+  setTexture(key: string): FakePlayerSprite;
   destroy(): void;
 }
+
+// 立繪源尺寸替身（R7 破圖回歸鎖）：模擬 #857 素材源尺寸不一——換圖後 frame
+// 尺寸改變，displaySize 未重算即體感暴增。
+const FAKE_TEXTURE_SIZE: Record<string, number> = {
+  'hero-ember': 768,
+  'hero-tide': 1254,
+  'hero-prism': 1254,
+  'hero-gravity': 1254,
+};
 
 function makePlayerSprite(x: number, y: number): FakePlayerSprite {
   const sprite: FakePlayerSprite = {
@@ -165,16 +183,27 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
     visible: true,
     flipX: false,
     depth: 0,
-    texture: { key: '__WHITE' },
-    frame: { realWidth: 48, realHeight: 48 },
+    scene: {},
+    texture: { key: 'hero-idle' },
+    frame: { realWidth: 512, realHeight: 512 },
     body: {
       velocity: { x: 0, y: 0 },
       blocked: { down: true },
       touching: { down: false },
-      setSize: vi.fn(),
+      // Phaser Body.updateBounds 語意替身：世界尺寸 = source 尺寸 × scale。
+      sourceWidth: 0,
+      sourceHeight: 0,
+      setSize(w: number, h: number) {
+        sprite.body.sourceWidth = w;
+        sprite.body.sourceHeight = h;
+      },
       setOffset: vi.fn(),
     },
-    setDisplaySize: () => sprite,
+    setDisplaySize(w: number, h: number) {
+      sprite.scaleX = w / sprite.frame.realWidth;
+      sprite.scaleY = h / sprite.frame.realHeight;
+      return sprite;
+    },
     setCollideWorldBounds: () => sprite,
     setVelocity(vx: number, vy: number) {
       sprite.body.velocity.x = vx;
@@ -197,21 +226,35 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
       sprite.scaleY = sy ?? sx;
       return sprite;
     },
-    setTexture: () => sprite,
+    setTexture(key: string) {
+      sprite.texture.key = key;
+      const size = FAKE_TEXTURE_SIZE[key] ?? 512;
+      sprite.frame.realWidth = size;
+      sprite.frame.realHeight = size;
+      return sprite;
+    },
     destroy: vi.fn(),
   };
   return sprite;
 }
 
-function makeHarness(): {
+function makeHarness(texturesExist = false): {
   player: ReturnType<typeof createPlayer>;
   groups: { maxSize: number }[];
   emit: ReturnType<typeof vi.fn>;
+  frame: { preUpdate(): void; postUpdate(): void };
 } {
   const groups: { maxSize: number }[] = [];
   const emit = vi.fn();
+  // 幀鉤替身（R9）：on/off 真實記錄 handler，frame 依註冊序觸發 PRE/POST_UPDATE
+  // 模擬跨幀——vi.fn() 版永不觸發回呼，「移除 wearTexture 的 vscale.rebase」單測
+  // 仍綠（產線下一幀被舊基準沖掉）＝假信心；emit 維持 spy 供遊戲事件斷言。
+  const sceneHandlers = new Map<string, ((...args: unknown[]) => void)[]>();
+  const fireScene = (event: string) => {
+    for (const handler of sceneHandlers.get(event) ?? []) handler();
+  };
   const scene = {
-    textures: { exists: () => false },
+    textures: { exists: () => texturesExist },
     add: {
       image: () => chainable(),
       zone: () => ({ setPosition: vi.fn(), destroy: vi.fn() }),
@@ -240,12 +283,33 @@ function makeHarness(): {
         },
       },
     },
-    events: { on: vi.fn(), once: vi.fn(), off: vi.fn(), emit },
+    events: {
+      on: (event: string, handler: (...args: unknown[]) => void) => {
+        sceneHandlers.set(event, [...(sceneHandlers.get(event) ?? []), handler]);
+      },
+      once: vi.fn(),
+      off: (event: string, handler: (...args: unknown[]) => void) => {
+        sceneHandlers.set(
+          event,
+          (sceneHandlers.get(event) ?? []).filter((entry) => entry !== handler),
+        );
+      },
+      emit,
+    },
     tweens: { add: vi.fn(), killTweensOf: vi.fn(), isTweening: () => false },
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
   } as unknown as Phaser.Scene;
-  return { player: createPlayer(scene, 100, 300), groups, emit };
+  // 解鎖集（§119）：單測給全形態，資格裁決守門案在 transform.test.ts。
+  return {
+    player: createPlayer(scene, 100, 300, unlockedTransformForms(30)),
+    groups,
+    emit,
+    frame: {
+      preUpdate: () => fireScene(Phaser.Scenes.Events.PRE_UPDATE),
+      postUpdate: () => fireScene(Phaser.Scenes.Events.POST_UPDATE),
+    },
+  };
 }
 
 const IDLE: ControlsState = {
@@ -409,5 +473,188 @@ describe('星光虹吸被抽（§113 stealTopStar）', () => {
     emit.mockClear();
     expect(player.stealTopStar()).toBe(false);
     expect(emit).not.toHaveBeenCalledWith(GameEvents.AMMO_CHANGED, expect.anything());
+  });
+});
+
+describe('§119 焰彈 burn 標記池重用（PR #886 收斂）', () => {
+  it('焰彈後復用同一池物件發射一般星：burn 殘留必須清除', () => {
+    const { player } = makeHarness();
+    // 重鑽味 ×3（連吞升級佔 2 發）→ 焰化資格成立，SP 點按地面即變身。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    // B 點按發焰彈：burn 標記為真。
+    player.update(PRESS, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const emberShot = stars.find((star) => star.active);
+    expect(emberShot?.getData('burn')).toBe(true);
+    // 模擬回收（recycleStar 語意）→ 解除變身 → 一般星發射復用同一池物件。
+    emberShot?.setActive(false);
+    player.update(IDLE, 16);
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(emberShot);
+    expect(reused?.getData('burn')).toBe(false);
+  });
+});
+
+describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出必全歸位）', () => {
+  it('殘留 tideDeflected/reflected/inhalable 的池星彈被焰彈復用後必為 false', () => {
+    const { player } = makeHarness();
+    // 先發一發一般星建立池物件，模擬互動旗標殘留後回收。
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const pooled = stars.find((star) => star.active);
+    if (!pooled) throw new Error('星彈未生成');
+    pooled.setData('tideDeflected', true);
+    pooled.setData('reflected', true);
+    pooled.setData('inhalable', true);
+    pooled.setActive(false);
+    // 焰化後 B 點按經 formSkills.launchShot 復用同一物件：旗標必須歸位。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(PRESS, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(pooled);
+    expect(reused?.getData('tideDeflected')).toBe(false);
+    expect(reused?.getData('reflected')).toBe(false);
+    expect(reused?.getData('inhalable')).toBe(false);
+    expect(reused?.getData('burn')).toBe(true);
+  });
+});
+
+// 星彈四鍵必寫回歸鎖（PR #886 R5/R6）：damage/pierce/flavor/mix 的排除理由是
+// 「兩發射器每發必寫」——本案把該事實升級為機制（拿掉任一鍵寫入即紅）。
+// R6 修假信心：形態彈復用一般星的池物件時，殘留四鍵會讓斷言空過（Grok mutation
+// 實證刪 launchShot 四鍵寫入仍綠——防池殘留的測試被池殘留騙過）。修法＝發射前
+// 對候選池物件把四鍵清為 undefined sentinel，斷言只能由本發寫入滿足。
+describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => {
+  const FOUR_KEYS = ['damage', 'pierce', 'flavor', 'mix'] as const;
+
+  it('一般星發射後四鍵為本發正確值（發射前寫毒值，殘值頂替即紅）', () => {
+    const { player } = makeHarness();
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const normal = stars.find((star) => star.active);
+    if (!normal) throw new Error('一般星未生成');
+    // R8：sentinel 改毒值——若生產改用 ?? fallback，undefined sentinel 仍會綠；
+    // 毒值配具體期望值，殘值或 fallback 頂替一律紅。
+    for (const key of FOUR_KEYS) normal.setData(key, -999);
+    normal.setActive(false);
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(normal);
+    expect(reused?.getData('damage')).toBe(STAR_FLAVORS.jelly.damage);
+    expect(reused?.getData('pierce')).toBe(STAR_FLAVORS.jelly.pierceCount);
+    expect(reused?.getData('flavor')).toBe('jelly');
+    expect(reused?.getData('mix')).toBeNull();
+  });
+
+  it('形態彈（launchShot 管線）四鍵為本發正確值（毒值禁殘值/fallback 頂替）', () => {
+    const { player } = makeHarness();
+    // 先發一發一般星建立池物件（製造殘值現場）。
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const pooled = stars.find((star) => star.active);
+    if (!pooled) throw new Error('一般星未生成');
+    // 毒值＋回收：復用時四鍵只能由 launchShot 本發寫入的正確值滿足。
+    for (const key of FOUR_KEYS) pooled.setData(key, -999);
+    pooled.setActive(false);
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(PRESS, 16);
+    const formShot = stars.find((star) => star.active);
+    if (!formShot) throw new Error('形態彈未生成');
+    expect(formShot).toBe(pooled);
+    const emberShot = TRANSFORM_FORMS.ember.shot;
+    if (!emberShot) throw new Error('焰化 shot 規格缺失');
+    expect(formShot?.getData('damage')).toBe(emberShot.damage);
+    expect(formShot?.getData('pierce')).toBe(emberShot.pierceCount);
+    expect(formShot?.getData('flavor')).toBe(emberShot.flavor);
+    expect(formShot?.getData('mix')).toBeNull();
+  });
+});
+
+// 變身破圖回歸鎖（PR #886 R7）：#857 形態立繪源尺寸不一（ember 768、tide/prism/
+// gravity 1254 vs 基準 512），換圖若不重算 displaySize，變身瞬間視覺暴增近 2.5 倍
+// 且與生成時錨定的物理箱脫鉤。wearTexture 統一入口必須讓「顯示 px = 48」恆成立。
+describe('變身換裝尺寸解耦（PR #886 R7）', () => {
+  // R8 判定箱斷言：Body.updateBounds 每步以 sourceWidth×|scaleX| 重算世界尺寸——
+  // hurtbox 若凍結生成時 512 基準，換 768/1254 源後會縮水 33%~59%（視覺不動）。
+  const bodyWorldW = (sprite: FakePlayerSprite) => sprite.body.sourceWidth * sprite.scaleX;
+  const bodyWorldH = (sprite: FakePlayerSprite) => sprite.body.sourceHeight * sprite.scaleY;
+  const HURT_W = 48 * FORGIVENESS.hurtboxWidthRatio;
+  const HURT_H = 48 * FORGIVENESS.hurtboxHeightRatio;
+
+  // R9 跨幀鎖（Grok MEDIUM）：PRE_UPDATE 以 vscale 基準覆寫 scale——wearTexture 若漏
+  // rebase，換裝當幀綠、下一幀被舊基準沖掉。斷言落在 PRE 後（Body.updateBounds 的
+  // 物理讀取點），再走 POST 完成真實幀序（視覺 base×fx×mod 不入斷言）。
+  const expectStableAcrossFrame = (
+    frame: { preUpdate(): void; postUpdate(): void },
+    sprite: FakePlayerSprite,
+  ) => {
+    frame.preUpdate();
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    frame.postUpdate();
+  };
+
+  it('穿上超尺寸形態立繪與返回姿勢立繪：顯示尺寸恆為 PLAYER_SIZE', () => {
+    const { player, frame } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    // 生成基準：hero-idle 512 源 → 48px；世界判定箱 36×38.4。
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    // 焰化（768 源）：顯示 px 必須仍為 48（未重算會是 72）。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(IDLE, 16);
+    expect(sprite.texture.key).toBe('hero-ember');
+    expect(sprite.frame.realWidth).toBe(768);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    // 跨幀後恆定（R9）：漏 rebase 時此處 72（顯示）／54×57.6（判定箱）必紅。
+    expectStableAcrossFrame(frame, sprite);
+    // 解除返回姿勢立繪（512 源）：同樣恆為 48。
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(512);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expectStableAcrossFrame(frame, sprite);
+  });
+
+  it('潮化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE', () => {
+    const { player, frame } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    for (let i = 0; i < 3; i += 1) player.grantStar('spora');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('tide');
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(1254);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    // 修復前此處為 14.7（−59%）：判定箱與源解析度解耦的核心斷言。
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    // 跨幀後恆定（R9）：漏 rebase 時顯示 117.56、判定箱 88.17 必紅。
+    expectStableAcrossFrame(frame, sprite);
   });
 });

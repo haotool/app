@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { MagazineSlot } from '../core/config';
 import {
+  FORM_INTRO_LEVEL,
+  GALE_BLADE,
   GALE_GLIDE,
+  GALE_SHOT,
   SHELL_CHARGE,
   SHELL_TUCK,
   TRANSFORM,
   TRANSFORM_FORMS,
   VOLT_DISCHARGE,
+  unlockedTransformForms,
   absorbHalvedDamage,
   consumeDischarge,
   consumeTuck,
@@ -198,5 +202,109 @@ describe('absorbHalvedDamage 殼化減傷池（§57）', () => {
 
   it('偶數傷害直接減半', () => {
     expect(absorbHalvedDamage(0, 2)).toEqual({ pool: 0, damage: 1 });
+  });
+});
+
+describe('§119 四新形態：資格映射與解鎖閘', () => {
+  it('同系 ×3 對應新四形態：drilly→ember、spora→tide、glowy→prism、boomy→gravity', () => {
+    expect(eligibleForm([slot('drilly'), slot('drilly'), slot('drilly')])).toBe('ember');
+    expect(eligibleForm([slot('spora'), slot('spora'), slot('spora')])).toBe('tide');
+    expect(eligibleForm([slot('glowy'), slot('glowy'), slot('glowy')])).toBe('prism');
+    expect(eligibleForm([slot('boomy'), slot('boomy'), slot('boomy')])).toBe('gravity');
+  });
+
+  it('解鎖閘：unlocked 集內才成立資格；基礎三形態恆開', () => {
+    const preFinale = unlockedTransformForms(20);
+    expect(eligibleForm([slot('glowy'), slot('glowy'), slot('glowy')], preFinale)).toBeNull();
+    expect(eligibleForm([slot('zappy'), slot('zappy'), slot('zappy')], preFinale)).toBe('volt');
+    const atL23 = unlockedTransformForms(23);
+    expect(eligibleForm([slot('spora'), slot('spora'), slot('spora')], atL23)).toBe('tide');
+    expect(eligibleForm([slot('boomy'), slot('boomy'), slot('boomy')], atL23)).toBeNull();
+  });
+
+  it('unlockedTransformForms 依引入關逐級開放（21/23/25/27）', () => {
+    expect([...unlockedTransformForms(20)].sort()).toEqual(['gale', 'shell', 'volt']);
+    expect(unlockedTransformForms(21).has('ember')).toBe(true);
+    expect(unlockedTransformForms(22).has('tide')).toBe(false);
+    expect(unlockedTransformForms(25).has('prism')).toBe(true);
+    expect(unlockedTransformForms(27).has('gravity')).toBe(true);
+    expect(unlockedTransformForms(30).size).toBe(Object.keys(TRANSFORM_FORMS).length);
+  });
+
+  it('FORM_INTRO_LEVEL 覆蓋全部新形態且不含基礎三形態', () => {
+    expect(FORM_INTRO_LEVEL).toEqual({ ember: 21, tide: 23, prism: 25, gravity: 27 });
+  });
+});
+
+describe('§119 四新形態規格：語彙 ≤4 與 anti-softlock 紅線', () => {
+  it('焰化：無防禦語彙（走位換輸出）——攻焰彈/機動衝刺/特落地爆共 3 語彙', () => {
+    const spec = TRANSFORM_FORMS.ember;
+    expect(spec.shot).not.toBeNull();
+    expect(spec.shot?.burn).toBe(true);
+    expect(spec.airDash).toBe(true);
+    expect(spec.landingImpact).toBe(true);
+    expect(spec.tuckCharges).toBe(0);
+    expect(spec.dischargeCharges).toBe(0);
+    expect(spec.halveDamage).toBe(false);
+    expect(spec.reflectProjectiles).toBe(false);
+  });
+
+  it('潮化：攻水引/防泡泡盾 ×1/機動滑翔/特潮環撥開共 4 語彙', () => {
+    const spec = TRANSFORM_FORMS.tide;
+    expect(spec.tapStrike).toBe('tide-pull');
+    expect(spec.tuckCharges).toBe(1);
+    expect(spec.glide).toBe(true);
+    expect(spec.deflectProjectiles).toBe(true);
+    expect(spec.shot).toBeNull();
+  });
+
+  it('稜化：攻三向碎片/防反射抵銷/機動鏡步/特彩虹光束共 4 語彙', () => {
+    const spec = TRANSFORM_FORMS.prism;
+    expect(spec.shot?.count).toBe(3);
+    // 反射抵銷＝折射銷毀不回傷（PR #886 SSOT 收斂）：與殼化反彈（回傷）語彙區辨。
+    expect(spec.negateProjectiles).toBe(true);
+    expect(spec.reflectProjectiles).toBe(false);
+    expect(spec.blinkPx).toBeGreaterThan(0);
+    expect(spec.tapStrike).toBeNull();
+  });
+
+  it('引力化：攻/特引力井/防星體護衛 ×3/機動錨墜（下砸強化）共 4 語彙', () => {
+    const spec = TRANSFORM_FORMS.gravity;
+    expect(spec.tapStrike).toBe('gravity-well');
+    expect(spec.tuckCharges).toBe(3);
+    expect(spec.slamRadiusMul).toBeGreaterThan(1);
+    expect(spec.gravityFlipImmune).toBe(true);
+  });
+
+  it('GALE_SHOT 鏡像 GALE_BLADE：單一發射管線零第二份數字', () => {
+    expect(GALE_SHOT.damage).toBe(GALE_BLADE.damage);
+    expect(GALE_SHOT.speed).toBe(GALE_BLADE.speed);
+    expect(GALE_SHOT.pierceCount).toBe(GALE_BLADE.pierceCount);
+    expect(GALE_SHOT.cooldownMs).toBe(GALE_BLADE.cooldownMs);
+    expect(GALE_SHOT.count).toBe(1);
+  });
+});
+
+describe('§119 consumeTuck 泛化：潮化泡泡盾／引力化星體護衛', () => {
+  it('潮化 1 次全免後耗盡；引力化 3 次遞減', () => {
+    let tide = startTransform('tide');
+    const first = consumeTuck(tide);
+    expect(first.triggered).toBe(true);
+    tide = first.state;
+    expect(consumeTuck(tide).triggered).toBe(false);
+
+    let gravity = startTransform('gravity');
+    for (let i = 3; i > 0; i -= 1) {
+      const hit = consumeTuck(gravity);
+      expect(hit.triggered).toBe(true);
+      gravity = hit.state;
+      expect(gravity.tuckLeft).toBe(i - 1);
+    }
+    expect(consumeTuck(gravity).triggered).toBe(false);
+  });
+
+  it('無防禦形態（焰化/稜化）恆不觸發', () => {
+    expect(consumeTuck(startTransform('ember')).triggered).toBe(false);
+    expect(consumeTuck(startTransform('prism')).triggered).toBe(false);
   });
 });

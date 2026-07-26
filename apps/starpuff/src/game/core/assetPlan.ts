@@ -1,7 +1,7 @@
 import { ASSETS, type AssetEntry, type AssetPhase } from './assets';
-import type { BossKind, EnemyKind } from './types';
+import type { BossKind, EnemyKind, TransformForm } from './types';
 import type { LevelSpec } from '../logic/levels';
-import { TRANSFORM_FORMS } from '../logic/transform';
+import { FORM_INTRO_LEVEL, TRANSFORM_FORMS } from '../logic/transform';
 
 // 分階段載入計畫（§115）：純 TS，不 import phaser，vitest 直接對象。
 // 「何時載入」由 assets.ts 的 phase 欄位決定；「哪一關要哪些」由 LevelSpec 派生，
@@ -48,7 +48,20 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   splatta: 'minion-splatta',
   twinkla: 'minion-twinkla',
   cometa: 'minion-cometa',
+  // §120 星海終局篇新怪（#857 素材已交付，鍵名以素材命名為準）。
+  cargo: 'minion-cargojelly',
+  ticketa: 'minion-ticketbat',
+  scanna: 'minion-scannereye',
+  foamy: 'minion-bubbler',
+  frosty: 'minion-iceslime',
+  manta: 'minion-tideray',
 };
+
+// 佔位立繪鍵（素材未交付期間的 manifest 守門豁免）：運行期各自回退（enemies 以
+// FALLBACK_COLORS generateTexture、player 以素身＋形態著色、CodexScene 以 fx-star
+// 剪影）。§119/§120 十鍵已於 #857 素材交付後全數移除納回載入計畫（機械鎖見
+// assetPlan.test 的 PENDING 三條守門）；未來新佔位鍵入列須顯式過審。
+export const PENDING_TEXTURE_KEYS: readonly string[] = [];
 
 // 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）。
 export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {
@@ -83,19 +96,33 @@ const HERO_POSE_KEYS: readonly string[] = [
   'hero-hurt',
 ];
 
-// 形態立繪：變身可於關內任意時點觸發，故每關都須備妥。鍵名由 TRANSFORM_FORMS 派生
-// （player.ts 以 `hero-${form}` 取用），新增形態自動跟進。
+// 形態立繪：變身可於關內任意時點觸發，故解鎖後每關都須備妥。鍵名由
+// TRANSFORM_FORMS 派生（player.ts 以 `hero-${form}` 取用），新增形態自動跟進。
 const FORM_TEXTURE_KEYS: readonly string[] = Object.keys(TRANSFORM_FORMS).map(
   (form) => `hero-${form}`,
 );
 
-// 全關共用核心：與關卡無關、但每關都必須在場的貼圖。
+// 形態立繪的關卡可用性（PR #886 R7）：FORM_INTRO_LEVEL 之前的關卡不載該形態
+// 立繪——四張新形態圖曾被無條件塞進 form 階段，使 L1 進場多載 292.6KiB
+//（侵蝕 #883 的分階段優化）。未列 FORM_INTRO_LEVEL 的形態（雷/殼/風）恆載。
+export function formTextureKeysForLevel(levelId: number): string[] {
+  return Object.keys(TRANSFORM_FORMS)
+    .filter((form) => (FORM_INTRO_LEVEL[form as TransformForm] ?? 0) <= levelId)
+    .map((form) => `hero-${form}`);
+}
+
+// 全關共用核心：與關卡無關、但每關都必須在場的貼圖（形態立繪全集；逐關納入
+// 時機由 formTextureKeysForLevel 依 FORM_INTRO_LEVEL 收斂）。
 export const SHARED_LEVEL_KEYS: readonly string[] = [...HERO_POSE_KEYS, ...FORM_TEXTURE_KEYS];
 
 // 該關實際會用到的貼圖鍵：關卡限定（背景／道具／小怪／魔王，由 LevelSpec 派生）
 // ＋全關共用核心（主角姿勢／形態立繪）。
 export function levelAssetKeys(level: LevelSpec): string[] {
-  const keys = new Set<string>([bgTextureKey(level.bgKey), ...SHARED_LEVEL_KEYS]);
+  const keys = new Set<string>([
+    bgTextureKey(level.bgKey),
+    ...HERO_POSE_KEYS,
+    ...formTextureKeysForLevel(level.id),
+  ]);
   for (const decor of level.decor) keys.add(decor.key);
 
   const kinds = new Set<EnemyKind>(level.enemyMix.map((entry) => entry.kind));
@@ -145,7 +172,8 @@ export function entriesForLevel(
   const scoped = levelScopedKeys(levels);
   return assets.filter((entry) => {
     const phase = phaseOf(entry);
-    if (phase === 'form') return true;
+    // 形態立繪依 FORM_INTRO_LEVEL 逐關納入（R7）；其餘 form 條目維持每關全載。
+    if (phase === 'form') return !FORM_TEXTURE_KEYS.includes(entry.key) || needed.has(entry.key);
     if (phase !== 'level' && phase !== 'boss') return false;
     return scoped.has(entry.key) ? needed.has(entry.key) : true;
   });

@@ -8,6 +8,7 @@ import {
   isInInhalePullRange,
   isInInhaleRange,
 } from '../logic/combat';
+import { FOAMY_FSM } from '../logic/enemyFsm';
 import { SHELL_CHARGE, SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -54,6 +55,17 @@ const PULL_BASE_SPEED = 160;
 const PULL_GAIN = 2.2;
 const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
+// 潮環撥開速度（§119 Tidal Ring）：接觸投射物即反向推離。
+const TIDE_DEFLECT_SPEED = 320;
+// 潮環撥開白名單（§119）：僅飛行彈體類 hazard（爆刺彈/鏡面反射彈/迴旋殼刃/
+// 拋物糖球/水刃）；泡泡另有免疫分流，區域拒止/近戰/光束不受撥開。
+const TIDE_DEFLECT_KINDS: readonly string[] = [
+  'spike',
+  'reflect',
+  'boomerang',
+  'sugarblob',
+  'waterblade',
+];
 
 export function applyInhalePull(
   scene: Phaser.Scene,
@@ -122,9 +134,11 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       return;
     }
     const spec = hooks.combat().specOf(s);
-    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s));
+    // burn（§119 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§120）。
+    const burn = s.getData('burn') === true;
+    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn);
     if (outcome === 'ignored') return;
-    if (spec.aoeRadiusPx > 0) hooks.combat().explodeStar(s.x, s.y, spec, target);
+    if (spec.aoeRadiusPx > 0) hooks.combat().explodeStar(s.x, s.y, spec, target, burn);
     // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
     if (spec.chainCount > 0) hooks.combat().chainLightning(s.x, s.y, spec, target);
     // 孢子星（§53）：命中未死目標套緩速＋輕持續傷。
@@ -179,6 +193,36 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.enemies().getHazards(), (_p, hz) => {
     const hazard = asSprite(hz);
     if (!hazard.active || hooks.isSettled()) return;
+    // 漂浮泡泡（§120 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§119）。
+    if (hazard.getData('hazardKind') === 'bubble') {
+      hazard.disableBody(true, true);
+      hooks.fx().burstSmall(hazard.x, hazard.y, 0xbfe8f0);
+      playSfx('pop', 1.3);
+      // 泡泡免疫走顯式 bubbleImmune 欄位（PR #886 收斂）：不與撥開旗標隱性耦合，
+      // 未來 deflect 型形態不會順便免疫上浮。
+      if (!hooks.combat().playerFormSpec()?.bubbleImmune) {
+        hooks.player().sprite.setVelocityY(FOAMY_FSM.bubbleLiftVy);
+      }
+      return;
+    }
+    // 潮環撥開（§119 Tidal Ring）：潮化接觸「投射物」即反向推離，不結算傷害不回收
+    //（防禦性撥開，非殼化反打）；deflected 標記防同一彈體逐幀重複推。
+    // 白名單收窄（PR #886 收斂）：僅飛行彈體——區域拒止/近戰/光束不屬投射物語彙，
+    // 全類撥開會使潮化對地形危害全免傷（違反「變身是優勢不是必勝」）。
+    if (
+      hooks.combat().playerFormSpec()?.deflectProjectiles &&
+      TIDE_DEFLECT_KINDS.includes(hazard.getData('hazardKind') as string)
+    ) {
+      if (hazard.getData('tideDeflected') !== true) {
+        hazard.setData('tideDeflected', true);
+        const player = hooks.player().sprite;
+        const away = Math.sign(hazard.x - player.x) || hooks.player().getFacing();
+        (hazard.body as Phaser.Physics.Arcade.Body).setVelocity(away * TIDE_DEFLECT_SPEED, -80);
+        hooks.fx().burstSmall(hazard.x, hazard.y, TRANSFORM_FORMS.tide.tint);
+        playSfx('pop', 1.2);
+      }
+      return;
+    }
     hazard.disableBody(true, true);
     hooks.damagePlayer(ENEMY.touchDamage, hazard.x);
   });
@@ -259,10 +303,32 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       playSfx('swallow');
       return;
     }
-    // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。
+    // 潮環撥開（§119）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
+    if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
+      if (projectile.getData('tideDeflected') !== true) {
+        projectile.setData('tideDeflected', true);
+        const away = Math.sign(projectile.x - hooks.player().sprite.x) || 1;
+        (projectile.body as Phaser.Physics.Arcade.Body).setVelocity(away * TIDE_DEFLECT_SPEED, -80);
+        playSfx('pop', 1.2);
+      }
+      return;
+    }
+    // 稜化反射抵銷（§119）：折射銷毀彈幕——無效化而非回傷（與殼化反彈語彙區辨）。
+    if (hooks.combat().playerFormSpec()?.negateProjectiles) {
+      const form = hooks.player().getTransformState().form;
+      projectile.disableBody(true, true);
+      hooks
+        .fx()
+        .burstSmall(projectile.x, projectile.y, form ? TRANSFORM_FORMS[form].tint : 0xffffff);
+      playSfx('pop', 1.4);
+      return;
+    }
+    // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）；
+    // tint 走現行形態 SSOT，不硬編殼化色。
     if (hooks.combat().playerFormSpec()?.reflectProjectiles) {
+      const form = hooks.player().getTransformState().form;
       projectile.setData('reflected', true);
-      projectile.setTint(TRANSFORM_FORMS.shell.tint);
+      projectile.setTint(form ? TRANSFORM_FORMS[form].tint : TRANSFORM_FORMS.shell.tint);
       (projectile.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
       const boss = hooks.nearestBossBody(projectile.x, projectile.y);
       scene.physics.moveTo(projectile, boss.x, boss.y, SHELL_REFLECT.speed);

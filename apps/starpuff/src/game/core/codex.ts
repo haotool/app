@@ -158,6 +158,49 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '高空鎖定俯衝拖彗尾，吞下得疾風星',
     inhalable: true,
   },
+  // §120 星海終局篇新怪：L21 星港三種＋L23 潮灣三種。
+  {
+    kind: 'cargo',
+    textureKey: 'minion-cargojelly',
+    nameZh: '貨櫃丁',
+    behavior: '緩推巡邏撞牆反彈，吞下得重鑽星（焰化供給）',
+    inhalable: true,
+  },
+  {
+    kind: 'ticketa',
+    textureKey: 'minion-ticketbat',
+    nameZh: '票券蝠',
+    behavior: '雙軌飛行週期換軌俯掠，擊殺掉加速票，吞下得疾風星',
+    inhalable: true,
+  },
+  {
+    kind: 'scanna',
+    textureKey: 'minion-scannereye',
+    nameZh: '掃描眼',
+    behavior: '鎖定後發直線掃描光，吸入會被彈開——用掩體或殼盾反制',
+    inhalable: false,
+  },
+  {
+    kind: 'foamy',
+    textureKey: 'minion-bubbler',
+    nameZh: '泡泡機',
+    behavior: '週期吐漂浮泡泡使你上浮（潮化免疫），吞下得孢子星（潮化供給）',
+    inhalable: true,
+  },
+  {
+    kind: 'frosty',
+    textureKey: 'minion-iceslime',
+    nameZh: '冰史萊姆',
+    behavior: '冰面滑行受擊分裂，焰化燒毀不分裂，吞下得孢子星',
+    inhalable: true,
+  },
+  {
+    kind: 'manta',
+    textureKey: 'minion-tideray',
+    nameZh: '潮汐魟',
+    behavior: '低空巡游放扇形水刃——逆流走位反制，吞下得孢子星',
+    inhalable: true,
+  },
   {
     kind: 'boss',
     textureKey: 'boss-idle',
@@ -233,7 +276,27 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   {
     nameZh: '星化變身',
     howTo: '同系 3 發地面按 SP',
-    detail: '雷化／風化／殼化 10 秒，消耗全部彈匣；變身中再按 SP 提前解除',
+    detail: '形態持續 10 秒，消耗全部彈匣；變身中再按 SP 提前解除（七形態逐區解鎖）',
+  },
+  {
+    nameZh: '焰化',
+    howTo: '重鑽味 ×3 按 SP',
+    detail: 'L21 解鎖：焰彈小爆＋空中跳焰衝刺＋落地熔岩爆；無防禦走位換輸出，可燒毀冰塊',
+  },
+  {
+    nameZh: '潮化',
+    howTo: '孢子味 ×3 按 SP',
+    detail: 'L23 解鎖：水引拉近敵人＋泡泡護盾擋一次＋滑翔緩降；潮環自動撥開投射物',
+  },
+  {
+    nameZh: '稜化',
+    howTo: '流光味 ×3 按 SP',
+    detail: 'L25 解鎖：三向稜光碎片、長按放彩虹光束；折射抵銷彈幕＋空中跳鏡步瞬移',
+  },
+  {
+    nameZh: '引力化',
+    howTo: '迴旋味 ×3 按 SP',
+    detail: 'L27 解鎖：引力井滯留牽引＋三星體護衛各擋一次＋下砸強化為錨墜',
   },
   {
     nameZh: '下衝擊',
@@ -256,6 +319,10 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
     detail: '拍翅最多三次延長滯空，落地重置',
   },
 ] as const;
+
+// §120 佔位立繪鍵 SSOT 移駐 core/assetPlan（載入計畫豁免同一份真值），此處再匯出
+// 供 CodexScene 與測試沿用既有匯入點。
+export { PENDING_TEXTURE_KEYS } from './assetPlan';
 
 // 星味首遇提示（§46/§47/§53）：GameScene 於本 session 首次取得該味/配方時 toast 一行文案。
 export const FLAVOR_HINTS: Record<StarFlavor, string> = {

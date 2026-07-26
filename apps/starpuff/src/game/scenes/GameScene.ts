@@ -18,7 +18,8 @@ import {
   recordLevelClear,
   type SaveData,
 } from '../core/save';
-import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
+import { SceneKeys, type GameResultData, type LevelId, type TransformForm } from '../core/types';
+import { unlockedTransformForms } from '../logic/transform';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor } from '../logic/combat';
@@ -150,6 +151,7 @@ export class GameScene extends Phaser.Scene {
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
 
+  private unlockedForms: ReadonlySet<TransformForm> = new Set();
   private tide: TideHandle | null = null;
   // 流星雨（§79）：關卡級環境彈幕；無配置關為 null。
   private meteor: MeteorSystem | null = null;
@@ -257,7 +259,10 @@ export class GameScene extends Phaser.Scene {
         ? 60
         : this.worldWidth() / 2
       : 100;
-    this.player = createPlayer(this, startX, GROUND_TOP - 40);
+    // 形態解鎖集（§119）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
+    const reach = Math.max(this.currentLevelId, this.save.highestClearedLevel + 1);
+    this.unlockedForms = unlockedTransformForms(reach);
+    this.player = createPlayer(this, startX, GROUND_TOP - 40, this.unlockedForms);
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
@@ -302,7 +307,7 @@ export class GameScene extends Phaser.Scene {
     this.boss = bossKit.handle;
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
-    createHud(this);
+    createHud(this, this.unlockedForms);
     // 場內浮字與慶祝演出（§24/§46/§94）：委派 systems/toasts（fx 閉包延遲解析）。
     this.toasts = createToasts(this, {
       fx: () => this.fx,
@@ -441,10 +446,8 @@ export class GameScene extends Phaser.Scene {
 
     this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
 
-    // shutdown 清理 Phaser 不接管的資源：scene.events 監聽（restart 不重建 emitter，
-    // 未解除即跨局累積）、DOM 監聽、音訊迴圈。player 的 PRE/POST_UPDATE bob 掛鉤必須
-    // 在此解除；fx/hud 自掛 shutdown 自清，enemies/boss 無 scene.events 與 DOM 監聽，
-    // 其 group/timer/tween 由 Phaser 系統先行銷毀，不得在此重複呼叫（group 已失效）。
+    // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈）；fx/hud
+    // 自掛自清，enemies/boss 的 group/timer/tween 由 Phaser 先行銷毀，不得重複呼叫。
     this.events.once('shutdown', () => {
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
@@ -480,8 +483,9 @@ export class GameScene extends Phaser.Scene {
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
       const spMode = this.player.getSpMode();
       this.controls.setSpMode(spMode);
-      // SP 變身教學（§110）：資格徽章首次浮現即教一次（L3 供給保證位點自然觸發）。
-      if (!taughtTransformSp && (spMode === 'volt' || spMode === 'gale' || spMode === 'shell')) {
+      // SP 變身教學（§110/§119）：任一形態資格徽章首次浮現即教一次。
+      const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
+      if (!taughtTransformSp && spIsForm) {
         taughtTransformSp = true;
         this.toasts.flavor('同系星彈 ×3！按 SP 鍵立即變身');
       }
@@ -626,9 +630,7 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
-  // 低幀率沉地防護（§45 已知引擎行為：極端掉幀下重力穿透地面分離）：主地面全寬無坑洞
-  //（§26），玩家軀體「完整」沒入地面帶即回貼地表——正常著地（腳底=地面頂）永不觸發，
-  // 不取代既有碰撞與掃掠守門。
+  // 低幀率沉地防護（§45）：完整沒入地面帶即回貼地表——正常著地永不觸發。
   private clampAboveGround(): void {
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     if (body.top <= GROUND_TOP + 2 || body.velocity.y < 0) return;
@@ -803,12 +805,10 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
       this.starCombat.resolveShieldCounter(x, y, facing),
     );
-    // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、starCombat 結算。
-    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) => {
-      if (kind === 'volt-beam') this.starCombat.resolveVoltBeam(x, y, facing);
-      else if (kind === 'volt-discharge') this.starCombat.resolveVoltDischarge(x, y);
-      else this.starCombat.resolveGaleLanding(x, y);
-    });
+    // 星化形態技（§57/§119）：player 發事件、starCombat 單點路由結算（七形態同制）。
+    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
+      this.starCombat.resolveTransformStrike(kind, x, y, facing),
+    );
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });
@@ -835,6 +835,10 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
       const flavor = inhaleFlavor(kind);
       if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
+    });
+    // 加速票（§120 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
+    bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
+      if (kind === 'ticketa') this.applyBuff('swift');
     });
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
@@ -958,8 +962,7 @@ export class GameScene extends Phaser.Scene {
     if (this.playerCrossedGate(this.prevPlayerX)) this.completeLevel();
   }
 
-  // 星星門必達背擋（§26/§43）：門 overlap 為 direct pair，Phaser 4 實測間歇漏檢——
-  // 逐幀以 crossedGate 幾何判定補判（跨門心/站門心右側/AABB 交疊），不得移除。
+  // 星星門必達背擋（§26/§43）：pair overlap 間歇漏檢——逐幀 crossedGate 幾何補判，不得移除。
   private syncGateSweep(): void {
     if (!this.gate) return;
     const x = this.player.sprite.x;
@@ -1031,7 +1034,6 @@ export class GameScene extends Phaser.Scene {
     if (result.spawn) this.spawnMercyHeart();
   }
 
-  // 愛心生成（§62）：隨機空中緩降型或地面定點型；落點沿地面錨點、夾限世界內必可達。
   private spawnMercyHeart(): void {
     const side = this.mercyRng() < 0.5 ? -1 : 1;
     const offset = 120 + this.mercyRng() * 120;
@@ -1151,9 +1153,8 @@ export class GameScene extends Phaser.Scene {
     this.wasInhaling = inhaling;
   }
 
-  // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列。
-  // 成就判定恆由 save 資料派生（awardAchievements 內部 diff），此處不做侵入式鉤子。
-  // 同批多解鎖合併為單張橫幅（審查 U1）：勝利轉場 2.8s 窗口內必可播完整批。
+  // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列；
+  // 成就判定恆由 save 資料派生，同批多解鎖合併單張橫幅（審查 U1）。
   private persistAndAward(save: SaveData): void {
     const newly = awardAchievements(save);
     // 落盤失敗必須外顯（#868）：配額將滿時開機探測會通過，只有實際寫入才會失敗。

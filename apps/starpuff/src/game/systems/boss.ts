@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { acquirePooled } from '../core/poolFlags';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
@@ -269,13 +270,12 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   };
 
   const spawnBall = (x: number, y: number): Phaser.Physics.Arcade.Sprite | null => {
-    const ball = projectiles.get(x, y, 'boss-jelly-ball') as Phaser.Physics.Arcade.Sprite | null;
+    const ball = acquirePooled(projectiles, x, y, 'boss-jelly-ball');
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
-    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時 / 反彈標記須復位。
+    // 池回收重用：追蹤彈殘留的 tint / 無重力 / homing 計時須復位。
     ball.clearTint();
     ball.setData('homingMs', 0);
-    ball.setData('reflected', false);
     (ball.body as Phaser.Physics.Arcade.Body).setAllowGravity(true);
     return ball;
   };
@@ -321,11 +321,12 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   };
 
   const spawnShockwave = (directionX: 1 | -1) => {
-    const wave = shockwaves.get(
+    const wave = acquirePooled(
+      shockwaves,
       sprite.x + directionX * BOSS_W * 0.5,
       GROUND_TOP - 8,
       'boss-shockwave',
-    ) as Phaser.Physics.Arcade.Sprite | null;
+    );
     if (!wave) return;
     wave.enableBody(true, sprite.x + directionX * BOSS_W * 0.5, GROUND_TOP - 8, true, true);
     wave.setVelocity(directionX * 320 * fsm.speedFactor, 0);

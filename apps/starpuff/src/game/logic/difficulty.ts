@@ -31,6 +31,9 @@ export const AUDIT_THRESHOLDS = {
   transformTtkGainMinPct: 0.15,
   // #813 去背板：魔王招式序列條件熵下限（bits），固定循環＝0 不可過門。
   moveEntropyMinBits: 0.5,
+  // §119 變身觸發密度：形態引入關 mid bot 首次變身 p50 ≤30s、p95 ≤60s。
+  transformFirstP50Ms: 30_000,
+  transformFirstP95Ms: 60_000,
 } as const;
 
 // ===== 分級 bot（機制 brief §10：低階反應 500ms＋基礎策略、高階 250ms＋完整策略）=====
@@ -310,6 +313,14 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   mirri: 'ranged',
   splatta: 'ranged',
   cometa: 'ranged',
+  // §120 星海終局篇：cargo/frosty 恆可吸近戰系；ticketa 換軌俯掠（沿 gusty/cometa
+  // 俯衝系口徑）、scanna/foamy/manta 具投射。
+  cargo: 'safe',
+  ticketa: 'ranged',
+  frosty: 'safe',
+  scanna: 'ranged',
+  foamy: 'ranged',
+  manta: 'ranged',
 };
 
 const THREAT_WEIGHT = { safe: 0, windowed: 0.4, ranged: 0.7, contact: 1 } as const;
