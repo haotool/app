@@ -347,31 +347,61 @@ export function validate002({ stagedContent, headContent }) {
 // 繼承呼叫端的 LANG／LC_ALL／LANGUAGE 會讓訊息變成當地語系而比對不到
 // （實測 macOS Homebrew git 2.55 + LC_ALL=zh_CN.UTF-8 即觸發）。
 // 鎖定 C locale 同時也鎖住訊息穩定性，降低跨 git 版本翻譯字串變動的風險。
+// LC_ALL／LANGUAGE 鎖英文輸出。移除訊息比對後這不再是正確性的依據，
+// 但保留可讓 git 輸出恆為決定性，避免日後有人新增解析時踩到 locale。
 const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' };
 
-const MISSING_OBJECT_PATTERNS = [
-  /does not exist in '/, // 指定 tree（HEAD 或 sha）無此路徑
-  /does not exist \(neither on disk nor in the index\)/, // index 與磁碟皆無
-  /exists on disk, but not in the index/, // staged 刪除（git rm --cached）
-  /invalid object name 'HEAD'\./, // 尚無任何 commit（初始 commit）
-];
+// 全檔唯一的 git 呼叫點：集中帶入 GIT_ENV 與 stdio，讓「忘記帶 env」在結構上不可能。
+// 非零離開一律拋出（由呼叫端決定是否為預期），不在此吞任何錯誤。
+function git(args) {
+  return execFileSync('git', args, {
+    env: GIT_ENV,
+    encoding: 'utf-8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+}
 
-// spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」。
-function gitShow(spec) {
+// repo 可用性只確認一次。確認之後，`ls-files`／`ls-tree` 的空輸出即代表「不存在」，
+// 是正常回傳值而非例外——因此不需要、也不再比對 git 的人類可讀 fatal 訊息。
+let repoUsable = false;
+function assertRepoUsable() {
+  if (repoUsable) return;
+  git(['rev-parse', '--git-dir']);
+  repoUsable = true;
+}
+
+// repo 已確認可用，故 rev-parse 失敗只可能是「該 ref 不存在」（例如尚無任何 commit）。
+function refResolves(ref) {
   try {
-    execFileSync('git', ['cat-file', '-e', spec], {
-      env: GIT_ENV,
-      stdio: ['ignore', 'ignore', 'pipe'],
-    });
-  } catch (error) {
-    if (error?.code === 'ENOENT') throw error;
-    const stderr = String(error?.stderr ?? error?.message ?? '');
-    if (error?.status === 128 && MISSING_OBJECT_PATTERNS.some((re) => re.test(stderr))) {
-      return null;
-    }
-    throw new Error(`git cat-file -e ${spec} 失敗（status=${error?.status}）：${stderr.trim()}`);
+    git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
+    return true;
+  } catch {
+    return false;
   }
-  return execFileSync('git', ['show', spec], { env: GIT_ENV, encoding: 'utf-8' });
+}
+
+// spec 形如「:path」（index）、「HEAD:path」、「<sha>:path」；不存在時回傳 null。
+//
+// 存在性改用 `ls-files`／`ls-tree` 而非 `cat-file -e`：後者把「不存在」表達成 status 128
+// ＋ fatal 訊息，與「repo 不可用」共用同一個離開碼，只能靠比對英文訊息區分——那是
+// 人類可讀輸出而非 API 契約，本守門已因此連續破三次（漏訊息、依賴英文、又漏一種）。
+// `ls-*` 對不存在的路徑輸出空字串且 exit 0，把「不存在」變成正常回傳值，
+// 非零離開則一律是環境問題並上拋 fail-closed，這條脆弱性從根上消失。
+function gitShow(spec) {
+  assertRepoUsable();
+  const separator = spec.indexOf(':');
+  const ref = spec.slice(0, separator);
+  const path = spec.slice(separator + 1);
+
+  let listed = '';
+  if (ref === '') {
+    listed = git(['ls-files', '--', path]);
+  } else if (refResolves(ref)) {
+    listed = git(['ls-tree', '--name-only', ref, '--', path]);
+  }
+  if (listed.trim() === '') return null;
+
+  return git(['show', spec]);
 }
 
 function report(errors) {
@@ -414,11 +444,7 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
   const gitStderr = (error) => String(error?.stderr ?? error?.message ?? '').trim();
   if (useMergeBase) {
     try {
-      base = execFileSync('git', ['merge-base', ref, 'HEAD'], {
-        env: GIT_ENV,
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }).trim();
+      base = git(['merge-base', ref, 'HEAD']).trim();
     } catch (error) {
       console.error(
         `002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）：${gitStderr(error)}`,
@@ -427,11 +453,7 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
     }
   } else {
     try {
-      base = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], {
-        env: GIT_ENV,
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }).trim();
+      base = git(['rev-parse', '--verify', `${ref}^{commit}`]).trim();
     } catch (error) {
       console.error(`002 記分守門失敗：無法解析基準 commit（「${ref}」）：${gitStderr(error)}`);
       process.exit(1);

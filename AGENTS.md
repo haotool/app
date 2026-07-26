@@ -287,9 +287,13 @@ Agent **必須**先完成：
 
 僅三種情境放行：002 相對基準未變更、002 在 index 與 HEAD 皆不存在、`before` 為全零（分支初建）。
 
-**`catch` 區塊的判準**：每一個吞掉錯誤的 `catch` 都必須說得出「為什麼這個錯誤可以安全忽略」，說不出來就 rethrow。本守門的四個 `catch` 各自的理由記於程式碼註解；其中 `gitShow` 只把**窮舉實測過的四種 git「物件不存在」訊息**視為可忽略，其餘（`not a git repository`、壞 git、權限問題、非預期 status）一律上拋。
+**`catch` 區塊的判準**：每一個吞掉錯誤的 `catch` 都必須說得出「為什麼這個錯誤可以安全忽略」，說不出來就 rethrow。本守門各 `catch` 的理由記於程式碼註解；`refResolves` 是唯一會吞的一處，理由是 `assertRepoUsable()` 已先確認 repo 可用，故 `rev-parse` 失敗只可能是「該 ref 不存在」。
 
-**依賴 git 文字輸出的前提**：上述判別讀的是 stderr，而 git 內建 gettext 翻譯會跟隨呼叫端 locale。故四處 git 呼叫一律傳 `env: { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }` 鎖英文輸出；未鎖時非英文環境會讓合法情境誤擋（實測 macOS Homebrew git 2.55 + `LC_ALL=zh_CN.UTF-8`，「初始 commit」由 exit 0 變 exit 1）。鎖 C locale 同時也降低跨 git 版本翻譯字串變動的風險。新增 git 呼叫時必須一併帶 env，測試有結構鎖把關。
+**存在性判定不得依賴 git 的 fatal 訊息**：`cat-file -e` 把「物件不存在」表達成 status 128 ＋ 人類可讀訊息，與「repo 不可用」共用同一個離開碼，只能靠比對英文訊息區分。這條路徑連續破了三次（漏訊息種類、依賴英文輸出、又漏第五種），根因是把人類可讀輸出當成 API 契約。
+
+現行做法把「不存在」變成正常回傳值：先 `git rev-parse --git-dir` 確認 repo 可用（僅一次），之後 index 用 `git ls-files -- <path>`、tree 用 `git ls-tree --name-only <ref> -- <path>`——路徑不存在時輸出空字串且 exit 0，非零離開一律是環境問題並上拋 fail-closed。「尚無任何 commit」由 `rev-parse --verify` 的離開碼結構判定，同樣不比對訊息。**新增存在性判定時不得退回訊息比對，測試有結構鎖把關。**
+
+所有 git 子行程收斂在唯一的 `git()` wrapper（帶 `LC_ALL=C`／`LANGUAGE=C` 使輸出決定性），測試斷言全檔只有一個子行程呼叫點——讓「忘記帶 env」在結構上不可能，而非事後字串偵測。
 
 #### 改動守門行為時的固定掃描清單（不需判斷邊界）
 

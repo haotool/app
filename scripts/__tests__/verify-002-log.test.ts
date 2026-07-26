@@ -870,15 +870,39 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
 
   // stderr 文字判別依賴英文輸出，而 git 內建 gettext 翻譯會跟隨呼叫端 locale。
   // 這條是 CI 上真正有效的回歸鎖：新增第五處 git 呼叫時若忘了帶 env 就會紅。
-  it('所有 git 呼叫都必須鎖 C locale', () => {
+  // 舊版逐一檢查每個呼叫點是否帶 env，是字串偵測、可用雙引號／spawnSync／間接呼叫繞過。
+  // 改為結構收斂：全檔只允許一個子行程呼叫點，且必須在帶 GIT_ENV 的 git() wrapper 內，
+  // 讓「忘記帶 env」不可能發生而非事後偵測。
+  it('git 子行程呼叫必須收斂在唯一帶 GIT_ENV 的 wrapper', () => {
     const source = readFileSync(SCRIPT_PATH, 'utf-8');
     expect(source).toContain("const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }");
-    // 不用單一 regex 括住整個呼叫：`${ref}^{commit}` 的 `}` 會提前終止比對。
-    // 改為切段後檢查每段開頭的選項物件範圍。
-    const segments = source.split("execFileSync('git'").slice(1);
-    expect(segments.length).toBe(4);
-    for (const segment of segments) {
-      expect(segment.slice(0, 220)).toContain('env: GIT_ENV');
+
+    // 任何形式的子行程 API 都只能出現在 wrapper 裡：全檔僅此一處。
+    const spawnCalls = source.match(
+      /\b(execFileSync|execSync|spawnSync|execFile|spawn|exec)\s*\(/g,
+    );
+    expect(spawnCalls).toHaveLength(1);
+
+    const wrapperStart = source.indexOf('function git(args) {');
+    expect(wrapperStart).toBeGreaterThan(-1);
+    const wrapper = source.slice(wrapperStart, source.indexOf('\n}', wrapperStart));
+    expect(wrapper).toContain('execFileSync');
+    expect(wrapper).toContain('env: GIT_ENV');
+  });
+
+  // 訊息比對曾連續三次失敗（漏訊息、依賴英文、又漏一種）；改用 ls-files／ls-tree 後
+  // 「不存在」是 exit 0 的空輸出而非例外，不得再退回比對 git 的 fatal 訊息。
+  it('存在性判定不得依賴 git 的 fatal 訊息比對', () => {
+    const source = readFileSync(SCRIPT_PATH, 'utf-8');
+    expect(source).toContain("git(['ls-files'");
+    expect(source).toContain("git(['ls-tree'");
+    // 只看可執行行：註解會提到 cat-file 等字樣作為「不採用」的反面說明。
+    const code = source
+      .split('\n')
+      .filter((line) => !line.trimStart().startsWith('//') && !line.trimStart().startsWith('*'))
+      .join('\n');
+    for (const forbidden of ['cat-file', 'does not exist', 'invalid object name']) {
+      expect(code).not.toContain(forbidden);
     }
   });
 
@@ -911,6 +935,57 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     const { status, output } = runIsolated(repo, { ...GIT_ENV, ...TRANSLATED_LOCALE });
     expect(status).toBe(1);
     expect(output).toContain('不可刪除');
+  });
+
+  // 已有 commit 的 repo 首次引入 002：工作區與 index 有檔、HEAD／基準 tree 無檔。
+  // `cat-file -e` 對此回「exists on disk, but not in '<ref>'」，與 index 版訊息不同，
+  // 是訊息比對法漏掉的第五種；改用 ls-tree 後直接是 exit 0 空輸出。
+  it('pre-commit：repo 已有 commit、首次加入 002 應放行', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'verify-002-first-'));
+    repos.push(repo);
+    git(repo, 'init', '-b', 'main');
+    mkdirSync(join(repo, dirname(LOG_PATH)), { recursive: true });
+    writeFileSync(join(repo, 'other.txt'), 'x');
+    git(repo, 'add', '--all');
+    git(repo, 'commit', '-m', 'init');
+
+    // 002 只在工作區與 index，不在 HEAD。
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+1',
+        entries: [{ id: 'reward-first-entry' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(0);
+    expect(output).toContain('通過');
+  });
+
+  it('--base-ref：PR 首次加入 002（基準 tree 無檔、工作區有檔）應放行', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'verify-002-first-ci-'));
+    repos.push(repo);
+    git(repo, 'init', '-b', 'main');
+    mkdirSync(join(repo, dirname(LOG_PATH)), { recursive: true });
+    writeFileSync(join(repo, 'other.txt'), 'x');
+    git(repo, 'add', '--all');
+    git(repo, 'commit', '-m', 'init');
+    git(repo, 'checkout', '-b', 'pr');
+
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+1',
+        entries: [{ id: 'reward-first-entry' }],
+      }),
+      'introduce 002',
+    );
+
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
+    expect(status).toBe(0);
+    expect(output).toContain('通過');
   });
 
   it('--base-commit：基準 commit 無法解析時明確失敗', () => {
@@ -1046,6 +1121,8 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     '不依賴解析是否成功', // 基準版可解析時只採解析結果
     '僅 002 檔變更時', // hook 已改無條件執行
     'AGT-LOG-04', // 殘餘風險已移出控制矩陣、取消編號
+    '窮舉實測過的四種', // 存在性判定已改結構化探測，不再比對 git 訊息
+    '判別 git 錯誤靠 stderr', // 同上
   ];
 
   // 本檔自身也在掃描範圍內，故需剔除上面那份清單的字面值，否則必然自我命中。
