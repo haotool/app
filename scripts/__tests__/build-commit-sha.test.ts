@@ -40,6 +40,21 @@ describe('resolveBuildCommitSha / 無效值防禦', () => {
     expect(resolveBuildCommitSha({ GIT_COMMIT_HASH: 'abc12' }, () => FULL_SHA)).toBe('9505d2b');
   });
 
+  it('非 hex 字元不算命中，續往下一個來源', () => {
+    // 長度足夠但含非 hex——CI 佔位字串、被截斷的分支名、平台注入的錯誤欄位皆屬此類。
+    expect(resolveBuildCommitSha({ ZEABUR_GIT_COMMIT_SHA: 'zzzzzzz' }, () => FULL_SHA)).toBe(
+      '9505d2b',
+    );
+    expect(resolveBuildCommitSha({ ZEABUR_GIT_COMMIT_SHA: '9505d2b!e' }, () => FULL_SHA)).toBe(
+      '9505d2b',
+    );
+    expect(resolveBuildCommitSha({ ZEABUR_GIT_COMMIT_SHA: 'refs/heads/main' }, noGit)).toBe('');
+  });
+
+  it('git 退路本身回傳非 hex 時不採信，回空字串', () => {
+    expect(resolveBuildCommitSha({}, () => 'fatal: not a git repository')).toBe('');
+  });
+
   it('大寫 SHA 正規化為小寫，避免同一 commit 產生兩種版本字串', () => {
     expect(resolveBuildCommitSha({ GIT_COMMIT_HASH: 'ABC1234DEF' }, noGit)).toBe('abc1234');
   });

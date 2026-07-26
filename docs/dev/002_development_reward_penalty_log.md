@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+248
+> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+249
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-build-commit-sha-nonhex-regression-lock
+- 原因：`resolveBuildCommitSha` 的 `SHA_PATTERN` 實際能擋非 hex 髒值（審查席手動驗證 PASS），但 8 案單測未鎖這條路徑，CI 無回歸保護——放寬 pattern 不會被任何測試抓到（Grok 席 -3）
+- 解法：補 2 案共 4 條斷言——`zzzzzzz`／`9505d2b!e`／`refs/heads/main` 皆不算命中續往下一來源，git 退路自身回傳錯誤訊息時亦不採信回空字串
 
 - 日期：2026-07-26
 - ID：reward-starpuff-no-popup-during-play-lock
