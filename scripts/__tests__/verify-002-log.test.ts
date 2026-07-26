@@ -180,6 +180,20 @@ describe('validate002', () => {
     expect(errors.some((message) => message.includes('日期格式應為 YYYY-MM-DD'))).toBe(true);
   });
 
+  // 空白 ID 若留成空字串，會被 newEntries 的 truthy 篩選排除，
+  // 使該筆同時繞過前綴、唯一性、計數與總分檢查（檔頭不動即全綠）。
+  it.each([
+    ['空字串', ''],
+    ['僅空白', '   '],
+  ])('新增條目 ID 為%s時視同缺少 ID 並擋下', (_label, id) => {
+    const staged = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+      entries: [{ id }, { id: 'reward-existing-entry' }],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: HEAD_CONTENT });
+    expect(errors.some((message) => message.includes('條目 ID 不可為空'))).toBe(true);
+  });
+
   it('新增條目 ID 前綴不合法時擋下', () => {
     const staged = buildLog({
       header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',

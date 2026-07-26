@@ -70,8 +70,11 @@ export function parseEntries(content) {
     if (block.length === 0) return;
     const entry = { id: null, lines: [...block], errors: [] };
     const idLine = block.find((line) => line.startsWith('- ID：'));
-    if (idLine) {
-      entry.id = idLine.slice('- ID：'.length).trim();
+    // 空白 ID 視同缺少 ID：留成空字串會被後續 truthy 篩選排除在新增條目之外，
+    // 使該筆同時繞過前綴、唯一性、計數與總分檢查。
+    const idValue = idLine ? idLine.slice('- ID：'.length).trim() : '';
+    if (idValue) {
+      entry.id = idValue;
     }
     // 定位字串優先用 ID：500+ 條目的檔案裡，只引用首行（多為日期）不足以指出是哪一筆。
     const locator = entry.id ?? block[0];
@@ -91,8 +94,10 @@ export function parseEntries(content) {
         entry.errors.push(`條目「${locator}」日期格式應為 YYYY-MM-DD：「${date}」`);
       }
     }
-    if (!idLine) {
-      entry.errors.push(`條目缺少 ID 行：「${block[0]}」`);
+    if (!entry.id) {
+      entry.errors.push(
+        idLine ? `條目 ID 不可為空：「${block[0]}」` : `條目缺少 ID 行：「${block[0]}」`,
+      );
     }
     entries.push(entry);
     block = [];
