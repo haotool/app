@@ -344,3 +344,8 @@ export const ASSETS: AssetEntry[] = [
     phase: 'level',
   },
 ];
+
+// v21-v30 未接關素材（442 條）獨立存放於 assetsV21Part1/2/3，刻意不併入本陣列：
+// runtime 對 lazy 條目零消費（entriesForLevel 濾除、無載入執行器），併入只會讓
+// 條目字面量常駐主 bundle（實測 +67.88kB）且隨批次單向成長。W2/W3 接關時把
+// 認領條目搬回本檔並標正確 phase；assetsV21.test.ts 守門防止整批 spread 回歸。

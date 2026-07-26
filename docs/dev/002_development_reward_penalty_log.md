@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 9、penalty 4、neutral 2）｜累計總分：+265
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+286
 
 ## 新增模板（4 行）
 
@@ -14,6 +14,150 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-qa-tinted-checker-hardening
+- 原因：終審對抗樣本揭露色偏棋盤（light chroma 15／dark 30）逃逸全部三軸——lowchroma 與塊級檔位的 chroma<=12 門檻過嚴。
+- 解法：lowchroma 門檻放寬至 20（色偏樣本 1.0 命中、水花最高 0.788 仍豁免）；塊級檔位試 30 誤殺 3 張淡彩資產後收回 12 取平衡點；病例 4/4、對抗 4/4、505 張與 14 bg 零誤殺，並依審查實測修正 docstring 三處過度宣稱（bbox 非普遍保證、單軸防護註記、盲區量化至 <~10% 畫布）。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-qa-scan-adversarial-hardening
+- 原因：終審對抗樣本揭露 QA 掃描兩漏洞——bg- 豁免包住 central-residue 令背景類零防護、nw_bbox 以畫布為分母令主體佔 90-95% 的整身假透明雙訊號皆不觸發。
+- 解法：central-residue 移出豁免（僅 edge-band 保留）、bbox 分母改 opaque 自身範圍（閾值 0.998＝假透明恆 1.0000 與正當白光 ≤0.9940 的物理間隙）＋lowchroma 無彩軸＋新增 4×4 塊級無彩雙檔 checker-blocks 抓局部棋盤；歷史病例 4/4、對抗樣本 3/3、現行 505 張與 14 張 bg 零誤殺。
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-002-unverified-causal-claim
+- 原因：把「多 410KiB 來自 B04 重轉 24 張」的未驗證因果推論寫進 002 當事實——量測未去重 precache manifest 重複 icon URL 多計 344KiB，再拿手邊現成敘事硬套差額，兩者皆未實測核實。
+- 解法：更正條目為 workbox 官方口徑實測值，確立「002 內任何數字與因果必須有當場實測依據，跨環境對照須同法同基準」的紀律。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-qa-fullimage-fake-transparency-scan
+- 原因：QA 只掃四角無法偵測中央棋盤紋等非角落假透明，複審要求系統性覆蓋。
+- 解法：落地 scripts/qa_asset_alpha.py 全圖掃描（edge-band 0.40＋central-residue 近白佔比×分佈廣度雙條件），六張舊病例回歸 4/4 命中、現行 505 張零誤殺，mean-alpha 降為語境性 WARN。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-manifest-code-split
+- 原因：442 筆 lazy 條目字面量常駐主 bundle（+67.88kB）且隨批次單向成長，runtime 對其零消費。
+- 解法：v21 分檔不再併入 ASSETS（vite.config 直接 import 分檔派生排除），index.js 回落 66.5KiB、precache 與 main 分毫不差、442 張圖不再 emit 省 22MB 產物，並加「主 manifest 零 lazy 條目」bundle 預算守門。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-lazy-phase-precache-dual-guard
+- 原因：#857 審查揭露未接關資產被 entriesForLevel fallback 每關全載（L1 15→457 檔）且 PWA precache 無差別膨脹（79→519 項、+22MiB）。
+- 解法：442 條未認領條目改標 lazy（行內保留原 phase）＋vite globIgnores 由 manifest phase 派生排除，L1 回到 15 檔 539KiB、precache 回到 79 項 3,820.85KiB（workbox 口徑；複審更正——原記 4.2MiB 係手工加總未去重 manifest 內重複的 4 個 icon URL 多計 344KiB，且「多 410KiB 因 B04 重轉 24 張」為未驗證推論不成立，實際差額 66KiB 全來自 442 筆條目字面量進主 bundle），並以 assetsV21.test.ts 守門鎖住接關時自動翻紅。
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-b03-boss-canon-cross-mismatch
+- 原因：B03 首批把 boss-reflector 本體與 boss-gravion-enraged 造型交叉錯置，拼貼判讀時把位置對應搞錯而漏檢，錯圖成為 B06 動畫幀 canon 引發後續兩次漂移。
+- 解法：以 B06 正確幀為造型唯一真值重生兩張入庫，並確立「基礎立繪與序列幀必須同批交叉比對」的驗收規則。
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-legacy-assets-qa-blindspot
+- 原因：批次 QA 只掃當批生成物，首批四張假透明資產（畫入棋盤紋／星空底／殘角白塊）從未進任何 QA 涵蓋。
+- 解法：全 manifest 505 張四角補掃找齊病灶，四張以正確幀為 ref 重生（含 thinking 泡泡金融圖示抽象化），六張終驗全 PASS。
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-shelly-flip-carryover-test-backfill
+- 原因：首批 commit 夾帶 shelly walk/spin 每幀朝向同步 3 行改動，無測試且 PR 描述未提及。
+- 解法：補 enemyUpdates.test.ts 鎖住速度符號驅動 setFlipX 行為並於 PR 回報說明來源。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-phase-annotation-rebase
+- 原因：rebase 到 #883 分階段載入後 510 張新資產若不標 phase 將全落 boot 預設，首屏自 148.5KiB 暴增逾 15MB；且拆檔重建時第一批四條 manifest 條目遺失
+- 解法：三分檔 445 條依載入時機註解全量標註（level 158/boss 249/form 92）、補回遺失四條、型別對齊 AssetEntry，實測 boot 集維持 main 原樣 6 張 148.5KiB、assetPlan 兩條不變式測試綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-tail-morphs-arrowrain
+- 原因：B06 尾項需 volt/gale/shell 變身五幀補齊七形態變身組與全屏箭雨分層演出層
+- 解法：三組十五幀沿 B02 變身構圖慣例生成、箭雨五層 1536×1024 橫幅分層，4 張半透明以 alpha 曲線拉滿收斂，QA 20/20
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-liudong-anim-frames
+- 原因：劉董 35 幀中 16 張帶白/棋盤底、待機受擊幀被模型多畫紫沙發家具且一張吻部變棕（幀間會跳動）
+- 解法：PIL 四角 floodfill 清底 16 張（magick 新版不支援 alpha floodfill 語法改用 PIL）、沙發與棕吻 4 張重生（明令禁家具＋全黑臉），QA 35/35 收斂；造型全程無漂移、迷因安全螢幕全抽象
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-gravion-anim-frames
+- 原因：Gravion 首批 23/39 幀（入場/轉階段/死亡）漂移成水晶天使形——引力題材描述（光盤/視界）誘發模型脫離 canon
+- 解法：招式/受擊/待機 16 張造型統一保留，23 張以強否定錨定（絕無水晶翼/天使形、halo＝扁平深紫圓盤）重生收斂，QA 36/39＋3 張死亡幀角落淡值清零
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-reflector-anim-frames
+- 原因：Reflector 首批 39 幀造型分裂（半數被畫成穿黑袍生物、30/39 場景底殘留）判定不合格，且 /tmp 遭系統清理令該批 raw 全失
+- 解法：重建工具鏈後整批重生——prompt 錨定「造型唯一真值＋絕非穿袍者＋禁一切場景底」與雙參照圖，重生批 QA 39/39 一次過、序列檢驗造型統一收斂
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-maridella-anim-frames
+- 原因：B06 次王 Maridella 39 幀動畫關鍵幀，4 張角落出現近白雜訊像素（alpha 255）
+- 解法：序列拼貼檢驗通過（體型穩/光源左上/P2 風暴螺旋與 P3 月蝕女帝演進辨識足/受擊白閃明顯），角落雜訊以四角 floodfill 清零收斂 39/39
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-tariffang-anim-frames
+- 原因：B06 首王 Tariffang 需 39 張動畫關鍵幀，動畫幀一致性風險（體型跳動/光源翻轉/轉階段靜態）與靜態圖不同
+- 解法：依 §7.3 拆四 session 生成並做序列拼貼檢驗——體型穩定、光源恆左上、P2 裂紋→狂暴與 P3 白熱→過載鍍金演進辨識度足、受擊側擠壓白閃與待機差異明顯，QA 38/39＋1 張角落淡光暈清零收斂
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-glowy-halo-emblem-fix
+- 原因：glowy 為 12 系中唯一違反「系間辨識靠形狀系徽」原則者——與 jelly 同形狀僅明度差，明亮戰場背景會吃掉色差且認錯系會觸發錯誤變身
+- 解法：整系四態重生加雙圈同心光環系徽，32px 縮放合成星港明亮背景與 jelly 並排驗證瞬間可辨後入庫
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b05-common-fx-hud
+- 原因：B05 尾段需共通技能三組分層 VFX 與 HUD 補完；模型對小圖示類請求反覆把透明背景畫成棋盤格假透明（重生一次仍再犯）
+- 解法：放棄重生改機械後處理——四角 fuzz floodfill 跨越棋盤兩色去背（主體深色外框保護）＋ammo 底板圈內填白修平，四張全部收斂 corners 0／body 255
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b05-star-bullets-12x4
+- 原因：星彈為全遊戲最高頻同屏資產，12 系 ×4 態需系間瞬辨與態間演進統一；首擴 zappy 因模型過度複製基準而丟失系徽與 jelly 無法區分
+- 解法：基準系先行自檢再擴散（構圖模板 4 張作 -i 參照）、zappy 整系重生把系徽拉為最高優先；深色三系原生半透明主體以 alpha 曲線拉滿（門檻 80），48 張收斂
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b04-market-vfx-layers
+- 原因：B04 尾段需四組市場終招分層 VFX（崩跌衝擊波/K線海嘯/市場黑洞/入金光束）；image_gen 已證實原生透明輸出，繞 chroma-key 反而是險徑
+- 解法：改直接要求透明底輸出（管線省去 key 選色與去背），20 層一次通過升級版 QA（含主體不透明度門檻），發光層半透明經目視確認屬設計性
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b04-scenes-liudong-market
+- 原因：B04 需要 L29/L30 場景、劉董三形態補完與入金四幀、牛熊怪、市場圖示與下跌箭頭三變體——其中假箭頭可辨識性是 anti-softlock 玩法要件、金融物件是全案迷因安全風險最高點
+- 解法：假箭頭以空心虛線鈍頭對比實心尖頭（64px 實戰背景合成驗證瞬間可辨）、全部螢幕與看板僅抽象色塊、逐張放大檢查零可辨識文字；牌價板首生內容錯置重生 1 次
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-v21-v30-alpha-opacity-regression
+- 原因：image_gen 多數 raw 其實原生透明底，`--auto-key border` 取樣到透明黑當 key 使深黑主體被 soft-matte 打成半透明（gravion mean alpha 94），且 QA 只驗四角/殘暈/覆蓋率漏驗主體不透明度，24 張受損資產推上遠端
+- 解法：管線改為 raw 角落 alpha=0 即跳過去背直接取用、QA 增主體 mean alpha 門檻；20 張自 raw 重轉、4 張水藍主體改 hard 模式（--tolerance 72 無 soft-matte）重切，全部復原至 mean ≥250
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-skills-fx-hud
+- 原因：B03 完整包尾段需技能四拍、光環五層 VFX 與徽章 HUD，B02 曾因柔邊光暈去背殘留 16% 色暈重生一次
+- 解法：B02 教訓前置化——core/overlay 層 prompt 直接要求硬邊 cel-shaded 分階光盤並附 B02 成品當質感範例，alpha QA 22/22 一次通過零重生，B03 全程零重生
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-minions-morph-frames
+- 原因：B03 尚缺稜系／引力系六新小怪與稜化／引力化基底加變身五關鍵幀 runtime 資產
+- 解法：小怪錨定 B01 輪廓板逐隻生成（512²）、雙形態基底先生成後作幀識別參考（1254²）、變身幀 1024²，alpha QA 18/18 零殘暈零重生並全數註冊 ASSETS
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-scenes-and-bosses
+- 原因：B03 需要鏡界塔／黑洞外環場景與 Reflector／Gravion runtime 資產，稜系白粉紫主體同時衝突綠與洋紅兩種 key 色
+- 解法：稜系一律 #00ff00 並在 prompt 明確禁綠（palette 限白粉紫藍金），沿 B02 管線去背 alpha QA 12/12 零殘暈，入庫縮遊戲解析度並註冊 ASSETS 附載入時機
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b02-skills-fx-hud
+- 原因：B02 完整包尾段（技能四拍、光環拖尾五層 VFX、徽章 HUD）中，潮化核心光層柔邊漸層與磁紅 chroma 底融合致去背殘留 16% 色暈
+- 解法：判定柔邊光暈不適合 chroma-key，改要求硬邊 cel-shaded 分階光盤重生 1 次（fringe 0.16→0.006），其餘 21 張一次通過；alpha QA 22/22 收斂全數入庫註冊
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b02-minions-morph-frames
+- 原因：B02 尚缺六新小怪本體與焰化／潮化變身五關鍵幀 runtime 資產，變身幀需跨圖保持角色一致性
+- 解法：小怪錨定 B01 輪廓板逐隻生成（512² 入庫）、潮化基底先生成後作後續幀識別參考（1254² 對齊 hero-ember）、變身幀 1024²，alpha QA 17/17 通過並全數註冊 ASSETS
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b02-scenes-and-bosses
+- 原因：B02 需要星港／潮灣場景與 Tariffang／Maridella runtime 資產，且 2048² 母檔直接入庫會爆 BootScene 全量預載的首屏預算（單批 6.6MB）
+- 解法：2048² chroma-key 生成＋remove_chroma_key 去背（12/12 alpha QA 通過零殘暈），入庫縮至遊戲解析度（props 512²／王 768²，批次 1.4MB）並註冊 ASSETS 附載入時機建議註解
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b01-style-lock-boards
+- 原因：B01 風格鎖定缺四張總覽板，且先前以不存在的 luna slug 探路誤判 blocked——正確路徑為 codex 預設模型搭配內建 image_gen skill 的 built-in 工具
+- 解法：依 imagegen SKILL.md 內建路徑、以既有 sprites 為風格錨生成七形態總覽／五新王總覽／13 小怪輪廓／VFX 形狀字典並轉 WebP 入庫 concepts/，迷因安全負面詞經目視驗收通過
+
 - ID：penalty-starpuff-invariant-hero-form-blind-spot
 - 原因：我立的覆蓋不變式註解宣稱「涵蓋全類別」，但 levelAssetKeys 只派生背景／道具／小怪／魔王，不含 hero 共用姿勢與 form 立繪——實測 hero-inhale-big-1／-2 標成 lazy 時 19 案全綠，其餘 hero 鍵只是恰好被測試端另一份手動清單接住，實為「不變式＋手動清單」的拼接
 - 解法：共用核心改在 assetPlan 宣告為 SHARED_LEVEL_KEYS 併入 levelAssetKeys（form 鍵由 TRANSFORM_FORMS 派生，W1 加 ember／tide 自動跟進），測試端手動清單刪除改讀同一真值；13 鍵 × lazy 誤標矩陣全數轉紅，註解同步改述為「levelAssetKeys 派生鍵」並點名派生外資產不在守門範圍
@@ -542,6 +686,11 @@
 - ID：reward-starpuff-t5hf-full-shield-siphon-no-drain
 - 原因：PR#855 review——Voidra 滿盾（2 層）時虹吸窗滿仍先 drainTopStar 扣玩家頂槽，absorbSiphonStar 回 absorbed:false 被忽略，玩家白丟彈藥
 - 解法：resolveSiphonDrain 以 shieldAfterAbsorb 守門（不可吸收即跳過抽彈）並移除被忽略的 result；新增 voidra.test.ts 最小 scene stub 驅動 3 窗循環，紅燈重現第 3 窗抽彈後修復鎖定 drainTopStar 恰 2 次
+
+- 日期：2026-07-24
+- ID：reward-starpuff-v21-v30-first-assets-shelly-facing
+- 原因：21-30 關首批生成素材尚未進入既有資產管線，且殼化小怪受物理反彈後視覺朝向不會同步
+- 解法：加入 Ember／劉董／市場下跌箭頭 WebP 與資產清單，並依殼化速度每幀同步左右翻面
 
 - 日期：2026-07-24
 - ID：reward-starpuff-t5hf-siphon-burst-star-only
