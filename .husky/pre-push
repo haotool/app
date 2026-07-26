@@ -13,6 +13,14 @@ pnpm typecheck || {
   exit 1
 }
 
+# root scripts type checking（#900）：pnpm -r typecheck 依 workspace 語意排除 root，
+# scripts/tsconfig.json 必須顯式執行，否則 scripts/__tests__ 型別漂移不會被任何閘看見。
+echo "⚙️  Scripts TypeScript check..."
+npx tsc --noEmit -p scripts/tsconfig.json || {
+  echo "❌ scripts/ TypeScript errors found. Please fix before pushing."
+  exit 1
+}
+
 # Unit tests only (快速，必要)
 # 跳過 coverage 檢查以加速，CI 會執行完整 coverage
 echo "🧪 Running unit tests..."

@@ -15,15 +15,12 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  LOG_PATH as LOG_PATH_UNTYPED,
+  LOG_PATH,
   parseEntries,
   parsePreviousTotal,
   parseStrictHeader,
   validate002,
 } from '../verify-002-log.mjs';
-
-// .mjs 無型別宣告，正規化為 string 供路徑參數使用（維持 SSOT、不複製字面值）。
-const LOG_PATH = String(LOG_PATH_UNTYPED);
 
 function buildLog({
   header,
