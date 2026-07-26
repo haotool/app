@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+13（reward 13、penalty 0、neutral 0）｜累計總分：+299
+> 本次分數變化：+20（reward 26、penalty 6、neutral 2）｜累計總分：+319
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,176 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-mutation-coverage-gaps
+- 原因：`require`／`createRequire` 識別字禁令與 GIT_ENV 的 `LANGUAGE` AST 檢查均實際有效，但缺對應 mutation 元測試——把它們從禁用清單或檢查鍵移除，既有 12 條 mutation 仍全綠（Grok 席實測證實），元測試防不住守門自身這三處的退化
+- 解法：對稱補 3 條 mutation（require 注入、createRequire 注入、LANGUAGE 弱化），並以「移除防線後對應 mutation 必紅」完成反向驗證
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-specifier-hardening-boundary
+- 原因：module specifier 正則只匹配裸 `child_process`，帶子路徑的 specifier（如 `node:child_process/promises`）不納入匯入形式檢查；該子路徑在現行 Node 並非內建模組、寫入會 ERR_UNKNOWN_BUILTIN_MODULE 使守門載入失敗（大聲 fail-closed），故非已知繞過，但留著即是永久審查爭點；能力邊界註解亦只點名字串拼接一類
+- 解法：specifier 匹配放寬為路徑段含 `child_process` 者皆檢（防禦性加固、非修補漏洞）並補 mutation 釘住；能力邊界書面出界列明不防類別（字串拼接／template literal／Reflect.get／vm／worker_threads／process.binding），交由 code review 把關
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-refless-orphan-probes
+- 原因：「無基準版」判準只看 `rev-list --all`（named refs＋HEAD），orphan 後刪光 named refs（`branch -D`＋清 packed-refs，甚至再 expire reflog）會讓 `--all` 回空但歷史 commit 物件仍在，本地守門誤判無基準版而讓掏空 002 exit 0——CI 走 `--base-commit` 同情境必紅，故屬本地假綠殘留
+- 解法：判準升級 refs／reflog／object store 三層結構探測（`--all --reflog` 為空再以 `cat-file --batch-all-objects` 探測 commit 型別物件），臨時 repo 實證兩情境由假綠轉必紅、真空 repo 仍放行並補整合測試；commit 物件被 prune（reflog expire＋gc --prune=now）的極端情境本機與真空 repo 結構上無法區分，登記 AGENTS 殘餘風險表由 CI 基準 SHA 兜底
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-ast-alias-eval-env-lock
+- 原因：AST 結構鎖仍有三條間接繞法——變數別名（`const fn = execFileSync`）不被 callee 檢查追蹤、`eval`／`new Function` 可從字串取回 API、wrapper 的 env 檢查用字串 includes 會被註解裡的 `env: GIT_ENV` 字面假陽性通過
+- 解法：檢查抽為 auditGitWrapperStructure 單一函數——綁定識別字只能作 import 綁定或直接呼叫 callee，`eval`／`Function`／`getBuiltinModule`／`require`／`createRequire` 識別字、動態 import 與字串夾帶 API 名全檔禁止，options 的 `env` 屬性與 GIT_ENV 定義本身改 AST PropertyAssignment 驗證；12 條 mutation 元測試釘住每條繞法必紅，防守門自身退化
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-superseded-drift-selfcheck
+- 原因：措辭鎖常數由 SUPERSEDED_PHRASES 改名 SUPERSEDED_PATTERNS 時 AGENTS.md 未同步（漂移偵測器自身發生漂移），且殘餘風險表「只有物件確實不存在才算無基準」的敘述與實作判準（reachable ref tip 是否存在）不同構
+- 解法：AGENTS.md 修正常數名並把舊常數名與舊「無基準」判準敘述加進措辭鎖自我偵測，無基準語意在 AGENTS／CLAUDE／腳本與測試註解全部改寫為與三層探測實作同構，rg 全 repo 掃描確認僅 002 歷史條目保留舊措辭（守門規則本就不回溯歷史）
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-unrelated-histories-diagnosis
+- 原因：orphan／unrelated histories 的 PR 走 `--base-ref` 時 merge-base exit 1 且 stderr 為空，通用訊息「無法解析 merge-base：」尾巴空白，無法與 ref 打錯或 repo 損壞區分
+- 解法：以 merge-base documented exit 1 語意＋ref 可解析為判準輸出專用診斷訊息（無共同祖先、fail-closed 行為不變），補 orphan PR 整合測試與 AGENTS 失敗行為契約表
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-orphan-head-fail-closed
+- 原因：存在性判定換成結構化探測後只覆蓋了 path 存在性，「無基準版」的語意仍綁在「HEAD 不是 commit ⇒ null」——`git checkout --orphan <branch>` 之後 HEAD 指向尚未存在的分支使 `rev-parse --verify` 失敗，但 repo 的歷史 commit 都還在，守門卻視為無基準版而跳過刪除防護與總分鏈；實測掏空 002 後 exit 0、penalty 條目消失，且這是標準 Git 指令即可觸發、不需劫持環境
+- 解法：改由 `git rev-list -n 1 --all` 是否為空來證明「無基準版」（只有真的一個 commit 都沒有才回 null），ref 不解析但 repo 已有 commit（orphan／損毀 symref／基準 ref 失效）一律 throw fail-closed；未加任何訊息 pattern，並補回歸鎖與「真空 repo 仍放行」的對照
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-structural-lock-ast
+- 原因：兩道防漂移機制都被證明可繞過——結構鎖用字串偵測，`import { execFileSync as run }` 與 `cp['execFileSync'](` 皆漏接；措辭鎖用字面比對，同一主張只要在關鍵詞之間插入修飾語就躲過（我自己留下的過時註解就是這樣躲過我自己建的鎖）
+- 解法：結構鎖升級為 AST（typescript compiler）——限制 `child_process` 只能具名未改名匯入、禁 namespace／default，再確認所有呼叫落在 `git()` wrapper 內；措辭鎖改 regex 以主張骨架比對。同時在測試註解與 `AGENTS.md` 寫明措辭鎖只擋已知舊主張、無法偵測全新錯誤敘述，真正的防線是鎖行為的結構測試——避免下一任高估它
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-existence-probe-destructured
+- 原因：`cat-file -e` 把「物件不存在」表達成 status 128 ＋ 人類可讀 fatal 訊息，與「repo 不可用」共用同一離開碼，只能靠比對英文訊息區分——這條路徑連續破三次（第十破口漏訊息種類、第十一個依賴英文輸出、第十二個又漏「exists on disk, but not in '<ref>'」使「已有 commit 的 repo 首次引入 002」在 pre-commit 與 CI 雙雙誤擋）；每輪修法都是再加一條 pattern，是在把人類可讀輸出當 API 契約的基礎上打地鼠
+- 解法：不加第五條 pattern，改為結構化探測——先 `rev-parse --git-dir` 確認 repo 可用（僅一次），之後 index 用 `ls-files`、tree 用 `ls-tree --name-only`，路徑不存在時輸出空字串且 exit 0，把「不存在」從例外變成正常回傳值，非零離開一律環境問題並 fail-closed；「尚無 commit」由 `rev-parse --verify` 離開碼結構判定。實測六個「不存在」情境有五個直接變成 exit 0 空輸出，全檔零訊息比對，並補結構鎖禁止退回
+
+- 日期：2026-07-27
+- ID：reward-002-log-gate-git-wrapper-convergence
+- 原因：`GIT_ENV` 靠四個呼叫點各自記得帶，結構鎖是字串切片（`split` 後取前 220 字元找 `env: GIT_ENV`）——實測有效但可用雙引號、`spawnSync`、變數間接呼叫或把 `env` 推到 220 字元之後繞過，屬事後偵測而非結構保證
+- 解法：git 子行程收斂為全檔唯一的 `git()` wrapper 集中帶 `GIT_ENV` 與 stdio，結構鎖改斷言「全檔只有一個子行程 API 呼叫且必須在 wrapper 內」，讓「忘記帶 env」在結構上不可能發生；與 #886 用 `acquirePooled` 收斂池取出點是同一個模式
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-lock-git-output-locale
+- 原因：`gitShow` 的四種「物件不存在」判別讀 git stderr 文字，但 git 內建 gettext 翻譯會跟隨呼叫端 locale 而 `execFileSync` 未傳 env 即繼承——實測 macOS Homebrew git 2.55 搭 `LC_ALL=zh_CN.UTF-8` 時 `致命错误：无效的对象名 'HEAD'。` 不 match 任何 pattern，使 `AGENTS.md` 明載支援的「初始 commit」情境由 exit 0 變 exit 1；方向雖是 fail-closed 而非資安退化，但根因是「窮舉四種訊息即完整」這個宣稱的隱含前提（英文輸出）既未驗證也未文件化
+- 解法：四處 git 呼叫（cat-file／show／merge-base／rev-parse）統一傳 `LC_ALL=C`／`LANGUAGE=C` 鎖英文輸出，順帶鎖住訊息穩定性以降低跨 git 版本翻譯字串變動的風險；補結構鎖要求任何 git 呼叫都須帶 env（新增第五處即紅，這是 CI 上真正有效的那道），另補兩案行為對照，並以七情境 × 雙 locale 實跑確認行為一致
+
+- 日期：2026-07-26
+- ID：penalty-002-log-audit-record-corrupted-by-squash-merge
+- 原因：#857 的 squash 合併同時損壞 002 兩處——`penalty-starpuff-invariant-hero-form-blind-spot` 的 `- 日期：` 整行消失只剩三行，檔頭 delta 行寫 `+1（reward 1、penalty 0、neutral 0）` 但該 PR 相對 `b7cd80b6b` 的實際聚合為 30 筆／reward 25、penalty 4、neutral 1、淨 `+21`（累計 286 本身正確，僅 delta 行不符）；002 是稽核紀錄，其自身損壞未被任何機制攔下正是本守門存在的理由，而它在上線前最後一刻被它要守的資料示範了一次
+- 解法：於獨立 commit 純修復（補回日期行、delta 行改為對該零新增 commit 精確的 `+0`，累計 286 不動），不靜默改掉而是以本條目留下事故紀錄；`+21` 未寫入檔頭是因為該欄位語意為「本 commit 新增條目的淨變化」而非歷史聚合，寫入會被守門判為與新增數不符（實測必紅）且下個 commit 即遭覆寫，故正確聚合改記於此
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-git-env-failure-fail-closed
+- 原因：`gitShow` 對非 `ENOENT` 的錯誤一律 `return null`，而 git 用同一個 status 128 同時表示「路徑不存在」與「repo 不可用」——實測壞 git stub（status 1）、`GIT_DIR` 指向無效路徑、`.git` chmod 000 三種環境失敗都讓守門 exit 0，證偽了上一輪「null 只可能發生在物件確實不存在」的宣稱；CI 因 `merge-base` 先失敗而倖免，但 SOP 明文要求 rebase 後手動直跑，正是受害路徑
+- 解法：改以 stderr 區分，窮舉實測四種合法「不存在」訊息（指定 tree 無此路徑／index 與磁碟皆無／`exists on disk, but not in the index`／`invalid object name 'HEAD'`）才回 null，其餘一律上拋 fail-closed——複審建議的 regex 只含 `does not exist`，會誤擋「尚無 commit」的初始 commit 路徑，故改用逐條列出的顯式清單；補 3 案回歸並各自紅綠驗證
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-catch-block-audit
+- 原因：這道守門的第七、九、十個破口都出在同一處——錯誤處理路徑 fail-open；上一輪雖掃了 13 條錯誤路徑，但檢查的是「哪些情況會 early return」，沒檢查「哪些例外會被吞成正常值」
+- 解法：改以 `catch` 區塊為獨立一類逐一稽核四處——`gitShow` 收斂為只忽略窮舉過的四種訊息；`isDirectRun` 原本吞掉 realpath 例外並退回字面比較、比不中即靜默不執行 `main()` 而 exit 0，改為不吞並由統一入口 fail-closed（執行期無法穩定構造故以結構鎖把關）；`merge-base` 與 `rev-parse` 兩處雖已 exit 1 但丟棄 git 原始訊息會讓「ref 打錯」與「repo 壞掉」無法分辨，改為帶出 stderr。判準寫入 `AGENTS.md`：吞掉的錯誤說不出可安全忽略的理由就 rethrow
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-drift-check-mechanized
+- 原因：文件與實作漂移在本守門上重複四次，前一輪的預防寫成「涉及守門行為的變更先跑全 repo 掃描」，但「什麼算涉及守門行為」是判斷題（改 commitlint 註解算不算？改表格算不算？），下一任無法機械執行；且關鍵字集合只含現行用語，漏掉行為同義詞與已被取代的措辭，本輪 `AGENTS.md:217`／`CLAUDE.md:109`／腳本 `:204` 三處矛盾正是這樣漏掉的
+- 解法：把判斷題改成清單題——固定六個檔案的掃描範圍與 `SUPERSEDED_PHRASES` 已取代措辭表，由 `verify-002-log.test.ts` 機械強制任一命中即紅（測試檔自身在範圍內，故剔除清單宣告區段避免自我命中）；唯一需要人做的動作是改寫行為時把舊說法加進清單。另記錄 `rg` 預設跳過隱藏目錄，是前兩次漏掃 `.husky`／`.github` 的根因
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-gitshow-contract-closed
+- 原因：`gitShow` 把所有 git 失敗都當成「物件不存在」而回 null，使「無基準版」與「讀不到基準版」無法區分——實測把 git 移出 PATH 後整道守門靜默 exit 0；複審席另構造攻擊證明「實檔 fail-closed」只是現況檔頭碰巧不合的巧合而非契約：重寫檔頭對齊 341 筆 compliant 條目即可 GREEN 並寫入累計總分 +999999
+- 解法：改為先 `git cat-file -e` 判存在性、存在卻讀不出即向上拋，直跑入口統一捕捉為 fail-closed；驗證 git 缺席時由 exit 0 轉為 exit 1，且 341 筆攻擊在有基準版時必紅（無基準版仍放行屬設計允許，因為沒有可對帳的歷史）
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-check-scope-corrections
+- 原因：兩項檢查範圍過寬——ID 唯一性無條件掃全檔，歷史一旦出現重複之後每個 commit 都會被卡死（即使沒動 002，現有 559 筆零重複故為休眠缺陷）；刪除比對聯集全檔原始文字掃描，使區段外的獨立 `- ID：` 行（文件範例）被移除時誤報刪除歷史條目
+- 解法：唯一性改為只對「本次造成的重複」擋，比照格式檢查的歷史不回溯；刪除比對改為基準版可解析時只採信解析結果、不可解析時才退回全檔掃描（CASCADE 防護不受影響）；`headContent` 判斷統一為 `!= null` 使空字串基準走解析 fail-closed
+
+- 日期：2026-07-26
+- ID：penalty-002-gate-comment-drift-third-occurrence
+- 原因：以「消除文件與實作漂移」為主題的 PR，在自己的程式碼註解裡第三次同型漂移——腳本檔頭仍寫「基準版無法解析時跳過」（正是本 PR 才修掉的第八破口）、`.husky/pre-commit` 仍寫「約 50ms」；前兩次分別是 `CLAUDE.md:111` 與同一修正 commit 內的另一知識點，顯示上輪把逐句清單範圍定為「兩份治理文件」仍然太窄
+- 解法：範圍改為 grep 全 repo（含隱藏目錄，避免 rg 預設跳過 `.husky`／`.github`）找出所有命中檔案再逐句對照，本輪掃出 6 個描述本守門的檔案並修正 8 處。惟「涉及守門行為」仍是判斷題，下一任無法機械執行——後續已改為固定範圍清單 × `SUPERSEDED_PHRASES` 措辭表並由測試強制，見同日 `reward-002-log-gate-drift-check-mechanized`
+
+- 日期：2026-07-26
+- ID：neutral-002-gate-overhead-figure-withdrawn
+- 原因：hook 開銷四方觀測跨越一個數量級（複審席 p50 54ms、另一席 p50 148ms 曾見 max 784ms、本機 p50 161ms／max 350ms、前輪 mean 109ms），文件寫「p50 約 120–160ms」這種看似精確的雙位數區間反而誤導，複審席的實測就落在區間外
+- 解法：放棄具體數字，只保留「遠低於同一 hook 內的 `pnpm typecheck`，對體感無影響」這個在任何機器上都成立的相對比較——該數字的用途本來就只是說明不影響體感
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-cascade-fail-closed
+- 原因：`validate002` 對基準版只取 `parseEntries().entries` 而丟棄 `globalErrors`，基準版本身不可解析（多個「## 條目」區段或區段被移除）時 `headEntryIds` 為空集合，使刪除檢查落入真空——攻擊鏈為「先讓遠端 tip 變成不可解析（`--no-verify`／admin 強制合併／CI 失效），下一個清理 commit 即可清空全部歷史 ID」，pre-commit 與 CI 雙雙綠燈；前六個破口都是單點繞過，這一個讓整道防線一次失明，且正好命中守門存在的唯一理由
+- 解法：雙保險——基準版有 `globalErrors` 即 fail-closed（無法確認歷史完整性就不放行），並僅在該情境退回全檔原始文字掃描 `- ID：` 作第二道保險（基準版可解析時只採信解析結果）。raw 掃描初版使「插入 `## ` 標題截斷」「條目搬到區段之前」兩條既有防線失效（被隱藏的條目仍在 raw 集合故不算刪除），由繞過路徑排查腳本當場抓到，補 hiddenIds 檢查收斂；共補 5 案回歸鎖（兩種 poison＋poison tip 後 wipe 的 E2E＋兩種移出解析範圍），各自以拔掉防護驗證紅→綠
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-error-path-fail-closed-audit
+- 原因：CASCADE 屬「錯誤處理路徑本身沒有 fail-closed」的模式，同族可能不只一處；實測發現第八條——基準版讀不出累計總分時 `previousTotal` 為 null 而靜默跳過總分鏈驗證，可寫入任意累計總分而不被察覺；另 `--base-ref` 與 `--base-commit` 同時傳入時參數迴圈先匹配前者，使誤用得到假綠
+- 解法：總分鏈改為僅「無基準版」（初始 commit）才跳過、讀不出即失敗；兩 flag 改互斥。另對腳本全部錯誤與例外路徑做掃描（13 條 CLI／解析／git 情境實跑），確認僅「相對基準未變更」「index 與 HEAD 皆無 002」「`before` 全零」三種放行，其餘一律 fail-closed，並把此契約以表格寫入 `AGENTS.md` 供新增分支時遵循
+
+- 日期：2026-07-26
+- ID：penalty-002-gate-doc-audit-not-internalized
+- 原因：上一輪才自陳「改 hook 時漏同步 `CLAUDE.md`」並記為 penalty，同一個修正 commit（`d93cbef7e`）裡卻對另一個知識點重犯——`AGENTS.md` 的 `--base-commit` 語意被正確更新且新增「兩種模式不可混用」，`CLAUDE.md` 對應那句完全沒被觸碰；抓到模式一次不等於內化成覆核習慣
+- 解法：改為以「列舉兩份文件中提及此守門的每一句、逐句對照實作」取代單點修補，本輪掃出並修正 12 處（含 `AGT-LOG-01` 與 `AGT-LOG-03` 字面衝突、Phase 4 步驟 1、開銷數字失準等既有問題）；往後涉及守門行為的變更一律先做這份逐句清單再動手
+
+- 日期：2026-07-26
+- ID：neutral-002-gate-residual-risk-documented
+- 原因：語意掏空／內容對調（ID 與非空性都保留、只改敘述）可洗白 penalty 敘事，這是刻意不擋的設計取捨（擋了會封死合法的精確性修正），但控制矩陣未標示，稽核者可能誤以為守門全包
+- 解法：於 `AGENTS.md` 新增「已知殘餘風險（非自動化控制，不列入上表）」獨立小節明列此項並歸屬人工審查責任，指向「為什麼堵掏空但不堵改寫」說明邊界；刻意不放進控制矩陣，避免只掃表格的稽核者因「有編號＝有控制」的視覺慣性誤判覆蓋範圍
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-push-base-and-header-sign
+- 原因：main push 兜底沿用 `--base-ref` 的 merge-base 取法，但 force push 時 `before` 並非 HEAD 的祖先，基準會退回更早的共同祖先——`before` 與祖先之間新增的 penalty 條目在改寫後消失也驗不出來，等於這道專為湮滅情境設的兜底對湮滅本身無效；另檔頭嚴格解析的 `[+-]?` 讓「本次分數變化：1」「累計總分：171」通過，與文件所定的固定 `+N`／`+T` 不符
+- 解法：新增 `--base-commit` 直取該 commit 作基準（PR 仍用 `--base-ref` 走 merge-base，因 base 分支會前進需退回分岔點），ci.yml push 步驟改用之並於 `AGENTS.md` 明載兩者不可混用；檔頭正負號改為強制存在（負值仍可解析）。以臨時 repo 重現 force push 丟棄 `penalty-evidence` 的情境，驗證 merge-base 模式綠燈而 `--base-commit` 必紅
+
+- 日期：2026-07-26
+- ID：penalty-002-gate-doc-impl-drift-claude-md
+- 原因：把 pre-commit 第 6 步改為無條件執行時只同步了 `AGENTS.md`，`CLAUDE.md` 仍寫「僅 002 檔變更時執行」——維護者依該句把 hook 改回條件式即會重新引入 `git mv` 繞過缺口；本 PR 的主題正是消除文件與實作漂移，卻在同一份 PR 內自製一處
+- 解法：同步 `CLAUDE.md` 措辭為無條件執行，並全文掃描確認無其他殘留；往後改動 hook 行為時，兩份操作 SSOT 必須在同一 commit 內一起改
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-landed-on-main
+- 原因：`AGENTS.md`／`CLAUDE.md` 上游分支與各代理載入的規則長期宣稱 pre-commit 有第 6 步 002 記分守門（issue #608）與 CI 端強制（#661），但 `3321f3e34`／`bcd52c15f` 皆非 `origin/main` 祖先、`scripts/verify-002-log.mjs` 從未在 main 出現——漂移的真實形狀是代理照著一道不存在的守門在工作（載入的是本機 checkout 被修改過的規則），任何讀 main 的人都不會發現；記分正確性全靠人工驗算，squash 聚合檔頭錯誤（#857 檔頭寫 +1、實際淨 +9）無任何自動攔截
+- 解法：將腳本與 hook 第 6 步移植進 main 並對齊 main 現況的 5 步版本，另補 `ci.yml` PR 專屬 `--base-ref` 步驟置於 install 前；七種故障注入（計數不符／總分斷鏈／ID 重複／刪歷史條目／缺行／日期格式／ID 前綴）全數 exit 1，實測 #857 head CI 端必紅而 #880 綠，rebase 後對合併態 main 的 544 條目解析零錯誤、無重複 ID
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-glued-block-parsing
+- 原因：來源版解析器只用空行切分條目，但歷史 002 有 2 處漏空行使多筆黏成一塊（8 行 2 筆、12 行 3 筆）——`block.find` 只取首個 ID，使 3 筆條目（`reward-rw-theme-ssot-drift-convergence`、`reward-starpuff-v17-gamescene-strangler-debt-train`、`neutral-starpuff-t2a-changeset-release-intent`）對 ID 唯一性與「歷史條目不可刪除」防護完全隱形，可被靜默刪除而不觸發守門
+- 解法：解析器補「- 日期：」為次要邊界（空行仍為主要邊界），納管條目由 515 升為 518（等於區段內全部 ID 行）；另 3 個超過 4 行的區塊實為單一條目帶 `content_type`／`topics` 額外欄位、非黏合，其格式錯誤仍只對新增條目生效不回溯擋 commit；補 2 案回歸鎖並以拔掉邊界驗證紅→綠
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-single-commit-constraint
+- 原因：pre-commit 以「本 commit 新增條目」對帳檔頭、CI 以「PR 聚合淨變化」對帳檔頭，兩種語意在 002 分散於多個 commit 時必然互斥，但既有 SOP 只寫「每次 commit 前更新 002」未涵蓋此衝突——照舊做法寫作將無法讓兩道閘同時綠燈
+- 解法：以臨時 repo 三情境實證（逐 commit 各自正確→CI 紅、末個 commit 改寫聚合檔頭→pre-commit 紅、單一 002 commit 承載全部條目→雙綠），新增 `AGT-LOG-03` 控制項並於 `AGENTS.md`／`CLAUDE.md` 明載；審查席主張此為過早收斂並自建 `merge-base(main, HEAD)` 版 pre-commit 反證，故補寫排除理由——base 不恆為 main（實驗線 PR base 指向 experiment 分支，硬寫 `origin/main` 會產生假綠）、本機無權威 base 來源，取捨非技術必然
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-content-emptiness-bypasses
+- 原因：條目檢查只比對行前綴不看內容，衍生三條同族繞過——`- ID：` 留空使 `entry.id` 為空字串而被 `newEntries` 的 truthy 篩選排除（同時繞過前綴、唯一性、計數與總分檢查）、`- 原因：`／`- 解法：` 留空讓缺 root cause 的紀錄過關、既有條目欄位被掏空（留空值或整行刪除）等同就地刪除卻只受 ID 層刪除防護檢視
+- 解法：三者收斂為同一組非空性檢查——`parseEntries` 抽出 fields map 供內容檢查與跨版本比對共用，空白 ID 視同缺 ID，內容欄位 trim 後判空，並新增「基準版非空的欄位改後不得為空」；判準定為「有沒有從有變成無」而非「內容有沒有變」，故改寫不擋（與合法的精確性修正無法機械區分），分界寫入 `AGENTS.md` 避免被誤認為漏做；補 9 案回歸鎖，正向對照採本 PR 真實的數字更正 diff
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-trigger-surface-bypasses
+- 原因：守門的判定正確不代表會被叫起來——`.husky/pre-commit` 以 `git diff --cached --name-only` 判斷觸發，`git mv` 的 rename 偵測只列新路徑故完全不設防；`ci.yml` 的守門步驟帶 `if: github.event_name == 'pull_request'`，main 直推連 CI 兜底都沒有；`parseEntries` 以 `findIndex` 只取第一個「## 條目」，前置 decoy 區段抄齊全部 ID 即可讓真區段永久落在視野外
+- 解法：hook 改無條件執行（觸發判斷收斂為單一 SSOT，不依賴 diff 呈現方式，002 未變更時約 50ms）、CI 補 main push 事件以 `github.event.before` 為基準（涵蓋一次推多個 commit，全零 SHA 跳過）、條目區段改為必須唯一；另實跑 17 條繞過路徑排查（含 symlink 化、homoglyph 前綴、標題截斷、行首縮排、改名並同步改 `LOG_PATH`）確認其餘皆已擋下，並記錄 merge commit 走 `pre-merge-commit` 故 hook 層不覆蓋為刻意不補（補了會使 `git merge origin/main` 誤紅）
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-direct-run-and-locator
+- 原因：`isDirectRun` 以 `process.argv[1]` 字面比對 `import.meta.url`，macOS `/tmp` 為 `/private/tmp` 的 symlink 使絕對路徑呼叫時兩側不等，`main()` 不執行卻 exit 0 形成靜默假成功；另 `parseEntries` 的格式錯誤訊息一律引用區塊首行（多為日期），在 500 筆以上的檔案裡無法指出是哪一筆
+- 解法：比對前先 `realpathSync`（失敗則退回原比較不拋錯），並以顯式建立 symlink 的回歸測試鎖住（不依賴平台 `/tmp` 行為故 Linux CI 同樣有效）；錯誤訊息改以條目 ID 為定位字串、取不到才退回首行
+
+- 日期：2026-07-26
+- ID：reward-002-log-gate-changeset-scope-boundary
+- 原因：`AGT-VER-01` 寫「每個 PR/功能必須建立 changeset」未區分變更範圍，導致審查對零 app 原始碼變更的純 root 工具 PR 也要求補 changeset——但 changesets 操作的對象是 package，此類 PR 沒有任何 package 可 bump，硬補只會產生對使用者無意義的 CHANGELOG 條目
+- 解法：控制矩陣與 Phase 7 補上適用界線——變更落在 `apps/*/**`（含該 app 的 docs／README）要建立、純 root 層（`scripts/`、`.husky/`、`.github/`、root 設定與文件、`docs/dev/*`）則否，並明載判斷依據為變更檔案所屬 package 而非 commit type
+
+- 日期：2026-07-26
+- ID：penalty-002-log-gate-overstated-bypass-scale
+- 原因：撰寫黏塊解析修正的 002 條目與 PR 描述時，把「5 個超過 4 行的區塊」直接當成「5 處漏空行、6 筆條目隱形」，未逐一分辨其中 3 個其實是單一條目帶額外欄位；實際為 2 處黏合、3 筆隱形，數字誇大近一倍且由審查席實跑複驗才發現
+- 解法：以新舊解析器對 main 真實檔逐一比對複驗（舊 515 區塊／新 518 條目／delta 3），更正 002 條目本體、腳本註解與 PR 描述三處，並在 PR 註明原 commit message 的舊數字待 rebase 時 amend
+
+- 日期：2026-07-26
+- ID：penalty-002-log-gate-git-env-leak-authorship
+- 原因：做繞過路徑排查時為隔離臨時 repo 而在持久 shell 內 `export GIT_AUTHOR_NAME`／`GIT_CONFIG_GLOBAL` 等變數且未還原，洩漏到後續在 worktree 的 commit，使其作者被寫成測試身分 `t <t@e.com>`，同批 `GIT_CONFIG_GLOBAL=/dev/null` 亦遮蔽 credential helper 導致 push 認證失敗
+- 解法：改以 push 失敗為訊號回查環境，清空全部 `GIT_` 變數後 `--amend --reset-author` 修正並驗證全分支作者一致；該 commit 未曾推上遠端。往後隔離用環境變數一律限定在單次 shell 呼叫內，不寫入持久 session
 
 - 日期：2026-07-27
 - ID：reward-starpuff-v21w1-framehook-mutation-lock
