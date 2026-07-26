@@ -875,11 +875,17 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
   // 改為結構收斂：全檔只允許一個子行程呼叫點，且必須在帶 GIT_ENV 的 git() wrapper 內，
   // 讓「忘記帶 env」不可能發生而非事後偵測。
   // 字串偵測可被 `import { execFileSync as run }`、`cp['execFileSync'](` 繞過，
-  // 故改走 AST：先限制 child_process 的匯入形式，再確認所有呼叫都落在 git() wrapper 內。
-  it('git 子行程呼叫必須收斂在唯一帶 GIT_ENV 的 wrapper（AST 級）', () => {
-    const source = readFileSync(SCRIPT_PATH, 'utf-8');
-    expect(source).toContain("const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }");
-
+  // 故走 AST：限制 child_process 的匯入形式，並確認所有呼叫都落在 git() wrapper 內。
+  // 已知且被堵住的間接繞法（各有 mutation 元測試釘住，不得退化）：
+  // - 變數別名（const fn = execFileSync）：綁定識別字只能作 import 綁定或直接呼叫 callee
+  // - eval／new Function／getBuiltinModule／require／createRequire：識別字全檔禁止
+  // - 動態 import：ImportKeyword 呼叫全檔禁止
+  // - 字串夾帶（cp['execFileSync']、eval('execFileSync')）：字串字面量不得含子行程 API 名
+  // - env 只留在註解：options 的 env 屬性以 AST PropertyAssignment 驗證，不受註解字面影響
+  // 能力邊界：字串拼接（'execFile'+'Sync'）等蓄意混淆不在防線內，由 code review 把關；
+  // 本鎖的目標是讓「無意漂移」與「直觀規避」在結構上必紅。
+  function auditGitWrapperStructure(source: string): string[] {
+    const violations: string[] = [];
     const sourceFile = ts.createSourceFile(
       'verify-002-log.mjs',
       source,
@@ -896,38 +902,220 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
       if (!ts.isStringLiteral(statement.moduleSpecifier)) continue;
       if (!/^(node:)?child_process$/.test(statement.moduleSpecifier.text)) continue;
 
-      expect(statement.importClause?.name).toBeUndefined();
+      if (statement.importClause?.name) violations.push('child_process 禁止 default 匯入');
       const bindings = statement.importClause?.namedBindings;
-      expect(bindings !== undefined && ts.isNamedImports(bindings)).toBe(true);
-      for (const element of (bindings as ts.NamedImports).elements) {
-        expect(element.propertyName).toBeUndefined();
+      if (!bindings || !ts.isNamedImports(bindings)) {
+        violations.push('child_process 只能具名匯入（禁止 namespace 匯入）');
+        continue;
+      }
+      for (const element of bindings.elements) {
+        if (element.propertyName) {
+          violations.push(`child_process 匯入不得改名：${element.name.text}`);
+        }
         boundNames.add(element.name.text);
       }
     }
-    expect([...boundNames]).toEqual(['execFileSync']);
+    if ([...boundNames].join(',') !== 'execFileSync') {
+      violations.push(
+        `child_process 匯入必須恰為 execFileSync（實際：${[...boundNames].join('、') || '無'}）`,
+      );
+    }
 
-    // 2) git() wrapper 的範圍。
+    // 2) GIT_ENV 定義本身也走 AST：字串比對會被「定義行照抄進註解」假陽性繞過。
+    const gitEnvDecl = sourceFile.statements
+      .filter(ts.isVariableStatement)
+      .flatMap((statement) => [...statement.declarationList.declarations])
+      .find((decl) => ts.isIdentifier(decl.name) && decl.name.text === 'GIT_ENV');
+    if (!gitEnvDecl?.initializer || !ts.isObjectLiteralExpression(gitEnvDecl.initializer)) {
+      violations.push('GIT_ENV 必須是頂層物件字面量定義');
+    } else {
+      const props = gitEnvDecl.initializer.properties;
+      const hasSpreadProcessEnv = props.some(
+        (prop) =>
+          ts.isSpreadAssignment(prop) &&
+          ts.isPropertyAccessExpression(prop.expression) &&
+          ts.isIdentifier(prop.expression.expression) &&
+          prop.expression.expression.text === 'process' &&
+          prop.expression.name.text === 'env',
+      );
+      if (!hasSpreadProcessEnv) violations.push('GIT_ENV 必須展開 process.env');
+      for (const key of ['LC_ALL', 'LANGUAGE']) {
+        const assignment = props.find(
+          (prop): prop is ts.PropertyAssignment =>
+            ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name) && prop.name.text === key,
+        );
+        if (
+          !assignment ||
+          !ts.isStringLiteral(assignment.initializer) ||
+          assignment.initializer.text !== 'C'
+        ) {
+          violations.push(`GIT_ENV 必須含 ${key}: 'C'`);
+        }
+      }
+    }
+
+    // 3) git() wrapper 的範圍。
     const wrapper = sourceFile.statements.find(
       (statement): statement is ts.FunctionDeclaration =>
         ts.isFunctionDeclaration(statement) && statement.name?.text === 'git',
     );
-    expect(wrapper).toBeDefined();
+    if (!wrapper) {
+      violations.push('找不到 git() wrapper');
+      return violations;
+    }
 
-    // 3) 所有對該綁定的呼叫都必須落在 wrapper 內。
-    const outside: string[] = [];
+    // 4) 全檔走訪：動態逃逸口、字串夾帶、綁定引用形式、wrapper 內 options 的 env 屬性。
+    const forbiddenIdentifiers = new Set([
+      'eval',
+      'Function',
+      'getBuiltinModule',
+      'require',
+      'createRequire',
+    ]);
+    let wrapperCallCount = 0;
     const visit = (node: ts.Node) => {
-      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-        if (boundNames.has(node.expression.text)) {
-          const inWrapper = node.pos >= wrapper!.pos && node.end <= wrapper!.end;
-          if (!inWrapper) outside.push(source.slice(node.pos, node.end).trim().slice(0, 60));
+      if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+        violations.push('禁止動態 import');
+      }
+      if (ts.isIdentifier(node) && forbiddenIdentifiers.has(node.text)) {
+        violations.push(`禁止出現識別字「${node.text}」`);
+      }
+      if (
+        (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+        !(ts.isImportDeclaration(node.parent) && node.parent.moduleSpecifier === node) &&
+        /execFileSync|child_process/.test(node.text)
+      ) {
+        violations.push(`字串字面量不得夾帶子行程 API 名：「${node.text}」`);
+      }
+      if (ts.isIdentifier(node) && boundNames.has(node.text)) {
+        const parent = node.parent;
+        const isImportBinding = ts.isImportSpecifier(parent);
+        const isDirectCallee = ts.isCallExpression(parent) && parent.expression === node;
+        if (!isImportBinding && !isDirectCallee) {
+          violations.push('execFileSync 只能作為直接呼叫的 callee，不得取別名或間接引用');
+        } else if (isDirectCallee) {
+          const call = parent as ts.CallExpression;
+          if (node.pos < wrapper.pos || node.end > wrapper.end) {
+            violations.push('execFileSync 呼叫必須位於 git() wrapper 內');
+          } else {
+            wrapperCallCount += 1;
+            const options = call.arguments[2];
+            const envProp =
+              options && ts.isObjectLiteralExpression(options)
+                ? options.properties.find(
+                    (prop): prop is ts.PropertyAssignment =>
+                      ts.isPropertyAssignment(prop) &&
+                      ts.isIdentifier(prop.name) &&
+                      prop.name.text === 'env',
+                  )
+                : undefined;
+            if (
+              !envProp ||
+              !ts.isIdentifier(envProp.initializer) ||
+              envProp.initializer.text !== 'GIT_ENV'
+            ) {
+              violations.push('execFileSync options 必須有 AST 可驗的 env: GIT_ENV 屬性');
+            }
+          }
         }
       }
       ts.forEachChild(node, visit);
     };
     visit(sourceFile);
-    expect(outside).toEqual([]);
+    if (wrapperCallCount === 0) {
+      violations.push('git() wrapper 內必須至少有一次 execFileSync 呼叫');
+    }
 
-    expect(source.slice(wrapper!.pos, wrapper!.end)).toContain('env: GIT_ENV');
+    return violations;
+  }
+
+  it('git 子行程呼叫必須收斂在唯一帶 GIT_ENV 的 wrapper（AST 級）', () => {
+    const source = readFileSync(SCRIPT_PATH, 'utf-8');
+    expect(auditGitWrapperStructure(source)).toEqual([]);
+  });
+
+  // mutation 元測試：把每條已知繞法寫成變異版，audit 必須回報違規（防守門自身退化）。
+  // 變異只做 AST 解析、不執行，語意合法與否不影響測試目的。
+  it.each([
+    [
+      '變數別名（const fn = execFileSync）',
+      (source: string) => `${source}\nconst fn = execFileSync;\nfn(['status']);\n`,
+      '不得取別名',
+    ],
+    [
+      'eval 字串夾帶（eval 識別字）',
+      (source: string) => `${source}\nconst hijacked = eval('spawn');\n`,
+      '禁止出現識別字「eval」',
+    ],
+    [
+      'new Function 動態產碼',
+      (source: string) => `${source}\nconst maker = new Function('return 1');\n`,
+      '禁止出現識別字「Function」',
+    ],
+    [
+      'process.getBuiltinModule 取模組',
+      (source: string) => `${source}\nconst cp = process.getBuiltinModule('node:fs');\n`,
+      '禁止出現識別字「getBuiltinModule」',
+    ],
+    [
+      '動態 import',
+      (source: string) => `${source}\nconst lazy = import('node:fs');\n`,
+      '禁止動態 import',
+    ],
+    [
+      '字串夾帶 API 名（cp[key] 的前置）',
+      (source: string) => `${source}\nconst key = 'execFileSync';\n`,
+      '字串字面量不得夾帶子行程 API 名',
+    ],
+    [
+      'wrapper 外直呼',
+      (source: string) =>
+        `${source}\nexecFileSync('git', ['status'], { env: GIT_ENV, encoding: 'utf-8' });\n`,
+      '必須位於 git() wrapper 內',
+    ],
+    [
+      'renamed import（execFileSync as run）',
+      (source: string) =>
+        source.replace(
+          "import { execFileSync } from 'node:child_process';",
+          "import { execFileSync as run } from 'node:child_process';",
+        ),
+      '不得改名',
+    ],
+    [
+      'namespace import（* as cp）',
+      (source: string) =>
+        source.replace(
+          "import { execFileSync } from 'node:child_process';",
+          "import * as cp from 'node:child_process';",
+        ),
+      '只能具名匯入',
+    ],
+    [
+      'env 只留在註解、options 實際未傳（字串 includes 的假陽性路徑）',
+      (source: string) => source.replace('    env: GIT_ENV,\n', '    // env: GIT_ENV\n'),
+      'env: GIT_ENV 屬性',
+    ],
+    [
+      'GIT_ENV 定義不再展開 process.env',
+      (source: string) =>
+        source.replace(
+          "const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' };",
+          "const GIT_ENV = { LC_ALL: 'C', LANGUAGE: 'C' };",
+        ),
+      '必須展開 process.env',
+    ],
+    [
+      'GIT_ENV 的 LC_ALL 被改弱',
+      (source: string) => source.replace("LC_ALL: 'C'", "LC_ALL: 'en_US.UTF-8'"),
+      "GIT_ENV 必須含 LC_ALL: 'C'",
+    ],
+  ])('AST 鎖 mutation：%s 必紅', (_label, mutate, expectedViolation) => {
+    const source = readFileSync(SCRIPT_PATH, 'utf-8');
+    const mutated = mutate(source);
+    expect(mutated).not.toBe(source);
+    const violations = auditGitWrapperStructure(mutated);
+    expect(violations.some((message) => message.includes(expectedViolation))).toBe(true);
   });
 
   // 訊息比對曾連續三次失敗（漏訊息、依賴英文、又漏一種）；改用 ls-files／ls-tree 後
