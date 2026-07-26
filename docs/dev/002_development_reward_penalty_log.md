@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+260
+> 本次分數變化：+5（reward 9、penalty 4、neutral 2）｜累計總分：+265
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,81 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-invariant-hero-form-blind-spot
+- 原因：我立的覆蓋不變式註解宣稱「涵蓋全類別」，但 levelAssetKeys 只派生背景／道具／小怪／魔王，不含 hero 共用姿勢與 form 立繪——實測 hero-inhale-big-1／-2 標成 lazy 時 19 案全綠，其餘 hero 鍵只是恰好被測試端另一份手動清單接住，實為「不變式＋手動清單」的拼接
+- 解法：共用核心改在 assetPlan 宣告為 SHARED_LEVEL_KEYS 併入 levelAssetKeys（form 鍵由 TRANSFORM_FORMS 派生，W1 加 ember／tide 自動跟進），測試端手動清單刪除改讀同一真值；13 鍵 × lazy 誤標矩陣全數轉紅，註解同步改述為「levelAssetKeys 派生鍵」並點名派生外資產不在守門範圍
+
+- 日期：2026-07-26
+- ID：reward-starpuff-stall-based-load-timeout
+- 原因：固定 20 秒逾時對慢網過緊——單關實測約 600KB，Slow 3G 或擁塞下資產還在飛就被強制降級成佔位色塊，傷害的正是最需要分階段載入的族群
+- 解法：改為停滯型判定（20 秒內無 progress／filecomplete／loaderror 才算掛死）＋120 秒硬上限兜底；補三案鎖住「90 秒持續進度不誤判」「極慢仍被硬上限接住」「逾時後晚到檔案不記為 manifest 來源」（晚到誤記會讓佔位色塊永不被替換）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-form-phase-misfile-guard
+- 原因：誤標矩陣顯示另一方向的破口——關卡限定資產標成 form 不會缺圖，但 form 一律每關載入，等於退回本 PR 要消除的「每關全載」成本，且無任何守門
+- 解法：補「關卡限定資產不得標為 form」不變式（levelScoped 減 SHARED_LEVEL_KEYS 派生，零硬編），minion／prop／bg 三向誤標實測全數轉紅
+
+- 日期：2026-07-26
+- ID：reward-starpuff-lazy-phase-coverage-invariant
+- 原因：審查指出 lazy 階段零 scene 呼叫點卻可被標註，戰鬥資產標進去即無聲缺圖；實測 boss-voidra／minion-magno 會被既有斷言擋下，但 prop-kiln-1 與 bg-kiln-l 標成 lazy 時 17 案全綠——守門只覆蓋小怪與魔王，道具與背景是破口
+- 解法：不接線空階段（會是死碼且擋不住誤標），改立與階段名無關的總不變式「每關派生出的每個鍵必落在 boot 或該關計畫內」，四類別誤標實測全數轉紅；per-category 斷言改為只驗派生完整性，消除與覆蓋率斷言的重疊
+
+- 日期：2026-07-26
+- ID：reward-starpuff-loader-error-timeout-degrade
+- 原因：assetLoader 無 loaderror 也無逾時——404 尚可靠 Phaser 自行 complete 走佔位降級，但請求永久 pending 會讓玩家卡在「載入中…」且無法自行脫離，違反 anti-softlock
+- 解法：補 loaderror 明說降級文案，並以 20 秒逾時呼叫 loadComplete() 強制收尾進 create（缺圖走佔位仍可通關、下次進關重試）；另修 fromManifest 記帳時機——原本排入即記，載入失敗後生成的佔位色塊會被誤認為正式立繪而永不替換，改為只記 filecomplete 成功鍵
+
+- 日期：2026-07-26
+- ID：reward-starpuff-asset-loader-unit-tests
+- 原因：assetLoader 是「佔位色塊 vs 正式立繪」逐出邏輯所在的最棘手檔案卻零單元測試，且匯出的 resetLoadedKeys 經確認全專案零呼叫點（為測試預留卻連測試都沒接）
+- 解法：補 8 案單測（逐出三態＋失敗重試＋逾時強制收尾＋正常完成解除逾時），三條新守門先驗紅再轉綠；死碼 resetLoadedKeys 刪除，模組級狀態隔離改用 vi.resetModules 慣例，不為測試在產品碼開後門
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-perf-claim-one-time-and-absolute-ms
+- 原因：PR 宣稱進關成本「每 session 一次性」與絕對 ms 數字，兩者皆不成立——實測逐關切換每個新關卡首次進入各付 44–197KiB／0.5–1.4s（SW 背景 precache 與頁面請求搶頻寬），且我用的節流參數與 Lighthouse 標準值不同致絕對秒數樂觀 30–40%
+- 解法：改以相對幅度為主張並揭露節流參數——兩組 Fast 3G 定義並列實測（DevTools 11813→3617ms、Lighthouse 15952→5590ms），與兩席獨立量測分別對上；「一次性」改述為「每個新關卡首次進入各付一次、同關重進 0KiB／35ms」
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-runtime-cache-scope-narrowing
+- 原因：CacheFirst 以 request.destination === 'image' 匹配，會涵蓋未雜湊的 icons/\*.png，與 precache revision 管理重疊而需靠路由順序決勝負
+- 解法：收窄為 /\/assets\/[^/]+\.webp$/ 只收 Vite 內容雜湊立繪，icons 全數留給 precache；build 後查 sw.js 確認路由已收窄，離線實測維持 63 張 precache、離線進 L1 的 21 筆立繪全 200
+
+- 日期：2026-07-26
+- ID：reward-starpuff-stage-hook-readiness-single-point
+- 原因：全量 e2e 揭露 13 案就緒競態（不只先前修的 2 案）——\_\_sp.stage() 回報 init 寫入的目標關卡，載入期即為真，等待端因此在場景未 RUNNING 時就送鍵或呼叫 isActive 守衛的鉤子
+- 解法：不逐案補等待（13 處散寫必漂移），改在 stage() 單點收斂——未 RUNNING 回 0，讓既有 37 處 expect.poll(stage()) 自動等到可互動；13 案回綠、smoke 冗餘等待一併移除
+
+- 日期：2026-07-26
+- ID：reward-starpuff-segmented-loading-manifest-phase
+- 原因：BootScene 一次預載全部 63 張立繪（1.8MB），首屏 Fast 3G 實測 12.3s／2196.9KiB，v21-v30 素材車再入庫 125 張後啟動時間必崩
+- 解法：ASSETS manifest 新增 phase 欄位（boot/level/boss/form/lazy，未標註安全預設 boot）單點驅動載入時機，關卡資產由 LevelSpec 派生於進關卡時載入；首屏收斂至 6 張／604.7KiB／4.1s（位元組 −72.5%、時間 −66.9%）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-texture-key-ssot-convergence
+- 原因：小怪品種→貼圖對照（enemies.ts TEXTURES）與背景重用別名（background.ts TEXTURE_ALIAS）散在呈現層，載入計畫要用就得複製第二份，必然漂移
+- 解法：兩表收斂至 core/assetPlan 純模組（ENEMY_TEXTURE_KEYS／BG_TEXTURE_ALIAS），呈現層與載入計畫共用單一真值，加關加怪自動跟進
+
+- 日期：2026-07-26
+- ID：reward-starpuff-placeholder-texture-blocking-real-art
+- 原因：enemies.ts 於 create 期為缺圖品種生成佔位色塊並佔用同一貼圖鍵，延遲載入後較晚關卡的正式立繪會被 Phaser loader 以「鍵已存在」永久跳過
+- 解法：assetLoader 記錄 manifest 來源鍵，排載前移除非 manifest 佔位貼圖，正式立繪必定取代色塊；以 anti-softlock 測試鎖住關卡計畫涵蓋全部登場貼圖
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-title-prefetch-doubles-level-bytes
+- 原因：於 Title 加閒置預取想抹平進關等待，但即點玩家會讓預取中途被場景關閉中止，GameScene 再取一次——實測關卡位元組 541.9KiB→1083.9KiB 翻倍、進關 3.1s→5.5s
+- 解法：量測對照後回退預取（跨場景 loader 交接需求不成比例），保留進關進度條回饋；改善幅度仍以首屏為主軸
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-preload-phase-breaks-held-key
+- 原因：GameScene 新增 preload 階段後，載入期場景尚未 RUNNING，此時按住的方向鍵不會被 create 才建立的 Phaser Key 物件看見，兩案魔王 e2e 由綠轉紅（玩家原地被打死）
+- 解法：以 baseline worktree 對照確認為自身回歸，改在送鍵前等 \_\_sp.scene() 就緒（scene RUNNING 的既有訊號），同型 fillQuota isActive 靜默略過競態一併收斂
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-offline-playability-evidence
+- 原因：延遲載入的資產若未進 precache，離線就會缺圖，僅看設定檔不足以證明離線可玩
+- 解法：真實 SW＋真實斷線實測留痕——precache 63 張 webp 全入、離線冷啟達 Title、離線進 L1 場景運行 HP5、21 筆 webp 全 200 自快取、零 console error
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7c-r4-calibration-comment-and-note-value

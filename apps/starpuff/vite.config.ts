@@ -47,10 +47,26 @@ export default defineConfig(async ({ mode }) => {
         registerType: 'prompt',
         injectRegister: 'auto',
         workbox: {
+          // 分階段載入（§115）：延遲載入的立繪仍全數進 precache，離線可玩不打折。
           globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
           globIgnores: ['**/node_modules/**'],
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          runtimeCaching: [
+            {
+              // precache 尚未完成即斷線的補償控制：延遲載入的立繪首次取得就落快取。
+              // 只收 Vite 產出的內容雜湊立繪（assets/*.webp）——雜湊 URL 下 CacheFirst 不會
+              // 造成版本撕裂；未雜湊的 icons/*.png 一律留給 precache revision 管理，
+              // 不讓兩套機制靠路由順序決勝負。
+              urlPattern: /\/assets\/[^/]+\.webp$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'starpuff-sprites',
+                expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
         manifest: {
           id: manifestScope,

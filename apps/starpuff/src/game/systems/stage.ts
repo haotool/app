@@ -54,6 +54,8 @@ export interface StageHandle {
 }
 
 const PLATFORM_H = 16;
+// 主地面高度 SSOT（GameScene 視寬重排與地形建立共用）。
+export const GROUND_HEIGHT = 80;
 const ONEWAY_TINT = 0xa8e6f0;
 const MOVING_TINT = 0xffd166;
 const SPRING_W = 44;
@@ -504,4 +506,35 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
       }
     },
   };
+}
+
+// 關卡地形（§29/§77）：主地面全寬鋪設 + 粉紅單向平台（levels.ts platforms 表驅動）。
+// 與 stage elements 同屬地形層，共用同一套下穿裁決，故置於本模組。
+export function createTerrain(
+  scene: Phaser.Scene,
+  level: LevelSpec,
+  worldWidth: number,
+): { ground: Phaser.GameObjects.Rectangle; platforms: Phaser.GameObjects.Rectangle[] } {
+  const ground = scene.add.rectangle(
+    worldWidth / 2,
+    VIEW.height - GROUND_HEIGHT / 2,
+    worldWidth,
+    GROUND_HEIGHT,
+    0xbff3e0,
+    0.9,
+  );
+  scene.physics.add.existing(ground, true);
+  const platforms = level.platforms.map((spec) => {
+    const platform = scene.add.rectangle(spec.x, spec.y, spec.w, PLATFORM_H, 0xffd1e0, 0.95);
+    scene.physics.add.existing(platform, true);
+    // 單向平台：僅上方著地，起跳穿越不撞頭。
+    const body = platform.body as Phaser.Physics.Arcade.StaticBody;
+    body.checkCollision.down = false;
+    body.checkCollision.left = false;
+    body.checkCollision.right = false;
+    // §77：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
+    platform.setData('oneway', true);
+    return platform;
+  });
+  return { ground, platforms };
 }

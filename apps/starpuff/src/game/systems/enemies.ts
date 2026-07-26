@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ENEMY_TEXTURE_KEYS } from '../core/assetPlan';
 import { ENEMY_SIZE, SPORA_SLOW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
@@ -95,26 +96,8 @@ export interface EnemySystem {
 }
 
 // texture keys 凍結（GAME_DESIGN §10、§19、§31、§55）；缺圖時以同色圓角色塊代替。
-const TEXTURES: Record<EnemyKind, string> = {
-  jelly: 'minion-jelly',
-  floaty: 'minion-floaty',
-  spiky: 'minion-spiky',
-  puffy: 'minion-puffy',
-  chompy: 'minion-chompy',
-  shelly: 'minion-shelly',
-  zappy: 'minion-zappy',
-  drilly: 'minion-drilly',
-  glowy: 'minion-glowy',
-  spora: 'minion-spora',
-  gusty: 'minion-gusty',
-  boomy: 'minion-boomy',
-  magno: 'minion-magno',
-  mirri: 'minion-mirri',
-  bubbla: 'minion-bubbla',
-  splatta: 'minion-splatta',
-  twinkla: 'minion-twinkla',
-  cometa: 'minion-cometa',
-};
+// 對照表已收斂至 core/assetPlan（§115），與分階段載入計畫共用單一真值。
+const TEXTURES = ENEMY_TEXTURE_KEYS;
 
 const FALLBACK_COLORS: Record<EnemyKind, number> = {
   jelly: 0xffb3c7,

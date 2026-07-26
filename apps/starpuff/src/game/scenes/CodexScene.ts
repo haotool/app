@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { loadAssets } from '../core/assetLoader';
+import { entriesForKeys } from '../core/assetPlan';
 import { CODEX_MONSTERS, CODEX_SKILLS, CODEX_TAB_GRIDS, MONSTER_PAGE_SIZE } from '../core/codex';
 import { fitBoundedGrid, gridRowTop } from '../core/gridLayout';
 import { loadSave } from '../core/save';
@@ -37,6 +39,13 @@ export class CodexScene extends Phaser.Scene {
   init(data: CodexSceneData): void {
     this.tab = data.tab ?? 'monsters';
     this.monsterPage = data.monsterPage ?? 0;
+  }
+
+  // 圖鑑立繪按需載入（§115）：未進過對應關卡時貼圖不在快取，開圖鑑才補載，
+  // 清單直接取 CODEX_MONSTERS 的 textureKey，不另立第二份名單。
+  preload(): void {
+    if (this.tab !== 'monsters') return;
+    loadAssets(this, entriesForKeys(CODEX_MONSTERS.map((monster) => monster.textureKey)));
   }
 
   create(): void {

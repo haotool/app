@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { ASSETS } from '../core/assets';
+import { loadAssets } from '../core/assetLoader';
+import { entriesForPhase } from '../core/assetPlan';
 import { SceneKeys } from '../core/types';
 
 export class BootScene extends Phaser.Scene {
@@ -7,23 +8,10 @@ export class BootScene extends Phaser.Scene {
     super(SceneKeys.Boot);
   }
 
+  // 首屏只載 boot 階段（§115）：其餘資產於進關卡／開圖鑑時才載，
+  // 未標註 phase 的條目一併算 boot，確保漏標不會缺圖。
   preload(): void {
-    const { width, height } = this.scale;
-    const barWidth = width * 0.6;
-    const barHeight = 14;
-    const x = (width - barWidth) / 2;
-    const y = height / 2;
-
-    this.add.rectangle(width / 2, y, barWidth + 8, barHeight + 8).setStrokeStyle(2, 0x8ad9be);
-    const fill = this.add.rectangle(x, y, 1, barHeight, 0xbff3e0).setOrigin(0, 0.5);
-
-    this.load.on('progress', (value: number) => {
-      fill.width = Math.max(1, barWidth * value);
-    });
-
-    for (const { key, url } of ASSETS) {
-      this.load.image(key, url);
-    }
+    loadAssets(this, entriesForPhase('boot'));
   }
 
   create(): void {

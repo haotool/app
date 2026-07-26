@@ -131,6 +131,11 @@ test('魔王戰敗北進 Result 敗北畫面，再戰直接回魔王關', async 
   await startGame(page);
   await page.evaluate(() => window.__sp.skipToBoss());
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  // 分階段載入（§115）：關卡資產載入期場景尚未 RUNNING，__sp.scene() 為空；
+  // 須等場景就緒再送鍵，否則載入期按下的鍵不會被新場景的 Key 物件看見。
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 30000 })
+    .toBe('Game');
   // 前室 retrofit（§86）：走過廊道入 arena 才觸發魔王入場。
   await page.keyboard.down('ArrowRight');
   await expect
@@ -180,6 +185,10 @@ test('跳關直達第四關魔王，強制勝利結算總用時', async ({ page 
   await startGame(page);
   await page.evaluate(() => window.__sp.skipToBoss());
   await expect.poll(() => page.evaluate(() => window.__sp.stage())).toBe(4);
+  // 分階段載入（§115）：等場景 RUNNING 再送鍵（同上，載入期按鍵不會被看見）。
+  await expect
+    .poll(() => page.evaluate(() => window.__sp.scene()), { timeout: 30000 })
+    .toBe('Game');
   // 前室 retrofit（§86）：入 arena 後魔王入場演出完成 bossHp 就緒。
   await page.keyboard.down('ArrowRight');
   await expect
@@ -268,5 +277,42 @@ test('彩蛋 reach-x：開局反向走到世界最左緣獲 +1 HP（§24）', as
   await expect.poll(() => page.evaluate(() => window.__sp.playerHp()), { timeout: 8000 }).toBe(6);
   await page.keyboard.up('ArrowLeft');
   await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});
+
+// 分階段載入（§115）：首屏只取 boot 階段，關卡資產進關才載。
+function collectWebp(page: Page): string[] {
+  const requested: string[] = [];
+  page.on('request', (req) => {
+    const name = req.url().split('/').pop() ?? '';
+    if (name.endsWith('.webp')) requested.push(name);
+  });
+  return requested;
+}
+
+test('首屏只載 boot 階段立繪，不拉關卡資產', async ({ page }) => {
+  const errors = collectErrors(page);
+  const webp = collectWebp(page);
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => window.__sp.scene())).toBe('Title');
+  await page.waitForTimeout(800);
+  // boot 階段為 6 張（hero-idle／fx-star／fx-clouds／bg-meadow-l／bg-heights-l／bg-arena-l）。
+  expect(webp.length).toBeLessThanOrEqual(6);
+  expect(webp.some((name) => name.startsWith('minion-'))).toBe(false);
+  expect(webp.some((name) => name.startsWith('boss-'))).toBe(false);
+  expect(webp.some((name) => name.startsWith('prop-'))).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('進第一關才補載該關資產，且無缺圖錯誤', async ({ page }) => {
+  const errors = collectErrors(page);
+  const webp = collectWebp(page);
+  await startGame(page);
+  await page.waitForTimeout(1200);
+  // L1 需要的關卡資產於進關後才出現；他關限定資產不得被拉進來。
+  expect(webp).toContain('prop-meadow-1.webp');
+  expect(webp).toContain('minion-jelly.webp');
+  expect(webp.some((name) => name.startsWith('prop-kiln-'))).toBe(false);
+  expect(webp).not.toContain('boss-voidra.webp');
   expect(errors).toEqual([]);
 });

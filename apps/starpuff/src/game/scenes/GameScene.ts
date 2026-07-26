@@ -8,6 +8,8 @@ import {
   type GameEventName,
 } from '../core/events';
 import { FLAVOR_HINTS, MIX_HINTS } from '../core/codex';
+import { loadAssets } from '../core/assetLoader';
+import { entriesForLevel } from '../core/assetPlan';
 import {
   loadSave,
   persistSave,
@@ -33,6 +35,7 @@ import {
 } from '../logic/buffs';
 import { createCaramelStatus, type CaramelStatus } from '../systems/caramelStatus';
 import {
+  LEVELS,
   carryKillsOnDeath,
   checkpointRespawnX,
   getLevel,
@@ -61,7 +64,7 @@ import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
-import { createStage, type StageHandle } from '../systems/stage';
+import { GROUND_HEIGHT, createStage, createTerrain, type StageHandle } from '../systems/stage';
 import { createStarCombat, type StarCombat } from '../systems/starCombat';
 import { createStarburstDirector, type StarburstDirector } from '../systems/starburstDirector';
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
@@ -72,7 +75,6 @@ import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
 
-const GROUND_HEIGHT = 80;
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 const MOUTH_OFFSET_X = 26;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
@@ -194,6 +196,12 @@ export class GameScene extends Phaser.Scene {
     this.carryKills = data.carryKills ?? 0;
   }
 
+  // 關卡資產於進關卡時載入（§115）：本關背景／道具／小怪／魔王＋全關共用核心，
+  // 由 assetPlan 自 LevelSpec 派生；已在快取者零成本，故重玩不再等待。
+  preload(): void {
+    loadAssets(this, entriesForLevel(getLevel(this.currentLevelId), LEVELS));
+  }
+
   create(): void {
     this.level = getLevel(this.currentLevelId);
     this.save = loadSave();
@@ -218,7 +226,7 @@ export class GameScene extends Phaser.Scene {
     // 每次 create 必須顯式重設（防前關/Voidra P3 注入殘留）。
     this.physics.world.gravity.y = GRAVITY_Y * (this.level.gravityScale ?? 1);
     this.background = createParallaxBackground(this, this.level);
-    const { ground, platforms } = this.addTerrain();
+    const { ground, platforms } = createTerrain(this, this.level, this.worldWidth());
     this.terrainGround = ground;
     this.terrainPlatforms = platforms;
     // v4 平台元素與佈景（§29/§32）：緊接地形建立，維持 平台 < 佈景/元素 < 玩家 繪製序；
@@ -731,34 +739,6 @@ export class GameScene extends Phaser.Scene {
       (this.terrainGround.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
     }
   };
-
-  private addTerrain(): {
-    ground: Phaser.GameObjects.Rectangle;
-    platforms: Phaser.GameObjects.Rectangle[];
-  } {
-    const ground = this.add.rectangle(
-      this.worldWidth() / 2,
-      VIEW.height - GROUND_HEIGHT / 2,
-      this.worldWidth(),
-      GROUND_HEIGHT,
-      0xbff3e0,
-      0.9,
-    );
-    this.physics.add.existing(ground, true);
-    const platforms = this.level.platforms.map((spec) => {
-      const platform = this.add.rectangle(spec.x, spec.y, spec.w, 16, 0xffd1e0, 0.95);
-      this.physics.add.existing(platform, true);
-      // 單向平台：僅上方著地，起跳穿越不撞頭。
-      const body = platform.body as Phaser.Physics.Arcade.StaticBody;
-      body.checkCollision.down = false;
-      body.checkCollision.left = false;
-      body.checkCollision.right = false;
-      // §77：oneway 標記供 canLandOneWay 的 a/b 解析（與 stage elements 同制）。
-      platform.setData('oneway', true);
-      return platform;
-    });
-    return { ground, platforms };
-  }
 
   // 多本體魔王（§68）：未實作 getBodies 的品種回落單本體清單。
   private bossBodies(): Phaser.Physics.Arcade.Sprite[] {
