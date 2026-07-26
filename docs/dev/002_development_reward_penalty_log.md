@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+270
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+271
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-scenes-and-bosses
+- 原因：B03 需要鏡界塔／黑洞外環場景與 Reflector／Gravion runtime 資產，稜系白粉紫主體同時衝突綠與洋紅兩種 key 色
+- 解法：稜系一律 #00ff00 並在 prompt 明確禁綠（palette 限白粉紫藍金），沿 B02 管線去背 alpha QA 12/12 零殘暈，入庫縮遊戲解析度並註冊 ASSETS 附載入時機
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b02-skills-fx-hud

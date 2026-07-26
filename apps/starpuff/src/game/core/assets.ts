@@ -579,4 +579,62 @@ export const ASSETS: AssetEntry[] = [
     key: 'ui-tide-skill',
     url: new URL('../../assets/sprites/ui-tide-skill.webp', import.meta.url).href,
   },
+  // v21-v30 B03 鏡界塔／黑洞外環場景（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'bg-mirror-l',
+    url: new URL('../../assets/sprites/bg-mirror-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-1',
+    url: new URL('../../assets/sprites/prop-mirror-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-2',
+    url: new URL('../../assets/sprites/prop-mirror-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-3',
+    url: new URL('../../assets/sprites/prop-mirror-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-4',
+    url: new URL('../../assets/sprites/prop-mirror-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-voidring-l',
+    url: new URL('../../assets/sprites/bg-voidring-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-1',
+    url: new URL('../../assets/sprites/prop-voidring-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-2',
+    url: new URL('../../assets/sprites/prop-voidring-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-3',
+    url: new URL('../../assets/sprites/prop-voidring-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-4',
+    url: new URL('../../assets/sprites/prop-voidring-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 雙王（載入時機建議：L26/L28 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-reflector',
+    url: new URL('../../assets/sprites/boss-reflector.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-reflector-enraged',
+    url: new URL('../../assets/sprites/boss-reflector-enraged.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-gravion',
+    url: new URL('../../assets/sprites/boss-gravion.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-gravion-enraged',
+    url: new URL('../../assets/sprites/boss-gravion-enraged.webp', import.meta.url).href,
+  },
 ];
