@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+251
+> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+260
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,61 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r4-calibration-comment-and-note-value
+- 原因：終輪雙席抓到兩處殘留——守門校準註解寫「211 筆」但實測為 218 筆（文件成長後數字漂移），§76 已廢止附註漏帶推導值「854 寬間距 ≈51px 單頁可容納」
+- 解法：註解改為實測值並區分「全量 218 筆」與「近似網實際受檢 200 筆」及綁定後受檢集最高值 0.182，避免再漂移；§76 附註補回推導值與「20 節點單頁確定放不下」理由；另以數值 token 逐檔比對全 10 檔確認反轉輪零規格值遺失（僅 4 個版本標籤／章號隨行內標註一併移除）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r3-doc-code-quote-binding
+- 原因：守門只查「行內取代標註格式」，抓不到「沒有帶任何標註的過期內容」——L8 hint 漏網即此盲區；另 INLINE_SUPERSESSION 漏被動語態「已被」，複審實測可繞過
+- 解法：regex 補「已被」並以三式參數化負向測試鎖住；新增 doc↔code 引述綁定檢查——文件以「引述」（`來源檔.ts` 說明）標註後守門逐字比對 src，另加 hint 近似網（Dice bigram，門檻 0.5 由實測校準：211 筆引述中非漂移最高 0.412、真漏網 0.558，已廢止附註豁免）攔截無標註的過期抄寫；四處既有引述全數補標記，三種故障注入實證
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r3-header-and-node-count-cleanup
+- 原因：02 檔頭寫「§23／§40 星暴敘述均為 v19 前歷史值」但 §23 主句早已改成現行的自動結晶＋SP，檔頭自打臉；§50／§60／§65 正文仍以現在式寫「七／九／十二節點單頁鋸齒」，§76 則缺引導句且正文仍寫十六節點——標題改對了內文沒跟上
+- 解法：02 檔頭改述為「§109.3 為完整規格、本檔只寫與星彈系統交界部分」；四節正文的節點佈局宣告改為「新增 N 節點」中性敘述，舊佈局降級為已廢止附註，§50／§76 補齊與 §60／§65 同構的引導句
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r3-l8-hint-drift
+- 原因：§60 的 L8 開場 hint 主句仍寫「地面長按吸入鍵 0.6 秒星化變身」，與 levels.ts:613 實值、WALKTHROUGH 與我自己改好的 §57 三處衝突；因該句「沒有帶取代標註」，必修 1 的 sweep 與守門的行內標註規則都掃不到（複審 Grok REQUEST_CHANGES 唯一理由）
+- 解法：主句改為與 levels.ts:613 逐字一致的 SP 文案並加 `levels.ts` L8 hint 綁定標記，舊文案降級為已廢止附註；此漏網暴露「無標註過期內容」的守門盲區，後續以 doc↔code 引述綁定檢查根治
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7c-r2-gate-self-exclusion
+- 原因：verify-design-docs.mjs 自身含 GAME_DESIGN 錨點偵測字面值，未入版控時 git ls-files 掃不到故 CLI 綠燈，commit 後轉為 tracked 即自我檢舉三筆偽陽性，pre-push 擋下
+- 解法：以 import.meta.url 推導自身相對路徑後排除（非硬編，搬移改名仍成立）；另注入他檔錨點複驗自我排除未削弱偵測能力
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r2-design-docs-gate
+- 原因：拆檔後 GAME_DESIGN 索引是唯一的「章號 → 檔案」解析器（src 有 77 處 §N 引用），卻零 CI 守門——本輪正確性全靠一次性腳本與兩席人工重算，未來新增 §119 漏登索引或誤重複編號不會被攔截，索引會悄悄失真
+- 解法：新增 `apps/starpuff/scripts/verify-design-docs.mjs`（索引存在性/檔名/零重複/零缺號/標題同步、每檔職責聲明、主句紀律附註格式、全 repo 零錨點引用六項）＋同名 .test.mjs 掛進 vitest（include 增 scripts/\*_/_.test.mjs）與 `pnpm verify:docs`；上線即抓到我自己漏更的 §60/§65 索引標題，另以四種故障注入實證守門非空轉
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-r2-supersession-main-clause-inversion
+- 原因：審查 Grok 席指出取代寫法方向錯誤——過期規則仍是主句、修正只在括號裡（如 §57 主句仍寫「地面長按 0.6s 變身」），掃讀者會照舊規格實作，changeset 承諾的「可直接判斷哪段有效」名實不符；另 01 檔頭宣告「不在本檔：按下之後發生什麼事」卻承載 §109.3 星暴狀態機
+- 解法：全 10 檔主句反轉為現行規則、舊規則降級為 35 條 `> **已廢止**（vNN 起，現行見 §YY）` 附註並立為全檔鐵律（99 增「主句紀律」章、索引同步）；01 檔頭改採收窄方案（納入「與輸入直接連動的彈匣／蓄能狀態機」並說明 resolveSpPress 需讀蓄能相位，拆去 02 會製造雙 SSOT），02 檔頭加星暴指路
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7c-docs-changeset
+- 原因：AGT-VER-01 要求每個 PR 建 changeset；本 PR 為純文件但含使用者可見的錯誤指示修正（變身觸發面／慈悲補血／設定入口），需依 bfdf65585 docs-only patch 先例補建
+- 解法：新增 patch changeset 描述玩家看得到的說明修正與設計文件可查性提升；純文件無行為變更故不升 minor
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-cross-doc-drift-sweep
+- 原因：交叉核對發現漂移不只 GAME_DESIGN——WALKTHROUGH 與 app README 仍寫「慈悲愛心隨機出現」「長按 0.6 秒變身」「主選單按鈕配置」，且五座魔王攻略未涵蓋 v21–v23 加權選招與六個主題招式
+- 解法：小漂移直接修（WALKTHROUGH 慈悲 pity／設定頁／版本落後聲明，README 變身觸發面／星暴 2.0／EX 五王 P4／設定頁／成就），大缺口開 issue 不擅改——#874 魔王主題招式需真機實測補寫、#875 六模組註解誤引 §5、#876 gitignored PRD 的 35%／60% 與 sp-rotation 漂移待 PM 裁決
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-game-design-topic-split
+- 原因：GAME_DESIGN.md 膨脹至 2436 行 118 章、以版本列車時序堆疊並靠「對舊章加取代標註」維護，讀者無法判斷哪一段現行有效，也無法憑主題定位（T7-C）
+- 解法：以一次性腳本按 §NN 邊界機械拆為 design/00-08 九個主題檔＋99-superseded 取代對照表，主檔改為索引入口（章號對照表＋主題檔一覽＋硬不變式）；章號不重編以保 src 註解引用有效，拆分經逐章比對驗證 115/118 逐字元相同、3 章為刻意搬遷失效內容
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7c-871-doc-drift-settings-mercy
+- 原因：T7-A（#864）改了慈悲補血判定與偏好儲存架構卻零文件同步，GAME_DESIGN 仍記 35%／60% RNG 擲骰與 sp-muted／sp-rotation／sp-key-layout 三散鍵，且宣告「本遊戲無設定頁」（issue #871，P1 SSOT drift）
+- 解法：先讀 mercyHeal.ts／settings.ts／save.ts／pwaUpdateGate.ts 實作反寫文件——§62 改確定性 pity 參數表（含 bossPityHurts=2 與首顆固定生成語意）、新增 §118 記載 sp-settings 單鍵 SSOT／migration 刪 legacy 與 persist 失敗例外／設定頁／存檔備援 checksum／PWA 更新閘，並對 §9/§34/§35/§36/§38/§63.1/§70/§87/§89/§95/§101 舊敘述加取代標註
 
 - 日期：2026-07-26
 - ID：reward-starpuff-release-verifiability-doc-accuracy
