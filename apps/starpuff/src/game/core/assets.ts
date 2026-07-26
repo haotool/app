@@ -360,4 +360,62 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/bg-astral-l.webp', import.meta.url).href,
     phase: 'level',
   },
+  // v21-v30 B02 星港／潮灣場景（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'bg-starport-l',
+    url: new URL('../../assets/sprites/bg-starport-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-1',
+    url: new URL('../../assets/sprites/prop-starport-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-2',
+    url: new URL('../../assets/sprites/prop-starport-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-3',
+    url: new URL('../../assets/sprites/prop-starport-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-4',
+    url: new URL('../../assets/sprites/prop-starport-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-tidebay-l',
+    url: new URL('../../assets/sprites/bg-tidebay-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-1',
+    url: new URL('../../assets/sprites/prop-tidebay-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-2',
+    url: new URL('../../assets/sprites/prop-tidebay-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-3',
+    url: new URL('../../assets/sprites/prop-tidebay-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-4',
+    url: new URL('../../assets/sprites/prop-tidebay-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 雙王（載入時機建議：L22/L24 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-tariffang',
+    url: new URL('../../assets/sprites/boss-tariffang.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-tariffang-enraged',
+    url: new URL('../../assets/sprites/boss-tariffang-enraged.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-maridella',
+    url: new URL('../../assets/sprites/boss-maridella.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-maridella-enraged',
+    url: new URL('../../assets/sprites/boss-maridella-enraged.webp', import.meta.url).href,
+  },
 ];

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0） 268:+1（reward 1、penalty 0、neutral 0） 269:+1（reward 1、penalty 0、neutral 0） 270:+1（reward 1、penalty 0、neutral 0） 271:+1（reward 1、penalty 0、neutral 0） 272:+1（reward 1、penalty 0、neutral 0） 273:+1（reward 1、penalty 0、neutral 0） 272:-1（reward 0、penalty 1、neutral 0） 273:+1（reward 1、penalty 0、neutral 0） 274:+1（reward 1、penalty 0、neutral 0） 275:+1（reward 1、penalty 0、neutral 0） 276:+1（reward 1、penalty 0、neutral 0）｜累計總分：+267
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+268
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b02-scenes-and-bosses
+- 原因：B02 需要星港／潮灣場景與 Tariffang／Maridella runtime 資產，且 2048² 母檔直接入庫會爆 BootScene 全量預載的首屏預算（單批 6.6MB）
+- 解法：2048² chroma-key 生成＋remove_chroma_key 去背（12/12 alpha QA 通過零殘暈），入庫縮至遊戲解析度（props 512²／王 768²，批次 1.4MB）並註冊 ASSETS 附載入時機建議註解
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b01-style-lock-boards
