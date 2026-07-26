@@ -377,8 +377,8 @@
 - 不疊加：蓄能星存在時再滿匣不再結晶（HUD 滿匣金色脈動提示；彈匣維持滿可正常
   射擊/殼盾）。變身窗口＝同系 3–4 發按 SP；滿匣即選擇星暴線（L3 hint 明示一次）。
 - 跨關持有／死亡清除／EX 進場清除：session 記憶（`systems/starburstDirector`，
-  不動 save schema）；首次結晶浮字「星力結晶！按 SP 鍵引爆」、首次帶星過關 toast
-  「蓄能星會跟你到下一關」各一次。已知行為（設計取捨）：detonating 相位過關
+  不動 save schema）；首次結晶浮字「星力結晶！按 SP 鍵引爆」（`starburstDirector.ts` 首次結晶浮字）、
+  首次帶星過關 toast「蓄能星會跟你到下一關」（`starburstDirector.ts` 帶星過關 toast）各一次。已知行為（設計取捨）：detonating 相位過關
   （0.3s 蓄爆窄窗撞入門）不持有也不結算——引爆效果隨場景凍結靜默丟棄。
 - 引爆：SP 點按 → 0.3s 蓄爆（`STARSTORM.chargeMs`，不可取消）→ 清場全小怪＋
   魔王 12 傷＋5s 無敵窗（沿 §64.2 取 max 不疊加）＋既有震屏白閃星雨呈現。

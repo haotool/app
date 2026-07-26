@@ -5,7 +5,7 @@
 // CLI：node apps/starpuff/scripts/verify-design-docs.mjs
 // 測試：scripts/verify-design-docs.test.mjs（掛進 pnpm test）
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative, sep } from 'node:path';
@@ -19,11 +19,23 @@ const REPO_ROOT = join(SCRIPT_DIR, '..', '..', '..');
 // 主題檔命名契約：0*.md 為現行規格檔，99-superseded.md 為歷史檔（不含 `## N.` 章節）。
 const SECTION_FILE_PATTERN = /^0\d-[a-z-]+\.md$/;
 const HISTORY_FILE = '99-superseded.md';
+const SRC_DIR = join(SCRIPT_DIR, '..', 'src');
+const WALKTHROUGH = join(DOCS_DIR, 'WALKTHROUGH.md');
+
+// doc↔code 引述綁定：文件引述程式碼字串時標註來源檔，例如
+//   「同系星彈集滿 3 發，站在地面按 SP 鍵星化變身」（`levels.ts` L8 hint）
+// 守門逐字比對該字串確實存在於該來源檔，杜絕「文件抄了舊值」這類無標註漂移。
+const QUOTE_BINDING = /「([^」]+)」（`([\w.-]+\.ts)`[^）]*）/g;
+// 近似網（僅針對 LevelSpec.hint 九條）：抓沒有綁定標記、又與現行 hint 高度相似的引述。
+// 門檻依實測校準——211 筆引述中，非漂移的最高相似度為 0.412
+//（§110.2 的變身首教浮字，與 hint 是不同字串），真漏網的 L8 舊文案為 0.558。
+export const HINT_SIMILARITY_THRESHOLD = 0.5;
 
 // 取代附註的唯一合法形狀（99-superseded.md「主句紀律」章定義）。
 const DEPRECATION_LINE = /^> \*\*已廢止\*\*（[^）]+）：.+/;
 // 主句紀律違規樣態：把過期規則留在主句、修正塞進行內括號。
-const INLINE_SUPERSESSION = /（v\d+(\.\d+)? 已(由|於) §/;
+// 被動語態三式（已由／已於／已被）皆須涵蓋——初版漏「已被」，複審實測可繞過守門。
+const INLINE_SUPERSESSION = /（v\d+(\.\d+)? 已(由|於|被) §/;
 
 function listSectionFiles() {
   return readdirSync(DESIGN_DIR)
@@ -92,6 +104,90 @@ function findAnchorReferences() {
     });
   }
   return hits;
+}
+
+// src 檔案索引（basename → 絕對路徑），供引述綁定解析來源檔。
+function indexSourceFiles(dir, acc = new Map()) {
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) indexSourceFiles(full, acc);
+    else if (name.endsWith('.ts')) (acc.get(name) ?? acc.set(name, []).get(name)).push(full);
+  }
+  return acc;
+}
+
+// 字元 bigram Dice 係數：對中文短句的近似度量比編輯距離穩定，且不需分詞。
+export function diceSimilarity(a, b) {
+  const grams = (s) => {
+    const t = s.replace(/\s+/g, '');
+    return new Set(Array.from({ length: Math.max(0, t.length - 1) }, (_, i) => t.slice(i, i + 2)));
+  };
+  const A = grams(a);
+  const B = grams(b);
+  if (A.size === 0 || B.size === 0) return 0;
+  let shared = 0;
+  for (const g of A) if (B.has(g)) shared += 1;
+  return (2 * shared) / (A.size + B.size);
+}
+
+function readLevelHints() {
+  const levels = join(SRC_DIR, 'game', 'logic', 'levels.ts');
+  const text = readFileSync(levels, 'utf8');
+  return [...text.matchAll(/^\s*hint:\s*'([^']+)'/gm)].map((m) => m[1]);
+}
+
+// 引述綁定與近似網：文件引述的程式碼字串必須與 src 逐字相符。
+function checkQuoteBindings(docFiles) {
+  const problems = [];
+  const sources = indexSourceFiles(SRC_DIR);
+  const hints = readLevelHints();
+  const bound = new Set();
+
+  for (const { name, path } of docFiles) {
+    const lines = readFileSync(path, 'utf8').split('\n');
+    lines.forEach((line, i) => {
+      for (const m of line.matchAll(QUOTE_BINDING)) {
+        const [, quoted, srcName] = m;
+        bound.add(quoted);
+        const candidates = sources.get(srcName);
+        if (!candidates) {
+          problems.push(`${name}:${i + 1} 引述綁定指向不存在的來源檔 ${srcName}`);
+          continue;
+        }
+        const hit = candidates.some((p) => readFileSync(p, 'utf8').includes(quoted));
+        if (!hit) {
+          problems.push(
+            `${name}:${i + 1} 引述與 ${srcName} 不符（逐字比對失敗）：「${quoted}」——` +
+              `文件抄了舊值或來源已改，請同步`,
+          );
+        }
+      }
+    });
+  }
+
+  // 近似網：沒帶綁定標記、又與現行 hint 高度相似的引述＝疑似過期抄寫（L8 漏網的樣態）。
+  // 已廢止附註內本就是舊值，不受檢。
+  for (const { name, path } of docFiles) {
+    const lines = readFileSync(path, 'utf8').split('\n');
+    lines.forEach((line, i) => {
+      if (line.startsWith('> **已廢止**')) return;
+      for (const m of line.matchAll(/「([^」]+)」/g)) {
+        const quoted = m[1];
+        if (bound.has(quoted) || hints.includes(quoted)) continue;
+        for (const hint of hints) {
+          if (diceSimilarity(quoted, hint) >= HINT_SIMILARITY_THRESHOLD) {
+            problems.push(
+              `${name}:${i + 1} 疑似過期的關卡 hint 引述：「${quoted}」——` +
+                `現行值為「${hint}」；若為刻意不同的文案請改寫，若是引述請加綁定標記`,
+            );
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  return problems;
 }
 
 export function verifyDesignDocs() {
@@ -176,7 +272,15 @@ export function verifyDesignDocs() {
     });
   }
 
-  // 6. 全 repo 零 GAME_DESIGN.md 錨點引用。
+  // 6. doc↔code 引述綁定：文件引述的程式碼字串必須與 src 逐字相符（含 hint 近似網）。
+  const docFiles = [...files, HISTORY_FILE].map((name) => ({
+    name,
+    path: join(DESIGN_DIR, name),
+  }));
+  docFiles.push({ name: 'WALKTHROUGH.md', path: WALKTHROUGH });
+  problems.push(...checkQuoteBindings(docFiles));
+
+  // 7. 全 repo 零 GAME_DESIGN.md 錨點引用。
   for (const hit of findAnchorReferences()) {
     problems.push(`${hit} 使用 GAME_DESIGN.md 錨點連結——拆檔後必為死鏈，改引用 §N`);
   }
@@ -192,5 +296,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     problems.forEach((p) => console.error(` - ${p}`));
     process.exit(1);
   }
-  console.log('設計文件守門通過：索引與章節一致、主句紀律成立、零錨點引用');
+  console.log('設計文件守門通過：索引與章節一致、主句紀律成立、引述與 src 逐字相符、零錨點引用');
 }
