@@ -126,8 +126,9 @@ export function parseSaveStrict(raw: string): SaveData | null {
   save.achievements = Array.isArray(data['achievements'])
     ? [...new Set(data['achievements'].filter((item): item is string => typeof item === 'string'))]
     : [];
-  // checksum 驗證：欄位存在才比對（legacy 向後相容）；正規化後重算不符即判損毀。
-  if (typeof data['checksum'] === 'string' && data['checksum'] !== checksumOf(save)) return null;
+  // checksum 驗證：屬性存在即須為相符字串（非字串亦判損毀，防手改為 null/數字繞過）；
+  // 僅完全無此屬性的 legacy 存檔豁免。
+  if ('checksum' in data && data['checksum'] !== checksumOf(save)) return null;
   return save;
 }
 
@@ -187,6 +188,10 @@ export function persistSave(save: SaveData): void {
     if (previous !== null && parseSaveStrict(previous) !== null) {
       localStorage.setItem(SAVE_BACKUP_KEY, previous);
     }
+  } catch {
+    /* noop：備援輪替失敗（配額不足／隱私模式）不得阻斷主檔寫入。 */
+  }
+  try {
     localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ ...save, checksum: checksumOf(save) }));
   } catch {
     /* noop */

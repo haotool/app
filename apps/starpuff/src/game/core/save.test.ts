@@ -423,6 +423,39 @@ describe('存檔備援（v19 #819 卡 7：backup 輪替＋checksum＋恢復）',
     expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null).levels[3]?.cleared).toBe(true);
   });
 
+  it('備援輪替配額失敗：主檔仍寫入（審查回歸鎖）', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    // 僅備援鍵寫入拋 QuotaExceededError：主檔覆寫路徑不得被連帶略過。
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (key === SAVE_BACKUP_KEY) throw new Error('QuotaExceededError');
+        map.set(key, value);
+      },
+      removeItem: (key: string) => void map.delete(key),
+    });
+    persistSave(recordLevelClear(first, 2, 40000));
+    expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null).levels[2]?.cleared).toBe(true);
+  });
+
+  it('checksum 屬性存在但非字串：判損毀走備援恢復', () => {
+    const map = stubStorage();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const legit = map.get(SAVE_BACKUP_KEY);
+    // 手改 checksum 為 null 不得繞過校驗。
+    const tampered = JSON.parse(map.get(SAVE_STORAGE_KEY) ?? '{}') as Record<string, unknown>;
+    tampered['checksum'] = null;
+    tampered['highestClearedLevel'] = 20;
+    map.set(SAVE_STORAGE_KEY, JSON.stringify(tampered));
+    expect(loadSave()).toEqual(parseSave(legit ?? null));
+    warn.mockRestore();
+  });
+
   it('resetSave 同時清除主檔與備援（避免恢復出已重置的舊進度）', () => {
     const map = stubStorage();
     const first = recordLevelClear(createDefaultSave(), 1, 30000);

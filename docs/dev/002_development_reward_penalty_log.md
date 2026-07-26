@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+240
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+242
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-backup-rotation-nonblocking
+- 原因：persistSave 備援輪替與主檔寫入共用同一 try/catch，備援 setItem 觸發 QuotaExceededError 會連帶略過主檔覆寫，使本次通關進度無聲遺失（Codex P1）
+- 解法：拆為兩段獨立 try/catch，備援失敗只吞自身錯誤不阻斷主檔寫入；補配額邊界回歸鎖單測（紅→綠）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-checksum-nonstring-corrupt
+- 原因：parseSaveStrict 以 typeof === 'string' 守衛 checksum，手改為 null／數字即完全跳過校驗並接受篡改進度，與損毀偵測目的相反（Codex P2）
+- 解法：改以 'checksum' in data 判定——屬性存在即須相符字串，非字串一律判損毀走備援恢復；僅無此屬性的 legacy 存檔豁免，補篡改單測
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-keyconfig-keyboard-a11y
