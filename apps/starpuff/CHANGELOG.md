@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.24.1
+
+### Patch Changes
+
+- 0c0e003: 新增 21-30 關首批視覺素材，並修正殼化小怪移動時的左右朝向同步。
+
 ## 0.24.0
 
 ### Minor Changes
