@@ -48,6 +48,7 @@ import { createLevelGate, type LevelGateHandle } from '../systems/levelGate';
 import { createMercyDirector, type MercyDirector } from '../systems/mercyDirector';
 import { openPauseMenu } from '../systems/pause';
 import { createPlayer, type PlayerHandle } from '../systems/player';
+import { createPlayerFeel, type PlayerFeel } from '../systems/playerFeel';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
 import { GROUND_HEIGHT, createStage, createTerrain, type StageHandle } from '../systems/stage';
@@ -61,7 +62,6 @@ import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
 
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
-const MOUTH_OFFSET_X = 26;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
 // P3（§30）：進場時停 0.3s。
@@ -84,8 +84,6 @@ const asSprite = (obj: unknown): Phaser.Physics.Arcade.Sprite =>
 // 星味首遇提示（§46/§47）：seen 僅存 session 記憶體（跨關卡重試保留、重載重置），
 // 不動 save schema。
 const seenFlavorHints = new Set<string>();
-// SP 變身教學浮字（§110）：變身徽章首次浮現時一次性教學，同 session 慣例。
-let taughtTransformSp = false;
 
 export class GameScene extends Phaser.Scene {
   playerHp: number = PLAYER.maxHp;
@@ -110,9 +108,9 @@ export class GameScene extends Phaser.Scene {
   private finished = false;
   private transitioning = false;
   private bossDown = false;
-  private prevVy = 0;
-  private wasInhaling = false;
-  private mouth = { x: 0, y: 0 };
+  // 玩家體感同步（§30/§45/§110）：嘴部錨點/吸入音效/跳躍配音/SP 教學/沉地防護
+  // 委派 systems/playerFeel。
+  private feel!: PlayerFeel;
   // 星星門流程（§26/§39/§43）：生成/掃掠背擋/過關演出委派 systems/levelGate。
   private levelGate!: LevelGateHandle;
   // 卡點關中點重生（§67）：本命最遠推進 x——越過 checkpoint 後死亡自 checkpoint 重生。
@@ -183,7 +181,6 @@ export class GameScene extends Phaser.Scene {
     this.finished = false;
     this.transitioning = false;
     this.bossDown = false;
-    this.wasInhaling = false;
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
     this.pendingUnlocked = [];
@@ -209,6 +206,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.controls = createControls(this);
+    // 玩家體感同步（§30/§45/§110）：委派 systems/playerFeel（create 重建即重置邊緣狀態）。
+    this.feel = createPlayerFeel(GROUND_TOP, {
+      player: () => this.player,
+      controls: () => this.controls,
+      fx: () => this.fx,
+      toasts: () => this.toasts,
+      waves: () => this.waves,
+    });
     // 受擊單一入口與短期增益/環境場效（§30/§69/§71/§74/§79）：委派 systems/damageDirector
     //（create 重建即歸零）；hooks 閉包延遲解析（levelGate/boss 等於後續建立）。
     this.damage = createDamageDirector(this, {
@@ -482,23 +487,16 @@ export class GameScene extends Phaser.Scene {
     this.background.update(deltaMs);
     this.controls.update(deltaMs);
     if (!this.finished && !this.transitioning) {
-      this.syncTutorialInput();
+      this.feel.syncTutorialInput();
       this.player.update(this.controls.state, deltaMs);
       this.stage.update(this.controls.state, deltaMs);
       // 下跳指示（§77/§85）：下向意圖（含釋放緩衝窗）＋站台 → 跳鍵變色與箭頭翻轉。
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
-      const spMode = this.player.getSpMode();
-      this.controls.setSpMode(spMode);
-      // SP 變身教學（§110/§119）：任一形態資格徽章首次浮現即教一次。
-      const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
-      if (!taughtTransformSp && spIsForm) {
-        taughtTransformSp = true;
-        this.toasts.flavor('同系星彈 ×3！按 SP 鍵立即變身');
-      }
-      this.clampAboveGround();
+      this.feel.syncSpMode();
+      this.feel.clampAboveGround();
       this.farthestX = Math.max(this.farthestX, this.player.sprite.x);
-      this.syncJumpSfx();
-      this.syncInhale();
+      this.feel.syncJumpSfx();
+      this.feel.syncInhale();
       this.eggTracker.sync();
       this.levelGate.sweep();
       for (const room of this.eliteRooms) room.update();
@@ -517,7 +515,7 @@ export class GameScene extends Phaser.Scene {
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
     // 吸入拉近（§30/#811 移至 overlaps.ts）：錐形收斂、吞下與殼殼暈眩窗強化拉力。
     if (!this.finished && !this.transitioning) {
-      applyInhalePull(this, this.player, this.enemies, this.mouth);
+      applyInhalePull(this, this.player, this.enemies, this.feel.mouth());
     }
     // 魔王關補生等入場運鏡完成（boss active）才推進，避免入場中生怪干擾玩家（review #698）。
     if (!this.level.boss || this.boss.isActive()) this.waves.update(deltaMs);
@@ -634,16 +632,6 @@ export class GameScene extends Phaser.Scene {
 
   private restartWith(data: GameSceneData): void {
     this.scene.restart(data);
-  }
-
-  // 低幀率沉地防護（§45）：完整沒入地面帶即回貼地表——正常著地永不觸發。
-  private clampAboveGround(): void {
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    if (body.top <= GROUND_TOP + 2 || body.velocity.y < 0) return;
-    const { x: vx } = body.velocity;
-    const lift = body.bottom - GROUND_TOP;
-    body.reset(this.player.sprite.x, this.player.sprite.y - lift);
-    body.setVelocity(vx, 0);
   }
 
   // 世界有效寬（§28）：捲軸關讀關卡資料；boss 關 = 前室寬＋當前視寬（854–1200 動態）。
@@ -929,30 +917,6 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  // 跳躍/拍翅無契約事件，以速度轉變判定配音（buffer 觸發的跳躍無當幀按壓）。
-  private syncJumpSfx(): void {
-    const vy = (this.player.sprite.body as Phaser.Physics.Arcade.Body).velocity.y;
-    if (vy !== this.prevVy) {
-      if (vy === PLAYER.jumpVelocity) playSfx('jump');
-      else if (vy === PLAYER.floatLift) playSfx('flap');
-    }
-    this.prevVy = vy;
-  }
-
-  private syncInhale(): void {
-    this.mouth.x = this.player.sprite.x + this.player.getFacing() * MOUTH_OFFSET_X;
-    this.mouth.y = this.player.sprite.y;
-    const inhaling = this.player.isInhaling();
-    if (inhaling && !this.wasInhaling) {
-      this.fx.startInhale(this.mouth);
-      playSfx('inhale');
-    } else if (!inhaling && this.wasInhaling) {
-      this.fx.stopInhale();
-      stopSfx('inhale');
-    }
-    this.wasInhaling = inhaling;
-  }
-
   // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列；
   // 成就判定恆由 save 資料派生，同批多解鎖合併單張橫幅（審查 U1）。
   private persistAndAward(save: SaveData): void {
@@ -962,11 +926,5 @@ export class GameScene extends Phaser.Scene {
     if (newly.length === 0) return;
     this.pendingUnlocked.push(...newly);
     this.toasts.queueAchievements(newly.map((id) => getAchievement(id)?.nameZh ?? id).join('、'));
-  }
-
-  // 教學浮字：偵測首次任一操作輸入，交由 waves 排程淡出。
-  private syncTutorialInput(): void {
-    const { left, right, jumpHeld, actionHeld } = this.controls.state;
-    if (left || right || jumpHeld || actionHeld) this.waves.noteInput();
   }
 }
