@@ -23,6 +23,8 @@ const HEADER_STRICT_RE =
 const HEADER_TOTAL_RE = /^> 本次分數變化：.*｜累計總分：([+-]?\d+)$/;
 
 const ENTRY_LINE_PREFIXES = ['- 日期：', '- ID：', '- 原因：', '- 解法：'];
+// 日期與 ID 各有專屬檢查，這兩欄只需確認非空。
+const CONTENT_PREFIXES = ['- 原因：', '- 解法：'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PREFIXES = ['reward-', 'penalty-', 'neutral-'];
 
@@ -92,6 +94,13 @@ export function parseEntries(content) {
       const date = dateLine.slice('- 日期：'.length).trim();
       if (!DATE_RE.test(date)) {
         entry.errors.push(`條目「${locator}」日期格式應為 YYYY-MM-DD：「${date}」`);
+      }
+    }
+    // 四行模板要求每筆都有一句話 root cause 與 resolution；只檢查前綴會讓空值通過。
+    for (const prefix of CONTENT_PREFIXES) {
+      const line = block.find((candidate) => candidate.startsWith(prefix));
+      if (line && line.slice(prefix.length).trim() === '') {
+        entry.errors.push(`條目「${locator}」的「${prefix}」不可為空`);
       }
     }
     if (!entry.id) {

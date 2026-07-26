@@ -194,6 +194,20 @@ describe('validate002', () => {
     expect(errors.some((message) => message.includes('條目 ID 不可為空'))).toBe(true);
   });
 
+  // 只檢查行前綴會讓「- 原因：」／「- 解法：」的空值通過，
+  // 使缺 root cause 或 resolution 的紀錄同時通過本地與 CI 守門。
+  it.each([
+    ['原因', { reason: '  ', fix: '解法' }, '- 原因：'],
+    ['解法', { reason: '原因', fix: '' }, '- 解法：'],
+  ])('新增條目的%s欄位為空時擋下', (_label, fields, prefix) => {
+    const staged = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+      entries: [{ id: 'reward-new-entry', ...fields }, { id: 'reward-existing-entry' }],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: HEAD_CONTENT });
+    expect(errors.some((message) => message.includes(`「${prefix}」不可為空`))).toBe(true);
+  });
+
   it('新增條目 ID 前綴不合法時擋下', () => {
     const staged = buildLog({
       header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
