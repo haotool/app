@@ -3,7 +3,7 @@
 // 分級 bot（低/中/高）與四專項探針（#809 jump/#810 telegraph/#811 swallow/#812 starburst）。
 //
 // 用法：node scripts/level-audit.mjs <levelId> [--ex] [--bot low|mid|high] [--runs N]
-//       [--cap 秒] [--probe jump|telegraph|swallow|starburst] [--all] [--port P] [--label 名]
+//       [--cap 秒] [--probe jump|telegraph|swallow|starburst|transform] [--all] [--port P] [--label 名]
 //       [--transform]（#816：魔王關依 TRANSFORM_ADVANTAGE 集星變身，TTK 用/不用對照）
 // 前置：dev server（pnpm dev，埠 SP_DEV_PORT）；輸出至 .claude/product-intel/level-audits/。
 import { execSync } from 'node:child_process';
@@ -54,8 +54,9 @@ const {
   percentile,
   sequenceEntropyBits,
 } = difficulty;
-const { canInhale } = await import('../src/game/logic/combat.ts');
+const { canInhale, inhaleFlavor } = await import('../src/game/logic/combat.ts');
 const { SHELLY_FSM } = await import('../src/game/logic/enemyFsm.ts');
+const { FORM_BY_FLAVOR } = await import('../src/game/logic/transform.ts');
 
 const baseSha = (() => {
   try {
@@ -407,6 +408,79 @@ async function runProbe(page, name, level, overrides = {}) {
           : allSamples.length > 0
             ? false
             : null,
+    };
+  }
+  if (name === 'transform') {
+    // §111 變身觸發密度：形態引入關 mid bot 獵集同系味首次變身 p50 ≤30s、p95 ≤60s
+    //（門檻 SSOT＝difficulty.AUDIT_THRESHOLDS；供給味反查 FORM_BY_FLAVOR 零第二份映射）。
+    if (!level || level.boss) throw new Error('transform probe 僅適用走動關');
+    const formEntry = (level.teaches ?? []).find((t) => t.endsWith('-form'));
+    if (!formEntry) throw new Error(`L${level.id} 未定義形態教學位點（teaches *-form）`);
+    const form = formEntry.replace('-form', '');
+    const supplyFlavor = Object.entries(FORM_BY_FLAVOR).find(([, f]) => f === form)?.[0];
+    if (!supplyFlavor) throw new Error(`形態 ${form} 未定義觸發味`);
+    // 獵集限恆可吸供給（條件可吸如 drilly 僅破土窗，bot 空守潛地期為量測噪音）。
+    const huntKinds = ALL_KINDS.filter(
+      (kind) => inhaleFlavor(kind) === supplyFlavor && canInhale(kind, false),
+    );
+    const trials = Number(opt('trials', '8'));
+    const capMs = 90_000;
+    const tierSpec = BOT_TIERS[opt('bot', 'mid')] ?? BOT_TIERS.mid;
+    const samples = [];
+    let timeouts = 0;
+    for (let i = 0; i < trials; i += 1) {
+      await gotoLevel(page, level.id, false);
+      await page.evaluate(installAuditDriver, {
+        kind: 'walk',
+        levelId: level.id,
+        reactionMs: tierSpec.reactionMs,
+        dodge: tierSpec.dodge,
+        kite: tierSpec.kite,
+        maxOnScreen: level.maxOnScreen,
+        floodPlatformXs: level.tide ? floodPlatformXs(level) : [],
+        inhalableKinds: INHALABLE_KINDS,
+        contactKinds: CONTACT_KINDS,
+        grantSupply: false,
+        transformFlavor: supplyFlavor,
+        huntKinds,
+      });
+      const startedAt = Date.now();
+      let firstMs = -1;
+      while (Date.now() - startedAt < capMs) {
+        await sleep(1000);
+        const scene = await readScene(page);
+        if (scene !== 'Game') break;
+        const m = await readMetrics(page);
+        if (m && m.firstTransformMs > 0) {
+          firstMs = m.firstTransformMs;
+          break;
+        }
+      }
+      await stopDriver(page);
+      if (firstMs > 0) samples.push(firstMs);
+      else timeouts += 1;
+      console.log(
+        `transform trial ${i + 1}/${trials}: ${firstMs > 0 ? fmtSec(firstMs) + 's' : 'timeout'}`,
+      );
+    }
+    const p50Ms = percentile(samples, 0.5);
+    const p95Ms = percentile(samples, 0.95);
+    const complete = samples.length > 0 && timeouts === 0;
+    return {
+      probe: 'transform',
+      levelId: level.id,
+      form,
+      supplyFlavor,
+      huntKinds,
+      trials,
+      firstTransformSecSamples: samples.map((ms) => fmtSec(ms)),
+      timeouts,
+      p50Sec: fmtSec(p50Ms),
+      p95Sec: fmtSec(p95Ms),
+      thresholdP50Sec: fmtSec(AUDIT_THRESHOLDS.transformFirstP50Ms),
+      thresholdP95Sec: fmtSec(AUDIT_THRESHOLDS.transformFirstP95Ms),
+      meetsP50: complete ? p50Ms <= AUDIT_THRESHOLDS.transformFirstP50Ms : false,
+      meetsP95: complete ? p95Ms <= AUDIT_THRESHOLDS.transformFirstP95Ms : false,
     };
   }
   throw new Error(`未知探針：${name}`);

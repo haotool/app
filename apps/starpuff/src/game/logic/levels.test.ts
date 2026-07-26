@@ -42,7 +42,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
-      3000, 1350, 1200, 1000, 2800, 950, 950,
+      3000, 1350, 1200, 1000, 2800, 900, 850,
     ]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
       3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 6,
@@ -540,9 +540,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('卡點關中點重生（§67/§84）：僅 L11/L15/L19 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+  it('卡點關中點重生（§67/§84/§111）：僅 L11/L15/L19/L21/L23 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+    const checkpointLevels = [11, 15, 19, 21, 23];
     for (const level of LEVELS) {
-      if (level.id !== 11 && level.id !== 15 && level.id !== 19) {
+      if (!checkpointLevels.includes(level.id)) {
         expect(level.checkpointX).toBeUndefined();
         continue;
       }

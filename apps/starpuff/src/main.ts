@@ -177,7 +177,7 @@ declare global {
       gateOpen: () => boolean;
       quota: () => { killCount: number; killQuota: number };
       listeners: (event: string) => number;
-      enemies: () => { kind: string; x: number; y: number }[];
+      enemies: () => { kind: string; x: number; y: number; elite: boolean }[];
       view: () => { width: number; height: number };
       paused: () => boolean;
       scenePaused: () => boolean;
@@ -377,14 +377,20 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       };
     },
     enemies: () => {
-      const list: { kind: string; x: number; y: number }[] = [];
+      const list: { kind: string; x: number; y: number; elite: boolean }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
       try {
         for (const child of internals().enemies.getGroup().getChildren()) {
           const kind = internals().enemies.kindOf(child);
           if (!kind) continue;
           const sprite = child as unknown as { x: number; y: number };
-          list.push({ kind, x: Math.round(sprite.x), y: Math.round(sprite.y) });
+          // elite 旗標（§111 probe）：精英不可吸——獵集 bot 據此跳過（同 kind 同形）。
+          list.push({
+            kind,
+            x: Math.round(sprite.x),
+            y: Math.round(sprite.y),
+            elite: child.getData('elite') === true,
+          });
         }
       } catch {
         return list;

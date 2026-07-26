@@ -1429,22 +1429,23 @@ export const LEVELS: readonly LevelSpec[] = [
     bgKey: 'bg-starport',
     worldWidth: 3800,
     killQuota: 14,
-    spawnIntervalMs: 950,
+    spawnIntervalMs: 900,
     maxOnScreen: 6,
     safeZoneTailPx: 480,
-    // §112 入編：cargo 主場＋ticketa/scanna 新怪同場、十種混編（終局章接續 L19 密度）；
-    // 恆可吸佔比 0.54（cargo/ticketa/jelly/floaty/puffy/glowy；drilly 破土窗保守不計）。
+    // §112 入編：cargo 主場＋ticketa/scanna 新怪同場、十一種混編（終局章接續 L19 密度）；
+    // 恆可吸佔比 0.58（cargo/ticketa/jelly/floaty/puffy/glowy/boomy；drilly 保守不計）。
     enemyMix: [
-      { kind: 'cargo', weight: 0.16 },
+      { kind: 'cargo', weight: 0.22 },
       { kind: 'ticketa', weight: 0.13 },
       { kind: 'scanna', weight: 0.13 },
       { kind: 'drilly', weight: 0.11 },
       { kind: 'chompy', weight: 0.11 },
-      { kind: 'spiky', weight: 0.11 },
-      { kind: 'jelly', weight: 0.09 },
-      { kind: 'floaty', weight: 0.08 },
+      { kind: 'spiky', weight: 0.07 },
+      { kind: 'jelly', weight: 0.06 },
+      { kind: 'floaty', weight: 0.05 },
       { kind: 'puffy', weight: 0.04 },
       { kind: 'glowy', weight: 0.04 },
+      { kind: 'boomy', weight: 0.04 },
     ],
     // 208 貨櫃頂台由蒸氣閥服務（§72 慣例）；主線地面雙層恆可通行。
     platforms: [
@@ -1483,12 +1484,13 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋二十一：開局反向走到世界最左緣（回聲彩蛋，與 L1/L13 同型）。
     easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
-    // §112 三精英（終局章密度）：巨貨櫃長（掉重鑽味＝焰化補給）＋鑽岩裝卸工＋
-    // 緋紅掃描長（掉雷鏈味），房距 600/850 ≥ 門距。
+    // §112 雙精英（全數置於練習區之後）：巨貨櫃長（掉重鑽味＝焰化補給）＋
+    // 緋紅掃描長（掉雷鏈味），房距 600 ≥ 門距；練習區前跑道零精英門，
+    // 保障「≤30s 湊齊變身」的觸發密度契約。
     elites: [
       {
         kind: 'cargo',
-        x: 1150,
+        x: 2200,
         hp: 24,
         scale: 1.55,
         tint: 0xc87848,
@@ -1496,17 +1498,8 @@ export const LEVELS: readonly LevelSpec[] = [
         rewardFlavor: 'drilly',
       },
       {
-        kind: 'drilly',
-        x: 1750,
-        hp: 22,
-        scale: 1.5,
-        tint: 0xb08050,
-        speedMul: 1.4,
-        rewardFlavor: 'drilly',
-      },
-      {
         kind: 'scanna',
-        x: 2600,
+        x: 2800,
         hp: 20,
         scale: 1.5,
         tint: 0xd8607a,
@@ -1516,13 +1509,16 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    // 卡點（§67 沿用）：終局章走動關世界寬 3800＋雙精英——中點重生錨落於精英房界外。
+    checkpointX: 1850,
     hint: '連吞 3 隻貨櫃丁——地面按 SP 焰化變身',
-    // §111 焰化首教：中段形態練習區保證 3 隻貨櫃丁（重鑽味 ×3 直達資格）。
+    // §111 焰化首教：中段形態練習區保證 3 隻貨櫃丁（重鑽味 ×3 直達資格），
+    // 位點在首個精英門之前（開放跑道）。
     teaches: ['ember-form'],
     drillSpawns: [
-      { kind: 'cargo', x: 2100 },
-      { kind: 'cargo', x: 2180 },
-      { kind: 'cargo', x: 2260 },
+      { kind: 'cargo', x: 1560 },
+      { kind: 'cargo', x: 1640 },
+      { kind: 'cargo', x: 1720 },
     ],
   },
   // §111 星海終局篇（七區冰晶潮域）——L23 冰晶潮灣：水流浮力（週期浮力柱）×
@@ -1534,7 +1530,7 @@ export const LEVELS: readonly LevelSpec[] = [
     bgKey: 'bg-tidebay',
     worldWidth: 3900,
     killQuota: 14,
-    spawnIntervalMs: 950,
+    spawnIntervalMs: 850,
     maxOnScreen: 6,
     safeZoneTailPx: 480,
     // §112 入編：潮系四供給（frosty/foamy/manta/spora 合佔 56%）＋九種混編；
@@ -1587,12 +1583,12 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋二十三：浪頂浮台（y=272）連站 3 次（與 L14 同型）。
     easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
-    // §112 三精英（終局章密度）：寒霜史萊姆王（掉孢子味＝潮化補給）＋泡沫巨機＋
-    // 深潮魟后（掉流光味），房距 650/750 ≥ 門距。
+    // §112 雙精英（全數置於練習區之後）：寒霜史萊姆王（掉孢子味＝潮化補給）＋
+    // 深潮魟后（掉流光味），房距 600 ≥ 門距；練習區前跑道零精英門。
     elites: [
       {
         kind: 'frosty',
-        x: 1150,
+        x: 2250,
         hp: 22,
         scale: 1.55,
         tint: 0x9ad8f0,
@@ -1600,17 +1596,8 @@ export const LEVELS: readonly LevelSpec[] = [
         rewardFlavor: 'spora',
       },
       {
-        kind: 'foamy',
-        x: 1750,
-        hp: 20,
-        scale: 1.5,
-        tint: 0x78b8d8,
-        speedMul: 1.4,
-        rewardFlavor: 'spora',
-      },
-      {
         kind: 'manta',
-        x: 2600,
+        x: 2850,
         hp: 20,
         scale: 1.5,
         tint: 0x5a98c8,
@@ -1620,15 +1607,19 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     boss: null,
     tutorial: false,
+    // 卡點（§67 沿用）：終局章走動關世界寬 3900＋雙精英——中點重生錨落於精英房界外。
+    checkpointX: 1900,
     // 糖漿潮汐管線重用（§71）：冰潮視覺由素材車換裝；dry-window 55% 等窗保底不變。
     tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
     hint: '連吞 3 隻潮系怪——地面按 SP 潮化變身',
-    // §111 潮化首教：中段形態練習區保證 3 隻孢子菇（孢子味 ×3 直達資格）。
+    // §111 潮化首教：中段形態練習區保證 3 隻泡泡機（孢子味 ×3 直達資格），
+    // 位點在首個精英門之前（開放跑道）；泡泡不傷人——練習區低壓（孢子菇叢集
+    // 的孢子雲範圍拒止實測為死亡坑，取證後換品種）。
     teaches: ['tide-form'],
     drillSpawns: [
-      { kind: 'spora', x: 2100 },
-      { kind: 'spora', x: 2180 },
-      { kind: 'spora', x: 2260 },
+      { kind: 'foamy', x: 1600 },
+      { kind: 'foamy', x: 1680 },
+      { kind: 'foamy', x: 1760 },
     ],
   },
 ];

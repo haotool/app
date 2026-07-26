@@ -577,10 +577,12 @@ export function tickBoomerangBody(
 // ===== §112 星海終局篇新怪 =====
 
 // 貨櫃丁 Cargo：緩推巡邏（週期折返＋碰牆 bounce 反彈）——形態練習區留駐供給
-//（純週期折返使個體不朝玩家長程漂移，drillSpawns 保證同系供給不散場）。
+//（遠域純週期折返不長程漂移，drillSpawns 保證同系供給不散場）；玩家入近域
+// 才緩推逼近（aggro）——供給會送上門，變身觸發密度契約的供給節奏由此承擔。
 export const CARGO_FSM = {
   walkSpeed: 45,
   flipMs: 2600,
+  aggroRangePx: 900,
 } as const;
 
 // 巡邏方向（純函式）：週期折返；牆面反彈由 body.bounce 承擔。

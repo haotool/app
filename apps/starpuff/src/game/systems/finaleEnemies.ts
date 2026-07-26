@@ -30,9 +30,10 @@ const SCANNA_FLICKER_MS = 110;
 const FOAMY_WINDUP_TINT = 0xcfeef5;
 const MANTA_AIM_TINT = 0xbfe8ff;
 
-// 貨櫃丁（§112）：緩推巡邏——週期折返＋碰牆 bounce；被外力夾停時恢復。
+// 貨櫃丁（§112）：遠域週期折返巡邏（練習區留駐）、玩家入近域緩推逼近（aggro）；
+// 碰牆 bounce、被外力夾停時恢復。
 export function updateCargo(
-  _ctx: EnemyUpdateContext,
+  ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,
   deltaMs: number,
 ): void {
@@ -40,7 +41,10 @@ export function updateCargo(
   const cycleMs = (sprite.getData('cycleMs') as number) + deltaMs;
   sprite.setData('cycleMs', cycleMs);
   const mul = (sprite.getData('eliteMul') as number) ?? 1;
-  const direction = cargoPatrolDirection(cycleMs);
+  const target = ctx.target;
+  const aggro = target !== null && Math.abs(target.x - sprite.x) <= CARGO_FSM.aggroRangePx;
+  const direction =
+    aggro && target ? (target.x < sprite.x ? -1 : 1) : cargoPatrolDirection(cycleMs);
   if (body.blocked.down && (body.velocity.x === 0 || direction !== Math.sign(body.velocity.x))) {
     body.setVelocityX(CARGO_FSM.walkSpeed * mul * direction);
   }

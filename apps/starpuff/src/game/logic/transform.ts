@@ -373,7 +373,8 @@ export const GRAVITY_WELL = {
 // 觸發味 → 形態對應：gusty 吞入歸 floaty 味（§52），自然併入風化來源。
 // §111 零新味裁決：焰化歸重鑽味（貨櫃丁供給）、潮化歸孢子味（潮灣三新怪供給）、
 // 稜化歸流光味、引力化歸迴旋味——四新形態全數映射既有味系。
-const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
+// export 供 level-audit transform probe 反查供給味（零第二份映射）。
+export const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
   zappy: 'volt',
   floaty: 'gale',
   shelly: 'shell',
