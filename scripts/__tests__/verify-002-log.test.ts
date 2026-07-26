@@ -336,6 +336,23 @@ describe('validate002', () => {
     ).toBe(true);
   });
 
+  // 整行刪除（既有四行條目縮成只剩日期與 ID）與留空值同屬掏空，
+  // 不得因「歷史條目格式錯誤不回溯」而被略過。
+  it('既有條目被刪成只剩日期與 ID 必須被擋下', () => {
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const head = buildLog({
+      header,
+      entries: [
+        { id: 'penalty-old-incident', reason: '真實事故根因', fix: '真實修法' },
+        { id: 'reward-existing-entry' },
+      ],
+    });
+    const staged = head.replace('- 原因：真實事故根因\n- 解法：真實修法\n', '');
+    const { errors } = validate002({ stagedContent: staged, headContent: head });
+    expect(errors.some((message) => message.includes('「- 原因：」原有內容不可清空'))).toBe(true);
+    expect(errors.some((message) => message.includes('「- 解法：」原有內容不可清空'))).toBe(true);
+  });
+
   // 正向對照採本 PR 真實發生的精確性修正（002 破口規模數字由 5 處／6 筆更正為 2 處／3 筆）：
   // 判準是「有沒有從有變成無」，內容改動本身不受限。
   it('精確性修正（非空改為另一個非空）不受掏空防護影響', () => {
