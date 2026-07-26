@@ -226,6 +226,9 @@ export function createPlayer(
     const body = sprite.body as Phaser.Physics.Arcade.Body;
     body.setSize(hurtW, hurtH, false);
     body.setOffset((frameW - hurtW) / 2, frameH - hurtH);
+    // 首幀同步（#896）：setSize 以上次快取的 _sx 換算世界尺寸，換裝當幀 scale 已變
+    // 而快取未更——立即 updateBounds 消除暫態誤差（否則下一物理步才自動修正）。
+    body.updateBounds();
   };
   fitHurtbox();
 
