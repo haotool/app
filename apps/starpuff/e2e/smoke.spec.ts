@@ -239,11 +239,9 @@ test('S2 彈簧墊超級跳：走上彈簧的騰空峰值遠高於一般跳可�
   await startGame(page);
   // 進第二關（§39 hub 流）並於頁內原子補配額：重載後立即開門停止生成，
   // 杜絕負載下 evaluate 往返間隔超過生成間隔（1800ms）造成敵潮干擾走查。
-  // 分階段載入（§115）：關卡資產載入期場景未 RUNNING，fillQuota 的 isActive 守衛會
-  // 靜默略過——改等 scene() 就緒（載入完成）再補配額。
   await page.evaluate(async () => {
     window.__sp.gotoLevel!(2);
-    while (window.__sp.stage() !== 2 || window.__sp.scene() !== 'Game') {
+    while (window.__sp.stage() !== 2) {
       await new Promise((resolve) => setTimeout(resolve, 40));
     }
     window.__sp.fillQuota();

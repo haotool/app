@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 3、penalty 2、neutral 1）｜累計總分：+261
+> 本次分數變化：+2（reward 4、penalty 2、neutral 1）｜累計總分：+262
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-stage-hook-readiness-single-point
+- 原因：全量 e2e 揭露 13 案就緒競態（不只先前修的 2 案）——\_\_sp.stage() 回報 init 寫入的目標關卡，載入期即為真，等待端因此在場景未 RUNNING 時就送鍵或呼叫 isActive 守衛的鉤子
+- 解法：不逐案補等待（13 處散寫必漂移），改在 stage() 單點收斂——未 RUNNING 回 0，讓既有 37 處 expect.poll(stage()) 自動等到可互動；13 案回綠、smoke 冗餘等待一併移除
 
 - 日期：2026-07-26
 - ID：reward-starpuff-segmented-loading-manifest-phase
