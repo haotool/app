@@ -181,7 +181,9 @@ export function loadSave(): SaveData {
   return createDefaultSave();
 }
 
-export function persistSave(save: SaveData): void {
+// 回傳主檔是否寫入成功（#868）：失敗必須外顯給呼叫端提示，否則玩家在無提示下遺失進度。
+// 備援輪替失敗不影響回傳值——主檔寫入才是進度是否保住的判準。
+export function persistSave(save: SaveData): boolean {
   try {
     // 備援輪替（v19 卡 7）：上一份主檔合法才轉入備援，避免損毀資料污染備援。
     const previous = localStorage.getItem(SAVE_STORAGE_KEY);
@@ -193,18 +195,32 @@ export function persistSave(save: SaveData): void {
   }
   try {
     localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ ...save, checksum: checksumOf(save) }));
+    return true;
   } catch {
-    /* noop */
+    return false;
   }
 }
 
+const STORAGE_PROBE_KEY = 'sp-storage-probe';
+
+// 探測負載對齊實際主檔體積（#868）：1 字元 probe 在同源配額將滿時仍會通過，
+// 隨後體積大得多的 sp-save 寫入才拋 QuotaExceededError。尚無存檔時退回 1 字元。
+function probePayload(): string {
+  let length = 1;
+  try {
+    length = Math.max(localStorage.getItem(SAVE_STORAGE_KEY)?.length ?? 0, 1);
+  } catch {
+    length = 1;
+  }
+  return 'x'.repeat(length);
+}
+
 // 儲存可用性探測（v19 卡 7）：隱私模式/空間耗盡時回 false，由 main.ts 明確提示，
-// 不再靜默吞掉「進度無法保存」。
+// 不再靜默吞掉「進度無法保存」。探測為盡力預判，實際寫入結果以 persistSave 為準。
 export function isSaveStorageAvailable(): boolean {
   try {
-    const probeKey = 'sp-storage-probe';
-    localStorage.setItem(probeKey, '1');
-    localStorage.removeItem(probeKey);
+    localStorage.setItem(STORAGE_PROBE_KEY, probePayload());
+    localStorage.removeItem(STORAGE_PROBE_KEY);
     return true;
   } catch {
     return false;

@@ -59,3 +59,57 @@ describe('whenShellIdle one-shot 守衛（#839 審查回歸鎖）', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 });
+
+interface FakeElement {
+  textContent: string;
+  children: FakeElement[];
+  className: string;
+  type: string;
+  classList: { contains: () => boolean };
+  setAttribute: () => void;
+  addEventListener: () => void;
+  remove: () => void;
+  appendChild: (child: FakeElement) => void;
+}
+
+function fakeElement(): FakeElement {
+  const element: FakeElement = {
+    textContent: '',
+    children: [],
+    className: '',
+    type: '',
+    classList: { contains: () => false },
+    setAttribute: () => undefined,
+    addEventListener: () => undefined,
+    remove: () => undefined,
+    appendChild: (child) => void element.children.push(child),
+  };
+  return element;
+}
+
+describe('notifySaveUnavailable（#868 進度無法保存提示單點）', () => {
+  it('寫入失敗觸發時於 Title 安靜時刻顯卡，且每工作階段至多一張', async () => {
+    vi.useFakeTimers();
+    const shell = fakeElement();
+    vi.stubGlobal('document', {
+      // Title 在場（data-menu="start"）、無忙碌 overlay、無 controls（略過 MutationObserver）。
+      getElementById: (id: string) => (id === 'game-shell' ? shell : null),
+      createElement: () => fakeElement(),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      querySelector: (selector: string) => (selector === '[data-menu="start"]' ? {} : null),
+    });
+
+    const { notifySaveUnavailable } = await import('./shellCards');
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(1000);
+    expect(shell.children).toHaveLength(1);
+    // shell > overlay > card > title
+    expect(shell.children[0]?.children[0]?.children[0]?.textContent).toBe('進度無法保存');
+
+    // 連續落盤失敗不得每次彈卡。
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(5000);
+    expect(shell.children).toHaveLength(1);
+  });
+});

@@ -488,3 +488,79 @@ describe('存檔備援（v19 #819 卡 7：backup 輪替＋checksum＋恢復）',
     expect([...map.keys()]).toEqual([]);
   });
 });
+
+// 配額邊界回歸鎖（#868）：同源空間僅剩少量時，1 字元 probe 會通過但體積大得多的
+// sp-save 主檔寫入仍拋 QuotaExceededError；持久化必須回報失敗供呼叫端提示。
+function stubQuotaLimitedStorage(maxValueLength: number): Map<string, string> {
+  const map = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => map.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      if (value.length > maxValueLength) {
+        throw new DOMException('exceeded the quota', 'QuotaExceededError');
+      }
+      map.set(key, value);
+    },
+    removeItem: (key: string) => void map.delete(key),
+  });
+  return map;
+}
+
+describe('存檔寫入失敗外顯（#868）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('主檔寫入成功時 persistSave 回傳 true', () => {
+    stubStorage();
+    expect(persistSave(recordLevelClear(createDefaultSave(), 1, 30000))).toBe(true);
+  });
+
+  it('主檔寫入拋 QuotaExceededError 時 persistSave 回傳 false，不再靜默吞掉', () => {
+    const map = stubQuotaLimitedStorage(8);
+    expect(persistSave(recordLevelClear(createDefaultSave(), 1, 30000))).toBe(false);
+    expect(map.has(SAVE_STORAGE_KEY)).toBe(false);
+  });
+
+  it('備援輪替失敗不影響回傳值：主檔寫得進去即為 true', () => {
+    const map = stubStorage();
+    persistSave(recordLevelClear(createDefaultSave(), 1, 30000));
+    const previous = map.get(SAVE_STORAGE_KEY) ?? '';
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (key === SAVE_BACKUP_KEY) {
+          throw new DOMException('exceeded the quota', 'QuotaExceededError');
+        }
+        map.set(key, value);
+      },
+      removeItem: (key: string) => void map.delete(key),
+    });
+    expect(persistSave(recordLevelClear(createDefaultSave(), 2, 20000))).toBe(true);
+    expect(map.get(SAVE_BACKUP_KEY)).toBeUndefined();
+    expect(map.get(SAVE_STORAGE_KEY)).not.toBe(previous);
+  });
+
+  it('配額僅容得下 1 字元時，探測負載對齊主檔體積後回報不可用', () => {
+    const map = stubStorage();
+    persistSave(recordLevelClear(createDefaultSave(), 1, 30000));
+    const saved = map.get(SAVE_STORAGE_KEY) ?? '';
+    expect(saved.length).toBeGreaterThan(1);
+
+    // 舊版 1 字元 probe 在此情境會誤判可寫；探測負載須對齊實際主檔體積。
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (value.length > 1) throw new DOMException('exceeded the quota', 'QuotaExceededError');
+        map.set(key, value);
+      },
+      removeItem: (key: string) => void map.delete(key),
+    });
+    expect(isSaveStorageAvailable()).toBe(false);
+  });
+
+  it('尚無存檔時探測退回 1 字元，不因保守負載誤報不可用', () => {
+    stubQuotaLimitedStorage(1);
+    expect(isSaveStorageAvailable()).toBe(true);
+  });
+});

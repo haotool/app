@@ -70,6 +70,7 @@ import { createTide, type TideHandle } from '../systems/tide';
 import { TIDE, soakWakeInvuln, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
+import { notifySaveUnavailable } from '../../shellCards';
 
 const GROUND_HEIGHT = 80;
 const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
@@ -1175,7 +1176,8 @@ export class GameScene extends Phaser.Scene {
   // 同批多解鎖合併為單張橫幅（審查 U1）：勝利轉場 2.8s 窗口內必可播完整批。
   private persistAndAward(save: SaveData): void {
     const newly = awardAchievements(save);
-    persistSave(save);
+    // 落盤失敗必須外顯（#868）：配額將滿時開機探測會通過，只有實際寫入才會失敗。
+    if (!persistSave(save)) notifySaveUnavailable();
     if (newly.length === 0) return;
     this.pendingUnlocked.push(...newly);
     this.toasts.queueAchievements(newly.map((id) => getAchievement(id)?.nameZh ?? id).join('、'));

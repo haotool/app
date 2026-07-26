@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+243
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+244
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-save-write-failure-surfaced
+- 原因：`persistSave` 主檔寫入失敗只 `catch { noop }` 無回傳值，且提示僅由 1 字元 probe 的 `isSaveStorageAvailable` 於開機觸發——同源配額將滿時 probe 通過但體積大得多的 `sp-save` 寫入仍拋 QuotaExceededError，玩家在零提示下遺失通關進度（#868）
+- 解法：`persistSave` 改回傳主檔寫入結果（備援輪替失敗不影響判準），GameScene 落盤點消費失敗訊號觸發 `notifySaveUnavailable`（與開機提示共用文案單點、每工作階段至多一張、仍走 whenShellIdle 不打斷遊戲）；探測負載改對齊實際主檔體積；補 5 案配額邊界與提示路徑回歸鎖
 
 - 日期：2026-07-26
 - ID：reward-build-commit-sha-ssot-zeabur
