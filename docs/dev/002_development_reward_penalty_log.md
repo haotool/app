@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+9（reward 9、penalty 0、neutral 2）｜累計總分：+260
+> 本次分數變化：+1（reward 3、penalty 2、neutral 1）｜累計總分：+261
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,36 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-segmented-loading-manifest-phase
+- 原因：BootScene 一次預載全部 63 張立繪（1.8MB），首屏 Fast 3G 實測 12.3s／2196.9KiB，v21-v30 素材車再入庫 125 張後啟動時間必崩
+- 解法：ASSETS manifest 新增 phase 欄位（boot/level/boss/form/lazy，未標註安全預設 boot）單點驅動載入時機，關卡資產由 LevelSpec 派生於進關卡時載入；首屏收斂至 6 張／604.7KiB／4.1s（位元組 −72.5%、時間 −66.9%）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-texture-key-ssot-convergence
+- 原因：小怪品種→貼圖對照（enemies.ts TEXTURES）與背景重用別名（background.ts TEXTURE_ALIAS）散在呈現層，載入計畫要用就得複製第二份，必然漂移
+- 解法：兩表收斂至 core/assetPlan 純模組（ENEMY_TEXTURE_KEYS／BG_TEXTURE_ALIAS），呈現層與載入計畫共用單一真值，加關加怪自動跟進
+
+- 日期：2026-07-26
+- ID：reward-starpuff-placeholder-texture-blocking-real-art
+- 原因：enemies.ts 於 create 期為缺圖品種生成佔位色塊並佔用同一貼圖鍵，延遲載入後較晚關卡的正式立繪會被 Phaser loader 以「鍵已存在」永久跳過
+- 解法：assetLoader 記錄 manifest 來源鍵，排載前移除非 manifest 佔位貼圖，正式立繪必定取代色塊；以 anti-softlock 測試鎖住關卡計畫涵蓋全部登場貼圖
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-title-prefetch-doubles-level-bytes
+- 原因：於 Title 加閒置預取想抹平進關等待，但即點玩家會讓預取中途被場景關閉中止，GameScene 再取一次——實測關卡位元組 541.9KiB→1083.9KiB 翻倍、進關 3.1s→5.5s
+- 解法：量測對照後回退預取（跨場景 loader 交接需求不成比例），保留進關進度條回饋；改善幅度仍以首屏為主軸
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-preload-phase-breaks-held-key
+- 原因：GameScene 新增 preload 階段後，載入期場景尚未 RUNNING，此時按住的方向鍵不會被 create 才建立的 Phaser Key 物件看見，兩案魔王 e2e 由綠轉紅（玩家原地被打死）
+- 解法：以 baseline worktree 對照確認為自身回歸，改在送鍵前等 \_\_sp.scene() 就緒（scene RUNNING 的既有訊號），同型 fillQuota isActive 靜默略過競態一併收斂
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-offline-playability-evidence
+- 原因：延遲載入的資產若未進 precache，離線就會缺圖，僅看設定檔不足以證明離線可玩
+- 解法：真實 SW＋真實斷線實測留痕——precache 63 張 webp 全入、離線冷啟達 Title、離線進 L1 場景運行 HP5、21 筆 webp 全 200 自快取、零 console error
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7c-r4-calibration-comment-and-note-value

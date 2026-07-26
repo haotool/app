@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { bgTextureKey } from '../core/assetPlan';
 import type { LevelSpec } from '../logic/levels';
 import { fillStarPath } from './fx';
 
@@ -45,29 +46,7 @@ interface ThemeSpec {
   ambience: AmbienceSpec;
 }
 
-// v8 貼圖重用別名（§55）：L6 迴聲石廊重用星空回廊橫景，以 grade/ambience 變化辨識。
-// v9（§60）：L8 磁極洞窟重用蝕月夜景、L9 鏡影迴廊重用星空回廊，均不生成新背景。
-// v10（§66/§67）：L10 幽光晶湖重用星空回廊、L11 磁晶險徑重用蝕月夜景，均以 grade 區分。
-const TEXTURE_ALIAS: Record<string, string> = {
-  'bg-gallery': 'bg-arena',
-  'bg-cavern': 'bg-eclipse',
-  'bg-mirror': 'bg-arena',
-  'bg-lumen': 'bg-arena',
-  'bg-magnetic': 'bg-eclipse',
-  'bg-prism': 'bg-arena',
-  // v11（§76）：四區四關共用焙糖火山橫景，以 grade 區分（丘陵/河谷/窯道/王窯）。
-  'bg-valley': 'bg-kiln',
-  'bg-kilnway': 'bg-kiln',
-  'bg-kilnhall': 'bg-kiln',
-  // v12（§84）：五區四關共用星核聖域橫景，以 grade 區分（浮橋/原野/前庭/聖域）。
-  'bg-meteorfield': 'bg-astral',
-  'bg-starcourt': 'bg-astral',
-  'bg-voidcore': 'bg-astral',
-};
-
-function textureKeyOf(bgKey: string): string {
-  return `${TEXTURE_ALIAS[bgKey] ?? bgKey}-l`;
-}
+// 貼圖重用別名已收斂至 core/assetPlan（§115）：載入計畫與呈現層共用同一份對照。
 
 // 主題以關卡 bgKey 索引（§25：花瓣/雲絮/星塵/金塵；分級 tint 統一 alpha 0.06）。
 const THEMES: Record<string, ThemeSpec> = {
@@ -421,7 +400,7 @@ function bindViewResize(scene: Phaser.Scene, relayout: () => void): () => void {
 
 // 一站式關卡背景：平鋪關雙層視差（近景 0.6 / 遠景雲 0.25 + 自漂移）；魔王關單張置中 cover。
 export function createParallaxBackground(scene: Phaser.Scene, level: LevelSpec): BackgroundHandle {
-  const key = textureKeyOf(level.bgKey);
+  const key = bgTextureKey(level.bgKey);
   const theme = THEMES[level.bgKey];
   const objects: Phaser.GameObjects.GameObject[] = [];
   let near: Phaser.GameObjects.TileSprite | null = null;
