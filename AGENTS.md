@@ -200,7 +200,10 @@ Agent **必須**先完成：
 - **改寫不擋**（同 ID 但描述被換成另一段非空文字）。理由是它與**合法且必要的精確性修正無法機械區分**——更正錯字、修正誤植數字都是同一個操作。守門若連內容改動一併擋下，會封死唯一的更正管道，而歷史條目又不可刪除重寫，將形成死結。
 - 因此判準是「**有沒有從有變成無**」，而不是「內容有沒有變」。非空性可機械判定、誤判風險低；語意品質需要人判斷，交由審查把關。
 - 同理，也**不採用**「回溯驗證所有既有條目的四行完整性」：main 上有 218 筆歷史條目無標準 ID 前綴、3 筆帶額外欄位，全面回溯會讓守門對現存資料直接報錯，而修正歷史條目本身又觸犯不可刪改原則。守門的一貫立場是**對歷史寬鬆、對新增嚴格、對「從有到無」零容忍**。
-- CI `Quality Checks` 於 install 前以 `node scripts/verify-002-log.mjs --base-ref <base sha>` 強制同一守門（issue #661）：基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態，002 未變更時跳過。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
+- `pre-commit` 第 6 步**無條件執行**，不以 `git diff` 判斷是否觸發：`git mv` 的 `--name-only` 只列新路徑，任何 diff-based 觸發條件都會被它繞過。跳過與否由腳本以 index／HEAD 的存在性決定；002 未變更時約 50ms。
+- 條目區段（`## 條目`）必須唯一：只解析第一個區段，多個等於替後續區段開永久盲區（前置 decoy 抄齊全部 ID 即滿足刪除防護，真區段從此不受檢視）。
+- CI `Quality Checks` 於 install 前以 `node scripts/verify-002-log.mjs --base-ref <base sha>` 強制同一守門（issue #661）：PR 事件基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態；**main push 事件另以 `github.event.before` 為基準兜底**（守門不假設 branch protection 永遠有效），`before` 為全零（分支初建／force push）時跳過。002 未變更時跳過。
+- **已知缺口（由 CI 兜底）**：`git merge` 產生的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者，故 merge commit 在 hook 層不受守門。**刻意不補**——`git merge origin/main` 併入 main 側 002 條目時，staged vs HEAD 會把它們全數視為新增而誤紅，屬合法工作流。此情境由 PR CI 與 main push CI 覆蓋，與 rebase 的處置一致。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；**在現行兩種語意下**002 分散於多個 commit 必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
 
 #### `AGT-LOG-03` 已評估但不採用的替代方案（此為設計取捨，非技術必然）
@@ -236,7 +239,7 @@ Agent **必須**先完成：
 3. `pnpm format`（`prettier --check .`）
 4. `node scripts/verify-ssot-sync.mjs`（僅相關檔變更時）
 5. `node scripts/verify-version-ssot.mjs`（僅版本相關檔變更時）
-6. `node scripts/verify-002-log.mjs`（僅 002 檔變更時；驗證檔頭記分與新增條目一致、累計總分鏈與條目格式）
+6. `node scripts/verify-002-log.mjs`（**無條件執行**；驗證檔頭記分與新增條目一致、累計總分鏈與條目格式，002 未變更時由腳本自行跳過）
 
 ### `pre-push`（Husky，快速必要檢查）
 
@@ -250,9 +253,10 @@ Agent **必須**先完成：
 ### CI `Quality Checks`（002 記分守門，PR 專屬）
 
 - 位置：`.github/workflows/ci.yml` 的 `quality` job，置於 `Install dependencies` 之前（零 npm 依賴、搶先紅燈）
-- 執行：`node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"`
-- 語意：`merge-base(base, HEAD)` 為基準版、PR 最終態為待驗版；002 未變更時毫秒級跳過，整檔刪除必紅
-- 定位：堵 `--no-verify` 與 GitHub 網頁端 merge/squash 繞過 pre-commit 的破口
+- PR 事件：`node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"`；`merge-base(base, HEAD)` 為基準版、PR 最終態為待驗版
+- main push 事件：`--base-ref "${{ github.event.before }}"`；基準為本次 push 前的 main tip，可涵蓋一次推多個 commit，merge commit 的 `before` 即第一父。`before` 為全零（分支初建／force push）時跳過而非誤紅
+- 共同：002 未變更時毫秒級跳過，整檔刪除或改名必紅
+- 定位：堵 `--no-verify`、`core.hooksPath` 改設定、GitHub 網頁端 merge/squash，以及 merge commit 不走 `pre-commit` 等所有繞過 hook 的路徑；**不假設 branch protection 永遠有效**
 
 ## Commit Format（commitlint SSOT）
 

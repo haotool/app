@@ -52,6 +52,14 @@ jobs:
         if: github.event_name == 'pull_request'
         run: node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"
 
+      # main 直推兜底：守門不假設 branch protection 永遠有效——這道守門的存在理由就是防止
+      # 稽核證據被湮滅。基準取 github.event.before（本次 push 前的 main tip），可涵蓋一次推多個
+      # commit；merge commit 的 before 即第一父，語意等同「main 上這次多了什麼」。
+      # 分支初建或 force push 後 before 為全零無法解析，該情境跳過而非誤紅。
+      - name: Verify 002 log (main push)
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: node scripts/verify-002-log.mjs --base-ref "${{ github.event.before }}"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

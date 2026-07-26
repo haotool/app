@@ -62,10 +62,22 @@ export function parseEntries(content) {
   const globalErrors = [];
   const entries = [];
   const lines = content.split('\n');
-  const sectionStart = lines.findIndex((line) => line.startsWith('## 條目'));
-  if (sectionStart === -1) {
+  const sectionStarts = lines.reduce(
+    (acc, line, index) => (line.startsWith('## 條目') ? [...acc, index] : acc),
+    [],
+  );
+  if (sectionStarts.length === 0) {
     return { entries, globalErrors: ['找不到「## 條目」區段'] };
   }
+  // 只解析第一個區段，故多個「## 條目」等於替後續區段開一個永久盲區：
+  // 前置 decoy 區段抄齊全部 ID 即可滿足刪除防護，真區段從此不受守門檢視。
+  if (sectionStarts.length > 1) {
+    return {
+      entries,
+      globalErrors: [`「## 條目」區段必須唯一（找到 ${sectionStarts.length} 個）`],
+    };
+  }
+  const sectionStart = sectionStarts[0];
 
   let block = [];
   const flush = () => {

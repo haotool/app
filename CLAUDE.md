@@ -108,7 +108,9 @@ pnpm format:fix              # prettier --write .
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
 - `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。
 - 既有條目的欄位不可被掏空：基準版非空的欄位（日期／原因／解法）改後不得為空。**掏空＝就地刪除**故擋；**改寫不擋**，因為它與合法的精確性修正（改錯字、更正數字）無法機械區分，擋下會封死唯一的更正管道。判準是「有沒有從有變成無」，不是「內容有沒有變」；語意品質交由審查把關。詳見 `AGENTS.md` § 為什麼堵「掏空」但不堵「改寫」。
-- CI `Quality Checks` 於 install 前跑 `node scripts/verify-002-log.mjs --base-ref <base sha>`（issue #661），以 `merge-base(base, HEAD)` 對 PR 最終態驗同一組規則。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
+- pre-commit 第 6 步無條件執行、不以 `git diff` 判斷觸發（`git mv` 的 `--name-only` 只列新路徑會繞過）；條目區段 `## 條目` 必須唯一（多個等於替後續區段開永久盲區）。
+- `git merge` 的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者故 hook 層不覆蓋——刻意不補（會讓 `git merge origin/main` 誤紅），由 CI 兜底。
+- CI `Quality Checks` 於 install 前跑 `node scripts/verify-002-log.mjs --base-ref <base sha>`（issue #661），PR 事件以 `merge-base(base, HEAD)` 對最終態驗；**main push 事件另以 `github.event.before` 兜底**（全零時跳過），不假設 branch protection 永遠有效。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。在現行兩種語意下，002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）互斥，無法同時綠燈。
 - 此為設計取捨非技術必然：已評估「pre-commit 也改用 `merge-base(<base>, HEAD)` 聚合語意」（可行、能保留逐 commit 寫法），因 **base 不恆為 main**（實驗線 PR base 指向 experiment 分支，硬寫 `origin/main` 會產生假紅／假綠）、本機無權威 base 來源，而 CI 已有零猜測的 `base.sha` 而不採用。詳見 `AGENTS.md` § `AGT-LOG-03` 已評估但不採用的替代方案。
 - 002 落盤後的審查修正 commit 不得新增條目（pre-commit 必紅）；補記併回同一個 002 commit——仍在 tip 用 `git commit --amend`，否則延到 rebase 時 fold。故盡量讓 002 commit 留在分支最後。

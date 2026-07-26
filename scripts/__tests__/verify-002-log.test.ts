@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -90,6 +98,17 @@ describe('parseEntries', () => {
   it('缺少條目區段時回報全域錯誤', () => {
     const { globalErrors } = parseEntries('# 空文件');
     expect(globalErrors).toEqual(['找不到「## 條目」區段']);
+  });
+
+  // 只解析第一個區段，故多個「## 條目」等於替後續區段開一個永久盲區：
+  // 前置 decoy 抄齊全部 ID 即可滿足刪除防護，真區段從此不受檢視。
+  it('多個「## 條目」區段時回報全域錯誤（decoy 區段盲區）', () => {
+    const decoyed = HEAD_CONTENT.replace(
+      '## 條目（新→舊）',
+      '## 條目（索引）\n\n- 日期：2026-07-07\n- ID：reward-existing-entry\n- 原因：原因\n- 解法：解法\n\n## 條目（新→舊）',
+    );
+    const { globalErrors } = parseEntries(decoyed);
+    expect(globalErrors).toEqual(['「## 條目」區段必須唯一（找到 2 個）']);
   });
 
   // 歷史檔有數處漏空行使多筆黏成一塊；僅靠空行切分會讓後續條目 ID 隱形。
@@ -573,6 +592,16 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     expect(output).toContain('不可刪除');
   });
 
+  // `git mv` 的 `--name-only` 只列新路徑，舊路徑不出現；腳本層以 index／HEAD 存在性
+  // 判定故仍必紅，但 hook 觸發條件不得再依賴 diff 呈現（見「守門觸發面」）。
+  it('pre-commit：git mv 改名 002 必紅', () => {
+    const repo = setupRepo();
+    git(repo, 'mv', LOG_PATH, join(dirname(LOG_PATH), 'renamed.md'));
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(1);
+    expect(output).toContain('不可刪除');
+  });
+
   it('pre-commit：002 不存在於 index 與 HEAD 時跳過', () => {
     const repo = mkdtempSync(join(tmpdir(), 'verify-002-'));
     repos.push(repo);
@@ -614,5 +643,45 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     const { status, output } = runGuard(repo);
     expect(status).toBe(0);
     expect(output).toContain('通過');
+  });
+});
+
+// 守門的兩個「觸發面」——hook 條件與 CI 條件——是實際的破口所在：
+// 腳本層判定正確不代表會被叫起來。這組鎖住觸發條件本身。
+describe('守門觸發面（hook 條件與 CI 條件）', () => {
+  const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const read = (relative: string) => readFileSync(join(REPO_ROOT, relative), 'utf-8');
+
+  it('pre-commit 第 6 步無條件執行守門，不得以 git diff 判斷觸發', () => {
+    const hook = read('.husky/pre-commit');
+    const markerIndex = hook.indexOf('# 6. 002 記分守門');
+    expect(markerIndex).toBeGreaterThan(-1);
+
+    // 只看可執行行；註解本身會提到 git diff 作為反面說明。
+    const step = hook
+      .slice(markerIndex)
+      .split('\n')
+      .filter((line) => !line.trimStart().startsWith('#'))
+      .join('\n');
+    expect(step).toContain('node scripts/verify-002-log.mjs');
+    // `git mv` 的 --name-only 只列新路徑，任何 diff-based 觸發條件都會被它繞過。
+    expect(step).not.toContain('git diff');
+  });
+
+  it('ci.yml 對 pull_request 與 main push 都掛守門，且置於 install 之前', () => {
+    const workflow = read('.github/workflows/ci.yml');
+    const prStep = workflow.indexOf('--base-ref "${{ github.event.pull_request.base.sha }}"');
+    const pushStep = workflow.indexOf('--base-ref "${{ github.event.before }}"');
+    const install = workflow.indexOf('pnpm install --frozen-lockfile');
+
+    expect(prStep).toBeGreaterThan(-1);
+    expect(pushStep).toBeGreaterThan(-1);
+    // 零 npm 依賴，必須搶在 install 前紅燈。
+    expect(prStep).toBeLessThan(install);
+    expect(pushStep).toBeLessThan(install);
+    expect(workflow).toContain("if: github.event_name == 'pull_request'");
+    expect(workflow).toContain("github.event_name == 'push'");
+    // 分支初建／force push 後 before 為全零，須跳過而非誤紅。
+    expect(workflow).toContain("github.event.before != '0000000000000000000000000000000000000000'");
   });
 });
