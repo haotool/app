@@ -9,7 +9,8 @@ import type Phaser from 'phaser';
 // 純靠人工留意，後者是缺口候選，改動相鄰程式時須主動複查）：
 // - hazardKind/lifeMs【機制】：spawnHazard 參數化強制寫入——漏寫即型別錯誤。
 // - damage/pierce/flavor/mix（星彈）【機制】：兩發射器每發必寫＋player.test
-//   四鍵必寫回歸鎖（R5）。
+//   四鍵必寫回歸鎖（R5 建、R6 修假信心：發射前對復用池物件清 sentinel，
+//   斷言不再被上一發的殘值頂替——兩發射器各自突變均紅）。
 // - 敵人本體池個體狀態【機制】：enemies.spawn 單一取出點全量逐鍵重建＋
 //   enemies.test 池復用重建回歸鎖（R5，含 inhalePull/beamDir/aimX/aimY/tailMs）。
 // - inhalePull【機制】：讀取端逐幀消費清除＋enemies.spawn 重建清單歸位（R4 補、

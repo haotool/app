@@ -890,12 +890,8 @@ export function createPrismix(
       // R5 前移至 fsm.tick/runCommand 之前：merge 的 spawnShardOrbit 在 runCommand
       // 同步棧內 acquirePooled(shields)，同幀稍早 overlap 已 disable 殘影時，對帳
       // 若在其後，殘影會被取走 enableBody 而使 !active 條件永遠認不出它。
-      // 殘影離池對帳（PR #886 R4/R5）：擊破可發生在 overlaps（星彈 1 發即破），
-      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體。
-      // R5 前移至 fsm.tick/runCommand 之前：merge 的 spawnShardOrbit 在 runCommand
-      // 同步棧內 acquirePooled(shields)，同幀稍早 overlap 已 disable 殘影時，對帳
-      // 若在其後，殘影會被取走 enableBody 而使 !active 條件永遠認不出它。
-      if (shadow && !shadow.active && shockwaves.contains(shadow)) {
+      // R6 謂詞放寬：不依賴單池 contains（殘影只掛單池的非對稱情境也離池）。
+      if (shadow && !shadow.active) {
         shockwaves.remove(shadow);
         shields.remove(shadow);
       }

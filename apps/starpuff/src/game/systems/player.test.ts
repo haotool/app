@@ -467,10 +467,15 @@ describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出�
   });
 });
 
-// 星彈四鍵必寫回歸鎖（PR #886 R5）：damage/pierce/flavor/mix 的排除理由是
-// 「兩發射器每發必寫」——本案把該事實從慣例升級為機制（拿掉任一鍵寫入即紅）。
-describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5）', () => {
-  it('一般星與形態彈發射後 damage/pierce/flavor/mix 全數有定義', () => {
+// 星彈四鍵必寫回歸鎖（PR #886 R5/R6）：damage/pierce/flavor/mix 的排除理由是
+// 「兩發射器每發必寫」——本案把該事實升級為機制（拿掉任一鍵寫入即紅）。
+// R6 修假信心：形態彈復用一般星的池物件時，殘留四鍵會讓斷言空過（Grok mutation
+// 實證刪 launchShot 四鍵寫入仍綠——防池殘留的測試被池殘留騙過）。修法＝發射前
+// 對候選池物件把四鍵清為 undefined sentinel，斷言只能由本發寫入滿足。
+describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => {
+  const FOUR_KEYS = ['damage', 'pierce', 'flavor', 'mix'] as const;
+
+  it('一般星發射後四鍵全數有定義（發射前清空 sentinel）', () => {
     const { player } = makeHarness();
     player.grantStar('jelly');
     player.update(PRESS, 16);
@@ -478,19 +483,40 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5）', () => {
     const stars = player.getStars().getChildren() as unknown as FakeStar[];
     const normal = stars.find((star) => star.active);
     if (!normal) throw new Error('一般星未生成');
-    for (const key of ['damage', 'pierce', 'flavor', 'mix']) {
-      expect(normal.getData(key), key).not.toBeUndefined();
-    }
+    // 一般星再發一輪：先回收並清 sentinel，復用同物件驗 launchStar 必寫。
+    for (const key of FOUR_KEYS) normal.setData(key, undefined);
     normal.setActive(false);
-    // 焰化形態彈（launchShot 管線）同鎖。
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(normal);
+    for (const key of FOUR_KEYS) {
+      expect(reused?.getData(key), key).not.toBeUndefined();
+    }
+  });
+
+  it('形態彈（launchShot 管線）四鍵全數有定義（發射前清空 sentinel 禁殘值頂替）', () => {
+    const { player } = makeHarness();
+    // 先發一發一般星建立池物件（製造殘值現場）。
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const pooled = stars.find((star) => star.active);
+    if (!pooled) throw new Error('一般星未生成');
+    // 清 sentinel＋回收：復用時四鍵只能由 launchShot 本發寫入滿足。
+    for (const key of FOUR_KEYS) pooled.setData(key, undefined);
+    pooled.setActive(false);
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     player.update(PRESS, 16);
     const formShot = stars.find((star) => star.active);
     if (!formShot) throw new Error('形態彈未生成');
-    for (const key of ['damage', 'pierce', 'flavor', 'mix']) {
-      expect(formShot.getData(key), key).not.toBeUndefined();
+    expect(formShot).toBe(pooled);
+    for (const key of FOUR_KEYS) {
+      expect(formShot?.getData(key), key).not.toBeUndefined();
     }
   });
 });
