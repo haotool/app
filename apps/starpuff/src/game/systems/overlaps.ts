@@ -55,7 +55,7 @@ const PULL_BASE_SPEED = 160;
 const PULL_GAIN = 2.2;
 const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
-// 潮環撥開速度（§111 Tidal Ring）：接觸投射物即反向推離。
+// 潮環撥開速度（§118 Tidal Ring）：接觸投射物即反向推離。
 const TIDE_DEFLECT_SPEED = 320;
 
 export function applyInhalePull(
@@ -125,7 +125,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       return;
     }
     const spec = hooks.combat().specOf(s);
-    // burn（§111 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§112）。
+    // burn（§118 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§119）。
     const burn = s.getData('burn') === true;
     const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn);
     if (outcome === 'ignored') return;
@@ -184,7 +184,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.enemies().getHazards(), (_p, hz) => {
     const hazard = asSprite(hz);
     if (!hazard.active || hooks.isSettled()) return;
-    // 漂浮泡泡（§112 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§111）。
+    // 漂浮泡泡（§119 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§118）。
     if (hazard.getData('hazardKind') === 'bubble') {
       hazard.disableBody(true, true);
       hooks.fx().burstSmall(hazard.x, hazard.y, 0xbfe8f0);
@@ -194,7 +194,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       }
       return;
     }
-    // 潮環撥開（§111 Tidal Ring）：潮化接觸投射物即反向推離，不結算傷害不回收
+    // 潮環撥開（§118 Tidal Ring）：潮化接觸投射物即反向推離，不結算傷害不回收
     //（防禦性撥開，非殼化反打）；deflected 標記防同一彈體逐幀重複推。
     if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
       if (hazard.getData('tideDeflected') !== true) {
@@ -287,7 +287,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       playSfx('swallow');
       return;
     }
-    // 潮環撥開（§111）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
+    // 潮環撥開（§118）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
     if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
       if (projectile.getData('tideDeflected') !== true) {
         projectile.setData('tideDeflected', true);

@@ -29,7 +29,7 @@ import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）', () => {
-  it('在編關卡依序為 1-20＋§111 星海終局篇 21/23（W1 過渡跳號）且參數對表', () => {
+  it('在編關卡依序為 1-20＋§118 星海終局篇 21/23（W1 過渡跳號）且參數對表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23,
     ]);
@@ -278,11 +278,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(inhalable).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('L19 星核前庭（§84）：十種混編全機制回收、六同屏（§111 起終局關同階）、恆可吸佔比 ≥50%', () => {
+  it('L19 星核前庭（§84）：十種混編全機制回收、六同屏（§118 起終局關同階）、恆可吸佔比 ≥50%', () => {
     const level = getLevel(19);
     expect(level.enemyMix).toHaveLength(10);
     expect(level.maxOnScreen).toBe(6);
-    // 六同屏僅限終試與 §111 星海終局篇走動關（L21+）；L1-L18 維持 ≤5。
+    // 六同屏僅限終試與 §118 星海終局篇走動關（L21+）；L1-L18 維持 ≤5。
     for (const other of LEVELS) {
       if (other.id !== 19 && other.id < 21) expect(other.maxOnScreen).toBeLessThanOrEqual(5);
     }
@@ -409,7 +409,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('氣流柱與熱泉噴口（§51/§72/§84/§111）：L5 恆常、L13/L15/L19/L21/L23 週期化；柱頂安全帶 ≥100px', () => {
+  it('氣流柱與熱泉噴口（§51/§72/§84/§118）：L5 恆常、L13/L15/L19/L21/L23 週期化；柱頂安全帶 ≥100px', () => {
     const updraftLevels = [5, 13, 15, 19, 21, 23];
     for (const level of LEVELS) {
       const updrafts = level.elements.filter((element) => element.kind === 'updraft');
@@ -447,7 +447,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('潮汐不變式（§71/§111）：僅 L14/L15/L23 配置；dry-window ≥40%、平台層頂高於漲頂 24px', () => {
+  it('潮汐不變式（§71/§118）：僅 L14/L15/L23 配置；dry-window ≥40%、平台層頂高於漲頂 24px', () => {
     for (const level of LEVELS) {
       if (level.id !== 14 && level.id !== 15 && level.id !== 23) {
         expect(level.tide).toBeUndefined();
@@ -540,7 +540,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('卡點關中點重生（§67/§84/§111）：僅 L11/L15/L19/L21/L23 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+  it('卡點關中點重生（§67/§84/§118）：僅 L11/L15/L19/L21/L23 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
     const checkpointLevels = [11, 15, 19, 21, 23];
     for (const level of LEVELS) {
       if (!checkpointLevels.includes(level.id)) {
@@ -658,7 +658,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       'bg-meteorfield': '(arena|throne)',
       'bg-starcourt': '(arena|throne)',
       'bg-voidcore': 'throne',
-      // §111 星海終局篇：星港混排 throne/arena（港區機械）、潮灣沿用 arena（冰晶）。
+      // §118 星海終局篇：星港混排 throne/arena（港區機械）、潮灣沿用 arena（冰晶）。
       'bg-starport': '(arena|throne)',
       'bg-tidebay': 'arena',
     };
@@ -682,7 +682,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('nextLevelId 依 LEVELS 在編序推進（含 §111 過渡跳號 21→23），末關回 null', () => {
+  it('nextLevelId 依 LEVELS 在編序推進（含 §118 過渡跳號 21→23），末關回 null', () => {
     for (let i = 0; i + 1 < LEVELS.length; i += 1) {
       expect(nextLevelId(LEVELS[i]?.id as never)).toBe(LEVELS[i + 1]?.id);
     }
@@ -690,7 +690,7 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(nextLevelId(23)).toBeNull();
   });
 
-  // §111 觸發密度契約：形態引入關的主形態星味須有 ≥2 種供給怪，且形態練習區
+  // §118 觸發密度契約：形態引入關的主形態星味須有 ≥2 種供給怪，且形態練習區
   // 保證生成 3 隻同系怪（沿 L3 安全房模式、位於關卡中段）。
   it('L21 焰化供給：重鑽味 ≥2 種入編、練習區 3 隻貨櫃丁居中段', () => {
     const level = getLevel(21);
@@ -1055,7 +1055,7 @@ describe('MechanicProgressionMatrix 教學矩陣（§110/機制 brief §6.1）',
         seen.add(mechanic);
       }
     }
-    // 13 機制＋§111 焰化/潮化教學位點全數落表（§6.1 矩陣覆蓋）。
+    // 13 機制＋§118 焰化/潮化教學位點全數落表（§6.1 矩陣覆蓋）。
     expect(seen.size).toBe(15);
   });
 

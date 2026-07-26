@@ -259,7 +259,7 @@ export class GameScene extends Phaser.Scene {
         ? 60
         : this.worldWidth() / 2
       : 100;
-    // 形態解鎖集（§111）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
+    // 形態解鎖集（§118）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
     const reach = Math.max(this.currentLevelId, this.save.highestClearedLevel + 1);
     this.unlockedForms = unlockedTransformForms(reach);
     this.player = createPlayer(this, startX, GROUND_TOP - 40, this.unlockedForms);
@@ -484,7 +484,7 @@ export class GameScene extends Phaser.Scene {
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
       const spMode = this.player.getSpMode();
       this.controls.setSpMode(spMode);
-      // SP 變身教學（§110/§111）：任一形態資格徽章首次浮現即教一次。
+      // SP 變身教學（§110/§118）：任一形態資格徽章首次浮現即教一次。
       const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
       if (!taughtTransformSp && spIsForm) {
         taughtTransformSp = true;
@@ -807,7 +807,7 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
       this.starCombat.resolveShieldCounter(x, y, facing),
     );
-    // 星化形態技（§57/§111）：player 發事件、starCombat 單點路由結算（七形態同制）。
+    // 星化形態技（§57/§118）：player 發事件、starCombat 單點路由結算（七形態同制）。
     bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
       this.starCombat.resolveTransformStrike(kind, x, y, facing),
     );
@@ -838,7 +838,7 @@ export class GameScene extends Phaser.Scene {
       const flavor = inhaleFlavor(kind);
       if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
     });
-    // 加速票（§112 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
+    // 加速票（§119 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
     bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
       if (kind === 'ticketa') this.applyBuff('swift');
     });

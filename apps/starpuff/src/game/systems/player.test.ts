@@ -246,7 +246,7 @@ function makeHarness(): {
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
   } as unknown as Phaser.Scene;
-  // 解鎖集（§111）：單測給全形態，資格裁決守門案在 transform.test.ts。
+  // 解鎖集（§118）：單測給全形態，資格裁決守門案在 transform.test.ts。
   return { player: createPlayer(scene, 100, 300, unlockedTransformForms(30)), groups, emit };
 }
 

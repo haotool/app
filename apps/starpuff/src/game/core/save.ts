@@ -39,7 +39,7 @@ export function createDefaultSave(): SaveData {
   };
 }
 
-// §111 星海終局篇：關卡清單由 LEVELS 派生（禁止第二份硬編清單）——列車過渡期
+// §118 星海終局篇：關卡清單由 LEVELS 派生（禁止第二份硬編清單）——列車過渡期
 // 可有跳號（W1 先入編 21/23），schema 不變、舊存檔原樣載入、新節點自然鎖定。
 const LEVEL_IDS: readonly LevelId[] = LEVELS.map((level) => level.id);
 
@@ -280,7 +280,7 @@ export function resetSave(): SaveData {
   return createDefaultSave();
 }
 
-// 解鎖規則（§39/§111）：首關恆開；其餘需「在編序列的前一關」已通關——
+// 解鎖規則（§39/§118）：首關恆開；其餘需「在編序列的前一關」已通關——
 // 列車過渡期跳號（如 L21→L23）由 LEVELS 順序自然銜接，後續補關自動收斂。
 export function isLevelUnlocked(save: SaveData, levelId: LevelId): boolean {
   const index = LEVEL_IDS.indexOf(levelId);

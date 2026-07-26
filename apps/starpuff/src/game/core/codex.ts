@@ -158,7 +158,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '高空鎖定俯衝拖彗尾，吞下得疾風星',
     inhalable: true,
   },
-  // §112 星海終局篇新怪：L21 星港三種＋L23 潮灣三種。
+  // §119 星海終局篇新怪：L21 星港三種＋L23 潮灣三種。
   {
     kind: 'cargo',
     textureKey: 'minion-cargo',
@@ -320,7 +320,7 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
 ] as const;
 
-// §112 佔位立繪鍵（素材車 B02 交付後自本表移除）：texture key 先行凍結，
+// §119 佔位立繪鍵（素材車 B02 交付後自本表移除）：texture key 先行凍結，
 // CodexScene 與 enemies 缺圖時各自回退（fx-star 剪影／同色圓角色塊）。
 export const PENDING_TEXTURE_KEYS: readonly string[] = [
   'minion-cargo',

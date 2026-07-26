@@ -411,7 +411,7 @@ async function runProbe(page, name, level, overrides = {}) {
     };
   }
   if (name === 'transform') {
-    // §111 變身觸發密度：形態引入關 mid bot 獵集同系味首次變身 p50 ≤30s、p95 ≤60s
+    // §118 變身觸發密度：形態引入關 mid bot 獵集同系味首次變身 p50 ≤30s、p95 ≤60s
     //（門檻 SSOT＝difficulty.AUDIT_THRESHOLDS；供給味反查 FORM_BY_FLAVOR 零第二份映射）。
     if (!level || level.boss) throw new Error('transform probe 僅適用走動關');
     const formEntry = (level.teaches ?? []).find((t) => t.endsWith('-form'));

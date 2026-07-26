@@ -230,7 +230,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     shieldRaised: () => internals().player.isShieldRaised(),
     // v9 觀測點（§57 e2e）：星化形態與剩餘時間。
     transform: () => internals().player.getTransformState(),
-    // 變身資格觀測（#848 審查修復）：走 player 資格單點（§111 含形態解鎖閘）。
+    // 變身資格觀測（#848 審查修復）：走 player 資格單點（§118 含形態解鎖閘）。
     transformEligible: () => internals().player.getEligibleForm() !== null,
     // v19 觀測點（§109 e2e/探針）：蓄能結晶相位。
     starburst: () => internals().player.getStarburst(),
@@ -384,7 +384,7 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
           const kind = internals().enemies.kindOf(child);
           if (!kind) continue;
           const sprite = child as unknown as { x: number; y: number };
-          // elite 旗標（§111 probe）：精英不可吸——獵集 bot 據此跳過（同 kind 同形）。
+          // elite 旗標（§118 probe）：精英不可吸——獵集 bot 據此跳過（同 kind 同形）。
           list.push({
             kind,
             x: Math.round(sprite.x),

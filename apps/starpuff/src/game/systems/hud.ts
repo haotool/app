@@ -245,7 +245,7 @@ function ensureHudTextures(scene: Phaser.Scene): void {
   }
 }
 
-// unlockedForms（§111）：與 SP 鍵同一資格裁決——鎖定形態不脈動，缺省不設限。
+// unlockedForms（§118）：與 SP 鍵同一資格裁決——鎖定形態不脈動，缺省不設限。
 export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<TransformForm>): Hud {
   ensureHudTextures(scene);
   addMuteButton(scene);

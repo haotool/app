@@ -31,7 +31,7 @@ export const AUDIT_THRESHOLDS = {
   transformTtkGainMinPct: 0.15,
   // #813 去背板：魔王招式序列條件熵下限（bits），固定循環＝0 不可過門。
   moveEntropyMinBits: 0.5,
-  // §111 變身觸發密度：形態引入關 mid bot 首次變身 p50 ≤30s、p95 ≤60s。
+  // §118 變身觸發密度：形態引入關 mid bot 首次變身 p50 ≤30s、p95 ≤60s。
   transformFirstP50Ms: 30_000,
   transformFirstP95Ms: 60_000,
 } as const;
@@ -313,7 +313,7 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   mirri: 'ranged',
   splatta: 'ranged',
   cometa: 'ranged',
-  // §112 星海終局篇：cargo/frosty 恆可吸近戰系；ticketa 換軌俯掠（沿 gusty/cometa
+  // §119 星海終局篇：cargo/frosty 恆可吸近戰系；ticketa 換軌俯掠（沿 gusty/cometa
   // 俯衝系口徑）、scanna/foamy/manta 具投射。
   cargo: 'safe',
   ticketa: 'ranged',

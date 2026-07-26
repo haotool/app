@@ -9,7 +9,7 @@ import {
 } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部二十四種小怪與五魔王（§112 星海終局篇六新怪入鑑）', () => {
+  it('收錄全部二十四種小怪與五魔王（§119 星海終局篇六新怪入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -43,7 +43,7 @@ describe('CODEX_MONSTERS', () => {
     ]);
   });
 
-  it('立繪鍵對應資產註冊表或 §112 佔位鍵（素材車交付後 pending 清空）', () => {
+  it('立繪鍵對應資產註冊表或 §119 佔位鍵（素材車交付後 pending 清空）', () => {
     const registered = new Set(ASSETS.map((asset) => asset.key));
     for (const monster of CODEX_MONSTERS) {
       expect(
@@ -52,7 +52,7 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73/§80/§112），四種條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73/§80/§119），四種條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );

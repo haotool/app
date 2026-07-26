@@ -13,12 +13,12 @@ import {
 import { playSfx } from '../audio/sfx';
 import { FX_TEXTURES, attachTrail, burstSmall } from './fx';
 
-// 形態呈現與攻擊彈發射（§57/§111）：自 player.ts 抽出（1200 行閘）——
+// 形態呈現與攻擊彈發射（§57/§118）：自 player.ts 抽出（1200 行閘）——
 // aura 粒子、變身環、護體視覺（泡泡盾/星體護衛）與偽星彈單一出口集中於此；
 // 形態狀態機與輸入裁決仍由 player 持有。
 
 const STAR_SIZE = 24;
-// 護體視覺（§111）：潮化泡泡盾半徑；引力化星體護衛公轉軌道與角速度。
+// 護體視覺（§118）：潮化泡泡盾半徑；引力化星體護衛公轉軌道與角速度。
 const BUBBLE_RADIUS_PX = 34;
 const ORBIT_RADIUS_PX = 36;
 const ORBIT_OMEGA = 0.004;
@@ -43,10 +43,10 @@ export interface FormShotLaunch {
 export interface FormSkills {
   begin(form: TransformForm): void;
   end(form: TransformForm): void;
-  // 逐幀呈現（§57/§111）：變身環倒數＋護體視覺（依 tuckLeft 畫泡泡盾或星體護衛）。
+  // 逐幀呈現（§57/§118）：變身環倒數＋護體視覺（依 tuckLeft 畫泡泡盾或星體護衛）。
   draw(transform: TransformState, x: number, y: number, timeMs: number): void;
   launchShot(launch: FormShotLaunch): void;
-  // 空中跳槽位機動（§111）：焰衝刺／鏡步瞬移——無對應語彙回 false（回落拍翅）。
+  // 空中跳槽位機動（§118）：焰衝刺／鏡步瞬移——無對應語彙回 false（回落拍翅）。
   airMove(spec: TransformFormSpec, facing: 1 | -1): boolean;
   destroy(): void;
 }
@@ -77,7 +77,7 @@ export function createFormSkills(
       .setDepth(11);
   }
 
-  // 變身環＋護體視覺（§57/§109/§111）：逐幀重繪。
+  // 變身環＋護體視覺（§57/§109/§118）：逐幀重繪。
   const gfx = scene.add.graphics().setDepth(95);
 
   function draw(transform: TransformState, x: number, y: number, timeMs: number): void {
@@ -90,7 +90,7 @@ export function createFormSkills(
     gfx.strokePath();
     if (transform.tuckLeft <= 0) return;
     if (transform.form === 'gravity') {
-      // 星體護衛（§111）：剩餘次數＝繞身星體數，等分角公轉。
+      // 星體護衛（§118）：剩餘次數＝繞身星體數，等分角公轉。
       gfx.fillStyle(spec.tint, 0.9);
       for (let i = 0; i < transform.tuckLeft; i += 1) {
         const angle = timeMs * ORBIT_OMEGA + (i * Math.PI * 2) / transform.tuckLeft;
@@ -103,13 +103,13 @@ export function createFormSkills(
       return;
     }
     if (transform.form === 'tide') {
-      // 泡泡護盾（§111）：全身淡藍泡殼，受擊消耗即消失（consumeTuck 扣次）。
+      // 泡泡護盾（§118）：全身淡藍泡殼，受擊消耗即消失（consumeTuck 扣次）。
       gfx.lineStyle(3, spec.tint, 0.8);
       gfx.strokeCircle(x, y, BUBBLE_RADIUS_PX + Math.sin(timeMs * 0.006) * 2);
     }
   }
 
-  // 形態攻擊彈單一出口（§57 風刃／§111 焰彈·稜片）：走 stars 池偽星彈，
+  // 形態攻擊彈單一出口（§57 風刃／§118 焰彈·稜片）：走 stars 池偽星彈，
   // 沿既有命中管線；burn 標記由命中端讀取（冰史萊姆熔解）。
   function launchShot(launch: FormShotLaunch): void {
     const { spec } = launch;
@@ -148,7 +148,7 @@ export function createFormSkills(
     });
   }
 
-  // 空中機動（§111）：焰衝刺＝水平衝速＋微抬升；鏡步＝面向側短距瞬移（保留速度、
+  // 空中機動（§118）：焰衝刺＝水平衝速＋微抬升；鏡步＝面向側短距瞬移（保留速度、
   // 夾限世界內）；兩者皆爆形態色星屑演出。
   function airMove(spec: TransformFormSpec, facing: 1 | -1): boolean {
     if (!spec.airDash && spec.blinkPx <= 0) return false;

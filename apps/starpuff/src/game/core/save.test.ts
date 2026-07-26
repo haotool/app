@@ -189,7 +189,7 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 19, 1000);
     expect(currentChallenge(save)).toBe(20);
     save = recordLevelClear(save, 20, 1000);
-    // §111 星海終局篇（W1 過渡跳號）：L20 之後接續 L21 → L23，全通關為 null。
+    // §118 星海終局篇（W1 過渡跳號）：L20 之後接續 L21 → L23，全通關為 null。
     expect(currentChallenge(save)).toBe(21);
     save = recordLevelClear(save, 21, 1000);
     expect(currentChallenge(save)).toBe(23);
@@ -197,7 +197,7 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(currentChallenge(save)).toBeNull();
   });
 
-  it('§111 解鎖鏈跳號銜接：L21 需 L20 通關、L23 需 L21 通關（不看不存在的 L22）', () => {
+  it('§118 解鎖鏈跳號銜接：L21 需 L20 通關、L23 需 L21 通關（不看不存在的 L22）', () => {
     let save = createDefaultSave();
     for (let id = 1; id <= 19; id += 1) save = recordLevelClear(save, id as LevelId, 1000);
     expect(isLevelUnlocked(save, 21)).toBe(false);

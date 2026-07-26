@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LEVELS } from './levels';
 import { ZONES, levelsInZone, zoneOf } from './zones';
 
-describe('分區分頁資料（§78/§111，主計畫 §2.2）', () => {
+describe('分區分頁資料（§78/§118，主計畫 §2.2）', () => {
   it('十區連續涵蓋 L1-L30：無縫隙、無重疊、區魔王收尾', () => {
     expect(ZONES).toHaveLength(10);
     let expectedFirst = 1;

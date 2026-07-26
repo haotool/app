@@ -208,7 +208,7 @@ export interface EnemyUpdateContext {
   spawnSugarBlob(x: number, y: number, directionX: 1 | -1): void;
   // v12（§80）：cometa 俯衝彗尾段，走 hazards 管線。
   spawnCometTail(x: number, y: number): void;
-  // §112：scanna 掃描光束／foamy 漂浮泡泡／manta 扇形水刃，皆走 hazards 管線。
+  // §119：scanna 掃描光束／foamy 漂浮泡泡／manta 扇形水刃，皆走 hazards 管線。
   spawnScanBeam(x: number, y: number, directionX: 1 | -1): void;
   spawnBubble(x: number, y: number, directionX: 1 | -1): void;
   spawnWaterBlade(x: number, y: number, vx: number, vy: number): void;
@@ -1111,7 +1111,7 @@ export function updateEnemyKind(
       updateCometa(ctx, sprite, deltaMs);
       break;
     }
-    // §112 星海終局篇新怪：AI 本體在 systems/finaleEnemies.ts（1200 行閘分檔）。
+    // §119 星海終局篇新怪：AI 本體在 systems/finaleEnemies.ts（1200 行閘分檔）。
     case 'cargo': {
       updateCargo(ctx, sprite, deltaMs);
       break;

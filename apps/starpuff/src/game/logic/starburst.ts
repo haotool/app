@@ -64,7 +64,7 @@ export function resolveSpPress(opts: {
 }
 
 // SP 鍵可用模式（§109 呈現契約）：hidden 完全隱藏；detonate 金色大星；
-// 形態名＝形態色圓徽（§111 七形態同制）；dismiss 解除迴旋箭。蓄爆中不可再操作 → hidden。
+// 形態名＝形態色圓徽（§118 七形態同制）；dismiss 解除迴旋箭。蓄爆中不可再操作 → hidden。
 export type SpMode = 'hidden' | 'detonate' | TransformForm | 'dismiss';
 
 export function resolveSpMode(opts: {

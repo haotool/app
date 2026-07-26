@@ -64,7 +64,7 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   // v12（§80）：twinkla 空中星靈、cometa 高處巡游（俯衝起點高於玩家帶）。
   twinkla: 240,
   cometa: 150,
-  // §112：cargo/foamy/frosty 地面帶；ticketa 高軌入場、scanna 定點懸浮、manta 低空巡游。
+  // §119：cargo/foamy/frosty 地面帶；ticketa 高軌入場、scanna 定點懸浮、manta 低空巡游。
   cargo: 330,
   ticketa: 190,
   scanna: 250,

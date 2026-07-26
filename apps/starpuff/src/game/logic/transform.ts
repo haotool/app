@@ -14,7 +14,7 @@ export const TRANSFORM = {
   requiredStars: 3,
 } as const;
 
-// 新形態攻擊彈（§111）：走 stars 池的偽星彈（沿風刃管線）；count>1 為扇形分裂；
+// 新形態攻擊彈（§118）：走 stars 池的偽星彈（沿風刃管線）；count>1 為扇形分裂；
 // flavor 決定命中效果表（焰彈借爆裂味小爆、稜片借標準味素身），傷害/穿透由本表覆寫。
 export interface FormShotSpec {
   damage: number;
@@ -24,11 +24,11 @@ export interface FormShotSpec {
   spreadVy: number;
   cooldownMs: number;
   flavor: StarFlavor;
-  // 焰系燒毀優勢（§111）：burn 命中使冰史萊姆熔解不分裂（W2 稅票同源消費）。
+  // 焰系燒毀優勢（§118）：burn 命中使冰史萊姆熔解不分裂（W2 稅票同源消費）。
   burn: boolean;
 }
 
-// 形態規格表（表驅動，禁止散落 scene）：每形態語彙 ≤4（§111 攻/防/機動/特守門）。
+// 形態規格表（表驅動，禁止散落 scene）：每形態語彙 ≤4（§118 攻/防/機動/特守門）。
 export interface TransformFormSpec {
   nameZh: string;
   tint: number;
@@ -51,7 +51,7 @@ export interface TransformFormSpec {
   magnetImmune: boolean;
   freeFlight: boolean;
   glide: boolean;
-  // §111 新形態語彙：shot＝B 點按攻擊彈（ember/prism）；tapStrike＝B 點按世界結算技
+  // §118 新形態語彙：shot＝B 點按攻擊彈（ember/prism）；tapStrike＝B 點按世界結算技
   //（tide/gravity，GameScene 經 SKILL_TRANSFORM_STRIKE 路由）；airDash/blinkPx＝空中跳
   // 槽位機動（焰衝刺／鏡步瞬移）；deflectProjectiles＝潮環撥開投射物（不反打）；
   // gravityFlipImmune＝引力方向切換抗性（L27/L28 W3 消費）。
@@ -63,7 +63,7 @@ export interface TransformFormSpec {
   gravityFlipImmune: boolean;
 }
 
-// 既有三形態零值基底（§111 擴欄）：新語彙欄位缺省關閉，行為零回歸。
+// 既有三形態零值基底（§118 擴欄）：新語彙欄位缺省關閉，行為零回歸。
 const FORM_EXT_BASE = {
   shot: null,
   tapStrike: null,
@@ -134,7 +134,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     freeFlight: false,
     glide: false,
   },
-  // 焰化 Ember（§111，L21 解鎖）：無防禦語彙——走位換輸出；焰彈小爆＋落地熔岩爆＋
+  // 焰化 Ember（§118，L21 解鎖）：無防禦語彙——走位換輸出；焰彈小爆＋落地熔岩爆＋
   // 空中焰衝刺；burn 對冰史萊姆（W2 稅票）燒毀優勢。
   ember: {
     ...FORM_EXT_BASE,
@@ -167,7 +167,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     },
     airDash: true,
   },
-  // 潮化 Tide（§111，L23 解鎖）：水引拉近＋一次性泡泡護盾＋霜滑翔＋潮環撥開投射物。
+  // 潮化 Tide（§118，L23 解鎖）：水引拉近＋一次性泡泡護盾＋霜滑翔＋潮環撥開投射物。
   tide: {
     ...FORM_EXT_BASE,
     nameZh: '潮化',
@@ -190,7 +190,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     tapStrike: 'tide-pull',
     deflectProjectiles: true,
   },
-  // 稜化 Prism（§111，L25 解鎖）：三向稜光碎片＋反射抵銷＋鏡步瞬移＋彩虹光束
+  // 稜化 Prism（§118，L25 解鎖）：三向稜光碎片＋反射抵銷＋鏡步瞬移＋彩虹光束
   //（B 長按釋放，可貫穿）。
   prism: {
     ...FORM_EXT_BASE,
@@ -223,7 +223,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     },
     blinkPx: 96,
   },
-  // 引力化 Gravity（§111，L27 解鎖）：虛空引拉＋星體護衛 ×3（tuck 計數）＋錨墜
+  // 引力化 Gravity（§118，L27 解鎖）：虛空引拉＋星體護衛 ×3（tuck 計數）＋錨墜
   //（下砸範圍強化）＋引力井滯留牽引；方向切換抗性由 W3 消費。
   gravity: {
     ...FORM_EXT_BASE,
@@ -266,7 +266,7 @@ export const GALE_BLADE = {
   cooldownMs: 350,
 } as const;
 
-// 風刃彈規格鏡像（§111 單一發射管線）：值全數派生自 GALE_BLADE，零第二份數字。
+// 風刃彈規格鏡像（§118 單一發射管線）：值全數派生自 GALE_BLADE，零第二份數字。
 export const GALE_SHOT: FormShotSpec = {
   damage: GALE_BLADE.damage,
   speed: GALE_BLADE.speed,
@@ -324,19 +324,19 @@ export function glideFallVy(vy: number): number {
   return vy > GALE_GLIDE.fallCapVy ? GALE_GLIDE.fallCapVy : vy;
 }
 
-// 焰衝刺（§111）：空中跳槽位＝水平衝刺（消耗拍翅次數）；無免傷（走位換輸出）。
+// 焰衝刺（§118）：空中跳槽位＝水平衝刺（消耗拍翅次數）；無免傷（走位換輸出）。
 export const EMBER_DASH = {
   speedX: 430,
   liftVy: -110,
 } as const;
 
-// 熔岩爆（§111）：焰化落地小範圍燒灼爆（burn 結算，範圍/傷害高於風化落地衝擊）。
+// 熔岩爆（§118）：焰化落地小範圍燒灼爆（burn 結算，範圍/傷害高於風化落地衝擊）。
 export const MAGMA_POP = {
   radiusPx: 70,
   damage: 2,
 } as const;
 
-// 水引（§111）：面向側域內小怪拉向玩家＋輕傷（B 點按，世界結算走 starCombat）。
+// 水引（§118）：面向側域內小怪拉向玩家＋輕傷（B 點按，世界結算走 starCombat）。
 export const TIDE_PULL = {
   rangePx: 200,
   damage: 2,
@@ -344,12 +344,12 @@ export const TIDE_PULL = {
   cooldownMs: 700,
 } as const;
 
-// 鏡步（§111）：空中跳槽位＝面向側短距瞬移（殘影演出，消耗拍翅次數）。
+// 鏡步（§118）：空中跳槽位＝面向側短距瞬移（殘影演出，消耗拍翅次數）。
 export const PRISM_STEP = {
   distancePx: 96,
 } as const;
 
-// 彩虹光束（§111）：B 長按釋放——面向側走廊貫穿判定；長按門檻沿殼盾情境同源
+// 彩虹光束（§118）：B 長按釋放——面向側走廊貫穿判定；長按門檻沿殼盾情境同源
 //（INHALE.holdThresholdMs 之上取 400ms 明確分離點按）。
 export const RAINBOW_BEAM = {
   holdMs: 400,
@@ -359,7 +359,7 @@ export const RAINBOW_BEAM = {
   cooldownMs: 1100,
 } as const;
 
-// 引力井（§111）：B 點按於面向側生成滯留牽引井——初爆輕傷＋週期把域內小怪拉向井心。
+// 引力井（§118）：B 點按於面向側生成滯留牽引井——初爆輕傷＋週期把域內小怪拉向井心。
 export const GRAVITY_WELL = {
   offsetPx: 120,
   radiusPx: 130,
@@ -371,7 +371,7 @@ export const GRAVITY_WELL = {
 } as const;
 
 // 觸發味 → 形態對應：gusty 吞入歸 floaty 味（§52），自然併入風化來源。
-// §111 零新味裁決：焰化歸重鑽味（貨櫃丁供給）、潮化歸孢子味（潮灣三新怪供給）、
+// §118 零新味裁決：焰化歸重鑽味（貨櫃丁供給）、潮化歸孢子味（潮灣三新怪供給）、
 // 稜化歸流光味、引力化歸迴旋味——四新形態全數映射既有味系。
 // export 供 level-audit transform probe 反查供給味（零第二份映射）。
 export const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
@@ -384,7 +384,7 @@ export const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
   boomy: 'gravity',
 };
 
-// 形態解鎖關（§111）：基礎三形態恆開；新四形態自其引入關起可用（含該關本身）。
+// 形態解鎖關（§118）：基礎三形態恆開；新四形態自其引入關起可用（含該關本身）。
 export const FORM_INTRO_LEVEL: Partial<Record<TransformForm, number>> = {
   ember: 21,
   tide: 23,
@@ -392,7 +392,7 @@ export const FORM_INTRO_LEVEL: Partial<Record<TransformForm, number>> = {
   gravity: 27,
 };
 
-// 解鎖集派生（§111）：以「可觸及最高關」（max(當前關, 最高通關+1)）判定，
+// 解鎖集派生（§118）：以「可觸及最高關」（max(當前關, 最高通關+1)）判定，
 // 不動 save schema；回頭重玩早期關可沿用已解鎖形態。
 export function unlockedTransformForms(highestReachableLevel: number): Set<TransformForm> {
   const unlocked = new Set<TransformForm>();
@@ -405,7 +405,7 @@ export function unlockedTransformForms(highestReachableLevel: number): Set<Trans
 
 // 變身資格（§57）：彈匣全數同系可變身味、非金非混，同系星彈合計 ≥3 發——
 // 強化槽為連吞兩發合成（§23），計 2 發（三連吞 [強化,單發] 即達標）。
-// unlocked（§111）：給定時未解鎖形態不成立資格；缺省不設限（既有呼叫零回歸）。
+// unlocked（§118）：給定時未解鎖形態不成立資格；缺省不設限（既有呼叫零回歸）。
 export function eligibleForm(
   magazine: readonly MagazineSlot[],
   unlocked?: ReadonlySet<TransformForm>,
@@ -471,7 +471,7 @@ export function consumeDischarge(state: TransformState): {
   return { state: { ...state, dischargeLeft: state.dischargeLeft - 1 }, triggered: true };
 }
 
-// 護體裁決（§110 受身入殼→§111 泛化）：殼化受身入殼／潮化泡泡護盾／引力化星體護衛
+// 護體裁決（§110 受身入殼→§118 泛化）：殼化受身入殼／潮化泡泡護盾／引力化星體護衛
 // 共用 tuck 計數——有剩餘次數即觸發、扣次、本次傷害全免；次數由 spec.tuckCharges 種入。
 export function consumeTuck(state: TransformState): {
   state: TransformState;
