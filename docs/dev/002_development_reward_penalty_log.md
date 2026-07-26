@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-t7c-game-design-topic-split
+- 原因：GAME_DESIGN.md 膨脹至 2436 行 118 章、以版本列車時序堆疊並靠「對舊章加取代標註」維護，讀者無法判斷哪一段現行有效，也無法憑主題定位（T7-C）
+- 解法：以一次性腳本按 §NN 邊界機械拆為 design/00-08 九個主題檔＋99-superseded 取代對照表，主檔改為索引入口（章號對照表＋主題檔一覽＋硬不變式）；章號不重編以保 src 註解引用有效，拆分經逐章比對驗證 115/118 逐字元相同、3 章為刻意搬遷失效內容
+
+- 日期：2026-07-26
 - ID：reward-starpuff-t7c-871-doc-drift-settings-mercy
 - 原因：T7-A（#864）改了慈悲補血判定與偏好儲存架構卻零文件同步，GAME_DESIGN 仍記 35%／60% RNG 擲骰與 sp-muted／sp-rotation／sp-key-layout 三散鍵，且宣告「本遊戲無設定頁」（issue #871，P1 SSOT drift）
 - 解法：先讀 mercyHeal.ts／settings.ts／save.ts／pwaUpdateGate.ts 實作反寫文件——§62 改確定性 pity 參數表（含 bossPityHurts=2 與首顆固定生成語意）、新增 §118 記載 sp-settings 單鍵 SSOT／migration 刪 legacy 與 persist 失敗例外／設定頁／存檔備援 checksum／PWA 更新閘，並對 §9/§34/§35/§36/§38/§63.1/§70/§87/§89/§95/§101 舊敘述加取代標註
