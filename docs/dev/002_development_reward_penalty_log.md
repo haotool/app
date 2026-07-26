@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+20（reward 26、penalty 6、neutral 2）｜累計總分：+319
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+324
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,31 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-ticketa-telegraph-warn-window
+- 原因：終局票券蝠 telegraph 閃爍與換軌俯掠同一物理幀啟動，玩家反應窗為 0，與「前搖必須可讀」設計原則不一致（#899）
+- 解法：fly 尾段 700ms 懸停＋閃爍預警（shift 才位移），FSM 常數不動故換軌頻率與俯掠速度零改變；新 ticketa 探針實測預警窗 58ms→783ms、動力學前後一致、最壞站位分級迴避率 0%→100%
+
+- 日期：2026-07-27
+- ID：reward-starpuff-fithurtbox-first-frame-updatebounds
+- 原因：Phaser Body.setSize 以上次 updateBounds 快取的 \_sx 換算世界尺寸，換裝當幀 hurtbox 暫態誤差（ember 54／tide 88.17，基準 36），既有替身以即時 scaleX 直算鎖不住快取縫（#896）
+- 解法：fitHurtbox 末尾補 body.updateBounds()，fake body 升級為 \_sx 快取語意並新增首幀 body 寬斷言；mutation 實證移除 updateBounds 必紅
+
+- 日期：2026-07-27
+- ID：reward-starpuff-transform-crossframe-coverage
+- 原因：prism／gravity 與 ember／tide 共用 wearTexture 唯一入口卻缺對等跨幀穩定案，rebase／fitHurtbox 回歸時會晚被發現（#897）
+- 解法：補 prism／gravity 各一條 expectStableAcrossFrame 跨幀案（1254 源）；mutation 實證移除 vscale.rebase 四形態案皆紅
+
+- 日期：2026-07-27
+- ID：reward-starpuff-visualscale-destroy-guard-test
+- 原因：fake sprite 用 scene:{}（truthy）使 visualScale 幀鉤活體檢查路徑永遠被執行，「已 destroy 的 sprite 不覆寫 scale」護欄從未被測到（#898）
+- 解法：新增 sprite.scene 清空後 PRE／POST 幀鉤不覆寫 scale 案（含活體對照組）；mutation 實證移除活體檢查必紅
+
+- 日期：2026-07-27
+- ID：reward-scripts-tsconfig-typecheck-gate
+- 原因：root「pnpm -r typecheck」依 workspace 語意排除 root 專案，scripts/tsconfig.json 從未進 CI／pre-push 閘，scripts/**tests** 累積 31 個 TS7006／TS7016（#900）
+- 解法：為六個被測模組補 .d.ts／.d.mts 宣告＋@types/xml2js 清零錯誤，pre-push 與 ci.yml 各增補顯式 tsc --noEmit -p scripts/tsconfig.json 步驟防再漂移
 
 - 日期：2026-07-27
 - ID：reward-002-log-gate-mutation-coverage-gaps
