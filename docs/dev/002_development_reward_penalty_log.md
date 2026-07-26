@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-t7c-cross-doc-drift-sweep
+- 原因：交叉核對發現漂移不只 GAME_DESIGN——WALKTHROUGH 與 app README 仍寫「慈悲愛心隨機出現」「長按 0.6 秒變身」「主選單按鈕配置」，且五座魔王攻略未涵蓋 v21–v23 加權選招與六個主題招式
+- 解法：小漂移直接修（WALKTHROUGH 慈悲 pity／設定頁／版本落後聲明，README 變身觸發面／星暴 2.0／EX 五王 P4／設定頁／成就），大缺口開 issue 不擅改——#874 魔王主題招式需真機實測補寫、#875 六模組註解誤引 §5、#876 gitignored PRD 的 35%／60% 與 sp-rotation 漂移待 PM 裁決
+
+- 日期：2026-07-26
 - ID：reward-starpuff-t7c-game-design-topic-split
 - 原因：GAME_DESIGN.md 膨脹至 2436 行 118 章、以版本列車時序堆疊並靠「對舊章加取代標註」維護，讀者無法判斷哪一段現行有效，也無法憑主題定位（T7-C）
 - 解法：以一次性腳本按 §NN 邊界機械拆為 design/00-08 九個主題檔＋99-superseded 取代對照表，主檔改為索引入口（章號對照表＋主題檔一覽＋硬不變式）；章號不重編以保 src 註解引用有效，拆分經逐章比對驗證 115/118 逐字元相同、3 章為刻意搬遷失效內容
