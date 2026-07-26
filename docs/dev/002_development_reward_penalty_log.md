@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+12（reward 12、penalty 0、neutral 0）｜累計總分：+298
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+299
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-v21w1-framehook-mutation-lock
+- 原因：Grok MEDIUM——尺寸回歸鎖的替身 scene.events 為 vi.fn()，PRE/POST_UPDATE 幀鉤從未觸發，移除 wearTexture 的 vscale.rebase 單測仍全綠（產線下一幀被舊基準沖掉）＝對 rebase 假信心
+- 解法：替身改真實 on/off 記錄＋frame.preUpdate/postUpdate 依註冊序驅動幀鉤，跨幀斷言落在 PRE 後物理讀取點；雙 mutation 實證——移除 rebase 紅（顯示 72／117.56 vs 48）、移除 fitHurtbox 紅（判定箱 24／14.7 vs 36），還原全綠
 
 - 日期：2026-07-27
 - ID：reward-starpuff-v21w1-hurtbox-decouple

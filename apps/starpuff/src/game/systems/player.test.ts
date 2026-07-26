@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type Phaser from 'phaser';
+import Phaser from 'phaser';
 import { STAR_FLAVORS, FORGIVENESS, STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
 import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
@@ -94,10 +94,13 @@ function makeFakeGroup(config: { maxSize: number }): {
   };
 }
 
-function chainable(): Record<string, ReturnType<typeof vi.fn>> {
+// texture/setTexture（R9）：幀鉤真正觸發後，POST_UPDATE 的剪影鏡像會讀
+// silhouette.texture.key——chainable 替身必須可駛完整幀序。
+function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { key: string } } {
   const target: Record<string, ReturnType<typeof vi.fn>> = {};
   for (const key of [
     'setDisplaySize',
+    'setTexture',
     'setTint',
     'setTintMode',
     'setPosition',
@@ -121,7 +124,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> {
   ]) {
     target[key] = vi.fn(() => target);
   }
-  return target;
+  return Object.assign(target, { texture: { key: '' } });
 }
 
 interface FakePlayerSprite {
@@ -134,6 +137,8 @@ interface FakePlayerSprite {
   visible: boolean;
   flipX: boolean;
   depth: number;
+  // visualScale 幀鉤以 sprite.scene 判活體（銷毀即跳過）；替身恆掛場景（R9）。
+  scene: unknown;
   texture: { key: string };
   frame: { realWidth: number; realHeight: number };
   body: {
@@ -178,6 +183,7 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
     visible: true,
     flipX: false,
     depth: 0,
+    scene: {},
     texture: { key: 'hero-idle' },
     frame: { realWidth: 512, realHeight: 512 },
     body: {
@@ -236,9 +242,17 @@ function makeHarness(texturesExist = false): {
   player: ReturnType<typeof createPlayer>;
   groups: { maxSize: number }[];
   emit: ReturnType<typeof vi.fn>;
+  frame: { preUpdate(): void; postUpdate(): void };
 } {
   const groups: { maxSize: number }[] = [];
   const emit = vi.fn();
+  // 幀鉤替身（R9）：on/off 真實記錄 handler，frame 依註冊序觸發 PRE/POST_UPDATE
+  // 模擬跨幀——vi.fn() 版永不觸發回呼，「移除 wearTexture 的 vscale.rebase」單測
+  // 仍綠（產線下一幀被舊基準沖掉）＝假信心；emit 維持 spy 供遊戲事件斷言。
+  const sceneHandlers = new Map<string, ((...args: unknown[]) => void)[]>();
+  const fireScene = (event: string) => {
+    for (const handler of sceneHandlers.get(event) ?? []) handler();
+  };
   const scene = {
     textures: { exists: () => texturesExist },
     add: {
@@ -269,13 +283,33 @@ function makeHarness(texturesExist = false): {
         },
       },
     },
-    events: { on: vi.fn(), once: vi.fn(), off: vi.fn(), emit },
+    events: {
+      on: (event: string, handler: (...args: unknown[]) => void) => {
+        sceneHandlers.set(event, [...(sceneHandlers.get(event) ?? []), handler]);
+      },
+      once: vi.fn(),
+      off: (event: string, handler: (...args: unknown[]) => void) => {
+        sceneHandlers.set(
+          event,
+          (sceneHandlers.get(event) ?? []).filter((entry) => entry !== handler),
+        );
+      },
+      emit,
+    },
     tweens: { add: vi.fn(), killTweensOf: vi.fn(), isTweening: () => false },
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
   } as unknown as Phaser.Scene;
   // 解鎖集（§119）：單測給全形態，資格裁決守門案在 transform.test.ts。
-  return { player: createPlayer(scene, 100, 300, unlockedTransformForms(30)), groups, emit };
+  return {
+    player: createPlayer(scene, 100, 300, unlockedTransformForms(30)),
+    groups,
+    emit,
+    frame: {
+      preUpdate: () => fireScene(Phaser.Scenes.Events.PRE_UPDATE),
+      postUpdate: () => fireScene(Phaser.Scenes.Events.POST_UPDATE),
+    },
+  };
 }
 
 const IDLE: ControlsState = {
@@ -565,8 +599,22 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
   const HURT_W = 48 * FORGIVENESS.hurtboxWidthRatio;
   const HURT_H = 48 * FORGIVENESS.hurtboxHeightRatio;
 
+  // R9 跨幀鎖（Grok MEDIUM）：PRE_UPDATE 以 vscale 基準覆寫 scale——wearTexture 若漏
+  // rebase，換裝當幀綠、下一幀被舊基準沖掉。斷言落在 PRE 後（Body.updateBounds 的
+  // 物理讀取點），再走 POST 完成真實幀序（視覺 base×fx×mod 不入斷言）。
+  const expectStableAcrossFrame = (
+    frame: { preUpdate(): void; postUpdate(): void },
+    sprite: FakePlayerSprite,
+  ) => {
+    frame.preUpdate();
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    frame.postUpdate();
+  };
+
   it('穿上超尺寸形態立繪與返回姿勢立繪：顯示尺寸恆為 PLAYER_SIZE', () => {
-    const { player } = makeHarness(true);
+    const { player, frame } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     // 生成基準：hero-idle 512 源 → 48px；世界判定箱 36×38.4。
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
@@ -582,6 +630,8 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    // 跨幀後恆定（R9）：漏 rebase 時此處 72（顯示）／54×57.6（判定箱）必紅。
+    expectStableAcrossFrame(frame, sprite);
     // 解除返回姿勢立繪（512 源）：同樣恆為 48。
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
@@ -589,10 +639,11 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(sprite.frame.realWidth).toBe(512);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expectStableAcrossFrame(frame, sprite);
   });
 
   it('潮化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE', () => {
-    const { player } = makeHarness(true);
+    const { player, frame } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
     for (let i = 0; i < 3; i += 1) player.grantStar('spora');
     player.update({ ...IDLE, spPressed: true }, 16);
@@ -603,5 +654,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     // 修復前此處為 14.7（−59%）：判定箱與源解析度解耦的核心斷言。
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    // 跨幀後恆定（R9）：漏 rebase 時顯示 117.56、判定箱 88.17 必紅。
+    expectStableAcrossFrame(frame, sprite);
   });
 });
