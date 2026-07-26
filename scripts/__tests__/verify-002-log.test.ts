@@ -408,6 +408,88 @@ describe('validate002', () => {
     expect(validate002({ stagedContent: staged, headContent: head }).errors).toEqual([]);
   });
 
+  // CASCADE：基準版本身不可解析時 parseEntries 回傳空 entries，會讓刪除檢查落入真空。
+  // 攻擊鏈為「先讓 tip 變成不可解析 → 下一個 commit 清空全部歷史 ID」，兩道閘皆綠。
+  it.each([
+    [
+      '多個「## 條目」區段',
+      '## 條目（索引）\n\n- 日期：2026-07-07\n- ID：penalty-evidence\n- 原因：原因\n- 解法：解法\n\n## 條目（新→舊）',
+      '區段必須唯一',
+    ],
+    ['區段標題被移除', '（區段標題被移除）', '找不到'],
+  ])('基準版因%s而不可解析時，清空歷史必紅（CASCADE）', (_label, poison, expectedReason) => {
+    const good = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+      entries: [{ id: 'penalty-evidence' }, { id: 'reward-existing-entry' }],
+    });
+    const poisonedHead = good.replace('## 條目（新→舊）', poison);
+    const wiped = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+      entries: [{ id: 'reward-clean-slate' }],
+    });
+
+    const { errors } = validate002({ stagedContent: wiped, headContent: poisonedHead });
+    // 第一道：基準版不可解析即 fail-closed。
+    expect(
+      errors.some(
+        (message) => message.includes('基準版 002 無法解析') && message.includes(expectedReason),
+      ),
+    ).toBe(true);
+    // 第二道：原始文字掃描仍抓得到被清掉的 ID（不依賴解析成功）。
+    expect(
+      errors.some(
+        (message) => message.includes('歷史條目不可刪除') && message.includes('penalty-evidence'),
+      ),
+    ).toBe(true);
+  });
+
+  // 刪除比對加入原始文字掃描後，被「移出解析範圍」的條目仍會出現在 raw 集合，
+  // 若只比對刪除就會讓「插入 `## ` 標題截斷」「搬到區段之前」這兩條路徑復活。
+  const EVIDENCE_BLOCK = '- 日期：2026-07-07\n- ID：penalty-evidence\n- 原因：原因\n- 解法：解法';
+
+  it.each([
+    // 在目標條目之前插入 `## ` 標題，使解析在該處中止。
+    [
+      '被「## 」標題截斷',
+      (log: string) => log.replace(EVIDENCE_BLOCK, `## 附錄\n\n${EVIDENCE_BLOCK}`),
+    ],
+    // 搬到「## 條目」區段之前（先移除原位置再插入，避免二次命中）。
+    [
+      '被搬到「## 條目」之前',
+      (log: string) =>
+        log
+          .replace(`${EVIDENCE_BLOCK}\n`, '')
+          .replace('## 條目（新→舊）\n', `${EVIDENCE_BLOCK}\n\n## 條目（新→舊）\n`),
+    ],
+  ])('既有條目%s而移出解析範圍時必紅', (_label, mutate) => {
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const head = buildLog({
+      header,
+      entries: [{ id: 'reward-existing-entry' }, { id: 'penalty-evidence' }],
+    });
+    const staged = mutate(head);
+    expect(staged).not.toBe(head);
+    const { errors } = validate002({ stagedContent: staged, headContent: head });
+    expect(
+      errors.some(
+        (message) => message.includes('不可移出') && message.includes('penalty-evidence'),
+      ),
+    ).toBe(true);
+  });
+
+  it('基準版讀不出累計總分時 fail-closed（不得靜默跳過總分鏈）', () => {
+    const headWithoutHeader = buildLog({
+      header: '> 版本：outline-v2-ultra',
+      entries: [{ id: 'penalty-evidence' }],
+    });
+    const staged = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+9999',
+      entries: [{ id: 'reward-new-entry' }, { id: 'penalty-evidence' }],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: headWithoutHeader });
+    expect(errors.some((message) => message.includes('基準版檔頭讀不出累計總分'))).toBe(true);
+  });
+
   it('正常 append（歷史條目完整保留，含非標準前綴）不受刪除防護影響', () => {
     const head = buildLog({
       header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
@@ -618,6 +700,40 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     expect(runGuard(repo, '--base-ref', before).status).toBe(0);
     // 直接以 before 為基準才驗得出刪除。
     const { status, output } = runGuard(repo, '--base-commit', before);
+    expect(status).toBe(1);
+    expect(output).toContain('penalty-evidence');
+  });
+
+  // 兩 flag 基準取法不同，靜默取其一會讓誤用得到假綠（原實作 --base-ref 永遠勝出）。
+  it('--base-ref 與 --base-commit 同時指定時互斥失敗', () => {
+    const repo = setupRepo();
+    const { status, output } = runGuard(repo, '--base-ref', 'main', '--base-commit', 'main');
+    expect(status).toBe(1);
+    expect(output).toContain('互斥');
+  });
+
+  // E2E：poison tip 後 wipe，pre-commit（staged vs HEAD）也必須紅。
+  it('pre-commit：基準 HEAD 被 poison 後清空歷史必紅（CASCADE E2E）', () => {
+    const repo = setupRepo();
+    const good = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+      entries: [{ id: 'penalty-evidence' }, { id: 'reward-existing-entry' }],
+    });
+    commitLog(
+      repo,
+      good.replace('## 條目（新→舊）', '## 條目（索引）\n\n## 條目（新→舊）'),
+      'poison',
+    );
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+        entries: [{ id: 'reward-clean-slate' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+
+    const { status, output } = runGuard(repo);
     expect(status).toBe(1);
     expect(output).toContain('penalty-evidence');
   });

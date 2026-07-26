@@ -112,9 +112,10 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 | ------------ | ------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
 | `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件                                 | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                                      |
 | `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                                                       | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                         |
-| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                                  | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md`         |
+| `AGT-LOG-01` | 獎懲記錄更新 | 每個 PR 必須更新 `docs/dev/002...`（含本次分數變化與累計總分）；落盤時機依 `AGT-LOG-03`                 | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md`         |
 | `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄格式必須與該檔案當前檔頭規範一致；若調整檔頭格式，必須同 PR 同步更新 002 本體 | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md`         |
 | `AGT-LOG-03` | 002 單一提交 | 一個 PR 的 002 條目必須集中在單一 commit，檔頭寫 PR 聚合淨變化                                          | `git log --oneline -- docs/dev/002...`   | `scripts/verify-002-log.mjs`、`.github/workflows/ci.yml` |
+| `AGT-LOG-04` | 002 殘餘風險 | 條目「語意掏空／內容對調」（ID 與非空性都保留、只改敘述）**守門不擋**，屬人工審查責任範圍               | PR review 記錄                           | 本 SOP § 為什麼堵「掏空」但不堵「改寫」                  |
 | `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                                  |
 | `AGT-PC-01`  | 提交前檢查   | `pre-commit` 6 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                                      |
 | `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                                            | hook log / CI                            | `.husky/pre-push`                                        |
@@ -156,7 +157,7 @@ Agent **必須**先完成：
 
 提交前 Agent **必須**：
 
-1. 更新 `docs/dev/002_development_reward_penalty_log.md`
+1. 更新 `docs/dev/002_development_reward_penalty_log.md`（條目累積後於單一 commit 落盤，見 `AGT-LOG-03`）
 2. 確認 002 新增內容符合 002 檔頭當前規範；歷史整理僅能寫入精簡索引，不得新增巨型 table
 3. 若本次調整 002 格式規範，必須同步更新 002 本體並在同 PR 提供遷移差異
 4. 依「獎懲分數計算 SSOT」更新本次分數與累計總分
@@ -189,9 +190,9 @@ Agent **必須**先完成：
 - 計算公式：
   - `本次分數變化 = reward_count - penalty_count`
   - `最新總分 = 前次總分 + 本次分數變化`
-- 每次新增 002 條目時，必須同步更新本次分數變化與累計總分（可放於檔頭摘要行或同批 commit 的 SSOT 文件）。
+- 新增 002 條目時，必須同步更新本次分數變化與累計總分；條目累積後於單一 commit 落盤（`AGT-LOG-03`），檔頭寫該 PR 的聚合淨變化。
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
-- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；staged 刪除整份 002（`git rm`）亦必紅；初始 commit 情境跳過總分鏈驗證。
+- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；staged 刪除整份 002（`git rm`）亦必紅。只有「無基準版」（初始 commit）才跳過總分鏈；**有基準版卻讀不出前版累計總分時 fail-closed**。
 - **既有條目的欄位不可被掏空**：某欄位在基準版為非空時，修改後不得為空（含刪掉整行、留空值、只剩空白）。日期／原因／解法適用；ID 被掏空則由「歷史條目不可刪除」攔下。歷史上本來就為空的欄位維持豁免，不回溯擋 commit。
 
 ##### 為什麼堵「掏空」但不堵「改寫」（此分界為刻意設計，不是漏做）
@@ -200,8 +201,9 @@ Agent **必須**先完成：
 - **改寫不擋**（同 ID 但描述被換成另一段非空文字）。理由是它與**合法且必要的精確性修正無法機械區分**——更正錯字、修正誤植數字都是同一個操作。守門若連內容改動一併擋下，會封死唯一的更正管道，而歷史條目又不可刪除重寫，將形成死結。
 - 因此判準是「**有沒有從有變成無**」，而不是「內容有沒有變」。非空性可機械判定、誤判風險低；語意品質需要人判斷，交由審查把關。
 - 同理，也**不採用**「回溯驗證所有既有條目的四行完整性」：main 上有 218 筆歷史條目無標準 ID 前綴、3 筆帶額外欄位，全面回溯會讓守門對現存資料直接報錯，而修正歷史條目本身又觸犯不可刪改原則。守門的一貫立場是**對歷史寬鬆、對新增嚴格、對「從有到無」零容忍**。
-- `pre-commit` 第 6 步**無條件執行**，不以 `git diff` 判斷是否觸發：`git mv` 的 `--name-only` 只列新路徑，任何 diff-based 觸發條件都會被它繞過。跳過與否由腳本以 index／HEAD 的存在性決定；002 未變更時約 50ms。
+- `pre-commit` 第 6 步**無條件執行**，不以 `git diff` 判斷是否觸發：`git mv` 的 `--name-only` 只列新路徑，任何 diff-based 觸發條件都會被它繞過。跳過與否由腳本以 index／HEAD 的存在性決定；002 未變更時 p50 約 120–160ms（n=30，含 node 啟動，隨機器而異），相對同一 hook 內的 `pnpm typecheck` 可忽略。
 - 條目區段（`## 條目`）必須唯一：只解析第一個區段，多個等於替後續區段開永久盲區（前置 decoy 抄齊全部 ID 即滿足刪除防護，真區段從此不受檢視）。
+- **基準版不可解析時 fail-closed**：基準版若本身解析失敗（區段重複或缺失），`entries` 會是空集合而讓刪除檢查落入真空——「先讓 tip 變成不可解析、下一個 commit 清空全部歷史」即可兩道閘全綠。故基準版有 `globalErrors` 一律判失敗；刪除比對另以原始文字掃描 `- ID：` 作第二道保險，不依賴解析是否成功。
 - CI `Quality Checks` 於 install 前強制同一守門（issue #661）：PR 事件以 `--base-ref <base sha>`（基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態）；**main push 事件以 `--base-commit <github.event.before>` 兜底**（守門不假設 branch protection 永遠有效），`before` 為全零（分支初建）時跳過。002 未變更時跳過。
 - **已知缺口（由 CI 兜底）**：`git merge` 產生的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者，故 merge commit 在 hook 層不受守門。**刻意不補**——`git merge origin/main` 併入 main 側 002 條目時，staged vs HEAD 會把它們全數視為新增而誤紅，屬合法工作流。此情境由 PR CI 與 main push CI 覆蓋，與 rebase 的處置一致。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；**在現行兩種語意下**002 分散於多個 commit 必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
@@ -256,6 +258,23 @@ Agent **必須**先完成：
 - PR 事件：`node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"`；`merge-base(base, HEAD)` 為基準版、PR 最終態為待驗版
 - main push 事件：`--base-commit "${{ github.event.before }}"`；基準為本次 push 前的 main tip，可涵蓋一次推多個 commit，merge commit 的 `before` 即第一父。`before` 為全零（分支初建）時跳過而非誤紅
 - **兩種模式的基準取法不同，不可混用**：`--base-ref` 取 `merge-base(ref, HEAD)`（PR 的 base 分支會前進，需退回分岔點）；`--base-commit` 直接取該 commit。main push 若誤用 `--base-ref`，force push 時 `before` 並非 HEAD 的祖先，merge-base 會退到更早的共同祖先，使被改寫掉的條目驗不出來——而那正是此模式的存在理由
+- 兩個 flag **互斥**，同時指定即失敗；靜默取其一會讓誤用得到假綠
+
+#### 失敗行為契約：所有錯誤路徑一律 fail-closed
+
+守門至今被找出的破口有半數屬同一模式——**檢查在錯誤路徑上靜默失效**。故以下情境全部視為驗證失敗，不得放行；新增分支時必須維持此契約：
+
+| 情境                                               | 行為                                 |
+| -------------------------------------------------- | ------------------------------------ |
+| 基準版解析失敗（區段重複／缺失）                   | 失敗（另有原始文字掃描作第二道保險） |
+| 基準版讀不出累計總分                               | 失敗                                 |
+| 待驗版解析失敗、檔頭缺失或格式不符                 | 失敗                                 |
+| base ref／base commit 無法解析                     | 失敗                                 |
+| flag 缺值、兩 flag 同時指定                        | 失敗                                 |
+| 002 在基準版存在但待驗版消失（`git rm`／`git mv`） | 失敗                                 |
+
+僅三種情境放行：002 相對基準未變更、002 在 index 與 HEAD 皆不存在、`before` 為全零（分支初建）。
+
 - 共同：002 未變更時毫秒級跳過，整檔刪除或改名必紅
 - 定位：堵 `--no-verify`、`core.hooksPath` 改設定、GitHub 網頁端 merge/squash，以及 merge commit 不走 `pre-commit` 等所有繞過 hook 的路徑；**不假設 branch protection 永遠有效**
 

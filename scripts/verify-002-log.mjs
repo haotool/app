@@ -6,9 +6,15 @@
  * 2. 檔頭「累計總分」= 基準版累計總分 + N；初始 commit 或基準版無法解析時跳過
  * 3. 新增條目符合四行模板（日期/ID/原因/解法）、日期為 YYYY-MM-DD、ID 對全檔唯一
  *
- * 兩種執行語意共用同一 validate002 核心（無雙實作）:
- * - pre-commit（預設）：staged 版 vs HEAD 版
- * - CI（--base-ref <ref>）：HEAD 版 vs merge-base(<ref>, HEAD) 版；檔案未變更時跳過
+ * 三種執行語意共用同一 validate002 核心（無雙實作）:
+ * - pre-commit（預設）：staged 版（index）vs HEAD 版
+ * - PR CI（--base-ref <ref>）：HEAD 版 vs merge-base(<ref>, HEAD) 版
+ * - main push CI（--base-commit <sha>）：HEAD 版 vs 該 commit 版（不取 merge-base——
+ *   force push 時 <sha> 非 HEAD 祖先，merge-base 會退到更早的共同祖先而漏驗被改寫的條目）
+ * 兩個 flag 互斥；檔案相對基準未變更時跳過。
+ *
+ * 失敗行為一律 fail-closed：基準版無法解析、基準 ref 無法解析、檔案被刪除或改名
+ * 皆視為驗證失敗，不得靜默放行。
  */
 import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -23,7 +29,8 @@ const HEADER_STRICT_RE =
 // 前版檔頭僅需能取出累計總分（相容歷史自由格式）。
 const HEADER_TOTAL_RE = /^> 本次分數變化：.*｜累計總分：([+-]?\d+)$/;
 
-const ENTRY_LINE_PREFIXES = ['- 日期：', '- ID：', '- 原因：', '- 解法：'];
+const ID_LINE_PREFIX = '- ID：';
+const ENTRY_LINE_PREFIXES = ['- 日期：', ID_LINE_PREFIX, '- 原因：', '- 解法：'];
 // 日期與 ID 各有專屬檢查，這兩欄只需確認非空。
 const CONTENT_PREFIXES = ['- 原因：', '- 解法：'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -31,6 +38,21 @@ const ID_PREFIXES = ['reward-', 'penalty-', 'neutral-'];
 
 function findHeaderLine(content) {
   return content.split('\n').find((line) => line.startsWith('> 本次分數變化：')) ?? null;
+}
+
+// 不經區段結構、直接掃全檔的 `- ID：`。刪除比對需要它作後備：基準版若本身不可解析
+// （多個「## 條目」區段、區段被移除），parseEntries 會回傳空 entries，
+// 使刪除檢查落入真空而讓任何刪除靜默通過。
+export function scanRawIds(content) {
+  const ids = new Set();
+  if (!content) return ids;
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trimEnd();
+    if (!line.startsWith(ID_LINE_PREFIX)) continue;
+    const id = line.slice(ID_LINE_PREFIX.length).trim();
+    if (id) ids.add(id);
+  }
+  return ids;
 }
 
 export function parseStrictHeader(content) {
@@ -161,15 +183,44 @@ export function validate002({ stagedContent, headContent }) {
   const { entries: stagedEntries, globalErrors } = parseEntries(stagedContent);
   errors.push(...globalErrors);
 
-  const headEntries = headContent ? parseEntries(headContent).entries : [];
+  const headParsed = headContent ? parseEntries(headContent) : { entries: [], globalErrors: [] };
+  const headEntries = headParsed.entries;
   const headEntryIds = new Set(headEntries.map((entry) => entry.id));
 
-  // 歷史條目不可靜默刪除（防湮滅 penalty 證據）：HEAD 全部條目 ID（不限標準前綴）
-  // 必須仍存在於 staged 版本，缺失即擋 commit。
-  const stagedIds = new Set(stagedEntries.map((entry) => entry.id).filter(Boolean));
-  const deletedIds = [...headEntryIds].filter((id) => id && !stagedIds.has(id));
+  // 基準版本身不可解析時 fail-closed：無法確認歷史完整性就不得放行。
+  // 否則「先讓基準版變成不可解析、下一個 commit 清空全部歷史」即可兩道閘全綠。
+  if (headParsed.globalErrors.length > 0) {
+    errors.push(
+      `基準版 002 無法解析，守門無法確認歷史條目完整性：${headParsed.globalErrors.join('、')}`,
+    );
+  }
+
+  // 歷史條目不可靜默刪除（防湮滅 penalty 證據）：基準版全部 ID（不限標準前綴）
+  // 必須仍存在於待驗版，缺失即擋。兩側都取「解析結果 ∪ 原始文字掃描」，
+  // 使刪除比對不依賴解析是否成功（上述 fail-closed 的第二道保險）。
+  const stagedParsedIds = new Set(stagedEntries.map((entry) => entry.id).filter(Boolean));
+  const stagedRawIds = scanRawIds(stagedContent);
+  const stagedIds = new Set([...stagedParsedIds, ...stagedRawIds]);
+  const headAllIds = new Set(
+    [...headEntryIds, ...scanRawIds(headContent)].filter((id) => Boolean(id)),
+  );
+  const deletedIds = [...headAllIds].filter((id) => !stagedIds.has(id));
   if (deletedIds.length > 0) {
     errors.push(`歷史條目不可刪除，缺失 ID：${deletedIds.map((id) => `「${id}」`).join('、')}`);
+  }
+
+  // 原本可解析的條目不可移出解析範圍（被 `## ` 標題截斷、或搬到「## 條目」之前）。
+  // 原始文字仍在故刪除防護不失效，但格式／掏空／唯一性檢查都不再覆蓋它，等同開盲區。
+  // 以「基準版解析得到、待驗版只剩原始文字」為判準，故不會誤傷檔頭模板的示例 ID。
+  const hiddenIds = [...headEntryIds].filter(
+    (id) => id && !stagedParsedIds.has(id) && stagedRawIds.has(id),
+  );
+  if (hiddenIds.length > 0) {
+    errors.push(
+      `條目不可移出「## 條目」解析範圍（仍在檔內但已不受檢視）：${hiddenIds
+        .map((id) => `「${id}」`)
+        .join('、')}`,
+    );
   }
 
   // 掏空既有條目 = 就地刪除，是刪除防護的等效規避路徑（保留檔案與 ID、把內容清空）。
@@ -251,15 +302,21 @@ export function validate002({ stagedContent, headContent }) {
     errors.push(`本次分數變化應為 ${expectedDelta}（reward - penalty），檔頭為 ${header.delta}`);
   }
 
-  // 總分鏈：前版累計 + N = 本版累計。
-  const previousTotal = headContent ? parsePreviousTotal(headContent) : null;
-  if (previousTotal !== null) {
-    const expectedTotal = previousTotal + header.delta;
-    if (header.total !== expectedTotal) {
-      errors.push(
-        `累計總分斷鏈：前版 ${previousTotal} + 本次 ${header.delta} = ${expectedTotal}，檔頭為 ${header.total}`,
-      );
-    }
+  // 總分鏈：前版累計 + N = 本版累計。無基準版（初始 commit）才可跳過；
+  // 有基準版卻讀不出前版累計時 fail-closed，否則任意總分都能寫入而不被察覺。
+  if (headContent === null) {
+    return { errors };
+  }
+  const previousTotal = parsePreviousTotal(headContent);
+  if (previousTotal === null) {
+    errors.push('基準版檔頭讀不出累計總分，無法驗算總分鏈');
+    return { errors };
+  }
+  const expectedTotal = previousTotal + header.delta;
+  if (header.total !== expectedTotal) {
+    errors.push(
+      `累計總分斷鏈：前版 ${previousTotal} + 本次 ${header.delta} = ${expectedTotal}，檔頭為 ${header.total}`,
+    );
   }
 
   return { errors };
@@ -348,21 +405,28 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
 
 function main() {
   const args = process.argv.slice(2);
-  for (const [flag, useMergeBase] of [
+  const modes = [
     ['--base-ref', true],
     ['--base-commit', false],
-  ]) {
-    const index = args.indexOf(flag);
-    if (index === -1) continue;
-    const ref = args[index + 1];
-    if (!ref) {
-      console.error(`002 記分守門失敗：${flag} 需指定基準（例如 origin/main 或 base SHA）`);
-      process.exit(1);
-    }
-    runAgainstBaseRef(ref, { useMergeBase });
+  ].filter(([flag]) => args.includes(flag));
+
+  // 兩個 flag 基準取法不同，同時出現無法判定意圖；靜默取其一會讓誤用得到假綠。
+  if (modes.length > 1) {
+    console.error('002 記分守門失敗：--base-ref 與 --base-commit 互斥，不可同時指定');
+    process.exit(1);
+  }
+  if (modes.length === 0) {
+    runPreCommit();
     return;
   }
-  runPreCommit();
+
+  const [flag, useMergeBase] = modes[0];
+  const ref = args[args.indexOf(flag) + 1];
+  if (!ref) {
+    console.error(`002 記分守門失敗：${flag} 需指定基準（例如 origin/main 或 base SHA）`);
+    process.exit(1);
+  }
+  runAgainstBaseRef(ref, { useMergeBase });
 }
 
 // argv[1] 需先解析 symlink 再比對：macOS 的 /tmp 是 /private/tmp 的 symlink，
