@@ -193,7 +193,16 @@ Agent **必須**先完成：
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
 - `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；staged 刪除整份 002（`git rm`）亦必紅；初始 commit 情境跳過總分鏈驗證。
 - CI `Quality Checks` 於 install 前以 `node scripts/verify-002-log.mjs --base-ref <base sha>` 強制同一守門（issue #661）：基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態，002 未變更時跳過。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
-- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；002 分散於多個 commit 時兩者必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
+- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；**在現行兩種語意下**002 分散於多個 commit 必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
+
+#### `AGT-LOG-03` 已評估但不採用的替代方案（此為設計取捨，非技術必然）
+
+- **替代方案**：讓 pre-commit 也改用聚合語意，即以 `merge-base(<base>, HEAD)` 而非 `HEAD` 當基準版。技術上可行，且能保留「逐 commit 更新 002」的舊寫法（各 commit 都對聚合基準對帳，末態自然正確）。
+- **不採用的理由**：
+  1. **base 不恆為 main**。本 repo 的長期實驗線（例如 ratewise 2026H2）PR base 指向 experiment 分支；pre-commit 若硬寫 `origin/main`，對這類分支會算出錯誤的 `merge-base` 與 `previousTotal`，產生**假紅或假綠**——而假綠比沒有守門更危險。
+  2. **本機沒有權威 base 來源**。commit 當下 PR 可能尚未建立；`@{upstream}` 指向自身的遠端追蹤分支而非 base。要正確就得引入設定檔或環境變數，等於為守門新增一個可被設錯的狀態。
+  3. **CI 已有零猜測的 base**（`github.event.pull_request.base.sha`）。把聚合判斷放在唯一確知 base 的環節，而讓 pre-commit 維持「零外部依賴、只看 index vs HEAD」的確定性。
+- **代價**：SOP 由「逐 commit 更新」改為「累積後單一 commit」。若日後判定保留逐 commit 的價值更高，`--base-ref` 已是現成入口，pre-commit 只需再加一層 base 解析——**必須走顯式設定，不得以 `origin/main` 猜測**。
 - 承上：002 落盤後才收到的審查修正，其 commit **不得再新增 002 條目**（pre-commit 以「本 commit 新增條目 vs 檔頭」對帳，必紅）。補記一律併回同一個 002 commit——002 commit 仍在 tip 時用 `git commit --amend`，否則延到分支 rebase 時 fold 補齊。故實務上**盡量讓 002 commit 留在分支最後**。
 - rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 

@@ -108,7 +108,8 @@ pnpm format:fix              # prettier --write .
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
 - `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。
 - CI `Quality Checks` 於 install 前跑 `node scripts/verify-002-log.mjs --base-ref <base sha>`（issue #661），以 `merge-base(base, HEAD)` 對 PR 最終態驗同一組規則。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
-- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）必然互斥，兩者無法同時綠燈。
+- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。在現行兩種語意下，002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）互斥，無法同時綠燈。
+- 此為設計取捨非技術必然：已評估「pre-commit 也改用 `merge-base(<base>, HEAD)` 聚合語意」（可行、能保留逐 commit 寫法），因 **base 不恆為 main**（實驗線 PR base 指向 experiment 分支，硬寫 `origin/main` 會產生假紅／假綠）、本機無權威 base 來源，而 CI 已有零猜測的 `base.sha` 而不採用。詳見 `AGENTS.md` § `AGT-LOG-03` 已評估但不採用的替代方案。
 - 002 落盤後的審查修正 commit 不得新增條目（pre-commit 必紅）；補記併回同一個 002 commit——仍在 tip 用 `git commit --amend`，否則延到 rebase 時 fold。故盡量讓 002 commit 留在分支最後。
 - rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 

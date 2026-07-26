@@ -11,6 +11,7 @@
  * - CI（--base-ref <ref>）：HEAD 版 vs merge-base(<ref>, HEAD) 版；檔案未變更時跳過
  */
 import { execFileSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 export const LOG_PATH = 'docs/dev/002_development_reward_penalty_log.md';
@@ -52,8 +53,8 @@ export function parsePreviousTotal(content) {
 }
 
 // 解析「## 條目（新→舊）」區段；每個條目為連續 4 行、以空行分隔。
-// 另以「- 日期：」作次要邊界：歷史檔有數處漏空行使多筆黏成一塊，僅靠空行切分會讓
-// 後續條目的 ID 對唯一性與刪除防護隱形。
+// 另以「- 日期：」作次要邊界：歷史檔有 2 處漏空行使多筆黏成一塊（8 行 2 筆、12 行 3 筆），
+// 僅靠空行切分會讓後續 3 筆條目的 ID 對唯一性與刪除防護隱形。
 // 格式錯誤附掛於各條目（entry.errors），供呼叫端只對新增條目擋 commit。
 export function parseEntries(content) {
   const globalErrors = [];
@@ -68,26 +69,29 @@ export function parseEntries(content) {
   const flush = () => {
     if (block.length === 0) return;
     const entry = { id: null, lines: [...block], errors: [] };
+    const idLine = block.find((line) => line.startsWith('- ID：'));
+    if (idLine) {
+      entry.id = idLine.slice('- ID：'.length).trim();
+    }
+    // 定位字串優先用 ID：500+ 條目的檔案裡，只引用首行（多為日期）不足以指出是哪一筆。
+    const locator = entry.id ?? block[0];
     if (block.length !== 4) {
-      entry.errors.push(`條目行數應為 4 行（實際 ${block.length} 行）：「${block[0]}」`);
+      entry.errors.push(`條目行數應為 4 行（實際 ${block.length} 行）：「${locator}」`);
     }
     block.forEach((line, index) => {
       const prefix = ENTRY_LINE_PREFIXES[index];
       if (prefix && !line.startsWith(prefix)) {
-        entry.errors.push(`條目第 ${index + 1} 行應以「${prefix}」開頭：「${line}」`);
+        entry.errors.push(`條目「${locator}」第 ${index + 1} 行應以「${prefix}」開頭：「${line}」`);
       }
     });
     const dateLine = block.find((line) => line.startsWith('- 日期：'));
     if (dateLine) {
       const date = dateLine.slice('- 日期：'.length).trim();
       if (!DATE_RE.test(date)) {
-        entry.errors.push(`日期格式應為 YYYY-MM-DD：「${date}」`);
+        entry.errors.push(`條目「${locator}」日期格式應為 YYYY-MM-DD：「${date}」`);
       }
     }
-    const idLine = block.find((line) => line.startsWith('- ID：'));
-    if (idLine) {
-      entry.id = idLine.slice('- ID：'.length).trim();
-    } else {
+    if (!idLine) {
       entry.errors.push(`條目缺少 ID 行：「${block[0]}」`);
     }
     entries.push(entry);
@@ -293,7 +297,18 @@ function main() {
   runAgainstBaseRef(baseRef);
 }
 
-const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-if (isDirectRun) {
+// argv[1] 需先解析 symlink 再比對：macOS 的 /tmp 是 /private/tmp 的 symlink，
+// 以絕對路徑呼叫時兩側不等會讓 main() 靜默不執行並 exit 0（假成功）。
+function isDirectRun() {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(invoked)).href;
+  } catch {
+    return import.meta.url === pathToFileURL(invoked).href;
+  }
+}
+
+if (isDirectRun()) {
   main();
 }

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -344,9 +344,9 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     return repo;
   }
 
-  function runGuard(repo: string, ...args: string[]) {
+  function runScript(repo: string, scriptPath: string, ...args: string[]) {
     try {
-      const stdout = execFileSync('node', [SCRIPT_PATH, ...args], {
+      const stdout = execFileSync('node', [scriptPath, ...args], {
         cwd: repo,
         env: GIT_ENV,
         encoding: 'utf-8',
@@ -360,6 +360,10 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
         output: `${failed.stdout ?? ''}${failed.stderr ?? ''}`,
       };
     }
+  }
+
+  function runGuard(repo: string, ...args: string[]) {
+    return runScript(repo, SCRIPT_PATH, ...args);
   }
 
   it('構造計數不符的 PR 最終態必紅', () => {
@@ -483,6 +487,22 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     const { status, output } = runGuard(repo);
     expect(status).toBe(0);
     expect(output).toContain('跳過');
+  });
+
+  // 以 symlink 路徑呼叫時，argv[1] 與 import.meta.url 的字面路徑不等（macOS 的 /tmp
+  // 即為 /private/tmp 的 symlink）；未解析 realpath 會讓 main() 不執行卻 exit 0。
+  it('經 symlink 路徑呼叫仍執行 main（不得靜默 exit 0）', () => {
+    const repo = setupRepo();
+    const holder = mkdtempSync(join(tmpdir(), 'verify-002-link-'));
+    repos.push(holder);
+    mkdirSync(join(holder, 'real'));
+    copyFileSync(SCRIPT_PATH, join(holder, 'real', 'guard.mjs'));
+    symlinkSync(join(holder, 'real'), join(holder, 'link'), 'dir');
+
+    const { status, output } = runScript(repo, join(holder, 'link', 'guard.mjs'));
+    expect(status).toBe(0);
+    // 靜默不執行時 stdout 為空；有輸出才證明 main() 真的跑了。
+    expect(output).toContain('002 記分守門');
   });
 
   it('pre-commit：正確 append 綠燈', () => {
