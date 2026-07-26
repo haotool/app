@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+278
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+279
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-reflector-anim-frames
+- 原因：Reflector 首批 39 幀造型分裂（半數被畫成穿黑袍生物、30/39 場景底殘留）判定不合格，且 /tmp 遭系統清理令該批 raw 全失
+- 解法：重建工具鏈後整批重生——prompt 錨定「造型唯一真值＋絕非穿袍者＋禁一切場景底」與雙參照圖，重生批 QA 39/39 一次過、序列檢驗造型統一收斂
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-maridella-anim-frames
