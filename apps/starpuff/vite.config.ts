@@ -47,10 +47,25 @@ export default defineConfig(async ({ mode }) => {
         registerType: 'prompt',
         injectRegister: 'auto',
         workbox: {
+          // 分階段載入（§115）：延遲載入的立繪仍全數進 precache，離線可玩不打折。
           globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
           globIgnores: ['**/node_modules/**'],
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          runtimeCaching: [
+            {
+              // precache 尚未完成即斷線的補償控制：延遲載入的立繪首次取得就落快取。
+              // URL 帶內容雜湊，CacheFirst 不會造成版本撕裂。
+              urlPattern: ({ request, sameOrigin }) =>
+                sameOrigin && request.destination === 'image',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'starpuff-sprites',
+                expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
         manifest: {
           id: manifestScope,
