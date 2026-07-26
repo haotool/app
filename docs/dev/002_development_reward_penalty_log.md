@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-t7c-871-doc-drift-settings-mercy
+- 原因：T7-A（#864）改了慈悲補血判定與偏好儲存架構卻零文件同步，GAME_DESIGN 仍記 35%／60% RNG 擲骰與 sp-muted／sp-rotation／sp-key-layout 三散鍵，且宣告「本遊戲無設定頁」（issue #871，P1 SSOT drift）
+- 解法：先讀 mercyHeal.ts／settings.ts／save.ts／pwaUpdateGate.ts 實作反寫文件——§62 改確定性 pity 參數表（含 bossPityHurts=2 與首顆固定生成語意）、新增 §118 記載 sp-settings 單鍵 SSOT／migration 刪 legacy 與 persist 失敗例外／設定頁／存檔備援 checksum／PWA 更新閘，並對 §9/§34/§35/§36/§38/§63.1/§70/§87/§89/§95/§101 舊敘述加取代標註
+
+- 日期：2026-07-26
 - ID：reward-starpuff-release-verifiability-doc-accuracy
 - 原因：兩席複審殘留扣分皆為敘述精確性——002 本身兩處與實作不符（宣稱 shell 與 JS 用「同一條」regex，實則 JS 另帶 `i` 並正規化小寫而 shell 大小寫敏感；`__resetSaveUnavailableForTests` 標為 dev-only，實則執行期無 env 閘只是命名慣例），save.ts 例外註解以「提示會反覆洗版」為由但 `notifySaveUnavailable` 早有 session 級單次守衛，且「備援回寫本身失敗」的貫穿場景無直接回歸鎖
 - 解法：三處敘述改為與實作一致（標明兩側 regex 語意差異與 shell 側 fail-closed、改稱測試用匯出、例外理由改為「配額問題持續時下次真實進度寫入會經已消費回傳值的 persistSave 觸發同一張卡」）；補 1 案貫穿測試鎖主檔損毀＋備援合法＋回寫拋錯，斷言備援逐字不變且 storage 恢復後再載入等值並成功落盤，以兩種 loadSave 變異（回寫失敗退預設、移除輪替合法性守衛）驗證紅→綠

@@ -62,7 +62,7 @@ hit-stop 60ms、震屏 4px、受擊白閃、squash & stretch（跳躍/落地/吸
 
 ## 9. 音效（zzfx，零音檔資產）
 
-jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠落地）、pop（puffy 爆裂）、chomp（咬咬花咬合）、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。靜音偏好存 localStorage（sp-muted）。
+jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠落地）、pop（puffy 爆裂）、chomp（咬咬花咬合）、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。靜音偏好存 localStorage（sp-muted）（v19 已由 §118.1 取代：收斂為 `sp-settings.audioMuted`，`sp-muted` 僅作一次性 migration 來源，落盤後刪除）。
 
 ## 10. 美術資產規格（codex imagegen 專用；除此之外嚴禁動用 codex）
 
@@ -322,7 +322,7 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 人體工學定案（§33 條目 7）：雙手橫持時拇指錨於下側角、食指自然落在裝置上緣——A 跳躍維持右下（拇指連打），B 吸/射移至右側偏上（食指按壓；與 A 垂直遠離杜絕誤觸）；方向搖桿維持左半屏。
 - 布局 SSOT：`core/layout.ts`——按鍵中心以 keys-layer 安全區內比例（cx/cy 0-1）表示，直橫持共用；`DEFAULT_LAYOUT`：A (0.92, 0.78)、B (0.92, 0.34)。（v16 已由 §95 取代「預設」的直持適用性：預設依殼旋轉態分流 `defaultLayoutFor`，直持採右下拇指帶錨點；自訂布局仍直橫持共用。）
 - `#keys-layer`：安全區內鋪滿的定位容器（四向 `max()` 地板＋portrait 換軸表），按鍵以 `left/top %` + `translate(-50%,-50%)` 定位。
-- 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。（v14 已由 §88/§89 取代操作列結構與 schema：schema 升 v2 增全域縮放、操作列直欄化並增持向切換與縮放列。）
+- 按鈕自訂（KISS：拖曳＋儲存＋重置，不做進階編輯器）（v19 已由 §118.1/§118.2 取代入口與儲存位置：入口自 Title 直鈕改為設定頁轉入，布局改存 `sp-settings.keyLayout`，`sp-key-layout` 僅作 migration 來源）：Title「按鈕配置」→ `systems/keyConfig.ts` DOM 覆層——直接拖曳真實 A/B 鍵即時預覽，「儲存並返回」寫入 localStorage `sp-key-layout`（schema `{version:1, a:{cx,cy}, b:{cx,cy}}`；版本不符/損毀回退預設），「恢復預設」一鍵還原。拖曳座標經 `pointerToLocal` 換軸，夾限 `KEY_CLAMP` 保證按鍵完整在畫面內。（v14 已由 §88/§89 取代操作列結構與 schema：schema 升 v2 增全域縮放、操作列直欄化並增持向切換與縮放列。）
 
 ## 35. v5 暫停系統與離頁自動暫停
 
@@ -331,12 +331,12 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 - 全停語義：`scene.pause(Game)`（物理/計時/tween/輸入輪詢全停）＋ `AudioContext.suspend()`（BGM 與 SFX 全停）。
 - 重新開始＝重置當前關卡全狀態（血量/彈藥/擊殺數/計時/實體經 scene.restart 重生），保留已完成關卡累計用時與本輪死亡數。
 - 離頁自動暫停：`visibilitychange`（hidden）與 `pagehide`（同走 hidden 檢查防雙觸發）即開暫停選單；回前景停在選單、玩家點「繼續」才接續（取代 §26 的自動恢復，杜絕回前景瞬間被偷襲）。音訊恢復一律走手勢堆疊內 `resume()`（§33 條目 6），刻意暫停期間全域復聲保險不生效。
-- 與 PWA 週期更新 hooks（main.ts `import './pwa'`）共存：兩者互不依賴，同檔並列。已知邊界：回前景恰逢新版部署時，autoUpdate 完成後的 reload 會重新載入頁面蓋過暫停選單，屬可接受權衡，不特別攔截。
+- 與 PWA 週期更新 hooks（main.ts `import './pwa'`）共存：兩者互不依賴，同檔並列。已知邊界：回前景恰逢新版部署時，autoUpdate 完成後的 reload 會重新載入頁面蓋過暫停選單，屬可接受權衡，不特別攔截。（v19 已由 §118.4 取代此已知邊界：更新套用改經殼層安靜閘，遊戲進行中與暫停選單期間絕不 reload。）
 
 ## 36. v5 開場主選單與圖鑑/技能介紹
 
 - Title 開場動畫：主標縮放彈出（Back.easeOut）、副標延遲淡入、主角自天而降 Bounce 落定＋光暈淡入；維持既有美術風格與 zzfx 音效（選單按壓 pop）。
-- 主選單：開始遊戲（主鈕）＋次選單列 圖鑑／技能介紹／按鈕配置（DOM 鈕承接命中，data-menu 標識）。
+- 主選單：開始遊戲（主鈕）＋次選單列 圖鑑／技能介紹／按鈕配置（DOM 鈕承接命中，data-menu 標識）。（v6 §39 增「世界地圖」；v19 已由 §118.2 取代次選單構成：世界地圖／圖鑑／技能介紹／設定四鈕，按鈕配置移入設定頁轉入口；桌機另增常駐「操作說明」，見 §87.4。）
 - 圖鑑/技能介紹（`CodexScene` 單場景雙分頁，資料 SSOT `core/codex.ts`，立繪一律取既有 sprite 資產、禁止新美術）：
   - 圖鑑分頁：全 8 角色（jelly/floaty/spiky/puffy/chompy/shelly/zappy/boss）4×2 網格——立繪＋名稱＋行為一句話＋可吸/不可吸圓點標記。（v7 擴 5×2 十格；v8 擴 7×2 十四格；v9 已由 §59 取代：8×2 十六格。）
   - 技能分頁：吸入／星彈三系（含來源怪物對應）（v6 已由 §40 擴充為五系＋殼盾／雷鏈條目；v7 §44/§46 移除空中疾衝、增混合星彈與七系敘述）／強化星／星暴／下衝擊／漂浮，雙欄列表（名稱＋操作＋效果）。
@@ -356,12 +356,12 @@ Arcade Physics 相容優先（斜坡不做——Arcade 無原生支援，違反 
 
 ## 38. 存檔系統（core/save.ts 為 SSOT，pure TS 可測）
 
-- localStorage `sp-save` schema v1：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, eggsFound: string[] } }, lastPlayedAt }`。
+- localStorage `sp-save` schema v1：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, eggsFound: string[] } }, lastPlayedAt }`。（v15 已由 §94.2 升 v2 增 `achievements`；v19 已由 §118.3 補訂 checksum 欄與 `sp-save-backup` 備援。）
 - 寫入時機：通關（星星門吸入當下即寫，演出中斷不掉進度）、魔王擊破、彩蛋觸發（`trigger` 型別字串為關內唯一 id）。
-- 容錯（沿用 §34 sp-key-layout parse/fallback 模式）：schema 版本不符、形狀損毀、隱私模式拋錯——一律回退預設值；`highestClearedLevel` 由關卡條目重新推導，不信任持久化值。
+- 容錯（沿用 §34 鍵位布局 parse/fallback 模式）：schema 版本不符、形狀損毀、隱私模式拋錯——一律回退預設值；`highestClearedLevel` 由關卡條目重新推導，不信任持久化值。
 - `bestTimeMs`＝該關單次成功嘗試的最短用時（死亡重試重計）；`eggsFound` 去重持久化，跨局累計。
-- 重置進度：世界地圖左下「重置進度」兩步確認（武裝態 3s 未確認自動退回），僅清 `sp-save`（按鍵布局 `sp-key-layout`、靜音 `sp-muted` 不動）。全新存檔不顯示入口。
-- 偏離備註：任務原文「設定頁加重置進度」——本遊戲無設定頁（按鈕配置為鍵位編輯器，語義不符），重置入口落於世界地圖（進度顯示與進度管理同場景，KISS）。
+- 重置進度：世界地圖左下「重置進度」兩步確認（武裝態 3s 未確認自動退回），僅清存檔（偏好不動）。全新存檔不顯示入口。（v19 已由 §118.3 補訂清除範圍：同時清 `sp-save` 與備援 `sp-save-backup`；偏好鍵自 `sp-key-layout`／`sp-muted` 收斂為 `sp-settings`。）
+- 偏離備註：任務原文「設定頁加重置進度」——v6 當時本遊戲無設定頁（按鈕配置為鍵位編輯器，語義不符），重置入口落於世界地圖（進度顯示與進度管理同場景，KISS）。（v19 已由 §118.2 取代前提：Title 已有「設定」入口，但重置進度**維持在世界地圖**——進度顯示與進度管理同場景的 KISS 裁決不變。）
 
 ## 39. 迷霧世界地圖（MapScene，data-driven 自 LEVELS）
 
@@ -817,17 +817,26 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 
 ## 62. v9 慈悲補血愛心（logic/mercyHeal.ts 純決策，保底機制非資源農場）
 
-- 機制參數表（`MERCY_HEAL`，RNG 與時鐘由呼叫端注入供測試）：
+- 機制參數表（`MERCY_HEAL`，**確定性 pity 決策**；時鐘由呼叫端注入供測試，RNG 僅決定
+  生成位置不參與生成與否——v19 #819 卡 9 去 RNG，取代原 35%／60% 擲骰）：
 
-| 參數     | 值              | 說明                                       |
-| -------- | --------------- | ------------------------------------------ |
-| 評估間隔 | 5000ms          | 每 5s 評估一次（未過門檻僅重置計時不擲骰） |
-| 血量門檻 | HP ≤ 總血量 1/3 | 5 血制即 HP ≤1                             |
-| 久戰門檻 | ≥60s            | 本關（本命）經過時間                       |
-| 生成冷卻 | ≥45s            | 距上次愛心生成                             |
-| 觸發機率 | 35%             | 全門檻通過後擲骰                           |
-| 每命上限 | 2 次            | 死亡重試/重開關卡即重置                    |
-| 回復量   | +1 HP           | 走既有回復管線                             |
+| 參數          | 一般關          | 魔王房（含 EX）override | 說明                                           |
+| ------------- | --------------- | ----------------------- | ---------------------------------------------- |
+| 評估間隔      | 5000ms          | 同左                    | 每 5s 評估一次（未過門檻僅重置評估計時）       |
+| 血量門檻      | HP ≤ 總血量 1/3 | HP ≤ 2（絕對值）        | 5 血制一般關即 HP ≤1                           |
+| 久戰門檻      | ≥60s            | ≥12s                    | 本關（本命）經過時間；boss 戰典型 20–60s       |
+| 生成冷卻      | ≥45s            | ≥18s                    | 距上次愛心生成                                 |
+| pity 受傷門檻 | ≥2 次           | ≥2 次                   | `pityHurts`／`bossPityHurts`，自上次生成起累計 |
+| pity 低血門檻 | ≥30s            | ≥15s                    | `pityLowHpMs`／`bossPityLowHpMs`，低血累計時間 |
+| 每命上限      | 2 次            | 2 次（EX 1 次）         | `exMaxPerLife=1`；死亡重試/重開關卡即重置      |
+| 回復量        | +1 HP           | 同左                    | 走既有回復管線                                 |
+
+- pity 決策語意（`advanceMercyHeal`）：**首顆固定生成**（`spawned === 0`）；第二顆起需
+  自上次生成後累積「受傷次數 ≥ pity 受傷門檻」**或**「低血狀態累計 ≥ pity 低血門檻」
+  任一成立才保底放行。受傷偵測＝HP 較上一 tick 下降即計 1（單次多傷計 1，回血僅更新
+  基準）；低血累計僅於存活且過血量門檻時推進。生成當下 pity 計量歸零。
+- 計量與評估分離：pity 計量逐幀累積，評估間隔到期才做生成決策；任一門檻不過只重置
+  評估計時，**保底計量不消耗**（低血久撐不會白費）。
 
 - 生成呈現（重用共用愛心拾取管線 systems/pickups.ts，勿新造 pickup 系統）：隨機擇一
   ——空中緩降型（y=150 起以 26px/s 緩慢飄落至地面錨點，降落中可接住）或地面定點型
@@ -868,7 +877,7 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 | levels L7 | 補給構成                        |    jelly/floaty/gusty |        **jelly/floaty/zappy** | 移除俯衝型騷擾；保雷化斷召素材                                                                   |
 | waves.ts  | 補給入場側                      |              左右交替 |                  **玩家遠側** | 走向玩家的路程＝拾取節奏                                                                         |
 | homing.ts | `BOSS_AIM_ASSIST`               |                    無 | **range 560 / 0.0012 rad/ms** | 一般星彈對魔王微導向：地面平射自然上彎入盤旋帶（追蹤彈 1/5 轉率、須大致對向；追電/迴旋星不疊加） |
-| mercyHeal | 魔王房 override                 |                    無 |    **HP≤2、12s、18s CD、60%** | boss 戰長度下保底真正可觸發                                                                      |
+| mercyHeal | 魔王房 override                 |                    無 |    **HP≤2、12s、18s CD、60%** | boss 戰長度下保底真正可觸發（v19 已由 §62 取代 60% 擲骰：改 pity 受傷 2 次／低血 15s 保底）      |
 
 ### 63.2 驗收證據（噗頭對噗頭 bot 實測，序列執行；`scripts/noctra-bot-audit.mjs`）
 
@@ -1026,8 +1035,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 - 新觸發器 `twin-finish`（eggs.ts 第五型）：時窗真值由 prismixFsm 持有（單一真值），
   GameScene 收到 twinFinish 事件餵入觸發器——鎖存、gold-star 獎勵＋全屏稜光演出；
   `vent-hit-count` 已於 v11 落地（§75）、`survive-collect` 隨 v12（主計畫 §7.3）。
-- 慈悲補血：L12 沿用 §62 魔王房 override（HP≤2、12s 起評、18s 冷卻、60%、上限 2）——
-  `bossRoom` 判定隨 `level.boss` 泛化，零新碼。
+- 慈悲補血：L12 沿用 §62 魔王房 override（HP≤2、12s 起評、18s 冷卻、上限 2；v19 已由
+  §62 取代 60% 擲骰：改 pity 受傷 2 次／低血 15s 保底）——`bossRoom` 判定隨 `level.boss`
+  泛化，零新碼。
 - anti-softlock 不變式（測試守門）：warp 四不變式（§66）；checkpoint 落點房界外（§67）；
   L12 補生全可吸且恆可吸佔比 ≥0.6；碎晶盾可全數擊破（星彈屏障非無敵殼）；前室單向門
   重試自前室起、arena 無門鎖擊破制（§10.2-10）；增益永不必需（§69）。
@@ -1487,10 +1497,14 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   bottom→殼左；cw 維持 v4 原表。
 - 偏好持久化：localStorage `sp-rotation`（'cw'｜'ccw'，缺省＝ccw 新預設；
   不進 save schema）；讀取走記憶體快取（pointer 熱路徑不重複讀 storage）。
+  （v19 已由 §118.1 取代儲存位置：收斂為 `sp-settings.shellRotation`，
+  `null`＝從未選擇；`sp-rotation` 僅作一次性 migration 來源，落盤後刪除。
+  記憶體快取語意不變。）
 
 ### 87.2 回訪玩家保護（肌肉記憶）
 
-- 既有玩家（sp-save 有進度且未曾設定 sp-rotation）首次進站於 Title 顯示一次性
+- 既有玩家（存檔有進度且未曾設定持向偏好——v19 §118.1 即
+  `sp-settings.shellRotation === null`）首次進站於 Title 顯示一次性
   方向告知卡（§92 殼層卡片）：說明新方向並提供「切回舊方向」一鍵；
   已示記憶 localStorage `sp-rotation-notice`。全新玩家無感知不打擾。
 - 持向切換入口常駐「按鈕配置」操作列（§88），納入草稿語意：切換即時預覽、
@@ -1499,7 +1513,7 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 ### 87.3 驗證
 
 - 座標矩陣單測（rotation.test.ts 九案）：三態四角／中心／滑動向量映射斷言。
-- portrait e2e 雙案：ccw 新預設（上滑=往右）＋ sp-rotation=cw 舊方向回歸
+- portrait e2e 雙案：ccw 新預設（上滑=往右）＋持向偏好設為 cw 的舊方向回歸
   （下滑=往右、殼 matrix 斷言）。畫布覆蓋率 99.98% 不變。
 
 ### 87.4 方向解鎖引導＋桌機正置（#817，T2）
@@ -1529,6 +1543,8 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
 
 - schema v1→v2 versioned migration：v1 舊存檔鍵位保留、`scale` 補預設 1；
   未知版本回退預設。v2：`{version:2, a, b, scale}`，scale 夾限 0.8–1.3。
+  （v19 已由 §118.1 取代儲存位置：**schema 形狀不變**，改存於
+  `sp-settings.keyLayout` 子樹；`sp-key-layout` 僅作一次性 migration 來源。）
 - 縮放經 CSS 變數 `--sp-key-scale` 單點驅動鍵體與鍵帽（clip-path 圖形同步），
   觸控熱區隨元素幾何自然同步；`KEY_BASE_PX`（A76/B72）與 style.css 以單測
   跨檔守門防雙寫漂移。
@@ -1643,14 +1659,15 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   （A fx 0.82/fy 0.86、B fx 0.80/fy 0.68——右下拇指帶、B 沿拇指弧在 A 上方），
   `defaultLayoutFor(rotation)` 依殼向反算層比例：ccw cx=1−fy、cy=fx；
   cw cx=fy、cy=1−fx（§87 軸向映射逆向）；橫持沿用 v14 定案。
-- schema 不動（sp-key-layout v2 零遷移）：合法自訂資料在任何持向原樣適用；
+- schema 不動（鍵位布局 v2 零遷移，§89）：合法自訂資料在任何持向原樣適用；
   只有「無自訂／損毀回退」與「恢復預設」走旋轉感知預設。
 - 直持下 A/B 幾何上與 joy-zone 重疊（裝置下半即遊戲左半）：keys-layer 為後繪
   兄弟層，按鍵天然承接命中；誤觸空白處僅錨定浮動搖桿（點按零位移，無害）。
 
 ### 95.2 儲存語意（配置頁）
 
-- 預設態不落盤：從未自訂或按過「恢復預設」後儲存＝清除 sp-key-layout，
+- 預設態不落盤：從未自訂或按過「恢復預設」後儲存＝清除布局（v19 §118.1：
+  `sp-settings.keyLayout` 置 null，v14–v18 為清除 `sp-key-layout` 鍵，語意等價），
   直橫持各自動態解析預設；拖曳／縮放屬自訂，儲存持久化具體布局（維持 v14
   單一共用布局語意）。
 - 「恢復預設」依當前草稿持向給對的錨點；持向切換（cw/ccw）時預設態即時重映射，
@@ -1742,8 +1759,9 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   canvas 圖示保留純視覺、移除 interactive（沿 recon-v4 A.3 單一命中路徑）；
   `pause.ts addButton` 補 aria-label。
 - 命中尺寸：邏輯 44×44 經 §98 短邊 48px 保底，直橫持皆達標。
-- 驗證：v16 e2e（暫停開選單真凍結→繼續、靜音 aria-pressed 與 sp-muted 同步
-  翻轉）；portrait e2e 真觸控點暫停即凍結、pause/mute AABB 短邊 ≥48。
+- 驗證：v16 e2e（暫停開選單真凍結→繼續、靜音 aria-pressed 與靜音偏好同步
+  翻轉——v19 §118.1 後偏好真值為 `sp-settings.audioMuted`）；portrait e2e
+  真觸控點暫停即凍結、pause/mute AABB 短邊 ≥48。
 
 ## 102. v16 配置模式遮罩加深（F-04，補充 §34）
 
@@ -2440,3 +2458,69 @@ W3 合議收斂：補齊 §8.2 表前二王真 P4（stub 落地）＋Syrona 暴�
 - 行為錨：visualScale.test 鎖住「動畫期間物理讀取窗 scale 恆為基準」契約與
   池重用重錨、shutdown 清理語意；行為零改變由全量 vitest＋e2e 全套＋
   level-audit L1/L14/L16 EX 對比 base 佐證。
+
+## 118. 使用者設定 SSOT、存檔備援與 PWA 更新閘（#819；T7-A 列車）
+
+現行偏好與持久化 SSOT。取代散落 localStorage 鍵敘述：§9 靜音鍵、§34/§89/§95.2 鍵位
+布局鍵、§87.1 旋轉方向鍵，以及 §38 的「本遊戲無設定頁」偏離備註與重置範圍描述。
+
+### 118.1 UserSettings 單鍵 SSOT（core/settings.ts）
+
+- 儲存鍵 `sp-settings`（`SETTINGS_SCHEMA_VERSION = 1`）為**唯一偏好真相**，欄位：
+  `audioMuted`／`hapticsEnabled`／`wakeLockEnabled`／`reducedMotion`／`screenShake`
+  （`off|low|full`）／`shellRotation`（`cw|ccw|null`，null＝從未選擇供 §87.2 一次性
+  告知判定）／`keyLayout`（§89 v2 子樹，null＝預設態不落盤，§95.2 語意不變）。
+- `reducedMotion` 預設尊重系統 `prefers-reduced-motion`（WCAG 2.3.3）；非瀏覽器環境 false。
+- **一次性 migration**：首次讀取時吸收 legacy 散鍵 `sp-muted`／`sp-rotation`／
+  `sp-key-layout` 為初始值（值損毀逐項回預設），**落盤成功即刪除三個 legacy 鍵**
+  （單真相；PWA 部署單向前進，回滾非支援路徑，殘留舊值會在主鍵遺失時被吸回過期偏好）。
+  例外語意：`persist` 失敗（隱私模式／配額滿）**保留 legacy 作下次開機來源**。
+- 主鍵損毀（JSON 壞損／版本不符／形狀損毀）：回退 legacy 吸收並回寫修復，不以預設
+  靜默覆蓋；置 `wasSettingsRecoveredFromCorruption` 旗標，main.ts 於 Title 安靜時刻
+  以殼卡（§92）明確告知。
+- 一次性記憶鍵（`sp-rotation-notice`／`sp-install-dismissed`／`sp-desktop-keys`／
+  `sp-orientation-hint` 等）非偏好，**不入本 schema**。
+- 已知限制：偏好經記憶體快取、無 storage event 跨分頁同步——多分頁併發寫入為
+  last-writer-wins（單分頁互動情境，接受此限制）。
+
+### 118.2 統一設定頁（systems/settingsPage.ts，取代 §38「無設定頁」備註）
+
+- Title 次選單第四鈕「設定」（`data-menu="settings"`）開啟純 DOM overlay（沿
+  keyConfig／shellCards 慣例，不進 Phaser Scene）；容器沿用 `.install-overlay`
+  class，`isShellBusy` 天然視為忙碌（與 PWA 套用／殼卡排隊互斥）。
+- 內容：音效／震動回饋／遊戲中螢幕常亮／減少動態效果四開關＋震屏強度三段
+  （關／弱／全）＋「按鈕配置（鍵位與持向）」轉入口（§34 keyConfig 專頁由此轉入，
+  不再是 Title 獨立鈕）＋「完成」。ESC 關閉。
+- **即改即存**，無草稿語意（草稿／取消回滾僅存在於按鈕配置頁，§87.2/§95.2 不變）；
+  音效切換同步 mute 系統，震動開啟時輕震一次即時回饋。
+- 震屏／閃光偏好落地（`systems/cameraFxGate.ts`）：一次性包裝 main camera 的
+  `shake`／`flash`，全部 boss／fx 呼叫端零改動即受管——`reducedMotion` 或
+  `screenShake:'off'` 時震屏強度 ×0（直接不震）、`low` ×0.5、`full` ×1；
+  `reducedMotion` 另將 flash 時長 ×0.3（未帶參呼叫以 Phaser 預設 250ms 為基準）。
+  偏好每次呼叫重讀，設定頁改動即時生效。
+
+### 118.3 存檔備援與 checksum（core/save.ts，補訂 §38）
+
+- schema 現值 v2（§94.2 已升版；§38 的 v1 敘述為 v6 歷史值）。寫入時附
+  `checksum` 欄；解析時 checksum 不符／JSON 壞損／未知版本一律判**損毀**。
+  legacy 存檔（無 checksum 欄）視為合法，不誤殺舊玩家。
+- 備援鍵 `sp-save-backup`：每次寫入前把**上一份合法主檔**輪替至備援（損毀資料不
+  污染備援）；主檔損毀時自備援恢復並回寫自癒，備援亦不可用才回退預設——兩路徑
+  皆 `console.warn` 留痕，不再默默歸零。備援輪替失敗（配額不足／隱私模式）不得
+  阻斷主檔寫入。
+- **重置進度範圍修正**（取代 §38 的「僅清 `sp-save`」）：`resetSave` 同時清除
+  `sp-save` 與 `sp-save-backup`（否則重置後會自備援恢復出舊進度）；偏好
+  （`sp-settings`：靜音／鍵位／持向等）不動。入口與兩步確認語意沿 §38 不變。
+
+### 118.4 PWA 更新套用時機閘（pwaUpdateGate.ts）
+
+- 新版 SW ready 只標記 pending，**遊戲進行中絕不 reload**；僅在殼層安靜
+  （非 GameScene／非配置中／無殼卡＝Title/Map/Result 選單面，忙碌訊號沿
+  `shellCards.isShellBusy` 單一 SSOT）才自動套用。
+- 套用寬限 1500ms：條件成立後再等寬限期並重驗，期間殼層轉忙（再入遊戲）即放棄
+  本次套用交還重試管線——避免場景切換瞬間 reload 吃掉使用者正要按下的點擊
+  （Result「下一關」CTA 競態，§100）。
+- 邊界事件漏接保險：pending 期間每 5s 低頻重試；`#controls` class 變化
+  （MutationObserver）＝遊戲進出場邊界，離開 GameScene 當下即嘗試套用。
+- 取代 §35 的已知邊界敘述「autoUpdate 完成後的 reload 會蓋過暫停選單」——該競態
+  已由本閘根治（暫停選單期間 `#controls.is-active` 仍為真＝殼層忙碌，不會套用）。
