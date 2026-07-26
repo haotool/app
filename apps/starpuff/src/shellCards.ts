@@ -145,3 +145,9 @@ export function notifySaveUnavailable(): void {
     2500,
   );
 }
+
+// 測試用旗標重置（審查 nit）：模組級單次守衛會跨案污染，同檔多案需顯式歸零。
+// 僅供單測呼叫，執行期無呼叫點。
+export function __resetSaveUnavailableForTests(): void {
+  saveUnavailableNotified = false;
+}

@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+247
+> 本次分數變化：+6（reward 6、penalty 0、neutral 0）｜累計總分：+248
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-no-popup-during-play-lock
+- 原因：「杜絕戰鬥中彈窗攔截操作」為硬不變式，但 `shellCards.test.ts` 只測 Title 安靜顯卡與節流，且 stub 讓 `[data-menu="start"]` 恆在——等於繞過該規則，新增提示呼叫點時無回歸保護（Grok 席 -4）
+- 解法：補兩案分別鎖住兩個忙碌訊號（非 Title、controls `is-active`）——advanceTimers 後 overlay 必須為 0，解除忙碌才變 1；另補 dev-only `__resetSaveUnavailableForTests` 消除模組旗標跨案污染。以拔掉 whenShellIdle 忙碌守衛驗證 3 案轉紅再還原綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-settings-fixture-sync-gate
