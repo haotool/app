@@ -418,4 +418,74 @@ export const ASSETS: AssetEntry[] = [
     key: 'boss-maridella-enraged',
     url: new URL('../../assets/sprites/boss-maridella-enraged.webp', import.meta.url).href,
   },
+  // v21-v30 B02 六新小怪（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'minion-cargojelly',
+    url: new URL('../../assets/sprites/minion-cargojelly.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-ticketbat',
+    url: new URL('../../assets/sprites/minion-ticketbat.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-scannereye',
+    url: new URL('../../assets/sprites/minion-scannereye.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-bubbler',
+    url: new URL('../../assets/sprites/minion-bubbler.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-iceslime',
+    url: new URL('../../assets/sprites/minion-iceslime.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-tideray',
+    url: new URL('../../assets/sprites/minion-tideray.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 潮化基底與焰化／潮化變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-tide',
+    url: new URL('../../assets/sprites/hero-tide.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-gather',
+    url: new URL('../../assets/sprites/hero-ember-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-shrink',
+    url: new URL('../../assets/sprites/hero-ember-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-stretch',
+    url: new URL('../../assets/sprites/hero-ember-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-burst',
+    url: new URL('../../assets/sprites/hero-ember-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-complete',
+    url: new URL('../../assets/sprites/hero-ember-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-gather',
+    url: new URL('../../assets/sprites/hero-tide-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-shrink',
+    url: new URL('../../assets/sprites/hero-tide-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-stretch',
+    url: new URL('../../assets/sprites/hero-tide-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-burst',
+    url: new URL('../../assets/sprites/hero-tide-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-complete',
+    url: new URL('../../assets/sprites/hero-tide-morph-complete.webp', import.meta.url).href,
+  },
 ];
