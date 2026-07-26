@@ -43,12 +43,6 @@ import {
   nextLevelId,
   type LevelSpec,
 } from '../logic/levels';
-import {
-  MERCY_HEAL,
-  advanceMercyHeal,
-  createMercyState,
-  type MercyState,
-} from '../logic/mercyHeal';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import type { BossDamageSource, BossHandle } from '../systems/boss';
 import { createBossKit } from '../systems/bossFactory';
@@ -60,8 +54,8 @@ import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem } from '../systems/fx';
 import { createHud } from '../systems/hud';
 import { createLevelGate, type LevelGateHandle } from '../systems/levelGate';
+import { createMercyDirector, type MercyDirector } from '../systems/mercyDirector';
 import { openPauseMenu } from '../systems/pause';
-import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
 import { createMeteorSystem, type MeteorSystem } from '../systems/meteor';
 import { applyInhalePull, wireCombatOverlaps } from '../systems/overlaps';
@@ -119,10 +113,8 @@ export class GameScene extends Phaser.Scene {
   private exMode = false;
   // 教學關死亡配額結轉（§105 D5）：retryLevel 帶入、waves runner 以此為種子。
   private carryKills = 0;
-  // 慈悲補血（§62）：每關每命狀態（create 重建即歸零）；rng/時間快轉供 e2e 注入。
-  private mercy: MercyState = createMercyState();
-  private mercyRng: () => number = Math.random;
-  private mercyWarpMs = 0;
+  // 慈悲補血（§62）：評估與生成錨點委派 systems/mercyDirector（create 重建即歸零）。
+  private mercy!: MercyDirector;
   private startedAt = 0;
   // 魔王擊破瞬間鎖存的通關用時（審查修復 #724）；非 boss 關恆 null 走即時計算。
   private clearTimeMs: number | null = null;
@@ -208,9 +200,6 @@ export class GameScene extends Phaser.Scene {
     this.bossHp = -1;
     this.pendingUnlocked = [];
     this.farthestX = 0;
-    this.mercy = createMercyState();
-    this.mercyRng = Math.random;
-    this.mercyWarpMs = 0;
 
     this.physics.world.setBounds(0, 0, this.worldWidth(), VIEW.height);
     // 低重力（§81）：關卡級重力係數單點注入（缺省 1.0 零回歸）；世界重力為全域值，
@@ -321,6 +310,18 @@ export class GameScene extends Phaser.Scene {
       noteClear: () => this.starburstDirector.noteClear(),
       persistClear: () =>
         this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs())),
+    });
+    // 慈悲補血（§62／v19 pity）：委派 systems/mercyDirector（create 重建即每命歸零）。
+    this.mercy = createMercyDirector(this, GROUND_TOP, {
+      player: () => this.player,
+      playerHp: () => this.playerHp,
+      fx: () => this.fx,
+      isBossLevel: () => this.level.boss !== null,
+      exMode: this.exMode,
+      elapsedMs: () => this.levelTimeMs(),
+      bossRoomEntered: () => this.bossRoom?.entered() === true,
+      arenaLeft: () => this.arenaLeft(),
+      worldWidth: () => this.worldWidth(),
     });
     // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
     // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
@@ -503,7 +504,7 @@ export class GameScene extends Phaser.Scene {
       this.advanceBuff(deltaMs);
       this.caramel.update(deltaMs);
       this.starSteering.update(deltaMs);
-      this.advanceMercy(deltaMs);
+      this.mercy.update(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
       this.advanceTide(deltaMs);
@@ -915,7 +916,7 @@ export class GameScene extends Phaser.Scene {
       this.player.heal(PLAYER.maxHp, PLAYER.maxHp);
       // 落地護體顯式重授（審查修復）：不依賴致死當下殘餘 i-frame，重生窗恆為完整時長。
       this.player.grantInvulnerability(PLAYER.invulnerableMs);
-      this.mercy = createMercyState();
+      this.mercy.resetLife();
       // 重生瞬移重置門掃掠基準（§66 同語義）：防大位移被誤判為跨越星星門。
       this.levelGate.noteWarp(respawnX);
       this.fx.burstSmall(respawnX, GROUND_TOP - 40, 0x9fe8ff);
@@ -929,51 +930,11 @@ export class GameScene extends Phaser.Scene {
     return this.time.now - this.startedAt;
   }
 
-  // 慈悲補血（§62／v19 pity）：每 5s 評估低血久戰保底，生成與否確定性；
-  // 一般關與魔王關（含 EX）皆啟用，mercyRng 僅決定生成位置。
-  private advanceMercy(deltaMs: number): void {
-    const result = advanceMercyHeal(this.mercy, {
-      deltaMs,
-      elapsedMs: this.levelTimeMs() + this.mercyWarpMs,
-      hp: this.playerHp,
-      maxHp: PLAYER.maxHp,
-      bossRoom: this.level.boss !== null,
-      exMode: this.exMode,
-    });
-    this.mercy = result.state;
-    if (result.spawn) this.spawnMercyHeart();
-  }
-
-  private spawnMercyHeart(): void {
-    const side = this.mercyRng() < 0.5 ? -1 : 1;
-    const offset = 120 + this.mercyRng() * 120;
-    // 夾限下界 50：玩家貼世界左牆（hurtbox 右緣 ~31）時拾取帶仍可觸及（anti-softlock）。
-    // 前室魔王關（§69）：入 arena 後單向門鎖閉，錨點下界改 arena 左緣防落於門後。
-    const minX =
-      this.bossRoom?.entered() === true && this.player.sprite.x >= this.arenaLeft()
-        ? this.arenaLeft() + 50
-        : 50;
-    const x = Phaser.Math.Clamp(this.player.sprite.x + side * offset, minX, this.worldWidth() - 50);
-    const groundY = GROUND_TOP - 22;
-    const airborne = this.mercyRng() >= 0.5;
-    const y = airborne ? 150 : groundY;
-    playSfx('reveal');
-    this.fx.burstSmall(x, y, 0xff9ec4);
-    spawnHealPickup(
-      this,
-      x,
-      y,
-      { player: () => this.player, playerHp: () => this.playerHp },
-      { healHp: MERCY_HEAL.healHp, ...(airborne ? { driftToY: groundY } : {}) },
-    );
-  }
-
   // e2e 鉤子（§62／v19 pity）：時間快轉供守門案觸發（生成已確定性）；
   // RNG 固定使生成位置可預期（玩家左側地面錨點）。
   mercyWarp(ms: number): void {
     if (!this.scene.isActive()) return;
-    this.mercyWarpMs += ms;
-    this.mercyRng = () => 0;
+    this.mercy.warp(ms);
   }
 
   // e2e 鉤子（§62）：以正式受擊管線壓低血量（i-frame 期間自然免傷，呼叫端輪詢）。
@@ -983,7 +944,7 @@ export class GameScene extends Phaser.Scene {
 
   // e2e 觀測點（§62）：本命累計愛心生成數。
   mercySpawnedCount(): number {
-    return this.mercy.spawned;
+    return this.mercy.spawnedCount();
   }
 
   // e2e 觀測點（§69）：當前短期增益狀態與本局累計拾取數。
