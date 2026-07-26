@@ -1003,4 +1003,291 @@ export const ASSETS: AssetEntry[] = [
     key: 'fx-market-deposit-overlay',
     url: new URL('../../assets/sprites/fx-market-deposit-overlay.webp', import.meta.url).href,
   },
+  // v21-v30 B05 十二系星彈四態（載入時機建議：Boot 預載——戰鬥高頻資產）。
+  {
+    key: 'fx-star-jelly-flight',
+    url: new URL('../../assets/sprites/fx-star-jelly-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-jelly-charge',
+    url: new URL('../../assets/sprites/fx-star-jelly-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-jelly-hit',
+    url: new URL('../../assets/sprites/fx-star-jelly-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-jelly-explosion',
+    url: new URL('../../assets/sprites/fx-star-jelly-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-floaty-flight',
+    url: new URL('../../assets/sprites/fx-star-floaty-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-floaty-charge',
+    url: new URL('../../assets/sprites/fx-star-floaty-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-floaty-hit',
+    url: new URL('../../assets/sprites/fx-star-floaty-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-floaty-explosion',
+    url: new URL('../../assets/sprites/fx-star-floaty-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-puffy-flight',
+    url: new URL('../../assets/sprites/fx-star-puffy-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-puffy-charge',
+    url: new URL('../../assets/sprites/fx-star-puffy-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-puffy-hit',
+    url: new URL('../../assets/sprites/fx-star-puffy-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-puffy-explosion',
+    url: new URL('../../assets/sprites/fx-star-puffy-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-shelly-flight',
+    url: new URL('../../assets/sprites/fx-star-shelly-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-shelly-charge',
+    url: new URL('../../assets/sprites/fx-star-shelly-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-shelly-hit',
+    url: new URL('../../assets/sprites/fx-star-shelly-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-shelly-explosion',
+    url: new URL('../../assets/sprites/fx-star-shelly-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-zappy-flight',
+    url: new URL('../../assets/sprites/fx-star-zappy-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-zappy-charge',
+    url: new URL('../../assets/sprites/fx-star-zappy-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-zappy-hit',
+    url: new URL('../../assets/sprites/fx-star-zappy-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-zappy-explosion',
+    url: new URL('../../assets/sprites/fx-star-zappy-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-drilly-flight',
+    url: new URL('../../assets/sprites/fx-star-drilly-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-drilly-charge',
+    url: new URL('../../assets/sprites/fx-star-drilly-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-drilly-hit',
+    url: new URL('../../assets/sprites/fx-star-drilly-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-drilly-explosion',
+    url: new URL('../../assets/sprites/fx-star-drilly-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-glowy-flight',
+    url: new URL('../../assets/sprites/fx-star-glowy-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-glowy-charge',
+    url: new URL('../../assets/sprites/fx-star-glowy-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-glowy-hit',
+    url: new URL('../../assets/sprites/fx-star-glowy-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-glowy-explosion',
+    url: new URL('../../assets/sprites/fx-star-glowy-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-spora-flight',
+    url: new URL('../../assets/sprites/fx-star-spora-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-spora-charge',
+    url: new URL('../../assets/sprites/fx-star-spora-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-spora-hit',
+    url: new URL('../../assets/sprites/fx-star-spora-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-spora-explosion',
+    url: new URL('../../assets/sprites/fx-star-spora-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-boomy-flight',
+    url: new URL('../../assets/sprites/fx-star-boomy-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-boomy-charge',
+    url: new URL('../../assets/sprites/fx-star-boomy-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-boomy-hit',
+    url: new URL('../../assets/sprites/fx-star-boomy-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-boomy-explosion',
+    url: new URL('../../assets/sprites/fx-star-boomy-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-tide-flight',
+    url: new URL('../../assets/sprites/fx-star-tide-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-tide-charge',
+    url: new URL('../../assets/sprites/fx-star-tide-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-tide-hit',
+    url: new URL('../../assets/sprites/fx-star-tide-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-tide-explosion',
+    url: new URL('../../assets/sprites/fx-star-tide-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-prism-flight',
+    url: new URL('../../assets/sprites/fx-star-prism-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-prism-charge',
+    url: new URL('../../assets/sprites/fx-star-prism-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-prism-hit',
+    url: new URL('../../assets/sprites/fx-star-prism-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-prism-explosion',
+    url: new URL('../../assets/sprites/fx-star-prism-explosion.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-gravity-flight',
+    url: new URL('../../assets/sprites/fx-star-gravity-flight.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-gravity-charge',
+    url: new URL('../../assets/sprites/fx-star-gravity-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-gravity-hit',
+    url: new URL('../../assets/sprites/fx-star-gravity-hit.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-star-gravity-explosion',
+    url: new URL('../../assets/sprites/fx-star-gravity-explosion.webp', import.meta.url).href,
+  },
+  // v21-v30 B05 共通技能分層 VFX（吸入/漂浮/落地，各五層獨立疊加）。
+  {
+    key: 'fx-common-inhale-core',
+    url: new URL('../../assets/sprites/fx-common-inhale-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-inhale-shock',
+    url: new URL('../../assets/sprites/fx-common-inhale-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-inhale-trail',
+    url: new URL('../../assets/sprites/fx-common-inhale-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-inhale-debris',
+    url: new URL('../../assets/sprites/fx-common-inhale-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-inhale-overlay',
+    url: new URL('../../assets/sprites/fx-common-inhale-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-float-core',
+    url: new URL('../../assets/sprites/fx-common-float-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-float-shock',
+    url: new URL('../../assets/sprites/fx-common-float-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-float-trail',
+    url: new URL('../../assets/sprites/fx-common-float-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-float-debris',
+    url: new URL('../../assets/sprites/fx-common-float-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-float-overlay',
+    url: new URL('../../assets/sprites/fx-common-float-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-landing-core',
+    url: new URL('../../assets/sprites/fx-common-landing-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-landing-shock',
+    url: new URL('../../assets/sprites/fx-common-landing-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-landing-trail',
+    url: new URL('../../assets/sprites/fx-common-landing-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-landing-debris',
+    url: new URL('../../assets/sprites/fx-common-landing-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-common-landing-overlay',
+    url: new URL('../../assets/sprites/fx-common-landing-overlay.webp', import.meta.url).href,
+  },
+  // v21-v30 B05 HUD 補完（volt/gale/shell 徽章技能圖示與通用彈藥/SP 圖示）。
+  {
+    key: 'ui-volt-badge',
+    url: new URL('../../assets/sprites/ui-volt-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-volt-skill',
+    url: new URL('../../assets/sprites/ui-volt-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-gale-badge',
+    url: new URL('../../assets/sprites/ui-gale-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-gale-skill',
+    url: new URL('../../assets/sprites/ui-gale-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-shell-badge',
+    url: new URL('../../assets/sprites/ui-shell-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-shell-skill',
+    url: new URL('../../assets/sprites/ui-shell-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-hud-ammo',
+    url: new URL('../../assets/sprites/ui-hud-ammo.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-hud-sp',
+    url: new URL('../../assets/sprites/ui-hud-sp.webp', import.meta.url).href,
+  },
 ];
