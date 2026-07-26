@@ -9,13 +9,18 @@ import { RESCUE_REACH_Y_TOP } from '../logic/levels';
 import {
   BOOMY_FSM,
   COMETA_FSM,
+  FOAMY_FSM,
+  FROSTY_FSM,
   GUSTY_FSM,
+  MANTA_FSM,
   MIRRI_FSM,
+  SCANNA_FSM,
   SPLATTA_FSM,
   SPORA_FSM,
   gustWindPush,
   resolveBubblaHit,
   resolveDrillyHit,
+  resolveFrostySplit,
   resolveMagnoStarHit,
   resolveMirriStarHit,
   resolveShellyHit,
@@ -66,7 +71,8 @@ export interface EnemySystem {
     opts: EliteOptions,
   ): Phaser.Physics.Arcade.Sprite | null;
   kill(enemy: Phaser.GameObjects.GameObject): void;
-  damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome;
+  // burn（§111/§112）：焰系傷害來源——冰史萊姆被 burn 擊殺熔解不分裂。
+  damage(enemy: Phaser.GameObjects.GameObject, amount: number, burn?: boolean): DamageOutcome;
   // 凍結場（§46 凝光星）：域內小怪凍結停擺，期滿自復。
   freeze(enemy: Phaser.GameObjects.GameObject, durationMs: number): void;
   // 孢子緩速（§53 孢子星/毒爆雲）：緩速期水平速度封頂＋週期輕持續傷，期滿自復。
@@ -118,6 +124,12 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   splatta: 0xc88850,
   twinkla: 0xf5e6b8,
   cometa: 0x9fd8f0,
+  cargo: 0xd8a888,
+  ticketa: 0xf0d8a0,
+  scanna: 0xe89ab0,
+  foamy: 0xbfe8f0,
+  frosty: 0xcfeeff,
+  manta: 0x8ac8e8,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -142,9 +154,48 @@ const HP: Record<EnemyKind, number> = {
   splatta: 1,
   twinkla: 1,
   cometa: 1,
+  // cargo 重型（§112）：兩發標準星；frosty 一擊分裂由擊殺路徑結算。
+  cargo: 10,
+  ticketa: 1,
+  scanna: 6,
+  foamy: 1,
+  frosty: 1,
+  manta: 1,
 };
 
 const POOL_SIZE = 16;
+// 生成初始態（§112 收斂）：三元鏈改查表；未列者 'idle'。
+// 無重力品種（§16/§73/§80/§112 收斂查表）。
+const NO_GRAVITY_KINDS: readonly EnemyKind[] = [
+  'floaty',
+  'puffy',
+  'zappy',
+  'glowy',
+  'gusty',
+  'bubbla',
+  'twinkla',
+  'cometa',
+  'ticketa',
+  'scanna',
+  'manta',
+];
+// 碰牆自動折返品種。
+const BOUNCE_KINDS: readonly EnemyKind[] = ['spiky', 'shelly', 'boomy', 'mirri', 'cargo', 'frosty'];
+const INITIAL_STATE: Partial<Record<EnemyKind, string>> = {
+  shelly: 'walk',
+  boomy: 'walk',
+  drilly: 'burrow',
+  gusty: 'drift',
+  mirri: 'roam',
+  bubbla: 'submerged',
+  splatta: 'patrol',
+  twinkla: 'phased',
+  cometa: 'glide',
+  ticketa: 'fly',
+  scanna: 'scan',
+  foamy: 'idle',
+  manta: 'cruise',
+};
 // puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）。
 const SPIKE_TEX = 'hazard-spike';
 const SPIKE_SPEED = 220;
@@ -164,6 +215,9 @@ const BLOB_SIZE = 18;
 const HAZARD_POOL_SIZE = 32;
 // 糖球落地判定線：主地面頂 y=400 上緣（§21 世界幾何常數）。
 const BLOB_GROUND_Y = 392;
+// §112 hazards：foamy 漂浮泡泡（不傷人上浮拒止）。
+const BUBBLE_TEX = 'hazard-bubble';
+const BUBBLE_SIZE = 30;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
 // 脈衝環 hitbox 啟用時長（zappy 放電/glowy 光脈衝共用）。
@@ -217,6 +271,19 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       .fillStyle(0xf5d8b8, 1)
       .fillCircle(SHELL_SIZE / 2 + 5, SHELL_SIZE / 2 - 3, SHELL_SIZE / 2 - 7)
       .generateTexture(SHELL_TEX, SHELL_SIZE, SHELL_SIZE)
+      .destroy();
+  }
+  // 泡泡（§112）：淡藍空心圓＋高光點。
+  if (!scene.textures.exists(BUBBLE_TEX)) {
+    scene.add
+      .graphics()
+      .fillStyle(0xbfe8f0, 0.35)
+      .fillCircle(BUBBLE_SIZE / 2, BUBBLE_SIZE / 2, BUBBLE_SIZE / 2 - 2)
+      .lineStyle(2, 0xdff6ff, 0.9)
+      .strokeCircle(BUBBLE_SIZE / 2, BUBBLE_SIZE / 2, BUBBLE_SIZE / 2 - 2)
+      .fillStyle(0xffffff, 0.8)
+      .fillCircle(BUBBLE_SIZE / 2 - 5, BUBBLE_SIZE / 2 - 6, 3)
+      .generateTexture(BUBBLE_TEX, BUBBLE_SIZE, BUBBLE_SIZE)
       .destroy();
   }
   // 糖球（§73）：焦糖雙圓滴珠；落地轉灼燙糖斑（同貼圖壓扁著色）。
@@ -418,6 +485,52 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(0, 0);
   }
 
+  // 掃描光束（§112 scanna）：鎖定側水平直線光——細長 hitbox 短存留（telegraph 由
+  // aim 期承擔），走 hazards 管線。
+  function spawnScanBeam(x: number, y: number, directionX: 1 | -1): void {
+    playSfx('zap', 0.8);
+    const beam = spawnHazard(x + directionX * (SCANNA_FSM.beamLengthPx / 2 + 16), y);
+    if (!beam) return;
+    beam.setTexture('fx-star').setVisible(true);
+    beam.setDisplaySize(SCANNA_FSM.beamLengthPx, 10);
+    beam.setTint(0xff9ec4);
+    beam.setData('hazardKind', 'scanbeam');
+    beam.setData('lifeMs', SCANNA_FSM.beamLifeMs);
+    const body = beam.body as Phaser.Physics.Arcade.Body;
+    body.setSize(SCANNA_FSM.beamLengthPx * (beam.width / beam.displayWidth), beam.height);
+    body.setVelocity(0, 0);
+  }
+
+  // 漂浮泡泡（§112 foamy）：不傷人拒止——觸碰使玩家上浮（潮化免疫），走 hazards 管線。
+  function spawnBubble(x: number, y: number, directionX: 1 | -1): void {
+    const bubble = spawnHazard(x, y);
+    if (!bubble) return;
+    bubble.setTexture(BUBBLE_TEX).setVisible(true);
+    bubble.setDisplaySize(BUBBLE_SIZE, BUBBLE_SIZE);
+    bubble.setAlpha(0.9);
+    bubble.setData('hazardKind', 'bubble');
+    bubble.setData('lifeMs', FOAMY_FSM.bubbleLifeMs);
+    const body = bubble.body as Phaser.Physics.Arcade.Body;
+    const radius = (BUBBLE_SIZE / 2) * (bubble.width / bubble.displayWidth);
+    body.setCircle(radius, bubble.width / 2 - radius, bubble.height / 2 - radius);
+    body.setVelocity(FOAMY_FSM.bubbleSpeedX * directionX, FOAMY_FSM.bubbleRiseVy);
+  }
+
+  // 扇形水刃（§112 manta）：順流三發直線水刃，壽命有界逾時必回收（§56）。
+  function spawnWaterBlade(x: number, y: number, vx: number, vy: number): void {
+    const blade = spawnHazard(x, y);
+    if (!blade) return;
+    blade.setTexture('fx-star').setVisible(true);
+    blade.setDisplaySize(18, 10);
+    blade.setTint(0x8ac8e8);
+    blade.setRotation(Math.atan2(vy, vx));
+    blade.setData('hazardKind', 'waterblade');
+    blade.setData('lifeMs', MANTA_FSM.bladeLifeMs);
+    const body = blade.body as Phaser.Physics.Arcade.Body;
+    body.setSize(14, 14);
+    body.setVelocity(vx, vy);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -510,6 +623,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     spawnBoomerang,
     spawnSugarBlob,
     spawnCometTail,
+    spawnScanBeam,
+    spawnBubble,
+    spawnWaterBlade,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
@@ -549,26 +665,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);
-    sprite.setData(
-      'state',
-      kind === 'shelly' || kind === 'boomy'
-        ? 'walk'
-        : kind === 'drilly'
-          ? 'burrow'
-          : kind === 'gusty'
-            ? 'drift'
-            : kind === 'mirri'
-              ? 'roam'
-              : kind === 'bubbla'
-                ? 'submerged'
-                : kind === 'splatta'
-                  ? 'patrol'
-                  : kind === 'twinkla'
-                    ? 'phased'
-                    : kind === 'cometa'
-                      ? 'glide'
-                      : 'idle',
-    );
+    sprite.setData('state', INITIAL_STATE[kind] ?? 'idle');
+    // §112 池重用重設：票券蝠軌帶錨依生成高度、冰史萊姆迷你旗標不得跨個體殘留。
+    sprite.setData('band', kind === 'ticketa' ? (y < 245 ? 'high' : 'low') : undefined);
+    sprite.setData('mini', false);
     // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
     sprite.setData('magnoPhase', kind === 'magno' ? 'idle' : undefined);
     sprite.setData('stateMs', 0);
@@ -586,21 +686,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setCollideWorldBounds(true);
     // bubbla（§73）定點潛伏：重力關閉，leap 位移由狀態機速度逼近驅動。
     // twinkla/cometa（§80）：星靈漂浮/高處巡游，重力一律關閉。
-    body.setAllowGravity(
-      kind !== 'floaty' &&
-        kind !== 'puffy' &&
-        kind !== 'zappy' &&
-        kind !== 'glowy' &&
-        kind !== 'gusty' &&
-        kind !== 'bubbla' &&
-        kind !== 'twinkla' &&
-        kind !== 'cometa',
-    );
-    // spiky/shelly/boomy/mirri 以 bounce=1 碰牆自動折返。
-    body.setBounce(
-      kind === 'spiky' || kind === 'shelly' || kind === 'boomy' || kind === 'mirri' ? 1 : 0,
-      0,
-    );
+    // ticketa/scanna/manta（§112）：雙軌飛行/定點懸浮/低空巡游，重力一律關閉。
+    body.setAllowGravity(!NO_GRAVITY_KINDS.includes(kind));
+    // spiky/shelly/boomy/mirri/cargo/frosty 以 bounce=1 碰牆自動折返。
+    body.setBounce(BOUNCE_KINDS.includes(kind) ? 1 : 0, 0);
     // 定點紮根（chompy/spora）由行為維持（更新迴圈不賦速），禁用 immovable——
     // immovable 動態體與靜態地面不做分離會穿地沉至世界底（#841 驗屍根因：
     // L14 救援 spora 埋於 y≈462 不可及，rescueNear 又抑制新救援成重尾）。
@@ -632,9 +721,29 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     return sprite;
   }
 
+  // 冰史萊姆分裂（§112）：本體被擊殺分裂兩隻迷你體（半衝量左右散開，不再分裂）；
+  // 池滿時 spawn 回 null 靜默略過（不致崩潰）。
+  function splitFrosty(sprite: Phaser.Physics.Arcade.Sprite): void {
+    for (const direction of [-1, 1] as const) {
+      const mini = spawn('frosty', sprite.x + direction * 14, sprite.y);
+      if (!mini) continue;
+      mini.setData('mini', true);
+      mini.setDisplaySize(ENEMY_SIZE * FROSTY_FSM.miniScale, ENEMY_SIZE * FROSTY_FSM.miniScale);
+      // 迷你體型為狀態性造型：重錨物理基準（§77 解耦）。
+      vscale.register(mini);
+      mini.setData('baseSX', mini.scaleX);
+      mini.setData('baseSY', mini.scaleY);
+      (mini.body as Phaser.Physics.Arcade.Body).setVelocityX(direction * FROSTY_FSM.splitVx);
+    }
+  }
+
   // 星彈與波及共用傷害入口：扣點未死白閃，歸零致死；puffy 死於星彈時爆刺。
   // 抽為內部函式供孢子持續傷（§53）於 update 迴圈共用同一結算管線。
-  function damage(enemy: Phaser.GameObjects.GameObject, amount: number): DamageOutcome {
+  function damage(
+    enemy: Phaser.GameObjects.GameObject,
+    amount: number,
+    burn = false,
+  ): DamageOutcome {
     const kind = kindOf(enemy);
     if (!kind) return 'ignored';
     const sprite = enemy as Phaser.Physics.Arcade.Sprite;
@@ -680,6 +789,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       return 'hurt';
     }
     if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
+    // 冰史萊姆（§112）：擊殺分裂；焰系 burn 熔解不分裂（迷你體恆不分裂）。
+    if (kind === 'frosty' && resolveFrostySplit(burn, sprite.getData('mini') === true)) {
+      splitFrosty(sprite);
+    }
     kill(enemy);
     return 'killed';
   }

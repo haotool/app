@@ -573,3 +573,154 @@ export function tickBoomerangBody(
   body.setVelocityX(boomerangVelocity(next, directionX, speed, turnMs));
   return next;
 }
+
+// ===== §112 星海終局篇新怪 =====
+
+// 貨櫃丁 Cargo：緩推巡邏（週期折返＋碰牆 bounce 反彈）——形態練習區留駐供給
+//（純週期折返使個體不朝玩家長程漂移，drillSpawns 保證同系供給不散場）。
+export const CARGO_FSM = {
+  walkSpeed: 45,
+  flipMs: 2600,
+} as const;
+
+// 巡邏方向（純函式）：週期折返；牆面反彈由 body.bounce 承擔。
+export function cargoPatrolDirection(cycleMs: number): 1 | -1 {
+  return Math.floor(cycleMs / CARGO_FSM.flipMs) % 2 === 0 ? 1 : -1;
+}
+
+// 票券蝠 Ticketa：雙軌飛行——fly 期沿當前軌帶漂移，shift 前搖（≥600ms 閃爍 telegraph）
+// 後換軌俯掠；換軌本身即攻擊語彙（穿越玩家空域），無投射物。
+export const TICKETA_FSM = {
+  flyMs: 2400,
+  shiftMs: 600,
+  bandHighY: 190,
+  bandLowY: 300,
+  flySpeed: 90,
+  shiftSpeed: 260,
+} as const;
+
+export type TicketaState = 'fly' | 'shift';
+
+export interface TicketaTick {
+  state: TicketaState;
+  stateMs: number;
+  entered: TicketaState | null;
+}
+
+export function tickTicketa(state: TicketaState, stateMs: number, deltaMs: number): TicketaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'fly' && next >= TICKETA_FSM.flyMs)
+    return { state: 'shift', stateMs: 0, entered: 'shift' };
+  if (state === 'shift' && next >= TICKETA_FSM.shiftMs)
+    return { state: 'fly', stateMs: 0, entered: 'fly' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 掃描眼 Scanna：定點懸浮掃描 scan → 鎖定 aim 0.8s（telegraph 掃描線漸亮，鎖定後不修正）
+// → 直線光 fire（單幀事件態，光束走 hazards 管線）→ 冷卻 cool → scan。不可吸（掩體/殼盾反制）。
+export const SCANNA_FSM = {
+  scanMs: 2600,
+  aimMs: 800,
+  coolMs: 1400,
+  beamLengthPx: 320,
+  beamLifeMs: 350,
+} as const;
+
+export type ScannaState = 'scan' | 'aim' | 'fire' | 'cool';
+
+export interface ScannaTick {
+  state: ScannaState;
+  stateMs: number;
+  entered: ScannaState | null;
+}
+
+export function tickScanna(state: ScannaState, stateMs: number, deltaMs: number): ScannaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'scan' && next >= SCANNA_FSM.scanMs)
+    return { state: 'aim', stateMs: 0, entered: 'aim' };
+  if (state === 'aim' && next >= SCANNA_FSM.aimMs)
+    return { state: 'fire', stateMs: 0, entered: 'fire' };
+  // fire 為單幀事件態：呈現層生成光束後即入冷卻（沿 boomy throw 慣例）。
+  if (state === 'fire') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= SCANNA_FSM.coolMs)
+    return { state: 'scan', stateMs: 0, entered: 'scan' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 泡泡機 Foamy：定點吐泡——idle → windup 0.6s（telegraph 鼓脹抖動）→ spit（單幀事件態，
+// 吐漂浮泡泡走 hazards 管線；泡泡不傷人、觸碰使玩家上浮，潮化免疫）→ cool → idle。
+export const FOAMY_FSM = {
+  idleMs: 2200,
+  windupMs: 600,
+  coolMs: 900,
+  bubbleSpeedX: 70,
+  bubbleRiseVy: -36,
+  bubbleLifeMs: 2600,
+  bubbleLiftVy: -300,
+} as const;
+
+export type FoamyState = 'idle' | 'windup' | 'spit' | 'cool';
+
+export interface FoamyTick {
+  state: FoamyState;
+  stateMs: number;
+  entered: FoamyState | null;
+}
+
+export function tickFoamy(state: FoamyState, stateMs: number, deltaMs: number): FoamyTick {
+  const next = stateMs + deltaMs;
+  if (state === 'idle' && next >= FOAMY_FSM.idleMs)
+    return { state: 'windup', stateMs: 0, entered: 'windup' };
+  if (state === 'windup' && next >= FOAMY_FSM.windupMs)
+    return { state: 'spit', stateMs: 0, entered: 'spit' };
+  if (state === 'spit') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= FOAMY_FSM.coolMs)
+    return { state: 'idle', stateMs: 0, entered: 'idle' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 冰史萊姆 Frosty：冰面滑行（恆速滑動＋碰牆反彈）；受擊分裂——本體被擊殺分裂為
+// 兩隻迷你體（不再分裂），焰系 burn 命中即熔解不分裂（§111 燒毀優勢）。
+export const FROSTY_FSM = {
+  slideSpeed: 120,
+  miniScale: 0.65,
+  splitCount: 2,
+  splitVx: 90,
+} as const;
+
+// 分裂裁決（純函式）：迷你體與 burn 擊殺不分裂。
+export function resolveFrostySplit(burn: boolean, mini: boolean): boolean {
+  return !burn && !mini;
+}
+
+// 潮汐魟 Manta：低空巡游 cruise → 鎖定 aim 0.65s（telegraph）→ 扇形水刃 volley
+//（單幀事件態，三發扇形走 hazards 管線）→ 冷卻 cool → cruise。
+export const MANTA_FSM = {
+  cruiseMs: 2600,
+  aimMs: 650,
+  coolMs: 1100,
+  cruiseSpeed: 75,
+  bladeSpeed: 220,
+  bladeLifeMs: 1500,
+  bladeFanVy: 70,
+} as const;
+
+export type MantaState = 'cruise' | 'aim' | 'volley' | 'cool';
+
+export interface MantaTick {
+  state: MantaState;
+  stateMs: number;
+  entered: MantaState | null;
+}
+
+export function tickManta(state: MantaState, stateMs: number, deltaMs: number): MantaTick {
+  const next = stateMs + deltaMs;
+  if (state === 'cruise' && next >= MANTA_FSM.cruiseMs)
+    return { state: 'aim', stateMs: 0, entered: 'aim' };
+  if (state === 'aim' && next >= MANTA_FSM.aimMs)
+    return { state: 'volley', stateMs: 0, entered: 'volley' };
+  if (state === 'volley') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= MANTA_FSM.coolMs)
+    return { state: 'cruise', stateMs: 0, entered: 'cruise' };
+  return { state, stateMs: next, entered: null };
+}

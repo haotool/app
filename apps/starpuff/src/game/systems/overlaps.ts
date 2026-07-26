@@ -8,6 +8,7 @@ import {
   isInInhalePullRange,
   isInInhaleRange,
 } from '../logic/combat';
+import { FOAMY_FSM } from '../logic/enemyFsm';
 import { SHELL_CHARGE, SHELL_REFLECT, TRANSFORM_FORMS } from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -124,9 +125,11 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       return;
     }
     const spec = hooks.combat().specOf(s);
-    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s));
+    // burn（§111 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§112）。
+    const burn = s.getData('burn') === true;
+    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn);
     if (outcome === 'ignored') return;
-    if (spec.aoeRadiusPx > 0) hooks.combat().explodeStar(s.x, s.y, spec, target);
+    if (spec.aoeRadiusPx > 0) hooks.combat().explodeStar(s.x, s.y, spec, target, burn);
     // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。
     if (spec.chainCount > 0) hooks.combat().chainLightning(s.x, s.y, spec, target);
     // 孢子星（§53）：命中未死目標套緩速＋輕持續傷。
@@ -181,6 +184,16 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.enemies().getHazards(), (_p, hz) => {
     const hazard = asSprite(hz);
     if (!hazard.active || hooks.isSettled()) return;
+    // 漂浮泡泡（§112 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§111）。
+    if (hazard.getData('hazardKind') === 'bubble') {
+      hazard.disableBody(true, true);
+      hooks.fx().burstSmall(hazard.x, hazard.y, 0xbfe8f0);
+      playSfx('pop', 1.3);
+      if (!hooks.combat().playerFormSpec()?.deflectProjectiles) {
+        hooks.player().sprite.setVelocityY(FOAMY_FSM.bubbleLiftVy);
+      }
+      return;
+    }
     // 潮環撥開（§111 Tidal Ring）：潮化接觸投射物即反向推離，不結算傷害不回收
     //（防禦性撥開，非殼化反打）；deflected 標記防同一彈體逐幀重複推。
     if (hooks.combat().playerFormSpec()?.deflectProjectiles) {

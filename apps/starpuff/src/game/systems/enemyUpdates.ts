@@ -34,6 +34,14 @@ import {
   type TwinklaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
+import {
+  updateCargo,
+  updateFoamy,
+  updateFrosty,
+  updateManta,
+  updateScanna,
+  updateTicketa,
+} from './finaleEnemies';
 import { spawnTelegraph } from './fx';
 import type { EnemyTarget } from './enemies';
 import type { VisualScaleChannel } from './visualScale';
@@ -200,6 +208,10 @@ export interface EnemyUpdateContext {
   spawnSugarBlob(x: number, y: number, directionX: 1 | -1): void;
   // v12（§80）：cometa 俯衝彗尾段，走 hazards 管線。
   spawnCometTail(x: number, y: number): void;
+  // §112：scanna 掃描光束／foamy 漂浮泡泡／manta 扇形水刃，皆走 hazards 管線。
+  spawnScanBeam(x: number, y: number, directionX: 1 | -1): void;
+  spawnBubble(x: number, y: number, directionX: 1 | -1): void;
+  spawnWaterBlade(x: number, y: number, vx: number, vy: number): void;
 }
 
 // 三態時序由 enemyFsm 決策；本函式只負責呈現層（速度、旋轉、著色、縮放復原）。
@@ -1097,6 +1109,31 @@ export function updateEnemyKind(
     }
     case 'cometa': {
       updateCometa(ctx, sprite, deltaMs);
+      break;
+    }
+    // §112 星海終局篇新怪：AI 本體在 systems/finaleEnemies.ts（1200 行閘分檔）。
+    case 'cargo': {
+      updateCargo(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'ticketa': {
+      updateTicketa(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'scanna': {
+      updateScanna(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'foamy': {
+      updateFoamy(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'frosty': {
+      updateFrosty(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'manta': {
+      updateManta(ctx, sprite, deltaMs);
       break;
     }
     case 'zappy': {

@@ -48,6 +48,13 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   splatta: 'minion-splatta',
   twinkla: 'minion-twinkla',
   cometa: 'minion-cometa',
+  // §120 星海終局篇新怪：素材由素材車批次交付，缺圖回落同色圓角色塊（既有慣例）。
+  cargo: 'minion-cargo',
+  ticketa: 'minion-ticketa',
+  scanna: 'minion-scanna',
+  foamy: 'minion-foamy',
+  frosty: 'minion-frosty',
+  manta: 'minion-manta',
 };
 
 // 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）。

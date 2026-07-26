@@ -197,7 +197,9 @@ export class CodexScene extends Phaser.Scene {
       const row = Math.floor(index / cols);
       const cx = gridLeft + cellW * (col + 0.5);
       const top = gridRowTop(row, CODEX_TAB_GRIDS.monsters);
-      const sprite = this.add.image(cx, top + 30, monster.textureKey);
+      // §112 佔位回退：素材車未交付的立繪鍵改畫 fx-star 剪影（缺圖不噴 missing texture）。
+      const texKey = this.textures.exists(monster.textureKey) ? monster.textureKey : 'fx-star';
+      const sprite = this.add.image(cx, top + 30, texKey);
       const scale = 50 / Math.max(sprite.width, sprite.height);
       sprite.setScale(scale);
       this.tweens.add({

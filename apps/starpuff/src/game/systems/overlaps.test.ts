@@ -252,7 +252,7 @@ describe('關鍵回調結算路徑', () => {
     const { scene, wirings, hooks, spies, groups } = makeHarness({});
     wireCombatOverlaps(scene, hooks);
     const hazardWiring = wirings.find((w) => w.b === groups.hazards);
-    const hazard = { active: true, x: 240, disableBody: vi.fn() };
+    const hazard = { active: true, x: 240, disableBody: vi.fn(), getData: vi.fn() };
     hazardWiring?.callback?.({}, hazard);
     expect(hazard.disableBody).toHaveBeenCalledWith(true, true);
     expect(spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 240);
@@ -260,7 +260,7 @@ describe('關鍵回調結算路徑', () => {
     const settled = makeHarness({ settled: true });
     wireCombatOverlaps(settled.scene, settled.hooks);
     const settledWiring = settled.wirings.find((w) => w.b === settled.groups.hazards);
-    const hazard2 = { active: true, x: 240, disableBody: vi.fn() };
+    const hazard2 = { active: true, x: 240, disableBody: vi.fn(), getData: vi.fn() };
     settledWiring?.callback?.({}, hazard2);
     expect(settled.spies.damagePlayer).not.toHaveBeenCalled();
   });

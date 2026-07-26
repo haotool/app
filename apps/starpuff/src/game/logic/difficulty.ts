@@ -310,6 +310,13 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   mirri: 'ranged',
   splatta: 'ranged',
   cometa: 'ranged',
+  // §112 星海終局篇：cargo/ticketa/frosty 恆可吸近戰系；scanna/foamy/manta 具投射。
+  cargo: 'safe',
+  ticketa: 'safe',
+  frosty: 'safe',
+  scanna: 'ranged',
+  foamy: 'ranged',
+  manta: 'ranged',
 };
 
 const THREAT_WEIGHT = { safe: 0, windowed: 0.4, ranged: 0.7, contact: 1 } as const;

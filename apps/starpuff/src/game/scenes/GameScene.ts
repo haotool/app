@@ -446,10 +446,9 @@ export class GameScene extends Phaser.Scene {
 
     this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
 
-    // shutdown 清理 Phaser 不接管的資源：scene.events 監聽（restart 不重建 emitter，
-    // 未解除即跨局累積）、DOM 監聽、音訊迴圈。player 的 PRE/POST_UPDATE bob 掛鉤必須
-    // 在此解除；fx/hud 自掛 shutdown 自清，enemies/boss 無 scene.events 與 DOM 監聽，
-    // 其 group/timer/tween 由 Phaser 系統先行銷毀，不得在此重複呼叫（group 已失效）。
+    // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈；restart 不重建
+    // emitter 未解除即跨局累積）；fx/hud 自掛自清，enemies/boss 的 group/timer/tween 由
+    // Phaser 先行銷毀，不得在此重複呼叫（group 已失效）。
     this.events.once('shutdown', () => {
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
@@ -632,8 +631,7 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
-  // 低幀率沉地防護（§45 已知引擎行為：極端掉幀下重力穿透地面分離）：主地面全寬無坑洞
-  //（§26），玩家軀體「完整」沒入地面帶即回貼地表——正常著地（腳底=地面頂）永不觸發，
+  // 低幀率沉地防護（§45）：玩家軀體完整沒入地面帶即回貼地表——正常著地永不觸發，
   // 不取代既有碰撞與掃掠守門。
   private clampAboveGround(): void {
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
@@ -840,6 +838,10 @@ export class GameScene extends Phaser.Scene {
       const flavor = inhaleFlavor(kind);
       if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
     });
+    // 加速票（§112 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
+    bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
+      if (kind === 'ticketa') this.applyBuff('swift');
+    });
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
     bind(GameEvents.PLAYER_DIED, ({ x, y }) => {
@@ -962,8 +964,8 @@ export class GameScene extends Phaser.Scene {
     if (this.playerCrossedGate(this.prevPlayerX)) this.completeLevel();
   }
 
-  // 星星門必達背擋（§26/§43）：門 overlap 為 direct pair，Phaser 4 實測間歇漏檢——
-  // 逐幀以 crossedGate 幾何判定補判（跨門心/站門心右側/AABB 交疊），不得移除。
+  // 星星門必達背擋（§26/§43）：direct pair overlap 間歇漏檢——逐幀 crossedGate
+  // 幾何補判，不得移除。
   private syncGateSweep(): void {
     if (!this.gate) return;
     const x = this.player.sprite.x;
@@ -1035,7 +1037,6 @@ export class GameScene extends Phaser.Scene {
     if (result.spawn) this.spawnMercyHeart();
   }
 
-  // 愛心生成（§62）：隨機空中緩降型或地面定點型；落點沿地面錨點、夾限世界內必可達。
   private spawnMercyHeart(): void {
     const side = this.mercyRng() < 0.5 ? -1 : 1;
     const offset = 120 + this.mercyRng() * 120;
@@ -1155,9 +1156,8 @@ export class GameScene extends Phaser.Scene {
     this.wasInhaling = inhaling;
   }
 
-  // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列。
-  // 成就判定恆由 save 資料派生（awardAchievements 內部 diff），此處不做侵入式鉤子。
-  // 同批多解鎖合併為單張橫幅（審查 U1）：勝利轉場 2.8s 窗口內必可播完整批。
+  // 存檔寫入單點（§94）：寫入後評估成就增量——頒發、單次持久化、排入 toast 佇列；
+  // 成就判定恆由 save 資料派生，同批多解鎖合併單張橫幅（審查 U1）。
   private persistAndAward(save: SaveData): void {
     const newly = awardAchievements(save);
     // 落盤失敗必須外顯（#868）：配額將滿時開機探測會通過，只有實際寫入才會失敗。

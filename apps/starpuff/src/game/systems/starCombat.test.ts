@@ -188,7 +188,7 @@ describe('explodeStar 爆裂波及（§20/§53）', () => {
     const spec = STAR_FLAVORS.puffy;
     combat.explodeStar(100, 300, spec, excluded as unknown as Phaser.GameObjects.GameObject);
     expect(damage).toHaveBeenCalledTimes(1);
-    expect(damage).toHaveBeenCalledWith(inner, spec.aoeDamage);
+    expect(damage).toHaveBeenCalledWith(inner, spec.aoeDamage, false);
   });
 
   it('毒爆雲（slowMs>0）對 hurt 未死者加套緩速持續傷', () => {

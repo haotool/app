@@ -16,7 +16,14 @@ export type EnemyKind =
   | 'bubbla'
   | 'splatta'
   | 'twinkla'
-  | 'cometa';
+  | 'cometa'
+  // §112 星海終局篇新怪：貨櫃丁/票券蝠/掃描眼（L21）與泡泡機/冰史萊姆/潮汐魟（L23）。
+  | 'cargo'
+  | 'ticketa'
+  | 'scanna'
+  | 'foamy'
+  | 'frosty'
+  | 'manta';
 
 export type LevelId =
   | 1

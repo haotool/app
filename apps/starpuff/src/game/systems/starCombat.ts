@@ -66,6 +66,7 @@ export interface StarCombat {
     y: number,
     spec: StarFlavorSpec,
     exclude: Phaser.GameObjects.GameObject | null,
+    burn?: boolean,
   ): void;
   chainLightning(
     x: number,
@@ -131,13 +132,14 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     y: number,
     spec: StarFlavorSpec,
     exclude: Phaser.GameObjects.GameObject | null,
+    burn = false,
   ): void {
     hooks.fx().burstSmall(x, y, spec.tint);
     for (const child of hooks.enemies().getGroup().getChildren()) {
       if (child === exclude || !child.active) continue;
       const enemy = child as Phaser.Physics.Arcade.Sprite;
       if (distanceBetween(x, y, enemy.x, enemy.y) <= spec.aoeRadiusPx) {
-        const outcome = hooks.enemies().damage(child, spec.aoeDamage);
+        const outcome = hooks.enemies().damage(child, spec.aoeDamage, burn);
         if (spec.slowMs > 0 && outcome === 'hurt') {
           hooks.enemies().applySlow(child, spec.slowMs, spec.dotDamage);
         }
@@ -389,7 +391,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       if (!child.active) continue;
       const enemy = child as Phaser.Physics.Arcade.Sprite;
       if (distanceBetween(x, y, enemy.x, enemy.y) > MAGMA_POP.radiusPx) continue;
-      const outcome = hooks.enemies().damage(child, MAGMA_POP.damage);
+      const outcome = hooks.enemies().damage(child, MAGMA_POP.damage, true);
       if (outcome === 'hurt') {
         const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed * 0.7, SLAM.knockbackLift);
         enemy.setVelocity(kb.x, kb.y);
