@@ -637,4 +637,78 @@ export const ASSETS: AssetEntry[] = [
     key: 'boss-gravion-enraged',
     url: new URL('../../assets/sprites/boss-gravion-enraged.webp', import.meta.url).href,
   },
+  // v21-v30 B03 六新小怪（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'minion-copypuff',
+    url: new URL('../../assets/sprites/minion-copypuff.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-prismbee',
+    url: new URL('../../assets/sprites/minion-prismbee.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-datamote',
+    url: new URL('../../assets/sprites/minion-datamote.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-gravitybub',
+    url: new URL('../../assets/sprites/minion-gravitybub.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-orbiton',
+    url: new URL('../../assets/sprites/minion-orbiton.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-riftling',
+    url: new URL('../../assets/sprites/minion-riftling.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 稜化／引力化基底與變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-prism',
+    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity',
+    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-gather',
+    url: new URL('../../assets/sprites/hero-prism-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-shrink',
+    url: new URL('../../assets/sprites/hero-prism-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-stretch',
+    url: new URL('../../assets/sprites/hero-prism-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-burst',
+    url: new URL('../../assets/sprites/hero-prism-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-complete',
+    url: new URL('../../assets/sprites/hero-prism-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-gather',
+    url: new URL('../../assets/sprites/hero-gravity-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-shrink',
+    url: new URL('../../assets/sprites/hero-gravity-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-stretch',
+    url: new URL('../../assets/sprites/hero-gravity-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-burst',
+    url: new URL('../../assets/sprites/hero-gravity-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-complete',
+    url: new URL('../../assets/sprites/hero-gravity-morph-complete.webp', import.meta.url).href,
+  },
 ];

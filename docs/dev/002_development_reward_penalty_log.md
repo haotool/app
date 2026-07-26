@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+271
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+272
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-minions-morph-frames
+- 原因：B03 尚缺稜系／引力系六新小怪與稜化／引力化基底加變身五關鍵幀 runtime 資產
+- 解法：小怪錨定 B01 輪廓板逐隻生成（512²）、雙形態基底先生成後作幀識別參考（1254²）、變身幀 1024²，alpha QA 18/18 零殘暈零重生並全數註冊 ASSETS
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b03-scenes-and-bosses
