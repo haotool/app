@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+275
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+276
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-glowy-halo-emblem-fix
+- 原因：glowy 為 12 系中唯一違反「系間辨識靠形狀系徽」原則者——與 jelly 同形狀僅明度差，明亮戰場背景會吃掉色差且認錯系會觸發錯誤變身
+- 解法：整系四態重生加雙圈同心光環系徽，32px 縮放合成星港明亮背景與 jelly 並排驗證瞬間可辨後入庫
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b05-common-fx-hud
