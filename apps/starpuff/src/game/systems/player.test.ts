@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
+import { STAR_FLAVORS, FORGIVENESS, STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
 import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
-import { unlockedTransformForms } from '../logic/transform';
+import { TRANSFORM_FORMS, unlockedTransformForms } from '../logic/transform';
 import type { ControlsState } from './controls';
 import { createPlayer } from './player';
 
@@ -140,7 +140,9 @@ interface FakePlayerSprite {
     velocity: { x: number; y: number };
     blocked: { down: boolean };
     touching: { down: boolean };
-    setSize: ReturnType<typeof vi.fn>;
+    sourceWidth: number;
+    sourceHeight: number;
+    setSize(w: number, h: number, center?: boolean): void;
     setOffset: ReturnType<typeof vi.fn>;
   };
   setDisplaySize(w: number, h: number): FakePlayerSprite;
@@ -182,7 +184,13 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
       velocity: { x: 0, y: 0 },
       blocked: { down: true },
       touching: { down: false },
-      setSize: vi.fn(),
+      // Phaser Body.updateBounds 語意替身：世界尺寸 = source 尺寸 × scale。
+      sourceWidth: 0,
+      sourceHeight: 0,
+      setSize(w: number, h: number) {
+        sprite.body.sourceWidth = w;
+        sprite.body.sourceHeight = h;
+      },
       setOffset: vi.fn(),
     },
     setDisplaySize(w: number, h: number) {
@@ -495,7 +503,7 @@ describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出�
 describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => {
   const FOUR_KEYS = ['damage', 'pierce', 'flavor', 'mix'] as const;
 
-  it('一般星發射後四鍵全數有定義（發射前清空 sentinel）', () => {
+  it('一般星發射後四鍵為本發正確值（發射前寫毒值，殘值頂替即紅）', () => {
     const { player } = makeHarness();
     player.grantStar('jelly');
     player.update(PRESS, 16);
@@ -503,20 +511,22 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
     const stars = player.getStars().getChildren() as unknown as FakeStar[];
     const normal = stars.find((star) => star.active);
     if (!normal) throw new Error('一般星未生成');
-    // 一般星再發一輪：先回收並清 sentinel，復用同物件驗 launchStar 必寫。
-    for (const key of FOUR_KEYS) normal.setData(key, undefined);
+    // R8：sentinel 改毒值——若生產改用 ?? fallback，undefined sentinel 仍會綠；
+    // 毒值配具體期望值，殘值或 fallback 頂替一律紅。
+    for (const key of FOUR_KEYS) normal.setData(key, -999);
     normal.setActive(false);
     player.grantStar('jelly');
     player.update(PRESS, 16);
     player.update(IDLE, 16);
     const reused = stars.find((star) => star.active);
     expect(reused).toBe(normal);
-    for (const key of FOUR_KEYS) {
-      expect(reused?.getData(key), key).not.toBeUndefined();
-    }
+    expect(reused?.getData('damage')).toBe(STAR_FLAVORS.jelly.damage);
+    expect(reused?.getData('pierce')).toBe(STAR_FLAVORS.jelly.pierceCount);
+    expect(reused?.getData('flavor')).toBe('jelly');
+    expect(reused?.getData('mix')).toBeNull();
   });
 
-  it('形態彈（launchShot 管線）四鍵全數有定義（發射前清空 sentinel 禁殘值頂替）', () => {
+  it('形態彈（launchShot 管線）四鍵為本發正確值（毒值禁殘值/fallback 頂替）', () => {
     const { player } = makeHarness();
     // 先發一發一般星建立池物件（製造殘值現場）。
     player.grantStar('jelly');
@@ -525,8 +535,8 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
     const stars = player.getStars().getChildren() as unknown as FakeStar[];
     const pooled = stars.find((star) => star.active);
     if (!pooled) throw new Error('一般星未生成');
-    // 清 sentinel＋回收：復用時四鍵只能由 launchShot 本發寫入滿足。
-    for (const key of FOUR_KEYS) pooled.setData(key, undefined);
+    // 毒值＋回收：復用時四鍵只能由 launchShot 本發寫入的正確值滿足。
+    for (const key of FOUR_KEYS) pooled.setData(key, -999);
     pooled.setActive(false);
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
     player.update({ ...IDLE, spPressed: true }, 16);
@@ -535,9 +545,12 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
     const formShot = stars.find((star) => star.active);
     if (!formShot) throw new Error('形態彈未生成');
     expect(formShot).toBe(pooled);
-    for (const key of FOUR_KEYS) {
-      expect(formShot?.getData(key), key).not.toBeUndefined();
-    }
+    const emberShot = TRANSFORM_FORMS.ember.shot;
+    if (!emberShot) throw new Error('焰化 shot 規格缺失');
+    expect(formShot?.getData('damage')).toBe(emberShot.damage);
+    expect(formShot?.getData('pierce')).toBe(emberShot.pierceCount);
+    expect(formShot?.getData('flavor')).toBe(emberShot.flavor);
+    expect(formShot?.getData('mix')).toBeNull();
   });
 });
 
@@ -545,11 +558,20 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
 // gravity 1254 vs 基準 512），換圖若不重算 displaySize，變身瞬間視覺暴增近 2.5 倍
 // 且與生成時錨定的物理箱脫鉤。wearTexture 統一入口必須讓「顯示 px = 48」恆成立。
 describe('變身換裝尺寸解耦（PR #886 R7）', () => {
+  // R8 判定箱斷言：Body.updateBounds 每步以 sourceWidth×|scaleX| 重算世界尺寸——
+  // hurtbox 若凍結生成時 512 基準，換 768/1254 源後會縮水 33%~59%（視覺不動）。
+  const bodyWorldW = (sprite: FakePlayerSprite) => sprite.body.sourceWidth * sprite.scaleX;
+  const bodyWorldH = (sprite: FakePlayerSprite) => sprite.body.sourceHeight * sprite.scaleY;
+  const HURT_W = 48 * FORGIVENESS.hurtboxWidthRatio;
+  const HURT_H = 48 * FORGIVENESS.hurtboxHeightRatio;
+
   it('穿上超尺寸形態立繪與返回姿勢立繪：顯示尺寸恆為 PLAYER_SIZE', () => {
     const { player } = makeHarness(true);
     const sprite = player.sprite as unknown as FakePlayerSprite;
-    // 生成基準：hero-idle 512 源 → 48px。
+    // 生成基準：hero-idle 512 源 → 48px；世界判定箱 36×38.4。
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
     // 焰化（768 源）：顯示 px 必須仍為 48（未重算會是 72）。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
     player.update({ ...IDLE, spPressed: true }, 16);
@@ -558,12 +580,15 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(sprite.texture.key).toBe('hero-ember');
     expect(sprite.frame.realWidth).toBe(768);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
     // 解除返回姿勢立繪（512 源）：同樣恆為 48。
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBeNull();
     player.update(IDLE, 16);
     expect(sprite.frame.realWidth).toBe(512);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
   });
 
   it('潮化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE', () => {
@@ -575,5 +600,8 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     player.update(IDLE, 16);
     expect(sprite.frame.realWidth).toBe(1254);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    // 修復前此處為 14.7（−59%）：判定箱與源解析度解耦的核心斷言。
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
   });
 });

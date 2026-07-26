@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import {
-  BOOMERANG,
   CHARGED_STAR,
   FORGIVENESS,
   INHALE,
@@ -13,7 +12,12 @@ import {
   type MagazineSlot,
   type StarFlavor,
 } from '../core/config';
-import { acquirePooled } from '../core/poolFlags';
+import {
+  BOOM_SPIN_RAD,
+  TRAIL_LIFESPAN_MS,
+  WIND_TRAIL_LIFESPAN_MS,
+  createStarLauncher,
+} from './starLauncher';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import {
@@ -24,11 +28,9 @@ import {
   resolveHit,
   tickTimer,
 } from '../logic/combat';
-import { tickBoomerangBody } from '../logic/enemyFsm';
 import { approachVelocity, detectMoveFx, type MoveFxEvent } from '../logic/movement';
 import {
   SHELL_SHIELD,
-  STAR_CULL_MARGIN_PX,
   STAR_POOL_MAX,
   advanceShield,
   createShieldState,
@@ -43,8 +45,6 @@ import {
   resolveShieldBlock,
   shieldEligible,
   shouldFireOnRelease,
-  slotSpec,
-  starDamage,
   starPitch,
   swallowIntoMagazine,
 } from '../logic/skills';
@@ -94,7 +94,7 @@ import {
 import { playSfx } from '../audio/sfx';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
-import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
+import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
 import { createFormSkills } from './formSkills';
 import { getVisualScale } from './visualScale';
 
@@ -154,7 +154,6 @@ type Pose =
   | 'hero-hurt';
 
 const PLAYER_SIZE = 48;
-const STAR_SIZE = 24;
 // 星彈池上限與視野裁切邊界（#820/#831）SSOT 收斂於 logic/skills.ts（滿匣散射＋風刃併發）。
 // 主角描邊（§45）：深紫近黑剪影色與放大比（48px 本體外露約 2.4px 輪廓環）。
 const HERO_OUTLINE_COLOR = 0x2f2a3d;
@@ -165,10 +164,7 @@ const BLINK_INTERVAL_MS = 100;
 // §18 落地塵埃圈：著地速度 >300 觸發。
 const DUST_FALL_SPEED = 300;
 // §20 星彈拖尾：疾風星拖尾加長 ×1.6，其餘維持基準長度；tint 依屬性表上色。
-const TRAIL_LIFESPAN_MS = 260;
-const WIND_TRAIL_LIFESPAN_MS = TRAIL_LIFESPAN_MS * 1.6;
 // 迴旋星自旋角速度（§53，與殼刃同值）。
-const BOOM_SPIN_RAD = 0.02;
 // 殼化護體窗（§57）：減傷池實扣 0 時的短無敵，防同一接觸逐幀重複結算。
 const SHELL_GUARD_MS = 400;
 // 蹲姿視覺（§77）：橫向外擴＋縱向壓扁＋輕微下沉；scale 走 visualScale 視覺通道，
@@ -218,8 +214,11 @@ export function createPlayer(
     silhouette.setVisible(sprite.visible);
   };
 
-  // 寬容度 hurtbox（§15.1）：視覺 75%W×80%H，貼齊腳底（setSize 以未縮放 frame 像素為單位）。
-  {
+  // 寬容度 hurtbox（§15.1）：視覺 75%W×80%H，貼齊腳底（setSize 以未縮放 frame 像素
+  // 為單位）。R8 改為換裝時現算：Body.updateBounds 每物理步以 sourceWidth×|scaleX|
+  // 重算世界尺寸——凍結生成時的 512 基準源尺寸，換到 768/1254 源貼圖後 scale 變小，
+  // 碰撞箱隨之縮水 33%~59% 而視覺不動（世界尺寸恆為 frameW×ratio×(48/frameW)＝常數）。
+  const fitHurtbox = () => {
     const frameW = sprite.frame.realWidth;
     const frameH = sprite.frame.realHeight;
     const hurtW = frameW * FORGIVENESS.hurtboxWidthRatio;
@@ -227,7 +226,8 @@ export function createPlayer(
     const body = sprite.body as Phaser.Physics.Arcade.Body;
     body.setSize(hurtW, hurtH, false);
     body.setOffset((frameW - hurtW) / 2, frameH - hurtH);
-  }
+  };
+  fitHurtbox();
 
   // 吸入判定區：面向錐形的廣域矩形（#811 依最大判定半徑取邊）＋反向側貼身帶（#844
   // 候選區鋪到背後 INHALE_NEAR_PX，對齊邏輯層貼身豁免——否則反向豁免永不可達）；
@@ -318,6 +318,8 @@ export function createPlayer(
     sprite.setTexture(key);
     sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
     vscale.rebase(sprite);
+    // hurtbox 同步現算（R8）：視覺與判定箱一起與源解析度解耦。
+    fitHurtbox();
   };
 
   const setPose = (next: Pose) => {
@@ -501,14 +503,13 @@ export function createPlayer(
     wearTexture(tex(pose));
   };
 
-  const recycleStar = (star: Phaser.Physics.Arcade.Sprite) => {
-    (star.getData('fxTrail') as TrailHandle | undefined)?.stop();
-    star.setData('fxTrail', undefined);
-    star.setActive(false).setVisible(false);
-    const body = star.body as Phaser.Physics.Arcade.Body;
-    body.stop();
-    body.enable = false;
-  };
+  // 星彈發射／回收管線抽離（PR #886 R8）：彈體生命週期歸 starLauncher，
+  // 彈匣狀態與發射節奏留本檔；stars 群組所有權仍在此（formSkills 共用池）。
+  const starLauncher = createStarLauncher(scene, stars, {
+    facing: () => facing,
+    muzzle: () => ({ x: sprite.x + facing * (PLAYER_SIZE / 2 + 8), y: sprite.y }),
+    tex,
+  });
 
   const emitAmmo = () => {
     emitGameEvent(scene.events, GameEvents.AMMO_CHANGED, {
@@ -517,42 +518,6 @@ export function createPlayer(
       flavor: magazine[magazine.length - 1]?.flavor ?? lastFlavor,
       magazine,
     });
-  };
-
-  // 單發彈體生成（§23/§46）：尺寸/著色/拖尾/彈道資料單一出口；vy 供散射扇形。
-  const launchStar = (slot: MagazineSlot, vy: number) => {
-    const spec = slotSpec(slot);
-    const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
-    const star = acquirePooled(stars, fx, sprite.y, tex('fx-star'));
-    if (!star) return;
-    const boosted = slot.charged || slot.gold;
-    const size = boosted ? STAR_SIZE * CHARGED_STAR.sizeMultiplier : STAR_SIZE;
-    star.setActive(true).setVisible(true);
-    star.setDisplaySize(size, size);
-    // 標準星保留原金黃星彈藝術；其餘依屬性/配方上色；強化/金星套金邊 tint。
-    if (boosted) star.setTint(CHARGED_STAR.tint);
-    else if (slot.flavor === 'jelly' && slot.mix === undefined) star.clearTint();
-    else star.setTint(spec.tint);
-    const body = star.body as Phaser.Physics.Arcade.Body;
-    body.enable = true;
-    body.reset(fx, sprite.y);
-    star.setData('damage', starDamage(slot));
-    star.setData('pierce', spec.pierceCount);
-    star.setData('flavor', slot.flavor);
-    star.setData('mix', slot.mix ?? null);
-    // 迴旋星（§53）：標記迴旋彈道由本系統 steerBoomerangStars 逐幀驅動；非迴旋彈清殘留。
-    star.setData('boomMs', spec.boomerang ? 0 : null);
-    star.setData('boomDir', facing);
-    star.setData('boomSpeed', spec.speed);
-    star.setRotation(0);
-    star.setData(
-      'fxTrail',
-      attachTrail(scene, star, {
-        tint: boosted ? CHARGED_STAR.tint : spec.tint,
-        lifespan: slot.flavor === 'floaty' ? WIND_TRAIL_LIFESPAN_MS : TRAIL_LIFESPAN_MS,
-      }),
-    );
-    star.setVelocity(facing * spec.speed, vy);
   };
 
   // 後進先出發射（§23/§46）：頂槽決定屬性；混合星散射時分裂為小幅上下扇形。
@@ -565,10 +530,10 @@ export function createPlayer(
     const scatter = slot.mix !== undefined ? getMix(slot.mix).scatterCount : 0;
     if (scatter > 1) {
       for (let i = 0; i < scatter; i += 1) {
-        launchStar(slot, (i - (scatter - 1) / 2) * SCATTER_FAN_VY);
+        starLauncher.launch(slot, (i - (scatter - 1) / 2) * SCATTER_FAN_VY);
       }
     } else {
-      launchStar(slot, 0);
+      starLauncher.launch(slot, 0);
     }
     emitAmmo();
     emitGameEvent(scene.events, GameEvents.STAR_FIRED, {
@@ -585,31 +550,6 @@ export function createPlayer(
     slamming = true;
     sprite.setVelocityY(SLAM.fallVelocityY);
     squashStretch(0.8, 1.3);
-  };
-
-  // 迴旋星（§53）：去而復返速度曲線逐幀驅動＋自旋；逾時回收（anti-softlock 壽命上限）。
-  const steerBoomerangStars = (deltaMs: number): void => {
-    for (const child of stars.getChildren()) {
-      const star = child as Phaser.Physics.Arcade.Sprite;
-      if (!star.active) continue;
-      const boomMs = star.getData('boomMs') as number | null | undefined;
-      if (boomMs === null || boomMs === undefined) continue;
-      if (boomMs + deltaMs >= BOOMERANG.lifetimeMs) {
-        recycleStar(star);
-        continue;
-      }
-      const direction = star.getData('boomDir') as 1 | -1;
-      const next = tickBoomerangBody(
-        star.body as Phaser.Physics.Arcade.Body,
-        boomMs,
-        direction,
-        star.getData('boomSpeed') as number,
-        BOOMERANG.turnMs,
-        deltaMs,
-      );
-      star.setData('boomMs', next);
-      star.rotation += direction * BOOM_SPIN_RAD * deltaMs;
-    }
   };
 
   return {
@@ -942,16 +882,9 @@ export function createPlayer(
       else if (magazine.length > 0) setPose('hero-puffed');
       else setPose('hero-idle');
 
-      // 卷軸世界以相機視野為界回收星彈；迴旋星另走壽命與回程驅動。
-      const view = scene.cameras.main.worldView;
-      for (const child of stars.getChildren()) {
-        const star = child as Phaser.Physics.Arcade.Sprite;
-        const margin = STAR_CULL_MARGIN_PX;
-        if (star.active && (star.x < view.x - margin || star.x > view.right + margin)) {
-          recycleStar(star);
-        }
-      }
-      steerBoomerangStars(deltaMs);
+      // 出視野回收與迴旋星驅動歸 starLauncher（R8 抽離）。
+      starLauncher.cullOffscreen(scene.cameras.main.worldView);
+      starLauncher.steerBoomerangs(deltaMs);
     },
     takeDamage(damage: number, sourceX: number) {
       // 格擋後短無敵（§40）：防同一接觸連續結算。
@@ -1174,12 +1107,12 @@ export function createPlayer(
     onStarHit(star: Phaser.GameObjects.GameObject, mode: StarHitMode) {
       const s = star as Phaser.Physics.Arcade.Sprite;
       if (mode === 'absorb') {
-        recycleStar(s);
+        starLauncher.recycle(s);
         return;
       }
       const pierceLeft = (s.getData('pierce') as number) ?? 0;
       if (pierceLeft > 0) s.setData('pierce', pierceLeft - 1);
-      else recycleStar(s);
+      else starLauncher.recycle(s);
     },
     destroy() {
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, applyBob);

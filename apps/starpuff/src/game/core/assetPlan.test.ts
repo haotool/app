@@ -259,6 +259,8 @@ describe('PENDING 佔位鍵守門（R4）', () => {
 // 新增 hero 立繪必須 512×512；已知債務例外精確釘住尺寸（再漂移也會紅），
 // 素材重新輸出對齊後自例外表移除。
 describe('hero 立繪來源尺寸守門（R7）', () => {
+  // 追蹤 issue：#894（素材重新輸出 512 後自本表移除；雙向鎖——尺寸再漂移或
+  // 修對忘移除皆紅）。
   const OVERSIZED_DEBT: Record<string, number> = {
     'hero-ember': 768,
     'hero-tide': 1254,
