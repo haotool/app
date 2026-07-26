@@ -6,16 +6,24 @@
 >
 > **現行儲存鍵**：`sp-save`（存檔，schema v2）／`sp-save-backup`（備援）／`sp-settings`（全部偏好，schema v1）。`sp-muted`、`sp-rotation`、`sp-key-layout` 已於 §118.1 收斂，僅作一次性 migration 來源。
 >
-> 章號 §N 為全專案穩定識別碼（程式註解直接引用），拆檔不重新編號；索引與取代對照見 [`../GAME_DESIGN.md`](../GAME_DESIGN.md) 與 [`99-superseded.md`](99-superseded.md)。
+> **閱讀慣例**：每一句主文都是現行有效規則；被取代的舊規則一律降級為緊接其後的 `> **已廢止**` 附註，僅供追溯。索引與取代對照見 [`../GAME_DESIGN.md`](../GAME_DESIGN.md) 與 [`99-superseded.md`](99-superseded.md)。章號 §N 為全專案穩定識別碼（程式註解直接引用），拆檔不重新編號。
 
 ## 38. 存檔系統（core/save.ts 為 SSOT，pure TS 可測）
 
-- localStorage `sp-save` schema v1：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, eggsFound: string[] } }, lastPlayedAt }`。（v15 已由 §94.2 升 v2 增 `achievements`；v19 已由 §118.3 補訂 checksum 欄與 `sp-save-backup` 備援。）
+- localStorage `sp-save` **schema v2**：`{ schemaVersion, highestClearedLevel, levels: { [id]: { cleared, bestTimeMs, eggsFound: string[], exCleared? } }, lastPlayedAt, achievements, checksum }`（`achievements` 見 §94.2、`checksum` 與備援鍵 `sp-save-backup` 見 §118.3）。
+
+> **已廢止**（v15／v19 起）：schema v1（無 `achievements`、無 `checksum`、無備援）——v1 舊檔由 `parseSave` 遷移，禁 discard。
+
 - 寫入時機：通關（星星門吸入當下即寫，演出中斷不掉進度）、魔王擊破、彩蛋觸發（`trigger` 型別字串為關內唯一 id）。
 - 容錯（沿用 §34 鍵位布局 parse/fallback 模式）：schema 版本不符、形狀損毀、隱私模式拋錯——一律回退預設值；`highestClearedLevel` 由關卡條目重新推導，不信任持久化值。
 - `bestTimeMs`＝該關單次成功嘗試的最短用時（死亡重試重計）；`eggsFound` 去重持久化，跨局累計。
-- 重置進度：世界地圖左下「重置進度」兩步確認（武裝態 3s 未確認自動退回），僅清存檔（偏好不動）。全新存檔不顯示入口。（v19 已由 §118.3 補訂清除範圍：同時清 `sp-save` 與備援 `sp-save-backup`；偏好鍵自 `sp-key-layout`／`sp-muted` 收斂為 `sp-settings`。）
-- 偏離備註：任務原文「設定頁加重置進度」——v6 當時本遊戲無設定頁（按鈕配置為鍵位編輯器，語義不符），重置入口落於世界地圖（進度顯示與進度管理同場景，KISS）。（v19 已由 §118.2 取代前提：Title 已有「設定」入口，但重置進度**維持在世界地圖**——進度顯示與進度管理同場景的 KISS 裁決不變。）
+- 重置進度：世界地圖左下「重置進度」兩步確認（武裝態 3s 未確認自動退回），**清 `sp-save` 與備援 `sp-save-backup`**（§118.3；不清則會自備援恢復舊進度），偏好（`sp-settings`）不動。全新存檔不顯示入口。
+
+> **已廢止**（v19 §118.3 起）：清除範圍僅 `sp-save`；當時的偏好鍵表述為「`sp-key-layout`、`sp-muted` 不動」。
+
+- 入口位置裁決：重置進度**維持在世界地圖**——進度顯示與進度管理同場景（KISS）。Title 雖已有「設定」入口（§118.2），仍不搬入。
+
+> **已廢止**（v19 §118.2 起）：原偏離備註的前提「本遊戲無設定頁（按鈕配置為鍵位編輯器，語義不符）」——設定頁已存在，但入口裁決結論不變。
 
 ## 94. v15 成就系統（logic/achievements.ts，純呈現層聚合）
 

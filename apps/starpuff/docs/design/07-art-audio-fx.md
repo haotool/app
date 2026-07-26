@@ -6,7 +6,7 @@
 >
 > **紀律**：codex imagegen 僅用於本檔列出的資產批次；走路／跳躍等動作一律程式 tween，不生成逐幀序列。
 >
-> 章號 §N 為全專案穩定識別碼（程式註解直接引用），拆檔不重新編號；索引與取代對照見 [`../GAME_DESIGN.md`](../GAME_DESIGN.md) 與 [`99-superseded.md`](99-superseded.md)。
+> **閱讀慣例**：每一句主文都是現行有效規則；被取代的舊規則一律降級為緊接其後的 `> **已廢止**` 附註，僅供追溯。索引與取代對照見 [`../GAME_DESIGN.md`](../GAME_DESIGN.md) 與 [`99-superseded.md`](99-superseded.md)。章號 §N 為全專案穩定識別碼（程式註解直接引用），拆檔不重新編號。
 
 ## 8. Juice 清單（品質關鍵，全數必做）
 
@@ -14,7 +14,9 @@ hit-stop 60ms、震屏 4px、受擊白閃、squash & stretch（跳躍/落地/吸
 
 ## 9. 音效（zzfx，零音檔資產）
 
-jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠落地）、pop（puffy 爆裂）、chomp（咬咬花咬合）、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。靜音偏好存 localStorage（sp-muted）（v19 已由 §118.1 取代：收斂為 `sp-settings.audioMuted`，`sp-muted` 僅作一次性 migration 來源，落盤後刪除）。
+jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠落地）、pop（puffy 爆裂）、chomp（咬咬花咬合）、boss-roar、boss-slam、win、lose；BGM 用 zzfx 合成短循環（手刻序列混音，零依賴）。首次觸控後 resume AudioContext（iOS 必須）。靜音偏好存 `sp-settings.audioMuted`（§118.1），設定頁「音效」開關即改即存。
+
+> **已廢止**（v19 起，現行見 §118.1）：獨立 localStorage 鍵 `sp-muted`——僅存留為一次性 migration 來源，落盤成功後刪除。
 
 ## 10. 美術資產規格（codex imagegen 專用；除此之外嚴禁動用 codex）
 
