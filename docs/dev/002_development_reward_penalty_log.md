@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+274
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+275
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b05-common-fx-hud
+- 原因：B05 尾段需共通技能三組分層 VFX 與 HUD 補完；模型對小圖示類請求反覆把透明背景畫成棋盤格假透明（重生一次仍再犯）
+- 解法：放棄重生改機械後處理——四角 fuzz floodfill 跨越棋盤兩色去背（主體深色外框保護）＋ammo 底板圈內填白修平，四張全部收斂 corners 0／body 255
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b05-star-bullets-12x4
