@@ -882,7 +882,11 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
   // - 動態 import：ImportKeyword 呼叫全檔禁止
   // - 字串夾帶（cp['execFileSync']、eval('execFileSync')）：字串字面量不得含子行程 API 名
   // - env 只留在註解：options 的 env 屬性以 AST PropertyAssignment 驗證，不受註解字面影響
-  // 能力邊界：字串拼接（'execFile'+'Sync'）等蓄意混淆不在防線內，由 code review 把關；
+  // 能力邊界（書面出界；以下類別均不在本鎖防線內，一律交由 code review 把關）：
+  // - 字串拼接／template literal 組名（'execFile'+'Sync'、`${'child_process'}`）
+  // - Reflect.get(globalThis, …) 等反射取用
+  // - node:vm 動態執行、worker_threads 旁路執行、process.binding 底層綁定
+  // 這些同屬蓄意逃逸，防禦成本遠高於收益且窮舉不完；
   // 本鎖的目標是讓「無意漂移」與「直觀規避」在結構上必紅。
   function auditGitWrapperStructure(source: string): string[] {
     const violations: string[] = [];
@@ -896,11 +900,15 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
 
     // 1) child_process 只能具名且未改名匯入；namespace／default 匯入一律禁止——
     //    `cp['execFileSync'](…)` 這類存取無法靠名稱追蹤。
+    //    specifier 匹配放寬為「路徑段含 child_process 者皆納入檢查」（含帶子路徑形式，
+    //    如 node:child_process/promises）。誠實標註：該子路徑在現行 Node 並不是內建
+    //    模組（寫入會 ERR_UNKNOWN_BUILTIN_MODULE 使守門載入失敗、大聲 fail-closed），
+    //    放寬屬防禦性加固而非修補已知繞過。
     const boundNames = new Set<string>();
     for (const statement of sourceFile.statements) {
       if (!ts.isImportDeclaration(statement)) continue;
       if (!ts.isStringLiteral(statement.moduleSpecifier)) continue;
-      if (!/^(node:)?child_process$/.test(statement.moduleSpecifier.text)) continue;
+      if (!/(^|[:/])child_process(\/|$)/.test(statement.moduleSpecifier.text)) continue;
 
       if (statement.importClause?.name) violations.push('child_process 禁止 default 匯入');
       const bindings = statement.importClause?.namedBindings;
@@ -1109,6 +1117,28 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
       'GIT_ENV 的 LC_ALL 被改弱',
       (source: string) => source.replace("LC_ALL: 'C'", "LC_ALL: 'en_US.UTF-8'"),
       "GIT_ENV 必須含 LC_ALL: 'C'",
+    ],
+    [
+      'GIT_ENV 的 LANGUAGE 被改弱',
+      (source: string) => source.replace("LANGUAGE: 'C'", "LANGUAGE: 'zh_TW'"),
+      "GIT_ENV 必須含 LANGUAGE: 'C'",
+    ],
+    [
+      // 該子路徑在現行 Node 不存在（寫入即載入失敗、大聲 fail-closed）；
+      // 此 mutation 釘的是防禦性加固後的 specifier 匹配範圍，非已知繞過。
+      '帶子路徑的 child_process specifier（node:child_process/promises）',
+      (source: string) => `${source}\nimport { execFile } from 'node:child_process/promises';\n`,
+      '恰為 execFileSync',
+    ],
+    [
+      'require 注入',
+      (source: string) => `${source}\nconst cp3 = require('node:fs');\n`,
+      '禁止出現識別字「require」',
+    ],
+    [
+      'createRequire 注入',
+      (source: string) => `${source}\nconst req = createRequire(import.meta.url);\n`,
+      '禁止出現識別字「createRequire」',
     ],
   ])('AST 鎖 mutation：%s 必紅', (_label, mutate, expectedViolation) => {
     const source = readFileSync(SCRIPT_PATH, 'utf-8');
