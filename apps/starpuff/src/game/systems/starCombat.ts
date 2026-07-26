@@ -12,7 +12,16 @@ import {
 import { knockbackVelocity, pickInRadius } from '../logic/combat';
 import { buffDamageMul, type BuffState } from '../logic/buffs';
 import { SHELL_SHIELD, pickChainTargets } from '../logic/skills';
-import { GALE_FLIGHT, TRANSFORM_FORMS, VOLT_BEAM, VOLT_DISCHARGE } from '../logic/transform';
+import {
+  GALE_FLIGHT,
+  GRAVITY_WELL,
+  MAGMA_POP,
+  RAINBOW_BEAM,
+  TIDE_PULL,
+  TRANSFORM_FORMS,
+  VOLT_BEAM,
+  VOLT_DISCHARGE,
+} from '../logic/transform';
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
@@ -71,7 +80,18 @@ export interface StarCombat {
   resolveVoltBeam(x: number, y: number, facing: 1 | -1): void;
   resolveVoltDischarge(x: number, y: number): void;
   resolveGaleLanding(x: number, y: number): void;
+  // 形態技路由單一入口（§111）：GameScene 只轉發事件 kind，分派集中於此。
+  resolveTransformStrike(kind: TransformStrikeKind, x: number, y: number, facing: 1 | -1): void;
 }
+
+export type TransformStrikeKind =
+  | 'volt-beam'
+  | 'volt-discharge'
+  | 'gale-landing'
+  | 'magma-pop'
+  | 'tide-pull'
+  | 'rainbow-beam'
+  | 'gravity-well';
 
 export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): StarCombat {
   function flavorOf(star: Phaser.Physics.Arcade.Sprite): StarFlavor {
@@ -361,6 +381,164 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
+  // 焰化熔岩爆（§111）：落地燒灼小爆——範圍/傷害高於風化落地衝擊，burn 結算熔解優勢。
+  function resolveMagmaPop(x: number, y: number): void {
+    hooks.fx().shake(5);
+    hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.ember.tint);
+    for (const child of hooks.enemies().getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = child as Phaser.Physics.Arcade.Sprite;
+      if (distanceBetween(x, y, enemy.x, enemy.y) > MAGMA_POP.radiusPx) continue;
+      const outcome = hooks.enemies().damage(child, MAGMA_POP.damage);
+      if (outcome === 'hurt') {
+        const kb = knockbackVelocity(enemy.x, x, SLAM.knockbackSpeed * 0.7, SLAM.knockbackLift);
+        enemy.setVelocity(kb.x, kb.y);
+      }
+    }
+  }
+
+  // 潮化水引（§111）：面向側域內小怪拉向玩家＋輕傷——貼近吸入循環（吞取節奏加速）。
+  function resolveTidePull(x: number, y: number, facing: 1 | -1): void {
+    hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.tide.tint);
+    const player = hooks.player().sprite;
+    for (const child of hooks.enemies().getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = child as Phaser.Physics.Arcade.Sprite;
+      if (Math.sign(enemy.x - x) !== facing && enemy.x !== x) continue;
+      if (distanceBetween(x, y, enemy.x, enemy.y) > TIDE_PULL.rangePx) continue;
+      const outcome = hooks.enemies().damage(child, TIDE_PULL.damage);
+      if (outcome === 'ignored' || outcome === 'killed') continue;
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      enemy.setVelocity((dx / dist) * TIDE_PULL.pullSpeed, (dy / dist) * TIDE_PULL.pullSpeed);
+    }
+  }
+
+  // 稜化彩虹光束（§111）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。
+  function resolveRainbowBeam(x: number, y: number, facing: 1 | -1): void {
+    const endX = x + facing * RAINBOW_BEAM.rangePx;
+    const beam = scene.add.graphics().setDepth(93);
+    // 彩虹三色帶（形狀訊號，不依賴單色）。
+    const bands: readonly [number, number][] = [
+      [0xff9ec4, -8],
+      [0xfff1c4, 0],
+      [0x9fd8f0, 8],
+    ];
+    for (const [tint, offsetY] of bands) {
+      beam.lineStyle(6, tint, 0.85);
+      beam.lineBetween(x, y + offsetY, endX, y + offsetY);
+    }
+    scene.tweens.add({
+      targets: beam,
+      alpha: 0,
+      duration: 260,
+      ease: 'Quad.easeIn',
+      onComplete: () => beam.destroy(),
+    });
+    playSfx('zap', 1.3);
+    const inCorridor = (tx: number, ty: number): boolean =>
+      Math.abs(ty - y) <= RAINBOW_BEAM.corridorHalfPx &&
+      (Math.sign(tx - x) === facing || tx === x) &&
+      Math.abs(tx - x) <= RAINBOW_BEAM.rangePx;
+    const damage = RAINBOW_BEAM.damage * buffDamageMul(hooks.buff());
+    for (const child of hooks.enemies().getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = child as Phaser.Physics.Arcade.Sprite;
+      if (inCorridor(enemy.x, enemy.y)) hooks.enemies().damage(child, damage);
+    }
+    if (hooks.boss().isActive()) {
+      for (const body of hooks.bossBodies()) {
+        if (!(body.body as Phaser.Physics.Arcade.Body).enable) continue;
+        if (inCorridor(body.x, body.y)) hooks.damageBossAt(damage, body.x, body.y, 'star');
+      }
+    }
+  }
+
+  // 引力化引力井（§111）：面向側定點初爆輕傷＋滯留週期牽引（壽命有界必回收）。
+  function resolveGravityWell(x: number, y: number, facing: 1 | -1): void {
+    const wellX = x + facing * GRAVITY_WELL.offsetPx;
+    const well = scene.add
+      .circle(wellX, y, GRAVITY_WELL.radiusPx, TRANSFORM_FORMS.gravity.tint, 0.12)
+      .setStrokeStyle(3, TRANSFORM_FORMS.gravity.tint, 0.85)
+      .setDepth(59)
+      .setScale(0.3);
+    scene.tweens.add({ targets: well, scale: 1, duration: 200, ease: 'Quad.easeOut' });
+    for (const child of hooks.enemies().getGroup().getChildren()) {
+      if (!child.active) continue;
+      const enemy = child as Phaser.Physics.Arcade.Sprite;
+      if (distanceBetween(wellX, y, enemy.x, enemy.y) <= GRAVITY_WELL.radiusPx) {
+        hooks.enemies().damage(child, GRAVITY_WELL.damage);
+      }
+    }
+    let ticksLeft = GRAVITY_WELL.ticks;
+    const timer = scene.time.addEvent({
+      delay: GRAVITY_WELL.tickMs,
+      repeat: GRAVITY_WELL.ticks - 1,
+      callback: () => {
+        ticksLeft -= 1;
+        for (const child of hooks.enemies().getGroup().getChildren()) {
+          if (!child.active) continue;
+          const enemy = child as Phaser.Physics.Arcade.Sprite;
+          if (distanceBetween(wellX, y, enemy.x, enemy.y) > GRAVITY_WELL.radiusPx) continue;
+          const dx = wellX - enemy.x;
+          const dy = y - enemy.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          enemy.setVelocity(
+            (dx / dist) * GRAVITY_WELL.pullSpeed,
+            (dy / dist) * GRAVITY_WELL.pullSpeed,
+          );
+        }
+        if (ticksLeft <= 0) {
+          timer.remove();
+          scene.tweens.add({
+            targets: well,
+            alpha: 0,
+            scale: 0.4,
+            duration: 200,
+            onComplete: () => well.destroy(),
+          });
+        }
+      },
+    });
+  }
+
+  // 形態技路由（§111）：kind 窮舉分派，GameScene 零 if/else 常駐。
+  function resolveTransformStrike(
+    kind: TransformStrikeKind,
+    x: number,
+    y: number,
+    facing: 1 | -1,
+  ): void {
+    switch (kind) {
+      case 'volt-beam':
+        resolveVoltBeam(x, y, facing);
+        break;
+      case 'volt-discharge':
+        resolveVoltDischarge(x, y);
+        break;
+      case 'gale-landing':
+        resolveGaleLanding(x, y);
+        break;
+      case 'magma-pop':
+        resolveMagmaPop(x, y);
+        break;
+      case 'tide-pull':
+        resolveTidePull(x, y, facing);
+        break;
+      case 'rainbow-beam':
+        resolveRainbowBeam(x, y, facing);
+        break;
+      case 'gravity-well':
+        resolveGravityWell(x, y, facing);
+        break;
+      default: {
+        const exhaustive: never = kind;
+        void exhaustive;
+      }
+    }
+  }
+
   return {
     mixOf,
     specOf,
@@ -376,5 +554,6 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     resolveVoltBeam,
     resolveVoltDischarge,
     resolveGaleLanding,
+    resolveTransformStrike,
   };
 }

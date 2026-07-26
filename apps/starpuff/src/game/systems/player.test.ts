@@ -3,6 +3,7 @@ import type Phaser from 'phaser';
 import { STAR, STARSTORM, STAR_MIXES, getMix } from '../core/config';
 import { GameEvents } from '../core/events';
 import { MAX_CONCURRENT_WIND_BLADES, STAR_POOL_MAX } from '../logic/skills';
+import { unlockedTransformForms } from '../logic/transform';
 import type { ControlsState } from './controls';
 import { createPlayer } from './player';
 
@@ -245,7 +246,8 @@ function makeHarness(): {
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
   } as unknown as Phaser.Scene;
-  return { player: createPlayer(scene, 100, 300), groups, emit };
+  // 解鎖集（§111）：單測給全形態，資格裁決守門案在 transform.test.ts。
+  return { player: createPlayer(scene, 100, 300, unlockedTransformForms(30)), groups, emit };
 }
 
 const IDLE: ControlsState = {

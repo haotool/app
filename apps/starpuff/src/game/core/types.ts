@@ -46,7 +46,8 @@ export type LevelId =
 export type BossKind = 'jellord' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
-export type TransformForm = 'volt' | 'gale' | 'shell';
+// §111 星海終局篇：新增焰化／潮化／稜化／引力化（引入關見 FORM_INTRO_LEVEL）。
+export type TransformForm = 'volt' | 'gale' | 'shell' | 'ember' | 'tide' | 'prism' | 'gravity';
 
 // 星暴 2.0 蓄能相位（§109）：none 無蓄能星；charged 頭頂蓄能星待引爆；detonating 蓄爆中。
 export type StarburstPhase = 'none' | 'charged' | 'detonating';

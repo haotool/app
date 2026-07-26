@@ -13,7 +13,7 @@ import {
 import { bindButtonActivation, menuHitCssRect } from '../core/domButton';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
-import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
+import { TRANSFORM_FORMS, eligibleForm, type TransformForm } from '../logic/transform';
 import { fillStarPath } from './fx';
 import { openPauseMenu } from './pause';
 
@@ -245,7 +245,8 @@ function ensureHudTextures(scene: Phaser.Scene): void {
   }
 }
 
-export function createHud(scene: Phaser.Scene): Hud {
+// unlockedForms（§111）：與 SP 鍵同一資格裁決——鎖定形態不脈動，缺省不設限。
+export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<TransformForm>): Hud {
   ensureHudTextures(scene);
   addMuteButton(scene);
   addPauseButton(scene);
@@ -361,7 +362,7 @@ export function createHud(scene: Phaser.Scene): Hud {
   // 蓄能星存在時再滿匣（不疊加）改套金色脈動提示。
   let readyTween: Phaser.Tweens.Tween | null = null;
   function updateReadyPulse(magazine: readonly MagazineSlot[]): boolean {
-    const form = eligibleForm(magazine);
+    const form = eligibleForm(magazine, unlockedForms);
     const fullWithCharge = magazine.length >= STAR.maxAmmo;
     if (form || fullWithCharge) {
       const tint = form ? TRANSFORM_FORMS[form].tint : CHARGED_STAR.tint;

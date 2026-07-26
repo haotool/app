@@ -59,11 +59,14 @@ import {
   type StarburstState,
 } from '../logic/starburst';
 import {
-  GALE_BLADE,
   GALE_FLIGHT,
+  GALE_SHOT,
   GALE_GLIDE,
+  GRAVITY_WELL,
+  RAINBOW_BEAM,
   SHELL_CHARGE,
   SHELL_TUCK,
+  TIDE_PULL,
   TRANSFORM_FORMS,
   VOLT_BEAM,
   absorbHalvedDamage,
@@ -75,7 +78,8 @@ import {
   glideFallVy,
   startTransform,
   tickTransform,
-  transformProgress,
+  type FormShotSpec,
+  type TransformForm,
   type TransformState,
 } from '../logic/transform';
 import {
@@ -90,6 +94,7 @@ import { playSfx } from '../audio/sfx';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, attachTrail, burstSmall, ensureFxTextures, type TrailHandle } from './fx';
+import { createFormSkills } from './formSkills';
 import { getVisualScale } from './visualScale';
 
 // 星彈命中結果：pierce 依剩餘穿透數決定續飛；absorb 一律回收（魔王或未死目標吃彈）。
@@ -116,6 +121,8 @@ export interface PlayerHandle {
   isShieldRaised(): boolean;
   // v9 星化（§57）：形態觀測（e2e/世界結算）與下砸態（魔王頭頂 hit window 判定）。
   getTransformState(): TransformState;
+  // 變身資格觀測（§111 解鎖閘一致性）：HUD/e2e 與 SP 鍵同一裁決，鎖定形態不成立。
+  getEligibleForm(): TransformForm | null;
   // 滾殼衝撞（§110）：衝撞期觀測——overlaps 據此改判接觸傷向小怪結算。
   isShellCharging(): boolean;
   // 星暴 2.0（§109）：蓄能相位觀測、跨關授星、死亡/EX 清除與 SP 鍵呈現模式。
@@ -173,7 +180,13 @@ const INHALE_FRAME_MS = 160;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
-export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerHandle {
+// unlockedForms（§111）：GameScene 依進度派生的形態解鎖集——資格裁決單點注入。
+export function createPlayer(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  unlockedForms: ReadonlySet<TransformForm>,
+): PlayerHandle {
   // art stream 紋理未載入時退回內建白色矩形，避免本地驗證噴 missing texture。
   const tex = (key: string) => (scene.textures.exists(key) ? key : '__WHITE');
   // 主角輪廓對比（§45 審查修復）：深紫剪影背襯作描邊，淡色底（草原 1.81:1）提升至 ≥3:1。
@@ -266,9 +279,12 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
   let blockInvulnMs = 0;
   let wasShieldRaised = false;
   // 星化（§57）：形態狀態、形態技 CD 與殼化減傷池；觸發改 SP 鍵（§109）。
+  // formCdMs（§111）：風刃/焰彈/稜片/水引/引力井/光束共用形態技 CD（形態互斥）。
+  // prismArm（§111）：稜化 B 語意延遲——放開時依按住時長分派碎片（點按）或光束（長按）。
   let transform = createTransformState();
   let voltCdMs = 0;
-  let bladeCdMs = 0;
+  let formCdMs = 0;
+  let prismArm = false;
   let halfDamagePool = 0;
   // 滾殼衝撞（§110）：衝撞剩餘時長與 CD。
   let chargeMs = 0;
@@ -411,62 +427,54 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     emitStarburst();
   };
 
-  // 形態 aura（§57，池化）：三形態各一常駐 emitter（emitting=false），變身時僅啟用當前形態。
-  const auraEmitters = {} as Record<
-    'volt' | 'gale' | 'shell',
-    Phaser.GameObjects.Particles.ParticleEmitter
-  >;
-  for (const form of ['volt', 'gale', 'shell'] as const) {
-    auraEmitters[form] = scene.add
-      .particles(0, 0, FX_TEXTURES.star, {
-        follow: sprite,
-        speed: { min: 10, max: 40 },
-        angle: { min: 0, max: 360 },
-        scale: { start: 0.55, end: 0 },
-        alpha: { start: 0.75, end: 0 },
-        lifespan: { min: 260, max: 420 },
-        frequency: 70,
-        blendMode: 'ADD',
-        tint: TRANSFORM_FORMS[form].tint,
-        emitting: false,
-        maxAliveParticles: 14,
-      })
-      .setDepth(11);
-  }
+  // 形態呈現與攻擊彈（§57/§111）：aura／變身環／護體視覺／偽星彈發射委派 formSkills。
+  const formSkills = createFormSkills(scene, sprite, stars, tex);
 
-  // 變身環（§57/§109）：形態倒數（10s）逐幀重繪；長按充能進度隨 SP 即時變身退場。
-  const transformRing = scene.add.graphics().setDepth(95);
-  const drawTransformRing = () => {
-    transformRing.clear();
-    if (!transform.form) return;
-    const spec = TRANSFORM_FORMS[transform.form];
-    transformRing.lineStyle(4, spec.tint, 0.9);
-    transformRing.beginPath();
-    transformRing.arc(
-      sprite.x,
-      sprite.y - 44,
-      20,
-      -Math.PI / 2,
-      -Math.PI / 2 + transformProgress(transform) * Math.PI * 2,
-    );
-    transformRing.strokePath();
+  // 形態攻擊彈發射（§57 風刃／§111 焰彈·稜片）：面向嘴前出彈，風刃保留扁身長尾。
+  const fireFormShot = (shot: FormShotSpec, flat: boolean) => {
+    const spec = transform.form ? TRANSFORM_FORMS[transform.form] : null;
+    formSkills.launchShot({
+      x: sprite.x + facing * (PLAYER_SIZE / 2 + 8),
+      y: sprite.y,
+      facing,
+      spec: shot,
+      tint: spec?.tint ?? CHARGED_STAR.tint,
+      pitch: 1.4,
+      flat,
+      trailLifespanMs: flat ? WIND_TRAIL_LIFESPAN_MS : TRAIL_LIFESPAN_MS,
+    });
+  };
+
+  // 形態技世界結算事件單一出口（§111）：tide-pull／gravity-well／rainbow-beam。
+  const emitFormStrike = (
+    kind: 'tide-pull' | 'gravity-well' | 'rainbow-beam',
+    form: TransformForm,
+  ) => {
+    emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
+      kind,
+      form,
+      x: sprite.x + facing * (PLAYER_SIZE / 2 + 6),
+      y: sprite.y,
+      facing,
+    });
   };
 
   // 變身進入（§57）：消耗全部彈匣、爆發特效、啟用形態 aura。
-  const beginTransform = (form: 'volt' | 'gale' | 'shell') => {
+  const beginTransform = (form: TransformForm) => {
     transform = startTransform(form);
     magazine = [];
     deferredFire = false;
+    prismArm = false;
     halfDamagePool = 0;
     voltCdMs = 0;
-    bladeCdMs = 0;
+    formCdMs = 0;
     chargeMs = 0;
     chargeCdMs = 0;
     emitAmmo();
     playSfx('starstorm');
     burstSmall(scene, sprite.x, sprite.y, TRANSFORM_FORMS[form].tint);
     squashStretch(1.35, 0.7);
-    auraEmitters[form].start();
+    formSkills.begin(form);
   };
 
   // 解除（到期或再長按提前）：不返彈；aura 停用、外觀復原、衝撞態一併結束。
@@ -474,46 +482,13 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     const form = transform.form;
     transform = endTransform();
     chargeMs = 0;
+    prismArm = false;
     if (!form) return;
-    auraEmitters[form].stop();
+    formSkills.end(form);
     playSfx('pop');
     burstSmall(scene, sprite.x, sprite.y, TRANSFORM_FORMS[form].tint);
     // 立即回復非變身貼圖（setPose 快取不變時不重設，故直接覆寫）。
     sprite.setTexture(tex(pose));
-  };
-
-  // 風化穿透風刃（§57）：走 stars 池的偽星彈——傷害/穿透自帶，沿用既有命中管線。
-  const launchWindBlade = () => {
-    const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
-    const star = stars.get(fx, sprite.y, tex('fx-star')) as Phaser.Physics.Arcade.Sprite | null;
-    if (!star) return;
-    star.setActive(true).setVisible(true);
-    star.setDisplaySize(STAR_SIZE, STAR_SIZE * 0.7);
-    star.setTint(TRANSFORM_FORMS.gale.tint);
-    const body = star.body as Phaser.Physics.Arcade.Body;
-    body.enable = true;
-    body.reset(fx, sprite.y);
-    star.setData('damage', GALE_BLADE.damage);
-    star.setData('pierce', GALE_BLADE.pierceCount);
-    star.setData('flavor', 'floaty');
-    star.setData('mix', null);
-    star.setData('boomMs', null);
-    star.setRotation(0);
-    star.setData(
-      'fxTrail',
-      attachTrail(scene, star, {
-        tint: TRANSFORM_FORMS.gale.tint,
-        lifespan: WIND_TRAIL_LIFESPAN_MS,
-      }),
-    );
-    star.setVelocity(facing * GALE_BLADE.speed, 0);
-    emitGameEvent(scene.events, GameEvents.STAR_FIRED, {
-      x: fx,
-      y: sprite.y,
-      directionX: facing,
-      flavor: 'floaty',
-      pitch: 1.4,
-    });
   };
 
   const recycleStar = (star: Phaser.Physics.Arcade.Sprite) => {
@@ -636,7 +611,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       slamCdMs = tickTimer(slamCdMs, deltaMs);
       blockInvulnMs = tickTimer(blockInvulnMs, deltaMs);
       voltCdMs = tickTimer(voltCdMs, deltaMs);
-      bladeCdMs = tickTimer(bladeCdMs, deltaMs);
+      formCdMs = tickTimer(formCdMs, deltaMs);
       chargeMs = tickTimer(chargeMs, deltaMs);
       chargeCdMs = tickTimer(chargeCdMs, deltaMs);
 
@@ -677,11 +652,11 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
           });
         } else if (lastVy > DUST_FALL_SPEED) {
           spawnDustRing();
-          // 風化落地衝擊（§57）：一般落地即帶小範圍衝擊，世界結算交 GameScene。
-          if (transform.form === 'gale') {
+          // 落地衝擊（§57 風化／§111 焰化熔岩爆）：資料驅動 landingImpact，世界結算交 GameScene。
+          if (formSpec?.landingImpact && transform.form) {
             emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
-              kind: 'gale-landing',
-              form: 'gale',
+              kind: transform.form === 'ember' ? 'magma-pop' : 'gale-landing',
+              form: transform.form,
               x: sprite.x,
               y: sprite.y,
               facing,
@@ -758,6 +733,14 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
               squashStretch(0.8, 1.25);
             } else if (
               controls.jumpPressed &&
+              formSpec &&
+              flapsUsed < PLAYER.maxFlaps &&
+              formSkills.airMove(formSpec, facing)
+            ) {
+              // 焰衝刺／鏡步（§111）：形態機動佔用空中跳槽位，消耗拍翅次數。
+              flapsUsed += 1;
+            } else if (
+              controls.jumpPressed &&
               (formSpec?.freeFlight || flapsUsed < PLAYER.maxFlaps)
             ) {
               // 風化近自由飛行（§57）：拍翅無上限＋升力增強。
@@ -785,9 +768,26 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
               });
             }
           } else if (transform.form === 'gale') {
-            if (bladeCdMs <= 0) {
-              bladeCdMs = GALE_BLADE.cooldownMs;
-              launchWindBlade();
+            if (formCdMs <= 0) {
+              formCdMs = GALE_SHOT.cooldownMs;
+              fireFormShot(GALE_SHOT, true);
+            }
+          } else if (transform.form === 'ember') {
+            // 焰彈（§111）：直射小爆（借爆裂味效果表），burn 燒毀優勢由命中端結算。
+            if (formCdMs <= 0 && formSpec?.shot) {
+              formCdMs = formSpec.shot.cooldownMs;
+              fireFormShot(formSpec.shot, false);
+            }
+          } else if (transform.form === 'prism') {
+            // 稜化 B 語意延遲（§111）：放開時分派碎片（點按）或彩虹光束（長按）。
+            prismArm = true;
+          } else if (transform.form === 'tide' || transform.form === 'gravity') {
+            // 水引／引力井（§111）：世界結算交 starCombat（沿 SKILL 事件契約）。
+            if (formCdMs <= 0 && formSpec?.tapStrike) {
+              formCdMs =
+                formSpec.tapStrike === 'tide-pull' ? TIDE_PULL.cooldownMs : GRAVITY_WELL.cooldownMs;
+              playSfx(formSpec.tapStrike === 'tide-pull' ? 'pop' : 'charge', 0.9);
+              emitFormStrike(formSpec.tapStrike, transform.form);
             }
           } else if (transform.form === 'shell') {
             // 滾殼衝撞（§110）：B 點按起手；接觸傷由 overlaps 依衝撞態改判向小怪。
@@ -810,7 +810,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         // SP 情境鍵（§109）：點按依天然互斥語意分派——變身中解除／蓄能星引爆／
         // 資格成立（同系 ≥3、地面）立即變身；無技能可用時為 none。
         if (controls.spPressed) {
-          const spEligible = eligibleForm(magazine);
+          const spEligible = eligibleForm(magazine, unlockedForms);
           const command = resolveSpPress({
             phase: starburst.phase,
             transformActive: transform.form !== null,
@@ -827,6 +827,19 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       if (!controls.actionHeld) {
         if (deferredFire && hurtLockMs <= 0 && shouldFireOnRelease(actionHoldMs)) fireStar();
         deferredFire = false;
+        // 稜化 B 放開分派（§111）：長按 ≥ 門檻＝彩虹光束、否則三向稜光碎片。
+        if (prismArm && transform.form === 'prism' && hurtLockMs <= 0 && formCdMs <= 0) {
+          const spec = TRANSFORM_FORMS.prism;
+          if (actionHoldMs >= RAINBOW_BEAM.holdMs) {
+            formCdMs = RAINBOW_BEAM.cooldownMs;
+            playSfx('charge', 1.2);
+            emitFormStrike('rainbow-beam', 'prism');
+          } else if (spec.shot) {
+            formCdMs = spec.shot.cooldownMs;
+            fireFormShot(spec.shot, false);
+          }
+        }
+        prismArm = false;
       }
 
       // 蓄爆推進（§109）：0.3s 不可取消，期滿結算星暴——清場委派 GameScene/starCombat，
@@ -860,8 +873,8 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         !inShieldContext &&
         !transform.form;
       zoneBody.enable = inhaling;
-      // 變身環（§57/§109）：變身中畫形態倒數；長按充能進度已隨 SP 即時變身退場。
-      drawTransformRing();
+      // 變身環＋護體視覺（§57/§109/§111）：形態倒數與泡泡盾/星體護衛逐幀重繪。
+      formSkills.draw(transform, sprite.x, sprite.y, scene.time.now);
       // 候選區前緣 zoneSpan、後緣 INHALE_NEAR_PX（#844）：中心相應向面向側偏移。
       zone.setPosition(sprite.x + facing * ((zoneSpan - INHALE_NEAR_PX) / 2), sprite.y);
 
@@ -956,10 +969,10 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
         });
         return;
       }
-      // 受身入殼（§110）：殼化受擊自動入殼——本次傷害全免＋0.5s 免傷，每形態期 1 次；
-      // 既有 i-frame 生效期間不消耗次數。
+      // 護體（§110 受身入殼→§111 泛化）：殼化入殼／潮化泡泡盾／引力化星體護衛——
+      // 本次傷害全免＋0.5s 免傷，次數由 spec.tuckCharges 種入；i-frame 期不消耗。
       if (
-        transform.form === 'shell' &&
+        transform.form !== null &&
         effectiveInvulnMs(invulnerableMs, stormInvulnMs) <= 0 &&
         transform.tuckLeft > 0
       ) {
@@ -1096,6 +1109,9 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
     getTransformState() {
       return transform;
     },
+    getEligibleForm() {
+      return eligibleForm(magazine, unlockedForms);
+    },
     isShellCharging() {
       return chargeMs > 0;
     },
@@ -1120,7 +1136,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       return resolveSpMode({
         phase: starburst.phase,
         transformForm: transform.form,
-        eligibleForm: eligibleForm(magazine),
+        eligibleForm: eligibleForm(magazine, unlockedForms),
         airborne: !(body.blocked.down || body.touching.down),
       });
     },
@@ -1169,8 +1185,7 @@ export function createPlayer(scene: Phaser.Scene, x: number, y: number): PlayerH
       footDust.destroy();
       chargedStar.destroy();
       shieldGfx.destroy();
-      transformRing.destroy();
-      for (const emitter of Object.values(auraEmitters)) emitter.destroy();
+      formSkills.destroy();
       silhouette.destroy();
       sprite.destroy();
       zone.destroy();

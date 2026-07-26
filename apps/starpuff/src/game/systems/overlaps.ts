@@ -54,6 +54,8 @@ const PULL_BASE_SPEED = 160;
 const PULL_GAIN = 2.2;
 const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
+// 潮環撥開速度（§111 Tidal Ring）：接觸投射物即反向推離。
+const TIDE_DEFLECT_SPEED = 320;
 
 export function applyInhalePull(
   scene: Phaser.Scene,
@@ -179,6 +181,19 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.enemies().getHazards(), (_p, hz) => {
     const hazard = asSprite(hz);
     if (!hazard.active || hooks.isSettled()) return;
+    // 潮環撥開（§111 Tidal Ring）：潮化接觸投射物即反向推離，不結算傷害不回收
+    //（防禦性撥開，非殼化反打）；deflected 標記防同一彈體逐幀重複推。
+    if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
+      if (hazard.getData('tideDeflected') !== true) {
+        hazard.setData('tideDeflected', true);
+        const player = hooks.player().sprite;
+        const away = Math.sign(hazard.x - player.x) || hooks.player().getFacing();
+        (hazard.body as Phaser.Physics.Arcade.Body).setVelocity(away * TIDE_DEFLECT_SPEED, -80);
+        hooks.fx().burstSmall(hazard.x, hazard.y, TRANSFORM_FORMS.tide.tint);
+        playSfx('pop', 1.2);
+      }
+      return;
+    }
     hazard.disableBody(true, true);
     hooks.damagePlayer(ENEMY.touchDamage, hazard.x);
   });
@@ -257,6 +272,16 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       projectile.disableBody(true, true);
       hooks.player().grantStar('jelly');
       playSfx('swallow');
+      return;
+    }
+    // 潮環撥開（§111）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
+    if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
+      if (projectile.getData('tideDeflected') !== true) {
+        projectile.setData('tideDeflected', true);
+        const away = Math.sign(projectile.x - hooks.player().sprite.x) || 1;
+        (projectile.body as Phaser.Physics.Arcade.Body).setVelocity(away * TIDE_DEFLECT_SPEED, -80);
+        playSfx('pop', 1.2);
+      }
       return;
     }
     // 殼化反彈（§57/§58）：彈幕不傷身，反向射回最近存活本體（§68 多本體）。

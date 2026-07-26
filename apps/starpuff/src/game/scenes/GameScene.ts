@@ -18,7 +18,8 @@ import {
   recordLevelClear,
   type SaveData,
 } from '../core/save';
-import { SceneKeys, type GameResultData, type LevelId } from '../core/types';
+import { SceneKeys, type GameResultData, type LevelId, type TransformForm } from '../core/types';
+import { unlockedTransformForms } from '../logic/transform';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor } from '../logic/combat';
@@ -150,6 +151,7 @@ export class GameScene extends Phaser.Scene {
   // 中魔王精英房（§48/§52）：全流程委派 systems/eliteRoom.ts；v8 起一關可多房（L6 雙精英）。
   private eliteRooms: EliteRoomHandle[] = [];
 
+  private unlockedForms: ReadonlySet<TransformForm> = new Set();
   private tide: TideHandle | null = null;
   // 流星雨（§79）：關卡級環境彈幕；無配置關為 null。
   private meteor: MeteorSystem | null = null;
@@ -257,7 +259,10 @@ export class GameScene extends Phaser.Scene {
         ? 60
         : this.worldWidth() / 2
       : 100;
-    this.player = createPlayer(this, startX, GROUND_TOP - 40);
+    // 形態解鎖集（§111）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
+    const reach = Math.max(this.currentLevelId, this.save.highestClearedLevel + 1);
+    this.unlockedForms = unlockedTransformForms(reach);
+    this.player = createPlayer(this, startX, GROUND_TOP - 40, this.unlockedForms);
     this.enemies = createEnemySystem(this);
     // 糖漿潮汐（§71）：關卡級配置建立；spawn 調整走交叉不變式 13/17 hook。
     this.tide = this.level.tide ? createTide(this, this.level.tide, this.worldWidth()) : null;
@@ -302,7 +307,7 @@ export class GameScene extends Phaser.Scene {
     this.boss = bossKit.handle;
     this.bossTouchDamage = bossKit.bodyDamage;
     this.fx = createFx(this);
-    createHud(this);
+    createHud(this, this.unlockedForms);
     // 場內浮字與慶祝演出（§24/§46/§94）：委派 systems/toasts（fx 閉包延遲解析）。
     this.toasts = createToasts(this, {
       fx: () => this.fx,
@@ -480,8 +485,9 @@ export class GameScene extends Phaser.Scene {
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
       const spMode = this.player.getSpMode();
       this.controls.setSpMode(spMode);
-      // SP 變身教學（§110）：資格徽章首次浮現即教一次（L3 供給保證位點自然觸發）。
-      if (!taughtTransformSp && (spMode === 'volt' || spMode === 'gale' || spMode === 'shell')) {
+      // SP 變身教學（§110/§111）：任一形態資格徽章首次浮現即教一次。
+      const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
+      if (!taughtTransformSp && spIsForm) {
         taughtTransformSp = true;
         this.toasts.flavor('同系星彈 ×3！按 SP 鍵立即變身');
       }
@@ -803,12 +809,10 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
       this.starCombat.resolveShieldCounter(x, y, facing),
     );
-    // 星化形態技（§57）：雷化鏈電束／風化落地衝擊由 player 發事件、starCombat 結算。
-    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) => {
-      if (kind === 'volt-beam') this.starCombat.resolveVoltBeam(x, y, facing);
-      else if (kind === 'volt-discharge') this.starCombat.resolveVoltDischarge(x, y);
-      else this.starCombat.resolveGaleLanding(x, y);
-    });
+    // 星化形態技（§57/§111）：player 發事件、starCombat 單點路由結算（七形態同制）。
+    bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
+      this.starCombat.resolveTransformStrike(kind, x, y, facing),
+    );
     bind(GameEvents.BOSS_SPAWNED, ({ maxHp }) => {
       this.bossHp = maxHp;
     });

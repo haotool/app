@@ -14,7 +14,21 @@ export const TRANSFORM = {
   requiredStars: 3,
 } as const;
 
-// 形態規格表（表驅動，禁止散落 scene）：每形態 攻/防/機動 三語彙（§110 加深，≤3 守門）。
+// 新形態攻擊彈（§111）：走 stars 池的偽星彈（沿風刃管線）；count>1 為扇形分裂；
+// flavor 決定命中效果表（焰彈借爆裂味小爆、稜片借標準味素身），傷害/穿透由本表覆寫。
+export interface FormShotSpec {
+  damage: number;
+  speed: number;
+  pierceCount: number;
+  count: number;
+  spreadVy: number;
+  cooldownMs: number;
+  flavor: StarFlavor;
+  // 焰系燒毀優勢（§111）：burn 命中使冰史萊姆熔解不分裂（W2 稅票同源消費）。
+  burn: boolean;
+}
+
+// 形態規格表（表驅動，禁止散落 scene）：每形態語彙 ≤4（§111 攻/防/機動/特守門）。
 export interface TransformFormSpec {
   nameZh: string;
   tint: number;
@@ -26,7 +40,8 @@ export interface TransformFormSpec {
   landingImpact: boolean;
   slamRadiusMul: number;
   chargeDash: boolean;
-  // 防禦：volt 受擊放電反擊次數；gale 落地滾翻免傷窗；shell 受身入殼次數＋受傷減半＋反彈。
+  // 防禦：volt 受擊放電反擊次數；gale 落地滾翻免傷窗；shell/tide/gravity 入殼護體次數
+  //（受身入殼／泡泡護盾／星體護衛共用 tuck 計數）＋受傷減半＋反彈。
   dischargeCharges: number;
   landingRollMs: number;
   tuckCharges: number;
@@ -36,10 +51,31 @@ export interface TransformFormSpec {
   magnetImmune: boolean;
   freeFlight: boolean;
   glide: boolean;
+  // §111 新形態語彙：shot＝B 點按攻擊彈（ember/prism）；tapStrike＝B 點按世界結算技
+  //（tide/gravity，GameScene 經 SKILL_TRANSFORM_STRIKE 路由）；airDash/blinkPx＝空中跳
+  // 槽位機動（焰衝刺／鏡步瞬移）；deflectProjectiles＝潮環撥開投射物（不反打）；
+  // gravityFlipImmune＝引力方向切換抗性（L27/L28 W3 消費）。
+  shot: FormShotSpec | null;
+  tapStrike: 'tide-pull' | 'gravity-well' | null;
+  airDash: boolean;
+  blinkPx: number;
+  deflectProjectiles: boolean;
+  gravityFlipImmune: boolean;
 }
+
+// 既有三形態零值基底（§111 擴欄）：新語彙欄位缺省關閉，行為零回歸。
+const FORM_EXT_BASE = {
+  shot: null,
+  tapStrike: null,
+  airDash: false,
+  blinkPx: 0,
+  deflectProjectiles: false,
+  gravityFlipImmune: false,
+} as const;
 
 export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
   volt: {
+    ...FORM_EXT_BASE,
     nameZh: '雷化',
     tint: 0xffe28a,
     moveSpeedMul: 1.15,
@@ -59,6 +95,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     glide: false,
   },
   gale: {
+    ...FORM_EXT_BASE,
     nameZh: '風化',
     tint: 0xc8dcf5,
     moveSpeedMul: 1,
@@ -78,6 +115,7 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     glide: true,
   },
   shell: {
+    ...FORM_EXT_BASE,
     nameZh: '殼化',
     tint: 0x7fd8c8,
     moveSpeedMul: 0.8,
@@ -95,6 +133,119 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
     magnetImmune: false,
     freeFlight: false,
     glide: false,
+  },
+  // 焰化 Ember（§111，L21 解鎖）：無防禦語彙——走位換輸出；焰彈小爆＋落地熔岩爆＋
+  // 空中焰衝刺；burn 對冰史萊姆（W2 稅票）燒毀優勢。
+  ember: {
+    ...FORM_EXT_BASE,
+    nameZh: '焰化',
+    tint: 0xff8a5c,
+    moveSpeedMul: 1.15,
+    contactDamage: 0,
+    beam: false,
+    windBlade: false,
+    landingImpact: true,
+    slamRadiusMul: 1,
+    chargeDash: false,
+    dischargeCharges: 0,
+    landingRollMs: 0,
+    tuckCharges: 0,
+    halveDamage: false,
+    reflectProjectiles: false,
+    magnetImmune: false,
+    freeFlight: false,
+    glide: false,
+    shot: {
+      damage: 4,
+      speed: 560,
+      pierceCount: 0,
+      count: 1,
+      spreadVy: 0,
+      cooldownMs: 320,
+      flavor: 'puffy',
+      burn: true,
+    },
+    airDash: true,
+  },
+  // 潮化 Tide（§111，L23 解鎖）：水引拉近＋一次性泡泡護盾＋霜滑翔＋潮環撥開投射物。
+  tide: {
+    ...FORM_EXT_BASE,
+    nameZh: '潮化',
+    tint: 0x7fd8e8,
+    moveSpeedMul: 1,
+    contactDamage: 0,
+    beam: false,
+    windBlade: false,
+    landingImpact: false,
+    slamRadiusMul: 1,
+    chargeDash: false,
+    dischargeCharges: 0,
+    landingRollMs: 0,
+    tuckCharges: 1,
+    halveDamage: false,
+    reflectProjectiles: false,
+    magnetImmune: false,
+    freeFlight: false,
+    glide: true,
+    tapStrike: 'tide-pull',
+    deflectProjectiles: true,
+  },
+  // 稜化 Prism（§111，L25 解鎖）：三向稜光碎片＋反射抵銷＋鏡步瞬移＋彩虹光束
+  //（B 長按釋放，可貫穿）。
+  prism: {
+    ...FORM_EXT_BASE,
+    nameZh: '稜化',
+    tint: 0xe0b8f0,
+    moveSpeedMul: 1,
+    contactDamage: 0,
+    beam: false,
+    windBlade: false,
+    landingImpact: false,
+    slamRadiusMul: 1,
+    chargeDash: false,
+    dischargeCharges: 0,
+    landingRollMs: 0,
+    tuckCharges: 0,
+    halveDamage: false,
+    reflectProjectiles: true,
+    magnetImmune: false,
+    freeFlight: false,
+    glide: false,
+    shot: {
+      damage: 3,
+      speed: 540,
+      pierceCount: 1,
+      count: 3,
+      spreadVy: 80,
+      cooldownMs: 420,
+      flavor: 'jelly',
+      burn: false,
+    },
+    blinkPx: 96,
+  },
+  // 引力化 Gravity（§111，L27 解鎖）：虛空引拉＋星體護衛 ×3（tuck 計數）＋錨墜
+  //（下砸範圍強化）＋引力井滯留牽引；方向切換抗性由 W3 消費。
+  gravity: {
+    ...FORM_EXT_BASE,
+    nameZh: '引力化',
+    tint: 0x8a6ae0,
+    moveSpeedMul: 0.9,
+    contactDamage: 0,
+    beam: false,
+    windBlade: false,
+    landingImpact: false,
+    slamRadiusMul: 1.8,
+    chargeDash: false,
+    dischargeCharges: 0,
+    landingRollMs: 0,
+    tuckCharges: 3,
+    halveDamage: false,
+    reflectProjectiles: false,
+    magnetImmune: false,
+    freeFlight: false,
+    glide: false,
+    tapStrike: 'gravity-well',
+    gravityFlipImmune: true,
   },
 } as const;
 
@@ -114,6 +265,18 @@ export const GALE_BLADE = {
   pierceCount: 99,
   cooldownMs: 350,
 } as const;
+
+// 風刃彈規格鏡像（§111 單一發射管線）：值全數派生自 GALE_BLADE，零第二份數字。
+export const GALE_SHOT: FormShotSpec = {
+  damage: GALE_BLADE.damage,
+  speed: GALE_BLADE.speed,
+  pierceCount: GALE_BLADE.pierceCount,
+  count: 1,
+  spreadVy: 0,
+  cooldownMs: GALE_BLADE.cooldownMs,
+  flavor: 'floaty',
+  burn: false,
+};
 
 // 風化飛行（§57）：拍翅無上限＋升力增強（近自由飛行）；落地小範圍衝擊。
 export const GALE_FLIGHT = {
@@ -161,20 +324,96 @@ export function glideFallVy(vy: number): number {
   return vy > GALE_GLIDE.fallCapVy ? GALE_GLIDE.fallCapVy : vy;
 }
 
+// 焰衝刺（§111）：空中跳槽位＝水平衝刺（消耗拍翅次數）；無免傷（走位換輸出）。
+export const EMBER_DASH = {
+  speedX: 430,
+  liftVy: -110,
+} as const;
+
+// 熔岩爆（§111）：焰化落地小範圍燒灼爆（burn 結算，範圍/傷害高於風化落地衝擊）。
+export const MAGMA_POP = {
+  radiusPx: 70,
+  damage: 2,
+} as const;
+
+// 水引（§111）：面向側域內小怪拉向玩家＋輕傷（B 點按，世界結算走 starCombat）。
+export const TIDE_PULL = {
+  rangePx: 200,
+  damage: 2,
+  pullSpeed: 300,
+  cooldownMs: 700,
+} as const;
+
+// 鏡步（§111）：空中跳槽位＝面向側短距瞬移（殘影演出，消耗拍翅次數）。
+export const PRISM_STEP = {
+  distancePx: 96,
+} as const;
+
+// 彩虹光束（§111）：B 長按釋放——面向側走廊貫穿判定；長按門檻沿殼盾情境同源
+//（INHALE.holdThresholdMs 之上取 400ms 明確分離點按）。
+export const RAINBOW_BEAM = {
+  holdMs: 400,
+  rangePx: 420,
+  corridorHalfPx: 46,
+  damage: 5,
+  cooldownMs: 1100,
+} as const;
+
+// 引力井（§111）：B 點按於面向側生成滯留牽引井——初爆輕傷＋週期把域內小怪拉向井心。
+export const GRAVITY_WELL = {
+  offsetPx: 120,
+  radiusPx: 130,
+  damage: 2,
+  pullSpeed: 240,
+  tickMs: 200,
+  ticks: 6,
+  cooldownMs: 1200,
+} as const;
+
 // 觸發味 → 形態對應：gusty 吞入歸 floaty 味（§52），自然併入風化來源。
+// §111 零新味裁決：焰化歸重鑽味（貨櫃丁供給）、潮化歸孢子味（潮灣三新怪供給）、
+// 稜化歸流光味、引力化歸迴旋味——四新形態全數映射既有味系。
 const FORM_BY_FLAVOR: Partial<Record<StarFlavor, TransformForm>> = {
   zappy: 'volt',
   floaty: 'gale',
   shelly: 'shell',
+  drilly: 'ember',
+  spora: 'tide',
+  glowy: 'prism',
+  boomy: 'gravity',
 };
+
+// 形態解鎖關（§111）：基礎三形態恆開；新四形態自其引入關起可用（含該關本身）。
+export const FORM_INTRO_LEVEL: Partial<Record<TransformForm, number>> = {
+  ember: 21,
+  tide: 23,
+  prism: 25,
+  gravity: 27,
+};
+
+// 解鎖集派生（§111）：以「可觸及最高關」（max(當前關, 最高通關+1)）判定，
+// 不動 save schema；回頭重玩早期關可沿用已解鎖形態。
+export function unlockedTransformForms(highestReachableLevel: number): Set<TransformForm> {
+  const unlocked = new Set<TransformForm>();
+  for (const form of Object.keys(TRANSFORM_FORMS) as TransformForm[]) {
+    const intro = FORM_INTRO_LEVEL[form];
+    if (intro === undefined || highestReachableLevel >= intro) unlocked.add(form);
+  }
+  return unlocked;
+}
 
 // 變身資格（§57）：彈匣全數同系可變身味、非金非混，同系星彈合計 ≥3 發——
 // 強化槽為連吞兩發合成（§23），計 2 發（三連吞 [強化,單發] 即達標）。
-export function eligibleForm(magazine: readonly MagazineSlot[]): TransformForm | null {
+// unlocked（§111）：給定時未解鎖形態不成立資格；缺省不設限（既有呼叫零回歸）。
+export function eligibleForm(
+  magazine: readonly MagazineSlot[],
+  unlocked?: ReadonlySet<TransformForm>,
+): TransformForm | null {
   const first = magazine[0];
   if (!first) return null;
   const form = FORM_BY_FLAVOR[first.flavor];
   if (!form) return null;
+  if (unlocked && !unlocked.has(form)) return null;
   let stars = 0;
   for (const slot of magazine) {
     if (slot.gold || slot.mix !== undefined || slot.flavor !== first.flavor) return null;
@@ -231,12 +470,13 @@ export function consumeDischarge(state: TransformState): {
   return { state: { ...state, dischargeLeft: state.dischargeLeft - 1 }, triggered: true };
 }
 
-// 殼化受身入殼裁決（§110）：僅殼化且有剩餘次數時觸發；觸發即扣次、本次傷害全免。
+// 護體裁決（§110 受身入殼→§111 泛化）：殼化受身入殼／潮化泡泡護盾／引力化星體護衛
+// 共用 tuck 計數——有剩餘次數即觸發、扣次、本次傷害全免；次數由 spec.tuckCharges 種入。
 export function consumeTuck(state: TransformState): {
   state: TransformState;
   triggered: boolean;
 } {
-  if (state.form !== 'shell' || state.tuckLeft <= 0) return { state, triggered: false };
+  if (!state.form || state.tuckLeft <= 0) return { state, triggered: false };
   return { state: { ...state, tuckLeft: state.tuckLeft - 1 }, triggered: true };
 }
 
