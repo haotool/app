@@ -366,13 +366,13 @@ function assertRepoUsable() {
 // 不可用 `rev-parse --verify HEAD` 代替：`git checkout --orphan` 之後 HEAD 指向尚未存在
 // 的分支，verify 一樣失敗，但 repo 裡的歷史 commit 都還在，此時視為無基準版會讓
 // 刪除防護與總分鏈整個跳過（標準 Git 指令即可觸發，不需劫持環境）。
-// 判準必須結構性且逐層兜底，不可只看 named refs：
-// 1. refs＋reflog（--all --reflog）：orphan 之後把 named refs 全刪（branch -D＋清
-//    packed-refs）會讓 --all 為空，但 reflog 仍留有紀錄。
-// 2. object store：reflog 也被 expire＋刪 .git/logs 時，只要任何 commit 物件仍在就
-//    不是無基準版。只在第 1 層為空時執行（正常 repo 永不觸發）；真空 repo 至多數個
-//    staged blob，輸出極小。被構造的大 repo 若超出 maxBuffer 會上拋 fail-closed，
-//    方向仍正確（誤擋不誤放）。
+// 判準必須結構性且逐層兜底（refs／reflog／object store 三層），不可只看 named refs：
+// - refs＋reflog（--all --reflog 一次涵蓋前兩層）：orphan 之後把 named refs 全刪
+//   （branch -D＋清 packed-refs）會讓 --all 為空，但 reflog 仍留有紀錄。
+// - object store（第三層）：reflog 也被 expire＋刪 .git/logs 時，只要任何 commit 物件
+//   仍在就不是無基準版。只在前兩層為空時執行（正常 repo 永不觸發）；真空 repo 至多
+//   數個 staged blob，輸出極小。被構造的大 repo 若超出 maxBuffer 會上拋 fail-closed，
+//   方向仍正確（誤擋不誤放）。
 // 連 commit 物件都被 prune（reflog expire＋gc --prune=now）的 repo 與真空 repo 在
 // 結構上無法區分，本機守門到此為止，由 CI 以 GitHub 事件的基準 SHA 兜底
 //（見 AGENTS.md「已知殘餘風險」）。
@@ -465,8 +465,14 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
     try {
       base = git(['merge-base', ref, 'HEAD']).trim();
     } catch (error) {
+      // `git merge-base` 以 exit 1 表示「無共同祖先」（documented 行為），非環境錯誤：
+      // orphan／unrelated histories 的 PR 落在這裡。歷史條目完整性無法對帳，維持
+      // fail-closed，但訊息須可診斷，不與「ref 打錯」「repo 不可用」（exit 128）混為一談。
       console.error(
-        `002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）：${gitStderr(error)}`,
+        error?.status === 1 && refResolves(ref)
+          ? `002 記分守門失敗：base ref「${ref}」與 HEAD 無共同祖先` +
+              '（orphan／unrelated histories）——歷史條目完整性無法對帳，fail-closed'
+          : `002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）：${gitStderr(error)}`,
       );
       process.exit(1);
     }

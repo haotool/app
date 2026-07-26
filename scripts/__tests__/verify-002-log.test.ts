@@ -1252,8 +1252,9 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
   });
 
   // 更深的繞法：orphan 之後把 named refs 全刪（branch -D＋清 packed-refs），
-  // `rev-list --all` 為空但歷史 commit 物件仍在。判準必須逐層兜底：
-  // reflog（--reflog）接第一層，reflog 也被 expire 時 object store 接第二層。
+  // `rev-list --all` 為空但歷史 commit 物件仍在。判準必須逐層兜底
+  //（refs／reflog／object store 三層）：refs 被刪光由 reflog 接住，
+  // reflog 也被 expire 時由 object store 探測接住。
   function setupRefsWipedOrphan() {
     const repo = setupRepo();
     commitLog(
@@ -1319,6 +1320,24 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     const { status, output } = runGuard(repo, '--base-commit', 'deadbeefdeadbeefdeadbeef');
     expect(status).toBe(1);
     expect(output).toContain('無法解析基準 commit');
+  });
+
+  // `git merge-base` 以 exit 1 表示「無共同祖先」；orphan／unrelated histories 的 PR
+  // 仍必須 fail-closed，且訊息可診斷（非通用「無法解析」——那會誤導成 ref 打錯）。
+  it('--base-ref：與基準無共同祖先（orphan PR）時 fail-closed 且訊息可診斷', () => {
+    const repo = setupRepo();
+    git(repo, 'checkout', '--orphan', 'unrelated');
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+1',
+        entries: [{ id: 'reward-orphan-root' }],
+      }),
+      'orphan root',
+    );
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
+    expect(status).toBe(1);
+    expect(output).toContain('無共同祖先');
   });
 
   it('刪除 002 檔案的 PR 必紅', () => {
@@ -1457,6 +1476,8 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     /窮舉[^，。\n]{0,12}(四種|訊息)/, // 存在性判定已改結構化探測
     /(必須|判別[^，。\n]{0,8})靠\s*stderr/, // 同上：不再以 stderr 文字判別
     /rev-parse 失敗只可能是/, // orphan HEAD 下此宣稱為假
+    /SUPERSEDED_PHRASES/, // 本清單的舊常數名，已改為 SUPERSEDED_PATTERNS
+    /rev-list -n 1 --all`/, // 舊「無基準」判準（--all 即結尾）；現行為 --all --reflog ＋ object store
   ];
 
   // 本檔自身也在掃描範圍內，故需剔除上面那份清單的字面值，否則必然自我命中。

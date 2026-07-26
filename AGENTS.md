@@ -283,6 +283,7 @@ Agent **必須**先完成：
 | 基準版讀不出累計總分                               | 失敗                                             |
 | 待驗版解析失敗、檔頭缺失或格式不符                 | 失敗                                             |
 | base ref／base commit 無法解析                     | 失敗                                             |
+| base ref 與 HEAD 無共同祖先（orphan PR）           | 失敗（專用診斷訊息，不與 ref 打錯混淆）          |
 | flag 缺值、兩 flag 同時指定                        | 失敗                                             |
 | 002 在基準版存在但待驗版消失（`git rm`／`git mv`） | 失敗                                             |
 
@@ -304,7 +305,7 @@ Agent **必須**先完成：
 
 - **固定範圍**（有新檔案描述守門行為就加進來）：`scripts/verify-002-log.mjs`、`scripts/__tests__/verify-002-log.test.ts`、`.husky/pre-commit`、`.github/workflows/ci.yml`、`AGENTS.md`、`CLAUDE.md`
 - **固定關鍵字**（現行用語）：`verify-002-log`、`002 記分守門`、`--base-ref`、`--base-commit`、`AGT-LOG-`、`fail-closed`
-- **已被取代的措辭**：維護在測試檔的 `SUPERSEDED_PHRASES`，任一命中即測試紅。**改寫守門行為時，把被取代的舊說法加進該清單**——這是唯一需要人做的動作，其餘由測試代勞
+- **已被取代的措辭**：維護在測試檔的 `SUPERSEDED_PATTERNS`，任一命中即測試紅。**改寫守門行為時，把被取代的舊說法加進該清單**——這是唯一需要人做的動作，其餘由測試代勞
 - 用 `rg --hidden`：預設會跳過 `.husky`／`.github` 等隱藏目錄，本守門的兩次漏掃都源於此
 
 - 共同：002 相對基準未變更時即刻跳過，整檔刪除或改名必紅
