@@ -108,20 +108,21 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 
 ## 控制矩陣（Audit Control Matrix）
 
-| 控制 ID      | 控制項       | 必須要求                                                                                                | 證據                                     | SSOT / 來源                                      |
-| ------------ | ------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
-| `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件                                 | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                              |
-| `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                                                       | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                 |
-| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                                  | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md` |
-| `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄格式必須與該檔案當前檔頭規範一致；若調整檔頭格式，必須同 PR 同步更新 002 本體 | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md` |
-| `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                          |
-| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 5 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                              |
-| `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                                            | hook log / CI                            | `.husky/pre-push`                                |
-| `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                             |
-| `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                              |
-| `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                                            | PR 編號、merge 記錄                      | GitHub / `gh`                                    |
-| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在                      | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                  |
-| `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts               | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`             |
+| 控制 ID      | 控制項       | 必須要求                                                                                                | 證據                                     | SSOT / 來源                                              |
+| ------------ | ------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `AGT-CTX-01` | 官方文件查證 | 遇 build/test/lint 錯誤、新工具、CI/CD 變更、major 升級時，先查官方文件                                 | Context7 / Web 查詢紀錄、引用來源        | 本 SOP、`CLAUDE.md`                                      |
+| `AGT-DOC-01` | 開發文檔編號 | `docs/dev/` 新檔名必須 `00X_*.md`                                                                       | `git diff`, 檔名紀錄                     | `docs/dev/` 結構                                         |
+| `AGT-LOG-01` | 獎懲記錄更新 | 每次 `git commit` 前更新 `docs/dev/002...`（含本次分數變化與累計總分）                                  | 002 檔案 diff、總分更新                  | `docs/dev/002_development_reward_penalty_log.md`         |
+| `AGT-LOG-02` | 002 格式治理 | `docs/dev/002...` 新增紀錄格式必須與該檔案當前檔頭規範一致；若調整檔頭格式，必須同 PR 同步更新 002 本體 | 002 檔案 diff、格式區塊一致性            | `docs/dev/002_development_reward_penalty_log.md`         |
+| `AGT-LOG-03` | 002 單一提交 | 一個 PR 的 002 條目必須集中在單一 commit，檔頭寫 PR 聚合淨變化                                          | `git log --oneline -- docs/dev/002...`   | `scripts/verify-002-log.mjs`、`.github/workflows/ci.yml` |
+| `AGT-CMT-01` | 提交格式     | commit message 通過 commitlint 硬規則                                                                   | `commit-msg` hook / commitlint 結果      | `commitlint.config.cjs`                                  |
+| `AGT-PC-01`  | 提交前檢查   | `pre-commit` 6 步驟通過                                                                                 | hook log                                 | `.husky/pre-commit`                                      |
+| `AGT-PP-01`  | 推送前檢查   | `typecheck` + `test` + `build:ratewise` 通過                                                            | hook log / CI                            | `.husky/pre-push`                                        |
+| `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                                     |
+| `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                                      |
+| `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                                            | PR 編號、merge 記錄                      | GitHub / `gh`                                            |
+| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在                      | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                          |
+| `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts               | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`                     |
 
 ## Mandatory Workflow (Agent SOP)
 
@@ -189,6 +190,11 @@ Agent **必須**先完成：
   - `本次分數變化 = reward_count - penalty_count`
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次新增 002 條目時，必須同步更新本次分數變化與累計總分（可放於檔頭摘要行或同批 commit 的 SSOT 文件）。
+- 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
+- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；初始 commit 情境跳過總分鏈驗證。
+- CI `Quality Checks` 於 install 前以 `node scripts/verify-002-log.mjs --base-ref <base sha>` 強制同一守門（issue #661）：基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態，002 未變更時跳過。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
+- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；002 分散於多個 commit 時兩者必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
+- rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 5. 推送與合併（Push & Merge Controls）
 
@@ -205,13 +211,14 @@ Agent **必須**先完成：
 - 執行：`npx --no -- commitlint --edit $1`
 - 規則來源：`commitlint.config.cjs`
 
-### `pre-commit`（Husky，實際 5 步驟）
+### `pre-commit`（Husky，實際 6 步驟）
 
 1. `pnpm lint-staged`（JS/TS 透過 `eslint --fix --no-warn-ignored` + `prettier --write`，避免 ignored file 警告誤擋 commit）
 2. `pnpm typecheck`
 3. `pnpm format`（`prettier --check .`）
 4. `node scripts/verify-ssot-sync.mjs`（僅相關檔變更時）
 5. `node scripts/verify-version-ssot.mjs`（僅版本相關檔變更時）
+6. `node scripts/verify-002-log.mjs`（僅 002 檔變更時；驗證檔頭記分與新增條目一致、累計總分鏈與條目格式）
 
 ### `pre-push`（Husky，快速必要檢查）
 
@@ -221,6 +228,13 @@ Agent **必須**先完成：
 
 - E2E / coverage / Lighthouse 由 CI 執行（本地 pre-push 不做完整長時間檢查）
 - PR CI E2E 為 smoke 子集（3 核心 spec × desktop）；main push 為 sharded 完整套件（見 `docs/dev/039_ci_e2e_speed_optimization.md`）
+
+### CI `Quality Checks`（002 記分守門，PR 專屬）
+
+- 位置：`.github/workflows/ci.yml` 的 `quality` job，置於 `Install dependencies` 之前（零 npm 依賴、搶先紅燈）
+- 執行：`node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"`
+- 語意：`merge-base(base, HEAD)` 為基準版、PR 最終態為待驗版；002 未變更時毫秒級跳過，整檔刪除必紅
+- 定位：堵 `--no-verify` 與 GitHub 網頁端 merge/squash 繞過 pre-commit 的破口
 
 ## Commit Format（commitlint SSOT）
 
