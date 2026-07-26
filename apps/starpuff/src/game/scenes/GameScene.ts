@@ -49,7 +49,6 @@ import {
   createMercyState,
   type MercyState,
 } from '../logic/mercyHeal';
-import { crossedGate, type BoundsRect } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import type { BossDamageSource, BossHandle } from '../systems/boss';
 import { createBossKit } from '../systems/bossFactory';
@@ -60,6 +59,7 @@ import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
 import { createFx, type FxSystem } from '../systems/fx';
 import { createHud } from '../systems/hud';
+import { createLevelGate, type LevelGateHandle } from '../systems/levelGate';
 import { openPauseMenu } from '../systems/pause';
 import { spawnHealPickup } from '../systems/pickups';
 import { createPlayer, type PlayerHandle } from '../systems/player';
@@ -85,14 +85,6 @@ const P3_HITSTOP_MS = 300;
 const QUAKE_BOUNCE_VY = -360;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
-// 星星門：位於世界右端、地面上方；演出時玩家縮小旋轉飛入。
-const GATE_MARGIN_X = 120;
-const GATE_Y = GROUND_TOP - 90;
-const GATE_ZONE_W = 90;
-const GATE_ZONE_H = 150;
-const GATE_ABSORB_MS = 700;
-// 過關星爆停留短拍後進世界地圖（§39：通關後自動進入）。
-const MAP_ENTER_DELAY_MS = 500;
 
 interface GameSceneData {
   levelId?: LevelId;
@@ -140,9 +132,8 @@ export class GameScene extends Phaser.Scene {
   private prevVy = 0;
   private wasInhaling = false;
   private mouth = { x: 0, y: 0 };
-  private gate: Phaser.GameObjects.Container | null = null;
-  private gateRect: BoundsRect | null = null;
-  private prevPlayerX = 0;
+  // 星星門流程（§26/§39/§43）：生成/掃掠背擋/過關演出委派 systems/levelGate。
+  private levelGate!: LevelGateHandle;
   // 卡點關中點重生（§67）：本命最遠推進 x——越過 checkpoint 後死亡自 checkpoint 重生。
   private farthestX = 0;
   // 成就（§94）：pendingUnlocked 為本局勝利瞬間新頒發清單，經 GameResultData
@@ -215,8 +206,6 @@ export class GameScene extends Phaser.Scene {
     this.wasInhaling = false;
     this.playerHp = PLAYER.maxHp;
     this.bossHp = -1;
-    this.gate = null;
-    this.gateRect = null;
     this.pendingUnlocked = [];
     this.farthestX = 0;
     this.mercy = createMercyState();
@@ -237,9 +226,7 @@ export class GameScene extends Phaser.Scene {
       player: () => this.player,
       spawnAmmoMinion: (x, y) => this.enemies.spawn('jelly', x, y),
       // 折躍瞬移（§66）：重置門掃掠基準，防前後幀大位移被誤判為跨越星星門。
-      onWarp: (x) => {
-        this.prevPlayerX = x;
-      },
+      onWarp: (x) => this.levelGate.noteWarp(x),
       // §77：地形粉紅平台納入下穿裁決（下＋跳可穿落，與 elements oneway 同權）。
       terrainOneWay: () => this.terrainPlatforms,
     });
@@ -318,6 +305,22 @@ export class GameScene extends Phaser.Scene {
       player: () => this.player,
       toasts: () => this.toasts,
       exMode: this.exMode,
+    });
+    // 星星門流程（§26/§39/§43）：委派 systems/levelGate；存檔寫入時機（§38）
+    // 由 persistClear 保持通關即記錄，演出中斷不掉進度。
+    this.levelGate = createLevelGate(this, GROUND_TOP, {
+      player: () => this.player,
+      fx: () => this.fx,
+      isBossLevel: () => this.level.boss !== null,
+      isSettled: () => this.finished || this.transitioning,
+      beginTransition: () => {
+        this.transitioning = true;
+      },
+      worldWidth: () => this.worldWidth(),
+      levelId: () => this.currentLevelId,
+      noteClear: () => this.starburstDirector.noteClear(),
+      persistClear: () =>
+        this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs())),
     });
     // 彩蛋進度追蹤（§24）：每關重建；存檔寫入與成就佇列經 persistAndAward 回流；
     // bossKit 的 feedEggs 回呼僅於魔王事件觸發（此時 tracker 已就緒）。
@@ -494,7 +497,7 @@ export class GameScene extends Phaser.Scene {
       this.syncJumpSfx();
       this.syncInhale();
       this.eggTracker.sync();
-      this.syncGateSweep();
+      this.levelGate.sweep();
       for (const room of this.eliteRooms) room.update();
       this.bossRoom?.update();
       this.advanceBuff(deltaMs);
@@ -673,7 +676,7 @@ export class GameScene extends Phaser.Scene {
       viewLeft: view.x,
       viewRight: view.right,
       playerX: this.player.sprite.x,
-      gateX: this.gate?.x ?? null,
+      gateX: this.levelGate.gateX(),
     });
   }
 
@@ -875,7 +878,7 @@ export class GameScene extends Phaser.Scene {
       else this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.clearTimeMs));
       this.time.delayedCall(WIN_DELAY_MS, () => this.finish('won'));
     });
-    bind(GameEvents.LEVEL_GATE_OPENED, () => this.spawnGate());
+    bind(GameEvents.LEVEL_GATE_OPENED, () => this.levelGate.spawn());
   }
 
   // 死亡重試當前關：已完成關卡的累計用時保留，當前關計時重來。
@@ -913,104 +916,11 @@ export class GameScene extends Phaser.Scene {
       // 落地護體顯式重授（審查修復）：不依賴致死當下殘餘 i-frame，重生窗恆為完整時長。
       this.player.grantInvulnerability(PLAYER.invulnerableMs);
       this.mercy = createMercyState();
-      this.prevPlayerX = respawnX;
+      // 重生瞬移重置門掃掠基準（§66 同語義）：防大位移被誤判為跨越星星門。
+      this.levelGate.noteWarp(respawnX);
       this.fx.burstSmall(respawnX, GROUND_TOP - 40, 0x9fe8ff);
       playSfx('reveal');
       this.transitioning = false;
-    });
-  }
-
-  // 星星門：fx-star 放大 + 光暈脈動 + 浮動 tween（graphics 組合，不新增美術）。
-  private spawnGate(): void {
-    if (this.gate || this.level.boss || this.finished || this.transitioning) return;
-    const gx = this.worldWidth() - GATE_MARGIN_X;
-    const glow = this.add.image(0, 0, 'fx-star').setDisplaySize(150, 150).setAlpha(0.35);
-    const core = this.add.image(0, 0, 'fx-star').setDisplaySize(96, 96);
-    const gate = this.add.container(gx, GATE_Y, [glow, core]);
-    gate.setScale(0);
-    this.gate = gate;
-    this.tweens.add({ targets: gate, scale: 1, duration: 400, ease: 'Back.easeOut' });
-    this.tweens.add({
-      targets: glow,
-      scale: glow.scale * 1.25,
-      alpha: 0.15,
-      duration: 700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-    this.tweens.add({
-      targets: gate,
-      y: GATE_Y - 14,
-      duration: 1100,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
-
-    const zone = this.add.zone(gx, GATE_Y, GATE_ZONE_W, GATE_ZONE_H);
-    this.physics.add.existing(zone, true);
-    this.physics.add.overlap(this.player.sprite, zone, () => this.completeLevel());
-    this.gateRect = {
-      left: gx - GATE_ZONE_W / 2,
-      right: gx + GATE_ZONE_W / 2,
-      top: GATE_Y - GATE_ZONE_H / 2,
-      bottom: GATE_Y + GATE_ZONE_H / 2,
-    };
-    this.prevPlayerX = this.player.sprite.x;
-    // 門生在身後（§43）：開門瞬間玩家已在門區內或門心右側（右緣紮營），直接判入門。
-    if (this.playerCrossedGate(this.prevPlayerX)) this.completeLevel();
-  }
-
-  // 星星門必達背擋（§26/§43）：pair overlap 間歇漏檢——逐幀 crossedGate 幾何補判，不得移除。
-  private syncGateSweep(): void {
-    if (!this.gate) return;
-    const x = this.player.sprite.x;
-    const crossed = this.playerCrossedGate(this.prevPlayerX);
-    this.prevPlayerX = x;
-    if (crossed) this.completeLevel();
-  }
-
-  private playerCrossedGate(prevX: number): boolean {
-    if (!this.gate || !this.gateRect) return false;
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    return crossedGate(
-      prevX,
-      this.player.sprite.x,
-      this.gate.x,
-      { left: body.left, right: body.right, top: body.top, bottom: body.bottom },
-      this.gateRect,
-    );
-  }
-
-  // 過關演出（§39）：玩家縮小旋轉飛入門 → 寫入存檔 → 世界地圖（揭霧下一關節點）。
-  private completeLevel(): void {
-    if (this.finished || this.transitioning || !this.gate) return;
-    this.transitioning = true;
-    stopSfx('inhale');
-    this.fx.stopInhale();
-    playSfx('swallow');
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    body.stop();
-    body.enable = false;
-    this.starburstDirector.noteClear();
-    // 存檔寫入時機（§38）：通關即記錄，演出中斷（切頁/重載）不掉進度。
-    this.persistAndAward(recordLevelClear(this.save, this.currentLevelId, this.levelTimeMs()));
-    this.tweens.add({
-      targets: this.player.sprite,
-      x: this.gate.x,
-      y: this.gate.y,
-      scale: 0,
-      angle: 720,
-      duration: GATE_ABSORB_MS,
-      ease: 'Cubic.easeIn',
-      onComplete: () => {
-        this.fx.starBurst(this.gate?.x ?? this.player.sprite.x, this.gate?.y ?? GATE_Y);
-        playSfx('win');
-        this.time.delayedCall(MAP_ENTER_DELAY_MS, () =>
-          this.scene.start(SceneKeys.Map, { reveal: nextLevelId(this.currentLevelId) }),
-        );
-      },
     });
   }
 
