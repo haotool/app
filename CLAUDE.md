@@ -106,9 +106,10 @@ pnpm format:fix              # prettier --write .
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次 commit 前新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」。
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
-- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）。
+- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。
 - CI `Quality Checks` 於 install 前跑 `node scripts/verify-002-log.mjs --base-ref <base sha>`（issue #661），以 `merge-base(base, HEAD)` 對 PR 最終態驗同一組規則。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）必然互斥，兩者無法同時綠燈。
+- 002 落盤後的審查修正 commit 不得新增條目（pre-commit 必紅）；補記併回同一個 002 commit——仍在 tip 用 `git commit --amend`，否則延到 rebase 時 fold。故盡量讓 002 commit 留在分支最後。
 - rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
@@ -133,8 +134,10 @@ pnpm format:fix              # prettier --write .
 - 新互動元件（MoneyBox 比較卡、星評 Modal）→ **minor**
 - Core Web Vitals 架構性改善（LCP ↓50%+，SSG 預渲染）→ **minor**
 
-**Changeset 規範**（每個 PR 完成後 MUST 執行 `pnpm changeset`）：
+**Changeset 規範**（**有 package 變更**的 PR 完成後 MUST 執行 `pnpm changeset`）：
 
+- 適用界線：changeset 的對象是 package。變更落在 `apps/*/**`（含該 app 的 `docs/`、`README.md`）→ **要**；純 root 層變更（`scripts/`、`.husky/`、`.github/`、root 設定與文件、`docs/dev/*`）→ **不要**，因為沒有任何 package 可 bump
+- 判斷依據是變更檔案所屬 package，不是 commit type
 - bump 類型選正確（見上表）；描述使用者**看得到**的影響，禁止描述實作細節
 - CHANGELOG 由 changeset 自動生成，禁止手動貼入 git log
 - commit 數量不等於升版次數；`.changeset/*.md` 是 release intent，`pnpm changeset:version` 才會消化成版本與 CHANGELOG

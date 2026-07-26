@@ -121,7 +121,7 @@ scripts/              # 驗證/SEO/版本/SSOT 腳本
 | `AGT-QA-01`  | QA 截圖管理  | 截圖集中於 `screenshots/`，不得污染 root                                                                | 檔案路徑、`git status --ignored --short` | `.gitignore`, 本 SOP                                     |
 | `AGT-DOC-02` | 文件同步     | 流程/規則變更需同步更新 `AGENTS.md` / `CLAUDE.md`                                                       | 文件 diff                                | 本 SOP、`CLAUDE.md`                                      |
 | `AGT-MRG-01` | 主支合併     | 透過 PR 與 `gh` 進行合併；避免未審查直推主支                                                            | PR 編號、merge 記錄                      | GitHub / `gh`                                            |
-| `AGT-VER-01` | SemVer 決策  | 每個 PR/功能 **必須**以正確 bump 類型建立 changeset；發版前 CHANGELOG 條目必須存在                      | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                          |
+| `AGT-VER-01` | SemVer 決策  | **有 package 變更**（`apps/*/**`）的 PR 必須以正確 bump 類型建立 changeset；純 root 工具變更則否        | `.changeset/*.md` 存在、CHANGELOG diff   | `CLAUDE.md` Phase 7、semver.org                          |
 | `AGT-VER-02` | 發版 SSOT    | 執行 `pnpm changeset:version` 完成版本升級；禁止手動修改版本號或個別執行 prebuild scripts               | `git diff` 包含全部版本嵌入產出物        | `scripts/update-release-metadata.js`                     |
 
 ## Mandatory Workflow (Agent SOP)
@@ -191,9 +191,10 @@ Agent **必須**先完成：
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次新增 002 條目時，必須同步更新本次分數變化與累計總分（可放於檔頭摘要行或同批 commit 的 SSOT 文件）。
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
-- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；初始 commit 情境跳過總分鏈驗證。
+- `pre-commit` 第 6 步由 `scripts/verify-002-log.mjs` 自動守門（issue #608）：驗證 `a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版（HEAD）累計 + `N`、條目四行模板、ID 全檔唯一性與歷史條目不可刪除；staged 刪除整份 002（`git rm`）亦必紅；初始 commit 情境跳過總分鏈驗證。
 - CI `Quality Checks` 於 install 前以 `node scripts/verify-002-log.mjs --base-ref <base sha>` 強制同一守門（issue #661）：基準版為 `merge-base(base, HEAD)`、待驗版為 PR 最終態，002 未變更時跳過。**pre-commit 只看單一 commit，攔不到 squash 聚合的記帳錯誤**（逐 commit 各自 +1 皆合法，squash 後檔頭仍寫 +1 但實際淨變化為 +N）；本 repo 以 squash 為主要合併方式，故 CI 端才是聚合記帳的真守門。
 - **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`）。pre-commit 以「本 commit 新增條目」對帳檔頭，CI 以「PR 聚合淨變化」對帳檔頭；002 分散於多個 commit 時兩者必然互斥——逐 commit 檔頭各自正確則 CI 紅（聚合不符），末個 commit 改寫為聚合檔頭則 pre-commit 紅。因此 002 更新一律累積後於單一 commit 落盤，檔頭直接寫 PR 聚合值。
+- 承上：002 落盤後才收到的審查修正，其 commit **不得再新增 002 條目**（pre-commit 以「本 commit 新增條目 vs 檔頭」對帳，必紅）。補記一律併回同一個 002 commit——002 commit 仍在 tip 時用 `git commit --amend`，否則延到分支 rebase 時 fold 補齊。故實務上**盡量讓 002 commit 留在分支最後**。
 - rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 5. 推送與合併（Push & Merge Controls）
@@ -457,9 +458,15 @@ curl -sI https://app.haotool.org/ratewise/og-image.jpg | grep -i "cache-control\
 
 SemVer 決策規則見 `CLAUDE.md` Phase 7。
 
-每個 PR 完成後 **必須**建立 changeset（AGT-VER-01）：
+每個 **有 package 變更**的 PR 完成後 **必須**建立 changeset（AGT-VER-01）：
 
 - `pnpm changeset` → 選 bump 類型 → 描述使用者可見影響（禁止描述實作細節）
+
+**適用界線（changeset 的對象是 package，不是 commit）**：
+
+- **要**：變更落在任一 workspace package 目錄內（`apps/*/**`，含該 app 的 `docs/`、`README.md` 等非程式碼檔）——該 package 確實有變更，需要版本與 CHANGELOG intent
+- **不要**：純 root 層變更（`scripts/`、`.husky/`、`.github/`、root `package.json`／設定檔、root `AGENTS.md`／`CLAUDE.md`／`README.md`、`docs/dev/*`）——沒有任何 package 可 bump，硬補只會產生對使用者無意義的 CHANGELOG 條目
+- 判斷依據為 **變更檔案所屬 package**，不是 commit type；`ci`／`chore` 若動到 `apps/*` 仍要 changeset，`feat` 若只動 root 工具則不用
 
 發版指令（AGT-VER-02）：
 
