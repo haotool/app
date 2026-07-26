@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+272
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+273
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b04-market-vfx-layers
+- 原因：B04 尾段需四組市場終招分層 VFX（崩跌衝擊波/K線海嘯/市場黑洞/入金光束）；image_gen 已證實原生透明輸出，繞 chroma-key 反而是險徑
+- 解法：改直接要求透明底輸出（管線省去 key 選色與去背），20 層一次通過升級版 QA（含主體不透明度門檻），發光層半透明經目視確認屬設計性
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b04-scenes-liudong-market

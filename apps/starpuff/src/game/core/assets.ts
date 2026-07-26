@@ -922,4 +922,85 @@ export const ASSETS: AssetEntry[] = [
     key: 'fx-market-circuitwall',
     url: new URL('../../assets/sprites/fx-market-circuitwall.webp', import.meta.url).href,
   },
+  // v21-v30 B04 市場終招分層 VFX（崩跌衝擊波/K線海嘯/市場黑洞/入金光束，各五層獨立疊加）。
+  {
+    key: 'fx-market-crashwave-core',
+    url: new URL('../../assets/sprites/fx-market-crashwave-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-crashwave-shock',
+    url: new URL('../../assets/sprites/fx-market-crashwave-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-crashwave-trail',
+    url: new URL('../../assets/sprites/fx-market-crashwave-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-crashwave-debris',
+    url: new URL('../../assets/sprites/fx-market-crashwave-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-crashwave-overlay',
+    url: new URL('../../assets/sprites/fx-market-crashwave-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-klinewave-core',
+    url: new URL('../../assets/sprites/fx-market-klinewave-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-klinewave-shock',
+    url: new URL('../../assets/sprites/fx-market-klinewave-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-klinewave-trail',
+    url: new URL('../../assets/sprites/fx-market-klinewave-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-klinewave-debris',
+    url: new URL('../../assets/sprites/fx-market-klinewave-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-klinewave-overlay',
+    url: new URL('../../assets/sprites/fx-market-klinewave-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-blackhole-core',
+    url: new URL('../../assets/sprites/fx-market-blackhole-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-blackhole-shock',
+    url: new URL('../../assets/sprites/fx-market-blackhole-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-blackhole-trail',
+    url: new URL('../../assets/sprites/fx-market-blackhole-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-blackhole-debris',
+    url: new URL('../../assets/sprites/fx-market-blackhole-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-blackhole-overlay',
+    url: new URL('../../assets/sprites/fx-market-blackhole-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-deposit-core',
+    url: new URL('../../assets/sprites/fx-market-deposit-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-deposit-shock',
+    url: new URL('../../assets/sprites/fx-market-deposit-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-deposit-trail',
+    url: new URL('../../assets/sprites/fx-market-deposit-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-deposit-debris',
+    url: new URL('../../assets/sprites/fx-market-deposit-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-deposit-overlay',
+    url: new URL('../../assets/sprites/fx-market-deposit-overlay.webp', import.meta.url).href,
+  },
 ];
