@@ -110,6 +110,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> {
     'setStrokeStyle',
     'clear',
     'lineStyle',
+    'strokeCircle',
     'beginPath',
     'arc',
     'strokePath',
@@ -142,7 +143,7 @@ interface FakePlayerSprite {
     setSize: ReturnType<typeof vi.fn>;
     setOffset: ReturnType<typeof vi.fn>;
   };
-  setDisplaySize(): FakePlayerSprite;
+  setDisplaySize(w: number, h: number): FakePlayerSprite;
   setCollideWorldBounds(): FakePlayerSprite;
   setVelocity(vx: number, vy: number): FakePlayerSprite;
   setVelocityX(vx: number): FakePlayerSprite;
@@ -151,9 +152,18 @@ interface FakePlayerSprite {
   setAlpha(): FakePlayerSprite;
   setRotation(): FakePlayerSprite;
   setScale(sx: number, sy?: number): FakePlayerSprite;
-  setTexture(): FakePlayerSprite;
+  setTexture(key: string): FakePlayerSprite;
   destroy(): void;
 }
+
+// 立繪源尺寸替身（R7 破圖回歸鎖）：模擬 #857 素材源尺寸不一——換圖後 frame
+// 尺寸改變，displaySize 未重算即體感暴增。
+const FAKE_TEXTURE_SIZE: Record<string, number> = {
+  'hero-ember': 768,
+  'hero-tide': 1254,
+  'hero-prism': 1254,
+  'hero-gravity': 1254,
+};
 
 function makePlayerSprite(x: number, y: number): FakePlayerSprite {
   const sprite: FakePlayerSprite = {
@@ -166,8 +176,8 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
     visible: true,
     flipX: false,
     depth: 0,
-    texture: { key: '__WHITE' },
-    frame: { realWidth: 48, realHeight: 48 },
+    texture: { key: 'hero-idle' },
+    frame: { realWidth: 512, realHeight: 512 },
     body: {
       velocity: { x: 0, y: 0 },
       blocked: { down: true },
@@ -175,7 +185,11 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
       setSize: vi.fn(),
       setOffset: vi.fn(),
     },
-    setDisplaySize: () => sprite,
+    setDisplaySize(w: number, h: number) {
+      sprite.scaleX = w / sprite.frame.realWidth;
+      sprite.scaleY = h / sprite.frame.realHeight;
+      return sprite;
+    },
     setCollideWorldBounds: () => sprite,
     setVelocity(vx: number, vy: number) {
       sprite.body.velocity.x = vx;
@@ -198,13 +212,19 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
       sprite.scaleY = sy ?? sx;
       return sprite;
     },
-    setTexture: () => sprite,
+    setTexture(key: string) {
+      sprite.texture.key = key;
+      const size = FAKE_TEXTURE_SIZE[key] ?? 512;
+      sprite.frame.realWidth = size;
+      sprite.frame.realHeight = size;
+      return sprite;
+    },
     destroy: vi.fn(),
   };
   return sprite;
 }
 
-function makeHarness(): {
+function makeHarness(texturesExist = false): {
   player: ReturnType<typeof createPlayer>;
   groups: { maxSize: number }[];
   emit: ReturnType<typeof vi.fn>;
@@ -212,7 +232,7 @@ function makeHarness(): {
   const groups: { maxSize: number }[] = [];
   const emit = vi.fn();
   const scene = {
-    textures: { exists: () => false },
+    textures: { exists: () => texturesExist },
     add: {
       image: () => chainable(),
       zone: () => ({ setPosition: vi.fn(), destroy: vi.fn() }),
@@ -518,5 +538,42 @@ describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5/R6）', () => 
     for (const key of FOUR_KEYS) {
       expect(formShot?.getData(key), key).not.toBeUndefined();
     }
+  });
+});
+
+// 變身破圖回歸鎖（PR #886 R7）：#857 形態立繪源尺寸不一（ember 768、tide/prism/
+// gravity 1254 vs 基準 512），換圖若不重算 displaySize，變身瞬間視覺暴增近 2.5 倍
+// 且與生成時錨定的物理箱脫鉤。wearTexture 統一入口必須讓「顯示 px = 48」恆成立。
+describe('變身換裝尺寸解耦（PR #886 R7）', () => {
+  it('穿上超尺寸形態立繪與返回姿勢立繪：顯示尺寸恆為 PLAYER_SIZE', () => {
+    const { player } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    // 生成基準：hero-idle 512 源 → 48px。
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    // 焰化（768 源）：顯示 px 必須仍為 48（未重算會是 72）。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(IDLE, 16);
+    expect(sprite.texture.key).toBe('hero-ember');
+    expect(sprite.frame.realWidth).toBe(768);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    // 解除返回姿勢立繪（512 源）：同樣恆為 48。
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(512);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+  });
+
+  it('潮化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE', () => {
+    const { player } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    for (let i = 0; i < 3; i += 1) player.grantStar('spora');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('tide');
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(1254);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
   });
 });

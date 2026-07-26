@@ -6,6 +6,16 @@
 import type { AssetEntry } from './assets';
 
 export const ASSETS_V21_PART1: AssetEntry[] = [
+  {
+    key: 'hero-prism',
+    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
+    phase: 'lazy', // 待接關改回 'form'（W3 L25/L27 入編時必改；W1 由 FORM_INTRO_LEVEL 過濾未認領）
+  },
+  {
+    key: 'hero-gravity',
+    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
+    phase: 'lazy', // 待接關改回 'form'（W3 L25/L27 入編時必改；W1 由 FORM_INTRO_LEVEL 過濾未認領）
+  },
   // v21-v30 首批（B04 前先行）：焰化基底與劉董本體、市場箭頭 canon。
   {
     key: 'boss-liudong',

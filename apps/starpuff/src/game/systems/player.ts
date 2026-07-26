@@ -311,10 +311,19 @@ export function createPlayer(
   // 剪影同步掛在 applyBob 之後（同事件註冊序）：取到含 bob 的最終視覺座標。
   scene.events.on(Phaser.Scenes.Events.POST_UPDATE, syncSilhouette);
 
+  // 換裝統一入口（PR #886 R7）：素材源尺寸不一（512/768/1254），換圖必重算
+  // displaySize 並回寫 vscale 基準——否則變身瞬間視覺暴增且與生成時錨定的
+  // 物理箱脫鉤（vscale 每幀以註冊基準覆寫 scale，單改 displaySize 會被沖掉）。
+  const wearTexture = (key: string) => {
+    sprite.setTexture(key);
+    sprite.setDisplaySize(PLAYER_SIZE, PLAYER_SIZE);
+    vscale.rebase(sprite);
+  };
+
   const setPose = (next: Pose) => {
     if (pose === next) return;
     pose = next;
-    sprite.setTexture(tex(next));
+    wearTexture(tex(next));
   };
 
   // squash/stretch（§77 解耦）：fx 代理瞬間變形再 tween 回 1；物理箱恆為基準不動。
@@ -488,8 +497,8 @@ export function createPlayer(
     formSkills.end(form);
     playSfx('pop');
     burstSmall(scene, sprite.x, sprite.y, TRANSFORM_FORMS[form].tint);
-    // 立即回復非變身貼圖（setPose 快取不變時不重設，故直接覆寫）。
-    sprite.setTexture(tex(pose));
+    // 立即回復非變身貼圖（setPose 快取不變時不重設，故直接走換裝入口覆寫）。
+    wearTexture(tex(pose));
   };
 
   const recycleStar = (star: Phaser.Physics.Arcade.Sprite) => {
@@ -668,10 +677,8 @@ export function createPlayer(
       wasOnGround = onGround;
 
       if (hurtLockMs <= 0) {
-        // 加減速曲線（§41）：以目標速度逐幀逼近取代瞬時 setVelocity；
-        // 邊緣事件（起跑/急停/轉身）於目標轉變當幀觸發一次性塵埃。
-        // 星化移速（§57）：雷化 +15%、殼化 -20%；短期增益（§69）疾風靴倍率疊乘。
-        // 風化滑翔（§110）：空中按住跳鍵且下落中＝緩降＋水平漂移 ×1.6。
+        // 加減速曲線（§41）逐幀逼近；星化移速（§57）與疾風靴（§69）倍率疊乘；
+        // 風化滑翔（§110）：空中持跳且下落＝緩降＋水平漂移 ×1.6。
         const gliding =
           formSpec?.glide === true && !onGround && controls.jumpHeld && body.velocity.y > 0;
         const moveSpeed =
@@ -703,11 +710,9 @@ export function createPlayer(
         if (chargeMs > 0) sprite.setVelocityX(facing * SHELL_CHARGE.speed);
         if (gliding) sprite.setVelocityY(glideFallVy(body.velocity.y));
 
-        // 跳躍鍵矩陣（§44）：空中「下＋跳」＝下衝擊（吞含狀態不影響；CD 中回落
-        // 跳躍鏈不吞輸入）；地面照走 coyote/buffer 跳躍鏈，單向平台下穿由 stage
-        // 層 shouldDropThrough 裁決並覆蓋跳躍脈衝（§29 既有優先序）。
-        // §77：coyote 窗內視同在地（接觸旗標抖動免疫），下砸僅真空中觸發。
-        // 衝撞躍（§110）：衝撞中按跳＝低弧跳、保持衝撞態，不進一般跳躍鏈。
+        // 跳躍鍵矩陣（§44/§29/§77/§110）：空中「下＋跳」＝下衝擊（僅真空中，
+        // coyote 窗視同在地）；地面走 coyote/buffer 跳躍鏈，下穿由 stage 裁決；
+        // 衝撞中按跳＝低弧跳保持衝撞態。
         const chargeHop = chargeMs > 0 && controls.jumpPressed && (onGround || coyoteMs > 0);
         const jumpCommand =
           controls.jumpPressed && !slamming && !chargeHop
@@ -887,9 +892,8 @@ export function createPlayer(
       // 蹲姿（§77）：地面壓下即蹲——120ms 內壓扁＋下沉；離地或鬆開同速率還原。
       crouch = advanceCrouch(crouch, controls.down && onGround && !slamming, deltaMs);
 
-      // 走動手感（§45）：速度驅動步頻——相位導出 bob（視覺 y 偏移，PRE/POST_UPDATE
-      // 掛鉤）與前傾＋搖擺角；落腳拍點觸發腳塵與步伐音。空中依 vy 前後傾姿態；
-      // 地面靜止走 idle 呼吸（visualScale mod 乘子，squash tween 進行中讓位）。
+      // 走動手感（§45）：速度驅動步頻導出 bob 與前傾搖擺；空中依 vy 傾姿；
+      // 靜止走 idle 呼吸（visualScale mod，squash tween 進行中讓位）。
       let breathY = 0;
       if (onGround && body.velocity.x !== 0) {
         const speedRatio = Math.abs(body.velocity.x) / PLAYER.moveSpeed;
@@ -932,7 +936,7 @@ export function createPlayer(
       // 形態貼圖（§57）：變身期間固定形態立繪；素材未載時退回一般姿勢（aura 保識別）。
       const formTexKey = transform.form ? `hero-${transform.form}` : null;
       if (formTexKey && scene.textures.exists(formTexKey)) {
-        if (sprite.texture.key !== formTexKey) sprite.setTexture(formTexKey);
+        if (sprite.texture.key !== formTexKey) wearTexture(formTexKey);
       } else if (invulnerableMs > 0) setPose('hero-hurt');
       else if (controls.actionHeld && magazine.length === 0 && !transform.form) setPose(inhalePose);
       else if (magazine.length > 0) setPose('hero-puffed');

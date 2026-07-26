@@ -343,8 +343,9 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/bg-astral-l.webp', import.meta.url).href,
     phase: 'level',
   },
-  // §119/§120/§121 W1 接關（PR #886）：四形態立繪／六新怪立繪／兩張專屬橫景
-  // 自 assetsV21Part1 逐筆搬回（#857 接關契約），phase 依接入語意標定。
+  // §119/§120/§121 W1 接關（PR #886）：焰化/潮化立繪、六新怪立繪、兩張專屬橫景
+  // 自 assetsV21Part1 逐筆搬回（#857 接關契約）；稜化/引力化立繪待 L25/L27 入編
+  //（FORM_INTRO_LEVEL 過濾下 W1 無關卡認領），留在 lazy 分檔。
   {
     key: 'hero-ember',
     url: new URL('../../assets/sprites/hero-ember.webp', import.meta.url).href,
@@ -353,16 +354,6 @@ export const ASSETS: AssetEntry[] = [
   {
     key: 'hero-tide',
     url: new URL('../../assets/sprites/hero-tide.webp', import.meta.url).href,
-    phase: 'form',
-  },
-  {
-    key: 'hero-prism',
-    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
-    phase: 'form',
-  },
-  {
-    key: 'hero-gravity',
-    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
     phase: 'form',
   },
   {

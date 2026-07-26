@@ -3,7 +3,7 @@ import { ASSETS } from './assets';
 import { ASSETS_V21_PART1 } from './assetsV21Part1';
 import { ASSETS_V21_PART2 } from './assetsV21Part2';
 import { ASSETS_V21_PART3 } from './assetsV21Part3';
-import { entriesForLevel, levelAssetKeys, SHARED_LEVEL_KEYS } from './assetPlan';
+import { entriesForLevel, levelAssetKeys } from './assetPlan';
 import { LEVELS } from '../logic/levels';
 
 // v21-v30 素材「暫時 lazy」契約守門（#857 審查 Blocking 1）：
@@ -14,7 +14,9 @@ const V21_ENTRIES = [...ASSETS_V21_PART1, ...ASSETS_V21_PART2, ...ASSETS_V21_PAR
 
 describe('assetsV21 暫時 lazy 契約', () => {
   it('接關前全部 v21 條目維持 lazy；被派生認領的條目必須改回正確 phase', () => {
-    const claimed = new Set<string>(SHARED_LEVEL_KEYS);
+    // R7：形態立繪依 FORM_INTRO_LEVEL 逐關認領——levelAssetKeys 已含姿勢與該關
+    // 解鎖形態，全關聯集即完整認領面（SHARED 全集會把未入編形態誤判為已認領）。
+    const claimed = new Set<string>();
     for (const level of LEVELS) for (const key of levelAssetKeys(level)) claimed.add(key);
 
     const claimedButLazy = V21_ENTRIES.filter(
