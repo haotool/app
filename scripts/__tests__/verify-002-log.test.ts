@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import {
+  chmodSync,
   copyFileSync,
   mkdirSync,
   mkdtempSync,
@@ -802,30 +803,69 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     expect(output).toContain('penalty-evidence');
   });
 
-  // git 無法執行時若把錯誤當成「物件不存在」，整道守門會靜默跳過 exit 0。
-  it('git 不可執行時 fail-closed（不得靜默跳過）', () => {
+  function runIsolated(repo: string, env: NodeJS.ProcessEnv) {
+    try {
+      const stdout = execFileSync(process.execPath, [SCRIPT_PATH], {
+        cwd: repo,
+        env,
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      return { status: 0, output: stdout };
+    } catch (error) {
+      const failed = error as { status?: number | null; stdout?: string; stderr?: string };
+      return { status: failed.status ?? 1, output: `${failed.stdout ?? ''}${failed.stderr ?? ''}` };
+    }
+  }
+
+  // git 對「物件不存在」與「repo 不可用」都回 status 128；若不靠 stderr 區分，
+  // 環境失敗會被誤讀成「檔案不存在」而讓整道守門靜默跳過 exit 0。
+  it('git 不可執行（PATH 無 git）時 fail-closed', () => {
     const repo = setupRepo();
     const isolated = mkdtempSync(join(tmpdir(), 'verify-002-nogit-'));
     repos.push(isolated);
     mkdirSync(join(isolated, 'bin'));
     symlinkSync(process.execPath, join(isolated, 'bin', 'node'));
 
-    let status = 0;
-    let output = '';
-    try {
-      execFileSync(process.execPath, [SCRIPT_PATH], {
-        cwd: repo,
-        env: { ...GIT_ENV, PATH: join(isolated, 'bin') },
-        encoding: 'utf-8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-    } catch (error) {
-      const failed = error as { status?: number | null; stdout?: string; stderr?: string };
-      status = failed.status ?? 1;
-      output = `${failed.stdout ?? ''}${failed.stderr ?? ''}`;
-    }
+    const { status, output } = runIsolated(repo, { ...GIT_ENV, PATH: join(isolated, 'bin') });
     expect(status).toBe(1);
     expect(output).toContain('執行期例外');
+  });
+
+  it('git 存在但永遠失敗（壞 stub，status=1）時 fail-closed', () => {
+    const repo = setupRepo();
+    const isolated = mkdtempSync(join(tmpdir(), 'verify-002-stub-'));
+    repos.push(isolated);
+    mkdirSync(join(isolated, 'bin'));
+    symlinkSync(process.execPath, join(isolated, 'bin', 'node'));
+    writeFileSync(join(isolated, 'bin', 'git'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+
+    const { status, output } = runIsolated(repo, { ...GIT_ENV, PATH: join(isolated, 'bin') });
+    expect(status).toBe(1);
+    expect(output).toContain('執行期例外');
+  });
+
+  it('GIT_DIR 指向無效路徑（not a git repository）時 fail-closed', () => {
+    const repo = setupRepo();
+    const { status, output } = runIsolated(repo, {
+      ...GIT_ENV,
+      GIT_DIR: join(tmpdir(), 'verify-002-no-such-git-dir'),
+    });
+    expect(status).toBe(1);
+    expect(output).toContain('not a git repository');
+  });
+
+  it('.git 不可讀（權限）時 fail-closed', () => {
+    const repo = setupRepo();
+    chmodSync(join(repo, '.git'), 0o000);
+    try {
+      const { status, output } = runIsolated(repo, GIT_ENV);
+      expect(status).toBe(1);
+      expect(output).toContain('not a git repository');
+    } finally {
+      // 還原權限，否則 afterEach 的 rmSync 清不掉臨時 repo。
+      chmodSync(join(repo, '.git'), 0o755);
+    }
   });
 
   it('--base-commit：基準 commit 無法解析時明確失敗', () => {
@@ -928,6 +968,52 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     expect(step).toContain('node scripts/verify-002-log.mjs');
     // `git mv` 的 --name-only 只列新路徑，任何 diff-based 觸發條件都會被它繞過。
     expect(step).not.toContain('git diff');
+  });
+
+  // `isDirectRun` 的 realpathSync 失敗只在 argv[1] 於載入後失效時發生，執行期無法穩定構造
+  // （node 必須先讀到該檔才能執行），故以結構鎖取代行為測試：一旦有人把 catch 加回去，
+  // 判不出直跑時就會靜默不執行 main() 而 exit 0（假成功）。
+  it('isDirectRun 不得吞掉 realpath 例外', () => {
+    const source = read('scripts/verify-002-log.mjs');
+    const start = source.indexOf('function isDirectRun()');
+    expect(start).toBeGreaterThan(-1);
+    const body = source.slice(start, source.indexOf('\n}', start));
+    expect(body).toContain('realpathSync');
+    expect(body).not.toContain('catch');
+  });
+
+  // 本 PR 內發生過四次「文件／註解與實作漂移」，每次都是靠人記得去掃某個檔案。
+  // 這裡把它變成機械檢查：固定範圍 × 固定的已被取代措辭清單，任一命中即紅。
+  // 新增／改寫守門行為時，把被取代的舊措辭加進這張表，範圍有新檔案就加進清單。
+  const GATE_FILES = [
+    'scripts/verify-002-log.mjs',
+    'scripts/__tests__/verify-002-log.test.ts',
+    '.husky/pre-commit',
+    '.github/workflows/ci.yml',
+    'AGENTS.md',
+    'CLAUDE.md',
+  ];
+  const SUPERSEDED_PHRASES = [
+    '約 50ms', // 開銷已改為相對比較，不記具體數字
+    'p50 約 120', // 同上
+    '毫秒級', // 同上
+    '基準版無法解析時跳過', // 已改 fail-closed
+    '不依賴解析是否成功', // 基準版可解析時只採解析結果
+    '僅 002 檔變更時', // hook 已改無條件執行
+    'AGT-LOG-04', // 殘餘風險已移出控制矩陣、取消編號
+  ];
+
+  // 本檔自身也在掃描範圍內，故需剔除上面那份清單的字面值，否則必然自我命中。
+  const stripChecklist = (source: string) => {
+    const start = source.indexOf('const SUPERSEDED_PHRASES');
+    if (start === -1) return source;
+    return source.slice(0, start) + source.slice(source.indexOf('];', start));
+  };
+
+  it.each(GATE_FILES)('%s 不得殘留已被取代的措辭', (file) => {
+    const source = stripChecklist(read(file));
+    const hits = SUPERSEDED_PHRASES.filter((phrase) => source.includes(phrase));
+    expect(hits).toEqual([]);
   });
 
   it('ci.yml 對 pull_request 與 main push 都掛守門，且置於 install 之前', () => {

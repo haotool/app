@@ -200,8 +200,8 @@ export function validate002({ stagedContent, headContent }) {
   }
 
   // 歷史條目不可靜默刪除（防湮滅 penalty 證據）：基準版全部 ID（不限標準前綴）
-  // 必須仍存在於待驗版，缺失即擋。兩側都取「解析結果 ∪ 原始文字掃描」，
-  // 使刪除比對不依賴解析是否成功（上述 fail-closed 的第二道保險）。
+  // 必須仍存在於待驗版，缺失即擋。待驗版側取「解析結果 ∪ 原始文字掃描」以免解析失敗時誤報；
+  // 基準版側的取法見下方（可解析時只採解析結果）。
   const stagedParsedIds = new Set(stagedEntries.map((entry) => entry.id).filter(Boolean));
   const stagedRawIds = scanRawIds(stagedContent);
   const stagedIds = new Set([...stagedParsedIds, ...stagedRawIds]);
@@ -277,7 +277,7 @@ export function validate002({ stagedContent, headContent }) {
   }
 
   const stagedHeaderLine = findHeaderLine(stagedContent);
-  const headHeaderLine = headContent ? findHeaderLine(headContent) : null;
+  const headHeaderLine = hasBase ? findHeaderLine(headContent) : null;
 
   // 檔頭未動且無新增條目（如 typo 修正、prettier 重排）：不驗記分。
   if (newEntries.length === 0 && stagedHeaderLine === headHeaderLine) {
@@ -339,15 +339,28 @@ export function validate002({ stagedContent, headContent }) {
   return { errors };
 }
 
+// git 對「物件不存在」與「repo 不可用」都回 status 128，必須靠 stderr 區分。
+// 以下為窮舉守門實際會遇到的四種「合法不存在」訊息（逐一實測取得）；
+// 其餘（not a git repository、壞 git、權限問題、非預期 status）一律上拋 fail-closed，
+// 否則環境失敗會被誤讀成「檔案不存在」而讓整道守門靜默跳過。
+const MISSING_OBJECT_PATTERNS = [
+  /does not exist in '/, // 指定 tree（HEAD 或 sha）無此路徑
+  /does not exist \(neither on disk nor in the index\)/, // index 與磁碟皆無
+  /exists on disk, but not in the index/, // staged 刪除（git rm --cached）
+  /invalid object name 'HEAD'\./, // 尚無任何 commit（初始 commit）
+];
+
 // spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」。
-// 只有「物件確實不存在」才回傳 null：先用 cat-file 判存在性，存在卻讀不出即向上拋。
-// 若把 git 本身無法執行（未安裝／PATH 缺失）也當成不存在，整道守門會靜默跳過。
 function gitShow(spec) {
   try {
-    execFileSync('git', ['cat-file', '-e', spec], { stdio: 'ignore' });
+    execFileSync('git', ['cat-file', '-e', spec], { stdio: ['ignore', 'ignore', 'pipe'] });
   } catch (error) {
     if (error?.code === 'ENOENT') throw error;
-    return null;
+    const stderr = String(error?.stderr ?? error?.message ?? '');
+    if (error?.status === 128 && MISSING_OBJECT_PATTERNS.some((re) => re.test(stderr))) {
+      return null;
+    }
+    throw new Error(`git cat-file -e ${spec} 失敗（status=${error?.status}）：${stderr.trim()}`);
   }
   return execFileSync('git', ['show', spec], { encoding: 'utf-8' });
 }
@@ -387,20 +400,29 @@ function runPreCommit() {
 // 使 before 與祖先之間新增的 penalty 條目在改寫後消失也驗不出來——而那正是本模式的存在理由。
 function runAgainstBaseRef(ref, { useMergeBase }) {
   let base = ref;
+  // 兩處 catch 都不吞錯誤（立即 exit 1），但必須帶出 git 原始訊息：
+  // 「ref 打錯」與「repo 不可用／git 壞掉」的處置完全不同，只印通用句會誤導診斷。
+  const gitStderr = (error) => String(error?.stderr ?? error?.message ?? '').trim();
   if (useMergeBase) {
     try {
-      base = execFileSync('git', ['merge-base', ref, 'HEAD'], { encoding: 'utf-8' }).trim();
-    } catch {
-      console.error(`002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）`);
+      base = execFileSync('git', ['merge-base', ref, 'HEAD'], {
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).trim();
+    } catch (error) {
+      console.error(
+        `002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）：${gitStderr(error)}`,
+      );
       process.exit(1);
     }
   } else {
     try {
       base = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], {
         encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
       }).trim();
-    } catch {
-      console.error(`002 記分守門失敗：無法解析基準 commit（「${ref}」）`);
+    } catch (error) {
+      console.error(`002 記分守門失敗：無法解析基準 commit（「${ref}」）：${gitStderr(error)}`);
       process.exit(1);
     }
   }
@@ -452,24 +474,23 @@ function main() {
 
 // argv[1] 需先解析 symlink 再比對：macOS 的 /tmp 是 /private/tmp 的 symlink，
 // 以絕對路徑呼叫時兩側不等會讓 main() 靜默不執行並 exit 0（假成功）。
+// realpathSync 失敗代表 argv[1] 無法解析，此時無從判定是否為直跑。
+// 舊版在此吞掉例外並退回字面比較，比不中就靜默視為「非直跑」——main() 不執行卻 exit 0
+// 正是假成功。改為不吞，由下方統一 fail-closed。
 function isDirectRun() {
   const invoked = process.argv[1];
   if (!invoked) return false;
-  try {
-    return import.meta.url === pathToFileURL(realpathSync(invoked)).href;
-  } catch {
-    return import.meta.url === pathToFileURL(invoked).href;
-  }
+  return import.meta.url === pathToFileURL(realpathSync(invoked)).href;
 }
 
-if (isDirectRun()) {
-  try {
+try {
+  if (isDirectRun()) {
     main();
-  } catch (error) {
-    // 任何未預期例外（git 無法執行、物件存在卻讀不出）一律 fail-closed。
-    console.error(
-      `002 記分守門失敗：執行期例外——${error instanceof Error ? error.message : String(error)}`,
-    );
-    process.exit(1);
   }
+} catch (error) {
+  // 任何未預期例外（git 無法執行、物件存在卻讀不出、argv[1] 無法解析）一律 fail-closed。
+  console.error(
+    `002 記分守門失敗：執行期例外——${error instanceof Error ? error.message : String(error)}`,
+  );
+  process.exit(1);
 }
