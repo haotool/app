@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+281
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+282
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-tail-morphs-arrowrain
+- 原因：B06 尾項需 volt/gale/shell 變身五幀補齊七形態變身組與全屏箭雨分層演出層
+- 解法：三組十五幀沿 B02 變身構圖慣例生成、箭雨五層 1536×1024 橫幅分層，4 張半透明以 alpha 曲線拉滿收斂，QA 20/20
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-liudong-anim-frames

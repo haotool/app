@@ -770,4 +770,85 @@ export const ASSETS_V21_PART3: { key: string; url: string }[] = [
     key: 'boss-liudong-death-6',
     url: new URL('../../assets/sprites/boss-liudong-death-6.webp', import.meta.url).href,
   },
+  // v21-v30 B06 尾項：volt/gale/shell 變身五幀與全屏箭雨分層（載入時機建議：形態解鎖/L30 延遲，暫沿 Boot 預載）。
+  {
+    key: 'hero-volt-morph-gather',
+    url: new URL('../../assets/sprites/hero-volt-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-volt-morph-shrink',
+    url: new URL('../../assets/sprites/hero-volt-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-volt-morph-stretch',
+    url: new URL('../../assets/sprites/hero-volt-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-volt-morph-burst',
+    url: new URL('../../assets/sprites/hero-volt-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-volt-morph-complete',
+    url: new URL('../../assets/sprites/hero-volt-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gale-morph-gather',
+    url: new URL('../../assets/sprites/hero-gale-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gale-morph-shrink',
+    url: new URL('../../assets/sprites/hero-gale-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gale-morph-stretch',
+    url: new URL('../../assets/sprites/hero-gale-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gale-morph-burst',
+    url: new URL('../../assets/sprites/hero-gale-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gale-morph-complete',
+    url: new URL('../../assets/sprites/hero-gale-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-shell-morph-gather',
+    url: new URL('../../assets/sprites/hero-shell-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-shell-morph-shrink',
+    url: new URL('../../assets/sprites/hero-shell-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-shell-morph-stretch',
+    url: new URL('../../assets/sprites/hero-shell-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-shell-morph-burst',
+    url: new URL('../../assets/sprites/hero-shell-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-shell-morph-complete',
+    url: new URL('../../assets/sprites/hero-shell-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrowrain-core',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrowrain-shock',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrowrain-trail',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrowrain-debris',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrowrain-overlay',
+    url: new URL('../../assets/sprites/fx-market-arrowrain-overlay.webp', import.meta.url).href,
+  },
 ];
