@@ -8,7 +8,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DOCS_DIR = join(SCRIPT_DIR, '..', 'docs');
@@ -62,6 +62,12 @@ function parseIndexRows() {
 }
 
 // 錨點引用掃描：拆檔後 GAME_DESIGN.md 不再有章節錨點，任何 `GAME_DESIGN.md#` 連結必然死鏈。
+// 本檔自身帶有偵測字面值，必須自我排除，否則掃描器會檢舉自己。路徑自 import.meta.url
+// 推導（非硬編），檔案搬移或改名時排除仍然成立。
+const SELF_REL_PATH = relative(REPO_ROOT, fileURLToPath(import.meta.url))
+  .split(sep)
+  .join('/');
+
 function findAnchorReferences() {
   const tracked = execFileSync('git', ['ls-files', '-z'], {
     cwd: REPO_ROOT,
@@ -72,6 +78,7 @@ function findAnchorReferences() {
     .filter(Boolean);
   const hits = [];
   for (const rel of tracked) {
+    if (rel === SELF_REL_PATH) continue;
     if (!/\.(md|ts|tsx|mjs|js|json|ya?ml)$/.test(rel)) continue;
     let text;
     try {
