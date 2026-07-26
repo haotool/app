@@ -48,9 +48,10 @@ describe('lighthouse-production SSOT controls', () => {
 
   it('keeps refreshed summary fields after spreading an existing baseline', () => {
     const source = readFileSync(SCRIPT_PATH, 'utf8');
-    const existingBaselineWrite = source.match(
-      /JSON\.stringify\(\s*\{\s*\.\.\.baseline[\s\S]*?paths: summary\.paths,[\s\S]*?\}\s*,\s*null,\s*2,\s*\)/,
-    );
+    const existingBaselineWrite =
+      /JSON\.stringify\(\s*\{\s*\.\.\.baseline[\s\S]*?paths: summary\.paths,[\s\S]*?\}\s*,\s*null,\s*2,\s*\)/.exec(
+        source,
+      );
 
     expect(existingBaselineWrite).not.toBeNull();
     const existingBaselineWriteBlock = existingBaselineWrite?.[0];

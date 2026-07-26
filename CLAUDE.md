@@ -83,15 +83,15 @@ pnpm format:fix              # prettier --write .
 
 ## Execution SOP（AI 助手執行程序）
 
-| Phase             | 核心動作                                                                            |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| **1. Intake**     | 確認目標、輸出物、風險等級（commit/push/merge？CI/PWA/版本？）                      |
-| **2. Context**    | 讀最小必要檔案；flow 變更先讀 `package.json` / `.husky/*`；合併前 `gh pr status`    |
-| **3. Evidence**   | build error / 新工具 / CI 變更 / major 升級 → **先查官方文件**（Context7）          |
-| **4. Execution**  | 最小必要變更；禁止跨 app 無關修改；保持可回滾；勿刪未追蹤 `.agents/skills/*`        |
-| **5. Validation** | 文檔→SSOT 一致；程式碼→typecheck/test/build:ratewise；UI→截圖+console errors        |
-| **6. Commit**     | 更新 `docs/dev/002...`（對齊當前 SSOT 模板 + 分數變化 + 累計總分）→ commitlint 提交 |
-| **7. Release**    | 見下方 Phase 7 版本發布流程                                                         |
+| Phase             | 核心動作                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| **1. Intake**     | 確認目標、輸出物、風險等級（commit/push/merge？CI/PWA/版本？）                                           |
+| **2. Context**    | 讀最小必要檔案；flow 變更先讀 `package.json` / `.husky/*`；合併前 `gh pr status`                         |
+| **3. Evidence**   | build error / 新工具 / CI 變更 / major 升級 → **先查官方文件**（Context7）                               |
+| **4. Execution**  | 最小必要變更；禁止跨 app 無關修改；保持可回滾；勿刪未追蹤 `.agents/skills/*`                             |
+| **5. Validation** | 文檔→SSOT 一致；程式碼→typecheck/test/build:ratewise；UI→截圖+console errors                             |
+| **6. Commit**     | 更新 `docs/dev/002...`（對齊當前 SSOT 模板 + 分數變化 + 累計總分；條目集中單一 commit）→ commitlint 提交 |
+| **7. Release**    | 見下方 Phase 7 版本發布流程                                                                              |
 
 ### 002 格式與獎懲分數 SSOT（對齊 `AGENTS.md`）
 
@@ -104,7 +104,17 @@ pnpm format:fix              # prettier --write .
   - `neutral = 0`
   - `本次分數變化 = reward_count - penalty_count`
   - `最新總分 = 前次總分 + 本次分數變化`
-- 每次 commit 前新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」。
+- 新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」；條目累積後於單一 commit 落盤（`AGT-LOG-03`）。
+- 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
+- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，**無條件執行**，跳過與否由腳本自行判定）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。ID 唯一性只對**本次造成的重複**擋 commit（歷史既有重複不回溯，否則會卡死所有後續 commit）；刪除比對只採信基準版解析結果，區段外的獨立 `- ID：` 行不列入。「無基準版」只能由三層結構探測證明——`git rev-list -n 1 --all --reflog` 為空且 object store 無 commit 物件（`checkout --orphan` 會讓 `rev-parse --verify HEAD` 失敗、orphan 後刪光 named refs 會讓 `--all` 為空，但歷史 commit 仍在，誤判即跳過刪除防護）；存在性判定用 `ls-files`／`ls-tree`（不存在 = exit 0 空輸出）而非 `cat-file -e` 的 fatal 訊息比對——後者把「不存在」與「repo 不可用」混在同一離開碼、只能比對英文訊息，已連續破三次；所有 git 子行程收斂在唯一帶 `LC_ALL=C` 的 wrapper。**基準版不可解析、或讀不出前版累計總分時一律 fail-closed**（否則先 poison tip 再清空歷史即可全綠）；僅在基準版不可解析時，刪除比對才退回全檔原始文字掃描 `- ID：` 作第二道保險。
+- 既有條目的欄位不可被掏空：基準版非空的欄位（日期／原因／解法）改後不得為空。**掏空＝就地刪除**故擋；**改寫不擋**，因為它與合法的精確性修正（改錯字、更正數字）無法機械區分，擋下會封死唯一的更正管道。判準是「有沒有從有變成無」，不是「內容有沒有變」；語意品質交由審查把關。詳見 `AGENTS.md` § 為什麼堵「掏空」但不堵「改寫」。
+- pre-commit 第 6 步無條件執行、不以 `git diff` 判斷觸發（`git mv` 的 `--name-only` 只列新路徑會繞過）；條目區段 `## 條目` 必須唯一（多個等於替後續區段開永久盲區）。
+- `git merge` 的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者故 hook 層不覆蓋——刻意不補（會讓 `git merge origin/main` 誤紅），由 CI 兜底。
+- CI `Quality Checks` 於 install 前跑守門（issue #661）：PR 事件用 `--base-ref <base sha>`，基準取 `merge-base(base, HEAD)`；**main push 事件用 `--base-commit <github.event.before>`**（全零時跳過），基準**直取該 commit 不走 merge-base**——force push 時 `before` 並非 HEAD 祖先，取 merge-base 會漏驗被改寫的條目。兩個 flag 互斥。守門不假設 branch protection 永遠有效。pre-commit 只看單一 commit，squash 聚合的檔頭記帳錯誤（逐 commit 各自合法、聚合後淨變化不符）只有 CI 端攔得到。
+- **一個 PR 的 002 條目必須集中在單一 commit**（`AGT-LOG-03`），檔頭直接寫 PR 聚合淨變化。在現行兩種語意下，002 分散多個 commit 時 pre-commit（逐 commit 對帳）與 CI（聚合對帳）互斥，無法同時綠燈。
+- 此為設計取捨非技術必然：已評估「pre-commit 也改用 `merge-base(<base>, HEAD)` 聚合語意」（可行、能保留逐 commit 寫法），因 **base 不恆為 main**（實驗線 PR base 指向 experiment 分支，硬寫 `origin/main` 會產生假紅／假綠）、本機無權威 base 來源，而 CI 已有零猜測的 `base.sha` 而不採用。詳見 `AGENTS.md` § `AGT-LOG-03` 已評估但不採用的替代方案。
+- 002 落盤後的審查修正 commit 不得新增條目（pre-commit 必紅）；補記併回同一個 002 commit——仍在 tip 用 `git commit --amend`，否則延到 rebase 時 fold。故盡量讓 002 commit 留在分支最後。
+- rebase 解 002 衝突後，`git rebase --continue` 不觸發 pre-commit——必須手動執行 `node scripts/verify-002-log.mjs` 驗證，或事後以 `git commit --amend` 重新觸發守門。
 
 ### Phase 7. 版本發布與依賴管理（Release & Dependencies）
 
@@ -128,8 +138,10 @@ pnpm format:fix              # prettier --write .
 - 新互動元件（MoneyBox 比較卡、星評 Modal）→ **minor**
 - Core Web Vitals 架構性改善（LCP ↓50%+，SSG 預渲染）→ **minor**
 
-**Changeset 規範**（每個 PR 完成後 MUST 執行 `pnpm changeset`）：
+**Changeset 規範**（**有 package 變更**的 PR 完成後 MUST 執行 `pnpm changeset`）：
 
+- 適用界線：changeset 的對象是 package。變更落在 `apps/*/**`（含該 app 的 `docs/`、`README.md`）→ **要**；純 root 層變更（`scripts/`、`.husky/`、`.github/`、root 設定與文件、`docs/dev/*`）→ **不要**，因為沒有任何 package 可 bump
+- 判斷依據是變更檔案所屬 package，不是 commit type
 - bump 類型選正確（見上表）；描述使用者**看得到**的影響，禁止描述實作細節
 - CHANGELOG 由 changeset 自動生成，禁止手動貼入 git log
 - commit 數量不等於升版次數；`.changeset/*.md` 是 release intent，`pnpm changeset:version` 才會消化成版本與 CHANGELOG
