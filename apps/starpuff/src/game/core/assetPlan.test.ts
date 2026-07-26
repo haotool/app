@@ -4,6 +4,7 @@ import {
   BOSS_SUMMON_KINDS,
   BOSS_TEXTURE_KEYS,
   ENEMY_TEXTURE_KEYS,
+  PENDING_TEXTURE_KEYS,
   SHARED_LEVEL_KEYS,
   bgTextureKey,
   entriesForKeys,
@@ -83,10 +84,13 @@ describe('manifest 驅動的分階段載入', () => {
 
   it('全關共用核心（主角姿勢／形態立繪）每關都在場', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));
+    // §119 新形態立繪為佔位鍵（player 素身著色回退），素材交付前豁免在場檢查。
+    const pending = new Set(PENDING_TEXTURE_KEYS);
     for (const level of LEVELS) {
       const keys = new Set(planKeys(level.id));
       // 清單取 SHARED_LEVEL_KEYS 單一真值，測試不另維護第二份。
       for (const shared of SHARED_LEVEL_KEYS) {
+        if (pending.has(shared)) continue;
         expect(keys.has(shared) || bootKeys.has(shared)).toBe(true);
       }
     }
@@ -173,17 +177,22 @@ describe('anti-softlock：登場貼圖派生完整', () => {
 describe('anti-softlock：登場貼圖必定載得到', () => {
   it('每關派生出的每一個鍵都落在 boot 或該關計畫內', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));
+    // §119/§120 佔位鍵豁免：無資產檔可載，運行期以生成貼圖／著色回退保證不缺圖；
+    // 素材車交付自 PENDING_TEXTURE_KEYS 移除後自動回到本守門範圍。
+    const pending = new Set(PENDING_TEXTURE_KEYS);
     for (const level of LEVELS) {
       const planned = new Set(planKeys(level.id));
       const missing = levelAssetKeys(level).filter(
-        (key) => !planned.has(key) && !bootKeys.has(key),
+        (key) => !planned.has(key) && !bootKeys.has(key) && !pending.has(key),
       );
       expect({ level: level.id, missing }).toEqual({ level: level.id, missing: [] });
     }
   });
 
-  it('圖鑑立繪全數可由 manifest 補載', () => {
-    const codexKeys = CODEX_MONSTERS.map((monster) => monster.textureKey);
+  it('圖鑑立繪全數可由 manifest 補載（§120 佔位鍵走 CodexScene 剪影回退，豁免）', () => {
+    const codexKeys = CODEX_MONSTERS.map((monster) => monster.textureKey).filter(
+      (key) => !PENDING_TEXTURE_KEYS.includes(key),
+    );
     expect(keysOf(entriesForKeys(codexKeys)).sort()).toEqual([...codexKeys].sort());
   });
 });

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { resetTransientFlags } from '../core/poolFlags';
+import { acquirePooled } from '../core/poolFlags';
 import { GRAVITY_Y, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { ECLIPSE_CLOAK, cloakActive, cloakAlpha } from '../logic/eclipseCloak';
@@ -178,12 +178,10 @@ export function createNoctra(
   };
 
   const spawnBall = (x: number, y: number, tint: number): Phaser.Physics.Arcade.Sprite | null => {
-    const ball = projectiles.get(x, y, 'noctra-bomb') as Phaser.Physics.Arcade.Sprite | null;
+    const ball = acquirePooled(projectiles, x, y, 'noctra-bomb');
     if (!ball) return null;
     ball.enableBody(true, x, y, true, true);
     ball.setTint(tint);
-    // 池回收重用：互動旗標（reflected/tideDeflected 等）走 poolFlags 單點復位。
-    resetTransientFlags(ball);
     return ball;
   };
 

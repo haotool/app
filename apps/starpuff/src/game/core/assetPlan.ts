@@ -22,6 +22,9 @@ export const BG_TEXTURE_ALIAS: Record<string, string> = {
   'bg-meteorfield': 'bg-astral',
   'bg-starcourt': 'bg-astral',
   'bg-voidcore': 'bg-astral',
+  // §121 星海終局篇走動關：暫沿星海橫景，專屬橫景待素材車 B02 交付後改指。
+  'bg-starport': 'bg-astral',
+  'bg-tidebay': 'bg-astral',
 };
 
 export function bgTextureKey(bgKey: string): string {
@@ -56,6 +59,23 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   frosty: 'minion-frosty',
   manta: 'minion-manta',
 };
+
+// §119/§120 佔位立繪鍵（素材車 B02 交付後自本表移除）：texture key 先行凍結，
+// 無資產檔可載——運行期各自回退（enemies 以 FALLBACK_COLORS generateTexture、
+// player 以素身＋形態著色、CodexScene 以 fx-star 剪影），故不受 manifest 載入
+// 守門管轄；素材交付自本表移除即自動納回載入計畫。
+export const PENDING_TEXTURE_KEYS: readonly string[] = [
+  'minion-cargo',
+  'minion-ticketa',
+  'minion-scanna',
+  'minion-foamy',
+  'minion-frosty',
+  'minion-manta',
+  'hero-ember',
+  'hero-tide',
+  'hero-prism',
+  'hero-gravity',
+];
 
 // 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）。
 export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {

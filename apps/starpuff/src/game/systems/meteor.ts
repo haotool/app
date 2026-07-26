@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { VIEW } from '../core/config';
+import { acquirePooled } from '../core/poolFlags';
 import {
   METEOR,
   advanceMeteorTimer,
@@ -112,7 +113,7 @@ export function createMeteorSystem(
   };
 
   const spawnMeteor = (x: number): void => {
-    const rock = meteors.get(x, meteorSpawnY(IMPACT_Y)) as Phaser.Physics.Arcade.Sprite | null;
+    const rock = acquirePooled(meteors, x, meteorSpawnY(IMPACT_Y));
     if (!rock) return;
     rock.setActive(true).setVisible(true);
     rock.setTexture(ROCK_TEX);
@@ -130,7 +131,7 @@ export function createMeteorSystem(
   };
 
   const spawnEmber = (x: number): void => {
-    const ember = embers.get(x, GROUND_TOP - EMBER_H / 2) as Phaser.Physics.Arcade.Sprite | null;
+    const ember = acquirePooled(embers, x, GROUND_TOP - EMBER_H / 2);
     if (!ember) return;
     ember.setActive(true).setVisible(true);
     ember.setTexture(EMBER_TEX);

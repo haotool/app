@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { resetTransientFlags } from '../core/poolFlags';
+import { acquirePooled } from '../core/poolFlags';
 import type { StarFlavor } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { TransformForm } from '../core/types';
@@ -115,11 +115,7 @@ export function createFormSkills(
   function launchShot(launch: FormShotLaunch): void {
     const { spec } = launch;
     for (let i = 0; i < spec.count; i += 1) {
-      const star = stars.get(
-        launch.x,
-        launch.y,
-        tex('fx-star'),
-      ) as Phaser.Physics.Arcade.Sprite | null;
+      const star = acquirePooled(stars, launch.x, launch.y, tex('fx-star'));
       if (!star) return;
       star.setActive(true).setVisible(true);
       star.setDisplaySize(STAR_SIZE, launch.flat ? STAR_SIZE * 0.7 : STAR_SIZE);
@@ -127,8 +123,6 @@ export function createFormSkills(
       const body = star.body as Phaser.Physics.Arcade.Body;
       body.enable = true;
       body.reset(launch.x, launch.y);
-      // 池重用重設走 poolFlags 單點復位，之後才落本發專屬的 burn。
-      resetTransientFlags(star);
       star.setData('damage', launch.damage ?? spec.damage);
       star.setData('pierce', launch.pierceCount ?? spec.pierceCount);
       star.setData('flavor', launch.flavor ?? spec.flavor);

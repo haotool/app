@@ -213,9 +213,11 @@
   未來 deflect 型形態不會順便免疫上浮。
 - 稜化**反射抵銷＝折射銷毀不回傷**（稜光碎光演出）——回傷反彈是殼化的防語彙
   （§57/§58），稜化防禦為無效化彈幕，兩形態語彙區辨。
-- 撥開/反彈/焰彈等一次性互動旗標由 `core/poolFlags.ts` SSOT 管理：所有池取出點
-  （hazards/魔王彈幕/星彈）必經 `resetTransientFlags` 單點復位，杜絕池回收殘留
-  旗標造成的靜默免疫/效果洩漏（同族缺陷已四度重演的結構性根治）。
+- 撥開/反彈/焰彈/糖漿等一次性互動旗標由 `core/poolFlags.ts` SSOT 清單管理
+  （tideDeflected/reflected/burn/inhalable/caramel）：所有池取出點（hazards/
+  魔王彈幕/糖漿波柱/星彈/隕石）一律經 `acquirePooled` 取出即復位——新增旗標由
+  清單守、新增取出點由原始碼靜態守門守（raw pool `.get` 直呼即測試紅），杜絕
+  池回收殘留旗標造成的靜默免疫/效果洩漏（同族缺陷已五度重演的結構性根治）。
 
 ### 119.2 工程契約
 
@@ -224,8 +226,8 @@
 - 護體泛化：泡泡盾/星體護衛沿殼化受身入殼 `tuckCharges` 計數（consumeTuck 單一機構）。
 - 攻擊彈：焰彈/稜片/風刃收斂 `formSkills.launchShot` 單一發射管線（FormShotSpec，
   flavor 借既有味系效果表——焰彈借爆裂小爆、稜片借標準素身）；burn 標記由命中端
-  結算（冰史萊姆熔解不分裂、W2 稅票同源），且一般星彈發射時必重設 burn=false
-  ——星彈池物件重用不得洩漏前個體殘留狀態。
+  結算（冰史萊姆熔解不分裂、W2 稅票同源），星彈池取出必經 `acquirePooled`
+  ——池物件重用不得洩漏前個體殘留狀態（旗標全集見上方 poolFlags 條）。
 - 世界結算：`SKILL_TRANSFORM_STRIKE` kind 擴 magma-pop/tide-pull/rainbow-beam/
   gravity-well，GameScene 經 `starCombat.resolveTransformStrike` 單點路由。
 - 呈現分檔：aura/變身環/護體視覺/空中機動抽 `systems/formSkills.ts`（1200 行閘）。

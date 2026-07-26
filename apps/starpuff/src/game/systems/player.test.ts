@@ -438,3 +438,31 @@ describe('§119 焰彈 burn 標記池重用（PR #886 收斂）', () => {
     expect(reused?.getData('burn')).toBe(false);
   });
 });
+
+describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出必全歸位）', () => {
+  it('殘留 tideDeflected/reflected/inhalable 的池星彈被焰彈復用後必為 false', () => {
+    const { player } = makeHarness();
+    // 先發一發一般星建立池物件，模擬互動旗標殘留後回收。
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const pooled = stars.find((star) => star.active);
+    if (!pooled) throw new Error('星彈未生成');
+    pooled.setData('tideDeflected', true);
+    pooled.setData('reflected', true);
+    pooled.setData('inhalable', true);
+    pooled.setActive(false);
+    // 焰化後 B 點按經 formSkills.launchShot 復用同一物件：旗標必須歸位。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(PRESS, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(pooled);
+    expect(reused?.getData('tideDeflected')).toBe(false);
+    expect(reused?.getData('reflected')).toBe(false);
+    expect(reused?.getData('inhalable')).toBe(false);
+    expect(reused?.getData('burn')).toBe(true);
+  });
+});

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { resetTransientFlags } from '../core/poolFlags';
+import { acquirePooled } from '../core/poolFlags';
 import { VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import {
@@ -223,12 +223,10 @@ export function createPrismix(
   };
 
   const spawnShot = (x: number, y: number): Phaser.Physics.Arcade.Sprite | null => {
-    const shot = projectiles.get(x, y, 'prismix-shot') as Phaser.Physics.Arcade.Sprite | null;
+    const shot = acquirePooled(projectiles, x, y, 'prismix-shot');
     if (!shot) return null;
     shot.enableBody(true, x, y, true, true);
     shot.setTint(0xd8c8f5);
-    // 池復用重設：互動旗標（reflected/inhalable/tideDeflected 等）走 poolFlags 單點復位。
-    resetTransientFlags(shot);
     (shot.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     return shot;
   };
@@ -261,11 +259,7 @@ export function createPrismix(
         outline.destroy();
         crack.destroy();
         if (dying) return;
-        const spike = shockwaves.get(
-          x,
-          GROUND_TOP - PILLAR_H / 2,
-          'prismix-shard',
-        ) as Phaser.Physics.Arcade.Sprite | null;
+        const spike = acquirePooled(shockwaves, x, GROUND_TOP - PILLAR_H / 2, 'prismix-shard');
         if (!spike) return;
         spike.enableBody(true, x, GROUND_TOP - PILLAR_H / 2, true, true);
         spike.setDisplaySize(PILLAR_W, PILLAR_H).setTint(CRYSTAL_TINT);
@@ -298,7 +292,7 @@ export function createPrismix(
     delay(PRISMIX.beamTelegraphMs, () => {
       if (dying) return;
       playSfx('zap', 0.8);
-      const beam = shockwaves.get(lineX, beamY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      const beam = acquirePooled(shockwaves, lineX, beamY, '__WHITE');
       if (!beam) return;
       beam.enableBody(true, lineX, beamY, true, true);
       beam.setDisplaySize(viewW(), BEAM_H).setTint(0xe8d8ff).setAlpha(0.85);
@@ -415,7 +409,7 @@ export function createPrismix(
       scene.tweens.killTweensOf(line);
       line.destroy();
       if (dying) return;
-      const wall = shockwaves.get(startX, wallY, '__WHITE') as Phaser.Physics.Arcade.Sprite | null;
+      const wall = acquirePooled(shockwaves, startX, wallY, '__WHITE');
       if (!wall) return;
       wall.enableBody(true, startX, wallY, true, true);
       wall.setDisplaySize(SWEEP_WALL_W, wallH).setTint(REBIRTH_TINT).setAlpha(0.9);
@@ -604,11 +598,7 @@ export function createPrismix(
       shard.disableBody(true, true);
     });
     for (let i = 0; i < shardCount; i += 1) {
-      const shard = shields.get(
-        core.x,
-        core.y,
-        'prismix-shard',
-      ) as Phaser.Physics.Arcade.Sprite | null;
+      const shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
       if (!shard) continue;
       shard.enableBody(true, core.x, core.y, true, true);
       shard.setTint(0xe8dcff);

@@ -13,7 +13,7 @@ import {
   type MagazineSlot,
   type StarFlavor,
 } from '../core/config';
-import { resetTransientFlags } from '../core/poolFlags';
+import { acquirePooled } from '../core/poolFlags';
 import { GameEvents, emitGameEvent } from '../core/events';
 import type { EnemyKind } from '../core/types';
 import {
@@ -514,7 +514,7 @@ export function createPlayer(
   const launchStar = (slot: MagazineSlot, vy: number) => {
     const spec = slotSpec(slot);
     const fx = sprite.x + facing * (PLAYER_SIZE / 2 + 8);
-    const star = stars.get(fx, sprite.y, tex('fx-star')) as Phaser.Physics.Arcade.Sprite | null;
+    const star = acquirePooled(stars, fx, sprite.y, tex('fx-star'));
     if (!star) return;
     const boosted = slot.charged || slot.gold;
     const size = boosted ? STAR_SIZE * CHARGED_STAR.sizeMultiplier : STAR_SIZE;
@@ -527,8 +527,6 @@ export function createPlayer(
     const body = star.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(fx, sprite.y);
-    // 池重用重設（PR #886 收斂）：焰彈殘留的 burn 等互動旗標走 poolFlags 單點復位。
-    resetTransientFlags(star);
     star.setData('damage', starDamage(slot));
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);

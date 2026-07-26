@@ -320,16 +320,9 @@ export const CODEX_SKILLS: readonly CodexSkill[] = [
   },
 ] as const;
 
-// §120 佔位立繪鍵（素材車 B02 交付後自本表移除）：texture key 先行凍結，
-// CodexScene 與 enemies 缺圖時各自回退（fx-star 剪影／同色圓角色塊）。
-export const PENDING_TEXTURE_KEYS: readonly string[] = [
-  'minion-cargo',
-  'minion-ticketa',
-  'minion-scanna',
-  'minion-foamy',
-  'minion-frosty',
-  'minion-manta',
-];
+// §120 佔位立繪鍵 SSOT 移駐 core/assetPlan（載入計畫豁免同一份真值），此處再匯出
+// 供 CodexScene 與測試沿用既有匯入點。
+export { PENDING_TEXTURE_KEYS } from './assetPlan';
 
 // 星味首遇提示（§46/§47/§53）：GameScene 於本 session 首次取得該味/配方時 toast 一行文案。
 export const FLAVOR_HINTS: Record<StarFlavor, string> = {

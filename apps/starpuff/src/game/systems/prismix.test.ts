@@ -301,7 +301,9 @@ describe('Prismix 呈現層：折返彈池回收旗標（§5 W2）', () => {
     if (!reflectShot) throw new Error('折返彈未生成');
     expect(reflectShot.getData('inhalable')).toBe(true);
 
-    // 模擬吸入/出界回收：sprite 停用進池等待復用（旗標殘留現場）。
+    // 模擬吸入/出界回收：sprite 停用進池等待復用（旗標殘留現場）；
+    // 潮環撥開標記同場疊加（PR #886 R3：acquirePooled 取出必全歸位）。
+    reflectShot.setData('tideDeflected', true);
     reflectShot.disableBody();
 
     // 窗外擊破單側→掙扎窗滿合體入 P3。
@@ -313,6 +315,7 @@ describe('Prismix 呈現層：折返彈池回收旗標（§5 W2）', () => {
     expect(step(() => reflectShot.active)).toBe(true);
     expect(reflectShot.getData('reflected')).toBe(false);
     expect(reflectShot.getData('inhalable')).not.toBe(true);
+    expect(reflectShot.getData('tideDeflected')).toBe(false);
   });
 });
 
