@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+276
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+277
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-tariffang-anim-frames
+- 原因：B06 首王 Tariffang 需 39 張動畫關鍵幀，動畫幀一致性風險（體型跳動/光源翻轉/轉階段靜態）與靜態圖不同
+- 解法：依 §7.3 拆四 session 生成並做序列拼貼檢驗——體型穩定、光源恆左上、P2 裂紋→狂暴與 P3 白熱→過載鍍金演進辨識度足、受擊側擠壓白閃與待機差異明顯，QA 38/39＋1 張角落淡光暈清零收斂
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-glowy-halo-emblem-fix

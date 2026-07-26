@@ -1,0 +1,446 @@
+// v21-v30 章節素材 manifest 分檔（B02–B03（星港潮灣/鏡界黑洞場景、四王、小怪、焰潮稜引力完整包））。
+// 由 assets.ts 的 ASSETS 展開引用；與載入策略欄位擴充相容，維持 append-only。
+export const ASSETS_V21_PART1: { key: string; url: string }[] = [
+  // v21-v30 B02 星港／潮灣場景（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'bg-starport-l',
+    url: new URL('../../assets/sprites/bg-starport-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-1',
+    url: new URL('../../assets/sprites/prop-starport-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-2',
+    url: new URL('../../assets/sprites/prop-starport-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-3',
+    url: new URL('../../assets/sprites/prop-starport-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-starport-4',
+    url: new URL('../../assets/sprites/prop-starport-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-tidebay-l',
+    url: new URL('../../assets/sprites/bg-tidebay-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-1',
+    url: new URL('../../assets/sprites/prop-tidebay-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-2',
+    url: new URL('../../assets/sprites/prop-tidebay-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-3',
+    url: new URL('../../assets/sprites/prop-tidebay-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-tidebay-4',
+    url: new URL('../../assets/sprites/prop-tidebay-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 雙王（載入時機建議：L22/L24 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-tariffang',
+    url: new URL('../../assets/sprites/boss-tariffang.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-tariffang-enraged',
+    url: new URL('../../assets/sprites/boss-tariffang-enraged.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-maridella',
+    url: new URL('../../assets/sprites/boss-maridella.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-maridella-enraged',
+    url: new URL('../../assets/sprites/boss-maridella-enraged.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 六新小怪（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'minion-cargojelly',
+    url: new URL('../../assets/sprites/minion-cargojelly.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-ticketbat',
+    url: new URL('../../assets/sprites/minion-ticketbat.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-scannereye',
+    url: new URL('../../assets/sprites/minion-scannereye.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-bubbler',
+    url: new URL('../../assets/sprites/minion-bubbler.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-iceslime',
+    url: new URL('../../assets/sprites/minion-iceslime.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-tideray',
+    url: new URL('../../assets/sprites/minion-tideray.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 潮化基底與焰化／潮化變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-tide',
+    url: new URL('../../assets/sprites/hero-tide.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-gather',
+    url: new URL('../../assets/sprites/hero-ember-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-shrink',
+    url: new URL('../../assets/sprites/hero-ember-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-stretch',
+    url: new URL('../../assets/sprites/hero-ember-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-burst',
+    url: new URL('../../assets/sprites/hero-ember-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-morph-complete',
+    url: new URL('../../assets/sprites/hero-ember-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-gather',
+    url: new URL('../../assets/sprites/hero-tide-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-shrink',
+    url: new URL('../../assets/sprites/hero-tide-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-stretch',
+    url: new URL('../../assets/sprites/hero-tide-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-burst',
+    url: new URL('../../assets/sprites/hero-tide-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-morph-complete',
+    url: new URL('../../assets/sprites/hero-tide-morph-complete.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 焰化／潮化技能四拍（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-ember-skill-windup',
+    url: new URL('../../assets/sprites/hero-ember-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-charge',
+    url: new URL('../../assets/sprites/hero-ember-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-burst',
+    url: new URL('../../assets/sprites/hero-ember-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-recover',
+    url: new URL('../../assets/sprites/hero-ember-skill-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-windup',
+    url: new URL('../../assets/sprites/hero-tide-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-charge',
+    url: new URL('../../assets/sprites/hero-tide-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-burst',
+    url: new URL('../../assets/sprites/hero-tide-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-recover',
+    url: new URL('../../assets/sprites/hero-tide-skill-recover.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 焰化／潮化光環拖尾分層 VFX（核心光/外圈衝擊/拖尾/碎片/overlay 獨立疊加）。
+  {
+    key: 'fx-ember-aura-core',
+    url: new URL('../../assets/sprites/fx-ember-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-shock',
+    url: new URL('../../assets/sprites/fx-ember-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-trail',
+    url: new URL('../../assets/sprites/fx-ember-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-debris',
+    url: new URL('../../assets/sprites/fx-ember-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-overlay',
+    url: new URL('../../assets/sprites/fx-ember-aura-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-core',
+    url: new URL('../../assets/sprites/fx-tide-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-shock',
+    url: new URL('../../assets/sprites/fx-tide-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-trail',
+    url: new URL('../../assets/sprites/fx-tide-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-debris',
+    url: new URL('../../assets/sprites/fx-tide-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-overlay',
+    url: new URL('../../assets/sprites/fx-tide-aura-overlay.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 形態徽章與技能 HUD 圖示（載入時機建議：HUD 顯示前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'ui-ember-badge',
+    url: new URL('../../assets/sprites/ui-ember-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-ember-skill',
+    url: new URL('../../assets/sprites/ui-ember-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-tide-badge',
+    url: new URL('../../assets/sprites/ui-tide-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-tide-skill',
+    url: new URL('../../assets/sprites/ui-tide-skill.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 鏡界塔／黑洞外環場景（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'bg-mirror-l',
+    url: new URL('../../assets/sprites/bg-mirror-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-1',
+    url: new URL('../../assets/sprites/prop-mirror-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-2',
+    url: new URL('../../assets/sprites/prop-mirror-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-3',
+    url: new URL('../../assets/sprites/prop-mirror-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-mirror-4',
+    url: new URL('../../assets/sprites/prop-mirror-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-voidring-l',
+    url: new URL('../../assets/sprites/bg-voidring-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-1',
+    url: new URL('../../assets/sprites/prop-voidring-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-2',
+    url: new URL('../../assets/sprites/prop-voidring-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-3',
+    url: new URL('../../assets/sprites/prop-voidring-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-voidring-4',
+    url: new URL('../../assets/sprites/prop-voidring-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 雙王（載入時機建議：L26/L28 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-reflector',
+    url: new URL('../../assets/sprites/boss-reflector.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-reflector-enraged',
+    url: new URL('../../assets/sprites/boss-reflector-enraged.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-gravion',
+    url: new URL('../../assets/sprites/boss-gravion.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-gravion-enraged',
+    url: new URL('../../assets/sprites/boss-gravion-enraged.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 六新小怪（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'minion-copypuff',
+    url: new URL('../../assets/sprites/minion-copypuff.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-prismbee',
+    url: new URL('../../assets/sprites/minion-prismbee.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-datamote',
+    url: new URL('../../assets/sprites/minion-datamote.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-gravitybub',
+    url: new URL('../../assets/sprites/minion-gravitybub.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-orbiton',
+    url: new URL('../../assets/sprites/minion-orbiton.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-riftling',
+    url: new URL('../../assets/sprites/minion-riftling.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 稜化／引力化基底與變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-prism',
+    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity',
+    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-gather',
+    url: new URL('../../assets/sprites/hero-prism-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-shrink',
+    url: new URL('../../assets/sprites/hero-prism-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-stretch',
+    url: new URL('../../assets/sprites/hero-prism-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-burst',
+    url: new URL('../../assets/sprites/hero-prism-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-morph-complete',
+    url: new URL('../../assets/sprites/hero-prism-morph-complete.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-gather',
+    url: new URL('../../assets/sprites/hero-gravity-morph-gather.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-shrink',
+    url: new URL('../../assets/sprites/hero-gravity-morph-shrink.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-stretch',
+    url: new URL('../../assets/sprites/hero-gravity-morph-stretch.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-burst',
+    url: new URL('../../assets/sprites/hero-gravity-morph-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-morph-complete',
+    url: new URL('../../assets/sprites/hero-gravity-morph-complete.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 稜化／引力化技能四拍（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-prism-skill-windup',
+    url: new URL('../../assets/sprites/hero-prism-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-skill-charge',
+    url: new URL('../../assets/sprites/hero-prism-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-skill-burst',
+    url: new URL('../../assets/sprites/hero-prism-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-prism-skill-recover',
+    url: new URL('../../assets/sprites/hero-prism-skill-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-skill-windup',
+    url: new URL('../../assets/sprites/hero-gravity-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-skill-charge',
+    url: new URL('../../assets/sprites/hero-gravity-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-skill-burst',
+    url: new URL('../../assets/sprites/hero-gravity-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-gravity-skill-recover',
+    url: new URL('../../assets/sprites/hero-gravity-skill-recover.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 稜化／引力化光環拖尾分層 VFX（核心光/外圈衝擊/拖尾/碎片/overlay 獨立疊加）。
+  {
+    key: 'fx-prism-aura-core',
+    url: new URL('../../assets/sprites/fx-prism-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-prism-aura-shock',
+    url: new URL('../../assets/sprites/fx-prism-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-prism-aura-trail',
+    url: new URL('../../assets/sprites/fx-prism-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-prism-aura-debris',
+    url: new URL('../../assets/sprites/fx-prism-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-prism-aura-overlay',
+    url: new URL('../../assets/sprites/fx-prism-aura-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-gravity-aura-core',
+    url: new URL('../../assets/sprites/fx-gravity-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-gravity-aura-shock',
+    url: new URL('../../assets/sprites/fx-gravity-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-gravity-aura-trail',
+    url: new URL('../../assets/sprites/fx-gravity-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-gravity-aura-debris',
+    url: new URL('../../assets/sprites/fx-gravity-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-gravity-aura-overlay',
+    url: new URL('../../assets/sprites/fx-gravity-aura-overlay.webp', import.meta.url).href,
+  },
+  // v21-v30 B03 形態徽章與技能 HUD 圖示（載入時機建議：HUD 顯示前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'ui-prism-badge',
+    url: new URL('../../assets/sprites/ui-prism-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-prism-skill',
+    url: new URL('../../assets/sprites/ui-prism-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-gravity-badge',
+    url: new URL('../../assets/sprites/ui-gravity-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-gravity-skill',
+    url: new URL('../../assets/sprites/ui-gravity-skill.webp', import.meta.url).href,
+  },
+];
