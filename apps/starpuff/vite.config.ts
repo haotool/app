@@ -3,6 +3,14 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolveBuildCommitSha } from '../../scripts/lib/build-commit-sha.mjs';
 import { seoHtmlPlugin } from './src/seo/vite-seo-plugin';
+import { ASSETS } from './src/game/core/assets';
+
+// lazy 資產不進 PWA precache（v21-v30 未接關素材）：避免既有玩家背景更新被迫
+// 下載玩不到的內容；離線補償由 starpuff-sprites 的 CacheFirst runtime 快取承接。
+// 由 manifest 的 phase 單點派生——接關改回正確 phase 後自動退出排除清單。
+const lazyPrecacheIgnores = ASSETS.filter((entry) => entry.phase === 'lazy').map(
+  (entry) => `**/assets/${entry.key}-*.webp`,
+);
 
 // 版本 SSOT（§42/§99 F-02/§109 F-08）：package.json version + short git SHA，經 define 嵌入。
 // SHA 來源鏈收斂於 scripts/lib/build-commit-sha.mjs（跨 app 共用），皆不可得時省略後綴。
@@ -49,7 +57,7 @@ export default defineConfig(async ({ mode }) => {
         workbox: {
           // 分階段載入（§115）：延遲載入的立繪仍全數進 precache，離線可玩不打折。
           globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
-          globIgnores: ['**/node_modules/**'],
+          globIgnores: ['**/node_modules/**', ...lazyPrecacheIgnores],
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           runtimeCaching: [
