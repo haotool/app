@@ -23,17 +23,7 @@ import { unlockedTransformForms } from '../logic/transform';
 import { awardAchievements, getAchievement } from '../logic/achievements';
 import { BOSS } from '../logic/bossFsm';
 import { inhaleFlavor } from '../logic/combat';
-import {
-  buffAccelMul,
-  buffSpeedMul,
-  consumeShieldBlock,
-  createBuffState,
-  pickupBuff,
-  tickBuff,
-  BUFF_SPECS,
-  type BuffId,
-  type BuffState,
-} from '../logic/buffs';
+import { buffAccelMul, buffSpeedMul } from '../logic/buffs';
 import { createCaramelStatus, type CaramelStatus } from '../systems/caramelStatus';
 import {
   LEVELS,
@@ -48,6 +38,7 @@ import type { BossDamageSource, BossHandle } from '../systems/boss';
 import { createBossKit } from '../systems/bossFactory';
 import { createBossRoom, type BossRoomHandle } from '../systems/bossRoom';
 import { createControls, type ControlsSystem } from '../systems/controls';
+import { createDamageDirector, type DamageDirector } from '../systems/damageDirector';
 import { createEggTracker, type EggTracker } from '../systems/eggTracker';
 import { createEliteRoom, type EliteRoomHandle } from '../systems/eliteRoom';
 import { createEnemySystem, type EnemySystem } from '../systems/enemies';
@@ -65,7 +56,6 @@ import { createStarburstDirector, type StarburstDirector } from '../systems/star
 import { createStarSteering, type StarSteering } from '../systems/starSteering';
 import { createToasts, type ToastSystem } from '../systems/toasts';
 import { createTide, type TideHandle } from '../systems/tide';
-import { TIDE, soakWakeInvuln, tideSoakVelocity } from '../logic/tide';
 import { createWaveRunner, type WaveRunner } from '../systems/waves';
 import { bindSfxToEvents, playSfx, stopSfx } from '../audio/sfx';
 import { notifySaveUnavailable } from '../../shellCards';
@@ -74,9 +64,8 @@ const GROUND_TOP = VIEW.height - GROUND_HEIGHT;
 const MOUTH_OFFSET_X = 26;
 // 魔王死亡演出：慢動作 0.5s + 星爆 0.9s 後進勝利流程。
 const WIN_DELAY_MS = 1500;
-// P3（§30）：進場時停 0.3s；全場震落強制彈起初速。
+// P3（§30）：進場時停 0.3s。
 const P3_HITSTOP_MS = 300;
-const QUAKE_BOUNCE_VY = -360;
 // 死亡重試：噗滅演出後 ≤400ms 回到可操作（§15.1 M-09）。
 const RETRY_DELAY_MS = 350;
 
@@ -140,9 +129,8 @@ export class GameScene extends Phaser.Scene {
   private meteor: MeteorSystem | null = null;
   // 魔王關體系（§69）：前室 prefab 與短期增益狀態；非前室魔王關為 null。
   private bossRoom: BossRoomHandle | null = null;
-  private buff: BuffState = createBuffState();
-  // e2e 觀測（§69）：本局累計增益拾取數——護盾可能拾取後旋即格擋消耗，快照式觀測會漏。
-  private buffPickups = 0;
+  // 受擊單一入口與短期增益/環境場效結算（§30/§69/§71/§74/§79）：委派 systems/damageDirector。
+  private damage!: DamageDirector;
   private caramel!: CaramelStatus;
   private unbinders: (() => void)[] = [];
   private terrainGround: Phaser.GameObjects.Rectangle | null = null;
@@ -221,13 +209,27 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.controls = createControls(this);
-    this.buff = createBuffState();
-    this.buffPickups = 0;
+    // 受擊單一入口與短期增益/環境場效（§30/§69/§71/§74/§79）：委派 systems/damageDirector
+    //（create 重建即歸零）；hooks 閉包延遲解析（levelGate/boss 等於後續建立）。
+    this.damage = createDamageDirector(this, {
+      player: () => this.player,
+      playerHp: () => this.playerHp,
+      fx: () => this.fx,
+      caramel: () => this.caramel,
+      toasts: () => this.toasts,
+      tide: () => this.tide,
+      meteor: () => this.meteor,
+      boss: () => this.boss,
+      bossRoom: () => this.bossRoom,
+      jumpHeld: () => this.controls.state.jumpHeld,
+      gateX: () => this.levelGate.gateX(),
+      isSettled: () => this.finished || this.transitioning,
+    });
     this.caramel = createCaramelStatus({
       player: () => this.player,
       fx: () => this.fx,
       toast: (message) => this.toasts.flavor(message),
-      buffMods: () => [buffSpeedMul(this.buff), buffAccelMul(this.buff)] as const,
+      buffMods: () => [buffSpeedMul(this.damage.buff()), buffAccelMul(this.damage.buff())] as const,
     });
     // 前室魔王關（§69）：自廊道起點入場；一般魔王關維持 arena 中央。
     const startX = this.level.boss
@@ -341,7 +343,7 @@ export class GameScene extends Phaser.Scene {
       fx: () => this.fx,
       boss: () => this.boss,
       player: () => this.player,
-      buff: () => this.buff,
+      buff: () => this.damage.buff(),
       bossBodies: () => this.bossBodies(),
       damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
     });
@@ -374,7 +376,7 @@ export class GameScene extends Phaser.Scene {
             player: () => this.player,
             playerHp: () => this.playerHp,
             spawnSupply: (kind, x, y) => this.enemies.spawn(kind, x, y),
-            onPickBuff: (id) => this.applyBuff(id),
+            onPickBuff: (id) => this.damage.applyBuff(id),
             onEnterArena: () => {
               this.cameras.main.stopFollow();
               this.cameras.main.setScroll(this.level.anteroomPx ?? 0, 0);
@@ -439,7 +441,7 @@ export class GameScene extends Phaser.Scene {
       bossBodies: () => this.bossBodies(),
       nearestBossBody: (x, y) => this.nearestBossBody(x, y),
       bossTouchDamage: () => this.bossTouchDamage,
-      damagePlayer: (damage, sourceX) => this.damagePlayer(damage, sourceX),
+      damagePlayer: (damage, sourceX) => this.damage.damagePlayer(damage, sourceX),
       damageBossAt: (amount, x, y, source) => this.damageBossAt(amount, x, y, source),
       applyCaramel: () => this.caramel.apply(),
       isSettled: () => this.finished || this.transitioning,
@@ -501,15 +503,15 @@ export class GameScene extends Phaser.Scene {
       this.levelGate.sweep();
       for (const room of this.eliteRooms) room.update();
       this.bossRoom?.update();
-      this.advanceBuff(deltaMs);
+      this.damage.advanceBuff(deltaMs);
       this.caramel.update(deltaMs);
       this.starSteering.update(deltaMs);
       this.mercy.update(deltaMs);
       // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
       this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
-      this.advanceTide(deltaMs);
-      this.advanceMeteors(deltaMs);
-      this.applyBossVents(deltaMs);
+      this.damage.advanceTide(deltaMs);
+      this.damage.advanceMeteors(deltaMs);
+      this.damage.applyBossVents(deltaMs);
     }
     this.enemies.update(deltaMs);
     // 拉力必須在 enemies AI 之後套用，避免被小怪速度邏輯覆寫。
@@ -655,82 +657,9 @@ export class GameScene extends Phaser.Scene {
     return this.level.boss ? (this.level.anteroomPx ?? 0) : 0;
   }
 
-  // 糖漿潮汐逐幀結算（§71/§107）：水位推進＋浸水傷害/強緩速/上推；接觸傷害走
-  // damagePlayer 單一入口，實際掉血再追加甦醒無敵窗（取 max）打斷滿潮死亡螺旋。
-  private advanceTide(deltaMs: number): void {
-    if (!this.tide) return;
-    this.tide.update(deltaMs);
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    if (!this.tide.isSubmerged(body.bottom)) return;
-    const hpBefore = this.playerHp;
-    this.damagePlayer(TIDE.contactDamage, this.player.sprite.x);
-    this.player.grantInvulnerability(soakWakeInvuln(hpBefore, this.playerHp));
-    const soaked = tideSoakVelocity(body.velocity.x, body.velocity.y);
-    body.setVelocity(soaked.vx, soaked.vy);
-  }
-
-  // 流星雨逐幀結算（§79）：波次推進委派呈現層；排除帶＝玩家縱帶＋開門後門前帶。
-  private advanceMeteors(deltaMs: number): void {
-    if (!this.meteor) return;
-    const view = this.cameras.main.worldView;
-    this.meteor.update(deltaMs, {
-      viewLeft: view.x,
-      viewRight: view.right,
-      playerX: this.player.sprite.x,
-      gateX: this.levelGate.gateX(),
-    });
-  }
-
   // e2e 觀測點（§79）：墜落中/餘燼/預警圈數量；無流星雨關回 null。
   meteorState(): { falling: number; embers: number; telegraphs: number } | null {
     return this.meteor?.state() ?? null;
-  }
-
-  // 場控魔王噴口供力（§74 Syrona）：逐幀委派結算；尾參 jumpHeld＝持鍵乘流意圖（W3）。
-  private applyBossVents(deltaMs: number): void {
-    if (!this.boss.getVentLift) return;
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    const { x, y } = this.player.sprite;
-    const held = this.controls.state.jumpHeld;
-    const lifted = this.boss.getVentLift(x, y, body.velocity.y, deltaMs, body.blocked.up, held);
-    if (lifted !== null) {
-      body.setVelocityY(lifted);
-      // 焦糖化反制（§5 W2）：乘噴口氣流吹乾即解除減速。
-      this.caramel.clear();
-    }
-  }
-
-  // 短期增益（§69）：拾取單點——同時僅存一個、後拾覆蓋；移動倍率同步注入 player。
-  private applyBuff(id: BuffId): void {
-    this.buff = pickupBuff(this.buff, id);
-    this.buffPickups += 1;
-    this.caramel.sync();
-    this.toasts.flavor(`${BUFF_SPECS[id].nameZh}！短暫強化`);
-  }
-
-  private advanceBuff(deltaMs: number): void {
-    if (this.buff.id === null) {
-      this.bossRoom?.updateBuffHud(this.buff);
-      return;
-    }
-    const result = tickBuff(this.buff, deltaMs);
-    this.buff = result.state;
-    if (result.expired) this.caramel.sync();
-    this.bossRoom?.updateBuffHud(this.buff);
-  }
-
-  // 玩家受擊單一入口（§69 護盾泡）：持盾期吸收 1 次任意傷害（彈幕/接觸/hazard）後破盾；
-  // 破盾走 0 傷受擊管線取得擊退＋i-frame，杜絕同一接觸下一幀連擊。
-  private damagePlayer(damage: number, sourceX: number): void {
-    const block = consumeShieldBlock(this.buff);
-    if (block.blocked) {
-      this.buff = block.state;
-      this.fx.burstSmall(this.player.sprite.x, this.player.sprite.y, BUFF_SPECS.shield.tint);
-      playSfx('metal');
-      this.player.takeDamage(0, sourceX);
-      return;
-    }
-    this.player.takeDamage(damage, sourceX);
   }
 
   // 視寬變更回呼（recon-v4 B.3）：僅更新 bounds 與佈局，禁止 setGameSize（防循環）。
@@ -834,7 +763,7 @@ export class GameScene extends Phaser.Scene {
         );
       }
     });
-    bind(GameEvents.BOSS_QUAKE, () => this.resolveBossQuake());
+    bind(GameEvents.BOSS_QUAKE, () => this.damage.resolveBossQuake());
     // 彩蛋事件餵送（§24）：吞噬歷史與魔王首擊時間窗。
     bind(GameEvents.ENEMY_INHALED, ({ kind }) => {
       const flavor = inhaleFlavor(kind);
@@ -842,7 +771,7 @@ export class GameScene extends Phaser.Scene {
     });
     // 加速票（§120 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
     bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
-      if (kind === 'ticketa') this.applyBuff('swift');
+      if (kind === 'ticketa') this.damage.applyBuff('swift');
     });
     // 敗北語意：走動關死亡重試當前關（卡點關越過中點改自 checkpoint 重生，§67）；
     // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
@@ -949,7 +878,7 @@ export class GameScene extends Phaser.Scene {
 
   // e2e 觀測點（§69）：當前短期增益狀態與本局累計拾取數。
   buffState(): { id: string | null; remainingMs: number; pickups: number } {
-    return { id: this.buff.id, remainingMs: this.buff.remainingMs, pickups: this.buffPickups };
+    return this.damage.buffState();
   }
 
   // e2e 觀測點（§54 難度 bot）：魔王本體與彈幕群（座標/迴避取樣用）。
@@ -1033,14 +962,6 @@ export class GameScene extends Phaser.Scene {
     if (newly.length === 0) return;
     this.pendingUnlocked.push(...newly);
     this.toasts.queueAchievements(newly.map((id) => getAchievement(id)?.nameZh ?? id).join('、'));
-  }
-
-  // P3 全場震落（§30）：slam 附加全場訊號，站立玩家強制彈起。
-  private resolveBossQuake(): void {
-    if (this.finished || this.transitioning) return;
-    this.fx.shake(10);
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    if (body.blocked.down || body.touching.down) this.player.sprite.setVelocityY(QUAKE_BOUNCE_VY);
   }
 
   // 教學浮字：偵測首次任一操作輸入，交由 waves 排程淡出。
