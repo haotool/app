@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+266
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0） 268:+1（reward 1、penalty 0、neutral 0） 269:+1（reward 1、penalty 0、neutral 0） 270:+1（reward 1、penalty 0、neutral 0） 271:+1（reward 1、penalty 0、neutral 0） 272:+1（reward 1、penalty 0、neutral 0） 273:+1（reward 1、penalty 0、neutral 0） 272:-1（reward 0、penalty 1、neutral 0） 273:+1（reward 1、penalty 0、neutral 0） 274:+1（reward 1、penalty 0、neutral 0） 275:+1（reward 1、penalty 0、neutral 0） 276:+1（reward 1、penalty 0、neutral 0）｜累計總分：+267
 
 ## 新增模板（4 行）
 
@@ -14,6 +14,10 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b01-style-lock-boards
+- 原因：B01 風格鎖定缺四張總覽板，且先前以不存在的 luna slug 探路誤判 blocked——正確路徑為 codex 預設模型搭配內建 image_gen skill 的 built-in 工具
+- 解法：依 imagegen SKILL.md 內建路徑、以既有 sprites 為風格錨生成七形態總覽／五新王總覽／13 小怪輪廓／VFX 形狀字典並轉 WebP 入庫 concepts/，迷因安全負面詞經目視驗收通過
+
 - ID：penalty-starpuff-invariant-hero-form-blind-spot
 - 原因：我立的覆蓋不變式註解宣稱「涵蓋全類別」，但 levelAssetKeys 只派生背景／道具／小怪／魔王，不含 hero 共用姿勢與 form 立繪——實測 hero-inhale-big-1／-2 標成 lazy 時 19 案全綠，其餘 hero 鍵只是恰好被測試端另一份手動清單接住，實為「不變式＋手動清單」的拼接
 - 解法：共用核心改在 assetPlan 宣告為 SHARED_LEVEL_KEYS 併入 levelAssetKeys（form 鍵由 TRANSFORM_FORMS 派生，W1 加 ember／tide 自動跟進），測試端手動清單刪除改讀同一真值；13 鍵 × lazy 誤標矩陣全數轉紅，註解同步改述為「levelAssetKeys 派生鍵」並點名派生外資產不在守門範圍
