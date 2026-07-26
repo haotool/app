@@ -1,5 +1,6 @@
 // E 驗證：縮放調整、持久化、v1 遷移、取消回滾、44px 守門。
 import { chromium } from '@playwright/test';
+import { readSetting } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -26,8 +27,10 @@ const sizeOf = (page, n) =>
 // 場景一：v1 舊存檔 migration（initScript 僅此 context）。
 {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  // legacy sp-key-layout 為本場景的 migration 輸入（刻意保留）；落盤後的判定一律讀
+  // sp-settings.keyLayout（#872）。
   await ctx.addInitScript(() => {
-    if (!localStorage.getItem('sp-key-layout')) {
+    if (!localStorage.getItem('sp-key-layout') && !localStorage.getItem('sp-settings')) {
       localStorage.setItem(
         'sp-key-layout',
         JSON.stringify({ version: 1, a: { cx: 0.8, cy: 0.7 }, b: { cx: 0.85, cy: 0.3 } }),
@@ -54,7 +57,7 @@ const sizeOf = (page, n) =>
 
   await tap(page, '[data-cfg="save"]');
   await page.waitForTimeout(200);
-  const stored = await page.evaluate(() => localStorage.getItem('sp-key-layout'));
+  const stored = JSON.stringify(await readSetting(page, 'keyLayout'));
   console.log('stored v2 after save:', stored);
 
   // 重載（initScript 有 guard 不覆蓋）→ 進遊戲驗持久化。
@@ -85,9 +88,7 @@ const sizeOf = (page, n) =>
   const aTemp = await sizeOf(page, 'a');
   await tap(page, '[data-cfg="cancel"]');
   await page.waitForTimeout(200);
-  const storedScale = await page.evaluate(
-    () => JSON.parse(localStorage.getItem('sp-key-layout')).scale,
-  );
+  const storedScale = (await readSetting(page, 'keyLayout'))?.scale;
   const aAfterCancel = await page.evaluate(
     () => document.querySelector('[data-btn="a"]').getBoundingClientRect().width,
   );

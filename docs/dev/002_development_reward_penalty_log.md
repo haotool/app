@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+244
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+245
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-verify-scripts-settings-ssot
+- 原因：T7-A 把偏好收斂到 `sp-settings` 後 migration 會刪除 legacy 散鍵，但 v14 驗證腳本仍以 `sp-muted`／`sp-rotation`／`sp-key-layout` 作判定依據，靜音鈕命中恆報 FAIL 並誤導後續驗收（#872）；v14-g 更連判定前提都過期——震動已與靜音解耦，閘門改為 `hapticsEnabled`
+- 解法：新增 `scripts/lib/settings-fixture.mjs` 作腳本側偏好 SSOT，六支腳本改讀寫 `sp-settings`；v14-g 判定改用 `hapticsEnabled`；migration 專測腳本刻意保留 legacy 鍵並加註；實跑 v14-c（4 情境全 PASS 含 mute 命中）與 v14-g（PASS）
 
 - 日期：2026-07-26
 - ID：reward-starpuff-save-write-failure-surfaced

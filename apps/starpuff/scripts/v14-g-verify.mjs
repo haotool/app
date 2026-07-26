@@ -1,5 +1,6 @@
 // G 驗證：觸覺回饋掛點（vibrate 呼叫記錄）與 wake lock 取得（支援環境）。
 import { chromium } from '@playwright/test';
+import { SETTINGS_KEY, settingsFixture } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -42,14 +43,13 @@ console.log(
   vibrations.length >= 1 ? 'PASS' : 'FAIL',
 );
 
-// 靜音後受擊不震。
-await page.evaluate(() => {
-  const before = window.__vibrations.length;
-  window.__muteProbe = before;
-});
-// 靜音鈕在 canvas 內；以 __sp 不可達，改直接呼叫 mute 模組不可行——用畫面右上角座標點擊。
-// 橫持殼無旋轉：邏輯座標≈CSS 座標比例。以 keyboard 快速驗證改用 localStorage 重載較穩。
-await page.evaluate(() => localStorage.setItem('sp-muted', '1'));
+// 關閉觸覺後受擊不震（#872）：T7-A 已將震動與靜音解耦——閘門為
+// UserSettings.hapticsEnabled（audio/haptics.ts 單點），不再是 legacy sp-muted。
+// 前置狀態以 sp-settings 落盤後重載，較點擊 canvas 內鈕穩定。
+await page.evaluate(
+  ([key, value]) => localStorage.setItem(key, value),
+  [SETTINGS_KEY, settingsFixture({ hapticsEnabled: false })],
+);
 await page.reload();
 await page.waitForFunction(() => window.__sp?.scene?.() === 'Title');
 await page
@@ -57,13 +57,13 @@ await page
   .dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true });
 await page.waitForFunction(() => window.__sp.scene() === 'Game');
 await page.waitForTimeout(400);
-const beforeMuted = await page.evaluate(() => window.__vibrations.length);
+const beforeOff = await page.evaluate(() => window.__vibrations.length);
 await page.evaluate(() => window.__sp.hurtPlayer(1));
 await page.waitForTimeout(300);
-const afterMuted = await page.evaluate(() => window.__vibrations.length);
+const afterOff = await page.evaluate(() => window.__vibrations.length);
 console.log(
-  `muted hurt: vibrations ${beforeMuted} -> ${afterMuted}`,
-  afterMuted === beforeMuted ? 'PASS（靜音不震）' : 'FAIL',
+  `haptics off hurt: vibrations ${beforeOff} -> ${afterOff}`,
+  afterOff === beforeOff ? 'PASS（關閉觸覺不震）' : 'FAIL',
 );
 
 console.log('console errors:', errors.length, errors.slice(0, 3));

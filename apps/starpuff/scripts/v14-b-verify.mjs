@@ -1,5 +1,6 @@
 // B 翻轉驗證：ccw 新預設幾何、搖桿語意、safe-area 換軸、cw 舊方向切換。
 import { chromium } from '@playwright/test';
+import { SETTINGS_KEY, settingsFixture } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -90,10 +91,13 @@ console.log('ccw buttons (device coords):', JSON.stringify(btns));
 await page.screenshot({ path: `${OUT}/b-after-portrait-game.png` });
 
 // 切回 cw 舊方向（模擬設定），驗證 CSS 與指標換算跟著走。
-await page.evaluate(() => {
-  localStorage.setItem('sp-rotation', 'cw');
-  document.documentElement.classList.add('sp-rot-cw');
-});
+await page.evaluate(
+  ([key, value]) => {
+    localStorage.setItem(key, value);
+    document.documentElement.classList.add('sp-rot-cw');
+  },
+  [SETTINGS_KEY, settingsFixture({ shellRotation: 'cw' })],
+);
 await page.waitForTimeout(300);
 const cwGeo = await page.evaluate(() => {
   const cs = getComputedStyle(document.getElementById('game-shell'));

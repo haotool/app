@@ -1,6 +1,8 @@
 // C 驗證：暫停/靜音鍵 safe-area 避讓——四組 insets（直持 ccw/直持 cw/橫持瀏海/無瀏海）。
-// mute 鈕為 canvas 內 Phaser 元素：以邏輯座標→裝置座標換算後真點，sp-muted 翻轉即命中。
+// mute 鈕為 canvas 內 Phaser 元素：以邏輯座標→裝置座標換算後真點，
+// sp-settings.audioMuted 翻轉即命中（#872：T7-A 後 legacy sp-muted 不再更新）。
 import { chromium } from '@playwright/test';
+import { SETTINGS_KEY, readSetting, settingsFixture } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -21,7 +23,11 @@ function logicalToDevice(logical, view, canvasCss, rotation, deviceW, deviceH) {
 async function scenario(name, viewport, insets, rotationPref, expectInsetLogical) {
   const ctx = await browser.newContext({ viewport, hasTouch: true });
   if (rotationPref === 'cw') {
-    await ctx.addInitScript(() => localStorage.setItem('sp-rotation', 'cw'));
+    const fixture = settingsFixture({ shellRotation: 'cw' });
+    await ctx.addInitScript(
+      ([key, value]) => localStorage.setItem(key, value),
+      [SETTINGS_KEY, fixture],
+    );
   }
   const page = await ctx.newPage();
   const errors = [];
@@ -57,7 +63,7 @@ async function scenario(name, viewport, insets, rotationPref, expectInsetLogical
   );
   if (!insetOk) allPass = false;
 
-  // mute 鈕邏輯位（避讓後）：(width - 26 - insetLogical, 26)；真點 → sp-muted 翻轉。
+  // mute 鈕邏輯位（避讓後）：(width - 26 - insetLogical, 26)；真點 → audioMuted 翻轉。
   const muteLogical = { x: env.view.width - 26 - insetLogical, y: 26 };
   const device = logicalToDevice(
     muteLogical,
@@ -67,10 +73,10 @@ async function scenario(name, viewport, insets, rotationPref, expectInsetLogical
     viewport.width,
     viewport.height,
   );
-  const mutedBefore = await page.evaluate(() => localStorage.getItem('sp-muted') === '1');
+  const mutedBefore = (await readSetting(page, 'audioMuted')) === true;
   await page.mouse.click(device.x, device.y);
   await page.waitForTimeout(200);
-  const mutedAfter = await page.evaluate(() => localStorage.getItem('sp-muted') === '1');
+  const mutedAfter = (await readSetting(page, 'audioMuted')) === true;
   const hit = mutedBefore !== mutedAfter;
   console.log(
     `  mute click @(${device.x.toFixed(0)},${device.y.toFixed(0)}) hit=${hit} ${hit ? 'PASS' : 'FAIL'}`,
