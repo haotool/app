@@ -1,4 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  SETTINGS_KEY,
+  SETTINGS_SCHEMA_VERSION,
+  settingsFixture,
+} from '../../../scripts/lib/settings-fixture.mjs';
 
 // UserSettings SSOT（v19 #819 卡 4）：sp-settings 單鍵 versioned schema，
 // migration 吸收 legacy 散鍵（sp-muted/sp-rotation/sp-key-layout）且向後相容不刪除。
@@ -202,5 +207,26 @@ describe('updateSettings 與變更通知', () => {
     expect(loadSettings().keyLayout).toEqual(layout);
     updateSettings({ keyLayout: null });
     expect(loadSettings().keyLayout).toBeNull();
+  });
+});
+
+// 驗證腳本 fixture 同步守門（審查 Should-fix）：scripts/lib/settings-fixture.mjs 為 node
+// 腳本用（無法 import TS），常數只能手抄本模組。schema bump 時忘記同步會讓 fixture 被
+// parseSettings 判版本不符而整段回退預設，腳本斷言全面失準且極難追因——以下把「兩份
+// 常數同步」與「fixture 真能被執行期解析」變成 CI 可驗證的契約。
+describe('settings-fixture 與執行期 SSOT 同步（#872 腳本側）', () => {
+  it('腳本 fixture 常數與 settings.ts 完全一致', async () => {
+    const { SETTINGS_STORAGE_KEY, SETTINGS_SCHEMA_VERSION: runtimeVersion } =
+      await loadSettingsModule();
+    expect(SETTINGS_KEY).toBe(SETTINGS_STORAGE_KEY);
+    expect(SETTINGS_SCHEMA_VERSION).toBe(runtimeVersion);
+  });
+
+  it('fixture 產物可被 parseSettings 接受，不會整段回退預設', async () => {
+    const { parseSettings } = await loadSettingsModule();
+    const parsed = parseSettings(settingsFixture({ audioMuted: true, shellRotation: 'cw' }));
+    expect(parsed).not.toBeNull();
+    expect(parsed?.audioMuted).toBe(true);
+    expect(parsed?.shellRotation).toBe('cw');
   });
 });

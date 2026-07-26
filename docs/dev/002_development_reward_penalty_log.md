@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+242
+> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+251
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,51 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-release-verifiability-doc-accuracy
+- 原因：兩席複審殘留扣分皆為敘述精確性——002 本身兩處與實作不符（宣稱 shell 與 JS 用「同一條」regex，實則 JS 另帶 `i` 並正規化小寫而 shell 大小寫敏感；`__resetSaveUnavailableForTests` 標為 dev-only，實則執行期無 env 閘只是命名慣例），save.ts 例外註解以「提示會反覆洗版」為由但 `notifySaveUnavailable` 早有 session 級單次守衛，且「備援回寫本身失敗」的貫穿場景無直接回歸鎖
+- 解法：三處敘述改為與實作一致（標明兩側 regex 語意差異與 shell 側 fail-closed、改稱測試用匯出、例外理由改為「配額問題持續時下次真實進度寫入會經已消費回傳值的 persistSave 觸發同一張卡」）；補 1 案貫穿測試鎖主檔損毀＋備援合法＋回寫拋錯，斷言備援逐字不變且 storage 恢復後再載入等值並成功落盤，以兩種 loadSave 變異（回寫失敗退預設、移除輪替合法性守衛）驗證紅→綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-release-verifiability-review-nits
+- 原因：審查 nits 兩項——`probePayload` 無存檔時退回 1 字元使「無存檔＋配額將滿」開機預判過度樂觀；Dockerfile 灌入 `GIT_COMMIT_HASH` 前未做 hex 校驗，髒的 ZEABUR 值會被只讀該變數而無 JS 層防禦的其他 app 取用
+- 解法：probe 下限改為預設存檔實際落盤體積（含 checksum），對應單測改鎖「容不下即不可用／容得下不誤報」；Dockerfile 於 shell 側以 `grep -Eq '^[0-9a-f]{7,40}$'` 校驗後才 export（字面 class 與 JS 側 `SHA_PATTERN` 相同但語意不完全等價——JS 另帶 `i` 旗標並正規化為小寫，shell 維持大小寫敏感的 fail-closed），實跑四種輸入（合法 SHA／`refs/heads/main`／`zzzzzzz`／空）驗證僅合法值通過且建置不中斷
+
+- 日期：2026-07-26
+- ID：reward-build-commit-sha-nonhex-regression-lock
+- 原因：`resolveBuildCommitSha` 的 `SHA_PATTERN` 實際能擋非 hex 髒值（審查席手動驗證 PASS），但 8 案單測未鎖這條路徑，CI 無回歸保護——放寬 pattern 不會被任何測試抓到（Grok 席 -3）
+- 解法：補 2 案共 4 條斷言——`zzzzzzz`／`9505d2b!e`／`refs/heads/main` 皆不算命中續往下一來源，git 退路自身回傳錯誤訊息時亦不採信回空字串
+
+- 日期：2026-07-26
+- ID：reward-starpuff-no-popup-during-play-lock
+- 原因：「杜絕戰鬥中彈窗攔截操作」為硬不變式，但 `shellCards.test.ts` 只測 Title 安靜顯卡與節流，且 stub 讓 `[data-menu="start"]` 恆在——等於繞過該規則，新增提示呼叫點時無回歸保護（Grok 席 -4）
+- 解法：補兩案分別鎖住兩個忙碌訊號（非 Title、controls `is-active`）——advanceTimers 後 overlay 必須為 0，解除忙碌才變 1；另補測試用匯出 `__resetSaveUnavailableForTests`（命名慣例標示用途，執行期無呼叫點）消除模組旗標跨案污染。以拔掉 whenShellIdle 忙碌守衛驗證 3 案轉紅再還原綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-settings-fixture-sync-gate
+- 原因：`scripts/lib/settings-fixture.mjs` 的 key 與 schemaVersion 為手抄字面值（node 腳本無法 import TS），與 `core/settings.ts` 執行期 SSOT 分家且無守門——schema bump 忘記同步會讓 fixture 被 parseSettings 判版本不符整段回退預設，腳本斷言全面失準且極難追因（兩席共同 Should-fix）
+- 解法：`settings.test.ts` 補兩案同步契約——常數逐一相等、fixture 產物實際餵入 parseSettings 須被接受且欄位正確；補 `.d.mts` 型別宣告；以刻意 bump fixture 版本驗證守門紅（2 案 fail）再還原綠
+
+- 日期：2026-07-26
+- ID：reward-starpuff-persistsave-contract-all-callsites
+- 原因：`persistSave` 註解宣稱「失敗必須外顯給呼叫端提示」，實際三個呼叫點只有 GameScene 消費回傳值——main.ts 開機成就補發落盤丟棄回傳值，save.ts 備援回寫亦然，契約留模糊地帶（兩席共同 Should-fix）
+- 解法：main.ts 補發落盤失敗改觸發 `notifySaveUnavailable`；save.ts 備援自癒回寫明文標為唯一例外並寫出理由（備援完好、下次開機重走、配額問題持續時下一次真實進度寫入會經已消費回傳值的 persistSave 觸發同一張卡），模組註解同步指向該例外
+
+- 日期：2026-07-26
+- ID：reward-starpuff-verify-scripts-settings-ssot
+- 原因：T7-A 把偏好收斂到 `sp-settings` 後 migration 會刪除 legacy 散鍵，但 v14 驗證腳本仍以 `sp-muted`／`sp-rotation`／`sp-key-layout` 作判定依據，靜音鈕命中恆報 FAIL 並誤導後續驗收（#872）；v14-g 更連判定前提都過期——震動已與靜音解耦，閘門改為 `hapticsEnabled`
+- 解法：新增 `scripts/lib/settings-fixture.mjs` 作腳本側偏好 SSOT，六支腳本改讀寫 `sp-settings`；v14-g 判定改用 `hapticsEnabled`；migration 專測腳本刻意保留 legacy 鍵並加註；實跑 v14-c（4 情境全 PASS 含 mute 命中）與 v14-g（PASS）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-save-write-failure-surfaced
+- 原因：`persistSave` 主檔寫入失敗只 `catch { noop }` 無回傳值，且提示僅由 1 字元 probe 的 `isSaveStorageAvailable` 於開機觸發——同源配額將滿時 probe 通過但體積大得多的 `sp-save` 寫入仍拋 QuotaExceededError，玩家在零提示下遺失通關進度（#868）
+- 解法：`persistSave` 改回傳主檔寫入結果（備援輪替失敗不影響判準），GameScene 落盤點消費失敗訊號觸發 `notifySaveUnavailable`（與開機提示共用文案單點、每工作階段至多一張、仍走 whenShellIdle 不打斷遊戲）；探測負載改對齊實際主檔體積；補 5 案配額邊界與提示路徑回歸鎖
+
+- 日期：2026-07-26
+- ID：reward-build-commit-sha-ssot-zeabur
+- 原因：`.dockerignore` 排除 `.git` 使建置容器內 git 指令必失敗，Zeabur 又不提供 `GIT_COMMIT_HASH`，Dockerfile 的 `export VAR="$(cmd)"` 退路又被 export 的 exit status 遮蔽而靜默留空——starpuff production 恆落純 `v0.22.1`，同版號兩次部署無鑑別力，發版驗證只能退回逐字串比對
+- 解法：查證 Zeabur 官方文件確認建置階段內建 `ZEABUR_GIT_COMMIT_SHA`，Dockerfile builder 段宣告 ARG/ENV 並修掉 exit status 遮蔽（改印 build fingerprint 留證），來源鏈收斂為跨 app SSOT `scripts/lib/build-commit-sha.mjs`（Zeabur → GIT_COMMIT_HASH → git → 省略後綴）＋ 8 案單測；實際 docker build 驗證映像內嵌 `v0.22.1+9505d2b`
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-backup-rotation-nonblocking

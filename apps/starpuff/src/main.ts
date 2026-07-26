@@ -10,7 +10,7 @@ import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyDesktopModeClass, applyRotationClass, loadRotationPref } from './game/core/rotation';
 import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './game/core/save';
 import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
-import { showShellCard, whenShellIdle } from './shellCards';
+import { notifySaveUnavailable, showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
 import { eligibleForm } from './game/logic/transform';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
@@ -57,22 +57,14 @@ if (wasSettingsRecoveredFromCorruption()) {
 }
 // 儲存不可用明確提示（v19 #819 卡 7）：隱私模式/空間耗盡時於 Title 安靜時刻告知，
 // 遊戲照常可玩但進度與設定不落盤，不再靜默吞掉。
-if (!isSaveStorageAvailable()) {
-  whenShellIdle(
-    () =>
-      showShellCard({
-        title: '進度無法保存',
-        description:
-          '偵測不到可用的瀏覽器儲存空間（可能為私密瀏覽模式或空間不足）。遊戲仍可正常遊玩，但通關進度與偏好設定將不會保存。',
-        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
-      }),
-    2500,
-  );
-}
+// 探測僅為開機預判；配額邊界的實際寫入失敗由 persistSave 回傳值觸發同一張卡（#868）。
+if (!isSaveStorageAvailable()) notifySaveUnavailable();
 // 開機成就補發單點（§94）：舊存檔（v1 遷移或版本更新新增成就）依既有資料靜默補發
 // 歷史成就（無 toast，圖鑑成就頁可見）；有增量才落盤，順帶完成 schema v2 遷移。
+// 落盤失敗一併外顯（審查 Should-fix）：persistSave 回傳值契約於所有玩家進度寫入點
+// 全面套用，補發成果寫不進去等同進度遺失，不得靜默。
 const bootSave = loadSave();
-if (awardAchievements(bootSave).length > 0) persistSave(bootSave);
+if (awardAchievements(bootSave).length > 0 && !persistSave(bootSave)) notifySaveUnavailable();
 // 開機套用直持旋轉偏好（§87）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
 applyRotationClass(loadRotationPref());
 // 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。

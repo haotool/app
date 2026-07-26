@@ -125,3 +125,29 @@ export function showShellCard(options: ShellCardOptions, onClose?: () => void): 
   shell.appendChild(overlay);
   return close;
 }
+
+// 「進度無法保存」提示單點（#868）：boot 探測與實際寫入失敗共用同一份文案，
+// 每工作階段至多一張——寫入失敗常連續發生，不得每次落盤都彈卡。
+// 仍走 whenShellIdle：遊戲進行中一律延後到 Title 安靜時刻，不攔截操作。
+let saveUnavailableNotified = false;
+
+export function notifySaveUnavailable(): void {
+  if (saveUnavailableNotified) return;
+  saveUnavailableNotified = true;
+  whenShellIdle(
+    () =>
+      showShellCard({
+        title: '進度無法保存',
+        description:
+          '偵測不到可用的瀏覽器儲存空間（可能為私密瀏覽模式或空間不足）。遊戲仍可正常遊玩，但通關進度與偏好設定將不會保存。清出空間後重新整理即可恢復保存。',
+        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
+      }),
+    2500,
+  );
+}
+
+// 測試用旗標重置（審查 nit）：模組級單次守衛會跨案污染，同檔多案需顯式歸零。
+// 僅供單測呼叫，執行期無呼叫點。
+export function __resetSaveUnavailableForTests(): void {
+  saveUnavailableNotified = false;
+}

@@ -1,5 +1,6 @@
 // F 驗證：keyConfig 標籤單行（854/1200 寬、直橫持、新舊方向）。
 import { chromium } from '@playwright/test';
+import { SETTINGS_KEY, settingsFixture } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -12,7 +13,12 @@ async function checkConfig(viewport, name, initCw = false) {
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(e.message));
-  if (initCw) await page.addInitScript(() => localStorage.setItem('sp-rotation', 'cw'));
+  if (initCw) {
+    await page.addInitScript(
+      ([key, value]) => localStorage.setItem(key, value),
+      [SETTINGS_KEY, settingsFixture({ shellRotation: 'cw' })],
+    );
+  }
   await page.goto(BASE);
   await page.waitForSelector('#app canvas');
   await page.waitForFunction(() => window.__sp?.scene?.() === 'Title');

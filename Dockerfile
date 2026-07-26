@@ -11,6 +11,10 @@ FROM node:24-alpine AS builder
 ARG GIT_COMMIT_COUNT
 ARG GIT_COMMIT_HASH
 ARG BUILD_TIME
+# [fix:2026-07-26] Zeabur build 階段內建 Git 特殊變數；multi-stage 需宣告 ARG 才會自動注入。
+# 生產部署唯一可得的 commit 來源（.dockerignore 排除 .git，容器內無 git repo）。
+# https://zeabur.com/docs/en-US/deploy/config/environment-variables
+ARG ZEABUR_GIT_COMMIT_SHA
 ARG VITE_HAOTOOL_BASE_PATH=/
 ARG VITE_RATEWISE_BASE_PATH=/ratewise/
 ARG VITE_NIHONNAME_BASE_PATH=/nihonname/
@@ -33,6 +37,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 # [fix:2025-11-05] 設定環境變數供 vite.config.ts 使用
 ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+ENV ZEABUR_GIT_COMMIT_SHA=${ZEABUR_GIT_COMMIT_SHA}
 ENV BUILD_TIME=${BUILD_TIME}
 ENV CI=true
 
@@ -64,18 +69,30 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
+# GIT_COMMIT_HASH 灌入前做 hex 校驗（審查 nit）：髒值不得外流給只讀此變數的其他 app
+# （starpuff 於 JS 層另有防禦，其餘 app 沒有），不合格一律清空視同不可得。
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
 # [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
 # [2026-07-05] haotool 根站先建（根站優先，見 docs/dev/046 §9）
 RUN set -eux; \
   if [ -z "${GIT_COMMIT_COUNT:-}" ]; then \
-    export GIT_COMMIT_COUNT="$(git rev-list --count HEAD)"; \
+    GIT_COMMIT_COUNT="$(git rev-list --count HEAD 2>/dev/null || true)"; \
+    export GIT_COMMIT_COUNT; \
   fi; \
   if [ -z "${GIT_COMMIT_HASH:-}" ]; then \
-    export GIT_COMMIT_HASH="$(git rev-parse --short HEAD)"; \
+    GIT_COMMIT_HASH="${ZEABUR_GIT_COMMIT_SHA:-}"; \
   fi; \
+  if [ -z "${GIT_COMMIT_HASH:-}" ]; then \
+    GIT_COMMIT_HASH="$(git rev-parse --short HEAD 2>/dev/null || true)"; \
+  fi; \
+  if ! printf '%s' "${GIT_COMMIT_HASH:-}" | grep -Eq '^[0-9a-f]{7,40}$'; then \
+    GIT_COMMIT_HASH=""; \
+  fi; \
+  export GIT_COMMIT_HASH; \
+  echo "build fingerprint: GIT_COMMIT_HASH=${GIT_COMMIT_HASH:-<unavailable>}"; \
   if [ -z "${BUILD_TIME:-}" ]; then \
-    export BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
+    BUILD_TIME="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"; \
+    export BUILD_TIME; \
   fi; \
   VITE_HAOTOOL_BASE_PATH=/ pnpm build:haotool && \
   VITE_RATEWISE_BASE_PATH=/ratewise/ pnpm build:ratewise && \

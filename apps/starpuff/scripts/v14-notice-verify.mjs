@@ -1,6 +1,7 @@
 // 審查修復驗證：rotationNotice 回訪玩家告知、遊戲中不彈卡、開玩自動收卡、
 // 非模態卡不擋 Title 開始鈕。
 import { chromium } from '@playwright/test';
+import { readSetting } from './lib/settings-fixture.mjs';
 
 const PORT = process.env.SP_DEV_PORT || '3014';
 const BASE = `http://localhost:${PORT}/`;
@@ -46,11 +47,15 @@ const errors = [];
     .last()
     .dispatchEvent('pointerdown', { pointerId: 5, isPrimary: true });
   await page.waitForTimeout(300);
-  const state = await page.evaluate(() => ({
-    transform: getComputedStyle(document.getElementById('game-shell')).transform,
-    pref: localStorage.getItem('sp-rotation'),
-    notice: localStorage.getItem('sp-rotation-notice'),
-  }));
+  // 持向偏好判定改讀 sp-settings.shellRotation（#872）；sp-rotation-notice 為 one-shot
+  // 記憶鍵，不屬偏好 schema，維持原鍵。
+  const state = {
+    ...(await page.evaluate(() => ({
+      transform: getComputedStyle(document.getElementById('game-shell')).transform,
+      notice: localStorage.getItem('sp-rotation-notice'),
+    }))),
+    pref: await readSetting(page, 'shellRotation'),
+  };
   console.log(
     `switch back: pref=${state.pref}(expect cw) notice=${state.notice}(expect 1) cwMatrix=${state.transform.startsWith('matrix(0, 1')}`,
   );

@@ -1715,6 +1715,12 @@ epic 資料夾（art-v8-ticket.md / run-art-v8.sh）。
   production 頁腳（v0.14.0+nogit）。
 - 修法：SHA 來源優先序 GIT_COMMIT_HASH env（repo Docker 慣例，同 ratewise）
   → 本地 git → 皆缺省略後綴（乾淨 vX.Y.Z，不再露佔位字樣）。
+- 後續修正（2026-07-26，取代上列來源優先序）：`.dockerignore` 排除 `.git`，Zeabur 建置
+  容器內 git 指令必失敗，且平台不提供 `GIT_COMMIT_HASH`——production 恆落純
+  `vX.Y.Z`，同版號兩次部署無鑑別力。改以 Zeabur 建置階段內建特殊變數
+  `ZEABUR_GIT_COMMIT_SHA` 為首選來源（Dockerfile builder 段宣告 ARG 才會注入），
+  來源鏈收斂於 `scripts/lib/build-commit-sha.mjs`（跨 app SSOT）：
+  ZEABUR_GIT_COMMIT_SHA → GIT_COMMIT_HASH → git rev-parse → 省略後綴。
 
 ## 100. v16 勝利結算「下一關」主 CTA（D3，取代 §39 勝利回地圖單一動線）
 

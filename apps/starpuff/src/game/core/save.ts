@@ -170,6 +170,10 @@ export function loadSave(): SaveData {
     const restored = backupRaw !== null ? parseSaveStrict(backupRaw) : null;
     if (restored !== null) {
       console.warn('sp-save 損毀，已從 sp-save-backup 恢復進度');
+      // 明文例外（審查 Should-fix）：此處刻意不消費回傳值、不提示。回寫為自癒修復而非
+      // 新進度落盤——失敗時備援仍完好、下次開機會再走一次同一條恢復路徑，玩家無實質
+      // 損失；若配額問題持續，下一次真實進度寫入會經已消費回傳值的 persistSave 觸發
+      // 同一張提示卡。儲存整體不可用的情境另由開機 isSaveStorageAvailable 探測涵蓋。
       persistSave(restored);
       return restored;
     }
@@ -181,7 +185,10 @@ export function loadSave(): SaveData {
   return createDefaultSave();
 }
 
-export function persistSave(save: SaveData): void {
+// 回傳主檔是否寫入成功（#868）：玩家進度寫入點必須消費回傳值並提示，否則玩家在無提示下
+// 遺失進度；唯一例外為 loadSave 的備援自癒回寫（理由見該處註解）。
+// 備援輪替失敗不影響回傳值——主檔寫入才是進度是否保住的判準。
+export function persistSave(save: SaveData): boolean {
   try {
     // 備援輪替（v19 卡 7）：上一份主檔合法才轉入備援，避免損毀資料污染備援。
     const previous = localStorage.getItem(SAVE_STORAGE_KEY);
@@ -193,18 +200,36 @@ export function persistSave(save: SaveData): void {
   }
   try {
     localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify({ ...save, checksum: checksumOf(save) }));
+    return true;
   } catch {
-    /* noop */
+    return false;
   }
 }
 
+const STORAGE_PROBE_KEY = 'sp-storage-probe';
+
+// 探測負載對齊實際主檔體積（#868）：1 字元 probe 在同源配額將滿時仍會通過，
+// 隨後體積大得多的 sp-save 寫入才拋 QuotaExceededError。
+// 下限取預設存檔實際落盤體積（含 checksum，審查 nit）——尚無存檔時仍需能寫得下
+// 第一次通關的落盤量，退回 1 字元會讓「無存檔＋配額將滿」的開機預判過度樂觀。
+function probePayload(): string {
+  const fallback = createDefaultSave();
+  const minimum = JSON.stringify({ ...fallback, checksum: checksumOf(fallback) }).length;
+  let length = 0;
+  try {
+    length = localStorage.getItem(SAVE_STORAGE_KEY)?.length ?? 0;
+  } catch {
+    length = 0;
+  }
+  return 'x'.repeat(Math.max(length, minimum));
+}
+
 // 儲存可用性探測（v19 卡 7）：隱私模式/空間耗盡時回 false，由 main.ts 明確提示，
-// 不再靜默吞掉「進度無法保存」。
+// 不再靜默吞掉「進度無法保存」。探測為盡力預判，實際寫入結果以 persistSave 為準。
 export function isSaveStorageAvailable(): boolean {
   try {
-    const probeKey = 'sp-storage-probe';
-    localStorage.setItem(probeKey, '1');
-    localStorage.removeItem(probeKey);
+    localStorage.setItem(STORAGE_PROBE_KEY, probePayload());
+    localStorage.removeItem(STORAGE_PROBE_KEY);
     return true;
   } catch {
     return false;

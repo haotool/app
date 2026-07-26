@@ -1,24 +1,16 @@
-import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { resolveBuildCommitSha } from '../../scripts/lib/build-commit-sha.mjs';
 import { seoHtmlPlugin } from './src/seo/vite-seo-plugin';
 
-// 版本 SSOT（§42/§99 F-02）：package.json version + short git SHA，經 define 嵌入。
-// SHA 來源優先序：GIT_COMMIT_HASH env（Docker/Zeabur build arg，repo 慣例同
-// ratewise）→ 本地 git；皆不可得時省略後綴——production 不再露出 +nogit 佔位。
+// 版本 SSOT（§42/§99 F-02/§109 F-08）：package.json version + short git SHA，經 define 嵌入。
+// SHA 來源鏈收斂於 scripts/lib/build-commit-sha.mjs（跨 app 共用），皆不可得時省略後綴。
 function resolveAppVersion(): string {
   const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
     version: string;
   };
-  let sha = (process.env['GIT_COMMIT_HASH'] ?? '').trim().slice(0, 7);
-  if (!sha) {
-    try {
-      sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim().slice(0, 7);
-    } catch {
-      sha = '';
-    }
-  }
+  const sha = resolveBuildCommitSha();
   return sha ? `v${pkg.version}+${sha}` : `v${pkg.version}`;
 }
 

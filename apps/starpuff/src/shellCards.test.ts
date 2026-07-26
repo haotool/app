@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { whenShellIdle } from './shellCards';
 
 // whenShellIdle 競態窗回歸（#839 e2e 曝露的雙發缺陷）：interval 與 delay timeout
@@ -57,5 +57,114 @@ describe('whenShellIdle one-shot 守衛（#839 審查回歸鎖）', () => {
     expect(callback).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(5000);
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+});
+
+interface FakeElement {
+  textContent: string;
+  children: FakeElement[];
+  className: string;
+  type: string;
+  classes: Set<string>;
+  classList: { contains: (name: string) => boolean };
+  setAttribute: () => void;
+  addEventListener: () => void;
+  remove: () => void;
+  appendChild: (child: FakeElement) => void;
+}
+
+function fakeElement(): FakeElement {
+  const classes = new Set<string>();
+  const element: FakeElement = {
+    textContent: '',
+    children: [],
+    className: '',
+    type: '',
+    classes,
+    classList: { contains: (name) => classes.has(name) },
+    setAttribute: () => undefined,
+    addEventListener: () => undefined,
+    remove: () => undefined,
+    appendChild: (child) => void element.children.push(child),
+  };
+  return element;
+}
+
+// 殼層 DOM stub：shell 承接 overlay、controls 供 is-active 判忙、atTitle 控制 Title 在場。
+function stubShellDom(initial: { atTitle: boolean }) {
+  const shell = fakeElement();
+  const controls = fakeElement();
+  const state = { atTitle: initial.atTitle };
+  vi.stubGlobal(
+    'MutationObserver',
+    class {
+      observe(): void {}
+      disconnect(): void {}
+    },
+  );
+  vi.stubGlobal('document', {
+    getElementById: (id: string) =>
+      id === 'game-shell' ? shell : id === 'controls' ? controls : null,
+    createElement: () => fakeElement(),
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    querySelector: (selector: string) =>
+      selector === '[data-menu="start"]' && state.atTitle ? {} : null,
+  });
+  return { shell, controls, state };
+}
+
+describe('notifySaveUnavailable（#868 進度無法保存提示單點）', () => {
+  beforeEach(async () => {
+    const { __resetSaveUnavailableForTests } = await import('./shellCards');
+    __resetSaveUnavailableForTests();
+  });
+
+  it('寫入失敗觸發時於 Title 安靜時刻顯卡，且每工作階段至多一張', async () => {
+    vi.useFakeTimers();
+    const { shell } = stubShellDom({ atTitle: true });
+
+    const { notifySaveUnavailable } = await import('./shellCards');
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(1000);
+    expect(shell.children).toHaveLength(1);
+    // shell > overlay > card > title
+    expect(shell.children[0]?.children[0]?.children[0]?.textContent).toBe('進度無法保存');
+
+    // 連續落盤失敗不得每次彈卡。
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(5000);
+    expect(shell.children).toHaveLength(1);
+  });
+
+  // 硬不變式（審查 -4）：杜絕戰鬥中彈窗攔截操作。前一案的 stub 讓 Title 恆在，
+  // 等於繞過這條規則，必須獨立鎖死兩個忙碌訊號。
+  it('非 Title（遊戲/地圖/結算中）不顯卡，回到 Title 才顯', async () => {
+    vi.useFakeTimers();
+    const { shell, state } = stubShellDom({ atTitle: false });
+
+    const { notifySaveUnavailable } = await import('./shellCards');
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(10000);
+    expect(shell.children).toHaveLength(0);
+
+    state.atTitle = true;
+    vi.advanceTimersByTime(1000);
+    expect(shell.children).toHaveLength(1);
+  });
+
+  it('controls is-active（遊戲進行中）不顯卡，離開遊戲才顯', async () => {
+    vi.useFakeTimers();
+    const { shell, controls } = stubShellDom({ atTitle: true });
+    controls.classes.add('is-active');
+
+    const { notifySaveUnavailable } = await import('./shellCards');
+    notifySaveUnavailable();
+    vi.advanceTimersByTime(10000);
+    expect(shell.children).toHaveLength(0);
+
+    controls.classes.delete('is-active');
+    vi.advanceTimersByTime(1000);
+    expect(shell.children).toHaveLength(1);
   });
 });
