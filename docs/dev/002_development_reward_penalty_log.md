@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+242
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+243
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-build-commit-sha-ssot-zeabur
+- 原因：`.dockerignore` 排除 `.git` 使建置容器內 git 指令必失敗，Zeabur 又不提供 `GIT_COMMIT_HASH`，Dockerfile 的 `export VAR="$(cmd)"` 退路又被 export 的 exit status 遮蔽而靜默留空——starpuff production 恆落純 `v0.22.1`，同版號兩次部署無鑑別力，發版驗證只能退回逐字串比對
+- 解法：查證 Zeabur 官方文件確認建置階段內建 `ZEABUR_GIT_COMMIT_SHA`，Dockerfile builder 段宣告 ARG/ENV 並修掉 exit status 遮蔽（改印 build fingerprint 留證），來源鏈收斂為跨 app SSOT `scripts/lib/build-commit-sha.mjs`（Zeabur → GIT_COMMIT_HASH → git → 省略後綴）＋ 8 案單測；實際 docker build 驗證映像內嵌 `v0.22.1+9505d2b`
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7a-review-backup-rotation-nonblocking
