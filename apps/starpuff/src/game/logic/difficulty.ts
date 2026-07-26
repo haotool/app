@@ -310,9 +310,10 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   mirri: 'ranged',
   splatta: 'ranged',
   cometa: 'ranged',
-  // §112 星海終局篇：cargo/ticketa/frosty 恆可吸近戰系；scanna/foamy/manta 具投射。
+  // §112 星海終局篇：cargo/frosty 恆可吸近戰系；ticketa 換軌俯掠（沿 gusty/cometa
+  // 俯衝系口徑）、scanna/foamy/manta 具投射。
   cargo: 'safe',
-  ticketa: 'safe',
+  ticketa: 'ranged',
   frosty: 'safe',
   scanna: 'ranged',
   foamy: 'ranged',

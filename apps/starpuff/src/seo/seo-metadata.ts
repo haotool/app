@@ -41,8 +41,9 @@ const ZONE_BOSSES: Record<number, Pick<BossEntry, 'boss' | 'bossEn' | 'trait'>> 
   5: { boss: '蝕星魔核 Voidra', bossEn: 'Voidra', trait: '生存段與星核共鳴的最終魔王' },
 };
 
-// 五區二十關與魔王對照：分區資料直接取自遊戲內 ZONES SSOT。
-export const WORLD_ZONES: BossEntry[] = ZONES.map((zone) => {
+// 分區與魔王對照：分區資料直接取自遊戲內 ZONES SSOT；§111 星海終局篇新區的魔王
+// 隨 W2-W4 波次入編後補文案——未定義魔王的過渡新區暫不列入 SEO 對照（零文案漂移）。
+export const WORLD_ZONES: BossEntry[] = ZONES.filter((zone) => ZONE_BOSSES[zone.id]).map((zone) => {
   const bossInfo = ZONE_BOSSES[zone.id];
   if (!bossInfo) throw new Error(`未定義魔王文案的分區 id：${zone.id}`);
   return {

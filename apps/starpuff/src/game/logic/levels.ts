@@ -67,7 +67,12 @@ export type MechanicId =
   | 'tide'
   | 'vent'
   | 'lowgrav'
-  | 'meteor';
+  | 'meteor'
+  // §111 星海終局篇新形態教學位點：焰化（L21）/潮化（L23）/稜化（L25）/引力化（L27）。
+  | 'ember-form'
+  | 'tide-form'
+  | 'prism-form'
+  | 'gravity-form';
 
 // v20 教學供給（§110 L3 變身首教）：進關即於固定位點生成的保證同系供給個體。
 export interface DrillSpawnSpec {
@@ -1414,6 +1419,217 @@ export const LEVELS: readonly LevelSpec[] = [
     anteroomBuffs: ['power', 'swift'],
     arenaBuff: 'shield',
     arenaBuffPhase: 'p3',
+  },
+  // §111 星海終局篇（六區星海港域）——L21 星港集散地：貨櫃推進（cargo 緩推）×
+  // 掃描光（scanna）走動關；焰化取得——重鑽味雙供給（cargo 恆可吸＋drilly 破土窗）、
+  // 中段形態練習區保證 3 隻貨櫃丁（週期折返留駐，沿 L3 安全房模式）。
+  {
+    id: 21,
+    nameZh: '星港集散地',
+    bgKey: 'bg-starport',
+    worldWidth: 3800,
+    killQuota: 14,
+    spawnIntervalMs: 950,
+    maxOnScreen: 6,
+    safeZoneTailPx: 480,
+    // §112 入編：cargo 主場＋ticketa/scanna 新怪同場、十種混編（終局章接續 L19 密度）；
+    // 恆可吸佔比 0.54（cargo/ticketa/jelly/floaty/puffy/glowy；drilly 破土窗保守不計）。
+    enemyMix: [
+      { kind: 'cargo', weight: 0.16 },
+      { kind: 'ticketa', weight: 0.13 },
+      { kind: 'scanna', weight: 0.13 },
+      { kind: 'drilly', weight: 0.11 },
+      { kind: 'chompy', weight: 0.11 },
+      { kind: 'spiky', weight: 0.11 },
+      { kind: 'jelly', weight: 0.09 },
+      { kind: 'floaty', weight: 0.08 },
+      { kind: 'puffy', weight: 0.04 },
+      { kind: 'glowy', weight: 0.04 },
+    ],
+    // 208 貨櫃頂台由蒸氣閥服務（§72 慣例）；主線地面雙層恆可通行。
+    platforms: [
+      { x: 480, y: 336, w: 150 },
+      { x: 900, y: 208, w: 130 },
+      { x: 1350, y: 336, w: 150 },
+      { x: 1800, y: 272, w: 140 },
+      { x: 2300, y: 336, w: 150 },
+      { x: 2750, y: 300, w: 140 },
+      { x: 3200, y: 336, w: 150 },
+    ],
+    // §29 複合陣：貨運廊道——蒸氣閥 ×2（週期氣壓柱）＋吊掛貨櫃移動平台 ×3＋支線。
+    elements: [
+      { kind: 'updraft', x: 900, topY: 150, w: 96, periodMs: 2600, dutyPct: 0.31 },
+      { kind: 'updraft', x: 3050, topY: 170, w: 96, periodMs: 3200, dutyPct: 0.31 },
+      { kind: 'oneway', x: 680, y: 320, w: 140 },
+      { kind: 'oneway', x: 1580, y: 320, w: 140 },
+      { kind: 'oneway', x: 2980, y: 336, w: 130 },
+      { kind: 'moving', x: 1150, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'moving', x: 2050, y: 320, w: 120, axis: 'x', range: 160, durationMs: 2400 },
+      { kind: 'moving', x: 3450, y: 328, w: 120, axis: 'y', range: -56, durationMs: 2200 },
+      { kind: 'spring', x: 360, y: 391 },
+      { kind: 'spring', x: 2550, y: 391 },
+      { kind: 'breakable', x: 1350, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2450, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：星港沿用 throne/arena 主題道具混排（星柱/星燈——港區機械語彙相容）。
+    decor: [
+      { key: 'prop-throne-1', x: 350 },
+      { key: 'prop-arena-2', x: 900 },
+      { key: 'prop-throne-3', x: 1450 },
+      { key: 'prop-arena-4', x: 2000 },
+      { key: 'prop-throne-1', x: 2550 },
+      { key: 'prop-arena-2', x: 3100 },
+      { key: 'prop-throne-3', x: 3650 },
+    ],
+    // §24 彩蛋二十一：開局反向走到世界最左緣（回聲彩蛋，與 L1/L13 同型）。
+    easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
+    // §112 三精英（終局章密度）：巨貨櫃長（掉重鑽味＝焰化補給）＋鑽岩裝卸工＋
+    // 緋紅掃描長（掉雷鏈味），房距 600/850 ≥ 門距。
+    elites: [
+      {
+        kind: 'cargo',
+        x: 1150,
+        hp: 24,
+        scale: 1.55,
+        tint: 0xc87848,
+        speedMul: 1.3,
+        rewardFlavor: 'drilly',
+      },
+      {
+        kind: 'drilly',
+        x: 1750,
+        hp: 22,
+        scale: 1.5,
+        tint: 0xb08050,
+        speedMul: 1.4,
+        rewardFlavor: 'drilly',
+      },
+      {
+        kind: 'scanna',
+        x: 2600,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xd8607a,
+        speedMul: 1.4,
+        rewardFlavor: 'zappy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    hint: '連吞 3 隻貨櫃丁——地面按 SP 焰化變身',
+    // §111 焰化首教：中段形態練習區保證 3 隻貨櫃丁（重鑽味 ×3 直達資格）。
+    teaches: ['ember-form'],
+    drillSpawns: [
+      { kind: 'cargo', x: 2100 },
+      { kind: 'cargo', x: 2180 },
+      { kind: 'cargo', x: 2260 },
+    ],
+  },
+  // §111 星海終局篇（七區冰晶潮域）——L23 冰晶潮灣：水流浮力（週期浮力柱）×
+  // 冰面滑行（frosty）×潮汐走動關；潮化取得——孢子味三新怪供給（foamy/frosty/manta），
+  // 中段形態練習區保證 3 隻孢子菇（定點紮根留駐）。
+  {
+    id: 23,
+    nameZh: '冰晶潮灣',
+    bgKey: 'bg-tidebay',
+    worldWidth: 3900,
+    killQuota: 14,
+    spawnIntervalMs: 950,
+    maxOnScreen: 6,
+    safeZoneTailPx: 480,
+    // §112 入編：潮系四供給（frosty/foamy/manta/spora 合佔 56%）＋九種混編；
+    // 恆可吸佔比 0.76（spiky/chompy 不可吸、bubbla 躍出窗保守不計）。
+    enemyMix: [
+      { kind: 'frosty', weight: 0.17 },
+      { kind: 'foamy', weight: 0.14 },
+      { kind: 'manta', weight: 0.13 },
+      { kind: 'spora', weight: 0.12 },
+      { kind: 'bubbla', weight: 0.1 },
+      { kind: 'jelly', weight: 0.1 },
+      { kind: 'floaty', weight: 0.1 },
+      { kind: 'spiky', weight: 0.09 },
+      { kind: 'chompy', weight: 0.05 },
+    ],
+    // 平台層頂恆高於漲頂 24px（§71 不變式）：漲頂 y=352 → 平台中心 y ≤ 336；
+    // 208 高台由週期浮力柱服務（§72 慣例）。
+    platforms: [
+      { x: 460, y: 336, w: 150 },
+      { x: 900, y: 208, w: 130 },
+      { x: 1350, y: 336, w: 150 },
+      { x: 1850, y: 272, w: 140 },
+      { x: 2350, y: 336, w: 150 },
+      { x: 2800, y: 208, w: 130 },
+      { x: 3250, y: 300, w: 140 },
+      { x: 3600, y: 336, w: 130 },
+    ],
+    // 水流浮力柱（§111）：週期湧升沿熱泉噴口管線（periodMs/dutyPct），托跳為捷徑非必需。
+    elements: [
+      { kind: 'updraft', x: 900, topY: 150, w: 96, periodMs: 2800, dutyPct: 0.35 },
+      { kind: 'updraft', x: 2800, topY: 150, w: 96, periodMs: 2800, dutyPct: 0.35 },
+      { kind: 'oneway', x: 660, y: 320, w: 140 },
+      { kind: 'oneway', x: 1600, y: 320, w: 140 },
+      { kind: 'oneway', x: 3050, y: 336, w: 130 },
+      { kind: 'moving', x: 2100, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'spring', x: 350, y: 391 },
+      { kind: 'spring', x: 3450, y: 391 },
+      { kind: 'breakable', x: 1100, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2550, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：潮灣沿用 arena 主題道具（水晶/星柱——冰晶質感）。
+    decor: [
+      { key: 'prop-arena-1', x: 380 },
+      { key: 'prop-arena-2', x: 930 },
+      { key: 'prop-arena-3', x: 1480 },
+      { key: 'prop-arena-4', x: 2030 },
+      { key: 'prop-arena-1', x: 2580 },
+      { key: 'prop-arena-2', x: 3130 },
+      { key: 'prop-arena-3', x: 3680 },
+    ],
+    // §24 彩蛋二十三：浪頂浮台（y=272）連站 3 次（與 L14 同型）。
+    easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
+    // §112 三精英（終局章密度）：寒霜史萊姆王（掉孢子味＝潮化補給）＋泡沫巨機＋
+    // 深潮魟后（掉流光味），房距 650/750 ≥ 門距。
+    elites: [
+      {
+        kind: 'frosty',
+        x: 1150,
+        hp: 22,
+        scale: 1.55,
+        tint: 0x9ad8f0,
+        speedMul: 1.4,
+        rewardFlavor: 'spora',
+      },
+      {
+        kind: 'foamy',
+        x: 1750,
+        hp: 20,
+        scale: 1.5,
+        tint: 0x78b8d8,
+        speedMul: 1.4,
+        rewardFlavor: 'spora',
+      },
+      {
+        kind: 'manta',
+        x: 2600,
+        hp: 20,
+        scale: 1.5,
+        tint: 0x5a98c8,
+        speedMul: 1.4,
+        rewardFlavor: 'glowy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 糖漿潮汐管線重用（§71）：冰潮視覺由素材車換裝；dry-window 55% 等窗保底不變。
+    tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
+    hint: '連吞 3 隻潮系怪——地面按 SP 潮化變身',
+    // §111 潮化首教：中段形態練習區保證 3 隻孢子菇（孢子味 ×3 直達資格）。
+    teaches: ['tide-form'],
+    drillSpawns: [
+      { kind: 'spora', x: 2100 },
+      { kind: 'spora', x: 2180 },
+      { kind: 'spora', x: 2260 },
+    ],
   },
 ];
 

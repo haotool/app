@@ -18,6 +18,12 @@ export const ZONES: readonly ZoneSpec[] = [
   { id: 3, nameZh: '幻晶深域', firstLevelId: 8, lastLevelId: 12 },
   { id: 4, nameZh: '焙糖火山', firstLevelId: 13, lastLevelId: 16 },
   { id: 5, nameZh: '星核聖域', firstLevelId: 17, lastLevelId: 20 },
+  // §111 星海終局篇（21-30）：每章＝走動關＋魔王關成對收尾（W1-W4 逐波入編）。
+  { id: 6, nameZh: '星海港域', firstLevelId: 21, lastLevelId: 22 },
+  { id: 7, nameZh: '冰晶潮域', firstLevelId: 23, lastLevelId: 24 },
+  { id: 8, nameZh: '鏡界塔域', firstLevelId: 25, lastLevelId: 26 },
+  { id: 9, nameZh: '引力深域', firstLevelId: 27, lastLevelId: 28 },
+  { id: 10, nameZh: '崩盤終章', firstLevelId: 29, lastLevelId: 30 },
 ] as const;
 
 // 關卡所屬區：L1-L20 全數落於五區之一；未涵蓋 id 視為資料錯誤即擲錯。

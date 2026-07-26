@@ -1,3 +1,4 @@
+import { LEVELS } from '../logic/levels';
 import type { LevelId } from './types';
 
 // 存檔 SSOT（GAME_DESIGN §38/§94）：localStorage sp-save schema v2（v1 由 parseSave 遷移），
@@ -38,11 +39,9 @@ export function createDefaultSave(): SaveData {
   };
 }
 
-// v12 五區終章（§84）：20 節點；schema v1 不變——舊存檔（≤16 關條目）原樣載入，
-// 新節點依解鎖規則自然呈鎖定態。
-const LEVEL_IDS: readonly LevelId[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-];
+// §111 星海終局篇：關卡清單由 LEVELS 派生（禁止第二份硬編清單）——列車過渡期
+// 可有跳號（W1 先入編 21/23），schema 不變、舊存檔原樣載入、新節點自然鎖定。
+const LEVEL_IDS: readonly LevelId[] = LEVELS.map((level) => level.id);
 
 function isLevelEntry(value: unknown): value is LevelSaveEntry {
   if (typeof value !== 'object' || value === null) return false;
@@ -281,10 +280,14 @@ export function resetSave(): SaveData {
   return createDefaultSave();
 }
 
-// 解鎖規則（§39）：第 1 關恆開；第 N 關需第 N-1 關已通關。
+// 解鎖規則（§39/§111）：首關恆開；其餘需「在編序列的前一關」已通關——
+// 列車過渡期跳號（如 L21→L23）由 LEVELS 順序自然銜接，後續補關自動收斂。
 export function isLevelUnlocked(save: SaveData, levelId: LevelId): boolean {
-  if (levelId === 1) return true;
-  return save.levels[(levelId - 1) as LevelId]?.cleared === true;
+  const index = LEVEL_IDS.indexOf(levelId);
+  if (index < 0) return false;
+  if (index === 0) return true;
+  const previous = LEVEL_IDS[index - 1];
+  return previous !== undefined && save.levels[previous]?.cleared === true;
 }
 
 export type MapNodeStatus = 'locked' | 'open' | 'cleared';
