@@ -559,8 +559,14 @@ describe('存檔寫入失敗外顯（#868）', () => {
     expect(isSaveStorageAvailable()).toBe(false);
   });
 
-  it('尚無存檔時探測退回 1 字元，不因保守負載誤報不可用', () => {
+  it('尚無存檔時探測下限為預設存檔落盤體積：容不下即回報不可用', () => {
     stubQuotaLimitedStorage(1);
+    expect(isSaveStorageAvailable()).toBe(false);
+  });
+
+  it('尚無存檔但配額容得下預設存檔體積時回報可用，不誤報', () => {
+    // 4096 遠大於預設存檔序列化長度（約百餘字元），代表空間充裕的一般情境。
+    stubQuotaLimitedStorage(4096);
     expect(isSaveStorageAvailable()).toBe(true);
   });
 });

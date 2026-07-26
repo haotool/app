@@ -69,6 +69,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 COPY . .
 
 # Build applications（若外部未提供 build args，於此自動回退計算）
+# GIT_COMMIT_HASH 灌入前做 hex 校驗（審查 nit）：髒值不得外流給只讀此變數的其他 app
+# （starpuff 於 JS 層另有防禦，其餘 app 沒有），不合格一律清空視同不可得。
 # [fix:2025-12-13] 分別為每個專案設置對應的 base 變數，避免相互污染
 # [2025 Best Practice] Sitemaps 現在由 vite-ssg-sitemap 在 build 時自動生成
 # [2026-07-05] haotool 根站先建（根站優先，見 docs/dev/046 §9）
@@ -82,6 +84,9 @@ RUN set -eux; \
   fi; \
   if [ -z "${GIT_COMMIT_HASH:-}" ]; then \
     GIT_COMMIT_HASH="$(git rev-parse --short HEAD 2>/dev/null || true)"; \
+  fi; \
+  if ! printf '%s' "${GIT_COMMIT_HASH:-}" | grep -Eq '^[0-9a-f]{7,40}$'; then \
+    GIT_COMMIT_HASH=""; \
   fi; \
   export GIT_COMMIT_HASH; \
   echo "build fingerprint: GIT_COMMIT_HASH=${GIT_COMMIT_HASH:-<unavailable>}"; \

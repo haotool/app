@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+7（reward 7、penalty 0、neutral 0）｜累計總分：+249
+> 本次分數變化：+8（reward 8、penalty 0、neutral 0）｜累計總分：+250
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-release-verifiability-review-nits
+- 原因：審查 nits 兩項——`probePayload` 無存檔時退回 1 字元使「無存檔＋配額將滿」開機預判過度樂觀；Dockerfile 灌入 `GIT_COMMIT_HASH` 前未做 hex 校驗，髒的 ZEABUR 值會被只讀該變數而無 JS 層防禦的其他 app 取用
+- 解法：probe 下限改為預設存檔實際落盤體積（含 checksum），對應單測改鎖「容不下即不可用／容得下不誤報」；Dockerfile 以同一條 `^[0-9a-f]{7,40}$` 於 shell 側校驗後才 export，實跑四種輸入（合法 SHA／`refs/heads/main`／`zzzzzzz`／空）驗證僅合法值通過且建置不中斷
 
 - 日期：2026-07-26
 - ID：reward-build-commit-sha-nonhex-regression-lock

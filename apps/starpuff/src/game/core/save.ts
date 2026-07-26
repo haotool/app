@@ -209,15 +209,19 @@ export function persistSave(save: SaveData): boolean {
 const STORAGE_PROBE_KEY = 'sp-storage-probe';
 
 // 探測負載對齊實際主檔體積（#868）：1 字元 probe 在同源配額將滿時仍會通過，
-// 隨後體積大得多的 sp-save 寫入才拋 QuotaExceededError。尚無存檔時退回 1 字元。
+// 隨後體積大得多的 sp-save 寫入才拋 QuotaExceededError。
+// 下限取預設存檔實際落盤體積（含 checksum，審查 nit）——尚無存檔時仍需能寫得下
+// 第一次通關的落盤量，退回 1 字元會讓「無存檔＋配額將滿」的開機預判過度樂觀。
 function probePayload(): string {
-  let length = 1;
+  const fallback = createDefaultSave();
+  const minimum = JSON.stringify({ ...fallback, checksum: checksumOf(fallback) }).length;
+  let length = 0;
   try {
-    length = Math.max(localStorage.getItem(SAVE_STORAGE_KEY)?.length ?? 0, 1);
+    length = localStorage.getItem(SAVE_STORAGE_KEY)?.length ?? 0;
   } catch {
-    length = 1;
+    length = 0;
   }
-  return 'x'.repeat(length);
+  return 'x'.repeat(Math.max(length, minimum));
 }
 
 // 儲存可用性探測（v19 卡 7）：隱私模式/空間耗盡時回 false，由 main.ts 明確提示，
