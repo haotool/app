@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+272
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+273
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b03-skills-fx-hud
+- 原因：B03 完整包尾段需技能四拍、光環五層 VFX 與徽章 HUD，B02 曾因柔邊光暈去背殘留 16% 色暈重生一次
+- 解法：B02 教訓前置化——core/overlay 層 prompt 直接要求硬邊 cel-shaded 分階光盤並附 B02 成品當質感範例，alpha QA 22/22 一次通過零重生，B03 全程零重生
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b03-minions-morph-frames
