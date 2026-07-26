@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+277
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+278
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-maridella-anim-frames
+- 原因：B06 次王 Maridella 39 幀動畫關鍵幀，4 張角落出現近白雜訊像素（alpha 255）
+- 解法：序列拼貼檢驗通過（體型穩/光源左上/P2 風暴螺旋與 P3 月蝕女帝演進辨識足/受擊白閃明顯），角落雜訊以四角 floodfill 清零收斂 39/39
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-tariffang-anim-frames
