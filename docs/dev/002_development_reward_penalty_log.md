@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+285
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+286
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-qa-tinted-checker-hardening
+- 原因：終審對抗樣本揭露色偏棋盤（light chroma 15／dark 30）逃逸全部三軸——lowchroma 與塊級檔位的 chroma<=12 門檻過嚴。
+- 解法：lowchroma 門檻放寬至 20（色偏樣本 1.0 命中、水花最高 0.788 仍豁免）；塊級檔位試 30 誤殺 3 張淡彩資產後收回 12 取平衡點；病例 4/4、對抗 4/4、505 張與 14 bg 零誤殺，並依審查實測修正 docstring 三處過度宣稱（bbox 非普遍保證、單軸防護註記、盲區量化至 <~10% 畫布）。
 
 - 日期：2026-07-26
 - ID：reward-starpuff-qa-scan-adversarial-hardening
