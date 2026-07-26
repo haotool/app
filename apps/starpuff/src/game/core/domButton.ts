@@ -19,6 +19,33 @@ export interface CssRect {
   h: number;
 }
 
+// 按鈕觸發雙路徑綁定 SSOT（#823/#830，v19 審查收斂）：指標走 pointerdown 即發維持
+// 觸控體感（殼層 touchstart preventDefault 會吞觸控合成 click，不能只綁 click）；
+// 鍵盤/AT activation 無指標前程、只發 click（detail=0）恆放行；手勢級一次性旗標
+// 吞指標合成 click，兩路徑互斥不雙觸發（WCAG 2.1.1 鍵盤可操作）。
+// hud.addDomButton 與 settingsPage 全鈕共用，禁止各自重寫觸發邏輯。
+export function bindButtonActivation(button: HTMLButtonElement, onPress: () => void): void {
+  let swallowPointerClick = false;
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    swallowPointerClick = true;
+    onPress();
+  });
+  // 手勢中斷（捲動/系統手勢接管）不派發 click：清旗標防吞掉下一次合法 activation。
+  button.addEventListener('pointercancel', () => {
+    swallowPointerClick = false;
+  });
+  button.addEventListener('click', (event) => {
+    // 鍵盤/AT activation（detail=0）無指標前程：恆放行，不受手勢旗標影響。
+    if (swallowPointerClick && event.detail !== 0) {
+      swallowPointerClick = false;
+      return;
+    }
+    swallowPointerClick = false;
+    onPress();
+  });
+}
+
 // left/top 相對 canvas 原點（呼叫端自加 canvas offset）。
 export function menuHitCssRect(rect: LogicalRect, sx: number, sy: number): CssRect {
   const w = Math.max(rect.w * sx, MIN_MENU_HIT_CSS_PX);

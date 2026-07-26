@@ -2,6 +2,7 @@
 // （0–1）；v2 增全域縮放 scale。純資料模組供 vitest node 環境驗證。
 // v16 D1：自訂布局直橫持共用不變，「預設」改依殼旋轉態分流（見 defaultLayoutFor）。
 import { getShellRotation, type ShellRotation } from './rotation';
+import { loadSettings, updateSettings } from './settings';
 
 export interface KeyPosition {
   cx: number;
@@ -15,7 +16,6 @@ export interface ControlLayout {
   scale: number;
 }
 
-export const LAYOUT_STORAGE_KEY = 'sp-key-layout';
 export const LAYOUT_SCHEMA_VERSION = 2;
 
 // 縮放範圍（§89）：0.8–1.3；最小鍵 B 72px×0.8=57.6px 仍高於 44px 觸控下限（守門單測）。
@@ -120,30 +120,36 @@ function isValidPosition(value: unknown): value is KeyPosition {
   );
 }
 
-// 解析持久化 JSON（§89 versioned migration）：v1（無 scale）就地升級為 v2 保留既有
+// 解析布局子樹值（§89 versioned migration）：v1（無 scale）就地升級為 v2 保留既有
 // 鍵位、scale 補預設；未知版本或形狀損毀一律回退預設（依旋轉態分流），座標與縮放
 // 重新夾限。合法自訂資料不受旋轉影響（§95 D1：自訂布局不得被覆蓋）。
+export function parseLayoutValue(value: unknown, rotation: ShellRotation = 'none'): ControlLayout {
+  if (typeof value !== 'object' || value === null) return defaultLayoutFor(rotation);
+  const data = value as Record<string, unknown>;
+  const version = data['version'];
+  if (version !== 1 && version !== LAYOUT_SCHEMA_VERSION) return defaultLayoutFor(rotation);
+  if (!isValidPosition(data['a']) || !isValidPosition(data['b'])) {
+    return defaultLayoutFor(rotation);
+  }
+  return {
+    version: LAYOUT_SCHEMA_VERSION,
+    a: clampKeyPosition(data['a'].cx, data['a'].cy),
+    b: clampKeyPosition(data['b'].cx, data['b'].cy),
+    scale: version === 1 ? KEY_SCALE.default : clampKeyScale(Number(data['scale'])),
+  };
+}
+
+// 字串入口保留（legacy 相容與單測）：JSON 損毀回退預設後委派 parseLayoutValue。
 export function parseLayout(raw: string | null, rotation: ShellRotation = 'none'): ControlLayout {
   if (!raw) return defaultLayoutFor(rotation);
   try {
-    const data = JSON.parse(raw) as Record<string, unknown>;
-    const version = data['version'];
-    if (version !== 1 && version !== LAYOUT_SCHEMA_VERSION) return defaultLayoutFor(rotation);
-    if (!isValidPosition(data['a']) || !isValidPosition(data['b'])) {
-      return defaultLayoutFor(rotation);
-    }
-    return {
-      version: LAYOUT_SCHEMA_VERSION,
-      a: clampKeyPosition(data['a'].cx, data['a'].cy),
-      b: clampKeyPosition(data['b'].cx, data['b'].cy),
-      scale: version === 1 ? KEY_SCALE.default : clampKeyScale(Number(data['scale'])),
-    };
+    return parseLayoutValue(JSON.parse(raw), rotation);
   } catch {
     return defaultLayoutFor(rotation);
   }
 }
 
-// 隱私模式下 localStorage 可能拋錯：讀寫皆容錯，布局退預設、儲存靜默略過。
+// 儲存收斂至 UserSettings SSOT（v19 #819 卡 4）：讀寫皆容錯，布局退預設、儲存靜默略過。
 // 旋轉態於呼叫當下解析（§95 D1）：無自訂資料時直/橫持各得人體工學正確的預設。
 export function loadLayout(): ControlLayout {
   let rotation: ShellRotation = 'none';
@@ -153,7 +159,7 @@ export function loadLayout(): ControlLayout {
     /* 非瀏覽器環境（單測）退橫持預設。 */
   }
   try {
-    return parseLayout(localStorage.getItem(LAYOUT_STORAGE_KEY), rotation);
+    return parseLayoutValue(loadSettings().keyLayout, rotation);
   } catch {
     return defaultLayoutFor(rotation);
   }
@@ -163,7 +169,7 @@ export function loadLayout(): ControlLayout {
 // 讓直橫持各自動態解析預設）。
 export function hasStoredLayout(): boolean {
   try {
-    return localStorage.getItem(LAYOUT_STORAGE_KEY) !== null;
+    return loadSettings().keyLayout !== null;
   } catch {
     return false;
   }
@@ -171,7 +177,7 @@ export function hasStoredLayout(): boolean {
 
 export function saveLayout(layout: ControlLayout): void {
   try {
-    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+    updateSettings({ keyLayout: layout });
   } catch {
     /* noop */
   }
@@ -182,10 +188,10 @@ export function getDefaultLayout(): ControlLayout {
 }
 
 // 回傳值為橫持基準預設；直持配置頁實際走 defaultLayoutFor(rotation) 旋轉分流，
-// 此處僅負責清除自訂落盤（§95）。
+// 此處僅負責清除自訂落盤（§95）：keyLayout 回 null＝預設態。
 export function resetLayout(): ControlLayout {
   try {
-    localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    updateSettings({ keyLayout: null });
   } catch {
     /* noop */
   }

@@ -50,7 +50,9 @@ export default defineConfig(async ({ mode }) => {
       seoHtmlPlugin(),
       VitePWA({
         base,
-        registerType: 'autoUpdate',
+        // prompt 型（v19 #819 卡 8，repo 標準模式）：autoUpdate 的 skipWaiting 立即
+        // 接管會在遊戲中吃掉進行中關卡並有版本撕裂風險；套用時機由 pwaUpdateGate 把關。
+        registerType: 'prompt',
         injectRegister: 'auto',
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],

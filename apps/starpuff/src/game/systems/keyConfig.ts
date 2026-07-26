@@ -10,6 +10,7 @@ import {
   saveLayout,
   type ControlLayout,
 } from '../core/layout';
+import { bindButtonActivation } from '../core/domButton';
 import {
   DEFAULT_PORTRAIT_ROTATION,
   applyRotationClass,
@@ -47,11 +48,10 @@ function addAction(
   button.className = 'cfg-btn';
   button.dataset['cfg'] = action;
   button.textContent = label;
-  button.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onPress();
-  });
+  // 阻擋冒泡沿舊行為（殼層手勢守衛）；觸發改走 core/domButton 雙路徑 SSOT
+  //（審查補筆：原僅綁 pointerdown，鍵盤 Enter/Space 無反應）。
+  button.addEventListener('pointerdown', (event) => event.stopPropagation());
+  bindButtonActivation(button, onPress);
   bar.appendChild(button);
   return button;
 }

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { MIN_MENU_HIT_CSS_PX, menuHitCssRect } from './domButton';
+import { describe, expect, it, vi } from 'vitest';
+import { MIN_MENU_HIT_CSS_PX, bindButtonActivation, menuHitCssRect } from './domButton';
 
 // 直持 390×844 實測縮放（§98 D2 量測基準）：canvas CSS 844×390、邏輯 1039×480。
 const SX = 844 / 1039;
@@ -43,5 +43,66 @@ describe('menuHitCssRect（§98 D2 命中短邊保底）', () => {
     const css = menuHitCssRect({ x: 100, y: 100, w: 40, h: 40 }, 1, 1);
     expect(css.w).toBe(MIN_MENU_HIT_CSS_PX);
     expect(css.h).toBe(MIN_MENU_HIT_CSS_PX);
+  });
+});
+
+// 假按鈕：node 環境捕捉 listener，模擬指標鏈與鍵盤 activation 事件序。
+interface FakeButton {
+  listeners: Map<string, (event: { detail: number; preventDefault: () => void }) => void>;
+  addEventListener: (
+    type: string,
+    handler: (event: { detail: number; preventDefault: () => void }) => void,
+  ) => void;
+  fire: (type: string, detail?: number) => void;
+}
+
+function makeFakeButton(): FakeButton {
+  const listeners = new Map<
+    string,
+    (event: { detail: number; preventDefault: () => void }) => void
+  >();
+  return {
+    listeners,
+    addEventListener: (type, handler) => void listeners.set(type, handler),
+    fire: (type, detail = 1) => listeners.get(type)?.({ detail, preventDefault: () => undefined }),
+  };
+}
+
+describe('bindButtonActivation（#823/#830 雙路徑觸發 SSOT）', () => {
+  it('指標完整事件鏈（pointerdown→click）僅單次觸發', () => {
+    const button = makeFakeButton();
+    const onPress = vi.fn();
+    bindButtonActivation(button as unknown as HTMLButtonElement, onPress);
+    button.fire('pointerdown');
+    button.fire('click', 1);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('鍵盤/AT activation（click detail=0，無指標前程）可觸發', () => {
+    const button = makeFakeButton();
+    const onPress = vi.fn();
+    bindButtonActivation(button as unknown as HTMLButtonElement, onPress);
+    button.fire('click', 0);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('指標互動後緊接鍵盤 activation 不被誤吞（#830 手勢級旗標）', () => {
+    const button = makeFakeButton();
+    const onPress = vi.fn();
+    bindButtonActivation(button as unknown as HTMLButtonElement, onPress);
+    button.fire('pointerdown');
+    button.fire('click', 1);
+    button.fire('click', 0);
+    expect(onPress).toHaveBeenCalledTimes(2);
+  });
+
+  it('手勢中斷（pointercancel）清旗標：下一次 click 照常觸發', () => {
+    const button = makeFakeButton();
+    const onPress = vi.fn();
+    bindButtonActivation(button as unknown as HTMLButtonElement, onPress);
+    button.fire('pointerdown');
+    button.fire('pointercancel');
+    button.fire('click', 1);
+    expect(onPress).toHaveBeenCalledTimes(2);
   });
 });

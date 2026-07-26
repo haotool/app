@@ -1,5 +1,6 @@
 import type Phaser from 'phaser';
 import { isMuted, setMuted } from '../audio/mute';
+import { loadSettings, onSettingsChanged, updateSettings } from '../core/settings';
 import {
   CHARGED_STAR,
   EGG_HP_CAP,
@@ -9,7 +10,7 @@ import {
   getMix,
   type MagazineSlot,
 } from '../core/config';
-import { menuHitCssRect } from '../core/domButton';
+import { bindButtonActivation, menuHitCssRect } from '../core/domButton';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { readShellSafeArea, toLogicalPx } from '../core/safeArea';
 import { TRANSFORM_FORMS, eligibleForm } from '../logic/transform';
@@ -38,7 +39,6 @@ const SPEAKER_ON_TEX = 'hud-spk-on';
 const SPEAKER_OFF_TEX = 'hud-spk-off';
 const PAUSE_TEX = 'hud-pause';
 const HUD_DEPTH = 100;
-const MUTE_STORAGE_KEY = 'sp-muted';
 
 export interface Hud {
   destroy(): void;
@@ -74,9 +74,9 @@ function ensureSpeakerTextures(scene: Phaser.Scene): void {
   }
 }
 
-// 右上角靜音鈕（修復包 B／§101 F-06）：Title 與 Game 場景共用；狀態經 localStorage
-// 跨次保存；右緣錨定隨視寬變更重排（§28）。命中改由同位 DOM 鈕承接（旋轉殼
-// hit-test 天然正確、讀屏可及），canvas 僅保留圖示視覺。
+// 右上角靜音鈕（修復包 B／§101 F-06）：Title 與 Game 場景共用；狀態經 UserSettings
+// SSOT 跨次保存（v19 卡 4）；右緣錨定隨視寬變更重排（§28）。命中改由同位 DOM 鈕承接
+//（旋轉殼 hit-test 天然正確、讀屏可及），canvas 僅保留圖示視覺。
 export function addMuteButton(scene: Phaser.Scene): void {
   ensureSpeakerTextures(scene);
   const texture = () => (isMuted() ? SPEAKER_OFF_TEX : SPEAKER_ON_TEX);
@@ -96,18 +96,22 @@ export function addMuteButton(scene: Phaser.Scene): void {
     () => {
       const next = !isMuted();
       setMuted(next);
-      // 隱私模式下 localStorage 可能拋錯：靜音仍生效，僅不跨次保存。
-      try {
-        localStorage.setItem(MUTE_STORAGE_KEY, next ? '1' : '0');
-      } catch {
-        /* noop */
-      }
+      // 隱私模式下寫入可能失敗（settings 內部容錯）：靜音仍生效，僅不跨次保存。
+      updateSettings({ audioMuted: next });
       button.setTexture(texture());
       domButton?.setAttribute('aria-pressed', next ? 'true' : 'false');
     },
     'mute',
   );
   domButton?.setAttribute('aria-pressed', isMuted() ? 'true' : 'false');
+  // 設定頁切換音效時同步（v19 卡 4）：以 settings 新值驅動 mute 系統與圖示，
+  // 場景關閉即退訂。
+  const offSettings = onSettingsChanged((settings) => {
+    setMuted(settings.audioMuted);
+    button.setTexture(texture());
+    domButton?.setAttribute('aria-pressed', settings.audioMuted ? 'true' : 'false');
+  });
+  scene.events.once('shutdown', offSettings);
 }
 
 // 遊戲場景暫停鍵（§35／§101 F-06）：與靜音鈕同列（top-right 硬熱區，避開戰鬥區）；
@@ -141,9 +145,9 @@ export function addPauseButton(scene: Phaser.Scene): void {
 
 // 開機還原上次靜音選擇；由 main.ts 於建立遊戲前呼叫。
 export function restoreMutePreference(): void {
-  // 隱私模式下 localStorage 可能拋錯：維持預設不靜音。
+  // 隱私模式下讀取可能失敗：維持預設不靜音。
   try {
-    setMuted(localStorage.getItem(MUTE_STORAGE_KEY) === '1');
+    setMuted(loadSettings().audioMuted);
   } catch {
     /* noop */
   }
@@ -204,26 +208,8 @@ export function addDomButton(
   };
   relayout();
   shell.appendChild(button);
-  // 手勢級一次性吞 click（#830）：pointerdown 設旗標、同手勢合成 click 消費後清除。
-  let swallowPointerClick = false;
-  button.addEventListener('pointerdown', (event) => {
-    event.preventDefault();
-    swallowPointerClick = true;
-    onPress();
-  });
-  // 手勢中斷（捲動/系統手勢接管）不派發 click：清旗標防吞掉下一次合法 activation。
-  button.addEventListener('pointercancel', () => {
-    swallowPointerClick = false;
-  });
-  button.addEventListener('click', (event) => {
-    // 鍵盤/AT activation（detail=0）無指標前程：恆放行，不受手勢旗標影響。
-    if (swallowPointerClick && event.detail !== 0) {
-      swallowPointerClick = false;
-      return;
-    }
-    swallowPointerClick = false;
-    onPress();
-  });
+  // 觸發雙路徑收斂至 core/domButton（#823/#830 SSOT，v19 審查消重複）。
+  bindButtonActivation(button, onPress);
   scene.scale.on('resize', relayout);
   scene.events.once('shutdown', () => {
     scene.scale.off('resize', relayout);

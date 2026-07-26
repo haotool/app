@@ -76,9 +76,9 @@ let muted = false;
 
 // pitchScale 以頻率倍率微調音高（§20：發射音依星彈屬性分色）。
 export function playSfx(name: SfxName, pitchScale = 1): void {
-  if (muted) return;
-  // 觸覺與音效同源觸發（§91）：靜音早退即同步關閉震動。
+  // 觸覺與靜音解耦（v19 卡 11）：震動先於靜音早退觸發，由 hapticsEnabled 獨立閘門。
   vibrateForSfx(name);
+  if (muted) return;
   if (name === 'inhale') {
     if (inhaleSource) return;
     inhaleSamples ??= ZZFX.buildSamples(...INHALE_PARAMS);

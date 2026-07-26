@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  SAVE_BACKUP_KEY,
   SAVE_SCHEMA_VERSION,
+  SAVE_STORAGE_KEY,
   createDefaultSave,
   currentChallenge,
   isLevelUnlocked,
+  isSaveStorageAvailable,
+  loadSave,
   nodeStatus,
   parseSave,
+  persistSave,
   recordExClear,
   recordLevelClear,
   recordEgg,
+  resetSave,
   eggsFoundCount,
 } from './save';
 
@@ -293,5 +299,192 @@ describe('解鎖規則與節點狀態（§39）', () => {
     expect(nodeStatus(save, 6)).toBe('locked');
     expect(nodeStatus(save, 7)).toBe('locked');
     expect(currentChallenge(save)).toBe(5);
+  });
+});
+
+// 記憶體版 localStorage stub（vitest node 環境，沿 shellCards.test.ts stubGlobal 慣例）。
+function stubStorage(): Map<string, string> {
+  const map = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => map.get(key) ?? null,
+    setItem: (key: string, value: string) => void map.set(key, value),
+    removeItem: (key: string) => void map.delete(key),
+  });
+  return map;
+}
+
+describe('存檔備援（v19 #819 卡 7：backup 輪替＋checksum＋恢復）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('persistSave 寫入含 checksum；loadSave 讀回等值', () => {
+    const map = stubStorage();
+    const save = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(save);
+    const raw = map.get(SAVE_STORAGE_KEY);
+    expect(raw).toBeDefined();
+    expect(JSON.parse(raw ?? '{}')).toMatchObject({ checksum: expect.any(String) });
+    const loaded = loadSave();
+    expect(loaded.highestClearedLevel).toBe(1);
+    expect(loaded.levels[1]).toEqual({
+      cleared: true,
+      bestTimeMs: 30000,
+      eggsFound: [],
+      exCleared: false,
+    });
+  });
+
+  it('備援輪替：再次 persist 前先把上一份合法主檔轉入 sp-save-backup', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    const firstRaw = map.get(SAVE_STORAGE_KEY);
+    const second = recordLevelClear(first, 2, 40000);
+    persistSave(second);
+    expect(map.get(SAVE_BACKUP_KEY)).toBe(firstRaw);
+  });
+
+  it('主檔 JSON 損毀：loadSave 從備援恢復（回寫主檔），不默默歸零', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    map.set(SAVE_STORAGE_KEY, '{oops');
+    const restored = loadSave();
+    expect(restored.levels[1]?.cleared).toBe(true);
+    expect(warn).toHaveBeenCalled();
+    // 主檔已被恢復回寫：再次載入不再走備援。
+    expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null)).toEqual(restored);
+    warn.mockRestore();
+  });
+
+  it('checksum 不符（欄位被篡改）視為損毀：走備援恢復', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const tampered = JSON.parse(map.get(SAVE_STORAGE_KEY) ?? '{}') as Record<string, unknown>;
+    tampered['highestClearedLevel'] = 20;
+    (tampered['levels'] as Record<string, unknown>)['20'] = {
+      cleared: true,
+      bestTimeMs: 1,
+      eggsFound: [],
+    };
+    map.set(SAVE_STORAGE_KEY, JSON.stringify(tampered));
+    const restored = loadSave();
+    expect(restored.levels[20]).toBeUndefined();
+    expect(restored.levels[1]?.cleared).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('legacy 主檔（無 checksum 欄位）向後相容：直接接受不走備援', () => {
+    const map = stubStorage();
+    map.set(
+      SAVE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        levels: { 1: { cleared: true, bestTimeMs: 42000, eggsFound: [] } },
+        lastPlayedAt: 5,
+      }),
+    );
+    const save = loadSave();
+    expect(save.levels[1]?.cleared).toBe(true);
+    expect(save.schemaVersion).toBe(SAVE_SCHEMA_VERSION);
+  });
+
+  it('主檔與備援皆損毀：回退預設（警示不拋錯）且重複載入節流不洗版', () => {
+    const map = stubStorage();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    map.set(SAVE_STORAGE_KEY, '{oops');
+    map.set(SAVE_BACKUP_KEY, '{also-broken');
+    expect(loadSave()).toEqual(createDefaultSave());
+    expect(warn).toHaveBeenCalledTimes(1);
+    // 雙壞無自癒（不落盤預設）：後續 loadSave 熱呼叫不重複警示（審查 nit 節流）。
+    expect(loadSave()).toEqual(createDefaultSave());
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it('主檔損毀時 persistSave 不輪替：合法備援不被壞資料覆蓋（審查回歸鎖）', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const backupRaw = map.get(SAVE_BACKUP_KEY);
+    expect(backupRaw).toBeDefined();
+    // 主檔被外力寫壞後再落盤：損毀內容不得進備援，備援維持上一份合法存檔。
+    map.set(SAVE_STORAGE_KEY, '{corrupted');
+    persistSave(recordLevelClear(first, 3, 50000));
+    expect(map.get(SAVE_BACKUP_KEY)).toBe(backupRaw);
+    // 新主檔本身正常落盤。
+    expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null).levels[3]?.cleared).toBe(true);
+  });
+
+  it('備援輪替配額失敗：主檔仍寫入（審查回歸鎖）', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    // 僅備援鍵寫入拋 QuotaExceededError：主檔覆寫路徑不得被連帶略過。
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (key === SAVE_BACKUP_KEY) throw new Error('QuotaExceededError');
+        map.set(key, value);
+      },
+      removeItem: (key: string) => void map.delete(key),
+    });
+    persistSave(recordLevelClear(first, 2, 40000));
+    expect(parseSave(map.get(SAVE_STORAGE_KEY) ?? null).levels[2]?.cleared).toBe(true);
+  });
+
+  it('checksum 屬性存在但非字串：判損毀走備援恢復', () => {
+    const map = stubStorage();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    const legit = map.get(SAVE_BACKUP_KEY);
+    // 手改 checksum 為 null 不得繞過校驗。
+    const tampered = JSON.parse(map.get(SAVE_STORAGE_KEY) ?? '{}') as Record<string, unknown>;
+    tampered['checksum'] = null;
+    tampered['highestClearedLevel'] = 20;
+    map.set(SAVE_STORAGE_KEY, JSON.stringify(tampered));
+    expect(loadSave()).toEqual(parseSave(legit ?? null));
+    warn.mockRestore();
+  });
+
+  it('resetSave 同時清除主檔與備援（避免恢復出已重置的舊進度）', () => {
+    const map = stubStorage();
+    const first = recordLevelClear(createDefaultSave(), 1, 30000);
+    persistSave(first);
+    persistSave(recordLevelClear(first, 2, 40000));
+    resetSave();
+    expect(map.has(SAVE_STORAGE_KEY)).toBe(false);
+    expect(map.has(SAVE_BACKUP_KEY)).toBe(false);
+  });
+
+  it('localStorage 不可用：isSaveStorageAvailable false、loadSave 回預設不拋錯', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('denied');
+      },
+      setItem: () => {
+        throw new Error('denied');
+      },
+      removeItem: () => {
+        throw new Error('denied');
+      },
+    });
+    expect(isSaveStorageAvailable()).toBe(false);
+    expect(loadSave()).toEqual(createDefaultSave());
+  });
+
+  it('localStorage 可用：isSaveStorageAvailable true 且探測鍵不殘留', () => {
+    const map = stubStorage();
+    expect(isSaveStorageAvailable()).toBe(true);
+    expect([...map.keys()]).toEqual([]);
   });
 });

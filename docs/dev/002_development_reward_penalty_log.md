@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+227
+> 本次分數變化：+2（reward 2、penalty 0、neutral 0）｜累計總分：+242
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,106 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-backup-rotation-nonblocking
+- 原因：persistSave 備援輪替與主檔寫入共用同一 try/catch，備援 setItem 觸發 QuotaExceededError 會連帶略過主檔覆寫，使本次通關進度無聲遺失（Codex P1）
+- 解法：拆為兩段獨立 try/catch，備援失敗只吞自身錯誤不阻斷主檔寫入；補配額邊界回歸鎖單測（紅→綠）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-checksum-nonstring-corrupt
+- 原因：parseSaveStrict 以 typeof === 'string' 守衛 checksum，手改為 null／數字即完全跳過校驗並接受篡改進度，與損毀偵測目的相反（Codex P2）
+- 解法：改以 'checksum' in data 判定——屬性存在即須相符字串，非字串一律判損毀走備援恢復；僅無此屬性的 legacy 存檔豁免，補篡改單測
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-keyconfig-keyboard-a11y
+- 原因：keyConfig.addAction 六顆鈕（reset/save/cancel/rotation/scale-up/scale-down）仍僅綁 pointerdown，與設定頁同型鍵盤不可及遺漏（Sonnet 複核席補抓）
+- 解法：套用 core/domButton.bindButtonActivation（同設定頁模式），保留 stopPropagation 殼層手勢守衛；e2e 補純鍵盤案（設定頁→按鈕配置→Enter 觸發縮放與取消）紅→綠，v5 配置指標案回歸全過
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-002-e2e-count-correction
+- 原因：52c386511 尾聚合條目記載「t7 e2e 11 案」有誤，當時實為 9 案（歷史條目不可刪改，需補筆更正）
+- 解法：以本條目更正記載——該輪 t7 e2e 為 9 案全綠；本補筆後 t7 e2e 為 10 案
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-review-round-wrapup
+- 原因：T7-A 雙席審查收斂輪（2 Blocking＋5 Should-fix/nits）七 commit 出貨完畢，需尾聚合留痕
+- 解法：鍵盤可及性/損毀 fallback/PWA 寬限/單真相/備援回歸鎖/boss pity 收緊/nits 全數收斂；全量 921 案綠、t7 e2e 11 案綠、L4/L12 EX high bot 抽驗 75%/75% 過門檻
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-v9-ex-jellord-preexisting
+- 原因：終跑 e2e 發現 v9 EX 果凍王案紅（damageBoss(89) 一次灌傷被 P4 相位門檻夾在 HP 15）——base main@e611e29b0 臨時 worktree 復現同敗，屬 T6 段檢查點既有缺陷非本車引入
+- 解法：bossFsm 屬 T7-A 白名單禁區（T7-B 轄），不越權修；留證據（兩側同敗＋門檻夾點）供 PM 派卡收斂
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-nits-batch
+- 原因：審查 nits 三項——loadSave 雙壞每次熱呼叫重複 warn 洗版、settings 無跨分頁併發已知限制註解（S4 已補）、設定損毀恢復對使用者靜默
+- 解法：雙壞 warn 每工作階段節流一次（恢復路徑自癒天然單次不動）；settings 損毀恢復旗標＋main.ts 沿存檔不可用殼卡慣例於 Title 安靜時刻明確提示；均附單測
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-boss-pity-tighten
+- 原因：boss 房第二顆「受傷 1 次＋18s CD」保底比原 60% RNG 期望更慷慨，慈悲語意漂移偏鬆（審查 Should-fix）
+- 解法：bossPityHurts 1→2（時間保底 15s 與 CD 不動）；改後 level-audit 序列量測 L4/L12 EX high n=4 cap540——L4 75%、L12 75% 均過 ≥60% 門檻且相對 T6 基準（83%/100%，n=6）無統計顯著漂移；EX 每命愛心上限 1、首顆邏輯未動，機制上無影響路徑
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-backup-no-overwrite-test
+- 原因：persistSave「損毀主檔不輪替入備援」守衛僅為實作細節、無專測釘住，未來重構可能默默失守（審查 Should-fix 覆蓋缺口）
+- 解法：save.test 補回歸鎖——主檔被寫壞後再落盤，備援必須維持上一份合法存檔且新主檔正常寫入
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-legacy-keys-single-truth
+- 原因：migration 後 legacy 散鍵殘留舊值形成雙真相——主鍵若再遺失會被 fallback 吸回過期偏好（審查 Should-fix；PM 裁決刪 legacy）
+- 解法：升版/修復落盤成功即 removeLegacyKeys（舊版回滾非支援發佈路徑，PWA 部署單向前進）；persist 失敗（隱私模式/配額滿）保留 legacy 作下次開機來源，單測與 e2e 釘住兩側行為
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-pwa-apply-grace
+- 原因：pwaUpdateGate 在 controls 邊界事件當下立即 reload，可能吃掉 Result 進場瞬間玩家正要按的下一關 CTA 點擊（審查 Should-fix 競態）
+- 解法：套用前加 1.5s 寬限期，期滿重驗殼層仍安靜才 updateSW；寬限內轉忙（點 CTA 再入遊戲）放棄本次套用交還重試管線；e2e 實測寬限內點下一關照常進 Game 不被 reload
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-settings-corrupt-fallback
+- 原因：sp-settings 損毀時 loadSettings 直接回預設，不回退 legacy 散鍵也不回寫壞主鍵——壞主鍵＋sp-muted=1 時靜音偏好被丟（審查 Blocking 實測）
+- 解法：parse 失敗 fallback migrateFromLegacy()（legacy 存在即恢復、缺席等同預設）並 persist 修復主鍵；補壞 JSON／未知 schemaVersion＋legacy 兩單測
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-review-settings-keyboard-a11y
+- 原因：設定頁全按鈕僅綁 pointerdown，Tab 可聚焦但 Enter/Space 無反應（審查 Blocking，Playwright 實測復現）——重寫觸發邏輯而未沿 #823 雙路徑先例
+- 解法：把 hud.addDomButton 的 pointerdown+click 雙路徑（swallowPointerClick 手勢級防雙觸發、detail=0 放行鍵盤/AT）抽為 core/domButton.bindButtonActivation SSOT，hud 與設定頁全鈕共用；補純鍵盤與指標不雙觸發單測 4 案＋e2e 2 案
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-train-wrapup
+- 原因：T7-A 運行時收斂車（#819 卡 4/7/8/9＋卡 11/12）四子項出貨完畢，需 release intent 與尾聚合留痕
+- 解法：建立 @app/starpuff minor changeset（設定頁為使用者可感知新功能）；本車五 commit（pity 去 RNG→存檔備援→PWA 時機閘→settings SSOT→設定頁＋fx gate）皆紅燈先行、全量 911 案綠、t7 e2e 6 案＋受影響 v5/v16/portrait/t2 全過、真瀏覽器抽驗 console 0 錯
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-settings-page-fx-gate
+- 原因：偏好無 UI 入口（僅靜音鈕與按鈕配置），reducedMotion/screenShake 無處設定且 boss/fx 全域 40+ 處直呼 cameras.main.shake/flash 無單點強度閘（#819 卡 4/12）
+- 解法：DOM 設定頁（Title「設定」入口，按鈕配置移為頁內轉入口防六鈕溢出）＋cameraFxGate 包裝 main camera 單點縮放（off/low/full、reducedMotion 強制關震並縮閃光 0.3），呼叫端零改動；e2e 以 cameraFx 觀測點實證 reducedMotion 下受擊完全不震
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-user-settings-ssot
+- 原因：偏好散落多個 localStorage 鍵（sp-muted/sp-rotation/sp-key-layout）且觸覺跟隨靜音早退耦合、wakeLock 無偏好閘，無單一 schema 可擴充（#819 卡 4/11）
+- 解法：新增 core/settings.ts UserSettings SSOT（sp-settings v1）＋單一 versioned migration 吸收 legacy 散鍵（不刪除向後相容）；rotation/layout/hud 儲存委派 settings，haptics 以 hapticsEnabled 獨立閘門與靜音解耦（vibratePattern 單點），wakeLock 接 wakeLockEnabled＋變更訂閱即時重同步
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-pwa-update-scene-gate
+- 原因：starpuff SW 為 autoUpdate（skipWaiting 立即接管），週期/回前景檢查命中新版時可能在遊戲中 reload 吃掉進行中關卡並有版本撕裂風險（#819 卡 8）
+- 解法：改 prompt 型＋pwaUpdateGate——onNeedRefresh 只標記 pending，殼層安靜（isShellBusy SSOT，Title/Map/Result）才 updateSW(true) 套用，controls 邊界觀察者＋5s 低頻重試兜底、pending 先清後套防重入；官方 prompt 流程經 context7 查證
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-save-backup-checksum
+- 原因：sp-save 為單份存檔且 parseSave 對損毀一律默默歸零，位元翻轉/截斷/手改即全進度蒸發（#819 卡 7）
+- 解法：persistSave 寫入前輪替上一份合法主檔至 sp-save-backup 並附 canonical djb2 checksum；loadSave 以 parseSaveStrict 區分損毀與缺席、損毀先從備援恢復回寫、備援亦壞才回預設並警示，localStorage 不可用由 Title 殼卡明確提示
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-t7a-save-export-import-deferred
+- 原因：#819 卡 7 原列匯出/匯入，行動 PWA 情境檔案來回收益低且增攻擊面（工人裁量）
+- 解法：本車僅交付備援輪替＋checksum＋恢復＋不可用提示，匯出/匯入延後不做，留待 PM 裁決是否另開卡
+
+- 日期：2026-07-26
+- ID：reward-starpuff-t7a-mercy-pity-deterministic
+- 原因：慈悲補血以 35%/60% RNG 決定有無，低血久戰玩家可能連續空骰得不到保底（#819 卡 9 外部評審指認體感不可靠）
+- 解法：mercyHeal 改確定性 pity meter——首次符合門檻固定生成、之後依受傷次數（一般 2／boss 1）或低血累計時間（30s／15s）保底，RNG 僅決定生成位置；EX 生存段固定愛心管線本已確定性不動
 
 - 日期：2026-07-26
 - ID：reward-starpuff-t7b-review-shouldfix-closeout

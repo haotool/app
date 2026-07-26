@@ -1035,14 +1035,14 @@ export class GameScene extends Phaser.Scene {
     return this.time.now - this.startedAt;
   }
 
-  // 慈悲補血（§62）：每 5s 評估低血久戰保底；一般關與魔王關（含 EX）皆啟用。
+  // 慈悲補血（§62／v19 pity）：每 5s 評估低血久戰保底，生成與否確定性；
+  // 一般關與魔王關（含 EX）皆啟用，mercyRng 僅決定生成位置。
   private advanceMercy(deltaMs: number): void {
     const result = advanceMercyHeal(this.mercy, {
       deltaMs,
       elapsedMs: this.levelTimeMs() + this.mercyWarpMs,
       hp: this.playerHp,
       maxHp: PLAYER.maxHp,
-      rng: this.mercyRng,
       bossRoom: this.level.boss !== null,
       exMode: this.exMode,
     });
@@ -1075,7 +1075,8 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  // e2e 鉤子（§62）：時間快轉＋RNG 固定必中，供慈悲補血守門案觸發。
+  // e2e 鉤子（§62／v19 pity）：時間快轉供守門案觸發（生成已確定性）；
+  // RNG 固定使生成位置可預期（玩家左側地面錨點）。
   mercyWarp(ms: number): void {
     if (!this.scene.isActive()) return;
     this.mercyWarpMs += ms;

@@ -8,7 +8,9 @@ import { initWakeLock } from './wakeLock';
 import { GRAVITY_Y, STAR_FLAVORS, VIEW, type StarFlavor } from './game/core/config';
 import { applyLayoutToDom, loadLayout } from './game/core/layout';
 import { applyDesktopModeClass, applyRotationClass, loadRotationPref } from './game/core/rotation';
-import { loadSave, persistSave, type SaveData } from './game/core/save';
+import { isSaveStorageAvailable, loadSave, persistSave, type SaveData } from './game/core/save';
+import { wasSettingsRecoveredFromCorruption } from './game/core/settings';
+import { showShellCard, whenShellIdle } from './shellCards';
 import { awardAchievements } from './game/logic/achievements';
 import { eligibleForm } from './game/logic/transform';
 import { initShellLayout, initialShellWidth } from './game/core/shellLayout';
@@ -39,6 +41,34 @@ initOrientationGuide();
 initInstallGuide();
 // 螢幕常亮（§91）：遊戲進行中取得、離開釋放；不支援或被拒靜默降級。
 initWakeLock();
+// 設定損毀恢復提示（審查 nit）：偏好已盡力自 legacy/預設恢復並回寫修復，
+// 於 Title 安靜時刻明確告知，不靜默；restoreMutePreference 已先觸發 loadSettings。
+if (wasSettingsRecoveredFromCorruption()) {
+  whenShellIdle(
+    () =>
+      showShellCard({
+        title: '偏好設定已重置',
+        description:
+          '偵測到偏好設定資料損毀，已盡可能恢復並修復。若音效、震動或按鍵配置與預期不符，可至「設定」重新調整。',
+        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
+      }),
+    3000,
+  );
+}
+// 儲存不可用明確提示（v19 #819 卡 7）：隱私模式/空間耗盡時於 Title 安靜時刻告知，
+// 遊戲照常可玩但進度與設定不落盤，不再靜默吞掉。
+if (!isSaveStorageAvailable()) {
+  whenShellIdle(
+    () =>
+      showShellCard({
+        title: '進度無法保存',
+        description:
+          '偵測不到可用的瀏覽器儲存空間（可能為私密瀏覽模式或空間不足）。遊戲仍可正常遊玩，但通關進度與偏好設定將不會保存。',
+        buttons: [{ label: '我知道了', primary: true, onPress: (close) => close() }],
+      }),
+    2500,
+  );
+}
 // 開機成就補發單點（§94）：舊存檔（v1 遷移或版本更新新增成就）依既有資料靜默補發
 // 歷史成就（無 toast，圖鑑成就頁可見）；有增量才落盤，順帶完成 schema v2 遷移。
 const bootSave = loadSave();
@@ -170,6 +200,7 @@ declare global {
       bossHint: () => string;
       grantInvuln: (ms: number) => void;
       achievementToast: () => string;
+      cameraFx: () => { shakeRunning: boolean; flashRunning: boolean; flashDuration: number };
     }>;
   }
 }
@@ -337,6 +368,18 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     grantInvuln: (ms) => gameScene().grantInvuln(ms),
     // v15 觀測點（§94 e2e）：最近成就 toast 文案（canvas 文字不可由 DOM 查詢）。
     achievementToast: () => gameScene().lastAchievementToast,
+    // v19 觀測點（#819 卡 12 e2e/抽驗）：主相機震屏/閃光即時狀態，驗證強度閘生效。
+    cameraFx: () => {
+      const cam = gameScene().cameras.main as unknown as {
+        shakeEffect: { isRunning: boolean };
+        flashEffect: { isRunning: boolean; duration: number };
+      };
+      return {
+        shakeRunning: cam.shakeEffect.isRunning,
+        flashRunning: cam.flashEffect.isRunning,
+        flashDuration: cam.flashEffect.duration,
+      };
+    },
     enemies: () => {
       const list: { kind: string; x: number; y: number }[] = [];
       // 場景轉換瞬間（Result/restart）內部系統短暫不可用：防禦回空（審查修復）。
