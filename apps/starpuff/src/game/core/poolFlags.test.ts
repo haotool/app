@@ -1,12 +1,13 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { POOL_TRANSIENT_FLAGS, acquirePooled, resetTransientFlags } from './poolFlags';
 
 // 池瞬時旗標 SSOT 守門（PR #886）：resetTransientFlags 對在冊旗標逐一歸位 false，
-// acquirePooled 為池取出唯一入口，且原始碼靜態守門禁止繞過 wrapper 直呼 pool .get
-// ——「新增旗標」與「新增取出點」兩個維度的遺漏都必須被抓到。
+// acquirePooled 為池取出唯一入口。取出點守門走 TypeScript 型別層 AST 檢查：任何
+// 對 Arcade Group 型別值的 `get` 存取（直呼／解構／中括號／換行／改名別名／跨檔
+// 參數／Reflect.get）都會被抓；動態字串組鍵等蓄意繞過不在守門範圍（誠實邊界）。
 
 describe('poolFlags（池瞬時旗標 SSOT）', () => {
   it('resetTransientFlags 將在冊旗標全部歸位 false', () => {
@@ -25,30 +26,144 @@ describe('poolFlags（池瞬時旗標 SSOT）', () => {
   });
 });
 
-describe('池取出點靜態守門（PR #886 R3：新取出點不走 acquirePooled 必被抓）', () => {
-  const GAME_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
-  // 池群組命名全集（含 enemies 本體池的 group）：raw .get 直呼＝繞過取出即復位。
-  const RAW_POOL_GET =
-    /\b(hazards|projectiles|shockwaves|stars|meteors|embers|shields|group)\.get\(/;
+// ---------- 型別層取出點守門 ----------
 
-  const walk = (dir: string): string[] =>
-    readdirSync(dir).flatMap((name) => {
-      const path = join(dir, name);
-      if (statSync(path).isDirectory()) return walk(path);
-      return path.endsWith('.ts') && !path.endsWith('.test.ts') ? [path] : [];
-    });
+// 判準：expression 的型別 symbol 名為 'Group'（Phaser.Physics.Arcade.Group 與其
+// 基底 GameObjects.Group 皆是；本 codebase 無其他同名類）。
+function isGroupTyped(checker: ts.TypeChecker, node: ts.Node): boolean {
+  const type = checker.getTypeAtLocation(node);
+  const symbol = type.getSymbol() ?? type.aliasSymbol;
+  return symbol?.getName() === 'Group';
+}
 
-  it('src/game 內禁止 raw pool .get（一律走 acquirePooled）', () => {
-    const violations: string[] = [];
-    for (const file of walk(GAME_DIR)) {
-      if (file.endsWith('poolFlags.ts')) continue;
-      const lines = readFileSync(file, 'utf-8').split('\n');
-      lines.forEach((line, index) => {
-        if (RAW_POOL_GET.test(line)) {
-          violations.push(`${relative(GAME_DIR, file)}:${index + 1} ${line.trim()}`);
+// 掃描一個 program，回報所有繞過 acquirePooled 的 Group `get` 存取。
+// exemptFile：acquirePooled 本體所在檔（唯一合法呼叫點）。
+export function findPoolGetViolations(program: ts.Program, exemptFile: string): string[] {
+  const checker = program.getTypeChecker();
+  const violations: string[] = [];
+  const report = (sourceFile: ts.SourceFile, node: ts.Node, how: string): void => {
+    const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+    violations.push(`${sourceFile.fileName}:${line + 1} ${how}`);
+  };
+  for (const sourceFile of program.getSourceFiles()) {
+    if (sourceFile.isDeclarationFile) continue;
+    if (sourceFile.fileName.endsWith(exemptFile)) continue;
+    const visit = (node: ts.Node): void => {
+      // obj.get（含換行、任意識別子、跨檔參數——型別層判定與寫法無關）。
+      if (
+        ts.isPropertyAccessExpression(node) &&
+        node.name.text === 'get' &&
+        isGroupTyped(checker, node.expression)
+      ) {
+        report(sourceFile, node, 'property access .get');
+      }
+      // obj['get']。
+      if (
+        ts.isElementAccessExpression(node) &&
+        ts.isStringLiteralLike(node.argumentExpression) &&
+        node.argumentExpression.text === 'get' &&
+        isGroupTyped(checker, node.expression)
+      ) {
+        report(sourceFile, node, "element access ['get']");
+      }
+      // const { get } = group（含改名 { get: g }）。
+      if (
+        ts.isVariableDeclaration(node) &&
+        ts.isObjectBindingPattern(node.name) &&
+        node.initializer &&
+        isGroupTyped(checker, node.initializer)
+      ) {
+        for (const element of node.name.elements) {
+          const key = element.propertyName ?? element.name;
+          if (ts.isIdentifier(key) && key.text === 'get') {
+            report(sourceFile, element, 'destructured get');
+          }
         }
-      });
-    }
+      }
+      // Reflect.get(group, 'get')。
+      if (
+        ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === 'Reflect' &&
+        node.expression.name.text === 'get' &&
+        node.arguments[0] !== undefined &&
+        isGroupTyped(checker, node.arguments[0])
+      ) {
+        report(sourceFile, node, 'Reflect.get');
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  }
+  return violations;
+}
+
+const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const GAME_DIR = join(APP_DIR, 'src', 'game');
+
+describe('池取出點型別層守門（PR #886 R4：Group.get 一律走 acquirePooled）', () => {
+  it('src/game 生產碼零違規（直呼/解構/中括號/換行/改名/跨檔參數/Reflect 全涵蓋）', () => {
+    const configFile = ts.readConfigFile(join(APP_DIR, 'tsconfig.json'), (path) =>
+      ts.sys.readFile(path),
+    );
+    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, APP_DIR);
+    const gameFiles = parsed.fileNames.filter(
+      (file) => file.includes('/src/game/') && !file.endsWith('.test.ts'),
+    );
+    expect(gameFiles.length).toBeGreaterThan(30);
+    const program = ts.createProgram(gameFiles, {
+      ...parsed.options,
+      skipLibCheck: true,
+      noEmit: true,
+    });
+    const violations = findPoolGetViolations(program, 'core/poolFlags.ts').map((entry) =>
+      relative(GAME_DIR, entry),
+    );
     expect(violations).toEqual([]);
+  }, 60_000);
+
+  // 守門自證：對已知繞過寫法逐一驗紅（虛擬 program，型別以同名 Group 類替身）。
+  it('繞過寫法覆蓋驗證：五種重構寫法全抓、註解與字串零假陽性', () => {
+    const virtualSource = `
+declare class Group { get(x?: number, y?: number, key?: string): unknown }
+declare const meteors: Group;
+declare const rocks: Group;
+function acquireFrom(pool: Group): unknown {
+  return pool.get(0, 0); // 跨檔/任意參數名
+}
+const direct = meteors.get(1, 2); // 直呼
+const { get } = meteors; // 解構
+const bracket = meteors['get'](3, 4); // 中括號
+const wrapped = meteors
+  .get(5, 6); // 換行
+const renamed = rocks.get(7, 8); // 池變數改名
+const dynamic = Reflect.get(meteors, 'get'); // Reflect
+// 註解裡的 meteors.get( 不得誤報
+const text = "meteors.get(";
+export { direct, get, bracket, wrapped, renamed, dynamic, text, acquireFrom };
+`;
+    const fileName = '/virtual/guard-probe.ts';
+    const host = ts.createCompilerHost({});
+    const baseGetSourceFile = host.getSourceFile.bind(host);
+    host.getSourceFile = (name, languageVersion, ...rest) =>
+      name === fileName
+        ? ts.createSourceFile(name, virtualSource, languageVersion, true)
+        : baseGetSourceFile(name, languageVersion, ...rest);
+    const baseFileExists = host.fileExists.bind(host);
+    host.fileExists = (name) => name === fileName || baseFileExists(name);
+    const program = ts.createProgram(
+      [fileName],
+      { target: ts.ScriptTarget.ESNext, skipLibCheck: true, noEmit: true },
+      host,
+    );
+    const violations = findPoolGetViolations(program, 'core/poolFlags.ts');
+    const hows = violations.map((entry) => entry.split(' ').slice(1).join(' '));
+    // 七筆違規：跨檔參數＋直呼＋解構＋中括號＋換行＋改名＋Reflect。
+    expect(violations).toHaveLength(7);
+    expect(hows.filter((how) => how === 'property access .get')).toHaveLength(4);
+    expect(hows).toContain('destructured get');
+    expect(hows).toContain("element access ['get']");
+    expect(hows).toContain('Reflect.get');
   });
 });

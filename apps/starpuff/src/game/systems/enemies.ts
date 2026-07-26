@@ -330,7 +330,14 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setActive(false).setVisible(false);
   }
 
-  function spawnHazard(x: number, y: number): Phaser.Physics.Arcade.Sprite | null {
+  // hazardKind/lifeMs 收進參數（PR #886 R4）：原先依賴「每條 spawner 分支都記得
+  // setData」——與 caramel 破口同模式；參數化後漏寫即型別錯誤，單點強制寫入。
+  function spawnHazard(
+    x: number,
+    y: number,
+    hazardKind: string,
+    lifeMs: number,
+  ): Phaser.Physics.Arcade.Sprite | null {
     const hazard = acquirePooled(hazards, x, y, SPIKE_TEX);
     if (!hazard) return null;
     hazard.setActive(true);
@@ -338,6 +345,8 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     // 互動旗標（tideDeflected 等）走 poolFlags 單點復位。
     hazard.setAlpha(1);
     hazard.setRotation(0);
+    hazard.setData('hazardKind', hazardKind);
+    hazard.setData('lifeMs', lifeMs);
     hazard.setData('boomMs', undefined);
     const body = hazard.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
@@ -356,13 +365,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       [0, -SPIKE_SPEED],
     ];
     for (const [vx, vy] of directions) {
-      const spike = spawnHazard(x, y);
+      const spike = spawnHazard(x, y, 'spike', SPIKE_LIFE_MS);
       if (!spike) continue;
       spike.setTexture(SPIKE_TEX).setVisible(true);
       spike.setDisplaySize(SPIKE_SIZE, SPIKE_SIZE);
       spike.setRotation(Math.atan2(vy, vx) + Math.PI / 2);
-      spike.setData('hazardKind', 'spike');
-      spike.setData('lifeMs', SPIKE_LIFE_MS);
       const body = spike.body as Phaser.Physics.Arcade.Body;
       // 池回收重用：body 尺寸須重設，避免沿用咬合 hitbox 的 42px。
       body.setSize(SPIKE_SIZE, SPIKE_SIZE);
@@ -387,11 +394,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
     });
-    const zap = spawnHazard(x, y);
+    const zap = spawnHazard(x, y, 'zap', PULSE_RING_ACTIVE_MS);
     if (!zap) return;
     zap.setVisible(false);
-    zap.setData('hazardKind', 'zap');
-    zap.setData('lifeMs', PULSE_RING_ACTIVE_MS);
     const body = zap.body as Phaser.Physics.Arcade.Body;
     // 圓形 hitbox 以 frame 中心定位；池回收重用時 setSize 會自動復位為矩形。
     body.setCircle(radius, zap.width / 2 - radius, zap.height / 2 - radius);
@@ -400,25 +405,21 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // 咬合 hitbox：嘴部朝玩家側，僅啟用 0.3s；視覺由 chompy 本體咬合動畫承擔。
   function spawnBite(chompy: Phaser.Physics.Arcade.Sprite): void {
     const dir = target && target.x < chompy.x ? -1 : 1;
-    const bite = spawnHazard(chompy.x + dir * BITE_OFFSET_X, chompy.y - 8);
+    const bite = spawnHazard(chompy.x + dir * BITE_OFFSET_X, chompy.y - 8, 'bite', CHOMPY_BITE_MS);
     if (!bite) return;
     bite.setVisible(false);
-    bite.setData('hazardKind', 'bite');
-    bite.setData('lifeMs', CHOMPY_BITE_MS);
     (bite.body as Phaser.Physics.Arcade.Body).setSize(BITE_SIZE, BITE_SIZE);
   }
 
   // 孢子雲（§52）：噴發位置滯留區域拒止，圓形 hitbox 存活 cloudMs；命中即散（走既有管線）。
   function spawnSporeCloud(x: number, y: number): void {
     playSfx('pop', 0.7);
-    const cloud = spawnHazard(x, y);
+    const cloud = spawnHazard(x, y, 'spore', SPORA_FSM.cloudMs);
     if (!cloud) return;
     cloud.setTexture(SPORE_TEX).setVisible(true);
     cloud.setDisplaySize(SPORA_FSM.cloudRadiusPx * 2, SPORA_FSM.cloudRadiusPx * 2);
     cloud.setAlpha(0.8);
     cloud.setRotation(0);
-    cloud.setData('hazardKind', 'spore');
-    cloud.setData('lifeMs', SPORA_FSM.cloudMs);
     const body = cloud.body as Phaser.Physics.Arcade.Body;
     const radius = SPORA_FSM.cloudRadiusPx * (cloud.width / cloud.displayWidth);
     body.setCircle(radius, cloud.width / 2 - radius, cloud.height / 2 - radius);
@@ -428,13 +429,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // 鏡面反射彈（§59）：星彈被鏡面態反射為朝玩家的傷害彈，走既有 hazards 管線。
   function reflectStar(x: number, y: number, towardX: number, towardY: number): void {
     playSfx('metal', 1.15);
-    const bolt = spawnHazard(x, y);
+    const bolt = spawnHazard(x, y, 'reflect', MIRRI_FSM.reflectLifeMs);
     if (!bolt) return;
     bolt.setTexture('fx-star').setVisible(true);
     bolt.setDisplaySize(18, 18);
     bolt.setTint(0xd8dce8);
-    bolt.setData('hazardKind', 'reflect');
-    bolt.setData('lifeMs', MIRRI_FSM.reflectLifeMs);
     const body = bolt.body as Phaser.Physics.Arcade.Body;
     body.setSize(14, 14);
     const dx = towardX - x;
@@ -446,12 +445,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // 拋物糖球（§73 splatta）：重力拋物、落地轉灼燙糖斑；壽命有界逾時必回收（§56）。
   function spawnSugarBlob(x: number, y: number, directionX: 1 | -1): void {
     playSfx('pop', 0.6);
-    const blob = spawnHazard(x, y);
+    const blob = spawnHazard(x, y, 'sugarblob', SPLATTA_FSM.blobLifeMs);
     if (!blob) return;
     blob.setTexture(BLOB_TEX).setVisible(true);
     blob.setDisplaySize(BLOB_SIZE, BLOB_SIZE);
-    blob.setData('hazardKind', 'sugarblob');
-    blob.setData('lifeMs', SPLATTA_FSM.blobLifeMs);
     const body = blob.body as Phaser.Physics.Arcade.Body;
     body.setSize(BLOB_SIZE, BLOB_SIZE);
     body.setAllowGravity(true);
@@ -460,13 +457,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
   // 灼燙糖斑（§73）：糖球落地滯留區域拒止（沿孢子雲管線），spotMs 期滿消散。
   function spawnSugarSpot(x: number): void {
-    const spot = spawnHazard(x, BLOB_GROUND_Y);
+    const spot = spawnHazard(x, BLOB_GROUND_Y, 'sugarspot', SPLATTA_FSM.spotMs);
     if (!spot) return;
     spot.setTexture(BLOB_TEX).setVisible(true);
     spot.setDisplaySize(SPLATTA_FSM.spotRadiusPx * 2, 12);
     spot.setAlpha(0.9);
-    spot.setData('hazardKind', 'sugarspot');
-    spot.setData('lifeMs', SPLATTA_FSM.spotMs);
     const body = spot.body as Phaser.Physics.Arcade.Body;
     body.setSize(SPLATTA_FSM.spotRadiusPx * 2 * (spot.width / spot.displayWidth), spot.height);
     body.setVelocity(0, 0);
@@ -474,14 +469,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
   // 彗尾段（§80 cometa）：俯衝沿路滯留短命傷害段（壽命有界逾時必回收 §56）。
   function spawnCometTail(x: number, y: number): void {
-    const tail = spawnHazard(x, y);
+    const tail = spawnHazard(x, y, 'comettail', COMETA_FSM.tailLifeMs);
     if (!tail) return;
     tail.setTexture('fx-star').setVisible(true);
     tail.setDisplaySize(16, 16);
     tail.setTint(0x9fd8f0);
     tail.setAlpha(0.85);
-    tail.setData('hazardKind', 'comettail');
-    tail.setData('lifeMs', COMETA_FSM.tailLifeMs);
     const body = tail.body as Phaser.Physics.Arcade.Body;
     body.setSize(12, 12);
     body.setVelocity(0, 0);
@@ -491,13 +484,16 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // aim 期承擔），走 hazards 管線。
   function spawnScanBeam(x: number, y: number, directionX: 1 | -1): void {
     playSfx('zap', 0.8);
-    const beam = spawnHazard(x + directionX * (SCANNA_FSM.beamLengthPx / 2 + 16), y);
+    const beam = spawnHazard(
+      x + directionX * (SCANNA_FSM.beamLengthPx / 2 + 16),
+      y,
+      'scanbeam',
+      SCANNA_FSM.beamLifeMs,
+    );
     if (!beam) return;
     beam.setTexture('fx-star').setVisible(true);
     beam.setDisplaySize(SCANNA_FSM.beamLengthPx, 10);
     beam.setTint(0xff9ec4);
-    beam.setData('hazardKind', 'scanbeam');
-    beam.setData('lifeMs', SCANNA_FSM.beamLifeMs);
     const body = beam.body as Phaser.Physics.Arcade.Body;
     body.setSize(SCANNA_FSM.beamLengthPx * (beam.width / beam.displayWidth), beam.height);
     body.setVelocity(0, 0);
@@ -505,13 +501,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
   // 漂浮泡泡（§120 foamy）：不傷人拒止——觸碰使玩家上浮（潮化免疫），走 hazards 管線。
   function spawnBubble(x: number, y: number, directionX: 1 | -1): void {
-    const bubble = spawnHazard(x, y);
+    const bubble = spawnHazard(x, y, 'bubble', FOAMY_FSM.bubbleLifeMs);
     if (!bubble) return;
     bubble.setTexture(BUBBLE_TEX).setVisible(true);
     bubble.setDisplaySize(BUBBLE_SIZE, BUBBLE_SIZE);
     bubble.setAlpha(0.9);
-    bubble.setData('hazardKind', 'bubble');
-    bubble.setData('lifeMs', FOAMY_FSM.bubbleLifeMs);
     const body = bubble.body as Phaser.Physics.Arcade.Body;
     const radius = (BUBBLE_SIZE / 2) * (bubble.width / bubble.displayWidth);
     body.setCircle(radius, bubble.width / 2 - radius, bubble.height / 2 - radius);
@@ -520,14 +514,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
   // 扇形水刃（§120 manta）：順流三發直線水刃，壽命有界逾時必回收（§56）。
   function spawnWaterBlade(x: number, y: number, vx: number, vy: number): void {
-    const blade = spawnHazard(x, y);
+    const blade = spawnHazard(x, y, 'waterblade', MANTA_FSM.bladeLifeMs);
     if (!blade) return;
     blade.setTexture('fx-star').setVisible(true);
     blade.setDisplaySize(18, 10);
     blade.setTint(0x8ac8e8);
     blade.setRotation(Math.atan2(vy, vx));
-    blade.setData('hazardKind', 'waterblade');
-    blade.setData('lifeMs', MANTA_FSM.bladeLifeMs);
     const body = blade.body as Phaser.Physics.Arcade.Body;
     body.setSize(14, 14);
     body.setVelocity(vx, vy);
@@ -536,13 +528,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
-    const shell = spawnHazard(x, y);
+    const shell = spawnHazard(x, y, 'boomerang', BOOMY_FSM.shellLifeMs);
     if (!shell) return;
     shell.setTexture(SHELL_TEX).setVisible(true);
     shell.setDisplaySize(SHELL_SIZE, SHELL_SIZE);
     shell.setAlpha(1);
-    shell.setData('hazardKind', 'boomerang');
-    shell.setData('lifeMs', BOOMY_FSM.shellLifeMs);
     shell.setData('boomMs', 0);
     shell.setData('boomDir', directionX);
     const body = shell.body as Phaser.Physics.Arcade.Body;
@@ -664,6 +654,9 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('dotAccMs', 0);
     // 池重用重設（§77）：吸入豁免窗不得跨個體殘留。
     sprite.setData('inhaleGraceUntil', 0);
+    // R4 重查補強：inhalePull 雖由讀取端逐幀消費清除，但池復用個體在「玩家正
+    // 吸入」的生成瞬間可殘留一幀錯誤拉力——重建清單強制歸位。
+    sprite.setData('inhalePull', false);
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);

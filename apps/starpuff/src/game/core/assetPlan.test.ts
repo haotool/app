@@ -210,3 +210,39 @@ describe('levelAssetKeys 派生', () => {
     }
   });
 });
+
+// PENDING 佔位鍵豁免的機械鎖（PR #886 R4）：豁免不受 anti-softlock 不變式管轄，
+// 若被濫用（把真資產鍵塞進 PENDING）會靜默放行缺圖——以下三條把範圍鎖死。
+describe('PENDING 佔位鍵守門（R4）', () => {
+  it('PENDING ∩ ASSETS = ∅：已存在 manifest 的鍵禁止列入豁免', () => {
+    const assetKeys = new Set(ASSETS.map((entry) => entry.key));
+    for (const key of PENDING_TEXTURE_KEYS) {
+      expect(assetKeys.has(key), key).toBe(false);
+    }
+  });
+
+  it('每個 PENDING key 必落在已知運行期回退集合（minion→色塊生成、hero→素身著色）', () => {
+    const minionFallback = new Set(Object.values(ENEMY_TEXTURE_KEYS));
+    const heroFallback = new Set(Object.keys(TRANSFORM_FORMS).map((form) => `hero-${form}`));
+    for (const key of PENDING_TEXTURE_KEYS) {
+      expect(minionFallback.has(key) || heroFallback.has(key), key).toBe(true);
+    }
+  });
+
+  it('PENDING 內容凍結為 §120 六新怪＋§119 四新形態：擴充必須顯式過審', () => {
+    expect([...PENDING_TEXTURE_KEYS].sort()).toEqual(
+      [
+        'minion-cargo',
+        'minion-ticketa',
+        'minion-scanna',
+        'minion-foamy',
+        'minion-frosty',
+        'minion-manta',
+        'hero-ember',
+        'hero-tide',
+        'hero-prism',
+        'hero-gravity',
+      ].sort(),
+    );
+  });
+});

@@ -517,6 +517,10 @@ export function createPrismix(
       const body = shadow.body as Phaser.Physics.Arcade.Body;
       body.setAllowGravity(false);
       body.setSize(shadow.width * 0.8, shadow.height * 0.8);
+    }
+    // 入池只在存活期（PR #886 R4）：殘影失效即離池（見 update 逐幀對帳），
+    // 否則 Group.get 復用 inactive 會把專屬 sprite 當池物件發給晶柱/波/盾。
+    if (!shockwaves.contains(shadow)) {
       shockwaves.add(shadow);
       shields.add(shadow);
     }
@@ -872,6 +876,13 @@ export function createPrismix(
       if (command) runCommand(command);
       // 鏡光面板逐幀貼合開鏡具（雙子浮動不脫錨）。
       if (mirrorPane && mirrorTwin) mirrorPane.setPosition(mirrorTwin.x, mirrorTwin.y);
+      // 殘影離池對帳（PR #886 R4）：擊破可發生在 overlaps（星彈 1 發即破），
+      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體
+      //（第六例池殘留同族破口：wave/晶柱/盾取到 shadow===true 的 sprite）。
+      if (shadow && !shadow.active && shockwaves.contains(shadow)) {
+        shockwaves.remove(shadow);
+        shields.remove(shadow);
+      }
       // 鏡像殘影（§5 W2）：水平反向步進＋垂直速度上限跟隨；壽命期滿消散。
       if (shadow && shadowSpawnAtMs >= 0 && shadow.active) {
         if (!shadowActive(shadowSpawnAtMs, scene.time.now)) {

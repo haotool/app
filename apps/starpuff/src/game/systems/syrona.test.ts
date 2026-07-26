@@ -464,4 +464,62 @@ describe('Syrona 池瞬時旗標循環（§119 潮環＋caramel，PR #886 R3）'
     // 復用證據：下一次自池取出必經 acquirePooled 將 caramel 復位。
     expect(step(() => wave.getData('caramel') === false)).toBe(true);
   });
+
+  // R4（Sonnet mutation 缺口）：R3 案全程停在 P1，line 312 doWave 取出點被共池
+  // 的噴泉柱（line 246）意外掩護——破壞 312 不會紅。本案直入 P3（招池僅
+  // wave/overload，其中只有 wave 取 shockwaves），污染回收物件後由 doWave 復用，
+  // 歸位斷言即鎖死 312 的 acquirePooled 路徑。
+  it('P3 糖漿波（doWave）復用回收物件：tideDeflected 歸位且 caramel 為本發所設', () => {
+    const body = makeBodySprite();
+    const pooledGroups: ReturnType<typeof makePooledGroup>[] = [];
+    const base = makeScene(body) as unknown as Record<string, unknown>;
+    const basePhysics = (base as { physics: { add: Record<string, unknown> } }).physics;
+    const scene = {
+      ...base,
+      physics: {
+        ...basePhysics,
+        add: {
+          ...basePhysics.add,
+          group: () => {
+            const group = makePooledGroup();
+            pooledGroups.push(group);
+            return group;
+          },
+        },
+      },
+    } as unknown as Phaser.Scene;
+    const handle = createSyrona(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    const shockwaves = pooledGroups[1];
+    if (!shockwaves) throw new Error('shockwaves group 未建立');
+
+    // 不經 update 直接壓進 P3：期間零攻擊，池保持空——首發 shockwave 必為 wave。
+    for (let i = 0; i < 200 && handle.getDebugState?.()?.phase !== 'p3'; i += 1) {
+      handle.applyDamage(4);
+      handle.trySegmentRespawn?.();
+    }
+    expect(handle.getDebugState?.()?.phase).toBe('p3');
+    expect(shockwaves.children).toHaveLength(0);
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // 首發 wave：同步 delayedCall 使其同 tick 生滅，以 caramel 資料為存在證據。
+    expect(step(() => shockwaves.children.length > 0)).toBe(true);
+    const wave = shockwaves.children[0];
+    if (!wave) throw new Error('wave 未生成');
+    expect(wave.getData('caramel')).toBe(true);
+
+    // 潮環撥開殘留現場 → 回池（已 inactive）→ 下一發 wave 復用（P3 僅 doWave
+    // 取 shockwaves）：tideDeflected 必歸位、caramel 為本發 doWave 重新寫入。
+    wave.setData('tideDeflected', true);
+    wave.active = false;
+    expect(step(() => wave.getData('tideDeflected') === false)).toBe(true);
+    expect(wave.getData('caramel')).toBe(true);
+  });
 });

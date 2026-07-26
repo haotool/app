@@ -216,8 +216,9 @@
 - 撥開/反彈/焰彈/糖漿等一次性互動旗標由 `core/poolFlags.ts` SSOT 清單管理
   （tideDeflected/reflected/burn/inhalable/caramel）：所有池取出點（hazards/
   魔王彈幕/糖漿波柱/星彈/隕石）一律經 `acquirePooled` 取出即復位——新增旗標由
-  清單守、新增取出點由原始碼靜態守門守（raw pool `.get` 直呼即測試紅），杜絕
-  池回收殘留旗標造成的靜默免疫/效果洩漏（同族缺陷已五度重演的結構性根治）。
+  清單守、新增取出點由 TypeScript 型別層守門守（對 Group 型別值的 get 存取
+  含解構/中括號/改名/跨檔參數全數測試紅；動態規避不在涵蓋範圍）。專屬 sprite
+  （如鏡像殘影）失效時必須離開所有池群組，不得被 Group.get 當池物件復用。
 
 ### 119.2 工程契約
 

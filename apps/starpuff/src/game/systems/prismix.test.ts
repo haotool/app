@@ -58,6 +58,7 @@ interface FakeSprite {
   setPosition(x: number, y: number): FakeSprite;
   setVisible(value: boolean): FakeSprite;
   setAlpha(value: number): FakeSprite;
+  setDepth(value: number): FakeSprite;
   setAngle(value: number): FakeSprite;
   setDisplaySize(): FakeSprite;
   setScale(): FakeSprite;
@@ -113,6 +114,7 @@ function makeSprite(x: number, y: number): FakeSprite {
       return sprite;
     },
     setDisplaySize: () => sprite,
+    setDepth: () => sprite,
     setScale: () => sprite,
     setTint: () => sprite,
     clearTint: () => sprite,
@@ -148,6 +150,8 @@ function makeGroup(maxSize: number): {
   get(x: number, y: number): FakeSprite | null;
   getMatching(key: string, value: boolean): FakeSprite[];
   add: (sprite: FakeSprite) => void;
+  contains: (sprite: FakeSprite) => boolean;
+  remove: (sprite: FakeSprite) => void;
   children: FakeSprite[];
   destroy: ReturnType<typeof vi.fn>;
 } {
@@ -169,7 +173,12 @@ function makeGroup(maxSize: number): {
     getMatching: (_key: string, value: boolean) =>
       children.filter((child) => child.active === value),
     add: (sprite: FakeSprite) => {
-      children.push(sprite);
+      if (!children.includes(sprite)) children.push(sprite);
+    },
+    contains: (sprite: FakeSprite) => children.includes(sprite),
+    remove: (sprite: FakeSprite) => {
+      const index = children.indexOf(sprite);
+      if (index >= 0) children.splice(index, 1);
     },
     destroy: vi.fn(),
   };
@@ -398,5 +407,65 @@ describe('Prismix 呈現層：EX 段檢查點（§114 W1.6）', () => {
     handle.applyDamageAt?.(999, 0, 352);
     expect(step(() => handle.getDebugState?.()?.phase === 'p3')).toBe(true);
     expect(handle.trySegmentRespawn?.()).toBe(false);
+  });
+});
+
+// 殘影離池對帳（PR #886 R4 第六例池破口）：殘影雙掛 shockwaves/shields 池群組，
+// Phaser Group.get 優先復用 inactive 且忽略 key——殘影被擊破（overlaps 星彈 1 發
+// 即破）後若留在池內，晶柱/波/盾取出就會拿到 shadow===true 的本體 sprite。
+describe('鏡像殘影失效即離池（PR #886 R4）', () => {
+  beforeEach(() => {
+    let seed = 11;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('殘影擊破後自兩池移除，後續池取出不得撿到殘影本體；再召喚重新入池', () => {
+    const groups: ReturnType<typeof makeGroup>[] = [];
+    const scene = makeScene(groups);
+    const handle = createPrismix(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    // 建立順序：projectiles → shockwaves → shields。
+    const shockwaves = groups[1];
+    const shields = groups[2];
+    if (!shockwaves || !shields) throw new Error('pooled groups 未建立');
+
+    const step = (predicate: () => boolean, maxTicks = 8000): boolean => {
+      for (let i = 0; i < maxTicks; i += 1) {
+        handle.update(100);
+        if (predicate()) return true;
+      }
+      return false;
+    };
+
+    // 壓 HP 至 ≤50% 使 shadow 招可選（P2 池，condition maxHpRatio 0.5）。
+    handle.applyDamage(28);
+    handle.applyDamageAt?.(14, 0, 352);
+    const hasShadow = () => shockwaves.children.some((child) => child.getData('shadow') === true);
+    expect(step(hasShadow)).toBe(true);
+    const shadowSprite = shockwaves.children.find((child) => child.getData('shadow') === true);
+    if (!shadowSprite) throw new Error('殘影未生成');
+    expect(shields.contains(shadowSprite)).toBe(true);
+
+    // 星彈 1 發即破（overlaps 語意）：外部 disableBody，殘影進 inactive。
+    shadowSprite.disableBody();
+    handle.update(100);
+    // 逐幀對帳：失效即離池。
+    expect(shockwaves.contains(shadowSprite)).toBe(false);
+    expect(shields.contains(shadowSprite)).toBe(false);
+
+    // 後續任何池取出都不可能是殘影本體（殘影已不在池內）。
+    for (const child of shockwaves.children) expect(child.getData('shadow')).not.toBe(true);
+    for (const child of shields.children) expect(child.getData('shadow')).not.toBe(true);
+
+    // 再召喚：殘影重新入池且存活（召喚流程不因離池而壞）。
+    expect(step(() => shockwaves.contains(shadowSprite) && shadowSprite.active)).toBe(true);
+    expect(shields.contains(shadowSprite)).toBe(true);
   });
 });
