@@ -14,7 +14,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test:e2e": "playwright test",
-    "audit:level": "node scripts/level-audit.mjs"
+    "audit:level": "node scripts/level-audit.mjs",
+    "verify:docs": "node scripts/verify-design-docs.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1",
