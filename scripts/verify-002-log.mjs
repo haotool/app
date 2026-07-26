@@ -17,8 +17,9 @@ import { pathToFileURL } from 'node:url';
 export const LOG_PATH = 'docs/dev/002_development_reward_penalty_log.md';
 
 // 檔頭記分行的標準格式；新 commit 一律要求此格式。
+// 正負號強制存在：文件所定格式為 `+N`／`+T`，省略加號會讓非標準檔頭寫進稽核記錄。
 const HEADER_STRICT_RE =
-  /^> 本次分數變化：([+-]?\d+)（reward (\d+)、penalty (\d+)、neutral (\d+)）｜累計總分：([+-]?\d+)$/;
+  /^> 本次分數變化：([+-]\d+)（reward (\d+)、penalty (\d+)、neutral (\d+)）｜累計總分：([+-]\d+)$/;
 // 前版檔頭僅需能取出累計總分（相容歷史自由格式）。
 const HEADER_TOTAL_RE = /^> 本次分數變化：.*｜累計總分：([+-]?\d+)$/;
 
@@ -301,29 +302,45 @@ function runPreCommit() {
   report(validate002({ stagedContent, headContent }).errors);
 }
 
-// CI 語意：HEAD 版（PR 最終態）vs merge-base 版；只驗整體一致性、不逐 commit。
-function runAgainstBaseRef(baseRef) {
-  let mergeBase;
-  try {
-    mergeBase = execFileSync('git', ['merge-base', baseRef, 'HEAD'], { encoding: 'utf-8' }).trim();
-  } catch {
-    console.error(`002 記分守門失敗：無法解析 merge-base（base ref「${baseRef}」）`);
-    process.exit(1);
+// CI 語意：HEAD 版（最終態）vs 基準版；只驗整體一致性、不逐 commit。
+// useMergeBase=true（PR）：基準取 merge-base(ref, HEAD)——base 分支會前進，需退回分岔點。
+// useMergeBase=false（main push）：基準直接取 ref（推送前的 tip）。此處**不得**取 merge-base：
+// 非快轉／force push 時 before 不是 HEAD 的祖先，merge-base 會退到更早的共同祖先，
+// 使 before 與祖先之間新增的 penalty 條目在改寫後消失也驗不出來——而那正是本模式的存在理由。
+function runAgainstBaseRef(ref, { useMergeBase }) {
+  let base = ref;
+  if (useMergeBase) {
+    try {
+      base = execFileSync('git', ['merge-base', ref, 'HEAD'], { encoding: 'utf-8' }).trim();
+    } catch {
+      console.error(`002 記分守門失敗：無法解析 merge-base（base ref「${ref}」）`);
+      process.exit(1);
+    }
+  } else {
+    try {
+      base = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], {
+        encoding: 'utf-8',
+      }).trim();
+    } catch {
+      console.error(`002 記分守門失敗：無法解析基準 commit（「${ref}」）`);
+      process.exit(1);
+    }
   }
 
+  const label = `${useMergeBase ? 'merge-base' : '基準'} ${base.slice(0, 12)}`;
   const currentContent = gitShow(`HEAD:${LOG_PATH}`);
-  const baseContent = gitShow(`${mergeBase}:${LOG_PATH}`);
+  const baseContent = gitShow(`${base}:${LOG_PATH}`);
 
   if (currentContent === null) {
     if (baseContent === null) {
       console.log(`002 記分守門跳過（${LOG_PATH} 不存在）`);
       return;
     }
-    report([`${LOG_PATH} 不可刪除（merge-base ${mergeBase.slice(0, 12)} 存在此檔）`]);
+    report([`${LOG_PATH} 不可刪除（${label} 存在此檔）`]);
     return;
   }
   if (currentContent === baseContent) {
-    console.log(`002 記分守門跳過（${LOG_PATH} 相對 merge-base ${mergeBase.slice(0, 12)} 無變更）`);
+    console.log(`002 記分守門跳過（${LOG_PATH} 相對 ${label} 無變更）`);
     return;
   }
   report(validate002({ stagedContent: currentContent, headContent: baseContent }).errors);
@@ -331,17 +348,21 @@ function runAgainstBaseRef(baseRef) {
 
 function main() {
   const args = process.argv.slice(2);
-  const flagIndex = args.indexOf('--base-ref');
-  if (flagIndex === -1) {
-    runPreCommit();
+  for (const [flag, useMergeBase] of [
+    ['--base-ref', true],
+    ['--base-commit', false],
+  ]) {
+    const index = args.indexOf(flag);
+    if (index === -1) continue;
+    const ref = args[index + 1];
+    if (!ref) {
+      console.error(`002 記分守門失敗：${flag} 需指定基準（例如 origin/main 或 base SHA）`);
+      process.exit(1);
+    }
+    runAgainstBaseRef(ref, { useMergeBase });
     return;
   }
-  const baseRef = args[flagIndex + 1];
-  if (!baseRef) {
-    console.error('002 記分守門失敗：--base-ref 需指定基準 ref（例如 origin/main 或 base SHA）');
-    process.exit(1);
-  }
-  runAgainstBaseRef(baseRef);
+  runPreCommit();
 }
 
 // argv[1] 需先解析 symlink 再比對：macOS 的 /tmp 是 /private/tmp 的 symlink，

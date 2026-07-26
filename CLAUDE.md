@@ -106,7 +106,7 @@ pnpm format:fix              # prettier --write .
   - `最新總分 = 前次總分 + 本次分數變化`
 - 每次 commit 前新增 002 紀錄時，必須同步更新「本次分數變化」與「累計總分」。
 - 檔頭記分行固定格式：`> 本次分數變化：+N（reward a、penalty b、neutral c）｜累計總分：+T`；條目 ID 必須以 `reward-` / `penalty-` / `neutral-` 開頭。
-- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，僅 002 檔變更時執行）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。
+- `pre-commit` 第 6 步（`scripts/verify-002-log.mjs`，**無條件執行**，跳過與否由腳本自行判定）自動驗證記分：`a+b+c` = 本次新增條目數、`N = a - b`、`T` = 前版累計 + `N`、四行模板、ID 唯一性與歷史條目不可刪除（issue #608）；staged 刪除整份 002（`git rm`）亦必紅。
 - 既有條目的欄位不可被掏空：基準版非空的欄位（日期／原因／解法）改後不得為空。**掏空＝就地刪除**故擋；**改寫不擋**，因為它與合法的精確性修正（改錯字、更正數字）無法機械區分，擋下會封死唯一的更正管道。判準是「有沒有從有變成無」，不是「內容有沒有變」；語意品質交由審查把關。詳見 `AGENTS.md` § 為什麼堵「掏空」但不堵「改寫」。
 - pre-commit 第 6 步無條件執行、不以 `git diff` 判斷觸發（`git mv` 的 `--name-only` 只列新路徑會繞過）；條目區段 `## 條目` 必須唯一（多個等於替後續區段開永久盲區）。
 - `git merge` 的 merge commit 走 `pre-merge-commit` 而非 `pre-commit`，本 repo 未設前者故 hook 層不覆蓋——刻意不補（會讓 `git merge origin/main` 誤紅），由 CI 兜底。

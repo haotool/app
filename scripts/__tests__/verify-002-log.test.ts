@@ -73,6 +73,21 @@ describe('parseStrictHeader / parsePreviousTotal', () => {
     });
   });
 
+  // 文件所定格式為 `+N`／`+T`；省略加號會讓非標準檔頭永久寫進稽核記錄。
+  it.each([
+    ['分數變化缺正號', '> 本次分數變化：2（reward 3、penalty 1、neutral 0）｜累計總分：+172'],
+    ['累計總分缺正號', '> 本次分數變化：+2（reward 3、penalty 1、neutral 0）｜累計總分：172'],
+  ])('%s時嚴格檔頭解析失敗', (_label, line) => {
+    expect(parseStrictHeader(line)).toBeNull();
+  });
+
+  it('負值檔頭仍可解析（負號即為顯式符號）', () => {
+    expect(
+      parseStrictHeader('> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：-3')
+        ?.delta,
+    ).toBe(-1);
+  });
+
   it('歷史自由格式檔頭仍可取出累計總分（前版相容）', () => {
     expect(
       parsePreviousTotal(
@@ -573,6 +588,47 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     expect(status).toBe(0);
   });
 
+  // main push 兜底若取 merge-base，force push 時 before 並非 HEAD 的祖先，
+  // 基準會退到更早的共同祖先，使被改寫掉的 penalty 條目驗不出來。
+  it('--base-commit：force push 改寫掉基準與祖先之間的條目必紅', () => {
+    const repo = setupRepo();
+    const ancestor = git(repo, 'rev-parse', 'HEAD').trim();
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+169',
+        entries: [{ id: 'penalty-evidence' }, { id: 'reward-existing-entry' }],
+      }),
+      'add penalty evidence',
+    );
+    const before = git(repo, 'rev-parse', 'HEAD').trim();
+
+    // 改寫歷史：回到 ancestor 後另起一條不含 penalty-evidence 的線。
+    git(repo, 'reset', '--hard', ancestor);
+    commitLog(
+      repo,
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+        entries: [{ id: 'reward-rewritten' }, { id: 'reward-existing-entry' }],
+      }),
+      'force-pushed rewrite',
+    );
+
+    // merge-base 模式會退回 ancestor 而看不見 penalty-evidence。
+    expect(runGuard(repo, '--base-ref', before).status).toBe(0);
+    // 直接以 before 為基準才驗得出刪除。
+    const { status, output } = runGuard(repo, '--base-commit', before);
+    expect(status).toBe(1);
+    expect(output).toContain('penalty-evidence');
+  });
+
+  it('--base-commit：基準 commit 無法解析時明確失敗', () => {
+    const repo = setupRepo();
+    const { status, output } = runGuard(repo, '--base-commit', 'deadbeefdeadbeefdeadbeef');
+    expect(status).toBe(1);
+    expect(output).toContain('無法解析基準 commit');
+  });
+
   it('刪除 002 檔案的 PR 必紅', () => {
     const repo = setupRepo();
     git(repo, 'rm', LOG_PATH);
@@ -671,7 +727,7 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
   it('ci.yml 對 pull_request 與 main push 都掛守門，且置於 install 之前', () => {
     const workflow = read('.github/workflows/ci.yml');
     const prStep = workflow.indexOf('--base-ref "${{ github.event.pull_request.base.sha }}"');
-    const pushStep = workflow.indexOf('--base-ref "${{ github.event.before }}"');
+    const pushStep = workflow.indexOf('--base-commit "${{ github.event.before }}"');
     const install = workflow.indexOf('pnpm install --frozen-lockfile');
 
     expect(prStep).toBeGreaterThan(-1);
@@ -681,6 +737,8 @@ describe('守門觸發面（hook 條件與 CI 條件）', () => {
     expect(pushStep).toBeLessThan(install);
     expect(workflow).toContain("if: github.event_name == 'pull_request'");
     expect(workflow).toContain("github.event_name == 'push'");
+    // push 必須用 --base-commit：--base-ref 會取 merge-base，force push 時驗不出被改寫的條目。
+    expect(workflow).not.toContain('--base-ref "${{ github.event.before }}"');
     // 分支初建／force push 後 before 為全零，須跳過而非誤紅。
     expect(workflow).toContain("github.event.before != '0000000000000000000000000000000000000000'");
   });
