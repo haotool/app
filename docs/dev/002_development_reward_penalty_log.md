@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+246
+> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+247
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-settings-fixture-sync-gate
+- 原因：`scripts/lib/settings-fixture.mjs` 的 key 與 schemaVersion 為手抄字面值（node 腳本無法 import TS），與 `core/settings.ts` 執行期 SSOT 分家且無守門——schema bump 忘記同步會讓 fixture 被 parseSettings 判版本不符整段回退預設，腳本斷言全面失準且極難追因（兩席共同 Should-fix）
+- 解法：`settings.test.ts` 補兩案同步契約——常數逐一相等、fixture 產物實際餵入 parseSettings 須被接受且欄位正確；補 `.d.mts` 型別宣告；以刻意 bump fixture 版本驗證守門紅（2 案 fail）再還原綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-persistsave-contract-all-callsites
