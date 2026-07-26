@@ -802,4 +802,124 @@ export const ASSETS: AssetEntry[] = [
     key: 'ui-gravity-skill',
     url: new URL('../../assets/sprites/ui-gravity-skill.webp', import.meta.url).href,
   },
+  // v21-v30 B04 崩盤前夜／劉董戰場場景（載入時機建議：L29/L30 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'bg-crasheve-l',
+    url: new URL('../../assets/sprites/bg-crasheve-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-crasheve-1',
+    url: new URL('../../assets/sprites/prop-crasheve-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-crasheve-2',
+    url: new URL('../../assets/sprites/prop-crasheve-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-crasheve-3',
+    url: new URL('../../assets/sprites/prop-crasheve-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-crasheve-4',
+    url: new URL('../../assets/sprites/prop-crasheve-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'bg-market-l',
+    url: new URL('../../assets/sprites/bg-market-l.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-market-1',
+    url: new URL('../../assets/sprites/prop-market-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-market-2',
+    url: new URL('../../assets/sprites/prop-market-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-market-3',
+    url: new URL('../../assets/sprites/prop-market-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'prop-market-4',
+    url: new URL('../../assets/sprites/prop-market-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B04 劉董三形態補完與入金演出四幀（載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-liudong-enraged',
+    url: new URL('../../assets/sprites/boss-liudong-enraged.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-doom',
+    url: new URL('../../assets/sprites/boss-liudong-doom.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-1',
+    url: new URL('../../assets/sprites/boss-liudong-entry-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-2',
+    url: new URL('../../assets/sprites/boss-liudong-entry-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-3',
+    url: new URL('../../assets/sprites/boss-liudong-entry-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-4',
+    url: new URL('../../assets/sprites/boss-liudong-entry-4.webp', import.meta.url).href,
+  },
+  // v21-v30 B04 牛熊怪與三市場圖示（載入時機建議：L29/L30 關卡載入，暫沿 Boot 預載）。
+  {
+    key: 'minion-bullrun',
+    url: new URL('../../assets/sprites/minion-bullrun.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-bearmarket',
+    url: new URL('../../assets/sprites/minion-bearmarket.webp', import.meta.url).href,
+  },
+  {
+    key: 'minion-bearlet',
+    url: new URL('../../assets/sprites/minion-bearlet.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-market-usstock',
+    url: new URL('../../assets/sprites/ui-market-usstock.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-market-crypto',
+    url: new URL('../../assets/sprites/ui-market-crypto.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-market-taistock',
+    url: new URL('../../assets/sprites/ui-market-taistock.webp', import.meta.url).href,
+  },
+  // v21-v30 B04 下跌箭頭三變體（假箭頭空心鈍頭可辨識）與市場攻擊單件。
+  {
+    key: 'fx-market-arrow-big',
+    url: new URL('../../assets/sprites/fx-market-arrow-big.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrow-small',
+    url: new URL('../../assets/sprites/fx-market-arrow-small.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-arrow-fake',
+    url: new URL('../../assets/sprites/fx-market-arrow-fake.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-coin',
+    url: new URL('../../assets/sprites/fx-market-coin.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-candle-green',
+    url: new URL('../../assets/sprites/fx-market-candle-green.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-candle-pin',
+    url: new URL('../../assets/sprites/fx-market-candle-pin.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-market-circuitwall',
+    url: new URL('../../assets/sprites/fx-market-circuitwall.webp', import.meta.url).href,
+  },
 ];
