@@ -488,4 +488,95 @@ export const ASSETS: AssetEntry[] = [
     key: 'hero-tide-morph-complete',
     url: new URL('../../assets/sprites/hero-tide-morph-complete.webp', import.meta.url).href,
   },
+  // v21-v30 B02 焰化／潮化技能四拍（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'hero-ember-skill-windup',
+    url: new URL('../../assets/sprites/hero-ember-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-charge',
+    url: new URL('../../assets/sprites/hero-ember-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-burst',
+    url: new URL('../../assets/sprites/hero-ember-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-ember-skill-recover',
+    url: new URL('../../assets/sprites/hero-ember-skill-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-windup',
+    url: new URL('../../assets/sprites/hero-tide-skill-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-charge',
+    url: new URL('../../assets/sprites/hero-tide-skill-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-burst',
+    url: new URL('../../assets/sprites/hero-tide-skill-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'hero-tide-skill-recover',
+    url: new URL('../../assets/sprites/hero-tide-skill-recover.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 焰化／潮化光環拖尾分層 VFX（核心光/外圈衝擊/拖尾/碎片/overlay 獨立疊加）。
+  {
+    key: 'fx-ember-aura-core',
+    url: new URL('../../assets/sprites/fx-ember-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-shock',
+    url: new URL('../../assets/sprites/fx-ember-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-trail',
+    url: new URL('../../assets/sprites/fx-ember-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-debris',
+    url: new URL('../../assets/sprites/fx-ember-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-ember-aura-overlay',
+    url: new URL('../../assets/sprites/fx-ember-aura-overlay.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-core',
+    url: new URL('../../assets/sprites/fx-tide-aura-core.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-shock',
+    url: new URL('../../assets/sprites/fx-tide-aura-shock.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-trail',
+    url: new URL('../../assets/sprites/fx-tide-aura-trail.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-debris',
+    url: new URL('../../assets/sprites/fx-tide-aura-debris.webp', import.meta.url).href,
+  },
+  {
+    key: 'fx-tide-aura-overlay',
+    url: new URL('../../assets/sprites/fx-tide-aura-overlay.webp', import.meta.url).href,
+  },
+  // v21-v30 B02 形態徽章與技能 HUD 圖示（載入時機建議：HUD 顯示前延遲載入，暫沿 Boot 預載）。
+  {
+    key: 'ui-ember-badge',
+    url: new URL('../../assets/sprites/ui-ember-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-ember-skill',
+    url: new URL('../../assets/sprites/ui-ember-skill.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-tide-badge',
+    url: new URL('../../assets/sprites/ui-tide-badge.webp', import.meta.url).href,
+  },
+  {
+    key: 'ui-tide-skill',
+    url: new URL('../../assets/sprites/ui-tide-skill.webp', import.meta.url).href,
+  },
 ];

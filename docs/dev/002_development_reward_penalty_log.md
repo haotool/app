@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+269
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+270
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b02-skills-fx-hud
+- 原因：B02 完整包尾段（技能四拍、光環拖尾五層 VFX、徽章 HUD）中，潮化核心光層柔邊漸層與磁紅 chroma 底融合致去背殘留 16% 色暈
+- 解法：判定柔邊光暈不適合 chroma-key，改要求硬邊 cel-shaded 分階光盤重生 1 次（fringe 0.16→0.006），其餘 21 張一次通過；alpha QA 22/22 收斂全數入庫註冊
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b02-minions-morph-frames
