@@ -289,6 +289,8 @@ Agent **必須**先完成：
 
 **`catch` 區塊的判準**：每一個吞掉錯誤的 `catch` 都必須說得出「為什麼這個錯誤可以安全忽略」，說不出來就 rethrow。本守門的四個 `catch` 各自的理由記於程式碼註解；其中 `gitShow` 只把**窮舉實測過的四種 git「物件不存在」訊息**視為可忽略，其餘（`not a git repository`、壞 git、權限問題、非預期 status）一律上拋。
 
+**依賴 git 文字輸出的前提**：上述判別讀的是 stderr，而 git 內建 gettext 翻譯會跟隨呼叫端 locale。故四處 git 呼叫一律傳 `env: { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }` 鎖英文輸出；未鎖時非英文環境會讓合法情境誤擋（實測 macOS Homebrew git 2.55 + `LC_ALL=zh_CN.UTF-8`，「初始 commit」由 exit 0 變 exit 1）。鎖 C locale 同時也降低跨 git 版本翻譯字串變動的風險。新增 git 呼叫時必須一併帶 env，測試有結構鎖把關。
+
 #### 改動守門行為時的固定掃描清單（不需判斷邊界）
 
 漂移在本守門上重複發生過四次，每次都是靠人記得去掃某個檔案。故把範圍與關鍵字都寫死，並由 `scripts/__tests__/verify-002-log.test.ts` 機械強制：

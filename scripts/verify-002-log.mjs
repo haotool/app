@@ -343,6 +343,12 @@ export function validate002({ stagedContent, headContent }) {
 // 以下為窮舉守門實際會遇到的四種「合法不存在」訊息（逐一實測取得）；
 // 其餘（not a git repository、壞 git、權限問題、非預期 status）一律上拋 fail-closed，
 // 否則環境失敗會被誤讀成「檔案不存在」而讓整道守門靜默跳過。
+// 所有 git 呼叫一律鎖英文輸出：下方判別依賴 stderr 文字，而 git 內建 gettext 翻譯，
+// 繼承呼叫端的 LANG／LC_ALL／LANGUAGE 會讓訊息變成當地語系而比對不到
+// （實測 macOS Homebrew git 2.55 + LC_ALL=zh_CN.UTF-8 即觸發）。
+// 鎖定 C locale 同時也鎖住訊息穩定性，降低跨 git 版本翻譯字串變動的風險。
+const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' };
+
 const MISSING_OBJECT_PATTERNS = [
   /does not exist in '/, // 指定 tree（HEAD 或 sha）無此路徑
   /does not exist \(neither on disk nor in the index\)/, // index 與磁碟皆無
@@ -353,7 +359,10 @@ const MISSING_OBJECT_PATTERNS = [
 // spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」。
 function gitShow(spec) {
   try {
-    execFileSync('git', ['cat-file', '-e', spec], { stdio: ['ignore', 'ignore', 'pipe'] });
+    execFileSync('git', ['cat-file', '-e', spec], {
+      env: GIT_ENV,
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
   } catch (error) {
     if (error?.code === 'ENOENT') throw error;
     const stderr = String(error?.stderr ?? error?.message ?? '');
@@ -362,7 +371,7 @@ function gitShow(spec) {
     }
     throw new Error(`git cat-file -e ${spec} 失敗（status=${error?.status}）：${stderr.trim()}`);
   }
-  return execFileSync('git', ['show', spec], { encoding: 'utf-8' });
+  return execFileSync('git', ['show', spec], { env: GIT_ENV, encoding: 'utf-8' });
 }
 
 function report(errors) {
@@ -406,6 +415,7 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
   if (useMergeBase) {
     try {
       base = execFileSync('git', ['merge-base', ref, 'HEAD'], {
+        env: GIT_ENV,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],
       }).trim();
@@ -418,6 +428,7 @@ function runAgainstBaseRef(ref, { useMergeBase }) {
   } else {
     try {
       base = execFileSync('git', ['rev-parse', '--verify', `${ref}^{commit}`], {
+        env: GIT_ENV,
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],
       }).trim();

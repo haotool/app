@@ -868,6 +868,51 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     }
   });
 
+  // stderr 文字判別依賴英文輸出，而 git 內建 gettext 翻譯會跟隨呼叫端 locale。
+  // 這條是 CI 上真正有效的回歸鎖：新增第五處 git 呼叫時若忘了帶 env 就會紅。
+  it('所有 git 呼叫都必須鎖 C locale', () => {
+    const source = readFileSync(SCRIPT_PATH, 'utf-8');
+    expect(source).toContain("const GIT_ENV = { ...process.env, LC_ALL: 'C', LANGUAGE: 'C' }");
+    // 不用單一 regex 括住整個呼叫：`${ref}^{commit}` 的 `}` 會提前終止比對。
+    // 改為切段後檢查每段開頭的選項物件範圍。
+    const segments = source.split("execFileSync('git'").slice(1);
+    expect(segments.length).toBe(4);
+    for (const segment of segments) {
+      expect(segment.slice(0, 220)).toContain('env: GIT_ENV');
+    }
+  });
+
+  // 行為對照：在有 git 翻譯的機器上這是真測試；沒有翻譯的環境 git 本來就輸出英文，
+  // 測試不會誤紅也不會提供額外保證，故與上面的結構鎖搭配使用。
+  const TRANSLATED_LOCALE = { LC_ALL: 'zh_CN.UTF-8', LANGUAGE: 'zh_CN' };
+
+  it('非英文 locale 下「尚無 commit」仍正確跳過（不得誤擋初始 commit）', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'verify-002-locale-'));
+    repos.push(repo);
+    git(repo, 'init', '-b', 'main');
+    mkdirSync(join(repo, dirname(LOG_PATH)), { recursive: true });
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+1',
+        entries: [{ id: 'reward-first-entry' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+
+    const { status, output } = runIsolated(repo, { ...GIT_ENV, ...TRANSLATED_LOCALE });
+    expect(status).toBe(0);
+    expect(output).toContain('通過');
+  });
+
+  it('非英文 locale 下 staged 刪除仍必紅', () => {
+    const repo = setupRepo();
+    git(repo, 'rm', '--cached', LOG_PATH);
+    const { status, output } = runIsolated(repo, { ...GIT_ENV, ...TRANSLATED_LOCALE });
+    expect(status).toBe(1);
+    expect(output).toContain('不可刪除');
+  });
+
   it('--base-commit：基準 commit 無法解析時明確失敗', () => {
     const repo = setupRepo();
     const { status, output } = runGuard(repo, '--base-commit', 'deadbeefdeadbeefdeadbeef');
