@@ -14,6 +14,11 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：neutral-starpuff-t7c-docs-changeset
+- 原因：AGT-VER-01 要求每個 PR 建 changeset；本 PR 為純文件但含使用者可見的錯誤指示修正（變身觸發面／慈悲補血／設定入口），需依 bfdf65585 docs-only patch 先例補建
+- 解法：新增 patch changeset 描述玩家看得到的說明修正與設計文件可查性提升；純文件無行為變更故不升 minor
+
+- 日期：2026-07-26
 - ID：reward-starpuff-t7c-cross-doc-drift-sweep
 - 原因：交叉核對發現漂移不只 GAME_DESIGN——WALKTHROUGH 與 app README 仍寫「慈悲愛心隨機出現」「長按 0.6 秒變身」「主選單按鈕配置」，且五座魔王攻略未涵蓋 v21–v23 加權選招與六個主題招式
 - 解法：小漂移直接修（WALKTHROUGH 慈悲 pity／設定頁／版本落後聲明，README 變身觸發面／星暴 2.0／EX 五王 P4／設定頁／成就），大缺口開 issue 不擅改——#874 魔王主題招式需真機實測補寫、#875 六模組註解誤引 §5、#876 gitignored PRD 的 35%／60% 與 sp-rotation 漂移待 PM 裁決
