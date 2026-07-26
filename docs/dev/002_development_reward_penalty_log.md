@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+8（reward 8、penalty 0、neutral 0）｜累計總分：+250
+> 本次分數變化：+9（reward 9、penalty 0、neutral 0）｜累計總分：+251
 
 ## 新增模板（4 行）
 
@@ -14,9 +14,14 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：reward-starpuff-release-verifiability-doc-accuracy
+- 原因：兩席複審殘留扣分皆為敘述精確性——002 本身兩處與實作不符（宣稱 shell 與 JS 用「同一條」regex，實則 JS 另帶 `i` 並正規化小寫而 shell 大小寫敏感；`__resetSaveUnavailableForTests` 標為 dev-only，實則執行期無 env 閘只是命名慣例），save.ts 例外註解以「提示會反覆洗版」為由但 `notifySaveUnavailable` 早有 session 級單次守衛，且「備援回寫本身失敗」的貫穿場景無直接回歸鎖
+- 解法：三處敘述改為與實作一致（標明兩側 regex 語意差異與 shell 側 fail-closed、改稱測試用匯出、例外理由改為「配額問題持續時下次真實進度寫入會經已消費回傳值的 persistSave 觸發同一張卡」）；補 1 案貫穿測試鎖主檔損毀＋備援合法＋回寫拋錯，斷言備援逐字不變且 storage 恢復後再載入等值並成功落盤，以兩種 loadSave 變異（回寫失敗退預設、移除輪替合法性守衛）驗證紅→綠
+
+- 日期：2026-07-26
 - ID：reward-starpuff-release-verifiability-review-nits
 - 原因：審查 nits 兩項——`probePayload` 無存檔時退回 1 字元使「無存檔＋配額將滿」開機預判過度樂觀；Dockerfile 灌入 `GIT_COMMIT_HASH` 前未做 hex 校驗，髒的 ZEABUR 值會被只讀該變數而無 JS 層防禦的其他 app 取用
-- 解法：probe 下限改為預設存檔實際落盤體積（含 checksum），對應單測改鎖「容不下即不可用／容得下不誤報」；Dockerfile 以同一條 `^[0-9a-f]{7,40}$` 於 shell 側校驗後才 export，實跑四種輸入（合法 SHA／`refs/heads/main`／`zzzzzzz`／空）驗證僅合法值通過且建置不中斷
+- 解法：probe 下限改為預設存檔實際落盤體積（含 checksum），對應單測改鎖「容不下即不可用／容得下不誤報」；Dockerfile 於 shell 側以 `grep -Eq '^[0-9a-f]{7,40}$'` 校驗後才 export（字面 class 與 JS 側 `SHA_PATTERN` 相同但語意不完全等價——JS 另帶 `i` 旗標並正規化為小寫，shell 維持大小寫敏感的 fail-closed），實跑四種輸入（合法 SHA／`refs/heads/main`／`zzzzzzz`／空）驗證僅合法值通過且建置不中斷
 
 - 日期：2026-07-26
 - ID：reward-build-commit-sha-nonhex-regression-lock
@@ -26,7 +31,7 @@
 - 日期：2026-07-26
 - ID：reward-starpuff-no-popup-during-play-lock
 - 原因：「杜絕戰鬥中彈窗攔截操作」為硬不變式，但 `shellCards.test.ts` 只測 Title 安靜顯卡與節流，且 stub 讓 `[data-menu="start"]` 恆在——等於繞過該規則，新增提示呼叫點時無回歸保護（Grok 席 -4）
-- 解法：補兩案分別鎖住兩個忙碌訊號（非 Title、controls `is-active`）——advanceTimers 後 overlay 必須為 0，解除忙碌才變 1；另補 dev-only `__resetSaveUnavailableForTests` 消除模組旗標跨案污染。以拔掉 whenShellIdle 忙碌守衛驗證 3 案轉紅再還原綠
+- 解法：補兩案分別鎖住兩個忙碌訊號（非 Title、controls `is-active`）——advanceTimers 後 overlay 必須為 0，解除忙碌才變 1；另補測試用匯出 `__resetSaveUnavailableForTests`（命名慣例標示用途，執行期無呼叫點）消除模組旗標跨案污染。以拔掉 whenShellIdle 忙碌守衛驗證 3 案轉紅再還原綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-settings-fixture-sync-gate
@@ -36,7 +41,7 @@
 - 日期：2026-07-26
 - ID：reward-starpuff-persistsave-contract-all-callsites
 - 原因：`persistSave` 註解宣稱「失敗必須外顯給呼叫端提示」，實際三個呼叫點只有 GameScene 消費回傳值——main.ts 開機成就補發落盤丟棄回傳值，save.ts 備援回寫亦然，契約留模糊地帶（兩席共同 Should-fix）
-- 解法：main.ts 補發落盤失敗改觸發 `notifySaveUnavailable`；save.ts 備援自癒回寫明文標為唯一例外並寫出理由（備援完好、下次開機重走、loadSave 為多處熱呼叫會洗版），模組註解同步指向該例外
+- 解法：main.ts 補發落盤失敗改觸發 `notifySaveUnavailable`；save.ts 備援自癒回寫明文標為唯一例外並寫出理由（備援完好、下次開機重走、配額問題持續時下一次真實進度寫入會經已消費回傳值的 persistSave 觸發同一張卡），模組註解同步指向該例外
 
 - 日期：2026-07-26
 - ID：reward-starpuff-verify-scripts-settings-ssot

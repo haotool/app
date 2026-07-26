@@ -172,8 +172,8 @@ export function loadSave(): SaveData {
       console.warn('sp-save 損毀，已從 sp-save-backup 恢復進度');
       // 明文例外（審查 Should-fix）：此處刻意不消費回傳值、不提示。回寫為自癒修復而非
       // 新進度落盤——失敗時備援仍完好、下次開機會再走一次同一條恢復路徑，玩家無實質
-      // 損失；且 loadSave 為 boot/Title/Map 多處熱呼叫，於此提示會反覆洗版。儲存整體
-      // 不可用的情境由開機 isSaveStorageAvailable 探測涵蓋。
+      // 損失；若配額問題持續，下一次真實進度寫入會經已消費回傳值的 persistSave 觸發
+      // 同一張提示卡。儲存整體不可用的情境另由開機 isSaveStorageAvailable 探測涵蓋。
       persistSave(restored);
       return restored;
     }
