@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+282
+> 本次分數變化：+19（reward 20、penalty 1、neutral 0）｜累計總分：+284
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-phase-annotation-rebase
+- 原因：rebase 到 #883 分階段載入後 510 張新資產若不標 phase 將全落 boot 預設，首屏自 148.5KiB 暴增逾 15MB；且拆檔重建時第一批四條 manifest 條目遺失
+- 解法：三分檔 445 條依載入時機註解全量標註（level 158/boss 249/form 92）、補回遺失四條、型別對齊 AssetEntry，實測 boot 集維持 main 原樣 6 張 148.5KiB、assetPlan 兩條不變式測試綠
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-tail-morphs-arrowrain
