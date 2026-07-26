@@ -209,7 +209,9 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     // （Key 物件於 create 才建立，載入期按住的鍵不會被看見）或呼叫 isActive 守衛的鉤子。
     stage: () => (gameScene().scene.isActive() ? gameScene().currentLevelId : 0),
     bossHp: () => gameScene().bossHp,
-    playerHp: () => gameScene().playerHp,
+    // 與 stage() 同一套就緒語意：載入期回 -1（沿 bossHp 的「不存在」慣例），
+    // 避免回報 class 預設值 5 被誤讀為新關卡已就緒且滿血。
+    playerHp: () => (gameScene().scene.isActive() ? gameScene().playerHp : -1),
     win: () => gameScene().forceWin(),
     lose: () => gameScene().forceLose(),
     fillQuota: () => gameScene().forceGate(),

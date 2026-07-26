@@ -47,7 +47,10 @@ describe('boot 階段最小集合', () => {
     );
   });
 
-  it('首屏資產量佔 manifest 一成以下（分階段載入的驗收門檻）', () => {
+  // 比例門檻擋單次大量漏標，但 ASSETS 將擴到 400+，分母變大會稀釋比例，逐 PR 各漏
+  // 一兩筆仍過得去；絕對值上限補這個慢性侵蝕缺口，兩者並存。
+  it('首屏資產量同時受絕對值與比例上限守門', () => {
+    expect(bootKeys.length).toBeLessThanOrEqual(10);
     expect(bootKeys.length / ASSETS.length).toBeLessThan(0.1);
   });
 });
@@ -103,52 +106,57 @@ describe('manifest 驅動的分階段載入', () => {
   });
 });
 
-describe('anti-softlock：關卡計畫涵蓋所有登場貼圖', () => {
-  it('每關 enemyMix／精英／教學供給的小怪立繪都在計畫內', () => {
+// levelAssetKeys 派生是否完整（有沒有漏掉會登場的品種），與該派生是否真的被載到
+// （phase 有沒有標錯）是兩件事，分開鎖。
+describe('anti-softlock：登場貼圖派生完整', () => {
+  it('enemyMix／精英與其獎勵味／教學供給的小怪立繪都被派生涵蓋', () => {
     for (const level of LEVELS) {
-      const keys = new Set(planKeys(level.id));
-      const bootKeys = new Set(keysOf(entriesForPhase('boot')));
-      for (const entry of level.enemyMix) {
-        const key = ENEMY_TEXTURE_KEYS[entry.kind];
-        expect(keys.has(key) || bootKeys.has(key)).toBe(true);
-      }
+      const keys = new Set(levelAssetKeys(level));
+      for (const entry of level.enemyMix) expect(keys).toContain(ENEMY_TEXTURE_KEYS[entry.kind]);
       for (const elite of level.elites) {
-        expect(keys.has(ENEMY_TEXTURE_KEYS[elite.kind])).toBe(true);
-        expect(keys.has(ENEMY_TEXTURE_KEYS[elite.rewardFlavor])).toBe(true);
+        expect(keys).toContain(ENEMY_TEXTURE_KEYS[elite.kind]);
+        expect(keys).toContain(ENEMY_TEXTURE_KEYS[elite.rewardFlavor]);
       }
       for (const drill of level.drillSpawns ?? []) {
-        expect(keys.has(ENEMY_TEXTURE_KEYS[drill.kind])).toBe(true);
+        expect(keys).toContain(ENEMY_TEXTURE_KEYS[drill.kind]);
       }
     }
   });
 
-  it('魔王召喚品種併入該關計畫（不在 enemyMix 內仍會登場）', () => {
+  it('魔王立繪與召喚品種被派生涵蓋（召喚不在 enemyMix 內仍會登場）', () => {
     for (const level of LEVELS) {
       if (!level.boss) continue;
-      const keys = new Set(planKeys(level.id));
+      const keys = new Set(levelAssetKeys(level));
+      for (const key of BOSS_TEXTURE_KEYS[level.boss]) expect(keys).toContain(key);
       for (const kind of BOSS_SUMMON_KINDS[level.boss]) {
-        expect(keys.has(ENEMY_TEXTURE_KEYS[kind])).toBe(true);
+        expect(keys).toContain(ENEMY_TEXTURE_KEYS[kind]);
       }
-      for (const key of BOSS_TEXTURE_KEYS[level.boss]) expect(keys.has(key)).toBe(true);
     }
   });
 
-  it('潮汐關併入生成替換與救援紮根品種（tideFilterKind／respawnRescue）', () => {
+  it('潮汐關涵蓋生成替換與救援紮根品種（tideFilterKind／respawnRescue）', () => {
     const tideLevels = LEVELS.filter((level) => level.tide !== undefined);
     expect(tideLevels.length).toBeGreaterThan(0);
     for (const level of tideLevels) {
-      const keys = new Set(planKeys(level.id));
-      expect(keys.has(ENEMY_TEXTURE_KEYS.jelly)).toBe(true);
-      expect(keys.has(ENEMY_TEXTURE_KEYS.spora)).toBe(true);
+      const keys = new Set(levelAssetKeys(level));
+      expect(keys).toContain(ENEMY_TEXTURE_KEYS.jelly);
+      expect(keys).toContain(ENEMY_TEXTURE_KEYS.spora);
     }
   });
+});
 
-  it('每關背景貼圖（含重用別名）都在計畫或 boot 內', () => {
+// phase 標錯的總守門：`lazy`／`form` 等非戰鬥階段沒有 scene 呼叫點，把戰鬥資產標進去
+// 會讓該關無聲缺圖走佔位色塊。此不變式與階段名稱無關——不論標成哪一階段，只要該關
+// 用得到就必須在 boot 或該關計畫內，涵蓋背景／道具／小怪／魔王全類別。
+describe('anti-softlock：登場貼圖必定載得到', () => {
+  it('每關派生出的每一個鍵都落在 boot 或該關計畫內', () => {
     const bootKeys = new Set(keysOf(entriesForPhase('boot')));
     for (const level of LEVELS) {
-      const key = bgTextureKey(level.bgKey);
-      const keys = new Set(planKeys(level.id));
-      expect(keys.has(key) || bootKeys.has(key)).toBe(true);
+      const planned = new Set(planKeys(level.id));
+      const missing = levelAssetKeys(level).filter(
+        (key) => !planned.has(key) && !bootKeys.has(key),
+      );
+      expect({ level: level.id, missing }).toEqual({ level: level.id, missing: [] });
     }
   });
 

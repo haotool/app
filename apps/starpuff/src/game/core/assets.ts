@@ -4,7 +4,9 @@
 //   level 進入關卡時載入（背景／道具／小怪為關卡限定，其餘為全關共用核心）
 //   boss  魔王關才載入的魔王立繪
 //   form  形態解鎖後才需要的變身立繪
-//   lazy  真正用到才載入（HUD 徽章等按需資產）
+//   lazy  非戰鬥的按需資產（HUD 徽章等），由使用端自行補載
+// lazy 目前無 scene 呼叫點：任何關卡會用到的資產都不得標為 lazy，否則該關會無聲缺圖
+// 走佔位色塊。assetPlan.test 的「登場貼圖必定載得到」不變式對全類別守門。
 export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'lazy';
 
 export interface AssetEntry {

@@ -55,9 +55,10 @@ export default defineConfig(async ({ mode }) => {
           runtimeCaching: [
             {
               // precache 尚未完成即斷線的補償控制：延遲載入的立繪首次取得就落快取。
-              // URL 帶內容雜湊，CacheFirst 不會造成版本撕裂。
-              urlPattern: ({ request, sameOrigin }) =>
-                sameOrigin && request.destination === 'image',
+              // 只收 Vite 產出的內容雜湊立繪（assets/*.webp）——雜湊 URL 下 CacheFirst 不會
+              // 造成版本撕裂；未雜湊的 icons/*.png 一律留給 precache revision 管理，
+              // 不讓兩套機制靠路由順序決勝負。
+              urlPattern: /\/assets\/[^/]+\.webp$/,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'starpuff-sprites',

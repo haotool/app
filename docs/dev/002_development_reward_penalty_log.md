@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+2（reward 4、penalty 2、neutral 1）｜累計總分：+262
+> 本次分數變化：+4（reward 7、penalty 3、neutral 2）｜累計總分：+264
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,31 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-lazy-phase-coverage-invariant
+- 原因：審查指出 lazy 階段零 scene 呼叫點卻可被標註，戰鬥資產標進去即無聲缺圖；實測 boss-voidra／minion-magno 會被既有斷言擋下，但 prop-kiln-1 與 bg-kiln-l 標成 lazy 時 17 案全綠——守門只覆蓋小怪與魔王，道具與背景是破口
+- 解法：不接線空階段（會是死碼且擋不住誤標），改立與階段名無關的總不變式「每關派生出的每個鍵必落在 boot 或該關計畫內」，四類別誤標實測全數轉紅；per-category 斷言改為只驗派生完整性，消除與覆蓋率斷言的重疊
+
+- 日期：2026-07-26
+- ID：reward-starpuff-loader-error-timeout-degrade
+- 原因：assetLoader 無 loaderror 也無逾時——404 尚可靠 Phaser 自行 complete 走佔位降級，但請求永久 pending 會讓玩家卡在「載入中…」且無法自行脫離，違反 anti-softlock
+- 解法：補 loaderror 明說降級文案，並以 20 秒逾時呼叫 loadComplete() 強制收尾進 create（缺圖走佔位仍可通關、下次進關重試）；另修 fromManifest 記帳時機——原本排入即記，載入失敗後生成的佔位色塊會被誤認為正式立繪而永不替換，改為只記 filecomplete 成功鍵
+
+- 日期：2026-07-26
+- ID：reward-starpuff-asset-loader-unit-tests
+- 原因：assetLoader 是「佔位色塊 vs 正式立繪」逐出邏輯所在的最棘手檔案卻零單元測試，且匯出的 resetLoadedKeys 經確認全專案零呼叫點（為測試預留卻連測試都沒接）
+- 解法：補 8 案單測（逐出三態＋失敗重試＋逾時強制收尾＋正常完成解除逾時），三條新守門先驗紅再轉綠；死碼 resetLoadedKeys 刪除，模組級狀態隔離改用 vi.resetModules 慣例，不為測試在產品碼開後門
+
+- 日期：2026-07-26
+- ID：penalty-starpuff-perf-claim-one-time-and-absolute-ms
+- 原因：PR 宣稱進關成本「每 session 一次性」與絕對 ms 數字，兩者皆不成立——實測逐關切換每個新關卡首次進入各付 44–197KiB／0.5–1.4s（SW 背景 precache 與頁面請求搶頻寬），且我用的節流參數與 Lighthouse 標準值不同致絕對秒數樂觀 30–40%
+- 解法：改以相對幅度為主張並揭露節流參數——兩組 Fast 3G 定義並列實測（DevTools 11813→3617ms、Lighthouse 15952→5590ms），與兩席獨立量測分別對上；「一次性」改述為「每個新關卡首次進入各付一次、同關重進 0KiB／35ms」
+
+- 日期：2026-07-26
+- ID：neutral-starpuff-runtime-cache-scope-narrowing
+- 原因：CacheFirst 以 request.destination === 'image' 匹配，會涵蓋未雜湊的 icons/\*.png，與 precache revision 管理重疊而需靠路由順序決勝負
+- 解法：收窄為 /\/assets\/[^/]+\.webp$/ 只收 Vite 內容雜湊立繪，icons 全數留給 precache；build 後查 sw.js 確認路由已收窄，離線實測維持 63 張 precache、離線進 L1 的 21 筆立繪全 200
 
 - 日期：2026-07-26
 - ID：reward-starpuff-stage-hook-readiness-single-point
