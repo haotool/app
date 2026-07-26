@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+245
+> 本次分數變化：+4（reward 4、penalty 0、neutral 0）｜累計總分：+246
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-persistsave-contract-all-callsites
+- 原因：`persistSave` 註解宣稱「失敗必須外顯給呼叫端提示」，實際三個呼叫點只有 GameScene 消費回傳值——main.ts 開機成就補發落盤丟棄回傳值，save.ts 備援回寫亦然，契約留模糊地帶（兩席共同 Should-fix）
+- 解法：main.ts 補發落盤失敗改觸發 `notifySaveUnavailable`；save.ts 備援自癒回寫明文標為唯一例外並寫出理由（備援完好、下次開機重走、loadSave 為多處熱呼叫會洗版），模組註解同步指向該例外
 
 - 日期：2026-07-26
 - ID：reward-starpuff-verify-scripts-settings-ssot

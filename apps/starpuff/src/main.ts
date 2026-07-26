@@ -61,8 +61,10 @@ if (wasSettingsRecoveredFromCorruption()) {
 if (!isSaveStorageAvailable()) notifySaveUnavailable();
 // 開機成就補發單點（§94）：舊存檔（v1 遷移或版本更新新增成就）依既有資料靜默補發
 // 歷史成就（無 toast，圖鑑成就頁可見）；有增量才落盤，順帶完成 schema v2 遷移。
+// 落盤失敗一併外顯（審查 Should-fix）：persistSave 回傳值契約於所有玩家進度寫入點
+// 全面套用，補發成果寫不進去等同進度遺失，不得靜默。
 const bootSave = loadSave();
-if (awardAchievements(bootSave).length > 0) persistSave(bootSave);
+if (awardAchievements(bootSave).length > 0 && !persistSave(bootSave)) notifySaveUnavailable();
 // 開機套用直持旋轉偏好（§87）：CSS 預設即新方向（ccw），僅舊方向偏好需掛 class。
 applyRotationClass(loadRotationPref());
 // 開機套用虛擬鍵自訂布局（§34）：JS 就緒即覆蓋 CSS fallback 預設位。

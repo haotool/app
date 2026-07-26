@@ -170,6 +170,10 @@ export function loadSave(): SaveData {
     const restored = backupRaw !== null ? parseSaveStrict(backupRaw) : null;
     if (restored !== null) {
       console.warn('sp-save 損毀，已從 sp-save-backup 恢復進度');
+      // 明文例外（審查 Should-fix）：此處刻意不消費回傳值、不提示。回寫為自癒修復而非
+      // 新進度落盤——失敗時備援仍完好、下次開機會再走一次同一條恢復路徑，玩家無實質
+      // 損失；且 loadSave 為 boot/Title/Map 多處熱呼叫，於此提示會反覆洗版。儲存整體
+      // 不可用的情境由開機 isSaveStorageAvailable 探測涵蓋。
       persistSave(restored);
       return restored;
     }
@@ -181,7 +185,8 @@ export function loadSave(): SaveData {
   return createDefaultSave();
 }
 
-// 回傳主檔是否寫入成功（#868）：失敗必須外顯給呼叫端提示，否則玩家在無提示下遺失進度。
+// 回傳主檔是否寫入成功（#868）：玩家進度寫入點必須消費回傳值並提示，否則玩家在無提示下
+// 遺失進度；唯一例外為 loadSave 的備援自癒回寫（理由見該處註解）。
 // 備援輪替失敗不影響回傳值——主檔寫入才是進度是否保住的判準。
 export function persistSave(save: SaveData): boolean {
   try {
