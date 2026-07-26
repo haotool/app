@@ -104,6 +104,10 @@ const GAME_DIR = join(APP_DIR, 'src', 'game');
 
 describe('池取出點型別層守門（PR #886 R4：Group.get 一律走 acquirePooled）', () => {
   it('src/game 生產碼零違規（直呼/解構/中括號/換行/改名/跨檔參數/Reflect 全涵蓋）', () => {
+    // 守門存續假設（漂移即啞火，此處以斷言鎖住）：
+    // 1) app tsconfig include 涵蓋 src/game 生產碼——以檔數下限＋已知檔在列驗證；
+    // 2) Phaser Arcade Group 的型別 symbol 名為 'Group'——由下方虛擬 probe 案的
+    //    「直呼必抓」持續自證（symbol 名漂移時 probe 案先紅）。
     const configFile = ts.readConfigFile(join(APP_DIR, 'tsconfig.json'), (path) =>
       ts.sys.readFile(path),
     );
@@ -112,6 +116,7 @@ describe('池取出點型別層守門（PR #886 R4：Group.get 一律走 acquire
       (file) => file.includes('/src/game/') && !file.endsWith('.test.ts'),
     );
     expect(gameFiles.length).toBeGreaterThan(30);
+    expect(gameFiles.some((file) => file.endsWith('systems/enemies.ts'))).toBe(true);
     const program = ts.createProgram(gameFiles, {
       ...parsed.options,
       skipLibCheck: true,
@@ -141,7 +146,19 @@ const renamed = rocks.get(7, 8); // 池變數改名
 const dynamic = Reflect.get(meteors, 'get'); // Reflect
 // 註解裡的 meteors.get( 不得誤報
 const text = "meteors.get(";
+// ---- 已知邊界（R5 記錄，一般重構即可自然產生、目前不涵蓋）----
+// 1) 型別斷言脫鉤：as any / as unknown as 寬介面。
+const asserted = (meteors as unknown as { get(x?: number, y?: number): unknown }).get(9, 9);
+// 2) 容器/寬介面中轉：存進結構型別後 symbol 與 Group 脫鉤。
+const bag: { get(x?: number, y?: number): unknown } = meteors;
+const viaBag = bag.get(10, 10);
+// 3) wrapper 回傳型別被推成非 Group。
+function pick(): { get(x?: number, y?: number): unknown } {
+  return meteors;
+}
+const viaWrapper = pick().get(11, 11);
 export { direct, get, bracket, wrapped, renamed, dynamic, text, acquireFrom };
+export { asserted, bag, viaBag, viaWrapper };
 `;
     const fileName = '/virtual/guard-probe.ts';
     const host = ts.createCompilerHost({});
@@ -159,7 +176,9 @@ export { direct, get, bracket, wrapped, renamed, dynamic, text, acquireFrom };
     );
     const violations = findPoolGetViolations(program, 'core/poolFlags.ts');
     const hows = violations.map((entry) => entry.split(' ').slice(1).join(' '));
-    // 七筆違規：跨檔參數＋直呼＋解構＋中括號＋換行＋改名＋Reflect。
+    // 七筆違規：跨檔參數＋直呼＋解構＋中括號＋換行＋改名＋Reflect；
+    // 三種已知邊界（斷言脫鉤/容器中轉/wrapper 收窄）不入違規——若未來守門升級
+    // 涵蓋任一種，本數字會變動並強制更新此份邊界文件。
     expect(violations).toHaveLength(7);
     expect(hows.filter((how) => how === 'property access .get')).toHaveLength(4);
     expect(hows).toContain('destructured get');

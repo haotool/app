@@ -466,3 +466,31 @@ describe('§119 形態彈池瞬時旗標循環（PR #886 R3：launchShot 取出�
     expect(reused?.getData('burn')).toBe(true);
   });
 });
+
+// 星彈四鍵必寫回歸鎖（PR #886 R5）：damage/pierce/flavor/mix 的排除理由是
+// 「兩發射器每發必寫」——本案把該事實從慣例升級為機制（拿掉任一鍵寫入即紅）。
+describe('星彈四鍵必寫（launchStar/launchShot，PR #886 R5）', () => {
+  it('一般星與形態彈發射後 damage/pierce/flavor/mix 全數有定義', () => {
+    const { player } = makeHarness();
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    player.update(IDLE, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const normal = stars.find((star) => star.active);
+    if (!normal) throw new Error('一般星未生成');
+    for (const key of ['damage', 'pierce', 'flavor', 'mix']) {
+      expect(normal.getData(key), key).not.toBeUndefined();
+    }
+    normal.setActive(false);
+    // 焰化形態彈（launchShot 管線）同鎖。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    player.update(PRESS, 16);
+    const formShot = stars.find((star) => star.active);
+    if (!formShot) throw new Error('形態彈未生成');
+    for (const key of ['damage', 'pierce', 'flavor', 'mix']) {
+      expect(formShot.getData(key), key).not.toBeUndefined();
+    }
+  });
+});

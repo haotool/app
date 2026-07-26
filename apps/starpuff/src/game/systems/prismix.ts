@@ -602,7 +602,14 @@ export function createPrismix(
       shard.disableBody(true, true);
     });
     for (let i = 0; i < shardCount; i += 1) {
-      const shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
+      // 第二閘（PR #886 R5）：本迴圈在 runCommand 同步棧內取池，殘影同幀被擊破
+      // 時對帳前移仍可能有未涵蓋路徑——取到殘影本體即強制離池並重取一次。
+      let shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
+      if (shard?.getData('shadow') === true) {
+        shockwaves.remove(shard);
+        shields.remove(shard);
+        shard = acquirePooled(shields, core.x, core.y, 'prismix-shard');
+      }
       if (!shard) continue;
       shard.enableBody(true, core.x, core.y, true, true);
       shard.setTint(0xe8dcff);
@@ -699,6 +706,12 @@ export function createPrismix(
     projectiles.getMatching('active', true).forEach(killProjectile);
     shockwaves.getMatching('active', true).forEach(killProjectile);
     shields.getMatching('active', true).forEach(killProjectile);
+    // 殘影顯式離池（R5 應修）：inactive 殘影不會被上面 active 掃清，死亡/段清
+    // 讓它留在池內直到 destroy——顯式移除兩池更乾淨。
+    if (shadow) {
+      shockwaves.remove(shadow);
+      shields.remove(shadow);
+    }
     const anchor = twinsAlive ? sideSprite(struggleSide ?? 'a') : core;
     emitGameEvent(scene.events, GameEvents.BOSS_DEFEATED, { x: anchor.x, y: anchor.y });
     delay(600, () => {
@@ -872,17 +885,24 @@ export function createPrismix(
       } else {
         fsm.setTargetDistance(null);
       }
-      const command = fsm.tick(deltaMs);
-      if (command) runCommand(command);
-      // 鏡光面板逐幀貼合開鏡具（雙子浮動不脫錨）。
-      if (mirrorPane && mirrorTwin) mirrorPane.setPosition(mirrorTwin.x, mirrorTwin.y);
-      // 殘影離池對帳（PR #886 R4）：擊破可發生在 overlaps（星彈 1 發即破），
-      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體
-      //（第六例池殘留同族破口：wave/晶柱/盾取到 shadow===true 的 sprite）。
+      // 殘影離池對帳（PR #886 R4/R5）：擊破可發生在 overlaps（星彈 1 發即破），
+      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體。
+      // R5 前移至 fsm.tick/runCommand 之前：merge 的 spawnShardOrbit 在 runCommand
+      // 同步棧內 acquirePooled(shields)，同幀稍早 overlap 已 disable 殘影時，對帳
+      // 若在其後，殘影會被取走 enableBody 而使 !active 條件永遠認不出它。
+      // 殘影離池對帳（PR #886 R4/R5）：擊破可發生在 overlaps（星彈 1 發即破），
+      // 非本系統可逐點掛鉤——失效瞬間自兩池移除，杜絕 Group.get 復用殘影本體。
+      // R5 前移至 fsm.tick/runCommand 之前：merge 的 spawnShardOrbit 在 runCommand
+      // 同步棧內 acquirePooled(shields)，同幀稍早 overlap 已 disable 殘影時，對帳
+      // 若在其後，殘影會被取走 enableBody 而使 !active 條件永遠認不出它。
       if (shadow && !shadow.active && shockwaves.contains(shadow)) {
         shockwaves.remove(shadow);
         shields.remove(shadow);
       }
+      const command = fsm.tick(deltaMs);
+      if (command) runCommand(command);
+      // 鏡光面板逐幀貼合開鏡具（雙子浮動不脫錨）。
+      if (mirrorPane && mirrorTwin) mirrorPane.setPosition(mirrorTwin.x, mirrorTwin.y);
       // 鏡像殘影（§5 W2）：水平反向步進＋垂直速度上限跟隨；壽命期滿消散。
       if (shadow && shadowSpawnAtMs >= 0 && shadow.active) {
         if (!shadowActive(shadowSpawnAtMs, scene.time.now)) {
@@ -1015,6 +1035,11 @@ export function createPrismix(
       mirrorPane = null;
       mirrorTwin = null;
       shadow?.disableBody(true, true);
+      // 段清顯式離池（R5 應修）：不等下一幀對帳，清段當下即移出兩池。
+      if (shadow) {
+        shockwaves.remove(shadow);
+        shields.remove(shadow);
+      }
       shadowSpawnAtMs = -1;
       steering = true;
       // 中斷演出殘留復位：barrage 蓄能白閃/rebirth 縮放 tween 若中斷須回段位相。

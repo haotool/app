@@ -469,3 +469,104 @@ describe('鏡像殘影失效即離池（PR #886 R4）', () => {
     expect(shields.contains(shadowSprite)).toBe(true);
   });
 });
+
+// 同幀 merge→shields 競態（PR #886 R5 Blocking）：Phaser 幀序為 UPDATE（overlap
+// disable）→ scene update（fsm.tick→runCommand→spawnShardOrbit 同步取池）。殘影
+// 同幀稍早被擊破時，若離池對帳晚於 runCommand，殘影會被當碎晶盾取走並
+// enableBody——此後 !active 對帳條件永遠認不出它。本測用兩輪可重放腳本決定性
+// 命中窗口：第一輪（同種子）錄下 merge 發生的精確 tick，第二輪重放至前一 tick
+// 擊破殘影（模擬 UPDATE 段 overlap 先行），再走 merge 那一 tick 驗軌道零殘影。
+describe('同幀 merge 競態：殘影不得混入碎晶盾軌道（PR #886 R5）', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function mockRandom(): void {
+    let seed = 11;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    });
+  }
+
+  interface Run {
+    handle: ReturnType<typeof createPrismix>;
+    shockwaves: ReturnType<typeof makeGroup>;
+    shields: ReturnType<typeof makeGroup>;
+    tick(): void;
+    ticks(): number;
+  }
+
+  function makeRun(): Run {
+    mockRandom();
+    const groups: ReturnType<typeof makeGroup>[] = [];
+    const scene = makeScene(groups);
+    const handle = createPrismix(scene, makeHooks(), { ex: false, arenaLeft: () => 0 });
+    handle.spawn();
+    const shockwaves = groups[1];
+    const shields = groups[2];
+    if (!shockwaves || !shields) throw new Error('pooled groups 未建立');
+    let count = 0;
+    // 兩輪腳本必須完全同拍：進場先壓 HP（P2＋≤50% 使 shadow 招可選）。
+    handle.applyDamage(28);
+    handle.applyDamageAt?.(14, 0, 352);
+    return {
+      handle,
+      shockwaves,
+      shields,
+      tick() {
+        count += 1;
+        handle.update(100);
+      },
+      ticks: () => count,
+    };
+  }
+
+  // 同種子同拍推進到謂詞成立，回傳成立時的絕對 tick 數。
+  function runUntil(run: Run, predicate: () => boolean, maxTicks = 8000): number {
+    for (let i = 0; i < maxTicks; i += 1) {
+      run.tick();
+      if (predicate()) return run.ticks();
+    }
+    throw new Error('runUntil 未達成謂詞');
+  }
+
+  it('殘影於 merge 同幀稍早被擊破：acquire 不得拿到殘影、shadow 不進軌道', () => {
+    // 第一輪：錄音——記下殘影入池後 merge（入 P3）發生的絕對 tick。
+    const recording = makeRun();
+    const state = () => recording.handle.getDebugState?.()?.state ?? '';
+    runUntil(recording, () =>
+      recording.shockwaves.children.some((c) => c.getData('shadow') === true),
+    );
+    runUntil(recording, () => state() === 'mirror');
+    runUntil(recording, () => state() !== 'mirror');
+    recording.handle.applyDamageAt?.(999, 0, 352);
+    const damageAtTick = recording.ticks();
+    const mergeTick = runUntil(recording, () => recording.handle.getDebugState?.()?.phase === 'p3');
+    expect(mergeTick).toBeGreaterThan(damageAtTick);
+    vi.restoreAllMocks();
+
+    // 第二輪：重放——同種子同拍走到 merge 前一 tick，擊破殘影後走 merge tick。
+    const replay = makeRun();
+    while (replay.ticks() < damageAtTick) replay.tick();
+    replay.handle.applyDamageAt?.(999, 0, 352);
+    while (replay.ticks() < mergeTick - 1) replay.tick();
+    const shadowSprite = replay.shockwaves.children.find((c) => c.getData('shadow') === true);
+    if (!shadowSprite) throw new Error('重放輪殘影未生成');
+    expect(shadowSprite.active).toBe(true);
+    // UPDATE 段 overlap 先行擊破（星彈 1 發即破語意）。
+    shadowSprite.disableBody();
+    // merge tick：spawnShardOrbit 於 runCommand 同步棧內取池。
+    replay.tick();
+    expect(replay.handle.getDebugState?.()?.phase).toBe('p3');
+    // 殘影不得在任何池、不得混入軌道、不得被 enableBody 復活。
+    expect(replay.shields.contains(shadowSprite)).toBe(false);
+    expect(replay.shockwaves.contains(shadowSprite)).toBe(false);
+    for (const child of replay.shields.children) {
+      expect(child.getData('shadow')).not.toBe(true);
+    }
+    const orbit = replay.shields.children.filter((child) => child.active);
+    expect(orbit.length).toBeGreaterThan(0);
+    expect(orbit).not.toContain(shadowSprite);
+  });
+});

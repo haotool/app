@@ -657,6 +657,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     // R4 重查補強：inhalePull 雖由讀取端逐幀消費清除，但池復用個體在「玩家正
     // 吸入」的生成瞬間可殘留一幀錯誤拉力——重建清單強制歸位。
     sprite.setData('inhalePull', false);
+    // R5 品種限定計時/瞄準欄位（scanna beamDir、cometa aimX/aimY/tailMs）：讀取端
+    // 雖有 kind/state 閘，重建清單一併強制歸位，免依賴閘門記憶。
+    sprite.setData('beamDir', undefined);
+    sprite.setData('aimX', undefined);
+    sprite.setData('aimY', undefined);
+    sprite.setData('tailMs', undefined);
     sprite.setData('elite', false);
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);

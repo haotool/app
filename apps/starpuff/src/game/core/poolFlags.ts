@@ -5,22 +5,24 @@ import type Phaser from 'phaser';
 // setData(x, false) 只會等下一個旗標再犯。新增一次性互動標記時只登記於此清單。
 //
 // 納入判準：跨系統寫入、代表一次性互動結果、物件回池後必須失效的布林標記。
-// 判定不納入（R4 逐條事實重查後改寫；每條附「為何現在為真＋如何保持為真」）：
-// - hazardKind/lifeMs：spawnHazard 參數化強制寫入（R4）——漏寫即型別錯誤，
-//   不再依賴各 spawner 分支自律。
-// - damage/pierce/flavor/mix（星彈）：兩個發射器（launchStar/launchShot）每發
-//   必寫，發射器即池取出點（型別層守門保證新增發射器必經 acquirePooled 審視）。
-// - boomMs：spawnHazard/兩發射器每發必寫歸位；boomDir/boomSpeed 僅在 boomMs
-//   有效（hazards 另加 hazardKind==='boomerang'）分支讀取，殘值不可達。
-// - homingMs（jellord 彈）/orbitIndex（護衛）：單一取出點內每發必寫。
-// - fxTrail：附著物件（particle emitter）需 destroy 而非布林覆寫，生命週期由
-//   recycleStar/starSteering 自管。
-// - 敵人本體池個體狀態（hp/state/elite/mini/frozenMs/...）：enemies.spawn 單一
-//   取出點全量逐鍵重建。
-// - inhalePull：overlaps 同一 wire 內每幀先清再設，幀內生命週期非跨池。
-// - shadow（prismix 鏡像殘影）：身分標記不復位（復位會破壞再召喚語意）；其
-//   「非池物件」前提在 R4 被證偽（殘影雙掛 shockwaves/shields 池），改以
-//   「失效即離池」對帳修正——殘影 inactive 時不得留在任何池群組內。
+// 判定不納入（R5 依守門強度分級標示——【機制】有機械鎖會紅、【慣例】無機械鎖
+// 純靠人工留意，後者是缺口候選，改動相鄰程式時須主動複查）：
+// - hazardKind/lifeMs【機制】：spawnHazard 參數化強制寫入——漏寫即型別錯誤。
+// - damage/pierce/flavor/mix（星彈）【機制】：兩發射器每發必寫＋player.test
+//   四鍵必寫回歸鎖（R5）。
+// - 敵人本體池個體狀態【機制】：enemies.spawn 單一取出點全量逐鍵重建＋
+//   enemies.test 池復用重建回歸鎖（R5，含 inhalePull/beamDir/aimX/aimY/tailMs）。
+// - inhalePull【機制】：讀取端逐幀消費清除＋enemies.spawn 重建清單歸位（R4 補、
+//   R5 測試釘住）——單靠幀內消費不足，池復用個體在玩家吸入中生成會殘留一幀。
+// - shadow（prismix 鏡像殘影）【機制】：身分標記不復位（復位破壞再召喚語意）；
+//   「非池物件」前提在 R4 被證偽（雙掛 shockwaves/shields），改「失效即離池」
+//   對帳（R5 前移至 fsm.tick 前＋spawnShardOrbit 取出第二閘＋同幀 merge 測試）。
+// - boomMs/boomDir/boomSpeed【慣例·無機械鎖】：三個寫入點每發歸位 boomMs、
+//   殘值讀取有 boomMs/hazardKind 閘——新增寫入或讀取分支時人工複查。
+// - homingMs（jellord 彈）/orbitIndex（護衛）【慣例·無機械鎖】：單一取出點內
+//   每發必寫——新增取出分支時人工複查。
+// - fxTrail【慣例·無機械鎖】：附著物件需 destroy 而非布林覆寫，生命週期由
+//   recycleStar/starSteering 自管——新增星彈回收路徑時人工複查。
 export const POOL_TRANSIENT_FLAGS = [
   'tideDeflected',
   'reflected',
@@ -41,11 +43,17 @@ interface PooledGroup {
   get(x?: number, y?: number, key?: string): unknown;
 }
 
-// 池取出唯一入口（PR #886 R3/R4）：取出即復位一體化——「新增旗標」由上表守、
-// 「新增取出點」由 poolFlags.test.ts 的 TypeScript 型別層守門守：任何對 Group
-// 型別值的 get 存取（直呼/解構/中括號/換行/改名/跨檔參數/Reflect.get）都會被
-// 抓。此守門大幅降低遺漏機率但非不可繞過——動態字串組鍵、any 斷言等蓄意規避
-// 不在涵蓋範圍（已知邊界，見守門測試自證案）。
+// 池取出唯一入口（PR #886 R3/R4/R5）：取出即復位一體化——「新增旗標」由上表
+// 守、「新增取出點」由 poolFlags.test.ts 的 TypeScript 型別層守門守：任何對
+// Group 型別值的 get 存取（直呼/解構/中括號/換行/改名/跨檔參數/Reflect.get）
+// 都會被抓。已知邊界（守門測試以 probe 常駐記錄）：
+// 1) 型別斷言脫鉤（as any / as unknown as 寬介面）；
+// 2) 容器/寬介面中轉後 symbol 與 Group 脫鉤；
+// 3) wrapper 回傳型別被推成非 Group。
+// 這三種一般重構即可自然產生，review 時對池群組的型別斷言/中轉要特別留意；
+// 動態字串組鍵、eval 等蓄意規避維持不涵蓋。
+// 守門存續假設：app tsconfig include 涵蓋 src/game、Phaser Group 符號名為
+// 'Group'——兩者由守門測試的檔案在列斷言與 probe 直呼必抓案鎖住，漂移先紅。
 export function acquirePooled(
   group: PooledGroup,
   x: number,
