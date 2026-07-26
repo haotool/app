@@ -81,7 +81,7 @@ export interface StarCombat {
   resolveVoltBeam(x: number, y: number, facing: 1 | -1): void;
   resolveVoltDischarge(x: number, y: number): void;
   resolveGaleLanding(x: number, y: number): void;
-  // 形態技路由單一入口（§118）：GameScene 只轉發事件 kind，分派集中於此。
+  // 形態技路由單一入口（§119）：GameScene 只轉發事件 kind，分派集中於此。
   resolveTransformStrike(kind: TransformStrikeKind, x: number, y: number, facing: 1 | -1): void;
 }
 
@@ -383,7 +383,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 焰化熔岩爆（§118）：落地燒灼小爆——範圍/傷害高於風化落地衝擊，burn 結算熔解優勢。
+  // 焰化熔岩爆（§119）：落地燒灼小爆——範圍/傷害高於風化落地衝擊，burn 結算熔解優勢。
   function resolveMagmaPop(x: number, y: number): void {
     hooks.fx().shake(5);
     hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.ember.tint);
@@ -399,7 +399,10 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 潮化水引（§118）：面向側域內小怪拉向玩家＋輕傷——貼近吸入循環（吞取節奏加速）。
+  // 潮化水引（§119）：面向側域內小怪拉向玩家——貼近吸入循環（吞取節奏加速）。
+  // 可吸目標只拉不傷（PR #886 收斂）：HP1 供給怪先傷即殺、拉近永不執行，潮引對
+  // 它最該作用的補彈目標失效；殺死供給亦與「拉近吸入」的控制定位相斥。
+  // 不可吸威脅維持輕傷＋未死拉近（攻語彙保留）。
   function resolveTidePull(x: number, y: number, facing: 1 | -1): void {
     hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.tide.tint);
     const player = hooks.player().sprite;
@@ -408,8 +411,10 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       const enemy = child as Phaser.Physics.Arcade.Sprite;
       if (Math.sign(enemy.x - x) !== facing && enemy.x !== x) continue;
       if (distanceBetween(x, y, enemy.x, enemy.y) > TIDE_PULL.rangePx) continue;
-      const outcome = hooks.enemies().damage(child, TIDE_PULL.damage);
-      if (outcome === 'ignored' || outcome === 'killed') continue;
+      if (!hooks.enemies().isInhalable(child)) {
+        const outcome = hooks.enemies().damage(child, TIDE_PULL.damage);
+        if (outcome === 'ignored' || outcome === 'killed') continue;
+      }
       const dx = player.x - enemy.x;
       const dy = player.y - enemy.y;
       const dist = Math.hypot(dx, dy) || 1;
@@ -417,7 +422,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 稜化彩虹光束（§118）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。
+  // 稜化彩虹光束（§119）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。
   function resolveRainbowBeam(x: number, y: number, facing: 1 | -1): void {
     const endX = x + facing * RAINBOW_BEAM.rangePx;
     const beam = scene.add.graphics().setDepth(93);
@@ -457,7 +462,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     }
   }
 
-  // 引力化引力井（§118）：面向側定點初爆輕傷＋滯留週期牽引（壽命有界必回收）。
+  // 引力化引力井（§119）：面向側定點初爆輕傷＋滯留週期牽引（壽命有界必回收）。
   function resolveGravityWell(x: number, y: number, facing: 1 | -1): void {
     const wellX = x + facing * GRAVITY_WELL.offsetPx;
     const well = scene.add
@@ -505,7 +510,7 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
     });
   }
 
-  // 形態技路由（§118）：kind 窮舉分派，GameScene 零 if/else 常駐。
+  // 形態技路由（§119）：kind 窮舉分派，GameScene 零 if/else 常駐。
   function resolveTransformStrike(
     kind: TransformStrikeKind,
     x: number,

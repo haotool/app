@@ -246,7 +246,7 @@ function makeHarness(): {
     time: { now: 0 },
     cameras: { main: { worldView: { x: 0, right: 854 } } },
   } as unknown as Phaser.Scene;
-  // 解鎖集（§118）：單測給全形態，資格裁決守門案在 transform.test.ts。
+  // 解鎖集（§119）：單測給全形態，資格裁決守門案在 transform.test.ts。
   return { player: createPlayer(scene, 100, 300, unlockedTransformForms(30)), groups, emit };
 }
 
@@ -411,5 +411,30 @@ describe('星光虹吸被抽（§113 stealTopStar）', () => {
     emit.mockClear();
     expect(player.stealTopStar()).toBe(false);
     expect(emit).not.toHaveBeenCalledWith(GameEvents.AMMO_CHANGED, expect.anything());
+  });
+});
+
+describe('§119 焰彈 burn 標記池重用（PR #886 收斂）', () => {
+  it('焰彈後復用同一池物件發射一般星：burn 殘留必須清除', () => {
+    const { player } = makeHarness();
+    // 重鑽味 ×3（連吞升級佔 2 發）→ 焰化資格成立，SP 點按地面即變身。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    // B 點按發焰彈：burn 標記為真。
+    player.update(PRESS, 16);
+    const stars = player.getStars().getChildren() as unknown as FakeStar[];
+    const emberShot = stars.find((star) => star.active);
+    expect(emberShot?.getData('burn')).toBe(true);
+    // 模擬回收（recycleStar 語意）→ 解除變身 → 一般星發射復用同一池物件。
+    emberShot?.setActive(false);
+    player.update(IDLE, 16);
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    player.grantStar('jelly');
+    player.update(PRESS, 16);
+    const reused = stars.find((star) => star.active);
+    expect(reused).toBe(emberShot);
+    expect(reused?.getData('burn')).toBe(false);
   });
 });

@@ -3,7 +3,7 @@ import type Phaser from 'phaser';
 import { SLAM, STARSTORM, STAR_FLAVORS, getMix } from '../core/config';
 import { createBuffState, pickupBuff, BUFF_SPECS } from '../logic/buffs';
 import { SHELL_SHIELD } from '../logic/skills';
-import { GALE_FLIGHT, VOLT_BEAM, TRANSFORM_FORMS } from '../logic/transform';
+import { GALE_FLIGHT, TIDE_PULL, VOLT_BEAM, TRANSFORM_FORMS } from '../logic/transform';
 import { createStarCombat, type StarCombatHooks } from './starCombat';
 import type { BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
@@ -32,6 +32,8 @@ interface FakeEnemy {
   x: number;
   y: number;
   active: boolean;
+  // §119 水引守門：可吸供給只拉不傷（缺省不可吸，沿既有測試語意）。
+  inhalable?: boolean;
   setVelocity: ReturnType<typeof vi.fn>;
 }
 
@@ -103,6 +105,7 @@ function makeHarness(overrides: {
         applySlow,
         kill,
         freeze,
+        isInhalable: (enemy: unknown) => (enemy as FakeEnemy).inhalable === true,
       }) as unknown as EnemySystem,
     fx: () => fx as unknown as FxSystem,
     boss: () =>
@@ -339,5 +342,30 @@ describe('resolveGaleLanding 風化落地衝擊（§57）', () => {
     expect(damage).toHaveBeenCalledTimes(1);
     expect(damage).toHaveBeenCalledWith(near, GALE_FLIGHT.landingDamage);
     expect(near.setVelocity).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('resolveTransformStrike tide-pull（§119 水引，PR #886 收斂）', () => {
+  it('可吸供給怪只拉不傷：HP1 供給不再被先傷即殺而拉近失效', () => {
+    const supply = makeEnemy(220, 300);
+    supply.inhalable = true;
+    const { combat, damage } = makeHarness({ enemies: [supply] });
+    combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+    expect(damage).not.toHaveBeenCalled();
+    expect(supply.setVelocity).toHaveBeenCalled();
+  });
+
+  it('不可吸目標照常傷＋未死拉近；被擊殺不拉', () => {
+    const foe = makeEnemy(220, 300);
+    const { combat, damage } = makeHarness({ enemies: [foe] });
+    combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+    expect(damage).toHaveBeenCalledWith(foe, TIDE_PULL.damage);
+    expect(foe.setVelocity).toHaveBeenCalled();
+
+    const dead = makeEnemy(220, 300);
+    const killedHarness = makeHarness({ enemies: [dead] });
+    killedHarness.damage.mockReturnValue('killed');
+    killedHarness.combat.resolveTransformStrike('tide-pull', 120, 300, 1);
+    expect(dead.setVelocity).not.toHaveBeenCalled();
   });
 });

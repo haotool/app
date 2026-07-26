@@ -205,7 +205,7 @@ describe('absorbHalvedDamage 殼化減傷池（§57）', () => {
   });
 });
 
-describe('§118 四新形態：資格映射與解鎖閘', () => {
+describe('§119 四新形態：資格映射與解鎖閘', () => {
   it('同系 ×3 對應新四形態：drilly→ember、spora→tide、glowy→prism、boomy→gravity', () => {
     expect(eligibleForm([slot('drilly'), slot('drilly'), slot('drilly')])).toBe('ember');
     expect(eligibleForm([slot('spora'), slot('spora'), slot('spora')])).toBe('tide');
@@ -236,7 +236,7 @@ describe('§118 四新形態：資格映射與解鎖閘', () => {
   });
 });
 
-describe('§118 四新形態規格：語彙 ≤4 與 anti-softlock 紅線', () => {
+describe('§119 四新形態規格：語彙 ≤4 與 anti-softlock 紅線', () => {
   it('焰化：無防禦語彙（走位換輸出）——攻焰彈/機動衝刺/特落地爆共 3 語彙', () => {
     const spec = TRANSFORM_FORMS.ember;
     expect(spec.shot).not.toBeNull();
@@ -283,7 +283,7 @@ describe('§118 四新形態規格：語彙 ≤4 與 anti-softlock 紅線', () =
   });
 });
 
-describe('§118 consumeTuck 泛化：潮化泡泡盾／引力化星體護衛', () => {
+describe('§119 consumeTuck 泛化：潮化泡泡盾／引力化星體護衛', () => {
   it('潮化 1 次全免後耗盡；引力化 3 次遞減', () => {
     let tide = startTransform('tide');
     const first = consumeTuck(tide);

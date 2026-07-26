@@ -574,7 +574,7 @@ export function tickBoomerangBody(
   return next;
 }
 
-// ===== §119 星海終局篇新怪 =====
+// ===== §120 星海終局篇新怪 =====
 
 // 貨櫃丁 Cargo：緩推巡邏（週期折返＋碰牆 bounce 反彈）——形態練習區留駐供給
 //（遠域純週期折返不長程漂移，drillSpawns 保證同系供給不散場）；玩家入近域
@@ -682,7 +682,7 @@ export function tickFoamy(state: FoamyState, stateMs: number, deltaMs: number): 
 }
 
 // 冰史萊姆 Frosty：冰面滑行（恆速滑動＋碰牆反彈）；受擊分裂——本體被擊殺分裂為
-// 兩隻迷你體（不再分裂），焰系 burn 命中即熔解不分裂（§118 燒毀優勢）。
+// 兩隻迷你體（不再分裂），焰系 burn 命中即熔解不分裂（§119 燒毀優勢）。
 export const FROSTY_FSM = {
   slideSpeed: 120,
   miniScale: 0.65,

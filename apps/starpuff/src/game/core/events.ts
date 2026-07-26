@@ -67,7 +67,7 @@ export interface GameEventPayloads {
   [GameEvents.SKILL_SLAM_LANDED]: { x: number; y: number };
   [GameEvents.SKILL_SHIELD_BLOCK]: { x: number; y: number; facing: 1 | -1 };
   [GameEvents.SKILL_TRANSFORM_STRIKE]: {
-    // §118 新形態技：magma-pop 焰化落地爆／tide-pull 水引／rainbow-beam 彩虹光束／
+    // §119 新形態技：magma-pop 焰化落地爆／tide-pull 水引／rainbow-beam 彩虹光束／
     // gravity-well 引力井——GameScene 路由至 starCombat.resolveTransformStrike。
     kind:
       | 'volt-beam'

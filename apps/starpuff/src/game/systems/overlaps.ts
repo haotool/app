@@ -55,8 +55,17 @@ const PULL_BASE_SPEED = 160;
 const PULL_GAIN = 2.2;
 const REPEL_SPEED = 260;
 const REPEL_LIFT = -180;
-// 潮環撥開速度（§118 Tidal Ring）：接觸投射物即反向推離。
+// 潮環撥開速度（§119 Tidal Ring）：接觸投射物即反向推離。
 const TIDE_DEFLECT_SPEED = 320;
+// 潮環撥開白名單（§119）：僅飛行彈體類 hazard（爆刺彈/鏡面反射彈/迴旋殼刃/
+// 拋物糖球/水刃）；泡泡另有免疫分流，區域拒止/近戰/光束不受撥開。
+const TIDE_DEFLECT_KINDS: readonly string[] = [
+  'spike',
+  'reflect',
+  'boomerang',
+  'sugarblob',
+  'waterblade',
+];
 
 export function applyInhalePull(
   scene: Phaser.Scene,
@@ -125,7 +134,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       return;
     }
     const spec = hooks.combat().specOf(s);
-    // burn（§118 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§119）。
+    // burn（§119 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§120）。
     const burn = s.getData('burn') === true;
     const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn);
     if (outcome === 'ignored') return;
@@ -184,7 +193,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
   scene.physics.add.overlap(hooks.player().sprite, hooks.enemies().getHazards(), (_p, hz) => {
     const hazard = asSprite(hz);
     if (!hazard.active || hooks.isSettled()) return;
-    // 漂浮泡泡（§119 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§118）。
+    // 漂浮泡泡（§120 foamy）：不傷人拒止——觸碰即破並使玩家上浮；潮化免疫（§119）。
     if (hazard.getData('hazardKind') === 'bubble') {
       hazard.disableBody(true, true);
       hooks.fx().burstSmall(hazard.x, hazard.y, 0xbfe8f0);
@@ -194,9 +203,14 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       }
       return;
     }
-    // 潮環撥開（§118 Tidal Ring）：潮化接觸投射物即反向推離，不結算傷害不回收
+    // 潮環撥開（§119 Tidal Ring）：潮化接觸「投射物」即反向推離，不結算傷害不回收
     //（防禦性撥開，非殼化反打）；deflected 標記防同一彈體逐幀重複推。
-    if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
+    // 白名單收窄（PR #886 收斂）：僅飛行彈體——區域拒止/近戰/光束不屬投射物語彙，
+    // 全類撥開會使潮化對地形危害全免傷（違反「變身是優勢不是必勝」）。
+    if (
+      hooks.combat().playerFormSpec()?.deflectProjectiles &&
+      TIDE_DEFLECT_KINDS.includes(hazard.getData('hazardKind') as string)
+    ) {
       if (hazard.getData('tideDeflected') !== true) {
         hazard.setData('tideDeflected', true);
         const player = hooks.player().sprite;
@@ -287,7 +301,7 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       playSfx('swallow');
       return;
     }
-    // 潮環撥開（§118）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
+    // 潮環撥開（§119）：魔王彈幕同受撥離（不回傷、不回收，遠離玩家側）。
     if (hooks.combat().playerFormSpec()?.deflectProjectiles) {
       if (projectile.getData('tideDeflected') !== true) {
         projectile.setData('tideDeflected', true);

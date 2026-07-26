@@ -552,7 +552,7 @@ describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
   });
 });
 
-describe('§119 星海終局篇新怪 FSM', () => {
+describe('§120 星海終局篇新怪 FSM', () => {
   it('telegraph 紅線：ticketa/scanna/foamy/manta 前搖窗一律 ≥600ms', () => {
     expect(TICKETA_FSM.shiftMs).toBeGreaterThanOrEqual(600);
     expect(SCANNA_FSM.aimMs).toBeGreaterThanOrEqual(600);

@@ -19,7 +19,7 @@ export function installAuditDriver(opts) {
     grantSupply, // 魔王關純標準星紀律：空匣補 jelly
     // 變身優勢 hook（#816 W2）：非 null 時以該味集齊 ×3 並按 SP 變身（TTK 對照量測）。
     transformFlavor = null,
-    // §118 walk transform probe：同系供給怪集合——獵集吸食路徑（非 grantStar 注入）。
+    // §119 walk transform probe：同系供給怪集合——獵集吸食路徑（非 grantStar 注入）。
     huntKinds = [],
     // 完整策略開關（#814 W1.5，BOT_TIERS SSOT 注入）：滿拍翅空中機動、鏡界窗紀律、
     // 魔王戰就地吸食補彈（低/中沿 grantSupply 節流口徑）。
@@ -98,7 +98,7 @@ export function installAuditDriver(opts) {
       stateLog: [],
       shots: 0,
       samples: [],
-      // 變身優勢 hook（#816 W2）：成功變身次數；§118 首次變身時刻（probe 量測）。
+      // 變身優勢 hook（#816 W2）：成功變身次數；§119 首次變身時刻（probe 量測）。
       transforms: 0,
       firstTransformMs: -1,
     },
@@ -904,7 +904,7 @@ export function installAuditDriver(opts) {
       d.lastJumpAt = now;
       tap(KEY.jump, 200);
     }
-    // §118 walk transform probe：獵集同系味→SP 變身（模擬「想變身的玩家」策略）。
+    // §119 walk transform probe：獵集同系味→SP 變身（模擬「想變身的玩家」策略）。
     // 形態量測（firstTransformMs）由本段真值觀測承擔；未設 transformFlavor 零影響。
     if (transformFlavor) {
       const tfWalk = window.__sp.transform ? window.__sp.transform() : { form: null };

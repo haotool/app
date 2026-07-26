@@ -18,7 +18,7 @@ import {
 import { playSfx } from '../audio/sfx';
 import type { EnemyUpdateContext } from './enemyUpdates';
 
-// §119 星海終局篇新怪 per-kind 逐幀 AI：時序由 enemyFsm 決策，此處只負責呈現層
+// §120 星海終局篇新怪 per-kind 逐幀 AI：時序由 enemyFsm 決策，此處只負責呈現層
 //（速度/旋轉/著色）；hazards 生成經 ctx 回呼銜接（enemies.ts 持有池）。
 // 獨立模組而非續寫 enemyUpdates.ts：既有檔 1132 行貼近 1200 行閘。
 
@@ -30,7 +30,7 @@ const SCANNA_FLICKER_MS = 110;
 const FOAMY_WINDUP_TINT = 0xcfeef5;
 const MANTA_AIM_TINT = 0xbfe8ff;
 
-// 貨櫃丁（§119）：遠域週期折返巡邏（練習區留駐）、玩家入近域緩推逼近（aggro）；
+// 貨櫃丁（§120）：遠域週期折返巡邏（練習區留駐）、玩家入近域緩推逼近（aggro）；
 // 碰牆 bounce、被外力夾停時恢復。
 export function updateCargo(
   ctx: EnemyUpdateContext,
@@ -51,7 +51,7 @@ export function updateCargo(
   sprite.setRotation(Math.sin(cycleMs * 0.006) * 0.05);
 }
 
-// 票券蝠（§119）：雙軌飛行——fly 沿軌帶水平漂移、垂直逼近軌帶高；shift 前搖閃爍
+// 票券蝠（§120）：雙軌飛行——fly 沿軌帶水平漂移、垂直逼近軌帶高；shift 前搖閃爍
 // telegraph 後高速換軌（穿越玩家空域即攻擊語彙）。
 export function updateTicketa(
   ctx: EnemyUpdateContext,
@@ -92,7 +92,7 @@ export function updateTicketa(
   sprite.setFlipX(body.velocity.x < 0);
 }
 
-// 掃描眼（§119）：定點懸浮；aim 期鎖定線漸亮（鎖定後不修正），fire 生成直線光束。
+// 掃描眼（§120）：定點懸浮；aim 期鎖定線漸亮（鎖定後不修正），fire 生成直線光束。
 export function updateScanna(
   ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,
@@ -128,7 +128,7 @@ export function updateScanna(
   sprite.clearTint();
 }
 
-// 泡泡機（§119）：定點吐泡——windup 鼓脹抖動 telegraph，spit 生成漂浮泡泡。
+// 泡泡機（§120）：定點吐泡——windup 鼓脹抖動 telegraph，spit 生成漂浮泡泡。
 export function updateFoamy(
   ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,
@@ -164,7 +164,7 @@ export function updateFoamy(
   mod.sy = 1;
 }
 
-// 冰史萊姆（§119）：冰面恆速滑行＋碰牆反彈；分裂在 enemies.damage 擊殺路徑結算。
+// 冰史萊姆（§120）：冰面恆速滑行＋碰牆反彈；分裂在 enemies.damage 擊殺路徑結算。
 export function updateFrosty(
   ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,
@@ -183,7 +183,7 @@ export function updateFrosty(
   sprite.setFlipX(body.velocity.x < 0);
 }
 
-// 潮汐魟（§119）：低空巡游；aim 鎖定 telegraph 後扇形三水刃（順流方向＝面向側）。
+// 潮汐魟（§120）：低空巡游；aim 鎖定 telegraph 後扇形三水刃（順流方向＝面向側）。
 export function updateManta(
   ctx: EnemyUpdateContext,
   sprite: Phaser.Physics.Arcade.Sprite,

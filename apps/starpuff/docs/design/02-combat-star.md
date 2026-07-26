@@ -184,3 +184,48 @@
   逐 tick 重試）；報告輸出 `transformsPerRun` 與情境描述。
 - 驗收口徑：同 bot 分級、同 runs 的有/無 `--transform` 兩份報告對照，TTK 改善
   ≥15%（`AUDIT_THRESHOLDS.transformTtkGainMinPct`）且無變身仍可通關（非必需）。
+
+## 119. 星海終局篇四新變身（W1；#886）
+
+沿 §57/§110 的 `TRANSFORM_FORMS` 資料驅動架構擴為七形態；觸發沿 §109 SP 情境鍵
+（同系 ≥3、地面）；anti-softlock 紅線不變——全部為優勢解非必需解。
+設計 SSOT＝`.claude/prds/starpuff-v21-v30-design.md` §3。
+
+### 119.1 形態總表（每形態語彙 ≤4：攻/防/機動/特）
+
+| 形態           | 解鎖 | 觸發味（零新味）   | 攻             | 防              | 機動              | 特                                      |
+| -------------- | ---- | ------------------ | -------------- | --------------- | ----------------- | --------------------------------------- |
+| 焰化 Ember     | L21  | 重鑽味（貨櫃丁）   | 焰彈小爆       | —（走位換輸出） | 焰衝刺（空跳）    | 熔岩爆落地＋burn 燒毀                   |
+| 潮化 Tide      | L23  | 孢子味（潮灣三怪） | 水引拉近       | 泡泡盾 ×1       | 霜滑翔            | 潮環撥開投射物                          |
+| 稜化 Prism     | L25  | 流光味             | 三向稜光碎片   | 反射抵銷        | 鏡步瞬移（空跳）  | 彩虹光束（B 長按貫穿）                  |
+| 引力化 Gravity | L27  | 迴旋味             | 引力井（初爆） | 星體護衛 ×3     | 錨墜（下砸 ×1.8） | 引力井滯留牽引＋方向切換抗性（W3 消費） |
+
+潮化兩項邊界語意（PR #886 bot review 收斂定案）：
+
+- 水引對**可吸目標只拉不傷**——供給怪正是最該拉近吸入的對象，先傷會把 HP1 供給
+  擊殺使拉近失效；不可吸威脅維持輕傷＋未死拉近（控制定位、攻語彙保留）。
+- 潮環撥開僅對**投射物彈體白名單**生效（爆刺彈/鏡面反射彈/迴旋殼刃/拋物糖球/
+  水刃；泡泡另有免疫分流）；區域拒止、近戰 hitbox 與掃描光束照常結算——潮化是
+  優勢不是必勝，不得對地形危害全免傷。
+
+### 119.2 工程契約
+
+- 解鎖閘：`FORM_INTRO_LEVEL`＋`unlockedTransformForms(可觸及最高關)`——不動 save
+  schema；SP 鍵、HUD 徽章與 e2e `transformEligible` 同一裁決（player 單點）。
+- 護體泛化：泡泡盾/星體護衛沿殼化受身入殼 `tuckCharges` 計數（consumeTuck 單一機構）。
+- 攻擊彈：焰彈/稜片/風刃收斂 `formSkills.launchShot` 單一發射管線（FormShotSpec，
+  flavor 借既有味系效果表——焰彈借爆裂小爆、稜片借標準素身）；burn 標記由命中端
+  結算（冰史萊姆熔解不分裂、W2 稅票同源），且一般星彈發射時必重設 burn=false
+  ——星彈池物件重用不得洩漏前個體殘留狀態。
+- 世界結算：`SKILL_TRANSFORM_STRIKE` kind 擴 magma-pop/tide-pull/rainbow-beam/
+  gravity-well，GameScene 經 `starCombat.resolveTransformStrike` 單點路由。
+- 呈現分檔：aura/變身環/護體視覺/空中機動抽 `systems/formSkills.ts`（1200 行閘）。
+
+### 119.3 觸發密度契約與量測
+
+- 每形態引入關：主形態味供給怪 ≥2 種＋中段形態練習區保證 3 隻同系怪
+  （位點一律在首個精英門之前——開放跑道；L23 取證教訓：孢子菇叢集＝範圍拒止
+  死亡坑，練習品種須低壓）。
+- 驗收：`node scripts/level-audit.mjs <21|23> --probe transform`——mid bot 獵集
+  同系味首次變身 p50 ≤30s、p95 ≤60s（門檻 SSOT＝AUDIT_THRESHOLDS）。
+  W1 實測：L21 p50 8s/p95 30s、L23 p50 11s/p95 26.6s（各 8 trials 零逾時）。

@@ -172,3 +172,6 @@
 | §116 | v24 EX 全面重設計 W3——Jellord 果凍狂潮＋Noctra 月相雙血條＋皇冠共鳴（#814；T6 收斂） | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
 | §117 | 物理/視覺縮放解耦 visualScale（#819 子項 3；T7-B 列車）                              | [`00-foundations.md`](design/00-foundations.md)       |
 | §118 | 使用者設定 SSOT、存檔備援與 PWA 更新閘（#819；T7-A 列車）                            | [`05-save-settings.md`](design/05-save-settings.md)   |
+| §119 | 星海終局篇四新變身（W1；#886）                                                       | [`02-combat-star.md`](design/02-combat-star.md)       |
+| §120 | 星海終局篇六新小怪（W1；#886）                                                       | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
+| §121 | 星海終局篇 L21/L23 走動關與進程（W1；#886）                                          | [`04-levels-world.md`](design/04-levels-world.md)     |

@@ -121,7 +121,7 @@ export interface PlayerHandle {
   isShieldRaised(): boolean;
   // v9 星化（§57）：形態觀測（e2e/世界結算）與下砸態（魔王頭頂 hit window 判定）。
   getTransformState(): TransformState;
-  // 變身資格觀測（§118 解鎖閘一致性）：HUD/e2e 與 SP 鍵同一裁決，鎖定形態不成立。
+  // 變身資格觀測（§119 解鎖閘一致性）：HUD/e2e 與 SP 鍵同一裁決，鎖定形態不成立。
   getEligibleForm(): TransformForm | null;
   // 滾殼衝撞（§110）：衝撞期觀測——overlaps 據此改判接觸傷向小怪結算。
   isShellCharging(): boolean;
@@ -180,7 +180,7 @@ const INHALE_FRAME_MS = 160;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
-// unlockedForms（§118）：GameScene 依進度派生的形態解鎖集——資格裁決單點注入。
+// unlockedForms（§119）：GameScene 依進度派生的形態解鎖集——資格裁決單點注入。
 export function createPlayer(
   scene: Phaser.Scene,
   x: number,
@@ -279,8 +279,8 @@ export function createPlayer(
   let blockInvulnMs = 0;
   let wasShieldRaised = false;
   // 星化（§57）：形態狀態、形態技 CD 與殼化減傷池；觸發改 SP 鍵（§109）。
-  // formCdMs（§118）：風刃/焰彈/稜片/水引/引力井/光束共用形態技 CD（形態互斥）。
-  // prismArm（§118）：稜化 B 語意延遲——放開時依按住時長分派碎片（點按）或光束（長按）。
+  // formCdMs（§119）：風刃/焰彈/稜片/水引/引力井/光束共用形態技 CD（形態互斥）。
+  // prismArm（§119）：稜化 B 語意延遲——放開時依按住時長分派碎片（點按）或光束（長按）。
   let transform = createTransformState();
   let voltCdMs = 0;
   let formCdMs = 0;
@@ -427,10 +427,10 @@ export function createPlayer(
     emitStarburst();
   };
 
-  // 形態呈現與攻擊彈（§57/§118）：aura／變身環／護體視覺／偽星彈發射委派 formSkills。
+  // 形態呈現與攻擊彈（§57/§119）：aura／變身環／護體視覺／偽星彈發射委派 formSkills。
   const formSkills = createFormSkills(scene, sprite, stars, tex);
 
-  // 形態攻擊彈發射（§57 風刃／§118 焰彈·稜片）：面向嘴前出彈，風刃保留扁身長尾。
+  // 形態攻擊彈發射（§57 風刃／§119 焰彈·稜片）：面向嘴前出彈，風刃保留扁身長尾。
   const fireFormShot = (shot: FormShotSpec, flat: boolean) => {
     const spec = transform.form ? TRANSFORM_FORMS[transform.form] : null;
     formSkills.launchShot({
@@ -445,7 +445,7 @@ export function createPlayer(
     });
   };
 
-  // 形態技世界結算事件單一出口（§118）：tide-pull／gravity-well／rainbow-beam。
+  // 形態技世界結算事件單一出口（§119）：tide-pull／gravity-well／rainbow-beam。
   const emitFormStrike = (
     kind: 'tide-pull' | 'gravity-well' | 'rainbow-beam',
     form: TransformForm,
@@ -530,6 +530,8 @@ export function createPlayer(
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
     star.setData('mix', slot.mix ?? null);
+    // 池重用重設（PR #886 收斂）：焰彈殘留的 burn 標記不得跨個體洩漏到一般星彈。
+    star.setData('burn', false);
     // 迴旋星（§53）：標記迴旋彈道由本系統 steerBoomerangStars 逐幀驅動；非迴旋彈清殘留。
     star.setData('boomMs', spec.boomerang ? 0 : null);
     star.setData('boomDir', facing);
@@ -652,7 +654,7 @@ export function createPlayer(
           });
         } else if (lastVy > DUST_FALL_SPEED) {
           spawnDustRing();
-          // 落地衝擊（§57 風化／§118 焰化熔岩爆）：資料驅動 landingImpact，世界結算交 GameScene。
+          // 落地衝擊（§57 風化／§119 焰化熔岩爆）：資料驅動 landingImpact，世界結算交 GameScene。
           if (formSpec?.landingImpact && transform.form) {
             emitGameEvent(scene.events, GameEvents.SKILL_TRANSFORM_STRIKE, {
               kind: transform.form === 'ember' ? 'magma-pop' : 'gale-landing',
@@ -737,7 +739,7 @@ export function createPlayer(
               flapsUsed < PLAYER.maxFlaps &&
               formSkills.airMove(formSpec, facing)
             ) {
-              // 焰衝刺／鏡步（§118）：形態機動佔用空中跳槽位，消耗拍翅次數。
+              // 焰衝刺／鏡步（§119）：形態機動佔用空中跳槽位，消耗拍翅次數。
               flapsUsed += 1;
             } else if (
               controls.jumpPressed &&
@@ -773,16 +775,16 @@ export function createPlayer(
               fireFormShot(GALE_SHOT, true);
             }
           } else if (transform.form === 'ember') {
-            // 焰彈（§118）：直射小爆（借爆裂味效果表），burn 燒毀優勢由命中端結算。
+            // 焰彈（§119）：直射小爆（借爆裂味效果表），burn 燒毀優勢由命中端結算。
             if (formCdMs <= 0 && formSpec?.shot) {
               formCdMs = formSpec.shot.cooldownMs;
               fireFormShot(formSpec.shot, false);
             }
           } else if (transform.form === 'prism') {
-            // 稜化 B 語意延遲（§118）：放開時分派碎片（點按）或彩虹光束（長按）。
+            // 稜化 B 語意延遲（§119）：放開時分派碎片（點按）或彩虹光束（長按）。
             prismArm = true;
           } else if (transform.form === 'tide' || transform.form === 'gravity') {
-            // 水引／引力井（§118）：世界結算交 starCombat（沿 SKILL 事件契約）。
+            // 水引／引力井（§119）：世界結算交 starCombat（沿 SKILL 事件契約）。
             if (formCdMs <= 0 && formSpec?.tapStrike) {
               formCdMs =
                 formSpec.tapStrike === 'tide-pull' ? TIDE_PULL.cooldownMs : GRAVITY_WELL.cooldownMs;
@@ -827,7 +829,7 @@ export function createPlayer(
       if (!controls.actionHeld) {
         if (deferredFire && hurtLockMs <= 0 && shouldFireOnRelease(actionHoldMs)) fireStar();
         deferredFire = false;
-        // 稜化 B 放開分派（§118）：長按 ≥ 門檻＝彩虹光束、否則三向稜光碎片。
+        // 稜化 B 放開分派（§119）：長按 ≥ 門檻＝彩虹光束、否則三向稜光碎片。
         if (prismArm && transform.form === 'prism' && hurtLockMs <= 0 && formCdMs <= 0) {
           const spec = TRANSFORM_FORMS.prism;
           if (actionHoldMs >= RAINBOW_BEAM.holdMs) {
@@ -873,7 +875,7 @@ export function createPlayer(
         !inShieldContext &&
         !transform.form;
       zoneBody.enable = inhaling;
-      // 變身環＋護體視覺（§57/§109/§118）：形態倒數與泡泡盾/星體護衛逐幀重繪。
+      // 變身環＋護體視覺（§57/§109/§119）：形態倒數與泡泡盾/星體護衛逐幀重繪。
       formSkills.draw(transform, sprite.x, sprite.y, scene.time.now);
       // 候選區前緣 zoneSpan、後緣 INHALE_NEAR_PX（#844）：中心相應向面向側偏移。
       zone.setPosition(sprite.x + facing * ((zoneSpan - INHALE_NEAR_PX) / 2), sprite.y);
@@ -969,7 +971,7 @@ export function createPlayer(
         });
         return;
       }
-      // 護體（§110 受身入殼→§118 泛化）：殼化入殼／潮化泡泡盾／引力化星體護衛——
+      // 護體（§110 受身入殼→§119 泛化）：殼化入殼／潮化泡泡盾／引力化星體護衛——
       // 本次傷害全免＋0.5s 免傷，次數由 spec.tuckCharges 種入；i-frame 期不消耗。
       if (
         transform.form !== null &&

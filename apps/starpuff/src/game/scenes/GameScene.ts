@@ -259,7 +259,7 @@ export class GameScene extends Phaser.Scene {
         ? 60
         : this.worldWidth() / 2
       : 100;
-    // 形態解鎖集（§118）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
+    // 形態解鎖集（§119）：可觸及最高關派生（不動 save schema），SP/HUD 同一裁決。
     const reach = Math.max(this.currentLevelId, this.save.highestClearedLevel + 1);
     this.unlockedForms = unlockedTransformForms(reach);
     this.player = createPlayer(this, startX, GROUND_TOP - 40, this.unlockedForms);
@@ -446,9 +446,8 @@ export class GameScene extends Phaser.Scene {
 
     this.boss.onMinionDrop(() => bossKit.spawnBossMinion());
 
-    // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈；restart 不重建
-    // emitter 未解除即跨局累積）；fx/hud 自掛自清，enemies/boss 的 group/timer/tween 由
-    // Phaser 先行銷毀，不得在此重複呼叫（group 已失效）。
+    // shutdown 清理 Phaser 不接管的資源（scene.events/DOM 監聽、音訊迴圈）；fx/hud
+    // 自掛自清，enemies/boss 的 group/timer/tween 由 Phaser 先行銷毀，不得重複呼叫。
     this.events.once('shutdown', () => {
       this.unbinders.forEach((off) => off());
       this.unbinders.length = 0;
@@ -484,7 +483,7 @@ export class GameScene extends Phaser.Scene {
       this.controls.setDropReady(this.stage.isDropReady(this.controls.state.downBuffered));
       const spMode = this.player.getSpMode();
       this.controls.setSpMode(spMode);
-      // SP 變身教學（§110/§118）：任一形態資格徽章首次浮現即教一次。
+      // SP 變身教學（§110/§119）：任一形態資格徽章首次浮現即教一次。
       const spIsForm = spMode !== 'hidden' && spMode !== 'detonate' && spMode !== 'dismiss';
       if (!taughtTransformSp && spIsForm) {
         taughtTransformSp = true;
@@ -631,8 +630,7 @@ export class GameScene extends Phaser.Scene {
     this.scene.restart(data);
   }
 
-  // 低幀率沉地防護（§45）：玩家軀體完整沒入地面帶即回貼地表——正常著地永不觸發，
-  // 不取代既有碰撞與掃掠守門。
+  // 低幀率沉地防護（§45）：完整沒入地面帶即回貼地表——正常著地永不觸發。
   private clampAboveGround(): void {
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
     if (body.top <= GROUND_TOP + 2 || body.velocity.y < 0) return;
@@ -807,7 +805,7 @@ export class GameScene extends Phaser.Scene {
     bind(GameEvents.SKILL_SHIELD_BLOCK, ({ x, y, facing }) =>
       this.starCombat.resolveShieldCounter(x, y, facing),
     );
-    // 星化形態技（§57/§118）：player 發事件、starCombat 單點路由結算（七形態同制）。
+    // 星化形態技（§57/§119）：player 發事件、starCombat 單點路由結算（七形態同制）。
     bind(GameEvents.SKILL_TRANSFORM_STRIKE, ({ kind, x, y, facing }) =>
       this.starCombat.resolveTransformStrike(kind, x, y, facing),
     );
@@ -838,7 +836,7 @@ export class GameScene extends Phaser.Scene {
       const flavor = inhaleFlavor(kind);
       if (flavor) this.eggTracker.feed({ kind: 'swallow', flavor });
     });
-    // 加速票（§119 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
+    // 加速票（§120 票券蝠）：擊殺即發疾風靴短加速（掉票語意的最小落地）。
     bind(GameEvents.ENEMY_KILLED, ({ kind }) => {
       if (kind === 'ticketa') this.applyBuff('swift');
     });
@@ -964,8 +962,7 @@ export class GameScene extends Phaser.Scene {
     if (this.playerCrossedGate(this.prevPlayerX)) this.completeLevel();
   }
 
-  // 星星門必達背擋（§26/§43）：direct pair overlap 間歇漏檢——逐幀 crossedGate
-  // 幾何補判，不得移除。
+  // 星星門必達背擋（§26/§43）：pair overlap 間歇漏檢——逐幀 crossedGate 幾何補判，不得移除。
   private syncGateSweep(): void {
     if (!this.gate) return;
     const x = this.player.sprite.x;

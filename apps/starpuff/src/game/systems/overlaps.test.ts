@@ -56,6 +56,8 @@ interface HarnessConfig {
   bossActive?: boolean;
   settled?: boolean;
   reflectForm?: boolean;
+  // §119 潮化（PR #886 收斂）：deflectProjectiles 形態——潮環撥開白名單守門用。
+  tideForm?: boolean;
   inhaling?: boolean;
 }
 
@@ -113,7 +115,10 @@ function makeHarness(config: HarnessConfig = {}): {
     getFacing: () => 1,
     isSlamming: () => false,
     onSlamBounce,
-    getTransformState: () => ({ form: config.reflectForm ? 'shell' : null, remainingMs: 0 }),
+    getTransformState: () => ({
+      form: config.reflectForm ? 'shell' : config.tideForm ? 'tide' : null,
+      remainingMs: 0,
+    }),
   } as unknown as PlayerHandle;
   const enemies = {
     getGroup: () => enemyGroup,
@@ -156,7 +161,11 @@ function makeHarness(config: HarnessConfig = {}): {
     mixOf: () => null,
     damageOf: () => 5,
     playerFormSpec: () =>
-      config.reflectForm ? { reflectProjectiles: true, contactDamage: 0 } : null,
+      config.reflectForm
+        ? { reflectProjectiles: true, contactDamage: 0 }
+        : config.tideForm
+          ? { deflectProjectiles: true, contactDamage: 0 }
+          : null,
     explodeStar: vi.fn(),
     chainLightning: vi.fn(),
     freezeField: vi.fn(),
@@ -406,5 +415,47 @@ describe('關鍵回調結算路徑', () => {
     meteorWiring?.callback?.({}, rock);
     expect(harness.spies.shatter).toHaveBeenCalledWith(rock);
     expect(harness.spies.damagePlayer).toHaveBeenCalledWith(ENEMY.touchDamage, 500);
+  });
+});
+
+describe('§119 潮環撥開白名單（PR #886 收斂：僅投射物，非投射物 hazard 照常結算）', () => {
+  const makeHazard = (hazardKind: string) => {
+    const data = new Map<string, unknown>([['hazardKind', hazardKind]]);
+    return {
+      active: true,
+      x: 240,
+      y: 300,
+      disableBody: vi.fn(),
+      getData: (key: string) => data.get(key),
+      setData: (key: string, value: unknown) => data.set(key, value),
+      body: { setVelocity: vi.fn() },
+    };
+  };
+
+  it('投射物（spike/waterblade）被撥開：不結算傷害、不回收、反向推離', () => {
+    for (const kind of ['spike', 'waterblade']) {
+      const { scene, wirings, hooks, spies, groups } = makeHarness({ tideForm: true });
+      wireCombatOverlaps(scene, hooks);
+      const hazardWiring = wirings.find((w) => w.b === groups.hazards);
+      const hazard = makeHazard(kind);
+      hazardWiring?.callback?.({}, hazard);
+      expect(spies.damagePlayer, kind).not.toHaveBeenCalled();
+      expect(hazard.disableBody, kind).not.toHaveBeenCalled();
+      expect(hazard.body.setVelocity, kind).toHaveBeenCalled();
+      void scene;
+    }
+  });
+
+  it('非投射物（spore 區域拒止/zap 放電環/scanbeam 光束）不受撥開：照常傷害結算', () => {
+    for (const kind of ['spore', 'zap', 'scanbeam']) {
+      const { scene, wirings, hooks, spies, groups } = makeHarness({ tideForm: true });
+      wireCombatOverlaps(scene, hooks);
+      const hazardWiring = wirings.find((w) => w.b === groups.hazards);
+      const hazard = makeHazard(kind);
+      hazardWiring?.callback?.({}, hazard);
+      expect(spies.damagePlayer, kind).toHaveBeenCalledWith(ENEMY.touchDamage, 240);
+      expect(hazard.disableBody, kind).toHaveBeenCalledWith(true, true);
+      void scene;
+    }
   });
 });

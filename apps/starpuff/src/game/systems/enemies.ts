@@ -71,7 +71,7 @@ export interface EnemySystem {
     opts: EliteOptions,
   ): Phaser.Physics.Arcade.Sprite | null;
   kill(enemy: Phaser.GameObjects.GameObject): void;
-  // burn（§118/§119）：焰系傷害來源——冰史萊姆被 burn 擊殺熔解不分裂。
+  // burn（§119/§120）：焰系傷害來源——冰史萊姆被 burn 擊殺熔解不分裂。
   damage(enemy: Phaser.GameObjects.GameObject, amount: number, burn?: boolean): DamageOutcome;
   // 凍結場（§46 凝光星）：域內小怪凍結停擺，期滿自復。
   freeze(enemy: Phaser.GameObjects.GameObject, durationMs: number): void;
@@ -154,7 +154,7 @@ const HP: Record<EnemyKind, number> = {
   splatta: 1,
   twinkla: 1,
   cometa: 1,
-  // cargo 重型（§119）：兩發標準星；frosty 一擊分裂由擊殺路徑結算。
+  // cargo 重型（§120）：兩發標準星；frosty 一擊分裂由擊殺路徑結算。
   cargo: 10,
   ticketa: 1,
   scanna: 6,
@@ -164,8 +164,8 @@ const HP: Record<EnemyKind, number> = {
 };
 
 const POOL_SIZE = 16;
-// 生成初始態（§119 收斂）：三元鏈改查表；未列者 'idle'。
-// 無重力品種（§16/§73/§80/§119 收斂查表）。
+// 生成初始態（§120 收斂）：三元鏈改查表；未列者 'idle'。
+// 無重力品種（§16/§73/§80/§120 收斂查表）。
 const NO_GRAVITY_KINDS: readonly EnemyKind[] = [
   'floaty',
   'puffy',
@@ -215,7 +215,7 @@ const BLOB_SIZE = 18;
 const HAZARD_POOL_SIZE = 32;
 // 糖球落地判定線：主地面頂 y=400 上緣（§21 世界幾何常數）。
 const BLOB_GROUND_Y = 392;
-// §119 hazards：foamy 漂浮泡泡（不傷人上浮拒止）。
+// §120 hazards：foamy 漂浮泡泡（不傷人上浮拒止）。
 const BUBBLE_TEX = 'hazard-bubble';
 const BUBBLE_SIZE = 30;
 const BITE_OFFSET_X = 22;
@@ -273,7 +273,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       .generateTexture(SHELL_TEX, SHELL_SIZE, SHELL_SIZE)
       .destroy();
   }
-  // 泡泡（§119）：淡藍空心圓＋高光點。
+  // 泡泡（§120）：淡藍空心圓＋高光點。
   if (!scene.textures.exists(BUBBLE_TEX)) {
     scene.add
       .graphics()
@@ -485,7 +485,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(0, 0);
   }
 
-  // 掃描光束（§119 scanna）：鎖定側水平直線光——細長 hitbox 短存留（telegraph 由
+  // 掃描光束（§120 scanna）：鎖定側水平直線光——細長 hitbox 短存留（telegraph 由
   // aim 期承擔），走 hazards 管線。
   function spawnScanBeam(x: number, y: number, directionX: 1 | -1): void {
     playSfx('zap', 0.8);
@@ -501,7 +501,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(0, 0);
   }
 
-  // 漂浮泡泡（§119 foamy）：不傷人拒止——觸碰使玩家上浮（潮化免疫），走 hazards 管線。
+  // 漂浮泡泡（§120 foamy）：不傷人拒止——觸碰使玩家上浮（潮化免疫），走 hazards 管線。
   function spawnBubble(x: number, y: number, directionX: 1 | -1): void {
     const bubble = spawnHazard(x, y);
     if (!bubble) return;
@@ -516,7 +516,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(FOAMY_FSM.bubbleSpeedX * directionX, FOAMY_FSM.bubbleRiseVy);
   }
 
-  // 扇形水刃（§119 manta）：順流三發直線水刃，壽命有界逾時必回收（§56）。
+  // 扇形水刃（§120 manta）：順流三發直線水刃，壽命有界逾時必回收（§56）。
   function spawnWaterBlade(x: number, y: number, vx: number, vy: number): void {
     const blade = spawnHazard(x, y);
     if (!blade) return;
@@ -666,7 +666,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('eliteMul', 1);
     sprite.setData('warnRing', undefined);
     sprite.setData('state', INITIAL_STATE[kind] ?? 'idle');
-    // §119 池重用重設：票券蝠軌帶錨依生成高度、冰史萊姆迷你旗標不得跨個體殘留。
+    // §120 池重用重設：票券蝠軌帶錨依生成高度、冰史萊姆迷你旗標不得跨個體殘留。
     sprite.setData('band', kind === 'ticketa' ? (y < 245 ? 'high' : 'low') : undefined);
     sprite.setData('mini', false);
     // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
@@ -686,7 +686,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setCollideWorldBounds(true);
     // bubbla（§73）定點潛伏：重力關閉，leap 位移由狀態機速度逼近驅動。
     // twinkla/cometa（§80）：星靈漂浮/高處巡游，重力一律關閉。
-    // ticketa/scanna/manta（§119）：雙軌飛行/定點懸浮/低空巡游，重力一律關閉。
+    // ticketa/scanna/manta（§120）：雙軌飛行/定點懸浮/低空巡游，重力一律關閉。
     body.setAllowGravity(!NO_GRAVITY_KINDS.includes(kind));
     // spiky/shelly/boomy/mirri/cargo/frosty 以 bounce=1 碰牆自動折返。
     body.setBounce(BOUNCE_KINDS.includes(kind) ? 1 : 0, 0);
@@ -721,7 +721,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     return sprite;
   }
 
-  // 冰史萊姆分裂（§119）：本體被擊殺分裂兩隻迷你體（半衝量左右散開，不再分裂）；
+  // 冰史萊姆分裂（§120）：本體被擊殺分裂兩隻迷你體（半衝量左右散開，不再分裂）；
   // 池滿時 spawn 回 null 靜默略過（不致崩潰）。
   function splitFrosty(sprite: Phaser.Physics.Arcade.Sprite): void {
     for (const direction of [-1, 1] as const) {
@@ -789,7 +789,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       return 'hurt';
     }
     if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
-    // 冰史萊姆（§119）：擊殺分裂；焰系 burn 熔解不分裂（迷你體恆不分裂）。
+    // 冰史萊姆（§120）：擊殺分裂；焰系 burn 熔解不分裂（迷你體恆不分裂）。
     if (kind === 'frosty' && resolveFrostySplit(burn, sprite.getData('mini') === true)) {
       splitFrosty(sprite);
     }
