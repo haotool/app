@@ -25,6 +25,11 @@ import type { EnemyUpdateContext } from './enemyUpdates';
 // 呈現層常數：ticketa 換軌閃爍節拍；scanna 鎖定著色；foamy 鼓脹抖動；manta 俯仰。
 const TICKETA_FLICKER_MS = 100;
 const TICKETA_SHIFT_TINT = 0xfff1c4;
+// 換軌預警窗（#899）：fly 尾段懸停＋閃爍，shift 才開始位移——原 telegraph 與俯掠
+// 同幀啟動，反應窗為 0。取 700 對齊 spora windup（低於 scanna aim 800、高於
+// zappy 500），且離散幀（~16ms）量測下界仍 ≥ AUDIT_THRESHOLDS.telegraphMinMs（600）；
+// export 供測試釘住反應窗契約。
+export const TICKETA_WARN_MS = 700;
 const SCANNA_AIM_TINT = 0xff9ec4;
 const SCANNA_FLICKER_MS = 110;
 const FOAMY_WINDUP_TINT = 0xcfeef5;
@@ -74,14 +79,21 @@ export function updateTicketa(
   }
   const bandY = sprite.getData('band') === 'high' ? TICKETA_FSM.bandHighY : TICKETA_FSM.bandLowY;
   const mul = (sprite.getData('eliteMul') as number) ?? 1;
+  const flickerTint = (stateMs: number) =>
+    Math.floor(stateMs / TICKETA_FLICKER_MS) % 2 === 0 ? 0xffffff : TICKETA_SHIFT_TINT;
   if (tick.state === 'shift') {
-    // 前搖閃爍（telegraph ≥600ms）＋朝目標軌帶俯掠。
-    sprite.setTint(
-      Math.floor(tick.stateMs / TICKETA_FLICKER_MS) % 2 === 0 ? 0xffffff : TICKETA_SHIFT_TINT,
-    );
+    // 俯掠期閃爍延續（telegraph 自 fly 尾段預警起已亮 ≥TICKETA_WARN_MS）。
+    sprite.setTint(flickerTint(tick.stateMs));
     const targetY =
       sprite.getData('band') === 'high' ? TICKETA_FSM.bandLowY : TICKETA_FSM.bandHighY;
     body.setVelocity(body.velocity.x, Math.sign(targetY - sprite.y) * TICKETA_FSM.shiftSpeed * mul);
+    return;
+  }
+  // fly 尾段預警（#899）：懸停＋閃爍——沿 scanna aim 定點鎖定語彙，位移歸零使
+  // 前搖可讀且可由座標探針量測；水平速度歸 0 亦使後續俯掠軌跡可預判。
+  if (TICKETA_FSM.flyMs - tick.stateMs <= TICKETA_WARN_MS) {
+    sprite.setTint(flickerTint(tick.stateMs));
+    body.setVelocity(0, (bandY - sprite.y) * 2);
     return;
   }
   const phase = sprite.getData('phase') as number;
