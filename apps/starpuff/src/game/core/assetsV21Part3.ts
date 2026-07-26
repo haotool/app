@@ -629,4 +629,145 @@ export const ASSETS_V21_PART3: { key: string; url: string }[] = [
     key: 'boss-gravion-death-6',
     url: new URL('../../assets/sprites/boss-gravion-death-6.webp', import.meta.url).href,
   },
+  // v21-v30 B06 劉董動畫關鍵幀（入場四幀已於 B04 註冊；載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
+  {
+    key: 'boss-liudong-idle-2',
+    url: new URL('../../assets/sprites/boss-liudong-idle-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-idle-3',
+    url: new URL('../../assets/sprites/boss-liudong-idle-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move1-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move1-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move1-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move1-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move2-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move2-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move2-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move2-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move3-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move3-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move3-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move3-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-1',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-2',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-3',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-4',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-5',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-6',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-6.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-1',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-2',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-3',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-4',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-5',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-6',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-6.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-7',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-7.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-hit-1',
+    url: new URL('../../assets/sprites/boss-liudong-hit-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-hit-2',
+    url: new URL('../../assets/sprites/boss-liudong-hit-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-1',
+    url: new URL('../../assets/sprites/boss-liudong-death-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-2',
+    url: new URL('../../assets/sprites/boss-liudong-death-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-3',
+    url: new URL('../../assets/sprites/boss-liudong-death-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-4',
+    url: new URL('../../assets/sprites/boss-liudong-death-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-5',
+    url: new URL('../../assets/sprites/boss-liudong-death-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-6',
+    url: new URL('../../assets/sprites/boss-liudong-death-6.webp', import.meta.url).href,
+  },
 ];

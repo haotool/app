@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+280
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+281
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-v30-b06-liudong-anim-frames
+- 原因：劉董 35 幀中 16 張帶白/棋盤底、待機受擊幀被模型多畫紫沙發家具且一張吻部變棕（幀間會跳動）
+- 解法：PIL 四角 floodfill 清底 16 張（magick 新版不支援 alpha floodfill 語法改用 PIL）、沙發與棕吻 4 張重生（明令禁家具＋全黑臉），QA 35/35 收斂；造型全程無漂移、迷因安全螢幕全抽象
 
 - 日期：2026-07-26
 - ID：reward-starpuff-v21-v30-b06-gravion-anim-frames
