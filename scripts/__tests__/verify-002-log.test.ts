@@ -477,6 +477,70 @@ describe('validate002', () => {
     ).toBe(true);
   });
 
+  // 區段外的獨立 `- ID：` 行（文件範例等）不是條目；併入刪除比對會誤傷合法的文件改寫。
+  it('移除「## 條目」區段外的獨立 ID 行不算刪除歷史條目', () => {
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const base = buildLog({ header, entries: [{ id: 'reward-existing-entry' }] });
+    const head = base.replace(
+      '## 條目（新→舊）',
+      '範例：\n- ID：penalty-ghost\n\n## 條目（新→舊）',
+    );
+    expect(validate002({ stagedContent: base, headContent: head }).errors).toEqual([]);
+  });
+
+  // 唯一性若無條件掃全檔，歷史一旦出現重複，之後每個 commit 都會被卡死（即使沒動 002）。
+  it('歷史上已存在的重複 ID 不回溯擋 commit', () => {
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const withDuplicate = buildLog({
+      header,
+      entries: [{ id: 'reward-dup' }, { id: 'reward-dup' }, { id: 'reward-existing-entry' }],
+    });
+    // 完全不動 002。
+    expect(
+      validate002({ stagedContent: withDuplicate, headContent: withDuplicate }).errors,
+    ).toEqual([]);
+    // 正常 append，歷史重複維持原樣。
+    const appended = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+      entries: [
+        { id: 'reward-new-entry' },
+        { id: 'reward-dup' },
+        { id: 'reward-dup' },
+        { id: 'reward-existing-entry' },
+      ],
+    });
+    expect(validate002({ stagedContent: appended, headContent: withDuplicate }).errors).toEqual([]);
+  });
+
+  it('本次造成的重複 ID 仍必須擋下', () => {
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const head = buildLog({
+      header,
+      entries: [{ id: 'reward-dup' }, { id: 'reward-dup' }, { id: 'reward-existing-entry' }],
+    });
+    // 重複度由 2 增為 3。
+    const staged = buildLog({
+      header,
+      entries: [
+        { id: 'reward-dup' },
+        { id: 'reward-dup' },
+        { id: 'reward-dup' },
+        { id: 'reward-existing-entry' },
+      ],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: head });
+    expect(errors.some((message) => message.includes('ID 重複：「reward-dup」'))).toBe(true);
+  });
+
+  it('空字串基準版走解析 fail-closed，不得當成「無基準版」', () => {
+    const staged = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+9999',
+      entries: [{ id: 'reward-new-entry' }],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: '' });
+    expect(errors.some((message) => message.includes('基準版 002 無法解析'))).toBe(true);
+  });
+
   it('基準版讀不出累計總分時 fail-closed（不得靜默跳過總分鏈）', () => {
     const headWithoutHeader = buildLog({
       header: '> 版本：outline-v2-ultra',
@@ -736,6 +800,32 @@ describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #66
     const { status, output } = runGuard(repo);
     expect(status).toBe(1);
     expect(output).toContain('penalty-evidence');
+  });
+
+  // git 無法執行時若把錯誤當成「物件不存在」，整道守門會靜默跳過 exit 0。
+  it('git 不可執行時 fail-closed（不得靜默跳過）', () => {
+    const repo = setupRepo();
+    const isolated = mkdtempSync(join(tmpdir(), 'verify-002-nogit-'));
+    repos.push(isolated);
+    mkdirSync(join(isolated, 'bin'));
+    symlinkSync(process.execPath, join(isolated, 'bin', 'node'));
+
+    let status = 0;
+    let output = '';
+    try {
+      execFileSync(process.execPath, [SCRIPT_PATH], {
+        cwd: repo,
+        env: { ...GIT_ENV, PATH: join(isolated, 'bin') },
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch (error) {
+      const failed = error as { status?: number | null; stdout?: string; stderr?: string };
+      status = failed.status ?? 1;
+      output = `${failed.stdout ?? ''}${failed.stderr ?? ''}`;
+    }
+    expect(status).toBe(1);
+    expect(output).toContain('執行期例外');
   });
 
   it('--base-commit：基準 commit 無法解析時明確失敗', () => {

@@ -3,8 +3,10 @@
  *
  * 驗證重點:
  * 1. 檔頭「本次分數變化：+N（reward a、penalty b、neutral c）」與本次新增條目計數一致
- * 2. 檔頭「累計總分」= 基準版累計總分 + N；初始 commit 或基準版無法解析時跳過
- * 3. 新增條目符合四行模板（日期/ID/原因/解法）、日期為 YYYY-MM-DD、ID 對全檔唯一
+ * 2. 檔頭「累計總分」= 基準版累計總分 + N；只有「無基準版」（初始 commit）才跳過，
+ *    基準版存在卻無法解析或讀不出累計總分一律 fail-closed
+ * 3. 新增條目符合四行模板（日期/ID/原因/解法）、日期為 YYYY-MM-DD；ID 對全檔唯一，
+ *    但僅對本次造成的重複擋 commit（歷史既有重複不回溯）
  *
  * 三種執行語意共用同一 validate002 核心（無雙實作）:
  * - pre-commit（預設）：staged 版（index）vs HEAD 版
@@ -183,7 +185,9 @@ export function validate002({ stagedContent, headContent }) {
   const { entries: stagedEntries, globalErrors } = parseEntries(stagedContent);
   errors.push(...globalErrors);
 
-  const headParsed = headContent ? parseEntries(headContent) : { entries: [], globalErrors: [] };
+  // 只有「無基準版」（null／undefined）才算沒有基準；空字串仍走解析並因找不到區段而 fail-closed。
+  const hasBase = headContent != null;
+  const headParsed = hasBase ? parseEntries(headContent) : { entries: [], globalErrors: [] };
   const headEntries = headParsed.entries;
   const headEntryIds = new Set(headEntries.map((entry) => entry.id));
 
@@ -201,8 +205,14 @@ export function validate002({ stagedContent, headContent }) {
   const stagedParsedIds = new Set(stagedEntries.map((entry) => entry.id).filter(Boolean));
   const stagedRawIds = scanRawIds(stagedContent);
   const stagedIds = new Set([...stagedParsedIds, ...stagedRawIds]);
+  // 基準版可解析時只採信解析結果：區段外的獨立 `- ID：` 行（文件範例等）不是條目，
+  // 併進來會讓「移除範例行」被誤報成刪除歷史條目。
+  // 基準版不可解析時才退回全檔原始文字掃描（該情境已另行 fail-closed，此處為第二道保險）。
   const headAllIds = new Set(
-    [...headEntryIds, ...scanRawIds(headContent)].filter((id) => Boolean(id)),
+    (headParsed.globalErrors.length > 0
+      ? [...headEntryIds, ...scanRawIds(headContent)]
+      : [...headEntryIds]
+    ).filter((id) => Boolean(id)),
   );
   const deletedIds = [...headAllIds].filter((id) => !stagedIds.has(id));
   if (deletedIds.length > 0) {
@@ -240,14 +250,21 @@ export function validate002({ stagedContent, headContent }) {
     }
   }
 
-  // ID 全檔唯一性。
-  const seen = new Set();
-  for (const entry of stagedEntries) {
-    if (!entry.id) continue;
-    if (seen.has(entry.id)) {
-      errors.push(`ID 重複：「${entry.id}」`);
+  // ID 全檔唯一性。比照格式檢查只對本次造成的重複擋 commit：
+  // 若無條件掃全檔，歷史上一旦出現過重複，之後每個 commit 都會被卡死（即使沒動 002）。
+  const countIds = (entries) => {
+    const counts = new Map();
+    for (const entry of entries) {
+      if (!entry.id) continue;
+      counts.set(entry.id, (counts.get(entry.id) ?? 0) + 1);
     }
-    seen.add(entry.id);
+    return counts;
+  };
+  const headIdCounts = countIds(headEntries);
+  for (const [id, count] of countIds(stagedEntries)) {
+    if (count < 2) continue;
+    if (count <= (headIdCounts.get(id) ?? 0)) continue;
+    errors.push(`ID 重複：「${id}」`);
   }
 
   const newEntries = stagedEntries.filter((entry) => entry.id && !headEntryIds.has(entry.id));
@@ -304,7 +321,7 @@ export function validate002({ stagedContent, headContent }) {
 
   // 總分鏈：前版累計 + N = 本版累計。無基準版（初始 commit）才可跳過；
   // 有基準版卻讀不出前版累計時 fail-closed，否則任意總分都能寫入而不被察覺。
-  if (headContent === null) {
+  if (!hasBase) {
     return { errors };
   }
   const previousTotal = parsePreviousTotal(headContent);
@@ -322,13 +339,17 @@ export function validate002({ stagedContent, headContent }) {
   return { errors };
 }
 
-// spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」；物件不存在時回傳 null。
+// spec 形如「:path」（staged）、「HEAD:path」、「<sha>:path」。
+// 只有「物件確實不存在」才回傳 null：先用 cat-file 判存在性，存在卻讀不出即向上拋。
+// 若把 git 本身無法執行（未安裝／PATH 缺失）也當成不存在，整道守門會靜默跳過。
 function gitShow(spec) {
   try {
-    return execFileSync('git', ['show', spec], { encoding: 'utf-8' });
-  } catch {
+    execFileSync('git', ['cat-file', '-e', spec], { stdio: 'ignore' });
+  } catch (error) {
+    if (error?.code === 'ENOENT') throw error;
     return null;
   }
+  return execFileSync('git', ['show', spec], { encoding: 'utf-8' });
 }
 
 function report(errors) {
@@ -442,5 +463,13 @@ function isDirectRun() {
 }
 
 if (isDirectRun()) {
-  main();
+  try {
+    main();
+  } catch (error) {
+    // 任何未預期例外（git 無法執行、物件存在卻讀不出）一律 fail-closed。
+    console.error(
+      `002 記分守門失敗：執行期例外——${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exit(1);
+  }
 }

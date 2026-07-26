@@ -61,7 +61,7 @@ fi
 # 6. 002 記分守門 (issue #608：檔頭記分與新增條目自動對帳)
 # 無條件執行：以 git diff 判斷是否觸發會被 `git mv` 繞過（--name-only 只列新路徑，
 # 舊路徑不出現），守門不應依賴 diff 呈現方式。跳過與否由腳本自行以 index 與 HEAD
-# 的存在性決定；002 未變更時約 50ms，相對本 hook 其他步驟可忽略。
+# 的存在性決定；開銷遠低於同一 hook 內的 pnpm typecheck，對體感無影響。
 echo "\nStep 6/6: 002 記分守門..."
 node scripts/verify-002-log.mjs
 if [ $? -ne 0 ]; then
