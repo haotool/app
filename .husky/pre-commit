@@ -10,7 +10,7 @@
 echo "執行 Pre-commit 檢查..."
 
 # 1. Lint-staged (程式碼格式化與 Lint)
-echo "\nStep 1/5: Lint-staged..."
+echo "\nStep 1/6: Lint-staged..."
 pnpm lint-staged
 if [ $? -ne 0 ]; then
   echo "\nLint-staged 失敗，請修復後再提交"
@@ -18,7 +18,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 2. TypeScript 檢查 (快速驗證類型錯誤)
-echo "\nStep 2/5: TypeScript 檢查..."
+echo "\nStep 2/6: TypeScript 檢查..."
 pnpm typecheck
 if [ $? -ne 0 ]; then
   echo "\nTypeScript 檢查失敗，請修復類型錯誤後再提交"
@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # 3. 格式檢查 (確保所有文件已格式化)
-echo "\nStep 3/5: Prettier 格式檢查..."
+echo "\nStep 3/6: Prettier 格式檢查..."
 pnpm format
 if [ $? -ne 0 ]; then
   echo "\n格式檢查失敗，請執行 'pnpm format:fix' 後再提交"
@@ -36,26 +36,38 @@ fi
 # 4. SSOT 同步驗證 (確保 SEO 配置一致性)
 # [可選] 僅在 ratewise 相關檔案有變更時執行
 if git diff --cached --name-only | grep -qE "(seo-paths|app\.config)"; then
-  echo "\nStep 4/5: SSOT 同步驗證..."
+  echo "\nStep 4/6: SSOT 同步驗證..."
   node scripts/verify-ssot-sync.mjs 2>/dev/null
   if [ $? -ne 0 ]; then
     echo "\nSSOT 同步驗證失敗，請確保 seo-paths.config.mjs 與 seo-paths.ts 一致"
     exit 1
   fi
 else
-  echo "\nStep 4/5: SSOT 同步驗證 (跳過 - 無相關變更)"
+  echo "\nStep 4/6: SSOT 同步驗證 (跳過 - 無相關變更)"
 fi
 
 # 5. 版本 SSOT 驗證 (確保版本管理不繞過 SSOT)
 if git diff --cached --name-only | grep -qE "(apps/ratewise/src|apps/ratewise/package\.json|package\.json)"; then
-  echo "\nStep 5/5: 版本 SSOT 驗證..."
+  echo "\nStep 5/6: 版本 SSOT 驗證..."
   node scripts/verify-version-ssot.mjs
   if [ $? -ne 0 ]; then
     echo "\n版本 SSOT 驗證失敗，請依照訊息修正"
     exit 1
   fi
 else
-  echo "\nStep 5/5: 版本 SSOT 驗證 (跳過 - 無相關變更)"
+  echo "\nStep 5/6: 版本 SSOT 驗證 (跳過 - 無相關變更)"
+fi
+
+# 6. 002 記分守門 (issue #608：檔頭記分與新增條目自動對帳)
+if git diff --cached --name-only | grep -qE "docs/dev/002_development_reward_penalty_log\.md"; then
+  echo "\nStep 6/6: 002 記分守門..."
+  node scripts/verify-002-log.mjs
+  if [ $? -ne 0 ]; then
+    echo "\n002 記分守門失敗，請依照訊息修正檔頭記分與條目"
+    exit 1
+  fi
+else
+  echo "\nStep 6/6: 002 記分守門 (跳過 - 無相關變更)"
 fi
 
 echo "\n所有 Pre-commit 檢查通過"

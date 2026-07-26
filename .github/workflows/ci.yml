@@ -46,6 +46,12 @@ jobs:
           node-version: '24'
           cache: 'pnpm'
 
+      # 002 記分守門 CI 端強制（issue #661）：驗 PR 最終態 vs merge-base，堵 --no-verify 與網頁端 merge 繞過。
+      # 002 未變更時毫秒級跳過；與 pre-commit 共用 validate002 核心，零 npm 依賴故置於 install 前搶先紅燈。
+      - name: Verify 002 log (vs merge-base)
+        if: github.event_name == 'pull_request'
+        run: node scripts/verify-002-log.mjs --base-ref "${{ github.event.pull_request.base.sha }}"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

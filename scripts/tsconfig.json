@@ -1,4 +1,8 @@
 {
   "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // scripts 為 Node 腳本與其測試：覆寫 base 的 types 白名單以載入 node 內建模組型別。
+    "types": ["node"]
+  },
   "include": ["**/*.ts"]
 }
