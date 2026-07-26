@@ -39,11 +39,20 @@ describe('assetsV21 暫時 lazy 契約', () => {
   });
 
   it('precache 排除樣式不誤殺非 lazy 資產（前綴碰撞守門）', () => {
-    const lazyKeys = ASSETS.filter((entry) => entry.phase === 'lazy').map((entry) => entry.key);
-    const activeKeys = ASSETS.filter((entry) => entry.phase !== 'lazy').map((entry) => entry.key);
+    const lazyKeys = V21_ENTRIES.filter((entry) => entry.phase === 'lazy').map(
+      (entry) => entry.key,
+    );
+    const activeKeys = ASSETS.map((entry) => entry.key);
     for (const active of activeKeys) {
       const collided = lazyKeys.filter((lazy) => `${active}-hash.webp`.startsWith(`${lazy}-`));
       expect(collided).toEqual([]);
     }
+  });
+
+  // bundle 預算守門（#857 複審應修 3）：v21 條目字面量不得進主 manifest——
+  // 一旦整批 spread 回 ASSETS，442+ 筆 URL/key 會常駐主 bundle（實測 +67.88kB）
+  // 且隨後續批次單向成長。接關時只允許把「已認領」條目逐筆搬回並標正確 phase。
+  it('主 manifest 零 lazy 條目（bundle 預算守門）', () => {
+    expect(ASSETS.filter((entry) => entry.phase === 'lazy').map((entry) => entry.key)).toEqual([]);
   });
 });

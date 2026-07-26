@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 1、penalty 2、neutral 1）｜累計總分：+283
+> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+284
 
 ## 新增模板（4 行）
 
@@ -14,9 +14,24 @@
 ## 條目（新→舊）
 
 - 日期：2026-07-26
+- ID：penalty-starpuff-002-unverified-causal-claim
+- 原因：把「多 410KiB 來自 B04 重轉 24 張」的未驗證因果推論寫進 002 當事實——量測未去重 precache manifest 重複 icon URL 多計 344KiB，再拿手邊現成敘事硬套差額，兩者皆未實測核實。
+- 解法：更正條目為 workbox 官方口徑實測值，確立「002 內任何數字與因果必須有當場實測依據，跨環境對照須同法同基準」的紀律。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-qa-fullimage-fake-transparency-scan
+- 原因：QA 只掃四角無法偵測中央棋盤紋等非角落假透明，複審要求系統性覆蓋。
+- 解法：落地 scripts/qa_asset_alpha.py 全圖掃描（edge-band 0.40＋central-residue 近白佔比×分佈廣度雙條件），六張舊病例回歸 4/4 命中、現行 505 張零誤殺，mean-alpha 降為語境性 WARN。
+
+- 日期：2026-07-26
+- ID：reward-starpuff-v21-manifest-code-split
+- 原因：442 筆 lazy 條目字面量常駐主 bundle（+67.88kB）且隨批次單向成長，runtime 對其零消費。
+- 解法：v21 分檔不再併入 ASSETS（vite.config 直接 import 分檔派生排除），index.js 回落 66.5KiB、precache 與 main 分毫不差、442 張圖不再 emit 省 22MB 產物，並加「主 manifest 零 lazy 條目」bundle 預算守門。
+
+- 日期：2026-07-26
 - ID：reward-starpuff-lazy-phase-precache-dual-guard
 - 原因：#857 審查揭露未接關資產被 entriesForLevel fallback 每關全載（L1 15→457 檔）且 PWA precache 無差別膨脹（79→519 項、+22MiB）。
-- 解法：442 條未認領條目改標 lazy（行內保留原 phase）＋vite globIgnores 由 manifest phase 派生排除，L1 回到 15 檔 539KiB、precache 回到 79 項 4.2MiB，並以 assetsV21.test.ts 三守門鎖住接關時自動翻紅。
+- 解法：442 條未認領條目改標 lazy（行內保留原 phase）＋vite globIgnores 由 manifest phase 派生排除，L1 回到 15 檔 539KiB、precache 回到 79 項 3,820.85KiB（workbox 口徑；複審更正——原記 4.2MiB 係手工加總未去重 manifest 內重複的 4 個 icon URL 多計 344KiB，且「多 410KiB 因 B04 重轉 24 張」為未驗證推論不成立，實際差額 66KiB 全來自 442 筆條目字面量進主 bundle），並以 assetsV21.test.ts 守門鎖住接關時自動翻紅。
 
 - 日期：2026-07-26
 - ID：penalty-starpuff-b03-boss-canon-cross-mismatch

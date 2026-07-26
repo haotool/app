@@ -3,14 +3,17 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolveBuildCommitSha } from '../../scripts/lib/build-commit-sha.mjs';
 import { seoHtmlPlugin } from './src/seo/vite-seo-plugin';
-import { ASSETS } from './src/game/core/assets';
+import { ASSETS_V21_PART1 } from './src/game/core/assetsV21Part1';
+import { ASSETS_V21_PART2 } from './src/game/core/assetsV21Part2';
+import { ASSETS_V21_PART3 } from './src/game/core/assetsV21Part3';
 
 // lazy 資產不進 PWA precache（v21-v30 未接關素材）：避免既有玩家背景更新被迫
 // 下載玩不到的內容；離線補償由 starpuff-sprites 的 CacheFirst runtime 快取承接。
-// 由 manifest 的 phase 單點派生——接關改回正確 phase 後自動退出排除清單。
-const lazyPrecacheIgnores = ASSETS.filter((entry) => entry.phase === 'lazy').map(
-  (entry) => `**/assets/${entry.key}-*.webp`,
-);
+// 由分檔 manifest 的 phase 單點派生——接關搬回 assets.ts 後自動退出排除清單。
+// 分檔已不被 runtime import（bundle 瘦身），此排除是防誤 emit 的雙保險。
+const lazyPrecacheIgnores = [...ASSETS_V21_PART1, ...ASSETS_V21_PART2, ...ASSETS_V21_PART3]
+  .filter((entry) => entry.phase === 'lazy')
+  .map((entry) => `**/assets/${entry.key}-*.webp`);
 
 // 版本 SSOT（§42/§99 F-02/§109 F-08）：package.json version + short git SHA，經 define 嵌入。
 // SHA 來源鏈收斂於 scripts/lib/build-commit-sha.mjs（跨 app 共用），皆不可得時省略後綴。
