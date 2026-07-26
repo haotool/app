@@ -229,20 +229,7 @@ describe('PENDING 佔位鍵守門（R4）', () => {
     }
   });
 
-  it('PENDING 內容凍結為 §120 六新怪＋§119 四新形態：擴充必須顯式過審', () => {
-    expect([...PENDING_TEXTURE_KEYS].sort()).toEqual(
-      [
-        'minion-cargo',
-        'minion-ticketa',
-        'minion-scanna',
-        'minion-foamy',
-        'minion-frosty',
-        'minion-manta',
-        'hero-ember',
-        'hero-tide',
-        'hero-prism',
-        'hero-gravity',
-      ].sort(),
-    );
+  it('PENDING 內容凍結：#857 素材交付後清空，新佔位鍵入列必須顯式過審', () => {
+    expect([...PENDING_TEXTURE_KEYS]).toEqual([]);
   });
 });

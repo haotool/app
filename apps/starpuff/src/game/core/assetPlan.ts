@@ -22,9 +22,6 @@ export const BG_TEXTURE_ALIAS: Record<string, string> = {
   'bg-meteorfield': 'bg-astral',
   'bg-starcourt': 'bg-astral',
   'bg-voidcore': 'bg-astral',
-  // §121 星海終局篇走動關：暫沿星海橫景，專屬橫景待素材車 B02 交付後改指。
-  'bg-starport': 'bg-astral',
-  'bg-tidebay': 'bg-astral',
 };
 
 export function bgTextureKey(bgKey: string): string {
@@ -51,31 +48,20 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   splatta: 'minion-splatta',
   twinkla: 'minion-twinkla',
   cometa: 'minion-cometa',
-  // §120 星海終局篇新怪：素材由素材車批次交付，缺圖回落同色圓角色塊（既有慣例）。
-  cargo: 'minion-cargo',
-  ticketa: 'minion-ticketa',
-  scanna: 'minion-scanna',
-  foamy: 'minion-foamy',
-  frosty: 'minion-frosty',
-  manta: 'minion-manta',
+  // §120 星海終局篇新怪（#857 素材已交付，鍵名以素材命名為準）。
+  cargo: 'minion-cargojelly',
+  ticketa: 'minion-ticketbat',
+  scanna: 'minion-scannereye',
+  foamy: 'minion-bubbler',
+  frosty: 'minion-iceslime',
+  manta: 'minion-tideray',
 };
 
-// §119/§120 佔位立繪鍵（素材車 B02 交付後自本表移除）：texture key 先行凍結，
-// 無資產檔可載——運行期各自回退（enemies 以 FALLBACK_COLORS generateTexture、
-// player 以素身＋形態著色、CodexScene 以 fx-star 剪影），故不受 manifest 載入
-// 守門管轄；素材交付自本表移除即自動納回載入計畫。
-export const PENDING_TEXTURE_KEYS: readonly string[] = [
-  'minion-cargo',
-  'minion-ticketa',
-  'minion-scanna',
-  'minion-foamy',
-  'minion-frosty',
-  'minion-manta',
-  'hero-ember',
-  'hero-tide',
-  'hero-prism',
-  'hero-gravity',
-];
+// 佔位立繪鍵（素材未交付期間的 manifest 守門豁免）：運行期各自回退（enemies 以
+// FALLBACK_COLORS generateTexture、player 以素身＋形態著色、CodexScene 以 fx-star
+// 剪影）。§119/§120 十鍵已於 #857 素材交付後全數移除納回載入計畫（機械鎖見
+// assetPlan.test 的 PENDING 三條守門）；未來新佔位鍵入列須顯式過審。
+export const PENDING_TEXTURE_KEYS: readonly string[] = [];
 
 // 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）。
 export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {

@@ -8,11 +8,6 @@ import type { AssetEntry } from './assets';
 export const ASSETS_V21_PART1: AssetEntry[] = [
   // v21-v30 首批（B04 前先行）：焰化基底與劉董本體、市場箭頭 canon。
   {
-    key: 'hero-ember',
-    url: new URL('../../assets/sprites/hero-ember.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'boss-liudong',
     url: new URL('../../assets/sprites/boss-liudong.webp', import.meta.url).href,
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
@@ -28,12 +23,6 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   // v21-v30 B02 星港／潮灣場景（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'bg-starport-l',
-    url: new URL('../../assets/sprites/bg-starport-l.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   {
     key: 'prop-starport-1',
     url: new URL('../../assets/sprites/prop-starport-1.webp', import.meta.url).href,
@@ -55,12 +44,6 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
   {
     key: 'prop-starport-4',
     url: new URL('../../assets/sprites/prop-starport-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'bg-tidebay-l',
-    url: new URL('../../assets/sprites/bg-tidebay-l.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
@@ -114,49 +97,7 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   // v21-v30 B02 六新小怪（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'minion-cargojelly',
-    url: new URL('../../assets/sprites/minion-cargojelly.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-ticketbat',
-    url: new URL('../../assets/sprites/minion-ticketbat.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-scannereye',
-    url: new URL('../../assets/sprites/minion-scannereye.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-bubbler',
-    url: new URL('../../assets/sprites/minion-bubbler.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-iceslime',
-    url: new URL('../../assets/sprites/minion-iceslime.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-tideray',
-    url: new URL('../../assets/sprites/minion-tideray.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B02 潮化基底與焰化／潮化變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
-  {
-    key: 'hero-tide',
-    url: new URL('../../assets/sprites/hero-tide.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   {
     key: 'hero-ember-morph-gather',
     url: new URL('../../assets/sprites/hero-ember-morph-gather.webp', import.meta.url).href,
@@ -476,18 +417,6 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   // v21-v30 B03 稜化／引力化基底與變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
-  {
-    key: 'hero-prism',
-    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'hero-gravity',
-    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   {
     key: 'hero-prism-morph-gather',
     url: new URL('../../assets/sprites/hero-prism-morph-gather.webp', import.meta.url).href,
