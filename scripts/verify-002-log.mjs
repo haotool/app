@@ -233,14 +233,21 @@ function report(errors) {
   console.log('002 記分守門通過');
 }
 
-// pre-commit 語意：staged 版 vs HEAD 版。
+// pre-commit 語意：staged 版（index）vs HEAD 版。
 function runPreCommit() {
   const stagedContent = gitShow(`:${LOG_PATH}`);
+  const headContent = gitShow(`HEAD:${LOG_PATH}`);
   if (stagedContent === null) {
-    console.log(`002 記分守門跳過（${LOG_PATH} 不在 staged set）`);
+    // index 無此路徑但 HEAD 有 = staged 刪除（`git rm`），必須擋下；
+    // 兩邊皆無才是與 002 無關的 commit。
+    if (headContent !== null) {
+      report([`${LOG_PATH} 不可刪除（HEAD 存在此檔，index 已移除）`]);
+      return;
+    }
+    console.log(`002 記分守門跳過（${LOG_PATH} 不存在於 index 與 HEAD）`);
     return;
   }
-  report(validate002({ stagedContent, headContent: gitShow(`HEAD:${LOG_PATH}`) }).errors);
+  report(validate002({ stagedContent, headContent }).errors);
 }
 
 // CI 語意：HEAD 版（PR 最終態）vs merge-base 版；只驗整體一致性、不逐 commit。

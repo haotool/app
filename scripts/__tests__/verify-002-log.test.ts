@@ -295,7 +295,7 @@ describe('validate002', () => {
   });
 });
 
-describe('--base-ref 模式（CI 語意，issue #661）', () => {
+describe('git 整合（pre-commit staged 語意／--base-ref CI 語意 issue #661）', () => {
   const SCRIPT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'verify-002-log.mjs');
   // 隔離全域/系統 git config（gpgsign、hooksPath 等），身分改由環境變數提供。
   // 先剝除繼承的 GIT_* 變數：hook 環境（pre-push 跑 vitest）會注入 GIT_DIR/GIT_INDEX_FILE，
@@ -344,9 +344,9 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
     return repo;
   }
 
-  function runGuard(repo: string, baseRef: string) {
+  function runGuard(repo: string, ...args: string[]) {
     try {
-      const stdout = execFileSync('node', [SCRIPT_PATH, '--base-ref', baseRef], {
+      const stdout = execFileSync('node', [SCRIPT_PATH, ...args], {
         cwd: repo,
         env: GIT_ENV,
         encoding: 'utf-8',
@@ -372,7 +372,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
       }),
       'bad count',
     );
-    const { status, output } = runGuard(repo, 'main');
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(1);
     expect(output).toContain('不符');
   });
@@ -387,7 +387,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
       }),
       'good append',
     );
-    const { status, output } = runGuard(repo, 'main');
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(0);
     expect(output).toContain('通過');
   });
@@ -397,7 +397,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
     writeFileSync(join(repo, 'other.txt'), 'unrelated');
     git(repo, 'add', '--all');
     git(repo, 'commit', '-m', 'unrelated');
-    const { status, output } = runGuard(repo, 'main');
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(0);
     expect(output).toContain('跳過');
   });
@@ -426,7 +426,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
       }),
       'step 2',
     );
-    const { status } = runGuard(repo, 'main');
+    const { status } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(0);
   });
 
@@ -450,7 +450,7 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
       'main entry',
     );
     git(repo, 'checkout', 'pr');
-    const { status } = runGuard(repo, 'main');
+    const { status } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(0);
   });
 
@@ -458,8 +458,45 @@ describe('--base-ref 模式（CI 語意，issue #661）', () => {
     const repo = setupRepo();
     git(repo, 'rm', LOG_PATH);
     git(repo, 'commit', '-m', 'delete log');
-    const { status, output } = runGuard(repo, 'main');
+    const { status, output } = runGuard(repo, '--base-ref', 'main');
     expect(status).toBe(1);
     expect(output).toContain('不可刪除');
+  });
+
+  // pre-commit 語意讀 index：staged 刪除會讓 `git show :<path>` 取不到內容，
+  // 不得與「與 002 無關的 commit」同樣靜默跳過。
+  it('pre-commit：staged 刪除 002（git rm --cached）必紅', () => {
+    const repo = setupRepo();
+    git(repo, 'rm', '--cached', LOG_PATH);
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(1);
+    expect(output).toContain('不可刪除');
+  });
+
+  it('pre-commit：002 不存在於 index 與 HEAD 時跳過', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'verify-002-'));
+    repos.push(repo);
+    git(repo, 'init', '-b', 'main');
+    writeFileSync(join(repo, 'other.txt'), 'unrelated');
+    git(repo, 'add', '--all');
+    git(repo, 'commit', '-m', 'no log file');
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(0);
+    expect(output).toContain('跳過');
+  });
+
+  it('pre-commit：正確 append 綠燈', () => {
+    const repo = setupRepo();
+    writeFileSync(
+      join(repo, LOG_PATH),
+      buildLog({
+        header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+171',
+        entries: [{ id: 'reward-new-entry' }, { id: 'reward-existing-entry' }],
+      }),
+    );
+    git(repo, 'add', '--all');
+    const { status, output } = runGuard(repo);
+    expect(status).toBe(0);
+    expect(output).toContain('通過');
   });
 });
