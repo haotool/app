@@ -306,6 +306,57 @@ describe('validate002', () => {
     ).toBe(true);
   });
 
+  // 掏空既有條目 = 就地刪除，是刪除防護的等效規避路徑（保留檔案與 ID、把內容清空）。
+  it.each([
+    ['原因', { reason: '' }, '- 原因：'],
+    ['解法', { fix: '   ' }, '- 解法：'],
+    ['日期', { date: '' }, '- 日期：'],
+  ])('掏空既有條目的%s欄位必須被擋下', (_label, emptied, prefix) => {
+    const head = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+      entries: [
+        { id: 'penalty-old-incident', reason: '原始原因', fix: '原始解法' },
+        { id: 'reward-existing-entry' },
+      ],
+    });
+    const staged = buildLog({
+      header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',
+      entries: [
+        { id: 'penalty-old-incident', reason: '原始原因', fix: '原始解法', ...emptied },
+        { id: 'reward-existing-entry' },
+      ],
+    });
+    const { errors } = validate002({ stagedContent: staged, headContent: head });
+    expect(
+      errors.some(
+        (message) =>
+          message.includes(`「${prefix}」原有內容不可清空`) &&
+          message.includes('penalty-old-incident'),
+      ),
+    ).toBe(true);
+  });
+
+  // 正向對照採本 PR 真實發生的精確性修正（002 破口規模數字由 5 處／6 筆更正為 2 處／3 筆）：
+  // 判準是「有沒有從有變成無」，內容改動本身不受限。
+  it('精確性修正（非空改為另一個非空）不受掏空防護影響', () => {
+    const before = {
+      id: 'reward-002-log-gate-glued-block-parsing',
+      reason:
+        '來源版解析器只用空行切分條目，但歷史 002 有 5 處漏空行使多筆黏成一塊——`block.find` 只取首個 ID，使 6 筆條目對唯一性與刪除防護隱形',
+      fix: '解析器補「- 日期：」為次要邊界（空行仍為主要邊界），納管條目由 513 升為 518',
+    };
+    const after = {
+      id: before.id,
+      reason:
+        '來源版解析器只用空行切分條目，但歷史 002 有 2 處漏空行使多筆黏成一塊（8 行 2 筆、12 行 3 筆）——`block.find` 只取首個 ID，使 3 筆條目對唯一性與刪除防護隱形',
+      fix: '解析器補「- 日期：」為次要邊界（空行仍為主要邊界），納管條目由 515 升為 518',
+    };
+    const header = '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170';
+    const head = buildLog({ header, entries: [before, { id: 'reward-existing-entry' }] });
+    const staged = buildLog({ header, entries: [after, { id: 'reward-existing-entry' }] });
+    expect(validate002({ stagedContent: staged, headContent: head }).errors).toEqual([]);
+  });
+
   it('正常 append（歷史條目完整保留，含非標準前綴）不受刪除防護影響', () => {
     const head = buildLog({
       header: '> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+170',

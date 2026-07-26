@@ -70,11 +70,18 @@ export function parseEntries(content) {
   let block = [];
   const flush = () => {
     if (block.length === 0) return;
-    const entry = { id: null, lines: [...block], errors: [] };
-    const idLine = block.find((line) => line.startsWith('- ID：'));
+    // 各欄位取值（trim 後）；缺該行則不存在此 key。供內容檢查與跨版本非空比對共用。
+    const fields = {};
+    for (const prefix of ENTRY_LINE_PREFIXES) {
+      const line = block.find((candidate) => candidate.startsWith(prefix));
+      if (line !== undefined) {
+        fields[prefix] = line.slice(prefix.length).trim();
+      }
+    }
+    const entry = { id: null, lines: [...block], fields, errors: [] };
     // 空白 ID 視同缺少 ID：留成空字串會被後續 truthy 篩選排除在新增條目之外，
     // 使該筆同時繞過前綴、唯一性、計數與總分檢查。
-    const idValue = idLine ? idLine.slice('- ID：'.length).trim() : '';
+    const idValue = fields['- ID：'] ?? '';
     if (idValue) {
       entry.id = idValue;
     }
@@ -89,23 +96,21 @@ export function parseEntries(content) {
         entry.errors.push(`條目「${locator}」第 ${index + 1} 行應以「${prefix}」開頭：「${line}」`);
       }
     });
-    const dateLine = block.find((line) => line.startsWith('- 日期：'));
-    if (dateLine) {
-      const date = dateLine.slice('- 日期：'.length).trim();
-      if (!DATE_RE.test(date)) {
-        entry.errors.push(`條目「${locator}」日期格式應為 YYYY-MM-DD：「${date}」`);
-      }
+    const date = fields['- 日期：'];
+    if (date !== undefined && !DATE_RE.test(date)) {
+      entry.errors.push(`條目「${locator}」日期格式應為 YYYY-MM-DD：「${date}」`);
     }
     // 四行模板要求每筆都有一句話 root cause 與 resolution；只檢查前綴會讓空值通過。
     for (const prefix of CONTENT_PREFIXES) {
-      const line = block.find((candidate) => candidate.startsWith(prefix));
-      if (line && line.slice(prefix.length).trim() === '') {
+      if (fields[prefix] === '') {
         entry.errors.push(`條目「${locator}」的「${prefix}」不可為空`);
       }
     }
     if (!entry.id) {
       entry.errors.push(
-        idLine ? `條目 ID 不可為空：「${block[0]}」` : `條目缺少 ID 行：「${block[0]}」`,
+        fields['- ID：'] === undefined
+          ? `條目缺少 ID 行：「${block[0]}」`
+          : `條目 ID 不可為空：「${block[0]}」`,
       );
     }
     entries.push(entry);
@@ -143,9 +148,8 @@ export function validate002({ stagedContent, headContent }) {
   const { entries: stagedEntries, globalErrors } = parseEntries(stagedContent);
   errors.push(...globalErrors);
 
-  const headEntryIds = new Set(
-    headContent ? parseEntries(headContent).entries.map((entry) => entry.id) : [],
-  );
+  const headEntries = headContent ? parseEntries(headContent).entries : [];
+  const headEntryIds = new Set(headEntries.map((entry) => entry.id));
 
   // 歷史條目不可靜默刪除（防湮滅 penalty 證據）：HEAD 全部條目 ID（不限標準前綴）
   // 必須仍存在於 staged 版本，缺失即擋 commit。
@@ -153,6 +157,23 @@ export function validate002({ stagedContent, headContent }) {
   const deletedIds = [...headEntryIds].filter((id) => id && !stagedIds.has(id));
   if (deletedIds.length > 0) {
     errors.push(`歷史條目不可刪除，缺失 ID：${deletedIds.map((id) => `「${id}」`).join('、')}`);
+  }
+
+  // 掏空既有條目 = 就地刪除，是刪除防護的等效規避路徑（保留檔案與 ID、把內容清空）。
+  // 判準只看「有沒有從有變成無」而非內容是否改動：精確性修正（改錯字、更正數字）
+  // 保留非空故不受影響；語意層的改寫由審查把關，不在守門範圍。
+  // 歷史上本來就為空的欄位維持豁免，不回溯擋 commit。
+  const headEntriesById = new Map(
+    headEntries.filter((entry) => entry.id).map((entry) => [entry.id, entry]),
+  );
+  for (const entry of stagedEntries) {
+    const headEntry = entry.id ? headEntriesById.get(entry.id) : undefined;
+    if (!headEntry) continue;
+    for (const prefix of ENTRY_LINE_PREFIXES) {
+      if (headEntry.fields[prefix] && !entry.fields[prefix]) {
+        errors.push(`條目「${entry.id}」的「${prefix}」原有內容不可清空`);
+      }
+    }
   }
 
   // ID 全檔唯一性。
