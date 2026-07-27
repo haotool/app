@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+5（reward 5、penalty 0、neutral 0）｜累計總分：+324
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+325
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-gamescene-strangler-split-w2prep
+- 原因：GameScene.ts 貼近 max-lines 1200 行硬閘（1180 行），餘裕不足支援 W2 新魔王關卡落地（#886）
+- 解法：採 strangler 模式抽離 levelGate／mercyDirector／damageDirector／playerFeel／sceneEvents 五個獨立導演與事件模組，補齊 5 組單元測試，GameScene 降至 875 行（−26%），1096 個 vitest 全綠零行為改變
 
 - 日期：2026-07-27
 - ID：reward-starpuff-ticketa-telegraph-warn-window
