@@ -32,80 +32,8 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
     url: new URL('../../assets/sprites/fx-market-down-arrow.webp', import.meta.url).href,
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
-  // v21-v30 B02 星港／潮灣場景（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'prop-starport-1',
-    url: new URL('../../assets/sprites/prop-starport-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-starport-2',
-    url: new URL('../../assets/sprites/prop-starport-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-starport-3',
-    url: new URL('../../assets/sprites/prop-starport-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-starport-4',
-    url: new URL('../../assets/sprites/prop-starport-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-tidebay-1',
-    url: new URL('../../assets/sprites/prop-tidebay-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-tidebay-2',
-    url: new URL('../../assets/sprites/prop-tidebay-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-tidebay-3',
-    url: new URL('../../assets/sprites/prop-tidebay-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-tidebay-4',
-    url: new URL('../../assets/sprites/prop-tidebay-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  // v21-v30 B02 雙王（載入時機建議：L22/L24 魔王關載入，暫沿 Boot 預載）。
-  {
-    key: 'boss-tariffang',
-    url: new URL('../../assets/sprites/boss-tariffang.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-tariffang-enraged',
-    url: new URL('../../assets/sprites/boss-tariffang-enraged.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-maridella',
-    url: new URL('../../assets/sprites/boss-maridella.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-maridella-enraged',
-    url: new URL('../../assets/sprites/boss-maridella-enraged.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
+  // v21-v30 B02 星港／潮灣場景與雙王：已於 §122 W2 接關認領，條目搬回主 manifest
+  //（assets.ts）並標正確 phase——本檔僅保留未認領批次。
   // v21-v30 B02 六新小怪（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
   // v21-v30 B02 潮化基底與焰化／潮化變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
   {

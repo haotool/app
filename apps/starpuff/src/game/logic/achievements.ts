@@ -51,6 +51,18 @@ const BOSS_TITLES: Record<BossKind, { win: string; winDesc: string; ex: string; 
       ex: 'EX 魔核制霸',
       exDesc: '以 EX 變體擊破蝕星魔核',
     },
+    tariffang: {
+      win: '關稅撤令',
+      winDesc: '擊破關稅巨獸',
+      ex: 'EX 巨獸制霸',
+      exDesc: '以 EX 變體擊破關稅巨獸',
+    },
+    maridella: {
+      win: '潮汐退位',
+      winDesc: '擊破潮汐女王',
+      ex: 'EX 女王制霸',
+      exDesc: '以 EX 變體擊破潮汐女王',
+    },
   };
 
 const BOSS_LEVELS = LEVELS.filter(

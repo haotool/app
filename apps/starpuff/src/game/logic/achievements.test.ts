@@ -16,9 +16,9 @@ import {
 } from './achievements';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
 
-// §121 星海終局篇：在編關卡含過渡跳號 21/23（all-clear 由 LEVELS 派生）。
+// §121/§122 星海終局篇：在編關卡 1-24（all-clear 由 LEVELS 派生）。
 const ALL_IDS = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
 ] as const;
 
 function saveWithClears(ids: readonly number[], timeMs = 45000): SaveData {
@@ -36,8 +36,8 @@ function saveWithAllEggs(): SaveData {
 }
 
 describe('成就資料表（§94 SSOT 不變式）', () => {
-  it('id 唯一、數量 21、名稱描述非空', () => {
-    expect(ACHIEVEMENTS).toHaveLength(21);
+  it('id 唯一、數量 25（§122 雙新王首勝＋EX 各 +2）、名稱描述非空', () => {
+    expect(ACHIEVEMENTS).toHaveLength(25);
     expect(new Set(ACHIEVEMENTS.map((a) => a.id)).size).toBe(ACHIEVEMENTS.length);
     for (const spec of ACHIEVEMENTS) {
       expect(spec.nameZh.length).toBeGreaterThan(0);
@@ -184,7 +184,7 @@ describe('awardAchievements（補發與去重）', () => {
     expect(newly).not.toContain('first-clear');
   });
 
-  it('歷史滿進度存檔一次補發全部 21 條（舊玩家補發語意）', () => {
+  it('歷史滿進度存檔一次補發全部 25 條（舊玩家補發語意）', () => {
     const save = saveWithAllEggs();
     for (const id of BOSS_LEVEL_IDS) recordExClear(save, id);
     // 速通門檻：45000 ≤ 60000 → 兩條速通同時成立。
@@ -276,7 +276,7 @@ describe('v9–v14 舊存檔載入補發', () => {
     expect(newly).not.toContain('ex-conquest');
   });
 
-  it('v13/v14 世代（全 20＋五王 EX＋全彩蛋）一次補發全部 21 條', () => {
+  it('滿進度在編存檔（全關＋七王 EX＋全彩蛋）一次補發全部 25 條', () => {
     const save = parseSave(
       eraSave(
         LEVELS.map((level) => ({

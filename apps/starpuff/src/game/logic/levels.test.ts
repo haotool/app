@@ -29,42 +29,42 @@ import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）', () => {
-  it('在編關卡依序為 1-20＋§121 星海終局篇 21/23（W1 過渡跳號）且參數對表', () => {
+  it('在編關卡依序為 1-20＋§121/§122 星海終局篇 21-24 且參數對表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
     ]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
       2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800, 854,
-      3400, 3700, 4000, 854, 3800, 3900,
+      3400, 3700, 4000, 854, 3800, 854, 3900, 854,
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([
-      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0, 14, 14,
+      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0, 14, 0, 14, 0,
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
-      3000, 1350, 1200, 1000, 2800, 900, 850,
+      3000, 1350, 1200, 1000, 2800, 900, 3000, 850, 2900,
     ]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
-      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 6,
+      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 2, 6, 2,
     ]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
       480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0, 480,
-      480,
+      0, 480, 0,
     ]);
   });
 
-  it('星核制霸判定（§86）：BOSS_LEVEL_IDS 由 LEVELS 派生；5 王 exCleared 全 true 才成立', () => {
-    expect(BOSS_LEVEL_IDS).toEqual([4, 7, 12, 16, 20]);
+  it('星核制霸判定（§86）：BOSS_LEVEL_IDS 由 LEVELS 派生；7 王 exCleared 全 true 才成立', () => {
+    expect(BOSS_LEVEL_IDS).toEqual([4, 7, 12, 16, 20, 22, 24]);
     let save = createDefaultSave();
     expect(exConquestDone(save)).toBe(false);
-    for (const id of [4, 7, 12, 16] as const) save = recordExClear(save, id);
-    // 差一王不成立。
+    for (const id of [4, 7, 12, 16, 20, 22] as const) save = recordExClear(save, id);
+    // 差一王不成立（§122 起制霸語意隨 LEVELS 派生自然擴為七王）。
     expect(exConquestDone(save)).toBe(false);
-    save = recordExClear(save, 20);
+    save = recordExClear(save, 24);
     expect(exConquestDone(save)).toBe(true);
   });
 
-  it('五魔王品種標記（§54/§68/§74/§82）：L4/L7/L12/L16/L20；教學與提示對表', () => {
+  it('七魔王品種標記（§54/§68/§74/§82/§122）：L4/L7/L12/L16/L20/L22/L24；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -87,7 +87,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       null,
       'voidra',
       null,
+      'tariffang',
       null,
+      'maridella',
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -129,6 +131,40 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     for (const id of [12, 16] as const) {
       expect(getLevel(id).arenaBuffPhase).toBeUndefined();
     }
+  });
+
+  it('§122 魔王關體系：L22/L24 前室與增益對表、補生供給滿足變身觸發密度契約', () => {
+    const l22 = getLevel(22);
+    expect(l22.anteroomPx).toBe(400);
+    expect(l22.anteroomBuffs).toEqual(['shield', 'power']);
+    expect(l22.arenaBuff).toBe('swift');
+    expect(l22.platforms).toEqual([]);
+    expect(l22.elements).toEqual([]);
+    expect(l22.elites).toEqual([]);
+    expect(l22.bossApplies).toEqual(['ember-form', 'transform']);
+    // 觸發密度（§119 使用者硬需求）：焰化供給（重鑽味）為補生主軸（權重 ≥0.5），
+    // 常態補給下 ≤30s 可湊齊同系 ×3——燒稅票優勢情境的星味保證。
+    const emberShare = l22.enemyMix
+      .filter((entry) => inhaleFlavor(entry.kind) === 'drilly')
+      .reduce((sum, entry) => sum + entry.weight, 0);
+    expect(emberShare).toBeGreaterThanOrEqual(0.5);
+    // 補生全可吸（§26 飢荒保證律供給面）。
+    for (const entry of l22.enemyMix) expect(canInhale(entry.kind)).toBe(true);
+
+    const l24 = getLevel(24);
+    expect(l24.anteroomPx).toBe(400);
+    expect(l24.anteroomBuffs).toEqual(['shield', 'swift']);
+    expect(l24.arenaBuff).toBe('power');
+    expect(l24.platforms).toEqual([]);
+    expect(l24.elements).toEqual([]);
+    expect(l24.elites).toEqual([]);
+    expect(l24.bossApplies).toEqual(['tide-form', 'transform']);
+    // 潮化供給（孢子味）為補生主軸（權重 ≥0.5）＋P2 潮湧召喚 foamy 加持。
+    const tideShare = l24.enemyMix
+      .filter((entry) => inhaleFlavor(entry.kind) === 'spora')
+      .reduce((sum, entry) => sum + entry.weight, 0);
+    expect(tideShare).toBeGreaterThanOrEqual(0.5);
+    for (const entry of l24.enemyMix) expect(canInhale(entry.kind)).toBe(true);
   });
 
   it('低重力係數（§81/§10.2-6）：僅 L17/L18/L19 配置且值域 [0.5, 1.0]', () => {
@@ -470,8 +506,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('getLevel 未知 id 擲錯（W1 過渡期 L22 尚未入編）', () => {
-    expect(() => getLevel(22)).toThrow();
+  it('getLevel：L22/L24 已入編（§122 W2）、未知 id 擲錯', () => {
+    expect(getLevel(22).boss).toBe('tariffang');
+    expect(getLevel(24).boss).toBe('maridella');
+    expect(() => getLevel(25)).toThrow();
     expect(() => getLevel(99 as never)).toThrow();
   });
 
@@ -658,9 +696,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       'bg-meteorfield': '(arena|throne)',
       'bg-starcourt': '(arena|throne)',
       'bg-voidcore': 'throne',
-      // §121 星海終局篇：星港混排 throne/arena（港區機械）、潮灣沿用 arena（冰晶）。
-      'bg-starport': '(arena|throne)',
-      'bg-tidebay': 'arena',
+      // §121 星海終局篇：星港混排 throne/arena（港區機械）、潮灣沿用 arena（冰晶）；
+      // §122 魔王關改用專屬 prop-starport/prop-tidebay 道具條（#857 素材）。
+      'bg-starport': '(arena|throne|starport)',
+      'bg-tidebay': '(arena|tidebay)',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -682,12 +721,13 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('nextLevelId 依 LEVELS 在編序推進（含 §121 過渡跳號 21→23），末關回 null', () => {
+  it('nextLevelId 依 LEVELS 在編序推進（§122 W2 補號 21→22→23→24），末關回 null', () => {
     for (let i = 0; i + 1 < LEVELS.length; i += 1) {
       expect(nextLevelId(LEVELS[i]?.id as never)).toBe(LEVELS[i + 1]?.id);
     }
-    expect(nextLevelId(21)).toBe(23);
-    expect(nextLevelId(23)).toBeNull();
+    expect(nextLevelId(21)).toBe(22);
+    expect(nextLevelId(22)).toBe(23);
+    expect(nextLevelId(24)).toBeNull();
   });
 
   // §119 觸發密度契約：形態引入關的主形態星味須有 ≥2 種供給怪，且形態練習區

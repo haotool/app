@@ -6,6 +6,8 @@ import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
 import { VOIDRA } from '../logic/voidraFsm';
+import { TARIFFANG } from '../logic/tariffangFsm';
+import { MARIDELLA } from '../logic/maridellaFsm';
 import type { EggEvent } from '../logic/eggs';
 import type { LevelSpec } from '../logic/levels';
 import { MERCY_HEAL } from '../logic/mercyHeal';
@@ -15,6 +17,8 @@ import { createNoctra } from './noctra';
 import { createPrismix } from './prismix';
 import { createSyrona } from './syrona';
 import { createVoidra } from './voidra';
+import { createTariffang } from './tariffang';
+import { createMaridella } from './maridella';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
 import type { MeteorSystem } from './meteor';
@@ -216,6 +220,31 @@ export function createBossKit(
             { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
           ),
           bodyDamage: VOIDRA.bodyDamage,
+        };
+      case 'tariffang':
+        return {
+          handle: createTariffang(
+            scene,
+            {
+              // 焰化燒稅票（§119 burn 命中端）：星彈群由 player 單點供給。
+              playerStars: () => hooks.player().getStars(),
+            },
+            { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
+          ),
+          bodyDamage: TARIFFANG.bodyDamage,
+        };
+      case 'maridella':
+        return {
+          handle: createMaridella(
+            scene,
+            {
+              summonFoamy: (cap) => summonMinion('foamy', cap),
+              // 潮化穩控（§119）：水流推移對潮化免效；形態真值由 player 單點供給。
+              playerForm: () => hooks.player().getTransformState().form,
+            },
+            { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
+          ),
+          bodyDamage: MARIDELLA.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

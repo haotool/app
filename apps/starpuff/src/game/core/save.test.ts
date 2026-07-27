@@ -189,24 +189,44 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 19, 1000);
     expect(currentChallenge(save)).toBe(20);
     save = recordLevelClear(save, 20, 1000);
-    // §121 星海終局篇（W1 過渡跳號）：L20 之後接續 L21 → L23，全通關為 null。
+    // §121/§122 星海終局篇：L20 之後接續 L21 → L22 → L23 → L24，全通關為 null。
     expect(currentChallenge(save)).toBe(21);
     save = recordLevelClear(save, 21, 1000);
+    expect(currentChallenge(save)).toBe(22);
+    save = recordLevelClear(save, 22, 1000);
     expect(currentChallenge(save)).toBe(23);
     save = recordLevelClear(save, 23, 1000);
+    expect(currentChallenge(save)).toBe(24);
+    save = recordLevelClear(save, 24, 1000);
     expect(currentChallenge(save)).toBeNull();
   });
 
-  it('§121 解鎖鏈跳號銜接：L21 需 L20 通關、L23 需 L21 通關（不看不存在的 L22）', () => {
+  it('§121/§122 解鎖鏈在編序銜接：L22 需 L21 通關、L23 需 L22 通關（W2 補號自動收斂）', () => {
     let save = createDefaultSave();
     for (let id = 1; id <= 19; id += 1) save = recordLevelClear(save, id as LevelId, 1000);
     expect(isLevelUnlocked(save, 21)).toBe(false);
     save = recordLevelClear(save, 20, 1000);
     expect(isLevelUnlocked(save, 21)).toBe(true);
-    expect(isLevelUnlocked(save, 23)).toBe(false);
-    save = recordLevelClear(save, 21, 1000);
-    expect(isLevelUnlocked(save, 23)).toBe(true);
     expect(isLevelUnlocked(save, 22)).toBe(false);
+    save = recordLevelClear(save, 21, 1000);
+    expect(isLevelUnlocked(save, 22)).toBe(true);
+    // W1 舊檔跳號通關（L21→L23 已通）情境：補號後 L23 解鎖依在編前一關 L22。
+    expect(isLevelUnlocked(save, 23)).toBe(false);
+    save = recordLevelClear(save, 22, 1000);
+    expect(isLevelUnlocked(save, 23)).toBe(true);
+    save = recordLevelClear(save, 23, 1000);
+    expect(isLevelUnlocked(save, 24)).toBe(true);
+  });
+
+  it('§122 W1 舊檔相容：跳號通關（L21/L23 已通、無 L22）載入後 L22 為當前挑戰、L23 保持 cleared', () => {
+    let save = createDefaultSave();
+    for (let id = 1; id <= 21; id += 1) save = recordLevelClear(save, id as LevelId, 1000);
+    save = recordLevelClear(save, 23, 1000);
+    // 補號後：L22 開放（前一關 L21 已通）、L23 已通不倒退、L24 隨 L23 已通直接開放。
+    expect(nodeStatus(save, 22)).toBe('open');
+    expect(nodeStatus(save, 23)).toBe('cleared');
+    expect(nodeStatus(save, 24)).toBe('open');
+    expect(currentChallenge(save)).toBe(22);
   });
 
   it('v11 存檔相容（§76）：v10 存檔（1-12 通關）載入後 L13 開放、L14 鎖定', () => {

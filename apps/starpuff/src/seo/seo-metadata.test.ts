@@ -47,13 +47,21 @@ describe('seo-metadata SSOT', () => {
     expect(emojiPattern.test(buildSeoBody())).toBe(false);
   });
 
-  it('五區二十關與五魔王對照完整', () => {
-    expect(WORLD_ZONES).toHaveLength(5);
+  it('七區與七魔王對照完整（§122 星海終局篇六/七區入編）', () => {
+    expect(WORLD_ZONES).toHaveLength(7);
     const bosses = WORLD_ZONES.map((z) => z.boss).join('');
-    for (const name of ['果凍王', '暗月蝠王', '稜晶雙子', '熔糖窯后', '蝕星魔核']) {
+    for (const name of [
+      '果凍王',
+      '暗月蝠王',
+      '稜晶雙子',
+      '熔糖窯后',
+      '蝕星魔核',
+      '關稅巨獸',
+      '潮汐女王',
+    ]) {
       expect(bosses).toContain(name);
     }
-    expect(WORLD_ZONES[WORLD_ZONES.length - 1]?.levels).toBe('L17-L20');
+    expect(WORLD_ZONES[WORLD_ZONES.length - 1]?.levels).toBe('L23-L24');
   });
 });
 
@@ -124,7 +132,7 @@ describe('buildSeoHead / buildSeoBody', () => {
     expect(sectionIndex).toBeGreaterThanOrEqual(0);
     expect(sectionIndex).toBeLessThan(noscriptIndex);
     expect(body).toContain('<h1>');
-    for (const heading of ['遊戲特色', '五大區域與魔王', '操作方式', '安裝與離線遊玩']) {
+    for (const heading of ['遊戲特色', '世界區域與魔王', '操作方式', '安裝與離線遊玩']) {
       expect(body).toContain(heading);
     }
     for (const zone of WORLD_ZONES) {

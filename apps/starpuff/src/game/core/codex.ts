@@ -18,7 +18,7 @@ export const CODEX_TAB_GRIDS = {
 export const MONSTER_PAGE_SIZE = 12;
 
 export interface CodexMonster {
-  kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
+  kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra' | 'tariffang' | 'maridella';
   textureKey: string;
   nameZh: string;
   behavior: string;
@@ -235,6 +235,21 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     textureKey: 'boss-voidra',
     nameZh: '蝕星魔核',
     behavior: '牽引、轟炸生存段、低重力終局最終魔王',
+    inhalable: false,
+  },
+  // §122 星海終局篇 W2：兩新魔王徽記入鑑。
+  {
+    kind: 'tariffang',
+    textureKey: 'boss-tariffang',
+    nameZh: '關稅巨獸',
+    behavior: '貨櫃稽查、追蹤稅票、封關衝撞星港魔王',
+    inhalable: false,
+  },
+  {
+    kind: 'maridella',
+    textureKey: 'boss-maridella',
+    nameZh: '潮汐女王',
+    behavior: '潮線改道、海嘯階梯、深海月蝕潮灣魔王',
     inhalable: false,
   },
 ] as const;
