@@ -476,7 +476,7 @@ export function walkAxisRaw(level: LevelSpec, firstSeen: Set<EnemyKind>): WalkAx
 
 // ===== 魔王關靜態三軸 raw（彈幕壓力／階段機制數／迴避精度）=====
 // 權重取向：D 以血池（TTK 壓力）為主、招式面為輔；M 計階段結構與場控疊加；
-// P 以最短 telegraph 反應窗為主。錨定校準（L4/L20）吸收單位，5 王總分需嚴格遞增。
+// P 以最短 telegraph 反應窗為主。錨定校準（L4/L20）吸收單位，7 王總分需嚴格遞增。
 export function bossAxisRaw(facts: BossAuditFacts): WalkAxisRaw {
   const dRaw = facts.maxHp * 0.06 + facts.attackKinds * 0.5;
   const mRaw = 3 + facts.attackKinds * 0.4 + facts.arenaMechanics + (facts.multiBody ? 0.5 : 0);
