@@ -51,6 +51,18 @@ export function oneWayLandBand(stepDeltaY: number): number {
   return Math.max(REST_ABOVE_PX, stepDeltaY + 2);
 }
 
+// 單向著地裁決 SSOT（§77 增補）：下降中（vy>=0）且穿越幀腳底落在動態著地帶內
+// 才著地；上行恆放行。stage elements、地形粉紅平台與魔王 arena 浮台三處 collider
+// 必須共用本函式——L16 曾因第二份固定 +6 帶裁決漂移，高速下降相位性直穿浮台。
+export function oneWayLandable(
+  velocityY: number,
+  bottom: number,
+  platformTop: number,
+  stepDeltaY: number,
+): boolean {
+  return velocityY >= 0 && bottom <= platformTop + oneWayLandBand(stepDeltaY);
+}
+
 // AABB 邊界（§43 掃掠背擋共用形狀）。
 export interface BoundsRect {
   left: number;

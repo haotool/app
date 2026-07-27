@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+328
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+329
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：reward-starpuff-l16-syrona-oneway-band-ssot
+- 原因：L16 Syrona 浮台 collider 沿用固定 +6 著地帶（#769 動態帶未覆蓋分支），雙跳／下砸 >360px/s 下降時穿越幀相位性越帶直穿浮台，P2 潮汐期墜水致死（真瀏覽器實測穿透率 20-25%）
+- 解法：著地裁決收斂 stageModel.oneWayLandable 單點（帶寬依單步位移動態放寬），三處單向平台 collider 共用；紅燈 e2e＋全速域相位掃描單測轉綠，真瀏覽器 40 連測零穿透且上行穿越保留
 
 - 日期：2026-07-27
 - ID：reward-starpuff-ticketa-fsm-redline-warn-repin

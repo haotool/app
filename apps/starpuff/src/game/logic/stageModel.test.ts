@@ -7,6 +7,7 @@ import {
   crossedGate,
   maxDecorInWindow,
   oneWayLandBand,
+  oneWayLandable,
   restingOnOneWay,
   shouldDropThrough,
   springSweepHit,
@@ -121,6 +122,40 @@ describe('oneWayLandBand 單向著地帶（§77 熱修：高速著地防隧穿�
   it('高速著地（單步位移 > 4px）依位移放寬，接住下砸與高處落下', () => {
     expect(oneWayLandBand(11.7)).toBeCloseTo(13.7);
     expect(oneWayLandBand(8)).toBeCloseTo(10);
+  });
+});
+
+// §77 增補（#769 未覆蓋分支）：L16 Syrona 浮台曾用第二份固定 +6 帶裁決，
+// 高速下降穿越幀越帶直穿——著地裁決收斂為 oneWayLandable 單點後以全速域鎖行為。
+describe('oneWayLandable 單向著地裁決（§77 增補：L16 浮台隧穿回歸）', () => {
+  const TOP = 328;
+
+  it('60Hz 全速域相位掃描：下降穿越幀（前一步尚在台頂上方）恆著地', () => {
+    // vy 30-700 覆蓋雙跳回落（~420）、噴口高處落下（~500-620）與下砸（700）。
+    for (let vy = 30; vy <= 700; vy += 10) {
+      const stepDy = vy / 60;
+      for (let phase = 0.1; phase <= 1; phase += 0.1) {
+        expect(oneWayLandable(vy, TOP + stepDy * phase, TOP, stepDy)).toBe(true);
+      }
+    }
+  });
+
+  it('固定 +6 帶漏接的相位（vy>360、腳底越帶 6-12px）必須接住', () => {
+    expect(oneWayLandable(500, TOP + 8, TOP, 500 / 60)).toBe(true);
+    expect(oneWayLandable(700, TOP + 11.6, TOP, 700 / 60)).toBe(true);
+  });
+
+  it('上升（vy<0）不著地：由下方跳穿上行保留', () => {
+    expect(oneWayLandable(-420, TOP + 3, TOP, 7)).toBe(false);
+    expect(oneWayLandable(-1, TOP, TOP, 0.02)).toBe(false);
+  });
+
+  it('低速側切（帶外深入）不著地：+6 緊帶語義保留', () => {
+    expect(oneWayLandable(50, TOP + 7, TOP, 50 / 60)).toBe(false);
+  });
+
+  it('站立（vy=0、位移 0、腳底貼頂）持續著地', () => {
+    expect(oneWayLandable(0, TOP, TOP, 0)).toBe(true);
   });
 });
 

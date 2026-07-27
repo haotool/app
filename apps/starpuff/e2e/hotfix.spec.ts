@@ -9,10 +9,13 @@ declare global {
   interface Window {
     __sp: {
       scene: () => string;
+      stage: () => number;
+      gotoLevel: (levelId: number, ex?: boolean) => void;
+      view: () => { width: number; height: number };
       playerHp: () => number;
       fillQuota: () => void;
       spawn: (kind: string, x?: number, y?: number) => void;
-      probe: () => { x: number; scrollX: number };
+      probe: () => { x: number; y: number; scrollX: number };
       walk: () => { rotation: number; bob: number; vy: number };
       crouch: () => number;
       grantInvuln: (ms: number) => void;
@@ -411,6 +414,89 @@ test('紮根怪（spora/chompy）落地站穩不穿地（#841）', async ({ page
     expect(foe.y).toBeGreaterThan(350);
     expect(foe.y).toBeLessThan(400);
   }
+  expect(errors).toEqual([]);
+});
+
+// §77 增補回歸（#769 未覆蓋分支）：L16 Syrona arena 浮台為全遊戲唯一魔王浮台，
+// 其著地裁決曾漂移為固定 +6 帶——雙跳／下砸高速下降（>360px/s）穿越幀有機率越帶
+// 而直穿浮台（真瀏覽器實測 20-25%/次），P2 潮汐期即墜水致死。修復後與 stage
+// 單向平台共用 oneWayLandable SSOT；上行穿越（vy<0 放行）語義必須同步守住。
+test('L16 Syrona 浮台：高速著地不穿透、由下方跳穿上行保留（§77 增補）', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await startGame(page);
+  await page.evaluate(() => window.__sp.gotoLevel(16));
+  await expect.poll(() => page.evaluate(() => window.__sp.stage()), { timeout: 15000 }).toBe(16);
+  await page.evaluate(() => window.__sp.grantInvuln(600_000));
+  const view = await page.evaluate(() => window.__sp.view());
+  // 幾何（syrona.ts §74）：arena 左緣＝前室寬 400、1 號浮台中心比例 0.22、
+  // 台頂 y=328（站姿 sprite y≈304）；台心與噴口帶（0.3±48px）無重疊，氣流零干擾。
+  const platformX = Math.round(400 + 0.22 * view.width);
+  const onPerch = (y: number) => y > 296 && y < 316;
+
+  // 落定取樣：vy 歸零且 y 連續穩定，排除仍在墜落／回跳中的暫態讀值。
+  const settledY = async (): Promise<number> => {
+    let last = -1;
+    await expect
+      .poll(
+        async () => {
+          const vy = (await page.evaluate(() => window.__sp.walk())).vy;
+          const y = await playerY(page);
+          const stable = vy === 0 && Math.abs(y - last) < 0.5;
+          last = y;
+          return stable;
+        },
+        { intervals: [60, 90], timeout: 8000 },
+      )
+      .toBe(true);
+    return playerY(page);
+  };
+
+  // 該穿要穿得過：台正下方起跳（vy<0 上行放行）→ 穿台並站上台頂。
+  await walkTo(page, platformX);
+  await page.keyboard.press('Z', { delay: 50 });
+  await page.waitForTimeout(250);
+  const perchY = await settledY();
+  expect(onPerch(perchY)).toBe(true);
+
+  // 穿台墜地後撈回台頂（下一輪起點）；起跳前先等 slam CD（1200ms）洗清。
+  const ensurePerched = async (): Promise<void> => {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const y = await settledY();
+      if (onPerch(y)) return;
+      await walkTo(page, platformX);
+      await page.keyboard.press('Z', { delay: 50 });
+      await page.waitForTimeout(250);
+    }
+    throw new Error('無法回到台頂');
+  };
+
+  // 不該穿不能穿：台上起跳 → 台頂上方 ~95px 空中下砸（vy=700、單步 ~11.7px）10 輪
+  // ＋ 三段拍翅高處自由落體（接觸 vy≈500-620）3 輪，落定點必須全數回到台頂。
+  const fails: string[] = [];
+  for (let i = 0; i < 10; i += 1) {
+    await ensurePerched();
+    await page.waitForTimeout(650);
+    await page.keyboard.press('Z', { delay: 50 });
+    await page.waitForTimeout(380);
+    await page.keyboard.down('ArrowDown');
+    await page.keyboard.press('Z', { delay: 40 });
+    await page.keyboard.up('ArrowDown');
+    const y = await settledY();
+    if (!onPerch(y)) fails.push(`下砸 #${i + 1} 落定 y=${Math.round(y)}`);
+  }
+  for (let i = 0; i < 3; i += 1) {
+    await ensurePerched();
+    await page.keyboard.press('Z', { delay: 50 });
+    await page.waitForTimeout(320);
+    for (let flap = 0; flap < 3; flap += 1) {
+      await page.keyboard.press('Z', { delay: 40 });
+      await page.waitForTimeout(280);
+    }
+    const y = await settledY();
+    if (!onPerch(y)) fails.push(`拍翅落體 #${i + 1} 落定 y=${Math.round(y)}`);
+  }
+  expect(fails).toEqual([]);
   expect(errors).toEqual([]);
 });
 

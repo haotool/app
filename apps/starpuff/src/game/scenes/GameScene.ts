@@ -25,6 +25,7 @@ import {
   nextLevelId,
   type LevelSpec,
 } from '../logic/levels';
+import { oneWayLandable } from '../logic/stageModel';
 import { createParallaxBackground, type BackgroundHandle } from '../systems/background';
 import type { BossDamageSource, BossHandle } from '../systems/boss';
 import { createBossKit } from '../systems/bossFactory';
@@ -411,13 +412,20 @@ export class GameScene extends Phaser.Scene {
       this,
     );
     // 場控魔王 arena 浮台（§74 Syrona）：呈現層動態佈建，此處接玩家 collider。
+    // §77 增補：著地裁決共用 oneWayLandable SSOT——固定 +6 帶曾使雙跳/下砸高速下降
+    // 相位性直穿浮台（#769 未覆蓋分支）；保底位不可下穿，故不吃 stage 下穿窗。
     const bossPlatforms = this.boss.getPlatforms?.() ?? [];
     if (bossPlatforms.length > 0) {
       this.physics.add.collider(this.player.sprite, bossPlatforms, undefined, (_p, platform) => {
         const rect = platform as Phaser.GameObjects.Rectangle;
         const rectBody = rect.body as Phaser.Physics.Arcade.StaticBody;
         const playerBody = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-        return playerBody.velocity.y >= 0 && playerBody.bottom <= rectBody.top + 6;
+        return oneWayLandable(
+          playerBody.velocity.y,
+          playerBody.bottom,
+          rectBody.top,
+          playerBody.deltaAbsY(),
+        );
       });
     }
     this.physics.add.collider(this.enemies.getGroup(), ground);
