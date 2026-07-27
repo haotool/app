@@ -151,6 +151,13 @@
 **地形平台統一**：粉紅平台掛 `canLandOneWay` process callback＋`terrainOneWay` hook
 納入同一下穿裁決——玩家視角所有「單向平台」下＋跳皆可穿落（S1 教學一致性）。
 
+**2026-07-28 增補（#769 未覆蓋分支）**：L16 Syrona arena 浮台 collider 原沿用獨立的
+固定 +6 帶裁決，未接入 `oneWayLandBand`——雙跳／下砸高速下降（>360px/s）穿越幀
+相位性越帶直穿浮台（真瀏覽器實測穿透率 20-25%/次），P2 潮汐期即墜水致死。著地
+裁決收斂 `stageModel.oneWayLandable` 單點，stage elements／地形粉紅平台／魔王浮台
+三處 collider 共用；魔王浮台維持不吃下穿窗（保底位不可下穿語義不變），上行穿越
+（vy<0 放行）不變。
+
 ### 77.2 蹲姿視覺與跳鍵下跳指示（§21 控制補訂）
 
 - 蹲姿：地面壓下 120ms 內壓扁（scaleX +14%／scaleY −22%）＋下沉 3px；
