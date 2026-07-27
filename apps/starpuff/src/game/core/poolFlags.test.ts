@@ -184,5 +184,7 @@ export { asserted, bag, viaBag, viaWrapper };
     expect(hows).toContain('destructured get');
     expect(hows).toContain("element access ['get']");
     expect(hows).toContain('Reflect.get');
-  });
+    // 逾時上限對齊同檔全量掃描案（60s）：虛擬 program 編譯在全 workspace 平行
+    // 測試負載下實測 12s+，預設 5s 會間歇性誤紅（pre-push 全量閘取證）。
+  }, 60_000);
 });
