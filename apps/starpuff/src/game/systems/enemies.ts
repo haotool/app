@@ -36,16 +36,18 @@ import {
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import {
-  CHOMPY_BITE_MS,
   PUFFY_FALL_SPEED,
-  SHELLY_SHELL_SCALE,
-  SHELLY_SPIN_SPEED,
-  SHELLY_WALK_SPEED,
   SPIKY_SPEED,
   updateEnemyKind,
   type EnemyUpdateContext,
 } from './enemyUpdates';
 import { popIn } from './fx';
+import {
+  CHOMPY_BITE_MS,
+  SHELLY_SHELL_SCALE,
+  SHELLY_SPIN_SPEED,
+  SHELLY_WALK_SPEED,
+} from './groundEnemies';
 import { getVisualScale } from './visualScale';
 
 export interface EnemyTarget {
