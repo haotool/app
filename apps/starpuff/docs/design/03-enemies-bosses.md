@@ -345,7 +345,7 @@ GameScene 依現量夾限走正式 spawn 管線）`
 - arena 場控幾何（§28 禁硬編，呈現層依動態視寬比例佈建；LevelSpec 幾何表留空）：
   浮台 ×3（22%/47%/70%，y 336/304/336——低台 P2 漲頂下可站、高台 304 沸騰期保底位，
   FSM 測試守門「每循環必留 ≥1 保底位」）＋噴口 ×2（30%/58%，週期同 L13）——供力由
-  GameScene 逐幀委派 `getVentLift`（BossHandle 選配），浮台由 `getPlatforms` 接 collider。
+  damageDirector 逐幀委派 `getVentLift`（BossHandle 選配），浮台由 `getPlatforms` 接 collider。
 - 皇冠弱點：頂帶（本體頂緣 34px 內）命中 ×2 傷（applyDamageAt 位置判定）；乘噴口
   升空為主要到頂路徑。保底線：讀潮汐節拍站浮台點射，僵直窗（散熱/吟唱/波後 ≥2s）
   為固定輸出窗，時窗佔比 0.50 保證磨死（主計畫 §3.2 保底 TTK ≈58s）。

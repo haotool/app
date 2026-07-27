@@ -728,7 +728,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
       target = next;
     },
     // 果凍回彈（§5）：玩家踩上活性果凍地塊經既有 getVentLift 管線彈起（非傷害），
-    // GameScene 逐幀委派結算零接線變更；彈起後短冷卻防連續重觸。
+    // damageDirector 逐幀委派結算零接線變更；彈起後短冷卻防連續重觸。
     getVentLift(x: number, y: number, vy: number) {
       if (!active || dying || jellyBounceCooldownMs > 0) return null;
       const bounce = jellyBounceVy(jellyPatches, scene.time.now, x, y, GROUND_TOP, vy);

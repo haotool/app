@@ -101,8 +101,8 @@ const game = new Phaser.Game({
       // Phaser 4.2.1 動態 RTree broadphase 間歇漏檢（§43 歸因）：useTree 只影響
       // sprite vs Group 配對（吸入區/星彈/觸碰 vs enemies group）——實體數 ≤40，
       // 關閉 tree 改直接枚舉根治該類漏檢。門/彈簧為 direct pair（collideSpriteVsSprite
-      // 直呼 separate、從不查 tree），本設定救不到它們，必要背擋為 GameScene 的
-      // syncGateSweep 與 stage 的 sweepSprings 幾何掃掠，不得視為冗餘移除。
+      // 直呼 separate、從不查 tree），本設定救不到它們，必要背擋為 levelGate 的
+      // sweep 與 stage 的 sweepSprings 幾何掃掠，不得視為冗餘移除。
       useTree: false,
       // 走動抖動歸因（§45）：非跟隨段的幀間位移 0/3.667/7.333px 跳動源於 fixedStep
       // 60Hz 與渲染幀率錯拍（單一渲染幀吞 0/1/2 個物理步）；剛性跟隨段 screen-space

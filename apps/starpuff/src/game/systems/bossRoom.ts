@@ -111,7 +111,7 @@ export interface BossRoomHandle {
   entered(): boolean;
   // arena 高風險位增益投放（§69 P2/P3）：世界座標；10s 未拾自動淡逝。
   dropArenaBuff(id: BuffId, x: number, y: number): void;
-  // buff HUD 倒數環（§69 規則 1：單一 icon＋倒數環，不加新面板）；GameScene 逐幀委派。
+  // buff HUD 倒數環（§69 規則 1：單一 icon＋倒數環，不加新面板）；damageDirector 逐幀委派。
   updateBuffHud(state: BuffState): void;
   // #809 前室反制提示觀測點（e2e）：目前顯示中的提示文案（無則空字串）。
   hintText(): string;

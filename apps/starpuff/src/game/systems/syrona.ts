@@ -655,7 +655,7 @@ export function createSyrona(
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
-    // arena 噴口供力查詢（§74）：GameScene 逐幀委派（沿 stage updraft 結算慣例）。
+    // arena 噴口供力查詢（§74）：damageDirector 逐幀委派（沿 stage updraft 結算慣例）。
     // P4 窯心暴走＝窯壓恆噴（W3 PM 裁決）：暴走段噴口不看週期恆供力，持鍵乘流
     // 升托至皇冠帶轉氣墊懸停——「像素級擦帶跳」升級為可學習的乘流登頂技巧
     //（≥600ms 級滯空輸出窗；水平離柱即交還重力，無滯留軟鎖）。
