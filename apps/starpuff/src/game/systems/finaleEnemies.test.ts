@@ -3,7 +3,7 @@ import type Phaser from 'phaser';
 import { AUDIT_THRESHOLDS } from '../logic/difficulty';
 import { TICKETA_FSM } from '../logic/enemyFsm';
 import type { EnemyUpdateContext } from './enemyUpdates';
-import { TICKETA_WARN_MS, updateCargo, updateFoamy, updateTicketa } from './finaleEnemies';
+import { TICKETA_WARN_MS, updateTicketa } from './finaleEnemies';
 
 // zzfx 於 import 期建 AudioContext（node 無此 API）；沿 player.test.ts 慣例替換。
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
@@ -139,69 +139,4 @@ describe('票券蝠換軌 telegraph 反應窗（#899）', () => {
   });
 });
 
-// 面向同步缺口回歸（facing hotfix）：cargo 走動、foamy 定點吐泡皆為方向性素材
-// （基準朝右）卻無 setFlipX——cargo 向右巡邏、foamy 對左側玩家吐泡時視覺顛倒。
-
-function makeDirectional(dataInit: Record<string, unknown>) {
-  const data = new Map<string, unknown>(Object.entries({ eliteMul: 1, ...dataInit }));
-  const flips: boolean[] = [];
-  const body = {
-    velocity: { x: 0, y: 0 },
-    blocked: { down: true },
-    setVelocityX: (vx: number) => {
-      body.velocity.x = vx;
-    },
-    setVelocity: (vx: number, vy: number) => {
-      body.velocity.x = vx;
-      body.velocity.y = vy;
-    },
-  };
-  const sprite = {
-    x: 100,
-    y: 100,
-    body,
-    flips,
-    getData: (key: string) => data.get(key),
-    setData(key: string, value: unknown) {
-      data.set(key, value);
-      return sprite;
-    },
-    setFlipX(value: boolean) {
-      flips.push(value);
-      return sprite;
-    },
-    setRotation: () => sprite,
-    setTint: () => sprite,
-    clearTint: () => sprite,
-  };
-  return sprite;
-}
-
-const dirCtx = (target: { x: number; y: number } | null) =>
-  ({
-    target,
-    elapsedMs: 0,
-    vscale: { mod: () => ({ sx: 1, sy: 1 }) },
-  }) as unknown as EnemyUpdateContext;
-
-describe('finale 怪視覺朝向同步（facing hotfix 回歸）', () => {
-  it('cargo：逼近玩家時面向跟隨速度符號', () => {
-    const left = makeDirectional({ cycleMs: 0 });
-    updateCargo(dirCtx({ x: 0, y: 100 }), left as unknown as Phaser.Physics.Arcade.Sprite, 16);
-    expect(left.flips[left.flips.length - 1]).toBe(true);
-
-    const right = makeDirectional({ cycleMs: 0 });
-    updateCargo(dirCtx({ x: 500, y: 100 }), right as unknown as Phaser.Physics.Arcade.Sprite, 16);
-    expect(right.flips[right.flips.length - 1]).toBe(false);
-  });
-
-  it('foamy：定點面向玩家側（吐泡方向與面向一致）', () => {
-    const left = makeDirectional({ state: 'idle', stateMs: 0 });
-    updateFoamy(dirCtx({ x: 0, y: 100 }), left as unknown as Phaser.Physics.Arcade.Sprite, 16);
-    expect(left.flips[left.flips.length - 1]).toBe(true);
-
-    const right = makeDirectional({ state: 'idle', stateMs: 0 });
-    updateFoamy(dirCtx({ x: 500, y: 100 }), right as unknown as Phaser.Physics.Arcade.Sprite, 16);
-    expect(right.flips[right.flips.length - 1]).toBe(false);
-  });
-});
+// cargo/foamy 面向同步守門已上收至 enemyFacing.test.ts 表驅動全表遍歷。
