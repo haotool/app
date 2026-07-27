@@ -194,7 +194,8 @@ export function createTariffang(
   // 一般單側錯拍（可背板）、EX 雙向同時（質性差分）。
   const doCargo = (count: number, bothSides: boolean) => {
     for (let wave = 0; wave < count; wave += 1) {
-      const fromLeft = bothSides ? true : (target?.x ?? arenaCx()) > arenaCx() ? false : true;
+      // 遠側滑入（逼近可讀）：玩家在右半場則自左緣入場，橫越全場朝玩家推進。
+      const fromLeft = bothSides ? true : (target?.x ?? arenaCx()) > arenaCx();
       const sides = bothSides ? [true, false] : [wave % 2 === 0 ? fromLeft : !fromLeft];
       delay(wave * CRATE_STAGGER_MS, () => {
         if (dying) return;
@@ -237,6 +238,10 @@ export function createTariffang(
         stamp.enableBody(true, x, 30, true, true);
         stamp.setTexture('__WHITE');
         stamp.setDisplaySize(34, 30).setTint(BRASS_TINT).setAlpha(0.95);
+        // 池復用殘留復位（poolFlags 僅復位標準旗標）：稅票身分屬本系統自訂資料，
+        // 復用為關稅槌時必須顯式清除，防被追蹤/壽命迴圈誤收。
+        stamp.setData('ticket', false);
+        stamp.setData('ticketUntil', 0);
         stamp.setData('homingMs', 0);
         const stampBody = stamp.body as Phaser.Physics.Arcade.Body;
         stampBody.setAllowGravity(false);
