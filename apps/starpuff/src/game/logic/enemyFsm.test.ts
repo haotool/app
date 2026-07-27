@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type Phaser from 'phaser';
 import { canInhale } from './combat';
+import { AUDIT_THRESHOLDS } from './difficulty';
+import type { EnemyUpdateContext } from '../systems/enemyUpdates';
+import { TICKETA_WARN_MS, updateTicketa } from '../systems/finaleEnemies';
 import {
   BOOMY_FSM,
   BUBBLA_FSM,
@@ -51,6 +55,9 @@ import {
   tickScanna,
   tickTicketa,
 } from './enemyFsm';
+
+// zzfx 於 import 期建 AudioContext（node 無此 API）；沿 finaleEnemies.test.ts 慣例替換。
+vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 
 describe('Shelly 三態時序（§30）', () => {
   it('巡邏恆持：walk 不自行轉移，計時持續累加', () => {
@@ -553,11 +560,55 @@ describe('Cometa 四態時序（§80 彗尾飛魚）', () => {
 });
 
 describe('§120 星海終局篇新怪 FSM', () => {
-  it('telegraph 紅線：ticketa/scanna/foamy/manta 前搖窗一律 ≥600ms', () => {
-    expect(TICKETA_FSM.shiftMs).toBeGreaterThanOrEqual(600);
-    expect(SCANNA_FSM.aimMs).toBeGreaterThanOrEqual(600);
-    expect(FOAMY_FSM.windupMs).toBeGreaterThanOrEqual(600);
-    expect(MANTA_FSM.aimMs).toBeGreaterThanOrEqual(600);
+  it('telegraph 紅線：ticketa/scanna/foamy/manta 可讀前搖窗一律 ≥ telegraphMinMs', () => {
+    // 票券蝠可讀前搖＝fly 尾段 WARN 預警（呈現層 TICKETA_WARN_MS）；shiftMs 為俯掠
+    // 位移時長而非前搖（#899/#904），其動力學釘點在 finaleEnemies.test.ts。
+    expect(TICKETA_WARN_MS).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(SCANNA_FSM.aimMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(FOAMY_FSM.windupMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(MANTA_FSM.aimMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+  });
+
+  it('WARN 預警分支存續守門（#904）：fly 尾段首幀必亮 telegraph 閃爍', () => {
+    // 刻意跨層驅動呈現層 updateTicketa：票券蝠可讀前搖住在 finaleEnemies 的 WARN
+    // 分支，若被移除或短路，僅釘常數的紅線仍綠——本案以行為斷言補上必紅守門，
+    // 防 #899 公平性缺陷靜默復活。僅斷言 tint 訊號，不綁懸停速度細節（速度語彙
+    // 與反應窗實測屬 finaleEnemies.test.ts）。
+    const data = new Map<string, unknown>([
+      ['state', 'fly'],
+      ['stateMs', TICKETA_FSM.flyMs - TICKETA_WARN_MS],
+      ['band', 'high'],
+      ['phase', 0],
+      ['eliteMul', 1],
+    ]);
+    const tintCalls: number[] = [];
+    const sprite = {
+      y: TICKETA_FSM.bandHighY,
+      body: {
+        velocity: { x: 0, y: 0 },
+        setVelocity(vx: number, vy: number) {
+          sprite.body.velocity.x = vx;
+          sprite.body.velocity.y = vy;
+        },
+      },
+      getData: (key: string) => data.get(key),
+      setData(key: string, value: unknown) {
+        data.set(key, value);
+        return sprite;
+      },
+      setTint(tint: number) {
+        tintCalls.push(tint);
+        return sprite;
+      },
+      clearTint: () => sprite,
+      setFlipX: () => sprite,
+    };
+    updateTicketa(
+      { elapsedMs: 0, target: null } as unknown as EnemyUpdateContext,
+      sprite as unknown as Phaser.Physics.Arcade.Sprite,
+      16,
+    );
+    expect(tintCalls.length).toBeGreaterThan(0);
   });
 
   it('cargoPatrolDirection：週期折返（flipMs 交替 ±1）', () => {
