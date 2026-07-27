@@ -61,7 +61,15 @@ export type LevelId =
 // v8 雙魔王（§54）：關卡資料以 BossKind 指定魔王品種，null 為走動關。
 // v10（§68）：新增分裂型稜晶雙子 prismix。v11（§74）：場控型 Syrona。
 // v12（§82）：場控收束型最終魔王 Voidra。
-export type BossKind = 'jellord' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
+// §122 星海終局篇 W2：關稅巨獸 Tariffang（L22）與潮汐女王 Maridella（L24）。
+export type BossKind =
+  | 'jellord'
+  | 'noctra'
+  | 'prismix'
+  | 'syrona'
+  | 'voidra'
+  | 'tariffang'
+  | 'maridella';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
 // §119 星海終局篇：新增焰化／潮化／稜化／引力化（引入關見 FORM_INTRO_LEVEL）。
