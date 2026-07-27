@@ -118,6 +118,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { ke
     'arc',
     'strokePath',
     'fillStyle',
+    'fillCircle',
     'slice',
     'fillPath',
     'destroy',
@@ -147,8 +148,15 @@ interface FakePlayerSprite {
     touching: { down: boolean };
     sourceWidth: number;
     sourceHeight: number;
+    // Phaser Body 快取語意（#896）：setSize 以上次 updateBounds 快取的 _sx/_sy
+    // 換算世界尺寸（width/height），而非即時 scaleX——換裝當幀不同步即暫態誤差。
+    _sx: number;
+    _sy: number;
+    width: number;
+    height: number;
     setSize(w: number, h: number, center?: boolean): void;
     setOffset: ReturnType<typeof vi.fn>;
+    updateBounds(): void;
   };
   setDisplaySize(w: number, h: number): FakePlayerSprite;
   setCollideWorldBounds(): FakePlayerSprite;
@@ -190,14 +198,28 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
       velocity: { x: 0, y: 0 },
       blocked: { down: true },
       touching: { down: false },
-      // Phaser Body.updateBounds 語意替身：世界尺寸 = source 尺寸 × scale。
+      // Phaser Body 快取語意替身（#896，貼 Body.js）：setSize 用上次 updateBounds
+      // 快取的 _sx/_sy 換算世界尺寸；updateBounds 才把即時 scale 寫回快取——
+      // 舊替身以「sourceWidth × 即時 scaleX」直算，鎖不住換裝首幀的 _sx 快取縫。
       sourceWidth: 0,
       sourceHeight: 0,
+      _sx: 1,
+      _sy: 1,
+      width: 0,
+      height: 0,
       setSize(w: number, h: number) {
         sprite.body.sourceWidth = w;
         sprite.body.sourceHeight = h;
+        sprite.body.width = w * sprite.body._sx;
+        sprite.body.height = h * sprite.body._sy;
       },
       setOffset: vi.fn(),
+      updateBounds() {
+        sprite.body._sx = sprite.scaleX;
+        sprite.body._sy = sprite.scaleY;
+        sprite.body.width = sprite.body.sourceWidth * sprite.body._sx;
+        sprite.body.height = sprite.body.sourceHeight * sprite.body._sy;
+      },
     },
     setDisplaySize(w: number, h: number) {
       sprite.scaleX = w / sprite.frame.realWidth;
@@ -656,5 +678,90 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
     // 跨幀後恆定（R9）：漏 rebase 時顯示 117.56、判定箱 88.17 必紅。
     expectStableAcrossFrame(frame, sprite);
+  });
+
+  // #897 防禦深度：prism／gravity 與 ember／tide 共用 wearTexture 唯一入口，
+  // 但缺對等跨幀案——vscale.rebase／fitHurtbox 回歸時會晚於 ember／tide 被發現。
+  it('稜化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE（#897）', () => {
+    const { player, frame } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    for (let i = 0; i < 3; i += 1) player.grantStar('glowy');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('prism');
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(1254);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    expectStableAcrossFrame(frame, sprite);
+  });
+
+  it('引力化（1254 源）同鎖：顯示尺寸恆為 PLAYER_SIZE（#897）', () => {
+    const { player, frame } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    for (let i = 0; i < 3; i += 1) player.grantStar('boomy');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('gravity');
+    player.update(IDLE, 16);
+    expect(sprite.frame.realWidth).toBe(1254);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
+    expectStableAcrossFrame(frame, sprite);
+  });
+
+  // 換裝首幀判定箱同步（#896）：Phaser Body.setSize 以上次 updateBounds 快取的
+  // _sx 換算世界尺寸——fitHurtbox 若不主動 updateBounds，換裝當幀 hurtbox 為
+  // 舊 scale 換算值（實測 ember 54／tide 88.17，基準 36；解除回 512 暫縮 24），
+  // 下一物理步才自動修正。本案直讀 body.width（快取語意欄位），與既有
+  // bodyWorldW（sourceWidth × 即時 scaleX＝穩定後語意）互補；移除 fitHurtbox
+  // 末尾 updateBounds 時本案必紅（快取停在生成前 _sx=1，width=576/940.5/384）。
+  it('換裝當幀 body 世界寬立即同步：ember／tide 首幀無暫態誤差（#896）', () => {
+    const { player } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    // 生成當幀即同步（未同步時 width＝384×1＝384）。
+    expect(sprite.body.width).toBeCloseTo(HURT_W);
+    expect(sprite.body.height).toBeCloseTo(HURT_H);
+    // 焰化（768 源）換裝當幀（未同步時 576×舊 _sx）。
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('ember');
+    expect(sprite.body.width).toBeCloseTo(HURT_W);
+    expect(sprite.body.height).toBeCloseTo(HURT_H);
+    // 解除回姿勢立繪（512 源）當幀（未同步時暫縮）。
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    player.update(IDLE, 16);
+    expect(sprite.body.width).toBeCloseTo(HURT_W);
+    // 潮化（1254 源）換裝當幀（未同步時 940.5×舊 _sx）。
+    for (let i = 0; i < 3; i += 1) player.grantStar('spora');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBe('tide');
+    expect(sprite.body.width).toBeCloseTo(HURT_W);
+    expect(sprite.body.height).toBeCloseTo(HURT_H);
+  });
+});
+
+// 已銷毀 sprite 護欄（#898）：Phaser destroy() 會清 sprite.scene；visualScale
+// 幀鉤以 scene 判活體。既有替身 scene:{} 恆為 truthy，護欄路徑從未被測到——
+// 本案模擬 destroy 後幀鉤不得覆寫 scale；移除 visualScale 活體檢查必紅。
+describe('visualScale 銷毀護欄（#898）', () => {
+  it('sprite.scene 清空後 PRE／POST 幀鉤不再覆寫 scale', () => {
+    const { player, frame } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    // 對照組：活體時幀鉤覆寫毒值回基準（證明本案警戒的覆寫路徑真實存在）。
+    sprite.scaleX = 0.5;
+    sprite.scaleY = 0.5;
+    frame.preUpdate();
+    expect(sprite.scaleX).toBeCloseTo(48 / 512);
+    // 模擬 Phaser destroy() 清 scene 後寫入毒值：幀鉤必須跳過不覆寫。
+    sprite.scene = undefined;
+    sprite.scaleX = 0.5;
+    sprite.scaleY = 0.5;
+    frame.preUpdate();
+    expect(sprite.scaleX).toBe(0.5);
+    frame.postUpdate();
+    expect(sprite.scaleX).toBe(0.5);
+    expect(sprite.scaleY).toBe(0.5);
   });
 });

@@ -3,7 +3,7 @@
 // 分級 bot（低/中/高）與四專項探針（#809 jump/#810 telegraph/#811 swallow/#812 starburst）。
 //
 // 用法：node scripts/level-audit.mjs <levelId> [--ex] [--bot low|mid|high] [--runs N]
-//       [--cap 秒] [--probe jump|telegraph|swallow|starburst|transform] [--all] [--port P] [--label 名]
+//       [--cap 秒] [--probe jump|telegraph|ticketa|swallow|starburst|transform] [--all] [--port P] [--label 名]
 //       [--transform]（#816：魔王關依 TRANSFORM_ADVANTAGE 集星變身，TTK 用/不用對照）
 // 前置：dev server（pnpm dev，埠 SP_DEV_PORT）；輸出至 .claude/product-intel/level-audits/。
 import { execSync } from 'node:child_process';
@@ -15,6 +15,7 @@ import {
   runStarburstProbe,
   runSwallowProbe,
   runTelegraphProbe,
+  runTicketaTelegraphProbe,
 } from './lib/audit-probes.mjs';
 import {
   enterArena,
@@ -334,6 +335,27 @@ async function runProbe(page, name, level, overrides = {}) {
           : null,
       dodge500Meets: meetsDodge(dodgeOf(500), AUDIT_THRESHOLDS.spikeDodgeMinRate500),
       dodge350Meets: meetsDodge(dodgeOf(350), AUDIT_THRESHOLDS.spikeDodgeMinRate350),
+    };
+  }
+  // #899 票券蝠換軌 telegraph：懸停預警窗（座標可觀測）＋俯掠動力學＋分級迴避對比。
+  if (name === 'ticketa') {
+    const { ENEMY_SIZE, FORGIVENESS, PLAYER } = await import('../src/game/core/config.ts');
+    // 玩家顯示尺寸 48（player.ts PLAYER_SIZE；systems 層含 Phaser 依賴不可直 import）。
+    const PLAYER_RENDER_SIZE = 48;
+    const result = await runTicketaTelegraphProbe(page, {
+      levelId: level?.id ?? 21,
+      crossings: Number(opt('cycles', '10')),
+      playerMoveSpeed: PLAYER.moveSpeed,
+      playerHurtHalfW: (PLAYER_RENDER_SIZE * FORGIVENESS.hurtboxWidthRatio) / 2,
+      enemyHalfW: ENEMY_SIZE / 2,
+    });
+    return {
+      probe: 'ticketa',
+      ...result,
+      thresholdMs: AUDIT_THRESHOLDS.telegraphMinMs,
+      // 懸停預警窗（telegraph 可見至位移開始）需達 telegraph SSOT 門檻。
+      meetsThreshold:
+        result.hoverMsAvg !== null ? result.hoverMsAvg >= AUDIT_THRESHOLDS.telegraphMinMs : null,
     };
   }
   if (name === 'swallow') {

@@ -74,6 +74,11 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+      # root scripts 型別閘（#900）：pnpm -r typecheck 依 workspace 語意排除 root，
+      # scripts/tsconfig.json 必須顯式執行避免 scripts/__tests__ 型別漂移。
+      - name: Type check (root scripts)
+        run: npx tsc --noEmit -p scripts/tsconfig.json
+
       - name: Run tests
         run: pnpm test:coverage
 

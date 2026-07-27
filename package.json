@@ -84,6 +84,7 @@
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.61.1",
     "@types/node": "^24.13.3",
+    "@types/xml2js": "^0.4.14",
     "@vitejs/plugin-react": "^6.0.3",
     "depcheck": "^1.4.7",
     "eslint": "^9.39.5",
