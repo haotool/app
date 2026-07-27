@@ -60,7 +60,7 @@ export interface BoundsRect {
 }
 
 // 星星門到達判定（§43）：門/彈簧為 direct pair overlap，Phaser 4 實測間歇漏檢，
-// 本函式為必要幾何背擋。三重判定：站於門心右側（含 spawnGate 時已越門）、
+// 本函式為必要幾何背擋。三重判定：站於門心右側（含門生成當幀已越門）、
 // 前後幀跨越門心 x（含等值，高速隧穿）、玩家 AABB 與門判定區相交（停在門區左半）。
 export function crossedGate(
   prevX: number,

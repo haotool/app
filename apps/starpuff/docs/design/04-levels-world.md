@@ -80,7 +80,7 @@ v6 當時的 L1-L4 攻略表已失效（怪物權重、星暴長按觸發、精�
 - 反卡關驗證（e2e 沿用 `__sp` 鉤子）：L1「全程僅用基礎動作通關」全流程案；L2/L3 `gotoLevel` 走查——飢荒必補可吸怪斷言＋地面路徑（含磚前繞跳）必達星星門；存檔重載、地圖解鎖、關卡重玩、殼盾格擋、雷鏈跳電各自獨立案。
 - 靜態 overlap 必達背擋（§26 擴充，歸因定稿）：實測 Phaser 4.2.1 Arcade overlap 存在間歇漏檢（v5 基準亦可重現：彈簧 walk-over 6 次 3 失敗、星星門走入間歇不觸發），修復分兩軌、因果不可混淆——
   - `useTree: false`（main.ts）：只服務 sprite vs **Group** 配對（吸入區/星彈/觸碰 vs enemies group 走 `collideSpriteVsGroup` 的動態 RTree broadphase），關閉後改直接枚舉，根治該類漏檢；
-  - 門/彈簧為 **direct pair**（`collideSpriteVsSprite` 直呼 `separate`、從不查 RTree）——`useTree:false` 對它們無效，真正有效且必要的是幾何掃掠背擋：星星門 `crossedGate`（跨門心/站門心右側/AABB 交疊三重判定，含 spawnGate 時已越門直判）與彈簧 `springSweepHit`（前後幀掃掠 x 區間，補高速穿越），純函式落 `logic/stageModel.ts` 供 vitest 守門，與原 overlap 共用單一觸發出口（transitioning/lockedUntil 閘去重）。**明文禁止未來把掃掠背擋當冗餘刪除。**
+  - 門/彈簧為 **direct pair**（`collideSpriteVsSprite` 直呼 `separate`、從不查 RTree）——`useTree:false` 對它們無效，真正有效且必要的是幾何掃掠背擋：星星門 `crossedGate`（跨門心/站門心右側/AABB 交疊三重判定，含門生成當幀已越門直判）與彈簧 `springSweepHit`（前後幀掃掠 x 區間，補高速穿越），純函式落 `logic/stageModel.ts` 供 vitest 守門，與原 overlap 共用單一觸發出口（transitioning/lockedUntil 閘去重）。**明文禁止未來把掃掠背擋當冗餘刪除。**
 
 ## 49. v7 每關攻略 PoC 與節奏補訂（引入→練習→考驗→獎勵）
 
@@ -305,7 +305,7 @@ v6 當時的 L1-L4 攻略表已失效（怪物權重、星暴長按觸發、精�
   ——非 stage element；底部糖漿帶週期漲落，漲潮時強制走平台層。
 - 水位時間軸（tideWaterY）：乾潮（收納世界底 y=600 等效無水）→ 漲坡 0.9s（地面頂→漲頂
   線性）→ 滿潮持平 → 退坡 0.9s 回地面頂；漲潮前 1s 河面冒泡 telegraph（tidePhase）。
-- 浸水結算（GameScene.advanceTide 單點）：接觸傷害 1 走 damagePlayer 單一入口（i-frame/
+- 浸水結算（damageDirector.advanceTide 單點）：接觸傷害 1 走 damagePlayer 單一入口（i-frame/
   護盾泡自然生效）＋強緩速（水平封頂 60px/s）＋垂直鎖上推 -240（**永不吸底**，
   anti-softlock §10.2-4）。
 - dry-window 不變式（levels.test 守門）：主地面每週期露出 ≥40%（dutyPct ≤0.6）、平台層

@@ -16,7 +16,7 @@
 - 日期：2026-07-27
 - ID：reward-starpuff-gamescene-strangler-split-w2prep
 - 原因：GameScene.ts 貼近 max-lines 1200 行硬閘（1180 行），餘裕不足支援 W2 新魔王關卡落地（#886）
-- 解法：採 strangler 模式抽離 levelGate／mercyDirector／damageDirector／playerFeel／sceneEvents 五個獨立導演與事件模組，補齊 5 組單元測試，GameScene 降至 875 行（−26%），1096 個 vitest 全綠零行為改變
+- 解法：採 strangler 模式抽離 levelGate／mercyDirector／damageDirector／playerFeel／sceneEvents 五個獨立導演與事件模組，補齊 5 組單元測試，GameScene 降至 875 行（−26%），1106 個 vitest 全綠零行為改變
 
 - 日期：2026-07-27
 - ID：reward-starpuff-ticketa-telegraph-warn-window

@@ -32,7 +32,7 @@ export interface StageHooks {
   player(): PlayerHandle;
   // 彈藥獎勵走正式管線：磚內藏可吸小怪，吞下即 +1 彈藥（配額與彩蛋語意不失真）。
   spawnAmmoMinion(x: number, y: number): void;
-  // 折躍瞬移通知（§66）：GameScene 據此重置前後幀掃掠基準（星星門背擋防偽跨越）。
+  // 折躍瞬移通知（§66）：經 GameScene 轉發 levelGate 重置掃掠基準（星星門背擋防偽跨越）。
   onWarp?(x: number): void;
   // 地形單向平台（§77）：GameScene addTerrain 的粉紅平台納入同一套下穿裁決。
   terrainOneWay?(): Phaser.GameObjects.Rectangle[];
@@ -305,7 +305,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     });
   }
 
-  // 彈簧掃掠背擋（§43，鏡像星星門 syncGateSweep）：彈簧 overlap 為 direct pair，
+  // 彈簧掃掠背擋（§43，鏡像星星門 levelGate.sweep）：彈簧 overlap 為 direct pair，
   // Phaser 4 實測間歇漏檢——以前後幀掃掠 x 區間幾何補判（含高速穿越），不得移除；
   // 重複觸發由 canSpringLaunch 冷卻閘去重。
   let prevSweepX: number | null = null;
@@ -400,7 +400,7 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
   }
 
   // 星門折躍結算（§66）：進門保留速度向量（body.reset 歸零後回寫）、相機硬切＋白閃；
-  // 傳送後重置本地掃掠基準並通知 GameScene，防前後幀大位移誤觸彈簧/星星門背擋。
+  // 傳送後重置本地掃掠基準並經 onWarp 通知 levelGate，防前後幀大位移誤觸彈簧/星星門背擋。
   function applyWarp(body: Phaser.Physics.Arcade.Body): void {
     if (warpGates.length === 0) return;
     const player = hooks.player().sprite;

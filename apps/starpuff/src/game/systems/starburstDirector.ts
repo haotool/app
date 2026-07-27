@@ -5,7 +5,7 @@ import type { ToastSystem } from './toasts';
 
 // 蓄能星生命週期導演（GAME_DESIGN §109）：跨關持有／死亡清除／EX 進場清除與
 // 首次教學浮字。session 記憶體狀態（跨關卡重試保留、重載重置），不動 save schema
-// ——與 GameScene 的 seenFlavorHints 同慣例。
+// ——與 sceneEvents 的 seenFlavorHints 同慣例。
 
 // 跨關持有旗標：通關瞬間快照玩家蓄能相位，下一關 create 時授回。
 let carryCharged = false;

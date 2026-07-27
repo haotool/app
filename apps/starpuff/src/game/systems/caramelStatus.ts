@@ -29,7 +29,7 @@ export interface CaramelStatus {
   apply(): void;
   update(deltaMs: number): void;
   clear(): void;
-  // 倍率重注（buff 拾取/過期時由 GameScene 呼叫）。
+  // 倍率重注（buff 拾取/過期時由 damageDirector 呼叫）。
   sync(): void;
 }
 
