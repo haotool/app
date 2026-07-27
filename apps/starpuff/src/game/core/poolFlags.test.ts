@@ -10,6 +10,18 @@ import { POOL_TRANSIENT_FLAGS, acquirePooled, resetTransientFlags } from './pool
 // 參數／Reflect.get）都會被抓；動態字串組鍵等蓄意繞過不在守門範圍（誠實邊界）。
 
 describe('poolFlags（池瞬時旗標 SSOT）', () => {
+  it('在冊旗標全清單釘住（§122 稅票身分/壽命戳記入冊；自清單移除復位即紅）', () => {
+    expect([...POOL_TRANSIENT_FLAGS]).toEqual([
+      'tideDeflected',
+      'reflected',
+      'burn',
+      'inhalable',
+      'caramel',
+      'ticket',
+      'ticketUntil',
+    ]);
+  });
+
   it('resetTransientFlags 將在冊旗標全部歸位 false', () => {
     const data = new Map<string, unknown>(POOL_TRANSIENT_FLAGS.map((flag) => [flag, true]));
     resetTransientFlags({ setData: (key, value) => data.set(key, value) });
@@ -184,5 +196,7 @@ export { asserted, bag, viaBag, viaWrapper };
     expect(hows).toContain('destructured get');
     expect(hows).toContain("element access ['get']");
     expect(hows).toContain('Reflect.get');
-  });
+    // 逾時上限對齊同檔全量掃描案（60s）：虛擬 program 編譯在全 workspace 平行
+    // 測試負載下實測 12s+，預設 5s 會間歇性誤紅（pre-push 全量閘取證）。
+  }, 60_000);
 });

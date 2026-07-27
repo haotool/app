@@ -79,8 +79,10 @@ async function gotoTitle(page: Page): Promise<void> {
 
 test('舊存檔開機補發（§94）：v13 世代 v1 存檔載入即補發歷史成就並升 v2', async ({ page }) => {
   const errors = collectErrors(page);
-  // 全 20 通關＋五王 EX＋三隱藏彩蛋（彩蛋僅 3 顆）：開機補發精確 19 條——
-  // egg-10／egg-all 未達門檻必須不補發（無多發）。
+  // 全 20 通關＋五王 EX＋三隱藏彩蛋（彩蛋僅 3 顆）：開機補發精確 17 條——
+  // egg-10／egg-all 未達門檻必須不補發（無多發）。兩項排除的成因不同：
+  // all-clear 自 §121（W1 新關入編）起即不由 20 關成立（本斷言當時未同步＝既有債）；
+  // ex-conquest 則是 §122（本車 BOSS_LEVEL_IDS 擴為七王）的直接結果（5 EX 不再滿編）。
   await seedV1Save(page, ALL_TWENTY, {
     exIds: BOSS_IDS,
     eggs: { 12: ['twin-finish'], 16: ['vent-hit-count'], 20: ['survive-collect'] },
@@ -96,11 +98,9 @@ test('舊存檔開機補發（§94）：v13 世代 v1 存檔載入即補發歷�
   );
   expect(persisted.schemaVersion).toBe(2);
   const awarded = persisted.achievements ?? [];
-  expect(awarded).toHaveLength(19);
+  expect(awarded).toHaveLength(17);
   for (const id of [
     'first-clear',
-    'all-clear',
-    'ex-conquest',
     'egg-first',
     'egg-twin',
     'egg-vent',
@@ -110,6 +110,8 @@ test('舊存檔開機補發（§94）：v13 世代 v1 存檔載入即補發歷�
   ]) {
     expect(awarded).toContain(id);
   }
+  expect(awarded).not.toContain('all-clear');
+  expect(awarded).not.toContain('ex-conquest');
   expect(awarded).not.toContain('egg-10');
   expect(awarded).not.toContain('egg-all');
   await page.waitForTimeout(400);

@@ -34,7 +34,7 @@
 | [`00-foundations.md`](design/00-foundations.md)       | 產品定位、場景流程、技術架構與事件契約、品質門檻、版本號、跨系統架構級契約     |
 | [`01-controls-input.md`](design/01-controls-input.md) | 搖桿與 A/B/SP 鍵語意、輸入矩陣、觸控判定、移動手感、旋轉殼、虛擬鍵布局與配置頁 |
 | [`02-combat-star.md`](design/02-combat-star.md)       | 戰鬥數值、九系星味與混合星、殼盾與雷鏈、星化三形態與教學矩陣                   |
-| [`03-enemies-bosses.md`](design/03-enemies-bosses.md) | 主角與 18 隻小怪 FSM、精英系統、五座魔王階段與招式、EX 變體與 P4 第二血條      |
+| [`03-enemies-bosses.md`](design/03-enemies-bosses.md) | 主角與小怪 FSM、精英系統、七座魔王階段與招式、EX 變體與 P4 第二血條            |
 | [`04-levels-world.md`](design/04-levels-world.md)     | 20 關資料與節奏、五區分頁世界地圖、彩蛋、平台與環境機制、魔王關前室與增益      |
 | [`05-save-settings.md`](design/05-save-settings.md)   | 存檔 schema 與備援、重置語意、成就系統、使用者偏好 SSOT 與設定頁、PWA 更新閘   |
 | [`06-ui-shell-pwa.md`](design/06-ui-shell-pwa.md)     | 主選單與圖鑑分頁、暫停系統、HUD 命中層、結算動線、殼層卡片、PWA 安裝指引       |
@@ -175,3 +175,4 @@
 | §119 | 星海終局篇四新變身（W1；#886）                                                       | [`02-combat-star.md`](design/02-combat-star.md)       |
 | §120 | 星海終局篇六新小怪（W1；#886）                                                       | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
 | §121 | 星海終局篇 L21/L23 走動關與進程（W1；#886）                                          | [`04-levels-world.md`](design/04-levels-world.md)     |
+| §122 | 星海終局篇雙魔王：Tariffang 關稅巨獸（L22）與 Maridella 潮汐女王（L24）（W2；#886）  | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |

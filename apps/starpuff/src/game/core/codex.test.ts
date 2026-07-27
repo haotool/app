@@ -9,7 +9,7 @@ import {
 } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部二十四種小怪與五魔王（§120 星海終局篇六新怪入鑑）', () => {
+  it('收錄全部二十四種小怪與七魔王（§120 六新怪＋§122 雙新王入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -40,6 +40,8 @@ describe('CODEX_MONSTERS', () => {
       'prismix',
       'syrona',
       'voidra',
+      'tariffang',
+      'maridella',
     ]);
   });
 

@@ -40,9 +40,9 @@ describe('圖鑑分頁縱向守門（§96 P1-01：任何分頁內容不得超出
     }
   });
 
-  it('成就分頁：當前 21 條維持 6 欄 4 列、成長至 30 條仍不溢出', () => {
+  it('成就分頁：當前 25 條收斂 7 欄 4 列（§122 雙新王 +4）、成長至 30 條仍不溢出', () => {
     const grid = fitBoundedGrid(ACHIEVEMENTS.length, CODEX_TAB_GRIDS.achievements);
-    expect(grid).toEqual({ cols: 6, rows: 4 });
+    expect(grid).toEqual({ cols: 7, rows: 4 });
     expect(gridBottom(grid, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
     const future = fitBoundedGrid(30, CODEX_TAB_GRIDS.achievements);
     expect(gridBottom(future, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);

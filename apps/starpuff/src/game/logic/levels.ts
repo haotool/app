@@ -1521,6 +1521,45 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'cargo', x: 1720 },
     ],
   },
+  // §122 星海終局篇（六區星海港域）——L22 關稅要塞：關稅巨獸 Tariffang——
+  // 貨物稽查（貨櫃地形改寫）× 加收費用（命中即生追蹤稅票）× 全面封關（閘門＋衝撞）；
+  // 魔王關體系沿用（§69 前室/增益/彩蛋）。
+  {
+    id: 22,
+    nameZh: '關稅要塞',
+    bgKey: 'bg-starport',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 3000,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26）＋觸發密度契約（§119）：cargo 0.5（重鑽味＝焰化供給主軸），
+    // 常態補給下 ≤30s 可湊齊焰化 ×3——燒稅票優勢情境的星味供給保證。
+    enemyMix: [
+      { kind: 'cargo', weight: 0.5 },
+      { kind: 'jelly', weight: 0.3 },
+      { kind: 'floaty', weight: 0.2 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-starport-1', x: 110 },
+      { key: 'prop-starport-2', x: 320 },
+      { key: 'prop-starport-3', x: 540 },
+      { key: 'prop-starport-4', x: 750 },
+    ],
+    // §24 彩蛋二十二：巨獸可擊打後 5 秒內首次命中（與 L4/L7 同型）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
+    elites: [],
+    boss: 'tariffang',
+    tutorial: false,
+    // §110 魔王驗收：焰化燒稅票（優勢情境）＋變身。
+    bossApplies: ['ember-form', 'transform'],
+    // 魔王關體系（§69 沿用）：前室 400px＋護盾/星力二選一；P2 高風險位刷疾風靴。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'power'],
+    arenaBuff: 'swift',
+  },
   // §121 星海終局篇（七區冰晶潮域）——L23 冰晶潮灣：水流浮力（週期浮力柱）×
   // 冰面滑行（frosty）×潮汐走動關；潮化取得——孢子味三新怪供給（foamy/frosty/manta），
   // 中段形態練習區保證 3 隻孢子菇（定點紮根留駐）。
@@ -1621,6 +1660,46 @@ export const LEVELS: readonly LevelSpec[] = [
       { kind: 'foamy', x: 1680 },
       { kind: 'foamy', x: 1760 },
     ],
+  },
+  // §122 星海終局篇（七區冰晶潮域）——L24 潮汐王庭：潮汐女王 Maridella——
+  // 潮線改道（水流推移＋箭頭提示）× 海嘯階梯（缺口牆）× 深海月蝕（三水球環爆）；
+  // 魔王關體系沿用（§69 前室/增益/彩蛋）。
+  {
+    id: 24,
+    nameZh: '潮汐王庭',
+    bgKey: 'bg-tidebay',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 2900,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26）＋觸發密度契約（§119）：潮系雙供給 0.55（foamy/frosty＝
+    // 孢子味＝潮化）＋P2 潮湧召喚 foamy 加持——穩控優勢情境的星味供給保證。
+    enemyMix: [
+      { kind: 'foamy', weight: 0.3 },
+      { kind: 'frosty', weight: 0.25 },
+      { kind: 'jelly', weight: 0.25 },
+      { kind: 'floaty', weight: 0.2 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-tidebay-1', x: 110 },
+      { key: 'prop-tidebay-2', x: 320 },
+      { key: 'prop-tidebay-3', x: 540 },
+      { key: 'prop-tidebay-4', x: 750 },
+    ],
+    // §24 彩蛋二十四：女王可擊打後 5 秒內首次命中（與 L4/L7 同型）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'full-magazine', windowMs: 5000 }],
+    elites: [],
+    boss: 'maridella',
+    tutorial: false,
+    // §110 魔王驗收：潮化穩控（優勢情境）＋變身。
+    bossApplies: ['tide-form', 'transform'],
+    // 魔王關體系（§69 沿用）：前室 400px＋護盾/疾風二選一；P2 高風險位刷星力果。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'swift'],
+    arenaBuff: 'power',
   },
 ];
 

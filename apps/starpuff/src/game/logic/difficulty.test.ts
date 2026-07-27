@@ -133,7 +133,7 @@ describe('三軸自動計算（主計畫 §3.1 錨定行重現）', () => {
     expect(voidra.total).toBe(9.2);
   });
 
-  it('非錨定魔王插值落於錨帶內且總分遞增（L4 < L7 < L12 < L16 < L20）', () => {
+  it('非錨定魔王插值落於錨帶內且七王總分遞增（L4 < L7 < L12 < L16 < L20 < L22 < L24）', () => {
     const totals = BOSS_LEVEL_IDS.map((id) => computeLevelAxes(levelOf(id), LEVELS).total);
     for (let i = 1; i < totals.length; i += 1) {
       expect(totals[i]).toBeGreaterThan(totals[i - 1] ?? 0);

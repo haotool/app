@@ -24,12 +24,17 @@ import type Phaser from 'phaser';
 //   每發必寫——新增取出分支時人工複查。
 // - fxTrail【慣例·無機械鎖】：附著物件需 destroy 而非布林覆寫，生命週期由
 //   recycleStar/starSteering 自管——新增星彈回收路徑時人工複查。
+// ticket/ticketUntil（§122 Tariffang 稅票身分與壽命戳記）：稅票追蹤/壽命/吸入
+// 迴圈全數以 ticket === true 為閘——取出即歸 false 使殘留戳記不可達，
+// 取代 stamp 路徑的手動逐鍵復位（審查回饋：手動清鍵是殘留旗標事故的候選缺口）。
 export const POOL_TRANSIENT_FLAGS = [
   'tideDeflected',
   'reflected',
   'burn',
   'inhalable',
   'caramel',
+  'ticket',
+  'ticketUntil',
 ] as const;
 
 interface DataHolder {

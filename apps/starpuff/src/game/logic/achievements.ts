@@ -51,6 +51,18 @@ const BOSS_TITLES: Record<BossKind, { win: string; winDesc: string; ex: string; 
       ex: 'EX 魔核制霸',
       exDesc: '以 EX 變體擊破蝕星魔核',
     },
+    tariffang: {
+      win: '關稅撤令',
+      winDesc: '擊破關稅巨獸',
+      ex: 'EX 巨獸制霸',
+      exDesc: '以 EX 變體擊破關稅巨獸',
+    },
+    maridella: {
+      win: '潮汐退位',
+      winDesc: '擊破潮汐女王',
+      ex: 'EX 女王制霸',
+      exDesc: '以 EX 變體擊破潮汐女王',
+    },
   };
 
 const BOSS_LEVELS = LEVELS.filter(
@@ -129,7 +141,8 @@ export const ACHIEVEMENTS: readonly AchievementSpec[] = [
   {
     id: 'ex-conquest',
     nameZh: '星核制霸',
-    descZh: '五王 EX 變體全數制霸',
+    // 王數由 BOSS_LEVEL_IDS 派生（§122 審查回饋）：擴王時文案自動跟進，禁硬編數字。
+    descZh: `${BOSS_LEVEL_IDS.length} 王 EX 變體全數制霸`,
     category: 'boss',
     hidden: false,
     unlocked: (save) => exConquestDone(save),

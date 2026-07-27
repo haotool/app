@@ -30,7 +30,7 @@ export const SCREENSHOT_URL = `${SITE_URL}icons/screenshot-gameplay.jpg`;
 export const DATE_PUBLISHED = '2026-07-14';
 // sitemap lastmod 政策（Google 官方）：反映內容的重大更新日，禁止隨每次 build 自動跳動。
 // SEO 內容（文案/結構化資料/llms）有實質變更時，隨該 PR 手動更新此常數。
-export const SEO_CONTENT_LASTMOD = '2026-07-19';
+export const SEO_CONTENT_LASTMOD = '2026-07-27';
 
 // 各區魔王行銷文案（區名與關卡區間由 zones.ts 推導，僅魔王描述在此維護）。
 const ZONE_BOSSES: Record<number, Pick<BossEntry, 'boss' | 'bossEn' | 'trait'>> = {
@@ -39,6 +39,9 @@ const ZONE_BOSSES: Record<number, Pick<BossEntry, 'boss' | 'bossEn' | 'trait'>> 
   3: { boss: '稜晶雙子 Prismix', bossEn: 'Prismix', trait: '雙血條同場作戰的稜晶孿生體' },
   4: { boss: '熔糖窯后 Syrona', bossEn: 'Syrona', trait: '噴泉洗牌與窯風三連的場控女王' },
   5: { boss: '蝕星魔核 Voidra', bossEn: 'Voidra', trait: '生存段與星核共鳴的最終魔王' },
+  // §122 星海終局篇 W2：六/七區魔王隨 L22/L24 入編補文案。
+  6: { boss: '關稅巨獸 Tariffang', bossEn: 'Tariffang', trait: '貨櫃稽查與追蹤稅票的星港關稅官' },
+  7: { boss: '潮汐女王 Maridella', bossEn: 'Maridella', trait: '潮線改道與深海月蝕的潮灣女王' },
 };
 
 // 分區與魔王對照：分區資料直接取自遊戲內 ZONES SSOT；§121 星海終局篇新區的魔王
@@ -55,7 +58,7 @@ export const WORLD_ZONES: BossEntry[] = ZONES.filter((zone) => ZONE_BOSSES[zone.
 
 export const GAME_FEATURES = [
   '完全免費、無廣告、免註冊，開啟瀏覽器即玩',
-  '五大區域二十道關卡，五大魔王與 EX 挑戰變體',
+  '七大區域二十四道關卡，七大魔王與 EX 挑戰變體',
   '吸入果凍怪化為九系星彈：穿透、爆裂、雷鏈、緩速、迴旋與雙味混合配方',
   '星化變身爆發輸出，搭配漂浮、下砸等動作技巧',
   'PWA 可安裝到主畫面，離線也能完整遊玩',
@@ -172,15 +175,15 @@ export function buildSeoBody(): string {
       <h1>${escapeHtml(SEO_TITLE)}</h1>
       <p>
         星噗噗（StarPuff）是一款繁體中文原創 IP 的免費橫向捲軸動作網頁遊戲：操控 Q
-        彈果凍球「噗噗」張大嘴吸入果凍怪、把牠們化為星彈反擊，一路闖越果凍星球的五大區域、二十道關卡，
-        挑戰五位風格迥異的魔王。免下載、免安裝、免註冊，手機、平板與電腦開啟瀏覽器即可遊玩；
+        彈果凍球「噗噗」張大嘴吸入果凍怪、把牠們化為星彈反擊，一路闖越果凍星球的七大區域、二十四道關卡，
+        挑戰七位風格迥異的魔王。免下載、免安裝、免註冊，手機、平板與電腦開啟瀏覽器即可遊玩；
         支援 PWA 安裝到主畫面，離線也能完整進行遊戲。
       </p>
       <h2>遊戲特色</h2>
       <ul>
         ${featureItems}
       </ul>
-      <h2>五大區域與魔王</h2>
+      <h2>世界區域與魔王</h2>
       <ul>
         ${zoneItems}
       </ul>

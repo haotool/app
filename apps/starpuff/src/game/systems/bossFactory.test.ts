@@ -2,16 +2,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
 import { GRAVITY_Y } from '../core/config';
 import { BOSS } from '../logic/bossFsm';
+import { MARIDELLA } from '../logic/maridellaFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
 import { SYRONA } from '../logic/syronaFsm';
+import { TARIFFANG } from '../logic/tariffangFsm';
 import { VOIDRA } from '../logic/voidraFsm';
 import type { LevelSpec } from '../logic/levels';
 import { createBossKit, type BossFactoryHooks } from './bossFactory';
 import { createBoss } from './boss';
+import { createMaridella } from './maridella';
 import { createNoctra } from './noctra';
 import { createPrismix } from './prismix';
 import { createSyrona } from './syrona';
+import { createTariffang } from './tariffang';
 import { createVoidra } from './voidra';
 import { spawnHealPickup } from './pickups';
 import type { EnemySystem } from './enemies';
@@ -29,6 +33,8 @@ vi.mock('./noctra', () => ({ createNoctra: vi.fn(() => ({ id: 'noctra-handle' })
 vi.mock('./prismix', () => ({ createPrismix: vi.fn(() => ({ id: 'prismix-handle' })) }));
 vi.mock('./syrona', () => ({ createSyrona: vi.fn(() => ({ id: 'syrona-handle' })) }));
 vi.mock('./voidra', () => ({ createVoidra: vi.fn(() => ({ id: 'voidra-handle' })) }));
+vi.mock('./tariffang', () => ({ createTariffang: vi.fn(() => ({ id: 'tariffang-handle' })) }));
+vi.mock('./maridella', () => ({ createMaridella: vi.fn(() => ({ id: 'maridella-handle' })) }));
 vi.mock('./pickups', () => ({ spawnHealPickup: vi.fn() }));
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 
@@ -135,12 +141,14 @@ describe('createBossKit 品種分派表（§54 唯一分派點）', () => {
     expect(vi.mocked(createBoss)).toHaveBeenCalledTimes(1);
   });
 
-  it('noctra/prismix/syrona/voidra 各取對應 handle 與體傷常數', () => {
+  it('noctra/prismix/syrona/voidra/tariffang/maridella 各取對應 handle 與體傷常數', () => {
     const cases = [
       { boss: 'noctra', factory: createNoctra, damage: NOCTRA.bodyDamage },
       { boss: 'prismix', factory: createPrismix, damage: PRISMIX.bodyDamage },
       { boss: 'syrona', factory: createSyrona, damage: SYRONA.bodyDamage },
       { boss: 'voidra', factory: createVoidra, damage: VOIDRA.bodyDamage },
+      { boss: 'tariffang', factory: createTariffang, damage: TARIFFANG.bodyDamage },
+      { boss: 'maridella', factory: createMaridella, damage: MARIDELLA.bodyDamage },
     ] as const;
     for (const spec of cases) {
       const enemies = makeEnemies();
@@ -324,5 +332,35 @@ describe('品種回呼接線（彩蛋餵送與環境管線委派）', () => {
     const args = vi.mocked(spawnHealPickup).mock.calls[0];
     expect(args?.[1]).toBe(854 * 0.3);
     expect(args?.[4]).toMatchObject({ driftToY: GROUND_TOP - 22 });
+  });
+
+  it('tariffang playerStars：燒稅票 overlap 的星彈群由 player 單點供給（§122）', () => {
+    const enemies = makeEnemies();
+    const stars = { id: 'stars-group' };
+    const { hooks } = makeHooks(enemies, {
+      player: () => ({ getStars: () => stars }) as unknown as PlayerHandle,
+    });
+    createBossKit(makeScene().scene, makeLevel({ boss: 'tariffang' }), GROUND_TOP, hooks);
+    const tariffangHooks = vi.mocked(createTariffang).mock.calls[0]?.[1] as {
+      playerStars(): unknown;
+    };
+    expect(tariffangHooks.playerStars()).toBe(stars);
+  });
+
+  it('maridella summonFoamy 走召喚夾限管線；playerForm 取 player 形態真值（§122）', () => {
+    const enemies = makeEnemies();
+    enemies.setAlive([{ kind: 'foamy' }]);
+    const { hooks } = makeHooks(enemies, {
+      player: () => ({ getTransformState: () => ({ form: 'tide' }) }) as unknown as PlayerHandle,
+    });
+    createBossKit(makeScene().scene, makeLevel({ boss: 'maridella' }), GROUND_TOP, hooks);
+    const maridellaHooks = vi.mocked(createMaridella).mock.calls[0]?.[1] as {
+      summonFoamy(cap: number): void;
+      playerForm(): string | null;
+    };
+    maridellaHooks.summonFoamy(2);
+    // 場上已 1 隻 foamy → 補 1 隻至 cap 2。
+    expect(enemies.spawned).toEqual([{ kind: 'foamy', x: 48, y: 330 }]);
+    expect(maridellaHooks.playerForm()).toBe('tide');
   });
 });

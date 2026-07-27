@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+330
+> 本次分數變化：-1（reward 1、penalty 2、neutral 0）｜累計總分：+329
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：reward-starpuff-w2-tariffang-maridella-ship
+- 原因：星海終局篇 W2 需交付 L22/L24 雙魔王關（#886），關卡/魔王/圖鑑/成就/SEO 多面接線且難度須接續 L20 遞增不倒掛
+- 解法：tariffangFsm/maridellaFsm 表驅動三段＋各自 systems 呈現層（GameScene 零分支），靜態軸 9.2→9.3→9.4、high bot ×7 均 86%（≥60%）、low ×7 均 0%（<20%），1142 案測試全綠
+
+- 日期：2026-07-28
+- ID：penalty-starpuff-w2-summon-telegraph-gap
+- 原因：Maridella 召喚前搖沿 duration×0.6 慣例得 540ms，低於「全招 ≥600ms」自報紅線且 telegraph 單測未覆蓋 summon 而漏網，經玩法席審查抓出
+- 解法：前搖常數化 summonTelegraphMs 650ms 並把 summon 納入 telegraph 單測錨定（含斷召窗恆先於生成的狂暴下界斷言），L24 audit 抽跑確認通關率不受影響
+
+- 日期：2026-07-28
+- ID：penalty-starpuff-w2-hmr-measurement-pollution
+- 原因：level-audit 序列量測進行中就地修改 systems 程式碼，Vite HMR 重載汙染量測批次且貨櫃/關稅槌修正使前批 L22 數據失效
+- 解法：終止批次並確立「量測期間程式碼凍結」紀律，修正後以負載閘門腳本重跑全套 ×7 序列量測取代失效數據
 
 - 日期：2026-07-28
 - ID：penalty-starpuff-facing-pr914-review-gaps

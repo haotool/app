@@ -63,13 +63,16 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
 // assetPlan.test 的 PENDING 三條守門）；未來新佔位鍵入列須顯式過審。
 export const PENDING_TEXTURE_KEYS: readonly string[] = [];
 
-// 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）。
+// 魔王品種 → 立繪鍵：jellord 含暴走幀（logic/bossFsm 轉段切換）；
+// §122 W2 兩王含 enraged 幀（P2 換裝，#857 素材）。
 export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {
   jellord: ['boss-idle', 'boss-enraged'],
   noctra: ['boss-noctra'],
   prismix: ['boss-prismix'],
   syrona: ['boss-syrona'],
   voidra: ['boss-voidra'],
+  tariffang: ['boss-tariffang', 'boss-tariffang-enraged'],
+  maridella: ['boss-maridella', 'boss-maridella-enraged'],
 };
 
 // 魔王召喚品種（systems/bossFactory.ts 分派）：不在 enemyMix 內仍會登場，必須併入關卡計畫。
@@ -79,6 +82,8 @@ export const BOSS_SUMMON_KINDS: Record<BossKind, readonly EnemyKind[]> = {
   prismix: ['mirri'],
   syrona: ['bubbla'],
   voidra: [],
+  tariffang: [],
+  maridella: ['foamy'],
 };
 
 // 潮汐關生成替換（logic/tide.tideFilterKind：磁極怪浸水改果凍）與滿潮救援紮根品種

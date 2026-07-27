@@ -2,9 +2,11 @@ import { GRAVITY_Y, PLAYER } from '../core/config';
 import type { EnemyKind } from '../core/types';
 import { BOSS } from './bossFsm';
 import type { LevelSpec } from './levels';
+import { MARIDELLA } from './maridellaFsm';
 import { NOCTRA } from './noctraFsm';
 import { PRISMIX } from './prismixFsm';
 import { SYRONA } from './syronaFsm';
+import { TARIFFANG } from './tariffangFsm';
 import { VOIDRA } from './voidraFsm';
 
 // 難度量化 SSOT（#818，主計畫 §3.1 三軸模型＋機制 brief §10 驗收掛鉤總表）。
@@ -112,7 +114,14 @@ export function maxJumpClearancePx(gravityScale = 1): number {
 // 血量/招式面由各 FSM 模組 import（零漂移）；本體幾何為 systems/*.ts 呈現層常數的
 // 鏡像快照（phaser 模組不可 import）——CLI 標準量測會以 __sp.bossBodies() 實測座標
 // 對照 anchorY 做漂移警報，鏡像失真時報告即曝光。
-export type BossId = 'jellord' | 'noctra' | 'prismix' | 'syrona' | 'voidra';
+export type BossId =
+  | 'jellord'
+  | 'noctra'
+  | 'prismix'
+  | 'syrona'
+  | 'voidra'
+  | 'tariffang'
+  | 'maridella';
 
 export interface BossAuditFacts {
   boss: BossId;
@@ -215,6 +224,49 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     minTelegraphMs: Math.min(VOIDRA.clawTelegraphMs, VOIDRA.barrageTelegraphMs),
     multiBody: false,
     // 低重力＋P2 生存段。
+    arenaMechanics: 2,
+  },
+  // §122 星海終局篇 W2：終局章魔王軸接續 L20 遞增（PRD §2：L21 起接續 L20、
+  // 終點 L30 ≤10）——L22 9.3、L24 9.4。
+  {
+    boss: 'tariffang',
+    levelId: 22,
+    maxHp: TARIFFANG.maxHp,
+    bodyW: 170,
+    bodyH: 150,
+    grounded: true,
+    hoverY: null,
+    // cargo／stamp／levy／gate／ram。
+    attackKinds: 5,
+    minTelegraphMs: Math.min(
+      TARIFFANG.cargoTelegraphMs,
+      TARIFFANG.stampTelegraphMs,
+      TARIFFANG.levyTelegraphMs,
+      TARIFFANG.gateTelegraphMs,
+      TARIFFANG.ramTelegraphMs,
+    ),
+    multiBody: false,
+    // 貨櫃地形改寫＋全面封關閘門。
+    arenaMechanics: 2,
+  },
+  {
+    boss: 'maridella',
+    levelId: 24,
+    maxHp: MARIDELLA.maxHp,
+    bodyW: 160,
+    bodyH: 140,
+    grounded: false,
+    hoverY: 250,
+    // current／droplet／wave／summon／moonorb。
+    attackKinds: 5,
+    minTelegraphMs: Math.min(
+      MARIDELLA.currentTelegraphMs,
+      MARIDELLA.dropletTelegraphMs,
+      MARIDELLA.waveTelegraphMs,
+      MARIDELLA.moonorbTelegraphMs,
+    ),
+    multiBody: false,
+    // 潮線水流場＋月蝕暗場。
     arenaMechanics: 2,
   },
 ] as const;
@@ -424,7 +476,7 @@ export function walkAxisRaw(level: LevelSpec, firstSeen: Set<EnemyKind>): WalkAx
 
 // ===== 魔王關靜態三軸 raw（彈幕壓力／階段機制數／迴避精度）=====
 // 權重取向：D 以血池（TTK 壓力）為主、招式面為輔；M 計階段結構與場控疊加；
-// P 以最短 telegraph 反應窗為主。錨定校準（L4/L20）吸收單位，5 王總分需嚴格遞增。
+// P 以最短 telegraph 反應窗為主。錨定校準（L4/L20）吸收單位，7 王總分需嚴格遞增。
 export function bossAxisRaw(facts: BossAuditFacts): WalkAxisRaw {
   const dRaw = facts.maxHp * 0.06 + facts.attackKinds * 0.5;
   const mRaw = 3 + facts.attackKinds * 0.4 + facts.arenaMechanics + (facts.multiBody ? 0.5 : 0);

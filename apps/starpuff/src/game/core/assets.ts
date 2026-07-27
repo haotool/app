@@ -396,6 +396,68 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/minion-tideray.webp', import.meta.url).href,
     phase: 'level',
   },
+  // §122 W2 接關：Tariffang/Maridella 雙王立繪（含 enraged 幀）與星港/潮灣道具條
+  // 自 assetsV21Part1 逐筆搬回（#857 接關契約）。
+  {
+    key: 'boss-tariffang',
+    url: new URL('../../assets/sprites/boss-tariffang.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-tariffang-enraged',
+    url: new URL('../../assets/sprites/boss-tariffang-enraged.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-maridella',
+    url: new URL('../../assets/sprites/boss-maridella.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-maridella-enraged',
+    url: new URL('../../assets/sprites/boss-maridella-enraged.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'prop-starport-1',
+    url: new URL('../../assets/sprites/prop-starport-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-starport-2',
+    url: new URL('../../assets/sprites/prop-starport-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-starport-3',
+    url: new URL('../../assets/sprites/prop-starport-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-starport-4',
+    url: new URL('../../assets/sprites/prop-starport-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-tidebay-1',
+    url: new URL('../../assets/sprites/prop-tidebay-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-tidebay-2',
+    url: new URL('../../assets/sprites/prop-tidebay-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-tidebay-3',
+    url: new URL('../../assets/sprites/prop-tidebay-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-tidebay-4',
+    url: new URL('../../assets/sprites/prop-tidebay-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
 ];
 
 // v21-v30 未接關素材（442 條）獨立存放於 assetsV21Part1/2/3，刻意不併入本陣列：
