@@ -327,12 +327,24 @@ lighthouse "$url" --max-wait-for-load 60000 ...
 
 ---
 
+## 🛡️ 宣告檔漂移守門（#903）
+
+scripts 內 `.js`/`.mjs` 實作以手寫 `.d.ts`/`.d.mts` 供 TS 消費端取得型別；
+`scripts/tsconfig.json` 只 include `**/*.ts`，tsc 從不驗證「宣告 vs 實作」。
+
+- **守門位置**: `scripts/__tests__/declaration-drift.test.ts`（經 `pnpm test:root` 接入 pre-push 與 CI）
+- **守備範圍**: export 名單雙向一致＋函式必填參數數（arity）一致
+- **維護契約**: 新增手寫宣告檔時必須同步登記該測試的 `MODULES` 表；深層回傳
+  物件欄位漂移由各模組行為測試承擔（`scripts/__tests__/*.test.ts`）
+
+---
+
 ## 🤝 貢獻
 
 發現 bug 或有改進建議？歡迎提交 Issue 或 PR！
 
 ---
 
-**最後更新**: 2026-04-28
+**最後更新**: 2026-07-27
 **維護者**: haotool
 **授權**: GPL-3.0

@@ -24,7 +24,8 @@ import type { EnemyUpdateContext } from './enemyUpdates';
 
 // 呈現層常數：ticketa 換軌閃爍節拍；scanna 鎖定著色；foamy 鼓脹抖動；manta 俯仰。
 const TICKETA_FLICKER_MS = 100;
-const TICKETA_SHIFT_TINT = 0xfff1c4;
+// export 供 FSM 層 WARN 守門比對閃爍色值，禁測試硬編色碼（#904/#910）。
+export const TICKETA_SHIFT_TINT = 0xfff1c4;
 // 換軌預警窗（#899）：fly 尾段懸停＋閃爍，shift 才開始位移——原 telegraph 與俯掠
 // 同幀啟動，反應窗為 0。取 700 對齊 spora windup（低於 scanna aim 800、高於
 // zappy 500），且離散幀（~16ms）量測下界仍 ≥ AUDIT_THRESHOLDS.telegraphMinMs（600）；

@@ -590,8 +590,9 @@ export function cargoPatrolDirection(cycleMs: number): 1 | -1 {
   return Math.floor(cycleMs / CARGO_FSM.flipMs) % 2 === 0 ? 1 : -1;
 }
 
-// 票券蝠 Ticketa：雙軌飛行——fly 期沿當前軌帶漂移，shift 前搖（≥600ms 閃爍 telegraph）
-// 後換軌俯掠；換軌本身即攻擊語彙（穿越玩家空域），無投射物。
+// 票券蝠 Ticketa：雙軌飛行——fly 期沿當前軌帶漂移，尾段由呈現層 WARN 預警承載
+// 可讀前搖（finaleEnemies TICKETA_WARN_MS 懸停＋閃爍 telegraph，#899/#904）；
+// shift＝換軌俯掠位移本身（穿越玩家空域即攻擊語彙），非前搖，無投射物。
 export const TICKETA_FSM = {
   flyMs: 2400,
   shiftMs: 600,
