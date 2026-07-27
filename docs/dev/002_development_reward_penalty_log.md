@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+325
+> 本次分數變化：+3（reward 3、penalty 0、neutral 0）｜累計總分：+328
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-ticketa-fsm-redline-warn-repin
+- 原因：#901 後票券蝠可讀前搖已由呈現層 TICKETA_WARN_MS 承載，enemyFsm 註解與紅線仍把 shiftMs 稱為前搖且只釘 shiftMs，刪除 WARN 分支時紅線仍綠、#899 公平性缺陷可靜默復活（#904）
+- 解法：註解改明 shift＝俯掠位移、紅線改釘 TICKETA_WARN_MS ≥ telegraphMinMs（SSOT），新增跨層行為守門（fly 尾段首幀必亮 tint）；mutation 實證移除 WARN 分支（保留常數）enemyFsm 層必紅
+
+- 日期：2026-07-27
+- ID：reward-scripts-declaration-drift-structural-gate
+- 原因：scripts/tsconfig 的 include 僅涵蓋 .ts，tsc 只驗「呼叫端 vs 手寫宣告」從不驗「宣告 vs 實作」，export 改名或簽章變更 typecheck 仍 0 錯誤（#903，#901 審查實測坐實）
+- 解法：新增 declaration-drift 結構測試（export 名單雙向一致＋函式必填 arity）接入 test:root；checkJs 全面補 JSDoc 實測 227 strict 錯誤改動面過大故棄；mutation A（頂層 export 改名）／B（加必填參數）為同類 tsc 盲區示範且均必紅，非 #901 深層回傳欄位改名的逐字重現——深層欄位漂移仍依賴各模組行為測試（殘餘缺口已明載測試檔頭與 scripts/README.md）
+
+- 日期：2026-07-27
+- ID：reward-starpuff-ticketa-warn-vx-experiment-revert
+- 原因：#905 質疑預警期 vx 歸零使俯掠近垂直，PM 裁決以受控實驗判定是否保留斜向動量（不為改而改）
+- 解法：實驗改為預警期不歸零 vx，四保留條件實測條件②崩潰（dodgeRateSignalAtWarn 100%→0%、hover 797ms→55ms、meetsThreshold 轉 false）而①③④成立；revert 改動並以數據 close #905 as not-planned（維持 scanna 定點語彙）
 
 - 日期：2026-07-27
 - ID：reward-starpuff-gamescene-strangler-split-w2prep
