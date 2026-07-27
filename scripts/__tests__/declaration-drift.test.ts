@@ -65,7 +65,9 @@ function parseDeclaredValueExports(declarationRelativePath: string): DeclaredVal
 
 describe('scripts 宣告檔 ↔ 實作無漂移（#903）', () => {
   for (const { declaration, runtime } of MODULES) {
-    describe(declaration.replace('../', ''), () => {
+    // 顯示名去除固定 '../' 前綴：MODULES 為常數字面值非外部輸入，用 slice 而非
+    // replace 以避開 CodeQL js/incomplete-sanitization 對 replace 首匹配語意的誤判。
+    describe(declaration.slice('../'.length), () => {
       const declared = parseDeclaredValueExports(declaration);
       const runtimeExports = runtime as Record<string, unknown>;
 
