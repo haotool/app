@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.25.3
+
+### Patch Changes
+
+- cbb707b: 文件與註解修正：GameScene 拆分（#906）審查收斂——搬走符號的註解/設計文件位置同步，無任何行為變更。
+
 ## 0.25.2
 
 ### Patch Changes
