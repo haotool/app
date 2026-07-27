@@ -41,6 +41,13 @@ jump、flap、inhale（迴圈）、swallow、shoot、hit、hurt、metal（皇冠
 
 走路/跳躍動畫一律用程式 tween（squash/stretch/bob/rotate）實現，不生成逐幀序列。PWA icon 由 hero-idle 裁切導出。
 
+### 素材基準朝向慣例（facing hotfix 定案，全素材恆成立）
+
+- **有左右朝向的角色素材（主角、方向性小怪）基準一律朝右**；面向左由程式 `setFlipX(true)` 鏡像呈現，嚴禁交付朝左素材再於程式端加負號補償。
+- 新素材入庫前必須目視確認朝向；朝左的生成結果以水平翻轉（flop）規範化後才可交付。
+- 程式端面向決策唯一出口為 `src/game/systems/enemyFacing.ts`（主角為 `player.ts` 既有 `facing` 通道）；方向性品種清單 `DIRECTIONAL_ENEMY_KINDS` 由表驅動測試與型別完整性守門雙重把關，新增品種必須顯式歸類。
+- 正面或對稱構圖素材（如 magno、splatta——臉正面、僅持物不對稱）歸非方向性，不做 flip。
+
 ## 18. 動畫流暢度打磨清單（全實體）
 
 走路彈跳（玩家移動時 y 微幅 bob + 輕微傾斜）、落地塵埃圈（著地速度 >300 觸發）、所有敵人生成 popIn（scale 0→1 back.out）、死亡 squash 消失、星星門吸入過關演出（玩家縮小旋轉飛入）、轉場卡緩動（slide+fade）、鏡頭剛性跟隨 lerp(1,1)（v3 定案；lerp×roundPixels 逐幀往返跳動的根因修復見 §25 抖動修復定案）。

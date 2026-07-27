@@ -56,3 +56,6 @@ describe('shelly 視覺朝向每幀同步（walk/spin）', () => {
     expect(right.setFlipX).toHaveBeenCalledWith(false);
   });
 });
+
+// 方向性品種面向同步的表驅動守門（含 drilly/boomy/mirri/gusty/cargo/foamy 等）
+// 已上收至 enemyFacing.test.ts，遍歷 DIRECTIONAL_ENEMY_KINDS 全表。

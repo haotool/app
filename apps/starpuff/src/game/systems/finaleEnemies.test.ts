@@ -138,3 +138,5 @@ describe('票券蝠換軌 telegraph 反應窗（#899）', () => {
     expect(fake.clearCalls).toBe(1);
   });
 });
+
+// cargo/foamy 面向同步守門已上收至 enemyFacing.test.ts 表驅動全表遍歷。

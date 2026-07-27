@@ -34,6 +34,7 @@ import {
   type TwinklaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
+import { setFacingBySign, setFacingFromVelocityX, setFacingTowardX } from './enemyFacing';
 import {
   updateCargo,
   updateFoamy,
@@ -261,13 +262,13 @@ function updateShelly(
         body.setVelocityX(SHELLY_WALK_SPEED * mul * direction);
       }
       // 殼化小怪的物理反彈會改變 velocity；每幀同步視覺朝向，避免只在停住時才轉向。
-      sprite.setFlipX(body.velocity.x < 0);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       sprite.setRotation(Math.sin(tick.stateMs * SHELLY_WADDLE_OMEGA) * SHELLY_WADDLE_RAD);
       break;
     }
     case 'spin': {
       if (body.velocity.x === 0) body.setVelocityX(SHELLY_SPIN_SPEED);
-      sprite.setFlipX(body.velocity.x < 0);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       sprite.rotation += Math.sign(body.velocity.x) * SHELLY_SPIN_OMEGA * deltaMs;
       break;
     }
@@ -318,6 +319,8 @@ function updateDrilly(
     ctx.vscale.setBase(sprite, bsx, bsy);
     sprite.setAlpha(1);
     body.setVelocity(0, DRILLY_EMERGE_VY);
+    // 破土躍出瞬間面向攻擊對象；躍出後僵直期維持此朝向。
+    if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
   } else if (tick.entered === 'burrow') {
     body.setVelocityX(0);
   }
@@ -331,10 +334,12 @@ function updateDrilly(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(DRILLY_BURROW_SPEED * direction);
       }
+      setFacingFromVelocityX(sprite, body.velocity.x);
       break;
     }
     case 'windup': {
-      // 前搖：定點鰭抖動。
+      // 前搖：定點鰭抖動，面向破土攻擊對象。
+      if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
       sprite.setRotation(Math.sin(tick.stateMs * 0.06) * 0.12);
       break;
     }
@@ -479,18 +484,22 @@ function updateGusty(
         bob,
       );
       sprite.setRotation(0);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       break;
     }
     case 'windup': {
-      // 前搖：懸停抖動預警。
+      // 前搖：懸停抖動預警，面向俯衝目標（dive 於前搖結束當下鎖定玩家位置）。
+      if (target) setFacingTowardX(sprite, target.x);
       sprite.setRotation(Math.sin(tick.stateMs * 0.06) * 0.14);
       break;
     }
     case 'dive': {
       sprite.setRotation(Math.sign(body.velocity.x) * 0.22);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       break;
     }
     case 'recover': {
+      // 垂直回升（vx=0）：面向凍結，維持俯衝末朝向。
       sprite.setRotation(0);
       // 回升至航高後懸停等待轉 drift。
       if (sprite.y <= (sprite.getData('baseY') as number)) body.setVelocityY(0);
@@ -526,6 +535,8 @@ function updateBoomy(
   }
   if (tick.state === 'throw') {
     const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
+    // 投擲瞬間面向與迴旋殼刃射向一致；cool 冷卻期凍結維持此朝向。
+    setFacingBySign(sprite, direction);
     ctx.spawnBoomerang(sprite.x + direction * 20, sprite.y + BOOMY_THROW_OFFSET_Y, direction);
     return;
   }
@@ -535,11 +546,13 @@ function updateBoomy(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(BOOMY_WALK_SPEED * mul * direction);
       }
+      setFacingFromVelocityX(sprite, body.velocity.x);
       sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.06);
       break;
     }
     case 'windup': {
-      // 前搖：定身舉殼抖動。
+      // 前搖：定身舉殼抖動，面向投擲目標（throw 的射向即朝目標側）。
+      if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
       sprite.setRotation(Math.sin(tick.stateMs * 0.05) * 0.16);
       break;
     }
@@ -628,6 +641,7 @@ function updateMirri(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(MIRRI_WALK_SPEED * mul * direction);
       }
+      setFacingFromVelocityX(sprite, body.velocity.x);
       // 鏡面預告（telegraph）：roam 末段亮銀閃爍。
       if (tick.flickerBright) sprite.setTint(MIRRI_MIRROR_TINT);
       else sprite.clearTint();
@@ -635,7 +649,8 @@ function updateMirri(
       break;
     }
     case 'mirror': {
-      // 鏡面態：定身亮銀＋高頻微顫（明確視覺）。
+      // 鏡面態：定身亮銀＋高頻微顫（明確視覺）。面向凍結——定身語彙，
+      // 且反射方向由星彈入射向量決定（enemies.reflectStar），與面向無關。
       body.setVelocityX(0);
       sprite.setTint(MIRRI_MIRROR_TINT);
       sprite.setRotation(Math.sin(tick.stateMs * 0.05) * 0.05);
@@ -901,11 +916,12 @@ function updateCometa(
         bob,
       );
       sprite.setRotation(0);
-      sprite.setFlipX(body.velocity.x < 0);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       break;
     }
     case 'lock': {
-      // 鎖定閃爍 telegraph。
+      // 鎖定閃爍 telegraph：面向鎖定點（dash 即朝此點衝刺，telegraph 可預判）。
+      setFacingTowardX(sprite, (sprite.getData('aimX') as number) ?? sprite.x);
       sprite.setTint(
         Math.floor(tick.stateMs / COMETA_LOCK_FLICKER_MS) % 2 === 0 ? 0xffffff : COMETA_LOCK_TINT,
       );
@@ -915,7 +931,7 @@ function updateCometa(
     case 'dash': {
       sprite.clearTint();
       sprite.setRotation(Math.atan2(body.velocity.y, Math.abs(body.velocity.x)) * 0.5);
-      sprite.setFlipX(body.velocity.x < 0);
+      setFacingFromVelocityX(sprite, body.velocity.x);
       // 彗尾段（§80）：沿路每 tailIntervalMs 滯留一段傷害彗尾。
       const tailMs = ((sprite.getData('tailMs') as number) ?? 0) + deltaMs;
       if (tailMs >= COMETA_FSM.tailIntervalMs) {

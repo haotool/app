@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+329
+> 本次分數變化：+1（reward 2、penalty 1、neutral 0）｜累計總分：+330
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：penalty-starpuff-facing-pr914-review-gaps
+- 原因：PR #914 首輪交付遭兩席異家族審查 REQUEST CHANGES——盤點宣稱 26 種實為 24（漏 chompy／twinkla）、註解自稱 facing SSOT 但實為 6 處散落呼叫點無共用 helper、回歸測試為硬編個案而非表驅動守門（新增品種漏設面向不會轉紅）、前搖與多狀態面向未同步且無速度死區
+- 解法：抽出 enemyFacing.ts 單一 helper（BySign／FromVelocityX 死區 ε=1／TowardX）收斂全部 15 處呼叫點，DIRECTIONAL_ENEMY_KINDS 表驅動測試＋型別完整性雙層守門（均以故意失敗驗證紅燈有效），24 種 kind 逐型重盤，windup／aim 朝目標、定身冷卻凍結面向，boomy 素材經高解析目視定案翻轉正確不還原
+
+- 日期：2026-07-28
+- ID：reward-starpuff-facing-mirri-fallback-rootcause
+- 原因：首輪 mirri 視覺驗證誤判為「鏡面 tint 均色化不可辨」——實為 spawn 於未載入 minion-mirri 素材的 L8，畫面上為 FALLBACK_COLORS 0xd8dce8 色塊替身而非本體
+- 解法：改於 mirri 主場 L9 spawn 取得乾淨 roam 走動幀，高倍放大確認向左走臉朝左（眼與觸角在左、鏡殼高光在右），視覺證據鏈補齊、殘餘風險消除
+
+- 日期：2026-07-28
+- ID：reward-starpuff-facing-direction-asset-baseline
+- 原因：AI 生成素材基準朝向不一致（shelly／drilly／boomy／mirri／gusty／cargojelly／tideray／iceslime 朝左），而全部面向呼叫點硬性假設素材朝右，且 drilly／boomy／mirri／gusty／cargo／foamy 六種怪無任何 setFlipX——玩家實測回報多種怪物左右面向與行進方向相反（shelly 恆倒退嚕）
+- 解法：素材規範化收斂單一 SSOT「全素材基準朝右」（8 張朝左素材 flop 翻轉），六種怪補每幀 setFlipX 面向同步（同 shelly 既有慣例），紅燈先行 7 條回歸測試釘住契約；主角經真瀏覽器實測（傾角採樣＋flipX 高光切換＋素材 md5 比對）證實邏輯與素材皆正確不動
 
 - 日期：2026-07-28
 - ID：reward-starpuff-l16-syrona-oneway-band-ssot
