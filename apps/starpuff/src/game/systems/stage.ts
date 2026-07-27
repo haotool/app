@@ -7,7 +7,7 @@ import {
   SPRING_COOLDOWN_MS,
   SPRING_VELOCITY_Y,
   canSpringLaunch,
-  oneWayLandBand,
+  oneWayLandable,
   restingOnOneWay,
   shouldDropThrough,
   springSweepHit,
@@ -462,16 +462,18 @@ export function createStage(scene: Phaser.Scene, level: LevelSpec, hooks: StageH
     getBreakables: () => breakables,
 
     // 單向著地（recon C.1）：僅下落且腳底不低於頂緣著地帶才碰撞；下穿窗內一律放行。
-    // §77 熱修：著地帶依單步位移動態放寬（oneWayLandBand），杜絕下砸/高處落下隧穿。
+    // §77 熱修＋增補：著地裁決收斂 oneWayLandable SSOT（帶寬依單步位移動態放寬）。
     canLandOneWay: (a, b) => {
       if (scene.time.now < dropUntilMs) return false;
       const aIsPlatform = hasFlag(a, 'oneway');
       const rect = asRect(aIsPlatform ? a : b);
       const other = (aIsPlatform ? b : a) as { body: Phaser.Physics.Arcade.Body };
       const rb = rect.body as Phaser.Physics.Arcade.StaticBody;
-      return (
-        other.body.velocity.y >= 0 &&
-        other.body.bottom <= rb.top + oneWayLandBand(other.body.deltaAbsY())
+      return oneWayLandable(
+        other.body.velocity.y,
+        other.body.bottom,
+        rb.top,
+        other.body.deltaAbsY(),
       );
     },
 
