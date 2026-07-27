@@ -144,7 +144,9 @@ export function createMaridella(
   const eclipseOverlay = scene.add
     .rectangle(arenaCx(), VIEW.height / 2, viewW() + 80, VIEW.height, 0x0a1430, 0)
     .setDepth(-2);
-  const moon = scene.add.circle(arenaX(0.82), 120, 40, 0xd8ecff, 0).setDepth(-2);
+  // 水月以物件 alpha 控顯隱（fill 恆 1）：fillAlpha 與 alpha 相乘合成，
+  // 兩者混用會使 tween alpha 永遠乘 0 不可見。
+  const moon = scene.add.circle(arenaX(0.82), 120, 40, 0xd8ecff, 1).setAlpha(0).setDepth(-2);
 
   const delay = (ms: number, fn: () => void) => {
     timers.push(scene.time.delayedCall(ms, fn));
