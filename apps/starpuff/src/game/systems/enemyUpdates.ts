@@ -331,6 +331,8 @@ function updateDrilly(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(DRILLY_BURROW_SPEED * direction);
       }
+      // 素材基準朝右（facing SSOT）：潛行朝向每幀跟隨速度符號（同 shelly 慣例）。
+      sprite.setFlipX(body.velocity.x < 0);
       break;
     }
     case 'windup': {
@@ -479,6 +481,8 @@ function updateGusty(
         bob,
       );
       sprite.setRotation(0);
+      // 素材基準朝右（facing SSOT）：漂移朝向每幀跟隨速度符號。
+      sprite.setFlipX(body.velocity.x < 0);
       break;
     }
     case 'windup': {
@@ -488,6 +492,7 @@ function updateGusty(
     }
     case 'dive': {
       sprite.setRotation(Math.sign(body.velocity.x) * 0.22);
+      sprite.setFlipX(body.velocity.x < 0);
       break;
     }
     case 'recover': {
@@ -535,6 +540,8 @@ function updateBoomy(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(BOOMY_WALK_SPEED * mul * direction);
       }
+      // 素材基準朝右（facing SSOT）：巡邏朝向每幀跟隨速度符號。
+      sprite.setFlipX(body.velocity.x < 0);
       sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.06);
       break;
     }
@@ -628,6 +635,8 @@ function updateMirri(
         const direction = ctx.target && ctx.target.x < sprite.x ? -1 : 1;
         body.setVelocityX(MIRRI_WALK_SPEED * mul * direction);
       }
+      // 素材基準朝右（facing SSOT）：巡邏朝向每幀跟隨速度符號。
+      sprite.setFlipX(body.velocity.x < 0);
       // 鏡面預告（telegraph）：roam 末段亮銀閃爍。
       if (tick.flickerBright) sprite.setTint(MIRRI_MIRROR_TINT);
       else sprite.clearTint();

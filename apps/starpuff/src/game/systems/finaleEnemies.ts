@@ -54,6 +54,8 @@ export function updateCargo(
   if (body.blocked.down && (body.velocity.x === 0 || direction !== Math.sign(body.velocity.x))) {
     body.setVelocityX(CARGO_FSM.walkSpeed * mul * direction);
   }
+  // 素材基準朝右（facing SSOT）：巡邏朝向每幀跟隨速度符號（同 shelly 慣例）。
+  sprite.setFlipX(body.velocity.x < 0);
   sprite.setRotation(Math.sin(cycleMs * 0.006) * 0.05);
 }
 
@@ -148,6 +150,8 @@ export function updateFoamy(
   deltaMs: number,
 ): void {
   (sprite.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
+  // 素材基準朝右（facing SSOT）：定點砲台恆面向玩家側，吐泡方向與面向一致。
+  sprite.setFlipX(ctx.target !== null && ctx.target.x < sprite.x);
   const tick = tickFoamy(
     sprite.getData('state') as FoamyState,
     sprite.getData('stateMs') as number,
