@@ -252,10 +252,11 @@ export function createMaridella(
   };
 
   // 潮湧召喚（P2）：吟唱抖動後由 GameScene 走正式 spawn 管線（雷化鏈電可斷召 §58）。
+  // 前搖走 summonTelegraphMs 固定常數（≥600ms 紅線；審查回饋修正 540ms 漏網）。
   const doSummon = (cap: number) => {
     scene.tweens.add({ targets: body, angle: 5, duration: 60, yoyo: true, repeat: 5 });
     playSfx('boss-roar', 0.6);
-    delay(MARIDELLA.summonDurationMs * 0.6, () => {
+    delay(MARIDELLA.summonTelegraphMs, () => {
       if (!dying) hooks.summonFoamy(cap);
     });
   };

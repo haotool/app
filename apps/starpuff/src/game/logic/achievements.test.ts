@@ -91,13 +91,19 @@ describe('魔王類判定', () => {
     expect(unlockedAchievements(exOnly).has('ex-noctra')).toBe(true);
   });
 
-  it('ex-conquest：4/5 不成立、5/5 成立（§86 同源判定）', () => {
+  it('ex-conquest：6/7 不成立、7/7 成立（§86 同源判定）', () => {
     const partial = createDefaultSave();
     for (const id of BOSS_LEVEL_IDS.slice(0, -1)) recordExClear(partial, id);
     expect(unlockedAchievements(partial).has('ex-conquest')).toBe(false);
     const full = createDefaultSave();
     for (const id of BOSS_LEVEL_IDS) recordExClear(full, id);
     expect(unlockedAchievements(full).has('ex-conquest')).toBe(true);
+  });
+
+  it('ex-conquest 文案王數由 BOSS_LEVEL_IDS 派生（§122 審查回饋：擴王不得漂移）', () => {
+    const conquest = ACHIEVEMENTS.find((a) => a.id === 'ex-conquest');
+    expect(conquest?.descZh).toBe(`${BOSS_LEVEL_IDS.length} 王 EX 變體全數制霸`);
+    expect(BOSS_LEVEL_IDS.length).toBe(7);
   });
 });
 

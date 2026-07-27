@@ -180,15 +180,20 @@ describe('加權選招治理（§111.1 去背板）', () => {
 });
 
 describe('可讀性與 anti-softlock 紅線（§122）', () => {
-  it('全招式 telegraph ≥600ms（可讀性紅線）', () => {
+  it('全招式 telegraph ≥600ms（可讀性紅線；含召喚吟唱前搖）', () => {
     for (const ms of [
       MARIDELLA.currentTelegraphMs,
       MARIDELLA.dropletTelegraphMs,
       MARIDELLA.waveTelegraphMs,
+      MARIDELLA.summonTelegraphMs,
       MARIDELLA.moonorbTelegraphMs,
     ]) {
       expect(ms).toBeGreaterThanOrEqual(600);
     }
+    // 前搖須落於召喚態時長內（狂暴 ×1.15 下仍成立）：斷召反應窗恆先於實際生成。
+    expect(MARIDELLA.summonTelegraphMs).toBeLessThan(
+      MARIDELLA.summonDurationMs / MARIDELLA.enrageSpeedMultiplier,
+    );
   });
 
   it('潮線推移恆低於玩家全速（交叉不變式 16：不與速度控制器對抗）', () => {

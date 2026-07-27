@@ -141,7 +141,8 @@ export const ACHIEVEMENTS: readonly AchievementSpec[] = [
   {
     id: 'ex-conquest',
     nameZh: '星核制霸',
-    descZh: '五王 EX 變體全數制霸',
+    // 王數由 BOSS_LEVEL_IDS 派生（§122 審查回饋）：擴王時文案自動跟進，禁硬編數字。
+    descZh: `${BOSS_LEVEL_IDS.length} 王 EX 變體全數制霸`,
     category: 'boss',
     hidden: false,
     unlocked: (save) => exConquestDone(save),

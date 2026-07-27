@@ -32,6 +32,9 @@ export const MARIDELLA = {
   currentTelegraphMs: 900,
   dropletTelegraphMs: 650,
   waveTelegraphMs: 900,
+  // 召喚吟唱前搖（審查回饋：原沿 duration×0.6=540ms 低於紅線）——固定常數化，
+  // 兼作雷化斷召的可讀反應窗。
+  summonTelegraphMs: 650,
   moonorbTelegraphMs: 600,
   // 潮線改道：水流推移強度恆低於玩家全速（220，交叉不變式 16）；潮化免推（§119 優勢）。
   currentPushPxPerSec: 90,

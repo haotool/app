@@ -238,10 +238,8 @@ export function createTariffang(
         stamp.enableBody(true, x, 30, true, true);
         stamp.setTexture('__WHITE');
         stamp.setDisplaySize(34, 30).setTint(BRASS_TINT).setAlpha(0.95);
-        // 池復用殘留復位（poolFlags 僅復位標準旗標）：稅票身分屬本系統自訂資料，
-        // 復用為關稅槌時必須顯式清除，防被追蹤/壽命迴圈誤收。
-        stamp.setData('ticket', false);
-        stamp.setData('ticketUntil', 0);
+        // 稅票身分/壽命戳記由 poolFlags SSOT 取出即復位（§122 審查收斂）；
+        // homingMs 沿 §30 jellord 慣例每發必寫。
         stamp.setData('homingMs', 0);
         const stampBody = stamp.body as Phaser.Physics.Arcade.Body;
         stampBody.setAllowGravity(false);
