@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+329
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+330
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：reward-starpuff-facing-direction-asset-baseline
+- 原因：AI 生成素材基準朝向不一致（shelly／drilly／boomy／mirri／gusty／cargojelly／tideray／iceslime 朝左），而全部面向呼叫點硬性假設素材朝右，且 drilly／boomy／mirri／gusty／cargo／foamy 六種怪無任何 setFlipX——玩家實測回報多種怪物左右面向與行進方向相反（shelly 恆倒退嚕）
+- 解法：素材規範化收斂單一 SSOT「全素材基準朝右」（8 張朝左素材 flop 翻轉），六種怪補每幀 setFlipX 面向同步（同 shelly 既有慣例），紅燈先行 7 條回歸測試釘住契約；主角經真瀏覽器實測（傾角採樣＋flipX 高光切換＋素材 md5 比對）證實邏輯與素材皆正確不動
 
 - 日期：2026-07-28
 - ID：reward-starpuff-l16-syrona-oneway-band-ssot
