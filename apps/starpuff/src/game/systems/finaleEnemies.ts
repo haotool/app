@@ -16,6 +16,7 @@ import {
   type TicketaState,
 } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
+import { setFacingBySign, setFacingFromVelocityX, setFacingTowardX } from './enemyFacing';
 import type { EnemyUpdateContext } from './enemyUpdates';
 
 // §120 星海終局篇新怪 per-kind 逐幀 AI：時序由 enemyFsm 決策，此處只負責呈現層
@@ -54,8 +55,7 @@ export function updateCargo(
   if (body.blocked.down && (body.velocity.x === 0 || direction !== Math.sign(body.velocity.x))) {
     body.setVelocityX(CARGO_FSM.walkSpeed * mul * direction);
   }
-  // 素材基準朝右（facing SSOT）：巡邏朝向每幀跟隨速度符號（同 shelly 慣例）。
-  sprite.setFlipX(body.velocity.x < 0);
+  setFacingFromVelocityX(sprite, body.velocity.x);
   sprite.setRotation(Math.sin(cycleMs * 0.006) * 0.05);
 }
 
@@ -104,7 +104,7 @@ export function updateTicketa(
     Math.cos(ctx.elapsedMs * 0.0014 + phase) * TICKETA_FSM.flySpeed * mul,
     (bandY - sprite.y) * 2,
   );
-  sprite.setFlipX(body.velocity.x < 0);
+  setFacingFromVelocityX(sprite, body.velocity.x);
 }
 
 // 掃描眼（§120）：定點懸浮；aim 期鎖定線漸亮（鎖定後不修正），fire 生成直線光束。
@@ -137,7 +137,7 @@ export function updateScanna(
     sprite.setTint(
       Math.floor(tick.stateMs / SCANNA_FLICKER_MS) % 2 === 0 ? 0xffffff : SCANNA_AIM_TINT,
     );
-    sprite.setFlipX((sprite.getData('beamDir') as number) === -1);
+    setFacingBySign(sprite, (sprite.getData('beamDir') as number) ?? 1);
     return;
   }
   sprite.clearTint();
@@ -150,8 +150,8 @@ export function updateFoamy(
   deltaMs: number,
 ): void {
   (sprite.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
-  // 素材基準朝右（facing SSOT）：定點砲台恆面向玩家側，吐泡方向與面向一致。
-  sprite.setFlipX(ctx.target !== null && ctx.target.x < sprite.x);
+  // 定點砲台恆面向玩家側，吐泡方向與面向一致；無目標時維持最後朝向。
+  if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
   const tick = tickFoamy(
     sprite.getData('state') as FoamyState,
     sprite.getData('stateMs') as number,
@@ -197,7 +197,7 @@ export function updateFrosty(
   const stateMs = ((sprite.getData('stateMs') as number) ?? 0) + deltaMs;
   sprite.setData('stateMs', stateMs);
   sprite.setRotation(Math.sin(stateMs * 0.01) * 0.08);
-  sprite.setFlipX(body.velocity.x < 0);
+  setFacingFromVelocityX(sprite, body.velocity.x);
 }
 
 // 潮汐魟（§120）：低空巡游；aim 鎖定 telegraph 後扇形三水刃（順流方向＝面向側）。
@@ -231,6 +231,8 @@ export function updateManta(
   }
   if (tick.state === 'aim') {
     body.setVelocity(0, 0);
+    // 瞄準前搖面向目標（volley 水刃射向即朝目標側，面向與攻擊一致）。
+    if (ctx.target) setFacingTowardX(sprite, ctx.target.x);
     sprite.setTint(
       Math.floor(tick.stateMs / SCANNA_FLICKER_MS) % 2 === 0 ? 0xffffff : MANTA_AIM_TINT,
     );
@@ -242,6 +244,6 @@ export function updateManta(
     Math.cos(ctx.elapsedMs * 0.0012 + phase) * MANTA_FSM.cruiseSpeed * mul,
     Math.sin(ctx.elapsedMs * 0.0024 + phase) * 14,
   );
-  sprite.setFlipX(body.velocity.x < 0);
+  setFacingFromVelocityX(sprite, body.velocity.x);
   sprite.setRotation(Math.sin(ctx.elapsedMs * 0.0024 + phase) * 0.08);
 }
