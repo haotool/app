@@ -6,6 +6,7 @@ import { approachPoint } from '../logic/noctraFlight';
 import { TARIFFANG, createTariffangFsm, type TariffangCommand } from '../logic/tariffangFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
+import { createBossStagecraft, preloadBossStagecraft } from './bossStagecraft';
 import { FX_TEXTURES, ensureFxTextures, spawnTelegraph } from './fx';
 import { getVisualScale } from './visualScale';
 
@@ -131,6 +132,14 @@ export function createTariffang(
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
+
+  // 動畫組背景補載＋演出件（§125）：前室廊道即補載窗口，缺圖以 base 立繪降級。
+  preloadBossStagecraft(scene, 'tariffang');
+  const stagecraft = createBossStagecraft(scene, body, {
+    kind: 'tariffang',
+    bodyW: BODY_W,
+    bodyH: BODY_H,
+  });
 
   const projectiles = scene.physics.add.group({ maxSize: 24, allowGravity: false });
   const shockwaves = scene.physics.add.group({ maxSize: 12, allowGravity: false });
@@ -319,17 +328,22 @@ export function createTariffang(
     });
   };
 
+  // 三招分鏡映射（§125）：本體發招類接 move 幀組（gate/ram 為場地機關與衝撞，
+  // 沿用既有 telegraph 演出）；分鏡窗＝該招既有 telegraph 時長，時序零改變。
   const runCommand = (command: TariffangCommand) => {
     switch (command.kind) {
       case 'idle':
         return;
       case 'cargo':
+        stagecraft.moveCinematic(1, TARIFFANG.cargoTelegraphMs);
         doCargo(command.count, command.bothSides);
         return;
       case 'stamp':
+        stagecraft.moveCinematic(2, TARIFFANG.stampTelegraphMs);
         doStamp(command.count);
         return;
       case 'levy':
+        stagecraft.moveCinematic(3, TARIFFANG.levyTelegraphMs);
         doLevy(command.count);
         return;
       case 'gate':
@@ -384,6 +398,7 @@ export function createTariffang(
     dying = true;
     active = false;
     ramTargetX = null;
+    stagecraft.playDeath();
     scene.tweens.killTweensOf(body);
     vscale.killFxTweens(body);
     projectiles.getMatching('active', true).forEach(killProjectile);
@@ -405,6 +420,7 @@ export function createTariffang(
       switch (event.kind) {
         case 'damaged':
           flashWhite();
+          stagecraft.hitFlash();
           scene.tweens.add({ targets: body, angle: 3, duration: 45, yoyo: true, repeat: 2 });
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
             hp: event.hp,
@@ -414,13 +430,14 @@ export function createTariffang(
           break;
         case 'phase':
           emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
-          // 狂暴換裝（§17 慣例）：P2 起換 enraged 立繪（顯示尺寸重錨＋vscale 基準回寫）。
+          // 狂暴轉段（§17/§125）：P2 播轉段幀序後落 enraged（換裝語義不變，
+          // 顯示尺寸與 vscale 基準由 stagecraft 換幀單點回寫）。
           if (event.phase === 'p2') {
-            body.setTexture('boss-tariffang-enraged').setDisplaySize(BODY_W, BODY_H);
-            vscale.rebase(body);
+            stagecraft.phaseTransition('p2');
             playSfx('boss-roar', 1.1);
             scene.cameras.main.flash(280, 255, 190, 120);
           } else if (event.phase === 'p3') {
+            stagecraft.phaseTransition('p3');
             playSfx('boss-roar', 1.3);
             scene.cameras.main.flash(320, 255, 150, 90);
             scene.cameras.main.shake(200, 0.007);
@@ -440,8 +457,10 @@ export function createTariffang(
     }
   };
 
-  // 入場：關稅巨獸自右側滑入崗哨（與升起/降臨型區隔——「進站」語彙）。
+  // 入場：關稅巨獸自右側滑入崗哨（與升起/降臨型區隔——「進站」語彙）；
+  // entry 四幀鋪在既有節拍（滑入→進站→咆哮→起勢），時序零改變（§125）。
   const introSlide = () => {
+    stagecraft.entryFrame(1);
     body.setPosition(arenaLeft() + viewW() + BODY_W, STAND_Y);
     scene.tweens.add({
       targets: body,
@@ -449,6 +468,7 @@ export function createTariffang(
       duration: 900,
       ease: 'Sine.easeOut',
       onComplete: () => {
+        stagecraft.entryFrame(2);
         playSfx('boss-slam');
         scene.cameras.main.shake(120, 0.006);
         introRoar();
@@ -457,6 +477,7 @@ export function createTariffang(
   };
 
   const introRoar = () => {
+    stagecraft.entryFrame(3);
     emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
     playSfx('boss-roar');
     scene.tweens.add({
@@ -472,11 +493,13 @@ export function createTariffang(
   };
 
   const introReset = () => {
+    stagecraft.entryFrame(4);
     const cam = scene.cameras.main;
     cam.pan(arenaCx(), VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
     cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
     delay(INTRO_RESET_MS, () => {
       active = true;
+      stagecraft.endEntry();
       // EX 入場變色（§58 慣例）：緋紅呼吸循環作為變體識別基調。
       if (ex) {
         scene.tweens.addCounter({
@@ -517,6 +540,7 @@ export function createTariffang(
     update(deltaMs: number) {
       if (!active || dying) return;
       elapsedMs += deltaMs;
+      stagecraft.idleBreath(deltaMs);
       // 距離帶餵送（§111.1 條件欄）。
       fsm.setTargetDistance(
         target ? Phaser.Math.Distance.Between(body.x, body.y, target.x, target.y) : null,
@@ -588,6 +612,7 @@ export function createTariffang(
     },
     destroy() {
       timers.forEach((timer) => timer.remove(false));
+      stagecraft.destroy();
       scene.tweens.killTweensOf(body);
       vscale.unregister(body);
       body.destroy();

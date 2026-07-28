@@ -13,6 +13,7 @@ import {
 } from '../logic/gravionFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
+import { createBossStagecraft, preloadBossStagecraft } from './bossStagecraft';
 import { ensureFxTextures, spawnTelegraph } from './fx';
 import { getVisualScale } from './visualScale';
 
@@ -131,6 +132,14 @@ export function createGravion(
   physBody.setAllowGravity(false);
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
+
+  // 動畫組背景補載＋演出件（§125）：前室廊道即補載窗口，缺圖以 base 立繪降級。
+  preloadBossStagecraft(scene, 'gravion');
+  const stagecraft = createBossStagecraft(scene, body, {
+    kind: 'gravion',
+    bodyW: BODY_W,
+    bodyH: BODY_H,
+  });
 
   const projectiles = scene.physics.add.group({ maxSize: 24, allowGravity: false });
   const shockwaves = scene.physics.add.group({ maxSize: 10, allowGravity: false });
@@ -341,11 +350,14 @@ export function createGravion(
     });
   };
 
+  // 三招分鏡映射（§125）：本體發招類接 move 幀組（orbshot/orbit 為星體軌道機制，
+  // 沿用既有 telegraph 演出）；分鏡窗＝該招既有 telegraph 時長，時序零改變。
   const runCommand = (command: GravionCommand) => {
     switch (command.kind) {
       case 'idle':
         return;
       case 'gswitch':
+        stagecraft.moveCinematic(1, GRAVION.gswitchTelegraphMs);
         doGswitch(command.direction, command.fieldMs);
         return;
       case 'orbshot':
@@ -355,9 +367,11 @@ export function createGravion(
         doOrbit(command.cap);
         return;
       case 'crush':
+        stagecraft.moveCinematic(2, GRAVION.crushTelegraphMs);
         doCrush(command.holdMs);
         return;
       case 'barrage':
+        stagecraft.moveCinematic(3, GRAVION.barrageTelegraphMs);
         doBarrage(command.count);
         return;
       default: {
@@ -389,6 +403,7 @@ export function createGravion(
     dying = true;
     active = false;
     fieldDirection = null;
+    stagecraft.playDeath();
     scene.tweens.killTweensOf(body);
     vscale.killFxTweens(body);
     holeGfx?.destroy();
@@ -410,6 +425,7 @@ export function createGravion(
       switch (event.kind) {
         case 'damaged':
           flashWhite();
+          stagecraft.hitFlash();
           scene.tweens.add({ targets: body, angle: 3, duration: 45, yoyo: true, repeat: 2 });
           emitGameEvent(scene.events, GameEvents.BOSS_DAMAGED, {
             hp: event.hp,
@@ -419,13 +435,14 @@ export function createGravion(
           break;
         case 'phase':
           emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
-          // 狂暴換裝（§17 慣例）：P2 起換 enraged 立繪；P3 黑洞常駐顯形。
+          // 狂暴轉段（§17/§125）：P2 播轉段幀序後落 enraged（換裝語義不變，
+          // 顯示尺寸與 vscale 基準由 stagecraft 換幀單點回寫）；P3 黑洞常駐顯形。
           if (event.phase === 'p2') {
-            body.setTexture('boss-gravion-enraged').setDisplaySize(BODY_W, BODY_H);
-            vscale.rebase(body);
+            stagecraft.phaseTransition('p2');
             playSfx('boss-roar', 1.1);
             scene.cameras.main.flash(280, 170, 150, 230);
           } else if (event.phase === 'p3') {
+            stagecraft.phaseTransition('p3');
             playSfx('boss-roar', 1.3);
             scene.cameras.main.flash(320, 140, 120, 220);
             scene.cameras.main.shake(200, 0.007);
@@ -446,8 +463,10 @@ export function createGravion(
     }
   };
 
-  // 入場：侯爵自上方虛空滑入（黑洞外環語彙——星體下沉降臨）。
+  // 入場：侯爵自上方虛空滑入（黑洞外環語彙——星體下沉降臨）；
+  // entry 四幀鋪在既有節拍（下沉→定位→咆哮→起勢），時序零改變（§125）。
   const introDescend = () => {
+    stagecraft.entryFrame(1);
     body.setPosition(arenaCx(), -BODY_H);
     scene.tweens.add({
       targets: body,
@@ -455,6 +474,7 @@ export function createGravion(
       duration: 900,
       ease: 'Sine.easeOut',
       onComplete: () => {
+        stagecraft.entryFrame(2);
         playSfx('boss-slam');
         scene.cameras.main.shake(120, 0.006);
         introRoar();
@@ -463,6 +483,7 @@ export function createGravion(
   };
 
   const introRoar = () => {
+    stagecraft.entryFrame(3);
     emitGameEvent(scene.events, GameEvents.BOSS_SPAWNED, { maxHp: fsm.maxHp });
     playSfx('boss-roar');
     scene.tweens.add({
@@ -478,11 +499,13 @@ export function createGravion(
   };
 
   const introReset = () => {
+    stagecraft.entryFrame(4);
     const cam = scene.cameras.main;
     cam.pan(arenaCx(), VIEW.height / 2, INTRO_RESET_MS, 'Sine.easeInOut');
     cam.zoomTo(1, INTRO_RESET_MS, 'Sine.easeInOut');
     delay(INTRO_RESET_MS, () => {
       active = true;
+      stagecraft.endEntry();
       // EX 入場變色（§58 慣例）：緋紅呼吸循環作為變體識別基調。
       if (ex) {
         scene.tweens.addCounter({
@@ -522,6 +545,7 @@ export function createGravion(
     update(deltaMs: number) {
       if (!active || dying) return;
       elapsedMs += deltaMs;
+      stagecraft.idleBreath(deltaMs);
       // 距離帶餵送（§111.1 條件欄）。
       fsm.setTargetDistance(
         target ? Phaser.Math.Distance.Between(body.x, body.y, target.x, target.y) : null,
@@ -604,6 +628,7 @@ export function createGravion(
     },
     destroy() {
       timers.forEach((timer) => timer.remove(false));
+      stagecraft.destroy();
       scene.tweens.killTweensOf(body);
       vscale.unregister(body);
       body.destroy();

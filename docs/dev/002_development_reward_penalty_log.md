@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+331
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：neutral-starpuff-w5-review-foldin
+- 原因：審查席 S 兩項 Should-fix——bossStagecraft 的 bossAnimAssets dynamic import 零 .catch（chunk 失敗產生未捕獲 rejection 牴觸 console 0 門檻）、docs 子標題 127.1-127.3 未隨頂層 §125 改號
+- 解法：補 .catch 靜默降級（缺圖走 base 立繪既有路徑）＋reject 路徑單測先紅後綠；子標題改 125.x 並在 verify-design-docs 增子標題章號一致性守門（先抓到 3 處殘漏紅、修復後綠）
+
+- 日期：2026-07-29
+- ID：reward-starpuff-w5-boss-stagecraft-ship
+- 原因：已上線四王（L22/L24/L26/L28）僅接 base＋enraged 兩張立繪，B06 動畫組 156 鍵閒置於 assetsV21 停車場，生產玩家演出規格落後劉董，且整批 spread 回主 manifest 有 +67.88kB 教訓
+- 解法：bossAnimAssets 動態分檔（dynamic import 隔離、主 bundle 僅 +2.74kB）＋bossStagecraft 共用演出件（魔王關 create 期背景補載、入場/三招/轉段/受擊/死亡/idle 分鏡鋪於既有 telegraph 窗、缺圖 base 降級），FSM 零改動、既有測試零修改 1269 案全綠、四王實測 console 0／404 0、precache 124→279 項
 
 - 日期：2026-07-28
 - ID：reward-starpuff-w3-mirror-gravity-ship
