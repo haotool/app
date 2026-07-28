@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+332
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：reward-starpuff-w4-liudong-finale-ship
+- 原因：星海終局篇 W4 終章需交付 L29 崩盤前夜（回收全章機制零新怪＋市場開盤伏筆演出）與 L30 劉董・崩盤之王（PRD §6 全節：入金入場/思考下單預告即機制/三市場/全屏箭雨/牛熊怪/熔斷與最後轉帳/失敗保護/迷因安全），為 21-30 世界計畫收官且 L30 須為全遊戲難度頂點並自證基礎星彈恆可通關
+- 解法：liudongFsm 表驅動三段＋liudong/liudongCinematics 分檔呈現層＋牛熊怪 fieldEnemies 入編＋動畫組整合 W5 bossAnimAssets 動態分檔（章號讓位 §126/§127），量測歸因驅動七輪調參修三根因（稜蜂精英反射牆/208 溺水錨/遠端缺口不可達），靜態軸 walk 9.7→9.8/boss 9.6→10.0、L29 mid ×7 86%、L30 high ×7 71%（≥60%）low ×7 0%（<20%）、全通關輪 transforms:0、招式熵 1.45-1.83、1304 案全綠
 
 - 日期：2026-07-29
 - ID：neutral-starpuff-w5-review-foldin
