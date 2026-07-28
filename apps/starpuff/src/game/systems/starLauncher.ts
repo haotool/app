@@ -44,7 +44,7 @@ export function createStarLauncher(
     body.enable = false;
   };
 
-  // 單發彈體生成（§23/§46）：尺寸/著色/拖尾/彈道資料單一出口；vy 供散射扇形。
+  // 單發彈體生成（§23/§46/§124）：尺寸/著色/拖尾/彈道資料單一出口；vy 供散射扇形。
   const launch = (slot: MagazineSlot, vy: number): void => {
     const spec = slotSpec(slot);
     const facing = deps.facing();
@@ -52,11 +52,19 @@ export function createStarLauncher(
     const star = acquirePooled(stars, x, y, deps.tex('fx-star'));
     if (!star) return;
     const boosted = slot.charged || slot.gold;
+    // 星味專屬彈體（§124 W5a）：flight 素身／charge 蓄能幀，素材已上色不 tint、
+    // 頭朝右需隨面向翻面；混合星無專屬素材，回退共用星形＋配方 tint。
+    const flavorTex = `fx-star-${slot.flavor}-${boosted ? 'charge' : 'flight'}`;
+    const useArt = slot.mix === undefined && scene.textures.exists(flavorTex);
+    // 池復用物件不會由 get 換貼圖：每發顯式重設。
+    star.setTexture(useArt ? flavorTex : deps.tex('fx-star'));
+    star.setFlipX(useArt && facing === -1);
     const size = boosted ? STAR_SIZE * CHARGED_STAR.sizeMultiplier : STAR_SIZE;
     star.setActive(true).setVisible(true);
     star.setDisplaySize(size, size);
     // 標準星保留原金黃星彈藝術；其餘依屬性/配方上色；強化/金星套金邊 tint。
-    if (boosted) star.setTint(CHARGED_STAR.tint);
+    if (useArt) star.clearTint();
+    else if (boosted) star.setTint(CHARGED_STAR.tint);
     else if (slot.flavor === 'jelly' && slot.mix === undefined) star.clearTint();
     else star.setTint(spec.tint);
     const body = star.body as Phaser.Physics.Arcade.Body;

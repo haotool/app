@@ -1,5 +1,7 @@
 import { ASSETS, type AssetEntry, type AssetPhase } from './assets';
 import type { BossKind, EnemyKind, TransformForm } from './types';
+import type { StarFlavor } from './config';
+import { inhaleFlavor } from '../logic/combat';
 import type { LevelSpec } from '../logic/levels';
 import { FORM_INTRO_LEVEL, TRANSFORM_FORMS } from '../logic/transform';
 
@@ -161,6 +163,32 @@ const HERO_POSE_KEYS: readonly string[] = [
   'hero-hurt',
 ];
 
+// 星味特效四層（§124 W5a）：charge 蓄能彈體／flight 彈體／hit 命中閃／explosion 爆裂，
+// starLauncher 與 player.onStarHit 以 `fx-star-${flavor}-${layer}` 取用。
+export const STAR_FX_LAYERS = ['charge', 'flight', 'hit', 'explosion'] as const;
+
+export function starFxKeys(flavor: StarFlavor | 'tide' | 'prism' | 'gravity'): string[] {
+  return STAR_FX_LAYERS.map((layer) => `fx-star-${flavor}-${layer}`);
+}
+
+// 基礎動作分層特效（§124 W5a）：吸入／浮空／落地 × 五分層，systems/fxLayers 消費；
+// 動作每關可用，屬全關共用核心。
+export const COMMON_FX_LAYERS = ['core', 'shock', 'trail', 'debris', 'overlay'] as const;
+const COMMON_FX_KEYS: readonly string[] = ['inhale', 'float', 'landing'].flatMap((group) =>
+  COMMON_FX_LAYERS.map((layer) => `fx-common-${group}-${layer}`),
+);
+
+// 該關可得星味（§124 W5a）：吞入怪決定星味——kinds 經 inhaleFlavor 派生，
+// jelly 恆載（標準星保底：fillMagazine／pushGoldStar／空匣預設全為 jelly）。
+function levelStarFxKeys(kinds: ReadonlySet<EnemyKind>): string[] {
+  const flavors = new Set<StarFlavor>(['jelly']);
+  for (const kind of kinds) {
+    const flavor = inhaleFlavor(kind);
+    if (flavor) flavors.add(flavor);
+  }
+  return [...flavors].flatMap((flavor) => starFxKeys(flavor));
+}
+
 // 形態立繪：變身可於關內任意時點觸發，故解鎖後每關都須備妥。鍵名由
 // TRANSFORM_FORMS 派生（player.ts 以 `hero-${form}` 取用），新增形態自動跟進。
 const FORM_TEXTURE_KEYS: readonly string[] = Object.keys(TRANSFORM_FORMS).map(
@@ -178,14 +206,19 @@ export function formTextureKeysForLevel(levelId: number): string[] {
 
 // 全關共用核心：與關卡無關、但每關都必須在場的貼圖（形態立繪全集；逐關納入
 // 時機由 formTextureKeysForLevel 依 FORM_INTRO_LEVEL 收斂）。
-export const SHARED_LEVEL_KEYS: readonly string[] = [...HERO_POSE_KEYS, ...FORM_TEXTURE_KEYS];
+export const SHARED_LEVEL_KEYS: readonly string[] = [
+  ...HERO_POSE_KEYS,
+  ...FORM_TEXTURE_KEYS,
+  ...COMMON_FX_KEYS,
+];
 
-// 該關實際會用到的貼圖鍵：關卡限定（背景／道具／小怪／魔王，由 LevelSpec 派生）
-// ＋全關共用核心（主角姿勢／形態立繪）。
+// 該關實際會用到的貼圖鍵：關卡限定（背景／道具／小怪／魔王／星味特效，由 LevelSpec
+// 派生）＋全關共用核心（主角姿勢／形態立繪／基礎動作特效）。
 export function levelAssetKeys(level: LevelSpec): string[] {
   const keys = new Set<string>([
     bgTextureKey(level.bgKey),
     ...HERO_POSE_KEYS,
+    ...COMMON_FX_KEYS,
     ...formTextureKeysForLevel(level.id),
   ]);
   for (const decor of level.decor) keys.add(decor.key);
@@ -206,6 +239,7 @@ export function levelAssetKeys(level: LevelSpec): string[] {
   if (level.tide !== undefined) for (const kind of TIDE_SUBSTITUTE_KINDS) kinds.add(kind);
 
   for (const kind of kinds) keys.add(ENEMY_TEXTURE_KEYS[kind]);
+  for (const key of levelStarFxKeys(kinds)) keys.add(key);
   return [...keys];
 }
 

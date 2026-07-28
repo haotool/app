@@ -24,6 +24,8 @@ vi.mock('./fx', () => ({
   burstSmall: vi.fn(),
   attachTrail: vi.fn(() => ({ stop: vi.fn() })),
 }));
+// 分層素材特效（§124 W5a）：純顯示層，player 邏輯測試以 mock 隔離。
+vi.mock('./fxLayers', () => ({ burstLayers: vi.fn(), flashSprite: vi.fn() }));
 
 interface FakeStar {
   x: number;
@@ -34,6 +36,8 @@ interface FakeStar {
   setActive(value: boolean): FakeStar;
   setVisible(value: boolean): FakeStar;
   setDisplaySize(): FakeStar;
+  setTexture(key: string): FakeStar;
+  setFlipX(value: boolean): FakeStar;
   setTint(): FakeStar;
   clearTint(): FakeStar;
   setRotation(): FakeStar;
@@ -56,6 +60,8 @@ function makeFakeStar(x: number, y: number): FakeStar {
     },
     setVisible: () => star,
     setDisplaySize: () => star,
+    setTexture: () => star,
+    setFlipX: () => star,
     setTint: () => star,
     clearTint: () => star,
     setRotation: () => star,

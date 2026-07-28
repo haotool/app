@@ -8,8 +8,10 @@ import {
   SLAM,
   STAR,
   STARSTORM,
+  STAR_FLAVORS,
   getMix,
   type MagazineSlot,
+  type MixId,
   type StarFlavor,
 } from '../core/config';
 import {
@@ -95,6 +97,7 @@ import { playSfx } from '../audio/sfx';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
+import { burstLayers, flashSprite } from './fxLayers';
 import { createFormSkills } from './formSkills';
 import { getVisualScale } from './visualScale';
 
@@ -353,6 +356,12 @@ export function createPlayer(
       duration: 320 * intensity,
       ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
+    });
+    // 落地分層特效（§124 W5a）：素材五層疊在白環上；缺載時白環單獨保底。
+    burstLayers(scene, sprite.x, sprite.y + PLAYER_SIZE / 2 - 6, 'fx-common-landing', {
+      sizePx: 52 * intensity,
+      depth: 12,
+      debrisCount: intensity > 1 ? 10 : 6,
     });
   };
 
@@ -696,6 +705,12 @@ export function createPlayer(
               if (!formSpec?.freeFlight) flapsUsed += 1;
               sprite.setVelocityY(formSpec?.freeFlight ? GALE_FLIGHT.floatLift : PLAYER.floatLift);
               squashStretch(0.9, 1.12);
+              // 浮空分層特效（§124 W5a）：拍翅腳下氣旋，缺載時僅擠壓回饋。
+              burstLayers(scene, sprite.x, sprite.y + PLAYER_SIZE / 2, 'fx-common-float', {
+                sizePx: 42,
+                depth: 12,
+                debrisCount: 4,
+              });
             } else if (controls.jumpPressed) {
               jumpBufferMs = FORGIVENESS.jumpBufferMs;
             }
@@ -989,6 +1004,18 @@ export function createPlayer(
       // 連吞升級（§23）強化音效；混合合成（§46）沿用 jingle 短奏提示。
       if (result.charged) playSfx('charge');
       else if (result.mixed) playSfx('jingle');
+      // 吞入衝擊圈（§124 W5a）：嘴前吞噬確認回饋，缺載時沿既有音效回饋。
+      const mouthX = sprite.x + facing * (PLAYER_SIZE / 2 + 4);
+      flashSprite(scene, 'fx-common-inhale-shock', mouthX, sprite.y, 52, {
+        durationMs: 220,
+        depth: 86,
+      });
+      flashSprite(scene, 'fx-common-inhale-trail', mouthX, sprite.y, 40, {
+        durationMs: 260,
+        depth: 85,
+        fromScale: 1.4,
+        rotate: true,
+      });
       emitGameEvent(scene.events, GameEvents.ENEMY_INHALED, { kind });
       maybeCrystallize();
       emitAmmo();
@@ -1109,6 +1136,22 @@ export function createPlayer(
     },
     onStarHit(star: Phaser.GameObjects.GameObject, mode: StarHitMode) {
       const s = star as Phaser.Physics.Arcade.Sprite;
+      // 星味命中演出（§124 W5a）：爆裂終端出 explosion 環、一般命中出 hit 閃；
+      // 素材缺載時沿既有回饋（敵方閃白／damage number）零疊加。
+      const flavor = s.getData('flavor') as StarFlavor | undefined;
+      if (flavor !== undefined) {
+        const mixId = s.getData('mix') as MixId | null | undefined;
+        const spec = mixId ? getMix(mixId) : STAR_FLAVORS[flavor];
+        const explosive = mode === 'absorb' && spec.aoeRadiusPx > 0;
+        if (explosive) {
+          flashSprite(scene, `fx-star-${flavor}-explosion`, s.x, s.y, spec.aoeRadiusPx * 2, {
+            durationMs: 260,
+            depth: 89,
+          });
+        } else {
+          flashSprite(scene, `fx-star-${flavor}-hit`, s.x, s.y, 44, { durationMs: 170, depth: 89 });
+        }
+      }
       if (mode === 'absorb') {
         starLauncher.recycle(s);
         return;

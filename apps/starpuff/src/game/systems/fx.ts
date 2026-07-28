@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameEvents, onGameEvent, offGameEvent, type GameEventName } from '../core/events';
 import { playSfx } from '../audio/sfx';
 import { getVisualScale, type ScalableSprite } from './visualScale';
+import { flashSprite } from './fxLayers';
 import { installCameraFxGate } from './cameraFxGate';
 
 export const FX_TEXTURES = {
@@ -275,16 +276,19 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     .setDepth(85);
 
   // 吸入漩渦：粒子自環形外圈生成、朝嘴前點匯聚（moveTo onEmit 讀取當下位置）。
+  // §124 W5a：匯聚粒子升級為星屑素材（1024 源以目標 px 換算縮放），缺載回退圓點。
+  const inhaleDebrisArt = scene.textures.exists('fx-common-inhale-debris');
   const inhaleEmitter = scene.add
-    .particles(0, 0, FX_TEXTURES.dot, {
+    .particles(0, 0, inhaleDebrisArt ? 'fx-common-inhale-debris' : FX_TEXTURES.dot, {
       x: () => mouthRef?.x ?? 0,
       y: () => mouthRef?.y ?? 0,
       lifespan: 300,
       frequency: 24,
       quantity: 1,
-      scale: { start: 0.9, end: 0.15 },
+      scale: inhaleDebrisArt ? { start: 26 / 1024, end: 5 / 1024 } : { start: 0.9, end: 0.15 },
       alpha: { start: 0.85, end: 0.1 },
-      tint: [0xffffff, 0xffd966, 0xbff3e0],
+      rotate: { min: 0, max: 360 },
+      tint: inhaleDebrisArt ? 0xffffff : [0xffffff, 0xffd966, 0xbff3e0],
       emitZone: {
         type: 'random',
         source: {
@@ -302,6 +306,26 @@ export function createFx(scene: Phaser.Scene): FxSystem {
       maxAliveParticles: 30,
     })
     .setDepth(85);
+
+  // 吸入嘴前光圈（§124 W5a）：core 素材低頻脈動——沿 mouthRef callback 模式跟嘴，
+  // 免逐幀同步管線；素材缺載時不建（吸入回饋由漩渦粒子保底）。
+  const inhaleCore = scene.textures.exists('fx-common-inhale-core')
+    ? scene.add
+        .particles(0, 0, 'fx-common-inhale-core', {
+          x: () => mouthRef?.x ?? 0,
+          y: () => mouthRef?.y ?? 0,
+          lifespan: 420,
+          frequency: 150,
+          quantity: 1,
+          scale: { start: 60 / 1024, end: 22 / 1024 },
+          alpha: { start: 0.55, end: 0 },
+          rotate: { min: -30, max: 30 },
+          blendMode: 'ADD',
+          emitting: false,
+          maxAliveParticles: 4,
+        })
+        .setDepth(84)
+    : null;
 
   const confettiEmitter = scene.add
     .particles(0, 0, FX_TEXTURES.dot, {
@@ -529,6 +553,7 @@ export function createFx(scene: Phaser.Scene): FxSystem {
       if (scene.physics.world) scene.physics.resume();
     }
     [burst, puffEmitter, inhaleEmitter, confettiEmitter].forEach((e) => e.destroy());
+    inhaleCore?.destroy();
     phaseVignette?.destroy();
     phaseDimmer?.destroy();
   }
@@ -542,9 +567,17 @@ export function createFx(scene: Phaser.Scene): FxSystem {
     startInhale(mouth) {
       mouthRef = mouth;
       inhaleEmitter.start();
+      inhaleCore?.start();
+      // 吸入起手光暈（§124 W5a）：overlay 單張快閃標記吸力啟動。
+      flashSprite(scene, 'fx-common-inhale-overlay', mouth.x ?? 0, mouth.y ?? 0, 64, {
+        durationMs: 240,
+        depth: 84,
+        fromScale: 1.5,
+      });
     },
     stopInhale() {
       inhaleEmitter.stop();
+      inhaleCore?.stop();
     },
     attachTrail: (target, opts) => attachTrail(scene, target, opts),
     damageNumber,
