@@ -8,6 +8,8 @@ import { SYRONA } from '../logic/syronaFsm';
 import { VOIDRA } from '../logic/voidraFsm';
 import { TARIFFANG } from '../logic/tariffangFsm';
 import { MARIDELLA } from '../logic/maridellaFsm';
+import { REFLECTOR } from '../logic/reflectorFsm';
+import { GRAVION } from '../logic/gravionFsm';
 import type { EggEvent } from '../logic/eggs';
 import type { LevelSpec } from '../logic/levels';
 import { MERCY_HEAL } from '../logic/mercyHeal';
@@ -19,6 +21,8 @@ import { createSyrona } from './syrona';
 import { createVoidra } from './voidra';
 import { createTariffang } from './tariffang';
 import { createMaridella } from './maridella';
+import { createReflector } from './reflector';
+import { createGravion } from './gravion';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
 import type { MeteorSystem } from './meteor';
@@ -245,6 +249,35 @@ export function createBossKit(
             { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
           ),
           bodyDamage: MARIDELLA.bodyDamage,
+        };
+      case 'reflector':
+        return {
+          handle: createReflector(
+            scene,
+            {
+              // 假噗噗分身鏡影錨（§123）：玩家位置由 player 單點供給。
+              playerPos: () => {
+                const sprite = hooks.player().sprite;
+                return { x: sprite.x, y: sprite.y };
+              },
+            },
+            { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
+          ),
+          bodyDamage: REFLECTOR.bodyDamage,
+        };
+      case 'gravion':
+        return {
+          handle: createGravion(
+            scene,
+            {
+              // 中央黑洞彎折（§123 P3）：星彈群由 player 單點供給。
+              playerStars: () => hooks.player().getStars(),
+              // 引力化抗性（§119 W3 消費）：形態真值由 player 單點供給。
+              playerForm: () => hooks.player().getTransformState().form,
+            },
+            { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
+          ),
+          bodyDamage: GRAVION.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

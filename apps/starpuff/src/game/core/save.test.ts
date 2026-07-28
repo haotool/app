@@ -189,7 +189,7 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 19, 1000);
     expect(currentChallenge(save)).toBe(20);
     save = recordLevelClear(save, 20, 1000);
-    // §121/§122 星海終局篇：L20 之後接續 L21 → L22 → L23 → L24，全通關為 null。
+    // §121/§122/§123 星海終局篇：L20 之後接續 L21 → … → L28，全通關為 null。
     expect(currentChallenge(save)).toBe(21);
     save = recordLevelClear(save, 21, 1000);
     expect(currentChallenge(save)).toBe(22);
@@ -198,6 +198,14 @@ describe('解鎖規則與節點狀態（§39）', () => {
     save = recordLevelClear(save, 23, 1000);
     expect(currentChallenge(save)).toBe(24);
     save = recordLevelClear(save, 24, 1000);
+    expect(currentChallenge(save)).toBe(25);
+    save = recordLevelClear(save, 25, 1000);
+    expect(currentChallenge(save)).toBe(26);
+    save = recordLevelClear(save, 26, 1000);
+    expect(currentChallenge(save)).toBe(27);
+    save = recordLevelClear(save, 27, 1000);
+    expect(currentChallenge(save)).toBe(28);
+    save = recordLevelClear(save, 28, 1000);
     expect(currentChallenge(save)).toBeNull();
   });
 

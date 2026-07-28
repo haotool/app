@@ -500,8 +500,13 @@ export class GameScene extends Phaser.Scene {
       this.caramel.update(deltaMs);
       this.starSteering.update(deltaMs);
       this.mercy.update(deltaMs);
-      // 側風推移（§52）：委派 enemies 系統結算；迴旋星驅動已內建於 player.update。
-      this.enemies.applyEnvironmentalForces(this.player.sprite, deltaMs);
+      // 側風推移（§52）＋重力場拉移（§123）：委派 enemies 系統結算；迴旋星驅動已
+      // 內建於 player.update。引力化抗性（§119 gravityFlipImmune）對重力場免效。
+      this.enemies.applyEnvironmentalForces(
+        this.player.sprite,
+        deltaMs,
+        this.starCombat.playerFormSpec()?.gravityFlipImmune === true,
+      );
       this.damage.advanceTide(deltaMs);
       this.damage.advanceMeteors(deltaMs);
       this.damage.applyBossVents(deltaMs);

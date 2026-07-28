@@ -26,6 +26,8 @@ export interface FormShotSpec {
   flavor: StarFlavor;
   // 焰系燒毀優勢（§119）：burn 命中使冰史萊姆熔解不分裂（W2 稅票同源消費）。
   burn: boolean;
+  // 稜系破鏡優勢（§123 W3 消費）：prism 命中使複製噗破鏡像。
+  prism?: boolean;
 }
 
 // 形態規格表（表驅動，禁止散落 scene）：每形態語彙 ≤4（§119 攻/防/機動/特守門）。
@@ -228,6 +230,8 @@ export const TRANSFORM_FORMS: Record<TransformForm, TransformFormSpec> = {
       cooldownMs: 420,
       flavor: 'jelly',
       burn: false,
+      // 稜片帶 prism 標記（§123）：命中複製噗即破鏡像。
+      prism: true,
     },
     blinkPx: 96,
   },

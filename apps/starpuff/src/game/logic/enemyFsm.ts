@@ -727,3 +727,251 @@ export function tickManta(state: MantaState, stateMs: number, deltaMs: number): 
     return { state: 'cruise', stateMs: 0, entered: 'cruise' };
   return { state, stateMs: next, entered: null };
 }
+
+// ===== §123 星海終局篇 W3 新怪 =====
+
+// 複製噗 Copypuff：鏡像模仿玩家水平動作（照鏡子——玩家位移取反向套用）；不可吸。
+// 稜化攻擊（prism 旗標）命中 → 破鏡像 broken（停走可打窗，行為解除非免傷——
+// 基礎星彈恆可正常擊殺，破鏡像是優勢解非必需解）。
+export const COPYPUFF_FSM = {
+  brokenMs: 1400,
+  // 鏡像位移倍率：玩家逐幀位移 × 倍率反向套用（positional，不與重力對抗）。
+  mirrorMul: 0.9,
+  maxMirrorPxPerFrame: 8,
+} as const;
+
+export type CopypuffState = 'mimic' | 'broken';
+
+export interface CopypuffTick {
+  state: CopypuffState;
+  stateMs: number;
+  entered: CopypuffState | null;
+}
+
+export function tickCopypuff(state: CopypuffState, stateMs: number, deltaMs: number): CopypuffTick {
+  const next = stateMs + deltaMs;
+  if (state === 'broken' && next >= COPYPUFF_FSM.brokenMs)
+    return { state: 'mimic', stateMs: 0, entered: 'mimic' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 鏡像水平位移（純函式）：玩家位移反向 × 倍率，單幀夾限防瞬移；+0 防 -0 汙染
+// 呼叫端比較（沿 bubblaLeapOffsetY 慣例）。
+export function copypuffMirrorDx(playerDx: number): number {
+  const mirrored = -playerDx * COPYPUFF_FSM.mirrorMul;
+  return (
+    Math.max(
+      -COPYPUFF_FSM.maxMirrorPxPerFrame,
+      Math.min(COPYPUFF_FSM.maxMirrorPxPerFrame, mirrored),
+    ) + 0
+  );
+}
+
+// 稜蜂 Prismbee：懸浮巡飛 hover → 鎖定 aim 0.7s（telegraph 閃爍）→ 直線衝刺 dart →
+// 冷卻 cool → hover。正面反射直線星彈（面向側命中）、側背面脆弱；死亡射三彩色碎片。
+export const PRISMBEE_FSM = {
+  hoverMs: 2400,
+  aimMs: 700,
+  dartMs: 500,
+  coolMs: 1100,
+  hoverSpeed: 70,
+  dartSpeed: 330,
+  // 死亡三彩碎片（走 hazards 管線，逾時必回收 §56）。
+  shardSpeed: 240,
+  shardLifeMs: 900,
+  shardFanVy: 90,
+} as const;
+
+export type PrismbeeState = 'hover' | 'aim' | 'dart' | 'cool';
+
+export interface PrismbeeTick {
+  state: PrismbeeState;
+  stateMs: number;
+  entered: PrismbeeState | null;
+}
+
+export function tickPrismbee(state: PrismbeeState, stateMs: number, deltaMs: number): PrismbeeTick {
+  const next = stateMs + deltaMs;
+  if (state === 'hover' && next >= PRISMBEE_FSM.hoverMs)
+    return { state: 'aim', stateMs: 0, entered: 'aim' };
+  if (state === 'aim' && next >= PRISMBEE_FSM.aimMs)
+    return { state: 'dart', stateMs: 0, entered: 'dart' };
+  if (state === 'dart' && next >= PRISMBEE_FSM.dartMs)
+    return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= PRISMBEE_FSM.coolMs)
+    return { state: 'hover', stateMs: 0, entered: 'hover' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 星彈受擊決策（§123）：正面（面向側來彈）反射、側背面正常結算——側擊即反制。
+export type PrismbeeStarHitOutcome = 'reflect' | 'vulnerable';
+
+export function resolvePrismbeeStarHit(facing: 1 | -1, starDx: number): PrismbeeStarHitOutcome {
+  return Math.sign(starDx) === facing ? 'reflect' : 'vulnerable';
+}
+
+// 重力泡 Gravitybub：漂浮 idle → 前搖 windup 0.7s（預警圈擴張）→ 重力場 field 1.9s
+//（域內玩家受水平 positional 拉力朝泡漂移）→ 回 idle。沿 magno 單計時器模式。
+export const GRAVITYBUB_FSM = {
+  idleMs: 2300,
+  windupMs: 700,
+  fieldMs: 1900,
+  fieldRadiusPx: 140,
+  // 拉力恆低於玩家全速（交叉不變式 16）：漂移是壓力非禁錮。
+  pullPxPerSec: 70,
+} as const;
+
+export type GravitybubPhase = 'idle' | 'windup' | 'field';
+
+export interface GravitybubTick {
+  bubMs: number;
+  phase: GravitybubPhase;
+  // windup 期預警擴張進度 0..1；其餘相位恆 0。
+  progress: number;
+}
+
+export function tickGravitybub(bubMs: number, deltaMs: number): GravitybubTick {
+  const total = GRAVITYBUB_FSM.idleMs + GRAVITYBUB_FSM.windupMs + GRAVITYBUB_FSM.fieldMs;
+  const next = bubMs + deltaMs;
+  if (next >= total) return { bubMs: 0, phase: 'idle', progress: 0 };
+  if (next >= GRAVITYBUB_FSM.idleMs + GRAVITYBUB_FSM.windupMs) {
+    return { bubMs: next, phase: 'field', progress: 0 };
+  }
+  if (next >= GRAVITYBUB_FSM.idleMs) {
+    return {
+      bubMs: next,
+      phase: 'windup',
+      progress: (next - GRAVITYBUB_FSM.idleMs) / GRAVITYBUB_FSM.windupMs,
+    };
+  }
+  return { bubMs: next, phase: 'idle', progress: 0 };
+}
+
+// 重力場拉向（§123）：field 期域內玩家被拉向泡的水平方向；域外為 0（沿 gustWindPush 模式）。
+export function gravityBubPull(
+  playerX: number,
+  playerY: number,
+  bubX: number,
+  bubY: number,
+): -1 | 0 | 1 {
+  const dx = playerX - bubX;
+  const dy = playerY - bubY;
+  if (dx * dx + dy * dy > GRAVITYBUB_FSM.fieldRadiusPx * GRAVITYBUB_FSM.fieldRadiusPx) return 0;
+  if (dx === 0) return 0;
+  return playerX > bubX ? -1 : 1;
+}
+
+// 軌道怪 Orbiton：逼近 approach →（抵軌道半徑）→ 繞行 orbit 三圈 → 前搖 windup 0.7s
+//（定格閃爍 telegraph）→ 突進 dash（鎖定前搖結束當下玩家位置，之後不修正）→
+// 回復 recover → approach。
+export const ORBITON_FSM = {
+  // 繞行三圈：orbitMs × angular ≈ 3×2π（4200 × 0.0045 = 18.9 rad ≈ 3 圈）。
+  orbitMs: 4200,
+  orbitRadiusPx: 120,
+  orbitAngularPerMs: 0.0045,
+  windupMs: 700,
+  dashMs: 550,
+  recoverMs: 900,
+  approachSpeed: 90,
+  dashSpeed: 360,
+} as const;
+
+export type OrbitonState = 'approach' | 'orbit' | 'windup' | 'dash' | 'recover';
+
+export interface OrbitonTick {
+  state: OrbitonState;
+  stateMs: number;
+  entered: OrbitonState | null;
+}
+
+export function tickOrbiton(
+  state: OrbitonState,
+  stateMs: number,
+  deltaMs: number,
+  nearOrbit: boolean,
+): OrbitonTick {
+  const next = stateMs + deltaMs;
+  if (state === 'approach' && nearOrbit) return { state: 'orbit', stateMs: 0, entered: 'orbit' };
+  if (state === 'orbit' && next >= ORBITON_FSM.orbitMs)
+    return { state: 'windup', stateMs: 0, entered: 'windup' };
+  if (state === 'windup' && next >= ORBITON_FSM.windupMs)
+    return { state: 'dash', stateMs: 0, entered: 'dash' };
+  if (state === 'dash' && next >= ORBITON_FSM.dashMs)
+    return { state: 'recover', stateMs: 0, entered: 'recover' };
+  if (state === 'recover' && next >= ORBITON_FSM.recoverMs)
+    return { state: 'approach', stateMs: 0, entered: 'approach' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 裂隙怪 Riftling：緩飄 idle → 裂縫預告 rift 0.7s（目的地裂縫 telegraph，讀裂縫即預判）→
+// 瞬移 blink（單幀事件態：跳至裂縫點）→ 冷卻 cool → idle。
+export const RIFTLING_FSM = {
+  idleMs: 1600,
+  riftMs: 700,
+  coolMs: 1100,
+  driftSpeed: 30,
+  // 單次瞬移步長上限（朝玩家方向夾限）。
+  blinkRangePx: 150,
+} as const;
+
+export type RiftlingState = 'idle' | 'rift' | 'blink' | 'cool';
+
+export interface RiftlingTick {
+  state: RiftlingState;
+  stateMs: number;
+  entered: RiftlingState | null;
+}
+
+export function tickRiftling(state: RiftlingState, stateMs: number, deltaMs: number): RiftlingTick {
+  const next = stateMs + deltaMs;
+  if (state === 'idle' && next >= RIFTLING_FSM.idleMs)
+    return { state: 'rift', stateMs: 0, entered: 'rift' };
+  if (state === 'rift' && next >= RIFTLING_FSM.riftMs)
+    return { state: 'blink', stateMs: 0, entered: 'blink' };
+  // blink 為單幀事件態：呈現層瞬移後即入冷卻（沿 boomy throw 慣例）。
+  if (state === 'blink') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= RIFTLING_FSM.coolMs)
+    return { state: 'idle', stateMs: 0, entered: 'idle' };
+  return { state, stateMs: next, entered: null };
+}
+
+// 瞬移目的地（純函式）：朝玩家方向、步長夾限 blinkRangePx。
+export function riftlingBlinkX(selfX: number, targetX: number): number {
+  const dx = targetX - selfX;
+  const step = Math.max(-RIFTLING_FSM.blinkRangePx, Math.min(RIFTLING_FSM.blinkRangePx, dx));
+  return selfX + step;
+}
+
+// 小熊市 Bearlet：緩走 waddle → 舉箭前搖 windup 0.65s（telegraph 閃爍）→ 拋下跌箭頭
+// toss（單幀事件態，紅色下跌箭頭拋物墜落——L30 熊市怪前置教學）→ 冷卻 cool → waddle。
+// 不可吸（無星味）；星彈可正常擊殺（HP 4，「清除」反制）。
+export const BEARLET_FSM = {
+  waddleMs: 2400,
+  windupMs: 650,
+  coolMs: 1200,
+  walkSpeed: 48,
+  // 下跌箭頭拋物初速與壽命（逾時必回收 §56）。
+  arrowSpeedX: 120,
+  arrowSpeedY: -260,
+  arrowLifeMs: 2200,
+} as const;
+
+export type BearletState = 'waddle' | 'windup' | 'toss' | 'cool';
+
+export interface BearletTick {
+  state: BearletState;
+  stateMs: number;
+  entered: BearletState | null;
+}
+
+export function tickBearlet(state: BearletState, stateMs: number, deltaMs: number): BearletTick {
+  const next = stateMs + deltaMs;
+  if (state === 'waddle' && next >= BEARLET_FSM.waddleMs)
+    return { state: 'windup', stateMs: 0, entered: 'windup' };
+  if (state === 'windup' && next >= BEARLET_FSM.windupMs)
+    return { state: 'toss', stateMs: 0, entered: 'toss' };
+  if (state === 'toss') return { state: 'cool', stateMs: 0, entered: 'cool' };
+  if (state === 'cool' && next >= BEARLET_FSM.coolMs)
+    return { state: 'waddle', stateMs: 0, entered: 'waddle' };
+  return { state, stateMs: next, entered: null };
+}

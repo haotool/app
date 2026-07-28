@@ -129,6 +129,7 @@ export function createFormSkills(
       star.setData('mix', null);
       star.setData('boomMs', null);
       star.setData('burn', spec.burn);
+      star.setData('prism', spec.prism === true);
       star.setRotation(0);
       star.setData(
         'fxTrail',

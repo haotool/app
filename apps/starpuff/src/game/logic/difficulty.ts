@@ -2,9 +2,11 @@ import { GRAVITY_Y, PLAYER } from '../core/config';
 import type { EnemyKind } from '../core/types';
 import { BOSS } from './bossFsm';
 import type { LevelSpec } from './levels';
+import { GRAVION } from './gravionFsm';
 import { MARIDELLA } from './maridellaFsm';
 import { NOCTRA } from './noctraFsm';
 import { PRISMIX } from './prismixFsm';
+import { REFLECTOR } from './reflectorFsm';
 import { SYRONA } from './syronaFsm';
 import { TARIFFANG } from './tariffangFsm';
 import { VOIDRA } from './voidraFsm';
@@ -121,7 +123,9 @@ export type BossId =
   | 'syrona'
   | 'voidra'
   | 'tariffang'
-  | 'maridella';
+  | 'maridella'
+  | 'reflector'
+  | 'gravion';
 
 export interface BossAuditFacts {
   boss: BossId;
@@ -269,6 +273,50 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     // 潮線水流場＋月蝕暗場。
     arenaMechanics: 2,
   },
+  // §123 星海終局篇 W3：終局章魔王軸接續 L24 遞增（PRD §2：終點 L30 ≤10，
+  // 留 L30 上探空間）——L26 → L28 嚴格遞增。
+  {
+    boss: 'reflector',
+    levelId: 26,
+    maxHp: REFLECTOR.maxHp,
+    bodyW: 160,
+    bodyH: 140,
+    grounded: false,
+    hoverY: 250,
+    // beam／shard／mirror／clone／panorama。
+    attackKinds: 5,
+    minTelegraphMs: Math.min(
+      REFLECTOR.beamTelegraphMs,
+      REFLECTOR.shardTelegraphMs,
+      REFLECTOR.mirrorTelegraphMs,
+      REFLECTOR.cloneTelegraphMs,
+      REFLECTOR.panoramaTelegraphMs,
+    ),
+    multiBody: false,
+    // 鏡面回彈場＋假噗噗分身鏡影。
+    arenaMechanics: 2,
+  },
+  {
+    boss: 'gravion',
+    levelId: 28,
+    maxHp: GRAVION.maxHp,
+    bodyW: 150,
+    bodyH: 140,
+    grounded: false,
+    hoverY: 250,
+    // gswitch／orbshot／orbit／crush／barrage。
+    attackKinds: 5,
+    minTelegraphMs: Math.min(
+      GRAVION.gswitchTelegraphMs,
+      GRAVION.orbshotTelegraphMs,
+      GRAVION.orbitTelegraphMs,
+      GRAVION.crushTelegraphMs,
+      GRAVION.barrageTelegraphMs,
+    ),
+    multiBody: false,
+    // 重力切換力場＋黑洞壓縮（側牆＋星彈彎折）。
+    arenaMechanics: 2,
+  },
 ] as const;
 
 // ===== 變身優勢情境模板（#816 W2，機制 brief §4/§10）=====
@@ -373,6 +421,16 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   scanna: 'ranged',
   foamy: 'ranged',
   manta: 'ranged',
+  // §123 星海終局篇 W3：copypuff/bearlet 恆不可吸（鏡像近逼/拋箭）；prismbee 衝刺
+  //（俯衝系口徑）、riftling 瞬移近逼具突襲性；datamote 聚集障礙、gravitybub 場
+  // 只拉不傷、orbiton 繞行突進均恆可吸。
+  copypuff: 'contact',
+  prismbee: 'ranged',
+  datamote: 'safe',
+  gravitybub: 'safe',
+  orbiton: 'ranged',
+  riftling: 'ranged',
+  bearlet: 'ranged',
 };
 
 const THREAT_WEIGHT = { safe: 0, windowed: 0.4, ranged: 0.7, contact: 1 } as const;

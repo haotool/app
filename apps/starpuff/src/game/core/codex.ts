@@ -18,7 +18,17 @@ export const CODEX_TAB_GRIDS = {
 export const MONSTER_PAGE_SIZE = 12;
 
 export interface CodexMonster {
-  kind: EnemyKind | 'boss' | 'noctra' | 'prismix' | 'syrona' | 'voidra' | 'tariffang' | 'maridella';
+  kind:
+    | EnemyKind
+    | 'boss'
+    | 'noctra'
+    | 'prismix'
+    | 'syrona'
+    | 'voidra'
+    | 'tariffang'
+    | 'maridella'
+    | 'reflector'
+    | 'gravion';
   textureKey: string;
   nameZh: string;
   behavior: string;
@@ -201,6 +211,56 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '低空巡游放扇形水刃——逆流走位反制，吞下得孢子星',
     inhalable: true,
   },
+  // §123 星海終局篇 W3 新怪：L25 鏡界三種＋L27 引力四種。
+  {
+    kind: 'copypuff',
+    textureKey: 'minion-copypuff',
+    nameZh: '複製噗',
+    behavior: '鏡像模仿你的動作，吸入會被彈開——稜化攻擊可短暫破鏡像',
+    inhalable: false,
+  },
+  {
+    kind: 'prismbee',
+    textureKey: 'minion-prismbee',
+    nameZh: '稜蜂',
+    behavior: '正面反射星彈、側面脆弱，死亡射三彩碎片，吞下得流光星（稜化供給）',
+    inhalable: true,
+  },
+  {
+    kind: 'datamote',
+    textureKey: 'minion-datamote',
+    nameZh: '資料塵',
+    behavior: '緩慢聚集成障礙，吞下得流光星（稜化供給）',
+    inhalable: true,
+  },
+  {
+    kind: 'gravitybub',
+    textureKey: 'minion-gravitybub',
+    nameZh: '重力泡',
+    behavior: '週期重力場使你漂移（引力化免疫），吞下得迴旋星（引力化供給）',
+    inhalable: true,
+  },
+  {
+    kind: 'orbiton',
+    textureKey: 'minion-orbiton',
+    nameZh: '軌道怪',
+    behavior: '繞你三圈後突進——讀定格前搖閃避，吞下得迴旋星',
+    inhalable: true,
+  },
+  {
+    kind: 'riftling',
+    textureKey: 'minion-riftling',
+    nameZh: '裂隙怪',
+    behavior: '短距瞬移逼近——裂縫即預告，吞下得迴旋星',
+    inhalable: true,
+  },
+  {
+    kind: 'bearlet',
+    textureKey: 'minion-bearlet',
+    nameZh: '小熊市',
+    behavior: '拋下跌箭頭，吸入會被彈開——跳躍閃避或星彈清除',
+    inhalable: false,
+  },
   {
     kind: 'boss',
     textureKey: 'boss-idle',
@@ -250,6 +310,21 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     textureKey: 'boss-maridella',
     nameZh: '潮汐女王',
     behavior: '潮線改道、海嘯階梯、深海月蝕潮灣魔王',
+    inhalable: false,
+  },
+  // §123 星海終局篇 W3：兩新魔王徽記入鑑。
+  {
+    kind: 'reflector',
+    textureKey: 'boss-reflector',
+    nameZh: '鏡界館長',
+    behavior: '鏡面回彈、假噗噗分身、全景反射鏡塔魔王',
+    inhalable: false,
+  },
+  {
+    kind: 'gravion',
+    textureKey: 'boss-gravion',
+    nameZh: '引力侯爵',
+    behavior: '重力切換、軌道星體、黑洞壓縮引力魔王',
     inhalable: false,
   },
 ] as const;

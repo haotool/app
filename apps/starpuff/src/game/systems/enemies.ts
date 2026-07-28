@@ -8,22 +8,27 @@ import { canInhale } from '../logic/combat';
 import { ENEMY_THREAT } from '../logic/difficulty';
 import { RESCUE_REACH_Y_TOP } from '../logic/levels';
 import {
+  BEARLET_FSM,
   BOOMY_FSM,
   COMETA_FSM,
   FOAMY_FSM,
   FROSTY_FSM,
+  GRAVITYBUB_FSM,
   GUSTY_FSM,
   MANTA_FSM,
   MIRRI_FSM,
+  PRISMBEE_FSM,
   SCANNA_FSM,
   SPLATTA_FSM,
   SPORA_FSM,
+  gravityBubPull,
   gustWindPush,
   resolveBubblaHit,
   resolveDrillyHit,
   resolveFrostySplit,
   resolveMagnoStarHit,
   resolveMirriStarHit,
+  resolvePrismbeeStarHit,
   resolveShellyHit,
   resolveTwinklaHit,
   tickBoomerangBody,
@@ -75,13 +80,24 @@ export interface EnemySystem {
   ): Phaser.Physics.Arcade.Sprite | null;
   kill(enemy: Phaser.GameObjects.GameObject): void;
   // burn（§119/§120）：焰系傷害來源——冰史萊姆被 burn 擊殺熔解不分裂。
-  damage(enemy: Phaser.GameObjects.GameObject, amount: number, burn?: boolean): DamageOutcome;
+  // prism（§123）：稜系傷害來源——複製噗被 prism 命中即破鏡像。
+  damage(
+    enemy: Phaser.GameObjects.GameObject,
+    amount: number,
+    burn?: boolean,
+    prism?: boolean,
+  ): DamageOutcome;
   // 凍結場（§46 凝光星）：域內小怪凍結停擺，期滿自復。
   freeze(enemy: Phaser.GameObjects.GameObject, durationMs: number): void;
   // 孢子緩速（§53 孢子星/毒爆雲）：緩速期水平速度封頂＋週期輕持續傷，期滿自復。
   applySlow(enemy: Phaser.GameObjects.GameObject, slowMs: number, dotDamage: number): void;
-  // 環境力（§52 Gusty 側風）：對玩家的水平位移推移，由 GameScene 逐幀委派。
-  applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number): void;
+  // 環境力（§52 Gusty 側風／§123 Gravitybub 重力場）：對玩家的水平位移推移，
+  // 由 GameScene 逐幀委派；gravityImmune＝引力化抗性（重力場拉移免效）。
+  applyEnvironmentalForces(
+    player: { x: number; y: number },
+    deltaMs: number,
+    gravityImmune?: boolean,
+  ): void;
   removeInhaled(enemy: Phaser.GameObjects.GameObject): void;
   kindOf(enemy: Phaser.GameObjects.GameObject): EnemyKind | null;
   // 個體可吸判定（§30/§47）：kind 規則 + 個體狀態（shelly 暈眩窗、drilly 破土窗）；精英不可吸。
@@ -90,8 +106,9 @@ export interface EnemySystem {
   isPhasedOut(enemy: Phaser.GameObjects.GameObject): boolean;
   // 磁場星彈免傷（§59 magno field）：星彈命中吸附失效；下砸/波及/接觸照常結算。
   isStarImmune(enemy: Phaser.GameObjects.GameObject): boolean;
-  // 鏡面反射（§59 mirri mirror）：星彈命中不結算，由 GameScene 分流生成反射彈。
-  isReflective(enemy: Phaser.GameObjects.GameObject): boolean;
+  // 鏡面反射（§59 mirri mirror／§123 prismbee 正面）：星彈命中不結算，由 GameScene
+  // 分流生成反射彈；fromX 為星彈命中位置（prismbee 面向側判定用，mirri 忽略）。
+  isReflective(enemy: Phaser.GameObjects.GameObject, fromX?: number): boolean;
   reflectStar(x: number, y: number, towardX: number, towardY: number): void;
   getGroup(): Phaser.Physics.Arcade.Group;
   getHazards(): Phaser.Physics.Arcade.Group;
@@ -133,6 +150,13 @@ const FALLBACK_COLORS: Record<EnemyKind, number> = {
   foamy: 0xbfe8f0,
   frosty: 0xcfeeff,
   manta: 0x8ac8e8,
+  copypuff: 0xd8cdeb,
+  prismbee: 0xf0c8e8,
+  datamote: 0xc0d8f0,
+  gravitybub: 0xa890e0,
+  orbiton: 0x8878c8,
+  riftling: 0xb0a0e8,
+  bearlet: 0xc89890,
 };
 
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
@@ -164,6 +188,14 @@ const HP: Record<EnemyKind, number> = {
   foamy: 1,
   frosty: 1,
   manta: 1,
+  // §123：copypuff 兩發標準星（破鏡像窗有意義）、bearlet「清除」反制留一發裕度。
+  copypuff: 6,
+  prismbee: 1,
+  datamote: 1,
+  gravitybub: 1,
+  orbiton: 1,
+  riftling: 1,
+  bearlet: 4,
 };
 
 const POOL_SIZE = 16;
@@ -181,6 +213,11 @@ const NO_GRAVITY_KINDS: readonly EnemyKind[] = [
   'ticketa',
   'scanna',
   'manta',
+  'prismbee',
+  'datamote',
+  'gravitybub',
+  'orbiton',
+  'riftling',
 ];
 // 碰牆自動折返品種。
 const BOUNCE_KINDS: readonly EnemyKind[] = ['spiky', 'shelly', 'boomy', 'mirri', 'cargo', 'frosty'];
@@ -198,6 +235,11 @@ const INITIAL_STATE: Partial<Record<EnemyKind, string>> = {
   scanna: 'scan',
   foamy: 'idle',
   manta: 'cruise',
+  copypuff: 'mimic',
+  prismbee: 'hover',
+  orbiton: 'approach',
+  riftling: 'idle',
+  bearlet: 'waddle',
 };
 // puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）。
 const SPIKE_TEX = 'hazard-spike';
@@ -527,6 +569,38 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(vx, vy);
   }
 
+  // 三彩碎片（§123 prismbee 死亡）：面向側扇形三發彩色稜片，壽命有界逾時必回收（§56）。
+  function burstPrismShards(x: number, y: number, directionX: 1 | -1): void {
+    playSfx('break', 0.9);
+    const tints = [0xff9ec4, 0xffd966, 0xb09ae8] as const;
+    const fan = [-PRISMBEE_FSM.shardFanVy, 0, PRISMBEE_FSM.shardFanVy] as const;
+    for (let i = 0; i < fan.length; i += 1) {
+      const shard = spawnHazard(x, y, 'prismshard', PRISMBEE_FSM.shardLifeMs);
+      if (!shard) continue;
+      shard.setTexture('fx-star').setVisible(true);
+      shard.setDisplaySize(14, 14);
+      shard.setTint(tints[i] ?? 0xffffff);
+      const body = shard.body as Phaser.Physics.Arcade.Body;
+      body.setSize(12, 12);
+      body.setVelocity(directionX * PRISMBEE_FSM.shardSpeed, fan[i] ?? 0);
+    }
+  }
+
+  // 下跌箭頭（§123 bearlet，L30 熊市怪前置教學）：紅色下跌箭頭拋物墜落，
+  // 落地即散；壽命有界逾時必回收（§56）。
+  function spawnCrashArrow(x: number, y: number, directionX: 1 | -1): void {
+    const arrow = spawnHazard(x, y, 'crasharrow', BEARLET_FSM.arrowLifeMs);
+    if (!arrow) return;
+    arrow.setTexture(SPIKE_TEX).setVisible(true);
+    arrow.setDisplaySize(16, 16);
+    arrow.setTint(0xe86a5a);
+    arrow.setRotation(directionX > 0 ? Math.PI * 0.75 : -Math.PI * 0.75);
+    const body = arrow.body as Phaser.Physics.Arcade.Body;
+    body.setSize(12, 12);
+    body.setAllowGravity(true);
+    body.setVelocity(BEARLET_FSM.arrowSpeedX * directionX, BEARLET_FSM.arrowSpeedY);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -620,10 +694,26 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     spawnScanBeam,
     spawnBubble,
     spawnWaterBlade,
+    spawnCrashArrow,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
       burstSpikes(x, y);
+    },
+    // §123 datamote 聚攏：最近同類（排除自身位置重合個體）；群組由本模組持有。
+    nearestKind(kind, fromX, fromY) {
+      let best: { x: number; y: number } | null = null;
+      let bestDist = Infinity;
+      for (const child of group.getChildren()) {
+        if (!child.active || kindOf(child) !== kind) continue;
+        const sprite = child as Phaser.Physics.Arcade.Sprite;
+        const dist = (sprite.x - fromX) ** 2 + (sprite.y - fromY) ** 2;
+        if (dist > 0 && dist < bestDist) {
+          bestDist = dist;
+          best = { x: sprite.x, y: sprite.y };
+        }
+      }
+      return best;
     },
   };
 
@@ -674,6 +764,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('mini', false);
     // magno（§59）：磁場相位鏡像供 GameScene 吸偏星彈與星彈免傷判定。
     sprite.setData('magnoPhase', kind === 'magno' ? 'idle' : undefined);
+    // §123 池重用重設：重力泡相位鏡像、複製噗鏡像錨、裂隙怪目的地、軌道怪相位角。
+    sprite.setData('bubPhase', kind === 'gravitybub' ? 'idle' : undefined);
+    sprite.setData('lastTargetX', undefined);
+    sprite.setData('blinkX', undefined);
+    sprite.setData('orbitAngle', undefined);
     sprite.setData('stateMs', 0);
     // gusty（§52）：航高鎖存供俯衝後回升。
     sprite.setData('baseY', y);
@@ -742,10 +837,12 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
 
   // 星彈與波及共用傷害入口：扣點未死白閃，歸零致死；puffy 死於星彈時爆刺。
   // 抽為內部函式供孢子持續傷（§53）於 update 迴圈共用同一結算管線。
+  // prism（§123 稜化破鏡像）：稜系傷害來源標記——複製噗被 prism 命中即入 broken 窗。
   function damage(
     enemy: Phaser.GameObjects.GameObject,
     amount: number,
     burn = false,
+    prism = false,
   ): DamageOutcome {
     const kind = kindOf(enemy);
     if (!kind) return 'ignored';
@@ -789,12 +886,22 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     if (hp > 0) {
       sprite.setData('hp', hp);
       flashWhite(sprite);
+      // 複製噗（§123）：稜化命中未死即破鏡像（行為解除窗，非免傷）。
+      if (kind === 'copypuff' && prism) {
+        sprite.setData('state', 'broken');
+        sprite.setData('stateMs', 0);
+        playSfx('break', 1.1);
+      }
       return 'hurt';
     }
     if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
     // 冰史萊姆（§120）：擊殺分裂；焰系 burn 熔解不分裂（迷你體恆不分裂）。
     if (kind === 'frosty' && resolveFrostySplit(burn, sprite.getData('mini') === true)) {
       splitFrosty(sprite);
+    }
+    // 稜蜂（§123）：死亡射三彩碎片（面向側扇形）；吸入回收不經此路徑。
+    if (kind === 'prismbee') {
+      burstPrismShards(sprite.x, sprite.y, sprite.flipX ? -1 : 1);
     }
     kill(enemy);
     return 'killed';
@@ -857,18 +964,32 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       sprite.setTint(SLOW_TINT);
     },
 
-    // 側風推移（§52 Gusty）：drift 期近域對玩家水平位移推移（positional drift，
-    // 不與移動速度控制器對抗）；同域多隻不疊加——合力僅取符號方向、恆速推移（KISS）。
-    applyEnvironmentalForces(player: { x: number; y: number }, deltaMs: number) {
+    // 側風推移（§52 Gusty）＋重力場拉移（§123 Gravitybub）：對玩家水平 positional
+    // drift（不與移動速度控制器對抗）；同域多隻不疊加——合力僅取符號方向、恆速推移
+    //（KISS）。gravityImmune（§119 引力化抗性）：重力場拉移對引力化免效，側風照常。
+    applyEnvironmentalForces(
+      player: { x: number; y: number },
+      deltaMs: number,
+      gravityImmune = false,
+    ) {
       let push = 0;
+      let pull = 0;
       for (const child of group.getChildren()) {
-        if (!child.active || kindOf(child) !== 'gusty') continue;
-        if (child.getData('state') !== 'drift') continue;
-        const gusty = child as Phaser.Physics.Arcade.Sprite;
-        push += gustWindPush(player.x, player.y, gusty.x, gusty.y);
+        if (!child.active) continue;
+        const kind = kindOf(child);
+        const sprite = child as Phaser.Physics.Arcade.Sprite;
+        if (kind === 'gusty' && child.getData('state') === 'drift') {
+          push += gustWindPush(player.x, player.y, sprite.x, sprite.y);
+        } else if (kind === 'gravitybub' && child.getData('bubPhase') === 'field') {
+          pull += gravityBubPull(player.x, player.y, sprite.x, sprite.y);
+        }
       }
-      if (push === 0) return;
-      player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
+      if (push !== 0) {
+        player.x += Math.sign(push) * GUSTY_FSM.windDriftPxPerSec * (deltaMs / 1000);
+      }
+      if (pull !== 0 && !gravityImmune) {
+        player.x += Math.sign(pull) * GRAVITYBUB_FSM.pullPxPerSec * (deltaMs / 1000);
+      }
     },
 
     // 個體可吸判定（§30/§47/§73/§80）：kind 規則疊加個體狀態暴露窗；精英（§48）一律不可吸。
@@ -898,10 +1019,19 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       return resolveMagnoStarHit(enemy.getData('magnoPhase') as MagnoPhase) === 'immune';
     },
 
-    // 鏡面反射（§59）：僅 mirri mirror 態；反射彈生成由 GameScene 於星彈 overlap 呼叫。
-    isReflective(enemy: Phaser.GameObjects.GameObject): boolean {
-      if (kindOf(enemy) !== 'mirri') return false;
-      return resolveMirriStarHit(enemy.getData('state') as MirriState) === 'reflect';
+    // 鏡面反射（§59 mirri／§123 prismbee）：mirri 僅 mirror 態；prismbee 正面（面向側
+    // 來彈）恆反射、側背面脆弱——側擊即反制（anti-softlock：非全向免傷）。
+    isReflective(enemy: Phaser.GameObjects.GameObject, fromX?: number): boolean {
+      const kind = kindOf(enemy);
+      if (kind === 'mirri') {
+        return resolveMirriStarHit(enemy.getData('state') as MirriState) === 'reflect';
+      }
+      if (kind === 'prismbee' && fromX !== undefined) {
+        const sprite = enemy as Phaser.Physics.Arcade.Sprite;
+        const facing = sprite.flipX ? -1 : 1;
+        return resolvePrismbeeStarHit(facing, fromX - sprite.x) === 'reflect';
+      }
+      return false;
     },
 
     reflectStar,
@@ -1033,6 +1163,19 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         } else if (hazard.getData('hazardKind') === 'comettail') {
           // 彗尾段（§80）：沿壽命漸隱（與孢子雲/糖斑淡出語彙一致）。
           hazard.setAlpha(Math.min(0.85, (lifeMs / COMETA_FSM.tailLifeMs) * 1.3));
+        } else if (hazard.getData('hazardKind') === 'crasharrow') {
+          // 下跌箭頭（§123）：落地即散（不留滯留區——L30 前置教學僅教語彙）。
+          if (hazard.y >= BLOB_GROUND_Y) {
+            const body = hazard.body as Phaser.Physics.Arcade.Body;
+            body.stop();
+            body.enable = false;
+            hazard.setActive(false).setVisible(false);
+            continue;
+          }
+        } else if (hazard.getData('hazardKind') === 'prismshard') {
+          // 三彩碎片（§123）：沿壽命漸隱＋自旋。
+          hazard.setAlpha(Math.min(0.9, (lifeMs / PRISMBEE_FSM.shardLifeMs) * 1.3));
+          hazard.rotation += deltaMs * 0.01;
         }
       }
     },

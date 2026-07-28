@@ -37,10 +37,17 @@ export const DIRECTIONAL_ENEMY_KINDS = [
   'foamy',
   'frosty',
   'manta',
+  // §123：複製噗鏡像行走、稜蜂正面反射（面向＝反射面）、裂隙怪瞬移後朝向、
+  // 小熊市緩走拋箭——素材皆具左右朝向。
+  'copypuff',
+  'prismbee',
+  'riftling',
+  'bearlet',
 ] as const satisfies readonly EnemyKind[];
 
 // 非方向性素材品種：正面或對稱構圖，flip 無視覺語意（magno／splatta 雖會走動，
-// 但臉部為正面構圖僅持物不對稱；ticketa／scanna 素材對稱，既有 flip 呼叫無害）。
+// 但臉部為正面構圖僅持物不對稱；ticketa／scanna 素材對稱，既有 flip 呼叫無害；
+// §123 datamote 塵粒／gravitybub 圓泡／orbiton 球體皆對稱構圖）。
 export const NON_DIRECTIONAL_ENEMY_KINDS = [
   'jelly',
   'floaty',
@@ -56,6 +63,9 @@ export const NON_DIRECTIONAL_ENEMY_KINDS = [
   'twinkla',
   'ticketa',
   'scanna',
+  'datamote',
+  'gravitybub',
+  'orbiton',
 ] as const satisfies readonly EnemyKind[];
 
 // 完整性守門（型別層）：兩清單聯集必須覆蓋全部 EnemyKind——新增品種未歸類，

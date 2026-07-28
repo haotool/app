@@ -124,19 +124,22 @@ export function wireCombatOverlaps(scene: Phaser.Scene, hooks: CombatOverlapHook
       hooks.player().onStarHit(s, 'absorb');
       return;
     }
-    // 鏡面反射（§59 mirri mirror）：星彈改生成朝玩家的反射彈（反射彈有傷害）。
-    if (hooks.enemies().isReflective(target)) {
-      const mirri = asSprite(enemy);
+    // 鏡面反射（§59 mirri mirror／§123 prismbee 正面）：星彈改生成朝玩家的反射彈
+    //（反射彈有傷害）；prismbee 依命中側判定——側背面照常結算（側擊反制）。
+    if (hooks.enemies().isReflective(target, s.x)) {
+      const reflector = asSprite(enemy);
       const playerSprite = hooks.player().sprite;
-      hooks.enemies().reflectStar(mirri.x, mirri.y, playerSprite.x, playerSprite.y);
+      hooks.enemies().reflectStar(reflector.x, reflector.y, playerSprite.x, playerSprite.y);
       hooks.fx().burstSmall(s.x, s.y, 0xf0f4ff);
       hooks.player().onStarHit(s, 'absorb');
       return;
     }
     const spec = hooks.combat().specOf(s);
     // burn（§119 焰彈）：焰系傷害來源標記——冰史萊姆被 burn 擊殺熔解不分裂（§120）。
+    // prism（§123 稜片）：稜系傷害來源標記——複製噗被 prism 命中即破鏡像。
     const burn = s.getData('burn') === true;
-    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn);
+    const prism = s.getData('prism') === true;
+    const outcome = hooks.enemies().damage(target, hooks.combat().damageOf(s), burn, prism);
     if (outcome === 'ignored') return;
     if (spec.aoeRadiusPx > 0) hooks.combat().explodeStar(s.x, s.y, spec, target, burn);
     // 雷鏈星（§40）：命中後跳電至半徑內最近敵，主目標排除。

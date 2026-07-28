@@ -176,3 +176,5 @@
 | §120 | 星海終局篇六新小怪（W1；#886）                                                       | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
 | §121 | 星海終局篇 L21/L23 走動關與進程（W1；#886）                                          | [`04-levels-world.md`](design/04-levels-world.md)     |
 | §122 | 星海終局篇雙魔王：Tariffang 關稅巨獸（L22）與 Maridella 潮汐女王（L24）（W2；#886）  | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
+| §123 | 星海終局篇 W3：鏡界引力七新小怪與 Reflector／Gravion 雙魔王（W3；#886）              | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
+| §124 | 星海終局篇 L25/L27 走動關與 L26/L28 魔王關（W3；#886）                               | [`04-levels-world.md`](design/04-levels-world.md)     |

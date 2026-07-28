@@ -40,19 +40,19 @@ describe('圖鑑分頁縱向守門（§96 P1-01：任何分頁內容不得超出
     }
   });
 
-  it('成就分頁：當前 25 條收斂 7 欄 4 列（§122 雙新王 +4）、成長至 30 條仍不溢出', () => {
+  it('成就分頁：當前 29 條收斂 8 欄 4 列（§122/§123 四新王 +8）、成長至 34 條仍不溢出', () => {
     const grid = fitBoundedGrid(ACHIEVEMENTS.length, CODEX_TAB_GRIDS.achievements);
-    expect(grid).toEqual({ cols: 7, rows: 4 });
+    expect(grid).toEqual({ cols: 8, rows: 4 });
     expect(gridBottom(grid, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
-    const future = fitBoundedGrid(30, CODEX_TAB_GRIDS.achievements);
+    const future = fitBoundedGrid(34, CODEX_TAB_GRIDS.achievements);
     expect(gridBottom(future, CODEX_TAB_GRIDS.achievements)).toBeLessThanOrEqual(470);
   });
 
-  it('怪物分頁（§104 F-03）：每頁 12 格 6×2 不溢出，29 隻為三頁（§120 六新怪入鑑）', () => {
+  it('怪物分頁（§104 F-03）：每頁 12 格 6×2 不溢出，40 隻為四頁（§120/§123 十三新怪入鑑）', () => {
     const grid = fitBoundedGrid(MONSTER_PAGE_SIZE, CODEX_TAB_GRIDS.monsters);
     expect(grid).toEqual({ cols: 6, rows: 2 });
     expect(gridBottom(grid, CODEX_TAB_GRIDS.monsters)).toBeLessThanOrEqual(470);
-    expect(Math.ceil(CODEX_MONSTERS.length / MONSTER_PAGE_SIZE)).toBe(3);
+    expect(Math.ceil(CODEX_MONSTERS.length / MONSTER_PAGE_SIZE)).toBe(4);
   });
 
   it('技能文案長度守門：詳述 ≤72 字（超長需同步重估 itemH 假設）', () => {

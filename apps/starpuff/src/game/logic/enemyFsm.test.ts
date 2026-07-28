@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { canInhale } from './combat';
+import { PLAYER } from '../core/config';
+import { canInhale, inhaleFlavor } from './combat';
 import { AUDIT_THRESHOLDS } from './difficulty';
 import type { EnemyUpdateContext } from '../systems/enemyUpdates';
 import { TICKETA_SHIFT_TINT, TICKETA_WARN_MS, updateTicketa } from '../systems/finaleEnemies';
@@ -54,6 +55,22 @@ import {
   tickManta,
   tickScanna,
   tickTicketa,
+  BEARLET_FSM,
+  COPYPUFF_FSM,
+  GRAVITYBUB_FSM,
+  ORBITON_FSM,
+  PRISMBEE_FSM,
+  RIFTLING_FSM,
+  copypuffMirrorDx,
+  gravityBubPull,
+  resolvePrismbeeStarHit,
+  riftlingBlinkX,
+  tickBearlet,
+  tickCopypuff,
+  tickGravitybub,
+  tickOrbiton,
+  tickPrismbee,
+  tickRiftling,
 } from './enemyFsm';
 
 // zzfx 於 import 期建 AudioContext（node 無此 API）；沿 finaleEnemies.test.ts 慣例替換。
@@ -670,5 +687,127 @@ describe('§120 星海終局篇新怪 FSM', () => {
     expect(FOAMY_FSM.bubbleLiftVy).toBeLessThan(0);
     expect(FOAMY_FSM.bubbleRiseVy).toBeLessThan(0);
     expect(FOAMY_FSM.bubbleLifeMs).toBeGreaterThan(0);
+  });
+});
+
+describe('§123 星海終局篇 W3 新怪 FSM', () => {
+  it('telegraph 紅線：prismbee/gravitybub/orbiton/riftling/bearlet 可讀前搖窗一律 ≥ telegraphMinMs', () => {
+    expect(PRISMBEE_FSM.aimMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(GRAVITYBUB_FSM.windupMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(ORBITON_FSM.windupMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(RIFTLING_FSM.riftMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(BEARLET_FSM.windupMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+  });
+
+  it('tickCopypuff：mimic 常駐；broken 期滿回 mimic（破鏡像窗有界）', () => {
+    expect(tickCopypuff('mimic', 5000, 16).state).toBe('mimic');
+    expect(tickCopypuff('broken', COPYPUFF_FSM.brokenMs - 1, 1)).toEqual({
+      state: 'mimic',
+      stateMs: 0,
+      entered: 'mimic',
+    });
+    expect(tickCopypuff('broken', 0, 16).state).toBe('broken');
+  });
+
+  it('copypuffMirrorDx：玩家位移取反向 × 倍率、單幀夾限防瞬移', () => {
+    expect(copypuffMirrorDx(4)).toBeCloseTo(-3.6, 5);
+    expect(copypuffMirrorDx(-4)).toBeCloseTo(3.6, 5);
+    expect(copypuffMirrorDx(0)).toBe(0);
+    // 大位移（暫停恢復/瞬移）夾限至單幀上限。
+    expect(copypuffMirrorDx(500)).toBe(-COPYPUFF_FSM.maxMirrorPxPerFrame);
+    expect(copypuffMirrorDx(-500)).toBe(COPYPUFF_FSM.maxMirrorPxPerFrame);
+  });
+
+  it('tickPrismbee：hover→aim→dart→cool→hover 完整循環', () => {
+    expect(tickPrismbee('hover', PRISMBEE_FSM.hoverMs - 1, 1).state).toBe('aim');
+    expect(tickPrismbee('aim', PRISMBEE_FSM.aimMs - 1, 1).state).toBe('dart');
+    expect(tickPrismbee('dart', PRISMBEE_FSM.dartMs - 1, 1).state).toBe('cool');
+    expect(tickPrismbee('cool', PRISMBEE_FSM.coolMs - 1, 1).state).toBe('hover');
+  });
+
+  it('resolvePrismbeeStarHit：正面（面向側來彈）反射、側背面脆弱（側擊反制）', () => {
+    // 面向右（facing 1）：右側來彈反射、左側來彈正常結算。
+    expect(resolvePrismbeeStarHit(1, 40)).toBe('reflect');
+    expect(resolvePrismbeeStarHit(1, -40)).toBe('vulnerable');
+    expect(resolvePrismbeeStarHit(-1, -40)).toBe('reflect');
+    expect(resolvePrismbeeStarHit(-1, 40)).toBe('vulnerable');
+    // 重合（dx=0）視為非正面：正常結算（anti-softlock 保守向）。
+    expect(resolvePrismbeeStarHit(1, 0)).toBe('vulnerable');
+  });
+
+  it('tickGravitybub：idle→windup（進度 0..1）→field→idle 單計時器循環（沿 magno 模式）', () => {
+    expect(tickGravitybub(0, 16).phase).toBe('idle');
+    const windup = tickGravitybub(GRAVITYBUB_FSM.idleMs, 16);
+    expect(windup.phase).toBe('windup');
+    expect(windup.progress).toBeGreaterThan(0);
+    const field = tickGravitybub(GRAVITYBUB_FSM.idleMs + GRAVITYBUB_FSM.windupMs, 16);
+    expect(field.phase).toBe('field');
+    const total = GRAVITYBUB_FSM.idleMs + GRAVITYBUB_FSM.windupMs + GRAVITYBUB_FSM.fieldMs;
+    expect(tickGravitybub(total - 1, 1).phase).toBe('idle');
+  });
+
+  it('gravityBubPull：域內拉向泡、域外為 0；拉力恆低於玩家全速（交叉不變式 16）', () => {
+    expect(gravityBubPull(300, 100, 200, 100)).toBe(-1);
+    expect(gravityBubPull(100, 100, 200, 100)).toBe(1);
+    expect(gravityBubPull(200 + GRAVITYBUB_FSM.fieldRadiusPx + 10, 100, 200, 100)).toBe(0);
+    expect(gravityBubPull(200, 100, 200, 100)).toBe(0);
+    expect(GRAVITYBUB_FSM.pullPxPerSec).toBeLessThan(PLAYER.moveSpeed);
+  });
+
+  it('tickOrbiton：approach→（抵軌）→orbit 三圈→windup→dash→recover→approach', () => {
+    expect(tickOrbiton('approach', 500, 16, false).state).toBe('approach');
+    expect(tickOrbiton('approach', 500, 16, true)).toEqual({
+      state: 'orbit',
+      stateMs: 0,
+      entered: 'orbit',
+    });
+    expect(tickOrbiton('orbit', ORBITON_FSM.orbitMs - 1, 1, true).state).toBe('windup');
+    expect(tickOrbiton('windup', ORBITON_FSM.windupMs - 1, 1, true).state).toBe('dash');
+    expect(tickOrbiton('dash', ORBITON_FSM.dashMs - 1, 1, false).state).toBe('recover');
+    expect(tickOrbiton('recover', ORBITON_FSM.recoverMs - 1, 1, false).state).toBe('approach');
+    // 繞行三圈幾何：orbitMs × angular ≈ 3×2π（±5% 容差）。
+    const totalRad = ORBITON_FSM.orbitMs * ORBITON_FSM.orbitAngularPerMs;
+    expect(totalRad).toBeGreaterThanOrEqual(Math.PI * 6 * 0.95);
+    expect(totalRad).toBeLessThanOrEqual(Math.PI * 6 * 1.05);
+  });
+
+  it('tickRiftling：idle→rift（裂縫預告）→blink（單幀事件態）→cool→idle', () => {
+    expect(tickRiftling('idle', RIFTLING_FSM.idleMs - 1, 1).state).toBe('rift');
+    expect(tickRiftling('rift', RIFTLING_FSM.riftMs - 1, 1).state).toBe('blink');
+    const afterBlink = tickRiftling('blink', 0, 16);
+    expect(afterBlink.state).toBe('cool');
+    expect(afterBlink.entered).toBe('cool');
+    expect(tickRiftling('cool', RIFTLING_FSM.coolMs - 1, 1).state).toBe('idle');
+  });
+
+  it('riftlingBlinkX：朝玩家方向、步長夾限 blinkRangePx（讀裂縫即預判）', () => {
+    expect(riftlingBlinkX(100, 150)).toBe(150);
+    expect(riftlingBlinkX(100, 1000)).toBe(100 + RIFTLING_FSM.blinkRangePx);
+    expect(riftlingBlinkX(1000, 100)).toBe(1000 - RIFTLING_FSM.blinkRangePx);
+    expect(riftlingBlinkX(100, 100)).toBe(100);
+  });
+
+  it('tickBearlet：waddle→windup→toss（單幀事件態）→cool→waddle；箭頭壽命有界', () => {
+    expect(tickBearlet('waddle', BEARLET_FSM.waddleMs - 1, 1).state).toBe('windup');
+    expect(tickBearlet('windup', BEARLET_FSM.windupMs - 1, 1).state).toBe('toss');
+    expect(tickBearlet('toss', 0, 16).state).toBe('cool');
+    expect(tickBearlet('cool', BEARLET_FSM.coolMs - 1, 1).state).toBe('waddle');
+    // 下跌箭頭逾時必回收（§56）。
+    expect(BEARLET_FSM.arrowLifeMs).toBeGreaterThan(0);
+    expect(BEARLET_FSM.arrowLifeMs).toBeLessThanOrEqual(3000);
+  });
+
+  it('可吸口徑（§123）：prismbee/datamote/gravitybub/orbiton/riftling 恆可吸；copypuff/bearlet 不可吸', () => {
+    for (const kind of ['prismbee', 'datamote', 'gravitybub', 'orbiton', 'riftling'] as const) {
+      expect(canInhale(kind)).toBe(true);
+    }
+    expect(canInhale('copypuff')).toBe(false);
+    expect(canInhale('bearlet')).toBe(false);
+    // 稜化供給＝流光味、引力化供給＝迴旋味（觸發密度契約星味面）。
+    expect(inhaleFlavor('prismbee')).toBe('glowy');
+    expect(inhaleFlavor('datamote')).toBe('glowy');
+    expect(inhaleFlavor('gravitybub')).toBe('boomy');
+    expect(inhaleFlavor('orbiton')).toBe('boomy');
+    expect(inhaleFlavor('riftling')).toBe('boomy');
   });
 });

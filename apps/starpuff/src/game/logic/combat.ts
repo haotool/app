@@ -50,6 +50,8 @@ export function clampAmmo(ammo: number, maxAmmo: number): number {
 // v12 起 twinkla 歸流光味（實體窗）、cometa 歸疾風味（§80 零新味裁決延續）。
 // §120 星海終局篇：cargo 歸重鑽味（焰化供給）、ticketa 歸疾風味、foamy/frosty/manta
 // 歸孢子味（潮化供給）；scanna 不可吸（零新味裁決延續）。
+// §123 星海終局篇 W3：prismbee/datamote 歸流光味（稜化供給）、gravitybub/orbiton/
+// riftling 歸迴旋味（引力化供給）；copypuff/bearlet 不可吸（零新味裁決延續）。
 const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   jelly: 'jelly',
   floaty: 'floaty',
@@ -72,6 +74,11 @@ const INHALE_FLAVORS: Partial<Record<EnemyKind, StarFlavor>> = {
   foamy: 'spora',
   frosty: 'spora',
   manta: 'spora',
+  prismbee: 'glowy',
+  datamote: 'glowy',
+  gravitybub: 'boomy',
+  orbiton: 'boomy',
+  riftling: 'boomy',
 };
 
 export function inhaleFlavor(kind: EnemyKind): StarFlavor | null {

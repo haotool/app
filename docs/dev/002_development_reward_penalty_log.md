@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+330
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+331
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：reward-starpuff-w3-mirror-gravity-ship
+- 原因：星海終局篇 W3 需交付 L25/L27 走動關（稜化/引力化教學位點＋七新小怪）與 L26 Reflector/L28 Gravion 雙魔王（#886），反射/重力機制須自證基礎星彈恆可通關且曲線接續 L23/L24 遞增
+- 解法：小怪 update 進 fieldEnemies 分檔＋兩王 FSM/systems 表驅動（Reflector 開鏡窗星彈恆全額結算、回彈節流上限＋固定射線預告；Gravion 力場零傷害位移），靜態軸 walk 9.2→9.5→9.7/boss 9.4→9.5→9.6、L26 high 67%/L28 high 83%（≥60%）、low 均 0%（<20%）、變身 p50 13.4s/5.3s（≤30s）、1258 案全綠
 
 - 日期：2026-07-28
 - ID：reward-starpuff-w3prep-enemyupdates-split

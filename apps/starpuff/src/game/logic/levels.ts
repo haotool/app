@@ -1701,6 +1701,292 @@ export const LEVELS: readonly LevelSpec[] = [
     anteroomBuffs: ['shield', 'swift'],
     arenaBuff: 'power',
   },
+  // §123 星海終局篇（八區鏡界塔域）——L25 鏡界資料塔：反射（prismbee）×複製體
+  //（copypuff 鏡像模仿）×資料聚集（datamote 障礙）走動關；稜化取得——流光味雙供給
+  //（prismbee/datamote 恆可吸＋glowy/twinkla 舊識），中段形態練習區保證 3 隻資料塵
+  //（聚攏留駐低壓——無攻擊語彙，沿 L23 取證教訓選最低壓品種）。
+  {
+    id: 25,
+    nameZh: '鏡界資料塔',
+    bgKey: 'bg-mirrortower',
+    worldWidth: 4000,
+    killQuota: 15,
+    spawnIntervalMs: 850,
+    maxOnScreen: 6,
+    safeZoneTailPx: 480,
+    // §123 入編：鏡界三新怪同場＋mirri/scanna 鏡性舊識、十種混編；
+    // 恆可吸佔比 0.64（prismbee/datamote/glowy/mirri/jelly/floaty；twinkla 保守不計）。
+    enemyMix: [
+      { kind: 'prismbee', weight: 0.16 },
+      { kind: 'datamote', weight: 0.15 },
+      { kind: 'copypuff', weight: 0.12 },
+      { kind: 'glowy', weight: 0.09 },
+      { kind: 'twinkla', weight: 0.09 },
+      { kind: 'mirri', weight: 0.09 },
+      { kind: 'scanna', weight: 0.08 },
+      { kind: 'jelly', weight: 0.08 },
+      { kind: 'floaty', weight: 0.07 },
+      { kind: 'spiky', weight: 0.07 },
+    ],
+    // 208 鏡台由資料流升柱服務（§72 慣例）；主線地面雙層恆可通行。
+    platforms: [
+      { x: 480, y: 336, w: 150 },
+      { x: 950, y: 208, w: 130 },
+      { x: 1400, y: 336, w: 150 },
+      { x: 1900, y: 272, w: 140 },
+      { x: 2400, y: 336, w: 150 },
+      { x: 2900, y: 208, w: 130 },
+      { x: 3350, y: 300, w: 140 },
+      { x: 3700, y: 336, w: 130 },
+    ],
+    // §29 複合陣：鏡廊迴路——資料流升柱 ×2（週期氣壓柱，208 鏡台服務）＋鏡門折躍
+    //（§66 warp 重用：鏡面傳送語彙）＋移動鏡台 ×2＋單向 ×3＋支線。
+    elements: [
+      { kind: 'updraft', x: 950, topY: 150, w: 96, periodMs: 2800, dutyPct: 0.33 },
+      { kind: 'updraft', x: 2900, topY: 150, w: 96, periodMs: 3000, dutyPct: 0.33 },
+      { kind: 'warp', x: 800, y: 300, pairId: 'mirrorgate' },
+      { kind: 'warp', x: 1900, y: 180, pairId: 'mirrorgate' },
+      { kind: 'oneway', x: 700, y: 320, w: 140 },
+      { kind: 'oneway', x: 1650, y: 320, w: 140 },
+      { kind: 'oneway', x: 3100, y: 336, w: 130 },
+      { kind: 'moving', x: 1150, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'moving', x: 2150, y: 320, w: 120, axis: 'y', range: -48, durationMs: 2200 },
+      { kind: 'spring', x: 360, y: 391 },
+      { kind: 'breakable', x: 1250, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2650, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：鏡界塔專屬道具（B03 素材 prop-mirror-1..4）。
+    decor: [
+      { key: 'prop-mirror-1', x: 380 },
+      { key: 'prop-mirror-2', x: 930 },
+      { key: 'prop-mirror-3', x: 1480 },
+      { key: 'prop-mirror-4', x: 2030 },
+      { key: 'prop-mirror-1', x: 2580 },
+      { key: 'prop-mirror-2', x: 3130 },
+      { key: 'prop-mirror-3', x: 3680 },
+    ],
+    // §24 彩蛋二十五：開局反向走到世界最左緣（回聲彩蛋，與 L1/L21 同型）。
+    easterEggs: [{ trigger: 'reach-x', reward: 'hp-up', maxX: 60 }],
+    // §123 雙精英（全數置於練習區之後）：鏡衛蜂后（掉流光味＝稜化補給）＋
+    // 映像噗長（掉雷鏈味），房距 600 ≥ 門距；練習區前跑道零精英門，
+    // 保障「≤30s 湊齊變身」的觸發密度契約。
+    elites: [
+      {
+        kind: 'prismbee',
+        x: 2300,
+        hp: 20,
+        scale: 1.5,
+        tint: 0xe87ab8,
+        speedMul: 1.3,
+        rewardFlavor: 'glowy',
+      },
+      {
+        kind: 'copypuff',
+        x: 2900,
+        hp: 26,
+        scale: 1.55,
+        tint: 0x9a88d8,
+        speedMul: 1.3,
+        rewardFlavor: 'zappy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 卡點（§67 沿用）：終局章走動關世界寬 4000＋雙精英——中點重生錨落於精英房界外。
+    checkpointX: 1950,
+    hint: '連吞 3 隻流光味怪——地面按 SP 稜化變身',
+    // §119 稜化首教：中段形態練習區保證 3 隻資料塵（流光味 ×3 直達資格），
+    // 位點在首個精英門之前（開放跑道）；資料塵無攻擊——練習區低壓。
+    teaches: ['prism-form'],
+    drillSpawns: [
+      { kind: 'datamote', x: 1620 },
+      { kind: 'datamote', x: 1700 },
+      { kind: 'datamote', x: 1780 },
+    ],
+  },
+  // §123 星海終局篇（八區鏡界塔域）——L26 鏡界聖殿：鏡界館長 Reflector——
+  // 鏡面回彈（固定射線提前顯示）× 假噗噗分身（玩家鏡影）× 全景反射（鏡板折射彈幕）；
+  // 魔王關體系沿用（§69 前室/增益/彩蛋）。
+  {
+    id: 26,
+    nameZh: '鏡界聖殿',
+    bgKey: 'bg-mirrortower',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 2900,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26）＋觸發密度契約（§119）：流光味雙供給 0.55（glowy/datamote）
+    // ——借鏡反打優勢情境的星味供給保證。
+    enemyMix: [
+      { kind: 'glowy', weight: 0.3 },
+      { kind: 'datamote', weight: 0.25 },
+      { kind: 'jelly', weight: 0.25 },
+      { kind: 'floaty', weight: 0.2 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-mirror-1', x: 110 },
+      { key: 'prop-mirror-2', x: 320 },
+      { key: 'prop-mirror-3', x: 540 },
+      { key: 'prop-mirror-4', x: 750 },
+    ],
+    // §24 彩蛋二十六：館長可擊打後 5 秒內首次命中（與 L4/L22 同型）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'heal', windowMs: 5000 }],
+    elites: [],
+    boss: 'reflector',
+    tutorial: false,
+    // §110 魔王驗收：稜化借鏡反打（優勢情境）＋變身。
+    bossApplies: ['prism-form', 'transform'],
+    // 魔王關體系（§69 沿用）：前室 400px＋護盾/星力二選一；P2 高風險位刷疾風靴。
+    anteroomPx: 400,
+    anteroomBuffs: ['shield', 'power'],
+    arenaBuff: 'swift',
+  },
+  // §123 星海終局篇（九區引力深域）——L27 黑洞外環：重力場（gravitybub 漂移）×
+  // 瞬移裂隙（riftling）×軌道突進（orbiton）走動關＋遠景市場黑洞（L29/L30 伏筆，
+  // bearlet 下跌箭頭前置教學）；引力化取得——迴旋味三供給（gravitybub/orbiton/
+  // riftling），中段形態練習區保證 3 隻重力泡（場只拉不傷——練習區低壓）。
+  {
+    id: 27,
+    nameZh: '黑洞外環',
+    bgKey: 'bg-voidring',
+    worldWidth: 4100,
+    killQuota: 15,
+    spawnIntervalMs: 800,
+    maxOnScreen: 6,
+    safeZoneTailPx: 480,
+    // §123 入編：引力三新怪＋bearlet 前置教學、十種混編；
+    // 恆可吸佔比 0.80（bearlet 不可吸、twinkla 保守不計）。
+    enemyMix: [
+      { kind: 'gravitybub', weight: 0.15 },
+      { kind: 'orbiton', weight: 0.14 },
+      { kind: 'riftling', weight: 0.13 },
+      { kind: 'bearlet', weight: 0.1 },
+      { kind: 'twinkla', weight: 0.1 },
+      { kind: 'boomy', weight: 0.09 },
+      { kind: 'cometa', weight: 0.08 },
+      { kind: 'jelly', weight: 0.08 },
+      { kind: 'floaty', weight: 0.07 },
+      { kind: 'zappy', weight: 0.06 },
+    ],
+    // 208 環帶台由引力上升流服務（§72 慣例）；主線地面雙層恆可通行。
+    platforms: [
+      { x: 470, y: 336, w: 150 },
+      { x: 920, y: 208, w: 130 },
+      { x: 1380, y: 336, w: 150 },
+      { x: 1880, y: 272, w: 140 },
+      { x: 2380, y: 336, w: 150 },
+      { x: 2880, y: 208, w: 130 },
+      { x: 3330, y: 300, w: 140 },
+      { x: 3750, y: 336, w: 130 },
+    ],
+    // §29 複合陣：外環軌道——引力上升流 ×2（週期氣壓柱）＋裂隙折躍（§66 warp 重用：
+    // 空間裂縫語彙，與 riftling 瞬移主題呼應）＋移動平台 ×2＋單向＋支線。
+    elements: [
+      { kind: 'updraft', x: 920, topY: 150, w: 96, periodMs: 2800, dutyPct: 0.33 },
+      { kind: 'updraft', x: 2880, topY: 150, w: 96, periodMs: 3000, dutyPct: 0.33 },
+      { kind: 'warp', x: 780, y: 300, pairId: 'riftgate' },
+      { kind: 'warp', x: 1880, y: 180, pairId: 'riftgate' },
+      { kind: 'oneway', x: 680, y: 320, w: 140 },
+      { kind: 'oneway', x: 1620, y: 320, w: 140 },
+      { kind: 'oneway', x: 3080, y: 336, w: 130 },
+      { kind: 'moving', x: 1150, y: 320, w: 120, axis: 'x', range: 150, durationMs: 2400 },
+      { kind: 'moving', x: 2130, y: 320, w: 120, axis: 'x', range: 160, durationMs: 2400 },
+      { kind: 'spring', x: 360, y: 391 },
+      { kind: 'spring', x: 3550, y: 391 },
+      { kind: 'breakable', x: 1280, y: 380, loot: 'ammo' },
+      { kind: 'breakable', x: 2620, y: 380, loot: 'hp' },
+    ],
+    // §55 重用評估：黑洞外環專屬道具（B03 素材 prop-voidring-1..4）。
+    decor: [
+      { key: 'prop-voidring-1', x: 380 },
+      { key: 'prop-voidring-2', x: 940 },
+      { key: 'prop-voidring-3', x: 1500 },
+      { key: 'prop-voidring-4', x: 2060 },
+      { key: 'prop-voidring-1', x: 2620 },
+      { key: 'prop-voidring-2', x: 3180 },
+      { key: 'prop-voidring-3', x: 3740 },
+    ],
+    // §24 彩蛋二十七：浪頂環帶台（y=272）連站 3 次（與 L14/L23 同型）。
+    easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
+    // §123 雙精英（全數置於練習區之後）：軌道統領（掉迴旋味＝引力化補給）＋
+    // 大熊市（掉雷鏈味），房距 600 ≥ 門距；練習區前跑道零精英門。
+    elites: [
+      {
+        kind: 'orbiton',
+        x: 2350,
+        hp: 20,
+        scale: 1.5,
+        tint: 0x6a58b8,
+        speedMul: 1.4,
+        rewardFlavor: 'boomy',
+      },
+      {
+        kind: 'bearlet',
+        x: 2950,
+        hp: 26,
+        scale: 1.6,
+        tint: 0xa86858,
+        speedMul: 1.3,
+        rewardFlavor: 'zappy',
+      },
+    ],
+    boss: null,
+    tutorial: false,
+    // 卡點（§67 沿用）：終局章走動關世界寬 4100＋雙精英——中點重生錨落於精英房界外。
+    checkpointX: 2000,
+    hint: '連吞 3 隻迴旋味怪——地面按 SP 引力化變身',
+    // §119 引力化首教：中段形態練習區保證 3 隻重力泡（迴旋味 ×3 直達資格），
+    // 位點在首個精英門之前（開放跑道）；重力場只拉不傷——練習區低壓。
+    teaches: ['gravity-form'],
+    drillSpawns: [
+      { kind: 'gravitybub', x: 1650 },
+      { kind: 'gravitybub', x: 1730 },
+      { kind: 'gravitybub', x: 1810 },
+    ],
+  },
+  // §123 星海終局篇（九區引力深域）——L28 引力王座：引力侯爵 Gravion——
+  // 重力切換（方向力場＋箭頭預告）× 軌道星體（可破屏障公轉）× 黑洞壓縮（側牆＋
+  // 星彈彎折）；魔王關體系沿用（§69 前室/增益/彩蛋）。
+  {
+    id: 28,
+    nameZh: '引力王座',
+    bgKey: 'bg-voidring',
+    worldWidth: 854,
+    killQuota: 0,
+    spawnIntervalMs: 2800,
+    maxOnScreen: 2,
+    safeZoneTailPx: 0,
+    // 補生全可吸（§26）＋觸發密度契約（§119）：迴旋味雙供給 0.55（boomy/gravitybub）
+    // ——引力化抗性優勢情境的星味供給保證。
+    enemyMix: [
+      { kind: 'boomy', weight: 0.3 },
+      { kind: 'gravitybub', weight: 0.25 },
+      { kind: 'jelly', weight: 0.25 },
+      { kind: 'floaty', weight: 0.2 },
+    ],
+    platforms: [],
+    elements: [],
+    decor: [
+      { key: 'prop-voidring-1', x: 110 },
+      { key: 'prop-voidring-2', x: 320 },
+      { key: 'prop-voidring-3', x: 540 },
+      { key: 'prop-voidring-4', x: 750 },
+    ],
+    // §24 彩蛋二十八：侯爵可擊打後 5 秒內首次命中（與 L4/L26 同型）。
+    easterEggs: [{ trigger: 'crown-early-hit', reward: 'full-magazine', windowMs: 5000 }],
+    elites: [],
+    boss: 'gravion',
+    tutorial: false,
+    // §110 魔王驗收：引力化抗性（優勢情境）＋變身。
+    bossApplies: ['gravity-form', 'transform'],
+    // 魔王關體系（§69 沿用）：前室 400px＋星力/疾風二選一；P2 高風險位刷護盾泡。
+    anteroomPx: 400,
+    anteroomBuffs: ['power', 'swift'],
+    arenaBuff: 'shield',
+  },
 ];
 
 export function getLevel(id: LevelId): LevelSpec {

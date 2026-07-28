@@ -29,42 +29,44 @@ import { WARP } from './warp';
 import { BRICK_SIZE, maxDecorInWindow } from './stageModel';
 
 describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）', () => {
-  it('在編關卡依序為 1-20＋§121/§122 星海終局篇 21-24 且參數對表', () => {
+  it('在編關卡依序為 1-20＋§121/§122/§123 星海終局篇 21-28 且參數對表', () => {
     expect(LEVELS.map((l) => l.id)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28,
     ]);
     expect(LEVELS.map((l) => l.worldWidth)).toEqual([
       2700, 3100, 3500, 854, 3300, 3600, 854, 3400, 3700, 3400, 3700, 854, 3300, 3600, 3800, 854,
-      3400, 3700, 4000, 854, 3800, 854, 3900, 854,
+      3400, 3700, 4000, 854, 3800, 854, 3900, 854, 4000, 854, 4100, 854,
     ]);
     expect(LEVELS.map((l) => l.killQuota)).toEqual([
-      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0, 14, 0, 14, 0,
+      6, 9, 10, 0, 10, 12, 0, 11, 12, 12, 13, 0, 11, 12, 14, 0, 11, 13, 15, 0, 14, 0, 14, 0, 15, 0,
+      15, 0,
     ]);
     expect(LEVELS.map((l) => l.spawnIntervalMs)).toEqual([
       2600, 1800, 1300, 3500, 1500, 1200, 4500, 1400, 1150, 1150, 1100, 3000, 1400, 1250, 1100,
-      3000, 1350, 1200, 1000, 2800, 900, 3000, 850, 2900,
+      3000, 1350, 1200, 1000, 2800, 900, 3000, 850, 2900, 850, 2900, 800, 2800,
     ]);
     expect(LEVELS.map((l) => l.maxOnScreen)).toEqual([
-      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 2, 6, 2,
+      3, 4, 5, 2, 5, 5, 1, 5, 5, 5, 5, 2, 5, 5, 5, 2, 5, 5, 6, 2, 6, 2, 6, 2, 6, 2, 6, 2,
     ]);
     expect(LEVELS.map((l) => l.safeZoneTailPx)).toEqual([
       480, 480, 480, 0, 480, 480, 0, 480, 480, 480, 480, 0, 480, 480, 480, 0, 480, 480, 480, 0, 480,
-      0, 480, 0,
+      0, 480, 0, 480, 0, 480, 0,
     ]);
   });
 
-  it('星核制霸判定（§86）：BOSS_LEVEL_IDS 由 LEVELS 派生；7 王 exCleared 全 true 才成立', () => {
-    expect(BOSS_LEVEL_IDS).toEqual([4, 7, 12, 16, 20, 22, 24]);
+  it('星核制霸判定（§86）：BOSS_LEVEL_IDS 由 LEVELS 派生；9 王 exCleared 全 true 才成立', () => {
+    expect(BOSS_LEVEL_IDS).toEqual([4, 7, 12, 16, 20, 22, 24, 26, 28]);
     let save = createDefaultSave();
     expect(exConquestDone(save)).toBe(false);
-    for (const id of [4, 7, 12, 16, 20, 22] as const) save = recordExClear(save, id);
-    // 差一王不成立（§122 起制霸語意隨 LEVELS 派生自然擴為七王）。
+    for (const id of [4, 7, 12, 16, 20, 22, 24, 26] as const) save = recordExClear(save, id);
+    // 差一王不成立（§122 起制霸語意隨 LEVELS 派生自然擴王）。
     expect(exConquestDone(save)).toBe(false);
-    save = recordExClear(save, 24);
+    save = recordExClear(save, 28);
     expect(exConquestDone(save)).toBe(true);
   });
 
-  it('七魔王品種標記（§54/§68/§74/§82/§122）：L4/L7/L12/L16/L20/L22/L24；教學與提示對表', () => {
+  it('九魔王品種標記（§54/§68/§74/§82/§122/§123）：L4/L7/L12/L16/L20/L22/L24/L26/L28；教學與提示對表', () => {
     expect(LEVELS.map((l) => l.boss)).toEqual([
       null,
       null,
@@ -90,6 +92,10 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       'tariffang',
       null,
       'maridella',
+      null,
+      'reflector',
+      null,
+      'gravion',
     ]);
     expect(LEVELS.map((l) => l.tutorial)).toEqual([
       true,
@@ -104,6 +110,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     expect(getLevel(19).hint).toContain('終試');
     expect(getLevel(21).hint).toContain('焰化');
     expect(getLevel(23).hint).toContain('潮化');
+    expect(getLevel(25).hint).toContain('稜化');
+    expect(getLevel(27).hint).toContain('引力化');
   });
 
   it('L16 魔王關體系（§69 沿用）：前室 400px、護盾/疾風二選一、P2 星力果、幾何留空', () => {
@@ -445,8 +453,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('氣流柱與熱泉噴口（§51/§72/§84/§121）：L5 恆常、L13/L15/L19/L21/L23 週期化；柱頂安全帶 ≥100px', () => {
-    const updraftLevels = [5, 13, 15, 19, 21, 23];
+  it('氣流柱與熱泉噴口（§51/§72/§84/§121/§123）：L5 恆常、L13/L15/L19/L21/L23/L25/L27 週期化；柱頂安全帶 ≥100px', () => {
+    const updraftLevels = [5, 13, 15, 19, 21, 23, 25, 27];
     for (const level of LEVELS) {
       const updrafts = level.elements.filter((element) => element.kind === 'updraft');
       if (!updraftLevels.includes(level.id)) {
@@ -506,10 +514,12 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('getLevel：L22/L24 已入編（§122 W2）、未知 id 擲錯', () => {
+  it('getLevel：L22/L24/L26/L28 已入編（§122 W2／§123 W3）、未知 id 擲錯', () => {
     expect(getLevel(22).boss).toBe('tariffang');
     expect(getLevel(24).boss).toBe('maridella');
-    expect(() => getLevel(25)).toThrow();
+    expect(getLevel(26).boss).toBe('reflector');
+    expect(getLevel(28).boss).toBe('gravion');
+    expect(() => getLevel(29)).toThrow();
     expect(() => getLevel(99 as never)).toThrow();
   });
 
@@ -532,10 +542,11 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     return surfaceTop - 20;
   };
 
-  it('星門折躍不變式（§66/§10.2-3/-15/§84）：僅 L10/L11/L19、必成對、跳入制、精英房互斥', () => {
+  it('星門折躍不變式（§66/§10.2-3/-15/§84/§123）：僅 L10/L11/L19/L25/L27、必成對、跳入制、精英房互斥', () => {
+    const warpLevels = [10, 11, 19, 25, 27];
     for (const level of LEVELS) {
       const warps = level.elements.filter((element) => element.kind === 'warp');
-      if (level.id !== 10 && level.id !== 11 && level.id !== 19) {
+      if (!warpLevels.includes(level.id)) {
         expect(warps).toEqual([]);
         continue;
       }
@@ -578,8 +589,8 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('卡點關中點重生（§67/§84/§121）：僅 L11/L15/L19/L21/L23 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
-    const checkpointLevels = [11, 15, 19, 21, 23];
+  it('卡點關中點重生（§67/§84/§121/§123）：僅 L11/L15/L19/L21/L23/L25/L27 設 checkpointX ≈ 世界中點且落於精英房界外', () => {
+    const checkpointLevels = [11, 15, 19, 21, 23, 25, 27];
     for (const level of LEVELS) {
       if (!checkpointLevels.includes(level.id)) {
         expect(level.checkpointX).toBeUndefined();
@@ -700,6 +711,9 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       // §122 魔王關改用專屬 prop-starport/prop-tidebay 道具條（#857 素材）。
       'bg-starport': '(arena|throne|starport)',
       'bg-tidebay': '(arena|tidebay)',
+      // §123 星海終局篇 W3：鏡界塔專屬 prop-mirror 道具條（#857 B03 素材；
+      // bgKey 取 mirrortower 避讓 L9 既有 bg-mirror 別名）；voidring 走預設派生。
+      'bg-mirrortower': 'mirror',
     };
     for (const level of LEVELS) {
       const theme = decorTheme[level.bgKey] ?? level.bgKey.replace('bg-', '');
@@ -721,13 +735,13 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
     }
   });
 
-  it('nextLevelId 依 LEVELS 在編序推進（§122 W2 補號 21→22→23→24），末關回 null', () => {
+  it('nextLevelId 依 LEVELS 在編序推進（§122/§123 補號 21→…→28），末關回 null', () => {
     for (let i = 0; i + 1 < LEVELS.length; i += 1) {
       expect(nextLevelId(LEVELS[i]?.id as never)).toBe(LEVELS[i + 1]?.id);
     }
     expect(nextLevelId(21)).toBe(22);
-    expect(nextLevelId(22)).toBe(23);
-    expect(nextLevelId(24)).toBeNull();
+    expect(nextLevelId(24)).toBe(25);
+    expect(nextLevelId(28)).toBeNull();
   });
 
   // §119 觸發密度契約：形態引入關的主形態星味須有 ≥2 種供給怪，且形態練習區
@@ -762,6 +776,53 @@ describe('LEVELS 資料（GAME_DESIGN §15/§50/§60/§66/§67/§68/§72/§84）
       expect(drill.x).toBeLessThan(level.worldWidth * 0.65);
     }
   });
+
+  // §123 W3 觸發密度契約：L25 稜化（流光味，新怪 prismbee/datamote）、
+  // L27 引力化（迴旋味，新怪 gravitybub/orbiton/riftling），練習區 3 隻同系居中段。
+  it.each([
+    [25, 'glowy', ['prismbee', 'datamote'], ['prism-form']],
+    [27, 'boomy', ['gravitybub', 'orbiton', 'riftling'], ['gravity-form']],
+  ] as const)(
+    'L%s 形態供給（§123）：%s 味 ≥2 種入編、練習區 3 隻同系居中段',
+    (id, flavor, kinds, teaches) => {
+      const level = getLevel(id);
+      const supplyKinds = level.enemyMix.filter((e) => inhaleFlavor(e.kind) === flavor);
+      expect(supplyKinds.length).toBeGreaterThanOrEqual(2);
+      expect(supplyKinds.map((e) => e.kind)).toEqual(expect.arrayContaining([...kinds]));
+      expect(level.teaches).toEqual(teaches);
+      const drills = level.drillSpawns ?? [];
+      expect(drills).toHaveLength(3);
+      for (const drill of drills) {
+        expect(inhaleFlavor(drill.kind)).toBe(flavor);
+        expect(drill.x).toBeGreaterThan(level.worldWidth * 0.4);
+        expect(drill.x).toBeLessThan(level.worldWidth * 0.65);
+      }
+    },
+  );
+
+  // §123 魔王關體系：前室/增益對表；觸發密度（§119 使用者硬需求）——主形態星味
+  // 為補生主軸（權重 ≥0.5，≤30s 湊齊同系 ×3 的優勢情境星味保證）＋補生全可吸（§26）。
+  it.each([
+    [26, ['shield', 'power'], 'swift', ['prism-form', 'transform'], 'glowy'],
+    [28, ['power', 'swift'], 'shield', ['gravity-form', 'transform'], 'boomy'],
+  ] as const)(
+    '§123 L%s 魔王關體系：前室與增益對表、補生供給 ≥0.5',
+    (id, anteroomBuffs, arenaBuff, bossApplies, flavor) => {
+      const level = getLevel(id);
+      expect(level.anteroomPx).toBe(400);
+      expect(level.anteroomBuffs).toEqual(anteroomBuffs);
+      expect(level.arenaBuff).toBe(arenaBuff);
+      expect(level.platforms).toEqual([]);
+      expect(level.elements).toEqual([]);
+      expect(level.elites).toEqual([]);
+      expect(level.bossApplies).toEqual(bossApplies);
+      const share = level.enemyMix
+        .filter((entry) => inhaleFlavor(entry.kind) === flavor)
+        .reduce((sum, entry) => sum + entry.weight, 0);
+      expect(share).toBeGreaterThanOrEqual(0.5);
+      for (const entry of level.enemyMix) expect(canInhale(entry.kind)).toBe(true);
+    },
+  );
 });
 
 describe('recordKill 配額推進', () => {
@@ -1095,8 +1156,8 @@ describe('MechanicProgressionMatrix 教學矩陣（§110/機制 brief §6.1）',
         seen.add(mechanic);
       }
     }
-    // 13 機制＋§119 焰化/潮化教學位點全數落表（§6.1 矩陣覆蓋）。
-    expect(seen.size).toBe(15);
+    // 13 機制＋§119 焰化/潮化/稜化/引力化教學位點全數落表（§6.1 矩陣覆蓋）。
+    expect(seen.size).toBe(17);
   });
 
   it('關鍵教學位點錨定：L1 吸射、L3 變身＋星暴、各區魔王驗收含 transform', () => {
