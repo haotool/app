@@ -1,4 +1,4 @@
-// 四王動畫組 manifest（GAME_DESIGN §125，#883 分階段載入契約）：本檔只允許被
+// 五王動畫組 manifest（GAME_DESIGN §125/§126，#883 分階段載入契約）：本檔只允許被
 // systems/bossStagecraft.ts 以 dynamic import 載入——條目字面量獨立成 async chunk，
 // 主 bundle 零增量（assets.ts 尾註 +67.88kB 教訓）。載入時機＝魔王關 create 期背景
 // 補載（前室廊道即充分窗口）；缺圖時演出層以 base 立繪降級，不影響行為。
@@ -641,13 +641,174 @@ const GRAVION_ANIM: readonly AssetEntry[] = [
   },
 ];
 
-// 演出鍵組 SSOT：四王共用同一幀結構（idle 2＋entry 4＋三招 4×3＋P2 轉段 6＋
-// P3 轉段 7＋受擊 2＋死亡 6＝39 鍵/王），bossStagecraft 依 kind 前綴取用。
+const LIUDONG_ANIM: readonly AssetEntry[] = [
+  {
+    key: 'boss-liudong-idle-2',
+    url: new URL('../../assets/sprites/boss-liudong-idle-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-idle-3',
+    url: new URL('../../assets/sprites/boss-liudong-idle-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-1',
+    url: new URL('../../assets/sprites/boss-liudong-entry-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-2',
+    url: new URL('../../assets/sprites/boss-liudong-entry-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-3',
+    url: new URL('../../assets/sprites/boss-liudong-entry-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-entry-4',
+    url: new URL('../../assets/sprites/boss-liudong-entry-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move1-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move1-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move1-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move1-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move1-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move2-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move2-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move2-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move2-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move2-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-windup',
+    url: new URL('../../assets/sprites/boss-liudong-move3-windup.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-charge',
+    url: new URL('../../assets/sprites/boss-liudong-move3-charge.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-burst',
+    url: new URL('../../assets/sprites/boss-liudong-move3-burst.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-move3-recover',
+    url: new URL('../../assets/sprites/boss-liudong-move3-recover.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-1',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-2',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-3',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-4',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-5',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p2trans-6',
+    url: new URL('../../assets/sprites/boss-liudong-p2trans-6.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-1',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-2',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-3',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-4',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-5',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-6',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-6.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-p3trans-7',
+    url: new URL('../../assets/sprites/boss-liudong-p3trans-7.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-hit-1',
+    url: new URL('../../assets/sprites/boss-liudong-hit-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-hit-2',
+    url: new URL('../../assets/sprites/boss-liudong-hit-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-1',
+    url: new URL('../../assets/sprites/boss-liudong-death-1.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-2',
+    url: new URL('../../assets/sprites/boss-liudong-death-2.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-3',
+    url: new URL('../../assets/sprites/boss-liudong-death-3.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-4',
+    url: new URL('../../assets/sprites/boss-liudong-death-4.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-5',
+    url: new URL('../../assets/sprites/boss-liudong-death-5.webp', import.meta.url).href,
+  },
+  {
+    key: 'boss-liudong-death-6',
+    url: new URL('../../assets/sprites/boss-liudong-death-6.webp', import.meta.url).href,
+  },
+];
+
+// 演出鍵組 SSOT：五王共用同一幀結構（idle 2＋entry 4＋三招 4×3＋P2 轉段 6＋
+// P3 轉段 7＋受擊 2＋死亡 6＝39 鍵/王）；四王由 bossStagecraft 依 kind 前綴取用、
+// 劉董由 liudongCinematics 消費（§126 專屬演出，載入管線共用本 manifest）。
 export const BOSS_ANIM_ASSETS = {
   tariffang: TARIFFANG_ANIM,
   maridella: MARIDELLA_ANIM,
   reflector: REFLECTOR_ANIM,
   gravion: GRAVION_ANIM,
+  liudong: LIUDONG_ANIM,
 } as const;
 
 export type StagecraftBossKind = keyof typeof BOSS_ANIM_ASSETS;

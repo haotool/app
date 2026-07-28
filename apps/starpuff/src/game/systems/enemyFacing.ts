@@ -43,7 +43,7 @@ export const DIRECTIONAL_ENEMY_KINDS = [
   'prismbee',
   'riftling',
   'bearlet',
-  // §125：牛市怪衝刺朝向、熊市怪緩走拍地——素材皆具左右朝向。
+  // §126：牛市怪衝刺朝向、熊市怪緩走拍地——素材皆具左右朝向。
   'bullrun',
   'bearmarket',
 ] as const satisfies readonly EnemyKind[];

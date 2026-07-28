@@ -286,11 +286,11 @@ describe('sceneEvents 彩蛋/加速票/生死路由（§24/§120/§67）', () =>
     expect(h.spies.onBossDefeated).toHaveBeenCalledTimes(1);
     h.emit(GameEvents.LEVEL_GATE_OPENED, { levelId: 2 });
     expect(h.spies.gateSpawn).toHaveBeenCalledTimes(1);
-    // 無收尾演出關：不觸發（§125）。
+    // 無收尾演出關：不觸發（§126）。
     expect(h.spies.playOutroCinematic).not.toHaveBeenCalled();
   });
 
-  it('LEVEL_GATE_OPENED 收尾演出（§125）：outroCinematic 有值時觸發、門照常生成', () => {
+  it('LEVEL_GATE_OPENED 收尾演出（§126）：outroCinematic 有值時觸發、門照常生成', () => {
     const h = makeHarness({ outroCinematic: 'market-open' });
     h.emit(GameEvents.LEVEL_GATE_OPENED, { levelId: 29 });
     expect(h.spies.gateSpawn).toHaveBeenCalledTimes(1);

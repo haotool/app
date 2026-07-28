@@ -4,9 +4,9 @@ import { SceneKeys, type GameResultData } from '../core/types';
 import { createMenuBackdrop, type BackgroundHandle } from '../systems/background';
 import { addDomButton } from '../systems/hud';
 
-// 星光復甦謝幕（GAME_DESIGN §84/§125）：擊破鏈末魔王後的輕量 credits——
+// 星光復甦謝幕（GAME_DESIGN §84/§126）：擊破鏈末魔王後的輕量 credits——
 // 星核淨化演出＋製作名單逐段浮現，隨時可點擊跳過；播畢/跳過皆接 Result 結算。
-// §125 終章擴充：L30 劉董擊破＝全 30 關通關，謝幕文案升級崩盤終章收官版
+// §126 終章擴充：L30 劉董擊破＝全 30 關通關，謝幕文案升級崩盤終章收官版
 //（沿 v12 慣例零新資產；觸發關號由 GameScene 鏈末判定資料驅動）。
 // KISS：純 tween 序列零新資產（星核以 fx-star 疊金光表現）。
 

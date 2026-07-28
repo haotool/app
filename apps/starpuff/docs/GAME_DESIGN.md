@@ -179,3 +179,5 @@
 | §123 | 星海終局篇 W3：鏡界引力七新小怪與 Reflector／Gravion 雙魔王（W3；#886）              | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
 | §124 | 星海終局篇 L25/L27 走動關與 L26/L28 魔王關（W3；#886）                               | [`04-levels-world.md`](design/04-levels-world.md)     |
 | §125 | 四王動畫演出接關 bossStagecraft（W5；#857 B06 素材）                                 | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
+| §126 | 星海終局篇 W4：牛熊怪與劉董・崩盤之王（L30 最終魔王）（W4；#886）                    | [`03-enemies-bosses.md`](design/03-enemies-bosses.md) |
+| §127 | 星海終局篇 L29 崩盤前夜與 L30 崩盤王座（W4；#886）                                   | [`04-levels-world.md`](design/04-levels-world.md)     |

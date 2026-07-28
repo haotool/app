@@ -66,7 +66,7 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   orbiton: 'minion-orbiton',
   riftling: 'minion-riftling',
   bearlet: 'minion-bearlet',
-  // §125 星海終局篇 W4 牛熊怪（#857 B04 素材已交付）。
+  // §126 星海終局篇 W4 牛熊怪（#857 B04 素材已交付）。
   bullrun: 'minion-bullrun',
   bearmarket: 'minion-bearmarket',
 };
@@ -77,27 +77,16 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
 // assetPlan.test 的 PENDING 三條守門）；未來新佔位鍵入列須顯式過審。
 export const PENDING_TEXTURE_KEYS: readonly string[] = [];
 
-// 幀序鍵展開：`prefix-1..count`（§125 劉董動畫組專用，禁手抄長清單）。
-function frameKeys(prefix: string, count: number): string[] {
-  return Array.from({ length: count }, (_, i) => `${prefix}-${i + 1}`);
-}
-
-// §125 劉董（L30）完整消費鍵組：三形態立繪＋入場/思考/下單/轉段/受擊/死亡幀
-//（liudongCinematics 消費）＋市場 FX（systems/liudong 消費）。全數列入使其
-// scoped 至 L30——boss phase 條目未 scoped 會被每關全載（entriesForLevel 語意）。
+// §126 劉董（L30）主 manifest 消費鍵組：四態立繪（段落錨與思考立繪——高頻
+// 直用不可缺圖）＋市場 FX（systems/liudong 戰鬥判定物材質）。動畫幀組（39 鍵）
+// 走 bossAnimAssets 動態分檔（§125 載入契約——主 bundle 零字面量，缺圖由
+// liudongCinematics setFrame 防衛降級）。全數列入使其 scoped 至 L30——
+// boss phase 條目未 scoped 會被每關全載（entriesForLevel 語意）。
 const LIUDONG_TEXTURE_KEYS: readonly string[] = [
   'boss-liudong',
   'boss-liudong-thinking',
   'boss-liudong-enraged',
   'boss-liudong-doom',
-  'boss-liudong-idle-2',
-  'boss-liudong-idle-3',
-  ...frameKeys('boss-liudong-entry', 4),
-  ...frameKeys('boss-liudong-hit', 2),
-  ...['windup', 'charge', 'burst', 'recover'].map((beat) => `boss-liudong-move1-${beat}`),
-  ...frameKeys('boss-liudong-p2trans', 6),
-  ...frameKeys('boss-liudong-p3trans', 7),
-  ...frameKeys('boss-liudong-death', 6),
   // 市場 FX（PRD §6.4/§6.5）：三市場攻擊／全屏箭頭三批／入金與崩跌演出分層。
   'fx-market-down-arrow',
   'fx-market-arrow-big',
@@ -132,7 +121,7 @@ export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {
   // §123 W3 兩王含 enraged 幀（P2 換裝，#857 B03 素材）。
   reflector: ['boss-reflector', 'boss-reflector-enraged'],
   gravion: ['boss-gravion', 'boss-gravion-enraged'],
-  // §125 W4 最終魔王：完整動畫組（#857 B04/B06 素材）。
+  // §126 W4 最終魔王：完整動畫組（#857 B04/B06 素材）。
   liudong: LIUDONG_TEXTURE_KEYS,
 };
 
@@ -147,7 +136,7 @@ export const BOSS_SUMMON_KINDS: Record<BossKind, readonly EnemyKind[]> = {
   maridella: ['foamy'],
   reflector: [],
   gravion: [],
-  // §125 劉董：P1 三市場召小熊市、P2 牛熊交叉／P3 熊市核心召牛熊怪。
+  // §126 劉董：P1 三市場召小熊市、P2 牛熊交叉／P3 熊市核心召牛熊怪。
   liudong: ['bearlet', 'bullrun', 'bearmarket'],
 };
 
@@ -155,9 +144,10 @@ export const BOSS_SUMMON_KINDS: Record<BossKind, readonly EnemyKind[]> = {
 // （systems/waves.respawnRescue 固定 spora）：兩者皆不出現在 enemyMix，須顯式併入。
 const TIDE_SUBSTITUTE_KINDS: readonly EnemyKind[] = ['jelly', 'spora'];
 
-// 關卡收尾演出消費鍵（§125）：L29 市場開盤倒數的遠景劉董剪影（entry 幀）。
+// 關卡收尾演出消費鍵（§127）：L29 市場開盤倒數的遠景劉董剪影（base 立繪——
+// entry 幀已入 bossAnimAssets 動態分檔，L29 不掛 boss chunk，剪影以 base＋白閃表現）。
 const OUTRO_CINEMATIC_KEYS: Record<'market-open', readonly string[]> = {
-  'market-open': ['boss-liudong-entry-2', 'boss-liudong-entry-3'],
+  'market-open': ['boss-liudong'],
 };
 
 // 主角姿勢貼圖：每關都會用到、不屬任何單一關卡。對應 systems/player.ts 的 Pose 聯集

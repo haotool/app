@@ -12,11 +12,12 @@ import {
 } from '../logic/liudongFsm';
 import { playSfx } from '../audio/sfx';
 import type { BossDamageSource, BossHandle } from './boss';
+import { preloadBossStagecraft } from './bossStagecraft';
 import { ensureFxTextures, spawnTelegraph } from './fx';
 import { createLiudongCinematics } from './liudongCinematics';
 import { getVisualScale } from './visualScale';
 
-// 劉董・崩盤之王呈現層（GAME_DESIGN §125，PRD §6）：與九王共用 BossHandle。
+// 劉董・崩盤之王呈現層（GAME_DESIGN §126，PRD §6）：與九王共用 BossHandle。
 // 地面持機型：西裝黑狗董事長於地面帶緩步持機（approachPoint 逼近錨點，禁座標
 // 直寫），威脅來自三市場攻擊（思考泡泡預告即機制）、全屏下跌箭頭（≥1 通行路線
 // 恆開）、牛熊召喚與 P3 終局招；入場/思考/下單/轉段/死亡演出委派
@@ -28,15 +29,18 @@ import { getVisualScale } from './visualScale';
 const GROUND_TOP = VIEW.height - 80;
 const BODY_W = 170;
 const BODY_H = 150;
-const APPROACH_SPEED = 170;
-// 持機踱步錨：偏場右側緩幅擺動（executive 持機語彙）。
-const PACE_FREQ = 0.0004;
+// 踱步速率與擺幅（TTK 實測回調）：落地持機型以中幅橫移換取 miss 率——
+// 全程可傷但非站樁靶；速率/擺幅壓在「有走位感但不衝撞」帶（idle 窗本體
+// 接觸傷實測為隱形傷害源，降幅回調）。
+const APPROACH_SPEED = 180;
+const PACE_FREQ = 0.0005;
 const PACE_AMP_RATIO = 0.1;
-const PACE_ANCHOR_RATIO = 0.68;
+const PACE_ANCHOR_RATIO = 0.64;
 // 彈體速度。
 const COIN_FALL_SPEED = 230;
-const ARROW_FALL_SPEED_BIG = 200;
-const ARROW_FALL_SPEED_SMALL = 300;
+const ARROW_FALL_SPEED_BIG = 210;
+// 快小箭與慢大箭的速差維持（PRD §6.5 批次語彙），上限壓在反應可解帶。
+const ARROW_FALL_SPEED_SMALL = 260;
 const PIN_DROP_SPEED = 420;
 const NOTICE_FALL_SPEED = 90;
 const CHAIN_SPEED = 190;
@@ -137,6 +141,9 @@ export function createLiudong(
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.82, body.height * 0.88);
 
+  // 動畫組背景補載（§125 載入契約，四王同拍）：createBossKit 於 create 期建構——
+  // 前室廊道即補載窗口；缺圖由 cinematics setFrame 防衛降級（base 立繪）。
+  preloadBossStagecraft(scene, 'liudong');
   const cinematics = createLiudongCinematics(scene, body, {
     bodyW: BODY_W,
     bodyH: BODY_H,
@@ -191,6 +198,18 @@ export function createLiudong(
   // 首見減速倍率（PRD §6.7 首見新招 −15%）。
   const speedMul = (firstSeen: boolean): number => (firstSeen ? LIUDONG.firstSeenSpeedMul : 1);
 
+  // 缺口車道錨定玩家（PRD §6.5「固定保留 ≥1 條可通行路線」的可達性面）：
+  // 玩家當前車道 ±1 內抽選——讀陰影後小步即達；全域隨機缺口在陰影窗 650ms
+  // 內跨不了 3 車道（142px/道 vs 全速 220px/s），實測為不公平死局。
+  const gapLaneNear = (laneCount: number): number => {
+    const laneW = viewW() / laneCount;
+    const playerLane = target
+      ? Phaser.Math.Clamp(Math.floor((target.x - arenaLeft()) / laneW), 0, laneCount - 1)
+      : Math.floor(laneCount / 2);
+    const offset = Math.floor(Math.random() * 3) - 1;
+    return Phaser.Math.Clamp(playerLane + offset, 0, laneCount - 1);
+  };
+
   // ===== 三市場攻擊（PRD §6.4）=====
 
   // 美股・開盤跳水：硬幣落下（落點紅影）＋地面 K 線柱＋開盤鐘震波。
@@ -200,8 +219,8 @@ export function createLiudong(
     playSfx('metal', 1.2);
     scene.cameras.main.flash(150, 255, 240, 200);
     const aimX = target?.x ?? arenaCx();
-    // 硬幣三枚：玩家位置±側offset，紅影先行。
-    for (const [i, offset] of [-90, 0, 90].entries()) {
+    // 硬幣四枚：玩家位置±側 offset，紅影先行。
+    for (const [i, offset] of [-130, -45, 45, 130].entries()) {
       const x = Phaser.Math.Clamp(aimX + offset, arenaLeft() + 40, arenaLeft() + viewW() - 40);
       spawnTelegraph(scene, x, GROUND_TOP - 8, LIUDONG.usstockTelegraphMs);
       delay(LIUDONG.usstockTelegraphMs + i * 140, () => {
@@ -213,9 +232,9 @@ export function createLiudong(
         playSfx('pop', 0.8);
       });
     }
-    // K 線柱：自魔王朝玩家側連升三根（升起後回落）。
+    // K 線柱：自魔王朝玩家側連升四根（升起後回落）。
     const direction = aimX < body.x ? -1 : 1;
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 4; i += 1) {
       const x = body.x + direction * (110 + i * 120);
       spawnTelegraph(scene, x, GROUND_TOP - 8, LIUDONG.usstockTelegraphMs + i * 160);
       delay(LIUDONG.usstockTelegraphMs + i * 160, () => {
@@ -311,8 +330,8 @@ export function createLiudong(
   // 0.8s 警示，PRD 明文）。
   const doTwstock = (firstSeen: boolean) => {
     const mul = speedMul(firstSeen);
-    // 缺口車道（1..4 內側車道；白輪廓為主要可讀訊號、尾數牌價為迷因提示）。
-    const gapLane = 1 + Math.floor(Math.random() * (ARROW_LANES - 2));
+    // 缺口車道（玩家近旁、夾限內側車道；白輪廓為主要可讀訊號、尾數牌價為迷因提示）。
+    const gapLane = Phaser.Math.Clamp(gapLaneNear(ARROW_LANES), 1, ARROW_LANES - 2);
     const laneW = viewW() / ARROW_LANES;
     const gapX = arenaLeft() + laneW * (gapLane + 0.5);
     // 白輪廓缺口標記（0.8s 警示）。
@@ -412,12 +431,15 @@ export function createLiudong(
     for (let batch = 0; batch < Math.min(batches, batchSpecs.length); batch += 1) {
       const spec = batchSpecs[batch];
       if (!spec) continue;
-      const gapLane = Math.floor(Math.random() * ARROW_LANES);
       delay(at, () => {
+        // 缺口逐批取樣（玩家近旁）：批啟動當下錨定、雙車道寬（PRD ≥1 路線的
+        // 超集——單車道 142px 對追打中的走位裕度實測不足）。
+        const gapLane = gapLaneNear(ARROW_LANES);
+        const gapLaneB = Math.min(gapLane + 1, ARROW_LANES - 1);
         if (dying) return;
         playSfx('reveal', 0.7);
         for (let lane = 0; lane < ARROW_LANES; lane += 1) {
-          if (lane === gapLane) continue;
+          if (lane === gapLane || lane === gapLaneB) continue;
           const x = arenaLeft() + laneW * (lane + 0.5);
           // 陰影預警 ≥600ms（PRD 硬規則）。
           spawnTelegraph(scene, x, GROUND_TOP - 8, LIUDONG.arrowShadowMs);
@@ -480,11 +502,11 @@ export function createLiudong(
     });
   };
 
-  // K 線海嘯（P2）：紅 K 線柱波列自一側掃向另一側，留 1 缺口車道。
+  // K 線海嘯（P2）：紅 K 線柱波列自一側掃向另一側，留 1 缺口車道（玩家近旁）。
   const doKlinewave = (firstSeen: boolean) => {
     const laneW = viewW() / ARROW_LANES;
     const fromLeft = (target?.x ?? arenaCx()) > arenaCx();
-    const gapLane = 1 + Math.floor(Math.random() * (ARROW_LANES - 2));
+    const gapLane = Phaser.Math.Clamp(gapLaneNear(ARROW_LANES), 1, ARROW_LANES - 2);
     playSfx('boss-roar', 0.7);
     const kwShock = scene.add
       .image(arenaX(fromLeft ? 0.06 : 0.94), GROUND_TOP - 70, 'fx-market-klinewave-shock')
@@ -562,8 +584,10 @@ export function createLiudong(
   };
 
   // 空頭雷射（P2 遠距）：鎖定玩家高度帶（鎖定後不修正）→ 紅雷射橫貫。
+  // 高度夾限至貼地帶之上（≤GROUND_TOP-70）：站立恆安全——「空頭打不到腳踏
+  // 實地的人」語彙，反制＝雷射期回地面。
   const doShortlaser = (firstSeen: boolean) => {
-    const aimY = Phaser.Math.Clamp(target?.y ?? GROUND_TOP - 30, 140, GROUND_TOP - 20);
+    const aimY = Phaser.Math.Clamp(target?.y ?? GROUND_TOP - 90, 140, GROUND_TOP - 70);
     const aim = scene.add.rectangle(arenaCx(), aimY, viewW(), 3, 0xff6a6a, 0.5).setDepth(8);
     scene.tweens.add({
       targets: aim,
@@ -581,7 +605,7 @@ export function createLiudong(
       laser.setDisplaySize(viewW(), LASER_H).setTint(0xff5a5a).setAlpha(0.9);
       playSfx('zap', 1.3);
       scene.cameras.main.shake(110, 0.004);
-      delay(420 / speedMul(firstSeen), () => {
+      delay(300 / speedMul(firstSeen), () => {
         if (laser.active) {
           scene.tweens.add({
             targets: laser,
@@ -624,10 +648,15 @@ export function createLiudong(
   };
 
   // 末日箭（P3）：全屏箭柱雨兩波；唯一走廊白輪廓恆亮（EX 窄通道，PRD §6.7）。
+  // 走廊錨定玩家近旁（±120px 抖動）：白輪廓自招式起亮、telegraph 900ms 內必可達。
   const doDoomarrow = (narrow: boolean, firstSeen: boolean) => {
     const mul = speedMul(firstSeen);
     const corridorW = narrow ? CORRIDOR_W_NARROW : CORRIDOR_W;
-    const corridorX = arenaLeft() + corridorW / 2 + Math.random() * (viewW() - corridorW);
+    const corridorX = Phaser.Math.Clamp(
+      (target?.x ?? arenaCx()) + (Math.random() - 0.5) * 240,
+      arenaLeft() + corridorW / 2,
+      arenaLeft() + viewW() - corridorW / 2,
+    );
     // 白輪廓走廊：telegraph 起亮、全招式期間常駐（anti-softlock 可讀）。
     const outline = scene.add
       .rectangle(corridorX, VIEW.height / 2, corridorW, VIEW.height, 0xffffff, 0.06)
@@ -857,8 +886,9 @@ export function createLiudong(
           throw new Error(`未知市場：${String(unhandled)}`);
         }
       }
-      // 召對應小怪（P1 節奏供給；cap 2 防堆積）。
-      hooks.summonMinion(MARKET_MINION[market], 2);
+      // 召對應小怪（PRD §6.6 P1）：cap 1——小熊市為常駐威脅非補給
+      //（不可吸），cap 2 實測形成常駐敵獵把玩家圍進前室走廊。
+      hooks.summonMinion(MARKET_MINION[market], 1);
     });
   };
 
@@ -982,7 +1012,7 @@ export function createLiudong(
       playSfx('break', 1.2);
       scene.cameras.main.flash(180, 255, 90, 90);
     });
-    // 稜化斷單（§125 優勢情境）：prism 星彈命中本體且市場招執行期 → 取消下單。
+    // 稜化斷單（§126 優勢情境）：prism 星彈命中本體且市場招執行期 → 取消下單。
     scene.physics.add.overlap(hooks.playerStars(), body, (a, b) => {
       const star = ((a as unknown) === (body as unknown) ? b : a) as Phaser.Physics.Arcade.Sprite;
       if (!star.active || !active || dying) return;

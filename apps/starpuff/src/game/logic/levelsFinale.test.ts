@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { canInhale, inhaleFlavor } from './combat';
 import { LEVELS, getLevel } from './levels';
 
-// §125 W4 終章關卡專項守門（levels.test.ts 1200 行閘分檔）：L29 崩盤前夜的
+// §127 W4 終章關卡專項守門（levels.test.ts 1200 行閘分檔）：L29 崩盤前夜的
 // 回收機制契約與收尾演出、L30 崩盤王座的魔王關體系與供給契約。
 // 通用不變式（潮汐/流星/折躍/卡點/精英/佈景）仍由 levels.test.ts 全關迴圈涵蓋。
 
-describe('§125 L29 崩盤前夜（混合挑戰走動關）', () => {
+describe('§127 L29 崩盤前夜（混合挑戰走動關）', () => {
   it('十種回收混編零新怪：PRD 主編制七種全數入編、牛熊怪不入走動關', () => {
     const level = getLevel(29);
     const kinds = level.enemyMix.map((e) => e.kind);
@@ -51,7 +51,7 @@ describe('§125 L29 崩盤前夜（混合挑戰走動關）', () => {
   });
 });
 
-describe('§125 L30 崩盤王座（最終魔王關）', () => {
+describe('§127 L30 崩盤王座（最終魔王關）', () => {
   it('魔王關體系：前室與增益對表、幾何留空、七形態通用變身驗收', () => {
     const level = getLevel(30);
     expect(level.boss).toBe('liudong');
@@ -61,16 +61,17 @@ describe('§125 L30 崩盤王座（最終魔王關）', () => {
     expect(level.platforms).toEqual([]);
     expect(level.elements).toEqual([]);
     expect(level.elites).toEqual([]);
-    // 七形態各有優勢情境（§125 對應表）：驗收機制為通用變身。
+    // 七形態各有優勢情境（§126.4 對應表）：驗收機制為通用變身。
     expect(level.bossApplies).toEqual(['transform']);
   });
 
-  it('供給契約：雷味頭部供給 ≥0.35（雷化清熊線）、補生全可吸且恆可吸 ≥0.6', () => {
+  it('供給契約：zappy 列首（補給輪替恆含雷味）且權重 ≥0.2、補生全可吸且恆可吸 ≥0.6', () => {
     const level = getLevel(30);
     const voltShare = level.enemyMix
       .filter((entry) => inhaleFlavor(entry.kind) === 'zappy')
       .reduce((sum, entry) => sum + entry.weight, 0);
-    expect(voltShare).toBeGreaterThanOrEqual(0.35);
+    expect(voltShare).toBeGreaterThanOrEqual(0.2);
+    expect(level.enemyMix[0]?.kind).toBe('zappy');
     for (const entry of level.enemyMix) expect(canInhale(entry.kind)).toBe(true);
     const always = level.enemyMix
       .filter((e) => canInhale(e.kind))

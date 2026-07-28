@@ -9,54 +9,6 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
   // v21-v30 B06 Maridella/Reflector/Gravion 動畫關鍵幀：已於 §125 W5 接關認領
   //（L24/L26/L28 演出層），條目搬入 bossAnimAssets.ts（dynamic import 分檔）。
   // v21-v30 B06 劉董動畫關鍵幀（入場四幀已於 B04 註冊；載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
-  {
-    key: 'boss-liudong-move2-windup',
-    url: new URL('../../assets/sprites/boss-liudong-move2-windup.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move2-charge',
-    url: new URL('../../assets/sprites/boss-liudong-move2-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move2-burst',
-    url: new URL('../../assets/sprites/boss-liudong-move2-burst.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move2-recover',
-    url: new URL('../../assets/sprites/boss-liudong-move2-recover.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move3-windup',
-    url: new URL('../../assets/sprites/boss-liudong-move3-windup.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move3-charge',
-    url: new URL('../../assets/sprites/boss-liudong-move3-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move3-burst',
-    url: new URL('../../assets/sprites/boss-liudong-move3-burst.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move3-recover',
-    url: new URL('../../assets/sprites/boss-liudong-move3-recover.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B06 尾項：volt/gale/shell 變身五幀與全屏箭雨分層（載入時機建議：形態解鎖/L30 延遲，暫沿 Boot 預載）。
   {
     key: 'hero-volt-morph-gather',

@@ -262,7 +262,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '拋下跌箭頭，吸入會被彈開——跳躍閃避或星彈清除',
     inhalable: false,
   },
-  // §125 星海終局篇 W4：牛熊怪入鑑（L30 劉董召喚體）。
+  // §126 星海終局篇 W4：牛熊怪入鑑（L30 劉董召喚體）。
   {
     kind: 'bullrun',
     textureKey: 'minion-bullrun',
@@ -343,7 +343,7 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '重力切換、軌道星體、黑洞壓縮引力魔王',
     inhalable: false,
   },
-  // §125 星海終局篇 W4：最終魔王徽記入鑑。
+  // §126 星海終局篇 W4：最終魔王徽記入鑑。
   {
     kind: 'liudong',
     textureKey: 'boss-liudong',

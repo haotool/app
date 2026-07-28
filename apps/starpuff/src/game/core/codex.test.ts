@@ -9,7 +9,7 @@ import {
 } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部三十三種小怪與十魔王（§120/§123/§125 十五新怪＋§122/§123/§125 五新王入鑑）', () => {
+  it('收錄全部三十三種小怪與十魔王（§120/§123/§126 十五新怪＋§122/§123/§126 五新王入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',

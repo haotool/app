@@ -16,7 +16,7 @@ import {
 } from './achievements';
 import { BOSS_LEVEL_IDS, LEVELS } from './levels';
 
-// §121/§122/§123/§125 星海終局篇：在編關卡 1-30（all-clear 由 LEVELS 派生）。
+// §121/§122/§123/§126 星海終局篇：在編關卡 1-30（all-clear 由 LEVELS 派生）。
 const ALL_IDS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
   28, 29, 30,
@@ -37,7 +37,7 @@ function saveWithAllEggs(): SaveData {
 }
 
 describe('成就資料表（§94 SSOT 不變式）', () => {
-  it('id 唯一、數量 31（§122/§123/§125 五新王首勝＋EX 各 +2）、名稱描述非空', () => {
+  it('id 唯一、數量 31（§122/§123/§126 五新王首勝＋EX 各 +2）、名稱描述非空', () => {
     expect(ACHIEVEMENTS).toHaveLength(31);
     expect(new Set(ACHIEVEMENTS.map((a) => a.id)).size).toBe(ACHIEVEMENTS.length);
     for (const spec of ACHIEVEMENTS) {

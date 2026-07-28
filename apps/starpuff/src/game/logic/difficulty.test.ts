@@ -133,15 +133,17 @@ describe('三軸自動計算（主計畫 §3.1 錨定行重現）', () => {
     expect(voidra.total).toBe(9.2);
   });
 
-  it('非錨定魔王插值落於錨帶內且九王總分嚴格遞增（L4 < … < L24 < L26 < L28）', () => {
+  it('非錨定魔王插值落於錨帶內且十王總分嚴格遞增（L4 < … < L26 < L28 < L30）', () => {
     const totals = BOSS_LEVEL_IDS.map((id) => computeLevelAxes(levelOf(id), LEVELS).total);
     for (let i = 1; i < totals.length; i += 1) {
       expect(totals[i]).toBeGreaterThan(totals[i - 1] ?? 0);
     }
+    // 終點 L30 為全遊戲頂點且 ≤ PRD 上限 10（§126/§126）。
+    expect(totals[totals.length - 1]).toBe(10);
   });
 
-  it('終局章走動關族內曲線（§123）：L23 < L25 < L27 嚴格遞增', () => {
-    const totals = [23, 25, 27].map((id) => computeLevelAxes(levelOf(id), LEVELS).total);
+  it('終局章走動關族內曲線（§123/§126）：L23 < L25 < L27 < L29 嚴格遞增', () => {
+    const totals = [23, 25, 27, 29].map((id) => computeLevelAxes(levelOf(id), LEVELS).total);
     for (let i = 1; i < totals.length; i += 1) {
       expect(totals[i]).toBeGreaterThan(totals[i - 1] ?? 0);
     }
@@ -195,7 +197,7 @@ describe('魔王稽核事實表', () => {
 });
 
 describe('TRANSFORM_ADVANTAGE 變身優勢情境模板（#816 W2）', () => {
-  it('T4 先落 Jellord/Noctra 兩王＋§125 劉董雷化清熊線；王/關對映與稽核事實表一致', () => {
+  it('T4 先落 Jellord/Noctra 兩王＋§126 劉董雷化清熊線；王/關對映與稽核事實表一致', () => {
     expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual(['jellord', 'noctra', 'liudong']);
     for (const spec of TRANSFORM_ADVANTAGE) {
       const facts = BOSS_AUDIT_FACTS.find((f) => f.boss === spec.boss);

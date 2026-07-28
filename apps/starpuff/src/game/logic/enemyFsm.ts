@@ -976,7 +976,7 @@ export function tickBearlet(state: BearletState, stateMs: number, deltaMs: numbe
   return { state, stateMs: next, entered: null };
 }
 
-// 牛市怪 Bull Run（§125，PRD §6.6）：緩走 prowl → 蓄力 charge 0.75s（定身閃爍
+// 牛市怪 Bull Run（§126，PRD §6.6）：緩走 prowl → 蓄力 charge 0.75s（定身閃爍
 // telegraph）→ 衝刺 dash（鎖定方向不修正）→ 撞牆反彈入二次加速 redash（呈現層
 // 翻向增速）→ 回復 recover。反制：跳越衝刺線／星彈命中蓄力期即中斷（雷化鏈電
 // 波及＝群體中斷優勢）／殼化反彈／風化空中迴避。
@@ -1023,7 +1023,7 @@ export function tickBullrun(
   return { state, stateMs: next, entered: null };
 }
 
-// 熊市怪 Bear Market（§125，PRD §6.6）：緩走 prowl → 拍地前搖 slamwind 0.7s
+// 熊市怪 Bear Market（§126，PRD §6.6）：緩走 prowl → 拍地前搖 slamwind 0.7s
 //（telegraph 閃爍）→ 拍地 slam（雙側地面波＋召下跌小箭頭，單幀事件態）→ 冷卻 cool；
 // 低血（≤40%）一次性冬眠 hibernate 1.4s（定身大 telegraph）→ 全場震波 quake
 //（單幀事件態，跳躍迴避）→ 甦醒 wake。反制：跳越波列／雷化鏈電速清／風化越頂／

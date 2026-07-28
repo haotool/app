@@ -80,7 +80,7 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   orbiton: 180,
   riftling: 280,
   bearlet: 330,
-  // §125：牛熊怪地面帶（劉董召喚體，spawn 管線統一供給）。
+  // §126 牛熊怪：地面帶（劉董召喚體，spawn 管線統一供給）。
   bullrun: 330,
   bearmarket: 330,
 };

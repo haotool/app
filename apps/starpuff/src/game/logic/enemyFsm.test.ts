@@ -816,7 +816,7 @@ describe('§123 星海終局篇 W3 新怪 FSM', () => {
   });
 });
 
-describe('§125 星海終局篇 W4 牛熊怪 FSM', () => {
+describe('§126 星海終局篇 W4 牛熊怪 FSM', () => {
   it('telegraph 紅線：bullrun 蓄力／bearmarket 拍地前搖與冬眠一律 ≥ telegraphMinMs', () => {
     expect(BULLRUN_FSM.chargeMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
     expect(BEARMARKET_FSM.slamwindMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
@@ -864,7 +864,7 @@ describe('§125 星海終局篇 W4 牛熊怪 FSM', () => {
     expect(tickBearmarket('wake', BEARMARKET_FSM.wakeMs - 1, 1, false).state).toBe('prowl');
   });
 
-  it('可吸口徑與波列有界（§125）：牛熊怪均不可吸；震波壽命有界（§56）', () => {
+  it('可吸口徑與波列有界（§126）：牛熊怪均不可吸；震波壽命有界（§56）', () => {
     expect(canInhale('bullrun')).toBe(false);
     expect(canInhale('bearmarket')).toBe(false);
     expect(BEARMARKET_FSM.slamWaveLifeMs).toBeLessThanOrEqual(3000);

@@ -319,7 +319,7 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     // 重力切換力場＋黑洞壓縮（側牆＋星彈彎折）。
     arenaMechanics: 2,
   },
-  // §125 星海終局篇 W4：終局章魔王軸終點——L30 為全遊戲頂點（PRD §2：≤10）。
+  // §126 星海終局篇 W4：終局章魔王軸終點——L30 為全遊戲頂點（PRD §2：≤10）。
   {
     boss: 'liudong',
     levelId: 30,
@@ -380,7 +380,7 @@ export const TRANSFORM_ADVANTAGE: readonly TransformAdvantageSpec[] = [
     supplyFlavor: 'zappy',
     scenarioZh: '雷化斷召線：鏈電命中蓄勢中的 Noctra 立即中斷召喚（§58 interruptSummon）',
   },
-  // §125 劉董（七形態優勢矩陣見 GAME_DESIGN §125；bot 可量測線取雷化）。
+  // §126 劉董（七形態優勢矩陣見 GAME_DESIGN §126；bot 可量測線取雷化）。
   {
     boss: 'liudong',
     levelId: 30,
@@ -472,7 +472,7 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   orbiton: 'ranged',
   riftling: 'ranged',
   bearlet: 'ranged',
-  // §125 星海終局篇 W4：牛市怪衝刺撞擊（俯衝系口徑）、熊市怪拍地波＋召箭具投射。
+  // §126 星海終局篇 W4：牛市怪衝刺撞擊（俯衝系口徑）、熊市怪拍地波＋召箭具投射。
   bullrun: 'contact',
   bearmarket: 'ranged',
 };

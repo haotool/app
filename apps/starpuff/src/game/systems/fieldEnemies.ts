@@ -166,7 +166,7 @@ const RIFTLING_RIFT_TINT = 0xd0b8ff;
 const RIFTLING_COOL_TINT = 0x9a90b8;
 const BEARLET_WINDUP_TINT = 0xffb8a8;
 const ORBITON_WINDUP_TINT = 0xe8d8ff;
-// §125 牛熊怪：蓄力金橘閃爍／拍地紫紅閃爍／冬眠深紫定身。
+// §126 牛熊怪：蓄力金橘閃爍／拍地紫紅閃爍／冬眠深紫定身。
 const BULLRUN_CHARGE_TINT = 0xffd88a;
 const BEARMARKET_WIND_TINT = 0xc8a8e8;
 const BEARMARKET_HIBERNATE_TINT = 0x584878;
@@ -566,9 +566,9 @@ export function updateBearlet(
   sprite.setRotation(Math.sin(tick.stateMs * 0.008) * 0.05);
 }
 
-// ===== §125 星海終局篇 W4：牛熊怪（L30 劉董召喚體，PRD §6.6）=====
+// ===== §126 星海終局篇 W4：牛熊怪（L30 劉董召喚體，PRD §6.6）=====
 
-// 牛市怪（§125）：緩走 → 蓄力閃爍 telegraph → 鎖定衝刺（不修正）→ 撞牆反彈
+// 牛市怪（§126）：緩走 → 蓄力閃爍 telegraph → 鎖定衝刺（不修正）→ 撞牆反彈
 // 二次加速 → 回復。蓄力期受星彈命中即中斷（enemies.damage 結算端）。
 export function updateBullrun(
   ctx: EnemyUpdateContext,
@@ -639,7 +639,7 @@ export function updateBullrun(
   }
 }
 
-// 熊市怪（§125）：緩走 → 拍地前搖閃爍 → 拍地（雙側地面波＋召下跌小箭頭）→ 冷卻；
+// 熊市怪（§126）：緩走 → 拍地前搖閃爍 → 拍地（雙側地面波＋召下跌小箭頭）→ 冷卻；
 // 低血一次性冬眠（深紫定身大 telegraph）→ 全場震波 → 甦醒。
 export function updateBearmarket(
   ctx: EnemyUpdateContext,

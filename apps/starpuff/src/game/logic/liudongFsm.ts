@@ -2,7 +2,7 @@ import type { BossPhase } from '../core/types';
 import { EX_MODS } from './bossFsm';
 import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 
-// 劉董・崩盤之王 Liudong FSM 純邏輯（GAME_DESIGN §125，PRD §6，不 import phaser），
+// 劉董・崩盤之王 Liudong FSM 純邏輯（GAME_DESIGN §126，PRD §6，不 import phaser），
 // vitest 對象。迷因終盤魔王三段（地面持機型）：P1 三市場輪替（思考泡泡圖示輪轉＝
 // 預告即機制，攻擊前奏召對應小怪、1–2s 輸出窗）→ P2 全屏壓力（箭雨/K 線海嘯/
 // 牛熊交叉/轉帳鏈/空頭雷射；每次全屏後有反擊窗、不連續同型全屏）→ P3 終局
@@ -12,8 +12,10 @@ import { distanceBandOf, pickMove, type WeightedMove } from './moveTable';
 // phase truth 全數收斂於此，禁止散落 scene。
 
 export const LIUDONG = {
-  // 魔王 HP 階梯（終局章接續 §123 遞增）：Gravion 124 → Liudong 132（全遊戲頂點）。
-  maxHp: 132,
+  // 魔王 HP 階梯（終局章接續 §123 遞增）：Gravion 124 → Liudong 148（全遊戲頂點；
+  // 落地持機型全程可傷，血池補償 free-hit 面——156 實測 high bot 攻堅不達 P3、
+  // 132 實測 26.7s 融化，公平性修正（雙車道缺口/雷射貼地豁免）後收斂 148）。
+  maxHp: 148,
   bodyDamage: 1,
   // 階段轉換閾值（PRD §6.6）：P2 ≤70%、P3 ≤35%。
   p2HpRatio: 0.7,
@@ -21,9 +23,12 @@ export const LIUDONG = {
   enrageSpeedMultiplier: 1.15,
   // 補給節奏（§26 飢荒保證律）：每損 10 HP 掉補給小怪。
   minionSpawnHpStep: 10,
-  // 最後轉帳（P3 一次性）：HP 閾值與黑洞牽引窗。
-  finalTransferHpRatio: 0.12,
-  // 輸出窗（PRD P1 1–2s；僵直窗固定不隨狂暴縮短，§74 慣例）。
+  // 最後轉帳（P3 一次性）：HP 閾值與黑洞牽引窗（18%——低於此值脆弱窗融血
+  // 會使終盤演出不可達，實測回調）。
+  finalTransferHpRatio: 0.18,
+  // 輸出窗（PRD P1 1–2s 上緣；僵直窗固定不隨狂暴縮短，§74 慣例）——
+  // 1600/1400/1300 實測把 high bot 壓進永久防禦態（射速 3.1→1.5 發/s、
+  // 輸出崩潰 0% 通關），輸出窗與攻擊密度必須成對平衡。
   idleMs: { p1: 1900, p2: 1600, p3: 1500, p4: 1500 },
   // 全屏招後反擊窗延長（PRD §6.6 P2「每次全屏後有反擊窗」）。
   fullscreenRecoverBonusMs: 900,
@@ -64,9 +69,9 @@ export const LIUDONG = {
   liquidationTelegraphMs: 700,
   circuitbreakerTelegraphMs: 800,
   finaltransferTelegraphMs: 1000,
-  // 熔斷倒數（P3）：倒數撐過後接長脆弱窗（受擊 ×2）。
+  // 熔斷倒數（P3）：倒數撐過後接長脆弱窗（受擊 ×2；窗長實測回調防融血跳段）。
   circuitbreakerCountdownMs: 3600,
-  circuitbreakerVulnerableMs: 3400,
+  circuitbreakerVulnerableMs: 2600,
   // 最後轉帳：黑洞牽引窗撐過後反噬（自傷）＋長脆弱窗。
   finaltransferHoldMs: 4200,
   finaltransferRecoilDamage: 6,
@@ -508,7 +513,7 @@ export function createLiudongFsm(options: LiudongFsmOptions = {}): LiudongFsm {
       }
     },
     tryInterruptOrder(): boolean {
-      // 稜化斷單（§125 優勢情境，沿 §58 interruptSummon 同構）：市場招執行期
+      // 稜化斷單（§126 優勢情境，沿 §58 interruptSummon 同構）：市場招執行期
       // 被稜片命中即取消本次下單，回待機輸出窗。
       if (defeated) return false;
       if (state !== 'usstock' && state !== 'crypto' && state !== 'twstock') return false;

@@ -3,7 +3,7 @@ import { LIUDONG, type MarketKind } from '../logic/liudongFsm';
 import { playSfx } from '../audio/sfx';
 import { getVisualScale } from './visualScale';
 
-// 劉董演出模組（GAME_DESIGN §125，PRD §6.2/§6.3）：入金入場序列、思考／下單
+// 劉董演出模組（GAME_DESIGN §126，PRD §6.2/§6.3）：入金入場序列、思考／下單
 // 前奏、轉段與死亡幀序、L29「市場開盤」收尾演出。boss-liudong 資產組幀數遠超
 // 既有魔王——播出邏輯獨立成檔（§106 GameScene strangler 紀律），systems/liudong.ts
 // 只負責攻擊結算。全部演出特效不遮玩家與平台（depth 低於玩家層，PRD §6.2）。
@@ -339,7 +339,7 @@ export function createLiudongCinematics(
   };
 }
 
-// L29 收尾演出（PRD／§125）：「市場即將開盤」大型倒數＋遠景劉董按下入金——
+// L29 收尾演出（PRD／§126）：「市場即將開盤」大型倒數＋遠景劉董按下入金——
 // L30 伏筆。純 overlay 零傷害、不阻操作；星星門正常生成（LEVEL_GATE_OPENED 觸發）。
 const VIGNETTE_COUNT_MS = 700;
 
@@ -349,22 +349,21 @@ export function playMarketOpenVignette(scene: Phaser.Scene): void {
   const cx = cam.scrollX + scene.scale.width / 2;
   const screenCx = scene.scale.width / 2;
   const topY = 96;
-  // 遠景劉董剪影：小尺寸暗色立繪＋掏手機幀切換（資產缺件時靜默略過）。
-  if (scene.textures.exists('boss-liudong-entry-2')) {
+  // 遠景劉董剪影：base 立繪暗色小圖＋按下入金白閃（entry 幀屬 L30 動態分檔，
+  // L29 不掛 boss chunk——剪影語彙以 base＋白閃承擔；資產缺件時靜默略過）。
+  if (scene.textures.exists('boss-liudong')) {
     const silhouette = scene.add
-      .image(cx + scene.scale.width * 0.3, topY + 64, 'boss-liudong-entry-2')
+      .image(cx + scene.scale.width * 0.3, topY + 64, 'boss-liudong')
       .setDisplaySize(64, 58)
       .setTint(0x2a2438)
       .setAlpha(0)
       .setDepth(VIGNETTE_DEPTH);
     scene.tweens.add({ targets: silhouette, alpha: 0.85, duration: 400 });
     scene.time.delayedCall(VIGNETTE_COUNT_MS * 3, () => {
-      if (scene.textures.exists('boss-liudong-entry-3')) {
-        silhouette.setTexture('boss-liudong-entry-3').setDisplaySize(64, 58);
-      }
       cam.flash(160, 255, 255, 255);
       scene.tweens.add({
         targets: silhouette,
+        scale: { from: 1, to: 1.15 },
         alpha: 0,
         delay: 500,
         duration: 400,

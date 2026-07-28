@@ -9,7 +9,7 @@ import {
   type LiudongCommand,
 } from './liudongFsm';
 
-// 劉董・崩盤之王 FSM（GAME_DESIGN §125，PRD §6）：迷因終盤三階段——P1 三市場
+// 劉董・崩盤之王 FSM（GAME_DESIGN §126，PRD §6）：迷因終盤三階段——P1 三市場
 // 輪替（思考下單前奏）、P2 全屏壓力（反擊窗＋不連續同型全屏）、P3 終局（熔斷
 // 倒數脆弱窗＋一次性最後轉帳）；失敗保護層（首見減速/連傷降節奏/EX 質性差分）。
 
@@ -32,10 +32,10 @@ const collectAttacks = (fsm: Fsm, count: number): LiudongCommand[] => {
   return commands;
 };
 
-describe('Liudong 三階段加權表（§125）', () => {
-  it('HP 132 為全魔王頂點（>Gravion 124）；三階段招池對表', () => {
+describe('Liudong 三階段加權表（§126）', () => {
+  it('HP 148 為全魔王頂點（>Gravion 124）；三階段招池對表', () => {
     const fsm = createLiudongFsm();
-    expect(fsm.maxHp).toBe(132);
+    expect(fsm.maxHp).toBe(148);
     expect(LIUDONG.maxHp).toBeGreaterThan(124);
     expect(liudongMoveTable('p1', false).map((m) => m.action)).toEqual([
       'usstock',
@@ -75,17 +75,17 @@ describe('Liudong 三階段加權表（§125）', () => {
 
   it('傷害驅動 P1→P2（≤70%）與 P2→P3（≤35%）；phase 事件依序帶出', () => {
     const fsm = createLiudongFsm();
-    let events = fsm.takeDamage(40);
+    let events = fsm.takeDamage(45);
     expect(fsm.phase).toBe('p2');
     expect(events.some((e) => e.kind === 'phase' && e.phase === 'p2')).toBe(true);
-    events = fsm.takeDamage(47);
+    events = fsm.takeDamage(52);
     expect(fsm.phase).toBe('p3');
     expect(events.some((e) => e.kind === 'phase' && e.phase === 'p3')).toBe(true);
   });
 
   it('擊破：hp 歸零鎖存 defeated，之後 tick 無指令且再受擊無事件（冪等）', () => {
     const fsm = createLiudongFsm();
-    const events = fsm.takeDamage(132);
+    const events = fsm.takeDamage(148);
     expect(events.some((e) => e.kind === 'defeated')).toBe(true);
     expect(fsm.defeated).toBe(true);
     expect(fsm.tick(5000)).toBeNull();
@@ -143,7 +143,7 @@ describe('P1 思考下單系統（PRD §6.3 預告即機制）', () => {
 describe('P2 全屏壓力（PRD §6.6）', () => {
   const toP2 = (seed: number): Fsm => {
     const fsm = createLiudongFsm({ rng: createSeededRng(seed) });
-    fsm.takeDamage(40);
+    fsm.takeDamage(Math.ceil(fsm.maxHp * 0.31));
     return fsm;
   };
 
@@ -298,11 +298,11 @@ describe('可讀性與 EX 差分紅線', () => {
     }
   });
 
-  it('EX 差分：HP ×1.5（198）；脆弱窗與生存窗時長不縮（只增體不縮窗）', () => {
+  it('EX 差分：HP ×1.5（222）；脆弱窗與生存窗時長不縮（只增體不縮窗）', () => {
     const exFsm = createLiudongFsm({ ex: true });
-    expect(exFsm.maxHp).toBe(198);
+    expect(exFsm.maxHp).toBe(222);
     // 生存窗常數不隨 EX 縮放（durationMs 對 circuitbreaker/finaltransfer 固定）。
-    expect(LIUDONG.circuitbreakerVulnerableMs).toBeGreaterThanOrEqual(3000);
+    expect(LIUDONG.circuitbreakerVulnerableMs).toBeGreaterThanOrEqual(2500);
     expect(LIUDONG.finaltransferVulnerableMs).toBeGreaterThanOrEqual(3000);
   });
 });

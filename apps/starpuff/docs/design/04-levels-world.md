@@ -528,3 +528,32 @@ v6 當時的 L1-L4 攻略表已失效（怪物權重、星暴長按觸發、精�
   （PRD §8 門檻 high ≥60%／low <20% 全過）；變身探針首次變身 L25 稜化
   p50 13.4s／p95 49s、L27 引力化 p50 5.3s／p95 7.9s（門檻 p50 ≤30s／p95 ≤60s）；
   console 錯誤 0。
+
+## 127. 星海終局篇 L29 崩盤前夜與 L30 崩盤王座（W4；#886）
+
+- L29 崩盤前夜（十區崩盤終章）：半毀星港交易大廳的混合挑戰走動關——**回收
+  21-28 全章核心機制零新怪**：段1 貨櫃阻路（貨櫃磚 ×2）→ 段2 潮流改向（關卡級
+  潮汐）→ 段3 鏡面假身區（prismbee 帶＋鏡門折躍 §66 重用）→ 段4 黑洞前兆
+  （引力上升流 ×2）＋全關市場隕落（流星雨崩盤語彙）。十種回收混編（PRD 主編制
+  cargo/frosty/prismbee/gravitybub/bearlet/scanna/orbiton ＋ riftling/twinkla/jelly
+  舊識）；權重取向＝威脅分由低 HP 可吸遠程（orbiton/riftling）承擔、高 HP
+  （cargo/scanna）與正面反彈（prismbee）壓低——**潮汐×流星疊加關的擊殺經濟
+  優先**（稜蜂精英為 mid bot 不可解反射牆、208 高台為漲潮期溺水帶，均實測
+  排除）。雙精英＝軌道統領（掉流光味）＋大熊市（掉雷鏈味）；checkpoint 2150；
+  彩蛋 stand-count（272 平台 ×3）。
+- L29 收尾演出（`LevelSpec.outroCinematic: 'market-open'`，L30 伏筆）：星星門
+  開啟同時播「市場即將開盤」大型倒數＋遠景劉董按下入金（entry 幀剪影＋白閃）
+  ——純 overlay 零傷害不阻操作；sceneEvents 資料驅動分派，禁 GameScene 關號
+  分支；演出資產經 assetPlan OUTRO_CINEMATIC_KEYS 併入 L29 載入計畫。
+- L30 崩盤王座：最終魔王關（魔王規格見 §126.2）；魔王關體系沿 §69（前室 400px
+  ＋星力/疾風二選一＋P2 護盾泡）；補生全可吸、zappy 列首（輪替恆含雷味）；
+  彩蛋 crown-early-hit（可擊打後 5s 內首擊，與 L28 同型）。
+- 進程：LevelId 滿編 1-30、十區全開（zones 崩盤終章 29-30）；謝幕（§84 資料驅動
+  鏈末判定）自動接管 L30——文案升級三十關收官版（CreditsScene，含「本遊戲
+  純屬虛構迷因 非投資建議」行）；星核制霸與 all-clear 成就語意隨 LEVELS 收斂至
+  十王/30 關。
+- 難度曲線（#818 靜態三軸）：walk L27 9.7 → **L29 9.8**、boss L28 9.6 →
+  **L30 10.0（全遊戲頂點，≤PRD 上限）**——族內嚴格遞增（difficulty.test 守門）。
+- 實測（level-audit 序列量測，cap walk 300s/boss 600s）：L29 mid ×7 通關 86%
+  （133s、7.57 死/run——終章最難走動關成立，硬不變式普通 ≥40% 過門）；
+  L30 數據見 PR（high/low ×7 序列）；console 錯誤 0。

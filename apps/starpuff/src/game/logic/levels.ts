@@ -133,7 +133,7 @@ export interface LevelSpec {
   gravityScale?: number;
   // v12 流星雨（§79）：關卡級環境彈幕；預警/排除帶不變式見 logic/meteor.ts 與 levels.test。
   meteor?: MeteorSpec;
-  // §125 關卡收尾演出（L29 市場開盤倒數＝L30 伏筆）：LEVEL_GATE_OPENED 時由
+  // §127 關卡收尾演出（L29 市場開盤倒數＝L30 伏筆）：LEVEL_GATE_OPENED 時由
   // sceneEvents 資料驅動分派，禁止 GameScene 依關號硬編。
   outroCinematic?: 'market-open';
 }
@@ -1990,7 +1990,7 @@ export const LEVELS: readonly LevelSpec[] = [
     anteroomBuffs: ['power', 'swift'],
     arenaBuff: 'shield',
   },
-  // §125 星海終局篇（十區崩盤終章）——L29 崩盤前夜：半毀星港交易大廳的混合挑戰
+  // §127 星海終局篇（十區崩盤終章）——L29 崩盤前夜：半毀星港交易大廳的混合挑戰
   // 走動關——回收 21-28 全章核心機制（貨櫃阻路／潮流改向／鏡面假身區／黑洞段
   // 引力上升流）各取一段＋市場隕落（流星雨崩盤語彙）；敵人全混編既有品種零新怪；
   // 收尾＝「市場即將開盤」倒數＋遠景劉董入金（outroCinematic，L30 伏筆）。
@@ -2005,31 +2005,36 @@ export const LEVELS: readonly LevelSpec[] = [
     safeZoneTailPx: 480,
     // 十種回收混編零新怪（PRD 主編制：cargo/frosty/prismbee/gravitybub/bearlet/
     // scanna/orbiton；輔以 riftling/twinkla/jelly 舊識——沿 L27 十種密度口徑）；
-    // 恆可吸佔比 0.72（bearlet/scanna 不可吸、twinkla 保守不計）。
+    // 恆可吸佔比 0.76（bearlet/scanna 不可吸、twinkla 保守不計）。權重取向
+    //（mid bot 實測回調）：威脅分由低 HP 可吸遠程（orbiton/riftling）承擔，
+    // 高 HP（cargo/scanna）與正面反彈（prismbee）壓低——潮汐×流星疊加關的
+    // 擊殺經濟優先。
     enemyMix: [
-      { kind: 'cargo', weight: 0.13 },
-      { kind: 'frosty', weight: 0.12 },
-      { kind: 'prismbee', weight: 0.14 },
-      { kind: 'gravitybub', weight: 0.1 },
-      { kind: 'bearlet', weight: 0.12 },
-      { kind: 'scanna', weight: 0.12 },
-      { kind: 'orbiton', weight: 0.13 },
-      { kind: 'riftling', weight: 0.06 },
-      { kind: 'twinkla', weight: 0.04 },
-      { kind: 'jelly', weight: 0.04 },
+      { kind: 'cargo', weight: 0.1 },
+      { kind: 'frosty', weight: 0.1 },
+      { kind: 'prismbee', weight: 0.08 },
+      { kind: 'gravitybub', weight: 0.12 },
+      { kind: 'bearlet', weight: 0.1 },
+      { kind: 'scanna', weight: 0.08 },
+      { kind: 'orbiton', weight: 0.16 },
+      { kind: 'riftling', weight: 0.14 },
+      { kind: 'twinkla', weight: 0.06 },
+      { kind: 'jelly', weight: 0.06 },
     ],
-    // 平台全層頂 ≤328（潮汐漲頂 352-24 不變式）；208 高台由引力上升流服務。
+    // 平台全層頂 ≤328（潮汐漲頂 352-24 不變式）；全數跳鏈可達（≤82px 爬升）——
+    // 潮汐關洪水錨不得依賴週期氣壓柱才可達（208 高台實測為漲潮期溺水帶根因），
+    // 氣壓柱降為機動輔助。
     platforms: [
       { x: 470, y: 336, w: 150 },
-      { x: 920, y: 208, w: 130 },
+      { x: 920, y: 272, w: 130 },
       { x: 1380, y: 336, w: 150 },
       { x: 1880, y: 272, w: 140 },
       { x: 2400, y: 336, w: 150 },
-      { x: 2900, y: 208, w: 130 },
+      { x: 2900, y: 272, w: 130 },
       { x: 3350, y: 300, w: 140 },
       { x: 3900, y: 336, w: 130 },
     ],
-    // 四段回收（§125）：段1 貨櫃阻路（可破壞貨櫃磚）→ 段2 潮流改向（關卡級潮汐）
+    // 四段回收（§127）：段1 貨櫃阻路（可破壞貨櫃磚）→ 段2 潮流改向（關卡級潮汐）
     // → 段3 鏡面假身區（prismbee 帶＋鏡門折躍）→ 段4 黑洞前兆（引力上升流 ×2）。
     elements: [
       { kind: 'updraft', x: 920, topY: 150, w: 96, periodMs: 2800, dutyPct: 0.33 },
@@ -2058,25 +2063,27 @@ export const LEVELS: readonly LevelSpec[] = [
     ],
     // §24 彩蛋二十九：浪頂平台（y=272）連站 3 次（與 L27 同型）。
     easterEggs: [{ trigger: 'stand-count', reward: 'full-magazine', platformY: 272, count: 3 }],
-    // §125 雙精英：鏡衛蜂后（掉流光味＝稜化補給）＋大熊市（掉雷鏈味）；
-    // 房距 1650 ≥ 門距、均落 checkpoint 與鏡門 ±300 帶外。
+    // §127 雙精英：軌道統領（掉流光味＝稜化補給）＋大熊市（掉雷鏈味）——
+    // 均取 L27 已驗證品種；稜蜂精英為 mid bot 不可解反射牆（正面反彈自傷×
+    // 軟鎖門×checkpoint 前全重置，實測 0% 根因）已排除。房距 1870 ≥ 門距、
+    // 均落 checkpoint 與鏡門 ±300 帶外；強度較 W3 保守（潮汐×流星疊加回調）。
     elites: [
       {
-        kind: 'prismbee',
-        x: 1500,
-        hp: 22,
+        kind: 'orbiton',
+        x: 1280,
+        hp: 16,
         scale: 1.5,
-        tint: 0xd898e0,
-        speedMul: 1.35,
+        tint: 0x6a58b8,
+        speedMul: 1.15,
         rewardFlavor: 'glowy',
       },
       {
         kind: 'bearlet',
         x: 3150,
-        hp: 28,
+        hp: 22,
         scale: 1.6,
         tint: 0xa86858,
-        speedMul: 1.3,
+        speedMul: 1.2,
         rewardFlavor: 'zappy',
       },
     ],
@@ -2085,13 +2092,14 @@ export const LEVELS: readonly LevelSpec[] = [
     // 卡點（§67 沿用）：終章走動關世界寬 4300——中點重生錨落於精英房與鏡門界外。
     checkpointX: 2150,
     hint: '崩盤前夜——撐過四段市場亂流，等開盤鐘響',
-    // 潮流改向（L23 回收）：糖漿潮汐同參數；市場隕落（L18/L19 流星雨回收）。
-    tide: { maxY: 352, periodMs: 9000, dutyPct: 0.45 },
-    meteor: { intervalMs: 4200, waveSize: 2 },
+    // 潮流改向（L23 回收）與市場隕落（L18/L19 流星雨回收）：兩機制全關疊加為
+    // 本關獨有壓力源——參數較單機制關保守（乾窗 65%、單發隕星），mid bot 實測回調。
+    tide: { maxY: 352, periodMs: 10_000, dutyPct: 0.35 },
+    meteor: { intervalMs: 6400, waveSize: 1 },
     // 收尾演出（PRD §6.2 伏筆）：市場開盤倒數＋遠景劉董按下入金。
     outroCinematic: 'market-open',
   },
-  // §125 星海終局篇（十區崩盤終章）——L30 崩盤王座：最終魔王劉董・崩盤之王——
+  // §127 星海終局篇（十區崩盤終章）——L30 崩盤王座：最終魔王劉董・崩盤之王——
   // 三市場攻擊（思考泡泡預告即機制）× 全屏下跌箭頭（≥1 通行路線恆開）× 牛熊
   // 召喚 × P3 終局（熔斷倒數／最後轉帳黑洞）；魔王關體系沿用（§69 前室/增益/彩蛋）。
   {
@@ -2103,12 +2111,14 @@ export const LEVELS: readonly LevelSpec[] = [
     spawnIntervalMs: 2800,
     maxOnScreen: 2,
     safeZoneTailPx: 0,
-    // 補生全可吸（§26）＋雷味頭部供給 0.35（雷化速清牛熊＝優勢情境的星味保證）。
+    // 補生全可吸（§26）；zappy 列首位＝補給輪替恆含雷味（雷化清熊線的星味保證
+    // ——minionDrop 依陣列序輪替，權重僅影響常態補生；zappy 常態權重壓低防
+    // 放電環成為 arena 隱形 chip 源，實測回調）。
     enemyMix: [
-      { kind: 'zappy', weight: 0.35 },
-      { kind: 'jelly', weight: 0.25 },
-      { kind: 'floaty', weight: 0.2 },
-      { kind: 'boomy', weight: 0.2 },
+      { kind: 'zappy', weight: 0.2 },
+      { kind: 'jelly', weight: 0.3 },
+      { kind: 'floaty', weight: 0.25 },
+      { kind: 'boomy', weight: 0.25 },
     ],
     platforms: [],
     elements: [],
@@ -2123,7 +2133,7 @@ export const LEVELS: readonly LevelSpec[] = [
     elites: [],
     boss: 'liudong',
     tutorial: false,
-    // §110 魔王驗收：七形態變身各有優勢情境（§125 對應表）。
+    // §110 魔王驗收：七形態變身各有優勢情境（§126.4 對應表）。
     bossApplies: ['transform'],
     // 魔王關體系（§69 沿用）：前室 400px＋星力/疾風二選一；P2 高風險位刷護盾泡。
     anteroomPx: 400,

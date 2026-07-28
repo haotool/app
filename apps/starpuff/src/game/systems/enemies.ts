@@ -178,7 +178,7 @@ const HP: Record<EnemyKind, number> = {
   orbiton: 1,
   riftling: 1,
   bearlet: 4,
-  // §125 牛熊怪（L30 召喚體）：三發/四發標準星——蓄力中斷窗與冬眠轉場有意義。
+  // §126 牛熊怪（L30 召喚體）：三發/四發標準星——蓄力中斷窗與冬眠轉場有意義。
   bullrun: 12,
   bearmarket: 16,
 };
@@ -204,7 +204,7 @@ const NO_GRAVITY_KINDS: readonly EnemyKind[] = [
   'orbiton',
   'riftling',
 ];
-// 碰牆自動折返品種（bullrun 衝刺撞牆反彈＝二次加速的物理基礎，§125）。
+// 碰牆自動折返品種（bullrun 衝刺撞牆反彈＝二次加速的物理基礎，§126）。
 const BOUNCE_KINDS: readonly EnemyKind[] = [
   'spiky',
   'shelly',
@@ -237,7 +237,7 @@ const INITIAL_STATE: Partial<Record<EnemyKind, string>> = {
   bearmarket: 'prowl',
 };
 // puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）；貼圖鍵與尺寸取
-// enemyTextures SSOT（§125 分檔）。
+// enemyTextures SSOT（§126 分檔）。
 const SPIKE_SPEED = 220;
 const SPIKE_LIFE_MS = 600;
 const SHELL_SPIN_RAD = 0.02;
@@ -259,7 +259,7 @@ const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
 
 export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
-  // 缺圖保底與 hazards 材質（§125 分檔）：單點烘焙委派 enemyTextures。
+  // 缺圖保底與 hazards 材質（§126 分檔）：單點烘焙委派 enemyTextures。
   ensureEnemyTextures(scene);
 
   const group = scene.physics.add.group({
@@ -520,7 +520,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(BEARLET_FSM.arrowSpeedX * directionX, BEARLET_FSM.arrowSpeedY);
   }
 
-  // 市場震波（§125 bearmarket）：地面行進波（拍地雙側／甦醒全場），跳躍迴避；
+  // 市場震波（§126 bearmarket）：地面行進波（拍地雙側／甦醒全場），跳躍迴避；
   // 壽命有界逾時必回收（§56）。
   function spawnMarketWave(x: number, y: number, directionX: 1 | -1, quake: boolean): void {
     const spec = quake
@@ -675,10 +675,10 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('cycleMs', 0);
     sprite.setData('phase', Math.random() * Math.PI * 2);
     sprite.setData('hp', HP[kind]);
-    // 血量上限鏡像（§125 bearmarket 低血冬眠閾值判定；精英覆寫時同步改寫）。
+    // 血量上限鏡像（§126 bearmarket 低血冬眠閾值判定；精英覆寫時同步改寫）。
     sprite.setData('maxHp', HP[kind]);
     sprite.setData('dmgCdMs', 0);
-    // §125 池重用重設：熊市怪一次性冬眠旗標不得跨個體殘留。
+    // §126 池重用重設：熊市怪一次性冬眠旗標不得跨個體殘留。
     sprite.setData('hibernated', false);
     sprite.setData('frozenMs', 0);
     sprite.setData('slowMs', 0);
@@ -832,7 +832,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         sprite.setData('stateMs', 0);
         playSfx('break', 1.1);
       }
-      // 牛市怪（§125）：蓄力期受星彈命中即中斷入回復——單發可斷、
+      // 牛市怪（§126）：蓄力期受星彈命中即中斷入回復——單發可斷、
       // 雷化鏈電波及＝群體中斷優勢（PRD §6.6 反制）。
       if (kind === 'bullrun' && sprite.getData('state') === 'charge') {
         sprite.setData('state', 'recover');

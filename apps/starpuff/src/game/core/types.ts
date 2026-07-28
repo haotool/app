@@ -32,7 +32,7 @@ export type EnemyKind =
   | 'orbiton'
   | 'riftling'
   | 'bearlet'
-  // §125 星海終局篇 W4：牛市怪/熊市怪（L30 劉董召喚體，PRD §6.6）。
+  // §126 星海終局篇 W4：牛市怪/熊市怪（L30 劉董召喚體，PRD §6.6）。
   | 'bullrun'
   | 'bearmarket';
 
@@ -74,7 +74,7 @@ export type LevelId =
 // v12（§82）：場控收束型最終魔王 Voidra。
 // §122 星海終局篇 W2：關稅巨獸 Tariffang（L22）與潮汐女王 Maridella（L24）。
 // §123 星海終局篇 W3：鏡界館長 Reflector（L26）與引力侯爵 Gravion（L28）。
-// §125 星海終局篇 W4：劉董・崩盤之王 Liudong（L30 最終魔王，PRD §6）。
+// §126 星海終局篇 W4：劉董・崩盤之王 Liudong（L30 最終魔王，PRD §6）。
 export type BossKind =
   | 'jellord'
   | 'noctra'

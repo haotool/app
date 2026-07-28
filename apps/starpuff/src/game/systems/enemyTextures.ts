@@ -4,7 +4,7 @@ import { ENEMY_SIZE } from '../core/config';
 import type { EnemyKind } from '../core/types';
 
 // 小怪佔位色塊與 hazards 程序化材質（GAME_DESIGN §10/§16 缺圖保底）：自 enemies.ts
-// 機械式搬移（§125 前置 1200 行閘分檔），烘焙內容零改變；貼圖鍵/尺寸常數為
+// 機械式搬移（§126 前置 1200 行閘分檔），烘焙內容零改變；貼圖鍵/尺寸常數為
 // enemies.ts spawner 與本檔烘焙共用 SSOT，一律由本檔匯出。
 
 export const FALLBACK_COLORS: Record<EnemyKind, number> = {
@@ -57,7 +57,7 @@ export const BLOB_SIZE = 18;
 // §120 hazards：foamy 漂浮泡泡（不傷人上浮拒止）。
 export const BUBBLE_TEX = 'hazard-bubble';
 export const BUBBLE_SIZE = 30;
-// §125 hazards：熊市怪地面震波（拍地雙側波／低血甦醒全場波，跳躍迴避）。
+// §126 hazards：熊市怪地面震波（拍地雙側波／低血甦醒全場波，跳躍迴避）。
 export const MARKET_WAVE_TEX = 'hazard-marketwave';
 export const MARKET_WAVE_W = 26;
 export const MARKET_WAVE_H = 20;
@@ -130,7 +130,7 @@ export function ensureEnemyTextures(scene: Phaser.Scene): void {
       .generateTexture(BLOB_TEX, BLOB_SIZE, BLOB_SIZE)
       .destroy();
   }
-  // 市場震波（§125 熊市怪）：深紫地面波峰（雙弧疊層），行進由生成端賦速。
+  // 市場震波（§126 熊市怪）：深紫地面波峰（雙弧疊層），行進由生成端賦速。
   if (!scene.textures.exists(MARKET_WAVE_TEX)) {
     scene.add
       .graphics()

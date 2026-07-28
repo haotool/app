@@ -722,7 +722,7 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  // 關卡收尾演出（§125）：依 LevelSpec.outroCinematic 值分派（exhaustive，資料驅動
+  // 關卡收尾演出（§127）：依 LevelSpec.outroCinematic 值分派（exhaustive，資料驅動
   // 非關號分支）；L29 市場開盤倒數＝L30 伏筆。
   private playOutroCinematic(): void {
     const outro = this.level.outroCinematic;
