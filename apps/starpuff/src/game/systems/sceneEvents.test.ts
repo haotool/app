@@ -54,6 +54,7 @@ interface HarnessConfig {
   bossRoom?: boolean;
   arenaBuff?: 'shield' | null;
   arenaBuffPhase?: 'p2' | 'p3';
+  outroCinematic?: 'market-open';
 }
 
 function makeHarness(config: HarnessConfig = {}): {
@@ -77,7 +78,8 @@ function makeHarness(config: HarnessConfig = {}): {
     | 'applyBuff'
     | 'onPlayerDied'
     | 'onBossDefeated'
-    | 'gateSpawn',
+    | 'gateSpawn'
+    | 'playOutroCinematic',
     ReturnType<typeof vi.fn>
   >;
 } {
@@ -100,6 +102,7 @@ function makeHarness(config: HarnessConfig = {}): {
     onPlayerDied: vi.fn(),
     onBossDefeated: vi.fn(),
     gateSpawn: vi.fn(),
+    playOutroCinematic: vi.fn(),
   };
   const hooks: SceneEventHooks = {
     setPlayerHp: spies.setPlayerHp,
@@ -127,6 +130,7 @@ function makeHarness(config: HarnessConfig = {}): {
       ({
         arenaBuff: config.arenaBuff ?? null,
         ...(config.arenaBuffPhase !== undefined ? { arenaBuffPhase: config.arenaBuffPhase } : {}),
+        ...(config.outroCinematic !== undefined ? { outroCinematic: config.outroCinematic } : {}),
       }) as unknown as LevelSpec,
     exMode: config.exMode ?? false,
     bossRoom: () =>
@@ -137,6 +141,7 @@ function makeHarness(config: HarnessConfig = {}): {
     viewWidth: () => 900,
     onPlayerDied: spies.onPlayerDied,
     onBossDefeated: spies.onBossDefeated,
+    playOutroCinematic: spies.playOutroCinematic,
   };
   const unbind = wireSceneEvents(bus, hooks);
   const emit = <K extends keyof GameEventPayloads>(event: K, payload: GameEventPayloads[K]): void =>
@@ -281,6 +286,15 @@ describe('sceneEvents 彩蛋/加速票/生死路由（§24/§120/§67）', () =>
     expect(h.spies.onBossDefeated).toHaveBeenCalledTimes(1);
     h.emit(GameEvents.LEVEL_GATE_OPENED, { levelId: 2 });
     expect(h.spies.gateSpawn).toHaveBeenCalledTimes(1);
+    // 無收尾演出關：不觸發（§125）。
+    expect(h.spies.playOutroCinematic).not.toHaveBeenCalled();
+  });
+
+  it('LEVEL_GATE_OPENED 收尾演出（§125）：outroCinematic 有值時觸發、門照常生成', () => {
+    const h = makeHarness({ outroCinematic: 'market-open' });
+    h.emit(GameEvents.LEVEL_GATE_OPENED, { levelId: 29 });
+    expect(h.spies.gateSpawn).toHaveBeenCalledTimes(1);
+    expect(h.spies.playOutroCinematic).toHaveBeenCalledTimes(1);
   });
 });
 

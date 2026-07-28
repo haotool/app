@@ -10,6 +10,7 @@ import { TARIFFANG } from '../logic/tariffangFsm';
 import { MARIDELLA } from '../logic/maridellaFsm';
 import { REFLECTOR } from '../logic/reflectorFsm';
 import { GRAVION } from '../logic/gravionFsm';
+import { LIUDONG } from '../logic/liudongFsm';
 import type { EggEvent } from '../logic/eggs';
 import type { LevelSpec } from '../logic/levels';
 import { MERCY_HEAL } from '../logic/mercyHeal';
@@ -23,6 +24,7 @@ import { createTariffang } from './tariffang';
 import { createMaridella } from './maridella';
 import { createReflector } from './reflector';
 import { createGravion } from './gravion';
+import { createLiudong } from './liudong';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
 import type { MeteorSystem } from './meteor';
@@ -278,6 +280,25 @@ export function createBossKit(
             { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
           ),
           bodyDamage: GRAVION.bodyDamage,
+        };
+      case 'liudong':
+        return {
+          handle: createLiudong(
+            scene,
+            {
+              // 牛熊/小熊市召喚（§125）：走正式 spawn 管線＋cap 夾限。
+              summonMinion: (minionKind, cap) => summonMinion(minionKind, cap),
+              // 爆倉扣彈（PRD §6.4 不即死）：彈匣頂槽由 player 單點供給（§113 同構）。
+              stealTopStar: () => hooks.player().stealTopStar(),
+              playerSprite: () => hooks.player().sprite,
+              // 稜化斷單（§125 優勢情境）：星彈群由 player 單點供給。
+              playerStars: () => hooks.player().getStars(),
+              // 引力化抗黑洞牽引（§119 gravityFlipImmune 同鍵消費）。
+              playerForm: () => hooks.player().getTransformState().form,
+            },
+            { ex: hooks.exMode, arenaLeft: () => hooks.arenaLeft() },
+          ),
+          bodyDamage: LIUDONG.bodyDamage,
         };
       default: {
         const unhandled: never = kind;

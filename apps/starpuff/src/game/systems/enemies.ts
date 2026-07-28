@@ -9,6 +9,7 @@ import { ENEMY_THREAT } from '../logic/difficulty';
 import { RESCUE_REACH_Y_TOP } from '../logic/levels';
 import {
   BEARLET_FSM,
+  BEARMARKET_FSM,
   BOOMY_FSM,
   COMETA_FSM,
   FOAMY_FSM,
@@ -46,6 +47,21 @@ import {
   updateEnemyKind,
   type EnemyUpdateContext,
 } from './enemyUpdates';
+import {
+  BLOB_SIZE,
+  BLOB_TEX,
+  BUBBLE_SIZE,
+  BUBBLE_TEX,
+  MARKET_WAVE_H,
+  MARKET_WAVE_TEX,
+  MARKET_WAVE_W,
+  SHELL_SIZE,
+  SHELL_TEX,
+  SPIKE_SIZE,
+  SPIKE_TEX,
+  SPORE_TEX,
+  ensureEnemyTextures,
+} from './enemyTextures';
 import { popIn } from './fx';
 import {
   CHOMPY_BITE_MS,
@@ -125,40 +141,6 @@ export interface EnemySystem {
 // 對照表已收斂至 core/assetPlan（§115），與分階段載入計畫共用單一真值。
 const TEXTURES = ENEMY_TEXTURE_KEYS;
 
-const FALLBACK_COLORS: Record<EnemyKind, number> = {
-  jelly: 0xffb3c7,
-  floaty: 0xcbb7f0,
-  spiky: 0xd9f29b,
-  puffy: 0xffa8a0,
-  chompy: 0xf5e6a8,
-  shelly: 0x7fd8c8,
-  zappy: 0xe8d88a,
-  drilly: 0xd8a26b,
-  glowy: 0xffe9a8,
-  spora: 0xa8d8a0,
-  gusty: 0xa8cbf0,
-  boomy: 0xe8a878,
-  magno: 0x8a98c8,
-  mirri: 0xd8dce8,
-  bubbla: 0xf2b26b,
-  splatta: 0xc88850,
-  twinkla: 0xf5e6b8,
-  cometa: 0x9fd8f0,
-  cargo: 0xd8a888,
-  ticketa: 0xf0d8a0,
-  scanna: 0xe89ab0,
-  foamy: 0xbfe8f0,
-  frosty: 0xcfeeff,
-  manta: 0x8ac8e8,
-  copypuff: 0xd8cdeb,
-  prismbee: 0xf0c8e8,
-  datamote: 0xc0d8f0,
-  gravitybub: 0xa890e0,
-  orbiton: 0x8878c8,
-  riftling: 0xb0a0e8,
-  bearlet: 0xc89890,
-};
-
 // HP 以傷害點計：chompy 10 = 兩發標準星（5×2），其餘一擊斃（GAME_DESIGN §16）。
 // shelly 的「HP 2 段」由狀態機承擔：walk 首發轉縮殼、stun 期一擊斃（§30）；
 // drilly 的防禦由潛地免傷窗承擔（§47）。
@@ -196,6 +178,9 @@ const HP: Record<EnemyKind, number> = {
   orbiton: 1,
   riftling: 1,
   bearlet: 4,
+  // §125 牛熊怪（L30 召喚體）：三發/四發標準星——蓄力中斷窗與冬眠轉場有意義。
+  bullrun: 12,
+  bearmarket: 16,
 };
 
 const POOL_SIZE = 16;
@@ -219,8 +204,16 @@ const NO_GRAVITY_KINDS: readonly EnemyKind[] = [
   'orbiton',
   'riftling',
 ];
-// 碰牆自動折返品種。
-const BOUNCE_KINDS: readonly EnemyKind[] = ['spiky', 'shelly', 'boomy', 'mirri', 'cargo', 'frosty'];
+// 碰牆自動折返品種（bullrun 衝刺撞牆反彈＝二次加速的物理基礎，§125）。
+const BOUNCE_KINDS: readonly EnemyKind[] = [
+  'spiky',
+  'shelly',
+  'boomy',
+  'mirri',
+  'cargo',
+  'frosty',
+  'bullrun',
+];
 const INITIAL_STATE: Partial<Record<EnemyKind, string>> = {
   shelly: 'walk',
   boomy: 'walk',
@@ -240,29 +233,19 @@ const INITIAL_STATE: Partial<Record<EnemyKind, string>> = {
   orbiton: 'approach',
   riftling: 'idle',
   bearlet: 'waddle',
+  bullrun: 'prowl',
+  bearmarket: 'prowl',
 };
-// puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）。
-const SPIKE_TEX = 'hazard-spike';
+// puffy 爆刺彈：4 向 220px/s、0.6s 消散、傷害 1（§16）；貼圖鍵與尺寸取
+// enemyTextures SSOT（§125 分檔）。
 const SPIKE_SPEED = 220;
 const SPIKE_LIFE_MS = 600;
-const SPIKE_SIZE = 12;
-// v8 hazards（§52）：孢子雲滯留區與迴旋殼刃。
-const SPORE_TEX = 'hazard-spore';
-const SPORE_SIZE = 28;
-const SHELL_TEX = 'hazard-shell';
-const SHELL_SIZE = 22;
 const SHELL_SPIN_RAD = 0.02;
-// v11 hazards（§73）：splatta 拋物糖球與落地灼燙糖斑。
-const BLOB_TEX = 'hazard-blob';
-const BLOB_SIZE = 18;
 // v12（§80）：comettail 高頻短命段加入共用池，上限 24→32 供 L19 六同屏尖峰裕度
 //（耗盡時 spawnHazard 回 null 靜默略過，不致崩潰）。
 const HAZARD_POOL_SIZE = 32;
 // 糖球落地判定線：主地面頂 y=400 上緣（§21 世界幾何常數）。
 const BLOB_GROUND_Y = 392;
-// §120 hazards：foamy 漂浮泡泡（不傷人上浮拒止）。
-const BUBBLE_TEX = 'hazard-bubble';
-const BUBBLE_SIZE = 30;
 const BITE_OFFSET_X = 22;
 const BITE_SIZE = 42;
 // 脈衝環 hitbox 啟用時長（zappy 放電/glowy 光脈衝共用）。
@@ -276,72 +259,8 @@ const DAMAGE_COOLDOWN_MS = 150;
 const FLASH_MS = 80;
 
 export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
-  for (const kind of Object.keys(TEXTURES) as EnemyKind[]) {
-    if (!scene.textures.exists(TEXTURES[kind])) {
-      scene.add
-        .graphics()
-        .fillStyle(FALLBACK_COLORS[kind])
-        .fillRoundedRect(0, 0, ENEMY_SIZE, ENEMY_SIZE, 12)
-        .generateTexture(TEXTURES[kind], ENEMY_SIZE, ENEMY_SIZE)
-        .destroy();
-    }
-  }
-  if (!scene.textures.exists(SPIKE_TEX)) {
-    scene.add
-      .graphics()
-      .fillStyle(0xffa8a0)
-      .fillTriangle(SPIKE_SIZE / 2, 0, SPIKE_SIZE, SPIKE_SIZE / 2, 0, SPIKE_SIZE / 2)
-      .fillTriangle(0, SPIKE_SIZE / 2, SPIKE_SIZE, SPIKE_SIZE / 2, SPIKE_SIZE / 2, SPIKE_SIZE)
-      .generateTexture(SPIKE_TEX, SPIKE_SIZE, SPIKE_SIZE)
-      .destroy();
-  }
-  // 孢子雲（§52）：柔和三圓簇孢子團。
-  if (!scene.textures.exists(SPORE_TEX)) {
-    scene.add
-      .graphics()
-      .fillStyle(0xbce8a0, 0.85)
-      .fillCircle(SPORE_SIZE / 2, SPORE_SIZE / 2, SPORE_SIZE / 2 - 2)
-      .fillStyle(0xa8d8a0, 0.9)
-      .fillCircle(SPORE_SIZE / 2 - 7, SPORE_SIZE / 2 + 4, 8)
-      .fillCircle(SPORE_SIZE / 2 + 7, SPORE_SIZE / 2 + 3, 7)
-      .generateTexture(SPORE_TEX, SPORE_SIZE, SPORE_SIZE)
-      .destroy();
-  }
-  // 迴旋殼刃（§52）：雙圓疊色殼片，旋轉由 update 迴圈驅動。
-  if (!scene.textures.exists(SHELL_TEX)) {
-    scene.add
-      .graphics()
-      .fillStyle(0xe8a878, 1)
-      .fillCircle(SHELL_SIZE / 2, SHELL_SIZE / 2, SHELL_SIZE / 2 - 1)
-      .fillStyle(0xf5d8b8, 1)
-      .fillCircle(SHELL_SIZE / 2 + 5, SHELL_SIZE / 2 - 3, SHELL_SIZE / 2 - 7)
-      .generateTexture(SHELL_TEX, SHELL_SIZE, SHELL_SIZE)
-      .destroy();
-  }
-  // 泡泡（§120）：淡藍空心圓＋高光點。
-  if (!scene.textures.exists(BUBBLE_TEX)) {
-    scene.add
-      .graphics()
-      .fillStyle(0xbfe8f0, 0.35)
-      .fillCircle(BUBBLE_SIZE / 2, BUBBLE_SIZE / 2, BUBBLE_SIZE / 2 - 2)
-      .lineStyle(2, 0xdff6ff, 0.9)
-      .strokeCircle(BUBBLE_SIZE / 2, BUBBLE_SIZE / 2, BUBBLE_SIZE / 2 - 2)
-      .fillStyle(0xffffff, 0.8)
-      .fillCircle(BUBBLE_SIZE / 2 - 5, BUBBLE_SIZE / 2 - 6, 3)
-      .generateTexture(BUBBLE_TEX, BUBBLE_SIZE, BUBBLE_SIZE)
-      .destroy();
-  }
-  // 糖球（§73）：焦糖雙圓滴珠；落地轉灼燙糖斑（同貼圖壓扁著色）。
-  if (!scene.textures.exists(BLOB_TEX)) {
-    scene.add
-      .graphics()
-      .fillStyle(0xc88850, 1)
-      .fillCircle(BLOB_SIZE / 2, BLOB_SIZE / 2, BLOB_SIZE / 2 - 1)
-      .fillStyle(0xe8b070, 0.95)
-      .fillCircle(BLOB_SIZE / 2 - 3, BLOB_SIZE / 2 - 3, BLOB_SIZE / 2 - 6)
-      .generateTexture(BLOB_TEX, BLOB_SIZE, BLOB_SIZE)
-      .destroy();
-  }
+  // 缺圖保底與 hazards 材質（§125 分檔）：單點烘焙委派 enemyTextures。
+  ensureEnemyTextures(scene);
 
   const group = scene.physics.add.group({
     classType: Phaser.Physics.Arcade.Sprite,
@@ -601,6 +520,22 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     body.setVelocity(BEARLET_FSM.arrowSpeedX * directionX, BEARLET_FSM.arrowSpeedY);
   }
 
+  // 市場震波（§125 bearmarket）：地面行進波（拍地雙側／甦醒全場），跳躍迴避；
+  // 壽命有界逾時必回收（§56）。
+  function spawnMarketWave(x: number, y: number, directionX: 1 | -1, quake: boolean): void {
+    const spec = quake
+      ? { speed: BEARMARKET_FSM.quakeWaveSpeed, lifeMs: BEARMARKET_FSM.quakeWaveLifeMs }
+      : { speed: BEARMARKET_FSM.slamWaveSpeed, lifeMs: BEARMARKET_FSM.slamWaveLifeMs };
+    const wave = spawnHazard(x, y, 'marketwave', spec.lifeMs);
+    if (!wave) return;
+    wave.setTexture(MARKET_WAVE_TEX).setVisible(true);
+    wave.setDisplaySize(MARKET_WAVE_W, MARKET_WAVE_H);
+    wave.setAlpha(0.95);
+    const body = wave.body as Phaser.Physics.Arcade.Body;
+    body.setSize(MARKET_WAVE_W - 6, MARKET_WAVE_H - 4);
+    body.setVelocity(spec.speed * directionX, 0);
+  }
+
   // 迴旋殼刃（§52）：去而復返雙判定；速度由 update 迴圈依 boomerangVelocity 逐幀驅動。
   function spawnBoomerang(x: number, y: number, directionX: 1 | -1): void {
     playSfx('shell-spin', 1.2);
@@ -695,6 +630,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     spawnBubble,
     spawnWaterBlade,
     spawnCrashArrow,
+    spawnMarketWave,
     popPuffy(sprite) {
       const { x, y } = sprite;
       deactivate(sprite);
@@ -739,7 +675,11 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
     sprite.setData('cycleMs', 0);
     sprite.setData('phase', Math.random() * Math.PI * 2);
     sprite.setData('hp', HP[kind]);
+    // 血量上限鏡像（§125 bearmarket 低血冬眠閾值判定；精英覆寫時同步改寫）。
+    sprite.setData('maxHp', HP[kind]);
     sprite.setData('dmgCdMs', 0);
+    // §125 池重用重設：熊市怪一次性冬眠旗標不得跨個體殘留。
+    sprite.setData('hibernated', false);
     sprite.setData('frozenMs', 0);
     sprite.setData('slowMs', 0);
     sprite.setData('dotDamage', 0);
@@ -892,6 +832,13 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
         sprite.setData('stateMs', 0);
         playSfx('break', 1.1);
       }
+      // 牛市怪（§125）：蓄力期受星彈命中即中斷入回復——單發可斷、
+      // 雷化鏈電波及＝群體中斷優勢（PRD §6.6 反制）。
+      if (kind === 'bullrun' && sprite.getData('state') === 'charge') {
+        sprite.setData('state', 'recover');
+        sprite.setData('stateMs', 0);
+        playSfx('break', 0.9);
+      }
       return 'hurt';
     }
     if (kind === 'puffy') burstSpikes(sprite.x, sprite.y);
@@ -920,6 +867,7 @@ export function createEnemySystem(scene: Phaser.Scene): EnemySystem {
       vscale.register(sprite);
       sprite.setTint(opts.tint);
       sprite.setData('hp', opts.hp);
+      sprite.setData('maxHp', opts.hp);
       sprite.setData('elite', true);
       sprite.setData('eliteTint', opts.tint);
       sprite.setData('eliteMul', opts.speedMul);

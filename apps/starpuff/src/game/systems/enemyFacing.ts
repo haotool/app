@@ -43,6 +43,9 @@ export const DIRECTIONAL_ENEMY_KINDS = [
   'prismbee',
   'riftling',
   'bearlet',
+  // §125：牛市怪衝刺朝向、熊市怪緩走拍地——素材皆具左右朝向。
+  'bullrun',
+  'bearmarket',
 ] as const satisfies readonly EnemyKind[];
 
 // 非方向性素材品種：正面或對稱構圖，flip 無視覺語意（magno／splatta 雖會走動，

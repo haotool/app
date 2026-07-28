@@ -195,8 +195,8 @@ describe('魔王稽核事實表', () => {
 });
 
 describe('TRANSFORM_ADVANTAGE 變身優勢情境模板（#816 W2）', () => {
-  it('T4 先落 Jellord/Noctra 兩王；王/關對映與稽核事實表一致', () => {
-    expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual(['jellord', 'noctra']);
+  it('T4 先落 Jellord/Noctra 兩王＋§125 劉董雷化清熊線；王/關對映與稽核事實表一致', () => {
+    expect(TRANSFORM_ADVANTAGE.map((s) => s.boss)).toEqual(['jellord', 'noctra', 'liudong']);
     for (const spec of TRANSFORM_ADVANTAGE) {
       const facts = BOSS_AUDIT_FACTS.find((f) => f.boss === spec.boss);
       expect(facts?.levelId).toBe(spec.levelId);

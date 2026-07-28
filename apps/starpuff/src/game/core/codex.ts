@@ -28,7 +28,8 @@ export interface CodexMonster {
     | 'tariffang'
     | 'maridella'
     | 'reflector'
-    | 'gravion';
+    | 'gravion'
+    | 'liudong';
   textureKey: string;
   nameZh: string;
   behavior: string;
@@ -261,6 +262,21 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     behavior: '拋下跌箭頭，吸入會被彈開——跳躍閃避或星彈清除',
     inhalable: false,
   },
+  // §125 星海終局篇 W4：牛熊怪入鑑（L30 劉董召喚體）。
+  {
+    kind: 'bullrun',
+    textureKey: 'minion-bullrun',
+    nameZh: '牛市怪',
+    behavior: '蓄力衝刺撞牆反彈再加速——蓄力期星彈可中斷，跳越衝刺線',
+    inhalable: false,
+  },
+  {
+    kind: 'bearmarket',
+    textureKey: 'minion-bearmarket',
+    nameZh: '熊市怪',
+    behavior: '拍地震波召小箭頭，低血冬眠後全場震波——跳躍越波、雷鏈速清',
+    inhalable: false,
+  },
   {
     kind: 'boss',
     textureKey: 'boss-idle',
@@ -325,6 +341,14 @@ export const CODEX_MONSTERS: readonly CodexMonster[] = [
     textureKey: 'boss-gravion',
     nameZh: '引力侯爵',
     behavior: '重力切換、軌道星體、黑洞壓縮引力魔王',
+    inhalable: false,
+  },
+  // §125 星海終局篇 W4：最終魔王徽記入鑑。
+  {
+    kind: 'liudong',
+    textureKey: 'boss-liudong',
+    nameZh: '劉董・崩盤之王',
+    behavior: '思考下單、三市場崩跌、全屏箭雨與牛熊終盤魔王',
     inhalable: false,
   },
 ] as const;

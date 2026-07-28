@@ -3,6 +3,7 @@ import type Phaser from 'phaser';
 import { GRAVITY_Y } from '../core/config';
 import { BOSS } from '../logic/bossFsm';
 import { GRAVION } from '../logic/gravionFsm';
+import { LIUDONG } from '../logic/liudongFsm';
 import { MARIDELLA } from '../logic/maridellaFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
@@ -14,6 +15,7 @@ import type { LevelSpec } from '../logic/levels';
 import { createBossKit, type BossFactoryHooks } from './bossFactory';
 import { createBoss } from './boss';
 import { createGravion } from './gravion';
+import { createLiudong } from './liudong';
 import { createMaridella } from './maridella';
 import { createNoctra } from './noctra';
 import { createPrismix } from './prismix';
@@ -41,6 +43,7 @@ vi.mock('./tariffang', () => ({ createTariffang: vi.fn(() => ({ id: 'tariffang-h
 vi.mock('./maridella', () => ({ createMaridella: vi.fn(() => ({ id: 'maridella-handle' })) }));
 vi.mock('./reflector', () => ({ createReflector: vi.fn(() => ({ id: 'reflector-handle' })) }));
 vi.mock('./gravion', () => ({ createGravion: vi.fn(() => ({ id: 'gravion-handle' })) }));
+vi.mock('./liudong', () => ({ createLiudong: vi.fn(() => ({ id: 'liudong-handle' })) }));
 vi.mock('./pickups', () => ({ spawnHealPickup: vi.fn() }));
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 
@@ -147,7 +150,7 @@ describe('createBossKit 品種分派表（§54 唯一分派點）', () => {
     expect(vi.mocked(createBoss)).toHaveBeenCalledTimes(1);
   });
 
-  it('noctra/prismix/syrona/voidra/tariffang/maridella/reflector/gravion 各取對應 handle 與體傷常數', () => {
+  it('noctra/prismix/syrona/voidra/tariffang/maridella/reflector/gravion/liudong 各取對應 handle 與體傷常數', () => {
     const cases = [
       { boss: 'noctra', factory: createNoctra, damage: NOCTRA.bodyDamage },
       { boss: 'prismix', factory: createPrismix, damage: PRISMIX.bodyDamage },
@@ -157,6 +160,7 @@ describe('createBossKit 品種分派表（§54 唯一分派點）', () => {
       { boss: 'maridella', factory: createMaridella, damage: MARIDELLA.bodyDamage },
       { boss: 'reflector', factory: createReflector, damage: REFLECTOR.bodyDamage },
       { boss: 'gravion', factory: createGravion, damage: GRAVION.bodyDamage },
+      { boss: 'liudong', factory: createLiudong, damage: LIUDONG.bodyDamage },
     ] as const;
     for (const spec of cases) {
       const enemies = makeEnemies();

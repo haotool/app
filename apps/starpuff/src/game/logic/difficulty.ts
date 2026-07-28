@@ -3,6 +3,7 @@ import type { EnemyKind } from '../core/types';
 import { BOSS } from './bossFsm';
 import type { LevelSpec } from './levels';
 import { GRAVION } from './gravionFsm';
+import { LIUDONG } from './liudongFsm';
 import { MARIDELLA } from './maridellaFsm';
 import { NOCTRA } from './noctraFsm';
 import { PRISMIX } from './prismixFsm';
@@ -125,7 +126,8 @@ export type BossId =
   | 'tariffang'
   | 'maridella'
   | 'reflector'
-  | 'gravion';
+  | 'gravion'
+  | 'liudong';
 
 export interface BossAuditFacts {
   boss: BossId;
@@ -317,6 +319,37 @@ export const BOSS_AUDIT_FACTS: readonly BossAuditFacts[] = [
     // 重力切換力場＋黑洞壓縮（側牆＋星彈彎折）。
     arenaMechanics: 2,
   },
+  // §125 星海終局篇 W4：終局章魔王軸終點——L30 為全遊戲頂點（PRD §2：≤10）。
+  {
+    boss: 'liudong',
+    levelId: 30,
+    maxHp: LIUDONG.maxHp,
+    bodyW: 170,
+    bodyH: 150,
+    grounded: true,
+    hoverY: null,
+    // 三市場（usstock/crypto/twstock）＋arrowrain／klinewave／bullbear／
+    // transferchain／shortlaser＋doomarrow／bearcore／liquidation／circuitbreaker
+    //（EX 專屬 fakeout 與一次性 finaltransfer 不計入常備招面）。
+    attackKinds: 12,
+    minTelegraphMs: Math.min(
+      LIUDONG.usstockTelegraphMs,
+      LIUDONG.cryptoTelegraphMs,
+      LIUDONG.twstockTelegraphMs,
+      LIUDONG.arrowShadowMs,
+      LIUDONG.klinewaveTelegraphMs,
+      LIUDONG.bullbearTelegraphMs,
+      LIUDONG.transferchainTelegraphMs,
+      LIUDONG.shortlaserTelegraphMs,
+      LIUDONG.doomarrowTelegraphMs,
+      LIUDONG.bearcoreTelegraphMs,
+      LIUDONG.liquidationTelegraphMs,
+      LIUDONG.circuitbreakerTelegraphMs,
+    ),
+    multiBody: false,
+    // 爆倉插針（彈藥壓力）＋熔斷倒數生存窗＋最後轉帳黑洞牽引。
+    arenaMechanics: 3,
+  },
 ] as const;
 
 // ===== 變身優勢情境模板（#816 W2，機制 brief §4/§10）=====
@@ -346,6 +379,14 @@ export const TRANSFORM_ADVANTAGE: readonly TransformAdvantageSpec[] = [
     form: 'volt',
     supplyFlavor: 'zappy',
     scenarioZh: '雷化斷召線：鏈電命中蓄勢中的 Noctra 立即中斷召喚（§58 interruptSummon）',
+  },
+  // §125 劉董（七形態優勢矩陣見 GAME_DESIGN §125；bot 可量測線取雷化）。
+  {
+    boss: 'liudong',
+    levelId: 30,
+    form: 'volt',
+    supplyFlavor: 'zappy',
+    scenarioZh: '雷化清熊線：鏈電波及速清牛熊怪與小熊市群（PRD §6.6 反制），奪回輸出窗',
   },
 ] as const;
 
@@ -431,6 +472,9 @@ export const ENEMY_THREAT: Record<EnemyKind, 'safe' | 'windowed' | 'contact' | '
   orbiton: 'ranged',
   riftling: 'ranged',
   bearlet: 'ranged',
+  // §125 星海終局篇 W4：牛市怪衝刺撞擊（俯衝系口徑）、熊市怪拍地波＋召箭具投射。
+  bullrun: 'contact',
+  bearmarket: 'ranged',
 };
 
 const THREAT_WEIGHT = { safe: 0, windowed: 0.4, ranged: 0.7, contact: 1 } as const;

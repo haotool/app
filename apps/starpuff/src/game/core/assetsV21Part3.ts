@@ -10,42 +10,6 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
   //（L24/L26/L28 演出層），條目搬入 bossAnimAssets.ts（dynamic import 分檔）。
   // v21-v30 B06 劉董動畫關鍵幀（入場四幀已於 B04 註冊；載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
   {
-    key: 'boss-liudong-idle-2',
-    url: new URL('../../assets/sprites/boss-liudong-idle-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-idle-3',
-    url: new URL('../../assets/sprites/boss-liudong-idle-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move1-windup',
-    url: new URL('../../assets/sprites/boss-liudong-move1-windup.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move1-charge',
-    url: new URL('../../assets/sprites/boss-liudong-move1-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move1-burst',
-    url: new URL('../../assets/sprites/boss-liudong-move1-burst.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-move1-recover',
-    url: new URL('../../assets/sprites/boss-liudong-move1-recover.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'boss-liudong-move2-windup',
     url: new URL('../../assets/sprites/boss-liudong-move2-windup.webp', import.meta.url).href,
 
@@ -90,132 +54,6 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
   {
     key: 'boss-liudong-move3-recover',
     url: new URL('../../assets/sprites/boss-liudong-move3-recover.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-1',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-2',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-3',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-4',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-5',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-5.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p2trans-6',
-    url: new URL('../../assets/sprites/boss-liudong-p2trans-6.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-1',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-2',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-3',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-4',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-5',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-5.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-6',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-6.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-p3trans-7',
-    url: new URL('../../assets/sprites/boss-liudong-p3trans-7.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-hit-1',
-    url: new URL('../../assets/sprites/boss-liudong-hit-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-hit-2',
-    url: new URL('../../assets/sprites/boss-liudong-hit-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-1',
-    url: new URL('../../assets/sprites/boss-liudong-death-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-2',
-    url: new URL('../../assets/sprites/boss-liudong-death-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-3',
-    url: new URL('../../assets/sprites/boss-liudong-death-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-4',
-    url: new URL('../../assets/sprites/boss-liudong-death-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-5',
-    url: new URL('../../assets/sprites/boss-liudong-death-5.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-death-6',
-    url: new URL('../../assets/sprites/boss-liudong-death-6.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
@@ -317,12 +155,6 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   {
-    key: 'fx-market-arrowrain-shock',
-    url: new URL('../../assets/sprites/fx-market-arrowrain-shock.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'fx-market-arrowrain-trail',
     url: new URL('../../assets/sprites/fx-market-arrowrain-trail.webp', import.meta.url).href,
 
@@ -331,12 +163,6 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
   {
     key: 'fx-market-arrowrain-debris',
     url: new URL('../../assets/sprites/fx-market-arrowrain-debris.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-arrowrain-overlay',
-    url: new URL('../../assets/sprites/fx-market-arrowrain-overlay.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },

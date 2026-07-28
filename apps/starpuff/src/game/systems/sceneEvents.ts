@@ -43,6 +43,8 @@ export interface SceneEventHooks {
   // 敗北/擊破流程深耦合 run 狀態（deaths/bossDown/clearTimeMs/save）：留 GameScene。
   onPlayerDied(x: number, y: number): void;
   onBossDefeated(): void;
+  // 關卡收尾演出（§125）：LevelSpec.outroCinematic 有值時觸發（GameScene 依值分派）。
+  playOutroCinematic(): void;
 }
 
 export function wireSceneEvents(bus: Bus, hooks: SceneEventHooks): () => void {
@@ -118,7 +120,12 @@ export function wireSceneEvents(bus: Bus, hooks: SceneEventHooks): () => void {
   // 魔王戰死亡進敗北結算（再玩一次直接重試魔王關）。
   bind(GameEvents.PLAYER_DIED, ({ x, y }) => hooks.onPlayerDied(x, y));
   bind(GameEvents.BOSS_DEFEATED, () => hooks.onBossDefeated());
-  bind(GameEvents.LEVEL_GATE_OPENED, () => hooks.levelGate().spawn());
+  // 關卡收尾演出（§125）：資料驅動自 LevelSpec.outroCinematic（L29 市場開盤倒數），
+  // 純 overlay 不阻星星門生成。
+  bind(GameEvents.LEVEL_GATE_OPENED, () => {
+    hooks.levelGate().spawn();
+    if (hooks.levelSpec().outroCinematic !== undefined) hooks.playOutroCinematic();
+  });
 
   return () => unbinders.forEach((off) => off());
 }

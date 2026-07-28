@@ -9,21 +9,6 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
   // 稜化／引力化立繪：已於 §123 W3 接關認領（FORM_INTRO_LEVEL L25/L27），
   // 條目搬回主 manifest（assets.ts）並標 'form'。
   // v21-v30 首批（B04 前先行）：焰化基底與劉董本體、市場箭頭 canon。
-  {
-    key: 'boss-liudong',
-    url: new URL('../../assets/sprites/boss-liudong.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-liudong-thinking',
-    url: new URL('../../assets/sprites/boss-liudong-thinking.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-market-down-arrow',
-    url: new URL('../../assets/sprites/fx-market-down-arrow.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B02 星港／潮灣場景與雙王：已於 §122 W2 接關認領，條目搬回主 manifest
   //（assets.ts）並標正確 phase——本檔僅保留未認領批次。
   // v21-v30 B02 六新小怪（載入時機建議：L21/L23 關卡載入，暫沿 Boot 預載）。
