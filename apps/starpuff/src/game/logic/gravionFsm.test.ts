@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PLAYER } from '../core/config';
 import { EX_MODS } from './bossFsm';
 import { AUDIT_THRESHOLDS, sequenceEntropyBits } from './difficulty';
 import { createSeededRng } from './moveTable';
@@ -100,8 +101,8 @@ describe('重力切換（§123 主題機制：位移力非傷害）', () => {
     const gswitch = driveTo(fsm, 'gswitch');
     expect(gswitch).not.toBeNull();
     if (gswitch?.kind === 'gswitch') expect(gswitch.fieldMs).toBe(GRAVION.gswitchFieldMs);
-    // 玩家全速 220px/s（PLAYER.moveSpeed 口徑）：漂移是壓力非禁錮。
-    expect(GRAVION.gswitchDriftPxPerSec).toBeLessThan(220);
+    // 玩家全速口徑取 PLAYER.moveSpeed SSOT：漂移是壓力非禁錮。
+    expect(GRAVION.gswitchDriftPxPerSec).toBeLessThan(PLAYER.moveSpeed);
     // 力場時長有界（招式循環自然收場，無常駐禁錮）。
     expect(GRAVION.gswitchFieldMs).toBeLessThanOrEqual(4000);
     // 上向力升托帶頂線（防無限上浮）。

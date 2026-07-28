@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
+import { PLAYER } from '../core/config';
 import { canInhale, inhaleFlavor } from './combat';
 import { AUDIT_THRESHOLDS } from './difficulty';
 import type { EnemyUpdateContext } from '../systems/enemyUpdates';
@@ -750,7 +751,7 @@ describe('§123 星海終局篇 W3 新怪 FSM', () => {
     expect(gravityBubPull(100, 100, 200, 100)).toBe(1);
     expect(gravityBubPull(200 + GRAVITYBUB_FSM.fieldRadiusPx + 10, 100, 200, 100)).toBe(0);
     expect(gravityBubPull(200, 100, 200, 100)).toBe(0);
-    expect(GRAVITYBUB_FSM.pullPxPerSec).toBeLessThan(220);
+    expect(GRAVITYBUB_FSM.pullPxPerSec).toBeLessThan(PLAYER.moveSpeed);
   });
 
   it('tickOrbiton：approach→（抵軌）→orbit 三圈→windup→dash→recover→approach', () => {

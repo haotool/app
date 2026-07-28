@@ -222,6 +222,15 @@ describe('levelAssetKeys 派生', () => {
     expect(bgTextureKey('bg-meadow')).toBe('bg-meadow-l');
   });
 
+  it('§123 鏡界塔別名避讓（W3 審查對照）：mirrortower 取 B03 素材、L9 既有別名不受影響', () => {
+    // L25/L26 的 bg-mirrortower 映射到 B03 新素材 bg-mirror-l。
+    expect(bgTextureKey('bg-mirrortower')).toBe('bg-mirror-l');
+    // L9 幻鏡迴廊沿用 bg-mirror → bg-arena 既有別名鍵位（零回歸）。
+    expect(bgTextureKey('bg-mirror')).toBe('bg-arena-l');
+    // L27/L28 的 bg-voidring 無別名走預設派生。
+    expect(bgTextureKey('bg-voidring')).toBe('bg-voidring-l');
+  });
+
   it('鍵不重複', () => {
     for (const level of LEVELS) {
       const keys = levelAssetKeys(level);
