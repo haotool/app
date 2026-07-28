@@ -948,7 +948,7 @@ B06 動畫組（39 鍵/王 ×4＝156 鍵）自 `assetsV21Part2/3` 停車場接�
 hitbox 全數凍結，行為零改變**；唯一物理相關動作為 `vscale.rebase`（沿 §77
 既有換裝模式，物理箱恆為基準）。
 
-### 127.1 載入契約（#883 分階段載入）
+### 125.1 載入契約（#883 分階段載入）
 
 - manifest 分檔 `core/bossAnimAssets.ts` **只允許 dynamic import**（獨立 async
   chunk，主 bundle 零字面量；實測主 bundle +2.74 kB 為演出邏輯本體）。
@@ -960,7 +960,7 @@ hitbox 全數凍結，行為零改變**；唯一物理相關動作為 `vscale.re
 - precache：條目搬離停車場後自動退出 `lazyPrecacheIgnores` 排除清單，
   四王動畫全數進 PWA precache（124→279 項），離線可玩不打折。
 
-### 127.2 演出結構（`systems/bossStagecraft.ts` 四王共用）
+### 125.2 演出結構（`systems/bossStagecraft.ts` 四王共用）
 
 - 幀鍵約定：`boss-<kind>-` 前綴＋固定後綴組（idle 2／entry 4／move1-3 ×
   windup-charge-burst-recover／p2trans 6／p3trans 7／hit 2／death 6），
@@ -981,7 +981,7 @@ hitbox 全數凍結，行為零改變**；唯一物理相關動作為 `vscale.re
 - 優先權＝演出代際（generation）：move/trans/death 開播即遞增，舊代際
   pending 幀作廢——高優先演出打斷低優先不殘留錯幀。
 
-### 127.3 三招分鏡映射（本體發招類；其餘沿用既有 telegraph 演出）
+### 125.3 三招分鏡映射（本體發招類；其餘沿用既有 telegraph 演出）
 
 | 王        | move1        | move2         | move3         | 沿用既有        |
 | --------- | ------------ | ------------- | ------------- | --------------- |

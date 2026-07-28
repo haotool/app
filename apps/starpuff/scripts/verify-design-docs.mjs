@@ -56,6 +56,32 @@ function parseHeadings(file) {
   return out;
 }
 
+// 子標題章號一致性：`### N.x` 的 N 必須等於所屬頂層 `## N.` 的 N。
+// 頂層改號時子標題漏改（如 §127→§125 只換頂層）會讓章內導航失真且無人發現。
+function checkSubheadings(file) {
+  const problems = [];
+  const text = readFileSync(join(DESIGN_DIR, file), 'utf8');
+  let currentNum = null;
+  text.split('\n').forEach((line, i) => {
+    const top = /^## (\d+)\. /.exec(line);
+    if (top) {
+      currentNum = Number(top[1]);
+      return;
+    }
+    const sub = /^### (\d+)\.\d+/.exec(line);
+    if (!sub) return;
+    const subNum = Number(sub[1]);
+    if (currentNum === null) {
+      problems.push(`子標題出現在任何頂層章節之前（${file}:${i + 1}）：「${line.trim()}」`);
+    } else if (subNum !== currentNum) {
+      problems.push(
+        `子標題章號與所屬章節不符（${file}:${i + 1}）：「### ${sub[1]}.x」應為「### ${currentNum}.x」`,
+      );
+    }
+  });
+  return problems;
+}
+
 // 解析索引表列 `| §N | 標題 | [`檔名`](design/檔名) |`（prettier 會補對齊空白）。
 function parseIndexRows() {
   const text = readFileSync(INDEX_FILE, 'utf8');
@@ -197,7 +223,7 @@ export function verifyDesignDocs() {
   const files = listSectionFiles();
   if (files.length === 0) problems.push('design/ 下找不到任何 0*.md 主題檔');
 
-  // 1. 章節標題彙整與重複檢查。
+  // 1. 章節標題彙整與重複檢查；子標題章號須與所屬章節一致。
   const headings = new Map();
   for (const file of files) {
     for (const h of parseHeadings(file)) {
@@ -208,6 +234,7 @@ export function verifyDesignDocs() {
       }
       headings.set(h.num, h);
     }
+    problems.push(...checkSubheadings(file));
   }
 
   // 2. 章號連續無缺號（新增章節必須接續遞增，不得跳號或回收）。
