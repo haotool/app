@@ -150,6 +150,34 @@ describe('bossStagecraft 四王演出共用件', () => {
     expect(frames[frames.length - 1]).toBe('boss-tariffang-enraged');
   });
 
+  it('背景補載失敗靜默降級：chunk reject 不產生未捕獲 rejection、loader 零觸碰', async () => {
+    // 模擬 chunk 載入失敗（離線/瞬時網路故障）：下一次 dynamic import 直接 reject。
+    vi.resetModules();
+    vi.doMock('../core/bossAnimAssets', () => {
+      throw new Error('chunk load failed');
+    });
+    const stage = makeStage();
+    (stage.scene.textures as { exists: (key: string) => boolean }).exists = () => false;
+    const { preloadBossStagecraft: preloadFresh, createBossStagecraft: createFresh } =
+      await import('./bossStagecraft');
+    preloadFresh(stage.scene, 'tariffang');
+    // 讓 microtask 佇列清空：未捕獲 rejection 會被 vitest 判為 unhandled error 而翻紅。
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(stage.loadImage).not.toHaveBeenCalled();
+    expect(stage.loadStart).not.toHaveBeenCalled();
+    // 降級行為維持：演出件照常運作，缺圖幀由 setFrame 防衛跳過（base 立繪路徑）。
+    const craft = createFresh(stage.scene, stage.body, {
+      kind: 'tariffang',
+      bodyW: 170,
+      bodyH: 150,
+    });
+    craft.moveCinematic(1, 800);
+    stage.advance(2000);
+    expect(stage.frames).toEqual([]);
+    vi.doUnmock('../core/bossAnimAssets');
+    vi.resetModules();
+  });
+
   it('背景補載：未載鍵逐條排入 loader 並 start；已載鍵零成本略過', async () => {
     const cold = makeStage();
     (cold.scene.textures as { exists: (key: string) => boolean }).exists = () => false;

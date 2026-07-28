@@ -23,17 +23,22 @@ const MOVE_SETTLE_MS = 680;
 // 背景補載（#883 分階段載入契約）：manifest 走 dynamic import 獨立 chunk，進魔王關
 // create 期觸發——前室廊道即補載窗口，不阻塞進關、不佔載入畫面。已載鍵零成本略過。
 export function preloadBossStagecraft(scene: Phaser.Scene, kind: StagecraftBossKind): void {
-  void import('../core/bossAnimAssets').then(({ BOSS_ANIM_ASSETS }) => {
-    // 玩家秒退關卡時 scene 可能已銷毀；未載完的幀由下次進關重試補齊。
-    if (!scene.sys || !scene.load) return;
-    let queued = 0;
-    for (const { key, url } of BOSS_ANIM_ASSETS[kind]) {
-      if (scene.textures.exists(key)) continue;
-      scene.load.image(key, url);
-      queued += 1;
-    }
-    if (queued > 0 && !scene.load.isLoading()) scene.load.start();
-  });
+  import('../core/bossAnimAssets')
+    .then(({ BOSS_ANIM_ASSETS }) => {
+      // 玩家秒退關卡時 scene 可能已銷毀；未載完的幀由下次進關重試補齊。
+      if (!scene.sys || !scene.load) return;
+      let queued = 0;
+      for (const { key, url } of BOSS_ANIM_ASSETS[kind]) {
+        if (scene.textures.exists(key)) continue;
+        scene.load.image(key, url);
+        queued += 1;
+      }
+      if (queued > 0 && !scene.load.isLoading()) scene.load.start();
+    })
+    .catch(() => {
+      // chunk 載入失敗（離線/瞬時網路故障）靜默降級：setFrame 缺圖防衛維持
+      // base 立繪演出（anti-softlock），下次進關重試補載。
+    });
 }
 
 export interface BossStagecraft {
