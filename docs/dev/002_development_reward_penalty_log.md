@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 1、penalty 2、neutral 0）｜累計總分：+329
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+330
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-28
+- ID：reward-starpuff-w3prep-enemyupdates-split
+- 原因：enemyUpdates.ts 1172 行僅餘 28 行逼近 max-lines 1200 硬閘，W3 落地 L26/L28 鏡界/引力新小怪 update 必撞閘
+- 解法：兩段式機械搬移拆四家族模組（ground/flyer/field/windupRing）主檔 1172→207 行，--color-moved 判定 1001 行搬移僅 57 行 import/簽名，1205 案全綠＋L21/L23 audit ×7 靜態軸全等 clearRate 兩側 7/7
 
 - 日期：2026-07-28
 - ID：reward-starpuff-w2-tariffang-maridella-ship
