@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { MAGNO_FSM, MIRRI_FSM } from '../logic/enemyFsm';
+import { BEARMARKET_FSM, BULLRUN_FSM, MAGNO_FSM, MIRRI_FSM } from '../logic/enemyFsm';
 import { playSfx } from '../audio/sfx';
 import type { EnemyUpdateContext } from './enemyUpdates';
-import { updateMagno, updateMirri } from './fieldEnemies';
+import { updateBearmarket, updateBullrun, updateMagno, updateMirri } from './fieldEnemies';
 
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 
@@ -27,9 +27,13 @@ function makeFieldSprite(dataInit: Record<string, unknown>) {
   const data = new Map<string, unknown>(Object.entries({ eliteMul: 1, ...dataInit }));
   const body = {
     velocity: { x: 0, y: 0 },
-    blocked: { down: true },
+    blocked: { down: true, left: false, right: false },
     setVelocityX(vx: number) {
       body.velocity.x = vx;
+    },
+    setVelocity(vx: number, vy: number) {
+      body.velocity.x = vx;
+      body.velocity.y = vy;
     },
   };
   const sprite = {
@@ -65,10 +69,18 @@ function makeFieldSprite(dataInit: Record<string, unknown>) {
 
 function makeFieldCtx(target: { x: number; y: number } | null) {
   const circles: FakeArc[] = [];
+  const spawnMarketWave = vi.fn();
+  const spawnCrashArrow = vi.fn();
+  const shake = vi.fn();
+  const mod = { sx: 1, sy: 1 };
   const ctx = {
     target,
     elapsedMs: 0,
+    spawnMarketWave,
+    spawnCrashArrow,
+    vscale: { mod: () => mod },
     scene: {
+      cameras: { main: { shake, flash: vi.fn() } },
       add: {
         circle: (x: number, y: number) => {
           const arc: FakeArc = {
@@ -99,7 +111,13 @@ function makeFieldCtx(target: { x: number; y: number } | null) {
       },
     },
   };
-  return { ctx: ctx as unknown as EnemyUpdateContext, circles };
+  return {
+    ctx: ctx as unknown as EnemyUpdateContext,
+    circles,
+    spawnMarketWave,
+    spawnCrashArrow,
+    mod,
+  };
 }
 
 const asSprite = (fake: unknown) => fake as Phaser.Physics.Arcade.Sprite;
@@ -163,5 +181,104 @@ describe('鏡面蟲 mirri 三態呈現', () => {
     updateMirri(makeFieldCtx(null).ctx, asSprite(fake), 16);
     expect(fake.getData('state')).toBe('roam');
     expect(fake.clearTintCalls).toBeGreaterThan(0);
+  });
+});
+
+describe('牛市怪 bullrun 呈現（§126.1）', () => {
+  it('prowl 緩走朝目標側；prowl 期滿入 charge 定身閃爍', () => {
+    const walking = makeFieldSprite({ state: 'prowl', stateMs: 0 });
+    updateBullrun(makeFieldCtx({ x: 0, y: 100 }).ctx, asSprite(walking), 16);
+    expect(walking.body.velocity.x).toBeLessThan(0);
+
+    const charging = makeFieldSprite({ state: 'prowl', stateMs: BULLRUN_FSM.prowlMs - 1 });
+    updateBullrun(makeFieldCtx({ x: 0, y: 100 }).ctx, asSprite(charging), 16);
+    expect(charging.getData('state')).toBe('charge');
+    expect(charging.body.velocity.x).toBe(0);
+    expect(charging.tints.length).toBeGreaterThan(0);
+  });
+
+  it('charge 期滿入 dash：鎖定朝目標側以 dashSpeed 衝刺', () => {
+    const fake = makeFieldSprite({ state: 'charge', stateMs: BULLRUN_FSM.chargeMs - 1 });
+    updateBullrun(makeFieldCtx({ x: 0, y: 100 }).ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('dash');
+    expect(fake.body.velocity.x).toBe(-BULLRUN_FSM.dashSpeed);
+  });
+
+  it('dash 撞牆入 redash 二次加速（沿反彈後速度向 ×redashSpeedMul）', () => {
+    const fake = makeFieldSprite({ state: 'dash', stateMs: 100 });
+    // bounce=1 已翻向：撞左牆後速度為正向。
+    fake.body.blocked.left = true;
+    fake.body.velocity.x = BULLRUN_FSM.dashSpeed;
+    updateBullrun(makeFieldCtx(null).ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('redash');
+    expect(fake.body.velocity.x).toBe(BULLRUN_FSM.dashSpeed * BULLRUN_FSM.redashSpeedMul);
+  });
+
+  it('redash 再撞牆入 recover 減速收勢；recover 期滿回 prowl', () => {
+    const fake = makeFieldSprite({ state: 'redash', stateMs: 100 });
+    fake.body.blocked.right = true;
+    fake.body.velocity.x = -200;
+    updateBullrun(makeFieldCtx(null).ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('recover');
+    expect(Math.abs(fake.body.velocity.x)).toBeLessThan(200);
+
+    const recovered = makeFieldSprite({ state: 'recover', stateMs: BULLRUN_FSM.recoverMs - 1 });
+    updateBullrun(makeFieldCtx(null).ctx, asSprite(recovered), 16);
+    expect(recovered.getData('state')).toBe('prowl');
+  });
+});
+
+describe('熊市怪 bearmarket 呈現（§126.1）', () => {
+  it('slamwind 期滿入 slam：雙側地面波＋朝目標側召一支下跌小箭頭', () => {
+    const fake = makeFieldSprite({
+      state: 'slamwind',
+      stateMs: BEARMARKET_FSM.slamwindMs - 1,
+      hp: 16,
+      maxHp: 16,
+    });
+    const h = makeFieldCtx({ x: 0, y: 100 });
+    updateBearmarket(h.ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('slam');
+    expect(h.spawnMarketWave).toHaveBeenCalledTimes(2);
+    // 拍地波為近距波（quake=false）。
+    expect(h.spawnMarketWave).toHaveBeenCalledWith(expect.any(Number), 110, -1, false);
+    expect(h.spawnMarketWave).toHaveBeenCalledWith(expect.any(Number), 110, 1, false);
+    expect(h.spawnCrashArrow).toHaveBeenCalledTimes(1);
+  });
+
+  it('低血一次性冬眠：prowl 期觸發 hibernate 並鎖存 hibernated＋鼓脹前搖', () => {
+    const fake = makeFieldSprite({ state: 'prowl', stateMs: 0, hp: 6, maxHp: 16 });
+    const h = makeFieldCtx(null);
+    updateBearmarket(h.ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('hibernate');
+    expect(fake.getData('hibernated')).toBe(true);
+    updateBearmarket(h.ctx, asSprite(fake), 700);
+    expect(h.mod.sx).toBeGreaterThan(1);
+  });
+
+  it('hibernate 期滿入 quake：雙側全場震波（quake=true）後甦醒回 prowl', () => {
+    const fake = makeFieldSprite({
+      state: 'hibernate',
+      stateMs: BEARMARKET_FSM.hibernateMs - 1,
+      hibernated: true,
+      hp: 6,
+      maxHp: 16,
+    });
+    const h = makeFieldCtx(null);
+    updateBearmarket(h.ctx, asSprite(fake), 16);
+    expect(fake.getData('state')).toBe('quake');
+    expect(h.spawnMarketWave).toHaveBeenCalledTimes(2);
+    expect(h.spawnMarketWave).toHaveBeenCalledWith(expect.any(Number), 110, -1, true);
+    expect(h.spawnMarketWave).toHaveBeenCalledWith(expect.any(Number), 110, 1, true);
+
+    const waking = makeFieldSprite({
+      state: 'wake',
+      stateMs: BEARMARKET_FSM.wakeMs - 1,
+      hibernated: true,
+      hp: 6,
+      maxHp: 16,
+    });
+    updateBearmarket(makeFieldCtx(null).ctx, asSprite(waking), 16);
+    expect(waking.getData('state')).toBe('prowl');
   });
 });
