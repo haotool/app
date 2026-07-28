@@ -73,6 +73,8 @@ export function createStarLauncher(
     star.setData('damage', starDamage(slot));
     star.setData('pierce', spec.pierceCount);
     star.setData('flavor', slot.flavor);
+    // 視覺味＝實際味（§124）：與 formSkills.launchShot 的覆寫口同鍵，每發必寫防殘值。
+    star.setData('fxFlavor', slot.flavor);
     star.setData('mix', slot.mix ?? null);
     // 迴旋星（§53）：標記迴旋彈道由 steerBoomerangs 逐幀驅動；非迴旋彈清殘留。
     star.setData('boomMs', spec.boomerang ? 0 : null);

@@ -8,10 +8,8 @@ import {
   SLAM,
   STAR,
   STARSTORM,
-  STAR_FLAVORS,
   getMix,
   type MagazineSlot,
-  type MixId,
   type StarFlavor,
 } from '../core/config';
 import {
@@ -94,10 +92,11 @@ import {
   strideTilt,
 } from '../logic/walkFeel';
 import { playSfx } from '../audio/sfx';
+import { morphFrameKeys } from '../core/assetPlan';
 import { createChargedStar } from './chargedStar';
 import type { ControlsState } from './controls';
 import { FX_TEXTURES, burstSmall, ensureFxTextures } from './fx';
-import { burstLayers, flashSprite } from './fxLayers';
+import { burstLayers, flashSprite, flashStarImpact } from './fxLayers';
 import { createFormSkills } from './formSkills';
 import { getVisualScale } from './visualScale';
 
@@ -177,6 +176,8 @@ const CROUCH_SQUASH_Y = 0.22;
 const CROUCH_SINK_PX = 3;
 // 大嘴吸入影格（§77.4）：吸入中兩影格交替營造吸力節奏；素材未載回退 hero-inhale。
 const INHALE_FRAME_MS = 160;
+// 變身分鏡幀長（§124 W5a）：五幀約 450ms，僅顯示層演出（操作不鎖）。
+const MORPH_FRAME_MS = 90;
 // 魔王頭頂命中回彈初速（§58）。
 const SLAM_BOUNCE_VY = -380;
 
@@ -296,6 +297,10 @@ export function createPlayer(
   // 滾殼衝撞（§110）：衝撞剩餘時長與 CD。
   let chargeMs = 0;
   let chargeCdMs = 0;
+  // 變身分鏡（§124 W5a）：五幀依序穿戴後落形態立繪；全五幀在場才播（部分缺圖
+  // 直接落立繪），全程走 wearTexture 唯一入口維持 hurtbox 恆定。
+  let morphFrames: readonly string[] | null = null;
+  let morphMs = 0;
 
   // 走路 bob 視覺 y 偏移（US-022 / recon 硬規則 10）：不動 displayOrigin、不污染物理。
   // POST_UPDATE（物理回寫後）套用偏移供渲染，下一幀 PRE_UPDATE（物理讀取前）復原。
@@ -466,6 +471,8 @@ export function createPlayer(
       pitch: 1.4,
       flat,
       trailLifespanMs: flat ? WIND_TRAIL_LIFESPAN_MS : TRAIL_LIFESPAN_MS,
+      // 稜片視覺味（§124 W5a）：彈體與命中閃走 fx-star-prism 專屬素材。
+      fxFlavor: transform.form === 'prism' ? 'prism' : undefined,
     });
   };
 
@@ -494,6 +501,10 @@ export function createPlayer(
     formCdMs = 0;
     chargeMs = 0;
     chargeCdMs = 0;
+    // 變身分鏡（§124 W5a）：全五幀在場才播，缺任一幀直接落形態立繪。
+    const frames = morphFrameKeys(form);
+    morphFrames = frames.every((key) => scene.textures.exists(key)) ? frames : null;
+    morphMs = 0;
     emitAmmo();
     playSfx('starstorm');
     burstSmall(scene, sprite.x, sprite.y, TRANSFORM_FORMS[form].tint);
@@ -507,6 +518,7 @@ export function createPlayer(
     transform = endTransform();
     chargeMs = 0;
     prismArm = false;
+    morphFrames = null;
     if (!form) return;
     formSkills.end(form);
     playSfx('pop');
@@ -891,8 +903,17 @@ export function createPlayer(
       const inhalePose: Pose =
         inhaling && scene.textures.exists(bigMouth) ? bigMouth : 'hero-inhale';
 
-      // 形態貼圖（§57）：變身期間固定形態立繪；素材未載時退回一般姿勢（aura 保識別）。
-      const formTexKey = transform.form ? `hero-${transform.form}` : null;
+      // 變身分鏡推進（§124 W5a）：五幀播畢清序列落形態立繪。
+      if (transform.form && morphFrames) {
+        morphMs += deltaMs;
+        if (Math.floor(morphMs / MORPH_FRAME_MS) >= morphFrames.length) morphFrames = null;
+      }
+      // 形態貼圖（§57/§124）：分鏡播放中逐幀穿戴、播畢固定形態立繪；素材未載時
+      // 退回一般姿勢（aura 保識別）。
+      const morphKey = transform.form
+        ? morphFrames?.[Math.floor(morphMs / MORPH_FRAME_MS)]
+        : undefined;
+      const formTexKey = transform.form ? (morphKey ?? `hero-${transform.form}`) : null;
       if (formTexKey && scene.textures.exists(formTexKey)) {
         if (sprite.texture.key !== formTexKey) wearTexture(formTexKey);
       } else if (invulnerableMs > 0) setPose('hero-hurt');
@@ -932,10 +953,19 @@ export function createPlayer(
         effectiveInvulnMs(invulnerableMs, stormInvulnMs) <= 0 &&
         transform.tuckLeft > 0
       ) {
+        const tuckForm = transform.form;
         transform = consumeTuck(transform).state;
         blockInvulnMs = Math.max(blockInvulnMs, SHELL_TUCK.invulnMs);
         squashStretch(0.8, 0.72);
         playSfx('metal');
+        // 護體消耗爆閃（§124 W5a）：潮化泡泡盾／引力化星體護衛以形態蓄能素材回饋。
+        if (tuckForm === 'tide' || tuckForm === 'gravity') {
+          flashSprite(scene, `fx-star-${tuckForm}-charge`, sprite.x, sprite.y, 64, {
+            durationMs: 260,
+            depth: 90,
+            fromScale: 1.5,
+          });
+        }
         return;
       }
       // 殼化受傷減半（§57）：0.5 傷害池累積，實扣 0 時給短護體窗防逐幀重複結算。
@@ -1136,22 +1166,8 @@ export function createPlayer(
     },
     onStarHit(star: Phaser.GameObjects.GameObject, mode: StarHitMode) {
       const s = star as Phaser.Physics.Arcade.Sprite;
-      // 星味命中演出（§124 W5a）：爆裂終端出 explosion 環、一般命中出 hit 閃；
-      // 素材缺載時沿既有回饋（敵方閃白／damage number）零疊加。
-      const flavor = s.getData('flavor') as StarFlavor | undefined;
-      if (flavor !== undefined) {
-        const mixId = s.getData('mix') as MixId | null | undefined;
-        const spec = mixId ? getMix(mixId) : STAR_FLAVORS[flavor];
-        const explosive = mode === 'absorb' && spec.aoeRadiusPx > 0;
-        if (explosive) {
-          flashSprite(scene, `fx-star-${flavor}-explosion`, s.x, s.y, spec.aoeRadiusPx * 2, {
-            durationMs: 260,
-            depth: 89,
-          });
-        } else {
-          flashSprite(scene, `fx-star-${flavor}-hit`, s.x, s.y, 44, { durationMs: 170, depth: 89 });
-        }
-      }
+      // 星味命中演出（§124 W5a）：hit 閃／explosion 環單一出口在 fxLayers。
+      flashStarImpact(scene, s, mode === 'absorb');
       if (mode === 'absorb') {
         starLauncher.recycle(s);
         return;

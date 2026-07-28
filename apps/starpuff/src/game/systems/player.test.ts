@@ -25,7 +25,11 @@ vi.mock('./fx', () => ({
   attachTrail: vi.fn(() => ({ stop: vi.fn() })),
 }));
 // 分層素材特效（§124 W5a）：純顯示層，player 邏輯測試以 mock 隔離。
-vi.mock('./fxLayers', () => ({ burstLayers: vi.fn(), flashSprite: vi.fn() }));
+vi.mock('./fxLayers', () => ({
+  burstLayers: vi.fn(),
+  flashSprite: vi.fn(),
+  flashStarImpact: vi.fn(),
+}));
 
 interface FakeStar {
   x: number;
@@ -116,6 +120,7 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { ke
     'setAlpha',
     'setVisible',
     'setDepth',
+    'setBlendMode',
     'setStrokeStyle',
     'clear',
     'lineStyle',
@@ -131,7 +136,8 @@ function chainable(): Record<string, ReturnType<typeof vi.fn>> & { texture: { ke
   ]) {
     target[key] = vi.fn(() => target);
   }
-  return Object.assign(target, { texture: { key: '' } });
+  // frame（§124 W5a）：badge／光環素材以 frame.realWidth 換算縮放，替身回 512 基準。
+  return Object.assign(target, { texture: { key: '' }, frame: { realWidth: 512 } });
 }
 
 interface FakePlayerSprite {
@@ -256,7 +262,8 @@ function makePlayerSprite(x: number, y: number): FakePlayerSprite {
     },
     setTexture(key: string) {
       sprite.texture.key = key;
-      const size = FAKE_TEXTURE_SIZE[key] ?? 512;
+      // 變身分鏡幀（§124 W5a）：素材產線 1024 源——同屬超尺寸解耦鎖範圍。
+      const size = FAKE_TEXTURE_SIZE[key] ?? (key.includes('-morph-') ? 1024 : 512);
       sprite.frame.realWidth = size;
       sprite.frame.realHeight = size;
       return sprite;
@@ -648,11 +655,17 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
-    // 焰化（768 源）：顯示 px 必須仍為 48（未重算會是 72）。
+    // 焰化：變身當幀先穿分鏡幀（§124 W5a，1024 源）——同鎖顯示尺寸恆定。
     for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBe('ember');
     player.update(IDLE, 16);
+    expect(sprite.texture.key).toBe('hero-ember-morph-gather');
+    expect(sprite.frame.realWidth).toBe(1024);
+    expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
+    expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
+    // 分鏡播畢落形態立繪（768 源）：顯示 px 必須仍為 48（未重算會是 72）。
+    player.update(IDLE, 500);
     expect(sprite.texture.key).toBe('hero-ember');
     expect(sprite.frame.realWidth).toBe(768);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
@@ -676,7 +689,8 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     for (let i = 0; i < 3; i += 1) player.grantStar('spora');
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBe('tide');
-    player.update(IDLE, 16);
+    // 分鏡播畢（§124）落形態立繪後斷言（分鏡幀恆 48 由焰化案鎖住）。
+    player.update(IDLE, 500);
     expect(sprite.frame.realWidth).toBe(1254);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     // 修復前此處為 14.7（−59%）：判定箱與源解析度解耦的核心斷言。
@@ -694,7 +708,7 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     for (let i = 0; i < 3; i += 1) player.grantStar('glowy');
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBe('prism');
-    player.update(IDLE, 16);
+    player.update(IDLE, 500);
     expect(sprite.frame.realWidth).toBe(1254);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
@@ -708,12 +722,34 @@ describe('變身換裝尺寸解耦（PR #886 R7）', () => {
     for (let i = 0; i < 3; i += 1) player.grantStar('boomy');
     player.update({ ...IDLE, spPressed: true }, 16);
     expect(player.getTransformState().form).toBe('gravity');
-    player.update(IDLE, 16);
+    player.update(IDLE, 500);
     expect(sprite.frame.realWidth).toBe(1254);
     expect(sprite.scaleX * sprite.frame.realWidth).toBeCloseTo(48);
     expect(bodyWorldW(sprite)).toBeCloseTo(HURT_W);
     expect(bodyWorldH(sprite)).toBeCloseTo(HURT_H);
     expectStableAcrossFrame(frame, sprite);
+  });
+
+  // 變身分鏡播放（§124 W5a）：五幀依序穿戴→落形態立繪；提前解除清序列不殘留。
+  it('變身分鏡五幀依序穿戴後落形態立繪；提前解除立即回姿勢', () => {
+    const { player } = makeHarness(true);
+    const sprite = player.sprite as unknown as FakePlayerSprite;
+    for (let i = 0; i < 3; i += 1) player.grantStar('drilly');
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(sprite.texture.key).toBe('hero-ember-morph-gather');
+    const seen: string[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      player.update(IDLE, 90);
+      seen.push(sprite.texture.key);
+    }
+    expect(seen).toContain('hero-ember-morph-shrink');
+    expect(seen).toContain('hero-ember-morph-burst');
+    expect(seen).toContain('hero-ember-morph-complete');
+    expect(seen[seen.length - 1]).toBe('hero-ember');
+    // 提前解除：分鏡序列清除、立即回姿勢貼圖（不殘留分鏡幀）。
+    player.update({ ...IDLE, spPressed: true }, 16);
+    expect(player.getTransformState().form).toBeNull();
+    expect(sprite.texture.key).toBe('hero-idle');
   });
 
   // 換裝首幀判定箱同步（#896）：Phaser Body.setSize 以上次 updateBounds 快取的

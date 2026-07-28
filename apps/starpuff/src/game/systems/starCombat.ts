@@ -25,6 +25,7 @@ import {
 import type { BossDamageSource, BossHandle } from './boss';
 import type { EnemySystem } from './enemies';
 import type { FxSystem } from './fx';
+import { flashSprite } from './fxLayers';
 import type { PlayerHandle } from './player';
 import { playSfx } from '../audio/sfx';
 
@@ -405,6 +406,13 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
   // 會使潮引近乎全面零傷）。其餘目標維持輕傷＋未死拉近（攻語彙保留）。
   function resolveTidePull(x: number, y: number, facing: 1 | -1): void {
     hooks.fx().burstSmall(x, y, TRANSFORM_FORMS.tide.tint);
+    // 水引起手演出（§124 W5a）：起手潮爆＋面向側水流掃出；素材缺載沿碎光保底。
+    flashSprite(scene, 'fx-star-tide-explosion', x, y, 72, { durationMs: 260, depth: 88 });
+    flashSprite(scene, 'fx-star-tide-flight', x + facing * (TIDE_PULL.rangePx / 2), y, 88, {
+      durationMs: 300,
+      depth: 87,
+      fromScale: 0.25,
+    });
     const player = hooks.player().sprite;
     const pullOnlyKinds: readonly string[] = TIDE_PULL.pullOnlyKinds;
     for (const child of hooks.enemies().getGroup().getChildren()) {
@@ -413,6 +421,8 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
       if (Math.sign(enemy.x - x) !== facing && enemy.x !== x) continue;
       if (distanceBetween(x, y, enemy.x, enemy.y) > TIDE_PULL.rangePx) continue;
       const kind = hooks.enemies().kindOf(child);
+      // 被拉目標水痕命中閃（§124 W5a）。
+      flashSprite(scene, 'fx-star-tide-hit', enemy.x, enemy.y, 40, { durationMs: 180, depth: 89 });
       if (kind !== null && pullOnlyKinds.includes(kind)) {
         // 零傷命中確認（PR #886 UIUX）：只拉不傷仍需碎光回饋，防玩家誤判技能未生效。
         hooks.fx().burstSmall(enemy.x, enemy.y, TRANSFORM_FORMS.tide.tint);
@@ -430,6 +440,9 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
   // 稜化彩虹光束（§119）：面向側走廊貫穿判定——小怪與魔王本體全結算，光帶漸隱演出。
   function resolveRainbowBeam(x: number, y: number, facing: 1 | -1): void {
     const endX = x + facing * RAINBOW_BEAM.rangePx;
+    // 光束端點演出（§124 W5a）：起點稜光蓄放＋終端稜光爆；素材缺載沿光帶保底。
+    flashSprite(scene, 'fx-star-prism-charge', x, y, 64, { durationMs: 240, depth: 93 });
+    flashSprite(scene, 'fx-star-prism-explosion', endX, y, 96, { durationMs: 320, depth: 93 });
     const beam = scene.add.graphics().setDepth(93);
     // 彩虹三色帶（形狀訊號，不依賴單色）。
     const bands: readonly [number, number][] = [
@@ -470,6 +483,11 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
   // 引力化引力井（§119）：面向側定點初爆輕傷＋滯留週期牽引（壽命有界必回收）。
   function resolveGravityWell(x: number, y: number, facing: 1 | -1): void {
     const wellX = x + facing * GRAVITY_WELL.offsetPx;
+    // 引力井初爆（§124 W5a）：井心引力爆點；素材缺載沿圓域描邊保底。
+    flashSprite(scene, 'fx-star-gravity-explosion', wellX, y, GRAVITY_WELL.radiusPx * 1.5, {
+      durationMs: 300,
+      depth: 60,
+    });
     const well = scene.add
       .circle(wellX, y, GRAVITY_WELL.radiusPx, TRANSFORM_FORMS.gravity.tint, 0.12)
       .setStrokeStyle(3, TRANSFORM_FORMS.gravity.tint, 0.85)
@@ -503,6 +521,12 @@ export function createStarCombat(scene: Phaser.Scene, hooks: StarCombatHooks): S
         }
         if (ticksLeft <= 0) {
           timer.remove();
+          // 井收束爆點（§124 W5a）：滯留期滿的內縮回饋。
+          flashSprite(scene, 'fx-star-gravity-hit', wellX, y, 56, {
+            durationMs: 220,
+            depth: 60,
+            fromScale: 1.6,
+          });
           scene.tweens.add({
             targets: well,
             alpha: 0,

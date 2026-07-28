@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { STAR_FLAVORS, getMix, type MixId, type StarFlavor } from '../core/config';
 import { acquirePooled } from '../core/poolFlags';
 import { loadSettings } from '../core/settings';
 
@@ -80,6 +81,31 @@ export function flashSprite(
     },
   });
   return true;
+}
+
+// 星味命中演出（§124 W5a）：爆裂終端出 explosion 環、一般命中出 hit 閃；視覺味
+// 以 fxFlavor 為準（稜片走 prism 素材），素材缺載時沿既有回饋（敵方閃白）零疊加。
+export function flashStarImpact(
+  scene: Phaser.Scene,
+  star: Phaser.Physics.Arcade.Sprite,
+  absorb: boolean,
+): void {
+  const flavor = star.getData('flavor') as StarFlavor | undefined;
+  if (flavor === undefined) return;
+  const fxFlavor = (star.getData('fxFlavor') as string | undefined) ?? flavor;
+  const mixId = star.getData('mix') as MixId | null | undefined;
+  const spec = mixId ? getMix(mixId) : STAR_FLAVORS[flavor];
+  if (absorb && spec.aoeRadiusPx > 0) {
+    flashSprite(scene, `fx-star-${fxFlavor}-explosion`, star.x, star.y, spec.aoeRadiusPx * 2, {
+      durationMs: 260,
+      depth: 89,
+    });
+  } else {
+    flashSprite(scene, `fx-star-${fxFlavor}-hit`, star.x, star.y, 44, {
+      durationMs: 170,
+      depth: 89,
+    });
+  }
 }
 
 export interface LayerBurstOptions {

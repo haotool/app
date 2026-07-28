@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GRAVITY_Y, PLAYER, VIEW } from '../core/config';
 import { GameEvents, emitGameEvent } from '../core/events';
 import { loadAssets } from '../core/assetLoader';
-import { entriesForLevel } from '../core/assetPlan';
+import { deferredEntriesForLevel, entriesForLevel } from '../core/assetPlan';
 import {
   loadSave,
   persistSave,
@@ -476,6 +476,16 @@ export class GameScene extends Phaser.Scene {
     this.waves.start();
     // 前室魔王關（§69）：入場運鏡延至玩家走入 arena 才啟動（onEnterArena）。
     if (this.level.boss && !this.bossRoom) this.boss.spawn();
+
+    // §124 W5a：變身演出級資產背景補載（分鏡／光環／徽章／形態技特效）——不入
+    // 進場關鍵路徑，開戰數秒內就緒；未載齊時變身直落立繪（運行期安全回退）。
+    const deferred = deferredEntriesForLevel(this.level).filter(
+      (entry) => !this.textures.exists(entry.key),
+    );
+    if (deferred.length > 0) {
+      for (const { key, url } of deferred) this.load.image(key, url);
+      this.load.start();
+    }
   }
 
   override update(_time: number, deltaMs: number): void {

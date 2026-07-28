@@ -1,16 +1,22 @@
+// §124 W5a 特效條目分檔（1200 行閘）：已接關的消費中條目，與停車場分檔語意不同；
+// assetsFx 僅回向 type-import 本檔，無運行時循環。
+import { ASSETS_W5A_FX } from './assetsFx';
+
 // 分階段載入 SSOT（§115）：載入時機由 manifest 的 phase 欄位單點驅動，
 // 場景不得自行散寫資產清單。新增條目請一併標註 phase。
 //   boot  首屏（Title／Map／Codex／Result 選單殼）必須存在的最小集合
 //   level 進入關卡時載入（背景／道具／小怪為關卡限定，其餘為全關共用核心）
 //   boss  魔王關才載入的魔王立繪
 //   form  形態解鎖後才需要的變身立繪
+//   deferred  關卡開場後背景補載（§124 W5a：變身演出級資產——分鏡／光環／徽章／
+//             形態技特效；GameScene create 尾端補載，缺載時運行期安全回退不缺圖）
 //   lazy  非戰鬥的按需資產（HUD 徽章等），由使用端自行補載
 // lazy 目前無 scene 呼叫點：任何關卡會用到的資產都不得標為 lazy，否則該關會無聲缺圖
 // 走佔位色塊。assetPlan.test 的「登場貼圖必定載得到」不變式守門，涵蓋範圍為
 // levelAssetKeys 派生鍵——關卡限定的背景／道具／小怪／魔王，加上共用的主角姿勢與
 // 形態立繪（SHARED_LEVEL_KEYS）。不在該派生內的資產（例如 form 階段的變身動畫分鏡、
 // 特效分層）標錯不會被擋下，新增這類條目時請自行確認載入時機。
-export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'lazy';
+export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'deferred' | 'lazy';
 
 export interface AssetEntry {
   key: string;
@@ -20,6 +26,7 @@ export interface AssetEntry {
 }
 
 export const ASSETS: AssetEntry[] = [
+  ...ASSETS_W5A_FX,
   {
     key: 'hero-idle',
     url: new URL('../../assets/sprites/hero-idle.webp', import.meta.url).href,
@@ -748,264 +755,6 @@ export const ASSETS: AssetEntry[] = [
     key: 'fx-market-blackhole-overlay',
     url: new URL('../../assets/sprites/fx-market-blackhole-overlay.webp', import.meta.url).href,
     phase: 'boss',
-  },
-  // §124 W5a 接關：九星味 × 四層星彈特效（charge/flight/hit/explosion）與吸入／
-  // 浮空／落地五分層基礎動作特效，自 assetsV21Part2 逐筆搬回（#857 接關契約）；
-  // 星味四層由 levelAssetKeys 依該關可吞品種派生（jelly 保底恆載）。
-  {
-    key: 'fx-star-jelly-flight',
-    url: new URL('../../assets/sprites/fx-star-jelly-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-jelly-charge',
-    url: new URL('../../assets/sprites/fx-star-jelly-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-jelly-hit',
-    url: new URL('../../assets/sprites/fx-star-jelly-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-jelly-explosion',
-    url: new URL('../../assets/sprites/fx-star-jelly-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-floaty-flight',
-    url: new URL('../../assets/sprites/fx-star-floaty-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-floaty-charge',
-    url: new URL('../../assets/sprites/fx-star-floaty-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-floaty-hit',
-    url: new URL('../../assets/sprites/fx-star-floaty-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-floaty-explosion',
-    url: new URL('../../assets/sprites/fx-star-floaty-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-puffy-flight',
-    url: new URL('../../assets/sprites/fx-star-puffy-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-puffy-charge',
-    url: new URL('../../assets/sprites/fx-star-puffy-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-puffy-hit',
-    url: new URL('../../assets/sprites/fx-star-puffy-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-puffy-explosion',
-    url: new URL('../../assets/sprites/fx-star-puffy-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-shelly-flight',
-    url: new URL('../../assets/sprites/fx-star-shelly-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-shelly-charge',
-    url: new URL('../../assets/sprites/fx-star-shelly-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-shelly-hit',
-    url: new URL('../../assets/sprites/fx-star-shelly-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-shelly-explosion',
-    url: new URL('../../assets/sprites/fx-star-shelly-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-zappy-flight',
-    url: new URL('../../assets/sprites/fx-star-zappy-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-zappy-charge',
-    url: new URL('../../assets/sprites/fx-star-zappy-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-zappy-hit',
-    url: new URL('../../assets/sprites/fx-star-zappy-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-zappy-explosion',
-    url: new URL('../../assets/sprites/fx-star-zappy-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-drilly-flight',
-    url: new URL('../../assets/sprites/fx-star-drilly-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-drilly-charge',
-    url: new URL('../../assets/sprites/fx-star-drilly-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-drilly-hit',
-    url: new URL('../../assets/sprites/fx-star-drilly-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-drilly-explosion',
-    url: new URL('../../assets/sprites/fx-star-drilly-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-glowy-flight',
-    url: new URL('../../assets/sprites/fx-star-glowy-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-glowy-charge',
-    url: new URL('../../assets/sprites/fx-star-glowy-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-glowy-hit',
-    url: new URL('../../assets/sprites/fx-star-glowy-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-glowy-explosion',
-    url: new URL('../../assets/sprites/fx-star-glowy-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-spora-flight',
-    url: new URL('../../assets/sprites/fx-star-spora-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-spora-charge',
-    url: new URL('../../assets/sprites/fx-star-spora-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-spora-hit',
-    url: new URL('../../assets/sprites/fx-star-spora-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-spora-explosion',
-    url: new URL('../../assets/sprites/fx-star-spora-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-boomy-flight',
-    url: new URL('../../assets/sprites/fx-star-boomy-flight.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-boomy-charge',
-    url: new URL('../../assets/sprites/fx-star-boomy-charge.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-boomy-hit',
-    url: new URL('../../assets/sprites/fx-star-boomy-hit.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-star-boomy-explosion',
-    url: new URL('../../assets/sprites/fx-star-boomy-explosion.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-core',
-    url: new URL('../../assets/sprites/fx-common-inhale-core.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-shock',
-    url: new URL('../../assets/sprites/fx-common-inhale-shock.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-trail',
-    url: new URL('../../assets/sprites/fx-common-inhale-trail.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-debris',
-    url: new URL('../../assets/sprites/fx-common-inhale-debris.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-overlay',
-    url: new URL('../../assets/sprites/fx-common-inhale-overlay.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-float-core',
-    url: new URL('../../assets/sprites/fx-common-float-core.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-float-shock',
-    url: new URL('../../assets/sprites/fx-common-float-shock.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-float-trail',
-    url: new URL('../../assets/sprites/fx-common-float-trail.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-float-debris',
-    url: new URL('../../assets/sprites/fx-common-float-debris.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-float-overlay',
-    url: new URL('../../assets/sprites/fx-common-float-overlay.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-landing-core',
-    url: new URL('../../assets/sprites/fx-common-landing-core.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-landing-shock',
-    url: new URL('../../assets/sprites/fx-common-landing-shock.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-landing-trail',
-    url: new URL('../../assets/sprites/fx-common-landing-trail.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-landing-debris',
-    url: new URL('../../assets/sprites/fx-common-landing-debris.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-landing-overlay',
-    url: new URL('../../assets/sprites/fx-common-landing-overlay.webp', import.meta.url).href,
-    phase: 'level',
   },
 ];
 

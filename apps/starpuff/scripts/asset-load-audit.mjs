@@ -5,7 +5,8 @@ import { statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import './lib/ts-bridge.mjs';
 
-const { entriesForPhase, entriesForLevel } = await import('../src/game/core/assetPlan.ts');
+const { entriesForPhase, entriesForLevel, deferredEntriesForLevel } =
+  await import('../src/game/core/assetPlan.ts');
 const { LEVELS } = await import('../src/game/logic/levels.ts');
 
 const levelIds = process.argv.slice(2).map(Number).filter(Number.isFinite);
@@ -29,5 +30,8 @@ for (const id of targets) {
     continue;
   }
   const entries = entriesForLevel(level, LEVELS);
-  console.log(`L${id}: ${entries.length} 條 ${kb(sumBytes(entries))}`);
+  const deferred = deferredEntriesForLevel(level);
+  console.log(
+    `L${id}: 進場 ${entries.length} 條 ${kb(sumBytes(entries))}｜開場後補載 ${deferred.length} 條 ${kb(sumBytes(deferred))}`,
+  );
 }

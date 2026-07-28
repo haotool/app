@@ -12,6 +12,7 @@ import {
   PENDING_TEXTURE_KEYS,
   SHARED_LEVEL_KEYS,
   bgTextureKey,
+  deferredEntriesForLevel,
   entriesForKeys,
   entriesForLevel,
   entriesForPhase,
@@ -68,6 +69,8 @@ describe('manifest 驅動的分階段載入', () => {
     const reachable = new Set<string>(keysOf(entriesForPhase('boot')));
     for (const level of LEVELS) {
       for (const key of keysOf(entriesForLevel(level, LEVELS))) reachable.add(key);
+      // §124 W5a：deferred 演出級資產由 GameScene 開場後補載，同屬有效呼叫點。
+      for (const key of keysOf(deferredEntriesForLevel(level))) reachable.add(key);
     }
     for (const key of keysOf(entriesForKeys(CODEX_MONSTERS.map((m) => m.textureKey)))) {
       reachable.add(key);

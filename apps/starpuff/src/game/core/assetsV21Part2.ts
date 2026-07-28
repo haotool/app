@@ -106,86 +106,8 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
   // §124 W5a 接關：九星味四層與 fx-common 十五分層已搬回主 manifest（assets.ts）
   // 並標 'level'（星味由 levelAssetKeys 派生、fx-common 入全關共用核心）；本檔僅
   // 保留 tide/prism/gravity 形態星彈四層待 W5a Wave2 隨形態綁定鍵接關。
-  {
-    key: 'fx-star-tide-flight',
-    url: new URL('../../assets/sprites/fx-star-tide-flight.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-tide-charge',
-    url: new URL('../../assets/sprites/fx-star-tide-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-tide-hit',
-    url: new URL('../../assets/sprites/fx-star-tide-hit.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-tide-explosion',
-    url: new URL('../../assets/sprites/fx-star-tide-explosion.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-prism-flight',
-    url: new URL('../../assets/sprites/fx-star-prism-flight.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-prism-charge',
-    url: new URL('../../assets/sprites/fx-star-prism-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-prism-hit',
-    url: new URL('../../assets/sprites/fx-star-prism-hit.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-prism-explosion',
-    url: new URL('../../assets/sprites/fx-star-prism-explosion.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-gravity-flight',
-    url: new URL('../../assets/sprites/fx-star-gravity-flight.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-gravity-charge',
-    url: new URL('../../assets/sprites/fx-star-gravity-charge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-gravity-hit',
-    url: new URL('../../assets/sprites/fx-star-gravity-hit.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'fx-star-gravity-explosion',
-    url: new URL('../../assets/sprites/fx-star-gravity-explosion.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   // v21-v30 B05 共通技能分層 VFX（吸入/漂浮/落地，各五層獨立疊加）。
   // v21-v30 B05 HUD 補完（volt/gale/shell 徽章技能圖示與通用彈藥/SP 圖示）。
-  {
-    key: 'ui-volt-badge',
-    url: new URL('../../assets/sprites/ui-volt-badge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
   {
     key: 'ui-volt-skill',
     url: new URL('../../assets/sprites/ui-volt-skill.webp', import.meta.url).href,
@@ -193,20 +115,8 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
     phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
   {
-    key: 'ui-gale-badge',
-    url: new URL('../../assets/sprites/ui-gale-badge.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
     key: 'ui-gale-skill',
     url: new URL('../../assets/sprites/ui-gale-skill.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'ui-shell-badge',
-    url: new URL('../../assets/sprites/ui-shell-badge.webp', import.meta.url).href,
 
     phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
