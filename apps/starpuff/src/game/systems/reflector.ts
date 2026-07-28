@@ -125,7 +125,7 @@ export function createReflector(
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
 
-  // 動畫組背景補載＋演出件（§127）：前室廊道即補載窗口，缺圖以 base 立繪降級。
+  // 動畫組背景補載＋演出件（§125）：前室廊道即補載窗口，缺圖以 base 立繪降級。
   preloadBossStagecraft(scene, 'reflector');
   const stagecraft = createBossStagecraft(scene, body, {
     kind: 'reflector',
@@ -390,7 +390,7 @@ export function createReflector(
     panelGfx = gfx;
   };
 
-  // 三招分鏡映射（§127）：本體發招類接 move 幀組（mirror/clone 為開鏡窗與分身
+  // 三招分鏡映射（§125）：本體發招類接 move 幀組（mirror/clone 為開鏡窗與分身
   // 機制，沿用既有演出）；分鏡窗＝該招既有 telegraph 時長，時序零改變。
   const runCommand = (command: ReflectorCommand) => {
     switch (command.kind) {
@@ -462,7 +462,7 @@ export function createReflector(
           break;
         case 'phase':
           emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
-          // 狂暴轉段（§17/§127）：P2 播轉段幀序後落 enraged（換裝語義不變，
+          // 狂暴轉段（§17/§125）：P2 播轉段幀序後落 enraged（換裝語義不變，
           // 顯示尺寸與 vscale 基準由 stagecraft 換幀單點回寫）。
           if (event.phase === 'p2') {
             stagecraft.phaseTransition('p2');
@@ -490,7 +490,7 @@ export function createReflector(
   };
 
   // 入場：館長自鏡光中降臨（鏡塔語彙——光束匯聚後現形）；
-  // entry 四幀鋪在既有節拍（降臨→現形→咆哮→起勢），時序零改變（§127）。
+  // entry 四幀鋪在既有節拍（降臨→現形→咆哮→起勢），時序零改變（§125）。
   const introDescend = () => {
     stagecraft.entryFrame(1);
     body.setPosition(arenaCx(), -BODY_H);

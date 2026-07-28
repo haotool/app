@@ -134,7 +134,7 @@ export function createMaridella(
   physBody.setImmovable(true);
   physBody.setSize(body.width * 0.85, body.height * 0.85);
 
-  // 動畫組背景補載＋演出件（§127）：前室廊道即補載窗口，缺圖以 base 立繪降級。
+  // 動畫組背景補載＋演出件（§125）：前室廊道即補載窗口，缺圖以 base 立繪降級。
   preloadBossStagecraft(scene, 'maridella');
   const stagecraft = createBossStagecraft(scene, body, {
     kind: 'maridella',
@@ -315,7 +315,7 @@ export function createMaridella(
     }
   };
 
-  // 三招分鏡映射（§127）：本體發招類接 move 幀組（summon/moonorb 為吟唱與軌道
+  // 三招分鏡映射（§125）：本體發招類接 move 幀組（summon/moonorb 為吟唱與軌道
   // 機關，沿用既有 telegraph 演出）；分鏡窗＝該招既有 telegraph 時長，時序零改變。
   const runCommand = (command: MaridellaCommand) => {
     switch (command.kind) {
@@ -397,7 +397,7 @@ export function createMaridella(
         case 'phase':
           emitGameEvent(scene.events, GameEvents.BOSS_PHASE, { phase: event.phase });
           if (event.phase === 'p2') {
-            // 狂暴轉段（§17/§127）：P2 播轉段幀序後落 enraged（換裝語義不變，
+            // 狂暴轉段（§17/§125）：P2 播轉段幀序後落 enraged（換裝語義不變，
             // 顯示尺寸與 vscale 基準由 stagecraft 換幀單點回寫）。
             stagecraft.phaseTransition('p2');
             playSfx('boss-roar', 1.1);
@@ -438,7 +438,7 @@ export function createMaridella(
   });
 
   // 入場：潮汐女王自潮面升起（與滑入/降臨型區隔——「湧升」語彙）；
-  // entry 四幀鋪在既有節拍（湧升→浮定→咆哮→起勢），時序零改變（§127）。
+  // entry 四幀鋪在既有節拍（湧升→浮定→咆哮→起勢），時序零改變（§125）。
   const introRise = () => {
     stagecraft.entryFrame(1);
     body.setPosition(arenaCx(), GROUND_TOP + BODY_H);

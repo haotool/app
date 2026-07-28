@@ -1,4 +1,4 @@
-// 四王動畫組 manifest（GAME_DESIGN §127，#883 分階段載入契約）：本檔只允許被
+// 四王動畫組 manifest（GAME_DESIGN §125，#883 分階段載入契約）：本檔只允許被
 // systems/bossStagecraft.ts 以 dynamic import 載入——條目字面量獨立成 async chunk，
 // 主 bundle 零增量（assets.ts 尾註 +67.88kB 教訓）。載入時機＝魔王關 create 期背景
 // 補載（前室廊道即充分窗口）；缺圖時演出層以 base 立繪降級，不影響行為。

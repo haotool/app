@@ -6,7 +6,7 @@
 import type { AssetEntry } from './assets';
 
 export const ASSETS_V21_PART3: AssetEntry[] = [
-  // v21-v30 B06 Maridella/Reflector/Gravion 動畫關鍵幀：已於 §127 W5 接關認領
+  // v21-v30 B06 Maridella/Reflector/Gravion 動畫關鍵幀：已於 §125 W5 接關認領
   //（L24/L26/L28 演出層），條目搬入 bossAnimAssets.ts（dynamic import 分檔）。
   // v21-v30 B06 劉董動畫關鍵幀（入場四幀已於 B04 註冊；載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
   {

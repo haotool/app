@@ -940,7 +940,7 @@ telegraph ≥600ms 測試守門；FSM 進 enemyFsm 表、逐幀 AI 進 `fieldEne
 - EX 差分（EX_MODS ×1.5/×1.15 共用 → HP 186）：質性差分＝軌道星體 4→6
   （間隙變窄）＋彈幕 6→8；telegraph 與力場窗不縮（只增體不縮窗）。
 
-## §127 四王動畫演出接關 bossStagecraft（W5；#857 B06 素材）
+## 125. 四王動畫演出接關 bossStagecraft（W5；#857 B06 素材）
 
 已上線四王（L22 Tariffang／L24 Maridella／L26 Reflector／L28 Gravion）的
 B06 動畫組（39 鍵/王 ×4＝156 鍵）自 `assetsV21Part2/3` 停車場接關，演出規格

@@ -7,7 +7,7 @@ import { ASSETS_V21_PART2 } from './assetsV21Part2';
 import { ASSETS_V21_PART3 } from './assetsV21Part3';
 import { BOSS_ANIM_ASSETS } from './bossAnimAssets';
 
-// 四王動畫組守門（§127 W5 接關）：鍵組結構完整性、素材實檔存在、與主 manifest／
+// 四王動畫組守門（§125 W5 接關）：鍵組結構完整性、素材實檔存在、與主 manifest／
 // v21 停車場零重複——manifest 單點真值，防搬遷殘留與雙重註冊。
 
 // 演出鍵組結構 SSOT：與 bossStagecraft 的取鍵約定一致（39 鍵/王）。

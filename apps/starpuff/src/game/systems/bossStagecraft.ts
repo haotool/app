@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import type { StagecraftBossKind } from '../core/bossAnimAssets';
 import { getVisualScale } from './visualScale';
 
-// 四王演出共用件（GAME_DESIGN §127）：L22/L24/L26/L28 動畫組（39 鍵/王）的補載與
+// 四王演出共用件（GAME_DESIGN §125）：L22/L24/L26/L28 動畫組（39 鍵/王）的補載與
 // 分鏡播放單點。純呈現層——不動 FSM 常數與判定，分鏡一律鋪在既有 telegraph 窗上；
 // 唯一物理相關動作為 vscale.rebase（沿 §77 既有換裝模式，物理箱恆為基準）。
 // 缺圖降級：setFrame 以 textures.exists 防衛，未載入幀靜默跳過（維持 base 立繪），

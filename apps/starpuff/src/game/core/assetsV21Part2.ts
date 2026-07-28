@@ -729,6 +729,6 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
 
     phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
-  // v21-v30 B06 Tariffang 動畫關鍵幀：已於 §127 W5 接關認領（L22 演出層），
+  // v21-v30 B06 Tariffang 動畫關鍵幀：已於 §125 W5 接關認領（L22 演出層），
   // 條目搬入 bossAnimAssets.ts（dynamic import 分檔，主 bundle 零字面量）。
 ];
