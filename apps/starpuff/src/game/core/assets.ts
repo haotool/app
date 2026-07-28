@@ -458,6 +458,124 @@ export const ASSETS: AssetEntry[] = [
     url: new URL('../../assets/sprites/prop-tidebay-4.webp', import.meta.url).href,
     phase: 'level',
   },
+  // §123 W3 接關：稜化/引力化立繪（FORM_INTRO_LEVEL L25/L27 認領）、鏡界塔/黑洞
+  // 外環橫景與道具條、Reflector/Gravion 雙王立繪（含 enraged 幀）、七新小怪立繪
+  // 自 assetsV21Part1/2 逐筆搬回（#857 接關契約）。
+  {
+    key: 'hero-prism',
+    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
+    phase: 'form',
+  },
+  {
+    key: 'hero-gravity',
+    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
+    phase: 'form',
+  },
+  {
+    key: 'bg-mirror-l',
+    url: new URL('../../assets/sprites/bg-mirror-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'bg-voidring-l',
+    url: new URL('../../assets/sprites/bg-voidring-l.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'boss-reflector',
+    url: new URL('../../assets/sprites/boss-reflector.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-reflector-enraged',
+    url: new URL('../../assets/sprites/boss-reflector-enraged.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-gravion',
+    url: new URL('../../assets/sprites/boss-gravion.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'boss-gravion-enraged',
+    url: new URL('../../assets/sprites/boss-gravion-enraged.webp', import.meta.url).href,
+    phase: 'boss',
+  },
+  {
+    key: 'minion-copypuff',
+    url: new URL('../../assets/sprites/minion-copypuff.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-prismbee',
+    url: new URL('../../assets/sprites/minion-prismbee.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-datamote',
+    url: new URL('../../assets/sprites/minion-datamote.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-gravitybub',
+    url: new URL('../../assets/sprites/minion-gravitybub.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-orbiton',
+    url: new URL('../../assets/sprites/minion-orbiton.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-riftling',
+    url: new URL('../../assets/sprites/minion-riftling.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'minion-bearlet',
+    url: new URL('../../assets/sprites/minion-bearlet.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-mirror-1',
+    url: new URL('../../assets/sprites/prop-mirror-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-mirror-2',
+    url: new URL('../../assets/sprites/prop-mirror-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-mirror-3',
+    url: new URL('../../assets/sprites/prop-mirror-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-mirror-4',
+    url: new URL('../../assets/sprites/prop-mirror-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-voidring-1',
+    url: new URL('../../assets/sprites/prop-voidring-1.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-voidring-2',
+    url: new URL('../../assets/sprites/prop-voidring-2.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-voidring-3',
+    url: new URL('../../assets/sprites/prop-voidring-3.webp', import.meta.url).href,
+    phase: 'level',
+  },
+  {
+    key: 'prop-voidring-4',
+    url: new URL('../../assets/sprites/prop-voidring-4.webp', import.meta.url).href,
+    phase: 'level',
+  },
 ];
 
 // v21-v30 未接關素材（442 條）獨立存放於 assetsV21Part1/2/3，刻意不併入本陣列：

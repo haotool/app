@@ -6,16 +6,8 @@
 import type { AssetEntry } from './assets';
 
 export const ASSETS_V21_PART1: AssetEntry[] = [
-  {
-    key: 'hero-prism',
-    url: new URL('../../assets/sprites/hero-prism.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'form'（W3 L25/L27 入編時必改；W1 由 FORM_INTRO_LEVEL 過濾未認領）
-  },
-  {
-    key: 'hero-gravity',
-    url: new URL('../../assets/sprites/hero-gravity.webp', import.meta.url).href,
-    phase: 'lazy', // 待接關改回 'form'（W3 L25/L27 入編時必改；W1 由 FORM_INTRO_LEVEL 過濾未認領）
-  },
+  // 稜化／引力化立繪：已於 §123 W3 接關認領（FORM_INTRO_LEVEL L25/L27），
+  // 條目搬回主 manifest（assets.ts）並標 'form'。
   // v21-v30 首批（B04 前先行）：焰化基底與劉董本體、市場箭頭 canon。
   {
     key: 'boss-liudong',
@@ -231,129 +223,8 @@ export const ASSETS_V21_PART1: AssetEntry[] = [
 
     phase: 'lazy', // 待接關改回 'form'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
-  // v21-v30 B03 鏡界塔／黑洞外環場景（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'bg-mirror-l',
-    url: new URL('../../assets/sprites/bg-mirror-l.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-mirror-1',
-    url: new URL('../../assets/sprites/prop-mirror-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-mirror-2',
-    url: new URL('../../assets/sprites/prop-mirror-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-mirror-3',
-    url: new URL('../../assets/sprites/prop-mirror-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-mirror-4',
-    url: new URL('../../assets/sprites/prop-mirror-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'bg-voidring-l',
-    url: new URL('../../assets/sprites/bg-voidring-l.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-voidring-1',
-    url: new URL('../../assets/sprites/prop-voidring-1.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-voidring-2',
-    url: new URL('../../assets/sprites/prop-voidring-2.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-voidring-3',
-    url: new URL('../../assets/sprites/prop-voidring-3.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'prop-voidring-4',
-    url: new URL('../../assets/sprites/prop-voidring-4.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  // v21-v30 B03 雙王（載入時機建議：L26/L28 魔王關載入，暫沿 Boot 預載）。
-  {
-    key: 'boss-reflector',
-    url: new URL('../../assets/sprites/boss-reflector.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-reflector-enraged',
-    url: new URL('../../assets/sprites/boss-reflector-enraged.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-gravion',
-    url: new URL('../../assets/sprites/boss-gravion.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'boss-gravion-enraged',
-    url: new URL('../../assets/sprites/boss-gravion-enraged.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'boss'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  // v21-v30 B03 六新小怪（載入時機建議：L25/L27 關卡載入，暫沿 Boot 預載）。
-  {
-    key: 'minion-copypuff',
-    url: new URL('../../assets/sprites/minion-copypuff.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-prismbee',
-    url: new URL('../../assets/sprites/minion-prismbee.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-datamote',
-    url: new URL('../../assets/sprites/minion-datamote.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-gravitybub',
-    url: new URL('../../assets/sprites/minion-gravitybub.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-orbiton',
-    url: new URL('../../assets/sprites/minion-orbiton.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
-  {
-    key: 'minion-riftling',
-    url: new URL('../../assets/sprites/minion-riftling.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
+  // v21-v30 B03 鏡界塔／黑洞外環場景、雙王與六新小怪：已於 §123 W3 接關認領，
+  // 條目搬回主 manifest（assets.ts）並標正確 phase——本檔僅保留未認領批次。
   // v21-v30 B03 稜化／引力化基底與變身五幀（載入時機建議：形態解鎖前延遲載入，暫沿 Boot 預載）。
   {
     key: 'hero-prism-morph-gather',

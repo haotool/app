@@ -155,6 +155,14 @@ const FACING_DRIVERS: Record<(typeof DIRECTIONAL_ENEMY_KINDS)[number], FacingDri
   foamy: targetDriven({ state: 'idle', stateMs: 0 }),
   frosty: targetDriven({ stateMs: 0 }),
   manta: phaseDriven({ state: 'cruise', stateMs: 0 }),
+  // §123 複製噗：鏡像驅動——玩家位移 dx 取反向（dir=-1 需 dx>0，lastTargetX 低於目標）。
+  copypuff: {
+    data: (dir) => ({ state: 'mimic', stateMs: 0, lastTargetX: dir === -1 ? 240 : 260 }),
+    target: () => ({ x: 250, y: 100 }),
+  },
+  prismbee: targetDriven({ state: 'hover', stateMs: 0, phase: 0 }),
+  riftling: targetDriven({ state: 'idle', stateMs: 0, phase: 0 }),
+  bearlet: targetDriven({ state: 'waddle', stateMs: 0 }),
 };
 
 describe('方向性品種面向同步（表驅動守門）', () => {

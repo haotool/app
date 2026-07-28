@@ -31,6 +31,7 @@ export const POOL_TRANSIENT_FLAGS = [
   'tideDeflected',
   'reflected',
   'burn',
+  'prism',
   'inhalable',
   'caramel',
   'ticket',

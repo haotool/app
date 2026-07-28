@@ -2,18 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type Phaser from 'phaser';
 import { GRAVITY_Y } from '../core/config';
 import { BOSS } from '../logic/bossFsm';
+import { GRAVION } from '../logic/gravionFsm';
 import { MARIDELLA } from '../logic/maridellaFsm';
 import { NOCTRA } from '../logic/noctraFsm';
 import { PRISMIX } from '../logic/prismixFsm';
+import { REFLECTOR } from '../logic/reflectorFsm';
 import { SYRONA } from '../logic/syronaFsm';
 import { TARIFFANG } from '../logic/tariffangFsm';
 import { VOIDRA } from '../logic/voidraFsm';
 import type { LevelSpec } from '../logic/levels';
 import { createBossKit, type BossFactoryHooks } from './bossFactory';
 import { createBoss } from './boss';
+import { createGravion } from './gravion';
 import { createMaridella } from './maridella';
 import { createNoctra } from './noctra';
 import { createPrismix } from './prismix';
+import { createReflector } from './reflector';
 import { createSyrona } from './syrona';
 import { createTariffang } from './tariffang';
 import { createVoidra } from './voidra';
@@ -35,6 +39,8 @@ vi.mock('./syrona', () => ({ createSyrona: vi.fn(() => ({ id: 'syrona-handle' })
 vi.mock('./voidra', () => ({ createVoidra: vi.fn(() => ({ id: 'voidra-handle' })) }));
 vi.mock('./tariffang', () => ({ createTariffang: vi.fn(() => ({ id: 'tariffang-handle' })) }));
 vi.mock('./maridella', () => ({ createMaridella: vi.fn(() => ({ id: 'maridella-handle' })) }));
+vi.mock('./reflector', () => ({ createReflector: vi.fn(() => ({ id: 'reflector-handle' })) }));
+vi.mock('./gravion', () => ({ createGravion: vi.fn(() => ({ id: 'gravion-handle' })) }));
 vi.mock('./pickups', () => ({ spawnHealPickup: vi.fn() }));
 vi.mock('../audio/sfx', () => ({ playSfx: vi.fn(), stopSfx: vi.fn() }));
 
@@ -141,7 +147,7 @@ describe('createBossKit 品種分派表（§54 唯一分派點）', () => {
     expect(vi.mocked(createBoss)).toHaveBeenCalledTimes(1);
   });
 
-  it('noctra/prismix/syrona/voidra/tariffang/maridella 各取對應 handle 與體傷常數', () => {
+  it('noctra/prismix/syrona/voidra/tariffang/maridella/reflector/gravion 各取對應 handle 與體傷常數', () => {
     const cases = [
       { boss: 'noctra', factory: createNoctra, damage: NOCTRA.bodyDamage },
       { boss: 'prismix', factory: createPrismix, damage: PRISMIX.bodyDamage },
@@ -149,6 +155,8 @@ describe('createBossKit 品種分派表（§54 唯一分派點）', () => {
       { boss: 'voidra', factory: createVoidra, damage: VOIDRA.bodyDamage },
       { boss: 'tariffang', factory: createTariffang, damage: TARIFFANG.bodyDamage },
       { boss: 'maridella', factory: createMaridella, damage: MARIDELLA.bodyDamage },
+      { boss: 'reflector', factory: createReflector, damage: REFLECTOR.bodyDamage },
+      { boss: 'gravion', factory: createGravion, damage: GRAVION.bodyDamage },
     ] as const;
     for (const spec of cases) {
       const enemies = makeEnemies();

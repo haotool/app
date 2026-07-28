@@ -1,6 +1,16 @@
 import type Phaser from 'phaser';
 import type { EnemyKind } from '../core/types';
-import { updateMagno, updateMirri } from './fieldEnemies';
+import {
+  updateBearlet,
+  updateCopypuff,
+  updateDatamote,
+  updateGravitybub,
+  updateMagno,
+  updateMirri,
+  updateOrbiton,
+  updatePrismbee,
+  updateRiftling,
+} from './fieldEnemies';
 import {
   updateCargo,
   updateFoamy,
@@ -60,6 +70,10 @@ export interface EnemyUpdateContext {
   spawnScanBeam(x: number, y: number, directionX: 1 | -1): void;
   spawnBubble(x: number, y: number, directionX: 1 | -1): void;
   spawnWaterBlade(x: number, y: number, vx: number, vy: number): void;
+  // §123：bearlet 下跌箭頭（L30 前置教學），走 hazards 管線。
+  spawnCrashArrow(x: number, y: number, directionX: 1 | -1): void;
+  // §123：datamote 聚攏尋找最近同類（enemies.ts 持有群組，經回呼查詢）。
+  nearestKind(kind: EnemyKind, fromX: number, fromY: number): { x: number; y: number } | null;
 }
 
 // per-kind 分派：enemies.ts update 迴圈於 dmgCd/凍結處理後呼叫。
@@ -191,6 +205,35 @@ export function updateEnemyKind(
     }
     case 'zappy': {
       updateZappy(ctx, sprite, deltaMs);
+      break;
+    }
+    // §123 星海終局篇 W3 新怪：AI 本體在 systems/fieldEnemies.ts（1200 行閘分檔）。
+    case 'copypuff': {
+      updateCopypuff(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'prismbee': {
+      updatePrismbee(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'datamote': {
+      updateDatamote(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'gravitybub': {
+      updateGravitybub(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'orbiton': {
+      updateOrbiton(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'riftling': {
+      updateRiftling(ctx, sprite, deltaMs);
+      break;
+    }
+    case 'bearlet': {
+      updateBearlet(ctx, sprite, deltaMs);
       break;
     }
     default: {

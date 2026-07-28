@@ -63,6 +63,18 @@ const BOSS_TITLES: Record<BossKind, { win: string; winDesc: string; ex: string; 
       ex: 'EX 女王制霸',
       exDesc: '以 EX 變體擊破潮汐女王',
     },
+    reflector: {
+      win: '鏡界閉館',
+      winDesc: '擊破鏡界館長',
+      ex: 'EX 館長制霸',
+      exDesc: '以 EX 變體擊破鏡界館長',
+    },
+    gravion: {
+      win: '引力退朝',
+      winDesc: '擊破引力侯爵',
+      ex: 'EX 侯爵制霸',
+      exDesc: '以 EX 變體擊破引力侯爵',
+    },
   };
 
 const BOSS_LEVELS = LEVELS.filter(

@@ -23,7 +23,15 @@ export type EnemyKind =
   | 'scanna'
   | 'foamy'
   | 'frosty'
-  | 'manta';
+  | 'manta'
+  // §123 星海終局篇 W3：複製噗/稜蜂/資料塵（L25）與重力泡/軌道怪/裂隙怪/小熊市（L27）。
+  | 'copypuff'
+  | 'prismbee'
+  | 'datamote'
+  | 'gravitybub'
+  | 'orbiton'
+  | 'riftling'
+  | 'bearlet';
 
 export type LevelId =
   | 1
@@ -62,6 +70,7 @@ export type LevelId =
 // v10（§68）：新增分裂型稜晶雙子 prismix。v11（§74）：場控型 Syrona。
 // v12（§82）：場控收束型最終魔王 Voidra。
 // §122 星海終局篇 W2：關稅巨獸 Tariffang（L22）與潮汐女王 Maridella（L24）。
+// §123 星海終局篇 W3：鏡界館長 Reflector（L26）與引力侯爵 Gravion（L28）。
 export type BossKind =
   | 'jellord'
   | 'noctra'
@@ -69,7 +78,9 @@ export type BossKind =
   | 'syrona'
   | 'voidra'
   | 'tariffang'
-  | 'maridella';
+  | 'maridella'
+  | 'reflector'
+  | 'gravion';
 
 // v9 星化三形態（§57）：雷化／風化／殼化；規格表由 logic/transform.ts 持有。
 // §119 星海終局篇：新增焰化／潮化／稜化／引力化（引入關見 FORM_INTRO_LEVEL）。

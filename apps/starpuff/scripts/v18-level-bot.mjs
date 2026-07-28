@@ -88,6 +88,11 @@ function installDriver({ playMode, forageMode, anchorX, floodPlatformXs, maxOnSc
     'foamy',
     'frosty',
     'manta',
+    'prismbee',
+    'datamote',
+    'gravitybub',
+    'orbiton',
+    'riftling',
   ]);
   const HARMFUL = new Set(['spiky', 'chompy']);
 

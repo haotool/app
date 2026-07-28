@@ -71,6 +71,15 @@ const SPAWN_Y: Record<EnemyKind, number> = {
   foamy: 330,
   frosty: 330,
   manta: 280,
+  // §123：copypuff/bearlet 地面帶；prismbee/datamote/gravitybub/riftling 中低空懸浮、
+  // orbiton 高處入場（繞行起點高於玩家帶）。
+  copypuff: 330,
+  prismbee: 260,
+  datamote: 250,
+  gravitybub: 270,
+  orbiton: 180,
+  riftling: 280,
+  bearlet: 330,
 };
 
 // #812 救援懸浮品種的可及帶定高（站立吸入錐直達，免跳拍追擊）。
@@ -82,6 +91,12 @@ const RESCUE_HOVER_KINDS: readonly EnemyKind[] = [
   'twinkla',
   'gusty',
   'ticketa',
+  // §123 懸浮可吸品種：救援生成一律壓入可及帶。
+  'prismbee',
+  'datamote',
+  'gravitybub',
+  'orbiton',
+  'riftling',
 ];
 
 const TUTORIAL_TEXT_TOUCH = '左搖桿 移動　綠鍵 跳躍\n粉鍵 長按吸入・點按發射';

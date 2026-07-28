@@ -117,12 +117,7 @@ export const ASSETS_V21_PART2: AssetEntry[] = [
 
     phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
   },
-  {
-    key: 'minion-bearlet',
-    url: new URL('../../assets/sprites/minion-bearlet.webp', import.meta.url).href,
-
-    phase: 'lazy', // 待接關改回 'level'（W2/W3 接入 LevelSpec／TRANSFORM_FORMS 時必改）
-  },
+  // minion-bearlet：已於 §123 W3 接關認領（L27 入編），條目搬回主 manifest（assets.ts）。
   {
     key: 'ui-market-usstock',
     url: new URL('../../assets/sprites/ui-market-usstock.webp', import.meta.url).href,

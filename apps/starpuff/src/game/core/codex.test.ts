@@ -9,7 +9,7 @@ import {
 } from './codex';
 
 describe('CODEX_MONSTERS', () => {
-  it('收錄全部二十四種小怪與七魔王（§120 六新怪＋§122 雙新王入鑑）', () => {
+  it('收錄全部三十一種小怪與九魔王（§120/§123 十三新怪＋§122/§123 四新王入鑑）', () => {
     expect(CODEX_MONSTERS.map((m) => m.kind)).toEqual([
       'jelly',
       'floaty',
@@ -35,6 +35,13 @@ describe('CODEX_MONSTERS', () => {
       'foamy',
       'frosty',
       'manta',
+      'copypuff',
+      'prismbee',
+      'datamote',
+      'gravitybub',
+      'orbiton',
+      'riftling',
+      'bearlet',
       'boss',
       'noctra',
       'prismix',
@@ -42,6 +49,8 @@ describe('CODEX_MONSTERS', () => {
       'voidra',
       'tariffang',
       'maridella',
+      'reflector',
+      'gravion',
     ]);
   });
 
@@ -54,7 +63,7 @@ describe('CODEX_MONSTERS', () => {
     }
   });
 
-  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73/§80/§120），四種條件可吸', () => {
+  it('可吸標記與戰鬥規則一致（§5/§16/§30/§47/§52/§59/§73/§80/§120/§123），四種條件可吸', () => {
     const inhalable = new Set(
       CODEX_MONSTERS.filter((m) => m.inhalable).map((m) => m.kind as string),
     );
@@ -77,6 +86,11 @@ describe('CODEX_MONSTERS', () => {
         'foamy',
         'frosty',
         'manta',
+        'prismbee',
+        'datamote',
+        'gravitybub',
+        'orbiton',
+        'riftling',
       ]),
     );
     expect(CODEX_MONSTERS.find((m) => m.kind === 'shelly')?.conditional).toBe(true);

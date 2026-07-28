@@ -22,6 +22,9 @@ export const BG_TEXTURE_ALIAS: Record<string, string> = {
   'bg-meteorfield': 'bg-astral',
   'bg-starcourt': 'bg-astral',
   'bg-voidcore': 'bg-astral',
+  // §123 W3：L25/L26 共用鏡界塔橫景（B03 素材 bg-mirror-l 已被 L9 別名佔用鍵位，
+  // 以 mirrortower 語意鍵映射，L9 幻鏡迴廊零回歸）。
+  'bg-mirrortower': 'bg-mirror',
 };
 
 export function bgTextureKey(bgKey: string): string {
@@ -55,6 +58,14 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyKind, string> = {
   foamy: 'minion-bubbler',
   frosty: 'minion-iceslime',
   manta: 'minion-tideray',
+  // §123 星海終局篇 W3 新怪（#857 B03 素材已交付）。
+  copypuff: 'minion-copypuff',
+  prismbee: 'minion-prismbee',
+  datamote: 'minion-datamote',
+  gravitybub: 'minion-gravitybub',
+  orbiton: 'minion-orbiton',
+  riftling: 'minion-riftling',
+  bearlet: 'minion-bearlet',
 };
 
 // 佔位立繪鍵（素材未交付期間的 manifest 守門豁免）：運行期各自回退（enemies 以
@@ -73,6 +84,9 @@ export const BOSS_TEXTURE_KEYS: Record<BossKind, readonly string[]> = {
   voidra: ['boss-voidra'],
   tariffang: ['boss-tariffang', 'boss-tariffang-enraged'],
   maridella: ['boss-maridella', 'boss-maridella-enraged'],
+  // §123 W3 兩王含 enraged 幀（P2 換裝，#857 B03 素材）。
+  reflector: ['boss-reflector', 'boss-reflector-enraged'],
+  gravion: ['boss-gravion', 'boss-gravion-enraged'],
 };
 
 // 魔王召喚品種（systems/bossFactory.ts 分派）：不在 enemyMix 內仍會登場，必須併入關卡計畫。
@@ -84,6 +98,8 @@ export const BOSS_SUMMON_KINDS: Record<BossKind, readonly EnemyKind[]> = {
   voidra: [],
   tariffang: [],
   maridella: ['foamy'],
+  reflector: [],
+  gravion: [],
 };
 
 // 潮汐關生成替換（logic/tide.tideFilterKind：磁極怪浸水改果凍）與滿潮救援紮根品種
