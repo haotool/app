@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+333
+> 本次分數變化：-1（reward 1、penalty 2、neutral 1）｜累計總分：+331
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,21 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：neutral-starpuff-w4-review-foldin
+- 原因：審查席 S REQUEST CHANGES 摺入——§6.7 慈悲機制死代碼 Blocking＋牛熊怪零測試、TTK 跨文件不一致、GameScene 措辭誤述三項 Should-fix
+- 解法：慈悲接線（BossHandle.notePlayerHurt 轉發＋整合測試先紅後綠）＋牛熊 characterization 7 案＋TTK 統一 28.4s 平均＋措辭改「零分支」
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-w4-mercy-deadcode
+- 原因：§6.7 慈悲機制（連續三次受傷降節奏）FSM 實作與單測完成後未接生產呼叫點即宣告完成，PR 內文／GAME_DESIGN §126.2／WALKTHROUGH／changeset 四處誤述為已生效
+- 解法：BossHandle 加選配 notePlayerHurt 由 damageDirector 實傷單點轉發（護盾/i-frame 不計），damageDirector 轉發三案＋liudong handle 級 speedFactor 整合測試先紅後綠，文檔描述隨接線轉真
+
+- 日期：2026-07-29
+- ID：penalty-pm-w4-false-doa
+- 原因：PM 以錯開時點的三訊號（transcript 凍結/零新 commit/髒檔靜止）誤判二代 worker 死亡並重派三代，形成同 worktree 雙寫手並存風險
+- 解法：判死改為同時點三訊號聯驗＋重派前先走 resume 探測通道，教訓落 incident 帳供後續長跑派工沿用
 
 - 日期：2026-07-29
 - ID：reward-starpuff-w4-liudong-finale-ship
