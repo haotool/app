@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+332
+> 本次分數變化：+1（reward 1、penalty 0、neutral 1）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：neutral-starpuff-w5-review-foldin
+- 原因：審查席 S 兩項 Should-fix——bossStagecraft 的 bossAnimAssets dynamic import 零 .catch（chunk 失敗產生未捕獲 rejection 牴觸 console 0 門檻）、docs 子標題 127.1-127.3 未隨頂層 §125 改號
+- 解法：補 .catch 靜默降級（缺圖走 base 立繪既有路徑）＋reject 路徑單測先紅後綠；子標題改 125.x 並在 verify-design-docs 增子標題章號一致性守門（先抓到 3 處殘漏紅、修復後綠）
 
 - 日期：2026-07-29
 - ID：reward-starpuff-w5-boss-stagecraft-ship
