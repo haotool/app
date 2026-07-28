@@ -939,3 +939,53 @@ telegraph ≥600ms 測試守門；FSM 進 enemyFsm 表、逐幀 AI 進 `fieldEne
   blackhole——①近身/中距射擊不受彎折 ②讀彎折弧線遠射修正。
 - EX 差分（EX_MODS ×1.5/×1.15 共用 → HP 186）：質性差分＝軌道星體 4→6
   （間隙變窄）＋彈幕 6→8；telegraph 與力場窗不縮（只增體不縮窗）。
+
+## §127 四王動畫演出接關 bossStagecraft（W5；#857 B06 素材）
+
+已上線四王（L22 Tariffang／L24 Maridella／L26 Reflector／L28 Gravion）的
+B06 動畫組（39 鍵/王 ×4＝156 鍵）自 `assetsV21Part2/3` 停車場接關，演出規格
+對齊劉董（§125 慣例）。**純呈現層波次：FSM 常數、telegraph 時長、傷害與
+hitbox 全數凍結，行為零改變**；唯一物理相關動作為 `vscale.rebase`（沿 §77
+既有換裝模式，物理箱恆為基準）。
+
+### 127.1 載入契約（#883 分階段載入）
+
+- manifest 分檔 `core/bossAnimAssets.ts` **只允許 dynamic import**（獨立 async
+  chunk，主 bundle 零字面量；實測主 bundle +2.74 kB 為演出邏輯本體）。
+- 補載時機＝魔王關 create 期 fire-and-forget（`preloadBossStagecraft`）：
+  前室廊道（四王關全數 `anteroomPx: 400`）即補載窗口，不佔載入畫面、
+  不阻塞進關；已載鍵零成本略過，重進關自動補齊。
+- 缺圖降級：換幀單點 `setFrame` 以 `textures.exists` 防衛，未載入幀靜默跳過
+  維持 base 立繪（anti-softlock）。
+- precache：條目搬離停車場後自動退出 `lazyPrecacheIgnores` 排除清單，
+  四王動畫全數進 PWA precache（124→279 項），離線可玩不打折。
+
+### 127.2 演出結構（`systems/bossStagecraft.ts` 四王共用）
+
+- 幀鍵約定：`boss-<kind>-` 前綴＋固定後綴組（idle 2／entry 4／move1-3 ×
+  windup-charge-burst-recover／p2trans 6／p3trans 7／hit 2／death 6），
+  結構由 `bossAnimAssets.test` 守門。
+- 入場：entry 四幀鋪在各王既有入場節拍（滑入/湧升/降臨 → 定位 → 咆哮 →
+  起勢），入場總時長不變。
+- 三招分鏡：windup 於指令抵達、charge 於 telegraph 中段（0.55）、burst 對齊
+  telegraph 結束（傷害物生成拍）、recover +320ms、回段落立繪 +680ms——
+  分鏡窗完全鋪在既有 telegraph 窗上。
+- 轉段：p2trans/p3trans 幀序 @130ms；**段落立繪錨（idleKey）於轉段開播即
+  更新**（p2＝enraged），過場被打斷也不殘留錯誤立繪。
+- 受擊：hit 兩幀交替短閃 @110ms、380ms 節流；排他演出期間讓位既有
+  flashWhite。
+- 死亡：death 六幀 @170ms（1020ms），貼齊既有 dieSequence 的 600ms 延遲＋
+  420ms 收縮節拍；death 後全演出凍結。
+- idle 呼吸：base→idle-2→idle-3 @460ms 輪播，P1 限定（enraged 後定格兇相），
+  由王的 update 逐幀驅動。
+- 優先權＝演出代際（generation）：move/trans/death 開播即遞增，舊代際
+  pending 幀作廢——高優先演出打斷低優先不殘留錯幀。
+
+### 127.3 三招分鏡映射（本體發招類；其餘沿用既有 telegraph 演出）
+
+| 王        | move1        | move2         | move3         | 沿用既有        |
+| --------- | ------------ | ------------- | ------------- | --------------- |
+| Tariffang | cargo 0.8s   | stamp 0.7s    | levy 0.6s     | gate／ram       |
+| Maridella | current 0.9s | droplet 0.65s | wave 0.9s     | summon／moonorb |
+| Reflector | beam 0.9s    | shard 0.7s    | panorama 0.9s | mirror／clone   |
+| Gravion   | gswitch 0.9s | crush 0.9s    | barrage 0.65s | orbshot／orbit  |
