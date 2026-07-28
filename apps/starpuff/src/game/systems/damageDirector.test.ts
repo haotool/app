@@ -28,6 +28,8 @@ interface HarnessConfig {
   ventLift?: number | null | 'none';
   settled?: boolean;
   grounded?: boolean;
+  // i-frame 模擬（§126.2 慈悲轉發守門）：takeDamage 不實際掉血。
+  immune?: boolean;
 }
 
 function makeHarness(config: HarnessConfig = {}): {
@@ -46,11 +48,13 @@ function makeHarness(config: HarnessConfig = {}): {
     updateBuffHud: ReturnType<typeof vi.fn>;
     tideUpdate: ReturnType<typeof vi.fn>;
     meteorUpdate: ReturnType<typeof vi.fn>;
+    notePlayerHurt: ReturnType<typeof vi.fn>;
   };
 } {
   const takeDamage = vi.fn((damage: number) => {
-    hp -= damage;
+    if (!config.immune) hp -= damage;
   });
+  const notePlayerHurt = vi.fn();
   const grantInvulnerability = vi.fn();
   const setVelocity = vi.fn();
   const setVelocityY = vi.fn();
@@ -87,8 +91,8 @@ function makeHarness(config: HarnessConfig = {}): {
         } as unknown as TideHandle);
   const meteor = config.meteor ? ({ update: meteorUpdate } as unknown as MeteorSystem) : null;
   const boss = (config.ventLift === 'none' || config.ventLift === undefined
-    ? {}
-    : { getVentLift: vi.fn(() => config.ventLift) }) as unknown as BossHandle;
+    ? { notePlayerHurt }
+    : { notePlayerHurt, getVentLift: vi.fn(() => config.ventLift) }) as unknown as BossHandle;
   const scene = {
     cameras: { main: { worldView: { x: 40, right: 894 } } },
   } as unknown as Phaser.Scene;
@@ -123,6 +127,7 @@ function makeHarness(config: HarnessConfig = {}): {
       updateBuffHud,
       tideUpdate,
       meteorUpdate,
+      notePlayerHurt,
     },
   };
 }
@@ -149,6 +154,29 @@ describe('damageDirector 受擊單一入口（§69 護盾泡）', () => {
     // 破盾後第二擊照常結算。
     h.director.damagePlayer(3, 340);
     expect(h.spies.takeDamage).toHaveBeenLastCalledWith(3, 340);
+  });
+});
+
+describe('damageDirector 慈悲轉發（§126.2 劉董連續受傷降節奏接線）', () => {
+  it('實際掉血才轉發 boss.notePlayerHurt（每次實傷各轉發一次）', () => {
+    const h = makeHarness();
+    h.director.damagePlayer(1, 340);
+    h.director.damagePlayer(1, 340);
+    h.director.damagePlayer(1, 340);
+    expect(h.spies.notePlayerHurt).toHaveBeenCalledTimes(3);
+  });
+
+  it('護盾吸收不轉發（未實際受傷，PRD §6.7 語意）', () => {
+    const h = makeHarness();
+    h.director.applyBuff('shield');
+    h.director.damagePlayer(3, 340);
+    expect(h.spies.notePlayerHurt).not.toHaveBeenCalled();
+  });
+
+  it('i-frame 免傷不轉發（takeDamage 未實際掉血）', () => {
+    const h = makeHarness({ immune: true });
+    h.director.damagePlayer(2, 340);
+    expect(h.spies.notePlayerHurt).not.toHaveBeenCalled();
   });
 });
 

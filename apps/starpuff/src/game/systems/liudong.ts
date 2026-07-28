@@ -1166,9 +1166,15 @@ export function createLiudong(
     onMinionDrop(handler: () => void) {
       minionHandlers.push(handler);
     },
-    // e2e 觀測（§83 慣例）：FSM 階段/招式即時值。
+    // 玩家實傷回報（§126.2 慈悲機制）：damageDirector 實傷單點轉發——FSM 連續
+    // 三次計數觸發降節奏 ×0.8 共 8s（boss 受擊即歸零，liudongFsm 持有真值）。
+    notePlayerHurt() {
+      if (!active || dying) return;
+      fsm.notePlayerHurt();
+    },
+    // e2e 觀測（§83 慣例）：FSM 階段/招式即時值＋speedFactor（慈悲整合守門）。
     getDebugState() {
-      return { phase: fsm.phase, state: fsm.state };
+      return { phase: fsm.phase, state: fsm.state, speedFactor: fsm.speedFactor };
     },
   };
 }
