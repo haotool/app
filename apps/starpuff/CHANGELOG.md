@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.28.5
+
+### Patch Changes
+
+- 4ff2971: 潮化的水引改為持續造成傷害，不再是四個變身技裡唯一打不痛魔王的那個。
+
 ## 0.28.4
 
 ### Patch Changes
