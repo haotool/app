@@ -10,6 +10,38 @@ export const ASSETS_V21_PART3: AssetEntry[] = [
   //（L24/L26/L28 演出層），條目搬入 bossAnimAssets.ts（dynamic import 分檔）。
   // v21-v30 B06 劉董動畫關鍵幀（入場四幀已於 B04 註冊；載入時機建議：L30 魔王關載入，暫沿 Boot 預載）。
   // v21-v30 B06 尾項：volt/gale/shell 變身五幀與全屏箭雨分層（載入時機建議：形態解鎖/L30 延遲，暫沿 Boot 預載）。
+  // 吸入五分層：曾於 §124 W5a 接關，因嘴前特效遮蔽待吸目標而退場（吸入回饋回退為
+  // systems/fx.ts 的圓點漩渦）。素材保留待重新設計，退回停車場不佔每關頻寬。
+  {
+    key: 'fx-common-inhale-core',
+    url: new URL('../../assets/sprites/fx-common-inhale-core.webp', import.meta.url).href,
+
+    phase: 'lazy', // 重新設計吸入演出並接回 systems/fx.ts 時改回 'level'
+  },
+  {
+    key: 'fx-common-inhale-shock',
+    url: new URL('../../assets/sprites/fx-common-inhale-shock.webp', import.meta.url).href,
+
+    phase: 'lazy', // 重新設計吸入演出並接回 systems/fx.ts 時改回 'level'
+  },
+  {
+    key: 'fx-common-inhale-trail',
+    url: new URL('../../assets/sprites/fx-common-inhale-trail.webp', import.meta.url).href,
+
+    phase: 'lazy', // 重新設計吸入演出並接回 systems/fx.ts 時改回 'level'
+  },
+  {
+    key: 'fx-common-inhale-debris',
+    url: new URL('../../assets/sprites/fx-common-inhale-debris.webp', import.meta.url).href,
+
+    phase: 'lazy', // 重新設計吸入演出並接回 systems/fx.ts 時改回 'level'
+  },
+  {
+    key: 'fx-common-inhale-overlay',
+    url: new URL('../../assets/sprites/fx-common-inhale-overlay.webp', import.meta.url).href,
+
+    phase: 'lazy', // 重新設計吸入演出並接回 systems/fx.ts 時改回 'level'
+  },
   {
     key: 'fx-market-arrowrain-core',
     url: new URL('../../assets/sprites/fx-market-arrowrain-core.webp', import.meta.url).href,

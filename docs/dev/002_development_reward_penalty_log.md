@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+329
+> 本次分數變化：-2（reward 0、penalty 2、neutral 0）｜累計總分：+327
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,16 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-inhale-fx-occludes-play
+- 原因：§124 W5a 把吸入回饋接成五層素材演出，其中 core 是大塊黃色煙霧（ADD 混色、每 150ms 補一顆、同時最多 4 顆疊在嘴前）＋overlay 起手大光圈——而嘴前正是玩家判讀待吸目標的區域，特效把自己要吸的敵人糊掉；debris 又是「單張多元素圖」當一顆粒子用，縮到 26px 只會糊成一團
+- 解法：吸入五層全數退場，回退為原本的三色圓點漩渦（吞入確認沿音效與彈匣 HUD）；素材自 assetsFx 搬回 assetsV21Part3 停車場標 lazy，不再每關佔頻寬。教訓：特效接關的驗收條件必須含「不遮蔽該動作的判讀區」，好看不等於可玩
+
+- 日期：2026-07-29
+- ID：penalty-starpuff-boss-hitbox-art-decoupled
+- 原因：bossStagecraft/liudongCinematics 的 setFrame 對每一幀硬套 setDisplaySize(bodyW, bodyH)，但各幀在 512 畫布內的實際不透明佔幅差異達 58%~100%——畫面上的身體隨 idle 輪播忽大忽小而物理箱恆定，玩家在小佔幅幀時距離可見身體 15~20px 外就吃接觸傷害（劉董 idle-3 佔幅 58%、BODY_W 170、物理箱 139px 最嚴重）；boss.ts 更是全場唯一完全不內縮碰撞箱者，boss-enraged 佔幅僅 84.6%×79.5%
+- 解法：新增 gen_boss_art_bounds.py 掃描 alpha 邊界框產出 bossArtBounds 佔幅表（213 筆），bossFrameFit 依「base 幀佔幅／該幀佔幅」正規化顯示框令可見身體世界尺寸恆定，碰撞箱一律由 base 幀佔幅回推並內縮 0.9（除以當前 scale 抵銷顯示框縮放，沿 player.ts R8 教訓）；三處換幀點與 boss.ts 收斂到同一單點，補 4 則不變式測試
 
 - 日期：2026-07-29
 - ID：penalty-pwa-gate-scene-blind

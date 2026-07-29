@@ -5,6 +5,7 @@ import { GameEvents, emitGameEvent } from '../core/events';
 import { BOSS, createBossFsm, type BossCommand } from '../logic/bossFsm';
 import { JELLY_PATCH, jellyBounceVy, prunePatches, type JellyPatch } from '../logic/jellyPatch';
 import { playSfx } from '../audio/sfx';
+import { createBossFrameFitter } from './bossFrameFit';
 import { burstSmall, landingDust, spawnTelegraph } from './fx';
 import { getVisualScale } from './visualScale';
 
@@ -143,7 +144,6 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     arenaLeft() + (which === 'left' ? SIDE_MARGIN_X : viewW() - SIDE_MARGIN_X);
 
   const sprite = scene.physics.add.sprite(sideX('right'), -BOSS_H, 'boss-idle');
-  sprite.setDisplaySize(BOSS_W, BOSS_H);
   // 物理/視覺縮放解耦（§77 根治）：wobble/擠壓/怒吼脈動/死亡收縮全走 fx 代理，
   // 物理箱恆為基準；texture 切換後 rebase 重錨。
   const vscale = getVisualScale(scene);
@@ -152,6 +152,15 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   const body = sprite.body as Phaser.Physics.Arcade.Body;
   body.setAllowGravity(false);
   body.setImmovable(true);
+  // 換幀＋碰撞箱單點（#943 根修）：本檔原先是全場唯一完全不內縮碰撞箱的魔王，
+  // 且 boss-enraged 佔幅只有 84.6%×79.5%——怒化後幻影判定達縱向 ±13px。改由
+  // bossFrameFit 依素材佔幅正規化顯示框並回推碰撞箱。
+  const fitter = createBossFrameFitter(scene, sprite, {
+    baseKey: 'boss-idle',
+    bodyW: BOSS_W,
+    bodyH: BOSS_H,
+  });
+  fitter.setFrame('boss-idle');
 
   const projectiles = scene.physics.add.group({ maxSize: 16 });
   const shockwaves = scene.physics.add.group({ maxSize: 6, allowGravity: false });
@@ -200,7 +209,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
   };
 
   const startEnrage = () => {
-    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    fitter.setFrame('boss-enraged');
     vscale.rebase(sprite);
     startTintCycle({ r: 255, g: 255, b: 255 }, ENRAGE_TINT, 700);
   };
@@ -215,7 +224,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
     }
   };
   const startFrenzy = () => {
-    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    fitter.setFrame('boss-enraged');
     vscale.rebase(sprite);
     startTintCycle({ r: 255, g: 176, b: 208 }, { r: 255, g: 120, b: 168 }, 360);
     playSfx('boss-roar', 1.3);
@@ -232,7 +241,7 @@ export function createBoss(scene: Phaser.Scene, options: BossOptions = {}): Boss
 
   // P3 進場演出（§30）：皇冠射出星環衝擊波（金色擴散環 + 星火），時停 0.3s 由 GameScene 接線。
   const startP3 = () => {
-    sprite.setTexture('boss-enraged').setDisplaySize(BOSS_W, BOSS_H);
+    fitter.setFrame('boss-enraged');
     vscale.rebase(sprite);
     startTintCycle(P3_GOLD, P3_PURPLE, P3_FLICKER_MS);
     const crownX = sprite.x;

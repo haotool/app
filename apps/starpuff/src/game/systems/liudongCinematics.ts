@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import { LIUDONG, type MarketKind } from '../logic/liudongFsm';
 import { playSfx } from '../audio/sfx';
-import { getVisualScale } from './visualScale';
+import { createBossFrameFitter } from './bossFrameFit';
 
 // 劉董演出模組（GAME_DESIGN §126，PRD §6.2/§6.3）：入金入場序列、思考／下單
 // 前奏、轉段與死亡幀序、L29「市場開盤」收尾演出。boss-liudong 資產組幀數遠超
@@ -55,7 +55,6 @@ export function createLiudongCinematics(
   body: Phaser.Physics.Arcade.Sprite,
   geometry: { bodyW: number; bodyH: number; arenaCx(): number; groundTop: number },
 ): LiudongCinematics {
-  const vscale = getVisualScale(scene);
   const timers: Phaser.Time.TimerEvent[] = [];
   let bubble: Phaser.GameObjects.Container | null = null;
   let bubbleTimer: Phaser.Time.TimerEvent | null = null;
@@ -67,13 +66,17 @@ export function createLiudongCinematics(
     timers.push(scene.time.delayedCall(ms, fn));
   };
 
-  // 換幀單點：保持顯示尺寸並重錨物理基準（§77 解耦；素材幀邊界不一致時防跳尺寸）。
-  const setFrame = (key: string): void => {
-    if (!scene.textures.exists(key)) return;
-    body.setTexture(key);
-    body.setDisplaySize(geometry.bodyW, geometry.bodyH);
-    vscale.rebase(body);
-  };
+  // 換幀單點：顯示尺寸依素材佔幅正規化、碰撞箱世界尺寸恆定（#943 根修，見
+  // bossFrameFit——劉董 idle-2/idle-3 佔幅僅 58~64%，是幻影判定最嚴重的一組）；
+  // 並重錨物理基準（§77 解耦）。
+  const fitter = createBossFrameFitter(scene, body, {
+    baseKey: 'boss-liudong',
+    bodyW: geometry.bodyW,
+    bodyH: geometry.bodyH,
+  });
+  const setFrame = fitter.setFrame;
+  // 構築期即取得碰撞箱所有權：覆蓋 createLiudong 內的固定比例 setSize。
+  fitter.refit();
 
   // 幀序播放：依步驟表逐幀換圖，播畢回呼。
   const playFrames = (steps: readonly FrameStep[], onDone?: () => void): void => {

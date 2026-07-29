@@ -189,31 +189,6 @@ export const ASSETS_W5A_FX: AssetEntry[] = [
     phase: 'level',
   },
   {
-    key: 'fx-common-inhale-core',
-    url: new URL('../../assets/sprites/fx-common-inhale-core.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-shock',
-    url: new URL('../../assets/sprites/fx-common-inhale-shock.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-trail',
-    url: new URL('../../assets/sprites/fx-common-inhale-trail.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-debris',
-    url: new URL('../../assets/sprites/fx-common-inhale-debris.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
-    key: 'fx-common-inhale-overlay',
-    url: new URL('../../assets/sprites/fx-common-inhale-overlay.webp', import.meta.url).href,
-    phase: 'level',
-  },
-  {
     key: 'fx-common-float-core',
     url: new URL('../../assets/sprites/fx-common-float-core.webp', import.meta.url).href,
     phase: 'level',
