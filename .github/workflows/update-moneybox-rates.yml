@@ -65,7 +65,7 @@ jobs:
           git checkout origin/main -- public/rates/ 2>/dev/null || mkdir -p public/rates
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
