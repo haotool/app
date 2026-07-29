@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+330
+> 本次分數變化：-1（reward 0、penalty 1、neutral 0）｜累計總分：+329
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-pwa-gate-scene-blind
+- 原因：PWA 更新閘以「isShellBusy 為 false 即安全」判定可否 reload，但該訊號綁 controls is-active（等同 GameScene）與殼卡存在與否，語意不涵蓋「非遊戲但不宜中斷」的場景——Credits 謝幕（約 14.7s）與 Codex 瀏覽皆非 GameScene 且無殼卡，會在寬限 1.5s 後直接被 reload 打斷
+- 解法：新增 core/sceneSignal 把場景鍵寫入 documentElement 的 data-scene（生產可讀，`__sp` 僅 dev），更新閘改為白名單（Title/Map/Result，鍵取自 SceneKeys SSOT）AND 殼層安靜；訊號未建立時 fail-closed；另加 data-scene MutationObserver 補 Credits→Title 這類 controls class 全程不變的轉場漏接
 
 - 日期：2026-07-29
 - ID：penalty-starpuff-modal-not-actually-modal
