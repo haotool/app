@@ -39,7 +39,10 @@ describe('AppLayout Safe Area', () => {
 
     const header = screen.getByRole('banner');
     expect(header).toHaveStyle(`height: ${navigationTokens.header.heightWithSafeArea}`);
-    expect(header).toHaveStyle(`padding-top: ${navigationTokens.safeArea.top}`);
+    expect(header).toHaveAttribute(
+      'style',
+      expect.stringContaining(`padding-top: ${navigationTokens.safeArea.top}`),
+    );
   });
 
   it('主要滾動區域應可鍵盤聚焦', () => {
