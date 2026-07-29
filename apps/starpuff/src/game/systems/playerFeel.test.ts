@@ -88,10 +88,14 @@ function makeHarness(): {
     getFacing: () => state.facing,
     isInhaling: () => state.inhaling,
     getSpMode: () => state.spMode,
+    // 變身技能圖示同步（§124 W5a）：syncSpMode 逐幀讀當前形態。
+    getTransformState: () => ({ form: null, remainingMs: 0, dischargeLeft: 0, tuckLeft: 0 }),
   } as unknown as PlayerHandle;
+  const setFormSkill = vi.fn();
   const hooks: PlayerFeelHooks = {
     player: () => player,
-    controls: () => ({ state: state.controlsState, setSpMode }) as unknown as ControlsSystem,
+    controls: () =>
+      ({ state: state.controlsState, setSpMode, setFormSkill }) as unknown as ControlsSystem,
     fx: () => ({ startInhale, stopInhale }) as unknown as FxSystem,
     toasts: () => ({ flavor }) as unknown as ToastSystem,
     waves: () => ({ noteInput }) as unknown as WaveRunner,

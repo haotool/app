@@ -1,16 +1,22 @@
+// §124 W5a 特效條目分檔（1200 行閘）：已接關的消費中條目，與停車場分檔語意不同；
+// assetsFx 僅回向 type-import 本檔，無運行時循環。
+import { ASSETS_W5A_FX } from './assetsFx';
+
 // 分階段載入 SSOT（§115）：載入時機由 manifest 的 phase 欄位單點驅動，
 // 場景不得自行散寫資產清單。新增條目請一併標註 phase。
 //   boot  首屏（Title／Map／Codex／Result 選單殼）必須存在的最小集合
 //   level 進入關卡時載入（背景／道具／小怪為關卡限定，其餘為全關共用核心）
 //   boss  魔王關才載入的魔王立繪
 //   form  形態解鎖後才需要的變身立繪
+//   deferred  關卡開場後背景補載（§124 W5a：變身演出級資產——分鏡／光環／徽章／
+//             形態技特效；GameScene create 尾端補載，缺載時運行期安全回退不缺圖）
 //   lazy  非戰鬥的按需資產（HUD 徽章等），由使用端自行補載
 // lazy 目前無 scene 呼叫點：任何關卡會用到的資產都不得標為 lazy，否則該關會無聲缺圖
 // 走佔位色塊。assetPlan.test 的「登場貼圖必定載得到」不變式守門，涵蓋範圍為
 // levelAssetKeys 派生鍵——關卡限定的背景／道具／小怪／魔王，加上共用的主角姿勢與
 // 形態立繪（SHARED_LEVEL_KEYS）。不在該派生內的資產（例如 form 階段的變身動畫分鏡、
 // 特效分層）標錯不會被擋下，新增這類條目時請自行確認載入時機。
-export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'lazy';
+export type AssetPhase = 'boot' | 'level' | 'boss' | 'form' | 'deferred' | 'lazy';
 
 export interface AssetEntry {
   key: string;
@@ -20,6 +26,7 @@ export interface AssetEntry {
 }
 
 export const ASSETS: AssetEntry[] = [
+  ...ASSETS_W5A_FX,
   {
     key: 'hero-idle',
     url: new URL('../../assets/sprites/hero-idle.webp', import.meta.url).href,

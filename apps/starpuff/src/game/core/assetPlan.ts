@@ -1,5 +1,7 @@
 import { ASSETS, type AssetEntry, type AssetPhase } from './assets';
 import type { BossKind, EnemyKind, TransformForm } from './types';
+import type { StarFlavor } from './config';
+import { inhaleFlavor } from '../logic/combat';
 import type { LevelSpec } from '../logic/levels';
 import { FORM_INTRO_LEVEL, TRANSFORM_FORMS } from '../logic/transform';
 
@@ -161,31 +163,106 @@ const HERO_POSE_KEYS: readonly string[] = [
   'hero-hurt',
 ];
 
+// 星味特效四層（§124 W5a）：charge 蓄能彈體／flight 彈體／hit 命中閃／explosion 爆裂，
+// starLauncher 與 player.onStarHit 以 `fx-star-${flavor}-${layer}` 取用。
+export const STAR_FX_LAYERS = ['charge', 'flight', 'hit', 'explosion'] as const;
+
+export function starFxKeys(flavor: StarFlavor | 'tide' | 'prism' | 'gravity'): string[] {
+  return STAR_FX_LAYERS.map((layer) => `fx-star-${flavor}-${layer}`);
+}
+
+// 基礎動作分層特效（§124 W5a）：吸入／浮空／落地 × 五分層，systems/fxLayers 消費；
+// 動作每關可用，屬全關共用核心。HUD 彈藥星圖示（hud.ts 消費）同屬每關在場。
+export const COMMON_FX_LAYERS = ['core', 'shock', 'trail', 'debris', 'overlay'] as const;
+const COMMON_FX_KEYS: readonly string[] = [
+  ...['inhale', 'float', 'landing'].flatMap((group) =>
+    COMMON_FX_LAYERS.map((layer) => `fx-common-${group}-${layer}`),
+  ),
+  'ui-hud-ammo',
+];
+
+// 該關可得星味（§124 W5a）：吞入怪決定星味——kinds 經 inhaleFlavor 派生，
+// jelly 恆載（標準星保底：fillMagazine／pushGoldStar／空匣預設全為 jelly）。
+function levelStarFxKeys(kinds: ReadonlySet<EnemyKind>): string[] {
+  const flavors = new Set<StarFlavor>(['jelly']);
+  for (const kind of kinds) {
+    const flavor = inhaleFlavor(kind);
+    if (flavor) flavors.add(flavor);
+  }
+  return [...flavors].flatMap((flavor) => starFxKeys(flavor));
+}
+
 // 形態立繪：變身可於關內任意時點觸發，故解鎖後每關都須備妥。鍵名由
 // TRANSFORM_FORMS 派生（player.ts 以 `hero-${form}` 取用），新增形態自動跟進。
 const FORM_TEXTURE_KEYS: readonly string[] = Object.keys(TRANSFORM_FORMS).map(
   (form) => `hero-${form}`,
 );
 
+// 變身分鏡五幀（§124 W5a）：player 變身進場依序穿戴 gather→shrink→stretch→
+// burst→complete，播畢落形態立繪。
+export const MORPH_STAGES = ['gather', 'shrink', 'stretch', 'burst', 'complete'] as const;
+
+export function morphFrameKeys(form: TransformForm): string[] {
+  return MORPH_STAGES.map((stage) => `hero-${form}-morph-${stage}`);
+}
+
+// 光環分層素材（§124 W5a）：四新形態有五層素材；三舊形態（雷/風/殼）素材未交付，
+// 維持 formSkills 程序化粒子。
+const AURA_FORMS: readonly TransformForm[] = ['ember', 'tide', 'prism', 'gravity'];
+// 形態技星彈特效（§124 W5a）：稜片彈體／水引命中／引力井爆點走 fx-star-{form} 四層。
+const FORM_STAR_FX: readonly TransformForm[] = ['tide', 'prism', 'gravity'];
+
+// 形態演出級資產鍵（§124 W5a）：變身分鏡＋光環分層＋HUD 徽章＋形態技星彈特效——
+// 標 'deferred' 由 GameScene 開場後背景補載（不入進場關鍵路徑；三舊形態分鏡
+// 1.5MiB 若隨 level 恆載會使 L1 進場量倍增，重演 R7 修掉的成本）。缺載時
+// 運行期各自安全回退（分鏡跳過直落立繪、光環回程序化粒子、徽章缺席）。
+export function formDeferredKeys(form: TransformForm): string[] {
+  const keys = [...morphFrameKeys(form), `ui-${form}-badge`];
+  if (AURA_FORMS.includes(form)) {
+    for (const layer of COMMON_FX_LAYERS) keys.push(`fx-${form}-aura-${layer}`);
+  }
+  if (FORM_STAR_FX.includes(form)) keys.push(...starFxKeys(form as 'tide' | 'prism' | 'gravity'));
+  return keys;
+}
+
 // 形態立繪的關卡可用性（PR #886 R7）：FORM_INTRO_LEVEL 之前的關卡不載該形態
 // 立繪——四張新形態圖曾被無條件塞進 form 階段，使 L1 進場多載 292.6KiB
 //（侵蝕 #883 的分階段優化）。未列 FORM_INTRO_LEVEL 的形態（雷/殼/風）恆載。
 export function formTextureKeysForLevel(levelId: number): string[] {
-  return Object.keys(TRANSFORM_FORMS)
-    .filter((form) => (FORM_INTRO_LEVEL[form as TransformForm] ?? 0) <= levelId)
-    .map((form) => `hero-${form}`);
+  return unlockedFormsAt(levelId).map((form) => `hero-${form}`);
+}
+
+function unlockedFormsAt(levelId: number): TransformForm[] {
+  return (Object.keys(TRANSFORM_FORMS) as TransformForm[]).filter(
+    (form) => (FORM_INTRO_LEVEL[form] ?? 0) <= levelId,
+  );
+}
+
+// 該關的演出級補載條目（§124 W5a）：GameScene create 尾端排入背景載入——
+// 解鎖形態的分鏡／光環／徽章／形態技特效，開戰數秒內就緒（變身需集星，時窗充裕）。
+export function deferredEntriesForLevel(
+  level: LevelSpec,
+  assets: readonly AssetEntry[] = ASSETS,
+): AssetEntry[] {
+  const wanted = new Set(unlockedFormsAt(level.id).flatMap((form) => formDeferredKeys(form)));
+  return assets.filter((entry) => phaseOf(entry) === 'deferred' && wanted.has(entry.key));
 }
 
 // 全關共用核心：與關卡無關、但每關都必須在場的貼圖（形態立繪全集；逐關納入
 // 時機由 formTextureKeysForLevel 依 FORM_INTRO_LEVEL 收斂）。
-export const SHARED_LEVEL_KEYS: readonly string[] = [...HERO_POSE_KEYS, ...FORM_TEXTURE_KEYS];
+export const SHARED_LEVEL_KEYS: readonly string[] = [
+  ...HERO_POSE_KEYS,
+  ...FORM_TEXTURE_KEYS,
+  ...COMMON_FX_KEYS,
+];
 
-// 該關實際會用到的貼圖鍵：關卡限定（背景／道具／小怪／魔王，由 LevelSpec 派生）
-// ＋全關共用核心（主角姿勢／形態立繪）。
+// 該關實際會用到的貼圖鍵：關卡限定（背景／道具／小怪／魔王／星味特效，由 LevelSpec
+// 派生）＋全關共用核心（主角姿勢／形態立繪／基礎動作特效）。
 export function levelAssetKeys(level: LevelSpec): string[] {
   const keys = new Set<string>([
     bgTextureKey(level.bgKey),
     ...HERO_POSE_KEYS,
+    ...COMMON_FX_KEYS,
     ...formTextureKeysForLevel(level.id),
   ]);
   for (const decor of level.decor) keys.add(decor.key);
@@ -206,6 +283,7 @@ export function levelAssetKeys(level: LevelSpec): string[] {
   if (level.tide !== undefined) for (const kind of TIDE_SUBSTITUTE_KINDS) kinds.add(kind);
 
   for (const kind of kinds) keys.add(ENEMY_TEXTURE_KEYS[kind]);
+  for (const key of levelStarFxKeys(kinds)) keys.add(key);
   return [...keys];
 }
 
@@ -241,6 +319,7 @@ export function entriesForLevel(
   return assets.filter((entry) => {
     const phase = phaseOf(entry);
     // 形態立繪依 FORM_INTRO_LEVEL 逐關納入（R7）；其餘 form 條目維持每關全載。
+    // deferred 演出級資產不入進場計畫（deferredEntriesForLevel 開場後補載）。
     if (phase === 'form') return !FORM_TEXTURE_KEYS.includes(entry.key) || needed.has(entry.key);
     if (phase !== 'level' && phase !== 'boss') return false;
     return scoped.has(entry.key) ? needed.has(entry.key) : true;

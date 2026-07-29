@@ -261,7 +261,9 @@ html.sp-desktop #controls.is-active {
 .ctl-btn-sp {
   width: calc(52px * var(--sp-key-scale, 1));
   height: calc(52px * var(--sp-key-scale, 1));
-  background: rgba(255, 214, 120, 0.5);
+  /* SP 寶石底圖（§124 W5a）：素材鍵帽疊 canvas glyph（模式語意仍由 glyph 表達）。 */
+  background: rgba(255, 214, 120, 0.5) url('./assets/sprites/ui-hud-sp.webp') center / 240%
+    no-repeat;
   opacity: 0;
   pointer-events: none;
   transition:
@@ -283,6 +285,18 @@ html.sp-desktop #controls.is-active {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* 變身技能圖示（§124 W5a）：變身期 B 鍵套形態 skill 素材（JS 設 background-image）、
+   停用星形鍵帽；方形圖示以 115% 填滿圓鈕（圓裁四角、中心完整）。 */
+.ctl-btn-b.is-form-skill {
+  background-size: 115%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.ctl-btn-b.is-form-skill::after {
+  content: none;
 }
 
 /* preventDefault 下 iOS :active 不可靠，controls 系統以 is-pressed class 驅動按壓態。 */

@@ -250,6 +250,9 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
   ensureHudTextures(scene);
   addMuteButton(scene);
   addPauseButton(scene);
+  // 彈藥星素材圖示（§124 W5a）：GameScene 進場已隨全關共用核心載入；缺載回退
+  // 程序星。素材金星底色與程序星同系，各味 tint 語意不變。
+  const ammoTex = scene.textures.exists('ui-hud-ammo') ? 'ui-hud-ammo' : STAR_TEX;
 
   const bus = scene.events;
   const unbinders: (() => void)[] = [];
@@ -268,9 +271,17 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
   const ammoStars: Phaser.GameObjects.Image[] = [];
   const slotRings: Phaser.GameObjects.Image[] = [];
   for (let i = 0; i < STAR.maxAmmo; i++) {
-    ammoStars.push(scene.add.image(22 + i * 26, 58, STAR_TEX).setAlpha(0.25));
+    ammoStars.push(
+      scene.add
+        .image(22 + i * 26, 58, ammoTex)
+        .setDisplaySize(20, 20)
+        .setAlpha(0.25),
+    );
     slotRings.push(scene.add.image(22 + i * 26, 58, SLOT_RING_TEX).setVisible(false));
   }
+  // 素材星 scale 基準（§124）：512 源縮 20px 後 scale ≈0.039，非程序星的 1——
+  // 脈動與裝填 tween 一律以此為錨，禁止硬編 1。
+  const ammoBaseScale = ammoStars[0]?.scaleX ?? 1;
   root.add(ammoStars);
   root.add(slotRings);
 
@@ -284,7 +295,7 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
     strokeThickness: 4,
   };
   const stageText = scene.add.text(0, 26, '', labelStyle).setOrigin(0.5);
-  const quotaIcon = scene.add.image(0, 26, STAR_TEX).setVisible(false);
+  const quotaIcon = scene.add.image(0, 26, ammoTex).setDisplaySize(20, 20).setVisible(false);
   const quotaText = scene.add.text(0, 26, '', labelStyle).setOrigin(1, 0.5);
   root.add([stageText, quotaIcon, quotaText]);
 
@@ -367,9 +378,10 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
     if (form || fullWithCharge) {
       const tint = form ? TRANSFORM_FORMS[form].tint : CHARGED_STAR.tint;
       slotRings.forEach((ring) => ring.setVisible(true).setTint(tint));
+      // 相對縮放（§124）：素材星與程序環 scale 基準不同，以 *= 各自放大。
       readyTween ??= scene.tweens.add({
         targets: [...ammoStars, ...slotRings],
-        scale: 1.22,
+        scale: '*=1.22',
         duration: 340,
         yoyo: true,
         repeat: -1,
@@ -380,7 +392,8 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
     if (readyTween) {
       readyTween.destroy();
       readyTween = null;
-      [...ammoStars, ...slotRings].forEach((image) => image.setScale(1));
+      ammoStars.forEach((image) => image.setScale(ammoBaseScale));
+      slotRings.forEach((image) => image.setScale(1));
     }
     return false;
   }
@@ -406,7 +419,7 @@ export function createHud(scene: Phaser.Scene, unlockedForms?: ReadonlySet<Trans
         if (!wasFilled) {
           scene.tweens.add({
             targets: star,
-            scale: { from: 0.4, to: 1 },
+            scale: { from: ammoBaseScale * 0.4, to: ammoBaseScale },
             duration: 220,
             ease: 'Back.easeOut',
           });

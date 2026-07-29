@@ -41,6 +41,13 @@ function makeEnemy(x: number, y: number, active = true, kind = 'jelly'): FakeEne
   return { x, y, active, kind, setVelocity: vi.fn() };
 }
 
+// 分層素材特效（§124 W5a）：純顯示層，世界結算測試以 mock 隔離。
+vi.mock('./fxLayers', () => ({
+  burstLayers: vi.fn(),
+  flashSprite: vi.fn(),
+  flashStarImpact: vi.fn(),
+}));
+
 function chainable(): Record<string, ReturnType<typeof vi.fn>> {
   const target: Record<string, ReturnType<typeof vi.fn>> = {};
   for (const key of [

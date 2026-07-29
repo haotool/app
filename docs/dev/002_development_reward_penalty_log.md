@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-1（reward 1、penalty 2、neutral 1）｜累計總分：+331
+> 本次分數變化：+1（reward 1、penalty 0、neutral 0）｜累計總分：+332
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：reward-starpuff-w5a-wave3-hud-keycap
+- 原因：B05 HUD 素材（彈藥星／SP 寶石／七形態技能圖示）長期停在 assetsV21 停車場 lazy 態，HUD 與 DOM 鍵帽仍全數程序繪製，素材車產出未轉化為玩家可見面
+- 解法：ui-hud-ammo 入 assetsFx（level phase，缺載回退程序星、tween 改相對縮放避開 512 源 scale 基準落差）；ui-hud-sp 與七形態 skill 走 DOM 按鈕層 Vite 資產（controls.setFormSkill 僅狀態轉變碰 DOM＋aria-label 隨形態改寫），Part2 對應條目退場
 
 - 日期：2026-07-29
 - ID：neutral-starpuff-w4-review-foldin
