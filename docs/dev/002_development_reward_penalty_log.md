@@ -39,6 +39,11 @@
 - 解法：勝率門檻入 AUDIT_THRESHOLDS（含最小樣本 5，使 40%/80% 落在整數成功次數）並由 level-audit 非零退出強制；telegraph 收窄為分層契約（魔王 ≥600、小怪 ≥500），例外表以掃描式測試固化並要求補償說明——順帶查出 issue 未提及的 syronaFsm.lobTelegraphMs 500ms
 
 - 日期：2026-07-29
+- ID：penalty-ci-starpuff-e2e-gate-absent
+- 原因：apps/starpuff 缺 test:coverage 使 pnpm -r 靜默跳過其 1300+ 單元測試；e2e-filter 只涵蓋 ratewise/nihonname/shared，starpuff／park-keeper／papertrade／split-meow 共 35 個 spec 既不在 PR smoke 也不在 main full，四個已上線 app 長期無任何自動化閘門
+- 解法：starpuff 補 test:coverage＋coverage 設定（scope 9→10 of 10）；e2e-filter 增 per-app paths-filter 產出 matrix，PR 只跑變更 app、main push 全跑；park-keeper CI webServer 由 undefined 改自帶；setup-playwright 加 browsers input（cache key 含組合 slug）供 papertrade/split-meow 的 webkit project
+
+- 日期：2026-07-29
 - ID：reward-starpuff-w5a-wave3-hud-keycap
 - 原因：B05 HUD 素材（彈藥星／SP 寶石／七形態技能圖示）長期停在 assetsV21 停車場 lazy 態，HUD 與 DOM 鍵帽仍全數程序繪製，素材車產出未轉化為玩家可見面
 - 解法：ui-hud-ammo 入 assetsFx（level phase，缺載回退程序星、tween 改相對縮放避開 512 源 scale 基準落差）；ui-hud-sp 與七形態 skill 走 DOM 按鈕層 Vite 資產（controls.setFormSkill 僅狀態轉變碰 DOM＋aria-label 隨形態改寫），Part2 對應條目退場

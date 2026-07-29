@@ -172,6 +172,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.filter.outputs.e2e }}
+      apps: ${{ steps.select-apps.outputs.apps }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -189,6 +190,108 @@ jobs:
               - 'package.json'
               - '.github/workflows/ci.yml'
               - '.github/actions/setup-playwright/**'
+
+      # 非 ratewise app 的 e2e 閘門（#918）：starpuff／park-keeper／papertrade／split-meow
+      # 各自持有 Playwright 套件，但在此之前沒有任何 workflow 觸發過它們。
+      # filter 名稱＝pnpm package 後綴，changes 輸出直接餵給 e2e-apps 的 matrix。
+      - name: Detect per-app E2E changes
+        uses: dorny/paths-filter@v4
+        id: app-filter
+        with:
+          filters: |
+            starpuff:
+              - 'apps/starpuff/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            park-keeper:
+              - 'apps/park-keeper/**'
+              - 'apps/shared/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            papertrade:
+              - 'apps/papertrade/**'
+              - 'apps/shared/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            split-meow:
+              - 'apps/split-meow/**'
+              - 'apps/shared/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+
+      # main push／workflow_dispatch 一律全跑：PR 階段的路徑限縮是速度取捨，
+      # 但主幹不得留下「兩者皆無」的缺口（#918 驗收標準）。
+      - name: Select apps to run
+        id: select-apps
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            apps='${{ steps.app-filter.outputs.changes }}'
+          else
+            apps='["starpuff","park-keeper","papertrade","split-meow"]'
+          fi
+          echo "apps=${apps}" >> "$GITHUB_OUTPUT"
+          echo "選定 E2E app：${apps}"
+
+  # 非 ratewise app 的 E2E（#918）：各 app 的 playwright.config 自帶 webServer，
+  # job 只需裝瀏覽器後執行；單一 app 失敗不取消其他 app，便於精準重跑。
+  e2e-apps:
+    name: E2E ${{ matrix.app }}
+    needs: [quality, e2e-filter]
+    if: |
+      needs.quality.result == 'success' &&
+      needs.e2e-filter.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    # starpuff 全套 136 案在 workers:1／fullyParallel:false 下本機實測約 16 min，
+    # CI 較慢且 retries:2，連同安裝與 build 抓 45 min 與 e2e-full 對齊。
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.e2e-filter.outputs.apps) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 9.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # papertrade／split-meow 的 mobile project 用 devices['iPhone 13'] 未覆寫
+      # browserName，走 webkit 引擎——不砍其測試矩陣，改為顯式加裝 webkit。
+      - name: Setup Playwright browsers
+        uses: ./.github/actions/setup-playwright
+        with:
+          app-filter: '@app/${{ matrix.app }}'
+          browsers: ${{ (matrix.app == 'papertrade' || matrix.app == 'split-meow') && 'chromium webkit' || 'chromium' }}
+
+      - name: Run E2E tests
+        env:
+          CI: true
+        run: pnpm --filter '@app/${{ matrix.app }}' exec playwright test --reporter=github,list
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report-${{ matrix.app }}
+          path: |
+            apps/${{ matrix.app }}/playwright-report
+            apps/${{ matrix.app }}/test-results
+          retention-days: 3
+          if-no-files-found: ignore
 
   # PR：核心 smoke（desktop 單專案 + 3 個核心 spec），預估 5–8 分鐘。
   e2e-smoke:
