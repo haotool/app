@@ -60,9 +60,16 @@ describe('PRISMIX 常數與加權表（§68/§112）', () => {
     expect(PRISMIX.maxHp).toBe(80);
     // #810：地面尖刺前搖須容納 500ms 反應玩家（下限對齊 AUDIT_THRESHOLDS.spikeTelegraphMinMs）。
     expect(PRISMIX.pillarTelegraphMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.spikeTelegraphMinMs);
-    expect(PRISMIX.beamTelegraphMs).toBeGreaterThanOrEqual(500);
-    expect(PRISMIX.pincerTelegraphMs).toBeGreaterThanOrEqual(500);
-    expect(PRISMIX.rainTelegraphMs).toBeGreaterThanOrEqual(500);
+    // #890 分層契約：魔王招式紅線＝AUDIT_THRESHOLDS.telegraphMinMs（600ms）。
+    // 衝撞型（pincer）與範圍落下型（rain）須滿足紅線，斷言直接釘 SSOT 常數。
+    expect(PRISMIX.pincerTelegraphMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    expect(PRISMIX.rainTelegraphMs).toBeGreaterThanOrEqual(AUDIT_THRESHOLDS.telegraphMinMs);
+    // beam 是紅線的明列例外（#890 裁決）：500ms 成立的前提是「全寬預示線精確標示
+    // 光束 Y 位置」——空間資訊零判讀，玩家只需離開那條線，與 pincer 需判讀左右
+    // 對衝時機與位置的性質不同。下限仍釘小怪層級，不得再往下調。
+    expect(PRISMIX.beamTelegraphMs).toBeGreaterThanOrEqual(
+      AUDIT_THRESHOLDS.telegraphMinimalMinionMs,
+    );
     expect(prismixMoveTable('p1').map((m) => m.action)).toEqual(['pillar', 'beam']);
     expect(prismixMoveTable('p2').map((m) => m.action)).toEqual([
       'pincer',
