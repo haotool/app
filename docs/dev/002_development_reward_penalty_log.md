@@ -2,7 +2,7 @@
 
 > 版本：outline-v2-ultra
 > 原則：每筆只保留日期、ID、原因、解法。
-> 本次分數變化：-2（reward 0、penalty 2、neutral 0）｜累計總分：+325
+> 本次分數變化：-3（reward 0、penalty 3、neutral 0）｜累計總分：+322
 
 ## 新增模板（4 行）
 
@@ -12,6 +12,11 @@
 - 解法：<一句話修正>
 
 ## 條目（新→舊）
+
+- 日期：2026-07-29
+- ID：penalty-papertrade-e2e-live-network-dependency
+- 原因：papertrade e2e 的 bybit mock 採「列舉開放」，未列舉的 instruments-info 直接打真網路——本機有外網時看似通過，CI 無外網才以 net::ERR_FAILED 汙染 console 斷言，是閘門接上後才暴露的隱性外網依賴
+- 解法：mock 改預設封閉——先註冊 bybit 網域兜底（未特化端點回合法空集合），再疊具體端點；另補 instruments-info 特化回應對齊 priceScale 靜態 tickSize，並以兜底改 abort 模擬完全斷網複驗 42 案全綠
 
 - 日期：2026-07-29
 - ID：penalty-starpuff-e2e-stale-world-assumptions
