@@ -1,5 +1,11 @@
 # @app/starpuff
 
+## 0.28.2
+
+### Patch Changes
+
+- f2f9b06: 關卡難度驗收改為自動把關：分級 bot 勝率未達標準時稽核工具直接報錯，不再只是印出數字給人看。
+
 ## 0.28.1
 
 ### Patch Changes
